@@ -2826,6 +2826,11 @@ struct scpi_keyword {
     char text[18];
 };
 
+typedef enum __attribute__((packed)) scpi_language_choice {
+    SCPI_LANGUAGE_PFORTH=0,
+    SCPI_LANGUAGE_INSTALL=1
+} scpi_language_choice;
+
 typedef struct scpi_multiplier scpi_multiplier, *Pscpi_multiplier;
 
 struct scpi_multiplier {
@@ -2957,6 +2962,13 @@ union scpi_token {
     struct scpi_token_string string;
     struct scpi_token_block block;
     int16_t digit;
+};
+
+typedef struct scpi_tree_pair scpi_tree_pair, *Pscpi_tree_pair;
+
+struct scpi_tree_pair {
+    struct scpi_child_list *common;
+    struct scpi_child_list *main;
 };
 
 typedef void (selftest_test)(struct char_slot);
@@ -3607,6 +3619,7 @@ _Static_assert(sizeof(scpi_error_message) == 6, "scpi_error_message");
 _Static_assert(sizeof(scpi_float_resolution) == 6, "scpi_float_resolution");
 _Static_assert(sizeof(scpi_handler) == 10, "scpi_handler");
 _Static_assert(sizeof(scpi_keyword) == 20, "scpi_keyword");
+_Static_assert(sizeof(scpi_language_choice) == 1, "scpi_language_choice");
 _Static_assert(sizeof(scpi_multiplier) == 4, "scpi_multiplier");
 _Static_assert(sizeof(scpi_node) == 36, "scpi_node");
 _Static_assert(sizeof(scpi_number) == 38, "scpi_number");
@@ -3627,6 +3640,7 @@ _Static_assert(sizeof(scpi_token) == 38, "scpi_token");
 _Static_assert(sizeof(scpi_token_block) == 6, "scpi_token_block");
 _Static_assert(sizeof(scpi_token_non_decimal) == 6, "scpi_token_non_decimal");
 _Static_assert(sizeof(scpi_token_string) == 6, "scpi_token_string");
+_Static_assert(sizeof(scpi_tree_pair) == 8, "scpi_tree_pair");
 _Static_assert(sizeof(scpi_unit) == 6, "scpi_unit");
 _Static_assert(sizeof(selftest_failure) == 1, "selftest_failure");
 _Static_assert(sizeof(selftest_gps_failure) == 2, "selftest_gps_failure");
@@ -4035,7 +4049,9 @@ extern char os_report_newline[3]; /* 000512e6 */
 extern char os_report_format[3]; /* 00051382 */
 extern char os_report_comma[2]; /* 00051385 */
 extern io_device_jumps io_table_defaults[4]; /* 0005171a */
+extern scpi_child_list scpi_common_list; /* 000526f6 */
 extern scpi_root_children scpi_main_tree; /* 00053034 */
+extern scpi_tree_pair scpi_trees; /* 0005d014 */
 extern const uint8_t ctype_table[257]; /* 0005ed98 */
 extern uint32_t powers_of_ten_by_25_mantissas[54]; /* 0005f860 */
 extern int16_t powers_of_ten_by_25_exponents[27]; /* 0005f938 */
@@ -4290,7 +4306,7 @@ extern char * scpi_input_next; /* 00102c4e */
 extern char * scpi_input_end; /* 00102c52 */
 extern char scpi_prompt_text[10]; /* 00102c56 */
 extern uint8_t scpi_port_echo_length; /* 00102c60 */
-extern uint8_t scpi_language; /* 00102c62 */
+extern scpi_language_choice scpi_language; /* 00102c62 */
 extern uint8_t scpi_prompt_enabled; /* 00102c63 */
 extern char scpi_echo_response[256]; /* 00102c64 */
 extern uint32_t scpi_values_SAMPle_IMULtiple[4]; /* 00102d64 */
@@ -4444,6 +4460,8 @@ extern char * installer_status_report_messages[5]; /* installer::00107b08 */
 extern duartb_settings_record installer_duartb_settings_defaults; /* installer::001081a2 */
 extern psos_configuration installer_psos_config_defaults; /* installer::001084da */
 extern io_device_jumps installer_io_table_defaults; /* installer::00108578 */
+extern scpi_tree_pair installer_scpi_trees; /* installer::00108930 */
+extern uint8_t installer_ctype_table[257]; /* installer::00109056 */
 
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
@@ -4451,8 +4469,6 @@ extern uint8_t DAT_0004cfc0; /* 0004cfc0 */
 extern uint8_t DAT_00700000; /* 00700000 */
 extern uint32_t *PTR_DAT_0004cf80; /* 0004cf80 */
 extern uint32_t *PTR_DAT_00050e5e; /* 00050e5e */
-extern uint32_t *PTR_DAT_installer__001085d8_installer__00108930; /* installer::00108930 */
-extern uint32_t *PTR_DAT_installer__00108606_installer__00108934; /* installer::00108934 */
 extern uint32_t *PTR_diag_cal_0001c8ac; /* 0001c8ac */
 extern uint32_t *PTR_lamp_test_command_000186b0; /* 000186b0 */
 extern uint32_t *PTR_s_Self_Test_0004d076; /* 0004d076 */
@@ -4489,7 +4505,6 @@ extern uint8_t UNK_001079c7; /* 001079c7 */
 extern uint8_t UNK_001079e3; /* 001079e3 */
 extern uint8_t UNK_001082c8; /* 001082c8 */
 extern uint8_t UNK_001082d7; /* 001082d7 */
-extern uint8_t UNK_00109057; /* 00109057 */
 extern uint8_t UNK_0010921e; /* 0010921e */
 extern uint8_t UNK_00109a08; /* 00109a08 */
 extern uint8_t UNK_00109a0c; /* 00109a0c */
@@ -4619,8 +4634,6 @@ __asm__(".set DAT_0004cfc0, 0x0004cfc0");
 __asm__(".set DAT_00700000, 0x00700000");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
 __asm__(".set PTR_DAT_00050e5e, 0x00050e5e");
-__asm__(".set PTR_DAT_installer__001085d8_installer__00108930, 0x00108930");
-__asm__(".set PTR_DAT_installer__00108606_installer__00108934, 0x00108934");
 __asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
 __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
@@ -4657,7 +4670,6 @@ __asm__(".set UNK_001079c7, 0x001079c7");
 __asm__(".set UNK_001079e3, 0x001079e3");
 __asm__(".set UNK_001082c8, 0x001082c8");
 __asm__(".set UNK_001082d7, 0x001082d7");
-__asm__(".set UNK_00109057, 0x00109057");
 __asm__(".set UNK_0010921e, 0x0010921e");
 __asm__(".set UNK_00109a08, 0x00109a08");
 __asm__(".set UNK_00109a0c, 0x00109a0c");
@@ -4859,6 +4871,7 @@ __asm__(".set idn_suffix, 0x00101f8c");
 __asm__(".set installer_atexit_count, 0x0010b0bc");
 __asm__(".set installer_atexit_functions, 0x0010b03c");
 __asm__(".set installer_console_port, 0x001076d0");
+__asm__(".set installer_ctype_table, 0x00109056");
 __asm__(".set installer_duart_shadow, 0x0010ad40");
 __asm__(".set installer_duarta, 0x0010ae50");
 __asm__(".set installer_duarta_ring, 0x0010ad4d");
@@ -4896,6 +4909,7 @@ __asm__(".set installer_scpi_input_repeat, 0x0010abec");
 __asm__(".set installer_scpi_last_input, 0x0010abe8");
 __asm__(".set installer_scpi_port_echo_length, 0x0010abe7");
 __asm__(".set installer_scpi_prompt_text, 0x0010acf8");
+__asm__(".set installer_scpi_trees, 0x00108930");
 __asm__(".set installer_service_request_enable, 0x0010abef");
 __asm__(".set installer_spoo_exchange, 0x0010afbe");
 __asm__(".set installer_spoo_message, 0x0010afc4");
@@ -5099,6 +5113,7 @@ __asm__(".set scpi_action_SYSTem_PRESet, 0x00041360");
 __asm__(".set scpi_action_self_test, 0x00041348");
 __asm__(".set scpi_action_temporary_hold, 0x0004133c");
 __asm__(".set scpi_char_classes, 0x000277ec");
+__asm__(".set scpi_common_list, 0x000526f6");
 __asm__(".set scpi_echo_length, 0x00102a46");
 __asm__(".set scpi_echo_response, 0x00102c64");
 __asm__(".set scpi_echo_text, 0x00102a47");
@@ -5188,6 +5203,7 @@ __asm__(".set scpi_response_begin_code, 0x00029636");
 __asm__(".set scpi_response_lists, 0x0010295e");
 __asm__(".set scpi_response_texts, 0x0010272a");
 __asm__(".set scpi_staged, 0x00102a0e");
+__asm__(".set scpi_trees, 0x0005d014");
 __asm__(".set scpi_value_DIAGnostic_ROSCillator_TCOefficient, 0x00101d0c");
 __asm__(".set scpi_value_DIAGnostic_TOFFset, 0x00101d10");
 __asm__(".set scpi_value_SAMPle_BARR, 0x00101ddd");
@@ -5417,8 +5433,6 @@ extern uint8_t DAT_installer__001076e1;
 __asm__(".set DAT_installer__001076e1, 0x001076e1");
 extern uint8_t DAT_installer__001082d7;
 __asm__(".set DAT_installer__001082d7, 0x001082d7");
-extern uint8_t DAT_installer__00109057;
-__asm__(".set DAT_installer__00109057, 0x00109057");
 extern uint8_t DAT_installer__00109a08;
 __asm__(".set DAT_installer__00109a08, 0x00109a08");
 extern uint8_t DAT_installer__00109a0c;
@@ -5951,8 +5965,8 @@ extern uint8_t LAB_installer__0010727c;
 __asm__(".set LAB_installer__0010727c, 0x0010727c");
 extern uint8_t LAB_installer__00108e6a;
 __asm__(".set LAB_installer__00108e6a, 0x00108e6a");
-extern uint8_t LAB_installer__00108ff8;
-__asm__(".set LAB_installer__00108ff8, 0x00108ff8");
+extern uint8_t LAB_installer__00108ff0;
+__asm__(".set LAB_installer__00108ff0, 0x00108ff0");
 extern uint8_t LAB_installer__00109802;
 __asm__(".set LAB_installer__00109802, 0x00109802");
 extern uint8_t LAB_installer__001098f6;
@@ -8116,11 +8130,11 @@ uint8_t installer_identification_record_read(void);
 void installer_psos_config_init(void);
 void * installer_memory_allocate(uint32_t size);
 int32_t installer_trap_1();
-void installer_float_raise(uint32_t param_1);
+uint64_t installer_float_raise(uint32_t code,...);
 void installer_call_atexit_functions(void);
 void * installer_memcpy(void *s1,void *s2,uint32_t n);
 char * installer_strncpy(char *s1,char *s2,uint32_t n);
-int32_t installer_strtol(char *param_1,uint32_t *param_2,int32_t param_3);
+int32_t installer_strtol(char *s,char **end,int32_t base);
 int32_t installer_toupper(int32_t c);
 void installer_double_to_digits_multiply(uint32_t *param_1);
 void installer_double_to_digits
@@ -49175,6 +49189,7 @@ uint32_t scpi_task_create(uint32_t param_1)
 #endif
 
 /* 0002a04a */
+#if 0 /* the decompiler's reading; rewritten in scpi_engine.c */
 
 /* SCPI task
    restart.md */
@@ -49196,15 +49211,15 @@ void scpi_task(void)
       console_write("scpi: error opening stream\n");
     }
     else {
-      scpi_interpret((int32_t)port,(int32_t)port,local_8,2000,&scpi_main_tree,0x526f6,status_object,0,
-                     unaff_D2);
+      scpi_interpret((int32_t)port,(int32_t)port,local_8,2000,&scpi_main_tree,&scpi_common_list,
+                     status_object,0,unaff_D2);
       psos_free_segment(local_8);
       (*(code *)port->methods->close)(port);
-      if (scpi_language == 0) {
+      if (scpi_language == SCPI_LANGUAGE_PFORTH) {
         psos_priority(0,0x33,(uint8_t *)0x0);
         spoo_run(console_init,0,0,0);
       }
-      else if (scpi_language == 1) {
+      else if (scpi_language == SCPI_LANGUAGE_INSTALL) {
         enter_installer();
       }
       psos_delete(0);
@@ -49216,6 +49231,7 @@ void scpi_task(void)
   return;
 }
 
+#endif
 
 /* 0002a18c */
 #if 0 /* the decompiler's reading; rewritten in scpi_common.c */
@@ -57086,7 +57102,7 @@ int32_t scpi_set_SYSTem_LANGuage(void *parameters,void *response,scpi_call *call
     pcVar7 = *(char **)((int32_t)parameters + 2);
     do {
       if (*pcVar7 == 0 && *pcVar6 == 0) {
-        scpi_language = 0;
+        scpi_language = SCPI_LANGUAGE_PFORTH;
         return -0x3c;
       }
       cVar5 = *pcVar6;
@@ -57098,7 +57114,7 @@ int32_t scpi_set_SYSTem_LANGuage(void *parameters,void *response,scpi_call *call
     pcVar7 = *(char **)((int32_t)parameters + 2);
     do {
       if (*pcVar7 == 0 && *pcVar6 == 0) {
-        scpi_language = 1;
+        scpi_language = SCPI_LANGUAGE_INSTALL;
         return -0x3c;
       }
       cVar5 = *pcVar6;
@@ -96233,6 +96249,7 @@ uint32_t installer_scpi_task_create(uint32_t priority)
 #endif
 
 /* installer::00107902 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's SCPI task, which installer_scpi_task_create starts */
 
@@ -96253,10 +96270,8 @@ void installer_scpi_task(void)
     }
     else {
       installer_scpi_interpret
-                ((int32_t)psVar2,(int32_t)psVar2,local_8,0x5dc,
-                 PTR_DAT_installer__00108606_installer__00108934,
-                 PTR_DAT_installer__001085d8_installer__00108930,installer_status_object,0,unaff_D2)
-      ;
+                ((int32_t)psVar2,(int32_t)psVar2,local_8,0x5dc,installer_scpi_trees.main,
+                 installer_scpi_trees.common,installer_status_object,0,unaff_D2);
       installer_psos_free_segment(local_8);
       (*(code *)psVar2->methods->close)(psVar2);
       installer_restart();
@@ -96269,6 +96284,7 @@ void installer_scpi_task(void)
   return;
 }
 
+#endif
 
 /* installer::00107a00 */
 #if 0 /* the decompiler's reading; rewritten in installer_status.c */
@@ -96500,149 +96516,194 @@ __asm__(
 
 /* installer::00108ca8 */
 
-/* WARNING: Type propagation algorithm not settling */
 /* the installer's float_raise
    softfloat.md */
 
-void installer_float_raise(uint32_t param_1)
+uint64_t installer_float_raise(uint32_t code,...)
 
 {
   uint8_t bVar1;
   uint32_t uVar2;
   uint32_t uVar3;
   uint32_t uVar4;
+  uint32_t extraout_D0;
+  uint32_t in_D1;
   uint32_t uVar5;
-  uint32_t uVar6;
-  int16_t sVar7;
-  uint32_t uVar8;
-  uint32_t uVar9;
+  uint32_t extraout_D1;
+  int16_t sVar6;
+  uint32_t uVar7;
+  bool bVar8;
   uint32_t in_stack_00000008 = *(uint32_t *)((char *)__builtin_frame_address(0) + 12);
   uint32_t in_stack_0000000c = *(uint32_t *)((char *)__builtin_frame_address(0) + 16);
-  uint16_t in_stack_00000010 = *(uint16_t *)((char *)__builtin_frame_address(0) + 20);
-  uint16_t in_stack_00000012 = *(uint16_t *)((char *)__builtin_frame_address(0) + 22);
-  uint16_t in_stack_00000014 = *(uint16_t *)((char *)__builtin_frame_address(0) + 24);
-  uint16_t in_stack_00000016 = *(uint16_t *)((char *)__builtin_frame_address(0) + 26);
+  uint32_t in_stack_00000010 = *(uint32_t *)((char *)__builtin_frame_address(0) + 20);
+  uint32_t in_stack_00000014 = *(uint32_t *)((char *)__builtin_frame_address(0) + 24);
   
-  if ((int16_t)param_1 == 0) goto LAB_installer__00108ff8;
-  uVar8 = param_1 >> 0x10;
-  if ((param_1 & 0x4000) == 0) {
-    if ((param_1 & 0x2000) == 0) {
-      if ((param_1 & 0x1000) == 0) {
-        if ((param_1 & 0x800) == 0) {
-          if ((param_1 & 0x400) == 0) {
-            if ((((param_1 & 0x200) != 0) || ((param_1 & 0x80) == 0)) ||
-               (installer_float_status = installer_float_status | 0x280,
-               ((uint8_t)installer_float_control & 0x80) != 0)) goto LAB_installer__00108ff8;
-            bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 2;
-          }
-          else {
-            installer_float_status = installer_float_status | 0x400;
-            if ((uVar8 & 0x80) != 0) {
-              installer_errno = 0x22;
+  uVar3 = CONCAT22((int16_t)((uint32_t)in_D1 >> 0x10),(int16_t)code);
+  if ((int16_t)code != 0) {
+    uVar4 = code >> 0x10;
+    if ((code & 0x4000) == 0) {
+      if ((code & 0x2000) == 0) {
+        if ((code & 0x1000) == 0) {
+          if ((code & 0x800) == 0) {
+            if ((code & 0x400) != 0) {
+              installer_float_status = installer_float_status | 0x400;
+              if ((uVar4 & 0x80) != 0) {
+                installer_errno = 0x22;
+              }
+              bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 4;
+              goto joined_r0x00108ef2;
             }
-            bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 4;
-          }
-          goto joined_r0x00108f3c;
-        }
-        sVar7 = (int16_t)in_stack_00000008;
-        if ((uVar8 & 1) == 0) {
-          uVar5 = CONCAT22(in_stack_00000010,in_stack_00000012);
-          uVar3 = CONCAT22(in_stack_00000014,in_stack_00000016);
-          uVar8 = in_stack_0000000c & 0xfffff | 0x100000;
-          if (sVar7 < 0x20) {
-            uVar8 = ~(__ghidra_shr(0xffffffffU, (in_stack_00000008 & 0x3f)));
-            uVar5 = uVar8 & (__ghidra_shl(uVar5, 0x20 - (in_stack_00000008 & 0x3f)) |
-                            __ghidra_shr(uVar5, (in_stack_00000008 & 0x3f))) |
-                    __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f));
-            if (((__ghidra_rotl(uVar8, in_stack_00000008 & 0x3f))
-                & uVar3) != 0) {
-              uVar5 = uVar5 | 1;
+            if ((((code & 0x200) == 0) && ((code & 0x80) != 0)) &&
+               ((installer_float_status = installer_float_status | 0x280,
+                ((uint8_t)installer_float_control & 0x80) == 0 &&
+                ((__ghidra_piece(uint8_t, installer_float_control, 0) & 2) == 0)))) {
+              in_stack_00000008 = 0x7fffffff;
+              in_stack_0000000c = 0xffffffff;
+              goto LAB_installer__00108ff0;
             }
           }
           else {
-            uVar4 = uVar3;
-            if (sVar7 != 0x20) {
-              if (0x37 < sVar7) goto LAB_installer__00108e6a;
-              uVar6 = (uint32_t)(uint16_t)(sVar7 - 0x20);
-              uVar9 = __ghidra_shr(0xffffffff, (uVar6 & 0x3f));
-              uVar4 = __ghidra_shl(uVar5, 0x20 - (uVar6 & 0x3f)) | __ghidra_shr(uVar5, (uVar6 & 0x3f));
-              uVar2 = ~uVar9;
-              uVar5 = uVar2 & (__ghidra_shl(uVar8, 0x20 - (uVar6 & 0x3f)) | __ghidra_shr(uVar8, (uVar6 & 0x3f))) |
-                      uVar9 & uVar4;
-              uVar4 = uVar2 & uVar4 | __ghidra_shr(uVar3, (uVar6 & 0x3f));
-              if (((__ghidra_rotl(uVar2, uVar6 & 0x3f)) & uVar3) != 0) {
-                uVar4 = uVar4 | 1;
+            sVar6 = (int16_t)in_stack_00000008;
+            if ((uVar4 & 1) == 0) {
+              in_stack_0000000c = in_stack_0000000c & 0xfffff | 0x100000;
+              if (sVar6 < 0x20) {
+                uVar7 = __ghidra_shr(0xffffffff, (in_stack_00000008 & 0x3f));
+                uVar2 = __ghidra_shl(in_stack_0000000c, 0x20 - (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(in_stack_0000000c, (in_stack_00000008 & 0x3f));
+                uVar5 = __ghidra_shl(in_stack_00000010, 0x20 - (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
+                uVar3 = uVar7 & uVar2;
+                uVar4 = ~uVar7;
+                in_stack_0000000c = uVar4 & uVar2 | uVar7 & uVar5;
+                in_stack_00000010 = uVar4 & uVar5 | __ghidra_shr(in_stack_00000014, (in_stack_00000008 & 0x3f));
+                if (((__ghidra_shl(uVar4, (in_stack_00000008 & 0x3f)) |
+                     __ghidra_shr(uVar4, 0x20 - (in_stack_00000008 & 0x3f))) & in_stack_00000014) != 0) {
+                  in_stack_00000010 = in_stack_00000010 | 1;
+                }
+              }
+              else {
+                uVar3 = in_stack_00000014;
+                if (sVar6 != 0x20) {
+                  if (0x37 < sVar6) goto LAB_installer__00108e6a;
+                  uVar5 = (uint32_t)(uint16_t)(sVar6 - 0x20);
+                  uVar7 = __ghidra_shr(0xffffffff, (uVar5 & 0x3f));
+                  uVar3 = __ghidra_shl(in_stack_0000000c, 0x20 - (uVar5 & 0x3f)) |
+                          __ghidra_shr(in_stack_0000000c, (uVar5 & 0x3f));
+                  uVar2 = __ghidra_shl(in_stack_00000010, 0x20 - (uVar5 & 0x3f)) |
+                          __ghidra_shr(in_stack_00000010, (uVar5 & 0x3f));
+                  in_stack_0000000c = uVar7 & uVar3;
+                  uVar4 = ~uVar7;
+                  in_stack_00000010 = uVar4 & uVar3 | uVar7 & uVar2;
+                  uVar3 = uVar4 & uVar2 | __ghidra_shr(in_stack_00000014, (uVar5 & 0x3f));
+                  if (((__ghidra_rotl(uVar4, uVar5 & 0x3f)) &
+                      in_stack_00000014) != 0) {
+                    uVar3 = uVar3 | 1;
+                  }
+                }
+                if (uVar3 != 0) {
+                  in_stack_00000010 = in_stack_00000010 | 1;
+                }
+                uVar3 = 0;
+              }
+              in_stack_00000008 = uVar3 & 0xffefffff;
+              if (in_stack_00000010 == 0) goto LAB_installer__00108ff0;
+              installer_float_status = installer_float_status | 0x200;
+              if ((CARRY4(in_stack_00000010,in_stack_00000010)) &&
+                 ((((in_stack_00000010 & 0x7fffffff) != 0 || ((in_stack_0000000c & 1) != 0)) &&
+                  (bVar8 = in_stack_0000000c == 0xffffffff,
+                  in_stack_0000000c = in_stack_0000000c + 1, bVar8)))) {
+                in_stack_00000008 = in_stack_00000008 + 1;
               }
             }
-            if (uVar4 != 0) {
-              uVar5 = uVar5 | 1;
+            else if (sVar6 < 0x19) {
+              uVar3 = in_stack_0000000c & 0x7fffff | 0x800000;
+              uVar4 = __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f));
+              in_stack_0000000c = ~(__ghidra_shl(-1, (in_stack_00000008 & 0x3f)));
+              uVar3 = in_stack_0000000c & uVar3;
+              uVar3 = __ghidra_shl(uVar3, 0x20 - (in_stack_00000008 & 0x3f)) |
+                      __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f)) |
+                      __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
+              in_stack_0000000c = in_stack_0000000c & in_stack_00000010;
+              if (in_stack_0000000c != 0) {
+                uVar3 = uVar3 | 1;
+              }
+              in_stack_00000008 = uVar4 & 0xff7fffff;
+              if (uVar3 == 0) goto LAB_installer__00108ff0;
+              installer_float_status = installer_float_status | 0x200;
+              if ((CARRY4(uVar3,uVar3)) && (((uVar3 & 0x7fffffff) != 0 || ((uVar4 & 1) != 0)))) {
+                in_stack_00000008 = in_stack_00000008 + 1;
+              }
+            }
+            else {
+LAB_installer__00108e6a:
+              if ((code & 0x800000) != 0) {
+                installer_errno = 0x22;
+              }
+              in_stack_00000008 = 0;
+              in_stack_0000000c = 0;
+            }
+            installer_float_status = installer_float_status | 0xa00;
+            if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 8) == 0) {
+              bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 2;
+              goto joined_r0x00108f8a;
             }
           }
-          if (uVar5 == 0) {
-            return;
-          }
-          installer_float_status = installer_float_status | 0x200;
-        }
-        else if (sVar7 < 0x19) {
-          uVar5 = ~(__ghidra_shl(-1, (in_stack_00000008 & 0x3f)));
-          uVar8 = uVar5 & (in_stack_0000000c & 0x7fffff | 0x800000);
-          uVar8 = __ghidra_shl(uVar8, 0x20 - (in_stack_00000008 & 0x3f)) | __ghidra_shr(uVar8, (in_stack_00000008 & 0x3f)) |
-                  __ghidra_shr(CONCAT22(in_stack_00000010,in_stack_00000012), (in_stack_00000008 & 0x3f));
-          if ((uVar5 & CONCAT22(in_stack_00000010,in_stack_00000012)) != 0) {
-            uVar8 = uVar8 | 1;
-          }
-          if (uVar8 == 0) {
-            return;
-          }
-          installer_float_status = installer_float_status | 0x200;
         }
         else {
-LAB_installer__00108e6a:
-          if ((param_1 & 0x800000) != 0) {
+          installer_float_status = installer_float_status | 0x1200;
+          if ((uVar4 & 0x80) != 0) {
             installer_errno = 0x22;
           }
+          if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 0x10) == 0) {
+            bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 2;
+joined_r0x00108ef2:
+            if (bVar1 == 0) {
+              if ((uVar4 & 1) == 0) {
+                in_stack_00000008 = 0x7ff00000;
+                in_stack_0000000c = 0;
+              }
+              else {
+                in_stack_00000008 = 0x7f800000;
+                in_stack_0000000c = uVar3;
+              }
+              goto LAB_installer__00108ff0;
+            }
+          }
         }
-        installer_float_status = installer_float_status | 0xa00;
-        bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 8;
       }
       else {
-        installer_float_status = installer_float_status | 0x1200;
-        if ((uVar8 & 0x80) != 0) {
-          installer_errno = 0x22;
+        installer_float_status = installer_float_status | 0x2000;
+        if ((uVar4 & 0x80) != 0) {
+          installer_errno = 0x21;
         }
-        bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 0x10;
+        if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 0x20) == 0) {
+          in_stack_00000008 = 0x7fffffff;
+          in_stack_0000000c = 0xffffffff;
+          goto LAB_installer__00108ff0;
+        }
       }
-      if (bVar1 != 0) goto LAB_installer__00108ff8;
-      bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 2;
     }
     else {
+      if ((uVar4 & 1) == 0) {
+        if ((in_stack_00000008 & 0x80000) != 0) goto LAB_installer__00108ff0;
+        in_stack_00000008 = in_stack_00000008 | 0x80000;
+      }
+      else {
+        in_stack_0000000c = uVar3;
+        if ((in_stack_00000008 & 0x400000) != 0) goto LAB_installer__00108ff0;
+        in_stack_00000008 = in_stack_00000008 | 0x400000;
+      }
       installer_float_status = installer_float_status | 0x2000;
-      if ((uVar8 & 0x80) != 0) {
-        installer_errno = 0x21;
-      }
       bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 0x20;
+joined_r0x00108f8a:
+      if (bVar1 == 0) goto LAB_installer__00108ff0;
     }
   }
-  else {
-    if ((uVar8 & 1) == 0) {
-      uVar8 = in_stack_00000008 & 0x80000;
-    }
-    else {
-      uVar8 = in_stack_00000008 & 0x400000;
-    }
-    if (uVar8 != 0) {
-      return;
-    }
-    installer_float_status = installer_float_status | 0x2000;
-    bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 0x20;
-  }
-joined_r0x00108f3c:
-  if (bVar1 == 0) {
-    return;
-  }
-LAB_installer__00108ff8:
-  installer_float_exception_report(param_1);
-  return;
+  installer_float_exception_report(code);
+  in_stack_00000008 = extraout_D0;
+  in_stack_0000000c = extraout_D1;
+LAB_installer__00108ff0:
+  return CONCAT44(in_stack_00000008,in_stack_0000000c);
 }
 
 
@@ -96728,10 +96789,11 @@ char * installer_strncpy(char *s1,char *s2,uint32_t n)
 #endif
 
 /* installer::001091ac */
+#if 0 /* the decompiler's reading; rewritten in installer_stdlib.c */
 
 /* strtol: a long from a string in a base up to 36, and where it ended */
 
-int32_t installer_strtol(char *param_1,uint32_t *param_2,int32_t param_3)
+int32_t installer_strtol(char *s,char **end,int32_t base)
 
 {
   bool bVar1;
@@ -96740,16 +96802,16 @@ int32_t installer_strtol(char *param_1,uint32_t *param_2,int32_t param_3)
   int32_t iVar4;
   int32_t iVar5;
   
-  if (param_2 != (uint32_t *)0x0) {
-    *param_2 = param_1;
+  if (end != (char **)0x0) {
+    *end = s;
   }
-  if ((-1 < param_3) && (param_3 < 0x25)) {
+  if ((-1 < base) && (base < 0x25)) {
     bVar1 = false;
-    uVar3 = (uint32_t)*param_1;
-    if (((&DAT_installer__00109057)[uVar3] & 7) == 0) {
-      while (((&DAT_installer__00109057)[uVar3] & 8) != 0) {
-        param_1 = param_1 + 1;
-        uVar3 = (uint32_t)*param_1;
+    uVar3 = (uint32_t)*s;
+    if ((installer_ctype_table[uVar3 + 1] & 7) == 0) {
+      while ((installer_ctype_table[uVar3 + 1] & 8) != 0) {
+        s = s + 1;
+        uVar3 = (uint32_t)*s;
       }
       if (uVar3 - 0x2b < 2U || uVar3 - 0x2d == 0) {
                     /* WARNING: Switch is manually overridden */
@@ -96757,40 +96819,40 @@ int32_t installer_strtol(char *param_1,uint32_t *param_2,int32_t param_3)
         case 6:
           bVar1 = true;
         case 8:
-          param_1 = param_1 + 1;
-          uVar3 = (uint32_t)*param_1;
+          s = s + 1;
+          uVar3 = (uint32_t)*s;
         }
       }
     }
-    if (param_3 == 0) {
+    if (base == 0) {
       if (uVar3 == 0x30) {
-        if ((param_1[1] == 'x') || (param_1[1] == 'X')) {
-          param_3 = 0x10;
+        if ((s[1] == 'x') || (s[1] == 'X')) {
+          base = 0x10;
         }
         else {
-          param_3 = 8;
+          base = 8;
         }
       }
       else {
-        param_3 = 10;
+        base = 10;
       }
     }
-    if (((&DAT_installer__00109057)[uVar3] & 7) != 0) {
-      if (((&DAT_installer__00109057)[uVar3] & 4) == 0) {
+    if ((installer_ctype_table[uVar3 + 1] & 7) != 0) {
+      if ((installer_ctype_table[uVar3 + 1] & 4) == 0) {
         iVar4 = (uVar3 | 0x20) - 0x57;
       }
       else {
         iVar4 = uVar3 - 0x30;
       }
-      if (iVar4 < param_3) {
-        if ((((param_3 == 0x10) && (uVar3 == 0x30)) &&
-            (((int16_t)(char)(&DAT_installer__00109057)[param_1[2]] & 0x80U) != 0)) &&
-           ((param_1[1] == 'x' || (param_1[1] == 'X')))) {
-          param_1 = param_1 + 2;
-          uVar3 = (uint32_t)*param_1;
+      if (iVar4 < base) {
+        if ((((base == 0x10) && (uVar3 == 0x30)) &&
+            (((int16_t)(char)installer_ctype_table[s[2] + 1] & 0x80U) != 0)) &&
+           ((s[1] == 'x' || (s[1] == 'X')))) {
+          s = s + 2;
+          uVar3 = (uint32_t)*s;
         }
         bVar2 = false;
-        if (((&DAT_installer__00109057)[uVar3] & 4) == 0) {
+        if ((installer_ctype_table[uVar3 + 1] & 4) == 0) {
           iVar4 = (uVar3 | 0x20) - 0x57;
         }
         else {
@@ -96798,22 +96860,22 @@ int32_t installer_strtol(char *param_1,uint32_t *param_2,int32_t param_3)
         }
         iVar4 = -iVar4;
         while( true ) {
-          param_1 = param_1 + 1;
-          uVar3 = (uint32_t)*param_1;
-          if (((&DAT_installer__00109057)[uVar3] & 7) == 0) break;
-          if (((&DAT_installer__00109057)[uVar3] & 4) == 0) {
+          s = s + 1;
+          uVar3 = (uint32_t)*s;
+          if ((installer_ctype_table[uVar3 + 1] & 7) == 0) break;
+          if ((installer_ctype_table[uVar3 + 1] & 4) == 0) {
             iVar5 = (uVar3 | 0x20) - 0x57;
           }
           else {
             iVar5 = uVar3 - 0x30;
           }
-          if (param_3 <= iVar5) break;
-          iVar5 = iVar4 * param_3 - iVar5;
+          if (base <= iVar5) break;
+          iVar5 = iVar4 * base - iVar5;
           bVar2 = (bool)(iVar4 < iVar5 | bVar2);
           iVar4 = iVar5;
         }
-        if (param_2 != (uint32_t *)0x0) {
-          *param_2 = param_1;
+        if (end != (char **)0x0) {
+          *end = s;
         }
         if ((iVar4 == -0x80000000) && (!bVar1)) {
           bVar2 = true;
@@ -96836,6 +96898,7 @@ int32_t installer_strtol(char *param_1,uint32_t *param_2,int32_t param_3)
   return 0;
 }
 
+#endif
 
 /* installer::00109366 */
 #if 0 /* the decompiler's reading; rewritten in installer_string.c */
@@ -97454,7 +97517,7 @@ LAB_installer__00109d1a:
         while( true ) {
           local_8 = (char *)(uVar14 - 0x30);
           uVar14 = (uint32_t)*param_1;
-          if ((0x7f < uVar14) || (((&DAT_installer__00109057)[uVar14] & 4) == 0)) break;
+          if ((0x7f < uVar14) || ((installer_ctype_table[uVar14 + 1] & 4) == 0)) break;
           uVar14 = uVar14 + (int32_t)local_8 * 10;
           param_1 = param_1 + 1;
         }
@@ -97586,7 +97649,7 @@ LAB_installer__0010a2a2:
             cVar11 = '+';
           }
           local_4e[-1] = cVar11;
-          if (((&DAT_installer__00109057)[uVar14] & 1) == 0) {
+          if ((installer_ctype_table[uVar14 + 1] & 1) == 0) {
             cVar11 = 'e';
           }
           else {

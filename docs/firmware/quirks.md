@@ -65,6 +65,9 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
   for every `rand` value from 1 to 127: `start_nothing`'s `rts`,
   `0x4e`, so that about one dither in 258 is -78, twice the table's
   largest, 39.
+- **`installer_strtol` (`installer::0x1091ac`)** indexes the ctype
+  table by a signed character, so that one above `0x7f` reads the 128
+  bytes before the table, the code before it.
 - **`clock_days_before_month`'s callers** index `days_before_month`
   and `days_before_month_leap` (`0x1186c`) by an unchecked month: 0
   reads the word before, past 12 the words after.

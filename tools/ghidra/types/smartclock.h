@@ -1804,6 +1804,20 @@ typedef struct scpi_child_list {
   scpi_node* children[]; /* +0x06 */
 } scpi_child_list;
 
+/* The two command trees scpi_task gives scpi_interpret, a pair in ROM
+ * at 0x5d014, and the installer's at installer::0x108930. */
+typedef struct scpi_tree_pair {
+  scpi_child_list* common; /* +0x00: the common commands' list, *IDN? on */
+  scpi_child_list* main;   /* +0x04: the main tree's root list */
+} scpi_tree_pair;
+
+/* :SYSTem:LANGuage's choice of what follows the SCPI session
+ * (scpi_language), which scpi_task acts on (0x2a0fe to 0x2a136). */
+typedef enum __attribute__((packed)) scpi_language_choice {
+  SCPI_LANGUAGE_PFORTH = 0,  /* the pForth console */
+  SCPI_LANGUAGE_INSTALL = 1, /* the installer */
+} scpi_language_choice;
+
 /* A header's path, scpi_interpret's 20 bytes (0x2935e): the list the
  * next keyword is looked up in, and the words the nodes on the way and
  * their numeric suffixes add, the handler's first parameters. */

@@ -112,3 +112,40 @@ int32_t installer_scpi_parse_message_unit(scpi_context* parser,
 int32_t installer_scpi_call_handler(scpi_call* call, void** response) {
   return scpi_engine_call_handler(call, response);
 }
+
+/* The installer's SCPI task: time sliced, takes a 1500-byte segment for
+ * the interpreter's arena and runs the interpreter on the console port
+ * until its session ends; then restarts the processor, whatever
+ * :SYSTem:LANGuage chose, and deletes itself (installer::0x107902). */
+void installer_scpi_task(void) {
+  /* installer_scpi_interpret's last argument, unread, is the long above
+   * its others: the task's D2, as it saved it. */
+  const uint32_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
+  static const uint32_t ARENA_SIZE = 1500;
+  static const uint32_t ERROR_BITS = 0xff;
+  void* arena;
+
+  installer_psos_mode(PSOS_MODE_TIME_SLICE, PSOS_MODE_TIME_SLICE, NULL);
+  const uint32_t error =
+      installer_psos_service_8(ARENA_SIZE, 0, 1, 0, (uint32_t*)&arena) &
+      ERROR_BITS;
+
+  if (error != 0) {
+    installer_printf("scpi: alloc_seg error %#0x\n", error);
+    return;
+  }
+  scpi_port* port = installer_scpi_session_init();
+
+  if (port == NULL) {
+    installer_console_write("scpi: error opening stream\n");
+    return;
+  }
+  installer_scpi_interpret((int32_t)port, (int32_t)port, arena, ARENA_SIZE,
+                           installer_scpi_trees.main,
+                           installer_scpi_trees.common, installer_status_object,
+                           0, caller_d2);
+  installer_psos_free_segment(arena);
+  port->methods->close(port);
+  installer_restart();
+  installer_psos_delete(0);
+}

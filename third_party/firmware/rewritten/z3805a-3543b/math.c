@@ -201,7 +201,6 @@ static double libc_reduce(union libc_double x, int32_t* exponent) {
  * function of z^2, plus the exponent times ln 2 in two parts.  Of zero
  * -infinity, with errno ERANGE. */
 double log(double x) {
-  static const int32_t ERANGE = 34;
   /* sqrt(1/2), where log and pow choose how to reduce their argument. */
   static const double SQRT_HALF = 0.7071067811865476;
   /* ln 2 in a high part and a low, and the rational approximation's
@@ -233,7 +232,7 @@ double log(double x) {
           .bits = (uint64_t)(LIBC_SIGN | LIBC_INFINITY_HIGH) << LIBC_WORD_BITS};
 
       result = minus_infinity.value;
-      errno = ERANGE;
+      errno = LIBC_ERANGE;
     }
     return result;
   }

@@ -81,7 +81,7 @@
 0x120aa	function	shutdown	restart.md	Shutdown
 0x2a04a	function	scpi_task	restart.md	SCPI task
 0x12f2c	function	enter_installer	restart.md	calls trap #11, the installer entry
-0x102c62	label	scpi_language	restart.md	language byte, 0 PFORTH, 1 INSTALL	uint8_t
+0x102c62	label	scpi_language	restart.md	what :SYSTem:LANGuage chose to follow the SCPI session	scpi_language_choice
 #
 # the interval, docs/firmware/interval.md, "In every image"
 0x448fc	function	pll_normal	the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine, which counts readings to ten and stores the mean	the loop's normal stage: averages interval readings, counting them to ten and storing the mean	pll_stage_result pll_normal(bool same_stage)
@@ -1809,11 +1809,11 @@ installer::0x10824a	function	installer_identification_record_read	context	the in
 installer::0x1083b6	function	installer_psos_config_init	psos.md	the installer's psos_config_init
 installer::0x108428	function	installer_memory_allocate	context	the installer's memory_allocate	void *installer_memory_allocate(uint32_t size)
 installer::0x108466	function	installer_trap_1	context	the installer's primary_trap_1, byte for byte: the boot vector table's vector 33, trap #1		convention=exception; confidence=read; family=exception
-installer::0x108ca8	function	installer_float_raise	softfloat.md	the installer's float_raise
+installer::0x108ca8	function	installer_float_raise	softfloat.md	the installer's float_raise	unsigned long long installer_float_raise(unsigned int code, ...)	convention=c; confidence=read; copies=D0:D1; preserves=D3, D4, D5, D6, D7, A0, A1
 installer::0x10904c	function	installer_call_atexit_functions	libc.md	the installer's call_atexit_functions
 installer::0x109160	function	installer_memcpy	libc.md	the installer's memcpy	void * installer_memcpy(void *s1, void *s2, unsigned int n)
 installer::0x10917e	function	installer_strncpy	libc.md	the installer's strncpy	char * installer_strncpy(char *s1, char *s2, unsigned int n)
-installer::0x1091ac	function	installer_strtol	context	strtol: a long from a string in a base up to 36, and where it ended
+installer::0x1091ac	function	installer_strtol	context	strtol: a long from a string in a base up to 36, and where it ended	int32_t installer_strtol(char *s, char **end, int32_t base)
 installer::0x109366	function	installer_toupper	libc.md	the installer's toupper	int installer_toupper(int c)
 installer::0x10937e	function	installer_double_to_digits_multiply	libc.md	the installer's double_to_digits_multiply
 installer::0x109562	function	installer_double_to_digits	libc.md	the installer's double_to_digits	void installer_double_to_digits(double value, int32_t count, int32_t *exponent, uint32_t *negative, char *digits, int32_t mode)
@@ -1890,7 +1890,9 @@ installer::0x107ad6	label	installer_status_register_layouts	read	the installer's
 installer::0x107aea	label	installer_status_conditions	read	the installer's status conditions, which installer_status_init gives installer_status_create: 0 nothing, 1 to 4 the errors -360 to -363	status_condition[5]
 installer::0x107b08	label	installer_status_report_messages	read	the installer's status_report_messages: none, then the messages of its four errors, -360 to -363	char *[5]
 installer::0x1081a2	label	installer_duartb_settings_defaults	read	channel B's settings by default, 9600 baud, no parity, eight bits, echo, which installer_parameter_record_read copies when the parameter record's checksum fails	duartb_settings_record
+installer::0x109056	label	installer_ctype_table	read	the installer's ctype_table, indexed from 0x109057; installer_strtol indexes it by a signed character	uint8_t[257]
 installer::0x1084da	label	installer_psos_config_defaults	structures.md	installer_psos_config_init copies these 0x62 bytes over installer_psos_config	psos_configuration
+installer::0x108930	label	installer_scpi_trees	read	the installer's command trees, its common list and main tree, which installer_scpi_task gives installer_scpi_interpret	scpi_tree_pair
 installer::0x108578	label	installer_io_table_defaults	structures.md	installer_psos_config_init copies these 0x24 bytes, one device's jmp.l instructions, over installer_io_table	io_device_jumps
 0x10ab60	label	installer_io_table	structures.md	installer_psos_config_init copies it from 0x108578: one device, DUART channel B	io_device_jumps
 0x10ab84	label	installer_psos_config	structures.md	installer_psos_config_init copies it from 0x1084da	psos_configuration
@@ -2149,6 +2151,8 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x512d2	label	os_report_any_text	structures.md	"any", which it prints when that byte is clear	char[4]
 0x51385	label	os_report_comma	structures.md	",", which os_report_exchange prints between the tasks waiting	char[2]
 0x53034	label	scpi_main_tree	docs/scpi/README.md	the main tree's root child list, 49 nodes, which scpi_interpret is given; the pair at 0x5d014 points at it and the common list at 0x526f6	scpi_root_children
+0x526f6	label	scpi_common_list	read	the common commands' child list, *CLS to *WAI, the first of scpi_trees	scpi_child_list
+0x5d014	label	scpi_trees	read	the common list and the main tree scpi_task gives scpi_interpret	scpi_tree_pair
 0x60868	label	doprnt_minus	libc.md	"-", doprnt's sign for a negative number	char[2]
 0x6086a	label	doprnt_plus	libc.md	"+", its sign with the + flag	char[2]
 0x6086c	label	doprnt_space	libc.md	" ", its sign with the space flag	char[2]

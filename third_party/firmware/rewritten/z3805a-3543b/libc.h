@@ -44,6 +44,9 @@ enum {
   LIBC_CTYPE_HEX = 0x80,         /* 0 to 9, A to F, a to f */
 };
 
+/* errno's value for a result out of range. */
+static const int32_t LIBC_ERANGE = 34;
+
 /* Fields of a double's high word, and of its 64 bits; an infinity's
  * high word is the exponent's mask, all ones. */
 static const uint32_t LIBC_SIGN = 0x80000000u;

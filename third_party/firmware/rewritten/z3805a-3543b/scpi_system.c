@@ -433,11 +433,11 @@ int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response,
     return 0;
   }
   if (scpi_parameters_same(given->text, "PFORTH")) {
-    scpi_language = 0; /* SCPI_LANGUAGE_PFORTH */
+    scpi_language = SCPI_LANGUAGE_PFORTH;
     return SESSION_END;
   }
   if (scpi_parameters_same(given->text, "INSTALL")) {
-    scpi_language = 1; /* SCPI_LANGUAGE_INSTALL */
+    scpi_language = SCPI_LANGUAGE_INSTALL;
     return SESSION_END;
   }
   if (scpi_parameters_same(given->text, "PRIMARY")) {

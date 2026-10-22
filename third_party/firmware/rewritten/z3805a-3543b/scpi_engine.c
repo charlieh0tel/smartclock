@@ -119,6 +119,49 @@ uint32_t scpi_message_done(void) { return 0; }
 /* scpi_interpret's hook when the input closes: 0 (0x29e38). */
 uint32_t scpi_input_closed(void) { return 0; }
 
+/* The SCPI task: time sliced, takes a 2000-byte segment for the
+ * interpreter's arena and runs the interpreter on the console port until
+ * its session ends; then gives the console to pForth, at priority 0x33,
+ * or enters the installer, as :SYSTem:LANGuage chose, and deletes
+ * itself (0x2a04a). */
+void scpi_task(void) {
+  /* scpi_interpret's last argument, unread, is the long above its
+   * others: the task's D2, as it saved it. */
+  const uint32_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
+  static const uint32_t ARENA_SIZE = 2000;
+  static const uint32_t ERROR_BITS = 0xff;
+  static const uint32_t CONSOLE_PRIORITY = 0x33;
+  void* arena;
+
+  psos_mode(PSOS_MODE_TIME_SLICE, PSOS_MODE_TIME_SLICE, NULL);
+  const uint32_t error =
+      psos_service_8(ARENA_SIZE, 0, 1, 0, (uint32_t*)&arena) & ERROR_BITS;
+
+  if (error != 0) {
+    printf("scpi: alloc_seg error %#0x\n", error);
+    return;
+  }
+  scpi_prompt_enabled = 1;
+  scpi_port* port = scpi_session_init();
+
+  if (port == NULL) {
+    console_write("scpi: error opening stream\n");
+    return;
+  }
+  scpi_interpret((int32_t)port, (int32_t)port, arena, ARENA_SIZE,
+                 scpi_trees.main, scpi_trees.common, status_object, 0,
+                 caller_d2);
+  psos_free_segment(arena);
+  port->methods->close(port);
+  if (scpi_language == SCPI_LANGUAGE_PFORTH) {
+    psos_priority(0, CONSOLE_PRIORITY, NULL);
+    spoo_run((spoo_function*)console_init, 0, 0, 0);
+  } else if (scpi_language == SCPI_LANGUAGE_INSTALL) {
+    enter_installer();
+  }
+  psos_delete(0);
+}
+
 /* Has spoo create the SCPI task, at priority 0x19, and leaves the
  * console to it (0x12f30). */
 void scpi_task_start(void) {

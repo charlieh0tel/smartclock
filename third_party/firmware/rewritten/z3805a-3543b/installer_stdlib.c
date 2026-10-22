@@ -53,3 +53,101 @@ void installer_call_atexit_functions(void) {
     installer_atexit_functions[(int16_t)installer_atexit_count]();
   }
 }
+
+/* A long from a string in a base, 2 to 36, or 0 for C's prefixes, and
+ * through end where it stopped; 0 for a base out of range or no digit,
+ * and on an overflow the long's limit, with errno ERANGE.  White space
+ * and a sign are skipped only before a character that is not a digit or
+ * a letter.  It counts down in negatives, so that the least long has
+ * room.  The primary has no strtol (installer::0x1091ac). */
+int32_t installer_strtol(char* s, char** end, int32_t base) {
+  static const int32_t BASE_MOST = 36;
+  static const int32_t LONG_LEAST = (int32_t)LIBC_SIGN;
+  static const int32_t LONG_MOST = (int32_t)(LIBC_SIGN - 1);
+  static const int32_t HEXADECIMAL = 16;
+  static const int32_t OCTAL = 8;
+  static const int32_t DECIMAL = 10;
+  /* A letter's digit: 10 for a or A on. */
+  static const int32_t LOWER_CASE = 0x20;
+  static const int32_t LETTER_TO_DIGIT = 'a' - 10;
+  static const uint8_t ALPHANUMERIC =
+      LIBC_CTYPE_UPPER | LIBC_CTYPE_LOWER | LIBC_CTYPE_DIGIT;
+  /* The ctype table from its EOF entry, which a character indexes signed:
+   * one above 0x7f reads the 128 bytes before the table. */
+  const uint8_t* classes = installer_ctype_table + 1;
+  bool negative = false;
+  bool overflow = false;
+
+  if (end != NULL) {
+    *end = s;
+  }
+  if (base < 0 || base > BASE_MOST) {
+    return 0;
+  }
+  int32_t c = (int8_t)*s;
+
+  if ((classes[c] & ALPHANUMERIC) == 0) {
+    while ((classes[c] & LIBC_CTYPE_SPACE) != 0) {
+      c = (int8_t)*++s;
+    }
+    if (c == '-') {
+      negative = true;
+      c = (int8_t)*++s;
+    } else if (c == '+') {
+      c = (int8_t)*++s;
+    }
+  }
+  if (base == 0) {
+    base = c != '0'                     ? DECIMAL
+           : s[1] == 'x' || s[1] == 'X' ? HEXADECIMAL
+                                        : OCTAL;
+  }
+  if ((classes[c] & ALPHANUMERIC) == 0) {
+    return 0;
+  }
+  int32_t digit = (classes[c] & LIBC_CTYPE_DIGIT) != 0
+                      ? c - '0'
+                      : (c | LOWER_CASE) - LETTER_TO_DIGIT;
+
+  if (digit >= base) {
+    return 0;
+  }
+  if (base == HEXADECIMAL && c == '0' &&
+      (classes[(int8_t)s[2]] & LIBC_CTYPE_HEX) != 0 &&
+      (s[1] == 'x' || s[1] == 'X')) {
+    s += 2;
+    c = (int8_t)*s;
+    digit = (classes[c] & LIBC_CTYPE_DIGIT) != 0
+                ? c - '0'
+                : (c | LOWER_CASE) - LETTER_TO_DIGIT;
+  }
+  int32_t value = -digit;
+
+  for (;;) {
+    c = (int8_t)*++s;
+    if ((classes[c] & ALPHANUMERIC) == 0) {
+      break;
+    }
+    digit = (classes[c] & LIBC_CTYPE_DIGIT) != 0
+                ? c - '0'
+                : (c | LOWER_CASE) - LETTER_TO_DIGIT;
+    if (digit >= base) {
+      break;
+    }
+    const int32_t next = value * base - digit;
+
+    overflow |= value < next;
+    value = next;
+  }
+  if (end != NULL) {
+    *end = s;
+  }
+  if (value == LONG_LEAST && !negative) {
+    overflow = true;
+  }
+  if (overflow) {
+    installer_errno = LIBC_ERANGE;
+    return negative ? LONG_LEAST : LONG_MOST;
+  }
+  return negative ? value : -value;
+}

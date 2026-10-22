@@ -1489,7 +1489,14 @@ view cannot drift apart.  The library, bottom up:
      the installer's kernel configuration and I/O table, and naming its
      tasks' entries, made Ghidra find about 60 installer functions it had not
      (its root, spool and SCPI tasks, its I/O calls and its SCPI
-     engine), each named after the primary function it copies.
+     engine), each named after the primary function it copies.  The
+     SCPI parser's bodies moved to headers (`scpi_lexer.h`,
+     `scpi_tree.h`, `scpi_parameters.h`, `scpi_engine.h`), each taking
+     its image's tables, so that the installer's parser is wrappers;
+     `scpi_header_resolve` and both `scpi_task`s are written by hand.
+     The installer's `float_raise` is variadic, as the primary's is, and
+     `scpi_interpret`'s harness cases all skip, so those stay the
+     decompiler's in both.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

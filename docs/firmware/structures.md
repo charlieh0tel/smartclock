@@ -1130,9 +1130,9 @@ clear `+0x00` and `+0x04`.
 
 | Offset | Field | Filled by | Read by |
 | ------ | ----- | --------- | ------- |
-| `+0x08` | `sender` | 1 `gpsx_send`, 2 `pll_scpi_send_to_loop` (its caller's argument), 3 or 4 `gps_request_post` | `request_kind_valid` (1 to 4), `gps_count_response`, `pllp_task` |
+| `+0x08` | `sender` | `gps_request_sender`: 1 `gpsx_send`, the loop's GPS sequences; 2 `pll_scpi_send_to_loop`, a setting; 3 or 4 `gps_request_post`, the command and status monitors | `request_kind_valid` (1 to 4), `gps_count_response`, `pllp_task` |
 | `+0x09` | `result` | 1; `gps_count_response` its kind before sending it back to `plla` | `pllp_task`, as `gps_ack_code` for sender 1 and `pll_scpi_complete`'s success for 2 |
-| `+0x0a` | `code` | the request | `gps_request_class`, `gpsm_task` |
+| `+0x0a` | `code` | the request, a `gps_request_code`: an Oncore message below `0x31`, a step to `0x46`, a script to `0x59` | `gps_request_class`, `gpsm_task` |
 | `+0x0c` | `argument_mode` | `gpsx_send`'s argument, 0 from the others but a `gps_request_post` of code 4 | `gps_request_class`, `gps_request_step` |
 | `+0x0e` | `arguments` | `gpsx_arguments`, `pll_scpi_gps_arguments`, or `gps_request_post`'s | four longs `gpsm_task` copies to `gps_request_step` |
 | `+0x12` | `sent` | `gps_request_post`'s last argument: 0 for the command monitor's request, 1 for the status monitor's `0x4b` | `request_ring_newest_replaceable` |

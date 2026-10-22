@@ -697,6 +697,118 @@ typedef struct selftest_results {
   uint8_t in_run;      /* +0x43: set during selftest_run; nothing reads it */
 } selftest_results;
 
+/* Who sends a GPS request (gps_request_entry.sender), so that its result
+ * comes back to it: gpsx_send for the loop's GPS sequences (pllp_task
+ * takes the result as gps_ack_code), pll_scpi_send_to_loop for a
+ * setting (pll_scpi_complete), and gps_request_post for the command
+ * and status monitors, whose results gps_count_response keeps in
+ * command_monitor_result and status_monitor_result.  request_kind_valid
+ * takes 1 to 4. */
+typedef enum __attribute__((packed)) gps_request_sender {
+  GPS_SENDER_SEQUENCE = 1,
+  GPS_SENDER_SETTING = 2,
+  GPS_SENDER_COMMAND_MONITOR = 3,
+  GPS_SENDER_STATUS_MONITOR = 4,
+} gps_request_sender;
+
+/* A GPS request's code (gps_request_entry.code, a descriptor's
+ * gps_request), which gps_request_class sorts: 0 to 0x30 an Oncore
+ * message, the index of its entry in oncore_messages (0x4fece; the VP
+ * Oncore Command Reference names each, third_party/motorola/
+ * VPCommands.pdf); 0x31 to 0x46 a step of the GPS task's own,
+ * gps_console_request's (0x4c572); 0x47 to 0x59 a script,
+ * gps_script_lookup's, each named by the messages it sends
+ * (docs/firmware/oncore/z3805a-3543b.txt).  The table's empty slots,
+ * 0x14, 0x1a, 0x22, 0x23, 0x25, 0x2a and 0x2b, have no name. */
+typedef enum __attribute__((packed)) gps_request_code {
+  GPS_REQUEST_TIME_OF_DAY = 0x00,              /* @@Aa */
+  GPS_REQUEST_GMT_CORRECTION = 0x01,           /* @@Ab */
+  GPS_REQUEST_DATE = 0x02,                     /* @@Ac */
+  GPS_REQUEST_LATITUDE = 0x03,                 /* @@Ad */
+  GPS_REQUEST_LONGITUDE = 0x04,                /* @@Ae */
+  GPS_REQUEST_HEIGHT = 0x05,                   /* @@Af */
+  GPS_REQUEST_MASK_ANGLE = 0x06,               /* @@Ag, :GPS:EMANgle */
+  GPS_REQUEST_SATELLITE_SELECT_OPTIONS = 0x07, /* @@Ah */
+  GPS_REQUEST_MANUAL_SATELLITE_SELECT = 0x08,  /* @@Ai */
+  GPS_REQUEST_DOP_TYPE = 0x09,                 /* @@Aj */
+  GPS_REQUEST_DOP_HYSTERESIS = 0x0a,           /* @@Ak */
+  GPS_REQUEST_DOP_THRESHOLD = 0x0b,            /* @@Al, 3D to 2D */
+  GPS_REQUEST_IGNORE_LIST = 0x0c,              /* @@Am, :GPS:SAT:TRAC:IGNore */
+  GPS_REQUEST_ALMANAC_UPDATE = 0x0d,           /* @@An */
+  GPS_REQUEST_DATUM = 0x0e,                    /* @@Ao */
+  GPS_REQUEST_USER_DATUM = 0x0f,               /* @@Ap */
+  GPS_REQUEST_IONOSPHERIC_CORRECTION = 0x10,   /* @@Aq */
+  GPS_REQUEST_FIX_ALGORITHM = 0x11,            /* @@Ar */
+  GPS_REQUEST_POSITION_HOLD_POSITION = 0x12,   /* @@As */
+  GPS_REQUEST_POSITION_HOLD = 0x13,            /* @@At */
+  GPS_REQUEST_ALTITUDE_HOLD = 0x15,            /* @@Av */
+  GPS_REQUEST_UTC_SELECT = 0x16,               /* @@Aw, UTC or GPS time */
+  GPS_REQUEST_EPOCH_OFFSET = 0x17,             /* @@Ax */
+  GPS_REQUEST_PPS_OFFSET = 0x18,               /* @@Ay */
+  GPS_REQUEST_CABLE_DELAY = 0x19,              /* @@Az, :GPS:ADELay */
+  GPS_REQUEST_APPLICATION_TYPE = 0x1b,         /* @@AB */
+  GPS_REQUEST_HDOP_THRESHOLD = 0x1c,           /* @@AC, 2D to 0D */
+  GPS_REQUEST_CORRECTION_THRESHOLDS = 0x1d,    /* @@AD */
+  GPS_REQUEST_POSITION_STATUS = 0x1e,          /* @@Ba */
+  GPS_REQUEST_VISIBILITY = 0x1f,               /* @@Bb */
+  GPS_REQUEST_DOP_TABLE = 0x20,                /* @@Bc */
+  GPS_REQUEST_ALMANAC_STATUS = 0x21,           /* @@Bd */
+  GPS_REQUEST_CORRECTION_OUTPUT = 0x24,        /* @@Bh */
+  GPS_REQUEST_LEAP_SECOND_PENDING = 0x26,      /* @@Bj */
+  GPS_REQUEST_POSITION_EXTENSION = 0x27,       /* @@Bk */
+  GPS_REQUEST_TRAIM = 0x28,                    /* @@Bn, Time RAIM */
+  GPS_REQUEST_SELFTEST = 0x29,                 /* @@Ca */
+  GPS_REQUEST_CORRECTION_INPUT = 0x2c,         /* @@Ce */
+  GPS_REQUEST_DEFAULTS = 0x2d,                 /* @@Cf, set to defaults */
+  GPS_REQUEST_FIX_MODE = 0x2e,                 /* @@Cg, fix or idle */
+  GPS_REQUEST_IO_FORMAT = 0x2f,                /* @@Ci */
+  GPS_REQUEST_RECEIVER_ID = 0x30,              /* @@Cj */
+  GPS_STEP_STATUS_SNAPSHOT = 0x31,             /* status_snapshot */
+  GPS_STEP_PRINT_STATUS = 0x32,
+  GPS_STEP_PRINT_VISIBILITY = 0x33,
+  GPS_STEP_PRINT_EXTENSION = 0x34,
+  GPS_STEP_PRINT_BEST_COMBINATIONS = 0x35,
+  GPS_STEP_PRINT_ID = 0x36,
+  GPS_STEP_PRINT_PPS = 0x37,
+  GPS_STEP_PRINT_INSTRUMENT_STATE = 0x38,
+  GPS_STEP_PRINT_TIME_RAIM = 0x39,
+  GPS_STEP_PRINT_AVERAGE = 0x3a,
+  GPS_STEP_AVERAGE_RESET = 0x3b,  /* gps.average_count = 0 */
+  GPS_STEP_SURVEY_START = 0x3d,   /* gps.surveying = 1 */
+  GPS_STEP_SURVEY_STOP = 0x3e,    /* gps.surveying = 0 */
+  GPS_STEP_PPS_CHECK = 0x3f,      /* gps.pps_check_disabled, its argument */
+  GPS_STEP_RAIM_ARGUMENTS = 0x40, /* raim_request_arguments */
+  GPS_STEP_PARSE_OPTIONS = 0x43,  /* gps_parse_options */
+  GPS_STEP_STATUS_MONITOR = 0x44, /* gps.status_monitor_enabled, its argument */
+  GPS_STEP_LINK_RESET = 0x45,     /* gps_link_reset; gps_request_queue empties
+                                     the ring for it */
+  GPS_SCRIPT_INIT_DEFAULTS = 0x47, /* @@Cf, then every setting; gps_init too */
+  GPS_SCRIPT_INIT = 0x48,          /* every setting, without @@Cf */
+  GPS_SCRIPT_FIX_RESTART = 0x49,   /* idle and fix again, the PPS check off */
+  GPS_SCRIPT_ENGINE_SELFTEST = 0x4a, /* @@Ca, idle */
+  GPS_SCRIPT_OUTPUTS_ON = 0x4b,      /* @@Ba and @@Bb each second */
+  GPS_SCRIPT_OUTPUTS_OFF = 0x4c,     /* @@Ba, @@Bb, @@Bc and @@Bk off */
+  GPS_SCRIPT_QUERY_SETTINGS = 0x4d,  /* @@Cj, then each setting's query */
+  GPS_SCRIPT_UTC_SET = 0x4e,         /* @@Aw from its arguments, @@Ba */
+  GPS_SCRIPT_HOLD_AT =
+      0x4f, /* @@As from its arguments, hold on, TRAIM, restart */
+  GPS_SCRIPT_POSITION_SET = 0x50,  /* @@Ad, @@Ae, @@Af, idle around them */
+  GPS_SCRIPT_HOLD_RELEASE = 0x51,  /* survey stop, average reset, hold off,
+                                      TRAIM, restart */
+  GPS_SCRIPT_SURVEY_FROM = 0x52,   /* hold off, @@Ad to @@Af from its
+                                      arguments, TRAIM, restart, survey start,
+                                      average reset */
+  GPS_SCRIPT_HOLD_OFF = 0x53,      /* hold off, TRAIM, average reset */
+  GPS_SCRIPT_HOLD_AT_QUIET = 0x54, /* @@As, hold on, TRAIM, no restart */
+  GPS_SCRIPT_HOLD_SELECT = 0x55,   /* @@At from its arguments, TRAIM, restart */
+  GPS_SCRIPT_HOLD_POSITION = 0x56, /* @@As from its arguments, restart */
+  GPS_SCRIPT_TIME_SET = 0x57,      /* @@Aa from its arguments, idle around it */
+  GPS_SCRIPT_DATE_SET = 0x58,      /* @@Ac from its arguments, idle around it */
+  GPS_SCRIPT_SATELLITE_SELECT = 0x59, /* @@Ah 1, each channel's @@Ai cleared,
+                                         then from its arguments */
+  GPS_REQUEST_NONE = 0xff,            /* a descriptor's, for none */
+} gps_request_code;
+
 /* A GPS request: the message pll_scpi_send_to_loop, gpsx_send and
  * gps_request_post build in 26 bytes of their frames and send
  * gpsx_exchange, which gpsm_task receives into 26 bytes, keeps in its
@@ -707,12 +819,11 @@ typedef struct gps_request_entry {
   uint32_t
       field_00; /* +0x00: the senders clear it; the kernel does not copy it */
   uint32_t
-      field_04;   /* +0x04: the senders clear it; kernel_send_for_task refuses a
-                     nonzero one other than the exchange's id, error 4 */
-  uint8_t sender; /* +0x08: 1 gpsx_send, 2 pll_scpi_send_to_loop, 3 and 4
-                     gps_request_post's command and status monitors;
-                     request_kind_valid takes 1 to 4.  One with the same sender
-                     waiting is not queued again; 3 and 4 may be replaced */
+      field_04; /* +0x04: the senders clear it; kernel_send_for_task refuses a
+                   nonzero one other than the exchange's id, error 4 */
+  gps_request_sender sender; /* +0x08: one with the same sender waiting is
+                                not queued again; the monitors' may be
+                                replaced */
   uint8_t result; /* +0x09: 1 as sent; gps_count_response's kind as it comes
                      back, which pllp_task takes as gps_ack_code or
                      pll_scpi_complete's success */
@@ -977,12 +1088,12 @@ typedef struct scpi_numeric_param {
   void* minimum;        /* +0x06: the least value accepted */
   void* maximum;        /* +0x0a: the greatest */
   scpi_validate_function*
-      validate;        /* +0x0e: validate_num's check; clamp_to_limits */
-  void* changed;       /* +0x12: called as each value is stored */
-  void* value;         /* +0x16: the current value, in RAM */
-  void* done;          /* +0x1a: called once they are stored */
-  uint16_t flags;      /* +0x1e: 2 saved in the NV register, 4 at 0x400000 */
-  uint8_t gps_request; /* +0x20: as scpi_setting_param's */
+      validate;   /* +0x0e: validate_num's check; clamp_to_limits */
+  void* changed;  /* +0x12: called as each value is stored */
+  void* value;    /* +0x16: the current value, in RAM */
+  void* done;     /* +0x1a: called once they are stored */
+  uint16_t flags; /* +0x1e: 2 saved in the NV register, 4 at 0x400000 */
+  gps_request_code gps_request; /* +0x20: as scpi_setting_param's */
   uint8_t field_21;
   void* group_cell;   /* +0x22: as scpi_setting_param's; scpi_numeric_get_double
                          alone reads it */
@@ -2256,12 +2367,12 @@ typedef struct scpi_setting_param {
   int8_t* nv_widths;    /* +0x02: each value's bits in the NV register */
   int8_t maximum;       /* +0x06: toggle_change refuses a value above it */
   uint8_t field_07;
-  void* changed;       /* +0x08: called as the value is stored */
-  uint8_t* value;      /* +0x0c: the current value, a byte each */
-  void* done;          /* +0x10: called once it is */
-  uint16_t flags;      /* +0x14: as scpi_numeric_param's */
-  uint8_t gps_request; /* +0x16: what pll_scpi_send_to_loop sends gpsx_exchange,
-                          0xff none */
+  void* changed;                /* +0x08: called as the value is stored */
+  uint8_t* value;               /* +0x0c: the current value, a byte each */
+  void* done;                   /* +0x10: called once it is */
+  uint16_t flags;               /* +0x14: as scpi_numeric_param's */
+  gps_request_code gps_request; /* +0x16: what pll_scpi_send_to_loop sends
+                                   gpsx_exchange, GPS_REQUEST_NONE none */
   uint8_t field_17;
   void* group_cell; /* +0x18: 0x101f92 to 0x101f9a by command group; no code
                        reads it */

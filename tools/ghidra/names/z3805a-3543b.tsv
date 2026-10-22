@@ -1203,9 +1203,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4bb9a	function	request_ring_empty	context	1 if the request ring is empty
 0x4bbb0	function	request_ring_full	context	1 if the request ring is full
 0x4bbd6	function	request_ring_contains	context	1 if a request with the ID is waiting in the ring
-0x4bd2c	function	gps_request_post	gps.md, "Requests"	builds a request, its kind, index and arguments, and sends it to the GPS task's exchange
+0x4bd2c	function	gps_request_post	gps.md, "Requests"	builds a request, its kind, index and arguments, and sends it to the GPS task's exchange	bool gps_request_post(gps_request_sender sender, int16_t code, int32_t *arguments, uint8_t sent)
 0x4bd2c	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
-0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4
+0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4	uint32_t request_kind_valid(gps_request_sender sender)
 0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps
 0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise
 0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(char param_1, gps_request_entry *request, gps_request_entry *param_3)
@@ -1881,7 +1881,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x42b7c	function	output_state_done	context	scpi_param_OUTPut_STATe's done hook: hands the output state to output_state_program
 0x42b8a	function	pll_scpi_do_action	context	carries out a request's action, flagging the self-test's descriptor at 0x41348
 0x42d78	function	pll_scpi_needs_loop	context	1 if a request's setting goes to the loop, its descriptor's flag bit 0; a survey start instead marks 0x102040
-0x42dc4	function	pll_scpi_send_to_loop	context	puts a request's validated values in the loop's message at 0x102002 by the setting's action code, and sends it
+0x42dc4	function	pll_scpi_send_to_loop	context	puts a request's validated values in the loop's message at 0x102002 by the setting's action code, and sends it	uint32_t pll_scpi_send_to_loop(gps_request_sender sender, uint8_t *status)
 0x42dc4	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x45c8e	function	pllp_start_nothing_a	context	does nothing; pllp_task calls it after counter_init
 0x45c90	function	pllp_start_nothing_b	context	does nothing; pllp_task calls it after pllp_start_nothing_a

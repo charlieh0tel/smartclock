@@ -1363,6 +1363,10 @@ view cannot drift apart.  The library, bottom up:
      digit pairs at `0x25c82` as a string literal, which past its end is
      gcc's data, not the image's; typed `uint16_t[100]`, it reads the
      ROM's.
+     Then a GPS request's sender and code named (`gps_request_sender`,
+     `gps_request_code`): the code's Oncore messages by the VP Oncore
+     Command Reference, its steps by `gps_console_request`, its
+     scripts by what they send.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

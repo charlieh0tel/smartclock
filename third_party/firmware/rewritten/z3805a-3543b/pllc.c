@@ -222,50 +222,50 @@ uint32_t pll_scpi_needs_loop(void) {
 /* Sends the descriptor's GPS request to gpsx_exchange, its arguments in
  * pll_scpi_gps_arguments by the request; 1 when sent, else 0 and in
  * *status the condition to report, 0 for none (0x42dc4). */
-uint32_t pll_scpi_send_to_loop(uint8_t sender, uint8_t* status) {
+uint32_t pll_scpi_send_to_loop(gps_request_sender sender, uint8_t* status) {
   pllc_param* param = pllc_current();
   uint32_t* arguments = pll_scpi_gps_arguments;
   gps_request_entry request;
 
-  /* the descriptor's gps_request, a gps_request_class index, 0xff none */
+  /* The descriptor's request: gps_request_code, GPS_REQUEST_NONE for none. */
   int16_t code =
       (int8_t)(param->type == SCPI_PARAM_SETTING ? param->setting.gps_request
                                                  : param->numeric.gps_request);
   *status = 0;
   switch (code) {
-    case 0x00:
+    case GPS_REQUEST_TIME_OF_DAY:
       arguments[0] = pll_scpi_validated[0];
       arguments[1] = pll_scpi_validated[1];
       arguments[2] = pll_scpi_validated[2];
       break;
-    case 0x02:
+    case GPS_REQUEST_DATE:
       arguments[0] = pll_scpi_validated[1];
       arguments[1] = pll_scpi_validated[2];
       arguments[2] = pll_scpi_validated[0];
       break;
-    case 0x03:
-    case 0x04:
-    case 0x06: /* @@Ag, the elevation mask */
-    case 0x0c: /* @@Am, the ignored satellites */
-    case 0x18:
-    case 0x19: /* @@Az, the antenna delay */
+    case GPS_REQUEST_LATITUDE:
+    case GPS_REQUEST_LONGITUDE:
+    case GPS_REQUEST_MASK_ANGLE:
+    case GPS_REQUEST_IGNORE_LIST:
+    case GPS_REQUEST_PPS_OFFSET:
+    case GPS_REQUEST_CABLE_DELAY:
       arguments[0] = pll_scpi_validated[0];
       break;
-    case 0x05:
+    case GPS_REQUEST_HEIGHT:
       arguments[0] = pll_scpi_validated[0];
       arguments[1] = 1;
       break;
-    case 0x12:
-    case 0x4f: /* the position */
-    case 0x56:
+    case GPS_REQUEST_POSITION_HOLD_POSITION:
+    case GPS_SCRIPT_HOLD_AT:
+    case GPS_SCRIPT_HOLD_POSITION:
       arguments[0] = pll_scpi_validated[0];
       arguments[1] = pll_scpi_validated[1];
       arguments[2] = pll_scpi_validated[2];
       arguments[3] = 1;
       break;
-    case 0x13:
-    case 0x51: /* :DOUGlas:STATe */
-    case 0x55:
+    case GPS_REQUEST_POSITION_HOLD:
+    case GPS_SCRIPT_HOLD_RELEASE:
+    case GPS_SCRIPT_HOLD_SELECT:
       arguments[0] = (int8_t)pll_scpi_setting;
       if (nv_settings.douglas_state != 0 && pll_scpi_setting == 0) {
         douglas_log_event = LOG_SURVEY_STARTED;
@@ -273,7 +273,7 @@ uint32_t pll_scpi_send_to_loop(uint8_t sender, uint8_t* status) {
         douglas_log_event = LOG_POSITION_HOLD_STARTED;
       }
       break;
-    case 0x28: /* @@Bn, the Time RAIM state and limit */
+    case GPS_REQUEST_TRAIM:
       if (!(pll_scpi_index == 0 && nv_settings.douglas_state != 0) &&
           !(pll_scpi_index == 1 && nv_settings.douglas_state == 0)) {
         *status = 0;
@@ -289,8 +289,8 @@ uint32_t pll_scpi_send_to_loop(uint8_t sender, uint8_t* status) {
         arguments[2] = pll_scpi_validated[0];
       }
       break;
-    case 0x31:
-    case 0x53:
+    case GPS_STEP_STATUS_SNAPSHOT:
+    case GPS_SCRIPT_HOLD_OFF:
       break;
     default:
       *status = STATUS_DEVICE_SPECIFIC_ERROR;
@@ -390,8 +390,6 @@ void finish_scpi_cmd(void) {
 /* Handles one request: validates it, sends what the GPS must hear, and,
  * unless a reply from it is pending, stores and saves it (0x432bc). */
 void pll_scpi_command(pllc_request* request, uint8_t* reply_pending) {
-  /* sender 2 in gps_request_entry */
-  static const uint8_t GPS_SENDER = 2;
   char needs_loop;
   /* Unset unless the request was sent: the image then reads its frame
    * (0x4331a). */
@@ -406,7 +404,7 @@ void pll_scpi_command(pllc_request* request, uint8_t* reply_pending) {
   if (pll_scpi_needs_loop() != 0) {
     if (pll_scpi_source == PLLC_SOURCE_SCPI ||
         pll_scpi_source == PLLC_SOURCE_ALSO_TO_GPS) {
-      *reply_pending = pll_scpi_send_to_loop(GPS_SENDER, &loop_status);
+      *reply_pending = pll_scpi_send_to_loop(GPS_SENDER_SETTING, &loop_status);
     }
     if (*reply_pending != 0) {
       return;

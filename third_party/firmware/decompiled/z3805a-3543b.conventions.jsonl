@@ -544,7 +544,7 @@
 {"address":"0001b0b2","name":"diag_adc_doven","convention":"unknown"}
 {"address":"0001b0d4","name":"diag_adc_ant_curr","convention":"unknown"}
 {"address":"0001b0f6","name":"diag_pr_adc_avg","convention":"unknown"}
-{"address":"0001b1d0","name":"diag_pr_hold_cause","convention":"unknown"}
+{"address":"0001b1d0","name":"diag_pr_hold_cause","note":"the console's pr_hold_cause: prints why the loop went to holdover; the word table at 0x1c8ac gives it no results","convention":"unknown"}
 {"address":"0001b282","name":"diag_efc_write","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001b292","name":"diag_hdac_write","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001b2a8","name":"diag_hdac_all","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
@@ -1478,7 +1478,7 @@
 {"address":"00049d14","name":"format_duration_short","note":"a duration as minutes and seconds or hours and minutes, or 1000+ hr","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00049db0","name":"status_screen_sync","note":"the status screen's synchronization line","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00049e5a","name":"format_time","note":"a packed time as \"%02d:%02d:%02d\", or \"--:--:--\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00049eb4","name":"format_date","note":"a date as \"%02d %s %04d\", or \"-- --- ----\"","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":1},{"offset":7,"size":1},{"offset":8,"size":4}]}
+{"address":"00049eb4","name":"format_date","note":"a date as \"%02d %s %04d\", or \"-- --- ----\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00049f30","name":"status_screen_time","note":"the screen's time with its reference, \"GPS\", \"UTC\", \"LOCL GPS\" or \"LOCAL\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00049fcc","name":"status_screen_position","note":"the status screen's position and survey lines; status_screen pushes the row byte, the snapshot and the line (0x4ae70 to 0x4ae76) and ignores D0","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":4}]}
 {"address":"0004a29c","name":"status_screen_tfom","note":"the status screen's TFOM, FFOM, 1PPS TI and holdover lines; row a byte (0x4a2b4), the snapshot (0x4a2a4), the line (0x4a2a8); status_screen ignores D0","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":4}]}
@@ -1540,7 +1540,7 @@
 {"address":"0004ef54","name":"byte_copy_optional","note":"copies a byte if there is somewhere to put it","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004ef70","name":"word_copy_advance","note":"copies a word and advances the source","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004ef8e","name":"bytes_to_long","note":"four bytes, high first, as a long","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"0004efb4","name":"oncore_as_height_decode","note":"@@As's height and its type, the position hold position's last fields","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0004efb4","name":"oncore_as_height_decode","note":"@@As's height and its type, the position hold position's last fields","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004efd6","name":"oncore_ai_decode","note":"@@Ai's byte, stored at its channel, 1 to 6","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004f002","name":"word_copy_14_bits","note":"copies a word's low 14 bits and advances the source","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004f02a","name":"oncore_decode_fields","note":"the field-table byte code the GPS task's decoders run","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}

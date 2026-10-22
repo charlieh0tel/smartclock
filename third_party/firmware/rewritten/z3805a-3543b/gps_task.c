@@ -61,7 +61,7 @@ void raim_request_arguments(void) {
 /* Runs one of the task's own steps, GPS_STEP_STATUS_SNAPSHOT to
  * GPS_STEP_LINK_RESET, with its arguments; any other does nothing
  * (0x4c572). */
-void gps_console_request(int16_t code, uint32_t* arguments, uint8_t sender) {
+void gps_console_request(int16_t code, int32_t* arguments, uint8_t sender) {
   switch (code) {
     case GPS_STEP_STATUS_SNAPSHOT:
       status_snapshot(&status_screen_snapshot);

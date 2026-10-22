@@ -1431,6 +1431,14 @@ struct gps_statistics {
     uint16_t status_monitor_failures;
 };
 
+typedef struct gps_visibility_record gps_visibility_record, *Pgps_visibility_record;
+
+struct gps_visibility_record {
+    uint8_t received;
+    uint8_t field_01;
+    struct oncore_visibility_fields visibility;
+};
+
 typedef struct gpt_registers gpt_registers, *Pgpt_registers;
 
 struct gpt_registers {
@@ -3395,6 +3403,7 @@ _Static_assert(sizeof(gps_state) == 1370, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
 _Static_assert(sizeof(gps_status_monitor_state) == 1, "gps_status_monitor_state");
 _Static_assert(sizeof(gps_sync_status) == 1, "gps_sync_status");
+_Static_assert(sizeof(gps_visibility_record) == 124, "gps_visibility_record");
 _Static_assert(sizeof(gpt_registers) == 46, "gpt_registers");
 _Static_assert(sizeof(holdover_steering_state) == 28, "holdover_steering_state");
 _Static_assert(sizeof(identification_record) == 48, "identification_record");
@@ -6490,7 +6499,7 @@ void diag_adc_oven(void);
 void diag_adc_doven(void);
 void diag_adc_ant_curr(void);
 void diag_pr_adc_avg(void);
-uint8_t diag_pr_hold_cause(void);
+void diag_pr_hold_cause(void);
 void diag_efc_write(uint32_t param_1);
 void diag_hdac_write(uint32_t param_1,uint32_t param_2);
 void diag_hdac_all(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
@@ -7493,13 +7502,14 @@ void satellite_sets_build(oncore_channel_status *channels,satellite_sets *sets);
 int32_t satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask);
 satellite_health_class satellite_track_class(oncore_visible_satellite *satellite);
 void satellite_elevation_azimuth(oncore_visible_satellite *satellite,uint8_t *entry);
-void satellite_status(char param_1,uint8_t param_2,int32_t param_3,int32_t param_4,uint8_t *param_5);
-uint32_t satellite_compare(uint8_t *param_1,uint8_t *param_2);
+void satellite_status(char tracked,uint8_t id,satellite_sets *sets,gps_visibility_record *visibility
+                     ,satellite_list_entry *entry);
+int32_t satellite_compare(uint8_t *first,uint8_t *second);
 void satellite_status_list
-               (char param_1,uint8_t param_2,int32_t param_3,uint8_t *param_4,int32_t param_5,uint8_t *param_6,
-               char *param_7);
+               (char tracked,uint8_t entries,satellite_sets *sets,oncore_channel_status *channels,
+               gps_visibility_record *visibility,satellite_list_entry *list,uint8_t *count);
 void format_satellite_number(char param_1,char *param_2);
-bool mark_flag(char param_1,uint8_t *param_2);
+bool mark_flag(char flag,char *text);
 void format_level(int16_t param_1,char *param_2);
 void format_satellite_cell(satellite_cell cell,char *text);
 void status_screen_height(status_snapshot_record *snapshot,char *line);
@@ -7507,7 +7517,7 @@ void format_si(double value,char resolution,uint8_t digits,char *unit,char *text
 void format_duration_short(uint32_t param_1,char *param_2);
 void status_screen_sync(status_snapshot_record *snapshot,char *line);
 bool format_time(time_of_day time,char *text);
-uint32_t format_date(uint16_t param_1,uint8_t param_2,uint8_t param_3,char *param_4);
+bool format_date(calendar_date date,char *text);
 void status_screen_time(status_snapshot_record *snapshot,char *line);
 void status_screen_position(uint8_t row,status_snapshot_record *snapshot,char *line);
 void status_screen_tfom(uint8_t row,status_snapshot_record *snapshot,char *line);
@@ -7516,20 +7526,20 @@ uint8_t bits_1_to_3_any(int16_t param_1);
 uint8_t bits_4_5_any(int16_t param_1);
 uint8_t bits_6_7_any(int16_t param_1);
 uint8_t bits_8_9_any(int16_t param_1);
-void status_screen_mode_suffix(char param_1,status_snapshot_record *snapshot,char *text);
+void status_screen_mode_suffix(status_screen_line line,status_snapshot_record *snapshot,char *text);
 void status_snapshot(status_snapshot_record *snapshot);
 void status_screen(status_snapshot_record *snapshot,char clear,write_function *write,
                   printf_function *print);
 void status_screen_print(uint8_t param_1,write_function *write,printf_function *print);
 bool uptime_elapsed(uint32_t *param_1,int32_t *param_2);
-uint32_t raim_monitor(void);
+void raim_monitor(void);
 void gps_receiver_status_reset(void);
 void gps_receiver_status_update(char param_1,uint8_t param_2);
 uint8_t gps_status_alternate(void);
 void command_monitor_init(void);
 void command_monitor(void);
 void gps_response_reset(void);
-uint32_t gps_response_lookup(char param_1,char param_2,uint16_t *param_3,int16_t *param_4);
+uint32_t gps_response_lookup(char first,char second,int16_t *length,int16_t *index);
 void gps_receive_expect(uint8_t c,uint8_t expected);
 gps_framing_state gps_receive(void);
 uint32_t gps_response_timed_out(int16_t param_1,uint32_t *param_2);
@@ -7551,11 +7561,11 @@ void gps_init(void);
 void gps_link_reset(void);
 void gpsm_task(void);
 void raim_request_arguments(void);
-void gps_console_request(int16_t param_1,uint32_t *param_2,uint8_t param_3);
+void gps_console_request(int16_t code,int32_t *arguments,uint8_t sender);
 void command_log_clear(void);
 int32_t command_log_add(gps_running_command *command,char *text);
 int32_t gps_print_command(gps_command_log *log,char *line);
-void status_snapshot_update(uint8_t *param_1);
+void status_snapshot_update(uint32_t time);
 void clear_gps_debug(void);
 void gps_print_command_log(gps_command_log *log);
 void gps_print_commands(void);
@@ -7566,14 +7576,14 @@ void long_array_set(int32_t value,int32_t *array,uint8_t index);
 char * long_array_get_byte(int32_t *array,uint8_t index,char *out);
 char * long_array_get_word(int32_t *array,uint8_t index,char *out);
 char * long_array_get_long(int32_t *array,uint8_t index,char *out);
-void long_array_get_long_prefixed(int32_t *array,uint8_t index,char *out);
-void byte_copy_optional(uint8_t *param_1,uint8_t *param_2);
+char * long_array_get_long_prefixed(int32_t *array,uint8_t index,char *out);
+uint8_t * byte_copy_optional(uint8_t *source,uint8_t *destination);
 uint16_t * word_copy_advance(uint16_t *param_1,uint16_t *param_2);
 uint8_t * bytes_to_long(uint8_t *param_1,uint32_t *param_2);
-void oncore_as_height_decode(uint8_t *param_1);
-uint8_t * oncore_ai_decode(uint8_t *param_1,int32_t param_2);
+uint8_t * oncore_as_height_decode(uint8_t *cursor,uint8_t *record);
+uint8_t * oncore_ai_decode(uint8_t *cursor,uint8_t *record);
 uint16_t * word_copy_14_bits(uint16_t *param_1,uint16_t *param_2);
-uint8_t * oncore_decode_fields(uint8_t *param_1,uint8_t *param_2,char *param_3);
+uint8_t * oncore_decode_fields(uint8_t *source,uint8_t *destination,uint8_t *program);
 int32_t satellite_id_valid(satellite_kind kind,uint8_t id);
 uint8_t channel_position_satellite(uint8_t param_1);
 uint32_t satellite_used_for_position(char param_1);
@@ -7583,7 +7593,7 @@ char count_bits(uint32_t param_1);
 bool visible_satellites(uint8_t *count,uint32_t *set);
 bool satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,
                       uint8_t *pseudolite_set);
-oncore_visible_satellite * satellite_find(uint8_t id,void *table);
+oncore_visible_satellite * satellite_find(uint8_t id,gps_visibility_record *record);
 bool position_settable(void);
 bool gps_position_get(int32_t *param_1,int32_t *param_2,int32_t *param_3);
 bool gps_time_local_get(time_of_day *time,uint32_t *date);
@@ -7591,22 +7601,21 @@ uint32_t survey_progress_percent(uint16_t *param_1);
 bool survey_progress_text(char *text);
 uint8_t status_screen_length(void);
 uint8_t * oncore_position_message(uint8_t *param_1,uint8_t *param_2);
-void oncore_visibility_message(uint8_t *param_1,uint8_t *param_2);
-void oncore_dop_message(uint8_t *param_1,uint8_t *param_2);
-void oncore_almanac_status_message(uint8_t *param_1,uint8_t *param_2);
+uint8_t * oncore_visibility_message(uint8_t *cursor,uint8_t *record);
+uint8_t * oncore_dop_message(uint8_t *cursor,uint8_t *record);
+uint8_t * oncore_almanac_status_message(uint8_t *cursor,uint8_t *record);
 uint8_t * oncore_corrections_message(uint8_t *param_1,uint8_t *param_2);
-void oncore_extension_message(uint8_t *param_1,uint8_t *param_2);
-void oncore_traim_message(uint8_t *param_1,uint8_t *param_2);
-void oncore_receiver_id_message(uint8_t *param_1,uint8_t *param_2);
+uint8_t * oncore_extension_message(uint8_t *cursor,uint8_t *record);
+uint8_t * oncore_traim_message(uint8_t *cursor,uint8_t *record);
+uint8_t * oncore_receiver_id_message(uint8_t *cursor,uint8_t *record);
 uint8_t oncore_checksum(uint8_t *param_1,uint8_t *param_2);
 void gps_parse_options(void);
 uint32_t gps_message_supported(int16_t param_1,uint8_t *param_2);
-int32_t gps_request_build(int16_t param_1,char param_2,int32_t param_3,char *param_4);
+int16_t gps_request_build(int16_t message,uint8_t query,int32_t *arguments,char *out);
 char * gps_response_decode(int16_t message,char *response);
 uint32_t bytes_equal_n(char *param_1,int16_t param_2,char *param_3,int16_t param_4);
-uint8_t
-gps_response_match(int16_t param_1,uint8_t *param_2,char param_3,char param_4,int16_t param_5,
-                  int32_t param_6,int16_t param_7);
+uint8_t gps_response_match(int16_t message,uint8_t *sent,char length,char query,int16_t index,
+                          uint8_t *response,int16_t response_length);
 int32_t gps_message_to_text(char *param_1,uint8_t param_2,char *param_3);
 void psos_config_init(void);
 void * memory_allocate(uint32_t size);
@@ -34133,12 +34142,12 @@ void diag_pr_adc_avg(void)
 
 /* 0001b1d0 */
 
-/* the pForth diagnostic word pr_hold_cause */
+/* the console's pr_hold_cause: prints why the loop went to holdover; the word table at 0x1c8ac
+   gives it no results */
 
-uint8_t diag_pr_hold_cause(void)
+void diag_pr_hold_cause(void)
 
 {
-  int32_t iVar1;
   char *format;
   
   if (pll.hold_causes == HOLD_CAUSE_NONE) {
@@ -34164,12 +34173,12 @@ uint8_t diag_pr_hold_cause(void)
       printf("Holdover due to temporary mode\r\n");
     }
     if ((pll.hold_causes & HOLD_CAUSE_1PPS_SELECTION) == HOLD_CAUSE_NONE) {
-      return 0;
+      return;
     }
     format = "Holdover due to 1PPS selection\r\n";
   }
-  iVar1 = printf(format);
-  return (char)iVar1;
+  printf(format);
+  return;
 }
 
 
@@ -67728,57 +67737,58 @@ void satellite_elevation_azimuth(oncore_visible_satellite *satellite,uint8_t *en
 
 /* for status_snapshot: a satellite's status code for the screen */
 
-void satellite_status(char param_1,uint8_t param_2,int32_t param_3,int32_t param_4,uint8_t *param_5)
+void satellite_status(char tracked,uint8_t id,satellite_sets *sets,gps_visibility_record *visibility
+                     ,satellite_list_entry *entry)
 
 {
   int32_t iVar1;
   oncore_visible_satellite *satellite;
   satellite_health_class class;
   
-  iVar1 = satellite_id_valid(SATELLITE_ANY,param_2);
+  iVar1 = satellite_id_valid(SATELLITE_ANY,id);
   if ((char)iVar1 == 0) {
-    *param_5 = 0;
+    entry->satellite = 0;
     return;
   }
-  if (param_2 < 0x21) {
-    satellite = satellite_find(param_2,(void *)param_4);
+  if (id < 0x21) {
+    satellite = satellite_find(id,visibility);
   }
   else {
     satellite = (oncore_visible_satellite *)0x0;
   }
-  if (param_1 != 1) {
+  if (tracked != 1) {
     class = satellite_track_class(satellite);
     if (class == SATELLITE_CLASS_REMOVED) {
-      *param_5 = 3;
+      entry->satellite = 3;
       return;
     }
     if (class == SATELLITE_CLASS_UNHEALTHY) {
-      *param_5 = 4;
+      entry->satellite = 4;
       return;
     }
-    iVar1 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x16));
+    iVar1 = satellite_in_set(SATELLITE_GPS,id,sets->acquiring);
     if (((char)iVar1 != 0) ||
-       (iVar1 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint32_t)*(uint8_t *)(param_3 + 0x23)),
+       (iVar1 = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint32_t)sets->pseudolites_acquiring),
        (char)iVar1 != 0)) {
-      *param_5 = 5;
+      entry->satellite = 5;
       return;
     }
-    iVar1 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x1a));
+    iVar1 = satellite_in_set(SATELLITE_GPS,id,sets->synchronized);
     if (((char)iVar1 != 0) ||
-       (iVar1 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint32_t)*(uint8_t *)(param_3 + 0x24)),
+       (iVar1 = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint32_t)sets->pseudolites_synchronized),
        (char)iVar1 != 0)) {
-      *param_5 = 6;
+      entry->satellite = 6;
       return;
     }
-    iVar1 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x1e));
+    iVar1 = satellite_in_set(SATELLITE_GPS,id,sets->ephemeris);
     if (((char)iVar1 != 0) ||
-       (iVar1 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint32_t)*(uint8_t *)(param_3 + 0x25)),
+       (iVar1 = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint32_t)sets->pseudolites_ephemeris),
        (char)iVar1 != 0)) {
-      *param_5 = 7;
+      entry->satellite = 7;
       return;
     }
   }
-  satellite_elevation_azimuth(satellite,param_5);
+  satellite_elevation_azimuth(satellite,&entry->satellite);
   return;
 }
 
@@ -67788,25 +67798,25 @@ void satellite_status(char param_1,uint8_t param_2,int32_t param_3,int32_t param
 
 /* qsort's comparison of two satellites, by elevation and then by number */
 
-uint32_t satellite_compare(uint8_t *param_1,uint8_t *param_2)
+int32_t satellite_compare(uint8_t *first,uint8_t *second)
 
 {
-  uint32_t uVar1;
+  int32_t iVar1;
   
-  if (param_1[1] < param_2[1]) {
+  if (first[1] < second[1]) {
 LAB_000497a6:
-    uVar1 = 0xffffffff;
+    iVar1 = -1;
   }
   else {
-    if (param_1[1] <= param_2[1]) {
-      if (*param_2 < *param_1) goto LAB_000497a6;
-      if (*param_2 <= *param_1) {
+    if (first[1] <= second[1]) {
+      if (*second < *first) goto LAB_000497a6;
+      if (*second <= *first) {
         return 0;
       }
     }
-    uVar1 = 1;
+    iVar1 = 1;
   }
-  return uVar1;
+  return iVar1;
 }
 
 #endif
@@ -67816,11 +67826,11 @@ LAB_000497a6:
 /* for status_snapshot: the screen's list of satellites, built and sorted */
 
 void satellite_status_list
-               (char param_1,uint8_t param_2,int32_t param_3,uint8_t *param_4,int32_t param_5,uint8_t *param_6,
-               char *param_7)
+               (char tracked,uint8_t entries,satellite_sets *sets,oncore_channel_status *channels,
+               gps_visibility_record *visibility,satellite_list_entry *list,uint8_t *count)
 
 {
-  uint8_t count;
+  uint8_t bVar3;
   uint32_t uVar1;
   char cVar4;
   char cVar5;
@@ -67831,47 +67841,48 @@ void satellite_status_list
   uint8_t bVar8;
   uint8_t *puVar9;
   uint8_t *puVar10;
-  uint8_t *puVar11;
-  bool bVar12;
+  oncore_channel_status *poVar11;
+  oncore_visible_satellite *poVar12;
+  bool bVar13;
   uint32_t local_2e;
   uint8_t local_2a [24];
   char local_12;
-  uint8_t *local_10;
+  satellite_list_entry *local_10;
   uint32_t uStack_c;
-  uint32_t uStack_8;
+  satellite_cell sStack_8;
   
-  local_10 = param_6 + (uint32_t)param_2 * 8;
+  local_10 = list + entries;
   sVar7 = 7;
-  puVar11 = (uint8_t *)&uStack_c;
-  puVar10 = satellite_status_blank_entry;
+  puVar10 = (uint8_t *)&uStack_c;
+  puVar9 = satellite_status_blank_entry;
   do {
-    *puVar11 = *puVar10;
+    *puVar10 = *puVar9;
     sVar7 = sVar7 + -1;
-    puVar11 = puVar11 + 1;
     puVar10 = puVar10 + 1;
+    puVar9 = puVar9 + 1;
   } while (sVar7 != -1);
-  if (param_1 == 1) {
-    local_2e = *(uint32_t *)(param_3 + 4);
-    bVar8 = *(uint8_t *)(param_3 + 0xc);
+  if (tracked == 1) {
+    local_2e = sets->used;
+    bVar8 = sets->pseudolites_used;
   }
   else {
-    local_2e = *(uint32_t *)(param_3 + 0xe);
-    bVar8 = *(uint8_t *)(param_3 + 0x22);
-    count = count_bits((uint32_t)bVar8);
-    uVar1 = (uint32_t)count;
-    count = count_bits(local_2e);
-    if (0xc < (int32_t)(uVar1 + count)) {
-      local_2e = *(uint32_t *)(param_3 + 8) & local_2e;
+    local_2e = sets->unused;
+    bVar8 = sets->pseudolites_tracked_unused;
+    bVar3 = count_bits((uint32_t)bVar8);
+    uVar1 = (uint32_t)bVar3;
+    bVar3 = count_bits(local_2e);
+    if (0xc < (int32_t)(uVar1 + bVar3)) {
+      local_2e = sets->tracked & local_2e;
       puVar10 = local_2a;
-      for (puVar11 = (uint8_t *)(param_5 + 4);
-          puVar11 < (uint8_t *)(param_5 + (uint32_t)*(uint8_t *)(param_5 + 2) * 10 + 4);
-          puVar11 = puVar11 + 10) {
-        set = satellite_in_set(SATELLITE_GPS,*puVar11,local_2e);
+      for (poVar12 = (visibility->visibility).satellites;
+          poVar12 < (visibility->visibility).satellites + (visibility->visibility).count;
+          poVar12 = poVar12 + 1) {
+        set = satellite_in_set(SATELLITE_GPS,poVar12->satellite,local_2e);
         puVar9 = puVar10;
         if ((char)set == 0) {
-          *puVar10 = *puVar11;
+          *puVar10 = poVar12->satellite;
           puVar9 = puVar10 + 2;
-          puVar10[1] = puVar11[4];
+          puVar10[1] = poVar12->elevation;
         }
         puVar10 = puVar9;
       }
@@ -67879,19 +67890,21 @@ void satellite_status_list
       cVar4 = count_bits((uint32_t)bVar8);
       cVar5 = count_bits(local_2e);
       local_12 = 0xc - (cVar4 + cVar5);
-      while (cVar4 = local_12 + -1, bVar12 = local_12 != 0, local_12 = cVar4, bVar12) {
+      while (cVar4 = local_12 + -1, bVar13 = local_12 != 0, local_12 = cVar4, bVar13) {
         puVar10 = puVar10 + -2;
         satellite_add_to_set(SATELLITE_GPS,*puVar10,&local_2e);
       }
     }
   }
-  *param_7 = 0;
+  *count = 0;
   id = 1;
   do {
-    if ((local_10 <= param_6) || ((local_2e == 0 && (bVar8 == 0)))) {
-      for (; param_6 < local_10; param_6 = param_6 + 8) {
-        *(uint32_t *)param_6 = uStack_c;
-        *(uint32_t *)(param_6 + 4) = uStack_8;
+    if ((local_10 <= list) || ((local_2e == 0 && (bVar8 == 0)))) {
+      for (; list < local_10; list = list + 1) {
+        list->satellite = __ghidra_piece(uint8_t, uStack_c, 0);
+        list->attempting = __ghidra_piece(uint8_t, uStack_c, 1);
+        list->level = __ghidra_piece(uint16_t, uStack_c, 2);
+        list->cell = sStack_8;
       }
       return;
     }
@@ -67900,31 +67913,31 @@ void satellite_status_list
       bVar8 = 0;
     }
     if ((local_2e & 1) != 0) {
-      *param_6 = id;
-      puVar11 = param_4;
-      if (param_1 == 1) {
-        for (; puVar11 < param_4 + 0x18; puVar11 = puVar11 + 4) {
-          if (id == *puVar11) {
-            *(uint16_t *)(param_6 + 2) = (uint16_t)puVar11[2];
+      list->satellite = id;
+      poVar11 = channels;
+      if (tracked == 1) {
+        for (; poVar11 < channels + 6; poVar11 = poVar11 + 1) {
+          if (id == poVar11->satellite) {
+            list->level = (uint16_t)poVar11->signal_strength;
             break;
           }
         }
       }
       else {
-        set = satellite_in_set(SATELLITE_GPS,id,*(uint32_t *)(param_3 + 0x12));
+        set = satellite_in_set(SATELLITE_GPS,id,sets->tracked_unused);
         if (((char)set == 0) &&
-           (set = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint32_t)*(uint8_t *)(param_3 + 0x22)),
-           (char)set == 0)) {
+           (set = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint32_t)sets->pseudolites_tracked_unused)
+           , (char)set == 0)) {
           uVar6 = 0;
         }
         else {
           uVar6 = 1;
         }
-        param_6[1] = uVar6;
+        list->attempting = uVar6;
       }
-      satellite_status(param_1,id,param_3,param_5,param_6 + 4);
-      *param_7 = *param_7 + 1;
-      param_6 = param_6 + 8;
+      satellite_status(tracked,id,sets,visibility,(satellite_list_entry *)&list->cell);
+      *count = *count + 1;
+      list = list + 1;
     }
     id = id + 1;
     local_2e = local_2e >> 1;
@@ -67965,13 +67978,13 @@ void format_satellite_number(char param_1,char *param_2)
 
 /* writes * for a set flag */
 
-bool mark_flag(char param_1,uint8_t *param_2)
+bool mark_flag(char flag,char *text)
 
 {
-  if (param_1 != 0) {
-    *param_2 = 0x2a;
+  if (flag != 0) {
+    *text = '*';
   }
-  return param_1 != 0;
+  return flag != 0;
 }
 
 #endif
@@ -68356,29 +68369,29 @@ bool format_time(time_of_day time,char *text)
 
 /* a date as "%02d %s %04d", or "-- --- ----" */
 
-uint32_t format_date(uint16_t param_1,uint8_t param_2,uint8_t param_3,char *param_4)
+bool format_date(calendar_date date,char *text)
 
 {
   char cVar1;
-  uint32_t uVar2;
+  bool bVar2;
   char *pcVar3;
   
-  if ((((param_2 == 0) || (0xc < param_2)) || (param_3 == 0)) ||
-     (((0x1f < param_3 || (param_1 < 0x76c)) || (0x81f < param_1)))) {
+  if ((((date.month == 0) || (0xc < date.month)) || (date.day == 0)) ||
+     (((0x1f < date.day || (date.year < 0x76c)) || (0x81f < date.year)))) {
     pcVar3 = "-- --- ----";
     do {
       cVar1 = *pcVar3;
-      *param_4 = cVar1;
+      *text = cVar1;
       pcVar3 = pcVar3 + 1;
-      param_4 = param_4 + 1;
+      text = text + 1;
     } while (cVar1 != 0);
-    uVar2 = 0;
+    bVar2 = false;
   }
   else {
-    sprintf(param_4,"%02d %s %04d",(uint32_t)param_3,month_names[param_2],(uint32_t)param_1);
-    uVar2 = 1;
+    sprintf(text,"%02d %s %04d",(uint32_t)__ghidra_aggregate_bits(date) & 0xff,month_names[date.month],(uint32_t)date.year);
+    bVar2 = true;
   }
-  return uVar2;
+  return bVar2;
 }
 
 #endif
@@ -68391,7 +68404,6 @@ uint32_t format_date(uint16_t param_1,uint8_t param_2,uint8_t param_3,char *para
 void status_screen_time(status_snapshot_record *snapshot,char *line)
 
 {
-  uint32_t uVar1;
   char *param2;
   char *param4;
   char acStack_1a [9];
@@ -68412,8 +68424,7 @@ void status_screen_time(status_snapshot_record *snapshot,char *line)
     param2 = "LOCAL";
   }
   format_time(snapshot->time,acStack_1a);
-  uVar1 = snapshot->date;
-  format_date((uint16_t)(uVar1 >> 0x10),(uint8_t)(uVar1 >> 8),(uint8_t)uVar1,acStack_11);
+  format_date(__ghidra_as(calendar_date, snapshot->date),acStack_11);
   if (snapshot->clock_invalid == 0) {
     param4 = "[?]";
   }
@@ -68823,7 +68834,7 @@ uint8_t bits_8_9_any(int16_t param_1)
    screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI
    %9.9s]" */
 
-void status_screen_mode_suffix(char param_1,status_snapshot_record *snapshot,char *text)
+void status_screen_mode_suffix(status_screen_line line,status_snapshot_record *snapshot,char *text)
 
 {
   char cVar1;
@@ -68835,7 +68846,7 @@ void status_screen_mode_suffix(char param_1,status_snapshot_record *snapshot,cha
   char acStack_14 [16];
   
   bVar3 = false;
-  if (param_1 == 0) {
+  if (line == STATUS_SCREEN_LINE_POWERUP) {
     uVar4 = snapshot->powerup_suffix;
   }
   else if (snapshot->recovery_suffix == 1) {
@@ -69003,11 +69014,13 @@ void status_snapshot(status_snapshot_record *snapshot)
   snapshot->douglas_duration = nv_settings.douglas_duration;
   satellite_sets_build(gps.status.channels,&snapshot->satellites);
   satellite_status_list
-            (0,0xc,(int32_t)&snapshot->satellites,&gps.status.channels[0].satellite,0x100d7a,
-             &snapshot->not_tracked[0].satellite,(char *)&snapshot->not_tracked_count);
+            (0,0xc,&snapshot->satellites,gps.status.channels,
+             (gps_visibility_record *)&gps.visibility_received,snapshot->not_tracked,
+             &snapshot->not_tracked_count);
   satellite_status_list
-            (1,6,(int32_t)&snapshot->satellites,&gps.status.channels[0].satellite,0x100d7a,
-             &snapshot->tracked[0].satellite,(char *)&snapshot->tracked_count);
+            (1,6,&snapshot->satellites,gps.status.channels,
+             (gps_visibility_record *)&gps.visibility_received,snapshot->tracked,
+             &snapshot->tracked_count);
   snapshot->status_received = gps.status_received;
   if (snapshot->position_hold == 0) {
     if ((snapshot->average_count == 0) || (snapshot->douglas_duration_infinite == 1)) {
@@ -69055,21 +69068,21 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
   int32_t iVar1;
   uint32_t uVar2;
   char *pcVar3;
-  uint8_t marked;
-  uint8_t bVar5;
+  bool marked;
+  bool bVar5;
   uint8_t uVar6;
   char cVar7;
   uint32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
-  status_screen_line sVar8;
-  satellite_list_entry *psVar9;
-  uint8_t **ppuVar10;
+  status_screen_line line_00;
+  satellite_list_entry *psVar8;
+  uint8_t **ppuVar9;
+  char *pcVar10;
   char *pcVar11;
-  char *pcVar12;
-  double dVar13;
-  uint8_t uVar14;
-  uint16_t uVar15;
+  double dVar12;
+  uint8_t uVar13;
+  uint16_t uVar14;
+  uint8_t uVar15;
   uint8_t uVar16;
-  uint8_t uVar17;
   uint8_t local_c0;
   satellite_list_entry *local_b2;
   uint8_t local_ae;
@@ -69100,11 +69113,11 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
     switch((&switchD_0004a96c_index_zero)[(int16_t)iVar1]) {
     case 0x12:
       local_7f = 0;
-      pcVar11 = "............... [ Outputs Invalid ]";
+      pcVar10 = "............... [ Outputs Invalid ]";
       break;
     case 0x1e:
       local_7f = 1;
-      pcVar11 = "................. [ Outputs Valid ]";
+      pcVar10 = "................. [ Outputs Valid ]";
       break;
     case 0x2c:
       goto override_jmp_0004a96c_case_1;
@@ -69113,25 +69126,25 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
   else {
 override_jmp_0004a96c_case_1:
     local_7f = 0;
-    pcVar11 = " [ Outputs Valid/Reduced Accuracy ]";
+    pcVar10 = " [ Outputs Valid/Reduced Accuracy ]";
   }
-  (*print)("%s\r\n",pcVar11);
+  (*print)("%s\r\n",pcVar10);
   (*write)("SmartClock Mode ___________________________   Reference Outputs _______________\r\n");
   iVar1 = (int32_t)(char)snapshot->mode - 5;
   if ((uint32_t)(int32_t)(char)snapshot->mode < 5 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0004a9d0_index_zero)[(int16_t)iVar1]) {
     case 0xc:
-      sVar8 = STATUS_SCREEN_LINE_POWERUP;
+      line_00 = STATUS_SCREEN_LINE_POWERUP;
       break;
     case 0x10:
-      sVar8 = STATUS_SCREEN_LINE_HOLDOVER;
+      line_00 = STATUS_SCREEN_LINE_HOLDOVER;
       break;
     case 0x14:
-      sVar8 = STATUS_SCREEN_LINE_RECOVERY;
+      line_00 = STATUS_SCREEN_LINE_RECOVERY;
       break;
     case 0x18:
-      sVar8 = STATUS_SCREEN_LINE_LOCKED;
+      line_00 = STATUS_SCREEN_LINE_LOCKED;
       break;
     case 0x1c:
       goto override_jmp_0004a9d0_case_0;
@@ -69139,29 +69152,29 @@ override_jmp_0004a96c_case_1:
   }
   else {
 override_jmp_0004a9d0_case_0:
-    sVar8 = STATUS_SCREEN_LINE_NONE;
+    line_00 = STATUS_SCREEN_LINE_NONE;
   }
   local_ae = 1;
   for (local_84 = status_screen_mode_lines; local_84->text != (char *)0x0; local_84 = local_84 + 1)
   {
-    if (sVar8 != local_84->mode) {
-      pcVar11 = "   ";
+    if (line_00 != local_84->mode) {
+      pcVar10 = "   ";
       goto LAB_0004ab0e;
     }
-    pcVar11 = ">> ";
-    if (sVar8 == STATUS_SCREEN_LINE_LOCKED) {
+    pcVar10 = ">> ";
+    if (line_00 == STATUS_SCREEN_LINE_LOCKED) {
       if (snapshot->pll_field_3d5 == 0) {
         pcVar3 = "GPS";
       }
       else {
         pcVar3 = "Ext";
       }
-      pcVar12 = acStack_2d;
+      pcVar11 = acStack_2d;
       do {
         cVar7 = *pcVar3;
-        *pcVar12 = cVar7;
+        *pcVar11 = cVar7;
         pcVar3 = pcVar3 + 1;
-        pcVar12 = pcVar12 + 1;
+        pcVar11 = pcVar11 + 1;
       } while (cVar7 != 0);
       if (local_7f == 0) {
         pcVar3 = ": stabilizing frequency";
@@ -69173,14 +69186,14 @@ override_jmp_0004a9d0_case_0:
       pcVar3 = acStack_2d;
       goto LAB_0004ab10;
     }
-    if (sVar8 == STATUS_SCREEN_LINE_RECOVERY) {
+    if (line_00 == STATUS_SCREEN_LINE_RECOVERY) {
 LAB_0004aa66:
-      status_screen_mode_suffix(sVar8,snapshot,acStack_2d);
+      status_screen_mode_suffix(line_00,snapshot,acStack_2d);
       pcVar3 = acStack_2d;
     }
     else {
-      if (sVar8 != STATUS_SCREEN_LINE_HOLDOVER) {
-        if (sVar8 != STATUS_SCREEN_LINE_POWERUP) goto LAB_0004ab0e;
+      if (line_00 != STATUS_SCREEN_LINE_HOLDOVER) {
+        if (line_00 != STATUS_SCREEN_LINE_POWERUP) goto LAB_0004ab0e;
         goto LAB_0004aa66;
       }
       if (snapshot->mode == 1) {
@@ -69217,12 +69230,12 @@ LAB_0004ab0e:
       }
     }
 LAB_0004ab10:
-    pcVar12 = line;
+    pcVar11 = line;
     do {
-      cVar7 = *pcVar11;
-      *pcVar12 = cVar7;
+      cVar7 = *pcVar10;
+      *pcVar11 = cVar7;
+      pcVar10 = pcVar10 + 1;
       pcVar11 = pcVar11 + 1;
-      pcVar12 = pcVar12 + 1;
     } while (cVar7 != 0);
     strcat(line,local_84->text);
     strcat(line,pcVar3);
@@ -69232,34 +69245,34 @@ LAB_0004ab10:
     local_ae = local_ae + 1;
   }
   if (snapshot->kenneth_predicted_valid == 0) {
-    pcVar11 = " --";
+    pcVar10 = " --";
     pcVar3 = acStack_2d;
     do {
-      cVar7 = *pcVar11;
+      cVar7 = *pcVar10;
       *pcVar3 = cVar7;
-      pcVar11 = pcVar11 + 1;
+      pcVar10 = pcVar10 + 1;
       pcVar3 = pcVar3 + 1;
     } while (cVar7 != 0);
   }
   else {
-    pcVar11 = acStack_2d;
-    uVar15 = 4;
-    uVar16 = 0xe1;
-    uVar17 = 0xe4;
+    pcVar10 = acStack_2d;
     uVar14 = 4;
+    uVar15 = 0xe1;
+    uVar16 = 0xe4;
+    uVar13 = 4;
     uVar6 = snapshot->field_031;
-    dVar13 = float_to_double(snapshot->kenneth_predicted);
-    format_si(dVar13,uVar6,uVar14,(char *)CONCAT31(CONCAT21(uVar15,uVar16),uVar17),pcVar11);
+    dVar12 = float_to_double(snapshot->kenneth_predicted);
+    format_si(dVar12,uVar6,uVar13,(char *)CONCAT31(CONCAT21(uVar14,uVar15),uVar16),pcVar10);
     strcat(acStack_2d,"/initial 24 hrs");
   }
   (*print)("%43s   Predict  %s\r\n","",acStack_2d + 1);
-  if ((sVar8 == STATUS_SCREEN_LINE_HOLDOVER) || (sVar8 == STATUS_SCREEN_LINE_RECOVERY)) {
-    pcVar11 = "Holdover Duration:";
+  if ((line_00 == STATUS_SCREEN_LINE_HOLDOVER) || (line_00 == STATUS_SCREEN_LINE_RECOVERY)) {
+    pcVar10 = "Holdover Duration:";
     pcVar3 = line;
     do {
-      cVar7 = *pcVar11;
+      cVar7 = *pcVar10;
       *pcVar3 = cVar7;
-      pcVar11 = pcVar11 + 1;
+      pcVar10 = pcVar10 + 1;
       pcVar3 = pcVar3 + 1;
     } while (cVar7 != 0);
     format_duration_short(snapshot->holdover_duration,acStack_2d);
@@ -69270,44 +69283,44 @@ LAB_0004ab10:
     line[1] = 0;
   }
   if (snapshot->kenneth_present_valid == 0) {
-    pcVar12 = "";
-    pcVar11 = " ";
+    pcVar11 = "";
+    pcVar10 = " ";
     pcVar3 = acStack_2d;
     do {
-      cVar7 = *pcVar11;
+      cVar7 = *pcVar10;
       *pcVar3 = cVar7;
-      pcVar11 = pcVar11 + 1;
+      pcVar10 = pcVar10 + 1;
       pcVar3 = pcVar3 + 1;
     } while (cVar7 != 0);
   }
   else {
-    pcVar12 = "Present";
-    pcVar11 = acStack_2d;
-    uVar15 = 4;
-    uVar16 = 0xe1;
-    uVar17 = 0xe4;
+    pcVar11 = "Present";
+    pcVar10 = acStack_2d;
     uVar14 = 4;
+    uVar15 = 0xe1;
+    uVar16 = 0xe4;
+    uVar13 = 4;
     uVar6 = snapshot->field_02b;
-    dVar13 = float_to_double(snapshot->kenneth_present);
-    format_si(dVar13,uVar6,uVar14,(char *)CONCAT31(CONCAT21(uVar15,uVar16),uVar17),pcVar11);
+    dVar12 = float_to_double(snapshot->kenneth_present);
+    format_si(dVar12,uVar6,uVar13,(char *)CONCAT31(CONCAT21(uVar14,uVar15),uVar16),pcVar10);
   }
-  (*print)("%43s   %s  %s\r\n",line,pcVar12,acStack_2d + 1);
+  (*print)("%43s   %s  %s\r\n",line,pcVar11,acStack_2d + 1);
   (*write)("ACQUISITION ..........................................");
   if (snapshot->pll_field_3d5 == 0) {
     if ((snapshot->reference_valid == 0) || (snapshot->pps_dead != 0)) {
-      pcVar11 = " [ GPS 1PPS CLK Invalid ]";
+      pcVar10 = " [ GPS 1PPS CLK Invalid ]";
     }
     else {
-      pcVar11 = ".. [ GPS 1PPS CLK Valid ]";
+      pcVar10 = ".. [ GPS 1PPS CLK Valid ]";
     }
   }
   else if ((snapshot->gps_field_532[0] == 0) || (snapshot->gps_field_532[1] != 0)) {
-    pcVar11 = " [ EXT 1PPS CLK Invalid ]";
+    pcVar10 = " [ EXT 1PPS CLK Invalid ]";
   }
   else {
-    pcVar11 = ".. [ EXT 1PPS CLK Valid ]";
+    pcVar10 = ".. [ EXT 1PPS CLK Valid ]";
   }
-  (*print)("%s\r\n",pcVar11);
+  (*print)("%s\r\n",pcVar10);
   iVar1 = (int32_t)(char)snapshot->leap_second_pending - 2;
   if ((uint32_t)(int32_t)(char)snapshot->leap_second_pending < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
@@ -69315,27 +69328,27 @@ LAB_0004ab10:
     case 6:
       goto override_jmp_0004acdc_case_0;
     case 0xe:
-      pcVar11 = " +1 leap second pending";
+      pcVar10 = " +1 leap second pending";
       break;
     case 0x16:
-      pcVar11 = " -1 leap second pending";
+      pcVar10 = " -1 leap second pending";
     }
   }
   else {
 override_jmp_0004acdc_case_0:
-    pcVar11 = "_______________________";
+    pcVar10 = "_______________________";
   }
   (*write)("Satellite Status __________________________   ");
-  (*print)("Time _____%s\r\n",pcVar11);
+  (*print)("Time _____%s\r\n",pcVar10);
   (*print)("Tracking: %d        Not Tracking: %-2d%11s",(uint32_t)snapshot->tracked_count,
            (uint32_t)snapshot->not_tracked_count,"");
   status_screen_time(snapshot,line);
   (*print)("%s\r\n",line);
   if (snapshot->tracked_count == 0) {
-    pcVar11 = "";
+    pcVar10 = "";
   }
   else {
-    pcVar11 = "PRN  El  Az   SS";
+    pcVar10 = "PRN  El  Az   SS";
   }
   if (snapshot->not_tracked_count == 0) {
     pcVar3 = "";
@@ -69344,63 +69357,63 @@ override_jmp_0004acdc_case_0:
     pcVar3 = "PRN  El  Az";
   }
   if (snapshot->not_tracked_count < 7) {
-    pcVar12 = "";
+    pcVar11 = "";
   }
   else {
-    pcVar12 = "PRN  El  Az";
+    pcVar11 = "PRN  El  Az";
   }
-  (*print)("%-16.16s   %-11.11s  %-11.11s%3s",pcVar11,pcVar3,pcVar12,"");
+  (*print)("%-16.16s   %-11.11s  %-11.11s%3s",pcVar10,pcVar3,pcVar11,"");
   if (snapshot->pll_field_3d5 == 0) {
-    pcVar11 = "1PPS CLK";
+    pcVar10 = "1PPS CLK";
   }
   else {
-    pcVar11 = "GPS 1PPS";
+    pcVar10 = "GPS 1PPS";
   }
   status_screen_sync(snapshot,acStack_2d);
-  (*print)("%s %s\r\n",pcVar11,acStack_2d);
+  (*print)("%s %s\r\n",pcVar10,acStack_2d);
   local_b2 = snapshot->tracked;
-  psVar9 = snapshot->not_tracked;
+  psVar8 = snapshot->not_tracked;
   local_ae = 0;
   local_c0 = 0;
   while (local_ae = local_ae + 1, local_ae < 7) {
     format_satellite_number(local_b2->satellite,acStack_ad);
     format_level(local_b2->level,acStack_a8);
     format_satellite_cell(local_b2->cell,acStack_a4);
-    format_satellite_number(psVar9->satellite,acStack_9d);
-    marked = mark_flag(psVar9->attempting,acStack_9d);
-    format_satellite_cell(psVar9->cell,acStack_98);
-    format_satellite_number(psVar9[6].satellite,acStack_91);
-    bVar5 = mark_flag(psVar9[6].attempting,acStack_91);
+    format_satellite_number(psVar8->satellite,acStack_9d);
+    marked = mark_flag(psVar8->attempting,acStack_9d);
+    format_satellite_cell(psVar8->cell,acStack_98);
+    format_satellite_number(psVar8[6].satellite,acStack_91);
+    bVar5 = mark_flag(psVar8[6].attempting,acStack_91);
     local_c0 = bVar5 | marked | local_c0;
-    format_satellite_cell(psVar9[6].cell,acStack_8c);
+    format_satellite_cell(psVar8[6].cell,acStack_8c);
     status_screen_position(local_ae,snapshot,line);
     (*print)("%3.3s  %6.6s  %3.3s   %3.3s  %6.6s  %3.3s  %6.6s%3s%s\r\n",acStack_ad,acStack_a4,
              acStack_a8,acStack_9d,acStack_98,acStack_91,acStack_8c,"",line);
     local_b2 = local_b2 + 1;
-    psVar9 = psVar9 + 1;
+    psVar8 = psVar8 + 1;
   }
   if (local_c0 == 0) {
-    pcVar11 = "";
+    pcVar10 = "";
   }
   else {
-    pcVar11 = "*attempting to track";
+    pcVar10 = "*attempting to track";
   }
-  (*print)("ELEV MASK %2d deg%3s%-25.25s%2s",(uint32_t)snapshot->mask_angle,"",pcVar11,"");
+  (*print)("ELEV MASK %2d deg%3s%-25.25s%2s",(uint32_t)snapshot->mask_angle,"",pcVar10,"");
   status_screen_height(snapshot,line);
   (*print)("%s\r\n",line);
   line[0] = 0;
   local_80 = 0;
-  for (ppuVar10 = &PTR_s_Self_Test_0004d076; *ppuVar10 != (uint8_t *)0x0;
-      ppuVar10 = (uint8_t **)((int32_t)ppuVar10 + 0xe)) {
-    uVar6 = (*(code *)ppuVar10[1])(*(uint16_t *)(ppuVar10 + 2),(uint16_t)unaff_D2);
+  for (ppuVar9 = &PTR_s_Self_Test_0004d076; *ppuVar9 != (uint8_t *)0x0;
+      ppuVar9 = (uint8_t **)((int32_t)ppuVar9 + 0xe)) {
+    uVar6 = (*(code *)ppuVar9[1])(*(uint16_t *)(ppuVar9 + 2),(uint16_t)unaff_D2);
     if (uVar6 == 0) {
-      pcVar11 = "OK";
+      pcVar10 = "OK";
     }
     else {
-      pcVar11 = "Err";
+      pcVar10 = "Err";
       local_80 = 1;
     }
-    sprintf(acStack_2d,"%s: %-3s%s",*ppuVar10,pcVar11,*(char **)((int32_t)ppuVar10 + 10));
+    sprintf(acStack_2d,"%s: %-3s%s",*ppuVar9,pcVar10,*(char **)((int32_t)ppuVar9 + 10));
     strcat(line,acStack_2d);
   }
   cVar7 = gps_message_supported(0x28,&raim_option);
@@ -69409,12 +69422,12 @@ override_jmp_0004acdc_case_0:
   }
   (*write)("HEALTH MONITOR ......................................................");
   if (local_80 == 0) {
-    pcVar11 = "... [ OK ]";
+    pcVar10 = "... [ OK ]";
   }
   else {
-    pcVar11 = " [ ERROR ]";
+    pcVar10 = " [ ERROR ]";
   }
-  (*print)("%s\r\n",pcVar11);
+  (*print)("%s\r\n",pcVar10);
   (*print)("%s",line);
   return;
 }
@@ -69462,68 +69475,66 @@ bool uptime_elapsed(uint32_t *param_1,int32_t *param_2)
 
 /* the RAIM alarm's state machine, counting raim_detected */
 
-uint32_t raim_monitor(void)
+void raim_monitor(void)
 
 {
-  uint32_t uVar1;
-  int16_t sVar2;
+  int32_t iVar1;
+  bool bVar2;
   char reached;
   uint32_t uStack_8;
   
   if ((((gps.raim.raim_on != 1) || (gps.raim_received == 0)) ||
       (gps.raim.raim_status == ONCORE_RAIM_NEITHER)) ||
-     (uVar1 = 1, gps.raim.solution_status == ONCORE_RAIM_UNKNOWN)) {
-    uVar1 = 0;
+     (bVar2 = true, gps.raim.solution_status == ONCORE_RAIM_UNKNOWN)) {
+    bVar2 = false;
   }
-  if (((char)uVar1 == 0) ||
-     (uVar1 = (int32_t)(char)gps.raim_assessment - 3,
-     2 < (uint32_t)(int32_t)(char)gps.raim_assessment && uVar1 != 0)) {
-    gps.raim_assessment = GPS_RAIM_INACTIVE;
-  }
-  else {
-    sVar2 = (int16_t)uVar1;
-    uVar1 = CONCAT22((int16_t)(uVar1 >> 0x10),(&switchD_0004b082_index_zero)[sVar2]);
+  if ((bVar2) &&
+     (iVar1 = (int32_t)(char)gps.raim_assessment - 3,
+     (uint32_t)(int32_t)(char)gps.raim_assessment < 3 || iVar1 == 0)) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_0004b082_index_zero)[sVar2]) {
+    switch((&switchD_0004b082_index_zero)[(int16_t)iVar1]) {
     case 8:
       if (gps.raim.solution_status != ONCORE_RAIM_OK) {
         gps.raim_assessment = GPS_RAIM_ALARM_DETECTED;
         raim_suspect_time = get_uptime();
         gps_counts.raim_detected = gps_counts.raim_detected + 1;
-        return raim_suspect_time;
+        return;
       }
       break;
     case 0x22:
       if (gps.raim.solution_status != ONCORE_RAIM_ALARM) {
-        return uVar1;
+        return;
       }
       gps.raim_assessment = GPS_RAIM_ALARM_DETECTED;
       raim_suspect_time = get_uptime();
       gps_counts.raim_detected = gps_counts.raim_detected + 1;
-      return raim_suspect_time;
+      return;
     case 0x3e:
       if (gps.raim.solution_status != ONCORE_RAIM_OK) {
         reached = uptime_elapsed(&raim_suspect_time,(int32_t *)&uStack_8);
         if (reached == 0) {
           raim_suspect_time = get_uptime();
-          return raim_suspect_time;
+          return;
         }
         if (uStack_8 < 4) {
-          return uStack_8 - 4;
+          return;
         }
         gps.raim_assessment = GPS_RAIM_ALARM;
         gps_counts.raim_alarms = gps_counts.raim_alarms + 1;
-        return uStack_8 - 4;
+        return;
       }
       break;
     case 0x72:
       if (gps.raim.solution_status != ONCORE_RAIM_OK) {
-        return uVar1;
+        return;
       }
     }
     gps.raim_assessment = GPS_RAIM_OK;
   }
-  return uVar1;
+  else {
+    gps.raim_assessment = GPS_RAIM_INACTIVE;
+  }
+  return;
 }
 
 
@@ -69922,7 +69933,7 @@ void gps_response_reset(void)
 
 /* a response's two-character ID to its index among 49, counting unknown_response */
 
-uint32_t gps_response_lookup(char param_1,char param_2,uint16_t *param_3,int16_t *param_4)
+uint32_t gps_response_lookup(char first,char second,int16_t *length,int16_t *index)
 
 {
   int16_t sVar1;
@@ -69933,11 +69944,11 @@ uint32_t gps_response_lookup(char param_1,char param_2,uint16_t *param_3,int16_t
       gps_counts.unknown_response = gps_counts.unknown_response + 1;
       return 0;
     }
-    if ((param_1 == *oncore_messages[sVar1].id) && (param_2 == oncore_messages[sVar1].id[1])) break;
+    if ((first == *oncore_messages[sVar1].id) && (second == oncore_messages[sVar1].id[1])) break;
     sVar1 = sVar1 + 1;
   }
-  *param_4 = sVar1;
-  *param_3 = oncore_messages[sVar1].length;
+  *index = sVar1;
+  *length = oncore_messages[sVar1].length;
   return 1;
 }
 
@@ -69990,14 +70001,15 @@ gps_framing_state gps_receive(void)
   int32_t iVar1;
   uint8_t *puVar2;
   uint8_t c;
+  uint32_t found;
   uint8_t checksum;
-  char cVar4;
+  char pending;
   uint8_t expected;
   
 LAB_0004b98c:
   do {
-    cVar4 = duarta_rx_pending();
-    if ((cVar4 == 0) || (gps_receive_state == GPS_FRAMING_COMPLETE)) {
+    pending = duarta_rx_pending();
+    if ((pending == 0) || (gps_receive_state == GPS_FRAMING_COMPLETE)) {
       return gps_receive_state;
     }
     c = drta_get_byte((char *)0x0);
@@ -70036,9 +70048,9 @@ LAB_0004b98c:
       puVar2 = gps_response_cursor + 1;
       *gps_response_cursor = c;
       gps_response_cursor = puVar2;
-      cVar4 = gps_response_lookup(gps_response_cursor[-2],gps_response_cursor[-1],
+      found = gps_response_lookup(gps_response_cursor[-2],gps_response_cursor[-1],
                                   &gps_response_length,&gps_response_index);
-      if (cVar4 != 0) {
+      if ((char)found != 0) {
         gps_response_remaining = gps_response_length + -6;
         gps_receive_state = gps_receive_state + GPS_FRAMING_SECOND_AT;
       }
@@ -70681,17 +70693,17 @@ void gpsm_task(void)
 
 {
   gps_script_step *pgVar1;
-  int16_t sVar2;
+  int16_t message;
   uint32_t error;
   uint32_t valid;
   gps_code_class class;
-  char cVar9;
+  char cVar8;
   int32_t argument;
-  int16_t sVar7;
-  uint8_t bVar10;
-  int32_t iVar6;
+  int16_t iVar6;
+  uint8_t bVar9;
+  int32_t iVar5;
+  char *pcVar10;
   char *pcVar11;
-  char *pcVar12;
   gps_request_entry received;
   gps_request_entry gStack_c4;
   gps_running_command command;
@@ -70701,7 +70713,7 @@ void gpsm_task(void)
   gps_code_class gStack_32;
   uint8_t uStack_31;
   int32_t *piStack_30;
-  char cStack_2c;
+  uint8_t uStack_2c;
   uint8_t bStack_2a;
   char acStack_29 [25];
   uint8_t bStack_10;
@@ -70737,7 +70749,7 @@ void gpsm_task(void)
     else if ((char)error != -0x7f) {
       gps_counts.received_errors = gps_counts.received_errors + 1;
     }
-    if ((gps_task_state == GPS_PROCESS_TASK_IDLE) && (cVar9 = request_ring_empty(), cVar9 == 0))
+    if ((gps_task_state == GPS_PROCESS_TASK_IDLE) && (cVar8 = request_ring_empty(), cVar8 == 0))
     {
       request_ring_get(&gStack_c4);
       local_34 = 1;
@@ -70745,12 +70757,12 @@ void gpsm_task(void)
     else {
       local_34 = 0;
     }
-    cVar9 = gps_receive();
-    local_33 = cVar9 == 7;
-    iVar6 = (int32_t)(char)gps_task_state - 2;
-    if ((uint32_t)(int32_t)(char)gps_task_state < 2 || iVar6 == 0) {
+    cVar8 = gps_receive();
+    local_33 = cVar8 == 7;
+    iVar5 = (int32_t)(char)gps_task_state - 2;
+    if ((uint32_t)(int32_t)(char)gps_task_state < 2 || iVar5 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&switchD_0004c058_index_zero)[(int16_t)iVar6]) {
+      switch((&switchD_0004c058_index_zero)[(int16_t)iVar5]) {
       case 6:
         if ((bool)local_33) {
           gps_response_decode(gps_response_index,(char *)gps_response_buffer);
@@ -70775,22 +70787,22 @@ void gpsm_task(void)
           command.request.field_13[5] = gStack_c4.field_13[5];
           command.request.field_13[6] = gStack_c4.field_13[6];
           gStack_32 = gps_request_class(gStack_c4.code,command.request.argument_mode);
-          iVar6 = (int32_t)(char)gStack_32 - 2;
-          if ((uint32_t)(int32_t)(char)gStack_32 < 2 || iVar6 == 0) {
+          iVar5 = (int32_t)(char)gStack_32 - 2;
+          if ((uint32_t)(int32_t)(char)gStack_32 < 2 || iVar5 == 0) {
                     /* WARNING: Switch is manually overridden */
-            switch((&switchD_0004c0c0_index_zero)[(int16_t)iVar6]) {
+            switch((&switchD_0004c0c0_index_zero)[(int16_t)iVar5]) {
             case 6:
               if (gps_commands_blocked == 0) {
                 gps_request_step.code = command.request.code;
                 gps_request_step.argument_mode = command.request.argument_mode;
-                bVar10 = 0;
+                bVar9 = 0;
                 do {
-                  gps_request_step.arguments[bVar10] =
+                  gps_request_step.arguments[bVar9] =
                        *(int32_t *)
                         (CONCAT22(__ghidra_piece(uint16_t, command.request.arguments, 0),__ghidra_piece(uint16_t, command.request.arguments, 2)) +
-                        (uint32_t)bVar10 * 4);
-                  bVar10 = bVar10 + 1;
-                } while (bVar10 < 4);
+                        (uint32_t)bVar9 * 4);
+                  bVar9 = bVar9 + 1;
+                } while (bVar9 < 4);
                 command.script = (gps_script_step **)&PTR_gps_request_step_00050cc2;
                 bStack_10 = 0;
                 bStack_2a = 0;
@@ -70800,14 +70812,14 @@ void gpsm_task(void)
               break;
             case 0x56:
               if (gps_commands_blocked == 0) {
-                bVar10 = 0;
+                bVar9 = 0;
                 do {
-                  gps_request_step.arguments[bVar10] =
+                  gps_request_step.arguments[bVar9] =
                        *(int32_t *)
                         (CONCAT22(__ghidra_piece(uint16_t, command.request.arguments, 0),__ghidra_piece(uint16_t, command.request.arguments, 2)) +
-                        (uint32_t)bVar10 * 4);
-                  bVar10 = bVar10 + 1;
-                } while (bVar10 < 4);
+                        (uint32_t)bVar9 * 4);
+                  bVar9 = bVar9 + 1;
+                } while (bVar9 < 4);
                 command.script = (gps_script_step **)gps_script_lookup(command.request.code);
                 bStack_10 = 0;
                 bStack_2a = 0;
@@ -70817,7 +70829,7 @@ void gpsm_task(void)
               break;
             case 0x98:
               gps_console_request(command.request.code,
-                                  (uint32_t *)
+                                  (int32_t *)
                                   CONCAT31(CONCAT21(__ghidra_piece(uint16_t, command.request.arguments, 0),
                                                     (char)((uint16_t)__ghidra_piece(uint16_t, command.request.arguments, 2)
                                                           >> 8)),
@@ -70842,8 +70854,8 @@ LAB_0004c17a:
         }
         else {
           pgVar1 = *command.script;
-          sVar2 = pgVar1->code;
-          if ((sVar2 < 0x31) || (0x46 < sVar2)) {
+          message = pgVar1->code;
+          if ((message < 0x31) || (0x46 < message)) {
             uStack_31 = pgVar1->argument_mode;
             if (uStack_31 == 2) {
               uStack_31 = 0;
@@ -70853,53 +70865,53 @@ LAB_0004c17a:
             else {
               piStack_30 = pgVar1->arguments;
             }
-            sVar7 = gps_request_build(sVar2,uStack_31,(int32_t)piStack_30,(char *)gps_command_message);
-            if (sVar7 < 1) {
-              if (sVar7 < 0) goto LAB_0004c1e6;
+            iVar6 = gps_request_build(message,uStack_31,piStack_30,(char *)gps_command_message);
+            if (iVar6 < 1) {
+              if (iVar6 < 0) goto LAB_0004c1e6;
               if (command.request.argument_mode == 0) {
                 gps_count_response(GPS_RESULT_NO_COMMAND,&command.request);
-                pcVar11 = " // command not supported //\n";
-                pcVar12 = gps_last_program_message;
+                pcVar10 = " // command not supported //\n";
+                pcVar11 = gps_last_program_message;
                 do {
-                  cVar9 = *pcVar11;
-                  *pcVar12 = cVar9;
+                  cVar8 = *pcVar10;
+                  *pcVar11 = cVar8;
+                  pcVar10 = pcVar10 + 1;
                   pcVar11 = pcVar11 + 1;
-                  pcVar12 = pcVar12 + 1;
-                } while (cVar9 != 0);
+                } while (cVar8 != 0);
               }
               else {
                 gps_count_response(GPS_RESULT_NO_QUERY,&command.request);
-                pcVar11 = " // query form not supported //\n";
-                pcVar12 = gps_last_program_message;
+                pcVar10 = " // query form not supported //\n";
+                pcVar11 = gps_last_program_message;
                 do {
-                  cVar9 = *pcVar11;
-                  *pcVar12 = cVar9;
+                  cVar8 = *pcVar10;
+                  *pcVar11 = cVar8;
+                  pcVar10 = pcVar10 + 1;
                   pcVar11 = pcVar11 + 1;
-                  pcVar12 = pcVar12 + 1;
-                } while (cVar9 != 0);
+                } while (cVar8 != 0);
               }
               gps_task_state = GPS_PROCESS_TASK_IDLE;
             }
             else {
               command.query = uStack_31;
-              bVar10 = (uint8_t)sVar7;
-              command.message = sVar2;
-              command.length = bVar10;
+              bVar9 = (uint8_t)iVar6;
+              command.message = message;
+              command.length = bVar9;
               memcpy(command.sent,gps_command_message,
-                     CONCAT31(CONCAT21(CONCAT11(sVar7 >> 0xf,sVar7 >> 0xf),
-                                       (char)((uint16_t)sVar7 >> 8)),bVar10));
-              drta_send_message(gps_command_message,sVar7);
+                     CONCAT31(CONCAT21(CONCAT11(iVar6 >> 0xf,iVar6 >> 0xf),
+                                       (char)((uint16_t)iVar6 >> 8)),bVar9));
+              drta_send_message(gps_command_message,iVar6);
               uStack_38 = get_uptime();
               bStack_10 = bStack_10 + 1;
               gps_counts.commands_sent = gps_counts.commands_sent + 1;
-              gps_message_to_text((char *)gps_command_message,bVar10,gps_last_program_message);
+              gps_message_to_text((char *)gps_command_message,bVar9,gps_last_program_message);
               command_log_add(&command,gps_last_program_message);
-              if (oncore_messages[sVar2].match_kind == 0) goto LAB_0004c1e6;
+              if (oncore_messages[message].match_kind == 0) goto LAB_0004c1e6;
               gps_task_state = GPS_PROCESS_WAIT_FOR_RESPONSE;
             }
           }
           else {
-            gps_console_request(sVar2,pgVar1->arguments,command.request.sender);
+            gps_console_request(message,pgVar1->arguments,command.request.sender);
 LAB_0004c1e6:
             command.script = command.script + 1;
           }
@@ -70922,19 +70934,20 @@ LAB_0004c1e6:
           gps_response_decode(gps_response_index,(char *)gps_response_buffer);
           gps_counts.responses_read = gps_counts.responses_read + 1;
           if (cStack_f == 0) {
-            cStack_2c = gps_response_match(command.message,command.sent,command.length,command.query
-                                           ,gps_response_index,0x101266,gps_response_length);
-            if (cStack_2c == 2) {
+            uStack_2c = gps_response_match(command.message,command.sent,command.length,command.query
+                                           ,gps_response_index,gps_response_buffer,
+                                           gps_response_length);
+            if (uStack_2c == 2) {
               gps.command_monitor_error = 0;
               command.script = command.script + 1;
               bStack_10 = 0;
               bStack_2a = 0;
               gps_task_state = GPS_PROCESS_SEND_COMMAND;
             }
-            else if (cStack_2c == 1) {
-              cVar9 = bytes_equal_n((char *)gps_response_buffer,gps_response_length,acStack_29,
+            else if (uStack_2c == 1) {
+              cVar8 = bytes_equal_n((char *)gps_response_buffer,gps_response_length,acStack_29,
                                     (uint16_t)bStack_2a);
-              if (cVar9 == 1) {
+              if (cVar8 == 1) {
                 gps.command_monitor_error = 1;
                 gps_count_response(GPS_RESULT_REJECT,&command.request);
                 gps_task_state = GPS_PROCESS_TASK_IDLE;
@@ -70967,8 +70980,8 @@ LAB_0004c1e6:
       status_screen(&status_screen_snapshot,1,console_write,printf);
       local_c = get_uptime();
       if (status_screen_print_interval < 0) {
-        iVar6 = abs((int32_t)(int8_t)status_screen_print_interval);
-        status_screen_print_interval = (int8_t)iVar6;
+        iVar5 = abs((int32_t)(int8_t)status_screen_print_interval);
+        status_screen_print_interval = (int8_t)iVar5;
       }
     }
   } while( true );
@@ -71012,12 +71025,12 @@ void raim_request_arguments(void)
 /* the GPS task's switch on the console's requests 0x31 to 0x45
    structures.md */
 
-void gps_console_request(int16_t param_1,uint32_t *param_2,uint8_t param_3)
+void gps_console_request(int16_t code,int32_t *arguments,uint8_t sender)
 
 {
-  if ((int32_t)param_1 - 0x31U < 0x15U) {
+  if ((int32_t)code - 0x31U < 0x15U) {
                     /* WARNING: Switch is manually overridden */
-    switch((int16_t)((int32_t)param_1 - 0x31U)) {
+    switch((int16_t)((int32_t)code - 0x31U)) {
     case 0:
       status_snapshot(&status_screen_snapshot);
       break;
@@ -71058,7 +71071,7 @@ void gps_console_request(int16_t param_1,uint32_t *param_2,uint8_t param_3)
       gps.surveying = 0;
       break;
     case 0xe:
-      gps.pps_check_disabled = (uint8_t)*param_2;
+      gps.pps_check_disabled = (uint8_t)*arguments;
       if (gps.pps_check_disabled == 1) {
         gps_receiver_status_reset();
       }
@@ -71070,7 +71083,7 @@ void gps_console_request(int16_t param_1,uint32_t *param_2,uint8_t param_3)
       gps_parse_options();
       break;
     case 0x13:
-      gps.status_monitor_enabled = (uint8_t)*param_2;
+      gps.status_monitor_enabled = (uint8_t)*arguments;
       break;
     case 0x14:
       gps_link_reset();
@@ -71195,7 +71208,7 @@ int32_t gps_print_command(gps_command_log *log,char *line)
     if (&log->read <= pgVar1 + 1) {
       log->read = log->entries;
     }
-    format_date((uint16_t)(entry.date >> 0x10),(uint8_t)(entry.date >> 8),(uint8_t)entry.date,acStack_1a);
+    format_date(__ghidra_as(calendar_date, entry.date),acStack_1a);
     format_time(entry.time,acStack_e);
     iVar2 = (char)entry.sender + -4;
     if ((int32_t)(char)entry.sender - 1U < 3U || iVar2 == 0) {
@@ -71244,7 +71257,7 @@ int32_t gps_print_command(gps_command_log *log,char *line)
 /* takes a status snapshot into 0x101560 for each @@Ea, and at 03:14:07 or 06:28:15 exactly into
    0x10168e as well, with a copy of the command log */
 
-void status_snapshot_update(uint8_t *param_1)
+void status_snapshot_update(uint32_t time)
 
 {
   uint8_t uVar1;
@@ -71254,8 +71267,8 @@ void status_snapshot_update(uint8_t *param_1)
   gps_command_log *pgVar5;
   
   if (status_snapshots_frozen == 0) {
-    if ((param_1 == &UNK_00061c0f) || (param_1 == (uint8_t *)0x30e07)) {
-      if (param_1 == (uint8_t *)status_snapshot_last_time) {
+    if (((uint8_t *)time == &UNK_00061c0f) || (time == 0x30e07)) {
+      if (time == status_snapshot_last_time) {
         status_snapshots_frozen = 1;
         return;
       }
@@ -71283,7 +71296,7 @@ void status_snapshot_update(uint8_t *param_1)
     else {
       status_snapshot(&status_snapshot_latest);
     }
-    status_snapshot_last_time = (uint32_t)param_1;
+    status_snapshot_last_time = time;
   }
   return;
 }
@@ -71683,12 +71696,14 @@ char * long_array_get_long(int32_t *array,uint8_t index,char *out)
 
 /* a zero byte, then long_array_get_long */
 
-void long_array_get_long_prefixed(int32_t *array,uint8_t index,char *out)
+char * long_array_get_long_prefixed(int32_t *array,uint8_t index,char *out)
 
 {
+  char *next;
+  
   *out = 0;
-  long_array_get_long(array,index,out + 1);
-  return;
+  next = long_array_get_long(array,index,out + 1);
+  return next;
 }
 
 
@@ -71696,13 +71711,13 @@ void long_array_get_long_prefixed(int32_t *array,uint8_t index,char *out)
 
 /* copies a byte if there is somewhere to put it */
 
-void byte_copy_optional(uint8_t *param_1,uint8_t *param_2)
+uint8_t * byte_copy_optional(uint8_t *source,uint8_t *destination)
 
 {
-  if (param_2 != (uint8_t *)0x0) {
-    *param_2 = *param_1;
+  if (destination != (uint8_t *)0x0) {
+    *destination = *source;
   }
-  return;
+  return source + 1;
 }
 
 
@@ -71750,14 +71765,14 @@ uint8_t * bytes_to_long(uint8_t *param_1,uint32_t *param_2)
 /* @@As's height and its type, the position hold position's last fields
    docs/firmware/oncore */
 
-void oncore_as_height_decode(uint8_t *param_1)
+uint8_t * oncore_as_height_decode(uint8_t *cursor,uint8_t *record)
 
 {
-  uint8_t *next;
+  uint8_t *puVar1;
   
-  next = (uint8_t *)bytes_to_long(param_1,&gps.hold_position.height);
-  byte_copy_optional(next,&gps.hold_height_type);
-  return;
+  puVar1 = (uint8_t *)bytes_to_long(cursor,&gps.hold_position.height);
+  puVar1 = byte_copy_optional(puVar1,&gps.hold_height_type);
+  return puVar1;
 }
 
 
@@ -71766,16 +71781,16 @@ void oncore_as_height_decode(uint8_t *param_1)
 /* @@Ai's byte, stored at its channel, 1 to 6
    docs/firmware/oncore */
 
-uint8_t * oncore_ai_decode(uint8_t *param_1,int32_t param_2)
+uint8_t * oncore_ai_decode(uint8_t *cursor,uint8_t *record)
 
 {
   uint8_t bVar1;
   
-  bVar1 = *param_1;
+  bVar1 = *cursor;
   if ((bVar1 != 0) && (bVar1 < 7)) {
-    byte_copy_optional(param_1 + 1,(uint8_t *)(param_2 + -1 + (uint32_t)bVar1));
+    byte_copy_optional(cursor + 1,record + (bVar1 - 1));
   }
-  return param_1 + 2;
+  return cursor + 2;
 }
 
 
@@ -71801,64 +71816,64 @@ uint16_t * word_copy_14_bits(uint16_t *param_1,uint16_t *param_2)
 /* the field-table byte code the GPS task's decoders run
    structures.md */
 
-uint8_t * oncore_decode_fields(uint8_t *param_1,uint8_t *param_2,char *param_3)
+uint8_t * oncore_decode_fields(uint8_t *source,uint8_t *destination,uint8_t *program)
 
 {
-  char *pcVar1;
+  uint8_t *puVar1;
   char cVar2;
   uint8_t bVar3;
-  char *pcVar4;
+  uint8_t *puVar4;
   
   cVar2 = 1;
-  pcVar1 = param_3;
+  puVar1 = program;
   do {
     do {
-      pcVar4 = pcVar1;
-      if (*pcVar4 == -0x80) {
-        return param_1;
+      puVar4 = puVar1;
+      if (*puVar4 == 0x80) {
+        return source;
       }
-    } while ((*pcVar4 == -0x7f) && (cVar2 = cVar2 + -1, pcVar1 = param_3, 0 < cVar2));
-    if (*pcVar4 < 1) {
-      if (*pcVar4 == 0) {
-        param_2 = param_2 + 1;
+    } while ((*puVar4 == 0x81) && (cVar2 = cVar2 + -1, puVar1 = program, 0 < cVar2));
+    if ((char)*puVar4 < 1) {
+      if (*puVar4 == 0) {
+        destination = destination + 1;
       }
-      else if (*pcVar4 == -0x7b) {
-        if ((*param_1 & 0x80) == 0) {
+      else if (*puVar4 == 0x85) {
+        if ((*source & 0x80) == 0) {
           bVar3 = 0;
         }
         else {
           bVar3 = 0xff;
         }
-        *param_2 = bVar3;
-        param_2 = param_2 + 1;
+        *destination = bVar3;
+        destination = destination + 1;
       }
       else {
-        if (*pcVar4 != -0x7c) {
-          if (*pcVar4 != -0x7d) {
-            if (*pcVar4 == -0x7e) {
-              param_1 = param_1 + 1;
+        if (*puVar4 != 0x84) {
+          if (*puVar4 != 0x83) {
+            if (*puVar4 == 0x82) {
+              source = source + 1;
             }
-            else if ((*pcVar4 < 0) && (-(int32_t)*pcVar4 < 0x40)) {
-              param_3 = pcVar4 + 1;
-              cVar2 = (char)-(int32_t)*pcVar4;
+            else if (((char)*puVar4 < 0) && (-(int32_t)(char)*puVar4 < 0x40)) {
+              program = puVar4 + 1;
+              cVar2 = (char)-(int32_t)(char)*puVar4;
             }
             goto LAB_0004f0c4;
           }
-          param_1 = param_1 + 1;
+          source = source + 1;
         }
-        *param_2 = 0;
-        param_2 = param_2 + 1;
+        *destination = 0;
+        destination = destination + 1;
       }
     }
     else {
-      for (bVar3 = 1; (int32_t)(uint32_t)bVar3 <= (int32_t)*pcVar4; bVar3 = bVar3 + 1) {
-        *param_2 = *param_1;
-        param_2 = param_2 + 1;
-        param_1 = param_1 + 1;
+      for (bVar3 = 1; (int32_t)(uint32_t)bVar3 <= (int32_t)(char)*puVar4; bVar3 = bVar3 + 1) {
+        *destination = *source;
+        destination = destination + 1;
+        source = source + 1;
       }
     }
 LAB_0004f0c4:
-    pcVar1 = pcVar4 + 1;
+    puVar1 = puVar4 + 1;
   } while( true );
 }
 
@@ -72116,7 +72131,7 @@ bool satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,
 
 /* finds a satellite by ID in a table of 10-byte entries, by bisection */
 
-oncore_visible_satellite * satellite_find(uint8_t id,void *table)
+oncore_visible_satellite * satellite_find(uint8_t id,gps_visibility_record *record)
 
 {
   oncore_visible_satellite *poVar1;
@@ -72124,8 +72139,8 @@ oncore_visible_satellite * satellite_find(uint8_t id,void *table)
   oncore_visible_satellite *poVar3;
   oncore_visible_satellite *poVar4;
   
-  poVar3 = (oncore_visible_satellite *)((int32_t)table + 4);
-  poVar1 = (oncore_visible_satellite *)((int32_t)table + (uint32_t)*(uint8_t *)((int32_t)table + 2) * 10 + 4);
+  poVar3 = (record->visibility).satellites;
+  poVar1 = (record->visibility).satellites + (record->visibility).count;
   while( true ) {
     do {
       poVar4 = poVar1;
@@ -72342,7 +72357,7 @@ uint8_t * oncore_position_message(uint8_t *param_1,uint8_t *param_2)
 
 {
   if (gps.fix_mode == ONCORE_POSITION_FIX) {
-    param_1 = oncore_decode_fields(param_1,param_2,(char *)oncore_status_field_codes);
+    param_1 = oncore_decode_fields(param_1,param_2,oncore_status_field_codes);
     gps_receiver_status_update(0,0);
     if ((gps.position_hold == 0) &&
        (((nv_settings.douglas_duration_infinite == 1 ||
@@ -72379,12 +72394,14 @@ uint8_t * oncore_position_message(uint8_t *param_1,uint8_t *param_2)
 /* decodes the visible satellites, @@Bb, and marks them received
    gps.md */
 
-void oncore_visibility_message(uint8_t *param_1,uint8_t *param_2)
+uint8_t * oncore_visibility_message(uint8_t *cursor,uint8_t *record)
 
 {
-  oncore_decode_fields(param_1,param_2,(char *)oncore_visibility_field_codes);
+  uint8_t *next;
+  
+  next = oncore_decode_fields(cursor,record,oncore_visibility_field_codes);
   gps.visibility_received = 1;
-  return;
+  return next;
 }
 
 
@@ -72393,11 +72410,13 @@ void oncore_visibility_message(uint8_t *param_1,uint8_t *param_2)
 /* decodes @@Bc, the xDOP table
    docs/firmware/oncore */
 
-void oncore_dop_message(uint8_t *param_1,uint8_t *param_2)
+uint8_t * oncore_dop_message(uint8_t *cursor,uint8_t *record)
 
 {
-  oncore_decode_fields(param_1,param_2,(char *)oncore_xdop_table_field_codes);
-  return;
+  uint8_t *next;
+  
+  next = oncore_decode_fields(cursor,record,oncore_xdop_table_field_codes);
+  return next;
 }
 
 
@@ -72406,11 +72425,13 @@ void oncore_dop_message(uint8_t *param_1,uint8_t *param_2)
 /* decodes @@Bd, the almanac status
    docs/firmware/oncore */
 
-void oncore_almanac_status_message(uint8_t *param_1,uint8_t *param_2)
+uint8_t * oncore_almanac_status_message(uint8_t *cursor,uint8_t *record)
 
 {
-  oncore_decode_fields(param_1,param_2,(char *)oncore_almanac_field_codes);
-  return;
+  uint8_t *next;
+  
+  next = oncore_decode_fields(cursor,record,oncore_almanac_field_codes);
+  return next;
 }
 
 
@@ -72437,7 +72458,7 @@ uint8_t * oncore_corrections_message(uint8_t *param_1,uint8_t *param_2)
   bVar3 = 0;
   accumulator_1 = 0.0;
   accumulator_2 = 0.0;
-  next = oncore_decode_fields(param_1,param_2,(char *)oncore_corrections_field_codes);
+  next = oncore_decode_fields(param_1,param_2,oncore_corrections_field_codes);
   bVar4 = 1;
   do {
     used = satellite_used_for_position(poVar5->satellite);
@@ -72482,11 +72503,13 @@ uint8_t * oncore_corrections_message(uint8_t *param_1,uint8_t *param_2)
 /* decodes @@Bk, the position/status/data extension
    docs/firmware/oncore */
 
-void oncore_extension_message(uint8_t *param_1,uint8_t *param_2)
+uint8_t * oncore_extension_message(uint8_t *cursor,uint8_t *record)
 
 {
-  oncore_decode_fields(param_1,param_2,(char *)oncore_extension_field_codes);
-  return;
+  uint8_t *next;
+  
+  next = oncore_decode_fields(cursor,record,oncore_extension_field_codes);
+  return next;
 }
 
 
@@ -72495,12 +72518,14 @@ void oncore_extension_message(uint8_t *param_1,uint8_t *param_2)
 /* decodes @@Bn, the Time RAIM setup and status, and sets traim_message_arrived
    docs/firmware/oncore */
 
-void oncore_traim_message(uint8_t *param_1,uint8_t *param_2)
+uint8_t * oncore_traim_message(uint8_t *cursor,uint8_t *record)
 
 {
-  oncore_decode_fields(param_1,param_2,(char *)oncore_raim_field_codes);
+  uint8_t *next;
+  
+  next = oncore_decode_fields(cursor,record,oncore_raim_field_codes);
   traim_message_arrived = 1;
-  return;
+  return next;
 }
 
 
@@ -72509,12 +72534,14 @@ void oncore_traim_message(uint8_t *param_1,uint8_t *param_2)
 /* decodes the receiver ID, @@Cj, and marks it received
    gps.md */
 
-void oncore_receiver_id_message(uint8_t *param_1,uint8_t *param_2)
+uint8_t * oncore_receiver_id_message(uint8_t *cursor,uint8_t *record)
 
 {
-  oncore_decode_fields(param_1,param_2,(char *)oncore_receiver_id_field_codes);
+  uint8_t *next;
+  
+  next = oncore_decode_fields(cursor,record,oncore_receiver_id_field_codes);
   gps.receiver_id_received = 1;
-  return;
+  return next;
 }
 
 
@@ -72587,98 +72614,100 @@ uint32_t gps_message_supported(int16_t param_1,uint8_t *param_2)
 
 /* builds a request's text: @@, its ID, then each argument through the message's encoders */
 
-int32_t gps_request_build(int16_t param_1,char param_2,int32_t param_3,char *param_4)
+int16_t gps_request_build(int16_t message,uint8_t query,int32_t *arguments,char *out)
 
 {
   int32_t iVar1;
-  char cVar3;
+  char cVar4;
+  int16_t sVar3;
   int32_t iVar2;
-  uint8_t bVar4;
-  char *pcVar5;
-  uint8_t *out;
+  uint8_t bVar5;
   uint8_t *pbVar6;
+  char *pcVar7;
+  uint8_t *out_00;
   uint8_t local_8 [2];
   char local_6 [2];
   
-  iVar1 = (int32_t)param_1;
+  iVar1 = (int32_t)message;
   local_6[0] = 0;
-  cVar3 = gps_message_supported(param_1,local_6);
-  if ((cVar3 == 0) || (local_6[0] == 0)) {
-    iVar1 = 0xffff;
+  cVar4 = gps_message_supported(message,local_6);
+  if ((cVar4 == 0) || (local_6[0] == 0)) {
+    sVar3 = -1;
   }
   else {
-    *param_4 = 0;
-    if ((oncore_messages[iVar1].kind == 1) ||
-       (pbVar6 = (uint8_t *)param_4, oncore_messages[iVar1].kind == 3)) {
-      strcat(param_4,"@@");
-      strcat(param_4,oncore_messages[iVar1].id);
+    *out = 0;
+    sVar3 = (int16_t)out;
+    if ((oncore_messages[iVar1].kind == 1) || (oncore_messages[iVar1].kind == 3)) {
+      strcat(out,"@@");
+      strcat(out,oncore_messages[iVar1].id);
       iVar2 = -1;
-      pcVar5 = param_4;
+      pcVar7 = out;
       do {
         iVar2 = iVar2 + 1;
-        cVar3 = *pcVar5;
-        pcVar5 = pcVar5 + 1;
-      } while (cVar3 != 0);
-      out = (uint8_t *)(param_4 + iVar2);
-      if (param_2 == 0) {
-        for (bVar4 = 0; (*(int32_t *)(iVar1 * 0x38 + 0x4fed4 + (uint32_t)bVar4 * 4) != 0 && (bVar4 < 4));
-            bVar4 = bVar4 + 1) {
-          out = (uint8_t *)(**(code **)(iVar1 * 0x38 + 0x4fed4 + (uint32_t)bVar4 * 4))((int16_t)param_3);
+        cVar4 = *pcVar7;
+        pcVar7 = pcVar7 + 1;
+      } while (cVar4 != 0);
+      out_00 = (uint8_t *)(out + iVar2);
+      if (query == 0) {
+        for (bVar5 = 0; (*(int32_t *)(iVar1 * 0x38 + 0x4fed4 + (uint32_t)bVar5 * 4) != 0 && (bVar5 < 4));
+            bVar5 = bVar5 + 1) {
+          out_00 = (uint8_t *)(**(code **)(iVar1 * 0x38 + 0x4fed4 + (uint32_t)bVar5 * 4))((int16_t)arguments)
+          ;
         }
-        if (param_1 == 0x1e) {
-          long_array_get_byte((int32_t *)param_3,0,(char *)local_8);
+        if (message == 0x1e) {
+          long_array_get_byte(arguments,0,(char *)local_8);
           gps.status_rate = local_8[0];
         }
-        else if (param_1 == 0x28) {
-          *out = 0;
-          out[1] = 0;
-          out[2] = 1;
-          bVar4 = 1;
-          pbVar6 = out + 3;
+        else if (message == 0x28) {
+          *out_00 = 0;
+          out_00[1] = 0;
+          out_00[2] = 1;
+          bVar5 = 1;
+          pbVar6 = out_00 + 3;
           do {
-            out = pbVar6 + 1;
+            out_00 = pbVar6 + 1;
             *pbVar6 = 0;
-            bVar4 = bVar4 + 1;
-            pbVar6 = out;
-          } while (bVar4 < 8);
+            bVar5 = bVar5 + 1;
+            pbVar6 = out_00;
+          } while (bVar5 < 8);
         }
       }
       else {
         pbVar6 = (uint8_t *)oncore_messages[iVar1].query;
         if (pbVar6 == (uint8_t *)0x0) {
-          *param_4 = 0;
+          *out = 0;
           return 0;
         }
-        if (param_1 == 8) {
-          out = (uint8_t *)long_array_get_byte((int32_t *)param_3,0,(char *)out);
+        if (message == 8) {
+          out_00 = (uint8_t *)long_array_get_byte(arguments,0,(char *)out_00);
         }
         for (; *pbVar6 != 0; pbVar6 = pbVar6 + 1) {
           if (*pbVar6 == 0xee) {
-            bVar4 = 0;
+            bVar5 = 0;
           }
           else {
-            bVar4 = *pbVar6;
+            bVar5 = *pbVar6;
           }
-          *out = bVar4;
-          out = out + 1;
+          *out_00 = bVar5;
+          out_00 = out_00 + 1;
         }
       }
-      bVar4 = 0xff;
-      pcVar5 = "@@";
+      bVar5 = 0xff;
+      pcVar7 = "@@";
       do {
-        bVar4 = bVar4 + 1;
-        cVar3 = *pcVar5;
-        pcVar5 = pcVar5 + 1;
-      } while (cVar3 != 0);
-      bVar4 = oncore_checksum((uint8_t *)(param_4 + bVar4),out);
-      *out = bVar4;
-      out[1] = 0xd;
-      pbVar6 = out + 3;
-      out[2] = 10;
+        bVar5 = bVar5 + 1;
+        cVar4 = *pcVar7;
+        pcVar7 = pcVar7 + 1;
+      } while (cVar4 != 0);
+      bVar5 = oncore_checksum((uint8_t *)(out + bVar5),out_00);
+      *out_00 = bVar5;
+      out_00[1] = 0xd;
+      out = (char *)(out_00 + 3);
+      out_00[2] = 10;
     }
-    iVar1 = (int32_t)pbVar6 - (int32_t)param_4;
+    sVar3 = (int16_t)out - sVar3;
   }
-  return iVar1;
+  return sVar3;
 }
 
 
@@ -72720,7 +72749,7 @@ char * gps_response_decode(int16_t message,char *response)
   }
   psos_mode(0,0x80,(uint8_t *)0x0);
   if (message == 0x1e) {
-    status_snapshot_update((uint8_t *)__ghidra_aggregate_bits(gps.status.time));
+    status_snapshot_update((uint32_t)__ghidra_aggregate_bits(gps.status.time));
   }
   return pcVar5;
 }
@@ -72752,11 +72781,11 @@ uint32_t bytes_equal_n(char *param_1,int16_t param_2,char *param_3,int16_t param
 
 /* checks a response against the request it answers */
 
-uint8_t
-gps_response_match(int16_t param_1,uint8_t *param_2,char param_3,char param_4,int16_t param_5,
-                  int32_t param_6,int16_t param_7)
+uint8_t gps_response_match(int16_t message,uint8_t *sent,char length,char query,int16_t index,
+                          uint8_t *response,int16_t response_length)
 
 {
+  uint8_t *s2;
   char cVar1;
   uint8_t bVar2;
   int32_t iVar3;
@@ -72764,136 +72793,112 @@ gps_response_match(int16_t param_1,uint8_t *param_2,char param_3,char param_4,in
   int32_t magnitude;
   char cVar6;
   char cVar7;
-  uint8_t uVar8;
-  uint8_t bVar9;
-  int16_t sVar10;
-  uint8_t bVar11;
-  char *pcVar12;
+  uint8_t bVar8;
+  int16_t sVar9;
+  uint8_t bVar10;
+  char *pcVar11;
   uint8_t auStack_12 [2];
   char cStack_10;
   int32_t iStack_c;
   int32_t iStack_8;
   
-  iVar4 = (int32_t)param_1;
+  iVar4 = (int32_t)message;
   if (oncore_messages[iVar4].match_kind < 10) {
                     /* WARNING: Switch is manually overridden */
     switch(oncore_messages[iVar4].match_kind) {
     case 0:
-      uVar8 = 2;
       break;
     default:
-      uVar8 = 0;
-      if (param_5 == param_1) {
+      if (index == message) {
         cVar6 = -1;
-        pcVar12 = "@@";
+        pcVar11 = "@@";
         do {
           cVar6 = cVar6 + 1;
-          cVar7 = *pcVar12;
-          pcVar12 = pcVar12 + 1;
+          cVar7 = *pcVar11;
+          pcVar11 = pcVar11 + 1;
         } while (cVar7 != 0);
         cVar7 = -1;
-        pcVar12 = oncore_messages[iVar4].id;
+        pcVar11 = oncore_messages[iVar4].id;
         do {
           cVar7 = cVar7 + 1;
-          cVar1 = *pcVar12;
-          pcVar12 = pcVar12 + 1;
+          cVar1 = *pcVar11;
+          pcVar11 = pcVar11 + 1;
         } while (cVar1 != 0);
-        bVar9 = cVar7 + cVar6;
-        bVar11 = param_3 - bVar9;
-        if ((param_4 != 1) &&
-           ((oncore_messages[iVar4].match_kind != 5 || (param_2[bVar9] != 2)))) {
+        bVar8 = cVar7 + cVar6;
+        bVar10 = length - bVar8;
+        if ((query != 1) && ((oncore_messages[iVar4].match_kind != 5 || (sent[bVar8] != 2)))) {
           cVar6 = -1;
-          pcVar12 = oncore_messages[param_5].id;
+          pcVar11 = oncore_messages[index].id;
           do {
             cVar6 = cVar6 + 1;
-            cVar7 = *pcVar12;
-            pcVar12 = pcVar12 + 1;
+            cVar7 = *pcVar11;
+            pcVar11 = pcVar11 + 1;
           } while (cVar7 != 0);
           cVar7 = -1;
-          pcVar12 = "@@";
+          pcVar11 = "@@";
           do {
             cVar7 = cVar7 + 1;
-            cVar1 = *pcVar12;
-            pcVar12 = pcVar12 + 1;
+            cVar1 = *pcVar11;
+            pcVar11 = pcVar11 + 1;
           } while (cVar1 != 0);
           bVar2 = cVar6 + cVar7;
-          sVar10 = param_7 - (uint16_t)bVar2;
+          sVar9 = response_length - (uint16_t)bVar2;
           iVar3 = (char)oncore_messages[iVar4].match_kind + -4;
           if ((int32_t)(char)oncore_messages[iVar4].match_kind - 2U < 2U || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
             switch((&switchD_0004fc88_index_zero)[(int16_t)iVar3]) {
             case 6:
-              pcVar12 = param_2 + bVar9;
-              if ((*pcVar12 == -1) && (pcVar12[1] == 0)) {
-                memcpy(auStack_12,pcVar12,3);
+              s2 = sent + bVar8;
+              if ((*s2 == 0xff) && (s2[1] == 0)) {
+                memcpy(auStack_12,s2,3);
                 auStack_12[0] = 0;
                 cStack_10 = -cStack_10;
-                param_2 = auStack_12;
-                bVar9 = 0;
-                bVar11 = 3;
-                sVar10 = 3;
+                sent = auStack_12;
+                bVar8 = 0;
+                bVar10 = 3;
+                sVar9 = 3;
               }
               break;
             case 0x50:
-              if (param_2[bVar9 + 4] == 1) {
-                param_6 = param_6 + 4;
+              if (sent[bVar8 + 4] == 1) {
+                response = response + 4;
               }
-              bVar11 = 4;
-              sVar10 = 4;
+              bVar10 = 4;
+              sVar9 = 4;
               break;
             case 0x68:
-              if (param_2[bVar9 + 0xc] == *(char *)(param_6 + 0xc + (uint32_t)bVar2)) {
-                bytes_to_long(param_2 + bVar9 + 8,&iStack_c);
-                bytes_to_long((uint8_t *)(param_6 + 8 + (uint32_t)bVar2),&iStack_8);
+              if (sent[bVar8 + 0xc] == response[bVar2 + 0xc]) {
+                bytes_to_long(sent + bVar8 + 8,&iStack_c);
+                bytes_to_long(response + bVar2 + 8,&iStack_8);
                 if (((-0x186a1 < iStack_c) && (iStack_c < 0x1b7741)) &&
                    (magnitude = labs(iStack_c - iStack_8), magnitude < 3)) {
-                  bVar11 = 8;
-                  sVar10 = 8;
+                  bVar10 = 8;
+                  sVar9 = 8;
                 }
               }
             }
           }
-          cVar6 = bytes_equal_n(param_2 + bVar9,(uint16_t)bVar11,(char *)(param_6 + (uint32_t)bVar2),
-                                sVar10);
+          cVar6 = bytes_equal_n((char *)(sent + bVar8),(uint16_t)bVar10,(char *)(response + bVar2),
+                                sVar9);
           if (cVar6 != 1) {
             return 1;
           }
         }
-        uVar8 = 2;
       }
       break;
     case 6:
-      if (param_5 == param_1) {
-        uVar8 = 2;
-      }
-      else {
-        uVar8 = 0;
-      }
       break;
     case 7:
-      if (param_5 == 0xf) {
-        uVar8 = 2;
-      }
-      else {
-        uVar8 = 0;
-      }
       break;
     case 8:
       goto override_jmp_0004fbca_case_8;
     case 9:
-      if (param_5 == 0x2c) {
-        uVar8 = 2;
-      }
-      else {
-        uVar8 = 0;
-      }
     }
   }
   else {
 override_jmp_0004fbca_case_8:
-    uVar8 = 0;
   }
-  return uVar8;
+  return 0;
 }
 
 

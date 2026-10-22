@@ -47,7 +47,7 @@ static void gps_oncore_restart(uint8_t c) {
 
 /* A response's index in oncore_messages by its ID, and its length;
  * 0, counted, for an ID not there (0x4b7ac). */
-uint32_t gps_response_lookup(char first, char second, uint16_t* length,
+uint32_t gps_response_lookup(char first, char second, int16_t* length,
                              int16_t* index) {
   static const int16_t COUNT =
       sizeof oncore_messages / sizeof oncore_messages[0];
@@ -320,7 +320,7 @@ uint16_t* word_copy_14_bits(uint16_t* source, uint16_t* destination) {
  * bytes (docs/firmware/gps.md, "Decoding"); the cursor past what it read
  * (0x4f02a). */
 uint8_t* oncore_decode_fields(uint8_t* source, uint8_t* destination,
-                              char* program) {
+                              uint8_t* program) {
   static const uint8_t SIGN_BIT = 0x80;
   int8_t repeats = 1;
   const char* group = program;

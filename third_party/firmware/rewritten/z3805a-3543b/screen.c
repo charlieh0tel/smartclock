@@ -13,14 +13,6 @@
  * double_divide_reversed(a, b) is b / a, float_compare(a, b) is
  * positive when b < a and double_compare(a, b) negative when b < a. */
 
-/* What satellite_find is given, gps.visibility_received (0x100d7a), and
- * the @@Bb message after it, which its search reads (0x4f32c). */
-typedef struct screen_visibility {
-  uint8_t received; /* gps.visibility_received */
-  uint8_t field_01;
-  oncore_visibility_fields visibility; /* +0x02: gps.visibility */
-} screen_visibility;
-
 /* An element satellite_status_list sorts with satellite_compare: a
  * visible satellite's number and elevation (0x4987a). */
 typedef struct screen_satellite_elevation {
@@ -184,7 +176,7 @@ void satellite_elevation_azimuth(oncore_visible_satellite* satellite,
 
 /* qsort's order of two satellites: by elevation, then the higher
  * number first (0x49794). */
-uint32_t satellite_compare(uint8_t* first, uint8_t* second) {
+int32_t satellite_compare(uint8_t* first, uint8_t* second) {
   static const int32_t BEFORE = -1;
   static const int32_t AFTER = 1;
   const screen_satellite_elevation* a =
@@ -203,8 +195,8 @@ uint32_t satellite_compare(uint8_t* first, uint8_t* second) {
 
 /* The @@Bb record of a satellite, by bisection of the records, which
  * the receiver sends sorted by number; NULL if none (0x4f32c). */
-oncore_visible_satellite* satellite_find(uint8_t id, void* table) {
-  screen_visibility* record = table;
+oncore_visible_satellite* satellite_find(uint8_t id,
+                                         gps_visibility_record* record) {
   oncore_visible_satellite* low = record->visibility.satellites;
   oncore_visible_satellite* high = low + record->visibility.count;
 
@@ -544,18 +536,19 @@ static char* const SCREEN_MONTH_NAMES[] = {"---", "Jan", "Feb", "Mar", "Apr",
 
 /* A date as "%02d %s %04d" day, month and year, 1900 to 2079; else
  * "-- --- ----"; 1 if it is one (0x49eb4). */
-uint32_t format_date(uint16_t year, uint8_t month, uint8_t day, char* text) {
+bool format_date(calendar_date date, char* text) {
   static const uint8_t LAST_MONTH = 12;
   static const uint8_t LAST_DAY = 31;
   static const uint16_t FIRST_YEAR = 1900;
   static const uint16_t LAST_YEAR = 2079;
 
-  if (month == 0 || month > LAST_MONTH || day == 0 || day > LAST_DAY ||
-      year < FIRST_YEAR || year > LAST_YEAR) {
+  if (date.month == 0 || date.month > LAST_MONTH || date.day == 0 ||
+      date.day > LAST_DAY || date.year < FIRST_YEAR || date.year > LAST_YEAR) {
     screen_copy(text, "-- --- ----");
     return 0;
   }
-  sprintf(text, "%02d %s %04d", day, SCREEN_MONTH_NAMES[month], year);
+  sprintf(text, "%02d %s %04d", date.day, SCREEN_MONTH_NAMES[date.month],
+          date.year);
   return 1;
 }
 
@@ -570,7 +563,7 @@ void format_satellite_number(char satellite, char* text) {
 
 /* Marks a satellite's number "*" when the flag is set, attempting to
  * track; the flag (0x49a26). */
-bool mark_flag(char flag, uint8_t* text) {
+bool mark_flag(char flag, char* text) {
   if (flag != 0) {
     *text = '*';
   }
@@ -679,8 +672,7 @@ void status_screen_time(status_snapshot_record* snapshot, char* line) {
     scale = snapshot->utc_time == ONCORE_TIME_GPS ? "LOCL GPS" : "LOCAL";
   }
   format_time(snapshot->time, time_text);
-  format_date(snapshot->date >> 16, snapshot->date >> 8, snapshot->date,
-              date_text);
+  format_date(clock_date_of(snapshot->date), date_text);
   sprintf(line, "%-9.9s%8s %3s %11s", scale, time_text,
           snapshot->clock_invalid == 0 ? "[?]" : "", date_text);
 }
@@ -914,8 +906,8 @@ void status_screen_height(status_snapshot_record* snapshot, char* line) {
 /* The suffix of the power-up line, or of the recovery line by its own
  * index, power-up's fine frequency or phase alignment; with the TI
  * reading for those that settle it (0x4a518). */
-void status_screen_mode_suffix(char line, status_snapshot_record* snapshot,
-                               char* text) {
+void status_screen_mode_suffix(status_screen_line line,
+                               status_snapshot_record* snapshot, char* text) {
   static const uint8_t TI_DIGITS = 4;
   pll_powerup_suffix suffix;
   char* words;

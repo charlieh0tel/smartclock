@@ -190,8 +190,7 @@ int32_t gps_print_command(gps_command_log* log, char* line) {
   char time[10];
 
   log->read = gps_reports_log_next(log, log->read);
-  format_date(clock_year(entry.date), clock_middle(entry.date),
-              clock_low(entry.date), date);
+  format_date(clock_date_of(entry.date), date);
   format_time(entry.time, time);
   sprintf(line, "%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s",
           gps_reports_sender_name(entry.sender), (int32_t)entry.code,

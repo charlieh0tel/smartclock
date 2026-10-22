@@ -55,6 +55,15 @@ static uint32_t clock_time_bits(time_of_day time) {
          clock_pack(time.hour, time.minute, time.second);
 }
 
+/* A calendar_date as a long holds it, year << 16 | month << 8 | day. */
+static calendar_date clock_date_of(uint32_t packed) {
+  return (calendar_date){
+      .year = clock_year(packed),
+      .month = clock_middle(packed),
+      .day = clock_low(packed),
+  };
+}
+
 static time_of_day clock_time_of(uint32_t bits) {
   return (time_of_day){
       .reserved = bits >> (3 * CLOCK_FIELD_BITS),

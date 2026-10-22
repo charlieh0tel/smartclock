@@ -3284,6 +3284,16 @@ typedef struct satellite_sets {
   uint8_t field_29;
 } satellite_sets;
 
+/* What satellite_find and the satellite lists are given:
+ * gps.visibility_received (0x100d7a) and the @@Bb message after it, as
+ * the image passes its address (0x4a800 to 0x4a83a) and its search
+ * reads it (0x4f32c). */
+typedef struct gps_visibility_record {
+  uint8_t received; /* +0x00: gps.visibility_received */
+  uint8_t field_01;
+  oncore_visibility_fields visibility; /* +0x02: gps.visibility */
+} gps_visibility_record;
+
 /* A satellite's cell on the screen, at +4 of a satellite_status_list
  * entry: satellite_elevation_azimuth's and satellite_status' (0x49654,
  * 0x49688), the long status_screen gives format_satellite_cell

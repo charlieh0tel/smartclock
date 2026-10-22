@@ -1465,6 +1465,12 @@ view cannot drift apart.  The library, bottom up:
      takes by value as the image's callers push it, are shared
      records, and the snapshot's lists are named for what they hold,
      tracked and not.
+     Then the prototypes wave 3 showed wrong, each checked in the image:
+     the Oncore decoders return the next cursor, gps_request_build a
+     word, raim_monitor and diag_pr_hold_cause nothing; the screen's
+     list routines take the records they are given
+     (gps_visibility_record, satellite_list_entry), and format_date a
+     calendar_date, the long its callers push.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

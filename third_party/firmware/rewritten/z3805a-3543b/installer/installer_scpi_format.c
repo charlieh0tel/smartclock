@@ -16,7 +16,7 @@ int32_t installer_scpi_format_response(scpi_port* output,
   }
   for (int16_t offset = 0;; item++) {
     int32_t error =
-        item->format(output, call->response + offset, item->argument, call);
+        item->format(output, call->response + offset, item->choices, call);
 
     if (error != 0) {
       return error;

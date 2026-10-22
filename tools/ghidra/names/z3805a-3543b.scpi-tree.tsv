@@ -488,6 +488,7 @@
 0x526de	label	scpi_parameter_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1	dump-scpi	parameter 1 of :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold's set handler	scpi_parameter
 0x526e6	label	scpi_parameter_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1	dump-scpi	parameter 1 of :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold's query handler	scpi_parameter
 0x526ee	label	scpi_parameter_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe_1	dump-scpi	parameter 1 of :DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe's set handler	scpi_parameter
+0x526fc	label	scpi_common_list_children	dump-scpi	the child list of the common commands, its children	scpi_node *[10]
 0x52724	label	scpi_list_TKN	dump-scpi	the child list of :TKN	scpi_child_list
 0x5272a	label	scpi_list_TKN_children	dump-scpi	the child list of :TKN, its children	scpi_node *[1]
 0x5272e	label	scpi_list_ROBin_MEMory_OVERflow	dump-scpi	the child list of :ROBin:MEMory:OVERflow	scpi_child_list
@@ -728,6 +729,7 @@
 0x52fce	label	scpi_list_DIAGnostic_GPSystem_children	dump-scpi	the child list of :DIAGnostic:GPSystem, its children	scpi_node *[3]
 0x52fda	label	scpi_list_DIAGnostic	dump-scpi	the child list of :DIAGnostic	scpi_child_list
 0x52fe0	label	scpi_list_DIAGnostic_children	dump-scpi	the child list of :DIAGnostic, its children	scpi_node *[21]
+0x5303a	label	scpi_main_tree_children	dump-scpi	the child list of the main tree's root, its children	scpi_node *[49]
 0x530fe	label	scpi_keyword_WAI	dump-scpi	the keyword pair WAI, the keyword of *WAI first	char[5]
 0x53103	label	scpi_keyword_STB	dump-scpi	the keyword pair STB, the keyword of *STB first	char[5]
 0x53108	label	scpi_keyword_SRE	dump-scpi	the keyword pair SRE, the keyword of *SRE first	char[5]
@@ -1101,383 +1103,194 @@
 0x53d80	label	scpi_unit_DEG	dump-scpi	the name of the unit DEG, of parameter 1 of :SOURce:GPSystem:EMANgle's set handler first	char[4]
 0x53d84	label	scpi_units_set_SOURce_GPSystem_EMANgle_1	dump-scpi	the units of parameter 1 of :SOURce:GPSystem:EMANgle's set handler	scpi_unit[2]
 0x53d90	label	scpi_kinds_set_common_SRE_1	dump-scpi	the kinds of parameter 1 of *SRE's set handler	scpi_parameter_kinds
-0x53d9c	label	scpi_kinds_set_common_SRE_1_converters	dump-scpi	the kinds of parameter 1 of *SRE's set handler, its converters	void *[6]
 0x53db4	label	scpi_kinds_set_common_ESE_1	dump-scpi	the kinds of parameter 1 of *ESE's set handler	scpi_parameter_kinds
-0x53dc0	label	scpi_kinds_set_common_ESE_1_converters	dump-scpi	the kinds of parameter 1 of *ESE's set handler, its converters	void *[6]
 0x53dd8	label	scpi_kinds_query_RVST_1	dump-scpi	the kinds of parameter 1 of :RVST's query handler	scpi_parameter_kinds
-0x53de4	label	scpi_kinds_query_RVST_1_converters	dump-scpi	the kinds of parameter 1 of :RVST's query handler, its converters	void *[6]
 0x53dfc	label	scpi_kinds_query_RTSA_1	dump-scpi	the kinds of parameter 1 of :RTSA's query handler	scpi_parameter_kinds
-0x53e08	label	scpi_kinds_query_RTSA_1_converters	dump-scpi	the kinds of parameter 1 of :RTSA's query handler, its converters	void *[6]
 0x53e20	label	scpi_kinds_query_RMHO_1	dump-scpi	the kinds of parameter 1 of :RMHO's query handler	scpi_parameter_kinds
-0x53e2c	label	scpi_kinds_query_RMHO_1_converters	dump-scpi	the kinds of parameter 1 of :RMHO's query handler, its converters	void *[6]
 0x53e44	label	scpi_kinds_query_FMHO_1	dump-scpi	the kinds of parameter 1 of :FMHO's query handler	scpi_parameter_kinds
-0x53e50	label	scpi_kinds_query_FMHO_1_converters	dump-scpi	the kinds of parameter 1 of :FMHO's query handler, its converters	void *[6]
 0x53e68	label	scpi_kinds_query_RSST_1	dump-scpi	the kinds of parameter 1 of :RSST's query handler	scpi_parameter_kinds
-0x53e74	label	scpi_kinds_query_RSST_1_converters	dump-scpi	the kinds of parameter 1 of :RSST's query handler, its converters	void *[6]
 0x53e8c	label	scpi_kinds_query_RPHS_1	dump-scpi	the kinds of parameter 1 of :RPHS's query handler	scpi_parameter_kinds
-0x53e98	label	scpi_kinds_query_RPHS_1_converters	dump-scpi	the kinds of parameter 1 of :RPHS's query handler, its converters	void *[6]
 0x53eb0	label	scpi_kinds_query_RSPR_1	dump-scpi	the kinds of parameter 1 of :RSPR's query handler	scpi_parameter_kinds
-0x53ebc	label	scpi_kinds_query_RSPR_1_converters	dump-scpi	the kinds of parameter 1 of :RSPR's query handler, its converters	void *[6]
 0x53ed4	label	scpi_kinds_query_IPSU_1	dump-scpi	the kinds of parameter 1 of :IPSU's query handler	scpi_parameter_kinds
-0x53ee0	label	scpi_kinds_query_IPSU_1_converters	dump-scpi	the kinds of parameter 1 of :IPSU's query handler, its converters	void *[6]
 0x53ef8	label	scpi_kinds_query_RTCM_1	dump-scpi	the kinds of parameter 1 of :RTCM's query handler	scpi_parameter_kinds
-0x53f04	label	scpi_kinds_query_RTCM_1_converters	dump-scpi	the kinds of parameter 1 of :RTCM's query handler, its converters	void *[6]
 0x53f1c	label	scpi_kinds_query_REQU_1	dump-scpi	the kinds of parameter 1 of :REQU's query handler	scpi_parameter_kinds
-0x53f28	label	scpi_kinds_query_REQU_1_converters	dump-scpi	the kinds of parameter 1 of :REQU's query handler, its converters	void *[6]
 0x53f40	label	scpi_kinds_query_CEQU_1	dump-scpi	the kinds of parameter 1 of :CEQU's query handler	scpi_parameter_kinds
-0x53f4c	label	scpi_kinds_query_CEQU_1_converters	dump-scpi	the kinds of parameter 1 of :CEQU's query handler, its converters	void *[6]
 0x53f64	label	scpi_kinds_query_CALA_1	dump-scpi	the kinds of parameter 1 of :CALA's query handler	scpi_parameter_kinds
-0x53f70	label	scpi_kinds_query_CALA_1_converters	dump-scpi	the kinds of parameter 1 of :CALA's query handler, its converters	void *[6]
 0x53f88	label	scpi_kinds_query_RAST_1	dump-scpi	the kinds of parameter 1 of :RAST's query handler	scpi_parameter_kinds
-0x53f94	label	scpi_kinds_query_RAST_1_converters	dump-scpi	the kinds of parameter 1 of :RAST's query handler, its converters	void *[6]
 0x53fac	label	scpi_kinds_query_RSSU_1	dump-scpi	the kinds of parameter 1 of :RSSU's query handler	scpi_parameter_kinds
-0x53fb8	label	scpi_kinds_query_RSSU_1_converters	dump-scpi	the kinds of parameter 1 of :RSSU's query handler, its converters	void *[6]
 0x53fd0	label	scpi_kinds_query_RAT3_2	dump-scpi	the kinds of parameter 2 of :RAT3's query handler	scpi_parameter_kinds
-0x53fdc	label	scpi_kinds_query_RAT3_2_converters	dump-scpi	the kinds of parameter 2 of :RAT3's query handler, its converters	void *[6]
 0x53ff4	label	scpi_kinds_query_RAT3_1	dump-scpi	the kinds of parameter 1 of :RAT3's query handler	scpi_parameter_kinds
-0x54000	label	scpi_kinds_query_RAT3_1_converters	dump-scpi	the kinds of parameter 1 of :RAT3's query handler, its converters	void *[6]
 0x54018	label	scpi_kinds_query_RAT2_2	dump-scpi	the kinds of parameter 2 of :RAT2's query handler	scpi_parameter_kinds
-0x54024	label	scpi_kinds_query_RAT2_2_converters	dump-scpi	the kinds of parameter 2 of :RAT2's query handler, its converters	void *[6]
 0x5403c	label	scpi_kinds_query_RAT2_1	dump-scpi	the kinds of parameter 1 of :RAT2's query handler	scpi_parameter_kinds
-0x54048	label	scpi_kinds_query_RAT2_1_converters	dump-scpi	the kinds of parameter 1 of :RAT2's query handler, its converters	void *[6]
 0x54060	label	scpi_kinds_query_RAT1_2	dump-scpi	the kinds of parameter 2 of :RAT1's query handler	scpi_parameter_kinds
-0x5406c	label	scpi_kinds_query_RAT1_2_converters	dump-scpi	the kinds of parameter 2 of :RAT1's query handler, its converters	void *[6]
 0x54084	label	scpi_kinds_query_RAT1_1	dump-scpi	the kinds of parameter 1 of :RAT1's query handler	scpi_parameter_kinds
-0x54090	label	scpi_kinds_query_RAT1_1_converters	dump-scpi	the kinds of parameter 1 of :RAT1's query handler, its converters	void *[6]
 0x540a8	label	scpi_kinds_query_REAL_2	dump-scpi	the kinds of parameter 2 of :REAL's query handler	scpi_parameter_kinds
-0x540b4	label	scpi_kinds_query_REAL_2_converters	dump-scpi	the kinds of parameter 2 of :REAL's query handler, its converters	void *[6]
 0x540cc	label	scpi_kinds_query_REAL_1	dump-scpi	the kinds of parameter 1 of :REAL's query handler	scpi_parameter_kinds
-0x540d8	label	scpi_kinds_query_REAL_1_converters	dump-scpi	the kinds of parameter 1 of :REAL's query handler, its converters	void *[6]
 0x540f0	label	scpi_kinds_query_RFOU_2	dump-scpi	the kinds of parameter 2 of :RFOU's query handler	scpi_parameter_kinds
-0x540fc	label	scpi_kinds_query_RFOU_2_converters	dump-scpi	the kinds of parameter 2 of :RFOU's query handler, its converters	void *[6]
 0x54114	label	scpi_kinds_query_RFOU_1	dump-scpi	the kinds of parameter 1 of :RFOU's query handler	scpi_parameter_kinds
-0x54120	label	scpi_kinds_query_RFOU_1_converters	dump-scpi	the kinds of parameter 1 of :RFOU's query handler, its converters	void *[6]
 0x54138	label	scpi_kinds_query_RACD_2	dump-scpi	the kinds of parameter 2 of :RACD's query handler	scpi_parameter_kinds
-0x54144	label	scpi_kinds_query_RACD_2_converters	dump-scpi	the kinds of parameter 2 of :RACD's query handler, its converters	void *[6]
 0x5415c	label	scpi_kinds_query_RACD_1	dump-scpi	the kinds of parameter 1 of :RACD's query handler	scpi_parameter_kinds
-0x54168	label	scpi_kinds_query_RACD_1_converters	dump-scpi	the kinds of parameter 1 of :RACD's query handler, its converters	void *[6]
 0x54180	label	scpi_kinds_query_R1PO_2	dump-scpi	the kinds of parameter 2 of :R1PO's query handler	scpi_parameter_kinds
-0x5418c	label	scpi_kinds_query_R1PO_2_converters	dump-scpi	the kinds of parameter 2 of :R1PO's query handler, its converters	void *[6]
 0x541a4	label	scpi_kinds_query_R1PO_1	dump-scpi	the kinds of parameter 1 of :R1PO's query handler	scpi_parameter_kinds
-0x541b0	label	scpi_kinds_query_R1PO_1_converters	dump-scpi	the kinds of parameter 1 of :R1PO's query handler, its converters	void *[6]
 0x541c8	label	scpi_kinds_query_RLOC_10	dump-scpi	the kinds of parameter 10 of :RLOC's query handler	scpi_parameter_kinds
-0x541d4	label	scpi_kinds_query_RLOC_10_converters	dump-scpi	the kinds of parameter 10 of :RLOC's query handler, its converters	void *[6]
 0x541ec	label	scpi_kinds_query_RLOC_9	dump-scpi	the kinds of parameter 9 of :RLOC's query handler	scpi_parameter_kinds
-0x541f8	label	scpi_kinds_query_RLOC_9_converters	dump-scpi	the kinds of parameter 9 of :RLOC's query handler, its converters	void *[6]
 0x54210	label	scpi_kinds_query_RLOC_8	dump-scpi	the kinds of parameter 8 of :RLOC's query handler	scpi_parameter_kinds
-0x5421c	label	scpi_kinds_query_RLOC_8_converters	dump-scpi	the kinds of parameter 8 of :RLOC's query handler, its converters	void *[6]
 0x54234	label	scpi_kinds_query_RLOC_7	dump-scpi	the kinds of parameter 7 of :RLOC's query handler	scpi_parameter_kinds
-0x54240	label	scpi_kinds_query_RLOC_7_converters	dump-scpi	the kinds of parameter 7 of :RLOC's query handler, its converters	void *[6]
 0x54258	label	scpi_kinds_query_RLOC_6	dump-scpi	the kinds of parameter 6 of :RLOC's query handler	scpi_parameter_kinds
-0x54264	label	scpi_kinds_query_RLOC_6_converters	dump-scpi	the kinds of parameter 6 of :RLOC's query handler, its converters	void *[6]
 0x5427c	label	scpi_kinds_query_RLOC_5	dump-scpi	the kinds of parameter 5 of :RLOC's query handler	scpi_parameter_kinds
-0x54288	label	scpi_kinds_query_RLOC_5_converters	dump-scpi	the kinds of parameter 5 of :RLOC's query handler, its converters	void *[6]
 0x542a0	label	scpi_kinds_query_RLOC_4	dump-scpi	the kinds of parameter 4 of :RLOC's query handler	scpi_parameter_kinds
-0x542ac	label	scpi_kinds_query_RLOC_4_converters	dump-scpi	the kinds of parameter 4 of :RLOC's query handler, its converters	void *[6]
 0x542c4	label	scpi_kinds_query_RLOC_3	dump-scpi	the kinds of parameter 3 of :RLOC's query handler	scpi_parameter_kinds
-0x542d0	label	scpi_kinds_query_RLOC_3_converters	dump-scpi	the kinds of parameter 3 of :RLOC's query handler, its converters	void *[6]
 0x542e8	label	scpi_kinds_query_RLOC_2	dump-scpi	the kinds of parameter 2 of :RLOC's query handler	scpi_parameter_kinds
-0x542f4	label	scpi_kinds_query_RLOC_2_converters	dump-scpi	the kinds of parameter 2 of :RLOC's query handler, its converters	void *[6]
 0x5430c	label	scpi_kinds_query_RLOC_1	dump-scpi	the kinds of parameter 1 of :RLOC's query handler	scpi_parameter_kinds
-0x54318	label	scpi_kinds_query_RLOC_1_converters	dump-scpi	the kinds of parameter 1 of :RLOC's query handler, its converters	void *[6]
 0x54330	label	scpi_kinds_query_RTZO_3	dump-scpi	the kinds of parameter 3 of :RTZO's query handler	scpi_parameter_kinds
-0x5433c	label	scpi_kinds_query_RTZO_3_converters	dump-scpi	the kinds of parameter 3 of :RTZO's query handler, its converters	void *[6]
 0x54354	label	scpi_kinds_query_RTZO_2	dump-scpi	the kinds of parameter 2 of :RTZO's query handler	scpi_parameter_kinds
-0x54360	label	scpi_kinds_query_RTZO_2_converters	dump-scpi	the kinds of parameter 2 of :RTZO's query handler, its converters	void *[6]
 0x54378	label	scpi_kinds_query_RTZO_1	dump-scpi	the kinds of parameter 1 of :RTZO's query handler	scpi_parameter_kinds
-0x54384	label	scpi_kinds_query_RTZO_1_converters	dump-scpi	the kinds of parameter 1 of :RTZO's query handler, its converters	void *[6]
 0x5439c	label	scpi_kinds_query_RTAD_1	dump-scpi	the kinds of parameter 1 of :RTAD's query handler	scpi_parameter_kinds
-0x543a8	label	scpi_kinds_query_RTAD_1_converters	dump-scpi	the kinds of parameter 1 of :RTAD's query handler, its converters	void *[6]
 0x543c0	label	scpi_kinds_query_RWHO_1	dump-scpi	the kinds of parameter 1 of :RWHO's query handler	scpi_parameter_kinds
-0x543cc	label	scpi_kinds_query_RWHO_1_converters	dump-scpi	the kinds of parameter 1 of :RWHO's query handler, its converters	void *[6]
 0x543e4	label	scpi_kinds_query_ROBin_TSTamp_2	dump-scpi	the kinds of parameter 2 of :ROBin:TSTamp's query handler	scpi_parameter_kinds
-0x543f0	label	scpi_kinds_query_ROBin_TSTamp_2_converters	dump-scpi	the kinds of parameter 2 of :ROBin:TSTamp's query handler, its converters	void *[6]
 0x54408	label	scpi_kinds_query_ROBin_TSTamp_1	dump-scpi	the kinds of parameter 1 of :ROBin:TSTamp's query handler	scpi_parameter_kinds
-0x54414	label	scpi_kinds_query_ROBin_TSTamp_1_converters	dump-scpi	the kinds of parameter 1 of :ROBin:TSTamp's query handler, its converters	void *[6]
 0x5442c	label	scpi_kinds_query_ROBin_POINts_1	dump-scpi	the kinds of parameter 1 of :ROBin:POINts's query handler	scpi_parameter_kinds
-0x54438	label	scpi_kinds_query_ROBin_POINts_1_converters	dump-scpi	the kinds of parameter 1 of :ROBin:POINts's query handler, its converters	void *[6]
 0x54450	label	scpi_kinds_set_ROBin_MEMory_SAVE_1	dump-scpi	the kinds of parameter 1 of :ROBin:MEMory:SAVE's set handler	scpi_parameter_kinds
-0x5445c	label	scpi_kinds_set_ROBin_MEMory_SAVE_1_converters	dump-scpi	the kinds of parameter 1 of :ROBin:MEMory:SAVE's set handler, its converters	void *[6]
 0x54474	label	scpi_kinds_query_ROBin_MEMory_OVERflow_COUNt_1	dump-scpi	the kinds of parameter 1 of :ROBin:MEMory:OVERflow:COUNt's query handler	scpi_parameter_kinds
-0x54480	label	scpi_kinds_query_ROBin_MEMory_OVERflow_COUNt_1_converters	dump-scpi	the kinds of parameter 1 of :ROBin:MEMory:OVERflow:COUNt's query handler, its converters	void *[6]
 0x54498	label	scpi_kinds_set_ROBin_CLEar_1	dump-scpi	the kinds of parameter 1 of :ROBin:CLEar's set handler	scpi_parameter_kinds
-0x544a4	label	scpi_kinds_set_ROBin_CLEar_1_converters	dump-scpi	the kinds of parameter 1 of :ROBin:CLEar's set handler, its converters	void *[6]
 0x544bc	label	scpi_kinds_query_ROBin_1	dump-scpi	the kinds of parameter 1 of :ROBin's query handler	scpi_parameter_kinds
-0x544c8	label	scpi_kinds_query_ROBin_1_converters	dump-scpi	the kinds of parameter 1 of :ROBin's query handler, its converters	void *[6]
 0x544e0	label	scpi_kinds_set_GARY_WRITe_1	dump-scpi	the kinds of parameter 1 of :GARY:WRITe's set handler	scpi_parameter_kinds
-0x544ec	label	scpi_kinds_set_GARY_WRITe_1_converters	dump-scpi	the kinds of parameter 1 of :GARY:WRITe's set handler, its converters	void *[6]
 0x54504	label	scpi_kinds_query_GARY_READ_1	dump-scpi	the kinds of parameter 1 of :GARY:READ's query handler	scpi_parameter_kinds
-0x54510	label	scpi_kinds_query_GARY_READ_1_converters	dump-scpi	the kinds of parameter 1 of :GARY:READ's query handler, its converters	void *[6]
 0x54528	label	scpi_kinds_set_GARY_CLEar_1	dump-scpi	the kinds of parameter 1 of :GARY:CLEar's set handler	scpi_parameter_kinds
-0x54534	label	scpi_kinds_set_GARY_CLEar_1_converters	dump-scpi	the kinds of parameter 1 of :GARY:CLEar's set handler, its converters	void *[6]
 0x5454c	label	scpi_kinds_set_DOUGlas_STATe_POWerup_1	dump-scpi	the kinds of parameter 1 of :DOUGlas:STATe:POWerup's set handler	scpi_parameter_kinds
-0x54558	label	scpi_kinds_set_DOUGlas_STATe_POWerup_1_converters	dump-scpi	the kinds of parameter 1 of :DOUGlas:STATe:POWerup's set handler, its converters	void *[6]
 0x54570	label	scpi_kinds_set_DOUGlas_STATe_1	dump-scpi	the kinds of parameter 1 of :DOUGlas:STATe's set handler	scpi_parameter_kinds
-0x5457c	label	scpi_kinds_set_DOUGlas_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :DOUGlas:STATe's set handler, its converters	void *[6]
 0x54594	label	scpi_kinds_set_DOUGlas_DURation_1	dump-scpi	the kinds of parameter 1 of :DOUGlas:DURation's set handler	scpi_parameter_kinds
-0x545a0	label	scpi_kinds_set_DOUGlas_DURation_1_converters	dump-scpi	the kinds of parameter 1 of :DOUGlas:DURation's set handler, its converters	void *[6]
 0x545b8	label	scpi_kinds_set_SAMPle_TARR_1	dump-scpi	the kinds of parameter 1 of :SAMPle:TARR's set handler	scpi_parameter_kinds
-0x545c4	label	scpi_kinds_set_SAMPle_TARR_1_converters	dump-scpi	the kinds of parameter 1 of :SAMPle:TARR's set handler, its converters	void *[6]
 0x545dc	label	scpi_kinds_set_SAMPle_TOGGle_1	dump-scpi	the kinds of parameter 1 of :SAMPle:TOGGle's set handler	scpi_parameter_kinds
-0x545e8	label	scpi_kinds_set_SAMPle_TOGGle_1_converters	dump-scpi	the kinds of parameter 1 of :SAMPle:TOGGle's set handler, its converters	void *[6]
 0x54600	label	scpi_kinds_set_SAMPle_BARR_1	dump-scpi	the kinds of parameter 1 of :SAMPle:BARR's set handler	scpi_parameter_kinds
-0x5460c	label	scpi_kinds_set_SAMPle_BARR_1_converters	dump-scpi	the kinds of parameter 1 of :SAMPle:BARR's set handler, its converters	void *[6]
 0x54624	label	scpi_kinds_set_SAMPle_BOOLean_1	dump-scpi	the kinds of parameter 1 of :SAMPle:BOOLean's set handler	scpi_parameter_kinds
-0x54630	label	scpi_kinds_set_SAMPle_BOOLean_1_converters	dump-scpi	the kinds of parameter 1 of :SAMPle:BOOLean's set handler, its converters	void *[6]
 0x54648	label	scpi_kinds_set_SYSTem_LANGuage_1	dump-scpi	the kinds of parameter 1 of :SYSTem:LANGuage's set handler	scpi_parameter_kinds
-0x54654	label	scpi_kinds_set_SYSTem_LANGuage_1_converters	dump-scpi	the kinds of parameter 1 of :SYSTem:LANGuage's set handler, its converters	void *[6]
 0x5466c	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_SBITs_1	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:SBITs's set handler	scpi_parameter_kinds
-0x54678	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_SBITs_1_converters	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:SBITs's set handler, its converters	void *[6]
 0x54690	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE_1	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:PARity:TYPE's set handler	scpi_parameter_kinds
-0x5469c	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE_1_converters	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:PARity:TYPE's set handler, its converters	void *[6]
 0x546b4	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_PACE_1	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:PACE's set handler	scpi_parameter_kinds
-0x546c0	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_PACE_1_converters	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:PACE's set handler, its converters	void *[6]
 0x546d8	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_BITS_1	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:BITS's set handler	scpi_parameter_kinds
-0x546e4	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_BITS_1_converters	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:BITS's set handler, its converters	void *[6]
 0x546fc	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_BAUD_1	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:BAUD's set handler	scpi_parameter_kinds
-0x54708	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_BAUD_1_converters	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:RECeive:BAUD's set handler, its converters	void *[6]
 0x54720	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_PROMpt_1	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:PROMpt's set handler	scpi_parameter_kinds
-0x5472c	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_PROMpt_1_converters	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:PROMpt's set handler, its converters	void *[6]
 0x54744	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_FDUPlex_1	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:FDUPlex's set handler	scpi_parameter_kinds
-0x54750	label	scpi_kinds_set_SYSTem_COMMunicate_SER1_FDUPlex_1_converters	dump-scpi	the kinds of parameter 1 of :SYSTem:COMMunicate:SER1:FDUPlex's set handler, its converters	void *[6]
 0x54768	label	scpi_kinds_set_STATus_QUEStionable_CONDition_USER_1	dump-scpi	the kinds of parameter 1 of :STATus:QUEStionable:CONDition:USER's set handler	scpi_parameter_kinds
-0x54774	label	scpi_kinds_set_STATus_QUEStionable_CONDition_USER_1_converters	dump-scpi	the kinds of parameter 1 of :STATus:QUEStionable:CONDition:USER's set handler, its converters	void *[6]
 0x5478c	label	scpi_kinds_set_STATus_QUEStionable_EVENt_USER_1	dump-scpi	the kinds of parameter 1 of :STATus:QUEStionable:EVENt:USER's set handler	scpi_parameter_kinds
-0x54798	label	scpi_kinds_set_STATus_QUEStionable_EVENt_USER_1_converters	dump-scpi	the kinds of parameter 1 of :STATus:QUEStionable:EVENt:USER's set handler, its converters	void *[6]
 0x547b0	label	scpi_kinds_set_SOURce_SYNChronization_HOLDover_RECovery_AUTO_1	dump-scpi	the kinds of parameter 1 of :SOURce:SYNChronization:HOLDover:RECovery:AUTO's set handler	scpi_parameter_kinds
-0x547bc	label	scpi_kinds_set_SOURce_SYNChronization_HOLDover_RECovery_AUTO_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:SYNChronization:HOLDover:RECovery:AUTO's set handler, its converters	void *[6]
 0x547d4	label	scpi_kinds_set_SOURce_SYNChronization_HOLDover_LIMit_STATe_1	dump-scpi	the kinds of parameter 1 of :SOURce:SYNChronization:HOLDover:LIMit:STATe's set handler	scpi_parameter_kinds
-0x547e0	label	scpi_kinds_set_SOURce_SYNChronization_HOLDover_LIMit_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:SYNChronization:HOLDover:LIMit:STATe's set handler, its converters	void *[6]
 0x547f8	label	scpi_kinds_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO_1	dump-scpi	the kinds of parameter 1 of :SOURce:ROSCillator:HOLDover:RECovery:AUTO's set handler	scpi_parameter_kinds
-0x54804	label	scpi_kinds_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:ROSCillator:HOLDover:RECovery:AUTO's set handler, its converters	void *[6]
 0x5481c	label	scpi_kinds_set_SOURce_ROSCillator_HOLDover_LIMit_STATe_1	dump-scpi	the kinds of parameter 1 of :SOURce:ROSCillator:HOLDover:LIMit:STATe's set handler	scpi_parameter_kinds
-0x54828	label	scpi_kinds_set_SOURce_ROSCillator_HOLDover_LIMit_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:ROSCillator:HOLDover:LIMit:STATe's set handler, its converters	void *[6]
 0x54840	label	scpi_kinds_set_SOURce_PULSe_STARt_TIME_1	dump-scpi	the kinds of parameter 1 of :SOURce:PULSe:STARt:TIME's set handler	scpi_parameter_kinds
-0x5484c	label	scpi_kinds_set_SOURce_PULSe_STARt_TIME_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PULSe:STARt:TIME's set handler, its converters	void *[6]
 0x54864	label	scpi_kinds_set_SOURce_PULSe_STARt_DATE_1	dump-scpi	the kinds of parameter 1 of :SOURce:PULSe:STARt:DATE's set handler	scpi_parameter_kinds
-0x54870	label	scpi_kinds_set_SOURce_PULSe_STARt_DATE_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PULSe:STARt:DATE's set handler, its converters	void *[6]
 0x54888	label	scpi_kinds_set_SOURce_PULSe_REFerence_EDGE_1	dump-scpi	the kinds of parameter 1 of :SOURce:PULSe:REFerence:EDGE's set handler	scpi_parameter_kinds
-0x54894	label	scpi_kinds_set_SOURce_PULSe_REFerence_EDGE_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PULSe:REFerence:EDGE's set handler, its converters	void *[6]
 0x548ac	label	scpi_kinds_set_SOURce_PULSe_CONTinuous_STATe_1	dump-scpi	the kinds of parameter 1 of :SOURce:PULSe:CONTinuous:STATe's set handler	scpi_parameter_kinds
-0x548b8	label	scpi_kinds_set_SOURce_PULSe_CONTinuous_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PULSe:CONTinuous:STATe's set handler, its converters	void *[6]
 0x548d0	label	scpi_kinds_set_SOURce_PTIMe_TZONe_2	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:TZONe's set handler	scpi_parameter_kinds
-0x548dc	label	scpi_kinds_set_SOURce_PTIMe_TZONe_2_converters	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:TZONe's set handler, its converters	void *[6]
 0x548f4	label	scpi_kinds_set_SOURce_PTIMe_TZONe_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:TZONe's set handler	scpi_parameter_kinds
-0x54900	label	scpi_kinds_set_SOURce_PTIMe_TZONe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:TZONe's set handler, its converters	void *[6]
 0x54918	label	scpi_kinds_set_SOURce_PTIMe_TCODe_FORMat_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:TCODe:FORMat's set handler	scpi_parameter_kinds
-0x54924	label	scpi_kinds_set_SOURce_PTIMe_TCODe_FORMat_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:TCODe:FORMat's set handler, its converters	void *[6]
 0x5493c	label	scpi_kinds_set_SOURce_PTIMe_PPS_EDGE_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:PPS:EDGE's set handler	scpi_parameter_kinds
-0x54948	label	scpi_kinds_set_SOURce_PTIMe_PPS_EDGE_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:PPS:EDGE's set handler, its converters	void *[6]
 0x54960	label	scpi_kinds_query_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_STATe_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:INCLude:STATe's query handler	scpi_parameter_kinds
-0x5496c	label	scpi_kinds_query_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:INCLude:STATe's query handler, its converters	void *[6]
 0x54984	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_2	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:INCLude's set handler	scpi_parameter_kinds
-0x54990	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_2_converters	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:INCLude's set handler, its converters	void *[6]
 0x549a8	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:INCLude's set handler	scpi_parameter_kinds
-0x549b4	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:INCLude's set handler, its converters	void *[6]
 0x549cc	label	scpi_kinds_query_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_STATe_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:IGNore:STATe's query handler	scpi_parameter_kinds
-0x549d8	label	scpi_kinds_query_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:IGNore:STATe's query handler, its converters	void *[6]
 0x549f0	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_2	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:IGNore's set handler	scpi_parameter_kinds
-0x549fc	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_2_converters	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:IGNore's set handler, its converters	void *[6]
 0x54a14	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:IGNore's set handler	scpi_parameter_kinds
-0x54a20	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:SATellite:TRACking:IGNore's set handler, its converters	void *[6]
 0x54a38	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_POWerup_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:POSition:SURVey:STATe:POWerup's set handler	scpi_parameter_kinds
-0x54a44	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_POWerup_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:POSition:SURVey:STATe:POWerup's set handler, its converters	void *[6]
 0x54a5c	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:POSition:SURVey:STATe's set handler	scpi_parameter_kinds
-0x54a68	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:POSition:SURVey:STATe's set handler, its converters	void *[6]
 0x54a80	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_SURVey_DURation_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:POSition:SURVey:DURation's set handler	scpi_parameter_kinds
-0x54a8c	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_SURVey_DURation_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:POSition:SURVey:DURation's set handler, its converters	void *[6]
 0x54aa4	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_9	dump-scpi	the kinds of parameter 9 of :SOURce:PTIMe:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54ab0	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_9_converters	dump-scpi	the kinds of parameter 9 of :SOURce:PTIMe:GPSystem:POSition's set handler, its converters	void *[6]
 0x54ac8	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_8	dump-scpi	the kinds of parameter 8 of :SOURce:PTIMe:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54ad4	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_8_converters	dump-scpi	the kinds of parameter 8 of :SOURce:PTIMe:GPSystem:POSition's set handler, its converters	void *[6]
 0x54aec	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_7	dump-scpi	the kinds of parameter 7 of :SOURce:PTIMe:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54af8	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_7_converters	dump-scpi	the kinds of parameter 7 of :SOURce:PTIMe:GPSystem:POSition's set handler, its converters	void *[6]
 0x54b10	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_6	dump-scpi	the kinds of parameter 6 of :SOURce:PTIMe:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54b1c	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_6_converters	dump-scpi	the kinds of parameter 6 of :SOURce:PTIMe:GPSystem:POSition's set handler, its converters	void *[6]
 0x54b34	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_5	dump-scpi	the kinds of parameter 5 of :SOURce:PTIMe:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54b40	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_5_converters	dump-scpi	the kinds of parameter 5 of :SOURce:PTIMe:GPSystem:POSition's set handler, its converters	void *[6]
 0x54b58	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_4	dump-scpi	the kinds of parameter 4 of :SOURce:PTIMe:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54b64	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_4_converters	dump-scpi	the kinds of parameter 4 of :SOURce:PTIMe:GPSystem:POSition's set handler, its converters	void *[6]
 0x54b7c	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_3	dump-scpi	the kinds of parameter 3 of :SOURce:PTIMe:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54b88	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_3_converters	dump-scpi	the kinds of parameter 3 of :SOURce:PTIMe:GPSystem:POSition's set handler, its converters	void *[6]
 0x54ba0	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_2	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54bac	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_2_converters	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:GPSystem:POSition's set handler, its converters	void *[6]
 0x54bc4	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54bd0	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:POSition's set handler, its converters	void *[6]
 0x54be8	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_9	dump-scpi	the kinds of parameter 9 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x54bf4	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_9_converters	dump-scpi	the kinds of parameter 9 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x54c0c	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_8	dump-scpi	the kinds of parameter 8 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x54c18	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_8_converters	dump-scpi	the kinds of parameter 8 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x54c30	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_7	dump-scpi	the kinds of parameter 7 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x54c3c	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_7_converters	dump-scpi	the kinds of parameter 7 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x54c54	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_6	dump-scpi	the kinds of parameter 6 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x54c60	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_6_converters	dump-scpi	the kinds of parameter 6 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x54c78	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_5	dump-scpi	the kinds of parameter 5 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x54c84	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_5_converters	dump-scpi	the kinds of parameter 5 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x54c9c	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_4	dump-scpi	the kinds of parameter 4 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x54ca8	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_4_converters	dump-scpi	the kinds of parameter 4 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x54cc0	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_3	dump-scpi	the kinds of parameter 3 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x54ccc	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_3_converters	dump-scpi	the kinds of parameter 3 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x54ce4	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_2	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x54cf0	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_2_converters	dump-scpi	the kinds of parameter 2 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x54d08	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x54d14	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x54d2c	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_TIME_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:INITial:TIME's set handler	scpi_parameter_kinds
-0x54d38	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_TIME_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:INITial:TIME's set handler, its converters	void *[6]
 0x54d50	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_DATE_1	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:INITial:DATE's set handler	scpi_parameter_kinds
-0x54d5c	label	scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_DATE_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:PTIMe:GPSystem:INITial:DATE's set handler, its converters	void *[6]
 0x54d74	label	scpi_kinds_query_SOURce_GPSystem_SATellite_TRACking_INCLude_STATe_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:SATellite:TRACking:INCLude:STATe's query handler	scpi_parameter_kinds
-0x54d80	label	scpi_kinds_query_SOURce_GPSystem_SATellite_TRACking_INCLude_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:SATellite:TRACking:INCLude:STATe's query handler, its converters	void *[6]
 0x54d98	label	scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_INCLude_2	dump-scpi	the kinds of parameter 2 of :SOURce:GPSystem:SATellite:TRACking:INCLude's set handler	scpi_parameter_kinds
-0x54da4	label	scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_INCLude_2_converters	dump-scpi	the kinds of parameter 2 of :SOURce:GPSystem:SATellite:TRACking:INCLude's set handler, its converters	void *[6]
 0x54dbc	label	scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_INCLude_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:SATellite:TRACking:INCLude's set handler	scpi_parameter_kinds
-0x54dc8	label	scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_INCLude_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:SATellite:TRACking:INCLude's set handler, its converters	void *[6]
 0x54de0	label	scpi_kinds_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:SATellite:TRACking:IGNore:STATe's query handler	scpi_parameter_kinds
-0x54dec	label	scpi_kinds_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:SATellite:TRACking:IGNore:STATe's query handler, its converters	void *[6]
 0x54e04	label	scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_IGNore_2	dump-scpi	the kinds of parameter 2 of :SOURce:GPSystem:SATellite:TRACking:IGNore's set handler	scpi_parameter_kinds
-0x54e10	label	scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_IGNore_2_converters	dump-scpi	the kinds of parameter 2 of :SOURce:GPSystem:SATellite:TRACking:IGNore's set handler, its converters	void *[6]
 0x54e28	label	scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_IGNore_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:SATellite:TRACking:IGNore's set handler	scpi_parameter_kinds
-0x54e34	label	scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_IGNore_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:SATellite:TRACking:IGNore's set handler, its converters	void *[6]
 0x54e4c	label	scpi_kinds_set_SOURce_GPSystem_POSition_SURVey_STATe_POWerup_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:POSition:SURVey:STATe:POWerup's set handler	scpi_parameter_kinds
-0x54e58	label	scpi_kinds_set_SOURce_GPSystem_POSition_SURVey_STATe_POWerup_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:POSition:SURVey:STATe:POWerup's set handler, its converters	void *[6]
 0x54e70	label	scpi_kinds_set_SOURce_GPSystem_POSition_SURVey_STATe_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:POSition:SURVey:STATe's set handler	scpi_parameter_kinds
-0x54e7c	label	scpi_kinds_set_SOURce_GPSystem_POSition_SURVey_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:POSition:SURVey:STATe's set handler, its converters	void *[6]
 0x54e94	label	scpi_kinds_set_SOURce_GPSystem_POSition_SURVey_DURation_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:POSition:SURVey:DURation's set handler	scpi_parameter_kinds
-0x54ea0	label	scpi_kinds_set_SOURce_GPSystem_POSition_SURVey_DURation_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:POSition:SURVey:DURation's set handler, its converters	void *[6]
 0x54eb8	label	scpi_kinds_set_SOURce_GPSystem_POSition_9	dump-scpi	the kinds of parameter 9 of :SOURce:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54ec4	label	scpi_kinds_set_SOURce_GPSystem_POSition_9_converters	dump-scpi	the kinds of parameter 9 of :SOURce:GPSystem:POSition's set handler, its converters	void *[6]
 0x54edc	label	scpi_kinds_set_SOURce_GPSystem_POSition_8	dump-scpi	the kinds of parameter 8 of :SOURce:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54ee8	label	scpi_kinds_set_SOURce_GPSystem_POSition_8_converters	dump-scpi	the kinds of parameter 8 of :SOURce:GPSystem:POSition's set handler, its converters	void *[6]
 0x54f00	label	scpi_kinds_set_SOURce_GPSystem_POSition_7	dump-scpi	the kinds of parameter 7 of :SOURce:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54f0c	label	scpi_kinds_set_SOURce_GPSystem_POSition_7_converters	dump-scpi	the kinds of parameter 7 of :SOURce:GPSystem:POSition's set handler, its converters	void *[6]
 0x54f24	label	scpi_kinds_set_SOURce_GPSystem_POSition_6	dump-scpi	the kinds of parameter 6 of :SOURce:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54f30	label	scpi_kinds_set_SOURce_GPSystem_POSition_6_converters	dump-scpi	the kinds of parameter 6 of :SOURce:GPSystem:POSition's set handler, its converters	void *[6]
 0x54f48	label	scpi_kinds_set_SOURce_GPSystem_POSition_5	dump-scpi	the kinds of parameter 5 of :SOURce:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54f54	label	scpi_kinds_set_SOURce_GPSystem_POSition_5_converters	dump-scpi	the kinds of parameter 5 of :SOURce:GPSystem:POSition's set handler, its converters	void *[6]
 0x54f6c	label	scpi_kinds_set_SOURce_GPSystem_POSition_4	dump-scpi	the kinds of parameter 4 of :SOURce:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54f78	label	scpi_kinds_set_SOURce_GPSystem_POSition_4_converters	dump-scpi	the kinds of parameter 4 of :SOURce:GPSystem:POSition's set handler, its converters	void *[6]
 0x54f90	label	scpi_kinds_set_SOURce_GPSystem_POSition_3	dump-scpi	the kinds of parameter 3 of :SOURce:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54f9c	label	scpi_kinds_set_SOURce_GPSystem_POSition_3_converters	dump-scpi	the kinds of parameter 3 of :SOURce:GPSystem:POSition's set handler, its converters	void *[6]
 0x54fb4	label	scpi_kinds_set_SOURce_GPSystem_POSition_2	dump-scpi	the kinds of parameter 2 of :SOURce:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54fc0	label	scpi_kinds_set_SOURce_GPSystem_POSition_2_converters	dump-scpi	the kinds of parameter 2 of :SOURce:GPSystem:POSition's set handler, its converters	void *[6]
 0x54fd8	label	scpi_kinds_set_SOURce_GPSystem_POSition_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:POSition's set handler	scpi_parameter_kinds
-0x54fe4	label	scpi_kinds_set_SOURce_GPSystem_POSition_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:POSition's set handler, its converters	void *[6]
 0x54ffc	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_9	dump-scpi	the kinds of parameter 9 of :SOURce:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x55008	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_9_converters	dump-scpi	the kinds of parameter 9 of :SOURce:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x55020	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_8	dump-scpi	the kinds of parameter 8 of :SOURce:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x5502c	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_8_converters	dump-scpi	the kinds of parameter 8 of :SOURce:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x55044	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_7	dump-scpi	the kinds of parameter 7 of :SOURce:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x55050	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_7_converters	dump-scpi	the kinds of parameter 7 of :SOURce:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x55068	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_6	dump-scpi	the kinds of parameter 6 of :SOURce:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x55074	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_6_converters	dump-scpi	the kinds of parameter 6 of :SOURce:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x5508c	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_5	dump-scpi	the kinds of parameter 5 of :SOURce:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x55098	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_5_converters	dump-scpi	the kinds of parameter 5 of :SOURce:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x550b0	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_4	dump-scpi	the kinds of parameter 4 of :SOURce:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x550bc	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_4_converters	dump-scpi	the kinds of parameter 4 of :SOURce:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x550d4	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_3	dump-scpi	the kinds of parameter 3 of :SOURce:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x550e0	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_3_converters	dump-scpi	the kinds of parameter 3 of :SOURce:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x550f8	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_2	dump-scpi	the kinds of parameter 2 of :SOURce:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x55104	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_2_converters	dump-scpi	the kinds of parameter 2 of :SOURce:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x5511c	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:INITial:POSition's set handler	scpi_parameter_kinds
-0x55128	label	scpi_kinds_set_SOURce_GPSystem_INITial_POSition_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:INITial:POSition's set handler, its converters	void *[6]
 0x55140	label	scpi_kinds_set_SOURce_GPSystem_INITial_TIME_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:INITial:TIME's set handler	scpi_parameter_kinds
-0x5514c	label	scpi_kinds_set_SOURce_GPSystem_INITial_TIME_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:INITial:TIME's set handler, its converters	void *[6]
 0x55164	label	scpi_kinds_set_SOURce_GPSystem_INITial_DATE_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:INITial:DATE's set handler	scpi_parameter_kinds
-0x55170	label	scpi_kinds_set_SOURce_GPSystem_INITial_DATE_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:INITial:DATE's set handler, its converters	void *[6]
 0x55188	label	scpi_kinds_set_SENSe_TST1_EDGE_1	dump-scpi	the kinds of parameter 1 of :SENSe:TST1:EDGE's set handler	scpi_parameter_kinds
-0x55194	label	scpi_kinds_set_SENSe_TST1_EDGE_1_converters	dump-scpi	the kinds of parameter 1 of :SENSe:TST1:EDGE's set handler, its converters	void *[6]
 0x551ac	label	scpi_kinds_query_SENSe_DATA_TSTamp_2	dump-scpi	the kinds of parameter 2 of :SENSe:DATA:TSTamp's query handler	scpi_parameter_kinds
-0x551b8	label	scpi_kinds_query_SENSe_DATA_TSTamp_2_converters	dump-scpi	the kinds of parameter 2 of :SENSe:DATA:TSTamp's query handler, its converters	void *[6]
 0x551d0	label	scpi_kinds_query_SENSe_DATA_TSTamp_1	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:TSTamp's query handler	scpi_parameter_kinds
-0x551dc	label	scpi_kinds_query_SENSe_DATA_TSTamp_1_converters	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:TSTamp's query handler, its converters	void *[6]
 0x551f4	label	scpi_kinds_query_SENSe_DATA_POINts_1	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:POINts's query handler	scpi_parameter_kinds
-0x55200	label	scpi_kinds_query_SENSe_DATA_POINts_1_converters	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:POINts's query handler, its converters	void *[6]
 0x55218	label	scpi_kinds_set_SENSe_DATA_MEMory_SAVE_1	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:MEMory:SAVE's set handler	scpi_parameter_kinds
-0x55224	label	scpi_kinds_set_SENSe_DATA_MEMory_SAVE_1_converters	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:MEMory:SAVE's set handler, its converters	void *[6]
 0x5523c	label	scpi_kinds_query_SENSe_DATA_MEMory_OVERflow_COUNt_1	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:MEMory:OVERflow:COUNt's query handler	scpi_parameter_kinds
-0x55248	label	scpi_kinds_query_SENSe_DATA_MEMory_OVERflow_COUNt_1_converters	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:MEMory:OVERflow:COUNt's query handler, its converters	void *[6]
 0x55260	label	scpi_kinds_set_SENSe_DATA_CLEar_1	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:CLEar's set handler	scpi_parameter_kinds
-0x5526c	label	scpi_kinds_set_SENSe_DATA_CLEar_1_converters	dump-scpi	the kinds of parameter 1 of :SENSe:DATA:CLEar's set handler, its converters	void *[6]
 0x55284	label	scpi_kinds_query_SENSe_DATA_1	dump-scpi	the kinds of parameter 1 of :SENSe:DATA's query handler	scpi_parameter_kinds
-0x55290	label	scpi_kinds_query_SENSe_DATA_1_converters	dump-scpi	the kinds of parameter 1 of :SENSe:DATA's query handler, its converters	void *[6]
 0x552a8	label	scpi_kinds_set_OUTPut_STATe_1	dump-scpi	the kinds of parameter 1 of :OUTPut:STATe's set handler	scpi_parameter_kinds
-0x552b4	label	scpi_kinds_set_OUTPut_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :OUTPut:STATe's set handler, its converters	void *[6]
 0x552cc	label	scpi_kinds_set_OUTPut_PIN1_DELay_ALIGnment_1	dump-scpi	the kinds of parameter 1 of :OUTPut:PIN1:DELay:ALIGnment's set handler	scpi_parameter_kinds
-0x552d8	label	scpi_kinds_set_OUTPut_PIN1_DELay_ALIGnment_1_converters	dump-scpi	the kinds of parameter 1 of :OUTPut:PIN1:DELay:ALIGnment's set handler, its converters	void *[6]
 0x552f0	label	scpi_kinds_set_LED_ENABled_1	dump-scpi	the kinds of parameter 1 of :LED:ENABled's set handler	scpi_parameter_kinds
-0x552fc	label	scpi_kinds_set_LED_ENABled_1_converters	dump-scpi	the kinds of parameter 1 of :LED:ENABled's set handler, its converters	void *[6]
 0x55314	label	scpi_kinds_set_LED_ALARm_USER_1	dump-scpi	the kinds of parameter 1 of :LED:ALARm:USER's set handler	scpi_parameter_kinds
-0x55320	label	scpi_kinds_set_LED_ALARm_USER_1_converters	dump-scpi	the kinds of parameter 1 of :LED:ALARm:USER's set handler, its converters	void *[6]
 0x55338	label	scpi_kinds_set_LED_ACTive_1	dump-scpi	the kinds of parameter 1 of :LED:ACTive's set handler	scpi_parameter_kinds
-0x55344	label	scpi_kinds_set_LED_ACTive_1_converters	dump-scpi	the kinds of parameter 1 of :LED:ACTive's set handler, its converters	void *[6]
 0x5535c	label	scpi_kinds_set_FORMat_DATA_1	dump-scpi	the kinds of parameter 1 of :FORMat:DATA's set handler	scpi_parameter_kinds
-0x55368	label	scpi_kinds_set_FORMat_DATA_1_converters	dump-scpi	the kinds of parameter 1 of :FORMat:DATA's set handler, its converters	void *[6]
 0x55380	label	scpi_kinds_query_DIAGnostic_TEST_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:TEST's query handler	scpi_parameter_kinds
-0x5538c	label	scpi_kinds_query_DIAGnostic_TEST_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:TEST's query handler, its converters	void *[6]
 0x553a4	label	scpi_kinds_set_DIAGnostic_SYSTem_PSTartup_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SYSTem:PSTartup's set handler	scpi_parameter_kinds
-0x553b0	label	scpi_kinds_set_DIAGnostic_SYSTem_PSTartup_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SYSTem:PSTartup's set handler, its converters	void *[6]
 0x553c8	label	scpi_kinds_set_DIAGnostic_SYSTem_DOUTput_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SYSTem:DOUTput's set handler	scpi_parameter_kinds
-0x553d4	label	scpi_kinds_set_DIAGnostic_SYSTem_DOUTput_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SYSTem:DOUTput's set handler, its converters	void *[6]
 0x553ec	label	scpi_kinds_set_DIAGnostic_STATus_HAPPening_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:STATus:HAPPening's set handler	scpi_parameter_kinds
-0x553f8	label	scpi_kinds_set_DIAGnostic_STATus_HAPPening_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:STATus:HAPPening's set handler, its converters	void *[6]
 0x55410	label	scpi_kinds_set_DIAGnostic_STATus_ERRor_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:STATus:ERRor's set handler	scpi_parameter_kinds
-0x5541c	label	scpi_kinds_set_DIAGnostic_STATus_ERRor_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:STATus:ERRor's set handler, its converters	void *[6]
 0x55434	label	scpi_kinds_query_DIAGnostic_SLOG_READ_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SLOG:READ's query handler	scpi_parameter_kinds
-0x55440	label	scpi_kinds_query_DIAGnostic_SLOG_READ_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SLOG:READ's query handler, its converters	void *[6]
 0x55458	label	scpi_kinds_set_DIAGnostic_SER1_EGResponse_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SER1:EGResponse's set handler	scpi_parameter_kinds
-0x55464	label	scpi_kinds_set_DIAGnostic_SER1_EGResponse_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SER1:EGResponse's set handler, its converters	void *[6]
 0x5547c	label	scpi_kinds_set_DIAGnostic_SER1_RESTricted_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SER1:RESTricted's set handler	scpi_parameter_kinds
-0x55488	label	scpi_kinds_set_DIAGnostic_SER1_RESTricted_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:SER1:RESTricted's set handler, its converters	void *[6]
 0x554a0	label	scpi_kinds_set_DIAGnostic_ME_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:ME's set handler	scpi_parameter_kinds
-0x554ac	label	scpi_kinds_set_DIAGnostic_ME_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:ME's set handler, its converters	void *[6]
 0x554c4	label	scpi_kinds_set_DIAGnostic_LOG_WRITe_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:LOG:WRITe's set handler	scpi_parameter_kinds
-0x554d0	label	scpi_kinds_set_DIAGnostic_LOG_WRITe_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:LOG:WRITe's set handler, its converters	void *[6]
 0x554e8	label	scpi_kinds_query_DIAGnostic_LOG_READ_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:LOG:READ's query handler	scpi_parameter_kinds
-0x554f4	label	scpi_kinds_query_DIAGnostic_LOG_READ_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:LOG:READ's query handler, its converters	void *[6]
 0x5550c	label	scpi_kinds_set_DIAGnostic_LOG_CLEar_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:LOG:CLEar's set handler	scpi_parameter_kinds
-0x55518	label	scpi_kinds_set_DIAGnostic_LOG_CLEar_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:LOG:CLEar's set handler, its converters	void *[6]
 0x55530	label	scpi_kinds_set_DIAGnostic_IDENtification_SERial_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:IDENtification:SERial's set handler	scpi_parameter_kinds
-0x5553c	label	scpi_kinds_set_DIAGnostic_IDENtification_SERial_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:IDENtification:SERial's set handler, its converters	void *[6]
 0x55554	label	scpi_kinds_set_DIAGnostic_IDENtification_MODel_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:IDENtification:MODel's set handler	scpi_parameter_kinds
-0x55560	label	scpi_kinds_set_DIAGnostic_IDENtification_MODel_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:IDENtification:MODel's set handler, its converters	void *[6]
 0x55578	label	scpi_kinds_set_DIAGnostic_IDENtification_HARDware_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:IDENtification:HARDware's set handler	scpi_parameter_kinds
-0x55584	label	scpi_kinds_set_DIAGnostic_IDENtification_HARDware_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:IDENtification:HARDware's set handler, its converters	void *[6]
 0x5559c	label	scpi_kinds_set_DIAGnostic_GPSystem_UTC_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:UTC's set handler	scpi_parameter_kinds
-0x555a8	label	scpi_kinds_set_DIAGnostic_GPSystem_UTC_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:UTC's set handler, its converters	void *[6]
 0x555c0	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_DEGRees_2	dump-scpi	the kinds of parameter 2 of :DIAGnostic:GPSystem:POSition:DEGRees's query handler	scpi_parameter_kinds
-0x555cc	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_DEGRees_2_converters	dump-scpi	the kinds of parameter 2 of :DIAGnostic:GPSystem:POSition:DEGRees's query handler, its converters	void *[6]
 0x555e4	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_DEGRees_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:DEGRees's query handler	scpi_parameter_kinds
-0x555f0	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_DEGRees_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:DEGRees's query handler, its converters	void *[6]
 0x55608	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_4	dump-scpi	the kinds of parameter 4 of :DIAGnostic:GPSystem:POSition:MSEConds's query handler	scpi_parameter_kinds
-0x55614	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_4_converters	dump-scpi	the kinds of parameter 4 of :DIAGnostic:GPSystem:POSition:MSEConds's query handler, its converters	void *[6]
 0x5562c	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_3	dump-scpi	the kinds of parameter 3 of :DIAGnostic:GPSystem:POSition:MSEConds's query handler	scpi_parameter_kinds
-0x55638	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_3_converters	dump-scpi	the kinds of parameter 3 of :DIAGnostic:GPSystem:POSition:MSEConds's query handler, its converters	void *[6]
 0x55650	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_2	dump-scpi	the kinds of parameter 2 of :DIAGnostic:GPSystem:POSition:MSEConds's query handler	scpi_parameter_kinds
-0x5565c	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_2_converters	dump-scpi	the kinds of parameter 2 of :DIAGnostic:GPSystem:POSition:MSEConds's query handler, its converters	void *[6]
 0x55674	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:MSEConds's query handler	scpi_parameter_kinds
-0x55680	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:MSEConds's query handler, its converters	void *[6]
 0x55698	label	scpi_kinds_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe's set handler	scpi_parameter_kinds
-0x556a4	label	scpi_kinds_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe's set handler, its converters	void *[6]
 0x556bc	label	scpi_kinds_set_STATus_OPERation_ENABle_1	dump-scpi	the kinds of parameter 1 of :STATus:OPERation:ENABle's set handler	scpi_parameter_kinds
-0x556c8	label	scpi_kinds_set_STATus_OPERation_ENABle_1_converters	dump-scpi	the kinds of parameter 1 of :STATus:OPERation:ENABle's set handler, its converters	void *[6]
 0x556e0	label	scpi_kinds_set_SOURce_GPSystem_EMANgle_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:EMANgle's set handler	scpi_parameter_kinds
-0x556ec	label	scpi_kinds_set_SOURce_GPSystem_EMANgle_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:EMANgle's set handler, its converters	void *[6]
 0x55704	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold's query handler	scpi_parameter_kinds
-0x55710	label	scpi_kinds_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold's query handler, its converters	void *[6]
 0x55728	label	scpi_kinds_set_OUTPut_PIN1_FREQuency_1	dump-scpi	the kinds of parameter 1 of :OUTPut:PIN1:FREQuency's set handler	scpi_parameter_kinds
-0x55734	label	scpi_kinds_set_OUTPut_PIN1_FREQuency_1_converters	dump-scpi	the kinds of parameter 1 of :OUTPut:PIN1:FREQuency's set handler, its converters	void *[6]
 0x5574c	label	scpi_kinds_set_KENneth_PREDicted_DURation_1	dump-scpi	the kinds of parameter 1 of :KENneth:PREDicted:DURation's set handler	scpi_parameter_kinds
-0x55758	label	scpi_kinds_set_KENneth_PREDicted_DURation_1_converters	dump-scpi	the kinds of parameter 1 of :KENneth:PREDicted:DURation's set handler, its converters	void *[6]
 0x55794	label	scpi_kinds_set_SOURce_GPSystem_ADELay_1	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:ADELay's set handler	scpi_parameter_kinds
-0x557a0	label	scpi_kinds_set_SOURce_GPSystem_ADELay_1_converters	dump-scpi	the kinds of parameter 1 of :SOURce:GPSystem:ADELay's set handler, its converters	void *[6]
 0x557b8	label	scpi_kinds_set_OUTPut_PIN1_DELay_1	dump-scpi	the kinds of parameter 1 of :OUTPut:PIN1:DELay's set handler	scpi_parameter_kinds
-0x557c4	label	scpi_kinds_set_OUTPut_PIN1_DELay_1_converters	dump-scpi	the kinds of parameter 1 of :OUTPut:PIN1:DELay's set handler, its converters	void *[6]
 0x55848	label	scpi_kinds_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold's set handler	scpi_parameter_kinds
-0x55854	label	scpi_kinds_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold's set handler, its converters	void *[6]
 0x5586c	label	scpi_kinds_set_SAMPle_DARR_1	dump-scpi	the kinds of parameter 1 of :SAMPle:DARR's set handler	scpi_parameter_kinds
-0x55878	label	scpi_kinds_set_SAMPle_DARR_1_converters	dump-scpi	the kinds of parameter 1 of :SAMPle:DARR's set handler, its converters	void *[6]
 0x55890	label	scpi_kinds_set_DIAGnostic_ROSCillator_TCOefficient_1	dump-scpi	the kinds of parameter 1 of :DIAGnostic:ROSCillator:TCOefficient's set handler	scpi_parameter_kinds
-0x5589c	label	scpi_kinds_set_DIAGnostic_ROSCillator_TCOefficient_1_converters	dump-scpi	the kinds of parameter 1 of :DIAGnostic:ROSCillator:TCOefficient's set handler, its converters	void *[6]
 0x558b4	label	scpi_node_common_WAI	dump-scpi	the node of *WAI	scpi_node
 0x558e6	label	scpi_items_common_TST	dump-scpi	the response items of *TST?	scpi_response_item[2]
 0x558fa	label	scpi_node_common_TST	dump-scpi	the node of *TST	scpi_node

@@ -114,35 +114,63 @@ address it names gets no row, so that its own row, and its type, stand.
 `third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c` through
 clang-format and `tools/ghidra/names/z3805a-3543b.scpi-tree.tsv`, and a
 test fails while either is stale, the C compared without its white
-space.  The C is not yet built or exported.  `make check-scpi-tree`
-compiles it alone with the Makefile's m68k flags and compares every
-object with the image: each byte, and each pointer by the address of
-what it names, the records' from the rows, the routines' from Ghidra's
-names in the decompiled C's `.conventions.jsonl`, so that a handler
-named otherwise than Ghidra names it differs.  All 1933 of the
-Z3805A's are the image's.
+space.  The exporter includes it with the hand-written C and drops the
+`.set` of each global it defines, so that the firmware's C, the
+parser's routines among them, reads the tree it defines, not ROM's
+(`docs/firmware/README.md`, "Hand-written C"); the function check
+proves them on it.  `make check-scpi-tree` compiles it alone with the
+Makefile's m68k flags and compares every object with the image: each
+byte, and each pointer by the address of what it names, the records'
+from the rows, the routines' from Ghidra's names in the decompiled C's
+`.conventions.jsonl`, so that a handler named otherwise than Ghidra
+names it differs; and it fails an object but a string at an odd
+address, and a list's children that do not follow the list.  All 2055
+of the Z3805A's, its 1933 records and its 122 lists' children, are the
+image's.
+
+The C defines a record's pointer to another record with a cast to the
+field's type, since the records are `const` and smartclock.h's fields
+are not: the exported C, which compiles it, has Ghidra's types, which
+keep no `const`.  A converter and a formatter are cast too, their
+prototypes not their field's own; a handler is not, every one of them
+taking `scpi_handler_function`'s parameters, as `SmartClockSetup.java`
+types them.  A child list's children are an array of their own,
+`NAME_children`, which follows the list, as in the image: Ghidra
+exports a flexible array member as one of no elements, which C cannot
+initialize.  And each record but a string is defined with
+`SCPI_TREE_DATA_EVEN`, at an even address as the image's are, since
+smartclock.h's types are packed and a word or a long at an odd address
+is misaligned (MC68331UM, 4.4.4).
 
 Beyond the node and the child list above, the records are, at the
 offsets smartclock.h gives:
 
-- A node is `0x24` bytes, `scpi_node`: its keyword pair, its child
+- A node is `0x32` bytes, `scpi_node`: its keyword pair, its child
   list, a setter and a query entry of 10 bytes each, `scpi_handler` --
   the routine, the first parameter and the bytes the parameters take
-  -- the query's response items and their bytes, and the word it adds
-  to the path, -1 for none.  The nodes lie `0x32` bytes apart; the 14
-  after each are zero in every image and nothing here reads them.
+  -- the query's response items and their bytes, the word it adds to
+  the path, -1 for none, and 14 bytes `unused`.  Every node of every
+  image is followed by those 14 zero bytes before the next record,
+  whatever its kind (the Z3805A's 459: 305 item lists, 153 nodes and
+  the tree pair), so they are the node's; no routine reads them (no
+  displacement from `0x24` to `0x31` off a node in the parser,
+  `0x25d00` to `0x2a200`, and no reference to one in Ghidra), and
+  `dump-scpi` refuses a node where one is not zero.
 - A parameter, `scpi_parameter`, is the next one and its kinds; the
   kinds, `scpi_parameter_kinds`, `0x24` bytes, the value's size, whether
   it may be left out, its unit table, its choice list and six
-  converters, one for each parameter kind, `SCPI_PARAMETER_DECIMAL` to
-  `_EXPRESSION`.  The kinds lie `0x24` bytes apart, as six make them.
+  converters, `converters[6]`, one for each parameter kind,
+  `SCPI_PARAMETER_DECIMAL` to `_EXPRESSION`, by which the parser
+  indexes them (`scpi_parameter_match`, `0x278f4`).  The kinds lie
+  `0x24` bytes apart, as six make them.
 - A unit table, `scpi_unit`, 6 bytes each, runs to a zero name; a
   unit's name is its letters reversed.
 - A choice list, `scpi_choices`, points at its keyword pairs' pointers,
   to a NULL, and at a word for each, or NULL for its index.
 - A response item list, `scpi_response_item`, 10 bytes each, runs to a
-  zero formatter; only `scpi_format_choice`'s items have an argument,
-  the node's choice list.
+  zero formatter; its third field, `choices`, the formatter's third
+  argument, is the node's choice list for `scpi_format_choice`, the one
+  formatter that reads it, and NULL for every other.
 
 `dump-scpi` refuses an image where any of these does not hold
 together: a pointer neither zero nor in the image (even, but for a
@@ -204,10 +232,11 @@ else the first path, query before setter, whose node holds it, which
 Ghidra's names for all 271 of the Z3805A's confirm.  The installer's
 handlers are no Ghidra functions; their names are the same rule's.
 
-`--names` adds two rows a record's type leaves out, since a flexible
-array member types none of its elements: at `+6` of a child list,
-`NAME_children`, `scpi_node *[n]`, and at `+0xc` of a parameter's
-kinds, `NAME_converters`, `void *[6]`.
+`--names` adds a row a record's type leaves out, since a flexible
+array member types none of its elements: at `+6` of every child list,
+the main tree's and the common commands' too, `NAME_children`,
+`scpi_node *[n]`, the array the C defines there.  Every child list,
+`scpi_main_tree` among them, is a `scpi_child_list`.
 
 ## Parameters and responses
 

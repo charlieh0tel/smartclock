@@ -45,12 +45,10 @@ uint32_t scpi_parse_boolean(int16_t* token, void* unused, uint16_t* value) {
 }
 
 /* A keyword of the node's choices, as its index or the value the list
- * gives it (0x25e42).  The token is a scpi_keyword, the list a
- * scpi_choices. */
+ * gives it (0x25e42).  The token is a scpi_keyword. */
 uint32_t scpi_parse_choice(int16_t* token, void* unused, int16_t* value,
-                           int32_t* list) {
+                           scpi_choices* choices) {
   scpi_keyword* keyword = (scpi_keyword*)token;
-  scpi_choices* choices = (scpi_choices*)list;
 
   if (choices == 0 || choices->keywords == 0) {
     return STATUS_SCPI_NO_LIST;

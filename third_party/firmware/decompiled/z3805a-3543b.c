@@ -2702,11 +2702,13 @@ typedef struct status_condition status_condition, *Pstatus_condition;
 
 typedef struct status_register status_register, *Pstatus_register;
 
-typedef int32_t (scpi_handler_function)(uint8_t *, void *, struct scpi_call *);
+typedef int32_t (scpi_handler_function)(void *, void *, struct scpi_call *);
 
 typedef struct scpi_parameter scpi_parameter, *Pscpi_parameter;
 
-typedef int32_t (scpi_format_function)(struct scpi_port *, void *, uint32_t, struct scpi_call *);
+typedef struct scpi_choices scpi_choices, *Pscpi_choices;
+
+typedef int32_t (scpi_format_function)(struct scpi_port *, void *, struct scpi_choices *, struct scpi_call *);
 
 typedef void (scpi_port_close_function)(struct scpi_port *);
 
@@ -2726,8 +2728,6 @@ typedef struct scpi_parameter_kinds scpi_parameter_kinds, *Pscpi_parameter_kinds
 
 typedef struct scpi_unit scpi_unit, *Pscpi_unit;
 
-typedef struct scpi_choices scpi_choices, *Pscpi_choices;
-
 struct scpi_parameter {
     struct scpi_parameter *next;
     struct scpi_parameter_kinds *kinds;
@@ -2738,7 +2738,7 @@ struct scpi_parameter_kinds {
     int16_t optional;
     struct scpi_unit *units;
     struct scpi_choices *choices;
-    void *converters[0];
+    void *converters[6];
 };
 
 struct scpi_port_methods {
@@ -2822,7 +2822,7 @@ struct scpi_handler {
 struct scpi_response_item {
     scpi_format_function *format;
     int16_t size;
-    uint32_t argument;
+    struct scpi_choices *choices;
 };
 
 struct status_error_queue {
@@ -2846,6 +2846,7 @@ struct scpi_node {
     struct scpi_response_item *response_items;
     int16_t response_size;
     int16_t path_word;
+    uint8_t unused[14];
 };
 
 struct scpi_port {
@@ -3778,12 +3779,12 @@ _Static_assert(sizeof(scpi_handler) == 10, "scpi_handler");
 _Static_assert(sizeof(scpi_keyword) == 20, "scpi_keyword");
 _Static_assert(sizeof(scpi_language_choice) == 1, "scpi_language_choice");
 _Static_assert(sizeof(scpi_multiplier) == 4, "scpi_multiplier");
-_Static_assert(sizeof(scpi_node) == 36, "scpi_node");
+_Static_assert(sizeof(scpi_node) == 50, "scpi_node");
 _Static_assert(sizeof(scpi_number) == 38, "scpi_number");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
 _Static_assert(sizeof(scpi_parameter) == 8, "scpi_parameter");
-_Static_assert(sizeof(scpi_parameter_kinds) == 12, "scpi_parameter_kinds");
+_Static_assert(sizeof(scpi_parameter_kinds) == 36, "scpi_parameter_kinds");
 _Static_assert(sizeof(scpi_path) == 20, "scpi_path");
 _Static_assert(sizeof(scpi_port) == 8, "scpi_port");
 _Static_assert(sizeof(scpi_port_methods) == 68, "scpi_port_methods");
@@ -4365,9 +4366,2061 @@ extern char os_report_format[3]; /* 00051382 */
 extern char os_report_comma[2]; /* 00051385 */
 extern io_device_jumps io_table_defaults[4]; /* 0005171a */
 extern io_device_stubs io_device_unused_stubs; /* 000517aa */
-extern scpi_child_list scpi_common_list; /* 000526f6 */
-extern scpi_root_children scpi_main_tree; /* 00053034 */
-extern scpi_tree_pair scpi_trees; /* 0005d014 */
+extern const scpi_parameter scpi_parameter_set_common_SRE_1; /* 000517ce */
+extern const scpi_parameter scpi_parameter_set_common_ESE_1; /* 000517d6 */
+extern const scpi_parameter scpi_parameter_query_RVST_1; /* 000517de */
+extern const scpi_parameter scpi_parameter_query_RTSA_1; /* 000517e6 */
+extern const scpi_parameter scpi_parameter_query_RMHO_1; /* 000517ee */
+extern const scpi_parameter scpi_parameter_query_FMHO_1; /* 000517f6 */
+extern const scpi_parameter scpi_parameter_query_RSST_1; /* 000517fe */
+extern const scpi_parameter scpi_parameter_query_RPHS_1; /* 00051806 */
+extern const scpi_parameter scpi_parameter_query_RSPR_1; /* 0005180e */
+extern const scpi_parameter scpi_parameter_query_IPSU_1; /* 00051816 */
+extern const scpi_parameter scpi_parameter_query_RTCM_1; /* 0005181e */
+extern const scpi_parameter scpi_parameter_query_REQU_1; /* 00051826 */
+extern const scpi_parameter scpi_parameter_query_CEQU_1; /* 0005182e */
+extern const scpi_parameter scpi_parameter_query_CALA_1; /* 00051836 */
+extern const scpi_parameter scpi_parameter_query_RAST_1; /* 0005183e */
+extern const scpi_parameter scpi_parameter_query_RSSU_1; /* 00051846 */
+extern const scpi_parameter scpi_parameter_query_WAT3_1; /* 0005184e */
+extern const scpi_parameter scpi_parameter_query_WAT3_2; /* 00051856 */
+extern const scpi_parameter scpi_parameter_query_RAT3_1; /* 0005185e */
+extern const scpi_parameter scpi_parameter_query_RAT3_2; /* 00051866 */
+extern const scpi_parameter scpi_parameter_query_WAT2_1; /* 0005186e */
+extern const scpi_parameter scpi_parameter_query_WAT2_2; /* 00051876 */
+extern const scpi_parameter scpi_parameter_query_RAT2_1; /* 0005187e */
+extern const scpi_parameter scpi_parameter_query_RAT2_2; /* 00051886 */
+extern const scpi_parameter scpi_parameter_query_WAT1_1; /* 0005188e */
+extern const scpi_parameter scpi_parameter_query_WAT1_2; /* 00051896 */
+extern const scpi_parameter scpi_parameter_query_RAT1_1; /* 0005189e */
+extern const scpi_parameter scpi_parameter_query_RAT1_2; /* 000518a6 */
+extern const scpi_parameter scpi_parameter_query_WEAL_1; /* 000518ae */
+extern const scpi_parameter scpi_parameter_query_WEAL_2; /* 000518b6 */
+extern const scpi_parameter scpi_parameter_query_REAL_1; /* 000518be */
+extern const scpi_parameter scpi_parameter_query_REAL_2; /* 000518c6 */
+extern const scpi_parameter scpi_parameter_query_WFOU_1; /* 000518ce */
+extern const scpi_parameter scpi_parameter_query_WFOU_2; /* 000518d6 */
+extern const scpi_parameter scpi_parameter_query_RFOU_1; /* 000518de */
+extern const scpi_parameter scpi_parameter_query_RFOU_2; /* 000518e6 */
+extern const scpi_parameter scpi_parameter_query_WACD_1; /* 000518ee */
+extern const scpi_parameter scpi_parameter_query_WACD_2; /* 000518f6 */
+extern const scpi_parameter scpi_parameter_query_RACD_1; /* 000518fe */
+extern const scpi_parameter scpi_parameter_query_RACD_2; /* 00051906 */
+extern const scpi_parameter scpi_parameter_query_W1PO_1; /* 0005190e */
+extern const scpi_parameter scpi_parameter_query_W1PO_2; /* 00051916 */
+extern const scpi_parameter scpi_parameter_query_R1PO_1; /* 0005191e */
+extern const scpi_parameter scpi_parameter_query_R1PO_2; /* 00051926 */
+extern const scpi_parameter scpi_parameter_query_WLOC_1; /* 0005192e */
+extern const scpi_parameter scpi_parameter_query_WLOC_2; /* 00051936 */
+extern const scpi_parameter scpi_parameter_query_WLOC_3; /* 0005193e */
+extern const scpi_parameter scpi_parameter_query_WLOC_4; /* 00051946 */
+extern const scpi_parameter scpi_parameter_query_WLOC_5; /* 0005194e */
+extern const scpi_parameter scpi_parameter_query_WLOC_6; /* 00051956 */
+extern const scpi_parameter scpi_parameter_query_WLOC_7; /* 0005195e */
+extern const scpi_parameter scpi_parameter_query_WLOC_8; /* 00051966 */
+extern const scpi_parameter scpi_parameter_query_WLOC_9; /* 0005196e */
+extern const scpi_parameter scpi_parameter_query_WLOC_10; /* 00051976 */
+extern const scpi_parameter scpi_parameter_query_RLOC_1; /* 0005197e */
+extern const scpi_parameter scpi_parameter_query_RLOC_2; /* 00051986 */
+extern const scpi_parameter scpi_parameter_query_RLOC_3; /* 0005198e */
+extern const scpi_parameter scpi_parameter_query_RLOC_4; /* 00051996 */
+extern const scpi_parameter scpi_parameter_query_RLOC_5; /* 0005199e */
+extern const scpi_parameter scpi_parameter_query_RLOC_6; /* 000519a6 */
+extern const scpi_parameter scpi_parameter_query_RLOC_7; /* 000519ae */
+extern const scpi_parameter scpi_parameter_query_RLOC_8; /* 000519b6 */
+extern const scpi_parameter scpi_parameter_query_RLOC_9; /* 000519be */
+extern const scpi_parameter scpi_parameter_query_RLOC_10; /* 000519c6 */
+extern const scpi_parameter scpi_parameter_query_WTZO_1; /* 000519ce */
+extern const scpi_parameter scpi_parameter_query_WTZO_2; /* 000519d6 */
+extern const scpi_parameter scpi_parameter_query_WTZO_3; /* 000519de */
+extern const scpi_parameter scpi_parameter_query_RTZO_1; /* 000519e6 */
+extern const scpi_parameter scpi_parameter_query_RTZO_2; /* 000519ee */
+extern const scpi_parameter scpi_parameter_query_RTZO_3; /* 000519f6 */
+extern const scpi_parameter scpi_parameter_query_RTAD_1; /* 000519fe */
+extern const scpi_parameter scpi_parameter_query_RWHO_1; /* 00051a06 */
+extern const scpi_parameter scpi_parameter_query_ROBin_TSTamp_1; /* 00051a0e */
+extern const scpi_parameter scpi_parameter_query_ROBin_TSTamp_2; /* 00051a16 */
+extern const scpi_parameter scpi_parameter_query_ROBin_POINts_1; /* 00051a1e */
+extern const scpi_parameter scpi_parameter_set_ROBin_MEMory_SAVE_1; /* 00051a26 */
+extern const scpi_parameter scpi_parameter_query_ROBin_MEMory_OVERflow_COUNt_1; /* 00051a2e */
+extern const scpi_parameter scpi_parameter_set_ROBin_CLEar_1; /* 00051a36 */
+extern const scpi_parameter scpi_parameter_query_ROBin_1; /* 00051a3e */
+extern const scpi_parameter scpi_parameter_set_KENneth_PREDicted_DURation_1; /* 00051a46 */
+extern const scpi_parameter scpi_parameter_query_KENneth_PREDicted_DURation_1; /* 00051a4e */
+extern const scpi_parameter scpi_parameter_set_GARY_WRITe_1; /* 00051a56 */
+extern const scpi_parameter scpi_parameter_query_GARY_READ_1; /* 00051a5e */
+extern const scpi_parameter scpi_parameter_set_GARY_CLEar_1; /* 00051a66 */
+extern const scpi_parameter scpi_parameter_set_DOUGlas_STATe_POWerup_1; /* 00051a6e */
+extern const scpi_parameter scpi_parameter_set_DOUGlas_STATe_1; /* 00051a76 */
+extern const scpi_parameter scpi_parameter_set_DOUGlas_DURation_1; /* 00051a7e */
+extern const scpi_parameter scpi_parameter_query_DOUGlas_DURation_1; /* 00051a86 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_DARRAY3_1; /* 00051a8e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_DARR3_1; /* 00051a96 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_DARRAY2_1; /* 00051a9e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_DARR2_1; /* 00051aa6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_DARRAY1_1; /* 00051aae */
+extern const scpi_parameter scpi_parameter_set_SAMPle_DARR1_1; /* 00051ab6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_DARRAY_1; /* 00051abe */
+extern const scpi_parameter scpi_parameter_set_SAMPle_DARR_1; /* 00051ac6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_DOUBle_1; /* 00051ace */
+extern const scpi_parameter scpi_parameter_query_SAMPle_DOUBle_1; /* 00051ad6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_FARRAY3_1; /* 00051ade */
+extern const scpi_parameter scpi_parameter_query_SAMPle_FARRAY3_1; /* 00051ae6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_FARR3_1; /* 00051aee */
+extern const scpi_parameter scpi_parameter_query_SAMPle_FARR3_1; /* 00051af6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_FARRAY2_1; /* 00051afe */
+extern const scpi_parameter scpi_parameter_query_SAMPle_FARRAY2_1; /* 00051b06 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_FARR2_1; /* 00051b0e */
+extern const scpi_parameter scpi_parameter_query_SAMPle_FARR2_1; /* 00051b16 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_FARRAY1_1; /* 00051b1e */
+extern const scpi_parameter scpi_parameter_query_SAMPle_FARRAY1_1; /* 00051b26 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_FARR1_1; /* 00051b2e */
+extern const scpi_parameter scpi_parameter_query_SAMPle_FARR1_1; /* 00051b36 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_FARRAY_1; /* 00051b3e */
+extern const scpi_parameter scpi_parameter_query_SAMPle_FARRAY_1; /* 00051b46 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_FARR_1; /* 00051b4e */
+extern const scpi_parameter scpi_parameter_query_SAMPle_FARR_1; /* 00051b56 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_FLOat_1; /* 00051b5e */
+extern const scpi_parameter scpi_parameter_query_SAMPle_FLOat_1; /* 00051b66 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IMULtiple_1; /* 00051b6e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IMULtiple_2; /* 00051b76 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IMULtiple_3; /* 00051b7e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IMULtiple_4; /* 00051b86 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARRAY4_1; /* 00051b8e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARR4_1; /* 00051b96 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARRAY3_1; /* 00051b9e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARR3_1; /* 00051ba6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARRAY2_1; /* 00051bae */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARR2_1; /* 00051bb6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARRAY1_1; /* 00051bbe */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARR1_1; /* 00051bc6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARRAY_1; /* 00051bce */
+extern const scpi_parameter scpi_parameter_set_SAMPle_IARR_1; /* 00051bd6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_INTeger_1; /* 00051bde */
+extern const scpi_parameter scpi_parameter_query_SAMPle_INTeger_1; /* 00051be6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_TARRAY3_1; /* 00051bee */
+extern const scpi_parameter scpi_parameter_set_SAMPle_TARR3_1; /* 00051bf6 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_TARRAY2_1; /* 00051bfe */
+extern const scpi_parameter scpi_parameter_set_SAMPle_TARR2_1; /* 00051c06 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_TARRAY1_1; /* 00051c0e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_TARR1_1; /* 00051c16 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_TARRAY_1; /* 00051c1e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_TARR_1; /* 00051c26 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_TOGGle_1; /* 00051c2e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_BARRAY2_1; /* 00051c36 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_BARR2_1; /* 00051c3e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_BARRAY1_1; /* 00051c46 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_BARR1_1; /* 00051c4e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_BARRAY_1; /* 00051c56 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_BARR_1; /* 00051c5e */
+extern const scpi_parameter scpi_parameter_set_SAMPle_BOOLean_1; /* 00051c66 */
+extern const scpi_parameter scpi_parameter_set_SAMPle_ACTion_1; /* 00051c6e */
+extern const scpi_parameter scpi_parameter_set_SYSTem_LANGuage_1; /* 00051c76 */
+extern const scpi_parameter scpi_parameter_set_SYSTem_COMMunicate_SER1_RECeive_SBITs_1; /* 00051c7e */
+extern const scpi_parameter scpi_parameter_query_SYSTem_COMMunicate_SER1_RECeive_SBITs_1; /* 00051c86 */
+extern const scpi_parameter scpi_parameter_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE_1; /* 00051c8e */
+extern const scpi_parameter scpi_parameter_set_SYSTem_COMMunicate_SER1_RECeive_PACE_1; /* 00051c96 */
+extern const scpi_parameter scpi_parameter_set_SYSTem_COMMunicate_SER1_RECeive_BITS_1; /* 00051c9e */
+extern const scpi_parameter scpi_parameter_query_SYSTem_COMMunicate_SER1_RECeive_BITS_1; /* 00051ca6 */
+extern const scpi_parameter scpi_parameter_set_SYSTem_COMMunicate_SER1_RECeive_BAUD_1; /* 00051cae */
+extern const scpi_parameter scpi_parameter_query_SYSTem_COMMunicate_SER1_RECeive_BAUD_1; /* 00051cb6 */
+extern const scpi_parameter scpi_parameter_set_SYSTem_COMMunicate_SER1_PROMpt_1; /* 00051cbe */
+extern const scpi_parameter scpi_parameter_set_SYSTem_COMMunicate_SER1_FDUPlex_1; /* 00051cc6 */
+extern const scpi_parameter scpi_parameter_set_STATus_QUEStionable_NTRansition_1; /* 00051cce */
+extern const scpi_parameter scpi_parameter_set_STATus_QUEStionable_PTRansition_1; /* 00051cd6 */
+extern const scpi_parameter scpi_parameter_set_STATus_QUEStionable_ENABle_1; /* 00051cde */
+extern const scpi_parameter scpi_parameter_set_STATus_QUEStionable_CONDition_USER_1; /* 00051ce6 */
+extern const scpi_parameter scpi_parameter_set_STATus_QUEStionable_EVENt_USER_1; /* 00051cee */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_POWerup_NTRansition_1; /* 00051cf6 */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_POWerup_PTRansition_1; /* 00051cfe */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_POWerup_ENABle_1; /* 00051d06 */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_HOLDover_NTRansition_1; /* 00051d0e */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_HOLDover_PTRansition_1; /* 00051d16 */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_HOLDover_ENABle_1; /* 00051d1e */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_HARDware_NTRansition_1; /* 00051d26 */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_HARDware_PTRansition_1; /* 00051d2e */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_HARDware_ENABle_1; /* 00051d36 */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_NTRansition_1; /* 00051d3e */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_PTRansition_1; /* 00051d46 */
+extern const scpi_parameter scpi_parameter_set_STATus_OPERation_ENABle_1; /* 00051d4e */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_LIMit_THReshold_1; /* 00051d56 */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_LIMit_THReshold_1; /* 00051d5e */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_TUNCertainty_PREDicted_DURation_1; /* 00051d66 */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_HOLDover_TUNCertainty_PREDicted_DURation_1; /* 00051d6e */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_RECovery_AUTO_1; /* 00051d76 */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_LIMit_THReshold_1; /* 00051d7e */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_HOLDover_LIMit_THReshold_1; /* 00051d86 */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_LIMit_STATe_1; /* 00051d8e */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_HYSTeresis_1; /* 00051d96 */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_HOLDover_HYSTeresis_1; /* 00051d9e */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALAR3_1; /* 00051da6 */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALAR3_1; /* 00051dae */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALARM3_1; /* 00051db6 */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALARM3_1; /* 00051dbe */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALAR1_1; /* 00051dc6 */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALAR1_1; /* 00051dce */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALARM1_1; /* 00051dd6 */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALARM1_1; /* 00051dde */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_1; /* 00051de6 */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_1; /* 00051dee */
+extern const scpi_parameter scpi_parameter_set_SOURce_SYNChronization_HOLDover_DURation_MEASurement_THReshold_1; /* 00051df6 */
+extern const scpi_parameter scpi_parameter_query_SOURce_SYNChronization_HOLDover_DURation_MEASurement_THReshold_1; /* 00051dfe */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_LIMit_THReshold_1; /* 00051e06 */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_LIMit_THReshold_1; /* 00051e0e */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_TUNCertainty_PREDicted_DURation_1; /* 00051e16 */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_HOLDover_TUNCertainty_PREDicted_DURation_1; /* 00051e1e */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO_1; /* 00051e26 */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold_1; /* 00051e2e */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold_1; /* 00051e36 */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_LIMit_STATe_1; /* 00051e3e */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_HYSTeresis_1; /* 00051e46 */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_HOLDover_HYSTeresis_1; /* 00051e4e */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR3_1; /* 00051e56 */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR3_1; /* 00051e5e */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALARM3_1; /* 00051e66 */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALARM3_1; /* 00051e6e */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1_1; /* 00051e76 */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1_1; /* 00051e7e */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALARM1_1; /* 00051e86 */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALARM1_1; /* 00051e8e */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_1; /* 00051e96 */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_1; /* 00051e9e */
+extern const scpi_parameter scpi_parameter_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold_1; /* 00051ea6 */
+extern const scpi_parameter scpi_parameter_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold_1; /* 00051eae */
+extern const scpi_parameter scpi_parameter_set_SOURce_PULSe_STARt_TIME_1; /* 00051eb6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PULSe_STARt_TIME_2; /* 00051ebe */
+extern const scpi_parameter scpi_parameter_set_SOURce_PULSe_STARt_TIME_3; /* 00051ec6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PULSe_STARt_DATE_1; /* 00051ece */
+extern const scpi_parameter scpi_parameter_set_SOURce_PULSe_STARt_DATE_2; /* 00051ed6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PULSe_STARt_DATE_3; /* 00051ede */
+extern const scpi_parameter scpi_parameter_set_SOURce_PULSe_REFerence_EDGE_1; /* 00051ee6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PULSe_CONTinuous_STATe_1; /* 00051eee */
+extern const scpi_parameter scpi_parameter_set_SOURce_PULSe_CONTinuous_PERiod_1; /* 00051ef6 */
+extern const scpi_parameter scpi_parameter_query_SOURce_PULSe_CONTinuous_PERiod_1; /* 00051efe */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_TZONe_1; /* 00051f06 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_TZONe_2; /* 00051f0e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_TCODe_FORMat_1; /* 00051f16 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_PPS_EDGE_1; /* 00051f1e */
+extern const scpi_parameter scpi_parameter_query_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_STATe_1; /* 00051f26 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_1; /* 00051f2e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_2; /* 00051f36 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_3; /* 00051f3e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_4; /* 00051f46 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_5; /* 00051f4e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_6; /* 00051f56 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_7; /* 00051f5e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_8; /* 00051f66 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_9; /* 00051f6e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_10; /* 00051f76 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_11; /* 00051f7e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_12; /* 00051f86 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_13; /* 00051f8e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_14; /* 00051f96 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_15; /* 00051f9e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_16; /* 00051fa6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_17; /* 00051fae */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_18; /* 00051fb6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_19; /* 00051fbe */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_20; /* 00051fc6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_21; /* 00051fce */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_22; /* 00051fd6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_23; /* 00051fde */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_24; /* 00051fe6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_25; /* 00051fee */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_26; /* 00051ff6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_27; /* 00051ffe */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_28; /* 00052006 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_29; /* 0005200e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_30; /* 00052016 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_31; /* 0005201e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_32; /* 00052026 */
+extern const scpi_parameter scpi_parameter_query_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_STATe_1; /* 0005202e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_1; /* 00052036 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_2; /* 0005203e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_3; /* 00052046 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_4; /* 0005204e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_5; /* 00052056 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_6; /* 0005205e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_7; /* 00052066 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_8; /* 0005206e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_9; /* 00052076 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_10; /* 0005207e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_11; /* 00052086 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_12; /* 0005208e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_13; /* 00052096 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_14; /* 0005209e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_15; /* 000520a6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_16; /* 000520ae */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_17; /* 000520b6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_18; /* 000520be */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_19; /* 000520c6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_20; /* 000520ce */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_21; /* 000520d6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_22; /* 000520de */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_23; /* 000520e6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_24; /* 000520ee */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_25; /* 000520f6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_26; /* 000520fe */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_27; /* 00052106 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_28; /* 0005210e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_29; /* 00052116 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_30; /* 0005211e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_31; /* 00052126 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_32; /* 0005212e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_EMANgle_1; /* 00052136 */
+extern const scpi_parameter scpi_parameter_query_SOURce_PTIMe_GPSystem_SATellite_TRACking_EMANgle_1; /* 0005213e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_REFerence_ADELay_1; /* 00052146 */
+extern const scpi_parameter scpi_parameter_query_SOURce_PTIMe_GPSystem_REFerence_ADELay_1; /* 0005214e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_POWerup_1; /* 00052156 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_1; /* 0005215e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_SURVey_DURation_1; /* 00052166 */
+extern const scpi_parameter scpi_parameter_query_SOURce_PTIMe_GPSystem_POSition_SURVey_DURation_1; /* 0005216e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_1; /* 00052176 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_2; /* 0005217e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_3; /* 00052186 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_4; /* 0005218e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_5; /* 00052196 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_6; /* 0005219e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_7; /* 000521a6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_8; /* 000521ae */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_POSition_9; /* 000521b6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_POSition_1; /* 000521be */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_POSition_2; /* 000521c6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_POSition_3; /* 000521ce */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_POSition_4; /* 000521d6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_POSition_5; /* 000521de */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_POSition_6; /* 000521e6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_POSition_7; /* 000521ee */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_POSition_8; /* 000521f6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_POSition_9; /* 000521fe */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_TIME_1; /* 00052206 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_TIME_2; /* 0005220e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_TIME_3; /* 00052216 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_DATE_1; /* 0005221e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_DATE_2; /* 00052226 */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_INITial_DATE_3; /* 0005222e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_EMANgle_1; /* 00052236 */
+extern const scpi_parameter scpi_parameter_query_SOURce_PTIMe_GPSystem_EMANgle_1; /* 0005223e */
+extern const scpi_parameter scpi_parameter_set_SOURce_PTIMe_GPSystem_ADELay_1; /* 00052246 */
+extern const scpi_parameter scpi_parameter_query_SOURce_PTIMe_GPSystem_ADELay_1; /* 0005224e */
+extern const scpi_parameter scpi_parameter_query_SOURce_GPSystem_SATellite_TRACking_INCLude_STATe_1; /* 00052256 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_1; /* 0005225e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_2; /* 00052266 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_3; /* 0005226e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_4; /* 00052276 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_5; /* 0005227e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_6; /* 00052286 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_7; /* 0005228e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_8; /* 00052296 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_9; /* 0005229e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_10; /* 000522a6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_11; /* 000522ae */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_12; /* 000522b6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_13; /* 000522be */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_14; /* 000522c6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_15; /* 000522ce */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_16; /* 000522d6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_17; /* 000522de */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_18; /* 000522e6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_19; /* 000522ee */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_20; /* 000522f6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_21; /* 000522fe */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_22; /* 00052306 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_23; /* 0005230e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_24; /* 00052316 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_25; /* 0005231e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_26; /* 00052326 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_27; /* 0005232e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_28; /* 00052336 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_29; /* 0005233e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_30; /* 00052346 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_31; /* 0005234e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_INCLude_32; /* 00052356 */
+extern const scpi_parameter scpi_parameter_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe_1; /* 0005235e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_1; /* 00052366 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_2; /* 0005236e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_3; /* 00052376 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_4; /* 0005237e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_5; /* 00052386 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_6; /* 0005238e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_7; /* 00052396 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_8; /* 0005239e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_9; /* 000523a6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_10; /* 000523ae */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_11; /* 000523b6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_12; /* 000523be */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_13; /* 000523c6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_14; /* 000523ce */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_15; /* 000523d6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_16; /* 000523de */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_17; /* 000523e6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_18; /* 000523ee */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_19; /* 000523f6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_20; /* 000523fe */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_21; /* 00052406 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_22; /* 0005240e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_23; /* 00052416 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_24; /* 0005241e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_25; /* 00052426 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_26; /* 0005242e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_27; /* 00052436 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_28; /* 0005243e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_29; /* 00052446 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_30; /* 0005244e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_31; /* 00052456 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_IGNore_32; /* 0005245e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_SATellite_TRACking_EMANgle_1; /* 00052466 */
+extern const scpi_parameter scpi_parameter_query_SOURce_GPSystem_SATellite_TRACking_EMANgle_1; /* 0005246e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_REFerence_ADELay_1; /* 00052476 */
+extern const scpi_parameter scpi_parameter_query_SOURce_GPSystem_REFerence_ADELay_1; /* 0005247e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_SURVey_STATe_POWerup_1; /* 00052486 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_SURVey_STATe_1; /* 0005248e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_SURVey_DURation_1; /* 00052496 */
+extern const scpi_parameter scpi_parameter_query_SOURce_GPSystem_POSition_SURVey_DURation_1; /* 0005249e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_1; /* 000524a6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_2; /* 000524ae */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_3; /* 000524b6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_4; /* 000524be */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_5; /* 000524c6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_6; /* 000524ce */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_7; /* 000524d6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_8; /* 000524de */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_POSition_9; /* 000524e6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_POSition_1; /* 000524ee */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_POSition_2; /* 000524f6 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_POSition_3; /* 000524fe */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_POSition_4; /* 00052506 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_POSition_5; /* 0005250e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_POSition_6; /* 00052516 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_POSition_7; /* 0005251e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_POSition_8; /* 00052526 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_POSition_9; /* 0005252e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_TIME_1; /* 00052536 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_TIME_2; /* 0005253e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_TIME_3; /* 00052546 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_DATE_1; /* 0005254e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_DATE_2; /* 00052556 */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_INITial_DATE_3; /* 0005255e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_EMANgle_1; /* 00052566 */
+extern const scpi_parameter scpi_parameter_query_SOURce_GPSystem_EMANgle_1; /* 0005256e */
+extern const scpi_parameter scpi_parameter_set_SOURce_GPSystem_ADELay_1; /* 00052576 */
+extern const scpi_parameter scpi_parameter_query_SOURce_GPSystem_ADELay_1; /* 0005257e */
+extern const scpi_parameter scpi_parameter_set_SENSe_TST1_EDGE_1; /* 00052586 */
+extern const scpi_parameter scpi_parameter_query_SENSe_DATA_TSTamp_1; /* 0005258e */
+extern const scpi_parameter scpi_parameter_query_SENSe_DATA_TSTamp_2; /* 00052596 */
+extern const scpi_parameter scpi_parameter_query_SENSe_DATA_POINts_1; /* 0005259e */
+extern const scpi_parameter scpi_parameter_set_SENSe_DATA_MEMory_SAVE_1; /* 000525a6 */
+extern const scpi_parameter scpi_parameter_query_SENSe_DATA_MEMory_OVERflow_COUNt_1; /* 000525ae */
+extern const scpi_parameter scpi_parameter_set_SENSe_DATA_CLEar_1; /* 000525b6 */
+extern const scpi_parameter scpi_parameter_query_SENSe_DATA_1; /* 000525be */
+extern const scpi_parameter scpi_parameter_set_OUTPut_STATe_1; /* 000525c6 */
+extern const scpi_parameter scpi_parameter_set_OUTPut_PIN1_FREQuency_1; /* 000525ce */
+extern const scpi_parameter scpi_parameter_query_OUTPut_PIN1_FREQuency_1; /* 000525d6 */
+extern const scpi_parameter scpi_parameter_set_OUTPut_PIN1_DELay_ALIGnment_1; /* 000525de */
+extern const scpi_parameter scpi_parameter_set_OUTPut_PIN1_DELay_1; /* 000525e6 */
+extern const scpi_parameter scpi_parameter_set_LED_ENABled_1; /* 000525ee */
+extern const scpi_parameter scpi_parameter_set_LED_ALARm_USER_1; /* 000525f6 */
+extern const scpi_parameter scpi_parameter_set_LED_ACTive_1; /* 000525fe */
+extern const scpi_parameter scpi_parameter_set_FORMat_DATA_1; /* 00052606 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_TOFFset_1; /* 0005260e */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_TOFFset_1; /* 00052616 */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_TEST_1; /* 0005261e */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_SYSTem_PSTartup_1; /* 00052626 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_SYSTem_DOUTput_1; /* 0005262e */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_STATus_HAPPening_1; /* 00052636 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_STATus_ERRor_1; /* 0005263e */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_SLOG_READ_1; /* 00052646 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_SER1_EGResponse_1; /* 0005264e */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_SER1_RESTricted_1; /* 00052656 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_ROSCillator_TCOefficient_1; /* 0005265e */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_ROSCillator_TCOefficient_1; /* 00052666 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_ME_1; /* 0005266e */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_LOG_WRITe_1; /* 00052676 */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_LOG_READ_1; /* 0005267e */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_LOG_CLEar_1; /* 00052686 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_IDENtification_SERial_1; /* 0005268e */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_IDENtification_MODel_1; /* 00052696 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_IDENtification_HARDware_1; /* 0005269e */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_GPSystem_UTC_1; /* 000526a6 */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_GPSystem_POSition_DEGRees_1; /* 000526ae */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_GPSystem_POSition_DEGRees_2; /* 000526b6 */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_GPSystem_POSition_MSEConds_1; /* 000526be */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_GPSystem_POSition_MSEConds_2; /* 000526c6 */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_GPSystem_POSition_MSEConds_3; /* 000526ce */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_GPSystem_POSition_MSEConds_4; /* 000526d6 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1; /* 000526de */
+extern const scpi_parameter scpi_parameter_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1; /* 000526e6 */
+extern const scpi_parameter scpi_parameter_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe_1; /* 000526ee */
+extern const scpi_child_list scpi_common_list; /* 000526f6 */
+extern scpi_node * const scpi_common_list_children[10]; /* 000526fc */
+extern const scpi_child_list scpi_list_TKN; /* 00052724 */
+extern scpi_node * const scpi_list_TKN_children[1]; /* 0005272a */
+extern const scpi_child_list scpi_list_ROBin_MEMory_OVERflow; /* 0005272e */
+extern scpi_node * const scpi_list_ROBin_MEMory_OVERflow_children[1]; /* 00052734 */
+extern const scpi_child_list scpi_list_ROBin_MEMory; /* 00052738 */
+extern scpi_node * const scpi_list_ROBin_MEMory_children[2]; /* 0005273e */
+extern const scpi_child_list scpi_list_ROBin; /* 00052746 */
+extern scpi_node * const scpi_list_ROBin_children[4]; /* 0005274c */
+extern const scpi_child_list scpi_list_KENneth_PREDicted; /* 0005275c */
+extern scpi_node * const scpi_list_KENneth_PREDicted_children[1]; /* 00052762 */
+extern const scpi_child_list scpi_list_KENneth; /* 00052766 */
+extern scpi_node * const scpi_list_KENneth_children[2]; /* 0005276c */
+extern const scpi_child_list scpi_list_GARY_READ; /* 00052774 */
+extern scpi_node * const scpi_list_GARY_READ_children[1]; /* 0005277a */
+extern const scpi_child_list scpi_list_GARY; /* 0005277e */
+extern scpi_node * const scpi_list_GARY_children[4]; /* 00052784 */
+extern const scpi_child_list scpi_list_DOUGlas_STATe; /* 00052794 */
+extern scpi_node * const scpi_list_DOUGlas_STATe_children[1]; /* 0005279a */
+extern const scpi_child_list scpi_list_DOUGlas; /* 0005279e */
+extern scpi_node * const scpi_list_DOUGlas_children[3]; /* 000527a4 */
+extern const scpi_child_list scpi_list_SAMPle; /* 000527b0 */
+extern scpi_node * const scpi_list_SAMPle_children[47]; /* 000527b6 */
+extern const scpi_child_list scpi_list_SYSTem_STATus; /* 00052872 */
+extern scpi_node * const scpi_list_SYSTem_STATus_children[1]; /* 00052878 */
+extern const scpi_child_list scpi_list_SYSTem_PRINt; /* 0005287c */
+extern scpi_node * const scpi_list_SYSTem_PRINt_children[1]; /* 00052882 */
+extern const scpi_child_list scpi_list_SYSTem_COMMunicate_SER1_RECeive_PARity; /* 00052886 */
+extern scpi_node * const scpi_list_SYSTem_COMMunicate_SER1_RECeive_PARity_children[1]; /* 0005288c */
+extern const scpi_child_list scpi_list_SYSTem_COMMunicate_SER1_RECeive; /* 00052890 */
+extern scpi_node * const scpi_list_SYSTem_COMMunicate_SER1_RECeive_children[5]; /* 00052896 */
+extern const scpi_child_list scpi_list_SYSTem_COMMunicate_SER; /* 000528aa */
+extern scpi_node * const scpi_list_SYSTem_COMMunicate_SER_children[6]; /* 000528b0 */
+extern const scpi_child_list scpi_list_SYSTem_COMMunicate; /* 000528c8 */
+extern scpi_node * const scpi_list_SYSTem_COMMunicate_children[6]; /* 000528ce */
+extern const scpi_child_list scpi_list_SYSTem; /* 000528e6 */
+extern scpi_node * const scpi_list_SYSTem_children[8]; /* 000528ec */
+extern const scpi_child_list scpi_list_STATus_PRESet; /* 0005290c */
+extern scpi_node * const scpi_list_STATus_PRESet_children[1]; /* 00052912 */
+extern const scpi_child_list scpi_list_STATus_QUEStionable_CONDition; /* 00052916 */
+extern scpi_node * const scpi_list_STATus_QUEStionable_CONDition_children[1]; /* 0005291c */
+extern const scpi_child_list scpi_list_STATus_QUEStionable_EVENt; /* 00052920 */
+extern scpi_node * const scpi_list_STATus_QUEStionable_EVENt_children[1]; /* 00052926 */
+extern const scpi_child_list scpi_list_STATus_QUEStionable; /* 0005292a */
+extern scpi_node * const scpi_list_STATus_QUEStionable_children[5]; /* 00052930 */
+extern const scpi_child_list scpi_list_STATus_OPERation_POWerup; /* 00052944 */
+extern scpi_node * const scpi_list_STATus_OPERation_POWerup_children[5]; /* 0005294a */
+extern const scpi_child_list scpi_list_STATus_OPERation_HOLDover; /* 0005295e */
+extern scpi_node * const scpi_list_STATus_OPERation_HOLDover_children[5]; /* 00052964 */
+extern const scpi_child_list scpi_list_STATus_OPERation_HARDware; /* 00052978 */
+extern scpi_node * const scpi_list_STATus_OPERation_HARDware_children[5]; /* 0005297e */
+extern const scpi_child_list scpi_list_STATus_OPERation; /* 00052992 */
+extern scpi_node * const scpi_list_STATus_OPERation_children[8]; /* 00052998 */
+extern const scpi_child_list scpi_list_STATus; /* 000529b8 */
+extern scpi_node * const scpi_list_STATus_children[3]; /* 000529be */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_LIMit; /* 000529ca */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_LIMit_children[1]; /* 000529d0 */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover_TUNCertainty_PREDicted; /* 000529d4 */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_TUNCertainty_PREDicted_children[1]; /* 000529da */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover_TUNCertainty; /* 000529de */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_TUNCertainty_children[2]; /* 000529e4 */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover_RECovery_LIMit; /* 000529ec */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_RECovery_LIMit_children[1]; /* 000529f2 */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover_RECovery; /* 000529f6 */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_RECovery_children[3]; /* 000529fc */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover_LIMit; /* 00052a08 */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_LIMit_children[2]; /* 00052a0e */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold; /* 00052a16 */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_children[5]; /* 00052a1c */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover_DURation_STATus; /* 00052a30 */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_DURation_STATus_children[1]; /* 00052a36 */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover_DURation_MEASurement; /* 00052a3a */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_DURation_MEASurement_children[1]; /* 00052a40 */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover_DURation; /* 00052a44 */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_DURation_children[2]; /* 00052a4a */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization_HOLDover; /* 00052a52 */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_HOLDover_children[7]; /* 00052a58 */
+extern const scpi_child_list scpi_list_SOURce_SYNChronization; /* 00052a74 */
+extern scpi_node * const scpi_list_SOURce_SYNChronization_children[7]; /* 00052a7a */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_LIMit; /* 00052a96 */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_LIMit_children[1]; /* 00052a9c */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover_TUNCertainty_PREDicted; /* 00052aa0 */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_TUNCertainty_PREDicted_children[1]; /* 00052aa6 */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover_TUNCertainty; /* 00052aaa */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_TUNCertainty_children[2]; /* 00052ab0 */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover_RECovery_LIMit; /* 00052ab8 */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_RECovery_LIMit_children[1]; /* 00052abe */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover_RECovery; /* 00052ac2 */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_RECovery_children[3]; /* 00052ac8 */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover_LIMit; /* 00052ad4 */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_LIMit_children[2]; /* 00052ada */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold; /* 00052ae2 */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_children[5]; /* 00052ae8 */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover_DURation_STATus; /* 00052afc */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_DURation_STATus_children[1]; /* 00052b02 */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover_DURation_MEASurement; /* 00052b06 */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_DURation_MEASurement_children[1]; /* 00052b0c */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover_DURation; /* 00052b10 */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_DURation_children[2]; /* 00052b16 */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator_HOLDover; /* 00052b1e */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_HOLDover_children[7]; /* 00052b24 */
+extern const scpi_child_list scpi_list_SOURce_ROSCillator; /* 00052b40 */
+extern scpi_node * const scpi_list_SOURce_ROSCillator_children[3]; /* 00052b46 */
+extern const scpi_child_list scpi_list_SOURce_PULSe_STARt; /* 00052b52 */
+extern scpi_node * const scpi_list_SOURce_PULSe_STARt_children[2]; /* 00052b58 */
+extern const scpi_child_list scpi_list_SOURce_PULSe_REFerence; /* 00052b60 */
+extern scpi_node * const scpi_list_SOURce_PULSe_REFerence_children[1]; /* 00052b66 */
+extern const scpi_child_list scpi_list_SOURce_PULSe_CONTinuous; /* 00052b6a */
+extern scpi_node * const scpi_list_SOURce_PULSe_CONTinuous_children[2]; /* 00052b70 */
+extern const scpi_child_list scpi_list_SOURce_PULSe; /* 00052b78 */
+extern scpi_node * const scpi_list_SOURce_PULSe_children[3]; /* 00052b7e */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_TIME; /* 00052b8a */
+extern scpi_node * const scpi_list_SOURce_PTIMe_TIME_children[1]; /* 00052b90 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_TCODe; /* 00052b94 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_TCODe_children[1]; /* 00052b9a */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_PPS; /* 00052b9e */
+extern scpi_node * const scpi_list_SOURce_PTIMe_PPS_children[1]; /* 00052ba4 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_LEAPsecond_ACCumulated; /* 00052ba8 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_LEAPsecond_ACCumulated_children[1]; /* 00052bae */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_LEAPsecond; /* 00052bb2 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_LEAPsecond_children[5]; /* 00052bb8 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_SATellite_VISible_PREDicted; /* 00052bcc */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_SATellite_VISible_PREDicted_children[1]; /* 00052bd2 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_SATellite_VISible; /* 00052bd6 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_SATellite_VISible_children[1]; /* 00052bdc */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude; /* 00052be0 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_children[4]; /* 00052be6 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore; /* 00052bf6 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_children[4]; /* 00052bfc */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_SATellite_TRACking; /* 00052c0c */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_SATellite_TRACking_children[4]; /* 00052c12 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_SATellite; /* 00052c22 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_SATellite_children[2]; /* 00052c28 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_REFerence; /* 00052c30 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_REFerence_children[2]; /* 00052c36 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe; /* 00052c3e */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_children[1]; /* 00052c44 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_POSition_SURVey; /* 00052c48 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_POSition_SURVey_children[3]; /* 00052c4e */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_POSition_HOLD; /* 00052c5a */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_POSition_HOLD_children[2]; /* 00052c60 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_POSition; /* 00052c68 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_POSition_children[3]; /* 00052c6e */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem_INITial; /* 00052c7a */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_INITial_children[3]; /* 00052c80 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_GPSystem; /* 00052c8c */
+extern scpi_node * const scpi_list_SOURce_PTIMe_GPSystem_children[6]; /* 00052c92 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe_SYNChronization; /* 00052caa */
+extern scpi_node * const scpi_list_SOURce_PTIMe_SYNChronization_children[1]; /* 00052cb0 */
+extern const scpi_child_list scpi_list_SOURce_PTIMe; /* 00052cb4 */
+extern scpi_node * const scpi_list_SOURce_PTIMe_children[11]; /* 00052cba */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_SATellite_VISible_PREDicted; /* 00052ce6 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_SATellite_VISible_PREDicted_children[1]; /* 00052cec */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_SATellite_VISible; /* 00052cf0 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_SATellite_VISible_children[1]; /* 00052cf6 */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_SATellite_TRACking_INCLude; /* 00052cfa */
+extern scpi_node * const scpi_list_SOURce_GPSystem_SATellite_TRACking_INCLude_children[4]; /* 00052d00 */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_SATellite_TRACking_IGNore; /* 00052d10 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_SATellite_TRACking_IGNore_children[4]; /* 00052d16 */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_SATellite_TRACking; /* 00052d26 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_SATellite_TRACking_children[4]; /* 00052d2c */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_SATellite; /* 00052d3c */
+extern scpi_node * const scpi_list_SOURce_GPSystem_SATellite_children[2]; /* 00052d42 */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_REFerence; /* 00052d4a */
+extern scpi_node * const scpi_list_SOURce_GPSystem_REFerence_children[2]; /* 00052d50 */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_POSition_SURVey_STATe; /* 00052d58 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_POSition_SURVey_STATe_children[1]; /* 00052d5e */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_POSition_SURVey; /* 00052d62 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_POSition_SURVey_children[3]; /* 00052d68 */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_POSition_HOLD; /* 00052d74 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_POSition_HOLD_children[2]; /* 00052d7a */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_POSition; /* 00052d82 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_POSition_children[3]; /* 00052d88 */
+extern const scpi_child_list scpi_list_SOURce_GPSystem_INITial; /* 00052d94 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_INITial_children[3]; /* 00052d9a */
+extern const scpi_child_list scpi_list_SOURce_GPSystem; /* 00052da6 */
+extern scpi_node * const scpi_list_SOURce_GPSystem_children[6]; /* 00052dac */
+extern const scpi_child_list scpi_list_SOURce; /* 00052dc4 */
+extern scpi_node * const scpi_list_SOURce_children[5]; /* 00052dca */
+extern const scpi_child_list scpi_list_SENSe_TST; /* 00052dde */
+extern scpi_node * const scpi_list_SENSe_TST_children[1]; /* 00052de4 */
+extern const scpi_child_list scpi_list_SENSe_DATA_MEMory_OVERflow; /* 00052de8 */
+extern scpi_node * const scpi_list_SENSe_DATA_MEMory_OVERflow_children[1]; /* 00052dee */
+extern const scpi_child_list scpi_list_SENSe_DATA_MEMory; /* 00052df2 */
+extern scpi_node * const scpi_list_SENSe_DATA_MEMory_children[2]; /* 00052df8 */
+extern const scpi_child_list scpi_list_SENSe_DATA; /* 00052e00 */
+extern scpi_node * const scpi_list_SENSe_DATA_children[4]; /* 00052e06 */
+extern const scpi_child_list scpi_list_SENSe; /* 00052e16 */
+extern scpi_node * const scpi_list_SENSe_children[11]; /* 00052e1c */
+extern const scpi_child_list scpi_list_OUTPut_PIN1_DELay; /* 00052e48 */
+extern scpi_node * const scpi_list_OUTPut_PIN1_DELay_children[1]; /* 00052e4e */
+extern const scpi_child_list scpi_list_OUTPut_PIN1; /* 00052e52 */
+extern scpi_node * const scpi_list_OUTPut_PIN1_children[2]; /* 00052e58 */
+extern const scpi_child_list scpi_list_OUTPut; /* 00052e60 */
+extern scpi_node * const scpi_list_OUTPut_children[8]; /* 00052e66 */
+extern const scpi_child_list scpi_list_LED_ALARm; /* 00052e86 */
+extern scpi_node * const scpi_list_LED_ALARm_children[3]; /* 00052e8c */
+extern const scpi_child_list scpi_list_LED; /* 00052e98 */
+extern scpi_node * const scpi_list_LED_children[6]; /* 00052e9e */
+extern const scpi_child_list scpi_list_FORMat; /* 00052eb6 */
+extern scpi_node * const scpi_list_FORMat_children[1]; /* 00052ebc */
+extern const scpi_child_list scpi_list_DIAGnostic_TEST; /* 00052ec0 */
+extern scpi_node * const scpi_list_DIAGnostic_TEST_children[1]; /* 00052ec6 */
+extern const scpi_child_list scpi_list_DIAGnostic_SYSTem; /* 00052eca */
+extern scpi_node * const scpi_list_DIAGnostic_SYSTem_children[2]; /* 00052ed0 */
+extern const scpi_child_list scpi_list_DIAGnostic_STATus; /* 00052ed8 */
+extern scpi_node * const scpi_list_DIAGnostic_STATus_children[2]; /* 00052ede */
+extern const scpi_child_list scpi_list_DIAGnostic_SLOG_READ; /* 00052ee6 */
+extern scpi_node * const scpi_list_DIAGnostic_SLOG_READ_children[1]; /* 00052eec */
+extern const scpi_child_list scpi_list_DIAGnostic_SLOG; /* 00052ef0 */
+extern scpi_node * const scpi_list_DIAGnostic_SLOG_children[3]; /* 00052ef6 */
+extern const scpi_child_list scpi_list_DIAGnostic_SER; /* 00052f02 */
+extern scpi_node * const scpi_list_DIAGnostic_SER_children[2]; /* 00052f08 */
+extern const scpi_child_list scpi_list_DIAGnostic_ROSCillator_EFControl; /* 00052f10 */
+extern scpi_node * const scpi_list_DIAGnostic_ROSCillator_EFControl_children[2]; /* 00052f16 */
+extern const scpi_child_list scpi_list_DIAGnostic_ROSCillator; /* 00052f1e */
+extern scpi_node * const scpi_list_DIAGnostic_ROSCillator_children[3]; /* 00052f24 */
+extern const scpi_child_list scpi_list_DIAGnostic_QUERy; /* 00052f30 */
+extern scpi_node * const scpi_list_DIAGnostic_QUERy_children[1]; /* 00052f36 */
+extern const scpi_child_list scpi_list_DIAGnostic_PTIMe; /* 00052f3a */
+extern scpi_node * const scpi_list_DIAGnostic_PTIMe_children[1]; /* 00052f40 */
+extern const scpi_child_list scpi_list_DIAGnostic_OS; /* 00052f44 */
+extern scpi_node * const scpi_list_DIAGnostic_OS_children[3]; /* 00052f4a */
+extern const scpi_child_list scpi_list_DIAGnostic_LOG_READ; /* 00052f56 */
+extern scpi_node * const scpi_list_DIAGnostic_LOG_READ_children[1]; /* 00052f5c */
+extern const scpi_child_list scpi_list_DIAGnostic_LOG; /* 00052f60 */
+extern scpi_node * const scpi_list_DIAGnostic_LOG_children[4]; /* 00052f66 */
+extern const scpi_child_list scpi_list_DIAGnostic_LIFetime; /* 00052f76 */
+extern scpi_node * const scpi_list_DIAGnostic_LIFetime_children[1]; /* 00052f7c */
+extern const scpi_child_list scpi_list_DIAGnostic_IDENtification; /* 00052f80 */
+extern scpi_node * const scpi_list_DIAGnostic_IDENtification_children[5]; /* 00052f86 */
+extern const scpi_child_list scpi_list_DIAGnostic_GPSystem_POSition_HOLD_RAIM; /* 00052f9a */
+extern scpi_node * const scpi_list_DIAGnostic_GPSystem_POSition_HOLD_RAIM_children[2]; /* 00052fa0 */
+extern const scpi_child_list scpi_list_DIAGnostic_GPSystem_POSition_HOLD; /* 00052fa8 */
+extern scpi_node * const scpi_list_DIAGnostic_GPSystem_POSition_HOLD_children[1]; /* 00052fae */
+extern const scpi_child_list scpi_list_DIAGnostic_GPSystem_POSition; /* 00052fb2 */
+extern scpi_node * const scpi_list_DIAGnostic_GPSystem_POSition_children[4]; /* 00052fb8 */
+extern const scpi_child_list scpi_list_DIAGnostic_GPSystem; /* 00052fc8 */
+extern scpi_node * const scpi_list_DIAGnostic_GPSystem_children[3]; /* 00052fce */
+extern const scpi_child_list scpi_list_DIAGnostic; /* 00052fda */
+extern scpi_node * const scpi_list_DIAGnostic_children[21]; /* 00052fe0 */
+extern const scpi_child_list scpi_main_tree; /* 00053034 */
+extern scpi_node * const scpi_main_tree_children[49]; /* 0005303a */
+extern const char scpi_keyword_WAI[5]; /* 000530fe */
+extern const char scpi_keyword_STB[5]; /* 00053103 */
+extern const char scpi_keyword_SRE[5]; /* 00053108 */
+extern const char scpi_keyword_RST[5]; /* 0005310d */
+extern const char scpi_keyword_OPC[5]; /* 00053112 */
+extern const char scpi_keyword_IDN[5]; /* 00053117 */
+extern const char scpi_keyword_ESR[5]; /* 0005311c */
+extern const char scpi_keyword_ESE[5]; /* 00053121 */
+extern const char scpi_keyword_CLS[5]; /* 00053126 */
+extern const char scpi_keyword_RVST[6]; /* 0005312b */
+extern const char scpi_keyword_RTSA[6]; /* 00053131 */
+extern const char scpi_keyword_RMHO[6]; /* 00053137 */
+extern const char scpi_keyword_FMHO[6]; /* 0005313d */
+extern const char scpi_keyword_RSST[6]; /* 00053143 */
+extern const char scpi_keyword_RPHS[6]; /* 00053149 */
+extern const char scpi_keyword_RSPR[6]; /* 0005314f */
+extern const char scpi_keyword_IPSU[6]; /* 00053155 */
+extern const char scpi_keyword_RTCM[6]; /* 0005315b */
+extern const char scpi_keyword_REQU[6]; /* 00053161 */
+extern const char scpi_keyword_CEQU[6]; /* 00053167 */
+extern const char scpi_keyword_CALA[6]; /* 0005316d */
+extern const char scpi_keyword_RAST[6]; /* 00053173 */
+extern const char scpi_keyword_RSSU[6]; /* 00053179 */
+extern const char scpi_keyword_WAT3[6]; /* 0005317f */
+extern const char scpi_keyword_RAT3[6]; /* 00053185 */
+extern const char scpi_keyword_WAT2[6]; /* 0005318b */
+extern const char scpi_keyword_RAT2[6]; /* 00053191 */
+extern const char scpi_keyword_WAT1[6]; /* 00053197 */
+extern const char scpi_keyword_RAT1[6]; /* 0005319d */
+extern const char scpi_keyword_WEAL[6]; /* 000531a3 */
+extern const char scpi_keyword_REAL[6]; /* 000531a9 */
+extern const char scpi_keyword_WFOU[6]; /* 000531af */
+extern const char scpi_keyword_RFOU[6]; /* 000531b5 */
+extern const char scpi_keyword_WACD[6]; /* 000531bb */
+extern const char scpi_keyword_RACD[6]; /* 000531c1 */
+extern const char scpi_keyword_W1PO[6]; /* 000531c7 */
+extern const char scpi_keyword_R1PO[6]; /* 000531cd */
+extern const char scpi_keyword_WLOC[6]; /* 000531d3 */
+extern const char scpi_keyword_RLOC[6]; /* 000531d9 */
+extern const char scpi_keyword_WTZO[6]; /* 000531df */
+extern const char scpi_keyword_RTZO[6]; /* 000531e5 */
+extern const char scpi_keyword_RTAD[6]; /* 000531eb */
+extern const char scpi_keyword_RWHO[6]; /* 000531f1 */
+extern const char scpi_keyword_TKN[5]; /* 000531f7 */
+extern const char scpi_keyword_ROBin[7]; /* 000531fc */
+extern const char scpi_keyword_KENneth[9]; /* 00053203 */
+extern const char scpi_keyword_GARY[6]; /* 0005320c */
+extern const char scpi_keyword_DOUGlas[9]; /* 00053212 */
+extern const char scpi_keyword_DANA[6]; /* 0005321b */
+extern const char scpi_keyword_DARRAY3[9]; /* 00053221 */
+extern const char scpi_keyword_DARR3[7]; /* 0005322a */
+extern const char scpi_keyword_DARRAY2[9]; /* 00053231 */
+extern const char scpi_keyword_DARR2[7]; /* 0005323a */
+extern const char scpi_keyword_DARRAY1[9]; /* 00053241 */
+extern const char scpi_keyword_DARR1[7]; /* 0005324a */
+extern const char scpi_keyword_DARRAY[8]; /* 00053251 */
+extern const char scpi_keyword_DARR[6]; /* 00053259 */
+extern const char scpi_keyword_DOUBle[8]; /* 0005325f */
+extern const char scpi_keyword_FARRAY3[9]; /* 00053267 */
+extern const char scpi_keyword_FARR3[7]; /* 00053270 */
+extern const char scpi_keyword_FARRAY2[9]; /* 00053277 */
+extern const char scpi_keyword_FARR2[7]; /* 00053280 */
+extern const char scpi_keyword_FARRAY1[9]; /* 00053287 */
+extern const char scpi_keyword_FARR1[7]; /* 00053290 */
+extern const char scpi_keyword_FARRAY[8]; /* 00053297 */
+extern const char scpi_keyword_FARR[6]; /* 0005329f */
+extern const char scpi_keyword_FLOat[7]; /* 000532a5 */
+extern const char scpi_keyword_IMULtiple[11]; /* 000532ac */
+extern const char scpi_keyword_IARRAY4[9]; /* 000532b7 */
+extern const char scpi_keyword_IARR4[7]; /* 000532c0 */
+extern const char scpi_keyword_IARRAY3[9]; /* 000532c7 */
+extern const char scpi_keyword_IARR3[7]; /* 000532d0 */
+extern const char scpi_keyword_IARRAY2[9]; /* 000532d7 */
+extern const char scpi_keyword_IARR2[7]; /* 000532e0 */
+extern const char scpi_keyword_IARRAY1[9]; /* 000532e7 */
+extern const char scpi_keyword_IARR1[7]; /* 000532f0 */
+extern const char scpi_keyword_IARRAY[8]; /* 000532f7 */
+extern const char scpi_keyword_IARR[6]; /* 000532ff */
+extern const char scpi_keyword_TARRAY3[9]; /* 00053305 */
+extern const char scpi_keyword_TARR3[7]; /* 0005330e */
+extern const char scpi_keyword_TARRAY2[9]; /* 00053315 */
+extern const char scpi_keyword_TARR2[7]; /* 0005331e */
+extern const char scpi_keyword_TARRAY1[9]; /* 00053325 */
+extern const char scpi_keyword_TARR1[7]; /* 0005332e */
+extern const char scpi_keyword_TARRAY[8]; /* 00053335 */
+extern const char scpi_keyword_TARR[6]; /* 0005333d */
+extern const char scpi_keyword_TOGGle[8]; /* 00053343 */
+extern const char scpi_keyword_BARRAY2[9]; /* 0005334b */
+extern const char scpi_keyword_BARR2[7]; /* 00053354 */
+extern const char scpi_keyword_BARRAY1[9]; /* 0005335b */
+extern const char scpi_keyword_BARR1[7]; /* 00053364 */
+extern const char scpi_keyword_BARRAY[8]; /* 0005336b */
+extern const char scpi_keyword_BARR[6]; /* 00053373 */
+extern const char scpi_keyword_BOOLean[9]; /* 00053379 */
+extern const char scpi_keyword_ACTion[8]; /* 00053382 */
+extern const char scpi_keyword_SAMPle[8]; /* 0005338a */
+extern const char scpi_keyword_LENGth[8]; /* 00053392 */
+extern const char scpi_keyword_PRINt[7]; /* 0005339a */
+extern const char scpi_keyword_LANGuage[10]; /* 000533a1 */
+extern const char scpi_keyword_SBITs[7]; /* 000533ab */
+extern const char scpi_keyword_TYPE[6]; /* 000533b2 */
+extern const char scpi_keyword_PARity[8]; /* 000533b8 */
+extern const char scpi_keyword_PACE[6]; /* 000533c0 */
+extern const char scpi_keyword_BITS[6]; /* 000533c6 */
+extern const char scpi_keyword_BAUD[6]; /* 000533cc */
+extern const char scpi_keyword_TRANsmit[10]; /* 000533d2 */
+extern const char scpi_keyword_RECeive[9]; /* 000533dc */
+extern const char scpi_keyword_PROMpt[8]; /* 000533e5 */
+extern const char scpi_keyword_FDUPlex[9]; /* 000533ed */
+extern const char scpi_keyword_ADDRess[9]; /* 000533f6 */
+extern const char scpi_keyword_COMMunicate[13]; /* 000533ff */
+extern const char scpi_keyword_PRESet[8]; /* 0005340c */
+extern const char scpi_keyword_QUEStionable[14]; /* 00053414 */
+extern const char scpi_keyword_ENABle[8]; /* 00053422 */
+extern const char scpi_keyword_CONDition[11]; /* 0005342a */
+extern const char scpi_keyword_EVENt[7]; /* 00053435 */
+extern const char scpi_keyword_OPERation[11]; /* 0005343c */
+extern const char scpi_keyword_PRESent[9]; /* 00053447 */
+extern const char scpi_keyword_TUNCertainty[14]; /* 00053450 */
+extern const char scpi_keyword_AUTO[6]; /* 0005345e */
+extern const char scpi_keyword_RECovery[10]; /* 00053464 */
+extern const char scpi_keyword_INITiate[10]; /* 0005346e */
+extern const char scpi_keyword_HYSTeresis[12]; /* 00053478 */
+extern const char scpi_keyword_EXCeeded[10]; /* 00053484 */
+extern const char scpi_keyword_ALAR3[7]; /* 0005348e */
+extern const char scpi_keyword_ALARM3[8]; /* 00053495 */
+extern const char scpi_keyword_ALAR1[7]; /* 0005349d */
+extern const char scpi_keyword_ALARM1[8]; /* 000534a4 */
+extern const char scpi_keyword_MEASurement[13]; /* 000534ac */
+extern const char scpi_keyword_STARt[7]; /* 000534b9 */
+extern const char scpi_keyword_PERiod[8]; /* 000534c0 */
+extern const char scpi_keyword_CONTinuous[12]; /* 000534c8 */
+extern const char scpi_keyword_PULSe[7]; /* 000534d4 */
+extern const char scpi_keyword_TZONe[7]; /* 000534db */
+extern const char scpi_keyword_STRing[8]; /* 000534e2 */
+extern const char scpi_keyword_TFOMerit[10]; /* 000534ea */
+extern const char scpi_keyword_TCODe[7]; /* 000534f4 */
+extern const char scpi_keyword_PPS[5]; /* 000534fb */
+extern const char scpi_keyword_GPSTime[9]; /* 00053500 */
+extern const char scpi_keyword_CALCulate[11]; /* 00053509 */
+extern const char scpi_keyword_ACCumulated[13]; /* 00053514 */
+extern const char scpi_keyword_LEAPsecond[12]; /* 00053521 */
+extern const char scpi_keyword_IMMediate[11]; /* 0005352d */
+extern const char scpi_keyword_SYNChronization[17]; /* 00053538 */
+extern const char scpi_keyword_FFOMerit[10]; /* 00053549 */
+extern const char scpi_keyword_PREDicted[11]; /* 00053553 */
+extern const char scpi_keyword_VISible[9]; /* 0005355e */
+extern const char scpi_keyword_INCLude[9]; /* 00053567 */
+extern const char scpi_keyword_TRACking[10]; /* 00053570 */
+extern const char scpi_keyword_SATellite[11]; /* 0005357a */
+extern const char scpi_keyword_VALid[7]; /* 00053585 */
+extern const char scpi_keyword_REFerence[11]; /* 0005358c */
+extern const char scpi_keyword_PROGress[10]; /* 00053597 */
+extern const char scpi_keyword_DURation[10]; /* 000535a1 */
+extern const char scpi_keyword_ACTual[8]; /* 000535ab */
+extern const char scpi_keyword_INITial[9]; /* 000535b3 */
+extern const char scpi_keyword_EMANgle[9]; /* 000535bc */
+extern const char scpi_keyword_ADELay[8]; /* 000535c5 */
+extern const char scpi_keyword_SOURce[8]; /* 000535cd */
+extern const char scpi_keyword_EDGE[6]; /* 000535d5 */
+extern const char scpi_keyword_TSTAMP4[9]; /* 000535db */
+extern const char scpi_keyword_TST4[6]; /* 000535e4 */
+extern const char scpi_keyword_TSTAMP3[9]; /* 000535ea */
+extern const char scpi_keyword_TST3[6]; /* 000535f3 */
+extern const char scpi_keyword_TSTAMP2[9]; /* 000535f9 */
+extern const char scpi_keyword_TST2[6]; /* 00053602 */
+extern const char scpi_keyword_TSTAMP1[9]; /* 00053608 */
+extern const char scpi_keyword_TST1[6]; /* 00053611 */
+extern const char scpi_keyword_TSTAMP[8]; /* 00053617 */
+extern const char scpi_keyword_TST[5]; /* 0005361f */
+extern const char scpi_keyword_TSTamp[8]; /* 00053624 */
+extern const char scpi_keyword_POINts[8]; /* 0005362c */
+extern const char scpi_keyword_SAVE[6]; /* 00053634 */
+extern const char scpi_keyword_OVERflow[10]; /* 0005363a */
+extern const char scpi_keyword_SENSe[7]; /* 00053644 */
+extern const char scpi_keyword_FREQuency[11]; /* 0005364b */
+extern const char scpi_keyword_ALIGnment[11]; /* 00053656 */
+extern const char scpi_keyword_PINS[6]; /* 00053661 */
+extern const char scpi_keyword_PIN7[6]; /* 00053667 */
+extern const char scpi_keyword_PIN2[6]; /* 0005366d */
+extern const char scpi_keyword_PIN8[6]; /* 00053673 */
+extern const char scpi_keyword_PIN3[6]; /* 00053679 */
+extern const char scpi_keyword_PIN6[6]; /* 0005367f */
+extern const char scpi_keyword_PIN1[6]; /* 00053685 */
+extern const char scpi_keyword_OUTPut[8]; /* 0005368b */
+extern const char scpi_keyword_TMHValid[10]; /* 00053693 */
+extern const char scpi_keyword_HOLDover[10]; /* 0005369d */
+extern const char scpi_keyword_GPSLock[9]; /* 000536a7 */
+extern const char scpi_keyword_ENABled[9]; /* 000536b0 */
+extern const char scpi_keyword_USER[6]; /* 000536b9 */
+extern const char scpi_keyword_MINor[7]; /* 000536bf */
+extern const char scpi_keyword_MAJor[7]; /* 000536c6 */
+extern const char scpi_keyword_ALARm[7]; /* 000536cd */
+extern const char scpi_keyword_ACTive[8]; /* 000536d4 */
+extern const char scpi_keyword_LED[5]; /* 000536dc */
+extern const char scpi_keyword_DATA[6]; /* 000536e1 */
+extern const char scpi_keyword_FORMat[8]; /* 000536e7 */
+extern const char scpi_keyword_TOFFset[9]; /* 000536ef */
+extern const char scpi_keyword_RESult[8]; /* 000536f8 */
+extern const char scpi_keyword_TEST[6]; /* 00053700 */
+extern const char scpi_keyword_TEMPerature[13]; /* 00053706 */
+extern const char scpi_keyword_PSTartup[10]; /* 00053713 */
+extern const char scpi_keyword_DOUTput[9]; /* 0005371d */
+extern const char scpi_keyword_SYSTem[8]; /* 00053726 */
+extern const char scpi_keyword_HAPPening[11]; /* 0005372e */
+extern const char scpi_keyword_STATus[8]; /* 00053739 */
+extern const char scpi_keyword_SLOG[6]; /* 00053741 */
+extern const char scpi_keyword_EGResponse[12]; /* 00053747 */
+extern const char scpi_keyword_RESTricted[12]; /* 00053753 */
+extern const char scpi_keyword_SERIAL2[9]; /* 0005375f */
+extern const char scpi_keyword_SERIAL1[9]; /* 00053768 */
+extern const char scpi_keyword_SERIAL[8]; /* 00053771 */
+extern const char scpi_keyword_SER[5]; /* 00053779 */
+extern const char scpi_keyword_TCOefficient[14]; /* 0005377e */
+extern const char scpi_keyword_ABSolute[10]; /* 0005378c */
+extern const char scpi_keyword_RELative[10]; /* 00053796 */
+extern const char scpi_keyword_EFControl[11]; /* 000537a0 */
+extern const char scpi_keyword_CURRent[9]; /* 000537ab */
+extern const char scpi_keyword_ROSCillator[13]; /* 000537b4 */
+extern const char scpi_keyword_RESPonse[10]; /* 000537c1 */
+extern const char scpi_keyword_QUERy[7]; /* 000537cb */
+extern const char scpi_keyword_TINTerval[11]; /* 000537d2 */
+extern const char scpi_keyword_PTIMe[7]; /* 000537dd */
+extern const char scpi_keyword_STACk[7]; /* 000537e4 */
+extern const char scpi_keyword_PROCess[9]; /* 000537eb */
+extern const char scpi_keyword_MEMory[8]; /* 000537f4 */
+extern const char scpi_keyword_OS[4]; /* 000537fc */
+extern const char scpi_keyword_ME[4]; /* 00053800 */
+extern const char scpi_keyword_WRITe[7]; /* 00053804 */
+extern const char scpi_keyword_READ[6]; /* 0005380b */
+extern const char scpi_keyword_LOG[5]; /* 00053811 */
+extern const char scpi_keyword_COUNt[7]; /* 00053816 */
+extern const char scpi_keyword_LIFetime[10]; /* 0005381d */
+extern const char scpi_keyword_SERial[8]; /* 00053827 */
+extern const char scpi_keyword_MODel[7]; /* 0005382f */
+extern const char scpi_keyword_DEFault[9]; /* 00053836 */
+extern const char scpi_keyword_IDENtification[16]; /* 0005383f */
+extern const char scpi_keyword_UTC[5]; /* 0005384f */
+extern const char scpi_keyword_DEGRees[9]; /* 00053854 */
+extern const char scpi_keyword_MSEConds[10]; /* 0005385d */
+extern const char scpi_keyword_THReshold[11]; /* 00053867 */
+extern const char scpi_keyword_STATe[7]; /* 00053872 */
+extern const char scpi_keyword_RAIM[6]; /* 00053879 */
+extern const char scpi_keyword_POSition[10]; /* 0005387f */
+extern const char scpi_keyword_GPSystem[10]; /* 00053889 */
+extern const char scpi_keyword_DIAGnostic[12]; /* 00053893 */
+extern const char scpi_keyword_XON[5]; /* 0005389f */
+extern const char scpi_keyword_ONE[5]; /* 000538a4 */
+extern const char scpi_keyword_ODD[5]; /* 000538a9 */
+extern const char scpi_keyword_EVEN[6]; /* 000538ae */
+extern const char scpi_keyword_NONE[6]; /* 000538b4 */
+extern const char scpi_keyword_ERRor[7]; /* 000538ba */
+extern const char scpi_keyword_LIMit[7]; /* 000538c1 */
+extern const char scpi_keyword_HARDware[10]; /* 000538c8 */
+extern const char scpi_keyword_FALLing[9]; /* 000538d2 */
+extern const char scpi_keyword_RISing[8]; /* 000538db */
+extern const char scpi_keyword_NEGative[10]; /* 000538e3 */
+extern const char scpi_keyword_POSitive[10]; /* 000538ed */
+extern const char scpi_keyword_SER2[6]; /* 000538f7 */
+extern const char scpi_keyword_SER1[6]; /* 000538fd */
+extern const char scpi_keyword_FIRSt[7]; /* 00053903 */
+extern const char scpi_keyword_OTHer[7]; /* 0005390a */
+extern const char scpi_keyword_LOCKed[8]; /* 00053911 */
+extern const char scpi_keyword_RECovering[12]; /* 00053919 */
+extern const char scpi_keyword_WAITing[9]; /* 00053925 */
+extern const char scpi_keyword_HOLDing[9]; /* 0005392e */
+extern const char scpi_keyword_POWerup[9]; /* 00053937 */
+extern const char scpi_keyword_INTeger[9]; /* 00053940 */
+extern const char scpi_keyword_ASCii[7]; /* 00053949 */
+extern const char scpi_keyword_QMRC[6]; /* 00053950 */
+extern const char scpi_keyword_IMRC[6]; /* 00053956 */
+extern const char scpi_keyword_POWer[7]; /* 0005395c */
+extern const char scpi_keyword_GPS[5]; /* 00053963 */
+extern const char scpi_keyword_IREFerence[12]; /* 00053968 */
+extern const char scpi_keyword_INTerpolator[14]; /* 00053974 */
+extern const char scpi_keyword_FPGA[6]; /* 00053982 */
+extern const char scpi_keyword_QSPI[6]; /* 00053988 */
+extern const char scpi_keyword_UART[6]; /* 0005398e */
+extern const char scpi_keyword_EEPRom[8]; /* 00053994 */
+extern const char scpi_keyword_RAM[5]; /* 0005399c */
+extern const char scpi_keyword_PROCessor[11]; /* 000539a1 */
+extern const char scpi_keyword_DISPlay[9]; /* 000539ac */
+extern const char scpi_keyword_F2[4]; /* 000539b5 */
+extern const char scpi_keyword_F1[4]; /* 000539b9 */
+extern const char scpi_keyword_ALL[5]; /* 000539bd */
+extern const char scpi_keyword_DELay[7]; /* 000539c8 */
+extern const char scpi_keyword_HOLD[6]; /* 000539cf */
+extern const char scpi_keyword_IGNore[8]; /* 000539e0 */
+extern const char scpi_keyword_DATE[6]; /* 00053a04 */
+extern const char scpi_keyword_TIME[6]; /* 00053a17 */
+extern const char scpi_keyword_CLEar[7]; /* 00053a1d */
+extern const char scpi_keyword_SET[5]; /* 00053a24 */
+extern const char scpi_keyword_NTRansition[13]; /* 00053a29 */
+extern const char scpi_keyword_PTRansition[13]; /* 00053a36 */
+extern const char scpi_keyword_ONCE[6]; /* 00053a43 */
+extern const char scpi_keyword_LONGitude[11]; /* 00053a49 */
+extern const char scpi_keyword_LATitude[10]; /* 00053a54 */
+extern const char scpi_keyword_W[3]; /* 00053a5e */
+extern const char scpi_keyword_E[3]; /* 00053a61 */
+extern const char scpi_keyword_SURVey[8]; /* 00053a64 */
+extern const char scpi_keyword_LAST[6]; /* 00053a6c */
+extern const char scpi_keyword_S[3]; /* 00053a72 */
+extern const char scpi_keyword_N[3]; /* 00053a75 */
+extern const char scpi_keyword_INFinity[10]; /* 00053a78 */
+extern const char scpi_keyword_MINimum[9]; /* 00053a82 */
+extern const char scpi_keyword_MAXimum[9]; /* 00053a8b */
+extern const char scpi_keyword_T1[4]; /* 00053a94 */
+extern const char scpi_keyword_T0[4]; /* 00053a98 */
+extern char * const scpi_choice_keywords_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE_1[5]; /* 00053a9c */
+extern const scpi_choices scpi_choices_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE_1; /* 00053ab0 */
+extern char * const scpi_choice_keywords_response_SOURce_ROSCillator_HOLDover_WAITing_1[6]; /* 00053ab8 */
+extern const scpi_choices scpi_choices_response_SOURce_ROSCillator_HOLDover_WAITing_1; /* 00053ad0 */
+extern char * const scpi_choice_keywords_response_SYSTem_COMMunicate_1[3]; /* 00053ad8 */
+extern const scpi_choices scpi_choices_response_SYSTem_COMMunicate_1; /* 00053ae4 */
+extern char * const scpi_choice_keywords_response_RSST_2[7]; /* 00053aec */
+extern const scpi_choices scpi_choices_response_RSST_2; /* 00053b08 */
+extern char * const scpi_choice_keywords_set_FORMat_DATA_1[3]; /* 00053b10 */
+extern const scpi_choices scpi_choices_set_FORMat_DATA_1; /* 00053b1c */
+extern char * const scpi_choice_keywords_query_DIAGnostic_TEST_1[15]; /* 00053b24 */
+extern const scpi_choices scpi_choices_query_DIAGnostic_TEST_1; /* 00053b60 */
+extern char * const scpi_choice_keywords_set_SOURce_PTIMe_TCODe_FORMat_1[3]; /* 00053b68 */
+extern const scpi_choices scpi_choices_set_SOURce_PTIMe_TCODe_FORMat_1; /* 00053b74 */
+extern char * const scpi_choice_keywords_set_STATus_QUEStionable_EVENt_USER_1[3]; /* 00053b7c */
+extern const scpi_choices scpi_choices_set_STATus_QUEStionable_EVENt_USER_1; /* 00053b88 */
+extern char * const scpi_choice_keywords_set_DOUGlas_STATe_1[2]; /* 00053b90 */
+extern const scpi_choices scpi_choices_set_DOUGlas_STATe_1; /* 00053b98 */
+extern char * const scpi_choice_keywords_query_DIAGnostic_GPSystem_POSition_DEGRees_1[3]; /* 00053ba0 */
+extern const scpi_choices scpi_choices_query_DIAGnostic_GPSystem_POSition_DEGRees_1; /* 00053bac */
+extern char * const scpi_choice_keywords_set_SAMPle_TARR_1[3]; /* 00053bb4 */
+extern const scpi_choices scpi_choices_set_SAMPle_TARR_1; /* 00053bc0 */
+extern char * const scpi_choice_keywords_set_SYSTem_COMMunicate_SER1_RECeive_PACE_1[3]; /* 00053bc8 */
+extern const int16_t scpi_choice_values_set_SYSTem_COMMunicate_SER1_RECeive_PACE_1[2]; /* 00053bd4 */
+extern const scpi_choices scpi_choices_set_SYSTem_COMMunicate_SER1_RECeive_PACE_1; /* 00053bd8 */
+extern char * const scpi_choice_keywords_set_SENSe_TST1_EDGE_1[3]; /* 00053be0 */
+extern const int16_t scpi_choice_values_set_SENSe_TST1_EDGE_1[2]; /* 00053bec */
+extern const scpi_choices scpi_choices_set_SENSe_TST1_EDGE_1; /* 00053bf0 */
+extern char * const scpi_choice_keywords_set_OUTPut_PIN1_DELay_ALIGnment_1[3]; /* 00053bf8 */
+extern const int16_t scpi_choice_values_set_OUTPut_PIN1_DELay_ALIGnment_1[2]; /* 00053c04 */
+extern const scpi_choices scpi_choices_set_OUTPut_PIN1_DELay_ALIGnment_1; /* 00053c08 */
+extern char * const scpi_choice_keywords_set_ROBin_MEMory_SAVE_1[3]; /* 00053c10 */
+extern const int16_t scpi_choice_values_set_ROBin_MEMory_SAVE_1[2]; /* 00053c1c */
+extern const scpi_choices scpi_choices_set_ROBin_MEMory_SAVE_1; /* 00053c20 */
+extern char * const scpi_choice_keywords_set_STATus_QUEStionable_CONDition_USER_1[3]; /* 00053c82 */
+extern const int16_t scpi_choice_values_set_STATus_QUEStionable_CONDition_USER_1[2]; /* 00053c8e */
+extern const scpi_choices scpi_choices_set_STATus_QUEStionable_CONDition_USER_1; /* 00053c92 */
+extern char * const scpi_choice_keywords_response_DIAGnostic_GPSystem_POSition_DEGRees_1[5]; /* 00053c9a */
+extern const int16_t scpi_choice_values_response_DIAGnostic_GPSystem_POSition_DEGRees_1[4]; /* 00053cae */
+extern const scpi_choices scpi_choices_response_DIAGnostic_GPSystem_POSition_DEGRees_1; /* 00053cb6 */
+extern char * const scpi_choice_keywords_query_RLOC_6[3]; /* 00053cbe */
+extern const int16_t scpi_choice_values_query_RLOC_6[2]; /* 00053cca */
+extern const scpi_choices scpi_choices_query_RLOC_6; /* 00053cce */
+extern char * const scpi_choice_keywords_set_SOURce_GPSystem_POSition_1[5]; /* 00053cd6 */
+extern const int16_t scpi_choice_values_set_SOURce_GPSystem_POSition_1[4]; /* 00053cea */
+extern const scpi_choices scpi_choices_set_SOURce_GPSystem_POSition_1; /* 00053cf2 */
+extern char * const scpi_choice_keywords_query_RLOC_2[3]; /* 00053cfa */
+extern const int16_t scpi_choice_values_query_RLOC_2[2]; /* 00053d06 */
+extern const scpi_choices scpi_choices_query_RLOC_2; /* 00053d0a */
+extern char * const scpi_choice_keywords_set_DOUGlas_DURation_1[4]; /* 00053d12 */
+extern const int16_t scpi_choice_values_set_DOUGlas_DURation_1[3]; /* 00053d22 */
+extern const scpi_choices scpi_choices_set_DOUGlas_DURation_1; /* 00053d28 */
+extern char * const scpi_choice_keywords_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1[3]; /* 00053d30 */
+extern const int16_t scpi_choice_values_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1[2]; /* 00053d3c */
+extern const scpi_choices scpi_choices_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1; /* 00053d40 */
+extern const char scpi_unit_NS[3]; /* 00053d48 */
+extern const scpi_unit scpi_units_set_OUTPut_PIN1_DELay_1[2]; /* 00053d4c */
+extern const char scpi_unit_S[2]; /* 00053d58 */
+extern const scpi_unit scpi_units_set_KENneth_PREDicted_DURation_1[2]; /* 00053d5a */
+extern const char scpi_unit_MHZ[4]; /* 00053d66 */
+extern const char scpi_unit_HZ[3]; /* 00053d6a */
+extern const scpi_unit scpi_units_set_OUTPut_PIN1_FREQuency_1[3]; /* 00053d6e */
+extern const char scpi_unit_DEG[4]; /* 00053d80 */
+extern const scpi_unit scpi_units_set_SOURce_GPSystem_EMANgle_1[2]; /* 00053d84 */
+extern const scpi_parameter_kinds scpi_kinds_set_common_SRE_1; /* 00053d90 */
+extern const scpi_parameter_kinds scpi_kinds_set_common_ESE_1; /* 00053db4 */
+extern const scpi_parameter_kinds scpi_kinds_query_RVST_1; /* 00053dd8 */
+extern const scpi_parameter_kinds scpi_kinds_query_RTSA_1; /* 00053dfc */
+extern const scpi_parameter_kinds scpi_kinds_query_RMHO_1; /* 00053e20 */
+extern const scpi_parameter_kinds scpi_kinds_query_FMHO_1; /* 00053e44 */
+extern const scpi_parameter_kinds scpi_kinds_query_RSST_1; /* 00053e68 */
+extern const scpi_parameter_kinds scpi_kinds_query_RPHS_1; /* 00053e8c */
+extern const scpi_parameter_kinds scpi_kinds_query_RSPR_1; /* 00053eb0 */
+extern const scpi_parameter_kinds scpi_kinds_query_IPSU_1; /* 00053ed4 */
+extern const scpi_parameter_kinds scpi_kinds_query_RTCM_1; /* 00053ef8 */
+extern const scpi_parameter_kinds scpi_kinds_query_REQU_1; /* 00053f1c */
+extern const scpi_parameter_kinds scpi_kinds_query_CEQU_1; /* 00053f40 */
+extern const scpi_parameter_kinds scpi_kinds_query_CALA_1; /* 00053f64 */
+extern const scpi_parameter_kinds scpi_kinds_query_RAST_1; /* 00053f88 */
+extern const scpi_parameter_kinds scpi_kinds_query_RSSU_1; /* 00053fac */
+extern const scpi_parameter_kinds scpi_kinds_query_RAT3_2; /* 00053fd0 */
+extern const scpi_parameter_kinds scpi_kinds_query_RAT3_1; /* 00053ff4 */
+extern const scpi_parameter_kinds scpi_kinds_query_RAT2_2; /* 00054018 */
+extern const scpi_parameter_kinds scpi_kinds_query_RAT2_1; /* 0005403c */
+extern const scpi_parameter_kinds scpi_kinds_query_RAT1_2; /* 00054060 */
+extern const scpi_parameter_kinds scpi_kinds_query_RAT1_1; /* 00054084 */
+extern const scpi_parameter_kinds scpi_kinds_query_REAL_2; /* 000540a8 */
+extern const scpi_parameter_kinds scpi_kinds_query_REAL_1; /* 000540cc */
+extern const scpi_parameter_kinds scpi_kinds_query_RFOU_2; /* 000540f0 */
+extern const scpi_parameter_kinds scpi_kinds_query_RFOU_1; /* 00054114 */
+extern const scpi_parameter_kinds scpi_kinds_query_RACD_2; /* 00054138 */
+extern const scpi_parameter_kinds scpi_kinds_query_RACD_1; /* 0005415c */
+extern const scpi_parameter_kinds scpi_kinds_query_R1PO_2; /* 00054180 */
+extern const scpi_parameter_kinds scpi_kinds_query_R1PO_1; /* 000541a4 */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_10; /* 000541c8 */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_9; /* 000541ec */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_8; /* 00054210 */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_7; /* 00054234 */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_6; /* 00054258 */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_5; /* 0005427c */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_4; /* 000542a0 */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_3; /* 000542c4 */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_2; /* 000542e8 */
+extern const scpi_parameter_kinds scpi_kinds_query_RLOC_1; /* 0005430c */
+extern const scpi_parameter_kinds scpi_kinds_query_RTZO_3; /* 00054330 */
+extern const scpi_parameter_kinds scpi_kinds_query_RTZO_2; /* 00054354 */
+extern const scpi_parameter_kinds scpi_kinds_query_RTZO_1; /* 00054378 */
+extern const scpi_parameter_kinds scpi_kinds_query_RTAD_1; /* 0005439c */
+extern const scpi_parameter_kinds scpi_kinds_query_RWHO_1; /* 000543c0 */
+extern const scpi_parameter_kinds scpi_kinds_query_ROBin_TSTamp_2; /* 000543e4 */
+extern const scpi_parameter_kinds scpi_kinds_query_ROBin_TSTamp_1; /* 00054408 */
+extern const scpi_parameter_kinds scpi_kinds_query_ROBin_POINts_1; /* 0005442c */
+extern const scpi_parameter_kinds scpi_kinds_set_ROBin_MEMory_SAVE_1; /* 00054450 */
+extern const scpi_parameter_kinds scpi_kinds_query_ROBin_MEMory_OVERflow_COUNt_1; /* 00054474 */
+extern const scpi_parameter_kinds scpi_kinds_set_ROBin_CLEar_1; /* 00054498 */
+extern const scpi_parameter_kinds scpi_kinds_query_ROBin_1; /* 000544bc */
+extern const scpi_parameter_kinds scpi_kinds_set_GARY_WRITe_1; /* 000544e0 */
+extern const scpi_parameter_kinds scpi_kinds_query_GARY_READ_1; /* 00054504 */
+extern const scpi_parameter_kinds scpi_kinds_set_GARY_CLEar_1; /* 00054528 */
+extern const scpi_parameter_kinds scpi_kinds_set_DOUGlas_STATe_POWerup_1; /* 0005454c */
+extern const scpi_parameter_kinds scpi_kinds_set_DOUGlas_STATe_1; /* 00054570 */
+extern const scpi_parameter_kinds scpi_kinds_set_DOUGlas_DURation_1; /* 00054594 */
+extern const scpi_parameter_kinds scpi_kinds_set_SAMPle_TARR_1; /* 000545b8 */
+extern const scpi_parameter_kinds scpi_kinds_set_SAMPle_TOGGle_1; /* 000545dc */
+extern const scpi_parameter_kinds scpi_kinds_set_SAMPle_BARR_1; /* 00054600 */
+extern const scpi_parameter_kinds scpi_kinds_set_SAMPle_BOOLean_1; /* 00054624 */
+extern const scpi_parameter_kinds scpi_kinds_set_SYSTem_LANGuage_1; /* 00054648 */
+extern const scpi_parameter_kinds scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_SBITs_1; /* 0005466c */
+extern const scpi_parameter_kinds scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE_1; /* 00054690 */
+extern const scpi_parameter_kinds scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_PACE_1; /* 000546b4 */
+extern const scpi_parameter_kinds scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_BITS_1; /* 000546d8 */
+extern const scpi_parameter_kinds scpi_kinds_set_SYSTem_COMMunicate_SER1_RECeive_BAUD_1; /* 000546fc */
+extern const scpi_parameter_kinds scpi_kinds_set_SYSTem_COMMunicate_SER1_PROMpt_1; /* 00054720 */
+extern const scpi_parameter_kinds scpi_kinds_set_SYSTem_COMMunicate_SER1_FDUPlex_1; /* 00054744 */
+extern const scpi_parameter_kinds scpi_kinds_set_STATus_QUEStionable_CONDition_USER_1; /* 00054768 */
+extern const scpi_parameter_kinds scpi_kinds_set_STATus_QUEStionable_EVENt_USER_1; /* 0005478c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_SYNChronization_HOLDover_RECovery_AUTO_1; /* 000547b0 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_SYNChronization_HOLDover_LIMit_STATe_1; /* 000547d4 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO_1; /* 000547f8 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_ROSCillator_HOLDover_LIMit_STATe_1; /* 0005481c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PULSe_STARt_TIME_1; /* 00054840 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PULSe_STARt_DATE_1; /* 00054864 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PULSe_REFerence_EDGE_1; /* 00054888 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PULSe_CONTinuous_STATe_1; /* 000548ac */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_TZONe_2; /* 000548d0 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_TZONe_1; /* 000548f4 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_TCODe_FORMat_1; /* 00054918 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_PPS_EDGE_1; /* 0005493c */
+extern const scpi_parameter_kinds scpi_kinds_query_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_STATe_1; /* 00054960 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_2; /* 00054984 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_1; /* 000549a8 */
+extern const scpi_parameter_kinds scpi_kinds_query_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_STATe_1; /* 000549cc */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_2; /* 000549f0 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_1; /* 00054a14 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_POWerup_1; /* 00054a38 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_1; /* 00054a5c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_SURVey_DURation_1; /* 00054a80 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_9; /* 00054aa4 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_8; /* 00054ac8 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_7; /* 00054aec */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_6; /* 00054b10 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_5; /* 00054b34 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_4; /* 00054b58 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_3; /* 00054b7c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_2; /* 00054ba0 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_POSition_1; /* 00054bc4 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_9; /* 00054be8 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_8; /* 00054c0c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_7; /* 00054c30 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_6; /* 00054c54 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_5; /* 00054c78 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_4; /* 00054c9c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_3; /* 00054cc0 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_2; /* 00054ce4 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_POSition_1; /* 00054d08 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_TIME_1; /* 00054d2c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_PTIMe_GPSystem_INITial_DATE_1; /* 00054d50 */
+extern const scpi_parameter_kinds scpi_kinds_query_SOURce_GPSystem_SATellite_TRACking_INCLude_STATe_1; /* 00054d74 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_INCLude_2; /* 00054d98 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_INCLude_1; /* 00054dbc */
+extern const scpi_parameter_kinds scpi_kinds_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe_1; /* 00054de0 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_IGNore_2; /* 00054e04 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_SATellite_TRACking_IGNore_1; /* 00054e28 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_SURVey_STATe_POWerup_1; /* 00054e4c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_SURVey_STATe_1; /* 00054e70 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_SURVey_DURation_1; /* 00054e94 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_9; /* 00054eb8 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_8; /* 00054edc */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_7; /* 00054f00 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_6; /* 00054f24 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_5; /* 00054f48 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_4; /* 00054f6c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_3; /* 00054f90 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_2; /* 00054fb4 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_POSition_1; /* 00054fd8 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_POSition_9; /* 00054ffc */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_POSition_8; /* 00055020 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_POSition_7; /* 00055044 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_POSition_6; /* 00055068 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_POSition_5; /* 0005508c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_POSition_4; /* 000550b0 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_POSition_3; /* 000550d4 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_POSition_2; /* 000550f8 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_POSition_1; /* 0005511c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_TIME_1; /* 00055140 */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_INITial_DATE_1; /* 00055164 */
+extern const scpi_parameter_kinds scpi_kinds_set_SENSe_TST1_EDGE_1; /* 00055188 */
+extern const scpi_parameter_kinds scpi_kinds_query_SENSe_DATA_TSTamp_2; /* 000551ac */
+extern const scpi_parameter_kinds scpi_kinds_query_SENSe_DATA_TSTamp_1; /* 000551d0 */
+extern const scpi_parameter_kinds scpi_kinds_query_SENSe_DATA_POINts_1; /* 000551f4 */
+extern const scpi_parameter_kinds scpi_kinds_set_SENSe_DATA_MEMory_SAVE_1; /* 00055218 */
+extern const scpi_parameter_kinds scpi_kinds_query_SENSe_DATA_MEMory_OVERflow_COUNt_1; /* 0005523c */
+extern const scpi_parameter_kinds scpi_kinds_set_SENSe_DATA_CLEar_1; /* 00055260 */
+extern const scpi_parameter_kinds scpi_kinds_query_SENSe_DATA_1; /* 00055284 */
+extern const scpi_parameter_kinds scpi_kinds_set_OUTPut_STATe_1; /* 000552a8 */
+extern const scpi_parameter_kinds scpi_kinds_set_OUTPut_PIN1_DELay_ALIGnment_1; /* 000552cc */
+extern const scpi_parameter_kinds scpi_kinds_set_LED_ENABled_1; /* 000552f0 */
+extern const scpi_parameter_kinds scpi_kinds_set_LED_ALARm_USER_1; /* 00055314 */
+extern const scpi_parameter_kinds scpi_kinds_set_LED_ACTive_1; /* 00055338 */
+extern const scpi_parameter_kinds scpi_kinds_set_FORMat_DATA_1; /* 0005535c */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_TEST_1; /* 00055380 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_SYSTem_PSTartup_1; /* 000553a4 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_SYSTem_DOUTput_1; /* 000553c8 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_STATus_HAPPening_1; /* 000553ec */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_STATus_ERRor_1; /* 00055410 */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_SLOG_READ_1; /* 00055434 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_SER1_EGResponse_1; /* 00055458 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_SER1_RESTricted_1; /* 0005547c */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_ME_1; /* 000554a0 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_LOG_WRITe_1; /* 000554c4 */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_LOG_READ_1; /* 000554e8 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_LOG_CLEar_1; /* 0005550c */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_IDENtification_SERial_1; /* 00055530 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_IDENtification_MODel_1; /* 00055554 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_IDENtification_HARDware_1; /* 00055578 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_GPSystem_UTC_1; /* 0005559c */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_GPSystem_POSition_DEGRees_2; /* 000555c0 */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_GPSystem_POSition_DEGRees_1; /* 000555e4 */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_4; /* 00055608 */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_3; /* 0005562c */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_2; /* 00055650 */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_GPSystem_POSition_MSEConds_1; /* 00055674 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe_1; /* 00055698 */
+extern const scpi_parameter_kinds scpi_kinds_set_STATus_OPERation_ENABle_1; /* 000556bc */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_EMANgle_1; /* 000556e0 */
+extern const scpi_parameter_kinds scpi_kinds_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1; /* 00055704 */
+extern const scpi_parameter_kinds scpi_kinds_set_OUTPut_PIN1_FREQuency_1; /* 00055728 */
+extern const scpi_parameter_kinds scpi_kinds_set_KENneth_PREDicted_DURation_1; /* 0005574c */
+extern const scpi_parameter_kinds scpi_kinds_set_SOURce_GPSystem_ADELay_1; /* 00055794 */
+extern const scpi_parameter_kinds scpi_kinds_set_OUTPut_PIN1_DELay_1; /* 000557b8 */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold_1; /* 00055848 */
+extern const scpi_parameter_kinds scpi_kinds_set_SAMPle_DARR_1; /* 0005586c */
+extern const scpi_parameter_kinds scpi_kinds_set_DIAGnostic_ROSCillator_TCOefficient_1; /* 00055890 */
+extern const scpi_node scpi_node_common_WAI; /* 000558b4 */
+extern const scpi_response_item scpi_items_common_TST[2]; /* 000558e6 */
+extern const scpi_node scpi_node_common_TST; /* 000558fa */
+extern const scpi_response_item scpi_items_common_STB[2]; /* 0005592c */
+extern const scpi_node scpi_node_common_STB; /* 00055940 */
+extern const scpi_response_item scpi_items_common_SRE[2]; /* 00055972 */
+extern const scpi_node scpi_node_common_SRE; /* 00055986 */
+extern const scpi_node scpi_node_common_RST; /* 000559b8 */
+extern const scpi_response_item scpi_items_common_OPC[2]; /* 000559ea */
+extern const scpi_node scpi_node_common_OPC; /* 000559fe */
+extern const scpi_response_item scpi_items_common_IDN[2]; /* 00055a30 */
+extern const scpi_node scpi_node_common_IDN; /* 00055a44 */
+extern const scpi_response_item scpi_items_common_ESR[2]; /* 00055a76 */
+extern const scpi_node scpi_node_common_ESR; /* 00055a8a */
+extern const scpi_response_item scpi_items_common_ESE[2]; /* 00055abc */
+extern const scpi_node scpi_node_common_ESE; /* 00055ad0 */
+extern const scpi_node scpi_node_common_CLS; /* 00055b02 */
+extern const scpi_response_item scpi_items_RVST[2]; /* 00055b34 */
+extern const scpi_node scpi_node_RVST; /* 00055b48 */
+extern const scpi_response_item scpi_items_RTSA[3]; /* 00055b7a */
+extern const scpi_node scpi_node_RTSA; /* 00055b98 */
+extern const scpi_response_item scpi_items_RMHO[2]; /* 00055bca */
+extern const scpi_node scpi_node_RMHO; /* 00055bde */
+extern const scpi_response_item scpi_items_FMHO[2]; /* 00055c10 */
+extern const scpi_node scpi_node_FMHO; /* 00055c24 */
+extern const scpi_response_item scpi_items_RSST[3]; /* 00055c56 */
+extern const scpi_node scpi_node_RSST; /* 00055c74 */
+extern const scpi_response_item scpi_items_RPHS[3]; /* 00055ca6 */
+extern const scpi_node scpi_node_RPHS; /* 00055cc4 */
+extern const scpi_response_item scpi_items_RSPR[3]; /* 00055cf6 */
+extern const scpi_node scpi_node_RSPR; /* 00055d14 */
+extern const scpi_response_item scpi_items_IPSU[2]; /* 00055d46 */
+extern const scpi_node scpi_node_IPSU; /* 00055d5a */
+extern const scpi_response_item scpi_items_RTCM[2]; /* 00055d8c */
+extern const scpi_node scpi_node_RTCM; /* 00055da0 */
+extern const scpi_response_item scpi_items_REQU[4]; /* 00055dd2 */
+extern const scpi_node scpi_node_REQU; /* 00055dfa */
+extern const scpi_response_item scpi_items_CEQU[2]; /* 00055e2c */
+extern const scpi_node scpi_node_CEQU; /* 00055e40 */
+extern const scpi_response_item scpi_items_CALA[2]; /* 00055e72 */
+extern const scpi_node scpi_node_CALA; /* 00055e86 */
+extern const scpi_response_item scpi_items_RAST[3]; /* 00055eb8 */
+extern const scpi_node scpi_node_RAST; /* 00055ed6 */
+extern const scpi_response_item scpi_items_RSSU[7]; /* 00055f08 */
+extern const scpi_node scpi_node_RSSU; /* 00055f4e */
+extern const scpi_response_item scpi_items_WAT3[3]; /* 00055f80 */
+extern const scpi_node scpi_node_WAT3; /* 00055f9e */
+extern const scpi_response_item scpi_items_RAT3[3]; /* 00055fd0 */
+extern const scpi_node scpi_node_RAT3; /* 00055fee */
+extern const scpi_response_item scpi_items_WAT2[3]; /* 00056020 */
+extern const scpi_node scpi_node_WAT2; /* 0005603e */
+extern const scpi_response_item scpi_items_RAT2[3]; /* 00056070 */
+extern const scpi_node scpi_node_RAT2; /* 0005608e */
+extern const scpi_response_item scpi_items_WAT1[3]; /* 000560c0 */
+extern const scpi_node scpi_node_WAT1; /* 000560de */
+extern const scpi_response_item scpi_items_RAT1[3]; /* 00056110 */
+extern const scpi_node scpi_node_RAT1; /* 0005612e */
+extern const scpi_response_item scpi_items_WEAL[3]; /* 00056160 */
+extern const scpi_node scpi_node_WEAL; /* 0005617e */
+extern const scpi_response_item scpi_items_REAL[3]; /* 000561b0 */
+extern const scpi_node scpi_node_REAL; /* 000561ce */
+extern const scpi_response_item scpi_items_WFOU[3]; /* 00056200 */
+extern const scpi_node scpi_node_WFOU; /* 0005621e */
+extern const scpi_response_item scpi_items_RFOU[3]; /* 00056250 */
+extern const scpi_node scpi_node_RFOU; /* 0005626e */
+extern const scpi_response_item scpi_items_WACD[3]; /* 000562a0 */
+extern const scpi_node scpi_node_WACD; /* 000562be */
+extern const scpi_response_item scpi_items_RACD[3]; /* 000562f0 */
+extern const scpi_node scpi_node_RACD; /* 0005630e */
+extern const scpi_response_item scpi_items_W1PO[3]; /* 00056340 */
+extern const scpi_node scpi_node_W1PO; /* 0005635e */
+extern const scpi_response_item scpi_items_R1PO[3]; /* 00056390 */
+extern const scpi_node scpi_node_R1PO; /* 000563ae */
+extern const scpi_response_item scpi_items_WLOC[11]; /* 000563e0 */
+extern const scpi_node scpi_node_WLOC; /* 0005644e */
+extern const scpi_response_item scpi_items_RLOC[11]; /* 00056480 */
+extern const scpi_node scpi_node_RLOC; /* 000564ee */
+extern const scpi_response_item scpi_items_WTZO[4]; /* 00056520 */
+extern const scpi_node scpi_node_WTZO; /* 00056548 */
+extern const scpi_response_item scpi_items_RTZO[4]; /* 0005657a */
+extern const scpi_node scpi_node_RTZO; /* 000565a2 */
+extern const scpi_response_item scpi_items_RTAD[10]; /* 000565d4 */
+extern const scpi_node scpi_node_RTAD; /* 00056638 */
+extern const scpi_response_item scpi_items_RWHO[3]; /* 0005666a */
+extern const scpi_node scpi_node_RWHO; /* 00056688 */
+extern const scpi_response_item scpi_items_TKN_LENGth[2]; /* 000566ba */
+extern const scpi_node scpi_node_TKN_LENGth; /* 000566ce */
+extern const scpi_response_item scpi_items_TKN[2]; /* 00056700 */
+extern const scpi_node scpi_node_TKN; /* 00056714 */
+extern const scpi_response_item scpi_items_ROBin_TSTamp[2]; /* 00056746 */
+extern const scpi_node scpi_node_ROBin_TSTamp; /* 0005675a */
+extern const scpi_response_item scpi_items_ROBin_POINts[2]; /* 0005678c */
+extern const scpi_node scpi_node_ROBin_POINts; /* 000567a0 */
+extern const scpi_response_item scpi_items_ROBin_MEMory_SAVE[2]; /* 000567d2 */
+extern const scpi_node scpi_node_ROBin_MEMory_SAVE; /* 000567e6 */
+extern const scpi_response_item scpi_items_ROBin_MEMory_OVERflow_COUNt[2]; /* 00056818 */
+extern const scpi_node scpi_node_ROBin_MEMory_OVERflow_COUNt; /* 0005682c */
+extern const scpi_node scpi_node_ROBin_MEMory_OVERflow; /* 0005685e */
+extern const scpi_node scpi_node_ROBin_MEMory; /* 00056890 */
+extern const scpi_node scpi_node_ROBin_CLEar; /* 000568c2 */
+extern const scpi_response_item scpi_items_ROBin[2]; /* 000568f4 */
+extern const scpi_node scpi_node_ROBin; /* 00056908 */
+extern const scpi_response_item scpi_items_KENneth_PRESent[2]; /* 0005693a */
+extern const scpi_node scpi_node_KENneth_PRESent; /* 0005694e */
+extern const scpi_response_item scpi_items_KENneth_PREDicted_DURation[2]; /* 00056980 */
+extern const scpi_node scpi_node_KENneth_PREDicted_DURation; /* 00056994 */
+extern const scpi_response_item scpi_items_KENneth_PREDicted[3]; /* 000569c6 */
+extern const scpi_node scpi_node_KENneth_PREDicted; /* 000569e4 */
+extern const scpi_node scpi_node_KENneth; /* 00056a16 */
+extern const scpi_node scpi_node_GARY_WRITe; /* 00056a48 */
+extern const scpi_response_item scpi_items_GARY_READ_ALL[2]; /* 00056a7a */
+extern const scpi_node scpi_node_GARY_READ_ALL; /* 00056a8e */
+extern const scpi_response_item scpi_items_GARY_READ[2]; /* 00056ac0 */
+extern const scpi_node scpi_node_GARY_READ; /* 00056ad4 */
+extern const scpi_response_item scpi_items_GARY_COUNt[2]; /* 00056b06 */
+extern const scpi_node scpi_node_GARY_COUNt; /* 00056b1a */
+extern const scpi_node scpi_node_GARY_CLEar; /* 00056b4c */
+extern const scpi_node scpi_node_GARY; /* 00056b7e */
+extern const scpi_response_item scpi_items_DOUGlas_STATe_POWerup[2]; /* 00056bb0 */
+extern const scpi_node scpi_node_DOUGlas_STATe_POWerup; /* 00056bc4 */
+extern const scpi_response_item scpi_items_DOUGlas_STATe[2]; /* 00056bf6 */
+extern const scpi_node scpi_node_DOUGlas_STATe; /* 00056c0a */
+extern const scpi_response_item scpi_items_DOUGlas_PROGress[2]; /* 00056c3c */
+extern const scpi_node scpi_node_DOUGlas_PROGress; /* 00056c50 */
+extern const scpi_response_item scpi_items_DOUGlas_DURation[2]; /* 00056c82 */
+extern const scpi_node scpi_node_DOUGlas_DURation; /* 00056c96 */
+extern const scpi_node scpi_node_DOUGlas; /* 00056cc8 */
+extern const scpi_response_item scpi_items_DANA[3]; /* 00056cfa */
+extern const scpi_node scpi_node_DANA; /* 00056d18 */
+extern const scpi_response_item scpi_items_SAMPle_DARRAY3[2]; /* 00056d4a */
+extern const scpi_node scpi_node_SAMPle_DARRAY3; /* 00056d5e */
+extern const scpi_response_item scpi_items_SAMPle_DARR3[2]; /* 00056d90 */
+extern const scpi_node scpi_node_SAMPle_DARR3; /* 00056da4 */
+extern const scpi_response_item scpi_items_SAMPle_DARRAY2[2]; /* 00056dd6 */
+extern const scpi_node scpi_node_SAMPle_DARRAY2; /* 00056dea */
+extern const scpi_response_item scpi_items_SAMPle_DARR2[2]; /* 00056e1c */
+extern const scpi_node scpi_node_SAMPle_DARR2; /* 00056e30 */
+extern const scpi_response_item scpi_items_SAMPle_DARRAY1[2]; /* 00056e62 */
+extern const scpi_node scpi_node_SAMPle_DARRAY1; /* 00056e76 */
+extern const scpi_response_item scpi_items_SAMPle_DARR1[2]; /* 00056ea8 */
+extern const scpi_node scpi_node_SAMPle_DARR1; /* 00056ebc */
+extern const scpi_response_item scpi_items_SAMPle_DARRAY[2]; /* 00056eee */
+extern const scpi_node scpi_node_SAMPle_DARRAY; /* 00056f02 */
+extern const scpi_response_item scpi_items_SAMPle_DARR[2]; /* 00056f34 */
+extern const scpi_node scpi_node_SAMPle_DARR; /* 00056f48 */
+extern const scpi_response_item scpi_items_SAMPle_DOUBle[2]; /* 00056f7a */
+extern const scpi_node scpi_node_SAMPle_DOUBle; /* 00056f8e */
+extern const scpi_response_item scpi_items_SAMPle_FARRAY3[2]; /* 00056fc0 */
+extern const scpi_node scpi_node_SAMPle_FARRAY3; /* 00056fd4 */
+extern const scpi_response_item scpi_items_SAMPle_FARR3[2]; /* 00057006 */
+extern const scpi_node scpi_node_SAMPle_FARR3; /* 0005701a */
+extern const scpi_response_item scpi_items_SAMPle_FARRAY2[2]; /* 0005704c */
+extern const scpi_node scpi_node_SAMPle_FARRAY2; /* 00057060 */
+extern const scpi_response_item scpi_items_SAMPle_FARR2[2]; /* 00057092 */
+extern const scpi_node scpi_node_SAMPle_FARR2; /* 000570a6 */
+extern const scpi_response_item scpi_items_SAMPle_FARRAY1[2]; /* 000570d8 */
+extern const scpi_node scpi_node_SAMPle_FARRAY1; /* 000570ec */
+extern const scpi_response_item scpi_items_SAMPle_FARR1[2]; /* 0005711e */
+extern const scpi_node scpi_node_SAMPle_FARR1; /* 00057132 */
+extern const scpi_response_item scpi_items_SAMPle_FARRAY[2]; /* 00057164 */
+extern const scpi_node scpi_node_SAMPle_FARRAY; /* 00057178 */
+extern const scpi_response_item scpi_items_SAMPle_FARR[2]; /* 000571aa */
+extern const scpi_node scpi_node_SAMPle_FARR; /* 000571be */
+extern const scpi_response_item scpi_items_SAMPle_FLOat[2]; /* 000571f0 */
+extern const scpi_node scpi_node_SAMPle_FLOat; /* 00057204 */
+extern const scpi_response_item scpi_items_SAMPle_IMULtiple[5]; /* 00057236 */
+extern const scpi_node scpi_node_SAMPle_IMULtiple; /* 00057268 */
+extern const scpi_response_item scpi_items_SAMPle_IARRAY4[2]; /* 0005729a */
+extern const scpi_node scpi_node_SAMPle_IARRAY4; /* 000572ae */
+extern const scpi_response_item scpi_items_SAMPle_IARR4[2]; /* 000572e0 */
+extern const scpi_node scpi_node_SAMPle_IARR4; /* 000572f4 */
+extern const scpi_response_item scpi_items_SAMPle_IARRAY3[2]; /* 00057326 */
+extern const scpi_node scpi_node_SAMPle_IARRAY3; /* 0005733a */
+extern const scpi_response_item scpi_items_SAMPle_IARR3[2]; /* 0005736c */
+extern const scpi_node scpi_node_SAMPle_IARR3; /* 00057380 */
+extern const scpi_response_item scpi_items_SAMPle_IARRAY2[2]; /* 000573b2 */
+extern const scpi_node scpi_node_SAMPle_IARRAY2; /* 000573c6 */
+extern const scpi_response_item scpi_items_SAMPle_IARR2[2]; /* 000573f8 */
+extern const scpi_node scpi_node_SAMPle_IARR2; /* 0005740c */
+extern const scpi_response_item scpi_items_SAMPle_IARRAY1[2]; /* 0005743e */
+extern const scpi_node scpi_node_SAMPle_IARRAY1; /* 00057452 */
+extern const scpi_response_item scpi_items_SAMPle_IARR1[2]; /* 00057484 */
+extern const scpi_node scpi_node_SAMPle_IARR1; /* 00057498 */
+extern const scpi_response_item scpi_items_SAMPle_IARRAY[2]; /* 000574ca */
+extern const scpi_node scpi_node_SAMPle_IARRAY; /* 000574de */
+extern const scpi_response_item scpi_items_SAMPle_IARR[2]; /* 00057510 */
+extern const scpi_node scpi_node_SAMPle_IARR; /* 00057524 */
+extern const scpi_response_item scpi_items_SAMPle_INTeger[2]; /* 00057556 */
+extern const scpi_node scpi_node_SAMPle_INTeger; /* 0005756a */
+extern const scpi_response_item scpi_items_SAMPle_TARRAY3[2]; /* 0005759c */
+extern const scpi_node scpi_node_SAMPle_TARRAY3; /* 000575b0 */
+extern const scpi_response_item scpi_items_SAMPle_TARR3[2]; /* 000575e2 */
+extern const scpi_node scpi_node_SAMPle_TARR3; /* 000575f6 */
+extern const scpi_response_item scpi_items_SAMPle_TARRAY2[2]; /* 00057628 */
+extern const scpi_node scpi_node_SAMPle_TARRAY2; /* 0005763c */
+extern const scpi_response_item scpi_items_SAMPle_TARR2[2]; /* 0005766e */
+extern const scpi_node scpi_node_SAMPle_TARR2; /* 00057682 */
+extern const scpi_response_item scpi_items_SAMPle_TARRAY1[2]; /* 000576b4 */
+extern const scpi_node scpi_node_SAMPle_TARRAY1; /* 000576c8 */
+extern const scpi_response_item scpi_items_SAMPle_TARR1[2]; /* 000576fa */
+extern const scpi_node scpi_node_SAMPle_TARR1; /* 0005770e */
+extern const scpi_response_item scpi_items_SAMPle_TARRAY[2]; /* 00057740 */
+extern const scpi_node scpi_node_SAMPle_TARRAY; /* 00057754 */
+extern const scpi_response_item scpi_items_SAMPle_TARR[2]; /* 00057786 */
+extern const scpi_node scpi_node_SAMPle_TARR; /* 0005779a */
+extern const scpi_response_item scpi_items_SAMPle_TOGGle[2]; /* 000577cc */
+extern const scpi_node scpi_node_SAMPle_TOGGle; /* 000577e0 */
+extern const scpi_response_item scpi_items_SAMPle_BARRAY2[2]; /* 00057812 */
+extern const scpi_node scpi_node_SAMPle_BARRAY2; /* 00057826 */
+extern const scpi_response_item scpi_items_SAMPle_BARR2[2]; /* 00057858 */
+extern const scpi_node scpi_node_SAMPle_BARR2; /* 0005786c */
+extern const scpi_response_item scpi_items_SAMPle_BARRAY1[2]; /* 0005789e */
+extern const scpi_node scpi_node_SAMPle_BARRAY1; /* 000578b2 */
+extern const scpi_response_item scpi_items_SAMPle_BARR1[2]; /* 000578e4 */
+extern const scpi_node scpi_node_SAMPle_BARR1; /* 000578f8 */
+extern const scpi_response_item scpi_items_SAMPle_BARRAY[2]; /* 0005792a */
+extern const scpi_node scpi_node_SAMPle_BARRAY; /* 0005793e */
+extern const scpi_response_item scpi_items_SAMPle_BARR[2]; /* 00057970 */
+extern const scpi_node scpi_node_SAMPle_BARR; /* 00057984 */
+extern const scpi_response_item scpi_items_SAMPle_BOOLean[2]; /* 000579b6 */
+extern const scpi_node scpi_node_SAMPle_BOOLean; /* 000579ca */
+extern const scpi_node scpi_node_SAMPle_ACTion; /* 000579fc */
+extern const scpi_node scpi_node_SAMPle; /* 00057a2e */
+extern const scpi_response_item scpi_items_SYSTem_TIME[4]; /* 00057a60 */
+extern const scpi_node scpi_node_SYSTem_TIME; /* 00057a88 */
+extern const scpi_response_item scpi_items_SYSTem_STATus_LENGth[2]; /* 00057aba */
+extern const scpi_node scpi_node_SYSTem_STATus_LENGth; /* 00057ace */
+extern const scpi_response_item scpi_items_SYSTem_STATus[2]; /* 00057b00 */
+extern const scpi_node scpi_node_SYSTem_STATus; /* 00057b14 */
+extern const scpi_response_item scpi_items_SYSTem_PRINt_LENGth[2]; /* 00057b46 */
+extern const scpi_node scpi_node_SYSTem_PRINt_LENGth; /* 00057b5a */
+extern const scpi_response_item scpi_items_SYSTem_PRINt[2]; /* 00057b8c */
+extern const scpi_node scpi_node_SYSTem_PRINt; /* 00057ba0 */
+extern const scpi_node scpi_node_SYSTem_PRESet; /* 00057bd2 */
+extern const scpi_response_item scpi_items_SYSTem_LANGuage[2]; /* 00057c04 */
+extern const scpi_node scpi_node_SYSTem_LANGuage; /* 00057c18 */
+extern const scpi_response_item scpi_items_SYSTem_ERRor[3]; /* 00057c4a */
+extern const scpi_node scpi_node_SYSTem_ERRor; /* 00057c68 */
+extern const scpi_response_item scpi_items_SYSTem_DATE[4]; /* 00057c9a */
+extern const scpi_node scpi_node_SYSTem_DATE; /* 00057cc2 */
+extern const scpi_response_item scpi_items_SYSTem_COMMunicate_SER1_RECeive_SBITs[2]; /* 00057cf4 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_RECeive_SBITs; /* 00057d08 */
+extern const scpi_response_item scpi_items_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE[2]; /* 00057d3a */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE; /* 00057d4e */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_RECeive_PARity; /* 00057d80 */
+extern const scpi_response_item scpi_items_SYSTem_COMMunicate_SER1_RECeive_PACE[2]; /* 00057db2 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_RECeive_PACE; /* 00057dc6 */
+extern const scpi_response_item scpi_items_SYSTem_COMMunicate_SER1_RECeive_BITS[2]; /* 00057df8 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_RECeive_BITS; /* 00057e0c */
+extern const scpi_response_item scpi_items_SYSTem_COMMunicate_SER1_RECeive_BAUD[2]; /* 00057e3e */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_RECeive_BAUD; /* 00057e52 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_TRANsmit; /* 00057e84 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_RECeive; /* 00057eb6 */
+extern const scpi_response_item scpi_items_SYSTem_COMMunicate_SER1_PROMpt[2]; /* 00057ee8 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_PROMpt; /* 00057efc */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_PRESet; /* 00057f2e */
+extern const scpi_response_item scpi_items_SYSTem_COMMunicate_SER1_FDUPlex[2]; /* 00057f60 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_FDUPlex; /* 00057f74 */
+extern const scpi_response_item scpi_items_SYSTem_COMMunicate_SER1_ADDRess[2]; /* 00057fa6 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1_ADDRess; /* 00057fba */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SERIAL2; /* 00057fec */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER2; /* 0005801e */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SERIAL1; /* 00058050 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER1; /* 00058082 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SERIAL; /* 000580b4 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate_SER; /* 000580e6 */
+extern const scpi_response_item scpi_items_SYSTem_COMMunicate[2]; /* 00058118 */
+extern const scpi_node scpi_node_SYSTem_COMMunicate; /* 0005812c */
+extern const scpi_node scpi_node_SYSTem; /* 0005815e */
+extern const scpi_node scpi_node_STATus_PRESet_ALARm; /* 00058190 */
+extern const scpi_node scpi_node_STATus_PRESet; /* 000581c2 */
+extern const scpi_response_item scpi_items_STATus_QUEStionable_NTRansition[2]; /* 000581f4 */
+extern const scpi_node scpi_node_STATus_QUEStionable_NTRansition; /* 00058208 */
+extern const scpi_response_item scpi_items_STATus_QUEStionable_PTRansition[2]; /* 0005823a */
+extern const scpi_node scpi_node_STATus_QUEStionable_PTRansition; /* 0005824e */
+extern const scpi_response_item scpi_items_STATus_QUEStionable_ENABle[2]; /* 00058280 */
+extern const scpi_node scpi_node_STATus_QUEStionable_ENABle; /* 00058294 */
+extern const scpi_node scpi_node_STATus_QUEStionable_CONDition_USER; /* 000582c6 */
+extern const scpi_response_item scpi_items_STATus_QUEStionable_CONDition[2]; /* 000582f8 */
+extern const scpi_node scpi_node_STATus_QUEStionable_CONDition; /* 0005830c */
+extern const scpi_node scpi_node_STATus_QUEStionable_EVENt_USER; /* 0005833e */
+extern const scpi_response_item scpi_items_STATus_QUEStionable_EVENt[2]; /* 00058370 */
+extern const scpi_node scpi_node_STATus_QUEStionable_EVENt; /* 00058384 */
+extern const scpi_node scpi_node_STATus_QUEStionable; /* 000583b6 */
+extern const scpi_response_item scpi_items_STATus_OPERation_POWerup_NTRansition[2]; /* 000583e8 */
+extern const scpi_node scpi_node_STATus_OPERation_POWerup_NTRansition; /* 000583fc */
+extern const scpi_response_item scpi_items_STATus_OPERation_POWerup_PTRansition[2]; /* 0005842e */
+extern const scpi_node scpi_node_STATus_OPERation_POWerup_PTRansition; /* 00058442 */
+extern const scpi_response_item scpi_items_STATus_OPERation_POWerup_ENABle[2]; /* 00058474 */
+extern const scpi_node scpi_node_STATus_OPERation_POWerup_ENABle; /* 00058488 */
+extern const scpi_response_item scpi_items_STATus_OPERation_POWerup_CONDition[2]; /* 000584ba */
+extern const scpi_node scpi_node_STATus_OPERation_POWerup_CONDition; /* 000584ce */
+extern const scpi_response_item scpi_items_STATus_OPERation_POWerup_EVENt[2]; /* 00058500 */
+extern const scpi_node scpi_node_STATus_OPERation_POWerup_EVENt; /* 00058514 */
+extern const scpi_node scpi_node_STATus_OPERation_POWerup; /* 00058546 */
+extern const scpi_response_item scpi_items_STATus_OPERation_HOLDover_NTRansition[2]; /* 00058578 */
+extern const scpi_node scpi_node_STATus_OPERation_HOLDover_NTRansition; /* 0005858c */
+extern const scpi_response_item scpi_items_STATus_OPERation_HOLDover_PTRansition[2]; /* 000585be */
+extern const scpi_node scpi_node_STATus_OPERation_HOLDover_PTRansition; /* 000585d2 */
+extern const scpi_response_item scpi_items_STATus_OPERation_HOLDover_ENABle[2]; /* 00058604 */
+extern const scpi_node scpi_node_STATus_OPERation_HOLDover_ENABle; /* 00058618 */
+extern const scpi_response_item scpi_items_STATus_OPERation_HOLDover_CONDition[2]; /* 0005864a */
+extern const scpi_node scpi_node_STATus_OPERation_HOLDover_CONDition; /* 0005865e */
+extern const scpi_response_item scpi_items_STATus_OPERation_HOLDover_EVENt[2]; /* 00058690 */
+extern const scpi_node scpi_node_STATus_OPERation_HOLDover_EVENt; /* 000586a4 */
+extern const scpi_node scpi_node_STATus_OPERation_HOLDover; /* 000586d6 */
+extern const scpi_response_item scpi_items_STATus_OPERation_HARDware_NTRansition[2]; /* 00058708 */
+extern const scpi_node scpi_node_STATus_OPERation_HARDware_NTRansition; /* 0005871c */
+extern const scpi_response_item scpi_items_STATus_OPERation_HARDware_PTRansition[2]; /* 0005874e */
+extern const scpi_node scpi_node_STATus_OPERation_HARDware_PTRansition; /* 00058762 */
+extern const scpi_response_item scpi_items_STATus_OPERation_HARDware_ENABle[2]; /* 00058794 */
+extern const scpi_node scpi_node_STATus_OPERation_HARDware_ENABle; /* 000587a8 */
+extern const scpi_response_item scpi_items_STATus_OPERation_HARDware_CONDition[2]; /* 000587da */
+extern const scpi_node scpi_node_STATus_OPERation_HARDware_CONDition; /* 000587ee */
+extern const scpi_response_item scpi_items_STATus_OPERation_HARDware_EVENt[2]; /* 00058820 */
+extern const scpi_node scpi_node_STATus_OPERation_HARDware_EVENt; /* 00058834 */
+extern const scpi_node scpi_node_STATus_OPERation_HARDware; /* 00058866 */
+extern const scpi_response_item scpi_items_STATus_OPERation_NTRansition[2]; /* 00058898 */
+extern const scpi_node scpi_node_STATus_OPERation_NTRansition; /* 000588ac */
+extern const scpi_response_item scpi_items_STATus_OPERation_PTRansition[2]; /* 000588de */
+extern const scpi_node scpi_node_STATus_OPERation_PTRansition; /* 000588f2 */
+extern const scpi_response_item scpi_items_STATus_OPERation_ENABle[2]; /* 00058924 */
+extern const scpi_node scpi_node_STATus_OPERation_ENABle; /* 00058938 */
+extern const scpi_response_item scpi_items_STATus_OPERation_CONDition[2]; /* 0005896a */
+extern const scpi_node scpi_node_STATus_OPERation_CONDition; /* 0005897e */
+extern const scpi_response_item scpi_items_STATus_OPERation_EVENt[2]; /* 000589b0 */
+extern const scpi_node scpi_node_STATus_OPERation_EVENt; /* 000589c4 */
+extern const scpi_node scpi_node_STATus_OPERation; /* 000589f6 */
+extern const scpi_node scpi_node_STATus; /* 00058a28 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_IMMediate; /* 00058a5a */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_TINTerval[2]; /* 00058a8c */
+extern const scpi_node scpi_node_SOURce_SYNChronization_TINTerval; /* 00058aa0 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_FFOMerit[2]; /* 00058ad2 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_FFOMerit; /* 00058ae6 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_TFOMerit[2]; /* 00058b18 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_TFOMerit; /* 00058b2c */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_STATe[2]; /* 00058b5e */
+extern const scpi_node scpi_node_SOURce_SYNChronization_STATe; /* 00058b72 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_LIMit_THReshold[2]; /* 00058ba4 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_LIMit_THReshold; /* 00058bb8 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_LIMit; /* 00058bea */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_WAITing[2]; /* 00058c1c */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_WAITing; /* 00058c30 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_TUNCertainty_PRESent[2]; /* 00058c62 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_TUNCertainty_PRESent; /* 00058c76 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_TUNCertainty_PREDicted_DURation[2]; /* 00058ca8 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_TUNCertainty_PREDicted_DURation; /* 00058cbc */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_TUNCertainty_PREDicted[3]; /* 00058cee */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_TUNCertainty_PREDicted; /* 00058d0c */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_TUNCertainty; /* 00058d3e */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_RECovery_LIMit_IGNore; /* 00058d70 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_RECovery_LIMit; /* 00058da2 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_RECovery_INITiate; /* 00058dd4 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_RECovery_AUTO[2]; /* 00058e06 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_RECovery_AUTO; /* 00058e1a */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_RECovery; /* 00058e4c */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_LIMit_THReshold[2]; /* 00058e7e */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_LIMit_THReshold; /* 00058e92 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_LIMit_STATe[2]; /* 00058ec4 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_LIMit_STATe; /* 00058ed8 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_LIMit; /* 00058f0a */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_INITiate; /* 00058f3c */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_HYSTeresis[2]; /* 00058f6e */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_HYSTeresis; /* 00058f82 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_EXCeeded[2]; /* 00058fb4 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_EXCeeded; /* 00058fc8 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALAR3[2]; /* 00058ffa */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALAR3; /* 0005900e */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALARM3[2]; /* 00059040 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALARM3; /* 00059054 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALAR1[2]; /* 00059086 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALAR1; /* 0005909a */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALARM1[2]; /* 000590cc */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold_ALARM1; /* 000590e0 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold[2]; /* 00059112 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation_STATus_THReshold; /* 00059126 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation_STATus; /* 00059158 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_DURation_MEASurement_THReshold[2]; /* 0005918a */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation_MEASurement_THReshold; /* 0005919e */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation_MEASurement; /* 000591d0 */
+extern const scpi_response_item scpi_items_SOURce_SYNChronization_HOLDover_DURation[3]; /* 00059202 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover_DURation; /* 00059220 */
+extern const scpi_node scpi_node_SOURce_SYNChronization_HOLDover; /* 00059252 */
+extern const scpi_node scpi_node_SOURce_SYNChronization; /* 00059284 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_STATe[2]; /* 000592b6 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_STATe; /* 000592ca */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_LIMit_THReshold[2]; /* 000592fc */
+extern const scpi_node scpi_node_SOURce_ROSCillator_LIMit_THReshold; /* 00059310 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_LIMit; /* 00059342 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_WAITing[2]; /* 00059374 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_WAITing; /* 00059388 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_TUNCertainty_PRESent[2]; /* 000593ba */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_TUNCertainty_PRESent; /* 000593ce */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_TUNCertainty_PREDicted_DURation[2]; /* 00059400 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_TUNCertainty_PREDicted_DURation; /* 00059414 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_TUNCertainty_PREDicted[3]; /* 00059446 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_TUNCertainty_PREDicted; /* 00059464 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_TUNCertainty; /* 00059496 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore; /* 000594c8 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_RECovery_LIMit; /* 000594fa */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_RECovery_INITiate; /* 0005952c */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_RECovery_AUTO[2]; /* 0005955e */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_RECovery_AUTO; /* 00059572 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_RECovery; /* 000595a4 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_LIMit_THReshold[2]; /* 000595d6 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_LIMit_THReshold; /* 000595ea */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_LIMit_STATe[2]; /* 0005961c */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_LIMit_STATe; /* 00059630 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_LIMit; /* 00059662 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_INITiate; /* 00059694 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_HYSTeresis[2]; /* 000596c6 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_HYSTeresis; /* 000596da */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded[2]; /* 0005970c */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded; /* 00059720 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR3[2]; /* 00059752 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR3; /* 00059766 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALARM3[2]; /* 00059798 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALARM3; /* 000597ac */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1[2]; /* 000597de */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1; /* 000597f2 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALARM1[2]; /* 00059824 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALARM1; /* 00059838 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold[2]; /* 0005986a */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold; /* 0005987e */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation_STATus; /* 000598b0 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold[2]; /* 000598e2 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; /* 000598f6 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation_MEASurement; /* 00059928 */
+extern const scpi_response_item scpi_items_SOURce_ROSCillator_HOLDover_DURation[3]; /* 0005995a */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover_DURation; /* 00059978 */
+extern const scpi_node scpi_node_SOURce_ROSCillator_HOLDover; /* 000599aa */
+extern const scpi_node scpi_node_SOURce_ROSCillator; /* 000599dc */
+extern const scpi_response_item scpi_items_SOURce_PULSe_STARt_TIME[4]; /* 00059a0e */
+extern const scpi_node scpi_node_SOURce_PULSe_STARt_TIME; /* 00059a36 */
+extern const scpi_response_item scpi_items_SOURce_PULSe_STARt_DATE[4]; /* 00059a68 */
+extern const scpi_node scpi_node_SOURce_PULSe_STARt_DATE; /* 00059a90 */
+extern const scpi_node scpi_node_SOURce_PULSe_STARt; /* 00059ac2 */
+extern const scpi_response_item scpi_items_SOURce_PULSe_REFerence_EDGE[2]; /* 00059af4 */
+extern const scpi_node scpi_node_SOURce_PULSe_REFerence_EDGE; /* 00059b08 */
+extern const scpi_node scpi_node_SOURce_PULSe_REFerence; /* 00059b3a */
+extern const scpi_response_item scpi_items_SOURce_PULSe_CONTinuous_STATe[2]; /* 00059b6c */
+extern const scpi_node scpi_node_SOURce_PULSe_CONTinuous_STATe; /* 00059b80 */
+extern const scpi_response_item scpi_items_SOURce_PULSe_CONTinuous_PERiod[2]; /* 00059bb2 */
+extern const scpi_node scpi_node_SOURce_PULSe_CONTinuous_PERiod; /* 00059bc6 */
+extern const scpi_node scpi_node_SOURce_PULSe_CONTinuous; /* 00059bf8 */
+extern const scpi_node scpi_node_SOURce_PULSe; /* 00059c2a */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_TZONe[3]; /* 00059c5c */
+extern const scpi_node scpi_node_SOURce_PTIMe_TZONe; /* 00059c7a */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_TINTerval[2]; /* 00059cac */
+extern const scpi_node scpi_node_SOURce_PTIMe_TINTerval; /* 00059cc0 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_TIME_STRing[2]; /* 00059cf2 */
+extern const scpi_node scpi_node_SOURce_PTIMe_TIME_STRing; /* 00059d06 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_TIME[4]; /* 00059d38 */
+extern const scpi_node scpi_node_SOURce_PTIMe_TIME; /* 00059d60 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_TFOMerit[2]; /* 00059d92 */
+extern const scpi_node scpi_node_SOURce_PTIMe_TFOMerit; /* 00059da6 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_TCODe_FORMat[2]; /* 00059dd8 */
+extern const scpi_node scpi_node_SOURce_PTIMe_TCODe_FORMat; /* 00059dec */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_TCODe[2]; /* 00059e1e */
+extern const scpi_node scpi_node_SOURce_PTIMe_TCODe; /* 00059e32 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_PPS_EDGE[2]; /* 00059e64 */
+extern const scpi_node scpi_node_SOURce_PTIMe_PPS_EDGE; /* 00059e78 */
+extern const scpi_node scpi_node_SOURce_PTIMe_PPS; /* 00059eaa */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_LEAPsecond_STATe[2]; /* 00059edc */
+extern const scpi_node scpi_node_SOURce_PTIMe_LEAPsecond_STATe; /* 00059ef0 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_LEAPsecond_GPSTime[2]; /* 00059f22 */
+extern const scpi_node scpi_node_SOURce_PTIMe_LEAPsecond_GPSTime; /* 00059f36 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_LEAPsecond_DURation[2]; /* 00059f68 */
+extern const scpi_node scpi_node_SOURce_PTIMe_LEAPsecond_DURation; /* 00059f7c */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_LEAPsecond_DATE[4]; /* 00059fae */
+extern const scpi_node scpi_node_SOURce_PTIMe_LEAPsecond_DATE; /* 00059fd6 */
+extern const scpi_node scpi_node_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate; /* 0005a008 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_LEAPsecond_ACCumulated[2]; /* 0005a03a */
+extern const scpi_node scpi_node_SOURce_PTIMe_LEAPsecond_ACCumulated; /* 0005a04e */
+extern const scpi_node scpi_node_SOURce_PTIMe_LEAPsecond; /* 0005a080 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_VISible_PREDicted_COUNt[2]; /* 0005a0b2 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_VISible_PREDicted_COUNt; /* 0005a0c6 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_VISible_PREDicted[2]; /* 0005a0f8 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_VISible_PREDicted; /* 0005a10c */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_VISible; /* 0005a13e */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_STATe[2]; /* 0005a170 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_STATe; /* 0005a184 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_NONE; /* 0005a1b6 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_COUNt[2]; /* 0005a1e8 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_COUNt; /* 0005a1fc */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude_ALL; /* 0005a22e */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude[2]; /* 0005a260 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_INCLude; /* 0005a274 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_STATe[2]; /* 0005a2a6 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_STATe; /* 0005a2ba */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_NONE; /* 0005a2ec */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_COUNt[2]; /* 0005a31e */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_COUNt; /* 0005a332 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore_ALL; /* 0005a364 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore[2]; /* 0005a396 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_IGNore; /* 0005a3aa */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_TRACking_EMANgle[2]; /* 0005a3dc */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_EMANgle; /* 0005a3f0 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_TRACking_COUNt[2]; /* 0005a422 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking_COUNt; /* 0005a436 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_SATellite_TRACking[2]; /* 0005a468 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite_TRACking; /* 0005a47c */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_SATellite; /* 0005a4ae */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_REFerence_VALid[2]; /* 0005a4e0 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_REFerence_VALid; /* 0005a4f4 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_REFerence_ADELay[2]; /* 0005a526 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_REFerence_ADELay; /* 0005a53a */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_REFerence; /* 0005a56c */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_POWerup[2]; /* 0005a59e */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe_POWerup; /* 0005a5b2 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe[2]; /* 0005a5e4 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition_SURVey_STATe; /* 0005a5f8 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_POSition_SURVey_PROGress[2]; /* 0005a62a */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition_SURVey_PROGress; /* 0005a63e */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_POSition_SURVey_DURation[2]; /* 0005a670 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition_SURVey_DURation; /* 0005a684 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition_SURVey; /* 0005a6b6 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_POSition_HOLD_STATe[2]; /* 0005a6e8 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition_HOLD_STATe; /* 0005a6fc */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_POSition_HOLD_LAST[10]; /* 0005a72e */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition_HOLD_LAST; /* 0005a792 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition_HOLD; /* 0005a7c4 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_POSition_ACTual[10]; /* 0005a7f6 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition_ACTual; /* 0005a85a */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_POSition[10]; /* 0005a88c */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_POSition; /* 0005a8f0 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_INITial_POSition; /* 0005a922 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_INITial_TIME; /* 0005a954 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_INITial_DATE; /* 0005a986 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_INITial; /* 0005a9b8 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_EMANgle[2]; /* 0005a9ea */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_EMANgle; /* 0005a9fe */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_GPSystem_ADELay[2]; /* 0005aa30 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem_ADELay; /* 0005aa44 */
+extern const scpi_node scpi_node_SOURce_PTIMe_GPSystem; /* 0005aa76 */
+extern const scpi_node scpi_node_SOURce_PTIMe_SYNChronization_IMMediate; /* 0005aaa8 */
+extern const scpi_node scpi_node_SOURce_PTIMe_SYNChronization; /* 0005aada */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_FFOMerit[2]; /* 0005ab0c */
+extern const scpi_node scpi_node_SOURce_PTIMe_FFOMerit; /* 0005ab20 */
+extern const scpi_response_item scpi_items_SOURce_PTIMe_DATE[4]; /* 0005ab52 */
+extern const scpi_node scpi_node_SOURce_PTIMe_DATE; /* 0005ab7a */
+extern const scpi_node scpi_node_SOURce_PTIMe; /* 0005abac */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt[2]; /* 0005abde */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt; /* 0005abf2 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_VISible_PREDicted[2]; /* 0005ac24 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_VISible_PREDicted; /* 0005ac38 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_VISible; /* 0005ac6a */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_TRACking_INCLude_STATe[2]; /* 0005ac9c */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_INCLude_STATe; /* 0005acb0 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_INCLude_NONE; /* 0005ace2 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt[2]; /* 0005ad14 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt; /* 0005ad28 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_INCLude_ALL; /* 0005ad5a */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_TRACking_INCLude[2]; /* 0005ad8c */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_INCLude; /* 0005ada0 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe[2]; /* 0005add2 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe; /* 0005ade6 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE; /* 0005ae18 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt[2]; /* 0005ae4a */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt; /* 0005ae5e */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL; /* 0005ae90 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_TRACking_IGNore[2]; /* 0005aec2 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_IGNore; /* 0005aed6 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_TRACking_EMANgle[2]; /* 0005af08 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_EMANgle; /* 0005af1c */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_TRACking_COUNt[2]; /* 0005af4e */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking_COUNt; /* 0005af62 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_SATellite_TRACking[2]; /* 0005af94 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite_TRACking; /* 0005afa8 */
+extern const scpi_node scpi_node_SOURce_GPSystem_SATellite; /* 0005afda */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_REFerence_VALid[2]; /* 0005b00c */
+extern const scpi_node scpi_node_SOURce_GPSystem_REFerence_VALid; /* 0005b020 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_REFerence_ADELay[2]; /* 0005b052 */
+extern const scpi_node scpi_node_SOURce_GPSystem_REFerence_ADELay; /* 0005b066 */
+extern const scpi_node scpi_node_SOURce_GPSystem_REFerence; /* 0005b098 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_POSition_SURVey_STATe_POWerup[2]; /* 0005b0ca */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition_SURVey_STATe_POWerup; /* 0005b0de */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_POSition_SURVey_STATe[2]; /* 0005b110 */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition_SURVey_STATe; /* 0005b124 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_POSition_SURVey_PROGress[2]; /* 0005b156 */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition_SURVey_PROGress; /* 0005b16a */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_POSition_SURVey_DURation[2]; /* 0005b19c */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition_SURVey_DURation; /* 0005b1b0 */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition_SURVey; /* 0005b1e2 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_POSition_HOLD_STATe[2]; /* 0005b214 */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition_HOLD_STATe; /* 0005b228 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_POSition_HOLD_LAST[10]; /* 0005b25a */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition_HOLD_LAST; /* 0005b2be */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition_HOLD; /* 0005b2f0 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_POSition_ACTual[10]; /* 0005b322 */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition_ACTual; /* 0005b386 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_POSition[10]; /* 0005b3b8 */
+extern const scpi_node scpi_node_SOURce_GPSystem_POSition; /* 0005b41c */
+extern const scpi_node scpi_node_SOURce_GPSystem_INITial_POSition; /* 0005b44e */
+extern const scpi_node scpi_node_SOURce_GPSystem_INITial_TIME; /* 0005b480 */
+extern const scpi_node scpi_node_SOURce_GPSystem_INITial_DATE; /* 0005b4b2 */
+extern const scpi_node scpi_node_SOURce_GPSystem_INITial; /* 0005b4e4 */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_EMANgle[2]; /* 0005b516 */
+extern const scpi_node scpi_node_SOURce_GPSystem_EMANgle; /* 0005b52a */
+extern const scpi_response_item scpi_items_SOURce_GPSystem_ADELay[2]; /* 0005b55c */
+extern const scpi_node scpi_node_SOURce_GPSystem_ADELay; /* 0005b570 */
+extern const scpi_node scpi_node_SOURce_GPSystem; /* 0005b5a2 */
+extern const scpi_node scpi_node_SOURce; /* 0005b5d4 */
+extern const scpi_response_item scpi_items_SENSe_TST1_EDGE[2]; /* 0005b606 */
+extern const scpi_node scpi_node_SENSe_TST1_EDGE; /* 0005b61a */
+extern const scpi_node scpi_node_SENSe_TSTAMP4; /* 0005b64c */
+extern const scpi_node scpi_node_SENSe_TST4; /* 0005b67e */
+extern const scpi_node scpi_node_SENSe_TSTAMP3; /* 0005b6b0 */
+extern const scpi_node scpi_node_SENSe_TST3; /* 0005b6e2 */
+extern const scpi_node scpi_node_SENSe_TSTAMP2; /* 0005b714 */
+extern const scpi_node scpi_node_SENSe_TST2; /* 0005b746 */
+extern const scpi_node scpi_node_SENSe_TSTAMP1; /* 0005b778 */
+extern const scpi_node scpi_node_SENSe_TST1; /* 0005b7aa */
+extern const scpi_node scpi_node_SENSe_TSTAMP; /* 0005b7dc */
+extern const scpi_node scpi_node_SENSe_TST; /* 0005b80e */
+extern const scpi_response_item scpi_items_SENSe_DATA_TSTamp[2]; /* 0005b840 */
+extern const scpi_node scpi_node_SENSe_DATA_TSTamp; /* 0005b854 */
+extern const scpi_response_item scpi_items_SENSe_DATA_POINts[2]; /* 0005b886 */
+extern const scpi_node scpi_node_SENSe_DATA_POINts; /* 0005b89a */
+extern const scpi_response_item scpi_items_SENSe_DATA_MEMory_SAVE[2]; /* 0005b8cc */
+extern const scpi_node scpi_node_SENSe_DATA_MEMory_SAVE; /* 0005b8e0 */
+extern const scpi_response_item scpi_items_SENSe_DATA_MEMory_OVERflow_COUNt[2]; /* 0005b912 */
+extern const scpi_node scpi_node_SENSe_DATA_MEMory_OVERflow_COUNt; /* 0005b926 */
+extern const scpi_node scpi_node_SENSe_DATA_MEMory_OVERflow; /* 0005b958 */
+extern const scpi_node scpi_node_SENSe_DATA_MEMory; /* 0005b98a */
+extern const scpi_node scpi_node_SENSe_DATA_CLEar; /* 0005b9bc */
+extern const scpi_response_item scpi_items_SENSe_DATA[2]; /* 0005b9ee */
+extern const scpi_node scpi_node_SENSe_DATA; /* 0005ba02 */
+extern const scpi_node scpi_node_SENSe; /* 0005ba34 */
+extern const scpi_response_item scpi_items_OUTPut_STATe[2]; /* 0005ba66 */
+extern const scpi_node scpi_node_OUTPut_STATe; /* 0005ba7a */
+extern const scpi_response_item scpi_items_OUTPut_PIN1_FREQuency[2]; /* 0005baac */
+extern const scpi_node scpi_node_OUTPut_PIN1_FREQuency; /* 0005bac0 */
+extern const scpi_response_item scpi_items_OUTPut_PIN1_DELay_ALIGnment[2]; /* 0005baf2 */
+extern const scpi_node scpi_node_OUTPut_PIN1_DELay_ALIGnment; /* 0005bb06 */
+extern const scpi_response_item scpi_items_OUTPut_PIN1_DELay[2]; /* 0005bb38 */
+extern const scpi_node scpi_node_OUTPut_PIN1_DELay; /* 0005bb4c */
+extern const scpi_node scpi_node_OUTPut_PINS; /* 0005bb7e */
+extern const scpi_node scpi_node_OUTPut_PIN7; /* 0005bbb0 */
+extern const scpi_node scpi_node_OUTPut_PIN2; /* 0005bbe2 */
+extern const scpi_node scpi_node_OUTPut_PIN8; /* 0005bc14 */
+extern const scpi_node scpi_node_OUTPut_PIN3; /* 0005bc46 */
+extern const scpi_node scpi_node_OUTPut_PIN6; /* 0005bc78 */
+extern const scpi_node scpi_node_OUTPut_PIN1; /* 0005bcaa */
+extern const scpi_node scpi_node_OUTPut; /* 0005bcdc */
+extern const scpi_response_item scpi_items_LED_TMHValid[2]; /* 0005bd0e */
+extern const scpi_node scpi_node_LED_TMHValid; /* 0005bd22 */
+extern const scpi_response_item scpi_items_LED_HOLDover[2]; /* 0005bd54 */
+extern const scpi_node scpi_node_LED_HOLDover; /* 0005bd68 */
+extern const scpi_response_item scpi_items_LED_GPSLock[2]; /* 0005bd9a */
+extern const scpi_node scpi_node_LED_GPSLock; /* 0005bdae */
+extern const scpi_response_item scpi_items_LED_ENABled[2]; /* 0005bde0 */
+extern const scpi_node scpi_node_LED_ENABled; /* 0005bdf4 */
+extern const scpi_response_item scpi_items_LED_ALARm_USER[2]; /* 0005be26 */
+extern const scpi_node scpi_node_LED_ALARm_USER; /* 0005be3a */
+extern const scpi_response_item scpi_items_LED_ALARm_MINor[2]; /* 0005be6c */
+extern const scpi_node scpi_node_LED_ALARm_MINor; /* 0005be80 */
+extern const scpi_response_item scpi_items_LED_ALARm_MAJor[2]; /* 0005beb2 */
+extern const scpi_node scpi_node_LED_ALARm_MAJor; /* 0005bec6 */
+extern const scpi_response_item scpi_items_LED_ALARm[2]; /* 0005bef8 */
+extern const scpi_node scpi_node_LED_ALARm; /* 0005bf0c */
+extern const scpi_response_item scpi_items_LED_ACTive[2]; /* 0005bf3e */
+extern const scpi_node scpi_node_LED_ACTive; /* 0005bf52 */
+extern const scpi_node scpi_node_LED; /* 0005bf84 */
+extern const scpi_response_item scpi_items_FORMat_DATA[2]; /* 0005bfb6 */
+extern const scpi_node scpi_node_FORMat_DATA; /* 0005bfca */
+extern const scpi_node scpi_node_FORMat; /* 0005bffc */
+extern const scpi_response_item scpi_items_DIAGnostic_TOFFset[2]; /* 0005c02e */
+extern const scpi_node scpi_node_DIAGnostic_TOFFset; /* 0005c042 */
+extern const scpi_response_item scpi_items_DIAGnostic_TEST_RESult[3]; /* 0005c074 */
+extern const scpi_node scpi_node_DIAGnostic_TEST_RESult; /* 0005c092 */
+extern const scpi_response_item scpi_items_DIAGnostic_TEST[4]; /* 0005c0c4 */
+extern const scpi_node scpi_node_DIAGnostic_TEST; /* 0005c0ec */
+extern const scpi_response_item scpi_items_DIAGnostic_TEMPerature[2]; /* 0005c11e */
+extern const scpi_node scpi_node_DIAGnostic_TEMPerature; /* 0005c132 */
+extern const scpi_response_item scpi_items_DIAGnostic_SYSTem_PSTartup[2]; /* 0005c164 */
+extern const scpi_node scpi_node_DIAGnostic_SYSTem_PSTartup; /* 0005c178 */
+extern const scpi_response_item scpi_items_DIAGnostic_SYSTem_DOUTput[2]; /* 0005c1aa */
+extern const scpi_node scpi_node_DIAGnostic_SYSTem_DOUTput; /* 0005c1be */
+extern const scpi_node scpi_node_DIAGnostic_SYSTem; /* 0005c1f0 */
+extern const scpi_node scpi_node_DIAGnostic_STATus_HAPPening; /* 0005c222 */
+extern const scpi_node scpi_node_DIAGnostic_STATus_ERRor; /* 0005c254 */
+extern const scpi_node scpi_node_DIAGnostic_STATus; /* 0005c286 */
+extern const scpi_response_item scpi_items_DIAGnostic_SLOG_READ_ALL[2]; /* 0005c2b8 */
+extern const scpi_node scpi_node_DIAGnostic_SLOG_READ_ALL; /* 0005c2cc */
+extern const scpi_response_item scpi_items_DIAGnostic_SLOG_READ[2]; /* 0005c2fe */
+extern const scpi_node scpi_node_DIAGnostic_SLOG_READ; /* 0005c312 */
+extern const scpi_response_item scpi_items_DIAGnostic_SLOG_COUNt[2]; /* 0005c344 */
+extern const scpi_node scpi_node_DIAGnostic_SLOG_COUNt; /* 0005c358 */
+extern const scpi_node scpi_node_DIAGnostic_SLOG_CLEar; /* 0005c38a */
+extern const scpi_node scpi_node_DIAGnostic_SLOG; /* 0005c3bc */
+extern const scpi_response_item scpi_items_DIAGnostic_SER1_EGResponse[2]; /* 0005c3ee */
+extern const scpi_node scpi_node_DIAGnostic_SER1_EGResponse; /* 0005c402 */
+extern const scpi_response_item scpi_items_DIAGnostic_SER1_RESTricted[2]; /* 0005c434 */
+extern const scpi_node scpi_node_DIAGnostic_SER1_RESTricted; /* 0005c448 */
+extern const scpi_node scpi_node_DIAGnostic_SERIAL2; /* 0005c47a */
+extern const scpi_node scpi_node_DIAGnostic_SER2; /* 0005c4ac */
+extern const scpi_node scpi_node_DIAGnostic_SERIAL1; /* 0005c4de */
+extern const scpi_node scpi_node_DIAGnostic_SER1; /* 0005c510 */
+extern const scpi_node scpi_node_DIAGnostic_SERIAL; /* 0005c542 */
+extern const scpi_node scpi_node_DIAGnostic_SER; /* 0005c574 */
+extern const scpi_response_item scpi_items_DIAGnostic_ROSCillator_TCOefficient[2]; /* 0005c5a6 */
+extern const scpi_node scpi_node_DIAGnostic_ROSCillator_TCOefficient; /* 0005c5ba */
+extern const scpi_response_item scpi_items_DIAGnostic_ROSCillator_EFControl_ABSolute[2]; /* 0005c5ec */
+extern const scpi_node scpi_node_DIAGnostic_ROSCillator_EFControl_ABSolute; /* 0005c600 */
+extern const scpi_response_item scpi_items_DIAGnostic_ROSCillator_EFControl_RELative[2]; /* 0005c632 */
+extern const scpi_node scpi_node_DIAGnostic_ROSCillator_EFControl_RELative; /* 0005c646 */
+extern const scpi_node scpi_node_DIAGnostic_ROSCillator_EFControl; /* 0005c678 */
+extern const scpi_response_item scpi_items_DIAGnostic_ROSCillator_CURRent[2]; /* 0005c6aa */
+extern const scpi_node scpi_node_DIAGnostic_ROSCillator_CURRent; /* 0005c6be */
+extern const scpi_node scpi_node_DIAGnostic_ROSCillator; /* 0005c6f0 */
+extern const scpi_response_item scpi_items_DIAGnostic_QUERy_RESPonse[2]; /* 0005c722 */
+extern const scpi_node scpi_node_DIAGnostic_QUERy_RESPonse; /* 0005c736 */
+extern const scpi_node scpi_node_DIAGnostic_QUERy; /* 0005c768 */
+extern const scpi_response_item scpi_items_DIAGnostic_PTIMe_TINTerval[2]; /* 0005c79a */
+extern const scpi_node scpi_node_DIAGnostic_PTIMe_TINTerval; /* 0005c7ae */
+extern const scpi_node scpi_node_DIAGnostic_PTIMe; /* 0005c7e0 */
+extern const scpi_response_item scpi_items_DIAGnostic_OS_STACk[2]; /* 0005c812 */
+extern const scpi_node scpi_node_DIAGnostic_OS_STACk; /* 0005c826 */
+extern const scpi_response_item scpi_items_DIAGnostic_OS_PROCess[2]; /* 0005c858 */
+extern const scpi_node scpi_node_DIAGnostic_OS_PROCess; /* 0005c86c */
+extern const scpi_response_item scpi_items_DIAGnostic_OS_MEMory[2]; /* 0005c89e */
+extern const scpi_node scpi_node_DIAGnostic_OS_MEMory; /* 0005c8b2 */
+extern const scpi_node scpi_node_DIAGnostic_OS; /* 0005c8e4 */
+extern const scpi_response_item scpi_items_DIAGnostic_ME[2]; /* 0005c916 */
+extern const scpi_node scpi_node_DIAGnostic_ME; /* 0005c92a */
+extern const scpi_node scpi_node_DIAGnostic_LOG_WRITe; /* 0005c95c */
+extern const scpi_response_item scpi_items_DIAGnostic_LOG_READ_ALL[2]; /* 0005c98e */
+extern const scpi_node scpi_node_DIAGnostic_LOG_READ_ALL; /* 0005c9a2 */
+extern const scpi_response_item scpi_items_DIAGnostic_LOG_READ[2]; /* 0005c9d4 */
+extern const scpi_node scpi_node_DIAGnostic_LOG_READ; /* 0005c9e8 */
+extern const scpi_response_item scpi_items_DIAGnostic_LOG_COUNt[2]; /* 0005ca1a */
+extern const scpi_node scpi_node_DIAGnostic_LOG_COUNt; /* 0005ca2e */
+extern const scpi_node scpi_node_DIAGnostic_LOG_CLEar; /* 0005ca60 */
+extern const scpi_node scpi_node_DIAGnostic_LOG; /* 0005ca92 */
+extern const scpi_response_item scpi_items_DIAGnostic_LIFetime_COUNt[2]; /* 0005cac4 */
+extern const scpi_node scpi_node_DIAGnostic_LIFetime_COUNt; /* 0005cad8 */
+extern const scpi_node scpi_node_DIAGnostic_LIFetime; /* 0005cb0a */
+extern const scpi_node scpi_node_DIAGnostic_IDENtification_SERial; /* 0005cb3c */
+extern const scpi_node scpi_node_DIAGnostic_IDENtification_MODel; /* 0005cb6e */
+extern const scpi_node scpi_node_DIAGnostic_IDENtification_HARDware; /* 0005cba0 */
+extern const scpi_response_item scpi_items_DIAGnostic_IDENtification_GPSystem[11]; /* 0005cbd2 */
+extern const scpi_node scpi_node_DIAGnostic_IDENtification_GPSystem; /* 0005cc40 */
+extern const scpi_response_item scpi_items_DIAGnostic_IDENtification_DEFault[3]; /* 0005cc72 */
+extern const scpi_node scpi_node_DIAGnostic_IDENtification_DEFault; /* 0005cc90 */
+extern const scpi_node scpi_node_DIAGnostic_IDENtification; /* 0005ccc2 */
+extern const scpi_response_item scpi_items_DIAGnostic_GPSystem_UTC[2]; /* 0005ccf4 */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_UTC; /* 0005cd08 */
+extern const scpi_response_item scpi_items_DIAGnostic_GPSystem_TIME[7]; /* 0005cd3a */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_TIME; /* 0005cd80 */
+extern const scpi_response_item scpi_items_DIAGnostic_GPSystem_POSition_DEGRees[5]; /* 0005cdb2 */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_POSition_DEGRees; /* 0005cde4 */
+extern const scpi_response_item scpi_items_DIAGnostic_GPSystem_POSition_MSEConds[2]; /* 0005ce16 */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_POSition_MSEConds; /* 0005ce2a */
+extern const scpi_response_item scpi_items_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold[2]; /* 0005ce5c */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold; /* 0005ce70 */
+extern const scpi_response_item scpi_items_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe[2]; /* 0005cea2 */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe; /* 0005ceb6 */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_POSition_HOLD_RAIM; /* 0005cee8 */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_POSition_SURVey; /* 0005cf1a */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_POSition_HOLD; /* 0005cf4c */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem_POSition; /* 0005cf7e */
+extern const scpi_node scpi_node_DIAGnostic_GPSystem; /* 0005cfb0 */
+extern const scpi_node scpi_node_DIAGnostic; /* 0005cfe2 */
+extern const scpi_tree_pair scpi_trees; /* 0005d014 */
 extern const uint8_t ctype_table[257]; /* 0005ed98 */
 extern uint32_t powers_of_ten_by_25_mantissas[54]; /* 0005f860 */
 extern int16_t powers_of_ten_by_25_exponents[27]; /* 0005f938 */
@@ -5570,7 +7623,6 @@ __asm__(".set scpi_action_SYSTem_PRESet, 0x00041360");
 __asm__(".set scpi_action_self_test, 0x00041348");
 __asm__(".set scpi_action_temporary_hold, 0x0004133c");
 __asm__(".set scpi_char_classes, 0x000277ec");
-__asm__(".set scpi_common_list, 0x000526f6");
 __asm__(".set scpi_echo_length, 0x00102a46");
 __asm__(".set scpi_echo_response, 0x00102c64");
 __asm__(".set scpi_echo_text, 0x00102a47");
@@ -5582,7 +7634,6 @@ __asm__(".set scpi_input_next, 0x00102c4e");
 __asm__(".set scpi_input_repeat, 0x00102b4a");
 __asm__(".set scpi_language, 0x00102c62");
 __asm__(".set scpi_last_input, 0x00102b46");
-__asm__(".set scpi_main_tree, 0x00053034");
 __asm__(".set scpi_message_end_code, 0x0002963a");
 __asm__(".set scpi_multipliers, 0x00027b2e");
 __asm__(".set scpi_normalize_exponents, 0x00025144");
@@ -5660,7 +7711,6 @@ __asm__(".set scpi_response_begin_code, 0x00029636");
 __asm__(".set scpi_response_lists, 0x0010295e");
 __asm__(".set scpi_response_texts, 0x0010272a");
 __asm__(".set scpi_staged, 0x00102a0e");
-__asm__(".set scpi_trees, 0x0005d014");
 __asm__(".set scpi_value_DIAGnostic_ROSCillator_TCOefficient, 0x00101d0c");
 __asm__(".set scpi_value_DIAGnostic_TOFFset, 0x00101d10");
 __asm__(".set scpi_value_SAMPle_BARR, 0x00101ddd");
@@ -7414,7 +9464,7 @@ uint32_t scpi_parse_text(scpi_token_string *token,void *unused,char **value);
 uint32_t scpi_parse_string(uint16_t *token,void *unused,uint32_t *value);
 uint32_t scpi_parse_boolean(int16_t *token,void *unused,uint16_t *value);
 int32_t scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *value,void *param_4);
-uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,int32_t *list);
+uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,scpi_choices *choices);
 int32_t scpi_parse_short(scpi_number *number,void *param_2,int16_t *value,scpi_unit *units);
 int32_t scpi_parse_unsigned_short(scpi_number *number,void *param_2,uint16_t *value,scpi_unit *units);
 int32_t scpi_parse_long(scpi_number *number,void *param_2,int32_t *value,scpi_unit *units);
@@ -45642,31 +47692,30 @@ int32_t scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *va
    no match
    docs/scpi/README.md, read */
 
-uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,int32_t *list)
+uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,scpi_choices *choices)
 
 {
-  int32_t iVar1;
+  char **ppcVar1;
   uint32_t uVar2;
   int16_t order;
   int16_t sVar4;
   
   sVar4 = 0;
-  if ((list == (int32_t *)0x0) || (iVar1 = *list, iVar1 == 0)) {
+  if ((choices == (scpi_choices *)0x0) || (ppcVar1 = choices->keywords, ppcVar1 == (char **)0x0)) {
     uVar2 = 0xffffffe4;
   }
   else {
-    while (*(int32_t *)(iVar1 + sVar4 * 4) != 0) {
-      order = scpi_keyword_compare((char *)(token + 1),(int32_t)*token,*(char **)(iVar1 + sVar4 * 4));
+    for (; ppcVar1[sVar4] != (char *)0x0; sVar4 = sVar4 + 1) {
+      order = scpi_keyword_compare((char *)(token + 1),(int32_t)*token,ppcVar1[sVar4]);
       if (order == 0) {
-        if (list[1] == 0) {
+        if (choices->values == (int16_t *)0x0) {
           *value = sVar4;
         }
         else {
-          *value = *(int16_t *)(list[1] + sVar4 * 2);
+          *value = choices->values[sVar4];
         }
         return 0;
       }
-      sVar4 = sVar4 + 1;
     }
     uVar2 = 0xffffffe5;
   }
@@ -46776,7 +48825,7 @@ LAB_00026bae:
                 uVar4 = scpi_parameter_match(&local_32,(int32_t)local_6,context->call,&local_2e);
                 if (uVar4 != 0) goto LAB_00026e5a;
                 unaff_D7 = local_32->kinds;
-                pcVar1 = *(code **)(&unaff_D7[1].size + local_6 * 2);
+                pcVar1 = unaff_D7->converters[local_6];
                 if (5U < kind - 0xd && kind - 0x13 != 0) goto LAB_00026d2a;
                     /* WARNING: Switch is manually overridden */
                 switch((&switchD_00026c64_index_zero)[(int16_t)(kind - 0x13)]) {
@@ -47458,7 +49507,7 @@ int32_t scpi_parameter_match(scpi_parameter **parameter,int32_t kind,scpi_call *
     if (psVar1 == (scpi_parameter *)0x0) {
       return -0x26;
     }
-    if (*(int32_t *)(&(*parameter)->kinds[1].size + sVar4 * 2) != 0) break;
+    if ((*parameter)->kinds->converters[sVar4] != (void *)0x0) break;
     if ((*parameter)->kinds->optional == 0) {
       return (int32_t)scpi_parameter_kind_errors[sVar4];
     }
@@ -48944,7 +50993,7 @@ int32_t scpi_format_response(scpi_port *output,scpi_response_item *items,scpi_ca
     scpi_port_echo_length = 0;
   }
   while( true ) {
-    iVar2 = (*(code *)items->format)(output,call->response + sVar3,items->argument,call);
+    iVar2 = (*(code *)items->format)(output,call->response + sVar3,items->choices,call);
     if (iVar2 != 0) {
       return iVar2;
     }
@@ -95076,7 +97125,7 @@ LAB_installer__0010485c:
                                   (&local_32,(int32_t)local_6,context->call,&local_2e);
                 if (uVar4 != 0) goto LAB_installer__00104b08;
                 unaff_D7 = local_32->kinds;
-                pcVar1 = *(code **)(&unaff_D7[1].size + local_6 * 2);
+                pcVar1 = unaff_D7->converters[local_6];
                 if (5U < uVar2 - 0xd && uVar2 - 0x13 != 0) goto LAB_installer__001049d8;
                     /* WARNING: Switch is manually overridden */
                 switch((&WORD_installer__00104922)[(int16_t)(uVar2 - 0x13)]) {
@@ -95757,7 +97806,7 @@ int32_t installer_scpi_parameter_match
     if (psVar1 == (scpi_parameter *)0x0) {
       return -0x26;
     }
-    if (*(int32_t *)(&(*parameter)->kinds[1].size + sVar4 * 2) != 0) break;
+    if ((*parameter)->kinds->converters[sVar4] != (void *)0x0) break;
     if ((*parameter)->kinds->optional == 0) {
       return (int32_t)*(int16_t *)(&DAT_installer__00105678 + sVar4 * 2);
     }
@@ -96858,7 +98907,7 @@ int32_t installer_scpi_format_response(scpi_port *output,scpi_response_item *ite
     installer_scpi_port_echo_length = 0;
   }
   while( true ) {
-    iVar2 = (*(code *)items->format)(output,call->response + sVar3,items->argument,call);
+    iVar2 = (*(code *)items->format)(output,call->response + sVar3,items->choices,call);
     if (iVar2 != 0) {
       return iVar2;
     }
@@ -99219,6 +101268,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/scpi_system.c"
 
 #include "../rewritten/z3805a-3543b/scpi_tree.c"
+
+#include "../rewritten/z3805a-3543b/scpi_tree_data.c"
 
 #include "../rewritten/z3805a-3543b/scpi_unsupported.c"
 

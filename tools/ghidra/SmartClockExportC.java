@@ -345,7 +345,7 @@ public class SmartClockExportC extends GhidraScript {
 			writer.print(functions);
 			// a folder's headers first, what its files share, then its files
 			List<File> included = new ArrayList<>(rewrittenHeaders());
-			included.addAll(new TreeSet<>(rewritten().values()));
+			included.addAll(rewrittenSources());
 			for (File file : included) {
 				writer.println();
 				writer.println("#include \"" + output.getAbsoluteFile().getParentFile().toPath()
@@ -4180,9 +4180,14 @@ public class SmartClockExportC extends GhidraScript {
 	 */
 	private static final Pattern DEFINITION =
 		Pattern.compile("(?m)^(?:[A-Za-z_][\\w \\*]*?\\b)?(\\w+)\\([^;{}]*\\)\\s*\\{");
-	/** A table's definition in hand-written C: const, at a line's start, then its name before its bounds or =. */
-	private static final Pattern DATA_DEFINITION =
-		Pattern.compile("(?m)^const [A-Za-z_][\\w ]*?\\b(\\w+)(?:\\[[^\\]]*\\])*\\s*=");
+	/**
+	 * A table's definition in hand-written or generated C, at a line's
+	 * start: const and its type, or a pointer type and const, a table of
+	 * const pointers; then any attribute macro, and its name before its
+	 * bounds or =.
+	 */
+	private static final Pattern DATA_DEFINITION = Pattern.compile(
+		"(?m)^(?:const [A-Za-z_][\\w\\s]*?|(?!static\\b)[A-Za-z_][\\w ]*?\\*+\\s*const\\s[\\w\\s]*?)\\b(\\w+)(?:\\s*\\[[^\\]]*\\])*\\s*=");
 
 	/**
 	 * The files of a rewritten=DIR argument with a suffix, in DIR and the
@@ -4202,28 +4207,52 @@ public class SmartClockExportC extends GhidraScript {
 
 	/**
 	 * The globals the rewritten= folder's .c files define, tables in ROM
-	 * that hand-written C keeps for the decompiler's functions too: their
-	 * extern is const, and they get no .set, so that the decompiler's
-	 * functions read the C's (docs/firmware/README.md, "Hand-written C").
-	 * Only the files the C includes, those that define a function, count:
-	 * a file of data alone, such as the generated SCPI tree, is not
-	 * included, so its globals keep their .set.
+	 * that hand-written or generated C keeps for the decompiler's
+	 * functions too: their extern is const, and they get no .set, so that
+	 * the decompiler's functions read the C's (docs/firmware/README.md,
+	 * "Hand-written C").  A file of data alone, the generated SCPI tree,
+	 * counts as one that defines functions does.
 	 */
 	private Set<String> rewrittenData() {
 		if (rewrittenData == null) {
 			rewrittenData = new TreeSet<>();
 			try {
-				for (File file : new TreeSet<>(rewritten().values())) {
+				for (File file : rewrittenSources()) {
 					Matcher definition = DATA_DEFINITION.matcher(Files.readString(file.toPath()));
 					while (definition.find()) {
 						rewrittenData.add(definition.group(1));
 					}
 				}
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
 			}
 		}
 		return rewrittenData;
+	}
+
+	/**
+	 * The rewritten= folder's .c files, sorted, which the C includes after
+	 * its own: those that define functions and those of data alone.
+	 */
+	private List<File> rewrittenSources() {
+		Set<File> sources = new TreeSet<>();
+		for (String arg : getScriptArgs()) {
+			if (arg.startsWith(REWRITTEN)) {
+				sources.addAll(rewrittenFiles(arg, ".c"));
+			}
+		}
+		return new ArrayList<>(sources);
+	}
+
+	/**
+	 * A table's declaration made const, as the C that defines it does: a
+	 * table of pointers is itself const, not what they point at
+	 * (scpi_node *const name[10]); anything else is const throughout.
+	 */
+	private static String constDeclaration(String declaration, String name) {
+		int at = declaration.lastIndexOf(name);
+		String type = declaration.substring(0, at).stripTrailing();
+		return type.endsWith("*") ? type + " const " + declaration.substring(at) : "const " + declaration;
 	}
 
 	/** Each hand-written function's file, by its name, from the rewritten= folder. */
@@ -4380,9 +4409,10 @@ public class SmartClockExportC extends GhidraScript {
 			if (data == null || Undefined.isUndefined(data.getDataType())) {
 				continue;
 			}
+			String declaration = declaration(data, data.getDataType(), symbol.getName());
 			writer.println(externFor(symbol.getAddress())
-				+ (rewrittenData().contains(symbol.getName()) ? "const " : "")
-				+ declaration(data, data.getDataType(), symbol.getName())
+				+ (rewrittenData().contains(symbol.getName())
+					? constDeclaration(declaration, symbol.getName()) : declaration)
 				+ "; /* " + symbol.getAddress() + " */");
 			declared.put(symbol.getName(), symbol.getAddress().toString());
 		}

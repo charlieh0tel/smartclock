@@ -1609,7 +1609,6 @@ call by offset: `+0` `scpi_session_init`, `+4` `scpi_session_close`
 | `gps_script_47` to `gps_script_59`, `gps_script_none` (`0x50cca` to `0x50fce`) | `gps_script_step *[N]` | `gps_script_lookup`'s scripts, each to its NULL (`oncore/z3805a-3543b.txt`); `command_monitor_queries` (`0x50e5e`) the command monitor's, `@@Bj`'s query alone |
 | `psos_config_defaults` (`0x5122a`), `io_table_defaults` (`0x5171a`) | the RAM tables' types | `psos_config_init`'s copies, `0x62` and `0x90` bytes |
 | `io_device_unused_stubs` (`0x517aa`) | `io_device_stubs` | a fifth device's six slots, `rts; nop; nop` each, after the `0x90` bytes copied; `last_device` is 3 |
-| `scpi_parameter_lists` (`0x517ce`) | `scpi_parameter[485]` | every node's parameter list, to `scpi_common_list` (`0x526f6`); referred to only by the nodes' handlers |
 | `oncore_id_Aa` to `oncore_query_unused` (`0x50986` to `0x50a46`) | `char[N]` | the IDs and query forms `oncore_messages` points at, each to its NUL |
 | `gps_step_Ad_set` to `gps_step_status_monitor` (`0x50a46` to `0x50cc2`) | `gps_script_query_step`, `gps_script_step_1_argument` to `_3_arguments`, `gps_script_step` | the scripts' steps, packed end to end, each to the next |
 | `powers_of_ten_times_five_float` (`0x12846`) | `float[61]` | 5e-30 to 5e30; `float_decimal_exponent_rounded`'s bound `0xf4`, code at `0x1293a` |
@@ -1618,7 +1617,7 @@ call by offset: `+0` `scpi_session_init`, `+4` `scpi_session_close`
 | `forth_user_header` (`0x1ad0e`) | `pforth_word_header` | the kernel's latest word; "The console's dictionary" below |
 | `fpga_bitstream` (`0x20f18`), `fpga_readback_mask_header` (`0x21e36`) | `uint8_t[3860]`, `uint8_t[5]` | `outputs.md`, "The FPGA bitstreams" |
 | `rom_lane_sums_low`, `_high` (`0x3fffc`, `0x7fffc`) | `uint8_t[4]` | the boot check's (`restart.md`); `0x36be8` to `0x3fffb` is erased |
-| `scpi_main_tree` (`0x53034`) | `scpi_root_children` | the main tree's root list, 49 nodes; `0x5d014` points at it |
+| `scpi_main_tree` (`0x53034`) | `scpi_child_list` | the main tree's root list, 49 nodes, typed by `scpi_main_tree_children` at `+6`, as every child list's are (docs/scpi/README.md, "As C"); `0x5d014` points at it |
 | `pow_two_powers`, `pow_two_power_tails` (`0x6184c`, `0x618d4`) | `double[17]`, `double[9]` | 2 to -k/16, k 0 to 16, and the even entries' low parts; code at `0x6191c` |
 
 The soft-float library's constants are labeled one by one:

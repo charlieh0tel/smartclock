@@ -276,7 +276,9 @@ part of what they change.  In order:
    `types=tools/ghidra/types/smartclock.h`,
    `types=tools/ghidra/types/mc68331.h`,
    `types=tools/ghidra/types/mc68681.h`,
-   `names=tools/ghidra/names/IMAGE.tsv`, `scpi=FILE` from
+   `names=tools/ghidra/names/IMAGE.tsv`, and
+   `names=tools/ghidra/names/IMAGE.scpi-tree.tsv` where `make scpi-tree`
+   made one (the SCPI tree's records), `scpi=FILE` from
    `smartclock-cli dump-scpi --handlers IMAGE` and
    `pforth=docs/firmware/pforth/IMAGE.txt`.
 4. `SmartClockForth.java`.
@@ -825,11 +827,14 @@ the image's label and address: `fpga.c`'s `fpga_bits` is
 `fpga_bit_table` (`0x41310`).  A table the decompiler's functions
 read too keeps the image's name and is `const` but not `static`:
 `stdlib.c` defines `ctype_table`, which `gps_receive` and `doprnt` read,
-and the exporter, finding the definition in a file it includes (one
-that defines a function), declares its extern `const` and gives it no
-`.set`, so that they read the C's.  The generated SCPI tree,
-`scpi_tree_data.c`, defines data alone, so it is not included yet and
-the parser still reads ROM's (PLAN.md, 2026-10-22).  Not where the
+and the exporter, finding the definition in a file of the folder,
+all of which it includes, declares its extern `const` and gives it no
+`.set`, so that they read the C's; a table of pointers is itself
+`const`, `T *const name[n]`, as its definition.  So with the generated
+SCPI tree, `scpi_tree_data.c`, a file of data alone, every record of
+it (docs/scpi/README.md, "As C"): the parser's routines, decompiled
+and hand-written, read the C's tree, not ROM's (PLAN.md,
+2026-10-22).  Not where the
 image reads past the
 table: `clock_days_before_month`'s unchecked month reads the word
 before `days_before_month` and those after it, `exception_name` reads
@@ -873,7 +878,18 @@ constants: gcc keeps `""` as any literal's end, so nothing before it
 tells (`loopback_expect_next` and `sci.transmit_next` reset to `""`);
 and a pointer to a C
 function's image copy and one to gcc's copy are the same (a driver's
-echo routine).  And a call starts with
+echo routine); and so are pointers into the same place of an image
+object and its twin among gcc's constants, an object the C defines that
+a names file labels in ROM (`tools/ghidra/names/IMAGE.tsv` and
+`IMAGE.*.tsv`, the generated tree's rows among them; `harness.Twins`):
+a node `scpi_node_find` returns, a list `scpi_header_step` leaves in
+the path.  So too in a call's pointer result, the memory beside RAM
+compared after it, and its effects, a kernel call's argument or a
+routine's of the harness's recorded as the image's copy would pass it.
+Where the harness gives a call one of the image's objects that has a
+twin, the main tree's root list or a node, as below, gcc's copy is
+given the twin, in its arguments and in the memory it starts with, so
+that it reads the C's tree as the firmware's C does.  And a call starts with
 A6 at a caller's frame on the harness's stack, its saved frame pointer
 0, its return address the harness's and its first argument a name,
 `"gpsx"` as `root_task` passes it, since the image's code may walk its
@@ -995,7 +1011,13 @@ holds no code, so that a jump into either faults.  Some parameters are
 given the image's own object their callers pass: by its name, an SCPI
 formatter's `output` and the lexer's `input`, the console port's
 object (`0x29e18`), and a header `path`, a buffer set back to the main
-tree's root list (`0x53034`), as `scpi_path_reset` does; and by its
+tree's root list (`0x53034`), as `scpi_path_reset` does; by its type, a
+`scpi_keyword *` token, by the case a keyword of the main tree's root,
+short or long, of `:SOURce`, which the root's default child reaches, or
+of neither, so that a lookup finds a node, directly or through the
+default, or none, and a generated tree that differs from ROM's shows
+(the header resolvers' query, which indexes a node's two handlers, is
+in range, 0 or 1); and by its
 type, `status_object`'s model, one of its registers by the case, its
 queue for a `status_error_queue *`, `aging_curve` for an
 `aging_curve_state *`, `status_screen_snapshot` for a

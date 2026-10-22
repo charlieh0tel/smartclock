@@ -26,8 +26,10 @@ use super::roots;
 use super::tree_entries;
 use crate::image::Image;
 
-/// A node's bytes (`scpi_node`).
-const NODE_SIZE: u32 = 0x24;
+/// A node's bytes (`scpi_node`), its unused bytes included.
+const NODE_SIZE: u32 = 0x32;
+/// Where a node's unused bytes start, which are zero in every image.
+const NODE_UNUSED_SLOT: u32 = 0x24;
 /// Where a node keeps its response items, zero for none.
 const RESPONSE_ITEMS_SLOT: u32 = 0x1c;
 /// Where a node keeps the bytes its query's response takes.
@@ -58,7 +60,7 @@ const UNITS_SLOT: u32 = 4;
 /// Where they keep the keywords a choice may take.
 const CHOICES_SLOT: u32 = 8;
 /// Where their converters start, one for each parameter kind.
-pub(super) const CONVERTERS_SLOT: u32 = 0xc;
+const CONVERTERS_SLOT: u32 = 0xc;
 /// How many converters: `SCPI_PARAMETER_DECIMAL` to `_EXPRESSION`
 /// (rewritten/z3805a-3543b/scpi.h), which the records' stride confirms.
 const PARAMETER_KINDS: usize = 6;
@@ -744,6 +746,16 @@ impl Reader<'_> {
         }
         let path = &entry.path;
         let id = identifier(path);
+        for unused in NODE_UNUSED_SLOT..NODE_SIZE {
+            let byte = self
+                .image
+                .u8(at + unused)
+                .ok_or_else(|| anyhow::anyhow!("the node at {at:#x} runs past the image"))?;
+            ensure!(
+                byte == 0,
+                "the node at {at:#x} holds {byte:#x} at +{unused:#x}, where every node holds zero"
+            );
+        }
         let keywords = self.string_pointer(at + KEYWORD_SLOT, "a node's keyword pair")?;
         let children = self.pointer(at + CHILDREN_SLOT, "a node's child list")?;
         let response_items = self.pointer(at + RESPONSE_ITEMS_SLOT, "a node's response items")?;

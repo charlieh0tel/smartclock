@@ -1570,17 +1570,6 @@ typedef struct scpi_error_message {
   char* text;   /* +0x02 */
 } scpi_error_message;
 
-/* The main tree's root child list at 0x53034 (docs/scpi/README.md, "How
- * it is read"): scpi_interpret's tree, beside the common commands'.  A
- * scpi_child_list with its 49 children counted, so that Ghidra types
- * them all. */
-typedef struct scpi_root_children {
-  uint16_t id;                    /* +0x00 */
-  int16_t count;                  /* +0x02: 49 */
-  int16_t default_child;          /* +0x04: 0x24 */
-  struct scpi_node* children[49]; /* +0x06 */
-} scpi_root_children;
-
 typedef struct scpi_numeric_param {
   scpi_param_type type; /* SCPI_PARAM_NUMERIC */
   uint8_t last_index;   /* +0x01: values less one */
@@ -1797,19 +1786,6 @@ typedef struct scpi_arena {
   uint8_t* last; /* +0x04 */
 } scpi_arena;
 
-struct scpi_call;
-/* A handler, the routine a node's setter or query entry holds: the
- * call's parameters, its response and the call (scpi_call_handler,
- * 0x29642). */
-typedef int32_t scpi_handler_function(uint8_t* parameters, void* response,
-                                      struct scpi_call* call);
-
-/* A response item's formatter: the port, the value at its place in the
- * response, the item's argument and the call (scpi_format_response,
- * 0x29690). */
-typedef int32_t scpi_format_function(struct scpi_port* output, void* value,
-                                     uint32_t argument, struct scpi_call* call);
-
 /* A choice parameter's list, the node's for scpi_parse_choice and
  * scpi_format_choice: its keywords to a NULL, and the value each gives,
  * or NULL for its index (0x26460). */
@@ -1818,16 +1794,32 @@ typedef struct scpi_choices {
   int16_t* values; /* +0x04 */
 } scpi_choices;
 
+struct scpi_call;
+/* A handler, the routine a node's setter or query entry holds: the
+ * call's parameters, its response and the call (scpi_call_handler,
+ * 0x29642), as SmartClockSetup.java types every handler. */
+typedef int32_t scpi_handler_function(void* parameters, void* response,
+                                      struct scpi_call* call);
+
+/* A response item's formatter: the port, the value at its place in the
+ * response, the item's choice list and the call (scpi_format_response,
+ * 0x29690); only scpi_format_choice reads the list. */
+typedef int32_t scpi_format_function(struct scpi_port* output, void* value,
+                                     scpi_choices* choices,
+                                     struct scpi_call* call);
+
 /* A parameter's descriptor, what scpi_parameter_match and
- * scpi_parse_message_unit read (0x26c3e to 0x26c80): converters runs on
- * past the record, one for each parameter kind. */
+ * scpi_parse_message_unit read (0x26c3e to 0x26c80), 0x24 bytes apart in
+ * every image (docs/scpi/README.md, "As C"). */
 typedef struct scpi_parameter_kinds {
   int16_t size;          /* +0x00: the value's bytes, after its kind word */
   int16_t optional;      /* +0x02: nonzero when it may be left out */
   scpi_unit* units;      /* +0x04 */
   scpi_choices* choices; /* +0x08 */
-  void* converters[];    /* +0x0c: by the token's kind, NULL for one it does not
-                            take; each kind's routine takes its own arguments */
+  void* converters[6];   /* +0x0c: one for each parameter kind, scpi.h's
+                            SCPI_PARAMETER_DECIMAL to _EXPRESSION, by which the
+                            parser indexes it; NULL for one it does not take;
+                            each kind's routine takes its own arguments */
 } scpi_parameter_kinds;
 
 /* A parameter a node takes, one of the list scpi_parameter_match walks
@@ -1851,10 +1843,13 @@ typedef struct scpi_handler {
 typedef struct scpi_response_item {
   scpi_format_function* format; /* +0x00: NULL after the last */
   int16_t size;                 /* +0x04: the value's bytes */
-  uint32_t argument;            /* +0x06: the node's list, for a choice */
+  scpi_choices* choices; /* +0x06: the node's list, for scpi_format_choice;
+                            NULL for every other formatter */
 } scpi_response_item;
 
-/* A node of the SCPI tree (docs/scpi/README.md, "How it is read"). */
+/* A node of the SCPI tree (docs/scpi/README.md, "How it is read"), 0x32
+ * bytes: every node in every image is followed by 14 zero bytes before
+ * the next record, whatever it is, and no routine reads them. */
 typedef struct scpi_node {
   char* keywords; /* +0x00: the short form, a NUL, the rest of the long form */
   struct scpi_child_list* children;   /* +0x04: NULL for a leaf */
@@ -1864,11 +1859,13 @@ typedef struct scpi_node {
       response_size; /* +0x20: the bytes the query's response takes (0x29666) */
   int16_t path_word; /* +0x22: the word it adds to the path, -1 for none
                         (0x27c50) */
+  uint8_t unused[14]; /* +0x24: zero */
 } scpi_node;
 
 /* A node's children, sorted by keyword for scpi_node_find's bisection
- * (docs/scpi/README.md, "How it is read"); scpi_root_children is the
- * main tree's. */
+ * (docs/scpi/README.md, "How it is read"), the main tree's root list
+ * among them.  The children follow the record, an array of their own
+ * that a names-file row types. */
 typedef struct scpi_child_list {
   uint16_t id;           /* +0x00 */
   int16_t count;         /* +0x02 */

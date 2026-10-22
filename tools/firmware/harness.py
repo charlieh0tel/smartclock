@@ -27,6 +27,7 @@ Unicorn has no CPU32; the 68020 stands in, and the image uses none of
 the instructions either has alone (PLAN.md, "A rebuild that runs").
 """
 
+import bisect
 import re
 import struct
 from dataclasses import dataclass
@@ -241,10 +242,10 @@ WIDTHS = {".b": 0xFF, ".w": 0xFFFF}
 
 def service_argument(m: "RebuiltMachine", name: str) -> tuple[str, int]:
     """An argument's name and the bits of its register a service reads,
-    a C function's gcc copy as its image copy, the same routine."""
+    as the image's copy would pass it (RebuiltMachine.as_image)."""
     register, width = name[:2], name[2:]
     value = m.uc.reg_read(REGISTERS[register]) & WIDTHS.get(width, 0xFFFFFFFF)
-    return name, m.image_copies.get(value, value)
+    return name, m.as_image(value)
 
 
 # The kernel's services, trap #3, by number.
@@ -632,6 +633,15 @@ OBJECTS = {"output": CONSOLE_PORT, "input": CONSOLE_PORT}
 PATH = "path"
 SCPI_MAIN_TREE = 0x53034
 RESET_PATH = struct.pack(">IH", SCPI_MAIN_TREE, 0)
+RESET_PATH_LIST = 0
+# And a keyword token, scpi_keyword: its length at +0 and its text from
+# +2 (smartclock.h), by the case one of KEYWORDS: of the main tree's
+# root list, short and long, of :SOURce's, which the root's default
+# child reaches, and of neither, so that a lookup from the root finds a
+# node directly, through the default, or none.
+KEYWORD = "scpi_keyword *"
+KEYWORDS = [b"SYST", b"STATUS", b"PTIM", b"GPSYSTEM", b"DIAG", b"OUTP", b"CALA", b"NONE"]
+KEYWORD_LENGTH = struct.Struct(">h")
 # And by its type: the status model status_init builds (INITIALIZERS),
 # which status_object keeps and every caller passes, one of its
 # registers, by the case, from the pointers at its +0x12, as many as
@@ -906,6 +916,75 @@ def overlay(convention: dict) -> str | None:
     return address.split(OVERLAY_SEPARATOR)[0] if OVERLAY_SEPARATOR in address else None
 
 
+class Twins:
+    """The objects gcc's C defines that have a twin in the image: a table
+    the hand-written C keeps in place of the image's, and every record of
+    the generated SCPI tree (docs/firmware/README.md, "Hand-written C";
+    docs/scpi/README.md, "As C").  A pointer into a C object at an offset
+    is the same as one into its twin at that offset, in a call's result,
+    in the memory compared after it and in its effects; and where the
+    harness gives a call one of the image's objects, gcc's copy is given
+    its twin.  A pointer to an object's end is to neither."""
+
+    def __init__(self, objects: list[tuple[int, int, int]] | None = None):
+        # each object as (its start, its size, its twin's start), sorted,
+        # once by the C's address and once by the image's, and their
+        # starts, which a lookup bisects
+        self.by_c = sorted(objects or [])
+        self.by_image = sorted((image, size, c) for c, size, image in self.by_c)
+        self.c_starts = [start for start, _, _ in self.by_c]
+        self.image_starts = [start for start, _, _ in self.by_image]
+
+    @staticmethod
+    def find(objects: list[tuple[int, int, int]], starts: list[int], at: int) -> int | None:
+        """Where an address in one of the objects lies in its twin; None
+        if it is in none."""
+        i = bisect.bisect_right(starts, at) - 1
+        if i < 0:
+            return None
+        start, size, twin = objects[i]
+        return twin + at - start if at < start + size else None
+
+    def image_address(self, at: int) -> int | None:
+        """The image's address for one in a C object; None if none."""
+        return Twins.find(self.by_c, self.c_starts, at)
+
+    def c_address(self, at: int) -> int | None:
+        """The C's address for one in the image's twin; None if none."""
+        return Twins.find(self.by_image, self.image_starts, at)
+
+
+def image_labels(paths: list[str]) -> dict[str, str]:
+    """Each label row's name and address, as the names files write it,
+    OVERLAY_SEPARATOR and all; none for a name given two."""
+    labels, ambiguous = {}, set()
+    for path in paths:
+        for line in open(path):
+            fields = line.rstrip("\n").split("\t")
+            if line.startswith("#") or len(fields) < 3 or fields[1] != "label":
+                continue
+            if labels.setdefault(fields[2], fields[0]) != fields[0]:
+                ambiguous.add(fields[2])
+    return {name: address for name, address in labels.items() if name not in ambiguous}
+
+
+def twins(objects: dict[str, tuple[int, int]], labels: dict[str, str], profile: "Profile") -> Twins:
+    """The Twins of a profile: each object gcc's link puts among its
+    constants, by name its (address, size), that the names files label
+    where the profile's literals lie, in ROM or its overlay's code."""
+    found = []
+    for name, (at, size) in objects.items():
+        label = labels.get(name)
+        if label is None or not REBUILT <= at < REBUILT_DATA or not size:
+            continue
+        space, _, address = label.rpartition(OVERLAY_SEPARATOR)
+        image_at = int(address, 16)
+        literals = [(ROM, ROM_SIZE)] + ([profile.code] if profile.code else [])
+        if (space or None) == profile.overlay and any(start <= image_at < start + n for start, n in literals):
+            found.append((at, size, image_at))
+    return Twins(found)
+
+
 class RebuiltMachine(Machine):
     """The image with the rebuilt image's code, run as a profile has it,
     and the effects the call running has had on what lies outside
@@ -923,6 +1002,12 @@ class RebuiltMachine(Machine):
         # and the image's copy by gcc's, which a kernel call records in
         # its place, a task's entry that psos_start passes
         self.image_copies: dict[int, int] = {}
+        # the C's objects with a twin in the image; and the cells of the
+        # memory a call starts with where the harness gave it one of the
+        # image's objects that has one, by address, holding the image's,
+        # where gcc's copy is given its twin (give)
+        self.twins = Twins()
+        self.given: dict[int, int] = {}
         # where a call's first segment of service 8 starts, past those
         # INITIALIZERS keep, and its next; and the task records service 3
         # has returned, by name
@@ -961,6 +1046,15 @@ class RebuiltMachine(Machine):
                 UC_HOOK_MEM_READ, self.status_read, status, begin=status.address, end=status.address + status.size - 1
             )
 
+    def as_image(self, value: int) -> int:
+        """A value as the image's copy would have it: a C function's gcc
+        copy as its image copy, and a pointer into a C object with a twin
+        as one into the twin; any other as it is."""
+        if value in self.image_copies:
+            return self.image_copies[value]
+        twin = self.twins.image_address(value)
+        return value if twin is None else twin
+
     def status_read(self, uc: Uc, access: int, address: int, size: int, value: int, status: Status) -> None:
         """Sets a polled register to what it reads as, before the read."""
         written = int.from_bytes(uc.mem_read(status.address, status.size), "big")
@@ -986,19 +1080,24 @@ class RebuiltMachine(Machine):
                 contents = string(uc, value) if text else None
             except UcError:
                 contents = None
-            arguments.append(value if contents is None else contents)
+            arguments.append(self.as_image(value) if contents is None else contents)
         self.effects.append(RoutineCall(stub.position, tuple(arguments)))
         uc.reg_write(UC_M68K_REG_D0, ROUTINE_RESULT)
 
 
 def rebuilt_machine(
-    image: bytes, linked: list[Section], linked_symbols: dict[str, int], profile: Profile = PRIMARY
+    image: bytes,
+    linked: list[Section],
+    linked_symbols: dict[str, int],
+    profile: Profile = PRIMARY,
+    objects: Twins | None = None,
 ) -> RebuiltMachine:
     """The image, with the rebuilt image's code at REBUILT, a stack, the
     EEPROM and the devices, which of the link's symbols name a C
-    function's copies, gcc's and the image's, and the profile's kernel's
-    RAM."""
+    function's copies, gcc's and the image's, the C's objects with a
+    twin in the image (twins), and the profile's kernel's RAM."""
     m = RebuiltMachine(image, profile)
+    m.twins = objects or Twins()
     m.copies = {
         (address, linked_symbols[IMAGE_PREFIX + name])
         for name, address in linked_symbols.items()
@@ -1165,19 +1264,19 @@ def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, resp
         return False
     ids = [i for i in (struct.unpack(">H", m.read(node + NODE_ID, 2))[0] for node in nodes) if i != NO_ID]
     m.uc.mem_write(parameters, struct.pack(f">{len(ids)}H", *ids))
-    for offset, layout, value in (
-        (CALL_NODE, ">I", nodes[-1]),
-        (CALL_INDEX, ">H", int(query)),
-        (CALL_ARENA, ">I", arena(m)),
-        (CALL_PARAMETERS, ">I", parameters),
-        (CALL_RESPONSE, ">I", response),
-        (CALL_INPUT, ">I", CONSOLE_PORT),
-        (CALL_OUTPUT, ">I", CONSOLE_PORT),
-        (CALL_STATUS, ">I", pointer_at(m, m.profile.status_object)),
-        (CALL_MAIN_TREE, ">I", SCPI_MAIN_TREE),
-        (CALL_COMMON_LIST, ">I", SCPI_COMMON_LIST),
+    for offset, value in (
+        (CALL_NODE, nodes[-1]),
+        (CALL_ARENA, arena(m)),
+        (CALL_PARAMETERS, parameters),
+        (CALL_RESPONSE, response),
+        (CALL_INPUT, CONSOLE_PORT),
+        (CALL_OUTPUT, CONSOLE_PORT),
+        (CALL_STATUS, pointer_at(m, m.profile.status_object)),
+        (CALL_MAIN_TREE, SCPI_MAIN_TREE),
+        (CALL_COMMON_LIST, SCPI_COMMON_LIST),
     ):
-        m.uc.mem_write(record + offset, struct.pack(layout, value))
+        give(m, record + offset, value)
+    m.uc.mem_write(record + CALL_INDEX, struct.pack(">H", int(query)))
     return True
 
 
@@ -1201,15 +1300,48 @@ def parser_context(m: RebuiltMachine, record: int) -> int:
     context = m.buffer()
     for offset, value in (
         (CONTEXT_INPUT, CONSOLE_PORT),
-        (CONTEXT_PATH, m.buffer(RESET_PATH)),
+        (CONTEXT_PATH, reset_path(m)),
         (CONTEXT_CALL, record),
         (CONTEXT_ARENA, pointer_at(m, record + CALL_ARENA)),
         (CONTEXT_MAIN_TREE, SCPI_MAIN_TREE),
         (CONTEXT_COMMON_LIST, SCPI_COMMON_LIST),
     ):
-        m.uc.mem_write(context + offset, struct.pack(">I", value))
+        give(m, context + offset, value)
     m.uc.mem_write(context + CONTEXT_WORD, bytes(CONTEXT_WORD_SIZE))
     return context
+
+
+def reset_path(m: RebuiltMachine) -> int:
+    """A fresh header path, as scpi_path_reset sets one back."""
+    path = m.buffer(RESET_PATH)
+    give(m, path + RESET_PATH_LIST, SCPI_MAIN_TREE)
+    return path
+
+
+def give(m: RebuiltMachine, at: int, pointer: int) -> None:
+    """Gives a call a pointer at a cell of the memory it starts with,
+    noting the cell if what it points at has a twin among the C's
+    objects, for give_twins."""
+    m.uc.mem_write(at, struct.pack(">I", pointer))
+    if m.twins.c_address(pointer) is not None:
+        m.given[at] = pointer
+
+
+def give_twins(m: RebuiltMachine) -> None:
+    """Gives gcc's copy, in place of each image object the harness gave
+    a call, its twin among the C's objects."""
+    for at, pointer in m.given.items():
+        m.uc.mem_write(at, struct.pack(">I", m.twins.c_address(pointer)))
+
+
+def twin_arguments(m: RebuiltMachine, types: Types, kinds: list[str], values: list[bytes]) -> list[bytes]:
+    """A call's arguments as gcc's copy is given them: a pointer to an
+    image object that has a twin among the C's objects, the twin."""
+    given = []
+    for kind, value in zip(kinds, values):
+        twin = m.twins.c_address(struct.unpack(">I", value)[0]) if types.is_pointer(kind) else None
+        given.append(value if twin is None else struct.pack(">I", twin))
+    return given
 
 
 def header_nodes(m: Machine, root: int, path: str) -> list[int]:
@@ -1245,7 +1377,10 @@ def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int) -> i
         if name in OBJECTS:
             return OBJECTS[name]
         if name == PATH:
-            return m.buffer(RESET_PATH)
+            return reset_path(m)
+        if kind == KEYWORD:
+            text = KEYWORDS[case % len(KEYWORDS)]
+            return m.buffer(KEYWORD_LENGTH.pack(len(text)) + text + b"\0")
         if kind in VARIABLES:
             return VARIABLES[kind]
         if kind == SCPI_STEP:
@@ -1302,6 +1437,7 @@ def fresh_ram(m: RebuiltMachine, case: int = 0) -> None:
     pointees' fill: a case's starting point."""
     start, size = m.profile.buffers
     m.next_buffer = start
+    m.given = {}
     if m.profile.buffers_apart():
         m.uc.mem_write(start, bytes(size))
     m.pointees = pointer_fill(case) * (POINTEES_SIZE // len(pointer_fill(case)))
@@ -1428,7 +1564,7 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
             if length is None:
                 # a message's longs, a routine spoo_run sends among them
                 longs = struct.unpack(f">{MESSAGE_LONGS}I", data)
-                data = struct.pack(f">{MESSAGE_LONGS}I", *(m.image_copies.get(v, v) for v in longs))
+                data = struct.pack(f">{MESSAGE_LONGS}I", *(m.as_image(v) for v in longs))
         if service.fills:
             buffer, exchange = (uc.reg_read(REGISTERS[name]) for name in service.fills)
             ids = m.profile.exchange_ids()
@@ -1658,15 +1794,22 @@ def same_literal(m: RebuiltMachine, a: int, b: int) -> bool:
 
 def same_pointer(m: RebuiltMachine, a: int, b: int) -> bool:
     """Whether two pointers name the same thing in the two copies: the
-    same literal, or the same C function, the image's copy and gcc's (a
-    driver's echo routine it stores)."""
-    return (a, b) in m.copies or (b, a) in m.copies or same_literal(m, a, b)
+    same literal, the same C function, the image's copy and gcc's (a
+    driver's echo routine it stores), or the same place in an image
+    object and its twin among the C's (Twins)."""
+    return (
+        (a, b) in m.copies
+        or (b, a) in m.copies
+        or a == m.twins.image_address(b)
+        or b == m.twins.image_address(a)
+        or same_literal(m, a, b)
+    )
 
 
 def pointers_difference(m: RebuiltMachine, a: bytes, b: bytes) -> int | None:
     """None if two copies of memory are the same, but for pointers, at
-    even offsets as the 68k keeps a long, to the same literal or
-    function; else the offset where they first differ."""
+    even offsets as the 68k keeps a long, that name the same thing
+    (same_pointer); else the offset where they first differ."""
     at = 0
     while a[at:] != b[at:]:
         first = next(i for i in range(at, len(a)) if a[i] != b[i])
@@ -1688,17 +1831,17 @@ def pointers_difference(m: RebuiltMachine, a: bytes, b: bytes) -> int | None:
 
 
 def ram_difference(m: RebuiltMachine, a: Run, b: Run) -> str | None:
-    """None if two calls left the memory_compared the same, but for
-    pointers to the same literal or function, and the EEPROM the same;
-    else where it first differs."""
+    """None if two calls left the memory_compared and the COMPARED
+    memory the same, but for pointers to the same literal, function or
+    place in an object and its twin; else where it first differs."""
     for start, memory in a.memory.items():
         first = pointers_difference(m, memory, b.memory[start])
         if first is not None:
             name = "RAM" if start == RAM else "the arguments' buffers"
             return f"{name} differs from {start + first:x}"
     for name, (start, _) in COMPARED.items():
-        if a.compared[name] != b.compared[name]:
-            first = next(i for i, (x, y) in enumerate(zip(a.compared[name], b.compared[name])) if x != y)
+        first = pointers_difference(m, a.compared[name], b.compared[name])
+        if first is not None:
             return f"{name} differs from {start + first:x}"
     return None
 

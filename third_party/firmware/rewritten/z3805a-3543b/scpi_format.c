@@ -375,7 +375,7 @@ int32_t scpi_format_response(scpi_port* output, scpi_response_item* item,
   }
   for (int16_t offset = 0;; item++) {
     int32_t error =
-        item->format(output, call->response + offset, item->argument, call);
+        item->format(output, call->response + offset, item->choices, call);
 
     if (error != 0) {
       return error;

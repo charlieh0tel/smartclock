@@ -57,6 +57,9 @@ IMAGE_PREFIX = "__image_"
 ELF_HEADER = ">16sHHIIIIIHHHHHH"
 SECTION_HEADER = ">IIIIIIIIII"
 NOBITS = 8
+# readelf's type and binding of a global data object's symbol.
+OBJECT = "OBJECT"
+GLOBAL = "GLOBAL"
 
 
 @dataclass
@@ -163,6 +166,17 @@ def symbols(elf_path: str) -> dict[str, int]:
         if len(fields) == 3:
             values[fields[2]] = int(fields[0], 16)
     return values
+
+
+def objects(elf_path: str) -> dict[str, tuple[int, int]]:
+    """A linked ELF's data objects, by name their address and size."""
+    found = {}
+    for line in run(TOOLS + "readelf", "-sW", elf_path).splitlines():
+        # number, value, size, type, binding, visibility, section, name
+        fields = line.split()
+        if len(fields) == 8 and fields[3] == OBJECT and fields[4] == GLOBAL:
+            found[fields[7]] = (int(fields[1], 16), int(fields[2], 0))
+    return found
 
 
 def main() -> int:

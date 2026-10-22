@@ -1554,12 +1554,31 @@ view cannot drift apart.  The library, bottom up:
   address map; the records `dump-scpi` does not yet read.
   Started: `--c` and `--names` read every record of every image's
   tree, the installer's too, and `make scpi-tree` writes the Z3805A
-  3543B's, `scpi_tree_data.c`, whose 1933 objects `make
-  check-scpi-tree` finds the image's bytes (docs/scpi/README.md, "As
-  C"); the other images' and the installers' C waits on names for their
-  converters and formatters.  Left: the exporter, which already takes
-  the file's `const` definitions for globals it need not `.set`, and
-  the harness's map.
+  3543B's, `scpi_tree_data.c`, whose 2055 objects, 1933 records and
+  122 lists' children, `make check-scpi-tree` finds the image's bytes
+  (docs/scpi/README.md, "As C"); the other images' and the installers'
+  C waits on names for their converters and formatters.  The types
+  settled first: a node is `0x32` bytes, its last 14 zero and read by
+  nothing; a parameter's kinds hold six converters, not a flexible
+  array; a response item's third field is `scpi_choices *`, as is
+  `scpi_parse_choice`'s list; a handler takes `void *` parameters, as
+  Setup types every one; and every child list, the main tree's too, is
+  a `scpi_child_list`, its children an array of their own, which Ghidra
+  types from a names row and the C defines, since Ghidra exports a
+  flexible array as one of no elements, which C cannot initialize.
+  The fields stay pointers to non-`const`: Ghidra's types, which the
+  exported C compiles the tree with, keep no `const`, so a record's
+  pointer is cast.  Wired in: the exporter includes every `.c` file of
+  the folder, data alone too, and so declares the tree's globals
+  `const` with no `.set`; the harness maps a pointer into a C object to
+  its twin's place in ROM (`harness.Twins`, from the link's objects and
+  the names files' labels) and gives gcc's copy the twin of each image
+  object it gives a call, and gives a lookup's keyword a real one, so
+  that the parser's routines are proven on the C's tree: a planted swap
+  of two root children, or a changed keyword, fails
+  `scpi_node_find_with_defaults`, `scpi_header_resolve` and
+  `scpi_header_step`.  Left: Setup taking the generated rows, so that
+  Ghidra labels each record and the exporter declares it.
 
   Left for a later pass: the firmware routines' names do not carry
   their file's prefix as the hand-written helpers do (`ti.c`'s

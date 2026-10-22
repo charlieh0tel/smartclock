@@ -8,7 +8,9 @@ called with its arguments where the .conventions.jsonl sidecar says the
 original reads them, as Ghidra's storage has them, and gcc's copy as
 gcc's callers lay them, in 4-byte slots.  From the same RAM, the two must give
 the same result, leave RAM the same, and make the same kernel calls and
-device writes in the same order (harness.py), each starting with what
+device writes in the same order (harness.py), a pointer into an object
+the C defines in place of the image's, the generated SCPI tree's
+records, the same as one into the image's (harness.Twins), each starting with what
 its callers set where it reads that (ESTABLISHED, SET_UP_REQUESTS,
 CALLED_FIRST).  After the generated cases come a function's own, the
 arguments its callers pass where the generated ones never reach them
@@ -43,6 +45,7 @@ are counted apart.  This is the rebuild's measure, not a gate: it exits
 zero whatever it finds.
 """
 
+import glob
 import json
 import os
 import random
@@ -78,6 +81,8 @@ from harness import (
     effects_difference,
     fresh_ram,
     gcc_slots,
+    give_twins,
+    image_labels,
     installer_profile,
     overlay,
     pointer_at,
@@ -88,9 +93,11 @@ from harness import (
     reset,
     snapshot,
     stopped_outcome,
+    twin_arguments,
+    twins,
 )
 from libc_check import BUFFER_SPACING
-from rebuild_link import IMAGE_PREFIX, REBUILT, Section, link, symbols
+from rebuild_link import IMAGE_PREFIX, REBUILT, Section, link, objects, symbols
 
 # The widest argument or result the harness lays out.
 WIDEST = 8
@@ -353,10 +360,16 @@ GIVEN_CASES = {
 # (0x41310), which the hand-written fpga.c keeps as fpga_bits; what
 # follows the image's table is not the C's.  scpi_char_upper's
 # character is a port's value, 0 to 0x105, which indexes the lexer's
-# classes (0x277ec), as scpi_engine_class keeps them.
+# classes (0x277ec), as scpi_engine_class keeps them.  The header
+# resolvers' query, 0 the setter or 1 the query, indexes the node's two
+# handlers (scpi_header_resolve, 0x27d80; scpi_common_header_resolve,
+# 0x27f10): past them lies what follows the node, the image's or the
+# generated tree's (docs/scpi/README.md, "As C").
 IN_RANGE = {
     **{name: {0: 6} for name in ("fpga_set_bit", "fpga_set_field")},
     "scpi_char_upper": {0: 0x106},
+    "scpi_header_resolve": {6: 2},
+    "scpi_common_header_resolve": {5: 2},
 }
 
 
@@ -705,13 +718,14 @@ def draw(states: States, located: dict[str, tuple[int, int]], name: str, descrip
 def hook_arguments(m: Machine, types: Types, routine: "Function", gcc: bool) -> tuple[int, ...]:
     """A hooked routine's arguments at its entry, where its copy reads
     them: the image's at the original's offsets, gcc's in its slots, a
-    narrower value in a slot's last bytes (gcc_slots)."""
+    narrower value in a slot's last bytes (gcc_slots); each as the
+    image's copy would pass it (RebuiltMachine.as_image)."""
     sp = m.uc.reg_read(UC_M68K_REG_A7)
     found, slot = [], FIRST_ARGUMENT
     for offset, kind in zip(routine.offsets, routine.parameters):
         size = types.size(kind)
         at = sp + (slot + max(size, GCC_SLOT) - size if gcc else offset)
-        found.append(int.from_bytes(m.uc.mem_read(at, size), "big"))
+        found.append(m.as_image(int.from_bytes(m.uc.mem_read(at, size), "big")))
         slot += max(size, GCC_SLOT)
     return tuple(found)
 
@@ -829,6 +843,12 @@ def same_text(m: Machine, function: Function, a: int, b: int) -> bool:
         return m.string(a) == m.string(b)
     except (UcError, ValueError):
         return False
+
+
+def same_object(m: Machine, function: Function, types: Types, a: int, b: int) -> bool:
+    """Whether two pointer results point at the same place in an image
+    object and its twin among the C's (harness.Twins)."""
+    return types.is_pointer(function.result) and a == m.twins.image_address(b)
 
 
 def call_first(m: Machine, linked_symbols: dict[str, int], routine: str, stack_arguments: bytes) -> None:
@@ -997,7 +1017,8 @@ def check_cases(
         reset(m, memory)
         original = Run(m, image, original_layout(function, values))
         reset(m, memory)
-        gcc = Run(m, rebuilt, gcc_slots(values) + UNDECLARED)
+        give_twins(m)
+        gcc = Run(m, rebuilt, gcc_slots(twin_arguments(m, types, function.parameters, values)) + UNDECLARED)
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
         if stopped:
@@ -1005,7 +1026,11 @@ def check_cases(
             continue
         differences = []
         wanted, got = result(function, types, original), result(function, types, gcc)
-        if wanted != got and not same_text(m, function, wanted, got):
+        if (
+            wanted != got
+            and not same_text(m, function, wanted, got)
+            and not same_object(m, function, types, wanted, got)
+        ):
             differences.append(f"result {got:x}, image's {wanted:x}")
         if original.status & SYSTEM_BYTE != gcc.status & SYSTEM_BYTE:
             differences.append(f"status register {gcc.status:04x}, image's {original.status:04x}")
@@ -1018,6 +1043,18 @@ def check_cases(
         yield description, "; ".join(differences) or None
 
 
+# The names files, which label the image's objects, by the C file's
+# image: NAMES/IMAGE.tsv and NAMES/IMAGE.*.tsv, the generated SCPI
+# tree's rows among them.
+NAMES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ghidra", "names")
+
+
+def names_files(c_path: str) -> list[str]:
+    """The names files of the image a C file is of."""
+    image = os.path.basename(c_path).removesuffix(".c")
+    return sorted(glob.glob(os.path.join(NAMES, image + ".tsv")) + glob.glob(os.path.join(NAMES, image + ".*.tsv")))
+
+
 def main() -> int:
     if len(sys.argv) < 3 or "DECOMPILED_CFLAGS" not in os.environ:
         print(__doc__.strip(), file=sys.stderr)
@@ -1028,6 +1065,7 @@ def main() -> int:
         elf = work + "/rebuilt.elf"
         linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf, probes())
         linked_symbols = symbols(elf)
+        linked_objects = objects(elf)
     located = probed(linked, linked_symbols)
     image_bytes = open(image_path, "rb").read()
     types = Types(c)
@@ -1035,8 +1073,11 @@ def main() -> int:
     for line in open(c_path.removesuffix(".c") + ".conventions.jsonl"):
         function = json.loads(line)
         conventions[function["name"]] = function
+    labels = image_labels(names_files(c_path))
     for profile in (PRIMARY, installer_profile(image_bytes)):
-        machine = rebuilt_machine(image_bytes, linked, linked_symbols, profile)
+        machine = rebuilt_machine(
+            image_bytes, linked, linked_symbols, profile, twins(linked_objects, labels, profile)
+        )
         protect_code(machine)
         runnable, unrunnable = functions(c, types, conventions, profile.overlay)
         context = Context(linked_symbols, located, {function.name: function for function in runnable})

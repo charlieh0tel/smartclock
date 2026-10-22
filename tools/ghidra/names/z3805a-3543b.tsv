@@ -1033,7 +1033,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2602e	function	scpi_parse_double	docs/scpi/README.md, read	the suffix, then a double within 9.9e37, else -11	int scpi_parse_double(scpi_number *number, void *param_2, double *value, scpi_unit *units)
 0x25d8c	function	scpi_parse_boolean	docs/scpi/README.md, read	ON as 1, OFF as 0	uint32_t scpi_parse_boolean(int16_t *token, void *unused, uint16_t *value)
 0x25de0	function	scpi_parse_boolean_number	docs/scpi/README.md, read	a number as a boolean by scpi_number_to_boolean; -9 with a suffix	int scpi_parse_boolean_number(scpi_number *number, void *param_2, uint16_t *value, void *param_4)
-0x25e42	function	scpi_parse_choice	docs/scpi/README.md, read	the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match	uint32_t scpi_parse_choice(int16_t *token, void *unused, int16_t *value, int32_t *list)
+0x25e42	function	scpi_parse_choice	docs/scpi/README.md, read	the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match	uint32_t scpi_parse_choice(int16_t *token, void *unused, int16_t *value, scpi_choices *choices)
 0x25d4a	function	scpi_parse_text	docs/scpi/README.md, read	the string's text, -21 if it holds a NUL; the string parameters' converter	uint32_t scpi_parse_text(scpi_token_string *token, void *unused, char **value)
 0x25d70	function	scpi_parse_string	docs/scpi/README.md, read	the string's pointer and length	uint32_t scpi_parse_string(uint16_t *token, void *unused, uint32_t *value)
 0x27ae4	function	scpi_apply_suffix	docs/scpi/README.md, read	matches the token's units suffix against the node's table, setting its scale and unit; -9 if none is allowed, -31 if unknown	int scpi_apply_suffix(scpi_number *number, scpi_unit *units)
@@ -2148,7 +2148,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x512cd	label	os_report_group_text	structures.md	"grp", which os_report_exchange prints when the exchange's +0x11 is set	char[4]
 0x512d2	label	os_report_any_text	structures.md	"any", which it prints when that byte is clear	char[4]
 0x51385	label	os_report_comma	structures.md	",", which os_report_exchange prints between the tasks waiting	char[2]
-0x53034	label	scpi_main_tree	docs/scpi/README.md	the main tree's root child list, 49 nodes, which scpi_interpret is given; the pair at 0x5d014 points at it and the common list at 0x526f6	scpi_root_children
+0x53034	label	scpi_main_tree	docs/scpi/README.md	the main tree's root child list, 49 nodes, which scpi_interpret is given; the pair at 0x5d014 points at it and the common list at 0x526f6	scpi_child_list
 0x526f6	label	scpi_common_list	read	the common commands' child list, *CLS to *WAI, the first of scpi_trees	scpi_child_list
 0x5d014	label	scpi_trees	read	the common list and the main tree scpi_task gives scpi_interpret	scpi_tree_pair
 0x60868	label	doprnt_minus	libc.md	"-", doprnt's sign for a negative number	char[2]

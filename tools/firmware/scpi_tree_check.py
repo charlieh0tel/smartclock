@@ -8,7 +8,9 @@ what it points at, resolved at the image's own addresses: the records'
 from the generated names rows, the routines' from the decompiled C's
 .conventions.jsonl sidecar, where Ghidra's names stand, and anything
 else from the names file.  A routine the C names that Ghidra does not
-name so at its address is a difference too.
+name so at its address is a difference too, as are a record but a
+string at an odd address and a child list's children, an array of
+their own, not right after the list.
 
     DECOMPILED_CFLAGS='...' python3 tools/firmware/scpi_tree_check.py \\
         third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c \\
@@ -36,6 +38,10 @@ TYPES = os.path.join(os.path.dirname(__file__), '..', 'ghidra', 'types', 'smartc
 # the macro under which the C declares the routines it points at
 ALONE = 'SCPI_TREE_DATA_ALONE'
 INSTALLER = 'installer::'
+# what a child list's children's name adds to the list's
+CHILDREN_SUFFIX = '_children'
+# how a names row's type starts for text, a keyword pair or a unit's name
+TEXT = 'char['
 # a .rela section's row: offset, info, type, value, symbol, sign, addend
 RELOCATION = re.compile(r'^([0-9a-f]+)\s+[0-9a-f]+\s+(R_68K_\w+)\s+[0-9a-f]+\s+(\S+)\s*([+-])\s*([0-9a-f]+)$')
 
@@ -83,6 +89,9 @@ def main(work):
         print(compiled.stderr)
         return 1
     values = addresses([tree_names, names_file], conventions)
+    # the rows typed as text, which may lie at any address
+    texts = {fields[2] for line in open(tree_names) if not line.startswith('#')
+             and len(fields := line.rstrip('\n').split('\t')) > 5 and fields[5].startswith(TEXT)}
     symbols = {}
     for line in run(TOOLS + 'readelf', '-sW', obj).splitlines():
         fields = line.split()
@@ -116,12 +125,24 @@ def main(work):
         return values[symbol][1] + addend
 
     identical = differing = 0
+    for name, (offset, size) in symbols.items():
+        # a child list's children, an array of their own, which the
+        # parser reads past the list's end, as the image lays them out
+        owner = symbols.get(name.removesuffix(CHILDREN_SUFFIX)) if name.endswith(CHILDREN_SUFFIX) else None
+        if owner is not None and sum(owner) != offset:
+            print(f'  {name}: not right after its list')
+            differing += 1
     for name, (offset, size) in sorted(symbols.items(), key=lambda item: item[1]):
         if name not in values:
             print(f'  {name}: no address in the names rows')
             differing += 1
             continue
         space, address = values[name]
+        if name not in texts and offset % 2:
+            # the section starts even: a word or long here is misaligned
+            print(f'  {name}: at an odd address, where its words are misaligned')
+            differing += 1
+            continue
         mine = bytearray(rodata[offset:offset + size])
         unresolved = []
         for at, symbol, addend in relocations:

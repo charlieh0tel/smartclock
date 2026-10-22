@@ -247,7 +247,7 @@ void qspi_read(qspi_device device, void* buffers, uint32_t count) {
  * masked, without the receive RAM's copy; finishes a transfer still
  * pending first (0x20b0c). */
 void qspi_send(qspi_device device, uint16_t* transmit, uint16_t count) {
-  uint16_t sr = enter_supervisor();
+  uint16_t sr = cpu_enter_supervisor();
   uint16_t spcr1;
 
   cpu_interrupts_raise(CPU_IPL_7);
@@ -274,7 +274,7 @@ void qspi_send(qspi_device device, uint16_t* transmit, uint16_t count) {
 void qspi_transfer(qspi_device device, qspi_buffers* buffers, uint16_t count) {
   volatile uint16_t* from = qsm.rr;
   uint16_t* to = buffers->receive;
-  uint16_t sr = enter_supervisor();
+  uint16_t sr = cpu_enter_supervisor();
   uint16_t spcr1;
 
   cpu_interrupts_raise(CPU_IPL_7);

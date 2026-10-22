@@ -254,7 +254,7 @@ static void leap_minute_arm(uint8_t minute_length) {
 
   clock.minute_length = minute_length;
   leap_minute_pending = 1;
-  sr = enter_supervisor();
+  sr = cpu_enter_supervisor();
   clock_record_checksum(&clock);
   cpu_sr_write(sr);
   clock_change_armed = 1;

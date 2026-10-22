@@ -770,3 +770,5 @@ psos_io_control	error	0, or the function and the device's error
 # wave 4, pll: the fine stage and its neighbors
 fine	result	a stage's: 0 running, 1 done, 2 failed
 clamp_double	clamped	1 when the value was clamped
+# wave 4, harness: the stack report (rewritten/z3805a-3543b/scpi_diagnostic.c)
+scpi_query_DIAGnostic_OS_STACk	error	always 0

@@ -36,6 +36,19 @@ static inline void cpu_sr_write(uint16_t sr) {
   __asm__ volatile("move.w %0,%%sr" : : "d"(sr) : "memory", "cc");
 }
 
+/* enter_supervisor (0x13422), called directly: from a task in user
+ * mode it returns, through trap #7's rte (0x1341a), on the supervisor
+ * stack, so its bridge, which saves gcc's registers on the user stack
+ * and restores them from the stack it returns on, cannot call it.  It
+ * pops its return address into A0 and returns the status register as
+ * it was in D0's low word, the rest of D0 as it found it. */
+static inline uint32_t cpu_enter_supervisor(void) {
+  register uint32_t sr __asm__("d0");
+
+  __asm__ volatile("jsr enter_supervisor" : "=r"(sr) : : "a0", "memory", "cc");
+  return sr;
+}
+
 /* Raises the interrupt mask by ORing bits into it; returns the status
  * register as it was. */
 static inline uint16_t cpu_interrupts_raise(uint16_t mask) {

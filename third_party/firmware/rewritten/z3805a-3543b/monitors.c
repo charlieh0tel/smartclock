@@ -368,7 +368,7 @@ void watchdog_report(void) {
     watchdog_countdown--;
   }
   if (watchdog_countdown != 0) {
-    uint16_t sr = enter_supervisor();
+    uint16_t sr = cpu_enter_supervisor();
 
     sim.swsr = CPU_SWSR_FIRST;
     sim.swsr = CPU_SWSR_SECOND;

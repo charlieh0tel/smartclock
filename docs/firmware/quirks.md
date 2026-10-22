@@ -34,8 +34,14 @@ state.  Each is by the routine and the address that shows it.
 
 - **`task_stack_info`** reads two locals it never sets ("no system
   stack found", `0x16c28` to `0x16c32`); the C reads them from the
-  frame too, though gcc puts them in each other's slots, so that both
-  fault on the harness's frame, filled all alike.
+  frame too, though gcc puts them in each other's slots; the function
+  check fills the stack report's frames with one segment's address, so
+  that both slots hold it in both copies (`function_check.py`,
+  `TASK_STACKS`).
+- **`task_stack_report`** prints the kernel's supervisor stack's use
+  from D2 when its words are all zero (`0x16e06`): the last printed
+  task's supervisor stack's use, or, with none printed, D2 as its
+  caller left it.
 - **`os_report_process`**, when it finds no stack segment (`0x1635e`),
   prints D5 as a task's stack share (`0x1643e`), which
   `os_report_processes` leaves holding the address of `"%s"`
@@ -135,8 +141,11 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
   it (`0x41170`, `0x41190`); the C does the same.
 - **`set_interrupt_mask` (`0x13378`) and its installer copy** return
   the status register trap #7 saved, whose condition codes are their
-  caller's; gcc's C copies its narrow argument first, which sets them,
-  so that the low byte of the result can differ.
+  caller's.  The primary's C enters supervisor mode first, with
+  `cpu.h`'s `cpu_enter_supervisor`, and agrees; the installer's goes
+  through the exporter's bridge, where gcc copies its narrow argument
+  first, which sets them, so that the low byte of its result can
+  differ.
 - **`setjmp`** reads its caller's registers.  No call or table in
   either image names it or `longjmp`.
 

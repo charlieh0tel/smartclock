@@ -1512,6 +1512,19 @@ view cannot drift apart.  The library, bottom up:
      cases with none differing.  The nine debug flags are one array,
      `dmes`, by `task_debug_flag`, and the counter's mode and state
      pairs are enums.
+     Then the harness: `root_task` runs as a task in user mode with
+     `ident` failing, to the end of its idle loop's 101st count
+     (`IDENT_FAILS`, `COUNTED_LOOPS`); `STATES` presets C variables and
+     hooks routines by case, for `fine`, `enter_holdover` and
+     `root_task`; a parameter of type `status_error_queue *` is given a
+     real queue; and the running task's stacks are filled
+     (`TASK_STACKS`), so that `task_stack_report` and
+     `:DIAGnostic:OS:STACk?` run and are written by hand.  Starting
+     `root_task` in user mode showed that the exporter's
+     `enter_supervisor` bridge saves registers on the user stack and
+     restores them from the supervisor's, so the hand-written C calls
+     the routine itself (`cpu.h`'s `cpu_enter_supervisor`); the bridge
+     stays wrong for the C that still uses it.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

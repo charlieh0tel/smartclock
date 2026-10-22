@@ -14,7 +14,14 @@ CALLED_FIRST).  After the generated cases come a function's own, the
 arguments its callers pass where the generated ones never reach them
 (GIVEN_CASES); and where no declared argument lies, both copies find
 the same pointers (UNDECLARED), so that a body reading an argument its
-prototype leaves out differs.
+prototype leaves out differs.  A function may start from states its
+zeroed RAM never reaches, drawn for each case, with routines it calls
+answered in their place and their calls compared (STATES); find no
+task by name (IDENT_FAILS); start in user mode, as a task
+(STARTING_STATUS); end its endless loop at a count (COUNTED_LOOPS);
+and, for the stack report, find the running task's stacks
+(TASK_STACKS).  Both copies must leave the status register's system
+byte the same.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\
@@ -23,8 +30,9 @@ prototype leaves out differs.
 With NAMEs, only those.  gcc's copy calls gcc's C and, through their
 names and the bridges, the assembly; so a difference may lie in a
 callee.  A call that ends at a trap that never returns, a zero divide,
-a write to code, a branch to itself or its KERNEL_CALL_LIMIT'th kernel
-call is compared up to there, but for its result.  A function that
+a write to code, a branch to itself, its KERNEL_CALL_LIMIT'th kernel
+call or its counter's count is compared up to there, but for its
+result.  A function that
 reaches beyond what the harness maps, calls a kernel service the
 harness does not model, or traps the same way both times is skipped.  A function whose prototype has an
 argument of no known size, a structure passed whole, a variable
@@ -37,6 +45,7 @@ zero whatever it finds.
 
 import json
 import os
+import random
 import re
 import shlex
 import struct
@@ -44,7 +53,8 @@ import sys
 import tempfile
 from dataclasses import dataclass
 
-from unicorn import UcError
+from unicorn import UC_HOOK_CODE, UcError
+from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_D0, UC_M68K_REG_PC
 
 from harness import (
     CASES,
@@ -54,8 +64,11 @@ from harness import (
     PLLC_EXCHANGE,
     POINTER_ALIGNMENT,
     POINTER_FILLS,
+    POINTER_SIZE,
     PRIMARY,
     RECEIVED,
+    SUPERVISOR,
+    SYSTEM_BYTE,
     UNSIGNED,
     Known,
     Machine,
@@ -67,6 +80,7 @@ from harness import (
     gcc_slots,
     installer_profile,
     overlay,
+    pointer_at,
     protect_code,
     ram_difference,
     rebuilt_machine,
@@ -75,7 +89,8 @@ from harness import (
     snapshot,
     stopped_outcome,
 )
-from rebuild_link import IMAGE_PREFIX, REBUILT, link, symbols
+from libc_check import BUFFER_SPACING
+from rebuild_link import IMAGE_PREFIX, REBUILT, Section, link, symbols
 
 # The widest argument or result the harness lays out.
 WIDEST = 8
@@ -345,6 +360,372 @@ IN_RANGE = {
 }
 
 
+@dataclass(frozen=True)
+class Preset:
+    """A variable whose value a case draws from a set: an lvalue of the
+    exported C, a global or a field of one (`pll.fine_state`), whose
+    address and size gcc finds (probes), and the values, each a float
+    for a float or double, else an int laid out in the lvalue's bytes."""
+
+    target: str
+    values: tuple[int | float, ...]
+
+
+@dataclass(frozen=True)
+class Hook:
+    """A routine whose calls, in both copies, the harness answers in its
+    place, so that a case chooses what it gives back: its name, the
+    variables it leaves at each call, with values drawn once for a case,
+    D0's values, drawn so (none, D0 left), and whether each call's
+    arguments, as its prototype lays them, are recorded as an effect,
+    compared in order with the kernel calls."""
+
+    routine: str
+    leaves: tuple[Preset, ...] = ()
+    results: tuple[int, ...] = ()
+    recorded: bool = True
+
+
+@dataclass(frozen=True)
+class States:
+    """A function's states, which the zeroed RAM a generated case starts
+    with never reaches: the variables every case of it starts with at a
+    value drawn for the case, the routines hooked in each, and how many
+    cases of its own it runs past the generated ones, each from a
+    generated case in turn."""
+
+    presets: tuple[Preset, ...] = ()
+    hooks: tuple[Hook, ...] = ()
+    cases: int = 0
+
+
+@dataclass(frozen=True)
+class HookedCall:
+    """A call of a Hook's routine: its name and its arguments' values."""
+
+    routine: str
+    arguments: tuple[int, ...]
+
+    def __str__(self) -> str:
+        return " ".join([f"call of {self.routine}"] + [f"{a:x}" for a in self.arguments])
+
+
+# The pll stage functions' states (applications/pll, docs/firmware/pll.md):
+# small time intervals and frequency offsets, in seconds, as the
+# counter's readings and the fit's sums hold them, and the sums of the
+# fit's counts over fine's 50 readings, 1275 and 42925 for its squares;
+# a stage's coded states and values past its last, which its switch
+# takes as none.
+SMALL = (0.0, 1e-8, -2e-7, 5e-9, -1e-10, 3e-7, 1.5e-9, -2.5e-9)
+READINGS = (0.0, 1e-8, 2.5e-7, -1.5e-7, 5e-7, -4e-7, 1.2e-7, -5e-8)
+FIT_SUMS = SMALL + (10.0, 1275.0, 42925.0)
+# counter_read (0x40d34) answered with a reading drawn for the case, its
+# validity mostly set, which interval_wait_reading takes from
+# interval_reading; and log_event (0x319a2), whose code each call
+# records, not run, so that what is compared is the code, not the log.
+COUNTER_READ = Hook(
+    "counter_read",
+    leaves=(Preset("interval_reading.value", READINGS), Preset("interval_reading.valid", (0, 1, 1, 1))),
+)
+LOG_EVENT = Hook("log_event")
+PLL_HOOKS = (COUNTER_READ, LOG_EVENT)
+PLL_CASES = 2000
+STATES = {
+    "fine": States(
+        presets=(
+            Preset("pll.stage", (1, 2, 3, 4)),
+            Preset("pll.fine_state", tuple(range(11)) + (0x80, 0xFF)),
+            Preset("pll.fine_index", (0, 1, 2, 3, 4, 49, 50, 51, 200)),
+            Preset("pll.fine_retries", (0, 5, 8, 9, 10)),
+            Preset("pll.fine_d", SMALL),
+            Preset("pll.sync_requested", (0, 0, 1)),
+            Preset("pll.holdover_duration", (0, 10, 100000)),
+            Preset("pll.frequency_tolerance", (1e-8, 0.0, 1e-9)),
+            Preset("pll.efc", (0.0, 12345.0, -500.0)),
+            Preset("interval_reading.value", READINGS),
+            Preset("interval_reading.valid", (0, 1, 1)),
+            Preset("pll_debug_enabled", (0, 1)),
+            Preset("nv_settings.holdover_limit_threshold", (1e-6, 1e-9)),
+            Preset("nv_settings.holdover_limit_state", (0, 1)),
+            Preset("nv_settings.holdover_measurement_threshold", (0, 50, 1000000)),
+            Preset("efc_gains.reciprocal_fine", (1e10, -3e9)),
+            *(
+                Preset(name, FIT_SUMS)
+                for name in (
+                    "fine_sum_i",
+                    "fine_sum_i_squared",
+                    "fine_sum_ti",
+                    "fine_sum_i_ti",
+                    "fine_y0",
+                    "fine_x0",
+                    "fine_ti_max",
+                )
+            ),
+            *(Preset(f"fine_readings[{index}]", SMALL) for index in range(3)),
+        ),
+        hooks=PLL_HOOKS,
+        cases=PLL_CASES,
+    ),
+    "enter_holdover": States(
+        presets=(
+            Preset("pll.stage", (0, 1, 2, 3, 4)),
+            Preset("pll.hold_causes", (0, 1, 2, 3, 4, 8, 0x10, 0x20, 0x40, 0x80, 0xC0, 0x22, 0x60)),
+            Preset("pll.holdover_duration", (0, 0, 7)),
+            Preset("gps.status_reported", tuple(range(11)) + (0x80, 0xFC)),
+            Preset("gps_pps_dead", (0, 1)),
+            Preset("holdover_recovery_auto", (0, 1)),
+        ),
+        hooks=PLL_HOOKS,
+        cases=PLL_CASES,
+    ),
+    # root_task's choice of the SCPI task or the pForth console (0x131ca)
+    "root_task": States(presets=(Preset("nv_settings.pforth_at_startup", (0, 1)),)),
+}
+# The functions whose cases find no task by name (harness.IDENT_NOT_FOUND),
+# by the generated cases that do so, the others finding one: those that
+# ask for their task before they create it, which, finding it, end in
+# fatal_error; and root_task, in every case, which then goes on to
+# create and start every task.
+CREATORS_IDENT_FAILS = range(1, CASES, 2)
+IDENT_FAILS = {
+    "root_task": range(CASES),
+    **{
+        name: CREATORS_IDENT_FAILS
+        for name in (
+            "spoo_task_create",
+            "klok_task_create",
+            "scpi_task_create",
+            "installer_spoo_task_create",
+            "installer_scpi_task_create",
+        )
+    },
+}
+# The functions whose loop never ends and makes no kernel call, by the
+# variable it counts in and the count a call ends at (harness.COUNTED):
+# root_task's idle loop (0x131dc), counting in idle_loops.  The count is
+# odd, so that a loop counting by more than one passes it and runs to
+# STEP_LIMIT, which the image's does not.
+IDLE_LOOPS = 101
+COUNTED_LOOPS = {"root_task": ("idle_loops", IDLE_LOOPS)}
+# The functions that start as a task does, in user mode, its interrupts
+# unmasked, by that status register, rather than harness.SUPERVISOR:
+# root_task, which kernel_init creates in mode 0 (0x15e70), enters
+# supervisor mode with trap #7 to enable the periodic interrupt and
+# moves its status register back (0x13082 to 0x13098).
+TASK_STATUS = 0
+STARTING_STATUS = {"root_task": TASK_STATUS}
+
+
+@dataclass(frozen=True)
+class TaskStacks:
+    """The running task's stacks a case of the stack report starts with
+    (task_stack_info, 0x16bb6; structures.md, "The tasks' stacks"): each
+    stack's bytes, used and unused, the unused filled with UNUSED_STACK;
+    whether the task has a supervisor stack, below its user stack, or
+    only a user stack, which task_stack_info takes from two locals it
+    never sets (docs/firmware/quirks.md); how far below each stack's top
+    its saved pointer lies, as a fraction of its size; and the bytes in
+    use at the top of the kernel's own supervisor stack, the rest zero,
+    which the report measures its use against (0x16dd4)."""
+
+    user: int
+    user_used: int
+    supervisor: int
+    supervisor_used: int
+    pointer_at: float
+    system_used: int
+
+
+# The fill the stack report measures a stack's use against (0x16cea), a
+# used word's value, and the bytes between a task's supervisor stack's
+# top and its user stack, which task_stack_info leaves out of the user
+# stack's size (0x16c08), and between a segment's start and its stack's
+# top, which it leaves out of the segment's (0x16c36).
+UNUSED_STACK = struct.pack(">H", 0xABCD)
+USED_STACK = struct.pack(">H", 0x1234)
+USER_STACK_GAP = 4
+SEGMENT_OVERHEAD = 0x12
+# The cases' stacks, in turn: both stacks, part used, the pointers in
+# their used parts, then below them, the kernel's stack's use then the
+# task's supervisor stack's, all its words zero (0x16df2); a user stack
+# alone in a segment, part used; and an empty one, so that no task is
+# printed and the kernel's stack's use is D2 as the report's caller
+# left it (0x16e06).
+TASK_STACK_CASES = [
+    TaskStacks(0x80, 0x40, 0x40, 0x30, 0.25, 0x800),
+    TaskStacks(0x80, 0x10, 0x40, 0x10, 0.75, 0),
+    TaskStacks(0x60, 0x20, 0, 0, 0.25, 0x10),
+    TaskStacks(0, 0, 0, 0, 0.5, 0),
+]
+TASK_STACKS = {"task_stack_report", "scpi_query_DIAGnostic_OS_STACk", "s_rep_word"}
+# The fields TaskStacks sets, as lvalues of a record at 0 whose
+# addresses are their offsets, probed as a Preset's target is; and the
+# kernel's own supervisor stack, from 200 bytes into its data area
+# (0x16dbe), and its size.
+TASK_FIELDS = {
+    name: f"((psos_task *)0)->{name}"
+    for name in ("stack_bottom", "supervisor_top", "user_top", "supervisor_pointer", "user_pointer")
+}
+SEGMENT_SIZE = "((psos_segment *)0)->size"
+SYSTEM_STACK = 200
+SYSTEM_STACK_SIZE = "psos_config.supervisor_stack_size"
+# The names of the probes gcc compiles for each Preset's target and
+# each of those, by its index: its address and its size.
+PROBE_ADDRESS = "function_check_address_{}"
+PROBE_SIZE = "function_check_size_{}"
+# A slot of gcc's stack arguments (gcc_slots).
+GCC_SLOT = 4
+
+
+def stack_bytes(size: int, used: int) -> bytes:
+    """A stack of a size, its top used bytes in use."""
+    return UNUSED_STACK * ((size - used) // len(UNUSED_STACK)) + USED_STACK * (used // len(USED_STACK))
+
+
+def area(m: Machine, contents: bytes) -> int:
+    """contents among the arguments' buffers, however many they take."""
+    at = m.next_buffer
+    m.next_buffer += -(-len(contents) // BUFFER_SPACING) * BUFFER_SPACING
+    m.uc.mem_write(at, contents)
+    return at
+
+
+def task_stacks(m: Machine, located: dict[str, tuple[int, int]], case: int) -> None:
+    """The running task's record and stacks, and the kernel's supervisor
+    stack, as a case of TASK_STACK_CASES has them; for a task with a
+    user stack alone, its segment, which each frame's locals point at,
+    task_stack_info's two unset ones among them."""
+    stacks = TASK_STACK_CASES[case % len(TASK_STACK_CASES)]
+    record = m.first_allocation
+
+    def field(name: str, value: int) -> None:
+        offset, size = located[TASK_FIELDS[name]]
+        m.uc.mem_write(record + offset, preset_bytes(value, size))
+
+    def into(top: int, size: int) -> int:
+        return top - int(size * stacks.pointer_at) & -len(UNUSED_STACK)
+
+    user = stack_bytes(stacks.user, stacks.user_used)
+    if stacks.supervisor:
+        bottom = area(m, stack_bytes(stacks.supervisor, stacks.supervisor_used) + bytes(USER_STACK_GAP) + user)
+        supervisor_top = bottom + stacks.supervisor
+        user_top = supervisor_top + USER_STACK_GAP + stacks.user
+        field("stack_bottom", bottom)
+        field("supervisor_top", supervisor_top)
+        field("user_top", user_top)
+        field("supervisor_pointer", into(supervisor_top, stacks.supervisor))
+        field("user_pointer", into(user_top, stacks.user))
+    else:
+        offset, size = located[SEGMENT_SIZE]
+        segment = bytearray(SEGMENT_OVERHEAD)
+        segment[offset : offset + size] = preset_bytes(stacks.user + SEGMENT_OVERHEAD, size)
+        top = area(m, user + bytes(segment)) + stacks.user
+        field("supervisor_pointer", into(top, stacks.user))
+        m.frame_fill = struct.pack(">I", top)
+    size_at, size = located[SYSTEM_STACK_SIZE]
+    system = pointer_at(m, m.profile.psos_config) + SYSTEM_STACK
+    length = int.from_bytes(m.read(size_at, size), "big")
+    unused = length - stacks.system_used
+    m.uc.mem_write(system, bytes(unused) + USED_STACK * (stacks.system_used // len(USED_STACK)))
+
+
+def targets() -> list[str]:
+    """Every Preset's target and the task stacks' fields, each once, in
+    a fixed order."""
+    found = [*TASK_FIELDS.values(), SEGMENT_SIZE, SYSTEM_STACK_SIZE]
+    for states in STATES.values():
+        for preset in states.presets + tuple(p for hook in states.hooks for p in hook.leaves):
+            if preset.target not in found:
+                found.append(preset.target)
+    return found
+
+
+def probes() -> str:
+    """The C that has gcc find each target's address and size."""
+    return (
+        "".join(
+            f"\nvoid *const {PROBE_ADDRESS.format(i)} = (void *)&({target});"
+            f"\nconst uint32_t {PROBE_SIZE.format(i)} = sizeof({target});"
+            for i, target in enumerate(targets())
+        )
+        + "\n"
+    )
+
+
+def probed(linked: list[Section], linked_symbols: dict[str, int]) -> dict[str, tuple[int, int]]:
+    """Each target's address and size, from the probes in the link."""
+
+    def long_at(name: str) -> int:
+        address = linked_symbols[name]
+        section = next(s for s in linked if s.address <= address < s.address + len(s.data))
+        return struct.unpack_from(">I", section.data, address - section.address)[0]
+
+    return {
+        target: (long_at(PROBE_ADDRESS.format(i)), long_at(PROBE_SIZE.format(i))) for i, target in enumerate(targets())
+    }
+
+
+def preset_bytes(value: int | float, size: int) -> bytes:
+    """A Preset's value in its target's bytes."""
+    if isinstance(value, float):
+        return struct.pack(">f" if size == 4 else ">d", value)
+    return (value & ((1 << 8 * size) - 1)).to_bytes(size, "big")
+
+
+@dataclass
+class Drawn:
+    """What a case drew for a function's States: each preset's bytes, by
+    address; and by hooked routine, the bytes it leaves, by address, and
+    its D0, None to leave it."""
+
+    presets: dict[int, bytes]
+    leaves: dict[str, dict[int, bytes]]
+    results: dict[str, int | None]
+
+
+def draw(states: States, located: dict[str, tuple[int, int]], name: str, description: str) -> Drawn:
+    """A case's draws, the same each run: its generator seeded by the
+    function and the case."""
+    generator = random.Random(f"{name} {description}")
+
+    def values(presets: tuple[Preset, ...]) -> dict[int, bytes]:
+        drawn = {}
+        for preset in presets:
+            address, size = located[preset.target]
+            drawn[address] = preset_bytes(generator.choice(preset.values), size)
+        return drawn
+
+    return Drawn(
+        values(states.presets),
+        {hook.routine: values(hook.leaves) for hook in states.hooks},
+        {hook.routine: generator.choice(hook.results) if hook.results else None for hook in states.hooks},
+    )
+
+
+def hook_arguments(m: Machine, types: Types, routine: "Function", gcc: bool) -> tuple[int, ...]:
+    """A hooked routine's arguments at its entry, where its copy reads
+    them: the image's at the original's offsets, gcc's in its slots, a
+    narrower value in a slot's last bytes (gcc_slots)."""
+    sp = m.uc.reg_read(UC_M68K_REG_A7)
+    found, slot = [], FIRST_ARGUMENT
+    for offset, kind in zip(routine.offsets, routine.parameters):
+        size = types.size(kind)
+        at = sp + (slot + max(size, GCC_SLOT) - size if gcc else offset)
+        found.append(int.from_bytes(m.uc.mem_read(at, size), "big"))
+        slot += max(size, GCC_SLOT)
+    return tuple(found)
+
+
+def return_from_hook(m: Machine, result: int | None) -> None:
+    """Returns from a hooked routine at its entry, D0 its result unless
+    None."""
+    sp = m.uc.reg_read(UC_M68K_REG_A7)
+    if result is not None:
+        m.uc.reg_write(UC_M68K_REG_D0, result & 0xFFFFFFFF)
+    m.uc.reg_write(UC_M68K_REG_PC, int.from_bytes(m.uc.mem_read(sp, POINTER_SIZE), "big"))
+    m.uc.reg_write(UC_M68K_REG_A7, sp + POINTER_SIZE)
+
+
 # The differences whose cause is found and is not the C's (PLAN.md,
 # "A rebuild that runs"), each counted as known while every failing case
 # is that difference, so that another in the same routine still fails.
@@ -364,14 +745,11 @@ KNOWN = {
         r"^one stopped: image None, gcc Invalid memory read \(UC_ERR_READ_UNMAPPED\) of fffff000 ",
     ),
     "log_erase": Known("log_erase checksums a pointer's bytes", r"^RAM differs from 101d50$"),
-    **{
-        name: Known(
-            "the status register it returns holds its caller's condition codes, "
-            "which gcc's copy of its narrow argument sets first",
-            r"^result ([0-9a-f]*?)[0-9a-f]{2}, image's \1[0-9a-f]{2}$",
-        )
-        for name in ("set_interrupt_mask", "installer_set_interrupt_mask")
-    },
+    "installer_set_interrupt_mask": Known(
+        "the status register it returns holds its caller's condition codes, "
+        "which gcc's copy of its narrow argument sets first",
+        r"^result ([0-9a-f]*?)[0-9a-f]{2}, image's \1[0-9a-f]{2}$",
+    ),
 }
 
 
@@ -521,17 +899,94 @@ def cases(function: Function) -> list[tuple[str, int, dict[int, int | float | by
     """Each case's description, the generated case it starts from and the
     arguments GIVEN_CASES gives it."""
     own = GIVEN_CASES.get(function.name, [])
-    return [(f"case {case}", case, {}) for case in range(CASES)] + [
-        (f"given case {i}", i % CASES, values) for i, values in enumerate(own)
-    ]
+    states = STATES.get(function.name, States())
+    return (
+        [(f"case {case}", case, {}) for case in range(CASES)]
+        + [(f"given case {i}", i % CASES, values) for i, values in enumerate(own)]
+        + [(f"state case {i}", i % CASES, {}) for i in range(states.cases)]
+    )
 
 
-def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int, linked_symbols: dict[str, int]):
+@dataclass
+class Context:
+    """What a check finds beyond the function: the link's symbols, each
+    Preset target's address and size, and the runnable functions, by
+    name, for a Hook's prototype."""
+
+    linked_symbols: dict[str, int]
+    located: dict[str, tuple[int, int]]
+    by_name: dict[str, Function]
+
+
+def install_hooks(m: Machine, types: Types, states: States, context: Context, drawn: list[Drawn]) -> list[int]:
+    """Hooks each of the States' routines, the image's copy and gcc's, to
+    answer as the current case drew (drawn's one entry); the hooks."""
+    handles = []
+    for hook in states.hooks:
+        routine = context.by_name[hook.routine]
+        image = context.linked_symbols[IMAGE_PREFIX + hook.routine]
+
+        def answer(uc, address, size, hook_data):
+            hook, routine, gcc = hook_data
+            case = drawn[0]
+            if hook.recorded:
+                m.effects.append(HookedCall(hook.routine, hook_arguments(m, types, routine, gcc)))
+            for at, contents in case.leaves[hook.routine].items():
+                uc.mem_write(at, contents)
+            return_from_hook(m, case.results[hook.routine])
+
+        for address, gcc in ((image, False), (context.linked_symbols[hook.routine], True)):
+            handles.append(m.uc.hook_add(UC_HOOK_CODE, answer, (hook, routine, gcc), begin=address, end=address))
+    # a block translated before its hook was added runs without it
+    m.uc.ctl_flush_tb()
+    return handles
+
+
+def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int, context: Context):
     """Yields (description, outcome) for each case: outcome None if gcc's
     copy agrees with the image's, else what differs."""
+    linked_symbols = context.linked_symbols
+    states = STATES.get(function.name, States())
+    drawn: list[Drawn] = []
+    handles = install_hooks(m, types, states, context, drawn)
+    counter = COUNTED_LOOPS.get(function.name)
+    m.counter = (linked_symbols[counter[0]], counter[1]) if counter else None
+    m.starting_status = STARTING_STATUS.get(function.name, SUPERVISOR)
+    try:
+        yield from check_cases(m, types, function, image, rebuilt, context, states, drawn)
+    finally:
+        for handle in handles:
+            m.uc.hook_del(handle)
+        m.uc.ctl_flush_tb()
+        m.counter = None
+        m.ident_fails = False
+        m.starting_status = SUPERVISOR
+        m.frame_fill = None
+
+
+def check_cases(
+    m: Machine,
+    types: Types,
+    function: Function,
+    image: int,
+    rebuilt: int,
+    context: Context,
+    states: States,
+    drawn: list[Drawn],
+):
+    """check's cases, with its hooks in place, each drawing its States
+    into drawn."""
+    linked_symbols = context.linked_symbols
     for description, case, values_given in cases(function):
+        drawn[:] = [draw(states, context.located, function.name, description)]
+        m.ident_fails = case in IDENT_FAILS.get(function.name, ())
+        m.frame_fill = None
         fresh_ram(m, case)
         establish(m, function, linked_symbols, case)
+        if function.name in TASK_STACKS:
+            task_stacks(m, context.located, case)
+        for address, contents in drawn[0].presets.items():
+            m.uc.mem_write(address, contents)
         values = arguments(m, types, function.parameters, case, function.names, function.name)
         for position, count in IN_RANGE.get(function.name, {}).items():
             values[position] = given(m, types, function.parameters[position], case % count)
@@ -552,6 +1007,8 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         wanted, got = result(function, types, original), result(function, types, gcc)
         if wanted != got and not same_text(m, function, wanted, got):
             differences.append(f"result {got:x}, image's {wanted:x}")
+        if original.status & SYSTEM_BYTE != gcc.status & SYSTEM_BYTE:
+            differences.append(f"status register {gcc.status:04x}, image's {original.status:04x}")
         ram_differs = ram_difference(m, original, gcc)
         if ram_differs:
             differences.append(ram_differs)
@@ -569,8 +1026,9 @@ def main() -> int:
     c = open(c_path).read()
     with tempfile.TemporaryDirectory() as work:
         elf = work + "/rebuilt.elf"
-        linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf)
+        linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf, probes())
         linked_symbols = symbols(elf)
+    located = probed(linked, linked_symbols)
     image_bytes = open(image_path, "rb").read()
     types = Types(c)
     conventions = {}
@@ -581,13 +1039,14 @@ def main() -> int:
         machine = rebuilt_machine(image_bytes, linked, linked_symbols, profile)
         protect_code(machine)
         runnable, unrunnable = functions(c, types, conventions, profile.overlay)
+        context = Context(linked_symbols, located, {function.name: function for function in runnable})
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         for function in runnable:
             image = linked_symbols.get(IMAGE_PREFIX + function.name)
             rebuilt = linked_symbols.get(function.name)
             if names and function.name not in names or image is None or rebuilt is None or rebuilt < REBUILT:
                 continue
-            outcomes = list(check(machine, types, function, image, rebuilt, linked_symbols))
+            outcomes = list(check(machine, types, function, image, rebuilt, context))
             counts[report(function.name, outcomes, KNOWN.get(function.name))] += 1
         label = f"{profile.overlay} " if profile.overlay else ""
         print(

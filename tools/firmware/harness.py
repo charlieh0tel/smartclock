@@ -19,8 +19,9 @@ stands in for what lies outside memory, the same for both calls: traps
 #1 and #7 run the image's own handlers, and rtr, which Unicorn lacks,
 is done in its place; the kernel's traps, #3 and #4, are answered by a
 model of each service; a trap that never returns, a zero divide, a
-write to code, a branch to itself and the KERNEL_CALL_LIMIT'th kernel
-call end a call; and the kernel calls and device writes a call makes,
+write to code, a branch to itself, the KERNEL_CALL_LIMIT'th kernel
+call and a machine's counter's count (COUNTED) end a call; and the
+kernel calls and device writes a call makes,
 in order, are its effects, compared as RAM is.
 Unicorn has no CPU32; the 68020 stands in, and the image uses none of
 the instructions either has alone (PLAN.md, "A rebuild that runs").
@@ -90,6 +91,10 @@ REGISTERS = {
 # and its supervisor bit.
 SUPERVISOR = 0x2700
 SUPERVISOR_BIT = 0x2000
+# The status register's system byte, its trace, supervisor and master
+# bits and interrupt mask, which a call leaves its caller, compared
+# after it.
+SYSTEM_BYTE = 0xFF00
 # A trap instruction's bytes.
 TRAP_SIZE = 2
 # A register's value before a call, distinct for each register.
@@ -102,6 +107,9 @@ STACK_TOP = STACK + STACK_SIZE - 0x10
 # What the stack holds at a call's start, so that a local read before
 # it is written reads the same in both calls, wherever their frames lie.
 CLEAN_STACK = b"\xa5" * STACK_SIZE
+# The supervisor stack a call started in user mode takes its exceptions
+# on, well below its own stack in the same memory.
+SUPERVISOR_STACK = STACK + STACK_SIZE // 2
 # link.w An,#d: its opcode, with the register's bits masked, and its
 # bytes with the displacement.  Each frame it makes starts as
 # CLEAN_STACK, so that a local read before it is written does not read
@@ -160,6 +168,13 @@ HALTED = "halted"
 # making it, and is compared up to there, both calls alike.
 KERNEL_CALL_LIMIT = 1000
 STILL_RUNNING = "still running"
+# A call whose loop never ends and makes no kernel call, root_task's
+# idle loop, ends where the machine's counter, a variable the loop
+# counts in, is written with its count, rather than at STEP_LIMIT,
+# which the two copies, their code apart, reach at different counts;
+# compared up to there, both calls alike.
+COUNTED = "counted"
+COUNTER = struct.Struct(">I")
 # A write to code, the image's ROM or gcc's, which the checks protect,
 # made by code, not by data a call runs, ends the call the same way, at
 # the bus error it would raise: the boot chip select is read only
@@ -224,10 +239,12 @@ COUNT = struct.Struct(">H")
 WIDTHS = {".b": 0xFF, ".w": 0xFFFF}
 
 
-def service_argument(uc, name: str) -> tuple[str, int]:
-    """An argument's name and the bits of its register a service reads."""
+def service_argument(m: "RebuiltMachine", name: str) -> tuple[str, int]:
+    """An argument's name and the bits of its register a service reads,
+    a C function's gcc copy as its image copy, the same routine."""
     register, width = name[:2], name[2:]
-    return name, uc.reg_read(REGISTERS[register]) & WIDTHS.get(width, 0xFFFFFFFF)
+    value = m.uc.reg_read(REGISTERS[register]) & WIDTHS.get(width, 0xFFFFFFFF)
+    return name, m.image_copies.get(value, value)
 
 
 # The kernel's services, trap #3, by number.
@@ -355,6 +372,11 @@ SEGMENT_ALIGNMENT = 2
 # 0x14ed0), and a record's bytes (docs/firmware/psos.md, "Inside the
 # kernel").
 TASK_RECORD_SIZE = 0xB2
+# What ident returns for a name no task has, where a machine's
+# ident_fails has it fail: error 1 and the last record its search
+# reached, none (kernel_ident, 0x14eda to 0x14eec).
+IDENT_NOT_FOUND = 1
+NO_TASK = 0
 # The kernel's configuration, psos_config, and its I/O table, which
 # psos_config_init (0x51038) copies from ROM at start-up, as (from, to,
 # bytes) (docs/firmware/structures.md, "The kernel's configuration"),
@@ -611,13 +633,14 @@ PATH = "path"
 SCPI_MAIN_TREE = 0x53034
 RESET_PATH = struct.pack(">IH", SCPI_MAIN_TREE, 0)
 # And by its type: the status model status_init builds (INITIALIZERS),
-# which status_object keeps and every caller passes, and one of its
+# which status_object keeps and every caller passes, one of its
 # registers, by the case, from the pointers at its +0x12, as many as
-# the word at its +0 counts; and by its name, its error queue, from
-# the pointer at its +6 (structures.md, "The status system").
+# the word at its +0 counts, and its error queue, from the pointer at
+# its +6 (structures.md, "The status system"), which the status model's
+# routines pass the queue's, the installer's copies too.
 STATUS_MODEL = "status_model *"
 STATUS_REGISTER = "status_register *"
-ERROR_QUEUE = "error_queue"
+ERROR_QUEUE = "status_error_queue *"
 STATUS_OBJECT = 0x102EB8
 STATUS_REGISTER_COUNT = 0
 STATUS_MODEL_QUEUE = 6
@@ -897,12 +920,29 @@ class RebuiltMachine(Machine):
         self.effects: list[KernelCall | DeviceWrite | RoutineCall] = []
         # each C function's two copies, gcc's address and the image's
         self.copies: set[tuple[int, int]] = set()
+        # and the image's copy by gcc's, which a kernel call records in
+        # its place, a task's entry that psos_start passes
+        self.image_copies: dict[int, int] = {}
         # where a call's first segment of service 8 starts, past those
         # INITIALIZERS keep, and its next; and the task records service 3
         # has returned, by name
         self.first_allocation = ALLOCATIONS
         self.next_allocation = ALLOCATIONS
         self.tasks: dict[int, int] = {}
+        # whether ident finds no task of any name but the running
+        # task's, so that a creator that asks first goes on to create
+        # one; and the counter whose write of its count ends a call, as
+        # (address, count), COUNTED
+        self.ident_fails = False
+        # the status register a call starts with: SUPERVISOR, or a
+        # task's in user mode, whose exceptions take SUPERVISOR_STACK
+        self.starting_status = SUPERVISOR
+        # what each frame a link makes starts as in place of CLEAN_STACK,
+        # if not None: a pattern repeated down from the frame pointer, so
+        # that a local the image reads unset holds it, wherever each
+        # copy puts the local
+        self.frame_fill: bytes | None = None
+        self.counter: tuple[int, int] | None = None
         # what each page of the pointees holds at a call's start
         self.pointees = b""
         # RAM as the profile has it but the kernel's tables, its data area
@@ -964,6 +1004,7 @@ def rebuilt_machine(
         for name, address in linked_symbols.items()
         if IMAGE_PREFIX + name in linked_symbols
     }
+    m.image_copies = dict(m.copies)
     m.uc.mem_map(REBUILT, REBUILT_SIZE)
     for section in linked:
         if section.name in LOADED:
@@ -1209,12 +1250,12 @@ def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int) -> i
             return VARIABLES[kind]
         if kind == SCPI_STEP:
             return pointer_at(m, SAMPLE_INTEGER + DESCRIPTOR_STEPS)
-    if kind not in (STATUS_MODEL, STATUS_REGISTER) and name != ERROR_QUEUE:
+    if kind not in (STATUS_MODEL, STATUS_REGISTER, ERROR_QUEUE):
         return None
     status = pointer_at(m, m.profile.status_object)
     if kind == STATUS_MODEL:
         return status
-    if name == ERROR_QUEUE:
+    if kind == ERROR_QUEUE:
         return pointer_at(m, status + STATUS_MODEL_QUEUE)
     count = struct.unpack(">h", m.read(status + STATUS_REGISTER_COUNT, 2))[0]
     return pointer_at(m, status + STATUS_MODEL_REGISTERS + case % count * POINTER_SIZE)
@@ -1384,6 +1425,10 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
                 return out_of_reach
             start = uc.reg_read(REGISTERS[pointer]) + (MESSAGE_OFFSET if length is None else 0)
             data = bytes(uc.mem_read(start, size))
+            if length is None:
+                # a message's longs, a routine spoo_run sends among them
+                longs = struct.unpack(f">{MESSAGE_LONGS}I", data)
+                data = struct.pack(f">{MESSAGE_LONGS}I", *(m.image_copies.get(v, v) for v in longs))
         if service.fills:
             buffer, exchange = (uc.reg_read(REGISTERS[name]) for name in service.fills)
             ids = m.profile.exchange_ids()
@@ -1407,15 +1452,21 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
         if segment is None:
             return too_large
         uc.reg_write(REGISTERS[pointer], segment)
+    error = NO_ERROR
     if service.identifies:
         name, pointer = service.identifies
         task = uc.reg_read(REGISTERS[name])
-        if task not in m.tasks:
-            m.tasks[task] = allocate(m, TASK_RECORD_SIZE)
-        if m.tasks[task] is None:
-            return too_large
-        uc.reg_write(REGISTERS[pointer], m.tasks[task])
-    call = KernelCall(vector, number, tuple(service_argument(uc, name) for name in service.arguments), data)
+        if m.ident_fails and task != RUNNING_TASK:
+            error = IDENT_NOT_FOUND
+            record = NO_TASK
+        else:
+            if task not in m.tasks:
+                m.tasks[task] = allocate(m, TASK_RECORD_SIZE)
+            record = m.tasks[task]
+            if record is None:
+                return too_large
+        uc.reg_write(REGISTERS[pointer], record)
+    call = KernelCall(vector, number, tuple(service_argument(m, name) for name in service.arguments), data)
     for name in service.results:
         uc.reg_write(REGISTERS[name], KERNEL_RESULT)
     if service.none_done:
@@ -1424,17 +1475,17 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
         pointer, count = service.text
         uc.reg_write(REGISTERS[pointer], uc.reg_read(REGISTERS[pointer]) + len(data))
         uc.reg_write(REGISTERS[count], len(data))
-    uc.reg_write(REGISTERS[SERVICE_REGISTER], NO_ERROR)
+    uc.reg_write(REGISTERS[SERVICE_REGISTER], error)
     uc.reg_write(UC_M68K_REG_PC, uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE)
     return call
 
 
 class Run:
     """One call: its stack arguments laid above the return address, its
-    registers after, the memory_compared and the COMPARED memory after,
-    its effects, the ENDING vector, HALTED or STILL_RUNNING it ended at
-    instead of returning, and the fault or trap that stopped it, if one
-    did."""
+    registers and status register after, the memory_compared and the
+    COMPARED memory after, its effects, the ENDING vector, HALTED,
+    STILL_RUNNING or COUNTED it ended at instead of returning, and the
+    fault or trap that stopped it, if one did."""
 
     def __init__(self, m: RebuiltMachine, start: int, stack_arguments: bytes = b""):
         trapped, invalid, ended = [], [], []
@@ -1487,23 +1538,41 @@ class Run:
                 invalid.append(address)
             uc.emu_stop()
 
+        def counted(uc, access, address, size, value, _):
+            # before the write; made here too, in case it is not after
+            counter, count = m.counter
+            if address == counter and size == COUNTER.size and value & 0xFFFFFFFF == count:
+                uc.mem_write(counter, COUNTER.pack(count))
+                ended.append(COUNTED)
+                uc.emu_stop()
+
         def clean_frame(uc, access, address, size, value, _):
             # at link's push of the frame pointer, the frame below it
             opcode, displacement = LINK_INSTRUCTION.unpack(
                 uc.mem_read(uc.reg_read(UC_M68K_REG_PC), LINK_INSTRUCTION.size)
             )
             if opcode & LINK_MASK == LINK and displacement < 0 and address + displacement >= STACK:
-                uc.mem_write(address + displacement, CLEAN_STACK[:-displacement])
+                fill = m.frame_fill
+                if fill is None:
+                    uc.mem_write(address + displacement, CLEAN_STACK[:-displacement])
+                else:
+                    uc.mem_write(address + displacement, (fill * (-displacement // len(fill) + 1))[displacement:])
 
         sp = STACK_TOP - 4 - len(stack_arguments)
         frame = FRAME_CONTENTS.pack(0, RETURN, m.profile.caller_name)
         m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments + frame)
+        if not m.starting_status & SUPERVISOR_BIT:
+            # A7 is then the user stack, the supervisor's kept apart
+            m.uc.reg_write(UC_M68K_REG_A7, SUPERVISOR_STACK)
+            m.uc.reg_write(UC_M68K_REG_SR, m.starting_status)
         m.uc.reg_write(UC_M68K_REG_A7, sp)
         hooks = [
             m.uc.hook_add(UC_HOOK_INTR, trap),
             m.uc.hook_add(UC_HOOK_MEM_INVALID, fault),
             m.uc.hook_add(UC_HOOK_MEM_WRITE, clean_frame, begin=STACK, end=STACK + STACK_SIZE - 1),
         ]
+        if m.counter is not None:
+            hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, counted, begin=m.counter[0], end=m.counter[0]))
         if m.protected and m.profile.code:
             code, size = m.profile.code
             hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, code_write, begin=code, end=code + size - 1))
@@ -1528,6 +1597,7 @@ class Run:
                 self.stopped = f"no return in {STEP_LIMIT} steps"
         self.ended = ended[0] if ended else None
         self.registers = {name: m.uc.reg_read(register) for name, register in REGISTERS.items()}
+        self.status = m.uc.reg_read(UC_M68K_REG_SR)
         self.memory = snapshot(m)
         self.compared = {name: m.read(start, size) for name, (start, size) in COMPARED.items()}
 

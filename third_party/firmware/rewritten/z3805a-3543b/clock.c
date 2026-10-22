@@ -66,7 +66,7 @@ void clock_set(time_of_day time, uint32_t date) {
 /* Derives the clock's local date and time from its GPS time again and
  * checksums its record, in supervisor mode (0x13782). */
 void clock_record_refresh(void) {
-  uint16_t sr = enter_supervisor();
+  uint16_t sr = cpu_enter_supervisor();
 
   clock_record_derive(&clock);
   clock_record_checksum(&clock);
@@ -76,7 +76,7 @@ void clock_record_refresh(void) {
 /* Sets the GPS-UTC offset, in seconds, and marks it valid, in
  * supervisor mode (0x139a2). */
 void set_gps_utc_offset(uint16_t seconds) {
-  uint16_t sr = enter_supervisor();
+  uint16_t sr = cpu_enter_supervisor();
 
   clock.gps_utc_offset = seconds;
   clock.gps_utc_offset_valid = 1;

@@ -491,7 +491,7 @@ static bool os_task_paused(psos_task* task) {
  * with each one's state, and sums their ticks into task_ticks_total;
  * the number of tasks (0x16540). */
 int32_t task_table_build(void) {
-  enum { TABLE_ENTRIES = sizeof task_table / sizeof task_table[0] };
+  static const int32_t TABLE_ENTRIES = sizeof task_table / sizeof task_table[0];
   psos_kernel* kernel = os_kernel_data();
 
   for (int32_t entry = 0; entry < TABLE_ENTRIES; entry++) {
@@ -1061,6 +1061,107 @@ void task_stack_info(void* record, uint32_t* user_top, uint32_t* user_pointer,
   *user_pointer = task->supervisor_pointer;
   *user_top = unset_top;
   *user_size = unset_segment->size - SEGMENT_OVERHEAD;
+}
+
+/* A percentage as the stack report computes it: of a stack's size, the
+ * bytes from a word to its top. */
+static uint16_t os_stack_percent(uint32_t top, uint32_t at, uint32_t size) {
+  static const uint32_t PERCENT = 100;
+
+  return (top - at) * PERCENT / size;
+}
+
+/* A task stack's use for the stack report, of a size that is not 0: up
+ * from its bottom, top - size, while below its saved pointer, the first
+ * word after one that is not the 0xabcd fill, as a percentage of its
+ * size from there to the top; 0 if it finds none (0x16ce0 to 0x16d14).
+ * The word at the bottom is never tested. */
+static uint16_t os_stack_use(uint32_t top, uint32_t size, uint32_t pointer) {
+  static const uint16_t UNUSED = 0xabcd;
+  const uint16_t* word = (const uint16_t*)(top - size);
+
+  while ((uint32_t)word < pointer) {
+    word++;
+    if (*word != UNUSED) {
+      return os_stack_percent(top, (uint32_t)word, size);
+    }
+  }
+  return 0;
+}
+
+/* :DIAG:OS:STAC?'s report: each task's user and supervisor stacks, their
+ * saved pointers, sizes, use and tops, then the kernel's own supervisor
+ * stack; the source is unused (0x16c44).  The kernel's stack's use is
+ * the last printed task's supervisor use when its words are all zero,
+ * and, when no task was printed either, D2 as the caller left it
+ * (0x16e06; docs/firmware/quirks.md, "Reads of what nothing set"). */
+void task_stack_report(uint8_t source) {
+  uint16_t supervisor_use = CPU_CALLERS_REGISTER(uint32_t, "d2");
+  /* task_stack_info's user size leaves out the 4 bytes above the
+   * supervisor stack, which the report puts back. */
+  static const uint32_t USER_STACK_GAP = 4;
+  /* The kernel's supervisor stack starts this far into its data area
+   * (structures.md, "The tasks' stacks"). */
+  static const uint32_t SYSTEM_STACK_OFFSET = 200;
+  static const uint16_t PERCENT = 100;
+  static char* const ROW = "$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n";
+  static char* const TOPS = "               $%08X (TOS)       $%08X (TOS)\r\n";
+
+  printf("%s", "\r\n");
+  printf("%s", os_report_rule);
+  printf("%s", "\r\n");
+  task_count = task_table_build();
+  printf("%s", "    pid   name     USP   size            SSP   size\r\n");
+  for (int16_t index = 0; index < task_count; index++) {
+    psos_task* task = task_table[index].task;
+    uint32_t user_top;
+    uint32_t user_pointer;
+    uint32_t user_size;
+    uint32_t supervisor_top;
+    uint32_t supervisor_pointer;
+    uint32_t supervisor_size;
+
+    task_stack_info(task, &user_top, &user_pointer, &user_size, &supervisor_top,
+                    &supervisor_pointer, &supervisor_size);
+    if (user_size == 0 && supervisor_size == 0) {
+      continue;
+    }
+    const uint16_t user_use =
+        user_size != 0 ? os_stack_use(user_top, user_size, user_pointer) : 0;
+    supervisor_use =
+        supervisor_size != 0
+            ? os_stack_use(supervisor_top, supervisor_size, supervisor_pointer)
+            : 0;
+    printf(ROW, (uint32_t)task, task_name(task), user_pointer,
+           user_size + USER_STACK_GAP, (uint32_t)user_use, supervisor_pointer,
+           supervisor_size, (uint32_t)supervisor_use);
+    printf(TOPS, user_top, supervisor_top);
+  }
+
+  const uint32_t system_size = psos_config.supervisor_stack_size;
+
+  if (system_size != 0) {
+    const uint32_t bottom =
+        (uint32_t)psos_config.data_area + SYSTEM_STACK_OFFSET;
+    const uint32_t top = bottom + system_size;
+
+    /* Up from the bottom to the first word in use, its use the rest. */
+    for (const uint16_t* word = (const uint16_t*)bottom; (uint32_t)word < top;
+         word++) {
+      if (*word != 0) {
+        supervisor_use =
+            PERCENT - os_stack_percent((uint32_t)word, bottom, system_size);
+        break;
+      }
+    }
+    printf("\r\n>> pSOS system supervisor stack:\r\n");
+    printf(ROW, 0, "pSOS", 0, 0, 0, bottom, system_size,
+           (uint32_t)supervisor_use);
+    printf(TOPS, 0, top);
+  }
+  printf("%s", "\r\n");
+  printf("%s", "\r\n");
+  printf("%s", os_report_rule);
 }
 
 /* Sets a task's priority, which the kernel changes by a step from the

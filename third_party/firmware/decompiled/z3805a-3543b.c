@@ -22207,6 +22207,7 @@ void task_stack_info(void *task,uint32_t *user_top,uint32_t *user_pointer,uint32
 #endif
 
 /* 00016c44 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* "pid name USP size SSP size", each task's stacks and their use
    structures.md */
@@ -22304,6 +22305,7 @@ LAB_00016dfc:
   return;
 }
 
+#endif
 
 /* 00016e5a */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -50973,6 +50975,7 @@ int32_t scpi_query_DIAGnostic_OS_PROCess(void *parameters,void *response,scpi_ca
 #endif
 
 /* 0002b874 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:OS:STACk? */
 
@@ -50987,6 +50990,7 @@ int32_t scpi_query_DIAGnostic_OS_STACk(void *parameters,void *response,scpi_call
   return 0;
 }
 
+#endif
 
 /* 0002b896 */
 #if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */

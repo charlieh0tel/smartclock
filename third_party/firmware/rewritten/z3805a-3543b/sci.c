@@ -212,7 +212,7 @@ void sci_settings_done(void) { psos_io_control(IO_DEVICE_SCI, 0, 0); }
  * its length (0x202c0). */
 int32_t sci_puts_polled(char* text) {
   int32_t count = 0;
-  uint16_t sr = enter_supervisor();
+  uint16_t sr = cpu_enter_supervisor();
 
   for (; *text != 0; text++, count++) {
     sci_putc_polled(*text);

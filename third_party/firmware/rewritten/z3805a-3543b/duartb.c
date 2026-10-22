@@ -276,7 +276,7 @@ void duartb_eight_bits_restrict(void) {
  * its length (0x1df12). */
 int32_t console_write_polled(char* s) {
   int32_t count = 0;
-  uint16_t sr = enter_supervisor();
+  uint16_t sr = cpu_enter_supervisor();
 
   for (; *s != 0; s++, count++) {
     duartb_putc_polled(*s);

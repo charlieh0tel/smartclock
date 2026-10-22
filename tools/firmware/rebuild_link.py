@@ -107,8 +107,9 @@ def script(pieces: list[str], image_names: dict[str, int]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def link(c_path: str, cflags: list[str], work: str, elf_path: str) -> list[Section]:
-    """Links the C file's rebuilt image to elf_path; its sections."""
+def link(c_path: str, cflags: list[str], work: str, elf_path: str, extra: str = "") -> list[Section]:
+    """Links the C file's rebuilt image to elf_path, with extra C after
+    the file's own (the function check's probes); its sections."""
     c = open(c_path).read()
     base = c_path.removesuffix(".c")
     addresses = {}
@@ -118,7 +119,7 @@ def link(c_path: str, cflags: list[str], work: str, elf_path: str) -> list[Secti
     made = set(re.findall(r"^(\w+) = 0x", open(base + ".symbols.ld").read(), re.M))
 
     c_only, compiled = work + "/c.c", work + "/c.o"
-    open(c_only, "w").write(CODE_BLOCK.sub("", c))
+    open(c_only, "w").write(CODE_BLOCK.sub("", c) + extra)
     # the hand-written C it includes is named from the C file's own folder
     run(TOOLS + "gcc", *cflags, "-I", os.path.dirname(os.path.abspath(c_path)), "-c", "-o", compiled, c_only)
     # what the C defines that is not a function, a bridge's bridge_ccr

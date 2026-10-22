@@ -556,6 +556,17 @@ int32_t scpi_query_DIAGnostic_OS_PROCess(void* parameters, void* response,
   return 0;
 }
 
+/* :DIAGnostic:OS:STACk?: prints the tasks' stacks; an empty response
+ * (0x2b874). */
+int32_t scpi_query_DIAGnostic_OS_STACk(void* parameters, void* response,
+                                       scpi_call* call) {
+  scpi_token_string* text = response;
+
+  text->length = 0;
+  task_stack_report(return_zero(call->input));
+  return 0;
+}
+
 /* :DIAGnostic:PTIMe:TINTerval?: a time-interval reading, through pllc,
  * and its tag; -230 when it is not valid (0x2b896). */
 int32_t scpi_query_DIAGnostic_PTIMe_TINTerval(void* parameters, void* response,

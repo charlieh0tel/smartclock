@@ -806,7 +806,11 @@ use), as does a body the installer's copy of a function shares with
 the primary's.  A file is a module's (`docs/firmware/modules.md`, "The
 hand-written files").  The checks run
 the hand-written function as they ran the decompiled one, against the
-image's own.
+image's own.  Hand-written C enters supervisor mode through `cpu.h`'s
+`cpu_enter_supervisor`, which calls `enter_supervisor` (`0x13422`)
+directly: from a task in user mode it returns on the supervisor stack,
+through trap #7's `rte`, and its bridge, which restores gcc's
+registers from the stack it returns on, would read the supervisor's.
 
 A constant is typed: `static const uint32_t SECONDS_PER_MINUTE = 60;`,
 inside the function that uses it when only one does, at file scope with
@@ -953,8 +957,24 @@ raises a bus error (the boot chip select is read only, CSORBT
 `0x6870`, and the bus monitor on, SYPCR `0xcc`).  A branch to itself,
 `fatal_error`'s spin, ends a call halted, since no interrupt comes;
 and a call still running at its 1000th kernel call, a task's loop,
-ends there, before making it.  Two calls that end the same way are
-compared as if they had returned, but for their result.  And the stack is filled with `0xa5` at a call's start,
+ends there, before making it.  A loop that makes no kernel call ends
+where it counts to a count of the function's (`COUNTED_LOOPS`):
+`root_task`'s idle loop at `idle_loops`' 101st write, odd, so that a
+loop counting by more passes it.  Two calls that end the same way are
+compared as if they had returned, but for their result, and both
+leave the status register's system byte, its supervisor bit and
+interrupt mask, the same.  A function may start as a task does, in user
+mode with its interrupts unmasked (`STARTING_STATUS`), its exceptions
+taken on a supervisor stack of the harness's: `root_task`, whose
+`trap #7` and move back of its status register then show (`0x13082`
+to `0x13098`).  A kernel call's argument, or a message's long, that is
+a C function's gcc copy is recorded as its image copy, the same
+routine: a task's entry for `psos_start`, `scpi_task_create` in
+`scpi_task_start`'s message.  ident finds every name, but in the
+cases `IDENT_FAILS` gives a function that asks before it creates:
+there it finds none but the running task's, error 1 and no record
+(`kernel_ident`, `0x14eda` to `0x14eec`), so that `root_task` goes on
+past `spoo_task_create` to create and start every task.  And the stack is filled with `0xa5` at a call's start,
 so that a local read before it is written reads the same in both.
 Each function runs eight cases: in the first six a pointer's buffer
 holds bytes, and in the last two longs that are pointers, so that a
@@ -973,8 +993,8 @@ given the image's own object their callers pass: by its name, an SCPI
 formatter's `output` and the lexer's `input`, the console port's
 object (`0x29e18`), and a header `path`, a buffer set back to the main
 tree's root list (`0x53034`), as `scpi_path_reset` does; and by its
-type, `status_object`'s model, one of its registers by the case, and
-by the name `error_queue` its queue, `aging_curve` for an
+type, `status_object`'s model, one of its registers by the case, its
+queue for a `status_error_queue *`, `aging_curve` for an
 `aging_curve_state *`, `status_screen_snapshot` for a
 `status_snapshot_record *`, and for a `scpi_step *` the first step of
 `:SAMPle:INTeger`'s descriptor, the request's; and
@@ -1004,7 +1024,25 @@ the image's own run on the request `request_x` receives, or for
 request, each in turn; and the pForth dictionary for
 `pforth_define_word` and `diag_words_define`, the image's own
 `pforth_dictionary_init` run as `console_init` runs it first, since
-with the dictionary pointer null a definition returns at once.  After
+with the dictionary pointer null a definition returns at once.  A
+function's states (`STATES`) are what its zeroed RAM never reaches:
+variables each case starts with at a value drawn for it, from a
+generator seeded by the function and the case -- an lvalue of the C,
+`pll.fine_state`, whose address and size gcc finds, compiled into the
+link as probes -- and routines both copies' calls of which the harness
+answers in their place, leaving variables at drawn values and each
+call's arguments recorded as an effect: `fine` and `enter_holdover`
+start from the stage's states, the fit's sums and the counter's
+reading, `counter_read` gives a drawn reading and `log_event` records
+its code, over 2000 cases of their own each; `root_task` draws
+`pforth_at_startup`, the SCPI task or the pForth console.  And the
+stack report (`task_stack_report`, its SCPI handler and `s_rep_word`)
+starts with the running task's stacks, in turn both, part used
+against the `0xabcd` fill, a user stack alone in a segment, and none,
+the kernel's own supervisor stack part used or all zero; with a user
+stack alone, each frame a `link` makes is filled with the segment's
+address in place of `0xa5`, so that `task_stack_info`'s two unset
+locals hold it wherever each copy puts them (`quirks.md`).  After
 its eight cases a function may run cases of its own (`GIVEN_CASES`),
 where the generated arguments never reach what its callers pass or
 what its body treats apart: `pforth_define_word`'s argument and result
@@ -1045,8 +1083,8 @@ copies them, from `0x1084da` and `0x108578` to `0x10ab84` and
 as `kernel_init`, whose bytes it is; its status object, `0x10ad06`, as
 its root task (`0x100d40`) has `0x107a00` make it, passing its address
 to `status_create`'s copy (`0x105d98`), whose model, a register of it
-and its error queue a parameter is given by type and name as the
-primary's are.  The root task creates no exchange
+and its error queue a parameter is given by type as the primary's
+are.  The root task creates no exchange
 itself; its spool's id, at `0x10afbe`, which `0x103efe` creates as
 `"spoo"`, is a distinct id, from which `request_x` receives the SCPI
 task's creator, `0x107886`, at priority `0x19`, as the root task sends

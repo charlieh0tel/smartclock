@@ -99,7 +99,7 @@ void root_task(void) {
   psos_debug_output(psos_debug_enabled);
   idle_loops = 0;
   task_root = psos_my_pid();
-  const uint16_t sr = enter_supervisor();
+  const uint16_t sr = cpu_enter_supervisor();
   periodic_interrupt_enable(1);
   cpu_sr_write(sr);
   kernel_running = 1;

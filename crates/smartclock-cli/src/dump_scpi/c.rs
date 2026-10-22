@@ -21,14 +21,18 @@ use super::records::Tree;
 /// where the exported C includes it, its own prototypes declare them.
 const ALONE: &str = "SCPI_TREE_DATA_ALONE";
 
-/// The macro each record but a string is defined with, which puts it at
-/// an even address, as the image's are: a word or a long at an odd one
-/// is misaligned, and smartclock.h's types, packed, would let one follow
-/// a string there.
-const EVEN: &str = "SCPI_TREE_DATA_EVEN";
+/// The attribute each record but a string is defined with, which puts
+/// it at an even address, as the image's are: a word or a long at an odd
+/// one is misaligned (MC68331UM, 4.4.4), and smartclock.h's types,
+/// packed, would let one follow a string there.
+const EVEN: &str = "__attribute__((aligned(2)))";
 
 /// What the names-file rows give as their source.
 const NAMES_SOURCE: &str = "dump-scpi";
+
+/// A handler's parameters, as SmartClockSetup.java's
+/// `HANDLER_PARAMETERS` gives the handlers it names from the path.
+const HANDLER_PARAMETERS: &str = "(void *parameters, void *response, scpi_call *call)";
 
 /// What generated the output, as its header says.
 pub(super) struct Source {
@@ -93,22 +97,16 @@ pub(super) fn c(records: &Records, source: &Source) -> Result<String> {
          * converter's and a formatter's are cast too, their prototypes not\n \
          * the field's own; a handler's is not.  A child list's children\n \
          * are an array of their own, which follows the list as in the\n \
-         * image.  Defining {ALONE} declares the routines, to compile the\n \
-         * file alone. */",
+         * image.  Each record but a string is aligned to an even address,\n \
+         * as the image's are, since a word or a long at an odd one is\n \
+         * misaligned (MC68331UM, 4.4.4) and the types are packed.  Defining\n \
+         * {ALONE} declares the routines, to compile the file alone. */",
         capitalized(tree_name(records.tree)),
         source.image,
         source.command(records.tree, "--c"),
     )?;
     writeln!(out)?;
     writeln!(out, "#include <stddef.h>")?;
-    writeln!(out)?;
-    writeln!(
-        out,
-        "/* A record's alignment: the image's lie at even addresses, since a\n \
-         * word or a long at an odd one is misaligned (MC68331UM, 4.4.4), and\n \
-         * the types are packed. */"
-    )?;
-    writeln!(out, "#define {EVEN} __attribute__((aligned(2)))")?;
     writeln!(out)?;
     writeln!(out, "#ifdef {ALONE}")?;
     let routines: BTreeSet<&str> = records
@@ -218,7 +216,12 @@ impl Writer<'_> {
         let name = &record.name;
         let mut out = String::new();
         writeln!(out)?;
-        writeln!(out, "/* {} ({at:#x}). */", capitalized(&record.note))?;
+        writeln!(
+            out,
+            "/* {} ({}). */",
+            capitalized(&record.note),
+            address(records.space(at), at)
+        )?;
         match &record.body {
             Body::TreePair { common, main } => {
                 writeln!(out, "const scpi_tree_pair {EVEN} {name} = {{")?;
@@ -243,8 +246,8 @@ impl Writer<'_> {
                 writeln!(out)?;
                 writeln!(
                     out,
-                    "/* Its children, which follow it ({:#x}). */",
-                    at + super::CHILDREN_START
+                    "/* Its children, which follow it ({}). */",
+                    address(records.space(at), at + super::CHILDREN_START)
                 )?;
                 writeln!(
                     out,
@@ -473,8 +476,9 @@ fn address(space: Space, at: u32) -> String {
     }
 }
 
-/// A label row, and with `typed` its type, for every record; with a
-/// names file, none for an address it names.
+/// A label row, and with `typed` its type, for every record, and for the
+/// installer's tree a function row for every handler; with a names file,
+/// none for an address it names.
 pub(super) fn names(records: &Records, source: &Source, names: Option<&NamesFile>) -> String {
     let mut out = format!(
         "# Labels and types for every record of {} SCPI command tree of\n\
@@ -489,6 +493,26 @@ pub(super) fn names(records: &Records, source: &Source, names: Option<&NamesFile
         out.push_str("# An address the names file names has no row here.\n");
     }
     let named = |at: u32| names.is_some_and(|names| names.any(records.space(at), at).is_some());
+    // SmartClockSetup.java names the primary's handlers from the paths
+    // dump-scpi --handlers gives it (scpi=); nothing else names the
+    // installer's, so these rows do, by the names the C gives them
+    if records.tree == Tree::Installer {
+        out.push_str("# Each handler is named for its path, as the C names it.\n");
+        for (&at, routine) in &records.routines {
+            if let (Role::Handler, Some(name)) = (routine.role, routine.name.as_deref())
+                && !named(at)
+            {
+                writeln!(
+                    out,
+                    "{}\tfunction\t{name}\t{NAMES_SOURCE}\t{} handler for {}\tint {name}{HANDLER_PARAMETERS}",
+                    address(records.space(at), at),
+                    tree_name(records.tree),
+                    routine.user,
+                )
+                .expect("a String takes writes");
+            }
+        }
+    }
     for (&at, record) in &records.records {
         // a named list's children are still a row of their own
         let mut row = |at: u32, name: &str, note: &str, kind: String| {
@@ -596,44 +620,56 @@ mod tests {
             .collect()
     }
 
+    /// Each tree `make scpi-tree` generates, its C file and its names
+    /// rows, under the repository's root.
+    const GENERATED: [(Tree, &str, &str); 2] = [
+        (
+            Tree::Primary,
+            "third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c",
+            "tools/ghidra/names/z3805a-3543b.scpi-tree.tsv",
+        ),
+        (
+            Tree::Installer,
+            "third_party/firmware/rewritten/z3805a-3543b/installer/installer_scpi_tree_data.c",
+            "tools/ghidra/names/z3805a-3543b.installer-scpi-tree.tsv",
+        ),
+    ];
+
     #[test]
     fn the_tree_data_is_what_the_image_gives() {
         let (image, names) = image_and_names();
-        let records = Records::read(&image, Tree::Primary, Some(&names)).expect("the tree reads");
-        let made = c(&records, &source()).expect("every routine is named");
-        let held = std::fs::read_to_string(format!(
-            "{}/third_party/firmware/rewritten/{IMAGE}/scpi_tree_data.c",
-            root()
-        ))
-        .expect("the generated C is in the repository");
-        assert!(
-            tokens(&made) == tokens(&held),
-            "third_party/firmware/rewritten/{IMAGE}/scpi_tree_data.c is stale; run make scpi-tree"
-        );
+        for (tree, c_path, _) in GENERATED {
+            let records = Records::read(&image, tree, Some(&names)).expect("the tree reads");
+            let made = c(&records, &source()).expect("every routine is named");
+            let held = std::fs::read_to_string(format!("{}/{c_path}", root()))
+                .expect("the generated C is in the repository");
+            assert!(
+                tokens(&made) == tokens(&held),
+                "{c_path} is stale; run make scpi-tree"
+            );
+        }
     }
 
     #[test]
     fn the_tree_names_are_what_the_image_gives() {
         let (image, names_file) = image_and_names();
-        let records =
-            Records::read(&image, Tree::Primary, Some(&names_file)).expect("the tree reads");
-        let held = std::fs::read_to_string(format!(
-            "{}/tools/ghidra/names/{IMAGE}.scpi-tree.tsv",
-            root()
-        ))
-        .expect("the generated rows are in the repository");
-        assert_eq!(
-            names(&records, &source(), Some(&names_file))
-                .lines()
-                .collect::<Vec<_>>(),
-            held.lines().collect::<Vec<_>>(),
-            "tools/ghidra/names/{IMAGE}.scpi-tree.tsv is stale; run make scpi-tree"
-        );
+        for (tree, _, names_path) in GENERATED {
+            let records = Records::read(&image, tree, Some(&names_file)).expect("the tree reads");
+            let held = std::fs::read_to_string(format!("{}/{names_path}", root()))
+                .expect("the generated rows are in the repository");
+            assert_eq!(
+                names(&records, &source(), Some(&names_file))
+                    .lines()
+                    .collect::<Vec<_>>(),
+                held.lines().collect::<Vec<_>>(),
+                "{names_path} is stale; run make scpi-tree"
+            );
+        }
     }
 
     /// Without a names file nothing names the converters and formatters,
-    /// and with the Z3805A's the installer's still are not, so only the
-    /// Z3805A's primary tree makes C.
+    /// so no tree makes C; with the Z3805A's both of its trees do
+    /// (`GENERATED`).
     #[test]
     fn a_tree_whose_routines_are_unnamed_makes_no_c() {
         for name in IMAGES {
@@ -649,9 +685,6 @@ mod tests {
                 assert!(refused.to_string().contains("have no name"), "{refused}");
             }
         }
-        let (image, names) = image_and_names();
-        let records = Records::read(&image, Tree::Installer, Some(&names)).expect("the tree reads");
-        assert!(c(&records, &source()).is_err());
     }
 
     #[test]

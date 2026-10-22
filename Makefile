@@ -162,20 +162,29 @@ check-decompiled:
 # are stale.  Needs clang-format.
 SCPI_TREE_C = third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c
 SCPI_TREE_NAMES = tools/ghidra/names/z3805a-3543b.scpi-tree.tsv
+INSTALLER_SCPI_TREE_C = third_party/firmware/rewritten/z3805a-3543b/installer/installer_scpi_tree_data.c
+INSTALLER_SCPI_TREE_NAMES = tools/ghidra/names/z3805a-3543b.installer-scpi-tree.tsv
+SCPI_TREE_IMAGE = --names-file tools/ghidra/names/z3805a-3543b.tsv third_party/firmware/z3805a-3543b.bin
 scpi-tree:
-	$(CARGO) run -q -p smartclock-cli -- dump-scpi --c \
-		--names-file tools/ghidra/names/z3805a-3543b.tsv third_party/firmware/z3805a-3543b.bin \
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --c $(SCPI_TREE_IMAGE) \
 		| $(CLANG_FORMAT) --assume-filename=$(SCPI_TREE_C) > $(SCPI_TREE_C)
-	$(CARGO) run -q -p smartclock-cli -- dump-scpi --names \
-		--names-file tools/ghidra/names/z3805a-3543b.tsv third_party/firmware/z3805a-3543b.bin \
-		> $(SCPI_TREE_NAMES)
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --names $(SCPI_TREE_IMAGE) > $(SCPI_TREE_NAMES)
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --c --installer $(SCPI_TREE_IMAGE) \
+		| $(CLANG_FORMAT) --assume-filename=$(INSTALLER_SCPI_TREE_C) > $(INSTALLER_SCPI_TREE_C)
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --names --installer $(SCPI_TREE_IMAGE) \
+		> $(INSTALLER_SCPI_TREE_NAMES)
 
-# Fail if a record of the generated SCPI tree, as m68k gcc lays it out,
-# is not the image's bytes, its pointers compared by what they point at.
-# Needs an m68k gcc and binutils; not part of ci.
+# Fail if a record of a generated SCPI tree, the primary's or the
+# installer's, as m68k gcc lays it out, is not the image's bytes, its
+# pointers compared by what they point at.  Needs an m68k gcc and
+# binutils; not part of ci.
 check-scpi-tree:
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" python3 tools/firmware/scpi_tree_check.py \
 		$(SCPI_TREE_C) $(SCPI_TREE_NAMES) tools/ghidra/names/z3805a-3543b.tsv \
+		third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl \
+		third_party/firmware/z3805a-3543b.bin
+	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" python3 tools/firmware/scpi_tree_check.py \
+		$(INSTALLER_SCPI_TREE_C) $(INSTALLER_SCPI_TREE_NAMES) tools/ghidra/names/z3805a-3543b.tsv \
 		third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl \
 		third_party/firmware/z3805a-3543b.bin
 

@@ -112,9 +112,15 @@ address it names gets no row, so that its own row, and its type, stand.
 
 `make scpi-tree` writes the Z3805A 3543B's,
 `third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c` through
-clang-format and `tools/ghidra/names/z3805a-3543b.scpi-tree.tsv`, and a
-test fails while either is stale, the C compared without its white
-space.  The exporter includes it with the hand-written C and drops the
+clang-format and `tools/ghidra/names/z3805a-3543b.scpi-tree.tsv`, and
+its installer's, `installer/installer_scpi_tree_data.c` beside the
+installer's other copies and `z3805a-3543b.installer-scpi-tree.tsv`,
+and a test fails while any is stale, the C compared without its white
+space.  The installer's rows also name its nine handlers, for their
+paths as the C names them, since nothing else does: Setup names the
+primary's from `dump-scpi --handlers` (`scpi=`), and Ghidra had no
+function at any of the installer's.  Setup takes both trees' rows as
+`names=` files after the names file's.  The exporter includes it with the hand-written C and drops the
 `.set` of each global it defines, so that the firmware's C, the
 parser's routines among them, reads the tree it defines, not ROM's
 (`docs/firmware/README.md`, "Hand-written C"); the function check
@@ -124,9 +130,11 @@ byte, and each pointer by the address of what it names, the records'
 from the rows, the routines' from Ghidra's names in the decompiled C's
 `.conventions.jsonl`, so that a handler named otherwise than Ghidra
 names it differs; and it fails an object but a string at an odd
-address, and a list's children that do not follow the list.  All 2055
-of the Z3805A's, its 1933 records and its 122 lists' children, are the
-image's.
+address, and a list's children that do not follow the list;
+`tools/firmware/rebuild_link.py` (`make check-decompiled`) fails those
+two in the full link as well, where every other object of the C lies
+beside the trees.  All 2055 of the Z3805A's, its 1933 records and its
+122 lists' children, are the image's, and all 38 of its installer's.
 
 The C defines a record's pointer to another record with a cast to the
 field's type, since the records are `const` and smartclock.h's fields
@@ -137,8 +145,8 @@ taking `scpi_handler_function`'s parameters, as `SmartClockSetup.java`
 types them.  A child list's children are an array of their own,
 `NAME_children`, which follows the list, as in the image: Ghidra
 exports a flexible array member as one of no elements, which C cannot
-initialize.  And each record but a string is defined with
-`SCPI_TREE_DATA_EVEN`, at an even address as the image's are, since
+initialize.  And each record but a string is defined
+`__attribute__((aligned(2)))`, at an even address as the image's are, since
 smartclock.h's types are packed and a word or a long at an odd address
 is misaligned (MC68331UM, 4.4.4).
 
@@ -179,7 +187,11 @@ keyword pair or a unit's name that is not one, a record read as two
 kinds, or two records of one name.  No two records overlap in any
 image.  `--c` also refuses while any routine has no name: without a
 names file, the converters and formatters of every image; with the
-Z3805A's, none of the primary's, but the installer's six.
+Z3805A's, none.  The installer's six, and the five routines they call,
+are copies of the primary's, named `installer_` and their twin's name:
+each is its twin's bytes at a constant offset, but for
+`installer_scpi_parse_short`'s two `jsr.l` targets, the installer's
+own copies.
 
 | Image | Tree | Records | Nodes | Child lists | Keyword pairs | Parameters | Kinds | Item lists | Choice lists | Unit tables | Routines |
 | ----- | ---- | ------- | ----- | ----------- | ------------- | ---------- | ----- | ---------- | ------------ | ----------- | -------- |
@@ -230,7 +242,8 @@ sort; a keyword pair the image shares between nodes, as it shares one
 names it from `dump-scpi --handlers`: the names file's function there,
 else the first path, query before setter, whose node holds it, which
 Ghidra's names for all 271 of the Z3805A's confirm.  The installer's
-handlers are no Ghidra functions; their names are the same rule's.
+handlers were no Ghidra functions; their names are the same rule's,
+which the installer's rows give Ghidra.
 
 `--names` adds a row a record's type leaves out, since a flexible
 array member types none of its elements: at `+6` of every child list,

@@ -14,14 +14,17 @@ gcc's: the original's callers keep the original's callees, and its
 the assembly, its globals kept, and placed at REBUILT, clear of
 everything the board decodes; it calls gcc's C, and the assembly
 through its names and the bridges.  gcc's helpers come from libgcc.
+The generated SCPI trees' records must lie in the link as the parser
+reads them: each child list's children right after the list, and every
+record but text at an even address.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/rebuild_link.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\
         third_party/firmware/z3805a-3543b.bin [ELF]
 
 make check-decompiled runs it with its flags.  Needs m68k-linux-gnu gcc
-and binutils.  Exits nonzero if the link fails or a piece is not the
-image's bytes.
+and binutils.  Exits nonzero if the link fails, a piece is not the
+image's bytes or a tree's record is misplaced.
 """
 
 import json
@@ -53,6 +56,14 @@ PIECE = re.compile(r"^\.text\.(\w+)\.([0-9a-f]+)$")
 CODE_BLOCK = re.compile(r"^__asm__\(\n.*?\.pushsection.*?^\);$", re.S | re.M)
 # The prefix of the image's own copy of a C function.
 IMAGE_PREFIX = "__image_"
+# The generated SCPI trees the C includes (docs/scpi/README.md, "As C").
+TREE_INCLUDE = re.compile(r'^#include "([^"]*scpi_tree_data\.c)"$', re.M)
+# A generated tree's record definition, its name, and its type's start;
+# a keyword pair, a unit's name or other text is a char array.
+TREE_RECORD = re.compile(r"^(const char\b|const\s|\w+\* const\s)[^=;{}]*?\b(\w+)(?:\s*\[\])?\s*=", re.M)
+TEXT_TYPE = "const char"
+# What a child list's children's name adds to the list's.
+CHILDREN_SUFFIX = "_children"
 # ELF32 header and section header layouts, big-endian.
 ELF_HEADER = ">16sHHIIIIIHHHHHH"
 SECTION_HEADER = ">IIIIIIIIII"
@@ -179,6 +190,35 @@ def objects(elf_path: str) -> dict[str, tuple[int, int]]:
     return found
 
 
+def tree_records(c_path: str) -> tuple[set[str], set[str]]:
+    """The records of the generated SCPI trees the C file includes, by
+    name, and those of them that are text."""
+    records, texts = set(), set()
+    for included in TREE_INCLUDE.findall(open(c_path).read()):
+        tree = open(os.path.join(os.path.dirname(os.path.abspath(c_path)), included)).read()
+        for kind, name in TREE_RECORD.findall(tree):
+            records.add(name)
+            if kind == TEXT_TYPE:
+                texts.add(name)
+    return records, texts
+
+
+def tree_layout(found: dict[str, tuple[int, int]], texts: set[str]) -> list[str]:
+    """What breaks the layout the parser reads of a tree's records, by
+    name their (address, size): a child list's children, an array of
+    their own that the parser reads past the list's end, not right after
+    the list, as the image lays them out, and a record but text at an
+    odd address, where its words are misaligned (MC68331UM, 4.4.4)."""
+    broken = []
+    for name, (at, size) in sorted(found.items(), key=lambda item: item[1]):
+        owner = found.get(name.removesuffix(CHILDREN_SUFFIX)) if name.endswith(CHILDREN_SUFFIX) else None
+        if owner is not None and sum(owner) != at:
+            broken.append(f"{name}: at {at:#x}, not right after its list, which ends at {sum(owner):#x}")
+        if name not in texts and at % 2:
+            broken.append(f"{name}: at an odd address, {at:#x}, where its words are misaligned")
+    return broken
+
+
 def main() -> int:
     if len(sys.argv) not in (3, 4) or "DECOMPILED_CFLAGS" not in os.environ:
         print(__doc__.strip(), file=sys.stderr)
@@ -187,14 +227,19 @@ def main() -> int:
     image = open(image_path, "rb").read()
     installer = installer_image(image)
     with tempfile.TemporaryDirectory() as work:
+        elf = sys.argv[3] if len(sys.argv) == 4 else work + "/rebuilt.elf"
         try:
-            linked = link(
-                c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work,
-                sys.argv[3] if len(sys.argv) == 4 else work + "/rebuilt.elf",
-            )
+            linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf)
         except subprocess.CalledProcessError as error:
             print(error.stderr, file=sys.stderr)
             return 1
+        linked_objects = objects(elf)
+    records, texts = tree_records(c_path)
+    missing = sorted(records - linked_objects.keys())
+    broken = tree_layout({name: linked_objects[name] for name in records & linked_objects.keys()}, texts)
+    for problem in [f"{name}: not in the link" for name in missing[:5]] + broken:
+        print(f"  {problem}")
+    print(f"SCPI tree records: {len(records)}, misplaced: {len(missing) + len(broken)}")
     identical = differing = 0
     for section in linked:
         if not PIECE.match(section.name):
@@ -209,7 +254,7 @@ def main() -> int:
             print(f"  {section.name}: differs from +{first:x}")
     rebuilt = next(s for s in linked if s.name == ".rebuilt")
     print(f"linked pieces identical: {identical}, differing: {differing}; gcc's code: {len(rebuilt.data)} bytes")
-    return 1 if differing else 0
+    return 1 if differing or missing or broken else 0
 
 
 if __name__ == "__main__":

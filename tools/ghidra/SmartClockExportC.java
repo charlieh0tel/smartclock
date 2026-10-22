@@ -1168,6 +1168,12 @@ public class SmartClockExportC extends GhidraScript {
 				found.put(name, "undefined4 " + name);
 				declared.put(name, declared.get(target).replaceFirst("^.*:", ""));
 			}
+			// a routine's first bytes read as data, as the installer's flash
+			// polling reads the primary's code it erases
+			else if (!declared.containsKey(name) && getFunction(target) != null) {
+				found.put(name, "undefined4 " + name);
+				declared.put(name, getFunction(target).getEntryPoint().toString().replaceFirst("^.*:", ""));
+			}
 		}
 		Matcher frame = FRAME.matcher(functions);
 		Map<String, String> frames = new TreeMap<>();
@@ -4198,11 +4204,13 @@ public class SmartClockExportC extends GhidraScript {
 	/**
 	 * A table's definition in hand-written or generated C, at a line's
 	 * start: const and its type, or a pointer type and const, a table of
-	 * const pointers; then any attribute macro, and its name before its
-	 * bounds or =.
+	 * const pointers; then any attribute, as the generated SCPI tree's
+	 * __attribute__((aligned(2))), and its name before its bounds or =.
 	 */
 	private static final Pattern DATA_DEFINITION = Pattern.compile(
-		"(?m)^(?:const [A-Za-z_][\\w\\s]*?|(?!static\\b)[A-Za-z_][\\w ]*?\\*+\\s*const\\s[\\w\\s]*?)\\b(\\w+)(?:\\s*\\[[^\\]]*\\])*\\s*=");
+		"(?m)^(?:const [A-Za-z_][\\w\\s]*?|(?!static\\b)[A-Za-z_][\\w ]*?\\*+\\s*const\\s[\\w\\s]*?)"
+			+ "(?:__attribute__\\(\\((?:[^()]|\\([^()]*\\))*\\)\\)\\s*)?"
+			+ "\\b(\\w+)(?:\\s*\\[[^\\]]*\\])*\\s*=");
 
 	/**
 	 * The files of a rewritten=DIR argument with a suffix, in DIR and the

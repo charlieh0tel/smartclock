@@ -277,8 +277,10 @@ part of what they change.  In order:
    `types=tools/ghidra/types/mc68331.h`,
    `types=tools/ghidra/types/mc68681.h`,
    `names=tools/ghidra/names/IMAGE.tsv`, and
-   `names=tools/ghidra/names/IMAGE.scpi-tree.tsv` where `make scpi-tree`
-   made one (the SCPI tree's records), `scpi=FILE` from
+   `names=tools/ghidra/names/IMAGE.scpi-tree.tsv` and
+   `names=tools/ghidra/names/IMAGE.installer-scpi-tree.tsv` where `make
+   scpi-tree` made them (the SCPI trees' records, and the installer's
+   handlers), `scpi=FILE` from
    `smartclock-cli dump-scpi --handlers IMAGE` and
    `pforth=docs/firmware/pforth/IMAGE.txt`.
 4. `SmartClockForth.java`.
@@ -834,9 +836,10 @@ all of which it includes, declares its extern `const` and gives it no
 `.set`, so that they read the C's; a table of pointers is itself
 `const`, `T *const name[n]`, as its definition.  So with the generated
 SCPI tree, `scpi_tree_data.c`, a file of data alone, every record of
-it (docs/scpi/README.md, "As C"): the parser's routines, decompiled
-and hand-written, read the C's tree, not ROM's (PLAN.md,
-2026-10-22).  Not where the
+it, and the installer's, `installer/installer_scpi_tree_data.c`
+(docs/scpi/README.md, "As C"): the parser's routines, decompiled
+and hand-written, the installer's copies too, read the C's tree, not
+ROM's or the installer's RAM's (PLAN.md, 2026-10-22).  Not where the
 image reads past the
 table: `clock_days_before_month`'s unchecked month reads the word
 before `days_before_month` and those after it, `exception_name` reads
@@ -891,7 +894,10 @@ routine's of the harness's recorded as the image's copy would pass it.
 Where the harness gives a call one of the image's objects that has a
 twin, the main tree's root list or a node, as below, gcc's copy is
 given the twin, in its arguments and in the memory it starts with, so
-that it reads the C's tree as the firmware's C does.  And a call starts with
+that it reads the C's tree as the firmware's C does.  Each profile
+gives the parser's objects of its own tree (`harness.ScpiObjects`):
+the installer's functions get its console port, its tree's lists and
+keywords, so that they read the installer's generated tree.  And a call starts with
 A6 at a caller's frame on the harness's stack, its saved frame pointer
 0, its return address the harness's and its first argument a name,
 `"gpsx"` as `root_task` passes it, since the image's code may walk its

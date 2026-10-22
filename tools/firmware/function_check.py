@@ -364,13 +364,15 @@ GIVEN_CASES = {
 # classes (0x277ec), as scpi_engine_class keeps them.  The header
 # resolvers' query, 0 the setter or 1 the query, indexes the node's two
 # handlers (scpi_header_resolve, 0x27d80; scpi_common_header_resolve,
-# 0x27f10): past them lies what follows the node, the image's or the
-# generated tree's (docs/scpi/README.md, "As C").
+# 0x27f10), and the installer's copies': past them lies what follows the
+# node, the image's or the generated tree's (docs/scpi/README.md, "As C").
 IN_RANGE = {
     **{name: {0: 6} for name in ("fpga_set_bit", "fpga_set_field")},
     "scpi_char_upper": {0: 0x106},
     "scpi_header_resolve": {6: 2},
     "scpi_common_header_resolve": {5: 2},
+    "installer_scpi_header_resolve": {6: 2},
+    "installer_scpi_common_header_resolve": {5: 2},
 }
 
 

@@ -640,14 +640,15 @@ TEXT = b"123.456\0"
 # its read routine at +0, which the lexer calls, and its methods from
 # the pointer at +4 (docs/firmware/structures.md).
 CONSOLE_PORT = 0x29E18
-OBJECTS = {"output": CONSOLE_PORT, "input": CONSOLE_PORT}
+OUTPUT = "output"
+INPUT = "input"
 # And an SCPI header path, a fresh buffer, as scpi_path_reset (0x27efe)
 # sets one back: the long at +0 the main tree's root list,
 # scpi_main_tree (0x53034), which scpi_interpret is given, and the
 # word at +4, the suffixes it holds, 0 (docs/scpi/README.md).
 PATH = "path"
 SCPI_MAIN_TREE = 0x53034
-RESET_PATH = struct.pack(">IH", SCPI_MAIN_TREE, 0)
+RESET_PATH_SUFFIXES = struct.pack(">H", 0)
 RESET_PATH_LIST = 0
 # And a keyword token, scpi_keyword: its length at +0 and its text from
 # +2 (smartclock.h), by the case one of KEYWORDS: of the main tree's
@@ -740,6 +741,42 @@ ITEMS = "items"
 RESPONSE_SLOT = "response"
 CONTEXT = "context"
 SAMPLE_CALL = (True, "STATus_OPERation_HARDware_ENABle")
+# The installer's (docs/scpi/README.md, "As C"): its console port,
+# installer_console_port (installer::0x1076d0), its main tree's root
+# list, installer_scpi_list_main (installer::0x108606), and its common
+# commands', installer_scpi_list_common (installer::0x1085d8), as
+# installer_scpi_trees (installer::0x108930) holds them; keywords of
+# its root list, short and long, of :SYSTem's, and of neither, the root
+# having no default child; and the query of :DIAGnostic:ERASe?, a short.
+INSTALLER_CONSOLE_PORT = 0x1076D0
+INSTALLER_SCPI_MAIN_TREE = 0x108606
+INSTALLER_SCPI_COMMON_LIST = 0x1085D8
+INSTALLER_KEYWORDS = (b"SYST", b"DIAGNOSTIC", b"ERR", b"NONE")
+INSTALLER_SAMPLE_CALL = (True, "DIAGnostic_ERASe")
+
+
+@dataclass(frozen=True)
+class ScpiObjects:
+    """The SCPI parser's objects a profile's routines are given: its
+    console port, its main tree's root list, its common commands' list,
+    the keywords a keyword token holds, by the case, and the path of the
+    node whose query a fresh call record is for."""
+
+    console_port: int
+    main_tree: int
+    common_list: int
+    keywords: tuple[bytes, ...]
+    sample_call: tuple[bool, str]
+
+
+PRIMARY_SCPI = ScpiObjects(CONSOLE_PORT, SCPI_MAIN_TREE, SCPI_COMMON_LIST, tuple(KEYWORDS), SAMPLE_CALL)
+INSTALLER_SCPI = ScpiObjects(
+    INSTALLER_CONSOLE_PORT,
+    INSTALLER_SCPI_MAIN_TREE,
+    INSTALLER_SCPI_COMMON_LIST,
+    INSTALLER_KEYWORDS,
+    INSTALLER_SAMPLE_CALL,
+)
 CONTEXT_INPUT = 0
 CONTEXT_WORD = 4
 CONTEXT_WORD_SIZE = 2
@@ -812,9 +849,11 @@ class Profile:
     a call's caller's frame, as CALLER_NAME; vsprintf its own, as
     VSPRINTF; buffers its arguments' buffers, as (start, bytes), in RAM
     or apart from it; status_object where its status set-up keeps the
-    status model, as STATUS_OBJECT; and objects whether its parameters
-    are given the primary's other objects, OBJECTS to
-    EXCHANGE_PARAMETERS and an SCPI handler's."""
+    status model, as STATUS_OBJECT; objects whether its parameters
+    are given the primary's other objects, VARIABLES to
+    EXCHANGE_PARAMETERS and an SCPI handler's; and scpi the SCPI
+    parser's objects its parameters are given, its own tree's, as
+    PRIMARY_SCPI and INSTALLER_SCPI."""
 
     overlay: str | None
     ram: bytes
@@ -833,6 +872,7 @@ class Profile:
     buffers: tuple[int, int]
     status_object: int
     objects: bool
+    scpi: ScpiObjects
 
     def exchange_ids(self) -> dict[int, int]:
         """A distinct id for each cell of received, as its creates leave one."""
@@ -865,6 +905,7 @@ PRIMARY = Profile(
     buffers=(BUFFER, ALLOCATIONS - BUFFER),
     status_object=STATUS_OBJECT,
     objects=True,
+    scpi=PRIMARY_SCPI,
 )
 # The installer (docs/firmware/restart.md, "Forced installer entry with
 # an unusable primary"): the entry at 0xa58 unpacks its records into RAM
@@ -922,6 +963,7 @@ def installer_profile(image: bytes) -> Profile:
         buffers=(INSTALLER_BUFFERS, PRIMARY.buffers[1]),
         status_object=INSTALLER_STATUS_OBJECT,
         objects=False,
+        scpi=INSTALLER_SCPI,
     )
 
 
@@ -1273,7 +1315,7 @@ def arguments(
     if handler and names == HANDLER_NAMES:
         parameters, response, call = (struct.unpack(">I", value)[0] for value in values)
         call_record(m, handler.group(1) == QUERY, handler.group(2), parameters, response, call)
-    elif objects and names and (CALL in names or CONTEXT in names):
+    elif names and (CALL in names or CONTEXT in names):
         record = sample_call(m)
         node = pointer_at(m, record + CALL_NODE)
         given = {
@@ -1290,8 +1332,9 @@ def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, resp
     """Makes record, a buffer, what scpi_interpret's call record holds for
     a handler's path, and parameters what scpi_header_resolve starts
     them with; False, leaving them, for a path not in the tree."""
+    scpi = m.profile.scpi
     common = path.startswith(COMMON_PREFIX)
-    nodes = header_nodes(m, SCPI_COMMON_LIST if common else SCPI_MAIN_TREE, path.removeprefix(COMMON_PREFIX))
+    nodes = header_nodes(m, scpi.common_list if common else scpi.main_tree, path.removeprefix(COMMON_PREFIX))
     if not nodes:
         return False
     ids = [i for i in (struct.unpack(">H", m.read(node + NODE_ID, 2))[0] for node in nodes) if i != NO_ID]
@@ -1301,11 +1344,11 @@ def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, resp
         (CALL_ARENA, arena(m)),
         (CALL_PARAMETERS, parameters),
         (CALL_RESPONSE, response),
-        (CALL_INPUT, CONSOLE_PORT),
-        (CALL_OUTPUT, CONSOLE_PORT),
+        (CALL_INPUT, scpi.console_port),
+        (CALL_OUTPUT, scpi.console_port),
         (CALL_STATUS, pointer_at(m, m.profile.status_object)),
-        (CALL_MAIN_TREE, SCPI_MAIN_TREE),
-        (CALL_COMMON_LIST, SCPI_COMMON_LIST),
+        (CALL_MAIN_TREE, scpi.main_tree),
+        (CALL_COMMON_LIST, scpi.common_list),
     ):
         give(m, record + offset, value)
     m.uc.mem_write(record + CALL_INDEX, struct.pack(">H", int(query)))
@@ -1313,10 +1356,11 @@ def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, resp
 
 
 def sample_call(m: RebuiltMachine) -> int:
-    """A fresh call record for SAMPLE_CALL, with fresh parameters and response."""
+    """A fresh call record for the profile's sample call, as SAMPLE_CALL,
+    with fresh parameters and response."""
     record = m.buffer()
-    if not call_record(m, *SAMPLE_CALL, m.buffer(), m.buffer(), record):
-        raise RuntimeError(f"no node for {SAMPLE_CALL}")
+    if not call_record(m, *m.profile.scpi.sample_call, m.buffer(), m.buffer(), record):
+        raise RuntimeError(f"no node for {m.profile.scpi.sample_call}")
     return record
 
 
@@ -1330,13 +1374,14 @@ def arena(m: RebuiltMachine) -> int:
 def parser_context(m: RebuiltMachine, record: int) -> int:
     """A fresh parser context, as scpi_interpret has scpi_context_init fill it."""
     context = m.buffer()
+    scpi = m.profile.scpi
     for offset, value in (
-        (CONTEXT_INPUT, CONSOLE_PORT),
+        (CONTEXT_INPUT, scpi.console_port),
         (CONTEXT_PATH, reset_path(m)),
         (CONTEXT_CALL, record),
         (CONTEXT_ARENA, pointer_at(m, record + CALL_ARENA)),
-        (CONTEXT_MAIN_TREE, SCPI_MAIN_TREE),
-        (CONTEXT_COMMON_LIST, SCPI_COMMON_LIST),
+        (CONTEXT_MAIN_TREE, scpi.main_tree),
+        (CONTEXT_COMMON_LIST, scpi.common_list),
     ):
         give(m, context + offset, value)
     m.uc.mem_write(context + CONTEXT_WORD, bytes(CONTEXT_WORD_SIZE))
@@ -1345,8 +1390,9 @@ def parser_context(m: RebuiltMachine, record: int) -> int:
 
 def reset_path(m: RebuiltMachine) -> int:
     """A fresh header path, as scpi_path_reset sets one back."""
-    path = m.buffer(RESET_PATH)
-    give(m, path + RESET_PATH_LIST, SCPI_MAIN_TREE)
+    main_tree = m.profile.scpi.main_tree
+    path = m.buffer(struct.pack(">I", main_tree) + RESET_PATH_SUFFIXES)
+    give(m, path + RESET_PATH_LIST, main_tree)
     return path
 
 
@@ -1404,15 +1450,17 @@ def keyword_text(m: Machine, node: int) -> str:
 def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int) -> int | None:
     """The image's object a parameter of a name and type is given, the
     case'th of those it may be; None if it is given none.  Every profile
-    gives its status model's; only one with objects the rest."""
+    gives its status model's and its SCPI parser's; only one with objects
+    the rest."""
+    scpi = m.profile.scpi
+    if name in (OUTPUT, INPUT):
+        return scpi.console_port
+    if name == PATH:
+        return reset_path(m)
+    if kind == KEYWORD:
+        text = scpi.keywords[case % len(scpi.keywords)]
+        return m.buffer(KEYWORD_LENGTH.pack(len(text)) + text + b"\0")
     if m.profile.objects:
-        if name in OBJECTS:
-            return OBJECTS[name]
-        if name == PATH:
-            return reset_path(m)
-        if kind == KEYWORD:
-            text = KEYWORDS[case % len(KEYWORDS)]
-            return m.buffer(KEYWORD_LENGTH.pack(len(text)) + text + b"\0")
         if kind in VARIABLES:
             return VARIABLES[kind]
         if kind == SCPI_STEP:

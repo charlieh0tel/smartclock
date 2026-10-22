@@ -7136,13 +7136,51 @@ extern char * installer_status_report_messages[5]; /* installer::00107b08 */
 extern duartb_settings_record installer_duartb_settings_defaults; /* installer::001081a2 */
 extern psos_configuration installer_psos_config_defaults; /* installer::001084da */
 extern io_device_jumps installer_io_table_defaults; /* installer::00108578 */
-extern scpi_tree_pair installer_scpi_trees; /* installer::00108930 */
+extern const scpi_parameter installer_scpi_parameter_set_SYSTem_LANGuage_1; /* installer::001085c0 */
+extern const scpi_parameter installer_scpi_parameter_query_DIAGnostic_TEST_1; /* installer::001085c8 */
+extern const scpi_parameter installer_scpi_parameter_set_DIAGnostic_DOWNload_1; /* installer::001085d0 */
+extern const scpi_child_list installer_scpi_list_common; /* installer::001085d8 */
+extern scpi_node * const installer_scpi_list_common_children[2]; /* installer::001085de */
+extern const scpi_child_list installer_scpi_list_SYSTem; /* installer::001085e6 */
+extern scpi_node * const installer_scpi_list_SYSTem_children[2]; /* installer::001085ec */
+extern const scpi_child_list installer_scpi_list_DIAGnostic; /* installer::001085f4 */
+extern scpi_node * const installer_scpi_list_DIAGnostic_children[3]; /* installer::001085fa */
+extern const scpi_child_list installer_scpi_list_main; /* installer::00108606 */
+extern scpi_node * const installer_scpi_list_main_children[2]; /* installer::0010860c */
+extern const char installer_scpi_keyword_IDN[5]; /* installer::00108614 */
+extern const char installer_scpi_keyword_CLS[5]; /* installer::00108619 */
+extern const char installer_scpi_keyword_LANGuage[10]; /* installer::0010861e */
+extern const char installer_scpi_keyword_ERRor[7]; /* installer::00108628 */
+extern const char installer_scpi_keyword_SYSTem[8]; /* installer::0010862f */
+extern const char installer_scpi_keyword_TEST[6]; /* installer::00108637 */
+extern const char installer_scpi_keyword_ERASe[7]; /* installer::0010863d */
+extern const char installer_scpi_keyword_DOWNload[10]; /* installer::00108644 */
+extern const char installer_scpi_keyword_DIAGnostic[12]; /* installer::0010864e */
+extern const scpi_parameter_kinds installer_scpi_kinds_set_SYSTem_LANGuage_1; /* installer::00108680 */
+extern const scpi_parameter_kinds installer_scpi_kinds_query_DIAGnostic_TEST_1; /* installer::001086a4 */
+extern const scpi_parameter_kinds installer_scpi_kinds_set_DIAGnostic_DOWNload_1; /* installer::001086c8 */
+extern const scpi_response_item installer_scpi_items_common_IDN[2]; /* installer::001086ec */
+extern const scpi_node installer_scpi_node_common_IDN; /* installer::00108700 */
+extern const scpi_node installer_scpi_node_common_CLS; /* installer::00108732 */
+extern const scpi_response_item installer_scpi_items_SYSTem_LANGuage[2]; /* installer::00108764 */
+extern const scpi_node installer_scpi_node_SYSTem_LANGuage; /* installer::00108778 */
+extern const scpi_response_item installer_scpi_items_SYSTem_ERRor[3]; /* installer::001087aa */
+extern const scpi_node installer_scpi_node_SYSTem_ERRor; /* installer::001087c8 */
+extern const scpi_node installer_scpi_node_SYSTem; /* installer::001087fa */
+extern const scpi_response_item installer_scpi_items_DIAGnostic_TEST[4]; /* installer::0010882c */
+extern const scpi_node installer_scpi_node_DIAGnostic_TEST; /* installer::00108854 */
+extern const scpi_response_item installer_scpi_items_DIAGnostic_ERASe[2]; /* installer::00108886 */
+extern const scpi_node installer_scpi_node_DIAGnostic_ERASe; /* installer::0010889a */
+extern const scpi_node installer_scpi_node_DIAGnostic_DOWNload; /* installer::001088cc */
+extern const scpi_node installer_scpi_node_DIAGnostic; /* installer::001088fe */
+extern const scpi_tree_pair installer_scpi_trees; /* installer::00108930 */
 extern uint8_t installer_ctype_table[257]; /* installer::00109056 */
 
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
 extern uint8_t DAT_0004cfc0; /* 0004cfc0 */
 extern uint8_t DAT_00700000; /* 00700000 */
+extern uint16_t LAB_0004aaaa; /* 0004aaaa */
 extern uint32_t *PTR_lamp_test_command_000186b0; /* 000186b0 */
 extern uint32_t *PTR_s_Self_Test_0004d076; /* 0004d076 */
 extern uint8_t UNK_0001af5e; /* 0001af5e */
@@ -7176,6 +7214,11 @@ extern uint8_t UNK_001076e1; /* 001076e1 */
 extern uint8_t UNK_001079bc; /* 001079bc */
 extern uint8_t UNK_001079c7; /* 001079c7 */
 extern uint8_t UNK_001079e3; /* 001079e3 */
+extern uint8_t UNK_001080b8; /* 001080b8 */
+extern uint8_t UNK_00108136; /* 00108136 */
+extern uint8_t UNK_00108154; /* 00108154 */
+extern uint8_t UNK_0010815c; /* 0010815c */
+extern uint8_t UNK_00108164; /* 00108164 */
 extern uint8_t UNK_001082c8; /* 001082c8 */
 extern uint8_t UNK_001082d7; /* 001082d7 */
 extern uint8_t UNK_0010921e; /* 0010921e */
@@ -7305,6 +7348,7 @@ extern uint8_t uint8_t_0010142a; /* 0010142a */
 
 __asm__(".set DAT_0004cfc0, 0x0004cfc0");
 __asm__(".set DAT_00700000, 0x00700000");
+__asm__(".set LAB_0004aaaa, 0x0004aaaa");
 __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
 __asm__(".set UNK_0001af5e, 0x0001af5e");
@@ -7338,6 +7382,11 @@ __asm__(".set UNK_001076e1, 0x001076e1");
 __asm__(".set UNK_001079bc, 0x001079bc");
 __asm__(".set UNK_001079c7, 0x001079c7");
 __asm__(".set UNK_001079e3, 0x001079e3");
+__asm__(".set UNK_001080b8, 0x001080b8");
+__asm__(".set UNK_00108136, 0x00108136");
+__asm__(".set UNK_00108154, 0x00108154");
+__asm__(".set UNK_0010815c, 0x0010815c");
+__asm__(".set UNK_00108164, 0x00108164");
 __asm__(".set UNK_001082c8, 0x001082c8");
 __asm__(".set UNK_001082d7, 0x001082d7");
 __asm__(".set UNK_0010921e, 0x0010921e");
@@ -7976,7 +8025,6 @@ __asm__(".set installer_scpi_input_repeat, 0x0010abec");
 __asm__(".set installer_scpi_last_input, 0x0010abe8");
 __asm__(".set installer_scpi_port_echo_length, 0x0010abe7");
 __asm__(".set installer_scpi_prompt_text, 0x0010acf8");
-__asm__(".set installer_scpi_trees, 0x00108930");
 __asm__(".set installer_service_request_enable, 0x0010abef");
 __asm__(".set installer_spoo_exchange, 0x0010afbe");
 __asm__(".set installer_spoo_message, 0x0010afc4");
@@ -8535,6 +8583,8 @@ extern uint8_t DAT_0010fffe;
 __asm__(".set DAT_0010fffe, 0x0010fffe");
 extern uint8_t DAT_installer__00100787;
 __asm__(".set DAT_installer__00100787, 0x00100787");
+extern uint8_t DAT_installer__00100cde;
+__asm__(".set DAT_installer__00100cde, 0x00100cde");
 extern uint8_t DAT_installer__00101528;
 __asm__(".set DAT_installer__00101528, 0x00101528");
 extern uint8_t DAT_installer__00104088;
@@ -8555,6 +8605,8 @@ extern uint8_t DAT_installer__00107298;
 __asm__(".set DAT_installer__00107298, 0x00107298");
 extern uint8_t DAT_installer__001076e1;
 __asm__(".set DAT_installer__001076e1, 0x001076e1");
+extern uint8_t DAT_installer__00108164;
+__asm__(".set DAT_installer__00108164, 0x00108164");
 extern uint8_t DAT_installer__001082d7;
 __asm__(".set DAT_installer__001082d7, 0x001082d7");
 extern uint8_t DAT_installer__00109a08;
@@ -9023,6 +9075,10 @@ extern uint8_t LAB_installer__0010334c;
 __asm__(".set LAB_installer__0010334c, 0x0010334c");
 extern uint8_t LAB_installer__00103352;
 __asm__(".set LAB_installer__00103352, 0x00103352");
+extern uint8_t LAB_installer__001042ce;
+__asm__(".set LAB_installer__001042ce, 0x001042ce");
+extern uint8_t LAB_installer__001042d4;
+__asm__(".set LAB_installer__001042d4, 0x001042d4");
 extern uint8_t LAB_installer__001047e0;
 __asm__(".set LAB_installer__001047e0, 0x001047e0");
 extern uint8_t LAB_installer__0010481c;
@@ -9065,6 +9121,8 @@ extern uint8_t LAB_installer__0010537e;
 __asm__(".set LAB_installer__0010537e, 0x0010537e");
 extern uint8_t LAB_installer__001053d6;
 __asm__(".set LAB_installer__001053d6, 0x001053d6");
+extern uint8_t LAB_installer__00105734;
+__asm__(".set LAB_installer__00105734, 0x00105734");
 extern uint8_t LAB_installer__001058c0;
 __asm__(".set LAB_installer__001058c0, 0x001058c0");
 extern uint8_t LAB_installer__001058c4;
@@ -9087,6 +9145,8 @@ extern uint8_t LAB_installer__00107276;
 __asm__(".set LAB_installer__00107276, 0x00107276");
 extern uint8_t LAB_installer__0010727c;
 __asm__(".set LAB_installer__0010727c, 0x0010727c");
+extern uint8_t LAB_installer__00107e66;
+__asm__(".set LAB_installer__00107e66, 0x00107e66");
 extern uint8_t LAB_installer__00108e6a;
 __asm__(".set LAB_installer__00108e6a, 0x00108e6a");
 extern uint8_t LAB_installer__00108ff0;
@@ -9127,12 +9187,20 @@ extern word WORD_installer__00105f12;
 __asm__(".set WORD_installer__00105f12, 0x00105f12");
 extern word WORD_installer__00105fd4;
 __asm__(".set WORD_installer__00105fd4, 0x00105fd4");
+extern word WORD_installer__001080b8;
+__asm__(".set WORD_installer__001080b8, 0x001080b8");
 extern word WORD_installer__0010921e;
 __asm__(".set WORD_installer__0010921e, 0x0010921e");
 extern uint32_t _DAT_00700000;
 __asm__(".set _DAT_00700000, 0x00700000");
+extern uint32_t _drtb_puts;
+__asm__(".set _drtb_puts, 0x0001d6ba");
+extern uint32_t _interpolator_calibration_init;
+__asm__(".set _interpolator_calibration_init, 0x00040000");
 extern uint32_t _interval_mean_flag;
 __asm__(".set _interval_mean_flag, 0x0010253c");
+extern uint32_t _sci_puts;
+__asm__(".set _sci_puts, 0x0001f76c");
 extern code func_0x0010135c;
 __asm__(".set func_0x0010135c, 0x0010135c");
 extern code *pcRam00100b48;
@@ -9175,8 +9243,14 @@ extern char s_DUARTB_isr_signaling_SIG_SOQ_installer__00103ecd[];
 __asm__(".set s_DUARTB_isr_signaling_SIG_SOQ_installer__00103ecd, 0x00103ecd");
 extern char s_E__04d__installer__001076d8[];
 __asm__(".set s_E__04d__installer__001076d8, 0x001076d8");
+extern char s_INSTALL_installer__0010815c[];
+__asm__(".set s_INSTALL_installer__0010815c, 0x0010815c");
+extern char s_NuHEWLETT_PACKARD__s__s__s__c_installer__00108136[];
+__asm__(".set s_NuHEWLETT_PACKARD__s__s__s__c_installer__00108136, 0x00108136");
 extern char s_Oooh__That_tickles__I_don_t_know_installer__00100b84[];
 __asm__(".set s_Oooh__That_tickles__I_don_t_know_installer__00100b84, 0x00100b84");
+extern char s_PRIMARY_installer__00108154[];
+__asm__(".set s_PRIMARY_installer__00108154, 0x00108154");
 extern char s_Prog_end__returned_installer__0010142a[];
 __asm__(".set s_Prog_end__returned_installer__0010142a, 0x0010142a");
 extern char s_RESET_to_recover__installer__001007bc[];
@@ -9221,6 +9295,10 @@ extern char s_wait_v_SIG_SIQ_error_in_getc_installer__00103dfc[];
 __asm__(".set s_wait_v_SIG_SIQ_error_in_getc_installer__00103dfc, 0x00103dfc");
 extern char s_wait_v_SIG_SOQ_error_in__drtb_pu_installer__00103dd9[];
 __asm__(".set s_wait_v_SIG_SOQ_error_in__drtb_pu_installer__00103dd9, 0x00103dd9");
+extern uint32_t uRam00045554;
+__asm__(".set uRam00045554, 0x00045554");
+extern uint32_t uRam0004aaaa;
+__asm__(".set uRam0004aaaa, 0x0004aaaa");
 extern uint32_t uRam00100b28;
 __asm__(".set uRam00100b28, 0x00100b28");
 extern uint32_t uRam00100b2c;
@@ -11210,6 +11288,15 @@ uint32_t installer_spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32
 void installer_spoo_task(void);
 void installer_fatal_error_with_code
                (char *message,uint32_t unused_1,uint32_t unused_2,uint32_t code);
+uint32_t installer_scpi_parse_text(scpi_token_string *token,void *unused,char **value);
+int32_t installer_scpi_parse_short(scpi_number *number,void *param_2,int16_t *value,scpi_unit *units);
+int32_t installer_scpi_number_to_short(scpi_number *number,int16_t *value,int32_t scale);
+int32_t installer_scpi_format_string(scpi_port *output,char **value);
+int32_t installer_scpi_format_counted_text(scpi_port *output,scpi_token_string *text);
+int32_t installer_scpi_unsigned_to_digits(uint32_t value,char *digits,int16_t *start);
+int32_t installer_scpi_format_long(scpi_port *output,int32_t *value);
+int32_t installer_scpi_format_short(scpi_port *output,int16_t *value);
+int32_t installer_scpi_format_unsigned_long(scpi_port *output,uint32_t *value);
 int32_t installer_scpi_context_init
                   (scpi_context *context,scpi_port *input,uint32_t word,scpi_path *path,
                   scpi_call *call,scpi_arena *arena,uint32_t field_1e,scpi_child_list *main_tree,
@@ -11226,6 +11313,8 @@ int32_t installer_scpi_parameter_match
 uint32_t installer_scpi_parameters_finish(scpi_parameter **parameter,scpi_call *call,int16_t *offset);
 int16_t installer_scpi_suffix_compare_tail(char *suffix,int32_t length,char *name);
 int8_t installer_scpi_multiplier_exponent(int32_t name);
+int16_t installer_scpi_match_suffix(int32_t length,char *suffix,scpi_unit *units,int16_t *scale);
+int32_t installer_scpi_apply_suffix(scpi_number *number,scpi_unit *units);
 scpi_node * installer_scpi_node_find(scpi_child_list *list,scpi_keyword *keyword);
 scpi_node *
 installer_scpi_node_find_with_defaults(scpi_path *path,scpi_keyword *keyword,void *unused);
@@ -11256,8 +11345,12 @@ void installer_status_apply_condition(status_model *status,int32_t condition,int
 int16_t installer_status_clear_bit(status_model *status,int32_t condition);
 uint32_t installer_condition_is_command_error(int32_t param_1);
 void installer_status_read_event(status_model *status,int32_t index,uint16_t *event);
+uint32_t FUN_installer__001061c8(status_model *param_1);
+void FUN_installer__001061f8(int32_t param_1,int32_t *param_2);
+void FUN_installer__0010621a(int32_t param_1,int32_t *param_2,uint32_t *param_3);
 uint32_t installer_error_queue_create(status_error_queue **queue,int32_t capacity,status_model *status);
 int16_t installer_error_queue_push(status_error_queue *queue,int32_t code,uint32_t value);
+void FUN_installer__0010634c(int16_t *param_1,int32_t *param_2,uint32_t *param_3);
 char * installer_error_message_lookup(int32_t code);
 uint32_t
 installer_scpi_interpret
@@ -11281,6 +11374,16 @@ uint32_t installer_scpi_task_create(uint32_t priority);
 void installer_scpi_task(void);
 uint32_t installer_status_init(void);
 uint32_t installer_status_report(int16_t code);
+int32_t installer_scpi_set_common_CLS(void *parameters,void *response,scpi_call *call);
+int32_t installer_scpi_query_common_IDN(void *parameters,void *response,scpi_call *call);
+uint32_t FUN_installer__00107c18(uint8_t **param_1,uint32_t param_2);
+int32_t installer_scpi_set_DIAGnostic_DOWNload(void *parameters,void *response,scpi_call *call);
+int32_t installer_scpi_set_DIAGnostic_ERASe(void *parameters,void *response,scpi_call *call);
+int32_t installer_scpi_query_DIAGnostic_ERASe(void *parameters,void *response,scpi_call *call);
+int32_t installer_scpi_set_SYSTem_LANGuage(void *parameters,void *response,scpi_call *call);
+int32_t installer_scpi_query_SYSTem_LANGuage(void *parameters,void *response,scpi_call *call);
+int32_t installer_scpi_query_SYSTem_ERRor(void *parameters,void *response,scpi_call *call);
+int32_t installer_scpi_query_DIAGnostic_TEST(void *parameters,void *response,scpi_call *call);
 uint16_t installer_record_checksum(void *record,uint16_t length);
 uint8_t installer_parameter_record_read(void);
 void installer_idn_model_default(void);
@@ -98308,6 +98411,235 @@ void installer_fatal_error_with_code
 
 #endif
 
+/* installer::001040f4 */
+
+/* the installer's copy of scpi_parse_text, at 0x25d4a plus 0xde3aa, byte for byte */
+
+uint32_t installer_scpi_parse_text(scpi_token_string *token,void *unused,char **value)
+
+{
+  char cVar1;
+  int32_t iVar2;
+  uint32_t uVar3;
+  char *pcVar4;
+  
+  iVar2 = -1;
+  pcVar4 = token->text;
+  do {
+    iVar2 = iVar2 + 1;
+    cVar1 = *pcVar4;
+    pcVar4 = pcVar4 + 1;
+  } while (cVar1 != 0);
+  if (iVar2 == (int16_t)token->length) {
+    *value = token->text;
+    uVar3 = 0;
+  }
+  else {
+    uVar3 = 0xffffffeb;
+  }
+  return uVar3;
+}
+
+
+/* installer::00104136 */
+
+/* the installer's copy of scpi_parse_short, at 0x25ea6 plus 0xde290, byte for byte but for its
+   jsr.l targets, installer_scpi_apply_suffix and installer_scpi_number_to_short
+   (installer::0x104142, installer::0x10415a) */
+
+int32_t installer_scpi_parse_short(scpi_number *number,void *param_2,int16_t *value,scpi_unit *units)
+
+{
+  int32_t iVar1;
+  
+  iVar1 = installer_scpi_apply_suffix(number,units);
+  if (iVar1 == 0) {
+    iVar1 = installer_scpi_number_to_short(number,value,(int32_t)number->scale);
+    value[1] = number->unit;
+  }
+  return iVar1;
+}
+
+
+/* installer::00104236 */
+
+/* the installer's copy of scpi_number_to_short, at 0x2609a plus 0xde19c, byte for byte */
+
+int32_t installer_scpi_number_to_short(scpi_number *number,int16_t *value,int32_t scale)
+
+{
+  int32_t iVar1;
+  uint16_t uVar2;
+  int16_t sVar3;
+  int32_t iVar4;
+  
+  if (number->digits[0] == 0) {
+    *value = 0;
+    goto LAB_installer__001042d4;
+  }
+  iVar4 = (int32_t)number->exponent + (int32_t)__ghidra_piece(int16_t, scale, 2);
+  iVar1 = iVar4 + 0x10;
+  if (iVar1 < 6) {
+    uVar2 = 0;
+    if (0 < iVar1) {
+      for (sVar3 = 0; (int32_t)sVar3 < iVar4 + 0xf; sVar3 = sVar3 + 1) {
+        uVar2 = (int16_t)number->digits[sVar3] + uVar2 * 10;
+      }
+      if (0xccc < uVar2) goto LAB_installer__001042ce;
+      uVar2 = (int16_t)number->digits[sVar3] + uVar2 * 10;
+    }
+    if ((-1 < iVar1) && (4 < number->suffix[iVar4 + -4])) {
+      uVar2 = uVar2 + 1;
+    }
+    if (number->negative == 0) {
+      if (0x7fff < uVar2) goto LAB_installer__001042ce;
+      *value = uVar2;
+    }
+    else {
+      if (0x8000 < uVar2) goto LAB_installer__001042ce;
+      *value = -uVar2;
+    }
+LAB_installer__001042d4:
+    iVar1 = 0;
+  }
+  else {
+LAB_installer__001042ce:
+    iVar1 = -0xb;
+  }
+  return iVar1;
+}
+
+
+/* installer::0010453a */
+
+/* the installer's copy of scpi_format_string, at 0x2639e plus 0xde19c, byte for byte */
+
+int32_t installer_scpi_format_string(scpi_port *output,char **value)
+
+{
+  char *pcVar1;
+  
+  pcVar1 = *value;
+  (*(code *)output->methods->put)(output,0x22);
+  for (; *pcVar1 != 0; pcVar1 = pcVar1 + 1) {
+    (*(code *)output->methods->put)(output,(int32_t)*pcVar1);
+    if (*pcVar1 == '\"') {
+      (*(code *)output->methods->put)(output,0x22);
+    }
+  }
+  (*(code *)output->methods->put)(output,0x22);
+  return 0;
+}
+
+
+/* installer::001045a8 */
+
+/* the installer's copy of scpi_format_counted_text, at 0x26438 plus 0xde170, byte for byte */
+
+int32_t installer_scpi_format_counted_text(scpi_port *output,scpi_token_string *text)
+
+{
+  (*(code *)output->methods->write)(output,text->text,(int32_t)(int16_t)text->length);
+  return -0x5a;
+}
+
+
+/* installer::001045d0 */
+
+/* the installer's copy of scpi_unsigned_to_digits, at 0x264e0 plus 0xde0f0, byte for byte */
+
+int32_t installer_scpi_unsigned_to_digits(uint32_t value,char *digits,int16_t *start)
+
+{
+  int16_t sVar1;
+  
+  sVar1 = 0x10;
+  do {
+    digits[sVar1] = (char)(value % 10) + '0';
+    value = value / 10;
+    if (value == 0) {
+      *start = sVar1;
+      return 0;
+    }
+    sVar1 = sVar1 + -1;
+  } while (0 < sVar1);
+  return -0x28;
+}
+
+
+/* installer::00104612 */
+
+/* the installer's copy of scpi_format_long, at 0x26522 plus 0xde0f0, byte for byte */
+
+int32_t installer_scpi_format_long(scpi_port *output,int32_t *value)
+
+{
+  int32_t iVar1;
+  uint32_t value_00;
+  bool bVar2;
+  char acStack_18 [18];
+  int16_t local_6;
+  
+  value_00 = *value;
+  bVar2 = -1 < (int32_t)value_00;
+  if (!bVar2) {
+    value_00 = -value_00;
+  }
+  iVar1 = installer_scpi_unsigned_to_digits(value_00,acStack_18,&local_6);
+  if (iVar1 == 0) {
+    if (bVar2) {
+      local_6 = local_6 + -1;
+      acStack_18[local_6] = '+';
+    }
+    else {
+      local_6 = local_6 + -1;
+      acStack_18[local_6] = '-';
+    }
+    (*(code *)output->methods->write)(output,acStack_18 + local_6,0x11 - local_6);
+    iVar1 = 0;
+  }
+  return iVar1;
+}
+
+
+/* installer::00104692 */
+
+/* the installer's copy of scpi_format_short, at 0x265a2 plus 0xde0f0, byte for byte */
+
+int32_t installer_scpi_format_short(scpi_port *output,int16_t *value)
+
+{
+  int32_t iVar1;
+  int32_t local_8;
+  
+  local_8 = (int32_t)*value;
+  iVar1 = installer_scpi_format_long(output,&local_8);
+  return iVar1;
+}
+
+
+/* installer::001046b2 */
+
+/* the installer's copy of scpi_format_unsigned_long, at 0x265c2 plus 0xde0f0, byte for byte */
+
+int32_t installer_scpi_format_unsigned_long(scpi_port *output,uint32_t *value)
+
+{
+  int32_t iVar1;
+  char acStack_18 [18];
+  int16_t local_6;
+  
+  iVar1 = installer_scpi_unsigned_to_digits(*value,acStack_18,&local_6);
+  if (iVar1 == 0) {
+    local_6 = local_6 + -1;
+    acStack_18[local_6] = '+';
+    (*(code *)output->methods->write)(output,acStack_18 + local_6,0x11 - local_6);
+    iVar1 = 0;
+  }
+  return iVar1;
+}
+
+
 /* installer::0010472e */
 #if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
@@ -99163,6 +99495,82 @@ int8_t installer_scpi_multiplier_exponent(int32_t name)
 
 #endif
 
+/* installer::001056d8 */
+
+/* the installer's copy of scpi_match_suffix, at 0x27a2a plus 0xddcae, byte for byte */
+
+int16_t installer_scpi_match_suffix(int32_t length,char *suffix,scpi_unit *units,int16_t *scale)
+
+{
+  int16_t sVar1;
+  int16_t sVar2;
+  int16_t sVar3;
+  uint16_t uVar4;
+  int8_t iVar5;
+  int16_t sVar6;
+  
+  sVar2 = (int16_t)length;
+  sVar1 = -1;
+  while( true ) {
+    do {
+      sVar6 = sVar1;
+      sVar1 = sVar6 + 1;
+      if (units[sVar1].name == (char *)0x0) {
+        return 0;
+      }
+      sVar3 = installer_scpi_suffix_compare_tail(suffix,(int32_t)sVar2,units[sVar1].name);
+    } while ((sVar3 == 0) || (2 < (int32_t)sVar2 - (int32_t)sVar3));
+    if (sVar2 == sVar3) break;
+    if (units[sVar1].exponent == -0x80) {
+      uVar4 = (uint16_t)*suffix;
+      if (sVar3 + 1 < (int32_t)sVar2) {
+        uVar4 = (int16_t)suffix[1] + uVar4 * 0x100;
+      }
+      iVar5 = installer_scpi_multiplier_exponent((uint32_t)uVar4);
+      *scale = (int16_t)iVar5;
+      if (iVar5 != -0x80) {
+LAB_installer__00105734:
+        return sVar6 + 2;
+      }
+    }
+  }
+  sVar1 = units[sVar1].exponent;
+  *scale = sVar1;
+  if (sVar1 == -0x80) {
+    *scale = 0;
+  }
+  goto LAB_installer__00105734;
+}
+
+
+/* installer::00105792 */
+
+/* the installer's copy of scpi_apply_suffix, at 0x27ae4 plus 0xddcae, byte for byte */
+
+int32_t installer_scpi_apply_suffix(scpi_number *number,scpi_unit *units)
+
+{
+  int16_t sVar1;
+  
+  if (number->suffix_length == 0) {
+    number->unit = 0;
+    number->scale = 0;
+  }
+  else {
+    if (units == (scpi_unit *)0x0) {
+      return -9;
+    }
+    sVar1 = installer_scpi_match_suffix
+                      ((int32_t)number->suffix_length,number->suffix,units,&number->scale);
+    number->unit = sVar1;
+    if (sVar1 == 0) {
+      return -0x1f;
+    }
+  }
+  return 0;
+}
+
+
 /* installer::00105858 */
 #if 0 /* the decompiler's reading; rewritten in installer_scpi_tree.c */
 
@@ -99838,6 +100246,44 @@ void installer_status_read_event(status_model *status,int32_t index,uint16_t *ev
 
 #endif
 
+/* installer::001061c8 */
+
+uint32_t FUN_installer__001061c8(status_model *param_1)
+
+{
+  int16_t sVar1;
+  uint16_t uStack_6;
+  
+  sVar1 = param_1->register_count;
+  while (sVar1 = sVar1 + -1, 0 < sVar1) {
+    installer_status_read_event(param_1,(int32_t)sVar1,&uStack_6);
+  }
+  return 0;
+}
+
+
+/* installer::001061f8 */
+
+void FUN_installer__001061f8(int32_t param_1,int32_t *param_2)
+
+{
+  uint32_t uStack_8;
+  
+  FUN_installer__0010634c(*(int16_t **)(param_1 + 6),param_2,&uStack_8);
+  return;
+}
+
+
+/* installer::0010621a */
+
+void FUN_installer__0010621a(int32_t param_1,int32_t *param_2,uint32_t *param_3)
+
+{
+  FUN_installer__0010634c(*(int16_t **)(param_1 + 6),param_2,param_3);
+  return;
+}
+
+
 /* installer::00106236 */
 #if 0 /* the decompiler's reading; rewritten in installer_status.c */
 
@@ -99924,6 +100370,30 @@ LAB_installer__0010632e:
 }
 
 #endif
+
+/* installer::0010634c */
+
+void FUN_installer__0010634c(int16_t *param_1,int32_t *param_2,uint32_t *param_3)
+
+{
+  if (*param_1 == param_1[1]) {
+    *param_2 = 0;
+    *param_3 = 0;
+  }
+  else {
+    param_1[1] = param_1[1] + 1;
+    if (param_1[1] == param_1[4]) {
+      param_1[1] = 0;
+    }
+    *param_2 = (int32_t)param_1[param_1[1] * 3 + 5];
+    *param_3 = *(uint32_t *)(param_1 + param_1[1] * 3 + 6);
+    if (*param_1 == param_1[1]) {
+      installer_status_prompt_refresh(*(status_model **)(param_1 + 2),0);
+    }
+  }
+  return;
+}
+
 
 /* installer::00106548 */
 #if 0 /* the decompiler's reading; rewritten in installer_status.c */
@@ -100519,6 +100989,458 @@ uint32_t installer_status_report(int16_t code)
 }
 
 #endif
+
+/* installer::00107b90 */
+
+/* the installer's handler for *CLS
+   dump-scpi */
+
+int32_t installer_scpi_set_common_CLS(void *parameters,void *response,scpi_call *call)
+
+{
+  int32_t local_8;
+  
+  FUN_installer__001061c8(call->status);
+  do {
+    FUN_installer__001061f8((int32_t)call->status,&local_8);
+  } while (local_8 != 0);
+  return 0;
+}
+
+
+/* installer::00107bc4 */
+
+/* the installer's handler for *IDN
+   dump-scpi */
+
+int32_t installer_scpi_query_common_IDN(void *parameters,void *response,scpi_call *call)
+
+{
+  char cVar1;
+  int16_t sVar2;
+  char *pcVar3;
+  
+  installer_sprintf(installer_idn_response,s_NuHEWLETT_PACKARD__s__s__s__c_installer__00108136 + 2,
+                    installer_idn_model,installer_idn_serial,&DAT_installer__00100cde,
+                    (int32_t)installer_idn_suffix);
+  *(char **)((int32_t)response + 2) = installer_idn_response;
+  sVar2 = -1;
+  pcVar3 = *(char **)((int32_t)response + 2);
+  do {
+    sVar2 = sVar2 + 1;
+    cVar1 = *pcVar3;
+    pcVar3 = pcVar3 + 1;
+  } while (cVar1 != 0);
+  *(int16_t *)response = sVar2;
+  return 0;
+}
+
+
+/* installer::00107c18 */
+
+uint32_t FUN_installer__00107c18(uint8_t **param_1,uint32_t param_2)
+
+{
+  uint16_t uVar1;
+  uint32_t uVar2;
+  int16_t sVar3;
+  int16_t sVar4;
+  uint8_t *puVar5;
+  uint8_t *puVar6;
+  
+  sVar4 = 0;
+  if ((param_1 < &primary_vectors) || (rom_lane_sums_high + 3 < param_1)) {
+    uVar2 = 0xfffffff5;
+  }
+  else {
+    if (rom_lane_sums_low + 3 < param_1) {
+      puVar5 = (uint8_t *)0x4aaaa;
+      puVar6 = (uint8_t *)0x45554;
+    }
+    else {
+      puVar5 = installer_records + 0x9eee;
+      puVar6 = installer_records + 0x4998;
+    }
+    do {
+      puVar5[0] = 0xaa;
+      puVar5[1] = 0xaa;
+      puVar6[0] = 0x55;
+      puVar6[1] = 0x55;
+      puVar5[0] = 0xa0;
+      puVar5[1] = 0xa0;
+      *(uint16_t *)param_1 = __ghidra_piece(uint16_t, param_2, 2);
+      sVar3 = 0;
+      do {
+        uVar1 = *(uint16_t *)param_1;
+        if ((uVar1 == __ghidra_piece(uint16_t, param_2, 2)) || ((uVar1 & 0x2020) == 0x2020)) break;
+        sVar3 = sVar3 + 1;
+      } while (sVar3 < 100);
+      sVar4 = sVar4 + 1;
+    } while ((uVar1 != __ghidra_piece(uint16_t, param_2, 2)) && (sVar4 < 5));
+    puVar5[0] = 0xaa;
+    puVar5[1] = 0xaa;
+    puVar6[0] = 0x55;
+    puVar6[1] = 0x55;
+    puVar5[0] = 0xf0;
+    puVar5[1] = 0xf0;
+    if (sVar4 == 5) {
+      uVar2 = 0xfffffff8;
+    }
+    else {
+      uVar2 = 0;
+    }
+  }
+  return uVar2;
+}
+
+
+/* installer::00107cb8 */
+
+/* WARNING: Removing unreachable block (ram,0x00107df6) */
+/* WARNING: Removing unreachable block (ram,0x00107e06) */
+/* the installer's handler for :DIAGnostic:DOWNload
+   dump-scpi */
+
+int32_t installer_scpi_set_DIAGnostic_DOWNload(void *parameters,void *response,scpi_call *call)
+
+{
+  char cVar1;
+  int32_t iVar2;
+  uint32_t uVar3;
+  int32_t iVar4;
+  int32_t iVar5;
+  int32_t iVar6;
+  int32_t iVar7;
+  uint32_t uVar8;
+  char *pcVar9;
+  char *pcVar10;
+  uint8_t **ppuStack_414;
+  char cStack_40c;
+  char cStack_40b;
+  uint8_t uStack_40a;
+  char acStack_406 [514];
+  uint16_t auStack_204 [256];
+  
+  pcVar9 = *(char **)((int32_t)parameters + 2);
+  pcVar10 = acStack_406 + 2;
+  do {
+    cVar1 = *pcVar9;
+    *pcVar10 = cVar1;
+    pcVar9 = pcVar9 + 1;
+    pcVar10 = pcVar10 + 1;
+  } while (cVar1 != 0);
+  if ((acStack_406[2] == 'S') && ((int32_t)acStack_406[3] - 0x30U < 10U)) {
+                    /* WARNING: Switch is manually overridden */
+    switch((int16_t)((int32_t)acStack_406[3] - 0x30U)) {
+    case 0: case 5:
+      return 0;
+    case 1: case 9:
+      iVar7 = 4;
+      break;
+    case 2: case 8:
+      iVar7 = 6;
+      break;
+    case 3: case 7:
+      iVar7 = 8;
+      break;
+    case 4: case 6:
+      goto LAB_installer__00107e66;
+    }
+    iVar4 = -1;
+    pcVar9 = acStack_406 + 2;
+    do {
+      iVar5 = iVar4;
+      cVar1 = *pcVar9;
+      iVar4 = iVar5 + 1;
+      pcVar9 = pcVar9 + 1;
+    } while (cVar1 != 0);
+    iVar4 = 0;
+    uVar8 = 0;
+    for (iVar6 = 0; iVar6 < iVar5 + -3; iVar6 = iVar6 + 2) {
+      cStack_40c = acStack_406[iVar6 + 4];
+      cStack_40b = acStack_406[iVar6 + 5];
+      uStack_40a = 0;
+      iVar2 = installer_strtol(&cStack_40c,(char **)0x0,0x10);
+      uVar8 = iVar2 + uVar8;
+      auStack_204[iVar4] = (uint16_t)iVar2;
+      iVar4 = iVar4 + 1;
+    }
+    auStack_204[iVar4] = 0xff;
+    cStack_40c = acStack_406[iVar5 + 1];
+    cStack_40b = acStack_406[iVar5 + 2];
+    uStack_40a = 0;
+    uVar3 = installer_strtol(&cStack_40c,(char **)0x0,0x10);
+    if (((~uVar8 & 0xff) == uVar3) && (iVar5 + 1 == (uint32_t)auStack_204[0] * 2 + 4)) {
+      ppuStack_414 = (uint8_t **)0x0;
+      iVar5 = 1;
+      for (iVar4 = 0; iVar4 < iVar7 >> 1; iVar4 = iVar4 + 1) {
+        ppuStack_414 = (uint8_t **)((uint32_t)auStack_204[iVar5] + (int32_t)ppuStack_414 * 0x100);
+        iVar5 = iVar5 + 1;
+      }
+      iVar4 = (iVar7 >> 1) + 1;
+      iVar5 = 0;
+      while( true ) {
+        if ((int32_t)(((uint32_t)auStack_204[0] * 2 - iVar7) + -2) <= iVar5) {
+          return 0;
+        }
+        if (ppuStack_414 < &primary_vectors) {
+          return -0xb;
+        }
+        if (rom_lane_sums_high + 3 < ppuStack_414) {
+          return -0xb;
+        }
+        iVar6 = FUN_installer__00107c18
+                          (ppuStack_414,
+                           (uint32_t)auStack_204[iVar4 + 1] + (uint32_t)auStack_204[iVar4] * 0x100 & 0xffff)
+        ;
+        if (iVar6 != 0) break;
+        iVar4 = iVar4 + 2;
+        iVar5 = iVar5 + 4;
+        ppuStack_414 = (uint8_t **)((int32_t)ppuStack_414 + 2);
+      }
+      return iVar6;
+    }
+  }
+LAB_installer__00107e66:
+  return -0xb;
+}
+
+
+/* installer::00107e6e */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the installer's handler for :DIAGnostic:ERASe
+   dump-scpi */
+
+int32_t installer_scpi_set_DIAGnostic_ERASe(void *parameters,void *response,scpi_call *call)
+
+{
+  int32_t iVar1;
+  bool bVar2;
+  uint16_t sr;
+  int32_t iVar3;
+  int32_t iVar4;
+  uint8_t **ppuVar5;
+  code *pcVar6;
+  
+  bVar2 = false;
+  iVar4 = 0;
+  do {
+    iVar4 = iVar4 + 1;
+    sr = installer_enter_supervisor_mode();
+    ppuVar5 = &primary_vectors;
+    installer_records[0x9eee] = 0xaa;
+    installer_records[0x9eef] = 0xaa;
+                    /* WARNING: Read-only address (ram,0x0000aaaa) is written */
+                    /* WARNING: Read-only address (ram,0x00005554) is written */
+                    /* WARNING: Read-only address (ram,0x0000aaaa) is written */
+                    /* WARNING: Read-only address (ram,0x0000aaaa) is written */
+    installer_records[0x4998] = 0x55;
+    installer_records[0x4999] = 0x55;
+                    /* WARNING: Read-only address (ram,0x00005554) is written */
+    iVar3 = 2;
+    do {
+      *(uint16_t *)ppuVar5 = 0x3030;
+      ppuVar5 = ppuVar5 + 0x2000;
+      iVar3 = iVar3 + 1;
+    } while (iVar3 < 8);
+    pcVar6 = interpolator_calibration_init;
+                    /* WARNING: Read-only address (ram,0x0004aaaa) is written */
+                    /* WARNING: Read-only address (ram,0x00045554) is written */
+                    /* WARNING: Read-only address (ram,0x0004aaaa) is written */
+                    /* WARNING: Read-only address (ram,0x0004aaaa) is written */
+    uRam0004aaaa = 0xaaaa;
+                    /* WARNING: Read-only address (ram,0x00045554) is written */
+    uRam00045554 = 0x5555;
+    iVar3 = 0;
+    do {
+      *(uint16_t *)pcVar6 = 0x3030;
+      pcVar6 = pcVar6 + 0x8000;
+      iVar3 = iVar3 + 1;
+    } while (iVar3 < 8);
+    installer_set_interrupt_mask(sr);
+    iVar3 = 1000000;
+    while ((!bVar2 && (iVar1 = iVar3 + -1, 0 < iVar3))) {
+      iVar3 = iVar1;
+      if (((__ghidra_piece(uint16_t, primary_vectors, 0) & 0xa000) != 0) &&
+         ((((__ghidra_piece(uint16_t, primary_vectors, 0) & 0xa0) != 0 && ((_interpolator_calibration_init & 0xa000) != 0))
+          && ((_interpolator_calibration_init & 0xa0) != 0)))) {
+        bVar2 = true;
+      }
+    }
+  } while ((!bVar2) && (iVar4 < 5));
+  if (iVar4 == 5) {
+    iVar4 = -8;
+  }
+  else {
+    iVar4 = 0;
+  }
+  return iVar4;
+}
+
+
+/* installer::00107f5c */
+
+/* the installer's handler for :DIAGnostic:ERASe
+   dump-scpi */
+
+int32_t installer_scpi_query_DIAGnostic_ERASe(void *parameters,void *response,scpi_call *call)
+
+{
+  uint8_t **ppuVar1;
+  
+  for (ppuVar1 = &primary_vectors; (ppuVar1 < (uint8_t **)0x80000 && (*(int16_t *)ppuVar1 == -1));
+      ppuVar1 = (uint8_t **)((int32_t)ppuVar1 + 2)) {
+  }
+  if (ppuVar1 == (uint8_t **)0x80000) {
+    *(uint16_t *)response = 1;
+  }
+  else {
+    *(uint16_t *)response = 0;
+  }
+  return 0;
+}
+
+
+/* installer::00107f92 */
+
+/* the installer's handler for :SYSTem:LANGuage
+   dump-scpi */
+
+int32_t installer_scpi_set_SYSTem_LANGuage(void *parameters,void *response,scpi_call *call)
+
+{
+  char cVar1;
+  int32_t iVar2;
+  char cVar3;
+  char *pcVar4;
+  char *pcVar5;
+  
+  for (cVar3 = 0; *(char *)(*(int32_t *)((int32_t)parameters + 2) + (int32_t)cVar3) != 0;
+      cVar3 = cVar3 + 1) {
+    iVar2 = installer_toupper((int32_t)*(char *)(*(int32_t *)((int32_t)parameters + 2) + (int32_t)cVar3));
+    *(char *)(*(int32_t *)((int32_t)parameters + 2) + (int32_t)cVar3) = (char)iVar2;
+  }
+  pcVar4 = s_PRIMARY_installer__00108154;
+  pcVar5 = *(char **)((int32_t)parameters + 2);
+  do {
+    if (*pcVar5 == 0 && *pcVar4 == 0) {
+      return -0x3c;
+    }
+    cVar3 = *pcVar4;
+    pcVar4 = pcVar4 + 1;
+    cVar1 = *pcVar5;
+    pcVar5 = pcVar5 + 1;
+  } while (cVar1 == cVar3);
+  pcVar4 = s_INSTALL_installer__0010815c;
+  pcVar5 = *(char **)((int32_t)parameters + 2);
+  do {
+    if (*pcVar5 == 0 && *pcVar4 == 0) {
+      return 0;
+    }
+    cVar3 = *pcVar4;
+    pcVar4 = pcVar4 + 1;
+    cVar1 = *pcVar5;
+    pcVar5 = pcVar5 + 1;
+  } while (cVar1 == cVar3);
+  return -8;
+}
+
+
+/* installer::00108016 */
+
+/* the installer's handler for :SYSTem:LANGuage
+   dump-scpi */
+
+int32_t installer_scpi_query_SYSTem_LANGuage(void *parameters,void *response,scpi_call *call)
+
+{
+  *(char **)response = s_INSTALL_installer__0010815c;
+  return 0;
+}
+
+
+/* installer::00108028 */
+
+/* the installer's handler for :SYSTem:ERRor
+   dump-scpi */
+
+int32_t installer_scpi_query_SYSTem_ERRor(void *parameters,void *response,scpi_call *call)
+
+{
+  int32_t local_c;
+  char *local_8;
+  
+  local_8 = (char *)0x0;
+  FUN_installer__0010621a((int32_t)call->status,&local_c,&local_8);
+  *(int16_t *)response = (int16_t)local_c;
+  if (local_8 == (char *)0x0) {
+    local_8 = installer_error_message_lookup(local_c);
+  }
+  if (local_8 == (char *)0x0) {
+    local_8 = &DAT_installer__00108164;
+  }
+  *(char **)((int32_t)response + 4) = local_8;
+  return 0;
+}
+
+
+/* installer::00108088 */
+
+/* the installer's handler for :DIAGnostic:TEST
+   dump-scpi */
+
+int32_t installer_scpi_query_DIAGnostic_TEST(void *parameters,void *response,scpi_call *call)
+
+{
+  int32_t iVar1;
+  uint32_t uVar2;
+  uint32_t uVar3;
+  uint32_t uVar4;
+  
+  uVar4 = 0;
+  uVar3 = 0;
+  iVar1 = (int32_t)*(int16_t *)((int32_t)parameters + 2) - 4;
+  if ((uint32_t)(int32_t)*(int16_t *)((int32_t)parameters + 2) < 4 || iVar1 == 0) {
+                    /* WARNING: Switch is manually overridden */
+    switch((&WORD_installer__001080b8)[(int16_t)iVar1]) {
+    case 10:
+      uVar2 = (uint32_t)(boot_selftest.checksum != 0);
+      if (boot_selftest.cpu != 0) {
+        uVar2 = uVar2 | 2;
+      }
+      if (boot_selftest.ram != 0) {
+        uVar2 = uVar2 | 4;
+      }
+      if (boot_selftest.uart != 0) {
+        uVar2 = uVar2 | 8;
+      }
+      break;
+    case 0x3c:
+      uVar2 = (uint32_t)(uint16_t)boot_selftest.checksum;
+      break;
+    case 0x46:
+      uVar2 = (uint32_t)(uint16_t)boot_selftest.cpu;
+      break;
+    case 0x50:
+      uVar2 = (uint32_t)boot_selftest.ram;
+      uVar4 = (uint32_t)boot_selftest.ram_data_bits;
+      uVar3 = boot_selftest.ram_address_lines;
+      break;
+    case 0x68:
+      uVar2 = (uint32_t)(uint16_t)boot_selftest.uart;
+    }
+    *(uint32_t *)response = uVar2;
+    *(uint32_t *)((int32_t)response + 6) = uVar4;
+    *(uint32_t *)((int32_t)response + 0xc) = uVar3;
+    iVar1 = 0;
+  }
+  else {
+    iVar1 = -8;
+  }
+  return iVar1;
+}
+
 
 /* installer::00108166 */
 #if 0 /* the decompiler's reading; rewritten in installer_records.c */
@@ -102434,6 +103356,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/installer/installer_scpi_port.c"
 
 #include "../rewritten/z3805a-3543b/installer/installer_scpi_tree.c"
+
+#include "../rewritten/z3805a-3543b/installer/installer_scpi_tree_data.c"
 
 #include "../rewritten/z3805a-3543b/installer/installer_spool.c"
 

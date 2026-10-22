@@ -15,7 +15,8 @@
 //       the names, so that names can use them; their #defines are
 //       skipped, as Ghidra's C parser takes none.
 //   names=tools/ghidra/names/IMAGE.tsv (more than one may be given, as
-//       IMAGE.scpi-tree.tsv, dump-scpi --names' rows, after it)
+//       IMAGE.scpi-tree.tsv and IMAGE.installer-scpi-tree.tsv, dump-scpi
+//       --names' rows for the two trees, after it)
 //       address, "function", "label" or "local", name, source, and
 //       optionally a note saying what it is or does, a function's C
 //       prototype, a label's data type or a local's "TYPE @ OFFSET",

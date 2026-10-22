@@ -1603,8 +1603,22 @@ view cannot drift apart.  The library, bottom up:
   that the parser's routines are proven on the C's tree: a planted swap
   of two root children, or a changed keyword, fails
   `scpi_node_find_with_defaults`, `scpi_header_resolve` and
-  `scpi_header_step`.  Left: Setup taking the generated rows, so that
-  Ghidra labels each record and the exporter declares it.
+  `scpi_header_step`.  A record's even address is
+  `__attribute__((aligned(2)))` at the record, not a `#define`, and
+  `make check-decompiled` checks the full link's layout too
+  (`rebuild_link.py`): each list's children right after it, every
+  record but text even.  The installer's tree is C too,
+  `installer/installer_scpi_tree_data.c` and
+  `IMAGE.installer-scpi-tree.tsv`, 38 objects: its six converters and
+  formatters and their five callees are named for their primary twins,
+  matched by bytes, and its nine handlers for their paths, by the
+  generated rows, which Setup takes as a third names file; the harness
+  gives each profile its own parser objects (`harness.ScpiObjects`), so
+  that a keyword or child planted wrong in the installer's tree fails
+  `installer_scpi_node_find_with_defaults`,
+  `installer_scpi_header_resolve` and `installer_scpi_header_step`.
+  Left: Setup taking the generated rows, so that Ghidra labels each
+  record and the exporter declares it.
 
   Left for a later pass: the firmware routines' names do not carry
   their file's prefix as the hand-written helpers do (`ti.c`'s

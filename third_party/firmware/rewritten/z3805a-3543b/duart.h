@@ -1,7 +1,8 @@
 /* What the DUART's drivers and the SCI's share (duart.c, duarta.c,
- * duartb.c, sci.c): the control characters, the flow byte and
- * thresholds, the baud and parity codes and the 68681's mode bits, the
- * line reader duart_gets, which drtb_gets and sci_gets share, and the
+ * duartb.c, sci.c, and the installer's installer_duart*.c): the control
+ * characters, the flow byte and thresholds, the baud and parity codes and the
+ * 68681's mode bits, the line reader duart_gets, which drtb_gets, sci_gets and
+ * installer_drtb_gets share, and the
  * channels' self-test routines. The exported C
  * includes the hand-written headers after its own declarations and
  * before the hand-written .c files, so every one of them can use it.
@@ -51,7 +52,8 @@ static const int32_t DUART_DRAIN_PAUSES = 100;
  * echoing through the port's echo; backspace takes back a character,
  * ctrl-X the line, and the CR or LF that is the other half of the last
  * line's end is skipped.  Returns the characters read, and moves the
- * port's receive errors to its read errors.  The SCI's compares a
+ * port's receive errors to its read errors, with error_message, unless
+ * it is NULL, as the installer's is (0x103266).  The SCI's compares a
  * character as a signed char, so that one with its top bit set is a
  * control character (0x1f89a), where channel B's is printable
  * (0x1d816). */
@@ -116,13 +118,46 @@ static int32_t duart_gets(char* buffer, int32_t length, uint8_t (*getc)(void),
   }
   *next = 0;
   if (*receive_errors != 0) {
-    task_debug_message(error_message);
+    if (error_message != NULL) {
+      task_debug_message(error_message);
+    }
     *read_errors = *receive_errors;
     *receive_errors = 0;
   } else {
     *read_errors = 0;
   }
   return count;
+}
+
+/* gp_port_select's and its installer copy's body: sets the GP port's
+ * bits 2 to 4 to a selection, 0 to 6, and returns it shifted there. */
+static int32_t duart_gp_port_select(char selection) {
+  /* The GP port's bits 2 to 4, the selection. */
+  static const uint8_t GP_SELECT_SHIFT = 2;
+  static const uint8_t GP_SELECT_MASK = 0x1c;
+  static const uint8_t GP_SELECT_MAX = 6;
+
+  if (selection > GP_SELECT_MAX) {
+    selection = 0;
+  }
+  gpt.portgp &= ~GP_SELECT_MASK;
+  gpt.portgp |= selection << GP_SELECT_SHIFT;
+  return selection << GP_SELECT_SHIFT;
+}
+
+/* duartb_putc_polled's and its installer copy's body: waits for DUART
+ * channel B's transmitter and writes a character; returns the status
+ * bit it waited on. */
+static uint8_t duart_b_putc_polled(uint8_t c) {
+  uint16_t sr = cpu_interrupts_at(CPU_IPL_2);
+  uint8_t status;
+
+  do {
+    status = duart.b.sr_csr;
+  } while ((status & SR_TXRDY) == 0);
+  duart.b.rb_tb = c;
+  cpu_sr_write(sr);
+  return status & SR_TXRDY;
 }
 
 /* What duarta.c and duartb.c share, from what was duart.c, which the

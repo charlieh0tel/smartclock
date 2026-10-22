@@ -42,7 +42,7 @@ static uint16_t records_sum_and_complement(uint8_t sum) {
  * answers too. */
 static const char RECORDS_FIRMWARE_REVISION[] = "3543B";
 
-/* record_checksum's and installer_record_checksum's body: the sum and
+/* record_checksum's and its installer copy's body: the sum and
  * its complement of a record's bytes after its first two. */
 static uint16_t records_checksum(void* record, uint16_t length) {
   /* What a record's checksum word does not cover: the word itself,

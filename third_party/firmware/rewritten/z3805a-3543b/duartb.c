@@ -131,17 +131,7 @@ void duartb_baud_from_settings(void) {
 
 /* Waits for DUART channel B's transmitter and writes a character;
  * returns the status bit it waited on (0x1d680). */
-uint8_t duartb_putc_polled(uint8_t c) {
-  uint16_t sr = cpu_interrupts_at(CPU_IPL_2);
-  uint8_t status;
-
-  do {
-    status = duart.b.sr_csr;
-  } while ((status & SR_TXRDY) == 0);
-  duart.b.rb_tb = c;
-  cpu_sr_write(sr);
-  return status & SR_TXRDY;
-}
+uint8_t duartb_putc_polled(uint8_t c) { return duart_b_putc_polled(c); }
 
 /* Writes a string to DUART channel B by interrupt, waiting until it is
  * out; returns how much went (0x1d6ba). */

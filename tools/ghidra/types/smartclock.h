@@ -1918,10 +1918,20 @@ typedef struct status_register {
   int16_t parent_bit;             /* +0x0e: at this bit */
 } status_register;
 
+/* How a status condition changes its register (status_condition.kind),
+ * by status_set_bit's jump table at 0x2825c. */
+typedef enum __attribute__((packed)) status_condition_kind {
+  STATUS_KIND_EVENT_SET = 0, /* sets the bit in the event word */
+  STATUS_KIND_SET = 1,       /* sets the bit in the condition word */
+  STATUS_KIND_CLEAR = 2,     /* clears it */
+  STATUS_KIND_ERROR = 3,     /* queues register_index as an error code */
+  STATUS_KIND_NOTHING = 4,
+} status_condition_kind;
+
 /* An entry of the status conditions table: which register and bit a
  * condition sets, and how.  6 bytes. */
 typedef struct status_condition {
-  int16_t kind;
+  int16_t kind; /* a status_condition_kind */
   int16_t register_index;
   int16_t bit;
 } status_condition;
@@ -2126,6 +2136,20 @@ typedef struct status_register_layout {
   uint32_t* positive;    /* +0x0e: its nv_settings filters, NULL for the */
   uint32_t* negative;    /* +0x12: Status Byte and Standard Event */
 } status_register_layout;
+
+/* One register's entry in the installer's status_register_layouts
+ * (installer::0x107ad6), two of them: status_register_layout's first ten
+ * bytes, without the nv_settings words, which the installer has none of.
+ * installer_status_init sets register 1 up from its entry, its positive
+ * filter its defined bits (installer::0x107a52 to 0x107a74). */
+typedef struct installer_status_register_layout {
+  uint8_t parent_index;  /* +0x00 */
+  uint8_t unused;        /* +0x01 */
+  uint16_t parent_bit;   /* +0x02 */
+  uint16_t maximum;      /* +0x04 */
+  uint16_t minimum;      /* +0x06 */
+  uint16_t defined_bits; /* +0x08 */
+} installer_status_register_layout;
 
 /* The SCPI status system: status_create builds it, status_object points
  * at it. */
@@ -3518,6 +3542,7 @@ typedef enum __attribute__((packed)) psos_table_state {
 /* The kernel's services, trap #3's D7 (psos.md, "Services"); 8 and 21
  * are named by the pSOS-68K brochure's list there. */
 typedef enum __attribute__((packed)) psos_service {
+  PSOS_SERVICE_SPAWN = 1, /* create a task */
   PSOS_SERVICE_START = 2,
   PSOS_SERVICE_IDENT = 3,
   PSOS_SERVICE_DELETE = 4,

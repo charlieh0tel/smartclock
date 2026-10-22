@@ -1,7 +1,8 @@
 /* What the SCPI engine's files share (scpi_*.c): the console port's
  * object, the token and parameter kinds, the lexer's character classes,
  * a number's digits, the length of a string, a long parameter and its
- * value kinds, and the comparison of two texts. The exported C includes
+ * value kinds, the comparison of two texts, and the lexer's routines its
+ * installer copies share. The exported C includes
  * the hand-written headers after its own declarations and before the
  * hand-written .c files, so every one of them can use it.  The
  * structures are docs/firmware/structures.md's "Numeric SCPI
@@ -175,8 +176,7 @@ static bool scpi_parameters_same(const char* text, const char* other) {
 /* scpi_suffix_compare_tail's and its installer copy's body: how many
  * characters of a unit's reversed name match the suffix's end, 0 unless
  * all of the name does. */
-static int16_t scpi_compare_suffix_tail(char* suffix, int32_t length,
-                                        char* name) {
+static int16_t scpi_compare_suffix_tail(char* suffix, int32_t length, char* name) {
   int16_t count = length;
   int16_t matched = 0;
 
@@ -184,4 +184,194 @@ static int16_t scpi_compare_suffix_tail(char* suffix, int32_t length,
     matched++;
   }
   return name[matched] == 0 ? matched : 0;
+}
+
+/* The lexer's, which its installer copies share (scpi_lexer.c,
+ * installer_scpi_lexer.c). */
+
+/* A port's values above a character: 0x102, which
+ * scpi_skip_to_terminator reads past, and the three the lexer reports
+ * (scpi_engine_port_error). */
+enum {
+  SCPI_PORT_SKIPPED_END = 0x102,
+  SCPI_PORT_CLOSED = 0x103,
+  SCPI_PORT_UNTERMINATED = 0x104,
+  SCPI_PORT_INTERRUPTED = 0x105,
+};
+
+/* The lexer's results for them that are not conditions, which
+ * scpi_interpret takes as the input's end (0x29596) and as a failure,
+ * which it returns -1 for (0x295be); the others are conditions,
+ * STATUS_SCPI_QUERY_UNTERMINATED and STATUS_SCPI_QUERY_INTERRUPTED. */
+enum {
+  SCPI_STATUS_INPUT_CLOSED = -102,
+  SCPI_STATUS_PORT_FAILED = -103,
+};
+
+/* A unit's exponent for one that takes a multiplier before it, and
+ * scpi_multiplier_exponent's result for no multiplier (structures.md,
+ * "A numeric parameter's units"). */
+static const int8_t SCPI_NO_MULTIPLIER = -128;
+
+/* A port value's character class, by the image's scpi_char_classes
+ * (0x277ec), 0 to 0x105; the installer's at installer::0x10549a are the
+ * same. */
+static scpi_char_class scpi_engine_class(int32_t character) {
+  static const scpi_char_class CLASSES[] = {
+      [0x00 ... 0x09] = SCPI_CLASS_WHITE,
+      [0x0a] = SCPI_CLASS_NEWLINE,
+      [0x0b ... ' '] = SCPI_CLASS_WHITE,
+      ['!'] = SCPI_CLASS_OTHER,
+      ['"'] = SCPI_CLASS_QUOTE,
+      ['#'] = SCPI_CLASS_HASH,
+      ['$'] = SCPI_CLASS_DOLLAR,
+      ['%' ... '&'] = SCPI_CLASS_OTHER,
+      [0x27] = SCPI_CLASS_QUOTE,
+      ['('] = SCPI_CLASS_OPEN,
+      [')'] = SCPI_CLASS_CLOSE,
+      ['*'] = SCPI_CLASS_STAR,
+      ['+'] = SCPI_CLASS_PLUS,
+      [','] = SCPI_CLASS_COMMA,
+      ['-'] = SCPI_CLASS_MINUS,
+      ['.'] = SCPI_CLASS_POINT,
+      ['/'] = SCPI_CLASS_SLASH,
+      ['0' ... '9'] = SCPI_CLASS_DIGIT,
+      [':'] = SCPI_CLASS_COLON,
+      [';'] = SCPI_CLASS_SEMICOLON,
+      ['<' ... '>'] = SCPI_CLASS_OTHER,
+      ['?'] = SCPI_CLASS_QUESTION,
+      ['@'] = SCPI_CLASS_AT,
+      ['A' ... 'Z'] = SCPI_CLASS_LETTER,
+      ['[' ... '^'] = SCPI_CLASS_OTHER,
+      ['_'] = SCPI_CLASS_UNDERSCORE,
+      ['`'] = SCPI_CLASS_OTHER,
+      ['a' ... 'z'] = SCPI_CLASS_LETTER,
+      ['{' ... 0xff] = SCPI_CLASS_OTHER,
+      [0x100 ... 0x101] = SCPI_CLASS_END,
+      [0x102] = SCPI_CLASS_SKIPPED_END,
+      [0x103 ... 0x105] = SCPI_CLASS_PORT_ERROR,
+  };
+
+  return CLASSES[character];
+}
+
+/* The next value from a port, its own routine's (0x26ef6). */
+static int16_t scpi_engine_read(scpi_port* input) { return input->read(input); }
+
+/* The lexer's result for a port's error value. */
+static int32_t scpi_engine_port_error(int16_t character) {
+  switch (character) {
+    case SCPI_PORT_CLOSED:
+      return SCPI_STATUS_INPUT_CLOSED;
+    case SCPI_PORT_UNTERMINATED:
+      return STATUS_SCPI_QUERY_UNTERMINATED;
+    case SCPI_PORT_INTERRUPTED:
+      return STATUS_SCPI_QUERY_INTERRUPTED;
+  }
+  return SCPI_STATUS_PORT_FAILED;
+}
+
+/* scpi_char_upper's and its installer copy's body: a letter in upper
+ * case, by its image's class table, which it indexes unchecked. */
+static uint32_t scpi_engine_upper(const scpi_char_class* classes, uint32_t character) {
+  /* Clears the lower-case bit, and the high byte of the value's
+   * word with it (0x277e2). */
+  const uint32_t upper_case = 0xffff00df;
+
+  if (classes[character] == SCPI_CLASS_LETTER) {
+    character &= upper_case;
+  }
+  return character;
+}
+
+/* scpi_scan_exponent's and its installer copy's body: scans a number's
+ * exponent, E and a signed integer, after its mantissa; an E with no
+ * digits after it starts the suffix; classes is its image's class
+ * table. */
+static int32_t scpi_engine_scan_exponent(const scpi_char_class* classes, int32_t character,
+                                         scpi_number* number, scpi_port* input) {
+  static const char EXPONENT_LETTER = 'E';
+  /* The most an exponent takes before another digit, a word's
+   * tenth. */
+  static const int16_t EXPONENT_MOST_TENTHS = 0xccb;
+
+  if ((int16_t)scpi_engine_upper(classes, (int16_t)character) != EXPONENT_LETTER) {
+    input->methods->unread(input);
+    number->exponent = 0;
+    return 0;
+  }
+  int16_t next = scpi_engine_read(input);
+  scpi_char_class class = classes[next];
+
+  if (class != SCPI_CLASS_DIGIT && class != SCPI_CLASS_PLUS && class != SCPI_CLASS_MINUS &&
+      class != SCPI_CLASS_WHITE) {
+    number->suffix[number->suffix_length++] = EXPONENT_LETTER;
+    input->methods->unread(input);
+    number->exponent = 0;
+    return 0;
+  }
+  while (class == SCPI_CLASS_WHITE) {
+    next = scpi_engine_read(input);
+    class = classes[next];
+  }
+  bool negative = class == SCPI_CLASS_MINUS;
+
+  if (class == SCPI_CLASS_MINUS || class == SCPI_CLASS_PLUS) {
+    next = scpi_engine_read(input);
+    class = classes[next];
+  }
+  if (class == SCPI_CLASS_DIGIT) {
+    int16_t exponent = next - '0';
+
+    for (;;) {
+      next = scpi_engine_read(input);
+      if (classes[next] != SCPI_CLASS_DIGIT) {
+        break;
+      }
+      if (exponent > EXPONENT_MOST_TENTHS) {
+        return STATUS_SCPI_EXPONENT_TOO_LARGE;
+      }
+      exponent = exponent * SCPI_NUMBER_BASE + next - '0';
+    }
+    number->exponent = negative ? -exponent : exponent;
+    input->methods->unread(input);
+    return 0;
+  }
+  if (class == SCPI_CLASS_PORT_ERROR) {
+    return scpi_engine_port_error(next);
+  }
+  input->methods->unread(input);
+  return STATUS_SCPI_INVALID_NUMBER;
+}
+
+/* scpi_multiplier_exponent's and its installer copy's body: a unit
+ * multiplier's power of ten by its one or two letters;
+ * SCPI_NO_MULTIPLIER for none. */
+static int8_t scpi_engine_multiplier(int32_t name) {
+  /* The image's table at 0x27b2e, scpi_multipliers, to a name of 0; the
+   * installer's at installer::0x1057dc holds the same. */
+  static const scpi_multiplier MULTIPLIERS[] = {
+      {.name = 'M', .exponent = -3},
+      {.name = 'K', .exponent = 3},
+      {.name = 'U', .exponent = -6},
+      {.name = 'M' << 8 | 'A', .exponent = 6},
+      {.name = 'N', .exponent = -9},
+      {.name = 'G', .exponent = 9},
+      {.name = 'P', .exponent = -12},
+      {.name = 'T', .exponent = 12},
+      {.name = 'F', .exponent = -15},
+      {.name = 'A', .exponent = -18},
+      {.name = 'P' << 8 | 'E', .exponent = 15},
+      {.name = 'E' << 8 | 'X', .exponent = 18},
+      {0},
+  };
+  const scpi_multiplier* entry = MULTIPLIERS;
+
+  do {
+    if (entry->name == (uint16_t)name) {
+      return entry->exponent;
+    }
+    entry++;
+  } while (entry->name != 0);
+  return SCPI_NO_MULTIPLIER;
 }

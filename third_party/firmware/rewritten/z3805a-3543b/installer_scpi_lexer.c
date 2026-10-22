@@ -1,0 +1,32 @@
+/* The installer's copies of the SCPI lexer's routines
+ * (`applications/scpi/lexer`; scpi_lexer.c has the primary's), whose
+ * bodies, scpi.h's, both share.  Written by hand in place of the
+ * decompiler's (docs/firmware/README.md, "Hand-written C"); each keeps
+ * its generated prototype. */
+
+/* Scans a number's exponent, E and a signed integer, after its
+ * mantissa; an E with no digits after it starts the suffix
+ * (installer::0x10531c). */
+int32_t installer_scpi_scan_exponent(int32_t character, scpi_number* number,
+                                     scpi_port* input) {
+  return scpi_engine_scan_exponent(installer_scpi_char_classes, character,
+                                   number, input);
+}
+
+/* A letter in upper case, by the lexer's classes (installer::0x105480). */
+uint32_t installer_scpi_char_upper(uint32_t character) {
+  return scpi_engine_upper(installer_scpi_char_classes, character);
+}
+
+/* How many characters of a unit's reversed name match the suffix's end,
+ * 0 unless all of the name does (installer::0x105684). */
+int16_t installer_scpi_suffix_compare_tail(char* suffix, int32_t length,
+                                           char* name) {
+  return scpi_compare_suffix_tail(suffix, length, name);
+}
+
+/* A unit multiplier's power of ten by its one or two letters;
+ * SCPI_NO_MULTIPLIER for none (installer::0x1056ba). */
+int8_t installer_scpi_multiplier_exponent(int32_t name) {
+  return scpi_engine_multiplier(name);
+}

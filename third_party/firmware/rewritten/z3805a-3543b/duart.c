@@ -13,17 +13,7 @@
 /* Sets the GP port's bits 2 to 4 to a selection, 0 to 6, and returns
  * it shifted there (0x1d572). */
 int32_t gp_port_select(char selection) {
-  /* The GP port's bits 2 to 4, gp_port_select's selection. */
-  static const uint8_t GP_SELECT_SHIFT = 2;
-  static const uint8_t GP_SELECT_MASK = 0x1c;
-  static const uint8_t GP_SELECT_MAX = 6;
-
-  if (selection > GP_SELECT_MAX) {
-    selection = 0;
-  }
-  gpt.portgp &= ~GP_SELECT_MASK;
-  gpt.portgp |= selection << GP_SELECT_SHIFT;
-  return selection << GP_SELECT_SHIFT;
+  return duart_gp_port_select(selection);
 }
 
 /* Sets or clears one of the output port's own bits, with interrupts

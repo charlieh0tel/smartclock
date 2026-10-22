@@ -1673,19 +1673,22 @@
 {"address":"installer::001005d2","name":"installer_print_exception","note":"the installer's print_exception","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":4},{"offset":10,"size":2},{"offset":12,"size":4}]}
 {"address":"installer::00100658","name":"installer_exception_name","note":"the installer's exception_name","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"installer::00100bb2","name":"installer_periodic_interrupt","note":"the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5","convention":"exception","confidence":"read","family":"exception"}
-{"address":"installer::00100bd2","name":"installer_periodic_interrupt_enable","note":"the installer's periodic_interrupt_enable","convention":"unknown"}
+{"address":"installer::00100bd2","name":"installer_periodic_interrupt_enable","note":"the installer's periodic_interrupt_enable","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"installer::00100bf4","name":"installer_qsm_init","note":"the installer's qsm_init","convention":"unknown"}
 {"address":"installer::00100c1e","name":"installer_gpt_init","note":"the installer's gpt_init","convention":"unknown"}
 {"address":"installer::00100c7a","name":"installer_start_nothing","note":"the installer's start_nothing","convention":"unknown"}
 {"address":"installer::00100c7c","name":"installer_system_init","note":"reads the parameter and identification records from EEPROM","convention":"unknown"}
 {"address":"installer::00100c96","name":"installer_start","note":"the installer's primary_start","convention":"unknown"}
+{"address":"installer::00100d1c","name":"installer_restart","note":"trap #12, the restart, where the primary's enter_installer has trap #11","convention":"unknown"}
+{"address":"installer::00100d20","name":"installer_scpi_task_start","note":"the installer's scpi_task_start: spoo_run of its scpi_task_create (0x107886) at priority 0x19, then its task_console cleared","convention":"unknown"}
+{"address":"installer::00100e42","name":"installer_region_find_segment","note":"the installer's region_find_segment","convention":"register","confidence":"read","in":[{"register":"A0","type":"void *","name":"region"},{"register":"D0","type":"char *","name":"address"}],"out":[{"register":"A1","type":"void *","name":"segment"}],"family":"stack"}
 {"address":"installer::00100e80","name":"installer_enter_supervisor_mode","note":"the installer's enter_supervisor_mode","convention":"unknown"}
 {"address":"installer::00100e90","name":"installer_set_interrupt_mask","note":"the installer's set_interrupt_mask","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"installer::00100f32","name":"installer_trap_7","note":"the installer's primary_trap_7, byte for byte: the boot vector table's vector 39, trap #7","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::00100f3a","name":"installer_enter_supervisor","note":"the installer's enter_supervisor","convention":"other","confidence":"read","out":[{"register":"D0","type":"int","name":"status"}],"preserves":["D1","D2","D3","D4","D5","D6","D7","A1","A2","A3","A4","A5","A6"],"family":"supervisor"}
-{"address":"installer::00100fc0","name":"installer_float_exception_report","note":"the installer's float_exception_report","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00100fc0","name":"installer_float_exception_report","note":"the installer's float_exception_report","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::0010135a","name":"installer_spurious_interrupt","note":"the installer's primary_spurious_interrupt, a lone rte, byte for byte: the boot vector table's vector 24, the spurious interrupt","convention":"exception","confidence":"read","family":"exception"}
-{"address":"installer::0010135c","name":"installer_entry","convention":"unknown"}
+{"address":"installer::0010135c","name":"installer_entry","note":"the installer's entry from the boot code, as primary_reset's end (0x14922): the stack at 0x10fffe and a null frame, the float library's state, atexit's count, errno and rand's seed, then installer_start and installer_program_exit with its result","convention":"other","confidence":"read"}
 {"address":"installer::001013ae","name":"installer_program_exit","note":"the installer's program_exit","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001013c2","name":"installer_program_end_report","note":"the installer's program_end_report","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::001014b4","name":"installer_kernel_dispatch_service","convention":"unknown"}
@@ -1751,52 +1754,113 @@
 {"address":"installer::001028d4","name":"installer_kernel_region_init","note":"the installer's copy of kernel_region_init, at 0x15ece plus 0xeca06, byte for byte","convention":"undetermined","confidence":"derived","family":"psos"}
 {"address":"installer::00102990","name":"installer_kernel_return_from_interrupt","note":"the installer's copy of kernel_return_from_interrupt, at 0x15f8a plus 0xeca06, byte for byte","convention":"exception","confidence":"read","family":"psos"}
 {"address":"installer::00102a72","name":"installer_psos_call","note":"the installer's psos_call","convention":"register","confidence":"read","in":[{"register":"D7","type":"char","name":"service"},{"register":"D0","type":"int","name":"d0"},{"register":"D1","type":"int","name":"d1"},{"register":"D2","type":"int","name":"d2"},{"register":"D3","type":"int","name":"d3"},{"register":"A0","type":"void *","name":"a0"},{"register":"A1","type":"void *","name":"a1"}],"out":[{"register":"D7","type":"int","name":"error"}],"returns":"ccr","results":["D0","D1","D2","D3","A0","A1"],"family":"psos-binding"}
+{"address":"installer::00102a8a","name":"installer_psos_io_call","note":"the installer's psos_io_call","convention":"register","confidence":"read","in":[{"register":"D7","type":"psos_io_function","name":"function"},{"register":"D0","type":"int","name":"device"},{"register":"D1","type":"int","name":"d1"},{"register":"D2","type":"int","name":"d2"},{"register":"D3","type":"int","name":"d3"},{"register":"A0","type":"void *","name":"a0"},{"register":"A1","type":"void *","name":"a1"}],"out":[{"register":"D7","type":"int","name":"error"}],"returns":"ccr","results":["D0","D1","D2","D3","A0","A1"],"family":"psos"}
 {"address":"installer::00102aa4","name":"installer_psos_pack_name","note":"the installer's psos_pack_name","convention":"other","confidence":"read","out":[{"register":"D0","type":"int","name":"name"}],"family":"psos-binding"}
+{"address":"installer::00102ac8","name":"installer_psos_create","note":"the installer's psos_create, service 1","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
+{"address":"installer::00102b02","name":"installer_psos_start","note":"the installer's psos_start","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00102b1e","name":"installer_psos_ident","note":"the installer's psos_ident","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00102b4c","name":"installer_psos_my_pid","note":"the installer's psos_my_pid","convention":"unknown"}
 {"address":"installer::00102b5c","name":"installer_psos_delete","note":"the installer's psos_delete, service 4","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00102bca","name":"installer_psos_pause","note":"the installer's psos_pause, service 28","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::00102be2","name":"installer_psos_mode","note":"the installer's psos_mode","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00102c08","name":"installer_psos_supervisor","note":"the installer's psos_supervisor","convention":"other","confidence":"read","family":"psos-binding"}
+{"address":"installer::00102c14","name":"installer_psos_service_8","note":"the installer's psos_service_8","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4}]}
+{"address":"installer::00102c48","name":"installer_psos_free_segment","note":"the installer's psos_free_segment","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00102d22","name":"installer_psos_create_x","note":"the installer's psos_create_x, service 20","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::00102da6","name":"installer_psos_send_x","note":"the installer's psos_send_x, service 23","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00102e18","name":"installer_psos_request_x","note":"the installer's psos_request_x","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::00102e3c","name":"installer_psos_signal_v","note":"the installer's psos_signal_v, service 25","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::00102e58","name":"installer_psos_wait_v","note":"the installer's psos_wait_v, service 26","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::00102e86","name":"installer_psos_get_v","note":"the installer's psos_get_v, service 27","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00102eb0","name":"installer_psos_announce_tick","note":"the installer's psos_announce_tick","convention":"unknown"}
+{"address":"installer::00102f36","name":"installer_psos_io_open","note":"the installer's psos_io_open","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00102f6a","name":"installer_psos_io_read","note":"the installer's psos_io_read","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00102f9c","name":"installer_psos_io_write","note":"the installer's psos_io_write","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00102ff4","name":"installer_gp_port_select","note":"the installer's gp_port_select","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"installer::00103016","name":"installer_duartb_mode_from_settings","note":"the installer's duartb_mode_from_settings","convention":"unknown"}
 {"address":"installer::001030b4","name":"installer_duartb_baud_from_settings","note":"the installer's duartb_baud_from_settings","convention":"unknown"}
 {"address":"installer::00103102","name":"installer_duartb_putc_polled","note":"the installer's duartb_putc_polled","convention":"unknown","stack":[{"offset":4,"size":1}]}
+{"address":"installer::0010313c","name":"installer_drtb_puts","note":"the installer's drtb_puts, which installer_drtb_putc calls","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001031cc","name":"installer_drtb_getc","note":"the installer's drtb_getc","convention":"unknown"}
 {"address":"installer::00103266","name":"installer_drtb_gets","note":"the installer's drtb_gets","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00103378","name":"installer_drtb_unlock","note":"the installer's drtb_unlock","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"write"}],"family":"drtb"}
+{"address":"installer::00103394","name":"installer_drtb_lock","note":"the installer's drtb_lock","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"write"}],"family":"drtb"}
 {"address":"installer::00103868","name":"installer_drtb_putc","note":"the installer's drtb_putc","convention":"unknown","stack":[{"offset":4,"size":1}]}
+{"address":"installer::001038e8","name":"installer_console_write","note":"the installer's console_write","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::00103908","name":"installer_printf","note":"the installer's printf","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::0010392e","name":"installer_console_read","note":"the installer's console_read","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00103958","name":"installer_scpi_port_open","note":"the installer's scpi_port_open","convention":"unknown"}
 {"address":"installer::00103984","name":"installer_console_write_polled","note":"the installer's console_write_polled","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001039ba","name":"installer_printf_polled","note":"the installer's printf_polled","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::001039e0","name":"installer_duart_output_bits","note":"the installer's duart_output_bits","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1}]}
 {"address":"installer::00103a44","name":"installer_duarta_receive","note":"empties DUART channel A's receiver into its ring; returns nothing, D0 left SRA's overrun bit, which its one caller, installer_duart_interrupt, does not read","convention":"unknown"}
 {"address":"installer::00103aa8","name":"installer_duartb_isr","note":"the installer's duartb_isr","convention":"unknown"}
 {"address":"installer::00103c7c","name":"installer_duarta_transmit_interrupt","note":"disables channel A's transmit interrupt","convention":"unknown"}
 {"address":"installer::00103c90","name":"installer_duartb_transmit_interrupt","note":"the installer's duartb_transmit_interrupt","convention":"unknown"}
 {"address":"installer::00103d74","name":"installer_duart_interrupt","note":"the DUART's interrupt: dispatches each pending, enabled source","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::00103eea","name":"installer_fatal_error","note":"holds off interrupts and hangs","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::00103efe","name":"installer_spoo_task_create","note":"the installer's spoo_task_create","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::00103fce","name":"installer_spoo_run","note":"the installer's spoo_run","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"installer::0010403a","name":"installer_spoo_task","note":"the installer's spoo_task, which installer_spoo_task_create starts","convention":"unknown"}
 {"address":"installer::001040a2","name":"installer_fatal_error_with_code","note":"the installer's fatal_error_with_code","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"installer::0010472e","name":"installer_scpi_context_init","note":"the installer's scpi_context_init","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4},{"offset":32,"size":4},{"offset":36,"size":4}]}
+{"address":"installer::00104764","name":"installer_scpi_parse_message_unit","note":"the installer's scpi_parse_message_unit","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00104b8e","name":"installer_scpi_scan_token","note":"the installer's scpi_scan_token","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00105036","name":"installer_scpi_skip_to_terminator","note":"the installer's scpi_skip_to_terminator","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::0010507a","name":"installer_scpi_scan_number","note":"the installer's scpi_scan_number","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::0010531c","name":"installer_scpi_scan_exponent","note":"the installer's scpi_scan_exponent","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105480","name":"installer_scpi_char_upper","note":"the installer's scpi_char_upper","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::001055a2","name":"installer_scpi_parameter_match","note":"the installer's scpi_parameter_match","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"installer::00105628","name":"installer_scpi_parameters_finish","note":"the installer's scpi_parameters_finish","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105684","name":"installer_scpi_suffix_compare_tail","note":"the installer's scpi_suffix_compare_tail","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"installer::001056ba","name":"installer_scpi_multiplier_exponent","note":"the installer's scpi_multiplier_exponent","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":2}]}
+{"address":"installer::001056ba","name":"installer_scpi_multiplier_exponent","note":"the installer's scpi_multiplier_exponent","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::00105858","name":"installer_scpi_node_find","note":"the installer's scpi_node_find","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::001058d0","name":"installer_scpi_node_find_with_defaults","note":"the installer's scpi_node_find_with_defaults","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00105942","name":"installer_scpi_node_find_numbered","note":"the installer's scpi_node_find_numbered","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00105a2e","name":"installer_scpi_header_resolve","note":"the installer's scpi_header_resolve","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":2},{"offset":26,"size":2},{"offset":28,"size":4},{"offset":32,"size":4}]}
+{"address":"installer::00105b4c","name":"installer_scpi_header_step","note":"the installer's scpi_header_step","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00105bac","name":"installer_scpi_path_reset","note":"the installer's scpi_path_reset","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00105bbe","name":"installer_scpi_common_header_resolve","note":"the installer's scpi_common_header_resolve","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":2},{"offset":22,"size":2},{"offset":24,"size":4},{"offset":28,"size":4}]}
+{"address":"installer::00105c2c","name":"installer_scpi_trg_defined","note":"the installer's scpi_trg_defined","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::00105c78","name":"installer_status_event_set","note":"the installer's status_event_set","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105c96","name":"installer_status_condition_set","note":"the installer's status_condition_set","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105cf2","name":"installer_status_condition_clear","note":"the installer's status_condition_clear","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105d52","name":"installer_status_propagate","note":"the installer's status_propagate","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00105d98","name":"installer_status_create","note":"the installer's status_create","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4}]}
+{"address":"installer::00105e4a","name":"installer_status_register_setup","note":"the installer's status_register_setup","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
 {"address":"installer::00105eb8","name":"installer_status_set_bit","note":"the installer's status_set_bit","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105f7c","name":"installer_status_apply_condition","note":"the installer's status_apply_condition","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00106036","name":"installer_status_clear_bit","note":"the installer's status_clear_bit","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::0010604a","name":"installer_condition_is_command_error","note":"the installer's condition_is_command_error","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00106164","name":"installer_status_read_event","note":"the installer's status_read_event","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00106236","name":"installer_error_queue_create","note":"the installer's error_queue_create","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00106282","name":"installer_error_queue_push","note":"the installer's error_queue_push","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00106548","name":"installer_error_message_lookup","note":"the installer's error_message_lookup","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::00106f30","name":"installer_scpi_interpret","note":"the installer's scpi_interpret","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4},{"offset":32,"size":4},{"offset":36,"size":4}]}
+{"address":"installer::0010729c","name":"installer_scpi_call_handler","note":"the installer's scpi_call_handler","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::001072ea","name":"installer_scpi_format_response","note":"the installer's scpi_format_response","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::0010735a","name":"installer_arena_alloc","note":"the installer's arena_alloc","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::0010739c","name":"installer_arena_take","note":"the installer's arena_take","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::001073b8","name":"installer_arena_current","note":"the installer's arena_current","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::001073c0","name":"installer_arena_set","note":"the installer's arena_set","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::001073ca","name":"installer_arena_init","note":"the installer's arena_init","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::001073f6","name":"installer_scpi_prompt","note":"the installer's scpi_prompt","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::0010742a","name":"installer_scpi_session_init","note":"the installer's scpi_session_init","convention":"unknown"}
+{"address":"installer::0010746a","name":"installer_scpi_console_port","note":"the installer's scpi_console_port: returns 0x1076d0, its console port's object","convention":"unknown"}
+{"address":"installer::00107656","name":"installer_status_update_rqs","note":"the installer's status_update_rqs","convention":"unknown"}
+{"address":"installer::001076ec","name":"installer_scpi_message_done","note":"the installer's scpi_message_done","convention":"unknown"}
+{"address":"installer::001076f0","name":"installer_scpi_input_closed","note":"the installer's scpi_input_closed","convention":"unknown"}
 {"address":"installer::001076f4","name":"installer_status_prompt_refresh","note":"the installer's status_prompt_refresh","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00107886","name":"installer_scpi_task_create","note":"the installer's scpi_task_create, which installer_scpi_task_start hands installer_spoo_run","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::00107902","name":"installer_scpi_task","note":"the installer's SCPI task, which installer_scpi_task_create starts","convention":"unknown"}
+{"address":"installer::00107a00","name":"installer_status_init","note":"the installer's status_init: builds installer_status_object, sets two registers up, sets installer_status_ready","convention":"unknown"}
+{"address":"installer::00107a86","name":"installer_status_report","note":"the installer's status_report","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"installer::00108166","name":"installer_record_checksum","note":"the installer's record_checksum","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2}]}
 {"address":"installer::001081ac","name":"installer_parameter_record_read","note":"the installer's parameter_record_read","convention":"unknown"}
 {"address":"installer::0010822e","name":"installer_idn_model_default","note":"sets the *IDN? model to 58000A","convention":"unknown"}
 {"address":"installer::0010824a","name":"installer_identification_record_read","note":"the installer's identification_record_read","convention":"unknown"}
 {"address":"installer::001083b6","name":"installer_psos_config_init","note":"the installer's psos_config_init","convention":"unknown"}
+{"address":"installer::00108428","name":"installer_memory_allocate","note":"the installer's memory_allocate","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00108466","name":"installer_trap_1","note":"the installer's primary_trap_1, byte for byte: the boot vector table's vector 33, trap #1","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::00108ca8","name":"installer_float_raise","note":"the installer's float_raise","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00109036","name":"installer_call_atexit_functions","convention":"unknown"}
@@ -1810,4 +1874,5 @@
 {"address":"installer::00109c7e","name":"installer_next_decimal_digit","note":"the installer's next_decimal_digit","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00109cb4","name":"installer_doprnt","note":"the installer's doprnt","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::0010aa3e","name":"installer_sprintf","note":"the installer's sprintf","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::0010aa6c","name":"installer_sprintf_put","note":"the installer's sprintf_put, which installer_vsprintf and installer_sprintf hand installer_doprnt","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::0010aaa6","name":"installer_vsprintf","note":"the installer's vsprintf","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}

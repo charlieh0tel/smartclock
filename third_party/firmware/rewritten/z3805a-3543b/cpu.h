@@ -60,6 +60,14 @@ static inline uint16_t cpu_interrupts_at(uint16_t level) {
  * offset. */
 static const uint16_t CPU_VECTOR_FORMAT_MASK = 0xf000;
 
+/* Moves saved, the status register as it was, back with its interrupt
+ * mask, bits 10 to 8, mask's: set_interrupt_mask's and its installer
+ * copy's body; returns saved. */
+static uint16_t cpu_interrupt_mask_set(uint16_t saved, uint16_t mask) {
+  cpu_sr_write((saved & ~CPU_IPL_7) | (mask & CPU_IPL_7));
+  return saved;
+}
+
 /* 1 shifted left by count as lsl.l shifts by a register: the count
  * modulo 64, and the bit shifted out from 32 on (MC68000PRM, LSL). */
 static uint32_t cpu_long_bit(uint32_t count) {

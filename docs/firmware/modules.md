@@ -243,6 +243,18 @@ them shares, from the file they were split from, is in a header named
 for it (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
 `scpi.h`), keeping that file's prefix.
 
+The installer's copies of the primary's functions (`installer::` in
+the names file, by their twins' names prefixed `installer_`) are
+written in a file named for their twin's module, prefixed:
+`installer_os.c`, `installer_duartb.c`, `installer_status.c`.  A copy
+that reads nothing of the installer's own, and calls nothing but
+other such bodies, shares its twin's body: the body moves to the
+group's header (`libc.h`, `scpi.h`, `status.h`, `startup.h`, `os.h`,
+`duart.h`) as a static function both call.  The others are written out
+again on the installer's globals and callees, and some are older than
+the primary's (`installer_print_exception`,
+`installer_identification_record_read`).
+
 ## Open
 
 - `efc_clamp` both clamps the EFC to the DAC's range and reports

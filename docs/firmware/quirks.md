@@ -84,6 +84,10 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
 - **`int64_divide` and `uint64_divide`**, on a quotient too wide for 32
   bits, return the dividend's low long, as `divs.l` leaves it; the C
   does the same.
+- **`set_interrupt_mask` (`0x13378`) and its installer copy** return
+  the status register trap #7 saved, whose condition codes are their
+  caller's; gcc's C copies its narrow argument first, which sets them,
+  so that the low byte of the result can differ.
 - **`setjmp`** reads its caller's registers.  Nothing calls it or
   `longjmp`: no call, and no table holds either's address.
 

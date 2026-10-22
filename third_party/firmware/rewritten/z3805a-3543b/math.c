@@ -12,29 +12,6 @@ static const int32_t LIBC_MANTISSA_BITS = 52;
  * that reduce their argument to it give a mantissa. */
 static const int32_t LIBC_HALF_EXPONENT = 0x3fe;
 
-/* float_raise's code (libc.md, "Exception codes"): the high word names
- * the routine, here the math library's (LIBC_RAISE_MATH and its
- * index), the low word the cause. */
-enum {
-  LIBC_RAISE_MATH = 0x80,
-  LIBC_RAISE_FABS = 16,
-  LIBC_RAISE_FREXP = 22,
-  LIBC_RAISE_LOG = 26,
-  LIBC_RAISE_MODF = 30,
-  LIBC_RAISE_POW = 32,
-  LIBC_RAISE_SQRT = 38,
-  LIBC_CAUSE_SIGNALING_NAN = 0x4000,
-  LIBC_CAUSE_OPERAND_ERROR = 0x2000,
-  LIBC_CAUSE_OVERFLOW = 0x1000,
-  LIBC_CAUSE_UNDERFLOW = 0x800,
-  LIBC_CAUSE_DIVIDE_BY_ZERO = 0x400,
-  LIBC_CAUSE_INEXACT = 0x200,
-  LIBC_CAUSE_PRECISION_LOST = 0x80,
-};
-
-#define LIBC_RAISE_CODE(routine, cause) \
-  ((uint32_t)(LIBC_RAISE_MATH | (routine)) << LIBC_WORD_BITS / 2 | (cause))
-
 /* float_raise's result, a double in D0:D1, as the uint64_t the export
  * declares it to return. */
 static double libc_from_bits(uint64_t bits) {
@@ -670,77 +647,12 @@ double pow(double x, double y) {
  * arguments are its return address, code and the long above code in
  * its caller's frame, which it prints as the code. */
 void float_exception_report(uint32_t code) {
-  /* The causes, tested in this order, and their messages. */
-  static const struct {
-    uint16_t cause;
-    const char* message;
-  } CAUSES[] = {
-      {LIBC_CAUSE_SIGNALING_NAN, "fp signaling NaN: "},
-      {LIBC_CAUSE_OPERAND_ERROR, "fp operand error: "},
-      {LIBC_CAUSE_OVERFLOW, "fp overflow: "},
-      {LIBC_CAUSE_UNDERFLOW, "fp underflow: "},
-      {LIBC_CAUSE_DIVIDE_BY_ZERO, "fp divide by zero: "},
-      {LIBC_CAUSE_INEXACT, "fp inexact result: "},
-      {LIBC_CAUSE_PRECISION_LOST, "fp all precision lost:"},
-  };
-  /* The routines' names, 8 characters each, spaces dropped, indexed by
-   * the code's high word's low 6 bits: the arithmetic's 1 to 0x13 and
-   * the math library's 0x80 to 0xed, a code of 0 or past either taken as
-   * its last. */
-  static const uint16_t ARITHMETIC_LAST = 0x13;
-  static const uint16_t MATH_LAST = 0xed;
-  static const uint16_t NAME_INDEX_MASK = 0x3f;
-  static const int32_t NAME_LENGTH = 8;
-  /* The long above code: A6's saved value, the return address and code
-   * come first. */
-  static const int32_t FRAME_LONG_ABOVE_CODE = 3;
-  const char* cause = "fp unknown exception: ";
-  const uint16_t cause_bits = code;
-  uint16_t routine = code >> LIBC_WORD_BITS / 2;
-  const char* names;
-
-  float_exception_message[0] = 0;
-  for (size_t i = 0; i < sizeof CAUSES / sizeof CAUSES[0]; i++) {
-    if ((cause_bits & CAUSES[i].cause) != 0) {
-      cause = CAUSES[i].message;
-      break;
-    }
-  }
-  for (; *cause != '\0'; cause++) {
-    libc_message_append(float_exception_message, *cause);
-  }
-  if ((routine & LIBC_RAISE_MATH) != 0) {
-    names =
-        "  acos() acosf()  asin() asinf()  atan() atanf() atan2()atan2f()"
-        "  ceil() ceilf()   cos()  cosf()  cosh() coshf()   exp()  expf()"
-        "  fabs() fabsf() floor()floorf()  fmod() fmodf() frexp()frexpf()"
-        " ldexp()ldexpf()   log()  logf() log10()log10f()  modf() modff()"
-        "   pow()  powf()   sin()  sinf()  sinh() sinhf()  sqrt() sqrtf()"
-        "   tan()  tanf()  tanh() tanhf()  frem() fremf()  ????? ";
-    if (routine > MATH_LAST || routine == 0) {
-      routine = MATH_LAST;
-    }
-  } else {
-    names =
-        "  ?????   ftoi()  ftod()  dtof()  dtoi() cmp32() cmp64() add32()"
-        " add64() sub32() sub64() mul32() mul64() div32() div64()  itof()"
-        " dtoui() ftoui() uitod() uitof()  ????? ";
-    if (routine > ARITHMETIC_LAST || routine == 0) {
-      routine = ARITHMETIC_LAST;
-    }
-  }
-  const char* name = names + (routine & NAME_INDEX_MASK) * NAME_LENGTH;
-
-  for (int32_t i = 0; i < NAME_LENGTH; i++) {
-    if (name[i] != ' ') {
-      libc_message_append(float_exception_message, name[i]);
-    }
-  }
   const uint32_t* frame = __builtin_frame_address(0);
 
+  libc_float_exception_message(float_exception_message, code);
   fatal_error_with_code((char*)float_exception_message,
                         (uint32_t)__builtin_return_address(0), code,
-                        frame[FRAME_LONG_ABOVE_CODE]);
+                        frame[LIBC_FRAME_LONG_ABOVE_CODE]);
   for (;;) {
   }
 }

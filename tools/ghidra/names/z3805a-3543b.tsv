@@ -960,6 +960,9 @@
 0x15f8a	function	kernel_return_from_interrupt	psos.md	trap #5: an interrupt handler's exit, switching tasks if it made a higher one ready		convention=exception; confidence=read; family=psos
 #
 # the installer's copy of the pSOS kernel, psos.md
+installer::0x100d1c	function	installer_restart	restart.md	trap #12, the restart, where the primary's enter_installer has trap #11	void installer_restart(void)
+installer::0x100d20	function	installer_scpi_task_start	context	the installer's scpi_task_start: spoo_run of its scpi_task_create (0x107886) at priority 0x19, then its task_console cleared	void installer_scpi_task_start(void)
+installer::0x100e42	function	installer_region_find_segment	context	the installer's region_find_segment		convention=register; confidence=read; in=A0 void *region, D0 char *address; out=A1 void *segment; family=stack
 installer::0x10152c	function	installer_kernel_dispatch_service	psos.md	the installer's copy of kernel_dispatch_service, at 0x14b26 plus 0xeca06, byte for byte		convention=exception; confidence=documented; in=D7 char service, D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x101610	function	installer_kernel_dispatch_io	psos.md	the installer's copy of kernel_dispatch_io, at 0x14c0a plus 0xeca06, byte for byte		convention=exception; confidence=documented; in=D7 char function, D0 int device; family=psos
 installer::0x101680	function	installer_kernel_switch_task	psos.md	the installer's copy of kernel_switch_task, at 0x14c7a plus 0xeca06, byte for byte		convention=other; confidence=read; family=psos
@@ -1682,7 +1685,7 @@ installer::0x1005f8	call	installer_printf_polled	read	the exception's name, inst
 installer::0x100626	call	installer_printf_polled	read	the exception's address, the long at the frame's +0x10	void installer_printf_polled(char *format, uint32_t address)
 installer::0x100658	function	installer_exception_name	context	the installer's exception_name	char * installer_exception_name(uint16_t vector)
 installer::0x100bb2	function	installer_periodic_interrupt	context	the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5		convention=exception; confidence=read; family=exception
-installer::0x100bd2	function	installer_periodic_interrupt_enable	context	the installer's periodic_interrupt_enable
+installer::0x100bd2	function	installer_periodic_interrupt_enable	context	the installer's periodic_interrupt_enable	void installer_periodic_interrupt_enable(char enable)
 installer::0x100bf4	function	installer_qsm_init	context	the installer's qsm_init
 installer::0x100c1e	function	installer_gpt_init	context	the installer's gpt_init
 installer::0x100c7a	function	installer_start_nothing	context	the installer's start_nothing
@@ -1692,57 +1695,119 @@ installer::0x100e80	function	installer_enter_supervisor_mode	context	the install
 installer::0x100e90	function	installer_set_interrupt_mask	context	the installer's set_interrupt_mask	uint16_t installer_set_interrupt_mask(uint16_t sr)
 installer::0x100f32	function	installer_trap_7	context	the installer's primary_trap_7, byte for byte: the boot vector table's vector 39, trap #7		convention=exception; confidence=read; family=exception
 installer::0x100f3a	function	installer_enter_supervisor	context	the installer's enter_supervisor		convention=other; confidence=read; out=D0 int status; preserves=D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6; family=supervisor
-installer::0x100fc0	function	installer_float_exception_report	context	the installer's float_exception_report	void installer_float_exception_report(uint param_1,undefined4 param_2)
+installer::0x100fc0	function	installer_float_exception_report	context	the installer's float_exception_report	void installer_float_exception_report(uint32_t code)
 installer::0x10135a	function	installer_spurious_interrupt	context	the installer's primary_spurious_interrupt, a lone rte, byte for byte: the boot vector table's vector 24, the spurious interrupt		convention=exception; confidence=read; family=exception
+installer::0x10135c	function	installer_entry	read	the installer's entry from the boot code, as primary_reset's end (0x14922): the stack at 0x10fffe and a null frame, the float library's state, atexit's count, errno and rand's seed, then installer_start and installer_program_exit with its result		convention=other; confidence=read
 installer::0x1013ae	function	installer_program_exit	context	the installer's program_exit	void installer_program_exit(undefined4 param_1)
 installer::0x1013c2	function	installer_program_end_report	context	the installer's program_end_report	void installer_program_end_report(uint value, uint32_t return_address)
 installer::0x102a72	function	installer_psos_call	psos.md	the installer's psos_call		convention=register; confidence=read; in=D7 char service, D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; results=D0, D1, D2, D3, A0, A1; family=psos-binding
+installer::0x102a8a	function	installer_psos_io_call	context	the installer's psos_io_call		convention=register; confidence=read; in=D7 psos_io_function function, D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; results=D0, D1, D2, D3, A0, A1; family=psos
 installer::0x102aa4	function	installer_psos_pack_name	psos.md	the installer's psos_pack_name		convention=other; confidence=read; out=D0 int name; family=psos-binding
+installer::0x102ac8	function	installer_psos_create	context	the installer's psos_create, service 1	unsigned long installer_psos_create(char *name, unsigned long a, unsigned long priority, unsigned long stack_a, unsigned long stack_b, void *e, unsigned long *task)
+installer::0x102b02	function	installer_psos_start	context	the installer's psos_start	unsigned long installer_psos_start(unsigned long task, void *entry)
+installer::0x102b1e	function	installer_psos_ident	context	the installer's psos_ident	unsigned long installer_psos_ident(char *name, unsigned long *id, unsigned char *b)
 installer::0x102b4c	function	installer_psos_my_pid	psos.md	the installer's psos_my_pid	unsigned long installer_psos_my_pid(void)
 installer::0x102b5c	function	installer_psos_delete	psos.md	the installer's psos_delete, service 4	unsigned long installer_psos_delete(unsigned long task)
 installer::0x102bca	function	installer_psos_pause	psos.md	the installer's psos_pause, service 28	unsigned long installer_psos_pause(unsigned long a)
+installer::0x102be2	function	installer_psos_mode	context	the installer's psos_mode	unsigned long installer_psos_mode(unsigned long mode, unsigned long mask, unsigned char *old)
+installer::0x102c08	function	installer_psos_supervisor	context	the installer's psos_supervisor		convention=other; confidence=read; family=psos-binding
+installer::0x102c14	function	installer_psos_service_8	context	the installer's psos_service_8	unsigned long installer_psos_service_8(unsigned long a, unsigned long b, unsigned long c, unsigned long d, unsigned long *out)
+installer::0x102c48	function	installer_psos_free_segment	context	the installer's psos_free_segment	unsigned long installer_psos_free_segment(void *segment)
 installer::0x102d22	function	installer_psos_create_x	psos.md	the installer's psos_create_x, service 20	unsigned long installer_psos_create_x(char *name, unsigned long a, unsigned long b, unsigned long *exchange)
 installer::0x102da6	function	installer_psos_send_x	psos.md	the installer's psos_send_x, service 23	unsigned long installer_psos_send_x(unsigned long exchange, void *message)
+installer::0x102e18	function	installer_psos_request_x	context	the installer's psos_request_x	unsigned long installer_psos_request_x(unsigned long exchange, void *buffer, unsigned long no_wait, unsigned long ticks)
 installer::0x102e3c	function	installer_psos_signal_v	psos.md	the installer's psos_signal_v, service 25	unsigned long installer_psos_signal_v(unsigned long variable, unsigned long value)
 installer::0x102e58	function	installer_psos_wait_v	psos.md	the installer's psos_wait_v, service 26	unsigned long installer_psos_wait_v(unsigned long a, unsigned long b, unsigned long c, unsigned long *out)
 installer::0x102e86	function	installer_psos_get_v	psos.md	the installer's psos_get_v, service 27	unsigned long installer_psos_get_v(unsigned long a, unsigned long b, unsigned long *out)
 installer::0x102eb0	function	installer_psos_announce_tick	psos.md	the installer's psos_announce_tick	unsigned long installer_psos_announce_tick(void)
+installer::0x102f36	function	installer_psos_io_open	context	the installer's psos_io_open	unsigned long installer_psos_io_open(unsigned long device, unsigned long a)
+installer::0x102f6a	function	installer_psos_io_read	context	the installer's psos_io_read	unsigned long installer_psos_io_read(unsigned long device, void *buffer, unsigned long *length)
+installer::0x102f9c	function	installer_psos_io_write	context	the installer's psos_io_write	unsigned long installer_psos_io_write(unsigned long device, void *buffer, unsigned long *length)
 installer::0x102ff4	function	installer_gp_port_select	context	the installer's gp_port_select
 installer::0x103016	function	installer_duartb_mode_from_settings	context	the installer's duartb_mode_from_settings
 installer::0x1030b4	function	installer_duartb_baud_from_settings	context	the installer's duartb_baud_from_settings
 installer::0x103102	function	installer_duartb_putc_polled	context	the installer's duartb_putc_polled
+installer::0x10313c	function	installer_drtb_puts	context	the installer's drtb_puts, which installer_drtb_putc calls	int32_t installer_drtb_puts(char *text)
 installer::0x1031cc	function	installer_drtb_getc	context	the installer's drtb_getc	uint8_t installer_drtb_getc(void)
-installer::0x103266	function	installer_drtb_gets	context	the installer's drtb_gets
-installer::0x103868	function	installer_drtb_putc	context	the installer's drtb_putc
+installer::0x103266	function	installer_drtb_gets	context	the installer's drtb_gets	int32_t installer_drtb_gets(char *buffer, int32_t length)
+installer::0x103378	function	installer_drtb_unlock	context	the installer's drtb_unlock		convention=register; confidence=read; in=D0 char write; family=drtb
+installer::0x103394	function	installer_drtb_lock	context	the installer's drtb_lock		convention=register; confidence=read; in=D0 char write; family=drtb
+installer::0x103868	function	installer_drtb_putc	context	the installer's drtb_putc	void installer_drtb_putc(char c)
+installer::0x1038e8	function	installer_console_write	context	the installer's console_write	unsigned long installer_console_write(char *s)
+installer::0x103908	function	installer_printf	context	the installer's printf	int installer_printf(char *format, ...)
+installer::0x10392e	function	installer_console_read	context	the installer's console_read	uint32_t installer_console_read(void *buffer, uint32_t length, uint8_t *errors)
+installer::0x103958	function	installer_scpi_port_open	context	the installer's scpi_port_open	void installer_scpi_port_open(void)
 installer::0x103984	function	installer_console_write_polled	context	the installer's console_write_polled	int installer_console_write_polled(char *s)
 installer::0x1039ba	function	installer_printf_polled	context	the installer's printf_polled	void installer_printf_polled(char *format, ...)
+installer::0x1039e0	function	installer_duart_output_bits	context	the installer's duart_output_bits	void installer_duart_output_bits(board_led reset, board_led set)
 installer::0x103a44	function	installer_duarta_receive	context	empties DUART channel A's receiver into its ring; returns nothing, D0 left SRA's overrun bit, which its one caller, installer_duart_interrupt, does not read	void installer_duarta_receive(void)
 installer::0x103aa8	function	installer_duartb_isr	context	the installer's duartb_isr
 installer::0x103c7c	function	installer_duarta_transmit_interrupt	context	disables channel A's transmit interrupt
 installer::0x103c90	function	installer_duartb_transmit_interrupt	context	the installer's duartb_transmit_interrupt
 installer::0x103d74	function	installer_duart_interrupt	context	the DUART's interrupt: dispatches each pending, enabled source		convention=exception; confidence=read; family=exception
 installer::0x103eea	function	installer_fatal_error	context	holds off interrupts and hangs	void installer_fatal_error(char *message)
-installer::0x1040a2	function	installer_fatal_error_with_code	context	the installer's fatal_error_with_code	void installer_fatal_error_with_code (char *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
-installer::0x10531c	function	installer_scpi_scan_exponent	context	the installer's scpi_scan_exponent
+installer::0x103efe	function	installer_spoo_task_create	context	the installer's spoo_task_create	uint32_t installer_spoo_task_create(uint32_t priority)
+installer::0x103fce	function	installer_spoo_run	context	the installer's spoo_run	uint installer_spoo_run(spoo_function *function, uint32_t a, uint32_t b, uint32_t c)
+installer::0x10403a	function	installer_spoo_task	context	the installer's spoo_task, which installer_spoo_task_create starts
+installer::0x1040a2	function	installer_fatal_error_with_code	context	the installer's fatal_error_with_code	void installer_fatal_error_with_code(char *message, uint32_t unused_1, uint32_t unused_2, uint32_t code)
+installer::0x10472e	function	installer_scpi_context_init	context	the installer's scpi_context_init	int32_t installer_scpi_context_init(scpi_context *context, scpi_port *input, uint32_t word, scpi_path *path, scpi_call *call, scpi_arena *arena, uint32_t field_1e, scpi_child_list *main_tree, scpi_child_list *common_list)
+installer::0x104764	function	installer_scpi_parse_message_unit	context	the installer's scpi_parse_message_unit	int installer_scpi_parse_message_unit(scpi_context *context, short *reset_path)
+installer::0x104b8e	function	installer_scpi_scan_token	context	the installer's scpi_scan_token	int installer_scpi_scan_token(scpi_port *input, scpi_token *token, scpi_arena *arena)
+installer::0x105036	function	installer_scpi_skip_to_terminator	context	the installer's scpi_skip_to_terminator	void installer_scpi_skip_to_terminator(scpi_port *input)
+installer::0x10507a	function	installer_scpi_scan_number	context	the installer's scpi_scan_number	int installer_scpi_scan_number(scpi_number *number, int have_character, int character, scpi_port *input)
+installer::0x10531c	function	installer_scpi_scan_exponent	context	the installer's scpi_scan_exponent	int32_t installer_scpi_scan_exponent(int32_t character, scpi_number *number, scpi_port *input)
 installer::0x105480	function	installer_scpi_char_upper	context	the installer's scpi_char_upper
+installer::0x1055a2	function	installer_scpi_parameter_match	context	the installer's scpi_parameter_match	int installer_scpi_parameter_match(scpi_parameter **parameter, int kind, scpi_call *call, short *offset)
+installer::0x105628	function	installer_scpi_parameters_finish	context	the installer's scpi_parameters_finish	uint32_t installer_scpi_parameters_finish(scpi_parameter **parameter, scpi_call *call, short *offset)
 installer::0x105684	function	installer_scpi_suffix_compare_tail	context	the installer's scpi_suffix_compare_tail	short installer_scpi_suffix_compare_tail(char *suffix, int length, char *name)
-installer::0x1056ba	function	installer_scpi_multiplier_exponent	context	the installer's scpi_multiplier_exponent
-installer::0x105c78	function	installer_status_event_set	context	the installer's status_event_set	void installer_status_event_set(status_model *status, status_register *reg, int bits)
-installer::0x105c96	function	installer_status_condition_set	context	the installer's status_condition_set
-installer::0x105cf2	function	installer_status_condition_clear	context	the installer's status_condition_clear
+installer::0x1056ba	function	installer_scpi_multiplier_exponent	context	the installer's scpi_multiplier_exponent	int8_t installer_scpi_multiplier_exponent(int32_t name)
+installer::0x105858	function	installer_scpi_node_find	context	the installer's scpi_node_find	scpi_node *installer_scpi_node_find(scpi_child_list *list, scpi_keyword *keyword)
+installer::0x1058d0	function	installer_scpi_node_find_with_defaults	context	the installer's scpi_node_find_with_defaults	scpi_node *installer_scpi_node_find_with_defaults(scpi_path *path, scpi_keyword *keyword, void *unused)
+installer::0x105942	function	installer_scpi_node_find_numbered	context	the installer's scpi_node_find_numbered	scpi_node *installer_scpi_node_find_numbered(scpi_path *path, scpi_keyword *keyword, void *unused)
+installer::0x105a2e	function	installer_scpi_header_resolve	context	the installer's scpi_header_resolve	
+installer::0x105b4c	function	installer_scpi_header_step	context	the installer's scpi_header_step	uint32_t installer_scpi_header_step(scpi_keyword *keyword, scpi_path *path, void *unused)
+installer::0x105bac	function	installer_scpi_path_reset	context	the installer's scpi_path_reset	void installer_scpi_path_reset(scpi_path *path, scpi_child_list *list)
+installer::0x105bbe	function	installer_scpi_common_header_resolve	context	the installer's scpi_common_header_resolve	
+installer::0x105c2c	function	installer_scpi_trg_defined	context	the installer's scpi_trg_defined	scpi_node *installer_scpi_trg_defined(scpi_child_list *list, uint16_t *no_setter)
+installer::0x105c78	function	installer_status_event_set	context	the installer's status_event_set	void installer_status_event_set(status_model *status, status_register *reg, uint32_t bits)
+installer::0x105c96	function	installer_status_condition_set	context	the installer's status_condition_set	void installer_status_condition_set(status_model *status, status_register *reg, int32_t bits)
+installer::0x105cf2	function	installer_status_condition_clear	context	the installer's status_condition_clear	void installer_status_condition_clear(status_model *status, status_register *reg, int32_t bits)
 installer::0x105d52	function	installer_status_propagate	context	the installer's status_propagate	void installer_status_propagate(status_model *status, status_register *reg)
+installer::0x105d98	function	installer_status_create	context	the installer's status_create	uint32_t installer_status_create(status_model **model, int register_count, int queue_capacity, status_condition *conditions, uint32_t reserved)
+installer::0x105e4a	function	installer_status_register_setup	context	the installer's status_register_setup	void installer_status_register_setup(int32_t model, int32_t index, uint32_t positive, uint32_t negative, int32_t parent_index, uint32_t parent_bit, int32_t port)
 installer::0x105eb8	function	installer_status_set_bit	context	the installer's status_set_bit	int16_t installer_status_set_bit(status_model *status, int condition, int value)
 installer::0x105f7c	function	installer_status_apply_condition	context	the installer's status_apply_condition	void installer_status_apply_condition(status_model *status, int condition, int param_3)
+installer::0x106036	function	installer_status_clear_bit	context	the installer's status_clear_bit	int16_t installer_status_clear_bit(status_model *status, int condition)
+installer::0x10604a	function	installer_condition_is_command_error	context	the installer's condition_is_command_error	uint32_t installer_condition_is_command_error(int32_t param_1)
 installer::0x106164	function	installer_status_read_event	context	the installer's status_read_event	void installer_status_read_event(status_model *status, int index, uint16_t *event)
-installer::0x106282	function	installer_error_queue_push	context	the installer's error_queue_push	int16_t installer_error_queue_push(short *error_queue, int code, uint32_t value)
-installer::0x106548	function	installer_error_message_lookup	context	the installer's error_message_lookup
+installer::0x106236	function	installer_error_queue_create	context	the installer's error_queue_create	uint32_t installer_error_queue_create(status_error_queue **queue, int capacity, status_model *status)
+installer::0x106282	function	installer_error_queue_push	context	the installer's error_queue_push	int16_t installer_error_queue_push(status_error_queue *queue, int32_t code, uint32_t value)
+installer::0x106548	function	installer_error_message_lookup	context	the installer's error_message_lookup	char *installer_error_message_lookup(int32_t code)
+installer::0x106f30	function	installer_scpi_interpret	context	the installer's scpi_interpret	undefined4 installer_scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
+installer::0x10729c	function	installer_scpi_call_handler	context	the installer's scpi_call_handler	int installer_scpi_call_handler(scpi_call *call, void **response)
+installer::0x1072ea	function	installer_scpi_format_response	context	the installer's scpi_format_response	int installer_scpi_format_response(scpi_port *output, scpi_response_item *items, scpi_call *call)
+installer::0x10735a	function	installer_arena_alloc	context	the installer's arena_alloc	void *installer_arena_alloc(int size, scpi_arena *arena)
+installer::0x10739c	function	installer_arena_take	context	the installer's arena_take	void *installer_arena_take(void *buffer, int size, scpi_arena *arena)
+installer::0x1073b8	function	installer_arena_current	context	the installer's arena_current	void *installer_arena_current(scpi_arena *arena)
+installer::0x1073c0	function	installer_arena_set	context	the installer's arena_set	void installer_arena_set(void *next, scpi_arena *arena)
+installer::0x1073ca	function	installer_arena_init	context	the installer's arena_init	void installer_arena_init(void *buffer, uint32_t size, scpi_arena **arena)
 installer::0x1073f6	function	installer_scpi_prompt	context	the installer's scpi_prompt
-installer::0x1076f4	function	installer_status_prompt_refresh	context	the installer's status_prompt_refresh	void installer_status_prompt_refresh(int param_1,undefined4 param_2)
+installer::0x10742a	function	installer_scpi_session_init	context	the installer's scpi_session_init	scpi_port *installer_scpi_session_init(void)
+installer::0x10746a	function	installer_scpi_console_port	context	the installer's scpi_console_port: returns 0x1076d0, its console port's object	scpi_port *installer_scpi_console_port(void)
+installer::0x107656	function	installer_status_update_rqs	context	the installer's status_update_rqs	void installer_status_update_rqs(void)
+installer::0x1076ec	function	installer_scpi_message_done	context	the installer's scpi_message_done	uint32_t installer_scpi_message_done(void)
+installer::0x1076f0	function	installer_scpi_input_closed	context	the installer's scpi_input_closed	uint32_t installer_scpi_input_closed(void)
+installer::0x1076f4	function	installer_status_prompt_refresh	context	the installer's status_prompt_refresh	void installer_status_prompt_refresh(status_model *status, int32_t error)
+installer::0x107886	function	installer_scpi_task_create	context	the installer's scpi_task_create, which installer_scpi_task_start hands installer_spoo_run	uint32_t installer_scpi_task_create(uint32_t priority)
+installer::0x107902	function	installer_scpi_task	context	the installer's SCPI task, which installer_scpi_task_create starts
+installer::0x107a00	function	installer_status_init	context	the installer's status_init: builds installer_status_object, sets two registers up, sets installer_status_ready	uint32_t installer_status_init(void)
+installer::0x107a86	function	installer_status_report	context	the installer's status_report	uint32_t installer_status_report(int16_t code)
 installer::0x108166	function	installer_record_checksum	context	the installer's record_checksum	uint16_t installer_record_checksum(void *record, uint16_t length)
-installer::0x1081ac	function	installer_parameter_record_read	context	the installer's parameter_record_read
+installer::0x1081ac	function	installer_parameter_record_read	context	the installer's parameter_record_read	uint8_t installer_parameter_record_read(void)
 installer::0x10822e	function	installer_idn_model_default	context	sets the *IDN? model to 58000A
-installer::0x10824a	function	installer_identification_record_read	context	the installer's identification_record_read
+installer::0x10824a	function	installer_identification_record_read	context	the installer's identification_record_read	uint8_t installer_identification_record_read(void)
 installer::0x1083b6	function	installer_psos_config_init	psos.md	the installer's psos_config_init
+installer::0x108428	function	installer_memory_allocate	context	the installer's memory_allocate	void *installer_memory_allocate(uint32_t size)
 installer::0x108466	function	installer_trap_1	context	the installer's primary_trap_1, byte for byte: the boot vector table's vector 33, trap #1		convention=exception; confidence=read; family=exception
 installer::0x108ca8	function	installer_float_raise	softfloat.md	the installer's float_raise
 installer::0x10904c	function	installer_call_atexit_functions	libc.md	the installer's call_atexit_functions
@@ -1751,10 +1816,11 @@ installer::0x10917e	function	installer_strncpy	libc.md	the installer's strncpy	c
 installer::0x1091ac	function	installer_strtol	context	strtol: a long from a string in a base up to 36, and where it ended
 installer::0x109366	function	installer_toupper	libc.md	the installer's toupper	int installer_toupper(int c)
 installer::0x10937e	function	installer_double_to_digits_multiply	libc.md	the installer's double_to_digits_multiply
-installer::0x109562	function	installer_double_to_digits	libc.md	the installer's double_to_digits	void installer_double_to_digits(double value, int count, int *exponent, uint *negative, char *digits, int mode)
+installer::0x109562	function	installer_double_to_digits	libc.md	the installer's double_to_digits	void installer_double_to_digits(double value, int32_t count, int32_t *exponent, uint32_t *negative, char *digits, int32_t mode)
 installer::0x109c7e	function	installer_next_decimal_digit	libc.md	the installer's next_decimal_digit	int installer_next_decimal_digit(uint32_t *n)
 installer::0x109cb4	function	installer_doprnt	libc.md	the installer's doprnt
 installer::0x10aa3e	function	installer_sprintf	libc.md	the installer's sprintf	int installer_sprintf(char *s, char *format, ...)
+installer::0x10aa6c	function	installer_sprintf_put	libc.md	the installer's sprintf_put, which installer_vsprintf and installer_sprintf hand installer_doprnt	int32_t installer_sprintf_put(char *text, int32_t size, int32_t count, sprintf_output *output)
 installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf	int installer_vsprintf(char *s, char *format, void *arg)
 #
 # the installer's DUART driver state, in plain RAM after its image, laid
@@ -1814,6 +1880,16 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x10ab3a	label	installer_idn_model	structures.md	the installer's idn_model, from the identification record, or "58000A"	char[18]
 0x10ab4c	label	installer_idn_serial	structures.md	the installer's idn_serial	char[18]
 0x10ab5e	label	installer_idn_suffix	structures.md	the installer's idn_suffix, 'A' without the record	char
+installer::0x1007d0	label	installer_exception_names	read	the installer's exception_names, at its "\r\nRESET to recover." text plus 0x14 as the primary's, which installer_exception_name indexes by the vector offset less 8	char *[57]
+installer::0x10549a	label	installer_scpi_char_classes	read	the installer's scpi_char_classes, the same bytes, which installer_scpi_char_upper indexes unchecked	scpi_char_class[262]
+installer::0x1063ce	label	installer_status_negative_conditions	read	the installer's status_negative_conditions, the same 63 entries, which installer_status_set_bit and installer_status_apply_condition take by a negative number at -6 times it	status_condition[63]
+installer::0x1076d0	label	installer_console_port	read	the installer's console port's object, which installer_scpi_console_port returns	scpi_port
+installer::0x107ad6	label	installer_status_register_layouts	read	the installer's two status registers' layouts, which installer_status_init sets register 1 up from	installer_status_register_layout[2]
+installer::0x107aea	label	installer_status_conditions	read	the installer's status conditions, which installer_status_init gives installer_status_create: 0 nothing, 1 to 4 the errors -360 to -363	status_condition[5]
+installer::0x107b08	label	installer_status_report_messages	read	the installer's status_report_messages: none, then the messages of its four errors, -360 to -363	char *[5]
+installer::0x1081a2	label	installer_duartb_settings_defaults	read	channel B's settings by default, 9600 baud, no parity, eight bits, echo, which installer_parameter_record_read copies when the parameter record's checksum fails	duartb_settings_record
+installer::0x1084da	label	installer_psos_config_defaults	structures.md	installer_psos_config_init copies these 0x62 bytes over installer_psos_config	psos_configuration
+installer::0x108578	label	installer_io_table_defaults	structures.md	installer_psos_config_init copies these 0x24 bytes, one device's jmp.l instructions, over installer_io_table	io_device_jumps
 0x10ab60	label	installer_io_table	structures.md	installer_psos_config_init copies it from 0x108578: one device, DUART channel B	io_device_jumps
 0x10ab84	label	installer_psos_config	structures.md	installer_psos_config_init copies it from 0x1084da	psos_configuration
 0x10abe8	label	installer_scpi_last_input	structures.md	as scpi_last_input	int32_t
@@ -1827,6 +1903,9 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x10ad04	label	installer_status_ready	structures.md	as status_ready: installer_system_init clears it, the status set-up at 0x107a00 sets it, the report at 0x107a86 does nothing without it	uint8_t
 0x10ad06	label	installer_status_object	structures.md	as status_object: the set-up at 0x107a00 passes its address to the status_create at 0x105d98; installer_status_prompt_refresh compares with it	status_model *
 0x10ad0a	label	installer_idn_response	structures.md	the installer's *IDN? answer, "HEWLETT-PACKARD,%s,%s,%s..." of installer_idn_model, installer_idn_serial and installer_idn_suffix	char[50]
+0x10afba	label	installer_task_spoo	read	the installer's task_spoo	uint32_t
+0x10afbe	label	installer_spoo_exchange	read	the installer's spoo_exchange	uint32_t
+0x10afc2	label	installer_spoo_started	read	the installer's spoo_started	uint8_t
 0x10afe0	label	installer_exception_hook	structures.md	as exception_hook	void *
 0x10afe4	label	installer_exception_hook_per_task	structures.md	as exception_hook_per_task	uint8_t
 0x10afe6	label	installer_kernel_running	structures.md	as kernel_running: installer_system_init clears it, the root task at 0x100d40 sets it; installer_default_exception and installer_print_exception pause only while it is set	uint8_t
@@ -1836,7 +1915,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x10b034	label	installer_idle_loops	structures.md	as idle_loops: the root task at 0x100d40 clears it and counts it in its endless loop	uint32_t
 0x10b038	label	installer_float_status	structures.md	as float_status; installer_entry clears it	uint16_t
 0x10b03a	label	installer_float_control	structures.md	as float_control; installer_entry sets 0x7480	uint16_t
-0x10b03c	label	installer_atexit_functions	structures.md	as atexit_functions; installer_call_atexit_functions calls them
+0x10b03c	label	installer_atexit_functions	structures.md	as atexit_functions; installer_call_atexit_functions calls them	atexit_function *[32]
 0x10b0bc	label	installer_atexit_count	structures.md	as atexit_count	uint16_t
 0x10b0be	label	installer_rand_seed	structures.md	as rand_seed; installer_entry sets 1	uint32_t
 0x10b0c2	label	installer_errno	structures.md	as errno; installer_float_raise and installer_strtol set it	int32_t

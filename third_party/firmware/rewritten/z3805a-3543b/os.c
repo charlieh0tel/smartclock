@@ -30,6 +30,21 @@ void psos_config_init(void) {
  * not read is passed as 0.  psos_pack_name packs the name the stub was
  * given, its caller's first argument. */
 
+/* Creates a task of a name and priority, its supervisor and user
+ * stacks' sizes in words packed in D3, a word each; on success its id
+ * (0x16f74). */
+uint32_t psos_create(char* name, uint32_t a, uint32_t priority,
+                     uint32_t stack_a, uint32_t stack_b, void* e,
+                     uint32_t* task) {
+  uint32_t error = psos_call(PSOS_SERVICE_SPAWN, psos_pack_name(), a, priority,
+                             os_stack_sizes(stack_a, stack_b), e, NULL);
+
+  if (error == 0 && task != NULL) {
+    *task = bridge_result_a0;
+  }
+  return error;
+}
+
 /* Starts a created task at its entry (0x16fae). */
 uint32_t psos_start(uint32_t task, void* entry) {
   return psos_call(PSOS_SERVICE_START, 0, 0, 0, 0, (void*)task, entry);

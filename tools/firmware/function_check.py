@@ -288,6 +288,14 @@ KNOWN = {
         r"^one stopped: image None, gcc Invalid memory read \(UC_ERR_READ_UNMAPPED\) of fffff000 ",
     ),
     "log_erase": Known("log_erase checksums a pointer's bytes", r"^RAM differs from 101d50$"),
+    **{
+        name: Known(
+            "the status register it returns holds its caller's condition codes, "
+            "which gcc's copy of its narrow argument sets first",
+            r"^result ([0-9a-f]*?)[0-9a-f]{2}, image's \1[0-9a-f]{2}$",
+        )
+        for name in ("set_interrupt_mask", "installer_set_interrupt_mask")
+    },
 }
 
 

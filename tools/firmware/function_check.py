@@ -164,6 +164,11 @@ DIGITS = [(7, 1), (17, 1), (1, 1), (6, 0), (0, 0), (60, 0)]
 # (0x609ac, 0x60dae) and modf then stores through iptr, float_raise
 # keeping A0 (0x5e940, 0x60e62).
 SPECIAL_DOUBLES = [5e-324, 1e-310, float("inf"), float("nan")]
+# The magnitudes the decimal exponents' bisections (0x1258a, 0x122f6)
+# find in their tables or past their ends: entries exactly, the image's
+# 1e23 and 5e22 an ulp high among them, a negative, and beyond 1e-30 and
+# 5e30.
+EXPONENT_DOUBLES = [1.0, 5.0, -100.0, 1e30, 5e30, 1e31, 1e-31, 1e23, 5e22, 1.0000000000000001e23, 5.0000000000000004e22, 0.0]
 # pow's operands the generated reals never are: a negative base to an
 # integer power, odd and even, which pow takes the sign of apart
 # (double_is_integer, 0x60e68), and a fraction.
@@ -238,6 +243,10 @@ GIVEN_CASES = {
     "double_to_digits": [{1: count, 5: mode} for count, mode in DIGITS],
     **{name: [{0: value} for value in SPECIAL_DOUBLES] for name in ("frexp", "modf", "sqrt", "log", "fabs")},
     "pow": [{0: base, 1: exponent} for base, exponent in POWERS],
+    **{
+        name: [{0: value} for value in EXPONENT_DOUBLES]
+        for name in ("double_decimal_exponent", "double_decimal_exponent_rounded")
+    },
     "status_register_setup": [
         {0: SETUP_MODEL, **{position + 1: value for position, value in enumerate(values)}} for values in SETUP_CASES
     ],

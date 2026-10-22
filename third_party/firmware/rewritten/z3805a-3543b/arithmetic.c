@@ -328,8 +328,7 @@ int32_t double_round_to_long(double x) {
 }
 
 /* 1e-30 to 1e30: the image's tables at 0x12614 and 0x129fc, which
- * double_decimal_exponent and tfom_table_index, the decompiler's, bisect
- * too. */
+ * double_decimal_exponent and tfom_table_index bisect too. */
 const double powers_of_ten_double[61] = {
     1e-30, 1e-29,
     1e-28, 1e-27,
@@ -393,6 +392,123 @@ float power_of_ten_float(int16_t power) {
     power = ARITHMETIC_POWER_OF_TEN_LIMIT;
   }
   return powers_of_ten_float[power + ARITHMETIC_POWER_OF_TEN_LIMIT];
+}
+
+/* A table's entries, 1e-30 to 1e30 or 5e-30 to 5e30, one for each power
+ * from -ARITHMETIC_POWER_OF_TEN_LIMIT up. */
+#define ARITHMETIC_POWER_ENTRIES 61
+
+/* The index of the entry a double's magnitude equals, else of the last
+ * entry below it (upper false) or the first above it (upper true), by
+ * bisection; past either end, the end's neighbor.  The magnitude's
+ * words compare as integers, the high signed and the low unsigned,
+ * which orders positive doubles by value (0x1258a, 0x122f6). */
+static int16_t arithmetic_power_bisect(const double* table, double value,
+                                       bool upper) {
+  union libc_double magnitude = {.value = value};
+  int16_t low = 0;
+  int16_t high = ARITHMETIC_POWER_ENTRIES;
+
+  magnitude.word.high &= ~LIBC_SIGN;
+  for (;;) {
+    int16_t middle = (low + high) / 2;
+
+    if (middle == low) {
+      return upper ? high : low;
+    }
+    union libc_double entry = {.value = table[middle]};
+    int32_t value_high = magnitude.word.high;
+    int32_t entry_high = entry.word.high;
+
+    if (value_high < entry_high ||
+        (value_high == entry_high && magnitude.word.low < entry.word.low)) {
+      high = middle;
+    } else if (value_high > entry_high || magnitude.word.low > entry.word.low) {
+      low = middle;
+    } else {
+      return middle;
+    }
+  }
+}
+
+/* The power of ten a double's magnitude rounds up to, ceil(log10), from
+ * -29 to 31; nothing calls it (0x1258a). */
+int16_t double_decimal_exponent(double value) {
+  return arithmetic_power_bisect(powers_of_ten_double, value, true) -
+         ARITHMETIC_POWER_OF_TEN_LIMIT;
+}
+
+/* 5e-30 to 5e30, the image's table at 0x1234c; 5e22, as 1e23 in
+ * powers_of_ten_double, an ulp high. */
+static const double ARITHMETIC_POWERS_TIMES_FIVE[ARITHMETIC_POWER_ENTRIES] = {
+    5e-30,
+    5e-29,
+    5e-28,
+    5e-27,
+    5e-26,
+    5e-25,
+    5e-24,
+    5e-23,
+    5e-22,
+    5e-21,
+    5e-20,
+    5e-19,
+    5e-18,
+    5e-17,
+    5e-16,
+    5e-15,
+    5e-14,
+    5e-13,
+    5e-12,
+    5e-11,
+    5e-10,
+    5e-9,
+    5e-8,
+    5e-7,
+    5e-6,
+    5e-5,
+    5e-4,
+    5e-3,
+    5e-2,
+    5e-1,
+    5e0,
+    5e1,
+    5e2,
+    5e3,
+    5e4,
+    5e5,
+    5e6,
+    5e7,
+    5e8,
+    5e9,
+    5e10,
+    5e11,
+    5e12,
+    5e13,
+    5e14,
+    5e15,
+    5e16,
+    5e17,
+    5e18,
+    5e19,
+    5e20,
+    5e21,
+    5.0000000000000004e+22,
+    5e23,
+    5e24,
+    5e25,
+    5e26,
+    5e27,
+    5e28,
+    5e29,
+    5e30,
+};
+
+/* The power of ten a double's magnitude rounds to, the next one from 5
+ * times a power up, from -29 to 31; nothing calls it (0x122f6). */
+int16_t double_decimal_exponent_rounded(double value) {
+  return arithmetic_power_bisect(ARITHMETIC_POWERS_TIMES_FIVE, value, false) -
+         (ARITHMETIC_POWER_OF_TEN_LIMIT - 1);
 }
 
 /* A small signed random value for the EFC's dither: rand's 1 to 0x7fff,

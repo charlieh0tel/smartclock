@@ -1844,7 +1844,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x110d6	function	oncore_date_unpack	context	the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 | year; called by nothing	uint32_t oncore_date_unpack(uint32_t packed)
 0x110d6	local	fields	read	the month, day and year it builds from the packed date's bytes and returns as a long (0x110e0 to 0x110f2)	oncore_date_fields @ -0x8
 0x122f6	function	double_decimal_exponent_rounded	context	the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c; called by nothing	int16_t double_decimal_exponent_rounded(double value)
-0x1258a	function	double_decimal_exponent	context	floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing	int16_t double_decimal_exponent(double value)
+0x1258a	function	double_decimal_exponent	context	ceil(log10) of a double's magnitude, -29 to 31, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing	int16_t double_decimal_exponent(double value)
 0x1749e	function	cpu_register_test	context, read	selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register; 1 at 0x100c24 on a failure; called as C, D0.w 0 on a pass, but its body is the registers themselves, which C cannot say		convention=other; confidence=read; family=selftest
 0x177ac	function	selftest_run_all	context	runs each self-test in the list at 0x17fe0
 0x177be	call	selftest_test	read	each self-test in turn, run 0	void selftest_test(char_slot run)

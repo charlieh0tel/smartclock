@@ -23,7 +23,8 @@ routine and the address that shows it.
   `set_interrupt_mask`, which keeps only the status register's bits 10
   to 8, so the mask they set is level 0, not 6.
 - **`powers_of_ten_double` (`0x12614`)** holds 1e23 an ulp high
-  (`0x44b52d02c7e14af7`, not `...af6`).
+  (`0x44b52d02c7e14af7`, not `...af6`), and `powers_of_ten_times_five`
+  (`0x1234c`) 5e22 the same, its mantissa 1e23's.
 
 ## Reads of what nothing set
 

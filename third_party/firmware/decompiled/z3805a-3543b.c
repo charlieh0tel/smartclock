@@ -10715,6 +10715,7 @@ int32_t round_divide(int32_t param_1,int32_t param_2)
 #endif
 
 /* 000122f6 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c;
    called by nothing */
@@ -10749,11 +10750,13 @@ int16_t double_decimal_exponent_rounded(double value)
   return (int16_t)(uVar2 - 0xe8) >> 3;
 }
 
+#endif
 
 /* 0001258a */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
-/* floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to
-   1e30 at 0x12614; called by nothing */
+/* ceil(log10) of a double's magnitude, -29 to 31, by bisection over power_of_ten_double's table,
+   1e-30 to 1e30 at 0x12614; called by nothing */
 
 int16_t double_decimal_exponent(double value)
 
@@ -10785,6 +10788,7 @@ int16_t double_decimal_exponent(double value)
   return (int16_t)(uVar6 - 0xf0) >> 3;
 }
 
+#endif
 
 /* 000125e2 */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */

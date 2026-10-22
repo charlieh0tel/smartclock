@@ -334,12 +334,12 @@ void robin_clear(uint8_t kind) {}
 
 /* :ROBin?, :SENSe:DATA? "TSTamp 1": an input's points, in the
  * :FORMat:DATA format (0x2eee8). */
-int32_t scpi_query_ROBin(void* parameters, void* response, void* call) {
+int32_t scpi_query_ROBin(void* parameters, void* response, scpi_call* call) {
   scpi_robin_parameters* given = parameters;
   uint32_t kind;
   uint32_t second;
   int32_t error = robin_parse(given->name, &kind, &second);
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
   int16_t* points = SCPI_ROBIN_POINTS[source];
   uint16_t count;
 
@@ -353,7 +353,8 @@ int32_t scpi_query_ROBin(void* parameters, void* response, void* call) {
 
 /* :ROBin:CLEar, an input's time stamps or, with no name, all of them
  * (0x2ef92). */
-int32_t scpi_set_ROBin_CLEar(void* parameters, void* response, void* call) {
+int32_t scpi_set_ROBin_CLEar(void* parameters, void* response,
+                             scpi_call* call) {
   scpi_robin_parameters* given = parameters;
   uint32_t kind;
   uint32_t second;
@@ -363,7 +364,8 @@ int32_t scpi_set_ROBin_CLEar(void* parameters, void* response, void* call) {
   } else if (robin_parse(given->name, &kind, &second) == 0) {
     robin_clear(kind);
   } else {
-    status_report_from(STATUS_ILLEGAL_PARAMETER_VALUE, return_zero());
+    status_report_from(STATUS_ILLEGAL_PARAMETER_VALUE,
+                       return_zero(call->input));
   }
   return 0;
 }
@@ -371,10 +373,10 @@ int32_t scpi_set_ROBin_CLEar(void* parameters, void* response, void* call) {
 /* :ROBin:MEMory:OVERflow:COUNt?, an input's overflow count or, with no
  * name, each input's (0x2eff8). */
 int32_t scpi_query_ROBin_MEMory_OVERflow_COUNt(void* parameters, void* response,
-                                               void* call) {
+                                               scpi_call* call) {
   scpi_robin_parameters* given = parameters;
   scpi_array* array = response;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
   double* counts = SCPI_ROBIN_OVERFLOWS[source];
   uint32_t kind;
   uint32_t second;
@@ -396,16 +398,17 @@ int32_t scpi_query_ROBin_MEMory_OVERflow_COUNt(void* parameters, void* response,
 
 /* :ROBin:MEMory:SAVE, FIRSt or LAST (0x2f0ac). */
 int32_t scpi_set_ROBin_MEMory_SAVE(void* parameters, void* response,
-                                   void* call) {
+                                   scpi_call* call) {
   scpi_robin_save_parameter* given = parameters;
 
-  pllc_request_a(&scpi_param_ROBin_MEMory_SAVE, 0, given->state, return_zero());
+  pllc_request_a(&scpi_param_ROBin_MEMory_SAVE, 0, given->state,
+                 return_zero(call->input));
   return 0;
 }
 
 /* :ROBin:MEMory:SAVE? (0x2f0dc). */
 int32_t scpi_query_ROBin_MEMory_SAVE(void* parameters, void* response,
-                                     void* call) {
+                                     scpi_call* call) {
   int16_t* value = response;
 
   *value = return_byte(nv_settings.memory_save);
@@ -414,10 +417,11 @@ int32_t scpi_query_ROBin_MEMory_SAVE(void* parameters, void* response,
 
 /* :ROBin:POINts?, an input's points or, with no name, each input's
  * (0x2f0f6). */
-int32_t scpi_query_ROBin_POINts(void* parameters, void* response, void* call) {
+int32_t scpi_query_ROBin_POINts(void* parameters, void* response,
+                                scpi_call* call) {
   scpi_robin_parameters* given = parameters;
   scpi_array* array = response;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
   int16_t* counts = SCPI_ROBIN_COUNTS[source];
   uint32_t kind;
   uint32_t second;
@@ -440,7 +444,8 @@ int32_t scpi_query_ROBin_POINts(void* parameters, void* response, void* call) {
 /* :ROBin:TSTamp?, an input's entry'th time stamp, its ten values in the
  * :FORMat:DATA format (0x2f19e).  The tenth is what the frame held, which
  * robin_timestamp_values leaves unset and the image copies. */
-int32_t scpi_query_ROBin_TSTamp(void* parameters, void* response, void* call) {
+int32_t scpi_query_ROBin_TSTamp(void* parameters, void* response,
+                                scpi_call* call) {
   static const int16_t LAST_ENTRY = 256;
   static const uint8_t TIMESTAMP_VALUES = 10;
   /* The value whose low byte robin_timestamp_values leaves in D0. */
@@ -449,7 +454,7 @@ int32_t scpi_query_ROBin_TSTamp(void* parameters, void* response, void* call) {
   uint32_t kind;
   uint32_t second;
   int32_t error = robin_parse(given->name, &kind, &second);
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
   int16_t* points = SCPI_ROBIN_POINTS[source];
   int16_t values[TIMESTAMP_VALUES];
 

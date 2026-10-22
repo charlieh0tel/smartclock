@@ -14,15 +14,17 @@ typedef struct scpi_led_parameters {
 } scpi_led_parameters;
 
 /* :LED:ACTive, "Sets or queries Active LED" (0x2d920). */
-int32_t scpi_set_LED_ACTive(void* parameters, void* response, void* call) {
+int32_t scpi_set_LED_ACTive(void* parameters, void* response, scpi_call* call) {
   scpi_led_parameters* given = parameters;
 
-  pllc_request_a(&scpi_param_LED_ACTive, 0, given->state, return_zero());
+  pllc_request_a(&scpi_param_LED_ACTive, 0, given->state,
+                 return_zero(call->input));
   return 0;
 }
 
 /* :LED:ACTive? (0x2d950). */
-int32_t scpi_query_LED_ACTive(void* parameters, void* response, void* call) {
+int32_t scpi_query_LED_ACTive(void* parameters, void* response,
+                              scpi_call* call) {
   int16_t* value = response;
 
   *value = return_byte(led_active);
@@ -30,7 +32,8 @@ int32_t scpi_query_LED_ACTive(void* parameters, void* response, void* call) {
 }
 
 /* :LED:ALARm?, "Query Alarm LED" (0x2d96a). */
-int32_t scpi_query_LED_ALARm(void* parameters, void* response, void* call) {
+int32_t scpi_query_LED_ALARm(void* parameters, void* response,
+                             scpi_call* call) {
   int16_t* value = response;
 
   *value = return_byte(led_alarm);
@@ -41,32 +44,36 @@ int32_t scpi_query_LED_ALARm(void* parameters, void* response, void* call) {
  * the four-letter stubs do, the call passed for the response
  * (scpi_unsupported.c) (0x2d984). */
 int32_t scpi_query_LED_ALARm_MINor(void* parameters, void* response,
-                                   void* call) {
+                                   scpi_call* call) {
   return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
 }
 
 /* :LED:ALARm:USER, "Provides a way to directly set Alarm", which this
  * firmware refuses (0x2d996). */
-int32_t scpi_set_LED_ALARm_USER(void* parameters, void* response, void* call) {
+int32_t scpi_set_LED_ALARm_USER(void* parameters, void* response,
+                                scpi_call* call) {
   return STATUS_SCPI_UNDEFINED_HEADER;
 }
 
 /* :LED:ALARm:USER?, refused as its setter is (0x2d99a). */
 int32_t scpi_query_LED_ALARm_USER(void* parameters, void* response,
-                                  void* call) {
+                                  scpi_call* call) {
   return STATUS_SCPI_UNDEFINED_HEADER;
 }
 
 /* :LED:ENABled, "Sets or queries Enabled LED" (0x2d99e). */
-int32_t scpi_set_LED_ENABled(void* parameters, void* response, void* call) {
+int32_t scpi_set_LED_ENABled(void* parameters, void* response,
+                             scpi_call* call) {
   scpi_led_parameters* given = parameters;
 
-  pllc_request_a(&scpi_param_LED_ENABled, 0, given->state, return_zero());
+  pllc_request_a(&scpi_param_LED_ENABled, 0, given->state,
+                 return_zero(call->input));
   return 0;
 }
 
 /* :LED:ENABled? (0x2d9ce). */
-int32_t scpi_query_LED_ENABled(void* parameters, void* response, void* call) {
+int32_t scpi_query_LED_ENABled(void* parameters, void* response,
+                               scpi_call* call) {
   int16_t* value = response;
 
   *value = return_byte(led_enabled);
@@ -74,7 +81,8 @@ int32_t scpi_query_LED_ENABled(void* parameters, void* response, void* call) {
 }
 
 /* :LED:GPSLock?, "Queries Lock LED", the loop's (0x2d9e8). */
-int32_t scpi_query_LED_GPSLock(void* parameters, void* response, void* call) {
+int32_t scpi_query_LED_GPSLock(void* parameters, void* response,
+                               scpi_call* call) {
   int16_t* value = response;
 
   *value = return_byte(pll.led_gps_lock);
@@ -82,7 +90,8 @@ int32_t scpi_query_LED_GPSLock(void* parameters, void* response, void* call) {
 }
 
 /* :LED:HOLDover?, "Queries Holdover LED", the loop's (0x2da02). */
-int32_t scpi_query_LED_HOLDover(void* parameters, void* response, void* call) {
+int32_t scpi_query_LED_HOLDover(void* parameters, void* response,
+                                scpi_call* call) {
   int16_t* value = response;
 
   *value = return_byte(pll.led_holdover);
@@ -91,7 +100,8 @@ int32_t scpi_query_LED_HOLDover(void* parameters, void* response, void* call) {
 
 /* :LED:TMHValid?, the loop's, in no manual (docs/scpi/undocumented.md)
  * (0x2da1c). */
-int32_t scpi_query_LED_TMHValid(void* parameters, void* response, void* call) {
+int32_t scpi_query_LED_TMHValid(void* parameters, void* response,
+                                scpi_call* call) {
   int16_t* value = response;
 
   *value = return_byte(pll.led_tmh_valid);

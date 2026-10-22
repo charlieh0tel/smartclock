@@ -19,7 +19,7 @@ typedef struct scpi_kenneth_predicted {
 /* :KENneth:PREDicted?: from startup PLL on; -230, Data corrupt or stale,
  * before (0x2fdaa).  The image tests the result's low byte (0x2fde0). */
 int32_t scpi_query_KENneth_PREDicted(void* parameters, void* response,
-                                     void* call) {
+                                     scpi_call* call) {
   scpi_kenneth_predicted* predicted = response;
   uint8_t resolution;
   uint8_t holdover;
@@ -53,18 +53,19 @@ typedef struct scpi_kenneth_numeric {
 /* :KENneth:PREDicted:DURation: the number, or MAX or MIN, to pllc
  * (0x2fe16). */
 int32_t scpi_set_KENneth_PREDicted_DURation(void* parameters, void* response,
-                                            void* call) {
+                                            scpi_call* call) {
   scpi_kenneth_numeric* duration = parameters;
 
   scpi_numeric_set(&scpi_param_KENneth_PREDicted_DURation, 0, duration->kind,
-                   duration->keyword, 0, duration->value, return_zero());
+                   duration->keyword, 0, duration->value,
+                   return_zero(call->input));
   return 0;
 }
 
 /* :KENneth:PREDicted:DURation?: the duration, or its MAX or MIN, as a
  * long (0x2fe50). */
 int32_t scpi_query_KENneth_PREDicted_DURation(void* parameters, void* response,
-                                              void* call) {
+                                              scpi_call* call) {
   scpi_kenneth_numeric* bound = parameters;
   int32_t* duration = response;
 
@@ -77,7 +78,7 @@ int32_t scpi_query_KENneth_PREDicted_DURation(void* parameters, void* response,
  * Settings conflict, else (0x2fe7c).  The image tests the result's low
  * byte (0x2feac). */
 int32_t scpi_query_KENneth_PRESent(void* parameters, void* response,
-                                   void* call) {
+                                   scpi_call* call) {
   scpi_float_resolution* error = response;
   uint8_t resolution;
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);

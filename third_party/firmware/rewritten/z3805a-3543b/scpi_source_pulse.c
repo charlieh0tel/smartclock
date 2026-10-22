@@ -45,18 +45,20 @@ typedef struct scpi_source_pulse_numeric {
 /* :PULSe:CONTinuous:PERiod: the number, or MAX or MIN, to pllc
  * (0x2da78). */
 int32_t scpi_set_SOURce_PULSe_CONTinuous_PERiod(void* parameters,
-                                                void* response, void* call) {
+                                                void* response,
+                                                scpi_call* call) {
   scpi_source_pulse_numeric* period = parameters;
 
   scpi_numeric_set(&scpi_param_SOURce_PULSe_CONTinuous_PERiod, 0, period->kind,
-                   period->keyword, 0, period->value, return_zero());
+                   period->keyword, 0, period->value, return_zero(call->input));
   return 0;
 }
 
 /* :PULSe:CONTinuous:PERiod?: the period, or its MAX or MIN, as a long
  * (0x2dab2). */
 int32_t scpi_query_SOURce_PULSe_CONTinuous_PERiod(void* parameters,
-                                                  void* response, void* call) {
+                                                  void* response,
+                                                  scpi_call* call) {
   scpi_source_pulse_numeric* bound = parameters;
   int32_t* period = response;
 
@@ -75,17 +77,18 @@ typedef struct scpi_source_pulse_boolean {
 
 /* :PULSe:CONTinuous:STATe: the pulse on or off, to pllc (0x2dade). */
 int32_t scpi_set_SOURce_PULSe_CONTinuous_STATe(void* parameters, void* response,
-                                               void* call) {
+                                               scpi_call* call) {
   scpi_source_pulse_boolean* state = parameters;
 
   pllc_request_a(&scpi_param_SOURce_PULSe_CONTinuous_STATe, 0,
-                 (uint8_t)state->value, return_zero());
+                 (uint8_t)state->value, return_zero(call->input));
   return 0;
 }
 
 /* :PULSe:CONTinuous:STATe? (0x2db0e). */
 int32_t scpi_query_SOURce_PULSe_CONTinuous_STATe(void* parameters,
-                                                 void* response, void* call) {
+                                                 void* response,
+                                                 scpi_call* call) {
   int16_t* state = response;
 
   /* Sign-extended (0x2db14). */
@@ -140,44 +143,44 @@ static void scpi_source_pulse_start_get(const int32_t* start,
 
 /* :PULSe:STARt:DATE year, month, day (0x2db20). */
 int32_t scpi_set_SOURce_PULSe_STARt_DATE(void* parameters, void* response,
-                                         void* call) {
+                                         scpi_call* call) {
   scpi_source_pulse_start_set(&scpi_param_SOURce_PULSe_STARt_DATE, parameters,
-                              return_zero());
+                              return_zero(call->input));
   return 0;
 }
 
 /* :PULSe:STARt:DATE? (0x2dba2). */
 int32_t scpi_query_SOURce_PULSe_STARt_DATE(void* parameters, void* response,
-                                           void* call) {
+                                           scpi_call* call) {
   scpi_source_pulse_start_get(nv_settings.pulse_start_date, response);
   return 0;
 }
 
 /* :PULSe:STARt:TIME hour, minute, second (0x2dbc4). */
 int32_t scpi_set_SOURce_PULSe_STARt_TIME(void* parameters, void* response,
-                                         void* call) {
+                                         scpi_call* call) {
   scpi_source_pulse_start_set(&scpi_param_SOURce_PULSe_STARt_TIME, parameters,
-                              return_zero());
+                              return_zero(call->input));
   return 0;
 }
 
 /* :PULSe:STARt:TIME? (0x2dc46). */
 int32_t scpi_query_SOURce_PULSe_STARt_TIME(void* parameters, void* response,
-                                           void* call) {
+                                           scpi_call* call) {
   scpi_source_pulse_start_get(nv_settings.pulse_start_time, response);
   return 0;
 }
 
 /* :PULSe:REFerence:EDGE: a stub; -113, Undefined header (0x2dc9c). */
 int32_t scpi_set_SOURce_PULSe_REFerence_EDGE(void* parameters, void* response,
-                                             void* call) {
-  status_report_from(STATUS_UNDEFINED_HEADER, return_zero());
+                                             scpi_call* call) {
+  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
   return 0;
 }
 
 /* :PULSe:REFerence:EDGE?: a stub; -113, Undefined header (0x2dcbc). */
 int32_t scpi_query_SOURce_PULSe_REFerence_EDGE(void* parameters, void* response,
-                                               void* call) {
+                                               scpi_call* call) {
   scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
   return 0;
 }

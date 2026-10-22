@@ -8,7 +8,8 @@
 
 /* :FORMat:DATA?: ASCii, comma-separated shorts, or INTeger, a block
  * (0x2eeb8).  Another format leaves the response as it is. */
-int32_t scpi_query_FORMat_DATA(void* parameters, void* response, void* call) {
+int32_t scpi_query_FORMat_DATA(void* parameters, void* response,
+                               scpi_call* call) {
   int16_t* choice = response;
 
   switch (nv_settings.format_data) {

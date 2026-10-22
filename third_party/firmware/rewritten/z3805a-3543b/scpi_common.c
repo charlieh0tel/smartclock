@@ -31,12 +31,12 @@ typedef struct scpi_common_mask {
 
 /* Sets a register's enable, through pllc, from a mask within 0 to
  * 0xff, else reports -222. */
-static void scpi_common_enable_set(int16_t index,
-                                   const scpi_common_mask* mask) {
+static void scpi_common_enable_set(int16_t index, const scpi_common_mask* mask,
+                                   scpi_port* input) {
   if (scpi_check_range(0, mask->value, SCPI_COMMON_MASK_MAXIMUM,
-                       return_zero()) != 0) {
+                       return_zero(input)) != 0) {
     pllc_request_c(&scpi_param_STATus_ENABle, index, mask->value, 0,
-                   return_zero());
+                   return_zero(input));
     status_register_set_enable(status_object, index,
                                nv_settings.status_enable[index]);
   }
@@ -44,40 +44,42 @@ static void scpi_common_enable_set(int16_t index,
 
 /* A register's enable, reporting a device-specific error where it
  * differs from nv_settings'. */
-static void scpi_common_enable_query(int16_t index, int16_t* enable) {
+static void scpi_common_enable_query(int16_t index, int16_t* enable,
+                                     scpi_port* input) {
   status_register_get_enable(status_object, index, (uint16_t*)enable);
   if (nv_settings.status_enable[index] != *enable) {
-    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, return_zero());
+    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, return_zero(input));
   }
 }
 
 /* *CLS: clears every event word and empties the error queue
  * (0x2a18c). */
-int32_t scpi_set_common_CLS(void* parameters, void* response, void* call) {
-  const scpi_call* given = call;
+int32_t scpi_set_common_CLS(void* parameters, void* response, scpi_call* call) {
   int32_t code;
 
   status_clear_events(status_object);
   do {
-    error_queue_clear(given->status, &code);
+    error_queue_clear(call->status, &code);
   } while (code != 0);
   return 0;
 }
 
 /* *ESE: the Standard Event register's enable (0x2a1e2). */
-int32_t scpi_set_common_ESE(void* parameters, void* response, void* call) {
-  scpi_common_enable_set(SCPI_COMMON_STANDARD_EVENT, parameters);
+int32_t scpi_set_common_ESE(void* parameters, void* response, scpi_call* call) {
+  scpi_common_enable_set(SCPI_COMMON_STANDARD_EVENT, parameters, call->input);
   return 0;
 }
 
 /* *ESE? (0x2a268). */
-int32_t scpi_query_common_ESE(void* parameters, void* response, void* call) {
-  scpi_common_enable_query(SCPI_COMMON_STANDARD_EVENT, response);
+int32_t scpi_query_common_ESE(void* parameters, void* response,
+                              scpi_call* call) {
+  scpi_common_enable_query(SCPI_COMMON_STANDARD_EVENT, response, call->input);
   return 0;
 }
 
 /* *ESR?: the Standard Event register, cleared as read (0x2a2ae). */
-int32_t scpi_query_common_ESR(void* parameters, void* response, void* call) {
+int32_t scpi_query_common_ESR(void* parameters, void* response,
+                              scpi_call* call) {
   status_read_event(status_object, SCPI_COMMON_STANDARD_EVENT, response);
   return 0;
 }
@@ -85,9 +87,10 @@ int32_t scpi_query_common_ESR(void* parameters, void* response, void* call) {
 /* *IDN?: the maker, model, serial number and firmware revision with the
  * hardware suffix, in the source's text buffer, as counted text
  * (0x2a2ca). */
-int32_t scpi_query_common_IDN(void* parameters, void* response, void* call) {
+int32_t scpi_query_common_IDN(void* parameters, void* response,
+                              scpi_call* call) {
   scpi_token_string* identification = response;
-  char* text = SCPI_COMMON_TEXTS[(uint8_t)return_zero()];
+  char* text = SCPI_COMMON_TEXTS[(uint8_t)return_zero(call->input)];
 
   sprintf(text, "HEWLETT-PACKARD,%s,%s,%s-%c", idn_model, idn_serial,
           RECORDS_FIRMWARE_REVISION, idn_suffix);
@@ -97,12 +100,13 @@ int32_t scpi_query_common_IDN(void* parameters, void* response, void* call) {
 }
 
 /* *OPC: nothing; every command completes before the next (0x2a356). */
-int32_t scpi_set_common_OPC(void* parameters, void* response, void* call) {
+int32_t scpi_set_common_OPC(void* parameters, void* response, scpi_call* call) {
   return 0;
 }
 
 /* *OPC?: "1" (0x2a35a). */
-int32_t scpi_query_common_OPC(void* parameters, void* response, void* call) {
+int32_t scpi_query_common_OPC(void* parameters, void* response,
+                              scpi_call* call) {
   const char** text = response;
 
   *text = "1";
@@ -110,40 +114,43 @@ int32_t scpi_query_common_OPC(void* parameters, void* response, void* call) {
 }
 
 /* *RST: nothing (0x2a368). */
-int32_t scpi_set_common_RST(void* parameters, void* response, void* call) {
+int32_t scpi_set_common_RST(void* parameters, void* response, scpi_call* call) {
   return 0;
 }
 
 /* *SRE: the service request enable (0x2a36c). */
-int32_t scpi_set_common_SRE(void* parameters, void* response, void* call) {
-  scpi_common_enable_set(SCPI_COMMON_STATUS_BYTE, parameters);
+int32_t scpi_set_common_SRE(void* parameters, void* response, scpi_call* call) {
+  scpi_common_enable_set(SCPI_COMMON_STATUS_BYTE, parameters, call->input);
   return 0;
 }
 
 /* *SRE? (0x2a3ee). */
-int32_t scpi_query_common_SRE(void* parameters, void* response, void* call) {
-  scpi_common_enable_query(SCPI_COMMON_STATUS_BYTE, response);
+int32_t scpi_query_common_SRE(void* parameters, void* response,
+                              scpi_call* call) {
+  scpi_common_enable_query(SCPI_COMMON_STATUS_BYTE, response, call->input);
   return 0;
 }
 
 /* *STB?: the Status Byte (0x2a432). */
-int32_t scpi_query_common_STB(void* parameters, void* response, void* call) {
+int32_t scpi_query_common_STB(void* parameters, void* response,
+                              scpi_call* call) {
   status_read_event(status_object, SCPI_COMMON_STATUS_BYTE, response);
   return 0;
 }
 
 /* *TST?: runs the self-tests, test 0, through pllc; their result, 0
  * for passed (0x2a44c). */
-int32_t scpi_query_common_TST(void* parameters, void* response, void* call) {
+int32_t scpi_query_common_TST(void* parameters, void* response,
+                              scpi_call* call) {
   static const uint8_t ALL_TESTS = 0;
   uint32_t* result = response;
 
-  pllc_request_b(&scpi_action_self_test, ALL_TESTS, return_zero());
+  pllc_request_b(&scpi_action_self_test, ALL_TESTS, return_zero(call->input));
   *result = selftest.result;
   return 0;
 }
 
 /* *WAI: nothing (0x2a47c). */
-int32_t scpi_set_common_WAI(void* parameters, void* response, void* call) {
+int32_t scpi_set_common_WAI(void* parameters, void* response, scpi_call* call) {
   return 0;
 }

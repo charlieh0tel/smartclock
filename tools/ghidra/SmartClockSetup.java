@@ -476,6 +476,7 @@ public class SmartClockSetup extends GhidraScript {
 					String built = prototypeFor(fields[2], prototype, convention, line);
 					if (built != null) {
 						applyPrototype(address, built);
+						namesPrototyped.add(address);
 					}
 					Function function = getFunctionAt(address);
 					if (function != null) {
@@ -597,7 +598,10 @@ public class SmartClockSetup extends GhidraScript {
 	 * response, and the call record.  A handler reads only what it needs,
 	 * so its own body shows fewer.
 	 */
-	private static final String HANDLER_PARAMETERS = "(void *parameters, void *response, void *call)";
+	private static final String HANDLER_PARAMETERS = "(void *parameters, void *response, scpi_call *call)";
+
+	/** The functions the names file gave a prototype this run, which a handler's does not replace. */
+	private final Set<Address> namesPrototyped = new HashSet<>();
 
 	/**
 	 * Gives the SCPI handler at address the handlers' prototype, unless
@@ -605,7 +609,7 @@ public class SmartClockSetup extends GhidraScript {
 	 */
 	private void applyHandlerPrototype(Address address) throws Exception {
 		Function function = getFunctionAt(address);
-		if (function.getSignatureSource() == SourceType.IMPORTED
+		if (namesPrototyped.contains(address)
 			|| function.getSignatureSource() == SourceType.USER_DEFINED) {
 			return;
 		}

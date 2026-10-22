@@ -94,50 +94,54 @@ static int16_t scpi_status_value(const scpi_status_number* number,
 
 /* Whether a register's value is within its bounds, reporting -222 when
  * it is not. */
-static bool scpi_status_in_range(int16_t index, int16_t value) {
+static bool scpi_status_in_range(int16_t index, int16_t value,
+                                 scpi_port* input) {
   const scpi_status_layout* layout = &SCPI_STATUS_LAYOUTS[index];
 
   return scpi_check_range(layout->minimum, value, layout->maximum,
-                          return_zero()) != 0;
+                          return_zero(input)) != 0;
 }
 
 /* Reports a device-specific error where a register's word read back
  * differs from nv_settings'. */
-static void scpi_status_verify(uint16_t word, uint32_t saved) {
+static void scpi_status_verify(uint16_t word, uint32_t saved,
+                               scpi_port* input) {
   if (word != saved) {
-    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, return_zero());
+    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, return_zero(input));
   }
 }
 
 /* Sets a register's enable, through pllc, as nv_settings keeps it. */
 static void scpi_status_enable_set(int16_t index,
                                    const scpi_status_number* number,
-                                   int16_t entry_d2) {
+                                   int16_t entry_d2, scpi_port* input) {
   int16_t value = scpi_status_value(number, entry_d2);
 
-  if (scpi_status_in_range(index, value)) {
-    pllc_request_c(&scpi_param_STATus_ENABle, index, value, 0, return_zero());
+  if (scpi_status_in_range(index, value, input)) {
+    pllc_request_c(&scpi_param_STATus_ENABle, index, value, 0,
+                   return_zero(input));
     status_register_set_enable(status_object, index,
                                nv_settings.status_enable[index]);
   }
 }
 
 /* A register's enable, checked against nv_settings'. */
-static void scpi_status_enable_query(int16_t index, uint16_t* enable) {
+static void scpi_status_enable_query(int16_t index, uint16_t* enable,
+                                     scpi_port* input) {
   status_register_get_enable(status_object, index, enable);
-  scpi_status_verify(*enable, nv_settings.status_enable[index]);
+  scpi_status_verify(*enable, nv_settings.status_enable[index], input);
 }
 
 /* Sets a register's positive transition filter. */
 static void scpi_status_positive_set(int16_t index,
                                      const scpi_status_number* number,
-                                     int16_t entry_d2) {
+                                     int16_t entry_d2, scpi_port* input) {
   int16_t value = scpi_status_value(number, entry_d2);
   int16_t filter = index - SCPI_STATUS_FIRST_FILTERED;
 
-  if (scpi_status_in_range(index, value)) {
+  if (scpi_status_in_range(index, value, input)) {
     pllc_request_c(&scpi_param_STATus_PTRansition, filter, value, 0,
-                   return_zero());
+                   return_zero(input));
     status_register_set_ptr(status_object, index,
                             nv_settings.status_positive_transition[filter]);
   }
@@ -145,24 +149,26 @@ static void scpi_status_positive_set(int16_t index,
 
 /* A register's positive transition filter, checked against
  * nv_settings'. */
-static void scpi_status_positive_query(int16_t index, uint16_t* filter) {
+static void scpi_status_positive_query(int16_t index, uint16_t* filter,
+                                       scpi_port* input) {
   status_register_get_ptr(status_object, index, filter);
   scpi_status_verify(
       *filter,
       nv_settings
-          .status_positive_transition[index - SCPI_STATUS_FIRST_FILTERED]);
+          .status_positive_transition[index - SCPI_STATUS_FIRST_FILTERED],
+      input);
 }
 
 /* Sets a register's negative transition filter. */
 static void scpi_status_negative_set(int16_t index,
                                      const scpi_status_number* number,
-                                     int16_t entry_d2) {
+                                     int16_t entry_d2, scpi_port* input) {
   int16_t value = scpi_status_value(number, entry_d2);
   int16_t filter = index - SCPI_STATUS_FIRST_FILTERED;
 
-  if (scpi_status_in_range(index, value)) {
+  if (scpi_status_in_range(index, value, input)) {
     pllc_request_c(&scpi_param_STATus_NTRansition, filter, value, 0,
-                   return_zero());
+                   return_zero(input));
     status_register_set_ntr(status_object, index,
                             nv_settings.status_negative_transition[filter]);
   }
@@ -170,17 +176,19 @@ static void scpi_status_negative_set(int16_t index,
 
 /* A register's negative transition filter, checked against
  * nv_settings'. */
-static void scpi_status_negative_query(int16_t index, uint16_t* filter) {
+static void scpi_status_negative_query(int16_t index, uint16_t* filter,
+                                       scpi_port* input) {
   status_register_get_ntr(status_object, index, filter);
   scpi_status_verify(
       *filter,
       nv_settings
-          .status_negative_transition[index - SCPI_STATUS_FIRST_FILTERED]);
+          .status_negative_transition[index - SCPI_STATUS_FIRST_FILTERED],
+      input);
 }
 
 /* :STATus:OPERation:CONDition? and its kind (0x2a4a0). */
 int32_t scpi_query_STATus_OPERation_CONDition(void* parameters, void* response,
-                                              void* call) {
+                                              scpi_call* call) {
   const scpi_status_query* given = parameters;
 
   status_read_condition(status_object, given->index, response);
@@ -189,7 +197,7 @@ int32_t scpi_query_STATus_OPERation_CONDition(void* parameters, void* response,
 
 /* :STATus:OPERation:EVENt? and its kind, cleared as read (0x2a480). */
 int32_t scpi_query_STATus_OPERation_EVENt(void* parameters, void* response,
-                                          void* call) {
+                                          scpi_call* call) {
   const scpi_status_query* given = parameters;
 
   status_read_event(status_object, given->index, response);
@@ -198,71 +206,73 @@ int32_t scpi_query_STATus_OPERation_EVENt(void* parameters, void* response,
 
 /* :STATus:OPERation:ENABle and its kind (0x2a580). */
 int32_t scpi_set_STATus_OPERation_ENABle(void* parameters, void* response,
-                                         void* call) {
+                                         scpi_call* call) {
   /* The caller's D2: the value for a kind neither decimal nor
    * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
   int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_setting* given = parameters;
 
-  scpi_status_enable_set(given->index, &given->number, entry_d2);
+  scpi_status_enable_set(given->index, &given->number, entry_d2, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:ENABle? and its kind (0x2a63a). */
 int32_t scpi_query_STATus_OPERation_ENABle(void* parameters, void* response,
-                                           void* call) {
+                                           scpi_call* call) {
   const scpi_status_query* given = parameters;
 
-  scpi_status_enable_query(given->index, response);
+  scpi_status_enable_query(given->index, response, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:PTRansition and its kind (0x2a68e). */
 int32_t scpi_set_STATus_OPERation_PTRansition(void* parameters, void* response,
-                                              void* call) {
+                                              scpi_call* call) {
   /* The caller's D2: the value for a kind neither decimal nor
    * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
   int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_setting* given = parameters;
 
-  scpi_status_positive_set(given->index, &given->number, entry_d2);
+  scpi_status_positive_set(given->index, &given->number, entry_d2, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:PTRansition? and its kind (0x2a74c). */
 int32_t scpi_query_STATus_OPERation_PTRansition(void* parameters,
-                                                void* response, void* call) {
+                                                void* response,
+                                                scpi_call* call) {
   const scpi_status_query* given = parameters;
 
-  scpi_status_positive_query(given->index, response);
+  scpi_status_positive_query(given->index, response, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:NTRansition and its kind (0x2a7a0). */
 int32_t scpi_set_STATus_OPERation_NTRansition(void* parameters, void* response,
-                                              void* call) {
+                                              scpi_call* call) {
   /* The caller's D2: the value for a kind neither decimal nor
    * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
   int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_setting* given = parameters;
 
-  scpi_status_negative_set(given->index, &given->number, entry_d2);
+  scpi_status_negative_set(given->index, &given->number, entry_d2, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:NTRansition? and its kind (0x2a85e). */
 int32_t scpi_query_STATus_OPERation_NTRansition(void* parameters,
-                                                void* response, void* call) {
+                                                void* response,
+                                                scpi_call* call) {
   const scpi_status_query* given = parameters;
 
-  scpi_status_negative_query(given->index, response);
+  scpi_status_negative_query(given->index, response, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:HARDware:CONDition? (0x2a8d4). */
 int32_t scpi_query_STATus_OPERation_HARDware_CONDition(void* parameters,
                                                        void* response,
-                                                       void* call) {
+                                                       scpi_call* call) {
   const scpi_status_hardware_query* given = parameters;
 
   status_read_condition(status_object, given->index, response);
@@ -271,7 +281,8 @@ int32_t scpi_query_STATus_OPERation_HARDware_CONDition(void* parameters,
 
 /* :STATus:OPERation:HARDware:EVENt?, cleared as read (0x2a8b2). */
 int32_t scpi_query_STATus_OPERation_HARDware_EVENt(void* parameters,
-                                                   void* response, void* call) {
+                                                   void* response,
+                                                   scpi_call* call) {
   const scpi_status_hardware_query* given = parameters;
 
   status_read_event(status_object, given->index, response);
@@ -280,69 +291,70 @@ int32_t scpi_query_STATus_OPERation_HARDware_EVENt(void* parameters,
 
 /* :STATus:OPERation:HARDware:ENABle (0x2a8f6). */
 int32_t scpi_set_STATus_OPERation_HARDware_ENABle(void* parameters,
-                                                  void* response, void* call) {
+                                                  void* response,
+                                                  scpi_call* call) {
   /* The caller's D2: the value for a kind neither decimal nor
    * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
   int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_hardware_setting* given = parameters;
 
-  scpi_status_enable_set(given->index, &given->number, entry_d2);
+  scpi_status_enable_set(given->index, &given->number, entry_d2, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:HARDware:ENABle? (0x2a9b8). */
 int32_t scpi_query_STATus_OPERation_HARDware_ENABle(void* parameters,
                                                     void* response,
-                                                    void* call) {
+                                                    scpi_call* call) {
   const scpi_status_hardware_query* given = parameters;
 
-  scpi_status_enable_query(given->index, response);
+  scpi_status_enable_query(given->index, response, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:HARDware:PTRansition (0x2aa10). */
 int32_t scpi_set_STATus_OPERation_HARDware_PTRansition(void* parameters,
                                                        void* response,
-                                                       void* call) {
+                                                       scpi_call* call) {
   /* The caller's D2: the value for a kind neither decimal nor
    * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
   int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_hardware_setting* given = parameters;
 
-  scpi_status_positive_set(given->index, &given->number, entry_d2);
+  scpi_status_positive_set(given->index, &given->number, entry_d2, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:HARDware:PTRansition? (0x2aad6). */
 int32_t scpi_query_STATus_OPERation_HARDware_PTRansition(void* parameters,
                                                          void* response,
-                                                         void* call) {
+                                                         scpi_call* call) {
   const scpi_status_hardware_query* given = parameters;
 
-  scpi_status_positive_query(given->index, response);
+  scpi_status_positive_query(given->index, response, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:HARDware:NTRansition (0x2ab2e). */
 int32_t scpi_set_STATus_OPERation_HARDware_NTRansition(void* parameters,
                                                        void* response,
-                                                       void* call) {
+                                                       scpi_call* call) {
   /* The caller's D2: the value for a kind neither decimal nor
    * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
   int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_hardware_setting* given = parameters;
 
-  scpi_status_negative_set(given->index, &given->number, entry_d2);
+  scpi_status_negative_set(given->index, &given->number, entry_d2, call->input);
   return 0;
 }
 
 /* :STATus:OPERation:HARDware:NTRansition? (0x2abf4). */
 int32_t scpi_query_STATus_OPERation_HARDware_NTRansition(void* parameters,
                                                          void* response,
-                                                         void* call) {
+                                                         scpi_call* call) {
   const scpi_status_hardware_query* given = parameters;
 
-  scpi_status_negative_query(given->index, response);
+  scpi_status_negative_query(given->index, response, call->input);
   return 0;
 }
 
@@ -350,45 +362,49 @@ int32_t scpi_query_STATus_OPERation_HARDware_NTRansition(void* parameters,
  * condition (0x2a4d2). */
 int32_t scpi_set_STATus_QUEStionable_CONDition_USER(void* parameters,
                                                     void* response,
-                                                    void* call) {
+                                                    scpi_call* call) {
   const scpi_status_user* given = parameters;
 
   pllc_request_a(&scpi_param_STATus_QUEStionable_USER, 0, given->choice,
-                 return_zero());
+                 return_zero(call->input));
   return 0;
 }
 
 /* :STATus:QUEStionable:EVENt:USER: makes the user condition's
  * transition, PTR clear then set, NTR set then clear (0x2a502). */
 int32_t scpi_set_STATus_QUEStionable_EVENt_USER(void* parameters,
-                                                void* response, void* call) {
+                                                void* response,
+                                                scpi_call* call) {
   /* The choice's values (0x53b88). */
   static const int16_t POSITIVE_TRANSITION = 1;
   const scpi_status_user* given = parameters;
   bool rising = given->choice == POSITIVE_TRANSITION;
 
   pllc_request_a(&scpi_param_STATus_QUEStionable_USER, 0, !rising,
-                 return_zero());
+                 return_zero(call->input));
   pllc_request_a(&scpi_param_STATus_QUEStionable_USER, 0, rising,
-                 return_zero());
+                 return_zero(call->input));
   return 0;
 }
 
 /* :STATus:PRESet: SCPI's preset enables and filters, by pllc's
  * status_preset_done (0x2ac4c). */
-int32_t scpi_set_STATus_PRESet(void* parameters, void* response, void* call) {
+int32_t scpi_set_STATus_PRESet(void* parameters, void* response,
+                               scpi_call* call) {
   static const uint8_t FORM_SCPI = 0; /* status.c's STATUS_PRESET_SCPI */
 
-  pllc_request_b(&scpi_action_STATus_PRESet, FORM_SCPI, return_zero());
+  pllc_request_b(&scpi_action_STATus_PRESet, FORM_SCPI,
+                 return_zero(call->input));
   return 0;
 }
 
 /* :STATus:PRESet:ALARm: the enables that light the Alarm LED on the
  * factory-default conditions (0x2ac72). */
 int32_t scpi_set_STATus_PRESet_ALARm(void* parameters, void* response,
-                                     void* call) {
+                                     scpi_call* call) {
   static const uint8_t FORM_ALARM = 1; /* status.c's STATUS_PRESET_ALARM */
 
-  pllc_request_b(&scpi_action_STATus_PRESet, FORM_ALARM, return_zero());
+  pllc_request_b(&scpi_action_STATus_PRESet, FORM_ALARM,
+                 return_zero(call->input));
   return 0;
 }

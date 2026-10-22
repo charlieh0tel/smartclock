@@ -17,13 +17,12 @@ typedef struct scpi_unsupported_error {
 
 /* :DANA?: takes the next error from the call's queue, its message the
  * queue's, else the code's own, else empty (0x3060e). */
-int32_t scpi_query_DANA(void* parameters, void* response, void* call) {
-  scpi_call* record = call;
+int32_t scpi_query_DANA(void* parameters, void* response, scpi_call* call) {
   scpi_unsupported_error* error = response;
   int32_t code;
   char* message = 0;
 
-  error_queue_read(record->status, &code, (uint32_t*)&message);
+  error_queue_read(call->status, &code, (uint32_t*)&message);
   error->code = code;
   if (message == 0) {
     message = error_message_lookup(code);
@@ -41,18 +40,17 @@ uint8_t rtcm_supported(void) { return 0; }
 /* :RTCM?, from the console port only: fails with no condition, since
  * rtcm_supported's bit 1 is never set; were it set, the timecode's T2
  * test is requested and waited for, and the response is 0 (0x2df46). */
-int32_t scpi_query_RTCM(void* parameters, void* response, void* call) {
+int32_t scpi_query_RTCM(void* parameters, void* response, scpi_call* call) {
   /* The bit of rtcm_supported's result that says RTCM is. */
   static const uint8_t RTCM_SUPPORTED = 0x02;
   /* The task event the SCPI task waits on for a request's end, as
    * request_and_wait does (structures.md, "The pllc task's SCPI
    * requests"). */
   static const uint32_t RTCM_DONE_EVENT = 0x20;
-  scpi_call* record = call;
   int16_t* value = response;
   uint32_t events;
 
-  if (scpi_console_port() != record->input) {
+  if (scpi_console_port() != call->input) {
     return 0;
   }
   if ((rtcm_supported() & RTCM_SUPPORTED) == 0) {

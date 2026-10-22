@@ -164,13 +164,13 @@ static int32_t scpi_source_gpsystem_steps(float* value,
 /* :GPS:ADELay: holds the loop in temporary mode, then sends the antenna
  * delay in nanoseconds, MIN or MAX the descriptor's limits (0x2c1ee). */
 int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
-                                        void* call) {
+                                        scpi_call* call) {
   static const float NANOSECOND = 1e-9f;
   scpi_source_gpsystem_real* delay = parameters;
   scpi_numeric_param* param = &scpi_param_SOURce_GPSystem_ADELay;
   int32_t nanoseconds;
 
-  pllc_request_b(&scpi_action_temporary_hold, 0, return_zero());
+  pllc_request_b(&scpi_action_temporary_hold, 0, return_zero(call->input));
   if (delay->kind == SCPI_PARAMETER_CHARACTER) {
     int32_t* limit = delay->keyword == SCPI_SOURCE_GPSYSTEM_MINIMUM
                          ? param->minimum
@@ -178,17 +178,17 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
 
     nanoseconds = *limit;
   } else {
-    nanoseconds = scpi_source_gpsystem_steps(&delay->value, param, 0,
-                                             NANOSECOND, return_zero());
+    nanoseconds = scpi_source_gpsystem_steps(
+        &delay->value, param, 0, NANOSECOND, return_zero(call->input));
   }
-  pllc_request_c(param, 0, nanoseconds, 0, return_zero());
+  pllc_request_c(param, 0, nanoseconds, 0, return_zero(call->input));
   return 0;
 }
 
 /* :GPS:ADELay?: the antenna delay, or its MIN or MAX, in seconds
  * (0x2c2e4). */
 int32_t scpi_query_SOURce_GPSystem_ADELay(void* parameters, void* response,
-                                          void* call) {
+                                          scpi_call* call) {
   static const float NANOSECOND = 1e-9f;
   scpi_source_gpsystem_choice* bound = parameters;
   float* seconds = response;
@@ -202,17 +202,17 @@ int32_t scpi_query_SOURce_GPSystem_ADELay(void* parameters, void* response,
 /* :GPS:EMANgle: the elevation mask in degrees, or MIN or MAX, to pllc
  * (0x2c328). */
 int32_t scpi_set_SOURce_GPSystem_EMANgle(void* parameters, void* response,
-                                         void* call) {
+                                         scpi_call* call) {
   scpi_source_gpsystem_short* angle = parameters;
 
   scpi_numeric_set(&scpi_param_SOURce_GPSystem_EMANgle, 0, angle->kind,
-                   angle->value, 0, angle->value, return_zero());
+                   angle->value, 0, angle->value, return_zero(call->input));
   return 0;
 }
 
 /* :GPS:EMANgle? (0x2c364). */
 int32_t scpi_query_SOURce_GPSystem_EMANgle(void* parameters, void* response,
-                                           void* call) {
+                                           scpi_call* call) {
   scpi_source_gpsystem_choice* bound = parameters;
   int16_t* angle = response;
 
@@ -224,9 +224,10 @@ int32_t scpi_query_SOURce_GPSystem_EMANgle(void* parameters, void* response,
 /* :GPS:INITial:DATE's or :TIME's three fields to pllc, through the
  * source's staged longs, while time_valid gives 0; -221, Settings
  * conflict, else. */
-static void scpi_source_gpsystem_initial_set(
-    scpi_numeric_param* param, scpi_source_gpsystem_short* fields) {
-  uint8_t source = return_zero();
+static void scpi_source_gpsystem_initial_set(scpi_numeric_param* param,
+                                             scpi_source_gpsystem_short* fields,
+                                             scpi_port* input) {
+  uint8_t source = return_zero(input);
 
   if (time_valid() != 0) {
     status_report_from(STATUS_SETTINGS_CONFLICT, source);
@@ -244,17 +245,17 @@ static void scpi_source_gpsystem_initial_set(
 
 /* :GPS:INITial:DATE year, month, day (0x2c390). */
 int32_t scpi_set_SOURce_GPSystem_INITial_DATE(void* parameters, void* response,
-                                              void* call) {
+                                              scpi_call* call) {
   scpi_source_gpsystem_initial_set(&scpi_param_SOURce_GPSystem_INITial_DATE,
-                                   parameters);
+                                   parameters, call->input);
   return 0;
 }
 
 /* :GPS:INITial:TIME hour, minute, second (0x2c412). */
 int32_t scpi_set_SOURce_GPSystem_INITial_TIME(void* parameters, void* response,
-                                              void* call) {
+                                              scpi_call* call) {
   scpi_source_gpsystem_initial_set(&scpi_param_SOURce_GPSystem_INITial_TIME,
-                                   parameters);
+                                   parameters, call->input);
   return 0;
 }
 
@@ -345,7 +346,8 @@ static void scpi_source_gpsystem_location(
  * and the height's descriptors, 0x33862 and 0x338ce, are numeric ones the
  * export names only as labels. */
 int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void* parameters,
-                                                  void* response, void* call) {
+                                                  void* response,
+                                                  scpi_call* call) {
   scpi_numeric_param* height_param = (scpi_numeric_param*)&LAB_000338ce;
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
   /* The image tests the result's low byte (0x2c4d2). */
@@ -353,17 +355,17 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void* parameters,
 
   set_interrupt_mask(sr);
   if (!settable) {
-    status_report_from(STATUS_SETTINGS_CONFLICT, return_zero());
+    status_report_from(STATUS_SETTINGS_CONFLICT, return_zero(call->input));
     return 0;
   }
   int32_t position[SCPI_SOURCE_GPSYSTEM_POSITION_LONGS];
 
-  scpi_source_gpsystem_location(parameters, height_param, 0, return_zero(),
-                                position);
-  pllc_request_c(&LAB_00033862, 0, position[0], 0, return_zero());
+  scpi_source_gpsystem_location(parameters, height_param, 0,
+                                return_zero(call->input), position);
+  pllc_request_c(&LAB_00033862, 0, position[0], 0, return_zero(call->input));
   pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_longitude, 0,
-                 position[1], 0, return_zero());
-  pllc_request_c(height_param, 0, position[2], 0, return_zero());
+                 position[1], 0, return_zero(call->input));
+  pllc_request_c(height_param, 0, position[2], 0, return_zero(call->input));
   return 0;
 }
 
@@ -396,10 +398,10 @@ static uint8_t scpi_source_gpsystem_left_out(
  * SURVey with no estimate is -221, Settings conflict; while a survey runs
  * with positions averaged, it goes to pllc as an action instead. */
 int32_t scpi_set_SOURce_GPSystem_POSition(void* parameters, void* response,
-                                          void* call) {
+                                          scpi_call* call) {
   scpi_source_gpsystem_location_parameters* location = parameters;
   int16_t first = location->latitude.hemisphere.keyword;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
   int32_t* staged = SCPI_SOURCE_GPSYSTEM_STAGED[source];
 
   if (first == SCPI_SOURCE_GPSYSTEM_LAST ||
@@ -485,7 +487,7 @@ static void scpi_source_gpsystem_location_answer(
 /* :GPS:POSition?: during a survey its estimate, -230, Data corrupt or
  * stale, while there is none; else the position held (0x2cc54). */
 int32_t scpi_query_SOURce_GPSystem_POSition(void* parameters, void* response,
-                                            void* call) {
+                                            scpi_call* call) {
   int32_t position[SCPI_SOURCE_GPSYSTEM_POSITION_LONGS];
   int32_t* answered = nv_settings.position;
 
@@ -505,7 +507,8 @@ int32_t scpi_query_SOURce_GPSystem_POSition(void* parameters, void* response,
  * corrupt or stale, before it has (0x2ae86).  It gives mas_to_dms each
  * angle as it is, not its magnitude. */
 int32_t scpi_query_SOURce_GPSystem_POSition_ACTual(void* parameters,
-                                                   void* response, void* call) {
+                                                   void* response,
+                                                   scpi_call* call) {
   int32_t position[SCPI_SOURCE_GPSYSTEM_POSITION_LONGS];
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
   bool reported = gps_position_get(&position[0], &position[1], &position[2]);
@@ -521,7 +524,7 @@ int32_t scpi_query_SOURce_GPSystem_POSition_ACTual(void* parameters,
 /* :GPS:POSition:HOLD:LAST?: the last position held (0x2cd94). */
 int32_t scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(void* parameters,
                                                       void* response,
-                                                      void* call) {
+                                                      scpi_call* call) {
   int32_t position[SCPI_SOURCE_GPSYSTEM_POSITION_LONGS];
 
   copy_longs_locked((uint32_t*)nv_settings.position, (uint32_t*)position,
@@ -534,7 +537,7 @@ int32_t scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(void* parameters,
  * return_byte's char gives it (0x2cea4). */
 int32_t scpi_query_SOURce_GPSystem_POSition_HOLD_STATe(void* parameters,
                                                        void* response,
-                                                       void* call) {
+                                                       scpi_call* call) {
   int16_t* state = response;
 
   *state = (int8_t)nv_settings.douglas_state;
@@ -544,7 +547,8 @@ int32_t scpi_query_SOURce_GPSystem_POSition_HOLD_STATe(void* parameters,
 /* :GPS:REFerence:VALid?: 1 while the reference is qualified and its 1
  * PPS alive (0x2d122). */
 int32_t scpi_query_SOURce_GPSystem_REFerence_VALid(void* parameters,
-                                                   void* response, void* call) {
+                                                   void* response,
+                                                   scpi_call* call) {
   uint16_t* valid = response;
 
   *valid = gps.reference_qualified != 0 && gps.pps_dead == 0;
@@ -674,8 +678,8 @@ static void scpi_source_gpsystem_list_answer(int16_t* list, uint32_t listed,
  * byte. */
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void* parameters,
                                                       void* response,
-                                                      void* call) {
-  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero()];
+                                                      scpi_call* call) {
+  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero(call->input)];
   uint8_t count;
   uint8_t pseudolite_count;
   uint32_t set;
@@ -709,7 +713,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void* parameters,
  * -230, Data corrupt or stale, while unknown (0x2d384). */
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(void* parameters,
                                                             void* response,
-                                                            void* call) {
+                                                            scpi_call* call) {
   uint16_t* tracked = response;
   uint8_t count;
   uint8_t pseudolite_count;
@@ -730,7 +734,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(void* parameters,
  * out of range, and none.  :INCLude sends the ignore list too. */
 static void scpi_source_gpsystem_ignore_edit(
     scpi_source_gpsystem_short* satellites,
-    bool (*edit)(char number, uint32_t* mask)) {
+    bool (*edit)(char number, uint32_t* mask), scpi_port* input) {
   uint32_t mask = nv_settings.ignored_satellites;
   bool invalid = !edit(satellites[0].value, &mask);
 
@@ -742,10 +746,10 @@ static void scpi_source_gpsystem_ignore_edit(
     }
   }
   if (invalid) {
-    status_report_from(STATUS_DATA_OUT_OF_RANGE, return_zero());
+    status_report_from(STATUS_DATA_OUT_OF_RANGE, return_zero(input));
   } else {
     pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, 0,
-                   mask, 0, return_zero());
+                   mask, 0, return_zero(input));
   }
 }
 
@@ -753,8 +757,8 @@ static void scpi_source_gpsystem_ignore_edit(
  * (0x2d400). */
 int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore(void* parameters,
                                                            void* response,
-                                                           void* call) {
-  scpi_source_gpsystem_ignore_edit(parameters, satellite_mask_add);
+                                                           scpi_call* call) {
+  scpi_source_gpsystem_ignore_edit(parameters, satellite_mask_add, call->input);
   return 0;
 }
 
@@ -771,8 +775,8 @@ static uint8_t scpi_source_gpsystem_mask_list(uint32_t mask, int16_t* list) {
 /* :GPS:SATellite:TRACking:IGNore? (0x2d4c4). */
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(void* parameters,
                                                              void* response,
-                                                             void* call) {
-  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero()];
+                                                             scpi_call* call) {
+  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero(call->input)];
 
   scpi_source_gpsystem_list_answer(
       list,
@@ -786,17 +790,17 @@ static const uint32_t SCPI_SOURCE_GPSYSTEM_EVERY_SATELLITE = 0xffffffff;
 
 /* :GPS:SATellite:TRACking:IGNore:ALL, and :INCLude:NONE: ignores every
  * satellite (0x2d54e). */
-int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL(void* parameters,
-                                                               void* response,
-                                                               void* call) {
+int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL(
+    void* parameters, void* response, scpi_call* call) {
   pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, 0,
-                 SCPI_SOURCE_GPSYSTEM_EVERY_SATELLITE, 0, return_zero());
+                 SCPI_SOURCE_GPSYSTEM_EVERY_SATELLITE, 0,
+                 return_zero(call->input));
   return 0;
 }
 
 /* :GPS:SATellite:TRACking:IGNore:COUNt? (0x2d57a). */
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   uint16_t* count = response;
 
   *count = scpi_source_gpsystem_mask_list(nv_settings.ignored_satellites, 0);
@@ -806,9 +810,9 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt(
 /* :GPS:SATellite:TRACking:IGNore:NONE, and :INCLude:ALL: ignores none
  * (0x2d5c0). */
 int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, 0, 0, 0,
-                 return_zero());
+                 return_zero(call->input));
   return 0;
 }
 
@@ -824,7 +828,7 @@ typedef struct scpi_source_gpsystem_state_parameters {
  * -222, Data out of range, for a number not 1 to 32 (0x2d5ea).  The
  * image tests the path word's low byte. */
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   scpi_source_gpsystem_state_parameters* asked = parameters;
   uint16_t* state = response;
   bool asks_ignored = (uint8_t)asked->path_word != 0;
@@ -843,16 +847,17 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe(
  * list (0x2d65a). */
 int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(void* parameters,
                                                             void* response,
-                                                            void* call) {
-  scpi_source_gpsystem_ignore_edit(parameters, satellite_mask_remove);
+                                                            scpi_call* call) {
+  scpi_source_gpsystem_ignore_edit(parameters, satellite_mask_remove,
+                                   call->input);
   return 0;
 }
 
 /* :GPS:SATellite:TRACking:INCLude?: those not ignored (0x2d71e). */
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude(void* parameters,
                                                               void* response,
-                                                              void* call) {
-  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero()];
+                                                              scpi_call* call) {
+  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero(call->input)];
 
   scpi_source_gpsystem_list_answer(
       list,
@@ -863,7 +868,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude(void* parameters,
 
 /* :GPS:SATellite:TRACking:INCLude:COUNt? (0x2d7ac). */
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   uint16_t* count = response;
 
   *count = scpi_source_gpsystem_mask_list(~nv_settings.ignored_satellites, 0);
@@ -873,10 +878,9 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt(
 /* :GPS:SATellite:VISible:PREDicted?: the satellites the almanac predicts
  * visible, as many as it counts; -230, Data corrupt or stale, while
  * unknown (0x2d7f6).  The image tests the result's low byte. */
-int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(void* parameters,
-                                                               void* response,
-                                                               void* call) {
-  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero()];
+int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(
+    void* parameters, void* response, scpi_call* call) {
+  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero(call->input)];
   uint8_t count;
   uint32_t set;
   uint8_t id_count;
@@ -899,7 +903,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(void* parameters,
 /* :GPS:SATellite:VISible:PREDicted:COUNt?; -230, Data corrupt or stale,
  * while unknown (0x2d8bc). */
 int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   uint16_t* visible = response;
   uint8_t count;
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);

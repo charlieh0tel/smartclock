@@ -89,14 +89,14 @@ static int32_t (*const
 
 /* :PTIMe:PPS:EDGE: a stub; -113, Undefined header (0x2dc68). */
 int32_t scpi_set_SOURce_PTIMe_PPS_EDGE(void* parameters, void* response,
-                                       void* call) {
-  status_report_from(STATUS_UNDEFINED_HEADER, return_zero());
+                                       scpi_call* call) {
+  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
   return 0;
 }
 
 /* :PTIMe:PPS:EDGE?: a stub; -113, Undefined header (0x2dc88). */
 int32_t scpi_query_SOURce_PTIMe_PPS_EDGE(void* parameters, void* response,
-                                         void* call) {
+                                         scpi_call* call) {
   scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
   return 0;
 }
@@ -106,7 +106,7 @@ int32_t scpi_query_SOURce_PTIMe_PPS_EDGE(void* parameters, void* response,
  * no date, and refuses with -230, Data corrupt or stale, when it gives 1
  * (the test at 0x2dcea). */
 int32_t scpi_query_SOURce_PTIMe_DATE(void* parameters, void* response,
-                                     void* call) {
+                                     scpi_call* call) {
   uint32_t date;
 
   if ((uint8_t)get_date_time(&date, 0) != 0) {
@@ -121,7 +121,7 @@ int32_t scpi_query_SOURce_PTIMe_DATE(void* parameters, void* response,
  * 4-2, page 4-8). */
 int32_t scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(void* parameters,
                                                        void* response,
-                                                       void* call) {
+                                                       scpi_call* call) {
   int16_t* accumulated = response;
   int16_t offset;
   uint16_t sr = enter_supervisor_mode();
@@ -137,18 +137,18 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(void* parameters,
 
 /* :PTIMe:LEAPsecond:ACCumulated:CALCulate: its action, leap_ack_request,
  * through pllc (0x2dd6e). */
-int32_t scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate(void* parameters,
-                                                               void* response,
-                                                               void* call) {
+int32_t scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate(
+    void* parameters, void* response, scpi_call* call) {
   pllc_request_b(&scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate, 0,
-                 return_zero());
+                 return_zero(call->input));
   return 0;
 }
 
 /* :PTIMe:LEAPsecond:DATE?: the pending leap second's year, month and
  * day; -230, Data corrupt or stale, with none pending (0x2dd94). */
 int32_t scpi_query_SOURce_PTIMe_LEAPsecond_DATE(void* parameters,
-                                                void* response, void* call) {
+                                                void* response,
+                                                scpi_call* call) {
   uint16_t sr = enter_supervisor_mode();
   uint8_t pending = nv_settings.leap_pending;
   uint32_t date = nv_settings.leap_date;
@@ -165,7 +165,7 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_DATE(void* parameters,
  * minute; -230, Data corrupt or stale, with none pending (0x2ddfc). */
 int32_t scpi_query_SOURce_PTIMe_LEAPsecond_DURation(void* parameters,
                                                     void* response,
-                                                    void* call) {
+                                                    scpi_call* call) {
   int16_t* duration = response;
   uint16_t sr = enter_supervisor_mode();
   uint8_t pending = nv_settings.leap_pending;
@@ -184,9 +184,10 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_DURation(void* parameters,
  * after writing the text and answering it all the same (0x2de48;
  * 097-z3801-01, table 4-2, page 4-8). */
 int32_t scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(void* parameters,
-                                                   void* response, void* call) {
+                                                   void* response,
+                                                   scpi_call* call) {
   char** answer = response;
-  char* text = SCPI_SOURCE_PTIME_TEXTS[(uint8_t)return_zero()];
+  char* text = SCPI_SOURCE_PTIME_TEXTS[(uint8_t)return_zero(call->input)];
   int32_t gps_time = leap_gps_time();
 
   sprintf(text, "#H%08X", gps_time);
@@ -199,7 +200,8 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(void* parameters,
 
 /* :PTIMe:LEAPsecond:STATe? (0x2deb8). */
 int32_t scpi_query_SOURce_PTIMe_LEAPsecond_STATe(void* parameters,
-                                                 void* response, void* call) {
+                                                 void* response,
+                                                 scpi_call* call) {
   int16_t* state = response;
 
   /* Sign-extended, as return_byte's char gives it (0x2dec6). */
@@ -213,16 +215,15 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_STATe(void* parameters,
  * stale, when tcode_request refuses (0x2ded2; 097-z3801-01, table 4-2,
  * page 4-8).  From another port it answers nothing. */
 int32_t scpi_query_SOURce_PTIMe_TCODe(void* parameters, void* response,
-                                      void* call) {
+                                      scpi_call* call) {
   /* The SCPI task's event duartb_transmit_interrupt signals at the end of
    * an asynchronous text (0x1ea10), as pllc does when a
    * request is done. */
   static const uint32_t SENT_EVENT = 0x20;
-  scpi_call* record = call;
   scpi_token_string* code = response;
   uint32_t events;
 
-  if (scpi_console_port() != record->input) {
+  if (scpi_console_port() != call->input) {
     return 0;
   }
   psos_get_v(SENT_EVENT, 1, &events);
@@ -250,15 +251,15 @@ typedef struct scpi_source_ptime_choice {
 
 /* :PTIMe:TCODe:FORMat F1 or F2: T1 or T2, to pllc (0x2dff6). */
 int32_t scpi_set_SOURce_PTIMe_TCODe_FORMat(void* parameters, void* response,
-                                           void* call) {
+                                           scpi_call* call) {
   scpi_source_ptime_choice* format = parameters;
 
   if (format->keyword == SCPI_SOURCE_PTIME_F1) {
     pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T1,
-                   return_zero());
+                   return_zero(call->input));
   } else if (format->keyword == SCPI_SOURCE_PTIME_F2) {
     pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T2,
-                   return_zero());
+                   return_zero(call->input));
   }
   return 0;
 }
@@ -266,7 +267,7 @@ int32_t scpi_set_SOURce_PTIMe_TCODe_FORMat(void* parameters, void* response,
 /* :PTIMe:TCODe:FORMat?: F1 for T1, F2 for T2; for T2's test form it
  * writes nothing (0x2e054, its jump table at 0x2e06c). */
 int32_t scpi_query_SOURce_PTIMe_TCODe_FORMat(void* parameters, void* response,
-                                             void* call) {
+                                             scpi_call* call) {
   int16_t* format = response;
 
   if (nv_settings.tcode_format == TIMECODE_T1) {
@@ -281,7 +282,7 @@ int32_t scpi_query_SOURce_PTIMe_TCODe_FORMat(void* parameters, void* response,
  * answers when get_date_time gives 0 and refuses with -230, Data corrupt
  * or stale, when it gives 1 (0x2e086). */
 int32_t scpi_query_SOURce_PTIMe_TIME(void* parameters, void* response,
-                                     void* call) {
+                                     scpi_call* call) {
   scpi_source_ptime_fields* fields = response;
   time_of_day time;
 
@@ -298,9 +299,9 @@ int32_t scpi_query_SOURce_PTIMe_TIME(void* parameters, void* response,
  * :PTIMe:TIME?, -230, Data corrupt or stale, when get_date_time gives 1,
  * and -300, Device-specific error, when format_time fails (0x2e164). */
 int32_t scpi_query_SOURce_PTIMe_TIME_STRing(void* parameters, void* response,
-                                            void* call) {
+                                            scpi_call* call) {
   char** answer = response;
-  char* text = SCPI_SOURCE_PTIME_TEXTS[(uint8_t)return_zero()];
+  char* text = SCPI_SOURCE_PTIME_TEXTS[(uint8_t)return_zero(call->input)];
   time_of_day time;
 
   if ((uint8_t)get_date_time(0, &time) != 0) {
@@ -317,24 +318,24 @@ int32_t scpi_query_SOURce_PTIMe_TIME_STRing(void* parameters, void* response,
  * to pllc through the source's staged longs, marking a change pending
  * first (0x2e1f2). */
 int32_t scpi_set_SOURce_PTIMe_TZONe(void* parameters, void* response,
-                                    void* call) {
+                                    scpi_call* call) {
   /* The values pllc takes: hours and minutes. */
   static const uint8_t LAST_VALUE = 1;
   scpi_source_ptime_short_parameter* zone = parameters;
-  int32_t* staged = SCPI_SOURCE_PTIME_STAGED[(uint8_t)return_zero()];
+  int32_t* staged = SCPI_SOURCE_PTIME_STAGED[(uint8_t)return_zero(call->input)];
 
   staged[0] = zone[0].value;
   staged[1] = zone[1].kind == SCPI_NONE ? 0 : zone[1].value;
   time_zone_changed();
   pllc_request_d(&scpi_param_SOURce_PTIMe_TZONe, LAST_VALUE, (uint32_t)staged,
-                 return_zero());
+                 return_zero(call->input));
   return 0;
 }
 
 /* :PTIMe:TZONe?: the time zone's hours and minutes, both negative west
  * of Greenwich (0x2e28c). */
 int32_t scpi_query_SOURce_PTIMe_TZONe(void* parameters, void* response,
-                                      void* call) {
+                                      scpi_call* call) {
   scpi_source_ptime_short_item* items = response;
   int8_t hours;
   int8_t minutes;
@@ -357,7 +358,7 @@ int32_t scpi_query_SOURce_PTIMe_TZONe(void* parameters, void* response,
  * while it is unknown; or the time figure of merit from pll.tfom
  * (0x3005a; 097-z3801-01, table 4-2, page 4-6). */
 int32_t scpi_query_SOURce_PTIMe_FFOMerit(void* parameters, void* response,
-                                         void* call) {
+                                         scpi_call* call) {
   static const int16_t FREQUENCY = 0;
   int16_t* path_word = parameters;
   uint16_t* merit = response;
@@ -385,7 +386,7 @@ int32_t scpi_query_SOURce_PTIMe_FFOMerit(void* parameters, void* response,
  * in seconds, to 1E-10 s; -230, Data corrupt or stale, while there is
  * none (0x300b2; 097-z3801-01, table 4-2, page 4-8). */
 int32_t scpi_query_SOURce_PTIMe_TINTerval(void* parameters, void* response,
-                                          void* call) {
+                                          scpi_call* call) {
   /* The power of ten of the resolution (0x300dc). */
   static const int16_t RESOLUTION = -10;
   scpi_float_resolution* interval = response;
@@ -405,8 +406,8 @@ int32_t scpi_query_SOURce_PTIMe_TINTerval(void* parameters, void* response,
  * through pllc (0x30108; 097-z3801-01, table 4-2, page 4-8). */
 int32_t scpi_set_SOURce_PTIMe_SYNChronization_IMMediate(void* parameters,
                                                         void* response,
-                                                        void* call) {
+                                                        scpi_call* call) {
   pllc_request_b(&scpi_action_SOURce_PTIMe_SYNChronization_IMMediate, 0,
-                 return_zero());
+                 return_zero(call->input));
   return 0;
 }

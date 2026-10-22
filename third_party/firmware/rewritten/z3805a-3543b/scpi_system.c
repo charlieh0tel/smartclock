@@ -81,16 +81,14 @@ typedef struct scpi_system_string_parameter {
 } scpi_system_string_parameter;
 
 /* Whether the call came in on the console port. */
-static bool scpi_system_from_console(void* call) {
-  scpi_call* record = call;
-
-  return scpi_console_port() == record->input;
+static bool scpi_system_from_console(const scpi_call* call) {
+  return scpi_console_port() == call->input;
 }
 
 /* :COMMunicate?: the console port's, SERial1, the first of its choices;
  * from another port nothing (0x3012e). */
 int32_t scpi_query_SYSTem_COMMunicate(void* parameters, void* response,
-                                      void* call) {
+                                      scpi_call* call) {
   uint16_t* choice = response;
 
   if (scpi_system_from_console(call)) {
@@ -101,19 +99,21 @@ int32_t scpi_query_SYSTem_COMMunicate(void* parameters, void* response,
 
 /* :COMMunicate:SERial:ADDRess?: not in this firmware (0x30148). */
 int32_t scpi_query_SYSTem_COMMunicate_SER1_ADDRess(void* parameters,
-                                                   void* response, void* call) {
+                                                   void* response,
+                                                   scpi_call* call) {
   return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
 }
 
 /* :COMMunicate:SERial:FDUPlex: whether the port echoes what it receives
  * (0x3015a). */
 int32_t scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(void* parameters,
-                                                 void* response, void* call) {
+                                                 void* response,
+                                                 scpi_call* call) {
   scpi_system_port_word* given = parameters;
   scpi_setting_param* setting = given->port == SCPI_SYSTEM_SERIAL1
                                     ? SCPI_SYSTEM_SERIAL1_FDUPLEX
                                     : SCPI_SYSTEM_SERIAL2_FDUPLEX;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   pllc_request_a(setting, 0, (uint8_t)given->value, source);
   return 0;
@@ -121,7 +121,8 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(void* parameters,
 
 /* :COMMunicate:SERial:FDUPlex? (0x301bc). */
 int32_t scpi_query_SYSTem_COMMunicate_SER1_FDUPlex(void* parameters,
-                                                   void* response, void* call) {
+                                                   void* response,
+                                                   scpi_call* call) {
   int16_t* port = parameters;
   int16_t* state = response;
   uint8_t echo =
@@ -134,12 +135,13 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_FDUPlex(void* parameters,
 /* :COMMunicate:SERial:PRESet: requests the port's settings preset
  * (0x301de). */
 int32_t scpi_set_SYSTem_COMMunicate_SER1_PRESet(void* parameters,
-                                                void* response, void* call) {
+                                                void* response,
+                                                scpi_call* call) {
   int16_t* port = parameters;
   scpi_action_param* action = *port == SCPI_SYSTEM_SERIAL1
                                   ? &scpi_action_SER1_PRESet
                                   : &scpi_action_SER2_PRESet;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   pllc_request_b(action, 0, source);
   return 0;
@@ -148,7 +150,8 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_PRESet(void* parameters,
 /* :COMMunicate:SERial1:PROMpt: whether the console prompts; SERial2's
  * is ignored (0x2b96c). */
 int32_t scpi_set_SYSTem_COMMunicate_SER1_PROMpt(void* parameters,
-                                                void* response, void* call) {
+                                                void* response,
+                                                scpi_call* call) {
   scpi_system_port_word* given = parameters;
 
   if (given->port == SCPI_SYSTEM_SERIAL1) {
@@ -159,7 +162,8 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_PROMpt(void* parameters,
 
 /* :COMMunicate:SERial1:PROMpt?; SERial2's answers nothing (0x2b982). */
 int32_t scpi_query_SYSTem_COMMunicate_SER1_PROMpt(void* parameters,
-                                                  void* response, void* call) {
+                                                  void* response,
+                                                  scpi_call* call) {
   int16_t* port = parameters;
   uint16_t* state = response;
 
@@ -173,7 +177,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_PROMpt(void* parameters,
  * next rate the port has, or MINimum or MAXimum (0x3022e). */
 int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD(void* parameters,
                                                       void* response,
-                                                      void* call) {
+                                                      scpi_call* call) {
   scpi_system_port_number* given = parameters;
   serial_baud baud;
 
@@ -192,7 +196,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD(void* parameters,
   scpi_setting_param* setting = given->port == SCPI_SYSTEM_SERIAL1
                                     ? SCPI_SYSTEM_SERIAL1_BAUD
                                     : SCPI_SYSTEM_SERIAL2_BAUD;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   pllc_request_a(setting, 0, baud, source);
   return 0;
@@ -202,7 +206,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD(void* parameters,
  * out of range answers nothing (0x302c4). */
 int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD(void* parameters,
                                                         void* response,
-                                                        void* call) {
+                                                        scpi_call* call) {
   scpi_system_port_number* given = parameters;
   int32_t* rate = response;
 
@@ -238,7 +242,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD(void* parameters,
  * (0x30332). */
 int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS(void* parameters,
                                                       void* response,
-                                                      void* call) {
+                                                      scpi_call* call) {
   scpi_system_port_number* given = parameters;
 
   if (given->port != SCPI_SYSTEM_SERIAL1) {
@@ -247,7 +251,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS(void* parameters,
   uint8_t eight_bits = given->number.kind == SCPI_VALUE_BOUND
                            ? given->number.bound != SCPI_BOUND_MINIMUM
                            : given->number.value >= SCPI_SYSTEM_EIGHT_BITS;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   pllc_request_a(&scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS, 0,
                  eight_bits, source);
@@ -259,7 +263,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS(void* parameters,
  * answers nothing (0x30388). */
 int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_BITS(void* parameters,
                                                         void* response,
-                                                        void* call) {
+                                                        scpi_call* call) {
   scpi_system_port_number* given = parameters;
   int32_t* bits = response;
 
@@ -291,12 +295,12 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_BITS(void* parameters,
  * (0x303fe). */
 int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(void* parameters,
                                                       void* response,
-                                                      void* call) {
+                                                      scpi_call* call) {
   scpi_system_port_word* given = parameters;
   scpi_setting_param* setting = given->port == SCPI_SYSTEM_SERIAL1
                                     ? SCPI_SYSTEM_SERIAL1_PACE
                                     : SCPI_SYSTEM_SERIAL2_PACE;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   pllc_request_a(setting, 0, (uint8_t)given->value, source);
   return 0;
@@ -305,7 +309,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(void* parameters,
 /* :COMMunicate:SERial:RECeive:PACE? (0x30460). */
 int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE(void* parameters,
                                                         void* response,
-                                                        void* call) {
+                                                        scpi_call* call) {
   int16_t* port = parameters;
   int16_t* choice = response;
   uint8_t xon_xoff = *port == SCPI_SYSTEM_SERIAL1 ? duartb_settings.xon_xoff
@@ -326,9 +330,8 @@ enum {
 
 /* :COMMunicate:SERial:RECeive:PARity:TYPE?; a code out of range
  * answers nothing (0x3051a). */
-int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void* parameters,
-                                                               void* response,
-                                                               void* call) {
+int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(
+    void* parameters, void* response, scpi_call* call) {
   int16_t* port = parameters;
   uint16_t* choice = response;
   serial_parity parity = *port == SCPI_SYSTEM_SERIAL1 ? duartb_settings.parity
@@ -357,7 +360,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void* parameters,
  * is an undefined header, the SCI having one (0x30568). */
 int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs(void* parameters,
                                                        void* response,
-                                                       void* call) {
+                                                       scpi_call* call) {
   scpi_system_port_number* given = parameters;
 
   if (given->port != SCPI_SYSTEM_SERIAL1) {
@@ -367,7 +370,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs(void* parameters,
       given->number.kind == SCPI_VALUE_BOUND
           ? given->number.bound != SCPI_BOUND_MINIMUM
           : given->number.value >= SCPI_SYSTEM_TWO_STOP_BITS;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   pllc_request_a(&scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs, 0,
                  two_stop_bits, source);
@@ -379,7 +382,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs(void* parameters,
  * (0x305be). */
 int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs(void* parameters,
                                                          void* response,
-                                                         void* call) {
+                                                         scpi_call* call) {
   scpi_system_port_number* given = parameters;
   int32_t* bits = response;
 
@@ -402,7 +405,8 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs(void* parameters,
  * 4-2), and "PRIMARY", this one, does nothing; another is an illegal
  * parameter value.  The text is put in upper case in place, its index
  * a byte (0x30680). */
-int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response, void* call) {
+int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response,
+                                 scpi_call* call) {
   /* What ends scpi_interpret's session; status_condition_code names
    * none. */
   static const int32_t SESSION_END = -60;
@@ -425,7 +429,7 @@ int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response, void* call) {
   if (scpi_parameters_same(given->text, "PRIMARY")) {
     return 0;
   }
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   status_report_from(STATUS_ILLEGAL_PARAMETER_VALUE, source);
   return 0;
@@ -434,7 +438,7 @@ int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response, void* call) {
 /* :LANGuage?: "PRIMARY" to the console; to another port nothing
  * (0x30752). */
 int32_t scpi_query_SYSTem_LANGuage(void* parameters, void* response,
-                                   void* call) {
+                                   scpi_call* call) {
   char** language = response;
 
   if (scpi_system_from_console(call)) {
@@ -445,8 +449,9 @@ int32_t scpi_query_SYSTem_LANGuage(void* parameters, void* response,
 
 /* :PRESet: requests the factory settings (097-z3801-01, table 4-2)
  * (0x30770). */
-int32_t scpi_set_SYSTem_PRESet(void* parameters, void* response, void* call) {
-  uint8_t source = return_zero();
+int32_t scpi_set_SYSTem_PRESet(void* parameters, void* response,
+                               scpi_call* call) {
+  uint8_t source = return_zero(call->input);
 
   pllc_request_b(&scpi_action_SYSTem_PRESet, 0, source);
   return 0;
@@ -454,9 +459,10 @@ int32_t scpi_set_SYSTem_PRESet(void* parameters, void* response, void* call) {
 
 /* :PRINt?: requests SCPI_SYSTEM_PRINT with no value, answers 0, and on
  * the console prints the status screen (0x30796). */
-int32_t scpi_query_SYSTem_PRINt(void* parameters, void* response, void* call) {
+int32_t scpi_query_SYSTem_PRINt(void* parameters, void* response,
+                                scpi_call* call) {
   uint16_t* answer = response;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   pllc_request_c(SCPI_SYSTEM_PRINT, 0, 0, 0, source);
   *answer = 0;
@@ -469,7 +475,7 @@ int32_t scpi_query_SYSTem_PRINt(void* parameters, void* response, void* call) {
 
 /* :PRINt:LENGth?: the status screen's length (0x30800). */
 int32_t scpi_query_SYSTem_PRINt_LENGth(void* parameters, void* response,
-                                       void* call) {
+                                       scpi_call* call) {
   uint16_t* length = response;
 
   *length = status_screen_length();

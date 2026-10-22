@@ -177,7 +177,7 @@ uint32_t scpi_common_header_resolve(scpi_keyword* keyword, int32_t* call,
                                     uint16_t* offset, int32_t* parameters,
                                     uint16_t unused, int16_t query,
                                     scpi_arena* arena, scpi_child_list* list) {
-  scpi_call* record = (scpi_call*)call;
+  scpi_call* record = call;
   scpi_node* node = scpi_node_find(list, keyword);
 
   if (node == 0) {

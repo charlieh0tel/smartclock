@@ -57,9 +57,9 @@ static char (*const SCPI_DOUGLAS_TEXTS)[SCPI_DOUGLAS_TEXT_SIZE] =
  * duration infinite; else the number, as a long, or MAX or MIN, to pllc
  * (0x2ced0). */
 int32_t scpi_set_DOUGlas_DURation(void* parameters, void* response,
-                                  void* call) {
+                                  scpi_call* call) {
   scpi_douglas_numeric* duration = parameters;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   if ((duration->kind == SCPI_PARAMETER_CHARACTER &&
        duration->keyword == SCPI_DOUGLAS_INFINITY) ||
@@ -79,7 +79,7 @@ int32_t scpi_set_DOUGlas_DURation(void* parameters, void* response,
 /* :DOUGlas:DURation?: SCPI's infinity when infinite and asked without
  * MAX or MIN, else the duration, or its MAX or MIN (0x2cf66). */
 int32_t scpi_query_DOUGlas_DURation(void* parameters, void* response,
-                                    void* call) {
+                                    scpi_call* call) {
   scpi_douglas_numeric* bound = parameters;
   float* seconds = response;
 
@@ -95,9 +95,9 @@ int32_t scpi_query_DOUGlas_DURation(void* parameters, void* response,
 /* :DOUGlas:PROGress?: the survey's progress as text; -221, Settings
  * conflict, when none is running (0x2cfa6). */
 int32_t scpi_query_DOUGlas_PROGress(void* parameters, void* response,
-                                    void* call) {
+                                    scpi_call* call) {
   char** text = response;
-  char* progress = SCPI_DOUGLAS_TEXTS[(uint8_t)return_zero()];
+  char* progress = SCPI_DOUGLAS_TEXTS[(uint8_t)return_zero(call->input)];
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
   /* The image tests the result's low byte (0x2cfea). */
   uint8_t running = survey_progress_text(progress);
@@ -113,17 +113,20 @@ int32_t scpi_query_DOUGlas_PROGress(void* parameters, void* response,
 /* :DOUGlas:STATe ONCE, its only keyword: starts a survey, setting the
  * state to 0, or while one runs, sends the state's request descriptor 0
  * (0x2d030). */
-int32_t scpi_set_DOUGlas_STATe(void* parameters, void* response, void* call) {
+int32_t scpi_set_DOUGlas_STATe(void* parameters, void* response,
+                               scpi_call* call) {
   if (nv_settings.douglas_state == 0) {
-    pllc_request_c(&scpi_param_DOUGlas_STATe_request, 0, 0, 0, return_zero());
+    pllc_request_c(&scpi_param_DOUGlas_STATe_request, 0, 0, 0,
+                   return_zero(call->input));
   } else {
-    pllc_request_a(&scpi_param_DOUGlas_STATe, 0, 0, return_zero());
+    pllc_request_a(&scpi_param_DOUGlas_STATe, 0, 0, return_zero(call->input));
   }
   return 0;
 }
 
 /* :DOUGlas:STATe?: ONCE while the state is 0, else 0 (0x2d0a8). */
-int32_t scpi_query_DOUGlas_STATe(void* parameters, void* response, void* call) {
+int32_t scpi_query_DOUGlas_STATe(void* parameters, void* response,
+                                 scpi_call* call) {
   char** text = response;
 
   *text = nv_settings.douglas_state == 0 ? "ONCE" : "0";
@@ -140,17 +143,17 @@ typedef struct scpi_douglas_boolean {
 /* :DOUGlas:STATe:POWerup: whether a survey starts at power-up, to pllc
  * (0x2d0d8). */
 int32_t scpi_set_DOUGlas_STATe_POWerup(void* parameters, void* response,
-                                       void* call) {
+                                       scpi_call* call) {
   scpi_douglas_boolean* state = parameters;
 
   pllc_request_a(&scpi_param_DOUGlas_STATe_POWerup, 0, (uint8_t)state->value,
-                 return_zero());
+                 return_zero(call->input));
   return 0;
 }
 
 /* :DOUGlas:STATe:POWerup? (0x2d108). */
 int32_t scpi_query_DOUGlas_STATe_POWerup(void* parameters, void* response,
-                                         void* call) {
+                                         scpi_call* call) {
   int16_t* state = response;
 
   /* Sign-extended, as return_byte's char gives it (0x2d116). */

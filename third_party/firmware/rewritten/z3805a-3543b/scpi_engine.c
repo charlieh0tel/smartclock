@@ -338,16 +338,15 @@ void copy_longs_locked(uint32_t* source, uint32_t* destination, uint8_t count) {
  * (0x29a62). */
 float float_identity(float x) { return x; }
 
-/* Returns 0; most SCPI query handlers call it (0x29ada). */
-int32_t return_zero(void) { return 0; }
+/* The source a command's input port gives: always 0 (0x29ada). */
+int32_t return_zero(scpi_port* input) { return 0; }
 
-/* Reports a query's failure, the condition code, for the source
- * return_zero gives, and empties its text response (0x29ade). */
-int32_t scpi_query_failed(status_condition_code code, void* response) {
-  scpi_engine_string_value* text = response;
-
-  status_report_from(code, return_zero());
-  text->length = 0;
+/* Reports a query's failure, the condition code, for the source its
+ * input gives, and clears its query word, so that scpi_interpret
+ * formats no response (0x29ade). */
+int32_t scpi_query_failed(status_condition_code code, scpi_call* call) {
+  status_report_from(code, return_zero(call->input));
+  call->query = 0;
   return 0;
 }
 

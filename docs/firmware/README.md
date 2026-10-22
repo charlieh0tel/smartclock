@@ -361,7 +361,7 @@ a variadic argument by the stack location it is pushed to, so where a
 `move.b` or `move.w` push for another call writes that location, it
 passes an address's low byte or word (`log_print`, `status_screen`,
 `status_screen_position`).  Every SCPI handler takes what `scpi_call_handler`
-gives it, `int NAME(void *parameters, void *response, void *call)`,
+gives it, `int NAME(void *parameters, void *response, scpi_call *call)`,
 unless its row gives a prototype.
 
 The convention is `key=value` pairs, which the names file's header sets

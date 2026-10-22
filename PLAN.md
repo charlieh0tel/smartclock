@@ -1417,6 +1417,11 @@ view cannot drift apart.  The library, bottom up:
      `char **`, the double routines `double` and `int64_t`,
      `save_calibration_block`'s unread index, `status_report_from`
      void, `load_double` a double step's routine.
+     Every SCPI handler takes its call as `scpi_call *`, and
+     `return_zero` the call's input port, which all 167 callers push
+     (`move.l (0x12,An),-(SP)`); `scpi_query_failed` clears the call's
+     `query`, so that no response is formatted, where the C had read a
+     response's length.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

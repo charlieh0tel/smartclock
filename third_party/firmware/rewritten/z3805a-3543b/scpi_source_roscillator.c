@@ -44,7 +44,7 @@ static uint8_t scpi_source_roscillator_mode(void) {
  * whether in one (097-z3801-01, table 4-2) (0x2fa12). */
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation(void* parameters,
                                                         void* response,
-                                                        void* call) {
+                                                        scpi_call* call) {
   scpi_source_roscillator_duration* answer = response;
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
   int8_t mode = pll_mode();
@@ -60,9 +60,9 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation(void* parameters,
 
 /* :HOLDover:DURation:MEASurement:THReshold (0x2fa82). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   scpi_numeric_set(
       &scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold, 0,
@@ -73,7 +73,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(
 /* :HOLDover:DURation:MEASurement:THReshold?, or its minimum or maximum,
  * in whole seconds (0x2fabc). */
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
   int32_t* seconds = response;
   float value = scpi_numeric_get(
@@ -87,9 +87,9 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(
 /* :HOLDover:DURation:STATus:THReshold, the holdover duration that sets
  * :EXCeeded (097-z3801-01, table 4-2) (0x2fae8). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   scpi_numeric_set(
       &scpi_param_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold, 0,
@@ -100,7 +100,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(
 /* :HOLDover:DURation:STATus:THReshold?, or its minimum or maximum, in
  * whole seconds (0x2fb22). */
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
   int32_t* seconds = response;
   float value = scpi_numeric_get(
@@ -114,14 +114,14 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(
 /* :HOLDover:DURation:STATus:THReshold:ALARm1 and 3: not in this
  * firmware (0x2fb4e). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   return STATUS_SCPI_UNDEFINED_HEADER;
 }
 
 /* :HOLDover:DURation:STATus:THReshold:ALARm1? and 3?: not in this
  * firmware (0x2fb52). */
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
 }
 
@@ -129,7 +129,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1(
  * outlasted the threshold (097-z3801-01, table 4-2) (0x2fb88). */
 int32_t
 scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded(
-    void* parameters, void* response, void* call) {
+    void* parameters, void* response, scpi_call* call) {
   int16_t* exceeded = response;
 
   *exceeded = (int8_t)holdover_duration_exceeded;
@@ -139,14 +139,14 @@ scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded(
 /* :HOLDover:HYSTeresis: not in this firmware (0x2fb9a). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis(void* parameters,
                                                         void* response,
-                                                        void* call) {
+                                                        scpi_call* call) {
   return STATUS_SCPI_UNDEFINED_HEADER;
 }
 
 /* :HOLDover:HYSTeresis?: not in this firmware (0x2fb9e). */
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis(void* parameters,
                                                           void* response,
-                                                          void* call) {
+                                                          scpi_call* call) {
   return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
 }
 
@@ -154,10 +154,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis(void* parameters,
  * (0x2fbc2). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void* parameters,
                                                       void* response,
-                                                      void* call) {
+                                                      scpi_call* call) {
   /* PLL_MODE_MANUAL_HOLDOVER */
   if (scpi_source_roscillator_mode() != 1) {
-    uint8_t source = return_zero();
+    uint8_t source = return_zero(call->input);
 
     pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_INITiate, 0,
                    source);
@@ -169,10 +169,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void* parameters,
  * keeps the reverse (0x2fc26). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe(void* parameters,
                                                          void* response,
-                                                         void* call) {
+                                                         scpi_call* call) {
   scpi_source_roscillator_boolean* given = parameters;
   uint8_t disabled = given->value == 0;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   pllc_request_a(&scpi_param_SOURce_ROSCillator_HOLDover_LIMit_STATe, 0,
                  disabled, source);
@@ -182,7 +182,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe(void* parameters,
 /* :HOLDover:LIMit:STATe? (0x2fc78). */
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe(void* parameters,
                                                            void* response,
-                                                           void* call) {
+                                                           scpi_call* call) {
   uint16_t* state = response;
 
   *state = nv_settings.holdover_limit_state == 0;
@@ -193,9 +193,9 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe(void* parameters,
  * (0x2fca2). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold(void* parameters,
                                                              void* response,
-                                                             void* call) {
+                                                             scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   scpi_numeric_set(&scpi_param_SOURce_ROSCillator_HOLDover_LIMit_THReshold, 0,
                    given->kind, given->bound, (uint32_t)given->value, 0,
@@ -204,9 +204,8 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold(void* parameters,
 }
 
 /* :HOLDover:LIMit:THReshold?, or its minimum or maximum (0x2fcdc). */
-int32_t scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold(void* parameters,
-                                                               void* response,
-                                                               void* call) {
+int32_t scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold(
+    void* parameters, void* response, scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
   float* threshold = response;
 
@@ -219,9 +218,9 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold(void* parameters,
 /* :HOLDover:RECovery:AUTO (0x2fd02). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void* parameters,
                                                            void* response,
-                                                           void* call) {
+                                                           scpi_call* call) {
   scpi_source_roscillator_boolean* given = parameters;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   pllc_request_a(&scpi_param_SOURce_ROSCillator_HOLDover_RECovery_AUTO, 0,
                  (uint8_t)given->value, source);
@@ -231,7 +230,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void* parameters,
 /* :HOLDover:RECovery:AUTO? (0x2fd32). */
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void* parameters,
                                                              void* response,
-                                                             void* call) {
+                                                             scpi_call* call) {
   int16_t* state = response;
 
   *state = (int8_t)holdover_recovery_auto;
@@ -240,10 +239,9 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void* parameters,
 
 /* :HOLDover:RECovery:INITiate: requests the end of a manual holdover
  * (097-z3801-01, table 4-2) (0x2fd4c). */
-int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate(void* parameters,
-                                                               void* response,
-                                                               void* call) {
-  uint8_t source = return_zero();
+int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate(
+    void* parameters, void* response, scpi_call* call) {
+  uint8_t source = return_zero(call->input);
 
   pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate, 0,
                  source);
@@ -253,8 +251,8 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate(void* parameters,
 /* :HOLDover:RECovery:LIMit:IGNore: requests recovery despite the TI
  * limit (097-z3801-01, table 4-2) (0x2fd84). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore(
-    void* parameters, void* response, void* call) {
-  uint8_t source = return_zero();
+    void* parameters, void* response, scpi_call* call) {
+  uint8_t source = return_zero(call->input);
 
   pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore,
                  0, source);
@@ -275,7 +273,7 @@ enum {
  * otherwise (0x2feda). */
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void* parameters,
                                                        void* response,
-                                                       void* call) {
+                                                       scpi_call* call) {
   uint16_t* choice = response;
 
   /* PLL_MODE_HOLDOVER */
@@ -310,9 +308,9 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void* parameters,
  * 4-2); the value's long is the float's bits (0x2ff78). */
 int32_t scpi_set_SOURce_ROSCillator_LIMit_THReshold(void* parameters,
                                                     void* response,
-                                                    void* call) {
+                                                    scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  uint8_t source = return_zero();
+  uint8_t source = return_zero(call->input);
 
   scpi_numeric_set(&scpi_param_SOURce_ROSCillator_LIMit_THReshold, 0,
                    given->kind, given->bound, (uint32_t)given->value, 0,
@@ -323,7 +321,7 @@ int32_t scpi_set_SOURce_ROSCillator_LIMit_THReshold(void* parameters,
 /* :LIMit:THReshold?, or its minimum or maximum (0x2ffb2). */
 int32_t scpi_query_SOURce_ROSCillator_LIMit_THReshold(void* parameters,
                                                       void* response,
-                                                      void* call) {
+                                                      scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
   float* threshold = response;
 
@@ -345,7 +343,7 @@ enum {
 /* [:STATe]?: the loop's state, by pll_mode (097-z3801-01, table 4-2)
  * (0x2ffd8). */
 int32_t scpi_query_SOURce_ROSCillator_STATe(void* parameters, void* response,
-                                            void* call) {
+                                            scpi_call* call) {
   uint16_t* choice = response;
 
   switch ((int8_t)scpi_source_roscillator_mode()) {

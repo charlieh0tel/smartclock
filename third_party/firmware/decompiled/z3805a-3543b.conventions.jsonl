@@ -880,8 +880,8 @@
 {"address":"00029a24","name":"copy_longs_locked","note":"copies so many longs with interrupts held off","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":1}]}
 {"address":"00029a62","name":"float_identity","note":"returns its argument; the EFC queries pass pll.efc through it","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00029a68","name":"robin_store","note":"stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":1},{"offset":18,"size":1}]}
-{"address":"00029ada","name":"return_zero","note":"returns 0; most SCPI query handlers call it","convention":"unknown"}
-{"address":"00029ade","name":"scpi_query_failed","note":"72 SCPI queries call it, most with STATUS_UNDEFINED_HEADER or STATUS_DATA_CORRUPT_OR_STALE; reports it through status_report_from and zeroes the reply's length at +4","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4}]}
+{"address":"00029ada","name":"return_zero","note":"the source a command's input port gives, always 0; every SCPI handler that reports a status condition, starts a request or picks a text buffer passes it its call's input","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00029ade","name":"scpi_query_failed","note":"72 SCPI queries call it, most with STATUS_UNDEFINED_HEADER or STATUS_DATA_CORRUPT_OR_STALE; reports it through status_report_from and clears the call's query word, so that scpi_interpret formats no response","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4}]}
 {"address":"00029b08","name":"rtcm_supported","note":"0: RTCM corrections are not supported","convention":"unknown"}
 {"address":"00029b0e","name":"scpi_prompt","note":"makes the SCPI prompt, with the latest error when there is one","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00029b42","name":"scpi_session_init","note":"clears the SCPI input, opens the port and prompts","convention":"unknown"}
@@ -1003,7 +1003,7 @@
 {"address":"0002bd96","name":"scpi_set_DIAGnostic_TOFFset","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002bdee","name":"scpi_query_DIAGnostic_TOFFset","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002be9c","name":"status_report","note":"puts a code into the status system once status_ready","convention":"unknown","stack":[{"offset":4,"size":2}]}
-{"address":"0002bf00","name":"status_report_from","note":"status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes return_zero()","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":1}]}
+{"address":"0002bf00","name":"status_report_from","note":"status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes return_zero(call->input)","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":1}]}
 {"address":"0002c148","name":"scpi_set_OUTPut_PIN1_DELay","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002c14c","name":"scpi_query_OUTPut_PIN1_DELay","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002c15e","name":"scpi_query_R1PO","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}

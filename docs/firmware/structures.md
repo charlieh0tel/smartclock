@@ -132,7 +132,12 @@ set or clear the registers' bits, or are events only, one name each
 for the bits of the Z3801A guide's status register tables
 (097-z3801-01, pages 4-15 to 4-17), so that `'I'` (`0x49`), which the
 EEPROM's writers raise, is `STATUS_EEPROM_WRITE_FAILURE`, and `'B'`
-(`0x42`), the EFC clamped, `STATUS_EFC_AT_LIMIT_SET`.
+(`0x42`), the EFC clamped, `STATUS_EFC_AT_LIMIT_SET`.  The same enum
+names conditions 1 to `0x16`, which queue an SCPI error each, by that
+error (`STATUS_MEMORY_ERROR`, -311), and the SCPI engine's negative
+conditions, indexes of `status_negative_conditions` (`0x28720`): -1 to
+-4 set Standard Event bits 5 to 2 (`STATUS_ESR_*`), the rest queue
+their error (`STATUS_SCPI_SYNTAX_ERROR`, -102).
 
 ## Numeric SCPI parameters
 

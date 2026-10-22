@@ -3,9 +3,7 @@
  * hand in place of the decompiler's (docs/firmware/README.md, "Hand-written C";
  * docs/firmware/structures.md, "The status system").  The exported C includes
  * this file after its own, so the types and prototypes it declares are in
- * scope; each function here keeps its generated prototype.  It uses scpi.c's
- * SCPI_STATUS_NO_MEMORY and SCPI_STATUS_REQUEST_SERVICE, which the export
- * includes before it. */
+ * scope; each function here keeps its generated prototype. */
 
 /* An error code's class, by the greatest code of each, which
  * error_queue_push reports through the negative conditions -1 to -4
@@ -13,14 +11,6 @@
  * errors' bounds are here, the other classes' in
  * status_error_class. */
 static const int16_t STATUS_COMMAND_ERROR_GREATEST = -100;
-
-/* The negative conditions for the error classes. */
-enum {
-  STATUS_CLASS_COMMAND_ERROR = -1,
-  STATUS_CLASS_EXECUTION_ERROR = -2,
-  STATUS_CLASS_DEVICE_ERROR = -3,
-  STATUS_CLASS_QUERY_ERROR = -4,
-};
 
 /* A status condition's kind, status_condition.kind, by the jump table
  * at 0x2825c. */
@@ -108,7 +98,7 @@ uint32_t status_create(status_model** slot, int32_t register_count,
 
   *slot = status;
   if (status == 0) {
-    return SCPI_STATUS_NO_MEMORY;
+    return STATUS_SCPI_NO_MEMORY;
   }
   status->register_count = register_count;
   status->field_0e = reserved;
@@ -118,7 +108,7 @@ uint32_t status_create(status_model** slot, int32_t register_count,
 
     (*slot)->registers[index] = reg;
     if (reg == 0) {
-      return SCPI_STATUS_NO_MEMORY;
+      return STATUS_SCPI_NO_MEMORY;
     }
   }
   return error_queue_create(&(*slot)->queue, queue_capacity, *slot);
@@ -220,7 +210,7 @@ void status_register_set_enable(status_model* status, int32_t index,
   if (reg->parent_bit == 0) {
     status->output->methods->sre_set(
         status->output,
-        (uint16_t)enable & (STATUS_BYTE_BITS & ~SCPI_STATUS_REQUEST_SERVICE));
+        (uint16_t)enable & (STATUS_BYTE_BITS & ~STATUS_BYTE_REQUEST_SERVICE));
     return;
   }
   reg->enable = enable;
@@ -293,7 +283,7 @@ uint32_t error_queue_create(status_error_queue** slot, int32_t capacity,
 
   *slot = ring;
   if (ring == 0) {
-    return SCPI_STATUS_NO_MEMORY;
+    return STATUS_SCPI_NO_MEMORY;
   }
   ring->status = status;
   ring->head = capacity;
@@ -311,16 +301,16 @@ static int32_t status_error_class(int16_t code) {
   static const int16_t ERROR_EXECUTION_GREATEST = -200;
 
   if (code <= ERROR_QUERY_GREATEST) {
-    return STATUS_CLASS_QUERY_ERROR;
+    return STATUS_ESR_QUERY_ERROR;
   }
   if (code <= ERROR_DEVICE_GREATEST || code > 0) {
-    return STATUS_CLASS_DEVICE_ERROR;
+    return STATUS_ESR_DEVICE_ERROR;
   }
   if (code <= ERROR_EXECUTION_GREATEST) {
-    return STATUS_CLASS_EXECUTION_ERROR;
+    return STATUS_ESR_EXECUTION_ERROR;
   }
   if (code <= STATUS_COMMAND_ERROR_GREATEST) {
-    return STATUS_CLASS_COMMAND_ERROR;
+    return STATUS_ESR_COMMAND_ERROR;
   }
   return 0;
 }

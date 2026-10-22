@@ -881,7 +881,7 @@
 {"address":"00029a62","name":"float_identity","note":"returns its argument; the EFC queries pass pll.efc through it","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00029a68","name":"robin_store","note":"stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":1},{"offset":18,"size":1}]}
 {"address":"00029ada","name":"return_zero","note":"returns 0; most SCPI query handlers call it","convention":"unknown"}
-{"address":"00029ade","name":"scpi_query_failed","note":"72 SCPI queries call it with -0x20; reports it through status_report_from and zeroes the reply's length at +4","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4}]}
+{"address":"00029ade","name":"scpi_query_failed","note":"72 SCPI queries call it, most with STATUS_UNDEFINED_HEADER or STATUS_DATA_CORRUPT_OR_STALE; reports it through status_report_from and zeroes the reply's length at +4","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4}]}
 {"address":"00029b08","name":"rtcm_supported","note":"0: RTCM corrections are not supported","convention":"unknown"}
 {"address":"00029b0e","name":"scpi_prompt","note":"makes the SCPI prompt, with the latest error when there is one","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00029b42","name":"scpi_session_init","note":"clears the SCPI input, opens the port and prompts","convention":"unknown"}

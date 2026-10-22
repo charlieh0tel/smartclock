@@ -9,25 +9,12 @@
  * parameter's units", "The SCPI lexer's token and port" and "The SCPI
  * session"; docs/scpi/README.md describes the language. */
 
-/* The negative conditions the engine's routines return, each queueing
- * the SCPI error beside it (status_negative_conditions, 0x28720). */
+/* Not a condition: scpi_interpret takes it as the response's end, and
+ * anything after it as STATUS_SCPI_QUERY_AFTER_INDEFINITE, -440 Query
+ * UNTERMINATED after indefinite response (0x294a6, 0x29446). */
 enum {
-  SCPI_STATUS_SYNTAX_ERROR = -6,             /* -102 Syntax error */
-  SCPI_STATUS_SUFFIX_NOT_ALLOWED = -9,       /* -138 Suffix not allowed */
-  SCPI_STATUS_DATA_OUT_OF_RANGE = -11,       /* -222 Data out of range */
-  SCPI_STATUS_ILLEGAL_PARAMETER_VALUE = -27, /* -224 Illegal parameter value */
-  SCPI_STATUS_NO_LIST = -28,                 /* -310 System error */
-  SCPI_STATUS_FORMAT_FAILED = -40,           /* -310 System error */
-  SCPI_STATUS_NO_MEMORY = -56,               /* -310 System error */
-  /* Not a condition: scpi_interpret takes it as the response's end,
-   * and anything after it as -15, -440 Query UNTERMINATED after
-   * indefinite response (0x294a6, 0x29446). */
   SCPI_STATUS_INDEFINITE_RESPONSE = -90,
 };
-
-/* The Status Byte's RQS bit (structures.md, "The SCPI session"), which
- * status_update_rqs keeps and the service request enable cannot set. */
-static const uint8_t SCPI_STATUS_REQUEST_SERVICE = 0x40;
 
 /* The console port's object in ROM: console_port_read, its method table
  * at 0x29dd4, then the prompts (structures.md, "The SCPI lexer's token
@@ -67,12 +54,6 @@ enum {
   SCPI_VALUE_BOUND = 2,
   SCPI_BOUND_MAXIMUM = 0,
   SCPI_BOUND_MINIMUM = 1,
-};
-
-/* The condition scpi_check_range reports, 9 in status_conditions, -222
- * Data out of range (0x2f86e). */
-enum {
-  SCPI_CONDITION_DATA_OUT_OF_RANGE = 9,
 };
 
 /* A number's digits: scpi_number.digits, d0 d1 ... d15, the integer
@@ -150,7 +131,7 @@ int32_t scpi_number_to_double(scpi_number* number, double* value,
 int32_t scpi_parse_boolean_number(scpi_number* number, void* unused,
                                   uint16_t* value, void* units) {
   if (number->suffix_length != 0) {
-    return SCPI_STATUS_SUFFIX_NOT_ALLOWED;
+    return STATUS_SCPI_SUFFIX_NOT_ALLOWED;
   }
   uint16_t truth;
 
@@ -224,7 +205,7 @@ int32_t scpi_parse_float(scpi_number* number, void* unused, float* value,
 
   if (scpi_number_to_double(number, &parsed, number->scale) != 0 ||
       double_compare(fabs(parsed), SCPI_REAL_LIMIT) < 0) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   *value = double_to_float(parsed);
   scpi_engine_store_unit(value + 1, number->unit);
@@ -242,7 +223,7 @@ int32_t scpi_parse_double(scpi_number* number, void* unused, double* value,
   }
   if (scpi_number_to_double(number, value, number->scale) != 0 ||
       double_compare(fabs(*value), SCPI_REAL_LIMIT) < 0) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   scpi_engine_store_unit(value + 1, number->unit);
   return 0;
@@ -263,14 +244,14 @@ int32_t scpi_number_to_short(scpi_number* number, int16_t* value,
   int32_t places = scpi_engine_places(number, scale);
 
   if (places > SCPI_SHORT_DIGITS) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   uint16_t magnitude = 0;
 
   if (places > 0) {
     magnitude = scpi_engine_digits_value(number, places - 1);
     if (magnitude > MOST_TENTHS) {
-      return SCPI_STATUS_DATA_OUT_OF_RANGE;
+      return STATUS_SCPI_DATA_OUT_OF_RANGE;
     }
     magnitude = magnitude * SCPI_NUMBER_BASE + number->digits[places - 1];
   }
@@ -278,7 +259,7 @@ int32_t scpi_number_to_short(scpi_number* number, int16_t* value,
     magnitude++;
   }
   if (magnitude > (number->negative ? MOST_NEGATIVE : MOST_POSITIVE)) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   *value = number->negative ? -magnitude : magnitude;
   return 0;
@@ -298,7 +279,7 @@ int32_t scpi_number_to_unsigned_short(scpi_number* number, uint16_t* value,
   int32_t places = scpi_engine_places(number, scale);
 
   if (places > SCPI_SHORT_DIGITS) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   uint16_t tens = 0;
   uint16_t units = 0;
@@ -306,7 +287,7 @@ int32_t scpi_number_to_unsigned_short(scpi_number* number, uint16_t* value,
   if (places > 0) {
     tens = scpi_engine_digits_value(number, places - 1);
     if (tens > MOST_TENTHS) {
-      return SCPI_STATUS_DATA_OUT_OF_RANGE;
+      return STATUS_SCPI_DATA_OUT_OF_RANGE;
     }
     tens *= SCPI_NUMBER_BASE;
     units = number->digits[places - 1];
@@ -315,7 +296,7 @@ int32_t scpi_number_to_unsigned_short(scpi_number* number, uint16_t* value,
     units++;
   }
   if (tens == MOST_TENTHS * SCPI_NUMBER_BASE && units > MOST_UNITS) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   *value = tens + units;
   return 0;
@@ -335,14 +316,14 @@ int32_t scpi_number_to_long(scpi_number* number, int32_t* value,
   int32_t places = scpi_engine_places(number, scale);
 
   if (places > SCPI_LONG_DIGITS) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   uint32_t magnitude = 0;
 
   if (places > 0) {
     magnitude = scpi_engine_digits_value(number, places - 1);
     if (magnitude > MOST_TENTHS) {
-      return SCPI_STATUS_DATA_OUT_OF_RANGE;
+      return STATUS_SCPI_DATA_OUT_OF_RANGE;
     }
     magnitude = magnitude * SCPI_NUMBER_BASE + number->digits[places - 1];
   }
@@ -350,7 +331,7 @@ int32_t scpi_number_to_long(scpi_number* number, int32_t* value,
     magnitude++;
   }
   if (magnitude > (number->negative ? most_negative : most_positive)) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   *value = number->negative ? -magnitude : magnitude;
   return 0;
@@ -369,7 +350,7 @@ int32_t scpi_number_to_unsigned_long(scpi_number* number, uint32_t* value,
   int32_t places = scpi_engine_places(number, scale);
 
   if (places > SCPI_LONG_DIGITS) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   uint32_t tens = 0;
   uint32_t units = 0;
@@ -377,7 +358,7 @@ int32_t scpi_number_to_unsigned_long(scpi_number* number, uint32_t* value,
   if (places > 0) {
     tens = scpi_engine_digits_value(number, places - 1);
     if (tens > most_tenths) {
-      return SCPI_STATUS_DATA_OUT_OF_RANGE;
+      return STATUS_SCPI_DATA_OUT_OF_RANGE;
     }
     tens *= SCPI_NUMBER_BASE;
     units = number->digits[places - 1];
@@ -386,7 +367,7 @@ int32_t scpi_number_to_unsigned_long(scpi_number* number, uint32_t* value,
     units++;
   }
   if (tens == most_tenths * SCPI_NUMBER_BASE && units > most_units) {
-    return SCPI_STATUS_DATA_OUT_OF_RANGE;
+    return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   *value = tens + units;
   return 0;
@@ -501,7 +482,7 @@ int32_t scpi_format_counted_text(scpi_port* output, scpi_token_string* text) {
 int32_t scpi_format_choice(scpi_port* output, int16_t* value,
                            scpi_choices* choices) {
   if (choices == 0 || choices->keywords == 0) {
-    return SCPI_STATUS_NO_LIST;
+    return STATUS_SCPI_NO_LIST;
   }
   if (choices->values == 0) {
     char* keyword = choices->keywords[*value];
@@ -516,7 +497,7 @@ int32_t scpi_format_choice(scpi_port* output, int16_t* value,
       return 0;
     }
   }
-  return SCPI_STATUS_FORMAT_FAILED;
+  return STATUS_SCPI_FORMAT_FAILED;
 }
 
 /* A value's decimal digits right-aligned in digits, to DIGITS_LAST,
@@ -532,7 +513,7 @@ int32_t scpi_unsigned_to_digits(uint32_t value, char* digits, int16_t* start) {
       return 0;
     }
   }
-  return SCPI_STATUS_FORMAT_FAILED;
+  return STATUS_SCPI_FORMAT_FAILED;
 }
 
 /* A sign, + or -, before a long's digits (0x26522). */
@@ -587,7 +568,7 @@ int32_t scpi_format_block(scpi_port* output, scpi_block* block) {
   int16_t start;
 
   if (scpi_unsigned_to_digits(block->length, header, &start) != 0) {
-    return SCPI_STATUS_FORMAT_FAILED;
+    return STATUS_SCPI_FORMAT_FAILED;
   }
   char count = SCPI_DIGITS_END - start;
 
@@ -786,23 +767,11 @@ enum {
   SCPI_PORT_INTERRUPTED = 0x105,
 };
 
-/* The lexer's results for them, and its own errors: negative
- * conditions but for -102 and -103, which scpi_interpret takes as the
- * input's end (0x29596) and as a failure, which it returns -1 for
- * (0x295be). */
+/* The lexer's results for them that are not conditions, which
+ * scpi_interpret takes as the input's end (0x29596) and as a failure,
+ * which it returns -1 for (0x295be); the others are conditions,
+ * STATUS_SCPI_QUERY_UNTERMINATED and STATUS_SCPI_QUERY_INTERRUPTED. */
 enum {
-  SCPI_STATUS_QUERY_UNTERMINATED = -12, /* -420 Query UNTERMINATED */
-  SCPI_STATUS_QUERY_INTERRUPTED = -13,  /* -410 Query INTERRUPTED */
-  SCPI_STATUS_INVALID_NUMBER = -17,     /* -121 Invalid character in number */
-  SCPI_STATUS_TOO_MANY_DIGITS = -23,    /* -124 Too many digits */
-  SCPI_STATUS_INVALID_SUFFIX = -31,     /* -131 Invalid suffix */
-  SCPI_STATUS_UNDEFINED_HEADER = -32,   /* -113 Undefined header */
-  SCPI_STATUS_HEADER_LEAF =
-      -33, /* -113 Undefined header: a keyword past a leaf */
-  SCPI_STATUS_MISSING_PARAMETER = -37,  /* -109 Missing parameter */
-  SCPI_STATUS_EXTRA_PARAMETER = -38,    /* -108 Parameter not allowed */
-  SCPI_STATUS_EXPONENT_TOO_LARGE = -45, /* -123 Exponent too large */
-  SCPI_STATUS_SUFFIX_TOO_LONG = -53,    /* -134 Suffix too long */
   SCPI_STATUS_INPUT_CLOSED = -102,
   SCPI_STATUS_PORT_FAILED = -103,
 };
@@ -834,17 +803,6 @@ enum {
   SCPI_TOKEN_KEYWORD = 19,
   SCPI_TOKEN_QUERY = 20,         /* a keyword and ? */
   SCPI_TOKEN_KEYWORD_COLON = 21, /* a keyword and : */
-};
-
-/* scpi_scan_token's own errors. */
-enum {
-  SCPI_STATUS_MNEMONIC_TOO_LONG = -16, /* -112 Program mnemonic too long */
-  SCPI_STATUS_INVALID_BLOCK = -18,     /* -161 Invalid block data */
-  SCPI_STATUS_INVALID_RADIX = -19,     /* -101 Invalid character */
-  SCPI_STATUS_INVALID_DIGIT = -20,     /* -121 Invalid character in number */
-  SCPI_STATUS_INVALID_STRING = -21,    /* -151 Invalid string data */
-  SCPI_STATUS_INVALID_CHARACTER = -39, /* -101 Invalid character */
-  SCPI_STATUS_TOO_MUCH_DATA = -52,     /* -223 Too much data */
 };
 
 /* A non-decimal number's radix letters. */
@@ -904,9 +862,9 @@ static int32_t scpi_engine_port_error(int16_t character) {
     case SCPI_PORT_CLOSED:
       return SCPI_STATUS_INPUT_CLOSED;
     case SCPI_PORT_UNTERMINATED:
-      return SCPI_STATUS_QUERY_UNTERMINATED;
+      return STATUS_SCPI_QUERY_UNTERMINATED;
     case SCPI_PORT_INTERRUPTED:
-      return SCPI_STATUS_QUERY_INTERRUPTED;
+      return STATUS_SCPI_QUERY_INTERRUPTED;
   }
   return SCPI_STATUS_PORT_FAILED;
 }
@@ -951,13 +909,8 @@ static const int8_t scpi_engine_token_parameter_kinds[] = {
     SCPI_PARAMETER_CHARACTER,
 };
 
-/* scpi_parse_message_unit's own results. */
+/* scpi_parse_message_unit's own results that are not conditions. */
 enum {
-  SCPI_STATUS_PARAMETER_DOLLAR =
-      -30, /* -181 Invalid outside macro definition: a $ digit as a parameter */
-  SCPI_STATUS_INVALID_SEPARATOR = -43, /* -103 Invalid separator */
-  SCPI_STATUS_GET_NOT_ALLOWED =
-      -54, /* -105 GET not allowed: SCPI_PORT_SKIPPED_END after white space */
   SCPI_STATUS_NO_PARAMETERS = -100, /* not a condition: an empty message unit */
   SCPI_STATUS_SKIPPED_END =
       -101, /* not a condition: SCPI_PORT_SKIPPED_END first */
@@ -990,7 +943,7 @@ static int32_t scpi_engine_convert(scpi_context* context, scpi_token* token,
                                    int32_t kind, scpi_parameter** parameter,
                                    int16_t* offset) {
   if (kind == SCPI_TOKEN_DOLLAR) {
-    return SCPI_STATUS_PARAMETER_DOLLAR;
+    return STATUS_SCPI_PARAMETER_DOLLAR;
   }
   int16_t parameter_kind =
       scpi_engine_token_parameter_kinds[kind - SCPI_TOKEN_NON_DECIMAL];
@@ -1053,7 +1006,7 @@ int32_t scpi_parse_message_unit(scpi_context* parser, int16_t* reset_path) {
   if (kind == SCPI_TOKEN_WHITE) {
     kind = scpi_engine_scan(parser, &token);
     if (kind == SCPI_TOKEN_SKIPPED_END) {
-      error = SCPI_STATUS_GET_NOT_ALLOWED;
+      error = STATUS_SCPI_GET_NOT_ALLOWED;
       goto failed;
     }
   }
@@ -1061,7 +1014,7 @@ int32_t scpi_parse_message_unit(scpi_context* parser, int16_t* reset_path) {
     scpi_path_reset(parser->path, parser->main_tree);
     kind = scpi_engine_scan(parser, &token);
     if (kind < SCPI_TOKEN_KEYWORD) {
-      error = SCPI_STATUS_SYNTAX_ERROR;
+      error = STATUS_SCPI_SYNTAX_ERROR;
       goto failed;
     }
   }
@@ -1078,7 +1031,7 @@ int32_t scpi_parse_message_unit(scpi_context* parser, int16_t* reset_path) {
       kind = scpi_engine_scan(parser, &token);
     }
     if (kind < SCPI_TOKEN_KEYWORD) {
-      error = SCPI_STATUS_SYNTAX_ERROR;
+      error = STATUS_SCPI_SYNTAX_ERROR;
       goto failed;
     }
     /* scpi_header_resolve and scpi_common_header_resolve keep the
@@ -1091,7 +1044,7 @@ int32_t scpi_parse_message_unit(scpi_context* parser, int16_t* reset_path) {
   } else if (kind == SCPI_TOKEN_STAR) {
     kind = scpi_engine_scan(parser, &token);
     if (kind != SCPI_TOKEN_KEYWORD && kind != SCPI_TOKEN_QUERY) {
-      error = SCPI_STATUS_SYNTAX_ERROR;
+      error = STATUS_SCPI_SYNTAX_ERROR;
       goto failed;
     }
     error = scpi_common_header_resolve(
@@ -1112,7 +1065,7 @@ int32_t scpi_parse_message_unit(scpi_context* parser, int16_t* reset_path) {
     kind = scpi_engine_scan(parser, &token);
     if (kind != SCPI_TOKEN_END && kind != SCPI_TOKEN_SEMICOLON) {
       if (!scpi_engine_is_parameter(kind)) {
-        error = SCPI_STATUS_SYNTAX_ERROR;
+        error = STATUS_SCPI_SYNTAX_ERROR;
         goto failed;
       }
       for (;;) {
@@ -1137,7 +1090,7 @@ terminator:
   } else if (kind == SCPI_TOKEN_SEMICOLON) {
     *reset_path = 0;
   } else {
-    error = SCPI_STATUS_INVALID_SEPARATOR;
+    error = STATUS_SCPI_INVALID_SEPARATOR;
     goto failed;
   }
   if (call->parameters == 0) {
@@ -1157,8 +1110,8 @@ failed:
     error = kind;
   }
   if (error <= SCPI_STATUS_UNREPORTED_GREATEST ||
-      error == SCPI_STATUS_QUERY_UNTERMINATED ||
-      error == SCPI_STATUS_QUERY_INTERRUPTED) {
+      error == STATUS_SCPI_QUERY_UNTERMINATED ||
+      error == STATUS_SCPI_QUERY_INTERRUPTED) {
     return error;
   }
   if (condition_is_command_error(error)) {
@@ -1205,7 +1158,7 @@ static int32_t scpi_engine_scan_keyword(scpi_port* input, scpi_keyword* keyword,
       break;
     }
     if (count >= KEYWORD_MOST) {
-      return SCPI_STATUS_MNEMONIC_TOO_LONG;
+      return STATUS_SCPI_MNEMONIC_TOO_LONG;
     }
   }
   keyword->length = count;
@@ -1235,7 +1188,7 @@ static int32_t scpi_engine_scan_block(scpi_port* input, scpi_token_block* block,
     int16_t character = scpi_engine_read(input);
 
     if (scpi_engine_class(character) != SCPI_CLASS_DIGIT) {
-      return scpi_engine_reject(input, character, SCPI_STATUS_INVALID_BLOCK);
+      return scpi_engine_reject(input, character, STATUS_SCPI_INVALID_BLOCK);
     }
     length = length * SCPI_NUMBER_BASE + (character - '0');
   }
@@ -1267,21 +1220,21 @@ static int32_t scpi_engine_scan_radix(scpi_port* input, scpi_token* token,
     } else if (class == SCPI_CLASS_DIGIT) {
       digit = character - '0';
     } else if (first) {
-      return scpi_engine_reject(input, character, SCPI_STATUS_INVALID_DIGIT);
+      return scpi_engine_reject(input, character, STATUS_SCPI_INVALID_DIGIT);
     } else {
       input->methods->unread(input);
       if (class == SCPI_CLASS_PORT_ERROR) {
         return scpi_engine_port_error(character);
       }
       if (!fits) {
-        return SCPI_STATUS_DATA_OUT_OF_RANGE;
+        return STATUS_SCPI_DATA_OUT_OF_RANGE;
       }
       token->non_decimal.base = base;
       token->non_decimal.value = value;
       return SCPI_TOKEN_NON_DECIMAL;
     }
     if (digit >= base) {
-      return SCPI_STATUS_INVALID_DIGIT;
+      return STATUS_SCPI_INVALID_DIGIT;
     }
     if ((value & top) != 0) {
       fits = false;
@@ -1312,7 +1265,7 @@ static int32_t scpi_engine_scan_hash(scpi_port* input, scpi_token* token) {
     case SCPI_RADIX_OCTAL:
       return scpi_engine_scan_radix(input, token, OCTAL, 3);
   }
-  return scpi_engine_reject(input, character, SCPI_STATUS_INVALID_RADIX);
+  return scpi_engine_reject(input, character, STATUS_SCPI_INVALID_RADIX);
 }
 
 /* A quoted string, each doubled quote one, into room the arena gives:
@@ -1328,7 +1281,7 @@ static int32_t scpi_engine_scan_string(scpi_port* input,
   int16_t character;
 
   if (text == 0) {
-    return SCPI_STATUS_TOO_MUCH_DATA;
+    return STATUS_SCPI_TOO_MUCH_DATA;
   }
   do {
     character = scpi_engine_read(input);
@@ -1355,9 +1308,9 @@ static int32_t scpi_engine_scan_string(scpi_port* input,
     }
   }
   input->methods->unread(input);
-  return SCPI_STATUS_TOO_MUCH_DATA;
+  return STATUS_SCPI_TOO_MUCH_DATA;
 ended:
-  return scpi_engine_reject(input, character, SCPI_STATUS_INVALID_STRING);
+  return scpi_engine_reject(input, character, STATUS_SCPI_INVALID_STRING);
 }
 
 /* The SCPI lexer: the next token from the input, its kind or an error,
@@ -1383,7 +1336,7 @@ int32_t scpi_scan_token(scpi_port* input, scpi_token* token,
       if (class == SCPI_CLASS_DIGIT || class == SCPI_CLASS_POINT) {
         return scpi_scan_number(&token->number, 1, next, input);
       }
-      return scpi_engine_reject(input, next, SCPI_STATUS_INVALID_NUMBER);
+      return scpi_engine_reject(input, next, STATUS_SCPI_INVALID_NUMBER);
     }
     case SCPI_CLASS_WHITE:
       do {
@@ -1402,7 +1355,7 @@ int32_t scpi_scan_token(scpi_port* input, scpi_token* token,
         token->digit = digit - '0';
         return SCPI_TOKEN_DOLLAR;
       }
-      return scpi_engine_reject(input, digit, SCPI_STATUS_INVALID_CHARACTER);
+      return scpi_engine_reject(input, digit, STATUS_SCPI_INVALID_CHARACTER);
     }
     case SCPI_CLASS_PORT_ERROR:
       return scpi_engine_port_error(character);
@@ -1428,7 +1381,7 @@ int32_t scpi_scan_token(scpi_port* input, scpi_token* token,
     case SCPI_CLASS_AT:
       return SCPI_TOKEN_AT;
   }
-  return SCPI_STATUS_INVALID_CHARACTER;
+  return STATUS_SCPI_INVALID_CHARACTER;
 }
 
 /* Reads to the next newline or an end, then gives the last value back
@@ -1476,7 +1429,7 @@ int32_t scpi_scan_number(scpi_number* number, int32_t have_character,
       shift -= point;
       leading_zero = true;
       if (shift == WORD_LEAST) {
-        return SCPI_STATUS_TOO_MANY_DIGITS;
+        return STATUS_SCPI_TOO_MANY_DIGITS;
       }
     } else if (next == '.') {
       if (point != 0) {
@@ -1499,7 +1452,7 @@ int32_t scpi_scan_number(scpi_number* number, int32_t have_character,
       number->digits[digits++] = next - '0';
       shift -= point;
       if (shift == WORD_LEAST) {
-        return SCPI_STATUS_TOO_MANY_DIGITS;
+        return STATUS_SCPI_TOO_MANY_DIGITS;
       }
       if (digits == SCPI_NUMBER_DIGITS) {
         break;
@@ -1514,7 +1467,7 @@ int32_t scpi_scan_number(scpi_number* number, int32_t have_character,
         number->digits[digits++] = 0;
         shift--;
         if (shift == WORD_LEAST) {
-          return SCPI_STATUS_TOO_MANY_DIGITS;
+          return STATUS_SCPI_TOO_MANY_DIGITS;
         }
       }
       goto exponent;
@@ -1528,7 +1481,7 @@ int32_t scpi_scan_number(scpi_number* number, int32_t have_character,
     class = scpi_engine_class(next);
     if (class == SCPI_CLASS_DIGIT) {
       if (point == 0 && ++shift > WORD_MOST - 1) {
-        return SCPI_STATUS_TOO_MANY_DIGITS;
+        return STATUS_SCPI_TOO_MANY_DIGITS;
       }
     } else if (class == SCPI_CLASS_POINT) {
       if (point != 0) {
@@ -1553,7 +1506,7 @@ exponent:
   int32_t exponent = number->exponent + shift;
 
   if (exponent > WORD_MOST || exponent < WORD_LEAST) {
-    return SCPI_STATUS_EXPONENT_TOO_LARGE;
+    return STATUS_SCPI_EXPONENT_TOO_LARGE;
   }
   number->exponent = exponent;
   do {
@@ -1568,7 +1521,7 @@ exponent:
            class == SCPI_CLASS_DIGIT || class == SCPI_CLASS_POINT ||
            class == SCPI_CLASS_LETTER) {
       if (length > SUFFIX_LAST) {
-        return SCPI_STATUS_SUFFIX_TOO_LONG;
+        return STATUS_SCPI_SUFFIX_TOO_LONG;
       }
       number->suffix[length++] = scpi_char_upper(next);
       next = scpi_engine_read(input);
@@ -1588,7 +1541,7 @@ not_a_number:
   }
 invalid:
   input->methods->unread(input);
-  return SCPI_STATUS_INVALID_NUMBER;
+  return STATUS_SCPI_INVALID_NUMBER;
 }
 
 /* Scans a number's exponent, E and a signed integer, after its
@@ -1634,7 +1587,7 @@ int32_t scpi_scan_exponent(int32_t character, scpi_number* number,
         break;
       }
       if (exponent > EXPONENT_MOST_TENTHS) {
-        return SCPI_STATUS_EXPONENT_TOO_LARGE;
+        return STATUS_SCPI_EXPONENT_TOO_LARGE;
       }
       exponent = exponent * SCPI_NUMBER_BASE + next - '0';
     }
@@ -1646,7 +1599,7 @@ int32_t scpi_scan_exponent(int32_t character, scpi_number* number,
     return scpi_engine_port_error(next);
   }
   input->methods->unread(input);
-  return SCPI_STATUS_INVALID_NUMBER;
+  return STATUS_SCPI_INVALID_NUMBER;
 }
 
 /* A letter in upper case, by the lexer's classes (0x277d2). */
@@ -1676,18 +1629,18 @@ int32_t scpi_parameter_match(scpi_parameter** next, int32_t kind,
   /* The condition for a parameter of each kind where none is allowed:
    * the image's table at 0x279ca, scpi_parameter_kind_errors. */
   static const int16_t KIND_ERRORS[] = {
-      [SCPI_PARAMETER_DECIMAL] = -46,     /* -128 Numeric data not allowed */
-      [SCPI_PARAMETER_STRING] = -48,      /* -158 String data not allowed */
-      [SCPI_PARAMETER_CHARACTER] = -47,   /* -148 Character data not allowed */
-      [SCPI_PARAMETER_BLOCK] = -49,       /* -168 Block data not allowed */
-      [SCPI_PARAMETER_NON_DECIMAL] = -46, /* -128 Numeric data not allowed */
-      [SCPI_PARAMETER_EXPRESSION] = -50,  /* -178 Expression data not allowed */
+      [SCPI_PARAMETER_DECIMAL] = STATUS_SCPI_NUMERIC_NOT_ALLOWED,
+      [SCPI_PARAMETER_STRING] = STATUS_SCPI_STRING_NOT_ALLOWED,
+      [SCPI_PARAMETER_CHARACTER] = STATUS_SCPI_CHARACTER_NOT_ALLOWED,
+      [SCPI_PARAMETER_BLOCK] = STATUS_SCPI_BLOCK_NOT_ALLOWED,
+      [SCPI_PARAMETER_NON_DECIMAL] = STATUS_SCPI_NUMERIC_NOT_ALLOWED,
+      [SCPI_PARAMETER_EXPRESSION] = STATUS_SCPI_EXPRESSION_NOT_ALLOWED,
   };
   int16_t token = kind;
 
   for (scpi_parameter* entry = *next;; entry = *next = entry->next) {
     if (entry == 0) {
-      return SCPI_STATUS_EXTRA_PARAMETER;
+      return STATUS_SCPI_EXTRA_PARAMETER;
     }
     if (entry->kinds->converters[token] != 0) {
       break;
@@ -1709,7 +1662,7 @@ uint32_t scpi_parameters_finish(scpi_parameter** next, scpi_call* call,
                                 int16_t* offset) {
   for (; *next != 0; *next = (*next)->next) {
     if ((*next)->kinds->optional == 0) {
-      return SCPI_STATUS_MISSING_PARAMETER;
+      return STATUS_SCPI_MISSING_PARAMETER;
     }
     scpi_engine_mark(call, *offset, SCPI_NONE);
     *offset += (*next)->kinds->size + sizeof(int16_t);
@@ -1806,12 +1759,12 @@ int32_t scpi_apply_suffix(scpi_number* number, scpi_unit* units) {
     return 0;
   }
   if (units == 0) {
-    return SCPI_STATUS_SUFFIX_NOT_ALLOWED;
+    return STATUS_SCPI_SUFFIX_NOT_ALLOWED;
   }
   number->unit = scpi_match_suffix(number->suffix_length, number->suffix, units,
                                    &number->scale);
   if (number->unit == 0) {
-    return SCPI_STATUS_INVALID_SUFFIX;
+    return STATUS_SCPI_INVALID_SUFFIX;
   }
   return 0;
 }
@@ -1967,11 +1920,11 @@ uint32_t scpi_header_step(scpi_keyword* keyword, scpi_path* header,
   } else {
     node = scpi_node_find_numbered(header, keyword, unused);
     if (node == 0) {
-      return SCPI_STATUS_UNDEFINED_HEADER;
+      return STATUS_SCPI_UNDEFINED_HEADER;
     }
   }
   header->list = node->children;
-  return header->list == 0 ? SCPI_STATUS_HEADER_LEAF : 0;
+  return header->list == 0 ? STATUS_SCPI_HEADER_LEAF : 0;
 }
 
 /* Sets a header's path back to a root list (0x27efe). */
@@ -2010,7 +1963,7 @@ int32_t scpi_call_handler(scpi_call* call, void** response) {
   if (call->query != 0) {
     *response = arena_alloc(call->node->response_size, call->arena);
     if (*response == 0) {
-      return SCPI_STATUS_NO_MEMORY;
+      return STATUS_SCPI_NO_MEMORY;
     }
   }
   return handler(call->parameters, *response, call);
@@ -2091,7 +2044,7 @@ void arena_init(void* buffer, uint32_t size, scpi_arena** slot) {
 uint32_t scpi_check_range(int32_t low, int32_t value, int32_t high,
                           uint8_t source) {
   if (value < low || value > high) {
-    status_report_from(SCPI_CONDITION_DATA_OUT_OF_RANGE, source);
+    status_report_from(STATUS_DATA_OUT_OF_RANGE, source);
     return 0;
   }
   return 1;
@@ -2170,16 +2123,6 @@ float scpi_numeric_get(scpi_numeric_param* param, int32_t index, int16_t which,
   return value.real;
 }
 
-/* The conditions console_read's errors raise: -362 Framing error, -363
- * Input buffer overrun, -361 Parity error and -360 Communication error
- * (the kind 3 entries 0x13 to 0x16 of status_conditions, 0x2f8aa). */
-enum {
-  SCPI_CONDITION_COMMUNICATION_ERROR = 0x13,
-  SCPI_CONDITION_PARITY_ERROR = 0x14,
-  SCPI_CONDITION_FRAMING_ERROR = 0x15,
-  SCPI_CONDITION_INPUT_OVERRUN = 0x16,
-};
-
 /* Returns its argument; the LED and DOUGlas queries call it (0x29a18). */
 char return_byte(char b) { return b; }
 
@@ -2204,9 +2147,8 @@ float float_identity(float x) { return x; }
 int32_t return_zero(void) { return 0; }
 
 /* Reports a query's failure, the condition code, for the source
- * return_zero gives, and empties its text response (0x29ade); 72
- * queries call it with -0x20. */
-int32_t scpi_query_failed(char code, void* response) {
+ * return_zero gives, and empties its text response (0x29ade). */
+int32_t scpi_query_failed(status_condition_code code, void* response) {
   scpi_engine_string_value* text = response;
 
   status_report_from(code, return_zero());
@@ -2293,16 +2235,16 @@ int16_t console_port_read(void) {
     scpi_input_line[0] = 0;
     character = SCPI_PORT_END;
     if (errors & CONSOLE_BREAK_OR_FRAMING) {
-      status_report(SCPI_CONDITION_FRAMING_ERROR);
+      status_report(STATUS_FRAMING_ERROR);
     }
     if (errors & CONSOLE_OVERRUN) {
-      status_report(SCPI_CONDITION_INPUT_OVERRUN);
+      status_report(STATUS_INPUT_OVERRUN);
     }
     if (errors & CONSOLE_PARITY) {
-      status_report(SCPI_CONDITION_PARITY_ERROR);
+      status_report(STATUS_PARITY_ERROR);
     }
     if (errors & CONSOLE_COMMUNICATION) {
-      status_report(SCPI_CONDITION_COMMUNICATION_ERROR);
+      status_report(STATUS_COMMUNICATION_ERROR);
     }
   }
   scpi_last_input = character;
@@ -2343,12 +2285,12 @@ uint8_t status_byte_get(void) { return status_byte; }
  * status_request_service with it (0x29d98). */
 void status_update_rqs(void) {
   bool request = (status_byte & service_request_enable &
-                  ~SCPI_STATUS_REQUEST_SERVICE) != 0;
+                  ~STATUS_BYTE_REQUEST_SERVICE) != 0;
 
   if (request) {
-    status_byte |= SCPI_STATUS_REQUEST_SERVICE;
+    status_byte |= STATUS_BYTE_REQUEST_SERVICE;
   } else {
-    status_byte &= ~SCPI_STATUS_REQUEST_SERVICE;
+    status_byte &= ~STATUS_BYTE_REQUEST_SERVICE;
   }
   status_request_service = request;
 }

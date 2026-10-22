@@ -1311,6 +1311,14 @@ view cannot drift apart.  The library, bottom up:
      queue the status model's (`status_error_queue`), and the main
      tree's root list a `scpi_child_list` with its 49 children counted
      (its third word the default child, `0x24`, not flags).
+     Then one enum for every status condition: `status_condition_code`
+     gains the error-queue conditions 1 to 0x16, named by their SCPI
+     errors, and the SCPI engine's negative ones, -1 to -4 the Standard
+     Event bits (`STATUS_ESR_*`) and the rest `STATUS_SCPI_*`, which
+     `scpi.c` and `status.c` now share; `scpi_query_failed` takes it,
+     so its 72 callers name theirs.  The functions that take a word or a
+     long (`status_report`, `status_set_bit`) keep their width, the
+     enum being a byte.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

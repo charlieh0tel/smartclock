@@ -2343,7 +2343,87 @@ struct sprintf_output {
 
 typedef int32_t (sprintf_put_function)(char *, int32_t, int32_t, struct sprintf_output *);
 
+typedef enum __attribute__((packed)) status_byte_bit {
+    STATUS_BYTE_REQUEST_SERVICE=64
+} status_byte_bit;
+
 typedef enum __attribute__((packed)) status_condition_code {
+    STATUS_SCPI_NO_MEMORY=-56,
+    STATUS_SCPI_NUMERIC_DATA_ERROR=-55,
+    STATUS_SCPI_GET_NOT_ALLOWED=-54,
+    STATUS_SCPI_SUFFIX_TOO_LONG=-53,
+    STATUS_SCPI_TOO_MUCH_DATA=-52,
+    STATUS_SCPI_DATA_TYPE_ERROR=-51,
+    STATUS_SCPI_EXPRESSION_NOT_ALLOWED=-50,
+    STATUS_SCPI_BLOCK_NOT_ALLOWED=-49,
+    STATUS_SCPI_STRING_NOT_ALLOWED=-48,
+    STATUS_SCPI_CHARACTER_NOT_ALLOWED=-47,
+    STATUS_SCPI_NUMERIC_NOT_ALLOWED=-46,
+    STATUS_SCPI_EXPONENT_TOO_LARGE=-45,
+    STATUS_SCPI_MACRO_EXECUTION_ERROR=-44,
+    STATUS_SCPI_INVALID_SEPARATOR=-43,
+    STATUS_SCPI_MACRO_RECURSION=-42,
+    STATUS_SCPI_INSIDE_MACRO=-41,
+    STATUS_SCPI_FORMAT_FAILED=-40,
+    STATUS_SCPI_INVALID_CHARACTER=-39,
+    STATUS_SCPI_EXTRA_PARAMETER=-38,
+    STATUS_SCPI_MISSING_PARAMETER=-37,
+    STATUS_SCPI_MACRO_HEADER_NOT_FOUND=-36,
+    STATUS_SCPI_ILLEGAL_MACRO_LABEL=-35,
+    STATUS_SCPI_MACRO_REDEFINITION=-34,
+    STATUS_SCPI_HEADER_LEAF=-33,
+    STATUS_SCPI_UNDEFINED_HEADER=-32,
+    STATUS_SCPI_INVALID_SUFFIX=-31,
+    STATUS_SCPI_PARAMETER_DOLLAR=-30,
+    STATUS_SCPI_NO_LIST=-28,
+    STATUS_SCPI_ILLEGAL_PARAMETER_VALUE=-27,
+    STATUS_SCPI_EXPRESSION_ERROR=-24,
+    STATUS_SCPI_TOO_MANY_DIGITS=-23,
+    STATUS_SCPI_STRING_ERROR=-22,
+    STATUS_SCPI_INVALID_STRING=-21,
+    STATUS_SCPI_INVALID_DIGIT=-20,
+    STATUS_SCPI_INVALID_RADIX=-19,
+    STATUS_SCPI_INVALID_BLOCK=-18,
+    STATUS_SCPI_INVALID_NUMBER=-17,
+    STATUS_SCPI_MNEMONIC_TOO_LONG=-16,
+    STATUS_SCPI_QUERY_AFTER_INDEFINITE=-15,
+    STATUS_SCPI_QUERY_DEADLOCKED=-14,
+    STATUS_SCPI_QUERY_INTERRUPTED=-13,
+    STATUS_SCPI_QUERY_UNTERMINATED=-12,
+    STATUS_SCPI_DATA_OUT_OF_RANGE=-11,
+    STATUS_SCPI_QUERY_ERROR=-10,
+    STATUS_SCPI_SUFFIX_NOT_ALLOWED=-9,
+    STATUS_SCPI_EXECUTION_ERROR=-8,
+    STATUS_SCPI_COMMAND_ERROR=-7,
+    STATUS_SCPI_SYNTAX_ERROR=-6,
+    STATUS_SCPI_OUT_OF_MEMORY=-5,
+    STATUS_ESR_QUERY_ERROR=-4,
+    STATUS_ESR_DEVICE_ERROR=-3,
+    STATUS_ESR_EXECUTION_ERROR=-2,
+    STATUS_ESR_COMMAND_ERROR=-1,
+    STATUS_NO_CONDITION=0,
+    STATUS_PARAMETER_NOT_ALLOWED=1,
+    STATUS_MISSING_PARAMETER=2,
+    STATUS_UNDEFINED_HEADER=3,
+    STATUS_INVALID_SUFFIX=4,
+    STATUS_INVALID_STRING_DATA=5,
+    STATUS_EXECUTION_ERROR=6,
+    STATUS_PARAMETER_ERROR=7,
+    STATUS_SETTINGS_CONFLICT=8,
+    STATUS_DATA_OUT_OF_RANGE=9,
+    STATUS_TOO_MUCH_DATA=10,
+    STATUS_ILLEGAL_PARAMETER_VALUE=11,
+    STATUS_DATA_CORRUPT_OR_STALE=12,
+    STATUS_HARDWARE_MISSING=13,
+    STATUS_DEVICE_SPECIFIC_ERROR=14,
+    STATUS_SYSTEM_ERROR=15,
+    STATUS_MEMORY_ERROR=16,
+    STATUS_CONFIGURATION_LOST=17,
+    STATUS_SELFTEST_FAILED=18,
+    STATUS_COMMUNICATION_ERROR=19,
+    STATUS_PARITY_ERROR=20,
+    STATUS_FRAMING_ERROR=21,
+    STATUS_INPUT_OVERRUN=22,
     STATUS_POWER_ON=25,
     STATUS_LOCKED_SET=26,
     STATUS_LOCKED_CLEARED=27,
@@ -2647,6 +2727,7 @@ _Static_assert(sizeof(sim_chip_select) == 4, "sim_chip_select");
 _Static_assert(sizeof(sim_registers) == 120, "sim_registers");
 _Static_assert(sizeof(spoo_request) == 24, "spoo_request");
 _Static_assert(sizeof(sprintf_output) == 8, "sprintf_output");
+_Static_assert(sizeof(status_byte_bit) == 1, "status_byte_bit");
 _Static_assert(sizeof(status_condition) == 6, "status_condition");
 _Static_assert(sizeof(status_condition_code) == 1, "status_condition_code");
 _Static_assert(sizeof(status_error_entry) == 6, "status_error_entry");
@@ -5913,7 +5994,7 @@ float float_identity(float x);
 void robin_store(scpi_array_record *response,int16_t *points,int32_t count,robin_format format,
                 uint8_t index);
 int32_t return_zero(void);
-int32_t scpi_query_failed(char code,void *response);
+int32_t scpi_query_failed(status_condition_code code,void *response);
 uint8_t rtcm_supported(void);
 void scpi_prompt(int32_t param_1);
 scpi_port * scpi_session_init(void);
@@ -46763,10 +46844,10 @@ int32_t return_zero(void)
 /* 00029ade */
 #if 0 /* the decompiler's reading; rewritten in scpi.c */
 
-/* 72 SCPI queries call it with -0x20; reports it through status_report_from and zeroes the reply's
-   length at +4 */
+/* 72 SCPI queries call it, most with STATUS_UNDEFINED_HEADER or STATUS_DATA_CORRUPT_OR_STALE;
+   reports it through status_report_from and zeroes the reply's length at +4 */
 
-int32_t scpi_query_failed(char code,void *response)
+int32_t scpi_query_failed(status_condition_code code,void *response)
 
 {
   int32_t zero;
@@ -47422,7 +47503,7 @@ int32_t scpi_query_CALA(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(-0x20,call);
+  error = scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -47436,7 +47517,7 @@ int32_t scpi_query_CEQU(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(-0x20,call);
+  error = scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -47530,7 +47611,7 @@ int32_t scpi_query_RWHO(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(-0x20,call);
+  error = scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -47681,7 +47762,7 @@ int32_t scpi_query_RAST(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(-0x20,call);
+  error = scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -48136,20 +48217,21 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe
 {
   char cVar2;
   int32_t error;
+  status_condition_code code;
   char local_6 [2];
   
   cVar2 = gps_message_supported(0x28,local_6);
   if (cVar2 == 0) {
-    cVar2 = 0xc;
+    code = STATUS_DATA_CORRUPT_OR_STALE;
   }
   else {
     if (local_6[0] != 0) {
       *(int16_t *)response = (int16_t)(char)nv_settings.raim_state[*(int16_t *)parameters];
       return 0;
     }
-    cVar2 = '\r';
+    code = STATUS_HARDWARE_MISSING;
   }
-  error = scpi_query_failed(cVar2,call);
+  error = scpi_query_failed(code,call);
   return error;
 }
 
@@ -48199,11 +48281,12 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
   char cVar3;
   float value;
   int32_t iVar2;
+  status_condition_code code;
   char local_6 [2];
   
   cVar3 = gps_message_supported(0x28,local_6);
   if (cVar3 == 0) {
-    cVar3 = 0xc;
+    code = STATUS_DATA_CORRUPT_OR_STALE;
   }
   else {
     if (local_6[0] != 0) {
@@ -48215,9 +48298,9 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
       *(int32_t *)response = iVar2;
       return 0;
     }
-    cVar3 = '\r';
+    code = STATUS_HARDWARE_MISSING;
   }
-  iVar2 = scpi_query_failed(cVar3,call);
+  iVar2 = scpi_query_failed(code,call);
   return iVar2;
 }
 
@@ -48245,7 +48328,7 @@ int32_t scpi_query_SOURce_GPSystem_POSition_ACTual(void *parameters,void *respon
   cVar3 = gps_position_get(&local_1c,&local_18,&local_14);
   set_interrupt_mask(sr);
   if (cVar3 == 0) {
-    iVar2 = scpi_query_failed(0xc,call);
+    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     mas_to_dms(local_1c,&local_10,local_e,&dStack_c);
@@ -48300,7 +48383,7 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_MSEConds(void *parameters,void *
     *(int32_t *)response = local_8;
     return 0;
   }
-  iVar1 = scpi_query_failed('\t',call);
+  iVar1 = scpi_query_failed(STATUS_DATA_OUT_OF_RANGE,call);
   return iVar1;
 }
 
@@ -48376,7 +48459,7 @@ int32_t scpi_query_DIAGnostic_GPSystem_TIME(void *parameters,void *response,void
     iVar1 = 0;
   }
   else {
-    iVar1 = scpi_query_failed(0xc,call);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   return iVar1;
 }
@@ -48433,7 +48516,7 @@ int32_t scpi_query_DIAGnostic_IDENtification_GPSystem(void *parameters,void *res
   int32_t iVar1;
   
   if (gps.receiver_id_received == 0) {
-    iVar1 = scpi_query_failed(0xc,call);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     *(uint32_t *)response = 0x101059;
@@ -48662,7 +48745,7 @@ int32_t scpi_query_DIAGnostic_LOG_COUNt(void *parameters,void *response,void *ca
     sVar2 = (int16_t)iVar1;
   }
   if (sVar2 < 0) {
-    iVar1 = scpi_query_failed(0xe,call);
+    iVar1 = scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR,call);
   }
   else {
     *(int16_t *)response = sVar2;
@@ -48784,7 +48867,7 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,void *cal
   if (0 < sVar4) {
     if (*(int16_t *)((int32_t)parameters + 2) != -1) {
       if ((*(int16_t *)((int32_t)parameters + 4) < 1) || (sVar4 < *(int16_t *)((int32_t)parameters + 4))) {
-        iVar3 = scpi_query_failed('\t',call);
+        iVar3 = scpi_query_failed(STATUS_DATA_OUT_OF_RANGE,call);
         return iVar3;
       }
       sVar4 = *(int16_t *)((int32_t)parameters + 4);
@@ -48804,7 +48887,7 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,void *cal
       return 0;
     }
   }
-  iVar3 = scpi_query_failed(0xe,call);
+  iVar3 = scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR,call);
   return iVar3;
 }
 
@@ -48949,7 +49032,7 @@ int32_t scpi_query_DIAGnostic_PTIMe_TINTerval(void *parameters,void *response,vo
   sr = set_interrupt_mask(0x100);
   if (interval_reading.valid == 0) {
     set_interrupt_mask(sr);
-    iVar1 = scpi_query_failed(0xc,call);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     fVar2 = double_to_float(interval_reading.value);
@@ -49069,7 +49152,7 @@ int32_t scpi_query_DIAGnostic_SER1_EGResponse(void *parameters,void *response,vo
 {
   int32_t error;
   
-  error = scpi_query_failed(-0x20,call);
+  error = scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -49196,7 +49279,7 @@ int32_t scpi_set_DIAGnostic_STATus_HAPPening(void *parameters,void *response,voi
     status_report_from(9,(uint8_t)zero);
   }
   else {
-    status_happening((char)*(uint16_t *)((int32_t)parameters + 2) + 0x16);
+    status_happening((char)*(uint16_t *)((int32_t)parameters + 2) + STATUS_INPUT_OVERRUN);
   }
   return 0;
 }
@@ -49513,7 +49596,7 @@ int32_t scpi_query_OUTPut_PIN1_DELay(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -49527,7 +49610,7 @@ int32_t scpi_query_R1PO(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -49556,7 +49639,7 @@ int32_t scpi_query_OUTPut_PIN1_DELay_ALIGnment(void *parameters,void *response,v
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -49570,7 +49653,7 @@ int32_t scpi_query_REAL(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -49595,7 +49678,7 @@ int32_t scpi_query_OUTPut_PIN1_FREQuency(void *parameters,void *response,void *c
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -49609,7 +49692,7 @@ int32_t scpi_query_RFOU(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -49623,7 +49706,7 @@ int32_t scpi_query_RSSU(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(-0x20,call);
+  error = scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -49697,7 +49780,7 @@ int32_t scpi_query_RACD(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -50108,7 +50191,7 @@ int32_t scpi_query_SOURce_GPSystem_POSition(void *parameters,void *response,void
   value = return_byte(nv_settings.douglas_state);
   if (value == 0) {
     if (survey_position_valid == 0) {
-      error = scpi_query_failed(0xc,call);
+      error = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
       return error;
     }
     uVar8 = (uint8_t)((uint32_t)&local_1c >> 0x18);
@@ -50244,7 +50327,7 @@ int32_t scpi_query_RLOC(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -50273,7 +50356,7 @@ int32_t scpi_query_RPHS(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -50345,7 +50428,7 @@ int32_t scpi_query_DOUGlas_PROGress(void *parameters,void *response,void *call)
   cVar3 = survey_progress_text((char *)((zero & 0xff) * 0x11a + 0x10272a));
   set_interrupt_mask(sr);
   if (cVar3 == 0) {
-    iVar2 = scpi_query_failed(8,call);
+    iVar2 = scpi_query_failed(STATUS_SETTINGS_CONFLICT,call);
   }
   else {
     *(uint32_t *)response = (zero & 0xff) * 0x11a + 0x10272a;
@@ -50364,7 +50447,7 @@ int32_t scpi_query_RSPR(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -50401,7 +50484,7 @@ int32_t scpi_query_IPSU(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -50630,7 +50713,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void *parameters,void *res
   iVar2 = satellites_in_use(&local_9,&local_8,&local_e,&local_a);
   if ((char)iVar2 == 0) {
     set_interrupt_mask(sr);
-    iVar2 = scpi_query_failed(0xc,call);
+    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     set_interrupt_mask(sr);
@@ -50669,7 +50752,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(void *parameters,voi
   iVar1 = satellites_in_use(&local_6,&local_5,(uint32_t *)0x0,(uint8_t *)0x0);
   if ((char)iVar1 == 0) {
     set_interrupt_mask(sr);
-    iVar1 = scpi_query_failed(0xc,call);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     set_interrupt_mask(sr);
@@ -50689,7 +50772,7 @@ int32_t scpi_query_RTSA(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -50829,7 +50912,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe
   uVar1 = *(uint16_t *)parameters;
   cVar3 = satellite_number_valid((uint8_t)*(uint16_t *)((int32_t)parameters + 4));
   if (cVar3 == 0) {
-    iVar2 = scpi_query_failed('\t',call);
+    iVar2 = scpi_query_failed(STATUS_DATA_OUT_OF_RANGE,call);
   }
   else {
     cVar3 = satellite_in_mask((char)*(uint16_t *)((int32_t)parameters + 4),
@@ -50957,7 +51040,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
   uVar2 = visible_satellites(&local_8,&local_c);
   if ((char)uVar2 == 0) {
     set_interrupt_mask(sr);
-    iVar3 = scpi_query_failed(0xc,call);
+    iVar3 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     set_interrupt_mask(sr);
@@ -50993,7 +51076,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
   uVar1 = visible_satellites(local_6,(uint32_t *)0x0);
   if ((char)uVar1 == 0) {
     set_interrupt_mask(sr);
-    iVar2 = scpi_query_failed(0xc,call);
+    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     set_interrupt_mask(sr);
@@ -51058,7 +51141,7 @@ int32_t scpi_query_LED_ALARm_MINor(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -51344,7 +51427,7 @@ int32_t scpi_set_SOURce_PTIMe_PPS_EDGE(void *parameters,void *response,void *cal
 int32_t scpi_query_SOURce_PTIMe_PPS_EDGE(void *parameters,void *response,void *call)
 
 {
-  scpi_query_failed(3,call);
+  scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return 0;
 }
 
@@ -51371,7 +51454,7 @@ int32_t scpi_set_SOURce_PULSe_REFerence_EDGE(void *parameters,void *response,voi
 int32_t scpi_query_SOURce_PULSe_REFerence_EDGE(void *parameters,void *response,void *call)
 
 {
-  scpi_query_failed(3,call);
+  scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return 0;
 }
 
@@ -51396,7 +51479,7 @@ int32_t scpi_query_SOURce_PTIMe_DATE(void *parameters,void *response,void *call)
     iVar1 = 0;
   }
   else {
-    iVar1 = scpi_query_failed(0xc,call);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   return iVar1;
 }
@@ -51418,7 +51501,7 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(void *parameters,void *re
   offset_valid = get_gps_utc_offset(&local_6);
   set_interrupt_mask(sr);
   if (offset_valid == 0) {
-    iVar1 = scpi_query_failed(0xc,call);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     *(int16_t *)response = local_6;
@@ -51464,7 +51547,7 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_DATE(void *parameters,void *response,
   uVar1 = nv_settings.leap_date;
   set_interrupt_mask(sr);
   if (uVar2 == 0) {
-    iVar3 = scpi_query_failed(0xc,call);
+    iVar3 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     local_8 = (uint16_t)(uVar1 >> 0x10);
@@ -51496,7 +51579,7 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_DURation(void *parameters,void *respo
   uVar1 = (uint16_t)nv_settings.leap_minute_length;
   set_interrupt_mask(sr);
   if (uVar2 == 0) {
-    iVar3 = scpi_query_failed(0xc,call);
+    iVar3 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     *(uint16_t *)response = uVar1;
@@ -51522,7 +51605,7 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(void *parameters,void *respon
   sprintf((char *)((zero & 0xff) * 0x11a + 0x10272a),"#H%08X",leap_seconds);
   *(uint32_t *)response = (zero & 0xff) * 0x11a + 0x10272a;
   if (leap_seconds == 0) {
-    iVar2 = scpi_query_failed(0xc,call);
+    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     iVar2 = 0;
@@ -51563,7 +51646,7 @@ int32_t scpi_query_SOURce_PTIMe_TCODe(void *parameters,void *response,void *call
     psos_get_v(0x20,1,&uStack_8);
     released = tcode_request(nv_settings.tcode_format);
     if (released == 0) {
-      error = scpi_query_failed(0xc,call);
+      error = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
       return error;
     }
     psos_wait_v(0x20,0,0,&uStack_8);
@@ -51591,13 +51674,13 @@ int32_t scpi_query_RTCM(void *parameters,void *response,void *call)
     return_zero();
     supported = rtcm_supported();
     if ((supported & 2) == 0) {
-      error = scpi_query_failed(0,call);
+      error = scpi_query_failed(STATUS_NO_CONDITION,call);
       return error;
     }
     psos_get_v(0x20,1,&uStack_8);
     released = tcode_request(TIMECODE_T2_TEST);
     if (released == 0) {
-      error = scpi_query_failed(0xc,call);
+      error = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
       return error;
     }
     psos_wait_v(0x20,0,0,&uStack_8);
@@ -51676,7 +51759,7 @@ int32_t scpi_query_SOURce_PTIMe_TIME(void *parameters,void *response,void *call)
     iVar1 = 0;
   }
   else {
-    iVar1 = scpi_query_failed(0xc,call);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   return iVar1;
 }
@@ -51720,7 +51803,7 @@ int32_t scpi_query_RTAD(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -51741,7 +51824,7 @@ int32_t scpi_query_SOURce_PTIMe_TIME_STRing(void *parameters,void *response,void
   if ((char)iVar2 == 0) {
     iVar2 = format_time(local_8,(char *)((zero & 0xff) * 0x11a + 0x10272a));
     if ((char)iVar2 == 0) {
-      iVar2 = scpi_query_failed(0xe,call);
+      iVar2 = scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR,call);
     }
     else {
       *(uint32_t *)response = (zero & 0xff) * 0x11a + 0x10272a;
@@ -51749,7 +51832,7 @@ int32_t scpi_query_SOURce_PTIMe_TIME_STRing(void *parameters,void *response,void
     }
   }
   else {
-    iVar2 = scpi_query_failed(0xc,call);
+    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   return iVar2;
 }
@@ -51817,7 +51900,7 @@ int32_t scpi_query_RTZO(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -52937,7 +53020,7 @@ int32_t scpi_query_ROBin(void *parameters,void *response,void *call)
     iVar1 = 0;
   }
   else {
-    iVar1 = scpi_query_failed(0xb,call);
+    iVar1 = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
   }
   return iVar1;
 }
@@ -52993,7 +53076,7 @@ int32_t scpi_query_ROBin_MEMory_OVERflow_COUNt(void *parameters,void *response,v
   else {
     iVar2 = robin_parse(*(char **)((int32_t)parameters + 2),&local_c,&uStack_8);
     if (iVar2 != 0) {
-      iVar2 = scpi_query_failed(0xb,call);
+      iVar2 = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
       return iVar2;
     }
     *(uint32_t *)response = 1;
@@ -53058,7 +53141,7 @@ int32_t scpi_query_ROBin_POINts(void *parameters,void *response,void *call)
   else {
     iVar2 = robin_parse(*(char **)((int32_t)parameters + 2),&local_c,&uStack_8);
     if (iVar2 != 0) {
-      iVar2 = scpi_query_failed(0xb,call);
+      iVar2 = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
       return iVar2;
     }
     *(uint32_t *)response = 1;
@@ -53114,10 +53197,10 @@ int32_t scpi_query_ROBin_TSTamp(void *parameters,void *response,void *call)
                   (uint8_t)zero);
       return 0;
     }
-    iVar1 = scpi_query_failed('\t',call);
+    iVar1 = scpi_query_failed(STATUS_DATA_OUT_OF_RANGE,call);
   }
   else {
-    iVar1 = scpi_query_failed(0xb,call);
+    iVar1 = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
   }
   return iVar1;
 }
@@ -53145,7 +53228,7 @@ int32_t scpi_set_SENSe_TST1_EDGE(void *parameters,void *response,void *call)
 int32_t scpi_query_SENSe_TST1_EDGE(void *parameters,void *response,void *call)
 
 {
-  scpi_query_failed(3,call);
+  scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return 0;
 }
 
@@ -53286,10 +53369,9 @@ void status_happening(status_condition_code condition)
   if (status_ready == 0) {
     status_event_hook(&early_status_happenings,condition);
   }
-  else if (condition != 0x16) {
-    status_clear_bit(status_object,
-                     CONCAT31(CONCAT21((char)condition >> 7,(char)condition >> 7),condition));
-    if ((char)condition < '*') {
+  else if (condition != STATUS_INPUT_OVERRUN) {
+    status_clear_bit(status_object,(int32_t)(int8_t)condition);
+    if (condition < STATUS_WAITING_SET) {
       if (condition == STATUS_LOCKED_SET) {
         status_clear_bit(status_object,0x29);
         status_clear_bit(status_object,0x2b);
@@ -53550,7 +53632,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -53564,7 +53646,7 @@ int32_t scpi_query_RAT1(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -53578,7 +53660,7 @@ int32_t scpi_query_RAT3(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -53616,7 +53698,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis(void *parameters,void 
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -53630,7 +53712,7 @@ int32_t scpi_query_RAT2(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -53666,7 +53748,7 @@ int32_t scpi_query_FMHO(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -53805,7 +53887,7 @@ int32_t scpi_query_RMHO(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -53843,7 +53925,7 @@ int32_t scpi_query_KENneth_PREDicted(void *parameters,void *response,void *call)
   cVar2 = kenneth_predicted_get(response,&local_6,&local_5);
   set_interrupt_mask(sr);
   if (cVar2 == 0) {
-    iVar1 = scpi_query_failed(0xc,call);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     *(int16_t *)((int32_t)response + 4) = (int16_t)local_6;
@@ -53905,7 +53987,7 @@ int32_t scpi_query_KENneth_PRESent(void *parameters,void *response,void *call)
   cVar2 = kenneth_present_get(response,local_6);
   set_interrupt_mask(sr);
   if (cVar2 == 0) {
-    iVar1 = scpi_query_failed(8,call);
+    iVar1 = scpi_query_failed(STATUS_SETTINGS_CONFLICT,call);
   }
   else {
     *(int16_t *)((int32_t)response + 4) = (int16_t)local_6[0];
@@ -54039,7 +54121,7 @@ int32_t scpi_query_RSST(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -54059,7 +54141,7 @@ int32_t scpi_query_SOURce_PTIMe_FFOMerit(void *parameters,void *response,void *c
   if (*(int16_t *)parameters == 0) {
     cVar3 = get_ffom(local_6);
     if (cVar3 == 0) {
-      error = scpi_query_failed(0xc,call);
+      error = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
       return error;
     }
     uVar2 = (uint16_t)local_6[0];
@@ -54085,7 +54167,7 @@ int32_t scpi_query_SOURce_PTIMe_TINTerval(void *parameters,void *response,void *
   sr = set_interrupt_mask(0x100);
   if (interval_mean_flag == 0) {
     set_interrupt_mask(sr);
-    iVar1 = scpi_query_failed(0xc,call);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
     *(float *)response = interval_mean;
@@ -54138,7 +54220,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_ADDRess(void *parameters,void *respon
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -54615,7 +54697,7 @@ int32_t scpi_query_REQU(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 
@@ -54745,7 +54827,7 @@ int32_t scpi_query_RVST(void *parameters,void *response,void *call)
 {
   int32_t error;
   
-  error = scpi_query_failed(3,call);
+  error = scpi_query_failed(STATUS_UNDEFINED_HEADER,call);
   return error;
 }
 

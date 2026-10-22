@@ -27,9 +27,6 @@ static const uint16_t RECORDS_SR_INTERRUPT_MASK = 0x0700;
  * message: an array size, so #define. */
 #define RECORDS_MESSAGE_SIZE 80
 
-/* A status_report code (status_report_messages, 0x2bf30). */
-static const int16_t RECORDS_STATUS_MEMORY_ERROR = 0x10;
-
 /* The tag the NV register's and the identification record's writers
  * store, and the firmware revision the NV register's must match. */
 static const char RECORDS_TAG[] = "S";
@@ -222,7 +219,7 @@ uint32_t save_calibration_block(uint32_t source) {
   block.checksum = record_checksum(&block, sizeof block);
   if (!eeprom_write((char*)&eeprom_calibration_block, (char*)&block,
                     sizeof block)) {
-    status_report_from(RECORDS_STATUS_MEMORY_ERROR, (uint8_t)source);
+    status_report_from(STATUS_MEMORY_ERROR, (uint8_t)source);
     return 0;
   }
   return 1;
@@ -274,7 +271,7 @@ bool save_parameter_record(uint8_t source) {
   bool written = eeprom_write((char*)&eeprom_parameter_record, (char*)&record,
                               sizeof record) != 0;
   if (!written) {
-    status_report_from(RECORDS_STATUS_MEMORY_ERROR, source);
+    status_report_from(STATUS_MEMORY_ERROR, source);
   }
   return written;
 }
@@ -877,8 +874,6 @@ void clear_nv(void) {
  * slot 1, erasing the other, and reports the configuration lost
  * (0x3282c). */
 void nv_restore(void) {
-  /* A status_report code (status_report_messages, 0x2bf30). */
-  static const int16_t STATUS_CONFIGURATION_LOST = 0x11;
   /* The source nv_restore gives nv_save and status_report_from. */
   static const uint8_t NV_RESTORE_SOURCE = 2;
   /* nv_settings by default: the image's nv_settings_defaults (0x30966),
@@ -1012,7 +1007,7 @@ char nv_save(uint8_t source) {
     if (kernel_running) {
       log_event(LOG_EEPROM_SAVE_FAILED);
     }
-    status_report_from(RECORDS_STATUS_MEMORY_ERROR, source);
+    status_report_from(STATUS_MEMORY_ERROR, source);
   }
   return saved;
 }

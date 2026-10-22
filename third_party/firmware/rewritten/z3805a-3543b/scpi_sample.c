@@ -103,10 +103,34 @@ static void scpi_sample_toggle_answer(int8_t toggle, uint16_t* choice) {
   }
 }
 
+/* :SAMPle:TOGGle: sets the setting to its choice (0x2e3c2). */
+int32_t scpi_set_SAMPle_TOGGle(void* parameters, void* response,
+                               scpi_call* call) {
+  const uint8_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
+  scpi_word_parameter* given = parameters;
+
+  pllc_request_a(&scpi_param_SAMPle_TOGGle, 0,
+                 scpi_two_choice(given->value, caller_d2),
+                 return_zero(call->input));
+  return 0;
+}
+
 /* :SAMPle:TOGGle? (0x2e412). */
 int32_t scpi_query_SAMPle_TOGGle(void* parameters, void* response,
                                  scpi_call* call) {
   scpi_sample_toggle_answer((int8_t)scpi_value_SAMPle_TOGGle, response);
+  return 0;
+}
+
+/* :SAMPle:TARRay: sets one of the settings to its choice (0x2e442). */
+int32_t scpi_set_SAMPle_TARR(void* parameters, void* response,
+                             scpi_call* call) {
+  const uint8_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
+  scpi_sample_indexed_word* given = parameters;
+
+  pllc_request_a(&scpi_param_SAMPle_TARR, (uint8_t)given->index,
+                 scpi_two_choice(given->given.value, caller_d2),
+                 return_zero(call->input));
   return 0;
 }
 

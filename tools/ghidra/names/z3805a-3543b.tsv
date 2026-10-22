@@ -2138,3 +2138,5 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x338ce	label	scpi_param_SOURce_GPSystem_INITial_POSition_height	context	the third, after scpi_param_SOURce_GPSystem_INITial_POSition_longitude	scpi_numeric_param
 0x10207c	label	fine_readings	context	fine's TI readings, up to 50, which its sums at fine_sum_i on fit	float[50]
 0x277ec	label	scpi_char_classes	context	the lexer's class of each port value, 0 to 0x105, which scpi_char_upper indexes unchecked	scpi_char_class[262]
+0x33382	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE	context	SERial1's parity setting, which :PARity:TYPE's setter requests	scpi_setting_param
+0x33ade	label	scpi_param_SYSTem_COMMunicate_SER2_RECeive_PARity_TYPE	context	SERial2's, the SCI's	scpi_setting_param

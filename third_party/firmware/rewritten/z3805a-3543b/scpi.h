@@ -154,6 +154,14 @@ enum {
   SCPI_BOUND_MINIMUM = 1,
 };
 
+/* A choice of two keywords, 0 or 1, as the setters' switches take it
+ * (0x2e3d0, 0x2e450, 0x2ee76); any other leaves otherwise, the D2 their
+ * callers left, which the parser never makes them read
+ * (docs/firmware/quirks.md). */
+static uint8_t scpi_two_choice(int16_t choice, uint8_t otherwise) {
+  return choice == 0 || choice == 1 ? choice : otherwise;
+}
+
 /* Whether two texts are the same. */
 static bool scpi_parameters_same(const char* text, const char* other) {
   for (; *text == *other; text++, other++) {

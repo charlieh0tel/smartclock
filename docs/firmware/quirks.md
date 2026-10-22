@@ -46,6 +46,13 @@ routine and the address that shows it.
   word as the value for a parameter neither decimal nor non-decimal
   (`0x2a588` to `0x2a5a2`), and **`:DIAG:TEST?`** D2's low byte as the
   test for a choice past its list (`0x2bc36`); the parser gives neither.
+  So do `:SAMPle:TOGGle`, `:SAMPle:TARRay` and `:FORMat:DATA` with a
+  choice past their two (`0x2e3d0`, `0x2e450`, `0x2ee76`), and
+  `:SYSTem:COMMunicate:SERial:RECeive:PARity:TYPE` past its four
+  (`0x3049c`).
+- **`:DIAGnostic:QUERy:RESPonse?`** from a port other than the console
+  copies A3's count of A4's bytes to A2, all three as its caller left
+  them (`0x2b91a`).
 
 - **`log_erase`** checksums a pointer's bytes.
 

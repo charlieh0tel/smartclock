@@ -3497,6 +3497,7 @@ extern scpi_setting_param * nv_setting_params[18]; /* 00032db2 */
 extern char identification_tag[2]; /* 00032ff5 */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_BAUD; /* 00033328 */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_PACE; /* 00033346 */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE; /* 00033382 */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS; /* 000333a0 */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs; /* 000333be */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_FDUPlex; /* 000333dc */
@@ -3523,6 +3524,7 @@ extern scpi_numeric_param scpi_param_SOURce_PULSe_STARt_TIME; /* 00033a14 */
 extern scpi_numeric_param scpi_param_SOURce_PULSe_STARt_DATE; /* 00033a74 */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER2_RECeive_BAUD; /* 00033aa2 */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER2_RECeive_PACE; /* 00033ac0 */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER2_RECeive_PARity_TYPE; /* 00033ade */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER2_FDUPlex; /* 00033afc */
 extern scpi_setting_param scpi_param_STATus_QUEStionable_USER; /* 00033b1a */
 extern scpi_numeric_param scpi_param_STATus_ENABle; /* 00033bae */
@@ -4717,10 +4719,12 @@ __asm__(".set scpi_param_SYSTem_COMMunicate_SER1_FDUPlex, 0x000333dc");
 __asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_BAUD, 0x00033328");
 __asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS, 0x000333a0");
 __asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_PACE, 0x00033346");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE, 0x00033382");
 __asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs, 0x000333be");
 __asm__(".set scpi_param_SYSTem_COMMunicate_SER2_FDUPlex, 0x00033afc");
 __asm__(".set scpi_param_SYSTem_COMMunicate_SER2_RECeive_BAUD, 0x00033aa2");
 __asm__(".set scpi_param_SYSTem_COMMunicate_SER2_RECeive_PACE, 0x00033ac0");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER2_RECeive_PARity_TYPE, 0x00033ade");
 __asm__(".set scpi_param_SYSTem_PRINt, 0x00033904");
 __asm__(".set scpi_parameter_kind_errors, 0x000279ca");
 __asm__(".set scpi_port_echo_length, 0x00102c60");
@@ -50019,6 +50023,7 @@ int32_t scpi_query_DIAGnostic_PTIMe_TINTerval(void *parameters,void *response,sc
 #endif
 
 /* 0002b91a */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:QUERy:RESPonse? */
 
@@ -50045,6 +50050,7 @@ int32_t scpi_query_DIAGnostic_QUERy_RESPonse(void *parameters,void *response,scp
   return 0;
 }
 
+#endif
 
 /* 0002b96c */
 #if 0 /* the decompiler's reading; rewritten in scpi_system.c */
@@ -53204,6 +53210,7 @@ int32_t scpi_query_SAMPle_BARR(void *parameters,void *response,scpi_call *call)
 #endif
 
 /* 0002e3c2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:TOGGle */
 
@@ -53230,6 +53237,7 @@ int32_t scpi_set_SAMPle_TOGGle(void *parameters,void *response,scpi_call *call)
   return 0;
 }
 
+#endif
 
 /* 0002e412 */
 #if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
@@ -53258,6 +53266,7 @@ int32_t scpi_query_SAMPle_TOGGle(void *parameters,void *response,scpi_call *call
 #endif
 
 /* 0002e442 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:TARR */
 
@@ -53284,6 +53293,7 @@ int32_t scpi_set_SAMPle_TARR(void *parameters,void *response,scpi_call *call)
   return 0;
 }
 
+#endif
 
 /* 0002e498 */
 #if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
@@ -54237,6 +54247,7 @@ void robin_clear(uint8_t param_1)
 #endif
 
 /* 0002ee68 */
+#if 0 /* the decompiler's reading; rewritten in scpi_format_data.c */
 
 /* the setter for :FORMat:DATA */
 
@@ -54263,6 +54274,7 @@ int32_t scpi_set_FORMat_DATA(void *parameters,void *response,scpi_call *call)
   return 0;
 }
 
+#endif
 
 /* 0002eeb8 */
 #if 0 /* the decompiler's reading; rewritten in scpi_format_data.c */
@@ -55937,6 +55949,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE(void *parameters,void *r
 #endif
 
 /* 00030482 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:COMMunicate:SER1:RECeive:PARity:TYPE */
 
@@ -55986,6 +55999,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE
   return 0;
 }
 
+#endif
 
 /* 0003051a */
 #if 0 /* the decompiler's reading; rewritten in scpi_system.c */

@@ -636,6 +636,32 @@ int32_t scpi_query_DIAGnostic_ROSCillator_TCOefficient(void* parameters,
   return 0;
 }
 
+/* :DIAGnostic:QUERy:RESPonse?: from the console port, the responses it
+ * has echoed since the last command, scpi_echo_text, copied into
+ * scpi_echo_response and NUL-terminated (0x2b91a).  From another port
+ * the count, the text and the copy are A3's, A4's and A2's as the
+ * caller left them (docs/firmware/quirks.md). */
+int32_t scpi_query_DIAGnostic_QUERy_RESPonse(void* parameters, void* response,
+                                             scpi_call* call) {
+  char* copy = CPU_CALLERS_REGISTER(char*, "a2");
+  uint8_t* length = CPU_CALLERS_REGISTER(uint8_t*, "a3");
+  char* echo = CPU_CALLERS_REGISTER(char*, "a4");
+  char** text = response;
+  uint8_t index;
+
+  if (scpi_console_port() == call->input) {
+    length = &scpi_echo_length;
+    echo = scpi_echo_text;
+    copy = scpi_echo_response;
+  }
+  for (index = 0; index < *length; index++) {
+    copy[index] = echo[index];
+  }
+  copy[index] = 0;
+  *text = copy;
+  return 0;
+}
+
 /* :DIAGnostic:SER1:EGResponse: undefined, -113 (0x2b9e6). */
 int32_t scpi_set_DIAGnostic_SER1_EGResponse(void* parameters, void* response,
                                             scpi_call* call) {

@@ -306,6 +306,42 @@ enum {
   SCPI_SYSTEM_PARITY_ONE = 3,
 };
 
+/* :COMMunicate:SERial:RECeive:PARity:TYPE: the port's parity by its
+ * choice; ONE, mark parity, only for SERial2, the SCI, SERial1's
+ * refused with -224 (0x30482).  A choice past the list sends D2 as the
+ * caller left it (docs/firmware/quirks.md). */
+int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void* parameters,
+                                                             void* response,
+                                                             scpi_call* call) {
+  uint8_t parity = CPU_CALLERS_REGISTER(uint32_t, "d2");
+  scpi_system_port_word* given = parameters;
+
+  switch (given->value) {
+    case SCPI_SYSTEM_PARITY_EVEN:
+      parity = SERIAL_PARITY_EVEN;
+      break;
+    case SCPI_SYSTEM_PARITY_NONE:
+      parity = SERIAL_PARITY_NONE;
+      break;
+    case SCPI_SYSTEM_PARITY_ODD:
+      parity = SERIAL_PARITY_ODD;
+      break;
+    case SCPI_SYSTEM_PARITY_ONE:
+      if (given->port == SCPI_SYSTEM_SERIAL1) {
+        status_report_from(STATUS_ILLEGAL_PARAMETER_VALUE,
+                           return_zero(call->input));
+        return 0;
+      }
+      parity = SERIAL_PARITY_ONE;
+      break;
+  }
+  pllc_request_a(given->port == SCPI_SYSTEM_SERIAL1
+                     ? &scpi_param_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE
+                     : &scpi_param_SYSTem_COMMunicate_SER2_RECeive_PARity_TYPE,
+                 0, parity, return_zero(call->input));
+  return 0;
+}
+
 /* :COMMunicate:SERial:RECeive:PARity:TYPE?; a code out of range
  * answers nothing (0x3051a). */
 int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(

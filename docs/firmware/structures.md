@@ -1081,6 +1081,45 @@ QSPI's receive RAM (`qsm.rr`, `0xfffd00` to `0xfffd1f`, MC68331UM
 Table D-13) to the buffer at `+0x46`, `+0x4a` words,
 and clears `+0x4d`, for which `qspi_start` waits.
 
+## The QSPI's devices
+
+A transfer names its device by I/O device 1's minor number, a
+`qspi_device`, which `qspi_queue_setup` (`0x20578`) turns into the
+queue's command RAM and SPCR0 through its jump table at `0x205c4`,
+cases 0 to 12.  Each command byte's low four bits drive PCS3 to PCS0
+(MC68331UM D.4.16).  The reset code makes all four QSPI pins
+(PQSPAR `0x7b`) and outputs (DDRQS `0xfe`) with PORTQS `0xff`
+(`0x12036` to `0x12046`), so they idle high and assert low (6.3.6).
+The codes the firmware writes, 0 to 7, all have PCS3 low and several
+lines low at once, so the board decodes the lines as a number (the
+manual's 16 decoded selects, 6.3); the decoder itself is not
+documented.  SCK is the 16.777 MHz system clock over twice SPCR0's
+divider (D.4.10).
+
+| Device | Name | Code | Queue | Callers |
+| ------ | ---- | ---- | ----- | ------- |
+| 0 | `QSPI_UNUSED_36_BIT` | 0 | three 12-bit words, held selected, SPI mode 3, divider 17; a read sends zeros | none: `0x1f278` sends a 1, its argument's bits 26 to 2 and ten 0s, and nothing calls or names it |
+| 1 | `QSPI_ADC` | 1 | one 16-bit word, mode 3, divider 24 | `adc_read`, `qspi_adc_test`; an ADC0838 (`ovens.md`) |
+| 2 | `QSPI_HDAC` | 2 | three 12-bit words, mode 2 to write and 3 to read, divider 70 | the hex DAC's routines and test |
+| 4 | `QSPI_UNUSED_WORD` | 4 | one 16-bit word, mode 3 to write and 2 to read, divider 8, as the EFC DAC's; its queue ends at entry 1, which it does not load (`quirks.md`) | none |
+| 5 | `QSPI_UNUSED_TWO_WORDS` | 5 | two 16-bit words, mode 2, divider 2 to write and 5 to read | none |
+| 6 | `QSPI_FPGA_BLOCK` | 6 | up to 16 16-bit words, mode 2, divider 2 to write and 9 to read | `fpga_program`; `0x1f664`, unreferenced |
+| 7 | `QSPI_EFC` | 7 | one 16-bit word, mode 3 to write and 2 to read, divider 8 | `efc_write`, `qspi_efc_test`; an AD569 (`efc.md`) |
+| 9 | `QSPI_FPGA_TAIL` | 6 | two 16-bit words, as device 6 | `fpga_program`; `0x1f680`, unreferenced |
+| 10 | `QSPI_FPGA_WORD` | 6 | one 16-bit word, as device 6 | none: `0x1f698`, unreferenced, sends the first word of its stack argument's slot |
+| 11 | `QSPI_FPGA_BYTE` | 6 | one 8-bit transfer, as device 6 | none: `0x1f6b0`, unreferenced, likewise |
+| 12 | `QSPI_FPGA_READBACK` | 6 | one word of 8 to 16 bits, mode 2, divider 9 | the FPGA's verification |
+
+Devices 3 and 8, and any past 12, return 1 and set nothing up.  Every
+image's devices 4 and 5 are set up byte for byte as here, and none
+calls them.  The Z3801A 3543 and Z3816A 4001 images set device 0 up
+as here, with the same unreferenced `0x1f278`; the 58503A (3633, 3704)
+and 58503B images set it up for one 8-bit word and send it the bytes
+of their front panel's routines (`0x4812e` and `0x53736` to `0x5395c`
+in 3704, beside the latch bits 6 and 7 of `outputs.md`), and the
+Z3815A's differs again.  So device 0 is each product's own, and the
+Z3805A's has no user.
+
 ## The EFC's gain
 
 `efc_gains` (`0x102554`, `efc_gain_values`, 24 bytes) is the fractional
@@ -1110,7 +1149,16 @@ readings at `+0x1a`.  `selftest_summary` makes the failures bits at
 interpolator tests, two details to `+0x3a`: what `*TST?` and
 `:DIAGnostic:TEST?` report.  The start-up clear begins at `0x100c3c`,
 within the record, so the reset code's results and the rest up to the
-interpolator's survive a warm restart.
+interpolator's survive a warm restart.  `supplies_test` (`0x18546`)
+sets the supplies' word's bits 0 to 2 for 5 V outside 4.5 to 5.5,
++15 V outside 14 to 16 and -15 V outside -16 to -14 (immediates at
+`0x1855a` to `0x185c6`), the health monitor's bounds below: 10 percent
+of 5 V but 1 V, 6.7 percent, of 15.  The Z3801A 3543 and 58503A 3633
+images hold the same six.  No manual in `third_party/hp` whose text
+extracts gives a tolerance for the three supplies (`58503a-01` is a
+scan); the 55300A's guide gives its own A2 supply's at J1 as
+4.8 to 5.2 V and 14.5 to 15.5 V (`097-55300-01`, Table 6-2), a
+different product's figure, not this one's.
 
 Two ROM tables run the tests.  `selftest_execute` (`0x182ec`) calls
 entry n of the 14 at `0x18458` twice, with 0 and then 1: entry 0 is

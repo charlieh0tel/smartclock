@@ -213,8 +213,8 @@ void hmon_check_supplies(void) {
   /* The supplies' tolerances and the readings outside one that count
    * as leaving it. */
   static const uint8_t TOLERANCE_LIMIT = 5;
-  static const float MONITORS_5V_LEAST = 4.5f;
-  static const float MONITORS_5V_MOST = 5.5f;
+  static const float PLUS_5V_LEAST = 4.5f;
+  static const float PLUS_5V_MOST = 5.5f;
   static const float PLUS_15V_LEAST = 14.0f;
   static const float PLUS_15V_MOST = 16.0f;
   static const float MINUS_15V_LEAST = -16.0f;
@@ -249,9 +249,8 @@ void hmon_check_supplies(void) {
     case MONITORS_STEP_5V:
       monitor_average_add(monitor, read_adc_5v());
       monitors_supply_report(
-          &monitors_5v,
-          monitor_out_of_range(monitor, MONITORS_5V_LEAST, MONITORS_5V_MOST,
-                               TOLERANCE_LIMIT));
+          &monitors_5v, monitor_out_of_range(monitor, PLUS_5V_LEAST,
+                                             PLUS_5V_MOST, TOLERANCE_LIMIT));
       break;
     case MONITORS_STEP_OVEN:
       monitor_average_add(monitor, read_adc_oven());

@@ -316,7 +316,7 @@
 {"address":"0001841a","name":"selftest_abort_wait","note":"if a test is running, sets selftest_abort and waits until it stops; returns whether one was","convention":"unknown"}
 {"address":"000184a4","name":"internal_pps_test","note":"counts the internal 1PPS over 1024 ticks; fails unless one to three came","convention":"unknown"}
 {"address":"000184ee","name":"lamp_test","note":"lights every lamp, then none, then each in turn, then restores them","convention":"unknown"}
-{"address":"00018546","name":"supplies_test","note":"checks the 5 V, +15 V and -15 V supplies within 10 percent","convention":"unknown"}
+{"address":"00018546","name":"supplies_test","note":"checks the 5 V supply within 10 percent and the +15 V and -15 V within 1 V, the health monitor's bounds","convention":"unknown"}
 {"address":"000185e2","name":"selftest_cpu_result","note":"returns selftest.cpu, the reset code's CPU test","convention":"unknown"}
 {"address":"000185ec","name":"selftest_ram_result","note":"returns selftest.ram, the reset code's RAM test","convention":"unknown"}
 {"address":"000185f6","name":"selftest_eeprom_result","note":"returns selftest.eeprom","convention":"unknown"}

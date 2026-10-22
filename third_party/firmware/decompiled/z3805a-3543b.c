@@ -2382,11 +2382,16 @@ struct qspi_buffers {
 };
 
 typedef enum __attribute__((packed)) qspi_device {
+    QSPI_UNUSED_36_BIT=0,
     QSPI_ADC=1,
     QSPI_HDAC=2,
+    QSPI_UNUSED_WORD=4,
+    QSPI_UNUSED_TWO_WORDS=5,
     QSPI_FPGA_BLOCK=6,
     QSPI_EFC=7,
     QSPI_FPGA_TAIL=9,
+    QSPI_FPGA_WORD=10,
+    QSPI_FPGA_BYTE=11,
     QSPI_FPGA_READBACK=12
 } qspi_device;
 
@@ -24826,7 +24831,8 @@ void lamp_test(void)
 /* 00018546 */
 #if 0 /* the decompiler's reading; rewritten in selftest.c */
 
-/* checks the 5 V, +15 V and -15 V supplies within 10 percent */
+/* checks the 5 V supply within 10 percent and the +15 V and -15 V within 1 V, the health monitor's
+   bounds */
 
 void supplies_test(void)
 
@@ -40438,7 +40444,7 @@ uint8_t qspi_queue_setup(qspi_device device,uint16_t *transmit,uint16_t count,ui
   if (QSPI_FPGA_READBACK < device) goto override_jmp_000205c0_case_3;
                     /* WARNING: Switch is manually overridden */
   switch(device) {
-  case 0:
+  case QSPI_UNUSED_36_BIT:
     if (read == 0) {
       qsm.tr[0] = *transmit;
       qsm.tr[1] = transmit[1];
@@ -40480,7 +40486,7 @@ uint8_t qspi_queue_setup(qspi_device device,uint16_t *transmit,uint16_t count,ui
     qsm.spcr2 = 0x8200;
     *spcr1 = 0x8101;
     break;
-  case 4:
+  case QSPI_UNUSED_WORD:
     qsm.tr[0] = *transmit;
     qsm.cr[0] = 0x44;
     if (read == 0) {
@@ -40492,7 +40498,7 @@ uint8_t qspi_queue_setup(qspi_device device,uint16_t *transmit,uint16_t count,ui
     qsm.spcr2 = 0x8100;
     *spcr1 = 0x8101;
     break;
-  case 5:
+  case QSPI_UNUSED_TWO_WORDS:
     qsm.tr[0] = *transmit;
     qsm.tr[1] = transmit[1];
     qsm.cr[0] = 0xc5;
@@ -40563,7 +40569,7 @@ override_jmp_000205c0_case_3:
     qsm.spcr2 = 0x8100;
     *spcr1 = 0x8101;
     break;
-  case 10:
+  case QSPI_FPGA_WORD:
     qsm.tr[0] = *transmit;
     qsm.cr[0] = 0x46;
     if (read == 0) {
@@ -40575,7 +40581,7 @@ override_jmp_000205c0_case_3:
     qsm.spcr2 = SPCR2_SPIFIE;
     *spcr1 = 0x8101;
     break;
-  case 0xb:
+  case QSPI_FPGA_BYTE:
     qsm.tr[0] = *transmit;
     qsm.cr[0] = 0x46;
     if (read == 0) {

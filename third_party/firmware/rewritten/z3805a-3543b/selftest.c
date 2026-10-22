@@ -123,28 +123,30 @@ void lamp_test(void) {
 }
 
 /* Checks the supplies: 5 V within 4.5 to 5.5, +15 V within 14 to 16
- * and -15 V within -16 to -14 (0x18546). */
+ * and -15 V within -16 to -14, the bounds hmon_check_supplies applies:
+ * 10 percent of 5 V, 1 V of 15 (0x18546). */
 void supplies_test(void) {
-  static const float LEAST_5V = 4.5f;
-  static const float MOST_5V = 5.5f;
-  static const float LEAST_P15V = 14.0f;
-  static const float MOST_P15V = 16.0f;
-  static const float LEAST_M15V = -16.0f;
-  static const float MOST_M15V = -14.0f;
+  static const float PLUS_5V_LEAST = 4.5f;
+  static const float PLUS_5V_MOST = 5.5f;
+  static const float PLUS_15V_LEAST = 14.0f;
+  static const float PLUS_15V_MOST = 16.0f;
+  static const float MINUS_15V_LEAST = -16.0f;
+  static const float MINUS_15V_MOST = -14.0f;
 
   selftest.power = 0;
   float volts = read_adc_5v();
-  if (float_compare(volts, LEAST_5V) < 0 || float_compare(volts, MOST_5V) > 0) {
+  if (float_compare(volts, PLUS_5V_LEAST) < 0 ||
+      float_compare(volts, PLUS_5V_MOST) > 0) {
     selftest.power |= SELFTEST_POWER_5V;
   }
   volts = read_adc_p15v();
-  if (float_compare(volts, LEAST_P15V) < 0 ||
-      float_compare(volts, MOST_P15V) > 0) {
+  if (float_compare(volts, PLUS_15V_LEAST) < 0 ||
+      float_compare(volts, PLUS_15V_MOST) > 0) {
     selftest.power |= SELFTEST_POWER_P15V;
   }
   volts = read_adc_m15v();
-  if (float_compare(volts, LEAST_M15V) < 0 ||
-      float_compare(volts, MOST_M15V) > 0) {
+  if (float_compare(volts, MINUS_15V_LEAST) < 0 ||
+      float_compare(volts, MINUS_15V_MOST) > 0) {
     selftest.power |= SELFTEST_POWER_M15V;
   }
 }

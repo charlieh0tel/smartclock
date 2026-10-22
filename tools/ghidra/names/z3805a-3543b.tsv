@@ -1421,7 +1421,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x183de	function	selftest_delay	context	pauses so many ticks, stopping if the self-test is aborted
 0x184a4	function	internal_pps_test	context	counts the internal 1PPS over 1024 ticks; fails unless one to three came
 0x184ee	function	lamp_test	context	lights every lamp, then none, then each in turn, then restores them
-0x18546	function	supplies_test	context	checks the 5 V, +15 V and -15 V supplies within 10 percent
+0x18546	function	supplies_test	context	checks the 5 V supply within 10 percent and the +15 V and -15 V within 1 V, the health monitor's bounds
 0x187aa	function	qspi_hex_dac_test	context	writes three words to QSPI device 2, the hex DAC, reads them back shifted and compares
 0x187aa	local	buffers	read	the transfer it hands qspi_transfer: the three words written and the three read back	qspi_buffers @ -0xc
 0x18890	function	qspi_adc_test	context	reads QSPI device 1, the ADC, and checks its status bits (a char result, 0x18910)	uint8_t qspi_adc_test(void)

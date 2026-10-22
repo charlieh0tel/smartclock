@@ -56,8 +56,8 @@ Where the approved layering named a module and the code says otherwise
   only applications call them: `selftest_run` from
   `gps_diag_sequence`, `selftest_print_failure` from `pllp_task`.
 - **`devices/dac` beside `devices/adc`.**  The hex DAC and the EFC DAC
-  are QSPI devices 2 and 7, the ADC device 1 (`qspi_write`,
-  structures.md).
+  are QSPI devices 2 and 7, the ADC device 1, the FPGA 6 and 9 to 12;
+  0, 4 and 5 have no caller (structures.md, "The QSPI's devices").
 - **`devices/eeprom` out of `records.c`.**  The chip, its lock and its
   page writes are a device; the records are what is written.
 - **`devices/duartb` is DUART channel B, `devices/duarta` channel

@@ -73,6 +73,12 @@ state.  Each is by the routine and the address that shows it.
   sign-extended (`0x45a42` to `0x45a50`), which `finish_scpi_cmd` does
   not push for a numeric hook (`0x43172`): the low bytes of the D2 and
   D3 it saved (`0x4306a`).  The C's caller need not leave the same.
+- **`qspi_queue_setup` (`0x20578`)**, for QSPI device 4,
+  `QSPI_UNUSED_WORD`, loads one word and its command (`0x2067a`,
+  `0x2067c`) but ends the queue at entry 1 (SPCR2 `0x8100`,
+  `0x20690`), so a transfer also sends entry 1's word under entry 1's
+  command, chip select included, as the last transfer left them.  No
+  caller passes device 4, in this image or any other.
 - **`happening_flush` (`0x2f6dc`)**, given a buffer that is neither
   early buffer, replays it in the mode of D2's low byte as its caller
   left it, setting a mode only for those two (`0x2f6f2`, `0x2f6fe`).

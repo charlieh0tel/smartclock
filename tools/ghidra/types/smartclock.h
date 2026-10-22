@@ -868,17 +868,28 @@ typedef struct qspi_state {
 } qspi_state;
 
 /* A device on the QSPI, by the minor number of I/O device 1, which
- * qspi_queue_setup (0x205a0) takes and sets up a queue for, cases 0 to
- * 0xc.  Only those a caller passes are named: the ADC (one word), the
- * hex DAC (three), the EFC DAC (one), and the FPGA's configuration in
- * blocks of up to 16 words and a tail of two, and its readback of 8 to
- * 16 bits (fpga_program 0x22da4, fpga_verify_chip 0x2384a). */
+ * qspi_queue_setup (0x20578) takes and sets up a queue for, by its jump
+ * table at 0x205c4, cases 0 to 0xc; 3 and 8 are unknown to it.  The ADC
+ * (one word), the hex DAC (three), the EFC DAC (one), and the FPGA's
+ * configuration in blocks of up to 16 words and a tail of two, and its
+ * readback of 8 to 16 bits (fpga_program 0x22da4, fpga_verify_chip
+ * 0x2384a).  Devices 0 to 7 drive their own number on PCS3-PCS0, the
+ * FPGA's all 6 (docs/firmware/structures.md, "The QSPI's devices").
+ * No caller passes 0, 4, 5, 10 or 11: 0 is three 12-bit words that only
+ * the unreferenced 0x1f278 sends; 4 one 16-bit word set up as the EFC
+ * DAC's; 5 two 16-bit words; 10 and 11 one word and one byte to the
+ * FPGA, which only the unreferenced 0x1f698 and 0x1f6b0 send. */
 typedef enum __attribute__((packed)) qspi_device {
+  QSPI_UNUSED_36_BIT = 0,
   QSPI_ADC = 1,
   QSPI_HDAC = 2,
+  QSPI_UNUSED_WORD = 4,
+  QSPI_UNUSED_TWO_WORDS = 5,
   QSPI_FPGA_BLOCK = 6,
   QSPI_EFC = 7,
   QSPI_FPGA_TAIL = 9,
+  QSPI_FPGA_WORD = 0xa,
+  QSPI_FPGA_BYTE = 0xb,
   QSPI_FPGA_READBACK = 0xc,
 } qspi_device;
 

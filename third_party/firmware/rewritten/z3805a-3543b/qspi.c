@@ -68,8 +68,10 @@ static void qspi_queue_end(uint16_t last, uint16_t* spcr1) {
 /* Sets the QSM's queue up for a transfer to or from a device, SPCR1's
  * start left to the caller; 1 for a device it does not know or an
  * empty FPGA block (0x20578).  A write to the hex DAC, the EFC DAC or
- * device 5 also marks the transfer running for qspi_start.  Device 4's
- * queue ends at its second entry, which it does not load. */
+ * QSPI_UNUSED_TWO_WORDS also marks the transfer running for
+ * qspi_start.  Devices 0 to 7 select their own number on PCS3-PCS0,
+ * the FPGA's all FPGA_CHIP_SELECT (docs/firmware/structures.md, "The
+ * QSPI's devices"). */
 uint8_t qspi_queue_setup(qspi_device device, uint16_t* transmit, uint16_t count,
                          uint8_t read, uint16_t* spcr1) {
   /* The FPGA's chip selects, and its clock divider for writes and for
@@ -86,8 +88,8 @@ uint8_t qspi_queue_setup(qspi_device device, uint16_t* transmit, uint16_t count,
   const uint8_t fpga_divider = read ? FPGA_READ_DIVIDER : FPGA_WRITE_DIVIDER;
 
   switch (device) {
-    case 0: /* no caller passes devices 0, 4, 5, 10 or 11 */
-      qspi_queue_words(read ? NULL : transmit, 3, 0);
+    case QSPI_UNUSED_36_BIT:
+      qspi_queue_words(read ? NULL : transmit, 3, QSPI_UNUSED_36_BIT);
       qsm.spcr0 = qspi_spcr0(12, spi_mode_3, 0x11);
       qspi_queue_end(2, spcr1);
       return 0;
@@ -104,13 +106,15 @@ uint8_t qspi_queue_setup(qspi_device device, uint16_t* transmit, uint16_t count,
       }
       qspi_queue_end(2, spcr1);
       return 0;
-    case 4:
-      qspi_queue_words(transmit, 1, 4);
+    case QSPI_UNUSED_WORD:
+      /* The queue ends at entry 1, which this does not load: it sends
+       * whatever the last transfer left there (0x20690). */
+      qspi_queue_words(transmit, 1, QSPI_UNUSED_WORD);
       qsm.spcr0 = qspi_spcr0(16, read ? spi_mode_2 : spi_mode_3, 8);
       qspi_queue_end(1, spcr1);
       return 0;
-    case 5:
-      qspi_queue_words(transmit, 2, 5);
+    case QSPI_UNUSED_TWO_WORDS:
+      qspi_queue_words(transmit, 2, QSPI_UNUSED_TWO_WORDS);
       qsm.spcr0 = qspi_spcr0(16, spi_mode_2, read ? 5 : 2);
       if (!read) {
         qspi.running = 1;
@@ -148,12 +152,12 @@ uint8_t qspi_queue_setup(qspi_device device, uint16_t* transmit, uint16_t count,
       qsm.spcr0 = qspi_spcr0(16, spi_mode_2, fpga_divider);
       qspi_queue_end(1, spcr1);
       return 0;
-    case 10:
+    case QSPI_FPGA_WORD:
       qspi_queue_words(transmit, 1, FPGA_CHIP_SELECT);
       qsm.spcr0 = qspi_spcr0(16, spi_mode_2, fpga_divider);
       qspi_queue_end(0, spcr1);
       return 0;
-    case 11:
+    case QSPI_FPGA_BYTE:
       qspi_queue_words(transmit, 1, FPGA_CHIP_SELECT);
       qsm.spcr0 = qspi_spcr0(8, spi_mode_2, fpga_divider);
       qspi_queue_end(0, spcr1);

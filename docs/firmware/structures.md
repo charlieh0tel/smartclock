@@ -1677,6 +1677,19 @@ Outside RAM and ROM: `lamp_latch` (`0x300000`), `fpga_port`
 `nv_record[2]`.  `crash 0` writes a long to `0x700000`, where no chip
 select answers and Ghidra has no memory to label.
 
+## What is left untyped
+
+`docs/firmware/untyped/IMAGE.tsv`, which
+`tools/ghidra/SmartClockUntyped.java` writes (`README.md`, "Decompiling
+with Ghidra"), lists every run of ROM, and of the installer's overlay,
+that is neither code nor typed data: its references, the items beside
+it, and whether it is padding, erased, code-like, referenced or
+unreferenced.  The first survey of the Z3805A 3543B found 426 runs,
+about 110 KB, two thirds erased; the tables and routines it led to are
+"ROM tables" above and the names file's section "The ROM tables and
+routines the untyped-range survey found".  A referenced or code-like
+run is the next to look at.
+
 ## The preserved region
 
 `preserved_region` (`0x100000`, `preserved_region_fields`, `0x94e`

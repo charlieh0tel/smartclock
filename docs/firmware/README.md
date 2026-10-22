@@ -264,7 +264,8 @@ row gives each such call its callee's prototype.
 
 Six GhidraScripts in `tools/ghidra/` take an image imported raw at
 address zero as `68000:BE:32:CPU32` to C, under `analyzeHeadless
--postScript` or ghidra-mcp's `run_ghidra_script`.  Each is meant to be
+-postScript` or ghidra-mcp's `run_ghidra_script`, and a seventh,
+optional, surveys what they leave untyped.  Each is meant to be
 run again over its own earlier output; their dry-run modes cover only
 part of what they change.  In order:
 
@@ -290,6 +291,18 @@ part of what they change.  In order:
    defines=tools/ghidra/types/mc68681.h
    defines=tools/ghidra/types/psos-signals.h
    results=tools/ghidra/names/results.tsv rewritten=third_party/firmware/rewritten/IMAGE`.
+
+Optionally, after step 3 or any later one,
+`SmartClockUntyped.java output=docs/firmware/untyped/IMAGE.tsv` lists
+the ROM that is neither code nor typed data, and the installer's
+overlay's: each run of 4 or more undefined bytes (`min=N` for another
+length), with the references into it, the defined item on each side,
+and a class, `padding`, `erased`, `code-like` (a prologue or `rts` that
+decodes cleanly, decoded in memory only), `referenced` or
+`unreferenced`, and at the end, `#` lines, each class's runs and bytes.
+It changes nothing in the program.  The TSV is checked in, rewritten
+after the names change, so its diff shows what a change typed
+(`structures.md`, "What is left untyped").
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the

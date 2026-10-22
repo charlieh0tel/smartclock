@@ -1552,7 +1552,8 @@ view cannot drift apart.  The library, bottom up:
      the two images in place of 621 and 42); and no SCPI handler is
      reached but through the tree's slots, from the SCPI task.
      Then a survey of ROM that is neither code nor typed data: about
-     110 KB, two thirds of it erased.  The GPS scripts' ROM steps, the
+     110 KB, two thirds of it erased; `SmartClockUntyped.java` repeats
+     it, into `docs/firmware/untyped/IMAGE.tsv`.  The GPS scripts' ROM steps, the
      Oncore ID pool, the pForth headers' head, the diagnostic words'
      table, the FPGA bitstreams and the unused I/O stubs are typed;
      13 routines nothing calls are named, three of them, which the

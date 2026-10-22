@@ -73,7 +73,8 @@ int32_t installer_strtol(char* s, char** end, int32_t base) {
   static const uint8_t ALPHANUMERIC =
       LIBC_CTYPE_UPPER | LIBC_CTYPE_LOWER | LIBC_CTYPE_DIGIT;
   /* The ctype table from its EOF entry, which a character indexes signed:
-   * one above 0x7f reads the 128 bytes before the table. */
+   * 0x80 to 0xfe read the 127 bytes before the table, 0xff its EOF
+   * entry. */
   const uint8_t* classes = installer_ctype_table + 1;
   bool negative = false;
   bool overflow = false;

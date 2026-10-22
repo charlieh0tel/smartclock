@@ -527,8 +527,11 @@ public class SmartClockExportC extends GhidraScript {
 	private static final String BRIDGE_PREFIX = "c_";
 	/** The registers gcc's callee saves, which a routine of another convention may not. */
 	private static final String SAVED = "%d2-%d7/%a2-%a6";
+	/** SAVED's registers, as a convention's preserves names them. */
+	private static final Set<String> SAVED_REGISTERS =
+		Set.of("D2", "D3", "D4", "D5", "D6", "D7", "A2", "A3", "A4", "A5", "A6");
 	/** Bytes the wrapper pushes saving SAVED, and the return address under them. */
-	private static final int SAVED_BYTES = 11 * 4;
+	private static final int SAVED_BYTES = SAVED_REGISTERS.size() * 4;
 	private static final int RETURN_ADDRESS_BYTES = 4;
 	/** A stack argument's first offset from the stack pointer at entry, above the return address. */
 	private static final int FIRST_ARGUMENT = RETURN_ADDRESS_BYTES;
@@ -541,8 +544,14 @@ public class SmartClockExportC extends GhidraScript {
 	 * from its convention: the prototype names the wrapper, c_NAME, by an
 	 * assembler label, and the wrapper saves what gcc's callee must, loads
 	 * each argument from gcc's stack slot into its register, calls the
-	 * routine and leaves its result where gcc takes it.  Null unless every
-	 * argument and the result are in registers.
+	 * routine and leaves its result where gcc takes it.  A routine that
+	 * takes no argument, gives its result where gcc takes it and keeps
+	 * SAVED itself has no wrapper: its prototype names it, and C calls it
+	 * directly, so that it returns on whichever stack it returns on, as in
+	 * the image.  enter_supervisor (0x13422), called from a task in user
+	 * mode, returns through trap #7's rte on the supervisor stack, from
+	 * which a wrapper would restore SAVED and pop its own return.  Null
+	 * unless every argument and the result are in registers.
 	 */
 	private Bridge bridge(Function function) {
 		if (!function.hasCustomVariableStorage()) {
@@ -612,10 +621,21 @@ public class SmartClockExportC extends GhidraScript {
 				return null;
 			}
 		}
+		// the condition codes first, before the moves that give the result set them
+		String keep = returnsConditionCodes(function) ? line("move.w %ccr," + CONDITION_CODES) : "";
+		for (String register : results(function)) {
+			keep += line("move.l %" + register.toLowerCase() + "," + RESULT_PREFIX + register.toLowerCase());
+		}
+		String declared = result + (result.endsWith("*") ? "" : " ") + name + "("
+			+ (parameters.isEmpty() ? "void" : String.join(", ", parameters)) + ")";
+		Set<String> preserved = preserves(function);
+		if (load.isEmpty() && give.isEmpty() && keep.isEmpty()
+			&& (preserved.contains(ALL_PRESERVED) || preserved.containsAll(SAVED_REGISTERS))) {
+			return new Bridge(declared + ";",
+				"/* " + name + " in gcc's convention already: C calls it directly */\n");
+		}
 		String wrapper = BRIDGE_PREFIX + name;
-		String prototype = result + (result.endsWith("*") ? "" : " ") + name + "("
-			+ (parameters.isEmpty() ? "void" : String.join(", ", parameters)) + ") __asm__(\""
-			+ wrapper + "\");";
+		String prototype = declared + " __asm__(\"" + wrapper + "\");";
 		StringBuilder assembly = new StringBuilder("/* ").append(name)
 			.append(" from gcc's convention: its arguments from the stack into its registers */\n")
 			.append("__asm__(\n")
@@ -623,11 +643,6 @@ public class SmartClockExportC extends GhidraScript {
 			.append(quoted("\t.globl " + wrapper)).append(quoted("\t.type " + wrapper + ", @function"))
 			.append(quoted(wrapper + ":"))
 			.append(quoted("\tmovem.l " + SAVED + ",-(%sp)"));
-		// the condition codes first, before the moves that give the result set them
-		String keep = returnsConditionCodes(function) ? line("move.w %ccr," + CONDITION_CODES) : "";
-		for (String register : results(function)) {
-			keep += line("move.l %" + register.toLowerCase() + "," + RESULT_PREFIX + register.toLowerCase());
-		}
 		for (String part : (load.toString() + line("jsr " + name) + keep + give
 				+ line("movem.l (%sp)+," + SAVED) + line("rts")).split("\n")) {
 			assembly.append(quoted(part));

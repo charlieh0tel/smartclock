@@ -1523,8 +1523,23 @@ view cannot drift apart.  The library, bottom up:
      `root_task` in user mode showed that the exporter's
      `enter_supervisor` bridge saves registers on the user stack and
      restores them from the supervisor's, so the hand-written C calls
-     the routine itself (`cpu.h`'s `cpu_enter_supervisor`); the bridge
-     stays wrong for the C that still uses it.
+     the routine itself (`cpu.h`'s `cpu_enter_supervisor`).
+     Then the exporter gives a routine that needs no moves and keeps
+     gcc's callee-saved registers no wrapper: `enter_supervisor` and the
+     installer's copy, the only bridged routines that change stacks, are
+     called directly.  gcc pops each call's arguments at once
+     (`-fno-defer-pop`).  And every function that runs only in a task,
+     663 found from the export's direct calls (`task_context`), starts
+     in user mode, a case falling back to supervisor mode on a
+     privilege violation (none does); kernel service 33 returns in
+     supervisor mode and `move (SP)+,SR` is done by the harness, since
+     Unicorn increments the stack it switches to.  User mode found one
+     bug of the hand-written C, `eeprom_lock` and `eeprom_unlock`
+     leaving their caller in supervisor mode where the image moves the
+     status register back at once (`0x30fc8`, `0x3107c`); the counts
+     are unchanged.  `cpu_enter_supervisor` stays, an asm statement, so
+     that `set_interrupt_mask`'s result keeps its caller's condition
+     codes; as a C call it differs as the installer's does.
      Then a survey of ROM that is neither code nor typed data: about
      110 KB, two thirds of it erased.  The GPS scripts' ROM steps, the
      Oncore ID pool, the pForth headers' head, the diagnostic words'

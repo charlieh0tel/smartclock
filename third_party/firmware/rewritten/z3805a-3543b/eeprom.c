@@ -51,8 +51,10 @@ void eeprom_init(void) {
 char eeprom_lock(void) {
   /* The ticks request_x waits for the token. */
   static const uint32_t EEPX_REQUEST_WAIT = 0x2800u;
+  /* Only to read the status register: moved back at once (0x30fc8). */
   int32_t sr = cpu_enter_supervisor();
 
+  cpu_sr_write(sr);
   if (!kernel_running) {
     return 0;
   }
@@ -85,8 +87,10 @@ char eeprom_lock(void) {
 /* Releases a level of the EEPROM's lock, sending eepx its message back at
  * the last (0x3105e). */
 void eeprom_unlock(void) {
+  /* Only to read the status register: moved back at once (0x3107c). */
   int32_t sr = cpu_enter_supervisor();
 
+  cpu_sr_write(sr);
   if (!kernel_running || (sr & RECORDS_SR_INTERRUPT_MASK) != 0) {
     return;
   }

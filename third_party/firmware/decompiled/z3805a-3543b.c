@@ -9097,7 +9097,7 @@ float float_absolute_on_stack(float f);
 double double_abs(double value);
 uint32_t rotate_left(uint32_t param_1,uint8_t param_2);
 int32_t primary_trap_7();
-uint32_t enter_supervisor(void) __asm__("c_enter_supervisor");
+uint32_t enter_supervisor(void);
 void busy_wait(uint32_t param_1);
 void sleep_seconds(float param_1);
 void clock_record_checksum(clock_record *record) __asm__("c_clock_record_checksum");
@@ -10776,7 +10776,7 @@ void *installer_region_find_segment(void *region, char *address) __asm__("c_inst
 uint16_t installer_enter_supervisor_mode(void);
 uint16_t installer_set_interrupt_mask(uint16_t sr);
 int32_t installer_trap_7();
-int32_t installer_enter_supervisor(void) __asm__("c_installer_enter_supervisor");
+int32_t installer_enter_supervisor(void);
 void installer_float_exception_report(uint32_t code);
 int32_t installer_spurious_interrupt();
 int32_t installer_entry();
@@ -15748,19 +15748,7 @@ __asm__(
 	"	.size enter_supervisor, .-enter_supervisor\n"
 	"	.popsection\n"
 );
-/* enter_supervisor from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_enter_supervisor,\"ax\",@progbits\n"
-	"	.globl c_enter_supervisor\n"
-	"	.type c_enter_supervisor, @function\n"
-	"c_enter_supervisor:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr enter_supervisor\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_enter_supervisor, .-c_enter_supervisor\n"
-	"	.popsection\n"
-);
+/* enter_supervisor in gcc's convention already: C calls it directly */
 
 /* 00013428 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -89807,19 +89795,7 @@ __asm__(
 	"	.size installer_enter_supervisor, .-installer_enter_supervisor\n"
 	"	.popsection\n"
 );
-/* installer_enter_supervisor from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_enter_supervisor,\"ax\",@progbits\n"
-	"	.globl c_installer_enter_supervisor\n"
-	"	.type c_installer_enter_supervisor, @function\n"
-	"c_installer_enter_supervisor:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr installer_enter_supervisor\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_enter_supervisor, .-c_installer_enter_supervisor\n"
-	"	.popsection\n"
-);
+/* installer_enter_supervisor in gcc's convention already: C calls it directly */
 
 /* installer::00100fc0 */
 #if 0 /* the decompiler's reading; rewritten in installer_math.c */

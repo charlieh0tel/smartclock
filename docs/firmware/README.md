@@ -590,11 +590,17 @@ routine that is not C and whose prototype has every argument and its
 result in registers is declared under that prototype as an assembler
 label, `c_NAME`: a generated wrapper that moves the arguments from
 gcc's stack into the routine's registers and its result into D0, D0:D1
-or A0.  `tools/firmware/bridge_check.py` runs each wrapper in Unicorn
+or A0.  One that takes no argument, gives its result in D0 and keeps
+gcc's callee-saved registers itself has no wrapper: its prototype
+names it, and C calls it directly.  `enter_supervisor` (`0x13422`) and
+the installer's copy are such: called from a task in user mode, they
+return through trap #7's `rte` on the supervisor stack, from which a
+wrapper would restore the registers it saved on the user stack, and
+pop its own return.  `tools/firmware/bridge_check.py` runs each wrapper in Unicorn
 against its routine called directly, from the registers the sidecar
-names, the installer's on the installer's machine (below): of the 91,
-87 give the same result, RAM and effects and keep gcc's callee-saved
-registers, 83 the primary's and 4 the installer's, and 4 are not run:
+names, the installer's on the installer's machine (below): of the 98,
+94 give the same result, RAM and effects and keep gcc's callee-saved
+registers, 82 the primary's and 12 the installer's, and 4 are not run:
 two with a register the sidecar does not name, and
 `kernel_dispatch_io`'s and `installer_kernel_dispatch_io`'s, exception
 handlers that `trap #4` enters with a frame for its `rte`, which a
@@ -808,11 +814,7 @@ use), as does a body the installer's copy of a function shares with
 the primary's.  A file is a module's (`docs/firmware/modules.md`, "The
 hand-written files").  The checks run
 the hand-written function as they ran the decompiled one, against the
-image's own.  Hand-written C enters supervisor mode through `cpu.h`'s
-`cpu_enter_supervisor`, which calls `enter_supervisor` (`0x13422`)
-directly: from a task in user mode it returns on the supervisor stack,
-through trap #7's `rte`, and its bridge, which restores gcc's
-registers from the stack it returns on, would read the supervisor's.
+image's own.
 
 A constant is typed: `static const uint32_t SECONDS_PER_MINUTE = 60;`,
 inside the function that uses it when only one does, at file scope with
@@ -896,7 +898,14 @@ A6 at a caller's frame on the harness's stack, its saved frame pointer
 caller's frame (`float_raise` reads the return address there).
 gcc keeps a frame pointer too (`-fno-omit-frame-pointer`), as the
 original compiler did: `psos_pack_name` reads its caller's first
-argument, the task or exchange creator's name, through the caller's A6.  The stack is filled with one byte
+argument, the task or exchange creator's name, through the caller's A6;
+and it addresses its locals through it, which stay where they are when
+a task's function enters supervisor mode and A7 becomes the supervisor
+stack.  And it pops each call's arguments right after the call
+(`-fno-defer-pop`), where by default it may leave them and pop several
+calls' at once, so that it never pops from one stack what it pushed
+on the other, across `enter_supervisor` or a move back of the status
+register.  The stack is filled with one byte
 at a call's start, and each frame a `link` makes is filled with it
 again, so that a local read before it is written, a message's bytes
 its sender leaves unset among them, reads the same in both copies,
@@ -982,11 +991,27 @@ where it counts to a count of the function's (`COUNTED_LOOPS`):
 loop counting by more passes it.  Two calls that end the same way are
 compared as if they had returned, but for their result, and both
 leave the status register's system byte, its supervisor bit and
-interrupt mask, the same.  A function may start as a task does, in user
-mode with its interrupts unmasked (`STARTING_STATUS`), its exceptions
-taken on a supervisor stack of the harness's: `root_task`, whose
-`trap #7` and move back of its status register then show (`0x13082`
-to `0x13098`).  A kernel call's argument, or a message's long, that is
+interrupt mask, the same.  A function that runs only in a task starts
+as a task does, in user mode with its interrupts unmasked
+(`TASK_STATUS`), its exceptions taken on a supervisor stack of the
+harness's, so that its `trap #7` and move back of its status register
+show (`root_task`'s, `0x13082` to `0x13098`).  Which functions those are
+the export's direct calls give (`task_context`): those reached from a
+task's entry -- the configuration's `root_entry`, `root_task`, each
+entry `psos_start` is given, and each SCPI handler, which the engine
+calls through the tree in the SCPI task -- and from no other function
+that nothing calls, an interrupt handler, the reset, a console word or
+a routine reached only through a table; of the functions run, 621 of
+the primary's and 42 of the installer's.  A case of one whose copies both stop at a
+privilege violation is run again in supervisor mode, as a caller in
+supervisor mode would run it; none does.  Two of the processor's ways
+the harness keeps for such a task: kernel service 33, which
+`klok_task` and `spoo_task` open with, returns in supervisor mode, the
+old status register in D0's low word (`kernel_supervisor`,
+`0x158f6`); and `move (SP)+,SR`, after which Unicorn's QEMU
+increments A7, so that a move back to user mode increments the user
+stack in place of the supervisor's (`set_gps_utc_offset`, `0x139c6`),
+is done in its place.  A kernel call's argument, or a message's long, that is
 a C function's gcc copy is recorded as its image copy, the same
 routine: a task's entry for `psos_start`, `scpi_task_create` in
 `scpi_task_start`'s message.  ident finds every name, but in the

@@ -196,6 +196,15 @@ RETURN_FROM_EXCEPTION = 0x100
 # pForth's code words end with it (forth_compile_code, 0x19338).
 ILLEGAL_INSTRUCTION = 4
 RETURN_AND_RESTORE = bytes.fromhex("4e77")
+# move (SP)+,SR, which pops the status register from the supervisor
+# stack (M68000PM, MOVE to SR: the source is read, then the status
+# register written): QEMU, under Unicorn, increments A7 after the write,
+# so that where it clears the supervisor bit, a task's move back after
+# trap #7 (set_gps_utc_offset, 0x139c6), the user stack is the one
+# incremented; the harness does it in its place, wherever the image's
+# code, in ROM or as RAM starts, holds it.
+STATUS_POP = bytes.fromhex("46df")
+STATUS_SIZE = 2
 RESTORED = struct.Struct(">HI")
 CONDITION_CODES = 0xFF
 
@@ -218,10 +227,12 @@ class Service:
     a segment it allocates, as (size, pointer) registers, returned from
     ALLOCATIONS; a task it identifies, as (name, pointer) registers,
     returned as its record, a segment of TASK_RECORD_SIZE allocated the
-    first time a call names it; and a block it reads through a pointer,
+    first time a call names it; a block it reads through a pointer,
     unless null, as a word count and that many words after it, recorded
-    by its contents.  An argument read only in part names its width,
-    D1.b for the low byte, and is recorded so."""
+    by its contents; and whether it returns to its caller in supervisor
+    mode, the old status register in D0's low word.  An argument read
+    only in part names its width, D1.b for the low byte, and is
+    recorded so."""
 
     arguments: tuple[str, ...] = ()
     results: tuple[str, ...] = ()
@@ -232,6 +243,7 @@ class Service:
     allocates: tuple[str, str] | None = None
     identifies: tuple[str, str] | None = None
     counted: str | None = None
+    supervisor: bool = False
 
 
 # A counted block's word count, and each of its words.
@@ -291,7 +303,10 @@ KERNEL_SERVICES = {
     # mode: the new mode and the mask in D0's and D1's low bytes
     # (kernel_mode, 0x158da: 0x158e2)
     32: Service(("D0.b", "D1.b"), ("D0",)),
-    33: Service(),
+    # supervisor: the status register the trap returns to gets its
+    # supervisor bit, the old in D0's low word (kernel_supervisor,
+    # 0x158f6), which klok_task and spoo_task open with
+    33: Service(supervisor=True),
     # create a partition: the area, the block size and the count of
     # blocks in D1's low word (kernel_create_partition, 0x15a10: 0x15a32)
     35: Service(("A0", "D0", "D1.w"), ("A0",)),
@@ -1038,6 +1053,10 @@ class RebuiltMachine(Machine):
         self.stubs: dict[int, Stub] = {}
         self.uc.mem_map(ROUTINES, ROUTINES_SIZE)
         self.uc.hook_add(UC_HOOK_CODE, self.routine_call, begin=ROUTINES, end=ROUTINES + ROUTINES_SIZE - 1)
+        for base, contents in ((ROM, image), (RAM, profile.ram)):
+            for at in range(0, len(contents) - 1, len(STATUS_POP)):
+                if contents[at : at + len(STATUS_POP)] == STATUS_POP:
+                    self.uc.hook_add(UC_HOOK_CODE, self.status_pop, begin=base + at, end=base + at)
         for start, size in DEVICES:
             self.uc.mem_map(start, size)
             self.uc.hook_add(UC_HOOK_MEM_WRITE, self.device_write, begin=start, end=start + size - 1)
@@ -1062,6 +1081,19 @@ class RebuiltMachine(Machine):
 
     def device_write(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
         self.effects.append(DeviceWrite(address, size, value & ((1 << 8 * size) - 1)))
+
+    def status_pop(self, uc: Uc, address: int, size: int, _) -> None:
+        """Does a move (SP)+,SR, STATUS_POP, in supervisor mode, as the
+        processor does; in user mode it is left to raise its privilege
+        violation."""
+        sr = uc.reg_read(UC_M68K_REG_SR)
+        if not sr & SUPERVISOR_BIT:
+            return
+        sp = uc.reg_read(UC_M68K_REG_A7)
+        popped = int.from_bytes(uc.mem_read(sp, STATUS_SIZE), "big")
+        uc.reg_write(UC_M68K_REG_A7, sp + STATUS_SIZE)
+        uc.reg_write(UC_M68K_REG_SR, popped)
+        uc.reg_write(UC_M68K_REG_PC, address + len(STATUS_POP))
 
     def routine_call(self, uc: Uc, address: int, size: int, _) -> None:
         """Records a call of a routine at ROUTINES, at the instruction it
@@ -1612,6 +1644,11 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
         uc.reg_write(REGISTERS[pointer], uc.reg_read(REGISTERS[pointer]) + len(data))
         uc.reg_write(REGISTERS[count], len(data))
     uc.reg_write(REGISTERS[SERVICE_REGISTER], error)
+    if service.supervisor:
+        sr = uc.reg_read(UC_M68K_REG_SR)
+        uc.reg_write(UC_M68K_REG_D0, uc.reg_read(UC_M68K_REG_D0) & ~WIDTHS[".w"] | sr)
+        # A7 becomes the supervisor stack, as the trap's rte leaves it
+        uc.reg_write(UC_M68K_REG_SR, sr | SUPERVISOR_BIT)
     uc.reg_write(UC_M68K_REG_PC, uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE)
     return call
 

@@ -19,10 +19,10 @@ the same pointers (UNDECLARED), so that a body reading an argument its
 prototype leaves out differs.  A function may start from states its
 zeroed RAM never reaches, drawn for each case, with routines it calls
 answered in their place and their calls compared (STATES); find no
-task by name (IDENT_FAILS); start in user mode, as a task
-(STARTING_STATUS); end its endless loop at a count (COUNTED_LOOPS);
-and, for the stack report, find the running task's stacks
-(TASK_STACKS).  Both copies must leave the status register's system
+task by name (IDENT_FAILS); start in user mode, as a task, if it
+runs only in one (TASK_STATUS, task_context); end its endless loop at
+a count (COUNTED_LOOPS); and, for the stack report, find the running
+task's stacks (TASK_STACKS).  Both copies must leave the status register's system
 byte the same.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
@@ -64,6 +64,7 @@ from harness import (
     FIRST_ARGUMENT,
     MESSAGE_OFFSET,
     NULL_LONG,
+    OVERLAY_SEPARATOR,
     PLLC_EXCHANGE,
     POINTER_ALIGNMENT,
     POINTER_FILLS,
@@ -520,13 +521,36 @@ IDENT_FAILS = {
 # STEP_LIMIT, which the image's does not.
 IDLE_LOOPS = 101
 COUNTED_LOOPS = {"root_task": ("idle_loops", IDLE_LOOPS)}
-# The functions that start as a task does, in user mode, its interrupts
-# unmasked, by that status register, rather than harness.SUPERVISOR:
-# root_task, which kernel_init creates in mode 0 (0x15e70), enters
-# supervisor mode with trap #7 to enable the periodic interrupt and
-# moves its status register back (0x13082 to 0x13098).
+# The status register a function starts with that runs only in a task,
+# as a task does, in user mode, its interrupts unmasked, rather than
+# harness.SUPERVISOR: root_task, which kernel_init creates in mode 0
+# (0x15e70), enters supervisor mode with trap #7 to enable the periodic
+# interrupt and moves its status register back (0x13082 to 0x13098).
+# Which functions run only in a task is found from the export's calls
+# (task_context).  A case whose two copies both stop at a privilege
+# violation, an instruction a caller in supervisor mode runs it for, is
+# run again in supervisor mode.
 TASK_STATUS = 0
-STARTING_STATUS = {"root_task": TASK_STATUS}
+PRIVILEGE_VIOLATION = 8
+# The task entries: what kernel_init starts as ROOT, the configuration's
+# root_entry (psos_configuration, +0x2c), and what a task's start,
+# service 2, is given (psos_start, 0x16fae, and the installer's copy).
+ROOT_ENTRY = "((psos_configuration *)0)->root_entry"
+TASK_START = re.compile(r"\b(?:installer_)?psos_start\s*\(\s*\w+\s*,\s*(\w+)\s*\)")
+# A function's block in the export, from the line giving its address to
+# the next; a direct call in its C, the decompiler's reading of the
+# image's (kept for a function written by hand), or in its assembly; a
+# thunk's target; and a comment, whose text is not a call.
+EXPORT_BLOCK = re.compile(r"^/\* ((?:\w+::)?[0-9a-f]{8}) \*/$", re.M)
+C_CALL = re.compile(r"\b(\w+)\s*\(")
+ASSEMBLY_CALL = re.compile(r"\b(?:jsr|jmp|bsr\S*|bra\S*)\s+\(?(\w+)")
+THUNK = re.compile(r'\.set (\w+), (\w+)"')
+COMMENT = re.compile(r"/\*.*?\*/", re.S)
+# A prototype, its result, name and parameters, a long one wrapped; and
+# an SCPI handler's parameters (scpi_handler_function), with which the
+# engine calls it through the command tree, in the SCPI task.
+PROTOTYPE = re.compile(r"^([A-Za-z_][\w \*]*?)\n?\b(\w+)\n?\s*\(([^()]*)\);$", re.M)
+SCPI_HANDLER = re.compile(r"^[^,]+,[^,]+,\s*scpi_call \*\s*\w*$")
 
 
 @dataclass(frozen=True)
@@ -645,7 +669,7 @@ def task_stacks(m: Machine, located: dict[str, tuple[int, int]], case: int) -> N
 def targets() -> list[str]:
     """Every Preset's target and the task stacks' fields, each once, in
     a fixed order."""
-    found = [*TASK_FIELDS.values(), SEGMENT_SIZE, SYSTEM_STACK_SIZE]
+    found = [*TASK_FIELDS.values(), SEGMENT_SIZE, SYSTEM_STACK_SIZE, ROOT_ENTRY]
     for states in STATES.values():
         for preset in states.presets + tuple(p for hook in states.hooks for p in hook.leaves):
             if preset.target not in found:
@@ -784,7 +808,7 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
     """Every C function of an image, the primary's or an overlay's, whose
     prototype the harness can lay out, and how many it cannot."""
     found, unrunnable = [], 0
-    for result, name, parameters in re.findall(r"^([A-Za-z_][\w \*]*?)\n?\b(\w+)\n?\s*\(([^()]*)\);$", c, re.M):
+    for result, name, parameters in PROTOTYPE.findall(c):
         convention = conventions.get(name)
         if parameters == "" or convention is None or overlay(convention) != image:
             continue
@@ -806,6 +830,47 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
         names = [re.search(r"\w*$", p).group() for p in declared]
         found.append(Function(name, result, kinds, [item["offset"] for item in stack], names))
     return found, unrunnable
+
+
+def task_context(c: str, conventions: dict, roots: set[str]) -> set[str]:
+    """The functions that run only in a task: those a task entry, one of
+    roots, an entry psos_start is given, or an SCPI handler reaches by
+    direct calls, and no other function nobody calls (an interrupt
+    handler, the reset, a console word, a routine reached only through a
+    table) reaches."""
+    names = {convention["address"]: name for name, convention in conventions.items()}
+    calls: dict[str, set[str]] = {name: set() for name in conventions}
+    blocks = EXPORT_BLOCK.split(c)
+    for address, block in zip(blocks[1::2], blocks[2::2]):
+        caller = names.get(address)
+        if caller is None:
+            continue
+        text = COMMENT.sub("", block)
+        callees = set(C_CALL.findall(text)) | set(ASSEMBLY_CALL.findall(text))
+        callees |= {target for _, target in THUNK.findall(block)}
+        calls[caller] |= {name for name in callees if name in calls and name != caller}
+    handlers = {name for _, name, parameters in PROTOTYPE.findall(c) if SCPI_HANDLER.match(parameters)}
+    entries = (roots | set(TASK_START.findall(c)) | handlers) & calls.keys()
+    called = set().union(*calls.values())
+
+    def reached(starts: set[str]) -> set[str]:
+        found, pending = set(starts), list(starts)
+        while pending:
+            for callee in calls[pending.pop()] - found:
+                found.add(callee)
+                pending.append(callee)
+        return found
+
+    return reached(entries) - reached(calls.keys() - called - entries)
+
+
+def root_function(m: Machine, located: dict[str, tuple[int, int]], conventions: dict) -> str | None:
+    """The function kernel_init starts as ROOT on a machine, from its
+    configuration in RAM; None if it is none of conventions'."""
+    fresh_ram(m)
+    entry = pointer_at(m, m.profile.psos_config + located[ROOT_ENTRY][0])
+    address = f"{entry:08x}" if m.profile.overlay is None else f"{m.profile.overlay}{OVERLAY_SEPARATOR}{entry:08x}"
+    return next((name for name, convention in conventions.items() if convention["address"] == address), None)
 
 
 def original_layout(function: Function, values: list[bytes]) -> bytes:
@@ -930,12 +995,13 @@ def cases(function: Function) -> list[tuple[str, int, dict[int, int | float | by
 @dataclass
 class Context:
     """What a check finds beyond the function: the link's symbols, each
-    Preset target's address and size, and the runnable functions, by
-    name, for a Hook's prototype."""
+    Preset target's address and size, the runnable functions, by name,
+    for a Hook's prototype, and the functions that run only in a task."""
 
     linked_symbols: dict[str, int]
     located: dict[str, tuple[int, int]]
     by_name: dict[str, Function]
+    in_task: set[str]
 
 
 def install_hooks(m: Machine, types: Types, states: States, context: Context, drawn: list[Drawn]) -> list[int]:
@@ -971,7 +1037,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
     handles = install_hooks(m, types, states, context, drawn)
     counter = COUNTED_LOOPS.get(function.name)
     m.counter = (linked_symbols[counter[0]], counter[1]) if counter else None
-    m.starting_status = STARTING_STATUS.get(function.name, SUPERVISOR)
+    m.starting_status = TASK_STATUS if function.name in context.in_task else SUPERVISOR
     try:
         yield from check_cases(m, types, function, image, rebuilt, context, states, drawn)
     finally:
@@ -982,6 +1048,18 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         m.ident_fails = False
         m.starting_status = SUPERVISOR
         m.frame_fill = None
+
+
+def both_runs(
+    m: Machine, types: Types, function: Function, image: int, rebuilt: int, values: list[bytes], memory
+) -> tuple[Run, Run]:
+    """The image's copy and gcc's, each run from memory on a case's
+    arguments, gcc's given the C's twins of the image's objects."""
+    reset(m, memory)
+    original = Run(m, image, original_layout(function, values))
+    reset(m, memory)
+    give_twins(m)
+    return original, Run(m, rebuilt, gcc_slots(twin_arguments(m, types, function.parameters, values)) + UNDECLARED)
 
 
 def check_cases(
@@ -1014,11 +1092,12 @@ def check_cases(
             values[position] = given(m, types, function.parameters[position], value)
         memory = snapshot(m)
 
-        reset(m, memory)
-        original = Run(m, image, original_layout(function, values))
-        reset(m, memory)
-        give_twins(m)
-        gcc = Run(m, rebuilt, gcc_slots(twin_arguments(m, types, function.parameters, values)) + UNDECLARED)
+        original, gcc = both_runs(m, types, function, image, rebuilt, values, memory)
+        privileged = f"trap {PRIVILEGE_VIOLATION}"
+        if original.stopped == gcc.stopped == privileged and m.starting_status != SUPERVISOR:
+            starting_status, m.starting_status = m.starting_status, SUPERVISOR
+            original, gcc = both_runs(m, types, function, image, rebuilt, values, memory)
+            m.starting_status = starting_status
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
         if stopped:
@@ -1080,7 +1159,8 @@ def main() -> int:
         )
         protect_code(machine)
         runnable, unrunnable = functions(c, types, conventions, profile.overlay)
-        context = Context(linked_symbols, located, {function.name: function for function in runnable})
+        in_task = task_context(c, conventions, {root_function(machine, located, conventions)})
+        context = Context(linked_symbols, located, {function.name: function for function in runnable}, in_task)
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         for function in runnable:
             image = linked_symbols.get(IMAGE_PREFIX + function.name)

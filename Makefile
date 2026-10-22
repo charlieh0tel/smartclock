@@ -141,9 +141,12 @@ check-types:
 # Fail if the decompiled C does not compile, its assembly is not the
 # image's own bytes, alone or linked, or a bridge disagrees with its
 # routine.  Needs an m68k
-# gcc and binutils, and uv; not part of ci.
+# gcc and binutils, and uv; not part of ci.  -fno-defer-pop has gcc pop
+# a call's arguments after the call, so that from a task in user mode an
+# argument is not pushed on one stack and popped from the other across
+# enter_supervisor or a move back of the status register.
 DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fwrapv -fno-toplevel-reorder -fno-builtin -ffunction-sections \
-	-fno-tree-loop-distribute-patterns -fno-omit-frame-pointer -w \
+	-fno-tree-loop-distribute-patterns -fno-omit-frame-pointer -fno-defer-pop -w \
 	-Wno-error=int-conversion -Wno-error=incompatible-pointer-types
 check-decompiled:
 	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o target/decompiled.o third_party/firmware/decompiled/z3805a-3543b.c

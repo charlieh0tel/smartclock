@@ -190,6 +190,17 @@ FORMATS = [
     (b"%f %.3f %10.2f %-8.1f|\0", struct.pack(">dddd", 3.14159, -2.5, 1e6, 0.05)),
     (b"%e %.2E %g %G\0", struct.pack(">dddd", 12345.678, -0.000123, 1e-5, 6.02e23)),
     (b"%g %g %.0f %#.0f\0", struct.pack(">dddd", 100000.0, 1234567.0, 2.5, 2.5)),
+    # A string from ROM, "scpi: error opening stream\n" (0x2a16f), whole,
+    # cut short by a precision, padded past the 20 a run of spaces holds,
+    # and as %S; widths and precisions from the arguments, one negative;
+    # zero padding past 20; the alternate forms of 0 and of %g; an
+    # exponent of three digits; and a character doprnt does not convert.
+    (b"%s|%.4s|%-30.3s|%.40S|%25s\0", struct.pack(">IIIII", *[0x2A16F] * 5)),
+    (b"%*d|%-*d|%.*f|%*.*e\0", struct.pack(">iiiiidiid", 6, 42, -6, 42, 2, 0.25, 12, 3, 1.5)),
+    (b"%030d|%-030d|%.0d|%#o|%#x|%#X|%.5d|%.5x\0", struct.pack(">iiiiiiii", -7, 7, 0, 0, 0, 255, -3, 0x1F)),
+    (b"%#g|%#.3g|%e|%E|%.0e|%G\0", struct.pack(">dddddd", 1.0, 0.0001, 1.5e-300, -2.5e300, 9.99, 1e-10)),
+    (b"%y|%5|%hu|%hx|%P|%#p\0", struct.pack(">iiii", 0x12345, 0x1BEEF, 0xABC, 0xABC)),
+    (b"%f|%.20f|%.70f|%f\0", struct.pack(">dddd", 1e20, 1.0 / 3, 0.1, -0.0000001)),
 ]
 # Double step records as clamp_double_to_step_and_limits reads them
 # (scpi_double_step): a step, then load_double (0x322aa) as the routine,
@@ -230,6 +241,7 @@ RETURN_ZERO = 0x29ADA
 ARRAY_RECORD_KINDS = [0, 1, 2, -1]
 GIVEN_CASES = {
     "vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
+    "installer_vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "clamp_double_to_step_and_limits": [
         {4: struct.pack(">dI", step, LOAD_DOUBLE)} for step in DOUBLE_STEPS
     ],

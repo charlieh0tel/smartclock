@@ -616,3 +616,635 @@ static void libc_float_exception_message(uint8_t* message, uint32_t code) {
     }
   }
 }
+
+/* doprnt's state for the flags of a conversion, as it keeps them in one
+ * word (0x5fb5e on). */
+enum {
+  LIBC_PRINT_LEFT = 0x04,           /* '-': padded on the right */
+  LIBC_PRINT_PRECISION = 0x40,      /* a precision was given */
+  LIBC_PRINT_EXPONENT = 0x80,       /* an exponent follows the digits */
+  LIBC_PRINT_TRAILING_ZEROS = 0x100 /* zeros past the digits computed */
+};
+
+/* Puts count copies of a run's character, 20 at a time from text, a run
+ * of 20, the last put even when it is empty; the count put. */
+static int32_t libc_print_run(const char* text, int32_t count,
+                              sprintf_put_function* put,
+                              sprintf_output* output) {
+  static const int32_t RUN = 20;
+  int32_t done = 0;
+
+  for (; count > RUN; count -= RUN) {
+    done += RUN;
+    put((char*)text, 1, RUN, output);
+  }
+  put((char*)text, 1, count, output);
+  return done + count;
+}
+
+/* A long's decimal digits, signed as the image divides them, written
+ * backward before start; the first digit's place.  None for 0 when a
+ * precision was given. */
+static char* libc_print_decimal(uint32_t value, char* start,
+                                bool precision_given) {
+  static const int32_t BASE = 10;
+  int32_t rest = value;
+
+  if (rest < BASE) {
+    if (rest != 0 || !precision_given) {
+      *--start = '0' + rest;
+    }
+    return start;
+  }
+  do {
+    *--start = '0' + rest % BASE;
+    rest /= BASE;
+  } while (rest >= BASE);
+  *--start = '0' + rest;
+  return start;
+}
+
+/* doprnt's and its installer copy's body: formats the format with the
+ * arguments, putting each run of text through put to output; the
+ * count the conversions' widths make.  ctype is its image's ctype_table
+ * past its EOF entry, indexed by a character.  The C library's printf engine,
+ * as libc.md describes it: flags ' ', '#', '+', '-' and '0', a width and a
+ * precision, each a number or '*', the sizes h, l and L, and the
+ * conversions c, d, e, E, f, g, G, i, n, o, p, P, s, S, u, x, X and %;
+ * another character is printed as itself. */
+static int32_t libc_doprnt(const uint8_t* ctype, char* format, void* arguments,
+                           sprintf_put_function* put, sprintf_output* output) {
+  /* The most digits double_to_digits gives significant, and the most a
+   * fixed-point fraction takes. */
+  static const int32_t SIGNIFICANT_MOST = 17;
+  static const int32_t FRACTION_MOST = 60;
+  static const int32_t DEFAULT_PRECISION = 6;
+  /* %g's exponent range for the fixed-point form. */
+  static const int32_t FIXED_LEAST = -3;
+  static const uint32_t DOUBLE_MAGNITUDE = 0x7fffffff;
+  static const char SPACES[] = "                    ";
+  static const char ZEROS[] = "00000000000000000000";
+  /* The conversion's text: its own 20 bytes, then double_to_digits'
+   * digits from the 22nd, which a fixed-point number's integer part
+   * runs on into as it is written, behind its reading of them. */
+  char text[20 + 352];
+  char* const conversion = text;
+  char* const digits = text + 21;
+  /* A number's last place for a decimal or hex conversion. */
+  char* const number_end = conversion + 11;
+  char exponent[6];
+  /* What the conversions make, widths included, and what has been put,
+   * which %n stores. */
+  int32_t counted = 0;
+  int32_t written = 0;
+  /* The values a conversion leaves for the next, as the image keeps
+   * them in its frame: only read where they were set for it. */
+  const char* prefix = 0;
+  int32_t leading_zeros = 0;
+  int32_t trailing_zeros = 0;
+  char* exponent_text = 0;
+  int32_t exponent_length = 0;
+  int32_t precision = 0;
+  int32_t significant = 0;
+  int32_t fraction_most = 0;
+  uint32_t* next_argument = arguments;
+
+  for (;;) {
+    char* scan = format + 1;
+    uint8_t c = *format;
+
+    if (c != 0 && c != '%') {
+      do {
+        c = *scan++;
+      } while (c != 0 && c != '%');
+      const int32_t length = scan - 1 - format;
+
+      counted += length;
+      written += length;
+      put(format, 1, length, output);
+    }
+    if (c == 0) {
+      return counted;
+    }
+    uint32_t flags = 0;
+    bool zero_pad = false;
+    bool long_size = false;
+    bool alternate = false;
+    bool short_size = false;
+    bool space = false;
+    bool plus = false;
+    int32_t extra = 0;
+    int32_t prefix_length = 0;
+    int32_t width = 0;
+    bool zeros = false;
+    bool string_short = false;
+    char* start = 0;
+    char* end = 0;
+    uint32_t conversion_char;
+
+  next_flag:
+    zeros = false;
+    format = scan + 1;
+    conversion_char = (uint8_t)*scan;
+    string_short = false;
+    switch (conversion_char) {
+      case ' ':
+        space = true;
+        scan = format;
+        goto next_flag;
+      case '#':
+        alternate = true;
+        scan = format;
+        goto next_flag;
+      case '%':
+        conversion[0] = '%';
+        start = conversion;
+        end = conversion + 1;
+        break;
+      case '*':
+        if ((flags & LIBC_PRINT_PRECISION) == 0) {
+          width = *next_argument++;
+          if (width < 0) {
+            width = -width;
+            flags ^= LIBC_PRINT_LEFT;
+          }
+        } else {
+          precision = *next_argument++;
+          if (precision < 0) {
+            flags ^= LIBC_PRINT_PRECISION;
+          }
+        }
+        scan = format;
+        goto next_flag;
+      case '+':
+        plus = true;
+        scan = format;
+        goto next_flag;
+      case '-':
+        flags |= LIBC_PRINT_LEFT;
+        zero_pad = false;
+        scan = format;
+        goto next_flag;
+      case '.':
+        flags |= LIBC_PRINT_PRECISION;
+        precision = 0;
+        scan = format;
+        goto next_flag;
+      case '0':
+        if (flags == 0) {
+          zero_pad = true;
+        }
+        scan = format;
+        goto next_flag;
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9': {
+        int32_t number;
+
+        for (;;) {
+          number = conversion_char - '0';
+          conversion_char = (uint8_t)*format;
+          if (conversion_char > 0x7f ||
+              (ctype[conversion_char] & LIBC_CTYPE_DIGIT) == 0) {
+            break;
+          }
+          conversion_char += number * 10;
+          format++;
+        }
+        if ((flags & LIBC_PRINT_PRECISION) == 0) {
+          width = number;
+        } else {
+          precision = number;
+        }
+        scan = format;
+        goto next_flag;
+      }
+      case 'L':
+        scan = format;
+        goto next_flag;
+      case 'h':
+        short_size = true;
+        scan = format;
+        goto next_flag;
+      case 'l':
+        long_size = true;
+        scan = format;
+        goto next_flag;
+      case 'c':
+        conversion[0] = (char)*next_argument++;
+        start = conversion;
+        end = conversion + 1;
+        break;
+      case 'n':
+        if (short_size) {
+          *(uint16_t*)*next_argument++ = written;
+        } else {
+          *(uint32_t*)*next_argument++ = written;
+        }
+        continue;
+      case 'd':
+      case 'i': {
+        uint32_t value = *next_argument++;
+
+        start = number_end;
+        if ((int32_t)value < 0) {
+          prefix = "-";
+          prefix_length = 1;
+          if (value == LIBC_SIGN) {
+            conversion[10] = libc_next_decimal_digit(&value);
+            start = conversion + 10;
+          } else {
+            value = -value;
+          }
+        } else if (plus) {
+          prefix = "+";
+          prefix_length = 1;
+        } else if (space) {
+          prefix = " ";
+          prefix_length = 1;
+        }
+        end = number_end;
+        start = libc_print_decimal(value, start,
+                                   (flags & LIBC_PRINT_PRECISION) != 0);
+        if ((flags & LIBC_PRINT_PRECISION) != 0) {
+          const int32_t more = precision - (end - start);
+
+          zeros = more > 0;
+          if (zeros) {
+            leading_zeros = more;
+            extra = more;
+          }
+          zero_pad = false;
+        }
+        break;
+      }
+      case 'u': {
+        uint32_t value = *next_argument++;
+
+        if (short_size) {
+          value &= 0xffff;
+        }
+        start = number_end;
+        if ((value & LIBC_SIGN) != 0) {
+          conversion[10] = libc_next_decimal_digit(&value);
+          start = conversion + 10;
+        }
+        end = number_end;
+        start = libc_print_decimal(value, start,
+                                   (flags & LIBC_PRINT_PRECISION) != 0);
+        if ((flags & LIBC_PRINT_PRECISION) != 0) {
+          const int32_t more = precision - (end - start);
+
+          zeros = more > 0;
+          if (zeros) {
+            leading_zeros = more;
+            extra = more;
+          }
+          zero_pad = false;
+        }
+        break;
+      }
+      case 'o':
+      case 'X':
+      case 'x': {
+        /* The digit's mask, and its bits less the one shifted first. */
+        const uint32_t mask = conversion_char == 'o' ? 7 : 0xf;
+        const uint32_t shift = conversion_char == 'o' ? 2 : 3;
+        const char* hex =
+            conversion_char == 'X' ? "0123456789ABCDEF" : "0123456789abcdef";
+        uint32_t value = *next_argument++;
+
+        if (short_size) {
+          value &= 0xffff;
+        }
+        end = number_end;
+        start = end;
+        if (value == 0) {
+          if ((flags & LIBC_PRINT_PRECISION) == 0) {
+            leading_zeros = 1;
+            extra = 1;
+            zeros = true;
+          }
+        } else {
+          for (uint32_t rest = value; rest != 0; rest = rest >> 1 >> shift) {
+            *--start = hex[rest & mask];
+          }
+        }
+        if ((flags & LIBC_PRINT_PRECISION) != 0) {
+          const int32_t more = precision - (end - start);
+
+          if (more > 0) {
+            zeros = true;
+            leading_zeros = more;
+            extra = more;
+          }
+          zero_pad = false;
+        }
+        if (alternate && value != 0) {
+          if (conversion_char == 'X') {
+            prefix = "0X";
+            prefix_length = 2;
+          } else if (conversion_char == 'o') {
+            if (!zeros) {
+              leading_zeros = 1;
+              extra = 1;
+              zeros = true;
+            }
+          } else {
+            prefix = "0x";
+            prefix_length = 2;
+          }
+        }
+        break;
+      }
+      case 'P':
+      case 'p': {
+        static const int32_t POINTER_DIGITS = 8;
+        static const int32_t DIGIT_BITS = 4;
+        static const uint32_t DIGIT_MASK = 0xf;
+        const char* hex =
+            conversion_char == 'P' ? "0123456789ABCDEF" : "0123456789abcdef";
+        int32_t rest = *next_argument++;
+
+        end = number_end;
+        start = end;
+        for (int32_t left = POINTER_DIGITS; left > 0; left--) {
+          *--start = hex[rest & DIGIT_MASK];
+          rest >>= DIGIT_BITS;
+        }
+        if ((flags & LIBC_PRINT_PRECISION) != 0) {
+          const int32_t more = precision - (end - start);
+
+          if (more > 0) {
+            zeros = true;
+            leading_zeros = more;
+            extra = more;
+          }
+        }
+        if (alternate) {
+          prefix = conversion_char == 'p' ? "0x" : "0X";
+          prefix_length = 2;
+        }
+        break;
+      }
+      case 's':
+        start = (char*)*next_argument++;
+        end = start;
+        if (start != 0) {
+          if ((flags & LIBC_PRINT_PRECISION) == 0) {
+            while (*end != 0) {
+              end++;
+            }
+          } else {
+            while (*end != 0 && precision-- > 0) {
+              end++;
+            }
+          }
+        }
+        break;
+      case 'S':
+        start = (char*)*next_argument++;
+        end = start;
+        if (start != 0) {
+          if ((flags & LIBC_PRINT_PRECISION) == 0) {
+            while (*end != 0) {
+              end++;
+            }
+          } else {
+            for (; *end != 0 && precision > 0; precision--) {
+              end++;
+            }
+            if (precision < 0) {
+              string_short = true;
+              end--;
+            }
+          }
+        }
+        break;
+      case 'E':
+      case 'G':
+      case 'e':
+      case 'f':
+      case 'g': {
+        const uint32_t high = next_argument[0];
+        const uint32_t low = next_argument[1];
+        const double value = *(double*)next_argument;
+        const bool nonzero = low != 0 || (high & DOUBLE_MAGNITUDE) != 0;
+        int32_t decimal_exponent;
+        uint32_t negative;
+        bool fixed;
+
+        if ((flags & LIBC_PRINT_PRECISION) == 0) {
+          precision = DEFAULT_PRECISION;
+        } else if (precision == 0 && (conversion_char | 0x20) == 'g') {
+          precision = 1;
+        }
+        if (conversion_char == 'f') {
+          fraction_most = FRACTION_MOST;
+          significant = SIGNIFICANT_MOST;
+          libc_double_to_digits(
+              value, precision < FRACTION_MOST ? precision : FRACTION_MOST,
+              &decimal_exponent, &negative, digits, 0);
+          fixed = true;
+        } else if ((conversion_char | 0x20) == 'e') {
+          libc_double_to_digits(value,
+                                precision + 1 < SIGNIFICANT_MOST
+                                    ? precision + 1
+                                    : SIGNIFICANT_MOST,
+                                &decimal_exponent, &negative, digits, 1);
+          fixed = false;
+        } else {
+          int32_t count = precision;
+
+          fraction_most = FRACTION_MOST;
+          significant = SIGNIFICANT_MOST;
+          libc_double_to_digits(
+              value,
+              precision > SIGNIFICANT_MOST - 1 ? SIGNIFICANT_MOST : precision,
+              &decimal_exponent, &negative, digits, 1);
+          if (!nonzero) {
+            decimal_exponent = 1;
+          }
+          if (!alternate) {
+            const int32_t length = libc_length(digits);
+
+            if (length < precision) {
+              count = length;
+            }
+            while (count > 0 && digits[count - 1] == '0') {
+              count--;
+            }
+          }
+          fixed = decimal_exponent >= FIXED_LEAST &&
+                  decimal_exponent < precision + 1;
+          precision = fixed ? count - decimal_exponent : count - 1;
+        }
+        next_argument += 2;
+        if (fixed) {
+          /* The fixed-point form: no sign for a negative that rounds to
+           * zero. */
+          if (negative != 0 && decimal_exponent > -precision &&
+              digits[0] != '0') {
+            prefix = "-";
+            prefix_length = 1;
+          } else if (plus) {
+            prefix = "+";
+            prefix_length = 1;
+          } else if (space) {
+            prefix = " ";
+            prefix_length = 1;
+          }
+          const char* digit = digits;
+          int32_t used = 0;
+          char* to = conversion;
+          int32_t left = decimal_exponent;
+
+          do {
+            if (left < 1 || *digit == 0 || used >= significant) {
+              *to++ = '0';
+            } else {
+              used++;
+              *to++ = *digit++;
+            }
+            left--;
+          } while (left > 0);
+          if (alternate || precision > 0) {
+            *to++ = '.';
+          }
+          int32_t fraction =
+              precision < fraction_most ? precision : fraction_most;
+
+          if (fraction < precision) {
+            flags |= LIBC_PRINT_TRAILING_ZEROS;
+            trailing_zeros = precision - fraction;
+            extra = trailing_zeros;
+          }
+          while (--fraction >= 0) {
+            decimal_exponent++;
+            if (decimal_exponent < 1 || *digit == 0 || used >= significant) {
+              *to++ = '0';
+            } else {
+              used++;
+              *to++ = *digit++;
+            }
+          }
+          start = conversion;
+          end = to;
+        } else {
+          /* The exponent form, d.ddde+dd. */
+          if (negative != 0) {
+            prefix = "-";
+            prefix_length = 1;
+          } else if (plus) {
+            prefix = "+";
+            prefix_length = 1;
+          } else if (space) {
+            prefix = " ";
+            prefix_length = 1;
+          }
+          const char* digit = digits;
+          char* to = conversion + 1;
+
+          if (digits[0] == 0) {
+            conversion[0] = '0';
+          } else {
+            conversion[0] = *digit++;
+          }
+          if (precision != 0 || alternate) {
+            *to++ = '.';
+          }
+          int32_t left = precision;
+
+          for (; left > 0 && *digit != 0; digit++, left--) {
+            *to++ = *digit;
+          }
+          if (left > 0) {
+            trailing_zeros = left;
+            extra = left;
+            flags |= LIBC_PRINT_TRAILING_ZEROS;
+          }
+          start = conversion;
+          end = to;
+          exponent_text = exponent + 5;
+          exponent[5] = 0;
+          if (nonzero) {
+            int32_t power = decimal_exponent - 1;
+
+            if (power < 0) {
+              power = -power;
+            }
+            for (; power > 9; power /= 10) {
+              *--exponent_text = '0' + power % 10;
+            }
+            *--exponent_text = '0' + power;
+          }
+          while (exponent_text > exponent + 3) {
+            *--exponent_text = '0';
+          }
+          exponent_text[-1] = decimal_exponent < 1 && nonzero ? '-' : '+';
+          exponent_text -= 2;
+          *exponent_text =
+              (ctype[conversion_char] & LIBC_CTYPE_UPPER) != 0 ? 'E' : 'e';
+          exponent_length = exponent + 5 - exponent_text;
+          extra += exponent_length;
+          flags |= LIBC_PRINT_EXPONENT;
+        }
+        break;
+      }
+      default:
+        /* Not a conversion: printed as itself. */
+        format = scan;
+        continue;
+    }
+    const int32_t length = end - start;
+    int32_t total = extra + prefix_length + length;
+
+    if (total < width) {
+      counted += width;
+      string_short = false;
+      if (zero_pad) {
+        if (zeros) {
+          leading_zeros += width - total;
+        } else {
+          zeros = true;
+          leading_zeros = width - total;
+        }
+        total = width;
+      } else if ((flags & LIBC_PRINT_LEFT) == 0) {
+        written += libc_print_run(SPACES, width - total, put, output);
+      }
+    } else {
+      counted += total;
+    }
+    if (prefix_length != 0) {
+      written += prefix_length;
+      put((char*)prefix, 1, prefix_length, output);
+    }
+    if (zeros) {
+      if (string_short) {
+        leading_zeros++;
+      }
+      written += libc_print_run(ZEROS, leading_zeros, put, output);
+    }
+    if (length > 0) {
+      written += length;
+      put(start, 1, length, output);
+    }
+    if ((flags & LIBC_PRINT_TRAILING_ZEROS) != 0) {
+      written += libc_print_run(ZEROS, trailing_zeros, put, output);
+    }
+    if ((flags & LIBC_PRINT_EXPONENT) != 0) {
+      written += exponent_length;
+      put(exponent_text, 1, exponent_length, output);
+    }
+    if ((flags & LIBC_PRINT_LEFT) != 0 && total < width) {
+      written += libc_print_run(SPACES, width - total, put, output);
+    }
+  }
+}

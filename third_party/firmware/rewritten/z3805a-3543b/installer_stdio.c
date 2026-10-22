@@ -24,6 +24,14 @@ void installer_double_to_digits(double value, int32_t count, int32_t* exponent,
   libc_double_to_digits(value, count, exponent, negative, digits, mode);
 }
 
+/* The formatting engine under sprintf, printf's, through put to
+ * output; the count the conversions' widths make
+ * (installer::0x109cb4). */
+int32_t installer_doprnt(char* format, void* arguments,
+                         sprintf_put_function* put, sprintf_output* output) {
+  return libc_doprnt(installer_ctype_table + 1, format, arguments, put, output);
+}
+
 /* Copies so many items of doprnt's output, of a size of 1 only, to
  * sprintf's buffer; returns the count copied, 0 for another size
  * (installer::0x10aa6c). */

@@ -1496,7 +1496,11 @@ view cannot drift apart.  The library, bottom up:
      `scpi_header_resolve` and both `scpi_task`s are written by hand.
      The installer's `float_raise` is variadic, as the primary's is, and
      `scpi_interpret`'s harness cases all skip, so those stay the
-     decompiler's in both.
+     decompiler's in both.  `doprnt`, the C library's printf engine,
+     is one body in `libc.h` for both images, proven by 24 vsprintf
+     formats, six of them new: strings, argument widths and
+     precisions, zero padding, the alternate forms and three-digit
+     exponents.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

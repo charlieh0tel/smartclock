@@ -50,6 +50,13 @@ int32_t sprintf_put(char* text, int32_t size, int32_t count,
   return libc_sprintf_put(text, size, count, output);
 }
 
+/* The formatting engine under sprintf, printf's, through put to
+ * output; the count the conversions' widths make (0x5fb0c). */
+int32_t doprnt(char* format, void* arguments, sprintf_put_function* put,
+               sprintf_output* output) {
+  return libc_doprnt(ctype_table + 1, format, arguments, put, output);
+}
+
 /* Formats into a buffer through doprnt and sprintf_put and ends it with
  * a NUL; returns doprnt's count (0x608fe). */
 int32_t vsprintf(char* s, char* format, void* arg) {

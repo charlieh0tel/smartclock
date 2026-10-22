@@ -1818,7 +1818,7 @@ installer::0x109366	function	installer_toupper	libc.md	the installer's toupper	i
 installer::0x10937e	function	installer_double_to_digits_multiply	libc.md	the installer's double_to_digits_multiply
 installer::0x109562	function	installer_double_to_digits	libc.md	the installer's double_to_digits	void installer_double_to_digits(double value, int32_t count, int32_t *exponent, uint32_t *negative, char *digits, int32_t mode)
 installer::0x109c7e	function	installer_next_decimal_digit	libc.md	the installer's next_decimal_digit	int installer_next_decimal_digit(uint32_t *n)
-installer::0x109cb4	function	installer_doprnt	libc.md	the installer's doprnt
+installer::0x109cb4	function	installer_doprnt	libc.md	the installer's doprnt	int32_t installer_doprnt(char *format, void *arguments, sprintf_put_function *put, sprintf_output *output)
 installer::0x10aa3e	function	installer_sprintf	libc.md	the installer's sprintf	int installer_sprintf(char *s, char *format, ...)
 installer::0x10aa6c	function	installer_sprintf_put	libc.md	the installer's sprintf_put, which installer_vsprintf and installer_sprintf hand installer_doprnt	int32_t installer_sprintf_put(char *text, int32_t size, int32_t count, sprintf_output *output)
 installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf	int installer_vsprintf(char *s, char *format, void *arg)

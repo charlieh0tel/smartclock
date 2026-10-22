@@ -1319,6 +1319,11 @@ view cannot drift apart.  The library, bottom up:
      so its 72 callers name theirs.  The functions that take a word or a
      long (`status_report`, `status_set_bit`) keep their width, the
      enum being a byte.
+     Then the other tables only the hand-written code, or it and the
+     decompiler's bisections, read: the powers of ten `arithmetic.c`
+     defines (the image's 1e23 an ulp high), the SCPI error messages
+     and the NV register's descriptor lists; those read past their
+     ends, or whose addresses stay in RAM, keep the image's.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

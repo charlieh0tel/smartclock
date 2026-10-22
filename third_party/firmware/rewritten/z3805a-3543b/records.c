@@ -851,10 +851,57 @@ static uint8_t records_nv_width(const int8_t* widths, int32_t index) {
   return (uint8_t)abs(widths[index]);
 }
 
+/* The descriptors whose values the NV register keeps, in its order: the
+ * image's nv_numeric_params and nv_setting_params (0x32d5e, 0x32db2). */
+static scpi_numeric_param* const records_nv_numeric_params[] = {
+    &scpi_param_SOURce_PTIMe_TZONe,
+    &scpi_param_SOURce_GPSystem_EMANgle,
+    &scpi_param_SOURce_GPSystem_ADELay,
+    &scpi_param_DOUGlas_DURation,
+    &nv_param_leap_minute_length,
+    &nv_param_leap_date,
+    &scpi_param_SOURce_GPSystem_POSition,
+    &scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore,
+    &scpi_param_SOURce_ROSCillator_LIMit_THReshold,
+    &scpi_param_SOURce_ROSCillator_HOLDover_LIMit_THReshold,
+    &scpi_param_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold,
+    &scpi_param_KENneth_PREDicted_DURation,
+    &scpi_param_STATus_ENABle,
+    &scpi_param_STATus_PTRansition,
+    &scpi_param_STATus_NTRansition,
+    &scpi_param_SOURce_PULSe_CONTinuous_PERiod,
+    &scpi_param_SOURce_PULSe_STARt_TIME,
+    &scpi_param_SOURce_PULSe_STARt_DATE,
+    &nv_param_field_b8,
+    &scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold,
+    &scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold,
+};
+static scpi_setting_param* const records_nv_setting_params[] = {
+    &scpi_param_DIAGnostic_SYSTem_PSTartup,
+    &scpi_param_DIAGnostic_SYSTem_DOUTput,
+    &scpi_param_DOUGlas_STATe,
+    &nv_param_field_1e,
+    &scpi_param_DIAGnostic_GPSystem_UTC,
+    &nv_param_leap_pending,
+    &scpi_param_SOURce_PTIMe_TCODe_FORMat,
+    &scpi_param_SOURce_ROSCillator_HOLDover_LIMit_STATe,
+    &scpi_param_DOUGlas_STATe_POWerup,
+    &scpi_param_STATus_QUEStionable_USER,
+    &scpi_param_DOUGlas_DURation_INFinity,
+    &nv_param_field_bc,
+    &scpi_param_ROBin_MEMory_SAVE,
+    &scpi_param_OUTPut_STATe,
+    &scpi_param_SOURce_PULSe_CONTinuous_STATe,
+    &scpi_param_FORMat_DATA,
+    &scpi_param_DIAGnostic_SER1_RESTricted,
+    &scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe,
+};
 static const uint32_t RECORDS_NV_NUMERIC_PARAMS =
-    (uint32_t)(sizeof nv_numeric_params / sizeof nv_numeric_params[0]);
+    (uint32_t)(sizeof records_nv_numeric_params /
+               sizeof records_nv_numeric_params[0]);
 static const uint32_t RECORDS_NV_SETTING_PARAMS =
-    (uint32_t)(sizeof nv_setting_params / sizeof nv_setting_params[0]);
+    (uint32_t)(sizeof records_nv_setting_params /
+               sizeof records_nv_setting_params[0]);
 
 /* Erases an NV register slot's tag, if it is not erased (0x327f4). */
 void nv_slot_erase(uint8_t slot) {
@@ -972,14 +1019,14 @@ char nv_save(uint8_t source) {
   strncpy(record.revision, (char*)RECORDS_FIRMWARE_REVISION,
           sizeof record.revision);
   for (uint32_t i = 0; i < RECORDS_NV_NUMERIC_PARAMS; i++) {
-    scpi_numeric_param* param = nv_numeric_params[i];
+    scpi_numeric_param* param = records_nv_numeric_params[i];
     uint32_t* values = param->value;
     for (int32_t v = 0; v <= (int8_t)param->last_index; v++) {
       records_pack(&stream, values[v], records_nv_width(param->nv_widths, v));
     }
   }
   for (uint32_t i = 0; i < RECORDS_NV_SETTING_PARAMS; i++) {
-    scpi_setting_param* param = nv_setting_params[i];
+    scpi_setting_param* param = records_nv_setting_params[i];
     for (int32_t v = 0; v <= (int8_t)param->last_index; v++) {
       records_pack(&stream, (uint32_t)(int8_t)param->value[v],
                    records_nv_width(param->nv_widths, v));
@@ -1039,7 +1086,7 @@ uint32_t nv_load_slot(void) {
                                .bits = record.packed[0]};
 
   for (uint32_t i = 0; i < RECORDS_NV_NUMERIC_PARAMS; i++) {
-    scpi_numeric_param* param = nv_numeric_params[i];
+    scpi_numeric_param* param = records_nv_numeric_params[i];
     uint32_t* values = param->value;
     for (int32_t v = 0; v <= (int8_t)param->last_index; v++) {
       uint8_t width = records_nv_width(param->nv_widths, v);
@@ -1051,7 +1098,7 @@ uint32_t nv_load_slot(void) {
   nv_numeric_bytes_loaded =
       (int16_t)((stream.next - record.packed) * sizeof *record.packed);
   for (uint32_t i = 0; i < RECORDS_NV_SETTING_PARAMS; i++) {
-    scpi_setting_param* param = nv_setting_params[i];
+    scpi_setting_param* param = records_nv_setting_params[i];
     for (int32_t v = 0; v <= (int8_t)param->last_index; v++) {
       param->value[v] = (uint8_t)records_unpack(
           &stream, records_nv_width(param->nv_widths, v));

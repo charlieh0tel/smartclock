@@ -2940,8 +2940,8 @@ extern uint8_t month_lengths[12]; /* 0001189c */
 extern char reset_to_recover_text[20]; /* 00011b8c */
 extern char * exception_names[57]; /* 00011ba0 */
 extern double powers_of_ten_times_five[61]; /* 0001234c */
-extern double powers_of_ten_double[61]; /* 00012614 */
-extern float powers_of_ten_float[61]; /* 000129fc */
+extern const double powers_of_ten_double[61]; /* 00012614 */
+extern const float powers_of_ten_float[61]; /* 000129fc */
 extern char dither_table[128]; /* 00012b32 */
 extern selftest_entry selftest_list[12]; /* 00017fe0 */
 extern selftest_entry selftest_table[14]; /* 00018458 */
@@ -4089,8 +4089,6 @@ __asm__(".set powers_of_ten_1_to_24_mantissas, 0x0005f96e");
 __asm__(".set powers_of_ten_64, 0x0005fa46");
 __asm__(".set powers_of_ten_by_25_exponents, 0x0005f938");
 __asm__(".set powers_of_ten_by_25_mantissas, 0x0005f860");
-__asm__(".set powers_of_ten_double, 0x00012614");
-__asm__(".set powers_of_ten_float, 0x000129fc");
 __asm__(".set powers_of_ten_float_21, 0x00032700");
 __asm__(".set powers_of_ten_times_five, 0x0001234c");
 __asm__(".set pps_exchange, 0x00100bc4");

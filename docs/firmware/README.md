@@ -822,12 +822,16 @@ and the exporter, finding the definition, declares its extern `const`
 and gives it no `.set`, so that they read the C's.  Not where the
 image reads past the
 table: `clock_days_before_month`'s unchecked month reads the word
-before `days_before_month` and those after it, so it keeps the
-image's; `random_dither` reads the byte after `dither_table`, which
-its copy keeps as a 129th entry.  Not where a table's address leaves
-the function, which the harness compares: `error_message_lookup`
-returns an entry's text and the DUART's loopback test keeps pointers
-into its strings.
+before `days_before_month` and those after it, `exception_name` reads
+`exception_names` by an unchecked, unaligned offset, and
+`status_negative_conditions` and `status_report_messages` are indexed
+by any condition, so they keep the image's; `random_dither` reads the
+byte after `dither_table`, which its copy keeps as a 129th entry.  Not
+where a table's address outlives the call in RAM, which the harness
+compares: the DUART's loopback test leaves pointers into its strings,
+and `status_init` keeps `status_conditions`' in the status model.  A
+returned string is compared by its text, so `error_message_lookup`'s
+table is its own.
 
 The hand-written C and the Ghidra type headers are in Google's style
 (`.clang-format`), with braces on every control statement's body:

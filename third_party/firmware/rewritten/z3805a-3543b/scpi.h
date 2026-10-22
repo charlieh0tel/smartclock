@@ -115,6 +115,12 @@ typedef struct scpi_word_parameter {
   int16_t value; /* +0x02 */
 } scpi_word_parameter;
 
+/* A string's text, as scpi_parse_text gives it its handler. */
+typedef struct scpi_text_parameter {
+  int16_t kind; /* +0x00 */
+  char* text;   /* +0x02 */
+} scpi_text_parameter;
+
 /* A short number and its unit. */
 typedef struct scpi_short_parameter {
   int16_t kind;  /* +0x00 */
@@ -388,6 +394,62 @@ static int8_t scpi_engine_multiplier(int32_t name) {
     entry++;
   } while (entry->name != 0);
   return SCPI_NO_MULTIPLIER;
+}
+
+/* scpi_match_suffix's and its installer copy's body: the unit a suffix
+ * names, its index plus one, and its power of ten, allowing a one- or
+ * two-letter multiplier before a unit that takes one; 0 for none. */
+static int16_t scpi_engine_match_suffix(int32_t length, char* suffix, scpi_unit* units,
+                                        int16_t* scale) {
+  static const int16_t MULTIPLIER_MOST = 2;
+  static const uint8_t LETTER_BITS = 8;
+  int16_t count = length;
+
+  for (int16_t index = 0; units[index].name != 0; index++) {
+    int16_t matched = scpi_compare_suffix_tail(suffix, count, units[index].name);
+
+    if (matched == 0 || count - matched > MULTIPLIER_MOST) {
+      continue;
+    }
+    if (count == matched) {
+      *scale = units[index].exponent;
+      if (*scale == SCPI_NO_MULTIPLIER) {
+        *scale = 0;
+      }
+      return index + 1;
+    }
+    if (units[index].exponent == SCPI_NO_MULTIPLIER) {
+      uint16_t multiplier = suffix[0];
+
+      if (matched + 1 < count) {
+        multiplier = (multiplier << LETTER_BITS) + suffix[1];
+      }
+      *scale = scpi_engine_multiplier(multiplier);
+      if (*scale != SCPI_NO_MULTIPLIER) {
+        return index + 1;
+      }
+    }
+  }
+  return 0;
+}
+
+/* scpi_apply_suffix's and its installer copy's body: matches a number's
+ * suffix against the node's units, setting its scale and unit. */
+static int32_t scpi_engine_apply_suffix(scpi_number* number, scpi_unit* units) {
+  if (number->suffix_length == 0) {
+    number->unit = 0;
+    number->scale = 0;
+    return 0;
+  }
+  if (units == 0) {
+    return STATUS_SCPI_SUFFIX_NOT_ALLOWED;
+  }
+  number->unit =
+      scpi_engine_match_suffix(number->suffix_length, number->suffix, units, &number->scale);
+  if (number->unit == 0) {
+    return STATUS_SCPI_INVALID_SUFFIX;
+  }
+  return 0;
 }
 
 /* The arena's, which its installer copies share (scpi_engine.c,

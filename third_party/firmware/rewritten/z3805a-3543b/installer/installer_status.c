@@ -81,6 +81,27 @@ void installer_status_read_event(status_model* status, int32_t index,
   status_model_read_event(status, index, event);
 }
 
+/* Reads every register's event word but the top one's, clearing them,
+ * for *CLS (installer::0x1061c8). */
+uint32_t installer_status_clear_events(status_model* status) {
+  return status_model_clear_events(status);
+}
+
+/* Takes the oldest error from the queue, its value dropped, for *CLS
+ * (installer::0x1061f8). */
+void installer_error_queue_clear(status_model* status, int32_t* code) {
+  uint32_t discarded;
+
+  installer_error_queue_pop(status->queue, code, &discarded);
+}
+
+/* Takes the oldest error and its value from the queue
+ * (installer::0x10621a). */
+void installer_error_queue_read(status_model* status, int32_t* code,
+                                uint32_t* message) {
+  installer_error_queue_pop(status->queue, code, message);
+}
+
 /* Adds an error to the queue and reports its class; its last free entry
  * takes -350, Queue overflow, in its place.  1 when the queue is full or
  * overflows, else 0 (installer::0x106282). */
@@ -119,6 +140,26 @@ int16_t installer_error_queue_push(status_error_queue* queue, int32_t code,
   }
   installer_status_prompt_refresh(status, error);
   return full;
+}
+
+/* Takes the oldest error and its value, 0 and 0 when the queue is
+ * empty, and prompts again once it empties (installer::0x10634c). */
+void installer_error_queue_pop(status_error_queue* queue, int32_t* code,
+                               uint32_t* value) {
+  if (queue->head == queue->tail) {
+    *code = 0;
+    *value = 0;
+    return;
+  }
+  queue->tail++;
+  if (queue->tail == queue->size) {
+    queue->tail = 0;
+  }
+  *code = queue->entries[queue->tail].code;
+  *value = queue->entries[queue->tail].value;
+  if (queue->head == queue->tail) {
+    installer_status_prompt_refresh(queue->status, 0);
+  }
 }
 
 /* An error code's message, NULL for none (installer::0x106548). */

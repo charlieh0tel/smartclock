@@ -1571,6 +1571,21 @@ view cannot drift apart.  The library, bottom up:
      ROM survey named are written by hand too.  `float_raise`'s cases
      found that its reports' addresses are chosen three ways
      (`quirks.md`).
+     Then the installer's 25 that its generated tree brought in, 0
+     left in either image again: its 11 converters' and formatters'
+     copies share their twins' bodies, moved to `scpi.h`,
+     `scpi_parameters.h`, `status.h` and two new headers,
+     `scpi_convert.h` and `scpi_format.h`; its nine handlers are
+     written on its own globals (`installer_scpi_common.c`,
+     `_system.c`, `_diagnostic.c`); and the five routines analysis
+     found are named, four by their bytes as the status system's
+     (`installer_status_clear_events`, `installer_error_queue_clear`,
+     `_read`, `_pop`) and one by what it does,
+     `installer_flash_program_word`.  Typed as their twins, the queue's
+     three run all eight cases, not one.  `:DIAGnostic:ERASe` and
+     `:DOWNload` are read in `restart.md`, "The installer"; the harness
+     runs them only to their first flash write.  Counts unchanged:
+     the primary's 1308 agree, 4 known; the installer's 155, 1 skipped.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

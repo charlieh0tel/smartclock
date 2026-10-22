@@ -252,13 +252,19 @@ exporter includes with the rest.  A copy
 that reads nothing of the installer's own, and calls nothing but
 other such bodies, shares its twin's body: the body moves to the
 group's header (`libc.h`, `scpi.h`, `scpi_lexer.h`, `scpi_tree.h`,
-`scpi_parameters.h`, `scpi_engine.h`, `status.h`, `startup.h`, `os.h`,
-`duart.h`) as a static function both call, given its image's own
-tables where it reads one (the lexer's class table, the negative
-conditions).  The others are written out
-again on the installer's globals and callees, and some are older than
-the primary's (`installer_print_exception`,
-`installer_identification_record_read`).
+`scpi_parameters.h`, `scpi_convert.h`, `scpi_format.h`,
+`scpi_engine.h`, `status.h`, `startup.h`, `os.h`, `duart.h`) as a
+static function both call, given its image's own tables where it reads
+one (the lexer's class table, the negative conditions).  The others
+are written out again on the installer's globals and callees, and some
+are older than the primary's (`installer_print_exception`,
+`installer_identification_record_read`).  The installer's SCPI
+handlers go by their group as the primary's do
+(`installer/installer_scpi_common.c`, `_system.c`, `_diagnostic.c`),
+those with no twin among them: `:DIAGnostic:ERASe` and `:DOWNload`,
+and the flash word programmer `:DOWNload` calls,
+`installer_flash_program_word`, which shares their flash commands
+(restart.md, "The installer").
 
 ## Open
 

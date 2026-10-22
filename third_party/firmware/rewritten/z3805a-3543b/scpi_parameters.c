@@ -9,21 +9,11 @@
  * its infinity. */
 static const double SCPI_REAL_LIMIT = 9.9e37;
 
-/* A converted parameter's unit, the matched unit's index plus one, is
- * stored after its value, where its handler reads it (0x25eda). */
-static void scpi_engine_store_unit(void* after_value, int16_t unit) {
-  *(int16_t*)after_value = unit;
-}
-
 /* A string token's text, through value; STATUS_SCPI_INVALID_STRING if
  * the text holds a NUL, which its length counts past (0x25d4a).  Its
  * lengths compare as the image's, the token's signed. */
 uint32_t scpi_parse_text(scpi_token_string* token, void* unused, char** value) {
-  if ((int32_t)libc_length(token->text) != (int16_t)token->length) {
-    return STATUS_SCPI_INVALID_STRING;
-  }
-  *value = token->text;
-  return 0;
+  return scpi_parameters_text(token, value);
 }
 
 /* A string token's text and length, as its handler takes them; 0
@@ -88,14 +78,7 @@ int32_t scpi_parse_boolean_number(scpi_number* number, void* unused,
 /* The suffix by scpi_apply_suffix, then scpi_number_to_short (0x25ea6). */
 int32_t scpi_parse_short(scpi_number* number, void* unused, int16_t* value,
                          scpi_unit* units) {
-  int32_t error = scpi_apply_suffix(number, units);
-
-  if (error != 0) {
-    return error;
-  }
-  error = scpi_number_to_short(number, value, number->scale);
-  scpi_engine_store_unit(value + 1, number->unit);
-  return error;
+  return scpi_parameters_short(number, value, units);
 }
 
 /* The suffix, then scpi_number_to_unsigned_short (0x25ee6). */

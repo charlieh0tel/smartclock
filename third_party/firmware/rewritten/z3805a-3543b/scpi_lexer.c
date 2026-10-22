@@ -58,54 +58,11 @@ int8_t scpi_multiplier_exponent(int32_t name) {
  * one; 0 for none (0x27a2a). */
 int16_t scpi_match_suffix(int32_t length, char* suffix, scpi_unit* units,
                           int16_t* scale) {
-  static const int16_t MULTIPLIER_MOST = 2;
-  static const uint8_t LETTER_BITS = 8;
-  int16_t count = length;
-
-  for (int16_t index = 0; units[index].name != 0; index++) {
-    int16_t matched =
-        scpi_suffix_compare_tail(suffix, count, units[index].name);
-
-    if (matched == 0 || count - matched > MULTIPLIER_MOST) {
-      continue;
-    }
-    if (count == matched) {
-      *scale = units[index].exponent;
-      if (*scale == SCPI_NO_MULTIPLIER) {
-        *scale = 0;
-      }
-      return index + 1;
-    }
-    if (units[index].exponent == SCPI_NO_MULTIPLIER) {
-      uint16_t multiplier = suffix[0];
-
-      if (matched + 1 < count) {
-        multiplier = (multiplier << LETTER_BITS) + suffix[1];
-      }
-      *scale = scpi_multiplier_exponent(multiplier);
-      if (*scale != SCPI_NO_MULTIPLIER) {
-        return index + 1;
-      }
-    }
-  }
-  return 0;
+  return scpi_engine_match_suffix(length, suffix, units, scale);
 }
 
 /* Matches a number's suffix against the node's units, setting its scale
  * and unit (0x27ae4). */
 int32_t scpi_apply_suffix(scpi_number* number, scpi_unit* units) {
-  if (number->suffix_length == 0) {
-    number->unit = 0;
-    number->scale = 0;
-    return 0;
-  }
-  if (units == 0) {
-    return STATUS_SCPI_SUFFIX_NOT_ALLOWED;
-  }
-  number->unit = scpi_match_suffix(number->suffix_length, number->suffix, units,
-                                   &number->scale);
-  if (number->unit == 0) {
-    return STATUS_SCPI_INVALID_SUFFIX;
-  }
-  return 0;
+  return scpi_engine_apply_suffix(number, units);
 }

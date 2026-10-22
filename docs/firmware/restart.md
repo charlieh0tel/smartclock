@@ -295,6 +295,42 @@ unpacked into `0x100400` to `0x10ac50`.
   instruction, at `0x45e`.  Its erase handler
   starts at `0x20000` and erases three 128 KiB blocks.  All five
   images pass their own sums.
+- *Erase and download (Peru installer, read).*  A command word goes
+  to both parts of a pair at once, the command in both bytes, at the
+  pair's base plus twice the parts' unlock addresses: `0xaaaa` and
+  `0x5554` for pair 1, `0x4aaaa` and `0x45554` for pair 2, `0xaaaa`
+  then `0x5555` written to them, then the command at the first.
+  `:DIAGnostic:ERASe` (`installer_scpi_set_DIAGnostic_ERASe`,
+  `0x107e6e`) masks interrupts (`installer_enter_supervisor_mode`),
+  sends each pair erase setup, `0x8080`, unlocks it again and writes
+  sector erase, `0x3030`, at each 32 KiB sector pair of the writable
+  range: `0x10000` to `0x38000` in pair 1, sectors 0 and 1 kept, and
+  `0x40000` to `0x78000` in pair 2; then restores the mask and polls
+  the words at `0x10000` and `0x40000`, up to a million reads, until
+  each byte of both shows DQ7 or DQ5 (`0xa000`, `0xa0`).  It makes the
+  whole sequence up to five times and answers -200, Execution error,
+  once the fifth is made, even when it succeeds (`quirks.md`).
+  `:DIAGnostic:ERASe?` (`0x107f5c`) answers 1 when every word from
+  `0x10000` to `0x7fffe` reads `0xffff`.  `:DIAGnostic:DOWNload`
+  (`0x107cb8`) copies its string into its frame, takes `S1` to `S3`
+  and `S7` to `S9` (4, 6 and 8 address digits; `S0` and `S5` it accepts
+  and ignores, `S4` and `S6` it refuses, -222, as any other text),
+  converts each pair of hex digits with `installer_strtol`, checks the
+  ones' complement of their sum's low byte against the last pair and
+  the count against the text's length, and programs the data a word at
+  a time, high byte first, from the record's address, refusing,
+  -222, an address outside `0x10000` to `0x7ffff`; an odd last byte is
+  paired with `0xff`, which leaves its neighbor erased.  The word
+  programmer, `installer_flash_program_word` (`0x107c18`), refuses an
+  address outside that range, sends program, `0xa0a0`, writes the
+  word, reads it back up to 100 times until it reads the word or both
+  bytes show DQ5 (`0x2020`), up to five tries, then sends read/reset,
+  `0xf0f0`, and answers -200 once the fifth try is made, as the erase
+  does.  The command words are the AM29F010's (AMD's data sheet, not in
+  `third_party/`); the decompiled reading names the polled word at
+  `0x40000` `_interpolator_calibration_init`, the primary's code that
+  lies there.  The harness runs both only as far as their first write
+  to flash, which faults there as code (README.md, "Hand-written C").
 
 On 2026-09-28 the bench Z3801A was taken into the installer and back,
 with queries only: `*IDN?` answered `Peru-A`, `:DIAGnostic:TEST? 1`
@@ -519,7 +555,8 @@ parsed as a mnemonic; the bench Z3801A rejects it with -112, "Program
 mnemonic too long".  The tool does not write the boot area or EEPROM.
 It checks for blank flash after erasing, waits for each record's
 prompt and checks the error queue before continuing.  The installer's
-word programmer (`0x107c18` in the unpacked Z3801A installer) compares
+word programmer (`installer_flash_program_word`, `0x107c18` in the
+unpacked Z3801A and Z3805A installer; "The installer" above) compares
 the flash word to the requested word and reports failure if
 programming fails.
 

@@ -782,3 +782,26 @@ scpi_parse_text	error	0, or -21 for a NUL inside the text
 duart_input_0_debounced	level	the input bit, 0 or 1
 duart_input_1_debounced	level	the input bit, 0 or 1
 duart_input_2_debounced	level	the input bit, 0 or 1
+# the installer's last 25: its converters' and formatters' copies, its handlers and its flash word programmer (rewritten/z3805a-3543b/installer/)
+installer_scpi_parse_text	error	0, or -21 for a NUL inside the text
+installer_scpi_parse_short	error	0, or a negative condition
+installer_scpi_number_to_short	error	0, or -11 out of range
+installer_scpi_unsigned_to_digits	error	0, or -40 when the digits do not fit
+installer_scpi_format_string	error	always 0
+installer_scpi_format_counted_text	error	-90, the response's end
+installer_scpi_format_long	error	0, or a negative condition
+installer_scpi_format_short	error	0, or a negative condition
+installer_scpi_format_unsigned_long	error	0, or a negative condition
+installer_scpi_match_suffix	unit	the unit's index plus one, 0 for none
+installer_scpi_apply_suffix	error	0, or a negative condition
+installer_status_clear_events	error	always 0
+installer_flash_program_word	error	0, -11 outside 0x10000 to 0x7ffff, -8 at the fifth try
+installer_scpi_set_common_CLS	error	always 0
+installer_scpi_query_common_IDN	error	always 0
+installer_scpi_query_SYSTem_ERRor	error	always 0
+installer_scpi_set_SYSTem_LANGuage	error	-60 for PRIMARY, which ends the session; 0 for INSTALL, else -8
+installer_scpi_query_SYSTem_LANGuage	error	always 0
+installer_scpi_set_DIAGnostic_DOWNload	error	0, -11 for a bad record or address, or the flash's -8
+installer_scpi_set_DIAGnostic_ERASe	error	0, or -8 at the fifth try
+installer_scpi_query_DIAGnostic_ERASe	error	always 0
+installer_scpi_query_DIAGnostic_TEST	error	0, or -8 for a choice past 4

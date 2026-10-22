@@ -40,6 +40,21 @@ state.  Each is by the routine and the address that shows it.
   (`0x5e948`).  Its report pushes the address before the code
   (`0x5ec8c`), which `float_exception_report` prints as its code; the
   C calls it with both, through `libc.h`'s `libc_raise_report`.
+- **The installer's `:DIAGnostic:ERASe` (`installer::0x107e6e`) and
+  its flash word programmer (`installer::0x107c18`)** count their
+  tries and report failure, -200, when the count reaches five
+  (`installer::0x107f4c`, `installer::0x107ca6`), not when the fifth
+  try fails, so that a fifth try that succeeds is reported as failed.
+
+## Overruns
+
+- **The installer's `:DIAGnostic:DOWNload` (`installer::0x107cb8`)**
+  copies its string parameter into 512 bytes of its frame unbounded
+  (`installer::0x107ccc`), so that a text of 512 characters or more
+  runs into the 256 words it then converts the digits into, and one of
+  1024 or more over its saved frame pointer and return address.  The C
+  copies it the same way, into a 512-byte array; the harness's texts
+  are short.
 
 ## Reads of what nothing set
 

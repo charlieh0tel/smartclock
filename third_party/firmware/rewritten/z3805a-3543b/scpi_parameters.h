@@ -1,6 +1,7 @@
-/* What the SCPI parameters' matching shares with the installer's copy
- * of it (scpi_parameters.c, installer_scpi_parameters.c): its bodies,
- * which both copies' routines call.  The exported C includes the
+/* What the SCPI parameters' parsers and matching share with the
+ * installer's copies of them (scpi_parameters.c,
+ * installer_scpi_parameters.c): their bodies, which both copies'
+ * routines call.  The exported C includes the
  * hand-written headers after its own declarations and before the
  * hand-written .c files, so every one of them can use it. */
 
@@ -61,4 +62,36 @@ static uint32_t scpi_parameters_left_out(scpi_parameter** next, scpi_call* call,
     *offset += (*next)->kinds->size + sizeof(int16_t);
   }
   return 0;
+}
+
+/* A converted parameter's unit, the matched unit's index plus one, is
+ * stored after its value, where its handler reads it (0x25eda). */
+static void scpi_engine_store_unit(void* after_value, int16_t unit) {
+  *(int16_t*)after_value = unit;
+}
+
+/* scpi_parse_text's and its installer copy's body: a string token's
+ * text, through value; STATUS_SCPI_INVALID_STRING if the text holds a
+ * NUL, which its length counts past.  Its lengths compare as the
+ * image's, the token's signed. */
+static uint32_t scpi_parameters_text(scpi_token_string* token, char** value) {
+  if ((int32_t)libc_length(token->text) != (int16_t)token->length) {
+    return STATUS_SCPI_INVALID_STRING;
+  }
+  *value = token->text;
+  return 0;
+}
+
+/* scpi_parse_short's and its installer copy's body: the suffix, then
+ * the number as a short, and its unit after it. */
+static int32_t scpi_parameters_short(scpi_number* number, int16_t* value,
+                                     scpi_unit* units) {
+  int32_t error = scpi_engine_apply_suffix(number, units);
+
+  if (error != 0) {
+    return error;
+  }
+  error = scpi_engine_number_to_short(number, value, number->scale);
+  scpi_engine_store_unit(value + 1, number->unit);
+  return error;
 }

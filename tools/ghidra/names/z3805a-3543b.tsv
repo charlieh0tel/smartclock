@@ -1807,8 +1807,12 @@ installer::0x105f7c	function	installer_status_apply_condition	context	the instal
 installer::0x106036	function	installer_status_clear_bit	context	the installer's status_clear_bit	int16_t installer_status_clear_bit(status_model *status, int condition)
 installer::0x10604a	function	installer_condition_is_command_error	context	the installer's condition_is_command_error	uint32_t installer_condition_is_command_error(int32_t param_1)
 installer::0x106164	function	installer_status_read_event	context	the installer's status_read_event	void installer_status_read_event(status_model *status, int index, uint16_t *event)
+installer::0x1061c8	function	installer_status_clear_events	context	the installer's status_clear_events, byte for byte	uint32_t installer_status_clear_events(status_model *status)
+installer::0x1061f8	function	installer_error_queue_clear	context	the installer's error_queue_clear, byte for byte but for its jsr.l's target	void installer_error_queue_clear(status_model *status, int *code)
+installer::0x10621a	function	installer_error_queue_read	context	the installer's error_queue_read, byte for byte but for its jsr.l's target	void installer_error_queue_read(status_model *status, int *code, uint32_t *message)
 installer::0x106236	function	installer_error_queue_create	context	the installer's error_queue_create	uint32_t installer_error_queue_create(status_error_queue **queue, int capacity, status_model *status)
 installer::0x106282	function	installer_error_queue_push	context	the installer's error_queue_push	int16_t installer_error_queue_push(status_error_queue *queue, int32_t code, uint32_t value)
+installer::0x10634c	function	installer_error_queue_pop	context	the installer's error_queue_pop, byte for byte but for its jsr.l's target, installer_status_prompt_refresh	void installer_error_queue_pop(status_error_queue *error_queue, int *code, uint32_t *value)
 installer::0x106548	function	installer_error_message_lookup	context	the installer's error_message_lookup	char *installer_error_message_lookup(int32_t code)
 installer::0x106f30	function	installer_scpi_interpret	context	the installer's scpi_interpret	undefined4 installer_scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
 installer::0x10729c	function	installer_scpi_call_handler	context	the installer's scpi_call_handler	int installer_scpi_call_handler(scpi_call *call, void **response)
@@ -1829,6 +1833,7 @@ installer::0x107886	function	installer_scpi_task_create	context	the installer's 
 installer::0x107902	function	installer_scpi_task	context	the installer's SCPI task, which installer_scpi_task_create starts
 installer::0x107a00	function	installer_status_init	context	the installer's status_init: builds installer_status_object, sets two registers up, sets installer_status_ready	uint32_t installer_status_init(void)
 installer::0x107a86	function	installer_status_report	context	the installer's status_report	uint32_t installer_status_report(int16_t code)
+installer::0x107c18	function	installer_flash_program_word	context	programs a flash word for :DIAGnostic:DOWNload: the AM29F010 pairs' program command, then polls the word, up to 100 times, for its data or both parts' DQ5, up to 5 tries, then the read/reset command; -11 outside 0x10000 to 0x7ffff, -8 at the fifth try	int32_t installer_flash_program_word(uint16_t *address, uint32_t word)
 installer::0x108166	function	installer_record_checksum	context	the installer's record_checksum	uint16_t installer_record_checksum(void *record, uint16_t length)
 installer::0x1081ac	function	installer_parameter_record_read	context	the installer's parameter_record_read	uint8_t installer_parameter_record_read(void)
 installer::0x10822e	function	installer_idn_model_default	context	sets the *IDN? model to 58000A

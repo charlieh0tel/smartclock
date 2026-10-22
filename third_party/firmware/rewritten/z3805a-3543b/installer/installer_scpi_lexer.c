@@ -31,6 +31,20 @@ int8_t installer_scpi_multiplier_exponent(int32_t name) {
   return scpi_engine_multiplier(name);
 }
 
+/* The unit a suffix names, its index plus one, and its power of ten,
+ * allowing a one- or two-letter multiplier before a unit that takes
+ * one; 0 for none (installer::0x1056d8). */
+int16_t installer_scpi_match_suffix(int32_t length, char* suffix,
+                                    scpi_unit* units, int16_t* scale) {
+  return scpi_engine_match_suffix(length, suffix, units, scale);
+}
+
+/* Matches a number's suffix against the node's units, setting its scale
+ * and unit (installer::0x105792). */
+int32_t installer_scpi_apply_suffix(scpi_number* number, scpi_unit* units) {
+  return scpi_engine_apply_suffix(number, units);
+}
+
 /* The SCPI lexer: the next token from the input, its kind or an error
  * (installer::0x104b8e). */
 int32_t installer_scpi_scan_token(scpi_port* input, scpi_token* token,

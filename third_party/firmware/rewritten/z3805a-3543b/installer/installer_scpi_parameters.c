@@ -1,8 +1,21 @@
-/* The installer's copies of the SCPI parameters' matching
+/* The installer's copies of the SCPI parameters' parsers and matching
  * (`applications/scpi/parameters`; scpi_parameters.c has the
  * primary's), whose bodies, scpi_parameters.h's, both share.  Written by
  * hand in place of the decompiler's (docs/firmware/README.md,
  * "Hand-written C"); each keeps its generated prototype. */
+
+/* A string token's text, through value; STATUS_SCPI_INVALID_STRING if
+ * the text holds a NUL (installer::0x1040f4). */
+uint32_t installer_scpi_parse_text(scpi_token_string* token, void* unused,
+                                   char** value) {
+  return scpi_parameters_text(token, value);
+}
+
+/* The suffix, then the number as a short (installer::0x104136). */
+int32_t installer_scpi_parse_short(scpi_number* number, void* unused,
+                                   int16_t* value, scpi_unit* units) {
+  return scpi_parameters_short(number, value, units);
+}
 
 /* Finds the node's next parameter that takes a token of the kind and
  * marks it with the kind (installer::0x1055a2). */

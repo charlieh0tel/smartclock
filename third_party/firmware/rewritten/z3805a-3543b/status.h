@@ -90,6 +90,17 @@ static void status_model_read_event(status_model* status, int32_t index,
   status_model_propagate(status, reg);
 }
 
+/* status_clear_events' and its installer copy's body: reads every
+ * register's event word but the top one's, clearing them, for *CLS; 0. */
+static uint32_t status_model_clear_events(status_model* status) {
+  uint16_t discarded;
+
+  for (int16_t index = status->register_count - 1; index > 0; index--) {
+    status_model_read_event(status, index, &discarded);
+  }
+  return 0;
+}
+
 /* The negative condition for an error code's class; 0 for none, a
  * code from -1 to -99 (0x2863c to 0x28670). */
 static int32_t status_model_error_class(int16_t code) {

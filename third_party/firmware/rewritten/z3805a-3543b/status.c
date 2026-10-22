@@ -176,12 +176,7 @@ void status_read_condition(status_model* status, int32_t index,
 /* Reads every register's event word but the top one's, clearing them,
  * for *CLS (0x2851a). */
 uint32_t status_clear_events(status_model* status) {
-  uint16_t discarded;
-
-  for (int16_t index = status->register_count - 1; index > 0; index--) {
-    status_read_event(status, index, &discarded);
-  }
-  return 0;
+  return status_model_clear_events(status);
 }
 
 /* Takes the oldest error from the queue, its value dropped, for *CLS

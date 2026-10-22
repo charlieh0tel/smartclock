@@ -4033,6 +4033,19 @@ typedef enum __attribute__((packed)) status_replay_mode {
   STATUS_REPLAY_HAPPENINGS = 1, /* by status_happening */
 } status_replay_mode;
 
+/* The installer's :DIAGnostic:TEST? choices, its parameter's value,
+ * a short: the jump table at installer::0x1080b0, which
+ * installer_scpi_query_DIAGnostic_TEST indexes by the choice less 4
+ * from installer::0x1080b8 (installer::0x1080a6); any other choice is
+ * an execution error.  docs/firmware/restart.md, "The installer". */
+typedef enum __attribute__((packed)) installer_test_choice {
+  INSTALLER_TEST_SUMMARY = 0,  /* bits 0 to 3: checksum, CPU, RAM, DUART */
+  INSTALLER_TEST_CHECKSUM = 1, /* boot_selftest.checksum's lane flags */
+  INSTALLER_TEST_CPU = 2,
+  INSTALLER_TEST_RAM = 3, /* and its failed data bits and address lines */
+  INSTALLER_TEST_UART = 4,
+} installer_test_choice;
+
 /* The boot code's self-test results, boot_selftest at 0x10ab20: a
  * checksum word, then the fields of selftest_results' first 14 bytes in
  * their order.  The installer's :DIAGnostic:TEST? reads them. */

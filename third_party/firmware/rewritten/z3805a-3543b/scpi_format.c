@@ -3,7 +3,8 @@
  * docs/firmware/modules.md, `applications/scpi/format`).  The exported C
  * includes this file after its own, so the types and prototypes it
  * declares are in scope; each function here keeps its generated
- * prototype. */
+ * prototype.  scpi_format.h holds the bodies its installer copies
+ * share. */
 
 /* What scpi_real_to_text is given: 15 significant digits for a double,
  * 6 for a float, and SCPI_REAL_EVERY_DIGIT (scpi.h) for the resolution
@@ -18,13 +19,6 @@ static const int16_t SCPI_REAL_FLOAT_DIGITS = 6;
 static const int16_t SCPI_REAL_TEXT_OVERHEAD = 4 + 3;
 
 #define SCPI_REAL_TEXT_SIZE 24
-
-/* scpi_unsigned_to_digits' buffer: digits right-aligned to its index
- * 16, with room before them for a sign or a block's header; its size an
- * array's, so #define. */
-static const int16_t SCPI_DIGITS_END = 16 + 1;
-
-#define SCPI_DIGITS_SIZE 20
 
 /* A double as NR3 text, through scpi_real_to_text, which takes its bits
  * as two longs, high first. */
@@ -43,11 +37,6 @@ static uint32_t scpi_engine_real_to_text(double value, char* text,
                            REAL_EXPONENT_DIGITS, resolution, REAL_POINT_ALWAYS);
 }
 
-/* Writes text through the port. */
-static void scpi_engine_write(scpi_port* output, char* text, int32_t length) {
-  output->methods->write(output, text, length);
-}
-
 /* A string as it is (0x2636e). */
 int32_t scpi_format_text(scpi_port* output, char** value) {
   scpi_engine_write(output, *value, scpi_engine_length(*value));
@@ -56,17 +45,7 @@ int32_t scpi_format_text(scpi_port* output, char** value) {
 
 /* A string in double quotes, each quote doubled (0x2639e). */
 int32_t scpi_format_string(scpi_port* output, char** value) {
-  static const char QUOTE = '"';
-
-  output->methods->put(output, QUOTE);
-  for (char* text = *value; *text != 0; text++) {
-    output->methods->put(output, *text);
-    if (*text == QUOTE) {
-      output->methods->put(output, QUOTE);
-    }
-  }
-  output->methods->put(output, QUOTE);
-  return 0;
+  return scpi_engine_format_string(output, value);
 }
 
 /* 0 or 1 (0x2640c). */
@@ -79,9 +58,7 @@ int32_t scpi_format_boolean(scpi_port* output, int16_t* value) {
  * response, which scpi_interpret takes as -440, Query UNTERMINATED
  * after indefinite response, for anything after it (0x26438). */
 int32_t scpi_format_counted_text(scpi_port* output, scpi_token_string* text) {
-  /* The length a signed word here (0x2643e). */
-  scpi_engine_write(output, text->text, (int16_t)text->length);
-  return SCPI_STATUS_INDEFINITE_RESPONSE;
+  return scpi_engine_format_counted_text(output, text);
 }
 
 /* The keyword for a value, from the node's list: the value's index, or
@@ -109,39 +86,17 @@ int32_t scpi_format_choice(scpi_port* output, int16_t* value,
 
 /* A sign, + or -, before a long's digits (0x26522). */
 int32_t scpi_format_long(scpi_port* output, int32_t* value) {
-  char digits[SCPI_DIGITS_SIZE];
-  int16_t start;
-  bool negative = *value < 0;
-  uint32_t magnitude = negative ? -(uint32_t)*value : (uint32_t)*value;
-  int32_t error = scpi_unsigned_to_digits(magnitude, digits, &start);
-
-  if (error != 0) {
-    return error;
-  }
-  digits[--start] = negative ? '-' : '+';
-  scpi_engine_write(output, &digits[start], SCPI_DIGITS_END - start);
-  return 0;
+  return scpi_engine_format_long(output, value);
 }
 
 /* A short, through scpi_format_long (0x265a2). */
 int32_t scpi_format_short(scpi_port* output, int16_t* value) {
-  int32_t wide = *value;
-
-  return scpi_format_long(output, &wide);
+  return scpi_engine_format_short(output, value);
 }
 
 /* + before an unsigned long's digits (0x265c2). */
 int32_t scpi_format_unsigned_long(scpi_port* output, uint32_t* value) {
-  char digits[SCPI_DIGITS_SIZE];
-  int16_t start;
-  int32_t error = scpi_unsigned_to_digits(*value, digits, &start);
-
-  if (error != 0) {
-    return error;
-  }
-  digits[--start] = '+';
-  scpi_engine_write(output, &digits[start], SCPI_DIGITS_END - start);
-  return 0;
+  return scpi_engine_format_unsigned_long(output, value);
 }
 
 /* An unsigned short, through scpi_format_unsigned_long (0x2661c). */

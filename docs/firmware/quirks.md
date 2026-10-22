@@ -59,6 +59,14 @@ state.  Each is by the routine and the address that shows it.
   (`installer::0x107f4c`, `installer::0x107ca6`), not when the fifth
   try fails, so that a fifth try that succeeds is reported as failed.
 
+- **pForth's `fill` (`0x191fa`)**, `( address count byte -- )`, pops
+  the byte and the count, and for a count of 0 or less returns before
+  it pops the address (`0x19200`), so that `0 fill` leaves the address
+  on the stack; and it counts with `dbf`, which decrements only a word,
+  so that a count above 65536 fills ((count - 1) mod 65536) + 1 bytes
+  (`0x19206`).  It is
+  the image's assembly, which the export keeps as it is.
+
 ## Overruns
 
 - **The installer's `:DIAGnostic:DOWNload` (`installer::0x107cb8`)**

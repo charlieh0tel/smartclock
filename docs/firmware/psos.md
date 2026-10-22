@@ -163,11 +163,31 @@ data area `psos_kernel`, the services `psos_service`);
 `kernel_return_from_interrupt`, trap #5, and `kernel_switch_task`, on
 the way out of a service, save the running task's registers in its
 record and switch to the first ready one.  Before `kernel_init` sits
-`kernel_init_checked` (`0x15caa`), which nothing refers to: it sums the
-kernel's words from `0x14acc` to `psos_call` (`0x1606c`) and, unless
-`kernel_checksum` (`0x14ac8`) is 0 or the sum, fails with error 4
-before falling into `kernel_init`.  The stored sum is `0x028a9b53`;
-the words now sum to `0x028d24cc`, so the check would fail.  Service 0
+`kernel_init_checked` (`0x15caa`), which nothing refers to: trap #6's
+entry in the kernel's header, `primary_trap_6` (`0x14ab6`), branches
+past it to `kernel_init` (`0x15cd8`).  It sums the kernel's words,
+unsigned, into a long, from `0x14acc`, just after the stored sum, to
+`psos_call` (`0x1606c`), both found PC-relative (`0x15caa`, `0x15cb0`),
+and, unless `kernel_checksum` (`0x14ac8`, read at `0x15cc8`) is 0 or
+the sum, puts error 4 in D7 and halts in `kernel_halt` (`0x15cd2`,
+`0x15ec4`: `0xdead` in A0, then `stop #0`); else it falls into
+`kernel_init`.  The stored sum is `0x028a9b53`; the words sum to
+`0x028d24cc`, so the check would halt the kernel (`quirks.md`).  The
+range holds the kernel's name, banner and code, the same bytes in the
+installer's copy, `0xeca06` higher, so nothing in it depends on where
+it lies; the long that depends on where the firmware put its
+configuration, `0x51226` at `0x14ac2`, lies before it, as do the trap
+entries.  Nor is it a wrong end: no run of words that starts between
+`0x14a00` and `0x14d00` sums to the stored value.  Every image in
+`third_party/firmware/` -- the 58503A's 3633 and 3704, the 58503B's
+1.01.04, the Z3801A's 3543, this one, the Z3815A's 4010 and the
+Z3816A's 4001 -- has the same stored sum in both its copies of the
+kernel, and every copy sums to `0x028d24cc` but the 58503A 3633's
+first (`0x1c8e`), which differs from its second in 758 bytes and sums
+to `0x028ce1d4`: the sum was not made over the kernel these images
+carry.  The installer's copy here
+(`installer_kernel_init_checked`, `installer::0x1026b0`) is the
+primary's byte for byte, and as unreachable.  Service 0
 has a binding too, `psos_version` (`0x16f68`), which nothing calls.
 
 ## Services

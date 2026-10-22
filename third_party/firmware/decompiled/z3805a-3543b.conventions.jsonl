@@ -1664,7 +1664,7 @@
 {"address":"0005e93c","name":"float_raise","note":"raises a floating-point exception","convention":"c","confidence":"read","copies":"D0:D1","preserves":["D3","D4","D5","D6","D7","A0","A1"],"stack":[{"offset":4,"size":4}]}
 {"address":"0005ec9e","name":"abs","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0005ecae","name":"atexit","note":"registers a function for call_atexit_functions in atexit_functions: 1 for NULL or a full table (atexit_count 32), else 0; nothing calls it","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0005ecda","name":"call_atexit_functions","convention":"unknown"}
+{"address":"0005ecda","name":"call_atexit_functions_entry","note":"a bra.b to call_atexit_functions, which program_exit calls (0x149a8); Ghidra takes it for a thunk","convention":"unknown"}
 {"address":"0005ecf0","name":"call_atexit_functions","convention":"unknown"}
 {"address":"0005ecfa","name":"atoi","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0005eea2","name":"div","note":"quotient in D0, remainder in D1","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
@@ -1754,10 +1754,10 @@
 {"address":"installer::0010135c","name":"installer_entry","note":"the installer's entry from the boot code, as primary_reset's end (0x14922): the stack at 0x10fffe and a null frame, the float library's state, atexit's count, errno and rand's seed, then installer_start and installer_program_exit with its result","convention":"other","confidence":"read"}
 {"address":"installer::001013ae","name":"installer_program_exit","note":"the installer's program_exit","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001013c2","name":"installer_program_end_report","note":"the installer's program_end_report","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"installer::001014b4","name":"installer_kernel_dispatch_service","convention":"unknown"}
-{"address":"installer::001014b8","name":"installer_kernel_dispatch_io","convention":"unknown"}
-{"address":"installer::001014bc","name":"installer_kernel_init","convention":"unknown"}
-{"address":"installer::001014c0","name":"installer_kernel_return_from_interrupt","convention":"unknown"}
+{"address":"installer::001014b4","name":"installer_trap_3","note":"trap #3's handler in the boot vector table (0x8c), the installer's primary_trap_3: a bra.w to installer_kernel_dispatch_service","convention":"unknown"}
+{"address":"installer::001014b8","name":"installer_trap_4","note":"trap #4's handler in the boot vector table (0x90), the installer's primary_trap_4: a bra.w to installer_kernel_dispatch_io","convention":"unknown"}
+{"address":"installer::001014bc","name":"installer_trap_6","note":"trap #6's handler in the boot vector table (0x98), the installer's primary_trap_6: a bra.w to installer_kernel_init","convention":"unknown"}
+{"address":"installer::001014c0","name":"installer_trap_5","note":"trap #5's handler in the boot vector table (0x94), the installer's primary_trap_5: a bra.w to installer_kernel_return_from_interrupt","convention":"unknown"}
 {"address":"installer::0010152c","name":"installer_kernel_dispatch_service","note":"the installer's copy of kernel_dispatch_service, at 0x14b26 plus 0xeca06, byte for byte","convention":"exception","confidence":"documented","in":[{"register":"D7","type":"char","name":"service"},{"register":"D0"},{"register":"D1"},{"register":"D2"},{"register":"D3"},{"register":"A0"},{"register":"A1"}],"out":[{"register":"D7","type":"char","name":"error"}],"family":"psos"}
 {"address":"installer::00101610","name":"installer_kernel_dispatch_io","note":"the installer's copy of kernel_dispatch_io, at 0x14c0a plus 0xeca06, byte for byte","convention":"exception","confidence":"documented","in":[{"register":"D7","type":"char","name":"function"},{"register":"D0","type":"int","name":"device"}],"family":"psos"}
 {"address":"installer::00101680","name":"installer_kernel_switch_task","note":"the installer's copy of kernel_switch_task, at 0x14c7a plus 0xeca06, byte for byte","convention":"other","confidence":"read","family":"psos"}
@@ -1861,6 +1861,7 @@
 {"address":"installer::00102f6a","name":"installer_psos_io_read","note":"the installer's psos_io_read","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00102f9c","name":"installer_psos_io_write","note":"the installer's psos_io_write","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00102fce","name":"installer_psos_io_control","note":"the installer's copy of psos_io_control, at 0x1747a plus 0xebb54, byte for byte","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00102ff2","name":"installer_cpu_register_test","note":"a bare rts where the primary has cpu_register_test (0x1749e), next after installer_psos_io_control as there; nothing calls it","convention":"unknown"}
 {"address":"installer::00102ff4","name":"installer_gp_port_select","note":"the installer's gp_port_select","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"installer::00103016","name":"installer_duartb_mode_from_settings","note":"the installer's duartb_mode_from_settings","convention":"unknown"}
 {"address":"installer::001030b4","name":"installer_duartb_baud_from_settings","note":"the installer's duartb_baud_from_settings","convention":"unknown"}
@@ -2025,7 +2026,7 @@
 {"address":"installer::00108c62","name":"installer_float_normalize","note":"the installer's copy of float_normalize, at 0x5e83c plus 0xaa426, byte for byte","convention":"other","confidence":"read","family":"softfloat"}
 {"address":"installer::00108ca8","name":"installer_float_raise","note":"the installer's float_raise","convention":"c","confidence":"read","copies":"D0:D1","preserves":["D3","D4","D5","D6","D7","A0","A1"],"stack":[{"offset":4,"size":4}]}
 {"address":"installer::0010900a","name":"installer_atexit","note":"the installer's copy of atexit, at 0x5ecae plus 0xaa35c, byte for byte but for its absolute addresses, installer_atexit_count and installer_atexit_functions","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"installer::00109036","name":"installer_call_atexit_functions","convention":"unknown"}
+{"address":"installer::00109036","name":"installer_call_atexit_functions_entry","note":"the installer's call_atexit_functions_entry, a bra.b to installer_call_atexit_functions, which installer_program_exit calls (installer::0x1013ae)","convention":"unknown"}
 {"address":"installer::0010904c","name":"installer_call_atexit_functions","note":"the installer's call_atexit_functions","convention":"unknown"}
 {"address":"installer::00109160","name":"installer_memcpy","note":"the installer's memcpy","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::0010917e","name":"installer_strncpy","note":"the installer's strncpy","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}

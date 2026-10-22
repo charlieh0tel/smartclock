@@ -170,6 +170,10 @@ public class SmartClockSetup extends GhidraScript {
 	private static final long PRIMARY_VECTORS = 0x10000;
 	private static final long BOOT_VECTORS = 0x0;
 	private static final int VECTOR_COUNT = 256;
+	/** SmartClockInstaller.java's overlay, the installer in RAM. */
+	private static final String INSTALLER_OVERLAY = "installer";
+	/** A data item's operand index, for a reference from it. */
+	private static final int DATA_OPERAND = 0;
 
 	/** Opcode of jmp (d8,PC,Xn); the extension word follows. */
 	private static final int JMP_PC_INDEX = 0x4efb;
@@ -390,6 +394,7 @@ public class SmartClockSetup extends GhidraScript {
 		mapMemory();
 		labelVectors(BOOT_VECTORS, "boot");
 		labelVectors(PRIMARY_VECTORS, "primary");
+		referBootVectorsToInstaller();
 		typeStrings();
 		analyzeChanges(currentProgram);
 		recoverServiceTables();
@@ -1272,6 +1277,40 @@ public class SmartClockSetup extends GhidraScript {
 				function.setName(name, SourceType.USER_DEFINED);
 			}
 		}
+	}
+
+	/**
+	 * Refers each boot vector that points into the installer's overlay to
+	 * the overlay rather than plain RAM: the boot code copies that table to
+	 * RAM and points VBR at it before it enters the installer, so its
+	 * handlers are the installer's.  Without the overlay, before
+	 * SmartClockInstaller.java has run, the references stay plain.
+	 */
+	private void referBootVectorsToInstaller() throws Exception {
+		MemoryBlock overlay = currentProgram.getMemory().getBlock(INSTALLER_OVERLAY);
+		if (overlay == null) {
+			return;
+		}
+		ReferenceManager references = currentProgram.getReferenceManager();
+		long[] targets = vectorTargets(BOOT_VECTORS);
+		int count = 0;
+		for (int vector = 0; vector < VECTOR_COUNT; vector++) {
+			Address inOverlay = overlay.getStart().getNewAddress(targets[vector]);
+			if (!overlay.contains(inOverlay)) {
+				continue;
+			}
+			Address slot = toAddr(BOOT_VECTORS + vector * 4L);
+			Address plain = toAddr(targets[vector]);
+			for (Reference reference : references.getReferencesFrom(slot)) {
+				if (reference.getToAddress().equals(plain)) {
+					references.delete(reference);
+				}
+			}
+			references.addMemoryReference(slot, inOverlay, RefType.DATA,
+				SourceType.USER_DEFINED, DATA_OPERAND);
+			count++;
+		}
+		println("boot vectors referred to the installer: " + count);
 	}
 
 	/** Each vector's handler address, from the table at base. */

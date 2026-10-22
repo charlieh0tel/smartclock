@@ -526,14 +526,22 @@ PLL_STAGE_HOLDOVER`, `adc_average(ADC_5V)`.
 
 **Installer** unpacks the records the boot code copies to RAM, after
 its vector table, into an overlay named `installer`, writable so that
-cells the installer changes do not fold, and makes a function at its
-entry and at each vector's handler, and clears the code analysis found
-in the packed records themselves, which never run where they lie, so
-that the overlay is the installer's only copy.  Boot code jumps into plain RAM,
+cells the installer changes do not fold, types its copy of the vector
+table as pointers, the initial SP's too, as Setup types the primary's,
+makes a function at its entry and at each vector's handler, and clears
+the code analysis found in the packed records themselves, which never
+run where they lie, so that the overlay is the installer's only copy.
+Boot code jumps into plain RAM,
 which the overlay does not serve; the jump is marked a call, so it
-reads `func_0x0010135c` rather than flowing into RAM with no code.  The
+reads `func_0x0010135c` rather than flowing into RAM with no code.
+The boot vector table at `0x0` is the one the boot code copies to RAM
+for the installer, so Setup, once the overlay exists, refers each of
+its vectors that points into the overlay (`0x10c`'s `0x103d74`,
+`installer_duart_interrupt`) to the overlay, not to plain RAM.  The
 installer's functions are not labeled at their plain addresses: the
-primary keeps its own data there.
+primary keeps its own data there.  Run again over an existing overlay,
+it types the vectors and marks the calls again, leaving the overlay's
+bytes as they are.
 
 **Forth** gives the pForth console's kernel its register convention
 (`console.md`, "The kernel's registers"): each function in the span of

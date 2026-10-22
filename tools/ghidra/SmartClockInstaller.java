@@ -15,6 +15,9 @@
 //
 // Boot code jumps into plain RAM, which an overlay does not serve; the
 // jump is marked a call, so the decompiler shows func_0xADDRESS there.
+// The boot vector table's handlers are the installer's, the table the
+// RAM copy is made from; SmartClockSetup.java, run again after this,
+// refers each of its vectors that points into the overlay to the overlay.
 //
 // The packed records are never run where they lie, but analysis finds
 // code in them, a copy of each installer routine at its ROM address; the
@@ -44,6 +47,8 @@ public class SmartClockInstaller extends GhidraScript {
 	private static final long RAM = 0x100000;
 	private static final int VECTOR_TABLE_BYTES = 0x400;
 	private static final int VECTOR_COUNT = VECTOR_TABLE_BYTES / 4;
+	/** Vector 0 is the initial SP, not a handler; handlers start at reset. */
+	private static final int FIRST_HANDLER_VECTOR = 1;
 	private static final byte START = 'S';
 	private static final byte COPY = 'C';
 	private static final byte END = 'E';
@@ -57,8 +62,9 @@ public class SmartClockInstaller extends GhidraScript {
 		long entry = Long.decode(args[1]);
 		MemoryBlock existing = currentProgram.getMemory().getBlock(OVERLAY);
 		if (existing != null) {
-			println("overlay " + OVERLAY + " exists; calls refreshed only");
+			println("overlay " + OVERLAY + " exists; vectors and calls refreshed only");
 			removeMirroredLabels(existing);
+			typeVectors(existing);
 			callIntoInstaller(existing);
 			clearPackedCode(records);
 			return;
@@ -75,18 +81,28 @@ public class SmartClockInstaller extends GhidraScript {
 		Address start = block.getStart();
 		createLabel(start, OVERLAY + "_vectors", true, SourceType.USER_DEFINED);
 		makeFunction(start.getNewAddress(entry), OVERLAY + "_entry");
-		for (int vector = 1; vector < VECTOR_COUNT; vector++) {
-			Address slot = start.add(vector * 4L);
-			clearListing(slot, slot.add(3));
-			createData(slot, PointerDataType.dataType);
-			long target = getInt(slot) & 0xffffffffL;
-			if (block.contains(start.getNewAddress(target))) {
-				makeFunction(start.getNewAddress(target), null);
-			}
-		}
+		typeVectors(block);
 		analyzeChanges(currentProgram);
 		callIntoInstaller(block);
 		clearPackedCode(records);
+	}
+
+	/**
+	 * Types the overlay's copy of the vector table as pointers, the initial
+	 * SP's included, as SmartClockSetup types the primary's, and makes a
+	 * function at each handler in the overlay.
+	 */
+	private void typeVectors(MemoryBlock block) throws Exception {
+		Address start = block.getStart();
+		for (int vector = 0; vector < VECTOR_COUNT; vector++) {
+			Address slot = start.add(vector * 4L);
+			clearListing(slot, slot.add(3));
+			createData(slot, PointerDataType.dataType);
+			Address target = start.getNewAddress(getInt(slot) & 0xffffffffL);
+			if (vector >= FIRST_HANDLER_VECTOR && block.contains(target)) {
+				makeFunction(target, null);
+			}
+		}
 	}
 
 	/**

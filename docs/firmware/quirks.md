@@ -17,6 +17,12 @@ state.  Each is by the routine and the address that shows it.
   `get_gps_utc_offset` says it is valid, the test at `0x115a6` the
   other way round from `utc_to_gps`'s, so that it uses the offset only
   while it is not valid.
+- **`kernel_init_checked` (`0x15caa`)** compares the kernel's word
+  sum from `0x14acc` to `psos_call`, `0x028d24cc`, with
+  `kernel_checksum` (`0x14ac8`), `0x028a9b53`, which no image's kernel
+  matches, so that it would halt the CPU (`0x15cd2`, `kernel_halt`).
+  Trap #6 enters `kernel_init` past it (`0x14ab6`) and nothing refers
+  to it, so the check never runs (`psos.md`, "Inside the kernel").
 - **`crc16_with_sum` (`0x1213a`)** tests the byte's own low bit, never
   shifted, against the CRC's in each of its 8 steps, so that the CRC
   is not the CCITT one; it returns the bytes' sum, inverted and plain,

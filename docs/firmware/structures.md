@@ -210,9 +210,13 @@ three longs, the year, 1994 to 2007, month and day) and `_TIME`
 centimeters), which the setter gives `pllc_request_c` one by one; only
 the descriptors refer to the cells.  Their defaults are 1961-08-22
 10:48:00, a date below the descriptor's minimum, and 0, 0, 0.  The
-descriptors at `0x335f4` and `0x3363c`, whose values are `0x101e08` (a
-long, 1 to 256) and `0x101e0c` (three, 0 to 100), are referred to by
-nothing, so those cells stay unlabeled.
+numeric descriptors at `0x335f4` and `0x3363c`, after
+`:SAMPle:IMULtiple`'s, are referred to by nothing, no handler and no
+table: `scpi_param_SAMPle_unreferenced_integer`, one long, 1 to 256,
+whose value `scpi_value_SAMPle_unreferenced_integer` (`0x101e08`) is
+filled with 63, and `scpi_param_SAMPle_unreferenced_integers`, three,
+0 to 100, whose `scpi_value_SAMPle_unreferenced_integers`
+(`0x101e0c`) are filled with 0; no command of the tree is theirs.
 
 ## EEPROM records
 
@@ -1733,9 +1737,15 @@ unreferenced copyright notice.  The runs left are the rts after an
 endless loop (`installer::0x100da2`, `0x104086`), the entry at
 `installer::0x108938` that swaps `float_compare`'s operands, and a few
 unreferenced bytes (`installer::0x10077a`, `0x104b86`), as in the
-primary, and the overlay's first long, the reset stack pointer
-`0x10fffe`, which `SmartClockInstaller.java` leaves untyped where
-`SmartClockSetup.java` types the primary's.
+primary.  The overlay's first long, the reset stack pointer
+`0x10fffe`, `SmartClockInstaller.java` types as a pointer, as
+`SmartClockSetup.java` types the primary's.  The primary's twins of
+the installer's text are labeled too: `revision_text` (`0x12eee`,
+`"3543B"`), `copyright_text` (`0x12ef4`), `spoo_name` (`0x20ef8`) and
+`dev_tab_header` (`0x516de`); and `installer_cpu_register_test`
+(`installer::0x102ff2`) is a bare `rts` where the primary has
+`cpu_register_test` (`0x1749e`), next after `psos_io_control` in
+both.
 
 ## The preserved region
 
@@ -1767,10 +1777,16 @@ alone, so each has its own label:
 
 `retained_block` (`0x101e70`) labels the block, typed `uint8_t[2]`
 only, as `sample_values` is, since its other cells have their own
-labels.  `0x101e70`, `0x101e71` and `0x101e73` are only copied; the
-setting
-descriptor at `0x33d02` points at `0x101e73`, but no handler refers to
-it.
+labels.  `0x101e70`, `0x101e71` and `0x101e73` are only copied.  Two
+setting descriptors no handler refers to lie between
+`scpi_param_LED_ACTive` and `scpi_param_LED_ENABled`, as the
+`:LED:ALARm` handlers lie between theirs: `scpi_param_LED_ALARm`
+(`0x33ce4`), value `led_alarm`, whose command is a query only, and
+`scpi_param_LED_ALARm_USER` (`0x33d02`), value `led_alarm_user`
+(`0x101e73`), the switch `:LED:ALARm:USER` "Provides a way to directly
+set Alarm" with (097-z3801-01, p. 4-5); in this image its setter and
+query (`0x2d996`, `0x2d99a`) are the stub `moveq #$e0,d0; rts`
+(`outputs.md`), so nothing sets or reads the cell.
 
 ## The clock record
 

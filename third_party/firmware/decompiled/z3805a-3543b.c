@@ -4106,6 +4106,8 @@ extern const double powers_of_ten_double[61]; /* 00012614 */
 extern float powers_of_ten_times_five_float[61]; /* 00012846 */
 extern const float powers_of_ten_float[61]; /* 000129fc */
 extern char dither_table[128]; /* 00012b32 */
+extern char revision_text[6]; /* 00012eee */
+extern char copyright_text[56]; /* 00012ef4 */
 extern uint32_t kernel_checksum; /* 00014ac8 */
 extern char psos_name[12]; /* 00014ace */
 extern char psos_banner[72]; /* 00014ada */
@@ -4431,6 +4433,7 @@ extern char forth_header_user_name[6]; /* 0001ad1a */
 extern diag_word_entry diag_words[86]; /* 0001c8ac */
 extern char loopback_idle_text[1]; /* 0001ed2c */
 extern char loopback_test_text[20]; /* 0001ee6e */
+extern char spoo_name[5]; /* 00020ef8 */
 extern uint8_t fpga_bitstream[3860]; /* 00020f18 */
 extern fpga_configuration_table fpga_configurations; /* 00021e2c */
 extern uint8_t fpga_readback_mask_header[5]; /* 00021e36 */
@@ -4482,6 +4485,8 @@ extern scpi_setting_param scpi_param_SAMPle_TARR; /* 000334b0 */
 extern scpi_numeric_param scpi_param_SAMPle_INTeger; /* 000334de */
 extern scpi_numeric_param scpi_param_SAMPle_IARR; /* 0003354e */
 extern scpi_numeric_param scpi_param_SAMPle_IMULtiple; /* 000335be */
+extern scpi_numeric_param scpi_param_SAMPle_unreferenced_integer; /* 000335f4 */
+extern scpi_numeric_param scpi_param_SAMPle_unreferenced_integers; /* 0003363c */
 extern scpi_numeric_param scpi_param_SAMPle_FLOat; /* 0003367a */
 extern scpi_numeric_param scpi_param_SAMPle_FARR; /* 000336da */
 extern scpi_numeric_param scpi_param_SOURce_GPSystem_INITial_DATE; /* 000337e4 */
@@ -4507,6 +4512,8 @@ extern scpi_numeric_param scpi_param_STATus_NTRansition; /* 00033c5c */
 extern scpi_setting_param scpi_param_DIAGnostic_SYSTem_PSTartup; /* 00033c8a */
 extern scpi_setting_param scpi_param_DIAGnostic_SYSTem_DOUTput; /* 00033ca8 */
 extern scpi_setting_param scpi_param_LED_ACTive; /* 00033cc6 */
+extern scpi_setting_param scpi_param_LED_ALARm; /* 00033ce4 */
+extern scpi_setting_param scpi_param_LED_ALARm_USER; /* 00033d02 */
 extern scpi_setting_param scpi_param_LED_ENABled; /* 00033d20 */
 extern scpi_setting_param scpi_param_SOURce_ROSCillator_HOLDover_RECovery_AUTO; /* 00033d3e */
 extern scpi_setting_param scpi_param_DOUGlas_STATe; /* 00033d5c */
@@ -4737,6 +4744,7 @@ extern char os_report_any_text[4]; /* 000512d2 */
 extern char os_report_newline[3]; /* 000512e6 */
 extern char os_report_format[3]; /* 00051382 */
 extern char os_report_comma[2]; /* 00051385 */
+extern char dev_tab_header[60]; /* 000516de */
 extern io_device_jumps io_table_defaults[4]; /* 0005171a */
 extern io_device_stubs io_device_unused_stubs; /* 000517aa */
 extern const scpi_parameter scpi_parameter_set_common_SRE_1; /* 000517ce */
@@ -6938,6 +6946,8 @@ extern uint8_t scpi_value_SAMPle_TARR[3]; /* 00101de0 */
 extern int32_t scpi_value_SAMPle_INTeger; /* 00101de4 */
 extern int32_t scpi_value_SAMPle_IARR[4]; /* 00101de8 */
 extern int32_t scpi_value_SAMPle_IMULtiple[4]; /* 00101df8 */
+extern int32_t scpi_value_SAMPle_unreferenced_integer; /* 00101e08 */
+extern int32_t scpi_value_SAMPle_unreferenced_integers[3]; /* 00101e0c */
 extern float scpi_value_SAMPle_FLOat; /* 00101e18 */
 extern float scpi_value_SAMPle_FARR[3]; /* 00101e1c */
 extern double scpi_value_SAMPle_DOUBle; /* 00101e28 */
@@ -6949,6 +6959,7 @@ extern int32_t scpi_value_SOURce_GPSystem_INITial_POSition_longitude; /* 00101e6
 extern int32_t scpi_value_SOURce_GPSystem_INITial_POSition_height; /* 00101e6a */
 extern uint8_t retained_block[2]; /* 00101e70 */
 extern uint8_t led_alarm; /* 00101e72 */
+extern uint8_t led_alarm_user; /* 00101e73 */
 extern uint8_t led_active; /* 00101e74 */
 extern uint8_t led_enabled; /* 00101e75 */
 extern uint8_t holdover_recovery_auto; /* 00101e76 */
@@ -7199,6 +7210,7 @@ extern reset_record eeprom_reset_records[32]; /* 004001c0 */
 extern volatile gpt_registers gpt; /* 00fff900 */
 extern volatile sim_registers sim; /* 00fffa00 */
 extern volatile qsm_registers qsm; /* 00fffc00 */
+extern void *installer_vectors; /* installer::00100000 */
 extern char installer_exception_newline[3]; /* installer::00100787 */
 extern char * installer_exception_names[57]; /* installer::001007d0 */
 extern char installer_revision_text[5]; /* installer::00100cde */
@@ -7502,6 +7514,7 @@ __asm__(".set console_device, 0x00100a02");
 __asm__(".set console_first_phrase, 0x00018dbc");
 __asm__(".set console_halt_hook_cell, 0x001009fe");
 __asm__(".set console_task_id, 0x00100b10");
+__asm__(".set copyright_text, 0x00012ef4");
 __asm__(".set counter_configuration, 0x00101fae");
 __asm__(".set crash_message, 0x0010094e");
 __asm__(".set day_names, 0x0004cf80");
@@ -7512,6 +7525,7 @@ __asm__(".set decimal_digit_pairs, 0x00025c82");
 __asm__(".set deferred_end, 0x001036fe");
 __asm__(".set deferred_start, 0x00103700");
 __asm__(".set deferred_text, 0x001032fd");
+__asm__(".set dev_tab_header, 0x000516de");
 __asm__(".set diag_leapsec_argument_1, 0x00102724");
 __asm__(".set diag_leapsec_argument_2, 0x00102726");
 __asm__(".set diag_words, 0x0001c8ac");
@@ -8147,6 +8161,7 @@ __asm__(".set installer_task_root, 0x0010aff8");
 __asm__(".set installer_task_scpi, 0x0010affc");
 __asm__(".set installer_task_spoo, 0x0010afba");
 __asm__(".set installer_unknown_text, 0x001082cf");
+__asm__(".set installer_vectors, 0x00100000");
 __asm__(".set internal_pps_count, 0x00101b70");
 __asm__(".set internal_pps_dead, 0x00101b6f");
 __asm__(".set internal_pps_last_count, 0x00101cfe");
@@ -8175,6 +8190,7 @@ __asm__(".set leap_minute_pending, 0x00100bc8");
 __asm__(".set leap_recheck_requested, 0x0010258e");
 __asm__(".set led_active, 0x00101e74");
 __asm__(".set led_alarm, 0x00101e72");
+__asm__(".set led_alarm_user, 0x00101e73");
 __asm__(".set led_enabled, 0x00101e75");
 __asm__(".set lifetime, 0x00101d00");
 __asm__(".set lifetime_event, 0x00101d14");
@@ -8367,6 +8383,7 @@ __asm__(".set restart_reference_seconds, 0x0010258c");
 __asm__(".set restart_reference_uptime, 0x00102594");
 __asm__(".set retained_block, 0x00101e70");
 __asm__(".set retained_block_defaults, 0x0003094c");
+__asm__(".set revision_text, 0x00012eee");
 __asm__(".set robin_arrays, 0x00102a36");
 __asm__(".set robin_blocks, 0x00102a26");
 __asm__(".set robin_keyword_code, 0x00102d74");
@@ -8428,6 +8445,8 @@ __asm__(".set scpi_param_DOUGlas_STATe_request, 0x0003393a");
 __asm__(".set scpi_param_FORMat_DATA, 0x00034224");
 __asm__(".set scpi_param_KENneth_PREDicted_DURation, 0x0003409c");
 __asm__(".set scpi_param_LED_ACTive, 0x00033cc6");
+__asm__(".set scpi_param_LED_ALARm, 0x00033ce4");
+__asm__(".set scpi_param_LED_ALARm_USER, 0x00033d02");
 __asm__(".set scpi_param_LED_ENABled, 0x00033d20");
 __asm__(".set scpi_param_OUTPut_STATe, 0x00033968");
 __asm__(".set scpi_param_ROBin_MEMory_SAVE, 0x00034260");
@@ -8440,6 +8459,8 @@ __asm__(".set scpi_param_SAMPle_IMULtiple, 0x000335be");
 __asm__(".set scpi_param_SAMPle_INTeger, 0x000334de");
 __asm__(".set scpi_param_SAMPle_TARR, 0x000334b0");
 __asm__(".set scpi_param_SAMPle_TOGGle, 0x00033490");
+__asm__(".set scpi_param_SAMPle_unreferenced_integer, 0x000335f4");
+__asm__(".set scpi_param_SAMPle_unreferenced_integers, 0x0003363c");
 __asm__(".set scpi_param_SOURce_GPSystem_ADELay, 0x00033f94");
 __asm__(".set scpi_param_SOURce_GPSystem_EMANgle, 0x00033f56");
 __asm__(".set scpi_param_SOURce_GPSystem_INITial_DATE, 0x000337e4");
@@ -8500,6 +8521,8 @@ __asm__(".set scpi_value_SAMPle_IMULtiple, 0x00101df8");
 __asm__(".set scpi_value_SAMPle_INTeger, 0x00101de4");
 __asm__(".set scpi_value_SAMPle_TARR, 0x00101de0");
 __asm__(".set scpi_value_SAMPle_TOGGle, 0x00101ddf");
+__asm__(".set scpi_value_SAMPle_unreferenced_integer, 0x00101e08");
+__asm__(".set scpi_value_SAMPle_unreferenced_integers, 0x00101e0c");
 __asm__(".set scpi_value_SOURce_GPSystem_INITial_DATE, 0x00101e4a");
 __asm__(".set scpi_value_SOURce_GPSystem_INITial_POSition_height, 0x00101e6a");
 __asm__(".set scpi_value_SOURce_GPSystem_INITial_POSition_latitude, 0x00101e62");
@@ -8516,6 +8539,7 @@ __asm__(".set si_prefixes, 0x0004cfc5");
 __asm__(".set sim, 0x00fffa00");
 __asm__(".set spoo_exchange, 0x001032f8");
 __asm__(".set spoo_message, 0x00103702");
+__asm__(".set spoo_name, 0x00020ef8");
 __asm__(".set spoo_receive_error, 0x0010371a");
 __asm__(".set spoo_started, 0x001032fc");
 __asm__(".set sqrt_half_high, 0x00061ba4");
@@ -11224,6 +11248,7 @@ int32_t double_normalize();
 uint64_t float_raise(uint32_t code,...);
 int32_t abs(int32_t j);
 int32_t atexit(atexit_function *function);
+int32_t call_atexit_functions_entry();
 void call_atexit_functions(void);
 int32_t atoi(char *s);
 uint64_t div(int32_t param_1,int32_t param_2);
@@ -11313,6 +11338,10 @@ int32_t installer_spurious_interrupt();
 int32_t installer_entry();
 void installer_program_exit(uint32_t param_1);
 void installer_program_end_report(uint32_t value,uint32_t return_address);
+int32_t installer_trap_3();
+int32_t installer_trap_4();
+int32_t installer_trap_6();
+int32_t installer_trap_5();
 int32_t installer_kernel_dispatch_service();
 void installer_kernel_dispatch_io(char function, int32_t device) __asm__("c_installer_kernel_dispatch_io");
 int32_t installer_kernel_switch_task();
@@ -11418,6 +11447,7 @@ uint32_t installer_psos_io_close(uint32_t device);
 uint32_t installer_psos_io_read(uint32_t device,void *buffer,uint32_t *length);
 uint32_t installer_psos_io_write(uint32_t device,void *buffer,uint32_t *length);
 uint32_t installer_psos_io_control(uint32_t device,uint32_t a,uint32_t b);
+void installer_cpu_register_test(void);
 int32_t installer_gp_port_select(char param_1);
 void installer_duartb_mode_from_settings(void);
 void installer_duartb_baud_from_settings(void);
@@ -11605,6 +11635,7 @@ float installer_float_multiply(float a, float b) __asm__("c_installer_float_mult
 int32_t installer_float_normalize();
 uint64_t installer_float_raise(uint32_t code,...);
 int32_t installer_atexit(atexit_function *function);
+int32_t installer_call_atexit_functions_entry();
 void installer_call_atexit_functions(void);
 void * installer_memcpy(void *s1,void *s2,uint32_t n);
 char * installer_strncpy(char *s1,char *s2,uint32_t n);
@@ -19150,7 +19181,7 @@ void program_exit(uint32_t param_1)
 {
   uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
   
-  call_atexit_functions();
+  call_atexit_functions_entry();
   program_end_report(param_1,in_stack_00000000);
   do {
                     /* WARNING: Do nothing block with infinite loop */
@@ -87413,6 +87444,7 @@ int32_t atexit(atexit_function *function)
 
 /* 0005ecda */
 /* a thunk to call_atexit_functions */
+__asm__(".set call_atexit_functions_entry, call_atexit_functions");
 
 /* 0005ecf0 */
 #if 0 /* the decompiler's reading; rewritten in stdlib.c */
@@ -91040,7 +91072,7 @@ void installer_start(void)
   installer_psos_config_init();
   sim.swsr = 0x55;
   sim.swsr = 0xaa;
-  installer_kernel_init();
+  installer_trap_6();
   return;
 }
 
@@ -91634,7 +91666,7 @@ void installer_program_exit(uint32_t param_1)
 {
   uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
   
-  installer_call_atexit_functions();
+  installer_call_atexit_functions_entry();
   installer_program_end_report(param_1,in_stack_00000000);
   do {
                     /* WARNING: Do nothing block with infinite loop */
@@ -91700,15 +91732,19 @@ void installer_program_end_report(uint32_t value,uint32_t return_address)
 
 /* installer::001014b4 */
 /* a thunk to installer_kernel_dispatch_service */
+__asm__(".set installer_trap_3, installer_kernel_dispatch_service");
 
 /* installer::001014b8 */
 /* a thunk to installer_kernel_dispatch_io */
+__asm__(".set installer_trap_4, installer_kernel_dispatch_io");
 
 /* installer::001014bc */
 /* a thunk to installer_kernel_init */
+__asm__(".set installer_trap_6, installer_kernel_init");
 
 /* installer::001014c0 */
 /* a thunk to installer_kernel_return_from_interrupt */
+__asm__(".set installer_trap_5, installer_kernel_return_from_interrupt");
 
 /* installer::0010152c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -99056,6 +99092,19 @@ uint32_t installer_psos_io_control(uint32_t device,uint32_t a,uint32_t b)
 
 #endif
 
+/* installer::00102ff2 */
+
+/* a bare rts where the primary has cpu_register_test (0x1749e), next after
+   installer_psos_io_control as there; nothing calls it
+   read */
+
+void installer_cpu_register_test(void)
+
+{
+  return;
+}
+
+
 /* installer::00102ff4 */
 #if 0 /* the decompiler's reading; rewritten in installer_duart.c */
 
@@ -105379,6 +105428,7 @@ int32_t installer_atexit(atexit_function *function)
 
 /* installer::00109036 */
 /* a thunk to installer_call_atexit_functions */
+__asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_functions");
 
 /* installer::0010904c */
 #if 0 /* the decompiler's reading; rewritten in installer_stdlib.c */

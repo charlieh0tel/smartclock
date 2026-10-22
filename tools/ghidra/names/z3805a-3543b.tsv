@@ -2577,7 +2577,7 @@ installer::0x10aa38	label	installer_doprnt_hex_prefix	context	the installer's do
 0x118b6	function	exception_hook_enable_per_task	read	sets exception_hook_per_task to 0xff and returns 0; nothing calls it	int exception_hook_enable_per_task(void)
 0x118d8	function	exception_hook_set	read	stores the default exception hook in exception_hook, returning 0xff if one was set, else 0; nothing calls it	int exception_hook_set(void *hook)
 0x118f4	function	exception_hook_clear_task	read	exception_hook_set_task(0); nothing calls it	int exception_hook_clear_task(void)
-0x14ac8	label	kernel_checksum	read	the sum kernel_init_checked compares with that of the kernel's words from 0x14acc to psos_call, 0x028a9b53; the words now sum to 0x028d24cc	uint32_t
+0x14ac8	label	kernel_checksum	read	the sum kernel_init_checked compares with that of the kernel's words from 0x14acc to psos_call, 0x028a9b53; the words now sum to 0x028d24cc, as in every image here (psos.md)	uint32_t
 0x15caa	function	kernel_init_checked	read	kernel_init with a check of the kernel's code first: sums its words from 0x14acc to psos_call (0x1606c) and, unless kernel_checksum is 0 or the sum, fails with error 4 (0x15cd4); then falls into kernel_init.  Nothing refers to it		convention=exception; confidence=read; family=psos
 0x16f68	function	psos_version	read	service 0, ver: the kernel's version, 0x3341, in D0's low word (psos.md); nothing calls it	uint16_t psos_version(void)
 0x510e0	function	current_task_id	read	the running task's id, through psos_my_pid; after memory_free, which Ghidra took it into; nothing calls it	unsigned long current_task_id(void)
@@ -2595,3 +2595,26 @@ installer::0x10aa38	label	installer_doprnt_hex_prefix	context	the installer's do
 0x101e6a	label	scpi_value_SOURce_GPSystem_INITial_POSition_height	structures.md	the value of scpi_param_SOURce_GPSystem_INITial_POSition_height, centimeters, its limits the longitude's; the last of sample_values	int32_t
 0x101f90	label	scpi_group_cells	structures.md	the words the descriptors' group_cell points at, one for each command group; nothing reads or writes them	scpi_group_cells_fields
 0x103948	label	psos_kernel_data	structures.md	the kernel's data area, psos_config.data_area, which kernel_init carves and keeps in A6: this record, then from +200 the supervisor stack and the records	psos_kernel
+#
+# the untyped survey's leftovers (2026-10-22): the primary's twins of
+# installer data, descriptors no handler refers to and their cells, the
+# installer's stub where the primary has cpu_register_test, and the
+# thunks that took their target's name
+0x12eee	label	revision_text	read	"3543B", the revision scpi_query_common_IDN gives (0x2a2ec), nv_save stores (0x32976) and nv_slot_valid compares (0x32b9e); the installer's is installer_revision_text, "Peru"	char[6]
+0x12ef4	label	copyright_text	read	"Copyright Hewlett-Packard Co. 1993. All Rights Reserved.", without a NUL, enter_installer after it (0x12f2c); nothing refers to it	char[56]
+0x20ef8	label	spoo_name	read	"spoo", the name spoo_task_create gives psos_ident (0x20caa), psos_create_x (0x20cd2) and psos_create (0x20cfe), after spoo_task's last rts	char[5]
+0x516de	label	dev_tab_header	read	"$@(#)$Header: dev_tab.S,v 1.8 95/01/11 15:27:20 jacob Exp $", after the "pSOS" at 0x516d8; nothing refers to it	char[60]
+0x335f4	label	scpi_param_SAMPle_unreferenced_integer	read	a numeric descriptor after scpi_param_SAMPle_IMULtiple, one integer, 1 to 256, value scpi_value_SAMPle_unreferenced_integer; no handler or table refers to it	scpi_numeric_param
+0x3363c	label	scpi_param_SAMPle_unreferenced_integers	read	a numeric descriptor after scpi_param_SAMPle_unreferenced_integer, three integers, 0 to 100 each, value scpi_value_SAMPle_unreferenced_integers; no handler or table refers to it	scpi_numeric_param
+0x101e08	label	scpi_value_SAMPle_unreferenced_integer	read	the value of scpi_param_SAMPle_unreferenced_integer, after scpi_value_SAMPle_IMULtiple; sample_values_defaults fills it with 63 (0x308e4); nothing else refers to it	int32_t
+0x101e0c	label	scpi_value_SAMPle_unreferenced_integers	read	the values of scpi_param_SAMPle_unreferenced_integers, last index 2; sample_values_defaults fills them with 0 (0x308e8); nothing else refers to them	int32_t[3]
+0x33ce4	label	scpi_param_LED_ALARm	context	a setting descriptor, value led_alarm, between scpi_param_LED_ACTive and scpi_param_LED_ALARm_USER as the handlers lie; nothing refers to it, :LED:ALARm being a query (097-z3801-01, p. 4-5)	scpi_setting_param
+0x33d02	label	scpi_param_LED_ALARm_USER	context	a setting descriptor, value led_alarm_user, before scpi_param_LED_ENABled as the handlers lie; nothing refers to it: scpi_set_LED_ALARm_USER and its query are moveq #$e0,d0; rts (outputs.md)	scpi_setting_param
+0x101e73	label	led_alarm_user	context	scpi_param_LED_ALARm_USER's value, :LED:ALARm:USER's switch, "a way to directly set Alarm" (097-z3801-01, p. 4-5); only retained_block's copies (system_init, pllp_task) touch it	uint8_t
+installer::0x102ff2	function	installer_cpu_register_test	read	a bare rts where the primary has cpu_register_test (0x1749e), next after installer_psos_io_control as there; nothing calls it	void installer_cpu_register_test(void)
+0x5ecda	function	call_atexit_functions_entry	read	a bra.b to call_atexit_functions, which program_exit calls (0x149a8); Ghidra takes it for a thunk
+installer::0x109036	function	installer_call_atexit_functions_entry	context	the installer's call_atexit_functions_entry, a bra.b to installer_call_atexit_functions, which installer_program_exit calls (installer::0x1013ae)
+installer::0x1014b4	function	installer_trap_3	context	trap #3's handler in the boot vector table (0x8c), the installer's primary_trap_3: a bra.w to installer_kernel_dispatch_service
+installer::0x1014b8	function	installer_trap_4	context	trap #4's handler in the boot vector table (0x90), the installer's primary_trap_4: a bra.w to installer_kernel_dispatch_io
+installer::0x1014bc	function	installer_trap_6	context	trap #6's handler in the boot vector table (0x98), the installer's primary_trap_6: a bra.w to installer_kernel_init
+installer::0x1014c0	function	installer_trap_5	context	trap #5's handler in the boot vector table (0x94), the installer's primary_trap_5: a bra.w to installer_kernel_return_from_interrupt

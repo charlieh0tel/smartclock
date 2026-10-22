@@ -104,12 +104,11 @@ def piece_sizes(obj):
     return sizes
 
 
-def main():
+def main(work):
     c_path, image_path = sys.argv[1], sys.argv[2]
     c = open(c_path).read()
     image = open(image_path, 'rb').read()
     installer = installer_image(image)
-    work = tempfile.mkdtemp()
     source, obj = work + '/a.s', work + '/a.o'
     lines = assembly_lines(c)
     open(source, 'w').write(''.join(lines))
@@ -178,4 +177,5 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    with tempfile.TemporaryDirectory() as work:
+        sys.exit(main(work))

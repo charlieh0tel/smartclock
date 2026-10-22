@@ -629,3 +629,37 @@ scpi_query_common_SRE	error	always 0
 scpi_query_common_STB	error	always 0
 scpi_query_common_TST	error	always 0
 scpi_set_common_WAI	error	always 0
+# The disciplining loop, applications/pll: aging, gps_control, pllp, stages (rewritten/z3805a-3543b/: pll_aging.c, pll_gps_control.c, pllp.c, pll_stages.c)
+fit_linear_halves	failed	always 0
+fit_linear	failed	linear_regression's
+fit_constant	failed	1 when no entry has the weight
+fit_logarithmic	failed	fit_log_search's last
+fit_log_initial	failed	linear_regression's
+fit_log_search	failed	its routines' failures ORed
+fit_log_residuals	failed	linear_regression's
+fit_three_point	failed	1 when the points give no vertex
+linear_regression	failed	1 with two entries or fewer, or all their x the same
+gpsx_send	sent	1 when gpsx_exchange took the request
+gps_ack_received	received	gps_ack_ready
+gps_diag_sequence	done	true once the self-test has run
+pll_check_reference	result	a stage's: 0 running, 1 done, 2 failed
+clock_check_against_gps	matches	1 when the clock's GPS date and time are gps.status's
+pll_mode	mode	the status screen's mode line, 0 none to 5 locked
+pll_powerup_suffix_index	suffix	the power-up mode's suffix, 0 none
+recovery_suffix_index	suffix	the recovery mode's suffix, 0 none
+holdover_waiting_reason	reason	the hold cause holdover waits on, or 0
+leap_ack_pending	pending	1 while the leap second's acknowledgment is asked for or under way
+get_ffom	valid	always 1
+kenneth_present_get	valid	1 in holdover or its recovery
+kenneth_predicted_get	valid	1 from start-up PLL on
+powerup	result	a stage's: 0 running, 1 done, 2 failed (a restart)
+coarse	result	a stage's: 0 running, 1 done, 2 failed
+fine_sync_adjust	steps	the 100 ns steps asked for, 4 for too far, 0 within 100 ns
+sync_perform	synced	1 when it asked for a sync
+startup_pll	result	a stage's: 0 running, 1 done, 2 failed
+pll_normal	result	a stage's: 0 running, 2 failed
+holdover	result	a stage's: 0 running, 1 done
+holdover_recovery	result	a stage's: 0 running, 1 done, 2 failed
+holdover_correction_valid	valid	1 when the TI's slope leaves the EFC in range
+holdover_ti_max	ti_max	holdover_steering.ti_largest
+holdover_limit_exceeded	within_limit	0 when the TI has reached the hold limit

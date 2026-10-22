@@ -73,6 +73,7 @@ static void scpi_source_ptime_date_items(uint32_t date,
  * at 0x10272a, which the names file does not name: a query writes the
  * text into its source's and answers its address. */
 #define SCPI_SOURCE_PTIME_TEXT_SIZE 0x11a
+
 static char (*const SCPI_SOURCE_PTIME_TEXTS)[SCPI_SOURCE_PTIME_TEXT_SIZE] =
     (char (*)[SCPI_SOURCE_PTIME_TEXT_SIZE])0x10272a;
 
@@ -81,6 +82,7 @@ static char (*const SCPI_SOURCE_PTIME_TEXTS)[SCPI_SOURCE_PTIME_TEXT_SIZE] =
  * pllc_request's values[0], its index the last of them (structures.md,
  * "The pllc task's SCPI requests"). */
 #define SCPI_SOURCE_PTIME_STAGED_COUNT 3
+
 static int32_t (*const
                     SCPI_SOURCE_PTIME_STAGED)[SCPI_SOURCE_PTIME_STAGED_COUNT] =
     (int32_t (*)[SCPI_SOURCE_PTIME_STAGED_COUNT])0x102a0e;

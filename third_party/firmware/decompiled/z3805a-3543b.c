@@ -54293,16 +54293,16 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation(void *parameters,void *r
 {
   int32_t iVar1;
   uint16_t sr;
-  uint8_t uVar3;
+  uint8_t mode;
   float fVar2;
   
   sr = set_interrupt_mask(0x100);
-  uVar3 = pll_mode();
+  mode = pll_mode();
   fVar2 = unsigned_to_float(pll.holdover_duration);
   set_interrupt_mask(sr);
   *(float *)response = fVar2;
-  iVar1 = (char)uVar3 + -5;
-  if ((int32_t)(char)uVar3 - 1U < 4U || iVar1 == 0) {
+  iVar1 = (char)mode + -5;
+  if ((int32_t)(char)mode - 1U < 4U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0002fa5c_index_zero)[(int16_t)iVar1]) {
     case 10:
@@ -54530,13 +54530,13 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void *parameters,void *res
 
 {
   uint16_t sr;
-  uint8_t uVar2;
+  uint8_t mode;
   int32_t zero;
   
   sr = set_interrupt_mask(0x100);
-  uVar2 = pll_mode();
+  mode = pll_mode();
   set_interrupt_mask(sr);
-  if (uVar2 != 1) {
+  if (mode != 1) {
     zero = return_zero();
     pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_INITiate,0,(char)zero);
   }
@@ -54743,15 +54743,15 @@ int32_t scpi_query_KENneth_PREDicted(void *parameters,void *response,void *call)
 
 {
   uint16_t sr;
-  char cVar2;
+  char valid;
   int32_t iVar1;
   char local_6;
   uint8_t local_5;
   
   sr = set_interrupt_mask(0x100);
-  cVar2 = kenneth_predicted_get(response,&local_6,&local_5);
+  valid = kenneth_predicted_get(response,&local_6,&local_5);
   set_interrupt_mask(sr);
-  if (cVar2 == 0) {
+  if (valid == 0) {
     iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
@@ -54812,14 +54812,14 @@ int32_t scpi_query_KENneth_PRESent(void *parameters,void *response,void *call)
 
 {
   uint16_t sr;
-  char cVar2;
+  char valid;
   int32_t iVar1;
   char local_6 [2];
   
   sr = set_interrupt_mask(0x100);
-  cVar2 = kenneth_present_get(response,local_6);
+  valid = kenneth_present_get(response,local_6);
   set_interrupt_mask(sr);
-  if (cVar2 == 0) {
+  if (valid == 0) {
     iVar1 = scpi_query_failed(STATUS_SETTINGS_CONFLICT,call);
   }
   else {
@@ -54840,19 +54840,19 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void *parameters,void *re
 
 {
   uint16_t sr;
-  uint8_t uVar2;
-  uint8_t bVar3;
+  uint8_t mode;
+  uint8_t reason;
   
   sr = set_interrupt_mask(0x100);
-  uVar2 = pll_mode();
+  mode = pll_mode();
   set_interrupt_mask(sr);
-  if (uVar2 == 2) {
+  if (mode == 2) {
     sr = set_interrupt_mask(0x100);
-    bVar3 = holdover_waiting_reason();
+    reason = holdover_waiting_reason();
     set_interrupt_mask(sr);
-    if (bVar3 - 1 < 0x10U) {
+    if (reason - 1 < 0x10U) {
                     /* WARNING: Switch is manually overridden */
-      switch((int16_t)(bVar3 - 1)) {
+      switch((int16_t)(reason - 1)) {
       case 0:
         *(uint16_t *)response = 0;
         return 0;
@@ -54921,13 +54921,13 @@ int32_t scpi_query_SOURce_ROSCillator_STATe(void *parameters,void *response,void
 {
   int32_t iVar1;
   uint16_t sr;
-  uint8_t uVar2;
+  uint8_t mode;
   
   sr = set_interrupt_mask(0x100);
-  uVar2 = pll_mode();
+  mode = pll_mode();
   set_interrupt_mask(sr);
-  iVar1 = (char)uVar2 + -5;
-  if ((int32_t)(char)uVar2 - 1U < 4U || iVar1 == 0) {
+  iVar1 = (char)mode + -5;
+  if ((int32_t)(char)mode - 1U < 4U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00030010_index_zero)[(int16_t)iVar1]) {
     case 10:
@@ -54978,14 +54978,14 @@ int32_t scpi_query_RSST(void *parameters,void *response,void *call)
 int32_t scpi_query_SOURce_PTIMe_FFOMerit(void *parameters,void *response,void *call)
 
 {
-  char cVar3;
+  char valid;
   int32_t error;
   uint16_t uVar2;
   uint8_t local_6 [2];
   
   if (*(int16_t *)parameters == 0) {
-    cVar3 = get_ffom(local_6);
-    if (cVar3 == 0) {
+    valid = get_ffom(local_6);
+    if (valid == 0) {
       error = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
       return error;
     }
@@ -59387,6 +59387,7 @@ void pll_action_nothing(int32_t index,int32_t source)
 #endif
 
 /* 0004137e */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* sums the EFC and stores each 2700 samples an entry of efc_history
    structures.md */
@@ -59522,8 +59523,10 @@ void efc_history_update(void)
   return;
 }
 
+#endif
 
 /* 0004172a */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* signals the curv task, event 0x100 */
 
@@ -59534,8 +59537,10 @@ void curv_signal(void)
   return;
 }
 
+#endif
 
 /* 0004173e */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* if the curv task has signaled 0x100, copies its fit's results into pll; efc_history_update calls
    it first */
@@ -59555,8 +59560,10 @@ void aging_fit_collect(void)
   return;
 }
 
+#endif
 
 /* 00041784 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* root_task starts curv here
    structures.md */
@@ -59572,8 +59579,10 @@ void curv_task(void)
   } while( true );
 }
 
+#endif
 
 /* 000417c6 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* fits the oscillator's aging curve, for the curv task
    loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f",
@@ -59585,7 +59594,7 @@ void aging_fit(void)
   double pushed_1;
   double pushed_2;
   uint32_t uVar1;
-  uint32_t uVar2;
+  uint32_t failed;
   float product;
   int32_t param2;
   int32_t iVar4;
@@ -59633,9 +59642,9 @@ void aging_fit(void)
       else {
         aging_curve.minimum_weight = 1;
         candidate.minimum_weight = 1;
-        uVar2 = fit_linear(&aging_curve);
+        failed = fit_linear(&aging_curve);
         uVar1 = fit_logarithmic(&candidate);
-        uVar1 = uVar1 | uVar2;
+        uVar1 = uVar1 | failed;
         aging_curve.mode = 3;
         product = float_multiply(aging_curve.rms,0.75);
         iVar5 = float_compare(product,candidate.rms);
@@ -59652,9 +59661,9 @@ void aging_fit(void)
     else {
       aging_curve.minimum_weight = 2;
       candidate.minimum_weight = 2;
-      uVar2 = fit_linear(&aging_curve);
+      failed = fit_linear(&aging_curve);
       uVar1 = fit_logarithmic(&candidate);
-      uVar1 = uVar1 | uVar2;
+      uVar1 = uVar1 | failed;
       aging_curve.mode = 3;
       product = float_multiply(aging_curve.rms,0.75);
       iVar5 = float_compare(product,candidate.rms);
@@ -59698,8 +59707,10 @@ void aging_fit(void)
   return;
 }
 
+#endif
 
 /* 00041a42 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* a slope from the two halves of the last 64 averages, and its residuals
    loop.md's aging fit */
@@ -59755,8 +59766,10 @@ int32_t fit_linear_halves(aging_curve_state *curve)
   return 0;
 }
 
+#endif
 
 /* 00041ba0 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* fits the EFC history as a line in time, by linear_regression
    loop.md's aging fit */
@@ -59764,7 +59777,7 @@ int32_t fit_linear_halves(aging_curve_state *curve)
 int32_t fit_linear(aging_curve_state *curve)
 
 {
-  int32_t iVar1;
+  int32_t failed;
   regression_record regression;
   float local_8;
   
@@ -59774,17 +59787,19 @@ int32_t fit_linear(aging_curve_state *curve)
   regression.x = pll.efc_history.times;
   regression.y = pll.efc_history.averages;
   regression.weights = pll.efc_history.weights;
-  iVar1 = linear_regression(&regression,1);
+  failed = linear_regression(&regression,1);
   curve->a = regression.intercept;
   curve->b = regression.slope;
   curve->c = 0.0;
   curve->rms = regression.rms;
   fit_evaluate_latest(curve,&local_8);
-  return iVar1;
+  return failed;
 }
 
+#endif
 
 /* 00041c20 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* fits the EFC history as a constant, its weighted mean; a long in D0, 1 when no entry has the
    weight (0x41c78, 0x41c86)
@@ -59822,8 +59837,10 @@ int32_t fit_constant(aging_curve_state *curve)
   return (uint32_t)(i == 0);
 }
 
+#endif
 
 /* 00041c8e */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* fits the EFC history with a term in log time, searching its coefficient in steps a tenth as large
    each pass
@@ -59834,7 +59851,7 @@ int32_t fit_logarithmic(aging_curve_state *curve)
 {
   double result_1;
   float a;
-  uint32_t uVar1;
+  uint32_t failed;
   float difference;
   int32_t iVar2;
   double a_00;
@@ -59846,7 +59863,7 @@ int32_t fit_logarithmic(aging_curve_state *curve)
   fit_log_initial(curve);
   do {
     a = curve->rms;
-    uVar1 = fit_log_search(curve,1);
+    failed = fit_log_search(curve,1);
     float_divide_in_place(&curve->c_step,10.0);
     difference = float_subtract(a,curve->rms);
     a_00 = float_to_double(difference);
@@ -59854,13 +59871,15 @@ int32_t fit_logarithmic(aging_curve_state *curve)
     result_1 = double_multiply(a_01,0.01);
     iVar2 = double_compare(a_00,result_1);
     if (-1 < iVar2) break;
-  } while (uVar1 == 0);
+  } while (failed == 0);
   fit_evaluate_latest(curve,&local_8);
-  return uVar1;
+  return failed;
 }
 
+#endif
 
 /* 00041d30 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* the first and last sample times among the weighted entries
    loop.md's aging fit */
@@ -59898,8 +59917,10 @@ void fit_span(aging_curve_state *curve)
   return;
 }
 
+#endif
 
 /* 00041dcc */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* the fit at the latest sample, and its residual
    loop.md's aging fit */
@@ -59920,8 +59941,10 @@ void fit_evaluate_latest(aging_curve_state *curve,float *fitted)
   return;
 }
 
+#endif
 
 /* 00041e32 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* the log term's first coefficient and step
    loop.md's aging fit */
@@ -59930,7 +59953,7 @@ int32_t fit_log_initial(aging_curve_state *curve)
 
 {
   double result_1;
-  int32_t iVar1;
+  int32_t failed;
   float fVar2;
   float magnitude;
   int32_t iVar3;
@@ -59942,7 +59965,7 @@ int32_t fit_log_initial(aging_curve_state *curve)
   regression.x = pll.efc_history.times;
   regression.y = pll.efc_history.averages;
   regression.weights = pll.efc_history.weights;
-  iVar1 = linear_regression(&regression,1);
+  failed = linear_regression(&regression,1);
   fVar2 = unsigned_to_float(curve->newest_time - curve->oldest_time);
   fVar2 = float_multiply(fVar2,regression.slope);
   magnitude = float_abs(fVar2);
@@ -59960,11 +59983,13 @@ int32_t fit_log_initial(aging_curve_state *curve)
   curve->c_step = fVar2;
   curve->c = fVar2;
   curve->rms = regression.rms;
-  return iVar1;
+  return failed;
 }
 
+#endif
 
 /* 00041f2a */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* steps the log term's coefficient while the fit improves
    loop.md's aging fit */
@@ -59974,7 +59999,7 @@ uint32_t fit_log_search(aging_curve_state *curve,int32_t with_slope)
 {
   float fVar1;
   float fVar2;
-  uint32_t uVar3;
+  uint32_t failed;
   uint32_t uVar4;
   int32_t iVar5;
   uint32_t uVar6;
@@ -59982,12 +60007,12 @@ uint32_t fit_log_search(aging_curve_state *curve,int32_t with_slope)
   float c_values [3];
   three_point_fit three_point;
   
-  uVar3 = fit_log_residuals(curve,with_slope);
+  failed = fit_log_residuals(curve,with_slope);
   rms_values[1] = curve->rms;
   c_values[1] = curve->c;
   c_values[2] = float_add_in_place(&curve->c,curve->c_step);
   uVar4 = fit_log_residuals(curve,with_slope);
-  uVar4 = uVar4 | uVar3;
+  uVar4 = uVar4 | failed;
   rms_values[2] = curve->rms;
   iVar5 = float_compare(rms_values[1],rms_values[2]);
   if (iVar5 < 1) {
@@ -60013,8 +60038,8 @@ uint32_t fit_log_search(aging_curve_state *curve,int32_t with_slope)
       c_values[0] = c_values[1];
       c_values[1] = c_values[2];
       c_values[2] = float_add_in_place(&curve->c,curve->c_step);
-      uVar3 = fit_log_residuals(curve,with_slope);
-      uVar4 = uVar3 | uVar4;
+      failed = fit_log_residuals(curve,with_slope);
+      uVar4 = failed | uVar4;
       rms_values[0] = rms_values[1];
       rms_values[1] = rms_values[2];
       rms_values[2] = curve->rms;
@@ -60022,14 +60047,16 @@ uint32_t fit_log_search(aging_curve_state *curve,int32_t with_slope)
   }
   three_point.x = c_values;
   three_point.y = rms_values;
-  uVar3 = fit_three_point(&three_point);
+  failed = fit_three_point(&three_point);
   curve->c = three_point.vertex_x;
   uVar6 = fit_log_residuals(curve,with_slope);
-  return uVar3 | uVar4 | uVar6;
+  return failed | uVar4 | uVar6;
 }
 
+#endif
 
 /* 00042092 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* the history less the log term, regressed on time
    loop.md's aging fit */
@@ -60062,8 +60089,10 @@ int32_t fit_log_residuals(aging_curve_state *curve,int32_t with_slope)
   return iVar2;
 }
 
+#endif
 
 /* 00042128 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* the parabola through three points' vertex, 1 and zeros if the points are degenerate
    loop.md's aging fit */
@@ -60150,8 +60179,10 @@ int32_t fit_three_point(three_point_fit *fit)
   return 1;
 }
 
+#endif
 
 /* 00042390 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* the means, Sxx and Sxy of the weighted entries of two arrays
    loop.md's aging fit */
@@ -60257,6 +60288,7 @@ int32_t linear_regression(regression_record *record,int32_t with_slope)
   return 1;
 }
 
+#endif
 
 /* 00042626 */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
@@ -60278,6 +60310,7 @@ float float_abs(float param_1)
 #endif
 
 /* 00042644 */
+#if 0 /* the decompiler's reading; rewritten in pll_aging.c */
 
 /* half the summed squares of successive residuals' differences, scaled to the span
    loop.md's aging fit */
@@ -60391,8 +60424,10 @@ LAB_0004298e:
   return;
 }
 
+#endif
 
 /* 0004299c */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7
    undocumented.md, ":KENneth" */
@@ -60413,8 +60448,10 @@ uint32_t kenneth_present_get(float *param_1,uint8_t *param_2)
   return uVar1;
 }
 
+#endif
 
 /* 000429c6 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* for :KENneth:PREDicted?: from startup PLL on, the float at pll +0x3a, resolution 1e-7, and
    whether in holdover
@@ -60443,8 +60480,10 @@ uint32_t kenneth_predicted_get(float *param_1,uint8_t *param_2,uint8_t *param_3)
   return uVar1;
 }
 
+#endif
 
 /* 00042a18 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* the time code's f; pll_rep's "ffom = %1d"
    structures.md */
@@ -60474,6 +60513,7 @@ uint32_t get_ffom(uint8_t *param_1)
   return 1;
 }
 
+#endif
 
 /* 00042b18 */
 #if 0 /* the decompiler's reading; rewritten in scpi_output.c */
@@ -61305,6 +61345,7 @@ void status_preset_done(uint32_t param_1,uint32_t param_2)
 #endif
 
 /* 00043804 */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* clears holdover's TI statistics */
 
@@ -61318,8 +61359,10 @@ void holdover_ti_reset(void)
   return;
 }
 
+#endif
 
 /* 0004381e */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the
    largest magnitude */
@@ -61343,8 +61386,10 @@ void holdover_ti_add(float param_1)
   return;
 }
 
+#endif
 
 /* 00043888 */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* 1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called
    by nothing */
@@ -61370,8 +61415,10 @@ uint8_t holdover_correction_valid(void)
   return 0;
 }
 
+#endif
 
 /* 00043916 */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* the largest TI magnitude holdover has seen, for holdover_limit_exceeded; a float in D0 (0x43916)
     */
@@ -61382,8 +61429,10 @@ float holdover_ti_max(void)
   return holdover_steering.ti_largest;
 }
 
+#endif
 
 /* 0004391e */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* 1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age
    times a rate plus holdover_limit_threshold */
@@ -61408,6 +61457,7 @@ uint32_t holdover_limit_exceeded(float param_1)
   return 1;
 }
 
+#endif
 
 /* 0004397a */
 
@@ -61501,6 +61551,7 @@ LAB_00043a88:
 
 
 /* 00043a90 */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* the loop's holdover stage, steering the oscillator without GPS
    loop.md's stage; "holdover - Error with measurement" */
@@ -61521,7 +61572,7 @@ uint8_t holdover(char param_1)
   float fVar2;
   int32_t iVar3;
   uint32_t uptime;
-  char cVar5;
+  char within_limit;
   uint8_t uVar6;
   double dVar7;
   char acStack_74 [100];
@@ -61672,8 +61723,8 @@ override_jmp_00043ae6_case_0:
   interval_mean = holdover_steering.ti_mean;
   if ((pll.ti_limit_override == 0) && (nv_settings.holdover_limit_state == 0)) {
     fVar1 = holdover_ti_max();
-    cVar5 = holdover_limit_exceeded(fVar1);
-    if (cVar5 != 0) goto LAB_00043eb8;
+    within_limit = holdover_limit_exceeded(fVar1);
+    if (within_limit != 0) goto LAB_00043eb8;
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_TI_LIMIT_EXCEEDED;
   }
   else {
@@ -61703,8 +61754,10 @@ LAB_00043ee6:
   return uVar6;
 }
 
+#endif
 
 /* 00043f18 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* compares the clock's date and time with gps.status, and on a second mismatch running sets the
    clock from GPS and reports event L */
@@ -61737,8 +61790,10 @@ uint32_t clock_check_against_gps(void)
   return uVar2;
 }
 
+#endif
 
 /* 00043f9a */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* the loop's stage that recovers from holdover once GPS returns
    loop.md's stage; "holdover recovery - Error with measurement" */
@@ -61883,8 +61938,10 @@ LAB_0004411a:
   return cVar3;
 }
 
+#endif
 
 /* 0004429e */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* the loop's start-up stage
    loop.md's stage; "startup_pll - Error with measurement" */
@@ -62116,8 +62173,10 @@ char startup_pll(char param_1)
   return cVar6;
 }
 
+#endif
 
 /* 000448fc */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* the loop's normal stage: averages interval readings, counting them to ten and storing the mean
    the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine,
@@ -62284,8 +62343,10 @@ uint8_t pll_normal(char param_1)
   return local_7a;
 }
 
+#endif
 
 /* 00044e8e */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* for a TI beyond 1e-7 requests a sync of one to three steps of 100 ns, and returns the steps, 4
    for beyond 3e-7; fine stores it as pll.fine_index */
@@ -62334,8 +62395,10 @@ uint8_t fine_sync_adjust(float param_1)
   return uVar4;
 }
 
+#endif
 
 /* 00044f5e */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* synchronizes the outputs to GPS time
    "Peforming sync" */
@@ -62361,6 +62424,7 @@ uint8_t sync_perform(float param_1)
   return 1;
 }
 
+#endif
 
 /* 00044fbc */
 #if 0 /* the decompiler's reading; rewritten in pll_reading.c */
@@ -62472,6 +62536,7 @@ void interval_wait_reading(void)
 #endif
 
 /* 000451c2 */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* the power-up step that sets the oscillator's frequency coarsely
    loop.md's power-up step; "coarse - Error with measurement 1" */
@@ -62571,6 +62636,7 @@ override_jmp_000451fa_case_0:
   return uVar4;
 }
 
+#endif
 
 /* 0004538c */
 
@@ -63070,6 +63136,7 @@ void nv_param_field_b8_done(void)
 #endif
 
 /* 00045b70 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and
    HOLD:INIT test it; a byte in D0 (0x45bb4)
@@ -63113,8 +63180,10 @@ override_jmp_00045b86_case_1:
   return uVar2;
 }
 
+#endif
 
 /* 00045bb8 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* the power-up sub-state, as the status screen's suffix index
    screen-format-strings.md's ladder: the power-up sub-state's suffix index */
@@ -63154,8 +63223,10 @@ uint8_t pll_powerup_suffix_index(void)
   return uVar2;
 }
 
+#endif
 
 /* 00045c18 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* in holdover recovery's first state: 1 fine freq adj, 2 phase alignment;
    pll_powerup_suffix_index's companion
@@ -63178,8 +63249,10 @@ uint8_t recovery_suffix_index(void)
   return uVar1;
 }
 
+#endif
 
 /* 00045c48 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8 */
 
@@ -63201,8 +63274,10 @@ uint8_t holdover_waiting_reason(void)
   return 0;
 }
 
+#endif
 
 /* 00045c8e */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* does nothing; pllp_task calls it after counter_init */
 
@@ -63212,8 +63287,10 @@ void pllp_start_nothing_a(void)
   return;
 }
 
+#endif
 
 /* 00045c90 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* does nothing; pllp_task calls it after pllp_start_nothing_a */
 
@@ -63223,6 +63300,7 @@ void pllp_start_nothing_b(void)
   return;
 }
 
+#endif
 
 /* 00045c92 */
 #if 0 /* the decompiler's reading; rewritten in nv.c */
@@ -63288,6 +63366,7 @@ void pwma_force_level(char param_1)
 #endif
 
 /* 00045e8e */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* the power-up stage: steps its sub-state, pll +3, through start, the oven warm-ups and waiting for
    GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6
@@ -63438,8 +63517,10 @@ override_jmp_00045f06_case_0:
   return uVar5;
 }
 
+#endif
 
 /* 00046188 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* waits for an interval reading, sets fault bits at pll +0x11 (2 no GPS, 4 no reading, 0x10
    internal 1PPS dead) and sets the clock from the reference; 1 if all is well, 2 if faulted */
@@ -63521,8 +63602,10 @@ override_jmp_000461bc_case_0:
   return uVar3;
 }
 
+#endif
 
 /* 00046290 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* takes the seconds from an FPGA count and the uptime, clamped to 0 to 59, adds them to the clock's
    time and sets it */
@@ -63567,6 +63650,7 @@ void clock_set_from_reference(void)
   return;
 }
 
+#endif
 
 /* 00046326 */
 #if 0 /* the decompiler's reading; rewritten in pllc.c */
@@ -63772,6 +63856,7 @@ uint8_t leds_update(void)
 #endif
 
 /* 00046524 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* by pll.stage, sets two pll flags and the status happenings they imply (0x1a, 0x1b, 0x28, 0x2a,
    0x2c), with log_event(6); pllp_task calls it at start and on stage changes */
@@ -63842,8 +63927,10 @@ override_jmp_000465c6_case_7:
   return;
 }
 
+#endif
 
 /* 00046620 */
+#if 0 /* the decompiler's reading; rewritten in pll_gps_control.c */
 
 /* returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it
     */
@@ -63857,8 +63944,10 @@ uint8_t gps_ack_received(void)
   return gps_ack_ready;
 }
 
+#endif
 
 /* 00046636 */
+#if 0 /* the decompiler's reading; rewritten in pll_gps_control.c */
 
 /* copies four longs and sends them to gpsx_exchange
    structures.md */
@@ -63898,8 +63987,10 @@ uint8_t gpsx_send(int16_t code,uint8_t argument_mode,int32_t *arguments,uint8_t 
   return uVar3;
 }
 
+#endif
 
 /* 000466ca */
+#if 0 /* the decompiler's reading; rewritten in pll_gps_control.c */
 
 /* asks the GPS engine for its self-test, up to 20 tries, failing the self-test's GPS bit 0x4000 if
    it never answers */
@@ -63907,13 +63998,13 @@ uint8_t gpsx_send(int16_t code,uint8_t argument_mode,int32_t *arguments,uint8_t 
 void gps_selftest_run(void)
 
 {
-  uint8_t uVar2;
+  uint8_t sent;
   uint32_t error;
   char cVar3;
   gps_request_entry reply;
   int32_t aiStack_14 [4];
   
-  for (cVar3 = 0x14; (uVar2 = gpsx_send(0x45,0,aiStack_14,5), uVar2 == 0 && (cVar3 != 0));
+  for (cVar3 = 0x14; (sent = gpsx_send(0x45,0,aiStack_14,5), sent == 0 && (cVar3 != 0));
       cVar3 = cVar3 + -1) {
     psos_pause(0x400);
     watchdog_pll = watchdog_pll + 1;
@@ -63940,7 +64031,7 @@ void gps_selftest_run(void)
   }
   gps_ack_awaited = 0;
   if (selftest.gps == 0) {
-    for (cVar3 = 0x14; (uVar2 = gpsx_send(0x4a,0,aiStack_14,5), uVar2 == 0 && (cVar3 != 0));
+    for (cVar3 = 0x14; (sent = gpsx_send(0x4a,0,aiStack_14,5), sent == 0 && (cVar3 != 0));
         cVar3 = cVar3 + -1) {
       psos_pause(0x400);
       watchdog_pll = watchdog_pll + 1;
@@ -63970,8 +64061,10 @@ void gps_selftest_run(void)
   return;
 }
 
+#endif
 
 /* 00046838 */
+#if 0 /* the decompiler's reading; rewritten in pll_gps_control.c */
 
 /* steps the GPS engine's initialization: each setting sent, then its acknowledgment checked
    the states print_gps_init_state names, each with its "... ack failure: %02X" */
@@ -63979,7 +64072,7 @@ void gps_selftest_run(void)
 void gps_init_sequence(void)
 
 {
-  uint8_t uVar1;
+  uint8_t sent;
   char cVar2;
   uint32_t arguments [4];
   char acStack_54 [80];
@@ -63987,8 +64080,8 @@ void gps_init_sequence(void)
   if (0x11 < pll.gps_init_state) {
 switchD_0004688c_caseD_0:
     arguments[0] = 0;
-    uVar1 = gpsx_send(0x48,0,(int32_t *)arguments,1);
-    if (uVar1 == 0) {
+    sent = gpsx_send(0x48,0,(int32_t *)arguments,1);
+    if (sent == 0) {
       return;
     }
     pll.gps_init_state = 1;
@@ -64014,8 +64107,8 @@ switchD_0004688c_caseD_0:
     break;
   case 2:
     arguments[0] = (uint32_t)(char)nv_settings.gps_utc;
-    uVar1 = gpsx_send(0x16,0,(int32_t *)arguments,1);
-    if (uVar1 != 0) {
+    sent = gpsx_send(0x16,0,(int32_t *)arguments,1);
+    if (sent != 0) {
       pll.gps_init_state = 3;
     }
     break;
@@ -64035,8 +64128,8 @@ switchD_0004688c_caseD_0:
     break;
   case 4:
     arguments[0] = nv_settings.elevation_mask;
-    uVar1 = gpsx_send(6,0,(int32_t *)arguments,1);
-    if (uVar1 != 0) {
+    sent = gpsx_send(6,0,(int32_t *)arguments,1);
+    if (sent != 0) {
       pll.gps_init_state = 5;
     }
     break;
@@ -64056,8 +64149,8 @@ switchD_0004688c_caseD_0:
     break;
   case 6:
     arguments[0] = nv_settings.antenna_delay;
-    uVar1 = gpsx_send(0x19,0,(int32_t *)arguments,1);
-    if (uVar1 != 0) {
+    sent = gpsx_send(0x19,0,(int32_t *)arguments,1);
+    if (sent != 0) {
       pll.gps_init_state = 7;
     }
     break;
@@ -64077,8 +64170,8 @@ switchD_0004688c_caseD_0:
     break;
   case 8:
     arguments[0] = nv_settings.ignored_satellites;
-    uVar1 = gpsx_send(0xc,0,(int32_t *)arguments,1);
-    if (uVar1 != 0) {
+    sent = gpsx_send(0xc,0,(int32_t *)arguments,1);
+    if (sent != 0) {
       pll.gps_init_state = 9;
     }
     break;
@@ -64106,8 +64199,8 @@ switchD_0004688c_caseD_0:
     arguments[1] = nv_settings.position[1];
     arguments[2] = nv_settings.position[2];
     arguments[3] = 1;
-    uVar1 = gpsx_send(0x4f,0,(int32_t *)arguments,1);
-    if (uVar1 != 0) {
+    sent = gpsx_send(0x4f,0,(int32_t *)arguments,1);
+    if (sent != 0) {
       pll.gps_init_state = 0xb;
     }
     break;
@@ -64128,8 +64221,8 @@ switchD_0004688c_caseD_0:
     break;
   case 0xc:
     arguments[0] = 0;
-    uVar1 = gpsx_send(0x55,0,(int32_t *)arguments,1);
-    if (uVar1 != 0) {
+    sent = gpsx_send(0x55,0,(int32_t *)arguments,1);
+    if (sent != 0) {
       pll.gps_init_state = 0xd;
     }
     break;
@@ -64179,8 +64272,8 @@ switchD_0004688c_caseD_0:
       arguments[1] = nv_settings.position[1];
       arguments[2] = nv_settings.position[2];
       arguments[3] = 1;
-      uVar1 = gpsx_send(0x54,0,(int32_t *)arguments,1);
-      if (uVar1 == 0) {
+      sent = gpsx_send(0x54,0,(int32_t *)arguments,1);
+      if (sent == 0) {
         return;
       }
       pll.gps_init_state = 0x10;
@@ -64227,8 +64320,10 @@ LAB_00046d8a:
   return;
 }
 
+#endif
 
 /* 00046d98 */
+#if 0 /* the decompiler's reading; rewritten in pll_gps_control.c */
 
 /* steps the leap second check with the GPS engine
    the states print_leap_check_state names; "leap pending ack failure: %02X" */
@@ -64237,8 +64332,8 @@ void gps_leap_sequence(void)
 
 {
   int32_t iVar1;
-  uint8_t uVar2;
-  char cVar3;
+  uint8_t sent;
+  char received;
   int32_t aiStack_64 [4];
   char acStack_54 [80];
   
@@ -64250,14 +64345,14 @@ void gps_leap_sequence(void)
       goto override_jmp_00046db6_case_0;
     case 0x14:
       aiStack_64[0] = 0;
-      uVar2 = gpsx_send(0x26,0,aiStack_64,3);
-      if (uVar2 != 0) {
+      sent = gpsx_send(0x26,0,aiStack_64,3);
+      if (sent != 0) {
         pll.leap_check_state = 2;
       }
       break;
     case 0x3e:
-      cVar3 = gps_ack_received();
-      if (cVar3 != 0) {
+      received = gps_ack_received();
+      if (received != 0) {
         if (gps_ack_code == 0) {
           leap_event_create();
           pll.leap_check_timer = 0;
@@ -64296,8 +64391,10 @@ LAB_00046e64:
   return;
 }
 
+#endif
 
 /* 00046e70 */
+#if 0 /* the decompiler's reading; rewritten in pll_gps_control.c */
 
 /* the leap second's acknowledgement step; "Error in leapsecond ack"; sets the GPS-UTC offset */
 
@@ -64307,8 +64404,8 @@ void gps_leap_ack(void)
   uint32_t pushed_1;
   uint32_t days;
   int32_t iVar2;
-  uint8_t uVar3;
-  char cVar4;
+  uint8_t sent;
+  char received;
   int16_t sVar5;
   uint8_t uVar7;
   uint8_t uVar8;
@@ -64341,14 +64438,14 @@ override_jmp_00046eb8_case_0:
     goto LAB_00046efe;
   case 0x52:
     auStack_14[0] = (uint32_t)(char)nv_settings.gps_utc;
-    uVar3 = gpsx_send(0x16,0,(int32_t *)auStack_14,2);
-    if (uVar3 != 0) {
+    sent = gpsx_send(0x16,0,(int32_t *)auStack_14,2);
+    if (sent != 0) {
       pll.leap_ack_state = 3;
     }
     break;
   case 0x80:
-    cVar4 = gps_ack_received();
-    if (cVar4 == 0) {
+    received = gps_ack_received();
+    if (received == 0) {
       return;
     }
     if (gps_ack_code != 0) {
@@ -64360,14 +64457,14 @@ LAB_00046efe:
     break;
   case 0x98:
     auStack_14[0] = (uint32_t)(gps.utc_time == ONCORE_TIME_GPS);
-    uVar3 = gpsx_send(0x4e,0,(int32_t *)auStack_14,2);
-    if (uVar3 != 0) {
+    sent = gpsx_send(0x4e,0,(int32_t *)auStack_14,2);
+    if (sent != 0) {
       pll.leap_ack_state = 5;
     }
     break;
   case 0xcc:
-    cVar4 = gps_ack_received();
-    if (cVar4 == 0) {
+    received = gps_ack_received();
+    if (received == 0) {
       return;
     }
     if (gps_ack_code == 0) {
@@ -64392,14 +64489,14 @@ LAB_00046efe:
     goto LAB_0004706a;
   case 0x15c:
     auStack_14[0] = (uint32_t)(gps.utc_time == ONCORE_TIME_GPS);
-    uVar3 = gpsx_send(0x16,0,(int32_t *)auStack_14,2);
-    if (uVar3 != 0) {
+    sent = gpsx_send(0x16,0,(int32_t *)auStack_14,2);
+    if (sent != 0) {
       pll.leap_ack_state = 7;
     }
     break;
   case 0x18c:
-    cVar4 = gps_ack_received();
-    if (cVar4 == 0) {
+    received = gps_ack_received();
+    if (received == 0) {
       return;
     }
     if (gps_ack_code == 0) {
@@ -64415,8 +64512,10 @@ LAB_0004706a:
   return;
 }
 
+#endif
 
 /* 00047078 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* 1 while a leap second acknowledgment is pending, pll +0x2c or +0x2d */
 
@@ -64434,6 +64533,7 @@ uint32_t leap_ack_pending(void)
   return uVar1;
 }
 
+#endif
 
 /* 00047090 */
 #if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
@@ -64453,6 +64553,7 @@ void leap_ack_request(int32_t index,int32_t source)
 #endif
 
 /* 000470aa */
+#if 0 /* the decompiler's reading; rewritten in pll_gps_control.c */
 
 /* maps the pending GPS command code at 0x10256c to an Oncore command and sends it */
 
@@ -64587,8 +64688,10 @@ switchD_000470d4_caseD_0:
   return;
 }
 
+#endif
 
 /* 000471fc */
+#if 0 /* the decompiler's reading; rewritten in pll_gps_control.c */
 
 /* the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack"; 1 once the self-test
    has run and pllp_task is to restart the loop */
@@ -64597,8 +64700,8 @@ bool gps_diag_sequence(bool same_stage)
 
 {
   int32_t iVar1;
-  uint8_t uVar2;
-  char cVar3;
+  uint8_t sent;
+  char received;
   bool bVar4;
   int32_t aiStack_14 [4];
   
@@ -64620,8 +64723,8 @@ bool gps_diag_sequence(bool same_stage)
       goto override_jmp_00047258_case_0;
     case 0x54:
       interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
-      cVar3 = gps_ack_received();
-      if (cVar3 == 0) {
+      received = gps_ack_received();
+      if (received == 0) {
         pll.gps_diag_substate = pll.gps_diag_substate + 1;
         if (0x1e < pll.gps_diag_substate) {
           selftest.gps = 0x4000;
@@ -64637,8 +64740,8 @@ bool gps_diag_sequence(bool same_stage)
       break;
     case 0x9c:
       interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
-      uVar2 = gpsx_send(0x4a,0,aiStack_14,5);
-      if (uVar2 == 0) {
+      sent = gpsx_send(0x4a,0,aiStack_14,5);
+      if (sent == 0) {
         pll.gps_diag_substate = pll.gps_diag_substate + 1;
         if (0x14 < pll.gps_diag_substate) {
           selftest.gps = 0x4000;
@@ -64652,8 +64755,8 @@ bool gps_diag_sequence(bool same_stage)
       break;
     case 0xe4:
       interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
-      cVar3 = gps_ack_received();
-      if (cVar3 == 0) {
+      received = gps_ack_received();
+      if (received == 0) {
         pll.gps_diag_substate = pll.gps_diag_substate + 1;
         if (0x1e < pll.gps_diag_substate) {
           selftest.gps = 0x4000;
@@ -64688,8 +64791,8 @@ bool gps_diag_sequence(bool same_stage)
   else {
 override_jmp_00047258_case_0:
     interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
-    uVar2 = gpsx_send(0x45,0,aiStack_14,5);
-    if (uVar2 == 0) {
+    sent = gpsx_send(0x45,0,aiStack_14,5);
+    if (sent == 0) {
       pll.gps_diag_substate = pll.gps_diag_substate + 1;
       if (0x14 < pll.gps_diag_substate) {
         selftest.gps = 0x4000;
@@ -64704,8 +64807,10 @@ override_jmp_00047258_case_0:
   return bVar4;
 }
 
+#endif
 
 /* 000473d2 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* clears pll, sets its stage invalid, its EFC from the saved value, tfom 1.0 and its defaults
    structures.md's pll */
@@ -64735,8 +64840,10 @@ void pll_init(void)
   return;
 }
 
+#endif
 
 /* 00047466 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* re-initializes pll, keeping two bytes, reports event /, and starts the power-up stage */
 
@@ -64765,8 +64872,10 @@ void pll_restart(void)
   return;
 }
 
+#endif
 
 /* 000474c2 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* sets the EFC's fractional frequency a count, 6.25e-13 from pllp_task, and the values derived from
    it: its reciprocal, 1 ns/s and 5e-9 a day in counts */
@@ -64786,8 +64895,10 @@ void efc_gain_set(float param_1)
   return;
 }
 
+#endif
 
 /* 00047528 */
+#if 0 /* the decompiler's reading; rewritten in pllp.c */
 
 /* root_task starts pllp here
    structures.md */
@@ -65143,6 +65254,7 @@ LAB_00047940:
   } while( true );
 }
 
+#endif
 
 /* 00047de2 */
 
@@ -93685,6 +93797,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/monitors.h"
 
+#include "../rewritten/z3805a-3543b/pll.h"
+
 #include "../rewritten/z3805a-3543b/pllc.h"
 
 #include "../rewritten/z3805a-3543b/records.h"
@@ -93733,9 +93847,17 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/os.c"
 
+#include "../rewritten/z3805a-3543b/pll_aging.c"
+
+#include "../rewritten/z3805a-3543b/pll_gps_control.c"
+
 #include "../rewritten/z3805a-3543b/pll_reading.c"
 
+#include "../rewritten/z3805a-3543b/pll_stages.c"
+
 #include "../rewritten/z3805a-3543b/pllc.c"
+
+#include "../rewritten/z3805a-3543b/pllp.c"
 
 #include "../rewritten/z3805a-3543b/pps.c"
 

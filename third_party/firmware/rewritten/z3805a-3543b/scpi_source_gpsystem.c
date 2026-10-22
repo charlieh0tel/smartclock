@@ -312,6 +312,7 @@ static int32_t scpi_source_gpsystem_angle(
 
 /* The limits of a latitude's and a longitude's degrees. */
 static const int32_t SCPI_SOURCE_GPSYSTEM_LATITUDE_LIMIT = 90;
+
 static const int32_t SCPI_SOURCE_GPSYSTEM_LONGITUDE_LIMIT = 180;
 
 /* A height's step and its limits' unit, a centimeter in meters. */
@@ -650,6 +651,7 @@ uint8_t satellites_in_mask(uint32_t mask, uint8_t count, int16_t* list,
  * 0x10295e, which the names file does not name: a list query writes its
  * source's and answers it as a scpi_array. */
 #define SCPI_SOURCE_GPSYSTEM_LIST_SIZE 32
+
 static int16_t (*const SCPI_SOURCE_GPSYSTEM_LISTS)
     [SCPI_SOURCE_GPSYSTEM_LIST_SIZE] =
         (int16_t (*)[SCPI_SOURCE_GPSYSTEM_LIST_SIZE])0x10295e;

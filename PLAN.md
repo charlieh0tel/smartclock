@@ -1385,6 +1385,10 @@ view cannot drift apart.  The library, bottom up:
      And `:DIAGnostic`, `:STATus` and the common commands (78), and
      `:GPS`, `:PTIMe`, `:PULSe`, `:KENneth` and `:DOUGlas` (72), all
      agreeing; the firmware revision moves to `records.h` for `*IDN?`.
+     And the disciplining loop (56: `pllp.c`, `pll_stages.c`,
+     `pll_aging.c`, `pll_gps_control.c`), all agreeing, what its files
+     share in `pll.h`; `fine` waits on a label for its readings at
+     `0x10207c`, `enter_holdover` on a `void` prototype.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

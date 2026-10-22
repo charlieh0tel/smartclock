@@ -49,6 +49,7 @@ static const float SCPI_DOUGLAS_INFINITE = 9.9e37f;
  * at 0x10272a, which the names file does not name: a query writes the
  * text into its source's and answers its address. */
 #define SCPI_DOUGLAS_TEXT_SIZE 0x11a
+
 static char (*const SCPI_DOUGLAS_TEXTS)[SCPI_DOUGLAS_TEXT_SIZE] =
     (char (*)[SCPI_DOUGLAS_TEXT_SIZE])0x10272a;
 

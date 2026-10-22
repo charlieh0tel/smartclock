@@ -1409,6 +1409,10 @@ view cannot drift apart.  The library, bottom up:
      any bridged routine's second result), and one `cpu.h` macro,
      `CPU_CALLERS_REGISTER`, for the registers the image reads as its
      callers left them.
+     And the kernel's records and codes moved from `os.c` to
+     `smartclock.h` as `psos_task`, `psos_exchange`, `psos_kernel`,
+     `psos_service` and the rest, which `psos_call` and `psos_io_call`
+     take, so that every decompiled call names its service.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

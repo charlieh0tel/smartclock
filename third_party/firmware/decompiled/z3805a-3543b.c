@@ -1879,8 +1879,84 @@ typedef int (printf_function)(char *, ...);
 
 typedef struct psos_configuration psos_configuration, *Ppsos_configuration;
 
+typedef struct psos_kernel psos_kernel, *Ppsos_kernel;
+
+typedef struct psos_task psos_task, *Ppsos_task;
+
+typedef struct psos_exchange psos_exchange, *Ppsos_exchange;
+
+typedef struct psos_message psos_message, *Ppsos_message;
+
+typedef struct psos_segment psos_segment, *Ppsos_segment;
+
+typedef enum __attribute__((packed)) psos_task_mode {
+    PSOS_MODE_TIME_SLICE=64,
+    PSOS_MODE_NO_PREEMPTION=128
+} psos_task_mode;
+
+typedef enum __attribute__((packed)) psos_task_status {
+    PSOS_TASK_SUSPENDED=4,
+    PSOS_TASK_PAUSED=8,
+    PSOS_TASK_VARIABLE_WAIT=16,
+    PSOS_TASK_EXCHANGE_WAIT=32,
+    PSOS_TASK_MEMORY_WAIT=64,
+    PSOS_TASK_SPAWNING=128
+} psos_task_status;
+
+typedef struct psos_resource psos_resource, *Ppsos_resource;
+
+struct psos_task {
+    struct psos_task *next;
+    uint32_t field_04;
+    struct psos_task *timer_next;
+    uint32_t field_0c;
+    uint8_t priority;
+    enum psos_task_mode mode;
+    uint8_t delay;
+    enum psos_task_status status;
+    uint8_t group;
+    uint8_t field_15;
+    uint16_t events_waited;
+    uint16_t events_pending;
+    uint16_t slice_ticks;
+    struct psos_resource *resources;
+    struct psos_segment *segments;
+    char name[4];
+    uint32_t id_check;
+    uint32_t field_2c;
+    struct psos_task *list_next;
+    uint16_t field_34;
+    uint32_t supervisor_pointer;
+    uint32_t user_pointer;
+    uint8_t field_3e[12];
+    int32_t timer_ticks;
+    uint32_t field_4e;
+    uint32_t region_request;
+    uint32_t region_wait;
+    uint8_t field_5a[40];
+    void *exception_hook;
+    uint32_t field_86;
+    uint32_t user_top;
+    uint32_t supervisor_top;
+    uint32_t stack_bottom;
+    uint8_t field_96[24];
+    uint32_t ticks;
+};
+
+struct psos_segment {
+    struct psos_segment *next;
+    uint32_t field_04;
+    uint32_t field_08;
+    uint32_t size;
+    uint16_t flags;
+};
+
+struct psos_message {
+    struct psos_message *next;
+};
+
 struct psos_configuration {
-    void *data_area;
+    struct psos_kernel *data_area;
     uint32_t data_end;
     uint32_t region_1_minimum;
     uint32_t region_2_start;
@@ -1903,6 +1979,91 @@ struct psos_configuration {
     void **task_hooks;
     uint8_t field_4a[24];
 };
+
+struct psos_exchange {
+    struct psos_task *waiting;
+    uint8_t field_04[12];
+    uint8_t by_priority;
+    uint8_t group_only;
+    uint8_t limited;
+    uint8_t field_13;
+    char name[4];
+    uint32_t id_check;
+    struct psos_exchange *next;
+    uint8_t queue_limit;
+    uint8_t queued;
+};
+
+struct psos_resource {
+    struct psos_resource *next;
+    void *object;
+};
+
+struct psos_kernel {
+    struct psos_task *running;
+    struct psos_task *ready;
+    struct psos_task *timers;
+    struct psos_task *tasks;
+    struct psos_task *free_tasks;
+    struct psos_exchange *exchanges;
+    struct psos_exchange *free_exchanges;
+    struct psos_message *free_messages;
+    uint8_t field_20[16];
+    void *debug_hooks;
+    uint32_t region_minimum[2];
+    uint32_t region_maximum[2];
+    uint32_t region_pending[2];
+    uint32_t region_end[2];
+    struct psos_segment *region_free[2];
+    uint8_t field_5c[8];
+    struct psos_task *region_waiting;
+};
+
+typedef enum __attribute__((packed)) psos_io_function {
+    PSOS_IO_INIT=0,
+    PSOS_IO_OPEN=1,
+    PSOS_IO_READ=3,
+    PSOS_IO_WRITE=4
+} psos_io_function;
+
+typedef enum __attribute__((packed)) psos_service {
+    PSOS_SERVICE_START=2,
+    PSOS_SERVICE_IDENT=3,
+    PSOS_SERVICE_DELETE=4,
+    PSOS_SERVICE_SUSPEND=5,
+    PSOS_SERVICE_RESUME=6,
+    PSOS_SERVICE_PRIORITY=7,
+    PSOS_SERVICE_ALLOCATE_SEGMENT=8,
+    PSOS_SERVICE_FREE_SEGMENT=9,
+    PSOS_SERVICE_ASSIGN_SEGMENT=10,
+    PSOS_SERVICE_RECLAIM_SEGMENT=16,
+    PSOS_SERVICE_BROADCAST_X=18,
+    PSOS_SERVICE_JAM_X=19,
+    PSOS_SERVICE_CREATE_X=20,
+    PSOS_SERVICE_ATTACH_X=21,
+    PSOS_SERVICE_DELETE_X=22,
+    PSOS_SERVICE_SEND_X=23,
+    PSOS_SERVICE_REQUEST_X=24,
+    PSOS_SERVICE_SIGNAL_V=25,
+    PSOS_SERVICE_WAIT_V=26,
+    PSOS_SERVICE_GET_V=27,
+    PSOS_SERVICE_PAUSE=28,
+    PSOS_SERVICE_ANNOUNCE_TICK=29,
+    PSOS_SERVICE_GET_TIME=30,
+    PSOS_SERVICE_SET_TIME=31,
+    PSOS_SERVICE_MODE=32,
+    PSOS_SERVICE_CREATE_PARTITION=35,
+    PSOS_SERVICE_DELETE_PARTITION=36,
+    PSOS_SERVICE_GET_BLOCK=37,
+    PSOS_SERVICE_RETURN_BLOCK=38
+} psos_service;
+
+typedef enum __attribute__((packed)) psos_table_state {
+    PSOS_TABLE_READY=0,
+    PSOS_TABLE_PAUSED=1,
+    PSOS_TABLE_BLOCKED=2,
+    PSOS_TABLE_EMPTY=255
+} psos_table_state;
 
 typedef struct qsm_registers qsm_registers, *Pqsm_registers;
 
@@ -2803,9 +2964,9 @@ struct status_snapshot_record {
 typedef struct task_table_entry task_table_entry, *Ptask_table_entry;
 
 struct task_table_entry {
-    uint8_t state;
+    enum psos_table_state state;
     uint8_t field_01;
-    void *task;
+    struct psos_task *task;
 };
 
 typedef struct three_point_fit three_point_fit, *Pthree_point_fit;
@@ -2949,6 +3110,17 @@ _Static_assert(sizeof(pllc_request) == 24, "pllc_request");
 _Static_assert(sizeof(pps_exchange_message) == 24, "pps_exchange_message");
 _Static_assert(sizeof(preserved_region_fields) == 2382, "preserved_region_fields");
 _Static_assert(sizeof(psos_configuration) == 98, "psos_configuration");
+_Static_assert(sizeof(psos_exchange) == 34, "psos_exchange");
+_Static_assert(sizeof(psos_io_function) == 1, "psos_io_function");
+_Static_assert(sizeof(psos_kernel) == 104, "psos_kernel");
+_Static_assert(sizeof(psos_message) == 4, "psos_message");
+_Static_assert(sizeof(psos_resource) == 8, "psos_resource");
+_Static_assert(sizeof(psos_segment) == 18, "psos_segment");
+_Static_assert(sizeof(psos_service) == 1, "psos_service");
+_Static_assert(sizeof(psos_table_state) == 1, "psos_table_state");
+_Static_assert(sizeof(psos_task) == 178, "psos_task");
+_Static_assert(sizeof(psos_task_mode) == 1, "psos_task_mode");
+_Static_assert(sizeof(psos_task_status) == 1, "psos_task_status");
 _Static_assert(sizeof(qsm_registers) == 336, "qsm_registers");
 _Static_assert(sizeof(qspi_buffers) == 8, "qspi_buffers");
 _Static_assert(sizeof(qspi_device) == 1, "qspi_device");
@@ -5614,8 +5786,8 @@ void task_stack_report(uint8_t param_1);
 void psos_debug_output(char param_1);
 void tick_account(int16_t mode) __asm__("c_tick_account");
 void task_count_tick(void);
-int32_t psos_call(char service, int32_t d0, int32_t d1, int32_t d2, int32_t d3, void *a0, void *a1) __asm__("c_psos_call");
-int32_t psos_io_call(char function, int32_t device, int32_t d1, int32_t d2, int32_t d3, void *a0, void *a1) __asm__("c_psos_io_call");
+int32_t psos_call(psos_service service, int32_t d0, int32_t d1, int32_t d2, int32_t d3, void *a0, void *a1) __asm__("c_psos_call");
+int32_t psos_io_call(psos_io_function function, int32_t device, int32_t d1, int32_t d2, int32_t d3, void *a0, void *a1) __asm__("c_psos_io_call");
 int32_t psos_pack_name(void) __asm__("c_psos_pack_name");
 uint32_t psos_create(char *name,uint32_t a,uint32_t priority,uint32_t stack_a,uint32_t stack_b,void *e,uint32_t *task);
 uint32_t psos_start(uint32_t task,void *entry);
@@ -8129,17 +8301,17 @@ __regcall int32_t mutex_init(int32_t name /* d0 */,mutex *lock /* a1 */)
   bool bVar2;
   
   bVar2 = false;
-  ({ __auto_type __c = ({ __auto_type __c = psos_call(0x15,name,in_D1,unaff_D2,unaff_D3,in_A0,lock); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+  ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_ATTACH_X,name,in_D1,unaff_D2,unaff_D3,in_A0,lock); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
   if (bVar2) {
     iVar1 = 3;
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x14,d0,0,0,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_CREATE_X,d0,0,0,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
     if (bVar2) {
       mutex_clear(lock_00);
       *(void **)((int32_t)a1_00 + 4) = a0_00;
-      iVar1 = psos_call(0x17,d0_00,d1,0,unaff_D3,a0_00,a1_00);
+      iVar1 = psos_call(PSOS_SERVICE_SEND_X,d0_00,d1,0,unaff_D3,a0_00,a1_00);
     }
   }
   return iVar1;
@@ -8212,7 +8384,7 @@ __regcall int32_t mutex_acquire(mutex *lock /* a1 */)
   int32_t extraout_A1;
   bool bVar2;
   
-  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+  iVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_IDENT,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
     *(int32_t *)((int32_t)a1 + 0xc) = *(int32_t *)((int32_t)a1 + 0xc) + 1;
@@ -8222,7 +8394,7 @@ __regcall int32_t mutex_acquire(mutex *lock /* a1 */)
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x18,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; a1 = (__typeof__(a1))bridge_result_a1; __c; });
+    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_REQUEST_X,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; a1 = (__typeof__(a1))bridge_result_a1; __c; });
     if (bVar2) {
       *(int32_t *)(extraout_A1 + 8) = extraout_A0;
     }
@@ -8302,11 +8474,11 @@ __regcall int32_t mutex_release(mutex *lock /* a1 */)
   int32_t extraout_A0;
   void *a1;
   
-  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+  iVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_IDENT,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     if (*(int32_t *)((int32_t)a1 + 0xc) == 0) {
       *(uint32_t *)((int32_t)a1 + 8) = 0;
-      iVar1 = ({ __auto_type __c = psos_call(0x17,*(int32_t *)((int32_t)a1 + 4),d1,unaff_D2,unaff_D3,
+      iVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_SEND_X,*(int32_t *)((int32_t)a1 + 4),d1,unaff_D2,unaff_D3,
                         (void *)*(int32_t *)((int32_t)a1 + 4),a1); a1 = (__typeof__(a1))bridge_result_a1; __c; });
     }
     else {
@@ -10807,8 +10979,8 @@ void pps_interrupt(void)
   pps_message.gps_time = get_gps_time();
   pps_message.gps_date = get_gps_date();
   if (pps_exchange != 0) {
-    psos_call(0x12,pps_exchange & 0xffffff00,d1,unaff_D2,unaff_D3,(void *)pps_exchange,
-              &pps_message);
+    psos_call(PSOS_SERVICE_BROADCAST_X,pps_exchange & 0xffffff00,d1,unaff_D2,unaff_D3,
+              (void *)pps_exchange,&pps_message);
   }
   return;
 }
@@ -10877,7 +11049,7 @@ int32_t pps_init(void)
   void *in_A1;
   
   pps_exchange = 0;
-  iVar2 = ({ __auto_type __c = psos_call(0x14,0x31707073,0,0,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  iVar2 = ({ __auto_type __c = psos_call(PSOS_SERVICE_CREATE_X,0x31707073,0,0,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if (iVar2 == 0) {
     pps_exchange = extraout_A0;
     mutex_clear((mutex *)&pps_message);
@@ -10910,7 +11082,8 @@ int32_t pps_interrupt_stop(void)
     iVar2 = 4;
   }
   else {
-    iVar2 = ({ __auto_type __c = psos_call(0x16,pps_exchange,in_D1,unaff_D2,unaff_D3,(void *)pps_exchange,in_A1); pps_exchange = (__typeof__(pps_exchange))bridge_result_d0; __c; });
+    iVar2 = ({ __auto_type __c = psos_call(PSOS_SERVICE_DELETE_X,pps_exchange,in_D1,unaff_D2,unaff_D3,
+                      (void *)pps_exchange,in_A1); pps_exchange = (__typeof__(pps_exchange))bridge_result_d0; __c; });
     uVar1 = gpt.tflg;
     gpt.tflg = uVar1 & ~TFLG_ICF1;
     uVar1 = gpt.tmsk;
@@ -10934,8 +11107,8 @@ int32_t pps_wait_time(uint32_t *param_1,uint32_t *param_2,int32_t param_3)
   int32_t iVar1;
   
   if ((param_3 != 0) &&
-     (iVar1 = psos_call(0x18,0x4b0,0,unaff_D2,unaff_D3,(void *)pps_exchange,&pps_message),
-     iVar1 != 0)) {
+     (iVar1 = psos_call(PSOS_SERVICE_REQUEST_X,0x4b0,0,unaff_D2,unaff_D3,(void *)pps_exchange,
+                        &pps_message), iVar1 != 0)) {
     return iVar1;
   }
   if (param_1 != (uint32_t *)0x0) {
@@ -14330,12 +14503,12 @@ __asm__(".set primary_trap_5, kernel_return_from_interrupt");
 __exception void kernel_dispatch_service(uint16_t param_1)
 
 {
-  int32_t iVar1;
+  psos_task *ppVar1;
   uint16_t *puVar2;
   uint8_t *puVar3;
   code *pcVar4;
   uint8_t bVar5;
-  void *pvVar6;
+  psos_kernel *ppVar6;
   uint32_t in_D0;
   uint32_t uVar7;
   uint16_t uVar8;
@@ -14358,7 +14531,7 @@ __exception void kernel_dispatch_service(uint16_t param_1)
   uint32_t unaff_A2 = ({ register int32_t __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   uint32_t unaff_A3 = ({ register int32_t __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   uint32_t unaff_A4 = ({ register int32_t __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
-  uint32_t unaff_A5 = ({ register int32_t __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  int32_t unaff_A5 = ({ register int32_t __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint32_t unaff_A6 = (uint32_t)*(void **)__builtin_frame_address(0);
   uint16_t *puVar13;
   uint16_t *puVar14;
@@ -14368,12 +14541,13 @@ __exception void kernel_dispatch_service(uint16_t param_1)
   uint32_t in_stack_00000002 = *(uint32_t *)((char *)__builtin_frame_address(0) + 6);
   int16_t sVar11;
   
-  pvVar6 = psos_config.data_area;
+  ppVar6 = psos_config.data_area;
   uVar15 = CONCAT44(in_D0,in_D1);
-  *(int16_t *)((int32_t)psos_config.data_area + 0x24) = *(int16_t *)((int32_t)psos_config.data_area + 0x24) + 1;
+  *(int16_t *)((psos_config.data_area)->field_20 + 4) =
+       *(int16_t *)((psos_config.data_area)->field_20 + 4) + 1;
   if ((uint16_t)unaff_D7 < 0x27) {
-    if (*(int32_t *)((int32_t)pvVar6 + 0x30) != 0) {
-      (**(code **)(*(int32_t *)((int32_t)pvVar6 + 0x30) + 4))();
+    if (ppVar6->debug_hooks != (void *)0x0) {
+      (**(code **)((int32_t)ppVar6->debug_hooks + 4))();
     }
     sVar11 = (uint16_t)unaff_D7 << 2;
     uVar10 = CONCAT22((int16_t)((uint32_t)unaff_D7 >> 0x10),sVar11);
@@ -14384,67 +14558,67 @@ __exception void kernel_dispatch_service(uint16_t param_1)
   else {
     uVar10 = CONCAT31((int3)((uint32_t)unaff_D7 >> 8),0x55);
   }
-  iVar1 = *(int32_t *)pvVar6;
+  ppVar1 = ppVar6->running;
   if ((in_stack_00000000 & 0x700) != 0) {
-    *(int16_t *)((int32_t)pvVar6 + 0x24) = *(int16_t *)((int32_t)pvVar6 + 0x24) + -1;
+    *(int16_t *)(ppVar6->field_20 + 4) = *(int16_t *)(ppVar6->field_20 + 4) + -1;
     return;
   }
-  while (uVar9 = (uint32_t)uVar15, *(int32_t *)((int32_t)pvVar6 + 0x6c) != 0) {
+  while (uVar9 = (uint32_t)uVar15, ppVar6[1].ready != (psos_task *)0x0) {
     uVar15 = kernel_process_ticks();
     in_A0 = extraout_A0_00;
     in_A1 = extraout_A1_00;
   }
-  bVar5 = *(uint8_t *)((int32_t)pvVar6 + 0x8b);
-  *(uint8_t *)((int32_t)pvVar6 + 0x8b) = bVar5 | 0x80;
+  bVar5 = ppVar6[1].field_20[3];
+  ppVar6[1].field_20[3] = bVar5 | 0x80;
   if ((bVar5 & 0x80) == 0) {
-    uVar9 = CONCAT22((int16_t)((uint64_t)uVar15 >> 0x10),*(uint16_t *)(iVar1 + 0x54));
+    uVar9 = CONCAT22((int16_t)((uint64_t)uVar15 >> 0x10),(int16_t)ppVar1->region_request);
   }
-  if ((iVar1 != *(int32_t *)((int32_t)pvVar6 + 4)) &&
-     (((*(uint8_t *)(iVar1 + 0x11) & 0x80) == 0 || (*(char *)(iVar1 + 0x13) != 0)))) {
-    *(int32_t *)(iVar1 + 0x4e) = (int32_t)((uint64_t)uVar15 >> 0x20);
-    *(uint32_t *)(iVar1 + 0x52) = uVar9;
-    *(uint32_t *)(iVar1 + 0x56) = unaff_D2;
-    *(uint32_t *)(iVar1 + 0x5a) = unaff_D3;
-    *(uint32_t *)(iVar1 + 0x5e) = unaff_D4;
-    *(uint32_t *)(iVar1 + 0x62) = unaff_D5;
-    *(uint32_t *)(iVar1 + 0x66) = unaff_D6;
-    *(uint32_t *)(iVar1 + 0x6a) = uVar10;
-    *(uint32_t *)(iVar1 + 0x6e) = in_A0;
-    *(uint32_t *)(iVar1 + 0x72) = in_A1;
-    *(uint32_t *)(iVar1 + 0x76) = unaff_A2;
-    *(uint32_t *)(iVar1 + 0x7a) = unaff_A3;
-    *(uint32_t *)(iVar1 + 0x7e) = unaff_A4;
-    *(uint32_t *)(iVar1 + 0x4a) = unaff_A5;
-    *(uint32_t *)(iVar1 + 0x46) = unaff_A6;
-    uVar7 = *(uint32_t *)(iVar1 + 0x42) & 0xffff1000;
+  if ((ppVar1 != ppVar6->ready) &&
+     (((ppVar1->mode & PSOS_MODE_NO_PREEMPTION) == 0 || (ppVar1->status != 0)))) {
+    ppVar1->field_4e = (uint32_t)((uint64_t)uVar15 >> 0x20);
+    ppVar1->region_request = uVar9;
+    ppVar1->region_wait = unaff_D2;
+    *(uint32_t *)ppVar1->field_5a = unaff_D3;
+    *(uint32_t *)(ppVar1->field_5a + 4) = unaff_D4;
+    *(uint32_t *)(ppVar1->field_5a + 8) = unaff_D5;
+    *(uint32_t *)(ppVar1->field_5a + 0xc) = unaff_D6;
+    *(uint32_t *)(ppVar1->field_5a + 0x10) = uVar10;
+    *(uint32_t *)(ppVar1->field_5a + 0x14) = in_A0;
+    *(uint32_t *)(ppVar1->field_5a + 0x18) = in_A1;
+    *(uint32_t *)(ppVar1->field_5a + 0x1c) = unaff_A2;
+    *(uint32_t *)(ppVar1->field_5a + 0x20) = unaff_A3;
+    *(uint32_t *)(ppVar1->field_5a + 0x24) = unaff_A4;
+    ppVar1->timer_ticks = unaff_A5;
+    *(uint32_t *)(ppVar1->field_3e + 8) = unaff_A6;
+    uVar7 = *(uint32_t *)(ppVar1->field_3e + 4) & 0xffff1000;
     uVar8 = (uint16_t)uVar7;
-    *(uint32_t *)(iVar1 + 0x42) = CONCAT22((int16_t)(uVar7 >> 0x10),in_stack_00000000 | uVar8);
-    *(uint32_t *)(iVar1 + 0x3e) = in_stack_00000002;
+    *(uint32_t *)(ppVar1->field_3e + 4) = CONCAT22((int16_t)(uVar7 >> 0x10),in_stack_00000000 | uVar8);
+    *(uint32_t *)ppVar1->field_3e = in_stack_00000002;
     puVar13 = (uint16_t *)&stack0x00000008;
-    *(uint16_t *)(iVar1 + 0x34) = param_1;
-    *(uint16_t **)(iVar1 + 0x3a) = in_USP;
-    puVar3 = *(uint8_t **)((int32_t)pvVar6 + 0x20);
+    ppVar1->field_34 = param_1;
+    ppVar1->user_pointer = (uint32_t)in_USP;
+    puVar3 = *(uint8_t **)ppVar6->field_20;
     if ((in_stack_00000000 & 0x1000) == 0 && uVar8 == 0) {
       for (; (uint16_t *)puVar3 != puVar13; puVar13 = puVar13 + 1) {
         in_USP = in_USP + -1;
         *in_USP = *puVar13;
       }
-      *(uint16_t **)(iVar1 + 0x36) = in_USP;
+      ppVar1->supervisor_pointer = (uint32_t)in_USP;
     }
     else {
-      *(uint8_t **)(iVar1 + 0x36) = &stack0x00000008;
+      ppVar1->supervisor_pointer = (uint32_t)&stack0x00000008;
       puVar13 = (uint16_t *)puVar3;
     }
-    iVar1 = *(int32_t *)((int32_t)pvVar6 + 4);
-    pcVar4 = *(code **)((int32_t)pvVar6 + 0xb4);
+    ppVar1 = ppVar6->ready;
+    pcVar4 = (code *)ppVar6[1].region_end[0];
     if (pcVar4 != (code *)0x0) {
       *(uint32_t *)((int32_t)puVar13 + -4) = 0x1602e;
       (*pcVar4)();
     }
-    *(int32_t *)pvVar6 = iVar1;
-    puVar12 = *(uint16_t **)(iVar1 + 0x36);
-    puVar2 = *(uint16_t **)(iVar1 + 0x3a);
-    uVar8 = *(uint16_t *)(iVar1 + 0x44);
+    ppVar6->running = ppVar1;
+    puVar12 = (uint16_t *)ppVar1->supervisor_pointer;
+    puVar2 = (uint16_t *)ppVar1->user_pointer;
+    uVar8 = *(uint16_t *)(ppVar1->field_3e + 6);
     if ((uVar8 & 0x1000) == 0) {
       for (; puVar2 != puVar12; puVar12 = puVar12 + 1) {
         puVar14 = (uint16_t *)((int32_t)puVar13 + -2);
@@ -14456,20 +14630,20 @@ __exception void kernel_dispatch_service(uint16_t param_1)
       uVar8 = uVar8 & 0xefff;
       puVar13 = puVar12;
     }
-    puVar13[-1] = *(uint16_t *)(iVar1 + 0x34);
-    *(uint32_t *)(puVar13 + -3) = *(uint32_t *)(iVar1 + 0x3e);
+    puVar13[-1] = ppVar1->field_34;
+    *(uint32_t *)(puVar13 + -3) = *(uint32_t *)ppVar1->field_3e;
     puVar13[-4] = uVar8;
-    *(uint32_t *)(puVar13 + -6) = *(uint32_t *)(iVar1 + 0x46);
-    *(uint32_t *)(puVar13 + -8) = *(uint32_t *)(iVar1 + 0x4a);
-    *(uint32_t *)(puVar13 + -10) = *(uint32_t *)(iVar1 + 0x66);
+    *(uint32_t *)(puVar13 + -6) = *(uint32_t *)(ppVar1->field_3e + 8);
+    *(int32_t *)(puVar13 + -8) = ppVar1->timer_ticks;
+    *(uint32_t *)(puVar13 + -10) = *(uint32_t *)(ppVar1->field_5a + 0xc);
     kernel_switch_task();
     return;
   }
-  *(int16_t *)((int32_t)pvVar6 + 0x24) = *(int16_t *)((int32_t)pvVar6 + 0x24) + -1;
-  if (*(int32_t *)((int32_t)pvVar6 + 0x30) != 0) {
+  *(int16_t *)(ppVar6->field_20 + 4) = *(int16_t *)(ppVar6->field_20 + 4) + -1;
+  if (ppVar6->debug_hooks != (void *)0x0) {
                     /* WARNING: Could not recover jumptable at 0x00014cbc. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-    (**(code **)(*(int32_t *)((int32_t)pvVar6 + 0x30) + 8))();
+    (**(code **)((int32_t)ppVar6->debug_hooks + 8))();
     return;
   }
   return;
@@ -14563,19 +14737,19 @@ __asm__(
 __exception void kernel_dispatch_io(char function /* d7 */,int32_t device /* d0 */)
 
 {
-  int32_t *piVar1;
+  void *pvVar1;
   uint16_t uVar2;
   uint8_t unaff_0000001e;
   
   uVar2 = (uint16_t)device;
   if (CONCAT11(unaff_0000001e,function) < 6) {
-    piVar1 = (int32_t *)((int32_t)psos_config.data_area + 0x30);
-    if (*piVar1 != 0) {
-      *(int16_t *)((int32_t)psos_config.data_area + 0x24) =
-           *(int16_t *)((int32_t)psos_config.data_area + 0x24) + 1;
-      uVar2 = (**(code **)(*piVar1 + 4))();
-      *(int16_t *)((int32_t)psos_config.data_area + 0x24) =
-           *(int16_t *)((int32_t)psos_config.data_area + 0x24) + -1;
+    pvVar1 = (psos_config.data_area)->debug_hooks;
+    if (pvVar1 != (void *)0x0) {
+      *(int16_t *)((psos_config.data_area)->field_20 + 4) =
+           *(int16_t *)((psos_config.data_area)->field_20 + 4) + 1;
+      uVar2 = (**(code **)((int32_t)pvVar1 + 4))();
+      *(int16_t *)((psos_config.data_area)->field_20 + 4) =
+           *(int16_t *)((psos_config.data_area)->field_20 + 4) + -1;
     }
     if (uVar2 >> 8 <= psos_config.last_device) {
       return;
@@ -19678,158 +19852,158 @@ __asm__(
 __exception void kernel_init(void)
 
 {
-  void *pvVar1;
-  uint16_t *puVar2;
-  int32_t iVar3;
-  code *pcVar4;
-  int32_t iVar5;
-  void *pvVar6;
+  uint16_t *puVar1;
+  int32_t iVar2;
+  code *pcVar3;
+  int32_t iVar4;
+  psos_kernel *ppVar5;
+  uint16_t uVar6;
   uint16_t uVar7;
-  uint16_t uVar8;
   int32_t extraout_A0;
   int32_t extraout_A0_00;
   uint32_t *extraout_A0_01;
-  uint16_t *puVar9;
-  uint32_t uVar10;
-  uint32_t *puVar11;
-  uint32_t *puVar12;
-  uint32_t *puVar13;
-  uint16_t *puVar14;
-  bool bVar15;
+  uint16_t *puVar8;
+  void *pvVar9;
+  psos_task *ppVar10;
+  psos_task *ppVar11;
+  psos_task *ppVar12;
+  bool bVar13;
   
-  pvVar6 = psos_config.data_area;
-  iVar5 = (uint32_t)(uint16_t)(psos_config.task_records + 1) * 0xb2 +
+  ppVar5 = psos_config.data_area;
+  iVar4 = (uint32_t)(uint16_t)(psos_config.task_records + 1) * 0xb2 +
           (uint32_t)psos_config.message_buffers * 0x18 +
           (uint32_t)psos_config.exchange_records * 0x22 + psos_config.supervisor_stack_size + 0xda;
-  if ((uint32_t)(iVar5 + (int32_t)psos_config.data_area) <= psos_config.data_end) {
-    puVar11 = (uint32_t *)((int32_t)psos_config.data_area + psos_config.supervisor_stack_size + 200);
-    *(uint32_t **)((int32_t)psos_config.data_area + 0x20) = puVar11;
-    *(uint16_t *)((int32_t)pvVar6 + 0xb8) = 0xdeaf;
-    *(uint32_t *)((int32_t)pvVar6 + 0x30) = 0;
-    *(uint32_t *)((int32_t)pvVar6 + 0x14) = 0;
-    *(uint32_t *)((int32_t)pvVar6 + 0x18) = 0;
-    uVar7 = psos_config.exchange_records;
-    puVar12 = puVar11;
+  if ((uint32_t)(iVar4 + (int32_t)psos_config.data_area) <= psos_config.data_end) {
+    ppVar12 = (psos_task *)
+              (psos_config.data_area[1].field_5c + psos_config.supervisor_stack_size + 4);
+    *(psos_task **)(psos_config.data_area)->field_20 = ppVar12;
+    *(uint16_t *)(ppVar5[1].region_end + 1) = 0xdeaf;
+    ppVar5->debug_hooks = (void *)0x0;
+    ppVar5->exchanges = (psos_exchange *)0x0;
+    ppVar5->free_exchanges = (psos_exchange *)0x0;
+    uVar6 = psos_config.exchange_records;
+    ppVar10 = ppVar12;
     if (psos_config.exchange_records != 0) {
-      *(uint32_t **)((int32_t)pvVar6 + 0x18) = puVar11;
+      ppVar5->free_exchanges = (psos_exchange *)ppVar12;
       do {
-        puVar13 = puVar12;
-        *(uint8_t *)((int32_t)puVar13 + 0x11) = 0xfe;
-        puVar13[6] = (int32_t)puVar13 << 0x10 | (uint32_t)puVar13 >> 0x10;
-        puVar12 = (uint32_t *)((int32_t)puVar13 + 0x22);
-        puVar13[7] = puVar12;
-        uVar7 = uVar7 - 1;
-      } while (uVar7 != 0);
-      puVar13[7] = 0;
+        ppVar11 = ppVar10;
+        ppVar11->mode = 0xfe;
+        *(uint32_t *)&ppVar11->events_pending = (int32_t)ppVar11 << 0x10 | (uint32_t)ppVar11 >> 0x10;
+        ppVar10 = (psos_task *)((int32_t)&ppVar11->segments + 2);
+        ppVar11->resources = (psos_resource *)ppVar10;
+        uVar6 = uVar6 - 1;
+      } while (uVar6 != 0);
+      ppVar11->resources = (psos_resource *)0x0;
     }
-    *(uint32_t *)((int32_t)pvVar6 + 0x1c) = 0;
-    uVar7 = psos_config.message_buffers;
+    ppVar5->free_messages = (psos_message *)0x0;
+    uVar6 = psos_config.message_buffers;
     if (psos_config.message_buffers != 0) {
-      *(uint32_t **)((int32_t)pvVar6 + 0x1c) = puVar12;
+      ppVar5->free_messages = (psos_message *)ppVar10;
       do {
-        puVar13 = puVar12;
-        puVar12 = puVar13 + 6;
-        *puVar13 = puVar12;
-        uVar7 = uVar7 - 1;
-      } while (uVar7 != 0);
-      *puVar13 = 0;
+        ppVar11 = ppVar10;
+        ppVar10 = (psos_task *)&ppVar11->events_pending;
+        ppVar11->next = ppVar10;
+        uVar6 = uVar6 - 1;
+      } while (uVar6 != 0);
+      ppVar11->next = (psos_task *)0x0;
     }
-    uVar7 = psos_config.task_records;
-    *(uint32_t **)((int32_t)pvVar6 + 0x10) = puVar12;
+    uVar6 = psos_config.task_records;
+    ppVar5->free_tasks = ppVar10;
     do {
-      puVar13 = puVar12;
-      *(uint8_t *)((int32_t)puVar13 + 0x13) = 0xff;
-      puVar13[10] = CONCAT22((int16_t)((uint32_t)puVar13 >> 0x10),~(uint16_t)puVar13);
-      puVar13[0xc] = (uint32_t *)((int32_t)puVar13 + 0xb2);
-      bVar15 = uVar7 != 0;
-      uVar7 = uVar7 - 1;
-      puVar12 = (uint32_t *)((int32_t)puVar13 + 0xb2);
-    } while (bVar15);
-    puVar13[0xc] = 0;
-    *(uint32_t *)((int32_t)pvVar6 + 0xc) = 0;
+      ppVar11 = ppVar10;
+      ppVar11->status = 0xff;
+      ppVar11->id_check = CONCAT22((int16_t)((uint32_t)ppVar11 >> 0x10),~(uint16_t)ppVar11);
+      ppVar11->list_next = ppVar11 + 1;
+      bVar13 = uVar6 != 0;
+      uVar6 = uVar6 - 1;
+      ppVar10 = ppVar11 + 1;
+    } while (bVar13);
+    ppVar11->list_next = (psos_task *)0x0;
+    ppVar5->tasks = (psos_task *)0x0;
     if (psos_config.task_hooks != (void **)0x0) {
-      pvVar1 = *psos_config.task_hooks;
-      puVar11[-1] = 0x15dc2;
-      (**(code **)((int32_t)pvVar1 + 4))();
+      pvVar9 = *psos_config.task_hooks;
+      ppVar12[-1].ticks = 0x15dc2;
+      (**(code **)((int32_t)pvVar9 + 4))();
     }
-    puVar11[-1] = 0x15dc6;
+    ppVar12[-1].ticks = 0x15dc6;
     kernel_region_init();
-    *(uint32_t *)((int32_t)pvVar6 + 0x7a) = 0x1f001f1e;
-    *(uint32_t *)((int32_t)pvVar6 + 0x7e) = 0x1f1e1f1f;
-    *(uint32_t *)((int32_t)pvVar6 + 0x82) = 0x1e1f1e1f;
-    *(uint32_t *)((int32_t)pvVar6 + 0x6c) = 0;
-    *(uint16_t *)((int32_t)pvVar6 + 0x70) = 0;
-    *(uint32_t *)((int32_t)pvVar6 + 0x72) = 0;
-    *(uint32_t *)((int32_t)pvVar6 + 0x76) = 0x7c20501;
-    puVar11[-1] = 0x15df4;
+    *(uint32_t *)((int32_t)&ppVar5[1].free_tasks + 2) = 0x1f001f1e;
+    *(uint32_t *)((int32_t)&ppVar5[1].exchanges + 2) = 0x1f1e1f1f;
+    *(uint32_t *)((int32_t)&ppVar5[1].free_exchanges + 2) = 0x1e1f1e1f;
+    ppVar5[1].ready = (psos_task *)0x0;
+    *(uint16_t *)&ppVar5[1].timers = 0;
+    *(uint32_t *)((int32_t)&ppVar5[1].timers + 2) = 0;
+    *(uint32_t *)((int32_t)&ppVar5[1].tasks + 2) = 0x7c20501;
+    ppVar12[-1].ticks = 0x15df4;
     kernel_set_leap_year();
-    *(uint8_t *)((int32_t)pvVar6 + 0x8a) = 0;
-    *(uint32_t *)((int32_t)pvVar6 + 0x86) = *(uint32_t *)(extraout_A0 + 0x1e);
-    *(uint32_t *)((int32_t)pvVar6 + 8) = 0;
-    puVar12 = (uint32_t *)((int32_t)pvVar6 + 0x8c);
-    *(uint32_t **)pvVar6 = puVar12;
-    *(uint32_t *)((int32_t)pvVar6 + 4) = puVar12;
-    *puVar12 = 0;
-    *(uint32_t **)((int32_t)pvVar6 + 0x90) = (uint32_t *)((int32_t)pvVar6 + 4);
-    *(uint32_t *)((int32_t)pvVar6 + 0xb0) = 0x73797364;
-    *(uint32_t *)((int32_t)pvVar6 + 0x9c) = 0;
-    *(uint8_t *)((int32_t)pvVar6 + 0xa0) = 0;
-    *(uint32_t *)((int32_t)pvVar6 + 0xa8) = 0;
-    *(uint32_t *)((int32_t)pvVar6 + 0xb4) = *(uint32_t *)(extraout_A0 + 0x3e);
-    *(uint8_t *)((int32_t)pvVar6 + 0x8b) = *(uint8_t *)((int32_t)pvVar6 + 0x8b) | 0x80;
-    *(uint16_t *)((int32_t)pvVar6 + 0x24) = 1;
-    uVar8 = *(int16_t *)(extraout_A0 + 0x22) * 0x24;
-    iVar3 = *(int32_t *)(extraout_A0 + 0x24);
+    ppVar5[1].field_20[2] = 0;
+    *(uint32_t *)((int32_t)&ppVar5[1].free_messages + 2) = *(uint32_t *)(extraout_A0 + 0x1e);
+    ppVar5->timers = (psos_task *)0x0;
+    ppVar10 = (psos_task *)(ppVar5[1].field_20 + 4);
+    ppVar5->running = ppVar10;
+    ppVar5->ready = ppVar10;
+    ppVar10->next = (psos_task *)0x0;
+    *(psos_task ***)(ppVar5[1].field_20 + 8) = &ppVar5->ready;
+    ppVar5[1].region_pending[1] = 0x73797364;
+    ppVar5[1].region_minimum[0] = 0;
+    *(uint8_t *)(ppVar5[1].region_minimum + 1) = 0;
+    ppVar5[1].region_maximum[1] = 0;
+    ppVar5[1].region_end[0] = *(uint32_t *)(extraout_A0 + 0x3e);
+    ppVar5[1].field_20[3] = ppVar5[1].field_20[3] | 0x80;
+    ppVar5->field_20[4] = 0;
+    ppVar5->field_20[5] = 1;
+    uVar7 = *(int16_t *)(extraout_A0 + 0x22) * 0x24;
+    iVar2 = *(int32_t *)(extraout_A0 + 0x24);
     do {
-      puVar11[-1] = 0x15e52;
-      (*(code *)(iVar3 + (int16_t)uVar8))();
-      bVar15 = 0x23 < uVar8;
-      uVar8 = uVar8 - 0x24;
-    } while (bVar15);
-    uVar10 = 0;
+      ppVar12[-1].ticks = 0x15e52;
+      (*(code *)(iVar2 + (int16_t)uVar7))();
+      bVar13 = 0x23 < uVar7;
+      uVar7 = uVar7 - 0x24;
+    } while (bVar13);
+    pvVar9 = (void *)0x0;
     if (*(uint32_t **)(extraout_A0_00 + 0x42) != (uint32_t *)0x0) {
-      uVar10 = **(uint32_t **)(extraout_A0_00 + 0x42);
+      pvVar9 = (void *)**(uint32_t **)(extraout_A0_00 + 0x42);
     }
-    *(uint32_t *)((int32_t)pvVar6 + 0x30) = uVar10;
-    puVar11[-1] = 0x15e84;
+    ppVar5->debug_hooks = pvVar9;
+    ppVar12[-1].ticks = 0x15e84;
     kernel_create();
-    if ((char)iVar5 == 0) {
-      puVar11[-1] = 0x15e90;
+    if ((char)iVar4 == 0) {
+      ppVar12[-1].ticks = 0x15e90;
       kernel_start();
-      puVar11[-1] = 0x15ea2;
+      ppVar12[-1].ticks = 0x15ea2;
       kernel_create();
-      puVar11[-1] = 0x15eb4;
+      ppVar12[-1].ticks = 0x15eb4;
       kernel_start();
       *(uint16_t *)(extraout_A0_01 + 0x11) = *(uint16_t *)(extraout_A0_01 + 0x11) | 0x2000;
       *(uint8_t *)(extraout_A0_01 + 4) = 0;
       *extraout_A0_01 = 0;
-      iVar5 = *(int32_t *)((int32_t)pvVar6 + 4);
-      pcVar4 = *(code **)((int32_t)pvVar6 + 0xb4);
-      if (pcVar4 != (code *)0x0) {
-        puVar11[-1] = 0x1602e;
-        (*pcVar4)();
+      ppVar10 = ppVar5->ready;
+      pcVar3 = (code *)ppVar5[1].region_end[0];
+      if (pcVar3 != (code *)0x0) {
+        ppVar12[-1].ticks = 0x1602e;
+        (*pcVar3)();
       }
-      *(int32_t *)pvVar6 = iVar5;
-      puVar9 = *(uint16_t **)(iVar5 + 0x36);
-      puVar2 = *(uint16_t **)(iVar5 + 0x3a);
-      uVar8 = *(uint16_t *)(iVar5 + 0x44);
-      if ((uVar8 & 0x1000) == 0) {
-        for (; puVar2 != puVar9; puVar9 = puVar9 + 1) {
-          puVar14 = (uint16_t *)((int32_t)puVar11 + -2);
-          puVar11 = (uint32_t *)((int32_t)puVar11 + -2);
-          *puVar14 = *puVar9;
+      ppVar5->running = ppVar10;
+      puVar8 = (uint16_t *)ppVar10->supervisor_pointer;
+      puVar1 = (uint16_t *)ppVar10->user_pointer;
+      uVar7 = *(uint16_t *)(ppVar10->field_3e + 6);
+      if ((uVar7 & 0x1000) == 0) {
+        for (; puVar1 != puVar8; puVar8 = puVar8 + 1) {
+          ppVar11 = ppVar12 + -1;
+          ppVar12 = (psos_task *)((int32_t)&ppVar12[-1].ticks + 2);
+          *(uint16_t *)((int32_t)&ppVar11->ticks + 2) = *puVar8;
         }
       }
       else {
-        uVar8 = uVar8 & 0xefff;
-        puVar11 = (uint32_t *)puVar9;
+        uVar7 = uVar7 & 0xefff;
+        ppVar12 = (psos_task *)puVar8;
       }
-      *(uint16_t *)((int32_t)puVar11 + -2) = *(uint16_t *)(iVar5 + 0x34);
-      *(uint32_t *)((int32_t)puVar11 + -6) = *(uint32_t *)(iVar5 + 0x3e);
-      *(uint16_t *)((int32_t)puVar11 + -8) = uVar8;
-      *(uint32_t *)((int32_t)puVar11 + -0xc) = *(uint32_t *)(iVar5 + 0x46);
-      *(uint32_t *)((int32_t)puVar11 + -0x10) = *(uint32_t *)(iVar5 + 0x4a);
-      *(uint32_t *)((int32_t)puVar11 + -0x14) = *(uint32_t *)(iVar5 + 0x66);
+      *(uint16_t *)((int32_t)ppVar12 + -2) = ppVar10->field_34;
+      *(uint32_t *)((int32_t)ppVar12 + -6) = *(uint32_t *)ppVar10->field_3e;
+      *(uint16_t *)((int32_t)ppVar12 + -8) = uVar7;
+      *(uint32_t *)((int32_t)ppVar12 + -0xc) = *(uint32_t *)(ppVar10->field_3e + 8);
+      *(int32_t *)((int32_t)ppVar12 + -0x10) = ppVar10->timer_ticks;
+      *(uint32_t *)((int32_t)ppVar12 + -0x14) = *(uint32_t *)(ppVar10->field_5a + 0xc);
       kernel_switch_task();
       return;
     }
@@ -20179,11 +20353,11 @@ __asm__(
 __exception void kernel_return_from_interrupt(uint16_t param_1)
 
 {
-  int32_t iVar1;
+  psos_task *ppVar1;
   uint16_t *puVar2;
   uint8_t *puVar3;
   code *pcVar4;
-  void *pvVar5;
+  psos_kernel *ppVar5;
   uint32_t in_D0;
   uint32_t uVar6;
   uint16_t uVar7;
@@ -20202,7 +20376,7 @@ __exception void kernel_return_from_interrupt(uint16_t param_1)
   uint32_t unaff_A2 = ({ register int32_t __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   uint32_t unaff_A3 = ({ register int32_t __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   uint32_t unaff_A4 = ({ register int32_t __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
-  uint32_t unaff_A5 = ({ register int32_t __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  int32_t unaff_A5 = ({ register int32_t __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint32_t unaff_A6 = (uint32_t)*(void **)__builtin_frame_address(0);
   uint16_t *puVar9;
   uint16_t *puVar10;
@@ -20211,61 +20385,62 @@ __exception void kernel_return_from_interrupt(uint16_t param_1)
   uint32_t in_stack_0000000a;
   uint16_t in_stack_0000000e;
   
-  pvVar5 = psos_config.data_area;
+  ppVar5 = psos_config.data_area;
   uVar11 = CONCAT44(in_D0,in_D1);
-  if (((param_1 & 0x700) == 0) && (*(int16_t *)((int32_t)psos_config.data_area + 0x24) == 0)) {
-    *(int16_t *)((int32_t)psos_config.data_area + 0x24) =
-         *(int16_t *)((int32_t)psos_config.data_area + 0x24) + 1;
-    iVar1 = *(int32_t *)pvVar5;
-    while (*(int32_t *)((int32_t)pvVar5 + 0x6c) != 0) {
+  if (((param_1 & 0x700) == 0) && (*(int16_t *)((psos_config.data_area)->field_20 + 4) == 0)) {
+    *(int16_t *)((psos_config.data_area)->field_20 + 4) =
+         *(int16_t *)((psos_config.data_area)->field_20 + 4) + 1;
+    ppVar1 = ppVar5->running;
+    while (ppVar5[1].ready != (psos_task *)0x0) {
       uVar11 = kernel_process_ticks();
       in_A0 = extraout_A0;
       in_A1 = extraout_A1;
     }
-    if ((iVar1 != *(int32_t *)((int32_t)pvVar5 + 4)) && ((*(uint8_t *)(iVar1 + 0x11) & 0x80) == 0)) {
-      *(uint64_t *)(iVar1 + 0x4e) = uVar11;
-      *(uint32_t *)(iVar1 + 0x56) = unaff_D2;
-      *(uint32_t *)(iVar1 + 0x5a) = unaff_D3;
-      *(uint32_t *)(iVar1 + 0x5e) = unaff_D4;
-      *(uint32_t *)(iVar1 + 0x62) = unaff_D5;
-      *(uint32_t *)(iVar1 + 0x66) = unaff_D6;
-      *(uint32_t *)(iVar1 + 0x6a) = unaff_D7;
-      *(uint32_t *)(iVar1 + 0x6e) = in_A0;
-      *(uint32_t *)(iVar1 + 0x72) = in_A1;
-      *(uint32_t *)(iVar1 + 0x76) = unaff_A2;
-      *(uint32_t *)(iVar1 + 0x7a) = unaff_A3;
-      *(uint32_t *)(iVar1 + 0x7e) = unaff_A4;
-      *(uint32_t *)(iVar1 + 0x4a) = unaff_A5;
-      *(uint32_t *)(iVar1 + 0x46) = unaff_A6;
-      uVar6 = *(uint32_t *)(iVar1 + 0x42) & 0xffff1000;
+    if ((ppVar1 != ppVar5->ready) && ((ppVar1->mode & PSOS_MODE_NO_PREEMPTION) == 0)) {
+      ppVar1->field_4e = (int32_t)((uint64_t)uVar11 >> 0x20);
+      ppVar1->region_request = (int32_t)uVar11;
+      ppVar1->region_wait = unaff_D2;
+      *(uint32_t *)ppVar1->field_5a = unaff_D3;
+      *(uint32_t *)(ppVar1->field_5a + 4) = unaff_D4;
+      *(uint32_t *)(ppVar1->field_5a + 8) = unaff_D5;
+      *(uint32_t *)(ppVar1->field_5a + 0xc) = unaff_D6;
+      *(uint32_t *)(ppVar1->field_5a + 0x10) = unaff_D7;
+      *(uint32_t *)(ppVar1->field_5a + 0x14) = in_A0;
+      *(uint32_t *)(ppVar1->field_5a + 0x18) = in_A1;
+      *(uint32_t *)(ppVar1->field_5a + 0x1c) = unaff_A2;
+      *(uint32_t *)(ppVar1->field_5a + 0x20) = unaff_A3;
+      *(uint32_t *)(ppVar1->field_5a + 0x24) = unaff_A4;
+      ppVar1->timer_ticks = unaff_A5;
+      *(uint32_t *)(ppVar1->field_3e + 8) = unaff_A6;
+      uVar6 = *(uint32_t *)(ppVar1->field_3e + 4) & 0xffff1000;
       uVar7 = (uint16_t)uVar6;
-      *(uint32_t *)(iVar1 + 0x42) = CONCAT22((int16_t)(uVar6 >> 0x10),param_1 | uVar7);
-      *(uint32_t *)(iVar1 + 0x3e) = in_stack_0000000a;
+      *(uint32_t *)(ppVar1->field_3e + 4) = CONCAT22((int16_t)(uVar6 >> 0x10),param_1 | uVar7);
+      *(uint32_t *)ppVar1->field_3e = in_stack_0000000a;
       puVar9 = (uint16_t *)&stack0x00000010;
-      *(uint16_t *)(iVar1 + 0x34) = in_stack_0000000e;
-      *(uint16_t **)(iVar1 + 0x3a) = in_USP;
-      puVar3 = *(uint8_t **)((int32_t)pvVar5 + 0x20);
+      ppVar1->field_34 = in_stack_0000000e;
+      ppVar1->user_pointer = (uint32_t)in_USP;
+      puVar3 = *(uint8_t **)ppVar5->field_20;
       if ((param_1 & 0x1000) == 0 && uVar7 == 0) {
         for (; (uint16_t *)puVar3 != puVar9; puVar9 = puVar9 + 1) {
           in_USP = in_USP + -1;
           *in_USP = *puVar9;
         }
-        *(uint16_t **)(iVar1 + 0x36) = in_USP;
+        ppVar1->supervisor_pointer = (uint32_t)in_USP;
       }
       else {
-        *(uint8_t **)(iVar1 + 0x36) = &stack0x00000010;
+        ppVar1->supervisor_pointer = (uint32_t)&stack0x00000010;
         puVar9 = (uint16_t *)puVar3;
       }
-      iVar1 = *(int32_t *)((int32_t)pvVar5 + 4);
-      pcVar4 = *(code **)((int32_t)pvVar5 + 0xb4);
+      ppVar1 = ppVar5->ready;
+      pcVar4 = (code *)ppVar5[1].region_end[0];
       if (pcVar4 != (code *)0x0) {
         *(uint32_t *)((int32_t)puVar9 + -4) = 0x1602e;
         (*pcVar4)();
       }
-      *(int32_t *)pvVar5 = iVar1;
-      puVar8 = *(uint16_t **)(iVar1 + 0x36);
-      puVar2 = *(uint16_t **)(iVar1 + 0x3a);
-      uVar7 = *(uint16_t *)(iVar1 + 0x44);
+      ppVar5->running = ppVar1;
+      puVar8 = (uint16_t *)ppVar1->supervisor_pointer;
+      puVar2 = (uint16_t *)ppVar1->user_pointer;
+      uVar7 = *(uint16_t *)(ppVar1->field_3e + 6);
       if ((uVar7 & 0x1000) == 0) {
         for (; puVar2 != puVar8; puVar8 = puVar8 + 1) {
           puVar10 = (uint16_t *)((int32_t)puVar9 + -2);
@@ -20277,16 +20452,16 @@ __exception void kernel_return_from_interrupt(uint16_t param_1)
         uVar7 = uVar7 & 0xefff;
         puVar9 = puVar8;
       }
-      puVar9[-1] = *(uint16_t *)(iVar1 + 0x34);
-      *(uint32_t *)(puVar9 + -3) = *(uint32_t *)(iVar1 + 0x3e);
+      puVar9[-1] = ppVar1->field_34;
+      *(uint32_t *)(puVar9 + -3) = *(uint32_t *)ppVar1->field_3e;
       puVar9[-4] = uVar7;
-      *(uint32_t *)(puVar9 + -6) = *(uint32_t *)(iVar1 + 0x46);
-      *(uint32_t *)(puVar9 + -8) = *(uint32_t *)(iVar1 + 0x4a);
-      *(uint32_t *)(puVar9 + -10) = *(uint32_t *)(iVar1 + 0x66);
+      *(uint32_t *)(puVar9 + -6) = *(uint32_t *)(ppVar1->field_3e + 8);
+      *(int32_t *)(puVar9 + -8) = ppVar1->timer_ticks;
+      *(uint32_t *)(puVar9 + -10) = *(uint32_t *)(ppVar1->field_5a + 0xc);
       kernel_switch_task();
       return;
     }
-    *(int16_t *)((int32_t)pvVar5 + 0x24) = *(int16_t *)((int32_t)pvVar5 + 0x24) + -1;
+    *(int16_t *)(ppVar5->field_20 + 4) = *(int16_t *)(ppVar5->field_20 + 4) + -1;
   }
   return;
 }
@@ -20451,7 +20626,7 @@ char * object_name(void *object)
   }
   else {
     strncpy(object_name_text,(char *)((int32_t)object + 0x14),4);
-    task_table[0].state = 0;
+    task_table[0].state = PSOS_TABLE_READY;
     pcVar1 = object_name_text;
   }
   return pcVar1;
@@ -20733,16 +20908,16 @@ int32_t timer_ticks_until(void *task)
 
 {
   int32_t iVar1;
-  void *pvVar2;
+  psos_task *ppVar2;
   
   iVar1 = 0;
-  pvVar2 = *(void **)((int32_t)psos_config.data_area + 8);
+  ppVar2 = (psos_config.data_area)->timers;
   while( true ) {
     if (*(char *)((int32_t)task + 0x12) != 0 || (*(uint8_t *)((int32_t)task + 0x13) & 8) != 0) {
-      iVar1 = *(int32_t *)((int32_t)pvVar2 + 0x4a) + iVar1;
+      iVar1 = ppVar2->timer_ticks + iVar1;
     }
-    if (pvVar2 == (void *)0x0 || pvVar2 == task) break;
-    pvVar2 = *(void **)((int32_t)pvVar2 + 8);
+    if (ppVar2 == (psos_task *)0x0 || ppVar2 == task) break;
+    ppVar2 = ppVar2->timer_next;
   }
   return iVar1;
 }
@@ -20757,40 +20932,40 @@ int32_t timer_ticks_until(void *task)
 int32_t task_table_build(void)
 
 {
-  void *pvVar1;
+  psos_task *ppVar1;
   int32_t iVar2;
   int32_t iVar3;
-  void *pvVar4;
+  psos_task *ppVar4;
   
   iVar2 = 0;
   do {
-    task_table[iVar2].task = (void *)0x0;
-    task_table[iVar2].state = 0xff;
+    task_table[iVar2].task = (psos_task *)0x0;
+    task_table[iVar2].state = PSOS_TABLE_EMPTY;
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x11);
-  pvVar1 = *(void **)psos_config.data_area;
-  task_table[0].state = 0;
+  ppVar1 = (psos_config.data_area)->running;
+  task_table[0].state = PSOS_TABLE_READY;
   iVar2 = 1;
-  task_table[0].task = pvVar1;
-  for (pvVar4 = *(void **)((int32_t)psos_config.data_area + 0xc); pvVar4 != (void *)0x0;
-      pvVar4 = *(void **)((int32_t)pvVar4 + 0x30)) {
-    if (pvVar4 != pvVar1) {
-      task_table[iVar2].task = pvVar4;
-      if (*(char *)((int32_t)pvVar4 + 0x13) == 0) {
-        task_table[iVar2].state = 0;
+  task_table[0].task = ppVar1;
+  for (ppVar4 = (psos_config.data_area)->tasks; ppVar4 != (psos_task *)0x0;
+      ppVar4 = ppVar4->list_next) {
+    if (ppVar4 != ppVar1) {
+      task_table[iVar2].task = ppVar4;
+      if (ppVar4->status == 0) {
+        task_table[iVar2].state = PSOS_TABLE_READY;
       }
-      else if (*(char *)((int32_t)pvVar4 + 0x12) == 0 && (*(uint8_t *)((int32_t)pvVar4 + 0x13) & 8) == 0) {
-        task_table[iVar2].state = 2;
+      else if (ppVar4->delay == 0 && (ppVar4->status & PSOS_TASK_PAUSED) == 0) {
+        task_table[iVar2].state = PSOS_TABLE_BLOCKED;
       }
       else {
-        task_table[iVar2].state = 1;
+        task_table[iVar2].state = PSOS_TABLE_PAUSED;
       }
       iVar2 = iVar2 + 1;
     }
   }
   task_ticks_total = 0;
   for (iVar3 = 0; iVar3 < iVar2; iVar3 = iVar3 + 1) {
-    task_ticks_total = *(int32_t *)((int32_t)task_table[iVar3].task + 0xae) + task_ticks_total;
+    task_ticks_total = (task_table[iVar3].task)->ticks + task_ticks_total;
   }
   return iVar2;
 }
@@ -20810,7 +20985,7 @@ void os_report_process_summary(printf_function *print)
   int16_t sVar2;
   char *pcVar3;
   char *pcVar4;
-  int32_t iVar5;
+  psos_task *ppVar5;
   char acStack_38 [52];
   
   iVar1 = 0;
@@ -20823,8 +20998,8 @@ void os_report_process_summary(printf_function *print)
     pcVar3 = pcVar3 + 1;
     pcVar4 = pcVar4 + 1;
   } while (sVar2 != -1);
-  for (iVar5 = *(int32_t *)((int32_t)psos_config.data_area + 0x10); iVar5 != 0;
-      iVar5 = *(int32_t *)(iVar5 + 0x30)) {
+  for (ppVar5 = (psos_config.data_area)->free_tasks; ppVar5 != (psos_task *)0x0;
+      ppVar5 = ppVar5->list_next) {
     iVar1 = iVar1 + 1;
   }
   (*print)(acStack_38,task_count,iVar1,task_ticks_total);
@@ -20845,7 +21020,7 @@ void os_report_exchanges(printf_function *print)
   int16_t sVar1;
   char *pcVar2;
   char *pcVar3;
-  uint32_t *puVar4;
+  psos_exchange *ppVar4;
   char acStack_36 [50];
   
   sVar1 = 0x30;
@@ -20858,9 +21033,9 @@ void os_report_exchanges(printf_function *print)
     pcVar3 = pcVar3 + 1;
   } while (sVar1 != -1);
   (*print)("%s",acStack_36);
-  for (puVar4 = *(uint32_t **)((int32_t)psos_config.data_area + 0x14); puVar4 != (uint32_t *)0x0;
-      puVar4 = (uint32_t *)puVar4[7]) {
-    os_report_exchange(puVar4,print);
+  for (ppVar4 = (psos_config.data_area)->exchanges; ppVar4 != (psos_exchange *)0x0;
+      ppVar4 = ppVar4->next) {
+    os_report_exchange(&ppVar4->waiting,print);
   }
   return;
 }
@@ -20880,21 +21055,22 @@ void os_report_exchange_summary(printf_function *print)
   int32_t iVar2;
   int32_t iVar3;
   int32_t iVar4;
-  uint32_t *puVar5;
+  psos_exchange *ppVar5;
+  psos_message *ppVar6;
   
   iVar2 = 0;
   iVar1 = 0;
   iVar3 = 0;
-  for (iVar4 = *(int32_t *)((int32_t)psos_config.data_area + 0x14); iVar4 != 0;
-      iVar4 = *(int32_t *)(iVar4 + 0x1c)) {
+  for (ppVar5 = (psos_config.data_area)->exchanges; ppVar5 != (psos_exchange *)0x0;
+      ppVar5 = ppVar5->next) {
     iVar2 = iVar2 + 1;
   }
-  for (iVar4 = *(int32_t *)((int32_t)psos_config.data_area + 0x18); iVar4 != 0;
-      iVar4 = *(int32_t *)(iVar4 + 0x1c)) {
+  for (ppVar5 = (psos_config.data_area)->free_exchanges; ppVar5 != (psos_exchange *)0x0;
+      ppVar5 = ppVar5->next) {
     iVar1 = iVar1 + 1;
   }
-  for (puVar5 = *(uint32_t **)((int32_t)psos_config.data_area + 0x1c); puVar5 != (uint32_t *)0x0;
-      puVar5 = (uint32_t *)*puVar5) {
+  for (ppVar6 = (psos_config.data_area)->free_messages; ppVar6 != (psos_message *)0x0;
+      ppVar6 = ppVar6->next) {
     iVar3 = iVar3 + 1;
   }
   iVar4 = (int32_t)(int16_t)psos_config.message_buffers;
@@ -20914,14 +21090,14 @@ int32_t ready_queue_position(uint32_t *param_1)
 
 {
   int32_t iVar1;
-  uint32_t *puVar2;
+  psos_task *ppVar2;
   
   iVar1 = 0;
-  for (puVar2 = *(uint32_t **)((int32_t)psos_config.data_area + 4);
-      (puVar2 != (uint32_t *)0x0 && (puVar2 != param_1)); puVar2 = (uint32_t *)*puVar2) {
+  for (ppVar2 = (psos_config.data_area)->ready;
+      (ppVar2 != (psos_task *)0x0 && (ppVar2 != (psos_task *)param_1)); ppVar2 = ppVar2->next) {
     iVar1 = iVar1 + 1;
   }
-  if (puVar2 == (uint32_t *)0x0) {
+  if (ppVar2 == (psos_task *)0x0) {
     iVar1 = -1;
   }
   return iVar1;
@@ -20938,7 +21114,7 @@ int32_t ready_queue_position(uint32_t *param_1)
 int32_t os_report_processes(printf_function *print)
 
 {
-  uint32_t *task;
+  psos_task *task;
   bool bVar1;
   int32_t iVar2;
   uint32_t uVar3;
@@ -20948,8 +21124,7 @@ int32_t os_report_processes(printf_function *print)
   printf_function *print_00;
   
   (*print)("%s","    pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CPU\r\n");
-  os_report_process(task_table[0].task," RUN",0,(uint32_t)*(uint16_t *)((int32_t)task_table[0].task + 0x1a),
-                    print);
+  os_report_process(task_table[0].task," RUN",0,(uint32_t)(task_table[0].task)->slice_ticks,print);
   (*print)("%s","\r\n");
   iVar5 = 0;
   do {
@@ -20957,12 +21132,12 @@ int32_t os_report_processes(printf_function *print)
     for (iVar6 = 1; iVar6 < task_count; iVar6 = iVar6 + 1) {
       if ((char)task_table[iVar6].state == iVar5) {
         task = task_table[iVar6].task;
-        iVar2 = ready_queue_position(task);
+        iVar2 = ready_queue_position(&task->next);
         if (iVar5 == 1) {
           uVar3 = timer_ticks_until(task);
         }
         else {
-          uVar3 = (uint32_t)*(uint16_t *)((int32_t)task + 0x1a);
+          uVar3 = (uint32_t)task->slice_ticks;
         }
         print_00 = print;
         status = task_status_name(task);
@@ -20991,11 +21166,11 @@ int32_t os_report_processes(printf_function *print)
 void os_report_regions(printf_function *print)
 
 {
-  int32_t *piVar1;
+  psos_task **pppVar1;
   int32_t iVar2;
   int32_t iVar3;
-  uint32_t *puVar4;
-  int32_t *task;
+  psos_segment *ppVar4;
+  psos_task *task;
   uint32_t uVar5;
   char *pcVar6;
   int32_t count [2];
@@ -21014,10 +21189,10 @@ void os_report_regions(printf_function *print)
   count[1] = 0;
   count[0] = 0;
   for (iVar2 = 0; iVar2 < task_count; iVar2 = iVar2 + 1) {
-    for (puVar4 = *(uint32_t **)((int32_t)task_table[iVar2].task + 0x20); puVar4 != (uint32_t *)0x0;
-        puVar4 = (uint32_t *)*puVar4) {
-      iVar3 = (*(uint16_t *)(puVar4 + 4) & 3) - 1;
-      used[iVar3] = puVar4[3] + used[iVar3];
+    for (ppVar4 = (task_table[iVar2].task)->segments; ppVar4 != (psos_segment *)0x0;
+        ppVar4 = ppVar4->next) {
+      iVar3 = (ppVar4->flags & 3) - 1;
+      used[iVar3] = ppVar4->size + used[iVar3];
       count[iVar3] = count[iVar3] + 1;
     }
   }
@@ -21025,9 +21200,9 @@ void os_report_regions(printf_function *print)
   do {
     available[iVar2] = 0;
     iVar3 = 0;
-    for (puVar4 = *(uint32_t **)((int32_t)psos_config.data_area + iVar2 * 4 + 0x54);
-        puVar4 != (uint32_t *)0x0; puVar4 = (uint32_t *)*puVar4) {
-      available[iVar2] = puVar4[3] + available[iVar2];
+    for (ppVar4 = (psos_config.data_area)->region_free[iVar2]; ppVar4 != (psos_segment *)0x0;
+        ppVar4 = ppVar4->next) {
+      available[iVar2] = ppVar4->size + available[iVar2];
       iVar3 = iVar3 + 1;
     }
     if (start[iVar2] == (void *)0x0) {
@@ -21037,35 +21212,35 @@ void os_report_regions(printf_function *print)
       local_2a[iVar2 + 6] = 0;
     }
     else {
-      local_2a[iVar2] = *(uint32_t *)((int32_t)psos_config.data_area + iVar2 * 4 + 0x4c);
-      local_2a[iVar2 + 2] = *(uint32_t *)((int32_t)psos_config.data_area + iVar2 * 4 + 0x34);
-      local_2a[iVar2 + 4] = *(uint32_t *)((int32_t)psos_config.data_area + iVar2 * 4 + 0x3c);
-      local_2a[iVar2 + 6] = *(uint32_t *)((int32_t)psos_config.data_area + iVar2 * 4 + 0x44);
+      local_2a[iVar2] = (psos_config.data_area)->region_end[iVar2];
+      local_2a[iVar2 + 2] = (psos_config.data_area)->region_minimum[iVar2];
+      local_2a[iVar2 + 4] = (psos_config.data_area)->region_maximum[iVar2];
+      local_2a[iVar2 + 6] = (psos_config.data_area)->region_pending[iVar2];
     }
     (*print)("%1d 0x%08x 0x%08x %4d %8d %8d %4dkB %4d %4dkB %3d\r\n",iVar2 + 1,start[iVar2],
              local_2a[iVar2],local_2a[iVar2 + 2],local_2a[iVar2 + 4],local_2a[iVar2 + 6],
              (used[iVar2] + 0x200) / 0x400,count[iVar2],(available[iVar2] + 0x200) / 0x400,iVar3);
     iVar2 = iVar2 + 1;
   } while (iVar2 < 2);
-  piVar1 = (int32_t *)((int32_t)psos_config.data_area + 100);
-  task = *(int32_t **)((int32_t)psos_config.data_area + 100);
-  if (task != piVar1) {
+  pppVar1 = &(psos_config.data_area)->region_waiting;
+  task = (psos_config.data_area)->region_waiting;
+  if (task != (psos_task *)pppVar1) {
     pcVar6 = "   >> BLOCKED: ";
     do {
       (*print)(pcVar6);
       do {
-        if (task == piVar1) {
+        if (task == (psos_task *)pppVar1) {
           (*print)("%s","\r\n");
           goto LAB_000169e4;
         }
-        uVar5 = *(uint32_t *)((int32_t)task + 0x52);
-        local_6 = ((uint8_t)*(uint32_t *)((int32_t)task + 0x56) & 0xf) + 1;
+        uVar5 = task->region_request;
+        local_6 = ((uint8_t)task->region_wait & 0xf) + 1;
         iVar2 = (int32_t)local_6;
         local_a = uVar5;
         pcVar6 = task_name(task);
         (*print)("%s %d(%d)",pcVar6,uVar5,iVar2);
-        task = (int32_t *)*task;
-      } while (task == piVar1);
+        task = task->next;
+      } while (task == (psos_task *)pppVar1);
       pcVar6 = ",";
     } while( true );
   }
@@ -21154,11 +21329,11 @@ void os_process_report(uint8_t param_1)
 void os_memory_report(uint8_t param_1)
 
 {
-  void *task;
+  psos_task *task;
   char *name;
   int32_t iVar1;
-  uint32_t *puVar2;
-  uint32_t *puVar3;
+  psos_segment *ppVar2;
+  psos_segment *ppVar3;
   code *print;
   
   printf("%s","\r\n");
@@ -21168,22 +21343,21 @@ void os_memory_report(uint8_t param_1)
   printf("%s","Process  Memseg size(bytes)     next        last    neighbor   key\r\n");
   for (iVar1 = 0; iVar1 < task_count; iVar1 = iVar1 + 1) {
     task = task_table[iVar1].task;
-    for (puVar2 = *(uint32_t **)((int32_t)task + 0x20); puVar2 != (uint32_t *)0x0;
-        puVar2 = (uint32_t *)*puVar2) {
+    for (ppVar2 = task->segments; ppVar2 != (psos_segment *)0x0; ppVar2 = ppVar2->next) {
       print = printf;
-      puVar3 = puVar2;
+      ppVar3 = ppVar2;
       name = task_name(task);
-      os_report_region_line(name,puVar3,print);
+      os_report_region_line(name,&ppVar3->next,print);
     }
   }
   iVar1 = 0;
   do {
-    puVar2 = *(uint32_t **)((int32_t)psos_config.data_area + iVar1 * 4 + 0x54);
-    if (puVar2 != (uint32_t *)0x0) {
+    ppVar2 = (psos_config.data_area)->region_free[iVar1];
+    if (ppVar2 != (psos_segment *)0x0) {
       printf(">> Free memory - region: %d\r\n",iVar1);
     }
-    for (; puVar2 != (uint32_t *)0x0; puVar2 = (uint32_t *)*puVar2) {
-      os_report_region_line("****",puVar2,printf);
+    for (; ppVar2 != (psos_segment *)0x0; ppVar2 = ppVar2->next) {
+      os_report_region_line("****",&ppVar2->next,printf);
     }
     iVar1 = iVar1 + 1;
   } while (iVar1 < 2);
@@ -21240,17 +21414,19 @@ void task_stack_info(void *task,uint32_t *user_top,uint32_t *user_pointer,uint32
 void task_stack_report(uint8_t param_1)
 
 {
-  void *task;
+  psos_task *task;
+  uint8_t *param2;
+  uint8_t *puVar1;
   uint32_t param5;
   char *name;
   uint32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
-  uint16_t uVar1;
-  int16_t sVar2;
-  int16_t *param6;
-  int16_t *psVar3;
+  uint16_t uVar2;
+  int16_t sVar3;
+  uint8_t *param6;
   int16_t *psVar4;
+  uint8_t *puVar5;
   uint32_t param4;
-  int16_t *psVar5;
+  int16_t *psVar6;
   uint32_t param7;
   uint32_t param8;
   uint32_t local_1c;
@@ -21265,62 +21441,62 @@ void task_stack_report(uint8_t param_1)
   printf("%s","\r\n");
   task_count = task_table_build();
   printf("%s","    pid   name     USP   size            SSP   size\r\n");
-  for (sVar2 = 0; uVar1 = (uint16_t)unaff_D2, sVar2 < task_count; sVar2 = sVar2 + 1) {
-    task = task_table[sVar2].task;
+  for (sVar3 = 0; uVar2 = (uint16_t)unaff_D2, sVar3 < task_count; sVar3 = sVar3 + 1) {
+    task = task_table[sVar3].task;
     task_stack_info(task,&local_14,(uint32_t *)&local_8,&local_18,&local_10,(uint32_t *)&local_c,
                     &local_1c);
     if ((local_18 != 0) || (local_1c != 0)) {
-      uVar1 = 0;
+      uVar2 = 0;
       unaff_D2 = 0;
       if (local_18 != 0) {
-        psVar3 = (int16_t *)(local_14 - local_18);
+        psVar4 = (int16_t *)(local_14 - local_18);
         do {
-          psVar5 = psVar3 + 1;
-          if (local_8 <= psVar3) goto LAB_00016d16;
-          psVar3 = psVar5;
-        } while (*psVar5 == -0x5433);
-        uVar1 = (uint16_t)(((local_14 - (int32_t)psVar5) * 100) / local_18);
+          psVar6 = psVar4 + 1;
+          if (local_8 <= psVar4) goto LAB_00016d16;
+          psVar4 = psVar6;
+        } while (*psVar6 == -0x5433);
+        uVar2 = (uint16_t)(((local_14 - (int32_t)psVar6) * 100) / local_18);
       }
 LAB_00016d16:
       if (local_1c != 0) {
-        psVar3 = (int16_t *)(local_10 - local_1c);
+        psVar4 = (int16_t *)(local_10 - local_1c);
         do {
-          psVar5 = psVar3 + 1;
-          if (local_c <= psVar3) goto LAB_00016d52;
-          psVar3 = psVar5;
-        } while (*psVar5 == -0x5433);
-        unaff_D2 = ((local_10 - (int32_t)psVar5) * 100) / local_1c & 0xffff;
+          psVar6 = psVar4 + 1;
+          if (local_c <= psVar4) goto LAB_00016d52;
+          psVar4 = psVar6;
+        } while (*psVar6 == -0x5433);
+        unaff_D2 = ((local_10 - (int32_t)psVar6) * 100) / local_1c & 0xffff;
       }
 LAB_00016d52:
-      param5 = (uint32_t)uVar1;
+      param5 = (uint32_t)uVar2;
       param4 = local_18 + 4;
-      psVar3 = local_8;
-      psVar5 = local_c;
+      psVar4 = local_8;
+      psVar6 = local_c;
       param7 = local_1c;
       param8 = unaff_D2;
       name = task_name(task);
-      printf("$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n",(uint32_t)task,name,(uint32_t)psVar3,
-             param4,param5,(uint32_t)psVar5,param7,param8);
+      printf("$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n",(uint32_t)task,name,(uint32_t)psVar4,
+             param4,param5,(uint32_t)psVar6,param7,param8);
       printf("               $%08X (TOS)       $%08X (TOS)\r\n",local_14,local_10);
     }
   }
   local_1c = psos_config.supervisor_stack_size;
   if (psos_config.supervisor_stack_size != 0) {
-    param6 = (int16_t *)((int32_t)psos_config.data_area + 200);
-    psVar3 = (int16_t *)(psos_config.supervisor_stack_size + (int32_t)param6);
-    psVar5 = param6;
+    param6 = psos_config.data_area[1].field_5c + 4;
+    param2 = param6 + psos_config.supervisor_stack_size;
+    puVar1 = param6;
     do {
-      psVar4 = psVar5;
-      if (psVar3 <= psVar4) goto LAB_00016dfc;
-      psVar5 = psVar4 + 1;
-    } while (*psVar4 == 0);
-    uVar1 = 100 - (int16_t)((uint32_t)(((int32_t)psVar4 - (int32_t)param6) * 100) /
+      puVar5 = puVar1;
+      if (param2 <= puVar5) goto LAB_00016dfc;
+      puVar1 = puVar5 + 2;
+    } while (*(int16_t *)puVar5 == 0);
+    uVar2 = 100 - (int16_t)((uint32_t)(((int32_t)puVar5 - (int32_t)param6) * 100) /
                          psos_config.supervisor_stack_size);
 LAB_00016dfc:
     printf("\r\n>> pSOS system supervisor stack:\r\n");
     printf("$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n",0,"pSOS",0,0,0,(uint32_t)param6,local_1c,
-           (uint32_t)uVar1);
-    printf("               $%08X (TOS)       $%08X (TOS)\r\n",0,(uint32_t)psVar3);
+           (uint32_t)uVar2);
+    printf("               $%08X (TOS)       $%08X (TOS)\r\n",0,(uint32_t)param2);
   }
   printf("%s","\r\n");
   printf("%s","\r\n");
@@ -21344,7 +21520,7 @@ void psos_debug_output(char param_1)
   sr = set_interrupt_mask(0x700);
   if (param_1 == 0) {
     psos_debug_enabled = 0;
-    *(uint32_t *)((int32_t)psos_config.data_area + 0x30) = 0;
+    (psos_config.data_area)->debug_hooks = (void *)0x0;
   }
   else {
     psos_debug_enabled = 1;
@@ -21352,7 +21528,7 @@ void psos_debug_output(char param_1)
     if (psos_config.debug_hooks != (void **)0x0) {
       pvVar1 = *psos_config.debug_hooks;
     }
-    *(void **)((int32_t)psos_config.data_area + 0x30) = pvVar1;
+    (psos_config.data_area)->debug_hooks = pvVar1;
   }
   set_interrupt_mask(sr);
   return;
@@ -21371,18 +21547,21 @@ void psos_debug_output(char param_1)
 __regcall void tick_account(int16_t mode /* d6 */)
 
 {
+  uint8_t *puVar1;
+  uint32_t *puVar2;
+  
   if (-1 < (int16_t)(mode + -1)) {
-    *(int32_t *)(*(int32_t *)psos_config.data_area + 0xae) =
-         *(int32_t *)(*(int32_t *)psos_config.data_area + 0xae) + 1;
+    puVar2 = &(psos_config.data_area)->running->ticks;
+    *puVar2 = *puVar2 + 1;
     return;
   }
   if (mode != 1) {
-    *(int32_t *)(*(int32_t *)psos_config.data_area + 0x9a) =
-         *(int32_t *)(*(int32_t *)psos_config.data_area + 0x9a) + 1;
+    puVar1 = (psos_config.data_area)->running->field_96 + 4;
+    *(int32_t *)puVar1 = *(int32_t *)puVar1 + 1;
     return;
   }
-  *(int32_t *)(*(int32_t *)psos_config.data_area + 0x9e) =
-       *(int32_t *)(*(int32_t *)psos_config.data_area + 0x9e) + 1;
+  puVar1 = (psos_config.data_area)->running->field_96 + 8;
+  *(int32_t *)puVar1 = *(int32_t *)puVar1 + 1;
   return;
 }
 
@@ -21435,8 +21614,10 @@ __asm__(
 void task_count_tick(void)
 
 {
-  *(int32_t *)(*(int32_t *)psos_config.data_area + 0xae) =
-       *(int32_t *)(*(int32_t *)psos_config.data_area + 0xae) + 1;
+  uint32_t *puVar1;
+  
+  puVar1 = &(psos_config.data_area)->running->ticks;
+  *puVar1 = *puVar1 + 1;
   return;
 }
 
@@ -21446,13 +21627,13 @@ void task_count_tick(void)
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* trap #3, the service in D7, the error back in D7
-   Not a C function (register; read): its arguments and results in registers.  In: D7 char service,
-   D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1.  Out: D7 int error.
-   Returns: ccr.  Results: D0, D1, D2, D3, A0, A1.
+   Not a C function (register; read): its arguments and results in registers.  In: D7 psos_service
+   service, D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1.  Out: D7 int
+   error.  Returns: ccr.  Results: D0, D1, D2, D3, A0, A1.
    psos.md */
 
 /* out D7 int error; returns ccr; results D0, D1, D2, D3, A0, A1 */
-__regcall int32_t psos_call(char service /* d7 */,int32_t d0 /* d0 */,int32_t d1 /* d1 */,int32_t d2 /* d2 */,int32_t d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
+__regcall int32_t psos_call(psos_service service /* d7 */,int32_t d0 /* d0 */,int32_t d1 /* d1 */,int32_t d2 /* d2 */,int32_t d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
 
 {
   uint16_t local_2;
@@ -21520,13 +21701,13 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* trap #4, the function in D7, the device in D0's high byte
-   Not a C function (register; read): its arguments and results in registers.  In: D7 char function,
-   D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1.  Out: D7 int error.
-   Returns: ccr.  Results: D0, D1, D2, D3, A0, A1.
+   Not a C function (register; read): its arguments and results in registers.  In: D7
+   psos_io_function function, D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void
+   *a1.  Out: D7 int error.  Returns: ccr.  Results: D0, D1, D2, D3, A0, A1.
    psos.md */
 
 /* out D7 int error; returns ccr; results D0, D1, D2, D3, A0, A1 */
-__regcall int32_t psos_io_call(char function /* d7 */,int32_t device /* d0 */,int32_t d1 /* d1 */,int32_t d2 /* d2 */,int32_t d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
+__regcall int32_t psos_io_call(psos_io_function function /* d7 */,int32_t device /* d0 */,int32_t d1 /* d1 */,int32_t d2 /* d2 */,int32_t d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
 
 {
   undefined3 unaff_0000001c;
@@ -21534,7 +21715,7 @@ __regcall int32_t psos_io_call(char function /* d7 */,int32_t device /* d0 */,in
   
   local_2 = CONCAT11((char)((uint32_t)device >> 8),function);
   __m68k_trap(4);
-  if (function != 0) {
+  if (function != PSOS_IO_INIT) {
     return (uint32_t)local_2 << 0x10 | CONCAT31(unaff_0000001c,function) & 0xffff;
   }
   return 0;
@@ -21693,7 +21874,7 @@ uint32_t psos_start(uint32_t task,void *entry)
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint32_t uVar1;
   
-  uVar1 = psos_call(2,in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,entry);
+  uVar1 = psos_call(PSOS_SERVICE_START,in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,entry);
   return uVar1;
 }
 
@@ -21721,7 +21902,7 @@ uint32_t psos_ident(char *name,uint32_t *id,uint8_t *b)
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(3,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_IDENT,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
   if (bVar2) {
     if (id != (uint32_t *)0x0) {
       *id = extraout_A0;
@@ -21751,7 +21932,7 @@ uint32_t psos_my_pid(void)
   uint32_t extraout_A0;
   void *in_A1;
   
-  ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  ({ __auto_type __c = psos_call(PSOS_SERVICE_IDENT,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   return extraout_A0;
 }
 
@@ -21773,7 +21954,7 @@ uint32_t psos_delete(uint32_t task)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = psos_call(4,in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_DELETE,in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
   return uVar1;
 }
 
@@ -21795,7 +21976,7 @@ uint32_t psos_suspend(uint32_t task)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = psos_call(5,in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_SUSPEND,in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
   return uVar1;
 }
 
@@ -21817,7 +21998,7 @@ uint32_t psos_resume(uint32_t task)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = psos_call(6,in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_RESUME,in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
   return uVar1;
 }
 
@@ -21839,7 +22020,7 @@ uint32_t psos_priority(uint32_t task,uint32_t priority,uint8_t *old)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(7,priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_PRIORITY,priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
   if (old != (uint8_t *)0x0) {
     *old = extraout_D0b;
   }
@@ -21864,7 +22045,7 @@ uint32_t psos_pause(uint32_t a)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_call(0x1c,a,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_PAUSE,a,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
@@ -21886,7 +22067,7 @@ uint32_t psos_mode(uint32_t mode,uint32_t mask,uint8_t *old)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(' ',mode,mask,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_MODE,mode,mask,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
   if (old != (uint8_t *)0x0) {
     *old = extraout_D0b;
   }
@@ -21946,7 +22127,7 @@ uint32_t psos_service_8(uint32_t a,uint32_t b,uint32_t c,uint32_t d,uint32_t *ou
   uint32_t extraout_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(8,d,a,b,c,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_ALLOCATE_SEGMENT,d,a,b,c,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if ((uVar1 == 0) && (out != (uint32_t *)0x0)) {
     *out = extraout_A0;
   }
@@ -21971,7 +22152,7 @@ uint32_t psos_free_segment(void *segment)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = psos_call('\t',in_D0,in_D1,unaff_D2,unaff_D3,segment,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_FREE_SEGMENT,in_D0,in_D1,unaff_D2,unaff_D3,segment,in_A1);
   return uVar1;
 }
 
@@ -21992,7 +22173,7 @@ uint32_t psos_assign_segment(void *segment,uint32_t task)
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint32_t uVar1;
   
-  uVar1 = psos_call('\n',in_D0,in_D1,unaff_D2,unaff_D3,segment,(void *)task);
+  uVar1 = psos_call(PSOS_SERVICE_ASSIGN_SEGMENT,in_D0,in_D1,unaff_D2,unaff_D3,segment,(void *)task);
   return uVar1;
 }
 
@@ -22013,7 +22194,8 @@ uint32_t psos_reclaim_segment(void *segment,uint32_t task)
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint32_t uVar1;
   
-  uVar1 = psos_call(0x10,in_D0,in_D1,unaff_D2,unaff_D3,segment,(void *)task);
+  uVar1 = psos_call(PSOS_SERVICE_RECLAIM_SEGMENT,in_D0,in_D1,unaff_D2,unaff_D3,segment,(void *)task)
+  ;
   return uVar1;
 }
 
@@ -22034,7 +22216,7 @@ uint32_t psos_create_partition(void *area,uint32_t block_size,uint32_t count,voi
   void *extraout_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call('#',block_size,count,unaff_D2,unaff_D3,area,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_CREATE_PARTITION,block_size,count,unaff_D2,unaff_D3,area,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if (partition != (void **)0x0) {
     *partition = extraout_A0;
   }
@@ -22058,7 +22240,8 @@ uint32_t psos_delete_partition(void *partition,uint32_t block_size)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = psos_call('$',block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_DELETE_PARTITION,block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1
+                   );
   return uVar1;
 }
 
@@ -22080,7 +22263,7 @@ uint32_t psos_get_block(void *partition,uint32_t block_size,void **block)
   void *in_A1;
   void *extraout_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call('%',block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_GET_BLOCK,block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; __c; });
   if ((uVar1 == 0) && (block != (void **)0x0)) {
     *block = extraout_A1;
   }
@@ -22104,7 +22287,7 @@ uint32_t psos_return_block(void *partition,void *block)
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint32_t uVar1;
   
-  uVar1 = psos_call('&',in_D0,in_D1,unaff_D2,unaff_D3,partition,block);
+  uVar1 = psos_call(PSOS_SERVICE_RETURN_BLOCK,in_D0,in_D1,unaff_D2,unaff_D3,partition,block);
   return uVar1;
 }
 
@@ -22127,7 +22310,7 @@ uint32_t psos_create_x(char *name,uint32_t a,uint32_t b,uint32_t *exchange)
   void *a1;
   
   d0 = psos_pack_name();
-  uVar1 = ({ __auto_type __c = psos_call(0x14,d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_CREATE_X,d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if ((uVar1 == 0) && (exchange != (uint32_t *)0x0)) {
     *exchange = extraout_A0;
   }
@@ -22157,7 +22340,7 @@ uint32_t psos_service_21(char *name,uint32_t *out1,uint32_t *out2,uint32_t *out3
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x15,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_ATTACH_X,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
   if (bVar2) {
     if (out1 != (uint32_t *)0x0) {
       *out1 = extraout_A0;
@@ -22190,7 +22373,7 @@ uint32_t psos_delete_x(uint32_t exchange)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = psos_call(0x16,in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_DELETE_X,in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,in_A1);
   return uVar1;
 }
 
@@ -22211,7 +22394,7 @@ uint32_t psos_send_x(uint32_t exchange,void *message)
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint32_t uVar1;
   
-  uVar1 = psos_call(0x17,in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
+  uVar1 = psos_call(PSOS_SERVICE_SEND_X,in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
   return uVar1;
 }
 
@@ -22232,7 +22415,7 @@ uint32_t psos_jam_x(uint32_t exchange,void *message)
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint32_t uVar1;
   
-  uVar1 = psos_call(0x13,in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
+  uVar1 = psos_call(PSOS_SERVICE_JAM_X,in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
   return uVar1;
 }
 
@@ -22256,7 +22439,8 @@ uint32_t psos_broadcast_x(uint32_t exchange,void *message,uint32_t count,uint8_t
   bool bVar2;
   
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x12,count,in_D1,unaff_D2,unaff_D3,(void *)exchange,message); bVar2 = __ghidra_flag(4); __c; }); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; extraout_D1b = (__typeof__(extraout_D1b))bridge_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_BROADCAST_X,count,in_D1,unaff_D2,unaff_D3,(void *)exchange,message); bVar2 = __ghidra_flag(4); __c; }); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; extraout_D1b = (__typeof__(extraout_D1b))bridge_result_d1; __c; })
+  ;
   if (bVar2) {
     if (count_out != (uint8_t *)0x0) {
       *count_out = extraout_D0b;
@@ -22283,7 +22467,7 @@ uint32_t psos_request_x(uint32_t exchange,void *buffer,uint32_t a,uint32_t b)
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint32_t uVar1;
   
-  uVar1 = psos_call(0x18,b,a,unaff_D2,unaff_D3,(void *)exchange,buffer);
+  uVar1 = psos_call(PSOS_SERVICE_REQUEST_X,b,a,unaff_D2,unaff_D3,(void *)exchange,buffer);
   return uVar1;
 }
 
@@ -22304,7 +22488,7 @@ uint32_t psos_signal_v(uint32_t variable,uint32_t value)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = psos_call(0x19,in_D0,value,unaff_D2,unaff_D3,(void *)variable,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_SIGNAL_V,in_D0,value,unaff_D2,unaff_D3,(void *)variable,in_A1);
   return uVar1;
 }
 
@@ -22325,7 +22509,7 @@ uint32_t psos_wait_v(uint32_t a,uint32_t b,uint32_t c,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(0x1a,c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_WAIT_V,c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }
@@ -22350,7 +22534,7 @@ uint32_t psos_get_v(uint32_t a,uint32_t b,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(0x1b,in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_GET_V,in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }
@@ -22376,7 +22560,7 @@ uint32_t psos_announce_tick(void)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_call(0x1d,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_ANNOUNCE_TICK,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
@@ -22401,7 +22585,7 @@ uint32_t psos_get_time(uint32_t *date,uint32_t *time,uint16_t *ticks)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(0x1e,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))bridge_result_d0; extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_GET_TIME,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))bridge_result_d0; extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
   if (date != (uint32_t *)0x0) {
     *date = extraout_D0;
   }
@@ -22430,7 +22614,7 @@ uint32_t psos_set_time(uint32_t date,uint32_t time,uint32_t ticks)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_call(0x1f,date,time,ticks,unaff_D3,in_A0,in_A1);
+  uVar1 = psos_call(PSOS_SERVICE_SET_TIME,date,time,ticks,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
@@ -22452,7 +22636,7 @@ uint32_t psos_io_init(uint32_t device)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_io_call(0,device,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  uVar1 = psos_io_call(PSOS_IO_INIT,device,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
@@ -22473,7 +22657,7 @@ uint32_t psos_io_open(uint32_t device,uint32_t a)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_io_call(1,device,a,unaff_D2,unaff_D3,in_A0,in_A1);
+  uVar1 = psos_io_call(PSOS_IO_OPEN,device,a,unaff_D2,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
@@ -22514,7 +22698,7 @@ uint32_t psos_io_read(uint32_t device,void *buffer,uint32_t *length)
   uint32_t uVar1;
   
   d2 = *length;
-  uVar1 = ({ __auto_type __c = psos_io_call(3,device,in_D1,d2,unaff_D3,length,buffer); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = psos_io_call(PSOS_IO_READ,device,in_D1,d2,unaff_D3,length,buffer); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a0; __c; });
   if ((uVar1 == 0) && (length != (uint32_t *)0x0)) {
     *length = d2;
   }
@@ -22538,7 +22722,7 @@ uint32_t psos_io_write(uint32_t device,void *buffer,uint32_t *length)
   uint32_t uVar1;
   
   d2 = *length;
-  uVar1 = ({ __auto_type __c = psos_io_call(4,device,in_D1,d2,unaff_D3,buffer,length); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a1; __c; });
+  uVar1 = ({ __auto_type __c = psos_io_call(PSOS_IO_WRITE,device,in_D1,d2,unaff_D3,buffer,length); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a1; __c; });
   if ((uVar1 == 0) && (length != (uint32_t *)0x0)) {
     *length = d2;
   }
@@ -22560,7 +22744,7 @@ uint32_t psos_io_control(uint32_t device,uint32_t a,uint32_t b)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_io_call(5,device,in_D1,a,b,in_A0,in_A1);
+  uVar1 = psos_io_call(PSOS_IO_WRITE|PSOS_IO_OPEN,device,in_D1,a,b,in_A0,in_A1);
   return uVar1;
 }
 
@@ -25023,8 +25207,8 @@ __pforth uint32_t forth_read_line(forth_user_end user /* a5 */,char *input /* a3
     __m68k_trap(4);
     return in_D0;
   }
-  ({ __auto_type __c = psos_call(4,(uint32_t)(uint16_t)((forth_user_area *)(user + -0x28))->iodev,in_D1,unaff_D2,unaff_D3,
-            (void *)0x0,ADJ(user)->tib); extraout_D0 = (__typeof__(extraout_D0))bridge_result_d0; __c; });
+  ({ __auto_type __c = psos_call(PSOS_SERVICE_DELETE,(uint32_t)(uint16_t)((forth_user_area *)(user + -0x28))->iodev,in_D1,
+            unaff_D2,unaff_D3,(void *)0x0,ADJ(user)->tib); extraout_D0 = (__typeof__(extraout_D0))bridge_result_d0; __c; });
   return extraout_D0;
 }
 
@@ -25177,8 +25361,8 @@ __pforth void forth_print_string(char *s /* d0 */,forth_user_end user /* a5 */)
     __m68k_trap(4);
     return;
   }
-  psos_call(4,(uint32_t)(uint16_t)((forth_user_area *)(user + -0x28))->iodev,in_D1,unaff_D2,unaff_D3,
-            (void *)0x0,in_A1);
+  psos_call(PSOS_SERVICE_DELETE,(uint32_t)(uint16_t)((forth_user_area *)(user + -0x28))->iodev,in_D1,
+            unaff_D2,unaff_D3,(void *)0x0,in_A1);
   return;
 }
 
@@ -25237,7 +25421,7 @@ __pforth void forth_input_buffer(forth_user_end user /* a5 */)
   void *in_A1;
   
   if (ADJ(user)->tib == (char *)0x0) {
-    psos_call(4,0,in_D1,unaff_D2,unaff_D3,(void *)0x0,in_A1);
+    psos_call(PSOS_SERVICE_DELETE,0,in_D1,unaff_D2,unaff_D3,(void *)0x0,in_A1);
   }
   return;
 }
@@ -30511,8 +30695,9 @@ __pforth void forth_expect(forth_user_end user,int32_t *sp)
     __m68k_trap(4);
     return;
   }
-  psos_call(4,CONCAT22((int16_t)((uint32_t)in_D0 >> 0x10),((forth_user_area *)(user + -0x28))->iodev)
-            ,in_D1,*sp,unaff_D3,(void *)0x0,(void *)sp[1]);
+  psos_call(PSOS_SERVICE_DELETE,
+            CONCAT22((int16_t)((uint32_t)in_D0 >> 0x10),((forth_user_area *)(user + -0x28))->iodev),in_D1,
+            *sp,unaff_D3,(void *)0x0,(void *)sp[1]);
   return;
 }
 
@@ -31289,7 +31474,7 @@ __pforth void forth_psos_call(forth_user_end user,int32_t *sp,void *dp)
   int32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   uint8_t bVar1;
-  char unaff_D7b = ({ register int32_t __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
+  psos_service unaff_D7b = ({ register int32_t __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (psos_service)__entry; });
   uint32_t uVar2;
   void *in_A0;
   void *in_A1;
@@ -31452,7 +31637,7 @@ __pforth void forth_spawn(forth_user_end user,int32_t *sp,void *dp)
     *(void **)((int32_t)dp + 2) = dp;
     *(int16_t *)((int32_t)dp + 6) = (int16_t)iVar3;
     *(uint32_t *)((int32_t)dp + 8) = extraout_A0;
-    ({ __auto_type __c = psos_call(7,0,d1,d2,iVar3,(void *)0x0,a1); iVar3 = (__typeof__(iVar3))bridge_result_d3; __c; });
+    ({ __auto_type __c = psos_call(PSOS_SERVICE_PRIORITY,0,d1,d2,iVar3,(void *)0x0,a1); iVar3 = (__typeof__(iVar3))bridge_result_d3; __c; });
     forth_parse_word(user,unaff_A3);
     iVar3 = forth_pack_name(user);
     *(int32_t *)((int32_t)dp + 0xc) = iVar3;
@@ -33165,7 +33350,8 @@ __regcall void console_read_from_string(void)
   uint16_t uVar3;
   
   if ((string_device_cursor == (char *)0x0) || (*string_device_cursor == 0)) {
-    psos_call(5,in_D0,(int32_t)string_device_cursor,unaff_D2,unaff_D3,(void *)0x0,in_A1);
+    psos_call(PSOS_SERVICE_SUSPEND,in_D0,(int32_t)string_device_cursor,unaff_D2,unaff_D3,(void *)0x0,
+              in_A1);
   }
   else {
     uVar2 = unaff_D2 - 1;

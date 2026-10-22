@@ -153,7 +153,9 @@ Task and exchange IDs carry their record's address, complemented or
 swapped, which `kernel_check_task` and `kernel_check_exchange` compare;
 error 2 is a bad ID, 1 a deleted one and 3 one of another group.
 `kernel_init`, trap #6, carves the configured memory into task records
-of `0xb2` bytes, exchanges of `0x22` and message buffers of `0x18`;
+of `0xb2` bytes, exchanges of `0x22` and message buffers of `0x18`
+(`smartclock.h`'s `psos_task`, `psos_exchange` and `psos_message`, the
+data area `psos_kernel`, the services `psos_service`);
 `kernel_return_from_interrupt`, trap #5, and `kernel_switch_task`, on
 the way out of a service, save the running task's registers in its
 record and switch to the first ready one.

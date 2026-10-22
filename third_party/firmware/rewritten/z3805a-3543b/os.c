@@ -12,196 +12,8 @@
 
 #include <stddef.h>
 
-typedef struct os_task os_task;
-
-/* A segment of a region, on a task's list or a region's free list:
- * os_report_region_line prints its first five fields. */
-typedef struct os_segment {
-  struct os_segment* next; /* +0x00 */
-  uint32_t field_04;
-  uint32_t field_08;
-  uint32_t size;  /* +0x0c: bytes, from the segment's start */
-  uint16_t flags; /* +0x10: the region, 1 or 2, in bits 1 to 0 */
-} os_segment;
-
-/* One of a task's resources, on its list at +0x1c. */
-typedef struct os_resource {
-  struct os_resource* next; /* +0x00 */
-  void* object;             /* +0x04: an exchange; object_name names it */
-} os_resource;
-
-/* A task's record, 0xb2 bytes, which kernel_init (0x15cd8) carves from
- * the data area; its address is its id. */
-struct os_task {
-  os_task* next; /* +0x00: the next on the ready queue, or on the circular
-                    queue of an exchange or region it waits at */
-  uint32_t field_04;
-  os_task* timer_next; /* +0x08: the next on the delay list */
-  uint32_t field_0c;
-  uint8_t priority; /* +0x10 */
-  uint8_t mode;     /* +0x11: os_task_mode's bits, service 32's mode byte */
-  uint8_t delay;    /* +0x12: nonzero while paused */
-  uint8_t status;   /* +0x13: os_task_status's bits, 0 when ready */
-  uint8_t group;    /* +0x14 */
-  uint8_t field_15;
-  uint16_t events_waited;  /* +0x16 */
-  uint16_t events_pending; /* +0x18 */
-  uint16_t slice_ticks;    /* +0x1a: the report's TIX for a task not paused */
-  os_resource* resources;  /* +0x1c */
-  os_segment* segments;    /* +0x20: the segments it holds */
-  char name[4];            /* +0x24 */
-  uint32_t id_check;       /* +0x28: the id with its low word complemented */
-  uint32_t field_2c;
-  os_task* list_next; /* +0x30: the next on the kernel's task list or its
-                         free list */
-  uint16_t field_34;
-  uint32_t supervisor_pointer; /* +0x36: the saved SSP */
-  uint32_t user_pointer;       /* +0x3a: the saved USP */
-  uint8_t field_3e[0xc];
-  int32_t timer_ticks; /* +0x4a: its ticks past the delay list's one before */
-  uint32_t field_4e;
-  uint32_t region_request; /* +0x52: the bytes a region waiter asks */
-  uint32_t region_wait;    /* +0x56: bits 3 to 0, its region less 1 */
-  uint8_t field_5a[0x28];
-  void* exception_hook; /* +0x82: exception_hook_get's, per task */
-  uint32_t field_86;
-  uint32_t user_top;       /* +0x8a: the user stack's top */
-  uint32_t supervisor_top; /* +0x8e: the supervisor stack's top; the user
-                              stack starts 4 above it */
-  uint32_t stack_bottom;   /* +0x92: the supervisor stack's bottom */
-  uint8_t field_96[0x18];
-  uint32_t ticks; /* +0xae: ticks run since the last process report */
-};
-
-/* An exchange's record, 0x22 bytes; its address is its id. */
-typedef struct os_exchange {
-  os_task* waiting; /* +0x00: the circular queue of tasks waiting, which
-                       ends at the exchange itself */
-  uint8_t field_04[0xc];
-  uint8_t by_priority; /* +0x10: queues by priority, else first in first out */
-  uint8_t group_only;  /* +0x11: only its group may use it, else any */
-  uint8_t limited;     /* +0x12: queue_limit holds, else no limit */
-  uint8_t field_13;
-  char name[4];             /* +0x14 */
-  uint32_t id_check;        /* +0x18: the id with its words swapped */
-  struct os_exchange* next; /* +0x1c: the next on the kernel's list */
-  uint8_t queue_limit;      /* +0x20 */
-  uint8_t queued;           /* +0x21: messages queued */
-} os_exchange;
-
-/* A message buffer, 0x18 bytes, on the free list by its first long. */
-typedef struct os_message {
-  struct os_message* next; /* +0x00 */
-} os_message;
-
-/* The kernel's data area, psos_config.data_area, which it keeps in A6;
- * the regions' arrays are region 1's and region 2's. */
-typedef struct os_kernel {
-  os_task* running;            /* +0x00 */
-  os_task* ready;              /* +0x04: the ready queue, by priority */
-  os_task* timers;             /* +0x08: the delay list, through timer_next */
-  os_task* tasks;              /* +0x0c: every task, through list_next */
-  os_task* free_tasks;         /* +0x10 */
-  os_exchange* exchanges;      /* +0x14 */
-  os_exchange* free_exchanges; /* +0x18 */
-  os_message* free_messages;   /* +0x1c */
-  uint8_t field_20[0x10];
-  void* debug_hooks;          /* +0x30: psos_debug_output's table or 0 */
-  uint32_t region_minimum[2]; /* +0x34: os_report_regions' "min" */
-  uint32_t region_maximum[2]; /* +0x3c: "max" */
-  uint32_t region_pending[2]; /* +0x44: "pend" */
-  uint32_t region_end[2];     /* +0x4c */
-  os_segment* region_free[2]; /* +0x54 */
-  uint8_t field_5c[8];
-  os_task* region_waiting; /* +0x64: the circular queue of tasks waiting for a
-                              region, which ends at this field */
-} os_kernel;
-
-_Static_assert(offsetof(os_task, slice_ticks) == 0x1a, "os_task");
-
-_Static_assert(offsetof(os_task, list_next) == 0x30, "os_task");
-
-_Static_assert(offsetof(os_task, timer_ticks) == 0x4a, "os_task");
-
-_Static_assert(offsetof(os_task, exception_hook) == 0x82, "os_task");
-
-_Static_assert(offsetof(os_task, ticks) == 0xae, "os_task");
-
-_Static_assert(sizeof(os_task) == 0xb2, "os_task");
-
-_Static_assert(sizeof(os_exchange) == 0x22, "os_exchange");
-
-_Static_assert(offsetof(os_kernel, region_waiting) == 0x64, "os_kernel");
-
-/* A task record's status byte, +0x13, by task_status_name's text. */
-enum os_task_status {
-  OS_TASK_SUSPENDED = 0x04,     /* "susp" */
-  OS_TASK_PAUSED = 0x08,        /* "paus", as a nonzero delay is */
-  OS_TASK_VARIABLE_WAIT = 0x10, /* "vblk": in wait_v */
-  OS_TASK_EXCHANGE_WAIT = 0x20, /* "xblk": in request_x */
-  OS_TASK_MEMORY_WAIT = 0x40,   /* "mblk": on a region's queue, presumably */
-  OS_TASK_SPAWNING = 0x80,      /* "spwn": created, not started */
-};
-
-/* A task record's mode byte, +0x11 (psos.md, service 32). */
-enum os_task_mode {
-  OS_MODE_TIME_SLICE = 0x40,    /* the report's "R" */
-  OS_MODE_NO_PREEMPTION = 0x80, /* the report's "*" */
-};
-
-/* task_table_entry.state, by which os_report_processes groups the
- * tasks; OS_TABLE_EMPTY marks an unused entry. */
-enum os_table_state {
-  OS_TABLE_READY = 0,
-  OS_TABLE_PAUSED = 1,
-  OS_TABLE_BLOCKED = 2,
-  OS_TABLE_EMPTY = 0xff,
-};
-
-/* The kernel's services, trap #3's D7 (psos.md, "Services"); 8 and 21
- * are named by the pSOS-68K brochure's list there. */
-enum os_service {
-  OS_SERVICE_START = 2,
-  OS_SERVICE_IDENT = 3,
-  OS_SERVICE_DELETE = 4,
-  OS_SERVICE_SUSPEND = 5,
-  OS_SERVICE_RESUME = 6,
-  OS_SERVICE_PRIORITY = 7,
-  OS_SERVICE_ALLOCATE_SEGMENT = 8,
-  OS_SERVICE_FREE_SEGMENT = 9,
-  OS_SERVICE_ASSIGN_SEGMENT = 10,
-  OS_SERVICE_RECLAIM_SEGMENT = 16,
-  OS_SERVICE_BROADCAST_X = 18,
-  OS_SERVICE_JAM_X = 19,
-  OS_SERVICE_CREATE_X = 20,
-  OS_SERVICE_ATTACH_X = 21,
-  OS_SERVICE_DELETE_X = 22,
-  OS_SERVICE_SEND_X = 23,
-  OS_SERVICE_REQUEST_X = 24,
-  OS_SERVICE_SIGNAL_V = 25,
-  OS_SERVICE_WAIT_V = 26,
-  OS_SERVICE_GET_V = 27,
-  OS_SERVICE_PAUSE = 28,
-  OS_SERVICE_ANNOUNCE_TICK = 29,
-  OS_SERVICE_GET_TIME = 30,
-  OS_SERVICE_SET_TIME = 31,
-  OS_SERVICE_MODE = 32,
-  OS_SERVICE_CREATE_PARTITION = 35,
-  OS_SERVICE_DELETE_PARTITION = 36,
-  OS_SERVICE_GET_BLOCK = 37,
-  OS_SERVICE_RETURN_BLOCK = 38,
-};
-
-/* The I/O functions, trap #4's D7 (psos.md, "Calls"). */
-enum os_io_function {
-  OS_IO_INIT = 0,
-  OS_IO_OPEN = 1,
-  OS_IO_READ = 3,
-  OS_IO_WRITE = 4,
-};
-
 /* The kernel's data area. */
-static os_kernel* os_kernel_data(void) { return psos_config.data_area; }
+static psos_kernel* os_kernel_data(void) { return psos_config.data_area; }
 
 /* Copies the kernel's configuration and I/O table from ROM
  * (0x51038). */
@@ -220,13 +32,13 @@ void psos_config_init(void) {
 
 /* Starts a created task at its entry (0x16fae). */
 uint32_t psos_start(uint32_t task, void* entry) {
-  return psos_call(OS_SERVICE_START, 0, 0, 0, 0, (void*)task, entry);
+  return psos_call(PSOS_SERVICE_START, 0, 0, 0, 0, (void*)task, entry);
 }
 
 /* Looks a task up by name; on success its id and a byte (0x16fca). */
 uint32_t psos_ident(char* name, uint32_t* id, uint8_t* byte) {
   uint32_t error =
-      psos_call(OS_SERVICE_IDENT, psos_pack_name(), 0, 0, 0, NULL, NULL);
+      psos_call(PSOS_SERVICE_IDENT, psos_pack_name(), 0, 0, 0, NULL, NULL);
 
   if (error == 0) {
     if (id != NULL) {
@@ -241,30 +53,30 @@ uint32_t psos_ident(char* name, uint32_t* id, uint8_t* byte) {
 
 /* The running task's id, ident's for no name (0x16ff8). */
 uint32_t psos_my_pid(void) {
-  psos_call(OS_SERVICE_IDENT, 0, 0, 0, 0, NULL, NULL);
+  psos_call(PSOS_SERVICE_IDENT, 0, 0, 0, 0, NULL, NULL);
   return bridge_result_a0;
 }
 
 /* Deletes a task (0x17008). */
 uint32_t psos_delete(uint32_t task) {
-  return psos_call(OS_SERVICE_DELETE, 0, 0, 0, 0, (void*)task, NULL);
+  return psos_call(PSOS_SERVICE_DELETE, 0, 0, 0, 0, (void*)task, NULL);
 }
 
 /* Suspends a task (0x17020). */
 uint32_t psos_suspend(uint32_t task) {
-  return psos_call(OS_SERVICE_SUSPEND, 0, 0, 0, 0, (void*)task, NULL);
+  return psos_call(PSOS_SERVICE_SUSPEND, 0, 0, 0, 0, (void*)task, NULL);
 }
 
 /* Resumes a task (0x17038). */
 uint32_t psos_resume(uint32_t task) {
-  return psos_call(OS_SERVICE_RESUME, 0, 0, 0, 0, (void*)task, NULL);
+  return psos_call(PSOS_SERVICE_RESUME, 0, 0, 0, 0, (void*)task, NULL);
 }
 
 /* Changes a task's priority by a step; its old priority, even on an
  * error (0x17050). */
 uint32_t psos_priority(uint32_t task, uint32_t priority, uint8_t* old) {
   uint32_t error =
-      psos_call(OS_SERVICE_PRIORITY, priority, 0, 0, 0, (void*)task, NULL);
+      psos_call(PSOS_SERVICE_PRIORITY, priority, 0, 0, 0, (void*)task, NULL);
 
   if (old != NULL) {
     *old = bridge_result_d0;
@@ -274,13 +86,13 @@ uint32_t psos_priority(uint32_t task, uint32_t priority, uint8_t* old) {
 
 /* Pauses the running task for some ticks (0x17076). */
 uint32_t psos_pause(uint32_t ticks) {
-  return psos_call(OS_SERVICE_PAUSE, ticks, 0, 0, 0, NULL, NULL);
+  return psos_call(PSOS_SERVICE_PAUSE, ticks, 0, 0, 0, NULL, NULL);
 }
 
 /* Sets the masked bits of the running task's mode; the old mode, even on
  * an error (0x1708e). */
 uint32_t psos_mode(uint32_t mode, uint32_t mask, uint8_t* old) {
-  uint32_t error = psos_call(OS_SERVICE_MODE, mode, mask, 0, 0, NULL, NULL);
+  uint32_t error = psos_call(PSOS_SERVICE_MODE, mode, mask, 0, 0, NULL, NULL);
 
   if (old != NULL) {
     *old = bridge_result_d0;
@@ -293,7 +105,7 @@ uint32_t psos_mode(uint32_t mode, uint32_t mask, uint8_t* old) {
 uint32_t psos_service_8(uint32_t size, uint32_t d2, uint32_t d3, uint32_t d0,
                         uint32_t* out) {
   uint32_t error =
-      psos_call(OS_SERVICE_ALLOCATE_SEGMENT, d0, size, d2, d3, NULL, NULL);
+      psos_call(PSOS_SERVICE_ALLOCATE_SEGMENT, d0, size, d2, d3, NULL, NULL);
 
   if (error == 0 && out != NULL) {
     *out = bridge_result_a0;
@@ -303,17 +115,18 @@ uint32_t psos_service_8(uint32_t size, uint32_t d2, uint32_t d3, uint32_t d0,
 
 /* Frees a segment (0x170f4). */
 uint32_t psos_free_segment(void* segment) {
-  return psos_call(OS_SERVICE_FREE_SEGMENT, 0, 0, 0, 0, segment, NULL);
+  return psos_call(PSOS_SERVICE_FREE_SEGMENT, 0, 0, 0, 0, segment, NULL);
 }
 
 /* Gives a segment of the running task's to another task (0x1710c). */
 uint32_t psos_assign_segment(void* segment, uint32_t task) {
-  return psos_call(OS_SERVICE_ASSIGN_SEGMENT, 0, 0, 0, 0, segment, (void*)task);
+  return psos_call(PSOS_SERVICE_ASSIGN_SEGMENT, 0, 0, 0, 0, segment,
+                   (void*)task);
 }
 
 /* Takes a segment back from a task (0x17128). */
 uint32_t psos_reclaim_segment(void* segment, uint32_t task) {
-  return psos_call(OS_SERVICE_RECLAIM_SEGMENT, 0, 0, 0, 0, segment,
+  return psos_call(PSOS_SERVICE_RECLAIM_SEGMENT, 0, 0, 0, 0, segment,
                    (void*)task);
 }
 
@@ -321,8 +134,8 @@ uint32_t psos_reclaim_segment(void* segment, uint32_t task) {
  * error (0x17144). */
 uint32_t psos_create_partition(void* area, uint32_t block_size, uint32_t count,
                                void** partition) {
-  uint32_t error = psos_call(OS_SERVICE_CREATE_PARTITION, block_size, count, 0,
-                             0, area, NULL);
+  uint32_t error = psos_call(PSOS_SERVICE_CREATE_PARTITION, block_size, count,
+                             0, 0, area, NULL);
 
   if (partition != NULL) {
     *partition = (void*)bridge_result_a0;
@@ -332,14 +145,14 @@ uint32_t psos_create_partition(void* area, uint32_t block_size, uint32_t count,
 
 /* Deletes a partition (0x1716e). */
 uint32_t psos_delete_partition(void* partition, uint32_t block_size) {
-  return psos_call(OS_SERVICE_DELETE_PARTITION, block_size, 0, 0, 0, partition,
-                   NULL);
+  return psos_call(PSOS_SERVICE_DELETE_PARTITION, block_size, 0, 0, 0,
+                   partition, NULL);
 }
 
 /* Takes a block from a partition; on success the block (0x1718a). */
 uint32_t psos_get_block(void* partition, uint32_t block_size, void** block) {
   uint32_t error =
-      psos_call(OS_SERVICE_GET_BLOCK, block_size, 0, 0, 0, partition, NULL);
+      psos_call(PSOS_SERVICE_GET_BLOCK, block_size, 0, 0, 0, partition, NULL);
 
   if (error == 0 && block != NULL) {
     *block = (void*)bridge_result_a1;
@@ -349,14 +162,14 @@ uint32_t psos_get_block(void* partition, uint32_t block_size, void** block) {
 
 /* Returns a block to its partition (0x171b2). */
 uint32_t psos_return_block(void* partition, void* block) {
-  return psos_call(OS_SERVICE_RETURN_BLOCK, 0, 0, 0, 0, partition, block);
+  return psos_call(PSOS_SERVICE_RETURN_BLOCK, 0, 0, 0, 0, partition, block);
 }
 
 /* Creates an exchange of a name, with two longs; on success its id
  * (0x171ce). */
 uint32_t psos_create_x(char* name, uint32_t a, uint32_t b, uint32_t* exchange) {
   uint32_t error =
-      psos_call(OS_SERVICE_CREATE_X, psos_pack_name(), a, b, 0, NULL, NULL);
+      psos_call(PSOS_SERVICE_CREATE_X, psos_pack_name(), a, b, 0, NULL, NULL);
 
   if (error == 0 && exchange != NULL) {
     *exchange = bridge_result_a0;
@@ -369,7 +182,7 @@ uint32_t psos_create_x(char* name, uint32_t a, uint32_t b, uint32_t* exchange) {
 uint32_t psos_service_21(char* name, uint32_t* out1, uint32_t* out2,
                          uint32_t* out3) {
   uint32_t error =
-      psos_call(OS_SERVICE_ATTACH_X, psos_pack_name(), 0, 0, 0, NULL, NULL);
+      psos_call(PSOS_SERVICE_ATTACH_X, psos_pack_name(), 0, 0, 0, NULL, NULL);
 
   if (error == 0) {
     if (out1 != NULL) {
@@ -387,17 +200,17 @@ uint32_t psos_service_21(char* name, uint32_t* out1, uint32_t* out2,
 
 /* Deletes an exchange (0x1723a). */
 uint32_t psos_delete_x(uint32_t exchange) {
-  return psos_call(OS_SERVICE_DELETE_X, 0, 0, 0, 0, (void*)exchange, NULL);
+  return psos_call(PSOS_SERVICE_DELETE_X, 0, 0, 0, 0, (void*)exchange, NULL);
 }
 
 /* Sends a message to an exchange (0x17252). */
 uint32_t psos_send_x(uint32_t exchange, void* message) {
-  return psos_call(OS_SERVICE_SEND_X, 0, 0, 0, 0, (void*)exchange, message);
+  return psos_call(PSOS_SERVICE_SEND_X, 0, 0, 0, 0, (void*)exchange, message);
 }
 
 /* Sends a message to the front of an exchange's queue (0x1726e). */
 uint32_t psos_jam_x(uint32_t exchange, void* message) {
-  return psos_call(OS_SERVICE_JAM_X, 0, 0, 0, 0, (void*)exchange, message);
+  return psos_call(PSOS_SERVICE_JAM_X, 0, 0, 0, 0, (void*)exchange, message);
 }
 
 /* Gives a message to every task waiting at an exchange and queues
@@ -405,7 +218,7 @@ uint32_t psos_jam_x(uint32_t exchange, void* message) {
  * tasks given it, and those tasks (0x1728a). */
 uint32_t psos_broadcast_x(uint32_t exchange, void* message, uint32_t count,
                           uint8_t* count_out, uint8_t* woken) {
-  uint32_t error = psos_call(OS_SERVICE_BROADCAST_X, count, 0, 0, 0,
+  uint32_t error = psos_call(PSOS_SERVICE_BROADCAST_X, count, 0, 0, 0,
                              (void*)exchange, message);
 
   if (error == 0) {
@@ -423,18 +236,20 @@ uint32_t psos_broadcast_x(uint32_t exchange, void* message, uint32_t count,
  * D1 and D0 (0x172c4). */
 uint32_t psos_request_x(uint32_t exchange, void* buffer, uint32_t d1,
                         uint32_t d0) {
-  return psos_call(OS_SERVICE_REQUEST_X, d0, d1, 0, 0, (void*)exchange, buffer);
+  return psos_call(PSOS_SERVICE_REQUEST_X, d0, d1, 0, 0, (void*)exchange,
+                   buffer);
 }
 
 /* Signals events to a variable's task (0x172e8). */
 uint32_t psos_signal_v(uint32_t variable, uint32_t value) {
-  return psos_call(OS_SERVICE_SIGNAL_V, 0, value, 0, 0, (void*)variable, NULL);
+  return psos_call(PSOS_SERVICE_SIGNAL_V, 0, value, 0, 0, (void*)variable,
+                   NULL);
 }
 
 /* Waits on a variable with the longs in D1, D2 and D0; D1 back, even on
  * an error (0x17304). */
 uint32_t psos_wait_v(uint32_t d1, uint32_t d2, uint32_t d0, uint32_t* out) {
-  uint32_t error = psos_call(OS_SERVICE_WAIT_V, d0, d1, d2, 0, NULL, NULL);
+  uint32_t error = psos_call(PSOS_SERVICE_WAIT_V, d0, d1, d2, 0, NULL, NULL);
 
   if (out != NULL) {
     *out = bridge_result_d1;
@@ -445,7 +260,7 @@ uint32_t psos_wait_v(uint32_t d1, uint32_t d2, uint32_t d0, uint32_t* out) {
 /* Reads a variable with the longs in D1 and D2; D1 back, even on an
  * error (0x17332). */
 uint32_t psos_get_v(uint32_t d1, uint32_t d2, uint32_t* out) {
-  uint32_t error = psos_call(OS_SERVICE_GET_V, 0, d1, d2, 0, NULL, NULL);
+  uint32_t error = psos_call(PSOS_SERVICE_GET_V, 0, d1, d2, 0, NULL, NULL);
 
   if (out != NULL) {
     *out = bridge_result_d1;
@@ -455,13 +270,13 @@ uint32_t psos_get_v(uint32_t d1, uint32_t d2, uint32_t* out) {
 
 /* Counts a tick (0x1735c). */
 uint32_t psos_announce_tick(void) {
-  return psos_call(OS_SERVICE_ANNOUNCE_TICK, 0, 0, 0, 0, NULL, NULL);
+  return psos_call(PSOS_SERVICE_ANNOUNCE_TICK, 0, 0, 0, 0, NULL, NULL);
 }
 
 /* The time of day: its date, time and ticks into the second, even on an
  * error (0x17370). */
 uint32_t psos_get_time(uint32_t* date, uint32_t* time, uint16_t* ticks) {
-  uint32_t error = psos_call(OS_SERVICE_GET_TIME, 0, 0, 0, 0, NULL, NULL);
+  uint32_t error = psos_call(PSOS_SERVICE_GET_TIME, 0, 0, 0, 0, NULL, NULL);
 
   if (date != NULL) {
     *date = bridge_result_d0;
@@ -477,24 +292,24 @@ uint32_t psos_get_time(uint32_t* date, uint32_t* time, uint16_t* ticks) {
 
 /* Sets the time of day (0x173a6). */
 uint32_t psos_set_time(uint32_t date, uint32_t time, uint32_t ticks) {
-  return psos_call(OS_SERVICE_SET_TIME, date, time, ticks, 0, NULL, NULL);
+  return psos_call(PSOS_SERVICE_SET_TIME, date, time, ticks, 0, NULL, NULL);
 }
 
 /* Initializes a device (0x173ca). */
 uint32_t psos_io_init(uint32_t device) {
-  return psos_io_call(OS_IO_INIT, device, 0, 0, 0, NULL, NULL);
+  return psos_io_call(PSOS_IO_INIT, device, 0, 0, 0, NULL, NULL);
 }
 
 /* Opens a device with a long (0x173e2). */
 uint32_t psos_io_open(uint32_t device, uint32_t a) {
-  return psos_io_call(OS_IO_OPEN, device, a, 0, 0, NULL, NULL);
+  return psos_io_call(PSOS_IO_OPEN, device, a, 0, 0, NULL, NULL);
 }
 
 /* Reads up to a length from a device; on success the length read
  * (0x17416). */
 uint32_t psos_io_read(uint32_t device, void* buffer, uint32_t* length) {
   uint32_t error =
-      psos_io_call(OS_IO_READ, device, 0, *length, 0, length, buffer);
+      psos_io_call(PSOS_IO_READ, device, 0, *length, 0, length, buffer);
 
   if (error == 0 && length != NULL) {
     *length = bridge_result_d2;
@@ -506,7 +321,7 @@ uint32_t psos_io_read(uint32_t device, void* buffer, uint32_t* length) {
  * (0x17448). */
 uint32_t psos_io_write(uint32_t device, void* buffer, uint32_t* length) {
   uint32_t error =
-      psos_io_call(OS_IO_WRITE, device, 0, *length, 0, buffer, length);
+      psos_io_call(PSOS_IO_WRITE, device, 0, *length, 0, buffer, length);
 
   if (error == 0 && length != NULL) {
     *length = bridge_result_d2;
@@ -574,7 +389,7 @@ void exception_hook_reset(void) {
 
 /* Sets the running task's own exception hook (0x118c2). */
 int32_t exception_hook_set_task(void* hook) {
-  ((os_task*)psos_my_pid())->exception_hook = hook;
+  ((psos_task*)psos_my_pid())->exception_hook = hook;
   return 0;
 }
 
@@ -584,7 +399,7 @@ void* exception_hook_get(void) {
   void* hook = NULL;
 
   if (exception_hook_per_task != 0) {
-    hook = ((os_task*)psos_my_pid())->exception_hook;
+    hook = ((psos_task*)psos_my_pid())->exception_hook;
   }
   if (hook == NULL) {
     hook = exception_hook;
@@ -606,7 +421,7 @@ uint32_t exchange_id_valid(uint32_t id) {
       (int32_t)psos_config.data_end < (int32_t)id) {
     return 0;
   }
-  uint32_t check = ((os_exchange*)id)->id_check;
+  uint32_t check = ((psos_exchange*)id)->id_check;
 
   return (check << 16 | check >> 16) == id;
 }
@@ -619,7 +434,7 @@ uint32_t task_id_valid(uint32_t id) {
   if (id < (uint32_t)psos_config.data_area || psos_config.data_end < id) {
     return 0;
   }
-  return (((os_task*)id)->id_check ^ ID_CHECK_MASK) == id;
+  return (((psos_task*)id)->id_check ^ ID_CHECK_MASK) == id;
 }
 
 /* Turns the kernel's debug output on, with the configuration's hook
@@ -643,8 +458,8 @@ void psos_debug_output(char enable) {
 }
 
 /* Whether a task is paused, by its delay or its status. */
-static bool os_task_paused(os_task* task) {
-  return task->delay != 0 || (task->status & OS_TASK_PAUSED) != 0;
+static bool os_task_paused(psos_task* task) {
+  return task->delay != 0 || (task->status & PSOS_TASK_PAUSED) != 0;
 }
 
 /* Fills task_table, the running task first and then the kernel's list,
@@ -652,35 +467,35 @@ static bool os_task_paused(os_task* task) {
  * the number of tasks (0x16540). */
 int32_t task_table_build(void) {
   enum { TABLE_ENTRIES = sizeof task_table / sizeof task_table[0] };
-  os_kernel* kernel = os_kernel_data();
+  psos_kernel* kernel = os_kernel_data();
 
   for (int32_t entry = 0; entry < TABLE_ENTRIES; entry++) {
     task_table[entry].task = NULL;
-    task_table[entry].state = OS_TABLE_EMPTY;
+    task_table[entry].state = PSOS_TABLE_EMPTY;
   }
-  os_task* running = kernel->running;
+  psos_task* running = kernel->running;
 
-  task_table[0].state = OS_TABLE_READY;
+  task_table[0].state = PSOS_TABLE_READY;
   task_table[0].task = running;
   int32_t count = 1;
 
-  for (os_task* task = kernel->tasks; task != NULL; task = task->list_next) {
+  for (psos_task* task = kernel->tasks; task != NULL; task = task->list_next) {
     if (task == running) {
       continue;
     }
     task_table[count].task = task;
     if (task->status == 0) {
-      task_table[count].state = OS_TABLE_READY;
+      task_table[count].state = PSOS_TABLE_READY;
     } else if (!os_task_paused(task)) {
-      task_table[count].state = OS_TABLE_BLOCKED;
+      task_table[count].state = PSOS_TABLE_BLOCKED;
     } else {
-      task_table[count].state = OS_TABLE_PAUSED;
+      task_table[count].state = PSOS_TABLE_PAUSED;
     }
     count++;
   }
   task_ticks_total = 0;
   for (int32_t entry = 0; entry < count; entry++) {
-    task_ticks_total += ((os_task*)task_table[entry].task)->ticks;
+    task_ticks_total += ((psos_task*)task_table[entry].task)->ticks;
   }
   return count;
 }
@@ -689,10 +504,10 @@ int32_t task_table_build(void) {
  * address, task + 0x24, is 0; the copy's NUL lands on object_name_text
  * (0x160a0). */
 char* task_name(void* task) {
-  if ((uint32_t)task + offsetof(os_task, name) == 0) {
+  if ((uint32_t)task + offsetof(psos_task, name) == 0) {
     return NULL;
   }
-  strncpy(task_name_text, ((os_task*)task)->name, sizeof task_name_text);
+  strncpy(task_name_text, ((psos_task*)task)->name, sizeof task_name_text);
   object_name_text[0] = '\0';
   return task_name_text;
 }
@@ -701,10 +516,10 @@ char* task_name(void* task) {
  * name's address, object + 0x14, is 0; the copy's NUL lands on
  * task_table[0].state (0x160de). */
 char* object_name(void* object) {
-  if ((uint32_t)object + offsetof(os_exchange, name) == 0) {
+  if ((uint32_t)object + offsetof(psos_exchange, name) == 0) {
     return NULL;
   }
-  strncpy(object_name_text, ((os_exchange*)object)->name,
+  strncpy(object_name_text, ((psos_exchange*)object)->name,
           sizeof object_name_text);
   task_table[0].state = 0;
   return object_name_text;
@@ -712,24 +527,24 @@ char* object_name(void* object) {
 
 /* A task's status as the process report's four characters (0x161f6). */
 char* task_status_name(void* record) {
-  os_task* task = record;
+  psos_task* task = record;
 
-  if (task->status & OS_TASK_SPAWNING) {
+  if (task->status & PSOS_TASK_SPAWNING) {
     return "spwn";
   }
-  if (task->status & OS_TASK_MEMORY_WAIT) {
+  if (task->status & PSOS_TASK_MEMORY_WAIT) {
     return "mblk";
   }
-  if (task->status & OS_TASK_EXCHANGE_WAIT) {
+  if (task->status & PSOS_TASK_EXCHANGE_WAIT) {
     return "xblk";
   }
-  if (task->status & OS_TASK_VARIABLE_WAIT) {
+  if (task->status & PSOS_TASK_VARIABLE_WAIT) {
     return "vblk";
   }
   if (os_task_paused(task)) {
     return "paus";
   }
-  if (task->status & OS_TASK_SUSPENDED) {
+  if (task->status & PSOS_TASK_SUSPENDED) {
     return "susp";
   }
   if (task->status == 0) {
@@ -741,7 +556,7 @@ char* task_status_name(void* record) {
 /* The segment of a task's that holds an address, from its start to its
  * size past it, or null (0x162b2). */
 void* region_segment_containing(void* task, uint32_t address) {
-  os_segment* segment = ((os_task*)task)->segments;
+  psos_segment* segment = ((psos_task*)task)->segments;
 
   for (; segment != NULL; segment = segment->next) {
     int32_t offset = address - (uint32_t)segment;
@@ -756,10 +571,10 @@ void* region_segment_containing(void* task, uint32_t address) {
 /* A task's place on the ready queue from 0, or -1 when it is not on it
  * (0x16730). */
 int32_t ready_queue_position(uint32_t* record) {
-  os_task* task = os_kernel_data()->ready;
+  psos_task* task = os_kernel_data()->ready;
   int32_t position = 0;
 
-  while (task != NULL && task != (os_task*)record) {
+  while (task != NULL && task != (psos_task*)record) {
     position++;
     task = task->next;
   }
@@ -773,14 +588,14 @@ int32_t ready_queue_position(uint32_t* record) {
  * to and including it; 0 for a task not paused.  Like the image, it
  * reads the list's end, null, as a record too (0x164f2). */
 int32_t timer_ticks_until(void* task) {
-  os_task* timer = os_kernel_data()->timers;
+  psos_task* timer = os_kernel_data()->timers;
   int32_t ticks = 0;
 
   while (true) {
     if (os_task_paused(task)) {
       /* A copy the compiler cannot tie to timer, so that reading through
        * it, null or not, does not let it drop the test of timer below. */
-      os_task* record = timer;
+      psos_task* record = timer;
 
       __asm__("" : "+r"(record));
       ticks += record->timer_ticks;
@@ -822,7 +637,7 @@ void os_report_process_summary(printf_function* print) {
   char format[] = "\t%d Process(s) (%d avail); Total time: %-d ticks.\r\n";
   int32_t free = 0;
 
-  for (os_task* task = os_kernel_data()->free_tasks; task != NULL;
+  for (psos_task* task = os_kernel_data()->free_tasks; task != NULL;
        task = task->list_next) {
     free++;
   }
@@ -841,7 +656,7 @@ void os_report_process(void* record, char* status, int32_t position,
   uint32_t caller_d5 = CPU_CALLERS_REGISTER(uint32_t, "d5");
   int32_t caller_d6 = CPU_CALLERS_REGISTER(int32_t, "d6");
   static const int32_t PERCENT = 100;
-  os_task* task = record;
+  psos_task* task = record;
   char* name = task_name(task);
   char place[16];
   char state[20];
@@ -856,7 +671,7 @@ void os_report_process(void* record, char* status, int32_t position,
   }
   int32_t memory = caller_d6;
 
-  for (os_segment* segment = task->segments; segment != NULL;
+  for (psos_segment* segment = task->segments; segment != NULL;
        segment = segment->next) {
     memory += segment->size;
   }
@@ -883,19 +698,19 @@ void os_report_process(void* record, char* status, int32_t position,
         (task_ticks_total / 2 + task_ticks * PERCENT) / task_ticks_total;
   }
   os_copy_text(state, status);
-  if (task->mode & (OS_MODE_TIME_SLICE | OS_MODE_NO_PREEMPTION)) {
+  if (task->mode & (PSOS_MODE_TIME_SLICE | PSOS_MODE_NO_PREEMPTION)) {
     strcat(state, "/");
   }
-  if (task->mode & OS_MODE_TIME_SLICE) {
+  if (task->mode & PSOS_MODE_TIME_SLICE) {
     strcat(state, "R");
   }
-  if (task->mode & OS_MODE_NO_PREEMPTION) {
+  if (task->mode & PSOS_MODE_NO_PREEMPTION) {
     strcat(state, "*");
   }
   print("$%08X %4s  %6s  %3d %2d  %2s %5d %4dkB %2d%% %2d%%\r\n", task, name,
         state, task->priority, task->group, place, ticks, os_kilobytes(memory),
         stack_share, cpu_share);
-  os_resource* resource = task->resources;
+  psos_resource* resource = task->resources;
 
   if (resource != NULL) {
     print("\t   >> RESOURCES: ");
@@ -918,23 +733,23 @@ void os_report_process(void* record, char* status, int32_t position,
  * paused and blocked, each group after a blank line; D0 as the loop's
  * last test leaves it, 1 (0x1675a). */
 int32_t os_report_processes(printf_function* print) {
-  os_task* running = task_table[0].task;
-  int32_t state = OS_TABLE_READY;
+  psos_task* running = task_table[0].task;
+  int32_t state = PSOS_TABLE_READY;
 
   print("%s", "    pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CPU\r\n");
   os_report_process(running, " RUN", 0, running->slice_ticks, print);
   print("%s", "\r\n");
-  for (; state <= OS_TABLE_BLOCKED; state++) {
+  for (; state <= PSOS_TABLE_BLOCKED; state++) {
     bool listed = false;
 
     for (int32_t entry = 1; entry < task_count; entry++) {
       if ((int8_t)task_table[entry].state != state) {
         continue;
       }
-      os_task* task = task_table[entry].task;
+      psos_task* task = task_table[entry].task;
       int32_t position = ready_queue_position((uint32_t*)task);
-      uint32_t ticks = state == OS_TABLE_PAUSED ? timer_ticks_until(task)
-                                                : task->slice_ticks;
+      uint32_t ticks = state == PSOS_TABLE_PAUSED ? timer_ticks_until(task)
+                                                  : task->slice_ticks;
 
       os_report_process(task, task_status_name(task), position, ticks, print);
       listed = true;
@@ -943,13 +758,13 @@ int32_t os_report_processes(printf_function* print) {
       print("%s", "\r\n");
     }
   }
-  return state - OS_TABLE_BLOCKED;
+  return state - PSOS_TABLE_BLOCKED;
 }
 
 /* Prints an exchange's line of the exchange report: its id, name,
  * queueing, access, limit and queue, and the tasks waiting (0x16118). */
 void os_report_exchange(uint32_t* id, printf_function* print) {
-  os_exchange* exchange = (os_exchange*)id;
+  psos_exchange* exchange = (psos_exchange*)id;
   char* queueing = exchange->by_priority == 0 ? "fifo" : "prio";
   char* access = exchange->group_only == 0 ? "any" : "grp";
   char limit[40];
@@ -962,9 +777,9 @@ void os_report_exchange(uint32_t* id, printf_function* print) {
   print("0x%07x  %4s  %4s %4s  %3s    %d    ", exchange, object_name(exchange),
         queueing, access, limit, exchange->queued);
   /* The queue ends at the exchange, whose first field is its head. */
-  os_task* end = (os_task*)exchange;
+  psos_task* end = (psos_task*)exchange;
 
-  for (os_task* task = exchange->waiting; task != end;) {
+  for (psos_task* task = exchange->waiting; task != end;) {
     print("%s", task_name(task));
     task = task->next;
     if (task != end) {
@@ -979,7 +794,7 @@ void os_report_exchanges(printf_function* print) {
   char header[] = "    xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED\r\n";
 
   print("%s", header);
-  for (os_exchange* exchange = os_kernel_data()->exchanges; exchange != NULL;
+  for (psos_exchange* exchange = os_kernel_data()->exchanges; exchange != NULL;
        exchange = exchange->next) {
     os_report_exchange((uint32_t*)exchange, print);
   }
@@ -987,20 +802,20 @@ void os_report_exchanges(printf_function* print) {
 
 /* Prints the exchanges and message buffers, used and free (0x166b0). */
 void os_report_exchange_summary(printf_function* print) {
-  os_kernel* kernel = os_kernel_data();
+  psos_kernel* kernel = os_kernel_data();
   int32_t exchanges = 0;
   int32_t free_exchanges = 0;
   int32_t free_messages = 0;
 
-  for (os_exchange* exchange = kernel->exchanges; exchange != NULL;
+  for (psos_exchange* exchange = kernel->exchanges; exchange != NULL;
        exchange = exchange->next) {
     exchanges++;
   }
-  for (os_exchange* exchange = kernel->free_exchanges; exchange != NULL;
+  for (psos_exchange* exchange = kernel->free_exchanges; exchange != NULL;
        exchange = exchange->next) {
     free_exchanges++;
   }
-  for (os_message* message = kernel->free_messages; message != NULL;
+  for (psos_message* message = kernel->free_messages; message != NULL;
        message = message->next) {
     free_messages++;
   }
@@ -1022,7 +837,7 @@ void os_report_regions(printf_function* print) {
   /* A waiter's region is its record's bits 3 to 0, less 1. */
   static const uint32_t REGION_WAIT_MASK = 0xf;
   static const uint16_t SEGMENT_REGION_MASK = 3;
-  os_kernel* kernel = os_kernel_data();
+  psos_kernel* kernel = os_kernel_data();
   int32_t held_count[OS_REGIONS] = {0, 0};
   int32_t free_bytes[OS_REGIONS];
   int32_t held_bytes[OS_REGIONS] = {0, 0};
@@ -1033,7 +848,7 @@ void os_report_regions(printf_function* print) {
       "%s",
       "Region strt       end  min     max    pend   USED  cnt  AVAIL cnt\r\n");
   for (int32_t entry = 0; entry < task_count; entry++) {
-    for (os_segment* segment = ((os_task*)task_table[entry].task)->segments;
+    for (psos_segment* segment = ((psos_task*)task_table[entry].task)->segments;
          segment != NULL; segment = segment->next) {
       int32_t region = (segment->flags & SEGMENT_REGION_MASK) - 1;
 
@@ -1049,7 +864,7 @@ void os_report_regions(printf_function* print) {
     uint32_t pending = 0;
 
     free_bytes[region] = 0;
-    for (os_segment* segment = kernel->region_free[region]; segment != NULL;
+    for (psos_segment* segment = kernel->region_free[region]; segment != NULL;
          segment = segment->next) {
       free_bytes[region] += segment->size;
       free_count++;
@@ -1066,8 +881,8 @@ void os_report_regions(printf_function* print) {
           os_kilobytes(free_bytes[region]), free_count);
   }
   /* The queue ends at its head's field. */
-  os_task* end = (os_task*)&kernel->region_waiting;
-  os_task* task = kernel->region_waiting;
+  psos_task* end = (psos_task*)&kernel->region_waiting;
+  psos_task* task = kernel->region_waiting;
 
   if (task != end) {
     print("   >> BLOCKED: ");
@@ -1089,7 +904,7 @@ void os_report_regions(printf_function* print) {
  * longs, and its flags (0x16280). */
 void os_report_region_line(char* name, uint32_t* record,
                            printf_function* print) {
-  os_segment* segment = (os_segment*)record;
+  psos_segment* segment = (psos_segment*)record;
 
   print("%4s 0x%08x %7d   0x%08x  0x%08x  0x%08x 0x%04x\r\n", name, segment,
         segment->size, segment->next, segment->field_04, segment->field_08,
@@ -1108,7 +923,7 @@ void os_report_region_line(char* name, uint32_t* record,
 int32_t stack_measure(void* record, uint32_t* usage) {
   static const uint32_t HALF_BITS = 32;
   static const uint32_t USER_STACK_GAP = 4;
-  os_task* task = record;
+  psos_task* task = record;
   uint64_t supervisor =
       stack_usage((uint16_t*)task->stack_bottom, (char*)task->supervisor_top);
 
@@ -1149,9 +964,9 @@ void task_stack_info(void* record, uint32_t* user_top, uint32_t* user_pointer,
    * use 0x12 short of its size. */
   static const uint32_t USER_STACK_GAP = 4;
   static const uint32_t SEGMENT_OVERHEAD = 0x12;
-  os_task* task = record;
+  psos_task* task = record;
   volatile uint32_t unset_top;
-  os_segment* volatile unset_segment;
+  psos_segment* volatile unset_segment;
 
   *user_pointer = task->user_pointer;
   *supervisor_pointer = task->supervisor_pointer;

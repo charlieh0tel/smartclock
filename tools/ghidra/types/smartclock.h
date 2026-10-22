@@ -2915,6 +2915,180 @@ typedef struct io_device_jumps {
   io_jump function[6]; /* +0x00 */
 } io_device_jumps;
 
+/* The pSOS kernel's records and codes (docs/firmware/psos.md, "Inside
+ * the kernel"). */
+/* A task record's status byte, +0x13, by task_status_name's text. */
+typedef enum __attribute__((packed)) psos_task_status {
+  PSOS_TASK_SUSPENDED = 0x04,     /* "susp" */
+  PSOS_TASK_PAUSED = 0x08,        /* "paus", as a nonzero delay is */
+  PSOS_TASK_VARIABLE_WAIT = 0x10, /* "vblk": in wait_v */
+  PSOS_TASK_EXCHANGE_WAIT = 0x20, /* "xblk": in request_x */
+  PSOS_TASK_MEMORY_WAIT = 0x40,   /* "mblk": on a region's queue, presumably */
+  PSOS_TASK_SPAWNING = 0x80,      /* "spwn": created, not started */
+} psos_task_status;
+
+/* A task record's mode byte, +0x11 (psos.md, service 32). */
+typedef enum __attribute__((packed)) psos_task_mode {
+  PSOS_MODE_TIME_SLICE = 0x40,    /* the report's "R" */
+  PSOS_MODE_NO_PREEMPTION = 0x80, /* the report's "*" */
+} psos_task_mode;
+
+/* task_table_entry.state, by which os_report_processes groups the
+ * tasks; PSOS_TABLE_EMPTY marks an unused entry. */
+typedef enum __attribute__((packed)) psos_table_state {
+  PSOS_TABLE_READY = 0,
+  PSOS_TABLE_PAUSED = 1,
+  PSOS_TABLE_BLOCKED = 2,
+  PSOS_TABLE_EMPTY = 0xff,
+} psos_table_state;
+
+/* The kernel's services, trap #3's D7 (psos.md, "Services"); 8 and 21
+ * are named by the pSOS-68K brochure's list there. */
+typedef enum __attribute__((packed)) psos_service {
+  PSOS_SERVICE_START = 2,
+  PSOS_SERVICE_IDENT = 3,
+  PSOS_SERVICE_DELETE = 4,
+  PSOS_SERVICE_SUSPEND = 5,
+  PSOS_SERVICE_RESUME = 6,
+  PSOS_SERVICE_PRIORITY = 7,
+  PSOS_SERVICE_ALLOCATE_SEGMENT = 8,
+  PSOS_SERVICE_FREE_SEGMENT = 9,
+  PSOS_SERVICE_ASSIGN_SEGMENT = 10,
+  PSOS_SERVICE_RECLAIM_SEGMENT = 16,
+  PSOS_SERVICE_BROADCAST_X = 18,
+  PSOS_SERVICE_JAM_X = 19,
+  PSOS_SERVICE_CREATE_X = 20,
+  PSOS_SERVICE_ATTACH_X = 21,
+  PSOS_SERVICE_DELETE_X = 22,
+  PSOS_SERVICE_SEND_X = 23,
+  PSOS_SERVICE_REQUEST_X = 24,
+  PSOS_SERVICE_SIGNAL_V = 25,
+  PSOS_SERVICE_WAIT_V = 26,
+  PSOS_SERVICE_GET_V = 27,
+  PSOS_SERVICE_PAUSE = 28,
+  PSOS_SERVICE_ANNOUNCE_TICK = 29,
+  PSOS_SERVICE_GET_TIME = 30,
+  PSOS_SERVICE_SET_TIME = 31,
+  PSOS_SERVICE_MODE = 32,
+  PSOS_SERVICE_CREATE_PARTITION = 35,
+  PSOS_SERVICE_DELETE_PARTITION = 36,
+  PSOS_SERVICE_GET_BLOCK = 37,
+  PSOS_SERVICE_RETURN_BLOCK = 38,
+} psos_service;
+
+/* The I/O functions, trap #4's D7 (psos.md, "Calls"). */
+typedef enum __attribute__((packed)) psos_io_function {
+  PSOS_IO_INIT = 0,
+  PSOS_IO_OPEN = 1,
+  PSOS_IO_READ = 3,
+  PSOS_IO_WRITE = 4,
+} psos_io_function;
+
+typedef struct psos_task psos_task;
+
+/* A segment of a region, on a task's list or a region's free list:
+ * os_report_region_line prints its first five fields. */
+typedef struct psos_segment {
+  struct psos_segment* next; /* +0x00 */
+  uint32_t field_04;
+  uint32_t field_08;
+  uint32_t size;  /* +0x0c: bytes, from the segment's start */
+  uint16_t flags; /* +0x10: the region, 1 or 2, in bits 1 to 0 */
+} psos_segment;
+
+/* One of a task's resources, on its list at +0x1c. */
+typedef struct psos_resource {
+  struct psos_resource* next; /* +0x00 */
+  void* object;               /* +0x04: an exchange; object_name names it */
+} psos_resource;
+
+/* A task's record, 0xb2 bytes, which kernel_init (0x15cd8) carves from
+ * the data area; its address is its id. */
+struct psos_task {
+  psos_task* next; /* +0x00: the next on the ready queue, or on the circular
+                    queue of an exchange or region it waits at */
+  uint32_t field_04;
+  psos_task* timer_next; /* +0x08: the next on the delay list */
+  uint32_t field_0c;
+  uint8_t priority;        /* +0x10 */
+  psos_task_mode mode;     /* +0x11: service 32's mode byte */
+  uint8_t delay;           /* +0x12: nonzero while paused */
+  psos_task_status status; /* +0x13: 0 when ready */
+  uint8_t group;           /* +0x14 */
+  uint8_t field_15;
+  uint16_t events_waited;   /* +0x16 */
+  uint16_t events_pending;  /* +0x18 */
+  uint16_t slice_ticks;     /* +0x1a: the report's TIX for a task not paused */
+  psos_resource* resources; /* +0x1c */
+  psos_segment* segments;   /* +0x20: the segments it holds */
+  char name[4];             /* +0x24 */
+  uint32_t id_check;        /* +0x28: the id with its low word complemented */
+  uint32_t field_2c;
+  psos_task* list_next; /* +0x30: the next on the kernel's task list or its
+                         free list */
+  uint16_t field_34;
+  uint32_t supervisor_pointer; /* +0x36: the saved SSP */
+  uint32_t user_pointer;       /* +0x3a: the saved USP */
+  uint8_t field_3e[0xc];
+  int32_t timer_ticks; /* +0x4a: its ticks past the delay list's one before */
+  uint32_t field_4e;
+  uint32_t region_request; /* +0x52: the bytes a region waiter asks */
+  uint32_t region_wait;    /* +0x56: bits 3 to 0, its region less 1 */
+  uint8_t field_5a[0x28];
+  void* exception_hook; /* +0x82: exception_hook_get's, per task */
+  uint32_t field_86;
+  uint32_t user_top;       /* +0x8a: the user stack's top */
+  uint32_t supervisor_top; /* +0x8e: the supervisor stack's top; the user
+                              stack starts 4 above it */
+  uint32_t stack_bottom;   /* +0x92: the supervisor stack's bottom */
+  uint8_t field_96[0x18];
+  uint32_t ticks; /* +0xae: ticks run since the last process report */
+};
+
+/* An exchange's record, 0x22 bytes; its address is its id. */
+typedef struct psos_exchange {
+  psos_task* waiting; /* +0x00: the circular queue of tasks waiting, which
+                       ends at the exchange itself */
+  uint8_t field_04[0xc];
+  uint8_t by_priority; /* +0x10: queues by priority, else first in first out */
+  uint8_t group_only;  /* +0x11: only its group may use it, else any */
+  uint8_t limited;     /* +0x12: queue_limit holds, else no limit */
+  uint8_t field_13;
+  char name[4];               /* +0x14 */
+  uint32_t id_check;          /* +0x18: the id with its words swapped */
+  struct psos_exchange* next; /* +0x1c: the next on the kernel's list */
+  uint8_t queue_limit;        /* +0x20 */
+  uint8_t queued;             /* +0x21: messages queued */
+} psos_exchange;
+
+/* A message buffer, 0x18 bytes, on the free list by its first long. */
+typedef struct psos_message {
+  struct psos_message* next; /* +0x00 */
+} psos_message;
+
+/* The kernel's data area, psos_config.data_area, which it keeps in A6;
+ * the regions' arrays are region 1's and region 2's. */
+typedef struct psos_kernel {
+  psos_task* running;            /* +0x00 */
+  psos_task* ready;              /* +0x04: the ready queue, by priority */
+  psos_task* timers;             /* +0x08: the delay list, through timer_next */
+  psos_task* tasks;              /* +0x0c: every task, through list_next */
+  psos_task* free_tasks;         /* +0x10 */
+  psos_exchange* exchanges;      /* +0x14 */
+  psos_exchange* free_exchanges; /* +0x18 */
+  psos_message* free_messages;   /* +0x1c */
+  uint8_t field_20[0x10];
+  void* debug_hooks;            /* +0x30: psos_debug_output's table or 0 */
+  uint32_t region_minimum[2];   /* +0x34: os_report_regions' "min" */
+  uint32_t region_maximum[2];   /* +0x3c: "max" */
+  uint32_t region_pending[2];   /* +0x44: "pend" */
+  uint32_t region_end[2];       /* +0x4c */
+  psos_segment* region_free[2]; /* +0x54 */
+  uint8_t field_5c[8];
+  psos_task* region_waiting; /* +0x64: the circular queue of tasks waiting for a
+                              region, which ends at this field */
+} psos_kernel;
+
 /* The kernel's configuration table, psos_config at 0x10264c, which
  * psos_config_init copies from ROM 0x5122a; the installer's at 0x10ab84.
  * The kernel reaches it through the pointer at 0x51226, which the long
@@ -2922,7 +3096,8 @@ typedef struct io_device_jumps {
  * data area into the supervisor stack and the records, and gives
  * region 1 the rest up to data_end. */
 typedef struct psos_configuration {
-  void* data_area; /* +0x00: the kernel's state, A6; the supervisor stack starts
+  struct psos_kernel* data_area; /* +0x00: the kernel's state, A6; the
+                                    supervisor stack starts
                       200 bytes in */
   uint32_t data_end; /* +0x04: region 1's end; kernel_init fails unless its
                         records fit below it; task_id_valid and
@@ -2966,11 +3141,13 @@ typedef struct psos_configuration {
  * task_table_build fills from the running task and the kernel's task
  * list, the running task first. */
 typedef struct task_table_entry {
-  uint8_t state; /* +0x00: 0 when the record's +0x13 is clear; 1 when its +0x12
-                    is set or +0x13 has bit 3, as timer_ticks_until counts; 2
-                    otherwise.  os_report_processes lists by it */
+  psos_table_state state; /* +0x00: ready when the record's status is clear;
+                             paused when its delay is set or it has
+                             PSOS_TASK_PAUSED, as timer_ticks_until counts;
+                             blocked otherwise.  os_report_processes lists
+                             by it */
   uint8_t field_01;
-  void* task; /* +0x02: the task's record */
+  struct psos_task* task; /* +0x02: the task's record */
 } task_table_entry;
 
 /* A request on the spoo exchange, which spoo_run builds on its stack and

@@ -47085,7 +47085,7 @@ float float_identity(float x)
 #endif
 
 /* 00029a68 */
-#if 0 /* the decompiler's reading; rewritten in scpi_handlers.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36 */
 
@@ -47155,7 +47155,7 @@ int32_t scpi_query_failed(status_condition_code code,void *response)
 #endif
 
 /* 00029b08 */
-#if 0 /* the decompiler's reading; rewritten in scpi_handlers.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* 0: RTCM corrections are not supported */
 
@@ -55211,7 +55211,7 @@ uint16_t record_checksum(void *record,uint16_t length)
 #endif
 
 /* 0003086a */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* with nv_settings.serial_restricted set, clears channel B's eight_bits when its parity is also set
    DUART channel B's parity and scpi_param_DIAGnostic_SER1_RESTricted: changed */
@@ -55229,7 +55229,7 @@ void duartb_parity_restrict(void)
 #endif
 
 /* 0003088c */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* with nv_settings.serial_restricted set, clears channel B's parity when eight_bits is also set
    DUART channel B's eight_bits: changed */
@@ -55247,7 +55247,7 @@ void duartb_eight_bits_restrict(void)
 #endif
 
 /* 000308ae */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_douglas.c */
 
 /* clears nv_settings.douglas_duration_infinite
    scpi_param_DOUGlas_DURation: changed */
@@ -59914,7 +59914,7 @@ uint32_t get_ffom(uint8_t *param_1)
 
 
 /* 00042b18 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* a bare rts: what output_state_done hands it, :OUTPut:STATe, goes no further here */
 
@@ -59927,7 +59927,7 @@ void output_state_program(uint8_t param_1)
 #endif
 
 /* 00042b1a */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code
    reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse
@@ -59943,7 +59943,7 @@ void pulse_program(time_of_day time,calendar_date date,uint8_t state,int32_t per
 #endif
 
 /* 00042b1c */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* hands the pulse start time, date, state and period from nv_settings to pulse_program
    scpi_param_SOURce_PULSe_CONTinuous_STATe, PERiod, STARt_TIME and DATE: done */
@@ -59969,7 +59969,7 @@ void pulse_settings_done(void)
 #endif
 
 /* 00042b7c */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* scpi_param_OUTPut_STATe's done hook: hands the output state to output_state_program */
 
@@ -60573,7 +60573,7 @@ void gps_diag_complete(int32_t *param_1)
 #endif
 
 /* 00043426 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* task_debug_message of "sample action 1" to "3" for index 1 to 3; index 0 does nothing
    scpi_action_SAMPle_ACTion: action */
@@ -62316,7 +62316,7 @@ switchD_000453f0_caseD_0:
 
 
 /* 00045a24 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* marks the time zone changed, for :PTIMe:TZONe */
 
@@ -62330,7 +62330,7 @@ void time_zone_changed(void)
 #endif
 
 /* 00045a2e */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* clock_record_refresh, then clears time_zone_change_pending
    scpi_param_SOURce_PTIMe_TZONe: done */
@@ -62361,7 +62361,7 @@ void time_offset_done(int32_t a,int32_t b)
 
 
 /* 00045a5c */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* in manual holdover clears pll.manual and the manual hold cause and status_happening(0x2a); else
    status_report_from(8)
@@ -62388,7 +62388,7 @@ void holdover_recovery_initiate(int32_t index,int32_t source)
 #endif
 
 /* 00045aaa */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* past power-up sets the manual hold cause, pll.manual and pll_scpi_signal_delay, and
    status_happening(0x28) in holdover; in power-up status_report_from(8)
@@ -62431,7 +62431,7 @@ void temporary_hold_set(int32_t index,int32_t source)
 #endif
 
 /* 00045b02 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* clears bit 5 of pll's byte at +0x11 once the antenna delay changes
    scpi_param_SOURce_GPSystem_ADELay: done */
@@ -62449,7 +62449,7 @@ void antenna_delay_done(void)
 #endif
 
 /* 00045b0c */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* in holdover not manual, with no hold cause but the TI limit's, sets pll.ti_limit_override; else
    status_report_from(8)
@@ -62474,7 +62474,7 @@ void holdover_recovery_limit_ignore(int32_t index,int32_t source)
 #endif
 
 /* 00045b42 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* in power-up or holdover recovery sets pll.sync_requested; else status_report_from(8)
    scpi_action_SOURce_PTIMe_SYNChronization_IMMediate: action; 097-59551-02 p. 5-28 */
@@ -63025,7 +63025,7 @@ void selftest_request(int32_t index,int32_t source)
 #endif
 
 /* 00046340 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_douglas.c */
 
 /* sets douglas_start_requested and clears douglas_stop_requested when nv_settings.douglas_state is
    0, the reverse when it is set
@@ -63042,7 +63042,7 @@ void douglas_state_done(void)
 #endif
 
 /* 00046368 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* sets douglas_finish_requested and stores the source in douglas_finish_nv_argument
    scpi_action_SOURce_GPSystem_POSition: action */
@@ -63874,7 +63874,7 @@ uint32_t leap_ack_pending(void)
 
 
 /* 00047090 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* in holdover to normal PLL, stages 3 to 6, sets pll.leap_ack_requested
    scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate: action */
@@ -93123,6 +93123,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/monitors.h"
 
+#include "../rewritten/z3805a-3543b/pllc.h"
+
 #include "../rewritten/z3805a-3543b/records.h"
 
 #include "../rewritten/z3805a-3543b/scpi.h"
@@ -93183,13 +93185,17 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi_convert.c"
 
+#include "../rewritten/z3805a-3543b/scpi_diagnostic.c"
+
+#include "../rewritten/z3805a-3543b/scpi_douglas.c"
+
 #include "../rewritten/z3805a-3543b/scpi_engine.c"
 
 #include "../rewritten/z3805a-3543b/scpi_format.c"
 
-#include "../rewritten/z3805a-3543b/scpi_handlers.c"
-
 #include "../rewritten/z3805a-3543b/scpi_lexer.c"
+
+#include "../rewritten/z3805a-3543b/scpi_output.c"
 
 #include "../rewritten/z3805a-3543b/scpi_parameters.c"
 
@@ -93197,7 +93203,23 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi_requests.c"
 
+#include "../rewritten/z3805a-3543b/scpi_robin.c"
+
+#include "../rewritten/z3805a-3543b/scpi_sample.c"
+
+#include "../rewritten/z3805a-3543b/scpi_source_gpsystem.c"
+
+#include "../rewritten/z3805a-3543b/scpi_source_ptime.c"
+
+#include "../rewritten/z3805a-3543b/scpi_source_pulse.c"
+
+#include "../rewritten/z3805a-3543b/scpi_source_roscillator.c"
+
+#include "../rewritten/z3805a-3543b/scpi_system.c"
+
 #include "../rewritten/z3805a-3543b/scpi_tree.c"
+
+#include "../rewritten/z3805a-3543b/scpi_unsupported.c"
 
 #include "../rewritten/z3805a-3543b/selftest.c"
 

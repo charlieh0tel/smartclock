@@ -1,12 +1,14 @@
 /* pllc's side of the SCPI settings, the firmware's own "pll_scpi"
  * (finish_scpi_cmd's message): the server that takes a setter's request
  * from the pllc exchange, validates it by its descriptor, sends what the
- * GPS must hear and stores and saves the rest, then the descriptors'
- * validators, hooks and actions (docs/firmware/structures.md, "Numeric
- * SCPI parameters" and "The pllc task's SCPI requests"), written by hand
+ * GPS must hear and stores and saves the rest; the descriptors'
+ * validators and clamps; and the hooks and actions that no one command
+ * owns (docs/firmware/structures.md, "Numeric SCPI parameters" and "The
+ * pllc task's SCPI requests").  A command's own hooks and actions are in
+ * its tree's file (scpi_source_ptime.c and the others).  Written by hand
  * in place of the decompiler's (docs/firmware/README.md, "Hand-written
- * C").  The exported C includes this file after its own, so the types and
- * prototypes it declares are in scope; each function here keeps its
+ * C"); the exported C includes this file after its own, so the types
+ * and prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
 /* A descriptor of any type, as pll_scpi_param points at it: its first
@@ -26,38 +28,46 @@ typedef union pllc_param {
 /* A numeric descriptor's is_integer values (structures.md, "The pllc
  * task's SCPI requests"): a float, an integer, index + 1 longs, two. */
 #define PLLC_VALUE_FLOAT 0
+
 #define PLLC_VALUE_INTEGER 1
+
 #define PLLC_VALUE_LIST 2
+
 #define PLLC_VALUE_PAIR 3
 
 /* A descriptor's flags: the request goes to the GPS through
  * pll_scpi_send_to_loop, the value is saved in the NV register, and in
  * the EEPROM record at 0x400000. */
 static const uint16_t PLLC_FLAG_SEND_TO_GPS = 1;
-static const uint16_t PLLC_FLAG_SAVED_IN_NV = 2;
-static const uint16_t PLLC_FLAG_SAVED_IN_RECORD = 4;
 
-/* The event the SCPI task's request_and_wait (0x29e7e) waits for. */
-static const uint32_t PLLC_DONE_EVENT = 0x20;
+static const uint16_t PLLC_FLAG_SAVED_IN_NV = 2;
+
+static const uint16_t PLLC_FLAG_SAVED_IN_RECORD = 4;
 
 /* A request's source: the SCPI task, which waits for the done event; and
  * the other source whose requests go to the GPS (0x432fe). */
 static const uint8_t PLLC_SOURCE_SCPI = 0;
+
 static const uint8_t PLLC_SOURCE_ALSO_TO_GPS = 5;
 
 /* The hooks' and actions' shapes, which the descriptors keep as void
  * pointers.  A changed hook is passed its caller's D3 first. */
 typedef void pllc_changed_hook(uint32_t caller_d3, int32_t index,
                                int32_t source);
+
 typedef void pllc_setting_done_hook(int32_t index, int32_t source);
+
 typedef void pllc_numeric_done_hook(void);
+
 typedef void pllc_action(int32_t index, int32_t source);
 
 /* round_float_to_step and clamp_double_to_step_and_limits: beyond so
  * many steps the step is a thousand times coarser; a value rounds half
  * away from zero. */
 static const double PLLC_COARSE_STEPS = 1e9;
+
 static const float PLLC_COARSER = 1000.0f;
+
 static const float PLLC_HALF = 0.5f;
 
 static pllc_param* pllc_current(void) { return pll_scpi_param; }
@@ -588,142 +598,11 @@ void scpi_param_hook_nothing(void) {}
 /* :DIAG:PTIMe:TINTerval?'s action, which does nothing (0x41328). */
 void pll_action_nothing(int32_t index, int32_t source) {}
 
-/* :SAMPle's action: prints which of three it was (0x43426). */
-void sample_action_print(int32_t index, int32_t source) {
-  switch ((int8_t)index) {
-    case 1:
-      task_debug_message("sample action 1\r\n");
-      break;
-    case 2:
-      task_debug_message("sample action 2\r\n");
-      break;
-    case 3:
-      task_debug_message("sample action 3\r\n");
-      break;
-    default:
-      break;
-  }
-}
-
-/* With the serial port restricted, eight bits and a parity cannot both
- * be: a parity set clears eight bits (0x3086a). */
-void duartb_parity_restrict(void) {
-  if (nv_settings.serial_restricted != 0 && duartb_settings.eight_bits == 1 &&
-      duartb_settings.parity != SERIAL_PARITY_NONE) {
-    duartb_settings.eight_bits = 0;
-  }
-}
-
-/* With the serial port restricted, eight bits set clears the parity
- * (0x3088c). */
-void duartb_eight_bits_restrict(void) {
-  if (nv_settings.serial_restricted != 0 && duartb_settings.eight_bits == 1 &&
-      duartb_settings.parity != SERIAL_PARITY_NONE) {
-    duartb_settings.parity = SERIAL_PARITY_NONE;
-  }
-}
-
-/* :DOUGlas:DURation's changed hook: a duration set is not infinite
- * (0x308ae). */
-void douglas_duration_changed(void) {
-  nv_settings.douglas_duration_infinite = 0;
-}
-
-/* Programs the output's state; this firmware does nothing (0x42b18). */
-void output_state_program(uint8_t state) {}
-
-/* Programs the continuous pulse; this firmware does nothing (0x42b1a). */
-void pulse_program(time_of_day time, calendar_date date, uint8_t state,
-                   int32_t period) {}
-
-/* :PULSe's done hook: programs the pulse from its settings, the start's
- * time and date each kept as three longs (0x42b1c). */
-void pulse_settings_done(void) {
-  time_of_day start_time = {
-      .reserved = 0,
-      .hour = (uint8_t)nv_settings.pulse_start_time[0],
-      .minute = (uint8_t)nv_settings.pulse_start_time[1],
-      .second = (uint8_t)nv_settings.pulse_start_time[2],
-  };
-  calendar_date start_date = {
-      .year = (uint16_t)nv_settings.pulse_start_date[0],
-      .month = (uint8_t)nv_settings.pulse_start_date[1],
-      .day = (uint8_t)nv_settings.pulse_start_date[2],
-  };
-
-  pulse_program(start_time, start_date, nv_settings.pulse_state,
-                nv_settings.pulse_period);
-}
-
-/* :OUTPut:STATe's done hook (0x42b7c). */
-void output_state_done(void) { output_state_program(nv_settings.output_state); }
-
-/* The time zone's changed hook: marks a change pending (0x45a24). */
-void time_zone_changed(void) { time_zone_change_pending = 1; }
-
-/* The time zone's done hook: refreshes the clock's record (0x45a2e). */
-void time_zone_done(void) {
-  clock_record_refresh();
-  time_zone_change_pending = 0;
-}
-
-/* :ROSC:HOLDover:RECovery:INITiate: ends a manual holdover, else reports a
- * settings conflict (0x45a5c). */
-void holdover_recovery_initiate(int32_t index, int32_t source) {
-  if (pll.stage == PLL_STAGE_HOLDOVER && pll.manual != 0) {
-    pll.manual = 0;
-    pll.hold_causes &= ~HOLD_CAUSE_MANUAL;
-    status_happening(STATUS_WAITING_SET);
-  } else {
-    status_report_from(STATUS_SETTINGS_CONFLICT, (uint8_t)source);
-  }
-}
-
-/* :ROSC:HOLDover:INITiate: a manual holdover, past power-up (0x45aaa). */
-void holdover_initiate(int32_t index, int32_t source) {
-  if (pll.stage == PLL_STAGE_POWERUP) {
-    status_report_from(STATUS_SETTINGS_CONFLICT, (uint8_t)source);
-    return;
-  }
-  pll.hold_causes |= HOLD_CAUSE_MANUAL;
-  pll.manual = 1;
-  pll_scpi_signal_delay = 1;
-  if (pll.stage == PLL_STAGE_HOLDOVER) {
-    status_happening(STATUS_HOLDING_SET);
-  }
-}
-
 /* :DIAG:TOFFset's and :GPS:ADELay's action: the temporary-mode hold
  * cause (0x45af0). */
 void temporary_hold_set(int32_t index, int32_t source) {
   pll.hold_causes |= HOLD_CAUSE_TEMPORARY_MODE;
   pll_scpi_signal_delay = 1;
-}
-
-/* The antenna delay's done hook: clears the temporary-mode hold cause
- * (0x45b02). */
-void antenna_delay_done(void) { pll.hold_causes &= ~HOLD_CAUSE_TEMPORARY_MODE; }
-
-/* Ignores the TI limit in a holdover it alone caused, not manual, else
- * reports a settings conflict (0x45b0c). */
-void holdover_recovery_limit_ignore(int32_t index, int32_t source) {
-  if (pll.stage == PLL_STAGE_HOLDOVER && pll.manual == 0 &&
-      (pll.hold_causes & ~HOLD_CAUSE_TI_LIMIT_EXCEEDED) == HOLD_CAUSE_NONE) {
-    pll.ti_limit_override = 1;
-  } else {
-    status_report_from(STATUS_SETTINGS_CONFLICT, (uint8_t)source);
-  }
-}
-
-/* Requests a sync in power-up or holdover recovery, else reports a
- * settings conflict (0x45b42). */
-void sync_immediate_request(int32_t index, int32_t source) {
-  if (pll.stage == PLL_STAGE_POWERUP ||
-      pll.stage == PLL_STAGE_HOLDOVER_RECOVERY) {
-    pll.sync_requested = 1;
-  } else {
-    status_report_from(STATUS_SETTINGS_CONFLICT, (uint8_t)source);
-  }
 }
 
 /* nv_settings.field_b8's done hook, which does nothing (0x45b6e). */
@@ -734,25 +613,5 @@ void selftest_request(int32_t index, int32_t source) {
   if (selftest_requested == 0) {
     selftest_number = index;
     selftest_requested = 1;
-  }
-}
-
-/* :DOUGlas:STATe's done hook: requests the survey stopped or started
- * (0x46340). */
-void douglas_state_done(void) {
-  douglas_stop_requested = nv_settings.douglas_state != 0;
-  douglas_start_requested = nv_settings.douglas_state == 0;
-}
-
-/* Requests the survey finished, and the source to save with (0x46368). */
-void douglas_finish_request(int32_t index, int32_t source) {
-  douglas_finish_requested = 1;
-  douglas_finish_nv_argument = (uint8_t)source;
-}
-
-/* Acknowledges a leap second, from holdover to normal PLL (0x47090). */
-void leap_ack_request(int32_t index, int32_t source) {
-  if (pll.stage >= PLL_STAGE_HOLDOVER && pll.stage <= PLL_STAGE_NORMAL_PLL) {
-    pll.leap_ack_requested = 1;
   }
 }

@@ -118,12 +118,19 @@ typedef struct os_kernel {
 } os_kernel;
 
 _Static_assert(offsetof(os_task, slice_ticks) == 0x1a, "os_task");
+
 _Static_assert(offsetof(os_task, list_next) == 0x30, "os_task");
+
 _Static_assert(offsetof(os_task, timer_ticks) == 0x4a, "os_task");
+
 _Static_assert(offsetof(os_task, exception_hook) == 0x82, "os_task");
+
 _Static_assert(offsetof(os_task, ticks) == 0xae, "os_task");
+
 _Static_assert(sizeof(os_task) == 0xb2, "os_task");
+
 _Static_assert(sizeof(os_exchange) == 0x22, "os_exchange");
+
 _Static_assert(offsetof(os_kernel, region_waiting) == 0x64, "os_kernel");
 
 /* A task record's status byte, +0x13, by task_status_name's text. */

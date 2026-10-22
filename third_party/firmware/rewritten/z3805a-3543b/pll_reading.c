@@ -6,7 +6,11 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
-static bool ti_pps_dead(void) { return gps_pps_dead || internal_pps_dead; }
+/* Whether either 1PPS, the GPS's or the internal one, is dead, so that
+ * no reading comes. */
+static bool pll_reading_pps_dead(void) {
+  return gps_pps_dead || internal_pps_dead;
+}
 
 /* Waits for the counter's reading, or, while a 1PPS is dead, for the
  * periodic interrupt's tick, the reading then invalid; an invalid
@@ -18,10 +22,10 @@ void interval_wait_reading(void) {
   static const uint32_t PPS_TICK_EVENT = 0x200;
   static const uint32_t PPS_TICK_TIMEOUT = 0x2800;
 
-  if (!ti_pps_dead()) {
+  if (!pll_reading_pps_dead()) {
     counter_read(&interval_reading, &counter_configuration);
     if (!interval_reading.valid && !interval_armed_without_pps &&
-        !ti_pps_dead()) {
+        !pll_reading_pps_dead()) {
       status_happening(STATUS_TIME_INTERVAL_ERROR);
     }
   } else {
@@ -42,7 +46,7 @@ void interval_rearm(interval_arm_mode arm_mode) {
   } else if (arm_mode == INTERVAL_ARM_SYNC) {
     sync_request(3, 1); /* a sync_kind, once */
   }
-  interval_armed_without_pps = ti_pps_dead();
+  interval_armed_without_pps = pll_reading_pps_dead();
   counter_arm(&interval_reading, &counter_configuration);
 }
 

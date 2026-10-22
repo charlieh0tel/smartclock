@@ -1367,6 +1367,12 @@ view cannot drift apart.  The library, bottom up:
      `gps_request_code`): the code's Oncore messages by the VP Oncore
      Command Reference, its steps by `gps_console_request`, its
      scripts by what they send.
+     Then the SCPI commands a file to a tree or subtree
+     (`scpi_source_gpsystem.c`, `scpi_source_ptime.c`,
+     `scpi_diagnostic.c`, ...), each with the hooks and actions pllc runs
+     for its settings, found from the descriptors and action records
+     that point at them; `pllc.c` keeps the server, the clamps and what
+     no one command owns.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

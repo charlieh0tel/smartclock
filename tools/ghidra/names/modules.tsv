@@ -1063,27 +1063,27 @@
 0x12af0	scpi_param_hook_nothing	applications/pll/pll_scpi	bare rts, descriptor hook
 0x41328	pll_action_nothing	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x45b6e	nv_param_field_b8_done	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x3086a	duartb_parity_restrict	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x3088c	duartb_eight_bits_restrict	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x308ae	douglas_duration_changed	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x42b18	output_state_program	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x42b1a	pulse_program	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x42b1c	pulse_settings_done	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x42b7c	output_state_done	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x43426	sample_action_print	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x45a24	time_zone_changed	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x45a2e	time_zone_done	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
+0x3086a	duartb_parity_restrict	applications/scpi/handlers/diagnostic	:DIAG:SER1:RESTricted's changed hook
+0x3088c	duartb_eight_bits_restrict	applications/scpi/handlers/system	:SYST:COMM:SER1:RECeive:BITS's changed hook
+0x308ae	douglas_duration_changed	applications/scpi/handlers/douglas	:DOUGlas:DURation's changed hook
+0x42b18	output_state_program	applications/scpi/handlers/output	output_state_done's programming of the output
+0x42b1a	pulse_program	applications/scpi/handlers/source_pulse	pulse_settings_done's programming of the pulse
+0x42b1c	pulse_settings_done	applications/scpi/handlers/source_pulse	:PULSe:CONTinuous and :PULSe:STARt settings' done hook
+0x42b7c	output_state_done	applications/scpi/handlers/output	:OUTPut:STATe's done hook
+0x43426	sample_action_print	applications/scpi/handlers/sample	:SAMPle:ACTion's action
+0x45a24	time_zone_changed	applications/scpi/handlers/source_ptime	:PTIMe:TZONe's changed hook
+0x45a2e	time_zone_done	applications/scpi/handlers/source_ptime	:PTIMe:TZONe's done hook
 0x45a3c	time_offset_done	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x45b02	antenna_delay_done	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
+0x45b02	antenna_delay_done	applications/scpi/handlers/source_gpsystem	:GPS:ADELay's done hook
 0x45af0	temporary_hold_set	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
 0x46326	selftest_request	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x46340	douglas_state_done	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x46368	douglas_finish_request	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
-0x45aaa	holdover_initiate	applications/pll/pll_scpi	descriptor action on the loop's state, run by validate_or_doaction
-0x45a5c	holdover_recovery_initiate	applications/pll/pll_scpi	descriptor action on the loop's state, run by validate_or_doaction
-0x45b0c	holdover_recovery_limit_ignore	applications/pll/pll_scpi	descriptor action on the loop's state, run by validate_or_doaction
-0x45b42	sync_immediate_request	applications/pll/pll_scpi	descriptor action on the loop's state, run by validate_or_doaction
-0x47090	leap_ack_request	applications/pll/pll_scpi	descriptor action on the loop's state, run by validate_or_doaction
+0x46340	douglas_state_done	applications/scpi/handlers/douglas	:DOUGlas:STATe's done hook
+0x46368	douglas_finish_request	applications/scpi/handlers/source_gpsystem	:GPS:POSition's action while averaging
+0x45aaa	holdover_initiate	applications/scpi/handlers/source_roscillator	:ROSC:HOLDover:INITiate's action
+0x45a5c	holdover_recovery_initiate	applications/scpi/handlers/source_roscillator	:ROSC:HOLDover:RECovery:INITiate's action
+0x45b0c	holdover_recovery_limit_ignore	applications/scpi/handlers/source_roscillator	:ROSC:HOLDover:RECovery:LIMit:IGNore's action
+0x45b42	sync_immediate_request	applications/scpi/handlers/source_ptime	:PTIMe:SYNChronization:IMMediate's action
+0x47090	leap_ack_request	applications/scpi/handlers/source_ptime	:PTIMe:LEAPsecond:ACCumulated:CALCulate's action
 0x46636	gpsx_send	applications/pll/gps_control	the client side of gpsx_exchange; only pllp's sequences call it
 0x46620	gps_ack_received	applications/pll/gps_control	polled by gps_init_sequence's ack checks
 0x466ca	gps_selftest_run	applications/pll/gps_control	self-test 10 through selftest_gps_with_lamp

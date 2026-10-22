@@ -1,5 +1,7 @@
 /* What the C library's files share (math.c, stdio.c, stdlib.c,
- * docs/firmware/libc.md): a double's IEEE 754 bits and their fields. The
+ * string.c, docs/firmware/libc.md): a double's IEEE 754 bits and their
+ * fields, and the bodies of the routines the installer has its own copy
+ * of and that read nothing else, which both copies call. The
  * exported C includes the hand-written headers after its own
  * declarations and before the hand-written .c files, so every one of
  * them can use it.
@@ -102,4 +104,71 @@ static void libc_copy(char* destination, const char* text) {
  * fatal_error_with_code. */
 static void libc_message_append(uint8_t* message, char c) {
   message[1 + message[0]++] = c;
+}
+
+/* memcpy's and installer_memcpy's body: copies n bytes. */
+static void* libc_memcpy(void* s1, void* s2, uint32_t n) {
+  uint8_t* to = s1;
+  uint8_t* from = s2;
+
+  for (; n != 0; n--) {
+    *to++ = *from++;
+  }
+  return s1;
+}
+
+/* strncpy's and installer_strncpy's body: copies at most n characters
+ * and pads with NULs; a string it truncates it leaves unterminated. */
+static char* libc_strncpy(char* s1, char* s2, uint32_t n) {
+  char* to = s1;
+
+  while (n != 0) {
+    n--;
+    if ((*to++ = *s2++) == '\0') {
+      break;
+    }
+  }
+  for (; n != 0; n--) {
+    *to++ = '\0';
+  }
+  return s1;
+}
+
+/* toupper's and installer_toupper's body: a lower-case ASCII letter
+ * in upper case. */
+static int32_t libc_toupper(int32_t c) {
+  if (c >= 'a' && c <= 'z') {
+    c -= 'a' - 'A';
+  }
+  return c;
+}
+
+/* next_decimal_digit's and installer_next_decimal_digit's body: '0'
+ * plus *n % 10, dividing *n by ten.  The image leaves the quotient in
+ * D1 too, where divsl.l put it, which no caller reads. */
+static int32_t libc_next_decimal_digit(uint32_t* n) {
+  uint32_t value = *n;
+
+  *n = value / 10;
+  return '0' + value % 10;
+}
+
+/* double_to_digits_multiply's and its installer copy's body: the
+ * 128-bit product of the 64-bit numbers product[0..1] and
+ * product[2..3], high word first, into product[0..3]. */
+static void libc_double_to_digits_multiply(uint32_t* product) {
+  uint64_t a_high = product[0], a_low = product[1];
+  uint64_t b_high = product[2], b_low = product[3];
+  uint64_t low = a_low * b_low;
+  uint64_t cross_1 = a_low * b_high;
+  uint64_t cross_2 = a_high * b_low;
+  uint64_t middle =
+      (low >> LIBC_WORD_BITS) + (uint32_t)cross_1 + (uint32_t)cross_2;
+  uint64_t high = a_high * b_high + (cross_1 >> LIBC_WORD_BITS) +
+                  (cross_2 >> LIBC_WORD_BITS) + (middle >> LIBC_WORD_BITS);
+
+  product[0] = high >> LIBC_WORD_BITS;
+  product[1] = high;
+  product[2] = middle;
+  product[3] = low;
 }

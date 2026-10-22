@@ -583,13 +583,7 @@ uint32_t scpi_char_upper(uint32_t character) {
 /* How many characters of a unit's reversed name match the suffix's end,
  * 0 unless all of the name does (0x279d6). */
 int16_t scpi_suffix_compare_tail(char* suffix, int32_t length, char* name) {
-  int16_t count = length;
-  int16_t matched = 0;
-
-  while (matched < count && suffix[count - matched - 1] == name[matched]) {
-    matched++;
-  }
-  return name[matched] == 0 ? matched : 0;
+  return scpi_compare_suffix_tail(suffix, length, name);
 }
 
 /* A unit multiplier's power of ten by its one

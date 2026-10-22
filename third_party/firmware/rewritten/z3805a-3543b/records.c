@@ -25,16 +25,7 @@ static const duartb_settings_record records_duartb_defaults = {
 /* The sum and its complement of a record's bytes after its first two
  * (0x3082e). */
 uint16_t record_checksum(void* record, uint16_t length) {
-  /* What a record's checksum word does not cover: the word itself,
-   * its first two bytes. */
-  static const uint16_t CHECKSUM_SIZE = 2;
-
-  if (length < CHECKSUM_SIZE) {
-    return 0;
-  }
-  return records_sum_and_complement(
-      records_byte_sum((const uint8_t*)record + CHECKSUM_SIZE,
-                       (uint16_t)(length - CHECKSUM_SIZE)));
+  return records_checksum(record, length);
 }
 
 /* Reads the lifetime record into lifetime, or its defaults; true when its

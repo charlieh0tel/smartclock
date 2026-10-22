@@ -24,32 +24,13 @@ uint32_t console_read(void* buffer, uint32_t length, uint8_t* errors) {
   return length;
 }
 
-/* '0' plus *n % 10, dividing *n by ten (0x5fad6).  It leaves the
- * quotient in D1 too, where divsl.l put it, which no caller reads. */
-int32_t next_decimal_digit(uint32_t* n) {
-  uint32_t value = *n;
-
-  *n = value / 10;
-  return '0' + value % 10;
-}
+/* '0' plus *n % 10, dividing *n by ten (0x5fad6). */
+int32_t next_decimal_digit(uint32_t* n) { return libc_next_decimal_digit(n); }
 
 /* The 128-bit product of the 64-bit numbers product[0..1] and
  * product[2..3], high word first, into product[0..3] (0x5f1d6). */
 void double_to_digits_multiply(uint32_t* product) {
-  uint64_t a_high = product[0], a_low = product[1];
-  uint64_t b_high = product[2], b_low = product[3];
-  uint64_t low = a_low * b_low;
-  uint64_t cross_1 = a_low * b_high;
-  uint64_t cross_2 = a_high * b_low;
-  uint64_t middle =
-      (low >> LIBC_WORD_BITS) + (uint32_t)cross_1 + (uint32_t)cross_2;
-  uint64_t high = a_high * b_high + (cross_1 >> LIBC_WORD_BITS) +
-                  (cross_2 >> LIBC_WORD_BITS) + (middle >> LIBC_WORD_BITS);
-
-  product[0] = high >> LIBC_WORD_BITS;
-  product[1] = high;
-  product[2] = middle;
-  product[3] = low;
+  libc_double_to_digits_multiply(product);
 }
 
 /* mode: the count is of digits after the point, as %f wants, or of

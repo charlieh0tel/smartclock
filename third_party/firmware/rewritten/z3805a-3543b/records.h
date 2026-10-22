@@ -41,3 +41,18 @@ static uint16_t records_sum_and_complement(uint8_t sum) {
 /* The firmware revision the NV register's tag carries, which *IDN?
  * answers too. */
 static const char RECORDS_FIRMWARE_REVISION[] = "3543B";
+
+/* record_checksum's and installer_record_checksum's body: the sum and
+ * its complement of a record's bytes after its first two. */
+static uint16_t records_checksum(void* record, uint16_t length) {
+  /* What a record's checksum word does not cover: the word itself,
+   * its first two bytes. */
+  static const uint16_t CHECKSUM_SIZE = 2;
+
+  if (length < CHECKSUM_SIZE) {
+    return 0;
+  }
+  return records_sum_and_complement(
+      records_byte_sum((const uint8_t*)record + CHECKSUM_SIZE,
+                       (uint16_t)(length - CHECKSUM_SIZE)));
+}

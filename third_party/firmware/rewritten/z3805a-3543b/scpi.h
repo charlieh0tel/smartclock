@@ -171,3 +171,17 @@ static bool scpi_parameters_same(const char* text, const char* other) {
   }
   return false;
 }
+
+/* scpi_suffix_compare_tail's and its installer copy's body: how many
+ * characters of a unit's reversed name match the suffix's end, 0 unless
+ * all of the name does. */
+static int16_t scpi_compare_suffix_tail(char* suffix, int32_t length,
+                                        char* name) {
+  int16_t count = length;
+  int16_t matched = 0;
+
+  while (matched < count && suffix[count - matched - 1] == name[matched]) {
+    matched++;
+  }
+  return name[matched] == 0 ? matched : 0;
+}

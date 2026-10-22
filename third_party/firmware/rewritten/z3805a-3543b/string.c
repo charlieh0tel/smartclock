@@ -23,15 +23,7 @@ int32_t memcmp(void* s1, void* s2, uint32_t n) {
 }
 
 /* Copies n bytes (0x5ef48). */
-void* memcpy(void* s1, void* s2, uint32_t n) {
-  uint8_t* to = s1;
-  uint8_t* from = s2;
-
-  for (; n != 0; n--) {
-    *to++ = *from++;
-  }
-  return s1;
-}
+void* memcpy(void* s1, void* s2, uint32_t n) { return libc_memcpy(s1, s2, n); }
 
 /* Fills n bytes (0x5ef66). */
 void* memset(void* s, int32_t c, uint32_t n) {
@@ -78,30 +70,13 @@ int32_t strncmp(char* s1, char* s2, uint32_t n) {
   return *s1 - *s2;
 }
 
-/* Copies at most n characters and pads with NULs; a string it
- * truncates it leaves unterminated (0x5f190). */
+/* Copies at most n characters and pads with NULs (0x5f190). */
 char* strncpy(char* s1, char* s2, uint32_t n) {
-  char* to = s1;
-
-  while (n != 0) {
-    n--;
-    if ((*to++ = *s2++) == '\0') {
-      break;
-    }
-  }
-  for (; n != 0; n--) {
-    *to++ = '\0';
-  }
-  return s1;
+  return libc_strncpy(s1, s2, n);
 }
 
 /* A lower-case ASCII letter in upper case (0x5f1be). */
-int32_t toupper(int32_t c) {
-  if (c >= 'a' && c <= 'z') {
-    c -= 'a' - 'A';
-  }
-  return c;
-}
+int32_t toupper(int32_t c) { return libc_toupper(c); }
 
 /* A string in upper case, in place, indexed by a signed byte, so that
  * past 127 characters it wraps to before the string (0x2e6c0). */

@@ -1332,6 +1332,14 @@ view cannot drift apart.  The library, bottom up:
      for D0:D1, where `divsl.l` leaves the quotient in D1, and the
      caller's byte for D1's.  Pinned as `int` (the digit in D0), it
      agrees, and `vsprintf` has `%u`, `%d` and `%x` cases of it.
+     The same fault anywhere else: of the fourteen results Ghidra
+     takes as 64 bits, each is one (doubles, `int64_add`, `div`,
+     `stack_usage`'s usage and size), and every function reading a
+     register its callee does not return (`extraout_`) runs in the
+     harness but variadic `float_raise`, whose D0:D1 are its own.
+     `doprnt` ran all along, its generated formats never making a
+     conversion; `vsprintf` now has cases of each conversion and flag
+     its switch takes, floats too, and agrees.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -1292,7 +1292,7 @@ view cannot drift apart.  The library, bottom up:
      Then the first moves by that plan: `scpi.c`'s 27 status-model and
      error-queue functions to `status.c`, `services/status`;
      `clamp_double_to_step_and_limits` and `scpi_param_hook_nothing`
-     to `pll_scpi.c`; and the `:ROBin` and `:RTCM` handlers to
+     to `pllc.c`; and the `:ROBin` and `:RTCM` handlers to
      `scpi_handlers.c`.
      Then the ROM tables only hand-written code reads become its own
      `static const` tables, their values from the image: `fpga_bits`,

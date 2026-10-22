@@ -10202,7 +10202,7 @@ float power_of_ten_float(int16_t param_1)
 #endif
 
 /* 00012af0 */
-#if 0 /* the decompiler's reading; rewritten in pll_scpi.c */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* a bare rts: the changed hook of most numeric and setting descriptors, and the done hook of some
    the changed hook of most descriptors */
@@ -56384,7 +56384,7 @@ LAB_0003250c:
 
 
 /* 00032596 */
-#if 0 /* the decompiler's reading; rewritten in pll_scpi.c */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* clamps a double to its minimum and maximum and rounds it to its step */
 
@@ -92556,7 +92556,7 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/os.c"
 
-#include "../rewritten/z3805a-3543b/pll_scpi.c"
+#include "../rewritten/z3805a-3543b/pllc.c"
 
 #include "../rewritten/z3805a-3543b/qspi.c"
 

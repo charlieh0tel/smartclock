@@ -55211,7 +55211,7 @@ uint16_t record_checksum(void *record,uint16_t length)
 #endif
 
 /* 0003086a */
-#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
+#if 0 /* the decompiler's reading; rewritten in serial_port.c */
 
 /* with nv_settings.serial_restricted set, clears channel B's eight_bits when its parity is also set
    DUART channel B's parity and scpi_param_DIAGnostic_SER1_RESTricted: changed */
@@ -55229,7 +55229,7 @@ void duartb_parity_restrict(void)
 #endif
 
 /* 0003088c */
-#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
+#if 0 /* the decompiler's reading; rewritten in serial_port.c */
 
 /* with nv_settings.serial_restricted set, clears channel B's parity when eight_bits is also set
    DUART channel B's eight_bits: changed */
@@ -93185,8 +93185,6 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi_convert.c"
 
-#include "../rewritten/z3805a-3543b/scpi_diagnostic.c"
-
 #include "../rewritten/z3805a-3543b/scpi_douglas.c"
 
 #include "../rewritten/z3805a-3543b/scpi_engine.c"
@@ -93214,8 +93212,6 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/scpi_source_pulse.c"
 
 #include "../rewritten/z3805a-3543b/scpi_source_roscillator.c"
-
-#include "../rewritten/z3805a-3543b/scpi_system.c"
 
 #include "../rewritten/z3805a-3543b/scpi_tree.c"
 

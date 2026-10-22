@@ -247,6 +247,9 @@ for it (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
   callers.
 - `mas_to_dms` and `dms_to_mas` serve the SCPI position handlers and the
   screen; they are `gps/receiver`'s for now.
-- The descriptors' hooks are `pll/pll_scpi`'s but for those that act on
-  the loop's state; some (`duartb_parity_restrict`, `time_zone_done`)
-  could go to the module whose state they change.
+- A descriptor's hook or action goes with its command's tree, from the
+  record that points at it, or, when it keeps a module's own state,
+  with that module, as its prefix says: `duartb_parity_restrict` and
+  `duartb_eight_bits_restrict` keep channel B's settings and sit with
+  `duartb_settings_done` in `devices/serial_port`; `pll/pll_scpi` keeps
+  what no one command owns.

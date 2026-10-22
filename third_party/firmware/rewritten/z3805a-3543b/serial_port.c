@@ -204,6 +204,24 @@ void drtb_send_async(char* block, uint8_t count) {
  * reconfigures device 0 (0x1df00). */
 void duartb_settings_done(void) { psos_io_control(IO_DEVICE_DUART_B, 0, 0); }
 
+/* With the serial port restricted, eight bits and a parity cannot both
+ * be: a parity set clears eight bits (0x3086a). */
+void duartb_parity_restrict(void) {
+  if (nv_settings.serial_restricted != 0 && duartb_settings.eight_bits == 1 &&
+      duartb_settings.parity != SERIAL_PARITY_NONE) {
+    duartb_settings.eight_bits = 0;
+  }
+}
+
+/* With the serial port restricted, eight bits set clears the parity
+ * (0x3088c). */
+void duartb_eight_bits_restrict(void) {
+  if (nv_settings.serial_restricted != 0 && duartb_settings.eight_bits == 1 &&
+      duartb_settings.parity != SERIAL_PARITY_NONE) {
+    duartb_settings.parity = SERIAL_PARITY_NONE;
+  }
+}
+
 /* Writes a string to channel B by polling, in supervisor mode; returns
  * its length (0x1df12). */
 int32_t console_write_polled(char* s) {

@@ -1063,8 +1063,8 @@
 0x12af0	scpi_param_hook_nothing	applications/pll/pll_scpi	bare rts, descriptor hook
 0x41328	pll_action_nothing	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x45b6e	nv_param_field_b8_done	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x3086a	duartb_parity_restrict	applications/scpi/handlers/diagnostic	:DIAG:SER1:RESTricted's changed hook
-0x3088c	duartb_eight_bits_restrict	applications/scpi/handlers/system	:SYST:COMM:SER1:RECeive:BITS's changed hook
+0x3086a	duartb_parity_restrict	devices/serial_port	:SYST:COMM:SER1:RECeive:PARity:TYPE's and :DIAG:SER1:RESTricted's changed hook; keeps channel B's settings, as duartb_settings_done does
+0x3088c	duartb_eight_bits_restrict	devices/serial_port	:SYST:COMM:SER1:RECeive:BITS's changed hook; keeps channel B's settings, as duartb_settings_done does
 0x308ae	douglas_duration_changed	applications/scpi/handlers/douglas	:DOUGlas:DURation's changed hook
 0x42b18	output_state_program	applications/scpi/handlers/output	output_state_done's programming of the output
 0x42b1a	pulse_program	applications/scpi/handlers/source_pulse	pulse_settings_done's programming of the pulse

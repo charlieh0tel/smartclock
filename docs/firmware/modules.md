@@ -23,7 +23,9 @@ for the calls under "Calls the wrong way".
 | services | 194 | what the tasks share: the spooler, the status model, the EEPROM's records and logs, time, the 1PPS and the health monitor |
 | applications | 795 | the tasks that make the receiver: SCPI, the loop, the GPS engine's protocol, the self-test, the status screen and the console |
 
-Where the approved layering named a module and the code says otherwise:
+Where the approved layering named a module and the code says otherwise
+(these four names approved 2026-10-21: `platform/debug`,
+`services/status`, `applications/main`, `applications/selftest`):
 
 - **`platform/debug`, not `services/messages`.**  `fatal_error`
   (`0x1f176`), `task_debug_message` (`0x1eff6`), `task_dmessage`

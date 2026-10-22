@@ -827,8 +827,8 @@ image reads past the
 table: `clock_days_before_month`'s unchecked month reads the word
 before `days_before_month` and those after it, `exception_name` reads
 `exception_names` by an unchecked, unaligned offset, and
-`status_negative_conditions` and `status_report_messages` are indexed
-by any condition, so they keep the image's; `random_dither` reads the
+`status_negative_conditions` is indexed by any negative condition, so
+it keeps the image's, and `status_report_messages` with it; `random_dither` reads the
 byte after `dither_table`, which its copy keeps as a 129th entry.  Not
 where a table's address outlives the call in RAM, which the harness
 compares: the DUART's loopback test leaves pointers into its strings,

@@ -26,9 +26,9 @@ _Static_assert(sizeof(scpi_source_roscillator_duration) == 8,
                "scpi_source_roscillator_duration");
 
 /* pll_mode's result, read with interrupts masked. */
-static uint8_t scpi_source_roscillator_mode(void) {
+static pll_screen_mode scpi_source_roscillator_mode(void) {
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
-  uint8_t mode = pll_mode();
+  pll_screen_mode mode = pll_mode();
 
   set_interrupt_mask(sr);
   return mode;
@@ -149,8 +149,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis(void* parameters,
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void* parameters,
                                                       void* response,
                                                       scpi_call* call) {
-  /* PLL_MODE_MANUAL_HOLDOVER */
-  if (scpi_source_roscillator_mode() != 1) {
+  if (scpi_source_roscillator_mode() != PLL_MODE_HOLDOVER_MANUAL) {
     uint8_t source = return_zero(call->input);
 
     pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_INITiate, 0,
@@ -270,8 +269,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void* parameters,
                                                        scpi_call* call) {
   uint16_t* choice = response;
 
-  /* PLL_MODE_HOLDOVER */
-  if (scpi_source_roscillator_mode() == 2) {
+  if (scpi_source_roscillator_mode() == PLL_MODE_HOLDOVER) {
     uint16_t sr = set_interrupt_mask(CPU_IPL_1);
     uint8_t reason = holdover_waiting_reason();
 
@@ -341,19 +339,19 @@ int32_t scpi_query_SOURce_ROSCillator_STATe(void* parameters, void* response,
   uint16_t* choice = response;
 
   switch ((int8_t)scpi_source_roscillator_mode()) {
-    case 1: /* PLL_MODE_MANUAL_HOLDOVER */
+    case PLL_MODE_HOLDOVER_MANUAL:
       *choice = SCPI_SOURCE_ROSCILLATOR_STATE_HOLD;
       break;
-    case 2: /* PLL_MODE_HOLDOVER */
+    case PLL_MODE_HOLDOVER:
       *choice = SCPI_SOURCE_ROSCILLATOR_STATE_WAIT;
       break;
-    case 3: /* PLL_MODE_RECOVERY */
+    case PLL_MODE_RECOVERY:
       *choice = SCPI_SOURCE_ROSCILLATOR_STATE_REC;
       break;
-    case 4: /* PLL_MODE_POWERUP */
+    case PLL_MODE_POWERUP:
       *choice = SCPI_SOURCE_ROSCILLATOR_STATE_POW;
       break;
-    case 5: /* PLL_MODE_LOCKED */
+    case PLL_MODE_LOCKED:
       *choice = SCPI_SOURCE_ROSCILLATOR_STATE_LOCK;
       break;
     default:

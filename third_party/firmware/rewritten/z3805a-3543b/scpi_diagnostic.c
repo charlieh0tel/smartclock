@@ -441,18 +441,21 @@ int32_t scpi_query_DIAGnostic_LOG_COUNt(void* parameters, void* response,
   return 0;
 }
 
+/* log_read's and log_entry_text's text and heading: array sizes, so
+ * #define. */
+#define SCPI_DIAGNOSTIC_LOG_TEXT_SIZE 255
+#define SCPI_DIAGNOSTIC_LOG_HEADING_SIZE 27
+
 /* :DIAGnostic:LOG:READ? [number] and :SLOG's: an entry, the newest when
  * none is given, as its heading, ": " and its text, in the source's
  * text buffer; -222 for a number outside the log (0x2b632). */
 int32_t scpi_query_DIAGnostic_LOG_READ(void* parameters, void* response,
                                        scpi_call* call) {
-  /* log_read's and log_entry_text's text and heading. */
-  enum { TEXT_SIZE = 255, HEADING_SIZE = 27 };
   const scpi_diagnostic_indexed_word* given = parameters;
   char** entry = response;
   char* line = scpi_response_texts[(uint8_t)return_zero(call->input)];
-  char text[TEXT_SIZE];
-  char heading[HEADING_SIZE];
+  char text[SCPI_DIAGNOSTIC_LOG_TEXT_SIZE];
+  char heading[SCPI_DIAGNOSTIC_LOG_HEADING_SIZE];
 
   text[0] = 0;
   heading[0] = 0;

@@ -209,7 +209,10 @@ static void duart_loopback_test(const duart_loopback_channel* channel) {
   duart.isr_imr = duart_shadow.imr;
   channel->registers->cr = CR_TX_ENABLE | CR_RX_ENABLE;
   set_interrupt_mask(sr);
-  while (spins < LOOPBACK_SPINS && *loopback_expect_next != 0) {
+  /* The receive interrupt moves it on (0x1e398 reads it each time
+   * round). */
+  char* volatile* const expect_next = &loopback_expect_next;
+  while (spins < LOOPBACK_SPINS && **expect_next != 0) {
     spins++;
   }
   sr = set_interrupt_mask(CPU_IPL_7);

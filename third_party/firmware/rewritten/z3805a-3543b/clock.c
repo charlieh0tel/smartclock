@@ -22,8 +22,9 @@ static bool clock_record_valid(const clock_record* record) {
 }
 
 /* Starts the clock afresh, when forced or its record's checksum fails,
- * at no time on the lifetime record's date; either way marks it valid
- * and clears the pending leap minute and offset step (0x13908).
+ * at no time on the lifetime record's date; either way marks it not
+ * set, so that time_valid gives 0, and clears the pending leap minute
+ * and offset step (0x13908).
  * system_init passes selftest.eeprom. */
 void clock_init(int16_t force) {
   /* Days a month, January first, February's 0 for clock_set_leap_year

@@ -39,15 +39,6 @@ static const uint8_t PLL_AGING_WEIGHT_FULL = 3;
 /* aging_fit_collect's and the routines' results: a fit failed. */
 static const int32_t PLL_AGING_FIT_FAILED = 1;
 
-/* The EFC less its temperature correction, the TC times the oscillator
- * current. */
-static float pll_aging_efc_less_temperature(float current) {
-  float correction =
-      float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient, current);
-
-  return float_subtract_reversed(correction, pll.efc);
-}
-
 /* An entry's log term from its time t: ln(t - 1) + t ln(t / (t - 1)) - 1,
  * or -1 at a time of 1 or less. */
 static float pll_aging_log_term(float time) {
@@ -109,11 +100,11 @@ void efc_history_update(void) {
       pll.efc_history.efc_sum = 0.0f;
     }
     float_add_in_place(&pll.efc_history.efc_sum,
-                       pll_aging_efc_less_temperature(current));
+                       pll_efc_less_temperature(current));
     pll.efc_history.summed_count++;
   } else if (pll.efc_history.summed_count == 0) {
     float_add_in_place(&pll.efc_history.efc_sum,
-                       pll_aging_efc_less_temperature(current));
+                       pll_efc_less_temperature(current));
   }
   pll.efc_history.sample_count++;
   if (pll.efc_history.sample_count < PLL_AGING_SAMPLES) {

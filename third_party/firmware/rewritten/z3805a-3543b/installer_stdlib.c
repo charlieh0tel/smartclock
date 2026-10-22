@@ -14,8 +14,8 @@ void installer_program_exit(uint32_t value) {
 
 /* Builds "Prog end, returned N" in program_end_message and stops with
  * fatal_error_with_code, whose code is return_address, program_exit's;
- * never returns (0x149bc).  The digits are built backward from a stop
- * byte at the buffer's end, where they stay. */
+ * never returns (installer::0x1013c2; program_end_report, 0x149bc).  The digits
+ * are built backward from a stop byte at the buffer's end, where they stay. */
 void installer_program_end_report(uint32_t value, uint32_t return_address) {
   static const int32_t DIGITS_END = 0x2d;
   static const uint8_t DIGITS_STOP = 0xff;

@@ -10,6 +10,14 @@
 
 static const uint32_t PLL_AGING_INDEX_MASK = PLL_AGING_ENTRIES - 1;
 
+/* The EFC less its temperature correction, the TC times the oscillator
+ * current (0x41410, 0x442fa). */
+static float pll_efc_less_temperature(float current) {
+  return float_subtract_reversed(
+      float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient, current),
+      pll.efc);
+}
+
 /* Whether a float is zero of either sign, as the image tests its bits
  * (lsl.l #1, 0x42256). */
 static bool pll_is_zero(float value) {

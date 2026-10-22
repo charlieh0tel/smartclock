@@ -32,14 +32,6 @@ static float pll_stages_negate(float value) {
   return value;
 }
 
-/* The EFC less its temperature correction, the TC times the oscillator
- * current. */
-static float pll_stages_efc_less_temperature(float current) {
-  return float_subtract_reversed(
-      float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient, current),
-      pll.efc);
-}
-
 /* Readings before the clock is checked against GPS, as power-up and
  * holdover recovery count them, and between checks after a mismatch. */
 static const uint8_t PLL_STAGES_CLOCK_CHECK_DELAY = 25;
@@ -763,7 +755,7 @@ pll_stage_result startup_pll(bool same_stage) {
     pll.frequency_adjusted = 0;
     pll.ti_filtered = 0.0f;
     loop_steering.integral = 0.0f;
-    pll.efc_base = pll_stages_efc_less_temperature(current);
+    pll.efc_base = pll_efc_less_temperature(current);
     loop_steering.ti_sum = 0.0f;
     loop_steering.readings = 0;
     loop_steering.seconds = 0;
@@ -853,7 +845,7 @@ pll_stage_result pll_normal(bool same_stage) {
     loop_steering.integral_gain = gains.integral;
     loop_steering.filter_weight = gains.filter_weight;
     loop_steering.integral = 0.0f;
-    pll.efc_base = pll_stages_efc_less_temperature(current);
+    pll.efc_base = pll_efc_less_temperature(current);
     pll.frequency_tolerance = FREQUENCY_TOLERANCE;
   } else {
     uint8_t valid = interval_next_reading(INTERVAL_ARM_CALIBRATE, &ti);
@@ -1070,7 +1062,7 @@ pll_stage_result holdover(bool same_stage) {
   if (pll.holdover_state != PLL_HOLDOVER_HOLDING) {
     holdover_ti_reset();
     if (pll_is_zero(pll.efc_history.fit_a)) {
-      pll.efc_history.fit_a = pll_stages_efc_less_temperature(current);
+      pll.efc_history.fit_a = pll_efc_less_temperature(current);
     }
     holdover_steering.aging_limit = AGING_LIMIT;
     if (pll.aging_state == PLL_AGING_COLLECTING) {

@@ -281,7 +281,8 @@ int32_t scpi_number_to_long(scpi_number* number, int32_t* value,
                             int32_t scale) {
   /* A const object is not a constant expression, so the base is 10 here. */
   static const int32_t MOST_TENTHS = 0x7fffffff / 10;
-  const uint32_t most_positive = 0x7fffffff, most_negative = 0x80000000;
+  static const uint32_t MOST_POSITIVE = 0x7fffffff;
+  static const uint32_t MOST_NEGATIVE = 0x80000000;
 
   if (number->digits[0] == 0) {
     *value = 0;
@@ -304,7 +305,7 @@ int32_t scpi_number_to_long(scpi_number* number, int32_t* value,
   if (scpi_engine_rounds_up(number, places)) {
     magnitude++;
   }
-  if (magnitude > (number->negative ? most_negative : most_positive)) {
+  if (magnitude > (number->negative ? MOST_NEGATIVE : MOST_POSITIVE)) {
     return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   *value = number->negative ? -magnitude : magnitude;

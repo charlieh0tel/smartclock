@@ -190,7 +190,9 @@ void qspi_start(qspi_device device, uint16_t* transmit, uint16_t count,
       qspi.copy_pending = 0;
     }
   }
-  while (qspi.running) {
+  /* qspi_interrupt clears it (0x20866 reads it each time round). */
+  volatile uint8_t* const running = &qspi.running;
+  while (*running) {
   }
 }
 

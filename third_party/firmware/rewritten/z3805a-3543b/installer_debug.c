@@ -55,7 +55,8 @@ void installer_fatal_error(char* message) {
 }
 
 /* A length-prefixed message and ", %08X" with a code, to fatal_error;
- * the two arguments before the code are unread (0x1eefc). */
+ * the two arguments before the code are unread (installer::0x1040a2;
+ * fatal_error_with_code, 0x1eefc). */
 void installer_fatal_error_with_code(char* message, uint32_t unused_1,
                                      uint32_t unused_2, uint32_t code) {
   char text[100];

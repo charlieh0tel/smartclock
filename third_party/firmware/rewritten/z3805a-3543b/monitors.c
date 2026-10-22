@@ -310,13 +310,14 @@ bool oven_warmed_up(void) {
 }
 
 /* Reports pll.efc near the end of its range, outside 5% to 95%, once
- * five checks in a row find it there, and back inside at once
+ * six checks in a row find it there, and back inside at once
  * (0x242f0). */
 void hmon_check_efc(void) {
   /* The near-end bounds the health monitor keeps the EFC's 20 bits
    * to, and the checks outside them it waits for. */
   static const float EFC_NEAR_LOW = 52428.0f;   /* 5% of 2^20 */
   static const float EFC_NEAR_HIGH = 996132.0f; /* 95% */
+  /* The count past which it reports: the sixth check (0x24324). */
   static const uint8_t NEAR_END_CHECKS = 5;
 
   if (float_compare(pll.efc, EFC_NEAR_LOW) >= 0 &&

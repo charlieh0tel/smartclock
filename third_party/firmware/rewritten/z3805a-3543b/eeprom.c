@@ -5,13 +5,13 @@
  * in scope; each function here keeps its generated prototype. */
 
 /* The EEPROM writes a page of 64 bytes at once (eeprom_write_page). */
-static const uint32_t RECORDS_EEPROM_PAGE_SIZE = 64u;
+static const uint32_t EEPROM_PAGE_SIZE = 64u;
 
 /* Tries at a write, and polls of the last byte written for it to read
  * back, on each try. */
-static const int32_t RECORDS_EEPROM_TRIES = 5;
+static const int32_t EEPROM_TRIES = 5;
 
-static const int16_t RECORDS_EEPROM_POLLS = 5000;
+static const int16_t EEPROM_POLLS = 5000;
 
 /* The status register's interrupt mask; eeprom_lock and eeprom_unlock
  * take the lock only at mask 0. */
@@ -131,10 +131,9 @@ bool eeprom_write_byte(char* address, char value) {
   }
   records_set_writing(true);
   bool written = false;
-  for (int32_t tries = RECORDS_EEPROM_TRIES; !written && tries > 0; tries--) {
+  for (int32_t tries = EEPROM_TRIES; !written && tries > 0; tries--) {
     *cell = value;
-    for (int16_t polls = RECORDS_EEPROM_POLLS; *cell != value && polls > 0;
-         polls--) {
+    for (int16_t polls = EEPROM_POLLS; *cell != value && polls > 0; polls--) {
     }
     if (*cell == value) {
       written = true;
@@ -150,7 +149,7 @@ bool eeprom_write_byte(char* address, char value) {
 
 /* The EEPROM page an address is in. */
 static uint32_t records_eeprom_page(const char* address) {
-  return (uint32_t)address & ~(uint32_t)(RECORDS_EEPROM_PAGE_SIZE - 1);
+  return (uint32_t)address & ~(uint32_t)(EEPROM_PAGE_SIZE - 1);
 }
 
 /* Writes bytes within one EEPROM page, its interrupts masked, and checks
@@ -170,7 +169,7 @@ bool eeprom_write_page(char* destination, char* source, uint16_t length) {
 
   bool written = false;
   records_set_writing(true);
-  for (int32_t tries = RECORDS_EEPROM_TRIES; !written && tries > 0; tries--) {
+  for (int32_t tries = EEPROM_TRIES; !written && tries > 0; tries--) {
     uint16_t sr = enter_supervisor_mode();
     volatile char* to = destination;
     const char* from = source;
@@ -179,8 +178,7 @@ bool eeprom_write_page(char* destination, char* source, uint16_t length) {
     }
     *to = *from;
     set_interrupt_mask(sr);
-    for (int16_t polls = RECORDS_EEPROM_POLLS; *to != *from && polls > 0;
-         polls--) {
+    for (int16_t polls = EEPROM_POLLS; *to != *from && polls > 0; polls--) {
     }
 
     written = true;
@@ -201,8 +199,8 @@ bool eeprom_write_page(char* destination, char* source, uint16_t length) {
  * STATUS_EEPROM_WRITE_FAILURE on a failure (0x3124a). */
 uint32_t eeprom_write(char* destination, char* source, uint32_t length) {
   while ((int32_t)length > 0) {
-    uint32_t chunk = RECORDS_EEPROM_PAGE_SIZE -
-                     ((uint32_t)destination & (RECORDS_EEPROM_PAGE_SIZE - 1));
+    uint32_t chunk =
+        EEPROM_PAGE_SIZE - ((uint32_t)destination & (EEPROM_PAGE_SIZE - 1));
     if (length < chunk) {
       chunk = length;
     }

@@ -283,10 +283,10 @@ static int32_t scpi_engine_port_error(int16_t character) {
 static uint32_t scpi_engine_upper(const scpi_char_class* classes, uint32_t character) {
   /* Clears the lower-case bit, and the high byte of the value's
    * word with it (0x277e2). */
-  const uint32_t upper_case = 0xffff00df;
+  static const uint32_t UPPER_CASE = 0xffff00df;
 
   if (classes[character] == SCPI_CLASS_LETTER) {
-    character &= upper_case;
+    character &= UPPER_CASE;
   }
   return character;
 }

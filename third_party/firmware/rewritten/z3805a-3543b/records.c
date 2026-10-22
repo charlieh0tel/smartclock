@@ -146,9 +146,14 @@ bool calibration_block_read(void) {
  * differ from it, a memory error for the source when it fails; the
  * index is not read (0x30c60). */
 uint32_t save_calibration_block(int32_t index, int32_t source) {
-  if (eeprom_calibration_block.time_offset == scpi_value_DIAGnostic_TOFFset &&
-      eeprom_calibration_block.tc_coefficient ==
-          scpi_value_DIAGnostic_ROSCillator_TCOefficient) {
+  /* Compared as bits, cmp.l (0x30c6c to 0x30c82), so that -0 differs
+   * from 0 and a NaN equals its own bits. */
+  if (memcmp(&eeprom_calibration_block.time_offset,
+             &scpi_value_DIAGnostic_TOFFset,
+             sizeof scpi_value_DIAGnostic_TOFFset) == 0 &&
+      memcmp(&eeprom_calibration_block.tc_coefficient,
+             &scpi_value_DIAGnostic_ROSCillator_TCOefficient,
+             sizeof scpi_value_DIAGnostic_ROSCillator_TCOefficient) == 0) {
     return 1;
   }
 

@@ -82,8 +82,6 @@ void system_init(void) {
  * exchanges and tasks and starts them, then counts its idle loops
  * forever (0x1304a). */
 void root_task(void) {
-  /* The source log_erase reports a failure from (status_report_from). */
-  static const uint8_t LOG_ERASE_SOURCE = 4;
   /* pllc_exchange's create_x arguments, which psos.md leaves unnamed. */
   static const uint32_t PLLC_EXCHANGE_A = 2;
   static const uint32_t PLLC_EXCHANGE_B = 8;
@@ -109,7 +107,7 @@ void root_task(void) {
   status_init();
   log_init();
   if (selftest.eeprom != 0) {
-    log_erase_locked(LOG_ERASE_SOURCE);
+    log_erase_locked(REQUEST_SOURCE_INTERNAL);
     log_clear();
   }
 

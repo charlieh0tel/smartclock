@@ -3143,25 +3143,63 @@ typedef struct scpi_action_param {
   void* action;         /* +0x02: called with the index and the source */
 } scpi_action_param;
 
+/* request_source: who asked for a change or an EEPROM write, and so
+ * whether a failure goes to the status system.  Handed down through
+ * pllc_request.source and pll_scpi_source to the descriptors' validate,
+ * changed, done and action routines, and to nv_save,
+ * save_parameter_record, save_calibration_block, log_erase and
+ * douglas_finish_nv_argument, ending in status_report_from.  Its jump
+ * table at 0x2bf16 reports for 0 and 2 alone; any value above 4 is
+ * silent too (0x2bf06).  Nothing in the image passes 1, 3 or 5: they
+ * are named by what the code does with them.  Indexing
+ * scpi_response_texts[2] and its siblings by source suggests 1 was a
+ * second SCPI port, as the 59551A has (097-59551-02, *CLS, "Context
+ * Dependencies": each I/O port has its own error queue); unproved. */
+typedef enum __attribute__((packed)) request_source {
+  /* A SCPI command: return_zero(call->input) (0x29ada), the only port.
+   * Reports; pllc signals task_scpi when done (0x43208) and sends what
+   * the GPS must hear (0x432f8); status_preset_register sets registers
+   * for it alone (0x2f35c); status_preset_done's restores (0x43584,
+   * 0x435b8, 0x43604, 0x4362a). */
+  REQUEST_SOURCE_SCPI = 0,
+  /* Not reported, not sent to the GPS; the second slot of the per-source
+   * response arrays. */
+  REQUEST_SOURCE_SILENT_1 = 1,
+  /* Startup: nv_restore's save of the defaults and its configuration
+   * lost (0x328be, 0x328c8).  Reports. */
+  REQUEST_SOURCE_STARTUP = 2,
+  /* Not reported: status_report_from's own case, returning 0
+   * (0x2bf2c). */
+  REQUEST_SOURCE_SILENT_3 = 3,
+  /* The firmware on its own: root_task's log erase after a failed
+   * EEPROM self-test (0x130be), the leap second's and the loop's NV
+   * saves (0x463e2, 0x4643a, 0x47972), douglas_finish_nv_argument's
+   * when a survey ends (0x46d74, 0x475b6).  Not reported. */
+  REQUEST_SOURCE_INTERNAL = 4,
+  /* Not reported, but pllc sends its requests to the GPS as for
+   * REQUEST_SOURCE_SCPI (0x432fe). */
+  REQUEST_SOURCE_SILENT_TO_GPS = 5,
+} request_source;
+
 /* A SCPI request to the pllc task: the 24-byte message pllc_request_a
  * to pllc_request_e build in their frames and send pllc_exchange, which
  * pll_scpi_receive receives into 24 bytes and get_setup_vars copies
  * into pll_scpi_param to pll_scpi_values.  The kernel copies +0x04 to
  * +0x17 (kernel_copy_message). */
 typedef struct pllc_request {
-  uint32_t field_00;  /* +0x00: not set; the kernel does not copy it */
-  uint32_t field_04;  /* +0x04: cleared; as gps_request_entry's */
-  void* param;        /* +0x08: the descriptor, a scpi_numeric_param,
-                         scpi_setting_param or scpi_action_param; pll_scpi_param */
-  uint8_t index;      /* +0x0c: pll_scpi_index */
-  uint8_t source;     /* +0x0d: pll_scpi_source; for 0 the SCPI task is signaled
-                         when it is done */
-  uint8_t field_0e;   /* +0x0e: not set */
-  uint8_t setting;    /* +0x0f: a setting's new value, pll_scpi_setting;
-                         pllc_request_a's alone */
-  uint32_t values[2]; /* +0x10: by the numeric descriptor's is_integer: 0 the
-                         value in values[1], 1 in values[0], 3 both, 2 values[0]
-                         the address of index + 1 longs */
+  uint32_t field_00;     /* +0x00: not set; the kernel does not copy it */
+  uint32_t field_04;     /* +0x04: cleared; as gps_request_entry's */
+  void* param;           /* +0x08: the descriptor, a scpi_numeric_param,
+                            scpi_setting_param or scpi_action_param; pll_scpi_param */
+  uint8_t index;         /* +0x0c: pll_scpi_index */
+  request_source source; /* +0x0d: pll_scpi_source; for 0 the SCPI task is
+                         signaled when it is done */
+  uint8_t field_0e;      /* +0x0e: not set */
+  uint8_t setting;       /* +0x0f: a setting's new value, pll_scpi_setting;
+                            pllc_request_a's alone */
+  uint32_t values[2];    /* +0x10: by the numeric descriptor's is_integer: 0 the
+                            value in values[1], 1 in values[0], 3 both, 2 values[0]
+                            the address of index + 1 longs */
 } pllc_request;
 
 /* An Oncore argument encoder: puts a request's argument by its index

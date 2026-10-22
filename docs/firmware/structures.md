@@ -797,6 +797,15 @@ done `pll_scpi_receive`, `pll_scpi_complete` (`0x433b6`) and
 `gps_diag_complete` (`0x433fc`) signal that task event 0x20, which
 `request_and_wait` (`0x29e7e`) waits for.
 
+The source is a `request_source` (smartclock.h): who asked, and so
+whether a failure reaches the status system.  `status_report_from`
+(`0x2bf00`) reports for `REQUEST_SOURCE_SCPI` (0, every SCPI handler's
+`return_zero(call->input)`) and `REQUEST_SOURCE_STARTUP` (2,
+`nv_restore`), and drops it for `REQUEST_SOURCE_INTERNAL` (4, the
+firmware's own log erase and NV saves).  Nothing in the image passes 1,
+3 or 5; 5 alone is tested elsewhere (`0x432fe`, sent to the GPS as 0
+is), so those are named by what the code does with them.
+
 The request is a `pllc_request`, 24 bytes, the size of the kernel's
 message buffers (`psos.md`, "Inside the kernel"): each of
 `pllc_request_a` to `pllc_request_e` links a 24-byte frame and sends its

@@ -388,10 +388,10 @@ enum {
 };
 
 /* Sets a register's enable or transition filter for a request from
- * source 0, and 1; 0 for another source (0x2f34e). */
+ * SCPI, and 1; 0 for another source (0x2f34e). */
 uint32_t status_preset_register(char setting, char source, int16_t index,
                                 int16_t value) {
-  if (source != 0) {
+  if (source != REQUEST_SOURCE_SCPI) {
     return 0;
   }
   switch (setting) {
@@ -466,13 +466,13 @@ void status_preset_done(uint32_t form, uint32_t source) {
       for (uint8_t index = STATUS_FIRST_FILTERED; index < STATUS_REGISTERS;
            index++) {
         nv_settings.status_enable[index] = SCPI_ENABLES[index];
-        status_enable_restore(index, 0);
+        status_enable_restore(index, REQUEST_SOURCE_SCPI);
       }
       break;
     case STATUS_PRESET_ALARM:
       for (uint8_t index = 0; index < STATUS_REGISTERS; index++) {
         nv_settings.status_enable[index] = ALARM_ENABLES[index];
-        status_enable_restore(index, 0);
+        status_enable_restore(index, REQUEST_SOURCE_SCPI);
       }
       nv_settings.questionable_user = 0;
       questionable_user_done();
@@ -481,9 +481,9 @@ void status_preset_done(uint32_t form, uint32_t source) {
   for (uint8_t filter = 0; filter < STATUS_REGISTERS - STATUS_FIRST_FILTERED;
        filter++) {
     nv_settings.status_positive_transition[filter] = POSITIVE_FILTERS[filter];
-    status_ptr_restore(filter, 0);
+    status_ptr_restore(filter, REQUEST_SOURCE_SCPI);
     nv_settings.status_negative_transition[filter] = NEGATIVE_FILTERS[filter];
-    status_ntr_restore(filter, 0);
+    status_ntr_restore(filter, REQUEST_SOURCE_SCPI);
   }
   nv_save(source);
 }
@@ -525,11 +525,14 @@ uint32_t status_report(int16_t code) {
   return 0;
 }
 
-/* status_report for a source that reports, 0 or 2; 1, 3, 4 and any
- * past 4 do not (0x2bf00). */
-void status_report_from(int16_t code, uint8_t source) {
+/* status_report for a source that reports, a SCPI command or startup;
+ * the others, and any past REQUEST_SOURCE_INTERNAL, do not (0x2bf00). */
+void status_report_from(int16_t code, request_source source) {
   /* Whether each source reports, by the jump table at 0x2bf16. */
-  static const bool SOURCE_REPORTS[] = {true, false, true, false, false};
+  static const bool SOURCE_REPORTS[REQUEST_SOURCE_INTERNAL + 1] = {
+      [REQUEST_SOURCE_SCPI] = true,
+      [REQUEST_SOURCE_STARTUP] = true,
+  };
 
   if (source < sizeof SOURCE_REPORTS && SOURCE_REPORTS[source]) {
     status_report(code);

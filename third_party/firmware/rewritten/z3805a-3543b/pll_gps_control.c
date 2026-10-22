@@ -178,8 +178,6 @@ static void pll_gps_control_survey(void) {
  * its acknowledgment checked, then a held position, or the survey
  * (:DOUGlas) that finds one (0x46838). */
 void gps_init_sequence(void) {
-  /* The source nv_save gets when the survey finishes unasked. */
-  static const uint8_t SURVEY_NV_SOURCE = 4;
   uint8_t* state = &pll.gps_init_state;
   int32_t arguments[4];
 
@@ -306,7 +304,7 @@ void gps_init_sequence(void) {
       }
       if (douglas_finish_requested != 0) {
         douglas_finish_requested = 0;
-        douglas_finish_nv_argument = SURVEY_NV_SOURCE;
+        douglas_finish_nv_argument = REQUEST_SOURCE_INTERNAL;
       }
       if (douglas_start_requested != 0) {
         *state = PLL_GPS_INIT_SURVEY;

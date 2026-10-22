@@ -186,9 +186,6 @@ klok_entry* leap_event_schedule(uint32_t date, int32_t minute_length) {
   return leap_event_schedule_gps(date, minute_length);
 }
 
-/* The source leap_event_create gives nv_save. */
-static const uint8_t LEAP_NV_SOURCE = 4;
-
 /* Clears the pending leap second from the NV settings: a 60-second
  * minute on 1994-01-01 (0x4637a). */
 void leap_settings_clear(void) {
@@ -219,7 +216,7 @@ void leap_event_create(void) {
   if (gps.leap_second_pending == ONCORE_NO_LEAP_SECOND) {
     if (nv_settings.leap_pending) {
       leap_settings_clear();
-      nv_save(LEAP_NV_SOURCE);
+      nv_save(REQUEST_SOURCE_INTERNAL);
       leap_event_delete();
     }
     return;
@@ -242,7 +239,7 @@ void leap_event_create(void) {
     nv_settings.leap_pending = 1;
     nv_settings.leap_date = date;
     nv_settings.leap_minute_length = minute_length;
-    nv_save(LEAP_NV_SOURCE);
+    nv_save(REQUEST_SOURCE_INTERNAL);
   }
   leap_event_delete();
   if (leap_event_schedule(date, minute_length) == NULL) {

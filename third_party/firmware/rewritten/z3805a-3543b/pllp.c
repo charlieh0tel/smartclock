@@ -594,10 +594,6 @@ static void pllp_step_stage(bool same_stage) {
 void pllp_task(void) {
   /* The EFC's gain, fractional frequency a count. */
   static const float EFC_GAIN = 6.25e-13f;
-  /* The source the loop's own nv_save calls report, as leap.c's
-   * LEAP_NV_SOURCE: for a clock change, and for a survey finished
-   * unasked (gps_init_sequence). */
-  static const uint8_t LOOP_NV_SOURCE = 4;
   bool system_preset = false;
   pll_stage last_stage;
 
@@ -617,7 +613,7 @@ void pllp_task(void) {
   douglas_start_requested = 0;
   douglas_stop_requested = 0;
   douglas_finish_requested = 0;
-  douglas_finish_nv_argument = LOOP_NV_SOURCE;
+  douglas_finish_nv_argument = REQUEST_SOURCE_INTERNAL;
   selftest_requested = 0;
   clock_change_applied = 0;
   clock_change_armed = 0;
@@ -689,7 +685,7 @@ void pllp_task(void) {
     watchdog_pll++;
     status_summary_update();
     if (clock_change_applied != 0) {
-      nv_save(LOOP_NV_SOURCE);
+      nv_save(REQUEST_SOURCE_INTERNAL);
       clock_change_applied = 0;
       clock_change_armed = 0;
     }

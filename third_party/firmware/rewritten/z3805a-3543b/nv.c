@@ -148,8 +148,6 @@ void nv_clear_and_reset(void) {
  * slot 1, erasing the other, and reports the configuration lost
  * (0x3282c). */
 void nv_restore(void) {
-  /* The source nv_restore gives nv_save and status_report_from. */
-  static const uint8_t NV_RESTORE_SOURCE = 2;
   /* nv_settings by default: the image's nv_settings_defaults (0x30966),
    * its pads 0xff. */
   static const nv_settings_fields NV_DEFAULTS = {
@@ -200,8 +198,8 @@ void nv_restore(void) {
     nv_slot = 1;
   }
   nv_slot_erase(1 - nv_slot);
-  nv_save(NV_RESTORE_SOURCE);
-  status_report_from(STATUS_CONFIGURATION_LOST, NV_RESTORE_SOURCE);
+  nv_save(REQUEST_SOURCE_STARTUP);
+  status_report_from(STATUS_CONFIGURATION_LOST, REQUEST_SOURCE_STARTUP);
 }
 
 /* The sum and its complement of an NV register record's bytes from its

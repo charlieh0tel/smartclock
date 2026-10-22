@@ -43,12 +43,6 @@ static const uint16_t PLLC_FLAG_SAVED_IN_NV = 2;
 
 static const uint16_t PLLC_FLAG_SAVED_IN_RECORD = 4;
 
-/* A request's source: the SCPI task, which waits for the done event; and
- * the other source whose requests go to the GPS (0x432fe). */
-static const uint8_t PLLC_SOURCE_SCPI = 0;
-
-static const uint8_t PLLC_SOURCE_ALSO_TO_GPS = 5;
-
 /* The hooks' and actions' shapes, which the descriptors keep as void
  * pointers.  A changed hook is passed its caller's D3 first. */
 typedef void pllc_changed_hook(uint32_t caller_d3, int32_t index,
@@ -75,7 +69,7 @@ static uint16_t pllc_flags(void) {
  * descriptor's type and a numeric one's is_integer say (0x431f4). */
 void get_setup_vars(pllc_request* request) {
   pll_scpi_source = request->source;
-  if (pll_scpi_source == PLLC_SOURCE_SCPI) {
+  if (pll_scpi_source == REQUEST_SOURCE_SCPI) {
     pll_scpi_waiting_task = task_scpi;
   }
   pll_scpi_index = request->index;
@@ -400,8 +394,8 @@ void pll_scpi_command(pllc_request* request, uint8_t* reply_pending) {
   }
   douglas_log_event = LOG_CLEARED;
   if (pll_scpi_needs_loop() != 0) {
-    if (pll_scpi_source == PLLC_SOURCE_SCPI ||
-        pll_scpi_source == PLLC_SOURCE_ALSO_TO_GPS) {
+    if (pll_scpi_source == REQUEST_SOURCE_SCPI ||
+        pll_scpi_source == REQUEST_SOURCE_SILENT_TO_GPS) {
       *reply_pending = pll_scpi_send_to_loop(GPS_SENDER_SETTING, &loop_status);
     }
     if (*reply_pending != 0) {

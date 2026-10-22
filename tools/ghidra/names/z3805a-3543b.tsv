@@ -435,7 +435,7 @@
 0x1df48	function	printf_polled	structures.md	vsprintf into a buffer, then console_write_polled	void printf_polled(char *format, ...)
 0x20dd2	function	deferred_vprintf	structures.md	vsprintf into deferred_text at deferred_end	int deferred_vprintf(char *format, void *arguments)
 0x20ebe	function	deferred_flush	structures.md	prints deferred_text from deferred_start to deferred_end
-0x16c44	function	task_stack_report	structures.md	"pid name USP size SSP size", each task's stacks and their use
+0x16c44	function	task_stack_report	structures.md	"pid name USP size SSP size", each task's stacks and their use; the source, a byte in a word slot (0x12f9e, 0x2b888), is unread	void task_stack_report(request_source source)
 0x245a6	function	gps_pps_check	structures.md	"GPS 1pps signal is dead", "short gate, count %d", "long gate, count %d"
 0x2471a	function	internal_pps_check	structures.md	"Internal 1pps signal is dead", "count %d"
 0x13c50	function	timecode_update	structures.md	builds tcode_message, T1 or T2, and the es message
@@ -472,8 +472,8 @@
 0x20aec	function	qspi_read	structures.md	psos_io_read to device 0x100 | n	void qspi_read(qspi_device device, void *buffers, uint32_t count)
 0x284b6	function	status_read_event	structures.md	the STATus EVENt, *ESR? and *STB? queries' read of a register's event value	void status_read_event(status_model *status, int index, uint16_t *event)
 0x28506	function	status_read_condition	structures.md	the STATus CONDition queries' read of a register's condition	void status_read_condition(status_model *status, int index, uint16_t *condition)
-0x16a4c	function	os_process_report	structures.md	:DIAG:OS:PROC?'s report of the tasks
-0x16ace	function	os_memory_report	structures.md	:DIAG:OS:MEM?'s report, "Process Memseg size(bytes) next last neighbor key"
+0x16a4c	function	os_process_report	structures.md	:DIAG:OS:PROC?'s report of the tasks; the source, a byte in a word slot (0x12f86, 0x2b866), is unread	void os_process_report(request_source source)
+0x16ace	function	os_memory_report	structures.md	:DIAG:OS:MEM?'s report, "Process Memseg size(bytes) next last neighbor key"; the source, a byte in a word slot (0x12f92, 0x2b844), is unread	void os_memory_report(request_source source)
 0x16e5a	function	psos_debug_output	structures.md	the debug_psos word's and :DIAG:SYST:DOUT's switch
 0x31128	function	eeprom_write_byte	structures.md	the wr_eeprom word's: writes a byte, polls until it reads back, retries five times
 0x3281a	function	clear_nv	structures.md	the clear_nv word's
@@ -494,6 +494,16 @@
 0x11a2a	function	exception_name	structures.md	the "%s: %s" of an exception; "Oooh! That tickles. I don't know that vector."	char * exception_name(uint16_t vector)
 0x11b8c	label	reset_to_recover_text	read	"\r\nRESET to recover.", which print_exception ends a report with; its NUL is the first byte of exception_names, and exception_name reads that table from 12 bytes in, so it is bytes, not a string, to keep the C reading the ROM	char[20]
 0x11ba0	label	exception_names	read	the name of each exception vector from 2, bus error, to 58, PMMU access violation, which exception_name indexes by the vector offset less 8	char *[57]
+0x11a58	function	m68000_bus_error	structures.md	an MC68000 exception frame's adapter for vector 2: drops the 68000 group 0 frame's first 8 bytes (its status word, access address and instruction register; addq.w #8,sp), then moves the SR and PC down a word and puts the format/vector word 0x0008 (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
+0x11a72	function	m68000_address_error	structures.md	an MC68000 exception frame's adapter for vector 3: drops the 68000 group 0 frame's first 8 bytes (its status word, access address and instruction register; addq.w #8,sp), then moves the SR and PC down a word and puts the format/vector word 0x000c (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
+0x11a8c	function	m68000_illegal_instruction	structures.md	an MC68000 exception frame's adapter for vector 4: moves the SR and PC down a word and puts the format/vector word 0x0010 (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
+0x11aa4	function	m68000_zero_division	structures.md	an MC68000 exception frame's adapter for vector 5: moves the SR and PC down a word and puts the format/vector word 0x0014 (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
+0x11abc	function	m68000_chk	structures.md	an MC68000 exception frame's adapter for vector 6: moves the SR and PC down a word and puts the format/vector word 0x0018 (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
+0x11ad4	function	m68000_trapcc	structures.md	an MC68000 exception frame's adapter for vector 7: moves the SR and PC down a word and puts the format/vector word 0x001c (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
+0x11aec	function	m68000_privilege_violation	structures.md	an MC68000 exception frame's adapter for vector 8: moves the SR and PC down a word and puts the format/vector word 0x0020 (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
+0x11b04	function	m68000_trace	structures.md	an MC68000 exception frame's adapter for vector 9: moves the SR and PC down a word and puts the format/vector word 0x0024 (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
+0x11b1c	function	m68000_line_a	structures.md	an MC68000 exception frame's adapter for vector 10: moves the SR and PC down a word and puts the format/vector word 0x0028 (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
+0x11b34	function	m68000_line_f	structures.md	an MC68000 exception frame's adapter for vector 11: moves the SR and PC down a word and puts the format/vector word 0x002c (format 0) at +6, the CPU32 four-word frame print_exception reads, and branches to primary_default_exception (0x11924); no vector table or call names it in any image		convention=exception; confidence=read; family=exception
 #
 # batch 3, the most-called unnamed functions, by their code and callers
 0x29ade	function	scpi_query_failed	context	72 SCPI queries call it, most with STATUS_UNDEFINED_HEADER or STATUS_DATA_CORRUPT_OR_STALE; reports it through status_report_from and clears the call's query word, so that scpi_interpret formats no response	int32_t scpi_query_failed(status_condition_code code, scpi_call *call)
@@ -1619,12 +1629,12 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4115c	function	int64_divide	context	a 64-bit number divided by a long, the quotient, or on overflow the low word, which divs.l leaves; called by nothing	int int64_divide(int divisor, int high, unsigned int low)
 0x4117e	function	uint64_divide	context	an unsigned 64-bit number divided by an unsigned long, as int64_divide; called by nothing	unsigned int uint64_divide(unsigned int divisor, unsigned int high, unsigned int low)
 0x41244	function	double_to_int64	context	a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing	int64_t double_to_int64(double value)
-0x43482	function	status_enable_restore	context	restores a status register's enable mask from the NV settings, reporting 0xe if it fails
-0x434c2	function	status_ptr_restore	context	restores a status register's positive transition filter from the NV settings
+0x43482	function	status_enable_restore	context	restores a status register's enable mask from the NV settings, reporting 0xe if it fails	void status_enable_restore(int32_t index, int32_t source)
+0x434c2	function	status_ptr_restore	context	restores a status register's positive transition filter from the NV settings	void status_ptr_restore(int32_t index, int32_t source)
 #
 # the status presets, the Oncore decoders and the survey
-0x43504	function	status_ntr_restore	context	restores a status register's negative transition filter from the NV settings
-0x43546	function	status_preset_done	context	done for :STATus:PRESet: the enables and transition filters back to their defaults, saved
+0x43504	function	status_ntr_restore	context	restores a status register's negative transition filter from the NV settings	void status_ntr_restore(int32_t index, int32_t source)
+0x43546	function	status_preset_done	context	done for :STATus:PRESet: the enables and transition filters back to their defaults, saved	void status_preset_done(int32_t form, int32_t source)
 0x43888	function	holdover_correction_valid	context	1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called by nothing
 0x45a24	function	time_zone_changed	context	marks the time zone changed, for :PTIMe:TZONe
 0x45c92	function	nv_clear_and_reset	context	clears the NV settings, invalidates the battery-backed RAM's checksum and resets with trap #12
@@ -2241,8 +2251,8 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x1f6b0	function	qspi_fpga_byte_write	context	one transfer to QSPI_FPGA_BYTE through qspi_write, its own argument's slot as the buffer; called by nothing	void qspi_fpga_byte_write(uint16_t value)
 0x20f18	label	fpga_bitstream	outputs.md	the FPGA's configuration, an XC3000-family bitstream, ff 20 07 86 on; fpga_configurations' one entry, to 0x21e2c	uint8_t[3860]
 0x21e36	label	fpga_readback_mask_header	outputs.md	the second 3860-byte block's 40-bit header, ff 20 07 86 ef; fpga_verify_chip reads the block from fpga_readback_mask, 5 bytes on	uint8_t[5]
-0x1ad0e	label	forth_user_header	structures.md	the header of the kernel's latest word, user, which links the other 153 down to 0x1a296; pforth_dictionary_init stores it in pforth_latest_word and user pushes it	pforth_word_header
-0x1ad1a	label	forth_user_name	structures.md	"user", the name after forth_user_header, padded with 0xff	char[6]
+0x1ad0e	label	forth_header_user	structures.md	the header of the kernel's latest word, user, which links the other 153 down to 0x1a296; pforth_dictionary_init stores it in pforth_latest_word and user pushes it	pforth_word_header
+0x1ad1a	label	forth_header_user_name	structures.md	"user", the name after forth_header_user, padded with 0xff	char[6]
 0x1c8ac	label	diag_words	structures.md	the diagnostic words diag_words_define defines, 85 and an entry of zeros, its NULL code ending them	diag_word_entry[86]
 0x195f6	label	forth_until_tag	console.md	"\"until\"\r\n": until pushes it for forth_check_pairs (0x19600)	char[10]
 0x11b59	label	exception_newline	read	"\r\n", which print_exception prints first (0x119b0)	char[3]

@@ -986,12 +986,22 @@ typedef enum __attribute__((packed)) gps_argument_mode {
   GPS_ARGUMENTS_FROM_REQUEST = 2, /* set, gps_request_step's arguments */
 } gps_argument_mode;
 
+/* gps_request_code_word: a gps_request_code in a word, gps_script_step's
+ * code and its shorter forms', which gpsm_task reads with move.w and
+ * compares signed (0x4c1c6 to 0x4c1d2) and fills from the request's
+ * word (0x4c0d4).  Its values are gps_request_code's; its one name only
+ * makes it a signed word, in gcc's packing and in SmartClockSetup.java's
+ * sizing of enums alike, and no step holds it. */
+typedef enum __attribute__((packed)) gps_request_code_word {
+  GPS_REQUEST_CODE_WORD_MIN = -0x8000,
+} gps_request_code_word;
+
 /* A GPS script's step, as gpsm_task runs it.  The one at 0x101b56,
  * gps_request_step, is in RAM: the one-step script gps_script_message
  * (0x50cc2) points at it, and gpsm_task fills it from a request
  * gps_request_class puts in class 0, a message. */
 typedef struct gps_script_step {
-  int16_t code; /* +0x00: the request code gps_request_build is given */
+  gps_request_code_word code;      /* +0x00: gps_request_build's code */
   gps_argument_mode argument_mode; /* +0x02: GPS_ARGUMENTS_FROM_REQUEST from
                                       the index in arguments[0] */
   uint8_t field_03;
@@ -1008,27 +1018,27 @@ typedef struct gps_script_step {
  * gps_script_step's four would overlap the next step; these are its
  * shorter forms (docs/firmware/structures.md, "ROM tables"). */
 typedef struct gps_script_query_step {
-  int16_t code;                    /* +0x00 */
+  gps_request_code_word code;      /* +0x00 */
   gps_argument_mode argument_mode; /* +0x02: GPS_ARGUMENTS_QUERY */
   uint8_t field_03;
 } gps_script_query_step;
 
 typedef struct gps_script_step_1_argument {
-  int16_t code;                    /* +0x00 */
+  gps_request_code_word code;      /* +0x00 */
   gps_argument_mode argument_mode; /* +0x02 */
   uint8_t field_03;
   int32_t arguments[1]; /* +0x04 */
 } gps_script_step_1_argument;
 
 typedef struct gps_script_step_2_arguments {
-  int16_t code;                    /* +0x00 */
+  gps_request_code_word code;      /* +0x00 */
   gps_argument_mode argument_mode; /* +0x02 */
   uint8_t field_03;
   int32_t arguments[2]; /* +0x04 */
 } gps_script_step_2_arguments;
 
 typedef struct gps_script_step_3_arguments {
-  int16_t code;                    /* +0x00 */
+  gps_request_code_word code;      /* +0x00 */
   gps_argument_mode argument_mode; /* +0x02 */
   uint8_t field_03;
   int32_t arguments[3]; /* +0x04 */
@@ -3702,7 +3712,7 @@ typedef enum __attribute__((packed)) pforth_word_flag {
 
 /* The pForth console's dictionary (docs/firmware/structures.md, "The
  * console's dictionary").  A word's header: the kernel's 154, 0x1a296
- * to 0x1ad20, are in ROM, linked from forth_user_header (0x1ad0e), the
+ * to 0x1ad20, are in ROM, linked from forth_header_user (0x1ad0e), the
  * latest, which pforth_dictionary_init stores in pforth_latest_word;
  * pforth_define_word builds a new one the same way in RAM.  The name
  * follows the 12 bytes, ended by a NUL and padded to even with 0xff. */

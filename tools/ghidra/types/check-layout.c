@@ -171,6 +171,7 @@ CHECK_FIELD(adc_monitor, valid, 0x101b9e - 0x101b72);
 CHECK_FIELD(adc_monitor, sample_index, 0x101b9f - 0x101b72);
 CHECK_FIELD(adc_monitor, out_of_tolerance, 0x101bd0 - 0x101ba2);
 CHECK_FIELD(adc_monitor, out_of_range_count, 0x101ba1 - 0x101b72);
+CHECK_SIZE(gps_request_code_word, 0x101b58 - 0x101b56);
 CHECK_SIZE(gps_script_step, 0x101b6a - 0x101b56);
 CHECK_FIELD(gps_script_step, argument_mode, 0x101b58 - 0x101b56);
 CHECK_FIELD(gps_script_step, arguments, 0x101b5a - 0x101b56);

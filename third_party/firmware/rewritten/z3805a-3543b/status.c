@@ -406,7 +406,7 @@ uint32_t status_preset_register(status_register_mask mask,
 
 /* Sets a register's enable from nv_settings, reporting -300 to a source
  * that may not (0x43482). */
-void status_enable_restore(uint32_t index, uint32_t source) {
+void status_enable_restore(int32_t index, int32_t source) {
   int8_t reg = index;
 
   if (status_preset_register(STATUS_MASK_ENABLE, source, reg,
@@ -417,7 +417,7 @@ void status_enable_restore(uint32_t index, uint32_t source) {
 
 /* Sets a filtered register's positive transition filter from
  * nv_settings, by its index less 2 (0x434c2). */
-void status_ptr_restore(uint32_t index, uint32_t source) {
+void status_ptr_restore(int32_t index, int32_t source) {
   int8_t filter = index;
 
   if (status_preset_register(STATUS_MASK_POSITIVE_TRANSITION, source, filter,
@@ -428,7 +428,7 @@ void status_ptr_restore(uint32_t index, uint32_t source) {
 }
 
 /* The same for its negative transition filter (0x43504). */
-void status_ntr_restore(uint32_t index, uint32_t source) {
+void status_ntr_restore(int32_t index, int32_t source) {
   int8_t filter = index;
 
   if (status_preset_register(STATUS_MASK_NEGATIVE_TRANSITION, source, filter,
@@ -440,7 +440,7 @@ void status_ntr_restore(uint32_t index, uint32_t source) {
 
 /* :STATus:PRESet's hook: the enables its form gives and the filtered
  * registers' filters, set and saved for the source (0x43546). */
-void status_preset_done(uint32_t form, uint32_t source) {
+void status_preset_done(int32_t form, int32_t source) {
   /* The enables each form gives, by register (0x2f76e, 0x2f77c). */
   static const uint16_t SCPI_ENABLES[] = {0, 0, 0, 0, 7, 0xf, 0x1fff};
   static const uint16_t ALARM_ENABLES[] = {0x88, 0, 0x24, 3, 7, 8, 0x1fff};

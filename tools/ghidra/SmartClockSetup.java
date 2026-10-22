@@ -36,6 +36,10 @@
 //       table, word and code address; kernel words named forth_WORD,
 //       diagnostic words diag_WORD, punctuation spelled out.
 //
+// After the names, the pForth kernel's word headers are typed, from the
+// one the names file labels forth_header_user by link to NULL, and each
+// labeled forth_header_WORD, its word spelled as the pforth= names are.
+//
 // Sources: MC68331 User's Manual (third_party/motorola/MC68331UM.pdf)
 // Tables D-2 (GPT), D-3 (SIM), D-13 (QSM) and 5-2 (vectors); the chip
 // select map in smartclockmon docs/firmware/restart.md, "The switch byte
@@ -68,6 +72,7 @@
 //
 //@category SmartClock
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -93,6 +98,7 @@ import ghidra.app.util.cparser.C.CParser;
 import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.AbstractFloatDataType;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.Array;
@@ -270,6 +276,27 @@ public class SmartClockSetup extends GhidraScript {
 	/** What applying names did to a name. */
 	private enum NameCount { NAMED, LABELED, SKIPPED }
 
+	/**
+	 * The pForth console's dictionary in ROM (docs/firmware/structures.md,
+	 * "The console's dictionary"): the latest word's header, which the
+	 * names file labels, the type smartclock.h gives a header, its size
+	 * before the name, and the label each header gets, forth_header_WORD:
+	 * a prefix, so that no header takes a routine's name (forth_create_header
+	 * is one).
+	 */
+	private static final String PFORTH_HEAD = "forth_header_user";
+	private static final String PFORTH_HEADER_TYPE = "pforth_word_header";
+	private static final int PFORTH_HEADER_SIZE = 12;
+	private static final String PFORTH_HEADER_PREFIX = "forth_header_";
+	/** The name's NUL is padded to an even address with this byte. */
+	private static final int PFORTH_NAME_PAD = 0xff;
+	/**
+	 * A name this long means the walk has left the dictionary: the Z3805A
+	 * 3543B's longest is 9 characters, and a diagnostic word's name field
+	 * (diag_word_entry) is 26 bytes.
+	 */
+	private static final int PFORTH_NAME_LIMIT = 32;
+
 	/** How each punctuation character of a Forth word is spelled in a name. */
 	private static final Map<Character, String> SPELLED = Map.ofEntries(
 		Map.entry('!', "store"), Map.entry('@', "fetch"), Map.entry('+', "plus"),
@@ -367,6 +394,7 @@ public class SmartClockSetup extends GhidraScript {
 		removeDataFunctions();
 		applyNames();
 		repairFlow();
+		typePforthHeaders();
 		commentVectors(BOOT_VECTORS, "boot");
 		commentVectors(PRIMARY_VECTORS, "primary");
 		nameConventions();
@@ -546,6 +574,66 @@ public class SmartClockSetup extends GhidraScript {
 		}
 		String result = name.toString();
 		return result.endsWith("_") ? result.substring(0, result.length() - 1) : result;
+	}
+
+	/**
+	 * Types the pForth kernel's word headers: from the one labeled
+	 * PFORTH_HEAD, by link to NULL, each a pforth_word_header and its name
+	 * a char[] of the NUL and the padding, labeled forth_header_WORD with
+	 * the word spelled as the pforth= names spell it.  A header that
+	 * overlaps a function, or a link that leaves initialized memory, odd
+	 * or back to a header already typed, is reported and not typed; the
+	 * walk goes on past an overlap, but stops at a bad link.
+	 */
+	private void typePforthHeaders() throws Exception {
+		List<Symbol> heads = getSymbols(PFORTH_HEAD, null);
+		if (heads.isEmpty()) {
+			println("no " + PFORTH_HEAD + ": pForth word headers not typed");
+			return;
+		}
+		AddressSetView initialized = currentProgram.getMemory().getAllInitializedAddressSet();
+		int[] counts = new int[NameCount.values().length];
+		int typed = 0;
+		int refused = 0;
+		Set<Address> seen = new HashSet<>();
+		Address header = heads.get(0).getAddress();
+		while (header != null) {
+			if (!initialized.contains(header, header.add(PFORTH_HEADER_SIZE + PFORTH_NAME_LIMIT))
+					|| isOdd(header) || !seen.add(header)) {
+				println("pForth word headers: stopped at a bad link, " + header);
+				break;
+			}
+			Address name = header.add(PFORTH_HEADER_SIZE);
+			int length = 0;
+			while (length < PFORTH_NAME_LIMIT && getByte(name.add(length)) != 0) {
+				length++;
+			}
+			if (length == PFORTH_NAME_LIMIT) {
+				println("pForth word headers: no name ends at " + name + "; stopped");
+				break;
+			}
+			byte[] text = getBytes(name, length);
+			int nameSize = length + 1;
+			if (isOdd(name.add(nameSize)) && (getByte(name.add(nameSize)) & 0xff) == PFORTH_NAME_PAD) {
+				nameSize++;
+			}
+			Address end = name.add(nameSize - 1);
+			if (currentProgram.getFunctionManager()
+					.getFunctionsOverlapping(new AddressSet(header, end)).hasNext()) {
+				println("pForth word header at " + header + " overlaps a function; not typed");
+				refused++;
+			}
+			else {
+				applyDataType(header, PFORTH_HEADER_TYPE);
+				applyDataType(name, "char[" + nameSize + "]");
+				String word = new String(text, StandardCharsets.ISO_8859_1);
+				label(header, PFORTH_HEADER_PREFIX + spell(word), counts);
+				typed++;
+			}
+			long link = getInt(header) & 0xffffffffL;
+			header = link == 0 ? null : toAddr(link);
+		}
+		println("pForth word headers: typed " + typed + ", refused " + refused);
 	}
 
 	/**

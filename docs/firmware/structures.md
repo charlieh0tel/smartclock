@@ -580,6 +580,23 @@ prints the line and counts it down, and writes SWSR only while it is
 above 0; `log_reset_cause` (`0x24440`) logs "Watchdog timeout: clk
 ..." when it is 0 and there is no exception or crash message.
 
+**The MC68000 frame adapters.**  Ten entries from `0x11a58` to
+`0x11b34`, `m68000_bus_error` to `m68000_line_f` (vectors 2 to 11),
+turn an MC68000's exception frame, which has no format/vector word,
+into the CPU32's four-word frame and branch to
+`primary_default_exception` (`0x11924`), the common entry: each moves
+the SR and PC down a word and writes the vector offset, format 0, at
+`+6` (`move.w #8,6(sp)` at `0x11a68` for vector 2, to `#$2c` at
+`0x11b42` for vector 11), the word `print_exception` reads at its
+frame's `+0xe`.  The bus and address errors' adapters first drop the 68000's
+group 0 frame's status word, access address and instruction register
+(`addq.w #8,sp`, `0x11a58`, `0x11a72`).  Neither vector table names
+them, nor does any call, in this image or any other here: the CPU32
+pushes its own format word, and the primary table sends vectors 2 to
+11 straight to `0x11924`.  The same ten follow each image's
+common entry (the Z3816A 4001 at `0x21b20`, to `0x219ec`), and the
+installer's copies follow `installer_exception_name` (`0x100686` on).
+
 **The clock and the log.**  The `klok` task's entries (`klok_entry`,
 `0x1a` bytes) are what `print_clk_list` prints (`klok_print_entries`,
 `0x107ee`): "at:", "period:", "function address:" and "event class:".
@@ -1429,7 +1446,10 @@ to `+0x2f` of all eight, its loop running 0 to 7, and the step.
 and the one-step script `gps_script_message` (`0x50cc2`) points at it.  For a request
 `gps_request_class` (`0x4bdba`) puts in class 0, a message, `gpsm_task`
 copies the request's code and a byte into `code` and `argument_mode`
-and its four arguments into `arguments`, and runs that script; for
+and its four arguments into `arguments`, and runs that script
+(`code` is a `gps_request_code` in a signed word,
+`gps_request_code_word`, which the task reads with `move.w` and
+compares signed, `0x4c1c6` to `0x4c1d2`); for
 class 1, a script, it copies only the arguments.  A step whose
 `argument_mode` is 2 takes its arguments from `gps_request_step`'s,
 from the index in its own first argument.  `raim_request_arguments`
@@ -1614,7 +1634,7 @@ call by offset: `+0` `scpi_session_init`, `+4` `scpi_session_close`
 | `powers_of_ten_times_five_float` (`0x12846`) | `float[61]` | 5e-30 to 5e30; `float_decimal_exponent_rounded`'s bound `0xf4`, code at `0x1293a` |
 | `bcd_to_binary` (`0x25b7e`), `binary_to_bcd` (`0x25c1e`) | `uint8_t[160]`, `uint8_t[100]` | a BCD byte's value, by `scpi_bcd_to_double` unchecked, 0 for a nibble over 9; 0 to 99 as BCD, which nothing reads; `decimal_digit_pairs` follows |
 | `diag_words` (`0x1c8ac`) | `diag_word_entry[86]` | `diag_words_define`'s, to the entry of zeros at `0x1d54a`; code at `0x1d570` |
-| `forth_user_header` (`0x1ad0e`) | `pforth_word_header` | the kernel's latest word; "The console's dictionary" below |
+| `forth_header_user` (`0x1ad0e`) | `pforth_word_header` | the kernel's latest word; "The console's dictionary" below |
 | `fpga_bitstream` (`0x20f18`), `fpga_readback_mask_header` (`0x21e36`) | `uint8_t[3860]`, `uint8_t[5]` | `outputs.md`, "The FPGA bitstreams" |
 | `rom_lane_sums_low`, `_high` (`0x3fffc`, `0x7fffc`) | `uint8_t[4]` | the boot check's (`restart.md`); `0x36be8` to `0x3fffb` is erased |
 | `scpi_main_tree` (`0x53034`) | `scpi_child_list` | the main tree's root list, 49 nodes, typed by `scpi_main_tree_children` at `+6`, as every child list's are (docs/scpi/README.md, "As C"); `0x5d014` points at it |
@@ -1766,8 +1786,13 @@ the bytes to copy for an inline word, a word of flags
 name with its NUL, padded to even with `0xff`.  The kernel's 154 are
 in ROM, one run from `0x1a296` to `0x1ad20`, between the kernel's code
 and `forth_user` (`0x1ad20`), which pushes the latest,
-`forth_user_header` (`0x1ad0e`); the run's first, `0x1a296`, has a
-null link.  The diagnostic words are a table instead, `diag_words`
+`forth_header_user` (`0x1ad0e`); the run's first, `0x1a296`, has a
+null link.  `SmartClockSetup.java` walks the links from
+`forth_header_user` after the names and types each header and its name,
+labeling it `forth_header_WORD`, the word spelled as the `pforth=`
+names spell it (`forth_over_header` at `0x1a296`); it refuses a header
+that overlaps a function.  Each header's code is the routine the
+word list (`docs/firmware/pforth/z3805a-3543b.txt`) gives its word.  The diagnostic words are a table instead, `diag_words`
 (`0x1c8ac`, `diag_word_entry`, `0x26` bytes): the code, a 26-byte
 name and the argument and result counts that `diag_words_define`
 (`0x1c18e`) passes `pforth_define_word`, which builds each a header in

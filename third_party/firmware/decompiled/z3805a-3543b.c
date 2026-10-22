@@ -948,6 +948,10 @@ typedef enum __attribute__((packed)) gps_request_code {
     GPS_REQUEST_NONE=255
 } gps_request_code;
 
+typedef enum __attribute__((packed)) gps_request_code_word {
+    GPS_REQUEST_CODE_WORD_MIN=-32768
+} gps_request_code_word;
+
 typedef struct gps_request_entry gps_request_entry, *Pgps_request_entry;
 
 typedef enum __attribute__((packed)) gps_request_result {
@@ -989,7 +993,7 @@ typedef struct gps_running_command gps_running_command, *Pgps_running_command;
 typedef struct gps_script_step gps_script_step, *Pgps_script_step;
 
 struct gps_script_step {
-    int16_t code;
+    enum gps_request_code_word code;
     enum gps_argument_mode argument_mode;
     uint8_t field_03;
     int32_t arguments[4];
@@ -1007,7 +1011,7 @@ struct gps_running_command {
 typedef struct gps_script_query_step gps_script_query_step, *Pgps_script_query_step;
 
 struct gps_script_query_step {
-    int16_t code;
+    enum gps_request_code_word code;
     enum gps_argument_mode argument_mode;
     uint8_t field_03;
 };
@@ -1015,7 +1019,7 @@ struct gps_script_query_step {
 typedef struct gps_script_step_1_argument gps_script_step_1_argument, *Pgps_script_step_1_argument;
 
 struct gps_script_step_1_argument {
-    int16_t code;
+    enum gps_request_code_word code;
     enum gps_argument_mode argument_mode;
     uint8_t field_03;
     int32_t arguments[1];
@@ -1024,7 +1028,7 @@ struct gps_script_step_1_argument {
 typedef struct gps_script_step_2_arguments gps_script_step_2_arguments, *Pgps_script_step_2_arguments;
 
 struct gps_script_step_2_arguments {
-    int16_t code;
+    enum gps_request_code_word code;
     enum gps_argument_mode argument_mode;
     uint8_t field_03;
     int32_t arguments[2];
@@ -1033,7 +1037,7 @@ struct gps_script_step_2_arguments {
 typedef struct gps_script_step_3_arguments gps_script_step_3_arguments, *Pgps_script_step_3_arguments;
 
 struct gps_script_step_3_arguments {
-    int16_t code;
+    enum gps_request_code_word code;
     enum gps_argument_mode argument_mode;
     uint8_t field_03;
     int32_t arguments[3];
@@ -3624,6 +3628,7 @@ _Static_assert(sizeof(gps_raim_assessment) == 1, "gps_raim_assessment");
 _Static_assert(sizeof(gps_receiver_number) == 1, "gps_receiver_number");
 _Static_assert(sizeof(gps_reference_override) == 1, "gps_reference_override");
 _Static_assert(sizeof(gps_request_code) == 1, "gps_request_code");
+_Static_assert(sizeof(gps_request_code_word) == 2, "gps_request_code_word");
 _Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
 _Static_assert(sizeof(gps_request_result) == 1, "gps_request_result");
 _Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
@@ -4054,8 +4059,161 @@ extern char forth_begin_tag[10]; /* 00019556 */
 extern char forth_while_tag[10]; /* 0001956a */
 extern char forth_until_tag[10]; /* 000195f6 */
 extern int32_t forth_sine_table[91]; /* 00019a2c */
-extern pforth_word_header forth_user_header; /* 0001ad0e */
-extern char forth_user_name[6]; /* 0001ad1a */
+extern pforth_word_header forth_header_over; /* 0001a296 */
+extern pforth_word_header forth_header_abs; /* 0001a2a8 */
+extern pforth_word_header forth_header_max; /* 0001a2b8 */
+extern pforth_word_header forth_header_min; /* 0001a2c8 */
+extern pforth_word_header forth_header_w_fetch; /* 0001a2d8 */
+extern pforth_word_header forth_header_w_store; /* 0001a2e8 */
+extern pforth_word_header forth_header_c_fetch; /* 0001a2f8 */
+extern pforth_word_header forth_header_c_store; /* 0001a308 */
+extern pforth_word_header forth_header_negate; /* 0001a318 */
+extern pforth_word_header forth_header_here; /* 0001a32c */
+extern pforth_word_header forth_header_greater_r; /* 0001a33e */
+extern pforth_word_header forth_header_r_greater; /* 0001a34e */
+extern pforth_word_header forth_header_fill; /* 0001a35e */
+extern pforth_word_header forth_header_pick; /* 0001a370 */
+extern pforth_word_header forth_header_comma; /* 0001a382 */
+extern pforth_word_header forth_header_w_comma; /* 0001a390 */
+extern pforth_word_header forth_header_c_comma; /* 0001a3a0 */
+extern pforth_word_header forth_header_rot; /* 0001a3b0 */
+extern pforth_word_header forth_header_minus_rot; /* 0001a3c0 */
+extern pforth_word_header forth_header_allot; /* 0001a3d2 */
+extern pforth_word_header forth_header_2dup; /* 0001a3e4 */
+extern pforth_word_header forth_header_2swap; /* 0001a3f6 */
+extern pforth_word_header forth_header_paren; /* 0001a408 */
+extern pforth_word_header forth_header_abort; /* 0001a416 */
+extern pforth_word_header forth_header_halt; /* 0001a428 */
+extern pforth_word_header forth_header_false; /* 0001a43a */
+extern pforth_word_header forth_header_true; /* 0001a44c */
+extern pforth_word_header forth_header_or; /* 0001a45e */
+extern pforth_word_header forth_header_and; /* 0001a46e */
+extern pforth_word_header forth_header_not; /* 0001a47e */
+extern pforth_word_header forth_header_xor; /* 0001a48e */
+extern pforth_word_header forth_header_equal; /* 0001a49e */
+extern pforth_word_header forth_header_greater; /* 0001a4ac */
+extern pforth_word_header forth_header_less; /* 0001a4ba */
+extern pforth_word_header forth_header_0_less; /* 0001a4c8 */
+extern pforth_word_header forth_header_0_equal; /* 0001a4d8 */
+extern pforth_word_header forth_header_0_greater; /* 0001a4e8 */
+extern pforth_word_header forth_header_query_dup; /* 0001a4f8 */
+extern pforth_word_header forth_header_cmove; /* 0001a50a */
+extern pforth_word_header forth_header_cmove_greater; /* 0001a51c */
+extern pforth_word_header forth_header_2drop; /* 0001a530 */
+extern pforth_word_header forth_header_drop; /* 0001a542 */
+extern pforth_word_header forth_header_swap; /* 0001a554 */
+extern pforth_word_header forth_header_dup; /* 0001a566 */
+extern pforth_word_header forth_header_depth; /* 0001a576 */
+extern pforth_word_header forth_header_if; /* 0001a588 */
+extern pforth_word_header forth_header_else; /* 0001a598 */
+extern pforth_word_header forth_header_then; /* 0001a5aa */
+extern pforth_word_header forth_header_endif; /* 0001a5bc */
+extern pforth_word_header forth_header_begin; /* 0001a5ce */
+extern pforth_word_header forth_header_while; /* 0001a5e0 */
+extern pforth_word_header forth_header_repeat; /* 0001a5f2 */
+extern pforth_word_header forth_header_again; /* 0001a606 */
+extern pforth_word_header forth_header_until; /* 0001a618 */
+extern pforth_word_header forth_header_do; /* 0001a62a */
+extern pforth_word_header forth_header_query_do; /* 0001a63a */
+extern pforth_word_header forth_header_loop; /* 0001a64a */
+extern pforth_word_header forth_header_plus_loop; /* 0001a65c */
+extern pforth_word_header forth_header_leave; /* 0001a66e */
+extern pforth_word_header forth_header_k; /* 0001a680 */
+extern pforth_word_header forth_header_j; /* 0001a68e */
+extern pforth_word_header forth_header_i; /* 0001a69c */
+extern pforth_word_header forth_header_fetch; /* 0001a6aa */
+extern pforth_word_header forth_header_store; /* 0001a6b8 */
+extern pforth_word_header forth_header_variable; /* 0001a6c6 */
+extern pforth_word_header forth_header_create; /* 0001a6dc */
+extern pforth_word_header forth_header_constant; /* 0001a6f0 */
+extern pforth_word_header forth_header_literal; /* 0001a706 */
+extern pforth_word_header forth_header_colon; /* 0001a71a */
+extern pforth_word_header forth_header_semicolon; /* 0001a728 */
+extern pforth_word_header forth_header_mod; /* 0001a736 */
+extern pforth_word_header forth_header_slash_mod; /* 0001a746 */
+extern pforth_word_header forth_header_star_slash_mod; /* 0001a758 */
+extern pforth_word_header forth_header_star_slash; /* 0001a76a */
+extern pforth_word_header forth_header_slash; /* 0001a77a */
+extern pforth_word_header forth_header_star; /* 0001a788 */
+extern pforth_word_header forth_header_minus; /* 0001a796 */
+extern pforth_word_header forth_header_plus; /* 0001a7a4 */
+extern pforth_word_header forth_header_plus_store; /* 0001a7b2 */
+extern pforth_word_header forth_header_1_plus; /* 0001a7c2 */
+extern pforth_word_header forth_header_1_minus; /* 0001a7d2 */
+extern pforth_word_header forth_header_2_plus; /* 0001a7e2 */
+extern pforth_word_header forth_header_2_minus; /* 0001a7f2 */
+extern pforth_word_header forth_header_2_slash; /* 0001a802 */
+extern pforth_word_header forth_header_2_star; /* 0001a812 */
+extern pforth_word_header forth_header_less_less; /* 0001a822 */
+extern pforth_word_header forth_header_greater_greater; /* 0001a832 */
+extern pforth_word_header forth_header_sin; /* 0001a842 */
+extern pforth_word_header forth_header_cos; /* 0001a852 */
+extern pforth_word_header forth_header_emit; /* 0001a862 */
+extern pforth_word_header forth_header_space; /* 0001a874 */
+extern pforth_word_header forth_header_spaces; /* 0001a886 */
+extern pforth_word_header forth_header_cr; /* 0001a89a */
+extern pforth_word_header forth_header_dot_quote; /* 0001a8aa */
+extern pforth_word_header forth_header_paren_dot_quote_close_paren; /* 0001a8ba */
+extern pforth_word_header forth_header_dot; /* 0001a8cc */
+extern pforth_word_header forth_header_u_dot; /* 0001a8da */
+extern pforth_word_header forth_header_u_dot_x; /* 0001a8ea */
+extern pforth_word_header forth_header_dot_s; /* 0001a8fa */
+extern pforth_word_header forth_header_decimal; /* 0001a90a */
+extern pforth_word_header forth_header_hex; /* 0001a91e */
+extern pforth_word_header forth_header_base; /* 0001a92e */
+extern pforth_word_header forth_header_state; /* 0001a940 */
+extern pforth_word_header forth_header_tick; /* 0001a952 */
+extern pforth_word_header forth_header_bracket_tick_close_bracket; /* 0001a960 */
+extern pforth_word_header forth_header_bracket; /* 0001a970 */
+extern pforth_word_header forth_header_close_bracket; /* 0001a97e */
+extern pforth_word_header forth_header_forget; /* 0001a98c */
+extern pforth_word_header forth_header_words; /* 0001a9a0 */
+extern pforth_word_header forth_header_startup; /* 0001a9b2 */
+extern pforth_word_header forth_header_interpret; /* 0001a9c6 */
+extern pforth_word_header forth_header_expect; /* 0001a9dc */
+extern pforth_word_header forth_header_type; /* 0001a9f0 */
+extern pforth_word_header forth_header_word; /* 0001aa02 */
+extern pforth_word_header forth_header_count; /* 0001aa14 */
+extern pforth_word_header forth_header_tib; /* 0001aa26 */
+extern pforth_word_header forth_header_pad; /* 0001aa36 */
+extern pforth_word_header forth_header_does_greater; /* 0001aa46 */
+extern pforth_word_header forth_header_recurse; /* 0001aa58 */
+extern pforth_word_header forth_header_immediate; /* 0001aa6c */
+extern pforth_word_header forth_header_fence; /* 0001aa82 */
+extern pforth_word_header forth_header_unfence; /* 0001aa94 */
+extern pforth_word_header forth_header_number; /* 0001aaa8 */
+extern pforth_word_header forth_header_0x; /* 0001aabc */
+extern pforth_word_header forth_header_execute; /* 0001aacc */
+extern pforth_word_header forth_header_watch; /* 0001aae0 */
+extern pforth_word_header forth_header_root; /* 0001aaf2 */
+extern pforth_word_header forth_header_my_pid; /* 0001ab04 */
+extern pforth_word_header forth_header_query_caret_C; /* 0001ab18 */
+extern pforth_word_header forth_header_spawn; /* 0001ab28 */
+extern pforth_word_header forth_header_ver; /* 0001ab3a */
+extern pforth_word_header forth_header_delete; /* 0001ab4a */
+extern pforth_word_header forth_header_suspend; /* 0001ab5e */
+extern pforth_word_header forth_header_resume; /* 0001ab72 */
+extern pforth_word_header forth_header_priority; /* 0001ab86 */
+extern pforth_word_header forth_header_jam_x; /* 0001ab9c */
+extern pforth_word_header forth_header_create_x; /* 0001abae */
+extern pforth_word_header forth_header_delete_x; /* 0001abc4 */
+extern pforth_word_header forth_header_send_x; /* 0001abda */
+extern pforth_word_header forth_header_request_x; /* 0001abee */
+extern pforth_word_header forth_header_signal_v; /* 0001ac04 */
+extern pforth_word_header forth_header_wait_v; /* 0001ac1a */
+extern pforth_word_header forth_header_get_v; /* 0001ac2e */
+extern pforth_word_header forth_header_pause; /* 0001ac40 */
+extern pforth_word_header forth_header_mode; /* 0001ac52 */
+extern pforth_word_header forth_header_ident; /* 0001ac64 */
+extern pforth_word_header forth_header_dev_init; /* 0001ac76 */
+extern pforth_word_header forth_header_dev_open; /* 0001ac8c */
+extern pforth_word_header forth_header_dev_close; /* 0001aca2 */
+extern pforth_word_header forth_header_dev_read; /* 0001acb8 */
+extern pforth_word_header forth_header_dev_write; /* 0001acce */
+extern pforth_word_header forth_header_dev_ctrl; /* 0001ace4 */
+extern pforth_word_header forth_header_store_iodev; /* 0001acfa */
+extern pforth_word_header forth_header_user; /* 0001ad0e */
+extern char forth_header_user_name[6]; /* 0001ad1a */
 extern diag_word_entry diag_words[86]; /* 0001c8ac */
 extern char loopback_idle_text[1]; /* 0001ed2c */
 extern char loopback_test_text[20]; /* 0001ee6e */
@@ -7149,14 +7307,167 @@ __asm__(".set forth_base_letters, 0x00019086");
 __asm__(".set forth_begin_tag, 0x00019556");
 __asm__(".set forth_character_classes, 0x00018de2");
 __asm__(".set forth_do_tag, 0x0001942d");
+__asm__(".set forth_header_0_equal, 0x0001a4d8");
+__asm__(".set forth_header_0_greater, 0x0001a4e8");
+__asm__(".set forth_header_0_less, 0x0001a4c8");
+__asm__(".set forth_header_0x, 0x0001aabc");
+__asm__(".set forth_header_1_minus, 0x0001a7d2");
+__asm__(".set forth_header_1_plus, 0x0001a7c2");
+__asm__(".set forth_header_2_minus, 0x0001a7f2");
+__asm__(".set forth_header_2_plus, 0x0001a7e2");
+__asm__(".set forth_header_2_slash, 0x0001a802");
+__asm__(".set forth_header_2_star, 0x0001a812");
+__asm__(".set forth_header_2drop, 0x0001a530");
+__asm__(".set forth_header_2dup, 0x0001a3e4");
+__asm__(".set forth_header_2swap, 0x0001a3f6");
+__asm__(".set forth_header_abort, 0x0001a416");
+__asm__(".set forth_header_abs, 0x0001a2a8");
+__asm__(".set forth_header_again, 0x0001a606");
+__asm__(".set forth_header_allot, 0x0001a3d2");
+__asm__(".set forth_header_and, 0x0001a46e");
+__asm__(".set forth_header_base, 0x0001a92e");
+__asm__(".set forth_header_begin, 0x0001a5ce");
+__asm__(".set forth_header_bracket, 0x0001a970");
+__asm__(".set forth_header_bracket_tick_close_bracket, 0x0001a960");
+__asm__(".set forth_header_c_comma, 0x0001a3a0");
+__asm__(".set forth_header_c_fetch, 0x0001a2f8");
+__asm__(".set forth_header_c_store, 0x0001a308");
+__asm__(".set forth_header_close_bracket, 0x0001a97e");
+__asm__(".set forth_header_cmove, 0x0001a50a");
+__asm__(".set forth_header_cmove_greater, 0x0001a51c");
+__asm__(".set forth_header_colon, 0x0001a71a");
+__asm__(".set forth_header_comma, 0x0001a382");
+__asm__(".set forth_header_constant, 0x0001a6f0");
+__asm__(".set forth_header_cos, 0x0001a852");
+__asm__(".set forth_header_count, 0x0001aa14");
+__asm__(".set forth_header_cr, 0x0001a89a");
+__asm__(".set forth_header_create, 0x0001a6dc");
+__asm__(".set forth_header_create_x, 0x0001abae");
+__asm__(".set forth_header_decimal, 0x0001a90a");
+__asm__(".set forth_header_delete, 0x0001ab4a");
+__asm__(".set forth_header_delete_x, 0x0001abc4");
+__asm__(".set forth_header_depth, 0x0001a576");
+__asm__(".set forth_header_dev_close, 0x0001aca2");
+__asm__(".set forth_header_dev_ctrl, 0x0001ace4");
+__asm__(".set forth_header_dev_init, 0x0001ac76");
+__asm__(".set forth_header_dev_open, 0x0001ac8c");
+__asm__(".set forth_header_dev_read, 0x0001acb8");
+__asm__(".set forth_header_dev_write, 0x0001acce");
+__asm__(".set forth_header_do, 0x0001a62a");
+__asm__(".set forth_header_does_greater, 0x0001aa46");
+__asm__(".set forth_header_dot, 0x0001a8cc");
+__asm__(".set forth_header_dot_quote, 0x0001a8aa");
+__asm__(".set forth_header_dot_s, 0x0001a8fa");
+__asm__(".set forth_header_drop, 0x0001a542");
+__asm__(".set forth_header_dup, 0x0001a566");
+__asm__(".set forth_header_else, 0x0001a598");
+__asm__(".set forth_header_emit, 0x0001a862");
+__asm__(".set forth_header_endif, 0x0001a5bc");
+__asm__(".set forth_header_equal, 0x0001a49e");
+__asm__(".set forth_header_execute, 0x0001aacc");
+__asm__(".set forth_header_expect, 0x0001a9dc");
+__asm__(".set forth_header_false, 0x0001a43a");
+__asm__(".set forth_header_fence, 0x0001aa82");
+__asm__(".set forth_header_fetch, 0x0001a6aa");
+__asm__(".set forth_header_fill, 0x0001a35e");
+__asm__(".set forth_header_forget, 0x0001a98c");
+__asm__(".set forth_header_get_v, 0x0001ac2e");
+__asm__(".set forth_header_greater, 0x0001a4ac");
+__asm__(".set forth_header_greater_greater, 0x0001a832");
+__asm__(".set forth_header_greater_r, 0x0001a33e");
+__asm__(".set forth_header_halt, 0x0001a428");
+__asm__(".set forth_header_here, 0x0001a32c");
+__asm__(".set forth_header_hex, 0x0001a91e");
+__asm__(".set forth_header_i, 0x0001a69c");
+__asm__(".set forth_header_ident, 0x0001ac64");
+__asm__(".set forth_header_if, 0x0001a588");
+__asm__(".set forth_header_immediate, 0x0001aa6c");
+__asm__(".set forth_header_interpret, 0x0001a9c6");
+__asm__(".set forth_header_j, 0x0001a68e");
+__asm__(".set forth_header_jam_x, 0x0001ab9c");
+__asm__(".set forth_header_k, 0x0001a680");
+__asm__(".set forth_header_leave, 0x0001a66e");
+__asm__(".set forth_header_less, 0x0001a4ba");
+__asm__(".set forth_header_less_less, 0x0001a822");
+__asm__(".set forth_header_literal, 0x0001a706");
+__asm__(".set forth_header_loop, 0x0001a64a");
+__asm__(".set forth_header_max, 0x0001a2b8");
+__asm__(".set forth_header_min, 0x0001a2c8");
+__asm__(".set forth_header_minus, 0x0001a796");
+__asm__(".set forth_header_minus_rot, 0x0001a3c0");
+__asm__(".set forth_header_mod, 0x0001a736");
+__asm__(".set forth_header_mode, 0x0001ac52");
+__asm__(".set forth_header_my_pid, 0x0001ab04");
+__asm__(".set forth_header_negate, 0x0001a318");
+__asm__(".set forth_header_not, 0x0001a47e");
+__asm__(".set forth_header_number, 0x0001aaa8");
+__asm__(".set forth_header_or, 0x0001a45e");
+__asm__(".set forth_header_over, 0x0001a296");
+__asm__(".set forth_header_pad, 0x0001aa36");
+__asm__(".set forth_header_paren, 0x0001a408");
+__asm__(".set forth_header_paren_dot_quote_close_paren, 0x0001a8ba");
+__asm__(".set forth_header_pause, 0x0001ac40");
+__asm__(".set forth_header_pick, 0x0001a370");
+__asm__(".set forth_header_plus, 0x0001a7a4");
+__asm__(".set forth_header_plus_loop, 0x0001a65c");
+__asm__(".set forth_header_plus_store, 0x0001a7b2");
+__asm__(".set forth_header_priority, 0x0001ab86");
+__asm__(".set forth_header_query_caret_C, 0x0001ab18");
+__asm__(".set forth_header_query_do, 0x0001a63a");
+__asm__(".set forth_header_query_dup, 0x0001a4f8");
+__asm__(".set forth_header_r_greater, 0x0001a34e");
+__asm__(".set forth_header_recurse, 0x0001aa58");
+__asm__(".set forth_header_repeat, 0x0001a5f2");
+__asm__(".set forth_header_request_x, 0x0001abee");
+__asm__(".set forth_header_resume, 0x0001ab72");
+__asm__(".set forth_header_root, 0x0001aaf2");
+__asm__(".set forth_header_rot, 0x0001a3b0");
+__asm__(".set forth_header_semicolon, 0x0001a728");
+__asm__(".set forth_header_send_x, 0x0001abda");
+__asm__(".set forth_header_signal_v, 0x0001ac04");
+__asm__(".set forth_header_sin, 0x0001a842");
+__asm__(".set forth_header_slash, 0x0001a77a");
+__asm__(".set forth_header_slash_mod, 0x0001a746");
+__asm__(".set forth_header_space, 0x0001a874");
+__asm__(".set forth_header_spaces, 0x0001a886");
+__asm__(".set forth_header_spawn, 0x0001ab28");
+__asm__(".set forth_header_star, 0x0001a788");
+__asm__(".set forth_header_star_slash, 0x0001a76a");
+__asm__(".set forth_header_star_slash_mod, 0x0001a758");
+__asm__(".set forth_header_startup, 0x0001a9b2");
+__asm__(".set forth_header_state, 0x0001a940");
+__asm__(".set forth_header_store, 0x0001a6b8");
+__asm__(".set forth_header_store_iodev, 0x0001acfa");
+__asm__(".set forth_header_suspend, 0x0001ab5e");
+__asm__(".set forth_header_swap, 0x0001a554");
+__asm__(".set forth_header_then, 0x0001a5aa");
+__asm__(".set forth_header_tib, 0x0001aa26");
+__asm__(".set forth_header_tick, 0x0001a952");
+__asm__(".set forth_header_true, 0x0001a44c");
+__asm__(".set forth_header_type, 0x0001a9f0");
+__asm__(".set forth_header_u_dot, 0x0001a8da");
+__asm__(".set forth_header_u_dot_x, 0x0001a8ea");
+__asm__(".set forth_header_unfence, 0x0001aa94");
+__asm__(".set forth_header_until, 0x0001a618");
+__asm__(".set forth_header_user, 0x0001ad0e");
+__asm__(".set forth_header_user_name, 0x0001ad1a");
+__asm__(".set forth_header_variable, 0x0001a6c6");
+__asm__(".set forth_header_ver, 0x0001ab3a");
+__asm__(".set forth_header_w_comma, 0x0001a390");
+__asm__(".set forth_header_w_fetch, 0x0001a2d8");
+__asm__(".set forth_header_w_store, 0x0001a2e8");
+__asm__(".set forth_header_wait_v, 0x0001ac1a");
+__asm__(".set forth_header_watch, 0x0001aae0");
+__asm__(".set forth_header_while, 0x0001a5e0");
+__asm__(".set forth_header_word, 0x0001aa02");
+__asm__(".set forth_header_words, 0x0001a9a0");
+__asm__(".set forth_header_xor, 0x0001a48e");
 __asm__(".set forth_if_tag, 0x000194de");
 __asm__(".set forth_pad_buffer, 0x00100a8a");
 __asm__(".set forth_prompt, 0x00100b14");
 __asm__(".set forth_sine_table, 0x00019a2c");
 __asm__(".set forth_terminal_input, 0x00100a04");
 __asm__(".set forth_until_tag, 0x000195f6");
-__asm__(".set forth_user_header, 0x0001ad0e");
-__asm__(".set forth_user_name, 0x0001ad1a");
 __asm__(".set forth_while_tag, 0x0001956a");
 __asm__(".set fpga_bit_table, 0x00041310");
 __asm__(".set fpga_bitstream, 0x00020f18");
@@ -8725,6 +9036,16 @@ void * exception_hook_get(void);
 int32_t primary_default_exception();
 void print_exception(uint16_t param_1,uint32_t param_2,uint16_t param_3,uint32_t param_4);
 char * exception_name(uint16_t vector);
+int32_t m68000_bus_error();
+int32_t m68000_address_error();
+int32_t m68000_illegal_instruction();
+int32_t m68000_zero_division();
+int32_t m68000_chk();
+int32_t m68000_trapcc();
+int32_t m68000_privilege_violation();
+int32_t m68000_trace();
+int32_t m68000_line_a();
+int32_t m68000_line_f();
 int32_t primary_user_66();
 void periodic_interrupt_enable(char param_1);
 void qsm_init(void);
@@ -8905,11 +9226,11 @@ int32_t os_report_processes(printf_function *print);
 void os_report_regions(printf_function *print);
 uint32_t exchange_id_valid(uint32_t param_1);
 uint32_t task_id_valid(uint32_t param_1);
-void os_process_report(uint8_t param_1);
-void os_memory_report(uint8_t param_1);
+void os_process_report(request_source source);
+void os_memory_report(request_source source);
 void task_stack_info(void *task,uint32_t *user_top,uint32_t *user_pointer,uint32_t *user_size,
                     uint32_t *supervisor_top,uint32_t *supervisor_pointer,uint32_t *supervisor_size);
-void task_stack_report(uint8_t param_1);
+void task_stack_report(request_source source);
 void psos_debug_output(char param_1);
 void tick_account(int16_t mode) __asm__("c_tick_account");
 void task_count_tick(void);
@@ -10140,10 +10461,10 @@ void pll_scpi_complete(int32_t *param_1,char param_2);
 void gps_diag_complete(int32_t *param_1);
 void sample_action_print(int32_t index,int32_t source);
 void questionable_user_done(void);
-void status_enable_restore(uint32_t param_1,uint32_t param_2);
-void status_ptr_restore(uint32_t param_1,uint32_t param_2);
-void status_ntr_restore(uint32_t param_1,uint32_t param_2);
-void status_preset_done(uint32_t param_1,uint32_t param_2);
+void status_enable_restore(int32_t index,int32_t source);
+void status_ptr_restore(int32_t index,int32_t source);
+void status_ntr_restore(int32_t index,int32_t source);
+void status_preset_done(int32_t form,int32_t source);
 void holdover_ti_reset(void);
 void holdover_ti_add(float param_1);
 uint8_t holdover_correction_valid(void);
@@ -13479,6 +13800,338 @@ char * exception_name(uint16_t vector)
 
 #endif
 
+/* 00011a58 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 2: drops the 68000 group 0 frame's first 8 bytes
+   (its status word, access address and instruction register; addq.w #8,sp), then moves the SR and
+   PC down a word and puts the format/vector word 0x0008 (format 0) at +6, the CPU32 four-word frame
+   print_exception reads, and branches to primary_default_exception (0x11924); no vector table or
+   call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_bus_error(uint16_t param_1,uint16_t param_2,uint16_t param_3)
+
+{
+  uint16_t uStack00000006;
+  
+  uStack00000006 = param_1;
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_bus_error\n"
+	"	.type m68000_bus_error, @function\n"
+	"	.pushsection .text.m68000_bus_error.11a58,\"ax\",@progbits\n"
+	"m68000_bus_error:\n"
+	"	addq.w #0x8,%sp\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x8,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_bus_error, .-m68000_bus_error\n"
+	"	.popsection\n"
+);
+
+/* 00011a72 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 3: drops the 68000 group 0 frame's first 8 bytes
+   (its status word, access address and instruction register; addq.w #8,sp), then moves the SR and
+   PC down a word and puts the format/vector word 0x000c (format 0) at +6, the CPU32 four-word frame
+   print_exception reads, and branches to primary_default_exception (0x11924); no vector table or
+   call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_address_error(uint16_t param_1,uint16_t param_2,uint16_t param_3)
+
+{
+  uint16_t uStack00000006;
+  
+  uStack00000006 = param_1;
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_address_error\n"
+	"	.type m68000_address_error, @function\n"
+	"	.pushsection .text.m68000_address_error.11a72,\"ax\",@progbits\n"
+	"m68000_address_error:\n"
+	"	addq.w #0x8,%sp\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0xc,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_address_error, .-m68000_address_error\n"
+	"	.popsection\n"
+);
+
+/* 00011a8c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 4: moves the SR and PC down a word and puts the
+   format/vector word 0x0010 (format 0) at +6, the CPU32 four-word frame print_exception reads, and
+   branches to primary_default_exception (0x11924); no vector table or call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_illegal_instruction(uint16_t param_1)
+
+{
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_illegal_instruction\n"
+	"	.type m68000_illegal_instruction, @function\n"
+	"	.pushsection .text.m68000_illegal_instruction.11a8c,\"ax\",@progbits\n"
+	"m68000_illegal_instruction:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x10,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_illegal_instruction, .-m68000_illegal_instruction\n"
+	"	.popsection\n"
+);
+
+/* 00011aa4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 5: moves the SR and PC down a word and puts the
+   format/vector word 0x0014 (format 0) at +6, the CPU32 four-word frame print_exception reads, and
+   branches to primary_default_exception (0x11924); no vector table or call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_zero_division(uint16_t param_1)
+
+{
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_zero_division\n"
+	"	.type m68000_zero_division, @function\n"
+	"	.pushsection .text.m68000_zero_division.11aa4,\"ax\",@progbits\n"
+	"m68000_zero_division:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x14,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_zero_division, .-m68000_zero_division\n"
+	"	.popsection\n"
+);
+
+/* 00011abc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 6: moves the SR and PC down a word and puts the
+   format/vector word 0x0018 (format 0) at +6, the CPU32 four-word frame print_exception reads, and
+   branches to primary_default_exception (0x11924); no vector table or call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_chk(uint16_t param_1)
+
+{
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_chk\n"
+	"	.type m68000_chk, @function\n"
+	"	.pushsection .text.m68000_chk.11abc,\"ax\",@progbits\n"
+	"m68000_chk:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x18,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_chk, .-m68000_chk\n"
+	"	.popsection\n"
+);
+
+/* 00011ad4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 7: moves the SR and PC down a word and puts the
+   format/vector word 0x001c (format 0) at +6, the CPU32 four-word frame print_exception reads, and
+   branches to primary_default_exception (0x11924); no vector table or call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_trapcc(uint16_t param_1)
+
+{
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_trapcc\n"
+	"	.type m68000_trapcc, @function\n"
+	"	.pushsection .text.m68000_trapcc.11ad4,\"ax\",@progbits\n"
+	"m68000_trapcc:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x1c,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_trapcc, .-m68000_trapcc\n"
+	"	.popsection\n"
+);
+
+/* 00011aec */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 8: moves the SR and PC down a word and puts the
+   format/vector word 0x0020 (format 0) at +6, the CPU32 four-word frame print_exception reads, and
+   branches to primary_default_exception (0x11924); no vector table or call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_privilege_violation(uint16_t param_1)
+
+{
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_privilege_violation\n"
+	"	.type m68000_privilege_violation, @function\n"
+	"	.pushsection .text.m68000_privilege_violation.11aec,\"ax\",@progbits\n"
+	"m68000_privilege_violation:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x20,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_privilege_violation, .-m68000_privilege_violation\n"
+	"	.popsection\n"
+);
+
+/* 00011b04 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 9: moves the SR and PC down a word and puts the
+   format/vector word 0x0024 (format 0) at +6, the CPU32 four-word frame print_exception reads, and
+   branches to primary_default_exception (0x11924); no vector table or call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_trace(uint16_t param_1)
+
+{
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_trace\n"
+	"	.type m68000_trace, @function\n"
+	"	.pushsection .text.m68000_trace.11b04,\"ax\",@progbits\n"
+	"m68000_trace:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x24,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_trace, .-m68000_trace\n"
+	"	.popsection\n"
+);
+
+/* 00011b1c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 10: moves the SR and PC down a word and puts the
+   format/vector word 0x0028 (format 0) at +6, the CPU32 four-word frame print_exception reads, and
+   branches to primary_default_exception (0x11924); no vector table or call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_line_a(uint16_t param_1)
+
+{
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_line_a\n"
+	"	.type m68000_line_a, @function\n"
+	"	.pushsection .text.m68000_line_a.11b1c,\"ax\",@progbits\n"
+	"m68000_line_a:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x28,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_line_a, .-m68000_line_a\n"
+	"	.popsection\n"
+);
+
+/* 00011b34 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* an MC68000 exception frame's adapter for vector 11: moves the SR and PC down a word and puts the
+   format/vector word 0x002c (format 0) at +6, the CPU32 four-word frame print_exception reads, and
+   branches to primary_default_exception (0x11924); no vector table or call names it in any image
+   Not a C function (exception; read): entered by the processor, not called.
+   structures.md */
+
+__exception void m68000_line_f(uint16_t param_1)
+
+{
+  primary_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl m68000_line_f\n"
+	"	.type m68000_line_f, @function\n"
+	"	.pushsection .text.m68000_line_f.11b34,\"ax\",@progbits\n"
+	"m68000_line_f:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x2c,(0x6,%sp)\n"
+	"	bra.w primary_default_exception\n"
+	"	.size m68000_line_f, .-m68000_line_f\n"
+	"	.popsection\n"
+);
+
 /* 00011f82 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
@@ -14531,7 +15184,7 @@ void console_halt_hook(void)
 void ps_word(void)
 
 {
-  os_process_report(0);
+  os_process_report(REQUEST_SOURCE_SCPI);
   return;
 }
 
@@ -14546,7 +15199,7 @@ void ps_word(void)
 void mem_rep_word(void)
 
 {
-  os_memory_report(0);
+  os_memory_report(REQUEST_SOURCE_SCPI);
   return;
 }
 
@@ -14561,7 +15214,7 @@ void mem_rep_word(void)
 void s_rep_word(void)
 
 {
-  task_stack_report(0);
+  task_stack_report(REQUEST_SOURCE_SCPI);
   return;
 }
 
@@ -24657,10 +25310,11 @@ uint32_t task_id_valid(uint32_t param_1)
 /* 00016a4c */
 #if 0 /* the decompiler's reading; rewritten in os.c */
 
-/* :DIAG:OS:PROC?'s report of the tasks
+/* :DIAG:OS:PROC?'s report of the tasks; the source, a byte in a word slot (0x12f86, 0x2b866), is
+   unread
    structures.md */
 
-void os_process_report(uint8_t param_1)
+void os_process_report(request_source source)
 
 {
   printf("%s","\r\n");
@@ -24685,10 +25339,11 @@ void os_process_report(uint8_t param_1)
 /* 00016ace */
 #if 0 /* the decompiler's reading; rewritten in os.c */
 
-/* :DIAG:OS:MEM?'s report, "Process Memseg size(bytes) next last neighbor key"
+/* :DIAG:OS:MEM?'s report, "Process Memseg size(bytes) next last neighbor key"; the source, a byte
+   in a word slot (0x12f92, 0x2b844), is unread
    structures.md */
 
-void os_memory_report(uint8_t param_1)
+void os_memory_report(request_source source)
 
 {
   psos_task *task;
@@ -24772,10 +25427,11 @@ void task_stack_info(void *task,uint32_t *user_top,uint32_t *user_pointer,uint32
 /* 00016c44 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
 
-/* "pid name USP size SSP size", each task's stacks and their use
+/* "pid name USP size SSP size", each task's stacks and their use; the source, a byte in a word slot
+   (0x12f9e, 0x2b888), is unread
    structures.md */
 
-void task_stack_report(uint8_t param_1)
+void task_stack_report(request_source source)
 
 {
   psos_task *task;
@@ -34607,7 +35263,7 @@ __asm__(
 __pforth void forth_unfence(forth_user_end user)
 
 {
-  ADJ(user)->fence = &forth_user_header;
+  ADJ(user)->fence = &forth_header_user;
   return;
 }
 
@@ -36237,7 +36893,7 @@ __asm__(
 __pforth void forth_user(int32_t *sp)
 
 {
-  sp[-1] = (int32_t)&forth_user_header;
+  sp[-1] = (int32_t)&forth_header_user;
   return;
 }
 
@@ -36571,7 +37227,7 @@ __naked void console_task(void)
   local_8 = local_28 + -(in_stack_00000000 >> 0x10);
   local_12 = pforth_dictionary_next;
   local_16 = pforth_latest_word;
-  local_1a = &forth_user_header;
+  local_1a = &forth_header_user;
   local_1e = forth_terminal_input;
   local_22 = forth_pad_buffer;
   local_28[1] = 0x7034;
@@ -53703,7 +54359,7 @@ int32_t scpi_query_DIAGnostic_OS_MEMory(void *parameters,void *response,scpi_cal
   
   *(uint16_t *)response = 0;
   zero = return_zero(call->input);
-  os_memory_report((char)zero);
+  os_memory_report((request_source)zero);
   return 0;
 }
 
@@ -53721,7 +54377,7 @@ int32_t scpi_query_DIAGnostic_OS_PROCess(void *parameters,void *response,scpi_ca
   
   *(uint16_t *)response = 0;
   zero = return_zero(call->input);
-  os_process_report((char)zero);
+  os_process_report((request_source)zero);
   return 0;
 }
 
@@ -53739,7 +54395,7 @@ int32_t scpi_query_DIAGnostic_OS_STACk(void *parameters,void *response,scpi_call
   
   *(uint16_t *)response = 0;
   zero = return_zero(call->input);
-  task_stack_report((char)zero);
+  task_stack_report((request_source)zero);
   return 0;
 }
 
@@ -65645,16 +66301,16 @@ void questionable_user_done(void)
 
 /* restores a status register's enable mask from the NV settings, reporting 0xe if it fails */
 
-void status_enable_restore(uint32_t param_1,uint32_t param_2)
+void status_enable_restore(int32_t index,int32_t source)
 
 {
   uint32_t accepted;
   
   accepted = status_preset_register
-                    (STATUS_MASK_ENABLE,(request_source)param_2,(int16_t)(char)param_1,
-                     (int16_t)nv_settings.status_enable[(char)param_1]);
+                    (STATUS_MASK_ENABLE,(request_source)source,(int16_t)(char)index,
+                     (int16_t)nv_settings.status_enable[(char)index]);
   if ((char)accepted == 0) {
-    status_report_from(0xe,(request_source)param_2);
+    status_report_from(0xe,(request_source)source);
   }
   return;
 }
@@ -65666,16 +66322,16 @@ void status_enable_restore(uint32_t param_1,uint32_t param_2)
 
 /* restores a status register's positive transition filter from the NV settings */
 
-void status_ptr_restore(uint32_t param_1,uint32_t param_2)
+void status_ptr_restore(int32_t index,int32_t source)
 
 {
   uint32_t accepted;
   
   accepted = status_preset_register
-                    (STATUS_MASK_POSITIVE_TRANSITION,(request_source)param_2,(int16_t)(char)param_1,
-                     (int16_t)nv_settings.status_positive_transition[(char)param_1]);
+                    (STATUS_MASK_POSITIVE_TRANSITION,(request_source)source,(int16_t)(char)index,
+                     (int16_t)nv_settings.status_positive_transition[(char)index]);
   if ((char)accepted == 0) {
-    status_report_from(0xe,(request_source)param_2);
+    status_report_from(0xe,(request_source)source);
   }
   return;
 }
@@ -65687,16 +66343,16 @@ void status_ptr_restore(uint32_t param_1,uint32_t param_2)
 
 /* restores a status register's negative transition filter from the NV settings */
 
-void status_ntr_restore(uint32_t param_1,uint32_t param_2)
+void status_ntr_restore(int32_t index,int32_t source)
 
 {
   uint32_t accepted;
   
   accepted = status_preset_register
-                    (STATUS_MASK_NEGATIVE_TRANSITION,(request_source)param_2,(int16_t)(char)param_1,
-                     (int16_t)nv_settings.status_negative_transition[(char)param_1]);
+                    (STATUS_MASK_NEGATIVE_TRANSITION,(request_source)source,(int16_t)(char)index,
+                     (int16_t)nv_settings.status_negative_transition[(char)index]);
   if ((char)accepted == 0) {
-    status_report_from(0xe,(request_source)param_2);
+    status_report_from(0xe,(request_source)source);
   }
   return;
 }
@@ -65708,48 +66364,48 @@ void status_ntr_restore(uint32_t param_1,uint32_t param_2)
 
 /* done for :STATus:PRESet: the enables and transition filters back to their defaults, saved */
 
-void status_preset_done(uint32_t param_1,uint32_t param_2)
+void status_preset_done(int32_t form,int32_t source)
 
 {
   uint8_t bVar1;
   int32_t iVar2;
-  uint32_t uVar3;
-  uint8_t bVar4;
+  uint32_t index;
+  uint8_t bVar3;
   
-  iVar2 = (char)param_1 + -1;
-  if ((char)param_1 == 0 || iVar2 == 0) {
+  iVar2 = (char)form + -1;
+  if ((char)form == 0 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0004355c_index_zero)[(int16_t)iVar2]) {
     case 4:
-      bVar4 = 2;
+      bVar3 = 2;
       do {
-        nv_settings.status_enable[bVar4] = (uint32_t)(&USHORT_0002f76e)[bVar4];
-        status_enable_restore((uint32_t)bVar4,0);
-        bVar4 = bVar4 + 1;
-      } while (bVar4 < 7);
+        nv_settings.status_enable[bVar3] = (uint32_t)(&USHORT_0002f76e)[bVar3];
+        status_enable_restore((uint32_t)bVar3,0);
+        bVar3 = bVar3 + 1;
+      } while (bVar3 < 7);
       break;
     case 0x38:
-      bVar4 = 0;
+      bVar3 = 0;
       do {
-        nv_settings.status_enable[bVar4] = (uint32_t)(&USHORT_0002f77c)[bVar4];
-        status_enable_restore((uint32_t)bVar4,0);
-        bVar4 = bVar4 + 1;
-      } while (bVar4 < 7);
+        nv_settings.status_enable[bVar3] = (uint32_t)(&USHORT_0002f77c)[bVar3];
+        status_enable_restore((uint32_t)bVar3,0);
+        bVar3 = bVar3 + 1;
+      } while (bVar3 < 7);
       nv_settings.questionable_user = 0;
       questionable_user_done();
     }
   }
-  bVar4 = 2;
+  bVar3 = 2;
   do {
-    bVar1 = bVar4 - 2;
+    bVar1 = bVar3 - 2;
     nv_settings.status_positive_transition[bVar1] = (uint32_t)(&USHORT_0002f78a)[bVar1];
     status_ptr_restore((uint32_t)bVar1,0);
-    uVar3 = (uint32_t)bVar1;
-    nv_settings.status_negative_transition[uVar3] = (uint32_t)(&USHORT_0002f794)[uVar3];
-    status_ntr_restore(uVar3,0);
-    bVar4 = bVar4 + 1;
-  } while (bVar4 < 7);
-  nv_save((request_source)param_2);
+    index = (uint32_t)bVar1;
+    nv_settings.status_negative_transition[index] = (uint32_t)(&USHORT_0002f794)[index];
+    status_ntr_restore(index,0);
+    bVar3 = bVar3 + 1;
+  } while (bVar3 < 7);
+  nv_save((request_source)source);
   return;
 }
 
@@ -73922,7 +74578,7 @@ void gpsm_task(void)
 
 {
   gps_script_step *pgVar1;
-  int16_t message;
+  gps_request_code_word message;
   uint32_t error;
   uint32_t valid;
   gps_code_class class;

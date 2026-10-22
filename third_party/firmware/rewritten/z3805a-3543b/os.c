@@ -936,7 +936,7 @@ static char* const os_report_rule =
 
 /* :DIAG:OS:PROC?'s report: the CPU, the tasks, the exchanges and the
  * regions; the source is unused (0x16a4c). */
-void os_process_report(uint8_t source) {
+void os_process_report(request_source source) {
   printf("%s", "\r\n");
   printf("%s", os_report_rule);
   printf("%s", "\r\n");
@@ -955,7 +955,7 @@ void os_process_report(uint8_t source) {
 
 /* :DIAG:OS:MEM?'s report: each task's segments, each region's free
  * segments, then the regions; the source is unused (0x16ace). */
-void os_memory_report(uint8_t source) {
+void os_memory_report(request_source source) {
   printf("%s", "\r\n");
   printf("%s", os_report_rule);
   task_count = task_table_build();
@@ -1095,7 +1095,7 @@ static uint16_t os_stack_use(uint32_t top, uint32_t size, uint32_t pointer) {
  * the last printed task's supervisor use when its words are all zero,
  * and, when no task was printed either, D2 as the caller left it
  * (0x16e06; docs/firmware/quirks.md, "Reads of what nothing set"). */
-void task_stack_report(uint8_t source) {
+void task_stack_report(request_source source) {
   uint16_t supervisor_use = CPU_CALLERS_REGISTER(uint32_t, "d2");
   /* task_stack_info's user size leaves out the 4 bytes above the
    * supervisor stack, which the report puts back. */

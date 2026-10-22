@@ -233,7 +233,7 @@
 0x10381c	label	dmes_scpi	context	set by the console's dmes_scpi	uint32_t
 0x103820	label	dmes_spoo	context	set by the console's dmes_spoo	uint32_t
 0x103824	label	dmes_curv	context	set by the console's dmes_curv	uint32_t
-0x136fe	function	get_date_time	context	:PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock.invalid	int get_date_time(uint32_t *date, time_of_day *time)
+0x136fe	function	get_date_time	context	:PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns 1 while clock.set is clear, the clock not set since power-up	int get_date_time(uint32_t *date, time_of_day *time)
 0x1009b8	label	clock	structures.md	the clock record the clock_record_ routines are given in A6, or reach through A4: uptime, date and time, GPS date and time, their month tables, the minute's length, the GPS-UTC offset; once the labels uptime, clock_time, clock_date, gps_time, gps_date, clock_invalid, gps_utc_offset and gps_utc_offset_valid	clock_record
 0x2410e	function	adc_average	context	diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(adc_channel channel)	convention=c; confidence=documented; out=D0 float
 0x1043a	function	mutex_acquire	context	recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned		convention=register; confidence=read; in=A1 mutex *lock; out=D7 int error; error=D7 0x80 nested hold; preserves=D0, D1, A0, A2; family=mutex
@@ -1126,10 +1126,10 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4637a	function	leap_settings_clear	context	clears the pending leap second: leap_pending 0, a 60-second minute, leap_date 1994-01-01
 0x46470	function	status_summary_update	context	builds status_summary's bits from the status registers
 0x4172a	function	curv_signal	context	signals the curv task, event 0x100
-0x4391e	function	holdover_limit_exceeded	context	1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age times a rate plus holdover_limit_threshold
+0x4391e	function	holdover_within_limit	context	1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age times a rate plus holdover_limit_threshold
 0x43804	function	holdover_ti_reset	context	clears holdover's TI statistics
 0x4381e	function	holdover_ti_add	context	adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the largest magnitude
-0x43916	function	holdover_ti_max	context	the largest TI magnitude holdover has seen, for holdover_limit_exceeded; a float in D0 (0x43916)	float holdover_ti_max(void)
+0x43916	function	holdover_ti_max	context	the largest TI magnitude holdover has seen, for holdover_within_limit; a float in D0 (0x43916)	float holdover_ti_max(void)
 0x46188	function	pll_check_reference	context	waits for an interval reading, sets fault bits at pll +0x11 (2 no GPS, 4 no reading, 0x10 internal 1PPS dead) and sets the clock from the reference; 1 if all is well, 2 if faulted	pll_stage_result pll_check_reference(bool same_stage)
 0x44e8e	function	fine_sync_adjust	context	for a TI beyond 1e-7 requests a sync of one to three steps of 100 ns, and returns the steps, 4 for beyond 3e-7; fine stores it as pll.fine_index
 0x46290	function	clock_set_from_reference	context	takes the seconds from an FPGA count and the uptime, clamped to 0 to 59, adds them to the clock's time and sets it

@@ -2764,7 +2764,9 @@ typedef struct clock_record {
   uint8_t gps_month_days[12]; /* +0x22: gps_date's */
   uint8_t minute_length; /* +0x2e: seconds in this minute, 60; 59 or 61 from the
                             leap stubs at 0x13666 and 0x1366c */
-  uint8_t invalid; /* +0x2f: get_date_time reports no date or time while set */
+  uint8_t set; /* +0x2f: the clock has been set since power-up, from GPS or by
+                  the console: set_timedate sets it (0x13870), clock_init
+                  clears it (0x13974); get_date_time returns 1 while clear */
   int16_t gps_utc_offset; /* +0x30: GPS less UTC in seconds, days times 86400
                              plus the difference of two times of day, negated in
                              UTC mode; a 59- or 61-second minute or offset_step

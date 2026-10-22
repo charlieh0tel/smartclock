@@ -1011,7 +1011,7 @@
 0x4381e	holdover_ti_add	applications/pll/stages
 0x43888	holdover_correction_valid	applications/pll/stages
 0x43916	holdover_ti_max	applications/pll/stages
-0x4391e	holdover_limit_exceeded	applications/pll/stages
+0x4391e	holdover_within_limit	applications/pll/stages
 0x4137e	efc_history_update	applications/pll/aging	the curv task
 0x4172a	curv_signal	applications/pll/aging	the curv task
 0x4173e	aging_fit_collect	applications/pll/aging	the curv task

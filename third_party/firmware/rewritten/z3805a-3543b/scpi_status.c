@@ -80,18 +80,6 @@ typedef struct scpi_status_user {
   int16_t choice; /* +0x04 */
 } scpi_status_user;
 
-/* D2's low word as the handler's caller left it, read before the
- * handler uses D2: the setters' value for a kind neither decimal nor
- * non-decimal, which the parser never gives them (0x2a588 to
- * 0x2a5a2). */
-static inline __attribute__((always_inline)) int16_t
-scpi_status_entry_d2(void) {
-  register int32_t d2 __asm__("d2");
-
-  __asm__("" : "=r"(d2));
-  return (int16_t)d2;
-}
-
 /* The value of a mask or filter, else the setter's entry D2. */
 static int16_t scpi_status_value(const scpi_status_number* number,
                                  int16_t entry_d2) {
@@ -211,7 +199,9 @@ int32_t scpi_query_STATus_OPERation_EVENt(void* parameters, void* response,
 /* :STATus:OPERation:ENABle and its kind (0x2a580). */
 int32_t scpi_set_STATus_OPERation_ENABle(void* parameters, void* response,
                                          void* call) {
-  int16_t entry_d2 = scpi_status_entry_d2();
+  /* The caller's D2: the value for a kind neither decimal nor
+   * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
+  int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_setting* given = parameters;
 
   scpi_status_enable_set(given->index, &given->number, entry_d2);
@@ -230,7 +220,9 @@ int32_t scpi_query_STATus_OPERation_ENABle(void* parameters, void* response,
 /* :STATus:OPERation:PTRansition and its kind (0x2a68e). */
 int32_t scpi_set_STATus_OPERation_PTRansition(void* parameters, void* response,
                                               void* call) {
-  int16_t entry_d2 = scpi_status_entry_d2();
+  /* The caller's D2: the value for a kind neither decimal nor
+   * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
+  int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_setting* given = parameters;
 
   scpi_status_positive_set(given->index, &given->number, entry_d2);
@@ -249,7 +241,9 @@ int32_t scpi_query_STATus_OPERation_PTRansition(void* parameters,
 /* :STATus:OPERation:NTRansition and its kind (0x2a7a0). */
 int32_t scpi_set_STATus_OPERation_NTRansition(void* parameters, void* response,
                                               void* call) {
-  int16_t entry_d2 = scpi_status_entry_d2();
+  /* The caller's D2: the value for a kind neither decimal nor
+   * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
+  int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_setting* given = parameters;
 
   scpi_status_negative_set(given->index, &given->number, entry_d2);
@@ -287,7 +281,9 @@ int32_t scpi_query_STATus_OPERation_HARDware_EVENt(void* parameters,
 /* :STATus:OPERation:HARDware:ENABle (0x2a8f6). */
 int32_t scpi_set_STATus_OPERation_HARDware_ENABle(void* parameters,
                                                   void* response, void* call) {
-  int16_t entry_d2 = scpi_status_entry_d2();
+  /* The caller's D2: the value for a kind neither decimal nor
+   * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
+  int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_hardware_setting* given = parameters;
 
   scpi_status_enable_set(given->index, &given->number, entry_d2);
@@ -308,7 +304,9 @@ int32_t scpi_query_STATus_OPERation_HARDware_ENABle(void* parameters,
 int32_t scpi_set_STATus_OPERation_HARDware_PTRansition(void* parameters,
                                                        void* response,
                                                        void* call) {
-  int16_t entry_d2 = scpi_status_entry_d2();
+  /* The caller's D2: the value for a kind neither decimal nor
+   * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
+  int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_hardware_setting* given = parameters;
 
   scpi_status_positive_set(given->index, &given->number, entry_d2);
@@ -329,7 +327,9 @@ int32_t scpi_query_STATus_OPERation_HARDware_PTRansition(void* parameters,
 int32_t scpi_set_STATus_OPERation_HARDware_NTRansition(void* parameters,
                                                        void* response,
                                                        void* call) {
-  int16_t entry_d2 = scpi_status_entry_d2();
+  /* The caller's D2: the value for a kind neither decimal nor
+   * non-decimal, which the parser never gives (0x2a588 to 0x2a5a2). */
+  int16_t entry_d2 = (int16_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const scpi_status_hardware_setting* given = parameters;
 
   scpi_status_negative_set(given->index, &given->number, entry_d2);

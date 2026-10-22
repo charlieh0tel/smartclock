@@ -124,7 +124,7 @@
 {"address":"000136e6","name":"get_gps_date","note":"returns gps_date; with get_gps_time, the T1 time code's GPS time","convention":"unknown"}
 {"address":"000136ee","name":"get_gps_time","note":"returns gps_time","convention":"unknown"}
 {"address":"000136f6","name":"get_uptime","note":"returns uptime; efc_history_update divides it by 2700 for an entry's time","convention":"unknown"}
-{"address":"000136fe","name":"get_date_time","note":":PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock.invalid","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"000136fe","name":"get_date_time","note":":PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns 1 while clock.set is clear, the clock not set since power-up","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00013740","name":"get_gps_datetime","note":"gps_date and gps_time through pointers; 1 if the clock is valid","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00013782","name":"clock_record_refresh","note":"recomputes the clock record's local time from its UTC and checksums it, in supervisor mode","convention":"unknown"}
 {"address":"000137a4","name":"set_timedate_unflagged","note":"set_timedate's twin: sets the clock record's date and time without marking it set; assembly as set_timedate is","convention":"other","confidence":"read","family":"clock"}
@@ -1384,8 +1384,8 @@
 {"address":"00043804","name":"holdover_ti_reset","note":"clears holdover's TI statistics","convention":"unknown"}
 {"address":"0004381e","name":"holdover_ti_add","note":"adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the largest magnitude","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00043888","name":"holdover_correction_valid","note":"1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called by nothing","convention":"unknown"}
-{"address":"00043916","name":"holdover_ti_max","note":"the largest TI magnitude holdover has seen, for holdover_limit_exceeded; a float in D0 (0x43916)","convention":"unknown"}
-{"address":"0004391e","name":"holdover_limit_exceeded","note":"1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age times a rate plus holdover_limit_threshold","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00043916","name":"holdover_ti_max","note":"the largest TI magnitude holdover has seen, for holdover_within_limit; a float in D0 (0x43916)","convention":"unknown"}
+{"address":"0004391e","name":"holdover_within_limit","note":"1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age times a rate plus holdover_limit_threshold","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0004397a","name":"enter_holdover","note":"sets the stage to holdover and the manual flag from fault bit 0, and logs the cause: a code for each fault bit at pll +0x11, the GPS receiver's status for bit 1","convention":"unknown"}
 {"address":"00043a90","name":"holdover","note":"the loop's holdover stage, steering the oscillator without GPS","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"00043f18","name":"clock_check_against_gps","note":"compares the clock's date and time with gps.status, and on a second mismatch running sets the clock from GPS and reports event L","convention":"unknown"}

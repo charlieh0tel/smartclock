@@ -38,7 +38,7 @@ static bool scpi_engine_rounds_up(scpi_number* number, int32_t places) {
 int32_t scpi_number_to_double(scpi_number* number, double* value,
                               int32_t scale) {
   /* The condition codes' Z bit, which the bridge to scpi_bcd_to_double
-   * keeps in __ghidra_ccr: set when the number does not fit a double
+   * keeps in bridge_ccr: set when the number does not fit a double
    * (0x2507a; MC68331UM, the CCR). */
   static const uint8_t CCR_ZERO = 0x04;
   scpi_bcd bcd;
@@ -48,7 +48,7 @@ int32_t scpi_number_to_double(scpi_number* number, double* value,
   }
   double converted = scpi_bcd_to_double(&bcd);
 
-  if (__ghidra_ccr & CCR_ZERO) {
+  if (bridge_ccr & CCR_ZERO) {
     return -1;
   }
   *value = converted;

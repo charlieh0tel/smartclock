@@ -671,7 +671,7 @@ float holdover_ti_max(void) { return holdover_steering.ti_largest; }
 /* 0 when, in a holdover younger than the measurement threshold and with
  * no frequency correction applied, the TI ti has reached the hold
  * limit, the threshold plus the tolerance a second; else 1 (0x4391e). */
-uint32_t holdover_limit_exceeded(float ti) {
+uint32_t holdover_within_limit(float ti) {
   if (pll.holdover_duration <=
       (uint32_t)nv_settings.holdover_measurement_threshold) {
     float limit =
@@ -835,7 +835,7 @@ pll_stage_result holdover(bool same_stage) {
     interval_mean_flag = 1;
     interval_mean = holdover_steering.ti_mean;
     if (pll.ti_limit_override == 0 && nv_settings.holdover_limit_state == 0 &&
-        (char)holdover_limit_exceeded(holdover_ti_max()) == 0) {
+        (char)holdover_within_limit(holdover_ti_max()) == 0) {
       pll.hold_causes |= HOLD_CAUSE_TI_LIMIT_EXCEEDED;
     } else {
       pll.hold_causes &= ~HOLD_CAUSE_TI_LIMIT_EXCEEDED;

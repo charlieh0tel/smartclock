@@ -174,8 +174,8 @@ pll_stage_result pll_check_reference(bool same_stage) {
 
 /* Whether the clock's GPS date and time are gps.status's, clearing the
  * mismatch flag; on a mismatch the second in a row sets the clock from
- * GPS, time set 'L'.  A valid clock, get_gps_datetime's 1, counts as a
- * mismatch, as the image's bne at 0x43f3e has it (0x43f18). */
+ * GPS, time set 'L'.  A clock not yet set, get_gps_datetime's 1, counts
+ * as a mismatch too (0x43f3e) (0x43f18). */
 uint32_t clock_check_against_gps(void) {
   uint32_t date;
   time_of_day time;

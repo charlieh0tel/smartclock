@@ -88,17 +88,6 @@ static const int16_t SCPI_DIAGNOSTIC_LOG_WRITE_FAILED = 0xfe;
 
 static const int16_t SCPI_DIAGNOSTIC_LOG_COUNT_DIFFERS = 0xff;
 
-/* D2's low byte as the handler's caller left it, read before the
- * handler uses D2: :TEST?'s test for a choice past the list, which the
- * parser never gives it (0x2bc36). */
-static inline __attribute__((always_inline)) uint8_t
-scpi_diagnostic_entry_d2(void) {
-  register int32_t d2 __asm__("d2");
-
-  __asm__("" : "=r"(d2));
-  return (uint8_t)d2;
-}
-
 /* STATUS_NO_CONDITION when the receiver takes @@Bn, Time RAIM; else
  * unknown before it has sent its ID, or -241 Hardware missing. */
 static status_condition_code scpi_diagnostic_raim_missing(
@@ -807,7 +796,9 @@ static const uint8_t SCPI_DIAGNOSTIC_TEST_OF_CHOICE[SCPI_DIAGNOSTIC_TESTS] = {
  * details (0x2bc2e). */
 int32_t scpi_query_DIAGnostic_TEST(void* parameters, void* response,
                                    void* call) {
-  uint8_t test = scpi_diagnostic_entry_d2();
+  /* The caller's D2: the test for a choice past the list, which the
+   * parser never gives (0x2bc36). */
+  uint8_t test = (uint8_t)CPU_CALLERS_REGISTER(int32_t, "d2");
   const struct {
     int16_t kind;    /* +0x00 */
     uint16_t choice; /* +0x02 */

@@ -662,7 +662,7 @@ decompiler wrote it, and reported.
   takes the call to keep the flags, an `INDIRECT` at the call, so the C
   tested a compare made before it (`bVar6 = param_4 == 0;` then the
   call, then `if (bVar6)`); the bridge keeps the condition codes in
-  `__ghidra_ccr` right after its `jsr`, and each flag variable is
+  `bridge_ccr` right after its `jsr`, and each flag variable is
   assigned its bit after the call, `bVar6 = __ghidra_flag(4)` for Z.  A
   scan of the image for a call followed by a conditional branch found
   the routines that return flags; those called only from assembly
@@ -673,7 +673,7 @@ decompiler wrote it, and reported.
   reads after it the routine's.  The decompiler takes each as a register
   the call happens to change, `extraout_A0`, which nothing set
   (`psos_ident`'s id, `psos_my_pid`); the bridge keeps each listed
-  register in `__ghidra_result_d0` and the like right after its `jsr`,
+  register in `bridge_result_d0` and the like right after its `jsr`,
   and each `extraout_` variable the C reads is assigned from it after
   the call, as is an argument in such a register -- the callee's
   parameter's register -- whose variable the C reads again after the
@@ -880,7 +880,7 @@ not what an earlier callee left where each copy's frames happen to
 lie.  The EEPROM, chip select 9's 8 KB at
 `0x400000`, is erased for each call and compared after it as RAM is;
 gcc's code is above every chip select so that a read of the EEPROM
-finds no code, and its data, a bridge's `__ghidra_ccr` and libgcc's
+finds no code, and its data, a bridge's `bridge_ccr` and libgcc's
 `_fpCCR`, apart from its code, which the function check keeps
 read-only.  libgcc's float routines are PIC and reach `_fpCCR` through
 the GOT, which the link gives an output section of its own, as ld's

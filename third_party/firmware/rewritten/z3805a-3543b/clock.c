@@ -47,7 +47,7 @@ void clock_init(int16_t force) {
     clock.gps_utc_offset = 0;
     clock.gps_utc_offset_valid = 0;
   }
-  clock.invalid = 0;
+  clock.set = 0;
   clock_record_checksum(&clock);
   leap_minute_pending = 0;
   offset_step_pending = 0;
@@ -138,7 +138,7 @@ static uint32_t clock_read(const time_of_day* time, const uint32_t* date,
 }
 
 /* The clock's date and time through pointers, either NULL to skip it; 1
- * unless clock.invalid (0x136fe).  :PTIM:DATE? passes the first,
+ * unless clock.set (0x136fe).  :PTIM:DATE? passes the first,
  * :PTIM:TIME? the second. */
 int32_t get_date_time(uint32_t* date, time_of_day* time) {
   uint32_t date_read;
@@ -150,7 +150,7 @@ int32_t get_date_time(uint32_t* date, time_of_day* time) {
   if (time) {
     *time = clock_time_of(time_read);
   }
-  return clock.invalid == 0;
+  return clock.set == 0;
 }
 
 /* The same of the GPS date and time (0x13740). */
@@ -164,12 +164,13 @@ bool get_gps_datetime(uint32_t* date, time_of_day* time) {
   if (time) {
     *time = clock_time_of(time_read);
   }
-  return clock.invalid == 0;
+  return clock.set == 0;
 }
 
-/* clock.invalid: nonzero while the clock has no date or time; the time
- * code's v is 0 while it is 0 (0x1399a). */
-uint8_t time_valid(void) { return clock.invalid; }
+/* Whether the clock has been set, from GPS or by the console, since
+ * power-up: clock.set, which set_timedate sets and clock_init clears
+ * (0x1399a). */
+uint8_t time_valid(void) { return clock.set; }
 
 /* Whether the GPS-UTC offset is valid, and the offset through a pointer,
  * NULL to skip it (0x139ce). */

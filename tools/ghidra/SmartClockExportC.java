@@ -227,11 +227,11 @@ public class SmartClockExportC extends GhidraScript {
 		#define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
 		#define __ghidra_also(var, v, n) (var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, v, n)))
 		/* the condition codes a routine that returns them left, as its bridge keeps them */
-		unsigned short __ghidra_ccr;
+		unsigned short bridge_ccr;
 		/* the registers a routine also leaves results in, as its bridge keeps them */
-		unsigned long __ghidra_result_d0, __ghidra_result_d1, __ghidra_result_d2,
-			__ghidra_result_d3, __ghidra_result_a0, __ghidra_result_a1;
-		#define __ghidra_flag(bit) ((__ghidra_ccr & (bit)) != 0)
+		unsigned long bridge_result_d0, bridge_result_d1, bridge_result_d2,
+			bridge_result_d3, bridge_result_a0, bridge_result_a1;
+		#define __ghidra_flag(bit) ((bridge_ccr & (bit)) != 0)
 		#define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
 		#define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
 		#define CARRY4(a, b) ((unsigned int)((a) + (b)) < (unsigned int)(a))
@@ -2370,14 +2370,14 @@ public class SmartClockExportC extends GhidraScript {
 	}
 
 	/** Where a bridge keeps the condition codes its routine returns, a C global. */
-	private static final String CONDITION_CODES = "__ghidra_ccr";
+	private static final String CONDITION_CODES = "bridge_ccr";
 	private static final Pattern RETURNS_CCR = Pattern.compile("\"returns\":\"ccr\"");
 	private static final Pattern PRESERVES = Pattern.compile("\"preserves\":\\[([^\\]]*)\\]");
 	/** What a convention's preserves holds for every register. */
 	private static final String ALL_PRESERVED = "all";
 	private static final Pattern RESULTS = Pattern.compile("\"results\":\\[([^\\]]*)\\]");
 	/** Where a bridge keeps a register its routine also leaves a result in, by its name. */
-	private static final String RESULT_PREFIX = "__ghidra_result_";
+	private static final String RESULT_PREFIX = "bridge_result_";
 	/** Each condition-code flag's register, by its bit in the CCR. */
 	private static final Map<String, Integer> FLAG_BITS =
 		Map.of("CF", 0x1, "VF", 0x2, "ZF", 0x4, "NF", 0x8, "XF", 0x10);
@@ -2395,7 +2395,7 @@ public class SmartClockExportC extends GhidraScript {
 	 * its result in the condition codes the routine's: the decompiler takes
 	 * the call to keep the flags it had before, an INDIRECT at the call, so
 	 * the C tests a compare made before it.  After the call each such
-	 * variable is assigned its flag from __ghidra_ccr, where the routine's
+	 * variable is assigned its flag from bridge_ccr, where the routine's
 	 * bridge keeps the condition codes.
 	 */
 	private void conditionCodeResults(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
@@ -2424,7 +2424,7 @@ public class SmartClockExportC extends GhidraScript {
 	 * convention lists it among its results the routine's: the decompiler
 	 * takes it as a register the call happens to change, extraout_, which
 	 * nothing sets (psos_ident's id in A0, psos_get_v's value in D1).
-	 * After the call each is assigned from __ghidra_result_REGISTER, where
+	 * After the call each is assigned from bridge_result_REGISTER, where
 	 * the routine's bridge keeps it, a narrower one its low bytes.
 	 */
 	private void registerResults(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {

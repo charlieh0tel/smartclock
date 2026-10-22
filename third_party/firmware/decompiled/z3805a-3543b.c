@@ -62,11 +62,11 @@ extern code *UNRECOVERED_JUMPTABLE;
 #define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
 #define __ghidra_also(var, v, n) (var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, v, n)))
 /* the condition codes a routine that returns them left, as its bridge keeps them */
-uint16_t __ghidra_ccr;
+uint16_t bridge_ccr;
 /* the registers a routine also leaves results in, as its bridge keeps them */
-uint32_t __ghidra_result_d0, __ghidra_result_d1, __ghidra_result_d2,
-	__ghidra_result_d3, __ghidra_result_a0, __ghidra_result_a1;
-#define __ghidra_flag(bit) ((__ghidra_ccr & (bit)) != 0)
+uint32_t bridge_result_d0, bridge_result_d1, bridge_result_d2,
+	bridge_result_d3, bridge_result_a0, bridge_result_a1;
+#define __ghidra_flag(bit) ((bridge_ccr & (bit)) != 0)
 #define CARRY1(a, b) ((uint8_t)((a) + (b)) < (uint8_t)(a))
 #define CARRY2(a, b) ((uint16_t)((a) + (b)) < (uint16_t)(a))
 #define CARRY4(a, b) ((uint32_t)((a) + (b)) < (uint32_t)(a))
@@ -350,7 +350,7 @@ struct clock_record {
     uint32_t gps_date;
     uint8_t gps_month_days[12];
     uint8_t minute_length;
-    uint8_t invalid;
+    uint8_t set;
     int16_t gps_utc_offset;
     uint8_t gps_utc_offset_valid;
 };
@@ -6820,7 +6820,7 @@ void holdover_ti_reset(void);
 void holdover_ti_add(float param_1);
 uint8_t holdover_correction_valid(void);
 float holdover_ti_max(void);
-uint32_t holdover_limit_exceeded(float param_1);
+uint32_t holdover_within_limit(float param_1);
 void enter_holdover(void);
 pll_stage_result holdover(bool same_stage);
 uint32_t clock_check_against_gps(void);
@@ -8129,13 +8129,13 @@ __regcall int32_t mutex_init(int32_t name /* d0 */,mutex *lock /* a1 */)
   bool bVar2;
   
   bVar2 = false;
-  ({ __auto_type __c = ({ __auto_type __c = psos_call(0x15,name,in_D1,unaff_D2,unaff_D3,in_A0,lock); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  ({ __auto_type __c = ({ __auto_type __c = psos_call(0x15,name,in_D1,unaff_D2,unaff_D3,in_A0,lock); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
   if (bVar2) {
     iVar1 = 3;
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x14,d0,0,0,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x14,d0,0,0,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
     if (bVar2) {
       mutex_clear(lock_00);
       *(void **)((int32_t)a1_00 + 4) = a0_00;
@@ -8212,7 +8212,7 @@ __regcall int32_t mutex_acquire(mutex *lock /* a1 */)
   int32_t extraout_A1;
   bool bVar2;
   
-  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
     *(int32_t *)((int32_t)a1 + 0xc) = *(int32_t *)((int32_t)a1 + 0xc) + 1;
@@ -8222,7 +8222,7 @@ __regcall int32_t mutex_acquire(mutex *lock /* a1 */)
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x18,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
+    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x18,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; a1 = (__typeof__(a1))bridge_result_a1; __c; });
     if (bVar2) {
       *(int32_t *)(extraout_A1 + 8) = extraout_A0;
     }
@@ -8302,12 +8302,12 @@ __regcall int32_t mutex_release(mutex *lock /* a1 */)
   int32_t extraout_A0;
   void *a1;
   
-  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     if (*(int32_t *)((int32_t)a1 + 0xc) == 0) {
       *(uint32_t *)((int32_t)a1 + 8) = 0;
       iVar1 = ({ __auto_type __c = psos_call(0x17,*(int32_t *)((int32_t)a1 + 4),d1,unaff_D2,unaff_D3,
-                        (void *)*(int32_t *)((int32_t)a1 + 4),a1); a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
+                        (void *)*(int32_t *)((int32_t)a1 + 4),a1); a1 = (__typeof__(a1))bridge_result_a1; __c; });
     }
     else {
       iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
@@ -10877,7 +10877,7 @@ int32_t pps_init(void)
   void *in_A1;
   
   pps_exchange = 0;
-  iVar2 = ({ __auto_type __c = psos_call(0x14,0x31707073,0,0,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  iVar2 = ({ __auto_type __c = psos_call(0x14,0x31707073,0,0,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if (iVar2 == 0) {
     pps_exchange = extraout_A0;
     mutex_clear((mutex *)&pps_message);
@@ -10910,7 +10910,7 @@ int32_t pps_interrupt_stop(void)
     iVar2 = 4;
   }
   else {
-    iVar2 = ({ __auto_type __c = psos_call(0x16,pps_exchange,in_D1,unaff_D2,unaff_D3,(void *)pps_exchange,in_A1); pps_exchange = (__typeof__(pps_exchange))__ghidra_result_d0; __c; });
+    iVar2 = ({ __auto_type __c = psos_call(0x16,pps_exchange,in_D1,unaff_D2,unaff_D3,(void *)pps_exchange,in_A1); pps_exchange = (__typeof__(pps_exchange))bridge_result_d0; __c; });
     uVar1 = gpt.tflg;
     gpt.tflg = uVar1 & ~TFLG_ICF1;
     uVar1 = gpt.tmsk;
@@ -11756,7 +11756,7 @@ __asm__(
 	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
 	"	move.l (48,%sp),%a6\n"
 	"	jsr clock_record_sum\n"
-	"	move.w %ccr,__ghidra_ccr\n"
+	"	move.w %ccr,bridge_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_clock_record_sum, .-c_clock_record_sum\n"
@@ -12226,8 +12226,8 @@ uint32_t get_uptime(void)
 /* 000136fe */
 #if 0 /* the decompiler's reading; rewritten in clock.c */
 
-/* :PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock.invalid
-    */
+/* :PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns 1 while clock.set is clear,
+   the clock not set since power-up */
 
 int32_t get_date_time(uint32_t *date,time_of_day *time)
 
@@ -12241,7 +12241,7 @@ int32_t get_date_time(uint32_t *date,time_of_day *time)
   if (time != (time_of_day *)0x0) {
     *time = tVar1;
   }
-  return (uint32_t)(clock.invalid == 0);
+  return (uint32_t)(clock.set == 0);
 }
 
 #endif
@@ -12263,7 +12263,7 @@ bool get_gps_datetime(uint32_t *date,time_of_day *time)
   if (time != (time_of_day *)0x0) {
     *time = tVar1;
   }
-  return clock.invalid == 0;
+  return clock.set == 0;
 }
 
 #endif
@@ -12408,7 +12408,7 @@ __regcall void clock_record_store(clock_record *record /* a6 */,int32_t date /* 
       record->gps_time = extraout_D1;
       record->gps_date = extraout_D0;
       if (mark != 0) {
-        record->invalid = 1;
+        record->set = 1;
       }
     }
   }
@@ -12692,7 +12692,7 @@ void clock_init(int16_t param_1)
   clock.gps_utc_offset = 0;
   clock.gps_utc_offset_valid = 0;
 LAB_00013974:
-  clock.invalid = 0;
+  clock.set = 0;
   clock_record_checksum(&clock);
   leap_minute_pending = 0;
   offset_step_pending = 0;
@@ -12712,7 +12712,7 @@ LAB_00013974:
 uint8_t time_valid(void)
 
 {
-  return clock.invalid;
+  return clock.set;
 }
 
 #endif
@@ -12841,7 +12841,7 @@ void es_build(uint32_t param_1,uint32_t param_2)
   uint32_t uVar1;
   uint8_t offset_valid;
   uint16_t day;
-  char invalid;
+  char clock_set;
   uint16_t uVar5;
   uint16_t uVar6;
   uint16_t local_e;
@@ -12856,10 +12856,10 @@ void es_build(uint32_t param_1,uint32_t param_2)
     local_6 = 0;
   }
   day = day_of_year(param_1);
-  invalid = time_valid();
-  uVar5 = (uint16_t)(invalid == 0);
+  clock_set = time_valid();
+  uVar5 = (uint16_t)(clock_set == 0);
   if ((nv_settings.leap_pending != 0) && (nv_settings.leap_date == param_1)) {
-    uVar6 = (uint16_t)(invalid == 0);
+    uVar6 = (uint16_t)(clock_set == 0);
     uVar5 = uVar6 | 4;
     if (0x3c < nv_settings.leap_minute_length) {
       uVar5 = uVar6 | 6;
@@ -21502,13 +21502,13 @@ __asm__(
 	"	move.l (68,%sp),%a0\n"
 	"	move.l (72,%sp),%a1\n"
 	"	jsr psos_call\n"
-	"	move.w %ccr,__ghidra_ccr\n"
-	"	move.l %d0,__ghidra_result_d0\n"
-	"	move.l %d1,__ghidra_result_d1\n"
-	"	move.l %d2,__ghidra_result_d2\n"
-	"	move.l %d3,__ghidra_result_d3\n"
-	"	move.l %a0,__ghidra_result_a0\n"
-	"	move.l %a1,__ghidra_result_a1\n"
+	"	move.w %ccr,bridge_ccr\n"
+	"	move.l %d0,bridge_result_d0\n"
+	"	move.l %d1,bridge_result_d1\n"
+	"	move.l %d2,bridge_result_d2\n"
+	"	move.l %d3,bridge_result_d3\n"
+	"	move.l %a0,bridge_result_a0\n"
+	"	move.l %a1,bridge_result_a1\n"
 	"	move.l %d7,%d0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
@@ -21578,13 +21578,13 @@ __asm__(
 	"	move.l (68,%sp),%a0\n"
 	"	move.l (72,%sp),%a1\n"
 	"	jsr psos_io_call\n"
-	"	move.w %ccr,__ghidra_ccr\n"
-	"	move.l %d0,__ghidra_result_d0\n"
-	"	move.l %d1,__ghidra_result_d1\n"
-	"	move.l %d2,__ghidra_result_d2\n"
-	"	move.l %d3,__ghidra_result_d3\n"
-	"	move.l %a0,__ghidra_result_a0\n"
-	"	move.l %a1,__ghidra_result_a1\n"
+	"	move.w %ccr,bridge_ccr\n"
+	"	move.l %d0,bridge_result_d0\n"
+	"	move.l %d1,bridge_result_d1\n"
+	"	move.l %d2,bridge_result_d2\n"
+	"	move.l %d3,bridge_result_d3\n"
+	"	move.l %a0,bridge_result_a0\n"
+	"	move.l %a1,bridge_result_a1\n"
 	"	move.l %d7,%d0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
@@ -21670,7 +21670,7 @@ uint32_t psos_create(char *name,uint32_t a,uint32_t priority,uint32_t stack_a,ui
   void *a1;
   
   d0 = psos_pack_name();
-  uVar1 = ({ __auto_type __c = psos_call(1,d0,a,priority,CONCAT22(__ghidra_piece(uint16_t, stack_a, 2),__ghidra_piece(uint16_t, stack_b, 2)),e,a1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(1,d0,a,priority,CONCAT22(__ghidra_piece(uint16_t, stack_a, 2),__ghidra_piece(uint16_t, stack_b, 2)),e,a1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if ((uVar1 == 0) && (task != (uint32_t *)0x0)) {
     *task = extraout_A0;
   }
@@ -21721,7 +21721,7 @@ uint32_t psos_ident(char *name,uint32_t *id,uint8_t *b)
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(3,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(3,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
   if (bVar2) {
     if (id != (uint32_t *)0x0) {
       *id = extraout_A0;
@@ -21751,7 +21751,7 @@ uint32_t psos_my_pid(void)
   uint32_t extraout_A0;
   void *in_A1;
   
-  ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   return extraout_A0;
 }
 
@@ -21839,7 +21839,7 @@ uint32_t psos_priority(uint32_t task,uint32_t priority,uint8_t *old)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(7,priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(7,priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
   if (old != (uint8_t *)0x0) {
     *old = extraout_D0b;
   }
@@ -21886,7 +21886,7 @@ uint32_t psos_mode(uint32_t mode,uint32_t mask,uint8_t *old)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(' ',mode,mask,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(' ',mode,mask,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
   if (old != (uint8_t *)0x0) {
     *old = extraout_D0b;
   }
@@ -21946,7 +21946,7 @@ uint32_t psos_service_8(uint32_t a,uint32_t b,uint32_t c,uint32_t d,uint32_t *ou
   uint32_t extraout_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(8,d,a,b,c,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(8,d,a,b,c,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if ((uVar1 == 0) && (out != (uint32_t *)0x0)) {
     *out = extraout_A0;
   }
@@ -22034,7 +22034,7 @@ uint32_t psos_create_partition(void *area,uint32_t block_size,uint32_t count,voi
   void *extraout_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call('#',block_size,count,unaff_D2,unaff_D3,area,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call('#',block_size,count,unaff_D2,unaff_D3,area,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if (partition != (void **)0x0) {
     *partition = extraout_A0;
   }
@@ -22080,7 +22080,7 @@ uint32_t psos_get_block(void *partition,uint32_t block_size,void **block)
   void *in_A1;
   void *extraout_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call('%',block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; __c; });
+  uVar1 = ({ __auto_type __c = psos_call('%',block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; __c; });
   if ((uVar1 == 0) && (block != (void **)0x0)) {
     *block = extraout_A1;
   }
@@ -22127,7 +22127,7 @@ uint32_t psos_create_x(char *name,uint32_t a,uint32_t b,uint32_t *exchange)
   void *a1;
   
   d0 = psos_pack_name();
-  uVar1 = ({ __auto_type __c = psos_call(0x14,d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(0x14,d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if ((uVar1 == 0) && (exchange != (uint32_t *)0x0)) {
     *exchange = extraout_A0;
   }
@@ -22157,7 +22157,7 @@ uint32_t psos_service_21(char *name,uint32_t *out1,uint32_t *out2,uint32_t *out3
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x15,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x15,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
   if (bVar2) {
     if (out1 != (uint32_t *)0x0) {
       *out1 = extraout_A0;
@@ -22256,7 +22256,7 @@ uint32_t psos_broadcast_x(uint32_t exchange,void *message,uint32_t count,uint8_t
   bool bVar2;
   
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x12,count,in_D1,unaff_D2,unaff_D3,(void *)exchange,message); bVar2 = __ghidra_flag(4); __c; }); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; extraout_D1b = (__typeof__(extraout_D1b))__ghidra_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x12,count,in_D1,unaff_D2,unaff_D3,(void *)exchange,message); bVar2 = __ghidra_flag(4); __c; }); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; extraout_D1b = (__typeof__(extraout_D1b))bridge_result_d1; __c; });
   if (bVar2) {
     if (count_out != (uint8_t *)0x0) {
       *count_out = extraout_D0b;
@@ -22325,7 +22325,7 @@ uint32_t psos_wait_v(uint32_t a,uint32_t b,uint32_t c,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(0x1a,c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(0x1a,c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }
@@ -22350,7 +22350,7 @@ uint32_t psos_get_v(uint32_t a,uint32_t b,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(0x1b,in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(0x1b,in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }
@@ -22401,7 +22401,7 @@ uint32_t psos_get_time(uint32_t *date,uint32_t *time,uint16_t *ticks)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(0x1e,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))__ghidra_result_d0; extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(0x1e,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))bridge_result_d0; extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
   if (date != (uint32_t *)0x0) {
     *date = extraout_D0;
   }
@@ -22514,7 +22514,7 @@ uint32_t psos_io_read(uint32_t device,void *buffer,uint32_t *length)
   uint32_t uVar1;
   
   d2 = *length;
-  uVar1 = ({ __auto_type __c = psos_io_call(3,device,in_D1,d2,unaff_D3,length,buffer); d2 = (__typeof__(d2))__ghidra_result_d2; length = (__typeof__(length))__ghidra_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = psos_io_call(3,device,in_D1,d2,unaff_D3,length,buffer); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a0; __c; });
   if ((uVar1 == 0) && (length != (uint32_t *)0x0)) {
     *length = d2;
   }
@@ -22538,7 +22538,7 @@ uint32_t psos_io_write(uint32_t device,void *buffer,uint32_t *length)
   uint32_t uVar1;
   
   d2 = *length;
-  uVar1 = ({ __auto_type __c = psos_io_call(4,device,in_D1,d2,unaff_D3,buffer,length); d2 = (__typeof__(d2))__ghidra_result_d2; length = (__typeof__(length))__ghidra_result_a1; __c; });
+  uVar1 = ({ __auto_type __c = psos_io_call(4,device,in_D1,d2,unaff_D3,buffer,length); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a1; __c; });
   if ((uVar1 == 0) && (length != (uint32_t *)0x0)) {
     *length = d2;
   }
@@ -25024,7 +25024,7 @@ __pforth uint32_t forth_read_line(forth_user_end user /* a5 */,char *input /* a3
     return in_D0;
   }
   ({ __auto_type __c = psos_call(4,(uint32_t)(uint16_t)((forth_user_area *)(user + -0x28))->iodev,in_D1,unaff_D2,unaff_D3,
-            (void *)0x0,ADJ(user)->tib); extraout_D0 = (__typeof__(extraout_D0))__ghidra_result_d0; __c; });
+            (void *)0x0,ADJ(user)->tib); extraout_D0 = (__typeof__(extraout_D0))bridge_result_d0; __c; });
   return extraout_D0;
 }
 
@@ -31452,7 +31452,7 @@ __pforth void forth_spawn(forth_user_end user,int32_t *sp,void *dp)
     *(void **)((int32_t)dp + 2) = dp;
     *(int16_t *)((int32_t)dp + 6) = (int16_t)iVar3;
     *(uint32_t *)((int32_t)dp + 8) = extraout_A0;
-    ({ __auto_type __c = psos_call(7,0,d1,d2,iVar3,(void *)0x0,a1); iVar3 = (__typeof__(iVar3))__ghidra_result_d3; __c; });
+    ({ __auto_type __c = psos_call(7,0,d1,d2,iVar3,(void *)0x0,a1); iVar3 = (__typeof__(iVar3))bridge_result_d3; __c; });
     forth_parse_word(user,unaff_A3);
     iVar3 = forth_pack_name(user);
     *(int32_t *)((int32_t)dp + 0xc) = iVar3;
@@ -32769,7 +32769,7 @@ __asm__(
 	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
 	"	move.l (48,%sp),%a4\n"
 	"	jsr pforth_link_word\n"
-	"	move.l %d0,__ghidra_result_d0\n"
+	"	move.l %d0,bridge_result_d0\n"
 	"	move.l %a4,%d0\n"
 	"	move.l %d0,%a0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
@@ -33572,16 +33572,16 @@ void diag_efc_rep(void)
 void diag_get_time(void)
 
 {
-  uint32_t valid;
-  uint8_t invalid;
+  uint32_t not_set;
+  uint8_t clock_set;
   calendar_date date;
   time_of_day tStack_8;
   
-  valid = get_date_time((uint32_t *)&date,&tStack_8);
-  invalid = time_valid();
+  not_set = get_date_time((uint32_t *)&date,&tStack_8);
+  clock_set = time_valid();
   printf("%02d/%02d/%04d\t%02d:%02d:%02d, %1d, valid: %1d\r\n",(uint32_t)date.month,(uint32_t)date.day,
          (uint32_t)date.year,(uint32_t)tStack_8.hour,(uint32_t)tStack_8.minute,(uint32_t)tStack_8.second,
-         valid & 0xff,(uint32_t)invalid);
+         not_set & 0xff,(uint32_t)clock_set);
   return;
 }
 
@@ -42119,7 +42119,7 @@ __asm__(
 	"	move.l (56,%sp),%d7\n"
 	"	move.l (60,%sp),%a0\n"
 	"	jsr scpi_double_to_decimal\n"
-	"	move.w %ccr,__ghidra_ccr\n"
+	"	move.w %ccr,bridge_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_double_to_decimal, .-c_scpi_double_to_decimal\n"
@@ -42587,7 +42587,7 @@ __asm__(
 	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
 	"	move.l (48,%sp),%a0\n"
 	"	jsr scpi_bcd_to_double\n"
-	"	move.w %ccr,__ghidra_ccr\n"
+	"	move.w %ccr,bridge_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_bcd_to_double, .-c_scpi_bcd_to_double\n"
@@ -42728,7 +42728,7 @@ __asm__(
 	"	move.l (56,%sp),%a0\n"
 	"	move.l (60,%sp),%a1\n"
 	"	jsr scpi_scale_by_power_of_ten\n"
-	"	move.w %ccr,__ghidra_ccr\n"
+	"	move.w %ccr,bridge_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_scale_by_power_of_ten, .-c_scpi_scale_by_power_of_ten\n"
@@ -43156,7 +43156,7 @@ __asm__(
 	"	move.l (56,%sp),%d2\n"
 	"	move.l (60,%sp),%d3\n"
 	"	jsr scpi_double_multiply\n"
-	"	move.w %ccr,__ghidra_ccr\n"
+	"	move.w %ccr,bridge_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_double_multiply, .-c_scpi_double_multiply\n"
@@ -43382,7 +43382,7 @@ __asm__(
 	"	move.l (52,%sp),%d0\n"
 	"	move.l (56,%sp),%a1\n"
 	"	jsr scpi_number_to_bcd\n"
-	"	move.w %ccr,__ghidra_ccr\n"
+	"	move.w %ccr,bridge_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_number_to_bcd, .-c_scpi_number_to_bcd\n"
@@ -50536,12 +50536,12 @@ int32_t scpi_set_SOURce_GPSystem_INITial_DATE(void *parameters,void *response,vo
 
 {
   uint32_t zero;
-  char invalid;
+  char clock_set;
   int32_t iVar2;
   
   zero = return_zero();
-  invalid = time_valid();
-  if (invalid == 0) {
+  clock_set = time_valid();
+  if (clock_set == 0) {
     iVar2 = (zero & 0xff) * 0xc;
     *(int32_t *)(iVar2 + 0x102a0e) = (int32_t)*(int16_t *)((int32_t)parameters + 2);
     *(int32_t *)(iVar2 + 0x102a12) = (int32_t)*(int16_t *)((int32_t)parameters + 8);
@@ -50565,12 +50565,12 @@ int32_t scpi_set_SOURce_GPSystem_INITial_TIME(void *parameters,void *response,vo
 
 {
   uint32_t zero;
-  char invalid;
+  char clock_set;
   int32_t iVar2;
   
   zero = return_zero();
-  invalid = time_valid();
-  if (invalid == 0) {
+  clock_set = time_valid();
+  if (clock_set == 0) {
     iVar2 = (zero & 0xff) * 0xc;
     *(int32_t *)(iVar2 + 0x102a0e) = (int32_t)*(int16_t *)((int32_t)parameters + 2);
     *(int32_t *)(iVar2 + 0x102a12) = (int32_t)*(int16_t *)((int32_t)parameters + 8);
@@ -56095,10 +56095,10 @@ uint32_t lifetime_record_write(void)
 void lifetime_event_run(void)
 
 {
-  char invalid;
+  char clock_set;
   
-  invalid = time_valid();
-  if (invalid != 0) {
+  clock_set = time_valid();
+  if (clock_set != 0) {
     lifetime.date = get_gps_date();
   }
   lifetime.count = lifetime.count + 1;
@@ -61617,8 +61617,7 @@ uint8_t holdover_correction_valid(void)
 /* 00043916 */
 #if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
-/* the largest TI magnitude holdover has seen, for holdover_limit_exceeded; a float in D0 (0x43916)
-    */
+/* the largest TI magnitude holdover has seen, for holdover_within_limit; a float in D0 (0x43916) */
 
 float holdover_ti_max(void)
 
@@ -61634,7 +61633,7 @@ float holdover_ti_max(void)
 /* 1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age
    times a rate plus holdover_limit_threshold */
 
-uint32_t holdover_limit_exceeded(float param_1)
+uint32_t holdover_within_limit(float param_1)
 
 {
   float fVar1;
@@ -61919,7 +61918,7 @@ override_jmp_00043ae6_case_0:
   interval_mean = holdover_steering.ti_mean;
   if ((pll.ti_limit_override == 0) && (nv_settings.holdover_limit_state == 0)) {
     fVar1 = holdover_ti_max();
-    within_limit = holdover_limit_exceeded(fVar1);
+    within_limit = holdover_within_limit(fVar1);
     if (within_limit != 0) goto LAB_00043eb8;
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_TI_LIMIT_EXCEEDED;
   }
@@ -69964,7 +69963,7 @@ int32_t command_log_add(gps_running_command *command,char *text)
   gps_request_sender gVar3;
   char cVar4;
   char cVar5;
-  int32_t valid;
+  int32_t not_set;
   gps_command_log *pgVar7;
   gps_command_log_entry entry;
   uint32_t local_c;
@@ -69976,8 +69975,8 @@ int32_t command_log_add(gps_running_command *command,char *text)
   cVar4 = text[4];
   cVar5 = text[5];
   entry.query = command->query;
-  valid = get_date_time(&local_c,&local_8);
-  if ((char)valid == 0) {
+  not_set = get_date_time(&local_c,&local_8);
+  if ((char)not_set == 0) {
     entry.clock_invalid = 1;
   }
   else {
@@ -83723,7 +83722,7 @@ __regcall int32_t installer_mutex_acquire(void *mutex /* a1 */)
   int32_t extraout_A1;
   bool bVar2;
   
-  iVar1 = ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  iVar1 = ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
     *(int32_t *)((int32_t)a1 + 0xc) = *(int32_t *)((int32_t)a1 + 0xc) + 1;
@@ -83733,7 +83732,7 @@ __regcall int32_t installer_mutex_acquire(void *mutex /* a1 */)
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = installer_psos_call(0x18,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
+    iVar1 = ({ __auto_type __c = ({ __auto_type __c = installer_psos_call(0x18,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; a1 = (__typeof__(a1))bridge_result_a1; __c; });
     if (bVar2) {
       *(int32_t *)(extraout_A1 + 8) = extraout_A0;
     }
@@ -83813,12 +83812,12 @@ __regcall int32_t installer_mutex_release(void *mutex /* a1 */)
   int32_t extraout_A0;
   void *a1;
   
-  iVar1 = ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  iVar1 = ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     if (*(int32_t *)((int32_t)a1 + 0xc) == 0) {
       *(uint32_t *)((int32_t)a1 + 8) = 0;
       iVar1 = ({ __auto_type __c = installer_psos_call(0x17,*(int32_t *)((int32_t)a1 + 4),d1,unaff_D2,unaff_D3,
-                                  (void *)*(int32_t *)((int32_t)a1 + 4),a1); a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
+                                  (void *)*(int32_t *)((int32_t)a1 + 4),a1); a1 = (__typeof__(a1))bridge_result_a1; __c; });
     }
     else {
       iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
@@ -90827,13 +90826,13 @@ __asm__(
 	"	move.l (68,%sp),%a0\n"
 	"	move.l (72,%sp),%a1\n"
 	"	jsr installer_psos_call\n"
-	"	move.w %ccr,__ghidra_ccr\n"
-	"	move.l %d0,__ghidra_result_d0\n"
-	"	move.l %d1,__ghidra_result_d1\n"
-	"	move.l %d2,__ghidra_result_d2\n"
-	"	move.l %d3,__ghidra_result_d3\n"
-	"	move.l %a0,__ghidra_result_a0\n"
-	"	move.l %a1,__ghidra_result_a1\n"
+	"	move.w %ccr,bridge_ccr\n"
+	"	move.l %d0,bridge_result_d0\n"
+	"	move.l %d1,bridge_result_d1\n"
+	"	move.l %d2,bridge_result_d2\n"
+	"	move.l %d3,bridge_result_d3\n"
+	"	move.l %a0,bridge_result_a0\n"
+	"	move.l %a1,bridge_result_a1\n"
 	"	move.l %d7,%d0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
@@ -91058,7 +91057,7 @@ uint32_t installer_psos_my_pid(void)
   uint32_t extraout_A0;
   void *in_A1;
   
-  ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   return extraout_A0;
 }
 
@@ -91119,7 +91118,7 @@ uint32_t installer_psos_create_x(char *name,uint32_t a,uint32_t b,uint32_t *exch
   void *a1;
   
   d0 = installer_psos_pack_name();
-  uVar1 = ({ __auto_type __c = installer_psos_call(0x14,d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = installer_psos_call(0x14,d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
   if ((uVar1 == 0) && (exchange != (uint32_t *)0x0)) {
     *exchange = extraout_A0;
   }
@@ -91179,7 +91178,7 @@ uint32_t installer_psos_wait_v(uint32_t a,uint32_t b,uint32_t c,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call(0x1a,c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = installer_psos_call(0x1a,c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }
@@ -91202,7 +91201,7 @@ uint32_t installer_psos_get_v(uint32_t a,uint32_t b,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call(0x1b,in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = installer_psos_call(0x1b,in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }

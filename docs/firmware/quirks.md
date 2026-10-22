@@ -36,6 +36,15 @@ routine and the address that shows it.
   `0x1643e`).
 - **`interpolator_verify`** returns, on its failure paths, D2 as its
   caller left it.
+- **`finish_scpi_cmd`** passes each changed hook a byte of its caller's
+  D3, which it never sets (`0x430b6`, `0x43114`, `0x4315c`).
+- **The six `:STATus` enable and transition setters** take D2's low
+  word as the value for a parameter neither decimal nor non-decimal
+  (`0x2a588` to `0x2a5a2`), and **`:DIAG:TEST?`** D2's low byte as the
+  test for a choice past its list (`0x2bc36`); the parser gives neither.
+
+The C reads such a register as the image does, first thing in the
+function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
 - **`log_erase`** checksums a pointer's bytes.
 
 ## Reads past a table

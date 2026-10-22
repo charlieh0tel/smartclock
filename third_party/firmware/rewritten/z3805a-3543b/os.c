@@ -214,7 +214,7 @@ void psos_config_init(void) {
  * service reads, makes it through psos_call, whose result is 0 or the
  * service in the high byte and its error in the low, and stores the
  * registers it returns, which psos_call's bridge keeps in
- * __ghidra_result_d0 to __ghidra_result_a1.  A register a service does
+ * bridge_result_d0 to bridge_result_a1.  A register a service does
  * not read is passed as 0.  psos_pack_name packs the name the stub was
  * given, its caller's first argument. */
 
@@ -230,10 +230,10 @@ uint32_t psos_ident(char* name, uint32_t* id, uint8_t* byte) {
 
   if (error == 0) {
     if (id != NULL) {
-      *id = __ghidra_result_a0;
+      *id = bridge_result_a0;
     }
     if (byte != NULL) {
-      *byte = __ghidra_result_d0;
+      *byte = bridge_result_d0;
     }
   }
   return error;
@@ -242,7 +242,7 @@ uint32_t psos_ident(char* name, uint32_t* id, uint8_t* byte) {
 /* The running task's id, ident's for no name (0x16ff8). */
 uint32_t psos_my_pid(void) {
   psos_call(OS_SERVICE_IDENT, 0, 0, 0, 0, NULL, NULL);
-  return __ghidra_result_a0;
+  return bridge_result_a0;
 }
 
 /* Deletes a task (0x17008). */
@@ -267,7 +267,7 @@ uint32_t psos_priority(uint32_t task, uint32_t priority, uint8_t* old) {
       psos_call(OS_SERVICE_PRIORITY, priority, 0, 0, 0, (void*)task, NULL);
 
   if (old != NULL) {
-    *old = __ghidra_result_d0;
+    *old = bridge_result_d0;
   }
   return error;
 }
@@ -283,7 +283,7 @@ uint32_t psos_mode(uint32_t mode, uint32_t mask, uint8_t* old) {
   uint32_t error = psos_call(OS_SERVICE_MODE, mode, mask, 0, 0, NULL, NULL);
 
   if (old != NULL) {
-    *old = __ghidra_result_d0;
+    *old = bridge_result_d0;
   }
   return error;
 }
@@ -296,7 +296,7 @@ uint32_t psos_service_8(uint32_t size, uint32_t d2, uint32_t d3, uint32_t d0,
       psos_call(OS_SERVICE_ALLOCATE_SEGMENT, d0, size, d2, d3, NULL, NULL);
 
   if (error == 0 && out != NULL) {
-    *out = __ghidra_result_a0;
+    *out = bridge_result_a0;
   }
   return error;
 }
@@ -325,7 +325,7 @@ uint32_t psos_create_partition(void* area, uint32_t block_size, uint32_t count,
                              0, area, NULL);
 
   if (partition != NULL) {
-    *partition = (void*)__ghidra_result_a0;
+    *partition = (void*)bridge_result_a0;
   }
   return error;
 }
@@ -342,7 +342,7 @@ uint32_t psos_get_block(void* partition, uint32_t block_size, void** block) {
       psos_call(OS_SERVICE_GET_BLOCK, block_size, 0, 0, 0, partition, NULL);
 
   if (error == 0 && block != NULL) {
-    *block = (void*)__ghidra_result_a1;
+    *block = (void*)bridge_result_a1;
   }
   return error;
 }
@@ -359,7 +359,7 @@ uint32_t psos_create_x(char* name, uint32_t a, uint32_t b, uint32_t* exchange) {
       psos_call(OS_SERVICE_CREATE_X, psos_pack_name(), a, b, 0, NULL, NULL);
 
   if (error == 0 && exchange != NULL) {
-    *exchange = __ghidra_result_a0;
+    *exchange = bridge_result_a0;
   }
   return error;
 }
@@ -373,13 +373,13 @@ uint32_t psos_service_21(char* name, uint32_t* out1, uint32_t* out2,
 
   if (error == 0) {
     if (out1 != NULL) {
-      *out1 = __ghidra_result_a0;
+      *out1 = bridge_result_a0;
     }
     if (out2 != NULL) {
-      *out2 = __ghidra_result_d1;
+      *out2 = bridge_result_d1;
     }
     if (out3 != NULL) {
-      *out3 = __ghidra_result_d2;
+      *out3 = bridge_result_d2;
     }
   }
   return error;
@@ -410,10 +410,10 @@ uint32_t psos_broadcast_x(uint32_t exchange, void* message, uint32_t count,
 
   if (error == 0) {
     if (count_out != NULL) {
-      *count_out = __ghidra_result_d0;
+      *count_out = bridge_result_d0;
     }
     if (woken != NULL) {
-      *woken = __ghidra_result_d1;
+      *woken = bridge_result_d1;
     }
   }
   return error;
@@ -437,7 +437,7 @@ uint32_t psos_wait_v(uint32_t d1, uint32_t d2, uint32_t d0, uint32_t* out) {
   uint32_t error = psos_call(OS_SERVICE_WAIT_V, d0, d1, d2, 0, NULL, NULL);
 
   if (out != NULL) {
-    *out = __ghidra_result_d1;
+    *out = bridge_result_d1;
   }
   return error;
 }
@@ -448,7 +448,7 @@ uint32_t psos_get_v(uint32_t d1, uint32_t d2, uint32_t* out) {
   uint32_t error = psos_call(OS_SERVICE_GET_V, 0, d1, d2, 0, NULL, NULL);
 
   if (out != NULL) {
-    *out = __ghidra_result_d1;
+    *out = bridge_result_d1;
   }
   return error;
 }
@@ -464,13 +464,13 @@ uint32_t psos_get_time(uint32_t* date, uint32_t* time, uint16_t* ticks) {
   uint32_t error = psos_call(OS_SERVICE_GET_TIME, 0, 0, 0, 0, NULL, NULL);
 
   if (date != NULL) {
-    *date = __ghidra_result_d0;
+    *date = bridge_result_d0;
   }
   if (time != NULL) {
-    *time = __ghidra_result_d1;
+    *time = bridge_result_d1;
   }
   if (ticks != NULL) {
-    *ticks = __ghidra_result_d2;
+    *ticks = bridge_result_d2;
   }
   return error;
 }
@@ -497,7 +497,7 @@ uint32_t psos_io_read(uint32_t device, void* buffer, uint32_t* length) {
       psos_io_call(OS_IO_READ, device, 0, *length, 0, length, buffer);
 
   if (error == 0 && length != NULL) {
-    *length = __ghidra_result_d2;
+    *length = bridge_result_d2;
   }
   return error;
 }
@@ -509,7 +509,7 @@ uint32_t psos_io_write(uint32_t device, void* buffer, uint32_t* length) {
       psos_io_call(OS_IO_WRITE, device, 0, *length, 0, buffer, length);
 
   if (error == 0 && length != NULL) {
-    *length = __ghidra_result_d2;
+    *length = bridge_result_d2;
   }
   return error;
 }
@@ -838,10 +838,8 @@ void os_report_process_summary(printf_function* print) {
 void os_report_process(void* record, char* status, int32_t position,
                        uint32_t ticks, printf_function* print) {
   /* The registers as the caller left them, which the image reads. */
-  register uint32_t caller_d5 __asm__("d5");
-  register int32_t caller_d6 __asm__("d6");
-  __asm__("" : "=r"(caller_d5));
-  __asm__("" : "=r"(caller_d6));
+  uint32_t caller_d5 = CPU_CALLERS_REGISTER(uint32_t, "d5");
+  int32_t caller_d6 = CPU_CALLERS_REGISTER(int32_t, "d6");
   static const int32_t PERCENT = 100;
   os_task* task = record;
   char* name = task_name(task);

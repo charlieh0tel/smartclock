@@ -332,9 +332,7 @@ void finish_scpi_cmd(void) {
   /* The image passes each changed hook a byte of its caller's D3, which
    * it never sets (0x430b6, 0x43114, 0x4315c); read before gcc's code
    * uses the register. */
-  register uint32_t entry_d3 __asm__("d3");
-  __asm__("" : "=r"(entry_d3));
-  uint32_t caller_d3 = (uint8_t)entry_d3;
+  uint32_t caller_d3 = (uint8_t)CPU_CALLERS_REGISTER(uint32_t, "d3");
   pllc_param* param = pllc_current();
   int8_t index = (int8_t)pll_scpi_index;
 

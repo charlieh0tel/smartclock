@@ -64,3 +64,14 @@ static const uint16_t CPU_VECTOR_FORMAT_MASK = 0xf000;
  * in turn (MC68331UM, "Software Watchdog"; D.3.15). */
 static const uint8_t CPU_SWSR_FIRST = 0x55;
 static const uint8_t CPU_SWSR_SECOND = 0xaa;
+
+/* A register as the function's caller left it: the image's code reads
+ * some it never sets (docs/firmware/quirks.md, "Reads of what nothing
+ * set").  Use it first in the function, before gcc's code uses the
+ * register: CPU_CALLERS_REGISTER(uint32_t, "d3"). */
+#define CPU_CALLERS_REGISTER(type, reg)           \
+  ({                                              \
+    register type cpu_callers_value __asm__(reg); \
+    __asm__("" : "=r"(cpu_callers_value));        \
+    cpu_callers_value;                            \
+  })

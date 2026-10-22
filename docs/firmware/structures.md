@@ -416,7 +416,7 @@ Its other named fields, by the routines that use them:
 | `+0x13` | `ti_limit_override` | `holdover` checks the TI limit while it is 0; `pll_init` and `holdover` clear it, and `holdover_recovery_limit_ignore` (`0x45b0c`), `:ROSC:HOLDover:RECovery:LIMit:IGNore`'s action, sets it in holdover with no cause but the TI limit's |
 | `+0x14` | `recovery_countdown` | `holdover_recovery`'s, as `powerup_countdown` |
 | `+0x16` | `coarse_state` | `coarse`'s sub-state |
-| `+0x18` | `frequency_adjusted` | set when `fine` applies a frequency correction; `holdover_limit_exceeded` counts the limit exceeded while it is |
+| `+0x18` | `frequency_adjusted` | set when `fine` applies a frequency correction; `holdover_within_limit` counts the limit exceeded while it is |
 | `+0x1a` | `fine_retries` | `fine`'s failed attempts, a word; it gives up past 9 |
 | `+0x20` | `aging_state` | `efc_history_update`'s: 1 once it has stored the EFC and the first uncertainty, 3 once the ring holds the aging fit's entry; holdover uses the fit only at 3 |
 | `+0x24`, `+0x25` | `gps_diag_state`, `gps_diag_substate` | `gps_diag_sequence`'s |
@@ -1596,7 +1596,7 @@ it.
 (`get_date_time`, `0x136fe`): a checksum word, `uptime` at `+2`, the
 date and time `get_date_time` returns at `+6` and `+0xa`, their month
 table at `+0xe`, `gps_time` and `gps_date` at `+0x1a` and `+0x1e` with
-theirs at `+0x22`, `minute_length` at `+0x2e`, `invalid` at `+0x2f`,
+theirs at `+0x22`, `minute_length` at `+0x2e`, `set` at `+0x2f` (the clock set since power-up: `set_timedate` sets it, `clock_init` clears it),
 and `gps_utc_offset` and its flag at `+0x30` and `+0x32`.
 `clock_record_checksum` (`0x134a8`) sums `+2` to `+0x32`.
 `clock_init` (`0x13908`), given a nonzero argument or finding the

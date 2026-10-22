@@ -1403,6 +1403,12 @@ view cannot drift apart.  The library, bottom up:
      and `:RTCM?`, which work, out of the unsupported entries into
      `scpi_misc.c`; and the board's six LEDs, OP2 to OP7, named
      (`board_led`), the heartbeat `hmon_task`'s alone.
+     Then the names decided: `clock` +0x2f is `set`,
+     `holdover_within_limit`, the bridges' result registers and
+     condition codes `bridge_result_*` and `bridge_ccr` (not only pSOS's:
+     any bridged routine's second result), and one `cpu.h` macro,
+     `CPU_CALLERS_REGISTER`, for the registers the image reads as its
+     callers left them.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

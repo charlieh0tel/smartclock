@@ -170,9 +170,9 @@ get_clock_date	date	clock.date
 get_clock_time	time	clock.time
 get_gps_date	gps_date	clock.gps_date
 get_gps_time	gps_time	clock.gps_time
-get_date_time	valid	1 unless clock.invalid
-get_gps_datetime	valid	1 unless clock.invalid
-time_valid	invalid	clock.invalid, despite the function's name
+get_date_time	not_set	1 while clock.set is clear, the clock not set since power-up
+get_gps_datetime	not_set	1 while clock.set is clear
+time_valid	clock_set	clock.set: the clock has been set since power-up
 get_gps_utc_offset	offset_valid	clock.gps_utc_offset_valid
 tcode_checksum	checksum	the time code's characters' sum
 tcode_request	released	drtb_release_for_timecode's, 0 for a request refused
@@ -662,4 +662,4 @@ holdover	result	a stage's: 0 running, 1 done
 holdover_recovery	result	a stage's: 0 running, 1 done, 2 failed
 holdover_correction_valid	valid	1 when the TI's slope leaves the EFC in range
 holdover_ti_max	ti_max	holdover_steering.ti_largest
-holdover_limit_exceeded	within_limit	0 when the TI has reached the hold limit
+holdover_within_limit	within_limit	0 when the TI has reached the hold limit

@@ -30,22 +30,6 @@ static const int32_t GPS_REPORTS_MAS_PER_MINUTE = 60000;
 static const uint8_t GPS_REPORTS_CHANNELS =
     sizeof gps.status.channels / sizeof gps.status.channels[0];
 
-/* A text's length, as the image counts it in line. */
-static uint32_t gps_reports_length(const char* text) {
-  uint32_t length = 0;
-
-  while (text[length] != 0) {
-    length++;
-  }
-  return length;
-}
-
-/* Copies a text with its NUL, as the image does in line. */
-static void gps_reports_copy(char* destination, const char* text) {
-  while ((*destination++ = *text++) != 0) {
-  }
-}
-
 /* A signed count of units, divided, for a "%f". */
 static double gps_reports_scaled(int32_t value, float divisor) {
   return float_to_double(float_divide(integer_to_float(value), divisor));
@@ -79,16 +63,6 @@ void format_angle(char* text, int32_t mas, char latitude) {
           float_to_double(seconds));
 }
 
-/* ldiv's quotient, its result's high long, leaving the remainder, its
- * low long, in *numerator. */
-static int32_t gps_reports_divide(int32_t* numerator, int32_t denominator) {
-  static const int32_t LONG_BITS = 32;
-  int64_t result = ldiv(*numerator, denominator);
-
-  *numerator = (int32_t)result;
-  return result >> LONG_BITS;
-}
-
 /* A time of the week in seconds as "%02d:%02d:%04.1f [%s]", its hours,
  * minutes and seconds and its day's name (0x4816c).  The names are the
  * image's table, indexed unchecked by the day plus one: "---" and "Sun"
@@ -98,9 +72,9 @@ void format_duration(double time, char* text) {
   static const int32_t SECONDS_PER_HOUR = 3600;
   static const int32_t SECONDS_PER_MINUTE = 60;
   int32_t seconds = double_to_integer(time);
-  uint8_t day = gps_reports_divide(&seconds, SECONDS_PER_DAY) + 1;
-  uint8_t hours = gps_reports_divide(&seconds, SECONDS_PER_HOUR);
-  uint8_t minutes = gps_reports_divide(&seconds, SECONDS_PER_MINUTE);
+  uint8_t day = libc_divide(&seconds, SECONDS_PER_DAY) + 1;
+  uint8_t hours = libc_divide(&seconds, SECONDS_PER_HOUR);
+  uint8_t minutes = libc_divide(&seconds, SECONDS_PER_MINUTE);
   /* The export types the table's entries as uint32_t pointers; they
    * are texts. */
   char* day_name = (char*)(&PTR_DAT_0004cf80)[day];
@@ -195,7 +169,7 @@ int32_t gps_print_command(gps_command_log* log, char* line) {
   sprintf(line, "%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s",
           gps_reports_sender_name(entry.sender), (int32_t)entry.code,
           oncore_messages[entry.message].id, entry.argument_text,
-          entry.query != 0 ? "q" : "c", date, time,
+          entry.query != GPS_ARGUMENTS_SET ? "q" : "c", date, time,
           entry.clock_invalid != 0 ? " " : "e");
   return 1;
 }
@@ -316,14 +290,11 @@ void gps_print_process_monitor(void) {
   if (gps_last_command == NULL) {
     console_write("(none received)\r\n");
   } else {
-    /* gps_request_entry.argument_mode: a setting, or its query */
-    static const uint8_t CHANGE = 0;
-    static const uint8_t QUERY = 1;
     gps_request_entry* request = &gps_last_command->request;
 
-    if (request->argument_mode == QUERY) {
+    if (request->argument_mode == GPS_ARGUMENTS_QUERY) {
       detail = "query setting";
-    } else if (request->argument_mode == CHANGE) {
+    } else if (request->argument_mode == GPS_ARGUMENTS_SET) {
       detail = "change/execute";
     } else {
       detail = "? action";
@@ -352,13 +323,12 @@ void gps_print_process_monitor(void) {
     char* digits = hex;
 
     sprintf(hex, "%hx", (uint16_t)*gps_print_cursor);
-    if (gps_reports_length(digits) < 2) {
+    if (libc_length(digits) < 2) {
       hex[2] = 0;
       hex[1] = hex[0];
       hex[0] = '0';
     } else {
-      while (gps_reports_length(digits) >= 3 &&
-             (*digits == '0' || *digits == 'f')) {
+      while (libc_length(digits) >= 3 && (*digits == '0' || *digits == 'f')) {
         digits++;
       }
     }
@@ -488,7 +458,7 @@ void gps_debug_status(void) {
                 (uint32_t)gps.status.receiver_status);
   printf("%s%2.1f\r\n", line,
          gps_reports_scaled_unsigned(gps.status.dop, GPS_REPORTS_TENTHS));
-  gps_reports_copy(line, "gs: ");
+  libc_copy(line, "gs: ");
   for (uint32_t channel = 0; channel < GPS_REPORTS_CHANNELS; channel++) {
     oncore_channel_status* tracked = &gps.status.channels[channel];
 
@@ -497,7 +467,7 @@ void gps_debug_status(void) {
                   (uint32_t)tracked->signal_strength,
                   (uint32_t)tracked->status);
     if (channel == GPS_REPORTS_CHANNELS - 1) {
-      part[gps_reports_length(part) - 1] = 0; /* the last comma */
+      part[libc_length(part) - 1] = 0; /* the last comma */
     }
     strcat(line, part);
   }
@@ -755,7 +725,7 @@ void enabled_string(char enabled, char* text) {
   } else {
     name = "?";
   }
-  gps_reports_copy(text, name);
+  libc_copy(text, name);
 }
 
 /* Prints the Instrument State Settings: the receiver's time, date,
@@ -844,7 +814,7 @@ void gps_print_instrument_state(void) {
          gps.hold_position.longitude, other, gps.position.longitude);
   /* the held height in the column of its type, the ellipsoid's or mean
    * sea level's */
-  if (gps.hold_height_type == 0) {
+  if (gps.hold_height_type == ONCORE_HEIGHT_GPS) {
     sprintf(text, "%+8d cm", gps.hold_position.height);
     other[0] = 0;
   } else {
@@ -870,10 +840,10 @@ void gps_print_instrument_state(void) {
     }
     mask >>= 1;
   }
-  uint8_t length = gps_reports_length(ignored);
+  uint8_t length = libc_length(ignored);
 
   if (length == 0) {
-    gps_reports_copy(ignored, "(none ignored)");
+    libc_copy(ignored, "(none ignored)");
   } else {
     ignored[length - 2] = 0; /* the last ", " */
   }

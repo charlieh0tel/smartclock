@@ -1471,6 +1471,17 @@ view cannot drift apart.  The library, bottom up:
      list routines take the records they are given
      (gps_visibility_record, satellite_list_entry), and format_date a
      calendar_date, the long its callers push.
+     With those, the rest of the GPS engine, the screen and the console
+     by hand (all 91, 32 and 94): the Oncore's message table typed,
+     its encoders and decoders `oncore_encoder` and
+     `oncore_decode_function`, its kinds and match kinds enums; a step's
+     argument mode (`gps_argument_mode`), the match's verdict and the
+     kernel's timeout error (`psos_error`) shared enums.  The table holds
+     the image's own routines, which return a pointer in D0 alone, so
+     the C calls them as returning a long (gcc takes a pointer from A0).
+     The in-line string length and copy and the `lsl.l` bit, each
+     written three times, are one each (`libc.h`, `cpu.h`), and the
+     satellite IDs are `gps.h`'s.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

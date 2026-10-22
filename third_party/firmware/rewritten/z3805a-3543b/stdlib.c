@@ -173,7 +173,8 @@ void qsort_range(uint8_t* first, uint8_t* end) {
 
 /* Sorts nmemb elements of size bytes by compar, leaving compar and
  * size where qsort_range reads them (0x5f0cc). */
-void qsort(void* base, uint32_t nmemb, uint32_t size, void* compar) {
+void qsort(void* base, uint32_t nmemb, uint32_t size,
+           qsort_compare_function* compar) {
   qsort_compare = compar;
   qsort_size = size;
   qsort_range(base, (uint8_t*)base + size * nmemb);

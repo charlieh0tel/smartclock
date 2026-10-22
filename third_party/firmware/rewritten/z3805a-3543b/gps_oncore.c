@@ -12,16 +12,6 @@
 /* A message's two-character ID, after its "@@". */
 static const uint32_t GPS_ONCORE_ID_LENGTH = 2;
 
-/* A string's length; the image has no strlen and counts in line. */
-static uint32_t gps_oncore_length(const char* s) {
-  uint32_t length = 0;
-
-  while (s[length] != 0) {
-    length++;
-  }
-  return length;
-}
-
 /* Points gps_response_cursor back at gps_response_buffer's start and
  * expects a message's first @ (0x4b79a). */
 void gps_response_reset(void) {
@@ -221,7 +211,7 @@ int32_t gps_count_response(gps_request_result kind,
  * after them in hex, and "<cr><lf>"; empty unless it ends in CR LF.  Its
  * length (0x4fdca). */
 int32_t gps_message_to_text(char* message, uint8_t length, char* text) {
-  const uint32_t header_length = gps_oncore_length("@@") + GPS_ONCORE_ID_LENGTH;
+  const uint32_t header_length = libc_length("@@") + GPS_ONCORE_ID_LENGTH;
   const char* end = message + (length - 2);
 
   if (message[0] == 0 || end[0] != '\r' || end[1] != '\n') {
@@ -238,14 +228,13 @@ int32_t gps_message_to_text(char* message, uint8_t length, char* text) {
       char* shown = digits;
 
       sprintf(digits, "%hx", (uint32_t)(uint8_t)*byte);
-      if (gps_oncore_length(digits) < 2) {
+      if (libc_length(digits) < 2) {
         digits[2] = 0;
         digits[1] = digits[0];
         digits[0] = '0';
       } else {
         /* Never more than two digits for a byte, so never trimmed. */
-        while (gps_oncore_length(shown) >= 3 &&
-               (*shown == '0' || *shown == 'f')) {
+        while (libc_length(shown) >= 3 && (*shown == '0' || *shown == 'f')) {
           shown++;
         }
       }
@@ -253,7 +242,7 @@ int32_t gps_message_to_text(char* message, uint8_t length, char* text) {
     }
     sprintf(text, "%s%s<cr><lf>", header, hex);
   }
-  return gps_oncore_length(text);
+  return libc_length(text);
 }
 
 /* A request's argument by its index (0x4ee8c). */
@@ -294,14 +283,48 @@ char* long_array_get_long(int32_t* array, uint8_t index, char* out) {
   return out + 4;
 }
 
+/* A zero byte, then an argument, high byte first (0x4ef3a). */
+char* long_array_get_long_prefixed(int32_t* array, uint8_t index, char* out) {
+  *out = 0;
+  return long_array_get_long(array, index, out + 1);
+}
+
 /* The decoders a message's descriptor names, which gps_response_decode
  * calls with the cursor in the response and their record, and which
  * return the cursor past what they read. */
+
+/* Copies a byte, if there is somewhere to put it (0x4ef54). */
+uint8_t* byte_copy_optional(uint8_t* source, uint8_t* destination) {
+  if (destination != NULL) {
+    *destination = *source;
+  }
+  return source + 1;
+}
 
 /* Copies a word (0x4ef70). */
 uint16_t* word_copy_advance(uint16_t* source, uint16_t* destination) {
   *destination = *source;
   return source + 1;
+}
+
+/* Decodes @@As's height and its type, the position hold position's
+ * last fields (0x4efb4). */
+uint8_t* oncore_as_height_decode(uint8_t* cursor, uint8_t* record) {
+  /* bytes_to_long takes the long as unsigned, byte_copy_optional the
+   * type as a byte. */
+  cursor = bytes_to_long(cursor, (uint32_t*)&gps.hold_position.height);
+  return byte_copy_optional(cursor, (uint8_t*)&gps.hold_height_type);
+}
+
+/* Decodes @@Ai's byte into record at its channel, 1 to 6 (0x4efd6). */
+uint8_t* oncore_ai_decode(uint8_t* cursor, uint8_t* record) {
+  static const uint8_t CHANNELS = 6;
+  const uint8_t channel = cursor[0];
+
+  if (channel != 0 && channel <= CHANNELS) {
+    byte_copy_optional(&cursor[1], &record[channel - 1]);
+  }
+  return cursor + 2;
 }
 
 /* Copies @@Ca's self-test result, if there is somewhere to put it, but
@@ -323,11 +346,11 @@ uint8_t* oncore_decode_fields(uint8_t* source, uint8_t* destination,
                               uint8_t* program) {
   static const uint8_t SIGN_BIT = 0x80;
   int8_t repeats = 1;
-  const char* group = program;
-  const char* op = program;
+  const uint8_t* group = program;
+  const uint8_t* op = program;
 
   for (;;) {
-    uint8_t code = (uint8_t)*op;
+    uint8_t code = *op;
 
     if (code == ONCORE_FIELD_END) {
       return source;
@@ -337,10 +360,10 @@ uint8_t* oncore_decode_fields(uint8_t* source, uint8_t* destination,
       continue;
     }
     if (code > ONCORE_FIELD_SKIP_DESTINATION && code < ONCORE_FIELD_END) {
-      /* The count is read again for each byte, as the image does, so a
-       * record laid over the program ends the copy where it has written
-       * over it. */
-      for (uint8_t i = 1; i <= *op; i++) {
+      /* The count is read again for each byte, signed, as the image
+       * does, so a record laid over the program ends the copy where it
+       * has written over it. */
+      for (uint8_t i = 1; i <= (int8_t)*op; i++) {
         *destination++ = *source++;
       }
     } else if (code == ONCORE_FIELD_SKIP_DESTINATION) {
@@ -379,9 +402,7 @@ uint8_t* oncore_position_message(uint8_t* cursor, uint8_t* record) {
     channels_reset();
     return cursor;
   }
-  /* oncore_decode_fields takes the program's bytes as char. */
-  cursor =
-      oncore_decode_fields(cursor, record, (char*)oncore_status_field_codes);
+  cursor = oncore_decode_fields(cursor, record, oncore_status_field_codes);
   gps_receiver_status_update(0, 0);
   if (gps.position_hold == 0 &&
       (nv_settings.douglas_duration_infinite == 1 ||
@@ -407,6 +428,24 @@ uint8_t* oncore_position_message(uint8_t* cursor, uint8_t* record) {
   return cursor;
 }
 
+/* Decodes @@Bb, the visible satellites, and marks them received
+ * (0x4f682). */
+uint8_t* oncore_visibility_message(uint8_t* cursor, uint8_t* record) {
+  cursor = oncore_decode_fields(cursor, record, oncore_visibility_field_codes);
+  gps.visibility_received = 1;
+  return cursor;
+}
+
+/* Decodes @@Bc, the DOP table (0x4f6a4). */
+uint8_t* oncore_dop_message(uint8_t* cursor, uint8_t* record) {
+  return oncore_decode_fields(cursor, record, oncore_xdop_table_field_codes);
+}
+
+/* Decodes @@Bd, the almanac status (0x4f6be). */
+uint8_t* oncore_almanac_status_message(uint8_t* cursor, uint8_t* record) {
+  return oncore_decode_fields(cursor, record, oncore_almanac_field_codes);
+}
+
 /* Decodes @@Ce, the pseudorange corrections, and keeps the mean and
  * standard deviation, in meters, of those of the satellites used for
  * position (0x4f6d8). */
@@ -418,9 +457,8 @@ uint8_t* oncore_corrections_message(uint8_t* cursor, uint8_t* record) {
   double sum = 0.0;
   double sum_of_squares = 0.0;
   uint8_t used = 0;
-  /* oncore_decode_fields takes the program's bytes as char. */
-  uint8_t* next = oncore_decode_fields(cursor, record,
-                                       (char*)oncore_corrections_field_codes);
+  uint8_t* next =
+      oncore_decode_fields(cursor, record, oncore_corrections_field_codes);
 
   for (uint32_t i = 0; i < CHANNELS; i++) {
     const oncore_correction_channel* channel = &gps.corrections.channels[i];
@@ -452,4 +490,157 @@ uint8_t* oncore_corrections_message(uint8_t* cursor, uint8_t* record) {
         double_multiply(sqrt(variance), CENTIMETERS_TO_METERS);
   }
   return next;
+}
+
+/* Decodes @@Bk, the position, status and data extension (0x4f842). */
+uint8_t* oncore_extension_message(uint8_t* cursor, uint8_t* record) {
+  return oncore_decode_fields(cursor, record, oncore_extension_field_codes);
+}
+
+/* Decodes @@Bn, the Time RAIM setup and status, and marks it arrived
+ * (0x4f85c). */
+uint8_t* oncore_traim_message(uint8_t* cursor, uint8_t* record) {
+  cursor = oncore_decode_fields(cursor, record, oncore_raim_field_codes);
+  traim_message_arrived = 1;
+  return cursor;
+}
+
+/* Decodes @@Cj, the receiver ID, and marks it received (0x4f87e). */
+uint8_t* oncore_receiver_id_message(uint8_t* cursor, uint8_t* record) {
+  cursor = oncore_decode_fields(cursor, record, oncore_receiver_id_field_codes);
+  gps.receiver_id_received = 1;
+  return cursor;
+}
+
+/* Runs a decoder of oncore_messages.  The table holds the image's own
+ * routines, which return the cursor in D0 alone, where gcc takes a
+ * pointer result from A0; so it is called as returning a long. */
+static uint8_t* gps_oncore_decode(const oncore_decoder* decoder,
+                                  uint8_t* cursor) {
+  typedef uint32_t decode_in_d0(uint8_t* cursor, uint8_t* record);
+
+  return (uint8_t*)((decode_in_d0*)decoder->decode)(cursor, decoder->record);
+}
+
+/* Runs a response's decoders over it, past its "@@" and ID, with
+ * preemption off, and gives @@Ba's time to status_snapshot_update; the
+ * cursor past what they read (0x4faa2). */
+char* gps_response_decode(int16_t message, char* response) {
+  static const uint8_t DECODERS = sizeof oncore_messages[0].decoders /
+                                  sizeof oncore_messages[0].decoders[0];
+  const oncore_message_entry* entry = &oncore_messages[message];
+  uint8_t* cursor;
+
+  psos_mode(PSOS_MODE_NO_PREEMPTION, PSOS_MODE_NO_PREEMPTION, NULL);
+  cursor = (uint8_t*)response + libc_length("@@") + libc_length(entry->id);
+  for (uint8_t i = 0; i < DECODERS && entry->decoders[i].decode != NULL; i++) {
+    cursor = gps_oncore_decode(&entry->decoders[i], cursor);
+  }
+  psos_mode(0, PSOS_MODE_NO_PREEMPTION, NULL);
+  if (message == GPS_REQUEST_POSITION_STATUS) {
+    status_snapshot_update(clock_time_bits(gps.status.time));
+  }
+  return (char*)cursor;
+}
+
+/* Whether a response answers the command sent, by the message's match
+ * kind; for those that compare, whether its bytes after the ID are the
+ * command's (0x4fb86). */
+gps_match_result gps_response_match(int16_t message, uint8_t* sent,
+                                    uint8_t length, gps_argument_mode mode,
+                                    int16_t index, uint8_t* response,
+                                    int16_t response_length) {
+  /* @@Ab's offset: sign, hours, minutes. */
+  static const uint8_t OFFSET_LENGTH = 3;
+  static const uint8_t OFFSET_NEGATIVE = 0xff;
+  /* @@Af's height, then its type; the response's GPS height, then its
+   * MSL one. */
+  static const uint8_t HEIGHT_LENGTH = 4;
+  /* @@As's latitude, longitude, height and type, and the heights it
+   * takes, in cm (VPCommands.pdf, Position Hold Position). */
+  static const uint8_t HOLD_HEIGHT = 8;
+  static const uint8_t HOLD_TYPE = 12;
+  static const int32_t HOLD_HEIGHT_LOWEST = -100000;
+  static const int32_t HOLD_HEIGHT_HIGHEST = 1800000;
+  static const int32_t HOLD_HEIGHT_TOLERANCE = 2;
+  const oncore_message_entry* entry = &oncore_messages[message];
+  const oncore_match_kind kind = entry->match_kind;
+  uint8_t offset[3];
+  uint8_t sent_start;
+  uint8_t sent_count;
+  uint8_t response_start;
+  int16_t response_count;
+
+  switch (kind) {
+    case ONCORE_MATCH_ANY:
+      return GPS_MATCH_ANSWERED;
+    case ONCORE_MATCH_SAME:
+      return index == message ? GPS_MATCH_ANSWERED : GPS_MATCH_OTHER;
+    case ONCORE_MATCH_USER_DATUM:
+      return index == GPS_REQUEST_USER_DATUM ? GPS_MATCH_ANSWERED
+                                             : GPS_MATCH_OTHER;
+    case ONCORE_MATCH_CORRECTIONS:
+      return index == GPS_REQUEST_CORRECTION_INPUT ? GPS_MATCH_ANSWERED
+                                                   : GPS_MATCH_OTHER;
+    case ONCORE_MATCH_ECHO:
+    case ONCORE_MATCH_GMT_OFFSET:
+    case ONCORE_MATCH_HEIGHT:
+    case ONCORE_MATCH_HOLD_POSITION:
+    case ONCORE_MATCH_FIX_MODE:
+      break;
+    default:
+      return GPS_MATCH_OTHER;
+  }
+  if (index != message) {
+    return GPS_MATCH_OTHER;
+  }
+  sent_start = libc_length("@@") + libc_length(entry->id);
+  sent_count = length - sent_start;
+  if (mode == GPS_ARGUMENTS_QUERY ||
+      (kind == ONCORE_MATCH_FIX_MODE &&
+       sent[sent_start] == ONCORE_FIX_MODE_QUERY)) {
+    return GPS_MATCH_ANSWERED;
+  }
+  response_start = libc_length(oncore_messages[index].id) + libc_length("@@");
+  response_count = response_length - response_start;
+  if (kind == ONCORE_MATCH_GMT_OFFSET) {
+    uint8_t* given = &sent[sent_start];
+
+    if (given[0] == OFFSET_NEGATIVE && given[1] == 0) {
+      memcpy(offset, given, OFFSET_LENGTH);
+      offset[0] = 0;
+      offset[2] = -offset[2];
+      sent = offset;
+      sent_start = 0;
+      sent_count = OFFSET_LENGTH;
+      response_count = OFFSET_LENGTH;
+    }
+  } else if (kind == ONCORE_MATCH_HEIGHT) {
+    if (sent[sent_start + HEIGHT_LENGTH] == ONCORE_HEIGHT_MSL) {
+      response += HEIGHT_LENGTH;
+    }
+    sent_count = HEIGHT_LENGTH;
+    response_count = HEIGHT_LENGTH;
+  } else if (kind == ONCORE_MATCH_HOLD_POSITION &&
+             sent[sent_start + HOLD_TYPE] ==
+                 response[response_start + HOLD_TYPE]) {
+    int32_t sent_height;
+    int32_t response_height;
+
+    /* bytes_to_long takes the long as unsigned. */
+    bytes_to_long(&sent[sent_start + HOLD_HEIGHT], (uint32_t*)&sent_height);
+    bytes_to_long(&response[response_start + HOLD_HEIGHT],
+                  (uint32_t*)&response_height);
+    if (sent_height >= HOLD_HEIGHT_LOWEST &&
+        sent_height <= HOLD_HEIGHT_HIGHEST &&
+        labs(sent_height - response_height) <= HOLD_HEIGHT_TOLERANCE) {
+      sent_count = HOLD_HEIGHT;
+      response_count = HOLD_HEIGHT;
+    }
+  }
+  /* bytes_equal_n takes the bytes as char. */
+  return bytes_equal_n((char*)&sent[sent_start], sent_count,
+                       (char*)&response[response_start], response_count) == 1
+             ? GPS_MATCH_ANSWERED
+             : GPS_MATCH_DIFFERS;
 }

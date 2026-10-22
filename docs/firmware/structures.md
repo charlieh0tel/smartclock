@@ -1354,7 +1354,7 @@ to `+0x2f` of all eight, its loop running 0 to 7, and the step.
 
 `gpsm_task` runs a script as a list of step pointers; the step at
 `0x101b56`, `gps_request_step` (`gps_script_step`, 20 bytes), is in RAM,
-and the one-step script at `0x50cc2` points at it.  For a request
+and the one-step script `gps_script_message` (`0x50cc2`) points at it.  For a request
 `gps_request_class` (`0x4bdba`) puts in class 0, a message, `gpsm_task`
 copies the request's code and a byte into `code` and `argument_mode`
 and its four arguments into `arguments`, and runs that script; for
@@ -1914,4 +1914,5 @@ reader is it, and `scpi_task_start` (`0x12f30`) clears it.
 and three arguments to `spoo_exchange` as a `spoo_request`, which
 `spoo_task` (`0x20e4e`) receives into `spoo_message` (`0x103702`) and
 calls; `request_x`'s error is kept in `spoo_receive_error`
-(`0x10371a`), and `0x81` makes it run `deferred_flush` instead.
+(`0x10371a`), and a timeout, `0x81` after `0x400` ticks, makes it run
+`deferred_flush` instead.

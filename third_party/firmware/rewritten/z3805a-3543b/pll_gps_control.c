@@ -16,8 +16,8 @@ static const uint32_t PLL_GPS_CONTROL_RETRY_TICKS = 0x400;
 /* Sends a request to gpsx_exchange, its four arguments copied to
  * gpsx_arguments, unless an acknowledgment is awaited; whether it was
  * sent, and then ack_awaited awaits its acknowledgment (0x46636). */
-uint8_t gpsx_send(int16_t code, uint8_t argument_mode, int32_t* arguments,
-                  uint8_t ack_awaited) {
+uint8_t gpsx_send(int16_t code, gps_argument_mode argument_mode,
+                  int32_t* arguments, uint8_t ack_awaited) {
   gps_request_entry request;
 
   if (gps_ack_awaited != GPS_ACK_NONE) {
@@ -60,7 +60,8 @@ uint8_t gps_ack_received(void) {
 static void pll_gps_control_selftest_send(int16_t code, int32_t* arguments) {
   uint8_t tries = 20;
 
-  while (gpsx_send(code, 0, arguments, GPS_ACK_SELFTEST) == 0 && tries != 0) {
+  while (gpsx_send(code, GPS_ARGUMENTS_SET, arguments, GPS_ACK_SELFTEST) == 0 &&
+         tries != 0) {
     psos_pause(PLL_GPS_CONTROL_RETRY_TICKS);
     watchdog_pll++;
     tries--;
@@ -117,7 +118,7 @@ void gps_selftest_run(void) {
  * moves to the state that waits for it. */
 static void pll_gps_control_init_send(int16_t code, int32_t* arguments,
                                       uint8_t ack_state) {
-  if (gpsx_send(code, 0, arguments, GPS_ACK_INIT) != 0) {
+  if (gpsx_send(code, GPS_ARGUMENTS_SET, arguments, GPS_ACK_INIT) != 0) {
     pll.gps_init_state = ack_state;
   }
 }
@@ -330,8 +331,8 @@ void gps_leap_sequence(void) {
   switch (pll.leap_check_state) {
     case PLL_LEAP_CHECK_PENDING_SEND:
       arguments[0] = 0;
-      if (gpsx_send(GPS_REQUEST_LEAP_SECOND_PENDING, 0, arguments,
-                    GPS_ACK_LEAP_CHECK) != 0) {
+      if (gpsx_send(GPS_REQUEST_LEAP_SECOND_PENDING, GPS_ARGUMENTS_SET,
+                    arguments, GPS_ACK_LEAP_CHECK) != 0) {
         pll.leap_check_state = PLL_LEAP_CHECK_PENDING_ACK;
       }
       break;
@@ -411,8 +412,8 @@ void gps_leap_ack(void) {
     }
     case PLL_LEAP_ACK_MODE_SEND:
       arguments[0] = (int8_t)nv_settings.gps_utc;
-      if (gpsx_send(GPS_REQUEST_UTC_SELECT, 0, arguments, GPS_ACK_LEAP_ACK) !=
-          0) {
+      if (gpsx_send(GPS_REQUEST_UTC_SELECT, GPS_ARGUMENTS_SET, arguments,
+                    GPS_ACK_LEAP_ACK) != 0) {
         *state = PLL_LEAP_ACK_MODE_ACK;
       }
       return;
@@ -428,7 +429,8 @@ void gps_leap_ack(void) {
       return;
     case PLL_LEAP_ACK_SWITCH_SEND:
       arguments[0] = gps.utc_time == ONCORE_TIME_GPS;
-      if (gpsx_send(GPS_SCRIPT_UTC_SET, 0, arguments, GPS_ACK_LEAP_ACK) != 0) {
+      if (gpsx_send(GPS_SCRIPT_UTC_SET, GPS_ARGUMENTS_SET, arguments,
+                    GPS_ACK_LEAP_ACK) != 0) {
         *state = PLL_LEAP_ACK_SWITCH_ACK;
       }
       return;
@@ -445,8 +447,8 @@ void gps_leap_ack(void) {
       return;
     case PLL_LEAP_ACK_BACK_SEND:
       arguments[0] = gps.utc_time == ONCORE_TIME_GPS;
-      if (gpsx_send(GPS_REQUEST_UTC_SELECT, 0, arguments, GPS_ACK_LEAP_ACK) !=
-          0) {
+      if (gpsx_send(GPS_REQUEST_UTC_SELECT, GPS_ARGUMENTS_SET, arguments,
+                    GPS_ACK_LEAP_ACK) != 0) {
         *state = PLL_LEAP_ACK_BACK_ACK;
       }
       return;
@@ -477,7 +479,7 @@ void gps_leap_ack(void) {
 /* Sends the console's pending GPS command, gps_command, as the request
  * its code maps to, with its arguments, and clears it (0x470aa). */
 void gps_command_send(void) {
-  uint8_t argument_mode = 0;
+  gps_argument_mode argument_mode = GPS_ARGUMENTS_SET;
   int16_t code;
 
   switch (gps_command.code) {
@@ -509,18 +511,18 @@ void gps_command_send(void) {
       break;
     case 9:
       code = GPS_REQUEST_MASK_ANGLE;
-      argument_mode = 1;
+      argument_mode = GPS_ARGUMENTS_QUERY;
       break;
     case 10:
       code = GPS_REQUEST_POSITION_HOLD_POSITION;
-      argument_mode = 1;
+      argument_mode = GPS_ARGUMENTS_QUERY;
       break;
     case 0x0b:
       code = GPS_REQUEST_CABLE_DELAY;
       break;
     case 0x0c:
       code = GPS_REQUEST_CABLE_DELAY;
-      argument_mode = 1;
+      argument_mode = GPS_ARGUMENTS_QUERY;
       break;
     case 0x0d:
       code = GPS_REQUEST_VISIBILITY;
@@ -581,7 +583,7 @@ void gps_command_send(void) {
       break;
     case 0x20:
       code = (int16_t)gps_command.request;
-      argument_mode = 1;
+      argument_mode = GPS_ARGUMENTS_QUERY;
       break;
     default:
       gps_command.code = 0;
@@ -608,7 +610,7 @@ static void pll_gps_control_diag_send(int16_t code, int32_t* arguments,
   static const uint8_t SEND_TRIES = 20;
 
   interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
-  if (gpsx_send(code, 0, arguments, GPS_ACK_SELFTEST) == 0) {
+  if (gpsx_send(code, GPS_ARGUMENTS_SET, arguments, GPS_ACK_SELFTEST) == 0) {
     pll_gps_control_diag_retry(SEND_TRIES);
   } else {
     pll.gps_diag_state = ack_state;

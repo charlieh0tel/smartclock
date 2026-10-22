@@ -12,15 +12,6 @@
 static const uint8_t GPS_RECEIVER_CHANNELS =
     sizeof gps.status.channels / sizeof gps.status.channels[0];
 
-/* The satellite IDs: GPS 1 to 32, pseudolites 33 to 37 (satellite_kind). */
-static const uint8_t GPS_RECEIVER_FIRST_GPS = 1;
-
-static const uint8_t GPS_RECEIVER_LAST_GPS = 0x20;
-
-static const uint8_t GPS_RECEIVER_FIRST_PSEUDOLITE = 0x21;
-
-static const uint8_t GPS_RECEIVER_LAST_PSEUDOLITE = 0x25;
-
 /* Sets the receiver status to not tracking, as after a reset, and the
  * channels to code search (0x4b112). */
 void gps_receiver_status_reset(void) {
@@ -43,16 +34,16 @@ int32_t satellite_id_valid(satellite_kind kind, uint8_t id) {
 
   switch (kind) {
     case SATELLITE_GPS:
-      first = GPS_RECEIVER_FIRST_GPS;
-      last = GPS_RECEIVER_LAST_GPS;
+      first = GPS_FIRST_SATELLITE;
+      last = GPS_LAST_SATELLITE;
       break;
     case SATELLITE_PSEUDOLITE:
-      first = GPS_RECEIVER_FIRST_PSEUDOLITE;
-      last = GPS_RECEIVER_LAST_PSEUDOLITE;
+      first = GPS_FIRST_PSEUDOLITE;
+      last = GPS_LAST_PSEUDOLITE;
       break;
     case SATELLITE_ANY:
-      first = GPS_RECEIVER_FIRST_GPS;
-      last = GPS_RECEIVER_LAST_PSEUDOLITE;
+      first = GPS_FIRST_SATELLITE;
+      last = GPS_LAST_PSEUDOLITE;
       break;
     default:
       return 0;
@@ -93,25 +84,13 @@ void channels_reset(void) {
   }
 }
 
-/* A set's bit for an index: lsl.l takes its count modulo 64, and one of
- * 32 or more shifts the bit out. */
-static uint32_t gps_receiver_bit(uint8_t index) {
-  static const uint8_t COUNT_MASK = 0x3f;
-  static const uint8_t LONG_BITS = 32;
-  uint8_t count = index & COUNT_MASK;
-
-  return count < LONG_BITS ? (uint32_t)1 << count : 0;
-}
-
 /* Adds a satellite to a set: a GPS satellite as bit id - 1 of a long, a
- * pseudolite as bit id - 0x21 of a byte, which callers pass through the
- * same pointer, the long's first byte (0x4f1a6). */
-void satellite_add_to_set(satellite_kind kind, uint8_t id, uint32_t* set) {
+ * pseudolite as bit id - 0x21 of a byte (0x4f1a6). */
+void satellite_add_to_set(satellite_kind kind, uint8_t id, void* set) {
   if (kind == SATELLITE_GPS) {
-    *set |= gps_receiver_bit(id - GPS_RECEIVER_FIRST_GPS);
+    *(uint32_t*)set |= cpu_long_bit(id - GPS_FIRST_SATELLITE);
   } else {
-    *(uint8_t*)set |=
-        (uint8_t)gps_receiver_bit(id - GPS_RECEIVER_FIRST_PSEUDOLITE);
+    *(uint8_t*)set |= (uint8_t)cpu_long_bit(id - GPS_FIRST_PSEUDOLITE);
   }
 }
 
@@ -121,6 +100,58 @@ static uint32_t gps_receiver_validation_mark(uint32_t seconds,
                                              double fraction) {
   return double_to_unsigned(
       double_multiply(unsigned_to_double(seconds), fraction));
+}
+
+/* Assesses Time RAIM from @@Bn, while it is on and its status known:
+ * not OK first raises an alarm detected, at raim_suspect_time, and not
+ * OK for RAIM_ALARM_SECONDS an alarm; OK clears either (0x4b01e). */
+void raim_monitor(void) {
+  static const uint32_t RAIM_ALARM_SECONDS = 4;
+  const oncore_raim_fields* raim = &gps.raim;
+  int32_t elapsed;
+
+  if (raim->raim_on != 1 || gps.raim_received == 0 ||
+      raim->raim_status == ONCORE_RAIM_NEITHER ||
+      raim->solution_status == ONCORE_RAIM_UNKNOWN) {
+    gps.raim_assessment = GPS_RAIM_INACTIVE;
+    return;
+  }
+  switch (gps.raim_assessment) {
+    case GPS_RAIM_INACTIVE:
+      if (raim->solution_status == ONCORE_RAIM_OK) {
+        gps.raim_assessment = GPS_RAIM_OK;
+      } else {
+        gps.raim_assessment = GPS_RAIM_ALARM_DETECTED;
+        raim_suspect_time = get_uptime();
+        gps_counts.raim_detected++;
+      }
+      break;
+    case GPS_RAIM_OK:
+      if (raim->solution_status == ONCORE_RAIM_ALARM) {
+        gps.raim_assessment = GPS_RAIM_ALARM_DETECTED;
+        raim_suspect_time = get_uptime();
+        gps_counts.raim_detected++;
+      }
+      break;
+    case GPS_RAIM_ALARM_DETECTED:
+      if (raim->solution_status == ONCORE_RAIM_OK) {
+        gps.raim_assessment = GPS_RAIM_OK;
+      } else if (!uptime_elapsed(&raim_suspect_time, &elapsed)) {
+        raim_suspect_time = get_uptime();
+      } else if ((uint32_t)elapsed >= RAIM_ALARM_SECONDS) {
+        gps.raim_assessment = GPS_RAIM_ALARM;
+        gps_counts.raim_alarms++;
+      }
+      break;
+    case GPS_RAIM_ALARM:
+      if (raim->solution_status == ONCORE_RAIM_OK) {
+        gps.raim_assessment = GPS_RAIM_OK;
+      }
+      break;
+    default:
+      gps.raim_assessment = GPS_RAIM_INACTIVE;
+      break;
+  }
 }
 
 /* Updates the receiver status (gps_sync_status) and reference_valid
@@ -434,6 +465,40 @@ void command_monitor(void) {
                        : STATUS_GPS_FAILURE_CLEARED);
 }
 
+/* The sets of GPS satellites and pseudolites the channels use for
+ * position, and their counts, each set if asked; false before @@Ba has
+ * come (0x4f28e). */
+bool satellites_in_use(uint8_t* count, uint8_t* pseudolite_count, uint32_t* set,
+                       uint8_t* pseudolite_set) {
+  uint32_t used = 0;
+  uint8_t pseudolites_used = 0;
+
+  if (gps.status_received == 0) {
+    return false;
+  }
+  for (uint8_t channel = 1; channel <= GPS_RECEIVER_CHANNELS; channel++) {
+    const uint8_t satellite = channel_position_satellite(channel);
+
+    if (satellite == 0) {
+      continue;
+    }
+    if (satellite > GPS_LAST_SATELLITE) {
+      satellite_add_to_set(SATELLITE_PSEUDOLITE, satellite, &pseudolites_used);
+    } else {
+      satellite_add_to_set(SATELLITE_GPS, satellite, &used);
+    }
+  }
+  *count = count_bits(used);
+  *pseudolite_count = count_bits(pseudolites_used);
+  if (set != NULL) {
+    *set = used;
+  }
+  if (pseudolite_set != NULL) {
+    *pseudolite_set = pseudolites_used;
+  }
+  return true;
+}
+
 /* The number of GPS satellites @@Bb predicts visible, at most twelve,
  * and their set if asked; false before @@Bb has come (0x4f1f8). */
 bool visible_satellites(uint8_t* count, uint32_t* set) {
@@ -568,4 +633,32 @@ bool survey_progress_text(char* text) {
   }
   sprintf(text, "%+.1f", float_to_double(progress));
   return true;
+}
+
+/* The milliarcseconds of a position's coordinate, as degrees, minutes
+ * and seconds of its magnitude (0x47e32). */
+void mas_to_dms(int32_t mas, uint16_t* degrees, uint8_t* minutes,
+                double* seconds) {
+  static const int32_t PER_DEGREE = 3600000;
+  static const int32_t PER_MINUTE = 60000;
+  static const double PER_SECOND = 1000.0;
+  int32_t rest = labs(mas);
+
+  *degrees = libc_divide(&rest, PER_DEGREE);
+  *minutes = libc_divide(&rest, PER_MINUTE);
+  *seconds = double_divide_reversed(PER_SECOND, integer_to_double(rest));
+}
+
+/* Degrees, minutes and seconds as milliarcseconds, the seconds'
+ * magnitude (0x47eb0). */
+void dms_to_mas(int32_t* mas, uint16_t degrees, uint8_t minutes,
+                double seconds) {
+  static const uint32_t PER_DEGREE = 3600000;
+  static const uint32_t PER_MINUTE = 60000;
+  static const double PER_SECOND = 1000.0;
+  const double whole =
+      integer_to_double(minutes * PER_MINUTE + degrees * PER_DEGREE);
+
+  *mas = double_to_integer(
+      double_add(whole, double_multiply(PER_SECOND, fabs(seconds))));
 }

@@ -71,6 +71,32 @@ static int32_t libc_normalize(uint64_t* mantissa) {
   return shift;
 }
 
+/* A text's length, as the image counts it in line: it has no strlen. */
+static uint32_t libc_length(const char* text) {
+  uint32_t length = 0;
+
+  while (text[length] != 0) {
+    length++;
+  }
+  return length;
+}
+
+/* ldiv's quotient, its result's high long, leaving the remainder, its
+ * low long, in *numerator. */
+static int32_t libc_divide(int32_t* numerator, int32_t denominator) {
+  static const int32_t LONG_BITS = 32;
+  int64_t result = ldiv(*numerator, denominator);
+
+  *numerator = (int32_t)result;
+  return result >> LONG_BITS;
+}
+
+/* Copies a text with its NUL, as the image does in line. */
+static void libc_copy(char* destination, const char* text) {
+  while ((*destination++ = *text++) != 0) {
+  }
+}
+
 /* Appends a character to a message of a length byte and its text, as
  * float_exception_report and program_end_report build theirs for
  * fatal_error_with_code. */

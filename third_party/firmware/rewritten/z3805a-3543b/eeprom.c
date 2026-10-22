@@ -49,12 +49,8 @@ void eeprom_init(void) {
 /* Takes the EEPROM's recursive lock; 0 when held, 1 while a write runs at
  * a raised interrupt mask, or request_x's error (0x30fae). */
 char eeprom_lock(void) {
-  /* request_x's second long as eeprom_lock passes it; psos.md does
-   * not give its meaning. */
+  /* The ticks request_x waits for the token. */
   static const uint32_t EEPX_REQUEST_WAIT = 0x2800u;
-  /* The one error of request_x eeprom_lock returns to its caller
-   * rather than calling fatal_error; not traced. */
-  static const uint8_t EEPX_ERROR_RETURNED = 0x81;
   int32_t sr = enter_supervisor();
 
   if (!kernel_running) {
@@ -77,7 +73,7 @@ char eeprom_lock(void) {
     eepx_token.depth = 0;
     return 0;
   }
-  if (code != EEPX_ERROR_RETURNED) {
+  if (code != PSOS_ERROR_TIMEOUT) {
     char message[RECORDS_MESSAGE_SIZE];
     sprintf(message, "Unable to acquire eepx token: %X",
             error & RECORDS_FIELD_MASK);

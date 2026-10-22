@@ -513,14 +513,9 @@ uint32_t satellite_number_valid(uint8_t number) {
   return number >= 1 && number <= SCPI_SOURCE_GPSYSTEM_SATELLITES;
 }
 
-/* A satellite's bit in a mask: 1 shifted by its number less one, as
- * lsl.l does it, the count modulo 64 and none left from 32 on (0x2d16a). */
+/* A satellite's bit in a mask: its number less one's (0x2d16a). */
 static uint32_t scpi_source_gpsystem_bit(uint8_t number) {
-  static const uint32_t COUNT_MASK = 0x3f;
-  static const uint32_t LONG_BITS = 32;
-  uint32_t count = (uint32_t)(number - 1) & COUNT_MASK;
-
-  return count < LONG_BITS ? (uint32_t)1 << count : 0;
+  return cpu_long_bit((uint32_t)(number - 1));
 }
 
 /* Whether a satellite's bit is set in a mask (0x2d160). */

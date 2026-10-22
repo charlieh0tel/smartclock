@@ -66,17 +66,15 @@ uint32_t spoo_run(spoo_function* function, uint32_t a, uint32_t b, uint32_t c) {
 int32_t deferred_vprintf(char* format, void* arguments) {
   /* deferred_text's room for a message: one starts only below this. */
   static const int16_t DEFERRED_LAST_START = 944;
-  static const uint32_t MODE_NO_PREEMPT =
-      0x80; /* mode's bit (psos.md, service 32) */
   int32_t count = -1;
 
   /* with preemption off, empties the text once it has all been printed */
-  psos_mode(MODE_NO_PREEMPT, MODE_NO_PREEMPT, 0);
+  psos_mode(PSOS_MODE_NO_PREEMPTION, PSOS_MODE_NO_PREEMPTION, 0);
   if (deferred_start >= deferred_end) {
     deferred_end = 0;
     deferred_start = 0;
   }
-  psos_mode(~MODE_NO_PREEMPT, MODE_NO_PREEMPT, 0);
+  psos_mode(~(uint32_t)PSOS_MODE_NO_PREEMPTION, PSOS_MODE_NO_PREEMPTION, 0);
   if (deferred_end < DEFERRED_LAST_START) {
     count = vsprintf(deferred_text + deferred_end, format, arguments);
     if (count >= 0) {
@@ -87,25 +85,23 @@ int32_t deferred_vprintf(char* format, void* arguments) {
 }
 
 /* The spool task: runs each function spoo_run sends, and prints the
- * deferred messages when its request ends with FLUSH_ERROR
+ * deferred messages when its request times out
  * (0x20e4e). */
 void spoo_task(void) {
-  /* Its request_x's argument, which psos.md leaves unnamed, and the
-   * request error on which it prints the deferred messages instead
-   * (structures.md, "Others"). */
-  static const uint32_t REQUEST_B = 0x400;
-  static const uint8_t FLUSH_ERROR = 0x81;
+  /* The ticks it waits for a message before it prints the deferred
+   * ones instead (structures.md, "Others"). */
+  static const uint32_t WAIT_TICKS = 0x400;
 
   psos_supervisor();
   for (;;) {
     spoo_receive_error =
-        (uint8_t)psos_request_x(spoo_exchange, &spoo_message, 0, REQUEST_B);
+        (uint8_t)psos_request_x(spoo_exchange, &spoo_message, 0, WAIT_TICKS);
     watchdog_spool++;
     if (spoo_receive_error == 0) {
       spoo_message.function(spoo_message.arguments[0],
                             spoo_message.arguments[1],
                             spoo_message.arguments[2]);
-    } else if (spoo_receive_error == FLUSH_ERROR) {
+    } else if (spoo_receive_error == PSOS_ERROR_TIMEOUT) {
       deferred_flush();
     }
   }

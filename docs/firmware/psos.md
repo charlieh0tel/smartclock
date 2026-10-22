@@ -192,7 +192,7 @@ reports an error.  A service no word calls keeps its number.
 | 21 | `0x171fe` | attach exchange, likewise | name; three longs through the next three |
 | 22 | `0x1723a` | `delete_x` | the exchange |
 | 23 | `0x17252` | `send_x` | the exchange, the message |
-| 24 | `0x172c4` | `request_x` | the exchange, the buffer, two longs |
+| 24 | `0x172c4` | `request_x` | the exchange, the buffer, a flag (D1) not to wait, and the ticks to wait (D0), 0 without end: error 0x80 for none without waiting, as from an interrupt (`0x15740`), 0x81 when the ticks run out (`kernel_process_ticks`, `0x14d18`) |
 | 25 | `0x172e8` | `signal_v` | the variable, a long |
 | 26 | `0x17304` | `wait_v` | three longs; a long through the last |
 | 27 | `0x17332` | `get_v` | two longs; a long through the last |

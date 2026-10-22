@@ -6,9 +6,7 @@
  * C"; docs/firmware/modules.md, `applications/screen`).  The exported C
  * includes this file after its own, so the types and prototypes it
  * declares are in scope; each function here keeps its generated
- * prototype.  satellite_status and satellite_status_list stay the
- * decompiler's: their prototypes take the satellite sets and the
- * visibility record as int32_t.  The floating arithmetic is calls to the
+ * prototype.  The floating arithmetic is calls to the
  * image's soft-float routines (docs/firmware/softfloat.md):
  * double_divide_reversed(a, b) is b / a, float_compare(a, b) is
  * positive when b < a and double_compare(a, b) negative when b < a. */
@@ -27,52 +25,24 @@ static const char SCREEN_ZERO_DIGIT = '0';
 /* The unit format_si appends for seconds (0x4e1e4). */
 static char* const SCREEN_SECONDS = "s";
 
-/* Copies a string, as the image's formatters do in line. */
-static void screen_copy(char* to, const char* from) {
-  while ((*to++ = *from++) != '\0') {
-  }
-}
-
-/* A string's length, as the image counts it in line. */
-static uint32_t screen_length(const char* text) {
-  uint32_t length = 0;
-
-  while (text[length] != '\0') {
-    length++;
-  }
-  return length;
-}
-
-/* Bit count of a long, as lsl.l shifts by a register: the count modulo
- * 64, so that one past 31 is no bit (MC68000PRM, LSL). */
-static uint32_t screen_bit(int32_t count) {
-  static const int32_t COUNT_MASK = 0x3f;
-  static const int32_t LONG_BITS = 32;
-  int32_t shift = count & COUNT_MASK;
-
-  return shift < LONG_BITS ? 1u << shift : 0;
-}
-
 /* The satellite's bit of a set, GPS prn - 1 of a long, a pseudolite's
  * prn - 0x21: 1 if it is set, 0 if not or for 0 (0x495e2). */
 int32_t satellite_in_set(satellite_kind kind, uint8_t id, uint32_t mask) {
-  static const uint8_t PSEUDOLITE_FIRST = 0x20;
-
   if (id == 0) {
     return 0;
   }
   if (kind == SATELLITE_PSEUDOLITE) {
-    id -= PSEUDOLITE_FIRST;
+    id -= GPS_LAST_SATELLITE;
   }
-  return (mask & screen_bit((uint8_t)(id - 1))) != 0;
+  return (mask & cpu_long_bit((uint8_t)(id - 1))) != 0;
 }
 
 /* The tracking bands a channel's mode puts a satellite in: acquiring
  * below 5, synchronized below 7, then ephemeris, compared signed
  * (0x494f0 to 0x4951a). */
 static void screen_band_add(satellite_kind kind, uint8_t id, int8_t mode,
-                            uint32_t* acquiring, uint32_t* synchronized,
-                            uint32_t* ephemeris) {
+                            void* acquiring, void* synchronized,
+                            void* ephemeris) {
   static const int8_t SYNCHRONIZED_FIRST = ONCORE_MESSAGE_SYNC_DETECT;
   static const int8_t EPHEMERIS_FIRST = ONCORE_EPHEMERIS_ACQUIRE;
 
@@ -91,8 +61,7 @@ static void screen_band_add(satellite_kind kind, uint8_t id, int8_t mode,
 /* For status_snapshot: the sets of satellites visible, used and
  * tracked, the tracked by their channels' modes, and those not used;
  * all empty unless both the visible and the used sets are known
- * (0x49474).  satellite_add_to_set takes a uint32_t * for a pseudolite
- * set too, and writes its byte. */
+ * (0x49474). */
 void satellite_sets_build(oncore_channel_status* channels,
                           satellite_sets* sets) {
   static const uint8_t CHANNELS = 6;
@@ -118,11 +87,10 @@ void satellite_sets_build(oncore_channel_status* channels,
                       &sets->synchronized, &sets->ephemeris);
     } else if (satellite_id_valid(SATELLITE_PSEUDOLITE, id) != 0) {
       satellite_add_to_set(SATELLITE_PSEUDOLITE, id,
-                           (uint32_t*)&sets->pseudolites_tracked);
-      screen_band_add(SATELLITE_PSEUDOLITE, id, mode,
-                      (uint32_t*)&sets->pseudolites_acquiring,
-                      (uint32_t*)&sets->pseudolites_synchronized,
-                      (uint32_t*)&sets->pseudolites_ephemeris);
+                           &sets->pseudolites_tracked);
+      screen_band_add(
+          SATELLITE_PSEUDOLITE, id, mode, &sets->pseudolites_acquiring,
+          &sets->pseudolites_synchronized, &sets->pseudolites_ephemeris);
     }
   }
   sets->tracked_unused = sets->tracked & ~sets->used;
@@ -159,10 +127,9 @@ satellite_health_class satellite_track_class(
 /* A satellite's cell: its elevation and azimuth while the record holds
  * them, below 91 and 360 degrees; else no position (0x49654). */
 void satellite_elevation_azimuth(oncore_visible_satellite* satellite,
-                                 uint8_t* entry) {
+                                 satellite_cell* cell) {
   static const uint8_t ELEVATION_LIMIT = 91;
   static const uint16_t AZIMUTH_LIMIT = 360;
-  satellite_cell* cell = (satellite_cell*)entry;
 
   if (satellite != NULL && satellite->elevation < ELEVATION_LIMIT &&
       satellite->azimuth < AZIMUTH_LIMIT) {
@@ -176,13 +143,11 @@ void satellite_elevation_azimuth(oncore_visible_satellite* satellite,
 
 /* qsort's order of two satellites: by elevation, then the higher
  * number first (0x49794). */
-int32_t satellite_compare(uint8_t* first, uint8_t* second) {
+int32_t satellite_compare(void* first, void* second) {
   static const int32_t BEFORE = -1;
   static const int32_t AFTER = 1;
-  const screen_satellite_elevation* a =
-      (const screen_satellite_elevation*)first;
-  const screen_satellite_elevation* b =
-      (const screen_satellite_elevation*)second;
+  const screen_satellite_elevation* a = first;
+  const screen_satellite_elevation* b = second;
 
   if (a->elevation != b->elevation) {
     return a->elevation < b->elevation ? BEFORE : AFTER;
@@ -212,6 +177,133 @@ oncore_visible_satellite* satellite_find(uint8_t id,
     }
   }
   return NULL;
+}
+
+/* A satellite's cell: none for an ID not a satellite's; for one not
+ * tracked, ignored, unhealthy or acquiring, by its health and its
+ * channel's band, if any; else its elevation and azimuth (0x49688). */
+void satellite_status(char tracked, uint8_t id, satellite_sets* sets,
+                      gps_visibility_record* visibility, satellite_cell* cell) {
+  oncore_visible_satellite* satellite;
+
+  if (satellite_id_valid(SATELLITE_ANY, id) == 0) {
+    cell->status = SATELLITE_CELL_NONE;
+    return;
+  }
+  satellite = id <= GPS_LAST_SATELLITE ? satellite_find(id, visibility) : NULL;
+  if (tracked != 1) {
+    switch (satellite_track_class(satellite)) {
+      case SATELLITE_CLASS_REMOVED:
+        cell->status = SATELLITE_CELL_IGNORED;
+        return;
+      case SATELLITE_CLASS_UNHEALTHY:
+        cell->status = SATELLITE_CELL_UNHEALTHY;
+        return;
+      default:
+        break;
+    }
+    if (satellite_in_set(SATELLITE_GPS, id, sets->acquiring) != 0 ||
+        satellite_in_set(SATELLITE_PSEUDOLITE, id,
+                         sets->pseudolites_acquiring) != 0) {
+      cell->status = SATELLITE_CELL_ACQUIRING;
+      return;
+    }
+    if (satellite_in_set(SATELLITE_GPS, id, sets->synchronized) != 0 ||
+        satellite_in_set(SATELLITE_PSEUDOLITE, id,
+                         sets->pseudolites_synchronized) != 0) {
+      cell->status = SATELLITE_CELL_SYNCHRONIZED;
+      return;
+    }
+    if (satellite_in_set(SATELLITE_GPS, id, sets->ephemeris) != 0 ||
+        satellite_in_set(SATELLITE_PSEUDOLITE, id,
+                         sets->pseudolites_ephemeris) != 0) {
+      cell->status = SATELLITE_CELL_EPHEMERIS;
+      return;
+    }
+  }
+  satellite_elevation_azimuth(satellite, cell);
+}
+
+/* The screen's list of satellites, tracked (those used) or not (the
+ * rest, visible or tracked), by number, the GPS satellites first, each
+ * with its cell, then blank entries to the list's end; count the
+ * satellites listed.  When more than SHOWN are not tracked, those on a
+ * channel are kept, then the highest of the rest (0x497c8). */
+void satellite_status_list(char tracked, uint8_t entries, satellite_sets* sets,
+                           oncore_channel_status* channels,
+                           gps_visibility_record* visibility,
+                           satellite_list_entry* list, uint8_t* count) {
+  /* The not-tracked list's length, status_snapshot's. */
+  static const int32_t SHOWN = 12;
+  static const uint8_t CHANNELS = 6;
+  const satellite_list_entry* end = list + entries;
+  const satellite_list_entry blank = satellite_status_blank_entry;
+  uint32_t set;
+  uint8_t pseudolites;
+
+  if (tracked == 1) {
+    set = sets->used;
+    pseudolites = sets->pseudolites_used;
+  } else {
+    set = sets->unused;
+    pseudolites = sets->pseudolites_tracked_unused;
+    if ((uint8_t)count_bits(pseudolites) + (uint8_t)count_bits(set) > SHOWN) {
+      const oncore_visibility_fields* visible = &visibility->visibility;
+      screen_satellite_elevation others[12];
+      screen_satellite_elevation* next = others;
+      int8_t room;
+
+      set &= sets->tracked;
+      for (const oncore_visible_satellite* satellite = visible->satellites;
+           satellite < visible->satellites + visible->count; satellite++) {
+        if (satellite_in_set(SATELLITE_GPS, satellite->satellite, set) == 0) {
+          next->satellite = satellite->satellite;
+          next->elevation = satellite->elevation;
+          next++;
+        }
+      }
+      qsort(others, next - others, sizeof others[0], satellite_compare);
+      /* Byte arithmetic, as the image's. */
+      room = (int8_t)(SHOWN -
+                      (uint8_t)(count_bits(pseudolites) + count_bits(set)));
+      while (room-- != 0) {
+        next--;
+        satellite_add_to_set(SATELLITE_GPS, next->satellite, &set);
+      }
+    }
+  }
+  *count = 0;
+  for (uint8_t id = GPS_FIRST_SATELLITE;
+       list < end && (set != 0 || pseudolites != 0); id++, set >>= 1) {
+    if (id == GPS_FIRST_PSEUDOLITE) {
+      set = pseudolites;
+      pseudolites = 0;
+    }
+    if ((set & 1) == 0) {
+      continue;
+    }
+    list->satellite = id;
+    if (tracked == 1) {
+      for (const oncore_channel_status* channel = channels;
+           channel < channels + CHANNELS; channel++) {
+        if (id == channel->satellite) {
+          list->level = channel->signal_strength;
+          break;
+        }
+      }
+    } else {
+      list->attempting =
+          satellite_in_set(SATELLITE_GPS, id, sets->tracked_unused) != 0 ||
+          satellite_in_set(SATELLITE_PSEUDOLITE, id,
+                           sets->pseudolites_tracked_unused) != 0;
+    }
+    satellite_status(tracked, id, sets, visibility, &list->cell);
+    (*count)++;
+    list++;
+  }
+  for (; list < end; list++) {
+    *list = blank;
+  }
 }
 
 /* gps_receiver_status_update's first argument: 0 updates gps' status;
@@ -425,7 +517,7 @@ void format_si(double value, char resolution, uint8_t digits, char* unit,
   }
   if (scpi_real_to_text(bits.words[0], bits.words[1], (uint8_t*)text, digits,
                         EXPONENT_DIGITS, resolution, POINT_AS_NEEDED) != 0) {
-    screen_copy(text, "--");
+    libc_copy(text, "--");
     return;
   }
   cursor = strchr(text, 'E');
@@ -445,7 +537,7 @@ void format_si(double value, char resolution, uint8_t digits, char* unit,
     if (shift != 0 && text[1] != SCREEN_ZERO_DIGIT) {
       cursor = strchr(text, '.');
       if (cursor == NULL) {
-        cursor = text + screen_length(text);
+        cursor = text + libc_length(text);
       }
       while (shift-- != 0) {
         if (*cursor == '.') {
@@ -475,7 +567,7 @@ void format_si(double value, char resolution, uint8_t digits, char* unit,
   }
   *cursor = '\0';
 
-  cursor = text + screen_length(text);
+  cursor = text + libc_length(text);
   *cursor++ = ' ';
   *cursor = prefix;
   if (prefix != '\0') {
@@ -496,7 +588,7 @@ void format_duration_short(uint32_t seconds, char* text) {
   char small_letter;
 
   if (seconds >= LONGEST) {
-    screen_copy(text, "1000+ hr");
+    libc_copy(text, "1000+ hr");
     return;
   }
   if (seconds < SECONDS_PER_HOUR) {
@@ -525,7 +617,7 @@ bool format_time(time_of_day time, char* text) {
     sprintf(text, "%02d:%02d:%02d", time.hour, time.minute, time.second);
     return true;
   }
-  screen_copy(text, "--:--:--");
+  libc_copy(text, "--:--:--");
   return false;
 }
 
@@ -544,7 +636,7 @@ bool format_date(calendar_date date, char* text) {
 
   if (date.month == 0 || date.month > LAST_MONTH || date.day == 0 ||
       date.day > LAST_DAY || date.year < FIRST_YEAR || date.year > LAST_YEAR) {
-    screen_copy(text, "-- --- ----");
+    libc_copy(text, "-- --- ----");
     return 0;
   }
   sprintf(text, "%02d %s %04d", date.day, SCREEN_MONTH_NAMES[date.month],
@@ -555,7 +647,7 @@ bool format_date(calendar_date date, char* text) {
 /* A satellite's number as " %2d", or blanks for none (0x499f2). */
 void format_satellite_number(char satellite, char* text) {
   if (satellite == 0) {
-    screen_copy(text, "   ");
+    libc_copy(text, "   ");
     return;
   }
   sprintf(text, " %2d", (uint8_t)satellite);
@@ -573,7 +665,7 @@ bool mark_flag(char flag, char* text) {
 /* A signal level as "%3d", or blanks when negative (0x49a3c). */
 void format_level(int16_t level, char* text) {
   if (level < 0) {
-    screen_copy(text, "   ");
+    libc_copy(text, "   ");
     return;
   }
   sprintf(text, "%3d", level);
@@ -610,7 +702,7 @@ void format_satellite_cell(satellite_cell cell, char* text) {
       words = "      ";
       break;
   }
-  screen_copy(text, words);
+  libc_copy(text, words);
 }
 
 /* The screen's synchronization status, by the receiver's status code
@@ -655,7 +747,7 @@ void status_screen_sync(status_snapshot_record* snapshot, char* line) {
       words = "";
       break;
   }
-  screen_copy(line, words);
+  libc_copy(line, words);
 }
 
 /* The screen's time line: the time's scale, GPS or UTC, local with a
@@ -754,7 +846,7 @@ static void screen_angle_line(status_snapshot_record* snapshot, int32_t mas,
   char label[10];
 
   format_dms(mas, longitude, angle);
-  screen_copy(label, snapshot->position_source);
+  libc_copy(label, snapshot->position_source);
   strcat(label, axis);
   sprintf(line, "%-8s %s", label, angle);
 }
@@ -779,10 +871,10 @@ void status_screen_position(uint8_t row, status_snapshot_record* snapshot,
       sprintf(line, "ANT DLY  %s", delay + 1);
       break;
     case SCREEN_ROW_POSITION:
-      screen_copy(line, "Position ________________________");
+      libc_copy(line, "Position ________________________");
       break;
     case SCREEN_ROW_MODE:
-      screen_copy(line, "MODE     ");
+      libc_copy(line, "MODE     ");
       if (snapshot->position_hold != 0) {
         strcat(line, "Hold");
       } else if (snapshot->douglas_duration_infinite == 1) {
@@ -800,7 +892,7 @@ void status_screen_position(uint8_t row, status_snapshot_record* snapshot,
       if (reason != NULL) {
         sprintf(line, "%9sSuspended: %13.13s", "", reason);
       } else {
-        screen_copy(line, "");
+        libc_copy(line, "");
       }
       break;
     case SCREEN_ROW_LATITUDE:
@@ -846,7 +938,7 @@ void status_screen_tfom(uint8_t row, status_snapshot_record* snapshot,
   switch (row) {
     case SCREEN_ROW_TFOM:
       if (snapshot->ffom_valid == 0) {
-        screen_copy(text, "--");
+        libc_copy(text, "--");
       } else {
         sprintf(text, "%d", snapshot->ffom);
       }
@@ -856,11 +948,11 @@ void status_screen_tfom(uint8_t row, status_snapshot_record* snapshot,
     case SCREEN_ROW_INTERVAL:
       /* The flag is interval_mean_flag's first byte (0x4a330). */
       if (snapshot->interval_mean_flag >> 8 == 0) {
-        screen_copy(text, " --");
+        libc_copy(text, " --");
       } else {
         format_si(float_to_double(snapshot->interval_mean), TI_RESOLUTION,
                   EVERY_DIGIT, "s ", text);
-        length = screen_length(text);
+        length = libc_length(text);
         if (length <= ROOMY) {
           strcat(text, "relative to GPS");
         } else if (length <= CLOSE) {
@@ -873,7 +965,7 @@ void status_screen_tfom(uint8_t row, status_snapshot_record* snapshot,
       break;
     case SCREEN_ROW_HOLD_THRESHOLD:
       if (snapshot->holdover_limit_state == LIMIT_OFF) {
-        screen_copy(text, " Off");
+        libc_copy(text, " Off");
       } else {
         format_si(float_to_double(snapshot->holdover_limit_threshold),
                   THRESHOLD_RESOLUTION, EVERY_DIGIT, SCREEN_SECONDS, text);
@@ -881,7 +973,7 @@ void status_screen_tfom(uint8_t row, status_snapshot_record* snapshot,
       sprintf(line, "HOLD THR %s", text + 1);
       break;
     case SCREEN_ROW_UNCERTAINTY:
-      screen_copy(line, "Holdover Uncertainty ____________");
+      libc_copy(line, "Holdover Uncertainty ____________");
       break;
     default:
       break;
@@ -897,7 +989,7 @@ void status_screen_height(status_snapshot_record* snapshot, char* line) {
   char value[21];
   char label[9];
 
-  screen_copy(label, snapshot->position_source);
+  libc_copy(label, snapshot->position_source);
   strcat(label, "HGT");
   sprintf(value, "%+9.2f m  (MSL)", float_to_double(height));
   sprintf(line, "%-15s%s", label, value);
@@ -964,14 +1056,14 @@ void status_screen_mode_suffix(status_screen_line line,
     sprintf(bracketed, "[TI %9.9s]", reading);
     sprintf(text, "%-18.18s%14s", words, bracketed);
   } else {
-    screen_copy(text, words);
+    libc_copy(text, words);
   }
 }
 
 /* Whether bit bit of a value is set, the value sign-extended
  * (0x4a42c). */
 bool bit_is_set(int16_t value, int16_t bit) {
-  return (value & screen_bit(bit)) != 0;
+  return (value & cpu_long_bit(bit)) != 0;
 }
 
 /* 1 if any of bits 1 to 3 is set: the internal power supplies'
@@ -1073,7 +1165,7 @@ static char* screen_mode_suffix(status_screen_line line, bool locked,
                                 status_snapshot_record* snapshot, char* text) {
   switch (line) {
     case STATUS_SCREEN_LINE_LOCKED:
-      screen_copy(text, snapshot->pll_field_3d5 == 0 ? "GPS" : "Ext");
+      libc_copy(text, snapshot->pll_field_3d5 == 0 ? "GPS" : "Ext");
       strcat(text, locked ? "" : ": stabilizing frequency");
       return text;
     case STATUS_SCREEN_LINE_RECOVERY:
@@ -1160,10 +1252,10 @@ void status_screen(status_snapshot_record* snapshot, char clear,
        mode_line++) {
     if (current == mode_line->mode) {
       suffix = screen_mode_suffix(current, locked, snapshot, text);
-      screen_copy(line, ">> ");
+      libc_copy(line, ">> ");
     } else {
       suffix = "";
-      screen_copy(line, "   ");
+      libc_copy(line, "   ");
     }
     strcat(line, mode_line->text);
     strcat(line, suffix);
@@ -1174,7 +1266,7 @@ void status_screen(status_snapshot_record* snapshot, char clear,
   }
 
   if (snapshot->kenneth_predicted_valid == 0) {
-    screen_copy(text, " --");
+    libc_copy(text, " --");
   } else {
     format_si(float_to_double(snapshot->kenneth_predicted), snapshot->field_031,
               PREDICTION_DIGITS, SCREEN_SECONDS, text);
@@ -1183,15 +1275,15 @@ void status_screen(status_snapshot_record* snapshot, char clear,
   print("%43s   Predict  %s\r\n", "", text + 1);
   if (current == STATUS_SCREEN_LINE_HOLDOVER ||
       current == STATUS_SCREEN_LINE_RECOVERY) {
-    screen_copy(line, "Holdover Duration:");
+    libc_copy(line, "Holdover Duration:");
     format_duration_short(snapshot->holdover_duration, text);
     strcat(line, text);
   } else {
-    screen_copy(line, " ");
+    libc_copy(line, " ");
   }
   if (snapshot->kenneth_present_valid == 0) {
     label = "";
-    screen_copy(text, " ");
+    libc_copy(text, " ");
   } else {
     label = "Present";
     format_si(float_to_double(snapshot->kenneth_present), snapshot->field_02b,
@@ -1286,6 +1378,13 @@ void status_screen(status_snapshot_record* snapshot, char clear,
       "HEALTH MONITOR ......................................................");
   print("%s\r\n", failed ? " [ ERROR ]" : "... [ OK ]");
   print("%s", line);
+}
+
+/* Prints the status screen from status_screen_snapshot, for
+ * :SYSTem:PRINt?; its first argument unread (0x4afd6). */
+void status_screen_print(uint8_t unread, write_function* write,
+                         printf_function* print) {
+  status_screen(&status_screen_snapshot, 0, write, print);
 }
 
 /* :SYSTem:PRINt:LENGth?'s answer, the screen's lines (0x4f596). */

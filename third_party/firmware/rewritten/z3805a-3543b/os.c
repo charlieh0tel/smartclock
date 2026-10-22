@@ -232,12 +232,12 @@ uint32_t psos_broadcast_x(uint32_t exchange, void* message, uint32_t count,
   return error;
 }
 
-/* Receives a message from an exchange into a buffer, with two longs in
- * D1 and D0 (0x172c4). */
-uint32_t psos_request_x(uint32_t exchange, void* buffer, uint32_t d1,
-                        uint32_t d0) {
-  return psos_call(PSOS_SERVICE_REQUEST_X, d0, d1, 0, 0, (void*)exchange,
-                   buffer);
+/* Receives a message from an exchange into a buffer, waiting, unless
+ * no_wait, up to ticks, 0 without end (0x172c4). */
+uint32_t psos_request_x(uint32_t exchange, void* buffer, uint32_t no_wait,
+                        uint32_t ticks) {
+  return psos_call(PSOS_SERVICE_REQUEST_X, ticks, no_wait, 0, 0,
+                   (void*)exchange, buffer);
 }
 
 /* Signals events to a variable's task (0x172e8). */
@@ -608,12 +608,6 @@ int32_t timer_ticks_until(void* task) {
   return ticks;
 }
 
-/* Copies a string, as the image's reports do in line. */
-static void os_copy_text(char* to, const char* from) {
-  while ((*to++ = *from++) != '\0') {
-  }
-}
-
 /* Rounds bytes to the nearest kilobyte, as the reports print them. */
 static int32_t os_kilobytes(int32_t bytes) {
   static const int32_t KILOBYTE = 0x400;
@@ -697,7 +691,7 @@ void os_report_process(void* record, char* status, int32_t position,
     cpu_share =
         (task_ticks_total / 2 + task_ticks * PERCENT) / task_ticks_total;
   }
-  os_copy_text(state, status);
+  libc_copy(state, status);
   if (task->mode & (PSOS_MODE_TIME_SLICE | PSOS_MODE_NO_PREEMPTION)) {
     strcat(state, "/");
   }
@@ -770,7 +764,7 @@ void os_report_exchange(uint32_t* id, printf_function* print) {
   char limit[40];
 
   if (exchange->limited == 0) {
-    os_copy_text(limit, "inf");
+    libc_copy(limit, "inf");
   } else {
     sprintf(limit, "%d", exchange->queue_limit);
   }

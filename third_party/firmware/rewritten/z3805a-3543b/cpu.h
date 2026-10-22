@@ -60,6 +60,16 @@ static inline uint16_t cpu_interrupts_at(uint16_t level) {
  * offset. */
 static const uint16_t CPU_VECTOR_FORMAT_MASK = 0xf000;
 
+/* 1 shifted left by count as lsl.l shifts by a register: the count
+ * modulo 64, and the bit shifted out from 32 on (MC68000PRM, LSL). */
+static uint32_t cpu_long_bit(uint32_t count) {
+  static const uint32_t COUNT_MASK = 0x3f;
+  static const uint32_t LONG_BITS = 32;
+
+  count &= COUNT_MASK;
+  return count < LONG_BITS ? (uint32_t)1 << count : 0;
+}
+
 /* The SIM's software watchdog is serviced by writing these two to SWSR
  * in turn (MC68331UM, "Software Watchdog"; D.3.15). */
 static const uint8_t CPU_SWSR_FIRST = 0x55;

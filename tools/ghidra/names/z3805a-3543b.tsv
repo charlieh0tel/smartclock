@@ -119,7 +119,7 @@
 0x5ef12	function	memcmp	libc.md		int memcmp(void *s1, void *s2, unsigned int n)
 0x5ef48	function	memcpy	libc.md		void * memcpy(void *s1, void *s2, unsigned int n)
 0x5ef66	function	memset	libc.md		void * memset(void *s, int c, unsigned int n)
-0x5f0cc	function	qsort	libc.md		void qsort(void *base, unsigned int nmemb, unsigned int size, void *compar)
+0x5f0cc	function	qsort	libc.md		void qsort(void *base, unsigned int nmemb, unsigned int size, qsort_compare_function *compar)
 0x5efc4	function	qsort_range	libc.md	sorts a range by qsort's comparator and size
 0x5ef86	function	qsort_swap	libc.md
 0x5efa0	function	qsort_rotate	libc.md
@@ -182,7 +182,7 @@
 0x171fe	function	psos_service_21	psos.md		unsigned long psos_service_21(char *name, unsigned long *out1, unsigned long *out2, unsigned long *out3)
 0x1723a	function	psos_delete_x	psos.md	service 22, delete_x	unsigned long psos_delete_x(unsigned long exchange)
 0x17252	function	psos_send_x	psos.md	service 23, send_x	unsigned long psos_send_x(unsigned long exchange, void *message)
-0x172c4	function	psos_request_x	psos.md	service 24, request_x	unsigned long psos_request_x(unsigned long exchange, void *buffer, unsigned long a, unsigned long b)
+0x172c4	function	psos_request_x	psos.md	service 24, request_x	unsigned long psos_request_x(unsigned long exchange, void *buffer, unsigned long no_wait, unsigned long ticks)
 0x172e8	function	psos_signal_v	psos.md	service 25, signal_v	unsigned long psos_signal_v(unsigned long variable, unsigned long value)
 0x17304	function	psos_wait_v	psos.md	service 26, wait_v	unsigned long psos_wait_v(unsigned long a, unsigned long b, unsigned long c, unsigned long *out)
 0x17332	function	psos_get_v	psos.md	service 27, get_v	unsigned long psos_get_v(unsigned long a, unsigned long b, unsigned long *out)
@@ -292,7 +292,7 @@
 0x29f60	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
 0x29f94	function	pllc_request_e	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and both values through a pointer
 0x29f94	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
-0x46636	function	gpsx_send	structures.md	copies four longs and sends them to gpsx_exchange	uint8_t gpsx_send(int16_t code, uint8_t argument_mode, int32_t *arguments, gps_ack_awaited_kind ack_awaited)
+0x46636	function	gpsx_send	structures.md	copies four longs and sends them to gpsx_exchange	uint8_t gpsx_send(int16_t code, gps_argument_mode argument_mode, int32_t *arguments, gps_ack_awaited_kind ack_awaited)
 0x46636	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x3082e	function	record_checksum	structures.md	the sum and its complement of an EEPROM record's bytes after the first two	uint16_t record_checksum(void *record, uint16_t length)
 0x1f53a	function	hdac_set	structures.md	a 6-bit value into one half of an hdac word, written with device1_write; hdac_write leads here
@@ -390,7 +390,8 @@
 0x101b4e	label	raim_suspect_time	structures.md	the uptime raim_monitor stamps when gps.raim_assessment becomes 2; 4 seconds on with the solution still not OK makes it 3	uint32_t
 0x101b54	label	status_message_arrived	structures.md	oncore_position_message sets it on each @@Ba; command_monitor's status monitor takes and clears it	uint8_t
 0x101b55	label	traim_message_arrived	structures.md	oncore_traim_message sets it on each @@Bn; command_monitor's status monitor takes it, setting gps.raim_received	uint8_t
-0x101b56	label	gps_request_step	structures.md	the one-step script at 0x50cc2's step, which gpsm_task fills from a class 0 request; its arguments also a script's	gps_script_step
+0x101b56	label	gps_request_step	structures.md	gps_script_message's step, which gpsm_task fills from a class 0 request; its arguments also a script's	gps_script_step
+0x50cc2	label	gps_script_message	read	the one-step script gpsm_task runs a message request with, gps_request_step and a null (0x4c102)	gps_script_step *[2]
 0x101b6a	label	gps_status_print_interval	structures.md	abr_stat's argument, through gps_command code 7: oncore_position_message prints gps_debug_status every that many @@Ba, 0 for never	uint8_t
 0x101b6b	label	gps_status_print_count	structures.md	oncore_position_message's count of @@Ba toward gps_status_print_interval	uint8_t
 0x101b6c	label	fpga_programming	structures.md	set while fpga_program runs; gps_pps_check and internal_pps_check skip their checks while it is set	uint8_t
@@ -582,7 +583,7 @@
 0x3119e	function	eeprom_write_page	context	writes within one 64-byte EEPROM page under eeprom_lock, five tries
 0x110fa	function	oncore_date_pack	context	@@Ba's month, day and year into year << 16 | month << 8 | day	uint32_t oncore_date_pack(oncore_date_fields fields)
 0x495e2	function	satellite_in_set	context	bit prn - 1 of a mask, or prn - 0x21 for the second kind	int satellite_in_set(satellite_kind kind, uint8_t id, uint32_t mask)
-0x4f1a6	function	satellite_add_to_set	context	sets bit prn - 1 of a mask, or prn - 0x21 for the second kind	void satellite_add_to_set(satellite_kind kind, uint8_t id, uint32_t *mask)
+0x4f1a6	function	satellite_add_to_set	context	sets bit prn - 1 of a mask, or prn - 0x21 for the second kind	void satellite_add_to_set(satellite_kind kind, uint8_t id, void *set)
 0x2d226	function	satellites_in_mask	context	lists the PRNs whose bits are set; the SAT:TRAC:IGN? and INCL? queries
 0x4aff2	function	uptime_elapsed	context	get_uptime() less *start into *elapsed, restarting *start if the clock went back
 0x4513c	function	interval_wait_reading	context	the wait half of interval_next_reading: the FPGA's reading, or a wait while a 1PPS is dead; updates the EFC history
@@ -1207,9 +1208,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4bd2c	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4	uint32_t request_kind_valid(gps_request_sender sender)
 0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps
-0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise	gps_code_class gps_request_class(int16_t code, char argument_mode)
+0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise	gps_code_class gps_request_class(int16_t code, gps_argument_mode argument_mode)
 0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(char param_1, gps_request_entry *request, gps_request_entry *param_3)
-0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders	int16_t gps_request_build(int16_t message, uint8_t query, int32_t *arguments, char *out)
+0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders	int16_t gps_request_build(int16_t message, gps_argument_mode mode, int32_t *arguments, char *out)
 0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update	char *gps_response_decode(int16_t message, char *response)
 0x4b7ac	function	gps_response_lookup	context	a response's two-character ID to its index among 49, counting unknown_response	uint32_t gps_response_lookup(char first, char second, int16_t *length, int16_t *index)
 0x4b9a6	function	gps_response_timed_out	context	1 once more time has passed than the message's timeout
@@ -1235,9 +1236,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f18c	function	channels_reset	context	sets every channel's mode to code search
 0x4f1f8	function	visible_satellites	context	the set and count of visible GPS satellites, from gps.visibility	bool visible_satellites(uint8_t *count, uint32_t *set)
 0x4f32c	function	satellite_find	context	finds a satellite by ID in a table of 10-byte entries, by bisection	oncore_visible_satellite *satellite_find(uint8_t id, gps_visibility_record *record)
-0x49654	function	satellite_elevation_azimuth	context	a satellite's elevation and azimuth, valid below 91 and 360	void satellite_elevation_azimuth(oncore_visible_satellite *satellite, uint8_t *entry)
+0x49654	function	satellite_elevation_azimuth	context	a satellite's elevation and azimuth, valid below 91 and 360	void satellite_elevation_azimuth(oncore_visible_satellite *satellite, satellite_cell *cell)
 0x49474	function	satellite_sets_build	context	for status_snapshot: the sets of GPS and pseudolite satellites visible, used and tracked, and the tracked by @@Ba channel mode	void satellite_sets_build(oncore_channel_status *channels, satellite_sets *sets)
-0x49688	function	satellite_status	context	for status_snapshot: a satellite's status code for the screen	void satellite_status(char tracked, uint8_t id, satellite_sets *sets, gps_visibility_record *visibility, satellite_list_entry *entry)
+0x49688	function	satellite_status	context	for status_snapshot: a satellite's status code for the screen	void satellite_status(char tracked, uint8_t id, satellite_sets *sets, gps_visibility_record *visibility, satellite_cell *cell)
 0x49612	function	satellite_track_class	context	a track record's class, 1 to 3	satellite_health_class satellite_track_class(oncore_visible_satellite *satellite)
 0x497c8	function	satellite_status_list	context	for status_snapshot: the screen's list of satellites, built and sorted	void satellite_status_list(char tracked, uint8_t entries, satellite_sets *sets, oncore_channel_status *channels, gps_visibility_record *visibility, satellite_list_entry *list, uint8_t *count)
 0x4a636	function	status_snapshot	context	gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask	void status_snapshot(status_snapshot_record *snapshot)
@@ -1633,7 +1634,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x47078	function	leap_ack_pending	context	1 while a leap second acknowledgment is pending, pll +0x2c or +0x2d
 0x47de2	function	running_average_update	context	folds a value into a running average of so many
 0x47eb0	function	dms_to_mas	context	degrees, minutes and seconds as milliarcseconds	void dms_to_mas(long *mas, ushort degrees, byte minutes, double seconds)
-0x49794	function	satellite_compare	context	qsort's comparison of two satellites, by elevation and then by number	int32_t satellite_compare(uint8_t *first, uint8_t *second)
+0x49794	function	satellite_compare	context	qsort's comparison of two satellites, by elevation and then by number	int32_t satellite_compare(void *first, void *second)
 0x4a448	function	bits_1_to_3_any	context	1 if any of bits 1 to 3 is set
 0x4a494	function	bits_4_5_any	context	1 if bit 4 or 5 is set
 0x4a4c0	function	bits_6_7_any	context	1 if bit 6 or 7 is set
@@ -1658,7 +1659,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f682	function	oncore_visibility_message	gps.md	decodes the visible satellites, @@Bb, and marks them received	uint8_t *oncore_visibility_message(uint8_t *cursor, uint8_t *record)
 0x4f6d8	function	oncore_corrections_message	gps.md	decodes the range corrections and averages those of the satellites in use, and their deviation
 0x4f87e	function	oncore_receiver_id_message	gps.md	decodes the receiver ID, @@Cj, and marks it received	uint8_t *oncore_receiver_id_message(uint8_t *cursor, uint8_t *record)
-0x4fb86	function	gps_response_match	context	checks a response against the request it answers	uint8_t gps_response_match(int16_t message, uint8_t *sent, char length, char query, int16_t index, uint8_t *response, int16_t response_length)
+0x4fb86	function	gps_response_match	context	checks a response against the request it answers	gps_match_result gps_response_match(int16_t message, uint8_t *sent, uint8_t length, gps_argument_mode mode, int16_t index, uint8_t *response, int16_t response_length)
 0x51038	function	psos_config_init	psos.md	copies the kernel's configuration and its I/O table into RAM
 0x510aa	function	memory_allocate	psos.md	allocates from region 1 through service 8	void *memory_allocate(uint32_t size)
 0x510d2	function	memory_free	psos.md	frees a segment through service 9	void memory_free(void *segment)
@@ -2038,7 +2039,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x4cfce	label	month_names	structures.md	format_date's "Jan" to "Dec" for months 1 to 12; entry 0 "---"	char *[13]
 0x4d032	label	status_screen_mode_lines	structures.md	status_screen's mode lines, "Locked to ", "Recovery", "Holdover" and "Power-up", each with the mode it marks; the decompiler otherwise takes its address as the string "\x03"	status_screen_mode_line[5]
 0x4d10b	label	status_screen_blank	structures.md	an empty string status_screen and status_snapshot print or store for a field with nothing	char[1]
-0x4e016	label	satellite_status_blank_entry	structures.md	satellite_status_list copies its 8 bytes over each unused entry of the list	uint8_t[8]
+0x4e016	label	satellite_status_blank_entry	structures.md	satellite_status_list copies it over each unused entry of the list	satellite_list_entry
 0x50cca	label	gps_script_47	oncore/z3805a-3543b.txt	script 0x47, gps_script_lookup's first, which also calls gps_init; to its NULL	gps_script_step *[26]
 0x50d32	label	gps_script_48	oncore/z3805a-3543b.txt	script 0x48; to its NULL	gps_script_step *[29]
 0x50da6	label	gps_script_49	oncore/z3805a-3543b.txt	script 0x49; to its NULL	gps_script_step *[5]

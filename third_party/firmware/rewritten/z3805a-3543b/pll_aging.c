@@ -198,9 +198,7 @@ void aging_fit_collect(void) {
 /* The curv task: time sliced, fits the history each time it is
  * signaled, and signals pllp_task back (0x41784). */
 void curv_task(void) {
-  static const uint32_t TIME_SLICING = 0x40;
-
-  psos_mode(TIME_SLICING, TIME_SLICING, NULL);
+  psos_mode(PSOS_MODE_TIME_SLICE, PSOS_MODE_TIME_SLICE, NULL);
   for (;;) {
     psos_wait_v(PLL_AGING_FIT_EVENT, 0, 0, NULL);
     aging_fit();

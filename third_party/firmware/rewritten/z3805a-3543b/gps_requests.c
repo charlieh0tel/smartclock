@@ -28,9 +28,11 @@ uint32_t request_kind_valid(gps_request_sender sender) {
 
 /* A request code's class, by its range and, for a message, its argument
  * mode, 0 to send it and 1 to query it (0x4bdba). */
-gps_code_class gps_request_class(int16_t code, char argument_mode) {
+gps_code_class gps_request_class(int16_t code,
+                                 gps_argument_mode argument_mode) {
   if (code >= GPS_REQUEST_TIME_OF_DAY && code <= GPS_REQUEST_RECEIVER_ID &&
-      (argument_mode == 0 || argument_mode == 1)) {
+      (argument_mode == GPS_ARGUMENTS_SET ||
+       argument_mode == GPS_ARGUMENTS_QUERY)) {
     return GPS_CLASS_MESSAGE;
   }
   if (code >= GPS_STEP_STATUS_SNAPSHOT && code < GPS_SCRIPT_INIT_DEFAULTS) {
@@ -192,7 +194,7 @@ bool gps_request_post(gps_request_sender sender, int16_t code,
     request.arguments = step->arguments;
   } else {
     request.code = code;
-    request.argument_mode = 0;
+    request.argument_mode = GPS_ARGUMENTS_SET;
     request.arguments = 0;
   }
   request.sent = sent;
@@ -252,4 +254,83 @@ void gps_parse_options(void) {
   gps.raim_option =
       strncmp(gps.receiver_id.options, (char*)LABEL, LABEL_LENGTH) == 0 &&
       strchr(gps.receiver_id.options + LABEL_LENGTH, 'I') != 0;
+}
+
+/* Runs an argument encoder of oncore_messages.  The table holds the
+ * image's own routines, which return where the next byte goes in D0
+ * alone, where gcc takes a pointer result from A0; so it is called as
+ * returning a long. */
+static char* gps_requests_encode(oncore_encoder* encoder, int32_t* arguments,
+                                 uint8_t index, char* out) {
+  typedef uint32_t encode_in_d0(int32_t* arguments, uint8_t index, char* out);
+
+  return (char*)((encode_in_d0*)encoder)(arguments, index, out);
+}
+
+/* Builds a request's message at out: "@@" and its ID, then its
+ * arguments through the message's encoders or its query form, then the
+ * checksum and CR LF.  Its length; 0, out empty, for a message the task
+ * does not send or a query of one without a query form; -1 for one the
+ * receiver does not take (0x4f932). */
+int16_t gps_request_build(int16_t message, gps_argument_mode mode,
+                          int32_t* arguments, char* out) {
+  static const uint8_t ENCODERS = sizeof oncore_messages[0].encoders /
+                                  sizeof oncore_messages[0].encoders[0];
+  /* A query form's stand-in for a zero byte, which would end it. */
+  static const char QUERY_ZERO = (char)0xee;
+  /* @@Bn's fields after those its encoders send: nnn and mdyyhms, not
+   * used (VPCommands.pdf, Time RAIM Setup and Status), as the image
+   * sends them. */
+  static const char TRAIM_UNUSED[] = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0};
+  const oncore_message_entry* entry = &oncore_messages[message];
+  uint8_t supported = 0;
+  char* next;
+
+  if (gps_message_supported(message, &supported) == 0 || supported == 0) {
+    return -1;
+  }
+  *out = 0;
+  if (entry->kind != ONCORE_KIND_SENT && entry->kind != ONCORE_KIND_EXCHANGED) {
+    return 0;
+  }
+  strcat(out, "@@");
+  strcat(out, entry->id);
+  next = out + libc_length(out);
+  if (mode == GPS_ARGUMENTS_SET) {
+    for (uint8_t i = 0; i < ENCODERS && entry->encoders[i] != NULL; i++) {
+      next = gps_requests_encode(entry->encoders[i], arguments, i, next);
+    }
+    if (message == GPS_REQUEST_POSITION_STATUS) {
+      /* The rate asked for, @@Ba's first argument, as it is sent. */
+      char rate;
+
+      gps_requests_encode(entry->encoders[0], arguments, 0, &rate);
+      gps.status_rate = (uint8_t)rate;
+    } else if (message == GPS_REQUEST_TRAIM) {
+      for (uint32_t i = 0; i < sizeof TRAIM_UNUSED; i++) {
+        *next++ = TRAIM_UNUSED[i];
+      }
+    }
+  } else {
+    const char* form = entry->query;
+
+    if (form == NULL) {
+      *out = 0;
+      return 0;
+    }
+    if (message == GPS_REQUEST_MANUAL_SATELLITE_SELECT) {
+      /* @@Ai's query names its channel. */
+      next = long_array_get_byte(arguments, 0, next);
+    }
+    for (; *form != 0; form++) {
+      *next++ = *form == QUERY_ZERO ? 0 : *form;
+    }
+  }
+  /* The checksum covers the ID on. */
+  *next =
+      (char)oncore_checksum((uint8_t*)out + libc_length("@@"), (uint8_t*)next);
+  next++;
+  *next++ = '\r';
+  *next++ = '\n';
+  return (int16_t)(next - out);
 }

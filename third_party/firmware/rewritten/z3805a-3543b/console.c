@@ -367,6 +367,33 @@ void diag_pr_adc_avg(void) {
   console_print_average("Oven current: %.2f\r\n", ADC_CURRENT);
 }
 
+/* The word pr_hold_cause: each reason the loop holds over, or none
+ * (0x1b1d0). */
+void diag_pr_hold_cause(void) {
+  static const struct {
+    pll_hold_cause cause;
+    char* text;
+  } CAUSES[] = {
+      {HOLD_CAUSE_HARDWARE_FAILURE, "Holdover due to hardware failure\r\n"},
+      {HOLD_CAUSE_MANUAL, "Holdover due to manual\r\n"},
+      {HOLD_CAUSE_GPS, "Holdover due to GPS\r\n"},
+      {HOLD_CAUSE_TI_ERROR, "Holdover due to TI error\r\n"},
+      {HOLD_CAUSE_TI_LIMIT_EXCEEDED, "Holdover due to TI limit exceeded\r\n"},
+      {HOLD_CAUSE_TEMPORARY_MODE, "Holdover due to temporary mode\r\n"},
+      {HOLD_CAUSE_1PPS_SELECTION, "Holdover due to 1PPS selection\r\n"},
+  };
+
+  if (pll.hold_causes == HOLD_CAUSE_NONE) {
+    printf("No holdover cause\r\n");
+    return;
+  }
+  for (uint32_t i = 0; i < sizeof CAUSES / sizeof CAUSES[0]; i++) {
+    if ((pll.hold_causes & CAUSES[i].cause) != 0) {
+      printf(CAUSES[i].text);
+    }
+  }
+}
+
 /* The words efc_write, hdac_write and hdac_all: the DACs written
  * (0x1b282, 0x1b292, 0x1b2a8). */
 void diag_efc_write(uint32_t value) { efc_write(value); }

@@ -718,6 +718,19 @@ word_copy_14_bits	next	the cursor past the word
 oncore_decode_fields	next	the cursor past the fields read
 oncore_position_message	next	the cursor past the fields read
 oncore_corrections_message	next	the cursor past the fields read
+long_array_get_long_prefixed	next	where the next encoder writes
+byte_copy_optional	next	the cursor past the byte
+oncore_as_height_decode	next	the cursor past the fields read
+oncore_ai_decode	next	the cursor past the channel and its byte
+oncore_visibility_message	next	the cursor past the fields read
+oncore_dop_message	next	the cursor past the fields read
+oncore_almanac_status_message	next	the cursor past the fields read
+oncore_extension_message	next	the cursor past the fields read
+oncore_traim_message	next	the cursor past the fields read
+oncore_receiver_id_message	next	the cursor past the fields read
+gps_response_decode	next	the cursor past what the decoders read
+gps_request_build	length	the message's; 0 for none, -1 for one the receiver does not take
+gps_response_match	match	whether the response answers the command, GPS_MATCH_ANSWERED if so
 # Wave 3, console: the pForth console's setup and diagnostic words
 pforth_define_word	defined	0, or -1 with no dictionary
 diag_adc_read	reading	the ADC channel's raw byte
@@ -742,6 +755,7 @@ satellite_id_valid	valid	whether the ID is one of the kind's satellites
 channel_position_satellite	satellite	the channel's satellite when available for position, else 0
 satellite_used_for_position	used	whether a channel uses the satellite for position
 visible_satellites	received	whether @@Bb has come
+satellites_in_use	received	whether @@Ba has come
 position_settable	settable	neither held nor surveyed
 gps_position_get	received	whether @@Ba has come
 gps_time_local_get	received	whether @@Ba has come

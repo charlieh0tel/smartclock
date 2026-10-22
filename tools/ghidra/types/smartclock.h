@@ -432,8 +432,15 @@ typedef enum __attribute__((packed)) oncore_time_mode {
 /* @@Cg: fix or idle. */
 typedef enum __attribute__((packed)) oncore_fix_mode {
   ONCORE_IDLE = 0,
-  ONCORE_POSITION_FIX = 1
+  ONCORE_POSITION_FIX = 1,
+  ONCORE_FIX_MODE_QUERY = 2 /* sent only: "Send current receiver mode" */
 } oncore_fix_mode;
+
+/* @@Af and @@As: the height's type. */
+typedef enum __attribute__((packed)) oncore_height_type {
+  ONCORE_HEIGHT_GPS = 0, /* above the GPS ellipsoid */
+  ONCORE_HEIGHT_MSL = 1
+} oncore_height_type;
 
 /* @@Bj: the leap second pending. */
 typedef enum __attribute__((packed)) oncore_leap_pending {
@@ -933,15 +940,26 @@ typedef struct adc_monitor {
                                  outside the range, held at its limit */
 } adc_monitor;
 
+/* How a GPS request or script step gives its message's arguments
+ * (gps_request_entry.argument_mode, gps_script_step.argument_mode,
+ * gps_running_command.query): gps_request_class takes 0 and 1 for a
+ * message, gps_print_process_monitor prints them "change/execute" and
+ * "query setting", and gpsm_task takes 2 as 0 with gps_request_step's
+ * arguments from the index in the step's first (0x4c1f6 to 0x4c212). */
+typedef enum __attribute__((packed)) gps_argument_mode {
+  GPS_ARGUMENTS_SET = 0,          /* the message with its arguments */
+  GPS_ARGUMENTS_QUERY = 1,        /* the message's query form */
+  GPS_ARGUMENTS_FROM_REQUEST = 2, /* set, gps_request_step's arguments */
+} gps_argument_mode;
+
 /* A GPS script's step, as gpsm_task runs it.  The one at 0x101b56,
- * gps_request_step, is in RAM: the one-step script at 0x50cc2 points at
- * it, and gpsm_task fills it from a request gps_request_class puts in
- * class 0, a message. */
+ * gps_request_step, is in RAM: the one-step script gps_script_message
+ * (0x50cc2) points at it, and gpsm_task fills it from a request
+ * gps_request_class puts in class 0, a message. */
 typedef struct gps_script_step {
   int16_t code; /* +0x00: the request code gps_request_build is given */
-  uint8_t argument_mode; /* +0x02: 2 takes the arguments from
-                            gps_request_step's, from the index in arguments[0];
-                            otherwise given to gps_request_build */
+  gps_argument_mode argument_mode; /* +0x02: GPS_ARGUMENTS_FROM_REQUEST from
+                                      the index in arguments[0] */
   uint8_t field_03;
   int32_t arguments[4]; /* +0x04: gps_request_step's are also a class 1
                            request's, a script's, and raim_request_arguments' */
@@ -1239,8 +1257,8 @@ typedef struct gps_request_entry {
                      pll_scpi_complete's success */
   int16_t code; /* +0x0a: the request, gps_request_class's index; 0x45 empties
                    the ring before it is queued */
-  uint8_t argument_mode; /* +0x0c: gps_request_class's second argument, copied
-                            to gps_request_step's */
+  gps_argument_mode argument_mode; /* +0x0c: gps_request_class's second
+                                      argument, copied to gps_request_step's */
   uint8_t field_0d;
   int32_t* arguments; /* +0x0e: four longs, which gpsm_task copies into
                          gps_request_step's */
@@ -1271,11 +1289,11 @@ typedef struct gps_running_command {
                                 matched response, a null one ending the script */
   int16_t message; /* +0x1e: the step's code, an index of oncore_messages, which
                       gps_request_build built */
-  uint8_t query;   /* +0x20: the step's argument mode, gps_request_build's query
-                      form; the log prints q, else c */
-  uint8_t length;  /* +0x21: the built message's bytes */
-  uint8_t sent[80]; /* +0x22: the message as sent, copied from
-                       gps_command_message */
+  gps_argument_mode query; /* +0x20: the step's, as gps_request_build was
+                              given it; the log prints q, else c */
+  uint8_t length;          /* +0x21: the built message's bytes */
+  uint8_t sent[80];        /* +0x22: the message as sent, copied from
+                              gps_command_message */
 } gps_running_command;
 
 /* A time of day as a long holds it, hour << 16 | minute << 8 | second,
@@ -1311,10 +1329,9 @@ typedef struct gps_command_log_entry {
   uint8_t field_03; /* never written */
   int16_t message; /* +0x04: the request's +0x1e, its index in the message table
                       at 0x4fece, whose ID prints */
-  char argument_text[3]; /* +0x06: characters 4 and 5 of gps_message_to_text's
-                            text, the first byte after the ID in hex; NUL */
-  uint8_t query; /* +0x09: the request's +0x20, gps_request_build's query form;
-                    printed q, else c */
+  char argument_text[3];   /* +0x06: characters 4 and 5 of gps_message_to_text's
+                              text, the first byte after the ID in hex; NUL */
+  gps_argument_mode query; /* +0x09: the command's; printed q, else c */
   uint8_t clock_invalid; /* +0x0a: get_date_time returned 0; printed blank, else
                             e */
   uint8_t field_0b;      /* never written */
@@ -2444,7 +2461,7 @@ typedef struct gps_state {
   uint8_t ionospheric_correction;            /* @@Aq */
   oncore_fix_algorithm fix_algorithm;        /* @@Ar */
   oncore_hold_position_fields hold_position; /* @@As */
-  uint8_t hold_height_type;                  /* @@As: 0 GPS ellipsoid, 1 MSL */
+  oncore_height_type hold_height_type;       /* @@As */
   uint8_t field_0b3;
   uint8_t position_hold; /* @@At */
   uint8_t field_0b5[0xbb - 0xb5];
@@ -3082,28 +3099,79 @@ typedef struct pllc_request {
                          the address of index + 1 longs */
 } pllc_request;
 
+/* An Oncore argument encoder: puts a request's argument by its index
+ * at out, and returns where the next byte goes (long_array_get_byte and
+ * its kin). */
+typedef char* oncore_encoder(int32_t* arguments, uint8_t index, char* out);
+
+/* An Oncore response decoder: unpacks the message at cursor into
+ * record, and returns the cursor past what it read
+ * (oncore_decode_fields and the oncore_*_message routines). */
+typedef uint8_t* oncore_decode_function(uint8_t* cursor, uint8_t* record);
+
 /* A decoder of an Oncore message and the record in gps it fills. */
 typedef struct oncore_decoder {
-  void* decode; /* gps_response_decode calls it with the cursor and record, and
-                   takes the cursor back */
-  void* record;
+  oncore_decode_function* decode; /* gps_response_decode calls it with the
+                                     cursor and record, and takes the cursor
+                                     back */
+  uint8_t* record;
 } oncore_decoder;
+
+/* How gps_response_match takes a response to a message
+ * (oncore_message_entry.match_kind; its jump table at 0x4fbce).  The
+ * kinds that compare take the response as the command's echo, its bytes
+ * after the ID the same (VPCommands.pdf for each message). */
+typedef enum __attribute__((packed)) oncore_match_kind {
+  ONCORE_MATCH_ANY = 0,        /* answered at once; gpsm_task waits for none */
+  ONCORE_MATCH_ECHO = 1,       /* the same message, its bytes the same */
+  ONCORE_MATCH_GMT_OFFSET = 2, /* @@Ab: an echo, but a negative offset under
+                                  an hour, sign 0xff and hours 0, compared as
+                                  sign 0 and its minutes negated */
+  ONCORE_MATCH_HEIGHT = 3,     /* @@Af: the height alone, the response's MSL
+                                  one for type 1 */
+  ONCORE_MATCH_HOLD_POSITION = 4, /* @@As: latitude and longitude alone when
+                                     the type is the same and the height in
+                                     range and within 2 cm */
+  ONCORE_MATCH_FIX_MODE = 5,      /* @@Cg: an echo, but mode 2, a query of the
+                                     mode, matched at once */
+  ONCORE_MATCH_SAME = 6,          /* the same message, its bytes not compared */
+  ONCORE_MATCH_USER_DATUM = 7,    /* @@Ao: answered by @@Ap */
+  ONCORE_MATCH_NEVER = 8,         /* never answered; no message has it */
+  ONCORE_MATCH_CORRECTIONS = 9,   /* @@Bh: answered by @@Ce */
+} oncore_match_kind;
+
+/* gps_response_match's verdict on a response. */
+typedef enum __attribute__((packed)) gps_match_result {
+  GPS_MATCH_OTHER = 0,    /* not the command's answer */
+  GPS_MATCH_DIFFERS = 1,  /* its answer, its bytes not the command's */
+  GPS_MATCH_ANSWERED = 2, /* its answer */
+} gps_match_result;
+
+/* An oncore_messages entry's kind: bit 0 that the task sends the
+ * message, bit 1 that the engine does.  gps_request_build composes those
+ * with bit 0; @@Ci, which switches the engine's format, has no answer,
+ * and @@Ap and @@Ce only the engine sends. */
+typedef enum __attribute__((packed)) oncore_message_kind {
+  ONCORE_KIND_EMPTY = 0,     /* a slot without a message */
+  ONCORE_KIND_SENT = 1,      /* @@Ci */
+  ONCORE_KIND_RECEIVED = 2,  /* @@Ap, @@Ce */
+  ONCORE_KIND_EXCHANGED = 3, /* every other */
+} oncore_message_kind;
 
 /* An entry of the GPS task's Oncore message table, oncore_messages: 56
  * bytes (docs/firmware/oncore/README.md, "The message table"). */
 typedef struct oncore_message_entry {
-  char* id;     /* +0x00: the two-letter ID; zero for an empty slot */
-  uint8_t kind; /* +0x04: gps_request_build composes kinds 1 and 3 */
+  char* id; /* +0x00: the two-letter ID; zero for an empty slot */
+  oncore_message_kind kind; /* +0x04 */
   uint8_t field_05;
-  void* encoders[4]; /* +0x06: argument encoders */
-  char* query;       /* +0x16: the query form; zero if none */
+  oncore_encoder* encoders[4]; /* +0x06: to the first zero */
+  char* query;                 /* +0x16: the query form; zero if none */
   uint8_t
       timeout; /* +0x1a: gps_response_timed_out's limit on the uptime elapsed */
   uint8_t field_1b;
   uint16_t length; /* +0x1c: the response's, @@ to line end; gps_response_lookup
                       returns it */
-  uint8_t
-      match_kind; /* +0x1e: what gps_response_match switches on when below 10 */
+  oncore_match_kind match_kind; /* +0x1e */
   uint8_t field_1f;
   oncore_decoder
       decoders[3]; /* +0x20: gps_response_decode runs them to the first zero */
@@ -3421,6 +3489,16 @@ typedef enum __attribute__((packed)) psos_task_status {
   PSOS_TASK_MEMORY_WAIT = 0x40,   /* "mblk": on a region's queue, presumably */
   PSOS_TASK_SPAWNING = 0x80,      /* "spwn": created, not started */
 } psos_task_status;
+
+/* The kernel's errors that a caller tells apart, the low byte of a
+ * service's result (D7). */
+typedef enum __attribute__((packed)) psos_error {
+  PSOS_ERROR_NONE = 0,
+  PSOS_ERROR_NO_MESSAGE = 0x80, /* request_x not to wait, or from an
+                                   interrupt, and none there (0x15746) */
+  PSOS_ERROR_TIMEOUT = 0x81,    /* a wait's ticks run out
+                                   (kernel_process_ticks, 0x14d18) */
+} psos_error;
 
 /* A task record's mode byte, +0x11 (psos.md, service 32). */
 typedef enum __attribute__((packed)) psos_task_mode {

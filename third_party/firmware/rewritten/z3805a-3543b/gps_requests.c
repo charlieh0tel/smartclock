@@ -174,18 +174,16 @@ void gps_request_queue(char state, gps_request_entry* request,
 }
 
 /* Sends a monitor's request to the task's exchange, marking its result
- * pending: the code's, without arguments, or for code 4 the code, mode
+ * pending: the code's, without arguments, or for GPS_POST_STEP the code, mode
  * and arguments of the step arguments[0] points at (0x4bd2c). */
 bool gps_request_post(gps_request_sender sender, int16_t code,
                       int32_t* arguments, uint8_t sent) {
-  /* The code that passes a step, rather than naming the request. */
-  static const int16_t STEP_GIVEN = 4;
   gps_request_entry request;
 
   request.field_00 = 0;
   request.field_04 = 0;
   request.sender = sender;
-  if (code == STEP_GIVEN) {
+  if (code == GPS_POST_STEP) {
     /* The argument long holds the step's address. */
     gps_script_step* step = (gps_script_step*)arguments[0];
 

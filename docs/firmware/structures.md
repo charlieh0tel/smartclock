@@ -1154,9 +1154,9 @@ page's "[last 20]".  `command_log_clear` (`0x4c65e`) empties it, from
 message index (`+0x1e`) and query flag (`+0x20`), the two characters
 after the ID in `gps_last_program_message` (`gps_message_to_text`'s
 text, the first byte after the ID in hex), and a date and time: when
-`get_date_time` (`0x136fe`) returns valid, `@@Ba`'s
-(`gps.status`) through `oncore_date_pack` and `utc_to_local`, else the
-clock's, setting `clock_invalid`.  Nothing writes `+3` or `+0xb`.
+`get_date_time` (`0x136fe`) returns 1, the clock not set since
+power-up, `@@Ba`'s (`gps.status`) through `oncore_date_pack` and
+`utc_to_local`, else the clock's, setting `from_clock`.  Nothing writes `+3` or `+0xb`.
 
 `gps_print_command` (`0x4c754`) prints the oldest entry of the log it
 is given and advances past it, returning 0 when the log is empty; so
@@ -1523,8 +1523,9 @@ call by offset: `+0` `scpi_session_init`, `+4` `scpi_session_close`
 | `scpi_error_messages` (`0x28910`) | `scpi_error_message[101]` | `error_message_lookup`'s, to the code -1 |
 | `status_report_messages` (`0x2bf30`) | `char *[23]` | `status_report`'s for codes 1 to 22, 0 "No error" |
 | `sample_values_defaults` (`0x308b6`) | `uint8_t[148]` | `system_init`'s `memcpy` over `0x101dda`, `0x94` bytes |
+| `day_names` (`0x4cf80`) | `char *[8]` | `format_duration`'s, `"---"` then Sun to Sat, by the day plus one, unchecked |
 | `month_names` (`0x4cfce`) | `char *[13]` | `format_date`'s for months 1 to 12, 0 `"---"` |
-| `gps_script_47` to `gps_script_59`, `gps_script_none` (`0x50cca` to `0x50fce`) | `gps_script_step *[N]` | `gps_script_lookup`'s scripts, each to its NULL (`oncore/z3805a-3543b.txt`); `0x50e5e`, two pointers no code loads, is left |
+| `gps_script_47` to `gps_script_59`, `gps_script_none` (`0x50cca` to `0x50fce`) | `gps_script_step *[N]` | `gps_script_lookup`'s scripts, each to its NULL (`oncore/z3805a-3543b.txt`); `command_monitor_queries` (`0x50e5e`) the command monitor's, `@@Bj`'s query alone |
 | `psos_config_defaults` (`0x5122a`), `io_table_defaults` (`0x5171a`) | the RAM tables' types | `psos_config_init`'s copies, `0x62` and `0x90` bytes |
 | `scpi_main_tree` (`0x53034`) | `scpi_root_children` | the main tree's root list, 49 nodes; `0x5d014` points at it |
 | `pow_two_powers`, `pow_two_power_tails` (`0x6184c`, `0x618d4`) | `double[17]`, `double[9]` | 2 to -k/16, k 0 to 16, and the even entries' low parts; code at `0x6191c` |

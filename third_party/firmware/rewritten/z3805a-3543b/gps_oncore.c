@@ -403,7 +403,7 @@ uint8_t* oncore_position_message(uint8_t* cursor, uint8_t* record) {
     return cursor;
   }
   cursor = oncore_decode_fields(cursor, record, oncore_status_field_codes);
-  gps_receiver_status_update(0, 0);
+  gps_receiver_status_update(GPS_RECEIVER_ONCORE, 0);
   if (gps.position_hold == 0 &&
       (nv_settings.douglas_duration_infinite == 1 ||
        gps.average_count < (uint32_t)nv_settings.douglas_duration) &&

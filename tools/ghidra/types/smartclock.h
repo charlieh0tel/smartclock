@@ -161,6 +161,14 @@ typedef enum __attribute__((packed)) gps_console_command {
   GPS_CONSOLE_QUERY = 0x20, /* gps_query: request, as a query */
 } gps_console_command;
 
+/* Which receiver gps_receiver_status_update updates: the Oncore's
+ * status, or the alternate receiver's, which it ignores, returning at
+ * once (0x4b168); gpsm_task and status_snapshot call it with each. */
+typedef enum __attribute__((packed)) gps_receiver_number {
+  GPS_RECEIVER_ONCORE = 0,
+  GPS_RECEIVER_ALTERNATE = 1,
+} gps_receiver_number;
+
 /* The console's override of the GPS reference's validity,
  * reference_valid_override_request (0x100c68), which force_1pps
  * (diag_force_1pps, 0x1b68c) sets from -1, 0 or 1. */
@@ -1202,6 +1210,8 @@ typedef enum __attribute__((packed)) gps_request_code {
   GPS_STEP_PRINT_TIME_RAIM = 0x39,
   GPS_STEP_PRINT_AVERAGE = 0x3a,
   GPS_STEP_AVERAGE_RESET = 0x3b,  /* gps.average_count = 0 */
+  GPS_STEP_AVERAGE = 0x3c,        /* the console's avg; gps_console_request
+                                     does nothing with it */
   GPS_STEP_SURVEY_START = 0x3d,   /* gps.surveying = 1 */
   GPS_STEP_SURVEY_STOP = 0x3e,    /* gps.surveying = 0 */
   GPS_STEP_PPS_CHECK = 0x3f,      /* gps.pps_check_disabled, its argument */
@@ -1323,19 +1333,21 @@ typedef struct calendar_date {
  * request gpsm_task has sent, and gps_print_command prints as
  * "%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s". */
 typedef struct gps_command_log_entry {
-  int16_t code;     /* +0x00: the request's +0xa, printed under "ID" */
-  uint8_t sender;   /* +0x02: the request's +8; 1 SCPI1, 2 PLL, 3 GPSc, 4 GPSs,
-                       else "?" */
-  uint8_t field_03; /* never written */
+  int16_t code;              /* +0x00: the request's +0xa, printed under "ID" */
+  gps_request_sender sender; /* +0x02: the request's; printed PLL, SCPI1,
+                                GPSc and GPSs, else "?" */
+  uint8_t field_03;          /* never written */
   int16_t message; /* +0x04: the request's +0x1e, its index in the message table
                       at 0x4fece, whose ID prints */
   char argument_text[3];   /* +0x06: characters 4 and 5 of gps_message_to_text's
                               text, the first byte after the ID in hex; NUL */
   gps_argument_mode query; /* +0x09: the command's; printed q, else c */
-  uint8_t clock_invalid; /* +0x0a: get_date_time returned 0; printed blank, else
-                            e */
-  uint8_t field_0b;      /* never written */
-  uint32_t date; /* +0x0c: @@Ba's, local; the clock's while clock_invalid */
+  uint8_t from_clock; /* +0x0a: 1 when the clock is set, the date and time its;
+                        0 for a clock not set since power-up (get_date_time's
+                        1), the date and time @@Ba's.  Printed blank, else
+                        e */
+  uint8_t field_0b;   /* never written */
+  uint32_t date; /* +0x0c: the clock's while from_clock, else @@Ba's, local */
   time_of_day
       time; /* +0x10: likewise; gps_print_command passes it to format_time */
 } gps_command_log_entry;
@@ -2565,10 +2577,10 @@ typedef struct gps_state {
   uint8_t pps_check_disabled; /* gps_pps_check skips while set */
   uint8_t receiver_health_failed; /* "GPS Receiver Health" */
   uint8_t command_monitor_enabled;
-  uint8_t
-      command_monitor_state;   /* 0 disabled, 1 standby, 2 query, 3 query-ack */
-  void* command_monitor_query; /* the next query of the list at 0x50e5e */
-  uint32_t command_monitor_time; /* uptime of its last state change */
+  gps_command_monitor_state command_monitor_state;
+  gps_script_step** command_monitor_query; /* its next query, a place in
+                                              command_monitor_queries */
+  uint32_t command_monitor_time;           /* uptime of its last state change */
   uint8_t command_monitor_error; /* set by gpsm_task when a command goes
                                     unanswered */
   uint8_t command_monitor_failed;
@@ -3446,10 +3458,10 @@ typedef struct status_snapshot_record {
   uint32_t holdover_duration;           /* +0x022: pll's */
   float kenneth_present;                /* +0x026: kenneth_present_get's */
   uint8_t kenneth_present_valid;        /* +0x02a: its result */
-  uint8_t field_02b;                    /* its second output */
+  int8_t kenneth_present_resolution;    /* its resolution, a power of ten */
   float kenneth_predicted;              /* +0x02c: kenneth_predicted_get's */
   uint8_t kenneth_predicted_valid;      /* +0x030: its result */
-  uint8_t field_031;                    /* its second output */
+  int8_t kenneth_predicted_resolution;  /* its resolution, a power of ten */
   satellite_sets satellites;            /* +0x032: satellite_sets_build's */
   satellite_list_entry not_tracked[12]; /* +0x05c: satellite_status_list's
                                            list 0, the visible satellites no
@@ -3469,12 +3481,13 @@ typedef struct status_snapshot_record {
   uint8_t fix_mode;                  /* +0x0f6: gps' */
   oncore_receiver_status receiver_status; /* +0x0f7: gps.status' */
   time_of_day time;     /* +0x0f8: gps.status' time made local (0x4a720);
-                           get_date_time's while clock_invalid (0x4a74e) */
+                           get_date_time's while from_clock (0x4a74e) */
   uint32_t date;        /* +0x0fc: the same's date */
   int32_t time_zone[2]; /* +0x100: nv_settings' */
-  uint8_t
-      clock_invalid; /* +0x108: 1 when get_date_time reports no date or time */
-  uint8_t utc_time;  /* +0x109: gps' */
+  uint8_t from_clock;   /* +0x108: 1 when the clock is set, the time its; 0 for
+                          a clock not set since power-up (get_date_time's 1),
+                          the time @@Ba's, which the screen marks "[?]" */
+  uint8_t utc_time;     /* +0x109: gps' */
   uint8_t leap_second_pending; /* +0x10a: gps' */
   uint8_t field_10b;
   int32_t pps_cable_delay;           /* +0x10c: gps' */

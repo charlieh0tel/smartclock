@@ -400,8 +400,8 @@ void gpsm_task(void) {
       default:
         break;
     }
-    gps_receiver_status_update(0, 0);
-    gps_receiver_status_update(1, gps_status_alternate());
+    gps_receiver_status_update(GPS_RECEIVER_ONCORE, 0);
+    gps_receiver_status_update(GPS_RECEIVER_ALTERNATE, gps_status_alternate());
     command_monitor();
     if (status_screen_print_interval != 0) {
       int32_t elapsed;

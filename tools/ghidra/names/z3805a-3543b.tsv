@@ -81,6 +81,7 @@
 0x120aa	function	shutdown	restart.md	Shutdown
 0x2a04a	function	scpi_task	restart.md	SCPI task
 0x12f2c	function	enter_installer	restart.md	calls trap #11, the installer entry
+0x18dbc	label	console_first_phrase	read	"0 !iodev", the phrase console_init has the console's string device read first, which makes device 0, channel B, the console's; the device keeps its address past the call	char[9]
 0x102c62	label	scpi_language	restart.md	what :SYSTem:LANGuage chose to follow the SCPI session	scpi_language_choice
 #
 # the interval, docs/firmware/interval.md, "In every image"
@@ -1222,7 +1223,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4bef6	function	gps_init	structures.md's gps	clears gps and resets the receiver status and the command monitor
 0x4bf3a	function	gps_link_reset	context	resets the response framing and empties the request ring
 0x4b01e	function	raim_monitor	context	the RAIM alarm's state machine, counting raim_detected	void raim_monitor(void)
-0x4b168	function	gps_receiver_status_update	context	sets the GPS receiver's status code, which enter_holdover reports, from its fix mode, the satellites in use, position hold and RAIM
+0x4b168	function	gps_receiver_status_update	context	sets the GPS receiver's status code, which enter_holdover reports, from its fix mode, the satellites in use, position hold and RAIM	void gps_receiver_status_update(gps_receiver_number receiver, uint8_t alternate_status)
 0x4b112	function	gps_receiver_status_reset	context	sets the receiver's status codes back to 2 and every channel back to code search
 0x4b46e	function	command_monitor	context	watches for commands the receiver does not answer, counting command_monitor_failures and resending after a time
 0x4b426	function	command_monitor_init	context	clears the command monitor's state and reports status event G
@@ -1987,7 +1988,7 @@ installer::0x108578	label	installer_io_table_defaults	structures.md	installer_ps
 #
 # setjmp's partner
 0x51100	function	longjmp	context	restores the registers setjmp saved, its status register through trap #1, and returns to its caller with the value given
-0x100c68	label	reference_valid_override_request	context	1 forces the GPS reference valid, 0xff invalid; gps_init clears it and no code sets it, so only a memory write, as from the pForth console, does	gps_reference_override
+0x100c68	label	reference_valid_override_request	context	1 forces the GPS reference valid, 0xff invalid; gps_init clears it, and the pForth console's force_1pps sets it (diag_force_1pps, 0x1b68c), which gps_receiver_status_update copies to gps.reference_valid_override	gps_reference_override
 #
 # pForth kernel subroutines Ghidra had not made functions
 0x19360	function	forth_resolve_forward	console.md	patches a forward branch at the address on the data stack to land here: its word before it gets here less it, plus 2; if, else, while		convention=pforth; confidence=read; preserves=all; family=pforth
@@ -2121,6 +2122,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x33898	label	scpi_param_SOURce_GPSystem_INITial_POSition_longitude	structures.md	the second of the three descriptors its setter gives pllc_request_c, after 0x33862 and before 0x338ce; value 0x101e66	scpi_numeric_param
 0x3393a	label	scpi_param_DOUGlas_STATe_request	structures.md	scpi_param_SAMPle_INTeger's bytes but for gps_request 0x53; :DOUGlas:STATe's setter gives it pllc_request_c while nv_settings.douglas_state is 0	scpi_numeric_param
 0x41300	label	two_to_32	softfloat.md	4294967296.0, by which int64_to_double and double_to_int64 scale the high long	double
+0x4cf80	label	day_names	read	format_duration's day names, "---" then Sun to Sat, indexed unchecked by the day plus one	char *[8]
 0x4cfce	label	month_names	structures.md	format_date's "Jan" to "Dec" for months 1 to 12; entry 0 "---"	char *[13]
 0x4d032	label	status_screen_mode_lines	structures.md	status_screen's mode lines, "Locked to ", "Recovery", "Holdover" and "Power-up", each with the mode it marks; the decompiler otherwise takes its address as the string "\x03"	status_screen_mode_line[5]
 0x4d10b	label	status_screen_blank	structures.md	an empty string status_screen and status_snapshot print or store for a field with nothing	char[1]
@@ -2144,6 +2146,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x50f72	label	gps_script_57	oncore/z3805a-3543b.txt	script 0x57; to its NULL	gps_script_step *[6]
 0x50f8a	label	gps_script_58	oncore/z3805a-3543b.txt	script 0x58; to its NULL	gps_script_step *[6]
 0x50fa2	label	gps_script_59	oncore/z3805a-3543b.txt	script 0x59; to its NULL	gps_script_step *[11]
+0x50e5e	label	command_monitor_queries	read	the command monitor's queries, a null-ended list of steps it posts in turn, one at a time, from the start again at the null: @@Bj's query alone (0x4b4bc to 0x4b5bc)	gps_script_step *[2]
 0x50fce	label	gps_script_none	oncore/z3805a-3543b.txt	the empty script gps_script_lookup returns for an index outside 0x47 to 0x59	gps_script_step *[1]
 0x5122a	label	psos_config_defaults	structures.md	psos_config_init copies these 0x62 bytes over psos_config	psos_configuration
 0x5171a	label	io_table_defaults	structures.md	psos_config_init copies these 0x90 bytes, four devices' jmp.l instructions, over io_table	io_device_jumps[4]

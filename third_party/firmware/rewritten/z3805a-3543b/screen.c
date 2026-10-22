@@ -306,12 +306,6 @@ void satellite_status_list(char tracked, uint8_t entries, satellite_sets* sets,
   }
 }
 
-/* gps_receiver_status_update's first argument: 0 updates gps' status;
- * 1, with gps_status_alternate's, returns at once (0x4b168). */
-static const char SCREEN_STATUS_UPDATE = 0;
-
-static const char SCREEN_STATUS_UPDATE_NONE = 1;
-
 /* satellite_status_list's first argument: 1 for the tracked, those
  * used for the fix; 0 for those visible or tracked and not used
  * (0x49802). */
@@ -347,9 +341,10 @@ void status_snapshot(status_snapshot_record* snapshot) {
   snapshot->tfom = pll.tfom;
   snapshot->ffom_valid = get_ffom((frequency_figure_of_merit*)&snapshot->ffom);
   snapshot->kenneth_present_valid = kenneth_present_get(
-      &snapshot->kenneth_present, (int8_t*)&snapshot->field_02b);
-  snapshot->kenneth_predicted_valid = kenneth_predicted_get(
-      &snapshot->kenneth_predicted, (int8_t*)&snapshot->field_031, &holdover);
+      &snapshot->kenneth_present, &snapshot->kenneth_present_resolution);
+  snapshot->kenneth_predicted_valid =
+      kenneth_predicted_get(&snapshot->kenneth_predicted,
+                            &snapshot->kenneth_predicted_resolution, &holdover);
   snapshot->holdover_waiting_reason = holdover_waiting_reason();
   snapshot->holdover_duration = pll.holdover_duration;
   snapshot->holdover_limit_state = nv_settings.holdover_limit_state;
@@ -357,18 +352,18 @@ void status_snapshot(status_snapshot_record* snapshot) {
   snapshot->time_zone[0] = nv_settings.time_zone[0];
   snapshot->time_zone[1] = nv_settings.time_zone[1];
   if (get_date_time(&date, &time)) {
-    snapshot->clock_invalid = 0;
+    snapshot->from_clock = 0;
     snapshot->time = gps.status.time;
     snapshot->date = oncore_date_pack(gps.status.date);
     utc_to_local(&snapshot->date, &snapshot->time);
   } else {
-    snapshot->clock_invalid = 1;
+    snapshot->from_clock = 1;
     snapshot->time = time;
     snapshot->date = date;
   }
   snapshot->pll_field_3d5 = pll.field_3d5;
-  gps_receiver_status_update(SCREEN_STATUS_UPDATE, 0);
-  gps_receiver_status_update(SCREEN_STATUS_UPDATE_NONE, gps_status_alternate());
+  gps_receiver_status_update(GPS_RECEIVER_ONCORE, 0);
+  gps_receiver_status_update(GPS_RECEIVER_ALTERNATE, gps_status_alternate());
   snapshot->douglas_duration_infinite = nv_settings.douglas_duration_infinite;
   snapshot->hardware_condition = status_hardware_condition();
   set_interrupt_mask(sr);
@@ -766,7 +761,7 @@ void status_screen_time(status_snapshot_record* snapshot, char* line) {
   format_time(snapshot->time, time_text);
   format_date(clock_date_of(snapshot->date), date_text);
   sprintf(line, "%-9.9s%8s %3s %11s", scale, time_text,
-          snapshot->clock_invalid == 0 ? "[?]" : "", date_text);
+          snapshot->from_clock == 0 ? "[?]" : "", date_text);
 }
 
 /* The rows of the position column status_screen_position fills, beside
@@ -1268,8 +1263,9 @@ void status_screen(status_snapshot_record* snapshot, char clear,
   if (snapshot->kenneth_predicted_valid == 0) {
     libc_copy(text, " --");
   } else {
-    format_si(float_to_double(snapshot->kenneth_predicted), snapshot->field_031,
-              PREDICTION_DIGITS, SCREEN_SECONDS, text);
+    format_si(float_to_double(snapshot->kenneth_predicted),
+              snapshot->kenneth_predicted_resolution, PREDICTION_DIGITS,
+              SCREEN_SECONDS, text);
     strcat(text, "/initial 24 hrs");
   }
   print("%43s   Predict  %s\r\n", "", text + 1);
@@ -1286,8 +1282,9 @@ void status_screen(status_snapshot_record* snapshot, char clear,
     libc_copy(text, " ");
   } else {
     label = "Present";
-    format_si(float_to_double(snapshot->kenneth_present), snapshot->field_02b,
-              PREDICTION_DIGITS, SCREEN_SECONDS, text);
+    format_si(float_to_double(snapshot->kenneth_present),
+              snapshot->kenneth_present_resolution, PREDICTION_DIGITS,
+              SCREEN_SECONDS, text);
   }
   print("%43s   %s  %s\r\n", line, label, text + 1);
 

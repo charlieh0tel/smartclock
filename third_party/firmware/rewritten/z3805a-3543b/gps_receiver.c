@@ -160,14 +160,11 @@ void raim_monitor(void) {
  * 1PPS makes it absent.  Only the Oncore's, receiver 0; the alternate
  * receiver's status, gps_status_alternate's, it takes and leaves
  * (0x4b168). */
-void gps_receiver_status_update(char receiver, uint8_t alternate_status) {
+void gps_receiver_status_update(gps_receiver_number receiver,
+                                uint8_t alternate_status) {
   static const uint32_t VALIDATION_SECONDS = 30;
-  /* reference_valid_override_request: forces the reference valid or
-   * invalid (structures.md) */
-  static const uint8_t FORCE_VALID = 1;
-  static const uint8_t FORCE_INVALID = 0xff;
 
-  if (receiver != 0) {
+  if (receiver != GPS_RECEIVER_ONCORE) {
     return;
   }
   bool no_status = gps.status_received == 0 || gps.status_monitor_failed != 0;
@@ -244,9 +241,10 @@ void gps_receiver_status_update(char receiver, uint8_t alternate_status) {
   }
 
   gps.reference_valid_override = reference_valid_override_request;
-  if (reference_valid_override_request == FORCE_VALID) {
+  if (reference_valid_override_request == GPS_REFERENCE_OVERRIDE_VALID) {
     valid = true;
-  } else if (reference_valid_override_request == FORCE_INVALID) {
+  } else if (reference_valid_override_request ==
+             GPS_REFERENCE_OVERRIDE_INVALID) {
     valid = false;
   }
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
@@ -280,19 +278,16 @@ void command_monitor_init(void) {
   status_happening(STATUS_GPS_FAILURE_CLEARED);
   gps.command_monitor_enabled = 1;
   gps.command_monitor_error = 0;
-  gps.command_monitor_query = &PTR_DAT_00050e5e;
+  gps.command_monitor_query = command_monitor_queries;
   gps.status_monitor_enabled = 0;
 }
 
 /* The command monitor's step: on a command gone unanswered it fails
  * and, every 20 s while the error stands, posts its next query, moving
- * along the list at 0x50e5e when one is answered, rejected or timed out
+ * along command_monitor_queries when one is answered, rejected or timed out
  * (0x4b4bc to 0x4b5bc). */
 static void gps_receiver_command_monitor(void) {
   static const uint32_t QUERY_INTERVAL = 20; /* s */
-  /* the request the monitor posts, its query as its arguments
-   * (0x4b536) */
-  static const int16_t QUERY_REQUEST = 4;
   int32_t elapsed;
 
   switch (gps.command_monitor_state) {
@@ -319,8 +314,10 @@ static void gps_receiver_command_monitor(void) {
         gps.command_monitor_state = GPS_COMMAND_MONITOR_DISABLED;
       } else if (uptime_elapsed(&gps.command_monitor_time, &elapsed) &&
                  (uint32_t)elapsed > QUERY_INTERVAL) {
-        gps_request_post(GPS_SENDER_COMMAND_MONITOR, QUERY_REQUEST,
-                         gps.command_monitor_query, 0);
+        /* Its query's place in the list, whose long is the step's
+         * address. */
+        gps_request_post(GPS_SENDER_COMMAND_MONITOR, GPS_POST_STEP,
+                         (int32_t*)gps.command_monitor_query, 0);
         gps.command_monitor_state = GPS_COMMAND_MONITOR_QUERY_ACK;
       }
       break;
@@ -335,11 +332,11 @@ static void gps_receiver_command_monitor(void) {
         case GPS_RESULT_SUCCESS:
         case GPS_RESULT_REJECT:
         case GPS_RESULT_TIMEOUT: {
-          uint32_t** query = gps.command_monitor_query;
+          gps_script_step** query = gps.command_monitor_query;
 
           query++;
           if (*query == NULL) {
-            query = &PTR_DAT_00050e5e;
+            query = command_monitor_queries;
           }
           gps.command_monitor_query = query;
           break;

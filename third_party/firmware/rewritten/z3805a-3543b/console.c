@@ -29,10 +29,6 @@ void console_init(void) {
   static const uint32_t BLOCK_A_SIZE = 0x200;
   static const uint32_t BLOCK_B_SIZE = 0x200;
   static const uint32_t STACK_SIZE = 0x180;
-  /* The phrase "0 !iodev" in ROM: the console's port is device 0.  The
-   * string device keeps the address past the call, so it is the image's
-   * (it has no label yet). */
-  static const uint32_t FIRST_PHRASE = 0x18dbc;
 
   pforth_dictionary_init(CONSOLE_DICTIONARY_SIZE);
   console_set_halt_hook(console_halt_hook);
@@ -40,7 +36,9 @@ void console_init(void) {
   pforth_define_word("mem_rep", (uint32_t)mem_rep_word, 0, 0);
   pforth_define_word("s_rep", (uint32_t)s_rep_word, 0, 0);
   diag_words_define();
-  psos_io_control(IO_DEVICE_CONSOLE_STRING, FIRST_PHRASE, 0);
+  /* The string device keeps the phrase's address past the call, so it
+   * is the image's. */
+  psos_io_control(IO_DEVICE_CONSOLE_STRING, (uint32_t)console_first_phrase, 0);
   console_set_device(IO_DEVICE_CONSOLE_STRING);
   task_console = console_task_create(BLOCK_A_SIZE, BLOCK_B_SIZE, STACK_SIZE,
                                      CONSOLE_PRIORITY);

@@ -75,9 +75,7 @@ void format_duration(double time, char* text) {
   uint8_t day = libc_divide(&seconds, SECONDS_PER_DAY) + 1;
   uint8_t hours = libc_divide(&seconds, SECONDS_PER_HOUR);
   uint8_t minutes = libc_divide(&seconds, SECONDS_PER_MINUTE);
-  /* The export types the table's entries as uint32_t pointers; they
-   * are texts. */
-  char* day_name = (char*)(&PTR_DAT_0004cf80)[day];
+  char* day_name = day_names[day];
 
   sprintf(text, "%02d:%02d:%04.1f [%s]", hours, minutes,
           float_to_double(integer_to_float(seconds)), day_name);
@@ -116,12 +114,12 @@ int32_t command_log_add(gps_running_command* command, char* text) {
   entry.argument_text[2] = 0;
   entry.query = command->query;
   if (get_date_time(&entry.date, &entry.time)) {
-    entry.clock_invalid = 0;
+    entry.from_clock = 0;
     entry.date = oncore_date_pack(gps.status.date);
     entry.time = gps.status.time;
     utc_to_local(&entry.date, &entry.time);
   } else {
-    entry.clock_invalid = 1;
+    entry.from_clock = 1;
   }
 
   gps_command_log_entry* next =
@@ -170,7 +168,7 @@ int32_t gps_print_command(gps_command_log* log, char* line) {
           gps_reports_sender_name(entry.sender), (int32_t)entry.code,
           oncore_messages[entry.message].id, entry.argument_text,
           entry.query != GPS_ARGUMENTS_SET ? "q" : "c", date, time,
-          entry.clock_invalid != 0 ? " " : "e");
+          entry.from_clock != 0 ? " " : "e");
   return 1;
 }
 

@@ -483,110 +483,110 @@ void gps_command_send(void) {
   int16_t code;
 
   switch (gps_command.code) {
-    case 1:
+    case GPS_CONSOLE_PRINT_STATUS:
       code = GPS_STEP_PRINT_STATUS;
       break;
-    case 2:
+    case GPS_CONSOLE_STATUS_RATE:
       code = GPS_REQUEST_POSITION_STATUS;
       break;
-    case 3:
+    case GPS_CONSOLE_TIME:
       code = GPS_REQUEST_TIME_OF_DAY;
       break;
-    case 4:
+    case GPS_CONSOLE_DATE:
       code = GPS_REQUEST_DATE;
       break;
-    case 5:
+    case GPS_CONSOLE_HOLD_POSITION:
       code = GPS_REQUEST_POSITION_HOLD_POSITION;
       break;
-    case 6:
+    case GPS_CONSOLE_POSITION_HOLD:
       code = GPS_REQUEST_POSITION_HOLD;
       break;
-    case 7:
+    case GPS_CONSOLE_STATUS_INTERVAL:
       /* Not a request: the status printout's interval. */
       gps_status_print_interval = (uint8_t)gps_command.arguments[0];
-      gps_command.code = 0;
+      gps_command.code = GPS_CONSOLE_NONE;
       return;
-    case 8:
+    case GPS_CONSOLE_MASK_ANGLE:
       code = GPS_REQUEST_MASK_ANGLE;
       break;
-    case 9:
+    case GPS_CONSOLE_MASK_ANGLE_QUERY:
       code = GPS_REQUEST_MASK_ANGLE;
       argument_mode = GPS_ARGUMENTS_QUERY;
       break;
-    case 10:
+    case GPS_CONSOLE_HOLD_POSITION_QUERY:
       code = GPS_REQUEST_POSITION_HOLD_POSITION;
       argument_mode = GPS_ARGUMENTS_QUERY;
       break;
-    case 0x0b:
+    case GPS_CONSOLE_CABLE_DELAY:
       code = GPS_REQUEST_CABLE_DELAY;
       break;
-    case 0x0c:
+    case GPS_CONSOLE_CABLE_DELAY_QUERY:
       code = GPS_REQUEST_CABLE_DELAY;
       argument_mode = GPS_ARGUMENTS_QUERY;
       break;
-    case 0x0d:
+    case GPS_CONSOLE_VISIBILITY_RATE:
       code = GPS_REQUEST_VISIBILITY;
       break;
-    case 0x0e:
+    case GPS_CONSOLE_DOP_RATE:
       code = GPS_REQUEST_DOP_TABLE;
       break;
-    case 0x0f:
+    case GPS_CONSOLE_PRINT_VISIBILITY:
       code = GPS_STEP_PRINT_VISIBILITY;
       break;
-    case 0x10:
+    case GPS_CONSOLE_PRINT_BEST_COMBINATIONS:
       code = GPS_STEP_PRINT_BEST_COMBINATIONS;
       break;
-    case 0x11:
+    case GPS_CONSOLE_EXTENSION_RATE:
       code = GPS_REQUEST_POSITION_EXTENSION;
       break;
-    case 0x12:
+    case GPS_CONSOLE_PRINT_EXTENSION:
       code = GPS_STEP_PRINT_EXTENSION;
       break;
-    case 0x13:
+    case GPS_CONSOLE_PRINT_ID:
       code = GPS_STEP_PRINT_ID;
       break;
-    case 0x14:
+    case GPS_CONSOLE_PRINT_PPS:
       code = GPS_STEP_PRINT_PPS;
       break;
-    case 0x15:
+    case GPS_CONSOLE_PRINT_TIME_RAIM:
       code = GPS_STEP_PRINT_TIME_RAIM;
       break;
-    case 0x16:
-      code = 0x3c; /* a gps_request_code step smartclock.h does not name */
+    case GPS_CONSOLE_AVERAGE:
+      code = GPS_STEP_AVERAGE;
       break;
-    case 0x17:
+    case GPS_CONSOLE_CLEAR_AVERAGE:
       code = GPS_STEP_AVERAGE_RESET;
       break;
-    case 0x18:
+    case GPS_CONSOLE_INIT:
       code = GPS_SCRIPT_INIT;
       break;
-    case 0x19:
+    case GPS_CONSOLE_MASTER_RESET:
       code = GPS_SCRIPT_INIT_DEFAULTS;
       break;
-    case 0x1a:
+    case GPS_CONSOLE_SELFTEST:
       code = GPS_SCRIPT_ENGINE_SELFTEST;
       break;
-    case 0x1b:
+    case GPS_CONSOLE_QUERY_ALL:
       code = GPS_SCRIPT_QUERY_SETTINGS;
       break;
-    case 0x1c:
+    case GPS_CONSOLE_QUIET_STATUS:
       code = GPS_SCRIPT_OUTPUTS_OFF;
       break;
-    case 0x1d:
+    case GPS_CONSOLE_PRINT_AVERAGE:
       code = GPS_STEP_PRINT_AVERAGE;
       break;
-    case 0x1e:
+    case GPS_CONSOLE_PRINT_INSTRUMENT_STATE:
       code = GPS_STEP_PRINT_INSTRUMENT_STATE;
       break;
-    case 0x1f:
+    case GPS_CONSOLE_CHANGE:
       code = (int16_t)gps_command.request;
       break;
-    case 0x20:
+    case GPS_CONSOLE_QUERY:
       code = (int16_t)gps_command.request;
       argument_mode = GPS_ARGUMENTS_QUERY;
       break;
     default:
-      gps_command.code = 0;
+      gps_command.code = GPS_CONSOLE_NONE;
       return;
   }
   gpsx_send(code, argument_mode, gps_command.arguments, GPS_ACK_COMMAND);

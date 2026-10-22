@@ -181,6 +181,7 @@
 0x1213a	crc16_with_sum	platform/arithmetic
 0x12af2	random_dither	platform/arithmetic	rand shaped by dither_table; efc_write_dithered
 0x410fa	int64_add	platform/arithmetic
+0x41086	int64_compare	platform/arithmetic
 0x4111e	int64_negate	platform/arithmetic
 0x41132	int64_add_long	platform/arithmetic
 0x4115c	int64_divide	platform/arithmetic
@@ -195,11 +196,17 @@
 0x129d0	power_of_ten_float	platform/arithmetic
 0x1258a	double_decimal_exponent	platform/arithmetic
 0x122f6	double_decimal_exponent_rounded	platform/arithmetic
+0x12534	double_decimal_exponent_floor	platform/arithmetic
+0x127fc	float_decimal_exponent_rounded	platform/arithmetic
+0x1293a	float_decimal_exponent_floor	platform/arithmetic
 0x3202a	float_table_index	platform/arithmetic	called by nothing
 0x1ecae	duart_early_init	devices/duart
 0x1d572	gp_port_select	devices/duart
 0x1ebbc	duart_stop	devices/duart
 0x1dfe6	duart_op0_set	devices/duart
+0x1e072	duart_input_0_debounced	devices/duart
+0x1e0ae	duart_input_1_debounced	devices/duart
+0x1e0ea	duart_input_2_debounced	devices/duart
 0x1e02c	duart_op1_set	devices/duart
 0x1e126	duart_output_bits	devices/duart
 0x1e650	duart_test	devices/duart
@@ -243,6 +250,7 @@
 0x2021a	sci_port_write	devices/sci
 0x1f71a	sci_putc_polled	devices/sci
 0x202c0	sci_puts_polled	devices/sci
+0x2031c	sci_transmit_allowed	devices/sci
 0x1f7d0	sci_getc	devices/sci
 0x1f868	sci_gets	devices/sci
 0x20190	sci_read	devices/sci
@@ -256,6 +264,11 @@
 0x20972	qspi_isr	devices/qspi
 0x2050c	qspi_release	devices/qspi
 0x20acc	qspi_write	devices/qspi
+0x1f278	qspi_unused_36_bit_write	devices/qspi
+0x1f664	qspi_fpga_block_write	devices/qspi
+0x1f680	qspi_fpga_tail_write	devices/qspi
+0x1f698	qspi_fpga_word_write	devices/qspi
+0x1f6b0	qspi_fpga_byte_write	devices/qspi
 0x20aec	qspi_read	devices/qspi
 0x1f2c0	adc_read	devices/adc
 0x1f308	read_adc_temp	devices/adc

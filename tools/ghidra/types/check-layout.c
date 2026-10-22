@@ -775,3 +775,18 @@ CHECK_FIELD(psos_kernel, region_waiting, 0x64);
 CHECK_SIZE(status_register_layout, 22);
 CHECK_SIZE(satellite_cell, 4);
 CHECK_SIZE(satellite_list_entry, 8);
+
+/* The ROM's packed script steps, each to the next (0x50a46 to 0x50cc2). */
+CHECK_SIZE(gps_script_query_step, 0x50b36 - 0x50b32);
+CHECK_SIZE(gps_script_step_1_argument, 0x50a4e - 0x50a46);
+CHECK_SIZE(gps_script_step_2_arguments, 0x50a62 - 0x50a56);
+CHECK_SIZE(gps_script_step_3_arguments, 0x50a8e - 0x50a7e);
+CHECK_SIZE(gps_script_step, 0x50a76 - 0x50a62);
+CHECK_SIZE(io_device_stubs, 0x517ce - 0x517aa);
+CHECK_SIZE(io_device_stubs, sizeof(io_device_jumps));
+CHECK_SIZE(pforth_word_header, 0x1ad1a - 0x1ad0e);
+CHECK_FIELD(pforth_word_header, flags, 0x1ad18 - 0x1ad0e);
+CHECK_SIZE(diag_word_entry, 0x1c8d2 - 0x1c8ac);
+CHECK_SIZE(diag_word_entry[86], 0x1d570 - 0x1c8ac);
+CHECK_FIELD(diag_word_entry, argument_count, 0x1e);
+CHECK_FIELD(diag_word_entry, result_count, 0x22);

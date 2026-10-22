@@ -1517,7 +1517,16 @@ table writes are the size of its record above:
 
 `oncore_messages` (`0x4fece`, `oncore_message_entry`, 56 bytes):
 `gps_response_lookup` (`0x4b7ac`) searches entries 0 to `0x30`, and
-the ID strings start at `0x50986`, 49 entries on.  The layout is
+the ID strings start at `0x50986`, 49 entries on.  They are a pool,
+`0x50986` to `0x50a46`, that only the table's pointers reach: each
+entry's two-letter ID with its NUL (`oncore_id_Aa` on, `char[3]`; the
+seven empty slots have none, and `gps_response_lookup` compares their
+null `id`'s bytes, the reset vector's at 0), and between them the query
+forms `+0x16` points at (`oncore_query_Aa` on), which
+`gps_request_build` copies to their NUL, `0xee` standing for a zero
+byte: 42 IDs and eleven forms for 30 messages, `@@Ag`'s single `0xff`
+eleven others' too, the table's 72 pointers.  `0x50a45`, one more
+`0xff` form, no entry points at.  The layout is
 `oncore/README.md`'s; `gps_response_timed_out` (`0x4b9a6`) compares
 the uptime elapsed with the byte at `+0x1a`, `gps_response_lookup`
 returns the word at `+0x1c`, `gps_response_match` (`0x4fb86`)
@@ -1599,6 +1608,16 @@ call by offset: `+0` `scpi_session_init`, `+4` `scpi_session_close`
 | `month_names` (`0x4cfce`) | `char *[13]` | `format_date`'s for months 1 to 12, 0 `"---"` |
 | `gps_script_47` to `gps_script_59`, `gps_script_none` (`0x50cca` to `0x50fce`) | `gps_script_step *[N]` | `gps_script_lookup`'s scripts, each to its NULL (`oncore/z3805a-3543b.txt`); `command_monitor_queries` (`0x50e5e`) the command monitor's, `@@Bj`'s query alone |
 | `psos_config_defaults` (`0x5122a`), `io_table_defaults` (`0x5171a`) | the RAM tables' types | `psos_config_init`'s copies, `0x62` and `0x90` bytes |
+| `io_device_unused_stubs` (`0x517aa`) | `io_device_stubs` | a fifth device's six slots, `rts; nop; nop` each, after the `0x90` bytes copied; `last_device` is 3 |
+| `scpi_parameter_lists` (`0x517ce`) | `scpi_parameter[485]` | every node's parameter list, to `scpi_common_list` (`0x526f6`); referred to only by the nodes' handlers |
+| `oncore_id_Aa` to `oncore_query_unused` (`0x50986` to `0x50a46`) | `char[N]` | the IDs and query forms `oncore_messages` points at, each to its NUL |
+| `gps_step_Ad_set` to `gps_step_status_monitor` (`0x50a46` to `0x50cc2`) | `gps_script_query_step`, `gps_script_step_1_argument` to `_3_arguments`, `gps_script_step` | the scripts' steps, packed end to end, each to the next |
+| `powers_of_ten_times_five_float` (`0x12846`) | `float[61]` | 5e-30 to 5e30; `float_decimal_exponent_rounded`'s bound `0xf4`, code at `0x1293a` |
+| `bcd_to_binary` (`0x25b7e`), `binary_to_bcd` (`0x25c1e`) | `uint8_t[160]`, `uint8_t[100]` | a BCD byte's value, by `scpi_bcd_to_double` unchecked, 0 for a nibble over 9; 0 to 99 as BCD, which nothing reads; `decimal_digit_pairs` follows |
+| `diag_words` (`0x1c8ac`) | `diag_word_entry[86]` | `diag_words_define`'s, to the entry of zeros at `0x1d54a`; code at `0x1d570` |
+| `forth_user_header` (`0x1ad0e`) | `pforth_word_header` | the kernel's latest word; "The console's dictionary" below |
+| `fpga_bitstream` (`0x20f18`), `fpga_readback_mask_header` (`0x21e36`) | `uint8_t[3860]`, `uint8_t[5]` | `outputs.md`, "The FPGA bitstreams" |
+| `rom_lane_sums_low`, `_high` (`0x3fffc`, `0x7fffc`) | `uint8_t[4]` | the boot check's (`restart.md`); `0x36be8` to `0x3fffb` is erased |
 | `scpi_main_tree` (`0x53034`) | `scpi_root_children` | the main tree's root list, 49 nodes; `0x5d014` points at it |
 | `pow_two_powers`, `pow_two_power_tails` (`0x6184c`, `0x618d4`) | `double[17]`, `double[9]` | 2 to -k/16, k 0 to 16, and the even entries' low parts; code at `0x6191c` |
 
@@ -1740,6 +1759,20 @@ the task `console_exception_hook` (`0x18e62`) through
 `0x1037d4` is set, and only `0x118b6`, which nothing refers to, sets
 it.  `0x118d8`, which sets the global hook, and `0x118f4`, which
 clears the task's, are not referred to either.
+
+A word's header (`pforth_word_header`, 12 bytes and the name) is a
+link to the word before, its code, a word `forth_interpret` reads as
+the bytes to copy for an inline word, a word of flags
+(`pforth_word_flag`: compile only, hidden, immediate, inline), and the
+name with its NUL, padded to even with `0xff`.  The kernel's 154 are
+in ROM, one run from `0x1a296` to `0x1ad20`, between the kernel's code
+and `forth_user` (`0x1ad20`), which pushes the latest,
+`forth_user_header` (`0x1ad0e`); the run's first, `0x1a296`, has a
+null link.  The diagnostic words are a table instead, `diag_words`
+(`0x1c8ac`, `diag_word_entry`, `0x26` bytes): the code, a 26-byte
+name and the argument and result counts that `diag_words_define`
+(`0x1c18e`) passes `pforth_define_word`, which builds each a header in
+RAM.
 
 ## The GPS task's link
 

@@ -2227,3 +2227,172 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x33382	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE	context	SERial1's parity setting, which :PARity:TYPE's setter requests	scpi_setting_param
 0x33ade	label	scpi_param_SYSTem_COMMunicate_SER2_RECeive_PARity_TYPE	context	SERial2's, the SCI's	scpi_setting_param
 0x1b1d0	function	diag_pr_hold_cause	context	the console's pr_hold_cause: prints why the loop went to holdover; the word table at 0x1c8ac gives it no results	void diag_pr_hold_cause(void)
+#
+# The ROM tables and routines the untyped-range survey found (2026-10-22)
+0x517aa	label	io_device_unused_stubs	structures.md	a fifth device's I/O slot after io_table_defaults, each function rts; nop; nop: psos_config_init copies only the four before it, 0x90 bytes, and psos_config.last_device is 3, so nothing reaches it	io_device_stubs
+0x12534	function	double_decimal_exponent_floor	context	floor(log10) of a double's magnitude, -30 to 30, by bisection over powers_of_ten_double (0x12614): the largest entry its bits are not below, or entry 0; called by nothing	int16_t double_decimal_exponent_floor(double value)
+0x127fc	function	float_decimal_exponent_rounded	context	the decimal exponent of a float's magnitude rounded, -29 to 31, by bisection over powers_of_ten_times_five_float (0x12846): the largest entry its bits are not below, or entry 0, less 29; called by nothing	int16_t float_decimal_exponent_rounded(float value)
+0x12846	label	powers_of_ten_times_five_float	structures.md	5e-30 to 5e30; float_decimal_exponent_rounded bisects 61 entries, its bound 0xf4; code at 0x1293a	float[61]
+0x1293a	function	float_decimal_exponent_floor	context	floor(log10) of a float's magnitude, -30 to 30, by bisection over powers_of_ten_float (0x129fc): the largest entry its bits are not below, or entry 0; called by nothing	int16_t float_decimal_exponent_floor(float value)
+0x1f278	function	qspi_unused_36_bit_write	context	a long as three 12-bit words to QSPI device 0, qspi_queue_setup's case 0: (value >> 16) | 0x800, (value >> 4) & 0xfff and (value << 8) & 0xc00, through qspi_write; called by nothing here or in the Z3801A, 58503A 3633 and Z3816A, which carry it	void qspi_unused_36_bit_write(uint32_t value)
+0x1f664	function	qspi_fpga_block_write	context	a count of words to QSPI_FPGA_BLOCK through qspi_write; called by nothing	void qspi_fpga_block_write(uint16_t *words, uint16_t count)
+0x1f680	function	qspi_fpga_tail_write	context	two words to QSPI_FPGA_TAIL through qspi_write, its own argument's slot as the buffer; called by nothing	void qspi_fpga_tail_write(uint32_t words)
+0x1f698	function	qspi_fpga_word_write	context	one word to QSPI_FPGA_WORD through qspi_write, its own argument's slot as the buffer; called by nothing	void qspi_fpga_word_write(uint16_t word)
+0x1f6b0	function	qspi_fpga_byte_write	context	one transfer to QSPI_FPGA_BYTE through qspi_write, its own argument's slot as the buffer; called by nothing	void qspi_fpga_byte_write(uint16_t value)
+0x20f18	label	fpga_bitstream	outputs.md	the FPGA's configuration, an XC3000-family bitstream, ff 20 07 86 on; fpga_configurations' one entry, to 0x21e2c	uint8_t[3860]
+0x21e36	label	fpga_readback_mask_header	outputs.md	the second 3860-byte block's 40-bit header, ff 20 07 86 ef; fpga_verify_chip reads the block from fpga_readback_mask, 5 bytes on	uint8_t[5]
+0x1ad0e	label	forth_user_header	structures.md	the header of the kernel's latest word, user, which links the other 153 down to 0x1a296; pforth_dictionary_init stores it in pforth_latest_word and user pushes it	pforth_word_header
+0x1ad1a	label	forth_user_name	structures.md	"user", the name after forth_user_header, padded with 0xff	char[6]
+0x1c8ac	label	diag_words	structures.md	the diagnostic words diag_words_define defines, 85 and an entry of zeros, its NULL code ending them	diag_word_entry[86]
+0x195f6	label	forth_until_tag	console.md	"\"until\"\r\n": until pushes it for forth_check_pairs (0x19600)	char[10]
+0x11b59	label	exception_newline	read	"\r\n", which print_exception prints first (0x119b0)	char[3]
+0x14ace	label	psos_name	psos.md	"..PSOS-6803", the kernel's name before its banner	char[12]
+0x14ada	label	psos_banner	psos.md	" V4.1 COPYRIGHT 1983, 1984, 1985, 1986 SOFTWARE COMPONENTS GROUP, INC. A", without a NUL: kernel_service_0 returns its last letter, the A at 0x14b21	char[72]
+0x25b7e	label	bcd_to_binary	read	a BCD byte's value, 0x00 to 0x99, 0 for a nibble over 9; scpi_bcd_to_double indexes it by each byte of its digits (0x2508a)	uint8_t[160]
+0x25c1e	label	binary_to_bcd	read	0 to 99 as BCD bytes; nothing refers to it	uint8_t[100]
+0x3fffc	label	rom_lane_sums_low	restart.md	the boot check's sums of the low bank's byte lanes, which the reset code at 0x550 compares	uint8_t[4]
+0x7fffc	label	rom_lane_sums_high	restart.md	the same for the high bank	uint8_t[4]
+0x1e072	function	duart_input_0_debounced	context	the DUART's input port bit 0 as 0 or 1, read until ten reads in a row after the first agree; called by nothing (the Z3815A 4010's copy, 0x2e798, is polled)	uint8_t duart_input_0_debounced(void)
+0x1e0ae	function	duart_input_1_debounced	context	the same for input port bit 1; called by nothing	uint8_t duart_input_1_debounced(void)
+0x1e0ea	function	duart_input_2_debounced	context	the same for input port bit 2; called by nothing	uint8_t duart_input_2_debounced(void)
+0x2031c	function	sci_transmit_allowed	context	1 unless an XOFF received holds the SCI's transmission, sci.flow bit 7, else 0; called by nothing	int32_t sci_transmit_allowed(void)
+0x41086	function	int64_compare	context	0 if two 64-bit numbers are equal, else 1 if b - a, int64_add(int64_negate(a), b), is not negative and -1 if it is: 1 for a below b, the reverse of a C comparator, the difference wrapping; called by nothing	int32_t int64_compare(int64_t a, int64_t b)
+0x50986	label	oncore_id_Aa	structures.md	oncore_messages[0x00].id	char[3]
+0x5098d	label	oncore_id_Ab	structures.md	oncore_messages[0x01].id	char[3]
+0x50990	label	oncore_id_Ac	structures.md	oncore_messages[0x02].id	char[3]
+0x50998	label	oncore_id_Ad	structures.md	oncore_messages[0x03].id	char[3]
+0x509a0	label	oncore_id_Ae	structures.md	oncore_messages[0x04].id	char[3]
+0x509a3	label	oncore_id_Af	structures.md	oncore_messages[0x05].id	char[3]
+0x509ac	label	oncore_id_Ag	structures.md	oncore_messages[0x06].id	char[3]
+0x509b1	label	oncore_id_Ah	structures.md	oncore_messages[0x07].id	char[3]
+0x509b4	label	oncore_id_Ai	structures.md	oncore_messages[0x08].id	char[3]
+0x509b7	label	oncore_id_Aj	structures.md	oncore_messages[0x09].id	char[3]
+0x509ba	label	oncore_id_Ak	structures.md	oncore_messages[0x0a].id	char[3]
+0x509c0	label	oncore_id_Al	structures.md	oncore_messages[0x0b].id	char[3]
+0x509c3	label	oncore_id_Am	structures.md	oncore_messages[0x0c].id	char[3]
+0x509cc	label	oncore_id_An	structures.md	oncore_messages[0x0d].id	char[3]
+0x509cf	label	oncore_id_Ao	structures.md	oncore_messages[0x0e].id	char[3]
+0x509d2	label	oncore_id_Ap	structures.md	oncore_messages[0x0f].id	char[3]
+0x509d5	label	oncore_id_Aq	structures.md	oncore_messages[0x10].id	char[3]
+0x509d8	label	oncore_id_Ar	structures.md	oncore_messages[0x11].id	char[3]
+0x509db	label	oncore_id_As	structures.md	oncore_messages[0x12].id	char[3]
+0x509ec	label	oncore_id_At	structures.md	oncore_messages[0x13].id	char[3]
+0x509ef	label	oncore_id_Av	structures.md	oncore_messages[0x15].id	char[3]
+0x509f2	label	oncore_id_Aw	structures.md	oncore_messages[0x16].id	char[3]
+0x509f5	label	oncore_id_Ax	structures.md	oncore_messages[0x17].id	char[3]
+0x509f8	label	oncore_id_Ay	structures.md	oncore_messages[0x18].id	char[3]
+0x509fb	label	oncore_id_Az	structures.md	oncore_messages[0x19].id	char[3]
+0x509fe	label	oncore_id_AB	structures.md	oncore_messages[0x1b].id	char[3]
+0x50a01	label	oncore_id_AC	structures.md	oncore_messages[0x1c].id	char[3]
+0x50a04	label	oncore_id_AD	structures.md	oncore_messages[0x1d].id	char[3]
+0x50a07	label	oncore_id_Ba	structures.md	oncore_messages[0x1e].id	char[3]
+0x50a0a	label	oncore_id_Bb	structures.md	oncore_messages[0x1f].id	char[3]
+0x50a0d	label	oncore_id_Bc	structures.md	oncore_messages[0x20].id	char[3]
+0x50a10	label	oncore_id_Bd	structures.md	oncore_messages[0x21].id	char[3]
+0x50a13	label	oncore_id_Bh	structures.md	oncore_messages[0x24].id	char[3]
+0x50a16	label	oncore_id_Bj	structures.md	oncore_messages[0x26].id	char[3]
+0x50a1b	label	oncore_id_Bk	structures.md	oncore_messages[0x27].id	char[3]
+0x50a1e	label	oncore_id_Bn	structures.md	oncore_messages[0x28].id	char[3]
+0x50a31	label	oncore_id_Ca	structures.md	oncore_messages[0x29].id	char[3]
+0x50a34	label	oncore_id_Ce	structures.md	oncore_messages[0x2c].id	char[3]
+0x50a37	label	oncore_id_Cf	structures.md	oncore_messages[0x2d].id	char[3]
+0x50a3a	label	oncore_id_Cg	structures.md	oncore_messages[0x2e].id	char[3]
+0x50a3f	label	oncore_id_Ci	structures.md	oncore_messages[0x2f].id	char[3]
+0x50a42	label	oncore_id_Cj	structures.md	oncore_messages[0x30].id	char[3]
+0x50989	label	oncore_query_Aa	structures.md	the query form of @@Aa, @@Ab: ff ff ff, 0xee a zero byte	char[4]
+0x50993	label	oncore_query_Ac	structures.md	the query form of @@Ac, @@Ay, @@Az: ff ff ff ff, 0xee a zero byte	char[5]
+0x5099b	label	oncore_query_Ad	structures.md	the query form of @@Ad, @@Ae: 99 99 99 99, 0xee a zero byte	char[5]
+0x509a6	label	oncore_query_Af	structures.md	the query form of @@Af: 99 99 99 99 99, 0xee a zero byte	char[6]
+0x509af	label	oncore_query_Ag	structures.md	the query form of @@Ag, @@Ah, @@Ai, @@Aj, @@An, @@Ao, @@Aq, @@Ar, @@At, @@Av, @@Aw, @@AB: ff, 0xee a zero byte	char[2]
+0x509bd	label	oncore_query_Ak	structures.md	the query form of @@Ak, @@Al, @@Ax, @@AC, @@AD: ff ff, 0xee a zero byte	char[3]
+0x509c6	label	oncore_query_Am	structures.md	the query form of @@Am: ff ee ee ee ee, 0xee a zero byte	char[6]
+0x509de	label	oncore_query_As	structures.md	the query form of @@As: 7f ff ff ff 7f ff ff ff 7f ff ff ff ff, 0xee a zero byte	char[14]
+0x50a19	label	oncore_query_Bj	structures.md	the query form of @@Bj: ee, 0xee a zero byte	char[2]
+0x50a21	label	oncore_query_Bn	structures.md	the query form of @@Bn: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff, 0xee a zero byte	char[16]
+0x50a3d	label	oncore_query_Cg	structures.md	the query form of @@Cg: 02, 0xee a zero byte	char[2]
+0x50a45	label	oncore_query_unused	structures.md	a query form, 0xff, that no oncore_messages entry points at	char[2]
+0x50a46	label	gps_step_Ad_set	structures.md	a script step: @@Ad set, arguments 0x8025b04	gps_script_step_1_argument
+0x50a4e	label	gps_step_Ae_set	structures.md	a script step: @@Ae set, arguments 0xe5d27578	gps_script_step_1_argument
+0x50a56	label	gps_step_Af_set	structures.md	a script step: @@Af set, arguments 0x157c, 0x1	gps_script_step_2_arguments
+0x50a62	label	gps_step_As_set	structures.md	a script step: @@As set, arguments 0x8025b04, 0xe5d27578, 0x157c, 0x1	gps_script_step
+0x50a76	label	gps_step_Cf_set	structures.md	a script step: @@Cf set, arguments 0x0	gps_script_step_1_argument
+0x50a7e	label	gps_step_Ab_set	structures.md	a script step: @@Ab set, arguments 0x0, 0x0, 0x0	gps_script_step_3_arguments
+0x50a8e	label	gps_step_Ah_set_2	structures.md	a script step: @@Ah set, arguments 0x2	gps_script_step_1_argument
+0x50a96	label	gps_step_Aj_set	structures.md	a script step: @@Aj set, arguments 0x0	gps_script_step_1_argument
+0x50a9e	label	gps_step_Ak_set	structures.md	a script step: @@Ak set, arguments 0xa	gps_script_step_1_argument
+0x50aa6	label	gps_step_Al_set	structures.md	a script step: @@Al set, arguments 0x3c	gps_script_step_1_argument
+0x50aae	label	gps_step_An_set	structures.md	a script step: @@An set, arguments 0x1	gps_script_step_1_argument
+0x50ab6	label	gps_step_Ao_set	structures.md	a script step: @@Ao set, arguments 0x31	gps_script_step_1_argument
+0x50abe	label	gps_step_Aq_set	structures.md	a script step: @@Aq set, arguments 0x1	gps_script_step_1_argument
+0x50ac6	label	gps_step_Ar_set	structures.md	a script step: @@Ar set, arguments 0x1	gps_script_step_1_argument
+0x50ace	label	gps_step_Av_set	structures.md	a script step: @@Av set, arguments 0x0	gps_script_step_1_argument
+0x50ad6	label	gps_step_Aw_set	structures.md	a script step: @@Aw set, arguments 0x0	gps_script_step_1_argument
+0x50ade	label	gps_step_Ax_set	structures.md	a script step: @@Ax set, arguments 0x0	gps_script_step_1_argument
+0x50ae6	label	gps_step_Ay_set	structures.md	a script step: @@Ay set, arguments 0x0	gps_script_step_1_argument
+0x50aee	label	gps_step_AB_set	structures.md	a script step: @@AB set, arguments 0x4	gps_script_step_1_argument
+0x50af6	label	gps_step_AC_set	structures.md	a script step: @@AC set, arguments 0x78	gps_script_step_1_argument
+0x50afe	label	gps_step_AD_set	structures.md	a script step: @@AD set, arguments 0x0, 0x20	gps_script_step_2_arguments
+0x50b0a	label	gps_step_Ba_set_1	structures.md	a script step: @@Ba set, arguments 0x1	gps_script_step_1_argument
+0x50b12	label	gps_step_Bb_set_1	structures.md	a script step: @@Bb set, arguments 0x1	gps_script_step_1_argument
+0x50b1a	label	gps_step_Bc_set_0	structures.md	a script step: @@Bc set, arguments 0x0	gps_script_step_1_argument
+0x50b22	label	gps_step_Bk_set_0	structures.md	a script step: @@Bk set, arguments 0x0	gps_script_step_1_argument
+0x50b2a	label	gps_step_Ci_set	structures.md	a script step: @@Ci set, arguments 0x0	gps_script_step_1_argument
+0x50b32	label	gps_step_Aa_query	structures.md	a script step: @@Aa query	gps_script_query_step
+0x50b36	label	gps_step_Ab_query	structures.md	a script step: @@Ab query	gps_script_query_step
+0x50b3a	label	gps_step_Ac_query	structures.md	a script step: @@Ac query	gps_script_query_step
+0x50b3e	label	gps_step_Ad_query	structures.md	a script step: @@Ad query	gps_script_query_step
+0x50b42	label	gps_step_Ae_query	structures.md	a script step: @@Ae query	gps_script_query_step
+0x50b46	label	gps_step_Af_query	structures.md	a script step: @@Af query	gps_script_query_step
+0x50b4a	label	gps_step_Ag_query	structures.md	a script step: @@Ag query	gps_script_query_step
+0x50b4e	label	gps_step_Ah_query	structures.md	a script step: @@Ah query	gps_script_query_step
+0x50b52	label	gps_step_Aj_query	structures.md	a script step: @@Aj query	gps_script_query_step
+0x50b56	label	gps_step_Ak_query	structures.md	a script step: @@Ak query	gps_script_query_step
+0x50b5a	label	gps_step_Al_query	structures.md	a script step: @@Al query	gps_script_query_step
+0x50b5e	label	gps_step_Am_query	structures.md	a script step: @@Am query	gps_script_query_step
+0x50b62	label	gps_step_Ao_query	structures.md	a script step: @@Ao query	gps_script_query_step
+0x50b66	label	gps_step_Aq_query	structures.md	a script step: @@Aq query	gps_script_query_step
+0x50b6a	label	gps_step_Ar_query	structures.md	a script step: @@Ar query	gps_script_query_step
+0x50b6e	label	gps_step_As_query	structures.md	a script step: @@As query	gps_script_query_step
+0x50b72	label	gps_step_At_query	structures.md	a script step: @@At query	gps_script_query_step
+0x50b76	label	gps_step_Aw_query	structures.md	a script step: @@Aw query	gps_script_query_step
+0x50b7a	label	gps_step_Ay_query	structures.md	a script step: @@Ay query	gps_script_query_step
+0x50b7e	label	gps_step_Az_query	structures.md	a script step: @@Az query	gps_script_query_step
+0x50b82	label	gps_step_AB_query	structures.md	a script step: @@AB query	gps_script_query_step
+0x50b86	label	gps_step_AD_query	structures.md	a script step: @@AD query	gps_script_query_step
+0x50b8a	label	gps_step_Bj_query	structures.md	a script step: @@Bj query	gps_script_query_step
+0x50b8e	label	gps_step_Cg_query	structures.md	a script step: @@Cg query	gps_script_query_step
+0x50b92	label	gps_step_Cj_set	structures.md	a script step: @@Cj set, arguments 0x0	gps_script_step_1_argument
+0x50b9a	label	gps_step_Aw_requested	structures.md	a script step: @@Aw requested, its arguments from gps_request_step.arguments[0]	gps_script_step_1_argument
+0x50ba2	label	gps_step_As_requested	structures.md	a script step: @@As requested, its arguments from gps_request_step.arguments[0]	gps_script_step_1_argument
+0x50baa	label	gps_step_At_requested	structures.md	a script step: @@At requested, its arguments from gps_request_step.arguments[0]	gps_script_step_1_argument
+0x50bb2	label	gps_step_Ad_requested	structures.md	a script step: @@Ad requested, its arguments from gps_request_step.arguments[0]	gps_script_step_1_argument
+0x50bba	label	gps_step_Ae_requested	structures.md	a script step: @@Ae requested, its arguments from gps_request_step.arguments[1]	gps_script_step_1_argument
+0x50bc2	label	gps_step_Af_requested	structures.md	a script step: @@Af requested, its arguments from gps_request_step.arguments[2]	gps_script_step_1_argument
+0x50bca	label	gps_step_At_set_0	structures.md	a script step: @@At set, arguments 0x0	gps_script_step_1_argument
+0x50bd2	label	gps_step_At_set_1	structures.md	a script step: @@At set, arguments 0x1	gps_script_step_1_argument
+0x50bda	label	gps_step_Aa_requested	structures.md	a script step: @@Aa requested, its arguments from gps_request_step.arguments[0]	gps_script_step_1_argument
+0x50be2	label	gps_step_Ac_requested	structures.md	a script step: @@Ac requested, its arguments from gps_request_step.arguments[0]	gps_script_step_1_argument
+0x50bea	label	gps_step_Bn_requested	structures.md	a script step: @@Bn requested, its arguments from gps_request_step.arguments[0]	gps_script_step_1_argument
+0x50bf2	label	gps_step_Ah_set_1	structures.md	a script step: @@Ah set, arguments 0x1	gps_script_step_1_argument
+0x50bfa	label	gps_step_Ai_set_1_0	structures.md	a script step: @@Ai set, arguments 0x1, 0x0	gps_script_step_2_arguments
+0x50c06	label	gps_step_Ai_set_2_0	structures.md	a script step: @@Ai set, arguments 0x2, 0x0	gps_script_step_2_arguments
+0x50c12	label	gps_step_Ai_set_3_0	structures.md	a script step: @@Ai set, arguments 0x3, 0x0	gps_script_step_2_arguments
+0x50c1e	label	gps_step_Ai_set_4_0	structures.md	a script step: @@Ai set, arguments 0x4, 0x0	gps_script_step_2_arguments
+0x50c2a	label	gps_step_Ai_set_5_0	structures.md	a script step: @@Ai set, arguments 0x5, 0x0	gps_script_step_2_arguments
+0x50c36	label	gps_step_Ai_set_6_0	structures.md	a script step: @@Ai set, arguments 0x6, 0x0	gps_script_step_2_arguments
+0x50c42	label	gps_step_Ai_requested	structures.md	a script step: @@Ai requested, its arguments from gps_request_step.arguments[0]	gps_script_step_1_argument
+0x50c4a	label	gps_step_Cg_set_0	structures.md	a script step: @@Cg set, arguments 0x0	gps_script_step_1_argument
+0x50c52	label	gps_step_Cg_set_1	structures.md	a script step: @@Cg set, arguments 0x1	gps_script_step_1_argument
+0x50c5a	label	gps_step_Ba_set_0	structures.md	a script step: @@Ba set, arguments 0x0	gps_script_step_1_argument
+0x50c62	label	gps_step_Bb_set_0	structures.md	a script step: @@Bb set, arguments 0x0	gps_script_step_1_argument
+0x50c6a	label	gps_step_Bc_set_0_second	structures.md	a script step: @@Bc set, arguments 0x0, the same bytes as gps_step_Bc_set_0	gps_script_step_1_argument
+0x50c72	label	gps_step_Bk_set_0_second	structures.md	a script step: @@Bk set, arguments 0x0, the same bytes as gps_step_Bk_set_0	gps_script_step_1_argument
+0x50c7a	label	gps_step_Ca_set	structures.md	a script step: @@Ca set, arguments 0x0	gps_script_step_1_argument
+0x50c82	label	gps_step_average_reset	structures.md	a script step: GPS_STEP_AVERAGE_RESET, arguments 0x0	gps_script_step_1_argument
+0x50c8a	label	gps_step_survey_start	structures.md	a script step: GPS_STEP_SURVEY_START, arguments 0x0	gps_script_step_1_argument
+0x50c92	label	gps_step_survey_stop	structures.md	a script step: GPS_STEP_SURVEY_STOP, arguments 0x0	gps_script_step_1_argument
+0x50c9a	label	gps_step_pps_check_1	structures.md	a script step: GPS_STEP_PPS_CHECK, arguments 0x1	gps_script_step_1_argument
+0x50ca2	label	gps_step_pps_check_0	structures.md	a script step: GPS_STEP_PPS_CHECK, arguments 0x0	gps_script_step_1_argument
+0x50caa	label	gps_step_raim_arguments	structures.md	a script step: GPS_STEP_RAIM_ARGUMENTS, arguments 0x0	gps_script_step_1_argument
+0x50cb2	label	gps_step_parse_options	structures.md	a script step: GPS_STEP_PARSE_OPTIONS, arguments 0x0	gps_script_step_1_argument
+0x50cba	label	gps_step_status_monitor	structures.md	a script step: GPS_STEP_STATUS_MONITOR, arguments 0x1	gps_script_step_1_argument

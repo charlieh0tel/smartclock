@@ -511,6 +511,64 @@ int16_t double_decimal_exponent_rounded(double value) {
          (ARITHMETIC_POWER_OF_TEN_LIMIT - 1);
 }
 
+/* The index of the entry a float's magnitude equals, else of the last
+ * entry below it, by bisection; past either end, the end's neighbor.
+ * The magnitude's bits compare as a signed long, which orders positive
+ * floats by value (0x127fc, 0x1293a). */
+static int16_t arithmetic_float_power_bisect(const float* table, float value) {
+  uint32_t bits;
+  int16_t low = 0;
+  int16_t high = ARITHMETIC_POWER_ENTRIES;
+
+  memcpy(&bits, &value, sizeof bits);
+  const int32_t magnitude = bits & ~LIBC_SIGN;
+  for (;;) {
+    int16_t middle = (low + high) / 2;
+    int32_t entry;
+
+    if (middle == low) {
+      return middle;
+    }
+    memcpy(&entry, &table[middle], sizeof entry);
+    if (magnitude == entry) {
+      return middle;
+    }
+    if (magnitude < entry) {
+      high = middle;
+    } else {
+      low = middle;
+    }
+  }
+}
+
+/* 5e-30 to 5e30 as floats, the image's table at 0x12846,
+ * powers_of_ten_times_five_float. */
+static const float
+    ARITHMETIC_FLOAT_POWERS_TIMES_FIVE[ARITHMETIC_POWER_ENTRIES] = {
+        5e-30f, 5e-29f, 5e-28f, 5e-27f, 5e-26f, 5e-25f, 5e-24f, 5e-23f, 5e-22f,
+        5e-21f, 5e-20f, 5e-19f, 5e-18f, 5e-17f, 5e-16f, 5e-15f, 5e-14f, 5e-13f,
+        5e-12f, 5e-11f, 5e-10f, 5e-9f,  5e-8f,  5e-7f,  5e-6f,  5e-5f,  5e-4f,
+        5e-3f,  5e-2f,  5e-1f,  5e0f,   5e1f,   5e2f,   5e3f,   5e4f,   5e5f,
+        5e6f,   5e7f,   5e8f,   5e9f,   5e10f,  5e11f,  5e12f,  5e13f,  5e14f,
+        5e15f,  5e16f,  5e17f,  5e18f,  5e19f,  5e20f,  5e21f,  5e22f,  5e23f,
+        5e24f,  5e25f,  5e26f,  5e27f,  5e28f,  5e29f,  5e30f,
+};
+
+/* The power of ten a float's magnitude rounds to, the next one from 5
+ * times a power up, from -29 to 31; nothing calls it (0x127fc). */
+int16_t float_decimal_exponent_rounded(float value) {
+  return arithmetic_float_power_bisect(ARITHMETIC_FLOAT_POWERS_TIMES_FIVE,
+                                       value) -
+         (ARITHMETIC_POWER_OF_TEN_LIMIT - 1);
+}
+
+/* The power of ten a float's magnitude is at or above, floor(log10),
+ * from -30 to 30; nothing calls it (0x1293a). */
+int16_t float_decimal_exponent_floor(float value) {
+  return arithmetic_float_power_bisect(powers_of_ten_float, value) -
+         ARITHMETIC_POWER_OF_TEN_LIMIT;
+}
+
 /* A small signed random value for the EFC's dither: rand's 1 to 0x7fff,
  * its top 8 bits indexing dither_table from its start for the upper half
  * and, negated, back from its end for the lower.  A value of 0 reads the

@@ -223,9 +223,14 @@ keeps it at `0x102533`, `pll.fpga_configuration`; the only other
 caller, `0x18938`, reloads that stored index.  The loader drives PROGRAM with
 PORTE bit 6, reads INIT on `0xfff90c` bit 3, PACTL's PCLKS, and reads
 DONE on PORTF bit 3 (`0x22e6e`, `0x22f40`), which it drives low while
-it waits for INIT (`0x22dea` to `0x22e44`).  The second
-block starts right after the table, at `0x21e36`.  No table entry and
-no code address points to it.
+it waits for INIT (`0x22dea` to `0x22e44`).  The names file labels
+the first block `fpga_bitstream`, `uint8_t[3860]`.  The second
+block starts right after the table, at `0x21e36`.  No table entry
+points to it, but `fpga_verify_chip` reads it from 5 bytes in,
+`fpga_readback_mask` (`0x21e3b`), past its 40-bit header
+(`fpga_readback_mask_header`), as the mask its readback is compared
+under (`structures.md`, "ROM tables").  That it is the same in every
+image fits a mask, which belongs to the part rather than the design.
 
 Copies of the five designs are in `third_party/firmware/fpga/`.
 `tools/fpga/iobdump.js` prints a bitstream's I/O blocks, using the

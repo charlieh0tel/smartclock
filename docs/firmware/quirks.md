@@ -68,6 +68,10 @@ state.  Each is by the routine and the address that shows it.
   copies the count of bytes at A3 from A4 to A2, and ends them with a
   NUL, all three registers as its caller left them (`0x2b92c` to
   `0x2b958`).
+- **`gps_response_lookup` (`0x4b7cc`)** compares a response's ID with
+  each of `oncore_messages`' entries, the seven empty ones too, whose
+  `id` is null, so that it reads ROM 0 and 1 for them; `gps_oncore.c`
+  does the same.
 - **`time_offset_done`** (`0x45a3c`), `:DIAGnostic:TOFFset`'s done hook,
   passes `save_calibration_block` its two stack arguments' low bytes,
   sign-extended (`0x45a42` to `0x45a50`), which `finish_scpi_cmd` does

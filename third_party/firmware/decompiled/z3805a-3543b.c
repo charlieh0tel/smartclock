@@ -419,6 +419,15 @@ typedef enum __attribute__((packed)) data_format {
     FORMAT_INTEGER=1
 } data_format;
 
+typedef struct diag_word_entry diag_word_entry, *Pdiag_word_entry;
+
+struct diag_word_entry {
+    void *code;
+    char name[26];
+    int32_t argument_count;
+    uint32_t result_count;
+};
+
 typedef struct duart_channel duart_channel, *Pduart_channel;
 
 struct duart_channel {
@@ -993,6 +1002,41 @@ struct gps_running_command {
     enum gps_argument_mode query;
     uint8_t length;
     uint8_t sent[80];
+};
+
+typedef struct gps_script_query_step gps_script_query_step, *Pgps_script_query_step;
+
+struct gps_script_query_step {
+    int16_t code;
+    enum gps_argument_mode argument_mode;
+    uint8_t field_03;
+};
+
+typedef struct gps_script_step_1_argument gps_script_step_1_argument, *Pgps_script_step_1_argument;
+
+struct gps_script_step_1_argument {
+    int16_t code;
+    enum gps_argument_mode argument_mode;
+    uint8_t field_03;
+    int32_t arguments[1];
+};
+
+typedef struct gps_script_step_2_arguments gps_script_step_2_arguments, *Pgps_script_step_2_arguments;
+
+struct gps_script_step_2_arguments {
+    int16_t code;
+    enum gps_argument_mode argument_mode;
+    uint8_t field_03;
+    int32_t arguments[2];
+};
+
+typedef struct gps_script_step_3_arguments gps_script_step_3_arguments, *Pgps_script_step_3_arguments;
+
+struct gps_script_step_3_arguments {
+    int16_t code;
+    enum gps_argument_mode argument_mode;
+    uint8_t field_03;
+    int32_t arguments[3];
 };
 
 typedef struct gps_state gps_state, *Pgps_state;
@@ -1605,6 +1649,19 @@ struct io_device_jumps {
     struct io_jump function[6];
 };
 
+typedef struct io_device_stubs io_device_stubs, *Pio_device_stubs;
+
+typedef struct io_stub io_stub, *Pio_stub;
+
+struct io_stub {
+    uint16_t opcode;
+    uint16_t nops[2];
+};
+
+struct io_device_stubs {
+    struct io_stub function[6];
+};
+
 typedef struct klok_entry klok_entry, *Pklok_entry;
 
 typedef void (spoo_function)(uint32_t, uint32_t, uint32_t);
@@ -1862,6 +1919,23 @@ struct parameter_record {
     uint8_t sci_xon_xoff;
     uint8_t sci_echo;
     uint8_t unused[3];
+};
+
+typedef enum __attribute__((packed)) pforth_word_flag {
+    PFORTH_WORD_COMPILE_ONLY=1,
+    PFORTH_WORD_HIDDEN=2,
+    PFORTH_WORD_IMMEDIATE=4,
+    PFORTH_WORD_INLINE=8
+} pforth_word_flag;
+
+typedef struct pforth_word_header pforth_word_header, *Ppforth_word_header;
+
+struct pforth_word_header {
+    struct pforth_word_header *link;
+    void *code;
+    uint16_t inline_size;
+    uint16_t flags;
+    char name[0];
 };
 
 typedef enum __attribute__((packed)) pll_aging_state {
@@ -3510,6 +3584,7 @@ _Static_assert(sizeof(counter_sync_kind) == 1, "counter_sync_kind");
 _Static_assert(sizeof(counter_sync_mode) == 1, "counter_sync_mode");
 _Static_assert(sizeof(counter_work_state) == 1, "counter_work_state");
 _Static_assert(sizeof(data_format) == 1, "data_format");
+_Static_assert(sizeof(diag_word_entry) == 38, "diag_word_entry");
 _Static_assert(sizeof(duart_channel) == 8, "duart_channel");
 _Static_assert(sizeof(duart_registers) == 32, "duart_registers");
 _Static_assert(sizeof(duart_shadow_registers) == 13, "duart_shadow_registers");
@@ -3553,7 +3628,11 @@ _Static_assert(sizeof(gps_request_result) == 1, "gps_request_result");
 _Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
 _Static_assert(sizeof(gps_request_sender) == 1, "gps_request_sender");
 _Static_assert(sizeof(gps_running_command) == 114, "gps_running_command");
+_Static_assert(sizeof(gps_script_query_step) == 4, "gps_script_query_step");
 _Static_assert(sizeof(gps_script_step) == 20, "gps_script_step");
+_Static_assert(sizeof(gps_script_step_1_argument) == 8, "gps_script_step_1_argument");
+_Static_assert(sizeof(gps_script_step_2_arguments) == 12, "gps_script_step_2_arguments");
+_Static_assert(sizeof(gps_script_step_3_arguments) == 16, "gps_script_step_3_arguments");
 _Static_assert(sizeof(gps_state) == 1370, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
 _Static_assert(sizeof(gps_status_monitor_state) == 1, "gps_status_monitor_state");
@@ -3569,7 +3648,9 @@ _Static_assert(sizeof(interval_arm_mode) == 1, "interval_arm_mode");
 _Static_assert(sizeof(interval_reading_fields) == 13, "interval_reading_fields");
 _Static_assert(sizeof(io_device) == 2, "io_device");
 _Static_assert(sizeof(io_device_jumps) == 36, "io_device_jumps");
+_Static_assert(sizeof(io_device_stubs) == 36, "io_device_stubs");
 _Static_assert(sizeof(io_jump) == 6, "io_jump");
+_Static_assert(sizeof(io_stub) == 6, "io_stub");
 _Static_assert(sizeof(klok_entry) == 26, "klok_entry");
 _Static_assert(sizeof(klok_event_class) == 1, "klok_event_class");
 _Static_assert(sizeof(lifetime_record) == 32, "lifetime_record");
@@ -3623,6 +3704,8 @@ _Static_assert(sizeof(oncore_xdop_table_fields) == 75, "oncore_xdop_table_fields
 _Static_assert(sizeof(oncore_xdop_type) == 1, "oncore_xdop_type");
 _Static_assert(sizeof(packed_datetime) == 8, "packed_datetime");
 _Static_assert(sizeof(parameter_record) == 16, "parameter_record");
+_Static_assert(sizeof(pforth_word_flag) == 1, "pforth_word_flag");
+_Static_assert(sizeof(pforth_word_header) == 12, "pforth_word_header");
 _Static_assert(sizeof(pll_aging_state) == 1, "pll_aging_state");
 _Static_assert(sizeof(pll_coarse_state) == 1, "pll_coarse_state");
 _Static_assert(sizeof(pll_fine_state) == 1, "pll_fine_state");
@@ -3949,12 +4032,16 @@ extern klok_entry leap_event_utc_template; /* 00010cca */
 extern int16_t days_before_month[12]; /* 0001186c */
 extern int16_t days_before_month_leap[12]; /* 00011884 */
 extern uint8_t month_lengths[12]; /* 0001189c */
+extern char exception_newline[3]; /* 00011b59 */
 extern char reset_to_recover_text[20]; /* 00011b8c */
 extern char * exception_names[57]; /* 00011ba0 */
 extern double powers_of_ten_times_five[61]; /* 0001234c */
 extern const double powers_of_ten_double[61]; /* 00012614 */
+extern float powers_of_ten_times_five_float[61]; /* 00012846 */
 extern const float powers_of_ten_float[61]; /* 000129fc */
 extern char dither_table[128]; /* 00012b32 */
+extern char psos_name[12]; /* 00014ace */
+extern char psos_banner[72]; /* 00014ada */
 extern selftest_entry selftest_list[12]; /* 00017fe0 */
 extern selftest_entry selftest_table[14]; /* 00018458 */
 extern char console_first_phrase[9]; /* 00018dbc */
@@ -3964,14 +4051,22 @@ extern char forth_do_tag[16]; /* 0001942d */
 extern char forth_if_tag[7]; /* 000194de */
 extern char forth_begin_tag[10]; /* 00019556 */
 extern char forth_while_tag[10]; /* 0001956a */
+extern char forth_until_tag[10]; /* 000195f6 */
 extern int32_t forth_sine_table[91]; /* 00019a2c */
+extern pforth_word_header forth_user_header; /* 0001ad0e */
+extern char forth_user_name[6]; /* 0001ad1a */
+extern diag_word_entry diag_words[86]; /* 0001c8ac */
 extern char loopback_idle_text[1]; /* 0001ed2c */
 extern char loopback_test_text[20]; /* 0001ee6e */
+extern uint8_t fpga_bitstream[3860]; /* 00020f18 */
 extern fpga_configuration_table fpga_configurations; /* 00021e2c */
+extern uint8_t fpga_readback_mask_header[5]; /* 00021e36 */
 extern uint8_t fpga_readback_mask[3847]; /* 00021e3b */
 extern uint16_t scpi_normalize_exponents[32]; /* 00025144 */
 extern double scpi_powers_of_ten[145]; /* 000256ae */
 extern double scpi_powers_of_ten_64[9]; /* 00025b36 */
+extern uint8_t bcd_to_binary[160]; /* 00025b7e */
+extern uint8_t binary_to_bcd[100]; /* 00025c1e */
 extern uint16_t decimal_digit_pairs[100]; /* 00025c82 */
 extern scpi_char_class scpi_char_classes[262]; /* 000277ec */
 extern int16_t scpi_parameter_kind_errors[6]; /* 000279ca */
@@ -4070,6 +4165,7 @@ extern scpi_setting_param scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STAT
 extern scpi_numeric_param scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold; /* 000342f8 */
 extern scpi_numeric_param scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; /* 00034336 */
 extern scpi_numeric_param nv_param_field_b8; /* 00034374 */
+extern uint8_t rom_lane_sums_low[4]; /* 0003fffc */
 extern double two_to_32; /* 00041300 */
 extern fpga_bit fpga_bit_table[6]; /* 00041310 */
 extern scpi_action_param scpi_action_DIAGnostic_PTIMe_TINTerval; /* 0004132a */
@@ -4093,6 +4189,144 @@ extern status_screen_mode_line status_screen_mode_lines[5]; /* 0004d032 */
 extern char status_screen_blank[1]; /* 0004d10b */
 extern satellite_list_entry satellite_status_blank_entry; /* 0004e016 */
 extern oncore_message_entry oncore_messages[49]; /* 0004fece */
+extern char oncore_id_Aa[3]; /* 00050986 */
+extern char oncore_query_Aa[4]; /* 00050989 */
+extern char oncore_id_Ab[3]; /* 0005098d */
+extern char oncore_id_Ac[3]; /* 00050990 */
+extern char oncore_query_Ac[5]; /* 00050993 */
+extern char oncore_id_Ad[3]; /* 00050998 */
+extern char oncore_query_Ad[5]; /* 0005099b */
+extern char oncore_id_Ae[3]; /* 000509a0 */
+extern char oncore_id_Af[3]; /* 000509a3 */
+extern char oncore_query_Af[6]; /* 000509a6 */
+extern char oncore_id_Ag[3]; /* 000509ac */
+extern char oncore_query_Ag[2]; /* 000509af */
+extern char oncore_id_Ah[3]; /* 000509b1 */
+extern char oncore_id_Ai[3]; /* 000509b4 */
+extern char oncore_id_Aj[3]; /* 000509b7 */
+extern char oncore_id_Ak[3]; /* 000509ba */
+extern char oncore_query_Ak[3]; /* 000509bd */
+extern char oncore_id_Al[3]; /* 000509c0 */
+extern char oncore_id_Am[3]; /* 000509c3 */
+extern char oncore_query_Am[6]; /* 000509c6 */
+extern char oncore_id_An[3]; /* 000509cc */
+extern char oncore_id_Ao[3]; /* 000509cf */
+extern char oncore_id_Ap[3]; /* 000509d2 */
+extern char oncore_id_Aq[3]; /* 000509d5 */
+extern char oncore_id_Ar[3]; /* 000509d8 */
+extern char oncore_id_As[3]; /* 000509db */
+extern char oncore_query_As[14]; /* 000509de */
+extern char oncore_id_At[3]; /* 000509ec */
+extern char oncore_id_Av[3]; /* 000509ef */
+extern char oncore_id_Aw[3]; /* 000509f2 */
+extern char oncore_id_Ax[3]; /* 000509f5 */
+extern char oncore_id_Ay[3]; /* 000509f8 */
+extern char oncore_id_Az[3]; /* 000509fb */
+extern char oncore_id_AB[3]; /* 000509fe */
+extern char oncore_id_AC[3]; /* 00050a01 */
+extern char oncore_id_AD[3]; /* 00050a04 */
+extern char oncore_id_Ba[3]; /* 00050a07 */
+extern char oncore_id_Bb[3]; /* 00050a0a */
+extern char oncore_id_Bc[3]; /* 00050a0d */
+extern char oncore_id_Bd[3]; /* 00050a10 */
+extern char oncore_id_Bh[3]; /* 00050a13 */
+extern char oncore_id_Bj[3]; /* 00050a16 */
+extern char oncore_query_Bj[2]; /* 00050a19 */
+extern char oncore_id_Bk[3]; /* 00050a1b */
+extern char oncore_id_Bn[3]; /* 00050a1e */
+extern char oncore_query_Bn[16]; /* 00050a21 */
+extern char oncore_id_Ca[3]; /* 00050a31 */
+extern char oncore_id_Ce[3]; /* 00050a34 */
+extern char oncore_id_Cf[3]; /* 00050a37 */
+extern char oncore_id_Cg[3]; /* 00050a3a */
+extern char oncore_query_Cg[2]; /* 00050a3d */
+extern char oncore_id_Ci[3]; /* 00050a3f */
+extern char oncore_id_Cj[3]; /* 00050a42 */
+extern gps_script_step_1_argument gps_step_Ad_set; /* 00050a46 */
+extern gps_script_step_1_argument gps_step_Ae_set; /* 00050a4e */
+extern gps_script_step_2_arguments gps_step_Af_set; /* 00050a56 */
+extern gps_script_step gps_step_As_set; /* 00050a62 */
+extern gps_script_step_1_argument gps_step_Cf_set; /* 00050a76 */
+extern gps_script_step_3_arguments gps_step_Ab_set; /* 00050a7e */
+extern gps_script_step_1_argument gps_step_Ah_set_2; /* 00050a8e */
+extern gps_script_step_1_argument gps_step_Aj_set; /* 00050a96 */
+extern gps_script_step_1_argument gps_step_Ak_set; /* 00050a9e */
+extern gps_script_step_1_argument gps_step_Al_set; /* 00050aa6 */
+extern gps_script_step_1_argument gps_step_An_set; /* 00050aae */
+extern gps_script_step_1_argument gps_step_Ao_set; /* 00050ab6 */
+extern gps_script_step_1_argument gps_step_Aq_set; /* 00050abe */
+extern gps_script_step_1_argument gps_step_Ar_set; /* 00050ac6 */
+extern gps_script_step_1_argument gps_step_Av_set; /* 00050ace */
+extern gps_script_step_1_argument gps_step_Aw_set; /* 00050ad6 */
+extern gps_script_step_1_argument gps_step_Ax_set; /* 00050ade */
+extern gps_script_step_1_argument gps_step_Ay_set; /* 00050ae6 */
+extern gps_script_step_1_argument gps_step_AB_set; /* 00050aee */
+extern gps_script_step_1_argument gps_step_AC_set; /* 00050af6 */
+extern gps_script_step_2_arguments gps_step_AD_set; /* 00050afe */
+extern gps_script_step_1_argument gps_step_Ba_set_1; /* 00050b0a */
+extern gps_script_step_1_argument gps_step_Bb_set_1; /* 00050b12 */
+extern gps_script_step_1_argument gps_step_Bc_set_0; /* 00050b1a */
+extern gps_script_step_1_argument gps_step_Bk_set_0; /* 00050b22 */
+extern gps_script_step_1_argument gps_step_Ci_set; /* 00050b2a */
+extern gps_script_query_step gps_step_Aa_query; /* 00050b32 */
+extern gps_script_query_step gps_step_Ab_query; /* 00050b36 */
+extern gps_script_query_step gps_step_Ac_query; /* 00050b3a */
+extern gps_script_query_step gps_step_Ad_query; /* 00050b3e */
+extern gps_script_query_step gps_step_Ae_query; /* 00050b42 */
+extern gps_script_query_step gps_step_Af_query; /* 00050b46 */
+extern gps_script_query_step gps_step_Ag_query; /* 00050b4a */
+extern gps_script_query_step gps_step_Ah_query; /* 00050b4e */
+extern gps_script_query_step gps_step_Aj_query; /* 00050b52 */
+extern gps_script_query_step gps_step_Ak_query; /* 00050b56 */
+extern gps_script_query_step gps_step_Al_query; /* 00050b5a */
+extern gps_script_query_step gps_step_Am_query; /* 00050b5e */
+extern gps_script_query_step gps_step_Ao_query; /* 00050b62 */
+extern gps_script_query_step gps_step_Aq_query; /* 00050b66 */
+extern gps_script_query_step gps_step_Ar_query; /* 00050b6a */
+extern gps_script_query_step gps_step_As_query; /* 00050b6e */
+extern gps_script_query_step gps_step_At_query; /* 00050b72 */
+extern gps_script_query_step gps_step_Aw_query; /* 00050b76 */
+extern gps_script_query_step gps_step_Ay_query; /* 00050b7a */
+extern gps_script_query_step gps_step_Az_query; /* 00050b7e */
+extern gps_script_query_step gps_step_AB_query; /* 00050b82 */
+extern gps_script_query_step gps_step_AD_query; /* 00050b86 */
+extern gps_script_query_step gps_step_Bj_query; /* 00050b8a */
+extern gps_script_query_step gps_step_Cg_query; /* 00050b8e */
+extern gps_script_step_1_argument gps_step_Cj_set; /* 00050b92 */
+extern gps_script_step_1_argument gps_step_Aw_requested; /* 00050b9a */
+extern gps_script_step_1_argument gps_step_As_requested; /* 00050ba2 */
+extern gps_script_step_1_argument gps_step_At_requested; /* 00050baa */
+extern gps_script_step_1_argument gps_step_Ad_requested; /* 00050bb2 */
+extern gps_script_step_1_argument gps_step_Ae_requested; /* 00050bba */
+extern gps_script_step_1_argument gps_step_Af_requested; /* 00050bc2 */
+extern gps_script_step_1_argument gps_step_At_set_0; /* 00050bca */
+extern gps_script_step_1_argument gps_step_At_set_1; /* 00050bd2 */
+extern gps_script_step_1_argument gps_step_Aa_requested; /* 00050bda */
+extern gps_script_step_1_argument gps_step_Ac_requested; /* 00050be2 */
+extern gps_script_step_1_argument gps_step_Bn_requested; /* 00050bea */
+extern gps_script_step_1_argument gps_step_Ah_set_1; /* 00050bf2 */
+extern gps_script_step_2_arguments gps_step_Ai_set_1_0; /* 00050bfa */
+extern gps_script_step_2_arguments gps_step_Ai_set_2_0; /* 00050c06 */
+extern gps_script_step_2_arguments gps_step_Ai_set_3_0; /* 00050c12 */
+extern gps_script_step_2_arguments gps_step_Ai_set_4_0; /* 00050c1e */
+extern gps_script_step_2_arguments gps_step_Ai_set_5_0; /* 00050c2a */
+extern gps_script_step_2_arguments gps_step_Ai_set_6_0; /* 00050c36 */
+extern gps_script_step_1_argument gps_step_Ai_requested; /* 00050c42 */
+extern gps_script_step_1_argument gps_step_Cg_set_0; /* 00050c4a */
+extern gps_script_step_1_argument gps_step_Cg_set_1; /* 00050c52 */
+extern gps_script_step_1_argument gps_step_Ba_set_0; /* 00050c5a */
+extern gps_script_step_1_argument gps_step_Bb_set_0; /* 00050c62 */
+extern gps_script_step_1_argument gps_step_Bc_set_0_second; /* 00050c6a */
+extern gps_script_step_1_argument gps_step_Bk_set_0_second; /* 00050c72 */
+extern gps_script_step_1_argument gps_step_Ca_set; /* 00050c7a */
+extern gps_script_step_1_argument gps_step_average_reset; /* 00050c82 */
+extern gps_script_step_1_argument gps_step_survey_start; /* 00050c8a */
+extern gps_script_step_1_argument gps_step_survey_stop; /* 00050c92 */
+extern gps_script_step_1_argument gps_step_pps_check_1; /* 00050c9a */
+extern gps_script_step_1_argument gps_step_pps_check_0; /* 00050ca2 */
+extern gps_script_step_1_argument gps_step_raim_arguments; /* 00050caa */
+extern gps_script_step_1_argument gps_step_parse_options; /* 00050cb2 */
+extern gps_script_step_1_argument gps_step_status_monitor; /* 00050cba */
 extern gps_script_step * gps_script_message[2]; /* 00050cc2 */
 extern gps_script_step * gps_script_47[26]; /* 00050cca */
 extern gps_script_step * gps_script_48[29]; /* 00050d32 */
@@ -4130,6 +4364,7 @@ extern char os_report_newline[3]; /* 000512e6 */
 extern char os_report_format[3]; /* 00051382 */
 extern char os_report_comma[2]; /* 00051385 */
 extern io_device_jumps io_table_defaults[4]; /* 0005171a */
+extern io_device_stubs io_device_unused_stubs; /* 000517aa */
 extern scpi_child_list scpi_common_list; /* 000526f6 */
 extern scpi_root_children scpi_main_tree; /* 00053034 */
 extern scpi_tree_pair scpi_trees; /* 0005d014 */
@@ -4170,6 +4405,7 @@ extern double sqrt_seed_a; /* 00061b94 */
 extern double sqrt_seed_b; /* 00061b9c */
 extern double sqrt_half_high; /* 00061ba4 */
 extern double sqrt_half_low; /* 00061bac */
+extern uint8_t rom_lane_sums_high[4]; /* 0007fffc */
 extern preserved_region_fields preserved_region; /* 00100000 */
 extern char crash_message[80]; /* 0010094e */
 extern exception_record last_exception; /* 0010099e */
@@ -4543,7 +4779,6 @@ extern uint8_t installer_ctype_table[257]; /* installer::00109056 */
 
 extern uint8_t DAT_0004cfc0; /* 0004cfc0 */
 extern uint8_t DAT_00700000; /* 00700000 */
-extern uint32_t *PTR_diag_cal_0001c8ac; /* 0001c8ac */
 extern uint32_t *PTR_lamp_test_command_000186b0; /* 000186b0 */
 extern uint32_t *PTR_s_Self_Test_0004d076; /* 0004d076 */
 extern uint8_t UNK_0001af5e; /* 0001af5e */
@@ -4706,7 +4941,6 @@ extern uint8_t uint8_t_0010142a; /* 0010142a */
 
 __asm__(".set DAT_0004cfc0, 0x0004cfc0");
 __asm__(".set DAT_00700000, 0x00700000");
-__asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
 __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
 __asm__(".set UNK_0001af5e, 0x0001af5e");
@@ -4767,6 +5001,8 @@ __asm__(".set adc_monitors, 0x00101b72");
 __asm__(".set aging_curve, 0x00101fd8");
 __asm__(".set atexit_count, 0x00103934");
 __asm__(".set atexit_functions, 0x001038b4");
+__asm__(".set bcd_to_binary, 0x00025b7e");
+__asm__(".set binary_to_bcd, 0x00025c1e");
 __asm__(".set boot_loopback_expect_next, 0x0010afb6");
 __asm__(".set boot_loopback_send_next, 0x0010afb2");
 __asm__(".set boot_selftest, 0x0010ab20");
@@ -4795,6 +5031,7 @@ __asm__(".set deferred_start, 0x00103700");
 __asm__(".set deferred_text, 0x001032fd");
 __asm__(".set diag_leapsec_argument_1, 0x00102724");
 __asm__(".set diag_leapsec_argument_2, 0x00102726");
+__asm__(".set diag_words, 0x0001c8ac");
 __asm__(".set dither_table, 0x00012b32");
 __asm__(".set dmes, 0x00103808");
 __asm__(".set dmes_gpsm, 0x00103808");
@@ -4841,6 +5078,7 @@ __asm__(".set es_message, 0x00103832");
 __asm__(".set exception_hook, 0x001037d0");
 __asm__(".set exception_hook_per_task, 0x001037d4");
 __asm__(".set exception_names, 0x00011ba0");
+__asm__(".set exception_newline, 0x00011b59");
 __asm__(".set fconf_regs, 0x00101fa9");
 __asm__(".set fine_readings, 0x0010207c");
 __asm__(".set fine_sum_i, 0x00102144");
@@ -4863,12 +5101,17 @@ __asm__(".set forth_pad_buffer, 0x00100a8a");
 __asm__(".set forth_prompt, 0x00100b14");
 __asm__(".set forth_sine_table, 0x00019a2c");
 __asm__(".set forth_terminal_input, 0x00100a04");
+__asm__(".set forth_until_tag, 0x000195f6");
+__asm__(".set forth_user_header, 0x0001ad0e");
+__asm__(".set forth_user_name, 0x0001ad1a");
 __asm__(".set forth_while_tag, 0x0001956a");
 __asm__(".set fpga_bit_table, 0x00041310");
+__asm__(".set fpga_bitstream, 0x00020f18");
 __asm__(".set fpga_configurations, 0x00021e2c");
 __asm__(".set fpga_port, 0x00304000");
 __asm__(".set fpga_programming, 0x00101b6c");
 __asm__(".set fpga_readback_mask, 0x00021e3b");
+__asm__(".set fpga_readback_mask_header, 0x00021e36");
 __asm__(".set gps, 0x00100c6a");
 __asm__(".set gps_ack_abandoned, 0x00102587");
 __asm__(".set gps_ack_awaited, 0x00102586");
@@ -4920,6 +5163,91 @@ __asm__(".set gps_script_message, 0x00050cc2");
 __asm__(".set gps_script_none, 0x00050fce");
 __asm__(".set gps_status_print_count, 0x00101b6b");
 __asm__(".set gps_status_print_interval, 0x00101b6a");
+__asm__(".set gps_step_AB_query, 0x00050b82");
+__asm__(".set gps_step_AB_set, 0x00050aee");
+__asm__(".set gps_step_AC_set, 0x00050af6");
+__asm__(".set gps_step_AD_query, 0x00050b86");
+__asm__(".set gps_step_AD_set, 0x00050afe");
+__asm__(".set gps_step_Aa_query, 0x00050b32");
+__asm__(".set gps_step_Aa_requested, 0x00050bda");
+__asm__(".set gps_step_Ab_query, 0x00050b36");
+__asm__(".set gps_step_Ab_set, 0x00050a7e");
+__asm__(".set gps_step_Ac_query, 0x00050b3a");
+__asm__(".set gps_step_Ac_requested, 0x00050be2");
+__asm__(".set gps_step_Ad_query, 0x00050b3e");
+__asm__(".set gps_step_Ad_requested, 0x00050bb2");
+__asm__(".set gps_step_Ad_set, 0x00050a46");
+__asm__(".set gps_step_Ae_query, 0x00050b42");
+__asm__(".set gps_step_Ae_requested, 0x00050bba");
+__asm__(".set gps_step_Ae_set, 0x00050a4e");
+__asm__(".set gps_step_Af_query, 0x00050b46");
+__asm__(".set gps_step_Af_requested, 0x00050bc2");
+__asm__(".set gps_step_Af_set, 0x00050a56");
+__asm__(".set gps_step_Ag_query, 0x00050b4a");
+__asm__(".set gps_step_Ah_query, 0x00050b4e");
+__asm__(".set gps_step_Ah_set_1, 0x00050bf2");
+__asm__(".set gps_step_Ah_set_2, 0x00050a8e");
+__asm__(".set gps_step_Ai_requested, 0x00050c42");
+__asm__(".set gps_step_Ai_set_1_0, 0x00050bfa");
+__asm__(".set gps_step_Ai_set_2_0, 0x00050c06");
+__asm__(".set gps_step_Ai_set_3_0, 0x00050c12");
+__asm__(".set gps_step_Ai_set_4_0, 0x00050c1e");
+__asm__(".set gps_step_Ai_set_5_0, 0x00050c2a");
+__asm__(".set gps_step_Ai_set_6_0, 0x00050c36");
+__asm__(".set gps_step_Aj_query, 0x00050b52");
+__asm__(".set gps_step_Aj_set, 0x00050a96");
+__asm__(".set gps_step_Ak_query, 0x00050b56");
+__asm__(".set gps_step_Ak_set, 0x00050a9e");
+__asm__(".set gps_step_Al_query, 0x00050b5a");
+__asm__(".set gps_step_Al_set, 0x00050aa6");
+__asm__(".set gps_step_Am_query, 0x00050b5e");
+__asm__(".set gps_step_An_set, 0x00050aae");
+__asm__(".set gps_step_Ao_query, 0x00050b62");
+__asm__(".set gps_step_Ao_set, 0x00050ab6");
+__asm__(".set gps_step_Aq_query, 0x00050b66");
+__asm__(".set gps_step_Aq_set, 0x00050abe");
+__asm__(".set gps_step_Ar_query, 0x00050b6a");
+__asm__(".set gps_step_Ar_set, 0x00050ac6");
+__asm__(".set gps_step_As_query, 0x00050b6e");
+__asm__(".set gps_step_As_requested, 0x00050ba2");
+__asm__(".set gps_step_As_set, 0x00050a62");
+__asm__(".set gps_step_At_query, 0x00050b72");
+__asm__(".set gps_step_At_requested, 0x00050baa");
+__asm__(".set gps_step_At_set_0, 0x00050bca");
+__asm__(".set gps_step_At_set_1, 0x00050bd2");
+__asm__(".set gps_step_Av_set, 0x00050ace");
+__asm__(".set gps_step_Aw_query, 0x00050b76");
+__asm__(".set gps_step_Aw_requested, 0x00050b9a");
+__asm__(".set gps_step_Aw_set, 0x00050ad6");
+__asm__(".set gps_step_Ax_set, 0x00050ade");
+__asm__(".set gps_step_Ay_query, 0x00050b7a");
+__asm__(".set gps_step_Ay_set, 0x00050ae6");
+__asm__(".set gps_step_Az_query, 0x00050b7e");
+__asm__(".set gps_step_Ba_set_0, 0x00050c5a");
+__asm__(".set gps_step_Ba_set_1, 0x00050b0a");
+__asm__(".set gps_step_Bb_set_0, 0x00050c62");
+__asm__(".set gps_step_Bb_set_1, 0x00050b12");
+__asm__(".set gps_step_Bc_set_0, 0x00050b1a");
+__asm__(".set gps_step_Bc_set_0_second, 0x00050c6a");
+__asm__(".set gps_step_Bj_query, 0x00050b8a");
+__asm__(".set gps_step_Bk_set_0, 0x00050b22");
+__asm__(".set gps_step_Bk_set_0_second, 0x00050c72");
+__asm__(".set gps_step_Bn_requested, 0x00050bea");
+__asm__(".set gps_step_Ca_set, 0x00050c7a");
+__asm__(".set gps_step_Cf_set, 0x00050a76");
+__asm__(".set gps_step_Cg_query, 0x00050b8e");
+__asm__(".set gps_step_Cg_set_0, 0x00050c4a");
+__asm__(".set gps_step_Cg_set_1, 0x00050c52");
+__asm__(".set gps_step_Ci_set, 0x00050b2a");
+__asm__(".set gps_step_Cj_set, 0x00050b92");
+__asm__(".set gps_step_average_reset, 0x00050c82");
+__asm__(".set gps_step_parse_options, 0x00050cb2");
+__asm__(".set gps_step_pps_check_0, 0x00050ca2");
+__asm__(".set gps_step_pps_check_1, 0x00050c9a");
+__asm__(".set gps_step_raim_arguments, 0x00050caa");
+__asm__(".set gps_step_status_monitor, 0x00050cba");
+__asm__(".set gps_step_survey_start, 0x00050c8a");
+__asm__(".set gps_step_survey_stop, 0x00050c92");
 __asm__(".set gps_task_state, 0x0010139c");
 __asm__(".set gpsx_arguments, 0x001025ac");
 __asm__(".set gpsx_exchange, 0x001037fc");
@@ -5005,6 +5333,7 @@ __asm__(".set interval_mean, 0x00102538");
 __asm__(".set interval_mean_flag, 0x0010253c");
 __asm__(".set interval_reading, 0x00101f9c");
 __asm__(".set interval_tick_wait, 0x0010207a");
+__asm__(".set io_device_unused_stubs, 0x000517aa");
 __asm__(".set io_table, 0x001025bc");
 __asm__(".set io_table_defaults, 0x0005171a");
 __asm__(".set kernel_running, 0x001037dc");
@@ -5075,7 +5404,60 @@ __asm__(".set offset_step_time, 0x00100bca");
 __asm__(".set oncore_almanac_field_codes, 0x00051002");
 __asm__(".set oncore_corrections_field_codes, 0x00050ff6");
 __asm__(".set oncore_extension_field_codes, 0x00050fe4");
+__asm__(".set oncore_id_AB, 0x000509fe");
+__asm__(".set oncore_id_AC, 0x00050a01");
+__asm__(".set oncore_id_AD, 0x00050a04");
+__asm__(".set oncore_id_Aa, 0x00050986");
+__asm__(".set oncore_id_Ab, 0x0005098d");
+__asm__(".set oncore_id_Ac, 0x00050990");
+__asm__(".set oncore_id_Ad, 0x00050998");
+__asm__(".set oncore_id_Ae, 0x000509a0");
+__asm__(".set oncore_id_Af, 0x000509a3");
+__asm__(".set oncore_id_Ag, 0x000509ac");
+__asm__(".set oncore_id_Ah, 0x000509b1");
+__asm__(".set oncore_id_Ai, 0x000509b4");
+__asm__(".set oncore_id_Aj, 0x000509b7");
+__asm__(".set oncore_id_Ak, 0x000509ba");
+__asm__(".set oncore_id_Al, 0x000509c0");
+__asm__(".set oncore_id_Am, 0x000509c3");
+__asm__(".set oncore_id_An, 0x000509cc");
+__asm__(".set oncore_id_Ao, 0x000509cf");
+__asm__(".set oncore_id_Ap, 0x000509d2");
+__asm__(".set oncore_id_Aq, 0x000509d5");
+__asm__(".set oncore_id_Ar, 0x000509d8");
+__asm__(".set oncore_id_As, 0x000509db");
+__asm__(".set oncore_id_At, 0x000509ec");
+__asm__(".set oncore_id_Av, 0x000509ef");
+__asm__(".set oncore_id_Aw, 0x000509f2");
+__asm__(".set oncore_id_Ax, 0x000509f5");
+__asm__(".set oncore_id_Ay, 0x000509f8");
+__asm__(".set oncore_id_Az, 0x000509fb");
+__asm__(".set oncore_id_Ba, 0x00050a07");
+__asm__(".set oncore_id_Bb, 0x00050a0a");
+__asm__(".set oncore_id_Bc, 0x00050a0d");
+__asm__(".set oncore_id_Bd, 0x00050a10");
+__asm__(".set oncore_id_Bh, 0x00050a13");
+__asm__(".set oncore_id_Bj, 0x00050a16");
+__asm__(".set oncore_id_Bk, 0x00050a1b");
+__asm__(".set oncore_id_Bn, 0x00050a1e");
+__asm__(".set oncore_id_Ca, 0x00050a31");
+__asm__(".set oncore_id_Ce, 0x00050a34");
+__asm__(".set oncore_id_Cf, 0x00050a37");
+__asm__(".set oncore_id_Cg, 0x00050a3a");
+__asm__(".set oncore_id_Ci, 0x00050a3f");
+__asm__(".set oncore_id_Cj, 0x00050a42");
 __asm__(".set oncore_messages, 0x0004fece");
+__asm__(".set oncore_query_Aa, 0x00050989");
+__asm__(".set oncore_query_Ac, 0x00050993");
+__asm__(".set oncore_query_Ad, 0x0005099b");
+__asm__(".set oncore_query_Af, 0x000509a6");
+__asm__(".set oncore_query_Ag, 0x000509af");
+__asm__(".set oncore_query_Ak, 0x000509bd");
+__asm__(".set oncore_query_Am, 0x000509c6");
+__asm__(".set oncore_query_As, 0x000509de");
+__asm__(".set oncore_query_Bj, 0x00050a19");
+__asm__(".set oncore_query_Bn, 0x00050a21");
+__asm__(".set oncore_query_Cg, 0x00050a3d");
 __asm__(".set oncore_raim_field_codes, 0x00050fe6");
 __asm__(".set oncore_receiver_id_field_codes, 0x00051004");
 __asm__(".set oncore_status_field_codes, 0x00050fd2");
@@ -5135,14 +5517,17 @@ __asm__(".set powers_of_ten_by_25_exponents, 0x0005f938");
 __asm__(".set powers_of_ten_by_25_mantissas, 0x0005f860");
 __asm__(".set powers_of_ten_float_21, 0x00032700");
 __asm__(".set powers_of_ten_times_five, 0x0001234c");
+__asm__(".set powers_of_ten_times_five_float, 0x00012846");
 __asm__(".set pps_exchange, 0x00100bc4");
 __asm__(".set pps_message, 0x00100bac");
 __asm__(".set preserved_region, 0x00100000");
 __asm__(".set primary_vectors, 0x00010000");
 __asm__(".set program_end_message, 0x00100bf4");
+__asm__(".set psos_banner, 0x00014ada");
 __asm__(".set psos_config, 0x0010264c");
 __asm__(".set psos_config_defaults, 0x0005122a");
 __asm__(".set psos_debug_enabled, 0x001037de");
+__asm__(".set psos_name, 0x00014ace");
 __asm__(".set qsm, 0x00fffc00");
 __asm__(".set qsort_compare, 0x00103940");
 __asm__(".set qsort_size, 0x00103944");
@@ -5160,6 +5545,8 @@ __asm__(".set robin_blocks, 0x00102a26");
 __asm__(".set robin_keyword_code, 0x00102d74");
 __asm__(".set robin_overflows, 0x001029de");
 __asm__(".set robin_points, 0x00102d76");
+__asm__(".set rom_lane_sums_high, 0x0007fffc");
+__asm__(".set rom_lane_sums_low, 0x0003fffc");
 __asm__(".set sample_values, 0x00101dda");
 __asm__(".set sample_values_defaults, 0x000308b6");
 __asm__(".set satellite_status_blank_entry, 0x0004e016");
@@ -6057,10 +6444,6 @@ extern uint8_t LAB_installer__0010a2a2;
 __asm__(".set LAB_installer__0010a2a2, 0x0010a2a2");
 extern uint8_t LAB_installer__0010a474;
 __asm__(".set LAB_installer__0010a474, 0x0010a474");
-extern uint32_t * PTR_PTR_0001ad0e;
-__asm__(".set PTR_PTR_0001ad0e, 0x0001ad0e");
-extern uint32_t * PTR_PTR_00025b7e;
-__asm__(".set PTR_PTR_00025b7e, 0x00025b7e");
 extern uint32_t * PTR_PTR_installer__001014c8;
 __asm__(".set PTR_PTR_installer__001014c8, 0x001014c8");
 extern uint8_t UNK_00019406;
@@ -6305,8 +6688,11 @@ int32_t round_shift_right(int32_t param_1,uint32_t param_2);
 int32_t double_round_to_long(double x);
 int32_t round_divide(int32_t param_1,int32_t param_2);
 int16_t double_decimal_exponent_rounded(double value);
+int16_t double_decimal_exponent_floor(double value);
 int16_t double_decimal_exponent(double value);
 double power_of_ten_double(int16_t param_1);
+int16_t float_decimal_exponent_rounded(float value);
+int16_t float_decimal_exponent_floor(float value);
 int16_t tfom_table_index(uint32_t tfom);
 float power_of_ten_float(int16_t param_1);
 void scpi_param_hook_nothing(void);
@@ -6890,6 +7276,9 @@ bool drtb_try_lock_write(void);
 uint8_t drtb_release_for_timecode(void);
 void duart_op0_set(char param_1);
 void duart_op1_set(char param_1);
+uint8_t duart_input_0_debounced(void);
+uint8_t duart_input_1_debounced(void);
+uint8_t duart_input_2_debounced(void);
 void duart_output_bits(board_led reset,board_led set);
 uint8_t drta_send_message(char *param_1,int16_t param_2);
 bool duarta_rx_pending(void);
@@ -6918,6 +7307,7 @@ void debug_printf(char *format,...);
 void task_debug_message(char *message);
 void task_dmessage(char *message);
 void fatal_error(char *message);
+void qspi_unused_36_bit_write(uint32_t value);
 int32_t adc_read(adc_channel channel);
 float read_adc_temp(void);
 float read_adc_5v(void);
@@ -6932,6 +7322,10 @@ void hdac_set(uint8_t param_1,uint8_t param_2);
 void hdac_write_all(uint8_t param_1,uint8_t param_2,uint8_t param_3,uint8_t param_4,uint8_t param_5,uint8_t param_6);
 void hdac_update(void);
 void efc_write(uint16_t param_1);
+void qspi_fpga_block_write(uint16_t *words,uint16_t count);
+void qspi_fpga_tail_write(uint32_t words);
+void qspi_fpga_word_write(uint16_t word);
+void qspi_fpga_byte_write(uint16_t value);
 void sci_echo_none(char c);
 void sci_baud_set(serial_baud baud);
 uint16_t sci_putc_polled(char param_1);
@@ -6952,6 +7346,7 @@ void sci_printf(char *format,...);
 void sci_settings_done(void);
 int32_t sci_puts_polled(char *param_1);
 void sci_printf_polled(char *format,...);
+int32_t sci_transmit_allowed(void);
 void qspi_release(void);
 uint8_t qspi_queue_setup(qspi_device device,uint16_t *transmit,uint16_t count,uint8_t read,
                         uint16_t *spcr1);
@@ -7645,6 +8040,7 @@ int32_t counter_load_registers(void);
 void counter_configuration_init(counter_configuration_fields *configuration);
 void counter_init(void);
 void counter_selftest(void);
+int32_t int64_compare(int64_t a,int64_t b);
 uint64_t int64_add(int32_t param_1,uint32_t param_2,int32_t param_3,uint32_t param_4);
 uint64_t int64_negate(int32_t param_1,int32_t param_2);
 uint64_t int64_add_long(uint32_t param_1,int32_t param_2,uint32_t param_3);
@@ -11464,6 +11860,42 @@ int16_t double_decimal_exponent_rounded(double value)
 
 #endif
 
+/* 00012534 */
+
+/* floor(log10) of a double's magnitude, -30 to 30, by bisection over powers_of_ten_double
+   (0x12614): the largest entry its bits are not below, or entry 0; called by nothing */
+
+int16_t double_decimal_exponent_floor(double value)
+
+{
+  uint32_t uVar1;
+  uint16_t uVar2;
+  uint16_t uVar3;
+  uint16_t uVar4;
+  uint16_t uVar5;
+  uint16_t uVar6;
+  
+  uVar3 = 0;
+  uVar4 = 0x1e8;
+  do {
+    uVar6 = uVar4;
+    uVar5 = uVar3;
+    uVar2 = (int16_t)(uVar6 + uVar5) >> 1 & 0xfff8;
+    if (uVar2 == uVar5) break;
+    uVar3 = uVar5;
+    uVar4 = uVar2;
+  } while (((((int32_t)(__ghidra_piece(uint32_t, value, 0) & 0x7fffffff) <
+              *(int32_t *)((int32_t)powers_of_ten_double + (int32_t)(int16_t)uVar2)) ||
+            (uVar3 = uVar2, uVar4 = uVar6,
+            *(int32_t *)((int32_t)powers_of_ten_double + (int32_t)(int16_t)uVar2) <
+            (int32_t)(__ghidra_piece(uint32_t, value, 0) & 0x7fffffff))) ||
+           (uVar1 = *(uint32_t *)((int32_t)powers_of_ten_double + (int16_t)uVar2 + 4), uVar3 = uVar5,
+           uVar4 = uVar2, __ghidra_piece(uint32_t, value, 4) < uVar1)) ||
+          (uVar3 = uVar2, uVar4 = uVar6, __ghidra_piece(uint32_t, value, 4) != uVar1));
+  return (int16_t)(uVar2 - 0xf0) >> 3;
+}
+
+
 /* 0001258a */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
@@ -11518,6 +11950,66 @@ double power_of_ten_double(int16_t param_1)
     param_1 = 0x1e;
   }
   return powers_of_ten_double[param_1 + 0x1e];
+}
+
+#endif
+
+/* 000127fc */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
+
+/* the decimal exponent of a float's magnitude rounded, -29 to 31, by bisection over
+   powers_of_ten_times_five_float (0x12846): the largest entry its bits are not below, or entry 0,
+   less 29; called by nothing */
+
+int16_t float_decimal_exponent_rounded(float value)
+
+{
+  uint16_t uVar1;
+  uint16_t uVar2;
+  uint16_t uVar3;
+  uint16_t uVar4;
+  
+  uVar3 = 0;
+  uVar2 = 0xf4;
+  do {
+    uVar4 = uVar2;
+    uVar1 = (int16_t)(uVar4 + uVar3) >> 1 & 0xfffc;
+    if (uVar1 == uVar3) break;
+    uVar2 = uVar1;
+  } while (((int32_t)ABS(value) <
+            (int32_t)*(float *)((int32_t)powers_of_ten_times_five_float + (int32_t)(int16_t)uVar1)) ||
+          (uVar3 = uVar1, uVar2 = uVar4,
+          ABS(value) != *(float *)((int32_t)powers_of_ten_times_five_float + (int32_t)(int16_t)uVar1)));
+  return (int16_t)(uVar1 - 0x74) >> 2;
+}
+
+#endif
+
+/* 0001293a */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
+
+/* floor(log10) of a float's magnitude, -30 to 30, by bisection over powers_of_ten_float (0x129fc):
+   the largest entry its bits are not below, or entry 0; called by nothing */
+
+int16_t float_decimal_exponent_floor(float value)
+
+{
+  uint16_t uVar1;
+  uint16_t uVar2;
+  uint16_t uVar3;
+  uint16_t uVar4;
+  
+  uVar3 = 0;
+  uVar2 = 0xf4;
+  do {
+    uVar4 = uVar2;
+    uVar1 = (int16_t)(uVar4 + uVar3) >> 1 & 0xfffc;
+    if (uVar1 == uVar3) break;
+    uVar2 = uVar1;
+  } while (((int32_t)ABS(value) < (int32_t)*(float *)((int32_t)powers_of_ten_float + (int32_t)(int16_t)uVar1)) ||
+          (uVar3 = uVar1, uVar2 = uVar4,
+          ABS(value) != *(float *)((int32_t)powers_of_ten_float + (int32_t)(int16_t)uVar1)));
+  return (int16_t)(uVar1 - 0x78) >> 2;
 }
 
 #endif
@@ -28731,16 +29223,7 @@ __asm__(
 	"	bsr.w forth_compile_code\n"
 	"	bsr.w forth_resolve_branch\n"
 	"	rts\n"
-	"	.byte 0x22\n"
-	"	.byte 0x75\n"
-	"	.byte 0x6e\n"
-	"	.byte 0x74\n"
-	"	.byte 0x69\n"
-	"	.byte 0x6c\n"
-	"	.byte 0x22\n"
-	"	.byte 0x0d\n"
-	"	.byte 0x0a\n"
-	"	.byte 0x00\n"
+	"	.byte 0x22,0x75,0x6e,0x74,0x69,0x6c,0x22,0x0d,0x0a,0x00\n"
 	"	.size forth_again, .-forth_again\n"
 	"	.popsection\n"
 );
@@ -32074,7 +32557,7 @@ __asm__(
 __pforth void forth_unfence(forth_user_end user)
 
 {
-  ADJ(user)->fence = &PTR_PTR_0001ad0e;
+  ADJ(user)->fence = &forth_user_header;
   return;
 }
 
@@ -33704,7 +34187,7 @@ __asm__(
 __pforth void forth_user(int32_t *sp)
 
 {
-  sp[-1] = (int32_t)&PTR_PTR_0001ad0e;
+  sp[-1] = (int32_t)&forth_user_header;
   return;
 }
 
@@ -34023,7 +34506,7 @@ __naked void console_task(void)
   uint16_t local_28 [3];
   char *local_22;
   char *local_1e;
-  uint8_t **local_1a;
+  pforth_word_header *local_1a;
   void *local_16;
   void *local_12;
   uint32_t uStackY_e;
@@ -34038,7 +34521,7 @@ __naked void console_task(void)
   local_8 = local_28 + -(in_stack_00000000 >> 0x10);
   local_12 = pforth_dictionary_next;
   local_16 = pforth_latest_word;
-  local_1a = &PTR_PTR_0001ad0e;
+  local_1a = &forth_user_header;
   local_1e = forth_terminal_input;
   local_22 = forth_pad_buffer;
   local_28[1] = 0x7034;
@@ -36417,12 +36900,10 @@ void diag_fp_u(void)
 void diag_words_define(void)
 
 {
-  uint8_t **ppuVar1;
+  diag_word_entry *pdVar1;
   
-  for (ppuVar1 = &PTR_diag_cal_0001c8ac; *ppuVar1 != (uint8_t *)0x0;
-      ppuVar1 = (uint8_t **)((int32_t)ppuVar1 + 0x26)) {
-    pforth_define_word((char *)(ppuVar1 + 1),*ppuVar1,*(int32_t *)((int32_t)ppuVar1 + 0x1e),
-                       *(uint32_t *)((int32_t)ppuVar1 + 0x22));
+  for (pdVar1 = diag_words; pdVar1->code != (void *)0x0; pdVar1 = pdVar1 + 1) {
+    pforth_define_word(pdVar1->name,pdVar1->code,pdVar1->argument_count,pdVar1->result_count);
   }
   return;
 }
@@ -37586,6 +38067,91 @@ void duart_op1_set(char param_1)
 
 #endif
 
+/* 0001e072 */
+
+/* the DUART's input port bit 0 as 0 or 1, read until ten reads in a row after the first agree;
+   called by nothing (the Z3815A 4010's copy, 0x2e798, is polled) */
+
+uint8_t duart_input_0_debounced(void)
+
+{
+  uint8_t uVar1;
+  uint8_t bVar2;
+  int32_t iVar3;
+  
+  uVar1 = duart.ip_opcr;
+  iVar3 = 0;
+  bVar2 = uVar1 & 1;
+  while (iVar3 < 10) {
+    uVar1 = duart.ip_opcr;
+    if ((uVar1 & 1) == bVar2) {
+      iVar3 = iVar3 + 1;
+    }
+    else {
+      iVar3 = 0;
+      bVar2 = uVar1 & 1;
+    }
+  }
+  return bVar2 != 0;
+}
+
+
+/* 0001e0ae */
+
+/* the same for input port bit 1; called by nothing */
+
+uint8_t duart_input_1_debounced(void)
+
+{
+  uint8_t uVar1;
+  uint8_t bVar2;
+  int32_t iVar3;
+  
+  uVar1 = duart.ip_opcr;
+  iVar3 = 0;
+  bVar2 = uVar1 & 2;
+  while (iVar3 < 10) {
+    uVar1 = duart.ip_opcr;
+    if ((uVar1 & 2) == bVar2) {
+      iVar3 = iVar3 + 1;
+    }
+    else {
+      iVar3 = 0;
+      bVar2 = uVar1 & 2;
+    }
+  }
+  return bVar2 != 0;
+}
+
+
+/* 0001e0ea */
+
+/* the same for input port bit 2; called by nothing */
+
+uint8_t duart_input_2_debounced(void)
+
+{
+  uint8_t uVar1;
+  uint8_t bVar2;
+  int32_t iVar3;
+  
+  uVar1 = duart.ip_opcr;
+  iVar3 = 0;
+  bVar2 = uVar1 & 4;
+  while (iVar3 < 10) {
+    uVar1 = duart.ip_opcr;
+    if ((uVar1 & 4) == bVar2) {
+      iVar3 = iVar3 + 1;
+    }
+    else {
+      iVar3 = 0;
+      bVar2 = uVar1 & 4;
+    }
+  }
+  return bVar2 != 0;
+}
+
+
 /* 0001e126 */
 #if 0 /* the decompiler's reading; rewritten in duart.c */
 
@@ -38627,6 +39193,29 @@ void fatal_error(char *message)
 
 #endif
 
+/* 0001f278 */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
+
+/* a long as three 12-bit words to QSPI device 0, qspi_queue_setup's case 0: (value >> 16) | 0x800,
+   (value >> 4) & 0xfff and (value << 8) & 0xc00, through qspi_write; called by nothing here or in
+   the Z3801A, 58503A 3633 and Z3816A, which carry it */
+
+void qspi_unused_36_bit_write(uint32_t value)
+
+{
+  uint16_t local_a;
+  uint16_t local_8;
+  uint16_t local_6;
+  
+  local_a = (uint16_t)(value >> 0x10) | 0x800;
+  local_8 = (uint16_t)(value >> 4) & 0xfff;
+  local_6 = (uint16_t)((value & 0xc) << 8);
+  qspi_write(QSPI_UNUSED_36_BIT,&local_a,3);
+  return;
+}
+
+#endif
+
 /* 0001f2c0 */
 #if 0 /* the decompiler's reading; rewritten in adc.c */
 
@@ -38959,6 +39548,57 @@ void efc_write(uint16_t param_1)
 }
 
 #endif
+
+/* 0001f664 */
+
+/* a count of words to QSPI_FPGA_BLOCK through qspi_write; called by nothing */
+
+void qspi_fpga_block_write(uint16_t *words,uint16_t count)
+
+{
+  qspi_write(QSPI_FPGA_BLOCK,words,(uint32_t)count);
+  return;
+}
+
+
+/* 0001f680 */
+
+/* two words to QSPI_FPGA_TAIL through qspi_write, its own argument's slot as the buffer; called by
+   nothing */
+
+void qspi_fpga_tail_write(uint32_t words)
+
+{
+  qspi_write(QSPI_FPGA_TAIL,&words,2);
+  return;
+}
+
+
+/* 0001f698 */
+
+/* one word to QSPI_FPGA_WORD through qspi_write, its own argument's slot as the buffer; called by
+   nothing */
+
+void qspi_fpga_word_write(uint16_t word)
+
+{
+  qspi_write(QSPI_FPGA_WORD,&word,1);
+  return;
+}
+
+
+/* 0001f6b0 */
+
+/* one transfer to QSPI_FPGA_BYTE through qspi_write, its own argument's slot as the buffer; called
+   by nothing */
+
+void qspi_fpga_byte_write(uint16_t value)
+
+{
+  qspi_write(QSPI_FPGA_BYTE,&value,1);
+  return;
+}
+
 
 /* 0001f6c8 */
 #if 0 /* the decompiler's reading; rewritten in sci.c */
@@ -40398,6 +41038,18 @@ void sci_printf_polled(char *format,...)
   vsprintf(acStack_54,format,&stack0x00000008);
   sci_puts_polled(acStack_54);
   return;
+}
+
+
+/* 0002031c */
+
+/* 1 unless an XOFF received holds the SCI's transmission, sci.flow bit 7, else 0; called by nothing
+    */
+
+int32_t sci_transmit_allowed(void)
+
+{
+  return (uint32_t)(((int16_t)(char)sci.flow & 0x80U) == 0);
 }
 
 
@@ -43508,10 +44160,8 @@ __regcall double scpi_bcd_to_double(scpi_bcd *bcd /* a0 */)
     return 0.0;
   }
   if (*(int32_t *)(bcd->digits + 4) == 0) {
-    uVar5 = (uint32_t)(uint16_t)((uint16_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e +
-                                            (int32_t)(int16_t)(uint16_t)bcd->digits[1]) +
-                          (uint16_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)*puVar11) *
-                          100);
+    uVar5 = (uint32_t)(uint16_t)((uint16_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[1]] +
+                          (uint16_t)bcd_to_binary[(int16_t)(uint16_t)*puVar11] * 100);
     if (*(int16_t *)(bcd->digits + 2) == 0) {
       iVar4 = uVar5 << 7;
       uVar10 = *(uint16_t *)
@@ -43524,9 +44174,8 @@ __regcall double scpi_bcd_to_double(scpi_bcd *bcd /* a0 */)
                           scpi_powers_of_ten + 0xc);
       return dVar14;
     }
-    uVar5 = (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)bcd->digits[3]) +
-            (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)bcd->digits[2]) * 100 +
-            uVar5 * 10000;
+    uVar5 = (uint32_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[3]] +
+            (uint32_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[2]] * 100 + uVar5 * 10000;
     uVar6 = uVar5 >> 6;
     uVar7 = uVar5 * 0x4000000;
     uVar10 = (uint16_t)(uVar5 >> 0x16) & 0x1e;
@@ -43561,14 +44210,14 @@ __regcall double scpi_bcd_to_double(scpi_bcd *bcd /* a0 */)
       return dVar14;
     }
   }
-  uVar5 = (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)bcd->digits[3]) +
-          (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)bcd->digits[2]) * 100 +
-          (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)bcd->digits[1]) * 10000 +
-          (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)*puVar11) * 1000000;
-  uVar7 = (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)bcd->digits[7]) +
-          (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)bcd->digits[6]) * 100 +
-          (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)bcd->digits[5]) * 10000 +
-          (uint32_t)*(uint8_t *)((int32_t)&PTR_PTR_00025b7e + (int32_t)(int16_t)(uint16_t)bcd->digits[4]) * 1000000;
+  uVar5 = (uint32_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[3]] +
+          (uint32_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[2]] * 100 +
+          (uint32_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[1]] * 10000 +
+          (uint32_t)bcd_to_binary[(int16_t)(uint16_t)*puVar11] * 1000000;
+  uVar7 = (uint32_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[7]] +
+          (uint32_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[6]] * 100 +
+          (uint32_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[5]] * 10000 +
+          (uint32_t)bcd_to_binary[(int16_t)(uint16_t)bcd->digits[4]] * 1000000;
   uVar6 = ((uVar5 & 0xffff) * 0x5f5e >> 0x10) + (uVar5 >> 0x10) * 0x5f5e;
   uVar3 = uVar6 * 0x10000000 | ((uVar5 & 0xffff) * 0x5f5e0000 >> 0x10) << 0xc;
   uVar2 = uVar5 * 0x100 + uVar3;
@@ -60917,6 +61566,36 @@ void counter_selftest(void)
 }
 
 #endif
+
+/* 00041086 */
+
+/* 0 if two 64-bit numbers are equal, else 1 if b - a, int64_add(int64_negate(a), b), is not
+   negative and -1 if it is: 1 for a below b, the reverse of a C comparator, the difference
+   wrapping; called by nothing */
+
+int32_t int64_compare(int64_t a,int64_t b)
+
+{
+  int32_t iVar1;
+  uint64_t negated;
+  uint64_t sum;
+  
+  if (a == b) {
+    iVar1 = 0;
+  }
+  else {
+    negated = int64_negate(__ghidra_piece(uint32_t, a, 0),__ghidra_piece(uint32_t, a, 4));
+    sum = int64_add((int32_t)((uint64_t)negated >> 0x20),(uint32_t)negated,__ghidra_piece(uint32_t, b, 0),__ghidra_piece(uint32_t, b, 4));
+    if ((sum & 0x8000000000000000) == 0) {
+      iVar1 = 1;
+    }
+    else {
+      iVar1 = -1;
+    }
+  }
+  return iVar1;
+}
+
 
 /* 000410fa */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */

@@ -72,8 +72,11 @@
 {"address":"0001223c","name":"double_round_to_long","note":"a double rounded half away from zero to a long, saturating; the double at SP+4 (0x1223c)","convention":"unknown","stack":[{"offset":4,"size":8}]}
 {"address":"000122d0","name":"round_divide","note":"an int divided with rounding, half away from zero; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000122f6","name":"double_decimal_exponent_rounded","note":"the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c; called by nothing","convention":"unknown","stack":[{"offset":4,"size":8}]}
+{"address":"00012534","name":"double_decimal_exponent_floor","note":"floor(log10) of a double's magnitude, -30 to 30, by bisection over powers_of_ten_double (0x12614): the largest entry its bits are not below, or entry 0; called by nothing","convention":"unknown","stack":[{"offset":4,"size":8}]}
 {"address":"0001258a","name":"double_decimal_exponent","note":"ceil(log10) of a double's magnitude, -29 to 31, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing","convention":"unknown","stack":[{"offset":4,"size":8}]}
 {"address":"000125e2","name":"power_of_ten_double","note":"10 to a power clamped to plus or minus 30, from the table of doubles at 0x12704; called by nothing","convention":"unknown","stack":[{"offset":4,"size":2}]}
+{"address":"000127fc","name":"float_decimal_exponent_rounded","note":"the decimal exponent of a float's magnitude rounded, -29 to 31, by bisection over powers_of_ten_times_five_float (0x12846): the largest entry its bits are not below, or entry 0, less 29; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0001293a","name":"float_decimal_exponent_floor","note":"floor(log10) of a float's magnitude, -30 to 30, by bisection over powers_of_ten_float (0x129fc): the largest entry its bits are not below, or entry 0; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00012984","name":"tfom_table_index","note":"tfom_code's bisection of the table at 0x129fc; compares the float's bits, its sign cleared (0x12990), with the table's; the index a word (0x129c6)","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000129d0","name":"power_of_ten_float","note":"10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"00012af0","name":"scpi_param_hook_nothing","note":"a bare rts: the changed hook of most numeric and setting descriptors, and the done hook of some","convention":"unknown"}
@@ -652,6 +655,9 @@
 {"address":"0001df8a","name":"drtb_release_for_timecode","note":"closes the console device so that channel B can send the time code","convention":"unknown"}
 {"address":"0001dfe6","name":"duart_op0_set","note":"sets or clears the DUART's output port bit 0","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"0001e02c","name":"duart_op1_set","note":"sets or clears the DUART's output port bit 1","convention":"unknown","stack":[{"offset":4,"size":1}]}
+{"address":"0001e072","name":"duart_input_0_debounced","note":"the DUART's input port bit 0 as 0 or 1, read until ten reads in a row after the first agree; called by nothing (the Z3815A 4010's copy, 0x2e798, is polled)","convention":"unknown"}
+{"address":"0001e0ae","name":"duart_input_1_debounced","note":"the same for input port bit 1; called by nothing","convention":"unknown"}
+{"address":"0001e0ea","name":"duart_input_2_debounced","note":"the same for input port bit 2; called by nothing","convention":"unknown"}
 {"address":"0001e126","name":"duart_output_bits","note":"sets and clears the DUART's output port bits, interrupts held off","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1}]}
 {"address":"0001e18a","name":"drta_send_message","note":"sends a message to the GPS engine on DUART channel A","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2}]}
 {"address":"0001e222","name":"duarta_rx_pending","note":"1 if DUART channel A's receive ring is not empty","convention":"unknown"}
@@ -680,6 +686,7 @@
 {"address":"0001eff6","name":"task_debug_message","note":"prints \"task: message\" with the calling task's name, while debug_enabled","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001f056","name":"task_dmessage","note":"the calling task's message, printed only while its dmes_ flag is set","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001f176","name":"fatal_error","note":"keeps the message and task name at crash_message, prints them and \"RESET to recover.\", then hangs","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0001f278","name":"qspi_unused_36_bit_write","note":"a long as three 12-bit words to QSPI device 0, qspi_queue_setup's case 0: (value >> 16) | 0x800, (value >> 4) & 0xfff and (value << 8) & 0xc00, through qspi_write; called by nothing here or in the Z3801A, 58503A 3633 and Z3816A, which carry it","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001f2c0","name":"adc_read","note":"sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2; diag_adc_read and diag_cal call it","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"0001f308","name":"read_adc_temp","note":"adc_temp's and :DIAG:TEMP?'s reading, \"Temperature: %f\": channel 0 times 0.273","convention":"c","confidence":"documented","out":[{"register":"D0","type":"float"}]}
 {"address":"0001f32e","name":"read_adc_5v","note":"adc_5v's reading, \"5V reading: %f\": channel 4 times 0.0242","convention":"c","confidence":"documented","out":[{"register":"D0","type":"float"}]}
@@ -694,6 +701,10 @@
 {"address":"0001f5bc","name":"hdac_write_all","note":"the hdac_all word's: six 6-bit values packed two to a word into hdac_shadow, written to device 2","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1},{"offset":8,"size":1},{"offset":10,"size":1},{"offset":12,"size":1},{"offset":14,"size":1}]}
 {"address":"0001f62e","name":"hdac_update","note":"sends the hex DAC's three shadow words to QSPI device 2","convention":"unknown"}
 {"address":"0001f646","name":"efc_write","note":"the efc_write word's: the value to device 7, then a strobe at 0x306000","convention":"unknown","stack":[{"offset":4,"size":2}]}
+{"address":"0001f664","name":"qspi_fpga_block_write","note":"a count of words to QSPI_FPGA_BLOCK through qspi_write; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2}]}
+{"address":"0001f680","name":"qspi_fpga_tail_write","note":"two words to QSPI_FPGA_TAIL through qspi_write, its own argument's slot as the buffer; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0001f698","name":"qspi_fpga_word_write","note":"one word to QSPI_FPGA_WORD through qspi_write, its own argument's slot as the buffer; called by nothing","convention":"unknown","stack":[{"offset":4,"size":2}]}
+{"address":"0001f6b0","name":"qspi_fpga_byte_write","note":"one transfer to QSPI_FPGA_BYTE through qspi_write, its own argument's slot as the buffer; called by nothing","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"0001f6c8","name":"sci_echo_none","note":"a bare rts: sci_init and sci_reconfigure put it in sci.echo when the settings' echo is off","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"0001f6ca","name":"sci_baud_set","note":"the SCI's baud rate from a code","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"0001f71a","name":"sci_putc_polled","note":"waits for the SCI's transmitter and writes a character, with the parity bit if set","convention":"unknown","stack":[{"offset":4,"size":1}]}
@@ -714,6 +725,7 @@
 {"address":"000202ac","name":"sci_settings_done","note":"the done hook of the SCI's setting descriptors (0x33ab2 on) and of its PRESet at 0x30ed4: psos_io_control(0x300, 0, 0)","convention":"unknown"}
 {"address":"000202c0","name":"sci_puts_polled","note":"writes a string to the SCI by polling, in supervisor mode","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000202f6","name":"sci_printf_polled","note":"formats into 80 bytes and writes to the SCI by polling; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0002031c","name":"sci_transmit_allowed","note":"1 unless an XOFF received holds the SCI's transmission, sci.flow bit 7, else 0; called by nothing","convention":"unknown"}
 {"address":"0002050c","name":"qspi_release","note":"signals the next task in the QSPI owner queue; \"SPI isr signaling SPI owner\"","convention":"unknown"}
 {"address":"00020578","name":"qspi_queue_setup","note":"writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's number","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":2},{"offset":12,"size":1},{"offset":14,"size":4}]}
 {"address":"0002081e","name":"qspi_start","note":"sets a transfer up and starts it, or releases the QSPI, and waits until it is done","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":2},{"offset":12,"size":1}]}
@@ -1329,6 +1341,7 @@
 {"address":"00040ed8","name":"counter_configuration_init","note":"the counter configuration's defaults, and the interval reading marked invalid","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00040f76","name":"counter_init","note":"sets the counter configuration and interpolator calibration to their defaults and arms the reading","convention":"unknown"}
 {"address":"00040f98","name":"counter_selftest","note":"the FPGA self-test: presets the counters and fails unless the count reads zero","convention":"unknown"}
+{"address":"00041086","name":"int64_compare","note":"0 if two 64-bit numbers are equal, else 1 if b - a, int64_add(int64_negate(a), b), is not negative and -1 if it is: 1 for a below b, the reverse of a C comparator, the difference wrapping; called by nothing","convention":"unknown","stack":[{"offset":4,"size":8},{"offset":12,"size":8}]}
 {"address":"000410fa","name":"int64_add","note":"adds two 64-bit numbers","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"0004111e","name":"int64_negate","note":"negates a 64-bit number","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00041132","name":"int64_add_long","note":"adds a signed long to a 64-bit number; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}

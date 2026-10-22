@@ -999,6 +999,41 @@ typedef struct gps_script_step {
                            request's, a script's, and raim_request_arguments' */
 } gps_script_step;
 
+/* The ROM's script steps, 0x50a46 to 0x50cc2, are packed end to end,
+ * each only as long as the arguments gpsm_task reads from it: none for
+ * a query (gps_request_build reads the message's query form), one for
+ * GPS_ARGUMENTS_FROM_REQUEST's index, a step of the task's own or a
+ * message with no encoder, and otherwise one for each of the message's
+ * encoders, which gps_request_build runs on arguments[0] on.  So
+ * gps_script_step's four would overlap the next step; these are its
+ * shorter forms (docs/firmware/structures.md, "ROM tables"). */
+typedef struct gps_script_query_step {
+  int16_t code;                    /* +0x00 */
+  gps_argument_mode argument_mode; /* +0x02: GPS_ARGUMENTS_QUERY */
+  uint8_t field_03;
+} gps_script_query_step;
+
+typedef struct gps_script_step_1_argument {
+  int16_t code;                    /* +0x00 */
+  gps_argument_mode argument_mode; /* +0x02 */
+  uint8_t field_03;
+  int32_t arguments[1]; /* +0x04 */
+} gps_script_step_1_argument;
+
+typedef struct gps_script_step_2_arguments {
+  int16_t code;                    /* +0x00 */
+  gps_argument_mode argument_mode; /* +0x02 */
+  uint8_t field_03;
+  int32_t arguments[2]; /* +0x04 */
+} gps_script_step_2_arguments;
+
+typedef struct gps_script_step_3_arguments {
+  int16_t code;                    /* +0x00 */
+  gps_argument_mode argument_mode; /* +0x02 */
+  uint8_t field_03;
+  int32_t arguments[3]; /* +0x04 */
+} gps_script_step_3_arguments;
+
 /* A self-test's number, selftest_run's test and the index of the table
  * at 0x18458 that selftest_execute calls.  :DIAGnostic:TEST? maps its
  * choice to it, alphabetically from the words at 0x53b24 by the jump
@@ -3640,6 +3675,59 @@ typedef struct io_jump {
 typedef struct io_device_jumps {
   io_jump function[6]; /* +0x00 */
 } io_device_jumps;
+
+/* An io_jump's slot filled with "rts; nop; nop" instead of a jmp.l. */
+typedef struct io_stub {
+  uint16_t opcode;  /* +0x00: 0x4e75, rts */
+  uint16_t nops[2]; /* +0x02: 0x4e71, nop */
+} io_stub;
+
+/* A fifth device's slot after io_table_defaults, at 0x517aa, each
+ * function an io_stub: psos_config_init copies only the four before it
+ * (0x90 bytes, 0x5104e) and psos_config.last_device is 3, so nothing
+ * reaches it. */
+typedef struct io_device_stubs {
+  io_stub function[6]; /* +0x00 */
+} io_device_stubs;
+
+/* The bits of a pForth word's flags, pforth_word_header.flags: what
+ * forth_interpret does with the word it finds (0x18f2e to 0x18f4e),
+ * forth_find's skip (0x18fda), and the clears at 0x19674 and 0x19dd2. */
+typedef enum __attribute__((packed)) pforth_word_flag {
+  PFORTH_WORD_COMPILE_ONLY = 0x01, /* interpreted, it is refused (0x18f2e) */
+  PFORTH_WORD_HIDDEN = 0x02,       /* forth_find skips it; cleared at 0x19674 */
+  PFORTH_WORD_IMMEDIATE = 0x04,    /* run even while compiling (0x18f3a);
+                                      immediate sets it (0x19e16) */
+  PFORTH_WORD_INLINE = 0x08, /* compiled by copying inline_size bytes of its
+                                code rather than a jsr (0x18f40); cleared at
+                                0x19dd2 */
+} pforth_word_flag;
+
+/* The pForth console's dictionary (docs/firmware/structures.md, "The
+ * console's dictionary").  A word's header: the kernel's 154, 0x1a296
+ * to 0x1ad20, are in ROM, linked from forth_user_header (0x1ad0e), the
+ * latest, which pforth_dictionary_init stores in pforth_latest_word;
+ * pforth_define_word builds a new one the same way in RAM.  The name
+ * follows the 12 bytes, ended by a NUL and padded to even with 0xff. */
+typedef struct pforth_word_header {
+  struct pforth_word_header* link; /* +0x00: the word before; NULL ends it */
+  void* code;                      /* +0x04: the word's routine */
+  uint16_t inline_size; /* +0x08: the bytes of code forth_interpret copies to
+                           compile a PFORTH_WORD_INLINE word (0x18f4e) */
+  uint16_t flags; /* +0x0a: pforth_word_flag bits, all in the low byte; the
+                     kernel reads and writes the word */
+  char name[];    /* +0x0c */
+} pforth_word_header;
+
+/* A diagnostic word, one entry of diag_words (0x1c8ac), which
+ * diag_words_define walks, 0x26 bytes a step, to the entry whose code is
+ * NULL, passing each to pforth_define_word (0x1c198 to 0x1c1b0). */
+typedef struct diag_word_entry {
+  void* code;             /* +0x00: the word's routine */
+  char name[26];          /* +0x04: NUL-padded */
+  int32_t argument_count; /* +0x1e */
+  uint32_t result_count;  /* +0x22 */
+} diag_word_entry;
 
 /* The pSOS kernel's records and codes (docs/firmware/psos.md, "Inside
  * the kernel"). */

@@ -43,6 +43,8 @@ uint32_t gps_response_lookup(char first, char second, int16_t* length,
       sizeof oncore_messages / sizeof oncore_messages[0];
 
   for (int16_t i = 0; i < COUNT; i++) {
+    /* An empty entry's id is null, so that this reads ROM 0 and 1, as
+     * the image does (docs/firmware/quirks.md). */
     if (first == oncore_messages[i].id[0] &&
         second == oncore_messages[i].id[1]) {
       *index = i;

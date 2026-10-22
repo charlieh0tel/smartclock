@@ -1525,6 +1525,13 @@ view cannot drift apart.  The library, bottom up:
      restores them from the supervisor's, so the hand-written C calls
      the routine itself (`cpu.h`'s `cpu_enter_supervisor`); the bridge
      stays wrong for the C that still uses it.
+     Then a survey of ROM that is neither code nor typed data: about
+     110 KB, two thirds of it erased.  The GPS scripts' ROM steps, the
+     Oncore ID pool, the pForth headers' head, the diagnostic words'
+     table, the FPGA bitstreams and the unused I/O stubs are typed;
+     13 routines nothing calls are named, three of them, which the
+     decompiler read wrong, written by hand.  The SCPI tree's records
+     are the generator's.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

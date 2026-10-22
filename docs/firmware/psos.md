@@ -101,7 +101,11 @@ device at `0x24` in the kernel's configuration.  The kernel jumps to the
 routine with the caller's registers, and the routine's error in D7 and
 its results in the others go back through the `rte`; so these are
 register routines, not C, the names file's `family=device`
-(`structures.md`, `io_table`, lists them).
+(`structures.md`, `io_table`, lists them).  The ROM table the kernel's
+is copied from, `io_table_defaults` (`0x5171a`), is followed by a fifth
+device's six slots, `io_device_unused_stubs` (`0x517aa`), each `rts;
+nop; nop` in place of a `jmp.l`; `psos_config_init` copies only the
+four before it and `last_device` is 3, so no call reaches them.
 
 `trap #7`, `0x1341a`, hands back the caller's status register in D0
 and returns to it in supervisor mode.  `0x13422` wraps it, and

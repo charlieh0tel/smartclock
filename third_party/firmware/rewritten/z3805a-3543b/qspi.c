@@ -302,3 +302,18 @@ void qspi_transfer(qspi_device device, qspi_buffers* buffers, uint16_t count) {
   }
   cpu_sr_write(sr);
 }
+
+/* A long as QSPI_UNUSED_36_BIT's three 12-bit words: its high word with
+ * bit 11 set, its bits 15 to 4, and its bits 3 and 2 in bits 11 and 10;
+ * nothing calls it (0x1f278). */
+void qspi_unused_36_bit_write(uint32_t value) {
+  static const uint16_t FIRST_MARK = 0x0800;
+  static const uint32_t TWELVE_BITS = 0x0fff;
+  static const uint32_t LAST_BITS = 0x0c00;
+  uint16_t words[3];
+
+  words[0] = (uint16_t)(value >> 16) | FIRST_MARK;
+  words[1] = (value >> 4) & TWELVE_BITS;
+  words[2] = (value << 8) & LAST_BITS;
+  qspi_write(QSPI_UNUSED_36_BIT, words, sizeof words / sizeof words[0]);
+}

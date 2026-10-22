@@ -5,9 +5,10 @@
  * files, so every one of them can use it. */
 
 /* scpi_unsigned_to_digits' buffer: digits right-aligned to its index
- * 16, with room before them for a sign or a block's header; its size an
- * array's, so #define. */
-static const int16_t SCPI_DIGITS_END = 16 + 1;
+ * SCPI_DIGITS_LAST (scpi_convert.h), with room before them for a sign
+ * or a block's header, and the index after them; its size an array's,
+ * so #define. */
+static const int16_t SCPI_DIGITS_END = SCPI_DIGITS_LAST + 1;
 
 #define SCPI_DIGITS_SIZE 20
 
@@ -82,4 +83,20 @@ static int32_t scpi_engine_format_unsigned_long(scpi_port* output,
   digits[--start] = '+';
   scpi_engine_write(output, &digits[start], SCPI_DIGITS_END - start);
   return 0;
+}
+
+/* scpi_format_text's and its installer copy's body: a string as it
+ * is. */
+static int32_t scpi_engine_format_text(scpi_port* output, char** value) {
+  scpi_engine_write(output, *value, scpi_engine_length(*value));
+  return 0;
+}
+
+/* scpi_format_unsigned_short's and its installer copy's body: an
+ * unsigned short, as an unsigned long. */
+static int32_t scpi_engine_format_unsigned_short(scpi_port* output,
+                                                 uint16_t* value) {
+  uint32_t wide = *value;
+
+  return scpi_engine_format_unsigned_long(output, &wide);
 }

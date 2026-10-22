@@ -21,7 +21,7 @@ installer_float_raise_kept(uint32_t code, ...) {
   const libc_raise_state state = {&installer_float_status,
                                   installer_float_control, &installer_errno};
   const libc_raised raised =
-      libc_float_raise(code, callers_d1, operand, LIBC_CALLERS_RETURN(), state);
+      libc_float_raise(code, callers_d1, operand, LIBC_CALLERS_FRAME(), state);
 
   if (raised.report) {
     installer_float_exception_report(code, raised.address);

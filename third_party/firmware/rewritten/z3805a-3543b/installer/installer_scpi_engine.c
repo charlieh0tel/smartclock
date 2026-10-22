@@ -53,10 +53,20 @@ scpi_port* installer_scpi_session_init(void) {
   return &installer_console_port;
 }
 
+/* Closes the SCPI port, the console port's close, from its method table
+ * (installer::0x107690) (installer::0x107472). */
+void installer_scpi_session_close(void) { installer_scpi_port_close(); }
+
 /* Takes size bytes, rounded up to even, from an arena; 0 when it does
  * not hold them (installer::0x10735a). */
 void* installer_arena_alloc(int32_t size, scpi_arena* arena) {
   return scpi_arena_alloc(size, arena);
+}
+
+/* The bytes left in an arena, and its next free byte
+ * (installer::0x107386). */
+void* installer_arena_remaining(int32_t* remaining, scpi_arena* arena) {
+  return scpi_arena_remaining(remaining, arena);
 }
 
 /* Takes size bytes, rounded up to even, from a buffer: the buffer, the
@@ -77,13 +87,16 @@ void installer_arena_init(void* buffer, uint32_t size, scpi_arena** slot) {
   scpi_arena_init(buffer, size, slot);
 }
 
-/* installer_scpi_interpret's hook at each message's end and error: 0,
- * no further error (installer::0x1076ec). */
-uint32_t installer_scpi_message_done(void) { return 0; }
+/* installer_scpi_interpret's hook at each message's end and error,
+ * passed the call and the condition reported (STATUS_NO_CONDITION at an
+ * end): 0, no further error (installer::0x1076ec). */
+uint32_t installer_scpi_message_done(scpi_call* call, int32_t condition) {
+  return 0;
+}
 
 /* installer_scpi_interpret's hook when the input closes: 0
  * (installer::0x1076f0). */
-uint32_t installer_scpi_input_closed(void) { return 0; }
+uint32_t installer_scpi_input_closed(scpi_call* call) { return 0; }
 
 /* Fills a parser context, the word from its long's low half
  * (installer::0x10472e). */

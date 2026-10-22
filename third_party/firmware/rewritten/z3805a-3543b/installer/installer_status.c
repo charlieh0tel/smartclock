@@ -288,3 +288,44 @@ uint32_t installer_condition_is_command_error(int32_t condition) {
   return status_model_command_error(installer_status_negative_conditions,
                                     condition);
 }
+
+/* Frees the status model's queue and registers; called by nothing
+ * (installer::0x105e0e). */
+void installer_status_destroy(status_model* status) {
+  installer_error_queue_destroy(status->queue);
+  for (int32_t index = 0; index < status->register_count; index++) {
+    installer_memory_free(status->registers[index]);
+  }
+  installer_memory_free(status);
+}
+
+/* A condition's bit in its register's condition word, inverted for one
+ * that clears it (installer::0x106080). */
+void installer_status_condition_bit_get(status_model* status, int32_t condition,
+                                        uint32_t* bit) {
+  status_model_condition_bit_get(status, condition, bit);
+}
+
+/* Sets a register's enable word; the top register's is the port's
+ * service request enable, without RQS (installer::0x1060da). */
+void installer_status_register_set_enable(status_model* status, int32_t index,
+                                          int32_t enable) {
+  status_model_register_set_enable(status, index, enable);
+}
+
+/* A register's enable word (installer::0x106122). */
+void installer_status_register_get_enable(status_model* status, int32_t index,
+                                          uint16_t* enable) {
+  status_model_register_get_enable(status, index, enable);
+}
+
+/* A register's condition word (installer::0x1061b4). */
+void installer_status_read_condition(status_model* status, int32_t index,
+                                     uint16_t* condition) {
+  status_model_read_condition(status, index, condition);
+}
+
+/* Frees the error queue (installer::0x1063c0). */
+void installer_error_queue_destroy(status_error_queue* queue) {
+  installer_memory_free(queue);
+}

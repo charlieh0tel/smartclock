@@ -152,3 +152,31 @@ int32_t installer_strtol(char* s, char** end, int32_t base) {
   }
   return negative ? value : -value;
 }
+
+/* Registers a function for installer_call_atexit_functions: 1 for NULL
+ * or a full table, else 0; nothing calls it (installer::0x10900a). */
+int32_t installer_atexit(atexit_function* function) {
+  static const uint16_t FUNCTIONS_MOST =
+      sizeof installer_atexit_functions / sizeof installer_atexit_functions[0];
+
+  if (function == NULL || installer_atexit_count == FUNCTIONS_MOST) {
+    return 1;
+  }
+  installer_atexit_functions[(int16_t)installer_atexit_count++] = function;
+  return 0;
+}
+
+/* Saves its caller's registers, frame, return and stack, and through
+ * the installer's trap #1 the status register, in a buffer; returns 0,
+ * and again the value installer_longjmp gives (installer::0x1084a8). */
+uint32_t installer_setjmp(uint32_t* buffer) {
+  libc_setjmp_save();
+  return 0;
+}
+
+/* Restores the registers installer_setjmp saved in a buffer, and
+ * through the installer's trap #1 its status register, and returns to
+ * installer_setjmp's caller with value in D0 (installer::0x10847e). */
+uint64_t installer_longjmp(uint32_t* buffer, uint32_t value) {
+  libc_longjmp_restore();
+}

@@ -49,6 +49,7 @@ remainder.
 | `0x60a10` | `log` | run; `softfloat.md`'s natural log; sets `0x10393a` to 34, ERANGE, for log of zero, so that cell is `errno` |
 | `0x60f5e` | `pow` | run; `softfloat.md`'s pow |
 | `0x6191c` | `sqrt` | run; `softfloat.md`'s square root |
+| `0x5ecae` | `atexit` | read: appends a function to the table at `0x1038b4`, 1 for NULL or a full table of 32, else 0; nothing calls it |
 | `0x5ecf0` | runs the `atexit` functions | read: calls the functions in the table at `0x1038b4`, last first, counting down `0x103934` |
 | `0x5e93c` | raises a floating-point exception | read: every float routine calls it with a code, below, on an invalid operand, an overflow or a division by zero; it sets the cause in the status word at `0x1038b0` and traps if the control word at `0x1038b2` enables it (`softfloat.md`) |
 | `0x1412e` | reports a floating-point exception | read: builds the message from the code, below, in the length-prefixed buffer at `0x100bd4`, hands it to `0x1eefc` and stops |

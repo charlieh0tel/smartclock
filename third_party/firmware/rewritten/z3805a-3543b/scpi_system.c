@@ -425,11 +425,11 @@ int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response,
   }
   if (scpi_parameters_same(given->text, "PFORTH")) {
     scpi_language = SCPI_LANGUAGE_PFORTH;
-    return SCPI_ENGINE_SESSION_END;
+    return SCPI_HANDLER_SESSION_END;
   }
   if (scpi_parameters_same(given->text, "INSTALL")) {
     scpi_language = SCPI_LANGUAGE_INSTALL;
-    return SCPI_ENGINE_SESSION_END;
+    return SCPI_HANDLER_SESSION_END;
   }
   if (scpi_parameters_same(given->text, "PRIMARY")) {
     return 0;

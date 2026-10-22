@@ -30,6 +30,13 @@ void psos_config_init(void) {
  * not read is passed as 0.  psos_pack_name packs the name the stub was
  * given, its caller's first argument. */
 
+/* The kernel's version, which service 0 returns in D7 where the other
+ * services return their error: 0x3341 (docs/firmware/psos.md); nothing
+ * calls it (0x16f68). */
+uint16_t psos_version(void) {
+  return psos_call(PSOS_SERVICE_VERSION, 0, 0, 0, 0, NULL, NULL);
+}
+
 /* Creates a task of a name and priority, its supervisor and user
  * stacks' sizes in words packed in D3, a word each; on success its id
  * (0x16f74). */
@@ -371,7 +378,7 @@ uint32_t mutex_lock(mutex* lock) { return mutex_acquire(lock); }
 uint32_t mutex_unlock(mutex* lock) { return mutex_release(lock); }
 
 /* The task holding a mutex (0x1052e). */
-uint32_t mutex_owner(void* lock) { return ((mutex*)lock)->owner; }
+uint32_t mutex_owner(void* lock) { return os_mutex_owner(lock); }
 
 /* Pushes an entry on the front of a list (0x10c68). */
 void list_push(klok_entry** list, klok_entry* entry) {
@@ -409,16 +416,41 @@ void* memory_allocate(uint32_t size) {
 /* Frees a segment memory_allocate gave (0x510d2). */
 void memory_free(void* segment) { psos_free_segment(segment); }
 
+/* The running task's id; nothing calls it (0x510e0). */
+uint32_t current_task_id(void) { return psos_my_pid(); }
+
 /* Clears the exception hook and its per-task switch (0x118a8). */
 void exception_hook_reset(void) {
   exception_hook_per_task = 0;
   exception_hook = NULL;
 }
 
+/* Sets the per-task switch, so that exception_hook_get takes the
+ * running task's hook first; 0.  Nothing calls it (0x118b6). */
+int32_t exception_hook_enable_per_task(void) {
+  exception_hook_per_task = OS_SWITCH_ON;
+  return 0;
+}
+
 /* Sets the running task's own exception hook (0x118c2). */
 int32_t exception_hook_set_task(void* hook) {
   ((psos_task*)psos_my_pid())->exception_hook = hook;
   return 0;
+}
+
+/* Sets the shared exception hook; OS_SWITCH_ON when one was set
+ * before, else 0.  Nothing calls it (0x118d8). */
+int32_t exception_hook_set(void* hook) {
+  int32_t was_set = exception_hook != NULL ? OS_SWITCH_ON : 0;
+
+  exception_hook = hook;
+  return was_set;
+}
+
+/* Clears the running task's own exception hook; nothing calls it
+ * (0x118f4). */
+int32_t exception_hook_clear_task(void) {
+  return exception_hook_set_task(NULL);
 }
 
 /* The running task's exception hook while the per-task switch is set,
@@ -1179,22 +1211,7 @@ uint8_t task_set_priority(uint32_t task, uint8_t priority) {
 
 /* Spins 729 empty loops for each count, the count a word once it is not
  * 0 (0x13428). */
-void busy_wait(uint32_t count) {
-  /* busy_wait's empty loops for each count (0x13432). */
-  static const uint16_t BUSY_WAIT_SPINS = 0x2d9;
-
-  if (count == 0) {
-    return;
-  }
-  uint16_t remaining = count;
-
-  do {
-    for (uint16_t spin = BUSY_WAIT_SPINS; spin != 0; spin--) {
-      __asm__ volatile("");
-    }
-    remaining--;
-  } while (remaining != 0);
-}
+void busy_wait(uint32_t count) { os_busy_wait(count); }
 
 /* Pauses a number of seconds, as kernel ticks, at least one; a negative
  * time pauses a tick, and one past 2^21 seconds that long; nothing calls

@@ -39,7 +39,14 @@ state.  Each is by the routine and the address that shows it.
   was, the cause in its low word and its caller's in its high
   (`0x5e948`).  Its report pushes the address before the code
   (`0x5ec8c`), which `float_exception_report` prints as its code; its
-  prototype takes both.
+  prototype takes both.  It reads its caller's return address through
+  the caller's frame pointer only on the branches that may report it,
+  so that a caller with no frame is safe on the others: a quiet NaN
+  returns at `0x5ec04`, a signaling one whose report is not enabled
+  at `0x5ec1e`, before either reads it.  The math library's underflow
+  report address is not a long of its own: it overlaps the mantissa,
+  `A6+0x18` for a double (`0x5e990`), `A6+0x16` for a float
+  (`0x5ea6c`).
 - **The installer's `:DIAGnostic:ERASe` (`installer::0x107e6e`) and
   its flash word programmer (`installer::0x107c18`)** count their
   tries and report failure, -200, when the count reaches five

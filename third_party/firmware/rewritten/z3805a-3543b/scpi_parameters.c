@@ -20,12 +20,8 @@ uint32_t scpi_parse_text(scpi_token_string* token, void* unused, char** value) {
  * (0x25d70).  The token is a scpi_token_string, the value a
  * scpi_engine_string_value. */
 uint32_t scpi_parse_string(uint16_t* token, void* unused, uint32_t* value) {
-  scpi_token_string* string = (scpi_token_string*)token;
-  scpi_engine_string_value* given = (scpi_engine_string_value*)value;
-
-  given->text = string->text;
-  given->length = string->length;
-  return 0;
+  return scpi_parameters_string((scpi_token_string*)token,
+                                (scpi_engine_string_value*)value);
 }
 
 /* A keyword, ON or OFF, as a boolean, its text ended with a NUL here
@@ -84,40 +80,19 @@ int32_t scpi_parse_short(scpi_number* number, void* unused, int16_t* value,
 /* The suffix, then scpi_number_to_unsigned_short (0x25ee6). */
 int32_t scpi_parse_unsigned_short(scpi_number* number, void* unused,
                                   uint16_t* value, scpi_unit* units) {
-  int32_t error = scpi_apply_suffix(number, units);
-
-  if (error != 0) {
-    return error;
-  }
-  error = scpi_number_to_unsigned_short(number, value, number->scale);
-  scpi_engine_store_unit(value + 1, number->unit);
-  return error;
+  return scpi_parameters_unsigned_short(number, value, units);
 }
 
 /* The suffix, then scpi_number_to_long (0x25f26). */
 int32_t scpi_parse_long(scpi_number* number, void* unused, int32_t* value,
                         scpi_unit* units) {
-  int32_t error = scpi_apply_suffix(number, units);
-
-  if (error != 0) {
-    return error;
-  }
-  error = scpi_number_to_long(number, value, number->scale);
-  scpi_engine_store_unit(value + 1, number->unit);
-  return error;
+  return scpi_parameters_long(number, value, units);
 }
 
 /* The suffix, then scpi_number_to_unsigned_long (0x25f66). */
 int32_t scpi_parse_unsigned_long(scpi_number* number, void* unused,
                                  uint32_t* value, scpi_unit* units) {
-  int32_t error = scpi_apply_suffix(number, units);
-
-  if (error != 0) {
-    return error;
-  }
-  error = scpi_number_to_unsigned_long(number, value, number->scale);
-  scpi_engine_store_unit(value + 1, number->unit);
-  return error;
+  return scpi_parameters_unsigned_long(number, value, units);
 }
 
 /* The suffix, then a float of magnitude up to SCPI_REAL_LIMIT

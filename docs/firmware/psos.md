@@ -162,7 +162,13 @@ of `0xb2` bytes, exchanges of `0x22` and message buffers of `0x18`
 data area `psos_kernel`, the services `psos_service`);
 `kernel_return_from_interrupt`, trap #5, and `kernel_switch_task`, on
 the way out of a service, save the running task's registers in its
-record and switch to the first ready one.
+record and switch to the first ready one.  Before `kernel_init` sits
+`kernel_init_checked` (`0x15caa`), which nothing refers to: it sums the
+kernel's words from `0x14acc` to `psos_call` (`0x1606c`) and, unless
+`kernel_checksum` (`0x14ac8`) is 0 or the sum, fails with error 4
+before falling into `kernel_init`.  The stored sum is `0x028a9b53`;
+the words now sum to `0x028d24cc`, so the check would fail.  Service 0
+has a binding too, `psos_version` (`0x16f68`), which nothing calls.
 
 ## Services
 

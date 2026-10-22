@@ -125,13 +125,7 @@ uint32_t condition_is_command_error(int32_t condition) {
  * bit is tested in. */
 void status_condition_bit_get(status_model* status, int32_t condition,
                               uint32_t* bit) {
-  status_condition* entry = &status->conditions[condition];
-  int32_t word = (int16_t)status->registers[entry->register_index]->condition;
-
-  *bit = (cpu_long_bit(entry->bit) & word) != 0;
-  if (entry->kind == STATUS_KIND_CLEAR) {
-    *bit = *bit == 0;
-  }
+  status_model_condition_bit_get(status, condition, bit);
 }
 
 /* Sets a register's enable word, as :ENABle and *ESE do; the top
@@ -139,27 +133,13 @@ void status_condition_bit_get(status_model* status, int32_t condition,
  * (0x2842c). */
 void status_register_set_enable(status_model* status, int32_t index,
                                 int32_t enable) {
-  static const uint8_t STATUS_BYTE_BITS = 0xff;
-  status_register* reg = status->registers[index];
-
-  if (reg->parent_bit == 0) {
-    status->output->methods->sre_set(
-        status->output,
-        (uint16_t)enable & (STATUS_BYTE_BITS & ~STATUS_BYTE_REQUEST_SERVICE));
-    return;
-  }
-  reg->enable = enable;
-  status_propagate(status, reg);
+  status_model_register_set_enable(status, index, enable);
 }
 
 /* A register's enable word, as :ENABle? and *ESE? read it (0x28474). */
 void status_register_get_enable(status_model* status, int32_t index,
                                 uint16_t* enable) {
-  if (status->registers[index]->parent_bit == 0) {
-    *enable = status->output->methods->sre_get(status->output);
-  } else {
-    *enable = status->registers[index]->enable;
-  }
+  status_model_register_get_enable(status, index, enable);
 }
 
 /* A register's event word, cleared as it is read (0x284b6). */
@@ -170,7 +150,7 @@ void status_read_event(status_model* status, int32_t index, uint16_t* event) {
 /* A register's condition word, as :CONDition? reads it (0x28506). */
 void status_read_condition(status_model* status, int32_t index,
                            uint16_t* condition) {
-  *condition = status->registers[index]->condition;
+  status_model_read_condition(status, index, condition);
 }
 
 /* Reads every register's event word but the top one's, clearing them,

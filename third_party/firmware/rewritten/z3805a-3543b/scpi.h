@@ -19,6 +19,21 @@ static scpi_port* const SCPI_CONSOLE_PORT = (scpi_port*)0x29e18;
  * CR LF. */
 static const int16_t SCPI_PORT_CHARACTERS = 0x100;
 
+/* What a port's read gives for the end of its input or a read error
+ * (structures.md, "The SCPI session"). */
+static const int16_t SCPI_PORT_END = 0x101;
+
+/* console_read's error bits, which console_port_read and its installer
+ * copy report: the DUART's received break and framing error, overrun
+ * and parity error (MC68681, SRA), and its own bit 0. */
+static const uint8_t SCPI_CONSOLE_BREAK_OR_FRAMING = 0xc0;
+
+static const uint8_t SCPI_CONSOLE_OVERRUN = 0x10;
+
+static const uint8_t SCPI_CONSOLE_PARITY = 0x20;
+
+static const uint8_t SCPI_CONSOLE_COMMUNICATION = 0x01;
+
 /* A node's path word, or a parameter's kind word, that is none. */
 enum {
   SCPI_NONE = -1,
@@ -469,6 +484,13 @@ static void* scpi_arena_alloc(int32_t size, scpi_arena* arena) {
   }
   arena->next = end;
   return start;
+}
+
+/* arena_remaining's and its installer copy's body: the bytes left in an
+ * arena, and its next free byte. */
+static void* scpi_arena_remaining(int32_t* remaining, scpi_arena* arena) {
+  *remaining = arena->last - arena->next + 1;
+  return arena->next;
 }
 
 /* arena_take's and its installer copy's body: takes size bytes,

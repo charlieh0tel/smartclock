@@ -6,10 +6,6 @@
  * prototype.  scpi_convert.h holds the bodies its installer copies
  * share. */
 
-/* The most integer digits a long's converter takes, the decimal width
- * of its type (SCPI_SHORT_DIGITS a short's). */
-static const uint8_t SCPI_LONG_DIGITS = 10;
-
 /* The condition codes' Z bit, which a bridge keeps in bridge_ccr: set
  * when scpi_bcd_to_double's number does not fit a double (0x2507a) and
  * when scpi_double_to_decimal's is subnormal, infinite or NaN (0x24e0e);
@@ -188,110 +184,19 @@ int32_t scpi_number_to_short(scpi_number* number, int16_t* value,
 /* Its magnitude at a scale as an unsigned short, rounded (0x26140). */
 int32_t scpi_number_to_unsigned_short(scpi_number* number, uint16_t* value,
                                       int32_t scale) {
-  /* A const object is not a constant expression, so the base is 10 here. */
-  static const uint16_t MOST_TENTHS = 0xffff / 10;
-  static const uint16_t MOST_UNITS = 0xffff % 10;
-
-  if (number->digits[0] == 0) {
-    *value = 0;
-    return 0;
-  }
-  int32_t places = scpi_engine_places(number, scale);
-
-  if (places > SCPI_SHORT_DIGITS) {
-    return STATUS_SCPI_DATA_OUT_OF_RANGE;
-  }
-  uint16_t tens = 0;
-  uint16_t units = 0;
-
-  if (places > 0) {
-    tens = scpi_engine_digits_value(number, places - 1);
-    if (tens > MOST_TENTHS) {
-      return STATUS_SCPI_DATA_OUT_OF_RANGE;
-    }
-    tens *= SCPI_NUMBER_BASE;
-    units = number->digits[places - 1];
-  }
-  if (scpi_engine_rounds_up(number, places)) {
-    units++;
-  }
-  if (tens == MOST_TENTHS * SCPI_NUMBER_BASE && units > MOST_UNITS) {
-    return STATUS_SCPI_DATA_OUT_OF_RANGE;
-  }
-  *value = tens + units;
-  return 0;
+  return scpi_engine_number_to_unsigned_short(number, value, scale);
 }
 
 /* A number at a scale as a long, rounded (0x261e4). */
 int32_t scpi_number_to_long(scpi_number* number, int32_t* value,
                             int32_t scale) {
-  /* A const object is not a constant expression, so the base is 10 here. */
-  static const int32_t MOST_TENTHS = 0x7fffffff / 10;
-  static const uint32_t MOST_POSITIVE = 0x7fffffff;
-  static const uint32_t MOST_NEGATIVE = 0x80000000;
-
-  if (number->digits[0] == 0) {
-    *value = 0;
-    return 0;
-  }
-  int32_t places = scpi_engine_places(number, scale);
-
-  if (places > SCPI_LONG_DIGITS) {
-    return STATUS_SCPI_DATA_OUT_OF_RANGE;
-  }
-  uint32_t magnitude = 0;
-
-  if (places > 0) {
-    magnitude = scpi_engine_digits_value(number, places - 1);
-    if (magnitude > MOST_TENTHS) {
-      return STATUS_SCPI_DATA_OUT_OF_RANGE;
-    }
-    magnitude = magnitude * SCPI_NUMBER_BASE + number->digits[places - 1];
-  }
-  if (scpi_engine_rounds_up(number, places)) {
-    magnitude++;
-  }
-  if (magnitude > (number->negative ? MOST_NEGATIVE : MOST_POSITIVE)) {
-    return STATUS_SCPI_DATA_OUT_OF_RANGE;
-  }
-  *value = number->negative ? -magnitude : magnitude;
-  return 0;
+  return scpi_engine_number_to_long(number, value, scale);
 }
 
 /* Its magnitude at a scale as an unsigned long, rounded (0x2628a). */
 int32_t scpi_number_to_unsigned_long(scpi_number* number, uint32_t* value,
                                      int32_t scale) {
-  const uint32_t most_tenths = 0xffffffff / SCPI_NUMBER_BASE,
-                 most_units = 0xffffffff % SCPI_NUMBER_BASE;
-
-  if (number->digits[0] == 0) {
-    *value = 0;
-    return 0;
-  }
-  int32_t places = scpi_engine_places(number, scale);
-
-  if (places > SCPI_LONG_DIGITS) {
-    return STATUS_SCPI_DATA_OUT_OF_RANGE;
-  }
-  uint32_t tens = 0;
-  uint32_t units = 0;
-
-  if (places > 0) {
-    tens = scpi_engine_digits_value(number, places - 1);
-    if (tens > most_tenths) {
-      return STATUS_SCPI_DATA_OUT_OF_RANGE;
-    }
-    tens *= SCPI_NUMBER_BASE;
-    units = number->digits[places - 1];
-  }
-  if (scpi_engine_rounds_up(number, places)) {
-    units++;
-  }
-  if (tens == most_tenths * SCPI_NUMBER_BASE && units > most_units) {
-    return STATUS_SCPI_DATA_OUT_OF_RANGE;
-  }
-  *value = tens + units;
-  return 0;
+  return scpi_engine_number_to_unsigned_long(number, value, scale);
 }
 
 /* A number at a scale as a boolean: nonzero once rounded (0x2632c). */

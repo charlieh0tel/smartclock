@@ -71,3 +71,11 @@ uint32_t installer_scpi_header_resolve(scpi_keyword* keyword, scpi_call* call,
   return scpi_tree_header_resolve(keyword, call, offset, parameters, path,
                                   query, arena, unused_2);
 }
+
+/* Compares a token with a keyword pair, its short form, a NUL and the
+ * rest of its long form: 0 when the token is either form, else -1 or 1
+ * as it sorts before or after (installer::0x105810). */
+int16_t installer_scpi_keyword_compare(char* token, int32_t length,
+                                       char* keyword) {
+  return scpi_tree_keyword_compare(token, length, keyword);
+}

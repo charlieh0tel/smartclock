@@ -31,6 +31,7 @@
 0x13378	set_interrupt_mask	platform/cpu
 0x13368	enter_supervisor_mode	platform/cpu
 0x51038	psos_config_init	platform/os	copies the kernel's configuration and I/O table from ROM
+0x16f68	psos_version	platform/os
 0x16f74	psos_create	platform/os
 0x16fae	psos_start	platform/os
 0x16fca	psos_ident	platform/os
@@ -79,8 +80,12 @@
 0x13448	sleep_seconds	platform/os
 0x510aa	memory_allocate	platform/os
 0x510d2	memory_free	platform/os
+0x510e0	current_task_id	platform/os
 0x118a8	exception_hook_reset	platform/os
+0x118b6	exception_hook_enable_per_task	platform/os
+0x118d8	exception_hook_set	platform/os
 0x118c2	exception_hook_set_task	platform/os
+0x118f4	exception_hook_clear_task	platform/os
 0x118fe	exception_hook_get	platform/os
 0x16ee6	task_count_tick	platform/os
 0x10538	idle_count	platform/os
@@ -143,6 +148,7 @@
 0x5efc4	qsort_range	platform/stdlib
 0x5ef86	qsort_swap	platform/stdlib
 0x5efa0	qsort_rotate	platform/stdlib
+0x5ecae	atexit	platform/stdlib
 0x5ecf0	call_atexit_functions	platform/stdlib
 0x149a8	program_exit	platform/stdlib
 0x149bc	program_end_report	platform/stdlib

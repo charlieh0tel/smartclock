@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled report-decompiled scpi-tree check-scpi-tree clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled check-module-figures module-figures report-decompiled scpi-tree check-scpi-tree clean deb release release-notes install-service
 
 all: build
 
@@ -148,7 +148,7 @@ check-types:
 DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fwrapv -fno-toplevel-reorder -fno-builtin -ffunction-sections \
 	-fno-tree-loop-distribute-patterns -fno-omit-frame-pointer -fno-defer-pop -w \
 	-Wno-error=int-conversion -Wno-error=incompatible-pointer-types
-check-decompiled:
+check-decompiled: check-module-figures
 	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o target/decompiled.o third_party/firmware/decompiled/z3805a-3543b.c
 	python3 tools/firmware/decompiled_check.py third_party/firmware/decompiled/z3805a-3543b.c \
 		third_party/firmware/z3805a-3543b.bin target/decompiled.o
@@ -156,6 +156,16 @@ check-decompiled:
 		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q tools/firmware/bridge_check.py \
 		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
+
+# Fail if a figure in docs/firmware/modules.md -- a module's or layer's
+# functions, a function's callers or calls, the calls the wrong way --
+# is not what tools/ghidra/names/modules.tsv and the exported C's direct
+# calls give; module-figures rewrites them.
+check-module-figures:
+	python3 -I tools/firmware/module_figures.py
+
+module-figures:
+	python3 -I tools/firmware/module_figures.py --write
 
 # The Z3805A 3543B's SCPI tree as C data and as names-file rows, from
 # the image (docs/scpi/README.md, "As C"); cargo test fails while they

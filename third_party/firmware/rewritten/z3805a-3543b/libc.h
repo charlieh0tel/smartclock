@@ -626,9 +626,13 @@ static void libc_float_exception_message(uint8_t* message, uint32_t code) {
 static const int32_t LIBC_EDOM = 33;
 
 /* The longs float_raise reads after its code, as its callers push them:
- * a NaN's bits; an underflow's shift count and its mantissa, a double's
- * in three longs and a float's in two; and, for the math library, the
- * address its report gives, after those.  An array size, so #define. */
+ * a NaN's bits, then the address the math library's report gives; an
+ * underflow's shift count and its mantissa, a double's in three longs
+ * and a float's in two.  An underflow's report address for the math
+ * library overlaps the mantissa: a double's is its third long, which
+ * the image loads from A6+0x18 (0x5e990), a float's the low word of its
+ * second and the high word of the long after, from A6+0x16 (0x5ea6c).
+ * An array size, so #define. */
 #define LIBC_RAISE_OPERANDS 4
 /* And its stack arguments, the code first, as many as it reads. */
 #define LIBC_RAISE_ARGUMENTS (1 + LIBC_RAISE_OPERANDS)
@@ -662,10 +666,25 @@ static void libc_raise_operands(va_list list,
   }
 }
 
-/* The address float_raise's caller returns to, which the image reads
- * through the caller's frame pointer (0x5e99a), as one of its reports'
- * addresses. */
-#define LIBC_CALLERS_RETURN() (((const uint32_t*)__builtin_frame_address(1))[1])
+/* float_raise's caller's frame, through which the image reads the
+ * address its caller returns to (0x5e99a), as one of its reports'
+ * addresses: only on the branches that report it, since a caller's
+ * frame pointer need not point at a frame. */
+#define LIBC_CALLERS_FRAME() ((const uint32_t*)__builtin_frame_address(1))
+
+/* The address the frame's routine returns to, its long above the saved
+ * frame pointer. */
+static uint32_t libc_frame_return(const uint32_t* frame) { return frame[1]; }
+
+/* An inexact result's report address (0x5ebdc): the math library's
+ * first operand when the long's bit 7, a routine's math bit, is set,
+ * else the address float_raise's caller returns to. */
+static uint32_t libc_raise_inexact_address(uint32_t routine,
+                                           const uint32_t* operand,
+                                           const uint32_t* callers_frame) {
+  return (routine & LIBC_RAISE_MATH) != 0 ? operand[0]
+                                          : libc_frame_return(callers_frame);
+}
 
 /* A long shifted right by a count, as lsr.l shifts by a register: the
  * count modulo 64, nothing left from 32 on (MC68000PRM, LSR). */
@@ -693,6 +712,100 @@ static uint32_t libc_rotate_right(uint32_t value, uint32_t count) {
 static uint32_t libc_rotate_left(uint32_t value, uint32_t count) {
   return libc_rotate_right(value,
                            LIBC_WORD_BITS - (count & (LIBC_WORD_BITS - 1)));
+}
+
+/* What setjmp saves in its buffer, a jmp_buf of 0x42 bytes, and longjmp
+ * restores (0x5112a, 0x51100): its caller's D1 to D7 and A1 to A5, as
+ * movem.l stores them, A0, the caller's frame pointer, the address it
+ * returns to and its stack pointer there, and the status register,
+ * which trap #1 (0x510e8) saves for D0 0 and restores for any other. */
+typedef struct libc_jump_buffer {
+  uint32_t registers[12]; /* +0x00: D1-D7, A1-A5 */
+  uint32_t a0;            /* +0x30 */
+  uint32_t frame;         /* +0x34: A6 */
+  uint32_t return_to;     /* +0x38 */
+  uint32_t stack;         /* +0x3c: SP at the return address */
+  uint16_t sr;            /* +0x40 */
+} libc_jump_buffer;
+
+/* The saved A1's index among the buffer's registers. */
+#define LIBC_JUMP_A1 7
+
+/* setjmp's and its installer copy's body: saves its caller's
+ * registers, frame, return and stack, and through trap #1 the status
+ * register, in the buffer, the first argument.  Its registers are what
+ * its caller left in them, which C has no names for: the image's
+ * instructions in an asm statement, always in line in the routine, so
+ * that after gcc's link the frame pointer holds the caller's frame and
+ * the buffer is 8 above it. */
+__attribute__((always_inline)) static inline void libc_setjmp_save(void) {
+  __asm__ volatile(
+      "move.l %%a0,-(%%sp)\n\t"
+      "movea.l 8(%%a6),%%a0\n\t"
+      "move.l (%%sp)+,%c[a0](%%a0)\n\t"
+      "clr.l %%d0\n\t"
+      "trap #1\n\t"
+      "lea %c[a0](%%a0),%%a0\n\t"
+      "movem.l %%d1-%%d7/%%a1-%%a5,-(%%a0)\n\t"
+      "move.l (%%a6),%c[frame](%%a0)\n\t"
+      "move.l 4(%%a6),%c[return_to](%%a0)\n\t"
+      "lea 4(%%a6),%%a1\n\t"
+      "move.l %%a1,%c[stack](%%a0)\n\t"
+      "movea.l %c[saved_a1](%%a0),%%a1\n\t"
+      "movea.l %c[a0](%%a0),%%a0"
+      :
+      : [a0] "i"(__builtin_offsetof(libc_jump_buffer, a0)),
+        [frame] "i"(__builtin_offsetof(libc_jump_buffer, frame)),
+        [return_to] "i"(__builtin_offsetof(libc_jump_buffer, return_to)),
+        [stack] "i"(__builtin_offsetof(libc_jump_buffer, stack)),
+        [saved_a1] "i"(
+            __builtin_offsetof(libc_jump_buffer, registers[LIBC_JUMP_A1]))
+      : "d0", "memory");
+}
+
+/* longjmp's and its installer copy's body: restores the registers
+ * setjmp saved in the buffer, the first argument, and through trap #1
+ * its status register, and returns to setjmp's caller with the value,
+ * the second, in D0.  A value of 0 has trap #1 save the status register
+ * again, not restore it, and is returned as 0.  In line in the routine
+ * as libc_setjmp_save is; it never returns to the routine's caller. */
+__attribute__((always_inline)) static inline void libc_longjmp_restore(void) {
+  __asm__ volatile(
+      "movea.l 8(%%a6),%%a0\n\t"
+      "move.l 12(%%a6),%%d0\n\t"
+      "trap #1\n\t"
+      "movem.l (%%a0)+,%%d1-%%d7/%%a1-%%a5\n\t"
+      "movea.l 8(%%a6),%%a0\n\t"
+      "unlk %%a6\n\t"
+      "movea.l %c[frame](%%a0),%%a6\n\t"
+      "movea.l %c[stack](%%a0),%%sp\n\t"
+      "move.l %c[return_to](%%a0),(%%sp)\n\t"
+      "movea.l %c[a0](%%a0),%%a0\n\t"
+      "rts"
+      :
+      : [a0] "i"(__builtin_offsetof(libc_jump_buffer, a0)),
+        [frame] "i"(__builtin_offsetof(libc_jump_buffer, frame)),
+        [return_to] "i"(__builtin_offsetof(libc_jump_buffer, return_to)),
+        [stack] "i"(__builtin_offsetof(libc_jump_buffer, stack)));
+  __builtin_unreachable();
+}
+
+/* float_absolute_on_stack's and its installer copy's body: a float's
+ * magnitude, its sign bit cleared. */
+static float libc_float_magnitude(float f) {
+  union libc_float result = {.value = f};
+
+  result.bits &= ~LIBC_SIGN;
+  return result.value;
+}
+
+/* double_abs' and its installer copy's body: a double with its sign bit
+ * cleared. */
+static double libc_double_magnitude(double x) {
+  union libc_double result = {.value = x};
+
+  result.word.high &= ~LIBC_SIGN;
+  return result.value;
 }
 
 /* Whether a result rounds up, to nearest with ties to even, by the
@@ -791,14 +904,14 @@ static uint32_t libc_raise_single_underflow(libc_raised* raised, uint32_t count,
  * register as the caller left it with its low word the cause, which a
  * float's infinity and its quieted NaN return beside their one long
  * (0x5e948).  The report's address is, by the cause, an operand the math
- * library passes, the address its caller's caller returns to,
- * callers_return, or 0 for a code of no cause, chosen by the routine's
- * bit 7 but for two: the signaling NaN's tests the cause's bit 7, the
- * precision lost (0x5ec24), and an underflow's inexact report the
- * result's (0x5ebe0). */
+ * library passes, the address its caller's caller returns to, read
+ * through callers_frame on the branches that give it, or 0 for a code
+ * of no cause, chosen by the routine's bit 7 but for two: the signaling
+ * NaN's tests the cause's bit 7, the precision lost (0x5ec24), and an
+ * underflow's inexact report the result's (0x5ebe0). */
 static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
                                     const uint32_t operand[LIBC_RAISE_OPERANDS],
-                                    uint32_t callers_return,
+                                    const uint32_t* callers_frame,
                                     libc_raise_state state) {
   static const uint32_t SINGLE_QUIET = 0x00400000;
   static const uint32_t DOUBLE_QUIET = 0x00080000;
@@ -811,12 +924,10 @@ static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
   const uint16_t routine = code >> LIBC_WORD_BITS / 2;
   const bool single = (routine & LIBC_RAISE_SINGLE) != 0;
   const bool math = (routine & LIBC_RAISE_MATH) != 0;
-  /* the address an inexact result's report gives (0x5ebdc) */
-  const uint32_t inexact_address = math ? operand[0] : callers_return;
   libc_raised raised = {.high = 0,
                         .low = (callers_d1 & HIGH_WORD) | cause,
                         .report = true,
-                        .address = inexact_address};
+                        .address = 0};
 
   if ((cause & LIBC_CAUSE_SIGNALING_NAN) != 0) {
     const uint32_t quiet = single ? SINGLE_QUIET : DOUBLE_QUIET;
@@ -833,14 +944,14 @@ static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
     raised.high |= quiet;
     *state.status |= LIBC_CAUSE_OPERAND_ERROR;
     raised.report = (state.control & LIBC_CAUSE_OPERAND_ERROR) != 0;
-    if ((code & LIBC_CAUSE_PRECISION_LOST) == 0) {
-      raised.address = callers_return;
+    if (raised.report && (code & LIBC_CAUSE_PRECISION_LOST) == 0) {
+      raised.address = libc_frame_return(callers_frame);
     }
   } else if ((cause & LIBC_CAUSE_OPERAND_ERROR) != 0) {
     raised.address = operand[0];
     *state.status |= LIBC_CAUSE_OPERAND_ERROR;
     if (math) {
-      raised.address = callers_return;
+      raised.address = libc_frame_return(callers_frame);
       *state.error = LIBC_EDOM;
     }
     raised.report = (state.control & LIBC_CAUSE_OPERAND_ERROR) != 0;
@@ -850,14 +961,15 @@ static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
     raised.address = operand[0];
     *state.status |= LIBC_CAUSE_OVERFLOW | LIBC_CAUSE_INEXACT;
     if (math) {
-      raised.address = callers_return;
+      raised.address = libc_frame_return(callers_frame);
       *state.error = LIBC_ERANGE;
     }
     if ((state.control & LIBC_CAUSE_OVERFLOW) != 0) {
       return raised;
     }
     if ((state.control & LIBC_CAUSE_INEXACT) != 0) {
-      raised.address = inexact_address;
+      raised.address =
+          libc_raise_inexact_address(routine, operand, callers_frame);
       return raised;
     }
     libc_raise_infinity(&raised, single);
@@ -867,9 +979,9 @@ static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
     if (single) {
       raised.address = math ? operand[2] << LIBC_WORD_BITS / 2 |
                                   operand[3] >> LIBC_WORD_BITS / 2
-                            : callers_return;
+                            : libc_frame_return(callers_frame);
     } else {
-      raised.address = math ? operand[3] : callers_return;
+      raised.address = math ? operand[3] : libc_frame_return(callers_frame);
     }
     if (places > (single ? SINGLE_UNDERFLOW_MOST : DOUBLE_UNDERFLOW_MOST)) {
       /* nothing is left (0x5eafe) */
@@ -912,7 +1024,7 @@ static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
        * result's high long, which the image keeps where it kept the
        * routine (0x5ebe0) */
       raised.address =
-          (raised.high & LIBC_RAISE_MATH) != 0 ? operand[0] : callers_return;
+          libc_raise_inexact_address(raised.high, operand, callers_frame);
       return raised;
     }
     raised.report = false;
@@ -920,7 +1032,7 @@ static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
     raised.address = operand[0];
     *state.status |= LIBC_CAUSE_DIVIDE_BY_ZERO;
     if (math) {
-      raised.address = callers_return;
+      raised.address = libc_frame_return(callers_frame);
       *state.error = LIBC_ERANGE;
     }
     if ((state.control & LIBC_CAUSE_DIVIDE_BY_ZERO) != 0) {
@@ -928,15 +1040,17 @@ static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
     }
     libc_raise_infinity(&raised, single);
   } else if ((cause & LIBC_CAUSE_INEXACT) != 0) {
+    raised.address =
+        libc_raise_inexact_address(routine, operand, callers_frame);
     return raised;
   } else if ((cause & LIBC_CAUSE_PRECISION_LOST) != 0) {
+    raised.address =
+        libc_raise_inexact_address(routine, operand, callers_frame);
     *state.status |= LIBC_CAUSE_PRECISION_LOST | LIBC_CAUSE_INEXACT;
     raised.report =
         (state.control & (LIBC_CAUSE_PRECISION_LOST | LIBC_CAUSE_INEXACT)) != 0;
     raised.high = LARGEST_NAN_HIGH;
     raised.low = LARGEST_NAN_LOW;
-  } else {
-    raised.address = 0;
   }
   return raised;
 }

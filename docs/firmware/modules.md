@@ -2,14 +2,20 @@
 
 The plan for regrouping the Z3805A 3543B's hand-written C
 (`third_party/firmware/rewritten/z3805a-3543b/`, README.md, "Hand-written
-C") by subject.  `tools/ghidra/names/modules.tsv` puts each of 1314
+C") by subject.  `tools/ghidra/names/modules.tsv` puts each of 1320
 functions of the exported C (`third_party/firmware/decompiled/z3805a-3543b.c`)
-in a module, all 1312 it gives as C written by hand and two, `drtb_read`
+in a module, all 1318 it gives as C written by hand and two, `drtb_read`
 and `sci_read`, assembly; the other assembly routines, the pForth kernel
 (`0x18ed6` to `0x1ad27`) and the installer's copies are left out.  The
 evidence is the exported C's direct calls, read from each function's
 body; a call through a pointer, a descriptor's hook or a vector, is not
 among them, and those that matter are listed under "Indirect calls".
+The figures here, a module's functions, a function's callers (the
+functions calling it) and, where a call count is cited, both its call
+sites and the callers they are in ("168 call sites in 118 callers"), are
+`tools/firmware/module_figures.py`'s: `make check-module-figures`
+(part of `check-decompiled`) fails when one drifts, and
+`make module-figures` rewrites them.
 
 ## Layers
 
@@ -18,7 +24,7 @@ for the calls under "Calls the wrong way".
 
 | Layer | Functions | What it holds |
 | ----- | --------: | ------------- |
-| platform | 184 | start-up, the CPU, the kernel's calls and tasks, the debug output, the C library and arithmetic |
+| platform | 190 | start-up, the CPU, the kernel's calls and tasks, the debug output, the C library and arithmetic |
 | devices | 142 | a module to a chip or a QSPI device |
 | services | 194 | what the tasks share: the spooler, the status model, the EEPROM's records and logs, time, the 1PPS and the health monitor |
 | applications | 794 | the tasks that make the receiver: SCPI, the loop, the GPS engine's protocol, the self-test, the status screen and the console |
@@ -31,7 +37,7 @@ Where the approved layering named a module and the code says otherwise
   (`0x1f176`), `task_debug_message` (`0x1eff6`), `task_dmessage`
   (`0x1f056`) and `debug_sprintf` (`0x1ef46`) are called by every driver
   (the DUART's, the SCI's, the QSPI's, the EEPROM's, the FPGA's and the
-  interval counter's: 34 calls), the kernel reports and libc
+  interval counter's: 56 call sites in 26 callers), the kernel reports and libc
   (`float_exception_report`, `program_end_report`).  As a service, every
   one would be a call the wrong way; below the drivers, three are (they
   reach channel B's polled output).  `exception_name` and
@@ -90,10 +96,10 @@ Where the approved layering named a module and the code says otherwise
 | `boot` | 5 | the boot code, reset at `0x550` (`restart.md`), its own program: `boot_duart_early_init`, `boot_unpack_installer`; `primary_unpack_records`, the primary's copy |
 | `startup` | 7 | the reset path: `primary_start` (`0x12d6e`), `qsm_init`, `gpt_init`, `periodic_interrupt_enable`, `enter_installer`, `shutdown`; `sim` |
 | `cpu` | 2 | `set_interrupt_mask` (38 callers), `enter_supervisor_mode` |
-| `os` | 79 | pSOS: `psos_config_init`, the service and I/O wrappers (`psos_pause`, `psos_wait_v`, `psos_send_x`, ...), mutexes, memory, exception hooks, and the `:DIAG:OS` reports (`os_process_report`, `os_memory_report`, `task_stack_report`); `psos_config`, `task_table` |
+| `os` | 84 | pSOS: `psos_config_init`, the service and I/O wrappers (`psos_pause`, `psos_wait_v`, `psos_send_x`, ...), mutexes, memory, exception hooks, and the `:DIAG:OS` reports (`os_process_report`, `os_memory_report`, `task_stack_report`); `psos_config`, `task_table` |
 | `debug` | 13 | debug and fatal output: `task_dmessage`, `task_debug_message`, `debug_sprintf`, `debug_printf`, `printf_polled`, `fatal_error`, `print_exception`; `debug_enabled`, `crash_message` |
 | `string` | 11 | `memcpy`, `strcat`, `strncpy`, ...; `string_upper`, `skip_spaces`, `string_trim_right` |
-| `stdlib` | 15 | `abs`, `div`, `atoi`, `rand`, `qsort`, `setjmp`, `longjmp`, `program_exit`; `atexit_functions` |
+| `stdlib` | 16 | `abs`, `div`, `atoi`, `rand`, `qsort`, `setjmp`, `longjmp`, `program_exit`; `atexit_functions` |
 | `stdio` | 10 | `vsprintf`, `sprintf`, `doprnt`, `double_to_digits`, `printf`, and `console_write`/`console_read`, pSOS device 0 |
 | `math` | 10 | `fabs`, `frexp`, `modf`, `log`, `sqrt`, `pow`, `float_raise`; `errno` |
 | `arithmetic` | 32 | the C parts of the arithmetic: 64-bit (`int64_add`, `int64_to_double`), rounding, powers of ten, bit counts, `random_dither`.  The soft float itself (`softfloat.md`) is assembly |
@@ -138,7 +144,7 @@ Where the approved layering named a module and the code says otherwise
 | ------ | --------: | --------------------------- |
 | `main` | 2 | `system_init`, `root_task`; the task ids and exchanges |
 | `selftest` | 52 | the self-test table at `0x18458` and its checks: `selftest_run`, `selftest_all`, `selftest_print_failure`, the `*_with_lamp` checks, `lamp_test`, `supplies_test`; `selftest` |
-| `scpi/engine` | 23 | the SCPI task and interpreter: `scpi_task_start`, `scpi_task`, `scpi_interpret`, `scpi_parse_message_unit`, `scpi_call_handler`, the arena, and the handlers' helpers `return_zero` (117 calls) and `scpi_query_failed` (68) |
+| `scpi/engine` | 23 | the SCPI task and interpreter: `scpi_task_start`, `scpi_task`, `scpi_interpret`, `scpi_parse_message_unit`, `scpi_call_handler`, the arena, and the handlers' helpers `return_zero` (168 call sites in 118 callers) and `scpi_query_failed` (72 call sites in 68 callers) |
 | `scpi/port` | 17 | the console port object, method table `0x29dd4`: `scpi_console_port`, `console_port_read`, `scpi_prompt`, the status byte and SRE methods, `status_prompt_refresh`; `status_byte` |
 | `scpi/lexer` | 9 | `scpi_scan_token`, numbers, units and suffixes (`scpi_apply_suffix`) |
 | `scpi/tree` | 9 | keyword lookup and header paths: `scpi_node_find`, `scpi_header_resolve` |
@@ -248,11 +254,12 @@ The installer's copies of the primary's functions (`installer::` in
 the names file, by their twins' names prefixed `installer_`) are
 written in a file named for their twin's module, prefixed, in the
 folder `installer/`: `installer/installer_os.c`,
-`installer/installer_duartb.c`, `installer/installer_status.c`, which the
-exporter includes with the rest.  A copy
+`installer/installer_duartb.c`, `installer/installer_status.c`,
+`installer/installer_arithmetic.c`, `installer/installer_scpi_requests.c`,
+which the exporter includes with the rest.  A copy
 that reads nothing of the installer's own, and calls nothing but
 other such bodies, shares its twin's body: the body moves to the
-group's header (`libc.h`, `scpi.h`, `scpi_lexer.h`, `scpi_tree.h`,
+group's header (`libc.h`, `records.h`, `scpi.h`, `scpi_lexer.h`, `scpi_tree.h`,
 `scpi_parameters.h`, `scpi_convert.h`, `scpi_format.h`,
 `scpi_engine.h`, `status.h`, `startup.h`, `os.h`, `duart.h`) as a
 static function both call, given its image's own tables where it reads

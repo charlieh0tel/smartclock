@@ -275,3 +275,23 @@ void installer_duartb_transmit_interrupt(void) {
   }
   installer_duartb.in_transmit_interrupt = 0;
 }
+
+/* Starts a block out of channel B by interrupt without waiting, if an
+ * asynchronous send is allowed and the port is free
+ * (installer::0x1038a4). */
+void installer_drtb_send_async(char* block, uint8_t count) {
+  if (installer_duartb.async_allowed && !installer_duartb.reconfiguring &&
+      !installer_duartb.in_transmit_interrupt) {
+    installer_duartb.async_next = block;
+    installer_duartb.async_count = count;
+    installer_duartb.async_pending = 1;
+    installer_duart_shadow.imr |= IMR_TXRDYB;
+    duart.isr_imr = installer_duart_shadow.imr;
+  }
+}
+
+/* The done hook of channel B's setting descriptors: reconfigures device
+ * 0 (installer::0x103972). */
+void installer_duartb_settings_done(void) {
+  installer_psos_io_control(IO_DEVICE_DUART_B, 0, 0);
+}

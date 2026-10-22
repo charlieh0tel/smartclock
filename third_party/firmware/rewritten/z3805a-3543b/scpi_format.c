@@ -39,8 +39,7 @@ static uint32_t scpi_engine_real_to_text(double value, char* text,
 
 /* A string as it is (0x2636e). */
 int32_t scpi_format_text(scpi_port* output, char** value) {
-  scpi_engine_write(output, *value, scpi_engine_length(*value));
-  return 0;
+  return scpi_engine_format_text(output, value);
 }
 
 /* A string in double quotes, each quote doubled (0x2639e). */
@@ -101,9 +100,7 @@ int32_t scpi_format_unsigned_long(scpi_port* output, uint32_t* value) {
 
 /* An unsigned short, through scpi_format_unsigned_long (0x2661c). */
 int32_t scpi_format_unsigned_short(scpi_port* output, uint16_t* value) {
-  uint32_t wide = *value;
-
-  return scpi_format_unsigned_long(output, &wide);
+  return scpi_engine_format_unsigned_short(output, value);
 }
 
 /* A definite-length block: #, the count of the length's digits, the

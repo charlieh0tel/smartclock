@@ -314,18 +314,6 @@ static int32_t scpi_engine_call_handler(scpi_call* call, void** response) {
   return handler(call->parameters, *response, call);
 }
 
-/* What a handler returns, beyond a condition, for scpi_interpret to
- * act on (0x293e0 to 0x29410): call the common list's _TRG node, the
- * user-defined trigger, in its place; set the header path back to the
- * root; end the session, which :SYSTem:LANGuage's "PFORTH" and
- * "INSTALL" return (scpi_system.c).  No handler of this image returns
- * the first two. */
-enum {
-  SCPI_ENGINE_CALL_TRIGGER = -62,
-  SCPI_ENGINE_RESET_PATH = -61,
-  SCPI_ENGINE_SESSION_END = -60,
-};
-
 /* The output's value after a message's responses, above a character's,
  * which the port's put writes as CR LF (0x29544). */
 static const int32_t SCPI_ENGINE_RESPONSE_END = 0x10a;
@@ -356,8 +344,8 @@ typedef struct scpi_engine_routines {
                              scpi_call* call);
   int16_t (*clear_bit)(status_model* status, int32_t condition);
   uint32_t (*is_command_error)(int32_t condition);
-  uint32_t (*message_done)(void);
-  uint32_t (*input_closed)(void);
+  uint32_t (*message_done)(scpi_call* call, int32_t condition);
+  uint32_t (*input_closed)(scpi_call* call);
   uint32_t* response_begin_code;
   uint32_t* message_end_code;
   uint32_t* input_end_code;
@@ -400,7 +388,7 @@ static bool scpi_engine_respond(const scpi_engine_routines* routines,
     call->responding = SCPI_CALL_INDEFINITE;
   } else if (formatted != 0) {
     routines->clear_bit(call->status, formatted);
-    routines->message_done();
+    routines->message_done(call, formatted);
     return false;
   }
   return true;
@@ -415,16 +403,16 @@ static bool scpi_engine_message_end(const scpi_engine_routines* routines,
   scpi_port* output = call->output;
   status_model* status = call->status;
   bool skip = false;
-  const int32_t done = routines->message_done();
-  const int32_t signalled =
+  const int32_t done = routines->message_done(call, STATUS_NO_CONDITION);
+  const int32_t signaled =
       scpi_engine_signal(output, routines->message_end_code);
 
-  if (signalled == 0) {
+  if (signaled == 0) {
     if (call->responding != SCPI_CALL_NO_RESPONSE) {
       output->methods->put(output, SCPI_ENGINE_RESPONSE_END);
     }
-  } else if (signalled != STATUS_SCPI_QUERY_DEADLOCKED) {
-    skip = scpi_engine_report(routines, status, signalled);
+  } else if (signaled != STATUS_SCPI_QUERY_DEADLOCKED) {
+    skip = scpi_engine_report(routines, status, signaled);
   }
   if (done != 0 && scpi_engine_report(routines, status, done)) {
     skip = true;
@@ -487,14 +475,14 @@ static uint32_t scpi_engine_interpret(const scpi_engine_routines* routines,
     for (;;) {
       if (calling) {
         handled = routines->call_handler(&call, (void**)&call.response);
-        if (handled == SCPI_ENGINE_CALL_TRIGGER) {
+        if (handled == SCPI_HANDLER_CALL_TRIGGER) {
           call.node = trigger;
           call.query = trigger_query;
           continue;
         }
-        if (handled == SCPI_ENGINE_RESET_PATH) {
+        if (handled == SCPI_HANDLER_RESET_PATH) {
           routines->path_reset(&path, main_tree);
-        } else if (handled != 0 && handled != SCPI_ENGINE_SESSION_END) {
+        } else if (handled != 0 && handled != SCPI_HANDLER_SESSION_END) {
           if (scpi_engine_report(routines, status, handled) && !reset_path) {
             skip = true;
           }
@@ -524,14 +512,14 @@ static uint32_t scpi_engine_interpret(const scpi_engine_routines* routines,
       }
       if (parsed == SCPI_STATUS_INPUT_CLOSED) {
         scpi_engine_signal(input, routines->input_end_code);
-        routines->input_closed();
+        routines->input_closed(&call);
       } else if (parsed == SCPI_STATUS_PORT_FAILED) {
-        handled = SCPI_ENGINE_SESSION_END;
+        handled = SCPI_HANDLER_SESSION_END;
         call.result = -1;
       } else {
         if (scpi_engine_report(routines, status, parsed)) {
           skip = true;
-          routines->message_done();
+          routines->message_done(&call, parsed);
           reset_path = 1;
         }
         if (parsed != STATUS_SCPI_QUERY_UNTERMINATED &&
@@ -543,7 +531,7 @@ static uint32_t scpi_engine_interpret(const scpi_engine_routines* routines,
       reset_path = 1;
       break;
     }
-    if (handled == SCPI_ENGINE_SESSION_END) {
+    if (handled == SCPI_HANDLER_SESSION_END) {
       return call.result;
     }
   }

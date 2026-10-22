@@ -101,6 +101,57 @@ static uint32_t status_model_clear_events(status_model* status) {
   return 0;
 }
 
+/* status_condition_bit_get's and its installer copy's body: a
+ * condition's bit in its register's condition word, inverted for one
+ * that clears it.  The word is sign-extended to the long the bit is
+ * tested in. */
+static void status_model_condition_bit_get(status_model* status,
+                                           int32_t condition, uint32_t* bit) {
+  status_condition* entry = &status->conditions[condition];
+  int32_t word = (int16_t)status->registers[entry->register_index]->condition;
+
+  *bit = (cpu_long_bit(entry->bit) & word) != 0;
+  if (entry->kind == STATUS_KIND_CLEAR) {
+    *bit = *bit == 0;
+  }
+}
+
+/* status_register_set_enable's and its installer copy's body: sets a
+ * register's enable word, as :ENABle and *ESE do; the top register's is
+ * the port's service request enable, without RQS. */
+static void status_model_register_set_enable(status_model* status,
+                                             int32_t index, int32_t enable) {
+  static const uint8_t STATUS_BYTE_BITS = 0xff;
+  status_register* reg = status->registers[index];
+
+  if (reg->parent_bit == 0) {
+    status->output->methods->sre_set(
+        status->output,
+        (uint16_t)enable & (STATUS_BYTE_BITS & ~STATUS_BYTE_REQUEST_SERVICE));
+    return;
+  }
+  reg->enable = enable;
+  status_model_propagate(status, reg);
+}
+
+/* status_register_get_enable's and its installer copy's body: a
+ * register's enable word, as :ENABle? and *ESE? read it. */
+static void status_model_register_get_enable(status_model* status,
+                                             int32_t index, uint16_t* enable) {
+  if (status->registers[index]->parent_bit == 0) {
+    *enable = status->output->methods->sre_get(status->output);
+  } else {
+    *enable = status->registers[index]->enable;
+  }
+}
+
+/* status_read_condition's and its installer copy's body: a register's
+ * condition word, as :CONDition? reads it. */
+static void status_model_read_condition(status_model* status, int32_t index,
+                                        uint16_t* condition) {
+  *condition = status->registers[index]->condition;
+}
+
 /* The negative condition for an error code's class; 0 for none, a
  * code from -1 to -99 (0x2863c to 0x28670). */
 static int32_t status_model_error_class(int16_t code) {

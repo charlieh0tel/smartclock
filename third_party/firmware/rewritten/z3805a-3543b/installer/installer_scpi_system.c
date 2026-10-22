@@ -38,16 +38,13 @@ int32_t installer_scpi_query_SYSTem_ERRor(void* parameters, void* response,
  * (installer::0x107f92). */
 int32_t installer_scpi_set_SYSTem_LANGuage(void* parameters, void* response,
                                            scpi_call* call) {
-  /* What ends installer_scpi_interpret's session, as the primary's;
-   * status_condition_code names none. */
-  static const int32_t SESSION_END = -60;
   scpi_text_parameter* given = parameters;
 
   for (int8_t i = 0; given->text[i] != 0; i++) {
     given->text[i] = (char)installer_toupper(given->text[i]);
   }
   if (scpi_parameters_same(given->text, "PRIMARY")) {
-    return SESSION_END;
+    return SCPI_HANDLER_SESSION_END;
   }
   if (scpi_parameters_same(given->text, "INSTALL")) {
     return 0;

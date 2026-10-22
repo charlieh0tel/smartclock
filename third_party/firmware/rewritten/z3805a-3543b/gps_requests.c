@@ -108,19 +108,20 @@ int32_t request_ring_unput(gps_request_entry* entry) {
   return 1;
 }
 
-/* 1 if a request from the sender is running, the task being busy, or
+/* Whether a request from the sender is running, the task not idle, or
  * is waiting in the ring (0x4bbd6). */
-uint32_t request_ring_contains(char busy, char sender, char running_sender) {
-  if (busy != 0 && sender == running_sender) {
-    return 1;
+bool request_ring_contains(gps_process_state state, gps_request_sender sender,
+                           gps_request_sender running_sender) {
+  if (state != GPS_PROCESS_TASK_IDLE && sender == running_sender) {
+    return true;
   }
   for (gps_request_entry* entry = gps_requests.read;
        entry != gps_requests.write; entry = gps_requests_after(entry)) {
     if (entry->sender == sender) {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 /* 1 if the newest waiting request is a monitor's not yet sent, which a
@@ -142,7 +143,7 @@ uint32_t request_ring_newest_replaceable(void) {
  * refused as busy while one from its sender runs or waits, or when the
  * ring is full, unless it can replace the newest, which is answered busy
  * in its place (0x4bc74). */
-void gps_request_queue(uint8_t state, gps_request_entry* request,
+void gps_request_queue(gps_process_state state, gps_request_entry* request,
                        gps_request_entry* running) {
   gps_request_entry waiting;
 
@@ -157,7 +158,7 @@ void gps_request_queue(uint8_t state, gps_request_entry* request,
     gps_task_state = GPS_PROCESS_TASK_IDLE;
     return;
   }
-  if (request_ring_contains(state, request->sender, running->sender) != 0) {
+  if (request_ring_contains(state, request->sender, running->sender)) {
     gps_count_response(GPS_RESULT_BUSY, request);
     return;
   }

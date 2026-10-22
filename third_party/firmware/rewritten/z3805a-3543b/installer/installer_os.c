@@ -231,3 +231,296 @@ uint32_t installer_psos_io_open(uint32_t device, uint32_t a) {
  * where the primary's enter_installer has trap #11
  * (installer::0x100d1c). */
 void installer_restart(void) { __asm__ volatile("trap #12"); }
+
+/* The kernel's version, which service 0 returns in D7 where the other
+ * services return their error (installer::0x102abc). */
+uint16_t installer_psos_version(void) {
+  return installer_psos_call(PSOS_SERVICE_VERSION, 0, 0, 0, 0, NULL, NULL);
+}
+
+/* Suspends a task (installer::0x102b74). */
+uint32_t installer_psos_suspend(uint32_t task) {
+  return installer_psos_call(PSOS_SERVICE_SUSPEND, 0, 0, 0, 0, (void*)task,
+                             NULL);
+}
+
+/* Resumes a task (installer::0x102b8c). */
+uint32_t installer_psos_resume(uint32_t task) {
+  return installer_psos_call(PSOS_SERVICE_RESUME, 0, 0, 0, 0, (void*)task,
+                             NULL);
+}
+
+/* Changes a task's priority by a step; its old priority, even on an
+ * error (installer::0x102ba4). */
+uint32_t installer_psos_priority(uint32_t task, uint32_t priority,
+                                 uint8_t* old) {
+  uint32_t error = installer_psos_call(PSOS_SERVICE_PRIORITY, priority, 0, 0, 0,
+                                       (void*)task, NULL);
+
+  if (old != NULL) {
+    *old = bridge_result_d0;
+  }
+  return error;
+}
+
+/* Gives a segment of the running task's to another task
+ * (installer::0x102c60). */
+uint32_t installer_psos_assign_segment(void* segment, uint32_t task) {
+  return installer_psos_call(PSOS_SERVICE_ASSIGN_SEGMENT, 0, 0, 0, 0, segment,
+                             (void*)task);
+}
+
+/* Takes a segment back from a task (installer::0x102c7c). */
+uint32_t installer_psos_reclaim_segment(void* segment, uint32_t task) {
+  return installer_psos_call(PSOS_SERVICE_RECLAIM_SEGMENT, 0, 0, 0, 0, segment,
+                             (void*)task);
+}
+
+/* Makes a partition of fixed blocks in an area; its id, even on an
+ * error (installer::0x102c98). */
+uint32_t installer_psos_create_partition(void* area, uint32_t block_size,
+                                         uint32_t count, void** partition) {
+  uint32_t error = installer_psos_call(PSOS_SERVICE_CREATE_PARTITION,
+                                       block_size, count, 0, 0, area, NULL);
+
+  if (partition != NULL) {
+    *partition = (void*)bridge_result_a0;
+  }
+  return error;
+}
+
+/* Deletes a partition (installer::0x102cc2). */
+uint32_t installer_psos_delete_partition(void* partition, uint32_t block_size) {
+  return installer_psos_call(PSOS_SERVICE_DELETE_PARTITION, block_size, 0, 0, 0,
+                             partition, NULL);
+}
+
+/* Takes a block from a partition; on success the block
+ * (installer::0x102cde). */
+uint32_t installer_psos_get_block(void* partition, uint32_t block_size,
+                                  void** block) {
+  uint32_t error = installer_psos_call(PSOS_SERVICE_GET_BLOCK, block_size, 0, 0,
+                                       0, partition, NULL);
+
+  if (error == 0 && block != NULL) {
+    *block = (void*)bridge_result_a1;
+  }
+  return error;
+}
+
+/* Returns a block to its partition (installer::0x102d06). */
+uint32_t installer_psos_return_block(void* partition, void* block) {
+  return installer_psos_call(PSOS_SERVICE_RETURN_BLOCK, 0, 0, 0, 0, partition,
+                             block);
+}
+
+/* Attaches to an exchange by name; on success three longs, A0's, D1's
+ * and D2's (installer::0x102d52). */
+uint32_t installer_psos_service_21(char* name, uint32_t* out1, uint32_t* out2,
+                                   uint32_t* out3) {
+  uint32_t error = installer_psos_call(
+      PSOS_SERVICE_ATTACH_X, installer_psos_pack_name(), 0, 0, 0, NULL, NULL);
+
+  if (error == 0) {
+    if (out1 != NULL) {
+      *out1 = bridge_result_a0;
+    }
+    if (out2 != NULL) {
+      *out2 = bridge_result_d1;
+    }
+    if (out3 != NULL) {
+      *out3 = bridge_result_d2;
+    }
+  }
+  return error;
+}
+
+/* Deletes an exchange (installer::0x102d8e). */
+uint32_t installer_psos_delete_x(uint32_t exchange) {
+  return installer_psos_call(PSOS_SERVICE_DELETE_X, 0, 0, 0, 0, (void*)exchange,
+                             NULL);
+}
+
+/* Sends a message to the front of an exchange's queue
+ * (installer::0x102dc2). */
+uint32_t installer_psos_jam_x(uint32_t exchange, void* message) {
+  return installer_psos_call(PSOS_SERVICE_JAM_X, 0, 0, 0, 0, (void*)exchange,
+                             message);
+}
+
+/* Gives a message to every task waiting at an exchange and queues
+ * copies up to a count; on success the larger of the count and the
+ * tasks given it, and those tasks (installer::0x102dde). */
+uint32_t installer_psos_broadcast_x(uint32_t exchange, void* message,
+                                    uint32_t count, uint8_t* count_out,
+                                    uint8_t* woken) {
+  uint32_t error = installer_psos_call(PSOS_SERVICE_BROADCAST_X, count, 0, 0, 0,
+                                       (void*)exchange, message);
+
+  if (error == 0) {
+    if (count_out != NULL) {
+      *count_out = bridge_result_d0;
+    }
+    if (woken != NULL) {
+      *woken = bridge_result_d1;
+    }
+  }
+  return error;
+}
+
+/* The time of day: its date, time and ticks into the second, even on an
+ * error (installer::0x102ec4). */
+uint32_t installer_psos_get_time(uint32_t* date, uint32_t* time,
+                                 uint16_t* ticks) {
+  uint32_t error =
+      installer_psos_call(PSOS_SERVICE_GET_TIME, 0, 0, 0, 0, NULL, NULL);
+
+  if (date != NULL) {
+    *date = bridge_result_d0;
+  }
+  if (time != NULL) {
+    *time = bridge_result_d1;
+  }
+  if (ticks != NULL) {
+    *ticks = bridge_result_d2;
+  }
+  return error;
+}
+
+/* Sets the time of day (installer::0x102efa). */
+uint32_t installer_psos_set_time(uint32_t date, uint32_t time, uint32_t ticks) {
+  return installer_psos_call(PSOS_SERVICE_SET_TIME, date, time, ticks, 0, NULL,
+                             NULL);
+}
+
+/* Initializes a device (installer::0x102f1e). */
+uint32_t installer_psos_io_init(uint32_t device) {
+  return installer_psos_io_call(PSOS_IO_INIT, device, 0, 0, 0, NULL, NULL);
+}
+
+/* Closes a device (installer::0x102f52). */
+uint32_t installer_psos_io_close(uint32_t device) {
+  return installer_psos_io_call(PSOS_IO_CLOSE, device, 0, 0, 0, NULL, NULL);
+}
+
+/* Controls a device with two longs (installer::0x102fce). */
+uint32_t installer_psos_io_control(uint32_t device, uint32_t a, uint32_t b) {
+  return installer_psos_io_call(PSOS_IO_CONTROL, device, 0, a, b, NULL, NULL);
+}
+
+/* Packs the name and creates the mutex as an exchange of that name;
+ * installer_psos_pack_name reads the name as this function's caller's
+ * first argument (installer::0x1004e6). */
+uint32_t installer_mutex_create(char* name, mutex* lock) {
+  return installer_mutex_init(installer_psos_pack_name(), lock);
+}
+
+/* installer_mutex_acquire on its argument (installer::0x100502). */
+uint32_t installer_mutex_lock(mutex* lock) {
+  return installer_mutex_acquire(lock);
+}
+
+/* installer_mutex_release on its argument (installer::0x100518). */
+uint32_t installer_mutex_unlock(mutex* lock) {
+  return installer_mutex_release(lock);
+}
+
+/* The task holding a mutex (installer::0x10052e). */
+uint32_t installer_mutex_owner(void* lock) { return os_mutex_owner(lock); }
+
+/* Frees a segment installer_memory_allocate gave
+ * (installer::0x108450). */
+void installer_memory_free(void* segment) {
+  installer_psos_free_segment(segment);
+}
+
+/* The running task's id; nothing calls it (installer::0x10845e). */
+uint32_t installer_current_task_id(void) { return installer_psos_my_pid(); }
+
+/* Sets the per-task switch, so that installer_exception_hook_get takes
+ * the running task's hook first; 0 (installer::0x100546). */
+int32_t installer_exception_hook_enable_per_task(void) {
+  installer_exception_hook_per_task = OS_SWITCH_ON;
+  return 0;
+}
+
+/* Sets the running task's own exception hook (installer::0x100552). */
+int32_t installer_exception_hook_set_task(void* hook) {
+  ((psos_task*)installer_psos_my_pid())->exception_hook = hook;
+  return 0;
+}
+
+/* Sets the shared exception hook; OS_SWITCH_ON when one was set
+ * before, else 0 (installer::0x100568). */
+int32_t installer_exception_hook_set(void* hook) {
+  int32_t was_set = installer_exception_hook != NULL ? OS_SWITCH_ON : 0;
+
+  installer_exception_hook = hook;
+  return was_set;
+}
+
+/* Clears the running task's own exception hook
+ * (installer::0x100584). */
+int32_t installer_exception_hook_clear_task(void) {
+  return installer_exception_hook_set_task(NULL);
+}
+
+/* A task's user stack's use and size, then its supervisor stack's, as
+ * installer_stack_usage measures them, its used bytes in D0's half of
+ * the result and the size in D1's (installer::0x100da4). */
+int32_t installer_stack_measure(void* record, uint32_t* usage) {
+  static const uint32_t HALF_BITS = 32;
+  static const uint32_t USER_STACK_GAP = 4;
+  psos_task* task = record;
+  uint64_t supervisor = installer_stack_usage((uint16_t*)task->stack_bottom,
+                                              (char*)task->supervisor_top);
+
+  usage[2] = supervisor >> HALF_BITS;
+  usage[3] = supervisor;
+  uint64_t user =
+      installer_stack_usage((uint16_t*)(task->supervisor_top + USER_STACK_GAP),
+                            (char*)task->user_top);
+
+  usage[0] = user >> HALF_BITS;
+  usage[1] = user;
+  return 0;
+}
+
+/* A bare rts where the primary has stack_usage_report; nothing calls
+ * it (installer::0x100e7e). */
+void installer_stack_usage_report(void) {}
+
+/* Sets a task's priority, which the kernel changes by a step from the
+ * present one, and returns the priority it had
+ * (installer::0x100eb6). */
+uint8_t installer_task_set_priority(uint32_t task, uint8_t priority) {
+  uint8_t old;
+
+  installer_psos_priority(task, 0, &old);
+  installer_psos_priority(task, priority - old, &old);
+  return old;
+}
+
+/* Spins 729 empty loops for each count, the count a word once it is not
+ * 0 (installer::0x100f40). */
+void installer_busy_wait(uint32_t count) { os_busy_wait(count); }
+
+/* Pauses a number of seconds, as kernel ticks, at least one; a negative
+ * time pauses a tick, and one past 2^21 seconds that long
+ * (installer::0x100f60). */
+void installer_sleep_seconds(float seconds) {
+  /* The kernel's ticks a second, and the shortest and longest pauses
+   * it takes, a tick and 2^21 seconds. */
+  static const float TICKS_PER_SECOND = 1024;
+  static const float SLEEP_LONGEST = 1 << 21;
+
+  if (installer_float_compare(0.0f, seconds) > 0) {
+    seconds = 1.0f / TICKS_PER_SECOND;
+  } else if (installer_float_compare(seconds, SLEEP_LONGEST) > 0) {
+    seconds = SLEEP_LONGEST;
+  }
+  uint32_t ticks = installer_float_to_unsigned(
+      installer_float_multiply(seconds, TICKS_PER_SECOND));
+
+  installer_psos_pause(ticks == 0 ? 1 : ticks);
+}

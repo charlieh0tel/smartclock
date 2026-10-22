@@ -1615,6 +1615,22 @@ view cannot drift apart.  The library, bottom up:
      case in each (225 of the primary's, 20 of the installer's).  The
      primary's 1307 agree, 5 known; the installer's 155, 1 skipped;
      about the same 2 minutes 15.
+     Then the functions a survey of the installer's code and RAM found,
+     and six nothing calls in the primary, 0 left in either image again
+     but thunks and assembly: `psos_version`, whose service 0 returns
+     the version in D7, where the decompiler's trap set no service; the
+     exception hook's three setters, `current_task_id` and `atexit`; and
+     about 80 installer copies, those that read nothing of the
+     installer's own sharing their twins' bodies, moved to `os.h`,
+     `libc.h` (`setjmp` and `longjmp`'s asm, now one for both images),
+     `records.h`, `status.h`, `scpi.h` and the SCPI headers, the rest
+     written on the installer's globals, `installer_pllc_request_a` to
+     `_e` on a `pllc_request` as their twins, where the decompiler's
+     loose locals laid the message out wrong.  `float_raise`'s body
+     reads its caller's frame only on the branches whose report gives
+     its caller's return address, as the image does (`0x5ec00`, a quiet
+     NaN, returns without it).  The primary's 1313 agree, 5 known; the
+     installer's 235, 1 skipped.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

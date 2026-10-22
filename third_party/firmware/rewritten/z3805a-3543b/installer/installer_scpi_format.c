@@ -57,3 +57,14 @@ int32_t installer_scpi_format_response(scpi_port* output,
     output->methods->put(output, SCPI_SEPARATOR);
   }
 }
+
+/* A string as it is (installer::0x10450a). */
+int32_t installer_scpi_format_text(scpi_port* output, char** value) {
+  return scpi_engine_format_text(output, value);
+}
+
+/* An unsigned short, as an unsigned long (installer::0x10470c). */
+int32_t installer_scpi_format_unsigned_short(scpi_port* output,
+                                             uint16_t* value) {
+  return scpi_engine_format_unsigned_short(output, value);
+}

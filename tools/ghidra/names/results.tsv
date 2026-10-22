@@ -698,7 +698,7 @@ request_ring_full	full	1 if the request ring has no room
 request_ring_put	put	0 if the ring was full
 request_ring_get	got	0 if the ring was empty
 request_ring_unput	got	0 if the ring was empty
-request_ring_contains	waiting	1 if one from the sender runs or waits
+request_ring_contains	waiting	true if one from the sender runs or waits
 request_ring_newest_replaceable	replaceable	1 if the newest is a monitor's not yet sent
 gps_request_post	posted	1 if sent to gpsx_exchange
 gps_script_lookup	script	the script's steps, gps_script_none for another code
@@ -805,3 +805,62 @@ installer_scpi_set_DIAGnostic_DOWNload	error	0, -11 for a bad record or address,
 installer_scpi_set_DIAGnostic_ERASe	error	0, or -8 at the fifth try
 installer_scpi_query_DIAGnostic_ERASe	error	always 0
 installer_scpi_query_DIAGnostic_TEST	error	0, or -8 for a choice past 4
+# the batch that writes every function of the export by hand (2026-10-22)
+psos_version	version	the kernel's version, 0x3341
+installer_psos_version	version	the kernel's version, 0x3341
+exception_hook_enable_per_task	status	always 0
+installer_exception_hook_enable_per_task	status	always 0
+exception_hook_set	was_set	0xff when a hook was set before, else 0
+installer_exception_hook_set	was_set	0xff when a hook was set before, else 0
+exception_hook_clear_task	status	always 0
+installer_exception_hook_clear_task	status	always 0
+current_task_id	task	the running task's id
+installer_current_task_id	task	the running task's id
+atexit	full	1 for NULL or a full table, else 0
+installer_atexit	full	1 for NULL or a full table, else 0
+installer_arena_remaining	next	the arena's next free byte; the bytes left through the first argument
+installer_console_port_read	character	or above 0xff an end
+installer_double_abs	magnitude
+installer_exception_hook_set_task	status	0
+installer_float_absolute_on_stack	magnitude
+installer_mutex_create	status	mutex_init's: 0 or the kernel's error
+installer_mutex_lock	status	mutex_acquire's: 0 or the kernel's error
+installer_mutex_owner	owner	the task holding a mutex, at its +8
+installer_mutex_unlock	status	mutex_release's: 0 or the kernel's error
+installer_psos_assign_segment	error	0, or the service and the kernel's error
+installer_psos_broadcast_x	error	0, or the service and the kernel's error
+installer_psos_create_partition	error	0, or the service and the kernel's error
+installer_psos_delete_partition	error	0, or the service and the kernel's error
+installer_psos_delete_x	error	0, or the service and the kernel's error
+installer_psos_get_block	error	0, or the service and the kernel's error
+installer_psos_get_time	error	0, or the service and the kernel's error
+installer_psos_io_close	error	0, or the function and the device's error
+installer_psos_io_control	error	0, or the function and the device's error
+installer_psos_io_init	error	0, or the function in the high byte and the device's error in the low
+installer_psos_jam_x	error	0, or the service and the kernel's error
+installer_psos_priority	error	0, or the service and the kernel's error
+installer_psos_reclaim_segment	error	0, or the service and the kernel's error
+installer_psos_resume	error	0, or the service and the kernel's error
+installer_psos_return_block	error	0, or the service and the kernel's error
+installer_psos_service_21	error	0, or the service and the kernel's error
+installer_psos_set_time	error	0, or the service and the kernel's error
+installer_psos_suspend	error	0, or the service and the kernel's error
+installer_rotate_left	rotated
+installer_scpi_console_read	count	the characters read
+installer_scpi_console_return_zero	zero
+installer_scpi_format_text	error	0, or a negative condition
+installer_scpi_format_unsigned_short	error	0, or a negative condition
+installer_scpi_keyword_compare	order	-1, 0 or 1 as the token sorts before, is, or sorts after the keyword
+installer_scpi_number_to_long	error	0, or -11 out of range
+installer_scpi_number_to_unsigned_long	error	0, or -11 out of range
+installer_scpi_number_to_unsigned_short	error	0, or -11 out of range
+installer_scpi_parse_long	error	0, or a negative condition
+installer_scpi_parse_string	error	always 0
+installer_scpi_parse_unsigned_long	error	0, or a negative condition
+installer_scpi_parse_unsigned_short	error	0, or a negative condition
+installer_setjmp	jumped	0, or the value longjmp returns it with
+installer_sign_extend_bits	extended	the value sign-extended to a long
+installer_stack_measure	status	0
+installer_status_byte_get	summary	the Status Byte
+installer_status_sre_get	enable	the service request enable
+installer_task_set_priority	old_priority

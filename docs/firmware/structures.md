@@ -201,6 +201,18 @@ longs) is the value of the descriptor at `0x335be`, which the setter
 (`0x2e56c`) gives `pllc_request_d`, and `scpi_value_SAMPle_DOUBle`
 (`0x101e28`) that of the one at `0x33724`, whose type byte is 3; its
 query returns the 8 bytes, and its setter (`0x2e68c`) only returns 0.
+The block ends with `:GPS:INITial`'s values, each labeled by its
+descriptor: `scpi_value_SOURce_GPSystem_INITial_DATE` (`0x101e4a`,
+three longs, the year, 1994 to 2007, month and day) and `_TIME`
+(`0x101e56`, the hour, minute and second), which their setters give
+`pllc_request_d`, and `_POSition_latitude`, `_longitude` and `_height`
+(`0x101e62` to `0x101e6a`, a long each, milliarcseconds and
+centimeters), which the setter gives `pllc_request_c` one by one; only
+the descriptors refer to the cells.  Their defaults are 1961-08-22
+10:48:00, a date below the descriptor's minimum, and 0, 0, 0.  The
+descriptors at `0x335f4` and `0x3363c`, whose values are `0x101e08` (a
+long, 1 to 256) and `0x101e0c` (three, 0 to 100), are referred to by
+nothing, so those cells stay unlabeled.
 
 ## EEPROM records
 
@@ -888,10 +900,17 @@ GPS task's own request above, `0x4f` for the position and `0x51` for
 at `pll_scpi_gps_arguments` (`0x102002`), four longs it fills by that
 request: for `0x28` 1, the RAIM state and the limit, and a last long
 of 1.  Both point a `group_cell`
-(`+0x22`, `+0x18`) at one of four words by command group: `0x101f92`
-`:SAMPle`, `0x101f94` `:PULSe`, `0x101f98` `:STATus` and `0x101f9a`
-the rest.  No code reads the pointer but `scpi_numeric_get_double`,
-which nothing calls, and nothing refers to the words.  A numeric
+(`+0x22`, `+0x18`) at one of six words by command group,
+`scpi_group_cells` (`0x101f90`, 12 bytes, up to `interval_reading`):
+`serial_1` `:SYSTem:COMMunicate:SERial1` (`0x33328` on), `sample`
+`:SAMPle`, `:GPS:INITial`, `:SYSTem:PRINt` and
+`scpi_param_DOUGlas_STATe_request`, `pulse` `:OUTPut:STATe` and
+`:PULSe`, `serial_2` `SERial2` (`0x33aa2` on), `status` `:STATus` and
+`rest` the others, `0x33c8a` to `0x34374`.  No code reads or writes the
+words, so each is a word by their spacing alone.  A double parameter's
+descriptor (type 3, `0x33724`) has instead its step there, a
+`scpi_double_step` (`0x33718`, 0.001 and `0x32e36`), which only
+`scpi_numeric_get_double`, which nothing calls, reads.  A numeric
 descriptor's `steps` (`+0x28`) give `validate` each value's step: 8
 bytes a value, whose routine at `+4` returns it.
 
@@ -1667,9 +1686,16 @@ Left unnamed: `0x7a120` is `os_report_cpu`'s 500000 and `0x61c0f`
 addresses; the 36 `UNK_` addresses from `0x100b84` to `0x10aa6c` are
 installer-overlay references Ghidra also made in plain RAM, whose
 targets carry the overlay's names; `0x10253e`, `0x10253f` and
-`0x102c60` are only cleared; `0x1009ec`, the first byte
-`primary_reset` and `primary_trap_12` zero, and `0x10ffd0` to `0x10fffe`
-(below) are bounds and stack, not cells.
+`0x102c60` are only cleared; `0x10ffd0` to `0x10fffe` (below) are
+bounds and stack, not cells.  `0x1009ec`, the first byte
+`primary_reset` and `primary_trap_12` zero, through `0x10ffff`, is a
+bound too, labeled `reset_cleared_ram` so that the decompiled C
+names it.  `0x103d74`, which the boot vector table's vector 67
+(`0x10c`) holds, is `installer_duart_interrupt` in the installer's
+overlay: Ghidra made the reference in plain RAM, where nothing is.
+`psos_kernel_data` (`0x103948`, `psos_kernel`) is the kernel's data
+area, `psos_config.data_area`; the code reaches it through the
+configuration and A6, never by its address.
 
 Outside RAM and ROM: `lamp_latch` (`0x300000`), `fpga_port`
 (`0x304000`, the four registers `fpga_write` writes), `efc_strobe`
@@ -1689,6 +1715,27 @@ about 110 KB, two thirds erased; the tables and routines it led to are
 "ROM tables" above and the names file's section "The ROM tables and
 routines the untyped-range survey found".  A referenced or code-like
 run is the next to look at.
+
+In the installer's overlay the survey found 17 code-like runs (1559
+bytes), 9 referenced and 37 unreferenced.  Nearly all are the
+primary's routines and tables copied, which the installer's own code
+never reaches: the pSOS bindings it does not use, the mutex,
+stack, `setjmp` and soft-float routines `sleep_seconds` pulls in, the
+SCPI parsers, formatters and status routines the primary's tree needs,
+`scpi_error_messages`, the double-to-digits tables.  Each is the
+primary's byte for byte but for its absolute addresses, so it is named
+for its twin, `installer_` and the twin's name, in the names file's
+section "installer code the untyped survey found"; its twin, where
+Ghidra had none, is named in the section after.  Its own are
+`installer_scpi_console_putc`, without the echo buffer,
+`installer_console_port_read`, its revision `"Peru"` and an
+unreferenced copyright notice.  The runs left are the rts after an
+endless loop (`installer::0x100da2`, `0x104086`), the entry at
+`installer::0x108938` that swaps `float_compare`'s operands, and a few
+unreferenced bytes (`installer::0x10077a`, `0x104b86`), as in the
+primary, and the overlay's first long, the reset stack pointer
+`0x10fffe`, which `SmartClockInstaller.java` leaves untyped where
+`SmartClockSetup.java` types the primary's.
 
 ## The preserved region
 
@@ -1718,9 +1765,10 @@ alone, so each has its own label:
 | `0x101e84` | `max_loop_time` | ("The loop's state", above) |
 | `0x101e88` | `holdover_duration_exceeded` | set by `holdover` and `holdover_recovery` once `pll.holdover_duration` passes `nv_settings.holdover_status_threshold`, with happening `'.'`; `status_summary` bit `0x20`; `:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` |
 
-`retained_block` (`0x101e70`) labels the block, untyped, since its
-cells have their own labels.  `0x101e70`, `0x101e71` and `0x101e73`
-are only copied; the setting
+`retained_block` (`0x101e70`) labels the block, typed `uint8_t[2]`
+only, as `sample_values` is, since its other cells have their own
+labels.  `0x101e70`, `0x101e71` and `0x101e73` are only copied; the
+setting
 descriptor at `0x33d02` points at `0x101e73`, but no handler refers to
 it.
 

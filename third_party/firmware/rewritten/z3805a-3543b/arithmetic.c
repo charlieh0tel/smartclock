@@ -134,11 +134,7 @@ uint16_t isqrt16(uint32_t value) {
 /* A long rotated left by a count modulo 32, as rol.l takes it
  * (0x13406). */
 uint32_t rotate_left(uint32_t value, uint8_t count) {
-  count %= ARITHMETIC_LONG_BITS;
-  if (count == 0) {
-    return value;
-  }
-  return value << count | value >> (ARITHMETIC_LONG_BITS - count);
+  return libc_rotate_left(value, count);
 }
 
 /* A word's set bits (0x4f1da). */
@@ -305,20 +301,10 @@ float float_abs(float value) {
 }
 
 /* A float's magnitude, its sign bit cleared (0x133e2). */
-float float_absolute_on_stack(float f) {
-  union libc_float result = {.value = f};
-
-  result.bits &= ~LIBC_SIGN;
-  return result.value;
-}
+float float_absolute_on_stack(float f) { return libc_float_magnitude(f); }
 
 /* A double with its sign bit cleared; nothing calls it (0x133f2). */
-double double_abs(double x) {
-  union libc_double result = {.value = x};
-
-  result.word.high &= ~LIBC_SIGN;
-  return result.value;
-}
+double double_abs(double x) { return libc_double_magnitude(x); }
 
 /* A double rounded half away from zero to a long, saturating at the
  * long's bounds (0x1223c).  double_compare(a, x) is negative when
@@ -749,19 +735,7 @@ int32_t random_dither(void) {
 
 /* A value of so many bits sign-extended to a long (0x3145a). */
 uint32_t sign_extend_bits(uint32_t value, uint8_t width) {
-  if (width == 8) {
-    return (uint32_t)(int8_t)value;
-  }
-  if (width == 16) {
-    return (uint32_t)(int16_t)value;
-  }
-  if (width == 0 || width >= RECORDS_LONG_BITS) {
-    return value;
-  }
-  if (value & (uint32_t)1 << (width - 1)) {
-    value |= ~(uint32_t)0 << width;
-  }
-  return value;
+  return records_sign_extend_bits(value, width);
 }
 
 /* A float's magnitude bisected in powers_of_ten_float_21 (1e-21 to

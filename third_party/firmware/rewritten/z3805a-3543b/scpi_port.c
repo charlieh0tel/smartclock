@@ -11,12 +11,6 @@ void scpi_port_open(void) { psos_io_open(IO_DEVICE_DUART_B, 0); }
 /* Closes the SCPI port, device 0 (0x1def4). */
 void scpi_port_close(void) { psos_io_close(IO_DEVICE_DUART_B); }
 
-/* What a port's read gives for the end of its input or a read error
- * (structures.md, "The SCPI session"). */
-enum {
-  SCPI_PORT_END = 0x101,
-};
-
 /* Makes the SCPI prompt, with the latest error when there is one
  * (0x29b0e). */
 void scpi_prompt(int32_t error) {
@@ -43,13 +37,6 @@ int32_t scpi_console_return_zero(void) { return 0; }
  * error, which it reports; the last again once scpi_input_ended has
  * marked it (0x29bce). */
 int16_t console_port_read(void) {
-  /* console_read's error bits, the DUART's received break and framing
-   * error, overrun and parity error (MC68681, SRA), and its own bit 0. */
-  static const uint8_t CONSOLE_BREAK_OR_FRAMING = 0xc0;
-  static const uint8_t CONSOLE_OVERRUN = 0x10;
-  static const uint8_t CONSOLE_PARITY = 0x20;
-  static const uint8_t CONSOLE_COMMUNICATION = 0x01;
-
   if (scpi_input_repeat != 0) {
     scpi_input_repeat = 0;
     return scpi_last_input;
@@ -77,16 +64,16 @@ int16_t console_port_read(void) {
     scpi_input_next = scpi_input_line + 1;
     scpi_input_line[0] = 0;
     character = SCPI_PORT_END;
-    if (errors & CONSOLE_BREAK_OR_FRAMING) {
+    if (errors & SCPI_CONSOLE_BREAK_OR_FRAMING) {
       status_report(STATUS_FRAMING_ERROR);
     }
-    if (errors & CONSOLE_OVERRUN) {
+    if (errors & SCPI_CONSOLE_OVERRUN) {
       status_report(STATUS_INPUT_OVERRUN);
     }
-    if (errors & CONSOLE_PARITY) {
+    if (errors & SCPI_CONSOLE_PARITY) {
       status_report(STATUS_PARITY_ERROR);
     }
-    if (errors & CONSOLE_COMMUNICATION) {
+    if (errors & SCPI_CONSOLE_COMMUNICATION) {
       status_report(STATUS_COMMUNICATION_ERROR);
     }
   }

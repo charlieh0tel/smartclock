@@ -1610,8 +1610,10 @@ typedef struct scpi_numeric_param {
   uint16_t flags; /* +0x1e: 2 saved in the NV register, 4 at 0x400000 */
   gps_request_code gps_request; /* +0x20: as scpi_setting_param's */
   uint8_t field_21;
-  void* group_cell;   /* +0x22: as scpi_setting_param's; scpi_numeric_get_double
-                         alone reads it */
+  void* group_cell;   /* +0x22: a scpi_group_cells word, as
+                         scpi_setting_param's; a double parameter's (type 3,
+                         0x33724) is instead its scpi_double_step (0x33718),
+                         which scpi_numeric_get_double alone reads */
   uint8_t is_integer; /* +0x26: 0 float, 1 integer, 2 or 3 several */
   uint8_t field_27;
   void* steps; /* +0x28: 8 bytes a value, whose routine at +4 gives validate the
@@ -1943,6 +1945,20 @@ typedef enum __attribute__((packed)) scpi_call_responding {
   SCPI_CALL_INDEFINITE = 2,
 } scpi_call_responding;
 
+/* What an SCPI handler returns, beyond a status condition, for
+ * scpi_interpret and its installer copy to act on (0x293e0 to 0x29410):
+ * call the common list's _TRG node, the user-defined trigger, in its
+ * place; set the header path back to the root; end the session, which
+ * :SYSTem:LANGuage's "PFORTH" and "INSTALL" return (0x30680) and the
+ * installer's "PRIMARY" (installer::0x107f92).  No handler of this image
+ * returns the first two.  It should type the handlers' results beside
+ * status_condition_code. */
+typedef enum __attribute__((packed)) scpi_handler_action {
+  SCPI_HANDLER_CALL_TRIGGER = -62,
+  SCPI_HANDLER_RESET_PATH = -61,
+  SCPI_HANDLER_SESSION_END = -60,
+} scpi_handler_action;
+
 /* The call record scpi_interpret builds for a handler, on its stack at
  * -0x78(a6) (docs/firmware/README.md, "Hand-written C"; 0x29322 to
  * 0x29344), which every handler is given. */
@@ -2056,6 +2072,21 @@ typedef struct status_register {
   struct status_register* parent; /* +0x0a: the register it reports into */
   int16_t parent_bit;             /* +0x0e: at this bit */
 } status_register;
+
+/* The installer's status conditions, installer_status_conditions'
+ * (installer::0x107aea) and installer_status_report_messages' indexes
+ * (installer::0x107b08): none, then its four errors, -360 to -363,
+ * which installer_console_port_read reports (installer::0x107554 to
+ * installer::0x10758e) where the primary's are STATUS_COMMUNICATION_ERROR
+ * to STATUS_INPUT_OVERRUN.  It should type installer_status_report's
+ * code. */
+typedef enum __attribute__((packed)) installer_status_condition {
+  INSTALLER_STATUS_NONE = 0,
+  INSTALLER_STATUS_COMMUNICATION_ERROR = 1, /* -360 */
+  INSTALLER_STATUS_PARITY_ERROR = 2,        /* -361 */
+  INSTALLER_STATUS_FRAMING_ERROR = 3,       /* -362 */
+  INSTALLER_STATUS_INPUT_OVERRUN = 4,       /* -363 */
+} installer_status_condition;
 
 /* How a status condition changes its register (status_condition.kind),
  * by status_set_bit's jump table at 0x2825c. */
@@ -3249,9 +3280,23 @@ typedef struct scpi_setting_param {
   gps_request_code gps_request; /* +0x16: what pll_scpi_send_to_loop sends
                                    gpsx_exchange, GPS_REQUEST_NONE none */
   uint8_t field_17;
-  void* group_cell; /* +0x18: 0x101f92 to 0x101f9a by command group; no code
-                       reads it */
+  void* group_cell; /* +0x18: a scpi_group_cells word by command group; no
+                       code reads it */
 } scpi_setting_param;
+
+/* The words the numeric and setting descriptors' group_cell points at,
+ * one for each command group (scpi_group_cells, 0x101f90, 12 bytes, up
+ * to interval_reading).  No code reads or writes them, only
+ * primary_reset's clear, so each is a word by their spacing alone. */
+typedef struct scpi_group_cells_fields {
+  uint16_t serial_1; /* +0x00: :SYSTem:COMMunicate:SERial1's (0x33328 on) */
+  uint16_t sample;   /* +0x02: :SAMPle's, :GPS:INITial's, :SYSTem:PRINt's
+                        and scpi_param_DOUGlas_STATe_request's */
+  uint16_t pulse;    /* +0x04: :OUTPut:STATe's and :PULSe's (0x33968 on) */
+  uint16_t serial_2; /* +0x06: :SYSTem:COMMunicate:SERial2's (0x33aa2 on) */
+  uint16_t status;   /* +0x08: :STATus's (0x33b10 on) */
+  uint16_t rest;     /* +0x0a: every other descriptor's, 0x33c8a to 0x34374 */
+} scpi_group_cells_fields;
 
 /* A SCPI action's descriptor, in ROM, 6 bytes, from 0x4132a to 0x4137d.
  * validate_or_doaction refuses an index above last_index, then
@@ -3823,7 +3868,8 @@ typedef enum __attribute__((packed)) psos_table_state {
 /* The kernel's services, trap #3's D7 (psos.md, "Services"); 8 and 21
  * are named by the pSOS-68K brochure's list there. */
 typedef enum __attribute__((packed)) psos_service {
-  PSOS_SERVICE_SPAWN = 1, /* create a task */
+  PSOS_SERVICE_VERSION = 0, /* ver: the kernel's version in D7 */
+  PSOS_SERVICE_SPAWN = 1,   /* create a task */
   PSOS_SERVICE_START = 2,
   PSOS_SERVICE_IDENT = 3,
   PSOS_SERVICE_DELETE = 4,

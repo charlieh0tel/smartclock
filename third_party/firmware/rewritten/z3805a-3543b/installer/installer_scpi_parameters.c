@@ -30,3 +30,31 @@ uint32_t installer_scpi_parameters_finish(scpi_parameter** next,
                                           scpi_call* call, int16_t* offset) {
   return scpi_parameters_left_out(next, call, offset);
 }
+
+/* A string token's text and length, as its handler takes them; 0
+ * (installer::0x10411a). */
+uint32_t installer_scpi_parse_string(uint16_t* token, void* unused,
+                                     uint32_t* value) {
+  return scpi_parameters_string((scpi_token_string*)token,
+                                (scpi_engine_string_value*)value);
+}
+
+/* The suffix, then the number as an unsigned short
+ * (installer::0x104176). */
+int32_t installer_scpi_parse_unsigned_short(scpi_number* number, void* unused,
+                                            uint16_t* value, scpi_unit* units) {
+  return scpi_parameters_unsigned_short(number, value, units);
+}
+
+/* The suffix, then the number as a long (installer::0x1041b6). */
+int32_t installer_scpi_parse_long(scpi_number* number, void* unused,
+                                  int32_t* value, scpi_unit* units) {
+  return scpi_parameters_long(number, value, units);
+}
+
+/* The suffix, then the number as an unsigned long
+ * (installer::0x1041f6). */
+int32_t installer_scpi_parse_unsigned_long(scpi_number* number, void* unused,
+                                           uint32_t* value, scpi_unit* units) {
+  return scpi_parameters_unsigned_long(number, value, units);
+}

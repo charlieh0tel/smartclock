@@ -82,6 +82,15 @@ static uint32_t scpi_parameters_text(scpi_token_string* token, char** value) {
   return 0;
 }
 
+/* scpi_parse_string's and its installer copy's body: a string token's
+ * text and length, as its handler takes them; 0. */
+static uint32_t scpi_parameters_string(scpi_token_string* token,
+                                       scpi_engine_string_value* value) {
+  value->text = token->text;
+  value->length = token->length;
+  return 0;
+}
+
 /* scpi_parse_short's and its installer copy's body: the suffix, then
  * the number as a short, and its unit after it. */
 static int32_t scpi_parameters_short(scpi_number* number, int16_t* value,
@@ -92,6 +101,51 @@ static int32_t scpi_parameters_short(scpi_number* number, int16_t* value,
     return error;
   }
   error = scpi_engine_number_to_short(number, value, number->scale);
+  scpi_engine_store_unit(value + 1, number->unit);
+  return error;
+}
+
+/* scpi_parse_unsigned_short's and its installer copy's body: the
+ * suffix, then the number as an unsigned short, and its unit after
+ * it. */
+static int32_t scpi_parameters_unsigned_short(scpi_number* number,
+                                              uint16_t* value,
+                                              scpi_unit* units) {
+  int32_t error = scpi_engine_apply_suffix(number, units);
+
+  if (error != 0) {
+    return error;
+  }
+  error = scpi_engine_number_to_unsigned_short(number, value, number->scale);
+  scpi_engine_store_unit(value + 1, number->unit);
+  return error;
+}
+
+/* scpi_parse_long's and its installer copy's body: the suffix, then the
+ * number as a long, and its unit after it. */
+static int32_t scpi_parameters_long(scpi_number* number, int32_t* value,
+                                    scpi_unit* units) {
+  int32_t error = scpi_engine_apply_suffix(number, units);
+
+  if (error != 0) {
+    return error;
+  }
+  error = scpi_engine_number_to_long(number, value, number->scale);
+  scpi_engine_store_unit(value + 1, number->unit);
+  return error;
+}
+
+/* scpi_parse_unsigned_long's and its installer copy's body: the suffix,
+ * then the number as an unsigned long, and its unit after it. */
+static int32_t scpi_parameters_unsigned_long(scpi_number* number,
+                                             uint32_t* value,
+                                             scpi_unit* units) {
+  int32_t error = scpi_engine_apply_suffix(number, units);
+
+  if (error != 0) {
+    return error;
+  }
+  error = scpi_engine_number_to_unsigned_long(number, value, number->scale);
   scpi_engine_store_unit(value + 1, number->unit);
   return error;
 }

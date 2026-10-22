@@ -38,6 +38,24 @@ static uint16_t records_sum_and_complement(uint8_t sum) {
   return (uint16_t)(sum << RECORDS_FIELD_BITS | (uint8_t)~sum);
 }
 
+/* sign_extend_bits' and its installer copy's body: a value of so many
+ * bits sign-extended to a long. */
+static uint32_t records_sign_extend_bits(uint32_t value, uint8_t width) {
+  if (width == 8) {
+    return (uint32_t)(int8_t)value;
+  }
+  if (width == 16) {
+    return (uint32_t)(int16_t)value;
+  }
+  if (width == 0 || width >= RECORDS_LONG_BITS) {
+    return value;
+  }
+  if (value & (uint32_t)1 << (width - 1)) {
+    value |= ~(uint32_t)0 << width;
+  }
+  return value;
+}
+
 /* The firmware revision the NV register's tag carries, which *IDN?
  * answers too. */
 static const char RECORDS_FIRMWARE_REVISION[] = "3543B";

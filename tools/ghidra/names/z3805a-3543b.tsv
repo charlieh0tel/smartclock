@@ -103,7 +103,7 @@
 0x100b14	label	forth_prompt	console.md	forth_build_prompt's "p4th", a space and the base's letter, then " > " or ">> " and a NUL; forth_refill prints it	char[10]
 0x100ba8	label	string_device_cursor	console.md	the string console_read_from_string reads, advanced as it reads; string_device_init clears it, string_device_control sets it	char *
 0x101dda	label	sample_values	structures.md	the start of the :SAMPle and :INITial values, 0x101dda to 0x101e6d, which system_init fills whole from sample_values_defaults; the descriptors' own labels, scpi_value_SAMPle_BOOLean on, split the rest, so only the first two bytes are this label's	uint8_t[2]
-0x101e70	label	retained_block	structures.md	the 0x19 bytes system_init and pllp_task copy whole with preserved_region; its own cells have their own labels, so untyped
+0x101e70	label	retained_block	structures.md	the start of the 0x19 bytes system_init and pllp_task copy whole with preserved_region; the cells' own labels, led_alarm on, split the rest, so only the first two bytes, which are only copied, are this label's	uint8_t[2]
 0x29fce	function	scpi_task_create	console.md	creator of the SCPI task
 #
 # the rest of the float library, docs/firmware/libc.md
@@ -961,6 +961,7 @@
 0x15c96	function	kernel_queue_remove	psos.md	unlinks the task in A5 from its queue		convention=undetermined; confidence=derived; family=psos
 0x15cd8	function	kernel_init	psos.md	trap #6: carves the configuration's memory into task records (0xb2 bytes), exchanges (0x22) and message buffers (0x18), and starts the kernel		convention=exception; confidence=read; family=psos
 0x15f84	function	kernel_idle_task	psos.md	the task kernel_init creates as IDLE and starts here: stop #0x2000, forever		convention=other; confidence=read; family=psos
+0x15ec4	function	kernel_halt	read	kernel_init's halt, which 0x15ea8 branches to: 0xdead in A0, then stop #0		convention=other; confidence=read; family=psos
 0x15ece	function	kernel_region_init	psos.md	sets up regions 0 and 1 from the configuration		convention=undetermined; confidence=derived; family=psos
 0x15f8a	function	kernel_return_from_interrupt	psos.md	trap #5: an interrupt handler's exit, switching tasks if it made a higher one ready		convention=exception; confidence=read; family=psos
 #
@@ -1212,13 +1213,13 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4bb4e	function	request_ring_unput	context	takes back the newest request from the ring	int request_ring_unput(gps_request_entry *entry)
 0x4bb9a	function	request_ring_empty	context	1 if the request ring is empty
 0x4bbb0	function	request_ring_full	context	1 if the request ring is full
-0x4bbd6	function	request_ring_contains	context	1 if a request with the ID is waiting in the ring
+0x4bbd6	function	request_ring_contains	context	true if a request from the sender is running or waiting in the ring; its one caller tests D0's low byte (0x4bcde)	bool request_ring_contains(gps_process_state state, gps_request_sender sender, gps_request_sender running_sender)
 0x4bd2c	function	gps_request_post	gps.md, "Requests"	builds a request, its kind, index and arguments, and sends it to the GPS task's exchange	bool gps_request_post(gps_request_sender sender, gps_request_code_word code, int32_t *arguments, uint8_t sent)
 0x4bd2c	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4	uint32_t request_kind_valid(gps_request_sender sender)
 0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps	gps_script_step ** gps_script_lookup(gps_request_code_word code)
 0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise	gps_code_class gps_request_class(gps_request_code_word code, gps_argument_mode argument_mode)
-0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(uint8_t state, gps_request_entry *request, gps_request_entry *running)
+0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(gps_process_state state, gps_request_entry *request, gps_request_entry *running)
 0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders	int16_t gps_request_build(gps_request_code_word message, gps_argument_mode mode, int32_t *arguments, uint8_t *out)
 0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update	uint8_t *gps_response_decode(gps_request_code_word message, uint8_t *response)
 0x4b7ac	function	gps_response_lookup	context	a response's two-character ID to its index among 49, counting unknown_response	uint32_t gps_response_lookup(char first, char second, int16_t *length, gps_request_code_word *index)
@@ -1826,8 +1827,8 @@ installer::0x1073f6	function	installer_scpi_prompt	context	the installer's scpi_
 installer::0x10742a	function	installer_scpi_session_init	context	the installer's scpi_session_init	scpi_port *installer_scpi_session_init(void)
 installer::0x10746a	function	installer_scpi_console_port	context	the installer's scpi_console_port: returns 0x1076d0, its console port's object	scpi_port *installer_scpi_console_port(void)
 installer::0x107656	function	installer_status_update_rqs	context	the installer's status_update_rqs	void installer_status_update_rqs(void)
-installer::0x1076ec	function	installer_scpi_message_done	context	the installer's scpi_message_done	uint32_t installer_scpi_message_done(void)
-installer::0x1076f0	function	installer_scpi_input_closed	context	the installer's scpi_input_closed	uint32_t installer_scpi_input_closed(void)
+installer::0x1076ec	function	installer_scpi_message_done	context	the installer's scpi_message_done	uint32_t installer_scpi_message_done(scpi_call *call, int32_t condition)
+installer::0x1076f0	function	installer_scpi_input_closed	context	the installer's scpi_input_closed	uint32_t installer_scpi_input_closed(scpi_call *call)
 installer::0x1076f4	function	installer_status_prompt_refresh	context	the installer's status_prompt_refresh	void installer_status_prompt_refresh(status_model *status, int32_t error)
 installer::0x107886	function	installer_scpi_task_create	context	the installer's scpi_task_create, which installer_scpi_task_start hands installer_spoo_run	uint32_t installer_scpi_task_create(uint32_t priority)
 installer::0x107902	function	installer_scpi_task	context	the installer's SCPI task, which installer_scpi_task_create starts
@@ -1953,6 +1954,7 @@ installer::0x108578	label	installer_io_table_defaults	structures.md	installer_ps
 0x10aff0	label	installer_task_console	structures.md	as task_console, which installer_duartb_isr compares with the reader for a ^C; only cleared, at 0x100d38	uint32_t
 0x10aff8	label	installer_task_root	structures.md	the root task at 0x100d40 stores its own id here	uint32_t
 0x10affc	label	installer_task_scpi	structures.md	the installer's scpi task, created at 0x107886; installer_duartb_transmit_interrupt signals it 0x20	uint32_t
+0x10b00c	label	installer_pllc_exchange	context	as pllc_exchange: installer_pllc_request_a to _e send their requests here; nothing in the installer creates it or calls them	uint32_t
 0x10b034	label	installer_idle_loops	structures.md	as idle_loops: the root task at 0x100d40 clears it and counts it in its endless loop	uint32_t
 0x10b038	label	installer_float_status	structures.md	as float_status; installer_entry clears it	uint16_t
 0x10b03a	label	installer_float_control	structures.md	as float_control; installer_entry sets 0x7480	uint16_t
@@ -1992,8 +1994,8 @@ installer::0x108578	label	installer_io_table_defaults	structures.md	installer_ps
 0x29990	function	scpi_numeric_get_double	context	scpi_numeric_get for a parameter of doubles; called by nothing	double scpi_numeric_get_double(scpi_numeric_param *param, int index, short kind, short bound)
 0x29a1e	function	long_identity	context	returns its argument; called by nothing
 0x29a62	function	float_identity	context	returns its argument; the EFC queries pass pll.efc through it	float float_identity(float x)
-0x29e34	function	scpi_message_done	context	scpi_interpret's hook at each message's end and error: returns 0, no further error	undefined4 scpi_message_done(void)
-0x29e38	function	scpi_input_closed	context	scpi_interpret's hook when the input closes: returns 0	undefined4 scpi_input_closed(void)
+0x29e34	function	scpi_message_done	context	scpi_interpret's hook at each message's end and error: returns 0, no further error	uint32_t scpi_message_done(scpi_call *call, int32_t condition)
+0x29e38	function	scpi_input_closed	context	scpi_interpret's hook when the input closes: returns 0	uint32_t scpi_input_closed(scpi_call *call)
 0x2f53a	function	status_event_hook	context	does nothing; status_report and status_happening pass it each event
 0x30f08	function	eeprom_lock_init	context	clears the EEPROM's busy flag at 0x101d34
 0x32e2e	function	load_long	context	the long at a pointer; the position setters pass it as a descriptor's getter	int32_t load_long(scpi_step *step, void *value, int32_t index)
@@ -2434,3 +2436,162 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x50caa	label	gps_step_raim_arguments	structures.md	a script step: GPS_STEP_RAIM_ARGUMENTS, arguments 0x0	gps_script_step_1_argument
 0x50cb2	label	gps_step_parse_options	structures.md	a script step: GPS_STEP_PARSE_OPTIONS, arguments 0x0	gps_script_step_1_argument
 0x50cba	label	gps_step_status_monitor	structures.md	a script step: GPS_STEP_STATUS_MONITOR, arguments 0x1	gps_script_step_1_argument
+#
+# installer code the untyped survey found (2026-10-22): each the installer's copy of
+# the primary routine its name follows, its bytes the primary's but where noted;
+# tools/ghidra/SmartClockUntyped.java, docs/firmware/untyped/z3805a-3543b.tsv
+installer::0x100400	function	installer_mutex_init	context	the installer's copy of mutex_init, at 0x10400 plus 0xf0000, byte for byte but for its jsr.l targets, installer_psos_call (installer::0x100406, installer::0x100416, installer::0x10042a)		convention=register; confidence=read; in=D0 int name, A1 mutex *lock; out=D7 int error; error=D7 3 service 21 finds the name; preserves=D1, D2, A0; family=mutex
+installer::0x1004d2	function	installer_mutex_clear	context	the installer's copy of mutex_clear, at 0x104d2 plus 0xf0000, byte for byte		convention=register; confidence=read; in=A1 mutex *lock; family=mutex
+installer::0x1004e6	function	installer_mutex_create	context	the installer's copy of mutex_create, at 0x104e6 plus 0xf0000, byte for byte but for its jsr.l targets, installer_psos_pack_name (installer::0x1004ec)	uint32_t installer_mutex_create(char *name, mutex *lock)
+installer::0x100502	function	installer_mutex_lock	context	the installer's copy of mutex_lock, at 0x10502 plus 0xf0000, byte for byte	uint32_t installer_mutex_lock(mutex *lock)
+installer::0x100518	function	installer_mutex_unlock	context	the installer's copy of mutex_unlock, at 0x10518 plus 0xf0000, byte for byte	uint32_t installer_mutex_unlock(mutex *lock)
+installer::0x10052e	function	installer_mutex_owner	context	the installer's copy of mutex_owner, at 0x1052e plus 0xf0000, byte for byte	uint32_t installer_mutex_owner(void *mutex)
+installer::0x100552	function	installer_exception_hook_set_task	context	the installer's copy of exception_hook_set_task, at 0x118c2 plus 0xeec90, byte for byte but for its jsr.l targets, installer_psos_my_pid (installer::0x100552)	int installer_exception_hook_set_task(void *hook)
+installer::0x100da4	function	installer_stack_measure	context	the installer's copy of stack_measure, at 0x1321a plus 0xedb8a, byte for byte	int installer_stack_measure(void *task, uint32_t *usage)
+installer::0x100e64	function	installer_stack_usage	context	the installer's copy of stack_usage, at 0x132da plus 0xedb8a, byte for byte		convention=register; confidence=read; in=A1 uint16_t *bottom, D0 char *top; out=D0:D1 long long usage; preserves=D2, D3, D4, D5, D6, D7, A0, A2, A3, A4, A5, A6; family=stack
+installer::0x100eb6	function	installer_task_set_priority	context	the installer's copy of task_set_priority, at 0x1339e plus 0xedb18, byte for byte but for its jsr.l targets, installer_psos_priority (installer::0x100ec6, installer::0x100ee6)	uint8_t installer_task_set_priority(uint32_t task, uint8_t priority)
+installer::0x100efa	function	installer_float_absolute_on_stack	context	the installer's copy of float_absolute_on_stack, at 0x133e2 plus 0xedb18, byte for byte	float installer_float_absolute_on_stack(float f)	convention=c; confidence=documented; out=D0 float
+installer::0x100f0a	function	installer_double_abs	context	the installer's copy of double_abs, at 0x133f2 plus 0xedb18, byte for byte	double installer_double_abs(double value)
+installer::0x100f1e	function	installer_rotate_left	context	the installer's copy of rotate_left, at 0x13406 plus 0xedb18, byte for byte	uint32_t installer_rotate_left(uint32_t value, uint8_t count)
+installer::0x100f40	function	installer_busy_wait	context	the installer's copy of busy_wait, at 0x13428 plus 0xedb18, byte for byte	void installer_busy_wait(uint32_t count)
+installer::0x100f60	function	installer_sleep_seconds	context	the installer's copy of sleep_seconds, at 0x13448 plus 0xedb18, byte for byte but for its jsr.l targets, installer_float_compare (installer::0x100f6c, installer::0x100f86), installer_float_multiply (installer::0x100f9e), installer_float_to_unsigned (installer::0x100fa4), installer_psos_pause (installer::0x100fb2)	void installer_sleep_seconds(float seconds)
+installer::0x1028ca	function	installer_kernel_halt	context	the installer's copy of kernel_halt, at 0x15ec4 plus 0xeca06		convention=other; confidence=read; family=psos
+installer::0x10298a	function	installer_kernel_idle_task	context	the installer's copy of kernel_idle_task, at 0x15f84 plus 0xeca06, byte for byte		convention=other; confidence=read; family=psos
+installer::0x102b74	function	installer_psos_suspend	context	the installer's copy of psos_suspend, at 0x17020 plus 0xebb54, byte for byte	unsigned long installer_psos_suspend(unsigned long task)
+installer::0x102b8c	function	installer_psos_resume	context	the installer's copy of psos_resume, at 0x17038 plus 0xebb54, byte for byte	unsigned long installer_psos_resume(unsigned long task)
+installer::0x102ba4	function	installer_psos_priority	context	the installer's copy of psos_priority, at 0x17050 plus 0xebb54, byte for byte	unsigned long installer_psos_priority(unsigned long task, unsigned long priority, unsigned char *old)
+installer::0x102c60	function	installer_psos_assign_segment	context	the installer's copy of psos_assign_segment, at 0x1710c plus 0xebb54, byte for byte	unsigned long installer_psos_assign_segment(void *segment, unsigned long task)
+installer::0x102c7c	function	installer_psos_reclaim_segment	context	the installer's copy of psos_reclaim_segment, at 0x17128 plus 0xebb54, byte for byte	unsigned long installer_psos_reclaim_segment(void *segment, unsigned long task)
+installer::0x102c98	function	installer_psos_create_partition	context	the installer's copy of psos_create_partition, at 0x17144 plus 0xebb54, byte for byte	unsigned long installer_psos_create_partition(void *area, unsigned long block_size, unsigned long count, void **partition)
+installer::0x102cc2	function	installer_psos_delete_partition	context	the installer's copy of psos_delete_partition, at 0x1716e plus 0xebb54, byte for byte	unsigned long installer_psos_delete_partition(void *partition, unsigned long block_size)
+installer::0x102cde	function	installer_psos_get_block	context	the installer's copy of psos_get_block, at 0x1718a plus 0xebb54, byte for byte	unsigned long installer_psos_get_block(void *partition, unsigned long block_size, void **block)
+installer::0x102d06	function	installer_psos_return_block	context	the installer's copy of psos_return_block, at 0x171b2 plus 0xebb54, byte for byte	unsigned long installer_psos_return_block(void *partition, void *block)
+installer::0x102d52	function	installer_psos_service_21	context	the installer's copy of psos_service_21, at 0x171fe plus 0xebb54, byte for byte	unsigned long installer_psos_service_21(char *name, unsigned long *out1, unsigned long *out2, unsigned long *out3)
+installer::0x102d8e	function	installer_psos_delete_x	context	the installer's copy of psos_delete_x, at 0x1723a plus 0xebb54, byte for byte	unsigned long installer_psos_delete_x(unsigned long exchange)
+installer::0x102dc2	function	installer_psos_jam_x	context	the installer's copy of psos_jam_x, at 0x1726e plus 0xebb54, byte for byte	unsigned long installer_psos_jam_x(unsigned long exchange, void *message)
+installer::0x102dde	function	installer_psos_broadcast_x	context	the installer's copy of psos_broadcast_x, at 0x1728a plus 0xebb54, byte for byte	unsigned long installer_psos_broadcast_x(unsigned long exchange, void *message, unsigned long count, unsigned char *count_out, unsigned char *woken)
+installer::0x102ec4	function	installer_psos_get_time	context	the installer's copy of psos_get_time, at 0x17370 plus 0xebb54, byte for byte	unsigned long installer_psos_get_time(unsigned long *date, unsigned long *time, unsigned short *ticks)
+installer::0x102efa	function	installer_psos_set_time	context	the installer's copy of psos_set_time, at 0x173a6 plus 0xebb54, byte for byte	unsigned long installer_psos_set_time(unsigned long date, unsigned long time, unsigned long ticks)
+installer::0x102f1e	function	installer_psos_io_init	context	the installer's copy of psos_io_init, at 0x173ca plus 0xebb54, byte for byte	unsigned long installer_psos_io_init(unsigned long device)
+installer::0x102f52	function	installer_psos_io_close	context	the installer's copy of psos_io_close, at 0x173fe plus 0xebb54, byte for byte	unsigned long installer_psos_io_close(unsigned long device)
+installer::0x102fce	function	installer_psos_io_control	context	the installer's copy of psos_io_control, at 0x1747a plus 0xebb54, byte for byte	unsigned long installer_psos_io_control(unsigned long device, unsigned long a, unsigned long b)
+installer::0x1038a4	function	installer_drtb_send_async	context	the installer's copy of drtb_send_async, at 0x1de32 plus 0xe5a72, byte for byte but for its absolute addresses, 0x10afaa, 0x10af6f, 0x10af70, 0x10af60, 0x10af66, 0x10af67, 0x10ad44	void installer_drtb_send_async(char *block, uint8_t count)
+installer::0x103966	function	installer_scpi_port_close	context	the installer's copy of scpi_port_close, at 0x1def4 plus 0xe5a72, byte for byte but for its jsr.l targets, installer_psos_io_close (installer::0x103968)	void installer_scpi_port_close(void)
+installer::0x103972	function	installer_duartb_settings_done	context	the installer's copy of duartb_settings_done, at 0x1df00 plus 0xe5a72, byte for byte but for its jsr.l targets, installer_psos_io_control (installer::0x103978)	void installer_duartb_settings_done(void)
+installer::0x10411a	function	installer_scpi_parse_string	context	the installer's copy of scpi_parse_string, at 0x25d70 plus 0xde3aa, byte for byte	uint32_t installer_scpi_parse_string(uint16_t *token, void *unused, uint32_t *value)
+installer::0x104176	function	installer_scpi_parse_unsigned_short	context	the installer's copy of scpi_parse_unsigned_short, at 0x25ee6 plus 0xde290, byte for byte but for its jsr.l targets, installer_scpi_apply_suffix (installer::0x104182), installer_scpi_number_to_unsigned_short (installer::0x10419a)	int installer_scpi_parse_unsigned_short(scpi_number *number, void *param_2, uint16_t *value, scpi_unit *units)
+installer::0x1041b6	function	installer_scpi_parse_long	context	the installer's copy of scpi_parse_long, at 0x25f26 plus 0xde290, byte for byte but for its jsr.l targets, installer_scpi_apply_suffix (installer::0x1041c2), installer_scpi_number_to_long (installer::0x1041da)	int installer_scpi_parse_long(scpi_number *number, void *param_2, int32_t *value, scpi_unit *units)
+installer::0x1041f6	function	installer_scpi_parse_unsigned_long	context	the installer's copy of scpi_parse_unsigned_long, at 0x25f66 plus 0xde290, byte for byte but for its jsr.l targets, installer_scpi_apply_suffix (installer::0x104202), installer_scpi_number_to_unsigned_long (installer::0x10421a)	int installer_scpi_parse_unsigned_long(scpi_number *number, void *param_2, uint32_t *value, scpi_unit *units)
+installer::0x1042dc	function	installer_scpi_number_to_unsigned_short	context	the installer's copy of scpi_number_to_unsigned_short, at 0x26140 plus 0xde19c, byte for byte	int installer_scpi_number_to_unsigned_short(scpi_number *number, uint16_t *value, int scale)
+installer::0x104380	function	installer_scpi_number_to_long	context	the installer's copy of scpi_number_to_long, at 0x261e4 plus 0xde19c, byte for byte	int installer_scpi_number_to_long(scpi_number *number, int32_t *value, int scale)
+installer::0x104426	function	installer_scpi_number_to_unsigned_long	context	the installer's copy of scpi_number_to_unsigned_long, at 0x2628a plus 0xde19c, byte for byte	int installer_scpi_number_to_unsigned_long(scpi_number *number, uint32_t *value, int scale)
+installer::0x10450a	function	installer_scpi_format_text	context	the installer's copy of scpi_format_text, at 0x2636e plus 0xde19c, byte for byte	int installer_scpi_format_text(scpi_port *output, char **value)
+installer::0x10470c	function	installer_scpi_format_unsigned_short	context	the installer's copy of scpi_format_unsigned_short, at 0x2661c plus 0xde0f0, byte for byte	int installer_scpi_format_unsigned_short(scpi_port *output, uint16_t *value)
+installer::0x105810	function	installer_scpi_keyword_compare	context	the installer's copy of scpi_keyword_compare, at 0x27b62 plus 0xddcae, byte for byte	short installer_scpi_keyword_compare(char *token, int length, char *keyword)
+installer::0x105e0e	function	installer_status_destroy	context	the installer's copy of status_destroy, at 0x28160 plus 0xddcae, byte for byte but for its jsr.l targets, installer_error_queue_destroy (installer::0x105e1a), installer_memory_free (installer::0x105e2a, installer::0x105e3c)	void installer_status_destroy(status_model *status)
+installer::0x106080	function	installer_status_condition_bit_get	context	the installer's copy of status_condition_bit_get, at 0x283d2 plus 0xddcae, byte for byte	void installer_status_condition_bit_get(status_model *status, int condition, uint32_t *bit)
+installer::0x1060da	function	installer_status_register_set_enable	context	the installer's copy of status_register_set_enable, at 0x2842c plus 0xddcae, byte for byte	void installer_status_register_set_enable(status_model *status, int index, int enable)
+installer::0x106122	function	installer_status_register_get_enable	context	the installer's copy of status_register_get_enable, at 0x28474 plus 0xddcae, byte for byte	void installer_status_register_get_enable(status_model *status, int index, uint16_t *enable)
+installer::0x1061b4	function	installer_status_read_condition	context	the installer's copy of status_read_condition, at 0x28506 plus 0xddcae, byte for byte	void installer_status_read_condition(status_model *status, int index, uint16_t *condition)
+installer::0x1063c0	function	installer_error_queue_destroy	context	the installer's copy of error_queue_destroy, at 0x28712 plus 0xddcae, byte for byte but for its jsr.l targets, installer_memory_free (installer::0x1063c4)	void installer_error_queue_destroy(status_error_queue *queue)
+installer::0x107386	function	installer_arena_remaining	context	the installer's copy of arena_remaining, at 0x2972c plus 0xddc5a, byte for byte	void *installer_arena_remaining(int *remaining, scpi_arena *arena)
+installer::0x107472	function	installer_scpi_session_close	context	the installer's copy of scpi_session_close, at 0x29b8a plus 0xdd8e8, byte for byte but for its jsr.l targets, installer_scpi_port_close (installer::0x107472)	void installer_scpi_session_close(void)
+installer::0x10747a	function	installer_scpi_console_return_zero	context	the installer's copy of scpi_console_return_zero, at 0x29b92 plus 0xdd8e8, byte for byte	int installer_scpi_console_return_zero(void)
+installer::0x10747e	function	installer_scpi_console_read	context	the installer's copy of scpi_console_read, at 0x29b96 plus 0xdd8e8, byte for byte but for its jsr.l targets, 0x1074b6 (installer::0x107484), installer_scpi_input_ended (installer::0x107496)	int32_t installer_scpi_console_read(scpi_port *port, uint8_t *buffer, int32_t length)
+installer::0x1075a4	function	installer_scpi_input_ended	context	the installer's copy of scpi_input_ended, at 0x29cc6 plus 0xdd8de, byte for byte but for its absolute addresses, installer_scpi_input_repeat	void installer_scpi_input_ended(void)
+installer::0x1075e0	function	installer_scpi_console_write	context	the installer's copy of scpi_console_write, at 0x29d22 plus 0xdd8be, byte for byte but for its jsr to installer_scpi_console_putc, PC-relative, whose displacement differs
+installer::0x1075fe	function	installer_scpi_console_write_loop	context	the installer's copy of scpi_console_write_loop, at 0x29d40 plus 0xdd8be, byte for byte	void installer_scpi_console_write_loop(scpi_port *port, char *s, int n)
+installer::0x10760e	function	installer_status_byte_set_bits	context	the installer's copy of status_byte_set_bits, at 0x29d50 plus 0xdd8be, byte for byte but for its jsr.l targets, installer_status_update_rqs (installer::0x107618); its absolute addresses, installer_status_byte	void installer_status_byte_set_bits(scpi_port *port, int32_t bits)
+installer::0x107620	function	installer_status_byte_clear_bits	context	the installer's copy of status_byte_clear_bits, at 0x29d62 plus 0xdd8be, byte for byte but for its jsr.l targets, installer_status_update_rqs (installer::0x10762c); its absolute addresses, installer_status_byte	void installer_status_byte_clear_bits(scpi_port *port, int32_t bits)
+installer::0x107634	function	installer_status_sre_set	context	the installer's copy of status_sre_set, at 0x29d76 plus 0xdd8be, byte for byte but for its jsr.l targets, installer_status_update_rqs (installer::0x10763e); its absolute addresses, installer_service_request_enable	void installer_status_sre_set(scpi_port *port, int32_t bits)
+installer::0x107646	function	installer_status_sre_get	context	the installer's copy of status_sre_get, at 0x29d88 plus 0xdd8be, byte for byte but for its absolute addresses, installer_service_request_enable	uint8_t installer_status_sre_get(void)
+installer::0x10764e	function	installer_status_byte_get	context	the installer's copy of status_byte_get, at 0x29d90 plus 0xdd8be, byte for byte but for its absolute addresses, installer_status_byte	uint8_t installer_status_byte_get(void)
+installer::0x10770e	function	installer_send_x_retry	context	the installer's copy of send_x_retry, at 0x29e56 plus 0xdd8b8, byte for byte but for its jsr.l targets, installer_psos_pause (installer::0x107716), installer_psos_send_x (installer::0x107726)	void installer_send_x_retry(uint32_t exchange, void *message, uint32_t ticks)
+installer::0x107736	function	installer_request_and_wait	context	the installer's copy of request_and_wait, at 0x29e7e plus 0xdd8b8, byte for byte but for its jsr.l targets, installer_psos_get_v (installer::0x10774a), installer_psos_wait_v (installer::0x10776c)	void installer_request_and_wait(uint32_t exchange, void *message)
+installer::0x10777a	function	installer_pllc_request_a	context	the installer's copy of pllc_request_a, at 0x29ec2 plus 0xdd8b8, byte for byte but for its absolute addresses, 0x10b00c	void installer_pllc_request_a(void *param, uint8_t index, uint8_t setting, request_source source)
+installer::0x1077ae	function	installer_pllc_request_b	context	the installer's copy of pllc_request_b, at 0x29ef6 plus 0xdd8b8, byte for byte but for its absolute addresses, 0x10b00c	void installer_pllc_request_b(void *param, uint8_t index, request_source source)
+installer::0x1077dc	function	installer_pllc_request_c	context	the installer's copy of pllc_request_c, at 0x29f24 plus 0xdd8b8, byte for byte but for its absolute addresses, 0x10b00c	void installer_pllc_request_c(void *param, uint8_t index, uint32_t first, uint32_t *second, request_source source)
+installer::0x107818	function	installer_pllc_request_d	context	the installer's copy of pllc_request_d, at 0x29f60 plus 0xdd8b8, byte for byte but for its absolute addresses, 0x10b00c	void installer_pllc_request_d(void *param, uint8_t index, uint32_t value, request_source source)
+installer::0x10784c	function	installer_pllc_request_e	context	the installer's copy of pllc_request_e, at 0x29f94 plus 0xdd8b8, byte for byte but for its absolute addresses, 0x10b00c	void installer_pllc_request_e(void *param, uint8_t index, uint32_t *values, request_source source)
+installer::0x1082da	function	installer_sign_extend_bits	context	the installer's copy of sign_extend_bits, at 0x3145a plus 0xd6e80, byte for byte	uint32_t installer_sign_extend_bits(uint32_t value, uint8_t width)
+installer::0x108450	function	installer_memory_free	context	the installer's copy of memory_free, at 0x510d2 plus 0xb737e, byte for byte but for its jsr.l targets, installer_psos_free_segment (installer::0x108454)	void installer_memory_free(void *segment)
+installer::0x10847e	function	installer_longjmp	context	the installer's copy of longjmp, at 0x51100 plus 0xb737e, byte for byte	uint64_t installer_longjmp(uint32_t *buffer, uint32_t value)
+installer::0x1084a8	function	installer_setjmp	context	the installer's copy of setjmp, at 0x5112a plus 0xb737e, byte for byte	uint32_t installer_setjmp(uint32_t *buffer)
+installer::0x10893a	function	installer_float_compare	context	the installer's copy of float_compare, at 0x5d65c plus 0xab2de, byte for byte but for its jsr.l targets, installer_float_raise (installer::0x108994)		convention=register; confidence=documented; in=D0 float a, D1 float b; out=D0 int; family=softfloat
+installer::0x1089d4	function	installer_float_to_integer	context	the installer's copy of float_to_integer, at 0x5dfbc plus 0xaaa18, byte for byte but for its jsr.l targets, installer_float_raise (installer::0x108a44, installer::0x108a56)		convention=register; confidence=run; in=D0 float f; out=D0 int; family=softfloat
+installer::0x108a66	function	installer_float_to_unsigned	context	the installer's copy of float_to_unsigned, at 0x5e04e plus 0xaaa18, byte for byte but for its jsr.l targets, installer_float_to_integer (installer::0x108a94)		convention=register; confidence=run; in=D0 float f; out=D0 unsigned int; family=softfloat
+installer::0x108b02	function	installer_float_multiply_in_place	context	the installer's copy of float_multiply_in_place, at 0x5e316 plus 0xaa7ec, byte for byte		convention=register; confidence=run; in=A0 float *x, D1 float y; out=D0 float; out.confidence=read; family=softfloat
+installer::0x108b0c	function	installer_float_multiply	context	the installer's copy of float_multiply, at 0x5e320 plus 0xaa7ec, byte for byte but for its jsr.l targets, installer_float_raise (installer::0x108c1a, installer::0x108c36, installer::0x108c48, installer::0x108c58); its absolute addresses, installer_float_status, installer_float_control		convention=register; confidence=documented; in=D0 float a, D1 float b; out=D0 float; family=softfloat
+installer::0x108c62	function	installer_float_normalize	context	the installer's copy of float_normalize, at 0x5e83c plus 0xaa426, byte for byte		convention=other; confidence=read; family=softfloat
+installer::0x1004c8	function	installer_mutex_get_owner	context	the installer's copy of mutex_get_owner, at 0x104c8 plus 0xf0000, byte for byte		convention=register; confidence=read; in=A1 mutex *lock; out=A0 uint32_t owner; preserves=D0; family=mutex
+installer::0x100546	function	installer_exception_hook_enable_per_task	context	the installer's copy of exception_hook_enable_per_task, at 0x118b6 plus 0xeec90, byte for byte but for its absolute address, installer_exception_hook_per_task	int installer_exception_hook_enable_per_task(void)
+installer::0x100568	function	installer_exception_hook_set	context	the installer's copy of exception_hook_set, at 0x118d8 plus 0xeec90, byte for byte but for its absolute addresses, installer_exception_hook	int installer_exception_hook_set(void *hook)
+installer::0x100584	function	installer_exception_hook_clear_task	context	the installer's copy of exception_hook_clear_task, at 0x118f4 plus 0xeec90, byte for byte	int installer_exception_hook_clear_task(void)
+installer::0x100e7e	function	installer_stack_usage_report	read	a bare rts where the primary has stack_usage_report (0x132f4), next after stack_usage as there; nothing calls it	void installer_stack_usage_report(void)
+installer::0x1026b0	function	installer_kernel_init_checked	context	the installer's copy of kernel_init_checked, at 0x15caa plus 0xeca06, byte for byte: sums the words from installer::0x1014d2 to installer_psos_call against installer_kernel_checksum, then falls into installer_kernel_init		convention=exception; confidence=read; family=psos
+installer::0x102abc	function	installer_psos_version	context	the installer's copy of psos_version, at 0x16f68 plus 0xebb54, byte for byte	uint16_t installer_psos_version(void)
+installer::0x1074b6	function	installer_console_port_read	read	the installer's console_port_read: the primary's (0x29bce) but that it prints installer_scpi_prompt_text through installer_console_write without testing a prompt switch, and reports conditions 3, 4, 2 and 1 through installer_status_report where the primary's are 0x15, 0x16, 0x14 and 0x13	int16_t installer_console_port_read(void)
+installer::0x1075ae	function	installer_scpi_console_putc	read	the installer's scpi_console_putc, without the primary's echo buffer: a character above 0xff writes the "\r\n" at installer::0x1076e9, any other the character alone as a string, through installer_console_write	void installer_scpi_console_putc(scpi_port *port, int character)
+installer::0x10845e	function	installer_current_task_id	context	the installer's copy of current_task_id, at 0x510e0 plus 0xb737e, byte for byte but for its jsr.l target, installer_psos_my_pid (installer::0x10845e)	unsigned long installer_current_task_id(void)
+installer::0x10900a	function	installer_atexit	context	the installer's copy of atexit, at 0x5ecae plus 0xaa35c, byte for byte but for its absolute addresses, installer_atexit_count and installer_atexit_functions	int installer_atexit(atexit_function *function)
+#
+# installer data the untyped survey found (2026-10-22): each the installer's
+# copy of the primary label its name follows, but where noted
+installer::0x100787	label	installer_exception_newline	context	the installer's exception_newline, "\r\n", which installer_print_exception prints first (installer::0x1005de)	char[3]
+installer::0x100cde	label	installer_revision_text	read	"Peru", the revision installer_scpi_query_common_IDN gives (installer::0x107bd4), where the primary's *IDN? gives "3543B" (0x12eee); restart.md	char[5]
+installer::0x100ce3	label	installer_copyright_text	read	"Copyright Hewlett-Packard Co. 1993. All Rights Reserved.", without a NUL, 0xff after it; nothing refers to it	char[56]
+installer::0x1014ce	label	installer_kernel_checksum	context	the installer's kernel_checksum, 0x028a9b53, at its kernel's header (installer::0x1014c8) plus 6 as the primary's	uint32_t
+installer::0x1014d4	label	installer_psos_name	context	the installer's psos_name, "..PSOS-6803"	char[12]
+installer::0x1014e0	label	installer_psos_banner	context	the installer's psos_banner, without a NUL; installer_kernel_service_0 returns its last letter	char[72]
+installer::0x104088	label	installer_spoo_name	read	"spoo", the task's name installer_spoo_task_create gives psos_create (installer::0x103f12), after installer_spoo_task's last rts	char[5]
+installer::0x105678	label	installer_scpi_parameter_kind_errors	context	the installer's scpi_parameter_kind_errors, which installer_scpi_parameter_match indexes by parameter kind (installer::0x1055c8)	int16_t[6]
+installer::0x1057dc	label	installer_scpi_multipliers	context	the installer's scpi_multipliers, the same 13 entries, which installer_scpi_multiplier_exponent walks (installer::0x1056ba)	scpi_multiplier[13]
+installer::0x105c72	label	installer_scpi_trg_keyword	context	the installer's scpi_trg_keyword, "_TRG", which installer_scpi_trg_defined copies	char[5]
+installer::0x10656a	label	installer_scpi_error_messages	context	the installer's scpi_error_messages, the same 101 codes, to the code -1, which installer_error_message_lookup walks (installer::0x106548)	scpi_error_message[101]
+installer::0x107290	label	installer_scpi_response_begin_code	context	the installer's scpi_response_begin_code, 8	uint32_t
+installer::0x107294	label	installer_scpi_message_end_code	context	the installer's scpi_message_end_code, 7	uint32_t
+installer::0x107298	label	installer_scpi_input_end_code	context	the installer's scpi_input_end_code, 6	uint32_t
+installer::0x10768c	label	installer_console_port_methods	read	installer_console_port's method table, which its +4 points at, in the primary's order (structures.md, the console port's methods)	scpi_port_methods
+installer::0x1082cf	label	installer_unknown_text	read	"Unknown", after the model default at installer::0x1082c8; nothing refers to it	char[8]
+installer::0x1082d7	label	installer_serial_default_text	read	"0", which installer_identification_record_read copies, 0x12 bytes, over installer_idn_serial when the record fails (installer::0x1082a4)	char[2]
+installer::0x108332	label	installer_low_bit_masks	context	the installer's low_bit_masks	uint32_t[33]
+installer::0x10853c	label	installer_dev_tab_header	read	"$@(#)$Header: dev_tab.S,v 1.8 95/01/11 15:27:20 jacob Exp $", as the primary's at 0x516de; nothing refers to it	char[60]
+installer::0x10859c	label	installer_io_device_unused_stubs	context	the installer's io_device_unused_stubs, after installer_io_table_defaults: rts; nop; nop six times, which installer_psos_config_init does not copy	io_device_stubs
+installer::0x10865a	label	installer_scpi_keyword_MINimum	context	the installer's scpi_keyword_MINimum, "MIN" then "IMUM"	char[9]
+installer::0x108663	label	installer_scpi_keyword_MAXimum	context	the installer's scpi_keyword_MAXimum, "MAX" then "IMUM"	char[9]
+installer::0x10866c	label	installer_scpi_choice_keywords_bounds	read	MAXimum and MINimum to a NULL, the keywords of installer_scpi_choices_bounds; nothing else refers to them	char *[3]
+installer::0x108678	label	installer_scpi_choices_bounds	read	a choice list of installer_scpi_choice_keywords_bounds with no values; no parameter refers to it	scpi_choices
+installer::0x109158	label	installer_huge_value	context	the installer's huge_value, +infinity; nothing in the installer reads it	double
+installer::0x109a08	label	installer_powers_of_ten_by_25_mantissas	context	the installer's powers_of_ten_by_25_mantissas, which installer_double_to_digits reads	uint32_t[54]
+installer::0x109ae0	label	installer_powers_of_ten_by_25_exponents	context	the installer's powers_of_ten_by_25_exponents	int16_t[27]
+installer::0x109b16	label	installer_powers_of_ten_1_to_24_mantissas	context	the installer's powers_of_ten_1_to_24_mantissas	uint32_t[48]
+installer::0x109bd6	label	installer_powers_of_ten_1_to_24_exponents	context	the installer's powers_of_ten_1_to_24_exponents	uint8_t[24]
+installer::0x109bee	label	installer_powers_of_ten_64	context	the installer's powers_of_ten_64	uint32_t[36]
+installer::0x10aa10	label	installer_doprnt_minus	context	the installer's doprnt_minus, "-"	char[2]
+installer::0x10aa12	label	installer_doprnt_plus	context	the installer's doprnt_plus, "+"	char[2]
+installer::0x10aa14	label	installer_doprnt_space	context	the installer's doprnt_space, " "	char[2]
+installer::0x10aa38	label	installer_doprnt_hex_prefix	context	the installer's doprnt_hex_prefix, "0x"	char[3]
+#
+# primary routines and data the installer's copies show unnamed (2026-10-22)
+0x104c8	function	mutex_get_owner	read	a mutex's owner, +8 of the mutex at A1, into A0, D0 kept by exg; after mutex_release, which Ghidra took it into; nothing calls it		convention=register; confidence=read; in=A1 mutex *lock; out=A0 uint32_t owner; preserves=D0; family=mutex
+0x118b6	function	exception_hook_enable_per_task	read	sets exception_hook_per_task to 0xff and returns 0; nothing calls it	int exception_hook_enable_per_task(void)
+0x118d8	function	exception_hook_set	read	stores the default exception hook in exception_hook, returning 0xff if one was set, else 0; nothing calls it	int exception_hook_set(void *hook)
+0x118f4	function	exception_hook_clear_task	read	exception_hook_set_task(0); nothing calls it	int exception_hook_clear_task(void)
+0x14ac8	label	kernel_checksum	read	the sum kernel_init_checked compares with that of the kernel's words from 0x14acc to psos_call, 0x028a9b53; the words now sum to 0x028d24cc	uint32_t
+0x15caa	function	kernel_init_checked	read	kernel_init with a check of the kernel's code first: sums its words from 0x14acc to psos_call (0x1606c) and, unless kernel_checksum is 0 or the sum, fails with error 4 (0x15cd4); then falls into kernel_init.  Nothing refers to it		convention=exception; confidence=read; family=psos
+0x16f68	function	psos_version	read	service 0, ver: the kernel's version, 0x3341, in D0's low word (psos.md); nothing calls it	uint16_t psos_version(void)
+0x510e0	function	current_task_id	read	the running task's id, through psos_my_pid; after memory_free, which Ghidra took it into; nothing calls it	unsigned long current_task_id(void)
+0x5ecae	function	atexit	read	registers a function for call_atexit_functions in atexit_functions: 1 for NULL or a full table (atexit_count 32), else 0; nothing calls it	int atexit(atexit_function *function)
+0x5ee9a	label	huge_value	read	+infinity, 0x7ff00000 00000000, which log and pow read (0x60aa6, 0x60faa)	double
+0x27fc4	label	scpi_trg_keyword	read	"_TRG", which scpi_trg_defined copies into its keyword (0x27f84)	char[5]
+#
+# RAM cells code or descriptors refer to that had no type (2026-10-22);
+# docs/firmware/structures.md
+0x1009ec	label	reset_cleared_ram	read	the first byte primary_reset's clear (0x14616) zeros, to 0x10ffff, the first after clock; a bound, not a cell, that nothing else refers to	uint8_t
+0x101e4a	label	scpi_value_SOURce_GPSystem_INITial_DATE	structures.md	the values of scpi_param_SOURce_GPSystem_INITial_DATE, last index 2: the year, month and day, 1994 to 2007, which its setter gives pllc_request_d; sample_values_defaults fills it with 1961, 8, 22	int32_t[3]
+0x101e56	label	scpi_value_SOURce_GPSystem_INITial_TIME	structures.md	the values of scpi_param_SOURce_GPSystem_INITial_TIME, last index 2: the hour, minute and second, which its setter gives pllc_request_d; defaults 10, 48, 0	int32_t[3]
+0x101e62	label	scpi_value_SOURce_GPSystem_INITial_POSition_latitude	structures.md	the value of scpi_param_SOURce_GPSystem_INITial_POSition_latitude, milliarcseconds, -324000000 to 324000000	int32_t
+0x101e66	label	scpi_value_SOURce_GPSystem_INITial_POSition_longitude	structures.md	the value of scpi_param_SOURce_GPSystem_INITial_POSition_longitude, milliarcseconds, -648000000 to 648000000	int32_t
+0x101e6a	label	scpi_value_SOURce_GPSystem_INITial_POSition_height	structures.md	the value of scpi_param_SOURce_GPSystem_INITial_POSition_height, centimeters, its limits the longitude's; the last of sample_values	int32_t
+0x101f90	label	scpi_group_cells	structures.md	the words the descriptors' group_cell points at, one for each command group; nothing reads or writes them	scpi_group_cells_fields
+0x103948	label	psos_kernel_data	structures.md	the kernel's data area, psos_config.data_area, which kernel_init carves and keeps in A6: this record, then from +200 the supervisor stack and the records	psos_kernel

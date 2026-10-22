@@ -77,8 +77,7 @@ void* arena_alloc(int32_t size, scpi_arena* arena) {
 
 /* The bytes left in an arena, and its next free byte (0x2972c). */
 void* arena_remaining(int32_t* remaining, scpi_arena* arena) {
-  *remaining = arena->last - arena->next + 1;
-  return arena->next;
+  return scpi_arena_remaining(remaining, arena);
 }
 
 /* Takes size bytes, rounded up to even, from a buffer: the buffer, the
@@ -149,12 +148,13 @@ scpi_port* scpi_session_init(void) {
  * (0x29b8a). */
 void scpi_session_close(void) { scpi_port_close(); }
 
-/* scpi_interpret's hook at each message's end and error: 0, no further
- * error (0x29e34). */
-uint32_t scpi_message_done(void) { return 0; }
+/* scpi_interpret's hook at each message's end and error, passed the
+ * call and the condition reported (STATUS_NO_CONDITION at an end): 0, no
+ * further error (0x29e34). */
+uint32_t scpi_message_done(scpi_call* call, int32_t condition) { return 0; }
 
 /* scpi_interpret's hook when the input closes: 0 (0x29e38). */
-uint32_t scpi_input_closed(void) { return 0; }
+uint32_t scpi_input_closed(scpi_call* call) { return 0; }
 
 /* The SCPI task: time sliced, takes a 2000-byte segment for the
  * interpreter's arena and runs the interpreter on the console port until

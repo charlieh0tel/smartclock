@@ -35,7 +35,7 @@ void request_and_wait(uint32_t exchange, void* message) {
 
 /* The descriptor, index, source and a setting's new value (0x29ec2). */
 void pllc_request_a(void* param, uint8_t index, uint8_t setting,
-                    uint8_t source) {
+                    request_source source) {
   pllc_request request;
 
   request.field_04 = 0;
@@ -47,7 +47,7 @@ void pllc_request_a(void* param, uint8_t index, uint8_t setting,
 }
 
 /* The descriptor, index and source (0x29ef6). */
-void pllc_request_b(void* param, uint8_t index, uint8_t source) {
+void pllc_request_b(void* param, uint8_t index, request_source source) {
   pllc_request request;
 
   request.field_04 = 0;
@@ -60,7 +60,7 @@ void pllc_request_b(void* param, uint8_t index, uint8_t source) {
 /* The descriptor, index, source, values[0] and values[1] through a
  * pointer (0x29f24). */
 void pllc_request_c(void* param, uint8_t index, uint32_t first,
-                    uint32_t* second, uint8_t source) {
+                    uint32_t* second, request_source source) {
   pllc_request request;
 
   request.field_04 = 0;
@@ -74,7 +74,7 @@ void pllc_request_c(void* param, uint8_t index, uint32_t first,
 
 /* The descriptor, index, source and values[0] (0x29f60). */
 void pllc_request_d(void* param, uint8_t index, uint32_t value,
-                    uint8_t source) {
+                    request_source source) {
   pllc_request request;
 
   request.field_04 = 0;
@@ -88,7 +88,7 @@ void pllc_request_d(void* param, uint8_t index, uint32_t value,
 /* The descriptor, index, source and both values through a pointer
  * (0x29f94). */
 void pllc_request_e(void* param, uint8_t index, uint32_t* values,
-                    uint8_t source) {
+                    request_source source) {
   pllc_request request;
 
   request.field_04 = 0;

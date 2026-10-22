@@ -143,7 +143,7 @@ uint32_t log_page_write(uint8_t page, log_page* source) {
 /* Empties the event log, every page in the EEPROM, reporting a memory
  * error for source if a write fails, and logs "Log cleared" if none
  * did; returns the first failure's low byte, or 0 (0x31536). */
-char log_erase(uint8_t source) {
+char log_erase(request_source source) {
   uint8_t status = 0;
 
   log_page_clear(&log_write_page);
@@ -171,7 +171,7 @@ char log_erase(uint8_t source) {
 }
 
 /* log_erase under log_mutex (0x315e8). */
-int32_t log_erase_locked(uint8_t source) {
+int32_t log_erase_locked(request_source source) {
   int32_t error = mutex_lock(&log_mutex);
 
   if (error != 0) {
@@ -183,7 +183,7 @@ int32_t log_erase_locked(uint8_t source) {
 }
 
 /* log_erase under log_mutex when the log holds count entries (0x3161a). */
-int32_t log_erase_checked(int32_t count, uint8_t source) {
+int32_t log_erase_checked(int32_t count, request_source source) {
   /* The result for a count not the log's. */
   static const uint8_t LOG_COUNT_DIFFERS = 0xff;
   int32_t error = mutex_lock(&log_mutex);

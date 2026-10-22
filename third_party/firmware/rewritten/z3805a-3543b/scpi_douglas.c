@@ -38,7 +38,7 @@ static const float SCPI_DOUGLAS_INFINITE = 9.9e37f;
 int32_t scpi_set_DOUGlas_DURation(void* parameters, void* response,
                                   scpi_call* call) {
   scpi_float_parameter* duration = parameters;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
 
   if ((duration->kind == SCPI_PARAMETER_CHARACTER &&
        duration->keyword == SCPI_DOUGLAS_INFINITY) ||

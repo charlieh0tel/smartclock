@@ -380,29 +380,23 @@ void status_transitions_init(void) {
   }
 }
 
-/* What status_preset_register sets, by the jump table at 0x2f386. */
-enum {
-  STATUS_PRESET_ENABLE = 0,
-  STATUS_PRESET_POSITIVE = 1, /* a filtered register's, by its index less 2 */
-  STATUS_PRESET_NEGATIVE = 2,
-};
-
 /* Sets a register's enable or transition filter for a request from
  * SCPI, and 1; 0 for another source (0x2f34e). */
-uint32_t status_preset_register(char setting, char source, int16_t index,
+uint32_t status_preset_register(status_register_mask mask,
+                                request_source source, int16_t index,
                                 int16_t value) {
   if (source != REQUEST_SOURCE_SCPI) {
     return 0;
   }
-  switch (setting) {
-    case STATUS_PRESET_ENABLE:
+  switch (mask) {
+    case STATUS_MASK_ENABLE:
       status_register_set_enable(status_object, index, value);
       break;
-    case STATUS_PRESET_POSITIVE:
+    case STATUS_MASK_POSITIVE_TRANSITION:
       status_register_set_ptr(status_object, index + STATUS_FIRST_FILTERED,
                               value);
       break;
-    case STATUS_PRESET_NEGATIVE:
+    case STATUS_MASK_NEGATIVE_TRANSITION:
       status_register_set_ntr(status_object, index + STATUS_FIRST_FILTERED,
                               value);
       break;
@@ -415,7 +409,7 @@ uint32_t status_preset_register(char setting, char source, int16_t index,
 void status_enable_restore(uint32_t index, uint32_t source) {
   int8_t reg = index;
 
-  if (status_preset_register(STATUS_PRESET_ENABLE, source, reg,
+  if (status_preset_register(STATUS_MASK_ENABLE, source, reg,
                              nv_settings.status_enable[reg]) == 0) {
     status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, source);
   }
@@ -426,7 +420,7 @@ void status_enable_restore(uint32_t index, uint32_t source) {
 void status_ptr_restore(uint32_t index, uint32_t source) {
   int8_t filter = index;
 
-  if (status_preset_register(STATUS_PRESET_POSITIVE, source, filter,
+  if (status_preset_register(STATUS_MASK_POSITIVE_TRANSITION, source, filter,
                              nv_settings.status_positive_transition[filter]) ==
       0) {
     status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, source);
@@ -437,19 +431,12 @@ void status_ptr_restore(uint32_t index, uint32_t source) {
 void status_ntr_restore(uint32_t index, uint32_t source) {
   int8_t filter = index;
 
-  if (status_preset_register(STATUS_PRESET_NEGATIVE, source, filter,
+  if (status_preset_register(STATUS_MASK_NEGATIVE_TRANSITION, source, filter,
                              nv_settings.status_negative_transition[filter]) ==
       0) {
     status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, source);
   }
 }
-
-/* :STATus:PRESet's two forms, status_preset_done's first argument, by
- * the jump table at 0x43560. */
-enum {
-  STATUS_PRESET_SCPI = 0,  /* the filtered registers' enables */
-  STATUS_PRESET_ALARM = 1, /* every enable, and :QUEStionable:USER off */
-};
 
 /* :STATus:PRESet's hook: the enables its form gives and the filtered
  * registers' filters, set and saved for the source (0x43546). */
@@ -461,7 +448,7 @@ void status_preset_done(uint32_t form, uint32_t source) {
   static const uint16_t POSITIVE_FILTERS[] = {0x7f, 2, 7, 0xf, 0x13ff};
   static const uint16_t NEGATIVE_FILTERS[] = {0, 0, 0, 0, 0};
 
-  switch ((char)form) {
+  switch ((status_preset_form)form) {
     case STATUS_PRESET_SCPI:
       for (uint8_t index = STATUS_FIRST_FILTERED; index < STATUS_REGISTERS;
            index++) {

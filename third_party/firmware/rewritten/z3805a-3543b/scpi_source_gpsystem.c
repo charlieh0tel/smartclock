@@ -15,7 +15,7 @@ void antenna_delay_done(void) { pll.hold_causes &= ~HOLD_CAUSE_TEMPORARY_MODE; }
 /* Requests the survey finished, and the source to save with (0x46368). */
 void douglas_finish_request(int32_t index, int32_t source) {
   douglas_finish_requested = 1;
-  douglas_finish_nv_argument = (uint8_t)source;
+  douglas_finish_nv_argument = source;
 }
 
 /* An angle: its hemisphere, then degrees, minutes and seconds. */
@@ -100,7 +100,7 @@ static scpi_step scpi_source_gpsystem_step(uint32_t value,
 static int32_t scpi_source_gpsystem_steps(float* value,
                                           scpi_numeric_param* param,
                                           uint8_t index, float unit,
-                                          uint8_t source) {
+                                          request_source source) {
   int32_t* minimum = param->minimum;
   int32_t* maximum = param->maximum;
   scpi_step step = scpi_source_gpsystem_step(
@@ -177,7 +177,7 @@ int32_t scpi_query_SOURce_GPSystem_EMANgle(void* parameters, void* response,
 static void scpi_source_gpsystem_initial_set(scpi_numeric_param* param,
                                              scpi_short_parameter* fields,
                                              scpi_port* input) {
-  uint8_t source = return_zero(input);
+  request_source source = return_zero(input);
 
   if (time_valid() != 0) {
     status_report_from(STATUS_SETTINGS_CONFLICT, source);
@@ -217,7 +217,7 @@ int32_t scpi_set_SOURce_GPSystem_INITial_TIME(void* parameters, void* response,
  * 0x2c612). */
 static int32_t scpi_source_gpsystem_angle(
     scpi_source_gpsystem_angle_parameters* angle, int32_t degrees_limit,
-    uint8_t source) {
+    request_source source) {
   static const int32_t MINUTES_LIMIT = 59;
   static const float SECONDS_LIMIT = 59.999f;
   static const float MILLISECOND = 0.001f;
@@ -273,7 +273,8 @@ static const float SCPI_SOURCE_GPSYSTEM_CENTIMETER = 0.01f;
  * centimeters, the height within the descriptor's limits at index. */
 static void scpi_source_gpsystem_location(
     scpi_source_gpsystem_location_parameters* location,
-    scpi_numeric_param* height_param, uint8_t height_index, uint8_t source,
+    scpi_numeric_param* height_param, uint8_t height_index,
+    request_source source,
     int32_t position[SCPI_SOURCE_GPSYSTEM_POSITION_LONGS]) {
   position[0] = scpi_source_gpsystem_angle(
       &location->latitude, SCPI_SOURCE_GPSYSTEM_LATITUDE_LIMIT, source);
@@ -351,7 +352,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void* parameters, void* response,
                                           scpi_call* call) {
   scpi_source_gpsystem_location_parameters* location = parameters;
   int16_t first = location->latitude.hemisphere.value;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
   int32_t* staged = scpi_staged[source];
 
   if (first == SCPI_SOURCE_GPSYSTEM_LAST ||

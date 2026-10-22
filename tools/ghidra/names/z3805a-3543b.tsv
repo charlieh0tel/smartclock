@@ -265,7 +265,7 @@
 0x2be9c	function	status_report	structures.md	puts a code into the status system once status_ready
 0x2f53c	function	status_happening	structures.md	raises a status condition: :DIAG:STAT:HAPP n passes condition n + 0x16, the firmware's own callers the condition itself, 0x16 to 0x4e (status_condition_code)	void status_happening(status_condition_code condition)
 0x298fc	function	scpi_numeric_get	structures.md	a parameter's value, or its minimum or maximum, from its descriptor	float scpi_numeric_get(scpi_numeric_param *param, int index, int16_t which, int16_t bound)	convention=c; confidence=documented; out=D0 float
-0x2982c	function	scpi_numeric_set	structures.md	sends a parameter's new value, or its minimum or maximum, to pllc: a float's value, its address as values[1], or an integer's as values[0]; every caller pushes both, the other 0	void scpi_numeric_set(scpi_numeric_param *param, int index, short kind, short bound, uint32_t float_value, int32_t integer_value, uint8_t source)
+0x2982c	function	scpi_numeric_set	structures.md	sends a parameter's new value, or its minimum or maximum, to pllc: a float's value, its address as values[1], or an integer's as values[0]; every caller pushes both, the other 0	void scpi_numeric_set(scpi_numeric_param *param, int index, short kind, short bound, uint32_t float_value, int32_t integer_value, request_source source)
 0x1304a	function	root_task	structures.md	stores its own task id in task_root, sets up the status system, creates the exchanges and tasks and starts them
 0x4bf4a	function	gpsm_task	structures.md	root_task starts gpsm here
 0x4bf4a	local	received	structures.md	the request it takes from gpsx_exchange	gps_request_entry @ -0xde
@@ -277,15 +277,15 @@
 0x1037fc	label	gpsx_exchange	structures.md	root_task's create_x("gpsx")	uint32_t
 0x103800	label	plla_exchange	structures.md	root_task's create_x("plla")	uint32_t
 0x103804	label	pllc_exchange	structures.md	root_task's create_x("pllc"); the SCPI setters' requests go here	uint32_t
-0x29ec2	function	pllc_request_a	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and a setting's new value
+0x29ec2	function	pllc_request_a	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and a setting's new value	void pllc_request_a(void *param, uint8_t index, uint8_t setting, request_source source)
 0x29ec2	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
-0x29ef6	function	pllc_request_b	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index and source
+0x29ef6	function	pllc_request_b	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index and source	void pllc_request_b(void *param, uint8_t index, request_source source)
 0x29ef6	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
-0x29f24	function	pllc_request_c	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source, values[0] and values[1] through a pointer
+0x29f24	function	pllc_request_c	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source, values[0] and values[1] through a pointer	void pllc_request_c(void *param, uint8_t index, uint32_t first, uint32_t *second, request_source source)
 0x29f24	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
-0x29f60	function	pllc_request_d	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and values[0]
+0x29f60	function	pllc_request_d	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and values[0]	void pllc_request_d(void *param, uint8_t index, uint32_t value, request_source source)
 0x29f60	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
-0x29f94	function	pllc_request_e	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and both values through a pointer
+0x29f94	function	pllc_request_e	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and both values through a pointer	void pllc_request_e(void *param, uint8_t index, uint32_t *values, request_source source)
 0x29f94	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
 0x46636	function	gpsx_send	structures.md	copies four longs and sends them to gpsx_exchange	uint8_t gpsx_send(int16_t code, gps_argument_mode argument_mode, int32_t *arguments, gps_ack_awaited_kind ack_awaited)
 0x46636	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
@@ -572,8 +572,8 @@
 0x480c2	function	format_angle	context	an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and minutes
 0x47e32	function	mas_to_dms	context	mas into degrees (/ 3600000), minutes (/ 60000) and seconds (the rest / 1000.0); the position queries
 0x322b4	function	clamp_to_limits	context	clamps *value to *min and *max, reporting through report_clamped	int clamp_to_limits(int32_t *value, int index, int32_t *minimum, int32_t *maximum, scpi_step *step, int source)
-0x31ff8	function	report_clamped	context	"Value too small, set to min limit" or "too large, set to max limit", and status_report_from(9)
-0x2979c	function	scpi_check_range	context	reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters
+0x31ff8	function	report_clamped	context	"Value too small, set to min limit" or "too large, set to max limit", and status_report_from(9)	void report_clamped(char too_large, request_source source)
+0x2979c	function	scpi_check_range	context	reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters	uint32_t scpi_check_range(int32_t low, int32_t value, int32_t high, request_source source)
 0x3124a	function	eeprom_write	context	writes data split at 64-byte page boundaries with eeprom_write_page; happening 'I' on a failure
 0x3119e	function	eeprom_write_page	context	writes within one 64-byte EEPROM page under eeprom_lock, five tries
 0x110fa	function	oncore_date_pack	context	@@Ba's month, day and year into year << 16 | month << 8 | day	uint32_t oncore_date_pack(oncore_date_fields fields)
@@ -626,7 +626,7 @@
 0x49b88	function	format_si	context	formats a double with an SI prefix from "pnum kMG" by its exponent / 3; "ANT DLY %s"; the double at SP+4 goes to scpi_real_to_text with the resolution exponent at +0xc and the significant digits at +0xe, 0 for 15 (0x49b8c to 0x49bb8); unit appended (0x49cf2); text at +0x14 (0x49b90)	void format_si(double value, char resolution, uint8_t digits, char *unit, char *text)
 0x101fae	label	counter_configuration	context	the configuration counter_calibrate, counter_arm and counter_read are given: fconf_regs' four values at +0, the calibration double at +4, the interpolator's offset and scale at +0x18 and +0x1c	counter_configuration_fields
 0x2d1cc	function	satellite_list_limits	context	the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6), 1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists (32, 32)	void satellite_list_limits(satellite_list kind, uint8_t *id_count, uint8_t *max_listed, uint8_t *id_base)
-0x3293a	function	nv_save	structures.md	packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it differs; "Warning: Entire nv register is being used"
+0x3293a	function	nv_save	structures.md	packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it differs; "Warning: Entire nv register is being used"	char nv_save(request_source source)
 0x3293a	local	record	read	the NV register record it builds and writes	nv_record @ -0x84
 0x3282c	function	nv_restore	structures.md	loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older slot and saves
 0x32bc2	function	nv_load_slot	structures.md	loads the settings from slot nv_slot when its record is good
@@ -1082,7 +1082,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x3232c	function	mask_to_limits	scpi_param_STATus_ENABle, PTRansition, NTRansition: validate	a register's new value ANDed with its maximum, the mask of the bits it has	uint32_t mask_to_limits(uint32_t *value, int32_t index, uint32_t *minimum, uint32_t *maximum, uint32_t *mask, int32_t source)
 0x3233a	function	clamp_to_step_and_limits	scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, nv_param_leap_date: validate	rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum, reporting each clamp	uint32_t clamp_to_step_and_limits(uint32_t *value, int32_t index, uint32_t *minimum, uint32_t *maximum, scpi_step *step, int32_t source)
 0x323fa	function	clamp_float_to_step_and_limits	scpi_param_SAMPle_FLOat, FARR, SOURce_ROSCillator_LIMit_THReshold: validate	clamps a float to its minimum and maximum and rounds it to its step	float clamp_float_to_step_and_limits(float *value, int32_t index, float *minimum, float *maximum, scpi_step *step, int32_t source)
-0x3209c	function	clamp_float	context	clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped
+0x3209c	function	clamp_float	context	clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped	uint32_t clamp_float(float *value, float *clamped, float *minimum, float *maximum, request_source source)
 0x3217e	function	round_float_to_step	context	rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps	float round_float_to_step(float *value, float *step)
 0x42b1c	function	pulse_settings_done	scpi_param_SOURce_PULSe_CONTinuous_STATe, PERiod, STARt_TIME and DATE: done	hands the pulse start time, date, state and period from nv_settings to pulse_program
 0x42b1c	local	start_time	read	the start time, its hour, minute and second the low bytes of nv_settings.pulse_start_time's three longs, the reserved byte cleared (0x42b2c to 0x42b42)	time_of_day @ -0xc
@@ -1170,7 +1170,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x24976	function	counter_reset	context	sets the FPGA up again and reloads the counter's registers
 0x30ab4	function	lifetime_record_write	context	writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the EFC, when it has changed
 0x30ab4	local	record	read	the lifetime record it builds and writes	lifetime_record @ -0x24
-0x30dea	function	save_parameter_record	structures.md	writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails
+0x30dea	function	save_parameter_record	structures.md	writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails	bool save_parameter_record(request_source source)
 0x30dea	local	record	read	the parameter record it builds and writes	parameter_record @ -0x14
 0x40f76	function	counter_init	context	sets the counter configuration and interpolator calibration to their defaults and arms the reading
 0x40ed8	function	counter_configuration_init	context	the counter configuration's defaults, and the interval reading marked invalid	void counter_configuration_init(counter_configuration_fields *configuration)
@@ -1276,8 +1276,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x10400	function	mutex_init	context	mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1		convention=register; confidence=read; in=D0 int name, A1 mutex *lock; out=D7 int error; error=D7 3 service 21 finds the name; preserves=D1, D2, A0; family=mutex
 0x104d2	function	mutex_clear	context	clears the six longs of the mutex at A1		convention=register; confidence=read; in=A1 mutex *lock; family=mutex
 0x3141a	function	log_page_read	context	reads the event log's 64-byte EEPROM page at 0x400d40 plus 0x40 times its number; 0xff if its checksum fails	uint32_t log_page_read(uint8_t page, log_page *destination)
-0x31536	function	log_erase	context	clears the event log's pages and resets its state, reporting event !	char log_erase(uint8_t source)
-0x315e8	function	log_erase_locked	context	log_erase under log_mutex	int32_t log_erase_locked(uint8_t source)
+0x31536	function	log_erase	context	clears the event log's pages and resets its state, reporting event !	char log_erase(request_source source)
+0x315e8	function	log_erase_locked	context	log_erase under log_mutex	int32_t log_erase_locked(request_source source)
 0x33238	function	reset_record_write	context	writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its checksum	uint32_t reset_record_write(uint32_t date, time_of_day time, char *text)
 0x33238	local	record	read	the reset-cause record it builds and writes	reset_record @ -0x60
 0x33028	function	reset_record_valid	context	1 if a reset-cause record's checksum holds (a char result, 0x33058)	uint8_t reset_record_valid(uint8_t index)
@@ -1540,7 +1540,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x29766	function	arena_set	context	sets an arena's next free byte	void arena_set(void *next, scpi_arena *arena)
 0x29770	function	arena_init	context	makes an arena of a buffer of so many bytes	void arena_init(void *buffer, uint32_t size, scpi_arena **arena)
 0x29a24	function	copy_longs_locked	context	copies so many longs with interrupts held off	void copy_longs_locked(uint32_t *source, uint32_t *destination, uint8_t count)
-0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36	void robin_store(scpi_array_record *response, short *points, long count, data_format format, uint8_t index)
+0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36	void robin_store(scpi_array_record *response, short *points, long count, data_format format, request_source source)
 0x29b08	function	rtcm_supported	context	0: RTCM corrections are not supported	undefined1 rtcm_supported(void)
 0x29b96	function	scpi_console_read	context	reads up to so many characters from the console, marking the input ended at its end	int32_t scpi_console_read(scpi_port *port, uint8_t *buffer, int32_t length)
 0x29cc6	function	scpi_input_ended	context	marks the SCPI input ended
@@ -1572,7 +1572,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2ed7a	function	robin_point_count	context	a ROBin kind's fixed point count, 4 to 7
 0x2edde	function	robin_overflow_count	context	a ROBin kind's fixed overflow count, 4.0 on (a double each, 0x2ee4a to 0x2ee4e)	void robin_overflow_count(char kind, double *count)
 0x2ee66	function	robin_clear	context	does nothing: :ROBin:CLEar's work
-0x2f34e	function	status_preset_register	context	sets a status register's enable or transition filter, as :STATus:PRESet does
+0x2f34e	function	status_preset_register	context	sets a status register's enable or transition filter, as :STATus:PRESet does	uint32_t status_preset_register(status_register_mask mask, request_source source, int16_t index, int16_t value)
 0x2f40c	function	status_transitions_init	context	sets registers 2 to 6's transition filters to their defaults from the setup table
 0x2f64a	function	happening_buffer_clear	context	clears a buffer of status events kept before the status model is ready
 0x2f668	function	happening_buffers_clear	context	clears both buffers of early status events
@@ -1590,10 +1590,10 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1df00	function	duartb_settings_done	read	the done hook of DUART channel B's setting descriptors (0x33338 on) and of its PRESet at 0x30ea0: psos_io_control(0, 0, 0)	void duartb_settings_done(void)
 0x202ac	function	sci_settings_done	read	the done hook of the SCI's setting descriptors (0x33ab2 on) and of its PRESet at 0x30ed4: psos_io_control(0x300, 0, 0)	void sci_settings_done(void)
 0x3145a	function	sign_extend_bits	context	sign-extends a value of so many bits to a long
-0x3161a	function	log_erase_checked	context	erases the event log under log_mutex if its count is the one given, else 0xff	int32_t log_erase_checked(int32_t count, uint8_t source)
+0x3161a	function	log_erase_checked	context	erases the event log under log_mutex if its count is the one given, else 0xff	int32_t log_erase_checked(int32_t count, request_source source)
 0x31662	function	log_entry_total	context	the event log's entry count, and whether it is full
 0x3202a	function	float_table_index	context	the index of a float's magnitude in the table at 0x32700, by bisection; called by nothing
-0x32104	function	clamp_double	context	clamps a double to its minimum and maximum, reporting each clamp; 1 if it clamped	uint32_t clamp_double(double *value, double *clamped, double *minimum, double *maximum, uint8_t source)
+0x32104	function	clamp_double	context	clamps a double to its minimum and maximum, reporting each clamp; 1 if it clamped	uint32_t clamp_double(double *value, double *clamped, double *minimum, double *maximum, request_source source)
 0x322aa	function	load_double	context	the double at a pointer	double load_double(scpi_double_step *step, double *value, int32_t index)
 0x323b2	function	float_max_of	context	the larger of two floats at pointers
 0x323d6	function	float_min_of	context	the smaller of two floats at pointers
@@ -1948,7 +1948,7 @@ installer::0x108578	label	installer_io_table_defaults	structures.md	installer_ps
 0x27f10	function	scpi_common_header_resolve	context	resolves a common command's header to its node and handler and takes room for its parameters	uint32_t scpi_common_header_resolve(scpi_keyword *keyword, scpi_call *call, int16_t *offset, scpi_parameter **parameters, uint16_t unused, int16_t query, scpi_arena *arena, scpi_child_list *list)
 0x292d6	function	scpi_interpret	context	the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends	undefined4 scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
 0x297c4	function	scpi_long_resolve_bound	context	a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the third; called by nothing	int scpi_long_resolve_bound(long low, long high, long value, short *parameter)
-0x298b2	function	scpi_numeric_set_double	context	scpi_numeric_set for a parameter of doubles; called by nothing
+0x298b2	function	scpi_numeric_set_double	context	scpi_numeric_set for a parameter of doubles; called by nothing	void scpi_numeric_set_double(int32_t param, int32_t index, int16_t kind, int16_t bound, uint32_t *value, request_source source)
 0x29990	function	scpi_numeric_get_double	context	scpi_numeric_get for a parameter of doubles; called by nothing	double scpi_numeric_get_double(scpi_numeric_param *param, int index, short kind, short bound)
 0x29a1e	function	long_identity	context	returns its argument; called by nothing
 0x29a62	function	float_identity	context	returns its argument; the EFC queries pass pll.efc through it	float float_identity(float x)

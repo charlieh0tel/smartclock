@@ -50,7 +50,7 @@ static const int32_t SCPI_SAMPLE_IMULTIPLE_COUNT = 4;
 int32_t scpi_set_SAMPle_ACTion(void* parameters, void* response,
                                scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
 
   pllc_request_b(&scpi_action_SAMPle_ACTion, (uint8_t)given->value, source);
   return 0;
@@ -60,7 +60,7 @@ int32_t scpi_set_SAMPle_ACTion(void* parameters, void* response,
 int32_t scpi_set_SAMPle_BOOLean(void* parameters, void* response,
                                 scpi_call* call) {
   scpi_word_parameter* given = parameters;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
 
   pllc_request_a(&scpi_param_SAMPle_BOOLean, 0, (uint8_t)given->value, source);
   return 0;
@@ -79,7 +79,7 @@ int32_t scpi_query_SAMPle_BOOLean(void* parameters, void* response,
 int32_t scpi_set_SAMPle_BARR(void* parameters, void* response,
                              scpi_call* call) {
   scpi_sample_indexed_word* given = parameters;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
 
   pllc_request_a(&scpi_param_SAMPle_BARR, (uint8_t)given->index,
                  (uint8_t)given->given.value, source);
@@ -148,7 +148,7 @@ int32_t scpi_query_SAMPle_TARR(void* parameters, void* response,
 int32_t scpi_set_SAMPle_INTeger(void* parameters, void* response,
                                 scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
 
   scpi_numeric_set(&scpi_param_SAMPle_INTeger, 0, given->kind, given->bound, 0,
                    given->value, source);
@@ -168,7 +168,7 @@ int32_t scpi_query_SAMPle_INTeger(void* parameters, void* response,
 int32_t scpi_set_SAMPle_IARR(void* parameters, void* response,
                              scpi_call* call) {
   scpi_sample_indexed_number* given = parameters;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
 
   scpi_numeric_set(&scpi_param_SAMPle_IARR, given->index, given->number.kind,
                    given->number.bound, 0, given->number.value, source);
@@ -196,7 +196,7 @@ int32_t scpi_set_SAMPle_IMULtiple(void* parameters, void* response,
   for (int32_t i = 0; i < SCPI_SAMPLE_IMULTIPLE_COUNT; i++) {
     scpi_values_SAMPle_IMULtiple[i] = given[i].number.value;
   }
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
 
   pllc_request_d(&scpi_param_SAMPle_IMULtiple, SCPI_SAMPLE_IMULTIPLE_COUNT - 1,
                  (uint32_t)scpi_values_SAMPle_IMULtiple, source);
@@ -219,7 +219,7 @@ int32_t scpi_query_SAMPle_IMULtiple(void* parameters, void* response,
 int32_t scpi_set_SAMPle_FLOat(void* parameters, void* response,
                               scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
 
   scpi_numeric_set(&scpi_param_SAMPle_FLOat, 0, given->kind, given->bound,
                    (uint32_t)given->value, 0, source);
@@ -240,7 +240,7 @@ int32_t scpi_query_SAMPle_FLOat(void* parameters, void* response,
 int32_t scpi_set_SAMPle_FARR(void* parameters, void* response,
                              scpi_call* call) {
   scpi_sample_indexed_number* given = parameters;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
 
   scpi_numeric_set(&scpi_param_SAMPle_FARR, given->index, given->number.kind,
                    given->number.bound, (uint32_t)given->number.value, 0,

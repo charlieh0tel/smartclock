@@ -806,6 +806,19 @@ firmware's own log erase and NV saves).  Nothing in the image passes 1,
 3 or 5; 5 alone is tested elsewhere (`0x432fe`, sent to the GPS as 0
 is), so those are named by what the code does with them.
 
+A routine called directly takes it as a `char`, in a 2-byte slot read
+at its start (`nv_save`, `save_parameter_record`, `log_erase` and its
+two wrappers, `scpi_check_range`, `report_clamped`, `clamp_float`,
+`clamp_double`, `scpi_numeric_set`, `scpi_numeric_set_double`,
+`robin_store`, `status_preset_register`, `pllc_request_a` to
+`pllc_request_e`), and its prototype says `request_source`.  The
+descriptors' routines, called through a pointer, are pushed a
+sign-extended long (`pll_scpi_do_action`, `0x42bac`) and read its low
+byte (`save_calibration_block`'s `(15,A6)`, the actions' `(11,SP)`, the
+validators' whole long at `(28,A6)`), as are `status_preset_done` and
+the status restores (`0x4354a`, `0x43484`): those keep a 4-byte
+integer, since a 1-byte type would make the slot 2 bytes.
+
 The request is a `pllc_request`, 24 bytes, the size of the kernel's
 message buffers (`psos.md`, "Inside the kernel"): each of
 `pllc_request_a` to `pllc_request_e` links a 24-byte frame and sends its

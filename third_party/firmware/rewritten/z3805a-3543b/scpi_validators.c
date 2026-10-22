@@ -19,7 +19,7 @@ static const float PLLC_HALF = 0.5f;
 
 /* Prints that a value was clamped to its minimum (0) or maximum, and
  * reports it out of range (0x31ff8). */
-void report_clamped(char too_large, uint8_t source) {
+void report_clamped(char too_large, request_source source) {
   if (too_large == 0) {
     task_dmessage("Value too small, set to min limit\r\n");
   } else {
@@ -31,7 +31,7 @@ void report_clamped(char too_large, uint8_t source) {
 /* A float clamped to its minimum and maximum into *clamped, reporting a
  * clamp: 1 if it clamped (0x3209c). */
 uint32_t clamp_float(float* value, float* clamped, float* minimum,
-                     float* maximum, uint8_t source) {
+                     float* maximum, request_source source) {
   if (float_compare(*minimum, *value) > 0) {
     report_clamped(0, source);
     *clamped = *minimum;
@@ -91,7 +91,7 @@ float clamp_float_to_step_and_limits(float* value, int32_t index,
                                      scpi_step* step, int32_t source) {
   float clamped;
 
-  clamp_float(value, &clamped, minimum, maximum, (uint8_t)source);
+  clamp_float(value, &clamped, minimum, maximum, source);
   float step_size = scpi_validators_float_step(step, &clamped, index);
   return round_float_to_step(&clamped, &step_size);
 }
@@ -103,7 +103,7 @@ int32_t clamp_float_to_step_double(float* value, int32_t index, float* minimum,
                                    int32_t source) {
   float clamped;
 
-  clamp_float(value, &clamped, minimum, maximum, (uint8_t)source);
+  clamp_float(value, &clamped, minimum, maximum, source);
   float step_size = scpi_validators_float_step(step, &clamped, index);
   return double_to_integer(scpi_validators_whole_steps(clamped, &step_size));
 }
@@ -118,11 +118,11 @@ int32_t clamp_to_limits(int32_t* value, int32_t index, int32_t* minimum,
     *value = step_size * (*value / step_size);
   }
   if (*value > *maximum) {
-    report_clamped(1, (uint8_t)source);
+    report_clamped(1, source);
     return *maximum;
   }
   if (*value < *minimum) {
-    report_clamped(0, (uint8_t)source);
+    report_clamped(0, source);
     return *minimum;
   }
   return *value;
@@ -139,11 +139,11 @@ uint32_t clamp_to_step_and_limits(uint32_t* value, int32_t index,
     *value = step_size * (*value / step_size);
   }
   if (*value > *maximum) {
-    report_clamped(1, (uint8_t)source);
+    report_clamped(1, source);
     return *maximum;
   }
   if (*value < *minimum) {
-    report_clamped(0, (uint8_t)source);
+    report_clamped(0, source);
     return *minimum;
   }
   return *value;
@@ -168,7 +168,7 @@ float float_min_of(float* a, float* b) {
 /* A double clamped to its minimum and maximum into *clamped, reporting a
  * clamp: 1 if it clamped (0x32104). */
 uint32_t clamp_double(double* value, double* clamped, double* minimum,
-                      double* maximum, uint8_t source) {
+                      double* maximum, request_source source) {
   if (double_compare(*value, *minimum) > 0) {
     report_clamped(0, source);
     *clamped = *minimum;
@@ -193,7 +193,7 @@ int32_t clamp_double_to_step_and_limits(double* value, uint32_t index,
   double clamped;
   double whole;
 
-  clamp_double(value, &clamped, minimum, maximum, (uint8_t)source);
+  clamp_double(value, &clamped, minimum, maximum, source);
   double step = step_record->function(step_record, &clamped, index);
   double steps = double_divide_reversed_pointers(&step, &clamped);
   if (double_compare(PLLC_COARSE_STEPS, steps) > 0 ||
@@ -213,7 +213,7 @@ double clamp_double_to_limits(double* value, int32_t index, double* minimum,
                               int32_t source) {
   double clamped;
 
-  clamp_double(value, &clamped, minimum, maximum, (uint8_t)source);
+  clamp_double(value, &clamped, minimum, maximum, source);
   return clamped;
 }
 

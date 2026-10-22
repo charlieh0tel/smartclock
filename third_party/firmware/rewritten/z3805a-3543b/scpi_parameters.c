@@ -187,7 +187,7 @@ uint32_t scpi_parameters_finish(scpi_parameter** next, scpi_call* call,
  * and 0; *ESE, *SRE and the :STATus enable and transition setters
  * (0x2979c). */
 uint32_t scpi_check_range(int32_t low, int32_t value, int32_t high,
-                          uint8_t source) {
+                          request_source source) {
   if (value < low || value > high) {
     status_report_from(STATUS_DATA_OUT_OF_RANGE, source);
     return 0;
@@ -220,7 +220,7 @@ int32_t scpi_long_resolve_bound(int32_t low, int32_t high, int32_t value,
  * values[0], the other 0 (0x2982c). */
 void scpi_numeric_set(scpi_numeric_param* param, int32_t index, int16_t kind,
                       int16_t bound, uint32_t float_value,
-                      int32_t integer_value, uint8_t source) {
+                      int32_t integer_value, request_source source) {
   uint32_t* real = 0;
   int32_t integer = 0;
 
@@ -245,7 +245,8 @@ void scpi_numeric_set(scpi_numeric_param* param, int32_t index, int16_t kind,
  * or its minimum's or maximum's, to pllc; called by nothing (0x298b2).
  * The parameter is a scpi_numeric_param. */
 void scpi_numeric_set_double(int32_t param, int32_t index, int16_t kind,
-                             int16_t bound, uint32_t* value, uint8_t source) {
+                             int16_t bound, uint32_t* value,
+                             request_source source) {
   scpi_numeric_param* numeric = (scpi_numeric_param*)param;
 
   if (kind == SCPI_VALUE_BOUND) {

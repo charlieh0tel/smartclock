@@ -22,7 +22,7 @@ void sync_immediate_request(int32_t index, int32_t source) {
       pll.stage == PLL_STAGE_HOLDOVER_RECOVERY) {
     pll.sync_requested = 1;
   } else {
-    status_report_from(STATUS_SETTINGS_CONFLICT, (uint8_t)source);
+    status_report_from(STATUS_SETTINGS_CONFLICT, source);
   }
 }
 

@@ -315,7 +315,7 @@ int32_t scpi_query_ROBin(void* parameters, void* response, scpi_call* call) {
   uint32_t kind;
   uint32_t second;
   int32_t error = robin_parse(given->name, &kind, &second);
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
   int16_t* points = robin_points[source];
   uint16_t count;
 
@@ -352,7 +352,7 @@ int32_t scpi_query_ROBin_MEMory_OVERflow_COUNt(void* parameters, void* response,
                                                scpi_call* call) {
   scpi_robin_parameters* given = parameters;
   scpi_array* array = response;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
   double* counts = robin_overflows[source];
   uint32_t kind;
   uint32_t second;
@@ -397,7 +397,7 @@ int32_t scpi_query_ROBin_POINts(void* parameters, void* response,
                                 scpi_call* call) {
   scpi_robin_parameters* given = parameters;
   scpi_array* array = response;
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
   int16_t* counts = scpi_response_lists[source];
   uint32_t kind;
   uint32_t second;
@@ -430,7 +430,7 @@ int32_t scpi_query_ROBin_TSTamp(void* parameters, void* response,
   uint32_t kind;
   uint32_t second;
   int32_t error = robin_parse(given->name, &kind, &second);
-  uint8_t source = return_zero(call->input);
+  request_source source = return_zero(call->input);
   int16_t* points = robin_points[source];
   int16_t values[TIMESTAMP_VALUES];
 
@@ -453,12 +453,12 @@ int32_t scpi_query_ROBin_TSTamp(void* parameters, void* response,
 }
 
 /* Makes a :ROBin query's response of its points, by its format, in the
- * index'th record of that kind (0x29a68). */
+ * source's record of that kind (0x29a68). */
 void robin_store(scpi_array_record* record, int16_t* points, int32_t count,
-                 data_format format, uint8_t index) {
+                 data_format format, request_source source) {
   switch (format) {
     case FORMAT_INTEGER: {
-      scpi_block* block = &robin_blocks[index];
+      scpi_block* block = &robin_blocks[source];
 
       block->length = count * sizeof *points;
       block->data = points;
@@ -467,7 +467,7 @@ void robin_store(scpi_array_record* record, int16_t* points, int32_t count,
       break;
     }
     case FORMAT_ASCII: {
-      scpi_array* array = &robin_arrays[index];
+      scpi_array* array = &robin_arrays[source];
 
       array->count = count;
       array->values = points;

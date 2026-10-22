@@ -164,7 +164,7 @@ uint32_t save_calibration_block(int32_t index, int32_t source) {
   block.checksum = record_checksum(&block, sizeof block);
   if (!eeprom_write((char*)&eeprom_calibration_block, (char*)&block,
                     sizeof block)) {
-    status_report_from(STATUS_MEMORY_ERROR, (uint8_t)source);
+    status_report_from(STATUS_MEMORY_ERROR, source);
     return 0;
   }
   return 1;
@@ -196,7 +196,7 @@ uint8_t parameter_record_read(void) {
 
 /* Writes both serial ports' settings to the parameter record, a memory
  * error for the source when it fails (0x30dea). */
-bool save_parameter_record(uint8_t source) {
+bool save_parameter_record(request_source source) {
   parameter_record record;
 
   memset(&record, RECORDS_ERASED, sizeof record);

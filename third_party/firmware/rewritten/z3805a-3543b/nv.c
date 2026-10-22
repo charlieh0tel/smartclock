@@ -233,7 +233,7 @@ uint32_t nv_record_differs(int32_t* first, int32_t* second) {
 /* Packs the settings into an NV register record and writes it to slot
  * nv_slot when it differs; a memory error for the source when the write
  * fails (0x3293a). */
-char nv_save(uint8_t source) {
+char nv_save(request_source source) {
   static const uint32_t NV_PACKED_LONGS =
       (uint32_t)(sizeof nv_records[0].packed / sizeof nv_records[0].packed[0]);
   nv_record record;

@@ -2192,6 +2192,28 @@ typedef struct installer_status_register_layout {
   uint16_t defined_bits; /* +0x08 */
 } installer_status_register_layout;
 
+/* status_register_mask: which of a status register's masks
+ * status_preset_register sets, by its jump table at 0x2f386; any other
+ * value sets none (0x2f378).  status_enable_restore passes the enable
+ * (0x434a0), status_ptr_restore and status_ntr_restore a filtered
+ * register's transition filters, by its index less 2 (0x434e0,
+ * 0x43522). */
+typedef enum __attribute__((packed)) status_register_mask {
+  STATUS_MASK_ENABLE = 0,
+  STATUS_MASK_POSITIVE_TRANSITION = 1,
+  STATUS_MASK_NEGATIVE_TRANSITION = 2,
+} status_register_mask;
+
+/* status_preset_form: :STATus:PRESet's two forms, the action index
+ * scpi_set_STATus_PRESet and scpi_set_STATus_PRESet_ALARm give
+ * status_preset_done, by its jump table at 0x43560. */
+typedef enum __attribute__((packed)) status_preset_form {
+  /* The filtered registers' enables (0x43564). */
+  STATUS_PRESET_SCPI = 0,
+  /* Every enable, and :QUEStionable:USER off (0x43598). */
+  STATUS_PRESET_ALARM = 1,
+} status_preset_form;
+
 /* The SCPI status system: status_create builds it, status_object points
  * at it. */
 typedef struct status_model {

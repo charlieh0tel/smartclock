@@ -370,9 +370,7 @@ int32_t scpi_set_STATus_QUEStionable_EVENt_USER(void* parameters,
  * status_preset_done (0x2ac4c). */
 int32_t scpi_set_STATus_PRESet(void* parameters, void* response,
                                scpi_call* call) {
-  static const uint8_t FORM_SCPI = 0; /* status.c's STATUS_PRESET_SCPI */
-
-  pllc_request_b(&scpi_action_STATus_PRESet, FORM_SCPI,
+  pllc_request_b(&scpi_action_STATus_PRESet, STATUS_PRESET_SCPI,
                  return_zero(call->input));
   return 0;
 }
@@ -381,9 +379,7 @@ int32_t scpi_set_STATus_PRESet(void* parameters, void* response,
  * factory-default conditions (0x2ac72). */
 int32_t scpi_set_STATus_PRESet_ALARm(void* parameters, void* response,
                                      scpi_call* call) {
-  static const uint8_t FORM_ALARM = 1; /* status.c's STATUS_PRESET_ALARM */
-
-  pllc_request_b(&scpi_action_STATus_PRESet, FORM_ALARM,
+  pllc_request_b(&scpi_action_STATus_PRESet, STATUS_PRESET_ALARM,
                  return_zero(call->input));
   return 0;
 }

@@ -85,7 +85,7 @@ int32_t scpi_query_SOURce_PULSe_CONTinuous_STATe(void* parameters,
  * source's staged longs. */
 static void scpi_source_pulse_start_set(scpi_numeric_param* param,
                                         scpi_short_parameter* fields,
-                                        uint8_t source) {
+                                        request_source source) {
   int32_t* staged = scpi_staged[source];
 
   for (uint8_t field = 0; field < SCPI_SOURCE_PULSE_FIELDS; field++) {

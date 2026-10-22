@@ -30,8 +30,7 @@ void selftest_fpga(char_slot run) {
 uint32_t selftest_fpga_with_lamp(void) {
   counter_selftest();
   if (selftest.fpga != 0) {
-    /* the DUART's output port bit 7, OP7, the failure lamp */
-    duart_output_bits(0x80, 0);
+    duart_output_bits(BOARD_LED_SELFTEST, 0);
   }
   return (uint16_t)selftest.fpga;
 }

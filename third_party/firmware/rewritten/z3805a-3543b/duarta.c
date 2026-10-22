@@ -1,9 +1,34 @@
-/* DUART channel A, the link to the GPS engine, written by hand in place
- * of the decompiler's (docs/firmware/README.md, "Hand-written C";
- * docs/firmware/modules.md, `devices/gps_link`).  The exported C
- * includes this file after its own, so the types and prototypes it
- * declares are in scope; each function here keeps its generated
- * prototype. */
+/* DUART channel A, the link to the GPS engine: its driver (the
+ * firmware's drta_ and duarta_ routines), its interrupt and its self-
+ * tests; its state is docs/firmware/structures.md's "DUART channel A's
+ * driver", the registers mc68681.h's, written by hand in place of the
+ * decompiler's (docs/firmware/README.md, "Hand-written C";
+ * docs/firmware/modules.md, `devices/duarta`).  The exported C includes
+ * this file after its own, so the types and prototypes it declares are
+ * in scope; each function here keeps its generated prototype. */
+
+/* The loopback test on channel A, the GPS receiver's (0x1e2c0). */
+void duart_loopback_test_a(void) {
+  /* The DUART self-test's bit in selftest.uart. */
+  static const int16_t TEST_A_TIMEOUT = 0x08;
+  const duart_loopback_channel channel = {
+      &duart.a,     &duart_shadow.mr2a,    IMR_RXRDYA | IMR_TXRDYA,
+      &duarta.held, &duarta.loopback_test, TEST_A_TIMEOUT,
+  };
+
+  duart_loopback_test(&channel);
+}
+
+/* The loopback test's receive on channel A (0x1e6be). */
+void duart_test_rx_a(void) {
+  /* The DUART self-test's bit in selftest.uart. */
+  static const int16_t TEST_A_MISMATCH = 0x04;
+
+  duart_test_receive(&duart.a, TEST_A_MISMATCH);
+}
+
+/* The loopback test's transmit on channel A (0x1e706). */
+void duart_test_tx_a(void) { duart_test_transmit(&duart.a, IMR_TXRDYA); }
 
 /* Sends a message to the GPS receiver on DUART channel A by interrupt,
  * waiting until it is out; only the GPS task may, and another gets 1

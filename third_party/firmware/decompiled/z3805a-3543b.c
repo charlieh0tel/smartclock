@@ -277,6 +277,15 @@ struct aging_curve_state {
 
 typedef void (atexit_function)(void);
 
+typedef enum __attribute__((packed)) board_led {
+    BOARD_LED_HEARTBEAT=4,
+    BOARD_LED_INSTALLER=8,
+    BOARD_LED_CPU=16,
+    BOARD_LED_RAM=32,
+    BOARD_LED_DUART=64,
+    BOARD_LED_SELFTEST=128
+} board_led;
+
 typedef struct boot_selftest_results boot_selftest_results, *Pboot_selftest_results;
 
 typedef short int16_t;
@@ -2817,6 +2826,7 @@ _Static_assert(sizeof(adc_channel) == 1, "adc_channel");
 _Static_assert(sizeof(adc_monitor) == 48, "adc_monitor");
 _Static_assert(sizeof(aging_curve_state) == 42, "aging_curve_state");
 _Static_assert(sizeof(aging_fit_mode) == 1, "aging_fit_mode");
+_Static_assert(sizeof(board_led) == 1, "board_led");
 _Static_assert(sizeof(boot_selftest_results) == 16, "boot_selftest_results");
 _Static_assert(sizeof(calendar_date) == 4, "calendar_date");
 _Static_assert(sizeof(calibration_block) == 64, "calibration_block");
@@ -6017,7 +6027,7 @@ bool drtb_try_lock_write(void);
 uint8_t drtb_release_for_timecode(void);
 void duart_op0_set(char param_1);
 void duart_op1_set(char param_1);
-void duart_output_bits(uint8_t param_1,uint8_t param_2);
+void duart_output_bits(board_led reset,board_led set);
 uint8_t drta_send_message(char *param_1,int16_t param_2);
 bool duarta_rx_pending(void);
 uint8_t drta_get_byte(char *param_1);
@@ -24192,7 +24202,7 @@ int16_t selftest_qspi_with_lamp(void)
   selftest.qspi = 0;
   qspi_tests_run();
   if (selftest.qspi != 0) {
-    duart_output_bits(0x80,0);
+    duart_output_bits(BOARD_LED_SELFTEST,0);
   }
   return selftest.qspi;
 }
@@ -24209,7 +24219,7 @@ uint32_t selftest_fpga_with_lamp(void)
 {
   counter_selftest();
   if (selftest.fpga != 0) {
-    duart_output_bits(0x80,0);
+    duart_output_bits(BOARD_LED_SELFTEST,0);
   }
   return (uint32_t)(uint16_t)selftest.fpga;
 }
@@ -24227,7 +24237,7 @@ int16_t selftest_interpolator_with_lamp(void)
   selftest.interpolator = 0;
   interpolator_selftest();
   if (selftest.interpolator != 0) {
-    duart_output_bits(0x80,0);
+    duart_output_bits(BOARD_LED_SELFTEST,0);
   }
   return selftest.interpolator;
 }
@@ -24244,7 +24254,7 @@ int16_t selftest_internal_reference_with_lamp(void)
   selftest.internal_reference = 0;
   internal_pps_test();
   if (selftest.internal_reference != 0) {
-    duart_output_bits(0x80,0);
+    duart_output_bits(BOARD_LED_SELFTEST,0);
   }
   return selftest.internal_reference;
 }
@@ -24272,7 +24282,7 @@ uint32_t selftest_uart_with_lamp(void)
 {
   duart_test();
   if (selftest.uart != 0) {
-    duart_output_bits(0x40,0);
+    duart_output_bits(BOARD_LED_DUART,0);
   }
   return (uint32_t)(uint16_t)selftest.uart;
 }
@@ -24288,7 +24298,7 @@ uint32_t selftest_gps_with_lamp(void)
 {
   gps_selftest_run();
   if (selftest.gps != 0) {
-    duart_output_bits(0x80,0);
+    duart_output_bits(BOARD_LED_SELFTEST,0);
   }
   return (uint32_t)(uint16_t)selftest.gps;
 }
@@ -24304,7 +24314,7 @@ uint32_t selftest_power_with_lamp(void)
 {
   supplies_test();
   if (selftest.power != 0) {
-    duart_output_bits(0x80,0);
+    duart_output_bits(BOARD_LED_SELFTEST,0);
   }
   return (uint32_t)(uint16_t)selftest.power;
 }
@@ -35119,7 +35129,7 @@ void diag_words_define(void)
 
 
 /* 0001d570 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* a bare rts: duart_init and duartb_reconfigure put it in duartb.echo when the settings' echo is
    off, drtb_putc when it is on
@@ -35156,7 +35166,7 @@ int32_t gp_port_select(char param_1)
 #endif
 
 /* 0001d594 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* DUART channel B's mode bits from the serial settings: parity, data bits, stop bits */
 
@@ -35198,7 +35208,7 @@ void duartb_mode_from_settings(void)
 #endif
 
 /* 0001d632 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* DUART channel B's baud rate code from the serial settings */
 
@@ -35238,7 +35248,7 @@ override_jmp_0001d646_case_3:
 #endif
 
 /* 0001d680 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* waits for DUART channel B's transmitter and writes a character */
 
@@ -35257,7 +35267,7 @@ uint8_t duartb_putc_polled(uint8_t param_1)
 #endif
 
 /* 0001d6ba */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* writes a string to DUART channel B, waiting for room
    the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts" */
@@ -35292,7 +35302,7 @@ int32_t drtb_puts(char *param_1)
 #endif
 
 /* 0001d74a */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* reads a character from DUART channel B, waiting for one
    "wait_v SIG_SIQ error in getc", DUART channel B */
@@ -35324,7 +35334,7 @@ uint8_t drtb_getc(void)
 #endif
 
 /* 0001d7e4 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* reads a line of up to the given length from DUART channel B; "DRTB receiver error" */
 
@@ -35864,7 +35874,7 @@ __asm__(
 );
 
 /* 0001dc7e */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* resets DUART channel B and applies the serial settings' mode and baud rate */
 
@@ -35989,7 +35999,7 @@ void drtb_read(void)
 
 
 /* 0001ddf6 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* writes a character to channel B under the write lock */
 
@@ -36012,7 +36022,7 @@ void drtb_putc(char param_1)
 #endif
 
 /* 0001de32 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* queues a block for channel B to send by interrupt */
 
@@ -36110,7 +36120,7 @@ void scpi_port_close(void)
 #endif
 
 /* 0001df00 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* the done hook of DUART channel B's setting descriptors (0x33338 on) and of its PRESet at 0x30ea0:
    psos_io_control(0, 0, 0)
@@ -36126,7 +36136,7 @@ void duartb_settings_done(void)
 #endif
 
 /* 0001df12 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it
     */
@@ -36164,7 +36174,7 @@ void printf_polled(char *format,...)
 
 
 /* 0001df6e */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* 1 if channel B's write mutex is held by another */
 
@@ -36180,7 +36190,7 @@ bool drtb_try_lock_write(void)
 #endif
 
 /* 0001df8a */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* closes the console device so that channel B can send the time code */
 
@@ -36254,14 +36264,23 @@ void duart_op1_set(char param_1)
 
 /* sets and clears the DUART's output port bits, interrupts held off */
 
-void duart_output_bits(uint8_t param_1,uint8_t param_2)
+void duart_output_bits(board_led reset,board_led set)
 
 {
   uint16_t sr;
   
   sr = set_interrupt_mask(6);
-  duart.stop_ropbc = param_1 & 0xfc | duart_shadow.output_reset & 0xfc;
-  duart_shadow.output_reset = ~(param_2 & 0xfc) & (param_1 & 0xfc | duart_shadow.output_reset);
+  duart.stop_ropbc =
+       reset & (BOARD_LED_SELFTEST|BOARD_LED_DUART|BOARD_LED_RAM|BOARD_LED_CPU|BOARD_LED_INSTALLER|
+               BOARD_LED_HEARTBEAT) |
+       duart_shadow.output_reset &
+       (BOARD_LED_SELFTEST|BOARD_LED_DUART|BOARD_LED_RAM|BOARD_LED_CPU|BOARD_LED_INSTALLER|
+       BOARD_LED_HEARTBEAT);
+  duart_shadow.output_reset =
+       ~(set & (BOARD_LED_SELFTEST|BOARD_LED_DUART|BOARD_LED_RAM|BOARD_LED_CPU|BOARD_LED_INSTALLER|
+               BOARD_LED_HEARTBEAT)) &
+       (reset & (BOARD_LED_SELFTEST|BOARD_LED_DUART|BOARD_LED_RAM|BOARD_LED_CPU|BOARD_LED_INSTALLER|
+                BOARD_LED_HEARTBEAT) | duart_shadow.output_reset);
   duart.start_sopbc = ~duart_shadow.output_reset & 0xfc;
   set_interrupt_mask(sr);
   return;
@@ -36270,7 +36289,7 @@ void duart_output_bits(uint8_t param_1,uint8_t param_2)
 #endif
 
 /* 0001e18a */
-#if 0 /* the decompiler's reading; rewritten in gps_link.c */
+#if 0 /* the decompiler's reading; rewritten in duarta.c */
 
 /* sends a message to the GPS engine on DUART channel A
    the firmware's own name, "wait_v SIG_SOQA error in drta_send_message" */
@@ -36308,7 +36327,7 @@ uint8_t drta_send_message(char *param_1,int16_t param_2)
 #endif
 
 /* 0001e222 */
-#if 0 /* the decompiler's reading; rewritten in gps_link.c */
+#if 0 /* the decompiler's reading; rewritten in duarta.c */
 
 /* 1 if DUART channel A's receive ring is not empty */
 
@@ -36321,7 +36340,7 @@ bool duarta_rx_pending(void)
 #endif
 
 /* 0001e238 */
-#if 0 /* the decompiler's reading; rewritten in gps_link.c */
+#if 0 /* the decompiler's reading; rewritten in duarta.c */
 
 /* reads a byte from the GPS engine on DUART channel A, waiting for one
    the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine
@@ -36355,7 +36374,7 @@ uint8_t drta_get_byte(char *param_1)
 #endif
 
 /* 0001e2c0 */
-#if 0 /* the decompiler's reading; rewritten in duart.c */
+#if 0 /* the decompiler's reading; rewritten in duarta.c */
 
 /* puts channel A in local loopback and sends "DUART test string"; sets the UART self-test's bit 8
    at 0x100c2e if it fails */
@@ -36419,7 +36438,7 @@ void duart_loopback_test_a(void)
 #endif
 
 /* 0001e41a */
-#if 0 /* the decompiler's reading; rewritten in duart.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* the same for channel B */
 
@@ -36557,7 +36576,7 @@ void duart_test(void)
 #endif
 
 /* 0001e6be */
-#if 0 /* the decompiler's reading; rewritten in duart.c */
+#if 0 /* the decompiler's reading; rewritten in duarta.c */
 
 /* the loopback test's receive on channel A: compares with the next expected character */
 
@@ -36579,7 +36598,7 @@ void duart_test_rx_a(void)
 #endif
 
 /* 0001e6e2 */
-#if 0 /* the decompiler's reading; rewritten in duart.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* the loopback test's receive on channel B */
 
@@ -36601,7 +36620,7 @@ void duart_test_rx_b(void)
 #endif
 
 /* 0001e706 */
-#if 0 /* the decompiler's reading; rewritten in duart.c */
+#if 0 /* the decompiler's reading; rewritten in duarta.c */
 
 /* the loopback test's transmit on channel A: sends the next character, or stops at the end */
 
@@ -36622,7 +36641,7 @@ void duart_test_tx_a(void)
 #endif
 
 /* 0001e736 */
-#if 0 /* the decompiler's reading; rewritten in duart.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* the loopback test's transmit on channel B */
 
@@ -36643,7 +36662,7 @@ void duart_test_tx_b(void)
 #endif
 
 /* 0001e766 */
-#if 0 /* the decompiler's reading; rewritten in gps_link.c */
+#if 0 /* the decompiler's reading; rewritten in duarta.c */
 
 /* the interrupt handler for DUART channel A, the GPS engine's
    "DUARTA isr signaling SIG_SIQ" */
@@ -36681,7 +36700,7 @@ uint8_t duarta_isr(void)
 #endif
 
 /* 0001e7f6 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* the interrupt handler for DUART channel B
    "DUARTB isr signaling SIGINTR", "SIG_SIQ" */
@@ -36768,7 +36787,7 @@ uint8_t duartb_isr(void)
 #endif
 
 /* 0001e9ca */
-#if 0 /* the decompiler's reading; rewritten in gps_link.c */
+#if 0 /* the decompiler's reading; rewritten in duarta.c */
 
 /* sends the next byte to the GPS engine, signaling the GPS task 0x800 once the message is out */
 
@@ -36791,7 +36810,7 @@ void duarta_tx_interrupt(void)
 #endif
 
 /* 0001ea10 */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* with channel B's queue empty, disables its transmit interrupt and signals the writer; "DUARTB isr
    signaling SIG_SOQ" */
@@ -36988,7 +37007,7 @@ void duart_stop(void)
 #endif
 
 /* 0001ebe4 */
-#if 0 /* the decompiler's reading; rewritten in duart.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* sends "DUART" through channel B in local loopback and checks each character back */
 
@@ -41330,8 +41349,8 @@ void hmon_task(void)
   char unaff_D4b = ({ register int32_t __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (char)__entry; });
   uint16_t uVar5;
   uint16_t uVar6;
-  uint8_t bVar7;
-  uint8_t bVar8;
+  board_led reset;
+  board_led set;
   uint16_t local_e;
   uint16_t local_c;
   uint16_t local_a;
@@ -41364,14 +41383,14 @@ void hmon_task(void)
       local_e = 0;
       bVar1 = !bVar1;
       if (bVar1) {
-        bVar8 = 0;
-        bVar7 = 4;
+        set = 0;
+        reset = BOARD_LED_HEARTBEAT;
       }
       else {
-        bVar8 = 4;
-        bVar7 = 0;
+        set = BOARD_LED_HEARTBEAT;
+        reset = 0;
       }
-      duart_output_bits(bVar7,bVar8);
+      duart_output_bits(reset,set);
     }
     if (gps.pps_check_disabled != 0) {
       gps_pps_unconfirmed = 1;
@@ -47333,7 +47352,7 @@ int32_t scpi_query_failed(status_condition_code code,void *response)
 #endif
 
 /* 00029b08 */
-#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_misc.c */
 
 /* 0: RTCM corrections are not supported */
 
@@ -52489,7 +52508,7 @@ int32_t scpi_query_SOURce_PTIMe_TCODe(void *parameters,void *response,void *call
 #endif
 
 /* 0002df46 */
-#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_misc.c */
 
 /* the query handler for :RTCM? */
 
@@ -55721,7 +55740,7 @@ LAB_00030608:
 #endif
 
 /* 0003060e */
-#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_misc.c */
 
 /* the query handler for :DANA? */
 
@@ -55951,7 +55970,7 @@ uint16_t record_checksum(void *record,uint16_t length)
 #endif
 
 /* 0003086a */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* with nv_settings.serial_restricted set, clears channel B's eight_bits when its parity is also set
    DUART channel B's parity and scpi_param_DIAGnostic_SER1_RESTricted: changed */
@@ -55969,7 +55988,7 @@ void duartb_parity_restrict(void)
 #endif
 
 /* 0003088c */
-#if 0 /* the decompiler's reading; rewritten in serial_port.c */
+#if 0 /* the decompiler's reading; rewritten in duartb.c */
 
 /* with nv_settings.serial_restricted set, clears channel B's parity when eight_bits is also set
    DUART channel B's eight_bits: changed */
@@ -57173,7 +57192,7 @@ uint32_t log_append(char *format,int32_t argument_1,int32_t argument_2)
 #endif
 
 /* 00031ff8 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* "Value too small, set to min limit" or "too large, set to max limit", and status_report_from(9)
     */
@@ -57240,7 +57259,7 @@ float float_table_index(float *param_1,int16_t param_2)
 #endif
 
 /* 0003209c */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped */
 
@@ -57310,7 +57329,7 @@ clamp_double(double *param_1,uint32_t *param_2,double *param_3,double *param_4,u
 
 
 /* 0003217e */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* rounds a float to the nearest multiple of its step, half away from zero, the step a thousand
    times coarser beyond 1e9 steps */
@@ -57372,7 +57391,7 @@ uint64_t load_double(uint64_t *param_1)
 
 
 /* 000322b4 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* clamps *value to *min and *max, reporting through report_clamped */
 
@@ -57447,7 +57466,7 @@ uint32_t clamp_to_step_and_limits
 
 
 /* 000323b2 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* the larger of two floats at pointers */
 
@@ -57466,7 +57485,7 @@ float float_max_of(float *param_1,float *param_2)
 #endif
 
 /* 000323d6 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* the smaller of two floats at pointers */
 
@@ -57556,7 +57575,7 @@ LAB_0003250c:
 
 
 /* 00032596 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* clamps a double to its minimum and maximum and rounds it to its step */
 
@@ -57983,7 +58002,7 @@ uint32_t nv_load_slot(void)
 #endif
 
 /* 00032e26 */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* the long at a pointer, load_long's code again; the position setters give it unit_step */
 
@@ -57996,7 +58015,7 @@ uint32_t load_long_unit_step(uint32_t *param_1)
 #endif
 
 /* 00032e2e */
-#if 0 /* the decompiler's reading; rewritten in pllc.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* the long at a pointer; the position setters pass it as a descriptor's getter */
 
@@ -94010,11 +94029,13 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/duart.c"
 
+#include "../rewritten/z3805a-3543b/duarta.c"
+
+#include "../rewritten/z3805a-3543b/duartb.c"
+
 #include "../rewritten/z3805a-3543b/eeprom.c"
 
 #include "../rewritten/z3805a-3543b/fpga.c"
-
-#include "../rewritten/z3805a-3543b/gps_link.c"
 
 #include "../rewritten/z3805a-3543b/klok.c"
 
@@ -94072,6 +94093,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi_lexer.c"
 
+#include "../rewritten/z3805a-3543b/scpi_misc.c"
+
 #include "../rewritten/z3805a-3543b/scpi_output.c"
 
 #include "../rewritten/z3805a-3543b/scpi_parameters.c"
@@ -94102,9 +94125,9 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi_unsupported.c"
 
-#include "../rewritten/z3805a-3543b/selftest.c"
+#include "../rewritten/z3805a-3543b/scpi_validators.c"
 
-#include "../rewritten/z3805a-3543b/serial_port.c"
+#include "../rewritten/z3805a-3543b/selftest.c"
 
 #include "../rewritten/z3805a-3543b/spool.c"
 

@@ -166,7 +166,8 @@ as a self-test display.  The output port register (OPR) holds "the
 complement of the logic levels output at the output port pins"
 (MC68681 data sheet, 4.2.12), so setting a bit (`SOPBC`, `0x20001d`)
 drives the pin low and resetting it (`ROPBC`, `0x20001f`) drives it
-high.  The code reads as if an LED lights on a high pin:
+high.  The code reads as if an LED lights on a high pin.  `smartclock.h`'s
+`board_led` names the bits, which `duart_output_bits` takes:
 
 | Bit | Lit when | Written at (Z3805A) |
 | --- | -------- | ------------------- |

@@ -801,7 +801,7 @@ generated prototype.  The files are
 included in sorted order and compiled as one translation unit, so each
 file-scope name takes its file's name as a prefix (`DUART_`,
 `duart_`), and one that several files share lives in a header
-(`duart.h`'s control characters, which `serial_port.c` and `sci.c`
+(`duart.h`'s control characters, which `duartb.c` and `sci.c`
 use).  A file is a module's (`docs/firmware/modules.md`, "The
 hand-written files").  The checks run
 the hand-written function as they ran the decompiled one, against the

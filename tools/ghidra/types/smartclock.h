@@ -295,6 +295,20 @@ typedef enum __attribute__((packed)) serial_parity {
   SERIAL_PARITY_ONE = 3, /* the SCI's only: the top bit set, mark parity */
 } serial_parity;
 
+/* The bank of six LEDs on the board, the DUART's output port bits OP2 to
+ * OP7, which duart_output_bits resets (lit, the pin high) and sets
+ * (docs/firmware/outputs.md, "The rest of the bank").  The heartbeat is
+ * hmon_task's alone, flipped about every 1.1 s; the reset code and the
+ * self-tests light the others on a failure, which stay lit. */
+typedef enum __attribute__((packed)) board_led {
+  BOARD_LED_HEARTBEAT = 0x04, /* OP2, hmon_task's */
+  BOARD_LED_INSTALLER = 0x08, /* OP3, the boot code entered the installer */
+  BOARD_LED_CPU = 0x10,       /* OP4, the CPU test failed */
+  BOARD_LED_RAM = 0x20,       /* OP5, the RAM test failed */
+  BOARD_LED_DUART = 0x40,     /* OP6, a DUART test failed */
+  BOARD_LED_SELFTEST = 0x80,  /* OP7, a power-up self-test failed */
+} board_led;
+
 /* A kernel I/O device, by kernel_dispatch_io's (0x14c36) major number in
  * the high byte; the QSPI's minor, a qspi_device, goes in the low. */
 typedef enum io_device {

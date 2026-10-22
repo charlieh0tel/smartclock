@@ -1396,6 +1396,13 @@ view cannot drift apart.  The library, bottom up:
      table, the aging fit's mode and the GPS acknowledgment awaited, in
      `smartclock.h` and typed there, not as enums inside the functions
      that write them.
+     Then the layout the owner asked for: DUART channel A's and B's
+     routines, self-tests included, in `duarta.c` and `duartb.c` beside
+     `duart.c`'s shared ones; the numeric descriptors' validators and
+     step routines out of `pllc.c` into `scpi_validators.c`; `:DANA?`
+     and `:RTCM?`, which work, out of the unsupported entries into
+     `scpi_misc.c`; and the board's six LEDs, OP2 to OP7, named
+     (`board_led`), the heartbeat `hmon_task`'s alone.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

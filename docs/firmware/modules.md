@@ -60,11 +60,13 @@ Where the approved layering named a module and the code says otherwise
   structures.md).
 - **`devices/eeprom` out of `records.c`.**  The chip, its lock and its
   page writes are a device; the records are what is written.
-- **`devices/serial_port` is DUART channel B, `devices/gps_link`
-  channel A.**  The split is real: each has its own ring, signals and
-  interrupt routine (`duarta_isr` `0x1e766`, `duartb_isr` `0x1e7f6`);
-  `devices/duart` keeps what the two share, the output port, the
-  self-test and the reset.
+- **`devices/duartb` is DUART channel B, `devices/duarta` channel
+  A**, named as the firmware's `drta_`/`duarta_` and `drtb_`/`duartb_`
+  routines are.  The split is real: each has its own ring, signals and
+  interrupt routine (`duarta_isr` `0x1e766`, `duartb_isr` `0x1e7f6`)
+  and its own self-tests (`duart_test_tx_a`, `duart_loopback_test_b`,
+  ...); `devices/duart` keeps what the two share, the output port,
+  `duart_test` and the reset.
 - **`services/pps`.**  The 1PPS capture's work (`pps_interrupt`,
   `0x12db6`) ticks the clock, builds the time code and posts the time
   to `pps_exchange`, which `klok_task` waits on: a service, not a timer.
@@ -99,9 +101,9 @@ Where the approved layering named a module and the code says otherwise
 
 | Module | Functions | Subject; entry points; data |
 | ------ | --------: | --------------------------- |
-| `duart` | 15 | what both channels share: `duart_early_init`, `duart_output_bits` (8 callers), `duart_test` and the loopbacks, `duart_stop`; `duart`, `duart_shadow` |
-| `gps_link` | 5 | channel A to the GPS engine: `drta_send_message`, `drta_get_byte`, `duarta_isr`; `duarta_ring` |
-| `serial_port` | 17 | channel B, the console and SCPI port (device 0): `drtb_putc`, `drtb_gets`, `duartb_reconfigure`, `console_write_polled`, `duartb_isr`; `duartb`, `duartb_ring` |
+| `duart` | 8 | what both channels share: `duart_early_init`, `duart_output_bits` (8 callers), `duart_test`, `duart_stop`; `duart`, `duart_shadow` |
+| `duarta` | 8 | channel A, the link to the GPS engine: `drta_send_message`, `drta_get_byte`, `duarta_isr`, its self-tests; `duarta_ring` |
+| `duartb` | 23 | channel B, the console and SCPI port (device 0): `drtb_putc`, `drtb_gets`, `duartb_reconfigure`, `console_write_polled`, `duartb_isr`, its self-tests and settings hooks; `duartb`, `duartb_ring` |
 | `sci` | 15 | the SCI, device 3: `sci_putc`, `sci_gets`, `sci_reconfigure`, `sci_send_async`; `sci`, `sci_ring` |
 | `qspi` | 9 | the QSPI and its owner queue: `qspi_transfer`, `qspi_send`, `qspi_write`, `qspi_read`, `qspi_isr`; `qspi` |
 | `adc` | 9 | `adc_read` and the `read_adc_*` readings |
@@ -140,10 +142,11 @@ Where the approved layering named a module and the code says otherwise
 | `scpi/lexer` | 9 | `scpi_scan_token`, numbers, units and suffixes (`scpi_apply_suffix`) |
 | `scpi/tree` | 9 | keyword lookup and header paths: `scpi_node_find`, `scpi_header_resolve` |
 | `scpi/parameters` | 18 | the `scpi_parse_*` parsers and the numeric get and set (`scpi_numeric_set`, 15 callers) |
+| `scpi/validators` | 17 | the numeric descriptors' validators and step routines, which pllc's `validate_num` calls through the descriptors: the clamps, `round_float_to_step`, `load_long`, `load_double`; `report_clamped` |
 | `scpi/convert` | 8 | numbers to and from text: `scpi_real_to_text`, `scpi_number_to_*` (with the BCD routines in assembly, `0x24d42` to `0x254fe`) |
 | `scpi/format` | 21 | the response formatters, `scpi_format_response` |
 | `scpi/requests` | 7 | the SCPI task's side of `pllc_exchange`: `pllc_request_a` to `_e` |
-| `scpi/handlers/*` | 289 | a module to a root keyword: `common` (`*` commands, 13), `status` (20), `system` (22), `source_gpsystem` (32), `source_ptime` (19), `source_pulse` (10), `source_roscillator` (23), `output` (8), `led` (11), `sense_format` (4), `diagnostic` (48), `sample` (23, the test tree), `douglas` (7), `kenneth` (4), `robin` (18, with its parser), `stubs` (27, the four-letter entries that fail, `scpi/undocumented.md`) |
+| `scpi/handlers/*` | 289 | a module to a root keyword: `common` (`*` commands, 13), `status` (20), `system` (22), `source_gpsystem` (32), `source_ptime` (19), `source_pulse` (10), `source_roscillator` (23), `output` (8), `led` (11), `format` (2), `sense` (2), `diagnostic` (48), `sample` (23, the test tree), `douglas` (7), `kenneth` (4), `robin` (18, with its parser), `stubs` (24, the four-letter entries that fail, `scpi/undocumented.md`), `misc` (3, `:DANA?`, which reads the error queue, and `:RTCM?`) |
 | `pll/pllp` | 18 | the pllp task and its state: `pll_init`, `pllp_task`, `pll_check_reference`, `pll_stage_status`, `pll_mode`, `get_ffom`; `pll` |
 | `pll/reading` | 3 | `interval_next_reading` (9 callers), the loop's one-second reading |
 | `pll/stages` | 15 | `loop.md`'s stages: `powerup`, `coarse`, `fine`, `startup_pll`, `pll_normal`, `holdover`, `holdover_recovery` |
@@ -251,5 +254,5 @@ for it (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
   record that points at it, or, when it keeps a module's own state,
   with that module, as its prefix says: `duartb_parity_restrict` and
   `duartb_eight_bits_restrict` keep channel B's settings and sit with
-  `duartb_settings_done` in `devices/serial_port`; `pll/pll_scpi` keeps
+  `duartb_settings_done` in `devices/duartb`; `pll/pll_scpi` keeps
   what no one command owns.

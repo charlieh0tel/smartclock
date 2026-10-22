@@ -1313,7 +1313,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x23cc4	function	monitor_filter_add	context	adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new	void monitor_filter_add(adc_monitor *monitor, float reading)
 0x23d28	function	monitor_out_of_range	context	counts a monitor's readings outside its range, true once past a limit	uint8_t monitor_out_of_range(adc_monitor *monitor, float minimum, float maximum, uint8_t limit)
 0x23c2a	function	monitors_reset	context	clears all eight adc_monitors' valid, sample_index, out_of_tolerance and out_of_range_count, and hmon_supply_step	void monitors_reset(void)
-0x1e126	function	duart_output_bits	context	sets and clears the DUART's output port bits, interrupts held off
+0x1e126	function	duart_output_bits	context	sets and clears the DUART's output port bits, interrupts held off	void duart_output_bits(board_led reset, board_led set)
 0x242de	function	efc_clamp_reset	context	clears efc_clamp's flags
 0x10b62	function	klok_run_due	context	runs the clock list's due entries and reschedules the periodic ones, under klok_mutex
 0x12e9e	function	pps_wait_time	context	waits up to 1200 ticks on pps_exchange for the next 1PPS and returns its time and date

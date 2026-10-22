@@ -1,9 +1,75 @@
-/* DUART channel B, the console and SCPI port, written by hand in place
- * of the decompiler's (docs/firmware/README.md, "Hand-written C";
- * docs/firmware/modules.md, `devices/serial_port`).  The exported C
- * includes this file after its own, so the types and prototypes it
- * declares are in scope; each function here keeps its generated
- * prototype. */
+/* DUART channel B, the console and SCPI port: its driver (the firmware's
+ * drtb_ and duartb_ routines), its interrupt, its settings' hooks and
+ * its self-tests; its state is docs/firmware/structures.md's "DUART
+ * channel B's driver", the registers mc68681.h's, written by hand in
+ * place of the decompiler's (docs/firmware/README.md, "Hand-written C";
+ * docs/firmware/modules.md, `devices/duartb`).  The exported C includes
+ * this file after its own, so the types and prototypes it declares are
+ * in scope; each function here keeps its generated prototype. */
+
+/* The DUART self-test's bits in selftest.uart that several functions
+ * set; the rest are in the functions that set them. */
+static const int16_t DUART_TEST_B_MISMATCH = 0x10;
+
+static const int16_t DUART_TEST_B_TIMEOUT = 0x20;
+
+/* The loopback test on channel B, the host port (0x1e41a). */
+void duart_loopback_test_b(void) {
+  const duart_loopback_channel channel = {
+      &duart.b,
+      &duart_shadow.mr2b,
+      IMR_RXRDYB | IMR_TXRDYB,
+      &duartb.reconfiguring,
+      &duartb.loopback_test,
+      DUART_TEST_B_TIMEOUT,
+  };
+
+  duart_loopback_test(&channel);
+}
+
+/* The loopback test's receive on channel B (0x1e6e2). */
+void duart_test_rx_b(void) {
+  duart_test_receive(&duart.b, DUART_TEST_B_MISMATCH);
+}
+
+/* The loopback test's transmit on channel B (0x1e736). */
+void duart_test_tx_b(void) { duart_test_transmit(&duart.b, IMR_TXRDYB); }
+
+/* At reset, before interrupts: sends "DUART" through channel B in local
+ * loopback by polling and checks each character back (0x1ebe4). */
+void duartb_loopback_check(void) {
+  /* How long duartb_loopback_check spins for each character back. */
+  static const int32_t LOOPBACK_CHECK_SPINS = 3000;
+  char* text = "DUART";
+
+  (void)duart.b.mr;
+  duart.b.mr = MR2_MODE_LOCAL_LOOPBACK | DUART_MR2_ONE_STOP_BIT;
+  loopback_send_next = text;
+  loopback_expect_next = text;
+  duart.b.cr = CR_TX_ENABLE | CR_RX_ENABLE;
+  duart.b.rb_tb = *loopback_send_next++;
+  while (*loopback_expect_next != 0 && selftest.uart == 0) {
+    for (int32_t spins = LOOPBACK_CHECK_SPINS;
+         spins > 0 && (duart.b.sr_csr & SR_RXRDY) == 0; spins--) {
+    }
+    if ((duart.b.sr_csr & SR_RXRDY) != 0) {
+      char expected = *loopback_expect_next++;
+
+      if (duart.b.rb_tb != expected) {
+        selftest.uart |= DUART_TEST_B_MISMATCH;
+      }
+      if (*loopback_send_next != 0) {
+        duart.b.rb_tb = *loopback_send_next++;
+      }
+    } else {
+      selftest.uart |= DUART_TEST_B_TIMEOUT;
+    }
+  }
+  duart.b.cr = CR_RESET_RECEIVER;
+  duart.b.cr = CR_RESET_TRANSMITTER;
+  (void)duart.b.mr;
+  duart.b.mr = DUART_MR2_ONE_STOP_BIT;
+}
 
 /* A no-op echo, a bare rts: duart_init and duartb_reconfigure put it in
  * duartb.echo when the settings' echo is off (0x1d570). */

@@ -204,35 +204,35 @@
 0x1e126	duart_output_bits	devices/duart
 0x1e650	duart_test	devices/duart
 0x1e574	duart_counter_test	devices/duart
-0x1e2c0	duart_loopback_test_a	devices/duart	self-test of channel A, run by duart_test with B's
-0x1e706	duart_test_tx_a	devices/duart	self-test of channel A, run by duart_test with B's
-0x1e6be	duart_test_rx_a	devices/duart	self-test of channel A, run by duart_test with B's
-0x1e41a	duart_loopback_test_b	devices/duart	self-test of channel B, run by duart_test with A's
-0x1e736	duart_test_tx_b	devices/duart	self-test of channel B, run by duart_test with A's
-0x1e6e2	duart_test_rx_b	devices/duart	self-test of channel B, run by duart_test with A's
-0x1ebe4	duartb_loopback_check	devices/duart	self-test of channel B, run by duart_test with A's
-0x1e18a	drta_send_message	devices/gps_link
-0x1e9ca	duarta_tx_interrupt	devices/gps_link
-0x1e238	drta_get_byte	devices/gps_link
-0x1e222	duarta_rx_pending	devices/gps_link
-0x1e766	duarta_isr	devices/gps_link
-0x1d594	duartb_mode_from_settings	devices/serial_port
-0x1d632	duartb_baud_from_settings	devices/serial_port
-0x1dc7e	duartb_reconfigure	devices/serial_port
-0x1df00	duartb_settings_done	devices/serial_port
-0x1d570	duartb_echo_none	devices/serial_port
-0x1ddf6	drtb_putc	devices/serial_port
-0x1d6ba	drtb_puts	devices/serial_port
-0x1de32	drtb_send_async	devices/serial_port
-0x1d680	duartb_putc_polled	devices/serial_port
-0x1df12	console_write_polled	devices/serial_port	polls channel B's transmitter directly (0x1d680); debug_write's path
-0x1df6e	drtb_try_lock_write	devices/serial_port
-0x1df8a	drtb_release_for_timecode	devices/serial_port	closes device 0 so channel B can carry the time code; tcode_request calls it
-0x1d74a	drtb_getc	devices/serial_port
-0x1d7e4	drtb_gets	devices/serial_port
-0x1ddd6	drtb_read	devices/serial_port
-0x1e7f6	duartb_isr	devices/serial_port
-0x1ea10	duartb_transmit_interrupt	devices/serial_port
+0x1e2c0	duart_loopback_test_a	devices/duarta	self-test of channel A, run by duart_test with B's
+0x1e706	duart_test_tx_a	devices/duarta	self-test of channel A, run by duart_test with B's
+0x1e6be	duart_test_rx_a	devices/duarta	self-test of channel A, run by duart_test with B's
+0x1e41a	duart_loopback_test_b	devices/duartb	self-test of channel B, run by duart_test with A's
+0x1e736	duart_test_tx_b	devices/duartb	self-test of channel B, run by duart_test with A's
+0x1e6e2	duart_test_rx_b	devices/duartb	self-test of channel B, run by duart_test with A's
+0x1ebe4	duartb_loopback_check	devices/duartb	self-test of channel B, run by duart_test with A's
+0x1e18a	drta_send_message	devices/duarta
+0x1e9ca	duarta_tx_interrupt	devices/duarta
+0x1e238	drta_get_byte	devices/duarta
+0x1e222	duarta_rx_pending	devices/duarta
+0x1e766	duarta_isr	devices/duarta
+0x1d594	duartb_mode_from_settings	devices/duartb
+0x1d632	duartb_baud_from_settings	devices/duartb
+0x1dc7e	duartb_reconfigure	devices/duartb
+0x1df00	duartb_settings_done	devices/duartb
+0x1d570	duartb_echo_none	devices/duartb
+0x1ddf6	drtb_putc	devices/duartb
+0x1d6ba	drtb_puts	devices/duartb
+0x1de32	drtb_send_async	devices/duartb
+0x1d680	duartb_putc_polled	devices/duartb
+0x1df12	console_write_polled	devices/duartb	polls channel B's transmitter directly (0x1d680); debug_write's path
+0x1df6e	drtb_try_lock_write	devices/duartb
+0x1df8a	drtb_release_for_timecode	devices/duartb	closes device 0 so channel B can carry the time code; tcode_request calls it
+0x1d74a	drtb_getc	devices/duartb
+0x1d7e4	drtb_gets	devices/duartb
+0x1ddd6	drtb_read	devices/duartb
+0x1e7f6	duartb_isr	devices/duartb
+0x1ea10	duartb_transmit_interrupt	devices/duartb
 0x1f6ca	sci_baud_set	devices/sci
 0x1fffa	sci_reconfigure	devices/sci
 0x202ac	sci_settings_done	devices/sci
@@ -951,7 +951,7 @@
 0x2ecf8	robin_timestamp_values	applications/scpi/handlers/robin
 0x2a1be	scpi_query_CALA	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
 0x2a1d0	scpi_query_CEQU	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
-0x3060e	scpi_query_DANA	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x3060e	scpi_query_DANA	applications/scpi/handlers/misc	a four-letter entry that fails with scpi_query_failed
 0x2fc14	scpi_query_FMHO	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
 0x2d096	scpi_query_IPSU	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
 0x2c15e	scpi_query_R1PO	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
@@ -970,12 +970,12 @@
 0x30048	scpi_query_RSST	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
 0x2c1dc	scpi_query_RSSU	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
 0x2e152	scpi_query_RTAD	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
-0x2df46	scpi_query_RTCM	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x2df46	scpi_query_RTCM	applications/scpi/handlers/misc	a four-letter entry that fails with scpi_query_failed
 0x2d3ee	scpi_query_RTSA	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
 0x2e2ec	scpi_query_RTZO	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
 0x307ee	scpi_query_RVST	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
 0x2a344	scpi_query_RWHO	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
-0x29b08	rtcm_supported	applications/scpi/handlers/stubs	:RTCM?'s answer, 0
+0x29b08	rtcm_supported	applications/scpi/handlers/misc	:RTCM?'s answer, 0
 0x473d2	pll_init	applications/pll/pllp
 0x47466	pll_restart	applications/pll/pllp
 0x474c2	efc_gain_set	applications/pll/pllp
@@ -1043,28 +1043,28 @@
 0x4306a	finish_scpi_cmd	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x433b6	pll_scpi_complete	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x433fc	gps_diag_complete	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x31ff8	report_clamped	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x3209c	clamp_float	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x32104	clamp_double	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x3217e	round_float_to_step	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x322aa	load_double	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x322b4	clamp_to_limits	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x3232c	mask_to_limits	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x3233a	clamp_to_step_and_limits	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x323b2	float_max_of	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x323d6	float_min_of	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x323fa	clamp_float_to_step_and_limits	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x3244a	clamp_float_to_step_double	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x32596	clamp_double_to_step_and_limits	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x326d2	clamp_double_to_limits	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x32e26	load_long_unit_step	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x32e2e	load_long	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x32e36	load_double_param	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x31ff8	report_clamped	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x3209c	clamp_float	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x32104	clamp_double	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x3217e	round_float_to_step	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x322aa	load_double	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x322b4	clamp_to_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x3232c	mask_to_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x3233a	clamp_to_step_and_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x323b2	float_max_of	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x323d6	float_min_of	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x323fa	clamp_float_to_step_and_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x3244a	clamp_float_to_step_double	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x32596	clamp_double_to_step_and_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x326d2	clamp_double_to_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x32e26	load_long_unit_step	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x32e2e	load_long	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x32e36	load_double_param	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x12af0	scpi_param_hook_nothing	applications/pll/pll_scpi	bare rts, descriptor hook
 0x41328	pll_action_nothing	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x45b6e	nv_param_field_b8_done	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x3086a	duartb_parity_restrict	devices/serial_port	:SYST:COMM:SER1:RECeive:PARity:TYPE's and :DIAG:SER1:RESTricted's changed hook; keeps channel B's settings, as duartb_settings_done does
-0x3088c	duartb_eight_bits_restrict	devices/serial_port	:SYST:COMM:SER1:RECeive:BITS's changed hook; keeps channel B's settings, as duartb_settings_done does
+0x3086a	duartb_parity_restrict	devices/duartb	:SYST:COMM:SER1:RECeive:PARity:TYPE's and :DIAG:SER1:RESTricted's changed hook; keeps channel B's settings, as duartb_settings_done does
+0x3088c	duartb_eight_bits_restrict	devices/duartb	:SYST:COMM:SER1:RECeive:BITS's changed hook; keeps channel B's settings, as duartb_settings_done does
 0x308ae	douglas_duration_changed	applications/scpi/handlers/douglas	:DOUGlas:DURation's changed hook
 0x42b18	output_state_program	applications/scpi/handlers/output	output_state_done's programming of the output
 0x42b1a	pulse_program	applications/scpi/handlers/source_pulse	pulse_settings_done's programming of the pulse

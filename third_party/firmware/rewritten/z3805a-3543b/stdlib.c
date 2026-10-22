@@ -7,18 +7,6 @@
 /* |j| (0x5ec9e). */
 int32_t abs(int32_t j) { return j < 0 ? -j : j; }
 
-/* ctype_table's bits, by the characters that carry them (libc.md). */
-enum {
-  LIBC_CTYPE_UPPER = 0x01, /* A to Z */
-  LIBC_CTYPE_LOWER = 0x02, /* a to z */
-  LIBC_CTYPE_DIGIT = 0x04,
-  LIBC_CTYPE_SPACE = 0x08,       /* tab to carriage return, and space */
-  LIBC_CTYPE_PUNCTUATION = 0x10, /* the printing characters but these */
-  LIBC_CTYPE_CONTROL = 0x20,     /* 0 to 0x1f and 0x7f */
-  LIBC_CTYPE_BLANK = 0x40,       /* space alone */
-  LIBC_CTYPE_HEX = 0x80,         /* 0 to 9, A to F, a to f */
-};
-
 /* Each character's ctype bits, indexed by the character plus one, so
  * that EOF, -1, has a slot, and 0 above 0x7f: the image's table at
  * 0x5ed98, which atoi and, through the export's extern, gps_receive

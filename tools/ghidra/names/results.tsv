@@ -690,3 +690,63 @@ selftest_gps_with_lamp	failures	selftest.gps, selftest_gps_failure bits
 selftest_power_with_lamp	failures	selftest.power, selftest_power_failure bits
 lamp_test_command	failures	always 0
 rom_lane_checksum	checksum	both byte lanes' sums, high bytes then low
+# The GPS engine: its requests, Oncore framing and decoding, and task
+request_kind_valid	valid	1 for a sender the task takes requests from
+gps_request_class	class	gps_code_class: message, script, step or invalid
+request_ring_empty	empty	1 if the request ring holds none
+request_ring_full	full	1 if the request ring has no room
+request_ring_put	put	0 if the ring was full
+request_ring_get	got	0 if the ring was empty
+request_ring_unput	got	0 if the ring was empty
+request_ring_contains	waiting	1 if one from the sender runs or waits
+request_ring_newest_replaceable	replaceable	1 if the newest is a monitor's not yet sent
+gps_request_post	posted	1 if sent to gpsx_exchange
+gps_script_lookup	script	the script's steps, gps_script_none for another code
+gps_message_supported	known	0 for @@Bn before the receiver ID
+gps_response_lookup	found	0 for an ID not in oncore_messages
+oncore_checksum	checksum	the XOR of the bytes
+gps_receive	framing	gps_receive_state, GPS_FRAMING_COMPLETE for a whole message
+gps_response_timed_out	timed_out	1 once the message's timeout has passed
+gps_count_response	delivered	1 if the result reached its sender
+gps_message_to_text	length	the text's
+long_array_get	argument	the long at the index
+long_array_get_byte	next	where the next encoder writes
+long_array_get_word	next	where the next encoder writes
+long_array_get_long	next	where the next encoder writes
+word_copy_advance	next	the cursor past the word
+word_copy_14_bits	next	the cursor past the word
+oncore_decode_fields	next	the cursor past the fields read
+oncore_position_message	next	the cursor past the fields read
+oncore_corrections_message	next	the cursor past the fields read
+# Wave 3, console: the pForth console's setup and diagnostic words
+pforth_define_word	defined	0, or -1 with no dictionary
+diag_adc_read	reading	the ADC channel's raw byte
+diag_wr_eeprom	written	true when the byte reads back
+# The status screen, applications/screen (rewritten/z3805a-3543b/screen.c)
+satellite_in_set	set	1 if the satellite's bit of the set is set
+satellite_track_class	class	the @@Bb record's satellite_health_class
+satellite_compare	order	-1, 0 or 1, qsort's order of two satellites
+satellite_find	satellite	the satellite's @@Bb record, or NULL
+mark_flag	marked	the flag was set and the number marked
+format_time	valid	the time was one and is printed
+format_date	valid	1 if the date was one and is printed
+bit_is_set	set	the bit of the value is set
+bits_1_to_3_any	failed	any of bits 1 to 3 is set
+bits_4_5_any	failed	bit 4 or 5 is set
+bits_6_7_any	failed	bit 6 or 7 is set
+bits_8_9_any	failed	bit 8 or 9 is set
+status_screen_length	lines	the screen's lines, 23
+
+# wave 3, gps-receiver: the GPS receiver's state and the console's GPS reports
+satellite_id_valid	valid	whether the ID is one of the kind's satellites
+channel_position_satellite	satellite	the channel's satellite when available for position, else 0
+satellite_used_for_position	used	whether a channel uses the satellite for position
+visible_satellites	received	whether @@Bb has come
+position_settable	settable	neither held nor surveyed
+gps_position_get	received	whether @@Ba has come
+gps_time_local_get	received	whether @@Ba has come
+gps_status_alternate	alternate_status	the alternate receiver's status, 0
+survey_progress_percent	surveying	whether a finite survey runs
+survey_progress_text	surveying	whether a finite survey runs
+command_log_add	logged	1
+gps_print_command	printed	0 when the log is empty, else 1

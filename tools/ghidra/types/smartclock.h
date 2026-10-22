@@ -32,6 +32,273 @@ typedef long long int64_t;
  * to its subject below, types them, and empties this section on
  * merging. */
 /* BEGIN PROPOSED ENUMS */
+/* gps_receive_state: where gps_receive is in framing an Oncore message
+ * into gps_response_buffer, its jump table at 0x4b892 (docs/firmware/
+ * gps.md, "Framing").  A state above GPS_FRAMING_COMPLETE drops each
+ * byte (0x4b884). */
+typedef enum __attribute__((packed)) gps_framing_state {
+  GPS_FRAMING_FIRST_AT = 0,  /* expects the first @ */
+  GPS_FRAMING_SECOND_AT = 1, /* expects the second @ */
+  GPS_FRAMING_ID_FIRST = 2,  /* an uppercase letter */
+  GPS_FRAMING_ID_SECOND = 3, /* a letter; the ID's length from the table */
+  GPS_FRAMING_BODY = 4,      /* the rest, the checksum last */
+  GPS_FRAMING_CR = 5,
+  GPS_FRAMING_LF = 6,
+  GPS_FRAMING_COMPLETE = 7, /* gps_receive reads no more */
+} gps_framing_state;
+
+/* What became of a GPS request, gps_count_response's kind: what it
+ * counts in gps_counts (its jump table at 0x4ba0c), stores in
+ * command_monitor_result or status_monitor_result for the monitors'
+ * requests, and sends back to plla_exchange in gps_request_entry.result
+ * for the others.  Every sender sends a request with 1;
+ * gps_request_post sets its monitor's result to pending. */
+typedef enum __attribute__((packed)) gps_request_result {
+  GPS_RESULT_SUCCESS = 0,         /* successes */
+  GPS_RESULT_REJECT = 1,          /* rejects: the same wrong response twice */
+  GPS_RESULT_ABORT = 2,           /* aborts: emptied by a link reset */
+  GPS_RESULT_UNKNOWN_SENDER = 3,  /* unknown_sender: request_kind_valid's */
+  GPS_RESULT_UNKNOWN_COMMAND = 4, /* unknown_command: gps_request_class's 3 */
+  GPS_RESULT_BUSY = 5,            /* busy: not queued, or replaced */
+  GPS_RESULT_NO_COMMAND = 6, /* no_command: " // command not supported //" */
+  GPS_RESULT_NO_QUERY = 7,   /* no_query: " // query form not supported //" */
+  GPS_RESULT_TIMEOUT = 8,    /* timeouts: no response after three sends */
+  GPS_RESULT_PENDING = 9,    /* not yet answered; counted as none */
+} gps_request_result;
+
+/* gps_request_class's sorting of a request code (gps_request_code). */
+typedef enum __attribute__((packed)) gps_code_class {
+  GPS_CLASS_MESSAGE = 0, /* 0 to 0x30 with argument mode 0 or 1: one message */
+  GPS_CLASS_SCRIPT = 1,  /* 0x47 to 0x59: gps_script_lookup's */
+  GPS_CLASS_STEP = 2,    /* 0x31 to 0x46: gps_console_request's */
+  GPS_CLASS_INVALID = 3,
+} gps_code_class;
+
+/* A byte of the field programs oncore_decode_fields runs to unpack a
+ * message into its record, oncore_status_field_codes (0x50fd2) to
+ * oncore_receiver_id_field_codes (0x51004): docs/firmware/gps.md,
+ * "Decoding".  1 to 0x7f copies that many bytes, and 0xc1 to 0xff
+ * starts a group repeated 0x100 less that many times, 63 to 1; the
+ * others, 0x86 to 0xc0, do nothing. */
+typedef enum __attribute__((packed)) oncore_field_code {
+  ONCORE_FIELD_SKIP_DESTINATION = 0x00, /* leaves a record byte */
+  ONCORE_FIELD_END = 0x80,
+  ONCORE_FIELD_GROUP_END = 0x81,   /* back to the group's start, or on */
+  ONCORE_FIELD_SKIP_SOURCE = 0x82, /* drops a message byte */
+  ONCORE_FIELD_SKIP_ZERO = 0x83,   /* drops a message byte, writes zero */
+  ONCORE_FIELD_ZERO = 0x84,        /* writes a zero byte */
+  ONCORE_FIELD_SIGN = 0x85,        /* the next message byte's sign extension */
+  ONCORE_FIELD_GROUP_FIRST = 0xc1, /* the longest group, 63 times */
+} oncore_field_code;
+
+/* The receiver status byte of @@Ba, oncore_status_fields.receiver_status,
+ * a set of these bits (VPCommands.pdf, Position/Status/Data Message,
+ * "s - Receiver Status Message"). */
+typedef enum __attribute__((packed)) oncore_receiver_status {
+  ONCORE_STATUS_BAD_ALMANAC = 0x01,
+  ONCORE_STATUS_INSUFFICIENT_SATELLITES = 0x02, /* fewer than 3 visible */
+  ONCORE_STATUS_DIFFERENTIAL = 0x04,
+  ONCORE_STATUS_ACQUIRING = 0x08, /* acquiring satellites or position hold */
+  ONCORE_STATUS_2D_FIX = 0x10,    /* altitude hold */
+  ONCORE_STATUS_3D_FIX = 0x20,
+  ONCORE_STATUS_POOR_GEOMETRY = 0x40, /* DOP above 20 */
+  ONCORE_STATUS_PROPAGATE = 0x80,     /* position propagate mode */
+} oncore_receiver_status;
+/* fine's states, pll.fine_state, as print_fine_state (0x1ba32) names
+ * them: ": fine start" to ": fine fine slew" (0x1c5fe to 0x1c683). */
+typedef enum __attribute__((packed)) pll_fine_state {
+  PLL_FINE_START = 0,
+  PLL_FINE_SYNC_MEASURE = 1,
+  PLL_FINE_SYNC_1 = 2,
+  PLL_FINE_SYNC_2 = 3,
+  PLL_FINE_MEASURE_1 = 4,
+  PLL_FINE_MEASURE_DELAY = 5,
+  PLL_FINE_MEASURE_2 = 6,
+  PLL_FINE_SLEW = 7,
+  PLL_FINE_SLEW_MEASURE = 8,
+  PLL_FINE_FINE_SLEW = 9,
+} pll_fine_state;
+
+/* The console's GPS command, gps_command.code, named for the word that
+ * posts it (diag_print_stat 0x1b504 to diag_gps_query 0x1b706);
+ * gps_command_send (0x470aa) maps each to its GPS request.  Nothing in
+ * the console posts GPS_CONSOLE_SELFTEST. */
+typedef enum __attribute__((packed)) gps_console_command {
+  GPS_CONSOLE_NONE = 0x00,
+  GPS_CONSOLE_PRINT_STATUS = 0x01,            /* print_stat */
+  GPS_CONSOLE_STATUS_RATE = 0x02,             /* stat_rate */
+  GPS_CONSOLE_TIME = 0x03,                    /* gps_time */
+  GPS_CONSOLE_DATE = 0x04,                    /* gps_date */
+  GPS_CONSOLE_HOLD_POSITION = 0x05,           /* gps_php */
+  GPS_CONSOLE_POSITION_HOLD = 0x06,           /* gps_ph */
+  GPS_CONSOLE_STATUS_INTERVAL = 0x07,         /* abr_stat: no request */
+  GPS_CONSOLE_MASK_ANGLE = 0x08,              /* eman */
+  GPS_CONSOLE_MASK_ANGLE_QUERY = 0x09,        /* q_eman */
+  GPS_CONSOLE_HOLD_POSITION_QUERY = 0x0a,     /* q_gps_php */
+  GPS_CONSOLE_CABLE_DELAY = 0x0b,             /* gps_cable_dly */
+  GPS_CONSOLE_CABLE_DELAY_QUERY = 0x0c,       /* q_gps_cable_dly */
+  GPS_CONSOLE_VISIBILITY_RATE = 0x0d,         /* vis_stat_rate */
+  GPS_CONSOLE_DOP_RATE = 0x0e,                /* xdop_stat_rate */
+  GPS_CONSOLE_PRINT_VISIBILITY = 0x0f,        /* print_vis */
+  GPS_CONSOLE_PRINT_BEST_COMBINATIONS = 0x10, /* print_bc */
+  GPS_CONSOLE_EXTENSION_RATE = 0x11,          /* ext_msg_rate */
+  GPS_CONSOLE_PRINT_EXTENSION = 0x12,         /* print_ext_msg */
+  GPS_CONSOLE_PRINT_ID = 0x13,                /* pr_gps_id */
+  GPS_CONSOLE_PRINT_PPS = 0x14,               /* pr_1pps */
+  GPS_CONSOLE_PRINT_TIME_RAIM = 0x15,         /* pr_time_raim */
+  GPS_CONSOLE_AVERAGE = 0x16,                 /* avg */
+  GPS_CONSOLE_CLEAR_AVERAGE = 0x17,           /* clr_avg */
+  GPS_CONSOLE_INIT = 0x18,                    /* init_gps */
+  GPS_CONSOLE_MASTER_RESET = 0x19,            /* master_reset */
+  GPS_CONSOLE_SELFTEST = 0x1a,
+  GPS_CONSOLE_QUERY_ALL = 0x1b,              /* gps_query_all */
+  GPS_CONSOLE_QUIET_STATUS = 0x1c,           /* quiet_status */
+  GPS_CONSOLE_PRINT_AVERAGE = 0x1d,          /* pr_avg */
+  GPS_CONSOLE_PRINT_INSTRUMENT_STATE = 0x1e, /* pr_gps_istate */
+  GPS_CONSOLE_CHANGE = 0x1f,                 /* gps_change: request, as set */
+  GPS_CONSOLE_QUERY = 0x20, /* gps_query: request, as a query */
+} gps_console_command;
+
+/* The console's override of the GPS reference's validity,
+ * reference_valid_override_request (0x100c68), which force_1pps
+ * (diag_force_1pps, 0x1b68c) sets from -1, 0 or 1. */
+typedef enum __attribute__((packed)) gps_reference_override {
+  GPS_REFERENCE_OVERRIDE_NONE = 0x00,
+  GPS_REFERENCE_OVERRIDE_VALID = 0x01,
+  GPS_REFERENCE_OVERRIDE_INVALID = 0xff,
+} gps_reference_override;
+
+/* sync_request's kind, counter_configuration_fields.sync_kind: a step
+ * against a positive TI, against a negative one, and a sync
+ * (pll_stages.c's steps; sync_imm, diag_sync_imm 0x1b2ec, asks for a
+ * sync). */
+typedef enum __attribute__((packed)) counter_sync_kind {
+  COUNTER_SYNC_POSITIVE = 1,
+  COUNTER_SYNC_NEGATIVE = 2,
+  COUNTER_SYNC_FULL = 3,
+} counter_sync_kind;
+
+/* The fault the console's crash word raises, its argument, by its jump
+ * table at 0x1c09a (diag_crash, 0x1c07c); any other does nothing. */
+typedef enum __attribute__((packed)) console_crash_kind {
+  CONSOLE_CRASH_BUS_ERROR = 0,     /* a long written to 0x700000, unmapped */
+  CONSOLE_CRASH_ADDRESS_ERROR = 1, /* a long written to an odd address */
+  CONSOLE_CRASH_ZERO_DIVIDE = 2,   /* divul by zero */
+  CONSOLE_CRASH_FLOAT_DIVIDE = 3,  /* a double divided by zero */
+  CONSOLE_CRASH_FATAL_ERROR = 4,   /* fatal_error */
+} console_crash_kind;
+/* A satellite's cell on the status screen, the code at +4 of a
+ * satellite_status_list entry: satellite_elevation_azimuth sets 1 or 2
+ * (0x49654), satellite_status the rest (0x49688), and
+ * format_satellite_cell prints each (its table at 0x49ab4). */
+typedef enum __attribute__((packed)) satellite_cell_status {
+  SATELLITE_CELL_NONE = 0,         /* blank */
+  SATELLITE_CELL_POSITION = 1,     /* "%2d %3d", elevation and azimuth */
+  SATELLITE_CELL_NO_POSITION = 2,  /* "-- ---" */
+  SATELLITE_CELL_IGNORED = 3,      /* "Ignore" */
+  SATELLITE_CELL_UNHEALTHY = 4,    /* "Not OK" */
+  SATELLITE_CELL_ACQUIRING = 5,    /* "Acq   ": channel modes 1 to 4 */
+  SATELLITE_CELL_SYNCHRONIZED = 6, /* "Acq . ": modes 5 and 6 */
+  SATELLITE_CELL_EPHEMERIS = 7     /* "Acq ..": modes 7 and 8 */
+} satellite_cell_status;
+
+/* satellite_track_class's class of a @@Bb record, by its health
+ * (oncore_health; 0x49612, its table at 0x49638): satellite_status
+ * shows a removed one as "Ignore" and an unhealthy one as "Not OK". */
+typedef enum __attribute__((packed)) satellite_health_class {
+  SATELLITE_CLASS_UNKNOWN = 0, /* no record, or a health past 3 */
+  SATELLITE_CLASS_HEALTHY = 1,
+  SATELLITE_CLASS_UNHEALTHY = 2,
+  SATELLITE_CLASS_REMOVED = 3 /* healthy or not */
+} satellite_health_class;
+
+/* A mode line of the status screen, status_screen_mode_line.mode, which
+ * status_screen picks by pll_screen_mode (0x4a9be, its table at
+ * 0x4a9d4) and marks ">>"; status_screen_mode_suffix takes power-up's
+ * or recovery's. */
+typedef enum __attribute__((packed)) status_screen_line {
+  STATUS_SCREEN_LINE_POWERUP = 0,  /* "Power-up" */
+  STATUS_SCREEN_LINE_HOLDOVER = 1, /* "Holdover" */
+  STATUS_SCREEN_LINE_RECOVERY = 2, /* "Recovery" */
+  STATUS_SCREEN_LINE_LOCKED = 3,   /* "Locked to " */
+  STATUS_SCREEN_LINE_NONE = 4      /* no line; the table's end */
+} status_screen_line;
+/* The receiver status gps_receiver_status_update keeps (0x4b168),
+ * gps.status_code, gps.status_reported and gps.status_code_reset, and
+ * status_snapshot_record's copies: status_screen_sync's strings
+ * (0x49db0) by its switch on them. */
+typedef enum __attribute__((packed)) gps_sync_status {
+  GPS_SYNC_RECEIVER_ERROR = 0,      /* "Invalid: GPS rcvr err": the status
+                                       monitor failed */
+  GPS_SYNC_ABSENT = 1,              /* "Absent or freq error": the GPS 1PPS is
+                                       dead */
+  GPS_SYNC_NOT_TRACKING = 2,        /* "Invalid: not tracking", and after a
+                                       reset */
+  GPS_SYNC_INACCURATE_POSITION = 3, /* "Invalid: inacc position": tracking,
+                                       neither holding nor surveying */
+  GPS_SYNC_RAIM_ERROR = 4,          /* "Invalid: Time RAIM error": holding or
+                                       surveying, Time RAIM in alarm */
+  GPS_SYNC_ASSESSING = 5,           /* "Assessing stability": the 30 s
+                                       validation's start */
+  GPS_SYNC_ASSESSING_27 = 6,        /* " .": 27 % of it */
+  GPS_SYNC_ASSESSING_53 = 7,        /* " ..": 53 % */
+  GPS_SYNC_ASSESSING_77 = 8,        /* " ...": 77 % */
+  GPS_SYNC_SYNCHRONIZED = 9,        /* "Synchronized to UTC" or "GPS Time":
+                                       reference_valid */
+} gps_sync_status;
+
+/* raim_monitor's assessment of Time RAIM (0x4b01e), gps.raim_assessment:
+ * gps_print_time_raim's "Assessment:" strings (0x48560's table). */
+typedef enum __attribute__((packed)) gps_raim_assessment {
+  GPS_RAIM_INACTIVE = 0,
+  GPS_RAIM_OK = 1,
+  GPS_RAIM_ALARM_DETECTED = 2, /* not OK since raim_suspect_time */
+  GPS_RAIM_ALARM = 3,          /* not OK for 4 s */
+} gps_raim_assessment;
+
+/* The command monitor's state, gps.command_monitor_state: command_monitor's
+ * switch (0x4b4b0) and gps_print_process_monitor's strings (0x4ceae's
+ * table). */
+typedef enum __attribute__((packed)) gps_command_monitor_state {
+  GPS_COMMAND_MONITOR_DISABLED = 0,
+  GPS_COMMAND_MONITOR_STANDBY = 1,
+  GPS_COMMAND_MONITOR_QUERY = 2,     /* a command went unanswered; queries */
+  GPS_COMMAND_MONITOR_QUERY_ACK = 3, /* waits for the query's result */
+} gps_command_monitor_state;
+
+/* The status monitor's state, gps.status_monitor_state: command_monitor's
+ * switch (0x4b5ec) and gps_print_process_monitor's strings (0x4cf22's
+ * table). */
+typedef enum __attribute__((packed)) gps_status_monitor_state {
+  GPS_STATUS_MONITOR_DISABLED = 0,
+  GPS_STATUS_MONITOR_STANDBY = 1,  /* watches @@Ba come */
+  GPS_STATUS_MONITOR_RECOVERY = 2, /* waits for the outputs' request */
+} gps_status_monitor_state;
+
+/* @@AB: the application type, gps.application_type:
+ * gps_print_instrument_state's "APPL" strings (0x48a7c's table). */
+typedef enum __attribute__((packed)) oncore_application_type {
+  ONCORE_APPLICATION_AIR = 0,
+  ONCORE_APPLICATION_HANDHELD = 1,
+  ONCORE_APPLICATION_LAND = 2,
+  ONCORE_APPLICATION_MARINE = 3,
+  ONCORE_APPLICATION_STATIC = 4,
+} oncore_application_type;
+
+/* @@Ah: the satellite selection, gps.satellite_select:
+ * gps_print_instrument_state's "SELECTION" strings (0x48cf8's table). */
+typedef enum __attribute__((packed)) oncore_satellite_select {
+  ONCORE_SELECT_AUTOMATIC = 0,
+  ONCORE_SELECT_MANUAL = 1,
+  ONCORE_SELECT_HIGHEST_IN_SKY = 2,
+} oncore_satellite_select;
+
+/* @@Ar: the fix algorithm, gps.fix_algorithm:
+ * gps_print_instrument_state's "FIX ALG" strings. */
+typedef enum __attribute__((packed)) oncore_fix_algorithm {
+  ONCORE_FIX_BEST_FOUR = 0,   /* "Best 4 satellites" */
+  ONCORE_FIX_ALL_IN_VIEW = 1, /* "N-in-view" */
+} oncore_fix_algorithm;
 /* END PROPOSED ENUMS */
 
 /* The loop's stage, pll.stage: the console's "PLL state: " strings

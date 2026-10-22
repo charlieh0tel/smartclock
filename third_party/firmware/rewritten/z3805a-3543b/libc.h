@@ -29,6 +29,19 @@ union libc_float {
   uint32_t bits;
 };
 
+/* ctype_table's bits, by the characters that carry them (libc.md);
+ * stdlib.c defines the table, which gps_oncore.c reads too. */
+enum {
+  LIBC_CTYPE_UPPER = 0x01, /* A to Z */
+  LIBC_CTYPE_LOWER = 0x02, /* a to z */
+  LIBC_CTYPE_DIGIT = 0x04,
+  LIBC_CTYPE_SPACE = 0x08,       /* tab to carriage return, and space */
+  LIBC_CTYPE_PUNCTUATION = 0x10, /* the printing characters but these */
+  LIBC_CTYPE_CONTROL = 0x20,     /* 0 to 0x1f and 0x7f */
+  LIBC_CTYPE_BLANK = 0x40,       /* space alone */
+  LIBC_CTYPE_HEX = 0x80,         /* 0 to 9, A to F, a to f */
+};
+
 /* Fields of a double's high word, and of its 64 bits; an infinity's
  * high word is the exponent's mask, all ones. */
 static const uint32_t LIBC_SIGN = 0x80000000u;

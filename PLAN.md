@@ -1455,6 +1455,10 @@ view cannot drift apart.  The library, bottom up:
      and `selftest_execute`'s) and each test's failure bits in
      `smartclock.h`, the DUART's and the GPS control's copies of them
      gone.
+     And the GPS engine (91 functions: 75 hand-written, the rest on
+     prototypes still wrong), the status screen (30 of 32) and the
+     console's words (93 of 94), in gps_requests.c, gps_oncore.c,
+     gps_task.c, gps_receiver.c, gps_reports.c, screen.c and console.c.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

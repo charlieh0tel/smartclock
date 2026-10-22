@@ -355,6 +355,14 @@ struct clock_record {
     uint8_t gps_utc_offset_valid;
 };
 
+typedef enum __attribute__((packed)) console_crash_kind {
+    CONSOLE_CRASH_BUS_ERROR=0,
+    CONSOLE_CRASH_ADDRESS_ERROR=1,
+    CONSOLE_CRASH_ZERO_DIVIDE=2,
+    CONSOLE_CRASH_FLOAT_DIVIDE=3,
+    CONSOLE_CRASH_FATAL_ERROR=4
+} console_crash_kind;
+
 typedef struct counter_configuration_fields counter_configuration_fields, *Pcounter_configuration_fields;
 
 struct counter_configuration_fields {
@@ -379,6 +387,12 @@ typedef enum __attribute__((packed)) counter_error {
     COUNTER_MEASUREMENT_ABORTED=8,
     COUNTER_CALIBRATION_FAILURE=16
 } counter_error;
+
+typedef enum __attribute__((packed)) counter_sync_kind {
+    COUNTER_SYNC_POSITIVE=1,
+    COUNTER_SYNC_NEGATIVE=2,
+    COUNTER_SYNC_FULL=3
+} counter_sync_kind;
 
 typedef uint8_t (dac_measure)(struct char_slot);
 
@@ -687,6 +701,13 @@ typedef enum __attribute__((packed)) gps_ack_awaited_kind {
     GPS_ACK_SELFTEST=5
 } gps_ack_awaited_kind;
 
+typedef enum __attribute__((packed)) gps_code_class {
+    GPS_CLASS_MESSAGE=0,
+    GPS_CLASS_SCRIPT=1,
+    GPS_CLASS_STEP=2,
+    GPS_CLASS_INVALID=3
+} gps_code_class;
+
 typedef struct gps_command_log gps_command_log, *Pgps_command_log;
 
 typedef struct gps_command_log_entry gps_command_log_entry, *Pgps_command_log_entry;
@@ -719,11 +740,78 @@ struct gps_command_mailbox {
     int32_t request;
 };
 
+typedef enum __attribute__((packed)) gps_command_monitor_state {
+    GPS_COMMAND_MONITOR_DISABLED=0,
+    GPS_COMMAND_MONITOR_STANDBY=1,
+    GPS_COMMAND_MONITOR_QUERY=2,
+    GPS_COMMAND_MONITOR_QUERY_ACK=3
+} gps_command_monitor_state;
+
+typedef enum __attribute__((packed)) gps_console_command {
+    GPS_CONSOLE_NONE=0,
+    GPS_CONSOLE_PRINT_STATUS=1,
+    GPS_CONSOLE_STATUS_RATE=2,
+    GPS_CONSOLE_TIME=3,
+    GPS_CONSOLE_DATE=4,
+    GPS_CONSOLE_HOLD_POSITION=5,
+    GPS_CONSOLE_POSITION_HOLD=6,
+    GPS_CONSOLE_STATUS_INTERVAL=7,
+    GPS_CONSOLE_MASK_ANGLE=8,
+    GPS_CONSOLE_MASK_ANGLE_QUERY=9,
+    GPS_CONSOLE_HOLD_POSITION_QUERY=10,
+    GPS_CONSOLE_CABLE_DELAY=11,
+    GPS_CONSOLE_CABLE_DELAY_QUERY=12,
+    GPS_CONSOLE_VISIBILITY_RATE=13,
+    GPS_CONSOLE_DOP_RATE=14,
+    GPS_CONSOLE_PRINT_VISIBILITY=15,
+    GPS_CONSOLE_PRINT_BEST_COMBINATIONS=16,
+    GPS_CONSOLE_EXTENSION_RATE=17,
+    GPS_CONSOLE_PRINT_EXTENSION=18,
+    GPS_CONSOLE_PRINT_ID=19,
+    GPS_CONSOLE_PRINT_PPS=20,
+    GPS_CONSOLE_PRINT_TIME_RAIM=21,
+    GPS_CONSOLE_AVERAGE=22,
+    GPS_CONSOLE_CLEAR_AVERAGE=23,
+    GPS_CONSOLE_INIT=24,
+    GPS_CONSOLE_MASTER_RESET=25,
+    GPS_CONSOLE_SELFTEST=26,
+    GPS_CONSOLE_QUERY_ALL=27,
+    GPS_CONSOLE_QUIET_STATUS=28,
+    GPS_CONSOLE_PRINT_AVERAGE=29,
+    GPS_CONSOLE_PRINT_INSTRUMENT_STATE=30,
+    GPS_CONSOLE_CHANGE=31,
+    GPS_CONSOLE_QUERY=32
+} gps_console_command;
+
+typedef enum __attribute__((packed)) gps_framing_state {
+    GPS_FRAMING_FIRST_AT=0,
+    GPS_FRAMING_SECOND_AT=1,
+    GPS_FRAMING_ID_FIRST=2,
+    GPS_FRAMING_ID_SECOND=3,
+    GPS_FRAMING_BODY=4,
+    GPS_FRAMING_CR=5,
+    GPS_FRAMING_LF=6,
+    GPS_FRAMING_COMPLETE=7
+} gps_framing_state;
+
 typedef enum __attribute__((packed)) gps_process_state {
     GPS_PROCESS_TASK_IDLE=0,
     GPS_PROCESS_SEND_COMMAND=1,
     GPS_PROCESS_WAIT_FOR_RESPONSE=2
 } gps_process_state;
+
+typedef enum __attribute__((packed)) gps_raim_assessment {
+    GPS_RAIM_INACTIVE=0,
+    GPS_RAIM_OK=1,
+    GPS_RAIM_ALARM_DETECTED=2,
+    GPS_RAIM_ALARM=3
+} gps_raim_assessment;
+
+typedef enum __attribute__((packed)) gps_reference_override {
+    GPS_REFERENCE_OVERRIDE_NONE=0,
+    GPS_REFERENCE_OVERRIDE_VALID=1,
+    GPS_REFERENCE_OVERRIDE_INVALID=255
+} gps_reference_override;
 
 typedef enum __attribute__((packed)) gps_request_code {
     GPS_REQUEST_TIME_OF_DAY=0,
@@ -829,6 +917,19 @@ struct gps_request_entry {
     uint8_t sent;
     uint8_t field_13[7];
 };
+
+typedef enum __attribute__((packed)) gps_request_result {
+    GPS_RESULT_SUCCESS=0,
+    GPS_RESULT_REJECT=1,
+    GPS_RESULT_ABORT=2,
+    GPS_RESULT_UNKNOWN_SENDER=3,
+    GPS_RESULT_UNKNOWN_COMMAND=4,
+    GPS_RESULT_BUSY=5,
+    GPS_RESULT_NO_COMMAND=6,
+    GPS_RESULT_NO_QUERY=7,
+    GPS_RESULT_TIMEOUT=8,
+    GPS_RESULT_PENDING=9
+} gps_request_result;
 
 typedef struct gps_request_ring gps_request_ring, *Pgps_request_ring;
 
@@ -1281,6 +1382,25 @@ struct gps_statistics {
     uint16_t status_monitor_failures;
 };
 
+typedef enum __attribute__((packed)) gps_status_monitor_state {
+    GPS_STATUS_MONITOR_DISABLED=0,
+    GPS_STATUS_MONITOR_STANDBY=1,
+    GPS_STATUS_MONITOR_RECOVERY=2
+} gps_status_monitor_state;
+
+typedef enum __attribute__((packed)) gps_sync_status {
+    GPS_SYNC_RECEIVER_ERROR=0,
+    GPS_SYNC_ABSENT=1,
+    GPS_SYNC_NOT_TRACKING=2,
+    GPS_SYNC_INACCURATE_POSITION=3,
+    GPS_SYNC_RAIM_ERROR=4,
+    GPS_SYNC_ASSESSING=5,
+    GPS_SYNC_ASSESSING_27=6,
+    GPS_SYNC_ASSESSING_53=7,
+    GPS_SYNC_ASSESSING_77=8,
+    GPS_SYNC_SYNCHRONIZED=9
+} gps_sync_status;
+
 typedef struct gpt_registers gpt_registers, *Pgpt_registers;
 
 struct gpt_registers {
@@ -1570,12 +1690,36 @@ struct nv_settings_fields {
     uint8_t debug_output;
 };
 
+typedef enum __attribute__((packed)) oncore_application_type {
+    ONCORE_APPLICATION_AIR=0,
+    ONCORE_APPLICATION_HANDHELD=1,
+    ONCORE_APPLICATION_LAND=2,
+    ONCORE_APPLICATION_MARINE=3,
+    ONCORE_APPLICATION_STATIC=4
+} oncore_application_type;
+
 typedef struct oncore_decoder oncore_decoder, *Poncore_decoder;
 
 struct oncore_decoder {
     void *decode;
     void *record;
 };
+
+typedef enum __attribute__((packed)) oncore_field_code {
+    ONCORE_FIELD_SKIP_DESTINATION=0,
+    ONCORE_FIELD_END=128,
+    ONCORE_FIELD_GROUP_END=129,
+    ONCORE_FIELD_SKIP_SOURCE=130,
+    ONCORE_FIELD_SKIP_ZERO=131,
+    ONCORE_FIELD_ZERO=132,
+    ONCORE_FIELD_SIGN=133,
+    ONCORE_FIELD_GROUP_FIRST=193
+} oncore_field_code;
+
+typedef enum __attribute__((packed)) oncore_fix_algorithm {
+    ONCORE_FIX_BEST_FOUR=0,
+    ONCORE_FIX_ALL_IN_VIEW=1
+} oncore_fix_algorithm;
 
 typedef struct oncore_message_entry oncore_message_entry, *Poncore_message_entry;
 
@@ -1592,6 +1736,23 @@ struct oncore_message_entry {
     uint8_t field_1f;
     struct oncore_decoder decoders[3];
 };
+
+typedef enum __attribute__((packed)) oncore_receiver_status {
+    ONCORE_STATUS_BAD_ALMANAC=1,
+    ONCORE_STATUS_INSUFFICIENT_SATELLITES=2,
+    ONCORE_STATUS_DIFFERENTIAL=4,
+    ONCORE_STATUS_ACQUIRING=8,
+    ONCORE_STATUS_2D_FIX=16,
+    ONCORE_STATUS_3D_FIX=32,
+    ONCORE_STATUS_POOR_GEOMETRY=64,
+    ONCORE_STATUS_PROPAGATE=128
+} oncore_receiver_status;
+
+typedef enum __attribute__((packed)) oncore_satellite_select {
+    ONCORE_SELECT_AUTOMATIC=0,
+    ONCORE_SELECT_MANUAL=1,
+    ONCORE_SELECT_HIGHEST_IN_SKY=2
+} oncore_satellite_select;
 
 typedef struct packed_datetime packed_datetime, *Ppacked_datetime;
 
@@ -1632,6 +1793,19 @@ typedef enum __attribute__((packed)) pll_coarse_state {
     PLL_COARSE_FIRST=3,
     PLL_COARSE_SECOND=4
 } pll_coarse_state;
+
+typedef enum __attribute__((packed)) pll_fine_state {
+    PLL_FINE_START=0,
+    PLL_FINE_SYNC_MEASURE=1,
+    PLL_FINE_SYNC_1=2,
+    PLL_FINE_SYNC_2=3,
+    PLL_FINE_MEASURE_1=4,
+    PLL_FINE_MEASURE_DELAY=5,
+    PLL_FINE_MEASURE_2=6,
+    PLL_FINE_SLEW=7,
+    PLL_FINE_SLEW_MEASURE=8,
+    PLL_FINE_FINE_SLEW=9
+} pll_fine_state;
 
 typedef enum __attribute__((packed)) pll_gps_diag_state {
     PLL_GPS_DIAG_RESET_SEND=0,
@@ -2155,6 +2329,24 @@ struct reset_record {
 typedef double robin_overflow_counts[3];
 
 typedef int16_t robin_point_record[80];
+
+typedef enum __attribute__((packed)) satellite_cell_status {
+    SATELLITE_CELL_NONE=0,
+    SATELLITE_CELL_POSITION=1,
+    SATELLITE_CELL_NO_POSITION=2,
+    SATELLITE_CELL_IGNORED=3,
+    SATELLITE_CELL_UNHEALTHY=4,
+    SATELLITE_CELL_ACQUIRING=5,
+    SATELLITE_CELL_SYNCHRONIZED=6,
+    SATELLITE_CELL_EPHEMERIS=7
+} satellite_cell_status;
+
+typedef enum __attribute__((packed)) satellite_health_class {
+    SATELLITE_CLASS_UNKNOWN=0,
+    SATELLITE_CLASS_HEALTHY=1,
+    SATELLITE_CLASS_UNHEALTHY=2,
+    SATELLITE_CLASS_REMOVED=3
+} satellite_health_class;
 
 typedef enum __attribute__((packed)) satellite_kind {
     SATELLITE_GPS=0,
@@ -3027,6 +3219,14 @@ struct status_register_layout {
     uint32_t *negative;
 };
 
+typedef enum __attribute__((packed)) status_screen_line {
+    STATUS_SCREEN_LINE_POWERUP=0,
+    STATUS_SCREEN_LINE_HOLDOVER=1,
+    STATUS_SCREEN_LINE_RECOVERY=2,
+    STATUS_SCREEN_LINE_LOCKED=3,
+    STATUS_SCREEN_LINE_NONE=4
+} status_screen_line;
+
 typedef struct status_screen_mode_line status_screen_mode_line, *Pstatus_screen_mode_line;
 
 struct status_screen_mode_line {
@@ -3128,8 +3328,10 @@ _Static_assert(sizeof(calendar_date) == 4, "calendar_date");
 _Static_assert(sizeof(calibration_block) == 64, "calibration_block");
 _Static_assert(sizeof(char_slot) == 4, "char_slot");
 _Static_assert(sizeof(clock_record) == 51, "clock_record");
+_Static_assert(sizeof(console_crash_kind) == 1, "console_crash_kind");
 _Static_assert(sizeof(counter_configuration_fields) == 32, "counter_configuration_fields");
 _Static_assert(sizeof(counter_error) == 1, "counter_error");
+_Static_assert(sizeof(counter_sync_kind) == 1, "counter_sync_kind");
 _Static_assert(sizeof(data_format) == 1, "data_format");
 _Static_assert(sizeof(duart_channel) == 8, "duart_channel");
 _Static_assert(sizeof(duart_registers) == 32, "duart_registers");
@@ -3155,18 +3357,27 @@ _Static_assert(sizeof(fpga_configuration_table) == 10, "fpga_configuration_table
 _Static_assert(sizeof(fpga_register) == 1, "fpga_register");
 _Static_assert(sizeof(frequency_figure_of_merit) == 1, "frequency_figure_of_merit");
 _Static_assert(sizeof(gps_ack_awaited_kind) == 1, "gps_ack_awaited_kind");
+_Static_assert(sizeof(gps_code_class) == 1, "gps_code_class");
 _Static_assert(sizeof(gps_command_log) == 428, "gps_command_log");
 _Static_assert(sizeof(gps_command_log_entry) == 20, "gps_command_log_entry");
 _Static_assert(sizeof(gps_command_mailbox) == 22, "gps_command_mailbox");
+_Static_assert(sizeof(gps_command_monitor_state) == 1, "gps_command_monitor_state");
+_Static_assert(sizeof(gps_console_command) == 1, "gps_console_command");
+_Static_assert(sizeof(gps_framing_state) == 1, "gps_framing_state");
 _Static_assert(sizeof(gps_process_state) == 1, "gps_process_state");
+_Static_assert(sizeof(gps_raim_assessment) == 1, "gps_raim_assessment");
+_Static_assert(sizeof(gps_reference_override) == 1, "gps_reference_override");
 _Static_assert(sizeof(gps_request_code) == 1, "gps_request_code");
 _Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
+_Static_assert(sizeof(gps_request_result) == 1, "gps_request_result");
 _Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
 _Static_assert(sizeof(gps_request_sender) == 1, "gps_request_sender");
 _Static_assert(sizeof(gps_running_command) == 114, "gps_running_command");
 _Static_assert(sizeof(gps_script_step) == 20, "gps_script_step");
 _Static_assert(sizeof(gps_state) == 1370, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
+_Static_assert(sizeof(gps_status_monitor_state) == 1, "gps_status_monitor_state");
+_Static_assert(sizeof(gps_sync_status) == 1, "gps_sync_status");
 _Static_assert(sizeof(gpt_registers) == 46, "gpt_registers");
 _Static_assert(sizeof(holdover_steering_state) == 28, "holdover_steering_state");
 _Static_assert(sizeof(identification_record) == 48, "identification_record");
@@ -3190,6 +3401,7 @@ _Static_assert(sizeof(nv_record) == 128, "nv_record");
 _Static_assert(sizeof(nv_settings_fields) == 197, "nv_settings_fields");
 _Static_assert(sizeof(oncore_almanac) == 8, "oncore_almanac");
 _Static_assert(sizeof(oncore_almanac_status_fields) == 16, "oncore_almanac_status_fields");
+_Static_assert(sizeof(oncore_application_type) == 1, "oncore_application_type");
 _Static_assert(sizeof(oncore_channel_mode) == 1, "oncore_channel_mode");
 _Static_assert(sizeof(oncore_channel_status) == 4, "oncore_channel_status");
 _Static_assert(sizeof(oncore_correction_channel) == 10, "oncore_correction_channel");
@@ -3198,6 +3410,8 @@ _Static_assert(sizeof(oncore_date_fields) == 4, "oncore_date_fields");
 _Static_assert(sizeof(oncore_decoder) == 8, "oncore_decoder");
 _Static_assert(sizeof(oncore_dop_type) == 1, "oncore_dop_type");
 _Static_assert(sizeof(oncore_extension_fields) == 62, "oncore_extension_fields");
+_Static_assert(sizeof(oncore_field_code) == 1, "oncore_field_code");
+_Static_assert(sizeof(oncore_fix_algorithm) == 1, "oncore_fix_algorithm");
 _Static_assert(sizeof(oncore_fix_mode) == 1, "oncore_fix_mode");
 _Static_assert(sizeof(oncore_gmt_offset_fields) == 3, "oncore_gmt_offset_fields");
 _Static_assert(sizeof(oncore_health) == 1, "oncore_health");
@@ -3212,6 +3426,8 @@ _Static_assert(sizeof(oncore_raim_fields) == 63, "oncore_raim_fields");
 _Static_assert(sizeof(oncore_raim_solution) == 1, "oncore_raim_solution");
 _Static_assert(sizeof(oncore_raim_status) == 1, "oncore_raim_status");
 _Static_assert(sizeof(oncore_receiver_id) == 277, "oncore_receiver_id");
+_Static_assert(sizeof(oncore_receiver_status) == 1, "oncore_receiver_status");
+_Static_assert(sizeof(oncore_satellite_select) == 1, "oncore_satellite_select");
 _Static_assert(sizeof(oncore_status_fields) == 63, "oncore_status_fields");
 _Static_assert(sizeof(oncore_time_fields) == 3, "oncore_time_fields");
 _Static_assert(sizeof(oncore_time_mode) == 1, "oncore_time_mode");
@@ -3224,6 +3440,7 @@ _Static_assert(sizeof(packed_datetime) == 8, "packed_datetime");
 _Static_assert(sizeof(parameter_record) == 16, "parameter_record");
 _Static_assert(sizeof(pll_aging_state) == 1, "pll_aging_state");
 _Static_assert(sizeof(pll_coarse_state) == 1, "pll_coarse_state");
+_Static_assert(sizeof(pll_fine_state) == 1, "pll_fine_state");
 _Static_assert(sizeof(pll_gps_diag_state) == 1, "pll_gps_diag_state");
 _Static_assert(sizeof(pll_gps_init_state) == 1, "pll_gps_init_state");
 _Static_assert(sizeof(pll_hold_cause) == 1, "pll_hold_cause");
@@ -3262,6 +3479,8 @@ _Static_assert(sizeof(qspi_device) == 1, "qspi_device");
 _Static_assert(sizeof(qspi_state) == 78, "qspi_state");
 _Static_assert(sizeof(regression_record) == 26, "regression_record");
 _Static_assert(sizeof(reset_record) == 92, "reset_record");
+_Static_assert(sizeof(satellite_cell_status) == 1, "satellite_cell_status");
+_Static_assert(sizeof(satellite_health_class) == 1, "satellite_health_class");
 _Static_assert(sizeof(satellite_kind) == 1, "satellite_kind");
 _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
 _Static_assert(sizeof(satellite_sets) == 42, "satellite_sets");
@@ -3330,6 +3549,7 @@ _Static_assert(sizeof(status_error_queue) == 10, "status_error_queue");
 _Static_assert(sizeof(status_model) == 46, "status_model");
 _Static_assert(sizeof(status_register) == 16, "status_register");
 _Static_assert(sizeof(status_register_layout) == 22, "status_register_layout");
+_Static_assert(sizeof(status_screen_line) == 1, "status_screen_line");
 _Static_assert(sizeof(status_screen_mode_line) == 6, "status_screen_mode_line");
 _Static_assert(sizeof(status_snapshot_record) == 302, "status_snapshot_record");
 _Static_assert(sizeof(task_table_entry) == 6, "task_table_entry");
@@ -11341,6 +11561,7 @@ void scpi_task_start(void)
 #endif
 
 /* 00012f50 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* hook halt runs
    console.md */
@@ -11355,6 +11576,7 @@ void console_halt_hook(void)
   return;
 }
 
+#endif
 
 /* 00012f86 */
 #if 0 /* the decompiler's reading; rewritten in console.c */
@@ -11402,6 +11624,7 @@ void s_rep_word(void)
 #endif
 
 /* 00012faa */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* allocates the pForth dictionary, defines ps, mem_rep, s_rep and the diagnostic words, opens the
    console's device and starts its task
@@ -11422,6 +11645,7 @@ void console_init(void)
   return;
 }
 
+#endif
 
 /* 0001303c */
 #if 0 /* the decompiler's reading; rewritten in klok.c */
@@ -33131,6 +33355,7 @@ __asm__(
 );
 
 /* 0001ad8a */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* adds a word to the dictionary: links it, copies its name and compiles its code
    console.md */
@@ -33195,6 +33420,7 @@ uint32_t pforth_define_word(char *param_1,uint32_t param_2,int32_t param_3,uint3
   return uVar3;
 }
 
+#endif
 
 /* 0001ae36 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -33246,6 +33472,7 @@ __asm__(
 );
 
 /* 0001ae46 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* stores the routine the console calls on halt */
 
@@ -33256,8 +33483,10 @@ void console_set_halt_hook(void *param_1)
   return;
 }
 
+#endif
 
 /* 0001ae50 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* stores the console's device, 0x200 for device 2 (console_init pushes a long, 0x1300e; it stores
    its low word, 0x1ae54) */
@@ -33269,6 +33498,7 @@ void console_set_device(int32_t device)
   return;
 }
 
+#endif
 
 /* 0001ae5c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -33690,6 +33920,7 @@ __asm__(
 );
 
 /* 0001afd6 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word adc_read */
 
@@ -33709,8 +33940,10 @@ uint32_t diag_adc_read(uint8_t param_1)
   return reading & 0xff;
 }
 
+#endif
 
 /* 0001b008 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word adc_temp */
 
@@ -33726,8 +33959,10 @@ void diag_adc_temp(void)
   return;
 }
 
+#endif
 
 /* 0001b02a */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word adc_5v */
 
@@ -33743,8 +33978,10 @@ void diag_adc_5v(void)
   return;
 }
 
+#endif
 
 /* 0001b04c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word adc_p15v */
 
@@ -33760,8 +33997,10 @@ void diag_adc_p15v(void)
   return;
 }
 
+#endif
 
 /* 0001b06e */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word adc_m15v */
 
@@ -33777,8 +34016,10 @@ void diag_adc_m15v(void)
   return;
 }
 
+#endif
 
 /* 0001b090 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word adc_oven */
 
@@ -33794,8 +34035,10 @@ void diag_adc_oven(void)
   return;
 }
 
+#endif
 
 /* 0001b0b2 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word adc_doven */
 
@@ -33811,8 +34054,10 @@ void diag_adc_doven(void)
   return;
 }
 
+#endif
 
 /* 0001b0d4 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word adc_ant_curr */
 
@@ -33828,8 +34073,10 @@ void diag_adc_ant_curr(void)
   return;
 }
 
+#endif
 
 /* 0001b0f6 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_adc_avg */
 
@@ -33863,6 +34110,7 @@ void diag_pr_adc_avg(void)
   return;
 }
 
+#endif
 
 /* 0001b1d0 */
 
@@ -33907,6 +34155,7 @@ uint8_t diag_pr_hold_cause(void)
 
 
 /* 0001b282 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word efc_write */
 
@@ -33917,8 +34166,10 @@ void diag_efc_write(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b292 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word hdac_write */
 
@@ -33929,8 +34180,10 @@ void diag_hdac_write(uint32_t param_1,uint32_t param_2)
   return;
 }
 
+#endif
 
 /* 0001b2a8 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word hdac_all */
 
@@ -33943,8 +34196,10 @@ void diag_hdac_all(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t p
   return;
 }
 
+#endif
 
 /* 0001b2d8 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word clk_synch */
 
@@ -33955,8 +34210,10 @@ void diag_clk_synch(uint8_t param_1,uint32_t param_2)
   return;
 }
 
+#endif
 
 /* 0001b2ec */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word sync_imm */
 
@@ -33967,8 +34224,10 @@ void diag_sync_imm(void)
   return;
 }
 
+#endif
 
 /* 0001b2fe */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word loop_time */
 
@@ -33979,8 +34238,10 @@ void diag_loop_time(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b310 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pll_rep */
 
@@ -34008,8 +34269,10 @@ void diag_pll_rep(void)
   return;
 }
 
+#endif
 
 /* 0001b3de */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word efc_rep */
 
@@ -34032,8 +34295,10 @@ void diag_efc_rep(void)
   return;
 }
 
+#endif
 
 /* 0001b430 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word get_time */
 
@@ -34053,8 +34318,10 @@ void diag_get_time(void)
   return;
 }
 
+#endif
 
 /* 0001b4a0 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word set_time */
 
@@ -34075,8 +34342,10 @@ void diag_set_time(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t p
   return;
 }
 
+#endif
 
 /* 0001b504 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word print_stat */
 
@@ -34087,8 +34356,10 @@ void diag_print_stat(void)
   return;
 }
 
+#endif
 
 /* 0001b50e */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word print_vis */
 
@@ -34099,8 +34370,10 @@ void diag_print_vis(void)
   return;
 }
 
+#endif
 
 /* 0001b518 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_avg */
 
@@ -34111,8 +34384,10 @@ void diag_pr_avg(void)
   return;
 }
 
+#endif
 
 /* 0001b522 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_gps_istate */
 
@@ -34123,8 +34398,10 @@ void diag_pr_gps_istate(void)
   return;
 }
 
+#endif
 
 /* 0001b52c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word print_bc */
 
@@ -34135,8 +34412,10 @@ void diag_print_bc(void)
   return;
 }
 
+#endif
 
 /* 0001b536 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word print_ext_msg */
 
@@ -34147,8 +34426,10 @@ void diag_print_ext_msg(void)
   return;
 }
 
+#endif
 
 /* 0001b540 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word abr_stat */
 
@@ -34160,8 +34441,10 @@ void diag_abr_stat(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b552 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word avg */
 
@@ -34173,8 +34456,10 @@ void diag_avg(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b564 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word master_reset */
 
@@ -34185,8 +34470,10 @@ void diag_master_reset(void)
   return;
 }
 
+#endif
 
 /* 0001b56e */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word quiet_status */
 
@@ -34197,8 +34484,10 @@ void diag_quiet_status(void)
   return;
 }
 
+#endif
 
 /* 0001b578 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word gps_query_all */
 
@@ -34209,8 +34498,10 @@ void diag_gps_query_all(void)
   return;
 }
 
+#endif
 
 /* 0001b582 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word init_gps */
 
@@ -34221,8 +34512,10 @@ void diag_init_gps(void)
   return;
 }
 
+#endif
 
 /* 0001b58c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word clr_avg */
 
@@ -34233,8 +34526,10 @@ void diag_clr_avg(void)
   return;
 }
 
+#endif
 
 /* 0001b596 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word stat_rate */
 
@@ -34246,8 +34541,10 @@ void diag_stat_rate(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b5a8 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word vis_stat_rate */
 
@@ -34264,8 +34561,10 @@ void diag_vis_stat_rate(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b5ca */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word xdop_stat_rate */
 
@@ -34277,8 +34576,10 @@ void diag_xdop_stat_rate(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b5dc */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word ext_msg_rate */
 
@@ -34290,8 +34591,10 @@ void diag_ext_msg_rate(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b5ee */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word gps_time */
 
@@ -34305,8 +34608,10 @@ void diag_gps_time(int32_t param_1,int32_t param_2,int32_t param_3)
   return;
 }
 
+#endif
 
 /* 0001b60e */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word eman */
 
@@ -34318,8 +34623,10 @@ void diag_eman(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b620 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word q_eman */
 
@@ -34330,8 +34637,10 @@ void diag_q_eman(void)
   return;
 }
 
+#endif
 
 /* 0001b62a */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word gps_date */
 
@@ -34345,8 +34654,10 @@ void diag_gps_date(int32_t param_1,int32_t param_2,int32_t param_3)
   return;
 }
 
+#endif
 
 /* 0001b64a */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word gps_php */
 
@@ -34361,8 +34672,10 @@ void diag_gps_php(int32_t param_1,int32_t param_2,int32_t param_3,int32_t param_
   return;
 }
 
+#endif
 
 /* 0001b670 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word q_gps_php */
 
@@ -34373,8 +34686,10 @@ void diag_q_gps_php(void)
   return;
 }
 
+#endif
 
 /* 0001b67a */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word gps_ph */
 
@@ -34386,8 +34701,10 @@ void diag_gps_ph(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b68c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word force_1pps */
 
@@ -34413,8 +34730,10 @@ override_jmp_0001b6a4_case_1:
   return;
 }
 
+#endif
 
 /* 0001b6be */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word gps_cable_dly */
 
@@ -34426,8 +34745,10 @@ void diag_gps_cable_dly(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b6d0 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word q_gps_cable_dly */
 
@@ -34438,8 +34759,10 @@ void diag_q_gps_cable_dly(void)
   return;
 }
 
+#endif
 
 /* 0001b6da */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word gps_change */
 
@@ -34456,8 +34779,10 @@ void diag_gps_change(int32_t param_1,int32_t param_2,int32_t param_3,int32_t par
   return;
 }
 
+#endif
 
 /* 0001b706 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word gps_query */
 
@@ -34469,8 +34794,10 @@ void diag_gps_query(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b718 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_gps_id */
 
@@ -34481,8 +34808,10 @@ void diag_pr_gps_id(void)
   return;
 }
 
+#endif
 
 /* 0001b722 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_1pps */
 
@@ -34493,8 +34822,10 @@ void diag_pr_1pps(void)
   return;
 }
 
+#endif
 
 /* 0001b72c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_time_raim */
 
@@ -34505,8 +34836,10 @@ void diag_pr_time_raim(void)
   return;
 }
 
+#endif
 
 /* 0001b736 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_gps_debug */
 
@@ -34517,8 +34850,10 @@ void diag_pr_gps_debug(void)
   return;
 }
 
+#endif
 
 /* 0001b73e */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word clr_gps_debug */
 
@@ -34529,8 +34864,10 @@ void diag_clr_gps_debug(void)
   return;
 }
 
+#endif
 
 /* 0001b746 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_gps_cmds */
 
@@ -34541,8 +34878,10 @@ void diag_pr_gps_cmds(void)
   return;
 }
 
+#endif
 
 /* 0001b74e */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word disable_gps_cmds */
 
@@ -34553,8 +34892,10 @@ void diag_disable_gps_cmds(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b766 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pstat */
 
@@ -34568,8 +34909,10 @@ void diag_pstat(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b77c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word efc_wr */
 
@@ -34583,8 +34926,10 @@ void diag_efc_wr(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b79a */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_efc */
 
@@ -34598,8 +34943,10 @@ void diag_pr_efc(void)
   return;
 }
 
+#endif
 
 /* 0001b7bc */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word lock */
 
@@ -34610,8 +34957,10 @@ void diag_lock(void)
   return;
 }
 
+#endif
 
 /* 0001b7c6 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pll_restart */
 
@@ -34622,8 +34971,10 @@ void diag_pll_restart(void)
   return;
 }
 
+#endif
 
 /* 0001b7d0 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pll_debug */
 
@@ -34634,8 +34985,10 @@ void diag_pll_debug(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b7dc */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word phase_off */
 
@@ -34646,8 +34999,10 @@ void diag_phase_off(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001b7ee */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* prints the GPS initialization sequence's state
    "Gen GPS state:", "start", "init ack", .. "survey", "done" */
@@ -34859,8 +35214,10 @@ void print_gps_init_state(void)
   return;
 }
 
+#endif
 
 /* 0001b99c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* prints the leap second check's state
    "Leap chk state:", "leap start", "leap pending send", "leap wait" */
@@ -34934,8 +35291,10 @@ void print_leap_check_state(void)
   return;
 }
 
+#endif
 
 /* 0001ba32 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the suffix naming the fine adjustment's sub-state
    ": fine start" .. ": fine fine slew", ": fine unknown" */
@@ -34986,8 +35345,10 @@ void print_fine_state(uint8_t param_1,char *param_2)
   return;
 }
 
+#endif
 
 /* 0001bac8 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word pr_pll */
 
@@ -35207,8 +35568,10 @@ LAB_0001bdbe:
   return;
 }
 
+#endif
 
 /* 0001bde2 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word log_send */
 
@@ -35219,8 +35582,10 @@ void diag_log_send(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001bdf6 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word print_clk_list */
 
@@ -35231,8 +35596,10 @@ void diag_print_clk_list(void)
   return;
 }
 
+#endif
 
 /* 0001bdfe */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmessage */
 
@@ -35244,8 +35611,10 @@ void diag_dmessage(char *param_1)
   return;
 }
 
+#endif
 
 /* 0001be18 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmes_gpsm */
 
@@ -35256,8 +35625,10 @@ void diag_dmes_gpsm(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001be22 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmes_hmon */
 
@@ -35268,8 +35639,10 @@ void diag_dmes_hmon(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001be2c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmes_klok */
 
@@ -35280,8 +35653,10 @@ void diag_dmes_klok(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001be36 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmes_pllp */
 
@@ -35292,8 +35667,10 @@ void diag_dmes_pllp(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001be40 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmes_root */
 
@@ -35304,8 +35681,10 @@ void diag_dmes_root(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001be4a */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmes_scpi */
 
@@ -35316,8 +35695,10 @@ void diag_dmes_scpi(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001be54 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmes_spoo */
 
@@ -35328,8 +35709,10 @@ void diag_dmes_spoo(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001be5e */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmes_curv */
 
@@ -35340,8 +35723,10 @@ void diag_dmes_curv(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001be68 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word dmes_all */
 
@@ -35358,8 +35743,10 @@ void diag_dmes_all(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001be84 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word wr_eeprom */
 
@@ -35372,8 +35759,10 @@ uint8_t diag_wr_eeprom(char *param_1,uint32_t param_2)
   return written;
 }
 
+#endif
 
 /* 0001be9e */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word clear_nv */
 
@@ -35384,8 +35773,10 @@ void diag_clear_nv(void)
   return;
 }
 
+#endif
 
 /* 0001bea6 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word debug_psos */
 
@@ -35396,8 +35787,10 @@ void diag_debug_psos(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001bebe */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word doven */
 
@@ -35417,8 +35810,10 @@ void diag_doven(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001bed8 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word cal */
 
@@ -35494,8 +35889,10 @@ void diag_cal(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001c07c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word crash */
@@ -35529,8 +35926,10 @@ void diag_crash(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001c108 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word leapsec */
 
@@ -35543,8 +35942,10 @@ void diag_leapsec(uint32_t param_1,uint32_t param_2)
   return;
 }
 
+#endif
 
 /* 0001c124 */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word es_ascii */
 
@@ -35555,8 +35956,10 @@ void diag_es_ascii(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 0001c13c */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* the pForth diagnostic word fp_u */
 
@@ -35576,8 +35979,10 @@ void diag_fp_u(void)
   return;
 }
 
+#endif
 
 /* 0001c18e */
+#if 0 /* the decompiler's reading; rewritten in console.c */
 
 /* defines every diagnostic word in the table at 0x1c8ac
    console.md */
@@ -35595,6 +36000,7 @@ void diag_words_define(void)
   return;
 }
 
+#endif
 
 /* 0001d570 */
 #if 0 /* the decompiler's reading; rewritten in duartb.c */
@@ -49282,14 +49688,14 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe
 {
   uint8_t bVar1;
   int32_t zero;
-  char cVar3;
+  char known;
   uint32_t uVar4;
   char local_6 [2];
   
   zero = return_zero(call->input);
   bVar1 = (uint8_t)zero;
-  cVar3 = gps_message_supported(0x28,local_6);
-  if (cVar3 == 0) {
+  known = gps_message_supported(0x28,local_6);
+  if (known == 0) {
     uVar4 = CONCAT22(6,(uint16_t)bVar1 << 8);
   }
   else {
@@ -49316,13 +49722,13 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe
               (void *parameters,void *response,scpi_call *call)
 
 {
-  char cVar2;
+  char known;
   int32_t error;
   status_condition_code code;
   char local_6 [2];
   
-  cVar2 = gps_message_supported(0x28,local_6);
-  if (cVar2 == 0) {
+  known = gps_message_supported(0x28,local_6);
+  if (known == 0) {
     code = STATUS_DATA_CORRUPT_OR_STALE;
   }
   else {
@@ -49348,13 +49754,13 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
 
 {
   int32_t zero;
-  char cVar2;
+  char known;
   int16_t code;
   char local_6 [2];
   
   zero = return_zero(call->input);
-  cVar2 = gps_message_supported(0x28,local_6);
-  if (cVar2 == 0) {
+  known = gps_message_supported(0x28,local_6);
+  if (known == 0) {
     code = 6;
   }
   else {
@@ -49383,15 +49789,15 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
 
 {
   int16_t sVar1;
-  char cVar4;
+  char known;
   float value;
   int32_t iVar2;
   int32_t error;
   status_condition_code code;
   char local_6 [2];
   
-  cVar4 = gps_message_supported(0x28,local_6);
-  if (cVar4 == 0) {
+  known = gps_message_supported(0x28,local_6);
+  if (known == 0) {
     code = STATUS_DATA_CORRUPT_OR_STALE;
   }
   else {
@@ -49421,7 +49827,7 @@ int32_t scpi_query_SOURce_GPSystem_POSition_ACTual(void *parameters,void *respon
 
 {
   uint16_t sr;
-  char cVar3;
+  char received;
   float fVar1;
   int32_t iVar2;
   double dVar4;
@@ -49433,9 +49839,9 @@ int32_t scpi_query_SOURce_GPSystem_POSition_ACTual(void *parameters,void *respon
   double dStack_c;
   
   sr = set_interrupt_mask(0x100);
-  cVar3 = gps_position_get(&local_1c,&local_18,&local_14);
+  received = gps_position_get(&local_1c,&local_18,&local_14);
   set_interrupt_mask(sr);
-  if (cVar3 == 0) {
+  if (received == 0) {
     iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
@@ -49555,7 +49961,7 @@ int32_t scpi_query_DIAGnostic_GPSystem_TIME(void *parameters,void *response,scpi
 
 {
   uint16_t sr;
-  bool bVar2;
+  bool received;
   int32_t iVar1;
   time_of_day time;
   uint16_t local_8;
@@ -49563,9 +49969,9 @@ int32_t scpi_query_DIAGnostic_GPSystem_TIME(void *parameters,void *response,scpi
   uint8_t local_5;
   
   sr = set_interrupt_mask(0x100);
-  bVar2 = gps_time_local_get(&time,(uint32_t *)&local_8);
+  received = gps_time_local_get(&time,(uint32_t *)&local_8);
   set_interrupt_mask(sr);
-  if (bVar2) {
+  if (received) {
     *(uint16_t *)response = (uint16_t)time.hour;
     *(uint16_t *)((int32_t)response + 4) = (uint16_t)time.minute;
     *(uint16_t *)((int32_t)response + 8) = (uint16_t)time.second;
@@ -51123,7 +51529,7 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
 
 {
   uint16_t sr;
-  bool bVar5;
+  bool settable;
   int32_t zero;
   uint32_t uVar2;
   int32_t clamped;
@@ -51146,8 +51552,8 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
   float local_8;
   
   sr = set_interrupt_mask(0x100);
-  bVar5 = position_settable();
-  local_36 = !bVar5;
+  settable = position_settable();
+  local_36 = !settable;
   set_interrupt_mask(sr);
   if (local_36 == 0) {
     unit_step.value = 1;
@@ -51682,14 +52088,14 @@ int32_t scpi_query_DOUGlas_PROGress(void *parameters,void *response,scpi_call *c
 {
   uint32_t zero;
   uint16_t sr;
-  bool bVar3;
+  bool surveying;
   int32_t iVar2;
   
   zero = return_zero(call->input);
   sr = set_interrupt_mask(0x100);
-  bVar3 = survey_progress_text(scpi_response_texts[zero & 0xff]);
+  surveying = survey_progress_text(scpi_response_texts[zero & 0xff]);
   set_interrupt_mask(sr);
-  if (bVar3) {
+  if (surveying) {
     *(scpi_response_text **)response = scpi_response_texts + (zero & 0xff);
     iVar2 = 0;
   }
@@ -52344,7 +52750,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
 {
   uint32_t zero;
   uint16_t sr;
-  bool bVar3;
+  bool received;
   int32_t iVar2;
   uint8_t listed;
   uint32_t local_c;
@@ -52355,8 +52761,8 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
   
   zero = return_zero(call->input);
   sr = set_interrupt_mask(0x100);
-  bVar3 = visible_satellites(&local_8,&local_c);
-  if (bVar3) {
+  received = visible_satellites(&local_8,&local_c);
+  if (received) {
     set_interrupt_mask(sr);
     satellite_list_limits(SATELLITE_LIST_VISIBLE,&local_7,&uStack_6,&local_5);
     listed = satellites_in_mask(local_c,local_7,scpi_response_lists[zero & 0xff],local_8,local_5);
@@ -52387,13 +52793,13 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
 
 {
   uint16_t sr;
-  bool bVar2;
+  bool received;
   int32_t iVar1;
   uint8_t local_6 [2];
   
   sr = set_interrupt_mask(0x100);
-  bVar2 = visible_satellites(local_6,(uint32_t *)0x0);
-  if (bVar2) {
+  received = visible_satellites(local_6,(uint32_t *)0x0);
+  if (received) {
     set_interrupt_mask(sr);
     *(uint16_t *)response = (uint16_t)local_6[0];
     iVar1 = 0;
@@ -56486,10 +56892,10 @@ int32_t scpi_query_RVST(void *parameters,void *response,scpi_call *call)
 int32_t scpi_query_SYSTem_PRINt_LENGth(void *parameters,void *response,scpi_call *call)
 
 {
-  uint8_t uVar1;
+  uint8_t lines;
   
-  uVar1 = status_screen_length();
-  *(uint16_t *)response = (uint16_t)uVar1;
+  lines = status_screen_length();
+  *(uint16_t *)response = (uint16_t)lines;
   return 0;
 }
 
@@ -66033,6 +66439,7 @@ LAB_00047940:
 #endif
 
 /* 00047de2 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* folds a value into a running average of so many */
 
@@ -66052,6 +66459,7 @@ void running_average_update(int32_t param_1,double *param_2,uint32_t param_3)
   return;
 }
 
+#endif
 
 /* 00047e32 */
 
@@ -66104,6 +66512,7 @@ void dms_to_mas(int32_t *mas,uint16_t degrees,uint8_t minutes,double seconds)
 
 
 /* 00047f14 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* formats an angle as degrees, minutes and seconds to milliseconds
    "%c%4d:%02d:%06.3f", degrees, minutes and seconds */
@@ -66154,8 +66563,10 @@ void format_dms(int32_t param_1,char param_2,char *param_3)
   return;
 }
 
+#endif
 
 /* 00047fb6 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* formats an angle as degrees, minutes and seconds to 0.1 microseconds
    "%c%4d:%02d:%06.7f" */
@@ -66198,8 +66609,10 @@ void format_dms_precise(char *text,double mas,char latitude)
   return;
 }
 
+#endif
 
 /* 000480c2 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and
    minutes */
@@ -66237,8 +66650,10 @@ void format_angle(char *param_1,int32_t param_2,char param_3)
   return;
 }
 
+#endif
 
 /* 0004816c */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* seconds as "%02d:%02d:%04.1f [%s]" */
 
@@ -66269,8 +66684,10 @@ void format_duration(double param_1,char *param_2)
   return;
 }
 
+#endif
 
 /* 00048224 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* print_bc's request, 0x35; xDOP VALID COMBOS
    structures.md */
@@ -66304,8 +66721,10 @@ void gps_print_best_combinations(void)
   return;
 }
 
+#endif
 
 /* 00048300 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* print_ext_msg's request, 0x34; @@Bk's data
    structures.md */
@@ -66362,8 +66781,10 @@ void gps_print_extension(void)
   return;
 }
 
+#endif
 
 /* 000484de */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* pr_time_raim's request, 0x39; Time RAIM Status
    structures.md */
@@ -66376,7 +66797,7 @@ void gps_print_time_raim(void)
   bool bVar3;
   char *pcVar4;
   char *pcVar5;
-  char cVar6;
+  char used;
   uint8_t bVar7;
   uint8_t uVar8;
   char acStack_12 [10];
@@ -66508,8 +66929,8 @@ void gps_print_time_raim(void)
     do {
       bVar1 = gps.raim.channels[bVar7].satellite;
       if (bVar1 != 0) {
-        cVar6 = satellite_used_for_position(bVar1);
-        if (cVar6 == 0) {
+        used = satellite_used_for_position(bVar1);
+        if (used == 0) {
           pcVar4 = " ";
         }
         else {
@@ -66530,8 +66951,10 @@ void gps_print_time_raim(void)
   return;
 }
 
+#endif
 
 /* 000487f6 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* Pseudorange Correction Status
    structures.md */
@@ -66580,8 +67003,10 @@ void gps_print_pseudorange_corrections(void)
   return;
 }
 
+#endif
 
 /* 00048964 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* "Enabled" or "Disabled" for a flag
    "Enabled", "Disabled" */
@@ -66616,8 +67041,10 @@ void enabled_string(char param_1,char *param_2)
   return;
 }
 
+#endif
 
 /* 000489a0 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* pr_gps_istate's request, 0x38; Instrument State Settings
    structures.md */
@@ -66863,8 +67290,10 @@ void gps_print_instrument_state(void)
   return;
 }
 
+#endif
 
 /* 00048ea0 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* pr_avg's request, 0x3a; AVG LAT, LON, HGT
    structures.md */
@@ -66914,8 +67343,10 @@ void gps_print_average(void)
   return;
 }
 
+#endif
 
 /* 00048fac */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* print_vis's request, 0x33; Visible Sats
    structures.md */
@@ -66940,8 +67371,10 @@ void gps_print_visibility(void)
   return;
 }
 
+#endif
 
 /* 00049054 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* print_stat's request, 0x32
    structures.md */
@@ -67005,8 +67438,10 @@ void gps_print_status(oncore_status_fields *status)
   return;
 }
 
+#endif
 
 /* 00049210 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* gps.status as the "gs: %02d:%02d:%02d.%09d,..." debug line */
 
@@ -67074,8 +67509,10 @@ void gps_debug_status(void)
   return;
 }
 
+#endif
 
 /* 000493c0 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* pr_gps_id's request, 0x36
    structures.md */
@@ -67099,8 +67536,10 @@ void gps_print_id(void)
   return;
 }
 
+#endif
 
 /* 00049474 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* for status_snapshot: the sets of GPS and pseudolite satellites visible, used and tracked, and the
    tracked by @@Ba channel mode */
@@ -67111,17 +67550,17 @@ void satellite_sets_build(oncore_channel_status *channels,satellite_sets *sets)
   uint8_t id;
   uint8_t bVar1;
   uint32_t uVar2;
-  bool bVar4;
+  bool received;
   bool bVar5;
   int32_t iVar3;
   oncore_channel_status *poVar6;
   uint32_t *mask;
   
   memset(sets,0,0x2a);
-  bVar4 = visible_satellites(&sets->visible_count,&sets->visible);
+  received = visible_satellites(&sets->visible_count,&sets->visible);
   bVar5 = satellites_in_use(&sets->used_count,&sets->pseudolites_used_count,&sets->used,
                             &sets->pseudolites_used);
-  if ((bVar4) && (poVar6 = channels, bVar5)) {
+  if ((received) && (poVar6 = channels, bVar5)) {
     for (; poVar6 < channels + 6; poVar6 = poVar6 + 1) {
       id = poVar6->satellite;
       iVar3 = satellite_id_valid(SATELLITE_GPS,id);
@@ -67180,8 +67619,10 @@ LAB_00049570:
   return;
 }
 
+#endif
 
 /* 000495e2 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* bit prn - 1 of a mask, or prn - 0x21 for the second kind */
 
@@ -67199,8 +67640,10 @@ int32_t satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask)
   return 0;
 }
 
+#endif
 
 /* 00049612 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* a track record's class, 1 to 3 */
 
@@ -67231,8 +67674,10 @@ uint8_t satellite_track_class(oncore_visible_satellite *satellite)
   return uVar2;
 }
 
+#endif
 
 /* 00049654 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* a satellite's elevation and azimuth, valid below 91 and 360 */
 
@@ -67256,6 +67701,7 @@ void satellite_elevation_azimuth(oncore_visible_satellite *satellite,uint8_t *en
   return;
 }
 
+#endif
 
 /* 00049688 */
 
@@ -67266,7 +67712,7 @@ void satellite_status(char param_1,uint8_t param_2,int32_t param_3,int32_t param
 {
   int32_t iVar1;
   oncore_visible_satellite *satellite;
-  uint8_t uVar2;
+  uint8_t class;
   
   iVar1 = satellite_id_valid(SATELLITE_ANY,param_2);
   if ((char)iVar1 == 0) {
@@ -67280,12 +67726,12 @@ void satellite_status(char param_1,uint8_t param_2,int32_t param_3,int32_t param
     satellite = (oncore_visible_satellite *)0x0;
   }
   if (param_1 != 1) {
-    uVar2 = satellite_track_class(satellite);
-    if (uVar2 == 3) {
+    class = satellite_track_class(satellite);
+    if (class == 3) {
       *param_5 = 3;
       return;
     }
-    if (uVar2 == 2) {
+    if (class == 2) {
       *param_5 = 4;
       return;
     }
@@ -67317,6 +67763,7 @@ void satellite_status(char param_1,uint8_t param_2,int32_t param_3,int32_t param
 
 
 /* 00049794 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* qsort's comparison of two satellites, by elevation and then by number */
 
@@ -67341,6 +67788,7 @@ LAB_000497a6:
   return uVar1;
 }
 
+#endif
 
 /* 000497c8 */
 
@@ -67355,7 +67803,7 @@ void satellite_status_list
   uint32_t uVar1;
   char cVar4;
   char cVar5;
-  int32_t iVar2;
+  int32_t set;
   uint8_t uVar6;
   int16_t sVar7;
   uint8_t id;
@@ -67397,9 +67845,9 @@ void satellite_status_list
       for (puVar11 = (uint8_t *)(param_5 + 4);
           puVar11 < (uint8_t *)(param_5 + (uint32_t)*(uint8_t *)(param_5 + 2) * 10 + 4);
           puVar11 = puVar11 + 10) {
-        iVar2 = satellite_in_set(SATELLITE_GPS,*puVar11,local_2e);
+        set = satellite_in_set(SATELLITE_GPS,*puVar11,local_2e);
         puVar9 = puVar10;
-        if ((char)iVar2 == 0) {
+        if ((char)set == 0) {
           *puVar10 = *puVar11;
           puVar9 = puVar10 + 2;
           puVar10[1] = puVar11[4];
@@ -67442,10 +67890,10 @@ void satellite_status_list
         }
       }
       else {
-        iVar2 = satellite_in_set(SATELLITE_GPS,id,*(uint32_t *)(param_3 + 0x12));
-        if (((char)iVar2 == 0) &&
-           (iVar2 = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint32_t)*(uint8_t *)(param_3 + 0x22)),
-           (char)iVar2 == 0)) {
+        set = satellite_in_set(SATELLITE_GPS,id,*(uint32_t *)(param_3 + 0x12));
+        if (((char)set == 0) &&
+           (set = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint32_t)*(uint8_t *)(param_3 + 0x22)),
+           (char)set == 0)) {
           uVar6 = 0;
         }
         else {
@@ -67464,6 +67912,7 @@ void satellite_status_list
 
 
 /* 000499f2 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* a satellite number as %2d, or blanks for none */
 
@@ -67488,8 +67937,10 @@ void format_satellite_number(char param_1,char *param_2)
   return;
 }
 
+#endif
 
 /* 00049a26 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* writes * for a set flag */
 
@@ -67502,8 +67953,10 @@ bool mark_flag(char param_1,uint8_t *param_2)
   return param_1 != 0;
 }
 
+#endif
 
 /* 00049a3c */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* a level as %3d, or blanks when negative */
 
@@ -67528,8 +67981,10 @@ void format_level(int16_t param_1,char *param_2)
   return;
 }
 
+#endif
 
 /* 00049a6e */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq" */
 
@@ -67582,8 +68037,10 @@ override_jmp_00049ab0_case_0:
   return;
 }
 
+#endif
 
 /* 00049b06 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* the status screen's height line, HGT and %+9.2f m (MSL) */
 
@@ -67615,8 +68072,10 @@ void status_screen_height(status_snapshot_record *snapshot,char *line)
   return;
 }
 
+#endif
 
 /* 00049b88 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* formats a double with an SI prefix from "pnum kMG" by its exponent / 3; "ANT DLY %s"; the double
    at SP+4 goes to scpi_real_to_text with the resolution exponent at +0xc and the significant digits
@@ -67723,8 +68182,10 @@ void format_si(double value,char resolution,uint8_t digits,char *unit,char *text
   return;
 }
 
+#endif
 
 /* 00049d14 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* a duration as minutes and seconds or hours and minutes, or 1000+ hr */
 
@@ -67771,8 +68232,10 @@ void format_duration_short(uint32_t param_1,char *param_2)
   return;
 }
 
+#endif
 
 /* 00049db0 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* the status screen's synchronization line
    "Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability" */
@@ -67834,8 +68297,10 @@ void status_screen_sync(status_snapshot_record *snapshot,char *line)
   return;
 }
 
+#endif
 
 /* 00049e5a */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* a packed time as "%02d:%02d:%02d", or "--:--:--" */
 
@@ -67863,8 +68328,10 @@ bool format_time(time_of_day time,char *text)
   return bVar2;
 }
 
+#endif
 
 /* 00049eb4 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* a date as "%02d %s %04d", or "-- --- ----" */
 
@@ -67893,8 +68360,10 @@ uint32_t format_date(uint16_t param_1,uint8_t param_2,uint8_t param_3,char *para
   return uVar2;
 }
 
+#endif
 
 /* 00049f30 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* the screen's time with its reference, "GPS", "UTC", "LOCL GPS" or "LOCAL" */
 
@@ -67934,8 +68403,10 @@ void status_screen_time(status_snapshot_record *snapshot,char *line)
   return;
 }
 
+#endif
 
 /* 00049fcc */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* the status screen's position and survey lines; status_screen pushes the row byte, the snapshot
    and the line (0x4ae70 to 0x4ae76) and ignores D0
@@ -68117,8 +68588,10 @@ void status_screen_position(uint8_t row,status_snapshot_record *snapshot,char *l
   return;
 }
 
+#endif
 
 /* 0004a29c */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* the status screen's TFOM, FFOM, 1PPS TI and holdover lines; row a byte (0x4a2b4), the snapshot
    (0x4a2a4), the line (0x4a2a8); status_screen ignores D0
@@ -68230,8 +68703,10 @@ void status_screen_tfom(uint8_t row,status_snapshot_record *snapshot,char *line)
   return;
 }
 
+#endif
 
 /* 0004a42c */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* value & 1 << bit */
 
@@ -68241,74 +68716,84 @@ bool bit_is_set(int16_t param_1,int16_t param_2)
   return ((int32_t)param_1 & __ghidra_shl(1, ((int32_t)param_2 & 0x3fU))) != 0;
 }
 
+#endif
 
 /* 0004a448 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* 1 if any of bits 1 to 3 is set */
 
 uint8_t bits_1_to_3_any(int16_t param_1)
 
 {
-  uint8_t bVar1;
+  uint8_t set;
   uint8_t bVar2;
   
-  bVar1 = bit_is_set(param_1,2);
+  set = bit_is_set(param_1,2);
   bVar2 = bit_is_set(param_1,1);
-  bVar2 = bVar2 | bVar1;
-  bVar1 = bit_is_set(param_1,3);
-  return bVar1 | bVar2;
+  bVar2 = bVar2 | set;
+  set = bit_is_set(param_1,3);
+  return set | bVar2;
 }
 
+#endif
 
 /* 0004a494 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* 1 if bit 4 or 5 is set */
 
 uint8_t bits_4_5_any(int16_t param_1)
 
 {
-  uint8_t bVar1;
+  uint8_t set;
   uint8_t bVar2;
   
-  bVar1 = bit_is_set(param_1,4);
+  set = bit_is_set(param_1,4);
   bVar2 = bit_is_set(param_1,5);
-  return bVar2 | bVar1;
+  return bVar2 | set;
 }
 
+#endif
 
 /* 0004a4c0 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* 1 if bit 6 or 7 is set */
 
 uint8_t bits_6_7_any(int16_t param_1)
 
 {
-  uint8_t bVar1;
+  uint8_t set;
   uint8_t bVar2;
   
-  bVar1 = bit_is_set(param_1,6);
+  set = bit_is_set(param_1,6);
   bVar2 = bit_is_set(param_1,7);
-  return bVar2 | bVar1;
+  return bVar2 | set;
 }
 
+#endif
 
 /* 0004a4ec */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* 1 if bit 8 or 9 is set */
 
 uint8_t bits_8_9_any(int16_t param_1)
 
 {
-  uint8_t bVar1;
+  uint8_t set;
   uint8_t bVar2;
   
-  bVar1 = bit_is_set(param_1,8);
+  set = bit_is_set(param_1,8);
   bVar2 = bit_is_set(param_1,9);
-  return bVar2 | bVar1;
+  return bVar2 | set;
 }
 
+#endif
 
 /* 0004a518 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* the status screen's suffix for the power-up sub-state
    screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI
@@ -68397,8 +68882,10 @@ override_jmp_0004a55c_case_0:
   return;
 }
 
+#endif
 
 /* 0004a636 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date
@@ -68415,7 +68902,7 @@ void status_snapshot(status_snapshot_record *snapshot)
   bool bVar8;
   uint8_t reason;
   uint32_t uVar2;
-  uint8_t uVar10;
+  uint8_t alternate_status;
   uint16_t uVar4;
   int32_t iVar3;
   time_of_day local_e;
@@ -68469,8 +68956,8 @@ void status_snapshot(status_snapshot_record *snapshot)
   }
   snapshot->pll_field_3d5 = pll.field_3d5;
   gps_receiver_status_update(0,0);
-  uVar10 = gps_status_alternate();
-  gps_receiver_status_update(1,uVar10);
+  alternate_status = gps_status_alternate();
+  gps_receiver_status_update(1,alternate_status);
   snapshot->douglas_duration_infinite = nv_settings.douglas_duration_infinite;
   uVar4 = status_hardware_condition();
   snapshot->hardware_condition = uVar4;
@@ -68529,8 +69016,10 @@ void status_snapshot(status_snapshot_record *snapshot)
   return;
 }
 
+#endif
 
 /* 0004a8ea */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* prints the receiver status screen; clear 1 clears the terminal first (0x4a908)
    "Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status" */
@@ -68543,7 +69032,7 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
   int32_t iVar2;
   uint32_t uVar3;
   char *pcVar4;
-  uint8_t bVar5;
+  uint8_t marked;
   uint8_t bVar6;
   uint8_t uVar7;
   char cVar8;
@@ -68857,13 +69346,13 @@ override_jmp_0004acdc_case_0:
     format_satellite_cell
               ((char)((uint32_t)uVar1 >> 0x18),(uint8_t)((uint32_t)uVar1 >> 0x10),(uint16_t)uVar1,acStack_a4);
     format_satellite_number((*pauVar9)[0],acStack_9d);
-    bVar5 = mark_flag((*pauVar9)[1],acStack_9d);
+    marked = mark_flag((*pauVar9)[1],acStack_9d);
     uVar1 = *(uint32_t *)(*pauVar9 + 4);
     format_satellite_cell
               ((char)((uint32_t)uVar1 >> 0x18),(uint8_t)((uint32_t)uVar1 >> 0x10),(uint16_t)uVar1,acStack_98);
     format_satellite_number(pauVar9[6][0],acStack_91);
     bVar6 = mark_flag(pauVar9[6][1],acStack_91);
-    local_c0 = bVar6 | bVar5 | local_c0;
+    local_c0 = bVar6 | marked | local_c0;
     uVar1 = *(uint32_t *)(pauVar9[6] + 4);
     format_satellite_cell
               ((char)((uint32_t)uVar1 >> 0x18),(uint8_t)((uint32_t)uVar1 >> 0x10),(uint16_t)uVar1,acStack_8c);
@@ -68913,6 +69402,7 @@ override_jmp_0004acdc_case_0:
   return;
 }
 
+#endif
 
 /* 0004afd6 */
 
@@ -69021,6 +69511,7 @@ uint32_t raim_monitor(void)
 
 
 /* 0004b112 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* sets the receiver's status codes back to 2 and every channel back to code search */
 
@@ -69042,8 +69533,10 @@ void gps_receiver_status_reset(void)
   return;
 }
 
+#endif
 
 /* 0004b168 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* WARNING: Removing unreachable block (ram,0x0004b20a) */
 /* sets the GPS receiver's status code, which enter_holdover reports, from its fix mode, the
@@ -69173,8 +69666,10 @@ LAB_0004b3a2:
   return;
 }
 
+#endif
 
 /* 0004b420 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* 0: the receiver status gpsm_task and status_snapshot hand gps_receiver_status_update with 1,
    which it ignores */
@@ -69185,8 +69680,10 @@ uint8_t gps_status_alternate(void)
   return 0;
 }
 
+#endif
 
 /* 0004b426 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* clears the command monitor's state and reports status event G */
 
@@ -69207,8 +69704,10 @@ void command_monitor_init(void)
   return;
 }
 
+#endif
 
 /* 0004b46e */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* watches for commands the receiver does not answer, counting command_monitor_failures and
    resending after a time */
@@ -69384,8 +69883,10 @@ LAB_0004b754:
   return;
 }
 
+#endif
 
 /* 0004b79a */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* points gps_response_cursor at gps_response_buffer and clears gps_receive_state */
 
@@ -69397,8 +69898,10 @@ void gps_response_reset(void)
   return;
 }
 
+#endif
 
 /* 0004b7ac */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* a response's two-character ID to its index among 49, counting unknown_response */
 
@@ -69421,8 +69924,10 @@ uint32_t gps_response_lookup(char param_1,char param_2,uint16_t *param_3,int16_t
   return 1;
 }
 
+#endif
 
 /* 0004b800 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* stores a byte that is the one expected and steps gps_receive_state; else counts
    gps_counts.frame_errors and, at an @, starts gps_response_buffer again with it at state 1, or
@@ -69454,8 +69959,10 @@ void gps_receive_expect(uint8_t c,uint8_t expected)
   return;
 }
 
+#endif
 
 /* 0004b846 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* reads bytes from the engine and frames its messages from their @ into gps_response_buffer,
    counting frame errors */
@@ -69466,7 +69973,7 @@ uint8_t gps_receive(void)
   int32_t iVar1;
   uint8_t *puVar2;
   uint8_t c;
-  uint8_t bVar3;
+  uint8_t checksum;
   char cVar4;
   uint8_t expected;
   
@@ -69536,8 +70043,8 @@ override_jmp_0004b88e_case_4:
   gps_response_cursor = puVar2;
   gps_response_remaining = gps_response_remaining + -1;
   if (gps_response_remaining == 0) {
-    bVar3 = oncore_checksum(gps_response_buffer + 2,gps_response_cursor + -1);
-    if (c == bVar3) {
+    checksum = oncore_checksum(gps_response_buffer + 2,gps_response_cursor + -1);
+    if (c == checksum) {
 LAB_0004b8c0:
       gps_receive_state = gps_receive_state + 1;
     }
@@ -69549,8 +70056,10 @@ LAB_0004b8c0:
   goto LAB_0004b98c;
 }
 
+#endif
 
 /* 0004b9a6 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* 1 once more time has passed than the message's timeout */
 
@@ -69571,8 +70080,10 @@ uint32_t gps_response_timed_out(int16_t param_1,uint32_t *param_2)
   return uVar1;
 }
 
+#endif
 
 /* 0004b9e6 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender,
    unknown_command, busy and the rest */
@@ -69638,8 +70149,10 @@ int32_t gps_count_response(char kind,gps_request_entry *request)
   return (uint32_t)(cVar3 == 0);
 }
 
+#endif
 
 /* 0004baaa */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* empties the ring of pending GPS requests, 26-byte entries at 0x10139e to 0x10141f
    gps.md, "Requests" */
@@ -69652,8 +70165,10 @@ void request_ring_clear(void)
   return;
 }
 
+#endif
 
 /* 0004baba */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* adds a request to the ring; 0 if it is full
    gps.md, "Requests" */
@@ -69689,8 +70204,10 @@ bool request_ring_put(gps_request_entry *entry)
   return bVar4;
 }
 
+#endif
 
 /* 0004bb02 */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* takes the oldest request from the ring; 0 if it is empty
    gps.md, "Requests" */
@@ -69730,8 +70247,10 @@ int32_t request_ring_get(gps_request_entry *entry)
   return iVar4;
 }
 
+#endif
 
 /* 0004bb4e */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* takes back the newest request from the ring */
 
@@ -69772,8 +70291,10 @@ int32_t request_ring_unput(gps_request_entry *entry)
   return iVar4;
 }
 
+#endif
 
 /* 0004bb9a */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* 1 if the request ring is empty */
 
@@ -69783,8 +70304,10 @@ bool request_ring_empty(void)
   return gps_requests.read == gps_requests.write;
 }
 
+#endif
 
 /* 0004bbb0 */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* 1 if the request ring is full */
 
@@ -69800,8 +70323,10 @@ bool request_ring_full(void)
   return pgVar1 == (gps_request_ring *)gps_requests.read;
 }
 
+#endif
 
 /* 0004bbd6 */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* 1 if a request with the ID is waiting in the ring */
 
@@ -69829,19 +70354,21 @@ LAB_0004bbee:
   return uVar1;
 }
 
+#endif
 
 /* 0004bc1c */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* 1 if the newest queued request is of kind 3 or 4 and not yet sent, so a new one replaces it */
 
 uint32_t request_ring_newest_replaceable(void)
 
 {
-  int32_t iVar1;
+  int32_t got;
   gps_request_entry gStack_1e;
   
-  iVar1 = request_ring_unput(&gStack_1e);
-  if (((char)iVar1 != 0) &&
+  got = request_ring_unput(&gStack_1e);
+  if (((char)got != 0) &&
      (((request_ring_put(&gStack_1e), gStack_1e.sender == GPS_SENDER_COMMAND_MONITOR ||
        (gStack_1e.sender == GPS_SENDER_STATUS_MONITOR)) && (gStack_1e.sent == 0)))) {
     return 1;
@@ -69849,8 +70376,10 @@ uint32_t request_ring_newest_replaceable(void)
   return 0;
 }
 
+#endif
 
 /* 0004bc58 */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* 1 for request kinds 1 to 4 */
 
@@ -69871,8 +70400,10 @@ uint32_t request_kind_valid(gps_request_sender sender)
   return 1;
 }
 
+#endif
 
 /* 0004bc74 */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* queues a new request: the step index 0x45 flushes the ring, others are queued unless one is
    waiting already */
@@ -69880,7 +70411,7 @@ uint32_t request_kind_valid(gps_request_sender sender)
 void gps_request_queue(char param_1,gps_request_entry *request,gps_request_entry *param_3)
 
 {
-  int32_t iVar1;
+  int32_t got;
   char cVar2;
   uint32_t *puVar3;
   uint32_t *puVar4;
@@ -69899,8 +70430,8 @@ LAB_0004bcac:
       puVar3 = (uint32_t *)((int32_t)puVar4 + -4);
       *(gps_request_entry **)((int32_t)puVar4 + -4) = &gStack_1e;
       *(uint32_t *)((int32_t)puVar4 + -8) = 0x4bcb4;
-      iVar1 = request_ring_get(*(gps_request_entry **)((int32_t)puVar4 + -4));
-      if ((char)iVar1 == 0) break;
+      got = request_ring_get(*(gps_request_entry **)((int32_t)puVar4 + -4));
+      if ((char)got == 0) break;
       *(gps_request_entry **)((int32_t)puVar4 + -4) = &gStack_1e;
     }
     *(gps_request_entry **)((int32_t)puVar4 + -4) = request;
@@ -69932,8 +70463,10 @@ LAB_0004bd18:
   return;
 }
 
+#endif
 
 /* 0004bd2c */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* builds a request, its kind, index and arguments, and sends it to the GPS task's exchange
    gps.md, "Requests" */
@@ -69969,8 +70502,10 @@ bool gps_request_post(gps_request_sender sender,int16_t code,int32_t *arguments,
   return (char)error == 0;
 }
 
+#endif
 
 /* 0004bdba */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3
    otherwise */
@@ -69999,8 +70534,10 @@ uint8_t gps_request_class(int16_t param_1,char param_2)
   return uVar1;
 }
 
+#endif
 
 /* 0004be04 */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* a script index from 0x47 on to its script, the first also resetting gps */
 
@@ -70077,8 +70614,10 @@ gps_script_step ** gps_script_lookup(int16_t param_1)
   return ppgVar1;
 }
 
+#endif
 
 /* 0004bef6 */
+#if 0 /* the decompiler's reading; rewritten in gps_task.c */
 
 /* clears gps and resets the receiver status and the command monitor
    structures.md's gps */
@@ -70098,8 +70637,10 @@ void gps_init(void)
   return;
 }
 
+#endif
 
 /* 0004bf3a */
+#if 0 /* the decompiler's reading; rewritten in gps_task.c */
 
 /* resets the response framing and empties the request ring */
 
@@ -70112,6 +70653,7 @@ void gps_link_reset(void)
   return;
 }
 
+#endif
 
 /* 0004bf4a */
 
@@ -70124,9 +70666,9 @@ void gpsm_task(void)
   gps_script_step *pgVar1;
   int16_t sVar2;
   uint32_t error;
-  uint32_t uVar4;
+  uint32_t valid;
   char cVar8;
-  int32_t lVar5;
+  int32_t argument;
   int16_t sVar7;
   uint8_t bVar9;
   int32_t iVar6;
@@ -70160,8 +70702,8 @@ void gpsm_task(void)
     error = psos_request_x(gpsx_exchange,&received,0,10);
     if ((char)error == 0) {
       gps_counts.received = gps_counts.received + 1;
-      uVar4 = request_kind_valid(received.sender);
-      if ((char)uVar4 == 0) {
+      valid = request_kind_valid(received.sender);
+      if ((char)valid == 0) {
         gps_count_response(3,&received);
       }
       else {
@@ -70287,8 +70829,8 @@ LAB_0004c17a:
             uStack_31 = pgVar1->argument_mode;
             if (uStack_31 == 2) {
               uStack_31 = 0;
-              lVar5 = long_array_get(pgVar1->arguments,0);
-              piStack_30 = gps_request_step.arguments + lVar5;
+              argument = long_array_get(pgVar1->arguments,0);
+              piStack_30 = gps_request_step.arguments + argument;
             }
             else {
               piStack_30 = pgVar1->arguments;
@@ -70416,6 +70958,7 @@ LAB_0004c1e6:
 
 
 /* 0004c4e8 */
+#if 0 /* the decompiler's reading; rewritten in gps_task.c */
 
 /* the RAIM request's four arguments: 1, raim_state and raim_threshold for position hold or not,
    then 1 */
@@ -70443,8 +70986,10 @@ void raim_request_arguments(void)
   return;
 }
 
+#endif
 
 /* 0004c572 */
+#if 0 /* the decompiler's reading; rewritten in gps_task.c */
 
 /* the GPS task's switch on the console's requests 0x31 to 0x45
    structures.md */
@@ -70516,8 +71061,10 @@ void gps_console_request(int16_t param_1,uint32_t *param_2,uint8_t param_3)
   return;
 }
 
+#endif
 
 /* 0004c65e */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* empties the GPS Receiver Command Log ring at 0x1017f6 */
 
@@ -70529,8 +71076,10 @@ void command_log_clear(void)
   return;
 }
 
+#endif
 
 /* 0004c66e */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* adds an entry to the GPS Receiver Command Log, with its date and time */
 
@@ -70589,8 +71138,10 @@ int32_t command_log_add(gps_running_command *command,char *text)
   return 1;
 }
 
+#endif
 
 /* 0004c754 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* prints one entry of the GPS receiver command log
    a command log line, "SCPI1", "GPSc", "GPSs" */
@@ -70668,6 +71219,7 @@ int32_t gps_print_command(gps_command_log *log,char *line)
   return iVar2;
 }
 
+#endif
 
 /* 0004c870 */
 
@@ -70720,6 +71272,7 @@ void status_snapshot_update(uint8_t *param_1)
 
 
 /* 0004c918 */
+#if 0 /* the decompiler's reading; rewritten in gps_task.c */
 
 /* the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_program_message
    structures.md */
@@ -70734,8 +71287,10 @@ void clear_gps_debug(void)
   return;
 }
 
+#endif
 
 /* 0004c940 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* prints the GPS receiver command log
    "GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued" */
@@ -70743,7 +71298,7 @@ void clear_gps_debug(void)
 void gps_print_command_log(gps_command_log *log)
 
 {
-  int32_t iVar1;
+  int32_t printed;
   uint8_t bVar2;
   char acStack_32 [46];
   
@@ -70754,8 +71309,8 @@ void gps_print_command_log(gps_command_log *log)
   console_write("Task  ID  Command     Date and Time Issued\r\n");
   console_write("---------------------------------------------\r\n");
   for (bVar2 = 0; bVar2 < 0x14; bVar2 = bVar2 + 1) {
-    iVar1 = gps_print_command(log,acStack_32);
-    if ((char)iVar1 != 1) break;
+    printed = gps_print_command(log,acStack_32);
+    if ((char)printed != 1) break;
     printf("%s\r\n",acStack_32);
   }
   if (bVar2 == 0) {
@@ -70764,8 +71319,10 @@ void gps_print_command_log(gps_command_log *log)
   return;
 }
 
+#endif
 
 /* 0004c9d4 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* the pr_gps_cmds word's: prints command_log, emptying it
    structures.md */
@@ -70777,8 +71334,10 @@ void gps_print_commands(void)
   return;
 }
 
+#endif
 
 /* 0004c9e2 */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* pr_1pps's request, 0x37
    structures.md */
@@ -70805,8 +71364,10 @@ void gps_print_1pps(void)
   return;
 }
 
+#endif
 
 /* 0004ca6c */
+#if 0 /* the decompiler's reading; rewritten in gps_reports.c */
 
 /* "GPS Process Monitor", gps_counts
    structures.md */
@@ -71016,8 +71577,10 @@ void gps_print_process_monitor(void)
   return;
 }
 
+#endif
 
 /* 0004ee8c */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* a long from an array by index */
 
@@ -71027,8 +71590,10 @@ int32_t long_array_get(int32_t *array,uint8_t index)
   return array[index];
 }
 
+#endif
 
 /* 0004eeac */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* stores a long into an array by index */
 
@@ -71039,55 +71604,62 @@ void long_array_set(int32_t value,int32_t *array,uint8_t index)
   return;
 }
 
+#endif
 
 /* 0004eec2 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* a long's low byte from an array by index, stored and the pointer advanced */
 
 char * long_array_get_byte(int32_t *array,uint8_t index,char *out)
 
 {
-  int32_t lVar1;
+  int32_t argument;
   
-  lVar1 = long_array_get(array,index);
-  *out = (char)lVar1;
+  argument = long_array_get(array,index);
+  *out = (char)argument;
   return out + 1;
 }
 
+#endif
 
 /* 0004eee0 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* a long's low word from an array by index, stored high byte first and the pointer advanced */
 
 char * long_array_get_word(int32_t *array,uint8_t index,char *out)
 
 {
-  int32_t lVar1;
+  int32_t argument;
   
-  lVar1 = long_array_get(array,index);
-  *out = (char)((uint32_t)lVar1 >> 8);
-  out[1] = (char)lVar1;
+  argument = long_array_get(array,index);
+  *out = (char)((uint32_t)argument >> 8);
+  out[1] = (char)argument;
   return out + 2;
 }
 
+#endif
 
 /* 0004ef02 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* a long from an array by index, stored high byte first and the pointer advanced */
 
 char * long_array_get_long(int32_t *array,uint8_t index,char *out)
 
 {
-  int32_t lVar1;
+  int32_t argument;
   
-  lVar1 = long_array_get(array,index);
-  *out = (char)((uint32_t)lVar1 >> 0x18);
-  out[1] = (char)((uint32_t)lVar1 >> 0x10);
-  out[2] = (char)((uint32_t)lVar1 >> 8);
-  out[3] = (char)lVar1;
+  argument = long_array_get(array,index);
+  *out = (char)((uint32_t)argument >> 0x18);
+  out[1] = (char)((uint32_t)argument >> 0x10);
+  out[2] = (char)((uint32_t)argument >> 8);
+  out[3] = (char)argument;
   return out + 4;
 }
 
+#endif
 
 /* 0004ef3a */
 
@@ -71117,6 +71689,7 @@ void byte_copy_optional(uint8_t *param_1,uint8_t *param_2)
 
 
 /* 0004ef70 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* copies a word and advances the source */
 
@@ -71127,6 +71700,7 @@ uint16_t * word_copy_advance(uint16_t *param_1,uint16_t *param_2)
   return param_1 + 1;
 }
 
+#endif
 
 /* 0004ef8e */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
@@ -71188,6 +71762,7 @@ uint8_t * oncore_ai_decode(uint8_t *param_1,int32_t param_2)
 
 
 /* 0004f002 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* copies a word's low 14 bits and advances the source */
 
@@ -71200,8 +71775,10 @@ uint16_t * word_copy_14_bits(uint16_t *param_1,uint16_t *param_2)
   return param_1 + 1;
 }
 
+#endif
 
 /* 0004f02a */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* the field-table byte code the GPS task's decoders run
    structures.md */
@@ -71267,8 +71844,10 @@ LAB_0004f0c4:
   } while( true );
 }
 
+#endif
 
 /* 0004f0d6 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either */
 
@@ -71303,8 +71882,10 @@ LAB_0004f102:
   return 0;
 }
 
+#endif
 
 /* 0004f118 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* a channel's satellite if it is valid and used for position, else 0 */
 
@@ -71312,34 +71893,36 @@ uint8_t channel_position_satellite(uint8_t param_1)
 
 {
   oncore_channel_status *poVar1;
-  int32_t iVar2;
+  int32_t valid;
   
   poVar1 = gps.status.channels + (param_1 - 1);
   if ((gps.status_received != 0) &&
-     (((iVar2 = satellite_id_valid(SATELLITE_GPS,poVar1->satellite), (char)iVar2 != 0 ||
-       (iVar2 = satellite_id_valid(SATELLITE_PSEUDOLITE,poVar1->satellite), (char)iVar2 != 0)) &&
+     (((valid = satellite_id_valid(SATELLITE_GPS,poVar1->satellite), (char)valid != 0 ||
+       (valid = satellite_id_valid(SATELLITE_PSEUDOLITE,poVar1->satellite), (char)valid != 0)) &&
       (gps.status.channels[param_1 - 1].mode == ONCORE_AVAILABLE_FOR_POSITION)))) {
     return poVar1->satellite;
   }
   return 0;
 }
 
+#endif
 
 /* 0004f162 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* 1 if a channel uses the satellite for position */
 
 uint32_t satellite_used_for_position(char param_1)
 
 {
-  char cVar1;
+  char satellite;
   uint8_t bVar2;
   
   if (param_1 != 0) {
     bVar2 = 1;
     do {
-      cVar1 = channel_position_satellite(bVar2);
-      if (cVar1 == param_1) {
+      satellite = channel_position_satellite(bVar2);
+      if (satellite == param_1) {
         return 1;
       }
       bVar2 = bVar2 + 1;
@@ -71348,8 +71931,10 @@ uint32_t satellite_used_for_position(char param_1)
   return 0;
 }
 
+#endif
 
 /* 0004f18c */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* sets every channel's mode to code search */
 
@@ -71366,8 +71951,10 @@ void channels_reset(void)
   return;
 }
 
+#endif
 
 /* 0004f1a6 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* sets bit prn - 1 of a mask, or prn - 0x21 for the second kind */
 
@@ -71383,6 +71970,7 @@ void satellite_add_to_set(satellite_kind kind,uint8_t id,uint32_t *mask)
   return;
 }
 
+#endif
 
 /* 0004f1da */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
@@ -71406,13 +71994,14 @@ char count_bits(uint32_t param_1)
 #endif
 
 /* 0004f1f8 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* the set and count of visible GPS satellites, from gps.visibility */
 
 bool visible_satellites(uint8_t *count,uint32_t *set)
 
 {
-  int32_t iVar1;
+  int32_t valid;
   uint8_t bVar2;
   uint8_t uVar3;
   bool bVar4;
@@ -71431,8 +72020,8 @@ bool visible_satellites(uint8_t *count,uint32_t *set)
     }
     for (; bVar5 < bVar2; bVar5 = bVar5 + 1) {
       uVar3 = gps.visibility.satellites[bVar5].satellite;
-      iVar1 = satellite_id_valid(SATELLITE_GPS,uVar3);
-      if ((char)iVar1 != 0) {
+      valid = satellite_id_valid(SATELLITE_GPS,uVar3);
+      if ((char)valid != 0) {
         satellite_add_to_set(SATELLITE_GPS,uVar3,&local_8);
       }
     }
@@ -71446,6 +72035,7 @@ bool visible_satellites(uint8_t *count,uint32_t *set)
   return bVar4;
 }
 
+#endif
 
 /* 0004f28e */
 
@@ -71455,7 +72045,7 @@ bool satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,
                       uint8_t *pseudolite_set)
 
 {
-  uint8_t id;
+  uint8_t satellite;
   uint8_t uVar1;
   bool bVar2;
   uint8_t bVar3;
@@ -71472,9 +72062,9 @@ bool satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,
     local_a = 0;
     local_6[0] = 0;
     for (bVar3 = 1; bVar3 < 7; bVar3 = bVar3 + 1) {
-      id = channel_position_satellite(bVar3);
-      if (id != 0) {
-        if (0x20 < id) {
+      satellite = channel_position_satellite(bVar3);
+      if (satellite != 0) {
+        if (0x20 < satellite) {
           uVar4 = (uint16_t)((uint32_t)local_6 >> 0x10);
           uVar5 = (uint8_t)((uint32_t)local_6 >> 8);
           uVar6 = SUB41(local_6,0);
@@ -71484,7 +72074,7 @@ bool satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,
           uVar5 = (uint8_t)((uint32_t)&local_a >> 8);
           uVar6 = SUB41(&local_a,0);
         }
-        satellite_add_to_set(0x20 < id,id,(uint32_t *)CONCAT31(CONCAT21(uVar4,uVar5),uVar6));
+        satellite_add_to_set(0x20 < satellite,satellite,(uint32_t *)CONCAT31(CONCAT21(uVar4,uVar5),uVar6));
       }
     }
     uVar1 = count_bits(local_a);
@@ -71504,6 +72094,7 @@ bool satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,
 
 
 /* 0004f32c */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* finds a satellite by ID in a table of 10-byte entries, by bisection */
 
@@ -71536,8 +72127,10 @@ oncore_visible_satellite * satellite_find(uint8_t id,void *table)
   return poVar1;
 }
 
+#endif
 
 /* 0004f39a */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* 1 unless the receiver holds its position or is surveying */
 
@@ -71555,8 +72148,10 @@ bool position_settable(void)
   return bVar1;
 }
 
+#endif
 
 /* 0004f3b2 */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* the receiver's latitude, longitude and MSL height, if it has reported them */
 
@@ -71574,8 +72169,10 @@ bool gps_position_get(int32_t *param_1,int32_t *param_2,int32_t *param_3)
   return bVar1;
 }
 
+#endif
 
 /* 0004f3de */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* the receiver's date and time, in local time, if it has reported them; the time through the first
    pointer, the date through the second */
@@ -71598,8 +72195,10 @@ bool gps_time_local_get(time_of_day *time,uint32_t *date)
   return bVar1;
 }
 
+#endif
 
 /* 0004f42e */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* the survey's progress, positions averaged against the duration, in percent */
 
@@ -71647,8 +72246,10 @@ uint32_t survey_progress_percent(uint16_t *param_1)
   return uVar3;
 }
 
+#endif
 
 /* 0004f4ca */
+#if 0 /* the decompiler's reading; rewritten in gps_receiver.c */
 
 /* the survey's progress as text, for :DOUGlas:PROGress? */
 
@@ -71697,8 +72298,10 @@ bool survey_progress_text(char *text)
   return bVar2;
 }
 
+#endif
 
 /* 0004f596 */
+#if 0 /* the decompiler's reading; rewritten in screen.c */
 
 /* returns 23, :SYSTem:PRINt:LENGth?'s answer
    scpi_query_SYSTem_PRINt_LENGth */
@@ -71709,8 +72312,10 @@ uint8_t status_screen_length(void)
   return 0x17;
 }
 
+#endif
 
 /* 0004f59a */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* decodes the position and status message, and while surveying averages its position
    gps.md */
@@ -71746,6 +72351,7 @@ uint8_t * oncore_position_message(uint8_t *param_1,uint8_t *param_2)
   return param_1;
 }
 
+#endif
 
 /* 0004f682 */
 
@@ -71788,6 +72394,7 @@ void oncore_almanac_status_message(uint8_t *param_1,uint8_t *param_2)
 
 
 /* 0004f6d8 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* decodes the range corrections and averages those of the satellites in use, and their deviation
    gps.md */
@@ -71795,8 +72402,8 @@ void oncore_almanac_status_message(uint8_t *param_1,uint8_t *param_2)
 uint8_t * oncore_corrections_message(uint8_t *param_1,uint8_t *param_2)
 
 {
-  uint8_t *pbVar1;
-  char cVar2;
+  uint8_t *next;
+  char used;
   uint8_t bVar3;
   uint8_t bVar4;
   oncore_correction_channel *poVar5;
@@ -71809,11 +72416,11 @@ uint8_t * oncore_corrections_message(uint8_t *param_1,uint8_t *param_2)
   bVar3 = 0;
   accumulator_1 = 0.0;
   accumulator_2 = 0.0;
-  pbVar1 = oncore_decode_fields(param_1,param_2,(char *)oncore_corrections_field_codes);
+  next = oncore_decode_fields(param_1,param_2,(char *)oncore_corrections_field_codes);
   bVar4 = 1;
   do {
-    cVar2 = satellite_used_for_position(poVar5->satellite);
-    if (cVar2 != 0) {
+    used = satellite_used_for_position(poVar5->satellite);
+    if (used != 0) {
       dVar6 = integer_to_double(poVar5->range_correction);
       double_add_in_place(&accumulator_1,dVar6);
       dVar7 = 2.0;
@@ -71844,9 +72451,10 @@ uint8_t * oncore_corrections_message(uint8_t *param_1,uint8_t *param_2)
     dVar6 = gps.correction_average;
   }
   gps.correction_average = dVar6;
-  return pbVar1;
+  return next;
 }
 
+#endif
 
 /* 0004f842 */
 
@@ -71890,6 +72498,7 @@ void oncore_receiver_id_message(uint8_t *param_1,uint8_t *param_2)
 
 
 /* 0004f8a0 */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* the XOR of a message's bytes */
 
@@ -71905,8 +72514,10 @@ uint8_t oncore_checksum(uint8_t *param_1,uint8_t *param_2)
   return bVar1;
 }
 
+#endif
 
 /* 0004f8b6 */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* sets gps.raim_option when the receiver ID's "OPTIONS LIST " has an I */
 
@@ -71926,8 +72537,10 @@ void gps_parse_options(void)
   return;
 }
 
+#endif
 
 /* 0004f8fc */
+#if 0 /* the decompiler's reading; rewritten in gps_requests.c */
 
 /* @@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is
    supported */
@@ -71947,6 +72560,7 @@ uint32_t gps_message_supported(int16_t param_1,uint8_t *param_2)
   return 1;
 }
 
+#endif
 
 /* 0004f932 */
 
@@ -72263,6 +72877,7 @@ override_jmp_0004fbca_case_8:
 
 
 /* 0004fdca */
+#if 0 /* the decompiler's reading; rewritten in gps_oncore.c */
 
 /* a message as text for the log: @@, its ID, the rest in hex, <cr><lf> */
 
@@ -72343,6 +72958,7 @@ int32_t gps_message_to_text(char *param_1,uint8_t param_2,char *param_3)
   return iVar6;
 }
 
+#endif
 
 /* 00051038 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -94614,6 +95230,16 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/fpga.c"
 
+#include "../rewritten/z3805a-3543b/gps_oncore.c"
+
+#include "../rewritten/z3805a-3543b/gps_receiver.c"
+
+#include "../rewritten/z3805a-3543b/gps_reports.c"
+
+#include "../rewritten/z3805a-3543b/gps_requests.c"
+
+#include "../rewritten/z3805a-3543b/gps_task.c"
+
 #include "../rewritten/z3805a-3543b/klok.c"
 
 #include "../rewritten/z3805a-3543b/leap.c"
@@ -94703,6 +95329,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/scpi_unsupported.c"
 
 #include "../rewritten/z3805a-3543b/scpi_validators.c"
+
+#include "../rewritten/z3805a-3543b/screen.c"
 
 #include "../rewritten/z3805a-3543b/selftest.c"
 

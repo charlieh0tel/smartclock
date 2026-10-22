@@ -121,3 +121,36 @@ void qspi_send(qspi_device device, uint16_t* transmit, uint16_t count) {
   }
   cpu_sr_write(sr);
 }
+
+/* Transfers to and from a QSPI device by polling, in supervisor mode
+ * with interrupts masked, copying the receive RAM into the buffers'
+ * receive, a word for the FPGA's readback and count words for any
+ * other; finishes a transfer still pending first (0x20b8a). */
+void qspi_transfer(qspi_device device, qspi_buffers* buffers, uint16_t count) {
+  volatile uint16_t* from = qsm.rr;
+  uint16_t* to = buffers->receive;
+  uint16_t sr = enter_supervisor();
+  uint16_t spcr1;
+
+  cpu_interrupts_raise(CPU_IPL_7);
+  qspi.field_00 = 1;
+  while ((qsm.spcr1 & SPCR1_SPE) != 0) {
+  }
+  if ((qsm.spsr & SPSR_SPIF) != 0) {
+    qspi_isr();
+  }
+  if ((uint8_t)qspi_queue_setup(device, buffers->transmit, count, 1, &spcr1) ==
+      0) {
+    uint16_t* end = to + (device == QSPI_FPGA_READBACK ? 1 : count);
+
+    qsm.spcr1 = spcr1;
+    while ((qsm.spsr & SPSR_SPIF) == 0) {
+    }
+    while (to < end) {
+      *to++ = *from++;
+    }
+    (void)qsm.spsr;
+    qsm.spsr = 0;
+  }
+  cpu_sr_write(sr);
+}

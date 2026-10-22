@@ -524,3 +524,380 @@ char* error_message_lookup(int32_t code) {
   }
   return 0;
 }
+
+/* One register's entry in the image's table at 0x2f79e, seven of them,
+ * which status_init sets the registers up from (0x2f4ec to 0x2f4fe) and
+ * the :STATus enable and transition setters check a value against
+ * (scpi_check_range's bounds, +0x04 and +0x06).  22 bytes. */
+typedef struct status_register_layout {
+  uint8_t parent_index;  /* +0x00: the register it reports into */
+  uint8_t unused;        /* +0x01 */
+  uint16_t parent_bit;   /* +0x02: at this bit; 0 for the Status Byte */
+  uint16_t maximum;      /* +0x04: the greatest enable or filter */
+  uint16_t minimum;      /* +0x06 */
+  uint16_t defined_bits; /* +0x08: the bits the register has */
+  uint32_t* enable;      /* +0x0a: its nv_settings.status_enable */
+  uint32_t* positive;    /* +0x0e: its nv_settings filters, NULL for the */
+  uint32_t* negative;    /* +0x12: Status Byte and Standard Event */
+} status_register_layout;
+
+_Static_assert(sizeof(status_register_layout) == 22, "status_register_layout");
+
+/* The table, which the SCPI handlers read too, so it stays the image's;
+ * the export labels 0x2f7ac, the first entry's positive. */
+static const status_register_layout* const STATUS_LAYOUTS =
+    (const status_register_layout*)0x2f79e;
+
+/* The registers status_create makes (structures.md, "The status
+ * system"). */
+static const uint8_t STATUS_REGISTERS = 7;
+
+/* The first register with transition filters, :STATus:OPERation; the
+ * filters' arrays in nv_settings start with it. */
+static const uint8_t STATUS_FIRST_FILTERED = 2;
+
+/* Sets a register up: its words cleared, its filters and its parent.
+ * The Status Byte, with no parent, is the port's: its service request
+ * enable and every bit but RQS cleared, and the port kept as the
+ * model's output (0x2819c). */
+void status_register_setup(int32_t model, int32_t index, uint32_t positive,
+                           uint32_t negative, int32_t parent_index,
+                           uint32_t parent_bit, int32_t port) {
+  status_model* status = (status_model*)model;
+  scpi_port* output = (scpi_port*)port;
+  status_register* reg = status->registers[index];
+
+  reg->condition = 0;
+  reg->event = 0;
+  reg->enable = 0;
+  reg->positive_transition = positive;
+  reg->negative_transition = negative;
+  reg->parent_bit = parent_bit;
+  if (reg->parent_bit == 0) {
+    output->methods->sre_set(output, 0);
+    output->methods->status_clear_bits(output,
+                                       (uint8_t)~STATUS_BYTE_REQUEST_SERVICE);
+    status->output = output;
+  } else {
+    reg->parent = status->registers[parent_index];
+  }
+}
+
+/* Builds the status model, sets its registers up from STATUS_LAYOUTS
+ * and the saved enables, and marks the status system ready;
+ * status_create's error (0x2f480).  The Standard Event register's
+ * filter pointers are NULL, so its filters are ROM's first long's low
+ * word, the reset stack pointer's, as the image reads them. */
+uint32_t status_init(void) {
+  static const int32_t ERROR_QUEUE_ROOM = 0x1e;
+
+  status_request_service = 0;
+  uint32_t error = status_create(&status_object, STATUS_REGISTERS,
+                                 ERROR_QUEUE_ROOM, status_conditions, 0);
+
+  if (error != 0) {
+    return error;
+  }
+  status_register_setup((int32_t)status_object, 0, 0, 0, 0, 0,
+                        (int32_t)scpi_console_port());
+  for (uint8_t index = 1; index < STATUS_REGISTERS; index++) {
+    const status_register_layout* layout = &STATUS_LAYOUTS[index];
+
+    status_register_setup((int32_t)status_object, index, *layout->positive,
+                          *layout->negative, layout->parent_index,
+                          layout->parent_bit, 0);
+  }
+  status_enables_init();
+  questionable_user_done();
+  status_ready = 1;
+  return 0;
+}
+
+/* Sets every register's enable from nv_settings (0x2f3d0). */
+void status_enables_init(void) {
+  for (uint8_t index = 0; index < STATUS_REGISTERS; index++) {
+    status_register_set_enable(status_object, index,
+                               *STATUS_LAYOUTS[index].enable);
+  }
+}
+
+/* Sets the filtered registers' transition filters from nv_settings;
+ * called by nothing (0x2f40c). */
+void status_transitions_init(void) {
+  for (uint8_t index = STATUS_FIRST_FILTERED; index < STATUS_REGISTERS;
+       index++) {
+    status_register_set_ptr(status_object, index,
+                            *STATUS_LAYOUTS[index].positive);
+    status_register_set_ntr(status_object, index,
+                            *STATUS_LAYOUTS[index].negative);
+  }
+}
+
+/* What status_preset_register sets, by the jump table at 0x2f386. */
+enum {
+  STATUS_PRESET_ENABLE = 0,
+  STATUS_PRESET_POSITIVE = 1, /* a filtered register's, by its index less 2 */
+  STATUS_PRESET_NEGATIVE = 2,
+};
+
+/* Sets a register's enable or transition filter for a request from
+ * source 0, and 1; 0 for another source (0x2f34e). */
+uint32_t status_preset_register(char setting, char source, int16_t index,
+                                int16_t value) {
+  if (source != 0) {
+    return 0;
+  }
+  switch (setting) {
+    case STATUS_PRESET_ENABLE:
+      status_register_set_enable(status_object, index, value);
+      break;
+    case STATUS_PRESET_POSITIVE:
+      status_register_set_ptr(status_object, index + STATUS_FIRST_FILTERED,
+                              value);
+      break;
+    case STATUS_PRESET_NEGATIVE:
+      status_register_set_ntr(status_object, index + STATUS_FIRST_FILTERED,
+                              value);
+      break;
+  }
+  return 1;
+}
+
+/* Sets a register's enable from nv_settings, reporting -300 to a source
+ * that may not (0x43482). */
+void status_enable_restore(uint32_t index, uint32_t source) {
+  int8_t reg = index;
+
+  if (status_preset_register(STATUS_PRESET_ENABLE, source, reg,
+                             nv_settings.status_enable[reg]) == 0) {
+    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, source);
+  }
+}
+
+/* Sets a filtered register's positive transition filter from
+ * nv_settings, by its index less 2 (0x434c2). */
+void status_ptr_restore(uint32_t index, uint32_t source) {
+  int8_t filter = index;
+
+  if (status_preset_register(STATUS_PRESET_POSITIVE, source, filter,
+                             nv_settings.status_positive_transition[filter]) ==
+      0) {
+    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, source);
+  }
+}
+
+/* The same for its negative transition filter (0x43504). */
+void status_ntr_restore(uint32_t index, uint32_t source) {
+  int8_t filter = index;
+
+  if (status_preset_register(STATUS_PRESET_NEGATIVE, source, filter,
+                             nv_settings.status_negative_transition[filter]) ==
+      0) {
+    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, source);
+  }
+}
+
+/* :STATus:PRESet's two forms, status_preset_done's first argument, by
+ * the jump table at 0x43560. */
+enum {
+  STATUS_PRESET_SCPI = 0,  /* the filtered registers' enables */
+  STATUS_PRESET_ALARM = 1, /* every enable, and :QUEStionable:USER off */
+};
+
+/* :STATus:PRESet's hook: the enables its form gives and the filtered
+ * registers' filters, set and saved for the source (0x43546). */
+void status_preset_done(uint32_t form, uint32_t source) {
+  /* The enables each form gives, by register (0x2f76e, 0x2f77c). */
+  static const uint16_t SCPI_ENABLES[] = {0, 0, 0, 0, 7, 0xf, 0x1fff};
+  static const uint16_t ALARM_ENABLES[] = {0x88, 0, 0x24, 3, 7, 8, 0x1fff};
+  /* The filters, by filtered register (0x2f78a, 0x2f794). */
+  static const uint16_t POSITIVE_FILTERS[] = {0x7f, 2, 7, 0xf, 0x13ff};
+  static const uint16_t NEGATIVE_FILTERS[] = {0, 0, 0, 0, 0};
+
+  switch ((char)form) {
+    case STATUS_PRESET_SCPI:
+      for (uint8_t index = STATUS_FIRST_FILTERED; index < STATUS_REGISTERS;
+           index++) {
+        nv_settings.status_enable[index] = SCPI_ENABLES[index];
+        status_enable_restore(index, 0);
+      }
+      break;
+    case STATUS_PRESET_ALARM:
+      for (uint8_t index = 0; index < STATUS_REGISTERS; index++) {
+        nv_settings.status_enable[index] = ALARM_ENABLES[index];
+        status_enable_restore(index, 0);
+      }
+      nv_settings.questionable_user = 0;
+      questionable_user_done();
+      break;
+  }
+  for (uint8_t filter = 0; filter < STATUS_REGISTERS - STATUS_FIRST_FILTERED;
+       filter++) {
+    nv_settings.status_positive_transition[filter] = POSITIVE_FILTERS[filter];
+    status_ptr_restore(filter, 0);
+    nv_settings.status_negative_transition[filter] = NEGATIVE_FILTERS[filter];
+    status_ntr_restore(filter, 0);
+  }
+  nv_save(source);
+}
+
+/* :STATus:QUEStionable:USER's hook: its condition from nv_settings
+ * (0x43466). */
+void questionable_user_done(void) {
+  status_happening(nv_settings.questionable_user != 0
+                       ? STATUS_USER_REPORTED_SET
+                       : STATUS_USER_REPORTED_CLEARED);
+}
+
+/* Where a code reported before the model is ready would be kept, an
+ * early_status_events buffer; does nothing (0x2f53a). */
+void status_event_hook(uint32_t buffer, uint8_t code) {}
+
+/* Puts a code into the status system once it is ready, with its
+ * message: SCPI's for 0 and a negative code, status_report_messages'
+ * from 1 to 0x16; 0 (0x2be9c). */
+uint32_t status_report(int16_t code) {
+  /* status_report_messages' entries. */
+  static const int16_t REPORT_MESSAGES = 0x17;
+
+  if (status_ready == 0) {
+    status_event_hook((uint32_t)&early_status_reports, code);
+    return 0;
+  }
+  char* message;
+
+  if (code <= 0) {
+    message = error_message_lookup(code);
+  } else if (code < REPORT_MESSAGES) {
+    message = status_report_messages[code];
+  } else {
+    message = 0;
+  }
+  /* The message is the error queue entry's value. */
+  status_set_bit(status_object, code, (int32_t)message);
+  return 0;
+}
+
+/* Raises a status condition once the status system is ready; entering
+ * one of the lock and holdover states clears the other three
+ * (0x2f53c).  STATUS_INPUT_OVERRUN, which :DIAG:STAT:HAPP 0 raises,
+ * does nothing. */
+void status_happening(status_condition_code condition) {
+  if (status_ready == 0) {
+    status_event_hook((uint32_t)&early_status_happenings, condition);
+    return;
+  }
+  if (condition == STATUS_INPUT_OVERRUN) {
+    return;
+  }
+  status_clear_bit(status_object, condition);
+  switch (condition) {
+    case STATUS_LOCKED_SET:
+      status_clear_bit(status_object, STATUS_HOLDING_CLEARED);
+      status_clear_bit(status_object, STATUS_WAITING_CLEARED);
+      status_clear_bit(status_object, STATUS_RECOVERING_CLEARED);
+      break;
+    case STATUS_HOLDING_SET:
+      status_clear_bit(status_object, STATUS_LOCKED_CLEARED);
+      status_clear_bit(status_object, STATUS_WAITING_CLEARED);
+      status_clear_bit(status_object, STATUS_RECOVERING_CLEARED);
+      break;
+    case STATUS_WAITING_SET:
+      status_clear_bit(status_object, STATUS_LOCKED_CLEARED);
+      status_clear_bit(status_object, STATUS_HOLDING_CLEARED);
+      status_clear_bit(status_object, STATUS_RECOVERING_CLEARED);
+      break;
+    case STATUS_RECOVERING_SET:
+      status_clear_bit(status_object, STATUS_LOCKED_CLEARED);
+      status_clear_bit(status_object, STATUS_HOLDING_CLEARED);
+      status_clear_bit(status_object, STATUS_WAITING_CLEARED);
+      break;
+    default:
+      break;
+  }
+}
+
+/* Empties an early_status_events buffer (0x2f64a). */
+void happening_buffer_clear(uint8_t* bytes) {
+  early_status_events* buffer = (early_status_events*)bytes;
+
+  buffer->count = 0;
+  buffer->next = 0;
+  for (uint8_t index = 0; index < sizeof buffer->events; index++) {
+    buffer->events[index] = 0;
+  }
+}
+
+/* Empties both early buffers (0x2f668). */
+void happening_buffers_clear(void) {
+  happening_buffer_clear((uint8_t*)&early_status_reports);
+  happening_buffer_clear((uint8_t*)&early_status_happenings);
+}
+
+/* What happening_replay replays a buffer's codes as, by the jump table
+ * at 0x2f6b2. */
+enum {
+  STATUS_REPLAY_REPORTS = 0,    /* by status_report */
+  STATUS_REPLAY_HAPPENINGS = 1, /* by status_happening */
+};
+
+/* Replays a buffer's codes from first to last (0x2f680). */
+void happening_replay(char* events, char mode, char first, char last) {
+  for (int8_t index = first; index <= last; index++) {
+    switch (mode) {
+      case STATUS_REPLAY_REPORTS:
+        status_report(events[index]);
+        break;
+      case STATUS_REPLAY_HAPPENINGS:
+        status_happening(events[index]);
+        break;
+    }
+  }
+}
+
+/* :STATus:OPERation:HARDware's condition word (0x2f626). */
+uint16_t status_hardware_condition(void) {
+  /* The register's index (structures.md, "The status system"). */
+  static const int32_t HARDWARE_REGISTER = 6;
+  uint16_t condition;
+
+  status_read_condition(status_object, HARDWARE_REGISTER, &condition);
+  return condition;
+}
+
+/* status_summary from the hardware condition's groups and the holdover
+ * threshold, and the Alarm lamp from it (outputs.md, "The Z3805A's
+ * lamps"; 0x46470). */
+void status_summary_update(void) {
+  /* The hardware condition's groups, by summary bit. */
+  static const uint16_t HARDWARE_SELFTEST = 0x0001;
+  static const uint16_t HARDWARE_SUPPLIES = 0x000e;
+  static const uint16_t HARDWARE_EFC_AT_LIMIT = 0x0080;
+  static const uint16_t HARDWARE_GPS = 0x0300;
+  static const uint16_t HARDWARE_INTERNAL_REFERENCE = 0x1000;
+  static const uint8_t SUMMARY_SELFTEST = 0x01;
+  static const uint8_t SUMMARY_SUPPLIES = 0x02;
+  static const uint8_t SUMMARY_EFC_AT_LIMIT = 0x04;
+  static const uint8_t SUMMARY_GPS = 0x08;
+  static const uint8_t SUMMARY_INTERNAL_REFERENCE = 0x10;
+  static const uint8_t SUMMARY_HOLDOVER_EXCEEDED = 0x20;
+  uint16_t hardware = status_hardware_condition();
+
+  status_summary = (hardware & HARDWARE_SELFTEST) != 0 ? SUMMARY_SELFTEST : 0;
+  if ((hardware & HARDWARE_SUPPLIES) != 0) {
+    status_summary |= SUMMARY_SUPPLIES;
+  }
+  if ((hardware & HARDWARE_EFC_AT_LIMIT) != 0) {
+    status_summary |= SUMMARY_EFC_AT_LIMIT;
+  }
+  if ((hardware & HARDWARE_GPS) != 0) {
+    status_summary |= SUMMARY_GPS;
+  }
+  if ((hardware & HARDWARE_INTERNAL_REFERENCE) != 0) {
+    status_summary |= SUMMARY_INTERNAL_REFERENCE;
+  }
+  if (holdover_duration_exceeded != 0) {
+    status_summary |= SUMMARY_HOLDOVER_EXCEEDED;
+  }
+  led_alarm = status_summary != 0;
+}

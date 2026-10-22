@@ -35,6 +35,13 @@ enum {
   SCPI_ARRAY_SHORTS = 2,
 };
 
+/* A string parameter as scpi_parse_string gives it its handler, and a
+ * text response as scpi_query_failed empties it. */
+typedef struct scpi_engine_string_value {
+  char* text;      /* +0x00 */
+  uint16_t length; /* +0x04 */
+} scpi_engine_string_value;
+
 /* A text's length. */
 static int32_t scpi_engine_length(char* text) {
   int32_t length = 0;

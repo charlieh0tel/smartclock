@@ -6,12 +6,6 @@
  * declares are in scope; each function here keeps its generated
  * prototype. */
 
-/* A string parameter as scpi_parse_string gives it its handler. */
-typedef struct scpi_engine_string_value {
-  char* text;      /* +0x00 */
-  uint16_t length; /* +0x04 */
-} scpi_engine_string_value;
-
 /* A converter of a parameter's token into its place in the call's
  * buffer, by the token's kind (0x26c68): a number's with the node's
  * units, a keyword's with its choices, a non-decimal number's and a
@@ -381,6 +375,16 @@ uint32_t scpi_message_done(void) { return 0; }
 
 /* scpi_interpret's hook when the input closes: 0 (0x29e38). */
 uint32_t scpi_input_closed(void) { return 0; }
+
+/* Has spoo create the SCPI task, at priority 0x19, and leaves the
+ * console to it (0x12f30). */
+void scpi_task_start(void) {
+  static const uint32_t SCPI_TASK_PRIORITY = 0x19;
+
+  /* spoo_run calls it with three longs; it reads the first. */
+  spoo_run((spoo_function*)scpi_task_create, SCPI_TASK_PRIORITY, 0, 0);
+  task_console = 0;
+}
 
 /* Creates and starts the SCPI task at a priority; -1 when it exists,
  * else the kernel's error (0x29fce). */

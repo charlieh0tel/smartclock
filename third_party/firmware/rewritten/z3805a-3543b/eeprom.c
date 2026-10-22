@@ -21,6 +21,10 @@ static const uint16_t RECORDS_SR_INTERRUPT_MASK = 0x0700;
  * message: an array size, so #define. */
 #define RECORDS_MESSAGE_SIZE 80
 
+/* Clears eeprom_writing, so that eeprom_lock may take the lock
+ * (0x30f08). */
+void eeprom_lock_init(void) { eeprom_writing = 0; }
+
 /* Creates eepx and sends it the lock's one message (0x30f10). */
 void eeprom_init(void) {
   char message[RECORDS_MESSAGE_SIZE];

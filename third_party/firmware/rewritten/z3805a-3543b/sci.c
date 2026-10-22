@@ -111,6 +111,67 @@ int32_t sci_gets(char* buffer, int32_t length) {
                     "SCI receiver error ocurred\r\n", true);
 }
 
+/* Applies the serial settings to the SCI: waits for its transmitter to
+ * drain, then sets baud rate, parity, flow control and echo
+ * (0x1fffa). */
+void sci_reconfigure(void) {
+  /* How long it spins for the last frame to go, after the drain. */
+  static const int32_t COMPLETE_SPINS = 5000;
+  static const uint16_t INTERRUPTS_AND_RECEIVER =
+      SCCR1_TIE | SCCR1_RIE | SCCR1_RE;
+
+  sci.reconfiguring = 1;
+  qsm.sccr1 &= ~INTERRUPTS_AND_RECEIVER;
+  for (int32_t pauses = DUART_DRAIN_PAUSES;
+       pauses > 0 && (qsm.scsr & SCSR_TDRE) == 0; pauses--) {
+    psos_pause(1);
+  }
+  qsm.sccr1 &= ~SCCR1_TE;
+  for (int32_t spins = COMPLETE_SPINS; spins > 0 && (qsm.scsr & SCSR_TC) == 0;
+       spins--) {
+  }
+  sci_baud_set(sci_settings.baud);
+  switch (sci_settings.parity) {
+    case SERIAL_PARITY_EVEN:
+      qsm.sccr1 |= SCCR1_PE;
+      qsm.sccr1 &= ~SCCR1_PT;
+      sci.seven_bits = 1;
+      sci.mark_bit = 0;
+      break;
+    case SERIAL_PARITY_ODD:
+      qsm.sccr1 |= SCCR1_PT | SCCR1_PE;
+      sci.seven_bits = 1;
+      sci.mark_bit = 0;
+      break;
+    case SERIAL_PARITY_ONE:
+      qsm.sccr1 &= ~SCCR1_PE;
+      sci.seven_bits = 1;
+      sci.mark_bit = 1;
+      break;
+    default:
+      qsm.sccr1 &= ~SCCR1_PE;
+      sci.seven_bits = 0;
+      sci.mark_bit = 0;
+      break;
+  }
+  qsm.sccr1 |= SCCR1_TE;
+  if (!sci_settings.xon_xoff) {
+    if (sci.xon_xoff && (sci.flow & DUART_FLOW_XOFF_SENT) != 0) {
+      sci_putc_polled(DUART_XON);
+    }
+    sci.xon_xoff = 0;
+    sci.flow &= ~(DUART_FLOW_XOFF_SENT | DUART_FLOW_XOFF_RECEIVED);
+  } else {
+    if (!sci.xon_xoff && (sci.flow & DUART_FLOW_XOFF_SENT) != 0) {
+      sci_putc_polled(DUART_XOFF);
+    }
+    sci.xon_xoff = 1;
+  }
+  sci.echo = sci_settings.echo ? sci_putc : sci_echo_none;
+  qsm.sccr1 |= INTERRUPTS_AND_RECEIVER | SCCR1_TE;
+  sci.reconfiguring = 0;
+}
+
 /* Writes a character to the SCI under its write lock, if it can take
  * it (0x201b0). */
 void sci_putc(char c) {

@@ -250,6 +250,45 @@ int32_t scpi_format_array(scpi_port* output, scpi_array_record* array) {
   return 0;
 }
 
+/* A block or resolution array response with the routine that releases
+ * it once written, as scpi_format_resolution_array_record takes it. */
+typedef struct scpi_format_released_array {
+  int8_t kind; /* +0x00: the jump table at 0x26836 */
+  uint8_t unused;
+  void* array;           /* +0x02: a scpi_block or scpi_resolution_array */
+  void (*release)(void); /* +0x06 */
+} scpi_format_released_array;
+
+_Static_assert(sizeof(scpi_format_released_array) == 10,
+               "scpi_format_released_array");
+
+/* scpi_format_resolution_array_record's kinds. */
+enum {
+  SCPI_RELEASED_BLOCK = 0,
+  SCPI_RELEASED_RESOLUTION_ARRAY = 1,
+};
+
+/* By its kind, a block or a resolution array, 0 for another kind, then
+ * the record's release, whatever the kind (0x26816). */
+int32_t scpi_format_resolution_array_record(scpi_port* output, char* record) {
+  scpi_format_released_array* response = (scpi_format_released_array*)record;
+  int32_t error;
+
+  switch (response->kind) {
+    case SCPI_RELEASED_BLOCK:
+      error = scpi_format_block(output, response->array);
+      break;
+    case SCPI_RELEASED_RESOLUTION_ARRAY:
+      error = scpi_format_resolution_array(output, response->array);
+      break;
+    default:
+      error = 0;
+      break;
+  }
+  response->release();
+  return error;
+}
+
 /* A double, to every one of 15 digits (0x26870). */
 int32_t scpi_format_double(scpi_port* output, double* value) {
   char text[SCPI_REAL_TEXT_SIZE];

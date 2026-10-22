@@ -42,8 +42,10 @@ enum {
   TI_HDAC_SLOT_HIGH = 3,
 };
 
-/* Both DACs' start, the middle of their 6-bit range. */
+/* Both DACs' start, the middle of their 6-bit range, and its top. */
 static const uint8_t TI_HDAC_START = 0x1f;
+
+static const uint8_t TI_HDAC_MAXIMUM = 0x3f;
 
 /* The interpolator's readings at its references: the low in 1 to 25,
  * the high in 201 to 225, the high 200 above the low. */
@@ -313,6 +315,70 @@ uint8_t interpolator_measure_high(char_slot dac) {
   return interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
 }
 
+/* A dac_measure's reading with its DAC at a value, the byte the
+ * original pushes in a 2-byte slot. */
+static uint8_t ti_measure_at(dac_measure* measure, uint8_t dac) {
+  return measure((char_slot){.value = dac});
+}
+
+/* Bisects a DAC between minimum and maximum, up to 10 measurements,
+ * until its reading is in low to high or the range closes; returns the
+ * DAC (0x400b0). */
+uint8_t dac_search_bisect(uint8_t dac, uint8_t minimum, uint8_t maximum,
+                          uint8_t low, uint8_t high, dac_measure* measure) {
+  static const uint8_t MEASUREMENTS = 10;
+
+  for (uint8_t left = MEASUREMENTS; left != 0; left--) {
+    uint8_t reading = ti_measure_at(measure, dac);
+
+    if ((reading >= low && reading <= high) || minimum == maximum) {
+      break;
+    }
+    if (reading < low) {
+      maximum = dac - 1;
+    } else {
+      minimum = dac + 1;
+    }
+    dac = ((uint32_t)minimum + maximum) / 2;
+  }
+  return dac;
+}
+
+/* Steps a DAC by one, up to 20 measurements, until its reading is in
+ * low to high or the DAC reaches minimum or maximum; returns the DAC
+ * (0x4012e). */
+uint8_t dac_search_step(uint8_t dac, uint8_t minimum, uint8_t maximum,
+                        uint8_t low, uint8_t high, dac_measure* measure) {
+  static const uint8_t MEASUREMENTS = 20;
+
+  for (uint8_t left = MEASUREMENTS; left != 0; left--) {
+    uint8_t reading = ti_measure_at(measure, dac);
+
+    if ((reading >= low && reading <= high) || dac >= maximum ||
+        dac <= minimum) {
+      break;
+    }
+    if (reading < low) {
+      dac--;
+    } else {
+      dac++;
+    }
+  }
+  return dac;
+}
+
+/* Moves the low reference's DAC a step against the spread's error,
+ * unless it is at either end of its range; returns the DAC
+ * (0x4018e). */
+uint8_t hdac_nudge(int32_t error, uint8_t hdac) {
+  if (hdac == 0 || hdac >= TI_HDAC_MAXIMUM || error == 0) {
+    return hdac;
+  }
+  hdac += error < 0 ? 1 : -1;
+  hdac_set(hdac, TI_HDAC_SLOT_LOW);
+  return hdac;
+}
+
 /* Sets both DACs from the calibration and keeps both references'
  * readings in it. */
 static void ti_measure_both(interpolator_calibration* calibration) {
@@ -343,7 +409,6 @@ static void ti_calibration_keep(interpolator_calibration* calibration) {
  * started afresh, if not (0x40248). */
 uint8_t interpolator_calibrate(interpolator_calibration* calibration) {
   static const uint8_t HDAC_MINIMUM = 0;
-  static const uint8_t HDAC_MAXIMUM = 0x3f;
   /* the high reference's DAC is first stepped to put its reading this
    * window below the low's, as a uint8_t wraps */
   static const uint8_t STEP_BELOW_FAR = 0x3c;
@@ -368,18 +433,18 @@ uint8_t interpolator_calibrate(interpolator_calibration* calibration) {
 
   if (!ti_high_in_range(calibration->reading_high)) {
     calibration->hdac_3 = dac_search_bisect(
-        calibration->hdac_3, HDAC_MINIMUM, HDAC_MAXIMUM, TI_HIGH_MINIMUM,
+        calibration->hdac_3, HDAC_MINIMUM, TI_HDAC_MAXIMUM, TI_HIGH_MINIMUM,
         TI_HIGH_MAXIMUM, interpolator_measure_high);
   }
   calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
   if (!ti_low_in_range(calibration->reading_low)) {
     calibration->hdac_2 = dac_search_bisect(
-        calibration->hdac_2, HDAC_MINIMUM, HDAC_MAXIMUM, TI_LOW_MINIMUM,
+        calibration->hdac_2, HDAC_MINIMUM, TI_HDAC_MAXIMUM, TI_LOW_MINIMUM,
         TI_LOW_MAXIMUM, interpolator_measure_low);
   }
   calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
   calibration->hdac_3 = dac_search_step(
-      calibration->hdac_3, HDAC_MINIMUM, HDAC_MAXIMUM,
+      calibration->hdac_3, HDAC_MINIMUM, TI_HDAC_MAXIMUM,
       calibration->reading_low - STEP_BELOW_FAR,
       calibration->reading_low - STEP_BELOW_NEAR, interpolator_measure_high);
   calibration->reading_high = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
@@ -391,7 +456,7 @@ uint8_t interpolator_calibrate(interpolator_calibration* calibration) {
         calibration->hdac_2);
     if (!ti_high_in_range(calibration->reading_high)) {
       calibration->hdac_3 = dac_search_step(
-          calibration->hdac_3, HDAC_MINIMUM, HDAC_MAXIMUM, TI_HIGH_MINIMUM,
+          calibration->hdac_3, HDAC_MINIMUM, TI_HDAC_MAXIMUM, TI_HIGH_MINIMUM,
           TI_HIGH_MAXIMUM, interpolator_measure_high);
     }
     calibration->reading_high =

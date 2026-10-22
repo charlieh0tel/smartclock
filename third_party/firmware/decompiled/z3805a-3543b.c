@@ -2959,7 +2959,7 @@ extern uint8_t fpga_readback_mask[3847]; /* 00021e3b */
 extern uint16_t scpi_normalize_exponents[32]; /* 00025144 */
 extern double scpi_powers_of_ten[145]; /* 000256ae */
 extern double scpi_powers_of_ten_64[9]; /* 00025b36 */
-extern char decimal_digit_pairs[200]; /* 00025c82 */
+extern uint16_t decimal_digit_pairs[100]; /* 00025c82 */
 extern int16_t scpi_parameter_kind_errors[6]; /* 000279ca */
 extern scpi_multiplier scpi_multipliers[13]; /* 00027b2e */
 extern status_condition status_negative_conditions[63]; /* 00028720 */
@@ -6969,6 +6969,7 @@ int32_t installer_sprintf(char *s,char *format,...);
 int32_t installer_vsprintf(char *s,char *format,void *arg);
 
 /* 00000400 */
+#if 0 /* the decompiler's reading; rewritten in boot.c */
 
 /* the boot code's duartb_loopback_check: sends "DUART" through channel B in local loopback; 0x10 at
    0x10ab2c if a character comes back wrong, 0x20 if none comes */
@@ -7015,8 +7016,10 @@ void boot_duartb_loopback_check(void)
   return;
 }
 
+#endif
 
 /* 000004cc */
+#if 0 /* the decompiler's reading; rewritten in boot.c */
 
 /* the boot code's duart_early_init: writes and reads back the DUART's IVR, then sets channel B up
    and runs the loopback test; 1 at 0x10ab2c if the IVR fails */
@@ -7048,6 +7051,7 @@ void boot_duart_early_init(void)
   return;
 }
 
+#endif
 
 /* 00000550 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -7759,6 +7763,7 @@ __asm__(
 );
 
 /* 00000aa0 */
+#if 0 /* the decompiler's reading; rewritten in boot.c */
 
 /* WARNING: Removing unreachable block (ram,0x00000aba) */
 /* WARNING: Removing unreachable block (ram,0x00000ad6) */
@@ -7790,8 +7795,10 @@ uint32_t boot_unpack_installer(void)
   return 2;
 }
 
+#endif
 
 /* 00000b9e */
+#if 0 /* the decompiler's reading; rewritten in boot.c */
 
 /* copies so many bytes, returning the destination */
 
@@ -7810,6 +7817,7 @@ uint8_t * boot_memcpy(uint8_t *param_1,uint8_t *param_2,int32_t param_3)
   return param_1;
 }
 
+#endif
 
 /* 00010400 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -8383,6 +8391,7 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int32_t param_2)
 #endif
 
 /* 0001075a */
+#if 0 /* the decompiler's reading; rewritten in leap.c */
 
 /* queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says */
 
@@ -8400,6 +8409,7 @@ klok_entry * leap_event_schedule(uint32_t param_1,int32_t param_2)
   return entry;
 }
 
+#endif
 
 /* 00010786 */
 #if 0 /* the decompiler's reading; rewritten in klok.c */
@@ -8687,6 +8697,7 @@ int32_t list_unlink(klok_entry **list,klok_entry *entry)
 #endif
 
 /* 00010c34 */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* inserts an entry into the clock list in time order */
 
@@ -8705,6 +8716,7 @@ void klok_insert_sorted(klok_entry **list,klok_entry *entry)
   return;
 }
 
+#endif
 
 /* 00010c68 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -9870,6 +9882,7 @@ void periodic_interrupt_enable(char param_1)
 #endif
 
 /* 00012026 */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* sets the QSM up: QSMCR, QILR and QIVR, the QS port's pins and directions */
 
@@ -9884,8 +9897,10 @@ void qsm_init(void)
   return;
 }
 
+#endif
 
 /* 00012050 */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* sets the GPT up: GPTMCR, GPT_ICR, its port, output compares and pulse accumulator */
 
@@ -9911,6 +9926,7 @@ void gpt_init(void)
   return;
 }
 
+#endif
 
 /* 000120aa */
 #if 0 /* the decompiler's reading; rewritten in startup.c */
@@ -10012,6 +10028,7 @@ uint32_t crc16_ccitt(uint8_t *param_1,int16_t param_2)
 #endif
 
 /* 0001219a */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a 16-bit integer square root; called by nothing */
 
@@ -10072,6 +10089,7 @@ code_r0x000121f4:
   goto LAB_000121de;
 }
 
+#endif
 
 /* 00012206 */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
@@ -10096,6 +10114,7 @@ int32_t round_shift_right(int32_t param_1,uint32_t param_2)
 #endif
 
 /* 0001223c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a double rounded half away from zero to a long, saturating; the double at SP+4 (0x1223c) */
 
@@ -10130,6 +10149,7 @@ int32_t double_round_to_long(double x)
   return iVar1;
 }
 
+#endif
 
 /* 000122d0 */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
@@ -10242,6 +10262,7 @@ double power_of_ten_double(int16_t param_1)
 #endif
 
 /* 00012984 */
+#if 0 /* the decompiler's reading; rewritten in timecode.c */
 
 /* tfom_code's bisection of the table at 0x129fc; compares the float's bits, its sign cleared
    (0x12990), with the table's; the index a word (0x129c6) */
@@ -10267,6 +10288,7 @@ int16_t tfom_table_index(uint32_t tfom)
   return (int16_t)(uVar4 - 0x78) >> 2;
 }
 
+#endif
 
 /* 000129d0 */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
@@ -10485,6 +10507,7 @@ void primary_start(uint32_t param_1,uint32_t param_2,uint32_t param_3)
 #endif
 
 /* 00012db6 */
+#if 0 /* the decompiler's reading; rewritten in pps.c */
 
 /* the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to
    pps_exchange */
@@ -10508,6 +10531,7 @@ void pps_interrupt(void)
   return;
 }
 
+#endif
 
 /* 00012e04 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -10555,6 +10579,7 @@ __asm__(
 );
 
 /* 00012e24 */
+#if 0 /* the decompiler's reading; rewritten in pps.c */
 
 /* "Pps_init error %#04x" prints its result
    structures.md */
@@ -10582,8 +10607,10 @@ int32_t pps_init(void)
   return iVar2;
 }
 
+#endif
 
 /* 00012e6c */
+#if 0 /* the decompiler's reading; rewritten in pps.c */
 
 /* stops the 1PPS interrupt, clearing its GPT enable and flag */
 
@@ -10610,8 +10637,10 @@ int32_t pps_interrupt_stop(void)
   return iVar2;
 }
 
+#endif
 
 /* 00012e9e */
+#if 0 /* the decompiler's reading; rewritten in pps.c */
 
 /* waits up to 1200 ticks on pps_exchange for the next 1PPS and returns its time and date */
 
@@ -10636,8 +10665,10 @@ int32_t pps_wait_time(uint32_t *param_1,uint32_t *param_2,int32_t param_3)
   return 0;
 }
 
+#endif
 
 /* 00012f2c */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* calls trap #11, the installer entry
    restart.md */
@@ -10649,8 +10680,10 @@ void enter_installer(void)
   return;
 }
 
+#endif
 
 /* 00012f30 */
+#if 0 /* the decompiler's reading; rewritten in scpi_engine.c */
 
 /* starts scpi_task_create at priority 0x19
    restart.md */
@@ -10663,6 +10696,7 @@ void scpi_task_start(void)
   return;
 }
 
+#endif
 
 /* 00012f50 */
 
@@ -11096,6 +11130,7 @@ void stack_usage_report(void *task)
 #endif
 
 /* 00013368 */
+#if 0 /* the decompiler's reading; rewritten in cpu.c */
 
 /* C's wrapper for enter_supervisor */
 
@@ -11108,6 +11143,7 @@ uint16_t enter_supervisor_mode(void)
   return (uint16_t)uVar1;
 }
 
+#endif
 
 /* 00013378 */
 
@@ -11142,6 +11178,7 @@ uint8_t task_set_priority(uint32_t param_1,uint8_t param_2)
 #endif
 
 /* 000133e2 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* absolute value of the float on the stack
    softfloat.md */
@@ -11152,8 +11189,10 @@ float float_absolute_on_stack(float f)
   return ABS(f);
 }
 
+#endif
 
 /* 000133f2 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a double's magnitude; called by nothing */
 
@@ -11163,8 +11202,10 @@ uint64_t double_abs(uint32_t param_1,uint32_t param_2)
   return CONCAT44(param_1,param_2) & 0x7fffffffffffffff;
 }
 
+#endif
 
 /* 00013406 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a long rotated left */
 
@@ -11174,6 +11215,7 @@ uint32_t rotate_left(uint32_t param_1,uint8_t param_2)
   return __ghidra_rotl(param_1, param_2 & 0x3f);
 }
 
+#endif
 
 /* 0001341a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -11758,6 +11800,7 @@ __asm__(
 );
 
 /* 00013666 */
+#if 0 /* the decompiler's reading; rewritten in leap.c */
 
 /* makes the clock's minute 59 seconds, sets leap_minute_pending and clock_change_armed, and
    checksums the clock record in supervisor mode
@@ -11774,8 +11817,10 @@ void leap_minute_59_arm(void)
   return;
 }
 
+#endif
 
 /* 0001366c */
+#if 0 /* the decompiler's reading; rewritten in leap.c */
 
 /* the same with a 61-second minute
    leap_event_schedule_gps's clock event */
@@ -11791,6 +11836,7 @@ void leap_minute_61_arm(void)
   return;
 }
 
+#endif
 
 /* 000136a2 */
 #if 0 /* the decompiler's reading; rewritten in leap.c */
@@ -11941,6 +11987,7 @@ bool get_gps_datetime(uint32_t *date,time_of_day *time)
 #endif
 
 /* 00013782 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* recomputes the clock record's local time from its UTC and checksums it, in supervisor mode */
 
@@ -11953,6 +12000,7 @@ void clock_record_refresh(void)
   return;
 }
 
+#endif
 
 /* 000137a4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -12311,6 +12359,7 @@ __asm__(
 );
 
 /* 00013908 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* sets the clock record up: its month tables, uptime and time zero, the date from the lifetime
    record, a 60-second minute */
@@ -12370,6 +12419,7 @@ LAB_00013974:
   return;
 }
 
+#endif
 
 /* 0001399a */
 #if 0 /* the decompiler's reading; rewritten in clock.c */
@@ -12386,6 +12436,7 @@ uint8_t time_valid(void)
 #endif
 
 /* 000139a2 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* sets clock.gps_utc_offset, from D1, and clock.gps_utc_offset_valid; 0x46e70 computes it from the
    engine's GPS and UTC times */
@@ -12402,6 +12453,7 @@ void set_gps_utc_offset(uint16_t param_1)
   return;
 }
 
+#endif
 
 /* 000139ce */
 #if 0 /* the decompiler's reading; rewritten in clock.c */
@@ -12918,6 +12970,7 @@ __asm__(
 );
 
 /* 0001412e */
+#if 0 /* the decompiler's reading; rewritten in math.c */
 
 /* libc.md */
 
@@ -12988,6 +13041,7 @@ void float_exception_report(uint32_t code)
   } while( true );
 }
 
+#endif
 
 /* 000144c8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -13893,6 +13947,7 @@ __asm__(
 );
 
 /* 000149a8 */
+#if 0 /* the decompiler's reading; rewritten in stdlib.c */
 
 /* runs the atexit functions and reports "Prog end, returned" with the code; never returns */
 
@@ -13908,8 +13963,10 @@ void program_exit(uint32_t param_1)
   } while( true );
 }
 
+#endif
 
 /* 000149bc */
+#if 0 /* the decompiler's reading; rewritten in stdlib.c */
 
 /* builds "Prog end, returned N" and stops with fatal_error_with_code, its code the long above
    value, which program_exit does not push: program_exit's return address (0x149ae to 0x149b2) */
@@ -13960,6 +14017,7 @@ void program_end_report(uint32_t value,uint32_t return_address)
   } while( true );
 }
 
+#endif
 
 /* 00014aae */
 /* a thunk to kernel_dispatch_service */
@@ -22792,7 +22850,7 @@ void selftest_all(char_slot run)
 
 {
   int32_t iVar1;
-  char cVar2;
+  char enabled;
   
   if (run.value == 0) {
     selftest_run_all();
@@ -22802,8 +22860,8 @@ void selftest_all(char_slot run)
     selftest_summary();
     iVar1 = selftest_aborted();
     if ((iVar1 == 0) && (selftest.summary != 0)) {
-      cVar2 = debug_is_enabled();
-      if (cVar2 != 0) {
+      enabled = debug_is_enabled();
+      if (enabled != 0) {
         selftest_report_fail((uint32_t)selftest.summary,"ALL:",0);
       }
     }
@@ -23242,6 +23300,7 @@ void selftest_execute(char param_1)
 
 
 /* 00018334 */
+#if 0 /* the decompiler's reading; rewritten in debug.c */
 
 /* returns debug_enabled */
 
@@ -23251,6 +23310,7 @@ char debug_is_enabled(void)
   return debug_enabled;
 }
 
+#endif
 
 /* 0001833c */
 
@@ -36311,6 +36371,7 @@ void duart_test_tx_b(void)
 #endif
 
 /* 0001e766 */
+#if 0 /* the decompiler's reading; rewritten in gps_link.c */
 
 /* the interrupt handler for DUART channel A, the GPS engine's
    "DUARTA isr signaling SIG_SIQ" */
@@ -36345,6 +36406,7 @@ uint8_t duarta_isr(void)
   return uVar1 & 0x10;
 }
 
+#endif
 
 /* 0001e7f6 */
 #if 0 /* the decompiler's reading; rewritten in serial_port.c */
@@ -38401,6 +38463,7 @@ __asm__(
 );
 
 /* 0001fffa */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* resets the SCI and applies the serial settings' baud rate and mode */
 
@@ -38492,6 +38555,7 @@ LAB_000200ce:
   return;
 }
 
+#endif
 
 /* 00020152 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -39425,6 +39489,7 @@ void qspi_send(qspi_device device,uint16_t *transmit,uint16_t count)
 #endif
 
 /* 00020b8a */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out */
 
@@ -39475,6 +39540,7 @@ void qspi_transfer(qspi_device device,qspi_buffers *buffers,uint16_t count)
   return;
 }
 
+#endif
 
 /* 00020c96 */
 #if 0 /* the decompiler's reading; rewritten in spool.c */
@@ -40238,6 +40304,7 @@ uint8_t fpga_verify(fpga_configuration_index configuration,char with_task_name)
 #endif
 
 /* 00023c2a */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* clears all eight adc_monitors' valid, sample_index, out_of_tolerance and out_of_range_count, and
    hmon_supply_step */
@@ -40259,6 +40326,7 @@ void monitors_reset(void)
   return;
 }
 
+#endif
 
 /* 00023c5a */
 #if 0 /* the decompiler's reading; rewritten in monitors.c */
@@ -41283,10 +41351,8 @@ __regcall void scpi_decimal_to_text_unused(char *record /* a0 */,char *text /* a
     *pbVar5 = *pbVar5 | 0x30;
     sVar2 = sVar2 + (int16_t)((int32_t)sVar2 / 100) * -100;
   }
-  pcVar4[3] = "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
-              [(int16_t)(sVar2 * 2)];
-  pcVar4[4] = "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
-              [(int16_t)(sVar2 * 2) + 1];
+  pcVar4[3] = *(char *)((int32_t)decimal_digit_pairs + (int32_t)(int16_t)(sVar2 * 2));
+  pcVar4[4] = *(char *)((int32_t)decimal_digit_pairs + (int16_t)(sVar2 * 2) + 1);
   pcVar4[5] = 0;
   return;
 }
@@ -41519,10 +41585,7 @@ LAB_00024e22:
             uVar14 = (uint16_t)((uint32_t)(iVar12 * 0x10000) >> 0x10);
             uVar11 = (CONCAT22(uVar14,uVar13) & 0xffff00ff) << 0x10 | (uint32_t)uVar14;
             *(uint16_t *)puVar17 =
-                 *(uint16_t *)
-                  (
-                  "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
-                  + (int16_t)((uVar13 >> 8) * 2));
+                 *(uint16_t *)((int32_t)decimal_digit_pairs + (int32_t)(int16_t)((uVar13 >> 8) * 2));
             sVar18 = sVar18 + -2;
             puVar17 = (uint32_t *)((int32_t)puVar17 + 2);
           } while (-1 < sVar18);
@@ -43132,14 +43195,10 @@ LAB_00025618:
   }
   __ghidra_piece(uint16_t, exponent_digits, 0) =
        *(uint16_t *)
-        (
-        "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
-        + (int16_t)((int16_t)((uint32_t)(int32_t)param_6 / 100) << 1));
+        ((int32_t)decimal_digit_pairs + (int32_t)(int16_t)((int16_t)((uint32_t)(int32_t)param_6 / 100) << 1));
   __ghidra_piece(uint16_t, exponent_digits, 2) =
        *(uint16_t *)
-        (
-        "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
-        + (int16_t)((int16_t)((uint32_t)(int32_t)param_6 % 100) << 1));
+        ((int32_t)decimal_digit_pairs + (int32_t)(int16_t)((int16_t)((uint32_t)(int32_t)param_6 % 100) << 1));
   if (0 < param_5) {
     bVar1 = 4 - (char)param_5;
     if (SBORROW1(4,(char)param_5) == (int16_t)((uint16_t)bVar1 << 8) < 0) {
@@ -43171,6 +43230,7 @@ LAB_00025618:
 
 
 /* 00025d70 */
+#if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
 
 /* the string's pointer and length
    docs/scpi/README.md, read */
@@ -43183,8 +43243,10 @@ uint32_t scpi_parse_string(uint16_t *token,void *unused,uint32_t *value)
   return 0;
 }
 
+#endif
 
 /* 00025d8c */
+#if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
 
 /* ON as 1, OFF as 0
    docs/scpi/README.md, read */
@@ -43225,6 +43287,7 @@ uint32_t scpi_parse_boolean(int16_t *token,void *unused,uint16_t *value)
   return 0xffffffe5;
 }
 
+#endif
 
 /* 00025de0 */
 #if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
@@ -43252,6 +43315,7 @@ int32_t scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *va
 #endif
 
 /* 00025e42 */
+#if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
 
 /* the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for
    no match
@@ -43288,6 +43352,7 @@ uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,int32_t *l
   return uVar2;
 }
 
+#endif
 
 /* 00025ea6 */
 #if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
@@ -44119,6 +44184,7 @@ int32_t scpi_format_array(scpi_port *output,scpi_array_record *record)
 #endif
 
 /* 00026816 */
+#if 0 /* the decompiler's reading; rewritten in scpi_format.c */
 
 /* by its kind, a block or a resolution array, then the record's release callback
    docs/scpi/README.md, read */
@@ -44146,6 +44212,7 @@ int32_t scpi_format_resolution_array_record(scpi_port *output,char *record)
   return iVar1;
 }
 
+#endif
 
 /* 00026870 */
 #if 0 /* the decompiler's reading; rewritten in scpi_format.c */
@@ -45566,6 +45633,7 @@ void scpi_path_reset(scpi_path *path,scpi_child_list *list)
 #endif
 
 /* 00027f10 */
+#if 0 /* the decompiler's reading; rewritten in scpi_tree.c */
 
 /* resolves a common command's header to its node and handler and takes room for its parameters */
 
@@ -45607,6 +45675,7 @@ scpi_common_header_resolve
   return uVar3;
 }
 
+#endif
 
 /* 00027f7e */
 #if 0 /* the decompiler's reading; rewritten in scpi_tree.c */
@@ -45794,6 +45863,7 @@ void status_destroy(status_model *status)
 #endif
 
 /* 0002819c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* one register's fields and its parent
    structures.md */
@@ -45823,6 +45893,7 @@ void status_register_setup
   return;
 }
 
+#endif
 
 /* 0002820a */
 #if 0 /* the decompiler's reading; rewritten in status.c */
@@ -46767,6 +46838,7 @@ LAB_00029896:
 #endif
 
 /* 000298b2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
 
 /* scpi_numeric_set for a parameter of doubles; called by nothing */
 
@@ -46787,6 +46859,7 @@ void scpi_numeric_set_double
   return;
 }
 
+#endif
 
 /* 000298fc */
 #if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
@@ -46826,6 +46899,7 @@ float scpi_numeric_get(scpi_numeric_param *param,int32_t index,int16_t which,int
 #endif
 
 /* 00029990 */
+#if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
 
 /* scpi_numeric_get for a parameter of doubles; called by nothing */
 
@@ -46854,6 +46928,7 @@ double scpi_numeric_get_double(scpi_numeric_param *param,int32_t index,int16_t k
   return dVar2;
 }
 
+#endif
 
 /* 00029a18 */
 #if 0 /* the decompiler's reading; rewritten in scpi_engine.c */
@@ -47094,6 +47169,7 @@ int32_t scpi_console_return_zero(void)
 #endif
 
 /* 00029b96 */
+#if 0 /* the decompiler's reading; rewritten in scpi_port.c */
 
 /* reads up to so many characters from the console, marking the input ended at its end */
 
@@ -47118,6 +47194,7 @@ int32_t scpi_console_read(scpi_port *port,uint8_t *buffer,int32_t length)
   return iVar2;
 }
 
+#endif
 
 /* 00029bce */
 #if 0 /* the decompiler's reading; rewritten in scpi_port.c */
@@ -47243,6 +47320,7 @@ void scpi_console_write_loop(scpi_port *port,char *s,int32_t n)
 #endif
 
 /* 00029d50 */
+#if 0 /* the decompiler's reading; rewritten in scpi_port.c */
 
 /* the status output object's method: sets bits in the status byte and updates RQS */
 
@@ -47254,8 +47332,10 @@ void status_byte_set_bits(scpi_port *port,int32_t bits)
   return;
 }
 
+#endif
 
 /* 00029d62 */
+#if 0 /* the decompiler's reading; rewritten in scpi_port.c */
 
 /* the status output object's method: clears bits in the status byte and updates RQS */
 
@@ -47267,8 +47347,10 @@ void status_byte_clear_bits(scpi_port *port,int32_t bits)
   return;
 }
 
+#endif
 
 /* 00029d76 */
+#if 0 /* the decompiler's reading; rewritten in scpi_port.c */
 
 /* the status output object's method: sets the service request enable and updates RQS */
 
@@ -47280,6 +47362,7 @@ void status_sre_set(scpi_port *port,int32_t bits)
   return;
 }
 
+#endif
 
 /* 00029d88 */
 #if 0 /* the decompiler's reading; rewritten in scpi_port.c */
@@ -48881,6 +48964,7 @@ int32_t scpi_query_DIAGnostic_LOG_COUNt(void *parameters,void *response,void *ca
 
 
 /* 0002b4c2 */
+#if 0 /* the decompiler's reading; rewritten in log.c */
 
 /* prints the event log's state
    "Log status: Error", "Empty", "One entry", "%-3d entries", "Full" */
@@ -48926,8 +49010,10 @@ void log_status(char *param_1,char param_2)
   return;
 }
 
+#endif
 
 /* 0002b578 */
+#if 0 /* the decompiler's reading; rewritten in log.c */
 
 /* prints the event log, its status and each entry, through the callbacks given */
 
@@ -48963,6 +49049,7 @@ void log_print(char param_1,write_function *write,printf_function *print)
   return;
 }
 
+#endif
 
 /* 0002b632 */
 
@@ -49643,6 +49730,7 @@ int32_t scpi_query_DIAGnostic_TOFFset(void *parameters,void *response,void *call
 
 
 /* 0002be9c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* puts a code into the status system once status_ready
    structures.md */
@@ -49672,6 +49760,7 @@ uint32_t status_report(int16_t param_1)
   return 0;
 }
 
+#endif
 
 /* 0002bf00 */
 
@@ -51891,6 +51980,7 @@ int32_t scpi_query_SOURce_PTIMe_TIME(void *parameters,void *response,void *call)
 
 
 /* 0002e0d8 */
+#if 0 /* the decompiler's reading; rewritten in calendar.c */
 
 /* a time zone's minutes as signed hours and minutes (a signed char result, 1 or -1, 0x2e14a, which
    the caller tests with ble at 0x2e2ba) */
@@ -51918,6 +52008,7 @@ int8_t time_zone_split(int8_t hours,int8_t minutes,int8_t *hours_out,int8_t *min
   return iVar2;
 }
 
+#endif
 
 /* 0002e152 */
 
@@ -51996,14 +52087,14 @@ int32_t scpi_set_SOURce_PTIMe_TZONe(void *parameters,void *response,void *call)
 int32_t scpi_query_SOURce_PTIMe_TZONe(void *parameters,void *response,void *call)
 
 {
-  int8_t iVar2;
+  int8_t sign;
   int16_t sVar1;
   int8_t local_6;
   int8_t local_5;
   
-  iVar2 = time_zone_split((int8_t)nv_settings.time_zone[0],(int8_t)nv_settings.time_zone[1],&local_6
+  sign = time_zone_split((int8_t)nv_settings.time_zone[0],(int8_t)nv_settings.time_zone[1],&local_6
                           ,&local_5);
-  if (iVar2 < 1) {
+  if (sign < 1) {
     *(int16_t *)response = -(int16_t)local_6;
     sVar1 = -(int16_t)local_5;
   }
@@ -52406,6 +52497,7 @@ int32_t scpi_query_SAMPle_DARR(void *parameters,void *response,void *call)
 
 
 /* 0002e6c0 */
+#if 0 /* the decompiler's reading; rewritten in string.c */
 
 /* a string in upper case, in place */
 
@@ -52422,6 +52514,7 @@ void string_upper(char *text)
   return;
 }
 
+#endif
 
 /* 0002e6fc */
 
@@ -53359,6 +53452,7 @@ int32_t scpi_query_SENSe_TST1_EDGE(void *parameters,void *response,void *call)
 
 
 /* 0002f34e */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* sets a status register's enable or transition filter, as :STATus:PRESet does */
 
@@ -53391,8 +53485,10 @@ uint32_t status_preset_register(char param_1,char param_2,int16_t param_3,int16_
   return uVar2;
 }
 
+#endif
 
 /* 0002f3d0 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* sets the seven status registers' enable masks from the table at 0x2f7a8 */
 
@@ -53410,8 +53506,10 @@ void status_enables_init(void)
   return;
 }
 
+#endif
 
 /* 0002f40c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* sets registers 2 to 6's transition filters to their defaults from the setup table */
 
@@ -53432,8 +53530,10 @@ void status_transitions_init(void)
   return;
 }
 
+#endif
 
 /* 0002f480 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* builds status_object with status_create, sets each register up, sets status_ready
    structures.md */
@@ -53470,8 +53570,10 @@ uint32_t status_init(void)
   return uVar1;
 }
 
+#endif
 
 /* 0002f53a */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* does nothing; status_report and status_happening pass it each event */
 
@@ -53481,8 +53583,10 @@ void status_event_hook(uint32_t param_1,uint8_t param_2)
   return;
 }
 
+#endif
 
 /* 0002f53c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* raises a status condition: :DIAG:STAT:HAPP n passes condition n + 0x16, the firmware's own
    callers the condition itself, 0x16 to 0x4e (status_condition_code)
@@ -53522,8 +53626,10 @@ void status_happening(status_condition_code condition)
   return;
 }
 
+#endif
 
 /* 0002f626 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* the :STATus:OPERation:HARDware condition, register 6, which status_summary folds
    structures.md's status registers */
@@ -53537,8 +53643,10 @@ uint16_t status_hardware_condition(void)
   return local_6;
 }
 
+#endif
 
 /* 0002f64a */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* clears a buffer of status events kept before the status model is ready */
 
@@ -53557,8 +53665,10 @@ void happening_buffer_clear(uint8_t *param_1)
   return;
 }
 
+#endif
 
 /* 0002f668 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* clears both buffers of early status events */
 
@@ -53570,8 +53680,10 @@ void happening_buffers_clear(void)
   return;
 }
 
+#endif
 
 /* 0002f680 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* replays buffered status events through status_report or status_happening */
 
@@ -53596,6 +53708,7 @@ void happening_replay(char *events,char mode,char first,char last)
   return;
 }
 
+#endif
 
 /* 0002f6dc */
 
@@ -55353,6 +55466,7 @@ void sci_settings_preset(int32_t index,int32_t source)
 #endif
 
 /* 00030f08 */
+#if 0 /* the decompiler's reading; rewritten in eeprom.c */
 
 /* clears the EEPROM's busy flag at 0x101d34 */
 
@@ -55363,6 +55477,7 @@ void eeprom_lock_init(void)
   return;
 }
 
+#endif
 
 /* 00030f10 */
 #if 0 /* the decompiler's reading; rewritten in eeprom.c */
@@ -55641,6 +55756,7 @@ uint16_t log_page_checksum(log_page *page)
 #endif
 
 /* 000313a4 */
+#if 0 /* the decompiler's reading; rewritten in log.c */
 
 /* writes an event log page to EEPROM at 0x400d40 if it has changed, its count incremented and
    checksummed */
@@ -55665,8 +55781,10 @@ uint32_t log_page_write(uint8_t page,log_page *source)
   return 0;
 }
 
+#endif
 
 /* 0003141a */
+#if 0 /* the decompiler's reading; rewritten in log.c */
 
 /* reads the event log's 64-byte EEPROM page at 0x400d40 plus 0x40 times its number; 0xff if its
    checksum fails */
@@ -55700,6 +55818,7 @@ uint32_t log_page_read(uint8_t page,log_page *destination)
   return uVar4;
 }
 
+#endif
 
 /* 0003145a */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
@@ -55734,6 +55853,7 @@ uint32_t sign_extend_bits(uint32_t param_1,uint8_t param_2)
 #endif
 
 /* 00031536 */
+#if 0 /* the decompiler's reading; rewritten in log.c */
 
 /* clears the event log's pages and resets its state, reporting event ! */
 
@@ -55771,6 +55891,7 @@ char log_erase(uint8_t source)
   return (char)status;
 }
 
+#endif
 
 /* 000315e8 */
 #if 0 /* the decompiler's reading; rewritten in log.c */
@@ -56116,6 +56237,7 @@ void log_first_satellite(uint32_t param_1,uint32_t param_2)
 #endif
 
 /* 00031bba */
+#if 0 /* the decompiler's reading; rewritten in log.c */
 
 /* memset of a log page, 0x40 bytes
    structures.md */
@@ -56127,6 +56249,7 @@ void log_page_clear(void *param_1)
   return;
 }
 
+#endif
 
 /* 00031bd0 */
 #if 0 /* the decompiler's reading; rewritten in log.c */
@@ -56240,6 +56363,7 @@ void report_clamped(char param_1,uint8_t param_2)
 #endif
 
 /* 0003202a */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* the index of a float's magnitude in the table at 0x32700, by bisection; called by nothing */
 
@@ -56279,6 +56403,7 @@ float float_table_index(float *param_1,int16_t param_2)
   return powers_of_ten_float_21[((int32_t)sVar4 - (int32_t)param_2) + 1];
 }
 
+#endif
 
 /* 0003209c */
 #if 0 /* the decompiler's reading; rewritten in pllc.c */
@@ -57439,6 +57564,7 @@ uint8_t interpolator_measure_high(char_slot dac)
 #endif
 
 /* 000400b0 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* WARNING: Removing unreachable block (ram,0x00040102) */
 /* WARNING: Removing unreachable block (ram,0x0004011a) */
@@ -57490,8 +57616,10 @@ LAB_0004011c:
   goto LAB_00040122;
 }
 
+#endif
 
 /* 0004012e */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* moves a DAC a step at a time, up to 20, until a measurement falls in a window */
 
@@ -57535,8 +57663,10 @@ uint8_t dac_search_step(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,
   return dac;
 }
 
+#endif
 
 /* 0004018e */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* moves hex DAC channel 2 one step against a sign */
 
@@ -57558,6 +57688,7 @@ uint8_t hdac_nudge(int32_t param_1,uint8_t param_2)
   return param_2;
 }
 
+#endif
 
 /* 000401c4 */
 #if 0 /* the decompiler's reading; rewritten in ti.c */
@@ -58450,6 +58581,7 @@ void counter_selftest(void)
 #endif
 
 /* 000410fa */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* adds two 64-bit numbers */
 
@@ -58459,8 +58591,10 @@ uint64_t int64_add(int32_t param_1,uint32_t param_2,int32_t param_3,uint32_t par
   return CONCAT44(param_1 + param_3 + (uint32_t)CARRY4(param_2,param_4),param_2 + param_4);
 }
 
+#endif
 
 /* 0004111e */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* negates a 64-bit number */
 
@@ -58470,8 +58604,10 @@ uint64_t int64_negate(int32_t param_1,int32_t param_2)
   return CONCAT44(-(param_1 + (uint32_t)(-param_2 != 0)),-param_2);
 }
 
+#endif
 
 /* 00041132 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* adds a signed long to a 64-bit number; called by nothing */
 
@@ -58487,8 +58623,10 @@ uint64_t int64_add_long(uint32_t param_1,int32_t param_2,uint32_t param_3)
   return CONCAT44(iVar1 + param_2 + (uint32_t)CARRY4(param_1,param_3),param_1 + param_3);
 }
 
+#endif
 
 /* 0004115c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a 64-bit number divided by a long, the quotient, or on overflow the low word, which divs.l
    leaves; called by nothing */
@@ -58499,8 +58637,10 @@ int32_t int64_divide(int32_t divisor,int32_t high,uint32_t low)
   return (int32_t)(((int64_t)high << 0x20 | (int64_t)(int32_t)low) / (int64_t)divisor);
 }
 
+#endif
 
 /* 0004117e */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* an unsigned 64-bit number divided by an unsigned long, as int64_divide; called by nothing */
 
@@ -58510,15 +58650,17 @@ uint32_t uint64_divide(uint32_t divisor,uint32_t high,uint32_t low)
   return (uint32_t)(CONCAT44(high,low) / (uint64_t)divisor);
 }
 
+#endif
 
 /* 0004119c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a signed 64-bit number as a double, through 2^32 at 0x41300 */
 
 double int64_to_double(uint32_t param_1,uint32_t param_2)
 
 {
-  uint64_t uVar1;
+  uint64_t negated;
   double dVar2;
   double dStack_c;
   
@@ -58529,9 +58671,9 @@ double int64_to_double(uint32_t param_1,uint32_t param_2)
     double_add_in_place(&dStack_c,dVar2);
   }
   else {
-    uVar1 = int64_negate(param_1,param_2);
-    dStack_c = unsigned_to_double((uint32_t)uVar1);
-    dVar2 = unsigned_to_double((uint32_t)((uint64_t)uVar1 >> 0x20));
+    negated = int64_negate(param_1,param_2);
+    dStack_c = unsigned_to_double((uint32_t)negated);
+    dVar2 = unsigned_to_double((uint32_t)((uint64_t)negated >> 0x20));
     dVar2 = double_multiply_pointer(dVar2,&two_to_32);
     double_add_in_place(&dStack_c,dVar2);
     dStack_c = -dStack_c;
@@ -58539,8 +58681,10 @@ double int64_to_double(uint32_t param_1,uint32_t param_2)
   return dStack_c;
 }
 
+#endif
 
 /* 00041244 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing */
 
@@ -58570,6 +58714,7 @@ uint64_t double_to_int64(uint32_t param_1,uint32_t param_2)
   return uVar4;
 }
 
+#endif
 
 /* 00041328 */
 #if 0 /* the decompiler's reading; rewritten in pllc.c */
@@ -59131,7 +59276,7 @@ int32_t fit_log_initial(aging_curve_state *curve)
   double result_1;
   int32_t iVar1;
   float fVar2;
-  float f;
+  float magnitude;
   int32_t iVar3;
   double dVar4;
   double b;
@@ -59144,8 +59289,8 @@ int32_t fit_log_initial(aging_curve_state *curve)
   iVar1 = linear_regression(&regression,1);
   fVar2 = unsigned_to_float(curve->newest_time - curve->oldest_time);
   fVar2 = float_multiply(fVar2,regression.slope);
-  f = float_abs(fVar2);
-  dVar4 = float_to_double(f);
+  magnitude = float_abs(fVar2);
+  dVar4 = float_to_double(magnitude);
   b = float_to_double(regression.rms);
   result_1 = double_multiply(10.0,b);
   iVar3 = double_compare(dVar4,result_1);
@@ -59458,6 +59603,7 @@ int32_t linear_regression(regression_record *record,int32_t with_slope)
 
 
 /* 00042626 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a float's magnitude */
 
@@ -59473,6 +59619,7 @@ float float_abs(float param_1)
   return param_1;
 }
 
+#endif
 
 /* 00042644 */
 
@@ -60364,6 +60511,7 @@ void sample_action_print(int32_t index,int32_t source)
 #endif
 
 /* 00043466 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* reports status event M when the user bit is set and N when it is cleared
    scpi_param_STATus_QUEStionable_USER: done */
@@ -60383,65 +60531,73 @@ void questionable_user_done(void)
   return;
 }
 
+#endif
 
 /* 00043482 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* restores a status register's enable mask from the NV settings, reporting 0xe if it fails */
 
 void status_enable_restore(uint32_t param_1,uint32_t param_2)
 
 {
-  char cVar1;
+  char accepted;
   
-  cVar1 = status_preset_register
+  accepted = status_preset_register
                     (0,(uint8_t)param_2,(int16_t)(char)param_1,
                      (int16_t)nv_settings.status_enable[(char)param_1]);
-  if (cVar1 == 0) {
+  if (accepted == 0) {
     status_report_from(0xe,(uint8_t)param_2);
   }
   return;
 }
 
+#endif
 
 /* 000434c2 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* restores a status register's positive transition filter from the NV settings */
 
 void status_ptr_restore(uint32_t param_1,uint32_t param_2)
 
 {
-  char cVar1;
+  char accepted;
   
-  cVar1 = status_preset_register
+  accepted = status_preset_register
                     (1,(uint8_t)param_2,(int16_t)(char)param_1,
                      (int16_t)nv_settings.status_positive_transition[(char)param_1]);
-  if (cVar1 == 0) {
+  if (accepted == 0) {
     status_report_from(0xe,(uint8_t)param_2);
   }
   return;
 }
 
+#endif
 
 /* 00043504 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* restores a status register's negative transition filter from the NV settings */
 
 void status_ntr_restore(uint32_t param_1,uint32_t param_2)
 
 {
-  char cVar1;
+  char accepted;
   
-  cVar1 = status_preset_register
+  accepted = status_preset_register
                     (2,(uint8_t)param_2,(int16_t)(char)param_1,
                      (int16_t)nv_settings.status_negative_transition[(char)param_1]);
-  if (cVar1 == 0) {
+  if (accepted == 0) {
     status_report_from(0xe,(uint8_t)param_2);
   }
   return;
 }
 
+#endif
 
 /* 00043546 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* done for :STATus:PRESet: the enables and transition filters back to their defaults, saved */
 
@@ -60490,6 +60646,7 @@ void status_preset_done(uint32_t param_1,uint32_t param_2)
   return;
 }
 
+#endif
 
 /* 00043804 */
 
@@ -60579,15 +60736,15 @@ uint32_t holdover_limit_exceeded(float param_1)
 
 {
   float fVar1;
-  float b;
+  float magnitude;
   int32_t iVar2;
   
   if (pll.holdover_duration <= (uint32_t)nv_settings.holdover_measurement_threshold) {
     fVar1 = unsigned_to_float(pll.holdover_duration);
     fVar1 = float_multiply(fVar1,pll.frequency_tolerance);
     fVar1 = float_add(fVar1,nv_settings.holdover_limit_threshold);
-    b = float_absolute_on_stack(param_1);
-    iVar2 = float_compare(fVar1,b);
+    magnitude = float_absolute_on_stack(param_1);
+    iVar2 = float_compare(fVar1,magnitude);
     if ((iVar2 < 1) && (pll.frequency_adjusted == 0)) {
       return 0;
     }
@@ -61530,12 +61687,12 @@ uint8_t fine_sync_adjust(float param_1)
 uint8_t sync_perform(float param_1)
 
 {
-  float a;
+  float magnitude;
   int32_t iVar1;
   
   if (pll.sync_requested == 0) {
-    a = float_absolute_on_stack(param_1);
-    iVar1 = float_compare(a,nv_settings.limit_threshold);
+    magnitude = float_absolute_on_stack(param_1);
+    iVar1 = float_compare(magnitude,nv_settings.limit_threshold);
     if (iVar1 < 1) {
       return 0;
     }
@@ -62412,6 +62569,7 @@ void pllp_start_nothing_b(void)
 
 
 /* 00045c92 */
+#if 0 /* the decompiler's reading; rewritten in nv.c */
 
 /* clears the NV settings, invalidates the battery-backed RAM's checksum and resets with trap #12 */
 
@@ -62426,8 +62584,10 @@ void nv_clear_and_reset(void)
   return;
 }
 
+#endif
 
 /* 00045cc0 */
+#if 0 /* the decompiler's reading; rewritten in timers.c */
 
 /* clears the GPT's IC2 flag, TFLG1 bit 1, and returns through trap #5; no vector names it */
 
@@ -62444,8 +62604,10 @@ void gpt_input_capture_2_interrupt(void)
   } while( true );
 }
 
+#endif
 
 /* 00045ce4 */
+#if 0 /* the decompiler's reading; rewritten in timers.c */
 
 /* forces the PWMA pin low for a nonzero argument, high for zero: PWMC's F1A (MC68331UM D.2.14);
    holdover and the stages call it
@@ -62467,6 +62629,7 @@ void pwma_force_level(char param_1)
   return;
 }
 
+#endif
 
 /* 00045e8e */
 
@@ -62801,6 +62964,7 @@ void douglas_finish_request(int32_t index,int32_t source)
 #endif
 
 /* 0004637a */
+#if 0 /* the decompiler's reading; rewritten in leap.c */
 
 /* clears the pending leap second: leap_pending 0, a 60-second minute, leap_date 1994-01-01 */
 
@@ -62813,8 +62977,10 @@ void leap_settings_clear(void)
   return;
 }
 
+#endif
 
 /* 00046394 */
+#if 0 /* the decompiler's reading; rewritten in leap.c */
 
 /* deletes the pending leap second event
    "Error in deleting old leapsecond event" */
@@ -62835,8 +63001,10 @@ void leap_event_delete(void)
   return;
 }
 
+#endif
 
 /* 000463c2 */
+#if 0 /* the decompiler's reading; rewritten in leap.c */
 
 /* creates the leap second event
    "Error in creating leapsecond event" */
@@ -62882,28 +63050,30 @@ void leap_event_create(void)
   return;
 }
 
+#endif
 
 /* 00046470 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* builds status_summary's bits from the status registers */
 
 void status_summary_update(void)
 
 {
-  uint16_t uVar1;
+  uint16_t condition;
   
-  uVar1 = status_hardware_condition();
-  status_summary = (uVar1 & 1) != 0;
-  if ((uVar1 & 0xe) != 0) {
+  condition = status_hardware_condition();
+  status_summary = (condition & 1) != 0;
+  if ((condition & 0xe) != 0) {
     status_summary = status_summary | 2;
   }
-  if ((uVar1 & 0x80) != 0) {
+  if ((condition & 0x80) != 0) {
     status_summary = status_summary | 4;
   }
-  if ((uVar1 & 0x300) != 0) {
+  if ((condition & 0x300) != 0) {
     status_summary = status_summary | 8;
   }
-  if ((uVar1 & 0x1000) != 0) {
+  if ((condition & 0x1000) != 0) {
     status_summary = status_summary | 0x10;
   }
   if (holdover_duration_exceeded != 0) {
@@ -62913,8 +63083,10 @@ void status_summary_update(void)
   return;
 }
 
+#endif
 
 /* 000464de */
+#if 0 /* the decompiler's reading; rewritten in leds.c */
 
 /* writes the status flags to the latch at 0x300000, which the self-test walks a bit through: the
    front-panel lamps */
@@ -62941,6 +63113,7 @@ uint8_t leds_update(void)
   return uVar1;
 }
 
+#endif
 
 /* 00046524 */
 
@@ -63945,14 +64118,14 @@ void pll_restart(void)
 void efc_gain_set(float param_1)
 
 {
-  float a;
+  float magnitude;
   
   efc_gains.gain = param_1;
   efc_gains.reciprocal_fine = float_divide(1.0,param_1);
   efc_gains.reciprocal_ti = efc_gains.reciprocal_fine;
   efc_gains.reciprocal_tau = efc_gains.reciprocal_fine;
-  a = float_absolute_on_stack(efc_gains.gain);
-  efc_gains.step_limit = float_divide_reversed(a,6.25e-10);
+  magnitude = float_absolute_on_stack(efc_gains.gain);
+  efc_gains.step_limit = float_divide_reversed(magnitude,6.25e-10);
   efc_gains.aging_per_day = float_divide(5.787037e-14,efc_gains.gain);
   return;
 }
@@ -65633,7 +65806,7 @@ void satellite_status_list
                char *param_7)
 
 {
-  uint8_t bVar3;
+  uint8_t count;
   uint32_t uVar1;
   char cVar4;
   char cVar5;
@@ -65670,10 +65843,10 @@ void satellite_status_list
   else {
     local_2e = *(uint32_t *)(param_3 + 0xe);
     bVar8 = *(uint8_t *)(param_3 + 0x22);
-    bVar3 = count_bits((uint32_t)bVar8);
-    uVar1 = (uint32_t)bVar3;
-    bVar3 = count_bits(local_2e);
-    if (0xc < (int32_t)(uVar1 + bVar3)) {
+    count = count_bits((uint32_t)bVar8);
+    uVar1 = (uint32_t)count;
+    count = count_bits(local_2e);
+    if (0xc < (int32_t)(uVar1 + count)) {
       local_2e = *(uint32_t *)(param_3 + 8) & local_2e;
       puVar10 = local_2a;
       for (puVar11 = (uint8_t *)(param_5 + 4);
@@ -66231,7 +66404,7 @@ void status_screen_position(uint8_t row,status_snapshot_record *snapshot,char *l
   float fVar3;
   float a;
   int32_t iVar4;
-  uint8_t bVar5;
+  uint8_t count;
   char *unaff_D4 = ({ register int32_t __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   char *pcVar6;
   double dVar7;
@@ -66335,8 +66508,8 @@ void status_screen_position(uint8_t row,status_snapshot_record *snapshot,char *l
           unaff_D4 = "no track data";
         }
         else {
-          bVar5 = count_bits((snapshot->satellites).used);
-          if (bVar5 < 4) {
+          count = count_bits((snapshot->satellites).used);
+          if (count < 4) {
             unaff_D4 = "track <4 sats";
           }
           else if ((snapshot->receiver_status & 0x20) == 0) {
@@ -67204,6 +67377,7 @@ void status_screen_print(uint8_t param_1,write_function *write,printf_function *
 
 
 /* 0004aff2 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* get_uptime() less *start into *elapsed, restarting *start if the clock went back */
 
@@ -67225,6 +67399,7 @@ bool uptime_elapsed(uint32_t *param_1,int32_t *param_2)
   return uVar1 <= uptime;
 }
 
+#endif
 
 /* 0004b01e */
 
@@ -67235,7 +67410,7 @@ uint32_t raim_monitor(void)
 {
   uint32_t uVar1;
   int16_t sVar2;
-  char cVar3;
+  char reached;
   uint32_t uStack_8;
   
   if ((((gps.raim.raim_on != 1) || (gps.raim_received == 0)) ||
@@ -67271,8 +67446,8 @@ uint32_t raim_monitor(void)
       return raim_suspect_time;
     case 0x3e:
       if (gps.raim.solution_status != ONCORE_RAIM_OK) {
-        cVar3 = uptime_elapsed(&raim_suspect_time,(int32_t *)&uStack_8);
-        if (cVar3 == 0) {
+        reached = uptime_elapsed(&raim_suspect_time,(int32_t *)&uStack_8);
+        if (reached == 0) {
           raim_suspect_time = get_uptime();
           return raim_suspect_time;
         }
@@ -67493,7 +67668,7 @@ void command_monitor(void)
 {
   int32_t iVar1;
   bool bVar2;
-  char cVar3;
+  char reached;
   uint8_t *puVar4;
   status_condition_code condition;
   uint32_t uStack_8;
@@ -67526,8 +67701,8 @@ LAB_0004b4d2:
       }
       else {
         if (gps.command_monitor_enabled == 0) goto LAB_0004b4d2;
-        cVar3 = uptime_elapsed(&gps.command_monitor_time,(int32_t *)&uStack_8);
-        if ((cVar3 != 0) && (0x14 < uStack_8)) {
+        reached = uptime_elapsed(&gps.command_monitor_time,(int32_t *)&uStack_8);
+        if ((reached != 0) && (0x14 < uStack_8)) {
           gps_request_post(3,4,gps.command_monitor_query,0);
           gps.command_monitor_state = 3;
         }
@@ -67574,11 +67749,11 @@ LAB_0004b4d2:
       break;
     case 0x2a:
       if (bVar2) {
-        cVar3 = uptime_elapsed(&gps.status_monitor_time,(int32_t *)&uStack_8);
-        if (((cVar3 == 0) || (uStack_8 <= (uint32_t)gps.status_rate * 0xf)) &&
+        reached = uptime_elapsed(&gps.status_monitor_time,(int32_t *)&uStack_8);
+        if (((reached == 0) || (uStack_8 <= (uint32_t)gps.status_rate * 0xf)) &&
            ((status_without_traim_count < 7 && (gps.status_repeat_count < 0x2d)))) {
           if ((status_message_arrived == 0) && (traim_message_arrived == 0)) {
-            if (cVar3 == 0) {
+            if (reached == 0) {
               status_message_arrived = 0;
               gps.status_monitor_time = get_uptime();
             }
@@ -67832,12 +68007,12 @@ LAB_0004b8c0:
 uint32_t gps_response_timed_out(int16_t param_1,uint32_t *param_2)
 
 {
-  char cVar2;
+  char reached;
   uint32_t uVar1;
   uint32_t local_8;
   
-  cVar2 = uptime_elapsed(param_2,(int32_t *)&local_8);
-  if ((cVar2 == 0) || (local_8 <= oncore_messages[param_1].timeout)) {
+  reached = uptime_elapsed(param_2,(int32_t *)&local_8);
+  if ((reached == 0) || (local_8 <= oncore_messages[param_1].timeout)) {
     uVar1 = 0;
   }
   else {
@@ -69403,6 +69578,7 @@ uint16_t * word_copy_advance(uint16_t *param_1,uint16_t *param_2)
 
 
 /* 0004ef8e */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* four bytes, high first, as a long */
 
@@ -69424,6 +69600,7 @@ uint8_t * bytes_to_long(uint8_t *param_1,uint32_t *param_2)
   return puVar1;
 }
 
+#endif
 
 /* 0004efb4 */
 
@@ -69433,10 +69610,10 @@ uint8_t * bytes_to_long(uint8_t *param_1,uint32_t *param_2)
 void oncore_as_height_decode(uint8_t *param_1)
 
 {
-  uint8_t *puVar1;
+  uint8_t *next;
   
-  puVar1 = (uint8_t *)bytes_to_long(param_1,&gps.hold_position.height);
-  byte_copy_optional(puVar1,&gps.hold_height_type);
+  next = (uint8_t *)bytes_to_long(param_1,&gps.hold_position.height);
+  byte_copy_optional(next,&gps.hold_height_type);
   return;
 }
 
@@ -69657,6 +69834,7 @@ void satellite_add_to_set(satellite_kind kind,uint8_t id,uint32_t *mask)
 
 
 /* 0004f1da */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* counts a word's set bits */
 
@@ -69674,6 +69852,7 @@ char count_bits(uint32_t param_1)
   return cVar1;
 }
 
+#endif
 
 /* 0004f1f8 */
 
@@ -70363,6 +70542,7 @@ char * gps_response_decode(int16_t message,char *response)
 
 
 /* 0004fb54 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* 1 if two byte strings have the same nonzero length and bytes */
 
@@ -70381,6 +70561,7 @@ uint32_t bytes_equal_n(char *param_1,int16_t param_2,char *param_3,int16_t param
   return 0;
 }
 
+#endif
 
 /* 0004fb86 */
 
@@ -70761,6 +70942,7 @@ uint32_t setjmp(uint32_t *param_1)
 
 
 /* 00051158 */
+#if 0 /* the decompiler's reading; rewritten in boot.c */
 
 /* WARNING: Removing unreachable block (ram,0x0005118a) */
 /* WARNING: Removing unreachable block (ram,0x00051214) */
@@ -70778,6 +70960,7 @@ uint32_t primary_unpack_records(void)
   return 1;
 }
 
+#endif
 
 /* 0005d080 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -80055,6 +80238,7 @@ int32_t abs(int32_t j)
 /* a thunk to call_atexit_functions */
 
 /* 0005ecf0 */
+#if 0 /* the decompiler's reading; rewritten in stdlib.c */
 
 /* libc.md */
 
@@ -80068,6 +80252,7 @@ void call_atexit_functions(void)
   return;
 }
 
+#endif
 
 /* 0005ecfa */
 #if 0 /* the decompiler's reading; rewritten in stdlib.c */
@@ -81694,6 +81879,7 @@ int32_t sprintf(char *s,char *format,...)
 
 
 /* 000608c4 */
+#if 0 /* the decompiler's reading; rewritten in stdio.c */
 
 /* copies the engine's output into sprintf's buffer
    libc.md */
@@ -81720,8 +81906,10 @@ int32_t sprintf_put(char *text,int32_t size,int32_t count,sprintf_output *output
   return count;
 }
 
+#endif
 
 /* 000608fe */
+#if 0 /* the decompiler's reading; rewritten in stdio.c */
 
 /* libc.md */
 
@@ -81737,6 +81925,7 @@ int32_t vsprintf(char *s,char *format,void *arg)
   return length;
 }
 
+#endif
 
 /* 0006092a */
 #if 0 /* the decompiler's reading; rewritten in math.c */
@@ -92847,11 +93036,15 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/arithmetic.c"
 
+#include "../rewritten/z3805a-3543b/boot.c"
+
 #include "../rewritten/z3805a-3543b/calendar.c"
 
 #include "../rewritten/z3805a-3543b/clock.c"
 
 #include "../rewritten/z3805a-3543b/console.c"
+
+#include "../rewritten/z3805a-3543b/cpu.c"
 
 #include "../rewritten/z3805a-3543b/dac.c"
 
@@ -92869,6 +93062,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/leap.c"
 
+#include "../rewritten/z3805a-3543b/leds.c"
+
 #include "../rewritten/z3805a-3543b/log.c"
 
 #include "../rewritten/z3805a-3543b/math.c"
@@ -92882,6 +93077,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/pll_reading.c"
 
 #include "../rewritten/z3805a-3543b/pllc.c"
+
+#include "../rewritten/z3805a-3543b/pps.c"
 
 #include "../rewritten/z3805a-3543b/qspi.c"
 
@@ -92926,3 +93123,5 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/ti.c"
 
 #include "../rewritten/z3805a-3543b/timecode.c"
+
+#include "../rewritten/z3805a-3543b/timers.c"

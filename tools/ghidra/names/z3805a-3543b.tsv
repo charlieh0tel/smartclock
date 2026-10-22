@@ -1961,7 +1961,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x30a2c	label	sci_settings_defaults	structures.md	what parameter_record_read and scpi_action_SER2_PRESet's routine copy over sci_settings	sci_settings_record
 0x30a34	label	duartb_settings_defaults	structures.md	what parameter_record_read and scpi_action_SER1_PRESet's routine copy over duartb_settings	duartb_settings_record
 0x3094c	label	retained_block_defaults	structures.md	system_init copies these 25 bytes over the block at 0x101e70 unless it restores pllp_task's battery-backed copy at 0x100934; max_loop_time's 1000 at +0x14	uint8_t[25]
-0x25c82	label	decimal_digit_pairs	structures.md	"00" to "99", two characters a value; scpi_real_to_text and scpi_double_to_decimal index it by the value times 2	char[200]
+0x25c82	label	decimal_digit_pairs	structures.md	"00" to "99", a word of two characters a value; scpi_real_to_text and scpi_double_to_decimal index it by the value, scpi_real_to_text unchecked by an exponent over 9999	uint16_t[100]
 0x4cfc5	label	si_prefixes	structures.md	format_si's prefix for each third power of ten from -12 to 9, a NUL for none; bytes, since the decompiler prints a char array in ROM as a literal ending at its first NUL ("pnum")	uint8_t[8]
 0x314b2	label	low_bit_masks	structures.md	the mask of the low n bits, n 0 to 32; nv_save and nv_load_slot index it by a value's NV width	uint32_t[33]
 0x1186c	label	days_before_month	structures.md	the days before each month in a common year; day_of_year and days_to_date	int16_t[12]

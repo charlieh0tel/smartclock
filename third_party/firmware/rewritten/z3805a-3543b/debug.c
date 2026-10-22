@@ -75,6 +75,10 @@ void fatal_error_with_code(char* message, uint32_t unused_1, uint32_t unused_2,
   fatal_error(text);
 }
 
+/* Whether debug output is on, debug_enabled; the self-tests' test
+ * (0x18334). */
+char debug_is_enabled(void) { return debug_enabled; }
+
 /* Writes a string by polling while debug output is on; returns its
  * length, 0 when off (0x1ef74). */
 int32_t debug_write(char* text) {

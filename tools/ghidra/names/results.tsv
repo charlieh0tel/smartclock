@@ -268,6 +268,11 @@ status_clear_events	error	always 0
 error_queue_create	error	0, or -56 for no memory
 error_queue_push	full	1 when the queue was full or overflows
 error_message_lookup	message	NULL for none
+# services/status's setup, presets, reports and summary (rewritten/z3805a-3543b/status.c)
+status_init	error	0, or status_create's
+status_preset_register	accepted	1, or 0 for a source other than 0
+status_report	error	always 0
+status_hardware_condition	condition	:STATus:OPERation:HARDware's condition word
 scpi_interpret	error
 scpi_call_handler	error	the handler's, or -56 for no room for the response
 scpi_format_response	error	0, or a formatter's
@@ -373,3 +378,31 @@ float_max_of	larger
 float_min_of	smaller
 load_long_unit_step	step	the step record's long
 load_long	step	the step record's long
+# devices and services, but services/status (rewritten/z3805a-3543b/: ti.c, leds.c, calendar.c, clock.c)
+dac_search_bisect	dac	the DAC value the search ends on
+dac_search_step	dac	the DAC value the steps end on
+hdac_nudge	hdac	the low reference DAC, moved a step or not
+leds_update	lamps	the byte written to the lamp latch
+time_zone_split	sign	-1 if the hours or minutes were negative, else 1
+uptime_elapsed	reached	the uptime has reached the start
+# platform: arithmetic, boot, debug (arithmetic.c, boot.c, debug.c)
+isqrt16	root	the square root rounded to nearest
+rotate_left	rotated
+count_bits	count	the set bits
+bytes_to_long	next	the byte after the four read
+bytes_equal_n	equal	1 if the lengths and bytes match
+int64_add	sum
+int64_negate	negated
+int64_add_long	sum
+int64_divide	quotient	or the dividend's low long on overflow
+uint64_divide	quotient	or the dividend's low long on overflow
+int64_to_double	value
+double_to_int64	value
+float_abs	magnitude
+float_absolute_on_stack	magnitude
+double_abs	magnitude
+float_table_index	power	the table entry past the bisection's, less the offset
+boot_unpack_installer	status	0, 1 without the S, 2 at a bad record
+primary_unpack_records	status	as boot_unpack_installer's
+boot_memcpy	destination
+debug_is_enabled	enabled	debug_enabled

@@ -378,3 +378,29 @@ void double_to_digits(double value, int32_t count, int32_t* exponent,
   *out = '\0';
   *exponent = guess + 1;
 }
+
+/* Copies so many items of doprnt's output, of a size of 1 only, to
+ * sprintf's buffer; returns the count copied, 0 for another size
+ * (0x608c4). */
+int32_t sprintf_put(char* text, int32_t size, int32_t count,
+                    sprintf_output* output) {
+  if (size != 1) {
+    return 0;
+  }
+  for (int32_t left = count; left > 0; left--) {
+    *output->cursor++ = *text++;
+  }
+  return count;
+}
+
+/* Formats into a buffer through doprnt and sprintf_put and ends it with
+ * a NUL; returns doprnt's count (0x608fe). */
+int32_t vsprintf(char* s, char* format, void* arg) {
+  sprintf_output output;
+
+  output.cursor = s;
+  const int32_t length = doprnt(format, arg, sprintf_put, &output);
+
+  *output.cursor = '\0';
+  return length;
+}

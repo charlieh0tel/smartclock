@@ -39,6 +39,21 @@ void efc_clamp_reset(void) {
   efc_range.near_end_checks = 0;
 }
 
+/* Starts every ADC monitor afresh, and the supplies' check at its first
+ * step; hmon_task calls it as it starts (0x23c2a). */
+void monitors_reset(void) {
+  for (size_t index = 0; index < sizeof adc_monitors / sizeof adc_monitors[0];
+       index++) {
+    adc_monitor* monitor = &adc_monitors[index];
+
+    monitor->valid = 0;
+    monitor->sample_index = 0;
+    monitor->out_of_range_count = 0;
+    monitor->out_of_tolerance = 0;
+  }
+  hmon_supply_step = 0;
+}
+
 /* Puts a reading in a monitor's ring of ten and, once ten are in, keeps
  * their mean (0x23c5a). */
 void monitor_average_add(adc_monitor* monitor, float reading) {

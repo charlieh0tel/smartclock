@@ -50,3 +50,10 @@ static int32_t libc_normalize(uint64_t* mantissa) {
   }
   return shift;
 }
+
+/* Appends a character to a message of a length byte and its text, as
+ * float_exception_report and program_end_report build theirs for
+ * fatal_error_with_code. */
+static void libc_message_append(uint8_t* message, char c) {
+  message[1 + message[0]++] = c;
+}

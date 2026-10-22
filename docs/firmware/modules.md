@@ -229,7 +229,9 @@ The hand-written C (`third_party/firmware/rewritten/z3805a-3543b/`)
 follows the modules: one file to a module, named by it (`calendar.c`,
 `devices/dac`'s `dac.c`, `platform/string`'s `string.c`), an
 application's submodules prefixed (`scpi_lexer.c`, `pll_reading.c`),
-and the SCPI handlers together in `scpi_handlers.c`.  What a group of
+and the SCPI handlers together in `scpi_handlers.c`; a module's
+first function written by hand starts its file (`boot.c`, `cpu.c`,
+`leds.c`, `pps.c`, `timers.c`).  What a group of
 them shares, from the file they were split from, is in a header named
 for it (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
 `scpi.h`), keeping that file's prefix.

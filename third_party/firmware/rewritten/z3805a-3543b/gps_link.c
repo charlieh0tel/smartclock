@@ -51,6 +51,32 @@ uint8_t drta_get_byte(char* overrun) {
   return duarta_ring.data[duarta_ring.read++];
 }
 
+/* Channel A's receive interrupt: takes each byte the GPS receiver sent
+ * into the ring, signaling the GPS task for each, and notes the ring's
+ * least room and an overrun.  Returns the overrun bit of the status
+ * register (0x1e766). */
+uint8_t duarta_isr(void) {
+  uint8_t free_bytes;
+  uint8_t status;
+
+  while ((duart.a.sr_csr & SR_RXRDY) != 0) {
+    duarta_ring.data[duarta_ring.write++] = duart.a.rb_tb;
+    if (task_gpsm != 0 && (uint8_t)psos_signal_v(task_gpsm, SIG_SIQ) != 0) {
+      fatal_error("DUARTA isr signaling SIG_SIQ");
+    }
+  }
+  free_bytes = duarta_ring.read - duarta_ring.write;
+  if (free_bytes < duarta.least_free) {
+    duarta.least_free = free_bytes;
+  }
+  status = duart.a.sr_csr;
+  if ((status & SR_OVERRUN) != 0) {
+    duarta.overrun = 1;
+    duart.a.cr = CR_RESET_ERROR;
+  }
+  return status & SR_OVERRUN;
+}
+
 /* Channel A's transmit interrupt: sends the message's next byte, or at
  * its end turns the interrupt off and signals the GPS task
  * (0x1e9ca). */

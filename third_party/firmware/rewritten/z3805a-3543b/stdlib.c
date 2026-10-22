@@ -202,3 +202,54 @@ int32_t rand(void) {
   rand_seed = rand_seed * RAND_MULTIPLIER + RAND_INCREMENT;
   return rand_seed >> RAND_SHIFT & RAND_MASK;
 }
+
+/* Calls the functions atexit registered, the last first; the count is
+ * signed (0x5ecf0). */
+void call_atexit_functions(void) {
+  while ((int16_t)atexit_count > 0) {
+    atexit_count--;
+    atexit_functions[(int16_t)atexit_count]();
+  }
+}
+
+/* Builds "Prog end, returned N" in program_end_message and stops with
+ * fatal_error_with_code, whose code is return_address, program_exit's;
+ * never returns (0x149bc).  The digits are built backward from a stop
+ * byte at the buffer's end, where they stay. */
+void program_end_report(uint32_t value, uint32_t return_address) {
+  static const int32_t DIGITS_END = 0x2d;
+  static const uint8_t DIGITS_STOP = 0xff;
+  uint8_t* digit = &program_end_message[DIGITS_END];
+  uint32_t magnitude = value;
+
+  program_end_message[0] = 0;
+  for (const char* text = "Prog end, returned "; *text != '\0'; text++) {
+    libc_message_append(program_end_message, *text);
+  }
+  *digit = DIGITS_STOP;
+  if ((int32_t)value < 0) {
+    magnitude = -value;
+    libc_message_append(program_end_message, '-');
+  }
+  do {
+    *--digit = magnitude % 10;
+    magnitude /= 10;
+  } while (magnitude != 0);
+  for (; *digit != DIGITS_STOP; digit++) {
+    libc_message_append(program_end_message, '0' + *digit);
+  }
+  fatal_error_with_code((char*)program_end_message,
+                        (uint32_t)__builtin_return_address(0), value,
+                        return_address);
+  for (;;) {
+  }
+}
+
+/* Runs the atexit functions and reports the exit value with its own
+ * return address; never returns (0x149a8). */
+void program_exit(uint32_t value) {
+  call_atexit_functions();
+  program_end_report(value, (uint32_t)__builtin_return_address(0));
+  for (;;) {
+  }
+}

@@ -35,6 +35,66 @@ static void scpi_engine_store_unit(void* after_value, int16_t unit) {
   *(int16_t*)after_value = unit;
 }
 
+/* A string token's text and length, as its handler takes them; 0
+ * (0x25d70).  The token is a scpi_token_string, the value a
+ * scpi_engine_string_value. */
+uint32_t scpi_parse_string(uint16_t* token, void* unused, uint32_t* value) {
+  scpi_token_string* string = (scpi_token_string*)token;
+  scpi_engine_string_value* given = (scpi_engine_string_value*)value;
+
+  given->text = string->text;
+  given->length = string->length;
+  return 0;
+}
+
+/* Whether two texts are the same. */
+static bool scpi_parameters_same(const char* text, const char* other) {
+  for (; *text == *other; text++, other++) {
+    if (*text == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/* A keyword, ON or OFF, as a boolean (0x25d8c).  The token is a
+ * scpi_keyword, its text ended with a NUL here. */
+uint32_t scpi_parse_boolean(int16_t* token, void* unused, uint16_t* value) {
+  scpi_keyword* keyword = (scpi_keyword*)token;
+
+  keyword->text[keyword->length] = 0;
+  if (scpi_parameters_same(keyword->text, "ON")) {
+    *value = 1;
+    return 0;
+  }
+  if (scpi_parameters_same(keyword->text, "OFF")) {
+    *value = 0;
+    return 0;
+  }
+  return STATUS_SCPI_ILLEGAL_PARAMETER_VALUE;
+}
+
+/* A keyword of the node's choices, as its index or the value the list
+ * gives it (0x25e42).  The token is a scpi_keyword, the list a
+ * scpi_choices. */
+uint32_t scpi_parse_choice(int16_t* token, void* unused, int16_t* value,
+                           int32_t* list) {
+  scpi_keyword* keyword = (scpi_keyword*)token;
+  scpi_choices* choices = (scpi_choices*)list;
+
+  if (choices == 0 || choices->keywords == 0) {
+    return STATUS_SCPI_NO_LIST;
+  }
+  for (int16_t index = 0; choices->keywords[index] != 0; index++) {
+    if (scpi_keyword_compare(keyword->text, keyword->length,
+                             choices->keywords[index]) == 0) {
+      *value = choices->values == 0 ? index : choices->values[index];
+      return 0;
+    }
+  }
+  return STATUS_SCPI_ILLEGAL_PARAMETER_VALUE;
+}
+
 /* A number as a boolean, by scpi_number_to_boolean; none with a suffix
  * (0x25de0). */
 int32_t scpi_parse_boolean_number(scpi_number* number, void* unused,
@@ -250,6 +310,46 @@ void scpi_numeric_set(scpi_numeric_param* param, int32_t index, int16_t kind,
     integer = integer_value;
   }
   pllc_request_c(param, index, integer, real, source);
+}
+
+/* scpi_numeric_set for a parameter of doubles: the new value's address,
+ * or its minimum's or maximum's, to pllc; called by nothing (0x298b2).
+ * The parameter is a scpi_numeric_param. */
+void scpi_numeric_set_double(int32_t param, int32_t index, int16_t kind,
+                             int16_t bound, uint32_t* value, uint8_t source) {
+  scpi_numeric_param* numeric = (scpi_numeric_param*)param;
+
+  if (kind == SCPI_VALUE_BOUND) {
+    double* bounds =
+        bound == SCPI_BOUND_MINIMUM ? numeric->minimum : numeric->maximum;
+
+    value = (uint32_t*)&bounds[index];
+  }
+  pllc_request_e(numeric, index, value, source);
+}
+
+/* A double parameter's validate, which returns the value as validated
+ * in D0:D1 (0x299e6), where scpi_validate_function's returns a long. */
+typedef double scpi_parameters_validate_double(void* value, int index,
+                                               void* minimum, void* maximum,
+                                               void* step, int source);
+
+/* scpi_numeric_get for a parameter of doubles: its value, or its
+ * minimum or maximum as its validate settles it with the step for it;
+ * called by nothing (0x29990). */
+double scpi_numeric_get_double(scpi_numeric_param* param, int32_t index,
+                               int16_t kind, int16_t bound) {
+  if (kind != SCPI_VALUE_BOUND) {
+    return ((double*)param->value)[index];
+  }
+  double* minimum = param->minimum;
+  double* maximum = param->maximum;
+  double* limit = bound == SCPI_BOUND_MINIMUM ? minimum : maximum;
+  scpi_parameters_validate_double* validate =
+      (scpi_parameters_validate_double*)param->validate;
+
+  return validate(&limit[index], index, &minimum[index], &maximum[index],
+                  (scpi_double_step*)param->group_cell + index, 0);
 }
 
 /* A numeric parameter's value, or its minimum or maximum as its validate

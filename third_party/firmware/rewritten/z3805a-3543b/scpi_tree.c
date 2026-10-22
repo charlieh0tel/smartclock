@@ -169,6 +169,36 @@ void scpi_path_reset(scpi_path* path, scpi_child_list* list) {
   path->count = 0;
 }
 
+/* Resolves a common command's header in its list to its node and
+ * handler, 0 the setter and 1 the query, and takes the arena's room for
+ * its parameters; -33, as past a leaf, for no such handler (0x27f10).
+ * The call is a scpi_call, the parameters' slot a scpi_parameter's. */
+uint32_t scpi_common_header_resolve(scpi_keyword* keyword, int32_t* call,
+                                    uint16_t* offset, int32_t* parameters,
+                                    uint16_t unused, int16_t query,
+                                    scpi_arena* arena, scpi_child_list* list) {
+  scpi_call* record = (scpi_call*)call;
+  scpi_node* node = scpi_node_find(list, keyword);
+
+  if (node == 0) {
+    return STATUS_SCPI_UNDEFINED_HEADER;
+  }
+  scpi_handler* handler = &node->handlers[query];
+
+  if (handler->function == 0) {
+    return STATUS_SCPI_HEADER_LEAF;
+  }
+  record->parameters = arena_alloc(handler->parameters_size, arena);
+  if (record->parameters == 0) {
+    return STATUS_SCPI_NO_MEMORY;
+  }
+  record->query = query;
+  record->node = node;
+  *(scpi_parameter**)parameters = handler->parameters;
+  *offset = 0;
+  return 0;
+}
+
 /* Looks _TRG up in a list, and whether its node has no setter
  * (0x27f7e). */
 scpi_node* scpi_trg_defined(scpi_child_list* list, uint16_t* no_setter) {

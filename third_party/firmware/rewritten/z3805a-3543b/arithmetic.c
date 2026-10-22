@@ -1,7 +1,9 @@
 /* Small integer and table routines, written by hand in place of the
  * decompiler's (docs/firmware/README.md, "Hand-written C"): absolute
- * value, clamp, CRC-16, rounding shifts and division, the powers of ten
- * and the random dither.  Most are called by nothing.  The exported C
+ * value, clamp, CRC-16, rounding shifts and division, the square root,
+ * bit and byte helpers, the 64-bit routines, magnitudes and rounding of
+ * floats, the powers of ten and the random dither.  Most are called by
+ * nothing.  The exported C
  * includes this file after its own, so the types and prototypes it
  * declares are in scope; each function here keeps its generated
  * prototype. */
@@ -92,6 +94,240 @@ int32_t round_divide(int32_t dividend, int32_t divisor) {
     return -(((divisor >> 1) - dividend) / divisor);
   }
   return (dividend + (divisor >> 1)) / divisor;
+}
+
+/* A value's square root rounded to nearest, by two bits a step, then a
+ * half bit; 0 for a negative value and 256 for one of 16 bits or more;
+ * nothing calls it (0x1219a). */
+uint16_t isqrt16(uint32_t value) {
+  static const uint16_t SQUARE_ROOT_MOST = 0x100;
+  static const uint32_t SQUARE_ROOT_DOMAIN = 0x10000;
+  static const int32_t BITS_PER_STEP = 2;
+  static const uint32_t STEP_MASK = 3;
+  uint32_t root = 0;
+  uint32_t remainder = 0;
+
+  if ((int32_t)value < 0) {
+    return 0;
+  }
+  if (value >= SQUARE_ROOT_DOMAIN) {
+    return SQUARE_ROOT_MOST;
+  }
+  for (int32_t shift = 14; shift >= 0; shift -= BITS_PER_STEP) {
+    const uint32_t trial = root << BITS_PER_STEP | 1;
+
+    remainder = remainder << BITS_PER_STEP | (value >> shift & STEP_MASK);
+    root <<= 1;
+    if (remainder >= trial) {
+      remainder -= trial;
+      root |= 1;
+    }
+  }
+  /* The half bit: value >= (root + 1/2)^2 when the remainder exceeds
+   * the root. */
+  if (remainder > root) {
+    root++;
+  }
+  return root;
+}
+
+/* A long rotated left by a count modulo 32, as rol.l takes it
+ * (0x13406). */
+uint32_t rotate_left(uint32_t value, uint8_t count) {
+  count %= ARITHMETIC_LONG_BITS;
+  if (count == 0) {
+    return value;
+  }
+  return value << count | value >> (ARITHMETIC_LONG_BITS - count);
+}
+
+/* A word's set bits (0x4f1da). */
+char count_bits(uint32_t word) {
+  char count = 0;
+
+  for (; word != 0; word >>= 1) {
+    if (word & 1) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/* Four bytes, high first, as a long; returns the byte after them
+ * (0x4ef8e). */
+uint8_t* bytes_to_long(uint8_t* bytes, uint32_t* value) {
+  static const int32_t LONG_BYTES = 4;
+  uint32_t result = 0;
+
+  for (int32_t i = 0; i < LONG_BYTES; i++) {
+    result = result << 8 | *bytes++;
+  }
+  *value = result;
+  return bytes;
+}
+
+/* Whether two byte strings have the same nonzero length and bytes
+ * (0x4fb54). */
+uint32_t bytes_equal_n(char* a, int16_t a_length, char* b, int16_t b_length) {
+  if (a_length != b_length || a_length == 0) {
+    return 0;
+  }
+  for (; *a == *b; a++, b++) {
+    if (--a_length == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/* The 64-bit routines pass a number as two longs, the high first. */
+static uint64_t arithmetic_int64(uint32_t high, uint32_t low) {
+  return (uint64_t)high << ARITHMETIC_LONG_BITS | low;
+}
+
+/* The sum of two 64-bit numbers (0x410fa). */
+uint64_t int64_add(int32_t a_high, uint32_t a_low, int32_t b_high,
+                   uint32_t b_low) {
+  return arithmetic_int64(a_high, a_low) + arithmetic_int64(b_high, b_low);
+}
+
+/* A 64-bit number negated (0x4111e). */
+uint64_t int64_negate(int32_t high, int32_t low) {
+  return -arithmetic_int64(high, low);
+}
+
+/* A 64-bit number plus a signed long; nothing calls it (0x41132). */
+uint64_t int64_add_long(uint32_t addend, int32_t high, uint32_t low) {
+  const int32_t signed_addend = addend;
+
+  return arithmetic_int64(high, low) + (int64_t)signed_addend;
+}
+
+/* A signed 64-bit number divided by a long.  A quotient too wide for 32
+ * bits leaves divs.l's destination as it was, so that the result is the
+ * dividend's low long; nothing calls it (0x4115c). */
+int32_t int64_divide(int32_t divisor, int32_t high, uint32_t low) {
+  static const int64_t LONG_MOST = 0x7fffffff;
+  static const int64_t LONG_LEAST = -LONG_MOST - 1;
+  const int64_t quotient = (int64_t)arithmetic_int64(high, low) / divisor;
+
+  if (quotient < LONG_LEAST || quotient > LONG_MOST) {
+    return low;
+  }
+  return quotient;
+}
+
+/* The same unsigned, as divu.l does it; nothing calls it (0x4117e). */
+uint32_t uint64_divide(uint32_t divisor, uint32_t high, uint32_t low) {
+  static const uint64_t UNSIGNED_LONG_MOST = 0xffffffff;
+  const uint64_t quotient = arithmetic_int64(high, low) / divisor;
+
+  if (quotient > UNSIGNED_LONG_MOST) {
+    return low;
+  }
+  return quotient;
+}
+
+/* A signed 64-bit number as a double: its magnitude's low long plus its
+ * high long times 2^32 (two_to_32, 0x41300), the sign set after
+ * (0x4119c). */
+double int64_to_double(uint32_t high, uint32_t low) {
+  const bool negative = (high & LIBC_SIGN) != 0;
+
+  if (negative) {
+    const uint64_t magnitude = int64_negate(high, low);
+
+    high = magnitude >> ARITHMETIC_LONG_BITS;
+    low = magnitude;
+  }
+  union libc_double result = {.value = unsigned_to_double(low)};
+
+  double_add_in_place(&result.value, double_multiply_pointer(
+                                         unsigned_to_double(high), &two_to_32));
+  if (negative) {
+    result.word.high ^= LIBC_SIGN;
+  }
+  return result.value;
+}
+
+/* A double, passed as its two words, as a signed 64-bit number: its
+ * magnitude over 2^32 the high long, what remains the low, negated after;
+ * nothing calls it (0x41244). */
+uint64_t double_to_int64(uint32_t high, uint32_t low) {
+  union libc_double value = {.word = {high, low}};
+  /* double_compare(0, x) is negative when x < 0. */
+  const bool negative = double_compare(0.0, value.value) < 0;
+
+  if (negative) {
+    value.word.high ^= LIBC_SIGN;
+  }
+  const uint32_t result_high = double_to_unsigned(
+      double_divide_reversed_pointers(&two_to_32, &value.value));
+
+  double_subtract_in_place(
+      &value.value,
+      double_multiply_pointer(unsigned_to_double(result_high), &two_to_32));
+  const uint32_t result_low = double_to_unsigned(value.value);
+
+  if (negative) {
+    return int64_negate(result_high, result_low);
+  }
+  return arithmetic_int64(result_high, result_low);
+}
+
+/* A float's bits, which the magnitude routines change in place of an
+ * arithmetic negation. */
+union arithmetic_float {
+  float value;
+  uint32_t bits;
+};
+
+/* A float's magnitude: its sign flipped when float_compare finds it
+ * below 0, so that -0 and a NaN keep theirs (0x42626). */
+float float_abs(float value) {
+  union arithmetic_float result = {.value = value};
+
+  if (float_compare(0.0f, value) > 0) {
+    result.bits ^= LIBC_SIGN;
+  }
+  return result.value;
+}
+
+/* A float's magnitude, its sign bit cleared (0x133e2). */
+float float_absolute_on_stack(float f) {
+  union arithmetic_float result = {.value = f};
+
+  result.bits &= ~LIBC_SIGN;
+  return result.value;
+}
+
+/* A double, passed as its two words, with its sign bit cleared; nothing
+ * calls it (0x133f2). */
+uint64_t double_abs(uint32_t high, uint32_t low) {
+  return arithmetic_int64(high & ~LIBC_SIGN, low);
+}
+
+/* A double rounded half away from zero to a long, saturating at the
+ * long's bounds (0x1223c).  double_compare(a, x) is negative when
+ * x < a and positive when x > a. */
+int32_t double_round_to_long(double x) {
+  static const double LONG_LEAST = -2147483648.0;
+  static const double LONG_MOST = 2147483647.0;
+  static const int32_t LONG_LEAST_VALUE = -2147483647 - 1;
+  static const int32_t LONG_MOST_VALUE = 2147483647;
+  static const double HALF = 0.5;
+
+  if (double_compare(0.0, x) < 0) {
+    if (double_compare(LONG_LEAST, x) < 0) {
+      return LONG_LEAST_VALUE;
+    }
+    /* 0.5 - x, the magnitude rounded up. */
+    return -double_to_integer(double_subtract_pointer(HALF, &x));
+  }
+  if (double_compare(LONG_MOST, x) > 0) {
+    return LONG_MOST_VALUE;
+  }
+  return double_to_integer(double_add_pointer(HALF, &x));
 }
 
 /* 1e-30 to 1e30: the image's tables at 0x12614 and 0x129fc, which
@@ -331,4 +567,26 @@ uint32_t sign_extend_bits(uint32_t value, uint8_t width) {
     value |= ~(uint32_t)0 << width;
   }
   return value;
+}
+
+/* A float's magnitude bisected in powers_of_ten_float_21 (1e-21 to
+ * 1e21, 0x32700) between entries 0 and 42: the entry after the last at
+ * or below it, less an offset, which the image takes unchecked.
+ * Nothing calls it (0x3202a). */
+float float_table_index(float* value, int16_t offset) {
+  static const int16_t TABLE_END = 42;
+  const float magnitude = double_to_float(fabs(float_to_double(*value)));
+  int16_t low = 0;
+  int16_t high = TABLE_END;
+
+  while (low + 1 < high) {
+    const int16_t middle = (low + high) / 2;
+
+    if (float_compare(magnitude, powers_of_ten_float_21[middle]) < 0) {
+      high = middle;
+    } else {
+      low = middle;
+    }
+  }
+  return powers_of_ten_float_21[low - offset + 1];
 }

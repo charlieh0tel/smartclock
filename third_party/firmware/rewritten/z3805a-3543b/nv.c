@@ -133,6 +133,18 @@ void clear_nv(void) {
   nv_slot_erase(1);
 }
 
+/* Clears the NV settings, makes the battery-backed RAM's checksum good
+ * with its restore flag clear, so that system_init does not restore it,
+ * and restarts through trap #12 (docs/firmware/restart.md) (0x45c92). */
+void nv_clear_and_reset(void) {
+  clear_nv();
+  enter_supervisor_mode();
+  preserved_region.restore = 0;
+  preserved_region.checksum =
+      record_checksum(&preserved_region, sizeof preserved_region);
+  __m68k_trap(12);
+}
+
 /* Loads the settings from slot 0, else slot 1; else takes their defaults,
  * saves them to slot 0 when it is erased or no newer than slot 1, else to
  * slot 1, erasing the other, and reports the configuration lost

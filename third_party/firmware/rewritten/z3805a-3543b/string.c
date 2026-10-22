@@ -102,3 +102,11 @@ int32_t toupper(int32_t c) {
   }
   return c;
 }
+
+/* A string in upper case, in place, indexed by a signed byte, so that
+ * past 127 characters it wraps to before the string (0x2e6c0). */
+void string_upper(char* text) {
+  for (int8_t i = 0; text[i] != '\0'; i++) {
+    text[i] = toupper(text[i]);
+  }
+}

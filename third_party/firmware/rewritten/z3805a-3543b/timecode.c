@@ -50,6 +50,47 @@ char tcode_request(timecode_format format) {
   return released;
 }
 
+/* A float's bits as a long: the image compares positive floats as
+ * longs, which order as the floats do. */
+static int32_t timecode_float_bits(float value) {
+  union {
+    float value;
+    int32_t bits;
+  } reading = {.value = value};
+
+  return reading.bits;
+}
+
+/* The decimal exponent of a float's magnitude, given as its bits, -30
+ * to 31: a binary search of powers_of_ten_float for the first power
+ * not below it (0x12984). */
+int16_t tfom_table_index(uint32_t tfom) {
+  static const uint32_t SIGN_BIT = 0x80000000u;
+  /* 10^0's index in powers_of_ten_float. */
+  static const int16_t EXPONENT_ZERO = 30;
+  int32_t magnitude = tfom & ~SIGN_BIT;
+  int16_t low = 0;
+  int16_t high = sizeof powers_of_ten_float / sizeof powers_of_ten_float[0];
+
+  for (;;) {
+    int16_t middle = (low + high) / 2;
+    int32_t power;
+
+    if (middle == low) {
+      return high - EXPONENT_ZERO;
+    }
+    power = timecode_float_bits(powers_of_ten_float[middle]);
+    if (magnitude == power) {
+      return middle - EXPONENT_ZERO;
+    }
+    if (magnitude < power) {
+      high = middle;
+    } else {
+      low = middle;
+    }
+  }
+}
+
 /* The time code's t, from pll.tfom's bits: its decimal exponent moved by 9
  * and kept to 0 to 9 (0x13a48). */
 int16_t tfom_code(uint32_t tfom) {

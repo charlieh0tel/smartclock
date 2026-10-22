@@ -97,6 +97,24 @@ int16_t console_port_read(void) {
 /* Has the next read give the last character again (0x29cc6). */
 void scpi_input_ended(void) { scpi_input_repeat = 1; }
 
+/* The port's read of up to length characters into a buffer, stopping
+ * at an end, which the next read gives again; the characters read
+ * (0x29b96). */
+int32_t scpi_console_read(scpi_port* port, uint8_t* buffer, int32_t length) {
+  int32_t count = 0;
+
+  while (count < length) {
+    int16_t character = console_port_read();
+
+    if (character >= SCPI_PORT_CHARACTERS) {
+      scpi_input_ended();
+      break;
+    }
+    buffer[count++] = character;
+  }
+  return count;
+}
+
 /* Writes a character to the console, keeping it in the echo buffer, or
  * CR LF for an end (0x29cd0). */
 void scpi_console_putc(scpi_port* port, int32_t character) {
@@ -116,6 +134,24 @@ void scpi_console_write_loop(scpi_port* port, char* s, int32_t n) {
   for (; n > 0 && *s != 0; n--, s++) {
     scpi_console_putc(port, *s);
   }
+}
+
+/* Sets bits of the status byte, a method of the port (0x29d50). */
+void status_byte_set_bits(scpi_port* port, int32_t bits) {
+  status_byte |= bits;
+  status_update_rqs();
+}
+
+/* Clears bits of the status byte, a method of the port (0x29d62). */
+void status_byte_clear_bits(scpi_port* port, int32_t bits) {
+  status_byte &= ~bits;
+  status_update_rqs();
+}
+
+/* Sets the service request enable, a method of the port (0x29d76). */
+void status_sre_set(scpi_port* port, int32_t enable) {
+  service_request_enable = enable;
+  status_update_rqs();
 }
 
 /* The service request enable, a method of the port (0x29d88). */

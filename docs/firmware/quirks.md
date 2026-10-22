@@ -47,6 +47,10 @@ routine and the address that shows it.
 - **`clock_days_before_month`'s callers** index `days_before_month`
   and `days_before_month_leap` (`0x1186c`) by an unchecked month: 0
   reads the word before, past 12 the words after.
+- **`scpi_real_to_text` (`0x2553a`)** takes an exponent's hundreds'
+  digits from `decimal_digit_pairs` (`0x25c82`) unchecked, so that a
+  resolution of 10000 or more reads past the table into the code after
+  it, which is not digits, and the conversion fails.
 - **`exception_name` (`0x11a2a`)** indexes `exception_names` by a frame's
   vector offset, unchecked below vector 2 and unaligned, as bytes.
 - **The status system** indexes `status_negative_conditions`
@@ -57,7 +61,8 @@ routine and the address that shows it.
 ## What C does not say
 
 - **`int64_divide` and `uint64_divide`**, on a quotient too wide for 32
-  bits, return the dividend's low long, as `divs.l` leaves it.
+  bits, return the dividend's low long, as `divs.l` leaves it; the C
+  does the same.
 - **`setjmp`** reads its caller's registers.  Nothing calls it or
   `longjmp`: no call, and no table holds either's address.
 

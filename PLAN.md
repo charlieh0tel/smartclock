@@ -1353,6 +1353,16 @@ view cannot drift apart.  The library, bottom up:
      local to it until they move to `smartclock.h`.
      `applications/pll/pll_scpi`, 44 in `pllc.c`: the settings server,
      the clamps and the descriptors' hooks and actions.
+     And the rest of `platform` (36: the arithmetic, the boot code,
+     start-up, the C library's), of the devices and services (35: the
+     log's pages, the clock record, the leap events, the PPS, the
+     timers, the LEDs) and `services/status` with the SCPI engine's
+     remainder (31); the two 64-bit divides reproduce `divs.l`'s wide
+     quotient now and agree (1277 agreeing, 8 skipped, 5 known, none
+     failed).  On the way: the decompiled `scpi_real_to_text` read the
+     digit pairs at `0x25c82` as a string literal, which past its end is
+     gcc's data, not the image's; typed `uint16_t[100]`, it reads the
+     ROM's.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

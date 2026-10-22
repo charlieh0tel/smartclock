@@ -33,6 +33,16 @@ static packed_datetime* klok_when(uint32_t* time) {
   return (packed_datetime*)time;
 }
 
+/* Links an entry into a list sorted by time and date, after every entry
+ * not later than it (0x10c34). */
+void klok_insert_sorted(klok_entry** list, klok_entry* entry) {
+  while (*list != NULL && datetime_compare(&(*list)->time, &entry->time) <= 0) {
+    list = &(*list)->next;
+  }
+  entry->next = *list;
+  *list = entry;
+}
+
 /* Queues a copy of an event on the clock list from the free list; NULL
  * with none free or the mutex not taken (0x10540). */
 klok_entry* clk_do(klok_entry* event) {

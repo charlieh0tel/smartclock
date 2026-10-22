@@ -101,6 +101,75 @@ uint16_t log_page_checksum(log_page* page) {
       records_byte_sum((const uint8_t*)page->entries, sizeof page->entries));
 }
 
+/* The event log's pages in the EEPROM, at 0x400d40, which the export
+ * declares no object for. */
+static log_page* const LOG_EEPROM_PAGES = (log_page*)0x400d40;
+
+/* log_page_write's result when the EEPROM write fails. */
+static const uint32_t LOG_PAGE_WRITE_FAILED = 0xfffffffe;
+
+/* Empties a page (0x31bba). */
+void log_page_clear(void* page) { memset(page, 0, sizeof(log_page)); }
+
+/* Reads an event log page from the EEPROM; 0xff if its checksum fails,
+ * else 0 (0x3141a). */
+uint32_t log_page_read(uint8_t page, log_page* destination) {
+  static const uint32_t CHECKSUM_FAILS = 0xff;
+
+  *destination = LOG_EEPROM_PAGES[page];
+  return log_page_checksum(destination) == destination->checksum
+             ? 0
+             : CHECKSUM_FAILS;
+}
+
+/* Writes an event log page to the EEPROM if its entries have changed,
+ * its write count one past the EEPROM's and its checksum made;
+ * LOG_PAGE_WRITE_FAILED if the write fails, else 0 (0x313a4). */
+uint32_t log_page_write(uint8_t page, log_page* source) {
+  log_page* stored = &LOG_EEPROM_PAGES[page];
+
+  if (memcmp(stored->entries, source->entries, sizeof source->entries) == 0) {
+    return 0;
+  }
+  source->write_count = stored->write_count + 1;
+  source->checksum = log_page_checksum(source);
+  if ((uint8_t)eeprom_write((char*)stored, (char*)source, sizeof *source) ==
+      0) {
+    return LOG_PAGE_WRITE_FAILED;
+  }
+  return 0;
+}
+
+/* Empties the event log, every page in the EEPROM, reporting a memory
+ * error for source if a write fails, and logs "Log cleared" if none
+ * did; returns the first failure's low byte, or 0 (0x31536). */
+char log_erase(uint8_t source) {
+  uint8_t status = 0;
+
+  log_page_clear(&log_write_page);
+  log_page_clear(&log_page_buffer);
+  for (uint8_t page = 0; page < RECORDS_LOG_PAGES; page++) {
+    status = log_page_write(page, &log_write_page);
+    if (status != 0) {
+      if (status == (uint8_t)LOG_PAGE_WRITE_FAILED) {
+        status_report_from(STATUS_MEMORY_ERROR, source);
+      }
+      break;
+    }
+  }
+  log_write_page_number = 0;
+  log_page_number = 0;
+  log_cursor = log_write_page.entries;
+  log_entries = 0;
+  log_write_page_open = 0;
+  log_full = 0;
+  status_happening(STATUS_LOG_ALMOST_FULL_CLEARED);
+  if (status == 0) {
+    log_append("Log cleared", 0, 0);
+  }
+  return status;
+}
+
 /* log_erase under log_mutex (0x315e8). */
 int32_t log_erase_locked(uint8_t source) {
   int32_t error = mutex_lock(&log_mutex);
@@ -345,6 +414,60 @@ uint32_t log_append(char* format, int32_t argument_1, int32_t argument_2) {
     status_happening(STATUS_LOG_ALMOST_FULL_SET);
   }
   return status;
+}
+
+/* A log line's text and heading buffers: an array size, so #define. */
+#define LOG_TEXT_SIZE 80
+
+/* "Log status: ...", the event log's (reset_causes false) or the
+ * reset-cause log's entries, into text (0x2b4c2). */
+void log_status(char* text, char reset_causes) {
+  uint8_t event_log_full = 0;
+  uint8_t reset_log_full = 0;
+  int16_t count = reset_causes ? log_count(&reset_log_full)
+                               : log_entry_total(&event_log_full);
+
+  if (event_log_full || reset_log_full) {
+    sprintf(text, "Log status: Full");
+    return;
+  }
+  switch (count) {
+    case -1:
+      /* The image falls through, so that "Empty" replaces it. */
+      sprintf(text, "Log status: Error");
+      /* fall through */
+    case 0:
+      sprintf(text, "Log status: Empty");
+      break;
+    case 1:
+      sprintf(text, "Log status: One entry");
+      break;
+    default:
+      sprintf(text, "Log status: %-3d entries", count);
+      break;
+  }
+}
+
+/* Prints the event log or the reset-cause log: its status, then each
+ * entry under its heading (0x2b578). */
+void log_print(char reset_causes, write_function* write,
+               printf_function* print) {
+  char text[LOG_TEXT_SIZE];
+  char heading[LOG_TEXT_SIZE];
+  int16_t count = reset_causes ? log_count(0) : log_entry_total(0);
+
+  log_status(text, reset_causes);
+  print("%s\r\n", text);
+  write("\r\n");
+  for (int16_t number = 1; number <= count; number++) {
+    if (reset_causes) {
+      log_entry_text(number, text, heading);
+    } else {
+      log_read(number, text, heading);
+    }
+    print("%s:  %s\r\n", heading, text);
+  }
+  write("\r\n");
 }
 
 /* The sum and its complement of a reset-cause record's bytes from its

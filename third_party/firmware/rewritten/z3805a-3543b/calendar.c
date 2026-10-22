@@ -358,3 +358,27 @@ void local_to_utc(uint32_t* date, time_of_day* time) {
   *date = value.date;
   *time = value.time;
 }
+
+/* A time zone's hours and minutes as a magnitude and a sign, for
+ * :PTIMe:TZONe?: div's quotient and remainder of its minutes, each made
+ * positive; -1 if either was negative, else 1 (0x2e0d8). */
+int8_t time_zone_split(int8_t hours, int8_t minutes, int8_t* hours_out,
+                       int8_t* minutes_out) {
+  uint64_t hours_minutes =
+      div(hours * CLOCK_MINUTES_PER_HOUR + minutes, CLOCK_MINUTES_PER_HOUR);
+  int32_t whole_hours = hours_minutes >> 32;
+  int32_t left_minutes = hours_minutes;
+  int8_t sign = 1;
+
+  *hours_out = whole_hours;
+  *minutes_out = left_minutes;
+  if (whole_hours < 0) {
+    sign = -1;
+    *hours_out = -whole_hours;
+  }
+  if (left_minutes < 0) {
+    sign = -1;
+    *minutes_out = -left_minutes;
+  }
+  return sign;
+}

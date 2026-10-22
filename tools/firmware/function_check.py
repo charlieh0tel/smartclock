@@ -192,6 +192,29 @@ FORMATS = [
 # which coarsens it (0x32612).
 LOAD_DOUBLE = 0x322AA
 DOUBLE_STEPS = [0.5, 0.001, 1e-12, 100.0]
+# status_register_setup's arguments as status_init passes them
+# (0x2f4b8 to 0x2f50a): a status model, its first argument, whose
+# seven register pointers point into the pointee memory, and the
+# console port's object (0x29e18) for the Status Byte, register 0,
+# which has no parent; the others report into register 0 or 2, at a
+# bit, with no port.
+SETUP_REGISTERS = struct.pack(">7I", *(0x31300000 + 0x10 * index for index in range(7)))
+SETUP_MODEL = struct.pack(">hIIII", 7, 0, 0, 0, 0) + SETUP_REGISTERS
+CONSOLE_PORT = 0x29E18
+SETUP_CASES = [
+    (0, 0, 0, 0, 0, CONSOLE_PORT),
+    (1, 0x0010FFFE, 0x0010FFFE, 0, 0x20, 0),
+    (3, 0xFFFF0002, 0x12345678, 2, 8, 0),
+    (6, 0x13FF, 0, 2, 1, 0),
+]
+# scpi_format_resolution_array_record's records, by kind (0x26822): a
+# block, a resolution array and a kind of neither, each at eight zero
+# bytes in ROM (0x2f76e, an empty block and an empty array), with
+# return_zero (0x29ada) as the release routine at +6, which it calls
+# whatever the kind.
+EMPTY_IN_ROM = 0x2F76E
+RETURN_ZERO = 0x29ADA
+ARRAY_RECORD_KINDS = [0, 1, 2, -1]
 GIVEN_CASES = {
     "vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "clamp_double_to_step_and_limits": [
@@ -202,6 +225,12 @@ GIVEN_CASES = {
     "double_to_digits": [{1: count, 5: mode} for count, mode in DIGITS],
     **{name: [{0: value} for value in SPECIAL_DOUBLES] for name in ("frexp", "modf", "sqrt", "log", "fabs")},
     "pow": [{0: base, 1: exponent} for base, exponent in POWERS],
+    "status_register_setup": [
+        {0: SETUP_MODEL, **{position + 1: value for position, value in enumerate(values)}} for values in SETUP_CASES
+    ],
+    "scpi_format_resolution_array_record": [
+        {1: struct.pack(">bBII", kind, 0, EMPTY_IN_ROM, RETURN_ZERO)} for kind in ARRAY_RECORD_KINDS
+    ],
 }
 
 # Arguments a routine indexes a table by unchecked, which every caller
@@ -224,22 +253,14 @@ IN_RANGE = {
 # The firmware's own: os_report_processes holds
 # the address of "%s" in D5 across its calls (0x16768), which
 # os_report_process prints as a task's stack share.  And what C cannot
-# say: setjmp reads its caller's registers; int64_divide and
-# uint64_divide, on a quotient too wide for 32 bits, return the
-# dividend's low long, as divs.l leaves it; log_erase checksums a
+# say: setjmp reads its caller's registers; log_erase checksums a
 # pointer's bytes.
 D5_SHARE = Known(
     "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16768)",
     r"^effect \d+ trap #4 service 4 ",
 )
-WIDE_QUOTIENT = Known(
-    "a quotient too wide for 32 bits: the image returns the dividend's low long, as divs.l leaves it",
-    r"^result [0-9a-f]+, image's [0-9a-f]+$",
-)
 KNOWN = {
     **{name: D5_SHARE for name in ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")},
-    "int64_divide": WIDE_QUOTIENT,
-    "uint64_divide": WIDE_QUOTIENT,
     "setjmp": Known(
         "setjmp reads its caller's registers, which C has no name for",
         r"^one stopped: image None, gcc Invalid memory read \(UC_ERR_READ_UNMAPPED\) of fffff000 ",

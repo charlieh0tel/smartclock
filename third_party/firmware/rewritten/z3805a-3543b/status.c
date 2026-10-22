@@ -284,12 +284,12 @@ void error_queue_read(status_model* status, int32_t* code, uint32_t* message) {
 
 /* Allocates the error queue, with room for capacity entries, into its
  * slot, reporting into a status model; -56 for no memory (0x28588). */
-uint32_t error_queue_create(scpi_engine_error_queue** slot, int32_t capacity,
+uint32_t error_queue_create(status_error_queue** slot, int32_t capacity,
                             status_model* status) {
   /* A spare entry's room beyond the ring's. */
-  scpi_engine_error_queue* ring = memory_allocate(
-      capacity * sizeof(scpi_engine_error_entry) +
-      sizeof(scpi_engine_error_queue) + sizeof(scpi_engine_error_entry));
+  status_error_queue* ring =
+      memory_allocate(capacity * sizeof(status_error_entry) +
+                      sizeof(status_error_queue) + sizeof(status_error_entry));
 
   *slot = ring;
   if (ring == 0) {
@@ -328,7 +328,7 @@ static int32_t status_error_class(int16_t code) {
 /* Adds an error to the queue and reports its class; its last free entry
  * takes -350, Queue overflow, in its place.  1 when the queue is full or
  * overflows, else 0 (0x285d4). */
-int16_t error_queue_push(scpi_engine_error_queue* queue, int32_t code,
+int16_t error_queue_push(status_error_queue* queue, int32_t code,
                          uint32_t value) {
   /* The error the queue's last free entry takes, "Queue overflow" in
    * scpi_error_messages (0x28610). */
@@ -367,7 +367,7 @@ int16_t error_queue_push(scpi_engine_error_queue* queue, int32_t code,
 
 /* Takes the oldest error and its value, 0 and 0 when the queue is
  * empty, and prompts again once it empties (0x2869e). */
-void error_queue_pop(scpi_engine_error_queue* queue, int32_t* code,
+void error_queue_pop(status_error_queue* queue, int32_t* code,
                      uint32_t* value) {
   if (queue->head == queue->tail) {
     *code = 0;
@@ -386,7 +386,7 @@ void error_queue_pop(scpi_engine_error_queue* queue, int32_t* code,
 }
 
 /* Frees the error queue (0x28712). */
-void error_queue_destroy(scpi_engine_error_queue* queue) { memory_free(queue); }
+void error_queue_destroy(status_error_queue* queue) { memory_free(queue); }
 
 /* Sets a register's positive transition filter, for :PTRansition
  * (0x2889a). */

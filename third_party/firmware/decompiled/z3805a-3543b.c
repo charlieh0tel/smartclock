@@ -1826,89 +1826,72 @@ struct scpi_action_param {
     void *action;
 };
 
-typedef struct scpi_decimal scpi_decimal, *Pscpi_decimal;
+typedef struct scpi_arena scpi_arena, *Pscpi_arena;
 
-struct scpi_decimal {
-    int16_t sign;
-    char digits[16];
-    int16_t exponent;
-};
-
-typedef struct scpi_double_step scpi_double_step, *Pscpi_double_step;
-
-typedef double (scpi_double_step_function)(struct scpi_double_step *, double *, int32_t);
-
-struct scpi_double_step {
-    uint32_t value[2];
-    scpi_double_step_function *function;
-};
-
-typedef struct scpi_engine_arena scpi_engine_arena, *Pscpi_engine_arena;
-
-struct scpi_engine_arena {
+struct scpi_arena {
     uint8_t *next;
     uint8_t *last;
 };
 
-typedef struct scpi_engine_array scpi_engine_array, *Pscpi_engine_array;
+typedef struct scpi_array scpi_array, *Pscpi_array;
 
-struct scpi_engine_array {
+struct scpi_array {
     int32_t count;
     void *values;
 };
 
-typedef struct scpi_engine_array_record scpi_engine_array_record, *Pscpi_engine_array_record;
+typedef struct scpi_array_record scpi_array_record, *Pscpi_array_record;
 
-struct scpi_engine_array_record {
+struct scpi_array_record {
     int8_t kind;
     uint8_t unused;
     void *array;
 };
 
-typedef struct scpi_engine_bcd scpi_engine_bcd, *Pscpi_engine_bcd;
+typedef struct scpi_bcd scpi_bcd, *Pscpi_bcd;
 
-struct scpi_engine_bcd {
+struct scpi_bcd {
     int16_t negative;
     uint8_t digits[8];
     int16_t exponent;
 };
 
-typedef struct scpi_engine_block scpi_engine_block, *Pscpi_engine_block;
+typedef struct scpi_block scpi_block, *Pscpi_block;
 
-struct scpi_engine_block {
+struct scpi_block {
     uint32_t length;
     void *data;
 };
 
-typedef struct scpi_engine_call scpi_engine_call, *Pscpi_engine_call;
+typedef struct scpi_call scpi_call, *Pscpi_call;
 
-typedef struct scpi_engine_node scpi_engine_node, *Pscpi_engine_node;
+typedef struct scpi_node scpi_node, *Pscpi_node;
 
 typedef struct scpi_port scpi_port, *Pscpi_port;
 
 typedef struct status_model status_model, *Pstatus_model;
 
-typedef struct scpi_engine_child_list scpi_engine_child_list, *Pscpi_engine_child_list;
+typedef struct scpi_child_list scpi_child_list, *Pscpi_child_list;
 
-typedef struct scpi_engine_handler scpi_engine_handler, *Pscpi_engine_handler;
+typedef struct scpi_handler scpi_handler, *Pscpi_handler;
 
-typedef struct scpi_engine_response_item scpi_engine_response_item, *Pscpi_engine_response_item;
+typedef struct scpi_response_item scpi_response_item, *Pscpi_response_item;
 
 typedef int32_t (scpi_port_read_function)(struct scpi_port *);
 
 typedef struct scpi_port_methods scpi_port_methods, *Pscpi_port_methods;
 
-typedef struct scpi_engine_error_queue scpi_engine_error_queue, *Pscpi_engine_error_queue;
+typedef struct status_error_queue status_error_queue, *Pstatus_error_queue;
 
 typedef struct status_condition status_condition, *Pstatus_condition;
 
 typedef struct status_register status_register, *Pstatus_register;
 
-typedef int32_t (scpi_engine_handler_function)(uint8_t *, void *, struct scpi_engine_call *);
+typedef int32_t (scpi_handler_function)(uint8_t *, void *, struct scpi_call *);
 
-typedef struct scpi_engine_parameter scpi_engine_parameter, *Pscpi_engine_parameter;
+typedef struct scpi_parameter scpi_parameter, *Pscpi_parameter;
 
-typedef int32_t (scpi_engine_format_function)(struct scpi_port *, void *, uint32_t, struct scpi_engine_call *);
+typedef int32_t (scpi_format_function)(struct scpi_port *, void *, uint32_t, struct scpi_call *);
 
 typedef void (scpi_port_close_function)(struct scpi_port *);
 
@@ -1922,18 +1905,25 @@ typedef void (scpi_port_bits_function)(struct scpi_port *, int);
 
 typedef uint8_t (scpi_port_byte_function)(struct scpi_port *);
 
-typedef struct scpi_engine_error_entry scpi_engine_error_entry, *Pscpi_engine_error_entry;
+typedef struct status_error_entry status_error_entry, *Pstatus_error_entry;
 
-typedef struct scpi_engine_parameter_kinds scpi_engine_parameter_kinds, *Pscpi_engine_parameter_kinds;
+typedef struct scpi_parameter_kinds scpi_parameter_kinds, *Pscpi_parameter_kinds;
 
 typedef struct scpi_unit scpi_unit, *Pscpi_unit;
 
-typedef struct scpi_engine_choices scpi_engine_choices, *Pscpi_engine_choices;
+typedef struct scpi_choices scpi_choices, *Pscpi_choices;
 
-struct scpi_engine_handler {
-    scpi_engine_handler_function *function;
-    struct scpi_engine_parameter *parameters;
-    int16_t parameters_size;
+struct scpi_parameter {
+    struct scpi_parameter *next;
+    struct scpi_parameter_kinds *kinds;
+};
+
+struct scpi_parameter_kinds {
+    int16_t size;
+    int16_t optional;
+    struct scpi_unit *units;
+    struct scpi_choices *choices;
+    void *converters[0];
 };
 
 struct scpi_port_methods {
@@ -1956,17 +1946,9 @@ struct scpi_port_methods {
     scpi_port_byte_function *sre_get;
 };
 
-struct scpi_engine_response_item {
-    scpi_engine_format_function *format;
-    int16_t size;
-    uint32_t argument;
-};
-
-struct scpi_engine_child_list {
-    uint16_t id;
-    int16_t count;
-    int16_t default_child;
-    struct scpi_engine_node *children[0];
+struct status_error_entry {
+    int16_t code;
+    uint32_t value;
 };
 
 struct status_register {
@@ -1979,46 +1961,27 @@ struct status_register {
     int16_t parent_bit;
 };
 
-struct scpi_engine_parameter_kinds {
-    int16_t size;
-    int16_t optional;
-    struct scpi_unit *units;
-    struct scpi_engine_choices *choices;
-    void *converters[0];
-};
-
-struct scpi_engine_choices {
-    char **keywords;
-    int16_t *values;
-};
-
-struct scpi_engine_error_entry {
-    int16_t code;
-    uint32_t value;
-};
-
 struct scpi_unit {
     char *name;
     int16_t exponent;
 };
 
-struct scpi_engine_parameter {
-    struct scpi_engine_parameter *next;
-    struct scpi_engine_parameter_kinds *kinds;
+struct scpi_child_list {
+    uint16_t id;
+    int16_t count;
+    int16_t default_child;
+    struct scpi_node *children[0];
 };
 
-struct scpi_engine_error_queue {
-    int16_t head;
-    int16_t tail;
-    struct status_model *status;
-    int16_t size;
-    struct scpi_engine_error_entry entries[0];
+struct scpi_choices {
+    char **keywords;
+    int16_t *values;
 };
 
-struct scpi_engine_call {
-    struct scpi_engine_node *node;
+struct scpi_call {
+    struct scpi_node *node;
     uint16_t query;
-    struct scpi_engine_arena *arena;
+    struct scpi_arena *arena;
     uint8_t *parameters;
     uint8_t *response;
     struct scpi_port *input;
@@ -2029,19 +1992,30 @@ struct scpi_engine_call {
 struct status_model {
     int16_t register_count;
     struct scpi_port *output;
-    struct scpi_engine_error_queue *queue;
+    struct status_error_queue *queue;
     struct status_condition *conditions;
     int32_t field_0e;
     struct status_register *registers[7];
 };
 
-struct scpi_engine_node {
-    char *keywords;
-    struct scpi_engine_child_list *children;
-    struct scpi_engine_handler handlers[2];
-    struct scpi_engine_response_item *response_items;
-    int16_t response_size;
-    int16_t path_word;
+struct scpi_handler {
+    scpi_handler_function *function;
+    struct scpi_parameter *parameters;
+    int16_t parameters_size;
+};
+
+struct scpi_response_item {
+    scpi_format_function *format;
+    int16_t size;
+    uint32_t argument;
+};
+
+struct status_error_queue {
+    int16_t head;
+    int16_t tail;
+    struct status_model *status;
+    int16_t size;
+    struct status_error_entry entries[0];
 };
 
 struct status_condition {
@@ -2050,55 +2024,57 @@ struct status_condition {
     int16_t bit;
 };
 
+struct scpi_node {
+    char *keywords;
+    struct scpi_child_list *children;
+    struct scpi_handler handlers[2];
+    struct scpi_response_item *response_items;
+    int16_t response_size;
+    int16_t path_word;
+};
+
 struct scpi_port {
     scpi_port_read_function *read;
     struct scpi_port_methods *methods;
 };
 
-typedef struct scpi_engine_context scpi_engine_context, *Pscpi_engine_context;
+typedef struct scpi_context scpi_context, *Pscpi_context;
 
-typedef struct scpi_engine_path scpi_engine_path, *Pscpi_engine_path;
+typedef struct scpi_path scpi_path, *Pscpi_path;
 
-struct scpi_engine_context {
+struct scpi_context {
     struct scpi_port *input;
     uint16_t word;
-    struct scpi_engine_path *path;
-    struct scpi_engine_call *call;
-    struct scpi_engine_arena *arena;
-    struct scpi_engine_child_list *main_tree;
-    struct scpi_engine_child_list *common_list;
+    struct scpi_path *path;
+    struct scpi_call *call;
+    struct scpi_arena *arena;
+    struct scpi_child_list *main_tree;
+    struct scpi_child_list *common_list;
     uint8_t field_1a[4];
     uint32_t field_1e;
 };
 
-struct scpi_engine_path {
-    struct scpi_engine_child_list *list;
+struct scpi_path {
+    struct scpi_child_list *list;
     int16_t count;
     uint16_t words[7];
 };
 
-typedef struct scpi_engine_float_resolution scpi_engine_float_resolution, *Pscpi_engine_float_resolution;
+typedef struct scpi_decimal scpi_decimal, *Pscpi_decimal;
 
-struct scpi_engine_float_resolution {
-    float value;
-    int16_t resolution;
+struct scpi_decimal {
+    int16_t sign;
+    char digits[16];
+    int16_t exponent;
 };
 
-typedef struct scpi_engine_precise_double scpi_engine_precise_double, *Pscpi_engine_precise_double;
+typedef struct scpi_double_step scpi_double_step, *Pscpi_double_step;
 
-struct scpi_engine_precise_double {
-    double value;
-    char to_digits;
-    uint8_t unused;
-    int16_t precision;
-};
+typedef double (scpi_double_step_function)(struct scpi_double_step *, double *, int32_t);
 
-typedef struct scpi_engine_resolution_array scpi_engine_resolution_array, *Pscpi_engine_resolution_array;
-
-struct scpi_engine_resolution_array {
-    int32_t count;
-    double *values;
-    int16_t *resolutions;
+struct scpi_double_step {
+    uint32_t value[2];
+    scpi_double_step_function *function;
 };
 
 typedef struct scpi_error_message scpi_error_message, *Pscpi_error_message;
@@ -2106,6 +2082,13 @@ typedef struct scpi_error_message scpi_error_message, *Pscpi_error_message;
 struct scpi_error_message {
     int16_t code;
     char *text;
+};
+
+typedef struct scpi_float_resolution scpi_float_resolution, *Pscpi_float_resolution;
+
+struct scpi_float_resolution {
+    float value;
+    int16_t resolution;
 };
 
 typedef struct scpi_keyword scpi_keyword, *Pscpi_keyword;
@@ -2158,13 +2141,30 @@ struct scpi_numeric_param {
     void *steps;
 };
 
+typedef struct scpi_precise_double scpi_precise_double, *Pscpi_precise_double;
+
+struct scpi_precise_double {
+    double value;
+    char to_digits;
+    uint8_t unused;
+    int16_t precision;
+};
+
+typedef struct scpi_resolution_array scpi_resolution_array, *Pscpi_resolution_array;
+
+struct scpi_resolution_array {
+    int32_t count;
+    double *values;
+    int16_t *resolutions;
+};
+
 typedef struct scpi_root_children scpi_root_children, *Pscpi_root_children;
 
 struct scpi_root_children {
     uint16_t id;
-    uint16_t count;
-    uint16_t flags;
-    void *children[49];
+    int16_t count;
+    int16_t default_child;
+    struct scpi_node *children[49];
 };
 
 typedef struct scpi_setting_param scpi_setting_param, *Pscpi_setting_param;
@@ -2603,36 +2603,34 @@ _Static_assert(sizeof(sci_driver) == 28, "sci_driver");
 _Static_assert(sizeof(sci_exchange_state) == 56, "sci_exchange_state");
 _Static_assert(sizeof(sci_settings_record) == 6, "sci_settings_record");
 _Static_assert(sizeof(scpi_action_param) == 6, "scpi_action_param");
+_Static_assert(sizeof(scpi_arena) == 8, "scpi_arena");
+_Static_assert(sizeof(scpi_array) == 8, "scpi_array");
+_Static_assert(sizeof(scpi_array_record) == 6, "scpi_array_record");
+_Static_assert(sizeof(scpi_bcd) == 12, "scpi_bcd");
+_Static_assert(sizeof(scpi_block) == 8, "scpi_block");
+_Static_assert(sizeof(scpi_call) == 30, "scpi_call");
+_Static_assert(sizeof(scpi_child_list) == 6, "scpi_child_list");
+_Static_assert(sizeof(scpi_choices) == 8, "scpi_choices");
+_Static_assert(sizeof(scpi_context) == 34, "scpi_context");
 _Static_assert(sizeof(scpi_decimal) == 20, "scpi_decimal");
 _Static_assert(sizeof(scpi_double_step) == 12, "scpi_double_step");
-_Static_assert(sizeof(scpi_engine_arena) == 8, "scpi_engine_arena");
-_Static_assert(sizeof(scpi_engine_array) == 8, "scpi_engine_array");
-_Static_assert(sizeof(scpi_engine_array_record) == 6, "scpi_engine_array_record");
-_Static_assert(sizeof(scpi_engine_bcd) == 12, "scpi_engine_bcd");
-_Static_assert(sizeof(scpi_engine_block) == 8, "scpi_engine_block");
-_Static_assert(sizeof(scpi_engine_call) == 30, "scpi_engine_call");
-_Static_assert(sizeof(scpi_engine_child_list) == 6, "scpi_engine_child_list");
-_Static_assert(sizeof(scpi_engine_choices) == 8, "scpi_engine_choices");
-_Static_assert(sizeof(scpi_engine_context) == 34, "scpi_engine_context");
-_Static_assert(sizeof(scpi_engine_error_entry) == 6, "scpi_engine_error_entry");
-_Static_assert(sizeof(scpi_engine_error_queue) == 10, "scpi_engine_error_queue");
-_Static_assert(sizeof(scpi_engine_float_resolution) == 6, "scpi_engine_float_resolution");
-_Static_assert(sizeof(scpi_engine_handler) == 10, "scpi_engine_handler");
-_Static_assert(sizeof(scpi_engine_node) == 36, "scpi_engine_node");
-_Static_assert(sizeof(scpi_engine_parameter) == 8, "scpi_engine_parameter");
-_Static_assert(sizeof(scpi_engine_parameter_kinds) == 12, "scpi_engine_parameter_kinds");
-_Static_assert(sizeof(scpi_engine_path) == 20, "scpi_engine_path");
-_Static_assert(sizeof(scpi_engine_precise_double) == 12, "scpi_engine_precise_double");
-_Static_assert(sizeof(scpi_engine_resolution_array) == 12, "scpi_engine_resolution_array");
-_Static_assert(sizeof(scpi_engine_response_item) == 10, "scpi_engine_response_item");
 _Static_assert(sizeof(scpi_error_message) == 6, "scpi_error_message");
+_Static_assert(sizeof(scpi_float_resolution) == 6, "scpi_float_resolution");
+_Static_assert(sizeof(scpi_handler) == 10, "scpi_handler");
 _Static_assert(sizeof(scpi_keyword) == 20, "scpi_keyword");
 _Static_assert(sizeof(scpi_multiplier) == 4, "scpi_multiplier");
+_Static_assert(sizeof(scpi_node) == 36, "scpi_node");
 _Static_assert(sizeof(scpi_number) == 38, "scpi_number");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
+_Static_assert(sizeof(scpi_parameter) == 8, "scpi_parameter");
+_Static_assert(sizeof(scpi_parameter_kinds) == 12, "scpi_parameter_kinds");
+_Static_assert(sizeof(scpi_path) == 20, "scpi_path");
 _Static_assert(sizeof(scpi_port) == 8, "scpi_port");
 _Static_assert(sizeof(scpi_port_methods) == 68, "scpi_port_methods");
+_Static_assert(sizeof(scpi_precise_double) == 12, "scpi_precise_double");
+_Static_assert(sizeof(scpi_resolution_array) == 12, "scpi_resolution_array");
+_Static_assert(sizeof(scpi_response_item) == 10, "scpi_response_item");
 _Static_assert(sizeof(scpi_root_children) == 202, "scpi_root_children");
 _Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
 _Static_assert(sizeof(scpi_step) == 8, "scpi_step");
@@ -2651,6 +2649,8 @@ _Static_assert(sizeof(spoo_request) == 24, "spoo_request");
 _Static_assert(sizeof(sprintf_output) == 8, "sprintf_output");
 _Static_assert(sizeof(status_condition) == 6, "status_condition");
 _Static_assert(sizeof(status_condition_code) == 1, "status_condition_code");
+_Static_assert(sizeof(status_error_entry) == 6, "status_error_entry");
+_Static_assert(sizeof(status_error_queue) == 10, "status_error_queue");
 _Static_assert(sizeof(status_model) == 46, "status_model");
 _Static_assert(sizeof(status_register) == 16, "status_register");
 _Static_assert(sizeof(status_screen_mode_line) == 6, "status_screen_mode_line");
@@ -5779,12 +5779,12 @@ void pps_monitors_reset(void);
 void scpi_round_decimal(char *record, int16_t digits) __asm__("c_scpi_round_decimal");
 void scpi_decimal_to_text_unused(char *record, char *text, int16_t digits) __asm__("c_scpi_decimal_to_text_unused");
 void scpi_double_to_decimal(double value, int16_t digits, char *record) __asm__("c_scpi_double_to_decimal");
-double scpi_bcd_to_double(scpi_engine_bcd *bcd) __asm__("c_scpi_bcd_to_double");
+double scpi_bcd_to_double(scpi_bcd *bcd) __asm__("c_scpi_bcd_to_double");
 double scpi_scale_by_power_of_ten(double value, int16_t *exponent, double *powers) __asm__("c_scpi_scale_by_power_of_ten");
 double scpi_double_multiply(double a, double b) __asm__("c_scpi_double_multiply");
 int32_t scpi_double_multiply_short();
 int32_t scpi_number_to_double(scpi_number *number,double *value,int32_t scale);
-int32_t scpi_number_to_bcd(scpi_number *number, int16_t scale, scpi_engine_bcd *bcd) __asm__("c_scpi_number_to_bcd");
+int32_t scpi_number_to_bcd(scpi_number *number, int16_t scale, scpi_bcd *bcd) __asm__("c_scpi_number_to_bcd");
 uint32_t
 scpi_real_to_text(int32_t param_1,int32_t param_2,uint8_t *param_3,int16_t param_4,int16_t param_5,
                  int16_t param_6,char param_7);
@@ -5807,58 +5807,54 @@ int32_t scpi_format_text(scpi_port *output,char **value);
 int32_t scpi_format_string(scpi_port *output,char **value);
 int32_t scpi_format_boolean(scpi_port *output,int16_t *value);
 int32_t scpi_format_counted_text(scpi_port *output,scpi_token_string *text);
-int32_t scpi_format_choice(scpi_port *output,int16_t *value,scpi_engine_choices *choices);
+int32_t scpi_format_choice(scpi_port *output,int16_t *value,scpi_choices *choices);
 int32_t scpi_unsigned_to_digits(uint32_t value,char *digits,int16_t *start);
 int32_t scpi_format_long(scpi_port *output,int32_t *value);
 int32_t scpi_format_short(scpi_port *output,int16_t *value);
 int32_t scpi_format_unsigned_long(scpi_port *output,uint32_t *value);
 int32_t scpi_format_unsigned_short(scpi_port *output,uint16_t *value);
-int32_t scpi_format_block(scpi_port *output,scpi_engine_block *block);
-int32_t scpi_format_double_array(scpi_port *output,scpi_engine_array *array);
-int32_t scpi_format_short_array(scpi_port *output,scpi_engine_array *array);
-int32_t scpi_format_resolution_array(scpi_port *output,scpi_engine_resolution_array *array);
-int32_t scpi_format_array(scpi_port *output,scpi_engine_array_record *record);
+int32_t scpi_format_block(scpi_port *output,scpi_block *block);
+int32_t scpi_format_double_array(scpi_port *output,scpi_array *array);
+int32_t scpi_format_short_array(scpi_port *output,scpi_array *array);
+int32_t scpi_format_resolution_array(scpi_port *output,scpi_resolution_array *array);
+int32_t scpi_format_array(scpi_port *output,scpi_array_record *record);
 int32_t scpi_format_resolution_array_record(scpi_port *output,char *record);
 int32_t scpi_format_double(scpi_port *output,double *value);
 int32_t scpi_format_float(scpi_port *output,float *value);
-int32_t scpi_format_double_precision(scpi_port *output,scpi_engine_precise_double *value);
+int32_t scpi_format_double_precision(scpi_port *output,scpi_precise_double *value);
 int32_t scpi_format_double_resolution(scpi_port *output,double *value,int16_t *resolution);
-int32_t scpi_format_float_resolution(scpi_port *output,scpi_engine_float_resolution *value);
+int32_t scpi_format_float_resolution(scpi_port *output,scpi_float_resolution *value);
 uint32_t
 scpi_context_init(uint32_t *param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
                  uint32_t param_5,uint32_t param_6,uint32_t param_7,uint32_t param_8,
                  uint32_t param_9);
-int32_t scpi_parse_message_unit(scpi_engine_context *context,int16_t *reset_path);
-int32_t scpi_scan_token(scpi_port *input,scpi_token *token,scpi_engine_arena *arena);
+int32_t scpi_parse_message_unit(scpi_context *context,int16_t *reset_path);
+int32_t scpi_scan_token(scpi_port *input,scpi_token *token,scpi_arena *arena);
 void scpi_skip_to_terminator(scpi_port *input);
 int32_t scpi_scan_number(scpi_number *number,int32_t have_character,int32_t character,scpi_port *input);
 int32_t scpi_scan_exponent(int32_t character,scpi_number *number,scpi_port *input);
 uint32_t scpi_char_upper(uint32_t param_1);
-int32_t scpi_parameter_match
-              (scpi_engine_parameter **parameter,int32_t kind,scpi_engine_call *call,int16_t *offset);
-uint32_t scpi_parameters_finish
-                   (scpi_engine_parameter **parameter,scpi_engine_call *call,int16_t *offset);
+int32_t scpi_parameter_match(scpi_parameter **parameter,int32_t kind,scpi_call *call,int16_t *offset);
+uint32_t scpi_parameters_finish(scpi_parameter **parameter,scpi_call *call,int16_t *offset);
 int16_t scpi_suffix_compare_tail(char *suffix,int32_t length,char *name);
 int8_t scpi_multiplier_exponent(int32_t name);
 int16_t scpi_match_suffix(int32_t length,char *suffix,scpi_unit *units,int16_t *scale);
 int32_t scpi_apply_suffix(scpi_number *number,scpi_unit *units);
 int16_t scpi_keyword_compare(char *token,int32_t length,char *keyword);
-scpi_engine_node * scpi_node_find(scpi_engine_child_list *list,scpi_keyword *keyword);
-scpi_engine_node *
-scpi_node_find_with_defaults(scpi_engine_path *path,scpi_keyword *keyword,void *unused);
-scpi_engine_node *
-scpi_node_find_numbered(scpi_engine_path *path,scpi_keyword *keyword,void *unused);
+scpi_node * scpi_node_find(scpi_child_list *list,scpi_keyword *keyword);
+scpi_node * scpi_node_find_with_defaults(scpi_path *path,scpi_keyword *keyword,void *unused);
+scpi_node * scpi_node_find_numbered(scpi_path *path,scpi_keyword *keyword,void *unused);
 uint32_t
 scpi_header_resolve(scpi_keyword *param_1,int32_t *param_2,int16_t *param_3,uint32_t *param_4,
-                   uint32_t *param_5,uint16_t param_6,int16_t param_7,scpi_engine_arena *param_8,
+                   uint32_t *param_5,uint16_t param_6,int16_t param_7,scpi_arena *param_8,
                    void *param_9);
-uint32_t scpi_header_step(scpi_keyword *keyword,scpi_engine_path *path,void *unused);
-void scpi_path_reset(scpi_engine_path *path,scpi_engine_child_list *list);
+uint32_t scpi_header_step(scpi_keyword *keyword,scpi_path *path,void *unused);
+void scpi_path_reset(scpi_path *path,scpi_child_list *list);
 uint32_t
 scpi_common_header_resolve
           (scpi_keyword *param_1,int32_t *param_2,uint16_t *param_3,int32_t *param_4,uint16_t param_5,
-          int16_t param_6,scpi_engine_arena *param_7,scpi_engine_child_list *param_8);
-scpi_engine_node * scpi_trg_defined(scpi_engine_child_list *list,uint16_t *no_setter);
+          int16_t param_6,scpi_arena *param_7,scpi_child_list *param_8);
+scpi_node * scpi_trg_defined(scpi_child_list *list,uint16_t *no_setter);
 void status_event_set(status_model *status,status_register *reg,uint32_t bits);
 void status_condition_set(status_model *status,status_register *reg,int32_t bits);
 void status_condition_clear(status_model *status,status_register *reg,int32_t bits);
@@ -5881,27 +5877,26 @@ void status_read_condition(status_model *status,int32_t index,uint16_t *conditio
 uint32_t status_clear_events(status_model *status);
 void error_queue_clear(status_model *status,int32_t *code);
 void error_queue_read(status_model *status,int32_t *code,uint32_t *message);
-uint32_t error_queue_create(scpi_engine_error_queue **queue,int32_t capacity,status_model *status);
-int16_t error_queue_push(scpi_engine_error_queue *error_queue,int32_t code,uint32_t value);
-void error_queue_pop(scpi_engine_error_queue *error_queue,int32_t *code,uint32_t *value);
-void error_queue_destroy(scpi_engine_error_queue *queue);
+uint32_t error_queue_create(status_error_queue **queue,int32_t capacity,status_model *status);
+int16_t error_queue_push(status_error_queue *error_queue,int32_t code,uint32_t value);
+void error_queue_pop(status_error_queue *error_queue,int32_t *code,uint32_t *value);
+void error_queue_destroy(status_error_queue *queue);
 void status_register_set_ptr(status_model *status,int32_t index,uint32_t filter);
 void status_register_set_ntr(status_model *status,int32_t index,uint32_t filter);
 void status_register_get_ptr(status_model *status,int32_t index,uint16_t *filter);
 void status_register_get_ntr(status_model *status,int32_t index,uint16_t *filter);
 char * error_message_lookup(int32_t code);
 uint32_t
-scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,
-              scpi_engine_child_list *param_5,scpi_engine_child_list *param_6,status_model *param_7,
-              uint32_t param_8,uint32_t param_9);
-int32_t scpi_call_handler(scpi_engine_call *call,void **response);
-int32_t scpi_format_response(scpi_port *output,scpi_engine_response_item *items,scpi_engine_call *call);
-void * arena_alloc(int32_t size,scpi_engine_arena *arena);
-void * arena_remaining(int32_t *remaining,scpi_engine_arena *arena);
-void * arena_take(void *buffer,int32_t size,scpi_engine_arena *arena);
-void * arena_current(scpi_engine_arena *arena);
-void arena_set(void *next,scpi_engine_arena *arena);
-void arena_init(void *buffer,uint32_t size,scpi_engine_arena **arena);
+scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,scpi_child_list *param_5,
+              scpi_child_list *param_6,status_model *param_7,uint32_t param_8,uint32_t param_9);
+int32_t scpi_call_handler(scpi_call *call,void **response);
+int32_t scpi_format_response(scpi_port *output,scpi_response_item *items,scpi_call *call);
+void * arena_alloc(int32_t size,scpi_arena *arena);
+void * arena_remaining(int32_t *remaining,scpi_arena *arena);
+void * arena_take(void *buffer,int32_t size,scpi_arena *arena);
+void * arena_current(scpi_arena *arena);
+void arena_set(void *next,scpi_arena *arena);
+void arena_init(void *buffer,uint32_t size,scpi_arena **arena);
 uint32_t scpi_check_range(int32_t param_1,int32_t param_2,int32_t param_3,uint8_t param_4);
 int32_t scpi_long_resolve_bound(int32_t low,int32_t high,int32_t value,int16_t *parameter);
 void scpi_numeric_set(scpi_numeric_param *param,int32_t index,int16_t kind,int16_t bound,
@@ -5915,7 +5910,7 @@ char return_byte(char b);
 uint32_t long_identity(uint32_t param_1);
 void copy_longs_locked(uint32_t *source,uint32_t *destination,uint8_t count);
 float float_identity(float x);
-void robin_store(scpi_engine_array_record *response,int16_t *points,int32_t count,robin_format format,
+void robin_store(scpi_array_record *response,int16_t *points,int32_t count,robin_format format,
                 uint8_t index);
 int32_t return_zero(void);
 int32_t scpi_query_failed(char code,void *response);
@@ -41576,12 +41571,12 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the 16 BCD digits as a 64-bit integer, normalized, then scaled by scpi_scale_by_power_of_ten
-   Not a C function (register; run): its arguments and results in registers.  In: A0 scpi_engine_bcd
-   *bcd.  Out: D0:D1 double.  Returns: ccr.  Error: D0.w -9 out of range.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 scpi_bcd *bcd.
+   Out: D0:D1 double.  Returns: ccr.  Error: D0.w -9 out of range.
    docs/scpi/README.md, run, as scpi_number_to_double */
 
 /* out D0:D1 double; returns ccr; error D0.w -9 out of range */
-__regcall double scpi_bcd_to_double(scpi_engine_bcd *bcd /* a0 */)
+__regcall double scpi_bcd_to_double(scpi_bcd *bcd /* a0 */)
 
 {
   int16_t sVar1;
@@ -42733,7 +42728,7 @@ int32_t scpi_number_to_double(scpi_number *number,double *value,int32_t scale)
 {
   bool bVar1;
   double converted;
-  scpi_engine_bcd sStack_30;
+  scpi_bcd sStack_30;
   
   bVar1 = __ghidra_piece(uint16_t, scale, 2) == 0;
   ({ __auto_type __c = scpi_number_to_bcd(number,__ghidra_piece(uint16_t, scale, 2),&sStack_30); bVar1 = __ghidra_flag(4); __c; });
@@ -42755,12 +42750,12 @@ int32_t scpi_number_to_double(scpi_number *number,double *value,int32_t scale)
 /* a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1
    beyond 309
    Not a C function (register; read): its arguments and results in registers.  In: A0 scpi_number
-   *number, D0 short scale, A1 scpi_engine_bcd *bcd.  Out: D0 int status.  Returns: ccr.  Error: D0
-   -1 exponent beyond 309.
+   *number, D0 short scale, A1 scpi_bcd *bcd.  Out: D0 int status.  Returns: ccr.  Error: D0 -1
+   exponent beyond 309.
    docs/scpi/README.md, read */
 
 /* out D0 int status; returns ccr; error D0 -1 exponent beyond 309 */
-__regcall int32_t scpi_number_to_bcd(scpi_number *number /* a0 */,int16_t scale /* d0 */,scpi_engine_bcd *bcd /* a1 */)
+__regcall int32_t scpi_number_to_bcd(scpi_number *number /* a0 */,int16_t scale /* d0 */,scpi_bcd *bcd /* a1 */)
 
 {
   int32_t iVar1;
@@ -43566,7 +43561,7 @@ int32_t scpi_format_counted_text(scpi_port *output,scpi_token_string *text)
 /* the keyword for the value, from the node's list
    docs/scpi/README.md, read */
 
-int32_t scpi_format_choice(scpi_port *output,int16_t *value,scpi_engine_choices *choices)
+int32_t scpi_format_choice(scpi_port *output,int16_t *value,scpi_choices *choices)
 
 {
   char cVar1;
@@ -43576,8 +43571,7 @@ int32_t scpi_format_choice(scpi_port *output,int16_t *value,scpi_engine_choices 
   char *pcVar5;
   char **ppcVar6;
   
-  if ((choices == (scpi_engine_choices *)0x0) ||
-     (ppcVar6 = choices->keywords, ppcVar6 == (char **)0x0)) {
+  if ((choices == (scpi_choices *)0x0) || (ppcVar6 = choices->keywords, ppcVar6 == (char **)0x0)) {
     iVar2 = -0x1c;
   }
   else {
@@ -43754,7 +43748,7 @@ int32_t scpi_format_unsigned_short(scpi_port *output,uint16_t *value)
 /* a definite-length block, #, the count of length digits, the length, then the data
    docs/scpi/README.md, read */
 
-int32_t scpi_format_block(scpi_port *output,scpi_engine_block *block)
+int32_t scpi_format_block(scpi_port *output,scpi_block *block)
 
 {
   char cVar1;
@@ -43787,7 +43781,7 @@ int32_t scpi_format_block(scpi_port *output,scpi_engine_block *block)
 /* comma-separated, by scpi_format_double
    docs/scpi/README.md, read */
 
-int32_t scpi_format_double_array(scpi_port *output,scpi_engine_array *array)
+int32_t scpi_format_double_array(scpi_port *output,scpi_array *array)
 
 {
   int32_t iVar1;
@@ -43821,7 +43815,7 @@ int32_t scpi_format_double_array(scpi_port *output,scpi_engine_array *array)
 /* comma-separated, by scpi_format_short
    docs/scpi/README.md, read */
 
-int32_t scpi_format_short_array(scpi_port *output,scpi_engine_array *array)
+int32_t scpi_format_short_array(scpi_port *output,scpi_array *array)
 
 {
   int32_t iVar1;
@@ -43855,7 +43849,7 @@ int32_t scpi_format_short_array(scpi_port *output,scpi_engine_array *array)
 /* comma-separated, by scpi_format_double_resolution, a resolution for each
    docs/scpi/README.md, read */
 
-int32_t scpi_format_resolution_array(scpi_port *output,scpi_engine_resolution_array *array)
+int32_t scpi_format_resolution_array(scpi_port *output,scpi_resolution_array *array)
 
 {
   int32_t iVar1;
@@ -43892,7 +43886,7 @@ int32_t scpi_format_resolution_array(scpi_port *output,scpi_engine_resolution_ar
 /* by its kind, a block, a double array or a short array
    docs/scpi/README.md, read */
 
-int32_t scpi_format_array(scpi_port *output,scpi_engine_array_record *record)
+int32_t scpi_format_array(scpi_port *output,scpi_array_record *record)
 
 {
   int32_t iVar1;
@@ -43934,10 +43928,10 @@ int32_t scpi_format_resolution_array_record(scpi_port *output,char *record)
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00026832_index_zero)[(int16_t)iVar1]) {
     case 4:
-      iVar1 = scpi_format_block(output,*(scpi_engine_block **)(record + 2));
+      iVar1 = scpi_format_block(output,*(scpi_block **)(record + 2));
       break;
     case 0x14:
-      iVar1 = scpi_format_resolution_array(output,*(scpi_engine_resolution_array **)(record + 2));
+      iVar1 = scpi_format_resolution_array(output,*(scpi_resolution_array **)(record + 2));
     }
   }
   else {
@@ -44004,7 +43998,7 @@ int32_t scpi_format_float(scpi_port *output,float *value)
 /* a double whose record gives either its digits or its resolution
    docs/scpi/README.md, read */
 
-int32_t scpi_format_double_precision(scpi_port *output,scpi_engine_precise_double *value)
+int32_t scpi_format_double_precision(scpi_port *output,scpi_precise_double *value)
 
 {
   char cVar1;
@@ -44078,7 +44072,7 @@ int32_t scpi_format_double_resolution(scpi_port *output,double *value,int16_t *r
 /* 6 digits to the resolution the value carries
    docs/scpi/README.md, read */
 
-int32_t scpi_format_float_resolution(scpi_port *output,scpi_engine_float_resolution *value)
+int32_t scpi_format_float_resolution(scpi_port *output,scpi_float_resolution *value)
 
 {
   char cVar1;
@@ -44137,7 +44131,7 @@ scpi_context_init(uint32_t *param_1,uint32_t param_2,uint32_t param_3,uint32_t p
 /* parses one program message unit: its header, then its parameters, token by token; sets
    *reset_path, which has scpi_interpret reset the path before the next */
 
-int32_t scpi_parse_message_unit(scpi_engine_context *context,int16_t *reset_path)
+int32_t scpi_parse_message_unit(scpi_context *context,int16_t *reset_path)
 
 {
   code *pcVar1;
@@ -44145,9 +44139,9 @@ int32_t scpi_parse_message_unit(scpi_engine_context *context,int16_t *reset_path
   int32_t command_error;
   uint32_t uVar4;
   void *unaff_D5 = ({ register int32_t __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (void *)__entry; });
-  scpi_engine_parameter_kinds *unaff_D7 = ({ register int32_t __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (scpi_engine_parameter_kinds *)__entry; });
-  scpi_engine_choices *psVar5;
-  scpi_engine_parameter *local_32;
+  scpi_parameter_kinds *unaff_D7 = ({ register int32_t __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (scpi_parameter_kinds *)__entry; });
+  scpi_choices *psVar5;
+  scpi_parameter *local_32;
   int16_t local_2e;
   scpi_token token;
   int16_t local_6;
@@ -44194,7 +44188,7 @@ LAB_00026bae:
                     /* WARNING: Switch is manually overridden */
                 switch((&switchD_00026c64_index_zero)[(int16_t)(kind - 0x13)]) {
                 case 0xe:
-                  psVar5 = (scpi_engine_choices *)unaff_D7->units;
+                  psVar5 = (scpi_choices *)unaff_D7->units;
                   goto LAB_00026c84;
                 case 0x16:
                   psVar5 = unaff_D7->choices;
@@ -44268,7 +44262,7 @@ LAB_00026bf0:
     if (context->call->parameters == (uint8_t *)0x0) {
       return -100;
     }
-    if ((local_32 == (scpi_engine_parameter *)0x0) ||
+    if ((local_32 == (scpi_parameter *)0x0) ||
        (uVar4 = scpi_parameters_finish(&local_32,context->call,&local_2e), uVar4 == 0)) {
       return 0;
     }
@@ -44305,7 +44299,7 @@ LAB_00026e5a:
 /* the SCPI lexer: reads characters through the input's own routine and classifies them by the table
    at 0x277ec */
 
-int32_t scpi_scan_token(scpi_port *input,scpi_token *token,scpi_engine_arena *arena)
+int32_t scpi_scan_token(scpi_port *input,scpi_token *token,scpi_arena *arena)
 
 {
   code *pcVar1;
@@ -44854,11 +44848,10 @@ uint32_t scpi_char_upper(uint32_t param_1)
 /* finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it
    passes 0xffff; the kind a long whose low word it reads (0x27900) */
 
-int32_t scpi_parameter_match
-              (scpi_engine_parameter **parameter,int32_t kind,scpi_engine_call *call,int16_t *offset)
+int32_t scpi_parameter_match(scpi_parameter **parameter,int32_t kind,scpi_call *call,int16_t *offset)
 
 {
-  scpi_engine_parameter *psVar1;
+  scpi_parameter *psVar1;
   uint8_t *puVar2;
   int16_t sVar3;
   int16_t sVar4;
@@ -44866,7 +44859,7 @@ int32_t scpi_parameter_match
   sVar4 = (int16_t)kind;
   psVar1 = *parameter;
   while( true ) {
-    if (psVar1 == (scpi_engine_parameter *)0x0) {
+    if (psVar1 == (scpi_parameter *)0x0) {
       return -0x26;
     }
     if (*(int32_t *)(&(*parameter)->kinds[1].size + sVar4 * 2) != 0) break;
@@ -44893,15 +44886,14 @@ int32_t scpi_parameter_match
 
 /* marks the descriptors left 0xffff, omitted, unless one is required */
 
-uint32_t scpi_parameters_finish
-                   (scpi_engine_parameter **parameter,scpi_engine_call *call,int16_t *offset)
+uint32_t scpi_parameters_finish(scpi_parameter **parameter,scpi_call *call,int16_t *offset)
 
 {
   uint8_t *puVar1;
   int16_t sVar2;
   
   while( true ) {
-    if (*parameter == (scpi_engine_parameter *)0x0) {
+    if (*parameter == (scpi_parameter *)0x0) {
       return 0;
     }
     if ((*parameter)->kinds->optional == 0) break;
@@ -45089,7 +45081,7 @@ LAB_00027ba2:
 
 /* finds a keyword in a child list, by bisection */
 
-scpi_engine_node * scpi_node_find(scpi_engine_child_list *list,scpi_keyword *keyword)
+scpi_node * scpi_node_find(scpi_child_list *list,scpi_keyword *keyword)
 
 {
   char cVar1;
@@ -45107,7 +45099,7 @@ scpi_engine_node * scpi_node_find(scpi_engine_child_list *list,scpi_keyword *key
 LAB_00027c16:
   do {
     if (sVar6 < sVar5) {
-      return (scpi_engine_node *)0x0;
+      return (scpi_node *)0x0;
     }
     sVar4 = (int16_t)((int32_t)sVar6 + (int32_t)sVar5 >> 1);
     pcVar9 = keyword->text;
@@ -45128,7 +45120,7 @@ LAB_00027c16:
       if (cVar1 < cVar2) goto LAB_00027c12;
     }
     if (*pcVar8 == 0) {
-      return *(scpi_engine_node **)(&list[1].id + sVar4 * 2);
+      return *(scpi_node **)(&list[1].id + sVar4 * 2);
     }
 LAB_00027c12:
     sVar6 = sVar4 + -1;
@@ -45142,25 +45134,24 @@ LAB_00027c12:
 
 /* finds a keyword, else follows the default nodes, recording their suffixes */
 
-scpi_engine_node *
-scpi_node_find_with_defaults(scpi_engine_path *path,scpi_keyword *keyword,void *unused)
+scpi_node * scpi_node_find_with_defaults(scpi_path *path,scpi_keyword *keyword,void *unused)
 
 {
   int32_t iVar1;
   int16_t iVar2;
   int16_t sVar3;
-  scpi_engine_node *node;
-  scpi_engine_child_list *list;
+  scpi_node *node;
+  scpi_child_list *list;
   
   node = scpi_node_find(path->list,keyword);
-  if (node == (scpi_engine_node *)0x0) {
+  if (node == (scpi_node *)0x0) {
     list = path->list;
     iVar2 = path->count;
     do {
       if (list->default_child == -1) {
 LAB_00027c88:
         path->count = iVar2;
-        return (scpi_engine_node *)0x0;
+        return (scpi_node *)0x0;
       }
       iVar1 = *(int32_t *)(&list[1].id + list->default_child * 2);
       if (*(int16_t *)(iVar1 + 0x22) != -1) {
@@ -45168,10 +45159,10 @@ LAB_00027c88:
         path->count = path->count + 1;
         path->words[sVar3] = *(uint16_t *)(iVar1 + 0x22);
       }
-      list = *(scpi_engine_child_list **)(iVar1 + 4);
-      if (list == (scpi_engine_child_list *)0x0) goto LAB_00027c88;
+      list = *(scpi_child_list **)(iVar1 + 4);
+      if (list == (scpi_child_list *)0x0) goto LAB_00027c88;
       node = scpi_node_find(list,keyword);
-    } while (node == (scpi_engine_node *)0x0);
+    } while (node == (scpi_node *)0x0);
   }
   return node;
 }
@@ -45183,12 +45174,11 @@ LAB_00027c88:
 
 /* finds a keyword with its numeric suffix stripped and kept */
 
-scpi_engine_node *
-scpi_node_find_numbered(scpi_engine_path *path,scpi_keyword *keyword,void *unused)
+scpi_node * scpi_node_find_numbered(scpi_path *path,scpi_keyword *keyword,void *unused)
 
 {
   int16_t sVar1;
-  scpi_engine_node *node;
+  scpi_node *node;
   char *pcVar3;
   char *pcVar4;
   int32_t iVar5;
@@ -45210,13 +45200,13 @@ scpi_node_find_numbered(scpi_engine_path *path,scpi_keyword *keyword,void *unuse
     iVar5 = (int32_t)*pcVar4 + iVar5 * 10 + -0x30;
     sVar7 = sVar7 + -1;
     if (0xffff < iVar5) {
-      return (scpi_engine_node *)0x0;
+      return (scpi_node *)0x0;
     }
   }
   keyword->text[sVar6] = '*';
   keyword->length = sVar6 + 1;
   node = scpi_node_find_with_defaults(path,keyword,unused);
-  if (node != (scpi_engine_node *)0x0) {
+  if (node != (scpi_node *)0x0) {
     if (sVar1 < 1) {
       sVar6 = path->count;
       path->count = path->count + 1;
@@ -45229,15 +45219,15 @@ scpi_node_find_numbered(scpi_engine_path *path,scpi_keyword *keyword,void *unuse
     return node;
   }
   if (sVar1 < 1) {
-    return (scpi_engine_node *)0x0;
+    return (scpi_node *)0x0;
   }
   if (iVar5 != 1) {
-    return (scpi_engine_node *)0x0;
+    return (scpi_node *)0x0;
   }
   keyword->length = sVar6;
   node = scpi_node_find_with_defaults(path,keyword,unused);
-  if (node == (scpi_engine_node *)0x0) {
-    return (scpi_engine_node *)0x0;
+  if (node == (scpi_node *)0x0) {
+    return (scpi_node *)0x0;
   }
   if (node->path_word != -1) {
     sVar6 = path->count;
@@ -45257,37 +45247,37 @@ scpi_node_find_numbered(scpi_engine_path *path,scpi_keyword *keyword,void *unuse
 
 uint32_t
 scpi_header_resolve(scpi_keyword *param_1,int32_t *param_2,int16_t *param_3,uint32_t *param_4,
-                   uint32_t *param_5,uint16_t param_6,int16_t param_7,scpi_engine_arena *param_8,
+                   uint32_t *param_5,uint16_t param_6,int16_t param_7,scpi_arena *param_8,
                    void *param_9)
 
 {
-  scpi_engine_child_list *psVar1;
+  scpi_child_list *psVar1;
   int32_t iVar2;
-  scpi_engine_node *psVar3;
+  scpi_node *psVar3;
   uint32_t uVar4;
   void *start;
   int16_t sVar6;
   uint16_t auStackY_10014 [32743];
-  scpi_engine_path local_1a;
+  scpi_path local_1a;
   
-  local_1a.list = (scpi_engine_child_list *)*param_5;
+  local_1a.list = (scpi_child_list *)*param_5;
   local_1a.count = *(int16_t *)(param_5 + 1);
   for (sVar6 = 0; sVar6 < local_1a.count; sVar6 = sVar6 + 1) {
     local_1a.words[sVar6] = *(uint16_t *)((int32_t)param_5 + sVar6 * 2 + 6);
   }
   psVar3 = scpi_node_find_with_defaults(&local_1a,param_1,param_9);
-  if (psVar3 != (scpi_engine_node *)0x0) goto LAB_00027e0c;
+  if (psVar3 != (scpi_node *)0x0) goto LAB_00027e0c;
   psVar3 = scpi_node_find_numbered(&local_1a,param_1,param_9);
-  if (psVar3 == (scpi_engine_node *)0x0) {
+  if (psVar3 == (scpi_node *)0x0) {
     uVar4 = 0xffffffe0;
   }
   else {
     while (iVar2 = (int32_t)param_7, psVar3->handlers[iVar2].function == (uint8_t *)0x0) {
       psVar1 = psVar3->children;
-      if ((psVar1 == (scpi_engine_child_list *)0x0) || (psVar1->default_child == -1)) {
+      if ((psVar1 == (scpi_child_list *)0x0) || (psVar1->default_child == -1)) {
         return 0xffffffdf;
       }
-      psVar3 = *(scpi_engine_node **)(&psVar1[1].id + psVar1->default_child * 2);
+      psVar3 = *(scpi_node **)(&psVar1[1].id + psVar1->default_child * 2);
 LAB_00027e0c:
       if (psVar3->path_word != -1) {
         local_1a.words[local_1a.count] = psVar3->path_word;
@@ -45322,18 +45312,18 @@ LAB_00027e0c:
 
 /* moves the path one keyword down a compound header */
 
-uint32_t scpi_header_step(scpi_keyword *keyword,scpi_engine_path *path,void *unused)
+uint32_t scpi_header_step(scpi_keyword *keyword,scpi_path *path,void *unused)
 
 {
-  scpi_engine_child_list *psVar1;
+  scpi_child_list *psVar1;
   int16_t sVar2;
-  scpi_engine_node *node;
+  scpi_node *node;
   uint32_t uVar4;
   
   node = scpi_node_find_with_defaults(path,keyword,unused);
-  if (node == (scpi_engine_node *)0x0) {
+  if (node == (scpi_node *)0x0) {
     node = scpi_node_find_numbered(path,keyword,unused);
-    if (node == (scpi_engine_node *)0x0) {
+    if (node == (scpi_node *)0x0) {
       return 0xffffffe0;
     }
   }
@@ -45344,7 +45334,7 @@ uint32_t scpi_header_step(scpi_keyword *keyword,scpi_engine_path *path,void *unu
   }
   psVar1 = node->children;
   path->list = psVar1;
-  if (psVar1 == (scpi_engine_child_list *)0x0) {
+  if (psVar1 == (scpi_child_list *)0x0) {
     uVar4 = 0xffffffdf;
   }
   else {
@@ -45360,7 +45350,7 @@ uint32_t scpi_header_step(scpi_keyword *keyword,scpi_engine_path *path,void *unu
 
 /* sets a header path back to a root list */
 
-void scpi_path_reset(scpi_engine_path *path,scpi_engine_child_list *list)
+void scpi_path_reset(scpi_path *path,scpi_child_list *list)
 
 {
   path->list = list;
@@ -45377,16 +45367,16 @@ void scpi_path_reset(scpi_engine_path *path,scpi_engine_child_list *list)
 uint32_t
 scpi_common_header_resolve
           (scpi_keyword *param_1,int32_t *param_2,uint16_t *param_3,int32_t *param_4,uint16_t param_5,
-          int16_t param_6,scpi_engine_arena *param_7,scpi_engine_child_list *param_8)
+          int16_t param_6,scpi_arena *param_7,scpi_child_list *param_8)
 
 {
-  scpi_engine_handler *psVar1;
-  scpi_engine_node *node;
+  scpi_handler *psVar1;
+  scpi_node *node;
   uint32_t uVar3;
   void *start;
   
   node = scpi_node_find(param_8,param_1);
-  if (node == (scpi_engine_node *)0x0) {
+  if (node == (scpi_node *)0x0) {
     uVar3 = 0xffffffe0;
   }
   else {
@@ -45418,11 +45408,11 @@ scpi_common_header_resolve
 
 /* looks _TRG up in a list: whether the common list defines it */
 
-scpi_engine_node * scpi_trg_defined(scpi_engine_child_list *list,uint16_t *no_setter)
+scpi_node * scpi_trg_defined(scpi_child_list *list,uint16_t *no_setter)
 
 {
   char cVar1;
-  scpi_engine_node *node;
+  scpi_node *node;
   char *pcVar3;
   char *pcVar4;
   scpi_keyword keyword;
@@ -45437,7 +45427,7 @@ scpi_engine_node * scpi_trg_defined(scpi_engine_child_list *list,uint16_t *no_se
   } while (cVar1 != 0);
   keyword.length = 4;
   node = scpi_node_find(list,&keyword);
-  if (node != (scpi_engine_node *)0x0) {
+  if (node != (scpi_node *)0x0) {
     *no_setter = (uint16_t)(node->handlers[0].function == (uint8_t *)0x0);
   }
   return node;
@@ -45922,16 +45912,16 @@ void error_queue_read(status_model *status,int32_t *code,uint32_t *message)
 
 /* allocates the error queue ring with room for so many entries */
 
-uint32_t error_queue_create(scpi_engine_error_queue **queue,int32_t capacity,status_model *status)
+uint32_t error_queue_create(status_error_queue **queue,int32_t capacity,status_model *status)
 
 {
-  scpi_engine_error_queue *psVar1;
+  status_error_queue *psVar1;
   uint32_t uVar2;
   int16_t sVar3;
   
   psVar1 = memory_allocate(capacity * 6 + 0x10);
   *queue = psVar1;
-  if (psVar1 == (scpi_engine_error_queue *)0x0) {
+  if (psVar1 == (status_error_queue *)0x0) {
     uVar2 = 0xffffffc8;
   }
   else {
@@ -45952,7 +45942,7 @@ uint32_t error_queue_create(scpi_engine_error_queue **queue,int32_t capacity,sta
 
 /* adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full */
 
-int16_t error_queue_push(scpi_engine_error_queue *error_queue,int32_t code,uint32_t value)
+int16_t error_queue_push(status_error_queue *error_queue,int32_t code,uint32_t value)
 
 {
   status_model *status;
@@ -46009,7 +45999,7 @@ LAB_00028680:
 
 /* takes the oldest error and its message, prompting again once the queue is empty; 0 when empty */
 
-void error_queue_pop(scpi_engine_error_queue *error_queue,int32_t *code,uint32_t *value)
+void error_queue_pop(status_error_queue *error_queue,int32_t *code,uint32_t *value)
 
 {
   if (error_queue->head == error_queue->tail) {
@@ -46037,7 +46027,7 @@ void error_queue_pop(scpi_engine_error_queue *error_queue,int32_t *code,uint32_t
 
 /* frees the error queue */
 
-void error_queue_destroy(scpi_engine_error_queue *queue)
+void error_queue_destroy(status_error_queue *queue)
 
 {
   memory_free(queue);
@@ -46135,9 +46125,8 @@ char * error_message_lookup(int32_t code)
    errors, until the input ends */
 
 uint32_t
-scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,
-              scpi_engine_child_list *param_5,scpi_engine_child_list *param_6,status_model *param_7,
-              uint32_t param_8,uint32_t param_9)
+scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,scpi_child_list *param_5,
+              scpi_child_list *param_6,status_model *param_7,uint32_t param_8,uint32_t param_9)
 
 {
   bool bVar1;
@@ -46145,26 +46134,26 @@ scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,
   int32_t iVar3;
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   code *pcVar4;
-  scpi_engine_call *psVar5;
+  scpi_call *psVar5;
   uint32_t *puVar6;
   uint32_t uVar7;
-  scpi_engine_path sStack_92;
-  scpi_engine_call local_7c;
+  scpi_path sStack_92;
+  scpi_call local_7c;
   uint32_t local_5e;
-  scpi_engine_child_list *local_5a;
-  scpi_engine_child_list *local_56;
+  scpi_child_list *local_5a;
+  scpi_child_list *local_56;
   char local_52;
   uint16_t local_48;
   uint32_t local_46;
   int32_t local_42;
   int16_t local_3e;
-  scpi_engine_arena *local_3c;
+  scpi_arena *local_3c;
   uint32_t local_38;
   void *local_34;
-  scpi_engine_node *local_30;
+  scpi_node *local_30;
   uint16_t local_2c;
-  scpi_engine_response_item *local_2a;
-  scpi_engine_context sStack_26;
+  scpi_response_item *local_2a;
+  scpi_context sStack_26;
   
   arena_init(param_3,param_4,&local_3c);
   local_34 = arena_current(local_3c);
@@ -46312,7 +46301,7 @@ LAB_00029622:
 /* calls a node's handler with the call record's parameters, its response and the record, first
    taking room in the arena for a query's response */
 
-int32_t scpi_call_handler(scpi_engine_call *call,void **response)
+int32_t scpi_call_handler(scpi_call *call,void **response)
 
 {
   code *pcVar1;
@@ -46338,7 +46327,7 @@ int32_t scpi_call_handler(scpi_engine_call *call,void **response)
 
 /* writes a response's items through their formatters */
 
-int32_t scpi_format_response(scpi_port *output,scpi_engine_response_item *items,scpi_engine_call *call)
+int32_t scpi_format_response(scpi_port *output,scpi_response_item *items,scpi_call *call)
 
 {
   scpi_port *port;
@@ -46373,7 +46362,7 @@ int32_t scpi_format_response(scpi_port *output,scpi_engine_response_item *items,
 
 /* takes so many bytes, rounded up to even, from an arena; 0 if it is full */
 
-void * arena_alloc(int32_t size,scpi_engine_arena *arena)
+void * arena_alloc(int32_t size,scpi_arena *arena)
 
 {
   uint8_t *puVar1;
@@ -46397,7 +46386,7 @@ void * arena_alloc(int32_t size,scpi_engine_arena *arena)
 
 /* the bytes left in an arena, and its next free byte */
 
-void * arena_remaining(int32_t *remaining,scpi_engine_arena *arena)
+void * arena_remaining(int32_t *remaining,scpi_arena *arena)
 
 {
   *remaining = (int32_t)(arena->last + (1 - (int32_t)arena->next));
@@ -46411,7 +46400,7 @@ void * arena_remaining(int32_t *remaining,scpi_engine_arena *arena)
 
 /* takes so many bytes, rounded up to even, from a buffer */
 
-void * arena_take(void *buffer,int32_t size,scpi_engine_arena *arena)
+void * arena_take(void *buffer,int32_t size,scpi_arena *arena)
 
 {
   arena->next = (uint8_t *)((int32_t)buffer + (size + 1U & 0xfffffffe));
@@ -46425,7 +46414,7 @@ void * arena_take(void *buffer,int32_t size,scpi_engine_arena *arena)
 
 /* an arena's next free byte */
 
-void * arena_current(scpi_engine_arena *arena)
+void * arena_current(scpi_arena *arena)
 
 {
   return arena->next;
@@ -46438,7 +46427,7 @@ void * arena_current(scpi_engine_arena *arena)
 
 /* sets an arena's next free byte */
 
-void arena_set(void *next,scpi_engine_arena *arena)
+void arena_set(void *next,scpi_arena *arena)
 
 {
   arena->next = next;
@@ -46452,7 +46441,7 @@ void arena_set(void *next,scpi_engine_arena *arena)
 
 /* makes an arena of a buffer of so many bytes */
 
-void arena_init(void *buffer,uint32_t size,scpi_engine_arena **arena)
+void arena_init(void *buffer,uint32_t size,scpi_arena **arena)
 
 {
   *arena = buffer;
@@ -46726,7 +46715,7 @@ float float_identity(float x)
 
 /* stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36 */
 
-void robin_store(scpi_engine_array_record *response,int16_t *points,int32_t count,robin_format format,
+void robin_store(scpi_array_record *response,int16_t *points,int32_t count,robin_format format,
                 uint8_t index)
 
 {

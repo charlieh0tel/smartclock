@@ -6,17 +6,17 @@
 
 /* Makes a :ROBin query's response of its points, by its format, in the
  * index'th record of that kind (0x29a68). */
-void robin_store(scpi_engine_array_record* record, int16_t* points,
-                 int32_t count, robin_format format, uint8_t index) {
+void robin_store(scpi_array_record* record, int16_t* points, int32_t count,
+                 robin_format format, uint8_t index) {
   /* The :ROBin queries' responses, two of each kind, unnamed in the
    * export: blocks at 0x102a26 and arrays of shorts at 0x102a36
    * (0x29a74, 0x29a7a). */
-  static scpi_engine_block* const ROBIN_BLOCKS = (scpi_engine_block*)0x102a26;
-  static scpi_engine_array* const ROBIN_ARRAYS = (scpi_engine_array*)0x102a36;
+  static scpi_block* const ROBIN_BLOCKS = (scpi_block*)0x102a26;
+  static scpi_array* const ROBIN_ARRAYS = (scpi_array*)0x102a36;
 
   switch (format) {
     case ROBIN_BLOCK: {
-      scpi_engine_block* block = &ROBIN_BLOCKS[index];
+      scpi_block* block = &ROBIN_BLOCKS[index];
 
       block->length = count * sizeof *points;
       block->data = points;
@@ -25,7 +25,7 @@ void robin_store(scpi_engine_array_record* record, int16_t* points,
       break;
     }
     case ROBIN_SHORTS: {
-      scpi_engine_array* array = &ROBIN_ARRAYS[index];
+      scpi_array* array = &ROBIN_ARRAYS[index];
 
       array->count = count;
       array->values = points;

@@ -131,7 +131,7 @@ int32_t scpi_number_to_double(scpi_number* number, double* value,
    * keeps in __ghidra_ccr: set when the number does not fit a double
    * (0x2507a; MC68331UM, the CCR). */
   static const uint8_t CCR_ZERO = 0x04;
-  scpi_engine_bcd bcd;
+  scpi_bcd bcd;
 
   if (scpi_number_to_bcd(number, scale, &bcd) != 0) {
     return -1;
@@ -499,7 +499,7 @@ int32_t scpi_format_counted_text(scpi_port* output, scpi_token_string* text) {
 /* The keyword for a value, from the node's list: the value's index, or
  * the keyword the list maps it from (0x26460). */
 int32_t scpi_format_choice(scpi_port* output, int16_t* value,
-                           scpi_engine_choices* choices) {
+                           scpi_choices* choices) {
   if (choices == 0 || choices->keywords == 0) {
     return SCPI_STATUS_NO_LIST;
   }
@@ -581,7 +581,7 @@ int32_t scpi_format_unsigned_short(scpi_port* output, uint16_t* value) {
 
 /* A definite-length block: #, the count of the length's digits, the
  * length, then the data (0x2663e). */
-int32_t scpi_format_block(scpi_port* output, scpi_engine_block* block) {
+int32_t scpi_format_block(scpi_port* output, scpi_block* block) {
   static const char BLOCK_START = '#';
   char header[SCPI_DIGITS_SIZE];
   int16_t start;
@@ -599,8 +599,7 @@ int32_t scpi_format_block(scpi_port* output, scpi_engine_block* block) {
 }
 
 /* Doubles, comma-separated, by scpi_format_double (0x266d0). */
-int32_t scpi_format_double_array(scpi_port* output,
-                                 scpi_engine_array* doubles) {
+int32_t scpi_format_double_array(scpi_port* output, scpi_array* doubles) {
   double* value = doubles->values;
 
   for (int32_t index = 0; index < doubles->count; index++, value++) {
@@ -617,7 +616,7 @@ int32_t scpi_format_double_array(scpi_port* output,
 }
 
 /* Shorts, comma-separated, by scpi_format_short (0x2671c). */
-int32_t scpi_format_short_array(scpi_port* output, scpi_engine_array* shorts) {
+int32_t scpi_format_short_array(scpi_port* output, scpi_array* shorts) {
   int16_t* value = shorts->values;
 
   for (int32_t index = 0; index < shorts->count; index++, value++) {
@@ -636,7 +635,7 @@ int32_t scpi_format_short_array(scpi_port* output, scpi_engine_array* shorts) {
 /* Doubles, comma-separated, by scpi_format_double_resolution, each to
  * its own resolution (0x26768). */
 int32_t scpi_format_resolution_array(scpi_port* output,
-                                     scpi_engine_resolution_array* doubles) {
+                                     scpi_resolution_array* doubles) {
   double* value = doubles->values;
   int16_t* resolution = doubles->resolutions;
 
@@ -656,7 +655,7 @@ int32_t scpi_format_resolution_array(scpi_port* output,
 
 /* By its kind, a block, a double array or a short array; 0 for another
  * kind (0x267c0). */
-int32_t scpi_format_array(scpi_port* output, scpi_engine_array_record* array) {
+int32_t scpi_format_array(scpi_port* output, scpi_array_record* array) {
   switch (array->kind) {
     case SCPI_ARRAY_BLOCK:
       return scpi_format_block(output, array->array);
@@ -700,7 +699,7 @@ int32_t scpi_format_float(scpi_port* output, float* value) {
 /* A double to so many digits, or to 15 and a resolution, as its record
  * says (0x2692c). */
 int32_t scpi_format_double_precision(scpi_port* output,
-                                     scpi_engine_precise_double* value) {
+                                     scpi_precise_double* value) {
   char text[SCPI_REAL_TEXT_SIZE];
   int32_t error;
 
@@ -734,7 +733,7 @@ int32_t scpi_format_double_resolution(scpi_port* output, double* value,
 
 /* A float to 6 digits and the resolution after it (0x26a06). */
 int32_t scpi_format_float_resolution(scpi_port* output,
-                                     scpi_engine_float_resolution* real) {
+                                     scpi_float_resolution* real) {
   char text[SCPI_REAL_TEXT_SIZE];
   int32_t error =
       scpi_engine_real_to_text(float_to_double(real->value), text,
@@ -923,13 +922,12 @@ typedef int32_t scpi_engine_plain_converter(scpi_token* token, void* call,
                                             void* value);
 typedef int32_t scpi_engine_block_converter(scpi_token* token, void* call,
                                             void* value, uint32_t word,
-                                            scpi_port* input,
-                                            scpi_engine_arena* arena,
+                                            scpi_port* input, scpi_arena* arena,
                                             uint32_t extra);
 typedef int32_t scpi_engine_expression_converter(void* call, void* value,
                                                  uint32_t word,
                                                  scpi_port* input,
-                                                 scpi_engine_arena* arena);
+                                                 scpi_arena* arena);
 
 /* A parameter's kind, the index of its converter and of
  * scpi_parameter_kind_errors, by the kind of its token (the table at
@@ -968,13 +966,12 @@ enum {
 };
 
 /* The next token of the context's input. */
-static int32_t scpi_engine_scan(scpi_engine_context* context,
-                                scpi_token* token) {
+static int32_t scpi_engine_scan(scpi_context* context, scpi_token* token) {
   return scpi_scan_token(context->input, token, context->arena);
 }
 
 /* The next token, past white space. */
-static int32_t scpi_engine_scan_past_white(scpi_engine_context* context,
+static int32_t scpi_engine_scan_past_white(scpi_context* context,
                                            scpi_token* token) {
   int32_t kind = scpi_engine_scan(context, token);
 
@@ -989,9 +986,8 @@ static bool scpi_engine_is_parameter(int32_t kind) {
 /* Converts a parameter's token into its place in the call's buffer, by
  * the converter of the node's next parameter that takes it
  * (0x26c06 to 0x26d3c). */
-static int32_t scpi_engine_convert(scpi_engine_context* context,
-                                   scpi_token* token, int32_t kind,
-                                   scpi_engine_parameter** parameter,
+static int32_t scpi_engine_convert(scpi_context* context, scpi_token* token,
+                                   int32_t kind, scpi_parameter** parameter,
                                    int16_t* offset) {
   if (kind == SCPI_TOKEN_DOLLAR) {
     return SCPI_STATUS_PARAMETER_DOLLAR;
@@ -1004,8 +1000,8 @@ static int32_t scpi_engine_convert(scpi_engine_context* context,
   if (error != 0) {
     return error;
   }
-  scpi_engine_call* call = context->call;
-  scpi_engine_parameter_kinds* kinds = (*parameter)->kinds;
+  scpi_call* call = context->call;
+  scpi_parameter_kinds* kinds = (*parameter)->kinds;
   void* converter = kinds->converters[parameter_kind];
   void* value = call->parameters + *offset;
 
@@ -1044,11 +1040,10 @@ static int32_t scpi_engine_convert(scpi_engine_context* context,
  * the call's buffer, token by token; *reset_path says whether the next
  * unit starts at the root, after a newline (0x26ab6).  On an error it
  * reads to the unit's end unless the error is a command error. */
-int32_t scpi_parse_message_unit(scpi_engine_context* parser,
-                                int16_t* reset_path) {
-  scpi_engine_call* call = parser->call;
+int32_t scpi_parse_message_unit(scpi_context* parser, int16_t* reset_path) {
+  scpi_call* call = parser->call;
   scpi_token token;
-  scpi_engine_parameter* parameter;
+  scpi_parameter* parameter;
   int16_t offset;
   int32_t error;
   int32_t kind;
@@ -1324,7 +1319,7 @@ static int32_t scpi_engine_scan_hash(scpi_port* input, scpi_token* token) {
  * its text, NUL-terminated, the room after it given back (0x27212). */
 static int32_t scpi_engine_scan_string(scpi_port* input,
                                        scpi_token_string* string, int16_t quote,
-                                       scpi_engine_arena* arena) {
+                                       scpi_arena* arena) {
   /* A string's most characters with its NUL, the room scpi_scan_token
    * takes for it from the arena. */
   static const int16_t STRING_SIZE = 0xff;
@@ -1369,7 +1364,7 @@ ended:
  * filling the token for a keyword, a number, a string, a block's header
  * or a $ digit; a string's text from the arena (0x26ee0). */
 int32_t scpi_scan_token(scpi_port* input, scpi_token* token,
-                        scpi_engine_arena* arena) {
+                        scpi_arena* arena) {
   int16_t character = scpi_engine_read(input);
 
   switch (scpi_engine_class(character)) {
@@ -1669,16 +1664,15 @@ uint32_t scpi_char_upper(uint32_t character) {
 /* The parameter buffer's word at offset, a parameter's kind (0x27936).
  * The buffer holds each parameter's kind word, then its value, at any
  * offset its values' sizes give. */
-static void scpi_engine_mark(scpi_engine_call* call, int16_t offset,
-                             int16_t kind) {
+static void scpi_engine_mark(scpi_call* call, int16_t offset, int16_t kind) {
   *(int16_t*)(call->parameters + offset) = kind;
 }
 
 /* Finds the node's next parameter that takes a token of the kind,
  * marking the optional ones it passes left out, and marks it with the
  * kind; offset is the next parameter's in the call's buffer (0x278f4). */
-int32_t scpi_parameter_match(scpi_engine_parameter** next, int32_t kind,
-                             scpi_engine_call* call, int16_t* offset) {
+int32_t scpi_parameter_match(scpi_parameter** next, int32_t kind,
+                             scpi_call* call, int16_t* offset) {
   /* The condition for a parameter of each kind where none is allowed:
    * the image's table at 0x279ca, scpi_parameter_kind_errors. */
   static const int16_t KIND_ERRORS[] = {
@@ -1691,7 +1685,7 @@ int32_t scpi_parameter_match(scpi_engine_parameter** next, int32_t kind,
   };
   int16_t token = kind;
 
-  for (scpi_engine_parameter* entry = *next;; entry = *next = entry->next) {
+  for (scpi_parameter* entry = *next;; entry = *next = entry->next) {
     if (entry == 0) {
       return SCPI_STATUS_EXTRA_PARAMETER;
     }
@@ -1711,8 +1705,8 @@ int32_t scpi_parameter_match(scpi_engine_parameter** next, int32_t kind,
 
 /* Marks the node's parameters left over left out, unless one is
  * required (0x2797a). */
-uint32_t scpi_parameters_finish(scpi_engine_parameter** next,
-                                scpi_engine_call* call, int16_t* offset) {
+uint32_t scpi_parameters_finish(scpi_parameter** next, scpi_call* call,
+                                int16_t* offset) {
   for (; *next != 0; *next = (*next)->next) {
     if ((*next)->kinds->optional == 0) {
       return SCPI_STATUS_MISSING_PARAMETER;
@@ -1849,14 +1843,13 @@ int16_t scpi_keyword_compare(char* token, int32_t length, char* keyword) {
 
 /* A keyword's node in a child list, by bisection; NULL for none
  * (0x27baa). */
-scpi_engine_node* scpi_node_find(scpi_engine_child_list* children,
-                                 scpi_keyword* keyword) {
+scpi_node* scpi_node_find(scpi_child_list* children, scpi_keyword* keyword) {
   int16_t low = 0;
   int16_t high = children->count - 1;
 
   while (low <= high) {
     int16_t middle = (high + low) >> 1;
-    scpi_engine_node* node = children->children[middle];
+    scpi_node* node = children->children[middle];
     int16_t order =
         scpi_keyword_compare(keyword->text, keyword->length, node->keywords);
 
@@ -1873,13 +1866,12 @@ scpi_engine_node* scpi_node_find(scpi_engine_child_list* children,
 }
 
 /* Adds a word to a header's path. */
-static void scpi_engine_path_add(scpi_engine_path* path, uint16_t word) {
+static void scpi_engine_path_add(scpi_path* path, uint16_t word) {
   path->words[path->count++] = word;
 }
 
 /* Adds a node's word to the path, when it has one. */
-static void scpi_engine_path_add_node(scpi_engine_path* path,
-                                      scpi_engine_node* node) {
+static void scpi_engine_path_add_node(scpi_path* path, scpi_node* node) {
   if (node->path_word != SCPI_NONE) {
     scpi_engine_path_add(path, node->path_word);
   }
@@ -1888,18 +1880,17 @@ static void scpi_engine_path_add_node(scpi_engine_path* path,
 /* A keyword's node in the path's list, or else down the default
  * children, adding their words to the path; 0 for none, the path as it
  * was (0x27c22). */
-scpi_engine_node* scpi_node_find_with_defaults(scpi_engine_path* header,
-                                               scpi_keyword* keyword,
-                                               void* unused) {
-  scpi_engine_node* node = scpi_node_find(header->list, keyword);
+scpi_node* scpi_node_find_with_defaults(scpi_path* header,
+                                        scpi_keyword* keyword, void* unused) {
+  scpi_node* node = scpi_node_find(header->list, keyword);
   int16_t count = header->count;
 
-  for (scpi_engine_child_list* list = header->list; node == 0;) {
+  for (scpi_child_list* list = header->list; node == 0;) {
     if (list->default_child == SCPI_NONE) {
       header->count = count;
       return 0;
     }
-    scpi_engine_node* child = list->children[list->default_child];
+    scpi_node* child = list->children[list->default_child];
 
     scpi_engine_path_add_node(header, child);
     list = child->children;
@@ -1917,8 +1908,8 @@ scpi_engine_node* scpi_node_find_with_defaults(scpi_engine_path* header,
  * suffix of 1, the plain keyword's (0x27c94).  The suffix is the digits
  * at its end, read from after the character before them, or from that
  * character itself when it sorts before '0' (0x27caa to 0x27cb6). */
-scpi_engine_node* scpi_node_find_numbered(scpi_engine_path* header,
-                                          scpi_keyword* name, void* unused) {
+scpi_node* scpi_node_find_numbered(scpi_path* header, scpi_keyword* name,
+                                   void* unused) {
   static const char NUMBERED = '*';
   static const int32_t SUFFIX_MOST = 0xffff;
   int16_t length = name->length;
@@ -1948,7 +1939,7 @@ scpi_engine_node* scpi_node_find_numbered(scpi_engine_path* header,
   }
   name->text[length] = NUMBERED;
   name->length = length + 1;
-  scpi_engine_node* node = scpi_node_find_with_defaults(header, name, unused);
+  scpi_node* node = scpi_node_find_with_defaults(header, name, unused);
 
   if (node != 0) {
     scpi_engine_path_add(header, suffix_digits < 1 ? 1 : suffix);
@@ -1967,10 +1958,9 @@ scpi_engine_node* scpi_node_find_numbered(scpi_engine_path* header,
 }
 
 /* Moves the path one keyword down a compound header (0x27e9e). */
-uint32_t scpi_header_step(scpi_keyword* keyword, scpi_engine_path* header,
+uint32_t scpi_header_step(scpi_keyword* keyword, scpi_path* header,
                           void* unused) {
-  scpi_engine_node* node =
-      scpi_node_find_with_defaults(header, keyword, unused);
+  scpi_node* node = scpi_node_find_with_defaults(header, keyword, unused);
 
   if (node != 0) {
     scpi_engine_path_add_node(header, node);
@@ -1985,15 +1975,14 @@ uint32_t scpi_header_step(scpi_keyword* keyword, scpi_engine_path* header,
 }
 
 /* Sets a header's path back to a root list (0x27efe). */
-void scpi_path_reset(scpi_engine_path* path, scpi_engine_child_list* list) {
+void scpi_path_reset(scpi_path* path, scpi_child_list* list) {
   path->list = list;
   path->count = 0;
 }
 
 /* Looks _TRG up in a list, and whether its node has no setter
  * (0x27f7e). */
-scpi_engine_node* scpi_trg_defined(scpi_engine_child_list* list,
-                                   uint16_t* no_setter) {
+scpi_node* scpi_trg_defined(scpi_child_list* list, uint16_t* no_setter) {
   scpi_keyword keyword;
   char* from = "_TRG";
   char* to = keyword.text;
@@ -2001,7 +1990,7 @@ scpi_engine_node* scpi_trg_defined(scpi_engine_child_list* list,
   while ((*to++ = *from++) != 0) {
   }
   keyword.length = scpi_engine_length(keyword.text);
-  scpi_engine_node* node = scpi_node_find(list, &keyword);
+  scpi_node* node = scpi_node_find(list, &keyword);
 
   if (node != 0) {
     *no_setter = node->handlers[0].function == 0;
@@ -2015,9 +2004,8 @@ static uint32_t scpi_engine_even(int32_t size) { return (size + 1U) & ~1U; }
 /* Calls a node's setter or query with the call's parameters, its
  * response and the call, first taking room in the arena for a query's
  * response (0x29642). */
-int32_t scpi_call_handler(scpi_engine_call* call, void** response) {
-  scpi_engine_handler_function* handler =
-      call->node->handlers[call->query].function;
+int32_t scpi_call_handler(scpi_call* call, void** response) {
+  scpi_handler_function* handler = call->node->handlers[call->query].function;
 
   if (call->query != 0) {
     *response = arena_alloc(call->node->response_size, call->arena);
@@ -2030,8 +2018,8 @@ int32_t scpi_call_handler(scpi_engine_call* call, void** response) {
 
 /* Writes a query's response items through their formatters, separated
  * by commas, first emptying the console's echo (0x29690). */
-int32_t scpi_format_response(scpi_port* output, scpi_engine_response_item* item,
-                             scpi_engine_call* call) {
+int32_t scpi_format_response(scpi_port* output, scpi_response_item* item,
+                             scpi_call* call) {
   if (output == scpi_console_port()) {
     scpi_echo_length = 0;
   } else {
@@ -2054,7 +2042,7 @@ int32_t scpi_format_response(scpi_port* output, scpi_engine_response_item* item,
 
 /* Takes size bytes, rounded up to even, from an arena; 0 when it does
  * not hold them (0x29700). */
-void* arena_alloc(int32_t size, scpi_engine_arena* arena) {
+void* arena_alloc(int32_t size, scpi_arena* arena) {
   uint8_t* start = arena->next;
   uint8_t* end = start + scpi_engine_even(size);
 
@@ -2066,14 +2054,14 @@ void* arena_alloc(int32_t size, scpi_engine_arena* arena) {
 }
 
 /* The bytes left in an arena, and its next free byte (0x2972c). */
-void* arena_remaining(int32_t* remaining, scpi_engine_arena* arena) {
+void* arena_remaining(int32_t* remaining, scpi_arena* arena) {
   *remaining = arena->last - arena->next + 1;
   return arena->next;
 }
 
 /* Takes size bytes, rounded up to even, from a buffer: the buffer, the
  * arena's next free byte the one after them (0x29742). */
-void* arena_take(void* buffer, int32_t size, scpi_engine_arena* arena) {
+void* arena_take(void* buffer, int32_t size, scpi_arena* arena) {
   uint8_t* start = buffer;
 
   arena->next = start + scpi_engine_even(size);
@@ -2081,15 +2069,15 @@ void* arena_take(void* buffer, int32_t size, scpi_engine_arena* arena) {
 }
 
 /* An arena's next free byte (0x2975e). */
-void* arena_current(scpi_engine_arena* arena) { return arena->next; }
+void* arena_current(scpi_arena* arena) { return arena->next; }
 
 /* Sets an arena's next free byte (0x29766). */
-void arena_set(void* next, scpi_engine_arena* arena) { arena->next = next; }
+void arena_set(void* next, scpi_arena* arena) { arena->next = next; }
 
 /* Makes an arena of a buffer of size bytes, at its start, into its slot
  * (0x29770). */
-void arena_init(void* buffer, uint32_t size, scpi_engine_arena** slot) {
-  scpi_engine_arena* arena = buffer;
+void arena_init(void* buffer, uint32_t size, scpi_arena** slot) {
+  scpi_arena* arena = buffer;
   uint8_t* bytes = buffer;
 
   *slot = arena;

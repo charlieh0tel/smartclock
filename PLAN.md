@@ -1306,6 +1306,11 @@ view cannot drift apart.  The library, bottom up:
      `doprnt` read too, is `libc.c`'s, its bits named: the exporter
      declares a table the hand-written C defines `const` and gives it
      no `.set`.
+     Then the SCPI engine's types named by subject, `scpi_engine_`
+     dropped (`scpi_node`, `scpi_call`, `scpi_arena`, ...), its error
+     queue the status model's (`status_error_queue`), and the main
+     tree's root list a `scpi_child_list` with its 49 children counted
+     (its third word the default child, `0x24`, not flags).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

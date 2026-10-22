@@ -7015,6 +7015,7 @@ int32_t scpi_number_to_bcd(scpi_number *number, int16_t scale, scpi_bcd *bcd) __
 uint32_t
 scpi_real_to_text(int32_t param_1,int32_t param_2,uint8_t *param_3,int16_t param_4,int16_t param_5,
                  int16_t param_6,char param_7);
+uint32_t scpi_parse_text(scpi_token_string *token,void *unused,char **value);
 uint32_t scpi_parse_string(uint16_t *token,void *unused,uint32_t *value);
 uint32_t scpi_parse_boolean(int16_t *token,void *unused,uint16_t *value);
 int32_t scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *value,void *param_4);
@@ -44868,6 +44869,37 @@ LAB_00025618:
 }
 
 #endif
+
+/* 00025d4a */
+
+/* the string's text, -21 if it holds a NUL; the string parameters' converter
+   docs/scpi/README.md, read */
+
+uint32_t scpi_parse_text(scpi_token_string *token,void *unused,char **value)
+
+{
+  char cVar1;
+  int32_t iVar2;
+  uint32_t uVar3;
+  char *pcVar4;
+  
+  iVar2 = -1;
+  pcVar4 = token->text;
+  do {
+    iVar2 = iVar2 + 1;
+    cVar1 = *pcVar4;
+    pcVar4 = pcVar4 + 1;
+  } while (cVar1 != 0);
+  if (iVar2 == (int16_t)token->length) {
+    *value = token->text;
+    uVar3 = 0;
+  }
+  else {
+    uVar3 = 0xffffffeb;
+  }
+  return uVar3;
+}
+
 
 /* 00025d70 */
 #if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */

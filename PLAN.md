@@ -1545,6 +1545,14 @@ view cannot drift apart.  The library, bottom up:
   parser's functions, which return nodes and lists, are proven on it.
   Costs: thousands of generated lines in `rewritten/`; the harness's
   address map; the records `dump-scpi` does not yet read.
+  Started: `--c` and `--names` read every record of every image's
+  tree, the installer's too, and `make scpi-tree` writes the Z3805A
+  3543B's, `scpi_tree_data.c`, whose 1933 objects `make
+  check-scpi-tree` finds the image's bytes (docs/scpi/README.md, "As
+  C"); the other images' and the installers' C waits on names for their
+  converters and formatters.  Left: the exporter, which already takes
+  the file's `const` definitions for globals it need not `.set`, and
+  the harness's map.
 
   Left for a later pass: the firmware routines' names do not carry
   their file's prefix as the hand-written helpers do (`ti.c`'s

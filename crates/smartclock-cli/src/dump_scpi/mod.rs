@@ -17,7 +17,9 @@ use anyhow::ensure;
 use crate::image;
 use crate::image::Image;
 
+mod c;
 mod models;
+mod records;
 
 /// Where a node keeps the pointer to its keyword pair.
 const KEYWORD_SLOT: u32 = 0;
@@ -124,11 +126,17 @@ impl Image<'_> {
         None
     }
 
-    /// The keyword spelled by the pair at `at`: the short form, a NUL,
-    /// the rest of the long form and a NUL, both upper case, digits or
-    /// `KEYWORD_PUNCTUATION`.  The rest comes back lower case, as the
-    /// manuals write it.
+    /// The keyword spelled by the pair at `at`, its rest lower case, as
+    /// the manuals write it.
     fn keyword(&self, at: u32) -> Option<String> {
+        let (short, rest) = self.keyword_pair(at)?;
+        Some(short + &rest.to_ascii_lowercase())
+    }
+
+    /// The keyword pair at `at`: the short form, a NUL, the rest of the
+    /// long form and a NUL, both upper case, digits or
+    /// `KEYWORD_PUNCTUATION`, as they stand.
+    fn keyword_pair(&self, at: u32) -> Option<(String, String)> {
         let half = |from: usize, least: usize| {
             let bytes = self.0.get(from..)?;
             let length = bytes
@@ -147,7 +155,7 @@ impl Image<'_> {
         let at = usize::try_from(at).ok()?;
         let short = half(at, 1)?;
         let rest = half(at + short.len() + 1, 0)?;
-        Some(short + &rest.to_ascii_lowercase())
+        Some((short, rest))
     }
 
     /// The node at `at`, if its keyword slot points at a keyword pair.
@@ -189,9 +197,21 @@ struct Node {
     query: u32,
 }
 
-/// The two root lists: the common commands, `*IDN?` and its kind, and
-/// the main tree.  The parser keeps a pointer to each, side by side.
-fn roots(image: &Image) -> Result<(u32, u32)> {
+/// Where a tree's two root lists are: the common commands, `*IDN?` and
+/// its kind, and the main tree.  The parser keeps a pointer to each,
+/// side by side.
+#[derive(Debug, Clone, Copy)]
+struct Roots {
+    /// Where the pair of pointers is.
+    pair: u32,
+    /// The common commands' list.
+    common: u32,
+    /// The main tree's root list.
+    main: u32,
+}
+
+/// The one pair of root lists at or above `from`, an even address.
+fn roots(image: &Image, from: u32) -> Result<Roots> {
     let common = |list: u32| {
         image.children(list).is_some_and(|children| {
             children
@@ -199,13 +219,18 @@ fn roots(image: &Image) -> Result<(u32, u32)> {
                 .any(|(_, node)| node.keyword == COMMON_MARKER)
         })
     };
-    let found: Vec<(u32, u32)> = (0..)
+    let found: Vec<Roots> = (from..)
         .step_by(2)
-        .map_while(|at| Some((at, image.u32(at)?, image.u32(at + 4)?)))
-        .filter(|&(_, first, second)| {
-            common(first) && !common(second) && image.children(second).is_some()
+        .map_while(|at| {
+            Some(Roots {
+                pair: at,
+                common: image.u32(at)?,
+                main: image.u32(at + 4)?,
+            })
         })
-        .map(|(_, first, second)| (first, second))
+        .filter(|roots| {
+            common(roots.common) && !common(roots.main) && image.children(roots.main).is_some()
+        })
         .collect();
     match found.as_slice() {
         [one] => Ok(*one),
@@ -343,34 +368,119 @@ fn mark_refusals(image: &Image, entries: &mut [Entry]) {
 /// and the rest as `:`, ordered as a case-blind sort of the paths.
 fn entries(bytes: &[u8]) -> Result<Vec<Entry>> {
     let image = Image(bytes);
-    let (common, main) = roots(&image)?;
-    let mut entries = Vec::new();
-    walk(&image, common, "*", &mut Vec::new(), &mut entries)?;
-    walk(&image, main, ":", &mut Vec::new(), &mut entries)?;
+    let mut entries = tree_entries(&image, roots(&image, 0)?)?;
     mark_refusals(&image, &mut entries);
+    Ok(entries)
+}
+
+/// Every path the tree under `roots` holds, ordered as a case-blind
+/// sort of the paths, none marked as refusing.
+fn tree_entries(image: &Image, roots: Roots) -> Result<Vec<Entry>> {
+    let mut entries = Vec::new();
+    walk(image, roots.common, "*", &mut Vec::new(), &mut entries)?;
+    walk(image, roots.main, ":", &mut Vec::new(), &mut entries)?;
     entries.sort_by_cached_key(|entry| entry.path.to_ascii_lowercase());
     entries.dedup_by(|later, earlier| later.path == earlier.path);
     Ok(entries)
 }
 
+/// `dump-scpi`'s arguments.
+#[derive(Debug, clap::Args)]
+pub(crate) struct DumpScpiArgs {
+    /// Full 512 KiB images, as `read-flash` writes or `join-chips`
+    /// makes: one, or with `--models` any number.
+    #[arg(required = true)]
+    images: Vec<PathBuf>,
+    /// Print the trees side by side against the manuals and the
+    /// command table, as Markdown (docs/scpi/models.md).
+    #[arg(long)]
+    models: bool,
+    /// With `--models`, print a page that filters the table instead
+    /// of Markdown (docs/scpi/models.html).
+    #[arg(long, requires = "models")]
+    html: bool,
+    /// Follow each path with its query handler's and its setter's
+    /// addresses, `-` for one it lacks, to name them in a
+    /// disassembler (tools/ghidra/).
+    #[arg(long, conflicts_with = "models")]
+    handlers: bool,
+    /// Print every record of the tree as C data, for
+    /// `third_party/firmware/rewritten/` (docs/scpi/README.md, "As C").
+    #[arg(long, conflicts_with_all = ["models", "handlers", "names"])]
+    c: bool,
+    /// Print a label and type row for every record of the tree, in the
+    /// names-file format, for tools/ghidra/SmartClockSetup.java.
+    #[arg(long, conflicts_with_all = ["models", "handlers"])]
+    names: bool,
+    /// With `--c` or `--names`, a names file (tools/ghidra/names/)
+    /// whose name for an address replaces the one made from the path,
+    /// and names the routines the tree points at; with `--names`, rows
+    /// for the addresses it names are left out.
+    #[arg(long)]
+    names_file: Option<PathBuf>,
+    /// With `--c` or `--names`, the installer's tree, which the boot
+    /// code unpacks into RAM, in place of the primary's.
+    #[arg(long)]
+    installer: bool,
+}
+
 /// Print one image's paths, one a line, with `handlers` each followed
 /// by its handlers' addresses; with `models`, the trees of all of them
-/// side by side, as Markdown or with `html` as a page.
-pub(crate) fn run(images: &[PathBuf], models: bool, html: bool, handlers: bool) -> Result<()> {
-    if models {
-        let trees = image::load_all(images, entries)?;
-        if html {
+/// side by side, as Markdown or with `html` as a page; with `c` or
+/// `names`, the tree's records as C or as names-file rows.
+pub(crate) fn run(args: &DumpScpiArgs) -> Result<()> {
+    ensure!(
+        args.c || args.names || (args.names_file.is_none() && !args.installer),
+        "--names-file and --installer go with --c or --names"
+    );
+    if args.models {
+        let trees = image::load_all(&args.images, entries)?;
+        if args.html {
             print!("{}", models::html(&trees));
         } else {
             print!("{}", models::markdown(&trees));
         }
         return Ok(());
     }
-    let [image] = images else {
+    let [image] = args.images.as_slice() else {
         bail!("give one image, or --models and any number");
     };
+    if args.c || args.names {
+        let names = args
+            .names_file
+            .as_deref()
+            .map(|path| {
+                std::fs::read_to_string(path)
+                    .with_context(|| format!("reading {}", path.display()))
+                    .and_then(|text| records::NamesFile::parse(&text))
+                    .with_context(|| format!("reading {}", path.display()))
+            })
+            .transpose()?;
+        let tree = if args.installer {
+            records::Tree::Installer
+        } else {
+            records::Tree::Primary
+        };
+        let source = c::Source {
+            image: image::name(image)?,
+            names_file: args
+                .names_file
+                .as_deref()
+                .map(image::file_name)
+                .transpose()?,
+        };
+        let records = image::load(image, |bytes| {
+            records::Records::read(bytes, tree, names.as_ref())
+        })?;
+        if args.c {
+            print!("{}", c::c(&records, &source)?);
+        } else {
+            print!("{}", c::names(&records, &source, names.as_ref()));
+        }
+        return Ok(());
+    }
     for entry in image::load(image, entries)? {
-        if handlers {
+        if args.handlers {
             println!("{}", entry.handler_line());
         } else {
             println!("{}", entry.line());
@@ -394,7 +504,7 @@ mod tests {
 
     /// Each image in `third_party/firmware/`, by the name its tree has
     /// in `docs/scpi/`.
-    const IMAGES: [&str; 7] = [
+    pub(super) const IMAGES: [&str; 7] = [
         "58503a-3633",
         "58503a-3704",
         "58503b-1.01.04",

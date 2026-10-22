@@ -4205,24 +4205,22 @@ public class SmartClockExportC extends GhidraScript {
 	 * that hand-written C keeps for the decompiler's functions too: their
 	 * extern is const, and they get no .set, so that the decompiler's
 	 * functions read the C's (docs/firmware/README.md, "Hand-written C").
+	 * Only the files the C includes, those that define a function, count:
+	 * a file of data alone, such as the generated SCPI tree, is not
+	 * included, so its globals keep their .set.
 	 */
 	private Set<String> rewrittenData() {
 		if (rewrittenData == null) {
 			rewrittenData = new TreeSet<>();
-			for (String arg : getScriptArgs()) {
-				if (!arg.startsWith(REWRITTEN)) {
-					continue;
-				}
-				for (File file : rewrittenFiles(arg, ".c")) {
-					try {
-						Matcher definition = DATA_DEFINITION.matcher(Files.readString(file.toPath()));
-						while (definition.find()) {
-							rewrittenData.add(definition.group(1));
-						}
-					} catch (IOException e) {
-						throw new UncheckedIOException(e);
+			try {
+				for (File file : new TreeSet<>(rewritten().values())) {
+					Matcher definition = DATA_DEFINITION.matcher(Files.readString(file.toPath()));
+					while (definition.find()) {
+						rewrittenData.add(definition.group(1));
 					}
 				}
+			} catch (Exception e) {
+				throw new RuntimeException(e);
 			}
 		}
 		return rewrittenData;

@@ -825,8 +825,11 @@ the image's label and address: `fpga.c`'s `fpga_bits` is
 `fpga_bit_table` (`0x41310`).  A table the decompiler's functions
 read too keeps the image's name and is `const` but not `static`:
 `stdlib.c` defines `ctype_table`, which `gps_receive` and `doprnt` read,
-and the exporter, finding the definition, declares its extern `const`
-and gives it no `.set`, so that they read the C's.  Not where the
+and the exporter, finding the definition in a file it includes (one
+that defines a function), declares its extern `const` and gives it no
+`.set`, so that they read the C's.  The generated SCPI tree,
+`scpi_tree_data.c`, defines data alone, so it is not included yet and
+the parser still reads ROM's (PLAN.md, 2026-10-22).  Not where the
 image reads past the
 table: `clock_days_before_month`'s unchecked month reads the word
 before `days_before_month` and those after it, `exception_name` reads

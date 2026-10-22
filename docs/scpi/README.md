@@ -94,6 +94,121 @@ image.
 | [Z3815A 4010](z3815a-4010.txt) | 965 | 680 | 552 | `0x6cd16` |
 | [58503B 1.01.04](58503b-1.01.04.txt) | 831 | 525 | 477 | `0x68316` |
 
+## As C
+
+`dump-scpi --c IMAGE` prints a tree as C data, every record its roots
+reach, each a `const` object of the type
+`tools/ghidra/types/smartclock.h` declares, for
+`third_party/firmware/rewritten/` (PLAN.md, "Decided 2026-10-22");
+`--names` prints a label and type row for each, in the names-file
+format, for `SmartClockSetup.java`'s `names=`.  `--installer` reads the
+installer's tree instead, unpacked into RAM from the boot code's
+records as `tools/firmware/decompiled_check.py` unpacks it: the one
+stream of copy records below `0x20000`, the flash the installer lives
+in (`docs/firmware/restart.md`).  `--names-file` takes a names file:
+its name for an address replaces the one made, a routine is named only
+by it or, for a handler, by the rule below, and with `--names` an
+address it names gets no row, so that its own row, and its type, stand.
+
+`make scpi-tree` writes the Z3805A 3543B's,
+`third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c` through
+clang-format and `tools/ghidra/names/z3805a-3543b.scpi-tree.tsv`, and a
+test fails while either is stale, the C compared without its white
+space.  The C is not yet built or exported.  `make check-scpi-tree`
+compiles it alone with the Makefile's m68k flags and compares every
+object with the image: each byte, and each pointer by the address of
+what it names, the records' from the rows, the routines' from Ghidra's
+names in the decompiled C's `.conventions.jsonl`, so that a handler
+named otherwise than Ghidra names it differs.  All 1933 of the
+Z3805A's are the image's.
+
+Beyond the node and the child list above, the records are, at the
+offsets smartclock.h gives:
+
+- A node is `0x24` bytes, `scpi_node`: its keyword pair, its child
+  list, a setter and a query entry of 10 bytes each, `scpi_handler` --
+  the routine, the first parameter and the bytes the parameters take
+  -- the query's response items and their bytes, and the word it adds
+  to the path, -1 for none.  The nodes lie `0x32` bytes apart; the 14
+  after each are zero in every image and nothing here reads them.
+- A parameter, `scpi_parameter`, is the next one and its kinds; the
+  kinds, `scpi_parameter_kinds`, `0x24` bytes, the value's size, whether
+  it may be left out, its unit table, its choice list and six
+  converters, one for each parameter kind, `SCPI_PARAMETER_DECIMAL` to
+  `_EXPRESSION`.  The kinds lie `0x24` bytes apart, as six make them.
+- A unit table, `scpi_unit`, 6 bytes each, runs to a zero name; a
+  unit's name is its letters reversed.
+- A choice list, `scpi_choices`, points at its keyword pairs' pointers,
+  to a NULL, and at a word for each, or NULL for its index.
+- A response item list, `scpi_response_item`, 10 bytes each, runs to a
+  zero formatter; only `scpi_format_choice`'s items have an argument,
+  the node's choice list.
+
+`dump-scpi` refuses an image where any of these does not hold
+together: a pointer neither zero nor in the image (even, but for a
+string's), a list that does not end within the most any image holds, a
+keyword pair or a unit's name that is not one, a record read as two
+kinds, or two records of one name.  No two records overlap in any
+image.  `--c` also refuses while any routine has no name: without a
+names file, the converters and formatters of every image; with the
+Z3805A's, none of the primary's, but the installer's six.
+
+| Image | Tree | Records | Nodes | Child lists | Keyword pairs | Parameters | Kinds | Item lists | Choice lists | Unit tables | Routines |
+| ----- | ---- | ------- | ----- | ----------- | ------------- | ---------- | ----- | ---------- | ------------ | ----------- | -------- |
+| `z3801a-3543` | primary | 1933 | 459 | 122 | 308 | 485 | 189 | 305 | 22 | 4 | 295 |
+| `z3801a-3543` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
+| `z3805a-3543b` | primary | 1933 | 459 | 122 | 308 | 485 | 189 | 305 | 22 | 4 | 295 |
+| `z3805a-3543b` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
+| `z3816a-4001` | primary | 2015 | 496 | 141 | 297 | 488 | 198 | 324 | 24 | 5 | 313 |
+| `z3816a-4001` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
+| `58503a-3633` | primary | 2039 | 508 | 141 | 308 | 488 | 198 | 325 | 24 | 5 | 313 |
+| `58503a-3633` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
+| `58503a-3704` | primary | 2095 | 525 | 144 | 320 | 496 | 205 | 332 | 25 | 5 | 327 |
+| `58503a-3704` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
+| `z3815a-4010` | primary | 2257 | 559 | 145 | 363 | 534 | 206 | 366 | 30 | 5 | 364 |
+| `z3815a-4010` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
+| `58503b-1.01.04` | primary | 1970 | 513 | 144 | 317 | 450 | 174 | 299 | 27 | 3 | 309 |
+| `58503b-1.01.04` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
+
+Records counts every kind: those in the columns, the tree pair, and a
+choice list's keywords and values and a unit's name.  A test checks
+each row.
+
+Names, with `installer_` before each for the installer's tree; `ID` is
+a path as `SmartClockSetup.java` spells it in a handler's name, a
+common command's `*` as `common_`, the main tree's leading `:` dropped
+and every other `:` an `_` (`*IDN` is `common_IDN`, `:SYSTem:LANGuage`
+is `SYSTem_LANGuage`):
+
+| Record | Name |
+| ------ | ---- |
+| tree pair | `scpi_trees` |
+| root lists | `scpi_list_common`, `scpi_list_main` |
+| node | `scpi_node_ID` |
+| child list of a node | `scpi_list_ID` |
+| keyword pair, a node's or a choice's | `scpi_keyword_` and its spelling, `scpi_keyword_LANGuage` |
+| parameter N of the setter or the query | `scpi_parameter_set_ID_N`, `scpi_parameter_query_ID_N` |
+| its kinds, unit table and choice list | `scpi_kinds_`, `scpi_units_`, `scpi_choices_` and the same stem |
+| a choice list's keywords and values | `scpi_choice_keywords_`, `scpi_choice_values_` and its stem |
+| a unit's name | `scpi_unit_` and the unit, `scpi_unit_MHZ` |
+| a query's response items | `scpi_items_ID` |
+| the choice list of response item N | `scpi_choices_response_ID_N` |
+| a handler | `scpi_query_ID`, `scpi_set_ID` |
+
+A record reached by several paths, as the lists `SER`, `SER1` and the
+rest share, is named for the first in this tree's order, a case-blind
+sort; a keyword pair the image shares between nodes, as it shares one
+`COUNt` among them all, is one record.  A handler is named as `Setup`
+names it from `dump-scpi --handlers`: the names file's function there,
+else the first path, query before setter, whose node holds it, which
+Ghidra's names for all 271 of the Z3805A's confirm.  The installer's
+handlers are no Ghidra functions; their names are the same rule's.
+
+`--names` adds two rows a record's type leaves out, since a flexible
+array member types none of its elements: at `+6` of a child list,
+`NAME_children`, `scpi_node *[n]`, and at `+0xc` of a parameter's
+kinds, `NAME_converters`, `void *[6]`.
+
 ## Parameters and responses
 
 Each handler converts its parameters and writes its response through a
@@ -107,6 +222,10 @@ or `_double` converts it, the unsigned ones taking the magnitude and
 dropping the sign, each answering -11 out of range.  `scpi_parse_boolean`
 takes `ON` and `OFF`, `scpi_parse_boolean_number` a number, and
 `scpi_parse_choice` a keyword from the node's list.
+`scpi_parse_text` (`0x25d4a`), the string converter of 14 parameters'
+kinds, takes a quoted string's text pointer, and answers -21, "Invalid
+string data", for one holding a NUL, its length not the text's;
+`scpi_parse_string` takes the pointer and the length.
 
 A response goes to a writer whose method table puts a character (at
 `+0x14`) or a counted string (`+0x18`).  `scpi_format_long` and its kind

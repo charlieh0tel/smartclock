@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled report-decompiled clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled report-decompiled scpi-tree check-scpi-tree clean deb release release-notes install-service
 
 all: build
 
@@ -153,6 +153,28 @@ check-decompiled:
 		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q tools/firmware/bridge_check.py \
 		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
+
+# The Z3805A 3543B's SCPI tree as C data and as names-file rows, from
+# the image (docs/scpi/README.md, "As C"); cargo test fails while they
+# are stale.  Needs clang-format.
+SCPI_TREE_C = third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c
+SCPI_TREE_NAMES = tools/ghidra/names/z3805a-3543b.scpi-tree.tsv
+scpi-tree:
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --c \
+		--names-file tools/ghidra/names/z3805a-3543b.tsv third_party/firmware/z3805a-3543b.bin \
+		| $(CLANG_FORMAT) --assume-filename=$(SCPI_TREE_C) > $(SCPI_TREE_C)
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --names \
+		--names-file tools/ghidra/names/z3805a-3543b.tsv third_party/firmware/z3805a-3543b.bin \
+		> $(SCPI_TREE_NAMES)
+
+# Fail if a record of the generated SCPI tree, as m68k gcc lays it out,
+# is not the image's bytes, its pointers compared by what they point at.
+# Needs an m68k gcc and binutils; not part of ci.
+check-scpi-tree:
+	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" python3 tools/firmware/scpi_tree_check.py \
+		$(SCPI_TREE_C) $(SCPI_TREE_NAMES) tools/ghidra/names/z3805a-3543b.tsv \
+		third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl \
+		third_party/firmware/z3805a-3543b.bin
 
 # How many of the decompiled C functions, as gcc compiles them, agree with
 # the image's own in the emulator; a measure, never a failure.

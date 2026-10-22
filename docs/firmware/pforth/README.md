@@ -5,6 +5,8 @@ image in `third_party/firmware/`, as `smartclock-cli dump-pforth IMAGE`
 prints it, and [`models.md`](models.md) setting them side by side,
 as `dump-pforth --models` writes it.  A test regenerates each and fails
 if it differs from the file here; `make docs` rewrites them all.
+Beside each, `IMAGE-words.md` tables the same words with their flags
+and stack effects ("The word tables", below).
 `../console.md` is the console itself: getting in and out, reading
 memory, and what particular words do.
 
@@ -13,7 +15,57 @@ receiver.  The console defines a few more when it starts (`ps`,
 `mem_rep`, `s_rep`; `../console.md`, "Getting to it"), which no table
 in the image holds.
 
-## Format
+## The word tables
+
+`IMAGE-words.md`, one per image, tables each word with its header's
+and code's addresses, its flags and inline size, its stack effect and,
+where one is known, what it does:
+[Z3801A 3543](z3801a-3543-words.md),
+[Z3805A 3543B](z3805a-3543b-words.md),
+[Z3815A 4010](z3815a-4010-words.md),
+[Z3816A 4001](z3816a-4001-words.md),
+[58503A 3633](58503a-3633-words.md),
+[58503A 3704](58503a-3704-words.md),
+[58503B 1.01.04](58503b-1.01.04-words.md).
+`tools/firmware/pforth_words.py` writes them from the images, with no
+Ghidra; `make pforth-words` rewrites them and `make
+check-pforth-words` fails when one and its image disagree.  It needs
+python3's `capstone` module.
+
+It finds the kernel's dictionary by its shape, not by a name: the one
+header whose code pushes the header's own address (`move.l
+#HEADER,-(a6)`, `rts`) is `user`'s, the latest, and the links run from
+it to a null link.  A header is `pforth_word_header` (`../structures.md`,
+"The console's dictionary"): link, code, inline size, flags (1
+compile-only, 2 hidden, 4 immediate, 8 inline), and the name, ended by a
+NUL and padded to even with `0xff`.  The diagnostic words are the one
+run of `diag_word_entry` records ended by a null code whose address the
+image holds.  An image where either is not found once, or whose links
+leave the image or loop, is refused.
+
+A kernel word's stack effect, cells taken -- cells left, is read from
+its code: an inline word's inline-size bytes, any other's routine, on
+every path and into every routine it calls, counting A6's pops, pushes
+and reaches (A6 is the data stack, `../console.md`, "The kernel's
+registers").  For a compiling word it is what the word itself does
+while compiling, its control tags included.  It is `?`, with the
+reason, where the returning paths disagree (a loop that pushes, `?dup`,
+`fill`'s count of zero leaving the address), or A6 is indexed (`pick`,
+`.s`) or lost, or a call or jump goes through a register (`execute`,
+`halt`).  A path that resets the stacks, as `abort` does, does not
+return and does not count; a trap is taken to leave A6 alone.  A
+diagnostic word's effect is its table entry's argument and result
+counts, which `pforth_define_word` compiles a wrapper from: it moves
+that many cells to the C stack, calls the routine, and pushes D0 for
+one result and D1 too for two.  The descriptions are the names file's
+notes, in the Z3805A 3543B's table only, and what `../console.md` says.
+
+In every image 139 of the 154 kernel effects are read, `abort` does
+not return and 14 are `?`.  Read against their standard effects, `dup`,
+`drop`, `swap`, `over`, `rot`, `+`, `-`, `@`, `!` and `emit` agree in
+every image; `.` is `?`, its digits pushed on the data stack in a loop.
+
+## The word lists' format
 
 One word a line: its table, its name and its code's address, sorted by
 table and then by name.

@@ -1693,7 +1693,7 @@ view cannot drift apart.  The library, bottom up:
   Left: Setup taking the generated rows, so that Ghidra labels each
   record and the exporter declares it.
 
-  Decided 2026-10-22: the pForth kernel's 183 primitives stay the
+  Decided 2026-10-22: the pForth kernel's 154 words (183 routines in all) stay the
   image's assembly, exact by construction (check-decompiled proves the
   bytes); the C diagnostic words are tested further by pForth console
   sessions in the harness (the real interpreter on input lines, its
@@ -1702,6 +1702,21 @@ view cannot drift apart.  The library, bottom up:
   docs/firmware/pforth/, checked as module_figures checks modules.md.
   Both after the bridge rework (option B: register-bound inline asm in
   place of the exporter's bridges, Scc for a returns=ccr result).
+  Progress: the table is written, `docs/firmware/pforth/IMAGE-words.md`
+  from `tools/firmware/pforth_words.py` (no Ghidra; python3's
+  capstone), checked by `make check-pforth-words` and rewritten by
+  `make pforth-words`.  It finds the dictionary by shape (`user`'s
+  header, the one whose code pushes it) and the diagnostic table as
+  dump-scpi finds the tree, refusing rather than guessing; reads each
+  kernel word's stack effect from its code, every path and callee, A6's
+  pops and pushes: 139 of 154 in every image, `abort` not returning and
+  14 `?` (`fill`, `pick`, `?dup`, `.`, `u.`, `u.x`, `.s`, `ver`,
+  `interpret`, `number`, `0x`, `execute`, `watch`, `halt`); and takes
+  a diagnostic word's from its table entry's counts.  Ten of the eleven
+  well-known words checked agree with the standard effects, `.` is `?`.
+  A word's use is a one-line description, from the names file's note
+  (Z3805A 3543B only) or console.md, blank for most.  Left: the console
+  sessions.
 
   Left for a later pass: the firmware routines' names do not carry
   their file's prefix as the hand-written helpers do (`ti.c`'s

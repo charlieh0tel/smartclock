@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled check-module-figures module-figures report-decompiled scpi-tree check-scpi-tree clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled check-module-figures module-figures check-pforth-words pforth-words report-decompiled scpi-tree check-scpi-tree clean deb release release-notes install-service
 
 all: build
 
@@ -166,6 +166,15 @@ check-module-figures:
 
 module-figures:
 	python3 -I tools/firmware/module_figures.py --write
+
+# Fail if a table in docs/firmware/pforth/IMAGE-words.md -- each image's
+# pForth words, their headers, flags and stack effects -- is not what
+# the image gives; pforth-words rewrites them.
+check-pforth-words:
+	uv run -q tools/firmware/pforth_words.py
+
+pforth-words:
+	uv run -q tools/firmware/pforth_words.py --write
 
 # The Z3805A 3543B's SCPI tree as C data and as names-file rows, from
 # the image (docs/scpi/README.md, "As C"); cargo test fails while they

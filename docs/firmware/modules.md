@@ -223,30 +223,16 @@ Not in the direct calls above, and not counted:
   descriptors' hooks: their own, the loop's and `services/status`'s
   (`status_preset_done`, `questionable_user_done`), none above them.
 
-## Where the hand-written files differ
+## The hand-written files
 
-33 of the 429 hand-written functions are in a file whose subject the
-plan gives another module.
-
-| File | Functions | Module |
-| ---- | --------- | ------ |
-| `adc.c` | `hdac_write`, `hdac_set`, `hdac_write_all`, `hdac_update`, `efc_write`, `efc_write_dithered` | `devices/dac` |
-| `adc.c` | `efc_clamp`, `efc_clamp_reset` | `services/monitors` |
-| `duart.c` | `console_write`, `console_read` | `platform/stdio` |
-| `duart.c` | `scpi_port_open`, `scpi_port_close` | `applications/scpi/port` |
-| `monitors.c` | `counter_reset` | `devices/ti` |
-| `monitors.c` | `exception_record_clear`, `log_reset_cause` | `services/log` |
-| `os.c` | `ps_word`, `mem_rep_word`, `s_rep_word` | `applications/console` |
-| `os.c` | `exception_name`, `print_exception` | `platform/debug` |
-| `records.c` | `eeprom_init`, `eeprom_lock`, `eeprom_unlock`, `eeprom_write_byte`, `eeprom_write_page`, `eeprom_write` | `devices/eeprom` |
-| `records.c` | `sign_extend_bits` | `platform/arithmetic` |
-| `spool.c` | `fatal_error`, `fatal_error_with_code`, `debug_write`, `debug_message`, `task_debug_message`, `task_dmessage` | `platform/debug` |
-
-The rest split rather than move: `clock.c` into `services/calendar`,
-`clock` and `leap`; `duart.c` into `devices/duart`, `gps_link` and
-`serial_port`; `libc.c` into `platform/string`, `stdlib`, `stdio` and
-`math`; `records.c` into `services/records`, `nv` and `log`; `scpi.c`
-into the `applications/scpi` modules.
+The hand-written C (`third_party/firmware/rewritten/z3805a-3543b/`)
+follows the modules: one file to a module, named by it (`calendar.c`,
+`devices/dac`'s `dac.c`, `platform/string`'s `string.c`), an
+application's submodules prefixed (`scpi_lexer.c`, `pll_reading.c`),
+and the SCPI handlers together in `scpi_handlers.c`.  What a group of
+them shares, from the file they were split from, is in a header named
+for it (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
+`scpi.h`), keeping that file's prefix.
 
 ## Open
 

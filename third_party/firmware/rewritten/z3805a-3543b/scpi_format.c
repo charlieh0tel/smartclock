@@ -1,0 +1,354 @@
+/* The SCPI response formatters, written by hand in place of the
+ * decompiler's (docs/firmware/README.md, "Hand-written C";
+ * docs/firmware/modules.md, `applications/scpi/format`).  The exported C
+ * includes this file after its own, so the types and prototypes it
+ * declares are in scope; each function here keeps its generated
+ * prototype. */
+
+/* Not a condition: scpi_interpret takes it as the response's end, and
+ * anything after it as STATUS_SCPI_QUERY_AFTER_INDEFINITE, -440 Query
+ * UNTERMINATED after indefinite response (0x294a6, 0x29446). */
+enum {
+  SCPI_STATUS_INDEFINITE_RESPONSE = -90,
+};
+
+/* What scpi_real_to_text is given: 15 significant digits for a double,
+ * 6 for a float, and the resolution -308 for every digit (its exponent
+ * digits and point in scpi_engine_real_to_text); and the text's length
+ * with every digit, the sign, the point, "E", the exponent's sign and
+ * three digits.  The text's size is an array's, so #define. */
+static const int16_t SCPI_REAL_DOUBLE_DIGITS = 15;
+
+static const int16_t SCPI_REAL_FLOAT_DIGITS = 6;
+
+static const int16_t SCPI_REAL_EVERY_DIGIT = -308;
+
+static const int16_t SCPI_REAL_TEXT_OVERHEAD = 4 + 3;
+
+#define SCPI_REAL_TEXT_SIZE 24
+
+/* scpi_unsigned_to_digits' buffer: digits right-aligned to its index
+ * 16, with room before them for a sign or a block's header; its size an
+ * array's, so #define. */
+static const int16_t SCPI_DIGITS_END = 16 + 1;
+
+#define SCPI_DIGITS_SIZE 20
+
+/* The character a response's text puts between its values. */
+static const char SCPI_SEPARATOR = ',';
+
+/* A double as NR3 text, through scpi_real_to_text, which takes its bits
+ * as two longs, high first. */
+static uint32_t scpi_engine_real_to_text(double value, char* text,
+                                         int16_t digits, int16_t resolution) {
+  /* Three exponent digits, and 1 for "+0.dE" in place of "+dE" with
+   * one digit. */
+  static const int16_t REAL_EXPONENT_DIGITS = 3;
+  static const int16_t REAL_POINT_ALWAYS = 1;
+  union {
+    double value;
+    int32_t words[2];
+  } bits = {value};
+
+  return scpi_real_to_text(bits.words[0], bits.words[1], (uint8_t*)text, digits,
+                           REAL_EXPONENT_DIGITS, resolution, REAL_POINT_ALWAYS);
+}
+
+/* Writes text through the port. */
+static void scpi_engine_write(scpi_port* output, char* text, int32_t length) {
+  output->methods->write(output, text, length);
+}
+
+/* A string as it is (0x2636e). */
+int32_t scpi_format_text(scpi_port* output, char** value) {
+  scpi_engine_write(output, *value, scpi_engine_length(*value));
+  return 0;
+}
+
+/* A string in double quotes, each quote doubled (0x2639e). */
+int32_t scpi_format_string(scpi_port* output, char** value) {
+  static const char QUOTE = '"';
+
+  output->methods->put(output, QUOTE);
+  for (char* text = *value; *text != 0; text++) {
+    output->methods->put(output, *text);
+    if (*text == QUOTE) {
+      output->methods->put(output, QUOTE);
+    }
+  }
+  output->methods->put(output, QUOTE);
+  return 0;
+}
+
+/* 0 or 1 (0x2640c). */
+int32_t scpi_format_boolean(scpi_port* output, int16_t* value) {
+  output->methods->put(output, *value == 0 ? '0' : '1');
+  return 0;
+}
+
+/* Text of a given length, a scpi_token_string's layout; ends the
+ * response, which scpi_interpret takes as -440, Query UNTERMINATED
+ * after indefinite response, for anything after it (0x26438). */
+int32_t scpi_format_counted_text(scpi_port* output, scpi_token_string* text) {
+  /* The length a signed word here (0x2643e). */
+  scpi_engine_write(output, text->text, (int16_t)text->length);
+  return SCPI_STATUS_INDEFINITE_RESPONSE;
+}
+
+/* The keyword for a value, from the node's list: the value's index, or
+ * the keyword the list maps it from (0x26460). */
+int32_t scpi_format_choice(scpi_port* output, int16_t* value,
+                           scpi_choices* choices) {
+  if (choices == 0 || choices->keywords == 0) {
+    return STATUS_SCPI_NO_LIST;
+  }
+  if (choices->values == 0) {
+    char* keyword = choices->keywords[*value];
+
+    scpi_engine_write(output, keyword, scpi_engine_length(keyword));
+    return 0;
+  }
+  for (int16_t index = 0; choices->keywords[index] != 0; index++) {
+    if (choices->values[index] == *value) {
+      scpi_engine_write(output, choices->keywords[index],
+                        scpi_engine_length(choices->keywords[index]));
+      return 0;
+    }
+  }
+  return STATUS_SCPI_FORMAT_FAILED;
+}
+
+/* A sign, + or -, before a long's digits (0x26522). */
+int32_t scpi_format_long(scpi_port* output, int32_t* value) {
+  char digits[SCPI_DIGITS_SIZE];
+  int16_t start;
+  bool negative = *value < 0;
+  uint32_t magnitude = negative ? -(uint32_t)*value : (uint32_t)*value;
+  int32_t error = scpi_unsigned_to_digits(magnitude, digits, &start);
+
+  if (error != 0) {
+    return error;
+  }
+  digits[--start] = negative ? '-' : '+';
+  scpi_engine_write(output, &digits[start], SCPI_DIGITS_END - start);
+  return 0;
+}
+
+/* A short, through scpi_format_long (0x265a2). */
+int32_t scpi_format_short(scpi_port* output, int16_t* value) {
+  int32_t wide = *value;
+
+  return scpi_format_long(output, &wide);
+}
+
+/* + before an unsigned long's digits (0x265c2). */
+int32_t scpi_format_unsigned_long(scpi_port* output, uint32_t* value) {
+  char digits[SCPI_DIGITS_SIZE];
+  int16_t start;
+  int32_t error = scpi_unsigned_to_digits(*value, digits, &start);
+
+  if (error != 0) {
+    return error;
+  }
+  digits[--start] = '+';
+  scpi_engine_write(output, &digits[start], SCPI_DIGITS_END - start);
+  return 0;
+}
+
+/* An unsigned short, through scpi_format_unsigned_long (0x2661c). */
+int32_t scpi_format_unsigned_short(scpi_port* output, uint16_t* value) {
+  uint32_t wide = *value;
+
+  return scpi_format_unsigned_long(output, &wide);
+}
+
+/* A definite-length block: #, the count of the length's digits, the
+ * length, then the data (0x2663e). */
+int32_t scpi_format_block(scpi_port* output, scpi_block* block) {
+  static const char BLOCK_START = '#';
+  char header[SCPI_DIGITS_SIZE];
+  int16_t start;
+
+  if (scpi_unsigned_to_digits(block->length, header, &start) != 0) {
+    return STATUS_SCPI_FORMAT_FAILED;
+  }
+  char count = SCPI_DIGITS_END - start;
+
+  header[--start] = '0' + count;
+  header[--start] = BLOCK_START;
+  scpi_engine_write(output, &header[start], (char)(count + 2));
+  output->methods->write_block(output, block->data, block->length);
+  return 0;
+}
+
+/* Doubles, comma-separated, by scpi_format_double (0x266d0). */
+int32_t scpi_format_double_array(scpi_port* output, scpi_array* doubles) {
+  double* value = doubles->values;
+
+  for (int32_t index = 0; index < doubles->count; index++, value++) {
+    if (index != 0) {
+      output->methods->put(output, SCPI_SEPARATOR);
+    }
+    int32_t error = scpi_format_double(output, value);
+
+    if (error != 0) {
+      return error;
+    }
+  }
+  return 0;
+}
+
+/* Shorts, comma-separated, by scpi_format_short (0x2671c). */
+int32_t scpi_format_short_array(scpi_port* output, scpi_array* shorts) {
+  int16_t* value = shorts->values;
+
+  for (int32_t index = 0; index < shorts->count; index++, value++) {
+    if (index != 0) {
+      output->methods->put(output, SCPI_SEPARATOR);
+    }
+    int32_t error = scpi_format_short(output, value);
+
+    if (error != 0) {
+      return error;
+    }
+  }
+  return 0;
+}
+
+/* Doubles, comma-separated, by scpi_format_double_resolution, each to
+ * its own resolution (0x26768). */
+int32_t scpi_format_resolution_array(scpi_port* output,
+                                     scpi_resolution_array* doubles) {
+  double* value = doubles->values;
+  int16_t* resolution = doubles->resolutions;
+
+  for (int32_t index = 0; index < doubles->count;
+       index++, value++, resolution++) {
+    if (index != 0) {
+      output->methods->put(output, SCPI_SEPARATOR);
+    }
+    int32_t error = scpi_format_double_resolution(output, value, resolution);
+
+    if (error != 0) {
+      return error;
+    }
+  }
+  return 0;
+}
+
+/* By its kind, a block, a double array or a short array; 0 for another
+ * kind (0x267c0). */
+int32_t scpi_format_array(scpi_port* output, scpi_array_record* array) {
+  switch (array->kind) {
+    case SCPI_ARRAY_BLOCK:
+      return scpi_format_block(output, array->array);
+    case SCPI_ARRAY_DOUBLES:
+      return scpi_format_double_array(output, array->array);
+    case SCPI_ARRAY_SHORTS:
+      return scpi_format_short_array(output, array->array);
+  }
+  return 0;
+}
+
+/* A double, to every one of 15 digits (0x26870). */
+int32_t scpi_format_double(scpi_port* output, double* value) {
+  char text[SCPI_REAL_TEXT_SIZE];
+  int32_t error = scpi_engine_real_to_text(
+      *value, text, SCPI_REAL_DOUBLE_DIGITS, SCPI_REAL_EVERY_DIGIT);
+
+  if (error != 0) {
+    return error;
+  }
+  scpi_engine_write(output, text,
+                    SCPI_REAL_DOUBLE_DIGITS + SCPI_REAL_TEXT_OVERHEAD);
+  return 0;
+}
+
+/* A float, to every one of 6 digits (0x268c4). */
+int32_t scpi_format_float(scpi_port* output, float* value) {
+  char text[SCPI_REAL_TEXT_SIZE];
+  int32_t error =
+      scpi_engine_real_to_text(float_to_double(*value), text,
+                               SCPI_REAL_FLOAT_DIGITS, SCPI_REAL_EVERY_DIGIT);
+
+  if (error != 0) {
+    return error;
+  }
+  scpi_engine_write(output, text,
+                    SCPI_REAL_FLOAT_DIGITS + SCPI_REAL_TEXT_OVERHEAD);
+  return 0;
+}
+
+/* A double to so many digits, or to 15 and a resolution, as its record
+ * says (0x2692c). */
+int32_t scpi_format_double_precision(scpi_port* output,
+                                     scpi_precise_double* value) {
+  char text[SCPI_REAL_TEXT_SIZE];
+  int32_t error;
+
+  if (value->to_digits == 0) {
+    error = scpi_engine_real_to_text(value->value, text,
+                                     SCPI_REAL_DOUBLE_DIGITS, value->precision);
+  } else {
+    error = scpi_engine_real_to_text(value->value, text, value->precision,
+                                     SCPI_REAL_EVERY_DIGIT);
+  }
+  if (error != 0) {
+    return error;
+  }
+  scpi_engine_write(output, text, scpi_engine_length(text));
+  return 0;
+}
+
+/* A double to 15 digits and the resolution given (0x269a6). */
+int32_t scpi_format_double_resolution(scpi_port* output, double* value,
+                                      int16_t* resolution) {
+  char text[SCPI_REAL_TEXT_SIZE];
+  int32_t error = scpi_engine_real_to_text(
+      *value, text, SCPI_REAL_DOUBLE_DIGITS, *resolution);
+
+  if (error != 0) {
+    return error;
+  }
+  scpi_engine_write(output, text, scpi_engine_length(text));
+  return 0;
+}
+
+/* A float to 6 digits and the resolution after it (0x26a06). */
+int32_t scpi_format_float_resolution(scpi_port* output,
+                                     scpi_float_resolution* real) {
+  char text[SCPI_REAL_TEXT_SIZE];
+  int32_t error =
+      scpi_engine_real_to_text(float_to_double(real->value), text,
+                               SCPI_REAL_FLOAT_DIGITS, real->resolution);
+
+  if (error != 0) {
+    return error;
+  }
+  scpi_engine_write(output, text, scpi_engine_length(text));
+  return 0;
+}
+
+/* Writes a query's response items through their formatters, separated
+ * by commas, first emptying the console's echo (0x29690). */
+int32_t scpi_format_response(scpi_port* output, scpi_response_item* item,
+                             scpi_call* call) {
+  if (output == scpi_console_port()) {
+    scpi_echo_length = 0;
+  } else {
+    DAT_00102c60 = 0;
+  }
+  for (int16_t offset = 0;; item++) {
+    int32_t error =
+        item->format(output, call->response + offset, item->argument, call);
+
+    if (error != 0) {
+      return error;
+    }
+    offset += item->size;
+    if (item[1].format == 0) {
+      return 0;
+    }
+    output->methods->put(output, SCPI_SEPARATOR);
+  }
+}

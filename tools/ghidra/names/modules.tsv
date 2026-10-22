@@ -156,8 +156,8 @@
 0x5f1d6	double_to_digits_multiply	platform/stdio
 0x5fad6	next_decimal_digit	platform/stdio
 0x1de96	printf	platform/stdio
-0x1de76	console_write	platform/stdio	stdout/stdin: pSOS I/O device 0, whatever drives it (duart.c has them)
-0x1debc	console_read	platform/stdio	stdout/stdin: pSOS I/O device 0, whatever drives it (duart.c has them)
+0x1de76	console_write	platform/stdio	stdout/stdin: pSOS I/O device 0, whatever drives it
+0x1debc	console_read	platform/stdio	stdout/stdin: pSOS I/O device 0, whatever drives it
 0x6092a	fabs	platform/math
 0x6098a	frexp	platform/math
 0x60d94	modf	platform/math
@@ -174,7 +174,7 @@
 0x122d0	round_divide	platform/arithmetic
 0x1219a	isqrt16	platform/arithmetic
 0x13406	rotate_left	platform/arithmetic	called by nothing
-0x3145a	sign_extend_bits	platform/arithmetic	nv_load_slot calls it (records.c has it)
+0x3145a	sign_extend_bits	platform/arithmetic	nv_load_slot calls it
 0x4f1da	count_bits	platform/arithmetic	bit count; the satellite sets use it
 0x4ef8e	bytes_to_long	platform/arithmetic	big-endian bytes; the Oncore decoders use it
 0x4fb54	bytes_equal_n	platform/arithmetic	byte strings; the GPS task calls it
@@ -266,11 +266,11 @@
 0x1f356	read_adc_doven	devices/adc
 0x1f4ba	read_adc_ant_curr	devices/adc
 0x1f486	read_adc_osc_curr	devices/adc
-0x1f53a	hdac_set	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC; adc.c has them
-0x1f4ee	hdac_write	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC; adc.c has them
-0x1f5bc	hdac_write_all	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC; adc.c has them
-0x1f62e	hdac_update	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC; adc.c has them
-0x1f646	efc_write	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC; adc.c has them
+0x1f53a	hdac_set	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC
+0x1f4ee	hdac_write	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC
+0x1f5bc	hdac_write_all	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC
+0x1f62e	hdac_update	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC
+0x1f646	efc_write	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC
 0x2421c	efc_write_dithered	devices/dac	hmon_task writes it each tick
 0x22d70	fpga_setup	devices/fpga
 0x22da4	fpga_program	devices/fpga
@@ -292,7 +292,7 @@
 0x40ed8	counter_configuration_init	devices/ti
 0x40000	interpolator_calibration_init	devices/ti
 0x40f76	counter_init	devices/ti
-0x24976	counter_reset	devices/ti	fpga_setup and counter_load_registers (monitors.c has it)
+0x24976	counter_reset	devices/ti	fpga_setup and counter_load_registers
 0x40ea2	counter_load_registers	devices/ti
 0x40c6a	counter_arm	devices/ti
 0x40a84	counter_set_sync	devices/ti
@@ -317,13 +317,13 @@
 0x40670	interpolator_selftest_calibrate	devices/ti	the counter's own tests; the self-test runs them
 0x406c8	interpolator_selftest	devices/ti	the counter's own tests; the self-test runs them
 0x406e2	interpolator_sample_test	devices/ti	the counter's own tests; the self-test runs them
-0x30f08	eeprom_lock_init	devices/eeprom	the chip and its lock, not a record; records.c has them
-0x30f10	eeprom_init	devices/eeprom	the chip and its lock, not a record; records.c has them
-0x30fae	eeprom_lock	devices/eeprom	the chip and its lock, not a record; records.c has them
-0x3105e	eeprom_unlock	devices/eeprom	the chip and its lock, not a record; records.c has them
-0x31128	eeprom_write_byte	devices/eeprom	the chip and its lock, not a record; records.c has them
-0x3119e	eeprom_write_page	devices/eeprom	the chip and its lock, not a record; records.c has them
-0x3124a	eeprom_write	devices/eeprom	the chip and its lock, not a record; records.c has them
+0x30f08	eeprom_lock_init	devices/eeprom	the chip and its lock, not a record
+0x30f10	eeprom_init	devices/eeprom	the chip and its lock, not a record
+0x30fae	eeprom_lock	devices/eeprom	the chip and its lock, not a record
+0x3105e	eeprom_unlock	devices/eeprom	the chip and its lock, not a record
+0x31128	eeprom_write_byte	devices/eeprom	the chip and its lock, not a record
+0x3119e	eeprom_write_page	devices/eeprom	the chip and its lock, not a record
+0x3124a	eeprom_write	devices/eeprom	the chip and its lock, not a record
 0x45ce4	pwma_force_level	devices/timers	GPT PWMA pin; the loop calls it
 0x45cc0	gpt_input_capture_2_interrupt	devices/timers	GPT IC2; no vector names it
 0x464de	leds_update	devices/leds	the lamp latch at 0x300000; pllp_task and lamp_test
@@ -421,7 +421,7 @@
 0x2b4c2	log_status	services/log
 0x2b578	log_print	services/log
 0x2442c	exception_record_clear	services/log	clears the last exception and crash message; system_init
-0x24440	log_reset_cause	services/log	writes a reset-cause record; system_init (monitors.c has it)
+0x24440	log_reset_cause	services/log	writes a reset-cause record; system_init
 0x32ffa	reset_record_checksum	services/log	the reset-cause log at 0x4001c0
 0x33028	reset_record_valid	services/log	the reset-cause log at 0x4001c0
 0x33114	reset_record_count	services/log	the reset-cause log at 0x4001c0
@@ -507,14 +507,14 @@
 0x24984	pps_monitors_reset	services/monitors
 0x2458c	gps_pps_monitor_reset	services/monitors
 0x2470c	internal_pps_monitor_reset	services/monitors
-0x242de	efc_clamp_reset	services/monitors	efc_clamp's flags; hmon_task clears them (adc.c has it)
+0x242de	efc_clamp_reset	services/monitors	efc_clamp's flags; hmon_task clears them
 0x247d4	hmon_task	services/monitors
 0x23c5a	monitor_average_add	services/monitors
 0x23cc4	monitor_filter_add	services/monitors
 0x23d28	monitor_out_of_range	services/monitors
 0x23d80	hmon_check_supplies	services/monitors
 0x242f0	hmon_check_efc	services/monitors
-0x2426e	efc_clamp	services/monitors	the EFC DAC's range, reported as events B and C as hmon_check_efc reports its ends; the loop's stages call it (adc.c has it)
+0x2426e	efc_clamp	services/monitors	the EFC DAC's range, reported as events B and C as hmon_check_efc reports its ends; the loop's stages call it
 0x245a6	gps_pps_check	services/monitors
 0x2471a	internal_pps_check	services/monitors
 0x241f4	oven_warmed_up	services/monitors
@@ -598,8 +598,8 @@
 0x29a1e	long_identity	applications/scpi/engine	handler helper; called by nothing
 0x29a62	float_identity	applications/scpi/engine	handler helper; the EFC queries
 0x29a24	copy_longs_locked	applications/scpi/engine	the position handlers' copy
-0x1dee6	scpi_port_open	applications/scpi/port	psos_io_open of device 0 (duart.c has it)
-0x1def4	scpi_port_close	applications/scpi/port	psos_io_close of device 0 (duart.c has it)
+0x1dee6	scpi_port_open	applications/scpi/port	psos_io_open of device 0
+0x1def4	scpi_port_close	applications/scpi/port	psos_io_close of device 0
 0x29b82	scpi_console_port	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
 0x29b0e	scpi_prompt	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
 0x29b96	scpi_console_read	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
@@ -1225,9 +1225,9 @@
 0x1ae50	console_set_device	applications/console
 0x1ad8a	pforth_define_word	applications/console
 0x1c18e	diag_words_define	applications/console
-0x12f86	ps_word	applications/console	console word ps (os.c has it)
-0x12f92	mem_rep_word	applications/console	console word mem_rep (os.c has it)
-0x12f9e	s_rep_word	applications/console	console word s_rep (os.c has it)
+0x12f86	ps_word	applications/console	console word ps
+0x12f92	mem_rep_word	applications/console	console word mem_rep
+0x12f9e	s_rep_word	applications/console	console word s_rep
 0x1b7ee	print_gps_init_state	applications/console
 0x1b99c	print_leap_check_state	applications/console
 0x1ba32	print_fine_state	applications/console

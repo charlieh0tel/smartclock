@@ -8,8 +8,10 @@
 
 /* power_of_ten_double and _float's tables hold 1e-30 to 1e30. */
 static const int16_t ARITHMETIC_POWER_OF_TEN_LIMIT = 30;
+
 /* The 68000's shifts take their count modulo 64. */
 static const uint32_t ARITHMETIC_SHIFT_COUNT_MASK = 63;
+
 static const uint32_t ARITHMETIC_LONG_BITS = 32;
 
 /* An int's magnitude; nothing calls it (0x120e6). */
@@ -128,6 +130,7 @@ const double powers_of_ten_double[61] = {
     1e28,  1e29,
     1e30,
 };
+
 const float powers_of_ten_float[61] = {
     1e-30f, 1e-29f, 1e-28f, 1e-27f, 1e-26f, 1e-25f, 1e-24f, 1e-23f, 1e-22f,
     1e-21f, 1e-20f, 1e-19f, 1e-18f, 1e-17f, 1e-16f, 1e-15f, 1e-14f, 1e-13f,
@@ -311,4 +314,21 @@ int32_t random_dither(void) {
     return DITHER[value - DITHER_SIZE];
   }
   return -DITHER[DITHER_SIZE - value];
+}
+
+/* A value of so many bits sign-extended to a long (0x3145a). */
+uint32_t sign_extend_bits(uint32_t value, uint8_t width) {
+  if (width == 8) {
+    return (uint32_t)(int8_t)value;
+  }
+  if (width == 16) {
+    return (uint32_t)(int16_t)value;
+  }
+  if (width == 0 || width >= RECORDS_LONG_BITS) {
+    return value;
+  }
+  if (value & (uint32_t)1 << (width - 1)) {
+    value |= ~(uint32_t)0 << width;
+  }
+  return value;
 }

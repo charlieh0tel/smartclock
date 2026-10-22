@@ -1,18 +1,43 @@
 /* The health monitor and the PPS monitors, written by hand in place of
- * the decompiler's (docs/firmware/README.md, "Hand-written C"): the ADC
- * channels' averages and filter (monitor_*, adc_average), the supplies'
- * and the EFC's checks, the ovens' warm-up, the GPS and internal PPS
- * checks and their resets, the watchdog's report, and the reset cause's
- * log.  The exported C includes this file after its own, so the types
- * and prototypes it declares are in scope; each function here keeps its
- * generated prototype.  The monitors' state is
+ * the decompiler's (docs/firmware/README.md, "Hand-written C";
+ * docs/firmware/modules.md, `services/monitors`).  The exported C
+ * includes this file after its own, so the types and prototypes it
+ * declares are in scope; each function here keeps its generated
+ * prototype.  It is the ADC channels' averages and filter (monitor_*,
+ * adc_average), the supplies' and the EFC's checks and the EFC's clamp,
+ * the ovens' warm-up, the GPS and internal PPS checks and their resets,
+ * and the watchdog's report.  The monitors' state is
  * docs/firmware/structures.md's "The health monitor's supplies and EFC"
- * and "The health monitor's ADC monitors".  crash_message's size is
- * defined here, which spool.c's fatal_error uses too. */
+ * and "The health monitor's ADC monitors". */
 
-/* crash_message's size, which fatal_error fills and log_reset_cause
- * reads: an array size, so #define. */
-#define MONITORS_CRASH_MESSAGE_SIZE 80
+/* Clamps an EFC to 0 to 1048560, reporting each clamp, and the first
+ * value back in range (0x2426e). */
+float efc_clamp(float efc) {
+  /* The EFC's clamp, the top of its 20 bits. */
+  static const float EFC_MOST = 1048560.0f;
+
+  if (float_compare(0.0f, efc) > 0) {
+    efc = 0.0f;
+  } else if (float_compare(efc, EFC_MOST) > 0) {
+    efc = EFC_MOST;
+  } else {
+    if (efc_range.clamped) {
+      status_happening(STATUS_EFC_AT_LIMIT_CLEARED);
+      efc_range.clamped = 0;
+    }
+    return efc;
+  }
+  status_happening(STATUS_EFC_AT_LIMIT_SET);
+  efc_range.clamped = 1;
+  return efc;
+}
+
+/* Clears efc_clamp's and hmon_check_efc's state (0x242de). */
+void efc_clamp_reset(void) {
+  efc_range.clamped = 0;
+  efc_range.near_end = 0;
+  efc_range.near_end_checks = 0;
+}
 
 /* Puts a reading in a monitor's ring of ten and, once ten are in, keeps
  * their mean (0x23c5a). */
@@ -138,6 +163,7 @@ static const monitors_supply monitors_5v = {
     STATUS_PLUS_5V_SET,
     STATUS_PLUS_5V_CLEARED,
 };
+
 static const monitors_supply monitors_double_oven = {
     ADC_DOUBLE_OVEN,
     "Secondary oven voltage is out of tolerance, value: %.2f\r\n",
@@ -146,6 +172,7 @@ static const monitors_supply monitors_double_oven = {
     STATUS_SECONDARY_OVEN_SET,
     STATUS_SECONDARY_OVEN_CLEARED,
 };
+
 static const monitors_supply monitors_plus_15v = {
     ADC_PLUS_15V,
     "15V is out of tolerance, value: %.2f\r\n",
@@ -154,6 +181,7 @@ static const monitors_supply monitors_plus_15v = {
     STATUS_PLUS_15V_SET,
     STATUS_PLUS_15V_CLEARED,
 };
+
 static const monitors_supply monitors_minus_15v = {
     ADC_MINUS_15V,
     "-15V is out of tolerance, value: %.2f\r\n",
@@ -334,53 +362,6 @@ void watchdog_report(void) {
   watchdog_spool = 0;
 }
 
-/* Clears the last exception and the crash message (0x2442c). */
-void exception_record_clear(void) {
-  reset_record_count();
-  last_exception.pending = 0;
-  crash_message[0] = 0;
-}
-
-/* Logs why the last reset happened, with the time: the exception, the
- * fatal message, or, with neither and the watchdog's grace run out,
- * the watchdog counts; then clears both (0x24440). */
-void log_reset_cause(void) {
-  char text[MONITORS_CRASH_MESSAGE_SIZE];
-  uint32_t date;
-  time_of_day time;
-
-  reset_record_count();
-  get_date_time(&date, &time);
-  text[0] = 0;
-  if (last_exception.pending) {
-    if ((last_exception.vector & CPU_VECTOR_FORMAT_MASK) == 0) {
-      sprintf(text, "Exception: %s, vector %04X, PC = %08X, SR = %04X",
-              last_exception.name, last_exception.vector, last_exception.pc,
-              last_exception.sr);
-    } else {
-      sprintf(text,
-              "Exception: %s, vector %04X, PC = %08X, SR = %04X, addr = %08X",
-              last_exception.name, last_exception.vector, last_exception.pc,
-              last_exception.sr, last_exception.address);
-    }
-    reset_record_write(date, time, text);
-  }
-  if (crash_message[0] != 0) {
-    strncpy(text, crash_message, MONITORS_CRASH_MESSAGE_SIZE);
-    text[MONITORS_CRASH_MESSAGE_SIZE - 1] = 0;
-    reset_record_write(date, time, text);
-  }
-  if (watchdog_countdown == 0 && crash_message[0] == 0 &&
-      !last_exception.pending) {
-    sprintf(text, "Watchdog timeout: clk %1d gps %4d mon %4d pll %1d spl %1d",
-            watchdog_clock, watchdog_gps, watchdog_monitor, watchdog_pll,
-            watchdog_spool);
-    reset_record_write(date, time, text);
-  }
-  last_exception.pending = 0;
-  crash_message[0] = 0;
-}
-
 /* Clears the GPS 1PPS monitor's state (0x2458c). */
 void gps_pps_monitor_reset(void) {
   gps_pps_skipped_checks = 0;
@@ -397,6 +378,7 @@ void internal_pps_monitor_reset(void) {
 
 /* The internal 1PPS's count between checks: 1 to 3 is alive. */
 static const int8_t MONITORS_PPS_LEAST = 1;
+
 static const int8_t MONITORS_PPS_MOST = 3;
 
 /* Whether the 1PPS monitors may check: no self-test running and the
@@ -515,13 +497,6 @@ uint8_t gps_pps_check(void) {
   gps_pps_last_count = 0;
   gps_pps_gate = 0;
   return 1;
-}
-
-/* Sets the FPGA up again and reloads the counter's registers
- * (0x24976). */
-void counter_reset(void) {
-  fpga_setup();
-  counter_load_registers();
 }
 
 /* Clears both 1PPS monitors and the outer oven's flag (0x24984). */

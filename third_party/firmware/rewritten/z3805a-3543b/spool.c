@@ -1,121 +1,9 @@
-/* The spool task and the debug messages, written by hand in place of
- * the decompiler's (docs/firmware/README.md, "Hand-written C"): spoo,
- * which runs functions for other tasks, the deferred messages it
- * flushes, the debug writes with and without a task's name, and the
- * fatal errors.  The exported C includes this file after its own, so
- * the types and prototypes it declares are in scope; each function here
- * keeps its generated prototype. */
-
-/* A length-prefixed message and ", %08X" with a code, to fatal_error;
- * the two arguments before the code are unread (0x1eefc). */
-void fatal_error_with_code(char* message, uint32_t unused_1, uint32_t unused_2,
-                           uint32_t code) {
-  char text[100];
-
-  memcpy(text, message + 1, *message);
-  sprintf(text + *message, ", %08X", code);
-  fatal_error(text);
-}
-
-/* Writes a string by polling while debug output is on; returns its
- * length, 0 when off (0x1ef74). */
-int32_t debug_write(char* text) {
-  if (!debug_enabled) {
-    return 0;
-  }
-  return console_write_polled(text);
-}
-
-/* The calling task's id, from ident with no name. */
-static uint32_t spool_my_task(void) {
-  uint32_t task;
-  uint8_t error;
-
-  if ((uint8_t)psos_ident(0, &task, &error) != 0) {
-    fatal_error("dmessage");
-  }
-  return task;
-}
-
-/* Prints "task: message" with the calling task's name, while debug
- * output is on (0x1eff6). */
-void task_debug_message(char* message) {
-  if (debug_enabled) {
-    uint32_t task = spool_my_task();
-
-    debug_printf("%s: %s", task_name((void*)task), message);
-  }
-}
-
-/* A task and its dmes_ flag, which task_dmessage looks the caller up
- * in. */
-typedef struct spool_task_flag {
-  uint32_t* task;
-  uint32_t* enabled;
-} spool_task_flag;
-
-/* The tasks task_dmessage prints for, in the order it checks them. */
-static const spool_task_flag spool_task_flags[] = {
-    {&task_gpsm, &dmes_gpsm}, {&task_hmon, &dmes_hmon},
-    {&task_klok, &dmes_klok}, {&task_pllp, &dmes_pllp},
-    {&task_root, &dmes_root}, {&task_scpi, &dmes_scpi},
-    {&task_spoo, &dmes_spoo}, {&task_curv, &dmes_curv},
-};
-
-/* Prints "task: message" with the calling task's name, while debug
- * output and the task's dmes_ flag are on (0x1f056). */
-void task_dmessage(char* message) {
-  uint32_t task;
-  bool enabled = false;
-
-  if (!debug_enabled) {
-    return;
-  }
-  task = spool_my_task();
-  for (uint32_t i = 0; i < sizeof spool_task_flags / sizeof spool_task_flags[0];
-       i++) {
-    if (task == *spool_task_flags[i].task &&
-        *spool_task_flags[i].enabled != 0) {
-      enabled = true;
-      break;
-    }
-  }
-  if (enabled) {
-    debug_printf("%s: %s", task_name((void*)task), message);
-  }
-}
-
-/* Keeps the message, and the task's name, at crash_message; prints
- * them and "RESET to recover." while debug output is on; then spins
- * until the watchdog restarts the processor (0x1f176). */
-void fatal_error(char* message) {
-  /* The length below which crash_message takes ", " and a task's name. */
-  static const uint32_t CRASH_ROOM_FOR_NAME = 74;
-  static const uint32_t FATAL_PAUSES = 10;
-  uint32_t task;
-
-  strncpy(crash_message, message, MONITORS_CRASH_MESSAGE_SIZE);
-  crash_message[MONITORS_CRASH_MESSAGE_SIZE - 1] = 0;
-  if (kernel_running && (uint8_t)psos_ident(0, &task, 0) == 0) {
-    uint32_t length = 0;
-
-    while (crash_message[length] != 0) {
-      length++;
-    }
-    if (length < CRASH_ROOM_FOR_NAME) {
-      strcat(crash_message, ", ");
-      strcat(crash_message, task_name((void*)task));
-    }
-    if (debug_enabled) {
-      printf_polled("%s: %s", task_name((void*)task), "FATAL ERROR: ");
-      printf_polled("%s\r\nRESET to recover.\r\n", message);
-      psos_pause(FATAL_PAUSES);
-    }
-    set_interrupt_mask(CPU_IPL_4);
-  }
-  for (;;) {
-  }
-}
+/* The spool task, spoo, which runs functions for other tasks, and the
+ * deferred messages it flushes, written by hand in place of the
+ * decompiler's (docs/firmware/README.md, "Hand-written C";
+ * docs/firmware/modules.md, `services/spool`).  The exported C includes
+ * this file after its own, so the types and prototypes it declares are
+ * in scope; each function here keeps its generated prototype. */
 
 /* Creates the spool task at a priority, unless one is running, with its
  * exchange, and starts it; returns 0, else the kernel's error, or 1 for
@@ -234,15 +122,5 @@ void deferred_flush(void) {
     }
     /* past the message and its NUL, CR LF not stored */
     deferred_start += count - 1;
-  }
-}
-
-/* Prints a message through task_debug_message, with the task's name,
- * or else through debug_write by polling (0x22d4a). */
-void debug_message(char* message, char with_task_name) {
-  if (with_task_name) {
-    task_debug_message(message);
-  } else {
-    debug_write(message);
   }
 }

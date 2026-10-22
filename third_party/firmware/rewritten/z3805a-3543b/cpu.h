@@ -56,7 +56,7 @@ static inline uint16_t cpu_interrupts_at(uint16_t level) {
 
 /* An exception frame's format and vector word: the format in the top
  * four bits, the vector's offset, 4 times its number, in the rest
- * (the CPU32's exception stack frame); os.c's exception_name masks the
+ * (the CPU32's exception stack frame); debug.c's exception_name masks the
  * offset. */
 static const uint16_t CPU_VECTOR_FORMAT_MASK = 0xf000;
 

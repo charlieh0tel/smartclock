@@ -80,7 +80,7 @@ modf	fraction
 double_is_integer	integral	whether an integer
 double_truncate_sixteenths	truncated
 pow	power
-# The drivers, 0x1d000 to 0x24fff (rewritten/z3805a-3543b/: adc.c, duart.c, monitors.c, qspi.c, sci.c, spool.c, fpga.c)
+# The drivers, 0x1d000 to 0x24fff (rewritten/z3805a-3543b/, the devices' files)
 gp_port_select	port_bits	the selection shifted to GP port bits 2 to 4
 duartb_putc_polled	ready	SR_TXRDY, the status bit it waited on
 drtb_puts	sent	the characters the interrupt sent
@@ -197,7 +197,7 @@ pps_wait_time	status	0 or the kernel's error
 stack_measure	status	0
 enter_supervisor_mode	sr	the status register as it was
 set_interrupt_mask	sr	the status register as it was
-# The SCPI engine, 0x25000 to 0x29fff (rewritten/z3805a-3543b/scpi.c)
+# The SCPI engine, 0x25000 to 0x29fff (rewritten/z3805a-3543b/scpi_*.c)
 scpi_bcd_to_double	converted	Z set when the number does not fit a double
 scpi_scale_by_power_of_ten	scaled
 scpi_double_multiply	product

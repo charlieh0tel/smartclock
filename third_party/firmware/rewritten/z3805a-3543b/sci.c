@@ -5,8 +5,8 @@
  * and prototypes it declares are in scope; each function here keeps its
  * generated prototype.  The driver's state is
  * docs/firmware/structures.md's "The SCI port's driver"; the registers
- * are mc68331.h's.  It uses the control characters, codes, line reader
- * and status register helpers duart.c defines. */
+ * are mc68331.h's.  It uses the control characters, codes and line reader
+ * duart.h defines and cpu.h's status register helpers. */
 
 /* A no-op echo, a bare rts: sci_init and sci_reconfigure put it in
  * sci.echo when the settings' echo is off (0x1f6c8). */

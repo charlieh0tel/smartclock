@@ -1340,6 +1340,13 @@ view cannot drift apart.  The library, bottom up:
      `doprnt` ran all along, its generated formats never making a
      conversion; `vsprintf` now has cases of each conversion and flag
      its switch takes, floats too, and agrees.
+     Then the hand-written files regrouped by the module map, a file to
+     a module (`calendar.c`, `dac.c`, `eeprom.c`, `nv.c`, `log.c`,
+     `debug.c`, `string.c`, `scpi_lexer.c`, ...; 42 files from 20), what
+     a group shares in a header named for the file it came from
+     (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
+     `scpi.h`), the bodies unchanged: gcc's code is the same to the
+     byte.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -1,0 +1,104 @@
+/* The C library's strings, written by hand in place of the decompiler's
+ * (docs/firmware/README.md, "Hand-written C"; docs/firmware/modules.md,
+ * `platform/string`).  The exported C includes this file after its own,
+ * so the types and prototypes it declares are in scope; each function
+ * here keeps its generated prototype. */
+
+/* The first difference of two blocks' bytes, taken as signed (0x5ef12). */
+int32_t memcmp(void* s1, void* s2, uint32_t n) {
+  int8_t* a = s1;
+  int8_t* b = s2;
+
+  if (a == b) {
+    return 0;
+  }
+  for (; n != 0; n--, a++, b++) {
+    int32_t difference = *a - *b;
+
+    if (difference != 0) {
+      return difference;
+    }
+  }
+  return 0;
+}
+
+/* Copies n bytes (0x5ef48). */
+void* memcpy(void* s1, void* s2, uint32_t n) {
+  uint8_t* to = s1;
+  uint8_t* from = s2;
+
+  for (; n != 0; n--) {
+    *to++ = *from++;
+  }
+  return s1;
+}
+
+/* Fills n bytes (0x5ef66). */
+void* memset(void* s, int32_t c, uint32_t n) {
+  uint8_t* to = s;
+
+  for (; n != 0; n--) {
+    *to++ = c;
+  }
+  return s;
+}
+
+/* Appends s2 to s1 (0x5f128). */
+char* strcat(char* s1, char* s2) {
+  char* end = s1;
+
+  while (*end != '\0') {
+    end++;
+  }
+  while ((*end++ = *s2++) != '\0') {
+  }
+  return s1;
+}
+
+/* The first c in s, its NUL among them (0x5f140). */
+char* strchr(char* s, int32_t c) {
+  do {
+    if (*s == (char)c) {
+      return s;
+    }
+  } while (*s++ != '\0');
+  return NULL;
+}
+
+/* Compares at most n characters, as signed (0x5f15a). */
+int32_t strncmp(char* s1, char* s2, uint32_t n) {
+  for (; n != 0 && *s1 == *s2; n--, s1++, s2++) {
+    if (*s1 == '\0') {
+      return 0;
+    }
+  }
+  if (n == 0) {
+    return 0;
+  }
+  return *s1 - *s2;
+}
+
+/* Copies at most n characters and pads with NULs; a string it
+ * truncates it leaves unterminated (0x5f190). */
+char* strncpy(char* s1, char* s2, uint32_t n) {
+  char* to = s1;
+
+  while (n != 0) {
+    n--;
+    if ((*to++ = *s2++) == '\0') {
+      break;
+    }
+  }
+  for (; n != 0; n--) {
+    *to++ = '\0';
+  }
+  return s1;
+}
+
+/* A lower-case ASCII letter in upper case (0x5f1be). */
+int32_t toupper(int32_t c) {
+  if (c >= 'a' && c <= 'z') {
+    c -= 'a' - 'A';
+  }
+  return c;
+}

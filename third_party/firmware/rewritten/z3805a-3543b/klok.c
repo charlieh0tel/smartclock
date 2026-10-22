@@ -17,6 +17,7 @@ enum {
 };
 
 static const uint32_t KLOK_POOL_SIZE = 5;
+
 /* An array size, so #define. */
 #define KLOK_MESSAGE_SIZE 80
 

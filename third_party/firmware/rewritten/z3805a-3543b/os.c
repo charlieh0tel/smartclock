@@ -1,12 +1,11 @@
-/* The operating system's small routines, written by hand in place of
- * the decompiler's (docs/firmware/README.md, "Hand-written C"): the
- * mutexes and the idle count, the console's process, memory and stack
- * reports, the stacks' use, a task's priority, the busy and sleeping
- * waits, and the exception hook and the exceptions' report.  The
- * exported C includes this file after its own, so the types and
- * prototypes it declares are in scope; each function here keeps its
- * generated prototype.  The kernel's services are
- * docs/firmware/psos.md's. */
+/* The operating system's small routines, written by hand in place of the
+ * decompiler's (docs/firmware/README.md, "Hand-written C";
+ * docs/firmware/modules.md, `platform/os`).  The exported C includes
+ * this file after its own, so the types and prototypes it declares are
+ * in scope; each function here keeps its generated prototype.  It is the
+ * mutexes and the idle count, the memory and stack reports, the stacks'
+ * use, a task's priority, the busy and sleeping waits, and the exception
+ * hook.  The kernel's services are docs/firmware/psos.md's. */
 
 #include <stddef.h>
 
@@ -14,64 +13,6 @@
 void exception_hook_reset(void) {
   exception_hook_per_task = 0;
   exception_hook = NULL;
-}
-
-/* An exception's name, from its frame's format and vector word: the
- * vector's offset, 4 times its number, indexes exception_names as bytes
- * from vector 2's, the first named, unchecked below it and unaligned as
- * the image's is (0x11a2a). */
-char* exception_name(uint16_t vector) {
-  /* The vector's offset in an exception frame's format and vector
-   * word, below the format (CPU_VECTOR_FORMAT_MASK). */
-  static const uint16_t VECTOR_OFFSET_MASK = 0x0fff;
-  /* exception_names names the vectors from 2, bus error, to 58
-   * (offset 0xe8), by an exception frame's vector offset. */
-  static const uint16_t VECTOR_OFFSET_FIRST_NAMED = 2 * 4;
-  static const uint16_t VECTOR_OFFSET_LAST = 0xe8;
-  uint16_t offset = vector & VECTOR_OFFSET_MASK;
-
-  if (offset > VECTOR_OFFSET_LAST) {
-    return "Oooh! That tickles. I don't know that vector.";
-  }
-  return *(char**)((char*)exception_names + offset - VECTOR_OFFSET_FIRST_NAMED);
-}
-
-/* Records an exception in last_exception, with the running task's name
- * while the kernel runs; prints it while debug_enabled; and stops with the
- * interrupts masked (0x11942).  The fault address is kept and printed only
- * for a frame whose format is not 0. */
-void print_exception(uint16_t sr, uint32_t pc, uint16_t vector,
-                     uint32_t address) {
-  bool has_address = (vector & CPU_VECTOR_FORMAT_MASK) != 0;
-
-  last_exception.pending = 1;
-  last_exception.name[0] = 0;
-  last_exception.sr = sr;
-  last_exception.pc = pc;
-  last_exception.vector = vector;
-  last_exception.address = has_address ? address : 0;
-  if (kernel_running) {
-    const char* name = task_name((void*)psos_my_pid());
-    char* to = last_exception.name;
-
-    while ((*to++ = *name++) != 0) {
-    }
-  }
-  if (debug_enabled) {
-    printf_polled("\r\n");
-    printf_polled("%s: %s", last_exception.name, exception_name(vector));
-    printf_polled(": PC = %#8x, SR = %#04x", pc, (uint32_t)sr);
-    if (has_address) {
-      printf_polled(", address = %#8x", address);
-    }
-    printf_polled("\r\nRESET to recover.");
-    if (kernel_running) {
-      psos_pause(1);
-    }
-  }
-  set_interrupt_mask(CPU_IPL_7);
-  for (;;) {
-  }
 }
 
 /* Packs the name and creates the mutex as an exchange of that name;
@@ -94,15 +35,8 @@ uint32_t idle_count(void) { return idle_loops_last_second; }
 /* stack_measure's user stack's use and size, then its supervisor
  * stack's: array sizes, so #define. */
 #define OS_STACK_USAGE_LONGS 4
+
 #define OS_STACK_MESSAGE_SIZE 80
-
-/* The console's words ps, mem_rep and s_rep: the kernel's process, memory
- * and stack reports (0x12f86, 0x12f92, 0x12f9e). */
-void ps_word(void) { os_process_report(0); }
-
-void mem_rep_word(void) { os_memory_report(0); }
-
-void s_rep_word(void) { task_stack_report(0); }
 
 /* Prints a task's user and supervisor stacks' use and sizes
  * (0x132f4). */

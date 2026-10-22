@@ -13,6 +13,7 @@
  * timecode_update and es_build send their messages (0x13eca,
  * 0x13c3c). */
 static const uint32_t TIMECODE_DELAY = 0x28f5;
+
 /* An array size, so #define. */
 #define TIMECODE_CHECKSUM_SIZE 3
 

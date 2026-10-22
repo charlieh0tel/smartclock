@@ -387,14 +387,13 @@ int32_t toupper(int32_t c) {
   return c;
 }
 
-/* '0' plus *n % 10 in the high word, D0, and *n divided by ten, which
- * it stores back, in the low, D1 (0x5fad6). */
-uint64_t next_decimal_digit(uint32_t* n) {
+/* '0' plus *n % 10, dividing *n by ten (0x5fad6).  It leaves the
+ * quotient in D1 too, where divsl.l put it, which no caller reads. */
+int32_t next_decimal_digit(uint32_t* n) {
   uint32_t value = *n;
-  uint32_t digit = '0' + value % 10;
 
   *n = value / 10;
-  return (uint64_t)digit << LIBC_WORD_BITS | *n;
+  return '0' + value % 10;
 }
 
 /* |x|; a NaN raises (0x6092a). */

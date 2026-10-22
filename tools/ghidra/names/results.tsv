@@ -68,7 +68,7 @@ strchr	found	null when absent
 strncmp	difference
 strncpy	destination
 toupper	upper
-next_decimal_digit	digit_quotient	the digit in the high word, the quotient in the low
+next_decimal_digit	digit	'0' plus the remainder
 doprnt	length	the characters written
 sprintf	length	the characters written
 sprintf_put	written	the count copied, 0 for an element size other than 1

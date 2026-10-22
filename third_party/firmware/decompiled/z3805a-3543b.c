@@ -6807,7 +6807,7 @@ char * strncpy(char *s1,char *s2,uint32_t n);
 int32_t toupper(int32_t c);
 void double_to_digits_multiply(uint32_t *param_1);
 void double_to_digits(double value,int32_t count,int32_t *exponent,uint32_t *negative,char *digits,int32_t mode);
-uint64_t next_decimal_digit(uint32_t *param_1);
+int32_t next_decimal_digit(uint32_t *n);
 int32_t doprnt(char *format,void *arguments,sprintf_put_function *put,sprintf_output *output);
 int32_t sprintf(char *s,char *format,...);
 int32_t sprintf_put(char *text,int32_t size,int32_t count,sprintf_output *output);
@@ -6959,7 +6959,7 @@ int32_t installer_toupper(int32_t c);
 void installer_double_to_digits_multiply(uint32_t *param_1);
 void installer_double_to_digits
                (double value,int32_t count,int32_t *exponent,uint32_t *negative,char *digits,int32_t mode);
-uint64_t installer_next_decimal_digit(uint32_t *param_1);
+int32_t installer_next_decimal_digit(uint32_t *n);
 uint8_t * installer_doprnt(uint8_t *param_1,uint32_t *param_2,uint8_t *param_3,uint32_t param_4);
 int32_t installer_sprintf(char *s,char *format,...);
 int32_t installer_vsprintf(char *s,char *format,void *arg);
@@ -80719,16 +80719,16 @@ LAB_0005f7ae:
 /* '0' plus *n % 10, dividing *n by ten; the formatting engine's
    libc.md, run */
 
-uint64_t next_decimal_digit(uint32_t *param_1)
+int32_t next_decimal_digit(uint32_t *n)
 
 {
   uint32_t uVar1;
   uint32_t uVar2;
   
-  uVar1 = *param_1;
-  uVar2 = (int32_t)*param_1 >> 1 & 0x7fffffff;
-  *param_1 = uVar2 / 5;
-  return CONCAT44((uVar1 & 1) + 0x30 + (uVar2 % 5) * 2,uVar2 / 5);
+  uVar1 = *n;
+  uVar2 = (int32_t)*n >> 1 & 0x7fffffff;
+  *n = uVar2 / 5;
+  return (uVar1 & 1) + 0x30 + (uVar2 % 5) * 2;
 }
 
 #endif
@@ -80751,9 +80751,9 @@ int32_t doprnt(char *format,void *arguments,sprintf_put_function *put,sprintf_ou
   bool bVar8;
   bool bVar9;
   bool bVar10;
-  char cVar11;
-  uint8_t bVar12;
-  int32_t iVar13;
+  int32_t iVar11;
+  char cVar12;
+  uint8_t bVar13;
   uint32_t uVar14;
   uint8_t *pbVar15;
   uint8_t *pbVar16;
@@ -80795,20 +80795,20 @@ int32_t doprnt(char *format,void *arguments,sprintf_put_function *put,sprintf_ou
 LAB_0005fb1c:
   do {
     pbVar19 = (uint8_t *)(format + 1);
-    bVar12 = *format;
-    if ((bVar12 != 0) && (pbVar20 = pbVar19, bVar12 != 0x25)) {
+    bVar13 = *format;
+    if ((bVar13 != 0) && (pbVar20 = pbVar19, bVar13 != 0x25)) {
       do {
         pbVar19 = pbVar20 + 1;
-        bVar12 = *pbVar20;
-        if (bVar12 == 0) break;
+        bVar13 = *pbVar20;
+        if (bVar13 == 0) break;
         pbVar20 = pbVar19;
-      } while (bVar12 != 0x25);
+      } while (bVar13 != 0x25);
       pbVar20 = pbVar19 + (-1 - (int32_t)format);
       pbVar15 = pbVar20 + (int32_t)pbVar15;
       pbVar16 = pbVar20 + (int32_t)pbVar16;
       (*put)(format,1,(int32_t)pbVar20,output);
     }
-    if (bVar12 == 0) {
+    if (bVar13 == 0) {
       return (int32_t)pbVar15;
     }
     uVar17 = 0;
@@ -80917,12 +80917,12 @@ LAB_0005fb72:
         local_34 = *(uint32_t *)arguments;
         local_30 = *(int32_t *)((int32_t)arguments + 4);
         if (precision + 1 < 0x11) {
-          iVar13 = precision + 1;
+          iVar11 = precision + 1;
         }
         else {
-          iVar13 = 0x11;
+          iVar11 = 0x11;
         }
-        double_to_digits(*(double *)arguments,iVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
+        double_to_digits(*(double *)arguments,iVar11,&local_20,&local_1c,acStack_1b2 + 1,1);
         goto LAB_000600fa;
       case 0x27:
       case 0x47:
@@ -80936,25 +80936,25 @@ LAB_0005fb72:
         local_28 = 0x11;
         local_34 = *(uint32_t *)arguments;
         local_30 = *(int32_t *)((int32_t)arguments + 4);
-        iVar13 = precision;
+        iVar11 = precision;
         if (0x10 < precision) {
-          iVar13 = 0x11;
+          iVar11 = 0x11;
         }
-        double_to_digits(*(double *)arguments,iVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
+        double_to_digits(*(double *)arguments,iVar11,&local_20,&local_1c,acStack_1b2 + 1,1);
         if (local_30 == 0 && (local_34 & 0x7fffffff) == 0) {
           local_20 = 1;
         }
         count = precision;
         if (!bVar6) {
-          iVar13 = -1;
+          iVar11 = -1;
           pcVar18 = acStack_1b2 + 1;
           do {
-            iVar13 = iVar13 + 1;
-            cVar11 = *pcVar18;
+            iVar11 = iVar11 + 1;
+            cVar12 = *pcVar18;
             pcVar18 = pcVar18 + 1;
-          } while (cVar11 != 0);
-          if (iVar13 < precision) {
-            count = iVar13;
+          } while (cVar12 != 0);
+          if (iVar11 < precision) {
+            count = iVar11;
           }
           for (; (0 < count && (acStack_1b2[count] == '0')); count = count + -1) {
           }
@@ -81021,20 +81021,20 @@ LAB_000600fa:
             *local_4e = '0';
           }
           if ((local_20 < 1) && (local_30 != 0 || (local_34 & 0x7fffffff) != 0)) {
-            cVar11 = '-';
+            cVar12 = '-';
           }
           else {
-            cVar11 = '+';
+            cVar12 = '+';
           }
-          local_4e[-1] = cVar11;
+          local_4e[-1] = cVar12;
           if ((ctype_table[uVar14 + 1] & 1) == 0) {
-            cVar11 = 'e';
+            cVar12 = 'e';
           }
           else {
-            cVar11 = 'E';
+            cVar12 = 'E';
           }
           local_4e = local_4e + -2;
-          *local_4e = cVar11;
+          *local_4e = cVar12;
           local_40 = exponent + (5 - (int32_t)local_4e);
           local_3c = local_40 + (int32_t)local_3c;
           uVar17 = uVar17 | 0x80;
@@ -81064,16 +81064,16 @@ LAB_000602cc:
           do {
             pbVar22 = pbVar20;
             if (((count < 1) || (*pbVar19 == 0)) || (local_28 <= (int32_t)local_14)) {
-              bVar12 = 0x30;
+              bVar13 = 0x30;
               pbVar21 = pbVar19;
             }
             else {
               local_14 = (char *)((int32_t)local_14 + 1);
               pbVar21 = pbVar19 + 1;
-              bVar12 = *pbVar19;
+              bVar13 = *pbVar19;
             }
             pbVar20 = pbVar22 + 1;
-            *pbVar22 = bVar12;
+            *pbVar22 = bVar13;
             count = count + -1;
             pbVar19 = pbVar21;
           } while (0 < count);
@@ -81093,15 +81093,15 @@ LAB_000602cc:
           while (count = count + -1, -1 < count) {
             local_20 = local_20 + 1;
             if (((local_20 < 1) || (*pbVar21 == 0)) || (local_28 <= (int32_t)local_14)) {
-              bVar12 = 0x30;
+              bVar13 = 0x30;
               pbVar19 = pbVar21;
             }
             else {
               local_14 = (char *)((int32_t)local_14 + 1);
               pbVar19 = pbVar21 + 1;
-              bVar12 = *pbVar21;
+              bVar13 = *pbVar21;
             }
-            *pbVar23 = bVar12;
+            *pbVar23 = bVar13;
             pbVar21 = pbVar19;
             pbVar23 = pbVar23 + 1;
           }
@@ -81194,7 +81194,8 @@ LAB_000602cc:
           local_52 = "-";
           local_44 = 1;
           if (local_38 == 0x80000000) {
-            conversion[10] = next_decimal_digit(&local_38);
+            iVar11 = next_decimal_digit(&local_38);
+            conversion[10] = (char)iVar11;
             pbVar20 = (uint8_t *)(conversion + 10);
           }
           else {
@@ -81218,11 +81219,11 @@ LAB_000602cc:
         local_28 = 0x11;
         local_34 = *(uint32_t *)arguments;
         local_30 = *(int32_t *)((int32_t)arguments + 4);
-        iVar13 = precision;
+        iVar11 = precision;
         if (0x3b < precision) {
-          iVar13 = 0x3c;
+          iVar11 = 0x3c;
         }
-        double_to_digits(*(double *)arguments,iVar13,&local_20,&local_1c,acStack_1b2 + 1,0);
+        double_to_digits(*(double *)arguments,iVar11,&local_20,&local_1c,acStack_1b2 + 1,0);
         goto LAB_000602cc;
       case 0x48:
         bVar2 = true;
@@ -81320,7 +81321,7 @@ LAB_0005febe:
           }
           else {
             while ((*pbVar23 != 0 &&
-                   (iVar13 = precision + -1, bVar2 = 0 < precision, precision = iVar13, bVar2))) {
+                   (iVar11 = precision + -1, bVar2 = 0 < precision, precision = iVar11, bVar2))) {
               pbVar23 = pbVar23 + 1;
             }
           }
@@ -81338,7 +81339,8 @@ LAB_0005febe:
         }
         pbVar20 = (uint8_t *)(conversion + 0xb);
         if ((local_38 & 0x80000000) != 0) {
-          conversion[10] = next_decimal_digit(&local_38);
+          iVar11 = next_decimal_digit(&local_38);
+          conversion[10] = (char)iVar11;
           pbVar20 = (uint8_t *)(conversion + 10);
         }
 LAB_0005fdc4:
@@ -81354,13 +81356,13 @@ LAB_0005fdc4:
         else {
           do {
             pbVar19 = pbVar20;
-            iVar13 = count / 10;
+            iVar11 = count / 10;
             pbVar20 = pbVar19 + -1;
-            *pbVar20 = (char)count + (char)iVar13 * -10 + 0x30;
-            count = iVar13;
-          } while (9 < iVar13);
+            *pbVar20 = (char)count + (char)iVar11 * -10 + 0x30;
+            count = iVar11;
+          } while (9 < iVar11);
           pbVar20 = pbVar19 + -2;
-          *pbVar20 = (char)iVar13 + 0x30;
+          *pbVar20 = (char)iVar11 + 0x30;
         }
         if ((uVar17 & 0x40) != 0) {
           count = precision - ((int32_t)pbVar23 - (int32_t)pbVar20);
@@ -81372,8 +81374,8 @@ LAB_0005fdc4:
           bVar9 = false;
         }
       }
-      iVar13 = (int32_t)pbVar23 - (int32_t)pbVar20;
-      local_14 = local_3c + local_44 + iVar13;
+      iVar11 = (int32_t)pbVar23 - (int32_t)pbVar20;
+      local_14 = local_3c + local_44 + iVar11;
       if ((int32_t)local_14 < (int32_t)local_1d6) {
         pbVar15 = (uint8_t *)(local_1d6 + (int32_t)pbVar15);
         bVar5 = false;
@@ -81414,9 +81416,9 @@ LAB_0005fdc4:
         pbVar16 = pbVar16 + count;
         (*put)("00000000000000000000",1,count,output);
       }
-      if (0 < iVar13) {
-        pbVar16 = pbVar16 + iVar13;
-        (*put)((char *)pbVar20,1,iVar13,output);
+      if (0 < iVar11) {
+        pbVar16 = pbVar16 + iVar11;
+        (*put)((char *)pbVar20,1,iVar11,output);
       }
       if ((uVar17 & 0x184) != 0) {
         if ((uVar17 & 0x100) != 0) {
@@ -91826,16 +91828,16 @@ LAB_installer__00109956:
 /* the installer's next_decimal_digit
    libc.md */
 
-uint64_t installer_next_decimal_digit(uint32_t *param_1)
+int32_t installer_next_decimal_digit(uint32_t *n)
 
 {
   uint32_t uVar1;
   uint32_t uVar2;
   
-  uVar1 = *param_1;
-  uVar2 = (int32_t)*param_1 >> 1 & 0x7fffffff;
-  *param_1 = uVar2 / 5;
-  return CONCAT44((uVar1 & 1) + 0x30 + (uVar2 % 5) * 2,uVar2 / 5);
+  uVar1 = *n;
+  uVar2 = (int32_t)*n >> 1 & 0x7fffffff;
+  *n = uVar2 / 5;
+  return (uVar1 & 1) + 0x30 + (uVar2 % 5) * 2;
 }
 
 
@@ -91850,13 +91852,13 @@ uint8_t * installer_doprnt(uint8_t *param_1,uint32_t *param_2,uint8_t *param_3,u
   bool bVar1;
   bool bVar2;
   uint32_t *puVar3;
-  int32_t iVar4;
+  bool bVar4;
   bool bVar5;
   bool bVar6;
   bool bVar7;
   bool bVar8;
   bool bVar9;
-  bool bVar10;
+  int32_t iVar10;
   char cVar11;
   uint8_t bVar12;
   char *pcVar13;
@@ -91920,12 +91922,12 @@ LAB_installer__00109cc4:
       return pbVar15;
     }
     uVar17 = 0;
-    bVar9 = false;
-    bVar10 = false;
-    bVar6 = false;
-    bVar1 = false;
     bVar8 = false;
+    bVar9 = false;
+    bVar5 = false;
+    bVar1 = false;
     bVar7 = false;
+    bVar6 = false;
     local_3c = (char *)0x0;
     local_44 = 0;
     local_1d6 = (char *)0x0;
@@ -91933,18 +91935,18 @@ LAB_installer__00109d1a:
     bVar2 = false;
     param_1 = pbVar19 + 1;
     uVar14 = (uint32_t)*pbVar19;
-    bVar5 = false;
+    bVar4 = false;
     if (uVar14 - 0x20 < 0x59U) {
                     /* WARNING: Switch is manually overridden */
       switch((int16_t)(uVar14 - 0x20)) {
       case 0:
-        bVar8 = true;
+        bVar7 = true;
         pbVar19 = param_1;
         goto LAB_installer__00109d1a;
       default:
         goto switchD_installer__00109d38_caseD_21;
       case 3:
-        bVar6 = true;
+        bVar5 = true;
         pbVar19 = param_1;
         goto LAB_installer__00109d1a;
       case 5:
@@ -91974,12 +91976,12 @@ LAB_installer__00109d1a:
         }
         goto LAB_installer__00109d1a;
       case 0xb:
-        bVar7 = true;
+        bVar6 = true;
         pbVar19 = param_1;
         goto LAB_installer__00109d1a;
       case 0xd:
         uVar17 = uVar17 | 4;
-        bVar9 = false;
+        bVar8 = false;
         pbVar19 = param_1;
         goto LAB_installer__00109d1a;
       case 0xe:
@@ -91990,7 +91992,7 @@ LAB_installer__00109d1a:
       case 0x10:
         pbVar19 = param_1;
         if (uVar17 == 0) {
-          bVar9 = true;
+          bVar8 = true;
         }
         goto LAB_installer__00109d1a;
       case 0x11:
@@ -92055,7 +92057,7 @@ LAB_installer__00109d1a:
           local_20 = 1;
         }
         local_8 = local_1d2;
-        if (!bVar6) {
+        if (!bVar5) {
           pcVar13 = (char *)0xffffffff;
           pcVar18 = acStack_1b2 + 1;
           do {
@@ -92075,11 +92077,11 @@ LAB_installer__0010a2a2:
           param_2 = param_2 + 2;
           pbVar19 = (uint8_t *)(acStack_1b2 + 1);
           if (local_1c == 0) {
-            if (bVar7) {
+            if (bVar6) {
               local_52 = &DAT_installer__0010aa12;
               local_44 = 1;
             }
-            else if (bVar8) {
+            else if (bVar7) {
               local_52 = &DAT_installer__0010aa14;
               local_44 = 1;
             }
@@ -92096,7 +92098,7 @@ LAB_installer__0010a2a2:
             local_1c6[0] = acStack_1b2[1];
           }
           pbVar23 = local_1c6 + 1;
-          if ((local_1d2 != (char *)0x0) || (bVar6)) {
+          if ((local_1d2 != (char *)0x0) || (bVar5)) {
             pbVar23 = local_1c6 + 2;
             local_1c6[1] = 0x2e;
           }
@@ -92154,11 +92156,11 @@ LAB_installer__0010a2a2:
 LAB_installer__0010a474:
           param_2 = param_2 + 2;
           if (((local_1c == 0) || (local_20 <= -(int32_t)local_1d2)) || (acStack_1b2[1] == 0x30)) {
-            if (bVar7) {
+            if (bVar6) {
               local_52 = &DAT_installer__0010aa12;
               local_44 = 1;
             }
-            else if (bVar8) {
+            else if (bVar7) {
               local_52 = &DAT_installer__0010aa14;
               local_44 = 1;
             }
@@ -92187,7 +92189,7 @@ LAB_installer__0010a474:
             local_8 = (char *)((int32_t)local_8 + -1);
             pbVar19 = pbVar21;
           } while (0 < (int32_t)local_8);
-          if ((bVar6) || (pbVar23 = pbVar20, 0 < (int32_t)local_1d2)) {
+          if ((bVar5) || (pbVar23 = pbVar20, 0 < (int32_t)local_1d2)) {
             pbVar23 = pbVar22 + 2;
             *pbVar20 = 0x2e;
           }
@@ -92247,7 +92249,7 @@ LAB_installer__0010a474:
           local_3c = local_8;
         }
         param_2 = puVar3;
-        if (bVar6) {
+        if (bVar5) {
           if (uVar14 == 0x70) {
             local_52 = &DAT_installer__0010aa38;
             local_44 = 2;
@@ -92274,7 +92276,7 @@ LAB_installer__0010a474:
               pbVar23 = pbVar23 + 1;
             }
             if ((int32_t)local_1d2 < 0) {
-              bVar5 = true;
+              bVar4 = true;
               pbVar23 = pbVar23 + -1;
             }
           }
@@ -92293,7 +92295,7 @@ LAB_installer__0010a474:
         break;
       case 0x44:
       case 0x49:
-        if (bVar10) {
+        if (bVar9) {
           local_38 = (char *)*param_2;
         }
         else {
@@ -92304,18 +92306,19 @@ LAB_installer__0010a474:
           local_52 = &DAT_installer__0010aa10;
           local_44 = 1;
           if (local_38 == (char *)0x80000000) {
-            local_1bc[0] = installer_next_decimal_digit((uint32_t *)&local_38);
+            iVar10 = installer_next_decimal_digit((uint32_t *)&local_38);
+            local_1bc[0] = (uint8_t)iVar10;
             pbVar20 = local_1bc;
           }
           else {
             local_38 = (char *)-(int32_t)local_38;
           }
         }
-        else if (bVar7) {
+        else if (bVar6) {
           local_52 = &DAT_installer__0010aa12;
           local_44 = 1;
         }
-        else if (bVar8) {
+        else if (bVar7) {
           local_52 = &DAT_installer__0010aa14;
           local_44 = 1;
         }
@@ -92346,7 +92349,7 @@ LAB_installer__0010a474:
           *(int16_t *)*param_2 = (int16_t)pbVar16;
           param_2 = param_2 + 1;
         }
-        else if (bVar10) {
+        else if (bVar9) {
           *(uint8_t **)*param_2 = pbVar16;
           param_2 = param_2 + 1;
         }
@@ -92359,7 +92362,7 @@ LAB_installer__0010a474:
         local_c = 7;
         local_10 = 2;
 LAB_installer__0010a066:
-        if (bVar10) {
+        if (bVar9) {
           local_38 = (char *)*param_2;
         }
         else {
@@ -92399,9 +92402,9 @@ LAB_installer__0010a066:
             local_1ce = local_8;
             local_3c = local_8;
           }
-          bVar9 = false;
+          bVar8 = false;
         }
-        if ((bVar6) && (local_38 != (char *)0x0)) {
+        if ((bVar5) && (local_38 != (char *)0x0)) {
           if (uVar14 == 0x58) {
             local_52 = &DAT_installer__0010aa3b;
             local_44 = 2;
@@ -92439,7 +92442,7 @@ LAB_installer__0010a066:
         }
         break;
       case 0x55:
-        if (bVar10) {
+        if (bVar9) {
           local_38 = (char *)*param_2;
         }
         else {
@@ -92450,7 +92453,8 @@ LAB_installer__0010a066:
         }
         pbVar20 = local_1bc + 1;
         if (((uint32_t)local_38 & 0x80000000) != 0) {
-          local_1bc[0] = installer_next_decimal_digit((uint32_t *)&local_38);
+          iVar10 = installer_next_decimal_digit((uint32_t *)&local_38);
+          local_1bc[0] = (uint8_t)iVar10;
           pbVar20 = local_1bc;
         }
 LAB_installer__00109f6c:
@@ -92481,15 +92485,15 @@ LAB_installer__00109f6c:
             local_1ce = local_8;
             local_3c = local_8;
           }
-          bVar9 = false;
+          bVar8 = false;
         }
       }
-      iVar4 = (int32_t)pbVar23 - (int32_t)pbVar20;
-      local_14 = local_3c + local_44 + iVar4;
+      iVar10 = (int32_t)pbVar23 - (int32_t)pbVar20;
+      local_14 = local_3c + local_44 + iVar10;
       if ((int32_t)local_14 < (int32_t)local_1d6) {
         pbVar15 = (uint8_t *)(local_1d6 + (int32_t)pbVar15);
-        bVar5 = false;
-        if (bVar9) {
+        bVar4 = false;
+        if (bVar8) {
           if (bVar2) {
             local_1ce = local_1ce + ((int32_t)local_1d6 - (int32_t)local_14);
           }
@@ -92517,7 +92521,7 @@ LAB_installer__00109f6c:
         (*(code *)param_3)(local_52,1,local_44,param_4);
       }
       if (bVar2) {
-        if (bVar5) {
+        if (bVar4) {
           local_1ce = local_1ce + 1;
         }
         for (local_8 = local_1ce; 0x14 < (int32_t)local_8; local_8 = local_8 + -0x14) {
@@ -92527,9 +92531,9 @@ LAB_installer__00109f6c:
         pbVar16 = (uint8_t *)(local_8 + (int32_t)pbVar16);
         (*(code *)param_3)(s_00000000000000000000_installer__0010a9fb,1,local_8,param_4);
       }
-      if (0 < iVar4) {
-        pbVar16 = pbVar16 + iVar4;
-        (*(code *)param_3)(pbVar20,1,iVar4,param_4);
+      if (0 < iVar10) {
+        pbVar16 = pbVar16 + iVar10;
+        (*(code *)param_3)(pbVar20,1,iVar10,param_4);
       }
       if ((uVar17 & 0x184) != 0) {
         if ((uVar17 & 0x100) != 0) {
@@ -92561,7 +92565,7 @@ switchD_installer__00109d38_caseD_21:
     }
   } while( true );
 switchD_installer__00109d38_caseD_6c:
-  bVar10 = true;
+  bVar9 = true;
   pbVar19 = param_1;
   goto LAB_installer__00109d1a;
 }

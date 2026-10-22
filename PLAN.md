@@ -1326,6 +1326,12 @@ view cannot drift apart.  The library, bottom up:
      ends, or whose addresses stay in RAM, keep the image's.
      And the firmware's own faults the C reproduces, collected in
      `docs/firmware/quirks.md`.
+     And the decompiled `doprnt`'s `%u` of a value with its top bit
+     set, which ended in the quotient's low byte (`0xffffffff` printed
+     `429496729` and `0x99`): Ghidra took `next_decimal_digit`'s result
+     for D0:D1, where `divsl.l` leaves the quotient in D1, and the
+     caller's byte for D1's.  Pinned as `int` (the digit in D0), it
+     agrees, and `vsprintf` has `%u`, `%d` and `%x` cases of it.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -168,6 +168,12 @@ SPECIAL_DOUBLES = [5e-324, 1e-310, float("inf"), float("nan")]
 # integer power, odd and even, which pow takes the sign of apart
 # (double_is_integer, 0x60e68), and a fraction.
 POWERS = [(-2.0, 3.0), (-2.0, 2.0), (-0.5, 3.0), (2.0, 0.5), (0.0, 2.0)]
+# vsprintf's formats and an argument the generated text never makes: an
+# unsigned with its top bit set, whose last digit doprnt takes from
+# next_decimal_digit (0x5fd90) before its signed loop, and the same as
+# signed and hex.
+FORMATS = [b"%u\0", b"%d\0", b"%x\0", b"%10u|%-5u\0"]
+TOP_BIT_SET = struct.pack(">II", 0xFFFFFFFF, 0x80000000)
 # Double step records as clamp_double_to_step_and_limits reads them
 # (scpi_double_step): a step, then load_double (0x322aa) as the routine,
 # which returns the record's own step; one so fine the steps pass 1e9,
@@ -175,6 +181,7 @@ POWERS = [(-2.0, 3.0), (-2.0, 2.0), (-0.5, 3.0), (2.0, 0.5), (0.0, 2.0)]
 LOAD_DOUBLE = 0x322AA
 DOUBLE_STEPS = [0.5, 0.001, 1e-12, 100.0]
 GIVEN_CASES = {
+    "vsprintf": [{1: text, 2: TOP_BIT_SET} for text in FORMATS],
     "clamp_double_to_step_and_limits": [
         {4: struct.pack(">dI", step, LOAD_DOUBLE)} for step in DOUBLE_STEPS
     ],

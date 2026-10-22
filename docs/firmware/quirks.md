@@ -61,10 +61,3 @@ routine and the address that shows it.
 The harness counts these where they show (`KNOWN` in
 `tools/firmware/function_check.py`), or keeps its cases inside a
 table (`IN_RANGE`).
-
-## Open
-
-The decompiled `doprnt`, not the image, prints `%u` of `0xffffffff` as
-`429496729` and a stray byte, so that `timecode_update`'s T2-test
-format (`"rtcm? %u,..."`) differs from the image's whenever
-`tcode_format` is 1; its digit routine is not yet found.

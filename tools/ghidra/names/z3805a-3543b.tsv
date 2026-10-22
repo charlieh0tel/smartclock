@@ -861,7 +861,7 @@
 # the C library's helpers, libc.md
 0x60e68	function	double_is_integer	libc.md, run	whether a double is an integer, and through the pointer whether it is odd; pow's	undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3)
 0x60efa	function	double_truncate_sixteenths	libc.md, run	a double truncated to a multiple of 1/16; pow's	double double_truncate_sixteenths(double value)	convention=c; confidence=read; out=D0:D1 double; copies=D0:D1
-0x5fad6	function	next_decimal_digit	libc.md, run	'0' plus *n % 10, dividing *n by ten; the formatting engine's
+0x5fad6	function	next_decimal_digit	libc.md, run	'0' plus *n % 10, dividing *n by ten; the formatting engine's	int next_decimal_digit(uint32_t *n)
 0x5f3ba	function	double_to_digits	libc.md, run	a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's	void double_to_digits(double value, int count, int *exponent, uint *negative, char *digits, int mode)
 0x5f3ba	local	product	read	the 128-bit product double_to_digits_multiply works in, the power of ten's mantissa at its first two longs	uint32_t[4] @ -0x1a
 0x5f1d6	function	double_to_digits_multiply	libc.md, read	double_to_digits's product of two 64-bit numbers, one a power of ten from 0x5f864
@@ -1751,7 +1751,7 @@ installer::0x1091ac	function	installer_strtol	context	strtol: a long from a stri
 installer::0x109366	function	installer_toupper	libc.md	the installer's toupper	int installer_toupper(int c)
 installer::0x10937e	function	installer_double_to_digits_multiply	libc.md	the installer's double_to_digits_multiply
 installer::0x109562	function	installer_double_to_digits	libc.md	the installer's double_to_digits	void installer_double_to_digits(double value, int count, int *exponent, uint *negative, char *digits, int mode)
-installer::0x109c7e	function	installer_next_decimal_digit	libc.md	the installer's next_decimal_digit
+installer::0x109c7e	function	installer_next_decimal_digit	libc.md	the installer's next_decimal_digit	int installer_next_decimal_digit(uint32_t *n)
 installer::0x109cb4	function	installer_doprnt	libc.md	the installer's doprnt
 installer::0x10aa3e	function	installer_sprintf	libc.md	the installer's sprintf	int installer_sprintf(char *s, char *format, ...)
 installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf	int installer_vsprintf(char *s, char *format, void *arg)

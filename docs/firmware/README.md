@@ -84,6 +84,7 @@ request scripts in `oncore/`.
 - [The real-time kernel](psos.md)
 - [Structures](structures.md)
 - [Modules](modules.md)
+- [The firmware's own faults](quirks.md)
 
 ## Summary
 

@@ -1324,6 +1324,8 @@ view cannot drift apart.  The library, bottom up:
      defines (the image's 1e23 an ulp high), the SCPI error messages
      and the NV register's descriptor lists; those read past their
      ends, or whose addresses stay in RAM, keep the image's.
+     And the firmware's own faults the C reproduces, collected in
+     `docs/firmware/quirks.md`.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -56,7 +56,8 @@ routine and the address that shows it.
 
 - **`int64_divide` and `uint64_divide`**, on a quotient too wide for 32
   bits, return the dividend's low long, as `divs.l` leaves it.
-- **`setjmp`** reads its caller's registers.
+- **`setjmp`** reads its caller's registers.  Nothing calls it or
+  `longjmp`: no call, and no table holds either's address.
 
 The harness counts these where they show (`KNOWN` in
 `tools/firmware/function_check.py`), or keeps its cases inside a

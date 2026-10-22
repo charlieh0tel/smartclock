@@ -287,7 +287,7 @@ int32_t linear_regression(regression_record* record, int32_t with_slope) {
     }
   }
   if (double_compare(FEWEST, unsigned_to_double(count)) <= 0 ||
-      pll_aging_is_zero(sxx)) {
+      pll_is_zero(sxx)) {
     record->slope = 0.0f;
     record->rms = 0.0f;
     record->intercept = 0.0f;
@@ -365,15 +365,15 @@ int32_t fit_three_point(three_point_fit* fit) {
           float_subtract(x0, x1)));
 
   if (float_compare(x0, x1) == 0 || float_compare(x1, x2) == 0 ||
-      float_compare(x2, x0) == 0 || pll_aging_is_zero(denominator) ||
-      pll_aging_is_zero(numerator) || float_compare(y2, y0) == 0) {
+      float_compare(x2, x0) == 0 || pll_is_zero(denominator) ||
+      pll_is_zero(numerator) || float_compare(y2, y0) == 0) {
     fit->vertex_x = 0.0f;
     fit->vertex_y = 0.0f;
     return PLL_AGING_FIT_FAILED;
   }
   float curvature = float_divide(numerator, denominator);
 
-  if (pll_aging_is_zero(curvature)) {
+  if (pll_is_zero(curvature)) {
     fit->vertex_x = float_divide(
         float_subtract(float_multiply(x0, y2), float_multiply(x2, y0)),
         float_subtract(y2, y0));

@@ -866,9 +866,12 @@ int32_t scpi_set_DIAGnostic_TOFFset(void* parameters, void* response,
  * It passes save_calibration_block the low bytes of its own two stack
  * arguments, sign-extended, which finish_scpi_cmd does not push for a
  * numeric done hook: what its frame holds there. */
-void time_offset_done(int32_t index, int32_t source) {
+void time_offset_done(void) {
+  const int8_t index = (int8_t)CPU_CALLERS_STACK_LONG(0);
+  const int8_t source = (int8_t)CPU_CALLERS_STACK_LONG(1);
+
   antenna_delay_done();
-  save_calibration_block((int8_t)index, (int8_t)source);
+  save_calibration_block(index, source);
 }
 
 /* :DIAGnostic:TOFFset?, or its bound (0x2bdee). */

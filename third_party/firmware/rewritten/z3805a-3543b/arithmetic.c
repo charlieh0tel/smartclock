@@ -34,9 +34,9 @@ int32_t int_clamp(int32_t value, int32_t low, int32_t high) {
 /* A reflected CRC-16, polynomial 0x8408 from all ones, over a count of
  * bytes, and their sum: ~sum << 24 | sum << 16 | crc, 0 for no bytes.  Each
  * of a byte's 8 steps tests the byte's own low bit, never shifted, against
- * the CRC's, so that the CRC is not the CCITT one; nothing calls it
- * (0x1213a). */
-uint32_t crc16_ccitt(uint8_t* bytes, int16_t count) {
+ * the CRC's, so that the CRC is not the CCITT one; no call or table
+ * in the image names it (0x1213a). */
+uint32_t crc16_with_sum(uint8_t* bytes, int16_t count) {
   /* 0x8408, the CCITT polynomial 0x1021 reflected. */
   static const uint32_t CRC16_POLYNOMIAL = 0x8408;
   static const uint32_t CRC16_MASK = 0xffff;

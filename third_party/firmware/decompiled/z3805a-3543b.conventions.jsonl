@@ -66,7 +66,7 @@
 {"address":"000120aa","name":"shutdown","note":"Shutdown","convention":"unknown"}
 {"address":"000120e6","name":"int_abs","note":"an int's magnitude; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001211a","name":"int_clamp","note":"a value clamped between two bounds; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"0001213a","name":"crc16_ccitt","note":"the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2}]}
+{"address":"0001213a","name":"crc16_with_sum","note":"a reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes, with their sum: ~sum << 24 | sum << 16 | crc; each step tests the byte's unshifted low bit (quirks.md); no call or table names it","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2}]}
 {"address":"0001219a","name":"isqrt16","note":"a 16-bit integer square root; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00012206","name":"round_shift_right","note":"an int shifted right with rounding, half away from zero; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001223c","name":"double_round_to_long","note":"a double rounded half away from zero to a long, saturating; the double at SP+4 (0x1223c)","convention":"unknown","stack":[{"offset":4,"size":8}]}
@@ -1401,7 +1401,7 @@
 {"address":"0004538c","name":"fine","note":"the power-up step that adjusts the frequency finely, through its sync and slew sub-states","convention":"unknown"}
 {"address":"00045a24","name":"time_zone_changed","note":"marks the time zone changed, for :PTIMe:TZONe","convention":"unknown"}
 {"address":"00045a2e","name":"time_zone_done","note":"clock_record_refresh, then clears time_zone_change_pending","convention":"unknown"}
-{"address":"00045a3c","name":"time_offset_done","note":"antenna_delay_done, clearing the temporary-mode hold cause, then save_calibration_block given its two stack arguments, which finish_scpi_cmd does not push for a numeric done hook","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"00045a3c","name":"time_offset_done","note":"antenna_delay_done, clearing the temporary-mode hold cause, then save_calibration_block given its two stack arguments, which finish_scpi_cmd does not push for a numeric done hook","convention":"unknown"}
 {"address":"00045a5c","name":"holdover_recovery_initiate","note":"in manual holdover clears pll.manual and the manual hold cause and status_happening(0x2a); else status_report_from(8)","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00045aaa","name":"holdover_initiate","note":"past power-up sets the manual hold cause, pll.manual and pll_scpi_signal_delay, and status_happening(0x28) in holdover; in power-up status_report_from(8)","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00045af0","name":"temporary_hold_set","note":"sets the temporary-mode hold cause, 0x20 of pll.hold_causes, and pll_scpi_signal_delay; antenna_delay_done clears it","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}

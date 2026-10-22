@@ -357,7 +357,7 @@ static void pll_stages_fine_fit_add(void) {
 
   fine_y0 =
       float_subtract(float_multiply(fine_sum_i, fine_sum_i), n_sum_i_squared);
-  if (pll_aging_is_zero(fine_y0)) {
+  if (pll_is_zero(fine_y0)) {
     fine_y0 = 0.0f;
   } else {
     float n_sum_i_ti = float_multiply(unsigned_to_float(i), fine_sum_i_ti);
@@ -1069,7 +1069,7 @@ pll_stage_result holdover(bool same_stage) {
   }
   if (pll.holdover_state != PLL_HOLDOVER_HOLDING) {
     holdover_ti_reset();
-    if (pll_aging_is_zero(pll.efc_history.fit_a)) {
+    if (pll_is_zero(pll.efc_history.fit_a)) {
       pll.efc_history.fit_a = pll_stages_efc_less_temperature(current);
     }
     holdover_steering.aging_limit = AGING_LIMIT;

@@ -12,7 +12,7 @@ static const uint32_t PLL_AGING_INDEX_MASK = PLL_AGING_ENTRIES - 1;
 
 /* Whether a float is zero of either sign, as the image tests its bits
  * (lsl.l #1, 0x42256). */
-static bool pll_aging_is_zero(float value) {
+static bool pll_is_zero(float value) {
   uint32_t bits;
 
   memcpy(&bits, &value, sizeof bits);

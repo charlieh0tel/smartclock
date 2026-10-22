@@ -6271,7 +6271,7 @@ void gpt_init(void);
 void shutdown(void);
 int32_t int_abs(int32_t param_1);
 int32_t int_clamp(int32_t param_1,int32_t param_2,int32_t param_3);
-uint32_t crc16_ccitt(uint8_t *param_1,int16_t param_2);
+uint32_t crc16_with_sum(uint8_t *param_1,int16_t param_2);
 uint16_t isqrt16(uint32_t param_1);
 int32_t round_shift_right(int32_t param_1,uint32_t param_2);
 int32_t double_round_to_long(double x);
@@ -7687,7 +7687,7 @@ pll_stage_result coarse(void);
 pll_stage_result fine(void);
 void time_zone_changed(void);
 void time_zone_done(void);
-void time_offset_done(int32_t a,int32_t b);
+void time_offset_done(void);
 void holdover_recovery_initiate(int32_t index,int32_t source);
 void holdover_initiate(int32_t index,int32_t source);
 void temporary_hold_set(int32_t index,int32_t source);
@@ -11211,9 +11211,11 @@ int32_t int_clamp(int32_t param_1,int32_t param_2,int32_t param_3)
 /* 0001213a */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
-/* the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing */
+/* a reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes, with their sum: ~sum << 24 | sum
+   << 16 | crc; each step tests the byte's unshifted low bit (quirks.md); no call or table names it
+    */
 
-uint32_t crc16_ccitt(uint8_t *param_1,int16_t param_2)
+uint32_t crc16_with_sum(uint8_t *param_1,int16_t param_2)
 
 {
   uint32_t uVar1;
@@ -64574,11 +64576,14 @@ void time_zone_done(void)
    two stack arguments, which finish_scpi_cmd does not push for a numeric done hook
    scpi_param_DIAGnostic_TOFFset: done */
 
-void time_offset_done(int32_t a,int32_t b)
+void time_offset_done(void)
 
 {
+  char in_stack_00000007 = *(char *)((char *)__builtin_frame_address(0) + 11);
+  char in_stack_0000000b = *(char *)((char *)__builtin_frame_address(0) + 15);
+  
   antenna_delay_done();
-  save_calibration_block((int32_t)(char)a,(int32_t)(char)b);
+  save_calibration_block((int32_t)in_stack_00000007,(int32_t)in_stack_0000000b);
   return;
 }
 

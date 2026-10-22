@@ -17,9 +17,10 @@ state.  Each is by the routine and the address that shows it.
   `get_gps_utc_offset` says it is valid, the test at `0x115a6` the
   other way round from `utc_to_gps`'s, so that it uses the offset only
   while it is not valid.
-- **`crc16_ccitt` (`0x1213a`)** tests the byte's own low bit, never
+- **`crc16_with_sum` (`0x1213a`)** tests the byte's own low bit, never
   shifted, against the CRC's in each of its 8 steps, so that the CRC
-  is not the CCITT one.  No call or table in the image names it.
+  is not the CCITT one; it returns the bytes' sum, inverted and plain,
+  above the CRC.  No call or table in the image names it.
 - **`duart_op0_set` (`0x1dfe6`) and its kin** pass 6 to
   `set_interrupt_mask`, which keeps only the status register's bits 10
   to 8, so the mask they set is level 0, not 6.

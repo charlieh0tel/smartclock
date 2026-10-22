@@ -178,7 +178,7 @@
 0x4f1da	count_bits	platform/arithmetic	bit count; the satellite sets use it
 0x4ef8e	bytes_to_long	platform/arithmetic	big-endian bytes; the Oncore decoders use it
 0x4fb54	bytes_equal_n	platform/arithmetic	byte strings; the GPS task calls it
-0x1213a	crc16_ccitt	platform/arithmetic
+0x1213a	crc16_with_sum	platform/arithmetic
 0x12af2	random_dither	platform/arithmetic	rand shaped by dither_table; efc_write_dithered
 0x410fa	int64_add	platform/arithmetic
 0x4111e	int64_negate	platform/arithmetic

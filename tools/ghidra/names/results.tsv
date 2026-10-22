@@ -183,7 +183,7 @@ exception_hook_get	hook	the running task's exception hook, or the global one
 exception_hook_set_task	status	0
 int_abs	magnitude
 int_clamp	clamped
-crc16_ccitt	crc	~sum << 24 | sum << 16 | crc
+crc16_with_sum	crc	~sum << 24 | sum << 16 | crc
 round_shift_right	rounded
 round_divide	quotient	rounded half away from zero
 double_round_to_long	rounded

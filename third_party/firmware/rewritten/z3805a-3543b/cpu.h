@@ -93,3 +93,10 @@ static const uint8_t CPU_SWSR_SECOND = 0xaa;
     __asm__("" : "=r"(cpu_callers_value));        \
     cpu_callers_value;                            \
   })
+
+/* The index'th long of the stack arguments where a caller would have
+ * pushed them, for code that reads arguments its callers do not push
+ * (docs/firmware/quirks.md): above the frame pointer's saved copy and
+ * the return address, which -fno-omit-frame-pointer keeps. */
+#define CPU_CALLERS_STACK_LONG(index) \
+  (((volatile uint32_t*)__builtin_frame_address(0))[2 + (index)])

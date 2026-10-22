@@ -1096,7 +1096,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x3088c	function	duartb_eight_bits_restrict	DUART channel B's eight_bits: changed	with nv_settings.serial_restricted set, clears channel B's parity when eight_bits is also set	void duartb_eight_bits_restrict(void)
 0x308ae	function	douglas_duration_changed	scpi_param_DOUGlas_DURation: changed	clears nv_settings.douglas_duration_infinite	void douglas_duration_changed(void)
 0x45a2e	function	time_zone_done	scpi_param_SOURce_PTIMe_TZONe: done	clock_record_refresh, then clears time_zone_change_pending	void time_zone_done(void)
-0x45a3c	function	time_offset_done	scpi_param_DIAGnostic_TOFFset: done	antenna_delay_done, clearing the temporary-mode hold cause, then save_calibration_block given its two stack arguments, which finish_scpi_cmd does not push for a numeric done hook	void time_offset_done(int32_t a, int32_t b)
+0x45a3c	function	time_offset_done	scpi_param_DIAGnostic_TOFFset: done	antenna_delay_done, clearing the temporary-mode hold cause, then save_calibration_block given its two stack arguments, which finish_scpi_cmd does not push for a numeric done hook	void time_offset_done(void)
 0x45b6e	function	nv_param_field_b8_done	nv_param_field_b8: done	a bare rts	void nv_param_field_b8_done(void)
 0x46340	function	douglas_state_done	scpi_param_DOUGlas_STATe: done	sets douglas_start_requested and clears douglas_stop_requested when nv_settings.douglas_state is 0, the reverse when it is set	void douglas_state_done(void)
 #
@@ -1369,7 +1369,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x12050	function	gpt_init	context	sets the GPT up: GPTMCR, GPT_ICR, its port, output compares and pulse accumulator
 0x120e6	function	int_abs	context	an int's magnitude; called by nothing
 0x1211a	function	int_clamp	context	a value clamped between two bounds; called by nothing
-0x1213a	function	crc16_ccitt	context	the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing
+0x1213a	function	crc16_with_sum	context	a reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes, with their sum: ~sum << 24 | sum << 16 | crc; each step tests the byte's unshifted low bit (quirks.md); no call or table names it
 0x1219a	function	isqrt16	context	a 16-bit integer square root; called by nothing
 0x12206	function	round_shift_right	context	an int shifted right with rounding, half away from zero; called by nothing
 0x122d0	function	round_divide	context	an int divided with rounding, half away from zero; called by nothing

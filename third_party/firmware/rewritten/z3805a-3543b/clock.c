@@ -91,7 +91,7 @@ static time_of_day clock_time_of(uint32_t bits) {
 
 /* The days in a year before a month, 1 to 12.  The image indexes its
  * tables by the month unchecked: month 0 reads the word before the table,
- * a month past 12 the words after it. */
+ * a month past 12 the words after it, so these stay the image's. */
 static uint16_t clock_days_before_month(uint8_t month, bool leap) {
   const int16_t* table = leap ? days_before_month_leap : days_before_month;
 
@@ -181,14 +181,17 @@ int32_t date_to_mjd(uint32_t date) {
  * to 12 (0x11032). */
 uint8_t days_in_month(uint16_t year, uint8_t month) {
   static const uint8_t FEBRUARY_DAYS = 28;
+  /* The image's table at 0x1189c, month_lengths. */
+  static const uint8_t MONTH_LENGTHS[] = {31, 28, 31, 30, 31, 30,
+                                          31, 31, 30, 31, 30, 31};
 
   if (month == CLOCK_FEBRUARY) {
     return is_leap_year(year) ? FEBRUARY_DAYS + 1 : FEBRUARY_DAYS;
   }
   if (month == 0 || month > CLOCK_MONTHS_PER_YEAR) {
-    return month_lengths[0];
+    return MONTH_LENGTHS[0];
   }
-  return month_lengths[month - 1];
+  return MONTH_LENGTHS[month - 1];
 }
 
 /* A date with its overflowing months and days carried into the next
@@ -507,7 +510,9 @@ void local_to_utc(uint32_t* date, time_of_day* time) {
  * seconds, in GPS time; NULL for a 60-second minute or any other
  * (0x105ee). */
 klok_entry* leap_event_schedule_gps(uint32_t date, int32_t minute_length) {
-  klok_entry event = leap_event_gps_template;
+  /* At 23:59:55, the image's leap_event_gps_template (0x10cb0). */
+  klok_entry event = {.time = 23 << 16 | 59 << 8 | 55,
+                      .event_class = KLOK_EVENT_LEAP};
 
   event.date = date;
   if (minute_length == CLOCK_LEAP_MINUTE_SHORT) {
@@ -528,7 +533,7 @@ klok_entry* leap_event_schedule_utc(uint32_t date, int32_t minute_length) {
   /* The event comes this many seconds before the offset steps
    * (0x1070a). */
   static const uint8_t LEAP_EVENT_LEAD = 5;
-  klok_entry event = leap_event_utc_template;
+  klok_entry event = {.event_class = KLOK_EVENT_LEAP};
   packed_datetime when = {.time = {.hour = CLOCK_HOURS_PER_DAY}, .date = date};
   int16_t offset;
 

@@ -855,9 +855,45 @@ enum {
   SCPI_RADIX_BINARY = 'B',
 };
 
-/* A port value's character class. */
+/* A port value's character class: the image's table at 0x277ec, the
+ * export's LAB_000277ec, by a port's value, 0 to 0x105. */
 static uint8_t scpi_engine_class(int32_t character) {
-  return (&LAB_000277ec)[character];
+  static const uint8_t CLASSES[] = {
+      [0x00 ... 0x09] = SCPI_CLASS_WHITE,
+      [0x0a] = SCPI_CLASS_NEWLINE,
+      [0x0b ... ' '] = SCPI_CLASS_WHITE,
+      ['!'] = SCPI_CLASS_OTHER,
+      ['"'] = SCPI_CLASS_QUOTE,
+      ['#'] = SCPI_CLASS_HASH,
+      ['$'] = SCPI_CLASS_DOLLAR,
+      ['%' ... '&'] = SCPI_CLASS_OTHER,
+      [0x27] = SCPI_CLASS_QUOTE,
+      ['('] = SCPI_CLASS_OPEN,
+      [')'] = SCPI_CLASS_CLOSE,
+      ['*'] = SCPI_CLASS_STAR,
+      ['+'] = SCPI_CLASS_PLUS,
+      [','] = SCPI_CLASS_COMMA,
+      ['-'] = SCPI_CLASS_MINUS,
+      ['.'] = SCPI_CLASS_POINT,
+      ['/'] = SCPI_CLASS_SLASH,
+      ['0' ... '9'] = SCPI_CLASS_DIGIT,
+      [':'] = SCPI_CLASS_COLON,
+      [';'] = SCPI_CLASS_SEMICOLON,
+      ['<' ... '>'] = SCPI_CLASS_OTHER,
+      ['?'] = SCPI_CLASS_QUESTION,
+      ['@'] = SCPI_CLASS_AT,
+      ['A' ... 'Z'] = SCPI_CLASS_LETTER,
+      ['[' ... '^'] = SCPI_CLASS_OTHER,
+      ['_'] = SCPI_CLASS_UNDERSCORE,
+      ['`'] = SCPI_CLASS_OTHER,
+      ['a' ... 'z'] = SCPI_CLASS_LETTER,
+      ['{' ... 0xff] = SCPI_CLASS_OTHER,
+      [0x100 ... 0x101] = SCPI_CLASS_END,
+      [0x102] = SCPI_CLASS_SKIPPED_END,
+      [0x103 ... 0x105] = SCPI_CLASS_PORT_ERROR,
+  };
+
+  return CLASSES[character];
 }
 
 /* The next value from a port, its own routine's (0x26ef6). */
@@ -1643,6 +1679,16 @@ static void scpi_engine_mark(scpi_engine_call* call, int16_t offset,
  * kind; offset is the next parameter's in the call's buffer (0x278f4). */
 int32_t scpi_parameter_match(scpi_engine_parameter** next, int32_t kind,
                              scpi_engine_call* call, int16_t* offset) {
+  /* The condition for a parameter of each kind where none is allowed:
+   * the image's table at 0x279ca, scpi_parameter_kind_errors. */
+  static const int16_t KIND_ERRORS[] = {
+      [SCPI_PARAMETER_DECIMAL] = -46,     /* -128 Numeric data not allowed */
+      [SCPI_PARAMETER_STRING] = -48,      /* -158 String data not allowed */
+      [SCPI_PARAMETER_CHARACTER] = -47,   /* -148 Character data not allowed */
+      [SCPI_PARAMETER_BLOCK] = -49,       /* -168 Block data not allowed */
+      [SCPI_PARAMETER_NON_DECIMAL] = -46, /* -128 Numeric data not allowed */
+      [SCPI_PARAMETER_EXPRESSION] = -50,  /* -178 Expression data not allowed */
+  };
   int16_t token = kind;
 
   for (scpi_engine_parameter* entry = *next;; entry = *next = entry->next) {
@@ -1653,7 +1699,7 @@ int32_t scpi_parameter_match(scpi_engine_parameter** next, int32_t kind,
       break;
     }
     if (entry->kinds->optional == 0) {
-      return scpi_parameter_kind_errors[token];
+      return KIND_ERRORS[token];
     }
     scpi_engine_mark(call, *offset, SCPI_NONE);
     *offset += entry->kinds->size + sizeof(int16_t);
@@ -1689,10 +1735,26 @@ int16_t scpi_suffix_compare_tail(char* suffix, int32_t length, char* name) {
   return name[matched] == 0 ? matched : 0;
 }
 
-/* A unit multiplier's power of ten, from scpi_multipliers, by its one
+/* A unit multiplier's power of ten by its one
  * or two letters; SCPI_NO_MULTIPLIER for none (0x27a0c). */
 int8_t scpi_multiplier_exponent(int32_t name) {
-  scpi_multiplier* entry = scpi_multipliers;
+  /* The image's table at 0x27b2e, scpi_multipliers, to a name of 0. */
+  static const scpi_multiplier MULTIPLIERS[] = {
+      {.name = 'M', .exponent = -3},
+      {.name = 'K', .exponent = 3},
+      {.name = 'U', .exponent = -6},
+      {.name = 'M' << 8 | 'A', .exponent = 6},
+      {.name = 'N', .exponent = -9},
+      {.name = 'G', .exponent = 9},
+      {.name = 'P', .exponent = -12},
+      {.name = 'T', .exponent = 12},
+      {.name = 'F', .exponent = -15},
+      {.name = 'A', .exponent = -18},
+      {.name = 'P' << 8 | 'E', .exponent = 15},
+      {.name = 'E' << 8 | 'X', .exponent = 18},
+      {0},
+  };
+  const scpi_multiplier* entry = MULTIPLIERS;
 
   do {
     if (entry->name == (uint16_t)name) {

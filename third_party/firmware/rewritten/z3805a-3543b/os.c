@@ -64,7 +64,7 @@ void print_exception(uint16_t sr, uint32_t pc, uint16_t vector,
     if (has_address) {
       printf_polled(", address = %#8x", address);
     }
-    printf_polled(reset_to_recover_text);
+    printf_polled("\r\nRESET to recover.");
     if (kernel_running) {
       psos_pause(1);
     }

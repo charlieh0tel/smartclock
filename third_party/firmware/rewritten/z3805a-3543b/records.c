@@ -46,6 +46,21 @@ static const int32_t RECORDS_RESET_RECORDS =
 
 static const uint8_t RECORDS_LONG_BITS = 32;
 
+/* The serial ports' settings by default, 9600 baud, no parity, eight bits,
+ * echo: the image's sci_settings_defaults and duartb_settings_defaults
+ * (0x30a2c, 0x30a34). */
+static const sci_settings_record records_sci_defaults = {
+    .baud = SERIAL_BAUD_9600,
+    .parity = SERIAL_PARITY_NONE,
+    .echo = 1,
+};
+static const duartb_settings_record records_duartb_defaults = {
+    .baud = SERIAL_BAUD_9600,
+    .parity = SERIAL_PARITY_NONE,
+    .eight_bits = 1,
+    .echo = 1,
+};
+
 /* The sum of so many bytes, as every record checksum takes it. */
 static uint8_t records_byte_sum(const uint8_t* bytes, uint32_t count) {
   uint8_t sum = 0;
@@ -152,7 +167,7 @@ void lifetime_event_run(void) {
 void lifetime_update(int32_t date) {
   /* The clock event's period, three hours as a packed time (hour << 16). */
   static const uint32_t LIFETIME_EVENT_PERIOD = 3u << 16;
-  klok_entry event = lifetime_event_template;
+  klok_entry event = {.event_class = KLOK_EVENT_LIFETIME};
 
   if (lifetime.date != (uint32_t)date) {
     lifetime.date = date;
@@ -231,9 +246,9 @@ uint8_t parameter_record_read(void) {
         eeprom_parameter_record.duartb_two_stop_bits;
     duartb_settings.echo = eeprom_parameter_record.duartb_echo;
   } else {
-    memcpy(&duartb_settings, &duartb_settings_defaults, sizeof duartb_settings);
+    memcpy(&duartb_settings, &records_duartb_defaults, sizeof duartb_settings);
   }
-  memcpy(&sci_settings, &sci_settings_defaults, sizeof sci_settings);
+  memcpy(&sci_settings, &records_sci_defaults, sizeof sci_settings);
   return valid;
 }
 
@@ -268,7 +283,7 @@ bool save_parameter_record(uint8_t source) {
  * taken and saved (0x30ea0). */
 void duartb_settings_preset(int32_t index, int32_t source) {
   (void)index;
-  memcpy(&duartb_settings, &duartb_settings_defaults, sizeof duartb_settings);
+  memcpy(&duartb_settings, &records_duartb_defaults, sizeof duartb_settings);
   duartb_settings_done();
   save_parameter_record(source);
 }
@@ -276,7 +291,7 @@ void duartb_settings_preset(int32_t index, int32_t source) {
 /* The same for the SCI (0x30ed4). */
 void sci_settings_preset(int32_t index, int32_t source) {
   (void)index;
-  memcpy(&sci_settings, &sci_settings_defaults, sizeof sci_settings);
+  memcpy(&sci_settings, &records_sci_defaults, sizeof sci_settings);
   sci_settings_done();
   save_parameter_record(source);
 }
@@ -801,6 +816,16 @@ static void records_pack_flush(records_bit_stream* stream) {
   stream->used = 0;
 }
 
+/* The low n bits, n 0 to 32: the image's low_bit_masks (0x314b2). */
+static const uint32_t records_low_bit_masks[] = {
+    0x0,        0x1,        0x3,        0x7,       0xf,       0x1f,
+    0x3f,       0x7f,       0xff,       0x1ff,     0x3ff,     0x7ff,
+    0xfff,      0x1fff,     0x3fff,     0x7fff,    0xffff,    0x1ffff,
+    0x3ffff,    0x7ffff,    0xfffff,    0x1fffff,  0x3fffff,  0x7fffff,
+    0xffffff,   0x1ffffff,  0x3ffffff,  0x7ffffff, 0xfffffff, 0x1fffffff,
+    0x3fffffff, 0x7fffffff, 0xffffffff,
+};
+
 /* Packs a value's low bits. */
 static void records_pack(records_bit_stream* stream, uint32_t value,
                          uint8_t width) {
@@ -808,7 +833,7 @@ static void records_pack(records_bit_stream* stream, uint32_t value,
     records_pack_flush(stream);
   }
   stream->bits = (width >= RECORDS_LONG_BITS ? 0 : stream->bits << width) |
-                 (value & low_bit_masks[width]);
+                 (value & records_low_bit_masks[width]);
   stream->used += width;
 }
 
@@ -821,7 +846,7 @@ static uint32_t records_unpack(records_bit_stream* stream, uint8_t width) {
   }
   stream->bits = rotate_left(stream->bits, width);
   stream->used += width;
-  return stream->bits & low_bit_masks[width];
+  return stream->bits & records_low_bit_masks[width];
 }
 
 /* A value's bits in the NV register, from a descriptor's widths. */
@@ -856,6 +881,33 @@ void nv_restore(void) {
   static const int16_t STATUS_CONFIGURATION_LOST = 0x11;
   /* The source nv_restore gives nv_save and status_report_from. */
   static const uint8_t NV_RESTORE_SOURCE = 2;
+  /* nv_settings by default: the image's nv_settings_defaults (0x30966),
+   * its pads 0xff. */
+  static const nv_settings_fields NV_DEFAULTS = {
+      .elevation_mask = 10,
+      .douglas_duration = 7200,
+      .pad_0f = 0xff,
+      .holdover_status_threshold = 86400,
+      .limit_threshold = 1e-3f,
+      .holdover_limit_threshold = 1e-6f,
+      .field_1e = 1,
+      .pad_1f = 0xff,
+      .prediction_duration = 86400,
+      .leap_date = 1994 << 16 | 1 << 8 | 1,
+      .leap_minute_length = 60,
+      .raim_state = {1, 0},
+      .pad_47 = 0xff,
+      .raim_threshold = {10, 20},
+      .holdover_measurement_threshold = 25200,
+      .status_enable = {0x88, 0, 0x24, 0x3, 0x7, 0x8, 0x1fff},
+      .status_positive_transition = {0x7f, 0x2, 0x7, 0xf, 0x13ff},
+      .serial_restricted = 1,
+      .pad_9b = 0xff,
+      .pulse_period = 1,
+      .format_data = ROBIN_SHORTS,
+      .douglas_state_powerup = 1,
+      .tcode_format = TIMECODE_T1,
+  };
 
   selftest.eeprom = 0;
   nv_slot = 0;
@@ -869,7 +921,7 @@ void nv_restore(void) {
   }
 
   selftest.eeprom = 1;
-  memcpy(&nv_settings, &nv_settings_defaults, sizeof nv_settings);
+  memcpy(&nv_settings, &NV_DEFAULTS, sizeof nv_settings);
   uint32_t sequence_0 = (uint32_t)nv_records[0].sequence;
   uint32_t sequence_1 = (uint32_t)nv_records[1].sequence;
   if (sequence_0 == RECORDS_ERASED_LONG ||

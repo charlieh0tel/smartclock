@@ -1,12 +1,12 @@
 /* The FPGA, written by hand in place of the decompiler's
  * (docs/firmware/README.md, "Hand-written C"): its loading, fpga_setup
  * and fpga_program; its readback, fpga_verify and the frames it is
- * checked in; its registers, through fconf_regs and fpga_bit_table;
+ * checked in; its registers, through fconf_regs and fpga_bits;
  * and its self-tests.  The exported C includes this file after its
  * own, so the types and prototypes it declares are in scope; each
  * function here keeps its generated prototype.  A configuration is
  * smartclock.h's fpga_configuration_index, into the ROM table
- * fpga_configurations; pll's FPGA fields, fconf_regs, fpga_bit_table
+ * fpga_configurations; pll's FPGA fields, fconf_regs, fpga_bits
  * and fpga_readback_mask are docs/firmware/structures.md's; the lines
  * are docs/firmware/outputs.md's, "The FPGA bitstreams"; the
  * registers are mc68331.h's. */
@@ -417,20 +417,31 @@ uint8_t fpga_load_test(void) {
 /* Writes an FPGA register (0x40756). */
 void fpga_write(uint8_t reg, uint8_t value) { fpga_port[reg] = value; }
 
-/* Sets an fpga_bit_table field's bits in its register's image in
+/* Each FPGA bit or field's register image in fconf_regs and its mask, by
+ * fpga_bit_index: the image's table at 0x41310, fpga_bit_table. */
+static const fpga_bit fpga_bits[] = {
+    [FPGA_BIT_MODE] = {.reg = 0, .mask = 0x03, .is_flag = 0},
+    [FPGA_BIT_PRESET] = {.reg = 0, .mask = 0x40, .is_flag = 1},
+    [FPGA_BIT_START] = {.reg = 1, .mask = 0x01, .is_flag = 1},
+    [FPGA_BIT_REFERENCE] = {.reg = 1, .mask = 0x02, .is_flag = 1},
+    [FPGA_BIT_ADDRESS] = {.reg = 1, .mask = 0xf8, .is_flag = 0},
+    [FPGA_BIT_SYNC] = {.reg = 3, .mask = 0x03, .is_flag = 0},
+};
+
+/* Sets an fpga_bits field's bits in its register's image in
  * fconf_regs, clearing the rest of the field, and writes the
  * register. */
 static void fpga_field_store(uint8_t field, uint8_t bits) {
-  const fpga_bit* entry = &fpga_bit_table[field];
+  const fpga_bit* entry = &fpga_bits[field];
 
   fconf_regs[entry->reg] = (fconf_regs[entry->reg] & ~entry->mask) | bits;
   fpga_write(entry->reg, fconf_regs[entry->reg]);
 }
 
-/* Sets or clears an fpga_bit_table bit and writes its register
+/* Sets or clears an fpga_bits bit and writes its register
  * (0x409a4). */
 void fpga_set_bit(fpga_bit_index bit, uint8_t on) {
-  const fpga_bit* entry = &fpga_bit_table[bit];
+  const fpga_bit* entry = &fpga_bits[bit];
 
   if (on) {
     fconf_regs[entry->reg] |= entry->mask;
@@ -440,24 +451,24 @@ void fpga_set_bit(fpga_bit_index bit, uint8_t on) {
   fpga_write(entry->reg, fconf_regs[entry->reg]);
 }
 
-/* Sets an fpga_bit_table field to a value already in its place and
+/* Sets an fpga_bits field to a value already in its place and
  * writes its register (0x40a0e). */
 void fpga_set_field(fpga_bit_index field, uint8_t value) {
   fpga_field_store(field, value);
 }
 
 /* Builds the four registers' images from a value for each of
- * fpga_bit_table's fields: a flag's mask for a nonzero value, any
+ * fpga_bits's fields: a flag's mask for a nonzero value, any
  * other's value ORed in (0x40afe). */
 void fpga_fields_to_registers(uint8_t* fields, uint8_t* registers) {
   static const uint8_t REGISTERS = sizeof(fconf_regs);
-  static const uint8_t FIELDS = sizeof(fpga_bit_table) / sizeof(fpga_bit);
+  static const uint8_t FIELDS = sizeof(fpga_bits) / sizeof(fpga_bit);
 
   for (uint8_t reg = 0; reg < REGISTERS; reg++) {
     registers[reg] = 0;
   }
   for (uint8_t field = 0; field < FIELDS; field++) {
-    const fpga_bit* entry = &fpga_bit_table[field];
+    const fpga_bit* entry = &fpga_bits[field];
 
     if (entry->is_flag == 1) {
       if (fields[field] != 0) {
@@ -472,14 +483,14 @@ void fpga_fields_to_registers(uint8_t* fields, uint8_t* registers) {
   }
 }
 
-/* The field of fpga_bit_table that selects the register a read of the
+/* The field of fpga_bits that selects the register a read of the
  * FPGA returns, fconf_regs[1]'s top five bits (structures.md). */
 static const uint8_t FPGA_ADDRESS_SHIFT = 3;
 
 /* Reads an FPGA register: puts its number in the address field, reads
  * the FPGA, and puts the field back (0x4076a). */
 uint8_t fpga_read(uint8_t reg) {
-  const uint8_t saved = fconf_regs[fpga_bit_table[FPGA_BIT_ADDRESS].reg];
+  const uint8_t saved = fconf_regs[fpga_bits[FPGA_BIT_ADDRESS].reg];
 
   fpga_field_store(FPGA_BIT_ADDRESS, reg << FPGA_ADDRESS_SHIFT);
   /* a read at the FPGA's base returns the register addressed */
@@ -526,7 +537,7 @@ char fpga_read_seconds(void) {
  * (0x4085e). */
 void fpga_address_sweep_debug(void) {
   static const uint8_t ADDRESSES = 32;
-  const uint8_t reg = fpga_bit_table[FPGA_BIT_ADDRESS].reg;
+  const uint8_t reg = fpga_bits[FPGA_BIT_ADDRESS].reg;
   char text[80];
 
   for (uint8_t address = 0; address < ADDRESSES; address++) {

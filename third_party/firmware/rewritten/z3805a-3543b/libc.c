@@ -562,6 +562,17 @@ double log(double x) {
   static const int32_t ERANGE = 34;
   /* sqrt(1/2), where log and pow choose how to reduce their argument. */
   static const double SQRT_HALF = 0.7071067811865476;
+  /* ln 2 in a high part and a low, and the rational approximation's
+   * coefficients: the image's log_ln2_high to log_b2 (0x60d48 to
+   * 0x60d80). */
+  static const double LN2_HIGH = 0.693359375;
+  static const double LN2_LOW = -0.00021219444005469057;
+  static const double A0 = -64.12494342374558;
+  static const double A1 = 16.383943563021536;
+  static const double A2 = -0.7895611288749126;
+  static const double B0 = -769.4993210849487;
+  static const double B1 = 312.03222091924533;
+  static const double B2 = -35.66797773903465;
   union libc_double v = {.value = x};
 
   if (libc_is_nan(v)) {
@@ -606,24 +617,24 @@ double log(double x) {
   }
   double w = double_multiply(z, z);
   double scale = integer_to_double(exponent);
-  double p = double_multiply(w, log_a2);
+  double p = double_multiply(w, A2);
 
-  p = double_add(p, log_a1);
+  p = double_add(p, A1);
   p = double_multiply(p, w);
-  p = double_add(p, log_a0);
+  p = double_add(p, A0);
   p = double_multiply(p, w);
-  double q = double_add(w, log_b2);
+  double q = double_add(w, B2);
 
   q = double_multiply(q, w);
-  q = double_add(q, log_b1);
+  q = double_add(q, B1);
   q = double_multiply(q, w);
-  q = double_add(q, log_b0);
+  q = double_add(q, B0);
   double result = double_divide_reversed(q, p);
 
   result = double_multiply(result, z);
   result = double_add(result, z);
-  result = double_add(result, double_multiply(log_ln2_low, scale));
-  return double_add(double_multiply(log_ln2_high, scale), result);
+  result = double_add(result, double_multiply(LN2_LOW, scale));
+  return double_add(double_multiply(LN2_HIGH, scale), result);
 }
 
 /* The square root (0x6191c): of the argument reduced to [0.5, 1), a
@@ -631,6 +642,12 @@ double log(double x) {
  * halving; an odd exponent then multiplied by sqrt(1/2), in two parts,
  * and the exponent halved. */
 double sqrt(double x) {
+  /* The seed's coefficients and sqrt(1/2) in a high part and a low:
+   * the image's sqrt_seed_a to sqrt_half_low (0x61b94 to 0x61bac). */
+  static const double SEED_A = 0.41731;
+  static const double SEED_B = 0.59016;
+  static const double HALF_HIGH = 0.7071067809592932;
+  static const double HALF_LOW = 2.2725427813161828e-10;
   union libc_double v = {.value = x};
 
   if (libc_is_nan(v)) {
@@ -649,7 +666,7 @@ double sqrt(double x) {
 
   int32_t exponent;
   double reduced = libc_reduce(v, &exponent);
-  double root = double_add(double_multiply(reduced, sqrt_seed_b), sqrt_seed_a);
+  double root = double_add(double_multiply(reduced, SEED_B), SEED_A);
 
   root = double_add(double_divide_reversed(root, reduced), root);
   root =
@@ -664,11 +681,11 @@ double sqrt(double x) {
     union libc_double high = {
         .word = {.high = ((union libc_double){.value = root}).word.high}};
     double rest = double_subtract_reversed(high.value, root);
-    double sum = double_add(double_multiply(sqrt_half_high, rest),
-                            double_multiply(sqrt_half_low, rest));
+    double sum = double_add(double_multiply(HALF_HIGH, rest),
+                            double_multiply(HALF_LOW, rest));
 
-    sum = double_add(double_multiply(sqrt_half_low, high.value), sum);
-    root = double_add(double_multiply(sqrt_half_high, high.value), sum);
+    sum = double_add(double_multiply(HALF_LOW, high.value), sum);
+    root = double_add(double_multiply(HALF_HIGH, high.value), sum);
   }
   return libc_scale(root, (int32_t)scale / 2);
 }
@@ -684,9 +701,30 @@ static uint64_t libc_words(const uint32_t* words) {
   return (uint64_t)words[0] << LIBC_WORD_BITS | words[1];
 }
 
-/* 10^n as powers_of_ten_64 keeps it. */
+/* 10^n, n 0 to 17: the image's powers_of_ten_64 (0x5fa46). */
 static uint64_t libc_power_of_ten(int32_t n) {
-  return libc_words(&powers_of_ten_64[n * 2]);
+  static const uint64_t POWERS[] = {
+      1,
+      10,
+      100,
+      1000,
+      10000,
+      100000,
+      1000000,
+      10000000,
+      100000000,
+      1000000000,
+      10000000000u,
+      100000000000u,
+      1000000000000u,
+      10000000000000u,
+      100000000000000u,
+      1000000000000000u,
+      10000000000000000u,
+      100000000000000000u,
+  };
+
+  return POWERS[n];
 }
 
 /* The 128-bit product[0..3], high word first, shifted right by 32 +
@@ -755,6 +793,46 @@ void double_to_digits(double value, int32_t count, int32_t* exponent,
   static const int32_t LOG10_2_DOWN = 0x4d10;
   static const int32_t LOG10_2_UP = 0x4d11;
   static const int32_t LOG10_2_BITS = 16;
+  /* 10^(25k), k -13 to 13, as a 64-bit mantissa, high word first, and
+   * its binary exponent: the image's powers_of_ten_by_25_mantissas and
+   * _exponents (0x5f860, 0x5f938). */
+  static const uint32_t BY_25[][2] = {
+      {0xa5ced43b, 0x7e3e9188}, {0xab70fe17, 0xc79ac6cb},
+      {0xb1442798, 0xf49ffb4b}, {0xb749faed, 0x14125d37},
+      {0xbd8430bd, 0x08277232}, {0xc3f490aa, 0x77bd60fd},
+      {0xca9cf1d2, 0x06fdc03c}, {0xd17f3b51, 0xfca3a7a1},
+      {0xd89d64d5, 0x7a607745}, {0xdff97724, 0x70297ebe},
+      {0xe7958cb8, 0x7392c2c3}, {0xef73d256, 0xa5c0f77d},
+      {0xf79687ae, 0xd3eec551}, {0x00000000, 0x00000000},
+      {0x84595161, 0x401484a0}, {0x88d8762b, 0xf324cd10},
+      {0x8d7eb760, 0x70a08aed}, {0x924d692c, 0xa61be758},
+      {0x9745eb4d, 0x50ce6333}, {0x9c69a972, 0x84b578d8},
+      {0xa1ba1ba7, 0x9e1632dc}, {0xa738c6be, 0xbb12d16d},
+      {0xace73cbf, 0xdc0bfb7b}, {0xb2c71d5b, 0xca9023f8},
+      {0xb8da1662, 0xe7b00a17}, {0xbf21e440, 0x03acdd2d},
+      {0xc5a05277, 0x621be294}};
+  static const int16_t BY_25_EXPONENTS[] = {
+      -1080, -997, -914, -831, -748, -665, -582, -499, -416,
+      -333,  -250, -167, -84,  0,    83,   166,  249,  332,
+      415,   498,  581,  664,  747,  830,  913,  996,  1079};
+  /* The same for 10^1 to 10^24: powers_of_ten_1_to_24_mantissas and
+   * _exponents (0x5f96e, 0x5fa2e). */
+  static const uint32_t ONE_TO_24[][2] = {
+      {0xa0000000, 0x00000000}, {0xc8000000, 0x00000000},
+      {0xfa000000, 0x00000000}, {0x9c400000, 0x00000000},
+      {0xc3500000, 0x00000000}, {0xf4240000, 0x00000000},
+      {0x98968000, 0x00000000}, {0xbebc2000, 0x00000000},
+      {0xee6b2800, 0x00000000}, {0x9502f900, 0x00000000},
+      {0xba43b740, 0x00000000}, {0xe8d4a510, 0x00000000},
+      {0x9184e72a, 0x00000000}, {0xb5e620f4, 0x80000000},
+      {0xe35fa931, 0xa0000000}, {0x8e1bc9bf, 0x04000000},
+      {0xb1a2bc2e, 0xc5000000}, {0xde0b6b3a, 0x76400000},
+      {0x8ac72304, 0x89e80000}, {0xad78ebc5, 0xac620000},
+      {0xd8d726b7, 0x177a8000}, {0x87867832, 0x6eac9000},
+      {0xa968163f, 0x0a57b400}, {0xd3c21bce, 0xcceda100}};
+  static const uint8_t ONE_TO_24_EXPONENTS[] = {3,  6,  9,  13, 16, 19, 23, 26,
+                                                29, 33, 36, 39, 43, 46, 49, 53,
+                                                56, 59, 63, 66, 69, 73, 76, 79};
   /* The power of ten it scales by is a power of 10^25, from the
    * table's 10^-325 to 10^325 (index 13 is 10^0), times one of
    * 10^1 to 10^24 (libc.md, 0x5f864). */
@@ -841,23 +919,20 @@ void double_to_digits(double value, int32_t count, int32_t* exponent,
       shift += 2;
     } else {
       if (small == 0) {
-        product[0] = powers_of_ten_by_25_mantissas[(big + POWER_STEP_ZERO) * 2];
-        product[1] =
-            powers_of_ten_by_25_mantissas[(big + POWER_STEP_ZERO) * 2 + 1];
-        shift -= powers_of_ten_by_25_exponents[big + POWER_STEP_ZERO];
+        product[0] = BY_25[big + POWER_STEP_ZERO][0];
+        product[1] = BY_25[big + POWER_STEP_ZERO][1];
+        shift -= BY_25_EXPONENTS[big + POWER_STEP_ZERO];
         shift++;
       } else {
-        product[0] = powers_of_ten_1_to_24_mantissas[(small - 1) * 2];
-        product[1] = powers_of_ten_1_to_24_mantissas[(small - 1) * 2 + 1];
-        shift -= powers_of_ten_1_to_24_exponents[small - 1];
+        product[0] = ONE_TO_24[small - 1][0];
+        product[1] = ONE_TO_24[small - 1][1];
+        shift -= ONE_TO_24_EXPONENTS[small - 1];
         if (big == 0) {
           shift++;
         } else {
-          product[2] =
-              powers_of_ten_by_25_mantissas[(big + POWER_STEP_ZERO) * 2];
-          product[3] =
-              powers_of_ten_by_25_mantissas[(big + POWER_STEP_ZERO) * 2 + 1];
-          shift -= powers_of_ten_by_25_exponents[big + POWER_STEP_ZERO];
+          product[2] = BY_25[big + POWER_STEP_ZERO][0];
+          product[3] = BY_25[big + POWER_STEP_ZERO][1];
+          shift -= BY_25_EXPONENTS[big + POWER_STEP_ZERO];
           double_to_digits_multiply(product);
           /* The power's 128 bits rounded to their high 64, ties to even. */
           if ((product[2] & LIBC_SIGN) != 0) {
@@ -960,9 +1035,53 @@ static bool libc_is_infinity(union libc_double x) {
  * an integer power, the result negated for an odd one.  Its special
  * cases, a zero, an infinity or a NaN, it settles first. */
 double pow(double x, double y) {
-  /* pow's tables: pow_two_powers[k] is 2^(-k/16), k from 0 to 16
-   * (0x6184c), and for an odd k pow_two_power_tails[(k + 1) / 2] the
-   * rest of 2^(-k/16) that it leaves out (0x618d4). */
+  /* 2^(-k/16), k from 0 to 16, and for an odd k at (k + 1) / 2 the rest
+   * of 2^(-k/16) that it leaves out: the image's pow_two_powers
+   * (0x6184c) and pow_two_power_tails (0x618d4). */
+  static const double TWO_POWERS[] = {1.0,
+                                      0.9576032806985737,
+                                      0.9170040432046712,
+                                      0.8781260801866497,
+                                      0.8408964152537145,
+                                      0.8052451659746271,
+                                      0.7711054127039704,
+                                      0.7384130729697497,
+                                      0.7071067811865476,
+                                      0.6771277734684463,
+                                      0.6484197773255048,
+                                      0.620928906036742,
+                                      0.5946035575013605,
+                                      0.5693943173783458,
+                                      0.5452538663326288,
+                                      0.5221368912137069,
+                                      0.5};
+  static const double TWO_POWER_TAILS[] = {0.0,
+                                           -2.65498651404579e-17,
+                                           7.400351738593444e-18,
+                                           6.1767981423511124e-18,
+                                           -8.709986392171569e-18,
+                                           1.925237094945093e-17,
+                                           1.1645068979529732e-17,
+                                           2.228203169026117e-17,
+                                           2.137972426376836e-17};
+  /* The polynomials' coefficients, log2 of 1 + v and 2^w, and log2(e)
+   * - 1: the image's pow_log_p1 to pow_exp2_q7 and log2_e_minus_1
+   * (0x617e4 to 0x6183c). */
+  static const double LOG_P1 = 0.08333333333333322;
+  static const double LOG_P2 = 0.012500000000503799;
+  static const double LOG_P3 = 0.002232142128592426;
+  static const double LOG_P4 = 0.0004344577567216312;
+  static const double EXP2_Q1 = 0.6931471805599453;
+  static const double EXP2_Q2 = 0.24022650695909537;
+  static const double EXP2_Q3 = 0.055504108664085595;
+  static const double EXP2_Q4 = 0.009618129059517241;
+  static const double EXP2_Q5 = 0.0013333541313585784;
+  static const double EXP2_Q6 = 0.00015400290440989765;
+  static const double EXP2_Q7 = 1.4928852680595609e-05;
+  static const double LOG2_E_MINUS_1 = 0.4426950408889634;
+  /* The result of 0 to a power 0 or negative, a NaN by its bits: the
+   * image's pow_error_result (0x60d88). */
+  static const union libc_double ERROR_RESULT = {.bits = 0x7fffffffffffffffu};
   static const int32_t POW_SIXTEENTHS = 16;
   static const int32_t POW_SQRT_HALF = 8;
   /* float_raise's underflow takes the result denormalized: the shift
@@ -999,7 +1118,7 @@ double pow(double x, double y) {
 
   if (libc_is_zero(base) || libc_is_zero(power)) {
     if (libc_is_zero(base) && (libc_is_zero(power) || power_negative)) {
-      result.value = pow_error_result;
+      result.value = ERROR_RESULT.value;
       invalid = true;
     } else {
       result.bits = libc_is_zero(base) ? 0 : one.bits;
@@ -1071,36 +1190,35 @@ double pow(double x, double y) {
     double mantissa = frexp(base.value, &binary_exponent);
     int32_t k = 1;
 
-    if (double_compare(mantissa, pow_two_powers[POW_SQRT_HALF]) >= 0) {
+    if (double_compare(mantissa, TWO_POWERS[POW_SQRT_HALF]) >= 0) {
       k = 9;
     }
-    if (double_compare(mantissa, pow_two_powers[k + 3]) >= 0) {
+    if (double_compare(mantissa, TWO_POWERS[k + 3]) >= 0) {
       k += 4;
     }
-    if (double_compare(mantissa, pow_two_powers[k + 1]) >= 0) {
+    if (double_compare(mantissa, TWO_POWERS[k + 1]) >= 0) {
       k += 2;
     }
-    double numerator = double_subtract_reversed(pow_two_powers[k], mantissa);
+    double numerator = double_subtract_reversed(TWO_POWERS[k], mantissa);
 
     numerator =
-        double_subtract_reversed(pow_two_power_tails[(k + 1) >> 1], numerator);
-    double z =
-        libc_scale(double_divide_reversed(
-                       double_add(mantissa, pow_two_powers[k]), numerator),
-                   1);
+        double_subtract_reversed(TWO_POWER_TAILS[(k + 1) >> 1], numerator);
+    double z = libc_scale(
+        double_divide_reversed(double_add(mantissa, TWO_POWERS[k]), numerator),
+        1);
     double w = double_multiply(z, z);
-    double t = double_multiply(w, pow_log_p4);
+    double t = double_multiply(w, LOG_P4);
 
-    t = double_add(t, pow_log_p3);
+    t = double_add(t, LOG_P3);
     t = double_multiply(t, w);
-    t = double_add(t, pow_log_p2);
+    t = double_add(t, LOG_P2);
     t = double_multiply(t, w);
-    t = double_add(t, pow_log_p1);
+    t = double_add(t, LOG_P1);
     t = double_multiply(t, w);
     t = double_multiply(t, z);
-    t = double_add(double_multiply(t, log2_e_minus_1), t);
+    t = double_add(double_multiply(t, LOG2_E_MINUS_1), t);
     double log2_fraction =
-        double_add(double_add(double_multiply(log2_e_minus_1, z), t), z);
+        double_add(double_add(double_multiply(LOG2_E_MINUS_1, z), t), z);
     /* log2 x less log2_fraction, a whole number of sixteenths. */
     double log2_whole =
         libc_scale(integer_to_double(binary_exponent * POW_SIXTEENTHS - k), -4);
@@ -1157,22 +1275,22 @@ double pow(double x, double y) {
       int32_t scale = (sixteenths >> 4) + 1;
 
       k = scale * POW_SIXTEENTHS - sixteenths;
-      double r = double_multiply(low, pow_exp2_q7);
+      double r = double_multiply(low, EXP2_Q7);
 
-      r = double_add(r, pow_exp2_q6);
+      r = double_add(r, EXP2_Q6);
       r = double_multiply(r, low);
-      r = double_add(r, pow_exp2_q5);
+      r = double_add(r, EXP2_Q5);
       r = double_multiply(r, low);
-      r = double_add(r, pow_exp2_q4);
+      r = double_add(r, EXP2_Q4);
       r = double_multiply(r, low);
-      r = double_add(r, pow_exp2_q3);
+      r = double_add(r, EXP2_Q3);
       r = double_multiply(r, low);
-      r = double_add(r, pow_exp2_q2);
+      r = double_add(r, EXP2_Q2);
       r = double_multiply(r, low);
-      r = double_add(r, pow_exp2_q1);
+      r = double_add(r, EXP2_Q1);
       r = double_multiply(r, low);
       result.value =
-          double_add(double_multiply(r, pow_two_powers[k]), pow_two_powers[k]);
+          double_add(double_multiply(r, TWO_POWERS[k]), TWO_POWERS[k]);
 
       int32_t field =
           (int32_t)(result.word.high >> LIBC_EXPONENT_SHIFT) + scale;

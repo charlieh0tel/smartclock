@@ -185,6 +185,14 @@ GIVEN_CASES = {
     "pow": [{0: base, 1: exponent} for base, exponent in POWERS],
 }
 
+# Arguments a routine indexes a table by unchecked, which every caller
+# passes in range, by position: how many values each takes, the case
+# picking one.  fpga_set_bit's bit and fpga_set_field's field, an
+# fpga_bit_index, are one of the six entries of fpga_bit_table
+# (0x41310), which the hand-written fpga.c keeps as fpga_bits; what
+# follows the image's table is not the C's.
+IN_RANGE = {name: {0: 6} for name in ("fpga_set_bit", "fpga_set_field")}
+
 
 # The differences whose cause is found and is not the C's (PLAN.md,
 # "A rebuild that runs"), each counted as known while every failing case
@@ -355,6 +363,8 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         fresh_ram(m, case)
         establish(m, function, linked_symbols, case)
         values = arguments(m, types, function.parameters, case, function.names, function.name)
+        for position, count in IN_RANGE.get(function.name, {}).items():
+            values[position] = given(m, types, function.parameters[position], case % count)
         for position, value in values_given.items():
             values[position] = given(m, types, function.parameters[position], value)
         memory = snapshot(m)

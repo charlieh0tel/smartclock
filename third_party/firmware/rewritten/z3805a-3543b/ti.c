@@ -7,10 +7,10 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype.  interval_reading and counter_configuration are
  * docs/firmware/structures.md's "The time-interval counter's records";
- * the FPGA's registers, fconf_regs, and its bits, fpga_bit_table, its
+ * the FPGA's registers, fconf_regs, and its bits, fpga.c's fpga_bits, its
  * "Others".
  *
- * fpga_bit_table (0x41310), the entries fpga_set_bit and fpga_set_field
+ * fpga_bits (0x41310), the entries fpga_set_bit and fpga_set_field
  * take: 0 fconf_regs[0]'s mode, mask 0x03 (0 to count, 3 for the
  * interpolator's references); 1 fconf_regs[0]'s preset flag, 0x40; 2
  * fconf_regs[1]'s start flag, 0x01; 3 fconf_regs[1]'s reference flag,
@@ -73,7 +73,7 @@ void interpolator_calibration_init(interpolator_calibration* calibration) {
 /* The counter's configuration's defaults, its registers into fconf_regs
  * too, and the reading marked invalid (0x40ed8). */
 void counter_configuration_init(counter_configuration_fields* configuration) {
-  /* The fields by fpga_bit_table entry: preset and the high reference
+  /* The fields by fpga_bits entry: preset and the high reference
    * flagged, the rest 0. */
   uint8_t fields[] = {0, 8, 0, 1, 0, 0};
 
@@ -124,7 +124,7 @@ int32_t counter_load_registers(void) {
   return 0;
 }
 
-/* Sets fconf_regs[3]'s sync bits, fpga_bit_table entry 5, to a
+/* Sets fconf_regs[3]'s sync bits, fpga_bits entry 5, to a
  * sync_kind, through 0 (0x40a84). */
 void counter_set_sync(uint8_t kind) {
   static const uint8_t SYNC_MASK = 0x03;

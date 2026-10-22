@@ -1294,6 +1294,14 @@ view cannot drift apart.  The library, bottom up:
      `clamp_double_to_step_and_limits` and `scpi_param_hook_nothing`
      to `pll_scpi.c`; and the `:ROBin` and `:RTCM` handlers to
      `scpi_handlers.c`.
+     Then the ROM tables only hand-written code reads become its own
+     `static const` tables, their values from the image: `fpga_bits`,
+     the lexer's character classes, the unit multipliers, the
+     parameter kinds' errors, the serial and NV defaults, the klok
+     templates, the bit masks, and libc's powers of ten and
+     coefficients.  The image indexes `fpga_bit_table` unchecked, so
+     the harness passes `fpga_set_bit` and `fpga_set_field` only its
+     six entries (`IN_RANGE`).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

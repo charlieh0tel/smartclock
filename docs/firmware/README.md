@@ -812,6 +812,17 @@ channel or a task's state, is an `enum`.  A `#define` names a constant
 only where C wants a constant expression, a `case` label, an array's
 size or a static initializer, which a `const` object is not before
 C23.  A string used in one place is a literal there.
+A table in ROM that only hand-written code reads is a `static const`
+the same way, its values taken from the image and its comment naming
+the image's label and address: `fpga.c`'s `fpga_bits` is
+`fpga_bit_table` (`0x41310`).  Not where the image reads past the
+table: `clock_days_before_month`'s unchecked month reads the word
+before `days_before_month` and those after it, so it keeps the
+image's; `random_dither` reads the byte after `dither_table`, which
+its copy keeps as a 129th entry.  Not where a table's address leaves
+the function, which the harness compares: `error_message_lookup`
+returns an entry's text and the DUART's loopback test keeps pointers
+into its strings.
 
 The hand-written C and the Ghidra type headers are in Google's style
 (`.clang-format`), with braces on every control statement's body:

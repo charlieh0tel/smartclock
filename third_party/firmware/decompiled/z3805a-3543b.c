@@ -2606,7 +2606,7 @@ struct scpi_setting_param {
 
 typedef struct scpi_step scpi_step, *Pscpi_step;
 
-typedef int (scpi_step_function)(struct scpi_step *, void *, int);
+typedef int32_t (scpi_step_function)(struct scpi_step *, void *, int32_t);
 
 struct scpi_step {
     uint32_t value;
@@ -6879,22 +6879,25 @@ float round_float_to_step(float *value,float *step);
 double load_double(scpi_double_step *step,double *value,int32_t index);
 int32_t clamp_to_limits(int32_t *value,int32_t index,int32_t *minimum,int32_t *maximum,scpi_step *step,
                    int32_t source);
-uint32_t mask_to_limits(uint32_t *param_1,uint32_t *param_2);
+uint32_t mask_to_limits(uint32_t *value,int32_t index,uint32_t *minimum,uint32_t *maximum,
+                       uint32_t *mask,int32_t source);
 uint32_t clamp_to_step_and_limits
-               (uint32_t *param_1,uint32_t param_2,uint32_t *param_3,uint32_t *param_4,int32_t param_5,
-               uint32_t param_6);
+                   (uint32_t *value,int32_t index,uint32_t *minimum,uint32_t *maximum,
+                   scpi_step *step,int32_t source);
 float float_max_of(float *param_1,float *param_2);
 float float_min_of(float *param_1,float *param_2);
 float clamp_float_to_step_and_limits
-                (float *param_1,uint32_t param_2,float *param_3,float *param_4,int32_t param_5,
-                int32_t param_6);
+                (float *value,int32_t index,float *minimum,float *maximum,scpi_step *step,
+                int32_t source);
 int32_t clamp_float_to_step_double
-                  (float *param_1,uint32_t param_2,float *param_3,float *param_4,int32_t param_5,
-                  int32_t param_6);
+                  (float *value,int32_t index,float *minimum,float *maximum,scpi_step *step,
+                  int32_t source);
 int32_t clamp_double_to_step_and_limits
                   (double *value,uint32_t index,double *minimum,double *maximum,
                   scpi_double_step *step,int32_t source);
-double clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t param_4);
+double clamp_double_to_limits
+                 (double *value,int32_t index,double *minimum,double *maximum,scpi_double_step *step
+                 ,int32_t source);
 void nv_slot_erase(uint8_t param_1);
 void clear_nv(void);
 void nv_restore(void);
@@ -6903,8 +6906,8 @@ uint32_t nv_record_differs(int32_t *param_1,int32_t *param_2);
 char nv_save(uint8_t param_1);
 uint8_t nv_slot_valid(void);
 uint32_t nv_load_slot(void);
-uint32_t load_long_unit_step(uint32_t *param_1);
-uint32_t load_long(uint32_t *param_1);
+int32_t load_long_unit_step(scpi_step *step,void *value,int32_t index);
+int32_t load_long(scpi_step *step,void *value,int32_t index);
 double load_double_param(scpi_double_step *step,double *value,int32_t index);
 void idn_model_default(void);
 uint8_t identification_record_read(void);
@@ -50659,8 +50662,7 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,scpi_cal
     local_10 = float_multiply(fVar2,1e-09);
     zero = return_zero(call->input);
     iVar1 = clamp_float_to_step_double
-                      ((float *)((int32_t)parameters + 2),0,&local_14,&local_10,(int32_t)&step,zero & 0xff)
-    ;
+                      ((float *)((int32_t)parameters + 2),0,&local_14,&local_10,&step,zero & 0xff);
   }
   iVar4 = return_zero(call->input);
   pllc_request_c(&scpi_param_SOURce_GPSystem_ADELay,0,iVar1,(uint32_t *)0x0,(char)iVar4);
@@ -50868,7 +50870,7 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
       local_10 = 59.999;
       uVar2 = return_zero(call->input);
       fVar6 = clamp_float_to_step_and_limits
-                        ((float *)((int32_t)parameters + 0x16),0,&local_14,&local_10,(int32_t)&milli_step,
+                        ((float *)((int32_t)parameters + 0x16),0,&local_14,&local_10,&milli_step,
                          uVar2 & 0xff);
       bVar7 = (uint8_t)iVar4;
     }
@@ -50901,7 +50903,7 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
       local_10 = 59.999;
       uVar2 = return_zero(call->input);
       fVar6 = clamp_float_to_step_and_limits
-                        ((float *)((int32_t)parameters + 0x32),0,&local_14,&local_10,(int32_t)&milli_step,
+                        ((float *)((int32_t)parameters + 0x32),0,&local_14,&local_10,&milli_step,
                          uVar2 & 0xff);
       bVar7 = (uint8_t)iVar4;
     }
@@ -50915,7 +50917,7 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
     local_8 = float_multiply(fVar6,0.01);
     uVar2 = return_zero(call->input);
     local_3a = clamp_float_to_step_double
-                         ((float *)((int32_t)parameters + 0x3a),0,&local_c,&local_8,(int32_t)&centi_step,
+                         ((float *)((int32_t)parameters + 0x3a),0,&local_c,&local_8,&centi_step,
                           uVar2 & 0xff);
     if (*(int16_t *)((int32_t)parameters + 2) == 1) {
       local_42 = -local_42;
@@ -51033,7 +51035,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
       local_14 = 0.0;
       local_10 = 59.999;
       fVar4 = clamp_float_to_step_and_limits
-                        ((float *)((int32_t)parameters + 0x16),0,&local_14,&local_10,(int32_t)&milli_step,
+                        ((float *)((int32_t)parameters + 0x16),0,&local_14,&local_10,&milli_step,
                          zero & 0xff);
       bVar5 = (uint8_t)clamped;
     }
@@ -51061,7 +51063,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
       local_14 = 0.0;
       local_10 = 59.999;
       fVar4 = clamp_float_to_step_and_limits
-                        ((float *)((int32_t)parameters + 0x32),0,&local_14,&local_10,(int32_t)&milli_step,
+                        ((float *)((int32_t)parameters + 0x32),0,&local_14,&local_10,&milli_step,
                          zero & 0xff);
       bVar5 = (uint8_t)clamped;
     }
@@ -51074,7 +51076,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
     fVar4 = integer_to_float(1800000);
     local_8 = float_multiply(fVar4,0.01);
     local_38 = clamp_float_to_step_double
-                         ((float *)((int32_t)parameters + 0x3a),0,&local_c,&local_8,(int32_t)&centi_step,
+                         ((float *)((int32_t)parameters + 0x3a),0,&local_c,&local_8,&centi_step,
                           zero & 0xff);
     if (*(int16_t *)((int32_t)parameters + 2) == 1) {
       local_40 = -local_40;
@@ -57623,6 +57625,7 @@ LAB_00032210:
 #endif
 
 /* 000322aa */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* the double at a pointer */
 
@@ -57632,6 +57635,7 @@ double load_double(scpi_double_step *step,double *value,int32_t index)
   return step->value;
 }
 
+#endif
 
 /* 000322b4 */
 #if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
@@ -57665,48 +57669,54 @@ int32_t clamp_to_limits(int32_t *value,int32_t index,int32_t *minimum,int32_t *m
 #endif
 
 /* 0003232c */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* a register's new value ANDed with its maximum, the mask of the bits it has
    scpi_param_STATus_ENABle, PTRansition, NTRansition: validate */
 
-uint32_t mask_to_limits(uint32_t *param_1,uint32_t *param_2)
+uint32_t mask_to_limits(uint32_t *value,int32_t index,uint32_t *minimum,uint32_t *maximum,
+                       uint32_t *mask,int32_t source)
 
 {
-  return *param_1 & *param_2;
+  return *value & *mask;
 }
 
+#endif
 
 /* 0003233a */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum,
    reporting each clamp
    scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, nv_param_leap_date: validate */
 
 uint32_t clamp_to_step_and_limits
-               (uint32_t *param_1,uint32_t param_2,uint32_t *param_3,uint32_t *param_4,int32_t param_5,
-               uint32_t param_6)
+                   (uint32_t *value,int32_t index,uint32_t *minimum,uint32_t *maximum,
+                   scpi_step *step,int32_t source)
 
 {
   uint32_t uVar1;
+  uint32_t uVar2;
   
-  uVar1 = (**(code **)(param_5 + 4))(param_5,param_1);
+  uVar1 = (*(code *)step->function)(step,value);
   if (uVar1 != 1) {
-    *param_1 = uVar1 * (*param_1 / uVar1);
+    *value = uVar1 * (*value / uVar1);
   }
-  if (*param_4 < *param_1) {
-    report_clamped(1,(uint8_t)param_6);
-    uVar1 = *param_4;
+  if (*maximum < *value) {
+    report_clamped(1,(uint8_t)source);
+    uVar2 = *maximum;
   }
-  else if (*param_1 < *param_3) {
-    report_clamped(0,(uint8_t)param_6);
-    uVar1 = *param_3;
+  else if (*value < *minimum) {
+    report_clamped(0,(uint8_t)source);
+    uVar2 = *minimum;
   }
   else {
-    uVar1 = *param_1;
+    uVar2 = *value;
   }
-  return uVar1;
+  return uVar2;
 }
 
+#endif
 
 /* 000323b2 */
 #if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
@@ -57747,33 +57757,36 @@ float float_min_of(float *param_1,float *param_2)
 #endif
 
 /* 000323fa */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* clamps a float to its minimum and maximum and rounds it to its step
    scpi_param_SAMPle_FLOat, FARR, SOURce_ROSCillator_LIMit_THReshold: validate */
 
 float clamp_float_to_step_and_limits
-                (float *param_1,uint32_t param_2,float *param_3,float *param_4,int32_t param_5,
-                int32_t param_6)
+                (float *value,int32_t index,float *minimum,float *maximum,scpi_step *step,
+                int32_t source)
 
 {
   float rounded;
   float local_c;
   float local_8;
   
-  clamp_float(param_1,&local_c,param_3,param_4,(uint8_t)param_6);
-  local_8 = __ghidra_as(float, (**(code **)(param_5 + 4))(param_5,&local_c,param_2));
+  clamp_float(value,&local_c,minimum,maximum,(uint8_t)source);
+  local_8 = __ghidra_as(float, (*(code *)step->function)(step,&local_c,index));
   rounded = round_float_to_step(&local_c,&local_8);
   return rounded;
 }
 
+#endif
 
 /* 0003244a */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* validate for :GPS:ADELay and the positions: clamps a float and rounds it to its step in double */
 
 int32_t clamp_float_to_step_double
-                  (float *param_1,uint32_t param_2,float *param_3,float *param_4,int32_t param_5,
-                  int32_t param_6)
+                  (float *value,int32_t index,float *minimum,float *maximum,scpi_step *step,
+                  int32_t source)
 
 {
   float f;
@@ -57784,8 +57797,8 @@ int32_t clamp_float_to_step_double
   double dStack_14;
   double local_c;
   
-  clamp_float(param_1,&local_18,param_3,param_4,(uint8_t)param_6);
-  f = __ghidra_as(float, (**(code **)(param_5 + 4))(param_5,&local_18,param_2));
+  clamp_float(value,&local_18,minimum,maximum,(uint8_t)source);
+  f = __ghidra_as(float, (*(code *)step->function)(step,&local_18,index));
   local_c = float_to_double(local_18);
   dVar3 = float_to_double(f);
   dVar3 = double_divide_reversed_pointer(dVar3,&local_c);
@@ -57816,6 +57829,7 @@ LAB_0003250c:
   return iVar2;
 }
 
+#endif
 
 /* 00032596 */
 #if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
@@ -57870,18 +57884,22 @@ LAB_00032648:
 #endif
 
 /* 000326d2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* clamps a double to its minimum and maximum */
 
-double clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t param_4)
+double clamp_double_to_limits
+                 (double *value,int32_t index,double *minimum,double *maximum,scpi_double_step *step
+                 ,int32_t source)
 
 {
   double dStack_c;
   
-  clamp_double(param_1,&dStack_c,param_2,param_3,(uint8_t)param_4);
+  clamp_double(value,&dStack_c,minimum,maximum,(uint8_t)source);
   return dStack_c;
 }
 
+#endif
 
 /* 000327f4 */
 #if 0 /* the decompiler's reading; rewritten in nv.c */
@@ -58248,10 +58266,10 @@ uint32_t nv_load_slot(void)
 
 /* the long at a pointer, load_long's code again; the position setters give it unit_step */
 
-uint32_t load_long_unit_step(uint32_t *param_1)
+int32_t load_long_unit_step(scpi_step *step,void *value,int32_t index)
 
 {
-  return *param_1;
+  return step->value;
 }
 
 #endif
@@ -58261,15 +58279,16 @@ uint32_t load_long_unit_step(uint32_t *param_1)
 
 /* the long at a pointer; the position setters pass it as a descriptor's getter */
 
-uint32_t load_long(uint32_t *param_1)
+int32_t load_long(scpi_step *step,void *value,int32_t index)
 
 {
-  return *param_1;
+  return step->value;
 }
 
 #endif
 
 /* 00032e36 */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* the double at a pointer; descriptors at 0x33720 to 0x3379e point at it */
 
@@ -58279,6 +58298,7 @@ double load_double_param(scpi_double_step *step,double *value,int32_t index)
   return step->value;
 }
 
+#endif
 
 /* 00032e40 */
 #if 0 /* the decompiler's reading; rewritten in records.c */

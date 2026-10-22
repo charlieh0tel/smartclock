@@ -22,6 +22,13 @@ union libc_double {
   } word;
 };
 
+/* A float's IEEE 754 bits, which a step record holds and the magnitude
+ * routines change in place of an arithmetic negation. */
+union libc_float {
+  float value;
+  uint32_t bits;
+};
+
 /* Fields of a double's high word, and of its 64 bits; an infinity's
  * high word is the exponent's mask, all ones. */
 static const uint32_t LIBC_SIGN = 0x80000000u;

@@ -376,8 +376,8 @@ round_float_to_step	rounded	the nearest multiple of the step
 clamp_to_limits	clamped	the value on its step, within its limits
 float_max_of	larger
 float_min_of	smaller
-load_long_unit_step	step	the step record's long
-load_long	step	the step record's long
+load_long_unit_step	step	the step record's own step
+load_long	step	the step record's own step
 # devices and services, but services/status (rewritten/z3805a-3543b/: ti.c, leds.c, calendar.c, clock.c)
 dac_search_bisect	dac	the DAC value the search ends on
 dac_search_step	dac	the DAC value the steps end on
@@ -663,3 +663,11 @@ holdover_recovery	result	a stage's: 0 running, 1 done, 2 failed
 holdover_correction_valid	valid	1 when the TI's slope leaves the EFC in range
 holdover_ti_max	ti_max	holdover_steering.ti_largest
 holdover_within_limit	within_limit	0 when the TI has reached the hold limit
+# The numeric validators and step routines
+clamp_to_step_and_limits	clamped	the unsigned value on its step, within its limits
+mask_to_limits	masked	the value's bits within the mask
+clamp_float_to_step_and_limits	rounded	the clamped value on its step
+clamp_float_to_step_double	steps	the clamped value in steps, rounded half away from zero
+clamp_double_to_limits	clamped	the value within its limits
+load_double	step	the step record's double
+load_double_param	step	the step record's double

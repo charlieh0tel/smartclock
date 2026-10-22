@@ -192,6 +192,14 @@ FORMATS = [
 # which coarsens it (0x32612).
 LOAD_DOUBLE = 0x322AA
 DOUBLE_STEPS = [0.5, 0.001, 1e-12, 100.0]
+# And the long and float step records the other validators read
+# (scpi_step), load_long (0x32e2e) the routine, which returns the
+# record's own step: a long's steps, 1 among them, which
+# clamp_to_step_and_limits leaves the value at (0x3235c); a float's
+# bits, the fine one coarsened as the double's is (0x324fc).
+LOAD_LONG = 0x32E2E
+LONG_STEPS = [1, 3, 1000, 0x10000]
+FLOAT_STEPS = [0.5, 0.001, 1e-12, 100.0]
 # status_register_setup's arguments as status_init passes them
 # (0x2f4b8 to 0x2f50a): a status model, its first argument, whose
 # seven register pointers point into the pointee memory, and the
@@ -220,6 +228,11 @@ GIVEN_CASES = {
     "clamp_double_to_step_and_limits": [
         {4: struct.pack(">dI", step, LOAD_DOUBLE)} for step in DOUBLE_STEPS
     ],
+    "clamp_to_step_and_limits": [{4: struct.pack(">II", step, LOAD_LONG)} for step in LONG_STEPS],
+    **{
+        name: [{4: struct.pack(">fI", step, LOAD_LONG)} for step in FLOAT_STEPS]
+        for name in ("clamp_float_to_step_and_limits", "clamp_float_to_step_double")
+    },
     "pforth_define_word": [{2: arguments, 3: results} for arguments, results in WORD_COUNTS],
     "bytes_equal_n": [dict(enumerate(arguments)) for arguments in SAME_LENGTH],
     "double_to_digits": [{1: count, 5: mode} for count, mode in DIGITS],

@@ -1422,6 +1422,10 @@ view cannot drift apart.  The library, bottom up:
      (`move.l (0x12,An),-(SP)`); `scpi_query_failed` clears the call's
      `query`, so that no response is formatted, where the C had read a
      response's length.
+     And the validators take the descriptor's six arguments with their
+     own types, the step routines `scpi_step_function`'s three; with
+     real step records the three the harness skipped run (1280
+     agreeing, 5 skipped, 5 known), and all of them are written by hand.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

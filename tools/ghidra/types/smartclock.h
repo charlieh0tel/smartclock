@@ -1247,7 +1247,8 @@ typedef struct scpi_port {
 
 struct scpi_step;
 /* A step's routine: the step for value, the setting at index. */
-typedef int scpi_step_function(struct scpi_step* step, void* value, int index);
+typedef int32_t scpi_step_function(struct scpi_step* step, void* value,
+                                   int32_t index);
 typedef struct scpi_step {
   uint32_t value;               /* +0x00: the step's bits, a float or a long */
   scpi_step_function* function; /* +0x04 */

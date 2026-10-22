@@ -277,17 +277,10 @@ int64_t double_to_int64(double x) {
   return arithmetic_int64(result_high, result_low);
 }
 
-/* A float's bits, which the magnitude routines change in place of an
- * arithmetic negation. */
-union arithmetic_float {
-  float value;
-  uint32_t bits;
-};
-
 /* A float's magnitude: its sign flipped when float_compare finds it
  * below 0, so that -0 and a NaN keep theirs (0x42626). */
 float float_abs(float value) {
-  union arithmetic_float result = {.value = value};
+  union libc_float result = {.value = value};
 
   if (float_compare(0.0f, value) > 0) {
     result.bits ^= LIBC_SIGN;
@@ -297,7 +290,7 @@ float float_abs(float value) {
 
 /* A float's magnitude, its sign bit cleared (0x133e2). */
 float float_absolute_on_stack(float f) {
-  union arithmetic_float result = {.value = f};
+  union libc_float result = {.value = f};
 
   result.bits &= ~LIBC_SIGN;
   return result.value;

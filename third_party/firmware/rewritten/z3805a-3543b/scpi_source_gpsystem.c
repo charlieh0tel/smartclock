@@ -123,21 +123,17 @@ static int32_t (*const SCPI_SOURCE_GPSYSTEM_STAGED)
 
 /* A float's bits, which a scpi_step holds as its value. */
 static uint32_t scpi_source_gpsystem_float_bits(float value) {
-  union {
-    float real;
-    uint32_t bits;
-  } step = {.real = value};
+  union libc_float step = {.value = value};
 
   return step.bits;
 }
 
-/* load_long and load_long_unit_step read only the step, the first of
- * the arguments a scpi_step_function is given. */
+/* A step record of a value and its routine. */
 static scpi_step scpi_source_gpsystem_step(uint32_t value,
-                                           uint32_t (*function)(uint32_t*)) {
+                                           scpi_step_function* function) {
   scpi_step step = {
       .value = value,
-      .function = (scpi_step_function*)function,
+      .function = function,
   };
 
   return step;
@@ -156,9 +152,7 @@ static int32_t scpi_source_gpsystem_steps(float* value,
   float lowest = float_multiply(integer_to_float(minimum[index]), unit);
   float highest = float_multiply(integer_to_float(maximum[index]), unit);
 
-  /* clamp_float_to_step_double's prototype takes the step as a long. */
-  return clamp_float_to_step_double(value, 0, &lowest, &highest, (int32_t)&step,
-                                    source);
+  return clamp_float_to_step_double(value, 0, &lowest, &highest, &step, source);
 }
 
 /* :GPS:ADELay: holds the loop in temporary mode, then sends the antenna

@@ -46,25 +46,66 @@ uint32_t clamp_float(float* value, float* clamped, float* minimum,
   return 0;
 }
 
-/* A float rounded to the nearest multiple of its step, half away from
- * zero, the step a thousand times coarser beyond 1e9 steps (0x3217e). */
-float round_float_to_step(float* value, float* step_pointer) {
-  float step = *step_pointer;
-  double rounded = float_to_double(*value);
+/* A float's whole steps, rounded half away from zero, the step a
+ * thousand times coarser beyond 1e9 steps, as round_float_to_step and
+ * clamp_float_to_step_double both reckon them; the step used. */
+static double scpi_validators_whole_steps(float value, float* step) {
+  double rounded = float_to_double(value);
   double whole;
 
   float steps = double_to_float(
-      double_divide_reversed_pointer(float_to_double(step), &rounded));
+      double_divide_reversed_pointer(float_to_double(*step), &rounded));
   if (double_compare(float_to_double(steps), PLLC_COARSE_STEPS) < 0 ||
       double_compare(float_to_double(steps), -PLLC_COARSE_STEPS) > 0) {
-    step = float_multiply(step, PLLC_COARSER);
+    *step = float_multiply(*step, PLLC_COARSER);
   }
   float half = double_compare(0.0, rounded) < 0 ? -PLLC_HALF : PLLC_HALF;
-  double_add_in_place(&rounded, float_to_double(float_multiply(half, step)));
-  double_divide_in_place(&rounded, float_to_double(step));
+  double_add_in_place(&rounded, float_to_double(float_multiply(half, *step)));
+  double_divide_in_place(&rounded, float_to_double(*step));
   modf(rounded, &whole);
+  return whole;
+}
+
+/* A float rounded to the nearest multiple of its step (0x3217e). */
+float round_float_to_step(float* value, float* step_pointer) {
+  float step = *step_pointer;
+  double whole = scpi_validators_whole_steps(*value, &step);
+
   double_multiply_in_place(&whole, float_to_double(step));
   return double_to_float(whole);
+}
+
+/* A float step record's step, from its routine, which returns the
+ * float's bits. */
+static float scpi_validators_float_step(scpi_step* step, float* value,
+                                        int32_t index) {
+  union libc_float bits = {.bits = step->function(step, value, index)};
+
+  return bits.value;
+}
+
+/* A float clamped to its minimum and maximum, then rounded to its step
+ * (0x323fa). */
+float clamp_float_to_step_and_limits(float* value, int32_t index,
+                                     float* minimum, float* maximum,
+                                     scpi_step* step, int32_t source) {
+  float clamped;
+
+  clamp_float(value, &clamped, minimum, maximum, (uint8_t)source);
+  float step_size = scpi_validators_float_step(step, &clamped, index);
+  return round_float_to_step(&clamped, &step_size);
+}
+
+/* A float clamped to its minimum and maximum, then divided by its step
+ * and rounded: the steps, as an int (0x3244a). */
+int32_t clamp_float_to_step_double(float* value, int32_t index, float* minimum,
+                                   float* maximum, scpi_step* step,
+                                   int32_t source) {
+  float clamped;
+
+  clamp_float(value, &clamped, minimum, maximum, (uint8_t)source);
+  float step_size = scpi_validators_float_step(step, &clamped, index);
+  return double_to_integer(scpi_validators_whole_steps(clamped, &step_size));
 }
 
 /* A long rounded toward zero to its step, then clamped to its minimum and
@@ -85,6 +126,33 @@ int32_t clamp_to_limits(int32_t* value, int32_t index, int32_t* minimum,
     return *minimum;
   }
   return *value;
+}
+
+/* An unsigned long rounded toward zero to its step, then clamped to its
+ * minimum and maximum, reporting a clamp (0x3233a). */
+uint32_t clamp_to_step_and_limits(uint32_t* value, int32_t index,
+                                  uint32_t* minimum, uint32_t* maximum,
+                                  scpi_step* step, int32_t source) {
+  uint32_t step_size = step->function(step, value, index);
+
+  if (step_size != 1) {
+    *value = step_size * (*value / step_size);
+  }
+  if (*value > *maximum) {
+    report_clamped(1, (uint8_t)source);
+    return *maximum;
+  }
+  if (*value < *minimum) {
+    report_clamped(0, (uint8_t)source);
+    return *minimum;
+  }
+  return *value;
+}
+
+/* A long's bits within its mask, the descriptor's step slot (0x3232c). */
+uint32_t mask_to_limits(uint32_t* value, int32_t index, uint32_t* minimum,
+                        uint32_t* maximum, uint32_t* mask, int32_t source) {
+  return *value & *mask;
 }
 
 /* The larger of two floats (0x323b2). */
@@ -121,9 +189,36 @@ int32_t clamp_double_to_step_and_limits(double* value, uint32_t index,
   return double_to_integer(whole);
 }
 
-/* A step record's long, the position setters' unit step; load_long's
- * code again (0x32e26). */
-uint32_t load_long_unit_step(uint32_t* step) { return *step; }
+/* A double clamped to its minimum and maximum (0x326d2). */
+double clamp_double_to_limits(double* value, int32_t index, double* minimum,
+                              double* maximum, scpi_double_step* step,
+                              int32_t source) {
+  double clamped;
 
-/* A step record's long, the step of most integer descriptors (0x32e2e). */
-uint32_t load_long(uint32_t* step) { return *step; }
+  clamp_double(value, &clamped, minimum, maximum, (uint8_t)source);
+  return clamped;
+}
+
+/* A double step record's own step, the step of the double descriptors
+ * (0x322aa). */
+double load_double(scpi_double_step* step, double* value, int32_t index) {
+  return step->value;
+}
+
+/* A double step record's own step, load_double's code again; the
+ * descriptors at 0x33720 to 0x3379e point at it (0x32e36). */
+double load_double_param(scpi_double_step* step, double* value, int32_t index) {
+  return step->value;
+}
+
+/* A step record's own step, the position setters' unit step; load_long's
+ * code again (0x32e26). */
+int32_t load_long_unit_step(scpi_step* step, void* value, int32_t index) {
+  return step->value;
+}
+
+/* A step record's own step, the step of most integer descriptors
+ * (0x32e2e). */
+int32_t load_long(scpi_step* step, void* value, int32_t index) {
+  return step->value;
+}

@@ -209,8 +209,13 @@ GIVEN_CASES = {
 # picking one.  fpga_set_bit's bit and fpga_set_field's field, an
 # fpga_bit_index, are one of the six entries of fpga_bit_table
 # (0x41310), which the hand-written fpga.c keeps as fpga_bits; what
-# follows the image's table is not the C's.
-IN_RANGE = {name: {0: 6} for name in ("fpga_set_bit", "fpga_set_field")}
+# follows the image's table is not the C's.  scpi_char_upper's
+# character is a port's value, 0 to 0x105, which indexes the lexer's
+# classes (0x277ec), as scpi_engine_class keeps them.
+IN_RANGE = {
+    **{name: {0: 6} for name in ("fpga_set_bit", "fpga_set_field")},
+    "scpi_char_upper": {0: 0x106},
+}
 
 
 # The differences whose cause is found and is not the C's (PLAN.md,

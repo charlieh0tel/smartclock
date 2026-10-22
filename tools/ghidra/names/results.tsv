@@ -361,3 +361,15 @@ task_status_name	status	the report's four characters
 region_segment_containing	segment	the task's segment holding the address, or null
 ready_queue_position	position	from 0, or -1 off the ready queue
 timer_ticks_until	ticks	the delay list's ticks up to the task
+# pllc's settings server and the descriptors' validators, 0x31ff8 to 0x433fc (rewritten/z3805a-3543b/pllc.c)
+pll_scpi_needs_loop	needs_loop	1 when the request goes to the GPS before it is stored
+pll_scpi_send_to_loop	sent	1 when gpsx_exchange took the request
+scpi_param_saved_in_nv	saved	the descriptor's NV register flag
+scpi_param_saved_in_record	saved	the descriptor's EEPROM record flag
+clamp_float	clamped	1 when the value was clamped
+round_float_to_step	rounded	the nearest multiple of the step
+clamp_to_limits	clamped	the value on its step, within its limits
+float_max_of	larger
+float_min_of	smaller
+load_long_unit_step	step	the step record's long
+load_long	step	the step record's long

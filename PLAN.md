@@ -1351,6 +1351,8 @@ view cannot drift apart.  The library, bottom up:
      64 more in `os.c` (the pSOS binding, the kernel's records, the
      `:DIAG:OS` reports), its task, exchange, segment and kernel records
      local to it until they move to `smartclock.h`.
+     `applications/pll/pll_scpi`, 44 in `pllc.c`: the settings server,
+     the clamps and the descriptors' hooks and actions.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

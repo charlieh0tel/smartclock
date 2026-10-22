@@ -50145,7 +50145,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
   uint8_t bVar1;
   uint32_t zero;
   int32_t iVar3;
-  int32_t iVar4;
+  int32_t clamped;
   float fVar5;
   uint8_t bVar6;
   double dVar7;
@@ -50222,14 +50222,14 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
     else {
       local_1c = 0;
       local_18 = 0x3b;
-      iVar4 = clamp_to_limits((int32_t *)((int32_t)parameters + 0xe),0,&local_1c,&local_18,&unit_step,
+      clamped = clamp_to_limits((int32_t *)((int32_t)parameters + 0xe),0,&local_1c,&local_18,&unit_step,
                               zero & 0xff);
       local_14 = 0.0;
       local_10 = 59.999;
       fVar5 = clamp_float_to_step_and_limits
                         ((float *)((int32_t)parameters + 0x16),0,&local_14,&local_10,(int32_t)&milli_step,
                          zero & 0xff);
-      bVar6 = (uint8_t)iVar4;
+      bVar6 = (uint8_t)clamped;
     }
     dVar7 = float_to_double(fVar5);
     dms_to_mas(&local_40,(uint16_t)iVar3,bVar6,dVar7);
@@ -50250,14 +50250,14 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
     else {
       local_1c = 0;
       local_18 = 0x3b;
-      iVar4 = clamp_to_limits((int32_t *)((int32_t)parameters + 0x2a),0,&local_1c,&local_18,&unit_step,
+      clamped = clamp_to_limits((int32_t *)((int32_t)parameters + 0x2a),0,&local_1c,&local_18,&unit_step,
                               zero & 0xff);
       local_14 = 0.0;
       local_10 = 59.999;
       fVar5 = clamp_float_to_step_and_limits
                         ((float *)((int32_t)parameters + 0x32),0,&local_14,&local_10,(int32_t)&milli_step,
                          zero & 0xff);
-      bVar6 = (uint8_t)iVar4;
+      bVar6 = (uint8_t)clamped;
     }
     dVar7 = float_to_double(fVar5);
     dms_to_mas(&local_3c,(uint16_t)iVar3,bVar6,dVar7);
@@ -55004,6 +55004,7 @@ uint16_t record_checksum(void *record,uint16_t length)
 #endif
 
 /* 0003086a */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* with nv_settings.serial_restricted set, clears channel B's eight_bits when its parity is also set
    DUART channel B's parity and scpi_param_DIAGnostic_SER1_RESTricted: changed */
@@ -55018,8 +55019,10 @@ void duartb_parity_restrict(void)
   return;
 }
 
+#endif
 
 /* 0003088c */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* with nv_settings.serial_restricted set, clears channel B's parity when eight_bits is also set
    DUART channel B's eight_bits: changed */
@@ -55034,8 +55037,10 @@ void duartb_eight_bits_restrict(void)
   return;
 }
 
+#endif
 
 /* 000308ae */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* clears nv_settings.douglas_duration_infinite
    scpi_param_DOUGlas_DURation: changed */
@@ -55047,6 +55052,7 @@ void douglas_duration_changed(void)
   return;
 }
 
+#endif
 
 /* 00030a3e */
 #if 0 /* the decompiler's reading; rewritten in records.c */
@@ -56210,6 +56216,7 @@ uint32_t log_append(char *format,int32_t argument_1,int32_t argument_2)
 #endif
 
 /* 00031ff8 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* "Value too small, set to min limit" or "too large, set to max limit", and status_report_from(9)
     */
@@ -56230,6 +56237,7 @@ void report_clamped(char param_1,uint8_t param_2)
   return;
 }
 
+#endif
 
 /* 0003202a */
 
@@ -56273,6 +56281,7 @@ float float_table_index(float *param_1,int16_t param_2)
 
 
 /* 0003209c */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped */
 
@@ -56303,6 +56312,7 @@ uint32_t clamp_float(float *param_1,float *param_2,float *param_3,float *param_4
   return uVar2;
 }
 
+#endif
 
 /* 00032104 */
 
@@ -56341,6 +56351,7 @@ clamp_double(double *param_1,uint32_t *param_2,double *param_3,double *param_4,u
 
 
 /* 0003217e */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* rounds a float to the nearest multiple of its step, half away from zero, the step a thousand
    times coarser beyond 1e9 steps */
@@ -56388,6 +56399,7 @@ LAB_00032210:
   return fVar3;
 }
 
+#endif
 
 /* 000322aa */
 
@@ -56401,6 +56413,7 @@ uint64_t load_double(uint64_t *param_1)
 
 
 /* 000322b4 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* clamps *value to *min and *max, reporting through report_clamped */
 
@@ -56428,6 +56441,7 @@ int32_t clamp_to_limits(int32_t *value,int32_t index,int32_t *minimum,int32_t *m
   return iVar1;
 }
 
+#endif
 
 /* 0003232c */
 
@@ -56474,6 +56488,7 @@ uint32_t clamp_to_step_and_limits
 
 
 /* 000323b2 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* the larger of two floats at pointers */
 
@@ -56489,8 +56504,10 @@ float float_max_of(float *param_1,float *param_2)
   return *param_2;
 }
 
+#endif
 
 /* 000323d6 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* the smaller of two floats at pointers */
 
@@ -56506,6 +56523,7 @@ float float_min_of(float *param_1,float *param_2)
   return *param_2;
 }
 
+#endif
 
 /* 000323fa */
 
@@ -56517,14 +56535,14 @@ float clamp_float_to_step_and_limits
                 int32_t param_6)
 
 {
-  float fVar1;
+  float rounded;
   float local_c;
   float local_8;
   
   clamp_float(param_1,&local_c,param_3,param_4,(uint8_t)param_6);
   local_8 = __ghidra_as(float, (**(code **)(param_5 + 4))(param_5,&local_c,param_2));
-  fVar1 = round_float_to_step(&local_c,&local_8);
-  return fVar1;
+  rounded = round_float_to_step(&local_c,&local_8);
+  return rounded;
 }
 
 
@@ -57006,6 +57024,7 @@ uint32_t nv_load_slot(void)
 #endif
 
 /* 00032e26 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* the long at a pointer, load_long's code again; the position setters give it unit_step */
 
@@ -57015,8 +57034,10 @@ uint32_t load_long_unit_step(uint32_t *param_1)
   return *param_1;
 }
 
+#endif
 
 /* 00032e2e */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* the long at a pointer; the position setters pass it as a descriptor's getter */
 
@@ -57026,6 +57047,7 @@ uint32_t load_long(uint32_t *param_1)
   return *param_1;
 }
 
+#endif
 
 /* 00032e36 */
 
@@ -58550,6 +58572,7 @@ uint64_t double_to_int64(uint32_t param_1,uint32_t param_2)
 
 
 /* 00041328 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* a bare rts
    scpi_action_DIAGnostic_PTIMe_TINTerval: action */
@@ -58560,6 +58583,7 @@ void pll_action_nothing(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 0004137e */
 
@@ -59649,6 +59673,7 @@ uint32_t get_ffom(uint8_t *param_1)
 
 
 /* 00042b18 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* a bare rts: what output_state_done hands it, :OUTPut:STATe, goes no further here */
 
@@ -59658,8 +59683,10 @@ void output_state_program(uint8_t param_1)
   return;
 }
 
+#endif
 
 /* 00042b1a */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code
    reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse
@@ -59672,8 +59699,10 @@ void pulse_program(time_of_day time,calendar_date date,uint8_t state,int32_t per
   return;
 }
 
+#endif
 
 /* 00042b1c */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* hands the pulse start time, date, state and period from nv_settings to pulse_program
    scpi_param_SOURce_PULSe_CONTinuous_STATe, PERiod, STARt_TIME and DATE: done */
@@ -59696,8 +59725,10 @@ void pulse_settings_done(void)
   return;
 }
 
+#endif
 
 /* 00042b7c */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* scpi_param_OUTPut_STATe's done hook: hands the output state to output_state_program */
 
@@ -59708,8 +59739,10 @@ void output_state_done(void)
   return;
 }
 
+#endif
 
 /* 00042b8a */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* carries out a request's action, flagging the self-test's descriptor at 0x41348 */
 
@@ -59726,8 +59759,10 @@ void pll_scpi_do_action(uint8_t *param_1)
   return;
 }
 
+#endif
 
 /* 00042bc4 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* applies a change to a PLL setting that toggles, refusing a value above its maximum
    the firmware's own name, "pll_scpi: toggle_change() -- new value > max value" */
@@ -59747,8 +59782,10 @@ void toggle_change(uint8_t *param_1)
   return;
 }
 
+#endif
 
 /* 00042c10 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* the firmware's own name, "pll_scpi: validate_num() -- too many in multiple": each new value
    through its descriptor's validate, into pll_scpi_validated
@@ -59791,8 +59828,10 @@ void validate_num(void)
   return;
 }
 
+#endif
 
 /* 00042d02 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* checks a PLL SCPI request's value against its setting's descriptor, or carries it out
    the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type" */
@@ -59831,8 +59870,10 @@ void validate_or_doaction(char *needs_loop,char *result)
   return;
 }
 
+#endif
 
 /* 00042d78 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* 1 if a request's setting goes to the loop, its descriptor's flag bit 0; a survey start instead
    marks 0x102040 */
@@ -59859,8 +59900,10 @@ uint32_t pll_scpi_needs_loop(void)
   return 0;
 }
 
+#endif
 
 /* 00042dc4 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* puts a request's validated values in the loop's message at 0x102002 by the setting's action code,
    and sends it */
@@ -59983,8 +60026,10 @@ LAB_0004300c:
   return 0;
 }
 
+#endif
 
 /* 0004301a */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* the descriptor's flags & 2; finish_scpi_cmd then calls nv_save
    structures.md */
@@ -60003,8 +60048,10 @@ uint16_t scpi_param_saved_in_nv(void)
   return uVar1 & 2;
 }
 
+#endif
 
 /* 00043042 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* the descriptor's flags & 4; finish_scpi_cmd then calls 0x30dea, which writes the record at
    0x400000
@@ -60024,8 +60071,10 @@ uint16_t scpi_param_saved_in_record(void)
   return uVar1 & 4;
 }
 
+#endif
 
 /* 0004306a */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* the firmware's own name, "pll_scpi: finish_scpi_cmd() -- unknown structure type": stores the
    values by the descriptor's type, calls its hooks, and saves
@@ -60097,8 +60146,10 @@ void finish_scpi_cmd(void)
   return;
 }
 
+#endif
 
 /* 000431f4 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* finds the variables behind a PLL SCPI setting, by its descriptor's type
    the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type" */
@@ -60156,8 +60207,10 @@ override_jmp_0004322e_case_3:
   return;
 }
 
+#endif
 
 /* 000432bc */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* the pllc task's handling of one request: checks it, validate_num, reports, finish_scpi_cmd
    structures.md */
@@ -60165,8 +60218,8 @@ override_jmp_0004322e_case_3:
 void pll_scpi_command(pllc_request *request,uint8_t *reply_pending)
 
 {
-  char cVar1;
-  uint8_t uVar2;
+  char needs_loop;
+  uint8_t sent;
   char local_6;
   char local_5;
   
@@ -60174,11 +60227,11 @@ void pll_scpi_command(pllc_request *request,uint8_t *reply_pending)
   validate_or_doaction(&local_6,(char *)reply_pending);
   if (local_6 != 0) {
     douglas_log_event = LOG_CLEARED;
-    cVar1 = pll_scpi_needs_loop();
-    if (cVar1 != 0) {
+    needs_loop = pll_scpi_needs_loop();
+    if (needs_loop != 0) {
       if ((pll_scpi_source == 0) || (pll_scpi_source == 5)) {
-        uVar2 = pll_scpi_send_to_loop(2,&local_5);
-        *reply_pending = uVar2;
+        sent = pll_scpi_send_to_loop(2,&local_5);
+        *reply_pending = sent;
       }
       if (*reply_pending != 0) {
         return;
@@ -60192,8 +60245,10 @@ void pll_scpi_command(pllc_request *request,uint8_t *reply_pending)
   return;
 }
 
+#endif
 
 /* 00043340 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* takes a request from pllc_exchange and handles it
    structures.md */
@@ -60229,8 +60284,10 @@ void pll_scpi_receive(void)
   return;
 }
 
+#endif
 
 /* 000433b6 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* once the reply flag is set: clears it, reports failure, finishes the SCPI command and signals its
    task; otherwise counts */
@@ -60252,8 +60309,10 @@ void pll_scpi_complete(int32_t *param_1,char param_2)
   return;
 }
 
+#endif
 
 /* 000433fc */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* once the reply flag is set: clears it and signals the waiting task; otherwise counts */
 
@@ -60270,8 +60329,10 @@ void gps_diag_complete(int32_t *param_1)
   return;
 }
 
+#endif
 
 /* 00043426 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* task_debug_message of "sample action 1" to "3" for index 1 to 3; index 0 does nothing
    scpi_action_SAMPle_ACTion: action */
@@ -60300,6 +60361,7 @@ void sample_action_print(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 00043466 */
 
@@ -62003,6 +62065,7 @@ switchD_000453f0_caseD_0:
 
 
 /* 00045a24 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* marks the time zone changed, for :PTIMe:TZONe */
 
@@ -62013,8 +62076,10 @@ void time_zone_changed(void)
   return;
 }
 
+#endif
 
 /* 00045a2e */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* clock_record_refresh, then clears time_zone_change_pending
    scpi_param_SOURce_PTIMe_TZONe: done */
@@ -62027,6 +62092,7 @@ void time_zone_done(void)
   return;
 }
 
+#endif
 
 /* 00045a3c */
 
@@ -62044,6 +62110,7 @@ void time_offset_done(int32_t a,int32_t b)
 
 
 /* 00045a5c */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* in manual holdover clears pll.manual and the manual hold cause and status_happening(0x2a); else
    status_report_from(8)
@@ -62067,8 +62134,10 @@ void holdover_recovery_initiate(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 00045aaa */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* past power-up sets the manual hold cause, pll.manual and pll_scpi_signal_delay, and
    status_happening(0x28) in holdover; in power-up status_report_from(8)
@@ -62091,8 +62160,10 @@ void holdover_initiate(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 00045af0 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* sets the temporary-mode hold cause, 0x20 of pll.hold_causes, and pll_scpi_signal_delay;
    antenna_delay_done clears it
@@ -62106,8 +62177,10 @@ void temporary_hold_set(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 00045b02 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* clears bit 5 of pll's byte at +0x11 once the antenna delay changes
    scpi_param_SOURce_GPSystem_ADELay: done */
@@ -62122,8 +62195,10 @@ void antenna_delay_done(void)
   return;
 }
 
+#endif
 
 /* 00045b0c */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* in holdover not manual, with no hold cause but the TI limit's, sets pll.ti_limit_override; else
    status_report_from(8)
@@ -62145,8 +62220,10 @@ void holdover_recovery_limit_ignore(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 00045b42 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* in power-up or holdover recovery sets pll.sync_requested; else status_report_from(8)
    scpi_action_SOURce_PTIMe_SYNChronization_IMMediate: action; 097-59551-02 p. 5-28 */
@@ -62163,8 +62240,10 @@ void sync_immediate_request(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 00045b6e */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* a bare rts
    nv_param_field_b8: done */
@@ -62175,6 +62254,7 @@ void nv_param_field_b8_done(void)
   return;
 }
 
+#endif
 
 /* 00045b70 */
 
@@ -62670,6 +62750,7 @@ void clock_set_from_reference(void)
 
 
 /* 00046326 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* unless selftest_requested is set, stores the index in selftest_number and sets selftest_requested
    scpi_action_self_test: action */
@@ -62684,8 +62765,10 @@ void selftest_request(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 00046340 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* sets douglas_start_requested and clears douglas_stop_requested when nv_settings.douglas_state is
    0, the reverse when it is set
@@ -62699,8 +62782,10 @@ void douglas_state_done(void)
   return;
 }
 
+#endif
 
 /* 00046368 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* sets douglas_finish_requested and stores the source in douglas_finish_nv_argument
    scpi_action_SOURce_GPSystem_POSition: action */
@@ -62713,6 +62798,7 @@ void douglas_finish_request(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 0004637a */
 
@@ -63521,6 +63607,7 @@ uint32_t leap_ack_pending(void)
 
 
 /* 00047090 */
+#if 0 /* the decompiler's reading; rewritten in pllc.c */
 
 /* in holdover to normal PLL, stages 3 to 6, sets pll.leap_ack_requested
    scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate: action */
@@ -63534,6 +63621,7 @@ void leap_ack_request(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 000470aa */
 

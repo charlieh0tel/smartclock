@@ -44,7 +44,7 @@ void interval_rearm(interval_arm_mode arm_mode) {
   if (arm_mode == INTERVAL_ARM_CALIBRATE) {
     counter_calibrate(&interval_reading, &counter_configuration);
   } else if (arm_mode == INTERVAL_ARM_SYNC) {
-    sync_request(3, 1); /* a sync_kind, once */
+    sync_request(COUNTER_SYNC_FULL, 1);
   }
   interval_armed_without_pps = pll_reading_pps_dead();
   counter_arm(&interval_reading, &counter_configuration);

@@ -620,8 +620,8 @@ CHECK_FIELD(status_snapshot_record, satellites, 0x32);
 /* status_screen_mode_lines' five entries, the last a terminator */
 CHECK_SIZE(status_screen_mode_line[5], 0x4d050 - 0x4d032);
 CHECK_FIELD(status_screen_mode_line, text, 0x02);
-CHECK_FIELD(status_snapshot_record, gps_satellites, 0x5c);
-CHECK_FIELD(status_snapshot_record, pseudolites, 0xbc);
+CHECK_FIELD(status_snapshot_record, not_tracked, 0x5c);
+CHECK_FIELD(status_snapshot_record, tracked, 0xbc);
 CHECK_FIELD(status_snapshot_record, status_received, 0xec);
 CHECK_FIELD(status_snapshot_record, time, 0xf8);
 CHECK_FIELD(status_snapshot_record, time_zone, 0x100);
@@ -773,3 +773,5 @@ CHECK_SIZE(psos_task, 0xb2);
 CHECK_SIZE(psos_exchange, 0x22);
 CHECK_FIELD(psos_kernel, region_waiting, 0x64);
 CHECK_SIZE(status_register_layout, 22);
+CHECK_SIZE(satellite_cell, 4);
+CHECK_SIZE(satellite_list_entry, 8);

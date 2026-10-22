@@ -32,6 +32,8 @@ typedef long long int64_t;
  * to its subject below, types them, and empties this section on
  * merging. */
 /* BEGIN PROPOSED ENUMS */
+/* END PROPOSED ENUMS */
+
 /* gps_receive_state: where gps_receive is in framing an Oncore message
  * into gps_response_buffer, its jump table at 0x4b892 (docs/firmware/
  * gps.md, "Framing").  A state above GPS_FRAMING_COMPLETE drops each
@@ -299,7 +301,6 @@ typedef enum __attribute__((packed)) oncore_fix_algorithm {
   ONCORE_FIX_BEST_FOUR = 0,   /* "Best 4 satellites" */
   ONCORE_FIX_ALL_IN_VIEW = 1, /* "N-in-view" */
 } oncore_fix_algorithm;
-/* END PROPOSED ENUMS */
 
 /* The loop's stage, pll.stage: the console's "PLL state: " strings
  * (docs/firmware/loop.md, "The stages"). */
@@ -906,7 +907,7 @@ typedef struct efc_range_state {
  * 0x10256c: gps_command_send maps the code to an Oncore request, code
  * 0x20 sending request as it is, and sends it with the arguments. */
 typedef struct gps_command_mailbox {
-  uint8_t code; /* +0x00: 0 when none is pending */
+  gps_console_command code; /* +0x00: 0 when none is pending */
   uint8_t field_01;
   int32_t arguments[4]; /* +0x02 */
   int32_t request;      /* +0x12: code 0x20's request */
@@ -1233,11 +1234,11 @@ typedef struct gps_request_entry {
   gps_request_sender sender; /* +0x08: one with the same sender waiting is
                                 not queued again; the monitors' may be
                                 replaced */
-  uint8_t result; /* +0x09: 1 as sent; gps_count_response's kind as it comes
-                     back, which pllp_task takes as gps_ack_code or
+  gps_request_result result; /* +0x09: 1 as sent; gps_count_response's kind as
+                     it comes back, which pllp_task takes as gps_ack_code or
                      pll_scpi_complete's success */
-  int16_t code;   /* +0x0a: the request, gps_request_class's index; 0x45 empties
-                     the ring before it is queued */
+  int16_t code; /* +0x0a: the request, gps_request_class's index; 0x45 empties
+                   the ring before it is queued */
   uint8_t argument_mode; /* +0x0c: gps_request_class's second argument, copied
                             to gps_request_step's */
   uint8_t field_0d;
@@ -2298,7 +2299,7 @@ typedef struct oncore_status_fields {
   uint8_t visible_count;
   uint8_t tracked_count;
   oncore_channel_status channels[6];
-  uint8_t receiver_status;
+  oncore_receiver_status receiver_status;
 } oncore_status_fields;
 
 /* @@Bb: one visible satellite, padded by the decoder's table (0x50fd8)
@@ -2426,12 +2427,12 @@ typedef struct gps_state {
   oncore_time_fields time;             /* @@Aa */
   oncore_gmt_offset_fields gmt_offset; /* @@Ab */
   uint8_t field_007;
-  oncore_date_fields date;         /* @@Ac */
-  oncore_position_fields position; /* @@Ad, @@Ae, @@Af */
-  uint8_t mask_angle;              /* @@Ag */
-  uint8_t satellite_select;        /* @@Ah */
-  uint8_t manual_satellites[6];    /* @@Ai, by channel */
-  oncore_xdop_type xdop_type;      /* @@Aj */
+  oncore_date_fields date;                  /* @@Ac */
+  oncore_position_fields position;          /* @@Ad, @@Ae, @@Af */
+  uint8_t mask_angle;                       /* @@Ag */
+  oncore_satellite_select satellite_select; /* @@Ah */
+  uint8_t manual_satellites[6];             /* @@Ai, by channel */
+  oncore_xdop_type xdop_type;               /* @@Aj */
   uint8_t field_025;
   uint16_t xdop_hysteresis;    /* @@Ak */
   uint16_t xdop_threshold;     /* @@Al, 3D to 2D */
@@ -2441,7 +2442,7 @@ typedef struct gps_state {
   uint8_t almanac_update; /* @@An */
   uint8_t field_08f[0xa4 - 0x8f];
   uint8_t ionospheric_correction;            /* @@Aq */
-  uint8_t fix_algorithm;                     /* @@Ar */
+  oncore_fix_algorithm fix_algorithm;        /* @@Ar */
   oncore_hold_position_fields hold_position; /* @@As */
   uint8_t hold_height_type;                  /* @@As: 0 GPS ellipsoid, 1 MSL */
   uint8_t field_0b3;
@@ -2454,16 +2455,16 @@ typedef struct gps_state {
   int32_t pps_offset;      /* @@Ay */
   int32_t pps_cable_delay; /* @@Az */
   uint8_t field_0c8;
-  uint8_t application_type;              /* @@AB */
-  uint8_t position_fix_threshold;        /* @@AD, s */
-  uint8_t differential_output_threshold; /* @@AD, s */
+  oncore_application_type application_type; /* @@AB */
+  uint8_t position_fix_threshold;           /* @@AD, s */
+  uint8_t differential_output_threshold;    /* @@AD, s */
   uint8_t status_received;     /* @@Ba has come; the status monitor sets it */
   uint8_t status_rate;         /* s between @@Ba, as last requested */
   oncore_status_fields status; /* @@Ba */
   uint8_t field_10d;
-  uint8_t reference_qualified; /* reference_valid before the PPS check */
-  uint8_t status_reported;     /* status_code, held while it is 5 to 8 */
-  uint8_t visibility_received; /* set by @@Bb's decoder */
+  uint8_t reference_qualified;     /* reference_valid before the PPS check */
+  gps_sync_status status_reported; /* status_code, held while it is 5 to 8 */
+  uint8_t visibility_received;     /* set by @@Bb's decoder */
   uint8_t field_111;
   oncore_visibility_fields visibility; /* @@Bb */
   uint8_t field_18c;
@@ -2493,18 +2494,19 @@ typedef struct gps_state {
   double average_longitude;
   double average_height_gps;
   double average_height_msl;
-  uint8_t reference_valid; /* :GPS:REF:VALid; 0 while the PPS is dead */
-  uint8_t pps_dead;        /* gps_pps_dead, while it counts */
-  uint8_t status_code; /* 1 PPS dead, 2 after a reset, 3 tracking, 4 holding or
-                          surveying, 5 to 8 validating, 9 valid */
-  uint8_t reference_valid_override; /* the byte at 0x100c68: 1 forces valid,
-                                       0xff invalid */
-  uint32_t validation_start;        /* uptime as status_code reached 5 */
+  uint8_t reference_valid;     /* :GPS:REF:VALid; 0 while the PPS is dead */
+  uint8_t pps_dead;            /* gps_pps_dead, while it counts */
+  gps_sync_status status_code; /* 1 PPS dead, 2 after a reset, 3 tracking, 4
+                          holding or surveying, 5 to 8 validating, 9 valid */
+  gps_reference_override reference_valid_override; /* the byte at 0x100c68: 1
+                                       forces valid, 0xff invalid */
+  uint32_t validation_start; /* uptime as status_code reached 5 */
   uint8_t field_532[2]; /* status_snapshot reads them; nothing writes them */
-  uint8_t status_code_reset; /* 2, set by gps_receiver_status_reset */
+  gps_sync_status status_code_reset; /* 2, set by gps_receiver_status_reset */
   uint8_t field_535[5];
-  uint8_t surveying;          /* averaging @@Ba's position */
-  uint8_t raim_assessment;    /* 0 inactive, 1 OK, 2 alarm detected, 3 alarm */
+  uint8_t surveying; /* averaging @@Ba's position */
+  gps_raim_assessment
+      raim_assessment;        /* 0 inactive, 1 OK, 2 alarm detected, 3 alarm */
   uint8_t pps_check_disabled; /* gps_pps_check skips while set */
   uint8_t receiver_health_failed; /* "GPS Receiver Health" */
   uint8_t command_monitor_enabled;
@@ -2516,7 +2518,8 @@ typedef struct gps_state {
                                     unanswered */
   uint8_t command_monitor_failed;
   uint8_t status_monitor_enabled;
-  uint8_t status_monitor_state; /* 0 disabled, 1 standby, 2 recovery */
+  gps_status_monitor_state
+      status_monitor_state;     /* 0 disabled, 1 standby, 2 recovery */
   uint32_t status_monitor_time; /* uptime of the last fresh @@Ba */
   uint32_t status_last_time;   /* the last @@Ba's time bytes, compared as one */
   uint8_t status_repeat_count; /* @@Ba with the same time in a row */
@@ -2816,8 +2819,8 @@ typedef struct pll_state {
       recovery_countdown; /* +0x14: holdover_recovery's, as powerup_countdown */
   pll_recovery_state recovery_state; /* +0x15 */
   pll_coarse_state coarse_state;     /* +0x16: coarse's */
-  uint8_t fine_state;                /* +0x17: fine's; 7 to 9 slew the phase
-                                        (PLL_FINE_SLEW_FIRST, _LAST) */
+  pll_fine_state fine_state;         /* +0x17: fine's; 7 to 9 slew the phase
+                                 (PLL_FINE_SLEW_FIRST, _LAST) */
   uint8_t frequency_adjusted; /* +0x18: fine applied a frequency correction */
   uint8_t fine_index;         /* fine acquisition's "i= %d" */
   uint16_t fine_retries; /* +0x1a: fine's failed attempts, given up past 9 */
@@ -3172,15 +3175,15 @@ typedef struct interval_reading_fields {
  * a state go in pairs: a state of 2 asks for the work, 1 says it is done.
  * 0x20 bytes, interpolator_calibration_state after them. */
 typedef struct counter_configuration_fields {
-  uint8_t fpga_registers[4]; /* counter_arm copies them into fconf_regs */
-  double calibration;        /* s, which counter_read subtracts */
-  uint8_t registers_mode;    /* 1: load fpga_registers ... */
-  uint8_t registers_state;   /* ... when this is 2 */
-  uint8_t calibrate_mode;    /* 3: always calibrate; 1: ... */
-  uint8_t calibrate_state;   /* ... when this is 2 */
-  uint8_t sync_mode;         /* 2: counter_arm syncs ... */
-  uint8_t sync_state;        /* ... when this is 2; sync_request sets both */
-  uint8_t sync_kind;         /* sync_request's first; into fconf_regs[3] */
+  uint8_t fpga_registers[4];   /* counter_arm copies them into fconf_regs */
+  double calibration;          /* s, which counter_read subtracts */
+  uint8_t registers_mode;      /* 1: load fpga_registers ... */
+  uint8_t registers_state;     /* ... when this is 2 */
+  uint8_t calibrate_mode;      /* 3: always calibrate; 1: ... */
+  uint8_t calibrate_state;     /* ... when this is 2 */
+  uint8_t sync_mode;           /* 2: counter_arm syncs ... */
+  uint8_t sync_state;          /* ... when this is 2; sync_request sets both */
+  counter_sync_kind sync_kind; /* sync_request's first; into fconf_regs[3] */
   uint8_t pad_13;
   int32_t sync_count;          /* sync_request's second; counted down */
   int32_t interpolator_offset; /* reading_low, subtracted from the reading */
@@ -3281,6 +3284,27 @@ typedef struct satellite_sets {
   uint8_t field_29;
 } satellite_sets;
 
+/* A satellite's cell on the screen, at +4 of a satellite_status_list
+ * entry: satellite_elevation_azimuth's and satellite_status' (0x49654,
+ * 0x49688), the long status_screen gives format_satellite_cell
+ * (0x4ae0e). */
+typedef struct satellite_cell {
+  satellite_cell_status status;
+  uint8_t elevation; /* degrees, for SATELLITE_CELL_POSITION */
+  uint16_t azimuth;  /* degrees */
+} satellite_cell;
+
+/* A satellite_status_list entry, 8 bytes: status_snapshot keeps twelve
+ * not tracked and six tracked
+ * (0x4a81a, 0x4a83a); satellite_status_blank_entry (0x4e016) is an
+ * empty one. */
+typedef struct satellite_list_entry {
+  uint8_t satellite;   /* 0 for none */
+  uint8_t attempting;  /* not tracked: on a channel but not used (0x49964) */
+  int16_t level;       /* tracked: its channel's signal strength; -1 none */
+  satellite_cell cell; /* +0x04 */
+} satellite_list_entry;
+
 /* A status snapshot, status_snapshot's record, which status_screen
  * prints: 0x12e bytes, three of them from 0x10142c. */
 typedef struct status_snapshot_record {
@@ -3300,36 +3324,38 @@ typedef struct status_snapshot_record {
                                   format_si's resolution for the TI (0x4a5de) */
   float interval_mean;         /* +0x016 */
   uint16_t interval_mean_flag; /* +0x01a: the word at interval_mean_flag */
-  uint8_t holdover_waiting_reason; /* +0x01c */
-  uint8_t holdover_limit_state;    /* +0x01d: nv_settings' */
-  float holdover_limit_threshold;  /* +0x01e: nv_settings' */
-  uint32_t holdover_duration;      /* +0x022: pll's */
-  float kenneth_present;           /* +0x026: kenneth_present_get's */
-  uint8_t kenneth_present_valid;   /* +0x02a: its result */
-  uint8_t field_02b;               /* its second output */
-  float kenneth_predicted;         /* +0x02c: kenneth_predicted_get's */
-  uint8_t kenneth_predicted_valid; /* +0x030: its result */
-  uint8_t field_031;               /* its second output */
-  satellite_sets satellites;       /* +0x032: satellite_sets_build's */
-  uint8_t gps_satellites[12][8]; /* +0x05c: satellite_status_list's, for GPS */
-  uint8_t pseudolites[6]
-                     [8]; /* +0x0bc: satellite_status_list's, for pseudolites */
-  uint8_t status_received;     /* +0x0ec: gps' */
-  uint8_t gps_satellite_count; /* +0x0ed: satellite_status_list's count of
-                                  gps_satellites */
-  uint8_t pseudolite_count;    /* +0x0ee: its count of pseudolites */
-  uint8_t pll_field_3d5;       /* +0x0ef: pll.field_3d5 */
-  uint8_t reference_valid;     /* +0x0f0: gps' */
-  uint8_t pps_dead;            /* +0x0f1: gps' */
-  uint8_t status_code;         /* +0x0f2: gps' */
-  uint8_t gps_field_532[2];    /* +0x0f3: gps.field_532 */
-  uint8_t status_code_reset;   /* +0x0f5: gps' */
-  uint8_t fix_mode;            /* +0x0f6: gps' */
-  uint8_t receiver_status;     /* +0x0f7: gps.status' */
-  time_of_day time;            /* +0x0f8: gps.status' time made local (0x4a720);
-                                  get_date_time's while clock_invalid (0x4a74e) */
-  uint32_t date;               /* +0x0fc: the same's date */
-  int32_t time_zone[2];        /* +0x100: nv_settings' */
+  uint8_t holdover_waiting_reason;      /* +0x01c */
+  uint8_t holdover_limit_state;         /* +0x01d: nv_settings' */
+  float holdover_limit_threshold;       /* +0x01e: nv_settings' */
+  uint32_t holdover_duration;           /* +0x022: pll's */
+  float kenneth_present;                /* +0x026: kenneth_present_get's */
+  uint8_t kenneth_present_valid;        /* +0x02a: its result */
+  uint8_t field_02b;                    /* its second output */
+  float kenneth_predicted;              /* +0x02c: kenneth_predicted_get's */
+  uint8_t kenneth_predicted_valid;      /* +0x030: its result */
+  uint8_t field_031;                    /* its second output */
+  satellite_sets satellites;            /* +0x032: satellite_sets_build's */
+  satellite_list_entry not_tracked[12]; /* +0x05c: satellite_status_list's
+                                           list 0, the visible satellites no
+                                           channel uses for the fix */
+  satellite_list_entry tracked[6];      /* +0x0bc: its list 1, those the
+                                           channels use, with their signal */
+  uint8_t status_received;              /* +0x0ec: gps' */
+  uint8_t not_tracked_count;         /* +0x0ed: satellite_status_list's count of
+                                        not_tracked */
+  uint8_t tracked_count;             /* +0x0ee: its count of tracked */
+  uint8_t pll_field_3d5;             /* +0x0ef: pll.field_3d5 */
+  uint8_t reference_valid;           /* +0x0f0: gps' */
+  uint8_t pps_dead;                  /* +0x0f1: gps' */
+  gps_sync_status status_code;       /* +0x0f2: gps' */
+  uint8_t gps_field_532[2];          /* +0x0f3: gps.field_532 */
+  gps_sync_status status_code_reset; /* +0x0f5: gps' */
+  uint8_t fix_mode;                  /* +0x0f6: gps' */
+  oncore_receiver_status receiver_status; /* +0x0f7: gps.status' */
+  time_of_day time;     /* +0x0f8: gps.status' time made local (0x4a720);
+                           get_date_time's while clock_invalid (0x4a74e) */
+  uint32_t date;        /* +0x0fc: the same's date */
+  int32_t time_zone[2]; /* +0x100: nv_settings' */
   uint8_t
       clock_invalid; /* +0x108: 1 when get_date_time reports no date or time */
   uint8_t utc_time;  /* +0x109: gps' */
@@ -3352,7 +3378,8 @@ typedef struct status_snapshot_record {
  * screen and the mode it stands for, which status_screen marks ">>"
  * when it is the snapshot's.  A null text ends the table. */
 typedef struct status_screen_mode_line {
-  uint8_t mode; /* +0x00: 3 Locked, 2 Recovery, 1 Holdover, 0 Power-up */
+  status_screen_line
+      mode; /* +0x00: 3 Locked, 2 Recovery, 1 Holdover, 0 Power-up */
   uint8_t field_01;
   char* text; /* +0x02 */
 } status_screen_mode_line;

@@ -365,6 +365,12 @@ typedef enum __attribute__((packed)) console_crash_kind {
 
 typedef struct counter_configuration_fields counter_configuration_fields, *Pcounter_configuration_fields;
 
+typedef enum __attribute__((packed)) counter_sync_kind {
+    COUNTER_SYNC_POSITIVE=1,
+    COUNTER_SYNC_NEGATIVE=2,
+    COUNTER_SYNC_FULL=3
+} counter_sync_kind;
+
 struct counter_configuration_fields {
     uint8_t fpga_registers[4];
     double calibration;
@@ -374,7 +380,7 @@ struct counter_configuration_fields {
     uint8_t calibrate_state;
     uint8_t sync_mode;
     uint8_t sync_state;
-    uint8_t sync_kind;
+    enum counter_sync_kind sync_kind;
     uint8_t pad_13;
     int32_t sync_count;
     int32_t interpolator_offset;
@@ -387,12 +393,6 @@ typedef enum __attribute__((packed)) counter_error {
     COUNTER_MEASUREMENT_ABORTED=8,
     COUNTER_CALIBRATION_FAILURE=16
 } counter_error;
-
-typedef enum __attribute__((packed)) counter_sync_kind {
-    COUNTER_SYNC_POSITIVE=1,
-    COUNTER_SYNC_NEGATIVE=2,
-    COUNTER_SYNC_FULL=3
-} counter_sync_kind;
 
 typedef uint8_t (dac_measure)(struct char_slot);
 
@@ -733,20 +733,6 @@ struct gps_command_log {
 
 typedef struct gps_command_mailbox gps_command_mailbox, *Pgps_command_mailbox;
 
-struct gps_command_mailbox {
-    uint8_t code;
-    uint8_t field_01;
-    int32_t arguments[4];
-    int32_t request;
-};
-
-typedef enum __attribute__((packed)) gps_command_monitor_state {
-    GPS_COMMAND_MONITOR_DISABLED=0,
-    GPS_COMMAND_MONITOR_STANDBY=1,
-    GPS_COMMAND_MONITOR_QUERY=2,
-    GPS_COMMAND_MONITOR_QUERY_ACK=3
-} gps_command_monitor_state;
-
 typedef enum __attribute__((packed)) gps_console_command {
     GPS_CONSOLE_NONE=0,
     GPS_CONSOLE_PRINT_STATUS=1,
@@ -782,6 +768,20 @@ typedef enum __attribute__((packed)) gps_console_command {
     GPS_CONSOLE_CHANGE=31,
     GPS_CONSOLE_QUERY=32
 } gps_console_command;
+
+struct gps_command_mailbox {
+    enum gps_console_command code;
+    uint8_t field_01;
+    int32_t arguments[4];
+    int32_t request;
+};
+
+typedef enum __attribute__((packed)) gps_command_monitor_state {
+    GPS_COMMAND_MONITOR_DISABLED=0,
+    GPS_COMMAND_MONITOR_STANDBY=1,
+    GPS_COMMAND_MONITOR_QUERY=2,
+    GPS_COMMAND_MONITOR_QUERY_ACK=3
+} gps_command_monitor_state;
 
 typedef enum __attribute__((packed)) gps_framing_state {
     GPS_FRAMING_FIRST_AT=0,
@@ -905,19 +905,6 @@ typedef enum __attribute__((packed)) gps_request_sender {
     GPS_SENDER_STATUS_MONITOR=4
 } gps_request_sender;
 
-struct gps_request_entry {
-    uint32_t field_00;
-    uint32_t field_04;
-    enum gps_request_sender sender;
-    uint8_t result;
-    int16_t code;
-    uint8_t argument_mode;
-    uint8_t field_0d;
-    int32_t *arguments;
-    uint8_t sent;
-    uint8_t field_13[7];
-};
-
 typedef enum __attribute__((packed)) gps_request_result {
     GPS_RESULT_SUCCESS=0,
     GPS_RESULT_REJECT=1,
@@ -930,6 +917,19 @@ typedef enum __attribute__((packed)) gps_request_result {
     GPS_RESULT_TIMEOUT=8,
     GPS_RESULT_PENDING=9
 } gps_request_result;
+
+struct gps_request_entry {
+    uint32_t field_00;
+    uint32_t field_04;
+    enum gps_request_sender sender;
+    enum gps_request_result result;
+    int16_t code;
+    uint8_t argument_mode;
+    uint8_t field_0d;
+    int32_t *arguments;
+    uint8_t sent;
+    uint8_t field_13[7];
+};
 
 typedef struct gps_request_ring gps_request_ring, *Pgps_request_ring;
 
@@ -969,6 +969,12 @@ typedef struct oncore_date_fields oncore_date_fields, *Poncore_date_fields;
 
 typedef struct oncore_position_fields oncore_position_fields, *Poncore_position_fields;
 
+typedef enum __attribute__((packed)) oncore_satellite_select {
+    ONCORE_SELECT_AUTOMATIC=0,
+    ONCORE_SELECT_MANUAL=1,
+    ONCORE_SELECT_HIGHEST_IN_SKY=2
+} oncore_satellite_select;
+
 typedef enum __attribute__((packed)) oncore_xdop_type {
     ONCORE_XDOP_GDOP=0,
     ONCORE_XDOP_PDOP=1,
@@ -977,6 +983,11 @@ typedef enum __attribute__((packed)) oncore_xdop_type {
     ONCORE_XDOP_TDOP=4
 } oncore_xdop_type;
 
+typedef enum __attribute__((packed)) oncore_fix_algorithm {
+    ONCORE_FIX_BEST_FOUR=0,
+    ONCORE_FIX_ALL_IN_VIEW=1
+} oncore_fix_algorithm;
+
 typedef struct oncore_hold_position_fields oncore_hold_position_fields, *Poncore_hold_position_fields;
 
 typedef enum __attribute__((packed)) oncore_time_mode {
@@ -984,7 +995,28 @@ typedef enum __attribute__((packed)) oncore_time_mode {
     ONCORE_TIME_UTC=1
 } oncore_time_mode;
 
+typedef enum __attribute__((packed)) oncore_application_type {
+    ONCORE_APPLICATION_AIR=0,
+    ONCORE_APPLICATION_HANDHELD=1,
+    ONCORE_APPLICATION_LAND=2,
+    ONCORE_APPLICATION_MARINE=3,
+    ONCORE_APPLICATION_STATIC=4
+} oncore_application_type;
+
 typedef struct oncore_status_fields oncore_status_fields, *Poncore_status_fields;
+
+typedef enum __attribute__((packed)) gps_sync_status {
+    GPS_SYNC_RECEIVER_ERROR=0,
+    GPS_SYNC_ABSENT=1,
+    GPS_SYNC_NOT_TRACKING=2,
+    GPS_SYNC_INACCURATE_POSITION=3,
+    GPS_SYNC_RAIM_ERROR=4,
+    GPS_SYNC_ASSESSING=5,
+    GPS_SYNC_ASSESSING_27=6,
+    GPS_SYNC_ASSESSING_53=7,
+    GPS_SYNC_ASSESSING_77=8,
+    GPS_SYNC_SYNCHRONIZED=9
+} gps_sync_status;
 
 typedef struct oncore_visibility_fields oncore_visibility_fields, *Poncore_visibility_fields;
 
@@ -1011,12 +1043,29 @@ typedef enum __attribute__((packed)) oncore_fix_mode {
 
 typedef struct oncore_receiver_id oncore_receiver_id, *Poncore_receiver_id;
 
+typedef enum __attribute__((packed)) gps_status_monitor_state {
+    GPS_STATUS_MONITOR_DISABLED=0,
+    GPS_STATUS_MONITOR_STANDBY=1,
+    GPS_STATUS_MONITOR_RECOVERY=2
+} gps_status_monitor_state;
+
 typedef enum __attribute__((packed)) oncore_dop_type {
     ONCORE_DOP_PDOP=0,
     ONCORE_DOP_HDOP=1
 } oncore_dop_type;
 
 typedef struct oncore_channel_status oncore_channel_status, *Poncore_channel_status;
+
+typedef enum __attribute__((packed)) oncore_receiver_status {
+    ONCORE_STATUS_BAD_ALMANAC=1,
+    ONCORE_STATUS_INSUFFICIENT_SATELLITES=2,
+    ONCORE_STATUS_DIFFERENTIAL=4,
+    ONCORE_STATUS_ACQUIRING=8,
+    ONCORE_STATUS_2D_FIX=16,
+    ONCORE_STATUS_3D_FIX=32,
+    ONCORE_STATUS_POOR_GEOMETRY=64,
+    ONCORE_STATUS_PROPAGATE=128
+} oncore_receiver_status;
 
 typedef struct oncore_visible_satellite oncore_visible_satellite, *Poncore_visible_satellite;
 
@@ -1174,7 +1223,7 @@ struct oncore_status_fields {
     uint8_t visible_count;
     uint8_t tracked_count;
     struct oncore_channel_status channels[6];
-    uint8_t receiver_status;
+    enum oncore_receiver_status receiver_status;
 };
 
 struct oncore_receiver_id {
@@ -1256,7 +1305,7 @@ struct gps_state {
     struct oncore_date_fields date;
     struct oncore_position_fields position;
     uint8_t mask_angle;
-    uint8_t satellite_select;
+    enum oncore_satellite_select satellite_select;
     uint8_t manual_satellites[6];
     enum oncore_xdop_type xdop_type;
     uint8_t field_025;
@@ -1268,7 +1317,7 @@ struct gps_state {
     uint8_t almanac_update;
     uint8_t field_08f[21];
     uint8_t ionospheric_correction;
-    uint8_t fix_algorithm;
+    enum oncore_fix_algorithm fix_algorithm;
     struct oncore_hold_position_fields hold_position;
     uint8_t hold_height_type;
     uint8_t field_0b3;
@@ -1281,7 +1330,7 @@ struct gps_state {
     int32_t pps_offset;
     int32_t pps_cable_delay;
     uint8_t field_0c8;
-    uint8_t application_type;
+    enum oncore_application_type application_type;
     uint8_t position_fix_threshold;
     uint8_t differential_output_threshold;
     uint8_t status_received;
@@ -1289,7 +1338,7 @@ struct gps_state {
     struct oncore_status_fields status;
     uint8_t field_10d;
     uint8_t reference_qualified;
-    uint8_t status_reported;
+    enum gps_sync_status status_reported;
     uint8_t visibility_received;
     uint8_t field_111;
     struct oncore_visibility_fields visibility;
@@ -1322,14 +1371,14 @@ struct gps_state {
     double average_height_msl;
     uint8_t reference_valid;
     uint8_t pps_dead;
-    uint8_t status_code;
-    uint8_t reference_valid_override;
+    enum gps_sync_status status_code;
+    enum gps_reference_override reference_valid_override;
     uint32_t validation_start;
     uint8_t field_532[2];
-    uint8_t status_code_reset;
+    enum gps_sync_status status_code_reset;
     uint8_t field_535[5];
     uint8_t surveying;
-    uint8_t raim_assessment;
+    enum gps_raim_assessment raim_assessment;
     uint8_t pps_check_disabled;
     uint8_t receiver_health_failed;
     uint8_t command_monitor_enabled;
@@ -1339,7 +1388,7 @@ struct gps_state {
     uint8_t command_monitor_error;
     uint8_t command_monitor_failed;
     uint8_t status_monitor_enabled;
-    uint8_t status_monitor_state;
+    enum gps_status_monitor_state status_monitor_state;
     uint32_t status_monitor_time;
     uint32_t status_last_time;
     uint8_t status_repeat_count;
@@ -1381,25 +1430,6 @@ struct gps_statistics {
     uint16_t command_monitor_failures;
     uint16_t status_monitor_failures;
 };
-
-typedef enum __attribute__((packed)) gps_status_monitor_state {
-    GPS_STATUS_MONITOR_DISABLED=0,
-    GPS_STATUS_MONITOR_STANDBY=1,
-    GPS_STATUS_MONITOR_RECOVERY=2
-} gps_status_monitor_state;
-
-typedef enum __attribute__((packed)) gps_sync_status {
-    GPS_SYNC_RECEIVER_ERROR=0,
-    GPS_SYNC_ABSENT=1,
-    GPS_SYNC_NOT_TRACKING=2,
-    GPS_SYNC_INACCURATE_POSITION=3,
-    GPS_SYNC_RAIM_ERROR=4,
-    GPS_SYNC_ASSESSING=5,
-    GPS_SYNC_ASSESSING_27=6,
-    GPS_SYNC_ASSESSING_53=7,
-    GPS_SYNC_ASSESSING_77=8,
-    GPS_SYNC_SYNCHRONIZED=9
-} gps_sync_status;
 
 typedef struct gpt_registers gpt_registers, *Pgpt_registers;
 
@@ -1690,14 +1720,6 @@ struct nv_settings_fields {
     uint8_t debug_output;
 };
 
-typedef enum __attribute__((packed)) oncore_application_type {
-    ONCORE_APPLICATION_AIR=0,
-    ONCORE_APPLICATION_HANDHELD=1,
-    ONCORE_APPLICATION_LAND=2,
-    ONCORE_APPLICATION_MARINE=3,
-    ONCORE_APPLICATION_STATIC=4
-} oncore_application_type;
-
 typedef struct oncore_decoder oncore_decoder, *Poncore_decoder;
 
 struct oncore_decoder {
@@ -1716,11 +1738,6 @@ typedef enum __attribute__((packed)) oncore_field_code {
     ONCORE_FIELD_GROUP_FIRST=193
 } oncore_field_code;
 
-typedef enum __attribute__((packed)) oncore_fix_algorithm {
-    ONCORE_FIX_BEST_FOUR=0,
-    ONCORE_FIX_ALL_IN_VIEW=1
-} oncore_fix_algorithm;
-
 typedef struct oncore_message_entry oncore_message_entry, *Poncore_message_entry;
 
 struct oncore_message_entry {
@@ -1736,23 +1753,6 @@ struct oncore_message_entry {
     uint8_t field_1f;
     struct oncore_decoder decoders[3];
 };
-
-typedef enum __attribute__((packed)) oncore_receiver_status {
-    ONCORE_STATUS_BAD_ALMANAC=1,
-    ONCORE_STATUS_INSUFFICIENT_SATELLITES=2,
-    ONCORE_STATUS_DIFFERENTIAL=4,
-    ONCORE_STATUS_ACQUIRING=8,
-    ONCORE_STATUS_2D_FIX=16,
-    ONCORE_STATUS_3D_FIX=32,
-    ONCORE_STATUS_POOR_GEOMETRY=64,
-    ONCORE_STATUS_PROPAGATE=128
-} oncore_receiver_status;
-
-typedef enum __attribute__((packed)) oncore_satellite_select {
-    ONCORE_SELECT_AUTOMATIC=0,
-    ONCORE_SELECT_MANUAL=1,
-    ONCORE_SELECT_HIGHEST_IN_SKY=2
-} oncore_satellite_select;
 
 typedef struct packed_datetime packed_datetime, *Ppacked_datetime;
 
@@ -1973,7 +1973,7 @@ struct pll_state {
     uint8_t recovery_countdown;
     enum pll_recovery_state recovery_state;
     enum pll_coarse_state coarse_state;
-    uint8_t fine_state;
+    enum pll_fine_state fine_state;
     uint8_t frequency_adjusted;
     uint8_t fine_index;
     uint16_t fine_retries;
@@ -2330,6 +2330,8 @@ typedef double robin_overflow_counts[3];
 
 typedef int16_t robin_point_record[80];
 
+typedef struct satellite_cell satellite_cell, *Psatellite_cell;
+
 typedef enum __attribute__((packed)) satellite_cell_status {
     SATELLITE_CELL_NONE=0,
     SATELLITE_CELL_POSITION=1,
@@ -2340,6 +2342,12 @@ typedef enum __attribute__((packed)) satellite_cell_status {
     SATELLITE_CELL_SYNCHRONIZED=6,
     SATELLITE_CELL_EPHEMERIS=7
 } satellite_cell_status;
+
+struct satellite_cell {
+    enum satellite_cell_status status;
+    uint8_t elevation;
+    uint16_t azimuth;
+};
 
 typedef enum __attribute__((packed)) satellite_health_class {
     SATELLITE_CLASS_UNKNOWN=0,
@@ -2360,6 +2368,15 @@ typedef enum __attribute__((packed)) satellite_list {
     SATELLITE_LIST_VISIBLE=2,
     SATELLITE_LIST_ALL=3
 } satellite_list;
+
+typedef struct satellite_list_entry satellite_list_entry, *Psatellite_list_entry;
+
+struct satellite_list_entry {
+    uint8_t satellite;
+    uint8_t attempting;
+    int16_t level;
+    struct satellite_cell cell;
+};
 
 typedef struct satellite_sets satellite_sets, *Psatellite_sets;
 
@@ -3230,7 +3247,7 @@ typedef enum __attribute__((packed)) status_screen_line {
 typedef struct status_screen_mode_line status_screen_mode_line, *Pstatus_screen_mode_line;
 
 struct status_screen_mode_line {
-    uint8_t mode;
+    enum status_screen_line mode;
     uint8_t field_01;
     char *text;
 };
@@ -3262,19 +3279,19 @@ struct status_snapshot_record {
     uint8_t kenneth_predicted_valid;
     uint8_t field_031;
     struct satellite_sets satellites;
-    uint8_t gps_satellites[12][8];
-    uint8_t pseudolites[6][8];
+    struct satellite_list_entry not_tracked[12];
+    struct satellite_list_entry tracked[6];
     uint8_t status_received;
-    uint8_t gps_satellite_count;
-    uint8_t pseudolite_count;
+    uint8_t not_tracked_count;
+    uint8_t tracked_count;
     uint8_t pll_field_3d5;
     uint8_t reference_valid;
     uint8_t pps_dead;
-    uint8_t status_code;
+    enum gps_sync_status status_code;
     uint8_t gps_field_532[2];
-    uint8_t status_code_reset;
+    enum gps_sync_status status_code_reset;
     uint8_t fix_mode;
-    uint8_t receiver_status;
+    enum oncore_receiver_status receiver_status;
     struct time_of_day time;
     uint32_t date;
     int32_t time_zone[2];
@@ -3479,10 +3496,12 @@ _Static_assert(sizeof(qspi_device) == 1, "qspi_device");
 _Static_assert(sizeof(qspi_state) == 78, "qspi_state");
 _Static_assert(sizeof(regression_record) == 26, "regression_record");
 _Static_assert(sizeof(reset_record) == 92, "reset_record");
+_Static_assert(sizeof(satellite_cell) == 4, "satellite_cell");
 _Static_assert(sizeof(satellite_cell_status) == 1, "satellite_cell_status");
 _Static_assert(sizeof(satellite_health_class) == 1, "satellite_health_class");
 _Static_assert(sizeof(satellite_kind) == 1, "satellite_kind");
 _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
+_Static_assert(sizeof(satellite_list_entry) == 8, "satellite_list_entry");
 _Static_assert(sizeof(satellite_sets) == 42, "satellite_sets");
 _Static_assert(sizeof(sci_driver) == 28, "sci_driver");
 _Static_assert(sizeof(sci_exchange_state) == 56, "sci_exchange_state");
@@ -4000,6 +4019,7 @@ extern int16_t timecode_compare_wraps; /* 00100bd2 */
 extern uint8_t float_exception_message[32]; /* 00100bd4 */
 extern uint8_t program_end_message[46]; /* 00100bf4 */
 extern selftest_results selftest; /* 00100c24 */
+extern gps_reference_override reference_valid_override_request; /* 00100c68 */
 extern gps_state gps; /* 00100c6a */
 extern uint8_t gps_commands_blocked; /* 001011c4 */
 extern int8_t status_screen_print_interval; /* 001011c5 */
@@ -4008,14 +4028,14 @@ extern char gps_last_program_message[80]; /* 00101216 */
 extern uint8_t gps_response_buffer[20]; /* 00101266 */
 extern uint8_t * gps_response_cursor; /* 0010138c */
 extern uint8_t * gps_print_cursor; /* 00101390 */
-extern uint8_t gps_receive_state; /* 00101394 */
+extern gps_framing_state gps_receive_state; /* 00101394 */
 extern int16_t gps_response_index; /* 00101396 */
 extern int16_t gps_response_length; /* 00101398 */
 extern int16_t gps_response_remaining; /* 0010139a */
 extern gps_process_state gps_task_state; /* 0010139c */
 extern gps_request_ring gps_requests; /* 0010139e */
-extern int8_t command_monitor_result; /* 00101428 */
-extern int8_t status_monitor_result; /* 00101429 */
+extern gps_request_result command_monitor_result; /* 00101428 */
+extern gps_request_result status_monitor_result; /* 00101429 */
 extern uint8_t status_without_traim_count; /* 0010142a */
 extern status_snapshot_record status_screen_snapshot; /* 0010142c */
 extern uint8_t status_snapshots_frozen; /* 0010155a */
@@ -4386,7 +4406,6 @@ extern uint16_t USHORT_0002f77c; /* 0002f77c */
 extern uint16_t USHORT_0002f78a; /* 0002f78a */
 extern uint16_t USHORT_0002f794; /* 0002f794 */
 extern uint8_t installer_atexit_functions; /* 0010b03c */
-extern uint8_t reference_valid_override_request; /* 00100c68 */
 extern uint8_t retained_block; /* 00101e70 */
 extern word switchD_00010626_index_zero; /* 0001062e */
 extern word switchD_00013d08_index_zero; /* 00013d10 */
@@ -6476,7 +6495,7 @@ void diag_efc_write(uint32_t param_1);
 void diag_hdac_write(uint32_t param_1,uint32_t param_2);
 void diag_hdac_all(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
                   uint32_t param_5,uint32_t param_6);
-void diag_clk_synch(uint8_t param_1,uint32_t param_2);
+void diag_clk_synch(counter_sync_kind param_1,int32_t param_2);
 void diag_sync_imm(void);
 void diag_loop_time(int32_t param_1);
 void diag_pll_rep(void);
@@ -6530,7 +6549,7 @@ void diag_pll_debug(uint32_t param_1);
 void diag_phase_off(int32_t param_1);
 void print_gps_init_state(void);
 void print_leap_check_state(void);
-void print_fine_state(uint8_t param_1,char *param_2);
+void print_fine_state(pll_fine_state fine_state,char *state);
 void diag_pr_pll(void);
 void diag_log_send(uint32_t param_1);
 void diag_print_clk_list(void);
@@ -7322,7 +7341,7 @@ void fpga_address_sweep_debug(void);
 uint8_t counter_wait_ready(uint8_t mask);
 void fpga_set_bit(fpga_bit_index bit,uint8_t on);
 void fpga_set_field(fpga_bit_index field,uint8_t value);
-void sync_request(uint8_t param_1,int32_t param_2);
+void sync_request(counter_sync_kind kind,int32_t count);
 void counter_set_sync(uint8_t param_1);
 void fpga_fields_to_registers(uint8_t *fields,uint8_t *registers);
 uint8_t fpga_read_byte(fpga_register reg);
@@ -7472,7 +7491,7 @@ void gps_debug_status(void);
 void gps_print_id(void);
 void satellite_sets_build(oncore_channel_status *channels,satellite_sets *sets);
 int32_t satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask);
-uint8_t satellite_track_class(oncore_visible_satellite *satellite);
+satellite_health_class satellite_track_class(oncore_visible_satellite *satellite);
 void satellite_elevation_azimuth(oncore_visible_satellite *satellite,uint8_t *entry);
 void satellite_status(char param_1,uint8_t param_2,int32_t param_3,int32_t param_4,uint8_t *param_5);
 uint32_t satellite_compare(uint8_t *param_1,uint8_t *param_2);
@@ -7482,7 +7501,7 @@ void satellite_status_list
 void format_satellite_number(char param_1,char *param_2);
 bool mark_flag(char param_1,uint8_t *param_2);
 void format_level(int16_t param_1,char *param_2);
-void format_satellite_cell(char param_1,uint8_t param_2,uint16_t param_3,char *param_4);
+void format_satellite_cell(satellite_cell cell,char *text);
 void status_screen_height(status_snapshot_record *snapshot,char *line);
 void format_si(double value,char resolution,uint8_t digits,char *unit,char *text);
 void format_duration_short(uint32_t param_1,char *param_2);
@@ -7512,9 +7531,9 @@ void command_monitor(void);
 void gps_response_reset(void);
 uint32_t gps_response_lookup(char param_1,char param_2,uint16_t *param_3,int16_t *param_4);
 void gps_receive_expect(uint8_t c,uint8_t expected);
-uint8_t gps_receive(void);
+gps_framing_state gps_receive(void);
 uint32_t gps_response_timed_out(int16_t param_1,uint32_t *param_2);
-int32_t gps_count_response(char kind,gps_request_entry *request);
+int32_t gps_count_response(gps_request_result kind,gps_request_entry *request);
 void request_ring_clear(void);
 bool request_ring_put(gps_request_entry *entry);
 int32_t request_ring_get(gps_request_entry *entry);
@@ -7526,7 +7545,7 @@ uint32_t request_ring_newest_replaceable(void);
 uint32_t request_kind_valid(gps_request_sender sender);
 void gps_request_queue(char param_1,gps_request_entry *request,gps_request_entry *param_3);
 bool gps_request_post(gps_request_sender sender,int16_t code,int32_t *arguments,uint8_t sent);
-uint8_t gps_request_class(int16_t param_1,char param_2);
+gps_code_class gps_request_class(int16_t code,char argument_mode);
 gps_script_step ** gps_script_lookup(int16_t param_1);
 void gps_init(void);
 void gps_link_reset(void);
@@ -34203,7 +34222,7 @@ void diag_hdac_all(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t p
 
 /* the pForth diagnostic word clk_synch */
 
-void diag_clk_synch(uint8_t param_1,uint32_t param_2)
+void diag_clk_synch(counter_sync_kind param_1,int32_t param_2)
 
 {
   sync_request(param_1,param_2);
@@ -34220,7 +34239,7 @@ void diag_clk_synch(uint8_t param_1,uint32_t param_2)
 void diag_sync_imm(void)
 
 {
-  sync_request(3,1);
+  sync_request(COUNTER_SYNC_FULL,1);
   return;
 }
 
@@ -34352,7 +34371,7 @@ void diag_set_time(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t p
 void diag_print_stat(void)
 
 {
-  gps_command.code = 1;
+  gps_command.code = GPS_CONSOLE_PRINT_STATUS;
   return;
 }
 
@@ -34366,7 +34385,7 @@ void diag_print_stat(void)
 void diag_print_vis(void)
 
 {
-  gps_command.code = 0xf;
+  gps_command.code = GPS_CONSOLE_PRINT_VISIBILITY;
   return;
 }
 
@@ -34380,7 +34399,7 @@ void diag_print_vis(void)
 void diag_pr_avg(void)
 
 {
-  gps_command.code = 0x1d;
+  gps_command.code = GPS_CONSOLE_PRINT_AVERAGE;
   return;
 }
 
@@ -34394,7 +34413,7 @@ void diag_pr_avg(void)
 void diag_pr_gps_istate(void)
 
 {
-  gps_command.code = 0x1e;
+  gps_command.code = GPS_CONSOLE_PRINT_INSTRUMENT_STATE;
   return;
 }
 
@@ -34408,7 +34427,7 @@ void diag_pr_gps_istate(void)
 void diag_print_bc(void)
 
 {
-  gps_command.code = 0x10;
+  gps_command.code = GPS_CONSOLE_PRINT_BEST_COMBINATIONS;
   return;
 }
 
@@ -34422,7 +34441,7 @@ void diag_print_bc(void)
 void diag_print_ext_msg(void)
 
 {
-  gps_command.code = 0x12;
+  gps_command.code = GPS_CONSOLE_PRINT_EXTENSION;
   return;
 }
 
@@ -34437,7 +34456,7 @@ void diag_abr_stat(int32_t param_1)
 
 {
   gps_command.arguments[0] = param_1;
-  gps_command.code = 7;
+  gps_command.code = GPS_CONSOLE_STATUS_INTERVAL;
   return;
 }
 
@@ -34452,7 +34471,7 @@ void diag_avg(int32_t param_1)
 
 {
   gps_command.arguments[0] = param_1;
-  gps_command.code = 0x16;
+  gps_command.code = GPS_CONSOLE_AVERAGE;
   return;
 }
 
@@ -34466,7 +34485,7 @@ void diag_avg(int32_t param_1)
 void diag_master_reset(void)
 
 {
-  gps_command.code = 0x19;
+  gps_command.code = GPS_CONSOLE_MASTER_RESET;
   return;
 }
 
@@ -34480,7 +34499,7 @@ void diag_master_reset(void)
 void diag_quiet_status(void)
 
 {
-  gps_command.code = 0x1c;
+  gps_command.code = GPS_CONSOLE_QUIET_STATUS;
   return;
 }
 
@@ -34494,7 +34513,7 @@ void diag_quiet_status(void)
 void diag_gps_query_all(void)
 
 {
-  gps_command.code = 0x1b;
+  gps_command.code = GPS_CONSOLE_QUERY_ALL;
   return;
 }
 
@@ -34508,7 +34527,7 @@ void diag_gps_query_all(void)
 void diag_init_gps(void)
 
 {
-  gps_command.code = 0x18;
+  gps_command.code = GPS_CONSOLE_INIT;
   return;
 }
 
@@ -34522,7 +34541,7 @@ void diag_init_gps(void)
 void diag_clr_avg(void)
 
 {
-  gps_command.code = 0x17;
+  gps_command.code = GPS_CONSOLE_CLEAR_AVERAGE;
   return;
 }
 
@@ -34537,7 +34556,7 @@ void diag_stat_rate(int32_t param_1)
 
 {
   gps_command.arguments[0] = param_1;
-  gps_command.code = 2;
+  gps_command.code = GPS_CONSOLE_STATUS_RATE;
   return;
 }
 
@@ -34557,7 +34576,7 @@ void diag_vis_stat_rate(int32_t param_1)
   else {
     gps_command.arguments[0] = 1;
   }
-  gps_command.code = 0xd;
+  gps_command.code = GPS_CONSOLE_VISIBILITY_RATE;
   return;
 }
 
@@ -34572,7 +34591,7 @@ void diag_xdop_stat_rate(int32_t param_1)
 
 {
   gps_command.arguments[0] = param_1;
-  gps_command.code = 0xe;
+  gps_command.code = GPS_CONSOLE_DOP_RATE;
   return;
 }
 
@@ -34587,7 +34606,7 @@ void diag_ext_msg_rate(int32_t param_1)
 
 {
   gps_command.arguments[0] = param_1;
-  gps_command.code = 0x11;
+  gps_command.code = GPS_CONSOLE_EXTENSION_RATE;
   return;
 }
 
@@ -34604,7 +34623,7 @@ void diag_gps_time(int32_t param_1,int32_t param_2,int32_t param_3)
   gps_command.arguments[0] = param_1;
   gps_command.arguments[1] = param_2;
   gps_command.arguments[2] = param_3;
-  gps_command.code = 3;
+  gps_command.code = GPS_CONSOLE_TIME;
   return;
 }
 
@@ -34619,7 +34638,7 @@ void diag_eman(int32_t param_1)
 
 {
   gps_command.arguments[0] = param_1;
-  gps_command.code = 8;
+  gps_command.code = GPS_CONSOLE_MASK_ANGLE;
   return;
 }
 
@@ -34633,7 +34652,7 @@ void diag_eman(int32_t param_1)
 void diag_q_eman(void)
 
 {
-  gps_command.code = 9;
+  gps_command.code = GPS_CONSOLE_MASK_ANGLE_QUERY;
   return;
 }
 
@@ -34650,7 +34669,7 @@ void diag_gps_date(int32_t param_1,int32_t param_2,int32_t param_3)
   gps_command.arguments[0] = param_1;
   gps_command.arguments[1] = param_2;
   gps_command.arguments[2] = param_3;
-  gps_command.code = 4;
+  gps_command.code = GPS_CONSOLE_DATE;
   return;
 }
 
@@ -34668,7 +34687,7 @@ void diag_gps_php(int32_t param_1,int32_t param_2,int32_t param_3,int32_t param_
   gps_command.arguments[1] = param_2;
   gps_command.arguments[2] = param_3;
   gps_command.arguments[3] = param_4;
-  gps_command.code = 5;
+  gps_command.code = GPS_CONSOLE_HOLD_POSITION;
   return;
 }
 
@@ -34682,7 +34701,7 @@ void diag_gps_php(int32_t param_1,int32_t param_2,int32_t param_3,int32_t param_
 void diag_q_gps_php(void)
 
 {
-  gps_command.code = 10;
+  gps_command.code = GPS_CONSOLE_HOLD_POSITION_QUERY;
   return;
 }
 
@@ -34697,7 +34716,7 @@ void diag_gps_ph(int32_t param_1)
 
 {
   gps_command.arguments[0] = param_1;
-  gps_command.code = 6;
+  gps_command.code = GPS_CONSOLE_POSITION_HOLD;
   return;
 }
 
@@ -34715,17 +34734,17 @@ void diag_force_1pps(int32_t param_1)
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0001b6a4_index_zero)[(int16_t)(param_1 + -1)]) {
     case 6:
-      reference_valid_override_request = 0xff;
+      reference_valid_override_request = GPS_REFERENCE_OVERRIDE_INVALID;
       break;
     case 0xc:
       goto override_jmp_0001b6a4_case_1;
     case 0x10:
-      reference_valid_override_request = 1;
+      reference_valid_override_request = GPS_REFERENCE_OVERRIDE_VALID;
     }
   }
   else {
 override_jmp_0001b6a4_case_1:
-    reference_valid_override_request = 0;
+    reference_valid_override_request = GPS_REFERENCE_OVERRIDE_NONE;
   }
   return;
 }
@@ -34740,7 +34759,7 @@ override_jmp_0001b6a4_case_1:
 void diag_gps_cable_dly(int32_t param_1)
 
 {
-  gps_command.code = 0xb;
+  gps_command.code = GPS_CONSOLE_CABLE_DELAY;
   gps_command.arguments[0] = param_1;
   return;
 }
@@ -34755,7 +34774,7 @@ void diag_gps_cable_dly(int32_t param_1)
 void diag_q_gps_cable_dly(void)
 
 {
-  gps_command.code = 0xc;
+  gps_command.code = GPS_CONSOLE_CABLE_DELAY_QUERY;
   return;
 }
 
@@ -34770,7 +34789,7 @@ void diag_gps_change(int32_t param_1,int32_t param_2,int32_t param_3,int32_t par
                     )
 
 {
-  gps_command.code = 0x1f;
+  gps_command.code = GPS_CONSOLE_CHANGE;
   gps_command.request = param_1;
   gps_command.arguments[0] = param_2;
   gps_command.arguments[1] = param_3;
@@ -34789,7 +34808,7 @@ void diag_gps_change(int32_t param_1,int32_t param_2,int32_t param_3,int32_t par
 void diag_gps_query(int32_t param_1)
 
 {
-  gps_command.code = 0x20;
+  gps_command.code = GPS_CONSOLE_QUERY;
   gps_command.request = param_1;
   return;
 }
@@ -34804,7 +34823,7 @@ void diag_gps_query(int32_t param_1)
 void diag_pr_gps_id(void)
 
 {
-  gps_command.code = 0x13;
+  gps_command.code = GPS_CONSOLE_PRINT_ID;
   return;
 }
 
@@ -34818,7 +34837,7 @@ void diag_pr_gps_id(void)
 void diag_pr_1pps(void)
 
 {
-  gps_command.code = 0x14;
+  gps_command.code = GPS_CONSOLE_PRINT_PPS;
   return;
 }
 
@@ -34832,7 +34851,7 @@ void diag_pr_1pps(void)
 void diag_pr_time_raim(void)
 
 {
-  gps_command.code = 0x15;
+  gps_command.code = GPS_CONSOLE_PRINT_TIME_RAIM;
   return;
 }
 
@@ -35299,49 +35318,49 @@ void print_leap_check_state(void)
 /* the suffix naming the fine adjustment's sub-state
    ": fine start" .. ": fine fine slew", ": fine unknown" */
 
-void print_fine_state(uint8_t param_1,char *param_2)
+void print_fine_state(pll_fine_state fine_state,char *state)
 
 {
   char *s2;
   
-  if (param_1 < 10) {
+  if (fine_state < (PLL_FINE_SLEW_MEASURE|PLL_FINE_SYNC_1)) {
                     /* WARNING: Switch is manually overridden */
-    switch(param_1) {
-    case 0:
+    switch(fine_state) {
+    case PLL_FINE_START:
       s2 = ": fine start";
       break;
-    case 1:
+    case PLL_FINE_SYNC_MEASURE:
       s2 = ": fine sync meas";
       break;
-    case 2:
+    case PLL_FINE_SYNC_1:
       s2 = ": fine sync 1";
       break;
-    case 3:
+    case PLL_FINE_SYNC_2:
       s2 = ": fine sync 2";
       break;
-    case 4:
+    case PLL_FINE_MEASURE_1:
       s2 = ": fine meas 1";
       break;
-    case 5:
+    case PLL_FINE_MEASURE_DELAY:
       s2 = ": fine meas delay";
       break;
-    case 6:
+    case PLL_FINE_MEASURE_2:
       s2 = ": fine meas 2";
       break;
-    case 7:
+    case PLL_FINE_SLEW:
       s2 = ": fine slew";
       break;
-    case 8:
+    case PLL_FINE_SLEW_MEASURE:
       s2 = ": fine slew meas";
       break;
-    case 9:
+    case PLL_FINE_FINE_SLEW:
       s2 = ": fine fine slew";
     }
   }
   else {
     s2 = ": fine unknown";
   }
-  strcat(param_2,s2);
+  strcat(state,s2);
   return;
 }
 
@@ -60047,11 +60066,11 @@ void fpga_set_field(fpga_bit_index field,uint8_t value)
 /* the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2
    structures.md */
 
-void sync_request(uint8_t param_1,int32_t param_2)
+void sync_request(counter_sync_kind kind,int32_t count)
 
 {
-  counter_configuration.sync_kind = param_1;
-  counter_configuration.sync_count = param_2;
+  counter_configuration.sync_kind = kind;
+  counter_configuration.sync_count = count;
   counter_configuration.sync_mode = 2;
   counter_configuration.sync_state = 2;
   return;
@@ -62034,7 +62053,7 @@ LAB_00042fca:
   request.field_00 = 0;
   request.field_04 = 0;
   request.argument_mode = 0;
-  request.result = 1;
+  request.result = GPS_RESULT_REJECT;
   request.sender = sender;
   request.arguments = (int32_t *)pll_scpi_gps_arguments;
   error = psos_send_x(gpsx_exchange,&request);
@@ -63005,7 +63024,7 @@ override_jmp_00043ff8_case_0:
       }
     }
     else {
-      pll.fine_state = 0;
+      pll.fine_state = PLL_FINE_START;
       pll.recovery_state = PLL_RECOVERY_FINE;
     }
     goto LAB_0004411a;
@@ -63547,10 +63566,10 @@ uint8_t fine_sync_adjust(float param_1)
         quotient = float_divide(param_1,-1e-07);
         uVar3 = float_to_unsigned(quotient);
         uVar4 = (uint8_t)uVar3;
-        sync_request(2,uVar3 & 0xff);
+        sync_request(COUNTER_SYNC_NEGATIVE,uVar3 & 0xff);
       }
       else {
-        sync_request(2,1);
+        sync_request(COUNTER_SYNC_NEGATIVE,1);
         uVar4 = 4;
       }
     }
@@ -63561,10 +63580,10 @@ uint8_t fine_sync_adjust(float param_1)
       quotient = float_divide(param_1,1e-07);
       uVar3 = float_to_unsigned(quotient);
       uVar4 = (uint8_t)uVar3;
-      sync_request(1,uVar3 & 0xff);
+      sync_request(COUNTER_SYNC_POSITIVE,uVar3 & 0xff);
     }
     else {
-      sync_request(1,1);
+      sync_request(COUNTER_SYNC_POSITIVE,1);
       uVar4 = 4;
     }
   }
@@ -63592,7 +63611,7 @@ uint8_t sync_perform(float param_1)
       return 0;
     }
   }
-  sync_request(3,1);
+  sync_request(COUNTER_SYNC_FULL,1);
   pll.sync_requested = 0;
   if (pll_debug_enabled != 0) {
     task_dmessage("Peforming sync\r\n");
@@ -63640,7 +63659,7 @@ uint8_t interval_next_reading(interval_arm_mode arm_mode,float *reading)
     counter_calibrate(&interval_reading,&counter_configuration);
   }
   else if (arm_mode == INTERVAL_ARM_SYNC) {
-    sync_request(3,1);
+    sync_request(COUNTER_SYNC_FULL,1);
   }
   if ((gps_pps_dead == 0) && (internal_pps_dead == 0)) {
     interval_armed_without_pps = 0;
@@ -63669,7 +63688,7 @@ void interval_rearm(interval_arm_mode arm_mode)
     counter_calibrate(&interval_reading,&counter_configuration);
   }
   else if (arm_mode == INTERVAL_ARM_SYNC) {
-    sync_request(3,1);
+    sync_request(COUNTER_SYNC_FULL,1);
   }
   if ((gps_pps_dead == 0) && (internal_pps_dead == 0)) {
     interval_armed_without_pps = 0;
@@ -63841,15 +63860,15 @@ pll_stage_result fine(void)
   
   pVar6 = PLL_STAGE_RESULT_RUNNING;
   pVar5 = PLL_STAGE_RESULT_RUNNING;
-  if ((pll.sync_requested != 0) && (pll.fine_state != 9)) {
-    pll.fine_state = 1;
+  if ((pll.sync_requested != 0) && (pll.fine_state != PLL_FINE_FINE_SLEW)) {
+    pll.fine_state = PLL_FINE_SYNC_MEASURE;
   }
-  if (pll.fine_state < 10) {
+  if (pll.fine_state < (PLL_FINE_SLEW_MEASURE|PLL_FINE_SYNC_1)) {
                     /* WARNING: Switch is manually overridden */
     switch(pll.fine_state) {
-    case 0:
+    case PLL_FINE_START:
       goto switchD_000453f0_caseD_0;
-    case 1:
+    case PLL_FINE_SYNC_MEASURE:
       interval_wait_reading();
       if (interval_reading.valid == 0) {
         task_dmessage("fine-sync - Error with measurement\r\n");
@@ -63864,27 +63883,27 @@ pll_stage_result fine(void)
         fVar2 = double_to_float(interval_reading.value);
         synced = sync_perform(fVar2);
         if (synced == 0) {
-          pll.fine_state = 4;
+          pll.fine_state = PLL_FINE_MEASURE_1;
           pVar5 = pVar6;
         }
         else {
-          pll.fine_state = 2;
+          pll.fine_state = PLL_FINE_SYNC_1;
           pVar5 = pVar6;
         }
       }
       interval_rearm(INTERVAL_ARM_CALIBRATE);
       break;
-    case 2:
+    case PLL_FINE_SYNC_1:
       interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
-      pll.fine_state = 3;
+      pll.fine_state = PLL_FINE_SYNC_2;
       break;
-    case 3:
+    case PLL_FINE_SYNC_2:
       interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
-      pll.fine_state = 4;
+      pll.fine_state = PLL_FINE_MEASURE_1;
       break;
-    case 4:
+    case PLL_FINE_MEASURE_1:
       interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
-      pll.fine_state = 5;
+      pll.fine_state = PLL_FINE_MEASURE_DELAY;
       pll.fine_retries = 0;
       pll.fine_index = 1;
       fine_sum_i = 0.0;
@@ -63893,7 +63912,7 @@ pll_stage_result fine(void)
       fine_sum_i_ti = 0.0;
       fine_ti_max = 0.0;
       break;
-    case 5:
+    case PLL_FINE_MEASURE_DELAY:
       if (pll.fine_index < 0x33) {
         uVar3 = interval_next_reading(INTERVAL_ARM_CALIBRATE,&pll.fine_d);
         if (uVar3 == 0) {
@@ -63962,7 +63981,7 @@ pll_stage_result fine(void)
       }
       else {
         interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
-        pll.fine_state = 6;
+        pll.fine_state = PLL_FINE_MEASURE_2;
         pll.fine_index = 1;
         fVar2 = unsigned_to_float(1);
         fVar2 = float_multiply(fVar2,fine_y0);
@@ -63974,18 +63993,18 @@ pll_stage_result fine(void)
         iVar1 = float_compare(fVar2,3e-07);
         if (0 < iVar1) {
           task_dmessage("Bad TI in frequency measurement\r\n");
-          pll.fine_state = 4;
+          pll.fine_state = PLL_FINE_MEASURE_1;
           pll.fine_retries = pll.fine_retries + 1;
         }
       }
       break;
-    case 6:
+    case PLL_FINE_MEASURE_2:
       interval_wait_reading();
       if (interval_reading.valid == 0) {
         task_dmessage("fine - Error with measurement 2\r\n");
         pll.fine_retries = pll.fine_retries + 1;
         if (pll.fine_retries < 10) {
-          pll.fine_state = 4;
+          pll.fine_state = PLL_FINE_MEASURE_1;
           pVar5 = pVar6;
         }
         else {
@@ -64008,12 +64027,12 @@ LAB_00045812:
             pVar5 = PLL_STAGE_RESULT_DONE;
           }
           else if (pll.fine_index < 4) {
-            pll.fine_state = 9;
+            pll.fine_state = PLL_FINE_FINE_SLEW;
             pVar5 = pVar6;
           }
           else {
             pll.fine_retries = 0;
-            pll.fine_state = 7;
+            pll.fine_state = PLL_FINE_SLEW;
             pVar5 = pVar6;
           }
         }
@@ -64038,11 +64057,11 @@ LAB_00045812:
             fVar2 = double_to_float(interval_reading.value);
             synced = sync_perform(fVar2);
             if (synced == 0) {
-              pll.fine_state = 3;
+              pll.fine_state = PLL_FINE_SYNC_2;
               pVar5 = pVar6;
             }
             else {
-              pll.fine_state = 2;
+              pll.fine_state = PLL_FINE_SYNC_1;
               pVar5 = pVar6;
             }
           }
@@ -64065,12 +64084,12 @@ LAB_00045812:
       }
       interval_rearm(INTERVAL_ARM_PLAIN);
       break;
-    case 7:
+    case PLL_FINE_SLEW:
       interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
       pll.fine_retries = 0;
-      pll.fine_state = 8;
+      pll.fine_state = PLL_FINE_SLEW_MEASURE;
       break;
-    case 8:
+    case PLL_FINE_SLEW_MEASURE:
       interval_wait_reading();
       if (interval_reading.valid == 0) {
         task_dmessage("fine-slew - Error with measurement\r\n");
@@ -64087,18 +64106,18 @@ LAB_00045812:
           pVar5 = PLL_STAGE_RESULT_DONE;
         }
         else if (pll.fine_index < 4) {
-          pll.fine_state = 9;
+          pll.fine_state = PLL_FINE_FINE_SLEW;
           pVar5 = pVar6;
         }
         else {
           pll.fine_retries = 0;
-          pll.fine_state = 7;
+          pll.fine_state = PLL_FINE_SLEW;
           pVar5 = pVar6;
         }
       }
       interval_rearm(INTERVAL_ARM_CALIBRATE);
       break;
-    case 9:
+    case PLL_FINE_FINE_SLEW:
       interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       pll.fine_index = pll.fine_index - 1;
       if (pll.fine_index == 0) {
@@ -64107,11 +64126,11 @@ LAB_00045812:
     }
   }
   else {
-    pll.fine_state = 0;
+    pll.fine_state = PLL_FINE_START;
 switchD_000453f0_caseD_0:
     interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
     pll.fine_retries = 0;
-    pll.fine_state = 1;
+    pll.fine_state = PLL_FINE_SYNC_MEASURE;
   }
   if (pVar5 == PLL_STAGE_RESULT_FAILED) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_TI_ERROR;
@@ -64609,7 +64628,7 @@ pll_stage_result powerup(bool same_stage)
       if (pVar3 == PLL_STAGE_RESULT_DONE) {
         pll.tfom = 0.001;
         pll.powerup_state = PLL_POWERUP_FINE;
-        pll.fine_state = 0;
+        pll.fine_state = PLL_FINE_START;
       }
       else if (pVar3 == PLL_STAGE_RESULT_FAILED) {
         pVar6 = PLL_STAGE_RESULT_FAILED;
@@ -65151,7 +65170,7 @@ uint8_t gpsx_send(int16_t code,uint8_t argument_mode,int32_t *arguments,
     request.field_04 = 0;
     request.code = code;
     request.argument_mode = argument_mode;
-    request.result = 1;
+    request.result = GPS_RESULT_REJECT;
     request.sender = GPS_SENDER_SEQUENCE;
     request.arguments = (int32_t *)gpsx_arguments;
     error = psos_send_x(gpsx_exchange,&request);
@@ -65200,10 +65219,11 @@ void gps_selftest_run(void)
       psos_pause(0x400);
       watchdog_pll = watchdog_pll + 1;
     }
-    if ((cVar3 == 0) || ((reply.result != 0 && (reply.result != 8)))) {
+    if ((cVar3 == 0) ||
+       ((reply.result != GPS_RESULT_SUCCESS && (reply.result != GPS_RESULT_TIMEOUT)))) {
       selftest.gps = 0x4000;
     }
-    else if (reply.result == 0) {
+    else if (reply.result == GPS_RESULT_SUCCESS) {
       selftest.gps = gps.self_test;
     }
     else {
@@ -65228,10 +65248,11 @@ void gps_selftest_run(void)
         psos_pause(0x400);
         watchdog_pll = watchdog_pll + 1;
       }
-      if ((cVar3 == 0) || ((reply.result != 0 && (reply.result != 8)))) {
+      if ((cVar3 == 0) ||
+         ((reply.result != GPS_RESULT_SUCCESS && (reply.result != GPS_RESULT_TIMEOUT)))) {
         selftest.gps = 0x4000;
       }
-      else if (reply.result == 0) {
+      else if (reply.result == GPS_RESULT_SUCCESS) {
         selftest.gps = gps.self_test;
       }
       else {
@@ -65753,110 +65774,110 @@ void gps_command_send(void)
   
   bVar1 = true;
   argument_mode = 0;
-  if (0x20 < gps_command.code) goto switchD_000470d4_caseD_0;
+  if (GPS_CONSOLE_QUERY < gps_command.code) goto switchD_000470d4_caseD_0;
   code = (int16_t)gps_command.request;
                     /* WARNING: Switch is manually overridden */
   switch(gps_command.code) {
-  case 1:
+  case GPS_CONSOLE_PRINT_STATUS:
     code = 0x32;
     break;
-  case 2:
+  case GPS_CONSOLE_STATUS_RATE:
     code = 0x1e;
     break;
-  case 3:
+  case GPS_CONSOLE_TIME:
     code = 0;
     break;
-  case 4:
+  case GPS_CONSOLE_DATE:
     code = 2;
     break;
-  case 5:
+  case GPS_CONSOLE_HOLD_POSITION:
     code = 0x12;
     break;
-  case 6:
+  case GPS_CONSOLE_POSITION_HOLD:
     code = 0x13;
     break;
-  case 7:
+  case GPS_CONSOLE_STATUS_INTERVAL:
     gps_status_print_interval = (uint8_t)gps_command.arguments[0];
-  case 0:
+  case GPS_CONSOLE_NONE:
 switchD_000470d4_caseD_0:
     bVar1 = false;
     code = in_D1w;
     break;
-  case 8:
+  case GPS_CONSOLE_MASK_ANGLE:
     code = 6;
     break;
-  case 9:
+  case GPS_CONSOLE_MASK_ANGLE_QUERY:
     code = 6;
     argument_mode = 1;
     break;
-  case 10:
+  case GPS_CONSOLE_HOLD_POSITION_QUERY:
     code = 0x12;
     argument_mode = 1;
     break;
-  case 0xb:
+  case GPS_CONSOLE_CABLE_DELAY:
     code = 0x19;
     break;
-  case 0xc:
+  case GPS_CONSOLE_CABLE_DELAY_QUERY:
     code = 0x19;
     argument_mode = 1;
     break;
-  case 0xd:
+  case GPS_CONSOLE_VISIBILITY_RATE:
     code = 0x1f;
     break;
-  case 0xe:
+  case GPS_CONSOLE_DOP_RATE:
     code = 0x20;
     break;
-  case 0xf:
+  case GPS_CONSOLE_PRINT_VISIBILITY:
     code = 0x33;
     break;
-  case 0x10:
+  case GPS_CONSOLE_PRINT_BEST_COMBINATIONS:
     code = 0x35;
     break;
-  case 0x11:
+  case GPS_CONSOLE_EXTENSION_RATE:
     code = 0x27;
     break;
-  case 0x12:
+  case GPS_CONSOLE_PRINT_EXTENSION:
     code = 0x34;
     break;
-  case 0x13:
+  case GPS_CONSOLE_PRINT_ID:
     code = 0x36;
     break;
-  case 0x14:
+  case GPS_CONSOLE_PRINT_PPS:
     code = 0x37;
     break;
-  case 0x15:
+  case GPS_CONSOLE_PRINT_TIME_RAIM:
     code = 0x39;
     break;
-  case 0x16:
+  case GPS_CONSOLE_AVERAGE:
     code = 0x3c;
     break;
-  case 0x17:
+  case GPS_CONSOLE_CLEAR_AVERAGE:
     code = 0x3b;
     break;
-  case 0x18:
+  case GPS_CONSOLE_INIT:
     code = 0x48;
     break;
-  case 0x19:
+  case GPS_CONSOLE_MASTER_RESET:
     code = 0x47;
     break;
-  case 0x1a:
+  case GPS_CONSOLE_SELFTEST:
     code = 0x4a;
     break;
-  case 0x1b:
+  case GPS_CONSOLE_QUERY_ALL:
     code = 0x4d;
     break;
-  case 0x1c:
+  case GPS_CONSOLE_QUIET_STATUS:
     code = 0x4c;
     break;
-  case 0x1d:
+  case GPS_CONSOLE_PRINT_AVERAGE:
     code = 0x3a;
     break;
-  case 0x1e:
+  case GPS_CONSOLE_PRINT_INSTRUMENT_STATE:
     code = 0x38;
     break;
-  case 0x1f:
+  case GPS_CONSOLE_CHANGE:
     break;
-  case 0x20:
+  case GPS_CONSOLE_QUERY:
     argument_mode = 1;
   }
   if (bVar1) {
@@ -65866,7 +65887,7 @@ switchD_000470d4_caseD_0:
     local_8 = gps_command.arguments[3];
     gpsx_send(code,argument_mode,&local_14,GPS_ACK_COMMAND);
   }
-  gps_command.code = 0;
+  gps_command.code = GPS_CONSOLE_NONE;
   return;
 }
 
@@ -66331,7 +66352,7 @@ LAB_00047940:
     }
     error = psos_request_x(plla_exchange,&reply,1,0);
     if ((char)error == 0) {
-      if (reply.result != 0) {
+      if (reply.result != GPS_RESULT_SUCCESS) {
         plla_failed_count = plla_failed_count + 1;
       }
       if (reply.sender == GPS_SENDER_SEQUENCE) {
@@ -66353,7 +66374,7 @@ LAB_00047940:
         }
       }
       else if (reply.sender == GPS_SENDER_SETTING) {
-        pll_scpi_complete((int32_t *)&plla_unexpected_count,reply.result == 0);
+        pll_scpi_complete((int32_t *)&plla_unexpected_count,reply.result == GPS_RESULT_SUCCESS);
       }
       else {
         plla_unknown_count = plla_unknown_count + 1;
@@ -66389,7 +66410,7 @@ LAB_00047940:
       gps_leap_ack();
     }
     gps_leap_sequence();
-    if ((gps_command.code != 0) && (gps_ack_awaited == GPS_ACK_NONE)) {
+    if ((gps_command.code != GPS_CONSOLE_NONE) && (gps_ack_awaited == GPS_ACK_NONE)) {
       gps_command_send();
     }
     pll_scpi_receive();
@@ -67647,31 +67668,31 @@ int32_t satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask)
 
 /* a track record's class, 1 to 3 */
 
-uint8_t satellite_track_class(oncore_visible_satellite *satellite)
+satellite_health_class satellite_track_class(oncore_visible_satellite *satellite)
 
 {
   int32_t iVar1;
-  uint8_t uVar2;
+  satellite_health_class sVar2;
   
   if ((satellite == (oncore_visible_satellite *)0x0) ||
      (iVar1 = (int32_t)(char)satellite->health - 3, 2 < (uint32_t)(int32_t)(char)satellite->health && iVar1 != 0
      )) {
-    uVar2 = 0;
+    sVar2 = SATELLITE_CLASS_UNKNOWN;
   }
   else {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00049634_index_zero)[(int16_t)iVar1]) {
     case 8:
-      uVar2 = 1;
+      sVar2 = SATELLITE_CLASS_HEALTHY;
       break;
     case 0xc:
-      uVar2 = 3;
+      sVar2 = SATELLITE_CLASS_REMOVED;
       break;
     case 0x10:
-      uVar2 = 2;
+      sVar2 = SATELLITE_CLASS_UNHEALTHY;
     }
   }
-  return uVar2;
+  return sVar2;
 }
 
 #endif
@@ -67712,7 +67733,7 @@ void satellite_status(char param_1,uint8_t param_2,int32_t param_3,int32_t param
 {
   int32_t iVar1;
   oncore_visible_satellite *satellite;
-  uint8_t class;
+  satellite_health_class class;
   
   iVar1 = satellite_id_valid(SATELLITE_ANY,param_2);
   if ((char)iVar1 == 0) {
@@ -67727,11 +67748,11 @@ void satellite_status(char param_1,uint8_t param_2,int32_t param_3,int32_t param
   }
   if (param_1 != 1) {
     class = satellite_track_class(satellite);
-    if (class == 3) {
+    if (class == SATELLITE_CLASS_REMOVED) {
       *param_5 = 3;
       return;
     }
-    if (class == 2) {
+    if (class == SATELLITE_CLASS_UNHEALTHY) {
       *param_5 = 4;
       return;
     }
@@ -67988,19 +68009,19 @@ void format_level(int16_t param_1,char *param_2)
 
 /* a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq" */
 
-void format_satellite_cell(char param_1,uint8_t param_2,uint16_t param_3,char *param_4)
+void format_satellite_cell(satellite_cell cell,char *text)
 
 {
   char cVar1;
   int32_t iVar2;
   char *pcVar3;
   
-  if (param_1 == 1) {
-    sprintf(param_4,"%2d %3d",(uint32_t)param_2,(uint32_t)param_3);
+  if (cell.status == SATELLITE_CELL_POSITION) {
+    sprintf(text,"%2d %3d",(uint32_t)__ghidra_aggregate_bits(cell) >> 0x10 & 0xff,(uint32_t)__ghidra_aggregate_bits(cell) & 0xffff);
     return;
   }
-  iVar2 = (int32_t)param_1 - 7;
-  if ((uint32_t)(int32_t)param_1 < 7 || iVar2 == 0) {
+  iVar2 = (int32_t)(char)cell.status - 7;
+  if ((uint32_t)(int32_t)(char)cell.status < 7 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00049ab0_index_zero)[(int16_t)iVar2]) {
     case 0x10:
@@ -68030,9 +68051,9 @@ override_jmp_00049ab0_case_0:
   }
   do {
     cVar1 = *pcVar3;
-    *param_4 = cVar1;
+    *text = cVar1;
     pcVar3 = pcVar3 + 1;
-    param_4 = param_4 + 1;
+    text = text + 1;
   } while (cVar1 != 0);
   return;
 }
@@ -68246,37 +68267,37 @@ void status_screen_sync(status_snapshot_record *snapshot,char *line)
   char cVar1;
   char *pcVar2;
   
-  if (snapshot->status_code < 10) {
+  if (snapshot->status_code < (GPS_SYNC_ASSESSING_77|GPS_SYNC_NOT_TRACKING)) {
                     /* WARNING: Switch is manually overridden */
     switch(snapshot->status_code) {
-    case 0:
+    case GPS_SYNC_RECEIVER_ERROR:
       pcVar2 = "Invalid: GPS rcvr err";
       break;
-    case 1:
+    case GPS_SYNC_ABSENT:
       pcVar2 = "Absent or freq error";
       break;
-    case 2:
+    case GPS_SYNC_NOT_TRACKING:
       pcVar2 = "Invalid: not tracking";
       break;
-    case 3:
+    case GPS_SYNC_INACCURATE_POSITION:
       pcVar2 = "Invalid: inacc position";
       break;
-    case 4:
+    case GPS_SYNC_RAIM_ERROR:
       pcVar2 = "Invalid: Time RAIM error";
       break;
-    case 5:
+    case GPS_SYNC_ASSESSING:
       pcVar2 = "Assessing stability";
       break;
-    case 6:
+    case GPS_SYNC_ASSESSING_27:
       pcVar2 = "Assessing stability .";
       break;
-    case 7:
+    case GPS_SYNC_ASSESSING_53:
       pcVar2 = "Assessing stability ..";
       break;
-    case 8:
+    case GPS_SYNC_ASSESSING_77:
       pcVar2 = "Assessing stability ...";
       break;
-    case 9:
+    case GPS_SYNC_SYNCHRONIZED:
       if (snapshot->utc_time == 1) {
         pcVar2 = "Synchronized to UTC";
       }
@@ -68528,7 +68549,10 @@ void status_screen_position(uint8_t row,status_snapshot_record *snapshot,char *l
           if (count < 4) {
             unaff_D4 = "track <4 sats";
           }
-          else if ((snapshot->receiver_status & 0x20) == 0) {
+          else if ((snapshot->receiver_status & ONCORE_STATUS_3D_FIX) ==
+                   ~(ONCORE_STATUS_PROPAGATE|ONCORE_STATUS_POOR_GEOMETRY|ONCORE_STATUS_3D_FIX|
+                     ONCORE_STATUS_2D_FIX|ONCORE_STATUS_ACQUIRING|ONCORE_STATUS_DIFFERENTIAL|
+                     ONCORE_STATUS_INSUFFICIENT_SATELLITES|ONCORE_STATUS_BAD_ALMANAC)) {
             unaff_D4 = "poor geometry";
           }
           else {
@@ -68980,10 +69004,10 @@ void status_snapshot(status_snapshot_record *snapshot)
   satellite_sets_build(gps.status.channels,&snapshot->satellites);
   satellite_status_list
             (0,0xc,(int32_t)&snapshot->satellites,&gps.status.channels[0].satellite,0x100d7a,
-             snapshot->gps_satellites[0],(char *)&snapshot->gps_satellite_count);
+             &snapshot->not_tracked[0].satellite,(char *)&snapshot->not_tracked_count);
   satellite_status_list
             (1,6,(int32_t)&snapshot->satellites,&gps.status.channels[0].satellite,0x100d7a,
-             snapshot->pseudolites[0],(char *)&snapshot->pseudolite_count);
+             &snapshot->tracked[0].satellite,(char *)&snapshot->tracked_count);
   snapshot->status_received = gps.status_received;
   if (snapshot->position_hold == 0) {
     if ((snapshot->average_count == 0) || (snapshot->douglas_duration_infinite == 1)) {
@@ -69028,27 +69052,26 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
                   printf_function *print)
 
 {
-  uint32_t uVar1;
-  int32_t iVar2;
-  uint32_t uVar3;
-  char *pcVar4;
+  int32_t iVar1;
+  uint32_t uVar2;
+  char *pcVar3;
   uint8_t marked;
-  uint8_t bVar6;
-  uint8_t uVar7;
-  char cVar8;
+  uint8_t bVar5;
+  uint8_t uVar6;
+  char cVar7;
   uint32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
-  uint8_t (*pauVar9) [8];
+  status_screen_line sVar8;
+  satellite_list_entry *psVar9;
   uint8_t **ppuVar10;
   char *pcVar11;
   char *pcVar12;
   double dVar13;
-  uint8_t digits;
   uint8_t uVar14;
   uint16_t uVar15;
   uint8_t uVar16;
   uint8_t uVar17;
   uint8_t local_c0;
-  uint8_t (*local_b2) [8];
+  satellite_list_entry *local_b2;
   uint8_t local_ae;
   char acStack_ad [5];
   char acStack_a8 [4];
@@ -69071,10 +69094,10 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
   (*write)("------------------------------- Receiver Status -------------------------------\r\n");
   (*write)(" \r\n");
   (*write)("SYNCHRONIZATION ............................");
-  iVar2 = (char)snapshot->stage + -9;
-  if ((int32_t)(char)snapshot->stage - 1U < 8U || iVar2 == 0) {
+  iVar1 = (char)snapshot->stage + -9;
+  if ((int32_t)(char)snapshot->stage - 1U < 8U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_0004a96c_index_zero)[(int16_t)iVar2]) {
+    switch((&switchD_0004a96c_index_zero)[(int16_t)iVar1]) {
     case 0x12:
       local_7f = 0;
       pcVar11 = "............... [ Outputs Invalid ]";
@@ -69094,21 +69117,21 @@ override_jmp_0004a96c_case_1:
   }
   (*print)("%s\r\n",pcVar11);
   (*write)("SmartClock Mode ___________________________   Reference Outputs _______________\r\n");
-  iVar2 = (int32_t)(char)snapshot->mode - 5;
-  if ((uint32_t)(int32_t)(char)snapshot->mode < 5 || iVar2 == 0) {
+  iVar1 = (int32_t)(char)snapshot->mode - 5;
+  if ((uint32_t)(int32_t)(char)snapshot->mode < 5 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_0004a9d0_index_zero)[(int16_t)iVar2]) {
+    switch((&switchD_0004a9d0_index_zero)[(int16_t)iVar1]) {
     case 0xc:
-      uVar7 = 0;
+      sVar8 = STATUS_SCREEN_LINE_POWERUP;
       break;
     case 0x10:
-      uVar7 = 1;
+      sVar8 = STATUS_SCREEN_LINE_HOLDOVER;
       break;
     case 0x14:
-      uVar7 = 2;
+      sVar8 = STATUS_SCREEN_LINE_RECOVERY;
       break;
     case 0x18:
-      uVar7 = 3;
+      sVar8 = STATUS_SCREEN_LINE_LOCKED;
       break;
     case 0x1c:
       goto override_jmp_0004a9d0_case_0;
@@ -69116,93 +69139,93 @@ override_jmp_0004a96c_case_1:
   }
   else {
 override_jmp_0004a9d0_case_0:
-    uVar7 = 4;
+    sVar8 = STATUS_SCREEN_LINE_NONE;
   }
   local_ae = 1;
   for (local_84 = status_screen_mode_lines; local_84->text != (char *)0x0; local_84 = local_84 + 1)
   {
-    if (uVar7 != local_84->mode) {
+    if (sVar8 != local_84->mode) {
       pcVar11 = "   ";
       goto LAB_0004ab0e;
     }
     pcVar11 = ">> ";
-    if (uVar7 == 3) {
+    if (sVar8 == STATUS_SCREEN_LINE_LOCKED) {
       if (snapshot->pll_field_3d5 == 0) {
-        pcVar4 = "GPS";
+        pcVar3 = "GPS";
       }
       else {
-        pcVar4 = "Ext";
+        pcVar3 = "Ext";
       }
       pcVar12 = acStack_2d;
       do {
-        cVar8 = *pcVar4;
-        *pcVar12 = cVar8;
-        pcVar4 = pcVar4 + 1;
+        cVar7 = *pcVar3;
+        *pcVar12 = cVar7;
+        pcVar3 = pcVar3 + 1;
         pcVar12 = pcVar12 + 1;
-      } while (cVar8 != 0);
+      } while (cVar7 != 0);
       if (local_7f == 0) {
-        pcVar4 = ": stabilizing frequency";
+        pcVar3 = ": stabilizing frequency";
       }
       else {
-        pcVar4 = "";
+        pcVar3 = "";
       }
-      strcat(acStack_2d,pcVar4);
-      pcVar4 = acStack_2d;
+      strcat(acStack_2d,pcVar3);
+      pcVar3 = acStack_2d;
       goto LAB_0004ab10;
     }
-    if (uVar7 == 2) {
+    if (sVar8 == STATUS_SCREEN_LINE_RECOVERY) {
 LAB_0004aa66:
-      status_screen_mode_suffix(uVar7,snapshot,acStack_2d);
-      pcVar4 = acStack_2d;
+      status_screen_mode_suffix(sVar8,snapshot,acStack_2d);
+      pcVar3 = acStack_2d;
     }
     else {
-      if (uVar7 != 1) {
-        if (uVar7 != 0) goto LAB_0004ab0e;
+      if (sVar8 != STATUS_SCREEN_LINE_HOLDOVER) {
+        if (sVar8 != STATUS_SCREEN_LINE_POWERUP) goto LAB_0004ab0e;
         goto LAB_0004aa66;
       }
       if (snapshot->mode == 1) {
 override_jmp_0004aaaa_case_0:
-        pcVar4 = ": manually initiated";
+        pcVar3 = ": manually initiated";
         goto LAB_0004ab10;
       }
-      uVar3 = snapshot->holdover_waiting_reason - 1;
-      if (uVar3 < 0x10) {
+      uVar2 = snapshot->holdover_waiting_reason - 1;
+      if (uVar2 < 0x10) {
                     /* WARNING: Switch is manually overridden */
-        switch((int16_t)uVar3) {
+        switch((int16_t)uVar2) {
         case 0:
           goto override_jmp_0004aaaa_case_0;
         case 1:
           if (snapshot->pll_field_3d5 == 0) {
-            pcVar4 = ": GPS 1PPS CLK invalid";
+            pcVar3 = ": GPS 1PPS CLK invalid";
           }
           else {
-            pcVar4 = ": EXT 1PPS CLK invalid";
+            pcVar3 = ": EXT 1PPS CLK invalid";
           }
           break;
         default:
           goto LAB_0004ab0e;
         case 3: case 0xf:
-          pcVar4 = ": internal hardware problem";
+          pcVar3 = ": internal hardware problem";
           break;
         case 7:
-          pcVar4 = ": 1PPS TI exceeds hold threshold";
+          pcVar3 = ": 1PPS TI exceeds hold threshold";
         }
       }
       else {
 LAB_0004ab0e:
-        pcVar4 = "";
+        pcVar3 = "";
       }
     }
 LAB_0004ab10:
     pcVar12 = line;
     do {
-      cVar8 = *pcVar11;
-      *pcVar12 = cVar8;
+      cVar7 = *pcVar11;
+      *pcVar12 = cVar7;
       pcVar11 = pcVar11 + 1;
       pcVar12 = pcVar12 + 1;
-    } while (cVar8 != 0);
+    } while (cVar7 != 0);
     strcat(line,local_84->text);
-    strcat(line,pcVar4);
+    strcat(line,pcVar3);
     (*print)("%-46.46s",line);
     status_screen_tfom(local_ae,snapshot,line);
     (*print)("%s\r\n",line);
@@ -69210,35 +69233,35 @@ LAB_0004ab10:
   }
   if (snapshot->kenneth_predicted_valid == 0) {
     pcVar11 = " --";
-    pcVar4 = acStack_2d;
+    pcVar3 = acStack_2d;
     do {
-      cVar8 = *pcVar11;
-      *pcVar4 = cVar8;
+      cVar7 = *pcVar11;
+      *pcVar3 = cVar7;
       pcVar11 = pcVar11 + 1;
-      pcVar4 = pcVar4 + 1;
-    } while (cVar8 != 0);
+      pcVar3 = pcVar3 + 1;
+    } while (cVar7 != 0);
   }
   else {
     pcVar11 = acStack_2d;
     uVar15 = 4;
     uVar16 = 0xe1;
     uVar17 = 0xe4;
-    digits = 4;
-    uVar14 = snapshot->field_031;
+    uVar14 = 4;
+    uVar6 = snapshot->field_031;
     dVar13 = float_to_double(snapshot->kenneth_predicted);
-    format_si(dVar13,uVar14,digits,(char *)CONCAT31(CONCAT21(uVar15,uVar16),uVar17),pcVar11);
+    format_si(dVar13,uVar6,uVar14,(char *)CONCAT31(CONCAT21(uVar15,uVar16),uVar17),pcVar11);
     strcat(acStack_2d,"/initial 24 hrs");
   }
   (*print)("%43s   Predict  %s\r\n","",acStack_2d + 1);
-  if ((uVar7 == 1) || (uVar7 == 2)) {
+  if ((sVar8 == STATUS_SCREEN_LINE_HOLDOVER) || (sVar8 == STATUS_SCREEN_LINE_RECOVERY)) {
     pcVar11 = "Holdover Duration:";
-    pcVar4 = line;
+    pcVar3 = line;
     do {
-      cVar8 = *pcVar11;
-      *pcVar4 = cVar8;
+      cVar7 = *pcVar11;
+      *pcVar3 = cVar7;
       pcVar11 = pcVar11 + 1;
-      pcVar4 = pcVar4 + 1;
-    } while (cVar8 != 0);
+      pcVar3 = pcVar3 + 1;
+    } while (cVar7 != 0);
     format_duration_short(snapshot->holdover_duration,acStack_2d);
     strcat(line,acStack_2d);
   }
@@ -69249,13 +69272,13 @@ LAB_0004ab10:
   if (snapshot->kenneth_present_valid == 0) {
     pcVar12 = "";
     pcVar11 = " ";
-    pcVar4 = acStack_2d;
+    pcVar3 = acStack_2d;
     do {
-      cVar8 = *pcVar11;
-      *pcVar4 = cVar8;
+      cVar7 = *pcVar11;
+      *pcVar3 = cVar7;
       pcVar11 = pcVar11 + 1;
-      pcVar4 = pcVar4 + 1;
-    } while (cVar8 != 0);
+      pcVar3 = pcVar3 + 1;
+    } while (cVar7 != 0);
   }
   else {
     pcVar12 = "Present";
@@ -69264,9 +69287,9 @@ LAB_0004ab10:
     uVar16 = 0xe1;
     uVar17 = 0xe4;
     uVar14 = 4;
-    uVar7 = snapshot->field_02b;
+    uVar6 = snapshot->field_02b;
     dVar13 = float_to_double(snapshot->kenneth_present);
-    format_si(dVar13,uVar7,uVar14,(char *)CONCAT31(CONCAT21(uVar15,uVar16),uVar17),pcVar11);
+    format_si(dVar13,uVar6,uVar14,(char *)CONCAT31(CONCAT21(uVar15,uVar16),uVar17),pcVar11);
   }
   (*print)("%43s   %s  %s\r\n",line,pcVar12,acStack_2d + 1);
   (*write)("ACQUISITION ..........................................");
@@ -69285,10 +69308,10 @@ LAB_0004ab10:
     pcVar11 = ".. [ EXT 1PPS CLK Valid ]";
   }
   (*print)("%s\r\n",pcVar11);
-  iVar2 = (int32_t)(char)snapshot->leap_second_pending - 2;
-  if ((uint32_t)(int32_t)(char)snapshot->leap_second_pending < 2 || iVar2 == 0) {
+  iVar1 = (int32_t)(char)snapshot->leap_second_pending - 2;
+  if ((uint32_t)(int32_t)(char)snapshot->leap_second_pending < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_0004acdc_index_zero)[(int16_t)iVar2]) {
+    switch((&switchD_0004acdc_index_zero)[(int16_t)iVar1]) {
     case 6:
       goto override_jmp_0004acdc_case_0;
     case 0xe:
@@ -69304,29 +69327,29 @@ override_jmp_0004acdc_case_0:
   }
   (*write)("Satellite Status __________________________   ");
   (*print)("Time _____%s\r\n",pcVar11);
-  (*print)("Tracking: %d        Not Tracking: %-2d%11s",(uint32_t)snapshot->pseudolite_count,
-           (uint32_t)snapshot->gps_satellite_count,"");
+  (*print)("Tracking: %d        Not Tracking: %-2d%11s",(uint32_t)snapshot->tracked_count,
+           (uint32_t)snapshot->not_tracked_count,"");
   status_screen_time(snapshot,line);
   (*print)("%s\r\n",line);
-  if (snapshot->pseudolite_count == 0) {
+  if (snapshot->tracked_count == 0) {
     pcVar11 = "";
   }
   else {
     pcVar11 = "PRN  El  Az   SS";
   }
-  if (snapshot->gps_satellite_count == 0) {
-    pcVar4 = "";
+  if (snapshot->not_tracked_count == 0) {
+    pcVar3 = "";
   }
   else {
-    pcVar4 = "PRN  El  Az";
+    pcVar3 = "PRN  El  Az";
   }
-  if (snapshot->gps_satellite_count < 7) {
+  if (snapshot->not_tracked_count < 7) {
     pcVar12 = "";
   }
   else {
     pcVar12 = "PRN  El  Az";
   }
-  (*print)("%-16.16s   %-11.11s  %-11.11s%3s",pcVar11,pcVar4,pcVar12,"");
+  (*print)("%-16.16s   %-11.11s  %-11.11s%3s",pcVar11,pcVar3,pcVar12,"");
   if (snapshot->pll_field_3d5 == 0) {
     pcVar11 = "1PPS CLK";
   }
@@ -69335,32 +69358,26 @@ override_jmp_0004acdc_case_0:
   }
   status_screen_sync(snapshot,acStack_2d);
   (*print)("%s %s\r\n",pcVar11,acStack_2d);
-  local_b2 = snapshot->pseudolites;
-  pauVar9 = snapshot->gps_satellites;
+  local_b2 = snapshot->tracked;
+  psVar9 = snapshot->not_tracked;
   local_ae = 0;
   local_c0 = 0;
   while (local_ae = local_ae + 1, local_ae < 7) {
-    format_satellite_number((*local_b2)[0],acStack_ad);
-    format_level(*(int16_t *)(*local_b2 + 2),acStack_a8);
-    uVar1 = *(uint32_t *)(*local_b2 + 4);
-    format_satellite_cell
-              ((char)((uint32_t)uVar1 >> 0x18),(uint8_t)((uint32_t)uVar1 >> 0x10),(uint16_t)uVar1,acStack_a4);
-    format_satellite_number((*pauVar9)[0],acStack_9d);
-    marked = mark_flag((*pauVar9)[1],acStack_9d);
-    uVar1 = *(uint32_t *)(*pauVar9 + 4);
-    format_satellite_cell
-              ((char)((uint32_t)uVar1 >> 0x18),(uint8_t)((uint32_t)uVar1 >> 0x10),(uint16_t)uVar1,acStack_98);
-    format_satellite_number(pauVar9[6][0],acStack_91);
-    bVar6 = mark_flag(pauVar9[6][1],acStack_91);
-    local_c0 = bVar6 | marked | local_c0;
-    uVar1 = *(uint32_t *)(pauVar9[6] + 4);
-    format_satellite_cell
-              ((char)((uint32_t)uVar1 >> 0x18),(uint8_t)((uint32_t)uVar1 >> 0x10),(uint16_t)uVar1,acStack_8c);
+    format_satellite_number(local_b2->satellite,acStack_ad);
+    format_level(local_b2->level,acStack_a8);
+    format_satellite_cell(local_b2->cell,acStack_a4);
+    format_satellite_number(psVar9->satellite,acStack_9d);
+    marked = mark_flag(psVar9->attempting,acStack_9d);
+    format_satellite_cell(psVar9->cell,acStack_98);
+    format_satellite_number(psVar9[6].satellite,acStack_91);
+    bVar5 = mark_flag(psVar9[6].attempting,acStack_91);
+    local_c0 = bVar5 | marked | local_c0;
+    format_satellite_cell(psVar9[6].cell,acStack_8c);
     status_screen_position(local_ae,snapshot,line);
     (*print)("%3.3s  %6.6s  %3.3s   %3.3s  %6.6s  %3.3s  %6.6s%3s%s\r\n",acStack_ad,acStack_a4,
              acStack_a8,acStack_9d,acStack_98,acStack_91,acStack_8c,"",line);
     local_b2 = local_b2 + 1;
-    pauVar9 = pauVar9 + 1;
+    psVar9 = psVar9 + 1;
   }
   if (local_c0 == 0) {
     pcVar11 = "";
@@ -69375,8 +69392,8 @@ override_jmp_0004acdc_case_0:
   local_80 = 0;
   for (ppuVar10 = &PTR_s_Self_Test_0004d076; *ppuVar10 != (uint8_t *)0x0;
       ppuVar10 = (uint8_t **)((int32_t)ppuVar10 + 0xe)) {
-    uVar7 = (*(code *)ppuVar10[1])(*(uint16_t *)(ppuVar10 + 2),(uint16_t)unaff_D2);
-    if (uVar7 == 0) {
+    uVar6 = (*(code *)ppuVar10[1])(*(uint16_t *)(ppuVar10 + 2),(uint16_t)unaff_D2);
+    if (uVar6 == 0) {
       pcVar11 = "OK";
     }
     else {
@@ -69386,8 +69403,8 @@ override_jmp_0004acdc_case_0:
     sprintf(acStack_2d,"%s: %-3s%s",*ppuVar10,pcVar11,*(char **)((int32_t)ppuVar10 + 10));
     strcat(line,acStack_2d);
   }
-  cVar8 = gps_message_supported(0x28,&raim_option);
-  if ((cVar8 == 0) || (raim_option == 0)) {
+  cVar7 = gps_message_supported(0x28,&raim_option);
+  if ((cVar7 == 0) || (raim_option == 0)) {
     line[0xf] = '|';
   }
   (*write)("HEALTH MONITOR ......................................................");
@@ -69461,7 +69478,7 @@ uint32_t raim_monitor(void)
   if (((char)uVar1 == 0) ||
      (uVar1 = (int32_t)(char)gps.raim_assessment - 3,
      2 < (uint32_t)(int32_t)(char)gps.raim_assessment && uVar1 != 0)) {
-    gps.raim_assessment = 0;
+    gps.raim_assessment = GPS_RAIM_INACTIVE;
   }
   else {
     sVar2 = (int16_t)uVar1;
@@ -69470,7 +69487,7 @@ uint32_t raim_monitor(void)
     switch((&switchD_0004b082_index_zero)[sVar2]) {
     case 8:
       if (gps.raim.solution_status != ONCORE_RAIM_OK) {
-        gps.raim_assessment = 2;
+        gps.raim_assessment = GPS_RAIM_ALARM_DETECTED;
         raim_suspect_time = get_uptime();
         gps_counts.raim_detected = gps_counts.raim_detected + 1;
         return raim_suspect_time;
@@ -69480,7 +69497,7 @@ uint32_t raim_monitor(void)
       if (gps.raim.solution_status != ONCORE_RAIM_ALARM) {
         return uVar1;
       }
-      gps.raim_assessment = 2;
+      gps.raim_assessment = GPS_RAIM_ALARM_DETECTED;
       raim_suspect_time = get_uptime();
       gps_counts.raim_detected = gps_counts.raim_detected + 1;
       return raim_suspect_time;
@@ -69494,7 +69511,7 @@ uint32_t raim_monitor(void)
         if (uStack_8 < 4) {
           return uStack_8 - 4;
         }
-        gps.raim_assessment = 3;
+        gps.raim_assessment = GPS_RAIM_ALARM;
         gps_counts.raim_alarms = gps_counts.raim_alarms + 1;
         return uStack_8 - 4;
       }
@@ -69504,7 +69521,7 @@ uint32_t raim_monitor(void)
         return uVar1;
       }
     }
-    gps.raim_assessment = 1;
+    gps.raim_assessment = GPS_RAIM_OK;
   }
   return uVar1;
 }
@@ -69520,8 +69537,8 @@ void gps_receiver_status_reset(void)
 {
   uint16_t sr;
   
-  gps.status_code = 2;
-  gps.status_code_reset = 2;
+  gps.status_code = GPS_SYNC_NOT_TRACKING;
+  gps.status_code_reset = GPS_SYNC_NOT_TRACKING;
   sr = set_interrupt_mask(0x100);
   gps.reference_qualified = 0;
   gps.status_reported = gps.status_code_reset;
@@ -69578,35 +69595,35 @@ void gps_receiver_status_update(char param_1,uint8_t param_2)
     gps.pps_dead = 0;
   }
   uVar5 = 0;
-  if ((((bVar2) || (!bVar7)) || (!bVar1)) || (gps.raim_assessment == 3)) {
+  if ((((bVar2) || (!bVar7)) || (!bVar1)) || (gps.raim_assessment == GPS_RAIM_ALARM)) {
     if (gps.status_monitor_failed != 0) {
-      gps.status_code = 0;
+      gps.status_code = GPS_SYNC_RECEIVER_ERROR;
       goto LAB_0004b3a2;
     }
     if ((bVar7) && (gps.status_received != 0)) {
       if (bVar1) {
-        gps.status_code = 4;
+        gps.status_code = GPS_SYNC_RAIM_ERROR;
       }
       else {
-        gps.status_code = 3;
+        gps.status_code = GPS_SYNC_INACCURATE_POSITION;
       }
       goto LAB_0004b3a2;
     }
   }
-  else if (gps.status_code < 10) {
+  else if (gps.status_code < (GPS_SYNC_ASSESSING_77|GPS_SYNC_NOT_TRACKING)) {
                     /* WARNING: Switch is manually overridden */
     switch(gps.status_code) {
     default:
       gps.validation_start = get_uptime();
-      gps.status_code = 5;
+      gps.status_code = GPS_SYNC_ASSESSING;
       break;
-    case 5:
-    case 6:
-    case 7:
-    case 8:
+    case GPS_SYNC_ASSESSING:
+    case GPS_SYNC_ASSESSING_27:
+    case GPS_SYNC_ASSESSING_53:
+    case GPS_SYNC_ASSESSING_77:
       cVar4 = uptime_elapsed(&gps.validation_start,(int32_t *)&local_a);
       if (cVar4 == 0) {
-        gps.status_code = 5;
+        gps.status_code = GPS_SYNC_ASSESSING;
       }
       else if (local_a < 0x1e) {
         dVar8 = unsigned_to_double(0x1e);
@@ -69621,45 +69638,45 @@ void gps_receiver_status_update(char param_1,uint8_t param_2)
             dVar8 = double_multiply(dVar8,0.27);
             uVar3 = double_to_unsigned(dVar8);
             if (uVar3 <= local_a) {
-              gps.status_code = 6;
+              gps.status_code = GPS_SYNC_ASSESSING_27;
             }
           }
           else {
-            gps.status_code = 7;
+            gps.status_code = GPS_SYNC_ASSESSING_53;
           }
         }
         else {
-          gps.status_code = 8;
+          gps.status_code = GPS_SYNC_ASSESSING_77;
         }
       }
       else {
         uVar5 = 1;
-        gps.status_code = 9;
+        gps.status_code = GPS_SYNC_SYNCHRONIZED;
       }
       break;
-    case 9:
+    case GPS_SYNC_SYNCHRONIZED:
       uVar5 = 1;
     }
     goto LAB_0004b3a2;
   }
-  gps.status_code = 2;
+  gps.status_code = GPS_SYNC_NOT_TRACKING;
 LAB_0004b3a2:
   gps.reference_valid_override = reference_valid_override_request;
-  if (reference_valid_override_request == 1) {
+  if (reference_valid_override_request == GPS_REFERENCE_OVERRIDE_VALID) {
     uVar5 = 1;
   }
-  else if (reference_valid_override_request == 0xff) {
+  else if (reference_valid_override_request == GPS_REFERENCE_OVERRIDE_INVALID) {
     uVar5 = 0;
   }
   local_6 = set_interrupt_mask(0x100);
-  if (((gps.status_code != 5) && (gps.status_code != 6)) &&
-     ((gps.status_code != 7 && (gps.status_code != 8)))) {
+  if (((gps.status_code != GPS_SYNC_ASSESSING) && (gps.status_code != GPS_SYNC_ASSESSING_27)) &&
+     ((gps.status_code != GPS_SYNC_ASSESSING_53 && (gps.status_code != GPS_SYNC_ASSESSING_77)))) {
     gps.status_reported = gps.status_code;
   }
   gps.reference_valid = uVar5;
   if (gps.pps_dead != 0) {
     gps.reference_valid = 0;
-    gps.status_code = 1;
+    gps.status_code = GPS_SYNC_ABSENT;
   }
   gps.reference_qualified = uVar5;
   set_interrupt_mask(local_6);
@@ -69691,7 +69708,7 @@ void command_monitor_init(void)
 
 {
   gps.command_monitor_state = 0;
-  gps.status_monitor_state = 0;
+  gps.status_monitor_state = GPS_STATUS_MONITOR_DISABLED;
   gps.receiver_health_failed = 0;
   gps.command_monitor_failed = 0;
   gps.status_monitor_failed = 0;
@@ -69758,14 +69775,14 @@ LAB_0004b4d2:
       }
       break;
     case 0xa4:
-      if (command_monitor_result == 9) {
+      if (command_monitor_result == GPS_RESULT_PENDING) {
         if (gps.command_monitor_error == 0) {
           gps.command_monitor_failed = 0;
         }
       }
       else {
-        iVar1 = (int32_t)command_monitor_result - 8;
-        if ((uint32_t)(int32_t)command_monitor_result < 8 || iVar1 == 0) {
+        iVar1 = (int32_t)(char)command_monitor_result - 8;
+        if ((uint32_t)(int32_t)(char)command_monitor_result < 8 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
           switch((&switchD_0004b578_index_zero)[(int16_t)iVar1]) {
           case 0x12:
@@ -69848,15 +69865,15 @@ LAB_0004b4d2:
             gps.raim_received = 0;
           }
           gps_request_post(GPS_SENDER_STATUS_MONITOR,0x4b,(int32_t *)0x0,1);
-          gps.status_monitor_state = 2;
+          gps.status_monitor_state = GPS_STATUS_MONITOR_RECOVERY;
         }
       }
       else {
-        gps.status_monitor_state = 0;
+        gps.status_monitor_state = GPS_STATUS_MONITOR_DISABLED;
       }
       goto LAB_0004b754;
     case 0x12e:
-      if (status_monitor_result == 9) goto LAB_0004b754;
+      if (status_monitor_result == GPS_RESULT_PENDING) goto LAB_0004b754;
       gps.status_monitor_timed_out = 1;
       gps.status_last_time = 0xffffff;
       gps.status_repeat_count = 0;
@@ -69866,7 +69883,7 @@ LAB_0004b4d2:
       puVar4 = &status_without_traim_count;
     }
     *puVar4 = 0;
-    gps.status_monitor_state = 1;
+    gps.status_monitor_state = GPS_STATUS_MONITOR_STANDBY;
   }
 LAB_0004b754:
   if ((gps.command_monitor_failed != 0) ||
@@ -69894,7 +69911,7 @@ void gps_response_reset(void)
 
 {
   gps_response_cursor = gps_response_buffer;
-  gps_receive_state = 0;
+  gps_receive_state = GPS_FRAMING_FIRST_AT;
   return;
 }
 
@@ -69943,14 +69960,14 @@ void gps_receive_expect(uint8_t c,uint8_t expected)
     puVar1 = gps_response_cursor + 1;
     *gps_response_cursor = c;
     gps_response_cursor = puVar1;
-    gps_receive_state = gps_receive_state + 1;
+    gps_receive_state = gps_receive_state + GPS_FRAMING_SECOND_AT;
   }
   else {
     gps_counts.frame_errors = gps_counts.frame_errors + 1;
     if (c == 0x40) {
       gps_response_cursor = gps_response_buffer + 1;
       gps_response_buffer[0] = 0x40;
-      gps_receive_state = 1;
+      gps_receive_state = GPS_FRAMING_SECOND_AT;
     }
     else {
       gps_response_reset();
@@ -69967,7 +69984,7 @@ void gps_receive_expect(uint8_t c,uint8_t expected)
 /* reads bytes from the engine and frames its messages from their @ into gps_response_buffer,
    counting frame errors */
 
-uint8_t gps_receive(void)
+gps_framing_state gps_receive(void)
 
 {
   int32_t iVar1;
@@ -69980,7 +69997,7 @@ uint8_t gps_receive(void)
 LAB_0004b98c:
   do {
     cVar4 = duarta_rx_pending();
-    if ((cVar4 == 0) || (gps_receive_state == 7)) {
+    if ((cVar4 == 0) || (gps_receive_state == GPS_FRAMING_COMPLETE)) {
       return gps_receive_state;
     }
     c = drta_get_byte((char *)0x0);
@@ -70009,7 +70026,7 @@ LAB_0004b98c:
       if (c == 0x40) {
         gps_response_cursor = gps_response_buffer + 1;
         gps_response_buffer[0] = 0x40;
-        gps_receive_state = 1;
+        gps_receive_state = GPS_FRAMING_SECOND_AT;
       }
       else {
         gps_response_reset();
@@ -70023,7 +70040,7 @@ LAB_0004b98c:
                                   &gps_response_length,&gps_response_index);
       if (cVar4 != 0) {
         gps_response_remaining = gps_response_length + -6;
-        gps_receive_state = gps_receive_state + 1;
+        gps_receive_state = gps_receive_state + GPS_FRAMING_SECOND_AT;
       }
     }
     goto LAB_0004b98c;
@@ -70046,7 +70063,7 @@ override_jmp_0004b88e_case_4:
     checksum = oncore_checksum(gps_response_buffer + 2,gps_response_cursor + -1);
     if (c == checksum) {
 LAB_0004b8c0:
-      gps_receive_state = gps_receive_state + 1;
+      gps_receive_state = gps_receive_state + GPS_FRAMING_SECOND_AT;
     }
     else {
       gps_counts.checksum_errors = gps_counts.checksum_errors + 1;
@@ -70088,15 +70105,15 @@ uint32_t gps_response_timed_out(int16_t param_1,uint32_t *param_2)
 /* counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender,
    unknown_command, busy and the rest */
 
-int32_t gps_count_response(char kind,gps_request_entry *request)
+int32_t gps_count_response(gps_request_result kind,gps_request_entry *request)
 
 {
   int32_t iVar1;
   uint32_t error;
   char cVar3;
   
-  iVar1 = (int32_t)kind - 8;
-  if ((uint32_t)(int32_t)kind < 8 || iVar1 == 0) {
+  iVar1 = (int32_t)(char)kind - 8;
+  if ((uint32_t)(int32_t)(char)kind < 8 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0004ba08_index_zero)[(int16_t)iVar1]) {
     case 0x12:
@@ -70176,7 +70193,7 @@ void request_ring_clear(void)
 bool request_ring_put(gps_request_entry *entry)
 
 {
-  uint8_t uVar1;
+  gps_request_result gVar1;
   int16_t iVar2;
   gps_request_ring *pgVar3;
   bool bVar4;
@@ -70189,10 +70206,10 @@ bool request_ring_put(gps_request_entry *entry)
   if (bVar4) {
     (gps_requests.write)->field_00 = entry->field_00;
     (gps_requests.write)->field_04 = entry->field_04;
-    uVar1 = entry->result;
+    gVar1 = entry->result;
     iVar2 = entry->code;
     (gps_requests.write)->sender = entry->sender;
-    (gps_requests.write)->result = uVar1;
+    (gps_requests.write)->result = gVar1;
     (gps_requests.write)->code = iVar2;
     *(uint32_t *)&(gps_requests.write)->argument_mode = *(uint32_t *)&entry->argument_mode;
     *(uint32_t *)((int32_t)&(gps_requests.write)->arguments + 2) =
@@ -70215,7 +70232,7 @@ bool request_ring_put(gps_request_entry *entry)
 int32_t request_ring_get(gps_request_entry *entry)
 
 {
-  uint8_t uVar1;
+  gps_request_result gVar1;
   int16_t iVar2;
   gps_request_entry *pgVar3;
   int32_t iVar4;
@@ -70229,10 +70246,10 @@ int32_t request_ring_get(gps_request_entry *entry)
     puVar5 = &(gps_requests.read)->field_04;
     entry->field_00 = (gps_requests.read)->field_00;
     entry->field_04 = *puVar5;
-    uVar1 = pgVar3->result;
+    gVar1 = pgVar3->result;
     iVar2 = pgVar3->code;
     entry->sender = pgVar3->sender;
-    entry->result = uVar1;
+    entry->result = gVar1;
     entry->code = iVar2;
     *(uint32_t *)&entry->argument_mode = *(uint32_t *)&pgVar3->argument_mode;
     *(uint32_t *)((int32_t)&entry->arguments + 2) = *(uint32_t *)((int32_t)&pgVar3->arguments + 2);
@@ -70257,7 +70274,7 @@ int32_t request_ring_get(gps_request_entry *entry)
 int32_t request_ring_unput(gps_request_entry *entry)
 
 {
-  uint8_t uVar1;
+  gps_request_result gVar1;
   int16_t iVar2;
   gps_request_entry *pgVar3;
   int32_t iVar4;
@@ -70277,10 +70294,10 @@ int32_t request_ring_unput(gps_request_entry *entry)
     puVar5 = &(gps_requests.write)->field_04;
     entry->field_00 = (gps_requests.write)->field_00;
     entry->field_04 = *puVar5;
-    uVar1 = pgVar3->result;
+    gVar1 = pgVar3->result;
     iVar2 = pgVar3->code;
     entry->sender = pgVar3->sender;
-    entry->result = uVar1;
+    entry->result = gVar1;
     entry->code = iVar2;
     *(uint32_t *)&entry->argument_mode = *(uint32_t *)&pgVar3->argument_mode;
     *(uint32_t *)((int32_t)&entry->arguments + 2) = *(uint32_t *)((int32_t)&pgVar3->arguments + 2);
@@ -70424,7 +70441,7 @@ void gps_request_queue(char param_1,gps_request_entry *request,gps_request_entry
     while( true ) {
       *(uint8_t *)((int32_t)puVar3 + -2) = 2;
       *(uint32_t *)((int32_t)puVar3 + -6) = 0x4bcaa;
-      gps_count_response(*(char *)((int32_t)puVar3 + -2),(gps_request_entry *)*puVar3);
+      gps_count_response(*(gps_request_result *)((int32_t)puVar3 + -2),(gps_request_entry *)*puVar3);
       puVar4 = puVar3 + 1;
 LAB_0004bcac:
       puVar3 = (uint32_t *)((int32_t)puVar4 + -4);
@@ -70451,14 +70468,14 @@ LAB_0004bcac:
       }
       else {
         request_ring_unput(&gStack_1e);
-        gps_count_response(5,&gStack_1e);
+        gps_count_response(GPS_RESULT_BUSY,&gStack_1e);
       }
     }
     request_ring_put(request);
   }
   else {
 LAB_0004bd18:
-    gps_count_response(5,request);
+    gps_count_response(GPS_RESULT_BUSY,request);
   }
   return;
 }
@@ -70491,12 +70508,12 @@ bool gps_request_post(gps_request_sender sender,int16_t code,int32_t *arguments,
     request.arguments = (int32_t *)0x0;
   }
   request.sent = sent;
-  request.result = 1;
+  request.result = GPS_RESULT_REJECT;
   if (sender == GPS_SENDER_COMMAND_MONITOR) {
-    command_monitor_result = 9;
+    command_monitor_result = GPS_RESULT_PENDING;
   }
   else {
-    status_monitor_result = 9;
+    status_monitor_result = GPS_RESULT_PENDING;
   }
   error = psos_send_x(gpsx_exchange,&request);
   return (char)error == 0;
@@ -70510,28 +70527,28 @@ bool gps_request_post(gps_request_sender sender,int16_t code,int32_t *arguments,
 /* a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3
    otherwise */
 
-uint8_t gps_request_class(int16_t param_1,char param_2)
+gps_code_class gps_request_class(int16_t code,char argument_mode)
 
 {
-  uint8_t uVar1;
+  gps_code_class gVar1;
   
-  if (((param_1 < 0) || (0x30 < param_1)) || ((param_2 != 0 && (param_2 != 1)))) {
-    if ((param_1 < 0x31) || (0x46 < param_1)) {
-      if ((param_1 < 0x47) || (0x59 < param_1)) {
-        uVar1 = 3;
+  if (((code < 0) || (0x30 < code)) || ((argument_mode != 0 && (argument_mode != 1)))) {
+    if ((code < 0x31) || (0x46 < code)) {
+      if ((code < 0x47) || (0x59 < code)) {
+        gVar1 = GPS_CLASS_INVALID;
       }
       else {
-        uVar1 = 1;
+        gVar1 = GPS_CLASS_SCRIPT;
       }
     }
     else {
-      uVar1 = 2;
+      gVar1 = GPS_CLASS_STEP;
     }
   }
   else {
-    uVar1 = 0;
+    gVar1 = GPS_CLASS_MESSAGE;
   }
-  return uVar1;
+  return gVar1;
 }
 
 #endif
@@ -70629,10 +70646,10 @@ void gps_init(void)
   gps.field_504[0] = 0;
   gps_commands_blocked = 0;
   gps_receiver_status_reset();
-  gps.reference_valid_override = 0;
+  gps.reference_valid_override = GPS_REFERENCE_OVERRIDE_NONE;
   status_screen_print_interval = 0;
   gps.pps_check_disabled = 0;
-  reference_valid_override_request = 0;
+  reference_valid_override_request = GPS_REFERENCE_OVERRIDE_NONE;
   command_monitor_init();
   return;
 }
@@ -70667,20 +70684,21 @@ void gpsm_task(void)
   int16_t sVar2;
   uint32_t error;
   uint32_t valid;
-  char cVar8;
+  gps_code_class class;
+  char cVar9;
   int32_t argument;
   int16_t sVar7;
-  uint8_t bVar9;
+  uint8_t bVar10;
   int32_t iVar6;
-  char *pcVar10;
   char *pcVar11;
+  char *pcVar12;
   gps_request_entry received;
   gps_request_entry gStack_c4;
   gps_running_command command;
   uint32_t uStack_38;
   char local_34;
   char local_33;
-  char cStack_32;
+  gps_code_class gStack_32;
   uint8_t uStack_31;
   int32_t *piStack_30;
   char cStack_2c;
@@ -70704,12 +70722,12 @@ void gpsm_task(void)
       gps_counts.received = gps_counts.received + 1;
       valid = request_kind_valid(received.sender);
       if ((char)valid == 0) {
-        gps_count_response(3,&received);
+        gps_count_response(GPS_RESULT_UNKNOWN_SENDER,&received);
       }
       else {
-        cVar8 = gps_request_class(received.code,received.argument_mode);
-        if (cVar8 == 3) {
-          gps_count_response(4,&received);
+        class = gps_request_class(received.code,received.argument_mode);
+        if (class == GPS_CLASS_INVALID) {
+          gps_count_response(GPS_RESULT_UNKNOWN_COMMAND,&received);
         }
         else {
           gps_request_queue(gps_task_state,&received,&command.request);
@@ -70719,7 +70737,7 @@ void gpsm_task(void)
     else if ((char)error != -0x7f) {
       gps_counts.received_errors = gps_counts.received_errors + 1;
     }
-    if ((gps_task_state == GPS_PROCESS_TASK_IDLE) && (cVar8 = request_ring_empty(), cVar8 == 0))
+    if ((gps_task_state == GPS_PROCESS_TASK_IDLE) && (cVar9 = request_ring_empty(), cVar9 == 0))
     {
       request_ring_get(&gStack_c4);
       local_34 = 1;
@@ -70727,8 +70745,8 @@ void gpsm_task(void)
     else {
       local_34 = 0;
     }
-    cVar8 = gps_receive();
-    local_33 = cVar8 == 7;
+    cVar9 = gps_receive();
+    local_33 = cVar9 == 7;
     iVar6 = (int32_t)(char)gps_task_state - 2;
     if ((uint32_t)(int32_t)(char)gps_task_state < 2 || iVar6 == 0) {
                     /* WARNING: Switch is manually overridden */
@@ -70756,23 +70774,23 @@ void gpsm_task(void)
           command.request.field_13[4] = gStack_c4.field_13[4];
           command.request.field_13[5] = gStack_c4.field_13[5];
           command.request.field_13[6] = gStack_c4.field_13[6];
-          cStack_32 = gps_request_class(gStack_c4.code,command.request.argument_mode);
-          iVar6 = (int32_t)cStack_32 - 2;
-          if ((uint32_t)(int32_t)cStack_32 < 2 || iVar6 == 0) {
+          gStack_32 = gps_request_class(gStack_c4.code,command.request.argument_mode);
+          iVar6 = (int32_t)(char)gStack_32 - 2;
+          if ((uint32_t)(int32_t)(char)gStack_32 < 2 || iVar6 == 0) {
                     /* WARNING: Switch is manually overridden */
             switch((&switchD_0004c0c0_index_zero)[(int16_t)iVar6]) {
             case 6:
               if (gps_commands_blocked == 0) {
                 gps_request_step.code = command.request.code;
                 gps_request_step.argument_mode = command.request.argument_mode;
-                bVar9 = 0;
+                bVar10 = 0;
                 do {
-                  gps_request_step.arguments[bVar9] =
+                  gps_request_step.arguments[bVar10] =
                        *(int32_t *)
                         (CONCAT22(__ghidra_piece(uint16_t, command.request.arguments, 0),__ghidra_piece(uint16_t, command.request.arguments, 2)) +
-                        (uint32_t)bVar9 * 4);
-                  bVar9 = bVar9 + 1;
-                } while (bVar9 < 4);
+                        (uint32_t)bVar10 * 4);
+                  bVar10 = bVar10 + 1;
+                } while (bVar10 < 4);
                 command.script = (gps_script_step **)&PTR_gps_request_step_00050cc2;
                 bStack_10 = 0;
                 bStack_2a = 0;
@@ -70782,14 +70800,14 @@ void gpsm_task(void)
               break;
             case 0x56:
               if (gps_commands_blocked == 0) {
-                bVar9 = 0;
+                bVar10 = 0;
                 do {
-                  gps_request_step.arguments[bVar9] =
+                  gps_request_step.arguments[bVar10] =
                        *(int32_t *)
                         (CONCAT22(__ghidra_piece(uint16_t, command.request.arguments, 0),__ghidra_piece(uint16_t, command.request.arguments, 2)) +
-                        (uint32_t)bVar9 * 4);
-                  bVar9 = bVar9 + 1;
-                } while (bVar9 < 4);
+                        (uint32_t)bVar10 * 4);
+                  bVar10 = bVar10 + 1;
+                } while (bVar10 < 4);
                 command.script = (gps_script_step **)gps_script_lookup(command.request.code);
                 bStack_10 = 0;
                 bStack_2a = 0;
@@ -70806,7 +70824,7 @@ void gpsm_task(void)
                                            (char)__ghidra_piece(int16_t, command.request.arguments, 2)),
                                   command.request.sender);
             }
-            gps_count_response(0,&command.request);
+            gps_count_response(GPS_RESULT_SUCCESS,&command.request);
           }
 LAB_0004c17a:
           gps_last_command = &command;
@@ -70819,7 +70837,7 @@ LAB_0004c17a:
           gps_counts.responses_read = gps_counts.responses_read + 1;
         }
         if (*command.script == (gps_script_step *)0x0) {
-          gps_count_response(0,&command.request);
+          gps_count_response(GPS_RESULT_SUCCESS,&command.request);
           gps_task_state = GPS_PROCESS_TASK_IDLE;
         }
         else {
@@ -70839,42 +70857,42 @@ LAB_0004c17a:
             if (sVar7 < 1) {
               if (sVar7 < 0) goto LAB_0004c1e6;
               if (command.request.argument_mode == 0) {
-                gps_count_response(6,&command.request);
-                pcVar10 = " // command not supported //\n";
-                pcVar11 = gps_last_program_message;
+                gps_count_response(GPS_RESULT_NO_COMMAND,&command.request);
+                pcVar11 = " // command not supported //\n";
+                pcVar12 = gps_last_program_message;
                 do {
-                  cVar8 = *pcVar10;
-                  *pcVar11 = cVar8;
-                  pcVar10 = pcVar10 + 1;
+                  cVar9 = *pcVar11;
+                  *pcVar12 = cVar9;
                   pcVar11 = pcVar11 + 1;
-                } while (cVar8 != 0);
+                  pcVar12 = pcVar12 + 1;
+                } while (cVar9 != 0);
               }
               else {
-                gps_count_response(7,&command.request);
-                pcVar10 = " // query form not supported //\n";
-                pcVar11 = gps_last_program_message;
+                gps_count_response(GPS_RESULT_NO_QUERY,&command.request);
+                pcVar11 = " // query form not supported //\n";
+                pcVar12 = gps_last_program_message;
                 do {
-                  cVar8 = *pcVar10;
-                  *pcVar11 = cVar8;
-                  pcVar10 = pcVar10 + 1;
+                  cVar9 = *pcVar11;
+                  *pcVar12 = cVar9;
                   pcVar11 = pcVar11 + 1;
-                } while (cVar8 != 0);
+                  pcVar12 = pcVar12 + 1;
+                } while (cVar9 != 0);
               }
               gps_task_state = GPS_PROCESS_TASK_IDLE;
             }
             else {
               command.query = uStack_31;
-              bVar9 = (uint8_t)sVar7;
+              bVar10 = (uint8_t)sVar7;
               command.message = sVar2;
-              command.length = bVar9;
+              command.length = bVar10;
               memcpy(command.sent,gps_command_message,
                      CONCAT31(CONCAT21(CONCAT11(sVar7 >> 0xf,sVar7 >> 0xf),
-                                       (char)((uint16_t)sVar7 >> 8)),bVar9));
+                                       (char)((uint16_t)sVar7 >> 8)),bVar10));
               drta_send_message(gps_command_message,sVar7);
               uStack_38 = get_uptime();
               bStack_10 = bStack_10 + 1;
               gps_counts.commands_sent = gps_counts.commands_sent + 1;
-              gps_message_to_text((char *)gps_command_message,bVar9,gps_last_program_message);
+              gps_message_to_text((char *)gps_command_message,bVar10,gps_last_program_message);
               command_log_add(&command,gps_last_program_message);
               if (oncore_messages[sVar2].match_kind == 0) goto LAB_0004c1e6;
               gps_task_state = GPS_PROCESS_WAIT_FOR_RESPONSE;
@@ -70896,7 +70914,7 @@ LAB_0004c1e6:
           }
           else {
             gps.command_monitor_error = 1;
-            gps_count_response(8,&command.request);
+            gps_count_response(GPS_RESULT_TIMEOUT,&command.request);
             gps_task_state = GPS_PROCESS_TASK_IDLE;
           }
         }
@@ -70914,11 +70932,11 @@ LAB_0004c1e6:
               gps_task_state = GPS_PROCESS_SEND_COMMAND;
             }
             else if (cStack_2c == 1) {
-              cVar8 = bytes_equal_n((char *)gps_response_buffer,gps_response_length,acStack_29,
+              cVar9 = bytes_equal_n((char *)gps_response_buffer,gps_response_length,acStack_29,
                                     (uint16_t)bStack_2a);
-              if (cVar8 == 1) {
+              if (cVar9 == 1) {
                 gps.command_monitor_error = 1;
-                gps_count_response(1,&command.request);
+                gps_count_response(GPS_RESULT_REJECT,&command.request);
                 gps_task_state = GPS_PROCESS_TASK_IDLE;
               }
               else {
@@ -72329,7 +72347,10 @@ uint8_t * oncore_position_message(uint8_t *param_1,uint8_t *param_2)
     if ((gps.position_hold == 0) &&
        (((nv_settings.douglas_duration_infinite == 1 ||
          (gps.average_count < (uint32_t)nv_settings.douglas_duration)) &&
-        ((gps.status.receiver_status & 0x20) != 0)))) {
+        ((gps.status.receiver_status & ONCORE_STATUS_3D_FIX) !=
+         ~(ONCORE_STATUS_PROPAGATE|ONCORE_STATUS_POOR_GEOMETRY|ONCORE_STATUS_3D_FIX|
+           ONCORE_STATUS_2D_FIX|ONCORE_STATUS_ACQUIRING|ONCORE_STATUS_DIFFERENTIAL|
+           ONCORE_STATUS_INSUFFICIENT_SATELLITES|ONCORE_STATUS_BAD_ALMANAC))))) {
       running_average_update(gps.status.latitude,&gps.average_latitude,gps.average_count);
       running_average_update(gps.status.longitude,&gps.average_longitude,gps.average_count);
       running_average_update(gps.status.height_gps,&gps.average_height_gps,gps.average_count);

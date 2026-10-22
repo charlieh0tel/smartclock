@@ -439,7 +439,9 @@ void diag_debug_psos(int32_t on) { psos_debug_output(on != 0); }
 
 /* The words clk_synch and sync_imm: a counter step or sync (0x1b2d8,
  * 0x1b2ec). */
-void diag_clk_synch(uint8_t kind, uint32_t count) { sync_request(kind, count); }
+void diag_clk_synch(counter_sync_kind kind, int32_t count) {
+  sync_request(kind, count);
+}
 
 void diag_sync_imm(void) { sync_request(COUNTER_SYNC_FULL, 1); }
 
@@ -853,7 +855,7 @@ void print_leap_check_state(void) {
 }
 
 /* Appends fine's state, named, to a PLL state (0x1ba32). */
-void print_fine_state(uint8_t fine_state, char* state) {
+void print_fine_state(pll_fine_state fine_state, char* state) {
   char* name;
 
   switch (fine_state) {

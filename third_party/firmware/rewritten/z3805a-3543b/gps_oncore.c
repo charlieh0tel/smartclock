@@ -164,7 +164,8 @@ uint32_t gps_response_timed_out(int16_t message, uint32_t* sent_time) {
 /* Counts a request's outcome in gps_counts and gives it to its sender:
  * a monitor's in its result, another's sent back to plla_exchange; 1 if
  * it got there (0x4b9e6). */
-int32_t gps_count_response(char kind, gps_request_entry* request) {
+int32_t gps_count_response(gps_request_result kind,
+                           gps_request_entry* request) {
   uint8_t error;
 
   switch (kind) {

@@ -28,7 +28,7 @@ uint32_t request_kind_valid(gps_request_sender sender) {
 
 /* A request code's class, by its range and, for a message, its argument
  * mode, 0 to send it and 1 to query it (0x4bdba). */
-uint8_t gps_request_class(int16_t code, char argument_mode) {
+gps_code_class gps_request_class(int16_t code, char argument_mode) {
   if (code >= GPS_REQUEST_TIME_OF_DAY && code <= GPS_REQUEST_RECEIVER_ID &&
       (argument_mode == 0 || argument_mode == 1)) {
     return GPS_CLASS_MESSAGE;

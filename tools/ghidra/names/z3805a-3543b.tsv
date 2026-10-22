@@ -481,7 +481,7 @@
 0x16e5a	function	psos_debug_output	structures.md	the debug_psos word's and :DIAG:SYST:DOUT's switch
 0x31128	function	eeprom_write_byte	structures.md	the wr_eeprom word's: writes a byte, polls until it reads back, retries five times
 0x3281a	function	clear_nv	structures.md	the clear_nv word's
-0x40a64	function	sync_request	structures.md	the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2
+0x40a64	function	sync_request	structures.md	the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2	void sync_request(counter_sync_kind kind, int32_t count)
 0x45b70	function	pll_mode	screen-format-strings.md, "Mode suffixes"	the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it; a byte in D0 (0x45bb4)	pll_screen_mode pll_mode(void)
 0x4c918	function	clear_gps_debug	structures.md	the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_program_message
 0x330ee	function	log_count	structures.md	"Log status: %-3d entries"; sets *full when more than 31	int log_count(uint8_t *full)
@@ -505,7 +505,7 @@
 0x2e6fc	function	skip_spaces	context	advances a char ** past spaces	void skip_spaces(char **cursor)
 0x136f6	function	get_uptime	context	returns uptime; efc_history_update divides it by 2700 for an entry's time	uint32_t get_uptime(void)
 0x44fbc	function	interval_next_reading	context	the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history; arm_mode 0 calibrates, 2 syncs (0x4506e, 0x45082); *reading takes double_to_float's result (0x45060)	uint8_t interval_next_reading(interval_arm_mode arm_mode, float *reading)
-0x4b9e6	function	gps_count_response	context	counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender, unknown_command, busy and the rest	int gps_count_response(char kind, gps_request_entry *request)
+0x4b9e6	function	gps_count_response	context	counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender, unknown_command, busy and the rest	int gps_count_response(gps_request_result kind, gps_request_entry *request)
 0x46620	function	gps_ack_received	context	returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it
 0x102585	label	gps_ack_ready	context	gpsx_send clears it; pllp_task sets it with gps_ack_code when the GPS task's answer comes back on plla	uint8_t
 0x102586	label	gps_ack_awaited	context	gpsx_send stores its last argument there	gps_ack_awaited_kind
@@ -607,13 +607,13 @@
 0x4b846	function	gps_receive	context	reads bytes from the engine and frames its messages from their @ into gps_response_buffer, counting frame errors
 0x4b800	function	gps_receive_expect	gps_receive, in A4	stores a byte that is the one expected and steps gps_receive_state; else counts gps_counts.frame_errors and, at an @, starts gps_response_buffer again with it at state 1, or gps_response_reset	void gps_receive_expect(uint8_t c, uint8_t expected)
 0x10138c	label	gps_response_cursor	context	where gps_receive stores the next byte	uint8_t *
-0x101394	label	gps_receive_state	context	gps_receive's state; 7 when a message is complete	uint8_t
+0x101394	label	gps_receive_state	context	gps_receive's state; 7 when a message is complete	gps_framing_state
 0x101396	label	gps_response_index	structures.md	gps_response_lookup's index of the response's ID among the 49 at 0x4fece; gpsm_task gives it gps_response_decode and gps_response_match	int16_t
 0x101398	label	gps_response_length	structures.md	the response's length, from gps_response_lookup's table entry; gps_response_match and the retry compare take it	int16_t
 0x10139a	label	gps_response_remaining	structures.md	gps_receive's count of bytes to the checksum, the length less 6, counted down; at 0 the byte is the checksum	int16_t
 0x10139c	label	gps_task_state	structures.md	gpsm_task's state, which gps_print_process_monitor prints as "Task Idle", "Send Command" or "Wait for Response"; gps_link_reset clears it	gps_process_state
-0x101428	label	command_monitor_result	structures.md	gps_request_post sets it to 9 for a request from sender 3, the command monitor; gps_count_response stores the request's result code; command_monitor waits while it is 9	int8_t
-0x101429	label	status_monitor_result	structures.md	the same for the other senders: command_monitor's status monitor, sender 4	int8_t
+0x101428	label	command_monitor_result	structures.md	gps_request_post sets it to 9 for a request from sender 3, the command monitor; gps_count_response stores the request's result code; command_monitor waits while it is 9	gps_request_result
+0x101429	label	status_monitor_result	structures.md	the same for the other senders: command_monitor's status monitor, sender 4	gps_request_result
 0x10142a	label	status_without_traim_count	structures.md	command_monitor's count of @@Ba with a new time since the last @@Bn, while gps.raim.rate is set; at 7 the status monitor requests the messages again	uint8_t
 0x10142c	label	status_screen_snapshot	structures.md	the snapshot status_screen_print, the pstat print in gpsm_task and gps_console_request take and print	status_snapshot_record
 0x101560	label	status_snapshot_latest	structures.md	status_snapshot_update's snapshot at each @@Ea not at 03:14:07 or 06:28:15; gps_print_1pps prints it	status_snapshot_record
@@ -782,7 +782,7 @@
 0x2437a	function	watchdog_report	"watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d"	prints the tasks' watchdog counts
 0x1b7ee	function	print_gps_init_state	"Gen GPS state:", "start", "init ack", .. "survey", "done"	prints the GPS initialization sequence's state
 0x1b99c	function	print_leap_check_state	"Leap chk state:", "leap start", "leap pending send", "leap wait"	prints the leap second check's state
-0x1ba32	function	print_fine_state	": fine start" .. ": fine fine slew", ": fine unknown"	the suffix naming the fine adjustment's sub-state
+0x1ba32	function	print_fine_state	": fine start" .. ": fine fine slew", ": fine unknown"	the suffix naming the fine adjustment's sub-state	void print_fine_state(pll_fine_state fine_state, char *state)
 0x11942	function	print_exception	"%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover."	prints an exception's name, PC, SR and address
 0x4c940	function	gps_print_command_log	"GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued"	prints the GPS receiver command log	void gps_print_command_log(gps_command_log *log)
 0x4c754	function	gps_print_command	a command log line, "SCPI1", "GPSc", "GPSs"	prints one entry of the GPS receiver command log	int gps_print_command(gps_command_log *log, char *line)
@@ -850,7 +850,7 @@
 0x471fc	function	gps_diag_sequence	context	the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack"; 1 once the self-test has run and pllp_task is to restart the loop	bool gps_diag_sequence(bool same_stage)
 0x417c6	function	aging_fit	loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f", "HQ= %.1e mode= %d"	fits the oscillator's aging curve, for the curv task
 0x40556	function	interpolator_sample	context	sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test."	void interpolator_sample(interpolator_calibration *calibration)
-0x49a6e	function	format_satellite_cell	context	a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq"
+0x49a6e	function	format_satellite_cell	context	a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq"	void format_satellite_cell(satellite_cell cell, char *text)
 0x49e5a	function	format_time	context	a packed time as "%02d:%02d:%02d", or "--:--:--"	bool format_time(time_of_day time, char *text)
 0x49eb4	function	format_date	context	a date as "%02d %s %04d", or "-- --- ----"
 0x49f30	function	status_screen_time	context	the screen's time with its reference, "GPS", "UTC", "LOCL GPS" or "LOCAL"	void status_screen_time(status_snapshot_record *snapshot, char *line)
@@ -1207,7 +1207,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4bd2c	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4	uint32_t request_kind_valid(gps_request_sender sender)
 0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps
-0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise
+0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise	gps_code_class gps_request_class(int16_t code, char argument_mode)
 0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(char param_1, gps_request_entry *request, gps_request_entry *param_3)
 0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders
 0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update	char *gps_response_decode(int16_t message, char *response)
@@ -1238,7 +1238,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x49654	function	satellite_elevation_azimuth	context	a satellite's elevation and azimuth, valid below 91 and 360	void satellite_elevation_azimuth(oncore_visible_satellite *satellite, uint8_t *entry)
 0x49474	function	satellite_sets_build	context	for status_snapshot: the sets of GPS and pseudolite satellites visible, used and tracked, and the tracked by @@Ba channel mode	void satellite_sets_build(oncore_channel_status *channels, satellite_sets *sets)
 0x49688	function	satellite_status	context	for status_snapshot: a satellite's status code for the screen	void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefined1 *param_5)
-0x49612	function	satellite_track_class	context	a track record's class, 1 to 3	uint8_t satellite_track_class(oncore_visible_satellite *satellite)
+0x49612	function	satellite_track_class	context	a track record's class, 1 to 3	satellite_health_class satellite_track_class(oncore_visible_satellite *satellite)
 0x497c8	function	satellite_status_list	context	for status_snapshot: the screen's list of satellites, built and sorted
 0x4a636	function	status_snapshot	context	gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask	void status_snapshot(status_snapshot_record *snapshot)
 0x45c18	function	recovery_suffix_index	screen-format-strings.md, "Mode suffixes"	in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion	pll_recovery_suffix recovery_suffix_index(void)
@@ -1901,7 +1901,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 #
 # setjmp's partner
 0x51100	function	longjmp	context	restores the registers setjmp saved, its status register through trap #1, and returns to its caller with the value given
-0x100c68	label	reference_valid_override_request	context	1 forces the GPS reference valid, 0xff invalid; gps_init clears it and no code sets it, so only a memory write, as from the pForth console, does
+0x100c68	label	reference_valid_override_request	context	1 forces the GPS reference valid, 0xff invalid; gps_init clears it and no code sets it, so only a memory write, as from the pForth console, does	gps_reference_override
 #
 # pForth kernel subroutines Ghidra had not made functions
 0x19360	function	forth_resolve_forward	console.md	patches a forward branch at the address on the data stack to land here: its word before it gets here less it, plus 2; if, else, while		convention=pforth; confidence=read; preserves=all; family=pforth

@@ -263,14 +263,6 @@ pll_stage_result coarse(void) {
   return result;
 }
 
-/* sync_request's kind (counter_configuration.sync_kind): a step
- * against a positive TI, against a negative one, and a sync. */
-static const uint8_t PLL_STAGES_SYNC_POSITIVE = 1;
-
-static const uint8_t PLL_STAGES_SYNC_NEGATIVE = 2;
-
-static const uint8_t PLL_STAGES_SYNC_FULL = 3;
-
 /* For a TI of 100 ns or more, asks for that many 100 ns steps against
  * it, the steps; one and 4 for 300 ns or more; 0 within 100 ns
  * (0x44e8e). */
@@ -287,19 +279,19 @@ uint8_t fine_sync_adjust(float ti) {
       uint32_t steps =
           float_to_unsigned(float_divide(ti, pll_stages_negate(STEP)));
 
-      sync_request(PLL_STAGES_SYNC_NEGATIVE, (uint8_t)steps);
+      sync_request(COUNTER_SYNC_NEGATIVE, (uint8_t)steps);
       return steps;
     }
-    sync_request(PLL_STAGES_SYNC_NEGATIVE, 1);
+    sync_request(COUNTER_SYNC_NEGATIVE, 1);
     return TOO_FAR;
   }
   if (float_compare(ti, MOST) < 0) {
     uint32_t steps = float_to_unsigned(float_divide(ti, STEP));
 
-    sync_request(PLL_STAGES_SYNC_POSITIVE, (uint8_t)steps);
+    sync_request(COUNTER_SYNC_POSITIVE, (uint8_t)steps);
     return steps;
   }
-  sync_request(PLL_STAGES_SYNC_POSITIVE, 1);
+  sync_request(COUNTER_SYNC_POSITIVE, 1);
   return TOO_FAR;
 }
 
@@ -311,7 +303,7 @@ uint8_t sync_perform(float ti) {
           0) {
     return 0;
   }
-  sync_request(PLL_STAGES_SYNC_FULL, 1);
+  sync_request(COUNTER_SYNC_FULL, 1);
   pll.sync_requested = 0;
   if (pll_debug_enabled != 0) {
     task_dmessage("Peforming sync\r\n");

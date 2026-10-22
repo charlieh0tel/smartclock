@@ -21,27 +21,6 @@ typedef struct screen_visibility {
   oncore_visibility_fields visibility; /* +0x02: gps.visibility */
 } screen_visibility;
 
-/* A satellite's cell on the screen, at +4 of a satellite_status_list
- * entry: satellite_elevation_azimuth's and satellite_status' (0x49654,
- * 0x49688), the long status_screen gives format_satellite_cell
- * (0x4ae0e). */
-typedef struct screen_satellite_cell {
-  satellite_cell_status status;
-  uint8_t elevation; /* degrees, for SATELLITE_CELL_POSITION */
-  uint16_t azimuth;  /* degrees */
-} screen_satellite_cell;
-
-/* A satellite_status_list entry, 8 bytes: status_snapshot keeps twelve
- * not tracked in gps_satellites and six tracked in pseudolites
- * (0x4a81a, 0x4a83a); satellite_status_blank_entry (0x4e016) is an
- * empty one. */
-typedef struct screen_satellite_entry {
-  uint8_t satellite;  /* 0 for none */
-  uint8_t attempting; /* not tracked: on a channel but not used (0x49964) */
-  int16_t level;      /* tracked: its channel's signal strength; -1 none */
-  screen_satellite_cell cell; /* +0x04 */
-} screen_satellite_entry;
-
 /* An element satellite_status_list sorts with satellite_compare: a
  * visible satellite's number and elevation (0x4987a). */
 typedef struct screen_satellite_elevation {
@@ -167,7 +146,8 @@ void satellite_sets_build(oncore_channel_status* channels,
 }
 
 /* A @@Bb record's class by its health, none for no record (0x49612). */
-uint8_t satellite_track_class(oncore_visible_satellite* satellite) {
+satellite_health_class satellite_track_class(
+    oncore_visible_satellite* satellite) {
   if (satellite == NULL) {
     return SATELLITE_CLASS_UNKNOWN;
   }
@@ -190,7 +170,7 @@ void satellite_elevation_azimuth(oncore_visible_satellite* satellite,
                                  uint8_t* entry) {
   static const uint8_t ELEVATION_LIMIT = 91;
   static const uint16_t AZIMUTH_LIMIT = 360;
-  screen_satellite_cell* cell = (screen_satellite_cell*)entry;
+  satellite_cell* cell = (satellite_cell*)entry;
 
   if (satellite != NULL && satellite->elevation < ELEVATION_LIMIT &&
       satellite->azimuth < AZIMUTH_LIMIT) {
@@ -328,12 +308,12 @@ void status_snapshot(status_snapshot_record* snapshot) {
   satellite_status_list(
       SCREEN_LIST_NOT_TRACKED, NOT_TRACKED_ENTRIES,
       (int32_t)&snapshot->satellites, &gps.status.channels[0].satellite,
-      (int32_t)&gps.visibility_received, snapshot->gps_satellites[0],
-      (char*)&snapshot->gps_satellite_count);
+      (int32_t)&gps.visibility_received, (uint8_t*)snapshot->not_tracked,
+      (char*)&snapshot->not_tracked_count);
   satellite_status_list(
       SCREEN_LIST_TRACKED, TRACKED_ENTRIES, (int32_t)&snapshot->satellites,
       &gps.status.channels[0].satellite, (int32_t)&gps.visibility_received,
-      snapshot->pseudolites[0], (char*)&snapshot->pseudolite_count);
+      (uint8_t*)snapshot->tracked, (char*)&snapshot->tracked_count);
   snapshot->status_received = gps.status_received;
 
   if (snapshot->position_hold != 0) {
@@ -608,13 +588,12 @@ void format_level(int16_t level, char* text) {
 
 /* A satellite's cell: "%2d %3d" elevation and azimuth, or what its
  * status says (0x49a6e). */
-void format_satellite_cell(char status, uint8_t elevation, uint16_t azimuth,
-                           char* text) {
+void format_satellite_cell(satellite_cell cell, char* text) {
   char* words;
 
-  switch (status) {
+  switch (cell.status) {
     case SATELLITE_CELL_POSITION:
-      sprintf(text, "%2d %3d", elevation, azimuth);
+      sprintf(text, "%2d %3d", cell.elevation, cell.azimuth);
       return;
     case SATELLITE_CELL_NO_POSITION:
       words = "-- ---";
@@ -1130,10 +1109,8 @@ void status_screen(status_snapshot_record* snapshot, char clear,
   static const char ESCAPE = 0x1b;
   static const uint8_t PREDICTION_DIGITS = 4;
   static const uint8_t RAIM_MARK = 15; /* where the health line shows it */
-  const screen_satellite_entry* tracked =
-      (const screen_satellite_entry*)snapshot->pseudolites;
-  const screen_satellite_entry* not_tracked =
-      (const screen_satellite_entry*)snapshot->gps_satellites;
+  const satellite_list_entry* tracked = snapshot->tracked;
+  const satellite_list_entry* not_tracked = snapshot->not_tracked;
   const screen_health_part* part;
   const status_screen_mode_line* mode_line;
   status_screen_line current;
@@ -1254,37 +1231,34 @@ void status_screen(status_snapshot_record* snapshot, char clear,
   }
   write("Satellite Status __________________________   ");
   print("Time _____%s\r\n", words);
-  print("Tracking: %d        Not Tracking: %-2d%11s",
-        snapshot->pseudolite_count, snapshot->gps_satellite_count, "");
+  print("Tracking: %d        Not Tracking: %-2d%11s", snapshot->tracked_count,
+        snapshot->not_tracked_count, "");
   status_screen_time(snapshot, line);
   print("%s\r\n", line);
-  print("%-16.16s   %-11.11s  %-11.11s%3s",
-        snapshot->pseudolite_count == 0 ? "" : "PRN  El  Az   SS",
-        snapshot->gps_satellite_count == 0 ? "" : "PRN  El  Az",
-        snapshot->gps_satellite_count <= SCREEN_SATELLITE_ROWS ? ""
-                                                               : "PRN  El  Az",
-        "");
+  print(
+      "%-16.16s   %-11.11s  %-11.11s%3s",
+      snapshot->tracked_count == 0 ? "" : "PRN  El  Az   SS",
+      snapshot->not_tracked_count == 0 ? "" : "PRN  El  Az",
+      snapshot->not_tracked_count <= SCREEN_SATELLITE_ROWS ? "" : "PRN  El  Az",
+      "");
   status_screen_sync(snapshot, text);
   print("%s %s\r\n", snapshot->pll_field_3d5 == 0 ? "1PPS CLK" : "GPS 1PPS",
         text);
 
   attempting = false;
   for (row = 1; row <= SCREEN_SATELLITE_ROWS; row++) {
-    const screen_satellite_entry* first = not_tracked;
-    const screen_satellite_entry* second = not_tracked + SCREEN_SATELLITE_ROWS;
+    const satellite_list_entry* first = not_tracked;
+    const satellite_list_entry* second = not_tracked + SCREEN_SATELLITE_ROWS;
 
     format_satellite_number(tracked->satellite, tracked_number);
     format_level(tracked->level, tracked_level);
-    format_satellite_cell(tracked->cell.status, tracked->cell.elevation,
-                          tracked->cell.azimuth, tracked_cell);
+    format_satellite_cell(tracked->cell, tracked_cell);
     format_satellite_number(first->satellite, first_number);
     attempting |= mark_flag(first->attempting, (uint8_t*)first_number);
-    format_satellite_cell(first->cell.status, first->cell.elevation,
-                          first->cell.azimuth, first_cell);
+    format_satellite_cell(first->cell, first_cell);
     format_satellite_number(second->satellite, second_number);
     attempting |= mark_flag(second->attempting, (uint8_t*)second_number);
-    format_satellite_cell(second->cell.status, second->cell.elevation,
-                          second->cell.azimuth, second_cell);
+    format_satellite_cell(second->cell, second_cell);
     status_screen_position(row, snapshot, line);
     print("%3.3s  %6.6s  %3.3s   %3.3s  %6.6s  %3.3s  %6.6s%3s%s\r\n",
           tracked_number, tracked_cell, tracked_level, first_number, first_cell,

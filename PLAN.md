@@ -1459,6 +1459,12 @@ view cannot drift apart.  The library, bottom up:
      prototypes still wrong), the status screen (30 of 32) and the
      console's words (93 of 94), in gps_requests.c, gps_oncore.c,
      gps_task.c, gps_receiver.c, gps_reports.c, screen.c and console.c.
+     Their enums are smartclock.h's coded values now, typing the gps,
+     pll, counter and snapshot fields and the globals they name; a
+     satellite list entry and its cell, which format_satellite_cell
+     takes by value as the image's callers push it, are shared
+     records, and the snapshot's lists are named for what they hold,
+     tracked and not.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

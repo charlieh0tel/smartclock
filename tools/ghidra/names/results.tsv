@@ -671,3 +671,22 @@ clamp_float_to_step_double	steps	the clamped value in steps, rounded half away f
 clamp_double_to_limits	clamped	the value within its limits
 load_double	step	the step record's double
 load_double_param	step	the step record's double
+# The self-tests, applications/selftest (rewritten/z3805a-3543b/selftest.c)
+selftest_aborted	aborted	selftest's abort flag set
+selftest_may_report	may_report	the first pass, or the test not aborted
+selftest_abort_wait	was_running	1 when a test was running, and it has stopped
+shift_right_36	carry	the bit carried from the first word into the second
+qspi_hex_dac_test	passed	1 when both patterns read back
+qspi_adc_test	passed	1 when the ADC's reply checks
+qspi_efc_test	passed	true when both patterns read back
+selftest_cpu_result	failures	selftest.cpu
+selftest_ram_result	failures	selftest.ram, selftest_ram_failure bits
+selftest_eeprom_result	failures	selftest.eeprom
+selftest_uart_with_lamp	failures	selftest.uart, selftest_uart_failure bits
+selftest_qspi_with_lamp	failures	selftest.qspi, selftest_qspi_failure bits
+selftest_interpolator_with_lamp	failures	selftest.interpolator
+selftest_internal_reference_with_lamp	failures	selftest.internal_reference
+selftest_gps_with_lamp	failures	selftest.gps, selftest_gps_failure bits
+selftest_power_with_lamp	failures	selftest.power, selftest_power_failure bits
+lamp_test_command	failures	always 0
+rom_lane_checksum	checksum	both byte lanes' sums, high bytes then low

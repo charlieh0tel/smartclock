@@ -679,38 +679,155 @@ typedef struct gps_script_step {
                            request's, a script's, and raim_request_arguments' */
 } gps_script_step;
 
+/* A self-test's number, selftest_run's test and the index of the table
+ * at 0x18458 that selftest_execute calls.  :DIAGnostic:TEST? maps its
+ * choice to it, alphabetically from the words at 0x53b24 by the jump
+ * table at 0x2bc4c; 097-59551-02, ":DIAGnostic:TEST?", lists the words
+ * but IREFerence, IMRC and QMRC in this order.  0 is *TST?'s
+ * (selftest_request at 0x46326).  IMRC and QMRC are the interpolator's
+ * calibration and sample (selftest_interpolator_calibration,
+ * selftest_interpolator_sample). */
+typedef enum __attribute__((packed)) selftest_test_number {
+  SELFTEST_TEST_ALL = 0,
+  SELFTEST_TEST_DISPLAY = 1,
+  SELFTEST_TEST_PROCESSOR = 2,
+  SELFTEST_TEST_RAM = 3,
+  SELFTEST_TEST_EEPROM = 4,
+  SELFTEST_TEST_UART = 5,
+  SELFTEST_TEST_QSPI = 6,
+  SELFTEST_TEST_FPGA = 7,
+  SELFTEST_TEST_INTERPOLATOR = 8,
+  SELFTEST_TEST_INTERNAL_REFERENCE = 9,
+  SELFTEST_TEST_GPS = 10,
+  SELFTEST_TEST_POWER = 11,
+  SELFTEST_TEST_INTERPOLATOR_CALIBRATION = 12,
+  SELFTEST_TEST_INTERPOLATOR_SAMPLE = 13,
+} selftest_test_number;
+
+/* selftest_summary's failure flags (0x177fa), selftest_results.summary
+ * and test 0's result: bit n - 1 for test n that failed.  The display
+ * test, 1, has no result, so bit 0 is never set. */
+typedef enum __attribute__((packed)) selftest_summary_bit {
+  SELFTEST_SUMMARY_CPU = 0x002,
+  SELFTEST_SUMMARY_RAM = 0x004,
+  SELFTEST_SUMMARY_EEPROM = 0x008,
+  SELFTEST_SUMMARY_UART = 0x010,
+  SELFTEST_SUMMARY_QSPI = 0x020,
+  SELFTEST_SUMMARY_FPGA = 0x040,
+  SELFTEST_SUMMARY_INTERPOLATOR = 0x080,
+  SELFTEST_SUMMARY_INTERNAL_REFERENCE = 0x100,
+  SELFTEST_SUMMARY_GPS = 0x200,
+  SELFTEST_SUMMARY_POWER = 0x400,
+} selftest_summary_bit;
+
+/* The result of a test with one failure: selftest_results' cpu
+ * (cpu_register_test 0x1749e), eeprom (nv_slot_valid 0x32b5e), fpga
+ * (counter_selftest 0x40f98: the counters read nonzero after a preset),
+ * interpolator ("Interpolator: A, MRC mode" at 0x18015,
+ * interpolator_selftest 0x406c8) and internal_reference
+ * (internal_pps_test 0x184a4); each selftest_* entry reports its bit 0. */
+typedef enum __attribute__((packed)) selftest_failure {
+  SELFTEST_FAILED = 0x01,
+} selftest_failure;
+
+/* selftest_results.ram, the RAM test's failures, as selftest_ram
+ * reports them (0x179ac): a pattern, its data bits at ram_data_bits,
+ * or an address line, the lines at ram_address_lines. */
+typedef enum __attribute__((packed)) selftest_ram_failure {
+  SELFTEST_RAM_PATTERN = 0x01,
+  SELFTEST_RAM_ADDRESS_LINE = 0x02,
+} selftest_ram_failure;
+
+/* selftest_results.uart, the DUART test's failures, by selftest_uart's
+ * texts (0x17cbe): duart_test's IVR and counter checks (duart.c, 0x1e650)
+ * and each channel's loopback (duarta.c, duartb.c). */
+typedef enum __attribute__((packed)) selftest_uart_failure {
+  SELFTEST_UART_REGISTER = 0x01,
+  SELFTEST_UART_COUNTER = 0x02,
+  SELFTEST_UART_CHANNEL_A_DATA = 0x04,
+  SELFTEST_UART_CHANNEL_A_TIMEOUT = 0x08,
+  SELFTEST_UART_CHANNEL_B_DATA = 0x10,
+  SELFTEST_UART_CHANNEL_B_TIMEOUT = 0x20,
+} selftest_uart_failure;
+
+/* selftest_results.qspi, the QSPI devices that failed, as
+ * qspi_tests_run sets them (0x189f2) and selftest_qspi reports them. */
+typedef enum __attribute__((packed)) selftest_qspi_failure {
+  SELFTEST_QSPI_ADC = 0x02,
+  SELFTEST_QSPI_HEX_DAC = 0x04,
+  SELFTEST_QSPI_FPGA = 0x40,
+  SELFTEST_QSPI_EFC = 0x80,
+} selftest_qspi_failure;
+
+/* selftest_results.gps, the receiver's @@Ca result (VPCommands.pdf,
+ * "6 Channel Self-Test (@@Ca)": bit 0 channel 1 to bit 13), by
+ * selftest_gps's texts (0x17d94), which name bits 7 to 10 ROM LSByte,
+ * ROM MSByte, RAM LSByte and RAM MSByte where the reference's list is
+ * garbled.  Bits 14 and 15, spare in the reference, are
+ * gps_selftest_run's (0x466ca): the engine did not answer, "SW
+ * problem", or timed out. */
+typedef enum __attribute__((packed)) selftest_gps_failure {
+  SELFTEST_GPS_CHANNEL_1 = 0x0001,
+  SELFTEST_GPS_CHANNEL_2 = 0x0002,
+  SELFTEST_GPS_CHANNEL_3 = 0x0004,
+  SELFTEST_GPS_CHANNEL_4 = 0x0008,
+  SELFTEST_GPS_CHANNEL_5 = 0x0010,
+  SELFTEST_GPS_CHANNEL_6 = 0x0020,
+  SELFTEST_GPS_1_KHZ = 0x0040,
+  SELFTEST_GPS_ROM_LOW_BYTE = 0x0080,
+  SELFTEST_GPS_ROM_HIGH_BYTE = 0x0100,
+  SELFTEST_GPS_RAM_LOW_BYTE = 0x0200,
+  SELFTEST_GPS_RAM_HIGH_BYTE = 0x0400,
+  SELFTEST_GPS_EEPROM = 0x0800,
+  SELFTEST_GPS_DCXO = 0x1000,
+  SELFTEST_GPS_RTC = 0x2000,
+  SELFTEST_GPS_NO_ANSWER = 0x4000,
+  SELFTEST_GPS_TIMED_OUT = 0x8000,
+} selftest_gps_failure;
+
+/* selftest_results.power, the supplies out of range, as supplies_test
+ * sets them (0x18546). */
+typedef enum __attribute__((packed)) selftest_power_failure {
+  SELFTEST_POWER_5V = 0x01,
+  SELFTEST_POWER_P15V = 0x02,
+  SELFTEST_POWER_M15V = 0x04,
+} selftest_power_failure;
+
 /* The self-tests' results, at 0x100c24: each test's word nonzero if it
  * failed, and what selftest_run reports for test n, 0 to 13.  The
  * start-up clear begins at 0x100c3c, so the reset code's results
  * before it (CPU, RAM, UART) and the rest up to the interpolator's
  * survive a warm restart. */
 typedef struct selftest_results {
-  int16_t cpu;  /* +0x00: the reset code's CPU test; lights OP4 */
-  uint16_t ram; /* +0x02: the RAM test's, bit 0 a pattern, bit 1 an address
-                   line; lights OP5 */
+  int16_t cpu;  /* +0x00: the reset code's CPU test, selftest_failure; lights
+                   OP4 */
+  uint16_t ram; /* +0x02: the RAM test's, selftest_ram_failure's bits; lights
+                   OP5 */
   uint16_t ram_data_bits; /* +0x04: the bits that failed a pattern, both halves
                              of a long ORed */
   uint32_t ram_address_lines; /* +0x06: the address lines that alias */
-  int16_t
-      uart; /* +0x0a: duart_early_init's IVR and loopback checks; lights OP6 */
+  int16_t uart;      /* +0x0a: duart_early_init's IVR and loopback checks,
+                        selftest_uart_failure's bits; lights OP6 */
   uint8_t lamp_mask; /* +0x0c: the DUART output bits the failures reset, which
                         duart_init writes back */
   uint8_t field_0d;
-  uint16_t summary;     /* +0x0e: selftest_summary's failure flags as bits */
-  int16_t eeprom;       /* +0x10 */
-  int16_t fpga;         /* +0x12: the FPGA's counters, counter_selftest */
-  int16_t gps;          /* +0x14: the receiver's @@Ca result, its bits as the VP
-                           reference gives them */
-  int16_t interpolator; /* +0x16 */
+  uint16_t summary; /* +0x0e: selftest_summary_bit's */
+  int16_t eeprom;   /* +0x10: selftest_failure */
+  int16_t
+      fpga; /* +0x12: the FPGA's counters, counter_selftest; selftest_failure */
+  int16_t
+      gps; /* +0x14: the receiver's @@Ca result, selftest_gps_failure's bits */
+  int16_t interpolator;            /* +0x16: selftest_failure */
   uint8_t interpolator_calibrated; /* +0x18: 1 once a calibration succeeded */
   uint8_t interpolator_tries; /* +0x19: the calibrations it took, up to 20 */
   uint16_t interpolator_readings[2]; /* +0x1a: both ends' readings,
                                         interpolator_sample_test's */
-  uint8_t field_1e;
+  uint8_t abort;   /* +0x1e: set to stop a test running, selftest_abort */
   uint8_t running; /* +0x1f: set while selftest_execute runs a test */
-  int16_t power;   /* +0x20: the 5 V, +15 V and -15 V supplies */
-  int16_t internal_reference; /* +0x22: the internal 1PPS's count */
-  int16_t qspi; /* +0x24: the QSPI's devices: ADC, DACs, FPGA, EFC */
+  int16_t power;   /* +0x20: the 5 V, +15 V and -15 V supplies,
+                      selftest_power_failure's bits */
+  int16_t internal_reference; /* +0x22: the internal 1PPS's, selftest_failure */
+  int16_t qspi; /* +0x24: the QSPI's devices, selftest_qspi_failure's bits */
   uint8_t field_26[14];
   uint8_t passed; /* +0x34: 1 unless a test selftest_print_failure ran failed */
   uint8_t field_35;
@@ -718,8 +835,8 @@ typedef struct selftest_results {
                           :DIAGnostic:TEST? report */
   uint32_t details[2]; /* +0x3a: the RAM test's bits and lines, or the
                           interpolator's tries and outcome or readings */
-  uint8_t test;        /* +0x42: the test selftest_run was asked for */
-  uint8_t in_run;      /* +0x43: set during selftest_run; nothing reads it */
+  selftest_test_number test; /* +0x42: the test selftest_run was asked for */
+  uint8_t in_run; /* +0x43: set during selftest_run; nothing reads it */
 } selftest_results;
 
 /* Who sends a GPS request (gps_request_entry.sender), so that its result

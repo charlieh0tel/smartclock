@@ -100,8 +100,6 @@ void duart_counter_test(void) {
   static const uint16_t COUNTER_MOST = 0xf8cc;
   static const uint32_t PRIORITY_HIGHEST = 0xff;
   static const uint8_t BYTE_BITS = 8;
-  /* The DUART self-test's bit in selftest.uart. */
-  static const int16_t TEST_COUNTER_FAILED = 0x02;
   uint8_t priority;
   uint8_t upper;
   uint8_t lower;
@@ -125,7 +123,7 @@ void duart_counter_test(void) {
   task_set_priority(0, priority);
   count = upper << BYTE_BITS | lower;
   if (count > COUNTER_MOST || count < COUNTER_LEAST) {
-    selftest.uart |= TEST_COUNTER_FAILED;
+    selftest.uart |= SELFTEST_UART_COUNTER;
   }
 }
 
@@ -144,14 +142,12 @@ static void duart_ivr_test(void) {
   static const uint8_t IVR_PATTERN_1 = 0x55;
   static const uint8_t IVR_PATTERN_2 = 0xaa;
   static const uint8_t IVR_VECTOR = 0x43;
-  /* The DUART self-test's bit in selftest.uart. */
-  static const int16_t TEST_IVR_FAILED = 0x01;
 
   if (!duart_ivr_holds(IVR_PATTERN_1)) {
-    selftest.uart |= TEST_IVR_FAILED;
+    selftest.uart |= SELFTEST_UART_REGISTER;
   }
   if (!duart_ivr_holds(IVR_PATTERN_2)) {
-    selftest.uart |= TEST_IVR_FAILED;
+    selftest.uart |= SELFTEST_UART_REGISTER;
   }
   duart.ivr = IVR_VECTOR;
 }

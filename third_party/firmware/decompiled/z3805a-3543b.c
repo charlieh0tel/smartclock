@@ -2686,7 +2686,65 @@ typedef void (selftest_test)(struct char_slot);
 
 typedef selftest_test *selftest_entry;
 
+typedef enum __attribute__((packed)) selftest_failure {
+    SELFTEST_FAILED=1
+} selftest_failure;
+
+typedef enum __attribute__((packed)) selftest_gps_failure {
+    SELFTEST_GPS_CHANNEL_1=1,
+    SELFTEST_GPS_CHANNEL_2=2,
+    SELFTEST_GPS_CHANNEL_3=4,
+    SELFTEST_GPS_CHANNEL_4=8,
+    SELFTEST_GPS_CHANNEL_5=16,
+    SELFTEST_GPS_CHANNEL_6=32,
+    SELFTEST_GPS_1_KHZ=64,
+    SELFTEST_GPS_ROM_LOW_BYTE=128,
+    SELFTEST_GPS_ROM_HIGH_BYTE=256,
+    SELFTEST_GPS_RAM_LOW_BYTE=512,
+    SELFTEST_GPS_RAM_HIGH_BYTE=1024,
+    SELFTEST_GPS_EEPROM=2048,
+    SELFTEST_GPS_DCXO=4096,
+    SELFTEST_GPS_RTC=8192,
+    SELFTEST_GPS_NO_ANSWER=16384,
+    SELFTEST_GPS_TIMED_OUT=32768
+} selftest_gps_failure;
+
+typedef enum __attribute__((packed)) selftest_power_failure {
+    SELFTEST_POWER_5V=1,
+    SELFTEST_POWER_P15V=2,
+    SELFTEST_POWER_M15V=4
+} selftest_power_failure;
+
+typedef enum __attribute__((packed)) selftest_qspi_failure {
+    SELFTEST_QSPI_ADC=2,
+    SELFTEST_QSPI_HEX_DAC=4,
+    SELFTEST_QSPI_FPGA=64,
+    SELFTEST_QSPI_EFC=128
+} selftest_qspi_failure;
+
+typedef enum __attribute__((packed)) selftest_ram_failure {
+    SELFTEST_RAM_PATTERN=1,
+    SELFTEST_RAM_ADDRESS_LINE=2
+} selftest_ram_failure;
+
 typedef struct selftest_results selftest_results, *Pselftest_results;
+
+typedef enum __attribute__((packed)) selftest_test_number {
+    SELFTEST_TEST_ALL=0,
+    SELFTEST_TEST_DISPLAY=1,
+    SELFTEST_TEST_PROCESSOR=2,
+    SELFTEST_TEST_RAM=3,
+    SELFTEST_TEST_EEPROM=4,
+    SELFTEST_TEST_UART=5,
+    SELFTEST_TEST_QSPI=6,
+    SELFTEST_TEST_FPGA=7,
+    SELFTEST_TEST_INTERPOLATOR=8,
+    SELFTEST_TEST_INTERNAL_REFERENCE=9,
+    SELFTEST_TEST_GPS=10,
+    SELFTEST_TEST_POWER=11,
+    SELFTEST_TEST_INTERPOLATOR_CALIBRATION=12,
+    SELFTEST_TEST_INTERPOLATOR_SAMPLE=13
+} selftest_test_number;
 
 struct selftest_results {
     int16_t cpu;
@@ -2704,7 +2762,7 @@ struct selftest_results {
     uint8_t interpolator_calibrated;
     uint8_t interpolator_tries;
     uint16_t interpolator_readings[2];
-    uint8_t field_1e;
+    uint8_t abort;
     uint8_t running;
     int16_t power;
     int16_t internal_reference;
@@ -2714,9 +2772,31 @@ struct selftest_results {
     uint8_t field_35;
     uint32_t result;
     uint32_t details[2];
-    uint8_t test;
+    enum selftest_test_number test;
     uint8_t in_run;
 };
+
+typedef enum __attribute__((packed)) selftest_summary_bit {
+    SELFTEST_SUMMARY_CPU=2,
+    SELFTEST_SUMMARY_RAM=4,
+    SELFTEST_SUMMARY_EEPROM=8,
+    SELFTEST_SUMMARY_UART=16,
+    SELFTEST_SUMMARY_QSPI=32,
+    SELFTEST_SUMMARY_FPGA=64,
+    SELFTEST_SUMMARY_INTERPOLATOR=128,
+    SELFTEST_SUMMARY_INTERNAL_REFERENCE=256,
+    SELFTEST_SUMMARY_GPS=512,
+    SELFTEST_SUMMARY_POWER=1024
+} selftest_summary_bit;
+
+typedef enum __attribute__((packed)) selftest_uart_failure {
+    SELFTEST_UART_REGISTER=1,
+    SELFTEST_UART_COUNTER=2,
+    SELFTEST_UART_CHANNEL_A_DATA=4,
+    SELFTEST_UART_CHANNEL_A_TIMEOUT=8,
+    SELFTEST_UART_CHANNEL_B_DATA=16,
+    SELFTEST_UART_CHANNEL_B_TIMEOUT=32
+} selftest_uart_failure;
 
 typedef struct serial_ring serial_ring, *Pserial_ring;
 
@@ -3226,7 +3306,15 @@ _Static_assert(sizeof(scpi_token_block) == 6, "scpi_token_block");
 _Static_assert(sizeof(scpi_token_non_decimal) == 6, "scpi_token_non_decimal");
 _Static_assert(sizeof(scpi_token_string) == 6, "scpi_token_string");
 _Static_assert(sizeof(scpi_unit) == 6, "scpi_unit");
+_Static_assert(sizeof(selftest_failure) == 1, "selftest_failure");
+_Static_assert(sizeof(selftest_gps_failure) == 2, "selftest_gps_failure");
+_Static_assert(sizeof(selftest_power_failure) == 1, "selftest_power_failure");
+_Static_assert(sizeof(selftest_qspi_failure) == 1, "selftest_qspi_failure");
+_Static_assert(sizeof(selftest_ram_failure) == 1, "selftest_ram_failure");
 _Static_assert(sizeof(selftest_results) == 68, "selftest_results");
+_Static_assert(sizeof(selftest_summary_bit) == 2, "selftest_summary_bit");
+_Static_assert(sizeof(selftest_test_number) == 1, "selftest_test_number");
+_Static_assert(sizeof(selftest_uart_failure) == 1, "selftest_uart_failure");
 _Static_assert(sizeof(serial_baud) == 1, "serial_baud");
 _Static_assert(sizeof(serial_parity) == 1, "serial_parity");
 _Static_assert(sizeof(serial_ring) == 258, "serial_ring");
@@ -5925,7 +6013,7 @@ void selftest_interpolator_sample(char_slot run);
 void selftest_begin(void);
 void selftest_end(void);
 bool selftest_may_report(char param_1);
-void selftest_execute(char param_1);
+void selftest_execute(selftest_test_number test);
 char debug_is_enabled(void);
 void selftest_report_fail(int32_t param_1,char *param_2,char param_3);
 void format_binary(uint32_t value,char *text,int32_t digits);
@@ -23284,6 +23372,7 @@ __asm__(
 );
 
 /* 00017750 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* sums a ROM's even and odd byte lanes, one checksum for each chip; called by nothing (a long
    count, 0x17758, whose low word less 2 counts dbf, 0x17774) */
@@ -23313,8 +23402,10 @@ uint32_t rom_lane_checksum(uint8_t *rom,uint32_t count)
   return uVar4 & 0xff | (uVar3 & 0xff) << 8 | (uVar4 & 0xff00) << 8 | (uVar3 & 0xff00) << 0x10;
 }
 
+#endif
 
 /* 000177ac */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* runs each self-test in the list at 0x17fe0 */
 
@@ -23333,8 +23424,10 @@ void selftest_run_all(void)
   return;
 }
 
+#endif
 
 /* 000177cc */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* runs each self-test in the list at 0x17fe0, counting watchdog_pll before each */
 
@@ -23354,8 +23447,10 @@ void selftest_run_all_counted(void)
   return;
 }
 
+#endif
 
 /* 000177fa */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test's failure flags as bits; reports status event 4 on a failure and 5 on none */
 
@@ -23405,8 +23500,10 @@ void selftest_summary(void)
   return;
 }
 
+#endif
 
 /* 00017892 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero
    argument, then summarizes and reports any failures */
@@ -23414,7 +23511,7 @@ void selftest_summary(void)
 void selftest_all(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char enabled;
   
   if (run.value == 0) {
@@ -23423,8 +23520,8 @@ void selftest_all(char_slot run)
   else {
     selftest_run_all_counted();
     selftest_summary();
-    iVar1 = selftest_aborted();
-    if ((iVar1 == 0) && (selftest.summary != 0)) {
+    aborted = selftest_aborted();
+    if ((aborted == 0) && (selftest.summary != 0)) {
       enabled = debug_is_enabled();
       if (enabled != 0) {
         selftest_report_fail((uint32_t)selftest.summary,"ALL:",0);
@@ -23434,8 +23531,10 @@ void selftest_all(char_slot run)
   return;
 }
 
+#endif
 
 /* 000178e0 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test of the time interpolator
    entry 8; "Interpolator: A, MRC mode" */
@@ -23443,12 +23542,12 @@ void selftest_all(char_slot run)
 void selftest_interpolator(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char cVar2;
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       interpolator_selftest();
     }
   }
@@ -23462,8 +23561,10 @@ void selftest_interpolator(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017946 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test of the internal reference
    entry 9; "Internal reference:" */
@@ -23471,12 +23572,12 @@ void selftest_interpolator(char_slot run)
 void selftest_internal_reference(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char cVar2;
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       internal_pps_test();
     }
   }
@@ -23490,8 +23591,10 @@ void selftest_internal_reference(char_slot run)
   return;
 }
 
+#endif
 
 /* 000179ac */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test of system RAM, its data and address lines
    entry 3; "System RAM: D15-D0:", "adr line A18-A1:" */
@@ -23499,15 +23602,15 @@ void selftest_internal_reference(char_slot run)
 void selftest_ram(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char cVar2;
   char acStack_64 [19];
   char acStack_51 [17];
   char acStack_40 [60];
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       ram_pattern_test_locked();
     }
   }
@@ -23526,8 +23629,10 @@ void selftest_ram(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017a96 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test of the CPU
    the self-test table 0x18458's entry 2; "CPU:" */
@@ -23535,13 +23640,13 @@ void selftest_ram(char_slot run)
 void selftest_cpu(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char cVar2;
   char acStack_40 [60];
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       cpu_register_test();
     }
   }
@@ -23556,8 +23661,10 @@ void selftest_cpu(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017b16 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test of the EEPROM
    entry 4; "EEPROM:" */
@@ -23565,13 +23672,13 @@ void selftest_cpu(char_slot run)
 void selftest_eeprom(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char cVar2;
   char acStack_40 [60];
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       selftest_nv_slot();
     }
   }
@@ -23586,8 +23693,10 @@ void selftest_eeprom(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017b96 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test of the QSPI's devices: the ADC, the DACs, the FPGA and the EFC
    entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC" */
@@ -23595,12 +23704,12 @@ void selftest_eeprom(char_slot run)
 void selftest_qspi(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char cVar2;
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       selftest_qspi_run();
     }
   }
@@ -23617,6 +23726,7 @@ void selftest_qspi(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017c3e */
 #if 0 /* the decompiler's reading; rewritten in selftest.c */
@@ -23627,12 +23737,12 @@ void selftest_qspi(char_slot run)
 void selftest_fpga(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char cVar2;
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       counter_selftest();
     }
   }
@@ -23649,25 +23759,28 @@ void selftest_fpga(char_slot run)
 #endif
 
 /* 00017ca4 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* runs the lamp test unless the self-test has been aborted */
 
 void selftest_lamps(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       lamp_test();
     }
   }
   return;
 }
 
+#endif
 
 /* 00017cbe */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test of the DUART: its registers, counter and both channels
    entry 5; "UART: register read/write", "channel A data" */
@@ -23675,12 +23788,12 @@ void selftest_lamps(char_slot run)
 void selftest_uart(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char cVar2;
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       duart_test();
     }
   }
@@ -23699,8 +23812,10 @@ void selftest_uart(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017d94 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test of the GPS engine, reading its own self-test's result bits
    entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits */
@@ -23738,8 +23853,10 @@ void selftest_gps(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017f2c */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the self-test of the 5 V, 15 V and -15 V supplies
    entry 11; "POWER: 5V", "15V", "-15V" */
@@ -23747,12 +23864,12 @@ void selftest_gps(char_slot run)
 void selftest_power(char_slot run)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char cVar2;
   
   if (run.value == 1) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       supplies_test();
     }
   }
@@ -23768,8 +23885,10 @@ void selftest_power(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017fc0 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* on selftest_execute's second pass, its argument 1, runs interpolator_selftest
    the self-test table 0x18458's entry 12 */
@@ -23783,8 +23902,10 @@ void selftest_interpolator_calibration(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017fd0 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* on selftest_execute's second pass, its argument 1, runs interpolator_sample_test
    entry 13 */
@@ -23798,48 +23919,56 @@ void selftest_interpolator_sample(char_slot run)
   return;
 }
 
+#endif
 
 /* 000182c4 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* clears selftest_abort before a test */
 
 void selftest_begin(void)
 
 {
-  selftest.field_1e = 0;
+  selftest.abort = 0;
   return;
 }
 
+#endif
 
 /* 000182cc */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* clears selftest_abort after a test */
 
 void selftest_end(void)
 
 {
-  selftest.field_1e = 0;
+  selftest.abort = 0;
   return;
 }
 
+#endif
 
 /* 000182d4 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* true for mode 0 or when the test was not aborted */
 
 bool selftest_may_report(char param_1)
 
 {
-  return param_1 == 0 || selftest.field_1e == 0;
+  return param_1 == 0 || selftest.abort == 0;
 }
 
+#endif
 
 /* 000182ec */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with
    selftest.running set */
 
-void selftest_execute(char param_1)
+void selftest_execute(selftest_test_number test)
 
 {
   code *pcVar1;
@@ -23849,7 +23978,7 @@ void selftest_execute(char param_1)
   
   selftest.running = 1;
   watchdog_pll = watchdog_pll + 1;
-  pcVar1 = (code *)selftest_table[param_1];
+  pcVar1 = (code *)selftest_table[(char)test];
   uVar3 = 0x18310;
   selftest_begin();
   uVar2 = 0x18316;
@@ -23863,6 +23992,7 @@ void selftest_execute(char param_1)
   return;
 }
 
+#endif
 
 /* 00018334 */
 #if 0 /* the decompiler's reading; rewritten in debug.c */
@@ -23884,13 +24014,13 @@ char debug_is_enabled(void)
 void selftest_report_fail(int32_t param_1,char *param_2,char param_3)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   char *format;
   char acStack_54 [80];
   
   if (param_1 != 0) {
-    iVar1 = selftest_aborted();
-    if (iVar1 == 0) {
+    aborted = selftest_aborted();
+    if (aborted == 0) {
       sprintf(acStack_54,"%s %s",param_2,"FAIL");
       if (param_3 == 0) {
         format = "%s\r\n";
@@ -23906,6 +24036,7 @@ void selftest_report_fail(int32_t param_1,char *param_2,char param_3)
 
 
 /* 00018396 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* a number as a string of binary digits */
 
@@ -23922,26 +24053,30 @@ void format_binary(uint32_t value,char *text,int32_t digits)
   return;
 }
 
+#endif
 
 /* 000183ce */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* selftest_abort is set */
 
 bool selftest_aborted(void)
 
 {
-  return selftest.field_1e != 0;
+  return selftest.abort != 0;
 }
 
+#endif
 
 /* 000183de */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* pauses so many ticks, stopping if the self-test is aborted */
 
 void selftest_delay(uint32_t param_1)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   uint32_t uVar2;
   
   uVar2 = 0;
@@ -23949,16 +24084,18 @@ void selftest_delay(uint32_t param_1)
     if (param_1 <= uVar2) {
       return;
     }
-    iVar1 = selftest_aborted();
-    if (iVar1 != 0) break;
+    aborted = selftest_aborted();
+    if (aborted != 0) break;
     psos_pause(1);
     uVar2 = uVar2 + 1;
   }
   return;
 }
 
+#endif
 
 /* 00018404 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* clears selftest.running and selftest_abort */
 
@@ -23966,13 +24103,15 @@ void selftest_init(void)
 
 {
   selftest.running = 0;
-  selftest.field_1e = 0;
+  selftest.abort = 0;
   selftest.passed = 1;
   return;
 }
 
+#endif
 
 /* 0001841a */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* if a test is running, sets selftest_abort and waits until it stops; returns whether one was */
 
@@ -23986,7 +24125,7 @@ uint8_t selftest_abort_wait(void)
   }
   else {
     uVar1 = 1;
-    selftest.field_1e = 1;
+    selftest.abort = 1;
     while (selftest.running != 0) {
       psos_pause(1);
     }
@@ -23994,8 +24133,10 @@ uint8_t selftest_abort_wait(void)
   return uVar1;
 }
 
+#endif
 
 /* 000184a4 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* counts the internal 1PPS over 1024 ticks; fails unless one to three came */
 
@@ -24014,8 +24155,10 @@ void internal_pps_test(void)
   return;
 }
 
+#endif
 
 /* 000184ee */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* lights every lamp, then none, then each in turn, then restores them */
 
@@ -24040,8 +24183,10 @@ void lamp_test(void)
   return;
 }
 
+#endif
 
 /* 00018546 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* checks the 5 V, +15 V and -15 V supplies within 10 percent */
 
@@ -24071,8 +24216,10 @@ void supplies_test(void)
   return;
 }
 
+#endif
 
 /* 000185e2 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* returns selftest.cpu, the reset code's CPU test
    selftest_print_failure's table 0x186b0, "PROC" */
@@ -24083,8 +24230,10 @@ uint32_t selftest_cpu_result(void)
   return (uint32_t)(uint16_t)selftest.cpu;
 }
 
+#endif
 
 /* 000185ec */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* returns selftest.ram, the reset code's RAM test
    table 0x186b0, "RAM" */
@@ -24095,8 +24244,10 @@ uint32_t selftest_ram_result(void)
   return (uint32_t)selftest.ram;
 }
 
+#endif
 
 /* 000185f6 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* returns selftest.eeprom
    table 0x186b0, "EEPROM" */
@@ -24107,6 +24258,7 @@ uint32_t selftest_eeprom_result(void)
   return (uint32_t)(uint16_t)selftest.eeprom;
 }
 
+#endif
 
 /* 00018600 */
 
@@ -24148,7 +24300,7 @@ void selftest_print_failure(char param_1)
   }
   selftest_summary();
   selftest.result = (uint32_t)selftest.summary;
-  selftest.test = 0;
+  selftest.test = SELFTEST_TEST_ALL;
   selftest.running = 0;
   if (selftest.passed == 0) {
     log_event(LOG_SELFTEST_FAILED);
@@ -24158,6 +24310,7 @@ void selftest_print_failure(char param_1)
 
 
 /* 0001876c */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* shifts three 12-bit words right one bit as a 36-bit number */
 
@@ -24182,8 +24335,10 @@ uint16_t shift_right_36(uint16_t *param_1)
   return uVar1 & 1;
 }
 
+#endif
 
 /* 000187aa */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* writes three words to QSPI device 2, the hex DAC, reads them back shifted and compares */
 
@@ -24228,8 +24383,10 @@ uint8_t qspi_hex_dac_test(void)
   return uVar2;
 }
 
+#endif
 
 /* 00018890 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* reads QSPI device 1, the ADC, and checks its status bits (a char result, 0x18910) */
 
@@ -24253,6 +24410,7 @@ uint8_t qspi_adc_test(void)
   return 0;
 }
 
+#endif
 
 /* 00018918 */
 #if 0 /* the decompiler's reading; rewritten in fpga.c */
@@ -24277,6 +24435,7 @@ uint8_t fpga_load_test(void)
 #endif
 
 /* 0001895e */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* writes 0x5555 and 0xaaaa to QSPI device 7, the EFC DAC, and reads each back */
 
@@ -24300,8 +24459,10 @@ bool qspi_efc_test(void)
   return local_10 == local_e && bVar1;
 }
 
+#endif
 
 /* 000189f2 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* runs the ADC, hex DAC, FPGA and EFC tests with interrupts held off, a failure bit for each */
 
@@ -24309,12 +24470,12 @@ void qspi_tests_run(void)
 
 {
   uint16_t sr;
-  uint8_t uVar2;
+  uint8_t passed;
   char cVar3;
   
   sr = set_interrupt_mask(0x700);
-  uVar2 = qspi_adc_test();
-  if (uVar2 == 0) {
+  passed = qspi_adc_test();
+  if (passed == 0) {
     selftest.qspi = selftest.qspi | 2;
   }
   set_interrupt_mask(sr);
@@ -24339,6 +24500,7 @@ void qspi_tests_run(void)
   return;
 }
 
+#endif
 
 /* 00018a74 */
 
@@ -24347,72 +24509,73 @@ void qspi_tests_run(void)
 void selftest_run(uint32_t param_1)
 
 {
-  selftest.test = (uint8_t)param_1;
+  selftest.test = (selftest_test_number)param_1;
   selftest.in_run = 1;
   selftest.result = 0;
   selftest.details[0] = 0;
   selftest.details[1] = 0;
-  if ((uint8_t)param_1 < 0xe) {
+  if ((selftest_test_number)param_1 <
+      (SELFTEST_TEST_INTERPOLATOR_CALIBRATION|SELFTEST_TEST_PROCESSOR)) {
                     /* WARNING: Switch is manually overridden */
-    switch((uint8_t)param_1) {
-    case 0:
-      selftest_execute(0);
+    switch((selftest_test_number)param_1) {
+    case SELFTEST_TEST_ALL:
+      selftest_execute(SELFTEST_TEST_ALL);
       selftest.result = (uint32_t)selftest.summary;
       break;
-    case 1:
-      selftest_execute(1);
+    case SELFTEST_TEST_DISPLAY:
+      selftest_execute(SELFTEST_TEST_DISPLAY);
       selftest.result = 0;
       break;
-    case 2:
-      selftest_execute(2);
+    case SELFTEST_TEST_PROCESSOR:
+      selftest_execute(SELFTEST_TEST_PROCESSOR);
       selftest.result = (uint32_t)(uint16_t)selftest.cpu;
       break;
-    case 3:
-      selftest_execute(3);
+    case SELFTEST_TEST_RAM:
+      selftest_execute(SELFTEST_TEST_RAM);
       selftest.result = (uint32_t)selftest.ram;
       selftest.details[0] = (uint32_t)selftest.ram_data_bits;
       selftest.details[1] = selftest.ram_address_lines;
       break;
-    case 4:
-      selftest_execute(4);
+    case SELFTEST_TEST_EEPROM:
+      selftest_execute(SELFTEST_TEST_EEPROM);
       selftest.result = (uint32_t)(uint16_t)selftest.eeprom;
       break;
-    case 5:
-      selftest_execute(5);
+    case SELFTEST_TEST_UART:
+      selftest_execute(SELFTEST_TEST_UART);
       selftest.result = (uint32_t)(uint16_t)selftest.uart;
       break;
-    case 6:
-      selftest_execute(6);
+    case SELFTEST_TEST_QSPI:
+      selftest_execute(SELFTEST_TEST_QSPI);
       selftest.result = (uint32_t)(uint16_t)selftest.qspi;
       break;
-    case 7:
-      selftest_execute(7);
+    case SELFTEST_TEST_FPGA:
+      selftest_execute(SELFTEST_TEST_FPGA);
       selftest.result = (uint32_t)(uint16_t)selftest.fpga;
       break;
-    case 8:
-      selftest_execute(8);
+    case SELFTEST_TEST_INTERPOLATOR:
+      selftest_execute(SELFTEST_TEST_INTERPOLATOR);
       selftest.result = (uint32_t)(uint16_t)selftest.interpolator;
       break;
-    case 9:
-      selftest_execute('\t');
+    case SELFTEST_TEST_INTERNAL_REFERENCE:
+      selftest_execute(SELFTEST_TEST_INTERNAL_REFERENCE);
       selftest.result = (uint32_t)(uint16_t)selftest.internal_reference;
       break;
-    case 10:
-      selftest_execute('\n');
+    case SELFTEST_TEST_GPS:
+      selftest_execute(SELFTEST_TEST_GPS);
       selftest.result = (uint32_t)(uint16_t)selftest.gps;
       break;
-    case 0xb:
-      selftest_execute(0xb);
+    case SELFTEST_TEST_POWER:
+      selftest_execute(SELFTEST_TEST_POWER);
       selftest.result = (uint32_t)(uint16_t)selftest.power;
       break;
-    case 0xc:
-      selftest_execute(0xc);
+    case SELFTEST_TEST_INTERPOLATOR_CALIBRATION:
+      selftest_execute(SELFTEST_TEST_INTERPOLATOR_CALIBRATION);
       selftest.result = (uint32_t)(uint16_t)selftest.interpolator;
       selftest.details[0] = (uint32_t)selftest.interpolator_tries;
       selftest.details[1] = (uint32_t)selftest.interpolator_calibrated;
       break;
-    case 0xd:
-      selftest_execute('\r');
+    case SELFTEST_TEST_INTERPOLATOR_SAMPLE:
+      selftest_execute(SELFTEST_TEST_INTERPOLATOR_SAMPLE);
       selftest.result = (uint32_t)(uint16_t)selftest.interpolator;
       selftest.details[0] = (uint32_t)selftest.interpolator_readings[0];
       selftest.details[1] = (uint32_t)selftest.interpolator_readings[1];
@@ -24426,17 +24589,18 @@ void selftest_run(uint32_t param_1)
 
 
 /* 00018c48 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* ram_pattern_test with interrupts held off, unless the self-test is aborted */
 
 void ram_pattern_test_locked(void)
 
 {
-  int32_t iVar1;
+  int32_t aborted;
   uint16_t sr;
   
-  iVar1 = selftest_aborted();
-  if (iVar1 == 0) {
+  aborted = selftest_aborted();
+  if (aborted == 0) {
     sr = set_interrupt_mask(0x700);
     ram_pattern_test();
     set_interrupt_mask(sr);
@@ -24444,8 +24608,10 @@ void ram_pattern_test_locked(void)
   return;
 }
 
+#endif
 
 /* 00018c74 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the EEPROM self-test's settings check: nv_slot_valid's result at 0x100c34 */
 
@@ -24460,8 +24626,10 @@ void selftest_nv_slot(void)
   return;
 }
 
+#endif
 
 /* 00018c8e */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* clears the QSPI failure bits and runs the tests */
 
@@ -24473,8 +24641,10 @@ void selftest_qspi_run(void)
   return;
 }
 
+#endif
 
 /* 00018c9c */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the QSPI tests, lighting OP7 on a failure; selftest_print_failure's check "QSPI" in its table at
    0x186b0 */
@@ -24490,6 +24660,7 @@ int16_t selftest_qspi_with_lamp(void)
   return selftest.qspi;
 }
 
+#endif
 
 /* 00018cc6 */
 #if 0 /* the decompiler's reading; rewritten in selftest.c */
@@ -24510,6 +24681,7 @@ uint32_t selftest_fpga_with_lamp(void)
 #endif
 
 /* 00018cec */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the interpolator test, lighting OP7 on a failure; the check "INTERP" in selftest_print_failure's
    table */
@@ -24525,8 +24697,10 @@ int16_t selftest_interpolator_with_lamp(void)
   return selftest.interpolator;
 }
 
+#endif
 
 /* 00018d16 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* the internal 1PPS test, lighting OP7 on a failure; the check "INT_REF" in
    selftest_print_failure's table */
@@ -24542,8 +24716,10 @@ int16_t selftest_internal_reference_with_lamp(void)
   return selftest.internal_reference;
 }
 
+#endif
 
 /* 00018d40 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* runs the lamp test and returns 0; the check "DISP", first in selftest_print_failure's table */
 
@@ -24554,8 +24730,10 @@ uint32_t lamp_test_command(void)
   return 0;
 }
 
+#endif
 
 /* 00018d4a */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* duart_test, lighting OP6 on a failure; returns selftest.uart
    table 0x186b0, "UART" */
@@ -24570,8 +24748,10 @@ uint32_t selftest_uart_with_lamp(void)
   return (uint32_t)(uint16_t)selftest.uart;
 }
 
+#endif
 
 /* 00018d70 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* gps_selftest_run, lighting OP7 on a failure; returns selftest.gps
    table 0x186b0, "GPS" */
@@ -24586,8 +24766,10 @@ uint32_t selftest_gps_with_lamp(void)
   return (uint32_t)(uint16_t)selftest.gps;
 }
 
+#endif
 
 /* 00018d96 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* supplies_test, lighting OP7 on a failure; returns selftest.power
    table 0x186b0, "POWER" */
@@ -24602,6 +24784,7 @@ uint32_t selftest_power_with_lamp(void)
   return (uint32_t)(uint16_t)selftest.power;
 }
 
+#endif
 
 /* 00018e62 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -50453,49 +50636,49 @@ int32_t scpi_query_DIAGnostic_TEST_RESult(void *parameters,void *response,scpi_c
 
 {
   *(uint32_t *)response = selftest.result;
-  if (selftest.test < 0xe) {
+  if (selftest.test < (SELFTEST_TEST_INTERPOLATOR_CALIBRATION|SELFTEST_TEST_PROCESSOR)) {
                     /* WARNING: Switch is manually overridden */
     switch(selftest.test) {
-    case 0:
+    case SELFTEST_TEST_ALL:
       *(uint16_t *)((int32_t)response + 6) = 0;
       break;
-    case 1:
+    case SELFTEST_TEST_DISPLAY:
       *(uint16_t *)((int32_t)response + 6) = 1;
       break;
-    case 2:
+    case SELFTEST_TEST_PROCESSOR:
       *(uint16_t *)((int32_t)response + 6) = 9;
       break;
-    case 3:
+    case SELFTEST_TEST_RAM:
       *(uint16_t *)((int32_t)response + 6) = 0xc;
       break;
-    case 4:
+    case SELFTEST_TEST_EEPROM:
       *(uint16_t *)((int32_t)response + 6) = 2;
       break;
-    case 5:
+    case SELFTEST_TEST_UART:
       *(uint16_t *)((int32_t)response + 6) = 0xd;
       break;
-    case 6:
+    case SELFTEST_TEST_QSPI:
       *(uint16_t *)((int32_t)response + 6) = 0xb;
       break;
-    case 7:
+    case SELFTEST_TEST_FPGA:
       *(uint16_t *)((int32_t)response + 6) = 3;
       break;
-    case 8:
+    case SELFTEST_TEST_INTERPOLATOR:
       *(uint16_t *)((int32_t)response + 6) = 6;
       break;
-    case 9:
+    case SELFTEST_TEST_INTERNAL_REFERENCE:
       *(uint16_t *)((int32_t)response + 6) = 7;
       break;
-    case 10:
+    case SELFTEST_TEST_GPS:
       *(uint16_t *)((int32_t)response + 6) = 4;
       break;
-    case 0xb:
+    case SELFTEST_TEST_POWER:
       *(uint16_t *)((int32_t)response + 6) = 8;
       break;
-    case 0xc:
+    case SELFTEST_TEST_INTERPOLATOR_CALIBRATION:
       *(uint16_t *)((int32_t)response + 6) = 5;
       break;
-    case 0xd:
+    case SELFTEST_TEST_INTERPOLATOR_SAMPLE:
       *(uint16_t *)((int32_t)response + 6) = 10;
     }
   }

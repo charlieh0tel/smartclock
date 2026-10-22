@@ -9,11 +9,9 @@
 
 /* The loopback test on channel A, the GPS receiver's (0x1e2c0). */
 void duart_loopback_test_a(void) {
-  /* The DUART self-test's bit in selftest.uart. */
-  static const int16_t TEST_A_TIMEOUT = 0x08;
   const duart_loopback_channel channel = {
       &duart.a,     &duart_shadow.mr2a,    IMR_RXRDYA | IMR_TXRDYA,
-      &duarta.held, &duarta.loopback_test, TEST_A_TIMEOUT,
+      &duarta.held, &duarta.loopback_test, SELFTEST_UART_CHANNEL_A_TIMEOUT,
   };
 
   duart_loopback_test(&channel);
@@ -21,10 +19,7 @@ void duart_loopback_test_a(void) {
 
 /* The loopback test's receive on channel A (0x1e6be). */
 void duart_test_rx_a(void) {
-  /* The DUART self-test's bit in selftest.uart. */
-  static const int16_t TEST_A_MISMATCH = 0x04;
-
-  duart_test_receive(&duart.a, TEST_A_MISMATCH);
+  duart_test_receive(&duart.a, SELFTEST_UART_CHANNEL_A_DATA);
 }
 
 /* The loopback test's transmit on channel A (0x1e706). */

@@ -10,12 +10,6 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
-/* selftest.gps for an engine that never answered, and for one whose
- * acknowledgment timed out. */
-static const int16_t PLL_GPS_CONTROL_SELFTEST_NO_ANSWER = 0x4000;
-
-static const int16_t PLL_GPS_CONTROL_SELFTEST_TIMED_OUT = -0x8000;
-
 /* Ticks the self-test pauses between tries. */
 static const uint32_t PLL_GPS_CONTROL_RETRY_TICKS = 0x400;
 
@@ -72,7 +66,7 @@ static void pll_gps_control_selftest_send(int16_t code, int32_t* arguments) {
     tries--;
   }
   if (tries == 0) {
-    selftest.gps = PLL_GPS_CONTROL_SELFTEST_NO_ANSWER;
+    selftest.gps = SELFTEST_GPS_NO_ANSWER;
   }
 }
 
@@ -93,11 +87,11 @@ static void pll_gps_control_selftest_reply(uint8_t tries) {
   }
   if (tries == 0 || (reply.result != PLL_GPS_CONTROL_ACK_OK &&
                      reply.result != PLL_GPS_CONTROL_ACK_TIMED_OUT)) {
-    selftest.gps = PLL_GPS_CONTROL_SELFTEST_NO_ANSWER;
+    selftest.gps = SELFTEST_GPS_NO_ANSWER;
   } else if (reply.result == PLL_GPS_CONTROL_ACK_OK) {
     selftest.gps = gps.self_test;
   } else {
-    selftest.gps = PLL_GPS_CONTROL_SELFTEST_TIMED_OUT;
+    selftest.gps = SELFTEST_GPS_TIMED_OUT;
   }
 }
 
@@ -602,7 +596,7 @@ void gps_command_send(void) {
 static void pll_gps_control_diag_retry(uint8_t tries) {
   pll.gps_diag_substate++;
   if (pll.gps_diag_substate > tries) {
-    selftest.gps = PLL_GPS_CONTROL_SELFTEST_NO_ANSWER;
+    selftest.gps = SELFTEST_GPS_NO_ANSWER;
     pll.gps_diag_state = PLL_GPS_DIAG_SETTLE;
   }
 }
@@ -670,10 +664,10 @@ bool gps_diag_sequence(bool same_stage) {
         if (gps_ack_code == PLL_GPS_CONTROL_ACK_OK) {
           selftest.gps = gps.self_test;
         } else if (gps_ack_code == PLL_GPS_CONTROL_ACK_TIMED_OUT) {
-          selftest.gps = PLL_GPS_CONTROL_SELFTEST_TIMED_OUT;
+          selftest.gps = SELFTEST_GPS_TIMED_OUT;
         } else {
           task_dmessage("Error in DIAG GPS TST ack\r\n");
-          selftest.gps = PLL_GPS_CONTROL_SELFTEST_NO_ANSWER;
+          selftest.gps = SELFTEST_GPS_NO_ANSWER;
         }
         pll.gps_diag_state = PLL_GPS_DIAG_SETTLE;
       }

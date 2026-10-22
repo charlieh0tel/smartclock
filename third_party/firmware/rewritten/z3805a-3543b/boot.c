@@ -7,17 +7,9 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
-/* The boot code's DUART self-test bits in boot_selftest.uart, as the
- * primary's in selftest.uart (duart.c). */
-static const int16_t BOOT_TEST_IVR_FAILED = 0x01;
-
-static const int16_t BOOT_TEST_B_MISMATCH = 0x10;
-
-static const int16_t BOOT_TEST_B_TIMEOUT = 0x20;
-
 /* Sends "DUART" through channel B in local loopback, each character
- * read back against the text; a wrong one sets BOOT_TEST_B_MISMATCH, none
- * within the spins BOOT_TEST_B_TIMEOUT (0x400). */
+ * read back against the text; a wrong one sets SELFTEST_UART_CHANNEL_B_DATA,
+ * none within the spins SELFTEST_UART_CHANNEL_B_TIMEOUT (0x400). */
 void boot_duartb_loopback_check(void) {
   static const int32_t LOOPBACK_CHECK_SPINS = 3000;
   char* text = "DUART";
@@ -36,13 +28,13 @@ void boot_duartb_loopback_check(void) {
       char expected = *boot_loopback_expect_next++;
 
       if (duart.b.rb_tb != (uint8_t)expected) {
-        boot_selftest.uart |= BOOT_TEST_B_MISMATCH;
+        boot_selftest.uart |= SELFTEST_UART_CHANNEL_B_DATA;
       }
       if (*boot_loopback_send_next != 0) {
         duart.b.rb_tb = *boot_loopback_send_next++;
       }
     } else {
-      boot_selftest.uart |= BOOT_TEST_B_TIMEOUT;
+      boot_selftest.uart |= SELFTEST_UART_CHANNEL_B_TIMEOUT;
     }
   }
   duart.b.cr = CR_RESET_RECEIVER;
@@ -65,11 +57,11 @@ void boot_duart_early_init(void) {
   boot_selftest.uart = 0;
   duart.ivr = IVR_PATTERN_1;
   if (duart.ivr != IVR_PATTERN_1) {
-    boot_selftest.uart |= BOOT_TEST_IVR_FAILED;
+    boot_selftest.uart |= SELFTEST_UART_REGISTER;
   }
   duart.ivr = IVR_PATTERN_2;
   if (duart.ivr != IVR_PATTERN_2) {
-    boot_selftest.uart |= BOOT_TEST_IVR_FAILED;
+    boot_selftest.uart |= SELFTEST_UART_REGISTER;
   }
   duart.ivr = IVR_VECTOR;
   if (boot_selftest.uart == 0) {

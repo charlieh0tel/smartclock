@@ -7,12 +7,6 @@
  * this file after its own, so the types and prototypes it declares are
  * in scope; each function here keeps its generated prototype. */
 
-/* The DUART self-test's bits in selftest.uart that several functions
- * set; the rest are in the functions that set them. */
-static const int16_t DUART_TEST_B_MISMATCH = 0x10;
-
-static const int16_t DUART_TEST_B_TIMEOUT = 0x20;
-
 /* The loopback test on channel B, the host port (0x1e41a). */
 void duart_loopback_test_b(void) {
   const duart_loopback_channel channel = {
@@ -21,7 +15,7 @@ void duart_loopback_test_b(void) {
       IMR_RXRDYB | IMR_TXRDYB,
       &duartb.reconfiguring,
       &duartb.loopback_test,
-      DUART_TEST_B_TIMEOUT,
+      SELFTEST_UART_CHANNEL_B_TIMEOUT,
   };
 
   duart_loopback_test(&channel);
@@ -29,7 +23,7 @@ void duart_loopback_test_b(void) {
 
 /* The loopback test's receive on channel B (0x1e6e2). */
 void duart_test_rx_b(void) {
-  duart_test_receive(&duart.b, DUART_TEST_B_MISMATCH);
+  duart_test_receive(&duart.b, SELFTEST_UART_CHANNEL_B_DATA);
 }
 
 /* The loopback test's transmit on channel B (0x1e736). */
@@ -56,13 +50,13 @@ void duartb_loopback_check(void) {
       char expected = *loopback_expect_next++;
 
       if (duart.b.rb_tb != expected) {
-        selftest.uart |= DUART_TEST_B_MISMATCH;
+        selftest.uart |= SELFTEST_UART_CHANNEL_B_DATA;
       }
       if (*loopback_send_next != 0) {
         duart.b.rb_tb = *loopback_send_next++;
       }
     } else {
-      selftest.uart |= DUART_TEST_B_TIMEOUT;
+      selftest.uart |= SELFTEST_UART_CHANNEL_B_TIMEOUT;
     }
   }
   duart.b.cr = CR_RESET_RECEIVER;

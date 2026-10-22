@@ -786,26 +786,25 @@ int32_t scpi_query_DIAGnostic_TEMPerature(void* parameters, void* response,
 }
 
 /* The self-tests :TEST? names, by its choice's index, ALL to UART
- * (0x53b60), each selftest_run's test, 0 to 13: summary, display,
- * CPU, RAM, EEPROM, UART, QSPI, FPGA, interpolator, internal reference,
- * GPS, power, IMRC, QMRC (the jump tables at 0x2bc4c and 0x2bcfe). */
+ * (0x53b60) (the jump tables at 0x2bc4c and 0x2bcfe). */
 #define SCPI_DIAGNOSTIC_TESTS 14
 
-static const uint8_t SCPI_DIAGNOSTIC_TEST_OF_CHOICE[SCPI_DIAGNOSTIC_TESTS] = {
-    0,  /* ALL: summary */
-    1,  /* DISP */
-    4,  /* EEPR */
-    7,  /* FPGA */
-    10, /* GPS */
-    12, /* IMRC */
-    8,  /* INT: interpolator */
-    9,  /* IREF: internal reference */
-    11, /* POW: power */
-    2,  /* PROC: CPU */
-    13, /* QMRC */
-    6,  /* QSPI */
-    3,  /* RAM */
-    5,  /* UART */
+static const selftest_test_number
+    SCPI_DIAGNOSTIC_TEST_OF_CHOICE[SCPI_DIAGNOSTIC_TESTS] = {
+        SELFTEST_TEST_ALL,
+        SELFTEST_TEST_DISPLAY,
+        SELFTEST_TEST_EEPROM,
+        SELFTEST_TEST_FPGA,
+        SELFTEST_TEST_GPS,
+        SELFTEST_TEST_INTERPOLATOR_CALIBRATION, /* IMRC */
+        SELFTEST_TEST_INTERPOLATOR,             /* INT */
+        SELFTEST_TEST_INTERNAL_REFERENCE,       /* IREF */
+        SELFTEST_TEST_POWER,
+        SELFTEST_TEST_PROCESSOR,
+        SELFTEST_TEST_INTERPOLATOR_SAMPLE, /* QMRC */
+        SELFTEST_TEST_QSPI,
+        SELFTEST_TEST_RAM,
+        SELFTEST_TEST_UART,
 };
 
 /* :DIAGnostic:TEST? test: runs it through pllc; its result and two
@@ -814,7 +813,7 @@ int32_t scpi_query_DIAGnostic_TEST(void* parameters, void* response,
                                    scpi_call* call) {
   /* The caller's D2: the test for a choice past the list, which the
    * parser never gives (0x2bc36). */
-  uint8_t test = (uint8_t)CPU_CALLERS_REGISTER(int32_t, "d2");
+  selftest_test_number test = CPU_CALLERS_REGISTER(int32_t, "d2");
   const struct {
     int16_t kind;    /* +0x00 */
     uint16_t choice; /* +0x02 */

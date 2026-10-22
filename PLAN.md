@@ -1450,6 +1450,11 @@ view cannot drift apart.  The library, bottom up:
      A rewrite that needs a field's coded values adds their enum to
      smartclock.h's marked proposed section, never one of its own; the
      lead moves it to its subject and types the fields on merging.
+     Wave 3: the self-tests, 47, all hand-written, with their test
+     numbers (`selftest_test_number`, which types `selftest_results.test`
+     and `selftest_execute`'s) and each test's failure bits in
+     `smartclock.h`, the DUART's and the GPS control's copies of them
+     gone.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

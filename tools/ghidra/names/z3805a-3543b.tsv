@@ -548,7 +548,7 @@
 0x1025ac	label	gpsx_arguments	structures.md	gpsx_send copies its four arguments here and points its gpsx_exchange message at them	uint32_t[4]
 0x46524	function	pll_stage_status	context	by pll.stage, sets two pll flags and the status happenings they imply (0x1a, 0x1b, 0x28, 0x2a, 0x2c), with log_event(6); pllp_task calls it at start and on stage changes
 0x18a74	function	selftest_run	context	runs self-test n, 0 to 13, through selftest_execute and copies its result cells
-0x182ec	function	selftest_execute	context	runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with selftest.running set
+0x182ec	function	selftest_execute	context	runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with selftest.running set	void selftest_execute(selftest_test_number test)
 0x18314	call	selftest_test	read	the selected self-test, run 0	void selftest_test(char_slot run)
 0x1831c	call	selftest_test	read	the selected self-test again, run 1	void selftest_test(char_slot run)
 0x1833c	function	selftest_report_fail	context	prints "%s FAIL" when its test failed and selftest_aborted is false

@@ -2,7 +2,7 @@
 
 The plan for regrouping the Z3805A 3543B's hand-written C
 (`third_party/firmware/rewritten/z3805a-3543b/`, README.md, "Hand-written
-C") by subject.  `tools/ghidra/names/modules.tsv` puts each of the 1300
+C") by subject.  `tools/ghidra/names/modules.tsv` puts each of the 1301
 functions the exported C (`third_party/firmware/decompiled/z3805a-3543b.c`)
 gives as C in a module, 387 hand-written among them; the assembly
 routines, the pForth kernel (`0x18ed6` to `0x1ad27`) and the installer's
@@ -21,7 +21,7 @@ for the calls under "Calls the wrong way".
 | platform | 180 | start-up, the CPU, the kernel's calls and tasks, the debug output, the C library and arithmetic |
 | devices | 131 | a module to a chip or a QSPI device |
 | services | 194 | what the tasks share: the spooler, the status model, the EEPROM's records and logs, time, the 1PPS and the health monitor |
-| applications | 795 | the tasks that make the receiver: SCPI, the loop, the GPS engine's protocol, the self-test, the status screen and the console |
+| applications | 796 | the tasks that make the receiver: SCPI, the loop, the GPS engine's protocol, the self-test, the status screen and the console |
 
 Where the approved layering named a module and the code says otherwise
 (these four names approved 2026-10-21: `platform/debug`,
@@ -141,7 +141,7 @@ Where the approved layering named a module and the code says otherwise
 | `scpi/port` | 17 | the console port object, method table `0x29dd4`: `scpi_console_port`, `console_port_read`, `scpi_prompt`, the status byte and SRE methods, `status_prompt_refresh`; `status_byte` |
 | `scpi/lexer` | 9 | `scpi_scan_token`, numbers, units and suffixes (`scpi_apply_suffix`) |
 | `scpi/tree` | 9 | keyword lookup and header paths: `scpi_node_find`, `scpi_header_resolve` |
-| `scpi/parameters` | 18 | the `scpi_parse_*` parsers and the numeric get and set (`scpi_numeric_set`, 15 callers) |
+| `scpi/parameters` | 19 | the `scpi_parse_*` parsers and the numeric get and set (`scpi_numeric_set`, 15 callers) |
 | `scpi/validators` | 17 | the numeric descriptors' validators and step routines, which pllc's `validate_num` calls through the descriptors: the clamps, `round_float_to_step`, `load_long`, `load_double`; `report_clamped` |
 | `scpi/convert` | 8 | numbers to and from text: `scpi_real_to_text`, `scpi_number_to_*` (with the BCD routines in assembly, `0x24d42` to `0x254fe`) |
 | `scpi/format` | 21 | the response formatters, `scpi_format_response` |

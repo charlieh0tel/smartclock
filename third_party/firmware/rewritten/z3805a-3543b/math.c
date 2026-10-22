@@ -639,6 +639,30 @@ double pow(double x, double y) {
   return result.value;
 }
 
+/* Raises a floating-point exception for the soft-float library and the
+ * math routines: records its cause in float_status and returns the
+ * double to give, or, where float_control enables the cause, reports it
+ * (0x5e93c).  Variadic in name: whatever the code, it reads the
+ * LIBC_RAISE_OPERANDS longs after it, and D1 as its caller left it. */
+uint64_t float_raise(uint32_t code, ...) {
+  const uint32_t callers_d1 = CPU_CALLERS_REGISTER(uint32_t, "d1");
+  uint32_t operand[LIBC_RAISE_OPERANDS];
+  va_list list;
+
+  va_start(list, code);
+  libc_raise_operands(list, operand);
+  va_end(list);
+
+  const libc_raise_state state = {&float_status, float_control, &errno};
+  const libc_raised raised =
+      libc_float_raise(code, callers_d1, operand, LIBC_CALLERS_RETURN(), state);
+
+  if (raised.report) {
+    ((libc_raise_report*)float_exception_report)(code, raised.address);
+  }
+  return (uint64_t)raised.high << LIBC_WORD_BITS | raised.low;
+}
+
 /* Builds float_raise's report, "fp <cause>: <routine>", in
  * float_exception_message and stops with fatal_error_with_code
  * (libc.md, "Exception codes"); never returns (0x1412e).  The image

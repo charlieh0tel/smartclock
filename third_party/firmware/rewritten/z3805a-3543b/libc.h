@@ -11,6 +11,7 @@
  * a C operator, which gcc would hand to libgcc's; and the math routines
  * work on a double's bits, as the image's do, through union libc_double. */
 
+#include <stdarg.h>
 #include <stddef.h>
 
 /* A double's IEEE 754 bits.  The 68k is big-endian: the high word,
@@ -520,10 +521,19 @@ static int32_t libc_sprintf_put(char* text, int32_t size, int32_t count,
   return count;
 }
 
+/* The buffers the printf family formats into on its stack, as array
+ * sizes: printf's, printf_polled's and sci_printf's, and the debug and
+ * SCI polled routines' (0x1de96, 0x1ef90, 0x202f6). */
+#define LIBC_PRINTF_LENGTH 160
+#define LIBC_SHORT_PRINTF_LENGTH 80
+
 /* float_raise's code (libc.md, "Exception codes"): the high word names
  * the routine, here the math library's (LIBC_RAISE_MATH and its
- * index), the low word the cause. */
+ * index), its bit 0 set for a routine of single precision (each odd
+ * entry of either table: ftoi, add32, acosf ...); the low word the
+ * cause. */
 enum {
+  LIBC_RAISE_SINGLE = 0x01,
   LIBC_RAISE_MATH = 0x80,
   LIBC_RAISE_FABS = 16,
   LIBC_RAISE_FREXP = 22,
@@ -615,6 +625,329 @@ static void libc_float_exception_message(uint8_t* message, uint32_t code) {
       libc_message_append(message, name[i]);
     }
   }
+}
+
+/* errno's value for an argument out of a function's domain. */
+static const int32_t LIBC_EDOM = 33;
+
+/* The longs float_raise reads after its code, as its callers push them:
+ * a NaN's bits; an underflow's shift count and its mantissa, a double's
+ * in three longs and a float's in two; and, for the math library, the
+ * address its report gives, after those.  An array size, so #define. */
+#define LIBC_RAISE_OPERANDS 4
+
+/* What float_raise's body decides: the double it returns, its bits in
+ * D0:D1, high first, and whether it reports instead, with the address
+ * the report prints as its code (float_exception_report). */
+typedef struct libc_raised {
+  uint32_t high;
+  uint32_t low;
+  bool report;
+  uint32_t address;
+} libc_raised;
+
+/* float_raise's state: the primary's or the installer's status, whose
+ * bits record the causes raised, and control, whose same bits enable
+ * each cause's report; and errno. */
+typedef struct libc_raise_state {
+  uint16_t* status;
+  uint16_t control;
+  int32_t* error;
+} libc_raise_state;
+
+/* The operands from float_raise's variable list, all LIBC_RAISE_OPERANDS
+ * of them whatever the cause, as the image reads them from its
+ * caller's frame. */
+static void libc_raise_operands(va_list list,
+                                uint32_t operand[LIBC_RAISE_OPERANDS]) {
+  for (int32_t i = 0; i < LIBC_RAISE_OPERANDS; i++) {
+    operand[i] = va_arg(list, uint32_t);
+  }
+}
+
+/* The address float_raise's caller returns to, which the image reads
+ * through the caller's frame pointer (0x5e99a), as one of its reports'
+ * addresses. */
+#define LIBC_CALLERS_RETURN() (((const uint32_t*)__builtin_frame_address(1))[1])
+
+/* float_exception_report as float_raise calls it: the image pushes the
+ * report's address before the code, which the report passes on as the
+ * long above its code (LIBC_FRAME_LONG_ABOVE_CODE), where the report's
+ * prototype has the code alone (0x5ec8c). */
+typedef void libc_raise_report(uint32_t code, uint32_t address);
+
+/* A long shifted right by a count, as lsr.l shifts by a register: the
+ * count modulo 64, nothing left from 32 on (MC68000PRM, LSR). */
+static uint32_t libc_shift_right(uint32_t value, uint32_t count) {
+  count &= 2 * LIBC_WORD_BITS - 1;
+  return count < (uint32_t)LIBC_WORD_BITS ? value >> count : 0;
+}
+
+/* The same left, as lsl.l does it. */
+static uint32_t libc_shift_left(uint32_t value, uint32_t count) {
+  count &= 2 * LIBC_WORD_BITS - 1;
+  return count < (uint32_t)LIBC_WORD_BITS ? value << count : 0;
+}
+
+/* A long rotated right by a count, as ror.l rotates by a register:
+ * the count modulo 64, a rotation by 32 the long as it was (MC68000PRM,
+ * ROL, ROR). */
+static uint32_t libc_rotate_right(uint32_t value, uint32_t count) {
+  count &= LIBC_WORD_BITS - 1;
+  return count == 0 ? value
+                    : value >> count | value << (LIBC_WORD_BITS - count);
+}
+
+/* The same left, as rol.l does it. */
+static uint32_t libc_rotate_left(uint32_t value, uint32_t count) {
+  return libc_rotate_right(value,
+                           LIBC_WORD_BITS - (count & (LIBC_WORD_BITS - 1)));
+}
+
+/* Whether a result rounds up, to nearest with ties to even, by the
+ * bits shifted out of it, its guard bit at the top of guard and its
+ * sticky bits below, and the long whose bit 0 is its last (0x5ea44,
+ * 0x5eacc). */
+static bool libc_raise_rounds_up(uint32_t guard, uint32_t last) {
+  static const uint32_t GUARD = 0x80000000u;
+
+  return (guard & GUARD) != 0 && ((guard & ~GUARD) != 0 || (last & 1) != 0);
+}
+
+/* An infinity of a routine's precision, a float's in the high long
+ * alone (0x5eb90, 0x5eb9a). */
+static void libc_raise_infinity(libc_raised* raised, bool single) {
+  static const uint32_t SINGLE_INFINITY = 0x7f800000;
+  static const uint32_t DOUBLE_INFINITY = 0x7ff00000;
+
+  raised->report = false;
+  raised->high = single ? SINGLE_INFINITY : DOUBLE_INFINITY;
+  if (!single) {
+    raised->low = 0;
+  }
+}
+
+/* An underflow's result, a double's mantissa shifted right by an
+ * exponent's count, with its guard and sticky bits (0x5e990 to
+ * 0x5ea32): a count below 32 shifts the three longs as one, its bits
+ * shifted out of the lowest kept as sticky; 32 moves each down a long;
+ * up to 55 does both; and anything past 55, which leaves nothing, the
+ * caller makes zero.  The count is compared as the low word of its long
+ * and shifts by its low 6 bits, as the image's does; the implicit one
+ * is set and then cleared again, so that a result rounded up into it
+ * keeps it. */
+static uint32_t libc_raise_double_underflow(libc_raised* raised, uint32_t count,
+                                            uint32_t high, uint32_t low,
+                                            uint32_t sticky) {
+  static const uint32_t HIGH_MANTISSA = 0x000fffff;
+  static const uint32_t IMPLICIT_ONE = 0x00100000;
+  const int16_t places = count;
+  uint32_t guard;
+
+  high = (high & HIGH_MANTISSA) | IMPLICIT_ONE;
+  if (places != LIBC_WORD_BITS) {
+    const uint32_t shift =
+        places < LIBC_WORD_BITS ? count : count - LIBC_WORD_BITS;
+    const uint32_t kept = libc_shift_right(~0u, shift);
+    const uint32_t rotated_high = libc_rotate_right(high, shift);
+    const uint32_t rotated_low = libc_rotate_right(low, shift);
+
+    high = rotated_high & kept;
+    low = (rotated_low & kept) | (rotated_high & ~kept);
+    guard = libc_shift_right(sticky, shift) | (rotated_low & ~kept);
+    if ((sticky & libc_rotate_left(~kept, shift)) != 0) {
+      guard |= 1;
+    }
+    sticky = guard;
+  }
+  if (places >= LIBC_WORD_BITS) {
+    guard = low | (sticky != 0);
+    low = high;
+    high = 0;
+  }
+  raised->high = high & ~IMPLICIT_ONE;
+  raised->low = low;
+  return guard;
+}
+
+/* The same for a float's mantissa, its high long, and the long after it
+ * (0x5ea7c to 0x5eaba): the bits shifted out of the mantissa are the
+ * guard's top, those out of the long after it below them, and what of
+ * that long the shift keeps is left as the result's low long. */
+static uint32_t libc_raise_single_underflow(libc_raised* raised, uint32_t count,
+                                            uint32_t high, uint32_t after) {
+  static const uint32_t MANTISSA = 0x007fffff;
+  static const uint32_t IMPLICIT_ONE = 0x00800000;
+  const uint32_t shifted_out = ~libc_shift_left(~0u, count);
+
+  high = (high & MANTISSA) | IMPLICIT_ONE;
+  uint32_t guard = libc_shift_right(after, count) |
+                   libc_rotate_right(high & shifted_out, count);
+
+  if ((after & shifted_out) != 0) {
+    guard |= 1;
+  }
+  raised->high = libc_shift_right(high, count) & ~IMPLICIT_ONE;
+  raised->low = after & shifted_out;
+  return guard;
+}
+
+/* float_raise's and its installer copy's body (0x5e93c): records the
+ * cause in the state's status, sets errno for the math library's, and
+ * gives the double its caller returns, an infinity, the largest NaN, the
+ * operand quieted or an underflow's denormal, or, where the state's
+ * control enables the cause, the report.  low starts as callers_d1, the
+ * register as the caller left it with its low word the cause, which a
+ * float's infinity and its quieted NaN return beside their one long
+ * (0x5e948).  The report's address is, by the cause, an operand the math
+ * library passes, the address its caller's caller returns to,
+ * callers_return, or 0 for a code of no cause, chosen by the routine's
+ * bit 7 but for two: the signaling NaN's tests the cause's bit 7, the
+ * precision lost (0x5ec24), and an underflow's inexact report the
+ * result's (0x5ebe0). */
+static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
+                                    const uint32_t operand[LIBC_RAISE_OPERANDS],
+                                    uint32_t callers_return,
+                                    libc_raise_state state) {
+  static const uint32_t SINGLE_QUIET = 0x00400000;
+  static const uint32_t DOUBLE_QUIET = 0x00080000;
+  static const uint32_t LARGEST_NAN_HIGH = 0x7fffffff;
+  static const uint32_t LARGEST_NAN_LOW = 0xffffffff;
+  static const int16_t SINGLE_UNDERFLOW_MOST = 24;
+  static const int16_t DOUBLE_UNDERFLOW_MOST = 55;
+  static const uint32_t HIGH_WORD = 0xffff0000;
+  const uint16_t cause = code;
+  const uint16_t routine = code >> LIBC_WORD_BITS / 2;
+  const bool single = (routine & LIBC_RAISE_SINGLE) != 0;
+  const bool math = (routine & LIBC_RAISE_MATH) != 0;
+  /* the address an inexact result's report gives (0x5ebdc) */
+  const uint32_t inexact_address = math ? operand[0] : callers_return;
+  libc_raised raised = {.high = 0,
+                        .low = (callers_d1 & HIGH_WORD) | cause,
+                        .report = true,
+                        .address = inexact_address};
+
+  if ((cause & LIBC_CAUSE_SIGNALING_NAN) != 0) {
+    const uint32_t quiet = single ? SINGLE_QUIET : DOUBLE_QUIET;
+
+    raised.high = operand[0];
+    if (!single) {
+      raised.low = operand[1];
+    }
+    raised.address = operand[single ? 1 : 2];
+    if ((raised.high & quiet) != 0) {
+      raised.report = false;
+      return raised;
+    }
+    raised.high |= quiet;
+    *state.status |= LIBC_CAUSE_OPERAND_ERROR;
+    raised.report = (state.control & LIBC_CAUSE_OPERAND_ERROR) != 0;
+    if ((code & LIBC_CAUSE_PRECISION_LOST) == 0) {
+      raised.address = callers_return;
+    }
+  } else if ((cause & LIBC_CAUSE_OPERAND_ERROR) != 0) {
+    raised.address = operand[0];
+    *state.status |= LIBC_CAUSE_OPERAND_ERROR;
+    if (math) {
+      raised.address = callers_return;
+      *state.error = LIBC_EDOM;
+    }
+    raised.report = (state.control & LIBC_CAUSE_OPERAND_ERROR) != 0;
+    raised.high = LARGEST_NAN_HIGH;
+    raised.low = LARGEST_NAN_LOW;
+  } else if ((cause & LIBC_CAUSE_OVERFLOW) != 0) {
+    raised.address = operand[0];
+    *state.status |= LIBC_CAUSE_OVERFLOW | LIBC_CAUSE_INEXACT;
+    if (math) {
+      raised.address = callers_return;
+      *state.error = LIBC_ERANGE;
+    }
+    if ((state.control & LIBC_CAUSE_OVERFLOW) != 0) {
+      return raised;
+    }
+    if ((state.control & LIBC_CAUSE_INEXACT) != 0) {
+      raised.address = inexact_address;
+      return raised;
+    }
+    libc_raise_infinity(&raised, single);
+  } else if ((cause & LIBC_CAUSE_UNDERFLOW) != 0) {
+    const int16_t places = operand[0];
+
+    if (single) {
+      raised.address = math ? operand[2] << LIBC_WORD_BITS / 2 |
+                                  operand[3] >> LIBC_WORD_BITS / 2
+                            : callers_return;
+    } else {
+      raised.address = math ? operand[3] : callers_return;
+    }
+    if (places > (single ? SINGLE_UNDERFLOW_MOST : DOUBLE_UNDERFLOW_MOST)) {
+      /* nothing is left (0x5eafe) */
+      if (math) {
+        *state.error = LIBC_ERANGE;
+      }
+      raised.high = 0;
+      raised.low = 0;
+    } else if (single) {
+      const uint32_t guard = libc_raise_single_underflow(
+          &raised, operand[0], operand[1], operand[2]);
+
+      if (guard == 0) {
+        raised.report = false;
+        return raised;
+      }
+      *state.status |= LIBC_CAUSE_INEXACT;
+      if (libc_raise_rounds_up(guard, raised.high)) {
+        raised.high++;
+      }
+    } else {
+      const uint32_t guard = libc_raise_double_underflow(
+          &raised, operand[0], operand[1], operand[2], operand[3]);
+
+      if (guard == 0) {
+        raised.report = false;
+        return raised;
+      }
+      *state.status |= LIBC_CAUSE_INEXACT;
+      if (libc_raise_rounds_up(guard, raised.low) && ++raised.low == 0) {
+        raised.high++;
+      }
+    }
+    *state.status |= LIBC_CAUSE_UNDERFLOW | LIBC_CAUSE_INEXACT;
+    if ((state.control & LIBC_CAUSE_UNDERFLOW) != 0) {
+      return raised;
+    }
+    if ((state.control & LIBC_CAUSE_INEXACT) != 0) {
+      /* the inexact report's test of the routine's bit 7 reads the
+       * result's high long, which the image keeps where it kept the
+       * routine (0x5ebe0) */
+      raised.address =
+          (raised.high & LIBC_RAISE_MATH) != 0 ? operand[0] : callers_return;
+      return raised;
+    }
+    raised.report = false;
+  } else if ((cause & LIBC_CAUSE_DIVIDE_BY_ZERO) != 0) {
+    raised.address = operand[0];
+    *state.status |= LIBC_CAUSE_DIVIDE_BY_ZERO;
+    if (math) {
+      raised.address = callers_return;
+      *state.error = LIBC_ERANGE;
+    }
+    if ((state.control & LIBC_CAUSE_DIVIDE_BY_ZERO) != 0) {
+      return raised;
+    }
+    libc_raise_infinity(&raised, single);
+  } else if ((cause & LIBC_CAUSE_INEXACT) != 0) {
+    return raised;
+  } else if ((cause & LIBC_CAUSE_PRECISION_LOST) != 0) {
+    *state.status |= LIBC_CAUSE_PRECISION_LOST | LIBC_CAUSE_INEXACT;
+    raised.report =
+        (state.control & (LIBC_CAUSE_PRECISION_LOST | LIBC_CAUSE_INEXACT)) != 0;
+    raised.high = LARGEST_NAN_HIGH;
+    raised.low = LARGEST_NAN_LOW;
+  } else {
+    raised.address = 0;
+  }
+  return raised;
 }
 
 /* doprnt's state for the flags of a conversion, as it keeps them in one

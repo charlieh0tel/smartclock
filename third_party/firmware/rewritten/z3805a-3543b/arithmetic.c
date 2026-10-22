@@ -197,6 +197,21 @@ uint64_t int64_negate(int32_t high, int32_t low) {
   return -arithmetic_int64(high, low);
 }
 
+/* 0 if two 64-bit numbers are equal, else 1 if b - a, taken as
+ * int64_add(int64_negate(a), b) and wrapping, is not negative and -1 if
+ * it is: 1 for a below b, the reverse of a C comparator; nothing calls
+ * it (0x41086). */
+int32_t int64_compare(int64_t a, int64_t b) {
+  if (a == b) {
+    return 0;
+  }
+  const uint64_t negated = int64_negate(a >> ARITHMETIC_LONG_BITS, a);
+  const int64_t difference = int64_add(negated >> ARITHMETIC_LONG_BITS, negated,
+                                       b >> ARITHMETIC_LONG_BITS, b);
+
+  return difference < 0 ? -1 : 1;
+}
+
 /* A 64-bit number plus a signed long; nothing calls it (0x41132). */
 uint64_t int64_add_long(uint32_t addend, int32_t high, uint32_t low) {
   const int32_t signed_addend = addend;
@@ -436,6 +451,14 @@ static int16_t arithmetic_power_bisect(const double* table, double value,
  * -29 to 31; nothing calls it (0x1258a). */
 int16_t double_decimal_exponent(double value) {
   return arithmetic_power_bisect(powers_of_ten_double, value, true) -
+         ARITHMETIC_POWER_OF_TEN_LIMIT;
+}
+
+/* The power of ten a double's magnitude is not below, floor(log10),
+ * from -30 to 30, entry 0's for one below it; nothing calls it
+ * (0x12534). */
+int16_t double_decimal_exponent_floor(double value) {
+  return arithmetic_power_bisect(powers_of_ten_double, value, false) -
          ARITHMETIC_POWER_OF_TEN_LIMIT;
 }
 

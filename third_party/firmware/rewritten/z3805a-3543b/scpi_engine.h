@@ -313,3 +313,272 @@ static int32_t scpi_engine_call_handler(scpi_call* call, void** response) {
   }
   return handler(call->parameters, *response, call);
 }
+
+/* What a handler returns, beyond a condition, for scpi_interpret to
+ * act on (0x293e0 to 0x29410): call the common list's _TRG node, the
+ * user-defined trigger, in its place; set the header path back to the
+ * root; end the session, which :SYSTem:LANGuage's "PFORTH" and
+ * "INSTALL" return (scpi_system.c).  No handler of this image returns
+ * the first two. */
+enum {
+  SCPI_ENGINE_CALL_TRIGGER = -62,
+  SCPI_ENGINE_RESET_PATH = -61,
+  SCPI_ENGINE_SESSION_END = -60,
+};
+
+/* What a message's queries have responded so far, which the call
+ * record keeps (+0x2a): nothing, so that the first response is preceded
+ * by the output port's begin signal; a response, so that the next is
+ * preceded by a ';'; an indefinite response, after which every query
+ * is STATUS_SCPI_QUERY_AFTER_INDEFINITE (0x2943e to 0x294ac). */
+typedef enum __attribute__((packed)) scpi_engine_responding {
+  SCPI_ENGINE_NO_RESPONSE = 0,
+  SCPI_ENGINE_RESPONDING = 1,
+  SCPI_ENGINE_INDEFINITE = 2,
+} scpi_engine_responding;
+
+/* The output's value after a message's responses, above a character's,
+ * which the port's put writes as CR LF (0x29544). */
+static const int32_t SCPI_ENGINE_RESPONSE_END = 0x10a;
+
+/* The call record scpi_interpret keeps on its stack and gives each
+ * handler as its scpi_call (0x29322 to 0x29344): smartclock.h's
+ * scpi_call, then what the image keeps after it, which a handler may
+ * read through its call (the harness gives a handler's record the
+ * trees at +0x22 and +0x26). */
+typedef struct scpi_engine_record {
+  scpi_call call;                    /* +0x00 */
+  uint32_t result;                   /* +0x1e: scpi_interpret's result, -1
+                                        when its port fails, else unset */
+  scpi_child_list* main_tree;        /* +0x22 */
+  scpi_child_list* common_list;      /* +0x26 */
+  scpi_engine_responding responding; /* +0x2a */
+  uint8_t field_2b[9];               /* +0x2b: unset */
+  uint16_t field_34;                 /* +0x34: cleared */
+  uint32_t last_argument;            /* +0x36: scpi_interpret's last */
+} scpi_engine_record;
+
+_Static_assert(__builtin_offsetof(scpi_engine_record, last_argument) == 0x36,
+               "scpi_engine_record is the image's call record");
+
+/* The port's signal method, +0x28 of its methods, which smartclock.h
+ * types as a pointer: given one of scpi_interpret's codes, its error
+ * (scpi_console_return_zero gives 0). */
+typedef int32_t scpi_engine_signal_function(scpi_port* port,
+                                            const uint32_t* code);
+
+/* What scpi_interpret calls, the primary's routines or the installer's
+ * copies of them, and the codes it signals its ports with: a message's
+ * first response's begin, a message's end and the input's end. */
+typedef struct scpi_engine_routines {
+  void (*arena_init)(void* buffer, uint32_t size, scpi_arena** slot);
+  void* (*arena_current)(scpi_arena* arena);
+  void (*arena_set)(void* next, scpi_arena* arena);
+  scpi_node* (*trg_defined)(scpi_child_list* list, uint16_t* no_setter);
+  int32_t (*context_init)(scpi_context* context, scpi_port* input,
+                          uint32_t word, scpi_path* path, scpi_call* call,
+                          scpi_arena* arena, uint32_t field_1e,
+                          scpi_child_list* main_tree,
+                          scpi_child_list* common_list);
+  void (*path_reset)(scpi_path* path, scpi_child_list* list);
+  void (*skip_to_terminator)(scpi_port* input);
+  int32_t (*parse_message_unit)(scpi_context* parser, int16_t* reset_path);
+  int32_t (*call_handler)(scpi_call* call, void** response);
+  int32_t (*format_response)(scpi_port* output, scpi_response_item* items,
+                             scpi_call* call);
+  int16_t (*clear_bit)(status_model* status, int32_t condition);
+  uint32_t (*is_command_error)(int32_t condition);
+  uint32_t (*message_done)(void);
+  uint32_t (*input_closed)(void);
+  const uint32_t* response_begin_code;
+  const uint32_t* message_end_code;
+  const uint32_t* input_end_code;
+} scpi_engine_routines;
+
+/* Reports a condition to the status model; whether it is a command
+ * error, after which the rest of the message is skipped. */
+static bool scpi_engine_report(const scpi_engine_routines* routines,
+                               status_model* status, int32_t condition) {
+  routines->clear_bit(status, condition);
+  return routines->is_command_error(condition) != 0;
+}
+
+/* A port's signal method on a code. */
+static int32_t scpi_engine_signal(scpi_port* port, const uint32_t* code) {
+  return ((scpi_engine_signal_function*)port->methods->signal)(port, code);
+}
+
+/* Writes a query's response, after the begin signal or a ';', unless an
+ * indefinite one came before it in the message; false when formatting
+ * it fails, which it reports (0x29436 to 0x294ca). */
+static bool scpi_engine_respond(const scpi_engine_routines* routines,
+                                scpi_engine_record* record) {
+  scpi_port* output = record->call.output;
+
+  if (record->responding == SCPI_ENGINE_INDEFINITE) {
+    routines->clear_bit(record->call.status,
+                        STATUS_SCPI_QUERY_AFTER_INDEFINITE);
+    return true;
+  }
+  if (record->responding == SCPI_ENGINE_NO_RESPONSE) {
+    record->responding = SCPI_ENGINE_RESPONDING;
+    scpi_engine_signal(output, routines->response_begin_code);
+  } else {
+    output->methods->put(output, ';');
+  }
+  const int32_t formatted = routines->format_response(
+      output, record->call.node->response_items, &record->call);
+
+  if (formatted == SCPI_STATUS_INDEFINITE_RESPONSE) {
+    record->responding = SCPI_ENGINE_INDEFINITE;
+  } else if (formatted != 0) {
+    routines->clear_bit(record->call.status, formatted);
+    routines->message_done();
+    return false;
+  }
+  return true;
+}
+
+/* At a message's end: the done hook's and the end signal's errors
+ * reported, and the responses ended with SCPI_ENGINE_RESPONSE_END;
+ * whether a command error among them has the next message skipped to
+ * its end (0x294f2 to 0x2957e). */
+static bool scpi_engine_message_end(const scpi_engine_routines* routines,
+                                    scpi_engine_record* record) {
+  scpi_port* output = record->call.output;
+  status_model* status = record->call.status;
+  bool skip = false;
+  const int32_t done = routines->message_done();
+  const int32_t signalled =
+      scpi_engine_signal(output, routines->message_end_code);
+
+  if (signalled == 0) {
+    if (record->responding != SCPI_ENGINE_NO_RESPONSE) {
+      output->methods->put(output, SCPI_ENGINE_RESPONSE_END);
+    }
+  } else if (signalled != STATUS_SCPI_QUERY_DEADLOCKED) {
+    skip = scpi_engine_report(routines, status, signalled);
+  }
+  if (done != 0 && scpi_engine_report(routines, status, done)) {
+    skip = true;
+  }
+  return skip;
+}
+
+/* scpi_interpret's and its installer copy's body: parses each message
+ * unit of the input, calls its handler, writes a query's response and
+ * reports what fails, until a handler ends the session or the port
+ * fails (0x292d6).  handled is D3 as the caller left it, which holds
+ * the last handler's result, and which the image tests for the
+ * session's end after a message unit it called no handler for, the
+ * first too (0x29622).  The context's field_1e is a local the image
+ * never sets, and the result a handler's end of the session returns
+ * the record's, also unset (docs/firmware/quirks.md). */
+static uint32_t scpi_engine_interpret(const scpi_engine_routines* routines,
+                                      int32_t handled, scpi_port* input,
+                                      scpi_port* output, void* buffer,
+                                      uint32_t size, scpi_child_list* main_tree,
+                                      scpi_child_list* common_list,
+                                      status_model* status,
+                                      uint32_t last_argument) {
+  volatile uint32_t unset_field_1e;
+  scpi_arena* arena;
+  scpi_path path;
+  scpi_context context;
+  scpi_engine_record record;
+  uint16_t trigger_query;
+  int16_t reset_path = 1;
+  bool skip = false;
+
+  routines->arena_init(buffer, size, &arena);
+  void* const arena_start = routines->arena_current(arena);
+  scpi_node* const trigger = routines->trg_defined(common_list, &trigger_query);
+
+  record.call.input = input;
+  record.call.output = output;
+  record.call.status = status;
+  record.call.arena = arena;
+  record.main_tree = main_tree;
+  record.common_list = common_list;
+  record.field_34 = 0;
+  record.last_argument = last_argument;
+  routines->context_init(&context, input, 0, &path, &record.call, arena,
+                         unset_field_1e, main_tree, common_list);
+  for (;;) {
+    if (reset_path) {
+      record.responding = SCPI_ENGINE_NO_RESPONSE;
+      routines->path_reset(&path, main_tree);
+      routines->arena_set(arena_start, arena);
+    }
+    if (skip) {
+      routines->skip_to_terminator(input);
+      skip = false;
+    }
+    int32_t parsed = routines->parse_message_unit(&context, &reset_path);
+    bool calling = parsed == 0;
+
+    for (;;) {
+      if (calling) {
+        handled =
+            routines->call_handler(&record.call, (void**)&record.call.response);
+        if (handled == SCPI_ENGINE_CALL_TRIGGER) {
+          record.call.node = trigger;
+          record.call.query = trigger_query;
+          continue;
+        }
+        if (handled == SCPI_ENGINE_RESET_PATH) {
+          routines->path_reset(&path, main_tree);
+        } else if (handled != 0 && handled != SCPI_ENGINE_SESSION_END) {
+          if (scpi_engine_report(routines, status, handled) && !reset_path) {
+            skip = true;
+          }
+          record.call.query = 0;
+        }
+        if (record.call.query != 0 && !scpi_engine_respond(routines, &record)) {
+          reset_path = 1;
+          break;
+        }
+        routines->arena_set(arena_start, arena);
+      }
+      if (parsed == 0 || parsed == SCPI_STATUS_NO_PARAMETERS) {
+        if (reset_path && scpi_engine_message_end(routines, &record)) {
+          skip = true;
+        }
+        break;
+      }
+      handled = 0;
+      if (parsed == SCPI_STATUS_SKIPPED_END) {
+        /* the unit's handler is the trigger's (0x29592) */
+        parsed = 0;
+        reset_path = 1;
+        record.call.node = trigger;
+        record.call.query = trigger_query;
+        calling = true;
+        continue;
+      }
+      if (parsed == SCPI_STATUS_INPUT_CLOSED) {
+        scpi_engine_signal(input, routines->input_end_code);
+        routines->input_closed();
+      } else if (parsed == SCPI_STATUS_PORT_FAILED) {
+        handled = SCPI_ENGINE_SESSION_END;
+        record.result = -1;
+      } else {
+        if (scpi_engine_report(routines, status, parsed)) {
+          skip = true;
+          routines->message_done();
+          reset_path = 1;
+        }
+        if (parsed != STATUS_SCPI_QUERY_UNTERMINATED &&
+            parsed != STATUS_SCPI_QUERY_INTERRUPTED) {
+          break;
+        }
+        scpi_engine_signal(input, routines->input_end_code);
+      }
+      reset_path = 1;
+      break;
+    }
+    if (handled == SCPI_ENGINE_SESSION_END) {
+      return record.result;
+    }
+  }
+}

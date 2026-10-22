@@ -26,6 +26,43 @@ int32_t scpi_parse_message_unit(scpi_context* parser, int16_t* reset_path) {
       scpi_char_classes, status_negative_conditions, parser, reset_path);
 }
 
+/* The routines scpi_interpret calls, and its signals' codes. */
+static const scpi_engine_routines scpi_engine_primary = {
+    .arena_init = arena_init,
+    .arena_current = arena_current,
+    .arena_set = arena_set,
+    .trg_defined = scpi_trg_defined,
+    .context_init = scpi_context_init,
+    .path_reset = scpi_path_reset,
+    .skip_to_terminator = scpi_skip_to_terminator,
+    .parse_message_unit = scpi_parse_message_unit,
+    .call_handler = scpi_call_handler,
+    .format_response = scpi_format_response,
+    .clear_bit = status_clear_bit,
+    .is_command_error = condition_is_command_error,
+    .message_done = scpi_message_done,
+    .input_closed = scpi_input_closed,
+    .response_begin_code = &scpi_response_begin_code,
+    .message_end_code = &scpi_message_end_code,
+    .input_end_code = &scpi_input_end_code,
+};
+
+/* The parser's loop: parses each message unit of input, calls its
+ * handler, writes a query's response to output and reports errors to
+ * status, its arena in buffer, until a handler ends the session; its
+ * result then unset, -1 if the port fails (0x292d6).  Its ports come as
+ * longs, as its prototype has them; the eighth argument is unread. */
+uint32_t scpi_interpret(int32_t input, int32_t output, void* buffer,
+                        uint32_t size, scpi_child_list* main_tree,
+                        scpi_child_list* common_list, status_model* status,
+                        uint32_t unused, uint32_t last_argument) {
+  const int32_t handled = CPU_CALLERS_REGISTER(int32_t, "d3");
+
+  return scpi_engine_interpret(&scpi_engine_primary, handled, (scpi_port*)input,
+                               (scpi_port*)output, buffer, size, main_tree,
+                               common_list, status, last_argument);
+}
+
 /* Calls a node's setter or query with the call's parameters, its
  * response and the call (0x29642). */
 int32_t scpi_call_handler(scpi_call* call, void** response) {

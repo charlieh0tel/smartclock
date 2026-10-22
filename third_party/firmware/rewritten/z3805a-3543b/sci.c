@@ -204,6 +204,18 @@ uint32_t sci_port_write(void* text) {
   return length;
 }
 
+/* Formats into a buffer of LIBC_PRINTF_LENGTH through vsprintf and
+ * writes it to the SCI's device; nothing calls it (0x2023c). */
+void sci_printf(char* format, ...) {
+  char text[LIBC_PRINTF_LENGTH];
+  va_list arguments;
+
+  va_start(arguments, format);
+  vsprintf(text, format, arguments);
+  va_end(arguments);
+  sci_port_write(text);
+}
+
 /* The done hook of the SCI's setting descriptors and its PRESet:
  * reconfigures device 3 (0x202ac). */
 void sci_settings_done(void) { psos_io_control(IO_DEVICE_SCI, 0, 0); }
@@ -219,4 +231,22 @@ int32_t sci_puts_polled(char* text) {
   }
   cpu_sr_write(sr);
   return count;
+}
+
+/* Formats into a buffer of LIBC_SHORT_PRINTF_LENGTH through vsprintf and
+ * writes it to the SCI by polling; nothing calls it (0x202f6). */
+void sci_printf_polled(char* format, ...) {
+  char text[LIBC_SHORT_PRINTF_LENGTH];
+  va_list arguments;
+
+  va_start(arguments, format);
+  vsprintf(text, format, arguments);
+  va_end(arguments);
+  sci_puts_polled(text);
+}
+
+/* 1 unless an XOFF received holds the SCI's transmission, else 0;
+ * nothing calls it (0x2031c). */
+int32_t sci_transmit_allowed(void) {
+  return (sci.flow & DUART_FLOW_XOFF_RECEIVED) == 0;
 }

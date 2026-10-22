@@ -29,6 +29,17 @@ state.  Each is by the routine and the address that shows it.
   way between them, and rounding to even takes `...af6`), and
   `powers_of_ten_times_five` (`0x1234c`) 5e22 the same, its mantissa
   1e23's.
+- **`float_raise` (`0x5e93c`)** picks its report's address, an operand
+  of the math library's or its caller's caller's return, by the
+  routine's bit 7, the math library's, but for two: a signaling NaN
+  whose cause enables its report tests the cause's bit 7, precision
+  lost (`0x5ec24`), and an underflow whose inexact report is enabled
+  tests the result's high long, kept where the routine was
+  (`0x5ebe0`).  A float's infinity and its quieted NaN return D1 as it
+  was, the cause in its low word and its caller's in its high
+  (`0x5e948`).  Its report pushes the address before the code
+  (`0x5ec8c`), which `float_exception_report` prints as its code; the
+  C calls it with both, through `libc.h`'s `libc_raise_report`.
 
 ## Reads of what nothing set
 
@@ -83,6 +94,15 @@ state.  Each is by the routine and the address that shows it.
   `0x20690`), so a transfer also sends entry 1's word under entry 1's
   command, chip select included, as the last transfer left them.  No
   caller passes device 4, in this image or any other.
+- **`scpi_interpret` (`0x292d6`) and its installer copy** test D3
+  for the session's end after a message unit whose handler they did
+  not call (`0x29622`), the handler's result left there, or, for the
+  first unit, D3 as their caller left it; pass `scpi_context_init` a
+  local they never set as the context's `field_1e` (`-0x34(a6)`,
+  `0x29352`); and, when a handler ends the session, return the call
+  record's `+0x1e`, set only when the port fails (`0x295c6`).  The
+  C keeps the record as the image lays it out, `scpi_engine.h`'s
+  `scpi_engine_record`, past smartclock.h's `scpi_call`.
 - **`happening_flush` (`0x2f6dc`)**, given a buffer that is neither
   early buffer, replays it in the mode of D2's low byte as its caller
   left it, setting a mode only for those two (`0x2f6f2`, `0x2f6fe`).
@@ -157,8 +177,12 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
   `enter_supervisor` and `installer_enter_supervisor` come after gcc's
   copy of the narrow argument, which sets them, so that the low byte of
   the result can differ.
-- **`setjmp`** reads its caller's registers.  No call or table in
-  either image names it or `longjmp`.
+- **`setjmp` and `longjmp` (`0x5112a`, `0x51100`)** save and restore
+  their caller's registers, frame and stack, which C has no names for:
+  the C is the image's instructions in an asm statement after gcc's
+  `link`, and agrees.  `longjmp` with a value of 0 has trap #1 save the
+  status register again rather than restore it (`0x510ec`).  No call or
+  table in either image names either.
 
 The harness counts these where they show (`KNOWN` in
 `tools/firmware/function_check.py`), or keeps its cases inside a

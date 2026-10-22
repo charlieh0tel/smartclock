@@ -772,3 +772,13 @@ fine	result	a stage's: 0 running, 1 done, 2 failed
 clamp_double	clamped	1 when the value was clamped
 # wave 4, harness: the stack report (rewritten/z3805a-3543b/scpi_diagnostic.c)
 scpi_query_DIAGnostic_OS_STACk	error	always 0
+# the last of the decompiler's: the printf family, float_raise, the parser's loop, setjmp and the stragglers
+printf	length	console_write's length
+setjmp	jumped	0, or the value longjmp returns it with
+int64_compare	order	0 equal, 1 for a below b, -1 above
+double_decimal_exponent_floor	exponent	floor(log10), -30 to 30
+sci_transmit_allowed	allowed	0 while an XOFF holds the SCI
+scpi_parse_text	error	0, or -21 for a NUL inside the text
+duart_input_0_debounced	level	the input bit, 0 or 1
+duart_input_1_debounced	level	the input bit, 0 or 1
+duart_input_2_debounced	level	the input bit, 0 or 1

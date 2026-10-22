@@ -15,6 +15,17 @@ static void scpi_engine_store_unit(void* after_value, int16_t unit) {
   *(int16_t*)after_value = unit;
 }
 
+/* A string token's text, through value; STATUS_SCPI_INVALID_STRING if
+ * the text holds a NUL, which its length counts past (0x25d4a).  Its
+ * lengths compare as the image's, the token's signed. */
+uint32_t scpi_parse_text(scpi_token_string* token, void* unused, char** value) {
+  if ((int32_t)libc_length(token->text) != (int16_t)token->length) {
+    return STATUS_SCPI_INVALID_STRING;
+  }
+  *value = token->text;
+  return 0;
+}
+
 /* A string token's text and length, as its handler takes them; 0
  * (0x25d70).  The token is a scpi_token_string, the value a
  * scpi_engine_string_value. */

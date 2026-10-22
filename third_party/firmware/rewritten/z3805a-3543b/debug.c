@@ -26,6 +26,18 @@ char* exception_name(uint16_t vector) {
   return *(char**)((char*)exception_names + offset - VECTOR_OFFSET_FIRST_NAMED);
 }
 
+/* Formats into a buffer of LIBC_PRINTF_LENGTH through vsprintf and
+ * writes it to the console by polling (0x1df48). */
+void printf_polled(char* format, ...) {
+  char text[LIBC_PRINTF_LENGTH];
+  va_list arguments;
+
+  va_start(arguments, format);
+  vsprintf(text, format, arguments);
+  va_end(arguments);
+  console_write_polled(text);
+}
+
 /* Records an exception in last_exception, with the running task's name
  * while the kernel runs; prints it while debug_enabled; and stops with the
  * interrupts masked (0x11942).  The fault address is kept and printed only
@@ -78,6 +90,55 @@ void fatal_error_with_code(char* message, uint32_t unused_1, uint32_t unused_2,
 /* Whether debug output is on, debug_enabled; the self-tests' test
  * (0x18334). */
 char debug_is_enabled(void) { return debug_enabled; }
+
+/* While debug_enabled, formats into s through vsprintf, returning its
+ * count; else empties s and returns 0 (0x1ef46). */
+int32_t debug_sprintf(char* s, char* format, ...) {
+  if (!debug_enabled) {
+    *s = '\0';
+    return 0;
+  }
+  va_list arguments;
+
+  va_start(arguments, format);
+  const int32_t length = vsprintf(s, format, arguments);
+
+  va_end(arguments);
+  return length;
+}
+
+/* While debug_enabled, formats into a buffer of LIBC_SHORT_PRINTF_LENGTH
+ * and writes it to the console by polling, returning the count written;
+ * else returns 0 (0x1ef90). */
+int32_t debug_printf_polled(char* format, ...) {
+  char text[LIBC_SHORT_PRINTF_LENGTH];
+
+  if (!debug_enabled) {
+    return 0;
+  }
+  va_list arguments;
+
+  va_start(arguments, format);
+  vsprintf(text, format, arguments);
+  va_end(arguments);
+  return console_write_polled(text);
+}
+
+/* While debug_enabled, formats into a buffer of LIBC_SHORT_PRINTF_LENGTH
+ * and writes it to the console (0x1efc6). */
+void debug_printf(char* format, ...) {
+  char text[LIBC_SHORT_PRINTF_LENGTH];
+
+  if (!debug_enabled) {
+    return;
+  }
+  va_list arguments;
+
+  va_start(arguments, format);
+  vsprintf(text, format, arguments);
+  va_end(arguments);
+  console_write(text);
+}
 
 /* Writes a string by polling while debug output is on; returns its
  * length, 0 when off (0x1ef74). */

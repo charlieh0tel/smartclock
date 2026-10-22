@@ -113,6 +113,47 @@ int32_t installer_scpi_call_handler(scpi_call* call, void** response) {
   return scpi_engine_call_handler(call, response);
 }
 
+/* The installer's signal codes, its copies of scpi_response_begin_code,
+ * scpi_message_end_code and scpi_input_end_code, 8, 7 and 6, as at
+ * installer::0x107290 (the primary's 0x29636). */
+static const uint32_t installer_scpi_response_begin_code = 8;
+static const uint32_t installer_scpi_message_end_code = 7;
+static const uint32_t installer_scpi_input_end_code = 6;
+
+/* The installer's copies of the routines scpi_interpret calls. */
+static const scpi_engine_routines installer_scpi_engine = {
+    .arena_init = installer_arena_init,
+    .arena_current = installer_arena_current,
+    .arena_set = installer_arena_set,
+    .trg_defined = installer_scpi_trg_defined,
+    .context_init = installer_scpi_context_init,
+    .path_reset = installer_scpi_path_reset,
+    .skip_to_terminator = installer_scpi_skip_to_terminator,
+    .parse_message_unit = installer_scpi_parse_message_unit,
+    .call_handler = installer_scpi_call_handler,
+    .format_response = installer_scpi_format_response,
+    .clear_bit = installer_status_clear_bit,
+    .is_command_error = installer_condition_is_command_error,
+    .message_done = installer_scpi_message_done,
+    .input_closed = installer_scpi_input_closed,
+    .response_begin_code = &installer_scpi_response_begin_code,
+    .message_end_code = &installer_scpi_message_end_code,
+    .input_end_code = &installer_scpi_input_end_code,
+};
+
+/* The installer's parser loop, as scpi_interpret's (installer::0x106f30). */
+uint32_t installer_scpi_interpret(int32_t input, int32_t output, void* buffer,
+                                  uint32_t size, scpi_child_list* main_tree,
+                                  scpi_child_list* common_list,
+                                  status_model* status, uint32_t unused,
+                                  uint32_t last_argument) {
+  const int32_t handled = CPU_CALLERS_REGISTER(int32_t, "d3");
+
+  return scpi_engine_interpret(
+      &installer_scpi_engine, handled, (scpi_port*)input, (scpi_port*)output,
+      buffer, size, main_tree, common_list, status, last_argument);
+}
+
 /* The installer's SCPI task: time sliced, takes a 1500-byte segment for
  * the interpreter's arena and runs the interpreter on the console port
  * until its session ends; then restarts the processor, whatever

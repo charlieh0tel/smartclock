@@ -351,6 +351,28 @@ static char* const records_log_events[] = {
     "System preset",
 };
 
+/* Appends an entry to the event log under its lock; returns the lock's
+ * error or log_append's status (0x3195a).  Variadic in name: an entry
+ * keeps two longs of arguments, which it takes whatever its format
+ * converts, a double's two halves among them. */
+int32_t log_write(char* format, ...) {
+  va_list arguments;
+
+  va_start(arguments, format);
+  const int32_t argument_1 = va_arg(arguments, int32_t);
+  const int32_t argument_2 = va_arg(arguments, int32_t);
+
+  va_end(arguments);
+
+  uint32_t status = mutex_lock(&log_mutex);
+
+  if (status == 0) {
+    status = log_append(format, argument_1, argument_2);
+    mutex_unlock(&log_mutex);
+  }
+  return status;
+}
+
 /* Logs one of log_event's messages by its code (0x319a2). */
 int32_t log_event(log_event_code code) {
   /* The result for a code it has no message for. */

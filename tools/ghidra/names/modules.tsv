@@ -646,6 +646,7 @@
 0x27efe	scpi_path_reset	applications/scpi/tree
 0x27f10	scpi_common_header_resolve	applications/scpi/tree
 0x27f7e	scpi_trg_defined	applications/scpi/tree
+0x25d4a	scpi_parse_text	applications/scpi/parameters
 0x25d70	scpi_parse_string	applications/scpi/parameters
 0x25d8c	scpi_parse_boolean	applications/scpi/parameters
 0x25de0	scpi_parse_boolean_number	applications/scpi/parameters

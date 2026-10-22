@@ -242,6 +242,31 @@ void qspi_write(qspi_device device, void* buffers, uint32_t count) {
   psos_io_write(IO_DEVICE_QSPI | device, buffers, &count);
 }
 
+/* Writes count words to the FPGA's block through qspi_write; nothing
+ * calls it (0x1f664). */
+void qspi_fpga_block_write(uint16_t* words, uint16_t count) {
+  qspi_write(QSPI_FPGA_BLOCK, words, count);
+}
+
+/* Writes two words, its argument's, to the FPGA's tail through
+ * qspi_write, the argument's own slot the buffer; nothing calls it
+ * (0x1f680). */
+void qspi_fpga_tail_write(uint32_t words) {
+  qspi_write(QSPI_FPGA_TAIL, &words, 2);
+}
+
+/* Writes a word to the FPGA through qspi_write, the argument's own slot
+ * the buffer; nothing calls it (0x1f698). */
+void qspi_fpga_word_write(uint16_t word) {
+  qspi_write(QSPI_FPGA_WORD, &word, 1);
+}
+
+/* Makes one transfer to the FPGA's byte device through qspi_write, the
+ * argument's own slot the buffer; nothing calls it (0x1f6b0). */
+void qspi_fpga_byte_write(uint16_t value) {
+  qspi_write(QSPI_FPGA_BYTE, &value, 1);
+}
+
 /* Reads a QSPI device through the kernel, device 1 (0x20aec). */
 void qspi_read(qspi_device device, void* buffers, uint32_t count) {
   psos_io_read(IO_DEVICE_QSPI | device, buffers, &count);

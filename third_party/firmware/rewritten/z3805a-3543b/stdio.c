@@ -14,6 +14,18 @@ uint32_t console_write(char* s) {
   return length;
 }
 
+/* Formats into a buffer of LIBC_PRINTF_LENGTH through vsprintf and
+ * writes it to the console; returns console_write's length (0x1de96). */
+int32_t printf(char* format, ...) {
+  char text[LIBC_PRINTF_LENGTH];
+  va_list arguments;
+
+  va_start(arguments, format);
+  vsprintf(text, format, arguments);
+  va_end(arguments);
+  return console_write(text);
+}
+
 /* Reads from the console, device 0, and its last read errors
  * (0x1debc). */
 uint32_t console_read(void* buffer, uint32_t length, uint8_t* errors) {
@@ -65,6 +77,21 @@ int32_t vsprintf(char* s, char* format, void* arg) {
   output.cursor = s;
   const int32_t length = doprnt(format, arg, sprintf_put, &output);
 
+  *output.cursor = '\0';
+  return length;
+}
+
+/* Formats into s through doprnt and sprintf_put and ends it with a NUL;
+ * returns doprnt's count (0x60896). */
+int32_t sprintf(char* s, char* format, ...) {
+  sprintf_output output;
+  va_list arguments;
+
+  output.cursor = s;
+  va_start(arguments, format);
+  const int32_t length = doprnt(format, arguments, sprintf_put, &output);
+
+  va_end(arguments);
   *output.cursor = '\0';
   return length;
 }

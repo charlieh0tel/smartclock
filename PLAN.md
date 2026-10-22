@@ -1558,6 +1558,19 @@ view cannot drift apart.  The library, bottom up:
      13 routines nothing calls are named, three of them, which the
      decompiler read wrong, written by hand.  The SCPI tree's records
      are the generator's.
+     Then the last of the decompiler's C functions, 0 left in either
+     image but thunks: the harness runs a variadic function on its
+     callers' lists (`VARIADIC_CASES`), and the parser's loop on SCPI
+     sessions read from the console's line (`SCPI_SESSIONS`).  The
+     printf family, `sprintf`, `log_write` (two longs, whatever the
+     format) and `float_raise`, its body one in `libc.h` for both
+     images, are written by hand, as are `scpi_interpret`, its body in
+     `scpi_engine.h` calling each image's routines through a table, and
+     `setjmp` and `longjmp`, the image's instructions in asm statements,
+     which agree: `setjmp`'s `KNOWN` entry is gone.  The 11 routines the
+     ROM survey named are written by hand too.  `float_raise`'s cases
+     found that its reports' addresses are chosen three ways
+     (`quirks.md`).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

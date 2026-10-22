@@ -5,13 +5,6 @@
  * declares are in scope; each function here keeps its generated
  * prototype. */
 
-/* Not a condition: scpi_interpret takes it as the response's end, and
- * anything after it as STATUS_SCPI_QUERY_AFTER_INDEFINITE, -440 Query
- * UNTERMINATED after indefinite response (0x294a6, 0x29446). */
-enum {
-  SCPI_STATUS_INDEFINITE_RESPONSE = -90,
-};
-
 /* What scpi_real_to_text is given: 15 significant digits for a double,
  * 6 for a float, and SCPI_REAL_EVERY_DIGIT (scpi.h) for the resolution
  * (its exponent digits and point in scpi_engine_real_to_text); and the

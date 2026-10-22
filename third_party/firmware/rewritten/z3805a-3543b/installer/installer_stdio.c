@@ -53,6 +53,22 @@ int32_t installer_vsprintf(char* s, char* format, void* arg) {
   return length;
 }
 
+/* Formats into s through installer_doprnt and installer_sprintf_put and
+ * ends it with a NUL; returns doprnt's count (installer::0x10aa3e). */
+int32_t installer_sprintf(char* s, char* format, ...) {
+  sprintf_output output;
+  va_list arguments;
+
+  output.cursor = s;
+  va_start(arguments, format);
+  const int32_t length =
+      installer_doprnt(format, arguments, installer_sprintf_put, &output);
+
+  va_end(arguments);
+  *output.cursor = '\0';
+  return length;
+}
+
 /* Writes a string to the console, device 0; returns its length
  * (installer::0x1038e8). */
 uint32_t installer_console_write(char* s) {
@@ -60,6 +76,19 @@ uint32_t installer_console_write(char* s) {
 
   installer_psos_io_write(IO_DEVICE_DUART_B, s, &length);
   return length;
+}
+
+/* Formats into a buffer of LIBC_PRINTF_LENGTH through installer_vsprintf
+ * and writes it to the console; returns installer_console_write's
+ * length (installer::0x103908). */
+int32_t installer_printf(char* format, ...) {
+  char text[LIBC_PRINTF_LENGTH];
+  va_list arguments;
+
+  va_start(arguments, format);
+  installer_vsprintf(text, format, arguments);
+  va_end(arguments);
+  return installer_console_write(text);
 }
 
 /* Reads from the console, device 0, and its last read errors

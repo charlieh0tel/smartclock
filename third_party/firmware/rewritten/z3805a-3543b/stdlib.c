@@ -242,3 +242,79 @@ void program_exit(uint32_t value) {
   for (;;) {
   }
 }
+
+/* What setjmp saves in its buffer, a jmp_buf of 0x42 bytes, and longjmp
+ * restores (0x5112a, 0x51100): its caller's D1 to D7 and A1 to A5, as
+ * movem.l stores them, A0, the caller's frame pointer, the address it
+ * returns to and its stack pointer there, and the status register,
+ * which trap #1 (0x510e8) saves for D0 0 and restores for any other. */
+typedef struct stdlib_jump_buffer {
+  uint32_t registers[12]; /* +0x00: D1-D7, A1-A5 */
+  uint32_t a0;            /* +0x30 */
+  uint32_t frame;         /* +0x34: A6 */
+  uint32_t return_to;     /* +0x38 */
+  uint32_t stack;         /* +0x3c: SP at the return address */
+  uint16_t sr;            /* +0x40 */
+} stdlib_jump_buffer;
+
+/* The saved A1's index among the buffer's registers. */
+#define STDLIB_JUMP_A1 7
+
+/* Saves its caller's registers, frame, return and stack, and through
+ * trap #1 the status register, in a buffer; returns 0, and again the
+ * value longjmp gives (0x5112a).  Its registers are what its caller
+ * left in them, which C has no names for: the body is the image's
+ * instructions in an asm statement, after gcc's link, which leaves the
+ * caller's frame at the frame pointer and the buffer, the first
+ * argument, 8 above it. */
+uint32_t setjmp(uint32_t* buffer) {
+  __asm__ volatile(
+      "move.l %%a0,-(%%sp)\n\t"
+      "movea.l 8(%%a6),%%a0\n\t"
+      "move.l (%%sp)+,%c[a0](%%a0)\n\t"
+      "clr.l %%d0\n\t"
+      "trap #1\n\t"
+      "lea %c[a0](%%a0),%%a0\n\t"
+      "movem.l %%d1-%%d7/%%a1-%%a5,-(%%a0)\n\t"
+      "move.l (%%a6),%c[frame](%%a0)\n\t"
+      "move.l 4(%%a6),%c[return_to](%%a0)\n\t"
+      "lea 4(%%a6),%%a1\n\t"
+      "move.l %%a1,%c[stack](%%a0)\n\t"
+      "movea.l %c[saved_a1](%%a0),%%a1\n\t"
+      "movea.l %c[a0](%%a0),%%a0"
+      :
+      : [a0] "i"(__builtin_offsetof(stdlib_jump_buffer, a0)),
+        [frame] "i"(__builtin_offsetof(stdlib_jump_buffer, frame)),
+        [return_to] "i"(__builtin_offsetof(stdlib_jump_buffer, return_to)),
+        [stack] "i"(__builtin_offsetof(stdlib_jump_buffer, stack)),
+        [saved_a1] "i"(
+            __builtin_offsetof(stdlib_jump_buffer, registers[STDLIB_JUMP_A1]))
+      : "d0", "memory");
+  return 0;
+}
+
+/* Restores the registers setjmp saved in a buffer, and through trap #1
+ * its status register, and returns to setjmp's caller with value in D0
+ * (0x51100).  A value of 0 has trap #1 save the status register again,
+ * not restore it, and is returned as 0.  The body is the image's
+ * instructions after gcc's link; it never returns to its own caller. */
+uint64_t longjmp(uint32_t* buffer, uint32_t value) {
+  __asm__ volatile(
+      "movea.l 8(%%a6),%%a0\n\t"
+      "move.l 12(%%a6),%%d0\n\t"
+      "trap #1\n\t"
+      "movem.l (%%a0)+,%%d1-%%d7/%%a1-%%a5\n\t"
+      "movea.l 8(%%a6),%%a0\n\t"
+      "unlk %%a6\n\t"
+      "movea.l %c[frame](%%a0),%%a6\n\t"
+      "movea.l %c[stack](%%a0),%%sp\n\t"
+      "move.l %c[return_to](%%a0),(%%sp)\n\t"
+      "movea.l %c[a0](%%a0),%%a0\n\t"
+      "rts"
+      :
+      : [a0] "i"(__builtin_offsetof(stdlib_jump_buffer, a0)),
+        [frame] "i"(__builtin_offsetof(stdlib_jump_buffer, frame)),
+        [return_to] "i"(__builtin_offsetof(stdlib_jump_buffer, return_to)),
+        [stack] "i"(__builtin_offsetof(stdlib_jump_buffer, stack)));
+  __builtin_unreachable();
+}

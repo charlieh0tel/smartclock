@@ -14985,6 +14985,7 @@ int16_t double_decimal_exponent_rounded(double value)
 #endif
 
 /* 00012534 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* floor(log10) of a double's magnitude, -30 to 30, by bisection over powers_of_ten_double
    (0x12614): the largest entry its bits are not below, or entry 0; called by nothing */
@@ -15019,6 +15020,7 @@ int16_t double_decimal_exponent_floor(double value)
   return (int16_t)(uVar2 - 0xf0) >> 3;
 }
 
+#endif
 
 /* 0001258a */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
@@ -40982,6 +40984,7 @@ uint32_t console_write(char *s)
 #endif
 
 /* 0001de96 */
+#if 0 /* the decompiler's reading; rewritten in stdio.c */
 
 /* libc.md */
 
@@ -40996,6 +40999,7 @@ int32_t printf(char *format,...)
   return length;
 }
 
+#endif
 
 /* 0001debc */
 #if 0 /* the decompiler's reading; rewritten in stdio.c */
@@ -41081,6 +41085,7 @@ int32_t console_write_polled(char *s)
 #endif
 
 /* 0001df48 */
+#if 0 /* the decompiler's reading; rewritten in debug.c */
 
 /* vsprintf into a buffer, then console_write_polled
    structures.md */
@@ -41095,6 +41100,7 @@ void printf_polled(char *format,...)
   return;
 }
 
+#endif
 
 /* 0001df6e */
 #if 0 /* the decompiler's reading; rewritten in duartb.c */
@@ -41183,6 +41189,7 @@ void duart_op1_set(char param_1)
 #endif
 
 /* 0001e072 */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the DUART's input port bit 0 as 0 or 1, read until ten reads in a row after the first agree;
    called by nothing (the Z3815A 4010's copy, 0x2e798, is polled) */
@@ -41210,8 +41217,10 @@ uint8_t duart_input_0_debounced(void)
   return bVar2 != 0;
 }
 
+#endif
 
 /* 0001e0ae */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the same for input port bit 1; called by nothing */
 
@@ -41238,8 +41247,10 @@ uint8_t duart_input_1_debounced(void)
   return bVar2 != 0;
 }
 
+#endif
 
 /* 0001e0ea */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the same for input port bit 2; called by nothing */
 
@@ -41266,6 +41277,7 @@ uint8_t duart_input_2_debounced(void)
   return bVar2 != 0;
 }
 
+#endif
 
 /* 0001e126 */
 #if 0 /* the decompiler's reading; rewritten in duart.c */
@@ -42116,6 +42128,7 @@ void fatal_error_with_code(char *param_1,uint32_t param_2,uint32_t param_3,uint3
 #endif
 
 /* 0001ef46 */
+#if 0 /* the decompiler's reading; rewritten in debug.c */
 
 /* vsprintf into the buffer while debug_enabled, else empties it */
 
@@ -42134,6 +42147,7 @@ int32_t debug_sprintf(char *s,char *format,...)
   return iVar1;
 }
 
+#endif
 
 /* 0001ef74 */
 #if 0 /* the decompiler's reading; rewritten in debug.c */
@@ -42155,6 +42169,7 @@ int32_t debug_write(char *param_1)
 #endif
 
 /* 0001ef90 */
+#if 0 /* the decompiler's reading; rewritten in debug.c */
 
 /* formats and writes to the console by polling, when debug output is on; called by nothing */
 
@@ -42172,8 +42187,10 @@ int32_t debug_printf_polled(char *format,...)
   return iVar1;
 }
 
+#endif
 
 /* 0001efc6 */
+#if 0 /* the decompiler's reading; rewritten in debug.c */
 
 /* vsprintf then console_write, while debug_enabled */
 
@@ -42189,6 +42206,7 @@ void debug_printf(char *format,...)
   return;
 }
 
+#endif
 
 /* 0001eff6 */
 #if 0 /* the decompiler's reading; rewritten in debug.c */
@@ -42665,6 +42683,7 @@ void efc_write(uint16_t param_1)
 #endif
 
 /* 0001f664 */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* a count of words to QSPI_FPGA_BLOCK through qspi_write; called by nothing */
 
@@ -42675,8 +42694,10 @@ void qspi_fpga_block_write(uint16_t *words,uint16_t count)
   return;
 }
 
+#endif
 
 /* 0001f680 */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* two words to QSPI_FPGA_TAIL through qspi_write, its own argument's slot as the buffer; called by
    nothing */
@@ -42688,8 +42709,10 @@ void qspi_fpga_tail_write(uint32_t words)
   return;
 }
 
+#endif
 
 /* 0001f698 */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* one word to QSPI_FPGA_WORD through qspi_write, its own argument's slot as the buffer; called by
    nothing */
@@ -42701,8 +42724,10 @@ void qspi_fpga_word_write(uint16_t word)
   return;
 }
 
+#endif
 
 /* 0001f6b0 */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* one transfer to QSPI_FPGA_BYTE through qspi_write, its own argument's slot as the buffer; called
    by nothing */
@@ -42714,6 +42739,7 @@ void qspi_fpga_byte_write(uint16_t value)
   return;
 }
 
+#endif
 
 /* 0001f6c8 */
 #if 0 /* the decompiler's reading; rewritten in sci.c */
@@ -44090,6 +44116,7 @@ uint32_t sci_port_write(void *param_1)
 #endif
 
 /* 0002023c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* formats into 160 bytes and writes to the SCI device; called by nothing */
 
@@ -44103,6 +44130,7 @@ void sci_printf(char *format,...)
   return;
 }
 
+#endif
 
 /* 000202ac */
 #if 0 /* the decompiler's reading; rewritten in sci.c */
@@ -44142,6 +44170,7 @@ int32_t sci_puts_polled(char *param_1)
 #endif
 
 /* 000202f6 */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* formats into 80 bytes and writes to the SCI by polling; called by nothing */
 
@@ -44155,8 +44184,10 @@ void sci_printf_polled(char *format,...)
   return;
 }
 
+#endif
 
 /* 0002031c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* 1 unless an XOFF received holds the SCI's transmission, sci.flow bit 7, else 0; called by nothing
     */
@@ -44167,6 +44198,7 @@ int32_t sci_transmit_allowed(void)
   return (uint32_t)(((int16_t)(char)sci.flow & 0x80U) == 0);
 }
 
+#endif
 
 /* 0002050c */
 #if 0 /* the decompiler's reading; rewritten in qspi.c */
@@ -45088,15 +45120,15 @@ void spoo_task(void)
 void deferred_flush(void)
 
 {
-  int32_t iVar1;
+  int32_t length;
   
   while( true ) {
     if (deferred_end <= deferred_start) {
       return;
     }
-    iVar1 = printf("%s\r\n",deferred_text + deferred_start);
-    if (iVar1 < 0) break;
-    deferred_start = (int16_t)iVar1 + -1 + deferred_start;
+    length = printf("%s\r\n",deferred_text + deferred_start);
+    if (length < 0) break;
+    deferred_start = (int16_t)length + -1 + deferred_start;
   }
   return;
 }
@@ -48635,6 +48667,7 @@ LAB_00025618:
 #endif
 
 /* 00025d4a */
+#if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
 
 /* the string's text, -21 if it holds a NUL; the string parameters' converter
    docs/scpi/README.md, read */
@@ -48664,6 +48697,7 @@ uint32_t scpi_parse_text(scpi_token_string *token,void *unused,char **value)
   return uVar3;
 }
 
+#endif
 
 /* 00025d70 */
 #if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
@@ -51835,6 +51869,7 @@ char * error_message_lookup(int32_t code)
 #endif
 
 /* 000292d6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_engine.c */
 
 /* the parser's loop: parses each message unit, calls its handler, writes its response and reports
    errors, until the input ends */
@@ -52009,6 +52044,7 @@ LAB_00029622:
   goto LAB_0002937c;
 }
 
+#endif
 
 /* 00029642 */
 #if 0 /* the decompiler's reading; rewritten in scpi_engine.c */
@@ -62171,6 +62207,7 @@ int32_t log_read(int32_t number,char *text,char *heading)
 #endif
 
 /* 0003195a */
+#if 0 /* the decompiler's reading; rewritten in log.c */
 
 /* appends to the diagnostic log under its lock; :DIAG:LOG:WRIT and log_send call it */
 
@@ -62189,6 +62226,7 @@ int32_t log_write(char *format,...)
   return status;
 }
 
+#endif
 
 /* 000319a2 */
 #if 0 /* the decompiler's reading; rewritten in log.c */
@@ -64682,6 +64720,7 @@ void counter_selftest(void)
 #endif
 
 /* 00041086 */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* 0 if two 64-bit numbers are equal, else 1 if b - a, int64_add(int64_negate(a), b), is not
    negative and -1 if it is: 1 for a below b, the reverse of a C comparator, the difference
@@ -64710,6 +64749,7 @@ int32_t int64_compare(int64_t a,int64_t b)
   return iVar1;
 }
 
+#endif
 
 /* 000410fa */
 #if 0 /* the decompiler's reading; rewritten in arithmetic.c */
@@ -77409,6 +77449,7 @@ __asm__(
 );
 
 /* 00051100 */
+#if 0 /* the decompiler's reading; rewritten in stdlib.c */
 
 /* restores the registers setjmp saved, its status register through trap #1, and returns to its
    caller with the value given */
@@ -77424,8 +77465,10 @@ uint64_t longjmp(uint32_t *param_1,uint32_t param_2)
   return CONCAT44(param_2,uVar1);
 }
 
+#endif
 
 /* 0005112a */
+#if 0 /* the decompiler's reading; rewritten in stdlib.c */
 
 /* saves the registers, return address and stack, and through trap #1 the status register */
 
@@ -77468,6 +77511,7 @@ uint32_t setjmp(uint32_t *param_1)
   return 0;
 }
 
+#endif
 
 /* 00051158 */
 #if 0 /* the decompiler's reading; rewritten in boot.c */
@@ -86555,6 +86599,7 @@ __asm__(
 );
 
 /* 0005e93c */
+#if 0 /* the decompiler's reading; rewritten in math.c */
 
 /* raises a floating-point exception
    libc.md */
@@ -86745,6 +86790,7 @@ LAB_0005ec84:
   return CONCAT44(in_stack_00000008,in_stack_0000000c);
 }
 
+#endif
 
 /* 0005ec9e */
 #if 0 /* the decompiler's reading; rewritten in stdlib.c */
@@ -88392,6 +88438,7 @@ switchD_0005fb90_caseD_6c:
 #endif
 
 /* 00060896 */
+#if 0 /* the decompiler's reading; rewritten in stdio.c */
 
 /* libc.md */
 
@@ -88407,6 +88454,7 @@ int32_t sprintf(char *s,char *format,...)
   return length;
 }
 
+#endif
 
 /* 000608c4 */
 #if 0 /* the decompiler's reading; rewritten in stdio.c */
@@ -97901,6 +97949,7 @@ uint32_t installer_console_write(char *s)
 #endif
 
 /* installer::00103908 */
+#if 0 /* the decompiler's reading; rewritten in installer_stdio.c */
 
 /* the installer's printf */
 
@@ -97915,6 +97964,7 @@ int32_t installer_printf(char *format,...)
   return uVar1;
 }
 
+#endif
 
 /* installer::0010392e */
 #if 0 /* the decompiler's reading; rewritten in installer_stdio.c */
@@ -97969,6 +98019,7 @@ int32_t installer_console_write_polled(char *s)
 #endif
 
 /* installer::001039ba */
+#if 0 /* the decompiler's reading; rewritten in installer_debug.c */
 
 /* the installer's printf_polled */
 
@@ -97982,6 +98033,7 @@ void installer_printf_polled(char *format,...)
   return;
 }
 
+#endif
 
 /* installer::001039e0 */
 #if 0 /* the decompiler's reading; rewritten in installer_duart.c */
@@ -100419,6 +100471,7 @@ char * installer_error_message_lookup(int32_t code)
 #endif
 
 /* installer::00106f30 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's scpi_interpret */
 
@@ -100595,6 +100648,7 @@ LAB_installer__0010727c:
   goto LAB_installer__00106fd6;
 }
 
+#endif
 
 /* installer::0010729c */
 #if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
@@ -101615,6 +101669,7 @@ __asm__(
 );
 
 /* installer::00108ca8 */
+#if 0 /* the decompiler's reading; rewritten in installer_math.c */
 
 /* the installer's float_raise
    softfloat.md */
@@ -101806,6 +101861,7 @@ LAB_installer__00108ff0:
   return CONCAT44(in_stack_00000008,in_stack_0000000c);
 }
 
+#endif
 
 /* installer::00109036 */
 /* a thunk to installer_call_atexit_functions */
@@ -103186,6 +103242,7 @@ switchD_installer__00109d38_caseD_6c:
 #endif
 
 /* installer::0010aa3e */
+#if 0 /* the decompiler's reading; rewritten in installer_stdio.c */
 
 /* the installer's sprintf
    libc.md */
@@ -103202,6 +103259,7 @@ int32_t installer_sprintf(char *s,char *format,...)
   return iVar1;
 }
 
+#endif
 
 /* installer::0010aa6c */
 #if 0 /* the decompiler's reading; rewritten in installer_stdio.c */

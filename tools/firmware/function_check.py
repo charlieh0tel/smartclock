@@ -37,8 +37,10 @@ call or its counter's count is compared up to there, but for its
 result.  A function that
 reaches beyond what the harness maps, calls a kernel service the
 harness does not model, or traps the same way both times is skipped.  A function whose prototype has an
-argument of no known size, a structure passed whole, a variable
-argument list, or an argument not on the stack is not run.  The
+argument of no known size, a structure passed whole, or an argument
+not on the stack is not run; a variadic one runs on its callers' lists
+(VARIADIC_CASES), and the parser's loop on SCPI lines a session's
+console reads (SCPI_SESSIONS).  The
 installer's functions run on a machine of its own, whose RAM is the
 installer as the boot code unpacks it (harness.installer_profile), and
 are counted apart.  This is the rebuild's measure, not a gate: it exits
@@ -71,6 +73,8 @@ from harness import (
     POINTER_SIZE,
     PRIMARY,
     RECEIVED,
+    SCPI_COMMON_LIST,
+    SCPI_MAIN_TREE,
     SUPERVISOR,
     SYSTEM_BYTE,
     UNSIGNED,
@@ -310,7 +314,23 @@ QSPI_DEVICES = range(14)
 QSPI_FPGA_BLOCK = 6
 QSPI_FPGA_READBACK = 0xC
 QSPI_COUNTS = [0, 3, 10, 20]
+# scpi_parse_text's string tokens, scpi_token_string, a length and the
+# text, here a ROM string's, "scpi: error opening stream\n" (0x2a16f):
+# the length its NUL ends it at, one past, which the NUL then shortens,
+# its last five, and a length whose word is negative (0x25d60).
+ROM_TEXT = 0x2A16F
+ROM_TEXT_LENGTH = 27
+TEXT_TOKENS = [
+    struct.pack(">HI", length, text)
+    for length, text in (
+        (ROM_TEXT_LENGTH, ROM_TEXT),
+        (ROM_TEXT_LENGTH + 1, ROM_TEXT),
+        (5, ROM_TEXT + ROM_TEXT_LENGTH - 5),
+        (0x8000 | ROM_TEXT_LENGTH, ROM_TEXT),
+    )
+]
 GIVEN_CASES = {
+    "scpi_parse_text": [{0: token} for token in TEXT_TOKENS],
     "vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "installer_vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "clamp_double_to_step_and_limits": [
@@ -353,6 +373,192 @@ GIVEN_CASES = {
         for read in (0, 1)
     ],
 }
+
+# A variadic function's own cases, the arguments after its last declared
+# one as its callers push them, laid out alike for both copies (each
+# declared argument a 4-byte slot, so that the list starts where the
+# image's code and gcc's va_start find it), by function: each case's
+# declared arguments by position, as GIVEN_CASES gives them, and the
+# list's bytes.  The generated cases come first, their list empty, so
+# that UNDECLARED follows the declared arguments as for any function.
+# The printf family formats through vsprintf, as its callers do
+# (exception reports, debug and diagnostic output), into a buffer on its
+# stack, 160 bytes for printf, printf_polled and sci_printf and 80 for
+# the debug and SCI polled routines, then writes it: through the kernel
+# to device 0 or the SCI, compared as a kernel call's text, or by
+# polling the DUART or the SCI, compared as device writes.  So each is
+# given vsprintf's FORMATS, and those whose output 80 bytes holds,
+# without the long strings', zero padding's and %f's; sprintf and
+# debug_sprintf into their buffer argument, compared as RAM.
+VARIADIC = "..."
+LONG_OUTPUTS = (b"%s|", b"%030d|", b"%f|%.20f|")
+SHORT_FORMATS = [(text, listed) for text, listed in FORMATS if not text.startswith(LONG_OUTPUTS)]
+PRINTF_CASES = [({0: text}, listed) for text, listed in FORMATS]
+SHORT_PRINTF_CASES = [({0: text}, listed) for text, listed in SHORT_FORMATS]
+SPRINTF_CASES = [({1: text}, listed) for text, listed in FORMATS]
+# log_write's: an entry's format and the two longs log_append (0x31c42)
+# keeps, as its callers pass them: an int (console.c's "Log test
+# message %d", 0x13540), two (log_first_satellite's date and time,
+# 0x31ba6), a double in both (the supplies' "... value: %.2f", 0x1b2a2)
+# and none (log_event's, 0x319a2), which reads the caller's fill.
+LOG_CASES = [
+    ({0: b"Log test message %d\0"}, struct.pack(">i", 42)),
+    ({0: b"%08x %08x\0"}, struct.pack(">II", 0x19970114, 0x12345678)),
+    ({0: b"value: %.2f\0"}, struct.pack(">d", 4.875)),
+    ({0: b"Power on\0"}, b""),
+]
+# float_raise's: a code, its high word the routine and its low word the
+# cause (docs/firmware/libc.md, "Exception codes"; libc.h's
+# LIBC_RAISE_CODE), with the operands its callers push after it.  The
+# routine's bit 0 says a float's operand (one long), else a double's
+# (two); its bit 7 the math library's, whose report gives the address
+# pushed after the operands rather than its caller's caller's return
+# (0x5e990 to 0x5e9a0), and which sets errno (0x5eafe).  An
+# underflow's operands are an exponent's shift count and the mantissa,
+# a double's in three longs and a float's in two (0x5e9a0, 0x5ea7c),
+# with counts below 32, at 32, between, past 55 and, for a float, past
+# 24, negative ones, which shift by their low 6 bits (0x5e9c4), and
+# halfway cases that round to even, by the low long's last bit, not the
+# high's (0x5ea44).  A NaN's operand
+# with its quiet bit clear and set (0x5ec00, 0x5ec3e).  A code of no
+# cause, and one with only the precision lost bit (0x5ec4c).
+RAISE_ROUTINES = (0x0007, 0x0008, 0x0086, 0x0087, 0x0080)
+RAISE_CAUSES = (0x4000, 0x2000, 0x1000, 0x0400, 0x0200, 0x0080, 0x0000)
+RAISE_OPERANDS = struct.pack(">IIII", 0x7FF12345, 0x6789ABCD, 0x0FEDCBA9, 0x31400040)
+RAISE_QUIET = struct.pack(">IIII", 0x7FFC0000, 0x00000001, 0x7FC00001, 0x31400040)
+UNDERFLOW_COUNTS = (0, 1, 5, 31, 32, 33, 40, 55, 56, 24, 25, -1, -8)
+UNDERFLOW_MANTISSAS = (
+    (0x000FFFFF, 0xFFFFFFFF, 0x80000000),
+    (0x00012345, 0x6789ABCD, 0x00000000),
+    (0x00080000, 0x00000001, 0x80000001),
+    (0x00000002, 0x00000001, 0x80000000),
+    (0x00000001, 0x80000000, 0x00000000),
+)
+RAISE_CASES = [
+    *(
+        ({0: routine << 16 | cause}, operands)
+        for routine in RAISE_ROUTINES
+        for cause in RAISE_CAUSES
+        for operands in (RAISE_OPERANDS, RAISE_QUIET)
+    ),
+    *(
+        ({0: (routine | math) << 16 | 0x0800}, struct.pack(">i3I", count, *mantissa))
+        for routine in (0x0007, 0x0008)
+        for math in (0, 0x80)
+        for count in UNDERFLOW_COUNTS
+        for mantissa in UNDERFLOW_MANTISSAS
+    ),
+]
+VARIADIC_CASES = {
+    **{name: PRINTF_CASES for name in ("printf", "printf_polled", "sci_printf", "installer_printf", "installer_printf_polled")},
+    **{name: SHORT_PRINTF_CASES for name in ("debug_printf", "debug_printf_polled", "sci_printf_polled")},
+    **{name: SPRINTF_CASES for name in ("sprintf", "debug_sprintf", "installer_sprintf")},
+    "log_write": LOG_CASES,
+    **{name: RAISE_CASES for name in ("float_raise", "installer_float_raise")},
+}
+
+
+def variadic_cases(function: "Function") -> list[tuple[str, int, dict]]:
+    """A variadic function's own cases, as cases gives them, each with its
+    list's bytes under VARIADIC."""
+    return [
+        (f"variadic case {i}", i % CASES, {**declared, VARIADIC: listed})
+        for i, (declared, listed) in enumerate(VARIADIC_CASES.get(function.name, []) if function.variadic else [])
+    ]
+
+
+@dataclass(frozen=True)
+class ScpiSession:
+    """What the parser's loop is given in an SCPI session, as its image's
+    SCPI task gives it (scpi_task, 0x2a04a; the installer's, 0x107902):
+    the console port's object, as both its input and its output, the
+    port's methods its table at the object's +4 (docs/firmware/
+    structures.md, "The SCPI session"); the pair of trees, main and
+    common, whose two pointers it passes; the arena's size, a segment
+    of which it takes from the kernel; and the console's line buffer and
+    its two pointers, the next character and the line's end, which the
+    port reads from before it reads the console."""
+
+    port: int
+    trees: tuple[int, int] | str
+    arena: int
+    line: str
+    next: str
+    end: str
+
+
+# The sessions' lines, each read whole as the console's one line, then
+# its end, the line's NUL, and from then on an empty read of the
+# console: the line starts at its buffer's second byte, the first a NUL,
+# which console_port_read (0x29bce) gives again for each empty read, so
+# that the input ends, -102, and the loop reads on.  Most end the
+# session as :SYSTem:LANGuage "PFORTH" does, its handler's -60, which
+# returns (0x29622); one runs on to the kernel call limit.  A common
+# query and a command, an error query, a bad header, a query with
+# parameters, a compound message with a relative header, a query whose
+# response queues and one in a message that errs part way.
+SCPI_LINES = [
+    b'*IDN?\n:SYST:LANG "PFORTH"\n',
+    b':SYST:ERR?;*CLS\n:SYST:LANG "PFORTH"\n',
+    b':NOPE:HEADER 3\n:SYST:ERR?\n:SYST:LANG "PFORTH"\n',
+    b'*ESE 16;*ESE?;:STAT:OPER:ENAB 4;ENAB?\n:SYST:LANG "PFORTH"\n',
+    b':SYST:ERR?;:SYST:ERR?;*OPC?\n:SYST:LANG "PFORTH"\n',
+    b':SYST:LANG "PFORTH" junk\n:SYST:LANG "PFORTH"\n',
+    b"*IDN?;\n",
+]
+SCPI_SESSIONS = {
+    "scpi_interpret": ScpiSession(
+        CONSOLE_PORT, (SCPI_MAIN_TREE, SCPI_COMMON_LIST), 2000, "scpi_input_line", "scpi_input_next", "scpi_input_end"
+    ),
+    "installer_scpi_interpret": ScpiSession(
+        0x1076D0,
+        "installer_scpi_trees",
+        1500,
+        "installer_scpi_input_line",
+        "installer_scpi_input_next",
+        "installer_scpi_input_end",
+    ),
+}
+# A session case's line's index, among its arguments; and the
+# positions of the loop's arguments a session gives.
+SCPI_LINE = "line"
+SESSION_INPUT, SESSION_OUTPUT, SESSION_ARENA, SESSION_SIZE, SESSION_MAIN, SESSION_COMMON = range(6)
+SESSION_UNREAD = (7, 8)
+
+
+def session_cases(function: "Function") -> list[tuple[str, int, dict]]:
+    """The parser's loop's session cases, as cases gives them, each with
+    its line's index under SCPI_LINE."""
+    if function.name not in SCPI_SESSIONS:
+        return []
+    return [(f"session case {i}", i % CASES, {SCPI_LINE: i}) for i in range(len(SCPI_LINES))]
+
+
+def scpi_session(m: Machine, function: "Function", linked_symbols: dict[str, int], line: int) -> dict[int, int]:
+    """Puts a session's line in the console's buffer, its pointers at it;
+    the loop's arguments, by position, the status model's left as the
+    generated case's."""
+    session = SCPI_SESSIONS[function.name]
+    text = SCPI_LINES[line]
+    buffer = linked_symbols[session.line]
+    m.uc.mem_write(buffer, b"\0" + text + b"\0")
+    m.uc.mem_write(linked_symbols[session.next], struct.pack(">I", buffer + 1))
+    m.uc.mem_write(linked_symbols[session.end], struct.pack(">I", buffer + 1 + len(text)))
+    trees = session.trees if isinstance(session.trees, tuple) else None
+    if trees is None:
+        at = linked_symbols[session.trees]
+        # a scpi_tree_pair: the common list first, then the main tree
+        trees = (pointer_at(m, at + POINTER_SIZE), pointer_at(m, at))
+    return {
+        SESSION_INPUT: session.port,
+        SESSION_OUTPUT: session.port,
+        SESSION_ARENA: area(m, bytes(session.arena)),
+        SESSION_SIZE: session.arena,
+        SESSION_MAIN: trees[0],
+        SESSION_COMMON: trees[1],
+        **{position: 0 for position in SESSION_UNREAD},
+    }
+
 
 # Arguments a routine indexes a table by unchecked, which every caller
 # passes in range, by position: how many values each takes, the case
@@ -446,6 +652,29 @@ COUNTER_READ = Hook(
 LOG_EVENT = Hook("log_event")
 PLL_HOOKS = (COUNTER_READ, LOG_EVENT)
 PLL_CASES = 2000
+# The last functions' states: for the variadic (VARIADIC_CASES),
+# whether debug output is on, which the debug routines test first;
+# float_raise's trap enables, float_control's high byte's bits 1 to 5 by
+# cause and its low byte's bit 7 (0x5eae2 to 0x5ec70), none, one and
+# all; and the event log's cursor, which log_append (0x31c42) writes
+# through, at log_write_page's entries (0x101d4e, +4), its first, its
+# second and its last, after which it moves to the next page, with the
+# log's lock set up, its exchange an id as a create leaves one, or not,
+# which mutex_acquire fails (smartclock.h, mutex).  And the
+# SCI's flow, whose XOFF bits sci_transmit_allowed tests (0x2031c), the
+# one received and the one sent (duart.h).
+DEBUG_ENABLED = Preset("debug_enabled", (0, 1))
+FLOAT_CONTROLS = (0, 0, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x0080, 0x3E80)
+LOG_CURSORS = (0x101D52, 0x101D66, 0x101D7A)
+LOCK_EXCHANGES = (0x6B000010, 0x6B000010, 0)
+SCI_FLOWS = (0, 0x20, 0x80, 0xA0)
+STRAGGLER_STATES = {
+    **{name: States(presets=(DEBUG_ENABLED,)) for name in ("debug_printf", "debug_printf_polled", "debug_sprintf")},
+    "log_write": States(presets=(Preset("log_cursor", LOG_CURSORS), Preset("log_mutex.exchange", LOCK_EXCHANGES))),
+    "sci_transmit_allowed": States(presets=(Preset("sci.flow", SCI_FLOWS),)),
+    "float_raise": States(presets=(Preset("float_control", FLOAT_CONTROLS),)),
+    "installer_float_raise": States(presets=(Preset("installer_float_control", FLOAT_CONTROLS),)),
+}
 STATES = {
     "fine": States(
         presets=(
@@ -496,6 +725,7 @@ STATES = {
     ),
     # root_task's choice of the SCPI task or the pForth console (0x131ca)
     "root_task": States(presets=(Preset("nv_settings.pforth_at_startup", (0, 1)),)),
+    **STRAGGLER_STATES,
 }
 # The functions whose cases find no task by name (harness.IDENT_NOT_FOUND),
 # by the generated cases that do so, the others finding one: those that
@@ -784,18 +1014,13 @@ def return_from_hook(m: Machine, result: int | None) -> None:
 # The firmware's own: os_report_processes holds
 # the address of "%s" in D5 across its calls (0x16768), which
 # os_report_process prints as a task's stack share.  And what C cannot
-# say: setjmp reads its caller's registers; log_erase checksums a
-# pointer's bytes.
+# say: log_erase checksums a pointer's bytes.
 D5_SHARE = Known(
     "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16768)",
     r"^effect \d+ trap #4 service 4 ",
 )
 KNOWN = {
     **{name: D5_SHARE for name in ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")},
-    "setjmp": Known(
-        "setjmp reads its caller's registers, which C has no name for",
-        r"^one stopped: image None, gcc Invalid memory read \(UC_ERR_READ_UNMAPPED\) of fffff000 ",
-    ),
     "log_erase": Known("log_erase checksums a pointer's bytes", r"^RAM differs from 101d50$"),
 }
 
@@ -803,14 +1028,15 @@ KNOWN = {
 @dataclass
 class Function:
     """A C function: its prototype's parameter and result types, each
-    parameter's offset in the original's stack, and its parameters'
-    names."""
+    parameter's offset in the original's stack, its parameters' names,
+    and whether a variable list follows them (VARIADIC_CASES)."""
 
     name: str
     result: str
     parameters: list[str]
     offsets: list[int]
     names: list[str]
+    variadic: bool = False
 
 
 def functions(c: str, types: Types, conventions: dict, image: str | None) -> tuple[list[Function], int]:
@@ -822,6 +1048,8 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
         if parameters == "" or convention is None or overlay(convention) != image:
             continue
         declared = [] if parameters == "void" else [p.strip() for p in parameters.split(",")]
+        variadic = declared[-1:] == [VARIADIC]
+        declared = declared[:-1] if variadic else declared
         kinds = [re.sub(r"\w+$", "", p).strip() for p in declared]
         result = result.strip()
         sizes = [types.size(kind) for kind in kinds]
@@ -833,12 +1061,22 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
             or result_size is None
             or max(sizes + [result_size]) > WIDEST
             or [item["size"] for item in stack] != sizes
+            or variadic and not variadic_layable(stack)
         ):
             unrunnable += 1
             continue
         names = [re.search(r"\w*$", p).group() for p in declared]
-        found.append(Function(name, result, kinds, [item["offset"] for item in stack], names))
+        found.append(Function(name, result, kinds, [item["offset"] for item in stack], names, variadic))
     return found, unrunnable
+
+
+def variadic_layable(stack: list[dict]) -> bool:
+    """Whether a variadic function's declared arguments lie in 4-byte
+    slots from the first, as gcc's do, so that its list starts at the
+    same offset in both copies."""
+    return [(item["offset"], item["size"]) for item in stack] == [
+        (FIRST_ARGUMENT + GCC_SLOT * i, GCC_SLOT) for i in range(len(stack))
+    ]
 
 
 def task_context(c: str, conventions: dict, roots: set[str]) -> set[str]:
@@ -999,6 +1237,8 @@ def cases(function: Function) -> list[tuple[str, int, dict[int, int | float | by
     return (
         [(f"case {case}", case, {}) for case in range(CASES)]
         + [(f"given case {i}", i % CASES, values) for i, values in enumerate(own)]
+        + variadic_cases(function)
+        + session_cases(function)
         + [(f"state case {i}", i % CASES, {}) for i in range(states.cases)]
     )
 
@@ -1062,15 +1302,24 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
 
 
 def both_runs(
-    m: Machine, types: Types, function: Function, image: int, rebuilt: int, values: list[bytes], memory
+    m: Machine,
+    types: Types,
+    function: Function,
+    image: int,
+    rebuilt: int,
+    values: list[bytes],
+    memory,
+    listed: bytes = b"",
 ) -> tuple[Run, Run]:
     """The image's copy and gcc's, each run from memory on a case's
-    arguments, gcc's given the C's twins of the image's objects."""
+    arguments, a variable list's bytes after the declared ones, gcc's
+    given the C's twins of the image's objects."""
     reset(m, memory)
-    original = Run(m, image, original_layout(function, values))
+    original = Run(m, image, original_layout(function, values).removesuffix(UNDECLARED) + listed + UNDECLARED)
     reset(m, memory)
     give_twins(m)
-    return original, Run(m, rebuilt, gcc_slots(twin_arguments(m, types, function.parameters, values)) + UNDECLARED)
+    gcc = gcc_slots(twin_arguments(m, types, function.parameters, values))
+    return original, Run(m, rebuilt, gcc + listed + UNDECLARED)
 
 
 def check_cases(
@@ -1087,11 +1336,16 @@ def check_cases(
     into drawn."""
     linked_symbols = context.linked_symbols
     for description, case, values_given in cases(function):
+        values_given = dict(values_given)
+        listed = values_given.pop(VARIADIC, b"")
+        line = values_given.pop(SCPI_LINE, None)
         drawn[:] = [draw(states, context.located, function.name, description)]
         m.ident_fails = case in IDENT_FAILS.get(function.name, ())
         m.frame_fill = None
         fresh_ram(m, case)
         establish(m, function, linked_symbols, case)
+        if line is not None:
+            values_given = {**scpi_session(m, function, linked_symbols, line), **values_given}
         if function.name in TASK_STACKS:
             task_stacks(m, context.located, case)
         for address, contents in drawn[0].presets.items():
@@ -1103,11 +1357,11 @@ def check_cases(
             values[position] = given(m, types, function.parameters[position], value)
         memory = snapshot(m)
 
-        original, gcc = both_runs(m, types, function, image, rebuilt, values, memory)
+        original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed)
         privileged = f"trap {PRIVILEGE_VIOLATION}"
         if original.stopped == gcc.stopped == privileged and m.starting_status != SUPERVISOR:
             starting_status, m.starting_status = m.starting_status, SUPERVISOR
-            original, gcc = both_runs(m, types, function, image, rebuilt, values, memory)
+            original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed)
             m.starting_status = starting_status
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))

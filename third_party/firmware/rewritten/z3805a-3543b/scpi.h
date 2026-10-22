@@ -215,6 +215,13 @@ enum {
   SCPI_STATUS_PORT_FAILED = -103,
 };
 
+/* Not a condition: scpi_interpret takes it as the response's end, and
+ * anything after it as STATUS_SCPI_QUERY_AFTER_INDEFINITE, -440 Query
+ * UNTERMINATED after indefinite response (0x294a6, 0x29446). */
+enum {
+  SCPI_STATUS_INDEFINITE_RESPONSE = -90,
+};
+
 /* A unit's exponent for one that takes a multiplier before it, and
  * scpi_multiplier_exponent's result for no multiplier (structures.md,
  * "A numeric parameter's units"). */

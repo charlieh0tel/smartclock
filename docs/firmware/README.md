@@ -1117,6 +1117,25 @@ found its loop's count read back from a register nothing set),
 `bytes_equal_n`'s two strings of one length, `double_to_digits`'
 digit count and mode as `doprnt` passes them, and a subnormal, an
 infinity and a NaN for `frexp`, `modf`, `sqrt`, `log` and `fabs`.
+A variadic function runs too, its list after its declared arguments,
+each a 4-byte slot, laid out alike for both copies as its callers push
+it (`VARIADIC_CASES`): the printf family is given `vsprintf`'s
+formats with their arguments, those whose output 80 bytes holds for
+the routines whose buffer is 80, and its output is compared where it
+goes, a kernel write's text, the polled DUART's or SCI's writes, or
+the buffer; `log_write` an entry's format and its two longs, with the
+log's cursor and lock set up; `float_raise` each cause's code, float
+and double, arithmetic and math library, with its operands, NaNs quiet
+and not, and underflows' shift counts and mantissas that round, with
+`float_control`'s enables drawn.  And the parser's loop,
+`scpi_interpret` and the installer's copy, runs SCPI sessions
+(`SCPI_SESSIONS`): the console port as its input and output, an arena,
+the trees, and a line of messages in the console's line buffer, which
+the port reads before an empty read of the console, so that the input
+ends; most end the session with `:SYSTem:LANGuage "PFORTH"`, whose
+handler returns, and the rest run to the kernel call limit.  The
+installer's handlers never end a session, so its sessions all run to
+the limit, compared up to there.
 And the stack between and above the arguments where the original reads
 them holds the same pointers into the pointees in both calls, the
 seventh case's fill, so that a function whose prototype leaves out an

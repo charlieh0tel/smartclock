@@ -1003,7 +1003,7 @@
 {"address":"0002bd96","name":"scpi_set_DIAGnostic_TOFFset","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002bdee","name":"scpi_query_DIAGnostic_TOFFset","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002be9c","name":"status_report","note":"puts a code into the status system once status_ready","convention":"unknown","stack":[{"offset":4,"size":2}]}
-{"address":"0002bf00","name":"status_report_from","note":"status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes return_zero(call->input)","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":1}]}
+{"address":"0002bf00","name":"status_report_from","note":"status_report(code) for a request_source that reports, REQUEST_SOURCE_SCPI or REQUEST_SOURCE_STARTUP; silent for the others","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":1}]}
 {"address":"0002c148","name":"scpi_set_OUTPut_PIN1_DELay","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002c14c","name":"scpi_query_OUTPut_PIN1_DELay","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002c15e","name":"scpi_query_R1PO","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}

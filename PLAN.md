@@ -1413,6 +1413,10 @@ view cannot drift apart.  The library, bottom up:
      `smartclock.h` as `psos_task`, `psos_exchange`, `psos_kernel`,
      `psos_service` and the rest, which `psos_call` and `psos_io_call`
      take, so that every decompiled call names its service.
+     Then the prototypes the rewrites showed wrong: the text cursors
+     `char **`, the double routines `double` and `int64_t`,
+     `save_calibration_block`'s unread index, `status_report_from`
+     void, `load_double` a double step's routine.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

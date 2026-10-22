@@ -231,7 +231,9 @@ uint32_t uint64_divide(uint32_t divisor, uint32_t high, uint32_t low) {
 /* A signed 64-bit number as a double: its magnitude's low long plus its
  * high long times 2^32 (two_to_32, 0x41300), the sign set after
  * (0x4119c). */
-double int64_to_double(uint32_t high, uint32_t low) {
+double int64_to_double(int64_t value) {
+  uint32_t high = (uint64_t)value >> ARITHMETIC_LONG_BITS;
+  uint32_t low = value;
   const bool negative = (high & LIBC_SIGN) != 0;
 
   if (negative) {
@@ -250,11 +252,11 @@ double int64_to_double(uint32_t high, uint32_t low) {
   return result.value;
 }
 
-/* A double, passed as its two words, as a signed 64-bit number: its
+/* A double as a signed 64-bit number: its
  * magnitude over 2^32 the high long, what remains the low, negated after;
  * nothing calls it (0x41244). */
-uint64_t double_to_int64(uint32_t high, uint32_t low) {
-  union libc_double value = {.word = {high, low}};
+int64_t double_to_int64(double x) {
+  union libc_double value = {.value = x};
   /* double_compare(0, x) is negative when x < 0. */
   const bool negative = double_compare(0.0, value.value) < 0;
 
@@ -301,10 +303,12 @@ float float_absolute_on_stack(float f) {
   return result.value;
 }
 
-/* A double, passed as its two words, with its sign bit cleared; nothing
- * calls it (0x133f2). */
-uint64_t double_abs(uint32_t high, uint32_t low) {
-  return arithmetic_int64(high & ~LIBC_SIGN, low);
+/* A double with its sign bit cleared; nothing calls it (0x133f2). */
+double double_abs(double x) {
+  union libc_double result = {.value = x};
+
+  result.word.high &= ~LIBC_SIGN;
+  return result.value;
 }
 
 /* A double rounded half away from zero to a long, saturating at the

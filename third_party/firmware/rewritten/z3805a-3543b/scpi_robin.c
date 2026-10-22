@@ -10,10 +10,7 @@
  * "Clearing Time Stamp Memory" to "Processing Memory Overflows"), under
  * another name (docs/scpi/undocumented.md), and a stub of it: a data
  * set's name, "TSTamp 1" or the like, selects a Time Tag input, but the
- * answers are made up from the input alone, and nothing is cleared.
- *
- * Several routines take a text cursor, a char * kept in a uint32_t or
- * int32_t, which their prototypes give, as skip_spaces' does. */
+ * answers are made up from the input alone, and nothing is cleared. */
 
 /* The input a name selects, 0 for "TSTamp 1"; or every input. */
 enum {
@@ -116,18 +113,18 @@ static const scpi_robin_form SCPI_ROBIN_FORMS[] = {
 
 /* Steps a cursor past an optional XNON: or XNONE: data class, with or
  * without a ':' before it, or past a lone ':' (0x2e730). */
-void robin_strip_xnon(uint32_t* cursor) {
+void robin_strip_xnon(char** cursor) {
   /* In the order the image tries them. */
   static const char* const PREFIXES[] = {
       "XNON:", ":XNON:", "XNONE:", ":XNONE:", ":"};
-  char* text = (char*)*cursor;
+  char* text = *cursor;
 
   for (uint8_t index = 0; index < sizeof PREFIXES / sizeof *PREFIXES; index++) {
     char* prefix = (char*)PREFIXES[index];
     int32_t length = scpi_engine_length(prefix);
 
     if (strncmp(text, prefix, length) == 0) {
-      *cursor = (uint32_t)(text + length);
+      *cursor = text + length;
       return;
     }
   }
@@ -137,9 +134,9 @@ void robin_strip_xnon(uint32_t* cursor) {
  * past it: STATUS_SCPI_INVALID_STRING for neither; for a branch 0, past
  * the ':' that must follow, or STATUS_SCPI_INVALID_STRING; else the
  * code less SCPI_ROBIN_BRANCH, nonzero (0x2e7ee). */
-int32_t robin_keyword_match(char* entry, int32_t* cursor) {
+int32_t robin_keyword_match(char* entry, char** cursor) {
   scpi_robin_keyword* keyword = (scpi_robin_keyword*)entry;
-  char* text = (char*)*cursor;
+  char* text = *cursor;
   char* form;
 
   if (strncmp(keyword->long_form, text,
@@ -152,24 +149,24 @@ int32_t robin_keyword_match(char* entry, int32_t* cursor) {
     return SCPI_ROBIN_INVALID;
   }
   text += scpi_engine_length(form);
-  *cursor = (int32_t)text;
+  *cursor = text;
   if (keyword->code != SCPI_ROBIN_BRANCH) {
     return keyword->code - SCPI_ROBIN_BRANCH;
   }
   if (*text != ':') {
     return SCPI_ROBIN_INVALID;
   }
-  *cursor = (int32_t)(text + 1);
+  *cursor = text + 1;
   return 0;
 }
 
 /* Finds the name at a cursor among SCPI_ROBIN_NAMES, the first whose
  * every keyword matches, and steps past it: its last keyword's code and
  * arguments' form, and 0; or STATUS_SCPI_INVALID_STRING (0x2e882). */
-uint32_t robin_lookup(int32_t* cursor, uint32_t* code, uint32_t* form) {
+uint32_t robin_lookup(char** cursor, uint32_t* code, uint32_t* form) {
   for (const scpi_robin_keyword* const* name = SCPI_ROBIN_NAMES;; name++) {
     const scpi_robin_keyword* keyword = *name;
-    int32_t next = *cursor;
+    char* next = *cursor;
 
     if (keyword->code == SCPI_ROBIN_END) {
       return SCPI_ROBIN_INVALID;
@@ -191,10 +188,9 @@ uint32_t robin_lookup(int32_t* cursor, uint32_t* code, uint32_t* form) {
  * each number, less 1, and 0; or STATUS_SCPI_INVALID_STRING.  A form past
  * the last, 6, answers itself less 6, as the image's
  * switch leaves it (0x2e8ee). */
-int32_t robin_parse_arguments(int32_t* cursor, uint32_t form, uint32_t* first,
+int32_t robin_parse_arguments(char** text, uint32_t form, uint32_t* first,
                               uint32_t* second) {
   static const uint32_t LAST_FORM = 6;
-  char** text = (char**)cursor;
 
   *first = 0;
   *second = 0;
@@ -213,7 +209,7 @@ int32_t robin_parse_arguments(int32_t* cursor, uint32_t form, uint32_t* first,
   if (**text != ' ') {
     return SCPI_ROBIN_INVALID;
   }
-  skip_spaces((uint32_t*)text);
+  skip_spaces(text);
 
   char first_digit = **text;
 
@@ -225,12 +221,12 @@ int32_t robin_parse_arguments(int32_t* cursor, uint32_t form, uint32_t* first,
     *first = first_digit - '1';
     return 0;
   }
-  skip_spaces((uint32_t*)text);
+  skip_spaces(text);
   if (**text != ',') {
     return SCPI_ROBIN_INVALID;
   }
   (*text)++;
-  skip_spaces((uint32_t*)text);
+  skip_spaces(text);
 
   char second_digit = **text;
   bool after_one = first_digit == '1';
@@ -258,17 +254,17 @@ int32_t robin_parse(char* name, uint32_t* first, uint32_t* second) {
   for (uint32_t index = 0; (copy[index] = name[index]) != 0; index++) {
   }
   string_upper(text);
-  skip_spaces((uint32_t*)&text);
-  string_trim_right((uint32_t*)&text);
-  robin_strip_xnon((uint32_t*)&text);
+  skip_spaces(&text);
+  string_trim_right(&text);
+  robin_strip_xnon(&text);
 
   /* The image compares each result's low byte. */
-  int8_t error = robin_lookup((int32_t*)&text, &code, &form);
+  int8_t error = robin_lookup(&text, &code, &form);
 
   if (error == SCPI_ROBIN_INVALID) {
     return error;
   }
-  error = robin_parse_arguments((int32_t*)&text, form, first, second);
+  error = robin_parse_arguments(&text, form, first, second);
   if (error == SCPI_ROBIN_INVALID) {
     return error;
   }

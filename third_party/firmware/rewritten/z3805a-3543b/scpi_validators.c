@@ -107,8 +107,7 @@ int32_t clamp_double_to_step_and_limits(double* value, uint32_t index,
   double clamped;
   double whole;
 
-  /* clamp_double's prototype stores the double through a long pointer. */
-  clamp_double(value, (uint32_t*)&clamped, minimum, maximum, (uint8_t)source);
+  clamp_double(value, &clamped, minimum, maximum, (uint8_t)source);
   double step = step_record->function(step_record, &clamped, index);
   double steps = double_divide_reversed_pointers(&step, &clamped);
   if (double_compare(PLLC_COARSE_STEPS, steps) > 0 ||

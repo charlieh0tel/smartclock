@@ -152,8 +152,9 @@ bool calibration_block_read(void) {
 }
 
 /* Writes the time offset and TC to the calibration block when they
- * differ from it, a memory error for the source when it fails (0x30c60). */
-uint32_t save_calibration_block(uint32_t source) {
+ * differ from it, a memory error for the source when it fails; the
+ * index is not read (0x30c60). */
+uint32_t save_calibration_block(int32_t index, int32_t source) {
   if (eeprom_calibration_block.time_offset == scpi_value_DIAGnostic_TOFFset &&
       eeprom_calibration_block.tc_coefficient ==
           scpi_value_DIAGnostic_ROSCillator_TCOefficient) {

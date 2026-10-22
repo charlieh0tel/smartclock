@@ -43,9 +43,10 @@ routine and the address that shows it.
   (`0x2a588` to `0x2a5a2`), and **`:DIAG:TEST?`** D2's low byte as the
   test for a choice past its list (`0x2bc36`); the parser gives neither.
 
+- **`log_erase`** checksums a pointer's bytes.
+
 The C reads such a register as the image does, first thing in the
 function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
-- **`log_erase`** checksums a pointer's bytes.
 
 ## Reads past a table
 

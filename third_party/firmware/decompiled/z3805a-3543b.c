@@ -1337,6 +1337,8 @@ struct identification_record {
     uint8_t unused[6];
 };
 
+typedef longlong int64_t;
+
 typedef struct interpolator_calibration interpolator_calibration, *Pinterpolator_calibration;
 
 struct interpolator_calibration {
@@ -2491,7 +2493,7 @@ typedef struct scpi_double_step scpi_double_step, *Pscpi_double_step;
 typedef double (scpi_double_step_function)(struct scpi_double_step *, double *, int32_t);
 
 struct scpi_double_step {
-    uint32_t value[2];
+    double value;
     scpi_double_step_function *function;
 };
 
@@ -2977,6 +2979,8 @@ struct three_point_fit {
     float vertex_x;
     float vertex_y;
 };
+
+typedef ulonglong uint64_t;
 
 typedef ulong (write_function)(char *);
 
@@ -5613,8 +5617,8 @@ uint16_t isqrt16(uint32_t param_1);
 int32_t round_shift_right(int32_t param_1,uint32_t param_2);
 int32_t double_round_to_long(double x);
 int32_t round_divide(int32_t param_1,int32_t param_2);
-uint32_t double_decimal_exponent_rounded(uint32_t param_1,uint32_t param_2);
-uint32_t double_decimal_exponent(uint32_t param_1,uint32_t param_2);
+int16_t double_decimal_exponent_rounded(double value);
+int16_t double_decimal_exponent(double value);
 double power_of_ten_double(int16_t param_1);
 int16_t tfom_table_index(uint32_t tfom);
 float power_of_ten_float(int16_t param_1);
@@ -5646,7 +5650,7 @@ uint16_t enter_supervisor_mode(void);
 uint16_t set_interrupt_mask(uint16_t sr);
 uint8_t task_set_priority(uint32_t param_1,uint8_t param_2);
 float float_absolute_on_stack(float f);
-uint64_t double_abs(uint32_t param_1,uint32_t param_2);
+double double_abs(double value);
 uint32_t rotate_left(uint32_t param_1,uint8_t param_2);
 int32_t primary_trap_7();
 uint32_t enter_supervisor(void) __asm__("c_enter_supervisor");
@@ -6576,7 +6580,7 @@ int32_t scpi_query_DIAGnostic_TEST_RESult(void *parameters,void *response,void *
 int32_t scpi_set_DIAGnostic_TOFFset(void *parameters,void *response,void *call);
 int32_t scpi_query_DIAGnostic_TOFFset(void *parameters,void *response,void *call);
 uint32_t status_report(int16_t param_1);
-int32_t status_report_from(int16_t param_1,uint8_t param_2);
+void status_report_from(int16_t code,uint8_t source);
 int32_t scpi_set_OUTPut_PIN1_DELay(void *parameters,void *response,void *call);
 int32_t scpi_query_OUTPut_PIN1_DELay(void *parameters,void *response,void *call);
 int32_t scpi_query_R1PO(void *parameters,void *response,void *call);
@@ -6708,12 +6712,12 @@ int32_t scpi_query_SAMPle_DOUBle(void *parameters,void *response,void *call);
 int32_t scpi_set_SAMPle_DARR(void *parameters,void *response,void *call);
 int32_t scpi_query_SAMPle_DARR(void *parameters,void *response,void *call);
 void string_upper(char *text);
-void skip_spaces(uint32_t *param_1);
-void string_trim_right(uint32_t *param_1);
-void robin_strip_xnon(uint32_t *param_1);
-int32_t robin_keyword_match(char *param_1,int32_t *param_2);
-uint32_t robin_lookup(int32_t *param_1,uint32_t *param_2,uint32_t *param_3);
-int32_t robin_parse_arguments(int32_t *param_1,uint32_t param_2,uint32_t *param_3,uint32_t *param_4);
+void skip_spaces(char **cursor);
+void string_trim_right(char **text);
+void robin_strip_xnon(char **cursor);
+int32_t robin_keyword_match(char *entry,char **cursor);
+uint32_t robin_lookup(char **cursor,uint32_t *code,uint32_t *form);
+int32_t robin_parse_arguments(char **cursor,uint32_t form,uint32_t *first,uint32_t *second);
 int32_t robin_parse(char *param_1,uint32_t *param_2,uint32_t *param_3);
 void robin_point_list(uint16_t *points,uint16_t *count,char kind);
 void robin_timestamp_values(char param_1,int16_t param_2,int16_t *param_3);
@@ -6821,7 +6825,7 @@ uint32_t lifetime_record_write(void);
 void lifetime_event_run(void);
 void lifetime_update(int32_t param_1);
 bool calibration_block_read(void);
-uint32_t save_calibration_block(uint32_t param_1);
+uint32_t save_calibration_block(int32_t index,int32_t source);
 uint8_t parameter_record_read(void);
 bool save_parameter_record(uint8_t param_1);
 void duartb_settings_preset(int32_t index,int32_t source);
@@ -6853,10 +6857,9 @@ uint32_t log_append(char *format,int32_t argument_1,int32_t argument_2);
 void report_clamped(char param_1,uint8_t param_2);
 float float_table_index(float *param_1,int16_t param_2);
 uint32_t clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,uint8_t param_5);
-uint32_t
-clamp_double(double *param_1,uint32_t *param_2,double *param_3,double *param_4,uint8_t param_5);
+uint32_t clamp_double(double *value,double *clamped,double *minimum,double *maximum,uint8_t source);
 float round_float_to_step(float *value,float *step);
-uint64_t load_double(uint64_t *param_1);
+double load_double(scpi_double_step *step,double *value,int32_t index);
 int32_t clamp_to_limits(int32_t *value,int32_t index,int32_t *minimum,int32_t *maximum,scpi_step *step,
                    int32_t source);
 uint32_t mask_to_limits(uint32_t *param_1,uint32_t *param_2);
@@ -6874,8 +6877,7 @@ int32_t clamp_float_to_step_double
 int32_t clamp_double_to_step_and_limits
                   (double *value,uint32_t index,double *minimum,double *maximum,
                   scpi_double_step *step,int32_t source);
-uint64_t
-clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t param_4);
+double clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t param_4);
 void nv_slot_erase(uint8_t param_1);
 void clear_nv(void);
 void nv_restore(void);
@@ -6886,7 +6888,7 @@ uint8_t nv_slot_valid(void);
 uint32_t nv_load_slot(void);
 uint32_t load_long_unit_step(uint32_t *param_1);
 uint32_t load_long(uint32_t *param_1);
-uint64_t load_double_param(uint64_t *param_1);
+double load_double_param(scpi_double_step *step,double *value,int32_t index);
 void idn_model_default(void);
 uint8_t identification_record_read(void);
 uint32_t identification_record_write(void);
@@ -6940,8 +6942,8 @@ uint64_t int64_negate(int32_t param_1,int32_t param_2);
 uint64_t int64_add_long(uint32_t param_1,int32_t param_2,uint32_t param_3);
 int32_t int64_divide(int32_t divisor,int32_t high,uint32_t low);
 uint32_t uint64_divide(uint32_t divisor,uint32_t high,uint32_t low);
-double int64_to_double(uint32_t param_1,uint32_t param_2);
-uint64_t double_to_int64(uint32_t param_1,uint32_t param_2);
+double int64_to_double(int64_t value);
+int64_t double_to_int64(double value);
 void pll_action_nothing(int32_t index,int32_t source);
 void efc_history_update(void);
 void curv_signal(void);
@@ -6961,8 +6963,8 @@ int32_t fit_three_point(three_point_fit *fit);
 int32_t linear_regression(regression_record *record,int32_t with_slope);
 float float_abs(float param_1);
 void fit_quality(aging_curve_state *curve);
-uint32_t kenneth_present_get(float *param_1,uint8_t *param_2);
-uint32_t kenneth_predicted_get(float *param_1,uint8_t *param_2,uint8_t *param_3);
+uint32_t kenneth_present_get(float *value,uint8_t *resolution);
+uint32_t kenneth_predicted_get(float *value,uint8_t *resolution,uint8_t *holdover);
 uint32_t get_ffom(frequency_figure_of_merit *ffom);
 void output_state_program(uint8_t param_1);
 void pulse_program(time_of_day time,calendar_date date,uint8_t state,int32_t period);
@@ -10631,7 +10633,7 @@ int32_t round_divide(int32_t param_1,int32_t param_2)
 /* the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c;
    called by nothing */
 
-uint32_t double_decimal_exponent_rounded(uint32_t param_1,uint32_t param_2)
+int16_t double_decimal_exponent_rounded(double value)
 
 {
   uint32_t uVar1;
@@ -10641,7 +10643,6 @@ uint32_t double_decimal_exponent_rounded(uint32_t param_1,uint32_t param_2)
   uint16_t uVar5;
   uint16_t uVar6;
   
-  param_1 = param_1 & 0x7fffffff;
   uVar3 = 0;
   uVar4 = 0x1e8;
   do {
@@ -10651,12 +10652,15 @@ uint32_t double_decimal_exponent_rounded(uint32_t param_1,uint32_t param_2)
     if (uVar2 == uVar5) break;
     uVar3 = uVar5;
     uVar4 = uVar2;
-  } while (((((int32_t)param_1 < *(int32_t *)((int32_t)powers_of_ten_times_five + (int32_t)(int16_t)uVar2)) ||
+  } while (((((int32_t)(__ghidra_piece(uint32_t, value, 0) & 0x7fffffff) <
+              *(int32_t *)((int32_t)powers_of_ten_times_five + (int32_t)(int16_t)uVar2)) ||
             (uVar3 = uVar2, uVar4 = uVar6,
-            *(int32_t *)((int32_t)powers_of_ten_times_five + (int32_t)(int16_t)uVar2) < (int32_t)param_1)) ||
+            *(int32_t *)((int32_t)powers_of_ten_times_five + (int32_t)(int16_t)uVar2) <
+            (int32_t)(__ghidra_piece(uint32_t, value, 0) & 0x7fffffff))) ||
            (uVar1 = *(uint32_t *)((int32_t)powers_of_ten_times_five + (int16_t)uVar2 + 4), uVar3 = uVar5,
-           uVar4 = uVar2, param_2 < uVar1)) || (uVar3 = uVar2, uVar4 = uVar6, param_2 != uVar1));
-  return CONCAT22((int16_t)(param_1 >> 0x10),(int16_t)(uVar2 - 0xe8) >> 3);
+           uVar4 = uVar2, __ghidra_piece(uint32_t, value, 4) < uVar1)) ||
+          (uVar3 = uVar2, uVar4 = uVar6, __ghidra_piece(uint32_t, value, 4) != uVar1));
+  return (int16_t)(uVar2 - 0xe8) >> 3;
 }
 
 
@@ -10665,7 +10669,7 @@ uint32_t double_decimal_exponent_rounded(uint32_t param_1,uint32_t param_2)
 /* floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to
    1e30 at 0x12614; called by nothing */
 
-uint32_t double_decimal_exponent(uint32_t param_1,uint32_t param_2)
+int16_t double_decimal_exponent(double value)
 
 {
   uint32_t uVar1;
@@ -10675,7 +10679,6 @@ uint32_t double_decimal_exponent(uint32_t param_1,uint32_t param_2)
   uint16_t uVar5;
   uint16_t uVar6;
   
-  param_1 = param_1 & 0x7fffffff;
   uVar3 = 0;
   uVar4 = 0x1e8;
   do {
@@ -10685,13 +10688,15 @@ uint32_t double_decimal_exponent(uint32_t param_1,uint32_t param_2)
     if (uVar2 == uVar5) break;
     uVar3 = uVar5;
     uVar4 = uVar2;
-  } while (((((int32_t)param_1 < *(int32_t *)((int32_t)powers_of_ten_double + (int32_t)(int16_t)uVar2)) ||
+  } while (((((int32_t)(__ghidra_piece(uint32_t, value, 0) & 0x7fffffff) <
+              *(int32_t *)((int32_t)powers_of_ten_double + (int32_t)(int16_t)uVar2)) ||
             (uVar3 = uVar2, uVar4 = uVar6,
-            *(int32_t *)((int32_t)powers_of_ten_double + (int32_t)(int16_t)uVar2) < (int32_t)param_1)) ||
+            *(int32_t *)((int32_t)powers_of_ten_double + (int32_t)(int16_t)uVar2) <
+            (int32_t)(__ghidra_piece(uint32_t, value, 0) & 0x7fffffff))) ||
            (uVar1 = *(uint32_t *)((int32_t)powers_of_ten_double + (int16_t)uVar2 + 4), uVar3 = uVar5,
-           uVar4 = uVar2, param_2 < uVar1)) ||
-          (uVar3 = uVar2, uVar4 = uVar6, uVar6 = uVar2, param_2 != uVar1));
-  return CONCAT22((int16_t)(param_1 >> 0x10),(int16_t)(uVar6 - 0xf0) >> 3);
+           uVar4 = uVar2, __ghidra_piece(uint32_t, value, 4) < uVar1)) ||
+          (uVar3 = uVar2, uVar4 = uVar6, uVar6 = uVar2, __ghidra_piece(uint32_t, value, 4) != uVar1));
+  return (int16_t)(uVar6 - 0xf0) >> 3;
 }
 
 
@@ -11651,10 +11656,10 @@ float float_absolute_on_stack(float f)
 
 /* a double's magnitude; called by nothing */
 
-uint64_t double_abs(uint32_t param_1,uint32_t param_2)
+double double_abs(double value)
 
 {
-  return CONCAT44(param_1,param_2) & 0x7fffffffffffffff;
+  return ABS(value);
 }
 
 #endif
@@ -49010,13 +49015,13 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
 {
   int32_t zero;
   char cVar2;
-  int16_t sVar3;
+  int16_t code;
   char local_6 [2];
   
   zero = return_zero();
   cVar2 = gps_message_supported(0x28,local_6);
   if (cVar2 == 0) {
-    sVar3 = 6;
+    code = 6;
   }
   else {
     if (local_6[0] != 0) {
@@ -49026,9 +49031,9 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
                        (uint8_t)zero);
       return 0;
     }
-    sVar3 = 0xd;
+    code = 0xd;
   }
-  status_report_from(sVar3,(uint8_t)zero);
+  status_report_from(code,(uint8_t)zero);
   return 0;
 }
 
@@ -50416,26 +50421,22 @@ uint32_t status_report(int16_t param_1)
 /* status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes
    return_zero() */
 
-int32_t status_report_from(int16_t param_1,uint8_t param_2)
+void status_report_from(int16_t code,uint8_t source)
 
 {
-  int16_t sVar2;
   int32_t iVar1;
   
-  iVar1 = param_2 - 4;
-  if (param_2 < 4 || iVar1 == 0) {
-    sVar2 = (int16_t)iVar1;
-    iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),(&switchD_0002bf12_index_zero)[sVar2]);
+  iVar1 = source - 4;
+  if (source < 4 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_0002bf12_index_zero)[sVar2]) {
+    switch((&switchD_0002bf12_index_zero)[(int16_t)iVar1]) {
     case 10:
-      iVar1 = status_report(param_1);
+      status_report(code);
       break;
     case 0x16:
-      iVar1 = 0;
     }
   }
-  return iVar1;
+  return;
 }
 
 
@@ -50917,13 +50918,13 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
 int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call)
 
 {
-  uint8_t bVar1;
+  uint8_t source;
   uint32_t zero;
-  int32_t iVar3;
+  int32_t iVar2;
   int32_t clamped;
-  float fVar5;
-  uint8_t bVar6;
-  double dVar7;
+  float fVar4;
+  uint8_t bVar5;
+  double dVar6;
   int32_t local_40;
   int32_t local_3c;
   int32_t local_38;
@@ -50938,7 +50939,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
   float local_8;
   
   zero = return_zero();
-  bVar1 = (uint8_t)zero;
+  source = (uint8_t)zero;
   if ((*(int16_t *)((int32_t)parameters + 2) == 2) || (*(int16_t *)((int32_t)parameters + 2) == 3)) {
     if ((((*(int16_t *)((int32_t)parameters + 4) != -1) ||
          ((((*(int16_t *)((int32_t)parameters + 0xc) != -1 || (*(int16_t *)((int32_t)parameters + 0x14) != -1))
@@ -50946,7 +50947,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
           ((*(int16_t *)((int32_t)parameters + 0x20) != -1 || (*(int16_t *)((int32_t)parameters + 0x28) != -1)))
           ))) || (*(int16_t *)((int32_t)parameters + 0x30) != -1)) ||
        (*(int16_t *)((int32_t)parameters + 0x38) != -1)) {
-      status_report_from(1,bVar1);
+      status_report_from(1,source);
       return 0;
     }
     if (*(int16_t *)((int32_t)parameters + 2) == 2) {
@@ -50955,11 +50956,11 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
     }
     else {
       if (survey_position_valid == 0) {
-        status_report_from(8,bVar1);
+        status_report_from(8,source);
         return 0;
       }
       if ((nv_settings.douglas_state == 0) && (gps.average_count != 0)) {
-        pllc_request_b(&scpi_action_SOURce_GPSystem_POSition,0,bVar1);
+        pllc_request_b(&scpi_action_SOURce_GPSystem_POSition,0,source);
         return 0;
       }
       copy_longs_locked((uint32_t *)survey_position,(uint32_t *)((zero & 0xff) * 0xc + 0x102a0e),3)
@@ -50973,7 +50974,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
         ((*(int16_t *)((int32_t)parameters + 0x14) == -1 ||
          ((*(int16_t *)((int32_t)parameters + 0xc) == -1 || (*(int16_t *)((int32_t)parameters + 4) == -1))))))))
     {
-      status_report_from(2,bVar1);
+      status_report_from(2,source);
       return 0;
     }
     unit_step.value = 1;
@@ -50982,16 +50983,16 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
     milli_step.function = load_long;
     local_1c = 0;
     local_18 = 0x5a;
-    iVar3 = clamp_to_limits((int32_t *)((int32_t)parameters + 6),0,&local_1c,&local_18,&unit_step,
+    iVar2 = clamp_to_limits((int32_t *)((int32_t)parameters + 6),0,&local_1c,&local_18,&unit_step,
                             zero & 0xff);
-    if (iVar3 == local_18) {
-      bVar6 = 0;
-      fVar5 = 0.0;
+    if (iVar2 == local_18) {
+      bVar5 = 0;
+      fVar4 = 0.0;
       if (*(int32_t *)((int32_t)parameters + 0xe) != 0) {
-        status_report_from(9,bVar1);
+        status_report_from(9,source);
       }
       if ((*(uint32_t *)((int32_t)parameters + 0x16) & 0x7fffffff) != 0) {
-        status_report_from(9,bVar1);
+        status_report_from(9,source);
       }
     }
     else {
@@ -51001,25 +51002,25 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
                               zero & 0xff);
       local_14 = 0.0;
       local_10 = 59.999;
-      fVar5 = clamp_float_to_step_and_limits
+      fVar4 = clamp_float_to_step_and_limits
                         ((float *)((int32_t)parameters + 0x16),0,&local_14,&local_10,(int32_t)&milli_step,
                          zero & 0xff);
-      bVar6 = (uint8_t)clamped;
+      bVar5 = (uint8_t)clamped;
     }
-    dVar7 = float_to_double(fVar5);
-    dms_to_mas(&local_40,(uint16_t)iVar3,bVar6,dVar7);
+    dVar6 = float_to_double(fVar4);
+    dms_to_mas(&local_40,(uint16_t)iVar2,bVar5,dVar6);
     local_1c = 0;
     local_18 = 0xb4;
-    iVar3 = clamp_to_limits((int32_t *)((int32_t)parameters + 0x22),0,&local_1c,&local_18,&unit_step,
+    iVar2 = clamp_to_limits((int32_t *)((int32_t)parameters + 0x22),0,&local_1c,&local_18,&unit_step,
                             zero & 0xff);
-    if (iVar3 == local_18) {
-      bVar6 = 0;
-      fVar5 = 0.0;
+    if (iVar2 == local_18) {
+      bVar5 = 0;
+      fVar4 = 0.0;
       if (*(int32_t *)((int32_t)parameters + 0x2a) != 0) {
-        status_report_from(9,bVar1);
+        status_report_from(9,source);
       }
       if ((*(uint32_t *)((int32_t)parameters + 0x32) & 0x7fffffff) != 0) {
-        status_report_from(9,bVar1);
+        status_report_from(9,source);
       }
     }
     else {
@@ -51029,19 +51030,19 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
                               zero & 0xff);
       local_14 = 0.0;
       local_10 = 59.999;
-      fVar5 = clamp_float_to_step_and_limits
+      fVar4 = clamp_float_to_step_and_limits
                         ((float *)((int32_t)parameters + 0x32),0,&local_14,&local_10,(int32_t)&milli_step,
                          zero & 0xff);
-      bVar6 = (uint8_t)clamped;
+      bVar5 = (uint8_t)clamped;
     }
-    dVar7 = float_to_double(fVar5);
-    dms_to_mas(&local_3c,(uint16_t)iVar3,bVar6,dVar7);
+    dVar6 = float_to_double(fVar4);
+    dms_to_mas(&local_3c,(uint16_t)iVar2,bVar5,dVar6);
     centi_step.value = 0x3c23d70a;
     centi_step.function = load_long;
-    fVar5 = integer_to_float(-100000);
-    local_c = float_multiply(fVar5,0.01);
-    fVar5 = integer_to_float(1800000);
-    local_8 = float_multiply(fVar5,0.01);
+    fVar4 = integer_to_float(-100000);
+    local_c = float_multiply(fVar4,0.01);
+    fVar4 = integer_to_float(1800000);
+    local_8 = float_multiply(fVar4,0.01);
     local_38 = clamp_float_to_step_double
                          ((float *)((int32_t)parameters + 0x3a),0,&local_c,&local_8,(int32_t)&centi_step,
                           zero & 0xff);
@@ -51051,13 +51052,13 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
     if (*(int16_t *)((int32_t)parameters + 0x1e) == 3) {
       local_3c = -local_3c;
     }
-    iVar3 = (zero & 0xff) * 0xc;
-    *(int32_t *)(iVar3 + 0x102a0e) = local_40;
-    *(int32_t *)(iVar3 + 0x102a12) = local_3c;
-    *(int32_t *)(iVar3 + 0x102a16) = local_38;
+    iVar2 = (zero & 0xff) * 0xc;
+    *(int32_t *)(iVar2 + 0x102a0e) = local_40;
+    *(int32_t *)(iVar2 + 0x102a12) = local_3c;
+    *(int32_t *)(iVar2 + 0x102a16) = local_38;
   }
-  pllc_request_d(&scpi_param_SOURce_GPSystem_POSition,2,(zero & 0xff) * 0xc + 0x102a0e,bVar1);
-  pllc_request_a(&scpi_param_DOUGlas_STATe,0,1,bVar1);
+  pllc_request_d(&scpi_param_SOURce_GPSystem_POSition,2,(zero & 0xff) * 0xc + 0x102a0e,source);
+  pllc_request_a(&scpi_param_DOUGlas_STATe,0,1,source);
   return 0;
 }
 
@@ -53403,15 +53404,15 @@ void string_upper(char *text)
 
 /* advances a char ** past spaces */
 
-void skip_spaces(uint32_t *param_1)
+void skip_spaces(char **cursor)
 
 {
   char *pcVar1;
   
-  pcVar1 = (char *)*param_1;
+  pcVar1 = *cursor;
   while (*pcVar1 == ' ') {
     pcVar1 = pcVar1 + 1;
-    *param_1 = pcVar1;
+    *cursor = pcVar1;
   }
   return;
 }
@@ -53421,12 +53422,12 @@ void skip_spaces(uint32_t *param_1)
 
 /* strips a string's trailing spaces */
 
-void string_trim_right(uint32_t *param_1)
+void string_trim_right(char **text)
 
 {
   char *pcVar1;
   
-  for (pcVar1 = (char *)*param_1; *pcVar1 != 0; pcVar1 = pcVar1 + 1) {
+  for (pcVar1 = *text; *pcVar1 != 0; pcVar1 = pcVar1 + 1) {
   }
   while (pcVar1 = pcVar1 + -1, *pcVar1 == ' ') {
     *pcVar1 = 0;
@@ -53440,7 +53441,7 @@ void string_trim_right(uint32_t *param_1)
 
 /* skips an XNON:, :XNON:, XNONE: or :XNONE: prefix, for the ROBin queries */
 
-void robin_strip_xnon(uint32_t *param_1)
+void robin_strip_xnon(char **cursor)
 
 {
   char cVar1;
@@ -53449,7 +53450,7 @@ void robin_strip_xnon(uint32_t *param_1)
   char *pcVar4;
   char *pcVar5;
   
-  pcVar5 = (char *)*param_1;
+  pcVar5 = *cursor;
   uVar2 = 0xffffffff;
   pcVar4 = "XNON:";
   do {
@@ -53503,7 +53504,7 @@ void robin_strip_xnon(uint32_t *param_1)
     pcVar5 = pcVar5 + 6;
   }
 LAB_0002e7e4:
-  *param_1 = pcVar5;
+  *cursor = pcVar5;
   return;
 }
 
@@ -53514,7 +53515,7 @@ LAB_0002e7e4:
 
 /* matches a ROBin argument's keyword at the start of the text */
 
-int32_t robin_keyword_match(char *param_1,int32_t *param_2)
+int32_t robin_keyword_match(char *entry,char **cursor)
 
 {
   char cVar1;
@@ -53523,56 +53524,56 @@ int32_t robin_keyword_match(char *param_1,int32_t *param_2)
   char *pcVar4;
   
   uVar2 = 0xffffffff;
-  pcVar4 = param_1 + 5;
+  pcVar4 = entry + 5;
   do {
     uVar2 = uVar2 + 1;
     cVar1 = *pcVar4;
     pcVar4 = pcVar4 + 1;
   } while (cVar1 != 0);
-  iVar3 = strncmp(param_1 + 5,(char *)*param_2,uVar2);
+  iVar3 = strncmp(entry + 5,*cursor,uVar2);
   if (iVar3 == 0) {
     iVar3 = -1;
-    pcVar4 = param_1 + 5;
+    pcVar4 = entry + 5;
     do {
       iVar3 = iVar3 + 1;
       cVar1 = *pcVar4;
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != 0);
-    *param_2 = iVar3 + *param_2;
-    if (*(int32_t *)(param_1 + 0x10) + 2 != 0) {
-      return *(int32_t *)(param_1 + 0x10) + 2;
+    *cursor = *cursor + iVar3;
+    if (*(int32_t *)(entry + 0x10) + 2 != 0) {
+      return *(int32_t *)(entry + 0x10) + 2;
     }
-    cVar1 = *(char *)*param_2;
+    cVar1 = **cursor;
   }
   else {
     uVar2 = 0xffffffff;
-    pcVar4 = param_1;
+    pcVar4 = entry;
     do {
       uVar2 = uVar2 + 1;
       cVar1 = *pcVar4;
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != 0);
-    iVar3 = strncmp(param_1,(char *)*param_2,uVar2);
+    iVar3 = strncmp(entry,*cursor,uVar2);
     if (iVar3 != 0) {
       return -0x15;
     }
     iVar3 = -1;
-    pcVar4 = param_1;
+    pcVar4 = entry;
     do {
       iVar3 = iVar3 + 1;
       cVar1 = *pcVar4;
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != 0);
-    *param_2 = iVar3 + *param_2;
-    if (*(int32_t *)(param_1 + 0x10) + 2 != 0) {
-      return *(int32_t *)(param_1 + 0x10) + 2;
+    *cursor = *cursor + iVar3;
+    if (*(int32_t *)(entry + 0x10) + 2 != 0) {
+      return *(int32_t *)(entry + 0x10) + 2;
     }
-    cVar1 = *(char *)*param_2;
+    cVar1 = **cursor;
   }
   if (cVar1 != ':') {
     return -0x15;
   }
-  *param_2 = *param_2 + 1;
+  *cursor = *cursor + 1;
   return 0;
 }
 
@@ -53583,33 +53584,33 @@ int32_t robin_keyword_match(char *param_1,int32_t *param_2)
 
 /* finds a ROBin argument's keyword in the tables at 0x2f32a, and its kind */
 
-uint32_t robin_lookup(int32_t *param_1,uint32_t *param_2,uint32_t *param_3)
+uint32_t robin_lookup(char **cursor,uint32_t *code,uint32_t *form)
 
 {
   int32_t match;
-  char *pcVar2;
-  uint16_t *puVar3;
-  int32_t local_8;
+  char *entry;
+  uint16_t *puVar2;
+  char *local_8;
   
-  puVar3 = &USHORT_0002f32a;
+  puVar2 = &USHORT_0002f32a;
   do {
-    if (*(int32_t *)(*(int32_t *)puVar3 + 0x10) == -1) {
+    if (*(int32_t *)(*(int32_t *)puVar2 + 0x10) == -1) {
       return 0xffffffeb;
     }
-    local_8 = *param_1;
-    pcVar2 = *(char **)puVar3;
+    local_8 = *cursor;
+    entry = *(char **)puVar2;
     while( true ) {
-      if (*(int32_t *)(pcVar2 + 0x10) == -1) {
-        *param_1 = local_8;
+      if (*(int32_t *)(entry + 0x10) == -1) {
+        *cursor = local_8;
         return 0;
       }
-      match = robin_keyword_match(pcVar2,&local_8);
+      match = robin_keyword_match(entry,&local_8);
       if (match == -0x15) break;
-      *param_2 = *(uint32_t *)(pcVar2 + 0x10);
-      *param_3 = *(uint32_t *)(pcVar2 + 0x14);
-      pcVar2 = pcVar2 + 0x18;
+      *code = *(uint32_t *)(entry + 0x10);
+      *form = *(uint32_t *)(entry + 0x14);
+      entry = entry + 0x18;
     }
-    puVar3 = puVar3 + 2;
+    puVar2 = puVar2 + 2;
   } while( true );
 }
 
@@ -53620,89 +53621,89 @@ uint32_t robin_lookup(int32_t *param_1,uint32_t *param_2,uint32_t *param_3)
 
 /* parses the numbers after a ROBin keyword, by its kind */
 
-int32_t robin_parse_arguments(int32_t *param_1,uint32_t param_2,uint32_t *param_3,uint32_t *param_4)
+int32_t robin_parse_arguments(char **cursor,uint32_t form,uint32_t *first,uint32_t *second)
 
 {
   char *pcVar1;
   char cVar2;
   int32_t iVar3;
   
-  *param_3 = 0;
-  *param_4 = 0;
-  iVar3 = param_2 - 6;
-  if (5 < param_2 && iVar3 != 0) {
+  *first = 0;
+  *second = 0;
+  iVar3 = form - 6;
+  if (5 < form && iVar3 != 0) {
     return iVar3;
   }
                     /* WARNING: Switch is manually overridden */
   switch((&switchD_0002e91a_index_zero)[(int16_t)iVar3]) {
   case 0xe:
-    if (*(char *)*param_1 == 0) {
+    if (**cursor == 0) {
       return 0;
     }
-    if (*(char *)*param_1 != ' ') {
+    if (**cursor != ' ') {
       return -0x15;
     }
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != '1') {
+    skip_spaces(cursor);
+    if (**cursor != '1') {
       return -0x15;
     }
     goto LAB_0002e9be;
   case 0x30:
-    if (*(char *)*param_1 == 0) {
+    if (**cursor == 0) {
       return 0;
     }
-    if (*(char *)*param_1 != ' ') {
+    if (**cursor != ' ') {
       return -0x15;
     }
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != '1') {
-      if (*(char *)*param_1 != '2') {
+    skip_spaces(cursor);
+    if (**cursor != '1') {
+      if (**cursor != '2') {
         return -0x15;
       }
 LAB_0002e9ce:
-      *param_3 = 1;
-      *param_1 = *param_1 + 1;
+      *first = 1;
+      *cursor = *cursor + 1;
       return 0;
     }
     break;
   case 0x56:
-    if (*(char *)*param_1 == 0) {
+    if (**cursor == 0) {
       return 0;
     }
-    if (*(char *)*param_1 != ' ') {
+    if (**cursor != ' ') {
       return -0x15;
     }
-    skip_spaces(param_1);
-    pcVar1 = (char *)*param_1;
+    skip_spaces(cursor);
+    pcVar1 = *cursor;
     if (*pcVar1 != '1') {
       if (*pcVar1 != '2') {
         if (*pcVar1 != '3') {
           return -0x15;
         }
 LAB_0002e9e2:
-        *param_3 = 2;
-        *param_1 = *param_1 + 1;
+        *first = 2;
+        *cursor = *cursor + 1;
         return 0;
       }
       goto LAB_0002e9ce;
     }
     break;
   case 0x82:
-    if (*(char *)*param_1 == 0) {
+    if (**cursor == 0) {
       return 0;
     }
-    if (*(char *)*param_1 != ' ') {
+    if (**cursor != ' ') {
       return -0x15;
     }
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != '1') {
-      if (*(char *)*param_1 != '2') {
-        if (*(char *)*param_1 != '3') {
-          if (*(char *)*param_1 != '4') {
+    skip_spaces(cursor);
+    if (**cursor != '1') {
+      if (**cursor != '2') {
+        if (**cursor != '3') {
+          if (**cursor != '4') {
             return -0x15;
           }
-          *param_3 = 3;
-          *param_1 = *param_1 + 1;
+          *first = 3;
+          *cursor = *cursor + 1;
           return 0;
         }
         goto LAB_0002e9e2;
@@ -53711,127 +53712,127 @@ LAB_0002e9e2:
     }
     break;
   case 0xe6:
-    if (*(char *)*param_1 == 0) {
+    if (**cursor == 0) {
 LAB_0002eade:
-      *param_4 = 1;
+      *second = 1;
       return 0;
     }
-    if (*(char *)*param_1 != ' ') {
+    if (**cursor != ' ') {
       return -0x15;
     }
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != '1') {
+    skip_spaces(cursor);
+    if (**cursor != '1') {
       return -0x15;
     }
-    *param_1 = *param_1 + 1;
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != ',') {
+    *cursor = *cursor + 1;
+    skip_spaces(cursor);
+    if (**cursor != ',') {
       return -0x15;
     }
-    *param_1 = *param_1 + 1;
-    skip_spaces(param_1);
-    cVar2 = *(char *)*param_1;
+    *cursor = *cursor + 1;
+    skip_spaces(cursor);
+    cVar2 = **cursor;
     goto joined_r0x0002ea94;
   case 0x138:
-    if (*(char *)*param_1 == 0) goto LAB_0002eade;
-    if (*(char *)*param_1 != ' ') {
+    if (**cursor == 0) goto LAB_0002eade;
+    if (**cursor != ' ') {
       return -0x15;
     }
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != '1') {
-      if (*(char *)*param_1 != '2') {
+    skip_spaces(cursor);
+    if (**cursor != '1') {
+      if (**cursor != '2') {
         return -0x15;
       }
-      *param_1 = *param_1 + 1;
-      skip_spaces(param_1);
-      if (*(char *)*param_1 != ',') {
+      *cursor = *cursor + 1;
+      skip_spaces(cursor);
+      if (**cursor != ',') {
         return -0x15;
       }
-      *param_1 = *param_1 + 1;
-      skip_spaces(param_1);
-      cVar2 = *(char *)*param_1;
+      *cursor = *cursor + 1;
+      skip_spaces(cursor);
+      cVar2 = **cursor;
 joined_r0x0002eb60:
       if (cVar2 != '1') {
         return -0x15;
       }
-      *param_3 = 1;
-      *param_4 = 0;
-      *param_1 = *param_1 + 1;
+      *first = 1;
+      *second = 0;
+      *cursor = *cursor + 1;
       return 0;
     }
-    *param_1 = *param_1 + 1;
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != ',') {
+    *cursor = *cursor + 1;
+    skip_spaces(cursor);
+    if (**cursor != ',') {
       return -0x15;
     }
-    *param_1 = *param_1 + 1;
-    skip_spaces(param_1);
-    cVar2 = *(char *)*param_1;
+    *cursor = *cursor + 1;
+    skip_spaces(cursor);
+    cVar2 = **cursor;
 joined_r0x0002ea94:
     if (cVar2 != '2') {
       return -0x15;
     }
 LAB_0002ea48:
-    *param_4 = 1;
-    *param_1 = *param_1 + 1;
+    *second = 1;
+    *cursor = *cursor + 1;
     return 0;
   case 0x1ba:
-    if (*(char *)*param_1 == 0) goto LAB_0002eade;
-    if (*(char *)*param_1 != ' ') {
+    if (**cursor == 0) goto LAB_0002eade;
+    if (**cursor != ' ') {
       return -0x15;
     }
-    *param_1 = *param_1 + 1;
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != '1') {
-      if (*(char *)*param_1 != '2') {
-        if (*(char *)*param_1 != '3') {
+    *cursor = *cursor + 1;
+    skip_spaces(cursor);
+    if (**cursor != '1') {
+      if (**cursor != '2') {
+        if (**cursor != '3') {
           return -0x15;
         }
-        *param_1 = *param_1 + 1;
-        skip_spaces(param_1);
-        if (*(char *)*param_1 != ',') {
+        *cursor = *cursor + 1;
+        skip_spaces(cursor);
+        if (**cursor != ',') {
           return -0x15;
         }
-        *param_1 = *param_1 + 1;
-        skip_spaces(param_1);
-        if (*(char *)*param_1 != '1') {
+        *cursor = *cursor + 1;
+        skip_spaces(cursor);
+        if (**cursor != '1') {
           return -0x15;
         }
-        *param_3 = 2;
-        *param_4 = 0;
-        *param_1 = *param_1 + 1;
+        *first = 2;
+        *second = 0;
+        *cursor = *cursor + 1;
         return 0;
       }
-      *param_1 = *param_1 + 1;
-      skip_spaces(param_1);
-      if (*(char *)*param_1 != ',') {
+      *cursor = *cursor + 1;
+      skip_spaces(cursor);
+      if (**cursor != ',') {
         return -0x15;
       }
-      *param_1 = *param_1 + 1;
-      skip_spaces(param_1);
-      cVar2 = *(char *)*param_1;
+      *cursor = *cursor + 1;
+      skip_spaces(cursor);
+      cVar2 = **cursor;
       goto joined_r0x0002eb60;
     }
-    *param_1 = *param_1 + 1;
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != ',') {
+    *cursor = *cursor + 1;
+    skip_spaces(cursor);
+    if (**cursor != ',') {
       return -0x15;
     }
-    *param_1 = *param_1 + 1;
-    skip_spaces(param_1);
-    if (*(char *)*param_1 != '2') {
-      if (*(char *)*param_1 != '3') {
+    *cursor = *cursor + 1;
+    skip_spaces(cursor);
+    if (**cursor != '2') {
+      if (**cursor != '3') {
         return -0x15;
       }
-      *param_4 = 2;
-      *param_1 = *param_1 + 1;
+      *second = 2;
+      *cursor = *cursor + 1;
       return 0;
     }
     goto LAB_0002ea48;
   }
-  *param_3 = 0;
+  *first = 0;
 LAB_0002e9be:
-  *param_1 = *param_1 + 1;
+  *cursor = *cursor + 1;
   return 0;
 }
 
@@ -53845,35 +53846,41 @@ LAB_0002e9be:
 int32_t robin_parse(char *param_1,uint32_t *param_2,uint32_t *param_3)
 
 {
-  char cVar1;
-  char *pcVar2;
+  uint32_t error;
+  int32_t iVar2;
+  char cVar3;
+  char *pcVar4;
   uint32_t local_74;
   uint32_t local_70;
   char *local_6c;
   char local_68 [100];
   
-  pcVar2 = local_68;
+  pcVar4 = local_68;
   do {
-    cVar1 = *param_1;
-    *pcVar2 = cVar1;
+    cVar3 = *param_1;
+    *pcVar4 = cVar3;
     param_1 = param_1 + 1;
-    pcVar2 = pcVar2 + 1;
-  } while (cVar1 != 0);
+    pcVar4 = pcVar4 + 1;
+  } while (cVar3 != 0);
   local_6c = local_68;
   string_upper(local_6c);
   skip_spaces(&local_6c);
   string_trim_right(&local_6c);
   robin_strip_xnon(&local_6c);
-  cVar1 = robin_lookup((int32_t *)&local_6c,&local_74,&local_70);
-  if ((cVar1 != -0x15) &&
-     (cVar1 = robin_parse_arguments((int32_t *)&local_6c,local_70,param_2,param_3), cVar1 != -0x15)) {
-    if (*local_6c != 0) {
-      return -0x15;
+  error = robin_lookup(&local_6c,&local_74,&local_70);
+  cVar3 = (char)error;
+  if (cVar3 != -0x15) {
+    iVar2 = robin_parse_arguments(&local_6c,local_70,param_2,param_3);
+    cVar3 = (char)iVar2;
+    if (cVar3 != -0x15) {
+      if (*local_6c != 0) {
+        return -0x15;
+      }
+      robin_keyword_code = (uint8_t)local_74;
+      return 0;
     }
-    robin_keyword_code = (uint8_t)local_74;
-    return 0;
   }
-  return (int32_t)cVar1;
+  return (int32_t)cVar3;
 }
 
 #endif
@@ -55126,23 +55133,23 @@ int32_t scpi_query_KENneth_PREDicted(void *parameters,void *response,void *call)
 
 {
   uint16_t sr;
-  char valid;
-  int32_t iVar1;
-  char local_6;
+  uint32_t valid;
+  int32_t iVar2;
+  uint8_t local_6;
   uint8_t local_5;
   
   sr = set_interrupt_mask(0x100);
   valid = kenneth_predicted_get(response,&local_6,&local_5);
   set_interrupt_mask(sr);
-  if (valid == 0) {
-    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
+  if ((char)valid == 0) {
+    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
-    *(int16_t *)((int32_t)response + 4) = (int16_t)local_6;
+    *(int16_t *)((int32_t)response + 4) = (int16_t)(char)local_6;
     *(uint16_t *)((int32_t)response + 6) = (uint16_t)local_5;
-    iVar1 = 0;
+    iVar2 = 0;
   }
-  return iVar1;
+  return iVar2;
 }
 
 #endif
@@ -55195,21 +55202,21 @@ int32_t scpi_query_KENneth_PRESent(void *parameters,void *response,void *call)
 
 {
   uint16_t sr;
-  char valid;
-  int32_t iVar1;
-  char local_6 [2];
+  uint32_t valid;
+  int32_t iVar2;
+  uint8_t local_6 [2];
   
   sr = set_interrupt_mask(0x100);
   valid = kenneth_present_get(response,local_6);
   set_interrupt_mask(sr);
-  if (valid == 0) {
-    iVar1 = scpi_query_failed(STATUS_SETTINGS_CONFLICT,call);
+  if ((char)valid == 0) {
+    iVar2 = scpi_query_failed(STATUS_SETTINGS_CONFLICT,call);
   }
   else {
-    *(int16_t *)((int32_t)response + 4) = (int16_t)local_6[0];
-    iVar1 = 0;
+    *(int16_t *)((int32_t)response + 4) = (int16_t)(char)local_6[0];
+    iVar2 = 0;
   }
-  return iVar1;
+  return iVar2;
 }
 
 #endif
@@ -56376,7 +56383,7 @@ bool calibration_block_read(void)
    from it, reporting status 0x10 if the EEPROM write fails
    scpi_param_DIAGnostic_ROSCillator_TCOefficient: done; interval.md's calibration block */
 
-uint32_t save_calibration_block(uint32_t param_1)
+uint32_t save_calibration_block(int32_t index,int32_t source)
 
 {
   char written;
@@ -56390,7 +56397,7 @@ uint32_t save_calibration_block(uint32_t param_1)
     block.checksum = record_checksum(&block,0x40);
     written = eeprom_write((char *)&eeprom_calibration_block,(char *)&block,0x40);
     if (written == 0) {
-      status_report_from(0x10,(uint8_t)param_1);
+      status_report_from(0x10,(uint8_t)source);
       return 0;
     }
   }
@@ -57482,32 +57489,31 @@ uint32_t clamp_float(float *param_1,float *param_2,float *param_3,float *param_4
 
 /* clamps a double to its minimum and maximum, reporting each clamp; 1 if it clamped */
 
-uint32_t
-clamp_double(double *param_1,uint32_t *param_2,double *param_3,double *param_4,uint8_t param_5)
+uint32_t clamp_double(double *value,double *clamped,double *minimum,double *maximum,uint8_t source)
 
 {
   int32_t iVar1;
   uint32_t uVar2;
   
-  iVar1 = double_compare(*param_1,*param_3);
+  iVar1 = double_compare(*value,*minimum);
   if (iVar1 < 1) {
-    iVar1 = double_compare(*param_4,*param_1);
+    iVar1 = double_compare(*maximum,*value);
     if (iVar1 < 1) {
-      *param_2 = *(uint32_t *)param_1;
-      param_2[1] = *(uint32_t *)((int32_t)param_1 + 4);
+      *(uint32_t *)clamped = *(uint32_t *)value;
+      *(uint32_t *)((int32_t)clamped + 4) = *(uint32_t *)((int32_t)value + 4);
       uVar2 = 0;
     }
     else {
-      report_clamped(1,param_5);
-      *param_2 = *(uint32_t *)param_4;
-      param_2[1] = *(uint32_t *)((int32_t)param_4 + 4);
+      report_clamped(1,source);
+      *(uint32_t *)clamped = *(uint32_t *)maximum;
+      *(uint32_t *)((int32_t)clamped + 4) = *(uint32_t *)((int32_t)maximum + 4);
       uVar2 = 1;
     }
   }
   else {
-    report_clamped(0,param_5);
-    *param_2 = *(uint32_t *)param_3;
-    param_2[1] = *(uint32_t *)((int32_t)param_3 + 4);
+    report_clamped(0,source);
+    *(uint32_t *)clamped = *(uint32_t *)minimum;
+    *(uint32_t *)((int32_t)clamped + 4) = *(uint32_t *)((int32_t)minimum + 4);
     uVar2 = 1;
   }
   return uVar2;
@@ -57569,10 +57575,10 @@ LAB_00032210:
 
 /* the double at a pointer */
 
-uint64_t load_double(uint64_t *param_1)
+double load_double(scpi_double_step *step,double *value,int32_t index)
 
 {
-  return *param_1;
+  return step->value;
 }
 
 
@@ -57782,7 +57788,7 @@ int32_t clamp_double_to_step_and_limits
   double dStack_14;
   uint64_t local_c;
   
-  clamp_double(value,&uStack_3c,minimum,maximum,(uint8_t)source);
+  clamp_double(value,(double *)&uStack_3c,minimum,maximum,(uint8_t)source);
   dStack_34 = __ghidra_as(double, (*(code *)step->function)(step,&uStack_3c,index));
   local_c = __ghidra_as(double, CONCAT44(uStack_3c,uStack_38));
   dStack_24 = dStack_34;
@@ -57816,14 +57822,13 @@ LAB_00032648:
 
 /* clamps a double to its minimum and maximum */
 
-uint64_t
-clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t param_4)
+double clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t param_4)
 
 {
-  uint64_t uStack_c;
+  double dStack_c;
   
-  clamp_double(param_1,(uint32_t *)&uStack_c,param_2,param_3,(uint8_t)param_4);
-  return uStack_c;
+  clamp_double(param_1,&dStack_c,param_2,param_3,(uint8_t)param_4);
+  return dStack_c;
 }
 
 
@@ -58217,10 +58222,10 @@ uint32_t load_long(uint32_t *param_1)
 
 /* the double at a pointer; descriptors at 0x33720 to 0x3379e point at it */
 
-uint64_t load_double_param(uint64_t *param_1)
+double load_double_param(scpi_double_step *step,double *value,int32_t index)
 
 {
-  return *param_1;
+  return step->value;
 }
 
 
@@ -59458,7 +59463,7 @@ void counter_read(interval_reading_fields *reading,counter_configuration_fields 
   uint8_t ready;
   uint8_t bVar2;
   int64_t count;
-  double dVar4;
+  double dVar3;
   double a;
   
   if (interval_reading.armed == 0) {
@@ -59470,17 +59475,17 @@ void counter_read(interval_reading_fields *reading,counter_configuration_fields 
       ready = counter_wait_ready(1);
       if (ready != 0) {
         count = counter_read_raw();
-        dVar4 = int64_to_double((uint32_t)((uint64_t)count >> 0x20),(uint32_t)count);
-        reading->value = dVar4;
+        dVar3 = int64_to_double(count);
+        reading->value = dVar3;
         bVar2 = interpolator_read();
-        dVar4 = integer_to_double((uint32_t)bVar2 - configuration->interpolator_offset);
+        dVar3 = integer_to_double((uint32_t)bVar2 - configuration->interpolator_offset);
         a = integer_to_double(configuration->interpolator_scale);
-        dVar4 = double_divide_reversed(a,dVar4);
-        double_add_in_place(&reading->value,dVar4);
+        dVar3 = double_divide_reversed(a,dVar3);
+        double_add_in_place(&reading->value,dVar3);
         double_multiply_in_place(&reading->value,1e-07);
         double_subtract_in_place(&reading->value,configuration->calibration);
-        dVar4 = float_to_double(scpi_value_DIAGnostic_TOFFset);
-        double_add_in_place(&reading->value,dVar4);
+        dVar3 = float_to_double(scpi_value_DIAGnostic_TOFFset);
+        double_add_in_place(&reading->value,dVar3);
         reading->tag = 0xfff6;
         reading->valid = 1;
         goto LAB_00040e2e;
@@ -59696,21 +59701,21 @@ uint32_t uint64_divide(uint32_t divisor,uint32_t high,uint32_t low)
 
 /* a signed 64-bit number as a double, through 2^32 at 0x41300 */
 
-double int64_to_double(uint32_t param_1,uint32_t param_2)
+double int64_to_double(int64_t value)
 
 {
   uint64_t negated;
   double dVar2;
   double dStack_c;
   
-  if ((param_1 & 0x80000000) == 0) {
-    dStack_c = unsigned_to_double(param_2);
-    dVar2 = unsigned_to_double(param_1);
+  if ((value & 0x8000000000000000U) == 0) {
+    dStack_c = unsigned_to_double(__ghidra_piece(uint32_t, value, 4));
+    dVar2 = unsigned_to_double(__ghidra_piece(uint32_t, value, 0));
     dVar2 = double_multiply_pointer(dVar2,&two_to_32);
     double_add_in_place(&dStack_c,dVar2);
   }
   else {
-    negated = int64_negate(param_1,param_2);
+    negated = int64_negate(__ghidra_piece(uint32_t, value, 0),__ghidra_piece(uint32_t, value, 4));
     dStack_c = unsigned_to_double((uint32_t)negated);
     dVar2 = unsigned_to_double((uint32_t)((uint64_t)negated >> 0x20));
     dVar2 = double_multiply_pointer(dVar2,&two_to_32);
@@ -59727,30 +59732,30 @@ double int64_to_double(uint32_t param_1,uint32_t param_2)
 
 /* a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing */
 
-uint64_t double_to_int64(uint32_t param_1,uint32_t param_2)
+int64_t double_to_int64(double value)
 
 {
   int32_t iVar1;
   uint32_t u;
   uint32_t uVar2;
   double dVar3;
-  uint64_t uVar4;
+  int64_t iVar4;
   
-  iVar1 = double_compare(0.0,__ghidra_as(double, CONCAT44(param_1,param_2)));
+  iVar1 = double_compare(0.0,value);
   if (iVar1 < 0) {
-    param_1 = param_1 ^ 0x80000000;
+    value = -value;
   }
-  dVar3 = double_divide_reversed_pointers(&two_to_32,(double *)&param_1);
+  dVar3 = double_divide_reversed_pointers(&two_to_32,&value);
   u = double_to_unsigned(dVar3);
   dVar3 = unsigned_to_double(u);
   dVar3 = double_multiply_pointer(dVar3,&two_to_32);
-  double_subtract_in_place((double *)&param_1,dVar3);
-  uVar2 = double_to_unsigned(__ghidra_as(double, CONCAT44(param_1,param_2)));
-  uVar4 = CONCAT44(u,uVar2);
+  double_subtract_in_place(&value,dVar3);
+  uVar2 = double_to_unsigned(value);
+  iVar4 = CONCAT44(u,uVar2);
   if (iVar1 < 0) {
-    uVar4 = int64_negate(u,uVar2);
+    iVar4 = int64_negate(u,uVar2);
   }
-  return uVar4;
+  return iVar4;
 }
 
 #endif
@@ -60815,14 +60820,14 @@ LAB_0004298e:
 /* for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7
    undocumented.md, ":KENneth" */
 
-uint32_t kenneth_present_get(float *param_1,uint8_t *param_2)
+uint32_t kenneth_present_get(float *value,uint8_t *resolution)
 
 {
   uint32_t uVar1;
   
   if ((pll.stage == PLL_STAGE_HOLDOVER) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
-    *param_1 = pll.tfom;
-    *param_2 = 0xf9;
+    *value = pll.tfom;
+    *resolution = 0xf9;
     uVar1 = 1;
   }
   else {
@@ -60840,21 +60845,21 @@ uint32_t kenneth_present_get(float *param_1,uint8_t *param_2)
    whether in holdover
    undocumented.md, ":KENneth" */
 
-uint32_t kenneth_predicted_get(float *param_1,uint8_t *param_2,uint8_t *param_3)
+uint32_t kenneth_predicted_get(float *value,uint8_t *resolution,uint8_t *holdover)
 
 {
   uint32_t uVar1;
   
   if ((pll.stage == PLL_STAGE_HOLDOVER) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
-    *param_3 = 1;
+    *holdover = 1;
   }
   else {
-    *param_3 = 0;
+    *holdover = 0;
   }
   if ((((pll.stage == PLL_STAGE_STARTUP_PLL) || (pll.stage == PLL_STAGE_NORMAL_PLL)) ||
       (pll.stage == PLL_STAGE_HOLDOVER)) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
-    *param_1 = pll.predicted_uncertainty;
-    *param_2 = 0xf9;
+    *value = pll.predicted_uncertainty;
+    *resolution = 0xf9;
     uVar1 = 1;
   }
   else {
@@ -63365,7 +63370,7 @@ void time_offset_done(int32_t a,int32_t b)
 
 {
   antenna_delay_done();
-  save_calibration_block((int32_t)(char)b);
+  save_calibration_block((int32_t)(char)a,(int32_t)(char)b);
   return;
 }
 
@@ -68022,7 +68027,7 @@ void status_snapshot(status_snapshot_record *snapshot)
   pll_powerup_suffix suffix;
   pll_recovery_suffix pVar7;
   uint32_t uVar2;
-  uint8_t uVar8;
+  uint8_t reason;
   int32_t iVar3;
   uint8_t uVar9;
   uint16_t uVar4;
@@ -68050,12 +68055,12 @@ void status_snapshot(status_snapshot_record *snapshot)
   snapshot->tfom = pll.tfom;
   uVar2 = get_ffom(&snapshot->ffom);
   snapshot->ffom_valid = (uint8_t)uVar2;
-  uVar8 = kenneth_present_get(&snapshot->kenneth_present,&snapshot->field_02b);
-  snapshot->kenneth_present_valid = uVar8;
-  uVar8 = kenneth_predicted_get(&snapshot->kenneth_predicted,&snapshot->field_031,auStack_6);
-  snapshot->kenneth_predicted_valid = uVar8;
-  uVar8 = holdover_waiting_reason();
-  snapshot->holdover_waiting_reason = uVar8;
+  uVar2 = kenneth_present_get(&snapshot->kenneth_present,&snapshot->field_02b);
+  snapshot->kenneth_present_valid = (uint8_t)uVar2;
+  uVar2 = kenneth_predicted_get(&snapshot->kenneth_predicted,&snapshot->field_031,auStack_6);
+  snapshot->kenneth_predicted_valid = (uint8_t)uVar2;
+  reason = holdover_waiting_reason();
+  snapshot->holdover_waiting_reason = reason;
   snapshot->holdover_duration = pll.holdover_duration;
   snapshot->holdover_limit_state = nv_settings.holdover_limit_state;
   snapshot->holdover_limit_threshold = nv_settings.holdover_limit_threshold;

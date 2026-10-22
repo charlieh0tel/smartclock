@@ -18,6 +18,8 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 typedef unsigned long uint32_t;
 typedef long int32_t;
+typedef unsigned long long uint64_t;
+typedef long long int64_t;
 
 /* The firmware's coded values.  Packed, so that gcc makes each the
  * smallest integer that holds its values, a byte for all of these;
@@ -1260,7 +1262,7 @@ typedef double scpi_double_step_function(struct scpi_double_step* step,
  * it: its routine follows 8 bytes, where scpi_step's follows 4
  * (0x325c4). */
 typedef struct scpi_double_step {
-  uint32_t value[2];                   /* +0x00: not read there */
+  double value; /* +0x00: the step, which load_double gives */
   scpi_double_step_function* function; /* +0x08 */
 } scpi_double_step;
 

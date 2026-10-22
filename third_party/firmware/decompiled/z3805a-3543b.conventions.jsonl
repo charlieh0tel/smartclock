@@ -71,8 +71,8 @@
 {"address":"00012206","name":"round_shift_right","note":"an int shifted right with rounding, half away from zero; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001223c","name":"double_round_to_long","note":"a double rounded half away from zero to a long, saturating; the double at SP+4 (0x1223c)","convention":"unknown","stack":[{"offset":4,"size":8}]}
 {"address":"000122d0","name":"round_divide","note":"an int divided with rounding, half away from zero; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"000122f6","name":"double_decimal_exponent_rounded","note":"the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"0001258a","name":"double_decimal_exponent","note":"floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"000122f6","name":"double_decimal_exponent_rounded","note":"the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c; called by nothing","convention":"unknown","stack":[{"offset":4,"size":8}]}
+{"address":"0001258a","name":"double_decimal_exponent","note":"floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing","convention":"unknown","stack":[{"offset":4,"size":8}]}
 {"address":"000125e2","name":"power_of_ten_double","note":"10 to a power clamped to plus or minus 30, from the table of doubles at 0x12704; called by nothing","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"00012984","name":"tfom_table_index","note":"tfom_code's bisection of the table at 0x129fc; compares the float's bits, its sign cleared (0x12990), with the table's; the index a word (0x129c6)","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000129d0","name":"power_of_ten_float","note":"10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing","convention":"unknown","stack":[{"offset":4,"size":2}]}
@@ -104,7 +104,7 @@
 {"address":"00013378","name":"set_interrupt_mask","note":"sets SR's interrupt mask from the argument, returns the old SR","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"0001339e","name":"task_set_priority","note":"sets a task's priority, returning the old","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
 {"address":"000133e2","name":"float_absolute_on_stack","note":"absolute value of the float on the stack","convention":"c","confidence":"documented","out":[{"register":"D0","type":"float"}],"stack":[{"offset":4,"size":4}]}
-{"address":"000133f2","name":"double_abs","note":"a double's magnitude; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"000133f2","name":"double_abs","note":"a double's magnitude; called by nothing","convention":"unknown","stack":[{"offset":4,"size":8}]}
 {"address":"00013406","name":"rotate_left","note":"a long rotated left","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
 {"address":"0001341a","name":"primary_trap_7","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"00013422","name":"enter_supervisor","note":"trap #7, then a jump back through the return address it pops; returns the caller's status register in D0","convention":"other","confidence":"read","out":[{"register":"D0","type":"uint32_t","name":"status"}],"preserves":["D1","D2","D3","D4","D5","D6","D7","A1","A2","A3","A4","A5","A6"],"family":"supervisor"}
@@ -1227,7 +1227,7 @@
 {"address":"00030b30","name":"lifetime_event_run","note":"takes the GPS date into lifetime.date when time_valid, counts lifetime.count, takes pll.efc in normal PLL, and lifetime_record_write","convention":"unknown"}
 {"address":"00030b66","name":"lifetime_update","note":"on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00030c1e","name":"calibration_block_read","note":"reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its checksum fails","convention":"unknown"}
-{"address":"00030c60","name":"save_calibration_block","note":"rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails","convention":"unknown","stack":[{"offset":8,"size":4}]}
+{"address":"00030c60","name":"save_calibration_block","note":"rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00030d2e","name":"parameter_record_read","note":"reads DUART channel B's serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails; always sets the SCI's defaults (a char result, 0x30de0)","convention":"unknown"}
 {"address":"00030dea","name":"save_parameter_record","note":"writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"00030ea0","name":"duartb_settings_preset","note":"copies duartb_settings_defaults over duartb_settings, duartb_settings_done, then save_parameter_record given the source","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
@@ -1261,7 +1261,7 @@
 {"address":"0003209c","name":"clamp_float","note":"clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":1}]}
 {"address":"00032104","name":"clamp_double","note":"clamps a double to its minimum and maximum, reporting each clamp; 1 if it clamped","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":1}]}
 {"address":"0003217e","name":"round_float_to_step","note":"rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"000322aa","name":"load_double","note":"the double at a pointer","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"000322aa","name":"load_double","note":"the double at a pointer","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"000322b4","name":"clamp_to_limits","note":"clamps *value to *min and *max, reporting through report_clamped","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
 {"address":"0003232c","name":"mask_to_limits","note":"a register's new value ANDed with its maximum, the mask of the bits it has","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":20,"size":4}]}
 {"address":"0003233a","name":"clamp_to_step_and_limits","note":"rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum, reporting each clamp","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
@@ -1281,7 +1281,7 @@
 {"address":"00032bc2","name":"nv_load_slot","note":"loads the settings from slot nv_slot when its record is good","convention":"unknown"}
 {"address":"00032e26","name":"load_long_unit_step","note":"the long at a pointer, load_long's code again; the position setters give it unit_step","convention":"c","confidence":"read","stack":[{"offset":4,"size":4}]}
 {"address":"00032e2e","name":"load_long","note":"the long at a pointer; the position setters pass it as a descriptor's getter","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"00032e36","name":"load_double_param","note":"the double at a pointer; descriptors at 0x33720 to 0x3379e point at it","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00032e36","name":"load_double_param","note":"the double at a pointer; descriptors at 0x33720 to 0x3379e point at it","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00032e40","name":"idn_model_default","note":"sets the *IDN? model to Z3805A","convention":"unknown"}
 {"address":"00032e5c","name":"identification_record_read","note":"reads the model, serial and suffix from the identification record at EEPROM 0x400010, or their defaults","convention":"unknown"}
 {"address":"00032f00","name":"identification_record_write","note":"writes the model, serial and suffix to the identification record when they have changed","convention":"unknown"}
@@ -1333,8 +1333,8 @@
 {"address":"00041132","name":"int64_add_long","note":"adds a signed long to a 64-bit number; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0004115c","name":"int64_divide","note":"a 64-bit number divided by a long, the quotient, or on overflow the low word, which divs.l leaves; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0004117e","name":"uint64_divide","note":"an unsigned 64-bit number divided by an unsigned long, as int64_divide; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"0004119c","name":"int64_to_double","note":"a signed 64-bit number as a double, through 2^32 at 0x41300","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00041244","name":"double_to_int64","note":"a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"0004119c","name":"int64_to_double","note":"a signed 64-bit number as a double, through 2^32 at 0x41300","convention":"unknown","stack":[{"offset":4,"size":8}]}
+{"address":"00041244","name":"double_to_int64","note":"a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing","convention":"unknown","stack":[{"offset":4,"size":8}]}
 {"address":"00041328","name":"pll_action_nothing","note":"a bare rts","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004137e","name":"efc_history_update","note":"sums the EFC and stores each 2700 samples an entry of efc_history","convention":"unknown"}
 {"address":"0004172a","name":"curv_signal","note":"signals the curv task, event 0x100","convention":"unknown"}

@@ -1289,6 +1289,11 @@ view cannot drift apart.  The library, bottom up:
      `docs/firmware/modules.md` the layers, the modules, the eleven
      calls that go the wrong way and the 61 hand-written functions
      whose file is not their module's.
+     Then the first moves by that plan: `scpi.c`'s 27 status-model and
+     error-queue functions to `status.c`, `services/status`;
+     `clamp_double_to_step_and_limits` and `scpi_param_hook_nothing`
+     to `pll_scpi.c`; and the `:ROBin` and `:RTCM` handlers to
+     `scpi_handlers.c`.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

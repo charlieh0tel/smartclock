@@ -223,7 +223,7 @@ Not in the direct calls above, and not counted:
 
 ## Where the hand-written files differ
 
-61 of the 387 hand-written functions are in a file whose subject the
+33 of the 429 hand-written functions are in a file whose subject the
 plan gives another module.
 
 | File | Functions | Module |
@@ -238,9 +238,7 @@ plan gives another module.
 | `os.c` | `exception_name`, `print_exception` | `platform/debug` |
 | `records.c` | `eeprom_init`, `eeprom_lock`, `eeprom_unlock`, `eeprom_write_byte`, `eeprom_write_page`, `eeprom_write` | `devices/eeprom` |
 | `records.c` | `sign_extend_bits` | `platform/arithmetic` |
-| `scpi.c` | the 27 status-model and error-queue functions, `status_event_set` (`0x27fca`) to `error_message_lookup` (`0x288ee`) | `services/status` |
 | `spool.c` | `fatal_error`, `fatal_error_with_code`, `debug_write`, `debug_message`, `task_debug_message`, `task_dmessage` | `platform/debug` |
-| `startup.c` | `scpi_param_hook_nothing` | `applications/pll/pll_scpi` |
 
 The rest split rather than move: `clock.c` into `services/calendar`,
 `clock` and `leap`; `duart.c` into `devices/duart`, `gps_link` and

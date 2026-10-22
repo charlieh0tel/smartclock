@@ -1060,7 +1060,7 @@
 0x32e26	load_long_unit_step	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x32e2e	load_long	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x32e36	load_double_param	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
-0x12af0	scpi_param_hook_nothing	applications/pll/pll_scpi	bare rts, descriptor hook (startup.c has it)
+0x12af0	scpi_param_hook_nothing	applications/pll/pll_scpi	bare rts, descriptor hook
 0x41328	pll_action_nothing	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x45b6e	nv_param_field_b8_done	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
 0x3086a	duartb_parity_restrict	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction

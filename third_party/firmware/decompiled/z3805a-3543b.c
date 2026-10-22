@@ -10202,7 +10202,7 @@ float power_of_ten_float(int16_t param_1)
 #endif
 
 /* 00012af0 */
-#if 0 /* the decompiler's reading; rewritten in startup.c */
+#if 0 /* the decompiler's reading; rewritten in pll_scpi.c */
 
 /* a bare rts: the changed hook of most numeric and setting descriptors, and the done hook of some
    the changed hook of most descriptors */
@@ -45447,7 +45447,7 @@ scpi_engine_node * scpi_trg_defined(scpi_engine_child_list *list,uint16_t *no_se
 #endif
 
 /* 00027fca */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* ORs bits into a register's event word and propagates; the bits a word (0x27fce)
    structures.md's status registers */
@@ -45463,7 +45463,7 @@ void status_event_set(status_model *status,status_register *reg,uint32_t bits)
 #endif
 
 /* 00027fe8 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* sets condition bits; those rising through the positive transition mask become events; the bits a
    long whose low word it reads (0x27ff8)
@@ -45493,7 +45493,7 @@ void status_condition_set(status_model *status,status_register *reg,int32_t bits
 #endif
 
 /* 00028044 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* clears condition bits; those falling through the negative transition mask become events; the bits
    a long whose low word it reads
@@ -45523,7 +45523,7 @@ void status_condition_clear(status_model *status,status_register *reg,int32_t bi
 #endif
 
 /* 000280a4 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* sets or clears a register's summary bit in its parent from its event and enable words
    structures.md's status registers */
@@ -45543,7 +45543,7 @@ void status_propagate(status_model *status,status_register *reg)
 #endif
 
 /* 000280ea */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* allocates the status model and its registers, builds the queue
    structures.md */
@@ -45580,7 +45580,7 @@ LAB_0002810c:
 #endif
 
 /* 00028160 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* frees the status model's queue and registers; called by nothing */
 
@@ -45631,7 +45631,7 @@ void status_register_setup
 
 
 /* 0002820a */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* sets a condition's register bit through status_conditions
    structures.md */
@@ -45677,7 +45677,7 @@ int16_t status_set_bit(status_model *status,int32_t condition,int32_t value)
 #endif
 
 /* 000282ce */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* applies a condition by its kind: event set, condition set, condition clear, or the error queue
    structures.md's status registers */
@@ -45721,7 +45721,7 @@ void status_apply_condition(status_model *status,int32_t condition,int32_t param
 #endif
 
 /* 00028388 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* status_set_bit with 0
    structures.md */
@@ -45738,7 +45738,7 @@ int16_t status_clear_bit(status_model *status,int32_t condition)
 #endif
 
 /* 0002839c */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* 1 for a negative condition of the error kind with a code from -199 to -100, a command error */
 
@@ -45761,7 +45761,7 @@ uint32_t condition_is_command_error(int32_t param_1)
 #endif
 
 /* 000283d2 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* a condition's bit in its register's condition word, inverted for kind 2 */
 
@@ -45782,7 +45782,7 @@ void status_condition_bit_get(status_model *status,int32_t condition,uint32_t *b
 #endif
 
 /* 0002842c */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* sets one status register's enable mask, as :ENABle and *ESE do */
 
@@ -45805,7 +45805,7 @@ void status_register_set_enable(status_model *status,int32_t index,int32_t enabl
 #endif
 
 /* 00028474 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* a status register's enable mask, as the :ENABle? and *ESE? queries read it */
 
@@ -45827,7 +45827,7 @@ void status_register_get_enable(status_model *status,int32_t index,uint16_t *ena
 #endif
 
 /* 000284b6 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* the STATus EVENt, *ESR? and *STB? queries' read of a register's event value
    structures.md */
@@ -45854,7 +45854,7 @@ void status_read_event(status_model *status,int32_t index,uint16_t *event)
 #endif
 
 /* 00028506 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* the STATus CONDition queries' read of a register's condition
    structures.md */
@@ -45869,7 +45869,7 @@ void status_read_condition(status_model *status,int32_t index,uint16_t *conditio
 #endif
 
 /* 0002851a */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* reads every register's event word, clearing them, for *CLS */
 
@@ -45889,7 +45889,7 @@ uint32_t status_clear_events(status_model *status)
 #endif
 
 /* 0002854a */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* empties the error queue, for *CLS */
 
@@ -45905,7 +45905,7 @@ void error_queue_clear(status_model *status,int32_t *code)
 #endif
 
 /* 0002856c */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* takes the oldest error from the queue */
 
@@ -45919,7 +45919,7 @@ void error_queue_read(status_model *status,int32_t *code,uint32_t *message)
 #endif
 
 /* 00028588 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* allocates the error queue ring with room for so many entries */
 
@@ -45949,7 +45949,7 @@ uint32_t error_queue_create(scpi_engine_error_queue **queue,int32_t capacity,sta
 #endif
 
 /* 000285d4 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full */
 
@@ -46006,7 +46006,7 @@ LAB_00028680:
 #endif
 
 /* 0002869e */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* takes the oldest error and its message, prompting again once the queue is empty; 0 when empty */
 
@@ -46034,7 +46034,7 @@ void error_queue_pop(scpi_engine_error_queue *error_queue,int32_t *code,uint32_t
 #endif
 
 /* 00028712 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* frees the error queue */
 
@@ -46048,7 +46048,7 @@ void error_queue_destroy(scpi_engine_error_queue *queue)
 #endif
 
 /* 0002889a */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* sets a register's positive transition filter, for :PTRansition; the filter a word (0x288a6)
    structures.md's status registers */
@@ -46063,7 +46063,7 @@ void status_register_set_ptr(status_model *status,int32_t index,uint32_t filter)
 #endif
 
 /* 000288ae */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* sets a register's negative transition filter, for :NTRansition; the filter a word (0x288ba)
    structures.md's status registers */
@@ -46078,7 +46078,7 @@ void status_register_set_ntr(status_model *status,int32_t index,uint32_t filter)
 #endif
 
 /* 000288c2 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* a register's positive transition filter, for :PTRansition?
    structures.md's status registers */
@@ -46093,7 +46093,7 @@ void status_register_get_ptr(status_model *status,int32_t index,uint16_t *filter
 #endif
 
 /* 000288d8 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* a register's negative transition filter, for :NTRansition?
    structures.md's status registers */
@@ -46108,7 +46108,7 @@ void status_register_get_ntr(status_model *status,int32_t index,uint16_t *filter
 #endif
 
 /* 000288ee */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* an error code's message, from the table at 0x28910; the code a word (0x288f6) */
 
@@ -46723,7 +46723,7 @@ float float_identity(float x)
 #endif
 
 /* 00029a68 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_handlers.c */
 
 /* stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36 */
 
@@ -46792,7 +46792,7 @@ int32_t scpi_query_failed(char code,void *response)
 #endif
 
 /* 00029b08 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_handlers.c */
 
 /* 0: RTCM corrections are not supported */
 
@@ -56384,7 +56384,7 @@ LAB_0003250c:
 
 
 /* 00032596 */
-#if 0 /* the decompiler's reading; rewritten in scpi.c */
+#if 0 /* the decompiler's reading; rewritten in pll_scpi.c */
 
 /* clamps a double to its minimum and maximum and rounds it to its step */
 
@@ -92556,6 +92556,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/os.c"
 
+#include "../rewritten/z3805a-3543b/pll_scpi.c"
+
 #include "../rewritten/z3805a-3543b/qspi.c"
 
 #include "../rewritten/z3805a-3543b/records.c"
@@ -92564,9 +92566,13 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi.c"
 
+#include "../rewritten/z3805a-3543b/scpi_handlers.c"
+
 #include "../rewritten/z3805a-3543b/spool.c"
 
 #include "../rewritten/z3805a-3543b/startup.c"
+
+#include "../rewritten/z3805a-3543b/status.c"
 
 #include "../rewritten/z3805a-3543b/ti.c"
 

@@ -314,5 +314,5 @@ fpga_read_byte	value	two registers' low nibbles
 fpga_bit_test	set	any of the bits set
 fpga_read_seconds	seconds	register 0's high nibble, modulo 16
 selftest_fpga_with_lamp	failures	selftest.fpga
-# A double parameter's validate, 0x32596 (rewritten/z3805a-3543b/scpi.c)
+# A double parameter's validate, 0x32596 (rewritten/z3805a-3543b/pll_scpi.c)
 clamp_double_to_step_and_limits	steps	the clamped value in steps, rounded half away from zero

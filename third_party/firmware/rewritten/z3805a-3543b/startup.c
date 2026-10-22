@@ -1,6 +1,6 @@
 /* The start-up's path, written by hand in place of the decompiler's
  * (docs/firmware/README.md, "Hand-written C"): primary_start, its no-op
- * hooks, the periodic interrupt's enable and the shutdown.  The
+ * hook, the periodic interrupt's enable and the shutdown.  The
  * exported C includes this file after its own, so the types and
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
@@ -25,10 +25,6 @@ void primary_start(uint32_t a, uint32_t b, uint32_t c) {
 /* Does nothing; primary_start calls it between gpt_init and system_init
  * (0x12bb2). */
 void start_nothing(void) {}
-
-/* Does nothing: the changed hook of most numeric and setting descriptors,
- * and the done hook of some (0x12af0). */
-void scpi_param_hook_nothing(void) {}
 
 /* Sets the SIM's PICR: the periodic interrupt at level 5, or at level 0,
  * off (0x12004). */

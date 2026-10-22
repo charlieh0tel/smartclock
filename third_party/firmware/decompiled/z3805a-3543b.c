@@ -98338,47 +98338,47 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/gps_task.c"
 
-#include "../rewritten/z3805a-3543b/installer_cpu.c"
+#include "../rewritten/z3805a-3543b/installer/installer_cpu.c"
 
-#include "../rewritten/z3805a-3543b/installer_debug.c"
+#include "../rewritten/z3805a-3543b/installer/installer_debug.c"
 
-#include "../rewritten/z3805a-3543b/installer_duart.c"
+#include "../rewritten/z3805a-3543b/installer/installer_duart.c"
 
-#include "../rewritten/z3805a-3543b/installer_duarta.c"
+#include "../rewritten/z3805a-3543b/installer/installer_duarta.c"
 
-#include "../rewritten/z3805a-3543b/installer_duartb.c"
+#include "../rewritten/z3805a-3543b/installer/installer_duartb.c"
 
-#include "../rewritten/z3805a-3543b/installer_main.c"
+#include "../rewritten/z3805a-3543b/installer/installer_main.c"
 
-#include "../rewritten/z3805a-3543b/installer_math.c"
+#include "../rewritten/z3805a-3543b/installer/installer_math.c"
 
-#include "../rewritten/z3805a-3543b/installer_os.c"
+#include "../rewritten/z3805a-3543b/installer/installer_os.c"
 
-#include "../rewritten/z3805a-3543b/installer_records.c"
+#include "../rewritten/z3805a-3543b/installer/installer_records.c"
 
-#include "../rewritten/z3805a-3543b/installer_scpi_engine.c"
+#include "../rewritten/z3805a-3543b/installer/installer_scpi_engine.c"
 
-#include "../rewritten/z3805a-3543b/installer_scpi_format.c"
+#include "../rewritten/z3805a-3543b/installer/installer_scpi_format.c"
 
-#include "../rewritten/z3805a-3543b/installer_scpi_lexer.c"
+#include "../rewritten/z3805a-3543b/installer/installer_scpi_lexer.c"
 
-#include "../rewritten/z3805a-3543b/installer_scpi_parameters.c"
+#include "../rewritten/z3805a-3543b/installer/installer_scpi_parameters.c"
 
-#include "../rewritten/z3805a-3543b/installer_scpi_port.c"
+#include "../rewritten/z3805a-3543b/installer/installer_scpi_port.c"
 
-#include "../rewritten/z3805a-3543b/installer_scpi_tree.c"
+#include "../rewritten/z3805a-3543b/installer/installer_scpi_tree.c"
 
-#include "../rewritten/z3805a-3543b/installer_spool.c"
+#include "../rewritten/z3805a-3543b/installer/installer_spool.c"
 
-#include "../rewritten/z3805a-3543b/installer_startup.c"
+#include "../rewritten/z3805a-3543b/installer/installer_startup.c"
 
-#include "../rewritten/z3805a-3543b/installer_status.c"
+#include "../rewritten/z3805a-3543b/installer/installer_status.c"
 
-#include "../rewritten/z3805a-3543b/installer_stdio.c"
+#include "../rewritten/z3805a-3543b/installer/installer_stdio.c"
 
-#include "../rewritten/z3805a-3543b/installer_stdlib.c"
+#include "../rewritten/z3805a-3543b/installer/installer_stdlib.c"
 
-#include "../rewritten/z3805a-3543b/installer_string.c"
+#include "../rewritten/z3805a-3543b/installer/installer_string.c"
 
 #include "../rewritten/z3805a-3543b/klok.c"
 

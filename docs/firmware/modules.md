@@ -245,8 +245,10 @@ for it (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
 
 The installer's copies of the primary's functions (`installer::` in
 the names file, by their twins' names prefixed `installer_`) are
-written in a file named for their twin's module, prefixed:
-`installer_os.c`, `installer_duartb.c`, `installer_status.c`.  A copy
+written in a file named for their twin's module, prefixed, in the
+folder `installer/`: `installer/installer_os.c`,
+`installer/installer_duartb.c`, `installer/installer_status.c`, which the
+exporter includes with the rest.  A copy
 that reads nothing of the installer's own, and calls nothing but
 other such bodies, shares its twin's body: the body moves to the
 group's header (`libc.h`, `scpi.h`, `scpi_lexer.h`, `scpi_tree.h`,

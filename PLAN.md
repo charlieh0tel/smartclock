@@ -1482,7 +1482,7 @@ view cannot drift apart.  The library, bottom up:
      The in-line string length and copy and the `lsl.l` bit, each
      written three times, are one each (`libc.h`, `cpu.h`), and the
      satellite IDs are `gps.h`'s.
-     Then the installer's C, in `installer_<module>.c` files
+     Then the installer's C, in `installer/installer_<module>.c` files
      (modules.md, "The hand-written files"): a copy that reads nothing
      of the installer's own shares its twin's body through the group's
      header, the rest are written on the installer's globals.  Typing

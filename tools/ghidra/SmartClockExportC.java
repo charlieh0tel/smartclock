@@ -26,6 +26,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,6 +44,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -4182,6 +4184,19 @@ public class SmartClockExportC extends GhidraScript {
 	private static final Pattern DATA_DEFINITION =
 		Pattern.compile("(?m)^const [A-Za-z_][\\w ]*?\\b(\\w+)(?:\\[[^\\]]*\\])*\\s*=");
 
+	/**
+	 * The files of a rewritten=DIR argument with a suffix, in DIR and the
+	 * folders under it (the installer's, installer/), sorted by path.
+	 */
+	private static List<File> rewrittenFiles(String arg, String suffix) {
+		try (Stream<Path> paths = Files.walk(Path.of(arg.substring(REWRITTEN.length())))) {
+			return paths.filter(path -> path.toString().endsWith(suffix) && Files.isRegularFile(path))
+				.sorted().map(Path::toFile).toList();
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
+
 	/** The globals the rewritten= folder's .c files define. */
 	private Set<String> rewrittenData;
 
@@ -4198,8 +4213,7 @@ public class SmartClockExportC extends GhidraScript {
 				if (!arg.startsWith(REWRITTEN)) {
 					continue;
 				}
-				File[] files = new File(arg.substring(REWRITTEN.length())).listFiles((dir, name) -> name.endsWith(".c"));
-				for (File file : files) {
+				for (File file : rewrittenFiles(arg, ".c")) {
 					try {
 						Matcher definition = DATA_DEFINITION.matcher(Files.readString(file.toPath()));
 						while (definition.find()) {
@@ -4222,9 +4236,7 @@ public class SmartClockExportC extends GhidraScript {
 		List<File> headers = new ArrayList<>();
 		for (String arg : getScriptArgs()) {
 			if (arg.startsWith(REWRITTEN)) {
-				File[] files = new File(arg.substring(REWRITTEN.length())).listFiles((dir, name) -> name.endsWith(".h"));
-				Arrays.sort(files);
-				headers.addAll(List.of(files));
+				headers.addAll(rewrittenFiles(arg, ".h"));
 			}
 		}
 		return headers;
@@ -4243,9 +4255,7 @@ public class SmartClockExportC extends GhidraScript {
 				if (!arg.startsWith(REWRITTEN)) {
 					continue;
 				}
-				File[] files = new File(arg.substring(REWRITTEN.length())).listFiles((dir, name) -> name.endsWith(".c"));
-				Arrays.sort(files);
-				for (File file : files) {
+				for (File file : rewrittenFiles(arg, ".c")) {
 					Matcher definition = DEFINITION.matcher(Files.readString(file.toPath()));
 					while (definition.find()) {
 						rewritten.put(definition.group(1), file);

@@ -59,14 +59,9 @@ static const int8_t scpi_engine_token_parameter_kinds[] = {
     SCPI_PARAMETER_CHARACTER,
 };
 
-/* scpi_parse_message_unit's own results that are not conditions. */
-enum {
-  SCPI_STATUS_NO_PARAMETERS = -100, /* not a condition: an empty message unit */
-  SCPI_STATUS_SKIPPED_END =
-      -101, /* not a condition: SCPI_PORT_SKIPPED_END first */
-  SCPI_STATUS_UNREPORTED_GREATEST =
-      -60, /* the results from which down it returns as they are */
-};
+/* The greatest of scpi_parse_message_unit's results it returns as they
+ * are, without reporting them. */
+static const int32_t SCPI_STATUS_UNREPORTED_GREATEST = -60;
 
 /* The next token of the context's input. */
 static int32_t scpi_engine_scan(const scpi_char_class* classes,

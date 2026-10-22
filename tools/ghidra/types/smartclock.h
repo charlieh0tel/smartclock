@@ -1945,6 +1945,13 @@ typedef enum __attribute__((packed)) scpi_call_responding {
   SCPI_CALL_INDEFINITE = 2,
 } scpi_call_responding;
 
+/* scpi_parse_message_unit's own results that are not status
+ * conditions, beside the conditions it returns (scpi_engine.h). */
+typedef enum __attribute__((packed)) scpi_message_unit_result {
+  SCPI_STATUS_NO_PARAMETERS = -100, /* an empty message unit */
+  SCPI_STATUS_SKIPPED_END = -101,   /* SCPI_PORT_SKIPPED_END first */
+} scpi_message_unit_result;
+
 /* What an SCPI handler returns, beyond a status condition, for
  * scpi_interpret and its installer copy to act on (0x293e0 to 0x29410):
  * call the common list's _TRG node, the user-defined trigger, in its

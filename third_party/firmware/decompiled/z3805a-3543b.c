@@ -2999,6 +2999,11 @@ typedef enum __attribute__((packed)) scpi_language_choice {
     SCPI_LANGUAGE_INSTALL=1
 } scpi_language_choice;
 
+typedef enum __attribute__((packed)) scpi_message_unit_result {
+    SCPI_STATUS_SKIPPED_END=-101,
+    SCPI_STATUS_NO_PARAMETERS=-100
+} scpi_message_unit_result;
+
 typedef struct scpi_multiplier scpi_multiplier, *Pscpi_multiplier;
 
 struct scpi_multiplier {
@@ -3837,6 +3842,7 @@ _Static_assert(sizeof(scpi_handler) == 10, "scpi_handler");
 _Static_assert(sizeof(scpi_handler_action) == 1, "scpi_handler_action");
 _Static_assert(sizeof(scpi_keyword) == 20, "scpi_keyword");
 _Static_assert(sizeof(scpi_language_choice) == 1, "scpi_language_choice");
+_Static_assert(sizeof(scpi_message_unit_result) == 1, "scpi_message_unit_result");
 _Static_assert(sizeof(scpi_multiplier) == 4, "scpi_multiplier");
 _Static_assert(sizeof(scpi_node) == 50, "scpi_node");
 _Static_assert(sizeof(scpi_number) == 38, "scpi_number");

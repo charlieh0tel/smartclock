@@ -1373,6 +1373,12 @@ view cannot drift apart.  The library, bottom up:
      for its settings, found from the descriptors and action records
      that point at them; `pllc.c` keeps the server, the clamps and what
      no one command owns.
+     Then the handlers by tree, five agents again: `:ROSCillator`,
+     `:SAMPle` and `:SYSTem` (65), `:ROBin`, `:LED`, `:OUTPut`,
+     `:FORMat`, `:SENSe` and the root's unsupported entries (66), all
+     agreeing; the names they shared through the include order moved to
+     `scpi.h`, and the exporter finds a definition whose result type
+     clang-format put on the line before.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

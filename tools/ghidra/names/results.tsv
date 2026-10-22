@@ -406,3 +406,74 @@ boot_unpack_installer	status	0, 1 without the S, 2 at a bad record
 primary_unpack_records	status	as boot_unpack_installer's
 boot_memcpy	destination
 debug_is_enabled	enabled	debug_enabled
+# The :SOURce:ROSCillator, :SAMPle and :SYSTem handlers (rewritten/z3805a-3543b/scpi_source_roscillator.c, scpi_sample.c, scpi_system.c)
+scpi_set_SAMPle_ACTion	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_BARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_BARR	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_BOOLean	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_BOOLean	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_DARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_DARR	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_DOUBle	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_DOUBle	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_FARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_FARR	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_FLOat	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_FLOat	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_IARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_IARR	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_IMULtiple	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_IMULtiple	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_INTeger	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_INTeger	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_TARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_TOGGle	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_INITiate	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_WAITing	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_LIMit_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_LIMit_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_STATe	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_ADDRess	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_FDUPlex	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_FDUPlex	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_PRESet	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_PROMpt	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_PROMpt	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_BITS	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_LANGuage	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_LANGuage	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_PRESet	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_PRINt	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_PRINt_LENGth	error	0, or a status condition for scpi_call_handler
+# The :ROBin parser, 0x2e730 to 0x2eba8 (rewritten/z3805a-3543b/scpi_robin.c); the SCPI handlers, called through their nodes only, have no row
+robin_keyword_match	match	STATUS_SCPI_INVALID_STRING for none, 0 for a branch, else the code less SCPI_ROBIN_BRANCH
+robin_lookup	error	0, or STATUS_SCPI_INVALID_STRING for a name it does not know
+robin_parse_arguments	error	0, or STATUS_SCPI_INVALID_STRING; a form past 6 gives itself less 6
+robin_parse	error	0, or STATUS_SCPI_INVALID_STRING

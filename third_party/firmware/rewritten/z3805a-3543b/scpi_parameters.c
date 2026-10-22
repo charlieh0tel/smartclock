@@ -5,26 +5,6 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
-/* A long parameter as scpi_long_resolve_bound takes it: its kind and,
- * for a number, its value. */
-typedef struct scpi_engine_long_parameter {
-  int16_t kind; /* +0x00 */
-  union {
-    int32_t value; /* +0x02: a number's */
-    int16_t bound; /* +0x02: a bound's, SCPI_BOUND_MAXIMUM or _MINIMUM */
-  };
-} scpi_engine_long_parameter;
-
-/* A numeric parameter's kind, as scpi_numeric_set, _get and
- * scpi_long_resolve_bound read it: a number, or MINimum or MAXimum, by
- * the bound after it. */
-enum {
-  SCPI_VALUE_NUMBER = 0,
-  SCPI_VALUE_BOUND = 2,
-  SCPI_BOUND_MAXIMUM = 0,
-  SCPI_BOUND_MINIMUM = 1,
-};
-
 /* The largest magnitude a real parameter takes (0x25ff2), SCPI's 9.9E37,
  * its infinity. */
 static const double SCPI_REAL_LIMIT = 9.9e37;
@@ -45,16 +25,6 @@ uint32_t scpi_parse_string(uint16_t* token, void* unused, uint32_t* value) {
   given->text = string->text;
   given->length = string->length;
   return 0;
-}
-
-/* Whether two texts are the same. */
-static bool scpi_parameters_same(const char* text, const char* other) {
-  for (; *text == *other; text++, other++) {
-    if (*text == 0) {
-      return true;
-    }
-  }
-  return false;
 }
 
 /* A keyword, ON or OFF, as a boolean (0x25d8c).  The token is a

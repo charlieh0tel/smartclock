@@ -4171,9 +4171,13 @@ public class SmartClockExportC extends GhidraScript {
 
 	/** The argument naming the folder of hand-written C: rewritten=DIR. */
 	private static final String REWRITTEN = "rewritten=";
-	/** A function's definition in hand-written C: its name, at a line's start, its body's brace on the next. */
+	/**
+	 * A function's definition in hand-written C: its name, at a line's
+	 * start after its result type or alone there when the type is on the
+	 * line before, its body's brace after its parameters.
+	 */
 	private static final Pattern DEFINITION =
-		Pattern.compile("(?m)^[A-Za-z_][\\w \\*]*?\\b(\\w+)\\([^;{}]*\\)\\s*\\{");
+		Pattern.compile("(?m)^(?:[A-Za-z_][\\w \\*]*?\\b)?(\\w+)\\([^;{}]*\\)\\s*\\{");
 	/** A table's definition in hand-written C: const, at a line's start, then its name before its bounds or =. */
 	private static final Pattern DATA_DEFINITION =
 		Pattern.compile("(?m)^const [A-Za-z_][\\w ]*?\\b(\\w+)(?:\\[[^\\]]*\\])*\\s*=");

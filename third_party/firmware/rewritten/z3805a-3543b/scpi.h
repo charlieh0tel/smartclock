@@ -1,6 +1,7 @@
 /* What the SCPI engine's files share (scpi_*.c): the console port's
  * object, the token and parameter kinds, the lexer's character classes,
- * a number's digits and the length of a string. The exported C includes
+ * a number's digits, the length of a string, a long parameter and its
+ * value kinds, and the comparison of two texts. The exported C includes
  * the hand-written headers after its own declarations and before the
  * hand-written .c files, so every one of them can use it.  The
  * structures are docs/firmware/structures.md's "Numeric SCPI
@@ -87,3 +88,33 @@ enum {
   SCPI_PARAMETER_NON_DECIMAL = 4,
   SCPI_PARAMETER_EXPRESSION = 5,
 };
+
+/* A long parameter as scpi_long_resolve_bound takes it: its kind and,
+ * for a number, its value. */
+typedef struct scpi_engine_long_parameter {
+  int16_t kind; /* +0x00 */
+  union {
+    int32_t value; /* +0x02: a number's */
+    int16_t bound; /* +0x02: a bound's, SCPI_BOUND_MAXIMUM or _MINIMUM */
+  };
+} scpi_engine_long_parameter;
+
+/* A numeric parameter's kind, as scpi_numeric_set, _get and
+ * scpi_long_resolve_bound read it: a number, or MINimum or MAXimum, by
+ * the bound after it. */
+enum {
+  SCPI_VALUE_NUMBER = 0,
+  SCPI_VALUE_BOUND = 2,
+  SCPI_BOUND_MAXIMUM = 0,
+  SCPI_BOUND_MINIMUM = 1,
+};
+
+/* Whether two texts are the same. */
+static bool scpi_parameters_same(const char* text, const char* other) {
+  for (; *text == *other; text++, other++) {
+    if (*text == 0) {
+      return true;
+    }
+  }
+  return false;
+}

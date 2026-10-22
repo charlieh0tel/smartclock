@@ -47797,6 +47797,7 @@ int32_t scpi_set_common_CLS(void *parameters,void *response,void *call)
 
 
 /* 0002a1be */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :CALA? */
 
@@ -47809,8 +47810,10 @@ int32_t scpi_query_CALA(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002a1d0 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :CEQU? */
 
@@ -47823,6 +47826,7 @@ int32_t scpi_query_CEQU(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002a1e2 */
 
@@ -47905,6 +47909,7 @@ int32_t scpi_query_common_IDN(void *parameters,void *response,void *call)
 
 
 /* 0002a344 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RWHO? */
 
@@ -47917,6 +47922,7 @@ int32_t scpi_query_RWHO(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002a356 */
 
@@ -48056,6 +48062,7 @@ int32_t scpi_query_STATus_OPERation_CONDition(void *parameters,void *response,vo
 
 
 /* 0002a4c0 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RAST? */
 
@@ -48068,6 +48075,7 @@ int32_t scpi_query_RAST(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002a4d2 */
 
@@ -49380,6 +49388,7 @@ int32_t scpi_query_DIAGnostic_QUERy_RESPonse(void *parameters,void *response,voi
 
 
 /* 0002b96c */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:COMMunicate:SER1:PROMpt */
 
@@ -49392,8 +49401,10 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_PROMpt(void *parameters,void *response,
   return 0;
 }
 
+#endif
 
 /* 0002b982 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:COMMunicate:SER1:PROMpt? */
 
@@ -49406,6 +49417,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_PROMpt(void *parameters,void *respons
   return 0;
 }
 
+#endif
 
 /* 0002b99c */
 
@@ -49885,6 +49897,7 @@ int32_t status_report_from(int16_t param_1,uint8_t param_2)
 
 
 /* 0002c148 */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* the setter for :OUTPut:PIN1:DELay */
 
@@ -49894,8 +49907,10 @@ int32_t scpi_set_OUTPut_PIN1_DELay(void *parameters,void *response,void *call)
   return -0x20;
 }
 
+#endif
 
 /* 0002c14c */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* the query handler for :OUTPut:PIN1:DELay? */
 
@@ -49908,8 +49923,10 @@ int32_t scpi_query_OUTPut_PIN1_DELay(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002c15e */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :R1PO? */
 
@@ -49922,8 +49939,10 @@ int32_t scpi_query_R1PO(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002c170 */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* the setter for :OUTPut:PIN1:DELay:ALIGnment */
 
@@ -49937,8 +49956,10 @@ int32_t scpi_set_OUTPut_PIN1_DELay_ALIGnment(void *parameters,void *response,voi
   return 0;
 }
 
+#endif
 
 /* 0002c190 */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* the query handler for :OUTPut:PIN1:DELay:ALIGnment? */
 
@@ -49951,8 +49972,10 @@ int32_t scpi_query_OUTPut_PIN1_DELay_ALIGnment(void *parameters,void *response,v
   return error;
 }
 
+#endif
 
 /* 0002c1a2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :REAL? */
 
@@ -49965,8 +49988,10 @@ int32_t scpi_query_REAL(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002c1b4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* the setter for :OUTPut:PIN1:FREQuency */
 
@@ -49976,8 +50001,10 @@ int32_t scpi_set_OUTPut_PIN1_FREQuency(void *parameters,void *response,void *cal
   return -0x20;
 }
 
+#endif
 
 /* 0002c1b8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* the query handler for :OUTPut:PIN1:FREQuency? */
 
@@ -49990,8 +50017,10 @@ int32_t scpi_query_OUTPut_PIN1_FREQuency(void *parameters,void *response,void *c
   return error;
 }
 
+#endif
 
 /* 0002c1ca */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RFOU? */
 
@@ -50004,8 +50033,10 @@ int32_t scpi_query_RFOU(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002c1dc */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RSSU? */
 
@@ -50018,6 +50049,7 @@ int32_t scpi_query_RSSU(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002c1ee */
 
@@ -50080,6 +50112,7 @@ int32_t scpi_query_SOURce_GPSystem_ADELay(void *parameters,void *response,void *
 
 
 /* 0002c316 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RACD? */
 
@@ -50092,6 +50125,7 @@ int32_t scpi_query_RACD(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002c328 */
 
@@ -50627,6 +50661,7 @@ int32_t scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(void *parameters,void *res
 
 
 /* 0002ce92 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RLOC? */
 
@@ -50639,6 +50674,7 @@ int32_t scpi_query_RLOC(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002cea4 */
 
@@ -50656,6 +50692,7 @@ int32_t scpi_query_SOURce_GPSystem_POSition_HOLD_STATe(void *parameters,void *re
 
 
 /* 0002cebe */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RPHS? */
 
@@ -50668,6 +50705,7 @@ int32_t scpi_query_RPHS(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002ced0 */
 
@@ -50747,6 +50785,7 @@ int32_t scpi_query_DOUGlas_PROGress(void *parameters,void *response,void *call)
 
 
 /* 0002d01e */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RSPR? */
 
@@ -50759,6 +50798,7 @@ int32_t scpi_query_RSPR(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002d030 */
 
@@ -50784,6 +50824,7 @@ int32_t scpi_set_DOUGlas_STATe(void *parameters,void *response,void *call)
 
 
 /* 0002d096 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :IPSU? */
 
@@ -50796,6 +50837,7 @@ int32_t scpi_query_IPSU(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002d0a8 */
 
@@ -51072,6 +51114,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(void *parameters,voi
 
 
 /* 0002d3ee */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RTSA? */
 
@@ -51084,6 +51127,7 @@ int32_t scpi_query_RTSA(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002d400 */
 
@@ -51396,6 +51440,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
 
 
 /* 0002d920 */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the setter for :LED:ACTive */
 
@@ -51409,8 +51454,10 @@ int32_t scpi_set_LED_ACTive(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002d950 */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the query handler for :LED:ACTive? */
 
@@ -51424,8 +51471,10 @@ int32_t scpi_query_LED_ACTive(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002d96a */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the query handler for :LED:ALARm? */
 
@@ -51439,8 +51488,10 @@ int32_t scpi_query_LED_ALARm(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002d984 */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the query handler for :LED:ALARm:MINor? */
 
@@ -51453,8 +51504,10 @@ int32_t scpi_query_LED_ALARm_MINor(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002d996 */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the setter for :LED:ALARm:USER */
 
@@ -51464,8 +51517,10 @@ int32_t scpi_set_LED_ALARm_USER(void *parameters,void *response,void *call)
   return -0x20;
 }
 
+#endif
 
 /* 0002d99a */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the query handler for :LED:ALARm:USER? */
 
@@ -51475,8 +51530,10 @@ int32_t scpi_query_LED_ALARm_USER(void *parameters,void *response,void *call)
   return -0x20;
 }
 
+#endif
 
 /* 0002d99e */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the setter for :LED:ENABled */
 
@@ -51490,8 +51547,10 @@ int32_t scpi_set_LED_ENABled(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002d9ce */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the query handler for :LED:ENABled? */
 
@@ -51505,8 +51564,10 @@ int32_t scpi_query_LED_ENABled(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002d9e8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the query handler for :LED:GPSLock? */
 
@@ -51520,8 +51581,10 @@ int32_t scpi_query_LED_GPSLock(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002da02 */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the query handler for :LED:HOLDover? */
 
@@ -51535,8 +51598,10 @@ int32_t scpi_query_LED_HOLDover(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002da1c */
+#if 0 /* the decompiler's reading; rewritten in scpi_led.c */
 
 /* the query handler for :LED:TMHValid? */
 
@@ -51550,8 +51615,10 @@ int32_t scpi_query_LED_TMHValid(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002da36 */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* the setter for :OUTPut:STATe */
 
@@ -51565,8 +51632,10 @@ int32_t scpi_set_OUTPut_STATe(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002da66 */
+#if 0 /* the decompiler's reading; rewritten in scpi_output.c */
 
 /* the query handler for :OUTPut:STATe? */
 
@@ -51577,6 +51646,7 @@ int32_t scpi_query_OUTPut_STATe(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002da78 */
 
@@ -51965,6 +52035,7 @@ int32_t scpi_query_SOURce_PTIMe_TCODe(void *parameters,void *response,void *call
 
 
 /* 0002df46 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RTCM? */
 
@@ -51997,6 +52068,7 @@ int32_t scpi_query_RTCM(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002dff6 */
 
@@ -52105,6 +52177,7 @@ int8_t time_zone_split(int8_t hours,int8_t minutes,int8_t *hours_out,int8_t *min
 #endif
 
 /* 0002e152 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RTAD? */
 
@@ -52117,6 +52190,7 @@ int32_t scpi_query_RTAD(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002e164 */
 
@@ -52202,6 +52276,7 @@ int32_t scpi_query_SOURce_PTIMe_TZONe(void *parameters,void *response,void *call
 
 
 /* 0002e2ec */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RTZO? */
 
@@ -52214,8 +52289,10 @@ int32_t scpi_query_RTZO(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002e306 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:ACTion */
 
@@ -52229,8 +52306,10 @@ int32_t scpi_set_SAMPle_ACTion(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e334 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:BOOLean */
 
@@ -52244,8 +52323,10 @@ int32_t scpi_set_SAMPle_BOOLean(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e364 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:BOOLean? */
 
@@ -52256,8 +52337,10 @@ int32_t scpi_query_SAMPle_BOOLean(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e376 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:BARR */
 
@@ -52272,8 +52355,10 @@ int32_t scpi_set_SAMPle_BARR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e3a8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:BARR? */
 
@@ -52284,6 +52369,7 @@ int32_t scpi_query_SAMPle_BARR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e3c2 */
 
@@ -52313,6 +52399,7 @@ int32_t scpi_set_SAMPle_TOGGle(void *parameters,void *response,void *call)
 
 
 /* 0002e412 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:TOGGle? */
 
@@ -52335,6 +52422,7 @@ int32_t scpi_query_SAMPle_TOGGle(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e442 */
 
@@ -52364,6 +52452,7 @@ int32_t scpi_set_SAMPle_TARR(void *parameters,void *response,void *call)
 
 
 /* 0002e498 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:TARR? */
 
@@ -52386,8 +52475,10 @@ int32_t scpi_query_SAMPle_TARR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e4d0 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:INTeger */
 
@@ -52402,8 +52493,10 @@ int32_t scpi_set_SAMPle_INTeger(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e50a */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:INTeger? */
 
@@ -52414,8 +52507,10 @@ int32_t scpi_query_SAMPle_INTeger(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e518 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:IARR */
 
@@ -52431,8 +52526,10 @@ int32_t scpi_set_SAMPle_IARR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e556 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:IARR? */
 
@@ -52443,8 +52540,10 @@ int32_t scpi_query_SAMPle_IARR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e56c */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:IMULtiple */
 
@@ -52462,8 +52561,10 @@ int32_t scpi_set_SAMPle_IMULtiple(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e5ba */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:IMULtiple? */
 
@@ -52477,8 +52578,10 @@ int32_t scpi_query_SAMPle_IMULtiple(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e5dc */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:FLOat */
 
@@ -52493,8 +52596,10 @@ int32_t scpi_set_SAMPle_FLOat(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e616 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:FLOat? */
 
@@ -52505,8 +52610,10 @@ int32_t scpi_query_SAMPle_FLOat(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e624 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:FARR */
 
@@ -52522,8 +52629,10 @@ int32_t scpi_set_SAMPle_FARR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e662 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:FARR? */
 
@@ -52538,8 +52647,10 @@ int32_t scpi_query_SAMPle_FARR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e68c */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:DOUBle */
 
@@ -52549,8 +52660,10 @@ int32_t scpi_set_SAMPle_DOUBle(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e690 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:DOUBle? */
 
@@ -52562,8 +52675,10 @@ int32_t scpi_query_SAMPle_DOUBle(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e6a2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the setter for :SAMPle:DARR */
 
@@ -52573,8 +52688,10 @@ int32_t scpi_set_SAMPle_DARR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e6a6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sample.c */
 
 /* the query handler for :SAMPle:DARR? */
 
@@ -52589,6 +52706,7 @@ int32_t scpi_query_SAMPle_DARR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e6c0 */
 #if 0 /* the decompiler's reading; rewritten in string.c */
@@ -52647,6 +52765,7 @@ void string_trim_right(uint32_t *param_1)
 
 
 /* 0002e730 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* skips an XNON:, :XNON:, XNONE: or :XNONE: prefix, for the ROBin queries */
 
@@ -52717,8 +52836,10 @@ LAB_0002e7e4:
   return;
 }
 
+#endif
 
 /* 0002e7ee */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* matches a ROBin argument's keyword at the start of the text */
 
@@ -52784,15 +52905,17 @@ int32_t robin_keyword_match(char *param_1,int32_t *param_2)
   return 0;
 }
 
+#endif
 
 /* 0002e882 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* finds a ROBin argument's keyword in the tables at 0x2f32a, and its kind */
 
 uint32_t robin_lookup(int32_t *param_1,uint32_t *param_2,uint32_t *param_3)
 
 {
-  int32_t iVar1;
+  int32_t match;
   char *pcVar2;
   uint16_t *puVar3;
   int32_t local_8;
@@ -52809,8 +52932,8 @@ uint32_t robin_lookup(int32_t *param_1,uint32_t *param_2,uint32_t *param_3)
         *param_1 = local_8;
         return 0;
       }
-      iVar1 = robin_keyword_match(pcVar2,&local_8);
-      if (iVar1 == -0x15) break;
+      match = robin_keyword_match(pcVar2,&local_8);
+      if (match == -0x15) break;
       *param_2 = *(uint32_t *)(pcVar2 + 0x10);
       *param_3 = *(uint32_t *)(pcVar2 + 0x14);
       pcVar2 = pcVar2 + 0x18;
@@ -52819,8 +52942,10 @@ uint32_t robin_lookup(int32_t *param_1,uint32_t *param_2,uint32_t *param_3)
   } while( true );
 }
 
+#endif
 
 /* 0002e8ee */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* parses the numbers after a ROBin keyword, by its kind */
 
@@ -53039,8 +53164,10 @@ LAB_0002e9be:
   return 0;
 }
 
+#endif
 
 /* 0002eba8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* the ROBin queries' argument parser: upper case, trimmed, prefix stripped, keyword and numbers */
 
@@ -53078,8 +53205,10 @@ int32_t robin_parse(char *param_1,uint32_t *param_2,uint32_t *param_3)
   return (int32_t)cVar1;
 }
 
+#endif
 
 /* 0002ec40 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* fills a ROBin point list with fixed indexes */
 
@@ -53132,8 +53261,10 @@ void robin_point_list(uint16_t *points,uint16_t *count,char kind)
   return;
 }
 
+#endif
 
 /* 0002ecf8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* fills a ROBin timestamp from fixed values, from 1994 on: test data */
 
@@ -53156,8 +53287,10 @@ void robin_timestamp_values(char param_1,int16_t param_2,int16_t *param_3)
   return;
 }
 
+#endif
 
 /* 0002ed7a */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* a ROBin kind's fixed point count, 4 to 7 */
 
@@ -53199,8 +53332,10 @@ void robin_point_count(char param_1,int16_t *param_2)
   return;
 }
 
+#endif
 
 /* 0002edde */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* a ROBin kind's fixed overflow count, 4.0 on (a double each, 0x2ee4a to 0x2ee4e) */
 
@@ -53246,8 +53381,10 @@ LAB_0002ee5e:
   return;
 }
 
+#endif
 
 /* 0002ee66 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* does nothing: :ROBin:CLEar's work */
 
@@ -53257,6 +53394,7 @@ void robin_clear(uint8_t param_1)
   return;
 }
 
+#endif
 
 /* 0002ee68 */
 
@@ -53286,6 +53424,7 @@ int32_t scpi_set_FORMat_DATA(void *parameters,void *response,void *call)
 
 
 /* 0002eeb8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_sense_format.c */
 
 /* the query handler for :FORMat:DATA? */
 
@@ -53308,8 +53447,10 @@ int32_t scpi_query_FORMat_DATA(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002eee8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* the query handler for :ROBin? */
 
@@ -53337,8 +53478,10 @@ int32_t scpi_query_ROBin(void *parameters,void *response,void *call)
   return iVar1;
 }
 
+#endif
 
 /* 0002ef92 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* the setter for :ROBin:CLEar */
 
@@ -53365,8 +53508,10 @@ int32_t scpi_set_ROBin_CLEar(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002eff8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* the query handler for :ROBin:MEMory:OVERflow:COUNt? */
 
@@ -53399,8 +53544,10 @@ int32_t scpi_query_ROBin_MEMory_OVERflow_COUNt(void *parameters,void *response,v
   return 0;
 }
 
+#endif
 
 /* 0002f0ac */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* the setter for :ROBin:MEMory:SAVE */
 
@@ -53415,8 +53562,10 @@ int32_t scpi_set_ROBin_MEMory_SAVE(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002f0dc */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* the query handler for :ROBin:MEMory:SAVE? */
 
@@ -53430,8 +53579,10 @@ int32_t scpi_query_ROBin_MEMory_SAVE(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002f0f6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* the query handler for :ROBin:POINts? */
 
@@ -53464,8 +53615,10 @@ int32_t scpi_query_ROBin_POINts(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002f19e */
+#if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
 
 /* the query handler for :ROBin:TSTamp? */
 
@@ -53517,8 +53670,10 @@ int32_t scpi_query_ROBin_TSTamp(void *parameters,void *response,void *call)
   return iVar1;
 }
 
+#endif
 
 /* 0002f2ae */
+#if 0 /* the decompiler's reading; rewritten in scpi_sense_format.c */
 
 /* the setter for :SENSe:TST1:EDGE */
 
@@ -53532,8 +53687,10 @@ int32_t scpi_set_SENSe_TST1_EDGE(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002f2ce */
+#if 0 /* the decompiler's reading; rewritten in scpi_sense_format.c */
 
 /* the query handler for :SENSe:TST1:EDGE? */
 
@@ -53544,6 +53701,7 @@ int32_t scpi_query_SENSe_TST1_EDGE(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002f34e */
 #if 0 /* the decompiler's reading; rewritten in status.c */
@@ -53838,6 +53996,7 @@ void happening_flush(char *param_1)
 
 
 /* 0002fa12 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:DURation? */
 
@@ -53867,8 +54026,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation(void *parameters,void *r
   return 0;
 }
 
+#endif
 
 /* 0002fa82 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:DURation:MEASurement:THReshold */
 
@@ -53885,8 +54046,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold
   return 0;
 }
 
+#endif
 
 /* 0002fabc */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:DURation:MEASurement:THReshold? */
 
@@ -53904,8 +54067,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold
   return 0;
 }
 
+#endif
 
 /* 0002fae8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold */
 
@@ -53922,8 +54087,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold
   return 0;
 }
 
+#endif
 
 /* 0002fb22 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold? */
 
@@ -53941,8 +54108,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold
   return 0;
 }
 
+#endif
 
 /* 0002fb4e */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:ALAR1 */
 
@@ -53953,8 +54122,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1
   return -0x20;
 }
 
+#endif
 
 /* 0002fb52 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:ALAR1? */
 
@@ -53968,8 +54139,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1
   return error;
 }
 
+#endif
 
 /* 0002fb64 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RAT1? */
 
@@ -53982,8 +54155,10 @@ int32_t scpi_query_RAT1(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002fb76 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RAT3? */
 
@@ -53996,8 +54171,10 @@ int32_t scpi_query_RAT3(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002fb88 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded? */
 
@@ -54009,8 +54186,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeede
   return 0;
 }
 
+#endif
 
 /* 0002fb9a */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:HYSTeresis */
 
@@ -54020,8 +54199,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis(void *parameters,void *r
   return -0x20;
 }
 
+#endif
 
 /* 0002fb9e */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:HYSTeresis? */
 
@@ -54034,8 +54215,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis(void *parameters,void 
   return error;
 }
 
+#endif
 
 /* 0002fbb0 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RAT2? */
 
@@ -54048,8 +54231,10 @@ int32_t scpi_query_RAT2(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002fbc2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:INITiate */
 
@@ -54070,8 +54255,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void *parameters,void *res
   return 0;
 }
 
+#endif
 
 /* 0002fc14 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :FMHO? */
 
@@ -54084,8 +54271,10 @@ int32_t scpi_query_FMHO(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002fc26 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:LIMit:STATe */
 
@@ -54108,8 +54297,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe(void *parameters,void *
   return 0;
 }
 
+#endif
 
 /* 0002fc78 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:LIMit:STATe? */
 
@@ -54128,8 +54319,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe(void *parameters,void
   return 0;
 }
 
+#endif
 
 /* 0002fca2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:LIMit:THReshold */
 
@@ -54145,8 +54338,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold(void *parameters,vo
   return 0;
 }
 
+#endif
 
 /* 0002fcdc */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:LIMit:THReshold? */
 
@@ -54162,8 +54357,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold
   return 0;
 }
 
+#endif
 
 /* 0002fd02 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:RECovery:AUTO */
 
@@ -54178,8 +54375,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void *parameters,void
   return 0;
 }
 
+#endif
 
 /* 0002fd32 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:RECovery:AUTO? */
 
@@ -54193,8 +54392,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void *parameters,vo
   return 0;
 }
 
+#endif
 
 /* 0002fd4c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:RECovery:INITiate */
 
@@ -54209,8 +54410,10 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate
   return 0;
 }
 
+#endif
 
 /* 0002fd72 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RMHO? */
 
@@ -54223,8 +54426,10 @@ int32_t scpi_query_RMHO(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0002fd84 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:HOLDover:RECovery:LIMit:IGNore */
 
@@ -54239,6 +54444,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore
   return 0;
 }
 
+#endif
 
 /* 0002fdaa */
 
@@ -54330,6 +54536,7 @@ int32_t scpi_query_KENneth_PRESent(void *parameters,void *response,void *call)
 
 
 /* 0002feda */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:HOLDover:WAITing? */
 
@@ -54369,8 +54576,10 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void *parameters,void *re
   return 0;
 }
 
+#endif
 
 /* 0002ff78 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the setter for :SOURce:ROSCillator:LIMit:THReshold */
 
@@ -54386,8 +54595,10 @@ int32_t scpi_set_SOURce_ROSCillator_LIMit_THReshold(void *parameters,void *respo
   return 0;
 }
 
+#endif
 
 /* 0002ffb2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:LIMit:THReshold? */
 
@@ -54402,8 +54613,10 @@ int32_t scpi_query_SOURce_ROSCillator_LIMit_THReshold(void *parameters,void *res
   return 0;
 }
 
+#endif
 
 /* 0002ffd8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
 
 /* the query handler for :SOURce:ROSCillator:STATe? */
 
@@ -54443,8 +54656,10 @@ int32_t scpi_query_SOURce_ROSCillator_STATe(void *parameters,void *response,void
   return 0;
 }
 
+#endif
 
 /* 00030048 */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RSST? */
 
@@ -54457,6 +54672,7 @@ int32_t scpi_query_RSST(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 0003005a */
 
@@ -54527,6 +54743,7 @@ int32_t scpi_set_SOURce_PTIMe_SYNChronization_IMMediate(void *parameters,void *r
 
 
 /* 0003012e */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:COMMunicate? */
 
@@ -54542,8 +54759,10 @@ int32_t scpi_query_SYSTem_COMMunicate(void *parameters,void *response,void *call
   return 0;
 }
 
+#endif
 
 /* 00030148 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:COMMunicate:SER1:ADDRess? */
 
@@ -54556,8 +54775,10 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_ADDRess(void *parameters,void *respon
   return error;
 }
 
+#endif
 
 /* 0003015a */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:COMMunicate:SER1:FDUPlex */
 
@@ -54582,8 +54803,10 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(void *parameters,void *response
   return 0;
 }
 
+#endif
 
 /* 000301bc */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:COMMunicate:SER1:FDUPlex? */
 
@@ -54600,8 +54823,10 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_FDUPlex(void *parameters,void *respon
   return 0;
 }
 
+#endif
 
 /* 000301de */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:COMMunicate:SER1:PRESet */
 
@@ -54626,8 +54851,10 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_PRESet(void *parameters,void *response,
   return 0;
 }
 
+#endif
 
 /* 0003022e */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:COMMunicate:SER1:RECeive:BAUD */
 
@@ -54673,8 +54900,10 @@ LAB_00030274:
   return 0;
 }
 
+#endif
 
 /* 000302c4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:COMMunicate:SER1:RECeive:BAUD? */
 
@@ -54719,8 +54948,10 @@ switchD_00030304_caseD_3:
   return 0;
 }
 
+#endif
 
 /* 00030332 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:COMMunicate:SER1:RECeive:BITS */
 
@@ -54748,8 +54979,10 @@ LAB_0003035a:
   return 0;
 }
 
+#endif
 
 /* 00030388 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:COMMunicate:SER1:RECeive:BITS? */
 
@@ -54798,8 +55031,10 @@ LAB_000303f8:
   return 0;
 }
 
+#endif
 
 /* 000303fe */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:COMMunicate:SER1:RECeive:PACE */
 
@@ -54824,8 +55059,10 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(void *parameters,void *res
   return 0;
 }
 
+#endif
 
 /* 00030460 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:COMMunicate:SER1:RECeive:PACE? */
 
@@ -54842,6 +55079,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE(void *parameters,void *r
   return 0;
 }
 
+#endif
 
 /* 00030482 */
 
@@ -54893,6 +55131,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void *parameters,vo
 
 
 /* 0003051a */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:COMMunicate:SER1:RECeive:PARity:TYPE? */
 
@@ -54927,8 +55166,10 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE
   return 0;
 }
 
+#endif
 
 /* 00030568 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:COMMunicate:SER1:RECeive:SBITs */
 
@@ -54956,8 +55197,10 @@ LAB_00030590:
   return 0;
 }
 
+#endif
 
 /* 000305be */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:COMMunicate:SER1:RECeive:SBITs? */
 
@@ -54995,8 +55238,10 @@ LAB_00030608:
   return 0;
 }
 
+#endif
 
 /* 0003060e */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :DANA? */
 
@@ -55019,8 +55264,10 @@ int32_t scpi_query_DANA(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0003066e */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :REQU? */
 
@@ -55033,8 +55280,10 @@ int32_t scpi_query_REQU(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 00030680 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:LANGuage */
 
@@ -55096,8 +55345,10 @@ int32_t scpi_set_SYSTem_LANGuage(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 00030752 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:LANGuage? */
 
@@ -55113,8 +55364,10 @@ int32_t scpi_query_SYSTem_LANGuage(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 00030770 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the setter for :SYSTem:PRESet */
 
@@ -55128,8 +55381,10 @@ int32_t scpi_set_SYSTem_PRESet(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 00030796 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:PRINt? */
 
@@ -55149,8 +55404,10 @@ int32_t scpi_query_SYSTem_PRINt(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 000307ee */
+#if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
 
 /* the query handler for :RVST? */
 
@@ -55163,8 +55420,10 @@ int32_t scpi_query_RVST(void *parameters,void *response,void *call)
   return error;
 }
 
+#endif
 
 /* 00030800 */
+#if 0 /* the decompiler's reading; rewritten in scpi_system.c */
 
 /* the query handler for :SYSTem:PRINt:LENGth? */
 
@@ -55178,6 +55437,7 @@ int32_t scpi_query_SYSTem_PRINt_LENGth(void *parameters,void *response,void *cal
   return 0;
 }
 
+#endif
 
 /* 0003082e */
 #if 0 /* the decompiler's reading; rewritten in records.c */
@@ -93191,6 +93451,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi_format.c"
 
+#include "../rewritten/z3805a-3543b/scpi_led.c"
+
 #include "../rewritten/z3805a-3543b/scpi_lexer.c"
 
 #include "../rewritten/z3805a-3543b/scpi_output.c"
@@ -93205,6 +93467,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi_sample.c"
 
+#include "../rewritten/z3805a-3543b/scpi_sense_format.c"
+
 #include "../rewritten/z3805a-3543b/scpi_source_gpsystem.c"
 
 #include "../rewritten/z3805a-3543b/scpi_source_ptime.c"
@@ -93212,6 +93476,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/scpi_source_pulse.c"
 
 #include "../rewritten/z3805a-3543b/scpi_source_roscillator.c"
+
+#include "../rewritten/z3805a-3543b/scpi_system.c"
 
 #include "../rewritten/z3805a-3543b/scpi_tree.c"
 

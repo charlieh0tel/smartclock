@@ -5,36 +5,6 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
-/* The lexer's character classes, the table at 0x277ec, the export's
- * LAB_000277ec, by a port's value, 0 to 0x105. */
-enum {
-  SCPI_CLASS_LETTER = 0,
-  SCPI_CLASS_DIGIT = 1,
-  SCPI_CLASS_UNDERSCORE = 2,
-  SCPI_CLASS_WHITE = 3, /* controls and space */
-  SCPI_CLASS_HASH = 4,
-  SCPI_CLASS_QUOTE = 5, /* " and ' */
-  SCPI_CLASS_OTHER = 6,
-  SCPI_CLASS_COLON = 7,
-  SCPI_CLASS_SEMICOLON = 8,
-  SCPI_CLASS_QUESTION = 9,
-  SCPI_CLASS_OPEN = 10,
-  SCPI_CLASS_CLOSE = 11,
-  SCPI_CLASS_STAR = 15,
-  SCPI_CLASS_PLUS = 16,
-  SCPI_CLASS_MINUS = 17,
-  SCPI_CLASS_POINT = 18,
-  SCPI_CLASS_SLASH = 19,
-  SCPI_CLASS_COMMA = 20,
-  SCPI_CLASS_NEWLINE = 25,
-  SCPI_CLASS_END = 26,        /* 0x100 and SCPI_PORT_END */
-  SCPI_CLASS_PORT_ERROR = 27, /* SCPI_PORT_CLOSED to SCPI_PORT_INTERRUPTED */
-  SCPI_CLASS_SKIPPED_END =
-      28, /* 0x102, which scpi_skip_to_terminator reads past */
-  SCPI_CLASS_DOLLAR = 30,
-  SCPI_CLASS_AT = 31,
-};
-
 /* A port's values above a character: 0x102, which
  * scpi_skip_to_terminator reads past, and the three the lexer reports
  * (scpi_engine_port_error). */
@@ -66,10 +36,10 @@ enum {
   SCPI_RADIX_BINARY = 'B',
 };
 
-/* A port value's character class: the image's table at 0x277ec, the
- * export's LAB_000277ec, by a port's value, 0 to 0x105. */
-static uint8_t scpi_engine_class(int32_t character) {
-  static const uint8_t CLASSES[] = {
+/* A port value's character class, by the image's scpi_char_classes
+ * (0x277ec), 0 to 0x105. */
+static scpi_char_class scpi_engine_class(int32_t character) {
+  static const scpi_char_class CLASSES[] = {
       [0x00 ... 0x09] = SCPI_CLASS_WHITE,
       [0x0a] = SCPI_CLASS_NEWLINE,
       [0x0b ... ' '] = SCPI_CLASS_WHITE,
@@ -143,7 +113,7 @@ static int32_t scpi_engine_scan_keyword(scpi_port* input, scpi_keyword* keyword,
   static const int16_t KEYWORD_MOST = 16;
   int16_t count = 0;
   int16_t character = first;
-  uint8_t class = SCPI_CLASS_LETTER;
+  scpi_char_class class = SCPI_CLASS_LETTER;
 
   for (;;) {
     keyword->text[count++] =
@@ -208,7 +178,7 @@ static int32_t scpi_engine_scan_radix(scpi_port* input, scpi_token* token,
 
   for (;;) {
     int16_t character = scpi_engine_read(input);
-    uint8_t class = scpi_engine_class(character);
+    scpi_char_class class = scpi_engine_class(character);
     int16_t digit;
 
     if (class == SCPI_CLASS_LETTER) {
@@ -327,7 +297,7 @@ int32_t scpi_scan_token(scpi_port* input, scpi_token* token,
     case SCPI_CLASS_MINUS: {
       token->number.negative = character == '-';
       int16_t next = scpi_engine_read(input);
-      uint8_t class = scpi_engine_class(next);
+      scpi_char_class class = scpi_engine_class(next);
 
       if (class == SCPI_CLASS_DIGIT || class == SCPI_CLASS_POINT) {
         return scpi_scan_number(&token->number, 1, next, input);
@@ -413,7 +383,7 @@ int32_t scpi_scan_number(scpi_number* number, int32_t have_character,
   int16_t next = (int16_t)have_character != 0
                      ? (int16_t)character
                      : (int16_t)scpi_engine_read(input);
-  uint8_t class = scpi_engine_class(next);
+  scpi_char_class class = scpi_engine_class(next);
   int16_t digits = 0;
   int16_t point = 0;
   int16_t shift = 0;
@@ -555,7 +525,7 @@ int32_t scpi_scan_exponent(int32_t character, scpi_number* number,
     return 0;
   }
   int16_t next = scpi_engine_read(input);
-  uint8_t class = scpi_engine_class(next);
+  scpi_char_class class = scpi_engine_class(next);
 
   if (class != SCPI_CLASS_DIGIT && class != SCPI_CLASS_PLUS &&
       class != SCPI_CLASS_MINUS && class != SCPI_CLASS_WHITE) {

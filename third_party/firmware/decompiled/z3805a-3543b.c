@@ -2462,6 +2462,33 @@ struct scpi_port {
     struct scpi_port_methods *methods;
 };
 
+typedef enum __attribute__((packed)) scpi_char_class {
+    SCPI_CLASS_LETTER=0,
+    SCPI_CLASS_DIGIT=1,
+    SCPI_CLASS_UNDERSCORE=2,
+    SCPI_CLASS_WHITE=3,
+    SCPI_CLASS_HASH=4,
+    SCPI_CLASS_QUOTE=5,
+    SCPI_CLASS_OTHER=6,
+    SCPI_CLASS_COLON=7,
+    SCPI_CLASS_SEMICOLON=8,
+    SCPI_CLASS_QUESTION=9,
+    SCPI_CLASS_OPEN=10,
+    SCPI_CLASS_CLOSE=11,
+    SCPI_CLASS_STAR=15,
+    SCPI_CLASS_PLUS=16,
+    SCPI_CLASS_MINUS=17,
+    SCPI_CLASS_POINT=18,
+    SCPI_CLASS_SLASH=19,
+    SCPI_CLASS_COMMA=20,
+    SCPI_CLASS_NEWLINE=25,
+    SCPI_CLASS_END=26,
+    SCPI_CLASS_PORT_ERROR=27,
+    SCPI_CLASS_SKIPPED_END=28,
+    SCPI_CLASS_DOLLAR=30,
+    SCPI_CLASS_AT=31
+} scpi_char_class;
+
 typedef struct scpi_context scpi_context, *Pscpi_context;
 
 typedef struct scpi_path scpi_path, *Pscpi_path;
@@ -3154,6 +3181,7 @@ _Static_assert(sizeof(scpi_array_record) == 6, "scpi_array_record");
 _Static_assert(sizeof(scpi_bcd) == 12, "scpi_bcd");
 _Static_assert(sizeof(scpi_block) == 8, "scpi_block");
 _Static_assert(sizeof(scpi_call) == 30, "scpi_call");
+_Static_assert(sizeof(scpi_char_class) == 1, "scpi_char_class");
 _Static_assert(sizeof(scpi_child_list) == 6, "scpi_child_list");
 _Static_assert(sizeof(scpi_choices) == 8, "scpi_choices");
 _Static_assert(sizeof(scpi_context) == 34, "scpi_context");
@@ -3425,6 +3453,7 @@ extern uint16_t scpi_normalize_exponents[32]; /* 00025144 */
 extern double scpi_powers_of_ten[145]; /* 000256ae */
 extern double scpi_powers_of_ten_64[9]; /* 00025b36 */
 extern uint16_t decimal_digit_pairs[100]; /* 00025c82 */
+extern scpi_char_class scpi_char_classes[262]; /* 000277ec */
 extern int16_t scpi_parameter_kind_errors[6]; /* 000279ca */
 extern scpi_multiplier scpi_multipliers[13]; /* 00027b2e */
 extern status_condition status_negative_conditions[63]; /* 00028720 */
@@ -3756,6 +3785,7 @@ extern holdover_steering_state holdover_steering; /* 00102042 */
 extern loop_steering_state loop_steering; /* 0010205e */
 extern uint8_t interval_tick_wait; /* 0010207a */
 extern uint8_t interval_armed_without_pps; /* 0010207b */
+extern float fine_readings[50]; /* 0010207c */
 extern float fine_sum_i; /* 00102144 */
 extern float fine_sum_i_squared; /* 00102148 */
 extern float fine_sum_ti; /* 0010214c */
@@ -3976,7 +4006,6 @@ extern uint32_t DAT_0010fff2; /* 0010fff2 */
 extern uint32_t DAT_0010fff6; /* 0010fff6 */
 extern uint32_t DAT_0010fffa; /* 0010fffa */
 extern uint8_t DAT_00700000; /* 00700000 */
-extern uint8_t LAB_000277ec; /* 000277ec */
 extern uint32_t *PTR_DAT_0004cf80; /* 0004cf80 */
 extern uint32_t *PTR_DAT_00050e5e; /* 00050e5e */
 extern uint32_t *PTR_diag_cal_0001c8ac; /* 0001c8ac */
@@ -4151,7 +4180,6 @@ __asm__(".set DAT_0010fff2, 0x0010fff2");
 __asm__(".set DAT_0010fff6, 0x0010fff6");
 __asm__(".set DAT_0010fffa, 0x0010fffa");
 __asm__(".set DAT_00700000, 0x00700000");
-__asm__(".set LAB_000277ec, 0x000277ec");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
 __asm__(".set PTR_DAT_00050e5e, 0x00050e5e");
 __asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
@@ -4294,6 +4322,7 @@ __asm__(".set exception_hook, 0x001037d0");
 __asm__(".set exception_hook_per_task, 0x001037d4");
 __asm__(".set exception_names, 0x00011ba0");
 __asm__(".set fconf_regs, 0x00101fa9");
+__asm__(".set fine_readings, 0x0010207c");
 __asm__(".set fine_sum_i, 0x00102144");
 __asm__(".set fine_sum_i_squared, 0x00102148");
 __asm__(".set fine_sum_i_ti, 0x00102150");
@@ -4612,6 +4641,7 @@ __asm__(".set scpi_action_STATus_PRESet, 0x00041372");
 __asm__(".set scpi_action_SYSTem_PRESet, 0x00041360");
 __asm__(".set scpi_action_self_test, 0x00041348");
 __asm__(".set scpi_action_temporary_hold, 0x0004133c");
+__asm__(".set scpi_char_classes, 0x000277ec");
 __asm__(".set scpi_echo_length, 0x00102a46");
 __asm__(".set scpi_echo_response, 0x00102c64");
 __asm__(".set scpi_echo_text, 0x00102a47");
@@ -45154,7 +45184,7 @@ int32_t scpi_scan_token(scpi_port *input,scpi_token *token,scpi_arena *arena)
 
 {
   code *pcVar1;
-  char cVar2;
+  scpi_char_class sVar2;
   bool bVar3;
   bool bVar4;
   uint16_t uVar7;
@@ -45170,12 +45200,12 @@ int32_t scpi_scan_token(scpi_port *input,scpi_token *token,scpi_arena *arena)
   
   pcVar1 = (code *)input->read;
   uVar7 = (*pcVar1)(input);
-  if (0x1f < (uint16_t)(int16_t)(char)(&LAB_000277ec)[(int16_t)uVar7]) {
+  if (0x1f < (uint16_t)(int16_t)(char)scpi_char_classes[(int16_t)uVar7]) {
 LAB_00027380:
     return -0x27;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((int16_t)(char)(&LAB_000277ec)[(int16_t)uVar7]) {
+  switch((int16_t)(char)scpi_char_classes[(int16_t)uVar7]) {
   case 0:
     sVar8 = 0;
     do {
@@ -45185,9 +45215,9 @@ LAB_00027380:
         sVar8 = sVar11 + 1;
         *(char *)((int32_t)token + sVar11 + 2) = (char)uVar7;
         uVar7 = (*pcVar1)(input);
-        cVar2 = (&LAB_000277ec)[(int16_t)uVar7];
-        if (cVar2 == 0) break;
-        if (2 < cVar2) {
+        sVar2 = scpi_char_classes[(int16_t)uVar7];
+        if (sVar2 == SCPI_CLASS_LETTER) break;
+        if (2 < (char)sVar2) {
           (token->number).negative = sVar8;
           if (uVar7 == 0x3f) {
             return 0x14;
@@ -45195,7 +45225,7 @@ LAB_00027380:
           if (uVar7 == 0x3a) {
             return 0x15;
           }
-          if (cVar2 != 0x1b) {
+          if (sVar2 != SCPI_CLASS_PORT_ERROR) {
             (*(code *)input->methods->unread)(input);
             return 0x13;
           }
@@ -45219,13 +45249,13 @@ LAB_0002704a:
   case 3:
     do {
       sVar8 = (*pcVar1)(input);
-    } while ((&LAB_000277ec)[sVar8] == 3);
+    } while (scpi_char_classes[sVar8] == SCPI_CLASS_WHITE);
     (*(code *)input->methods->unread)(input);
     iVar6 = 4;
     break;
   case 4:
     uVar7 = (*pcVar1)(input);
-    if ((&LAB_000277ec)[(int16_t)uVar7] == 1) {
+    if (scpi_char_classes[(int16_t)uVar7] == SCPI_CLASS_DIGIT) {
       uVar10 = 0;
       sVar8 = uVar7 - 0x30;
       if (uVar7 == 0x30) {
@@ -45235,8 +45265,8 @@ LAB_0002704a:
         (token->block).indefinite = 0;
         for (sVar11 = 0; sVar11 < sVar8; sVar11 = sVar11 + 1) {
           uVar7 = (*pcVar1)(input);
-          if ((&LAB_000277ec)[(int16_t)uVar7] != 1) {
-            if ((&LAB_000277ec)[(int16_t)uVar7] != 0x1b) {
+          if (scpi_char_classes[(int16_t)uVar7] != SCPI_CLASS_DIGIT) {
+            if (scpi_char_classes[(int16_t)uVar7] != SCPI_CLASS_PORT_ERROR) {
               (*(code *)input->methods->unread)(input);
               return -0x12;
             }
@@ -45258,21 +45288,21 @@ LAB_00027148:
       bVar4 = true;
       do {
         uVar7 = (*pcVar1)(input);
-        cVar2 = (&LAB_000277ec)[(int16_t)uVar7];
-        if (cVar2 == 0) {
+        sVar2 = scpi_char_classes[(int16_t)uVar7];
+        if (sVar2 == SCPI_CLASS_LETTER) {
           sVar11 = (uVar7 & 0xdf) - 0x37;
         }
         else {
-          if (cVar2 != 1) {
+          if (sVar2 != SCPI_CLASS_DIGIT) {
             if (bVar3) {
-              if (cVar2 != 0x1b) {
+              if (sVar2 != SCPI_CLASS_PORT_ERROR) {
                 (*(code *)input->methods->unread)(input);
                 return -0x14;
               }
             }
             else {
               (*(code *)input->methods->unread)(input);
-              if (cVar2 != 0x1b) {
+              if (sVar2 != SCPI_CLASS_PORT_ERROR) {
                 if (!bVar4) {
                   return -0xb;
                 }
@@ -45307,7 +45337,7 @@ LAB_00027148:
       local_e = 3;
       goto LAB_00027148;
     }
-    if ((&LAB_000277ec)[(int16_t)uVar7] != 0x1b) {
+    if (scpi_char_classes[(int16_t)uVar7] != SCPI_CLASS_PORT_ERROR) {
       (*(code *)input->methods->unread)(input);
       return -0x13;
     }
@@ -45375,9 +45405,9 @@ switchD_00026f1c_caseD_1b:
   case 0x11:
     *(uint16_t *)token = (uint16_t)(uVar7 == 0x2d);
     uVar7 = (*pcVar1)(input);
-    cVar2 = (&LAB_000277ec)[(int16_t)uVar7];
-    if ((cVar2 == 1) || (cVar2 == 0x12)) goto LAB_0002704a;
-    if (cVar2 != 0x1b) {
+    sVar2 = scpi_char_classes[(int16_t)uVar7];
+    if ((sVar2 == SCPI_CLASS_DIGIT) || (sVar2 == SCPI_CLASS_POINT)) goto LAB_0002704a;
+    if (sVar2 != SCPI_CLASS_PORT_ERROR) {
       (*(code *)input->methods->unread)(input);
       return -0x11;
     }
@@ -45394,11 +45424,11 @@ switchD_00026f1c_caseD_1b:
     break;
   case 0x1e:
     uVar7 = (*pcVar1)(input);
-    if (((&LAB_000277ec)[(int16_t)uVar7] == 1) && (uVar7 != 0x30)) {
+    if ((scpi_char_classes[(int16_t)uVar7] == SCPI_CLASS_DIGIT) && (uVar7 != 0x30)) {
       (token->number).negative = uVar7 - 0x30;
       return 0x11;
     }
-    if ((&LAB_000277ec)[(int16_t)uVar7] != 0x1b) {
+    if (scpi_char_classes[(int16_t)uVar7] != SCPI_CLASS_PORT_ERROR) {
       (*(code *)input->methods->unread)(input);
       return -0x27;
     }
@@ -45409,7 +45439,7 @@ switchD_00026f1c_caseD_1b:
   return iVar6;
 LAB_000272a6:
   uVar7 = uVar9;
-  if ((&LAB_000277ec)[(int16_t)uVar7] != 0x1b) {
+  if (scpi_char_classes[(int16_t)uVar7] != SCPI_CLASS_PORT_ERROR) {
     (*(code *)input->methods->unread)(input);
     return -0x15;
   }
@@ -45433,7 +45463,7 @@ void scpi_skip_to_terminator(scpi_port *input)
   do {
     sVar2 = (*pcVar1)(input);
     if ((0xff < sVar2) && (sVar2 != 0x102)) break;
-  } while ((&LAB_000277ec)[sVar2] != 0x19);
+  } while (scpi_char_classes[sVar2] != SCPI_CLASS_NEWLINE);
   (*(code *)input->methods->unread)(input);
   return;
 }
@@ -45454,136 +45484,138 @@ int32_t scpi_scan_number(scpi_number *number,int32_t have_character,int32_t char
   uint16_t uVar3;
   int32_t iVar2;
   int16_t sVar4;
-  char cVar5;
-  uint32_t uVar6;
-  int16_t sVar7;
+  char upper;
+  scpi_char_class sVar6;
+  uint32_t uVar7;
   int16_t sVar8;
   int16_t sVar9;
+  int16_t sVar10;
   
-  uVar6 = character & 0xffff;
+  uVar7 = character & 0xffff;
   if ((int16_t)have_character == 0) {
     uVar3 = (*(code *)input->read)(input);
-    uVar6 = (uint32_t)uVar3;
+    uVar7 = (uint32_t)uVar3;
   }
-  cVar5 = (&LAB_000277ec)[(int16_t)uVar6];
-  sVar9 = 0;
-  sVar7 = 0;
+  sVar6 = scpi_char_classes[(int16_t)uVar7];
+  sVar10 = 0;
   sVar8 = 0;
+  sVar9 = 0;
   bVar1 = false;
   do {
-    sVar4 = (int16_t)uVar6;
+    sVar4 = (int16_t)uVar7;
     if (sVar4 == 0x30) {
-      sVar8 = sVar8 - sVar7;
+      sVar9 = sVar9 - sVar8;
       bVar1 = true;
-      if (sVar8 == -0x8000) {
+      if (sVar9 == -0x8000) {
         return -0x17;
       }
     }
     else {
       if (sVar4 != 0x2e) {
-        if (cVar5 == 1) break;
+        if (sVar6 == SCPI_CLASS_DIGIT) break;
         if (!bVar1) goto joined_r0x0002750e;
-        sVar9 = 1;
+        sVar10 = 1;
         number->digits[0] = 0;
         break;
       }
-      if (sVar7 != 0) goto LAB_0002752c;
-      sVar7 = 1;
+      if (sVar8 != 0) goto LAB_0002752c;
+      sVar8 = 1;
     }
     uVar3 = (*(code *)input->read)(input);
-    uVar6 = (uint32_t)uVar3;
-    cVar5 = (&LAB_000277ec)[(int16_t)uVar3];
+    uVar7 = (uint32_t)uVar3;
+    sVar6 = scpi_char_classes[(int16_t)uVar3];
   } while( true );
 LAB_0002747e:
-  sVar4 = (int16_t)uVar6;
-  if (cVar5 == 1) {
-    sVar4 = sVar9 + 1;
-    number->digits[sVar9] = (char)uVar6 + -0x30;
-    sVar8 = sVar8 - sVar7;
-    if (sVar8 == -0x8000) {
+  sVar4 = (int16_t)uVar7;
+  if (sVar6 == SCPI_CLASS_DIGIT) {
+    sVar4 = sVar10 + 1;
+    number->digits[sVar10] = (char)uVar7 + -0x30;
+    sVar9 = sVar9 - sVar8;
+    if (sVar9 == -0x8000) {
       return -0x17;
     }
-    sVar9 = sVar4;
+    sVar10 = sVar4;
     if (sVar4 == 0x10) goto LAB_000274a4;
   }
   else {
-    if (cVar5 != 0x12) {
-      if (sVar9 != 0) goto LAB_00027502;
+    if (sVar6 != SCPI_CLASS_POINT) {
+      if (sVar10 != 0) goto LAB_00027502;
 joined_r0x0002750e:
-      if (cVar5 != 0x1b) {
+      if (sVar6 != SCPI_CLASS_PORT_ERROR) {
 LAB_0002752c:
         (*(code *)input->methods->unread)(input);
         return -0x11;
       }
       goto joined_r0x00027514;
     }
-    if (sVar7 != 0) goto LAB_0002752c;
-    sVar7 = 1;
+    if (sVar8 != 0) goto LAB_0002752c;
+    sVar8 = 1;
   }
   uVar3 = (*(code *)input->read)(input);
-  uVar6 = (uint32_t)uVar3;
-  cVar5 = (&LAB_000277ec)[(int16_t)uVar3];
+  uVar7 = (uint32_t)uVar3;
+  sVar6 = scpi_char_classes[(int16_t)uVar3];
   goto LAB_0002747e;
 LAB_000274a4:
   while( true ) {
     uVar3 = (*(code *)input->read)(input);
-    uVar6 = (uint32_t)uVar3;
-    cVar5 = (&LAB_000277ec)[(int16_t)uVar3];
-    if (cVar5 != 1) break;
-    if ((sVar7 == 0) && (sVar8 = sVar8 + 1, 0x7ffe < sVar8)) {
+    uVar7 = (uint32_t)uVar3;
+    sVar6 = scpi_char_classes[(int16_t)uVar3];
+    if (sVar6 != SCPI_CLASS_DIGIT) break;
+    if ((sVar8 == 0) && (sVar9 = sVar9 + 1, 0x7ffe < sVar9)) {
       return -0x17;
     }
   }
-  if (cVar5 != 0x12) goto LAB_00027568;
-  if (sVar7 != 0) goto LAB_0002752c;
-  sVar7 = 1;
+  if (sVar6 != SCPI_CLASS_POINT) goto LAB_00027568;
+  if (sVar8 != 0) goto LAB_0002752c;
+  sVar8 = 1;
   goto LAB_000274a4;
 LAB_00027502:
-  while (sVar9 < 0x10) {
-    number->digits[sVar9] = 0;
-    sVar8 = sVar8 + -1;
-    sVar9 = sVar9 + 1;
-    if (sVar8 == -0x8000) {
+  while (sVar10 < 0x10) {
+    number->digits[sVar10] = 0;
+    sVar9 = sVar9 + -1;
+    sVar10 = sVar10 + 1;
+    if (sVar9 == -0x8000) {
       return -0x17;
     }
   }
 LAB_00027568:
-  while (cVar5 == 3) {
+  while (sVar6 == SCPI_CLASS_WHITE) {
     uVar3 = (*(code *)input->read)(input);
-    uVar6 = (uint32_t)uVar3;
-    cVar5 = (&LAB_000277ec)[(int16_t)uVar3];
+    uVar7 = (uint32_t)uVar3;
+    sVar6 = scpi_char_classes[(int16_t)uVar3];
   }
   number->suffix_length = 0;
-  iVar2 = scpi_scan_exponent((int32_t)(int16_t)uVar6,number,input);
+  iVar2 = scpi_scan_exponent((int32_t)(int16_t)uVar7,number,input);
   if (iVar2 != 0) {
     return iVar2;
   }
-  iVar2 = (int32_t)number->exponent + (int32_t)sVar8;
+  iVar2 = (int32_t)number->exponent + (int32_t)sVar9;
   if ((0x7fff < iVar2) || (iVar2 < -0x8000)) {
     return -0x2d;
   }
   number->exponent = (int16_t)iVar2;
   do {
     sVar4 = (*(code *)input->read)(input);
-    cVar5 = (&LAB_000277ec)[sVar4];
-  } while (cVar5 == 3);
-  sVar9 = number->suffix_length;
-  if ((cVar5 == 0x13) || (cVar5 == 0)) {
-    while (((cVar5 == 0x11 || (((cVar5 == 0x13 || (cVar5 == 1)) || (cVar5 == 0x12)))) ||
-           (cVar5 == 0))) {
-      if (0xc < sVar9) {
+    sVar6 = scpi_char_classes[sVar4];
+  } while (sVar6 == SCPI_CLASS_WHITE);
+  sVar10 = number->suffix_length;
+  if ((sVar6 == SCPI_CLASS_SLASH) || (sVar6 == SCPI_CLASS_LETTER)) {
+    while (((sVar6 == SCPI_CLASS_MINUS ||
+            (((sVar6 == SCPI_CLASS_SLASH || (sVar6 == SCPI_CLASS_DIGIT)) ||
+             (sVar6 == SCPI_CLASS_POINT)))) || (sVar6 == SCPI_CLASS_LETTER))) {
+      if (0xc < sVar10) {
         return -0x35;
       }
-      cVar5 = scpi_char_upper((int32_t)sVar4);
-      number->suffix[sVar9] = cVar5;
+      upper = scpi_char_upper((int32_t)sVar4);
+      number->suffix[sVar10] = upper;
       sVar4 = (*(code *)input->read)(input);
-      sVar9 = sVar9 + 1;
-      cVar5 = (&LAB_000277ec)[sVar4];
+      sVar10 = sVar10 + 1;
+      sVar6 = scpi_char_classes[sVar4];
     }
   }
-  if (cVar5 != 0x1b) {
+  if (sVar6 != SCPI_CLASS_PORT_ERROR) {
     (*(code *)input->methods->unread)(input);
-    number->suffix_length = sVar9;
+    number->suffix_length = sVar10;
     return 0xe;
   }
 joined_r0x00027514:
@@ -45613,7 +45645,7 @@ int32_t scpi_scan_exponent(int32_t character,scpi_number *number,scpi_port *inpu
   bool bVar1;
   int16_t sVar2;
   int16_t sVar3;
-  char cVar4;
+  scpi_char_class sVar4;
   
   sVar2 = scpi_char_upper((int32_t)(int16_t)character);
   if (sVar2 != 0x45) {
@@ -45623,30 +45655,31 @@ LAB_000276d0:
     return 0;
   }
   sVar2 = (*(code *)input->read)(input);
-  cVar4 = (&LAB_000277ec)[sVar2];
-  if ((((cVar4 != 1) && (cVar4 != 0x10)) && (cVar4 != 0x11)) && (cVar4 != 3)) {
+  sVar4 = scpi_char_classes[sVar2];
+  if ((((sVar4 != SCPI_CLASS_DIGIT) && (sVar4 != SCPI_CLASS_PLUS)) && (sVar4 != SCPI_CLASS_MINUS))
+     && (sVar4 != SCPI_CLASS_WHITE)) {
     sVar2 = number->suffix_length;
     number->suffix_length = number->suffix_length + 1;
     number->suffix[sVar2] = 'E';
     goto LAB_000276d0;
   }
-  while (cVar4 == 3) {
+  while (sVar4 == SCPI_CLASS_WHITE) {
     sVar2 = (*(code *)input->read)(input);
-    cVar4 = (&LAB_000277ec)[sVar2];
+    sVar4 = scpi_char_classes[sVar2];
   }
   bVar1 = false;
-  if (cVar4 == 0x11) {
+  if (sVar4 == SCPI_CLASS_MINUS) {
     bVar1 = true;
   }
-  else if (cVar4 != 0x10) goto LAB_00027728;
+  else if (sVar4 != SCPI_CLASS_PLUS) goto LAB_00027728;
   sVar2 = (*(code *)input->read)(input);
-  cVar4 = (&LAB_000277ec)[sVar2];
+  sVar4 = scpi_char_classes[sVar2];
 LAB_00027728:
-  if (cVar4 == 1) {
+  if (sVar4 == SCPI_CLASS_DIGIT) {
     sVar2 = sVar2 + -0x30;
     while( true ) {
       sVar3 = (*(code *)input->read)(input);
-      if ((&LAB_000277ec)[sVar3] != 1) {
+      if (scpi_char_classes[sVar3] != SCPI_CLASS_DIGIT) {
         if (bVar1) {
           sVar2 = -sVar2;
         }
@@ -45659,7 +45692,7 @@ LAB_00027728:
     }
     return -0x2d;
   }
-  if (cVar4 != 0x1b) {
+  if (sVar4 != SCPI_CLASS_PORT_ERROR) {
     (*(code *)input->methods->unread)(input);
     return -0x11;
   }
@@ -45685,7 +45718,7 @@ LAB_00027728:
 uint32_t scpi_char_upper(uint32_t param_1)
 
 {
-  if ((&LAB_000277ec)[param_1] == 0) {
+  if (scpi_char_classes[param_1] == SCPI_CLASS_LETTER) {
     param_1 = param_1 & 0xffff00df;
   }
   return param_1;

@@ -1175,6 +1175,36 @@ typedef struct scpi_token_block {
   uint16_t indefinite; /* +0x04: 1 for #0 (0x270e8), else 0 (0x2708c) */
 } scpi_token_block;
 
+/* The SCPI lexer's class of a port's value, 0 to 0x105, as
+ * scpi_char_classes (0x277ec) gives it. */
+typedef enum __attribute__((packed)) scpi_char_class {
+  SCPI_CLASS_LETTER = 0,
+  SCPI_CLASS_DIGIT = 1,
+  SCPI_CLASS_UNDERSCORE = 2,
+  SCPI_CLASS_WHITE = 3, /* controls and space */
+  SCPI_CLASS_HASH = 4,
+  SCPI_CLASS_QUOTE = 5, /* " and ' */
+  SCPI_CLASS_OTHER = 6,
+  SCPI_CLASS_COLON = 7,
+  SCPI_CLASS_SEMICOLON = 8,
+  SCPI_CLASS_QUESTION = 9,
+  SCPI_CLASS_OPEN = 10,
+  SCPI_CLASS_CLOSE = 11,
+  SCPI_CLASS_STAR = 15,
+  SCPI_CLASS_PLUS = 16,
+  SCPI_CLASS_MINUS = 17,
+  SCPI_CLASS_POINT = 18,
+  SCPI_CLASS_SLASH = 19,
+  SCPI_CLASS_COMMA = 20,
+  SCPI_CLASS_NEWLINE = 25,
+  SCPI_CLASS_END = 26,        /* 0x100 and SCPI_PORT_END */
+  SCPI_CLASS_PORT_ERROR = 27, /* SCPI_PORT_CLOSED to SCPI_PORT_INTERRUPTED */
+  SCPI_CLASS_SKIPPED_END =
+      28, /* 0x102, which scpi_skip_to_terminator reads past */
+  SCPI_CLASS_DOLLAR = 30,
+  SCPI_CLASS_AT = 31,
+} scpi_char_class;
+
 /* The SCPI lexer's token: scpi_scan_token fills the member for the
  * kind of token it returns, and the parameter converters take the
  * number.  A keyword (0x13, 0x14 with '?', 0x15 with ':') is its length

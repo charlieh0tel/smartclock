@@ -11,7 +11,7 @@
  * softfloat.md): float_divide_reversed(a, b) is b / a,
  * float_subtract_reversed(a, b) b - a, and double_compare(a, b) is
  * negative when b < a.  fine (0x4538c) stays the decompiler's: it keeps
- * its readings in an array at 0x10207c the export does not name. */
+ * its readings in fine_readings. */
 
 /* A TI reading in seconds as the debug messages print it, in ns. */
 static const float PLL_STAGES_NANOSECONDS = 1e+09f;

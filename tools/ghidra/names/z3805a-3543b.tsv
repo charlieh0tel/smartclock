@@ -1771,6 +1771,8 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 # the SCPI console session, the status byte, the early status events,
 # the spooler, the tick and the kernel's start; docs/firmware/structures.md,
 # "The SCPI session" and "The tasks' cells"
+0x102a26	label	robin_blocks	context	robin_store's :ROBin responses as blocks, by the index'th record of that kind (0x29a74)	scpi_block[2]
+0x102a36	label	robin_arrays	context	robin_store's :ROBin responses as arrays of shorts (0x29a7a)	scpi_array[2]
 0x102a46	label	scpi_echo_length	structures.md	scpi_console_putc's count of scpi_echo_text; scpi_session_init and, for the console port, scpi_format_response clear it	uint8_t
 0x102a47	label	scpi_echo_text	structures.md	the response characters scpi_console_putc writes, at scpi_echo_length, which wraps at 256 unchecked	char[255]
 0x102b46	label	scpi_last_input	structures.md	console_port_read's last result, a character or 0x101 for an end of line or an error; returned once more after scpi_input_ended	int32_t

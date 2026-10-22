@@ -3332,6 +3332,8 @@ extern int32_t task_count; /* 0010271c */
 extern uint32_t task_ticks_total; /* 00102720 */
 extern uint8_t diag_leapsec_argument_1; /* 00102724 */
 extern uint32_t diag_leapsec_argument_2; /* 00102726 */
+extern scpi_block robin_blocks[2]; /* 00102a26 */
+extern scpi_array robin_arrays[2]; /* 00102a36 */
 extern uint8_t scpi_echo_length; /* 00102a46 */
 extern char scpi_echo_text[255]; /* 00102a47 */
 extern int32_t scpi_last_input; /* 00102b46 */
@@ -4111,6 +4113,8 @@ __asm__(".set restart_reference_seconds, 0x0010258c");
 __asm__(".set restart_reference_uptime, 0x00102594");
 __asm__(".set retained_block, 0x00101e70");
 __asm__(".set retained_block_defaults, 0x0003094c");
+__asm__(".set robin_arrays, 0x00102a36");
+__asm__(".set robin_blocks, 0x00102a26");
 __asm__(".set robin_keyword_code, 0x00102d74");
 __asm__(".set sample_values_defaults, 0x000308b6");
 __asm__(".set satellite_status_blank_entry, 0x0004e016");
@@ -46799,27 +46803,28 @@ void robin_store(scpi_array_record *response,int16_t *points,int32_t count,robin
 
 {
   int32_t iVar1;
-  void *pvVar2;
+  uint32_t uVar2;
+  scpi_array *psVar3;
   
   iVar1 = (char)format + -1;
   if ((char)format == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00029a92_index_zero)[(int16_t)iVar1]) {
     case 4:
-      iVar1 = (uint32_t)index * 8;
-      *(int32_t *)(iVar1 + 0x102a26) = count * 2;
-      *(int16_t **)(iVar1 + 0x102a2a) = points;
+      uVar2 = (uint32_t)index;
+      robin_blocks[uVar2].length = count * 2;
+      robin_blocks[uVar2].data = points;
       response->kind = 0;
-      pvVar2 = (void *)(iVar1 + 0x102a26);
+      psVar3 = (scpi_array *)(robin_blocks + uVar2);
       break;
     case 0x22:
-      iVar1 = (uint32_t)index * 8;
-      *(int32_t *)(iVar1 + 0x102a36) = count;
-      *(int16_t **)(iVar1 + 0x102a3a) = points;
+      uVar2 = (uint32_t)index;
+      robin_arrays[uVar2].count = count;
+      robin_arrays[uVar2].values = points;
       response->kind = 2;
-      pvVar2 = (void *)(iVar1 + 0x102a36);
+      psVar3 = robin_arrays + uVar2;
     }
-    response->array = pvVar2;
+    response->array = psVar3;
   }
   return;
 }

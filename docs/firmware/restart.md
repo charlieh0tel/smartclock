@@ -440,6 +440,7 @@ but for CS4, which it lacks.
 | CS5 | `0x300000`, 64 KiB, 12 wait | 8-bit | R/W | latch at `0x300000`, registers at `0x304000` and `0x306000`, byte at `0x302000` |
 | CS8 | `0x200000`, 2 KiB, external DSACK | 8-bit | | 68681 DUART |
 | CS9 | `0x400000`, 8 KiB | 8-bit | | EEPROM |
+| CS10 | CPU space, interrupt acknowledge at level 2 (CSBAR10 `0xfff8`, CSOR10 `0x2bc4`, `0x628`/`0x630`), external DSACK, lower byte | 8-bit | read | the DUART's acknowledge: it answers with the vector its IVR holds, so its interrupt is level 2, vectored |
 
 The only read of `0x302000` in any installer is in the Oman installer
 that 58503A 3633 carries (unpacked address `0x108290`).  The installer

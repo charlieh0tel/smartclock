@@ -1709,11 +1709,13 @@ view cannot drift apart.  The library, bottom up:
   header, the one whose code pushes it) and the diagnostic table as
   dump-scpi finds the tree, refusing rather than guessing; reads each
   kernel word's stack effect from its code, every path and callee, A6's
-  pops and pushes: 139 of 154 in every image, `abort` not returning and
-  14 `?` (`fill`, `pick`, `?dup`, `.`, `u.`, `u.x`, `.s`, `ver`,
-  `interpret`, `number`, `0x`, `execute`, `watch`, `halt`); and takes
-  a diagnostic word's from its table entry's counts.  Ten of the eleven
-  well-known words checked agree with the standard effects, `.` is `?`.
+  pops and pushes, with a sentinel rule for the printing words' push
+  and pop loops, an index rule for `pick` and `.s`, and a split rule for
+  `?dup` and `fill`, whose effects hang on a cell: 147 of 154 in every
+  image, `abort` not returning and 6 `?` (`interpret`, `number`, `0x`,
+  `execute`, `watch`, `halt`); and takes a diagnostic word's from its
+  table entry's counts.  All eleven well-known words checked agree with
+  the standard effects.
   A word's use is a one-line description, from the names file's note
   (Z3805A 3543B only) or console.md, blank for most.  Left: the console
   sessions.

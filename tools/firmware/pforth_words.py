@@ -24,14 +24,46 @@ A kernel word's stack effect is read from its code (an inline word's,
 its inline_size bytes): every path through it, into the routines it
 calls, counting the A6 data stack's pops, pushes and reaches.  It is "?"
 where the paths that return do not agree, or on one of them A6 is
-copied, indexed or loaded, or a call goes through a register, or a
-jump does.  A path that resets the stacks (abort's movea to A7) does
-not return, and what it did to A6 does not count.  A trap is taken to
-leave A6 as it was: trap #3's and #4's arguments and results are in D0
-to D3, D7, A0 and A1 (docs/firmware/psos.md, "Calls").  A diagnostic word's effect is its
-table entry's argument and result counts, which the wrapper
-pforth_define_word compiles around its routine pops and pushes.  A
-word's description is its routine's note in the names file, in the
+copied or loaded, or a call goes through a register, or a jump does,
+except as three rules below allow.  A path that resets the stacks
+(abort's movea to A7) does not return, and what it did to A6 does not
+count.  A trap is taken to leave A6 as it was: trap #3's and #4's
+arguments and results are in D0 to D3, D7, A0 and A1
+(docs/firmware/psos.md, "Calls").
+
+The sentinel rule reads the printing words' loops.  A zero byte pushed
+(clr.b or move.b #0 to -(a6)) is a sentinel; a loop pushing bytes above
+it leaves A6 not known but above it; and move.b (a6)+,ea then bne (or
+beq) pops bytes until one is zero, after which A6 is known again, one
+byte past the sentinel.  The two loops so cancel, and the word's effect
+is the rest of its code's.  A byte pushed above the sentinel must not
+be zero: an immediate is checked, and a data register's taken to be
+so, which the effect then notes ("pushed bytes taken as nonzero").  `.`
+and `u.` push digits that the routine making them gives as '0' + d or
+'A' - 10 + d, d the remainder by base, so nonzero for a base up to 208;
+`u.x`'s d is a nibble.  A routine called above the sentinel that leaves
+the stack alone is stepped over; any other is followed into, so the
+popping loop may be in a routine of its own.  Anything else done to A6
+above a sentinel loses it.
+
+The index rule: d(a6,Xn) reads or writes the stack at a depth the index
+register gives, a value this does not follow.  A6 does not move, so the
+effect is counted as ever, and shown as n more cells taken and left
+("1+n -- 1+n" for pick, "n -- n" for .s).
+
+The split rule: a word whose returns disagree, whose code up to its
+first conditional branch runs straight, and whose branch is beq, bne,
+bmi or bpl on condition codes set by a move.l or tst.l of a cell, or of
+a data register holding one, or by subq.l or addq.l on such a register,
+is walked down each side of the branch alone.  Where each side returns
+with one A6, the word has both effects, the taken side's when the
+branch's condition holds of the cell's value at entry: ?dup's
+"1 -- 2 | 1 (1 when cell 1 is 0)", fill's "3 -- 0 | 1 (1 when cell 2 - 1
+is negative)".  Cells count from the top, 1.
+
+A diagnostic word's effect is its table entry's argument and result
+counts, which the wrapper pforth_define_word compiles around its
+routine pops and pushes.  A word's description is its routine's note in the names file, in the
 Z3805A 3543B's table only, or what docs/firmware/console.md says of
 it.  Exits nonzero on drift.
 
@@ -112,6 +144,20 @@ REGISTER_FIELD_MODES = (m68k.M68K_AM_REGI_ADDR, m68k.M68K_AM_REGI_ADDR_POST_INC,
                         m68k.M68K_AM_REGI_ADDR_PRE_DEC)
 # the longest instruction with the 68020's addressing modes, in bytes
 INSTRUCTION_LIMIT = 22
+# d(An,Xn) and its 68020 long form: an address register indexed by another
+INDEXED_MODES = (m68k.M68K_AM_AREGI_INDEX_8_BIT_DISP, m68k.M68K_AM_AREGI_INDEX_BASE_DISP)
+# a byte pushed from a data register, its value not followed
+REGISTER_BYTE = 'register'
+BYTE_MASK = 0xff
+# calls followed into, with bytes pushed above a sentinel, at most
+CALL_DEPTH_LIMIT = 8
+# the conditional branches a split reads, and what each tests when taken
+BRANCH_CONDITIONS = {'beq': 'is 0', 'bne': 'is not 0', 'bmi': 'is negative',
+                     'bpl': 'is not negative'}
+# the sentinel rule's note on an effect resting on it
+ASSUMED = 'pushed bytes taken as nonzero'
+# the index rule's note on an effect whose reach rests on a value
+INDEXED = 'n: cells an index register reaches past these'
 
 # What docs/firmware/console.md says a word does, where the names file
 # has no note for its routine: by section, "The kernel's registers" (the
@@ -195,20 +241,66 @@ class Word:
     code: int
     flags: int | None  # pforth_word_flag bits; None for a diagnostic word
     inline_size: int | None
-    effect: tuple[int, int] | None  # cells taken and left; None for "?"
+    effect: 'Stack | None'  # None for "?"
     reason: str  # why the effect is "?", or what it is, if not plain
+
+
+@dataclasses.dataclass(frozen=True)
+class Stack:
+    """A word's stack effect in cells, as its table gives it."""
+
+    taken: int
+    left: int
+    # an index register reaches n cells further, n read from the stack:
+    # n more are taken and left
+    indexed: bool = False
+    # the cells left on the other side of the word's one deciding branch,
+    # and when that side runs; None where every path agrees
+    other: int | None = None
+    when: str = ''
+
+    def plain(self):
+        """(taken, left) where the effect is one pair of counts, or None."""
+        if self.indexed or self.other is not None:
+            return None
+        return self.taken, self.left
+
+
+@dataclasses.dataclass(frozen=True)
+class Reach:
+    """What a routine's paths do to its caller's stack besides moving A6:
+    the deepest byte, from A6 at entry, they pop, read or write, and
+    whether an index register reaches past that."""
+
+    depth: int = 0
+    indexed: bool = False
+
+    def deeper(self, depth):
+        return dataclasses.replace(self, depth=max(self.depth, depth))
+
+    def merged(self, other, offset):
+        """This reach and a callee's, the callee entered at offset."""
+        return Reach(max(self.depth, offset + other.depth), self.indexed or other.indexed)
 
 
 @dataclasses.dataclass(frozen=True)
 class Effect:
     """A routine's net effect on the data stack, in bytes from A6 at its
-    entry: the deepest byte of its caller's stack it pops, reads or
-    writes, and A6 at its return less A6 at entry (positive: popped).
-    returns is False when every path resets the stacks (abort)."""
+    entry: its Reach, and A6 at its return less A6 at entry (positive:
+    popped).  returns is False when every path resets the stacks
+    (abort).  assumed is True where a path that returns rests on the
+    sentinel rule's taking a register's byte, pushed above the sentinel,
+    not to be zero."""
 
-    reach: int
+    reach: Reach
     delta: int
     returns: bool
+    assumed: bool = False
+
+    def clean(self):
+        """True where the routine returns and leaves the stack alone."""
+        return (self.returns and self.delta == 0 and self.reach == Reach()
+                and not self.assumed)
 
 
 def u16(image, address):
@@ -387,57 +479,304 @@ class Reader:
         self.effects[address] = effect
         return effect
 
-    def walk(self, entry, end):
-        """Every path from entry to an rts or, for an inline word, to end,
-        the byte after its code copied."""
-        seen = {}  # address: A6's offset there
+    def walk(self, entry, end, offset=0, reach=Reach(), assumed=False):
+        """Every path from entry, A6 at offset, to an rts or, for an
+        inline word, to end, the byte after its code copied.  A path is
+        an address, the return addresses of the calls followed into
+        (sentinel_call), A6's state there, and whether it rests on the
+        sentinel rule's assumption."""
+        seen = {}  # (address, return addresses): (A6's state, assumed) there
         exits = set()  # A6's offsets at the returns
-        reach = 0
-        work = [(entry, 0)]
+        exits_assumed = False
+        work = [(entry, (), offset, assumed)]
         while work:
-            address, offset = work.pop()
-            if end is not None and address >= end:
+            address, returns_to, state, assumed = work.pop()
+            if not returns_to and end is not None and address >= end:
                 if address != end:
                     raise Ambiguous(f'a branch past the inline code at {address:#x}')
-                exits.add(known(offset, address))
+                exits.add(known(state))
+                exits_assumed = exits_assumed or assumed
                 continue
-            if address in seen:
-                if not same(seen[address], offset):
-                    raise Ambiguous(f'A6 differs where paths join at {address:#x}')
-                continue
-            seen[address] = offset
+            key = (address, returns_to)
+            if key in seen:
+                state = join(seen[key][0], state, address)
+                assumed = assumed or seen[key][1]
+                if (state, assumed) == seen[key]:
+                    continue
+            seen[key] = (state, assumed)
             if len(seen) > STATE_LIMIT:
                 raise Ambiguous('too many instructions')
-            offset, reach, flow = self.step(self.instruction(address), offset, reach)
+            instruction = self.instruction(address)
+            sentinel = self.sentinel_step(instruction, state, reach)
+            if sentinel is not None:
+                reach, successors, assumes = sentinel
+                work.extend((successor, returns_to, after, assumed or assumes)
+                            for successor, after in successors)
+                continue
+            if isinstance(state, (Marked, Stacked)) and self.touches_a6(instruction):
+                state = state.lowered(f'A6 used below a sentinel at {address:#x}')
+            state, reach, flow = self.step(instruction, state, reach)
             if flow.returns:
-                exits.add(known(offset, address))
+                if returns_to:
+                    work.append((returns_to[-1], returns_to[:-1], state, assumed))
+                else:
+                    exits.add(known(state))
+                    exits_assumed = exits_assumed or assumed
             elif flow.following is not None:
-                offset, reach, returns = self.call(flow.call, offset, reach)
+                if isinstance(state, (Marked, Stacked)):
+                    state, reach, into, assumes = self.sentinel_call(flow.call, state, reach)
+                    if into is not None:
+                        if len(returns_to) >= CALL_DEPTH_LIMIT:
+                            raise Ambiguous(f'calls nested too deep at {address:#x}')
+                        work.append((into, returns_to + (flow.following,), state, assumed))
+                        continue
+                    returns = state is not None
+                else:
+                    state, reach, returns, assumes = self.call(flow.call, state, reach)
                 if returns:
-                    work.append((flow.following, offset))
+                    work.append((flow.following, returns_to, state, assumed or assumes))
             else:
-                work.extend((successor, offset) for successor in flow.successors)
+                work.extend((successor, returns_to, state, assumed)
+                            for successor in flow.successors)
         if len(exits) > 1:
             raise Ambiguous('A6 differs at the returns')
         if not exits:
             return Effect(reach, 0, False)
-        return Effect(reach, exits.pop(), True)
+        return Effect(reach, exits.pop(), True, exits_assumed)
 
     def call(self, callee, offset, reach):
-        """A call: A6's offset after it, the reach, and whether it returns.
-        A callee read as "?" leaves A6 unknown, which matters only if the
+        """A call: A6's offset after it, the reach, whether it returns and
+        whether its effect rests on the sentinel rule's assumption.  A
+        callee read as "?" leaves A6 unknown, which matters only if the
         path returns; a call through a register is one such callee."""
         if callee is None:
-            return Unknown('a call through a register'), reach, True
+            return Unknown('a call through a register'), reach, True, False
         try:
             effect = self.routine(callee)
         except Ambiguous as error:
-            return Unknown(f'through {callee:#x}, {error}'), reach, True
+            return Unknown(f'through {callee:#x}, {error}'), reach, True, False
         if not effect.returns:
-            return offset, reach, False
+            return offset, reach, False, False
         if isinstance(offset, Unknown):
-            return offset, reach, True
-        return offset + effect.delta, max(reach, offset + effect.reach), True
+            return offset, reach, True, False
+        return (offset + effect.delta, reach.merged(effect.reach, offset), True,
+                effect.assumed)
+
+    def sentinel_call(self, callee, state, reach):
+        """A call with bytes pushed above a sentinel: (state, reach, into,
+        assumed).  A callee that leaves the stack alone leaves the state;
+        one with an effect of its own, called with A6 known, has it
+        applied; any other is followed into (into, its address), the
+        state carried, so that a loop in it popping to the sentinel is
+        read.  state is None where the callee does not return."""
+        if callee is None:
+            return Unknown('a call through a register'), reach, None, False
+        try:
+            effect = self.routine(callee)
+        except Ambiguous:
+            return state, reach, callee, False
+        if not effect.returns:
+            return None, reach, None, False
+        if effect.clean():
+            return state, reach, None, False
+        if isinstance(state, Marked):
+            offset, reach, _, assumed = self.call(callee, state.offset, reach)
+            return offset, reach, None, assumed
+        return state, reach, callee, False
+
+    def sentinel_step(self, instruction, state, reach):
+        """The sentinel rule's two instructions, (reach, [(successor,
+        state)], assumed), or None for any other.  A zero byte pushed is a sentinel
+        (Marked); a byte pushed above it is taken not to be zero, checked
+        for an immediate and assumed for a data register's.  move.b
+        (a6)+,ea then bne or beq pops bytes until one is zero: the
+        sentinel, below which A6 is known again."""
+        operands = instruction.operands
+        address = instruction.address
+        following = address + instruction.size
+        pushed = self.pushed_byte(instruction)
+        if pushed is not None:
+            if pushed == 0:
+                if isinstance(state, Stacked):
+                    lost = Unknown(f'a second sentinel at {address:#x}')
+                    return reach, [(following, lost)], False
+                if isinstance(state, (int, Marked)):
+                    offset = state if isinstance(state, int) else state.offset
+                    return reach, [(following, Marked(offset - 1, offset - 1))], False
+                return None
+            assumes = pushed is REGISTER_BYTE
+            if isinstance(state, Marked):
+                return reach, [(following, Marked(state.offset - 1, state.mark))], assumes
+            if isinstance(state, Stacked):
+                return reach, [(following, state)], assumes
+            return None
+        if not isinstance(state, (Marked, Stacked)):
+            return None
+        if instruction.mnemonic != 'move.b' or len(operands) != 2:
+            return None
+        source, destination = operands
+        if (source.address_mode != m68k.M68K_AM_REGI_ADDR_POST_INC
+                or self.base(instruction, source) != DATA_STACK
+                or self.operand_names_a6(instruction, destination)):
+            return None
+        branch = self.instruction(following)
+        condition = branch.mnemonic.partition('.')[0]
+        if condition not in ('bne', 'beq'):
+            return None
+        past = following + branch.size
+        zero, nonzero = ((past, self.target(branch)) if condition == 'bne'
+                         else (self.target(branch), past))
+        popped = Marked(state.offset + 1, state.mark) if isinstance(state, Marked) else state
+        below = state.mark + 1
+        reach = reach.deeper(below)
+        if isinstance(state, Marked):
+            # A6 known: the byte popped is the sentinel or it is not
+            return reach, [(zero, below) if state.offset == state.mark
+                           else (nonzero, popped)], False
+        return reach, [(zero, below), (nonzero, popped)], False
+
+    def pushed_byte(self, instruction):
+        """A byte pushed onto A6 by clr.b or move.b: its value, an
+        immediate's, or REGISTER_BYTE for a data register's; else None."""
+        operands = instruction.operands
+        destination = operands[-1] if operands else None
+        if (destination is None
+                or destination.address_mode != m68k.M68K_AM_REGI_ADDR_PRE_DEC
+                or self.base(instruction, destination) != DATA_STACK):
+            return None
+        if instruction.mnemonic == 'clr.b' and len(operands) == 1:
+            return 0
+        if instruction.mnemonic != 'move.b' or len(operands) != 2:
+            return None
+        source = operands[0]
+        if source.type == m68k.M68K_OP_IMM:
+            return source.imm & BYTE_MASK
+        if (source.type == m68k.M68K_OP_REG
+                and self.register(instruction, source.reg).startswith('d')):
+            return REGISTER_BYTE
+        return None
+
+    def split(self, entry, end):
+        """A word whose returns disagree: its code up to the first
+        conditional branch, which must run straight, and each side of the
+        branch walked alone.  (fall-through Effect, taken Effect, when the
+        branch is taken), or Ambiguous where the branch's condition is not
+        a cell's value tested against zero (flag_source)."""
+        offset, reach, address = 0, Reach(), entry
+        registers = {}  # data register: (cell, addend) it holds
+        source = None  # what the condition codes were last set from
+        # a cell named is its value at entry: none is read once one is written
+        written = False
+        assumed = False
+        for _ in range(STATE_LIMIT):
+            if end is not None and address >= end:
+                break
+            instruction = self.instruction(address)
+            following = address + instruction.size
+            condition = instruction.mnemonic.partition('.')[0]
+            if condition in BRANCH_CONDITIONS:
+                if source is None:
+                    raise Ambiguous(f'a branch on an unread condition at {address:#x}')
+                taken = self.walk(self.target(instruction), end, offset, reach, assumed)
+                fall = self.walk(following, end, offset, reach, assumed)
+                if not (taken.returns and fall.returns):
+                    raise Ambiguous(f'a side of {address:#x} does not return')
+                return fall, taken, f'{source} {BRANCH_CONDITIONS[condition]}'
+            source = self.flag_source(instruction, None if written else offset, registers)
+            written = written or self.writes_a6_memory(instruction)
+            offset, reach, flow = self.step(instruction, offset, reach)
+            if isinstance(offset, Unknown):
+                raise Ambiguous(offset.why)
+            if flow.following is not None:
+                offset, reach, returns, assumes = self.call(flow.call, offset, reach)
+                assumed = assumed or assumes
+                registers.clear()
+                source = None
+                written = True
+                if not returns or isinstance(offset, Unknown):
+                    raise Ambiguous(f'a call before the branch at {address:#x}')
+                address = flow.following
+            elif not flow.returns and flow.successors == (following,):
+                address = following
+            else:
+                break
+        raise Ambiguous('no branch on the straight line from the entry')
+
+    def flag_source(self, instruction, offset, registers):
+        """What instruction sets the condition codes from, as 'cell N' or
+        'cell N - k', for a move.l or tst.l of a cell or a data register
+        holding one, or subq.l or addq.l on such a register; else None.
+        offset is None once the stack has been written, when no cell is
+        read.  Updates registers, forgetting any data register it names
+        otherwise."""
+        mnemonic = instruction.mnemonic
+        operands = instruction.operands
+        if mnemonic in ('move.l', 'tst.l'):
+            value = self.cell_value(instruction, operands[0], offset, registers)
+            if mnemonic == 'move.l' and value is not None:
+                name = self.data_register(instruction, operands[1])
+                if name is not None:
+                    registers[name] = value
+            if value is not None:
+                return cell_text(value)
+        if mnemonic in ('subq.l', 'addq.l'):
+            name = self.data_register(instruction, operands[1])
+            if name in registers:
+                cell, addend = registers[name]
+                step = operands[0].imm * (-1 if mnemonic == 'subq.l' else 1)
+                registers[name] = (cell, addend + step)
+                return cell_text(registers[name])
+        for operand in operands:
+            if operand.type == m68k.M68K_OP_REG_BITS:
+                registers.clear()
+            elif operand.type == m68k.M68K_OP_REG:
+                registers.pop(self.register(instruction, operand.reg), None)
+        return None
+
+    def cell_value(self, instruction, operand, offset, registers):
+        """(cell, 0) for a cell read through A6, a data register's
+        (cell, addend), or None."""
+        name = self.data_register(instruction, operand)
+        if name is not None:
+            return registers.get(name)
+        if (offset is None or operand.type != m68k.M68K_OP_MEM
+                or self.base(instruction, operand) != DATA_STACK):
+            return None
+        mode = operand.address_mode
+        if mode in (m68k.M68K_AM_REGI_ADDR, m68k.M68K_AM_REGI_ADDR_POST_INC):
+            depth = offset
+        elif mode == m68k.M68K_AM_REGI_ADDR_DISP:
+            depth = offset + operand.mem.disp
+        else:
+            return None
+        if depth < 0 or depth % CELL:
+            return None
+        return depth // CELL + 1, 0
+
+    def data_register(self, instruction, operand):
+        if operand.type != m68k.M68K_OP_REG:
+            return None
+        name = self.register(instruction, operand.reg)
+        return name if name.startswith('d') else None
+
+    def operand_names_a6(self, instruction, operand):
+        return (self.is_register(instruction, operand, DATA_STACK)
+                or self.base(instruction, operand) == DATA_STACK
+                or (operand.type == m68k.M68K_OP_REG_BITS
+                    and operand.register_bits & REGISTER_BITS_A6)
+                or (operand.type == m68k.M68K_OP_MEM
+                    and operand.address_mode not in REGISTER_FIELD_MODES
+                    and self.register(instruction, operand.mem.index_reg) == DATA_STACK))
+
+    def touches_a6(self, instruction):
+        return any(self.operand_names_a6(instruction, o) for o in instruction.operands)
+
+    def writes_a6_memory(self, instruction):
+        """True where an instruction's destination is memory through A6
+        (a one-operand instruction's operand is its destination)."""
+        operands = instruction.operands
+        return bool(operands) and (operands[-1].type == m68k.M68K_OP_MEM
+                                   and self.operand_names_a6(instruction, operands[-1]))
 
     def step(self, instruction, offset, reach):
         """One instruction: A6's offset after it, the reach, its Flow."""
@@ -579,6 +918,10 @@ class Reader:
             return offset, extend(reach, offset, size)
         if mode == m68k.M68K_AM_REGI_ADDR_DISP:
             return offset, extend(reach, offset, operand.mem.disp + size)
+        if mode in INDEXED_MODES:
+            # d(a6,Xn): A6 itself does not move, but how deep it reaches
+            # is the index register's, a value this does not follow
+            return offset, dataclasses.replace(reach, indexed=True)
         return Unknown(f'A6 indexed at {address:#x}'), reach
 
 
@@ -590,18 +933,68 @@ class Unknown:
 
     why: str
 
+    def __eq__(self, other):
+        return isinstance(other, Unknown)
 
-def known(offset, address):
-    """A6's offset where a path returns: "?" if it is unknown."""
-    if isinstance(offset, Unknown):
-        raise Ambiguous(offset.why)
-    return offset
+    def __hash__(self):
+        return hash(Unknown)
 
 
-def same(first, second):
-    if isinstance(first, Unknown) or isinstance(second, Unknown):
-        return isinstance(first, Unknown) and isinstance(second, Unknown)
-    return first == second
+@dataclasses.dataclass(frozen=True)
+class Marked:
+    """A6 at offset, a zero byte, the sentinel, pushed at mark, and every
+    byte from offset up to mark pushed after it and not zero."""
+
+    offset: int
+    mark: int
+
+    def lowered(self, why):
+        """The state with the sentinel forgotten."""
+        return self.offset
+
+
+@dataclasses.dataclass(frozen=True)
+class Stacked:
+    """A6 somewhere at or above mark, where a sentinel was pushed, a loop
+    having pushed bytes above it, none of them zero."""
+
+    mark: int
+
+    def lowered(self, why):
+        return Unknown(why)
+
+
+def join(first, second, address):
+    """A6's state where two paths meet: the one that covers both, or
+    Ambiguous where none does.  Two offsets below one sentinel join as
+    Stacked: a loop pushing bytes above it."""
+    if first == second:
+        return first
+    marks = [s.mark for s in (first, second) if isinstance(s, (Marked, Stacked))]
+    if len(marks) == 2 and marks[0] == marks[1]:
+        return Stacked(marks[0])
+    offsets = {s if isinstance(s, int) else s.offset
+               for s in (first, second) if isinstance(s, (int, Marked))}
+    if len(offsets) == 1 and not any(isinstance(s, (Stacked, Unknown)) for s in (first, second)):
+        return offsets.pop()
+    raise Ambiguous(f'A6 differs where paths join at {address:#x}')
+
+
+def known(state):
+    """A6's offset where a path returns: "?" if it is not known."""
+    if isinstance(state, Unknown):
+        raise Ambiguous(state.why)
+    if isinstance(state, Stacked):
+        raise Ambiguous('a return with bytes pushed above a sentinel')
+    return state.offset if isinstance(state, Marked) else state
+
+
+def cell_text(value):
+    """A cell's value, as a condition names it: (2, -1) is 'cell 2 - 1'."""
+    cell, addend = value
+    if not addend:
+        return f'cell {cell}'
+    return f'cell {cell} {"-" if addend < 0 else "+"} {abs(addend)}'
 
 
 def moved(offset, by):
@@ -610,23 +1003,39 @@ def moved(offset, by):
 
 def extend(reach, offset, end):
     """The reach, with an access from offset to offset + end."""
-    return reach if isinstance(offset, Unknown) else max(reach, offset + end)
+    return reach if isinstance(offset, Unknown) else reach.deeper(offset + end)
 
 
 def kernel_effect(reader, code, flags, inline_size):
-    """A kernel word's effect in cells, (taken, left), and a note: why it
-    is "?" (None), or that it does not return."""
+    """A kernel word's Stack and a note: why it is "?" (None), that it
+    does not return, or what its effect rests on.  A word whose returns
+    disagree is split at its first branch (Reader.split)."""
     inline = flags & FLAG_INLINE and inline_size
+    end = code + inline_size if inline else None
     try:
-        effect = reader.walk(code, code + inline_size) if inline else reader.routine(code)
+        effect = reader.walk(code, end) if inline else reader.routine(code)
+        sides = (effect,)
+        when = ''
     except Ambiguous as error:
-        return None, str(error)
-    if not effect.returns:
+        try:
+            *sides, when = reader.split(code, end)
+        except Ambiguous:
+            return None, str(error)
+    if not sides[0].returns:
         return None, NO_RETURN
-    if effect.delta % CELL:
-        return None, f'A6 moved by {effect.delta} bytes'
-    taken = -(-max(effect.reach, effect.delta, 0) // CELL)
-    return (taken, taken - effect.delta // CELL), ''
+    for side in sides:
+        if side.delta % CELL:
+            return None, f'A6 moved by {side.delta} bytes'
+    taken = max(-(-max(s.reach.depth, s.delta, 0) // CELL) for s in sides)
+    left = [taken - s.delta // CELL for s in sides]
+    indexed = any(s.reach.indexed for s in sides)
+    notes = [ASSUMED] * any(s.assumed for s in sides) + [INDEXED] * indexed
+    other = None
+    if len(sides) > 1 and left[1] != left[0]:
+        other = left[1]
+        notes.insert(0, f'{other} when {when}')
+    return Stack(taken, left[0], indexed, other, when if other is not None else ''), \
+        '; '.join(notes)
 
 
 def image_words(path):
@@ -641,7 +1050,8 @@ def image_words(path):
     for code, name, arguments, results in entries:
         left = min(results, DIAG_RESULTS_PUSHED)
         reason = '' if left == results else f'result count {results}'
-        words.append(Word('diagnostic', name, None, code, None, None, (arguments, left), reason))
+        words.append(Word('diagnostic', name, None, code, None, None, Stack(arguments, left),
+                          reason))
     return words
 
 
@@ -699,9 +1109,16 @@ def flag_names(flags):
 def stack(word):
     if word.effect is None:
         return word.reason if word.reason == NO_RETURN else f'? ({word.reason})'
-    taken, left = word.effect
+    effect = word.effect
+
+    def cells(count):
+        if not effect.indexed:
+            return str(count)
+        return f'{count}+n' if count else 'n'
+
+    lefts = [effect.left] + ([effect.other] if effect.other is not None else [])
     note = f' ({word.reason})' if word.reason else ''
-    return f'{taken} -- {left}{note}'
+    return f'{cells(effect.taken)} -- {" | ".join(cells(n) for n in lefts)}{note}'
 
 
 def render(path, words, notes):
@@ -756,7 +1173,7 @@ def sanity(words):
     """Each well-known word's effect read and standard: (name, read,
     standard), read None for "?"."""
     by_name = {w.name: w for w in words if w.table == 'kernel'}
-    return [(name, by_name[name].effect, standard)
+    return [(name, by_name[name].effect and by_name[name].effect.plain(), standard)
             for name, standard in STANDARD_EFFECTS.items() if name in by_name]
 
 

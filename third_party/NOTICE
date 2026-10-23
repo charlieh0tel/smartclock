@@ -16,8 +16,10 @@ presence here.
 That material is the manuals and papers in `hp/`, `motorola/`, `amd/`,
 `nist/` and `community/`, and in `firmware/` the images (`IMAGE.bin`),
 the console log one was rebuilt from, the EEPROM contents in
-`firmware/eeprom/`, the FPGA bitstreams in `firmware/fpga/` and the
-Ghidra archive in `firmware/ghidra/`.
+`firmware/eeprom/` and the FPGA bitstreams in `firmware/fpga/`.  The
+Ghidra archive in `firmware/ghidra/` is both: the image it holds is the
+vendor's, and the names, types and comments laid over it are the
+project's.
 
 The project's own work
 ----------------------
@@ -235,7 +237,9 @@ The Ghidra project the decompiled C was exported from, in
 `firmware/ghidra/`, as a Ghidra archive, derived from the images:
 
   smartclock.gar     Ghidra 12.1.4 project "smartclock": the Z3805A
-                     3543B image after the scripts' steps.
+                     3543B image after the scripts' steps.  The image is
+                     the vendor's; the names, types and comments the
+                     scripts put over it are the project's.
 
 The revision is the string the firmware puts in the third field of its
 `*IDN?` answer, stored just before the image's second copyright notice

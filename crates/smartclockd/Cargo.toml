@@ -62,7 +62,7 @@ history so it accumulates whether or not anyone is watching.  The \
 command-line tools come from smartclock-utils."""
 section = "utils"
 priority = "optional"
-depends = "$auto, adduser, smartclock-utils (= 1.6.12-1)"
+depends = "$auto, adduser, smartclock-utils (= 1.7.0-1)"
 recommends = "temper (>= 1.3.0)"
 assets = [
     ["target/release/smartclockd", "usr/bin/", "755"],

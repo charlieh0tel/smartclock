@@ -107,7 +107,7 @@ leaves the file smaller.  The same holds for the sensor log and
 `smartclock-sensord`, whose first schema with integer timestamps is 2.
 
 Up to 1.6.11, one package, `smartclockmon`, carried every program but
-the simulator.  From 1.6.12, `smartclock-cli` is in `smartclock-utils`,
+the simulator.  From 1.7.0, `smartclock-cli` is in `smartclock-utils`,
 which takes the file over from the older package (`Replaces` and
 `Breaks` on any `smartclockmon` older than itself), and `smartclockmon`
 requires it.  Install both at once, from files or with

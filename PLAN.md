@@ -544,7 +544,7 @@ table, the Z3801A keyword spellings, the flasher's and the console's
 notes.  `smartclockmon` (on `smartclockd`'s) is the daemon, the
 monitors, the exporter, the sensor service, their units and defaults,
 the `smartclockd` user and the operational documents.  Split from one
-package at 1.6.12: the CLI is wanted on machines that will never log a
+package at 1.7.0: the CLI is wanted on machines that will never log a
 receiver -- a bench laptop, a flashing station, a client of a daemon
 elsewhere -- and the one package brought a service user, four units and
 `temper` along with it.  The simulator was in no package before.
@@ -555,7 +555,7 @@ elsewhere -- and the one package brought a service user, four units and
   the socket protocol and the command table, and nothing tests one
   version of either against another.  Breaks and Replaces track the
   package's own version rather than staying at the first split one: a
-  fixed `<< 1.6.12-1` would also break a split snapshot, 1.6.12-0~git...,
+  fixed `<< 1.7.0-1` would also break a split snapshot, 1.7.0-0~git...,
   which sorts below it, so the snapshots built on the bench between
   releases could not be installed together.
 - cargo-deb has no variable for the package's version.  So the

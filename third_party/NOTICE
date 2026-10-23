@@ -2,8 +2,8 @@ Third-party material
 ====================
 
 The material listed under the headings below -- AMD, Hewlett-Packard,
-the firmware images, Motorola, the Z3801A owner's description and NIST
--- is not part of this project, and the project's license does not
+the firmware images, Motorola, the Z3801A owner's description, NIST and
+Xilinx -- is not part of this project, and the project's license does not
 apply to any of it.  Each document is the property of its copyright
 holder.  They are included for reference because they are the
 specification this software is written against: the SCPI command table
@@ -14,7 +14,7 @@ No license to any of this material is granted or implied by its
 presence here.
 
 That material is the manuals and papers in `hp/`, `motorola/`, `amd/`,
-`nist/` and `community/`, and in `firmware/` the images (`IMAGE.bin`),
+`nist/`, `xilinx/` and `community/`, and in `firmware/` the images (`IMAGE.bin`),
 the console log one was rebuilt from, the EEPROM contents in
 `firmware/eeprom/` and the FPGA bitstreams in `firmware/fpga/`.  The
 Ghidra archive in `firmware/ghidra/` is both: the image it holds is the
@@ -369,3 +369,23 @@ published values the Allan deviation is checked against.
                              Publication 1065, July 2008.  Section 12.4
                              defines a 1000-point test data set and
                              Table 31 gives its deviations.
+
+Xilinx
+------
+
+In `xilinx/`.
+
+  xc3000.pdf                 "XC3000 Series Field Programmable Gate
+                             Arrays (XC3000A/L, XC3100A/L)", Xilinx,
+                             November 9, 1998 (Version 3.1), with the
+                             original XC3000 family's product
+                             specification, as hosted by Iowa State
+                             University (www.ece.iastate.edu/~zambreno/
+                             classes/cpre583/documents/xilinx/3000.pdf;
+                             Xilinx's own copy, now behind AMD's
+                             documentation portal, could not be
+                             fetched).  The Z3805A's FPGA is an XC3042
+                             (docs/images/Z3805-68001/
+                             z3805a-cpu-fpga-flash.jpg, U32): its
+                             configuration states, length count, frame
+                             layout (Figure 21) and readback.

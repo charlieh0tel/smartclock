@@ -18,6 +18,92 @@ Only the component sides were photographed, and most signal lines
 leave a part's pins through vias within a few millimeters, so no line
 between two parts was followed end to end.
 
+## Working on the open Z3805A board
+
+The procedures under items 13, 20 and 21 are written for the bench
+Z3805A (Z3805-68001, `z3805a-board.html`) with the power off, with an
+ohmmeter.  The photos they call for are in `bench.md`, "Photos still
+wanted".  These rules hold for all of them.
+
+*Before measuring.*
+
+1. Stop the daemon, unplug the DC input at the rear panel, and wait a
+   minute.  Read +5 V (U33 pin 63 or U28 pin 8, below) and the ±15 V
+   rails to ground on the DC volts range; go on only when each reads
+   under 0.1 V.
+2. Wear a wrist strap to the chassis.  The oscillator and its outer
+   oven stay hot for a while after power-off; keep hands off them.
+3. Leave S1 alone: changing a position is item 13's own test.
+4. The board can stay in the chassis.  Where a cable or bracket hides
+   a pin (J12 is partly behind one), note it rather than remove parts,
+   and ask before unplugging the GPS engine or the front ribbon.
+
+*Measuring.*
+
+- Resistance range, lowest scale; null the leads.  Read each pair
+  both ways round.  A trace reads under 1 Ω.  Anything from a few ohms
+  to a few hundred kilohms is a part in series or a path through other
+  parts, often a CMOS input's protection diodes, which read differently
+  with the leads swapped: record the value and both polarities.  A
+  continuity beeper alone cannot tell a trace from a 10 Ω resistor.
+- U33's leads are fine pitch.  Probe the toe of the lead where it
+  meets its pad, or a via on the same line, with a sharpened tip; never
+  slide along the row.  Count from a corner, then confirm the count by
+  a ground pin near it (below).
+- Ground is any VSS pin of U33, U3's GND, or the J4/J5 shells.  Check
+  the chosen point against two others before using it.
+
+*Pins this file uses.*  The MC68331 in the 132-pin QFP, from
+MC68331UM Figure 3-2 (page 3-4; again as Figure B-1).  Pin 1 is at
+the middle of the top edge, marked by the dot; the numbers run
+counterclockwise seen from above: 1 down to 17 leftward along the top,
+18 to 50 down the left side, 51 to 83 left to right along the bottom,
+84 to 116 up the right side, 117 to 132 along the top to pin 1.
+
+| U33 pin | Signal | Used by |
+| ------- | ------ | ------- |
+| 51, 59, 67, 83 | VSS | the bottom row's count check: the 1st, 9th, 17th and 33rd pins from its left corner |
+| 29, 34, 40 | VSS | the left side's count check |
+| 63, 65, 84 | VDD | +5 V |
+| 54 | IPIPE/DSO | item 13, J12 |
+| 55 | IFETCH/DSI | item 13, J12 |
+| 56 | BKPT/DSCLK | item 13, J12 |
+| 58 | FREEZE/QUOT | item 13, J12 |
+| 68 | RESET | items 13, 20 |
+| 69 | HALT | item 13 |
+| 70 | BERR | item 13, J12 |
+| 85 | PE5/DS | item 13, J12 |
+| 71 to 77 | PF7/IRQ7 down to PF1/IRQ1; pin 76 is PF2/IRQ2 | item 21 |
+| 79 | R/W | item 20 |
+| 89 | PE0/DSACK0 | item 21 |
+| 91, 92, 93, 94, 97, 98, 99, 100 | DATA15, 14, 13, 12, 11, 10, 9, 8 | item 20; an 8-bit port is on DATA15 to DATA8 (MC68331UM 4.4.2) |
+| 35, 36, 37 | ADDR13, ADDR14, ADDR15 | item 20 |
+| 120 | PC2/FC2/CS5 | item 20 |
+| 123 | PC5/ADDR21/CS8 | item 21 |
+| 125 | ADDR23/CS10 | item 21 |
+
+The other parts' pinouts are not in `third_party/`; their public data
+sheets give them, and each must be checked against the data sheet
+before use, and against the board by its ground pin:
+
+| Part | Pins used | Source |
+| ---- | --------- | ------ |
+| U3, SCC68692 PLCC-44 | GND 22, /INTR 24, /CS 39, /IACK 41, VCC 44, /DTACK 10 -- **unconfirmed** | MC68681.pdf 6.1 gives only the 40-pin DIP (GND 20, /IRQ 21, /CS 35, /IACK 37, VCC 40, /DTACK 9).  The PLCC numbers assume the family's usual DIP-to-PLCC map, no-connects at 1, 12, 23 and 34; confirm with the Philips SCC68692 data sheet, and on the board by GND 22 reading 0 Ω to ground and VCC 44 to +5 V. |
+| U28, TL7705A SO-8 | RESIN 2, GND 4, RESET 5 (active high), /RESET 6, VCC 8 | TI TL7705A data sheet |
+| U44 (Z3801A), 74ABT574 SO-20 | /OE 1, D0 to D7 2 to 9, GND 10, CP 11, Q7 to Q0 12 to 19, VCC 20 | Philips 74ABT574 data sheet |
+| U22, U23, U25, U27, 74AC138 | A0 to A2 1 to 3, /E1 4, /E2 5, E3 6, /Y7 7, GND 8, /Y6 to /Y0 9 to 15, VCC 16 | National 74AC138 data sheet |
+| U29, DM74ALS09 | inputs 1, 2, 4, 5, 9, 10, 12, 13; open-collector outputs 3, 6, 8, 11; GND 7, VCC 14 | National DM74ALS09 data sheet |
+
+PLCC pins are numbered from pin 1 at the middle of the edge with the
+chamfered corner nearest it, counterclockwise seen from above.
+
+*Recording.*  Under the item, a dated paragraph in the form the
+others use (*Measured on the bench Z3805A, 3625A01487, date*), the
+meter, and a table of every pair read, including the ones that read
+open: a reading of "open" is a result.  Tick the item's TODO and
+update `z3805a-board.html`'s notes where a part's identification
+changes.
+
 ## 1. The word that chooses G
 
 *Open item:* what drives bit 8 of the read-only port at `0x302000`
@@ -420,6 +506,59 @@ IFETCH/DSI and IPIPE/DSO needs a continuity check.  J9, a 2 x 5
 socket near U24 (3250,1550 to 3500,1850), is the other unexplained
 connector.
 
+- [ ] TODO: J12 continuity, below.
+
+*Procedure, J12 (power off; "Working on the open Z3805A board" above).*
+MC68331UM 5.10.2.8, Figure 5-11, gives the recommended 10-pin, 2 × 5
+BDM header:
+
+| Header pin | Signal | U33 pin |
+| ---------- | ------ | ------- |
+| 1 | DS | 85 |
+| 2 | BERR | 70 |
+| 3 | GND | VSS |
+| 4 | BKPT/DSCLK | 56 |
+| 5 | GND | VSS |
+| 6 | FREEZE | 58 |
+| 7 | RESET | 68 |
+| 8 | IFETCH/DSI | 55 |
+| 9 | VDD | VDD |
+| 10 | IPIPE/DSO | 54 |
+
+1. Count J12's pins and rows: look behind the bracket with a mirror
+   or a phone camera, and note whether it is 1 × 5 or 2 × 5 and any
+   key, missing pin or pin-1 mark on the silkscreen.  Photograph it
+   (`bench.md`, "Photos still wanted").  Number the pins by the
+   silkscreen mark, else from the end nearest U33, odd pins in the row
+   nearer the board edge, and say which.
+2. Read every J12 pin to ground and to +5 V.  Record each value.  On
+   the standard header two pins read 0 Ω to ground and one 0 Ω to
+   +5 V.
+3. Read every J12 pin to each of U33 pins 54, 55, 56, 58, 68, 70 and
+   85.  A pin can reach more than one if two U33 pins share a
+   pull-up; record all readings under 1 kΩ.
+4. On the BDM lines that reach J12, read U33's pin to +5 V and to
+   ground.  A pull-up here shows a line held inactive for a debugger
+   to override; record its value.
+5. If none of 54, 55 and 56 reaches J12, read J12's pins against the
+   other candidates: U33 pins 52 and 53 (TXD, RXD), 43 to 49 (the
+   QSPI), the XC3042's configuration pins (U32; the PC84 pin table in
+   `third_party/xilinx/xc3000.pdf`), and the ±15 V rails.
+
+Expected:
+
+| Hypothesis | J12 reads |
+| ---------- | --------- |
+| The standard BDM header | the table above, pin for pin, 2 × 5 |
+| BDM in another order or a subset (a 1 × 5 with GND, DSCLK, DSI, DSO and RESET, say) | 54, 55 and 56 each on one J12 pin, in some order; record the order |
+| Not BDM | none of 54, 55, 56 on any pin; step 5 names what it is |
+
+Record the table of J12 pin to U33 pin, ground and +5 V, with
+resistances, under this item, and update J12's entry in
+`z3805a-board.html`.  If it is BDM, hypothesis 2's "board access"
+becomes known and its recovery remains untested; using it needs a
+BDM pod and the owner's say-so, powered, and is a separate step.
+
 *Changes:* a verified switch map and, if the board supports it, a
 recovery procedure for a primary whose checksums pass but which cannot
 accept `:SYSTem:LANGuage "INSTALL"`.
@@ -721,7 +860,7 @@ output where the 58503A's is unregistered (`firmware/outputs.md`).
   at J4 means a part between them is missing.  No pulse at the input
   points to the FPGA bitstream.
 - [ ] TODO: photograph the back of both boards under J4 and J5 and
-  compare the fitted parts.
+  compare the fitted parts (`bench.md`, "Photos still wanted").
 - [ ] TODO: with power off, check continuity on the 58503A from U32
   pin 45 to the input of J4's buffer.  Scope U32 pin 14 on the 58503A,
   and pins 14 and 45 on the Z3805A, for 1 PPS.
@@ -792,6 +931,68 @@ unless its /OE is tied to the reset line, as the emulator assumes it
 is not.  Suggests; the bench still has to tie chip select 1 to U44's
 clock and follow its outputs.
 
+*Which select.*  The chip-select table in `firmware/restart.md` ("The
+switch byte at `0x302000`") puts `0x300000` in chip select 5's
+64 KiB window, with registers at `0x302000`, `0x304000` and
+`0x306000` in the same window, and makes chip select 1 the upper
+flash bank's read select.  So the latch's strobe is most likely CS5
+(U33 pin 120) decoded on ADDR13 and ADDR14, `0x300000` being the
+window's first 8 KiB; the procedure tests that, and the board, not
+the label, settles it.
+
+*Procedure (power off; "Working on the open Z3805A board" above).*
+
+1. *Find the latch.*  Read U44's marking on the Z3805A, beside S1,
+   with a loupe and raking light (`bench.md`, "Photos still wanted").
+   If it is a '574, use its pinout above.  If it is a '273, pin 1 is
+   /MR, a clear; if a '374 or '573, take its pinout from its data sheet
+   before going on.  If U44 is not a register, look for an SO-20 or
+   DIP-20 near the ribbon header and read each against step 3.
+2. *Its outputs.*  Find the ribbon header's designator.  Read U44's Q0
+   to Q7 (pins 19 down to 12 on a '574) to every header pin; a path
+   through a resistor or a driver transistor reads as one: note it.
+   Then, with the ribbon unplugged only if the owner agrees, put the
+   meter's diode test across each lamp-board header pin and its ground
+   pin, both ways round: an LED lights faintly, which names the lamp
+   without power.  Count the lamps fitted and note which header pin
+   reaches none.  Power, if it is a lamp, should go to +5 V or a
+   supply pin, not to the latch.
+3. *Its strobe.*  Read CP (pin 11) to each of the four 74AC138s' eight
+   outputs (pins 7, 9 to 15) and to U33 pin 120.  On the '138 it
+   reaches, read A0 to A2 (pins 1 to 3) and the enables (4 to 6) to
+   U33 pins 35, 36, 37, 120 and 79.  If CP reaches no '138, read it
+   to U32's pins (the FPGA) and record which.
+4. *Its data.*  Read D0 to D7 (pins 2 to 9) to U33's DATA8 to DATA15
+   (pins 100, 99, 98, 97, 94, 93, 92, 91).  If they read open, the bus
+   is buffered: find the ACT11245 or ABT245A (U19, U20, U24 or U38)
+   whose B side the D pins reach, and read its A side to U33.  Record
+   the bit order: firmware bit n is DATA(n + 8).
+5. *Its enable and any clear.*  Read /OE (pin 1), and /MR if the part
+   has one, to ground, to +5 V, to U28 pins 5 (RESET) and 6
+   (/RESET), and to U33 pin 68 (RESET).
+
+Expected:
+
+| Hypothesis | Reads |
+| ---------- | ----- |
+| U44 is the latch, strobed by chip select 5 at `0x300000` | CP on a '138 output: /Y0 if its A0 and A1 are ADDR13 and ADDR14 and A2 is a constant or ADDR15; an enable on pin 120; perhaps R/W on another enable |
+| The latch keeps its outputs through a reset (the emulator) | /OE 0 Ω to ground, and no /MR |
+| A reset blanks the lamps | /OE to U28 pin 5 or to a line that follows it; the latch keeps its data, the lamps go dark during reset and come back at the next write |
+| A reset clears the latch | a '273 with /MR on U28 pin 6 or U33 pin 68 |
+| Bits 3, 6 and 7 are free | Q3, Q6 and Q7 reach no header pin, or header pins no lamp is on |
+
+Recording: the latch's part, its CP, /OE and any clear with what each
+reads to, a table of bit (D pin, DATA line) to Q pin to header pin to
+lamp, and the lamps fitted.  If it settles the select, correct "chip
+select 1" here and in `firmware/outputs.md`.
+
+*Power needed:* only to watch a reset's effect on the lamps, which
+the unpowered reads predict.  It is item 7's external reset: ask
+first, since it restarts the receiver, and pulse U28's RESIN (pin 2)
+to ground through a push button, not a probe tip.  Lamp-to-bit by
+watching `lamp_test` at power-up needs only the lid off and a power
+cycle, and the owner's agreement to the cycle.
+
 *Changes:* whether the firmware's lamp table is the board's, and
 whether bits 3, 6 and 7 are free.
 
@@ -819,6 +1020,37 @@ could share
 outputs beside U33 (3250,1050 to 3550,1350), is the kind of part that
 would merge such lines, but nothing ties it to /IRQ2.  Still needs the
 continuity check.
+
+*Procedure (power off; "Working on the open Z3805A board" above).*
+U3's PLCC pin numbers are unconfirmed (that section's table); confirm
+GND 22 and VCC 44 first, and if they do not read 0 Ω to ground and
++5 V, stop and get the SCC68692 data sheet.
+
+1. Read U3 pin 24 (/INTR) to U33 pin 76 (PF2/IRQ2).
+2. Read U3 pin 24 to U33 pins 71 to 75 and 77, the other levels.
+3. Read U33 pin 76 to +5 V and to ground: an open-drain request needs
+   a pull-up, so expect a resistor to +5 V; record its value, and find
+   it on the board if it can be seen.
+4. Read U33 pin 76 to each of U29's outputs (pins 3, 6, 8, 11).  If
+   one reads 0 Ω, read that gate's two inputs to U3 pin 24 and record
+   where the other input goes (U32, U3's OP pins, a connector).
+5. Read U3 pin 41 (/IACK) to U33 pin 125 (CS10), U3 pin 39 (/CS) to
+   U33 pin 123 (CS8), and U3 pin 10 (/DTACK) to U33 pin 89 (DSACK0),
+   the firmware's external acknowledge for both selects.
+
+Expected:
+
+| Hypothesis | Reads |
+| ---------- | ----- |
+| Level 2, alone | pin 24 to pin 76 under 1 Ω; a pull-up on pin 76; no U29 output on it |
+| Level 2, shared through U29 | pin 24 on a U29 input, that gate's output on pin 76; the other input names the second source |
+| Level 2, wired-OR without a gate | pin 24 to pin 76 direct, and a U29 output or another part's pin on the same net |
+| Another level | pin 24 on one of 71 to 75 or 77: the harness and the CS10 decode disagree with the board; record it and stop |
+| Not followed | pin 24 open to every IRQ pin: a buffer between them; look for it on the back side (`bench.md`, "Photos still wanted") |
+
+Steps 1 and 5 together are what this item asks; steps 3 and 4 say
+what else the line carries.  Record the readings as a table under this
+item, the pull-up's value and the shared source, if any.
 
 *Changes:* whether the harness's level-2 DUART interrupt is the
 board's.

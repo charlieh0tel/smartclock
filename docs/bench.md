@@ -273,6 +273,51 @@ DC-DC power module.
 
 ![The power supply, reverse: its part number and labels](images/Z3805-68001/z3805a-power-supply-bottom.jpg)
 
+### Photos still wanted
+
+What the photos above leave open (`hardware-investigations.md`,
+items 13, 19, 20 and 21).  Power off throughout, as in
+`hardware-investigations.md`, "Working on the open Z3805A board".
+For all of them: the full-resolution file, no crop, the camera's own
+EXIF rotation; a tripod or a rest, and focus set on the part, not the
+board's edge; a scale (a ruler or the part's own pin pitch) in frame
+for close-ups.
+
+1. *The U44 corner* (item 20).  Square on, straight down, the lens
+   parallel to the board, from 10 to 15 cm, with two lights low on
+   opposite sides at about 30° so the laser-etched marking reads by
+   raking light rather than glare; turn the lights, not the camera,
+   until it reads.  In frame: U44's marking, its designator, S1, the
+   ribbon header and its designator, and the parts between them.
+   Then one at 45° from the header's side to show its pin count and
+   any pin-1 mark.  The corner is out of focus in every photo so far
+   (`z3805a-main-board-2026-09-27.jpg`, 2350,2250 to 3150,3072): if
+   the analog section's height stops the lens getting square on, use
+   a phone's macro mode between the cables.
+2. *The back side under J4 and J5* (item 19).  Needs the board out
+   of the chassis: ask, and note each cable as it comes off.  Diffuse
+   light from straight above (a white sheet or a bounce card), the
+   whole J4, J5, U17 and U18 area in one frame, then a close-up of
+   each jack's footprint.  Take the same views of the 58503A for
+   comparison.
+3. *The back side between U3 and U33* (items 20 and 21): the same
+   setup, one frame from U3 to U33 so the vias from U3's /INTR side
+   and U33's bottom row can be followed, and a close-up of the area
+   under U29 and the 74AC138s.
+4. *J12 from behind its bracket* (item 13): side on and from above at
+   45°, to count its rows and read any silkscreen beside it.
+5. *The front panel and lamp board* (item 20).  The panel from the
+   front, square on, all lamps in frame with their legends legible.
+   Then the lamp board's parts side, square on and in focus, with
+   any designators and the ribbon's connector and its pin-1 stripe;
+   if the parts face the panel, the board has to come off its
+   standoffs, which wants the owner's agreement.  A third, with the
+   unit running if the owner agrees, after lock: which lamps are lit.
+
+Name each file as the others are, `z3805a-<what>.jpg`, under
+`images/Z3805-68001/`, add it to the list above, and read it into the
+item it serves as the *Photos* paragraphs do.
+
 Found at 9600 8N1, moved to 19200 to match the other unit.  No
 front-panel display -- the Z3801A and Z3805A never had one -- so the
 serial status screen is the only status output.

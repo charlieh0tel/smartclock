@@ -611,8 +611,8 @@ class Flash:
     so a part's address the bus's offset in its pair halved.  Writes
     reach it through chip select 6, write only over the boot ROM's range
     (CSBAR6 0x0006, CSOR6 0x7070; docs/firmware/README.md).  Each part
-    is a command state machine, as AMD's Am29F010 data sheet gives it
-    (not in third_party/): two unlock cycles, 0xaa at 0x5555 and 0x55 at
+    is a command state machine, as AMD's Am29F010B data sheet gives it
+    (third_party/amd/Am29F010B.pdf): two unlock cycles, 0xaa at 0x5555 and 0x55 at
     0x2aaa, then the command at 0x5555: program, 0xa0, the next write
     the byte, which can only clear bits; erase, 0x80, a second unlock
     and then chip erase, 0x10, at 0x5555, or sector erase, 0x30, at a

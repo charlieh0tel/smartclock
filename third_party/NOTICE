@@ -11,6 +11,22 @@ a receiver on the bench is backed by one of these.
 No license to any of this material is granted or implied by its
 presence here.
 
+AMD
+---
+
+In `amd/`.
+
+  Am29F010B.pdf              "Am29F010B 1 Megabit (128 K x 8-bit) CMOS
+                             5.0 Volt-only, Uniform Sector Flash
+                             Memory", AMD publication 22336 Rev C
+                             Amendment/0, November 28, 2000, as hosted
+                             by CERN (sy-dep-epc-lpc.web.cern.ch,
+                             components/datasheets/.../amd29f010b.pdf).
+                             The flash parts the installer erases and
+                             programs: their command cycles, status
+                             polling and sector map, which the
+                             harness's flash model follows.
+
 Hewlett-Packard / Agilent / Symmetricom
 ---------------------------------------
 

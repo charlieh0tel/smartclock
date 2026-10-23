@@ -1037,7 +1037,8 @@ writes to ROM's range are to the flash, as chip select 6, write only
 over the boot ROM's range, makes them on the board (`CSBAR6`, above),
 and the flash is modeled (`harness.Flash`): its two pairs of
 AM29F010s, a pair's parts a word's two bytes, each a command state
-machine as AMD's Am29F010 data sheet gives it (not in `third_party/`;
+machine as AMD's Am29F010B data sheet gives it
+(`third_party/amd/Am29F010B.pdf`;
 `restart.md`, "Erase and download"): the unlock cycles, program,
 sector erase with more sectors in its window, chip erase and
 read/reset, and while a program or erase runs, its status, DQ7's

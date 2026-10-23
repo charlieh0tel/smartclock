@@ -326,8 +326,8 @@ unpacked into `0x100400` to `0x10ac50`.
   word, reads it back up to 100 times until it reads the word or both
   bytes show DQ5 (`0x2020`), up to five tries, then sends read/reset,
   `0xf0f0`, and answers -200 once the fifth try is made, as the erase
-  does.  The command words are the AM29F010's (AMD's data sheet, not in
-  `third_party/`); the decompiled reading names the polled word at
+  does.  The command words are the AM29F010's (AMD's Am29F010B data sheet,
+  `third_party/amd/Am29F010B.pdf`); the decompiled reading names the polled word at
   `0x40000` `_interpolator_calibration_init`, the primary's code that
   lies there.  The harness runs both to their end on a model of the
   parts' commands and status, comparing the flash's contents after

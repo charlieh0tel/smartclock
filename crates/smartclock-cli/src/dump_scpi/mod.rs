@@ -6,6 +6,8 @@
 //! address: the tables are found by their shape, and an image whose
 //! tables are not found exactly once is refused rather than guessed at.
 
+use std::cmp::Reverse;
+use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
@@ -126,13 +128,6 @@ impl Image<'_> {
         None
     }
 
-    /// The keyword spelled by the pair at `at`, its rest lower case, as
-    /// the manuals write it.
-    fn keyword(&self, at: u32) -> Option<String> {
-        let (short, rest) = self.keyword_pair(at)?;
-        Some(short + &rest.to_ascii_lowercase())
-    }
-
     /// The keyword pair at `at`: the short form, a NUL, the rest of the
     /// long form and a NUL, both upper case, digits or
     /// `KEYWORD_PUNCTUATION`, as they stand.
@@ -160,9 +155,10 @@ impl Image<'_> {
 
     /// The node at `at`, if its keyword slot points at a keyword pair.
     fn node(&self, at: u32) -> Option<Node> {
-        let keyword = self.keyword(self.u32(at + KEYWORD_SLOT)?)?;
+        let (short, rest) = self.keyword_pair(self.u32(at + KEYWORD_SLOT)?)?;
         Some(Node {
-            keyword,
+            short,
+            rest,
             children: self.u32(at + CHILDREN_SLOT)?,
             setter: self.u32(at + SETTER_SLOT)?,
             query: self.u32(at + QUERY_SLOT)?,
@@ -187,14 +183,48 @@ impl Image<'_> {
 
 /// One node of the tree, as its record holds it.
 struct Node {
-    /// Its keyword, long form, with the short form upper case.
-    keyword: String,
+    /// Its keyword pair's short form, as it stands.
+    short: String,
+    /// Its keyword pair's rest of the long form, upper case as it
+    /// stands; empty in a whole keyword.
+    rest: String,
     /// Its child list, zero if it is a leaf.
     children: u32,
     /// Its setter, zero if it has none.
     setter: u32,
     /// Its query handler, zero if it has none.
     query: u32,
+}
+
+impl Node {
+    /// Its keyword, long form, the rest lower case, as the manuals
+    /// write it.
+    fn keyword(&self) -> String {
+        self.short.clone() + &self.rest.to_ascii_lowercase()
+    }
+
+    /// Its keyword as its stem and the numeric suffix it ends in, if it
+    /// is a whole keyword: one with an empty rest.
+    fn whole(&self) -> Option<(&str, &str)> {
+        self.rest.is_empty().then(|| {
+            let stem = self.short.trim_end_matches(|c: char| c.is_ascii_digit());
+            (stem, &self.short[stem.len()..])
+        })
+    }
+
+    /// The keyword `self` and `long` spell together, if they read as
+    /// one keyword's short and long forms (docs/scpi/README.md, "Alias
+    /// nodes"): both whole, with the same numeric suffix or none,
+    /// `self`'s stem a strict prefix of `long`'s.  The short form is
+    /// upper case, the rest of the long form lower, the suffix after:
+    /// `CALCulate1`.
+    fn alias_keyword(&self, long: &Node) -> Option<String> {
+        let (short_stem, short_suffix) = self.whole()?;
+        let (long_stem, long_suffix) = long.whole()?;
+        let rest = long_stem.strip_prefix(short_stem)?;
+        (!rest.is_empty() && short_suffix == long_suffix)
+            .then(|| format!("{short_stem}{}{short_suffix}", rest.to_ascii_lowercase()))
+    }
 }
 
 /// Where a tree's two root lists are: the common commands, `*IDN?` and
@@ -216,7 +246,7 @@ fn roots(image: &Image, from: u32) -> Result<Roots> {
         image.children(list).is_some_and(|children| {
             children
                 .iter()
-                .any(|(_, node)| node.keyword == COMMON_MARKER)
+                .any(|(_, node)| node.keyword() == COMMON_MARKER)
         })
     };
     let found: Vec<Roots> = (from..)
@@ -286,44 +316,177 @@ impl Entry {
     }
 }
 
-/// Every path the tree under `list` holds, prefixed by `prefix`.
-/// `above` is the lists the walk is inside, to refuse a cycle.
-fn walk(
-    image: &Image,
-    list: u32,
-    prefix: &str,
-    above: &mut Vec<u32>,
-    entries: &mut Vec<Entry>,
-) -> Result<()> {
-    ensure!(
-        !above.contains(&list),
-        "the tree loops back to the child list at {list:#x}"
-    );
-    let children = image
-        .children(list)
-        .with_context(|| format!("no child list at {list:#x}"))?;
-    above.push(list);
-    for (at, node) in children {
-        let path = format!("{prefix}{}", node.keyword);
-        for (slot, handler) in [("setter", node.setter), ("query", node.query)] {
-            ensure!(
-                handler == 0 || (handler % 2 == 0 && image.holds(handler)),
-                "{path} (node at {at:#x}) has {slot} {handler:#x}, neither zero nor code"
-            );
+/// What a walk does with alias nodes (docs/scpi/README.md, "Alias
+/// nodes").
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Aliases {
+    /// Keep each node of a pair, as the image holds them.
+    Keep,
+    /// Merge a pair into one node, its keyword in mixed case.
+    Merge,
+}
+
+/// What a walk of a tree finds.
+#[derive(Debug, Default)]
+struct Listing {
+    /// Every path, the node it reaches and its handlers.
+    entries: Vec<Entry>,
+    /// Each pair of nodes whose keywords read as one keyword's short
+    /// and long forms but which lead to different subtrees or
+    /// handlers, so are listed apart: a line for a reader.
+    notes: Vec<String>,
+}
+
+/// A walk of the tree: the image, what it does with alias nodes, where
+/// it is, and what it has found.
+struct Walk<'a, 'b> {
+    /// The image the tree is in.
+    image: &'a Image<'b>,
+    /// What it does with alias nodes.
+    aliases: Aliases,
+    /// The lists the walk is inside, to refuse a cycle.
+    above: Vec<u32>,
+    /// What it has found.
+    found: Listing,
+}
+
+/// A path relative to a subtree, and its node's query handler and
+/// setter: what two subtrees must share to be equal.
+type Shape = (String, Option<u32>, Option<u32>);
+
+impl Walk<'_, '_> {
+    /// A walk of `image` that has found nothing yet, inside `above`.
+    fn new<'a, 'b>(image: &'a Image<'b>, aliases: Aliases, above: Vec<u32>) -> Walk<'a, 'b> {
+        Walk {
+            image,
+            aliases,
+            above,
+            found: Listing::default(),
         }
-        if node.children != 0 {
-            walk(image, node.children, &format!("{path}:"), above, entries)?;
-        }
-        entries.push(Entry {
-            path,
-            node: at,
-            query: (node.query != 0).then_some(node.query),
-            setter: (node.setter != 0).then_some(node.setter),
-            refuses: false,
-        });
     }
-    above.pop();
-    Ok(())
+
+    /// Every path the tree under `list` holds, prefixed by `prefix`.
+    fn list(&mut self, list: u32, prefix: &str) -> Result<()> {
+        ensure!(
+            !self.above.contains(&list),
+            "the tree loops back to the child list at {list:#x}"
+        );
+        let children = self
+            .image
+            .children(list)
+            .with_context(|| format!("no child list at {list:#x}"))?;
+        self.above.push(list);
+        let merges = match self.aliases {
+            Aliases::Keep => BTreeMap::new(),
+            Aliases::Merge => self.merges(&children, prefix)?,
+        };
+        let merged: BTreeSet<usize> = merges.values().map(|(long, _)| *long).collect();
+        for (index, (at, node)) in children.iter().enumerate() {
+            if merged.contains(&index) {
+                continue;
+            }
+            let keyword = merges
+                .get(&index)
+                .map_or_else(|| node.keyword(), |(_, keyword)| keyword.clone());
+            let path = format!("{prefix}{keyword}");
+            for (slot, handler) in [("setter", node.setter), ("query", node.query)] {
+                ensure!(
+                    handler == 0 || (handler % 2 == 0 && self.image.holds(handler)),
+                    "{path} (node at {at:#x}) has {slot} {handler:#x}, neither zero nor code"
+                );
+            }
+            if node.children != 0 {
+                self.list(node.children, &format!("{path}:"))?;
+            }
+            self.found.entries.push(Entry {
+                path,
+                node: *at,
+                query: (node.query != 0).then_some(node.query),
+                setter: (node.setter != 0).then_some(node.setter),
+                refuses: false,
+            });
+        }
+        self.above.pop();
+        Ok(())
+    }
+
+    /// The alias pairs among `children`, under `prefix`, by the short
+    /// form's index: the long form's index and the keyword they spell
+    /// together.  A node takes part in one pair at most, the longest
+    /// long form first and for it the longest short form.  A pair that
+    /// differs, of nodes in no pair, is noted.
+    fn merges(
+        &mut self,
+        children: &[(u32, Node)],
+        prefix: &str,
+    ) -> Result<BTreeMap<usize, (usize, String)>> {
+        let mut pairs: Vec<(usize, usize, String)> = Vec::new();
+        for (short, (_, short_node)) in children.iter().enumerate() {
+            for (long, (_, long_node)) in children.iter().enumerate() {
+                if let Some(keyword) = short_node.alias_keyword(long_node) {
+                    pairs.push((short, long, keyword));
+                }
+            }
+        }
+        pairs.sort_by_key(|(short, long, _)| {
+            Reverse((
+                children[*long].1.short.len(),
+                children[*short].1.short.len(),
+            ))
+        });
+        let mut merges = BTreeMap::new();
+        let mut taken = BTreeSet::new();
+        let mut differing = Vec::new();
+        for (short, long, keyword) in pairs {
+            match self.difference(&children[short].1, &children[long].1)? {
+                None if !taken.contains(&short) && !taken.contains(&long) => {
+                    taken.extend([short, long]);
+                    merges.insert(short, (long, keyword));
+                }
+                None => {}
+                Some(what) => differing.push((short, long, what)),
+            }
+        }
+        for (short, long, what) in differing {
+            if !taken.contains(&short) && !taken.contains(&long) {
+                let (short_at, short_node) = &children[short];
+                let (long_at, long_node) = &children[long];
+                self.found.notes.push(format!(
+                    "{prefix}{} (node at {short_at:#x}) and {prefix}{} (node at {long_at:#x}) \
+                     read as one keyword but differ in their {what}; listed apart",
+                    short_node.keyword(),
+                    long_node.keyword()
+                ));
+            }
+        }
+        Ok(merges)
+    }
+
+    /// What `short` and `long` differ in, `None` if they have the same
+    /// handlers and lead to the same subtree, by one child list or by
+    /// equal ones.
+    fn difference(&self, short: &Node, long: &Node) -> Result<Option<&'static str>> {
+        if (short.setter, short.query) != (long.setter, long.query) {
+            return Ok(Some("handlers"));
+        }
+        if short.children == long.children {
+            return Ok(None);
+        }
+        if short.children == 0 || long.children == 0 {
+            return Ok(Some("children"));
+        }
+        let shape = |list: u32| -> Result<Vec<Shape>> {
+            let mut walk = Walk::new(self.image, self.aliases, self.above.clone());
+            walk.list(list, "")?;
+            Ok(walk
+                .found
+                .entries
+                .into_iter()
+                .map(|entry| (entry.path, entry.query, entry.setter))
+                .collect())
+        };
+        Ok((shape(short.children)? != shape(long.children)?).then_some("children"))
+    }
 }
 
 /// Mark each entry whose every handler only refuses.
@@ -364,24 +527,44 @@ fn mark_refusals(image: &Image, entries: &mut [Entry]) {
     }
 }
 
-/// Every path the image's parser knows, the common commands as `*`
-/// and the rest as `:`, ordered as a case-blind sort of the paths.
+/// Every path the image's parser knows, each alias node kept, the
+/// common commands as `*` and the rest as `:`, ordered as a case-blind
+/// sort of the paths.
 fn entries(bytes: &[u8]) -> Result<Vec<Entry>> {
-    let image = Image(bytes);
-    let mut entries = tree_entries(&image, roots(&image, 0)?)?;
-    mark_refusals(&image, &mut entries);
-    Ok(entries)
+    Ok(listing(bytes, Aliases::Keep)?.entries)
 }
 
-/// Every path the tree under `roots` holds, ordered as a case-blind
-/// sort of the paths, none marked as refusing.
+/// Every path the image's parser knows, with alias nodes as `aliases`
+/// says, the common commands as `*` and the rest as `:`, ordered as a
+/// case-blind sort of the paths, and the walk's notes.
+fn listing(bytes: &[u8], aliases: Aliases) -> Result<Listing> {
+    let image = Image(bytes);
+    let mut listing = tree_listing(&image, roots(&image, 0)?, aliases)?;
+    mark_refusals(&image, &mut listing.entries);
+    Ok(listing)
+}
+
+/// Every path the tree under `roots` holds, each alias node kept,
+/// ordered as a case-blind sort of the paths, none marked as refusing.
 fn tree_entries(image: &Image, roots: Roots) -> Result<Vec<Entry>> {
-    let mut entries = Vec::new();
-    walk(image, roots.common, "*", &mut Vec::new(), &mut entries)?;
-    walk(image, roots.main, ":", &mut Vec::new(), &mut entries)?;
-    entries.sort_by_cached_key(|entry| entry.path.to_ascii_lowercase());
-    entries.dedup_by(|later, earlier| later.path == earlier.path);
-    Ok(entries)
+    Ok(tree_listing(image, roots, Aliases::Keep)?.entries)
+}
+
+/// Every path the tree under `roots` holds, with alias nodes as
+/// `aliases` says, ordered as a case-blind sort of the paths, none
+/// marked as refusing, and the walk's notes.
+fn tree_listing(image: &Image, roots: Roots, aliases: Aliases) -> Result<Listing> {
+    let mut walk = Walk::new(image, aliases, Vec::new());
+    walk.list(roots.common, "*")?;
+    walk.list(roots.main, ":")?;
+    let mut listing = walk.found;
+    listing
+        .entries
+        .sort_by_cached_key(|entry| entry.path.to_ascii_lowercase());
+    listing
+        .entries
+        .dedup_by(|later, earlier| later.path == earlier.path);
+    Ok(listing)
 }
 
 /// `dump-scpi`'s arguments.
@@ -480,12 +663,18 @@ pub(crate) fn run(args: &DumpScpiArgs) -> Result<()> {
         }
         return Ok(());
     }
-    for entry in image::load(image, entries)? {
-        if args.handlers {
+    if args.handlers {
+        for entry in image::load(image, entries)? {
             println!("{}", entry.handler_line());
-        } else {
-            println!("{}", entry.line());
         }
+        return Ok(());
+    }
+    let listing = image::load(image, |bytes| listing(bytes, Aliases::Merge))?;
+    for entry in &listing.entries {
+        println!("{}", entry.line());
+    }
+    for note in &listing.notes {
+        eprintln!("{note}");
     }
     Ok(())
 }
@@ -495,12 +684,20 @@ mod tests {
     use anyhow::Result;
     use smartclock::scpi::spells;
 
+    use super::Aliases;
     use super::Entry;
     use super::entries;
+    use super::listing;
+    use super::records::Records;
+    use super::records::Tree;
 
     /// The tree as `dump-scpi` prints it, a line a path.
     fn dump(bytes: &[u8]) -> Result<Vec<String>> {
-        Ok(entries(bytes)?.iter().map(Entry::line).collect())
+        Ok(listing(bytes, Aliases::Merge)?
+            .entries
+            .iter()
+            .map(Entry::line)
+            .collect())
     }
 
     /// Each image in `third_party/firmware/`, by the name its tree has
@@ -631,46 +828,70 @@ mod tests {
         }
     }
 
-    /// A minimal image: a root pair at 0 naming a common list of `IDN`
-    /// and `_TRG` and a main list of `SYSTem`, each node with a query
-    /// handler.
-    fn tiny_image() -> Vec<u8> {
+    /// A synthetic image: a root pair at 0 naming `lists[0]` as the
+    /// common commands' list and `lists[1]` as the main tree's, each
+    /// list the indexes in `nodes` of the nodes it holds, and each node
+    /// its keyword pair and the index in `lists` of its child list, if
+    /// it has one.  Every node has one query handler, and is laid out
+    /// far enough from the next for `Records` to read it.
+    fn synthetic(nodes: &[(&[u8], Option<u32>)], lists: &[&[u32]]) -> Vec<u8> {
         const KEYWORDS: u32 = 0x100;
-        const NODES: u32 = 0x200;
-        const NODE_SIZE: u32 = 0x20;
-        const COMMON: u32 = 0x300;
-        const MAIN: u32 = 0x320;
-        const HANDLER: u32 = 0x400;
-        let mut image = vec![0u8; 0x1000];
+        const KEYWORD_STRIDE: u32 = 0x10;
+        const NODES: u32 = 0x400;
+        const NODE_STRIDE: u32 = 0x40;
+        const LISTS: u32 = 0xc00;
+        const LIST_STRIDE: u32 = 0x40;
+        const HANDLER: u32 = 0x1800;
+        const NO_DEFAULT_CHILD: [u8; 2] = [0xff, 0xff];
+        let list_at = |index: u32| LISTS + index * LIST_STRIDE;
+        let mut image = vec![0u8; 0x2000];
         let mut put = |at: u32, bytes: &[u8]| {
             let at = usize::try_from(at).expect("in range");
             image[at..at + bytes.len()].copy_from_slice(bytes);
         };
-        put(0, &COMMON.to_be_bytes());
-        put(4, &MAIN.to_be_bytes());
-        let pairs: [&[u8]; 3] = [b"IDN\0\0", b"_TRG\0\0", b"SYST\0EM\0"];
-        let mut keyword = KEYWORDS;
-        for (index, pair) in (0..).zip(pairs) {
-            let node = NODES + index * NODE_SIZE;
+        put(0, &list_at(0).to_be_bytes());
+        put(4, &list_at(1).to_be_bytes());
+        for (index, (pair, children)) in (0..).zip(nodes) {
+            let keyword = KEYWORDS + index * KEYWORD_STRIDE;
+            let node = NODES + index * NODE_STRIDE;
             put(keyword, pair);
-            put(node, &keyword.to_be_bytes());
-            put(node + 18, &HANDLER.to_be_bytes());
-            keyword += 0x10;
-        }
-        for (list, nodes) in [(COMMON, &[0, 1][..]), (MAIN, &[2][..])] {
-            put(
-                list + 2,
-                &u16::try_from(nodes.len()).expect("small").to_be_bytes(),
-            );
-            put(list + 4, &[0xff, 0xff]);
-            for (slot, node) in (0..).zip(nodes) {
+            put(node + super::KEYWORD_SLOT, &keyword.to_be_bytes());
+            if let Some(children) = children {
                 put(
-                    list + 6 + 4 * slot,
-                    &(NODES + node * NODE_SIZE).to_be_bytes(),
+                    node + super::CHILDREN_SLOT,
+                    &list_at(*children).to_be_bytes(),
+                );
+            }
+            put(node + super::QUERY_SLOT, &HANDLER.to_be_bytes());
+        }
+        for (index, members) in (0..).zip(lists) {
+            let list = list_at(index);
+            put(
+                list + super::COUNT_SLOT,
+                &u16::try_from(members.len()).expect("small").to_be_bytes(),
+            );
+            put(list + super::COUNT_SLOT + 2, &NO_DEFAULT_CHILD);
+            for (slot, node) in (0..).zip(*members) {
+                put(
+                    list + super::CHILDREN_START + 4 * slot,
+                    &(NODES + node * NODE_STRIDE).to_be_bytes(),
                 );
             }
         }
         image
+    }
+
+    /// A minimal image: a common list of `IDN` and `_TRG` and a main
+    /// list of `SYSTem`.
+    fn tiny_image() -> Vec<u8> {
+        synthetic(
+            &[
+                (b"IDN\0\0", None),
+                (b"_TRG\0\0", None),
+                (b"SYST\0EM\0", None),
+            ],
+            &[&[0, 1], &[2]],
+        )
     }
 
     #[test]
@@ -679,6 +900,90 @@ mod tests {
             dump(&tiny_image()).expect("the image has a tree"),
             ["*_TRG?", "*IDN?", ":SYSTem?"]
         );
+    }
+
+    /// An image whose main tree holds a keyword pair, `SYSTem`, and
+    /// pairs of whole keywords, each one keyword's short and long form
+    /// as two nodes: `CALC` and `CALCULATE` with one child list, and so
+    /// `CALC1` and `CALCULATE1`; `MEAS` and `MEASURE` with equal ones;
+    /// `INP` and `INPUT` with different ones.
+    fn alias_image() -> Vec<u8> {
+        synthetic(
+            &[
+                (b"IDN\0\0", None),
+                (b"SYST\0EM\0", Some(2)),
+                (b"CALC\0\0", Some(3)),
+                (b"CALCULATE\0\0", Some(3)),
+                (b"INP\0\0", Some(4)),
+                (b"INPUT\0\0", Some(5)),
+                (b"MEAS\0\0", Some(6)),
+                (b"MEASURE\0\0", Some(7)),
+                (b"STAT\0E\0", None),
+                (b"MATH\0\0", None),
+                (b"COUP\0LING\0", None),
+                (b"IMP\0EDANCE\0", None),
+                (b"VOLT\0AGE\0", None),
+                (b"CALC1\0\0", Some(3)),
+                (b"CALCULATE1\0\0", Some(3)),
+            ],
+            &[
+                &[0],
+                &[1, 2, 3, 4, 5, 6, 7, 13, 14],
+                &[8],
+                &[9],
+                &[10],
+                &[11],
+                &[12],
+                &[12],
+            ],
+        )
+    }
+
+    #[test]
+    fn alias_nodes_are_listed_as_one_keyword_when_they_lead_to_one_subtree() {
+        let image = alias_image();
+        let listing = listing(&image, Aliases::Merge).expect("the image has a tree");
+        let lines: Vec<String> = listing.entries.iter().map(Entry::line).collect();
+        assert_eq!(
+            lines,
+            [
+                "*IDN?",
+                ":CALCulate?",
+                ":CALCulate1?",
+                ":CALCulate1:MATH?",
+                ":CALCulate:MATH?",
+                ":INP?",
+                ":INP:COUPling?",
+                ":INPUT?",
+                ":INPUT:IMPedance?",
+                ":MEASure?",
+                ":MEASure:VOLTage?",
+                ":SYSTem?",
+                ":SYSTem:STATe?",
+            ]
+        );
+        assert_eq!(
+            listing.notes,
+            [
+                ":INP (node at 0x500) and :INPUT (node at 0x540) read as one keyword \
+              but differ in their children; listed apart"
+            ]
+        );
+    }
+
+    #[test]
+    fn alias_nodes_are_kept_for_the_handlers_and_the_records() {
+        let image = alias_image();
+        let paths: Vec<String> = entries(&image)
+            .expect("the image has a tree")
+            .into_iter()
+            .map(|entry| entry.path)
+            .collect();
+        for path in [":CALC:MATH", ":CALCULATE:MATH", ":MEAS", ":MEASURE"] {
+            assert!(paths.iter().any(|held| held == path), "{path}");
+        }
+        let records = Records::read(&image, Tree::Primary, None).expect("the image has records");
+        assert_eq!(records.counts().get("a node"), Some(&15));
     }
 
     #[test]

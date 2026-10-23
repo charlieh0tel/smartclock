@@ -79,24 +79,15 @@
 :DIAGnostic:ROSCillator:EFControl:MODE? (set)
 :DIAGnostic:ROSCillator:EFControl:RELative?
 :DIAGnostic:ROSCillator:TCOefficient? (set)
-:DIAGnostic:SER
-:DIAGnostic:SER1
-:DIAGnostic:SER1:EGResponse? (set)
-:DIAGnostic:SER1:RESTricted? (set)
-:DIAGnostic:SER2
-:DIAGnostic:SER2:EGResponse? (set)
-:DIAGnostic:SER2:RESTricted? (set)
-:DIAGnostic:SER:EGResponse? (set)
-:DIAGnostic:SER:RESTricted? (set)
-:DIAGnostic:SERIAL
-:DIAGnostic:SERIAL1
-:DIAGnostic:SERIAL1:EGResponse? (set)
-:DIAGnostic:SERIAL1:RESTricted? (set)
-:DIAGnostic:SERIAL2
-:DIAGnostic:SERIAL2:EGResponse? (set)
-:DIAGnostic:SERIAL2:RESTricted? (set)
-:DIAGnostic:SERIAL:EGResponse? (set)
-:DIAGnostic:SERIAL:RESTricted? (set)
+:DIAGnostic:SERial
+:DIAGnostic:SERial1
+:DIAGnostic:SERial1:EGResponse? (set)
+:DIAGnostic:SERial1:RESTricted? (set)
+:DIAGnostic:SERial2
+:DIAGnostic:SERial2:EGResponse? (set)
+:DIAGnostic:SERial2:RESTricted? (set)
+:DIAGnostic:SERial:EGResponse? (set)
+:DIAGnostic:SERial:RESTricted? (set)
 :DIAGnostic:SLOG
 :DIAGnostic:SLOG:CLEar (set)
 :DIAGnostic:SLOG:COUNt?
@@ -241,26 +232,16 @@
 :SENSe:DATA:MEMory:SAVE? (set)
 :SENSe:DATA:POINts?
 :SENSe:DATA:TSTamp?
-:SENSe:TST
-:SENSe:TST1
-:SENSe:TST1:EDGE? (set)
-:SENSe:TST2
-:SENSe:TST2:EDGE? (set)
-:SENSe:TST3
-:SENSe:TST3:EDGE? (set)
-:SENSe:TST4
-:SENSe:TST4:EDGE? (set)
-:SENSe:TST:EDGE? (set)
-:SENSe:TSTAMP
-:SENSe:TSTAMP1
-:SENSe:TSTAMP1:EDGE? (set)
-:SENSe:TSTAMP2
-:SENSe:TSTAMP2:EDGE? (set)
-:SENSe:TSTAMP3
-:SENSe:TSTAMP3:EDGE? (set)
-:SENSe:TSTAMP4
-:SENSe:TSTAMP4:EDGE? (set)
-:SENSe:TSTAMP:EDGE? (set)
+:SENSe:TSTamp
+:SENSe:TSTamp1
+:SENSe:TSTamp1:EDGE? (set)
+:SENSe:TSTamp2
+:SENSe:TSTamp2:EDGE? (set)
+:SENSe:TSTamp3
+:SENSe:TSTamp3:EDGE? (set)
+:SENSe:TSTamp4
+:SENSe:TSTamp4:EDGE? (set)
+:SENSe:TSTamp:EDGE? (set)
 :SIGQ (set)
 :SOURce
 :SOURce:GPSystem
@@ -383,48 +364,21 @@
 :SOURce:ROSCillator:HOLDover:DURation:MEASurement
 :SOURce:ROSCillator:HOLDover:DURation:MEASurement:THReshold? (set)
 :SOURce:ROSCillator:HOLDover:DURation:STATus
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR1:ACTion? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR1:ALAR1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR1:ALAR3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR1:ALARM1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR1:ALARM3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR1:EXCeeded?
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR2? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR2:ACTion? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR2:ALAR1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR2:ALAR3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR2:ALARM1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR2:ALARM3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR2:EXCeeded?
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR:ACTion? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR:ALAR1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR:ALAR3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR:ALARM1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR:ALARM3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THR:EXCeeded?
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD1:ACTion? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD1:ALAR1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD1:ALAR3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD1:ALARM1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD1:ALARM3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD1:EXCeeded?
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD2? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD2:ACTion? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD2:ALAR1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD2:ALAR3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD2:ALARM1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD2:ALARM3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD2:EXCeeded?
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD:ACTion? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD:ALAR1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD:ALAR3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD:ALARM1? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD:ALARM3? (set)
-:SOURce:ROSCillator:HOLDover:DURation:STATus:THRESHOLD:EXCeeded?
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold1? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold1:ACTion? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold1:ALARm1? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold1:ALARm3? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold1:EXCeeded?
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold2? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold2:ACTion? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold2:ALARm1? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold2:ALARm3? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold2:EXCeeded?
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:ACTion? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:ALARm1? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:ALARm3? (set)
+:SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?
 :SOURce:ROSCillator:HOLDover:HYSTeresis? (set)
 :SOURce:ROSCillator:HOLDover:INITiate (set)
 :SOURce:ROSCillator:HOLDover:LIMit
@@ -450,48 +404,21 @@
 :SOURce:SYNChronization:HOLDover:DURation:MEASurement
 :SOURce:SYNChronization:HOLDover:DURation:MEASurement:THReshold? (set)
 :SOURce:SYNChronization:HOLDover:DURation:STATus
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR1:ACTion? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR1:ALAR1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR1:ALAR3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR1:ALARM1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR1:ALARM3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR1:EXCeeded?
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR2? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR2:ACTion? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR2:ALAR1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR2:ALAR3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR2:ALARM1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR2:ALARM3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR2:EXCeeded?
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR:ACTion? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR:ALAR1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR:ALAR3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR:ALARM1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR:ALARM3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THR:EXCeeded?
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD1:ACTion? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD1:ALAR1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD1:ALAR3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD1:ALARM1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD1:ALARM3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD1:EXCeeded?
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD2? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD2:ACTion? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD2:ALAR1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD2:ALAR3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD2:ALARM1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD2:ALARM3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD2:EXCeeded?
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD:ACTion? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD:ALAR1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD:ALAR3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD:ALARM1? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD:ALARM3? (set)
-:SOURce:SYNChronization:HOLDover:DURation:STATus:THRESHOLD:EXCeeded?
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold1? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold1:ACTion? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold1:ALARm1? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold1:ALARm3? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold1:EXCeeded?
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold2? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold2:ACTion? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold2:ALARm1? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold2:ALARm3? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold2:EXCeeded?
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold:ACTion? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold:ALARm1? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold:ALARm3? (set)
+:SOURce:SYNChronization:HOLDover:DURation:STATus:THReshold:EXCeeded?
 :SOURce:SYNChronization:HOLDover:HYSTeresis? (set)
 :SOURce:SYNChronization:HOLDover:INITiate (set)
 :SOURce:SYNChronization:HOLDover:LIMit
@@ -757,132 +684,69 @@
 :SYSTem:COMMunicate:SCI:TRANsmit:PARity
 :SYSTem:COMMunicate:SCI:TRANsmit:PARity:TYPE? (set)
 :SYSTem:COMMunicate:SCI:TRANsmit:SBITs? (set)
-:SYSTem:COMMunicate:SER?
-:SYSTem:COMMunicate:SER1?
-:SYSTem:COMMunicate:SER1:ADDRess?
-:SYSTem:COMMunicate:SER1:CONTrol
-:SYSTem:COMMunicate:SER1:CONTrol:HPACe? (set)
-:SYSTem:COMMunicate:SER1:FDUPlex? (set)
-:SYSTem:COMMunicate:SER1:PRESet (set)
-:SYSTem:COMMunicate:SER1:PROMpt? (set)
-:SYSTem:COMMunicate:SER1:RECeive
-:SYSTem:COMMunicate:SER1:RECeive:BAUD? (set)
-:SYSTem:COMMunicate:SER1:RECeive:BITS? (set)
-:SYSTem:COMMunicate:SER1:RECeive:PACE? (set)
-:SYSTem:COMMunicate:SER1:RECeive:PARity
-:SYSTem:COMMunicate:SER1:RECeive:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SER1:RECeive:SBITs? (set)
-:SYSTem:COMMunicate:SER1:TRANsmit
-:SYSTem:COMMunicate:SER1:TRANsmit:BAUD? (set)
-:SYSTem:COMMunicate:SER1:TRANsmit:BITS? (set)
-:SYSTem:COMMunicate:SER1:TRANsmit:PACE? (set)
-:SYSTem:COMMunicate:SER1:TRANsmit:PARity
-:SYSTem:COMMunicate:SER1:TRANsmit:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SER1:TRANsmit:SBITs? (set)
-:SYSTem:COMMunicate:SER2?
-:SYSTem:COMMunicate:SER2:ADDRess?
-:SYSTem:COMMunicate:SER2:CONTrol
-:SYSTem:COMMunicate:SER2:CONTrol:HPACe? (set)
-:SYSTem:COMMunicate:SER2:FDUPlex? (set)
-:SYSTem:COMMunicate:SER2:PRESet (set)
-:SYSTem:COMMunicate:SER2:PROMpt? (set)
-:SYSTem:COMMunicate:SER2:RECeive
-:SYSTem:COMMunicate:SER2:RECeive:BAUD? (set)
-:SYSTem:COMMunicate:SER2:RECeive:BITS? (set)
-:SYSTem:COMMunicate:SER2:RECeive:PACE? (set)
-:SYSTem:COMMunicate:SER2:RECeive:PARity
-:SYSTem:COMMunicate:SER2:RECeive:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SER2:RECeive:SBITs? (set)
-:SYSTem:COMMunicate:SER2:TRANsmit
-:SYSTem:COMMunicate:SER2:TRANsmit:BAUD? (set)
-:SYSTem:COMMunicate:SER2:TRANsmit:BITS? (set)
-:SYSTem:COMMunicate:SER2:TRANsmit:PACE? (set)
-:SYSTem:COMMunicate:SER2:TRANsmit:PARity
-:SYSTem:COMMunicate:SER2:TRANsmit:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SER2:TRANsmit:SBITs? (set)
-:SYSTem:COMMunicate:SER:ADDRess?
-:SYSTem:COMMunicate:SER:CONTrol
-:SYSTem:COMMunicate:SER:CONTrol:HPACe? (set)
-:SYSTem:COMMunicate:SER:FDUPlex? (set)
-:SYSTem:COMMunicate:SER:PRESet (set)
-:SYSTem:COMMunicate:SER:PROMpt? (set)
-:SYSTem:COMMunicate:SER:RECeive
-:SYSTem:COMMunicate:SER:RECeive:BAUD? (set)
-:SYSTem:COMMunicate:SER:RECeive:BITS? (set)
-:SYSTem:COMMunicate:SER:RECeive:PACE? (set)
-:SYSTem:COMMunicate:SER:RECeive:PARity
-:SYSTem:COMMunicate:SER:RECeive:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SER:RECeive:SBITs? (set)
-:SYSTem:COMMunicate:SER:TRANsmit
-:SYSTem:COMMunicate:SER:TRANsmit:BAUD? (set)
-:SYSTem:COMMunicate:SER:TRANsmit:BITS? (set)
-:SYSTem:COMMunicate:SER:TRANsmit:PACE? (set)
-:SYSTem:COMMunicate:SER:TRANsmit:PARity
-:SYSTem:COMMunicate:SER:TRANsmit:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SER:TRANsmit:SBITs? (set)
-:SYSTem:COMMunicate:SERIAL?
-:SYSTem:COMMunicate:SERIAL1?
-:SYSTem:COMMunicate:SERIAL1:ADDRess?
-:SYSTem:COMMunicate:SERIAL1:CONTrol
-:SYSTem:COMMunicate:SERIAL1:CONTrol:HPACe? (set)
-:SYSTem:COMMunicate:SERIAL1:FDUPlex? (set)
-:SYSTem:COMMunicate:SERIAL1:PRESet (set)
-:SYSTem:COMMunicate:SERIAL1:PROMpt? (set)
-:SYSTem:COMMunicate:SERIAL1:RECeive
-:SYSTem:COMMunicate:SERIAL1:RECeive:BAUD? (set)
-:SYSTem:COMMunicate:SERIAL1:RECeive:BITS? (set)
-:SYSTem:COMMunicate:SERIAL1:RECeive:PACE? (set)
-:SYSTem:COMMunicate:SERIAL1:RECeive:PARity
-:SYSTem:COMMunicate:SERIAL1:RECeive:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SERIAL1:RECeive:SBITs? (set)
-:SYSTem:COMMunicate:SERIAL1:TRANsmit
-:SYSTem:COMMunicate:SERIAL1:TRANsmit:BAUD? (set)
-:SYSTem:COMMunicate:SERIAL1:TRANsmit:BITS? (set)
-:SYSTem:COMMunicate:SERIAL1:TRANsmit:PACE? (set)
-:SYSTem:COMMunicate:SERIAL1:TRANsmit:PARity
-:SYSTem:COMMunicate:SERIAL1:TRANsmit:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SERIAL1:TRANsmit:SBITs? (set)
-:SYSTem:COMMunicate:SERIAL2?
-:SYSTem:COMMunicate:SERIAL2:ADDRess?
-:SYSTem:COMMunicate:SERIAL2:CONTrol
-:SYSTem:COMMunicate:SERIAL2:CONTrol:HPACe? (set)
-:SYSTem:COMMunicate:SERIAL2:FDUPlex? (set)
-:SYSTem:COMMunicate:SERIAL2:PRESet (set)
-:SYSTem:COMMunicate:SERIAL2:PROMpt? (set)
-:SYSTem:COMMunicate:SERIAL2:RECeive
-:SYSTem:COMMunicate:SERIAL2:RECeive:BAUD? (set)
-:SYSTem:COMMunicate:SERIAL2:RECeive:BITS? (set)
-:SYSTem:COMMunicate:SERIAL2:RECeive:PACE? (set)
-:SYSTem:COMMunicate:SERIAL2:RECeive:PARity
-:SYSTem:COMMunicate:SERIAL2:RECeive:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SERIAL2:RECeive:SBITs? (set)
-:SYSTem:COMMunicate:SERIAL2:TRANsmit
-:SYSTem:COMMunicate:SERIAL2:TRANsmit:BAUD? (set)
-:SYSTem:COMMunicate:SERIAL2:TRANsmit:BITS? (set)
-:SYSTem:COMMunicate:SERIAL2:TRANsmit:PACE? (set)
-:SYSTem:COMMunicate:SERIAL2:TRANsmit:PARity
-:SYSTem:COMMunicate:SERIAL2:TRANsmit:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SERIAL2:TRANsmit:SBITs? (set)
-:SYSTem:COMMunicate:SERIAL:ADDRess?
-:SYSTem:COMMunicate:SERIAL:CONTrol
-:SYSTem:COMMunicate:SERIAL:CONTrol:HPACe? (set)
-:SYSTem:COMMunicate:SERIAL:FDUPlex? (set)
-:SYSTem:COMMunicate:SERIAL:PRESet (set)
-:SYSTem:COMMunicate:SERIAL:PROMpt? (set)
-:SYSTem:COMMunicate:SERIAL:RECeive
-:SYSTem:COMMunicate:SERIAL:RECeive:BAUD? (set)
-:SYSTem:COMMunicate:SERIAL:RECeive:BITS? (set)
-:SYSTem:COMMunicate:SERIAL:RECeive:PACE? (set)
-:SYSTem:COMMunicate:SERIAL:RECeive:PARity
-:SYSTem:COMMunicate:SERIAL:RECeive:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SERIAL:RECeive:SBITs? (set)
-:SYSTem:COMMunicate:SERIAL:TRANsmit
-:SYSTem:COMMunicate:SERIAL:TRANsmit:BAUD? (set)
-:SYSTem:COMMunicate:SERIAL:TRANsmit:BITS? (set)
-:SYSTem:COMMunicate:SERIAL:TRANsmit:PACE? (set)
-:SYSTem:COMMunicate:SERIAL:TRANsmit:PARity
-:SYSTem:COMMunicate:SERIAL:TRANsmit:PARity:TYPE? (set)
-:SYSTem:COMMunicate:SERIAL:TRANsmit:SBITs? (set)
+:SYSTem:COMMunicate:SERial?
+:SYSTem:COMMunicate:SERial1?
+:SYSTem:COMMunicate:SERial1:ADDRess?
+:SYSTem:COMMunicate:SERial1:CONTrol
+:SYSTem:COMMunicate:SERial1:CONTrol:HPACe? (set)
+:SYSTem:COMMunicate:SERial1:FDUPlex? (set)
+:SYSTem:COMMunicate:SERial1:PRESet (set)
+:SYSTem:COMMunicate:SERial1:PROMpt? (set)
+:SYSTem:COMMunicate:SERial1:RECeive
+:SYSTem:COMMunicate:SERial1:RECeive:BAUD? (set)
+:SYSTem:COMMunicate:SERial1:RECeive:BITS? (set)
+:SYSTem:COMMunicate:SERial1:RECeive:PACE? (set)
+:SYSTem:COMMunicate:SERial1:RECeive:PARity
+:SYSTem:COMMunicate:SERial1:RECeive:PARity:TYPE? (set)
+:SYSTem:COMMunicate:SERial1:RECeive:SBITs? (set)
+:SYSTem:COMMunicate:SERial1:TRANsmit
+:SYSTem:COMMunicate:SERial1:TRANsmit:BAUD? (set)
+:SYSTem:COMMunicate:SERial1:TRANsmit:BITS? (set)
+:SYSTem:COMMunicate:SERial1:TRANsmit:PACE? (set)
+:SYSTem:COMMunicate:SERial1:TRANsmit:PARity
+:SYSTem:COMMunicate:SERial1:TRANsmit:PARity:TYPE? (set)
+:SYSTem:COMMunicate:SERial1:TRANsmit:SBITs? (set)
+:SYSTem:COMMunicate:SERial2?
+:SYSTem:COMMunicate:SERial2:ADDRess?
+:SYSTem:COMMunicate:SERial2:CONTrol
+:SYSTem:COMMunicate:SERial2:CONTrol:HPACe? (set)
+:SYSTem:COMMunicate:SERial2:FDUPlex? (set)
+:SYSTem:COMMunicate:SERial2:PRESet (set)
+:SYSTem:COMMunicate:SERial2:PROMpt? (set)
+:SYSTem:COMMunicate:SERial2:RECeive
+:SYSTem:COMMunicate:SERial2:RECeive:BAUD? (set)
+:SYSTem:COMMunicate:SERial2:RECeive:BITS? (set)
+:SYSTem:COMMunicate:SERial2:RECeive:PACE? (set)
+:SYSTem:COMMunicate:SERial2:RECeive:PARity
+:SYSTem:COMMunicate:SERial2:RECeive:PARity:TYPE? (set)
+:SYSTem:COMMunicate:SERial2:RECeive:SBITs? (set)
+:SYSTem:COMMunicate:SERial2:TRANsmit
+:SYSTem:COMMunicate:SERial2:TRANsmit:BAUD? (set)
+:SYSTem:COMMunicate:SERial2:TRANsmit:BITS? (set)
+:SYSTem:COMMunicate:SERial2:TRANsmit:PACE? (set)
+:SYSTem:COMMunicate:SERial2:TRANsmit:PARity
+:SYSTem:COMMunicate:SERial2:TRANsmit:PARity:TYPE? (set)
+:SYSTem:COMMunicate:SERial2:TRANsmit:SBITs? (set)
+:SYSTem:COMMunicate:SERial:ADDRess?
+:SYSTem:COMMunicate:SERial:CONTrol
+:SYSTem:COMMunicate:SERial:CONTrol:HPACe? (set)
+:SYSTem:COMMunicate:SERial:FDUPlex? (set)
+:SYSTem:COMMunicate:SERial:PRESet (set)
+:SYSTem:COMMunicate:SERial:PROMpt? (set)
+:SYSTem:COMMunicate:SERial:RECeive
+:SYSTem:COMMunicate:SERial:RECeive:BAUD? (set)
+:SYSTem:COMMunicate:SERial:RECeive:BITS? (set)
+:SYSTem:COMMunicate:SERial:RECeive:PACE? (set)
+:SYSTem:COMMunicate:SERial:RECeive:PARity
+:SYSTem:COMMunicate:SERial:RECeive:PARity:TYPE? (set)
+:SYSTem:COMMunicate:SERial:RECeive:SBITs? (set)
+:SYSTem:COMMunicate:SERial:TRANsmit
+:SYSTem:COMMunicate:SERial:TRANsmit:BAUD? (set)
+:SYSTem:COMMunicate:SERial:TRANsmit:BITS? (set)
+:SYSTem:COMMunicate:SERial:TRANsmit:PACE? (set)
+:SYSTem:COMMunicate:SERial:TRANsmit:PARity
+:SYSTem:COMMunicate:SERial:TRANsmit:PARity:TYPE? (set)
+:SYSTem:COMMunicate:SERial:TRANsmit:SBITs? (set)
 :SYSTem:COMMunicate:TOD?
 :SYSTem:COMMunicate:TOD:ADDRess?
 :SYSTem:COMMunicate:TOD:CONTrol

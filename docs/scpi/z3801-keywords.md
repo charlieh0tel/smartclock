@@ -64,7 +64,7 @@ answered `+23`, `:SYSTem:LANGuage?` answered `"PRIMARY"`,
 answered `+9600` -- a second serial port, at a different rate from
 the first, which neither manual mentions.
 
-The whole tree, 595 paths, is `z3801a-3543.txt`, as
+The whole tree, 495 paths, is `z3801a-3543.txt`, as
 `smartclock-cli dump-scpi` reads it (`README.md`).  Three points
 of method: only a child list that some node's `+4` points at is real,
 since searching the region for any window containing a target finds

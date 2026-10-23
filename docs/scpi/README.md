@@ -46,6 +46,9 @@ with a setter.  A node with neither is a branch the parser walks
 through, or a keyword with no handler of its own (`:DIAGnostic:SLOG`,
 which a 58503A answers as a query nonetheless).
 
+A keyword the image holds as two alias nodes is listed once, in mixed
+case (`:SYSTem:COMMunicate:SERial1`; "Alias nodes" below).
+
 `:SOURce` is an optional header (`z3801a.md`): a path under it
 also answers without it, though only the form with it is listed.
 
@@ -84,15 +87,56 @@ and refuses a children slot holding anything but zero or a child list,
 and a handler slot holding anything but zero or an even address in the
 image.
 
+### Alias nodes
+
+A keyword with a numeric suffix is not one keyword pair but two sibling
+nodes, each a whole keyword, its rest empty: the short form and the
+long form, each with the suffix, as `SER1\0\0` and `SERIAL1\0\0`, under
+one parent, with the same handlers and one child list.  So is the same
+keyword without its suffix, `SER\0\0` and `SERIAL\0\0`.  The receivers
+hold `SERial`, `TSTamp`, `ALARm` and `THReshold` this way, the
+Z3815A and the 58503B also `PTHReshold` and `TTHReshold`, the 58503B
+`TCOefficient`, and the Z3801A and Z3805A the `BARRay` to `TARRay`
+keywords under `:DIAGnostic`; the HP 53131A-family counters hold
+`CALCulate`, `INPut`, `EVENt`, `SEQuence`, `CALibration` and others
+so.  Any other keyword is one keyword pair, `SYST\0EM\0`, or one
+whole keyword whose short form is its long, `MATH\0\0`.  The
+parser takes a header that spells either node's keyword, and nothing
+between: a 53132A answers `:CALC1:MATH:STAT?` and
+`:CALCULATE1:MATH:STATE?` and refuses `:CALCU1:MATH:STAT?` with -113
+(`../hp5313x.md`).
+
+`dump-scpi IMAGE` lists such a pair once.  Two whole keywords under one
+parent with the same numeric suffix, or none, where one's stem, the keyword
+without its suffix, is a strict prefix of the other's, are an alias
+pair if they have the same setter and query and lead to the same
+subtree: one child list, or child lists whose paths and handlers are
+equal.  The pair prints as one keyword, the short stem upper case, the
+rest of the long one lower, then the suffix: `SERial1`, `CALCulate`.
+A node takes part in one pair at most, the longest long form first,
+and for it the longest short form: `CALC` pairs with `CALCULATE`,
+`CAL` with `CALIBRATION`.  Two nodes that read as a pair but differ
+in handlers or children, and pair with no other, are listed apart,
+each as the image spells it, and a line on standard error says so; no
+image here has one.  `--handlers`, `--models`, `--c` and `--names`
+keep both nodes, as the image holds them: the handlers file and the
+records name each node by its own path, and the C reproduces the
+image's bytes.
+
+The listing's paths, an alias pair counted once:
+
 | Image | Paths | Query | Set | Root pair at |
 | ----- | ----- | ----- | --- | ------------ |
-| [Z3801A 3543](z3801a-3543.txt) | 595 | 414 | 303 | `0x5cfae` |
-| [Z3805A 3543B](z3805a-3543b.txt) | 595 | 414 | 303 | `0x5d014` |
-| [Z3816A 4001](z3816a-4001.txt) | 902 | 638 | 507 | `0x64ae8` |
-| [58503A 3633](58503a-3633.txt) | 914 | 639 | 519 | `0x60d48` |
-| [58503A 3704](58503a-3704.txt) | 931 | 646 | 533 | `0x61218` |
-| [Z3815A 4010](z3815a-4010.txt) | 965 | 680 | 552 | `0x6cd16` |
-| [58503B 1.01.04](58503b-1.01.04.txt) | 831 | 525 | 477 | `0x68316` |
+| [Z3801A 3543](z3801a-3543.txt) | 495 | 340 | 229 | `0x5cfae` |
+| [Z3805A 3543B](z3805a-3543b.txt) | 495 | 340 | 229 | `0x5d014` |
+| [Z3816A 4001](z3816a-4001.txt) | 766 | 528 | 406 | `0x64ae8` |
+| [58503A 3633](58503a-3633.txt) | 778 | 529 | 418 | `0x60d48` |
+| [58503A 3704](58503a-3704.txt) | 795 | 536 | 432 | `0x61218` |
+| [Z3815A 4010](z3815a-4010.txt) | 823 | 564 | 445 | `0x6cd16` |
+| [58503B 1.01.04](58503b-1.01.04.txt) | 736 | 456 | 414 | `0x68316` |
+
+`models.md` counts by path with both nodes kept, so its counts are
+larger.
 
 ## As C
 

@@ -82,17 +82,16 @@ counterclockwise seen from above: 1 down to 17 leftward along the top,
 | 123 | PC5/ADDR21/CS8 | item 21 |
 | 125 | ADDR23/CS10 | item 21 |
 
-The other parts' pinouts are not in `third_party/`; their public data
-sheets give them, and each must be checked against the data sheet
-before use, and against the board by its ground pin:
+The other parts' pinouts are from their data sheets in
+`third_party/`; check each on the board by its ground pin before use:
 
 | Part | Pins used | Source |
 | ---- | --------- | ------ |
-| U3, SCC68692 PLCC-44 | GND 22, /INTR 24, /CS 39, /IACK 41, VCC 44, /DTACK 10 -- **unconfirmed** | MC68681.pdf 6.1 gives only the 40-pin DIP (GND 20, /IRQ 21, /CS 35, /IACK 37, VCC 40, /DTACK 9).  The PLCC numbers assume the family's usual DIP-to-PLCC map, no-connects at 1, 12, 23 and 34; confirm with the Philips SCC68692 data sheet, and on the board by GND 22 reading 0 Ω to ground and VCC 44 to +5 V. |
-| U28, TL7705A SO-8 | RESIN 2, GND 4, RESET 5 (active high), /RESET 6, VCC 8 | TI TL7705A data sheet |
-| U44 (Z3801A), 74ABT574 SO-20 | /OE 1, D0 to D7 2 to 9, GND 10, CP 11, Q7 to Q0 12 to 19, VCC 20 | Philips 74ABT574 data sheet |
-| U22, U23, U25, U27, 74AC138 | A0 to A2 1 to 3, /E1 4, /E2 5, E3 6, /Y7 7, GND 8, /Y6 to /Y0 9 to 15, VCC 16 | National 74AC138 data sheet |
-| U29, DM74ALS09 | inputs 1, 2, 4, 5, 9, 10, 12, 13; open-collector outputs 3, 6, 8, 11; GND 7, VCC 14 | National DM74ALS09 data sheet |
+| U3, SCC68692 PLCC-44 | GND 22, /INTR 24, /CS 39, /IACK 41, VCC 44, /DTACK 10; no-connects 1, 12, 23 and 34 | `philips/SCC68692.pdf`, Figure 1 (page 3); the 40-pin DIP there, as in MC68681.pdf 6.1, is GND 20, /INTR 21, /CS 35, /IACK 37, VCC 40, /DTACK 9.  On the board, GND 22 reads 0 Ω to ground and VCC 44 to +5 V. |
+| U28, TL7705A SO-8 | /RESIN 2, GND 4, /RESET 5, RESET 6 (active high), VCC 8 | `ti/tl7705a.pdf`, section 5 (page 3) |
+| U44 (Z3801A), 74ABT574A SO-20 | /OE 1, D0 to D7 2 to 9, GND 10, CP 11, Q7 to Q0 12 to 19, VCC 20 | `philips/74ABT574A.pdf`, Table 2 |
+| U22, U23, U25, U27, 74AC138 | A0 to A2 1 to 3, /E1 4, /E2 5, E3 6, /Y7 7, GND 8, /Y6 to /Y0 9 to 15, VCC 16 | `fairchild/74AC138.pdf`, connection diagram (page 1; it names the outputs /O0 to /O7) |
+| U29, DM74ALS09 | inputs 1, 2, 4, 5, 9, 10, 12, 13; open-collector outputs 3, 6, 8, 11; GND 7, VCC 14 | `fairchild/DM74ALS09.pdf`, connection diagram (page 1) |
 
 PLCC pins are numbered from pin 1 at the middle of the edge with the
 chamfered corner nearest it, counterclockwise seen from above.
@@ -233,6 +232,17 @@ the same part.  The unfitted footprints near it on the Z3805A, J2 and
 the one at J3's place on the 58503A, both boxed headers on the 58503A
 (`58503a-interior.jpg`), are the candidates; TXB and RXB leave U3
 through vias and were not followed.  Still needs the bench.
+
+The SCC68692's data sheet (`third_party/philips/SCC68692.pdf`) gives
+TxDB as PLCC pin 13 and RxDB as pin 11.  It is the MC68681's register
+map and commands, with additions the firmware does not use: CR
+commands `0x8` to `0xf` (RTS, the receiver timeout mode and, on
+channel A, power down), where the MC68681 has bit 7 reserved; and
+reads of registers 2 and 10, "do not access" on the MC68681, which
+here toggle the baud-rate and 1X/16X test modes (Table 1, Table 6).
+The firmware issues only commands `0x0` to `0x7` and only writes the
+command registers (`firmware/include/mc68681.h`), so the MC68681's
+description is the board's as far as the firmware goes.
 
 ## 5. The outer oven's enable and readback
 
@@ -873,8 +883,10 @@ output where the 58503A's is unregistered (`firmware/outputs.md`).
 *Photos:* U17 and U18 are both marked TI 66CK05K ABT245A
 (`z3805a-pps-transceivers.jpg`; `z3805a-board-right.jpg`, 1350,2300
 to 2400,3350); U24 is a third of the same lot; U19, U20 and U38 are
-TI 66AL5CT ACT11245.  Public data sheets: TI SN74ABT245 (DIR pin 1,
-/OE pin 19) and 74ACT11245.  On the Z3805A J4's and J5's center pins
+TI 66AL5CT ACT11245.  Data sheets: TI SN74ABT245
+(`third_party/ti/sn74abt245b.pdf`, which covers the SN74ABT245B, the
+same pinout and function as these SN74ABT245As: DIR pin 1, /OE pin
+19) and TI 74ACT11245 (not in `third_party/`).  On the Z3805A J4's and J5's center pins
 are under the cable lugs, and the lines from U17 and U18 toward them
 leave through vias at the transceivers' pins: not followable.  The
 58503A's U17 and U18 are fitted, their markings under a cable
@@ -920,8 +932,10 @@ joints, as for lamps, its parts facing away, and its lamps were not
 counted.  At about the same place on the Z3801A is J13, bare, beside U44,
 a Philips 74ABT574AD (`z3801a-main-board.jpg`, 1600,0 to 2200,500):
 an octal D flip-flop with 3-state outputs, its outputs enabled by
-/OE, and no clear or reset input (public data sheet: Philips
-74ABT574).  An 8-bit register the firmware writes whole, beside the
+/OE, and no clear or reset input (`third_party/philips/
+74ABT574A.pdf`, Table 2; the AD is the 74ABT574A in SO-20).  Its
+feature list does claim a power-on reset, so it may come up cleared
+from a supply cycle, but no pin clears it afterward.  An 8-bit register the firmware writes whole, beside the
 front-panel header, is what chip select 1's latch looks like, so U44
 is the candidate.  On the Z3805A that corner is out of focus in every
 photo (`z3805a-main-board-2026-09-27.jpg`, 2350,2250 to 3150,3072):
@@ -968,7 +982,7 @@ the label, settles it.
    whose B side the D pins reach, and read its A side to U33.  Record
    the bit order: firmware bit n is DATA(n + 8).
 5. *Its enable and any clear.*  Read /OE (pin 1), and /MR if the part
-   has one, to ground, to +5 V, to U28 pins 5 (RESET) and 6
+   has one, to ground, to +5 V, to U28 pins 6 (RESET) and 5
    (/RESET), and to U33 pin 68 (RESET).
 
 Expected:
@@ -977,8 +991,8 @@ Expected:
 | ---------- | ----- |
 | U44 is the latch, strobed by chip select 5 at `0x300000` | CP on a '138 output: /Y0 if its A0 and A1 are ADDR13 and ADDR14 and A2 is a constant or ADDR15; an enable on pin 120; perhaps R/W on another enable |
 | The latch keeps its outputs through a reset (the emulator) | /OE 0 Ω to ground, and no /MR |
-| A reset blanks the lamps | /OE to U28 pin 5 or to a line that follows it; the latch keeps its data, the lamps go dark during reset and come back at the next write |
-| A reset clears the latch | a '273 with /MR on U28 pin 6 or U33 pin 68 |
+| A reset blanks the lamps | /OE to U28 pin 6 or to a line that follows it; the latch keeps its data, the lamps go dark during reset and come back at the next write |
+| A reset clears the latch | a '273 with /MR on U28 pin 5 or U33 pin 68 |
 | Bits 3, 6 and 7 are free | Q3, Q6 and Q7 reach no header pin, or header pins no lamp is on |
 
 Recording: the latch's part, its CP, /OE and any clear with what each
@@ -988,7 +1002,7 @@ select 1" here and in `firmware/outputs.md`.
 
 *Power needed:* only to watch a reset's effect on the lamps, which
 the unpowered reads predict.  It is item 7's external reset: ask
-first, since it restarts the receiver, and pulse U28's RESIN (pin 2)
+first, since it restarts the receiver, and pulse U28's /RESIN (pin 2)
 to ground through a push button, not a probe tip.  Lamp-to-bit by
 watching `lamp_test` at power-up needs only the lid off and a power
 cycle, and the owner's agreement to the cycle.
@@ -1014,7 +1028,8 @@ U33, the MC68331, at the upper right (2100,500 to 3000,1500), with the
 FPGA, the logic and the flash sockets between them; the lines from
 U3's pins drop into vias within a few millimeters, and the visible
 layer carries no line from one part to the other.  /INTR, the 68681's
-IRQ, is an active-low open-drain output (MC68681.pdf, 2.10), so it
+IRQ, is an active-low open-drain output (MC68681.pdf, 2.10; INTRN in
+`third_party/philips/SCC68692.pdf`, pin descriptions), so it
 could share
 /IRQ2 with other sources; U29, a DM74ALS09 quad AND with open-collector
 outputs beside U33 (3250,1050 to 3550,1350), is the kind of part that
@@ -1022,9 +1037,10 @@ would merge such lines, but nothing ties it to /IRQ2.  Still needs the
 continuity check.
 
 *Procedure (power off; "Working on the open Z3805A board" above).*
-U3's PLCC pin numbers are unconfirmed (that section's table); confirm
-GND 22 and VCC 44 first, and if they do not read 0 Ω to ground and
-+5 V, stop and get the SCC68692 data sheet.
+U3's PLCC pin numbers are the SCC68692 data sheet's (that section's
+table); confirm GND 22 and VCC 44 on the board first, and if they do
+not read 0 Ω to ground and +5 V, the pin count is off: stop and
+recount from pin 1.
 
 1. Read U3 pin 24 (/INTR) to U33 pin 76 (PF2/IRQ2).
 2. Read U3 pin 24 to U33 pins 71 to 75 and 77, the other levels.
@@ -1059,9 +1075,11 @@ board's.
 
 *Open item:* the 8 KiB EEPROM on chip select 9 (`0x400000`;
 `firmware/restart.md`, the chip-select table) holds the records and
-the log.  The firmware writes it a byte at a time and polls the byte
-it wrote until it reads back (`eeprom.c`, `0x31136` on), the data
-polling of a parallel EEPROM such as an X28C64 or AT28C64.  The
+the log.  The firmware writes it a byte (`eeprom_write_byte`,
+`0x31128`) or up to a 64-byte page at a time, the page loaded with
+interrupts masked (`eeprom_write_page`, `0x3119e`), and polls the last
+byte it wrote until it reads back (`eeprom.c`), the data polling of a
+parallel EEPROM such as an X28C64 or AT28C64.  The
 harness models that write cycle generically, the polled byte reading
 its complement until the write is done, because the part is not
 identified (the AT28C64B in `bench.md` is on the Oncore engine).  Now
@@ -1077,16 +1095,23 @@ identified, below.
   3050,3000).  It is the board's only parallel EEPROM, so chip select
   9's by elimination; the select line was not traced.
 
-The part's public data sheet (Atmel, now Microchip, AT28C64B) gives
-byte or 1- to 64-byte page writes, a write cycle of at most 10 ms,
-and two ways to see its end: DATA polling, where a read of the last
-byte written returns the complement of its bit 7 until the write is
-done, and toggle bit, bit 6 alternating on each read.  The data sheet
-names bits 7 and 6 only; the harness complements the whole byte,
-which the firmware's whole-byte compare ends on the same way.  Its
-write time and page mode are now the part's to model.  The data sheet
-is not in `third_party/`.
+The part's data sheet (`third_party/microchip/AT28C64B.pdf`,
+Microchip DS20006432B, sections 6.2 to 6.5 and Table 6-4) gives byte
+or 1- to 64-byte page writes, a page being the 64 bytes that share
+A6 to A12; each byte of a page must follow the last within 150 µs
+(tBLC), or the part stops taking bytes and starts the write; a write
+cycle (tWC) of at most 10 ms; and two ways to see its end: DATA
+polling, where a read of the last byte written returns the complement
+of its bit 7 until the write is done, and toggle bit, bit 6
+alternating on each read.  The data sheet names bits 7 and 6 only;
+the harness complements the whole byte, which the firmware's
+whole-byte compare ends on the same way.  The firmware's page writes
+keep within a page and mask interrupts while loading it, as tBLC
+requires.  The part also has software data protection, shipped
+disabled; its command addresses, `0x1555` and `0x0aaa` in the part
+(`0x401555`, `0x400aaa`), appear nowhere in the Z3805A 3543B
+decompiled C, so the firmware is taken not to use it.
 
 *Changes:* the harness's and the emulator's EEPROM model can follow
-the part's data sheet (its write time, page mode, toggle or data
-polling), which would then go in `third_party/`.
+the part's data sheet: its write time, page mode, toggle or data
+polling.

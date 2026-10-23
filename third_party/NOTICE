@@ -1,10 +1,11 @@
 Third-party material
 ====================
 
-The material listed under the headings below -- AMD, Hewlett-Packard,
-the firmware images, Motorola, the Z3801A owner's description, NIST and
-Xilinx -- is not part of this project, and the project's license does not
-apply to any of it.  Each document is the property of its copyright
+The material listed under the headings below -- AMD, Fairchild,
+Hewlett-Packard, the firmware images, Microchip, Motorola, the Z3801A
+owner's description, NIST, Philips, Texas Instruments and Xilinx -- is
+not part of this project, and the project's license does not apply to
+any of it.  Each document is the property of its copyright
 holder.  They are included for reference because they are the
 specification this software is written against: the SCPI command table
 cites them by page, and a claim in the code that is not backed by a
@@ -13,7 +14,8 @@ receiver on the bench is backed by one of these.
 No license to any of this material is granted or implied by its
 presence here.
 
-That material is the manuals and papers in `hp/`, `motorola/`, `amd/`,
+That material is the manuals, papers and data sheets in `hp/`,
+`motorola/`, `amd/`, `fairchild/`, `microchip/`, `philips/`, `ti/`,
 `nist/`, `xilinx/` and `community/`, and in `firmware/` the images (`IMAGE.bin`),
 the console log one was rebuilt from, the EEPROM contents in
 `firmware/eeprom/` and the FPGA bitstreams in `firmware/fpga/`.  The
@@ -93,6 +95,28 @@ In `amd/`.
                              programs: their command cycles, status
                              polling and sector map, which the
                              harness's flash model follows.
+
+Fairchild
+---------
+
+In `fairchild/`.  Logic on the Z3805A board (`docs/z3805a-board.html`),
+whose pinouts the bench procedures in `docs/hardware-investigations.md`
+use.  The board's parts are marked National; these are the copies of
+Fairchild, which took over National's logic lines in 1997, as hosted
+by Fairchild (fairchildsemi.com) and archived by the Internet Archive
+(web.archive.org); National's own could not be found.
+
+  74AC138.pdf                "74AC138, 74ACT138 1-of-8 Decoder/
+                             Demultiplexer", Fairchild DS009925,
+                             revised July 2003, with ON Semiconductor's
+                             cover page; www.fairchildsemi.com/
+                             datasheets/74/74AC138.pdf as archived on
+                             2017-10-16.  U22, U23, U25 and U27.
+  DM74ALS09.pdf              "DM74ALS09 Quad 2-Input AND Gate with Open
+                             Collector Outputs", Fairchild DS006179,
+                             revised February 2000; www.fairchildsemi.com/
+                             ds/DM/DM74ALS09.pdf as archived on
+                             2013-06-04.  U29.
 
 Hewlett-Packard / Agilent / Symmetricom
 ---------------------------------------
@@ -252,6 +276,29 @@ the 58503A 3633's, `0x1309c` in the 3704's, `0x12eee` in the Z3805A
 that follows it in a real answer, as in 3704-C, is read from RAM and is
 not in the image.
 
+Microchip / Atmel
+-----------------
+
+In `microchip/`.
+
+  AT28C64B.pdf               "AT28C64B 64-Kbit (8K x 8) Industrial
+                             Parallel EEPROM with Page Write and
+                             Software Data Protection", Microchip
+                             DS20006432B, revision B, August 2023, which
+                             replaces Atmel document 0270; ww1.microchip.
+                             com/downloads/aemDocuments/documents/MPD/
+                             ProductDocuments/DataSheets/AT28C64B-64-
+                             Kbit-8Kx8-Parallel-EEPROM-with-Page-Write-
+                             and-Software-Data-Protection-DS20006432.pdf.
+                             U4, the EEPROM on chip select 9: its byte
+                             and page writes, write cycle, DATA polling
+                             and toggle bit, which the EEPROM model
+                             follows.  The board's part is an Atmel
+                             AT28C64B-20JC of 1996, 200 ns and
+                             commercial range; this revision lists only
+                             the -15 industrial parts, the write timing
+                             the same.
+
 Motorola
 --------
 
@@ -274,7 +321,17 @@ In `motorola/`.
                              firmware programs the IVR, so the part
                              is a 68681, not a 2681; its maker and
                              exact part are not confirmed from a
-                             board.
+                             board.  The Z3805A's and 58503A's is a
+                             Philips SCC68692 (`philips/`).
+  MC144110.pdf               "MC144110 and MC144111 Digital-to-Analog
+                             Converters with Serial Interface",
+                             Freescale MC144110/D, Rev. 2, January 2005,
+                             as published by NXP, nxp.com/docs/en/
+                             data-sheet/MC144110.pdf, archived by the
+                             Internet Archive on 2026-02-10 (NXP no
+                             longer serves it).  U37, the hex DAC on
+                             QSPI device 2: its 36-bit shift, channel
+                             order and clock timing.
 
 Motorola / Synergy Systems
 --------------------------
@@ -369,6 +426,44 @@ published values the Allan deviation is checked against.
                              Publication 1065, July 2008.  Section 12.4
                              defines a 1000-point test data set and
                              Table 31 gives its deviations.
+
+Philips / NXP
+-------------
+
+In `philips/`.  Neither is served by NXP any longer; both are NXP's
+own files as archived by the Internet Archive.
+
+  SCC68692.pdf               "SCC68692 Dual asynchronous receiver/
+                             transmitter (DUART)", Philips
+                             Semiconductors, product data, 2004 Mar 03,
+                             superseding 1998 Sep 04; nxp.com/docs/en/
+                             data-sheet/SCC68692.pdf as archived on
+                             2025-03-18.  U3, the DUART on chip select
+                             8: its PLCC-44 pinout and what it adds to
+                             the MC68681 (`motorola/MC68681.pdf`).
+  74ABT574A.pdf              "74ABT574A Octal D-type flip-flop;
+                             3-state", NXP product data sheet, Rev. 2,
+                             23 November 2012; www.nxp.com/documents/
+                             data_sheet/74ABT574A.pdf as archived on
+                             2013-07-21.  The Z3801A's U44, a Philips
+                             74ABT574AD, the lamp latch's candidate.
+
+Texas Instruments
+-----------------
+
+In `ti/`.
+
+  sn74abt245b.pdf            "SN54ABT245A, SN74ABT245B Octal Bus
+                             Transceivers with 3-State Outputs", TI
+                             SCBS081L, revised April 2005,
+                             www.ti.com/lit/ds/symlink/sn74abt245b.pdf.
+                             U17, U18 and U24 are SN74ABT245As, which TI
+                             no longer documents; the B has the same
+                             pinout and function.
+  tl7705a.pdf                "TL77xxA Supply-Voltage Supervisors", TI
+                             SLVS028K, revised September 2016,
+                             www.ti.com/lit/ds/symlink/tl7705a.pdf.
+                             U28, the reset generator.
 
 Xilinx
 ------

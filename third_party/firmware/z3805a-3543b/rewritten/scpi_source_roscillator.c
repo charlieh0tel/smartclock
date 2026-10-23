@@ -164,11 +164,12 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe(void* parameters,
                                                          void* response,
                                                          scpi_call* call) {
   scpi_word_parameter* given = parameters;
-  uint8_t disabled = given->value == 0;
+  holdover_limit_setting setting =
+      given->value == 0 ? HOLDOVER_LIMIT_OFF : HOLDOVER_LIMIT_ON;
   request_source source = return_zero(call->input);
 
   pllc_request_a(&scpi_param_SOURce_ROSCillator_HOLDover_LIMit_STATe, 0,
-                 disabled, source);
+                 setting, source);
   return 0;
 }
 
@@ -178,7 +179,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe(void* parameters,
                                                            scpi_call* call) {
   uint16_t* state = response;
 
-  *state = nv_settings.holdover_limit_state == 0;
+  *state = nv_settings.holdover_limit_state == HOLDOVER_LIMIT_ON;
   return 0;
 }
 

@@ -88,15 +88,13 @@ void format_binary(uint32_t value, char* text, int32_t digits) {
  * 1024 ticks (0x184a4). */
 void internal_pps_test(void) {
   static const uint32_t TICKS = 1024;
-  static const int8_t FEWEST = 1;
-  static const int8_t MOST = 3;
 
   selftest.internal_reference = 0;
   uint8_t before = internal_pps_count;
   psos_pause(TICKS);
   /* the count wraps; the difference is signed (0x184d6) */
   int8_t count = (int8_t)(internal_pps_count - before);
-  if (count < FEWEST || count > MOST) {
+  if (count < MONITORS_PPS_LEAST || count > MONITORS_PPS_MOST) {
     selftest.internal_reference |= SELFTEST_FAILED;
   }
 }

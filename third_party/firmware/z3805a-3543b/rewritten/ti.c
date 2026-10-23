@@ -11,11 +11,11 @@
  * "Others".
  *
  * fpga_bits (0x41310), the entries fpga_set_bit and fpga_set_field
- * take: 0 fconf_regs[0]'s mode, mask 0x03 (0 to count, 3 for the
- * interpolator's references); 1 fconf_regs[0]'s preset flag, 0x40; 2
- * fconf_regs[1]'s start flag, 0x01; 3 fconf_regs[1]'s reference flag,
- * 0x02 (0 the low, 1 the high); 4 fconf_regs[1]'s address bits, 0xf8;
- * 5 fconf_regs[3]'s sync, 0x03.  The calls below name each. */
+ * take: 0 fconf_regs[0]'s mode, mask 0x03 (an fpga_mode); 1
+ * fconf_regs[0]'s preset flag, 0x40; 2 fconf_regs[1]'s start flag,
+ * 0x01; 3 fconf_regs[1]'s reference flag, 0x02 (0 the low, 1 the
+ * high); 4 fconf_regs[1]'s address bits, 0xf8; 5 fconf_regs[3]'s sync,
+ * 0x03.  The calls below name each. */
 
 /* Sets the FPGA up again and reloads the counter's registers
  * (0x24976). */
@@ -84,9 +84,10 @@ void interpolator_calibration_init(interpolator_calibration* calibration) {
 /* The counter's configuration's defaults, its registers into fconf_regs
  * too, and the reading marked invalid (0x40ed8). */
 void counter_configuration_init(counter_configuration_fields* configuration) {
-  /* The fields by fpga_bits entry: preset and the high reference
-   * flagged, the rest 0. */
-  uint8_t fields[] = {[FPGA_BIT_PRESET] = TI_PRESET_ON,
+  /* The fields by fpga_bits entry: the count, preset and the high
+   * reference flagged, the rest 0. */
+  uint8_t fields[] = {[FPGA_BIT_MODE] = FPGA_MODE_COUNT,
+                      [FPGA_BIT_PRESET] = TI_PRESET_ON,
                       [FPGA_BIT_REFERENCE] = INTERPOLATOR_REFERENCE_HIGH,
                       [FPGA_BIT_SYNC] = 0};
 
@@ -169,7 +170,7 @@ void counter_arm(interval_reading_fields* reading,
   }
   ti_registers_load_wanted(configuration);
   fpga_set_bit(FPGA_BIT_PRESET, TI_PRESET_ON);
-  fpga_set_field(FPGA_BIT_MODE, 0); /* count */
+  fpga_set_field(FPGA_BIT_MODE, FPGA_MODE_COUNT);
   fpga_set_bit(FPGA_BIT_START, 0);
   fpga_set_field(FPGA_BIT_ADDRESS, 0);
   if (configuration->sync_mode == COUNTER_SYNC_WHEN_WANTED &&
@@ -292,7 +293,7 @@ void counter_read(interval_reading_fields* reading,
 uint32_t interpolator_prepare(void) {
   ti_registers_load_wanted(&counter_configuration);
   fpga_set_bit(FPGA_BIT_PRESET, TI_PRESET_ON);
-  fpga_set_field(FPGA_BIT_MODE, 3); /* the interpolator's references */
+  fpga_set_field(FPGA_BIT_MODE, FPGA_MODE_REFERENCES);
   fpga_set_bit(FPGA_BIT_START, 0);
   fpga_set_field(FPGA_BIT_ADDRESS, 0);
   return 1;

@@ -437,7 +437,7 @@ static pll_stage_result pll_stages_fine_frequency(void) {
                   nv_settings.holdover_limit_threshold);
 
     if (float_compare(limit, fine_ti_max) < 0 && !long_holdover &&
-        nv_settings.holdover_limit_state == 0) {
+        nv_settings.holdover_limit_state == HOLDOVER_LIMIT_ON) {
       task_dmessage("fine - ti too far off\r\n");
       return PLL_STAGE_RESULT_FAILED;
     }
@@ -590,7 +590,7 @@ static void pll_stages_loop_reading(uint8_t valid, float ti,
   }
   if (float_compare(float_absolute_on_stack(ti),
                     nv_settings.holdover_limit_threshold) < 0 ||
-      nv_settings.holdover_limit_state != 0) {
+      nv_settings.holdover_limit_state != HOLDOVER_LIMIT_ON) {
     float_add_in_place(&loop_steering.ti_sum, ti);
     loop_steering.readings++;
   } else if (debug_enabled != 0) {
@@ -1148,7 +1148,8 @@ pll_stage_result holdover(bool same_stage) {
         ~(HOLD_CAUSE_GPS | HOLD_CAUSE_TI_ERROR | HOLD_CAUSE_HARDWARE_FAILURE);
     interval_mean_flag = 1;
     interval_mean = holdover_steering.ti_mean;
-    if (pll.ti_limit_override == 0 && nv_settings.holdover_limit_state == 0 &&
+    if (pll.ti_limit_override == 0 &&
+        nv_settings.holdover_limit_state == HOLDOVER_LIMIT_ON &&
         (char)holdover_within_limit(holdover_ti_max()) == 0) {
       pll.hold_causes |= HOLD_CAUSE_TI_LIMIT_EXCEEDED;
     } else {

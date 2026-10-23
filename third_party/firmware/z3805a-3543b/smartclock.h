@@ -46,6 +46,14 @@ typedef enum __attribute__((packed)) task_debug_flag {
   DMES_UNNAMED = 8,
 } task_debug_flag;
 
+/* preserved_region_fields.restore, a word: whether system_init restores
+ * the region (0x12bb4).  pllp_task sets it each pass; nv_clear_and_reset
+ * and system_init's defaults clear it. */
+typedef enum __attribute__((packed)) preserved_region_restore {
+  PRESERVED_REGION_DISCARD = 0,
+  PRESERVED_REGION_RESTORE = 1,
+} preserved_region_restore;
+
 /* BEGIN PROPOSED ENUMS */
 /* END PROPOSED ENUMS */
 
@@ -2797,8 +2805,7 @@ typedef struct gps_state {
  * names are from how ti.c's routines use them; only the address and
  * sync are in structures.md. */
 typedef enum __attribute__((packed)) fpga_bit_index {
-  FPGA_BIT_MODE = 0,   /* register 0, 0x03: 0 counts, 3 the interpolator's
-                          references (counter_arm, interpolator_prepare) */
+  FPGA_BIT_MODE = 0,   /* register 0, 0x03: an fpga_mode */
   FPGA_BIT_PRESET = 1, /* register 0, 0x40: set around arming; counter_selftest
                           reads a count of 0 under it */
   FPGA_BIT_START = 2,  /* register 1, 0x01: pulsed by interpolator_measure */
@@ -2806,6 +2813,15 @@ typedef enum __attribute__((packed)) fpga_bit_index {
   FPGA_BIT_ADDRESS = 4, /* register 1, 0xf8: the address bits fpga_read uses */
   FPGA_BIT_SYNC = 5,    /* register 3, 0x03: counter_set_sync */
 } fpga_bit_index;
+
+/* The FPGA's mode, fpga_bit_table entry 0, register 0's low two bits,
+ * as fpga_set_field is given it: counter_arm's 0 (0x40c6a) and
+ * interpolator_prepare's 3 (0x401c4) are its only values
+ * (docs/firmware/counter.md, "What is never written"). */
+typedef enum __attribute__((packed)) fpga_mode {
+  FPGA_MODE_COUNT = 0,      /* the count, started by the GPS 1PPS */
+  FPGA_MODE_REFERENCES = 3, /* the interpolator's references */
+} fpga_mode;
 
 /* A register the FPGA reads back through fpga_read and fpga_read_byte,
  * by the number fpga_read puts in fpga_bit_table entry 4's address
@@ -3479,6 +3495,16 @@ typedef struct oncore_message_entry {
       decoders[3]; /* +0x20: gps_response_decode runs them to the first zero */
 } oncore_message_entry;
 
+/* nv_settings.holdover_limit_state, :ROSCillator:HOLDover:LIMit:STATe's
+ * reverse: its setter stores 1 for OFF, 0 for ON (0x2fc26), its query
+ * answers 1 for 0 (0x2fc78), and nv_settings_defaults' is 0.  The loop
+ * tests it against 0 (fine, startup_pll's and pll_normal's readings,
+ * holdover) and the status screen against 1 (status_screen_tfom). */
+typedef enum __attribute__((packed)) holdover_limit_setting {
+  HOLDOVER_LIMIT_ON = 0,  /* the TI limit holds over */
+  HOLDOVER_LIMIT_OFF = 1, /* no limit; the screen prints " Off" */
+} holdover_limit_setting;
+
 /* The settings nv_save keeps in the NV register and nv_restore loads:
  * each field the value of the descriptor in nv_save's tables that points
  * at it, named by the SCPI command whose setter is given that descriptor.
@@ -3490,12 +3516,12 @@ typedef struct nv_settings_fields {
   int32_t douglas_duration;          /* :DOUGlas:DURation */
   uint8_t douglas_duration_infinite; /* :DOUGlas:DURation INFinity */
   uint8_t pad_0f;
-  int32_t holdover_status_threshold; /* :ROSC:HOLD:DUR:STAT:THR */
-  float limit_threshold;             /* :ROSC:LIMit:THReshold */
-  float holdover_limit_threshold;    /* :ROSC:HOLD:LIMit:THReshold */
-  uint8_t holdover_limit_state;      /* :ROSC:HOLD:LIMit:STATe */
-  uint8_t douglas_state;             /* :DOUGlas:STATe */
-  uint8_t field_1e;                  /* only its descriptor refers to it */
+  int32_t holdover_status_threshold;           /* :ROSC:HOLD:DUR:STAT:THR */
+  float limit_threshold;                       /* :ROSC:LIMit:THReshold */
+  float holdover_limit_threshold;              /* :ROSC:HOLD:LIMit:THReshold */
+  holdover_limit_setting holdover_limit_state; /* :ROSC:HOLD:LIMit:STATe */
+  uint8_t douglas_state;                       /* :DOUGlas:STATe */
+  uint8_t field_1e; /* only its descriptor refers to it */
   uint8_t pad_1f;
   int32_t position[3];         /* :GPS:POSition, mas, mas, cm */
   uint32_t ignored_satellites; /* :GPS:SAT:TRAC:IGNore */
@@ -3585,14 +3611,6 @@ typedef struct counter_configuration_fields {
   int32_t interpolator_offset; /* reading_low, subtracted from the reading */
   int32_t interpolator_scale;  /* the spread it is divided by */
 } counter_configuration_fields;
-
-/* preserved_region_fields.restore, a word: whether system_init restores
- * the region (0x12bb4).  pllp_task sets it each pass; nv_clear_and_reset
- * and system_init's defaults clear it. */
-typedef enum __attribute__((packed)) preserved_region_restore {
-  PRESERVED_REGION_DISCARD = 0,
-  PRESERVED_REGION_RESTORE = 1,
-} preserved_region_restore;
 
 /* The battery-backed RAM a warm restart restores, preserved_region at
  * 0x100000: pllp_task copies gps, pll and the 0x19 bytes from 0x101e70
@@ -3737,10 +3755,10 @@ typedef struct status_snapshot_record {
                                   format_si's resolution for the TI (0x4a5de) */
   float interval_mean;         /* +0x016 */
   uint16_t interval_mean_flag; /* +0x01a: the word at interval_mean_flag */
-  uint8_t holdover_waiting_reason;      /* +0x01c */
-  uint8_t holdover_limit_state;         /* +0x01d: nv_settings' */
-  float holdover_limit_threshold;       /* +0x01e: nv_settings' */
-  uint32_t holdover_duration;           /* +0x022: pll's */
+  uint8_t holdover_waiting_reason;             /* +0x01c */
+  holdover_limit_setting holdover_limit_state; /* +0x01d: nv_settings' */
+  float holdover_limit_threshold;              /* +0x01e: nv_settings' */
+  uint32_t holdover_duration;                  /* +0x022: pll's */
   float kenneth_present;                /* +0x026: kenneth_present_get's */
   uint8_t kenneth_present_valid;        /* +0x02a: its result */
   int8_t kenneth_present_resolution;    /* its resolution, a power of ten */

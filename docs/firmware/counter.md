@@ -69,8 +69,8 @@ loads, `fpga_address_sweep_debug`):
 - Register 2 is only written from `counter_configuration.fpga_registers[2]`,
   which no field reaches, so it is always 0.
 - Register 3's bits 2 to 7 are always 0.
-- The mode field takes only 0 (count) and 3 (the interpolator's
-  references).
+- The mode field takes only 0 (count, `FPGA_MODE_COUNT`) and 3 (the
+  interpolator's references, `FPGA_MODE_REFERENCES`): `fpga_mode`.
 - Status bits 2 and 3 are never tested: `counter_wait_ready`'s callers
   pass 1 and 2 only; `fpga_bit_test` (`0x407d4`) is called by nothing.
 

@@ -385,11 +385,6 @@ void internal_pps_monitor_reset(void) {
   internal_pps_started = 0;
 }
 
-/* The internal 1PPS's count between checks: 1 to 3 is alive. */
-static const int8_t MONITORS_PPS_LEAST = 1;
-
-static const int8_t MONITORS_PPS_MOST = 3;
-
 /* Whether the 1PPS monitors may check: no self-test running and the
  * FPGA, which counts the internal 1PPS, loaded. */
 static bool monitors_pps_checkable(void) {

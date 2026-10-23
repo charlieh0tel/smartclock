@@ -699,6 +699,11 @@ struct fpga_configuration_table {
     struct fpga_configuration_entry entries[1];
 };
 
+typedef enum __attribute__((packed)) fpga_mode {
+    FPGA_MODE_COUNT=0,
+    FPGA_MODE_REFERENCES=3
+} fpga_mode;
+
 typedef enum __attribute__((packed)) fpga_register {
     FPGA_REGISTER_STATUS=0,
     FPGA_REGISTER_INTERPOLATOR=16,
@@ -1555,6 +1560,11 @@ struct gpt_registers {
     uint16_t prescl;
 };
 
+typedef enum __attribute__((packed)) holdover_limit_setting {
+    HOLDOVER_LIMIT_ON=0,
+    HOLDOVER_LIMIT_OFF=1
+} holdover_limit_setting;
+
 typedef struct holdover_steering_state holdover_steering_state, *Pholdover_steering_state;
 
 struct holdover_steering_state {
@@ -1817,7 +1827,7 @@ struct nv_settings_fields {
     int32_t holdover_status_threshold;
     float limit_threshold;
     float holdover_limit_threshold;
-    uint8_t holdover_limit_state;
+    enum holdover_limit_setting holdover_limit_state;
     uint8_t douglas_state;
     uint8_t field_1e;
     uint8_t pad_1f;
@@ -3553,7 +3563,7 @@ struct status_snapshot_record {
     float interval_mean;
     uint16_t interval_mean_flag;
     uint8_t holdover_waiting_reason;
-    uint8_t holdover_limit_state;
+    enum holdover_limit_setting holdover_limit_state;
     float holdover_limit_threshold;
     uint32_t holdover_duration;
     float kenneth_present;
@@ -3672,6 +3682,7 @@ _Static_assert(sizeof(fpga_chip) == 1, "fpga_chip");
 _Static_assert(sizeof(fpga_configuration_entry) == 8, "fpga_configuration_entry");
 _Static_assert(sizeof(fpga_configuration_index) == 1, "fpga_configuration_index");
 _Static_assert(sizeof(fpga_configuration_table) == 10, "fpga_configuration_table");
+_Static_assert(sizeof(fpga_mode) == 1, "fpga_mode");
 _Static_assert(sizeof(fpga_register) == 1, "fpga_register");
 _Static_assert(sizeof(frequency_figure_of_merit) == 1, "frequency_figure_of_merit");
 _Static_assert(sizeof(gps_ack_awaited_kind) == 1, "gps_ack_awaited_kind");
@@ -3706,6 +3717,7 @@ _Static_assert(sizeof(gps_status_monitor_state) == 1, "gps_status_monitor_state"
 _Static_assert(sizeof(gps_sync_status) == 1, "gps_sync_status");
 _Static_assert(sizeof(gps_visibility_record) == 124, "gps_visibility_record");
 _Static_assert(sizeof(gpt_registers) == 46, "gpt_registers");
+_Static_assert(sizeof(holdover_limit_setting) == 1, "holdover_limit_setting");
 _Static_assert(sizeof(holdover_steering_state) == 28, "holdover_steering_state");
 _Static_assert(sizeof(identification_record) == 48, "identification_record");
 _Static_assert(sizeof(installer_status_condition) == 1, "installer_status_condition");
@@ -66884,7 +66896,7 @@ override_jmp_00043ae6_case_0:
         HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_MANUAL);
   interval_mean_flag = 1;
   interval_mean = holdover_steering.ti_mean;
-  if ((pll.ti_limit_override == 0) && (nv_settings.holdover_limit_state == 0)) {
+  if ((pll.ti_limit_override == 0) && (nv_settings.holdover_limit_state == HOLDOVER_LIMIT_ON)) {
     fVar1 = holdover_ti_max();
     within_limit = holdover_within_limit(fVar1);
     if (within_limit != 0) goto LAB_00043eb8;
@@ -67154,7 +67166,7 @@ pll_stage_result startup_pll(bool same_stage)
     else {
       fVar1 = float_absolute_on_stack(local_88);
       iVar2 = float_compare(fVar1,nv_settings.holdover_limit_threshold);
-      if ((iVar2 < 0) || (nv_settings.holdover_limit_state != 0)) {
+      if ((iVar2 < 0) || (nv_settings.holdover_limit_state != HOLDOVER_LIMIT_ON)) {
         float_add_in_place(&loop_steering.ti_sum,local_88);
         loop_steering.readings = loop_steering.readings + 1;
       }
@@ -67387,7 +67399,7 @@ pll_stage_result pll_normal(bool same_stage)
     else {
       fVar2 = float_absolute_on_stack(local_82);
       iVar3 = float_compare(fVar2,nv_settings.holdover_limit_threshold);
-      if ((iVar3 < 0) || (nv_settings.holdover_limit_state != 0)) {
+      if ((iVar3 < 0) || (nv_settings.holdover_limit_state != HOLDOVER_LIMIT_ON)) {
         float_add_in_place(&loop_steering.ti_sum,local_82);
         loop_steering.readings = loop_steering.readings + 1;
       }
@@ -68047,7 +68059,7 @@ LAB_00045812:
         iVar1 = float_compare(fVar2,fine_ti_max);
         if (((-1 < iVar1) ||
             ((uint32_t)nv_settings.holdover_measurement_threshold <= pll.holdover_duration)) ||
-           (nv_settings.holdover_limit_state != 0)) goto LAB_00045812;
+           (nv_settings.holdover_limit_state != HOLDOVER_LIMIT_ON)) goto LAB_00045812;
         task_dmessage("fine - ti too far off\r\n");
         pVar5 = PLL_STAGE_RESULT_FAILED;
       }
@@ -72681,7 +72693,7 @@ void status_screen_tfom(uint8_t row,status_snapshot_record *snapshot,char *line)
       sprintf(line,"1PPS TI %s",acStack_26);
       break;
     case 0xf6:
-      if (snapshot->holdover_limit_state == 1) {
+      if (snapshot->holdover_limit_state == HOLDOVER_LIMIT_OFF) {
         pcVar5 = " Off";
         pcVar8 = acStack_26;
         do {

@@ -918,9 +918,8 @@ void status_screen_tfom(uint8_t row, status_snapshot_record* snapshot,
                         char* line) {
   static const char TI_RESOLUTION = -10;
   static const char THRESHOLD_RESOLUTION = -9;
-  static const uint8_t LIMIT_OFF = 1; /* holdover_limit_state: no limit */
-  static const uint8_t ROOMY = 10;    /* TI texts that fit the long name */
-  static const uint8_t CLOSE = 15;    /* the short */
+  static const uint8_t ROOMY = 10; /* TI texts that fit the long name */
+  static const uint8_t CLOSE = 15; /* the short */
   char text[34];
   uint8_t length;
 
@@ -953,7 +952,7 @@ void status_screen_tfom(uint8_t row, status_snapshot_record* snapshot,
       sprintf(line, "1PPS TI %s", text);
       break;
     case SCREEN_ROW_HOLD_THRESHOLD:
-      if (snapshot->holdover_limit_state == LIMIT_OFF) {
+      if (snapshot->holdover_limit_state == HOLDOVER_LIMIT_OFF) {
         libc_copy(text, " Off");
       } else {
         format_si(float_to_double(snapshot->holdover_limit_threshold),

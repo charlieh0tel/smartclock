@@ -1737,7 +1737,12 @@ is `third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c`.
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,
 a Ghidra archive in Git LFS (install `git-lfs` to fetch it): restore it (File, Restore Project, or ghidra-mcp's
 `restore_project`) to work on it, and archive it over that file after
-work worth keeping.  Run over the bare image, imported raw at zero
+work worth keeping.  The archive is made from a bare import done in a
+neutral directory (`/tmp/smartclock/`), since a program records the path
+it was imported from; `tools/ghidra/ArchiveProject.java` archives a
+project without the GUI, as File, Archive Current Project does, run as
+a pre-script of any headless run with the archive to write, the
+projects directory and the project's name.  Run over the bare image, imported raw at zero
 and analyzed, or over the archive, the scripts reproduce the
 checked-in export, sidecar and `.symbols.ld` byte for byte; from the
 repository's root, with `GHIDRA` the install and `PROJECT` a new

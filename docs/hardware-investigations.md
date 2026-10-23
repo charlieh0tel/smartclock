@@ -658,3 +658,29 @@ output where the 58503A's is unregistered (`firmware/outputs.md`).
 
 *Changes:* whether the 58503A can have a second 1 PPS, and whether
 that takes parts or the Z3805A's FPGA bitstream.
+
+## 20. Where the Z3805A's lamp latch goes
+
+*Open item:* the firmware drives five front-panel lamps through the
+latch at `0x300000` (chip select 1): bit 0 Enabled, 1 Active, 2 Alarm,
+4 GPS Lock, 5 Holdover, written whole by `leds_update` (`0x464de`)
+about once a second (`firmware/outputs.md`, "The Z3805A's lamps").
+Bits 3, 6 and 7 drive nothing the firmware names; the 58503A uses 6
+and 7 to select its front-panel device.  The table is the firmware's
+and the Z3801A manual's (097-z3801-01, 1-2 and 2-9), not a board's.
+The board's own bank, the DUART's OP2 to OP7, is item 17's and
+`firmware/outputs.md`'s "The rest of the bank".
+
+- [ ] TODO: on a Z3805A board, find the latch (the part chip select 1
+  strobes) and follow its outputs: which pins reach lamps or a
+  connector, and where bits 3, 6 and 7 go.
+- [ ] TODO: watch the lamps through power-up (`lamp_test` lights all,
+  then each bit in turn, `0x133` ticks apiece), lock, a manual
+  holdover (`:SYNChronization:HOLDover:INITiate`) and an alarm, and
+  set `:LED:ENABled` and `:LED:ACTive` both ways, to tie each bit to a
+  lamp.
+- [ ] TODO: note whether the Z3805A fits all six lamps of the
+  Z3801A's panel, or a header for them, and what Power is wired to.
+
+*Changes:* whether the firmware's lamp table is the board's, and
+whether bits 3, 6 and 7 are free.

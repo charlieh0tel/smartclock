@@ -29,8 +29,7 @@ jobs:
     permissions:
       contents: read
     env:
-      # The one image with an export.  A folder only seeded so far
-      # (names, types) is never reached, whatever the folders present.
+      # The one image with an export.
       IMAGE: z3805a-3543b
       # Named, so that a newer default cannot change the format: 19, 20
       # and 21 format the C alike, and 18 three of the files otherwise.

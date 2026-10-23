@@ -97,7 +97,7 @@ request scripts in `oncore/`.
 - [Oncore message tables](oncore/README.md)
 - [The interval](interval.md)
 - [The time-interval counter](counter.md), the Z3805A's FPGA counter
-  as the firmware drives it, for the emulator
+  as the firmware drives it
 - [The disciplining loop](loop.md)
 - [The ovens](ovens.md)
 - [The debug console](console.md)

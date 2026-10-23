@@ -5,8 +5,7 @@ time-interval counter: the registers it writes and reads, the order it
 writes them in each second, how it waits for a reading and turns it
 into seconds, and what the loop does with the result.  `interval.md`
 covers the same routines in the Z3816A image at a coarser grain; this
-file is for the emulator's model of the counter
-(`crates/smartclock-emu/src/board/fpga.rs`).
+file goes as far as a model of the counter needs.
 
 Addresses are in the Z3805A image.  Function names are those of
 `third_party/firmware/z3805a-3543b/names.tsv`, the code is the
@@ -200,7 +199,7 @@ restart (the firmware reloads it at power-up, and again only when
   so a count below the preset is negative.
 - `interpolator_read` (`0x40c56`) complements `fpga_read_byte(0x10)`;
   `counter_read` keeps the low byte.  The FPGA returns the reading
-  complemented (read; the emulator's model complements it).
+  complemented (read).
 - The fraction is `double_divide_reversed` (`0x5da6a`, A0:A1 / D0:D1):
   `(interpolated − offset)` in A0:A1 over the scale in D0:D1.
   `offset` and `scale` are `counter_configuration` `+0x18` and `+0x1c`.
@@ -270,7 +269,7 @@ the byte's 255, a fraction up to about 1.2.
   has six fields, register 2 is always 0, and register 3's sync field
   only steps or syncs.  The log table names `EXT lock started` and two
   EXT holdovers (`log.c`), but no code logs them.  The 58503A 3704 does
-  write a seventh field (`58503a-3704.md`); this image has none.
+  write a seventh field; this image has none.
 - **The count needs both.**  `counter_wait_ready` gives up when either
   1 PPS is dead, and `interval_wait_reading` does not read the counter
   then.
@@ -313,9 +312,8 @@ at 0.4 s, and the Z3816A's tap would be at 6,067,840, not a round
 count.  Neither is excluded by the code.  The bitstream
 (`outputs.md`, "The FPGA bitstreams") would settle it.
 
-The emulator's `fpga.rs` and `docs/emulator.md` say the GPS 1 PPS stops
-the count; under this reading it starts it.  What the firmware needs
-from the model is the same either way (below).
+What the firmware needs from a model of the counter is the same
+either way (below).
 
 ## The 0.4000003 s calibration
 
@@ -416,7 +414,7 @@ straight to `sync_request`.
 - A step or sync applies before the next count, which begins after the
   preset comes off.
 
-## What the emulator needs
+## What a model needs
 
 Whatever the edges, the firmware sees only this:
 
@@ -430,7 +428,7 @@ Whatever the edges, the firmware sees only this:
 - **Interpolator:** registers `0x10`, `0x11` as the complement of
   `low + 200 × fraction`, fraction the remainder of a tick, with
   `low` the low reference's reading under its present trim.
-- **TI:** t_internal − t_GPS, the GPS 1 PPS from `Board::gps_pps`.
+- **TI:** t_internal − t_GPS.
   For the loop to close, the internal 1 PPS's period must follow the
   EFC, 6.25e−13 of frequency a count, rising with it (inferred).
 - **Sync:** register 3 going 0 then 1 moves the internal 1 PPS 100 ns

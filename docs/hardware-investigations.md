@@ -924,8 +924,7 @@ The board's own bank, the DUART's OP2 to OP7, is item 17's and
 - [ ] TODO: note whether the Z3805A fits all six lamps of the
   Z3801A's panel, or a header for them, and what Power is wired to.
 - [ ] TODO: note whether the latch has a reset or clear input tied to
-  the board's reset, or keeps its outputs through a reset.  The
-  emulator keeps them through a watchdog reset, assuming it has none.
+  the board's reset, or keeps its outputs through a reset.
 
 *Photos:* no part on the Z3805A's component side can be tied to chip
 select 5 by its traces.  The board's lamps are on a separate narrow
@@ -945,8 +944,7 @@ is the candidate.  On the Z3805A that corner is out of focus in every
 photo (`z3805a-main-board-2026-09-27.jpg`, 2350,2250 to 3150,3072):
 neither U44's designator nor its marking was read there.  If U44 is
 the latch, the part itself keeps its outputs through a reset,
-unless its /OE is tied to the reset line, as the emulator assumes it
-is not.  Suggests; the bench still has to tie CS5's decode to U44's
+unless its /OE is tied to the reset line.  Suggests; the bench still has to tie CS5's decode to U44's
 clock and follow its outputs.
 
 *Which select.*  Settled from the image (`firmware/restart.md`, "The
@@ -997,7 +995,7 @@ Expected:
 | Hypothesis | Reads |
 | ---------- | ----- |
 | U44 is the latch, strobed by chip select 5 at `0x300000` | CP on a '138 output: /Y0 if its A0 and A1 are ADDR13 and ADDR14 and A2 is a constant or ADDR15; an enable on pin 120; perhaps R/W on another enable |
-| The latch keeps its outputs through a reset (the emulator) | /OE 0 Ω to ground, and no /MR |
+| The latch keeps its outputs through a reset | /OE 0 Ω to ground, and no /MR |
 | A reset blanks the lamps | /OE to U28 pin 6 or to a line that follows it; the latch keeps its data, the lamps go dark during reset and come back at the next write |
 | A reset clears the latch | a '273 with /MR on U28 pin 5 or U33 pin 68 |
 | Bits 3, 6 and 7 are free | Q3, Q6 and Q7 reach no header pin, or header pins no lamp is on |
@@ -1119,7 +1117,7 @@ disabled; its command addresses, `0x1555` and `0x0aaa` in the part
 (`0x401555`, `0x400aaa`), appear nowhere in the Z3805A 3543B
 decompiled C, so the firmware is taken not to use it.
 
-*Changes:* the harness's and the emulator's EEPROM model can follow
+*Changes:* the harness's EEPROM model can follow
 the part's data sheet: its write time, page mode, toggle or data
 polling.
 

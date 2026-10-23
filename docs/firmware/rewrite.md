@@ -401,6 +401,4 @@ manual consulted (Integrated Systems, *pSOSystem System Calls*,
 000-5070-002) is cited, not included.  The harness runs on Unicorn,
 GPL-2.0-only, as a local tool.
 
-The 58503A 3704 port ([`58503a-3704.md`](58503a-3704.md)) and the
-emulator that boots the image ([`../emulator.md`](../emulator.md)) are
-in progress and not covered here.
+The 58503A 3704 port is in progress and not covered here.

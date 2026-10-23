@@ -41,8 +41,9 @@ from dataclasses import dataclass
 from decompiled_check import RAM, TOOLS, assembly_lines, installer_image
 
 # Where gcc's code is linked: above the chip selects the reset code
-# programs, the last of which, CS10, is at 0x500000 (docs/firmware/README.md),
-# so that a read of the EEPROM at 0x400000 reaches no code.
+# programs, the highest of which, CS4, is at 0x500000
+# (docs/firmware/restart.md, "The chip selects"), so that a read of the
+# EEPROM at 0x400000 reaches no code.
 REBUILT = 0x600000
 # Where gcc's own data is, apart from its code, which the harness keeps
 # read-only: libgcc's _fpCCR and its GOT.

@@ -405,15 +405,18 @@ G is a constant.  `FUN_0004b088` reads the hardware word at
 `0x302000` and passes −1.25 × 10⁻¹² if bit 8 is set and
 −2.125 × 10⁻¹² if clear (`0x4b14c` to `0x4b166`); the Z3801A's image
 passes a fixed +6.25 × 10⁻¹³ (`0x475bc`).  That word is all the
-firmware does with chip select 7: the reset code makes `0x302000` a
-2 KB, 16-bit, read-only block with one wait state (see the chip-select
-table above), `0x4b14c` is the only access to it in the image -- every
-other form of the address was searched for -- and only bit 8 is
-examined.  So it is an input port the processor reads once, when the
+firmware does with chip select 7: the primary's reset code makes
+`0x302000` a 2 KB, 16-bit, read-only block with one wait state
+(CSBAR7 `0x3020`, CSOR7 `0x6870` at `0x24706`, `0x2470e`;
+`README.md`'s chip-select table), `0x4b14c` is the only access to it
+in the image -- every other form of the address was searched for --
+and only bit 8 is examined.  So it is an input port the processor reads once, when the
 loop task starts; what drives bit 8 -- a link, a switch, or a signal
 from the oscillator or DAC board -- is on the board, not in the image.
-The Z3801A's reset code sets no chip select there and its image never
-reads the address.  What the sign of G stands for was not traced.
+In the Z3801A the address is only inside chip select 5's 64 KiB
+window, with the latch and the FPGA (`restart.md`, "The chip
+selects"), and its image never reads it.  What the sign of G stands
+for was not traced.
 
 `FUN_0004b022(G)` stores G, sets both gain constants to 1/G, sets M to
 6.25 × 10⁻¹⁰ / |G|, and sets a second limit at `0x102c3c` to

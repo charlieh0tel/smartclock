@@ -90,7 +90,7 @@ td:first-child { white-space: nowrap; font-family: "IBM Plex Mono", monospace; f
   <div class="notes">
     <div class="card">
       <h2>What the photos cannot show</h2>
-      <p>The board's back side was not photographed.  Most signal lines leave a part's pins through vias within a few millimeters, so no line between two parts was followed end to end on the visible layer: not the DUART's interrupt to the processor, not the 1 PPS buffers to J4 and J5, not chip select 1 to the lamp latch.</p>
+      <p>The board's back side was not photographed.  Most signal lines leave a part's pins through vias within a few millimeters, so no line between two parts was followed end to end on the visible layer: not the DUART's interrupt to the processor, not the 1 PPS buffers to J4 and J5, not chip select 5 to the lamp latch.</p>
       <p>The analog section above the processor, the oscillator's side, is out of focus in every Z3805A photo.</p>
     </div>
     <div class="card">
@@ -132,7 +132,7 @@ const items = [
     d: "The 58503A has an empty socket here.", p: CLOSEUP },
   { x: 43.8, y: 72.3, c: "pri", r: "U11", m: "label: Z3805-80001 U11/2L REV. C, W5",
     id: "Flash, PLCC-32 in a socket",
-    d: "The chip's own marking is under the label.  The firmware programs it with the Am29F010's commands (third_party/amd/Am29F010B.pdf).", p: CLOSEUP },
+    d: "The chip's own marking is under the label.  The firmware programs it with the Am29F010's commands (third_party/amd/Am29F010B.pdf).  The four are two banks of a word's two bytes: CSBOOT reads and CS6 writes 0x000000 to 0x03ffff, CS1 reads and CS7 writes 0x040000 to 0x07ffff (firmware/restart.md, \"The chip selects\"); which pair is which bank was not read.", p: CLOSEUP },
   { x: 55.0, y: 72.3, c: "pri", r: "U12", m: "label: Z3805-80002 U12/1L REV C, W5",
     id: "Flash, PLCC-32 in a socket", d: "As U11.", p: CLOSEUP },
   { x: 64.4, y: 72.3, c: "pri", r: "U13", m: "label: Z3805-80003 U13/2M REV C, W5",
@@ -141,7 +141,7 @@ const items = [
     id: "Flash, PLCC-32 in a socket", d: "As U11.", p: CLOSEUP },
   { x: 87.2, y: 76.0, c: "pri", r: "U15 or U16", m: "M5M51008BFP -70L 609107",
     id: "Mitsubishi M5M51008B, 128 K × 8 static RAM, 70 ns",
-    d: "Both designators are printed beside it; which names it was not settled.  Public data sheet: Mitsubishi M5M51008B.", p: CLOSEUP },
+    d: "Both designators are printed beside it; which names it was not settled.  CS0 reads both RAMs, CS2 writes the upper byte and CS3 the lower, 64 KiB at 0x100000 of the two parts' 256 KiB (firmware/restart.md, \"The chip selects\").  Public data sheet: Mitsubishi M5M51008B.", p: CLOSEUP },
   { x: 87.2, y: 90.9, c: "pri", r: "U8 or U9", m: "M5M51008BFP -70L 609107",
     id: "Mitsubishi M5M51008B, 128 K × 8 static RAM, 70 ns", d: "As the other RAM.", p: CLOSEUP },
   { x: 55.0, y: 97.2, c: "sec", r: "U3", m: "PHILIPS SCC68692C1A44 225A329 9601hA",

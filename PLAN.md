@@ -1922,7 +1922,7 @@ view cannot drift apart.  The library, bottom up:
   the image reads for the cause, which a case at the stack's edge
   checks; and named constants for the unsigned long converter and the
   pllc request's event.  The installer's writes to ROM's range now
-  reach the flash, as chip select 6 makes them on the board; one the
+  reach the flash, as chip selects 6 and 7 make them on the board; one the
   parts ignore, a stray pointer's, ends the call as a write to ROM did.
   Not modeled: the primary's own writes
   to ROM's range, which on the board reach the flash too.

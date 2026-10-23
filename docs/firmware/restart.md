@@ -425,22 +425,98 @@ How S1, a flash-read fault or the CPU's background debug mode might
 reach the installer without a working primary is speculative; see
 [the recovery hypotheses](../hardware-investigations.md#recovery-hypotheses).
 
+## The chip selects
+
+In the Z3805A 3543B the boot code's reset (`boot_reset`, `0x550`)
+programs the MC68331's chip selects at `0x568` to `0x630`, after only
+the SYPCR write, and the primary's reset code (`primary_reset`,
+`0x144ca`) writes the same 26 values again at `0x144d2` to `0x1459a`,
+each `0x13f6a` above the boot code's.  Nothing else in the image
+writes them: the SIM's chip-select addresses, `0xfffa44` to
+`0xfffa77`, appear in its bytes only in those two runs, and the only
+instruction that puts a SIM address in an address register is for
+PICR (`0x1200a`, `0xfffa22`).  The installer's packed records have
+no such write either, so the installer runs on the boot code's map.
+The Z3801A 3543 writes the same values at the same boot addresses
+(primary `0x141da` to `0x142a2`).  The 58503A writes no CSBAR4 or
+CSOR4, so CS4 keeps its reset state, its BYTE field disabled
+(MC68331UM 4.8.4), and 3633's boot code writes CSPAR0 `0x23ff`, the
+CS4 pin a discrete output, PC1 (its primary `0x2bff`).  The Z3816A
+4001 and Z3815A 4010 use another map (`README.md`'s table): there
+`0x300000` is chip select 1, `0x302000` chip select 7 and `0x304000`
+chip select 5, which none of the Z3801A, Z3805A and 58503A has.
+
+*Pins* (CSPAR0 `0x2bff` at `0x568`, CSPAR1 `0x03af` at `0x570`;
+MC68331UM D.3.23, D.3.24, Tables D-8 to D-10, 4.8.1.1).  CSBOOT, CS0
+to CS3, CS6, CS7 and CS10 are 16-bit chip selects, CS4, CS5, CS8 and
+CS9 8-bit ones.  Every pin that could instead be BR, BG, BGACK, FC0
+to FC2 or ADDR19 to ADDR23 is a chip select, so the board's address
+bus is ADDR0 to ADDR18, no function code or bus arbitration line
+leaves the processor, and any further decode on the board takes
+ADDR18 and below inside one chip select.  Pin numbers are the 132-pin
+QFP's (Figure 3-2); CS3 to CS10 as `../hardware-investigations.md`'s
+pin table reads that figure.
+
+*Option fields* (Table D-12, 4.8.1.3).  Every select is asynchronous
+(MODE 0), asserted on the address strobe (STRB 0) and asks no
+autovector (AVEC 0); all but CS10 match supervisor and user space
+(SPACE 11) at any level (IPL 0).
+
+| Window | Select | Pin | CSBAR, CSOR; written at | Port | BYTE, R/W, DSACK | Device |
+| ------ | ------ | --- | ----------------------- | ---- | ---------------- | ------ |
+| `0x000000`--`0x03ffff`, 256 KiB | CSBOOT | 112 | `0x0005`, `0x6870`; `0x578`, `0x580` | 16-bit | both, read, 1 wait | flash, lower bank: two of U11 to U14 (Am29F010, 128 K × 8), a word's two bytes |
+| the same | CS6 | 121, PC3/ADDR19 | `0x0005`, `0x7070`; `0x5e8`, `0x5f0` | 16-bit | both, write, 1 wait | the same parts' writes: command cycles and programming |
+| `0x040000`--`0x07ffff`, 256 KiB | CS1 | 114, BG | `0x0405`, `0x6870`; `0x598`, `0x5a0` | 16-bit | both, read, 1 wait | flash, upper bank: the other two |
+| the same | CS7 | 122, PC4/ADDR20 | `0x0405`, `0x7070`; `0x5f8`, `0x600` | 16-bit | both, write, 1 wait | the upper bank's writes |
+| `0x100000`--`0x10ffff`, 64 KiB | CS0 | 113, BR | `0x1003`, `0x6830`; `0x588`, `0x590` | 16-bit | both, read, 0 wait | RAM, read: the two M5M51008B (128 K × 8), of whose 256 KiB the selects reach 64 KiB |
+| the same | CS2 | 115, BGACK | `0x1003`, `0x5030`; `0x5a8`, `0x5b0` | 16-bit | upper, write, 0 wait | RAM, writes to the upper byte (even addresses, DATA15 to DATA8) |
+| the same | CS3 | 118, PC0/FC0 | `0x1003`, `0x3030`; `0x5b8`, `0x5c0` | 16-bit | lower, write, 0 wait | RAM, writes to the lower byte |
+| `0x200000`--`0x2007ff`, 2 KiB | CS8 | 123, PC5/ADDR21 | `0x2000`, `0x3bf0`; `0x608`, `0x610` | 8-bit | lower, read and write, external | U3, the SCC68692 DUART, driven as a 68681; on an 8-bit port any BYTE but 00 enables the select (4.8.1.3) |
+| `0x300000`--`0x30ffff`, 64 KiB | CS5 | 120, PC2/FC2 | `0x3003`, `0x7b30`; `0x5d8`, `0x5e0` | 8-bit | both, read and write, 12 wait | shared: the latch, the switch byte, the FPGA and the EFC strobe (below) |
+| `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x618`, `0x620` | 8-bit | both, read and write, 3 wait | U4, the AT28C64B EEPROM, by elimination (`../z3805a-board.html`) |
+| `0x500000`--`0x5007ff`, 2 KiB | CS4 | 119, PC1/FC1 | `0x5000`, `0x7830`; `0x5c8`, `0x5d0` | 8-bit | both, read and write, 0 wait | none: no instruction addresses it and no part is tied to it |
+| CPU space, interrupt acknowledge at level 2 | CS10 | 125, ADDR23 | `0xfff8`, `0x2bc4`; `0x628`, `0x630` | 16-bit | lower, read, external; SPACE 00, IPL 2 | the DUART's acknowledge: it answers with the vector its IVR holds, so its interrupt is level 2, vectored |
+
+CS10 is set up as 4.8.3 asks for a 16-bit port: base all ones, a
+2 KiB block so that ADDR[19:16] are compared, read only, the lower
+byte, the one an acknowledge at an odd address is.  Its DSACK is
+external, so the device's acknowledge sets the cycle's width (Table
+4-12); `../hardware-investigations.md` item 21 expects the DUART's
+/DTACK on DSACK0, which would make it an 8-bit cycle on DATA15 to
+DATA8; not yet read on the board.  The flash and
+RAM selects split one window between reads and writes, or between
+the bytes of a word, so that each part's /OE and /WE can take a chip
+select directly; that wiring was not traced.  Which pair of U11 to
+U14 is the lower bank was not read from the photos.
+
+*CS5's window.*  It is the only chip select the image uses for more
+than one device:
+
+| Address | Name | In the Z3805A image | Device |
+| ------- | ---- | ------------------- | ------ |
+| `0x300000` | `lamp_latch` | written whole by `leds_update` (`0x464de`) and `lamp_test` (`0x184ee`) | the lamp latch (`outputs.md`, "The Z3805A's lamps"); U44 the candidate |
+| `0x302000` | -- | never accessed; only 58503A 3633's Oman installer reads it (below) | the switch byte; whether it is S1 is open |
+| `0x304000` | `fpga_port` | read by `fpga_read` (`0x4076a`), written by `fpga_write` (`0x40756`) | U32, the XC3042 FPGA (`interval.md`) |
+| `0x306000` | `efc_strobe` | written 0 by `efc_write` (`0x1f646`) after the EFC goes out to QSPI device 7 | not identified |
+
+The four lie 8 KiB apart, so an access's device is ADDR13 and ADDR14;
+no access in the image sets ADDR15, so the image does not show
+whether `0x308000` to `0x30e000` decode to more devices, alias these,
+or select nothing.  A 74AC138 enabled by CS5 with ADDR13 to ADDR15 on
+its A inputs would give these four as /Y0 to /Y3; which of U22, U23,
+U25 and U27 it is, if any, is for the bench
+(`../hardware-investigations.md` item 20).  Every device in the
+window takes CS5's 12 wait states.  Nothing in the chip selects says
+what the other '138s decode; the QSPI's PCS0 to PCS3 carry a device
+number the board decodes (`structures.md`, "The QSPI's devices"),
+which wants one too.
+
 ## The switch byte at `0x302000`
 
-The Z3801A and Z3805A reset code sets up these chip selects (CSPAR0
-`0x2bff`, CSPAR1 `0x03af`; MC68331UM 4.8).  The 58503A's are the same
-but for CS4, which it lacks.
-
-| Select | Base, size | Port | Access | Use in the firmware |
-| ------ | ---------- | ---- | ------ | ------------------- |
-| BOOT, CS1 | `0x0`, `0x40000`; 256 KiB each | 16-bit | read | flash |
-| CS6, CS7 | the same | 16-bit | write | flash |
-| CS0, CS2, CS3 | `0x100000`, 64 KiB | 16-bit | | RAM |
-| CS4 | `0x500000`, 2 KiB, 0 wait | 8-bit | R/W | none |
-| CS5 | `0x300000`, 64 KiB, 12 wait | 8-bit | R/W | latch at `0x300000`, registers at `0x304000` and `0x306000`, byte at `0x302000` |
-| CS8 | `0x200000`, 2 KiB, external DSACK | 8-bit | | 68681 DUART |
-| CS9 | `0x400000`, 8 KiB | 8-bit | | EEPROM |
-| CS10 | CPU space, interrupt acknowledge at level 2 (CSBAR10 `0xfff8`, CSOR10 `0x2bc4`, `0x628`/`0x630`), external DSACK, lower byte | 8-bit | read | the DUART's acknowledge: it answers with the vector its IVR holds, so its interrupt is level 2, vectored |
+In the Z3801A, Z3805A and 58503A the byte lies in CS5's window ("The
+chip selects", above); in the Z3816A and Z3815A primaries it is chip
+select 7's own block (CSBAR7 `0x3020`, CSOR7 `0x6870`: Z3816A
+`0x24706`, `0x2470e`; Z3815A `0x24bce`, `0x24bd6`).
 
 The only read of `0x302000` in any installer is in the Oman installer
 that 58503A 3633 carries (unpacked address `0x108290`).  The installer

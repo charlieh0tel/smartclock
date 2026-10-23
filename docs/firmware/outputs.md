@@ -43,7 +43,8 @@ says nothing about a unit's hardware.
   the interpolator module (`0x40000` to `0x41000`), the loop's
   interval reads (`0x44fba` to `0x45266`) or a pForth word
   (`0x1b2c4`).
-- The latch at `0x300000` (chip select 1, shadow `0x100e0e`): a 3-bit
+- The latch at `0x300000` (in chip select 5's window with the FPGA,
+  `restart.md`, "The chip selects"; shadow `0x100e0e`): a 3-bit
   field the self-test and health code set (`0x186ac`, `0x23b7e`), and
   bits 6 and 7 the front-panel code sets (`0x53750`).
 - Bits 4 to 2 of PORTGP, which 3633's DUART initialization writes
@@ -65,7 +66,8 @@ output path (`0x13d28`).
 
 097-z3801-01 (1-2, 2-9) gives the Z3801A six front-panel lamps: Power,
 Enabled, Active, Alarm, GPS Lock and Holdover.  In the Z3805A 3543B
-five are bits of the latch at `0x300000` (chip select 1), which
+five are bits of the latch at `0x300000` (in chip select 5's window,
+`restart.md`, "The chip selects"), which
 `leds_update` (`0x464de`) writes whole at the end of each `pllp_task`
 pass, about once a second; Power is not the firmware's.
 

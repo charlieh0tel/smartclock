@@ -27,21 +27,24 @@ CPU as "U33 / MC68331" and the oven's control line as PGP5 (see
 
 The reset code at `0x2466e` sets the SIM up as follows (register
 names and encodings from MC68331UM appendix D; block sizes from Table
-D-11):
+D-11).  This is the Z3816A's map, and the Z3815A's; the Z3801A,
+Z3805A and 58503A use another, `0x300000` to `0x30ffff` one chip
+select, CS5, and the flash two banks (`restart.md`, "The chip
+selects"):
 
 | Register | Value | Meaning |
 | -------- | ----- | ------- |
 | SYPCR `0xfffa21` | `0xcc` | SWE, SWP, HME, BME: software watchdog on and prescaled by 512, halt and bus monitors on (D.3.12) |
 | CSBARBT `0xfffa48` | `0x0006` | boot chip select: `0x000000`, 512 KB -- the ROM this image is |
 | CSBAR0, 2, 3 | `0x1003` | `0x100000`, 64 KB -- the RAM: CSOR0 `0x6830` reads both bytes, CSOR2 `0x5030` writes the upper, CSOR3 `0x3030` the lower |
-| CSBAR1 | `0x3000` | `0x300000`, 2 KB |
-| CSBAR4 | `0xfff8` | `0xfff800`, 2 KB |
+| CSBAR1 | `0x3000` | `0x300000`, 2 KB; CSOR1 `0x7030`: both bytes, write only |
+| CSBAR4 | `0xfff8` | all ones, 2 KB; CSOR4 `0x2bc4`: CPU space, interrupt acknowledge at level 2, external DSACK, as CS10 is in the Z3805A's map |
 | CSBAR5 | `0x3040` | `0x304000`, 2 KB |
 | CSBAR6 | `0x0006` | `0x000000`, 512 KB, CSOR6 `0x7070`: write only -- the boot ROM's own range, for writing it |
 | CSBAR7 | `0x3020` | `0x302000`, 2 KB -- the word G is chosen by; CSOR7 `0x6870`: both bytes, read only, one wait state, and CSPAR1 `0x2af` makes CS7 a 16-bit port (Tables D-9, D-10, D-12) |
 | CSBAR8 | `0x2000` | `0x200000`, 2 KB -- the DUART |
 | CSBAR9 | `0x4001` | `0x400000`, 8 KB -- the checksummed block at `0x400080` |
-| CSBAR10 | `0x5000` | `0x500000`, 2 KB |
+| CSBAR10 | `0x5000` | `0x500000`, 2 KB; CSOR10 `0x7bf0`: both bytes, read and write, external DSACK |
 | SYNCR `0xfffa04` | `0xcf80` | W = 1, X = 1, Y = 15: f = f_ref · 4 · 16 · 8 (section 4.3.2): 16.777 MHz from the 32.768 kHz reference the manual's frequency tables assume (4.3.2, appendix A) |
 | PORTE0 `0xfffa11` | `0x40` | port E bit 6 high; `0x22e30` later pulses it low and high |
 
@@ -1168,13 +1171,14 @@ ends a call, as does a zero divide, which the common exception entry,
 with no task's handler set, records before it spins (`restart.md`,
 "Both end in the watchdog"), and a write to code.  On the board the
 boot chip select is read only (CSORBT `0x6870`), but chip select 6
-is write only over the same range (`CSBAR6`, above), so a stray write
-by the primary reaches the flash's command decoder rather than raising
+is write only over the same range, and in the Z3805A chip select 7
+over the upper bank's, which CS1 reads (`restart.md`, "The chip
+selects"), so a stray write by the primary reaches the flash's command decoder rather than raising
 a bus error; with no unlock cycle before it the flash ignores it.  The
 harness ends it as a bus error, which keeps a stray pointer from
 passing unseen.  The installer's
-writes to ROM's range are to the flash, as chip select 6, write only
-over the boot ROM's range, makes them on the board (`CSBAR6`, above),
+writes to ROM's range are to the flash, as chip selects 6 and 7,
+write only over the two banks' ranges, make them on the board,
 and the flash is modeled (`harness.Flash`): its two pairs of
 AM29F010s, a pair's parts a word's two bytes, each a command state
 machine as AMD's Am29F010B data sheet gives it

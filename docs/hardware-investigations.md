@@ -106,8 +106,10 @@ changes.
 ## 1. The word that chooses G
 
 *Open item:* what drives bit 8 of the read-only port at `0x302000`
-(chip select 7), which picks −1.25 × 10⁻¹² or −2.125 × 10⁻¹² per EFC
-unit on the Z3816A.
+(the Z3816A's chip select 7, CSBAR7 `0x3020` at `0x24706`; in the
+Z3801A and Z3805A the address is in chip select 5's window instead,
+`firmware/restart.md`, "The chip selects"), which picks
+−1.25 × 10⁻¹² or −2.125 × 10⁻¹² per EFC unit on the Z3816A.
 
 - [ ] TODO: needs a Z3816A, which the bench lacks: trace CS7 to the
   device it strobes and what feeds its D8.
@@ -900,7 +902,8 @@ that takes parts or the Z3805A's FPGA bitstream.
 ## 20. Where the Z3805A's lamp latch goes
 
 *Open item:* the firmware drives five front-panel lamps through the
-latch at `0x300000` (chip select 1): bit 0 Enabled, 1 Active, 2 Alarm,
+latch at `0x300000` (in chip select 5's window; `firmware/restart.md`,
+"The chip selects"): bit 0 Enabled, 1 Active, 2 Alarm,
 4 GPS Lock, 5 Holdover, written whole by `leds_update` (`0x464de`)
 about once a second (`firmware/outputs.md`, "The Z3805A's lamps").
 Bits 3, 6 and 7 drive nothing the firmware names; the 58503A uses 6
@@ -909,9 +912,9 @@ and the Z3801A manual's (097-z3801-01, 1-2 and 2-9), not a board's.
 The board's own bank, the DUART's OP2 to OP7, is item 17's and
 `firmware/outputs.md`'s "The rest of the bank".
 
-- [ ] TODO: on a Z3805A board, find the latch (the part chip select 1
-  strobes) and follow its outputs: which pins reach lamps or a
-  connector, and where bits 3, 6 and 7 go.
+- [ ] TODO: on a Z3805A board, find the latch (the part CS5, decoded
+  for `0x300000`, strobes) and follow its outputs: which pins reach
+  lamps or a connector, and where bits 3, 6 and 7 go.
 - [ ] TODO: watch the lamps through power-up (`lamp_test` lights all,
   then each bit in turn, `0x133` ticks apiece), lock, a manual
   holdover (`:SYNChronization:HOLDover:INITiate`) and an alarm, and
@@ -924,7 +927,7 @@ The board's own bank, the DUART's OP2 to OP7, is item 17's and
   emulator keeps them through a watchdog reset, assuming it has none.
 
 *Photos:* no part on the Z3805A's component side can be tied to chip
-select 1 by its traces.  The board's lamps are on a separate narrow
+select 5 by its traces.  The board's lamps are on a separate narrow
 board at the front of the chassis, reached by a ribbon cable from a
 header at the upper right of the main board (`z3805a-interior.jpg`,
 2500,1050 to 4080,2450); that board's back shows a column of two-pad
@@ -936,23 +939,26 @@ an octal D flip-flop with 3-state outputs, its outputs enabled by
 74ABT574A.pdf`, Table 2; the AD is the 74ABT574A in SO-20).  Its
 feature list does claim a power-on reset, so it may come up cleared
 from a supply cycle, but no pin clears it afterward.  An 8-bit register the firmware writes whole, beside the
-front-panel header, is what chip select 1's latch looks like, so U44
+front-panel header, is what the lamp latch looks like, so U44
 is the candidate.  On the Z3805A that corner is out of focus in every
 photo (`z3805a-main-board-2026-09-27.jpg`, 2350,2250 to 3150,3072):
 neither U44's designator nor its marking was read there.  If U44 is
 the latch, the part itself keeps its outputs through a reset,
 unless its /OE is tied to the reset line, as the emulator assumes it
-is not.  Suggests; the bench still has to tie chip select 1 to U44's
+is not.  Suggests; the bench still has to tie CS5's decode to U44's
 clock and follow its outputs.
 
-*Which select.*  The chip-select table in `firmware/restart.md` ("The
-switch byte at `0x302000`") puts `0x300000` in chip select 5's
-64 KiB window, with registers at `0x302000`, `0x304000` and
-`0x306000` in the same window, and makes chip select 1 the upper
-flash bank's read select.  So the latch's strobe is most likely CS5
-(U33 pin 120) decoded on ADDR13 and ADDR14, `0x300000` being the
-window's first 8 KiB; the procedure tests that, and the board, not
-the label, settles it.
+*Which select.*  Settled from the image (`firmware/restart.md`, "The
+chip selects"): the boot and primary reset code (`0x5d8`/`0x5e0`,
+`0x14542`/`0x1454a`) make CS5 (U33 pin 120) 64 KiB at `0x300000`, an
+8-bit port with 12 wait states, holding the latch, the switch byte at
+`0x302000`, the FPGA at `0x304000` and the EFC strobe at `0x306000`,
+8 KiB apart; chip select 1 is the upper flash bank's read select
+(`0x598`/`0x5a0`).  "Chip select 1" for the latch was the Z3816A's
+map, where CSBAR1 is `0x3000`.  So the latch's strobe is CS5 decoded
+on ADDR13 and ADDR14 (and perhaps ADDR15, which no access sets),
+`0x300000` being the window's first 8 KiB; the procedure finds the
+decoder, which the image cannot.
 
 *Procedure (power off; "Working on the open Z3805A board" above).*
 
@@ -997,8 +1003,8 @@ Expected:
 
 Recording: the latch's part, its CP, /OE and any clear with what each
 reads to, a table of bit (D pin, DATA line) to Q pin to header pin to
-lamp, and the lamps fitted.  If it settles the select, correct "chip
-select 1" here and in `firmware/outputs.md`.
+lamp, and the lamps fitted, and the '138 and its A and enable lines
+in `firmware/restart.md`, "The chip selects".
 
 *Power needed:* only to watch a reset's effect on the lamps, which
 the unpowered reads predict.  It is item 7's external reset: ask
@@ -1014,8 +1020,8 @@ whether bits 3, 6 and 7 are free.
 
 *Open item:* the reset code makes chip select 10 the interrupt
 acknowledge for level 2 with external DSACK (CSBAR10 `0xfff8`, CSOR10
-`0x2bc4`, `0x628`/`0x630`; `firmware/restart.md`, the chip-select
-table), and the DUART answers with the vector its IVR holds, so its
+`0x2bc4`, `0x628`/`0x630`; `firmware/restart.md`, "The chip
+selects"), and the DUART answers with the vector its IVR holds, so its
 interrupt should be level 2.  Nothing in the firmware shows the wire.
 
 - [ ] TODO: with power off, check continuity from the 68681's /INTR to
@@ -1074,7 +1080,7 @@ board's.
 ## 22. Which EEPROM the Z3805A carries -- done
 
 *Open item:* the 8 KiB EEPROM on chip select 9 (`0x400000`;
-`firmware/restart.md`, the chip-select table) holds the records and
+`firmware/restart.md`, "The chip selects") holds the records and
 the log.  The firmware writes it a byte (`eeprom_write_byte`,
 `0x31128`) or up to a 64-byte page at a time, the page loaded with
 interrupts masked (`eeprom_write_page`, `0x3119e`), and polls the last

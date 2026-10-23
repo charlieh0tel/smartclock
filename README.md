@@ -35,6 +35,22 @@ measurement, the disciplining loop, the GPS engine interface and the
 FPGA bitstreams.  See [`docs/firmware/`](docs/firmware/) and
 [`docs/scpi/`](docs/scpi/).
 
+### The Z3805A 3543B in C
+
+One image, the Z3805A's 3543B, is read whole as C.  Every C function
+of it and of the installer it unpacks into RAM, 1318 and 236, was
+decompiled by Ghidra through the project's scripts and then written
+again by hand, and each runs in an emulator harness against the
+image's own copy from the same state, its results, memory, kernel
+calls and device accesses compared: all agree but five whose
+difference is the firmware's own or one C cannot express, and one the
+harness cannot run.  The 474 routines that are not C, the pSOS and
+pForth kernels among them, are the image's instructions, reassembled
+byte for byte, and the generated SCPI trees are the ROM's bytes.  It is
+a reading of the firmware, not a buildable or flashable image, and the
+firmware's faults are kept, not fixed.  Method, checks and limits:
+[`docs/firmware/rewrite.md`](docs/firmware/rewrite.md).
+
 ## Status
 
 In daily use, logging continuously.  [`PLAN.md`](PLAN.md) holds the

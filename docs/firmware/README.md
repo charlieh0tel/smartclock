@@ -70,6 +70,9 @@ request scripts in `oncore/`.
 
 ## Contents
 
+- [The Z3805A 3543B in C: method and verification](rewrite.md), the
+  front door to the decompilation, the hand-written C and its checks,
+  which "Decompiling with Ghidra" and "Hand-written C" below detail
 - [The GPS receiver link](gps.md)
 - [Oncore message tables](oncore/README.md)
 - [The interval](interval.md)
@@ -451,8 +454,8 @@ the bytes after it up to the next routine, at most 256, which are its
 tables.  C calls these routines through `int NAME();`.
 `tools/firmware/decompiled_check.py` (`make check-decompiled`)
 assembles them alone and compares every piece with the image, every
-relocated field resolved at the image's own addresses: all 400
-routines, in 418 pieces, are the image's bytes.  `jq 'select(.convention
+relocated field resolved at the image's own addresses: all 474
+routines, in 494 pieces, are the image's bytes.  `jq 'select(.convention
 != "unknown" and .confidence != "run")'` over the sidecar lists what is
 left to confirm.
 
@@ -1470,11 +1473,12 @@ undone and ends the call as one to ROM does.  The primary's other objects,
 from `aging_curve` to the kernel's exchanges, are not given; an SCPI
 handler's record is, from the installer's tree.
 
-In the Z3805A 3543B image this gives 1813 functions, and every one but
-the ten thunks decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a
+In the Z3805A 3543B image this gives 2041 functions, 1700 the
+primary's and 341 the installer's, and every one but the 12 thunks
+decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
-(`docs/scpi/README.md`).  1813 of the functions are named.  The output
+(`docs/scpi/README.md`).  Every function is named.  The output
 is `third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,

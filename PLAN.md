@@ -639,6 +639,13 @@ view cannot drift apart.  The library, bottom up:
   the original side by side in the emulator the libc and app checks use
   (`tools/firmware/`), comparing results and memory.  A failure then
   points at one function, and every step leaves a working image.
+  Narrowed 2026-10-22: the hand-written C is a reading of the image
+  proven function by function, not a working image.  It compiles as one
+  translation unit with the export, and the installer's copies share
+  static bodies with the primary's through headers, which the real
+  installer, alone in RAM, could not; splitting them is not planned
+  unless a runnable image is the aim again
+  (`docs/firmware/rewrite.md`).
 
   Steps, in order:
 

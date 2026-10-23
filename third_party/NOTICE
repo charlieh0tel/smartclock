@@ -52,7 +52,10 @@ Decompiled C, in `firmware/IMAGE/decompiled/`: Ghidra 12.1.4's
 decompiler output for an image, produced by the scripts in
 `tools/ghidra/` (`docs/firmware/README.md`, "Decompiling with Ghidra"):
 machine output, named where the project's notes and tables establish a
-name, not reviewed.  The exporter rewrites the decompiler's text where
+name; the decompiler's own text is not reviewed, and each function it
+reads is kept under `#if 0` beside the hand-written C that replaces it,
+which is reviewed and proven against the image (`docs/firmware/
+rewrite.md`).  The exporter rewrites the decompiler's text where
 its C would not compile or would not do what the image does, and names
 what the tables name (`docs/firmware/README.md`, "Decompiling with
 Ghidra").

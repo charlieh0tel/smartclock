@@ -297,7 +297,11 @@ part of what they change.  In order:
 
 Each path is from the repository's root, and IMAGE is the image's
 name, `z3805a-3543b`: its folder, `third_party/firmware/IMAGE/`, beside
-`IMAGE.bin`, holds everything that image's work is.
+`IMAGE.bin`, holds everything that image's work is.  The make targets
+that check and generate it are `third_party/firmware/Makefile`'s, which
+runs alone, `make -C third_party/firmware TARGET IMAGE=z3805a-3543b`,
+for every image folder without `IMAGE=`, and to which the top Makefile
+hands each target by name, so that `make check-decompiled` is the same.
 
 Optionally, after step 3 or any later one,
 `SmartClockUntyped.java output=third_party/firmware/IMAGE/untyped.tsv`

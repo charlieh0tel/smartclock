@@ -6,7 +6,8 @@ them in place.
 
     python3 -I tools/firmware/report_figures.py REPORT [--write]
 
-make report-decompiled saves its report in target/report-decompiled.txt.
+make report-decompiled saves an image's report in
+target/firmware/IMAGE/report-decompiled.txt.
 Exits nonzero on drift, or if the report lacks the figures.
 """
 

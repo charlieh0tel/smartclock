@@ -6,6 +6,23 @@ the image.  For a reader who knows C and the 68000 family but not this
 project.  Each step is detailed elsewhere; this says what each is and
 where.
 
+## In short
+
+- Every C function in the Z3805A 3543B's ROM, and in the installer it
+  unpacks into RAM, has been rewritten by hand as readable C, starting
+  from Ghidra's decompilation.  The routines that are not C (the pSOS
+  and pForth kernels, exception entries, soft-float register routines)
+  are kept as the image's own assembly, reassembled byte-identical.
+- Each hand-written function is run in Unicorn beside the image's own
+  copy, from the same state, and must leave the same results, RAM,
+  registers and device and kernel calls, in the same order.  1313 of
+  the primary's functions agree, 5 differ for known reasons, none
+  fail; the installer's 236 agree.
+- It is a checked reading of the firmware, not a replacement for it:
+  it does not build a flashable image, and it has never run on a board.
+- Reproduce with `make check-decompiled` and `make report-decompiled`;
+  no Ghidra needed.
+
 ## What it is and is not
 
 - **Is:** every C function of the image (`third_party/firmware/z3805a-3543b.bin`)

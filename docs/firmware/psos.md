@@ -118,6 +118,15 @@ calling `0x16f1e`, which makes the trap and turns D7 into the result,
 and on success storing results through its pointer arguments.  A stub
 that takes a name passes it through `0x16f50`, which packs four
 characters into D0.  The I/O stubs, from `0x173ca`, call `0x16f36`.
+The stubs are assembly a C caller calls (`psos_ident`, `0x16fca`;
+`psos_service_21`, `0x171fe`; `psos_broadcast_x`, `0x1728a`): each
+branches on the Z flag `0x16f1e` returns, set for no error, and stores
+the service's results from the registers the trap left, saving only D7
+and what it uses of D2 and D3.  Their hand-written C (`os.c`) calls the
+binding the same way, in an asm statement that binds the registers
+(`os.h`, `os_psos_call`; README.md, "Hand-written C"), not through a
+wrapper that would hand the results on in globals another task's call
+may overwrite.
 The function check's model of the kernel (`tools/firmware/harness.py`,
 `KERNEL_SERVICES` and `IO_FUNCTIONS`) tabulates the registers each stub
 loads before the trap and stores from after it.  The installer has its

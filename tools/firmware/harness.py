@@ -367,7 +367,12 @@ SERVICE_REGISTER = "D7"
 SERVICE_MASK = 0xFF
 # What a modeled service returns: no error, and in each result register
 # a value no mapped memory lies at, so that one used as an address
-# faults.
+# faults.  Every other register it leaves as it was, as the kernel does:
+# the image's own code keeps values across the trap in registers the
+# binding's convention lists among its results, mutex_acquire its lock
+# in A1 across ident (0x10442 to 0x1044a), so that code calling the
+# binding in asm must name as changed each register the service
+# returns in, and may name more.
 NO_ERROR = 0
 KERNEL_RESULT = 0x6B000000
 # A message's five longs from +4, which the kernel copies from a sender's

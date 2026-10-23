@@ -10,7 +10,10 @@ itself is called with the same arguments in the registers the
 .conventions.jsonl sidecar names.  The two must give the same result,
 leave RAM the same and make the same kernel calls and device writes
 (harness.py), and the wrapper must keep the registers gcc's callee
-saves.
+saves.  A routine that returns in the condition codes or in registers
+beside its result's has no wrapper to run: the hand-written C calls it
+in an asm statement that binds its registers, and the function check
+runs those callers.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/bridge_check.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\

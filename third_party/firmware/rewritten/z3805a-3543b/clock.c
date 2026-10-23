@@ -6,19 +6,25 @@
  * initialization, its tick and its readers and setters
  * (docs/firmware/structures.md, "The clock record"). */
 
-/* Whether the clock record's checksum is good, as clock_record_sum
- * (0x134ca) leaves Z, which its bridge cannot return: the byte sum of
- * +0x02 to +0x32 and its complement. */
+/* Whether the clock record's checksum is good: clock_record_sum
+ * (0x134ca) sums the bytes of +0x02 to +0x32 of the record at A6 and
+ * leaves Z set when the word at +0 is the sum's complement and the sum,
+ * changing D0, D1, A0 and A1.  clock_init holds the record in A6
+ * (0x1390c); here A6 is the frame pointer, so the asm statement saves
+ * it around the call. */
 static bool clock_record_valid(const clock_record* record) {
-  const uint8_t* byte = (const uint8_t*)&record->uptime;
-  const uint8_t* end = (const uint8_t*)&record->gps_utc_offset_valid + 1;
-  uint8_t sum = 0;
+  uint8_t valid;
 
-  while (byte < end) {
-    sum += *byte++;
-  }
-  return record->checksum ==
-         (uint16_t)((uint8_t)~sum << CLOCK_FIELD_BITS | sum);
+  __asm__ volatile(
+      "move.l %%a6,-(%%sp)\n\t"
+      "movea.l %[record],%%a6\n\t"
+      "jsr clock_record_sum\n\t"
+      "movea.l (%%sp)+,%%a6\n\t"
+      "seq %[valid]"
+      : [valid] "=d"(valid)
+      : [record] "a"(record)
+      : "d0", "d1", "a0", "a1", "cc", "memory");
+  return valid != 0;
 }
 
 /* Starts the clock afresh, when forced or its record's checksum fails,

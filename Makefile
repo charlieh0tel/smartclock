@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled check-module-figures module-figures check-pforth-words pforth-words report-decompiled scpi-tree check-scpi-tree clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled check-module-figures module-figures check-pforth-words pforth-words report-decompiled check-report-figures report-figures scpi-tree check-scpi-tree clean deb release release-notes install-service
 
 all: build
 
@@ -208,10 +208,23 @@ check-scpi-tree:
 		third_party/firmware/z3805a-3543b.bin
 
 # How many of the decompiled C functions, as gcc compiles them, agree with
-# the image's own in the emulator; a measure, never a failure.
+# the image's own in the emulator; a measure, never a failure.  The
+# report is saved in REPORT_DECOMPILED for check-report-figures.
+REPORT_DECOMPILED = target/report-decompiled.txt
 report-decompiled:
+	mkdir -p $(dir $(REPORT_DECOMPILED))
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q tools/firmware/function_check.py \
-		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
+		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin \
+		| tee $(REPORT_DECOMPILED)
+
+# Fail if docs/firmware/README.md's figures from the function check --
+# the functions run in user mode alone and in both modes -- are not what
+# the last make report-decompiled saved; report-figures rewrites them.
+check-report-figures:
+	python3 -I tools/firmware/report_figures.py $(REPORT_DECOMPILED)
+
+report-figures:
+	python3 -I tools/firmware/report_figures.py $(REPORT_DECOMPILED) --write
 
 clean:
 	$(CARGO) clean

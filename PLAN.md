@@ -1693,6 +1693,36 @@ view cannot drift apart.  The library, bottom up:
   Left: Setup taking the generated rows, so that Ghidra labels each
   record and the exporter declares it.
 
+  Done 2026-10-22, the bridge rework (option B): a routine that returns
+  in the condition codes or in registers beside its result's --
+  `psos_call`, `psos_io_call`, `clock_record_sum`, `pforth_link_word`,
+  the SCPI engine's number routines and the installer's copies, 11 --
+  has no bridge and no prototype, and the globals the bridges kept them
+  in, `bridge_ccr` and `bridge_result_*`, are gone: another task's
+  kernel call could overwrite them between a call and its caller's
+  reads, where the image keeps them in registers.  The hand-written C
+  calls each in one asm statement that binds its registers and reads a
+  flag with `Scc` (`os.h`'s `os_psos_call` and the like, `clock.c`,
+  `console.c`, `scpi_convert.c`; docs/firmware/README.md, "Hand-written
+  C"); the exporter's passes that wrote the readings' assignments from
+  the globals went with them.  The function check compares the
+  condition codes after a function whose convention returns in them
+  and no other (none it runs has one), prints the user-mode figures
+  `docs/firmware/README.md` gives, which `make check-report-figures`
+  checks against the saved report, and runs `scpi_number_to_double` on
+  numbers that convert, which its generated cases never did.  Planted
+  bugs fail: a wrong result register (`psos_get_block`'s A0 for A1), a
+  wrong `Scc` (`seq` for the binding's `sne`, `sne` for
+  `clock_record_sum`'s and `scpi_bcd_to_double`'s `seq`), and a
+  wrong clobber (D2 an input of the binding's call; D2 to D7 left out
+  of `scpi_bcd_to_double`'s, which the preserved registers show).  A
+  kernel model that changed the registers a service does not return in
+  stopped 32 functions in `mutex_acquire`, which keeps its lock in A1
+  across ident (`0x10442` to `0x1044a`): the kernel keeps them, and the
+  model does.  Left: the soft-float, mutex and other routines that
+  return only their result are still called through their bridges,
+  which hold no state.
+
   Decided 2026-10-22: the pForth kernel's 154 words (183 routines in all) stay the
   image's assembly, exact by construction (check-decompiled proves the
   bytes); the C diagnostic words are tested further by pForth console

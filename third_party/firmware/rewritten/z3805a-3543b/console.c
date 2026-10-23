@@ -87,6 +87,21 @@ static void* console_align(void* address) {
   return (void*)(((uint32_t)address + 1) & ~(uint32_t)1);
 }
 
+/* Links the word at word to the latest in the dictionary and makes it
+ * the latest; past the link.  pforth_link_word (0x1ae36) takes the word
+ * in A4 and leaves A4 past the link it stores, the word in D0 and the
+ * condition codes changed, in registers C has no names for. */
+__attribute__((always_inline)) static inline void* console_link_word(
+    void* word) {
+  register void* console_cursor __asm__("a4") = word;
+
+  __asm__ volatile("jsr pforth_link_word"
+                   : "+r"(console_cursor)
+                   :
+                   : "d0", "cc", "memory");
+  return console_cursor;
+}
+
 /* Copies a code template into the dictionary; forth_compile_code only
  * reads it. */
 static void* console_compile(const uint16_t* code, void* dp) {
@@ -106,7 +121,7 @@ uint32_t pforth_define_word(char* name, uint32_t code, int32_t argument_count,
     return NO_DICTIONARY;
   }
   console_word_header* header =
-      pforth_link_word(console_align(pforth_dictionary_next));
+      console_link_word(console_align(pforth_dictionary_next));
   header->code = NULL;
   header->fields[0] = 0;
   header->fields[1] = 0;

@@ -619,11 +619,22 @@ names it, and C calls it directly.  `enter_supervisor` (`0x13422`) and
 the installer's copy are such: called from a task in user mode, they
 return through trap #7's `rte` on the supervisor stack, from which a
 wrapper would restore the registers it saved on the user stack, and
-pop its own return.  `tools/firmware/bridge_check.py` runs each wrapper in Unicorn
+pop its own return.  A routine whose convention returns in the
+condition codes (`returns=ccr`) or lists `results` in registers beside
+its result's -- the pSOS binding's `psos_call` and `psos_io_call`,
+`clock_record_sum`, `pforth_link_word`, the SCPI engine's number
+routines, and the installer's copies -- has neither wrapper nor
+prototype, only a comment saying so: a wrapper could hand them on only
+in globals, which another task's kernel call may overwrite between the
+call and its caller's reads, where the image keeps them in registers
+(`installer::0x102eda` to `0x102eee`).  The hand-written C calls each in
+an asm statement that binds its registers ("Hand-written C",
+register-bound calls); no generated C calls one.
+`tools/firmware/bridge_check.py` runs each wrapper in Unicorn
 against its routine called directly, from the registers the sidecar
-names, the installer's on the installer's machine (below): of the 98,
-94 give the same result, RAM and effects and keep gcc's callee-saved
-registers, 82 the primary's and 12 the installer's, and 4 are not run:
+names, the installer's on the installer's machine (below): of the 97,
+93 give the same result, RAM and effects and keep gcc's callee-saved
+registers, 74 the primary's and 19 the installer's, and 4 are not run:
 two with a register the sidecar does not name, and
 `kernel_dispatch_io`'s and `installer_kernel_dispatch_io`'s, exception
 handlers that `trap #4` enters with a frame for its `rte`, which a
@@ -687,29 +698,16 @@ decompiler wrote it, and reported.
   call(...)`, and the `CONCAT` reads it; so too a double the decompiler
   reads from D0:D1 after a call whose prototype it took to return
   elsewhere (`sqrt` through `jsr (A4)`).
-- A call to a routine whose convention has `returns=ccr` -- the pSOS
-  bindings, `clock_record_sum` and the SCPI engine's number routines --
-  gives the flags the C reads after it the routine's.  The decompiler
-  takes the call to keep the flags, an `INDIRECT` at the call, so the C
-  tested a compare made before it (`bVar6 = param_4 == 0;` then the
-  call, then `if (bVar6)`); the bridge keeps the condition codes in
-  `bridge_ccr` right after its `jsr`, and each flag variable is
-  assigned its bit after the call, `bVar6 = __ghidra_flag(4)` for Z.  A
-  scan of the image for a call followed by a conditional branch found
-  the routines that return flags; those called only from assembly
-  (the kernel's checks, the Forth words, the boot code) need none.
-- A call to a routine whose convention lists `results` -- the pSOS
-  bindings, `psos_call` and `psos_io_call`, whose services return in D0
-  to D3, A0 and A1 past the error in D7 -- gives the registers the C
-  reads after it the routine's.  The decompiler takes each as a register
-  the call happens to change, `extraout_A0`, which nothing set
-  (`psos_ident`'s id, `psos_my_pid`); the bridge keeps each listed
-  register in `bridge_result_d0` and the like right after its `jsr`,
-  and each `extraout_` variable the C reads is assigned from it after
-  the call, as is an argument in such a register -- the callee's
-  parameter's register -- whose variable the C reads again after the
-  call, which the decompiler takes the call to keep (`psos_io_read`'s
-  length).  A call whose convention has `copies` assigns any variable
+- A call to a routine whose convention has `returns=ccr` or lists
+  `results` is left as the decompiler reads it: the flags it tests and
+  the `extraout_` registers it reads after the call are what it took the
+  call to keep, which the routine does not.  Every caller of one is
+  written by hand (above), so the reading is only a reading, under
+  `#if 0`.  A scan of the image for a call followed by a conditional
+  branch found the routines that return flags; those called only from
+  assembly (the kernel's checks, the Forth words, the boot code) need
+  none.
+- A call whose convention has `copies` assigns any variable
   the C reads a copied register from, a byte piece of it from its own
   bytes (`format_duration`'s `ldiv`), and one to a routine that
   `preserves` a register assigns an `extraout_` variable for it the
@@ -874,6 +872,36 @@ and `status_init` keeps `status_conditions`' in the status model.  A
 returned string is compared by its text, so `error_message_lookup`'s
 table is its own.
 
+A routine that returns in registers C has no names for, the condition
+codes or registers beside its result's, is called in one asm statement
+that binds each argument to its register with a local register
+variable, `register uint32_t d0 __asm__("d0")`, makes the `jsr`, reads
+a flag with `Scc` before anything sets the condition codes again, and
+names as outputs or clobbers every register the routine changes, so
+that what it returns stays in its caller's registers and locals, as in
+the image, and not in globals another task's call could overwrite.
+`os.h` has the pSOS binding's: `os_psos_call` and `os_psos_io_call`,
+and `os_installer_` copies, take the service's registers as an
+`os_registers` and give back D0 to D3, A0 and A1 as the trap left them,
+D7, and `failed`, Z clear, which `sne` reads and the stubs branch on as
+the image's do (`bne` at `0x16fda`); every call is one shape, D0 to D3,
+A0, A1 and D7 in and out, though a service that does not return in D2
+or D3 keeps them, so gcc saves them where the image's stub does not.
+`OS_PACK_NAME` calls `psos_pack_name`, which reads the stub's name at
+`8(A6)`, in line in the stub.  `clock.c` calls `clock_record_sum`
+with the record in A6, the frame pointer, which the statement saves
+around it, `console.c` `pforth_link_word` with A4, and `scpi_convert.c`
+the engine's number routines, a flag `seq` stores in memory where the
+routine changes every data register.  In the image `psos_ident`,
+`psos_service_21`, `psos_broadcast_x` and `scpi_real_to_text` are
+assembly a C caller calls, their callees' flags and registers read in
+place; they stay hand-written C, which says the same.  The harness's
+kernel sets each register a service returns in, so a result register
+left out of an asm statement's outputs shows; it keeps the others, as
+the kernel does: the image's `mutex_acquire` keeps its lock in A1
+across ident (`0x10442` to `0x1044a`), and a model that changed them
+stopped 32 functions there.
+
 The hand-written C and the Ghidra type headers are in Google's style
 (`.clang-format`), with braces on every control statement's body:
 `make format-c` formats them and `make check-format-c` fails on one
@@ -940,8 +968,8 @@ not what an earlier callee left where each copy's frames happen to
 lie.  The EEPROM, chip select 9's 8 KB at
 `0x400000`, is erased for each call and compared after it as RAM is;
 gcc's code is above every chip select so that a read of the EEPROM
-finds no code, and its data, a bridge's `bridge_ccr` and libgcc's
-`_fpCCR`, apart from its code, which the function check keeps
+finds no code, and its data, libgcc's `_fpCCR` among it, apart from
+its code, which the function check keeps
 read-only.  libgcc's float routines are PIC and reach `_fpCCR` through
 the GOT, which the link gives an output section of its own, as ld's
 default script does (ld takes a GOT entry's offset from that section's
@@ -963,7 +991,8 @@ in; a call records the service and those registers, a message by the
 20 bytes from its `+4` the kernel copies and a write's buffer by its
 contents, since a caller's buffer on its stack lies where its own
 frame puts it, and returns no error and `0x6b000000`, an address
-nothing is mapped at, in each result register; `request_x` fills its
+nothing is mapped at, in each result register, keeping the others;
+`request_x` fills its
 buffer with that value, a read reads nothing and a write writes all it
 is given.  But a case starts with an id, another such address, in
 `spoo_exchange` and `pllc_exchange`, as `root_task`'s creates leave
@@ -1089,7 +1118,11 @@ where it counts to a count of the function's (`COUNTED_LOOPS`):
 loop counting by more passes it.  Two calls that end the same way are
 compared as if they had returned, but for their result, and both
 leave the status register's system byte, its supervisor bit and
-interrupt mask, the same.  Two calls that return leave alike the
+interrupt mask, the same.  Two that return leave its condition codes
+the same too where the function's sidecar row returns in them
+(`returns=ccr`), and nowhere else: no function the harness runs has
+one now, the routines that do being register routines, not C
+(`condition codes compared` in the report).  Two calls that return leave alike the
 registers the function's convention keeps for its caller
 (`harness.preserved_registers`): a C function's, the m68k C
 convention's D2 to D7 and A2 to A6, and those its sidecar row's
@@ -1120,9 +1153,9 @@ task that opens with service 33 and runs on in supervisor mode,
 installer's `spoo_task`, and a function `spoo_run` (`0x20d66`) is
 given, which it calls in its caller's mode before the spool task
 starts and sends to the spool task after (`console_init`, from
-`root_task` and spooled from `scpi_task`).  Of the functions run, 606
-of the primary's and 59 of the installer's run in user mode alone, and
-225 and 20 in both.  The image refers to a handler only from its node's setter
+`root_task` and spooled from `scpi_task`).  Of the functions run, 605
+of the primary's and 55 of the installer's run in user mode alone, and
+225 and 23 in both, figures the report prints and `make check-report-figures` checks against the last one it saved.  The image refers to a handler only from its node's setter
 or query slot, 499 slots in 459 nodes, which only `scpi_call_handler`
 (`0x29642`) calls through, from `scpi_interpret`, from `scpi_task`: no
 console word, spooled request or timer reaches one.  A case of one whose copies both stop at a

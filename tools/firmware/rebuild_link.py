@@ -44,7 +44,7 @@ from decompiled_check import RAM, TOOLS, assembly_lines, installer_image
 # so that a read of the EEPROM at 0x400000 reaches no code.
 REBUILT = 0x600000
 # Where gcc's own data is, apart from its code, which the harness keeps
-# read-only: a bridge's bridge_ccr, libgcc's _fpCCR and its GOT.
+# read-only: libgcc's _fpCCR and its GOT.
 REBUILT_DATA = 0x6F0000
 # The rebuilt image's sections the harness loads: its code, its data
 # and, after the data, the GOT.
@@ -136,7 +136,7 @@ def link(c_path: str, cflags: list[str], work: str, elf_path: str, extra: str = 
     open(c_only, "w").write(CODE_BLOCK.sub("", c) + extra)
     # the hand-written C it includes is named from the C file's own folder
     run(TOOLS + "gcc", *cflags, "-I", os.path.dirname(os.path.abspath(c_path)), "-c", "-o", compiled, c_only)
-    # what the C defines that is not a function, a bridge's bridge_ccr
+    # what the C defines that is not a function: the data the assembly may name
     c_data = {
         name for kind, name in re.findall(r"^\S* ([BCDRbdr]) (\S+)$", run(TOOLS + "nm", compiled), re.M)
     }

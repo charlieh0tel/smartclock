@@ -228,12 +228,6 @@ public class SmartClockExportC extends GhidraScript {
 			((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
 		#define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
 		#define __ghidra_also(var, v, n) (var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, v, n)))
-		/* the condition codes a routine that returns them left, as its bridge keeps them */
-		unsigned short bridge_ccr;
-		/* the registers a routine also leaves results in, as its bridge keeps them */
-		unsigned long bridge_result_d0, bridge_result_d1, bridge_result_d2,
-			bridge_result_d3, bridge_result_a0, bridge_result_a1;
-		#define __ghidra_flag(bit) ((bridge_ccr & (bit)) != 0)
 		#define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
 		#define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
 		#define CARRY4(a, b) ((unsigned int)((a) + (b)) < (unsigned int)(a))
@@ -261,6 +255,7 @@ public class SmartClockExportC extends GhidraScript {
 		decompiler.openProgram(currentProgram);
 		int written = 0;
 		int bridged = 0;
+		int bound = 0;
 		int failed = 0;
 		try (PrintWriter writer = new PrintWriter(output)) {
 			writer.println("/* " + currentProgram.getName() + ", "
@@ -308,7 +303,12 @@ public class SmartClockExportC extends GhidraScript {
 						else {
 							prototypes.add(bridge.prototype());
 							functions.append(bridge.assembly());
-							bridged++;
+							if (bridge.prototype() == null) {
+								bound++;
+							}
+							else {
+								bridged++;
+							}
 						}
 					}
 					else {
@@ -360,7 +360,7 @@ public class SmartClockExportC extends GhidraScript {
 		println("decompiled " + written + ", failed " + failed + " -> " + output);
 		println(standardTypes(output));
 		println(reinterpretConversions(output));
-		println("bridged for C: " + bridged);
+		println("bridged for C: " + bridged + ", bound in asm by the hand-written C: " + bound);
 		println("conventions recorded for " + recorded + " -> " + sidecar);
 	}
 
@@ -520,7 +520,11 @@ public class SmartClockExportC extends GhidraScript {
 		return bytes == 1 ? "signed char" : bytes == 2 ? "short" : bytes <= 4 ? "int" : "long long";
 	}
 
-	/** A routine's C prototype and the wrapper that calls it from gcc's convention. */
+	/**
+	 * A routine's C prototype and the wrapper that calls it from gcc's
+	 * convention; for a routine C calls only in asm, no prototype, null,
+	 * and a comment saying so.
+	 */
 	private record Bridge(String prototype, String assembly) {}
 
 	/** The prefix of a wrapper's symbol: c_ and the routine's name. */
@@ -550,14 +554,25 @@ public class SmartClockExportC extends GhidraScript {
 	 * directly, so that it returns on whichever stack it returns on, as in
 	 * the image.  enter_supervisor (0x13422), called from a task in user
 	 * mode, returns through trap #7's rte on the supervisor stack, from
-	 * which a wrapper would restore SAVED and pop its own return.  Null
-	 * unless every argument and the result are in registers.
+	 * which a wrapper would restore SAVED and pop its own return.  A
+	 * routine that returns in the condition codes or leaves results in
+	 * registers beside its result's has no wrapper and no prototype: a
+	 * wrapper could keep them only in globals, which another task's call
+	 * may overwrite before its caller reads them, so the hand-written C
+	 * calls it in an asm statement that binds its registers, its results
+	 * staying in its caller's registers as in the image
+	 * (docs/firmware/README.md, "Hand-written C").  Null unless every argument
+	 * and the result are in registers.
 	 */
 	private Bridge bridge(Function function) {
 		if (!function.hasCustomVariableStorage()) {
 			return null;
 		}
 		String name = function.getName();
+		if (returnsConditionCodes(function) || !results(function).isEmpty()) {
+			return new Bridge(null, "/* " + name + " returns in registers C has no names for:"
+				+ " no bridge, the hand-written C binds them */\n");
+		}
 		List<String> parameters = new ArrayList<>();
 		StringBuilder load = new StringBuilder();
 		int offset = SAVED_BYTES + RETURN_ADDRESS_BYTES;
@@ -621,15 +636,10 @@ public class SmartClockExportC extends GhidraScript {
 				return null;
 			}
 		}
-		// the condition codes first, before the moves that give the result set them
-		String keep = returnsConditionCodes(function) ? line("move.w %ccr," + CONDITION_CODES) : "";
-		for (String register : results(function)) {
-			keep += line("move.l %" + register.toLowerCase() + "," + RESULT_PREFIX + register.toLowerCase());
-		}
 		String declared = result + (result.endsWith("*") ? "" : " ") + name + "("
 			+ (parameters.isEmpty() ? "void" : String.join(", ", parameters)) + ")";
 		Set<String> preserved = preserves(function);
-		if (load.isEmpty() && give.isEmpty() && keep.isEmpty()
+		if (load.isEmpty() && give.isEmpty()
 			&& (preserved.contains(ALL_PRESERVED) || preserved.containsAll(SAVED_REGISTERS))) {
 			return new Bridge(declared + ";",
 				"/* " + name + " in gcc's convention already: C calls it directly */\n");
@@ -643,7 +653,7 @@ public class SmartClockExportC extends GhidraScript {
 			.append(quoted("\t.globl " + wrapper)).append(quoted("\t.type " + wrapper + ", @function"))
 			.append(quoted(wrapper + ":"))
 			.append(quoted("\tmovem.l " + SAVED + ",-(%sp)"));
-		for (String part : (load.toString() + line("jsr " + name) + keep + give
+		for (String part : (load.toString() + line("jsr " + name) + give
 				+ line("movem.l (%sp)+," + SAVED) + line("rts")).split("\n")) {
 			assembly.append(quoted(part));
 		}
@@ -1433,8 +1443,6 @@ public class SmartClockExportC extends GhidraScript {
 		unsignedEqualities(tokens, edits);
 		RegisterPairs pairs = registerPairs(tokens, results.getHighFunction());
 		resultCopies(tokens, results.getHighFunction(), pairs.names(), edits);
-		conditionCodeResults(tokens, results.getHighFunction(), edits);
-		registerResults(tokens, results.getHighFunction(), edits);
 		preservedRegisters(tokens, results.getHighFunction(), edits);
 		switchLabels(tokens, edits);
 		byteConstants(tokens, edits);
@@ -2392,18 +2400,11 @@ public class SmartClockExportC extends GhidraScript {
 		}
 	}
 
-	/** Where a bridge keeps the condition codes its routine returns, a C global. */
-	private static final String CONDITION_CODES = "bridge_ccr";
 	private static final Pattern RETURNS_CCR = Pattern.compile("\"returns\":\"ccr\"");
 	private static final Pattern PRESERVES = Pattern.compile("\"preserves\":\\[([^\\]]*)\\]");
 	/** What a convention's preserves holds for every register. */
 	private static final String ALL_PRESERVED = "all";
 	private static final Pattern RESULTS = Pattern.compile("\"results\":\\[([^\\]]*)\\]");
-	/** Where a bridge keeps a register its routine also leaves a result in, by its name. */
-	private static final String RESULT_PREFIX = "bridge_result_";
-	/** Each condition-code flag's register, by its bit in the CCR. */
-	private static final Map<String, Integer> FLAG_BITS =
-		Map.of("CF", 0x1, "VF", 0x2, "ZF", 0x4, "NF", 0x8, "XF", 0x10);
 
 	/** Whether the function's trusted convention says it returns its result in the condition codes. */
 	private boolean returnsConditionCodes(Function function) {
@@ -2411,101 +2412,6 @@ public class SmartClockExportC extends GhidraScript {
 		Matcher confidence = convention == null ? null : CONFIDENCE.matcher(convention);
 		return convention != null && RETURNS_CCR.matcher(convention).find() && confidence.find()
 			&& TRUSTED.contains(confidence.group(1));
-	}
-
-	/**
-	 * Gives each flag the C reads after a call to a routine that returns
-	 * its result in the condition codes the routine's: the decompiler takes
-	 * the call to keep the flags it had before, an INDIRECT at the call, so
-	 * the C tests a compare made before it.  After the call each such
-	 * variable is assigned its flag from bridge_ccr, where the routine's
-	 * bridge keeps the condition codes.
-	 */
-	private void conditionCodeResults(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
-		for (int i = 0; i < tokens.size(); i++) {
-			PcodeOp call = tokens.get(i).getPcodeOp();
-			if (!(tokens.get(i) instanceof ClangFuncNameToken) || call == null
-				|| call.getOpcode() != PcodeOp.CALL
-				|| !returnsConditionCodes(getFunctionAt(call.getInput(0).getAddress()))) {
-				continue;
-			}
-			List<String> assignments = new ArrayList<>();
-			for (PcodeOp op : indirects(high, call)) {
-				Register register = currentProgram.getRegister(op.getOutput());
-				Integer bit = register == null ? null : FLAG_BITS.get(register.getName());
-				String name = namedHigh(op.getOutput());
-				if (bit != null && name != null) {
-					assignments.add(name + " = __ghidra_flag(" + bit + ")");
-				}
-			}
-			assignAfterCall(tokens, edits, i, call, assignments);
-		}
-	}
-
-	/**
-	 * Gives each register the C reads after a call to a routine whose
-	 * convention lists it among its results the routine's: the decompiler
-	 * takes it as a register the call happens to change, extraout_, which
-	 * nothing sets (psos_ident's id in A0, psos_get_v's value in D1).
-	 * After the call each is assigned from bridge_result_REGISTER, where
-	 * the routine's bridge keeps it, a narrower one its low bytes.
-	 */
-	private void registerResults(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
-		for (int i = 0; i < tokens.size(); i++) {
-			PcodeOp call = tokens.get(i).getPcodeOp();
-			if (!(tokens.get(i) instanceof ClangFuncNameToken) || call == null
-				|| call.getOpcode() != PcodeOp.CALL) {
-				continue;
-			}
-			List<String> results = results(getFunctionAt(call.getInput(0).getAddress()));
-			List<String> assignments = new ArrayList<>();
-			for (PcodeOp op : indirects(high, call)) {
-				Register register = currentProgram.getRegister(op.getOutput());
-				String base = register == null ? null : register.getBaseRegister().getName();
-				String name = namedHigh(op.getOutput());
-				if (base != null && results.contains(base) && name != null && name.startsWith(EXTRA_OUTPUT)) {
-					assignments.add(name + " = (__typeof__(" + name + "))" + RESULT_PREFIX + base.toLowerCase());
-				}
-			}
-			// an argument in a result's register the decompiler takes the
-			// call to keep, read again after it (psos_io_read's length in D2)
-			Function callee = getFunctionAt(call.getInput(0).getAddress());
-			for (int k = 1; k < call.getNumInputs(); k++) {
-				Varnode argument = call.getInput(k);
-				Parameter parameter = callee == null ? null : callee.getParameter(k - 1);
-				Register register = parameter == null ? null : parameter.getRegister();
-				String base = register == null ? null : register.getBaseRegister().getName();
-				String name = namedHigh(argument);
-				String assignment = name + " = (__typeof__(" + name + "))" + RESULT_PREFIX
-					+ (base == null ? "" : base.toLowerCase());
-				if (base != null && results.contains(base) && name != null && readAfter(argument, call)
-					&& !assignments.contains(assignment)) {
-					assignments.add(assignment);
-				}
-			}
-			assignAfterCall(tokens, edits, i, call, assignments);
-		}
-	}
-
-	/**
-	 * Whether the variable a call is given is read after the call: by an
-	 * operation at a later address, other than the call and the INDIRECTs
-	 * that carry it past calls, on any instance of the variable.
-	 */
-	private static boolean readAfter(Varnode value, PcodeOp call) {
-		Address at = call.getSeqnum().getTarget();
-		HighVariable variable = value.getHigh();
-		Varnode[] instances = variable == null ? new Varnode[] { value } : variable.getInstances();
-		for (Varnode instance : instances) {
-			for (Iterator<PcodeOp> readers = instance.getDescendants(); readers.hasNext();) {
-				PcodeOp reader = readers.next();
-				if (reader != call && reader.getOpcode() != PcodeOp.INDIRECT
-					&& reader.getSeqnum().getTarget().compareTo(at) > 0) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	/**

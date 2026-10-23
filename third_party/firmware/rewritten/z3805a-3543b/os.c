@@ -23,18 +23,18 @@ void psos_config_init(void) {
 }
 
 /* The binding's stubs (0x16f74 up).  Each loads the registers its
- * service reads, makes it through psos_call, whose result is 0 or the
- * service in the high byte and its error in the low, and stores the
- * registers it returns, which psos_call's bridge keeps in
- * bridge_result_d0 to bridge_result_a1.  A register a service does
- * not read is passed as 0.  psos_pack_name packs the name the stub was
- * given, its caller's first argument. */
+ * service reads and makes it through psos_call, in one asm statement
+ * (os.h, os_psos_call), whose D7 is 0 or the service in the high byte
+ * and its error in the low, and stores from the registers it returns,
+ * on success, Z set, as the image's stubs branch on it.  A register a
+ * service does not read is passed as 0.  psos_pack_name packs the name
+ * the stub was given, its caller's first argument. */
 
 /* The kernel's version, which service 0 returns in D7 where the other
  * services return their error: 0x3341 (docs/firmware/psos.md); nothing
  * calls it (0x16f68). */
 uint16_t psos_version(void) {
-  return psos_call(PSOS_SERVICE_VERSION, 0, 0, 0, 0, NULL, NULL);
+  return os_psos_call(PSOS_SERVICE_VERSION, (os_registers){0}).error;
 }
 
 /* Creates a task of a name and priority, its supervisor and user
@@ -43,13 +43,17 @@ uint16_t psos_version(void) {
 uint32_t psos_create(char* name, uint32_t a, uint32_t priority,
                      uint32_t stack_a, uint32_t stack_b, void* e,
                      uint32_t* task) {
-  uint32_t error = psos_call(PSOS_SERVICE_SPAWN, psos_pack_name(), a, priority,
-                             os_stack_sizes(stack_a, stack_b), e, NULL);
+  const os_registers created = os_psos_call(
+      PSOS_SERVICE_SPAWN, (os_registers){.d0 = OS_PACK_NAME("psos_pack_name"),
+                                         .d1 = a,
+                                         .d2 = priority,
+                                         .d3 = os_stack_sizes(stack_a, stack_b),
+                                         .a0 = e});
 
-  if (error == 0 && task != NULL) {
-    *task = bridge_result_a0;
+  if (!created.failed && task != NULL) {
+    *task = (uint32_t)created.a0;
   }
-  return error;
+  return created.error;
 }
 
 /* Starts a created task at its entry (0x16fae).  The image's stub
@@ -57,185 +61,207 @@ uint32_t psos_create(char* name, uint32_t a, uint32_t priority,
  * reads only the task and the entry (0x14ea0) and takes no mode: the
  * task starts in user mode (docs/firmware/psos.md, "Services"). */
 uint32_t psos_start(uint32_t task, void* entry) {
-  return psos_call(PSOS_SERVICE_START, 0, 0, 0, 0, (void*)task, entry);
+  return os_psos_call(PSOS_SERVICE_START,
+                      (os_registers){.a0 = (void*)task, .a1 = entry})
+      .error;
 }
 
 /* Looks a task up by name; on success its id and a byte (0x16fca). */
 uint32_t psos_ident(char* name, uint32_t* id, uint8_t* byte) {
-  uint32_t error =
-      psos_call(PSOS_SERVICE_IDENT, psos_pack_name(), 0, 0, 0, NULL, NULL);
+  const os_registers found = os_psos_call(
+      PSOS_SERVICE_IDENT, (os_registers){.d0 = OS_PACK_NAME("psos_pack_name")});
 
-  if (error == 0) {
+  if (!found.failed) {
     if (id != NULL) {
-      *id = bridge_result_a0;
+      *id = (uint32_t)found.a0;
     }
     if (byte != NULL) {
-      *byte = bridge_result_d0;
+      *byte = found.d0;
     }
   }
-  return error;
+  return found.error;
 }
 
 /* The running task's id, ident's for no name (0x16ff8). */
 uint32_t psos_my_pid(void) {
-  psos_call(PSOS_SERVICE_IDENT, 0, 0, 0, 0, NULL, NULL);
-  return bridge_result_a0;
+  return (uint32_t)os_psos_call(PSOS_SERVICE_IDENT, (os_registers){0}).a0;
 }
 
 /* Deletes a task (0x17008). */
 uint32_t psos_delete(uint32_t task) {
-  return psos_call(PSOS_SERVICE_DELETE, 0, 0, 0, 0, (void*)task, NULL);
+  return os_psos_call(PSOS_SERVICE_DELETE, (os_registers){.a0 = (void*)task})
+      .error;
 }
 
 /* Suspends a task (0x17020). */
 uint32_t psos_suspend(uint32_t task) {
-  return psos_call(PSOS_SERVICE_SUSPEND, 0, 0, 0, 0, (void*)task, NULL);
+  return os_psos_call(PSOS_SERVICE_SUSPEND, (os_registers){.a0 = (void*)task})
+      .error;
 }
 
 /* Resumes a task (0x17038). */
 uint32_t psos_resume(uint32_t task) {
-  return psos_call(PSOS_SERVICE_RESUME, 0, 0, 0, 0, (void*)task, NULL);
+  return os_psos_call(PSOS_SERVICE_RESUME, (os_registers){.a0 = (void*)task})
+      .error;
 }
 
 /* Changes a task's priority by a step; its old priority, even on an
  * error (0x17050). */
 uint32_t psos_priority(uint32_t task, uint32_t priority, uint8_t* old) {
-  uint32_t error =
-      psos_call(PSOS_SERVICE_PRIORITY, priority, 0, 0, 0, (void*)task, NULL);
+  const os_registers changed = os_psos_call(
+      PSOS_SERVICE_PRIORITY, (os_registers){.d0 = priority, .a0 = (void*)task});
 
   if (old != NULL) {
-    *old = bridge_result_d0;
+    *old = changed.d0;
   }
-  return error;
+  return changed.error;
 }
 
 /* Pauses the running task for some ticks (0x17076). */
 uint32_t psos_pause(uint32_t ticks) {
-  return psos_call(PSOS_SERVICE_PAUSE, ticks, 0, 0, 0, NULL, NULL);
+  return os_psos_call(PSOS_SERVICE_PAUSE, (os_registers){.d0 = ticks}).error;
 }
 
 /* Sets the masked bits of the running task's mode; the old mode, even on
  * an error (0x1708e). */
 uint32_t psos_mode(uint32_t mode, uint32_t mask, uint8_t* old) {
-  uint32_t error = psos_call(PSOS_SERVICE_MODE, mode, mask, 0, 0, NULL, NULL);
+  const os_registers changed =
+      os_psos_call(PSOS_SERVICE_MODE, (os_registers){.d0 = mode, .d1 = mask});
 
   if (old != NULL) {
-    *old = bridge_result_d0;
+    *old = changed.d0;
   }
-  return error;
+  return changed.error;
 }
 
 /* Allocates a segment of the size in D1 with the other three longs in
  * D2, D3 and D0; on success the segment (0x170c0). */
 uint32_t psos_service_8(uint32_t size, uint32_t d2, uint32_t d3, uint32_t d0,
                         uint32_t* out) {
-  uint32_t error =
-      psos_call(PSOS_SERVICE_ALLOCATE_SEGMENT, d0, size, d2, d3, NULL, NULL);
+  const os_registers allocated =
+      os_psos_call(PSOS_SERVICE_ALLOCATE_SEGMENT,
+                   (os_registers){.d0 = d0, .d1 = size, .d2 = d2, .d3 = d3});
 
-  if (error == 0 && out != NULL) {
-    *out = bridge_result_a0;
+  if (!allocated.failed && out != NULL) {
+    *out = (uint32_t)allocated.a0;
   }
-  return error;
+  return allocated.error;
 }
 
 /* Frees a segment (0x170f4). */
 uint32_t psos_free_segment(void* segment) {
-  return psos_call(PSOS_SERVICE_FREE_SEGMENT, 0, 0, 0, 0, segment, NULL);
+  return os_psos_call(PSOS_SERVICE_FREE_SEGMENT, (os_registers){.a0 = segment})
+      .error;
 }
 
 /* Gives a segment of the running task's to another task (0x1710c). */
 uint32_t psos_assign_segment(void* segment, uint32_t task) {
-  return psos_call(PSOS_SERVICE_ASSIGN_SEGMENT, 0, 0, 0, 0, segment,
-                   (void*)task);
+  return os_psos_call(PSOS_SERVICE_ASSIGN_SEGMENT,
+                      (os_registers){.a0 = segment, .a1 = (void*)task})
+      .error;
 }
 
 /* Takes a segment back from a task (0x17128). */
 uint32_t psos_reclaim_segment(void* segment, uint32_t task) {
-  return psos_call(PSOS_SERVICE_RECLAIM_SEGMENT, 0, 0, 0, 0, segment,
-                   (void*)task);
+  return os_psos_call(PSOS_SERVICE_RECLAIM_SEGMENT,
+                      (os_registers){.a0 = segment, .a1 = (void*)task})
+      .error;
 }
 
 /* Makes a partition of fixed blocks in an area; its id, even on an
  * error (0x17144). */
 uint32_t psos_create_partition(void* area, uint32_t block_size, uint32_t count,
                                void** partition) {
-  uint32_t error = psos_call(PSOS_SERVICE_CREATE_PARTITION, block_size, count,
-                             0, 0, area, NULL);
+  const os_registers created =
+      os_psos_call(PSOS_SERVICE_CREATE_PARTITION,
+                   (os_registers){.d0 = block_size, .d1 = count, .a0 = area});
 
   if (partition != NULL) {
-    *partition = (void*)bridge_result_a0;
+    *partition = created.a0;
   }
-  return error;
+  return created.error;
 }
 
 /* Deletes a partition (0x1716e). */
 uint32_t psos_delete_partition(void* partition, uint32_t block_size) {
-  return psos_call(PSOS_SERVICE_DELETE_PARTITION, block_size, 0, 0, 0,
-                   partition, NULL);
+  return os_psos_call(PSOS_SERVICE_DELETE_PARTITION,
+                      (os_registers){.d0 = block_size, .a0 = partition})
+      .error;
 }
 
 /* Takes a block from a partition; on success the block (0x1718a). */
 uint32_t psos_get_block(void* partition, uint32_t block_size, void** block) {
-  uint32_t error =
-      psos_call(PSOS_SERVICE_GET_BLOCK, block_size, 0, 0, 0, partition, NULL);
+  const os_registers taken =
+      os_psos_call(PSOS_SERVICE_GET_BLOCK,
+                   (os_registers){.d0 = block_size, .a0 = partition});
 
-  if (error == 0 && block != NULL) {
-    *block = (void*)bridge_result_a1;
+  if (!taken.failed && block != NULL) {
+    *block = taken.a1;
   }
-  return error;
+  return taken.error;
 }
 
 /* Returns a block to its partition (0x171b2). */
 uint32_t psos_return_block(void* partition, void* block) {
-  return psos_call(PSOS_SERVICE_RETURN_BLOCK, 0, 0, 0, 0, partition, block);
+  return os_psos_call(PSOS_SERVICE_RETURN_BLOCK,
+                      (os_registers){.a0 = partition, .a1 = block})
+      .error;
 }
 
 /* Creates an exchange of a name, with two longs; on success its id
  * (0x171ce). */
 uint32_t psos_create_x(char* name, uint32_t a, uint32_t b, uint32_t* exchange) {
-  uint32_t error =
-      psos_call(PSOS_SERVICE_CREATE_X, psos_pack_name(), a, b, 0, NULL, NULL);
+  const os_registers created = os_psos_call(
+      PSOS_SERVICE_CREATE_X,
+      (os_registers){.d0 = OS_PACK_NAME("psos_pack_name"), .d1 = a, .d2 = b});
 
-  if (error == 0 && exchange != NULL) {
-    *exchange = bridge_result_a0;
+  if (!created.failed && exchange != NULL) {
+    *exchange = (uint32_t)created.a0;
   }
-  return error;
+  return created.error;
 }
 
 /* Attaches to an exchange by name; on success three longs, A0's, D1's
  * and D2's (0x171fe). */
 uint32_t psos_service_21(char* name, uint32_t* out1, uint32_t* out2,
                          uint32_t* out3) {
-  uint32_t error =
-      psos_call(PSOS_SERVICE_ATTACH_X, psos_pack_name(), 0, 0, 0, NULL, NULL);
+  const os_registers attached =
+      os_psos_call(PSOS_SERVICE_ATTACH_X,
+                   (os_registers){.d0 = OS_PACK_NAME("psos_pack_name")});
 
-  if (error == 0) {
+  if (!attached.failed) {
     if (out1 != NULL) {
-      *out1 = bridge_result_a0;
+      *out1 = (uint32_t)attached.a0;
     }
     if (out2 != NULL) {
-      *out2 = bridge_result_d1;
+      *out2 = attached.d1;
     }
     if (out3 != NULL) {
-      *out3 = bridge_result_d2;
+      *out3 = attached.d2;
     }
   }
-  return error;
+  return attached.error;
 }
 
 /* Deletes an exchange (0x1723a). */
 uint32_t psos_delete_x(uint32_t exchange) {
-  return psos_call(PSOS_SERVICE_DELETE_X, 0, 0, 0, 0, (void*)exchange, NULL);
+  return os_psos_call(PSOS_SERVICE_DELETE_X,
+                      (os_registers){.a0 = (void*)exchange})
+      .error;
 }
 
 /* Sends a message to an exchange (0x17252). */
 uint32_t psos_send_x(uint32_t exchange, void* message) {
-  return psos_call(PSOS_SERVICE_SEND_X, 0, 0, 0, 0, (void*)exchange, message);
+  return os_psos_call(PSOS_SERVICE_SEND_X,
+                      (os_registers){.a0 = (void*)exchange, .a1 = message})
+      .error;
 }
 
 /* Sends a message to the front of an exchange's queue (0x1726e). */
 uint32_t psos_jam_x(uint32_t exchange, void* message) {
-  return psos_call(PSOS_SERVICE_JAM_X, 0, 0, 0, 0, (void*)exchange, message);
+  return os_psos_call(PSOS_SERVICE_JAM_X,
+                      (os_registers){.a0 = (void*)exchange, .a1 = message})
+      .error;
 }
 
 /* Gives a message to every task waiting at an exchange and queues
@@ -243,132 +269,148 @@ uint32_t psos_jam_x(uint32_t exchange, void* message) {
  * tasks given it, and those tasks (0x1728a). */
 uint32_t psos_broadcast_x(uint32_t exchange, void* message, uint32_t count,
                           uint8_t* count_out, uint8_t* woken) {
-  uint32_t error = psos_call(PSOS_SERVICE_BROADCAST_X, count, 0, 0, 0,
-                             (void*)exchange, message);
+  const os_registers sent = os_psos_call(
+      PSOS_SERVICE_BROADCAST_X,
+      (os_registers){.d0 = count, .a0 = (void*)exchange, .a1 = message});
 
-  if (error == 0) {
+  if (!sent.failed) {
     if (count_out != NULL) {
-      *count_out = bridge_result_d0;
+      *count_out = sent.d0;
     }
     if (woken != NULL) {
-      *woken = bridge_result_d1;
+      *woken = sent.d1;
     }
   }
-  return error;
+  return sent.error;
 }
 
 /* Receives a message from an exchange into a buffer, waiting, unless
  * no_wait, up to ticks, 0 without end (0x172c4). */
 uint32_t psos_request_x(uint32_t exchange, void* buffer, uint32_t no_wait,
                         uint32_t ticks) {
-  return psos_call(PSOS_SERVICE_REQUEST_X, ticks, no_wait, 0, 0,
-                   (void*)exchange, buffer);
+  return os_psos_call(PSOS_SERVICE_REQUEST_X,
+                      (os_registers){.d0 = ticks,
+                                     .d1 = no_wait,
+                                     .a0 = (void*)exchange,
+                                     .a1 = buffer})
+      .error;
 }
 
 /* Signals events to a variable's task (0x172e8). */
 uint32_t psos_signal_v(uint32_t variable, uint32_t value) {
-  return psos_call(PSOS_SERVICE_SIGNAL_V, 0, value, 0, 0, (void*)variable,
-                   NULL);
+  return os_psos_call(PSOS_SERVICE_SIGNAL_V,
+                      (os_registers){.d1 = value, .a0 = (void*)variable})
+      .error;
 }
 
 /* Waits on a variable with the longs in D1, D2 and D0; D1 back, even on
  * an error (0x17304). */
 uint32_t psos_wait_v(uint32_t d1, uint32_t d2, uint32_t d0, uint32_t* out) {
-  uint32_t error = psos_call(PSOS_SERVICE_WAIT_V, d0, d1, d2, 0, NULL, NULL);
+  const os_registers waited = os_psos_call(
+      PSOS_SERVICE_WAIT_V, (os_registers){.d0 = d0, .d1 = d1, .d2 = d2});
 
   if (out != NULL) {
-    *out = bridge_result_d1;
+    *out = waited.d1;
   }
-  return error;
+  return waited.error;
 }
 
 /* Reads a variable with the longs in D1 and D2; D1 back, even on an
  * error (0x17332). */
 uint32_t psos_get_v(uint32_t d1, uint32_t d2, uint32_t* out) {
-  uint32_t error = psos_call(PSOS_SERVICE_GET_V, 0, d1, d2, 0, NULL, NULL);
+  const os_registers read =
+      os_psos_call(PSOS_SERVICE_GET_V, (os_registers){.d1 = d1, .d2 = d2});
 
   if (out != NULL) {
-    *out = bridge_result_d1;
+    *out = read.d1;
   }
-  return error;
+  return read.error;
 }
 
 /* Counts a tick (0x1735c). */
 uint32_t psos_announce_tick(void) {
-  return psos_call(PSOS_SERVICE_ANNOUNCE_TICK, 0, 0, 0, 0, NULL, NULL);
+  return os_psos_call(PSOS_SERVICE_ANNOUNCE_TICK, (os_registers){0}).error;
 }
 
 /* The time of day: its date, time and ticks into the second, even on an
  * error (0x17370). */
 uint32_t psos_get_time(uint32_t* date, uint32_t* time, uint16_t* ticks) {
-  uint32_t error = psos_call(PSOS_SERVICE_GET_TIME, 0, 0, 0, 0, NULL, NULL);
+  const os_registers now =
+      os_psos_call(PSOS_SERVICE_GET_TIME, (os_registers){0});
 
   if (date != NULL) {
-    *date = bridge_result_d0;
+    *date = now.d0;
   }
   if (time != NULL) {
-    *time = bridge_result_d1;
+    *time = now.d1;
   }
   if (ticks != NULL) {
-    *ticks = bridge_result_d2;
+    *ticks = now.d2;
   }
-  return error;
+  return now.error;
 }
 
 /* Sets the time of day (0x173a6). */
 uint32_t psos_set_time(uint32_t date, uint32_t time, uint32_t ticks) {
-  return psos_call(PSOS_SERVICE_SET_TIME, date, time, ticks, 0, NULL, NULL);
+  return os_psos_call(PSOS_SERVICE_SET_TIME,
+                      (os_registers){.d0 = date, .d1 = time, .d2 = ticks})
+      .error;
 }
 
 /* Initializes a device (0x173ca). */
 uint32_t psos_io_init(uint32_t device) {
-  return psos_io_call(PSOS_IO_INIT, device, 0, 0, 0, NULL, NULL);
+  return os_psos_io_call(PSOS_IO_INIT, (os_registers){.d0 = device}).error;
 }
 
 /* Opens a device with a long (0x173e2). */
 uint32_t psos_io_open(uint32_t device, uint32_t a) {
-  return psos_io_call(PSOS_IO_OPEN, device, a, 0, 0, NULL, NULL);
+  return os_psos_io_call(PSOS_IO_OPEN, (os_registers){.d0 = device, .d1 = a})
+      .error;
 }
 
 /* Closes a device (0x173fe). */
 uint32_t psos_io_close(uint32_t device) {
-  return psos_io_call(PSOS_IO_CLOSE, device, 0, 0, 0, NULL, NULL);
+  return os_psos_io_call(PSOS_IO_CLOSE, (os_registers){.d0 = device}).error;
 }
 
 /* Reads up to a length from a device; on success the length read
  * (0x17416). */
 uint32_t psos_io_read(uint32_t device, void* buffer, uint32_t* length) {
-  uint32_t error =
-      psos_io_call(PSOS_IO_READ, device, 0, *length, 0, length, buffer);
+  const os_registers read = os_psos_io_call(
+      PSOS_IO_READ,
+      (os_registers){.d0 = device, .d2 = *length, .a0 = length, .a1 = buffer});
 
-  if (error == 0 && length != NULL) {
-    *length = bridge_result_d2;
+  if (!read.failed && length != NULL) {
+    *length = read.d2;
   }
-  return error;
+  return read.error;
 }
 
 /* Writes a length to a device; on success the length written
  * (0x17448). */
 uint32_t psos_io_write(uint32_t device, void* buffer, uint32_t* length) {
-  uint32_t error =
-      psos_io_call(PSOS_IO_WRITE, device, 0, *length, 0, buffer, length);
+  const os_registers written = os_psos_io_call(
+      PSOS_IO_WRITE,
+      (os_registers){.d0 = device, .d2 = *length, .a0 = buffer, .a1 = length});
 
-  if (error == 0 && length != NULL) {
-    *length = bridge_result_d2;
+  if (!written.failed && length != NULL) {
+    *length = written.d2;
   }
-  return error;
+  return written.error;
 }
 
 /* Controls a device with two longs (0x1747a). */
 uint32_t psos_io_control(uint32_t device, uint32_t a, uint32_t b) {
-  return psos_io_call(PSOS_IO_CONTROL, device, 0, a, b, NULL, NULL);
+  return os_psos_io_call(PSOS_IO_CONTROL,
+                         (os_registers){.d0 = device, .d2 = a, .d3 = b})
+      .error;
 }
 
 /* Packs the name and creates the mutex as an exchange of that name;
  * psos_pack_name reads the name as this function's caller's first
  * argument (0x104e6). */
 uint32_t mutex_create(char* name, mutex* lock) {
-  return mutex_init(psos_pack_name(), lock);
+  return mutex_init(OS_PACK_NAME("psos_pack_name"), lock);
 }
 
 /* mutex_acquire on its argument (0x10502). */

@@ -28,8 +28,9 @@ in one, every case, or every other if supervisor code runs it too
 flash erased (FLASH), or its arguments at the stack's edge
 (STACK_EDGE).  Each case's devices answer as harness.DEVICE_CASES
 says, by the case.  Both copies must leave the status register's
-system byte the same, and the registers the function's convention
-keeps for its caller (harness.preserved_registers).
+system byte the same, its condition codes too for a function whose
+convention returns in them (returns=ccr), and the registers the
+function's convention keeps for its caller (harness.preserved_registers).
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\
@@ -69,6 +70,7 @@ from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_D0, UC_M68K_REG_PC
 
 from harness import (
     CASES,
+    CONDITION_CODES,
     Interrupt,
     FIRST_ARGUMENT,
     HANDLER_ENTRIES,
@@ -580,6 +582,12 @@ CONVERTER_CASES = {
         ("unsigned_long", LONG_NUMBERS),
     )
 }
+# The double converter's numbers: some that convert, one with more
+# digits than a scpi_number keeps, zero, one past a double's range,
+# which scpi_bcd_to_double refuses (Z set, 0x25258), and one whose
+# exponent is past 309, which scpi_number_to_bcd refuses (0x2550e).
+DOUBLE_NUMBERS = ["1.5", "-2.25", "123456789012345678", "0", "2" + "0" * 308, "1" + "0" * 400]
+CONVERTER_CASES["scpi_number_to_double"] = [{0: scpi_number(text), 2: 0} for text in DOUBLE_NUMBERS]
 # The numbers the parameter parsers are given, each with a suffix and
 # units of SUFFIXES', some of which take it and some not, and with a
 # suffix and no units.
@@ -1594,6 +1602,10 @@ KNOWN = {
 # and D1 untouched), so that the C's restores show.
 SETJMP_KEPT = ("D1", "A0", "A1")
 KEPT_BESIDE = {"setjmp": SETJMP_KEPT, "installer_setjmp": SETJMP_KEPT}
+# A sidecar convention's returns for a function whose result is in the
+# condition codes, which are compared after it as its result is; no
+# other function's are (setjmp's flags, which trap #1 leaves, are not).
+RETURNS_CONDITION_CODES = "ccr"
 
 
 @dataclass
@@ -1602,7 +1614,8 @@ class Function:
     parameter's offset in the original's stack, its parameters' names,
     whether a variable list follows them (VARIADIC_CASES), and the
     registers its convention keeps for its caller
-    (harness.preserved_registers)."""
+    (harness.preserved_registers), and whether it returns in the
+    condition codes, which are then compared after it."""
 
     name: str
     result: str
@@ -1611,6 +1624,7 @@ class Function:
     names: list[str]
     variadic: bool = False
     preserves: tuple[str, ...] = ()
+    condition_codes: bool = False
 
 
 def functions(c: str, types: Types, conventions: dict, image: str | None) -> tuple[list[Function], int]:
@@ -1642,7 +1656,8 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
         names = [re.search(r"\w*$", p).group() for p in declared]
         offsets = [item["offset"] for item in stack]
         preserves = preserved_registers(convention) + KEPT_BESIDE.get(name, ())
-        found.append(Function(name, result, kinds, offsets, names, variadic, preserves))
+        condition_codes = convention.get("returns") == RETURNS_CONDITION_CODES
+        found.append(Function(name, result, kinds, offsets, names, variadic, preserves, condition_codes))
     return found, unrunnable
 
 
@@ -2001,6 +2016,16 @@ def check_cases(
             differences.append(f"result {got:x}, image's {wanted:x}")
         if original.status & SYSTEM_BYTE != gcc.status & SYSTEM_BYTE:
             differences.append(f"status register {gcc.status:04x}, image's {original.status:04x}")
+        if (
+            function.condition_codes
+            and original.ended is None
+            and gcc.ended is None
+            and original.status & CONDITION_CODES != gcc.status & CONDITION_CODES
+        ):
+            differences.append(
+                f"condition codes {gcc.status & CONDITION_CODES:02x}, "
+                f"image's {original.status & CONDITION_CODES:02x}"
+            )
         registers_differ = registers_difference(m, original, gcc, function.preserves)
         if registers_differ:
             differences.append(registers_differ)
@@ -2054,6 +2079,8 @@ def main() -> int:
         by_name = {function.name: function for function in runnable}
         context = Context(linked_symbols, located, by_name, in_task, both_modes)
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
+        modes = {"user mode alone": 0, "both modes": 0}
+        condition_codes_compared = 0
         for function in runnable:
             image = linked_symbols.get(IMAGE_PREFIX + function.name)
             rebuilt = linked_symbols.get(function.name)
@@ -2061,10 +2088,19 @@ def main() -> int:
                 continue
             outcomes = list(check(machine, types, function, image, rebuilt, context))
             counts[report(function.name, outcomes, KNOWN.get(function.name))] += 1
+            modes["user mode alone"] += function.name in in_task
+            modes["both modes"] += function.name in both_modes
+            condition_codes_compared += function.condition_codes
         label = f"{profile.overlay} " if profile.overlay else ""
         print(
             f"{label}functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, "
             f"known: {counts['known']}, failed: {counts['failed']}; prototypes not laid out: {unrunnable}"
+        )
+        # the figures docs/firmware/README.md gives (report_figures.py)
+        print(
+            f"{label}functions run in "
+            + ", ".join(f"{what}: {count}" for what, count in modes.items())
+            + f"; condition codes compared (returns=ccr): {condition_codes_compared}"
         )
     return 0
 

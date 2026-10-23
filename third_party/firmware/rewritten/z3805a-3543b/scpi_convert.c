@@ -6,23 +6,92 @@
  * prototype.  scpi_convert.h holds the bodies its installer copies
  * share. */
 
-/* The condition codes' Z bit, which a bridge keeps in bridge_ccr: set
- * when scpi_bcd_to_double's number does not fit a double (0x2507a) and
- * when scpi_double_to_decimal's is subnormal, infinite or NaN (0x24e0e);
- * MC68331UM, the CCR. */
-static const uint8_t SCPI_CCR_ZERO = 0x04;
+/* The engine's conversions are register routines that return in the
+ * condition codes, which C has no names for: each is called in an asm
+ * statement that binds its registers and reads the flag with Scc, into
+ * memory where the routine changes every data register. */
+
+/* Packs a parsed number into a BCD record at a scale, its exponent the
+ * number's plus the scale plus 16: scpi_number_to_bcd (0x254fe) takes
+ * the number in A0, the scale in D0's word and the record in A1, and
+ * changes D0, D1, A0 and A1; whether it failed, Z clear and D0 -1, for an
+ * exponent beyond 309. */
+__attribute__((always_inline)) static inline bool scpi_convert_number_to_bcd(
+    scpi_number* number, int16_t scale, scpi_bcd* bcd) {
+  register int32_t scpi_status __asm__("d0") = scale;
+  register scpi_number* scpi_number_at __asm__("a0") = number;
+  register scpi_bcd* scpi_bcd_at __asm__("a1") = bcd;
+  uint8_t failed;
+
+  __asm__ volatile("jsr scpi_number_to_bcd\n\tsne %[failed]"
+                   : "+r"(scpi_status), "+r"(scpi_number_at),
+                     "+r"(scpi_bcd_at), [failed] "=d"(failed)
+                   :
+                   : "d1", "cc", "memory");
+  return failed != 0;
+}
+
+/* A BCD record's 16 digits as a double, scaled by its exponent:
+ * scpi_bcd_to_double (0x2507a) takes the record in A0 and returns the
+ * double in D0:D1, high first, through scpi_scale_by_power_of_ten
+ * (0x251e4) and scpi_double_multiply (0x252bc), which change D2 to D7,
+ * A0 and A1 too, as its caller expects, saving D2 to D7 (0x254ba);
+ * whether it failed, Z set, for a number that does not fit a double
+ * (0x25258). */
+__attribute__((always_inline)) static inline bool scpi_convert_bcd_to_double(
+    scpi_bcd* bcd, double* value) {
+  register uint32_t scpi_high __asm__("d0");
+  register uint32_t scpi_low __asm__("d1");
+  register scpi_bcd* scpi_bcd_at __asm__("a0") = bcd;
+  uint8_t failed;
+
+  __asm__ volatile("jsr scpi_bcd_to_double\n\tseq %[failed]"
+                   : "=r"(scpi_high), "=r"(scpi_low),
+                     "+r"(scpi_bcd_at), [failed] "=m"(failed)
+                   :
+                   : "d2", "d3", "d4", "d5", "d6", "d7", "a1", "cc", "memory");
+  /* The double's bits, high first, as the routine leaves them. */
+  union {
+    uint32_t words[2];
+    double value;
+  } bits = {{scpi_high, scpi_low}};
+
+  *value = bits.value;
+  return failed != 0;
+}
+
+/* A double, its two longs high first, as a decimal record of so many
+ * digits: scpi_double_to_decimal (0x24e18) takes them in D0:D1, the
+ * digits in D7 and the record in A0, and changes D0 to D7, A0 and A1,
+ * as its caller expects, saving D2 to D7 (0x2553e); whether it failed,
+ * Z set, for a subnormal, infinite or NaN double (0x24e0e). */
+__attribute__((always_inline)) static inline bool
+scpi_convert_double_to_decimal(int32_t high, int32_t low, int16_t digits,
+                               scpi_decimal* decimal) {
+  register int32_t scpi_high __asm__("d0") = high;
+  register int32_t scpi_low __asm__("d1") = low;
+  register int32_t scpi_digits __asm__("d7") = digits;
+  register scpi_decimal* scpi_decimal_at __asm__("a0") = decimal;
+  uint8_t failed;
+
+  __asm__ volatile("jsr scpi_double_to_decimal\n\tseq %[failed]"
+                   : "+r"(scpi_high), "+r"(scpi_low), "+r"(scpi_digits),
+                     "+r"(scpi_decimal_at), [failed] "=m"(failed)
+                   :
+                   : "d2", "d3", "d4", "d5", "d6", "a1", "cc", "memory");
+  return failed != 0;
+}
 
 /* A number at a scale as a double; -1 when it does not fit (0x254ba). */
 int32_t scpi_number_to_double(scpi_number* number, double* value,
                               int32_t scale) {
   scpi_bcd bcd;
+  double converted;
 
-  if (scpi_number_to_bcd(number, scale, &bcd) != 0) {
+  if (scpi_convert_number_to_bcd(number, scale, &bcd)) {
     return -1;
   }
-  double converted = scpi_bcd_to_double(&bcd);
-
-  if (bridge_ccr & SCPI_CCR_ZERO) {
+  if (scpi_convert_bcd_to_double(&bcd, &converted)) {
     return -1;
   }
   *value = converted;
@@ -56,11 +125,6 @@ uint32_t scpi_real_to_text(int32_t high, int32_t low, uint8_t* text,
   static const int8_t EXPONENT_MOST_DIGITS = 4;
   static const int16_t EXPONENT_PAIR = 100;
   const int16_t decimal_digits = sizeof(((scpi_decimal*)0)->digits);
-  /* The double's bits, as its callers split them. */
-  union {
-    int32_t words[2];
-    double value;
-  } bits = {{high, low}};
   union {
     uint16_t pairs[2];
     char digits[4];
@@ -72,8 +136,7 @@ uint32_t scpi_real_to_text(int32_t high, int32_t low, uint8_t* text,
     if (digits <= 0) {
       return 1;
     }
-    scpi_double_to_decimal(bits.value, digits, (char*)&decimal);
-    if (bridge_ccr & SCPI_CCR_ZERO) {
+    if (scpi_convert_double_to_decimal(high, low, digits, &decimal)) {
       return 1;
     }
     /* The digits above the resolution, a word's difference, as the image

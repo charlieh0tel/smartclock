@@ -38,75 +38,83 @@ void installer_psos_config_init(void) {
 
 /* The running task's id, ident's for no name (installer::0x102b4c). */
 uint32_t installer_psos_my_pid(void) {
-  installer_psos_call(PSOS_SERVICE_IDENT, 0, 0, 0, 0, NULL, NULL);
-  return bridge_result_a0;
+  return (uint32_t)os_installer_psos_call(PSOS_SERVICE_IDENT, (os_registers){0})
+      .a0;
 }
 
 /* Deletes a task (installer::0x102b5c). */
 uint32_t installer_psos_delete(uint32_t task) {
-  return installer_psos_call(PSOS_SERVICE_DELETE, 0, 0, 0, 0, (void*)task,
-                             NULL);
+  return os_installer_psos_call(PSOS_SERVICE_DELETE,
+                                (os_registers){.a0 = (void*)task})
+      .error;
 }
 
 /* Pauses the running task for some ticks (installer::0x102bca). */
 uint32_t installer_psos_pause(uint32_t ticks) {
-  return installer_psos_call(PSOS_SERVICE_PAUSE, ticks, 0, 0, 0, NULL, NULL);
+  return os_installer_psos_call(PSOS_SERVICE_PAUSE, (os_registers){.d0 = ticks})
+      .error;
 }
 
 /* Creates an exchange of a name, with two longs; on success its id
  * (installer::0x102d22). */
 uint32_t installer_psos_create_x(char* name, uint32_t a, uint32_t b,
                                  uint32_t* exchange) {
-  uint32_t error = installer_psos_call(
-      PSOS_SERVICE_CREATE_X, installer_psos_pack_name(), a, b, 0, NULL, NULL);
+  const os_registers created = os_installer_psos_call(
+      PSOS_SERVICE_CREATE_X,
+      (os_registers){
+          .d0 = OS_PACK_NAME("installer_psos_pack_name"), .d1 = a, .d2 = b});
 
-  if (error == 0 && exchange != NULL) {
-    *exchange = bridge_result_a0;
+  if (!created.failed && exchange != NULL) {
+    *exchange = (uint32_t)created.a0;
   }
-  return error;
+  return created.error;
 }
 
 /* Sends a message to an exchange (installer::0x102da6). */
 uint32_t installer_psos_send_x(uint32_t exchange, void* message) {
-  return installer_psos_call(PSOS_SERVICE_SEND_X, 0, 0, 0, 0, (void*)exchange,
-                             message);
+  return os_installer_psos_call(
+             PSOS_SERVICE_SEND_X,
+             (os_registers){.a0 = (void*)exchange, .a1 = message})
+      .error;
 }
 
 /* Signals events to a variable's task (installer::0x102e3c). */
 uint32_t installer_psos_signal_v(uint32_t variable, uint32_t value) {
-  return installer_psos_call(PSOS_SERVICE_SIGNAL_V, 0, value, 0, 0,
-                             (void*)variable, NULL);
+  return os_installer_psos_call(
+             PSOS_SERVICE_SIGNAL_V,
+             (os_registers){.d1 = value, .a0 = (void*)variable})
+      .error;
 }
 
 /* Waits on a variable with the longs in D1, D2 and D0; D1 back, even on
  * an error (installer::0x102e58). */
 uint32_t installer_psos_wait_v(uint32_t d1, uint32_t d2, uint32_t d0,
                                uint32_t* out) {
-  uint32_t error =
-      installer_psos_call(PSOS_SERVICE_WAIT_V, d0, d1, d2, 0, NULL, NULL);
+  const os_registers waited = os_installer_psos_call(
+      PSOS_SERVICE_WAIT_V, (os_registers){.d0 = d0, .d1 = d1, .d2 = d2});
 
   if (out != NULL) {
-    *out = bridge_result_d1;
+    *out = waited.d1;
   }
-  return error;
+  return waited.error;
 }
 
 /* Reads a variable with the longs in D1 and D2; D1 back, even on an
  * error (installer::0x102e86). */
 uint32_t installer_psos_get_v(uint32_t d1, uint32_t d2, uint32_t* out) {
-  uint32_t error =
-      installer_psos_call(PSOS_SERVICE_GET_V, 0, d1, d2, 0, NULL, NULL);
+  const os_registers read = os_installer_psos_call(
+      PSOS_SERVICE_GET_V, (os_registers){.d1 = d1, .d2 = d2});
 
   if (out != NULL) {
-    *out = bridge_result_d1;
+    *out = read.d1;
   }
-  return error;
+  return read.error;
 }
 
 /* Counts a tick (installer::0x102eb0). */
 uint32_t installer_psos_announce_tick(void) {
-  return installer_psos_call(PSOS_SERVICE_ANNOUNCE_TICK, 0, 0, 0, 0, NULL,
-                             NULL);
+  return os_installer_psos_call(PSOS_SERVICE_ANNOUNCE_TICK, (os_registers){0})
+      .error;
 }
 
 /* Creates a task of a name and priority, its supervisor and user
@@ -115,50 +123,57 @@ uint32_t installer_psos_announce_tick(void) {
 uint32_t installer_psos_create(char* name, uint32_t a, uint32_t priority,
                                uint32_t stack_a, uint32_t stack_b, void* e,
                                uint32_t* task) {
-  uint32_t error =
-      installer_psos_call(PSOS_SERVICE_SPAWN, installer_psos_pack_name(), a,
-                          priority, os_stack_sizes(stack_a, stack_b), e, NULL);
+  const os_registers created = os_installer_psos_call(
+      PSOS_SERVICE_SPAWN,
+      (os_registers){.d0 = OS_PACK_NAME("installer_psos_pack_name"),
+                     .d1 = a,
+                     .d2 = priority,
+                     .d3 = os_stack_sizes(stack_a, stack_b),
+                     .a0 = e});
 
-  if (error == 0 && task != NULL) {
-    *task = bridge_result_a0;
+  if (!created.failed && task != NULL) {
+    *task = (uint32_t)created.a0;
   }
-  return error;
+  return created.error;
 }
 
 /* Starts a created task at its entry (installer::0x102b02). */
 uint32_t installer_psos_start(uint32_t task, void* entry) {
-  return installer_psos_call(PSOS_SERVICE_START, 0, 0, 0, 0, (void*)task,
-                             entry);
+  return os_installer_psos_call(PSOS_SERVICE_START,
+                                (os_registers){.a0 = (void*)task, .a1 = entry})
+      .error;
 }
 
 /* Looks a task up by name; on success its id and a byte
  * (installer::0x102b1e). */
 uint32_t installer_psos_ident(char* name, uint32_t* id, uint8_t* byte) {
-  uint32_t error = installer_psos_call(
-      PSOS_SERVICE_IDENT, installer_psos_pack_name(), 0, 0, 0, NULL, NULL);
+  const os_registers found = os_installer_psos_call(
+      PSOS_SERVICE_IDENT,
+      (os_registers){.d0 = OS_PACK_NAME("installer_psos_pack_name")});
 
-  if (error == 0) {
+  if (!found.failed) {
     if (id != NULL) {
-      *id = bridge_result_a0;
+      *id = (uint32_t)found.a0;
     }
     if (byte != NULL) {
-      *byte = bridge_result_d0;
+      *byte = found.d0;
     }
   }
-  return error;
+  return found.error;
 }
 
 /* Allocates a segment of the size in D1 with the other three longs in
  * D2, D3 and D0; on success the segment (installer::0x102c14). */
 uint32_t installer_psos_service_8(uint32_t size, uint32_t d2, uint32_t d3,
                                   uint32_t d0, uint32_t* out) {
-  uint32_t error = installer_psos_call(PSOS_SERVICE_ALLOCATE_SEGMENT, d0, size,
-                                       d2, d3, NULL, NULL);
+  const os_registers allocated = os_installer_psos_call(
+      PSOS_SERVICE_ALLOCATE_SEGMENT,
+      (os_registers){.d0 = d0, .d1 = size, .d2 = d2, .d3 = d3});
 
-  if (error == 0 && out != NULL) {
-    *out = bridge_result_a0;
+  if (!allocated.failed && out != NULL) {
+    *out = (uint32_t)allocated.a0;
   }
-  return error;
+  return allocated.error;
 }
 
 /* A segment of a size, from service 8; on an error whatever its local
@@ -174,57 +189,66 @@ void* installer_memory_allocate(uint32_t size) {
  * (installer::0x102f6a). */
 uint32_t installer_psos_io_read(uint32_t device, void* buffer,
                                 uint32_t* length) {
-  uint32_t error = installer_psos_io_call(PSOS_IO_READ, device, 0, *length, 0,
-                                          length, buffer);
+  const os_registers read = os_installer_psos_io_call(
+      PSOS_IO_READ,
+      (os_registers){.d0 = device, .d2 = *length, .a0 = length, .a1 = buffer});
 
-  if (error == 0 && length != NULL) {
-    *length = bridge_result_d2;
+  if (!read.failed && length != NULL) {
+    *length = read.d2;
   }
-  return error;
+  return read.error;
 }
 
 /* Writes a length to a device; on success the length written
  * (installer::0x102f9c). */
 uint32_t installer_psos_io_write(uint32_t device, void* buffer,
                                  uint32_t* length) {
-  uint32_t error = installer_psos_io_call(PSOS_IO_WRITE, device, 0, *length, 0,
-                                          buffer, length);
+  const os_registers written = os_installer_psos_io_call(
+      PSOS_IO_WRITE,
+      (os_registers){.d0 = device, .d2 = *length, .a0 = buffer, .a1 = length});
 
-  if (error == 0 && length != NULL) {
-    *length = bridge_result_d2;
+  if (!written.failed && length != NULL) {
+    *length = written.d2;
   }
-  return error;
+  return written.error;
 }
 
 /* Sets the masked bits of the running task's mode; the old mode, even on
  * an error (installer::0x102be2). */
 uint32_t installer_psos_mode(uint32_t mode, uint32_t mask, uint8_t* old) {
-  uint32_t error =
-      installer_psos_call(PSOS_SERVICE_MODE, mode, mask, 0, 0, NULL, NULL);
+  const os_registers changed = os_installer_psos_call(
+      PSOS_SERVICE_MODE, (os_registers){.d0 = mode, .d1 = mask});
 
   if (old != NULL) {
-    *old = bridge_result_d0;
+    *old = changed.d0;
   }
-  return error;
+  return changed.error;
 }
 
 /* Frees a segment (installer::0x102c48). */
 uint32_t installer_psos_free_segment(void* segment) {
-  return installer_psos_call(PSOS_SERVICE_FREE_SEGMENT, 0, 0, 0, 0, segment,
-                             NULL);
+  return os_installer_psos_call(PSOS_SERVICE_FREE_SEGMENT,
+                                (os_registers){.a0 = segment})
+      .error;
 }
 
 /* Receives a message from an exchange into a buffer, waiting, unless
  * no_wait, up to ticks, 0 without end (installer::0x102e18). */
 uint32_t installer_psos_request_x(uint32_t exchange, void* buffer,
                                   uint32_t no_wait, uint32_t ticks) {
-  return installer_psos_call(PSOS_SERVICE_REQUEST_X, ticks, no_wait, 0, 0,
-                             (void*)exchange, buffer);
+  return os_installer_psos_call(PSOS_SERVICE_REQUEST_X,
+                                (os_registers){.d0 = ticks,
+                                               .d1 = no_wait,
+                                               .a0 = (void*)exchange,
+                                               .a1 = buffer})
+      .error;
 }
 
 /* Opens a device with a long (installer::0x102f36). */
 uint32_t installer_psos_io_open(uint32_t device, uint32_t a) {
-  return installer_psos_io_call(PSOS_IO_OPEN, device, a, 0, 0, NULL, NULL);
+  return os_installer_psos_io_call(PSOS_IO_OPEN,
+                                   (os_registers){.d0 = device, .d1 = a})
+      .error;
 }
 
 /* Restarts the processor through trap #12 (docs/firmware/restart.md),
@@ -235,117 +259,132 @@ void installer_restart(void) { __asm__ volatile("trap #12"); }
 /* The kernel's version, which service 0 returns in D7 where the other
  * services return their error (installer::0x102abc). */
 uint16_t installer_psos_version(void) {
-  return installer_psos_call(PSOS_SERVICE_VERSION, 0, 0, 0, 0, NULL, NULL);
+  return os_installer_psos_call(PSOS_SERVICE_VERSION, (os_registers){0}).error;
 }
 
 /* Suspends a task (installer::0x102b74). */
 uint32_t installer_psos_suspend(uint32_t task) {
-  return installer_psos_call(PSOS_SERVICE_SUSPEND, 0, 0, 0, 0, (void*)task,
-                             NULL);
+  return os_installer_psos_call(PSOS_SERVICE_SUSPEND,
+                                (os_registers){.a0 = (void*)task})
+      .error;
 }
 
 /* Resumes a task (installer::0x102b8c). */
 uint32_t installer_psos_resume(uint32_t task) {
-  return installer_psos_call(PSOS_SERVICE_RESUME, 0, 0, 0, 0, (void*)task,
-                             NULL);
+  return os_installer_psos_call(PSOS_SERVICE_RESUME,
+                                (os_registers){.a0 = (void*)task})
+      .error;
 }
 
 /* Changes a task's priority by a step; its old priority, even on an
  * error (installer::0x102ba4). */
 uint32_t installer_psos_priority(uint32_t task, uint32_t priority,
                                  uint8_t* old) {
-  uint32_t error = installer_psos_call(PSOS_SERVICE_PRIORITY, priority, 0, 0, 0,
-                                       (void*)task, NULL);
+  const os_registers changed = os_installer_psos_call(
+      PSOS_SERVICE_PRIORITY, (os_registers){.d0 = priority, .a0 = (void*)task});
 
   if (old != NULL) {
-    *old = bridge_result_d0;
+    *old = changed.d0;
   }
-  return error;
+  return changed.error;
 }
 
 /* Gives a segment of the running task's to another task
  * (installer::0x102c60). */
 uint32_t installer_psos_assign_segment(void* segment, uint32_t task) {
-  return installer_psos_call(PSOS_SERVICE_ASSIGN_SEGMENT, 0, 0, 0, 0, segment,
-                             (void*)task);
+  return os_installer_psos_call(
+             PSOS_SERVICE_ASSIGN_SEGMENT,
+             (os_registers){.a0 = segment, .a1 = (void*)task})
+      .error;
 }
 
 /* Takes a segment back from a task (installer::0x102c7c). */
 uint32_t installer_psos_reclaim_segment(void* segment, uint32_t task) {
-  return installer_psos_call(PSOS_SERVICE_RECLAIM_SEGMENT, 0, 0, 0, 0, segment,
-                             (void*)task);
+  return os_installer_psos_call(
+             PSOS_SERVICE_RECLAIM_SEGMENT,
+             (os_registers){.a0 = segment, .a1 = (void*)task})
+      .error;
 }
 
 /* Makes a partition of fixed blocks in an area; its id, even on an
  * error (installer::0x102c98). */
 uint32_t installer_psos_create_partition(void* area, uint32_t block_size,
                                          uint32_t count, void** partition) {
-  uint32_t error = installer_psos_call(PSOS_SERVICE_CREATE_PARTITION,
-                                       block_size, count, 0, 0, area, NULL);
+  const os_registers created = os_installer_psos_call(
+      PSOS_SERVICE_CREATE_PARTITION,
+      (os_registers){.d0 = block_size, .d1 = count, .a0 = area});
 
   if (partition != NULL) {
-    *partition = (void*)bridge_result_a0;
+    *partition = created.a0;
   }
-  return error;
+  return created.error;
 }
 
 /* Deletes a partition (installer::0x102cc2). */
 uint32_t installer_psos_delete_partition(void* partition, uint32_t block_size) {
-  return installer_psos_call(PSOS_SERVICE_DELETE_PARTITION, block_size, 0, 0, 0,
-                             partition, NULL);
+  return os_installer_psos_call(
+             PSOS_SERVICE_DELETE_PARTITION,
+             (os_registers){.d0 = block_size, .a0 = partition})
+      .error;
 }
 
 /* Takes a block from a partition; on success the block
  * (installer::0x102cde). */
 uint32_t installer_psos_get_block(void* partition, uint32_t block_size,
                                   void** block) {
-  uint32_t error = installer_psos_call(PSOS_SERVICE_GET_BLOCK, block_size, 0, 0,
-                                       0, partition, NULL);
+  const os_registers taken =
+      os_installer_psos_call(PSOS_SERVICE_GET_BLOCK,
+                             (os_registers){.d0 = block_size, .a0 = partition});
 
-  if (error == 0 && block != NULL) {
-    *block = (void*)bridge_result_a1;
+  if (!taken.failed && block != NULL) {
+    *block = taken.a1;
   }
-  return error;
+  return taken.error;
 }
 
 /* Returns a block to its partition (installer::0x102d06). */
 uint32_t installer_psos_return_block(void* partition, void* block) {
-  return installer_psos_call(PSOS_SERVICE_RETURN_BLOCK, 0, 0, 0, 0, partition,
-                             block);
+  return os_installer_psos_call(PSOS_SERVICE_RETURN_BLOCK,
+                                (os_registers){.a0 = partition, .a1 = block})
+      .error;
 }
 
 /* Attaches to an exchange by name; on success three longs, A0's, D1's
  * and D2's (installer::0x102d52). */
 uint32_t installer_psos_service_21(char* name, uint32_t* out1, uint32_t* out2,
                                    uint32_t* out3) {
-  uint32_t error = installer_psos_call(
-      PSOS_SERVICE_ATTACH_X, installer_psos_pack_name(), 0, 0, 0, NULL, NULL);
+  const os_registers attached = os_installer_psos_call(
+      PSOS_SERVICE_ATTACH_X,
+      (os_registers){.d0 = OS_PACK_NAME("installer_psos_pack_name")});
 
-  if (error == 0) {
+  if (!attached.failed) {
     if (out1 != NULL) {
-      *out1 = bridge_result_a0;
+      *out1 = (uint32_t)attached.a0;
     }
     if (out2 != NULL) {
-      *out2 = bridge_result_d1;
+      *out2 = attached.d1;
     }
     if (out3 != NULL) {
-      *out3 = bridge_result_d2;
+      *out3 = attached.d2;
     }
   }
-  return error;
+  return attached.error;
 }
 
 /* Deletes an exchange (installer::0x102d8e). */
 uint32_t installer_psos_delete_x(uint32_t exchange) {
-  return installer_psos_call(PSOS_SERVICE_DELETE_X, 0, 0, 0, 0, (void*)exchange,
-                             NULL);
+  return os_installer_psos_call(PSOS_SERVICE_DELETE_X,
+                                (os_registers){.a0 = (void*)exchange})
+      .error;
 }
 
 /* Sends a message to the front of an exchange's queue
  * (installer::0x102dc2). */
 uint32_t installer_psos_jam_x(uint32_t exchange, void* message) {
-  return installer_psos_call(PSOS_SERVICE_JAM_X, 0, 0, 0, 0, (void*)exchange,
-                             message);
+  return os_installer_psos_call(
+             PSOS_SERVICE_JAM_X,
+             (os_registers){.a0 = (void*)exchange, .a1 = message})
+      .error;
 }
 
 /* Gives a message to every task waiting at an exchange and queues
@@ -354,65 +393,72 @@ uint32_t installer_psos_jam_x(uint32_t exchange, void* message) {
 uint32_t installer_psos_broadcast_x(uint32_t exchange, void* message,
                                     uint32_t count, uint8_t* count_out,
                                     uint8_t* woken) {
-  uint32_t error = installer_psos_call(PSOS_SERVICE_BROADCAST_X, count, 0, 0, 0,
-                                       (void*)exchange, message);
+  const os_registers sent = os_installer_psos_call(
+      PSOS_SERVICE_BROADCAST_X,
+      (os_registers){.d0 = count, .a0 = (void*)exchange, .a1 = message});
 
-  if (error == 0) {
+  if (!sent.failed) {
     if (count_out != NULL) {
-      *count_out = bridge_result_d0;
+      *count_out = sent.d0;
     }
     if (woken != NULL) {
-      *woken = bridge_result_d1;
+      *woken = sent.d1;
     }
   }
-  return error;
+  return sent.error;
 }
 
 /* The time of day: its date, time and ticks into the second, even on an
  * error (installer::0x102ec4). */
 uint32_t installer_psos_get_time(uint32_t* date, uint32_t* time,
                                  uint16_t* ticks) {
-  uint32_t error =
-      installer_psos_call(PSOS_SERVICE_GET_TIME, 0, 0, 0, 0, NULL, NULL);
+  const os_registers now =
+      os_installer_psos_call(PSOS_SERVICE_GET_TIME, (os_registers){0});
 
   if (date != NULL) {
-    *date = bridge_result_d0;
+    *date = now.d0;
   }
   if (time != NULL) {
-    *time = bridge_result_d1;
+    *time = now.d1;
   }
   if (ticks != NULL) {
-    *ticks = bridge_result_d2;
+    *ticks = now.d2;
   }
-  return error;
+  return now.error;
 }
 
 /* Sets the time of day (installer::0x102efa). */
 uint32_t installer_psos_set_time(uint32_t date, uint32_t time, uint32_t ticks) {
-  return installer_psos_call(PSOS_SERVICE_SET_TIME, date, time, ticks, 0, NULL,
-                             NULL);
+  return os_installer_psos_call(
+             PSOS_SERVICE_SET_TIME,
+             (os_registers){.d0 = date, .d1 = time, .d2 = ticks})
+      .error;
 }
 
 /* Initializes a device (installer::0x102f1e). */
 uint32_t installer_psos_io_init(uint32_t device) {
-  return installer_psos_io_call(PSOS_IO_INIT, device, 0, 0, 0, NULL, NULL);
+  return os_installer_psos_io_call(PSOS_IO_INIT, (os_registers){.d0 = device})
+      .error;
 }
 
 /* Closes a device (installer::0x102f52). */
 uint32_t installer_psos_io_close(uint32_t device) {
-  return installer_psos_io_call(PSOS_IO_CLOSE, device, 0, 0, 0, NULL, NULL);
+  return os_installer_psos_io_call(PSOS_IO_CLOSE, (os_registers){.d0 = device})
+      .error;
 }
 
 /* Controls a device with two longs (installer::0x102fce). */
 uint32_t installer_psos_io_control(uint32_t device, uint32_t a, uint32_t b) {
-  return installer_psos_io_call(PSOS_IO_CONTROL, device, 0, a, b, NULL, NULL);
+  return os_installer_psos_io_call(
+             PSOS_IO_CONTROL, (os_registers){.d0 = device, .d2 = a, .d3 = b})
+      .error;
 }
 
 /* Packs the name and creates the mutex as an exchange of that name;
  * installer_psos_pack_name reads the name as this function's caller's
  * first argument (installer::0x1004e6). */
 uint32_t installer_mutex_create(char* name, mutex* lock) {
-  return installer_mutex_init(installer_psos_pack_name(), lock);
+  return installer_mutex_init(OS_PACK_NAME("installer_psos_pack_name"), lock);
 }
 
 /* installer_mutex_acquire on its argument (installer::0x100502). */

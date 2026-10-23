@@ -61,12 +61,6 @@ extern code *UNRECOVERED_JUMPTABLE;
 #define __ghidra_concat(y, a, b) 	((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
 #define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
 #define __ghidra_also(var, v, n) (var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, v, n)))
-/* the condition codes a routine that returns them left, as its bridge keeps them */
-uint16_t bridge_ccr;
-/* the registers a routine also leaves results in, as its bridge keeps them */
-uint32_t bridge_result_d0, bridge_result_d1, bridge_result_d2,
-	bridge_result_d3, bridge_result_a0, bridge_result_a1;
-#define __ghidra_flag(bit) ((bridge_ccr & (bit)) != 0)
 #define CARRY1(a, b) ((uint8_t)((a) + (b)) < (uint8_t)(a))
 #define CARRY2(a, b) ((uint16_t)((a) + (b)) < (uint16_t)(a))
 #define CARRY4(a, b) ((uint32_t)((a) + (b)) < (uint32_t)(a))
@@ -9617,7 +9611,6 @@ uint32_t enter_supervisor(void);
 void busy_wait(uint32_t param_1);
 void sleep_seconds(float param_1);
 void clock_record_checksum(clock_record *record) __asm__("c_clock_record_checksum");
-void clock_record_sum(clock_record *record) __asm__("c_clock_record_sum");
 void clock_tick(void);
 void clock_record_advance(clock_record *record) __asm__("c_clock_record_advance");
 void clock_record_advance_utc(clock_record *record) __asm__("c_clock_record_advance_utc");
@@ -9752,8 +9745,6 @@ void task_stack_report(request_source source);
 void psos_debug_output(char param_1);
 void tick_account(int16_t mode) __asm__("c_tick_account");
 void task_count_tick(void);
-int32_t psos_call(psos_service service, int32_t d0, int32_t d1, int32_t d2, int32_t d3, void *a0, void *a1) __asm__("c_psos_call");
-int32_t psos_io_call(psos_io_function function, int32_t device, int32_t d1, int32_t d2, int32_t d3, void *a0, void *a1) __asm__("c_psos_io_call");
 int32_t psos_pack_name(void) __asm__("c_psos_pack_name");
 uint16_t psos_version(void);
 uint32_t psos_create(char *name,uint32_t a,uint32_t priority,uint32_t stack_a,uint32_t stack_b,void *e,uint32_t *task);
@@ -10037,7 +10028,6 @@ int32_t forth_store_iodev();
 int32_t forth_user();
 int32_t pforth_dictionary_init();
 uint32_t pforth_define_word(char *param_1,uint32_t param_2,int32_t param_3,uint32_t param_4);
-void *pforth_link_word(void *word) __asm__("c_pforth_link_word");
 void console_set_halt_hook(void *param_1);
 void console_set_device(int32_t device);
 int32_t console_task_create();
@@ -10290,13 +10280,8 @@ void counter_reset(void);
 void pps_monitors_reset(void);
 void scpi_round_decimal(char *record, int16_t digits) __asm__("c_scpi_round_decimal");
 void scpi_decimal_to_text_unused(char *record, char *text, int16_t digits) __asm__("c_scpi_decimal_to_text_unused");
-void scpi_double_to_decimal(double value, int16_t digits, char *record) __asm__("c_scpi_double_to_decimal");
-double scpi_bcd_to_double(scpi_bcd *bcd) __asm__("c_scpi_bcd_to_double");
-double scpi_scale_by_power_of_ten(double value, int16_t *exponent, double *powers) __asm__("c_scpi_scale_by_power_of_ten");
-double scpi_double_multiply(double a, double b) __asm__("c_scpi_double_multiply");
 int32_t scpi_double_multiply_short();
 int32_t scpi_number_to_double(scpi_number *number,double *value,int32_t scale);
-int32_t scpi_number_to_bcd(scpi_number *number, int16_t scale, scpi_bcd *bcd) __asm__("c_scpi_number_to_bcd");
 uint32_t
 scpi_real_to_text(int32_t param_1,int32_t param_2,uint8_t *param_3,int16_t param_4,int16_t param_5,
                  int16_t param_6,char param_7);
@@ -11403,8 +11388,6 @@ int32_t installer_kernel_halt();
 int32_t installer_kernel_region_init();
 int32_t installer_kernel_idle_task();
 int32_t installer_kernel_return_from_interrupt();
-int32_t installer_psos_call(char service, int32_t d0, int32_t d1, int32_t d2, int32_t d3, void *a0, void *a1) __asm__("c_installer_psos_call");
-int32_t installer_psos_io_call(psos_io_function function, int32_t device, int32_t d1, int32_t d2, int32_t d3, void *a0, void *a1) __asm__("c_installer_psos_io_call");
 int32_t installer_psos_pack_name(void) __asm__("c_installer_psos_pack_name");
 uint16_t installer_psos_version(void);
 uint32_t installer_psos_create
@@ -12531,13 +12514,13 @@ __regcall int32_t mutex_init(int32_t name /* d0 */,mutex *lock /* a1 */)
   bool bVar2;
   
   bVar2 = false;
-  ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_ATTACH_X,name,in_D1,unaff_D2,unaff_D3,in_A0,lock); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+  psos_call(PSOS_SERVICE_ATTACH_X,name,in_D1,unaff_D2,unaff_D3,in_A0,lock);
   if (bVar2) {
     iVar1 = 3;
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_CREATE_X,d0,0,0,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+    iVar1 = psos_call(PSOS_SERVICE_CREATE_X,d0,0,0,unaff_D3,a0,a1);
     if (bVar2) {
       mutex_clear(lock_00);
       *(void **)((int32_t)a1_00 + 4) = a0_00;
@@ -12614,7 +12597,7 @@ __regcall int32_t mutex_acquire(mutex *lock /* a1 */)
   int32_t extraout_A1;
   bool bVar2;
   
-  iVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_IDENT,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+  iVar1 = psos_call(PSOS_SERVICE_IDENT,0,in_D1,unaff_D2,unaff_D3,in_A0,lock);
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
     *(int32_t *)((int32_t)a1 + 0xc) = *(int32_t *)((int32_t)a1 + 0xc) + 1;
@@ -12624,7 +12607,7 @@ __regcall int32_t mutex_acquire(mutex *lock /* a1 */)
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_REQUEST_X,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; a1 = (__typeof__(a1))bridge_result_a1; __c; });
+    iVar1 = psos_call(PSOS_SERVICE_REQUEST_X,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1);
     if (bVar2) {
       *(int32_t *)(extraout_A1 + 8) = extraout_A0;
     }
@@ -12704,12 +12687,12 @@ __regcall int32_t mutex_release(mutex *lock /* a1 */)
   int32_t extraout_A0;
   void *a1;
   
-  iVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_IDENT,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+  iVar1 = psos_call(PSOS_SERVICE_IDENT,0,in_D1,unaff_D2,unaff_D3,in_A0,lock);
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     if (*(int32_t *)((int32_t)a1 + 0xc) == 0) {
       *(uint32_t *)((int32_t)a1 + 8) = 0;
-      iVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_SEND_X,*(int32_t *)((int32_t)a1 + 4),d1,unaff_D2,unaff_D3,
-                        (void *)*(int32_t *)((int32_t)a1 + 4),a1); a1 = (__typeof__(a1))bridge_result_a1; __c; });
+      iVar1 = psos_call(PSOS_SERVICE_SEND_X,*(int32_t *)((int32_t)a1 + 4),d1,unaff_D2,unaff_D3,
+                        (void *)*(int32_t *)((int32_t)a1 + 4),a1);
     }
     else {
       iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
@@ -15816,7 +15799,7 @@ int32_t pps_init(void)
   void *in_A1;
   
   pps_exchange = 0;
-  iVar2 = ({ __auto_type __c = psos_call(PSOS_SERVICE_CREATE_X,0x31707073,0,0,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  iVar2 = psos_call(PSOS_SERVICE_CREATE_X,0x31707073,0,0,unaff_D3,in_A0,in_A1);
   if (iVar2 == 0) {
     pps_exchange = extraout_A0;
     mutex_clear((mutex *)&pps_message);
@@ -15849,8 +15832,8 @@ int32_t pps_interrupt_stop(void)
     iVar2 = 4;
   }
   else {
-    iVar2 = ({ __auto_type __c = psos_call(PSOS_SERVICE_DELETE_X,pps_exchange,in_D1,unaff_D2,unaff_D3,
-                      (void *)pps_exchange,in_A1); pps_exchange = (__typeof__(pps_exchange))bridge_result_d0; __c; });
+    iVar2 = psos_call(PSOS_SERVICE_DELETE_X,pps_exchange,in_D1,unaff_D2,unaff_D3,
+                      (void *)pps_exchange,in_A1);
     uVar1 = gpt.tflg;
     gpt.tflg = uVar1 & ~TFLG_ICF1;
     uVar1 = gpt.tmsk;
@@ -16683,21 +16666,7 @@ __asm__(
 	"	.size clock_record_sum, .-clock_record_sum\n"
 	"	.popsection\n"
 );
-/* clock_record_sum from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_clock_record_sum,\"ax\",@progbits\n"
-	"	.globl c_clock_record_sum\n"
-	"	.type c_clock_record_sum, @function\n"
-	"c_clock_record_sum:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a6\n"
-	"	jsr clock_record_sum\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_clock_record_sum, .-c_clock_record_sum\n"
-	"	.popsection\n"
-);
+/* clock_record_sum returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* 000134e8 */
 #if 0 /* the decompiler's reading; rewritten in clock.c */
@@ -17589,7 +17558,7 @@ void clock_init(int16_t param_1)
   
   bVar1 = param_1 == 0;
   if (bVar1) {
-    clock_record_sum(&clock), bVar1 = __ghidra_flag(4);
+    clock_record_sum(&clock);
     if (bVar1) goto LAB_00013974;
   }
   clock.month_days[0] = 0x1f;
@@ -26656,34 +26625,7 @@ __asm__(
 	"	.size psos_call, .-psos_call\n"
 	"	.popsection\n"
 );
-/* psos_call from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_psos_call,\"ax\",@progbits\n"
-	"	.globl c_psos_call\n"
-	"	.type c_psos_call, @function\n"
-	"c_psos_call:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d7\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%d1\n"
-	"	move.l (60,%sp),%d2\n"
-	"	move.l (64,%sp),%d3\n"
-	"	move.l (68,%sp),%a0\n"
-	"	move.l (72,%sp),%a1\n"
-	"	jsr psos_call\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	move.l %d0,bridge_result_d0\n"
-	"	move.l %d1,bridge_result_d1\n"
-	"	move.l %d2,bridge_result_d2\n"
-	"	move.l %d3,bridge_result_d3\n"
-	"	move.l %a0,bridge_result_a0\n"
-	"	move.l %a1,bridge_result_a1\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_psos_call, .-c_psos_call\n"
-	"	.popsection\n"
-);
+/* psos_call returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* 00016f36 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -26732,34 +26674,7 @@ __asm__(
 	"	.size psos_io_call, .-psos_io_call\n"
 	"	.popsection\n"
 );
-/* psos_io_call from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_psos_io_call,\"ax\",@progbits\n"
-	"	.globl c_psos_io_call\n"
-	"	.type c_psos_io_call, @function\n"
-	"c_psos_io_call:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d7\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%d1\n"
-	"	move.l (60,%sp),%d2\n"
-	"	move.l (64,%sp),%d3\n"
-	"	move.l (68,%sp),%a0\n"
-	"	move.l (72,%sp),%a1\n"
-	"	jsr psos_io_call\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	move.l %d0,bridge_result_d0\n"
-	"	move.l %d1,bridge_result_d1\n"
-	"	move.l %d2,bridge_result_d2\n"
-	"	move.l %d3,bridge_result_d3\n"
-	"	move.l %a0,bridge_result_a0\n"
-	"	move.l %a1,bridge_result_a1\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_psos_io_call, .-c_psos_io_call\n"
-	"	.popsection\n"
-);
+/* psos_io_call returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* 00016f50 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -26849,7 +26764,7 @@ uint32_t psos_create(char *name,uint32_t a,uint32_t priority,uint32_t stack_a,ui
   void *a1;
   
   d0 = psos_pack_name();
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_SPAWN,d0,a,priority,CONCAT22(__ghidra_piece(uint16_t, stack_a, 2),__ghidra_piece(uint16_t, stack_b, 2)),e,a1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_SPAWN,d0,a,priority,CONCAT22(__ghidra_piece(uint16_t, stack_a, 2),__ghidra_piece(uint16_t, stack_b, 2)),e,a1);
   if ((uVar1 == 0) && (task != (uint32_t *)0x0)) {
     *task = extraout_A0;
   }
@@ -26882,7 +26797,8 @@ uint32_t psos_start(uint32_t task,void *entry)
 /* 00016fca */
 #if 0 /* the decompiler's reading; rewritten in os.c */
 
-/* service 3, ident
+/* service 3, ident; C-callable assembly that branches on psos_call's Z and stores its A0 and D0,
+   written as C over os.h's register-bound call
    psos.md */
 
 uint32_t psos_ident(char *name,uint32_t *id,uint8_t *b)
@@ -26901,7 +26817,7 @@ uint32_t psos_ident(char *name,uint32_t *id,uint8_t *b)
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_IDENT,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_IDENT,d0,d1,unaff_D2,unaff_D3,a0,a1);
   if (bVar2) {
     if (id != (uint32_t *)0x0) {
       *id = extraout_A0;
@@ -26931,7 +26847,7 @@ uint32_t psos_my_pid(void)
   uint32_t extraout_A0;
   void *in_A1;
   
-  ({ __auto_type __c = psos_call(PSOS_SERVICE_IDENT,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  psos_call(PSOS_SERVICE_IDENT,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   return extraout_A0;
 }
 
@@ -27019,7 +26935,7 @@ uint32_t psos_priority(uint32_t task,uint32_t priority,uint8_t *old)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_PRIORITY,priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_PRIORITY,priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
   if (old != (uint8_t *)0x0) {
     *old = extraout_D0b;
   }
@@ -27066,7 +26982,7 @@ uint32_t psos_mode(uint32_t mode,uint32_t mask,uint8_t *old)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_MODE,mode,mask,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_MODE,mode,mask,unaff_D2,unaff_D3,in_A0,in_A1);
   if (old != (uint8_t *)0x0) {
     *old = extraout_D0b;
   }
@@ -27126,7 +27042,7 @@ uint32_t psos_service_8(uint32_t a,uint32_t b,uint32_t c,uint32_t d,uint32_t *ou
   uint32_t extraout_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_ALLOCATE_SEGMENT,d,a,b,c,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_ALLOCATE_SEGMENT,d,a,b,c,in_A0,in_A1);
   if ((uVar1 == 0) && (out != (uint32_t *)0x0)) {
     *out = extraout_A0;
   }
@@ -27215,7 +27131,7 @@ uint32_t psos_create_partition(void *area,uint32_t block_size,uint32_t count,voi
   void *extraout_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_CREATE_PARTITION,block_size,count,unaff_D2,unaff_D3,area,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_CREATE_PARTITION,block_size,count,unaff_D2,unaff_D3,area,in_A1);
   if (partition != (void **)0x0) {
     *partition = extraout_A0;
   }
@@ -27262,7 +27178,7 @@ uint32_t psos_get_block(void *partition,uint32_t block_size,void **block)
   void *in_A1;
   void *extraout_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_GET_BLOCK,block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_GET_BLOCK,block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1);
   if ((uVar1 == 0) && (block != (void **)0x0)) {
     *block = extraout_A1;
   }
@@ -27309,7 +27225,7 @@ uint32_t psos_create_x(char *name,uint32_t a,uint32_t b,uint32_t *exchange)
   void *a1;
   
   d0 = psos_pack_name();
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_CREATE_X,d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_CREATE_X,d0,a,b,unaff_D3,a0,a1);
   if ((uVar1 == 0) && (exchange != (uint32_t *)0x0)) {
     *exchange = extraout_A0;
   }
@@ -27321,7 +27237,9 @@ uint32_t psos_create_x(char *name,uint32_t a,uint32_t b,uint32_t *exchange)
 /* 000171fe */
 #if 0 /* the decompiler's reading; rewritten in os.c */
 
-/* psos.md */
+/* service 21, attach_x; C-callable assembly that branches on psos_call's Z and stores its A0, D1
+   and D2, written as C over os.h's register-bound call
+   psos.md */
 
 uint32_t psos_service_21(char *name,uint32_t *out1,uint32_t *out2,uint32_t *out3)
 
@@ -27339,7 +27257,7 @@ uint32_t psos_service_21(char *name,uint32_t *out1,uint32_t *out2,uint32_t *out3
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_ATTACH_X,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_ATTACH_X,d0,d1,unaff_D2,unaff_D3,a0,a1);
   if (bVar2) {
     if (out1 != (uint32_t *)0x0) {
       *out1 = extraout_A0;
@@ -27423,7 +27341,8 @@ uint32_t psos_jam_x(uint32_t exchange,void *message)
 /* 0001728a */
 #if 0 /* the decompiler's reading; rewritten in os.c */
 
-/* service 18, broadcast
+/* service 18, broadcast; C-callable assembly that branches on psos_call's Z and stores its D0 and
+   D1, written as C over os.h's register-bound call
    psos.md */
 
 uint32_t psos_broadcast_x(uint32_t exchange,void *message,uint32_t count,uint8_t *count_out,uint8_t *woken)
@@ -27438,7 +27357,7 @@ uint32_t psos_broadcast_x(uint32_t exchange,void *message,uint32_t count,uint8_t
   bool bVar2;
   
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(PSOS_SERVICE_BROADCAST_X,count,in_D1,unaff_D2,unaff_D3,(void *)exchange,message); bVar2 = __ghidra_flag(4); __c; }); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; extraout_D1b = (__typeof__(extraout_D1b))bridge_result_d1; __c; })
+  uVar1 = psos_call(PSOS_SERVICE_BROADCAST_X,count,in_D1,unaff_D2,unaff_D3,(void *)exchange,message)
   ;
   if (bVar2) {
     if (count_out != (uint8_t *)0x0) {
@@ -27508,7 +27427,7 @@ uint32_t psos_wait_v(uint32_t a,uint32_t b,uint32_t c,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_WAIT_V,c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_WAIT_V,c,a,b,unaff_D3,in_A0,in_A1);
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }
@@ -27533,7 +27452,7 @@ uint32_t psos_get_v(uint32_t a,uint32_t b,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_GET_V,in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_GET_V,in_D0,a,b,unaff_D3,in_A0,in_A1);
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }
@@ -27584,7 +27503,7 @@ uint32_t psos_get_time(uint32_t *date,uint32_t *time,uint16_t *ticks)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(PSOS_SERVICE_GET_TIME,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))bridge_result_d0; extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
+  uVar1 = psos_call(PSOS_SERVICE_GET_TIME,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   if (date != (uint32_t *)0x0) {
     *date = extraout_D0;
   }
@@ -27699,7 +27618,7 @@ uint32_t psos_io_read(uint32_t device,void *buffer,uint32_t *length)
   uint32_t uVar1;
   
   d2 = *length;
-  uVar1 = ({ __auto_type __c = psos_io_call(PSOS_IO_READ,device,in_D1,d2,unaff_D3,length,buffer); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a0; __c; });
+  uVar1 = psos_io_call(PSOS_IO_READ,device,in_D1,d2,unaff_D3,length,buffer);
   if ((uVar1 == 0) && (length != (uint32_t *)0x0)) {
     *length = d2;
   }
@@ -27723,7 +27642,7 @@ uint32_t psos_io_write(uint32_t device,void *buffer,uint32_t *length)
   uint32_t uVar1;
   
   d2 = *length;
-  uVar1 = ({ __auto_type __c = psos_io_call(PSOS_IO_WRITE,device,in_D1,d2,unaff_D3,buffer,length); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a1; __c; });
+  uVar1 = psos_io_call(PSOS_IO_WRITE,device,in_D1,d2,unaff_D3,buffer,length);
   if ((uVar1 == 0) && (length != (uint32_t *)0x0)) {
     *length = d2;
   }
@@ -30312,8 +30231,8 @@ __pforth uint32_t forth_read_line(forth_user_end user /* a5 */,char *input /* a3
     __m68k_trap(4);
     return in_D0;
   }
-  ({ __auto_type __c = psos_call(PSOS_SERVICE_DELETE,(uint32_t)(uint16_t)((forth_user_area *)(user + -0x28))->iodev,in_D1,
-            unaff_D2,unaff_D3,(void *)0x0,ADJ(user)->tib); extraout_D0 = (__typeof__(extraout_D0))bridge_result_d0; __c; });
+  psos_call(PSOS_SERVICE_DELETE,(uint32_t)(uint16_t)((forth_user_area *)(user + -0x28))->iodev,in_D1,
+            unaff_D2,unaff_D3,(void *)0x0,ADJ(user)->tib);
   return extraout_D0;
 }
 
@@ -36733,7 +36652,7 @@ __pforth void forth_spawn(forth_user_end user,int32_t *sp,void *dp)
     *(void **)((int32_t)dp + 2) = dp;
     *(int16_t *)((int32_t)dp + 6) = (int16_t)iVar3;
     *(uint32_t *)((int32_t)dp + 8) = extraout_A0;
-    ({ __auto_type __c = psos_call(PSOS_SERVICE_PRIORITY,0,d1,d2,iVar3,(void *)0x0,a1); iVar3 = (__typeof__(iVar3))bridge_result_d3; __c; });
+    psos_call(PSOS_SERVICE_PRIORITY,0,d1,d2,iVar3,(void *)0x0,a1);
     forth_parse_word(user,unaff_A3);
     iVar3 = forth_pack_name(user);
     *(int32_t *)((int32_t)dp + 0xc) = iVar3;
@@ -38043,23 +37962,7 @@ __asm__(
 	"	.size pforth_link_word, .-pforth_link_word\n"
 	"	.popsection\n"
 );
-/* pforth_link_word from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_pforth_link_word,\"ax\",@progbits\n"
-	"	.globl c_pforth_link_word\n"
-	"	.type c_pforth_link_word, @function\n"
-	"c_pforth_link_word:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a4\n"
-	"	jsr pforth_link_word\n"
-	"	move.l %d0,bridge_result_d0\n"
-	"	move.l %a4,%d0\n"
-	"	move.l %d0,%a0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_pforth_link_word, .-c_pforth_link_word\n"
-	"	.popsection\n"
-);
+/* pforth_link_word returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* 0001ae46 */
 #if 0 /* the decompiler's reading; rewritten in console.c */
@@ -47819,24 +47722,7 @@ __asm__(
 	"	.byte 0x00,0x00\n"
 	"	.popsection\n"
 );
-/* scpi_double_to_decimal from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_scpi_double_to_decimal,\"ax\",@progbits\n"
-	"	.globl c_scpi_double_to_decimal\n"
-	"	.type c_scpi_double_to_decimal, @function\n"
-	"c_scpi_double_to_decimal:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%d7\n"
-	"	move.l (60,%sp),%a0\n"
-	"	jsr scpi_double_to_decimal\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_scpi_double_to_decimal, .-c_scpi_double_to_decimal\n"
-	"	.popsection\n"
-);
+/* scpi_double_to_decimal returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* 0002507a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -48050,9 +47936,9 @@ LAB_000251da:
     }
     iVar4 = *(int32_t *)((int32_t)pdVar12 + (int16_t)(uVar10 << 3) + 4);
     bVar13 = iVar4 == 0;
-    dVar14 = ({ __auto_type __c = scpi_double_multiply
+    dVar14 = scpi_double_multiply
                        (a,(double)CONCAT44(*(uint32_t *)((int32_t)pdVar12 + (int32_t)(int16_t)(uVar10 << 3))
-                                           ,iVar4)); bVar13 = __ghidra_flag(4); __c; });
+                                           ,iVar4));
     if (!bVar13) {
       return dVar14;
     }
@@ -48287,21 +48173,7 @@ __asm__(
 	"	.size scpi_bcd_to_double, .-scpi_bcd_to_double\n"
 	"	.popsection\n"
 );
-/* scpi_bcd_to_double from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_scpi_bcd_to_double,\"ax\",@progbits\n"
-	"	.globl c_scpi_bcd_to_double\n"
-	"	.type c_scpi_bcd_to_double, @function\n"
-	"c_scpi_bcd_to_double:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	jsr scpi_bcd_to_double\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_scpi_bcd_to_double, .-c_scpi_bcd_to_double\n"
-	"	.popsection\n"
-);
+/* scpi_bcd_to_double returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* 000251e4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -48357,9 +48229,9 @@ __regcall double scpi_scale_by_power_of_ten(double value /* d0 */,int16_t *expon
     }
     iVar1 = *(int32_t *)((int32_t)powers + (int16_t)(sVar6 << 3) + 4);
     bVar7 = iVar1 == 0;
-    dVar8 = ({ __auto_type __c = scpi_double_multiply
+    dVar8 = scpi_double_multiply
                       (a,(double)CONCAT44(*(uint32_t *)((int32_t)powers + (int32_t)(int16_t)(sVar6 << 3)),
-                                          iVar1)); bVar7 = __ghidra_flag(4); __c; });
+                                          iVar1));
     if (!bVar7) {
       return dVar8;
     }
@@ -48425,24 +48297,7 @@ __asm__(
 	"	.size scpi_scale_by_power_of_ten, .-scpi_scale_by_power_of_ten\n"
 	"	.popsection\n"
 );
-/* scpi_scale_by_power_of_ten from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_scpi_scale_by_power_of_ten,\"ax\",@progbits\n"
-	"	.globl c_scpi_scale_by_power_of_ten\n"
-	"	.type c_scpi_scale_by_power_of_ten, @function\n"
-	"c_scpi_scale_by_power_of_ten:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a0\n"
-	"	move.l (60,%sp),%a1\n"
-	"	jsr scpi_scale_by_power_of_ten\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_scpi_scale_by_power_of_ten, .-c_scpi_scale_by_power_of_ten\n"
-	"	.popsection\n"
-);
+/* scpi_scale_by_power_of_ten returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* 000252bc */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -48853,24 +48708,7 @@ __asm__(
 	"	.size scpi_double_multiply, .-scpi_double_multiply\n"
 	"	.popsection\n"
 );
-/* scpi_double_multiply from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_scpi_double_multiply,\"ax\",@progbits\n"
-	"	.globl c_scpi_double_multiply\n"
-	"	.type c_scpi_double_multiply, @function\n"
-	"c_scpi_double_multiply:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%d2\n"
-	"	move.l (60,%sp),%d3\n"
-	"	jsr scpi_double_multiply\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_scpi_double_multiply, .-c_scpi_double_multiply\n"
-	"	.popsection\n"
-);
+/* scpi_double_multiply returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* 00025468 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -48999,9 +48837,9 @@ int32_t scpi_number_to_double(scpi_number *number,double *value,int32_t scale)
   scpi_bcd sStack_30;
   
   bVar1 = __ghidra_piece(uint16_t, scale, 2) == 0;
-  ({ __auto_type __c = scpi_number_to_bcd(number,__ghidra_piece(uint16_t, scale, 2),&sStack_30); bVar1 = __ghidra_flag(4); __c; });
+  scpi_number_to_bcd(number,__ghidra_piece(uint16_t, scale, 2),&sStack_30);
   if (bVar1) {
-    converted = ({ __auto_type __c = scpi_bcd_to_double(&sStack_30); bVar1 = __ghidra_flag(4); __c; });
+    converted = scpi_bcd_to_double(&sStack_30);
     if (!bVar1) {
       *value = converted;
       return 0;
@@ -49080,29 +48918,14 @@ __asm__(
 	"	.size scpi_number_to_bcd, .-scpi_number_to_bcd\n"
 	"	.popsection\n"
 );
-/* scpi_number_to_bcd from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_scpi_number_to_bcd,\"ax\",@progbits\n"
-	"	.globl c_scpi_number_to_bcd\n"
-	"	.type c_scpi_number_to_bcd, @function\n"
-	"c_scpi_number_to_bcd:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%a1\n"
-	"	jsr scpi_number_to_bcd\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_scpi_number_to_bcd, .-c_scpi_number_to_bcd\n"
-	"	.popsection\n"
-);
+/* scpi_number_to_bcd returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* 0002553a */
 #if 0 /* the decompiler's reading; rewritten in scpi_convert.c */
 
 /* a double as NR3 text, so many significant digits and no digit below the resolution given; -308
-   keeps them all
+   keeps them all; C-callable assembly that branches on scpi_double_to_decimal's Z, written as C
+   over a register-bound call
    docs/scpi/README.md, run */
 
 uint32_t
@@ -49124,7 +48947,7 @@ scpi_real_to_text(int32_t param_1,int32_t param_2,uint8_t *param_3,int16_t param
       return 1;
     }
     bVar6 = param_4 == 0;
-    scpi_double_to_decimal(__ghidra_as(double, CONCAT44(param_1,param_2)),param_4,(char *)&decimal), bVar6 = __ghidra_flag(4);
+    scpi_double_to_decimal(__ghidra_as(double, CONCAT44(param_1,param_2)),param_4,(char *)&decimal);
     if (bVar6) {
       return 1;
     }
@@ -89971,13 +89794,13 @@ __regcall int32_t installer_mutex_init(int32_t name /* d0 */,mutex *lock /* a1 *
   bool bVar2;
   
   bVar2 = false;
-  ({ __auto_type __c = ({ __auto_type __c = installer_psos_call(0x15,name,in_D1,unaff_D2,unaff_D3,in_A0,lock); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+  installer_psos_call(0x15,name,in_D1,unaff_D2,unaff_D3,in_A0,lock);
   if (bVar2) {
     iVar1 = 3;
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = installer_psos_call(0x14,d0,0,0,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+    iVar1 = installer_psos_call(0x14,d0,0,0,unaff_D3,a0,a1);
     if (bVar2) {
       installer_mutex_clear(lock_00);
       *(void **)((int32_t)a1_00 + 4) = a0_00;
@@ -90054,7 +89877,7 @@ __regcall int32_t installer_mutex_acquire(void *mutex /* a1 */)
   int32_t extraout_A1;
   bool bVar2;
   
-  iVar1 = ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+  iVar1 = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex);
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
     *(int32_t *)((int32_t)a1 + 0xc) = *(int32_t *)((int32_t)a1 + 0xc) + 1;
@@ -90064,7 +89887,7 @@ __regcall int32_t installer_mutex_acquire(void *mutex /* a1 */)
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = installer_psos_call(0x18,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; a1 = (__typeof__(a1))bridge_result_a1; __c; });
+    iVar1 = installer_psos_call(0x18,0,0,unaff_D2,unaff_D3,*(void **)((int32_t)a1 + 4),a1);
     if (bVar2) {
       *(int32_t *)(extraout_A1 + 8) = extraout_A0;
     }
@@ -90144,12 +89967,12 @@ __regcall int32_t installer_mutex_release(void *mutex /* a1 */)
   int32_t extraout_A0;
   void *a1;
   
-  iVar1 = ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; unaff_D3 = (__typeof__(unaff_D3))bridge_result_d3; __c; });
+  iVar1 = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex);
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     if (*(int32_t *)((int32_t)a1 + 0xc) == 0) {
       *(uint32_t *)((int32_t)a1 + 8) = 0;
-      iVar1 = ({ __auto_type __c = installer_psos_call(0x17,*(int32_t *)((int32_t)a1 + 4),d1,unaff_D2,unaff_D3,
-                                  (void *)*(int32_t *)((int32_t)a1 + 4),a1); a1 = (__typeof__(a1))bridge_result_a1; __c; });
+      iVar1 = installer_psos_call(0x17,*(int32_t *)((int32_t)a1 + 4),d1,unaff_D2,unaff_D3,
+                                  (void *)*(int32_t *)((int32_t)a1 + 4),a1);
     }
     else {
       iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
@@ -98027,34 +97850,7 @@ __asm__(
 	"	.size installer_psos_call, .-installer_psos_call\n"
 	"	.popsection\n"
 );
-/* installer_psos_call from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_psos_call,\"ax\",@progbits\n"
-	"	.globl c_installer_psos_call\n"
-	"	.type c_installer_psos_call, @function\n"
-	"c_installer_psos_call:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d7\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%d1\n"
-	"	move.l (60,%sp),%d2\n"
-	"	move.l (64,%sp),%d3\n"
-	"	move.l (68,%sp),%a0\n"
-	"	move.l (72,%sp),%a1\n"
-	"	jsr installer_psos_call\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	move.l %d0,bridge_result_d0\n"
-	"	move.l %d1,bridge_result_d1\n"
-	"	move.l %d2,bridge_result_d2\n"
-	"	move.l %d3,bridge_result_d3\n"
-	"	move.l %a0,bridge_result_a0\n"
-	"	move.l %a1,bridge_result_a1\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_psos_call, .-c_installer_psos_call\n"
-	"	.popsection\n"
-);
+/* installer_psos_call returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* installer::00102a8a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -98102,34 +97898,7 @@ __asm__(
 	"	.size installer_psos_io_call, .-installer_psos_io_call\n"
 	"	.popsection\n"
 );
-/* installer_psos_io_call from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_psos_io_call,\"ax\",@progbits\n"
-	"	.globl c_installer_psos_io_call\n"
-	"	.type c_installer_psos_io_call, @function\n"
-	"c_installer_psos_io_call:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d7\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%d1\n"
-	"	move.l (60,%sp),%d2\n"
-	"	move.l (64,%sp),%d3\n"
-	"	move.l (68,%sp),%a0\n"
-	"	move.l (72,%sp),%a1\n"
-	"	jsr installer_psos_io_call\n"
-	"	move.w %ccr,bridge_ccr\n"
-	"	move.l %d0,bridge_result_d0\n"
-	"	move.l %d1,bridge_result_d1\n"
-	"	move.l %d2,bridge_result_d2\n"
-	"	move.l %d3,bridge_result_d3\n"
-	"	move.l %a0,bridge_result_a0\n"
-	"	move.l %a1,bridge_result_a1\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_psos_io_call, .-c_installer_psos_io_call\n"
-	"	.popsection\n"
-);
+/* installer_psos_io_call returns in registers C has no names for: no bridge, the hand-written C binds them */
 
 /* installer::00102aa4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -98218,7 +97987,7 @@ uint32_t installer_psos_create
   void *a1;
   
   d0 = installer_psos_pack_name();
-  uVar1 = ({ __auto_type __c = installer_psos_call(1,d0,a,priority,CONCAT22(__ghidra_piece(uint16_t, stack_a, 2),__ghidra_piece(uint16_t, stack_b, 2)),e,a1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = installer_psos_call(1,d0,a,priority,CONCAT22(__ghidra_piece(uint16_t, stack_a, 2),__ghidra_piece(uint16_t, stack_b, 2)),e,a1);
   if ((uVar1 == 0) && (task != (uint32_t *)0x0)) {
     *task = extraout_A0;
   }
@@ -98268,7 +98037,7 @@ uint32_t installer_psos_ident(char *name,uint32_t *id,uint8_t *b)
   
   d0 = installer_psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = installer_psos_call(3,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
+  uVar1 = installer_psos_call(3,d0,d1,unaff_D2,unaff_D3,a0,a1);
   if (bVar2) {
     if (id != (uint32_t *)0x0) {
       *id = extraout_A0;
@@ -98298,7 +98067,7 @@ uint32_t installer_psos_my_pid(void)
   uint32_t extraout_A0;
   void *in_A1;
   
-  ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   return extraout_A0;
 }
 
@@ -98383,7 +98152,7 @@ uint32_t installer_psos_priority(uint32_t task,uint32_t priority,uint8_t *old)
   uint32_t uVar1;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call(7,priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
+  uVar1 = installer_psos_call(7,priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
   if (old != (uint8_t *)0x0) {
     *old = extraout_D0b;
   }
@@ -98429,7 +98198,7 @@ uint32_t installer_psos_mode(uint32_t mode,uint32_t mask,uint8_t *old)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call(' ',mode,mask,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; __c; });
+  uVar1 = installer_psos_call(' ',mode,mask,unaff_D2,unaff_D3,in_A0,in_A1);
   if (old != (uint8_t *)0x0) {
     *old = extraout_D0b;
   }
@@ -98487,7 +98256,7 @@ uint32_t installer_psos_service_8(uint32_t a,uint32_t b,uint32_t c,uint32_t d,ui
   uint32_t extraout_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call(8,d,a,b,c,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = installer_psos_call(8,d,a,b,c,in_A0,in_A1);
   if ((uVar1 == 0) && (out != (uint32_t *)0x0)) {
     *out = extraout_A0;
   }
@@ -98571,7 +98340,7 @@ uint32_t installer_psos_create_partition(void *area,uint32_t block_size,uint32_t
   void *extraout_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call('#',block_size,count,unaff_D2,unaff_D3,area,in_A1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = installer_psos_call('#',block_size,count,unaff_D2,unaff_D3,area,in_A1);
   if (partition != (void **)0x0) {
     *partition = extraout_A0;
   }
@@ -98615,7 +98384,7 @@ uint32_t installer_psos_get_block(void *partition,uint32_t block_size,void **blo
   void *in_A1;
   void *extraout_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call('%',block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1); extraout_A1 = (__typeof__(extraout_A1))bridge_result_a1; __c; });
+  uVar1 = installer_psos_call('%',block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1);
   if ((uVar1 == 0) && (block != (void **)0x0)) {
     *block = extraout_A1;
   }
@@ -98661,7 +98430,7 @@ uint32_t installer_psos_create_x(char *name,uint32_t a,uint32_t b,uint32_t *exch
   void *a1;
   
   d0 = installer_psos_pack_name();
-  uVar1 = ({ __auto_type __c = installer_psos_call(0x14,d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; __c; });
+  uVar1 = installer_psos_call(0x14,d0,a,b,unaff_D3,a0,a1);
   if ((uVar1 == 0) && (exchange != (uint32_t *)0x0)) {
     *exchange = extraout_A0;
   }
@@ -98691,7 +98460,7 @@ uint32_t installer_psos_service_21(char *name,uint32_t *out1,uint32_t *out2,uint
   
   d0 = installer_psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = installer_psos_call(0x15,d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; extraout_A0 = (__typeof__(extraout_A0))bridge_result_a0; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
+  uVar1 = installer_psos_call(0x15,d0,d1,unaff_D2,unaff_D3,a0,a1);
   if (bVar2) {
     if (out1 != (uint32_t *)0x0) {
       *out1 = extraout_A0;
@@ -98788,7 +98557,7 @@ uint32_t installer_psos_broadcast_x
   bool bVar2;
   
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = installer_psos_call(0x12,count,in_D1,unaff_D2,unaff_D3,(void *)exchange,message); bVar2 = __ghidra_flag(4); __c; }); extraout_D0b = (__typeof__(extraout_D0b))bridge_result_d0; extraout_D1b = (__typeof__(extraout_D1b))bridge_result_d1; __c; });
+  uVar1 = installer_psos_call(0x12,count,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
   if (bVar2) {
     if (count_out != (uint8_t *)0x0) {
       *count_out = extraout_D0b;
@@ -98856,7 +98625,7 @@ uint32_t installer_psos_wait_v(uint32_t a,uint32_t b,uint32_t c,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call(0x1a,c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
+  uVar1 = installer_psos_call(0x1a,c,a,b,unaff_D3,in_A0,in_A1);
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }
@@ -98881,7 +98650,7 @@ uint32_t installer_psos_get_v(uint32_t a,uint32_t b,uint32_t *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call(0x1b,in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; __c; });
+  uVar1 = installer_psos_call(0x1b,in_D0,a,b,unaff_D3,in_A0,in_A1);
   if (out != (uint32_t *)0x0) {
     *out = extraout_D1;
   }
@@ -98931,7 +98700,7 @@ uint32_t installer_psos_get_time(uint32_t *date,uint32_t *time,uint16_t *ticks)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = installer_psos_call(0x1e,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))bridge_result_d0; extraout_D1 = (__typeof__(extraout_D1))bridge_result_d1; unaff_D2 = (__typeof__(unaff_D2))bridge_result_d2; __c; });
+  uVar1 = installer_psos_call(0x1e,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   if (date != (uint32_t *)0x0) {
     *date = extraout_D0;
   }
@@ -99041,7 +98810,7 @@ uint32_t installer_psos_io_read(uint32_t device,void *buffer,uint32_t *length)
   uint32_t uVar1;
   
   d2 = *length;
-  uVar1 = ({ __auto_type __c = installer_psos_io_call(PSOS_IO_READ,device,in_D1,d2,unaff_D3,length,buffer); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a0; __c; });
+  uVar1 = installer_psos_io_call(PSOS_IO_READ,device,in_D1,d2,unaff_D3,length,buffer);
   if ((uVar1 == 0) && (length != (uint32_t *)0x0)) {
     *length = d2;
   }
@@ -99064,7 +98833,7 @@ uint32_t installer_psos_io_write(uint32_t device,void *buffer,uint32_t *length)
   uint32_t uVar1;
   
   d2 = *length;
-  uVar1 = ({ __auto_type __c = installer_psos_io_call(PSOS_IO_WRITE,device,in_D1,d2,unaff_D3,buffer,length); d2 = (__typeof__(d2))bridge_result_d2; length = (__typeof__(length))bridge_result_a1; __c; });
+  uVar1 = installer_psos_io_call(PSOS_IO_WRITE,device,in_D1,d2,unaff_D3,buffer,length);
   if ((uVar1 == 0) && (length != (uint32_t *)0x0)) {
     *length = d2;
   }

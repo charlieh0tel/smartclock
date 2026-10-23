@@ -168,7 +168,7 @@
 0x19ed0	function	forth_psos_call	psos.md	the console words' service call, reporting an error
 0x16f74	function	psos_create	psos.md	service 1, spawn's create	unsigned long psos_create(char *name, unsigned long a, unsigned long priority, unsigned long stack_a, unsigned long stack_b, void *e, unsigned long *task)
 0x16fae	function	psos_start	psos.md	service 2, spawn's start	unsigned long psos_start(unsigned long task, void *entry)
-0x16fca	function	psos_ident	psos.md	service 3, ident	unsigned long psos_ident(char *name, unsigned long *id, unsigned char *b)
+0x16fca	function	psos_ident	psos.md	service 3, ident; C-callable assembly that branches on psos_call's Z and stores its A0 and D0, written as C over os.h's register-bound call	unsigned long psos_ident(char *name, unsigned long *id, unsigned char *b)
 0x16ff8	function	psos_my_pid	psos.md	service 3 with no name, my_pid	unsigned long psos_my_pid(void)
 0x17008	function	psos_delete	psos.md	service 4, delete	unsigned long psos_delete(unsigned long task)
 0x17020	function	psos_suspend	psos.md	service 5, suspend	unsigned long psos_suspend(unsigned long task)
@@ -178,10 +178,10 @@
 0x170f4	function	psos_free_segment	psos.md	service 9, Free_segment	unsigned long psos_free_segment(void *segment)
 0x1710c	function	psos_assign_segment	psos.md	service 10, Assign_segment	unsigned long psos_assign_segment(void *segment, unsigned long task)
 0x17128	function	psos_reclaim_segment	psos.md	service 16, a segment back from a task	unsigned long psos_reclaim_segment(void *segment, unsigned long task)
-0x1728a	function	psos_broadcast_x	psos.md	service 18, broadcast	unsigned long psos_broadcast_x(unsigned long exchange, void *message, unsigned long count, unsigned char *count_out, unsigned char *woken)
+0x1728a	function	psos_broadcast_x	psos.md	service 18, broadcast; C-callable assembly that branches on psos_call's Z and stores its D0 and D1, written as C over os.h's register-bound call	unsigned long psos_broadcast_x(unsigned long exchange, void *message, unsigned long count, unsigned char *count_out, unsigned char *woken)
 0x1726e	function	psos_jam_x	psos.md	service 19, jam_x	unsigned long psos_jam_x(unsigned long exchange, void *message)
 0x171ce	function	psos_create_x	psos.md	service 20, create_x	unsigned long psos_create_x(char *name, unsigned long a, unsigned long b, unsigned long *exchange)
-0x171fe	function	psos_service_21	psos.md		unsigned long psos_service_21(char *name, unsigned long *out1, unsigned long *out2, unsigned long *out3)
+0x171fe	function	psos_service_21	psos.md	service 21, attach_x; C-callable assembly that branches on psos_call's Z and stores its A0, D1 and D2, written as C over os.h's register-bound call	unsigned long psos_service_21(char *name, unsigned long *out1, unsigned long *out2, unsigned long *out3)
 0x1723a	function	psos_delete_x	psos.md	service 22, delete_x	unsigned long psos_delete_x(unsigned long exchange)
 0x17252	function	psos_send_x	psos.md	service 23, send_x	unsigned long psos_send_x(unsigned long exchange, void *message)
 0x172c4	function	psos_request_x	psos.md	service 24, request_x	unsigned long psos_request_x(unsigned long exchange, void *buffer, unsigned long no_wait, unsigned long ticks)
@@ -1057,7 +1057,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x251e4	function	scpi_scale_by_power_of_ten	docs/scpi/README.md, run	the double in D0:D1 times 10 to the word at A0 less 16, by the tables at 0x256ae and 0x25b36; the sign from the word 10 bytes before; -9 beyond 309		convention=register; confidence=run; in=D0:D1 double value, A0 short *exponent, A1 double *powers; out=D0:D1 double; returns=ccr; error=D0.w -9 beyond 309; family=scpi-engine
 0x252bc	function	scpi_double_multiply	docs/scpi/README.md, run	D0:D1 times D2:D3, the engine's own IEEE multiply		convention=register; confidence=run; in=D0:D1 double a, D2:D3 double b; out=D0:D1 double; returns=ccr; error=D2 -2 underflow, D2 -1 overflow; preserves=A0; family=scpi-engine
 0x25468	function	scpi_double_multiply_short	docs/scpi/README.md, read	scpi_double_multiply's path for an operand whose mantissa fits in 16 bits		convention=other; confidence=read; family=scpi-engine
-0x2553a	function	scpi_real_to_text	docs/scpi/README.md, run	a double as NR3 text, so many significant digits and no digit below the resolution given; -308 keeps them all
+0x2553a	function	scpi_real_to_text	docs/scpi/README.md, run	a double as NR3 text, so many significant digits and no digit below the resolution given; -308 keeps them all; C-callable assembly that branches on scpi_double_to_decimal's Z, written as C over a register-bound call
 0x2553a	local	exponent_digits	read	the exponent's four digits, two from decimal_digit_pairs for its hundreds and two for the rest	char[4] @ -0x8
 0x2c1ee	local	step	read	the step clamp_float_to_step_double is given, 1e-9 and load_long	scpi_step @ -0xc
 0x2c494	local	unit_step	read	the degrees' and minutes' step, 1 and the routine at 0x32e26	scpi_step @ -0x24

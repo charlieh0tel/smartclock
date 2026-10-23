@@ -1811,8 +1811,7 @@ view cannot drift apart.  The library, bottom up:
   flag-setting instruction's operands read as flags and, from an
   interrupt hook or after a run stops, leaves the CPU with them; a
   write of PC from a code hook loses the codes as well, `cc_op` being
-  the translated block's until it ends.  The emulator found it first
-  (`crates/smartclock-emu/src/cpu/unicorn.rs`).  The harness read SR so
+  the translated block's until it ends.  The harness read SR so
   in trap #1 and #7, kernel service 33, interrupts, `rtr`,
   `move (SP)+,SR` and a call's final status, and took interrupts by a
   PC write from its step hook.  Now the system byte comes from a saved
@@ -1968,8 +1967,8 @@ view cannot drift apart.  The library, bottom up:
   `mc68331.h`, `mc68681.h` and `psos-signals.h`, go to
   `third_party/firmware/include/`.  The images, the EEPROM dumps, the
   bitstreams and the Ghidra archive stay where they are, and tables
-  written for reading (the pForth word tables, the 58503A report) stay
-  in `docs/firmware/`.  The firmware's make targets move to
+  written for reading (the pForth word tables) stay in
+  `docs/firmware/`.  The firmware's make targets move to
   `third_party/firmware/Makefile`, which runs on its own (`make -C
   third_party/firmware TARGET IMAGE=...`, every image without
   `IMAGE=`), the top Makefile delegating each by name.  `third_party/
@@ -1978,7 +1977,7 @@ view cannot drift apart.  The library, bottom up:
   keeps the name `smartclock.h`.  Done as refactor commits, each with
   the export unchanged and every check green: the shared headers, then
   the image folder, then the Makefile, then NOTICE; after the pForth
-  console sessions land and before the 58503A port.  Done 2026-10-22,
+  console sessions land.  Done 2026-10-22,
   in those four commits.  The export changed in its includes only,
   `"../rewritten/FILE"` for `"../rewritten/z3805a-3543b/FILE"`, which
   the exporter computes from the export's folder to `rewritten=`; the
@@ -2057,6 +2056,8 @@ view cannot drift apart.  The library, bottom up:
   hand-written assembly, not C (one branches into another's body; A6
   is the data stack), as assembly files beside the hand-written C;
   they are still the export's listing.
+
+  In progress, to follow on its own: the 58503A 3704 port.
 
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each

@@ -1750,6 +1750,31 @@ view cannot drift apart.  The library, bottom up:
   (Z3805A 3543B only) or console.md, blank for most.  Left: the console
   sessions.
 
+  Decided 2026-10-22, the firmware layout: one folder per image under
+  `third_party/firmware/`, holding everything that image's work is:
+  `third_party/firmware/IMAGE/` with its `smartclock.h` and
+  `check-layout.c` (from `tools/ghidra/types/`), its names files
+  (`names.tsv`, `scpi-tree.tsv`, `installer-scpi-tree.tsv`,
+  `modules.tsv`, `results.tsv`, from `tools/ghidra/names/`), the
+  generated `handlers.txt` (from `tmp/`), `rewritten/` (from
+  `third_party/firmware/rewritten/IMAGE/`), `decompiled/` (from
+  `third_party/firmware/decompiled/`) and `untyped.tsv` (from
+  `docs/firmware/untyped/`).  The image-independent headers,
+  `mc68331.h`, `mc68681.h` and `psos-signals.h`, go to
+  `third_party/firmware/include/`.  The images, the EEPROM dumps, the
+  bitstreams and the Ghidra archive stay where they are, and tables
+  written for reading (the pForth word tables, the 58503A report) stay
+  in `docs/firmware/`.  The firmware's make targets move to
+  `third_party/firmware/Makefile`, which runs on its own (`make -C
+  third_party/firmware TARGET IMAGE=...`, every image without
+  `IMAGE=`), the top Makefile delegating each by name.  `third_party/
+  NOTICE` is amended to say the image folders and the Makefile are the
+  project's own analysis of the vendor's material.  Each image's header
+  keeps the name `smartclock.h`.  Done as refactor commits, each with
+  the export unchanged and every check green: the shared headers, then
+  the image folder, then the Makefile, then NOTICE; after the pForth
+  console sessions land and before the 58503A port.
+
   Then a coverage push on the harness itself (2026-10-22), each part
   proved by a bug planted in the hand-written C that it catches and
   the generated cases let pass.  Device reads are effects, in order

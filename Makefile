@@ -139,24 +139,36 @@ $(FIRMWARE_TARGETS):
 clean:
 	$(CARGO) clean
 
+# The crates carrying [package.metadata.deb]: smartclock-cli makes
+# smartclock-utils, the tools, and smartclockd makes smartclockmon, the
+# monitoring stack, which requires smartclock-utils of its own version.
+DEB_CRATES := smartclock-cli smartclockd
+DEB_MANIFESTS := $(DEB_CRATES:%=crates/%/Cargo.toml)
+
 # Requires cargo-deb: cargo install cargo-deb
-# The deb carries the tools, so build the whole workspace first
-# and package without rebuilding.  cargo-deb warns that the asset paths
-# are not under target/release/ and so will not be built; that is the
-# point, --no-build means they are already there.
+# Each package carries binaries of several crates, so build the whole
+# workspace first and package without rebuilding.  cargo-deb warns that
+# the asset paths are not under target/release/ and so will not be
+# built; that is the point, --no-build means they are already there.
 deb:
 	$(CARGO) build --release --workspace
-# -q keeps the output to the artifact path.
+# -q keeps the output to the artifact paths.
 # A snapshot overrides the version with its own stamp, so two builds of
-# different code cannot share one.  A build standing on a release tag
-# does not: cargo-deb then takes the version from the changelog, which
-# is what CI does too, so the package built here and the package built
-# from the tag are the same version rather than 0.1.0 against 0.1.0-1.
+# different code cannot share one, and its relations to its sibling are
+# rewritten from the release version Cargo.toml names to that stamp.  A
+# build standing on a release tag does neither: cargo-deb then takes
+# Cargo.toml's version with revision 1, which is what CI does too, so
+# the package built here and the package built from the tag are the
+# same version rather than 0.1.0 against 0.1.0-1.
 	@v=$$(./target/release/smartclockd --version | awk '{print $$2}'); \
-	case "$$v" in \
-	  *~git*) $(CARGO) deb -p smartclockd --no-build -q --deb-version "$$v" ;; \
-	  *)      $(CARGO) deb -p smartclockd --no-build -q ;; \
-	esac
+	for crate in $(DEB_CRATES); do \
+	  case "$$v" in \
+	    *~git*) deb=$$($(CARGO) deb -p $$crate --no-build -q --deb-version "$$v") && \
+	            ./packaging/retarget-deb.sh "$$deb" "$(CARGO_VERSION)-1" "$$v" && \
+	            echo "$$deb" ;; \
+	    *)      $(CARGO) deb -p $$crate --no-build -q ;; \
+	  esac || exit 1; \
+	done
 
 # Cut a release: one version, in both places that must agree, tagged.
 #
@@ -211,9 +223,12 @@ release:
 # read 0.1.2-0~git... and sit where they belong, after the release they
 # follow and before the one they precede.  The changelog is not touched;
 # there is nothing to say about a version nobody has released yet.
+# The packages' relations to each other name the version too, as the
+# release cargo-deb would make of it (crates/smartclockd/Cargo.toml).
 	sed -i '0,/^version = ".*"/s//version = "$(NEXT_VERSION)"/' Cargo.toml
+	sed -i 's/(\(=\|<<\) $(subst .,\.,$(VERSION))-1)/(\1 $(NEXT_VERSION)-1)/' $(DEB_MANIFESTS)
 	$(CARGO) build --workspace
-	git add Cargo.toml Cargo.lock
+	git add Cargo.toml Cargo.lock $(DEB_MANIFESTS)
 	git commit -m "Open $(NEXT_VERSION) for development"
 	@echo
 	@echo "Tagged v$(VERSION), and Cargo.toml now reads $(NEXT_VERSION)."

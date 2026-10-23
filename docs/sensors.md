@@ -54,10 +54,15 @@ Repeatable switches, one per kind of sensor:
   which appears the first time the stick is read; a TEMPer2's outer
   probe is not read.  The stick is held open, and locked, between
   reads, and found again after an error, so a replug is picked up.
-  Access comes from the `temper` package, which the Debian package
-  depends on: its udev rules give the stick's hidraw node to group
-  `temper`, which the service joins, and turn off the stick's keyboard
-  interface.
+  Access comes from the `temper` package, which the smartclockmon
+  package recommends: its udev rules give the stick's hidraw node to
+  group `temper`, which the service joins, and turn off the stick's
+  keyboard interface.  Without it -- installed with
+  `--no-install-recommends`, or removed -- smartclockmon makes the
+  group itself, so the service still starts and reads hwmon and IIO
+  sensors, but a stick's node stays root's: every read of it fails,
+  journaled once and shown to clients as the stick's error, and its
+  keyboard interface stays on.
 - `--every SECONDS` (`SMARTCLOCK_SENSORD_EVERY`): how often every sensor
   is read; 10 by default, the receivers' medium tier.
 

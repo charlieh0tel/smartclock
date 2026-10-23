@@ -24,3 +24,41 @@ thiserror = "2.0.21"
 
 [dev-dependencies]
 smartclock-sim = { path = "../smartclock-sim" }
+
+# The tools' package, smartclock-utils: the CLI and the simulator, and
+# the documents a CLI user reads -- the command table, the Z3801A's own
+# keyword spellings for raw SCPI, the flasher's notes and the pForth
+# console that read-memory speaks to.  No service, no user, no
+# dependency on temper, so it installs on a machine that only talks to
+# a receiver, or to a daemon elsewhere.  The monitoring package,
+# smartclockmon, is on smartclockd and requires this one.
+#
+# smartclockmon carried /usr/bin/smartclock-cli until the two were
+# split, so this package takes the file over from any smartclockmon
+# older than itself.  The version is its own, written out and kept in
+# step as smartclockd's Depends is; see there.
+[package.metadata.deb]
+name = "smartclock-utils"
+maintainer = "Christopher Hoover <ch@murgatroid.com>"
+copyright = "2026, Christopher Hoover"
+extended-description = """\
+Command-line tools for HP / Symmetricom SmartClock GPS time and \
+frequency reference receivers, spoken to over RS-232: smartclock-cli \
+for queries, diagnostics, transcripts, ROM, EEPROM and firmware work, \
+directly or through a smartclockd daemon, and smartclock-sim, a \
+simulated receiver.  The daemon and monitors are in smartclockmon."""
+section = "utils"
+priority = "optional"
+depends = "$auto"
+breaks = "smartclockmon (<< 1.6.12-1)"
+replaces = "smartclockmon (<< 1.6.12-1)"
+assets = [
+    ["target/release/smartclock-cli", "usr/bin/", "755"],
+    ["target/release/smartclock-sim", "usr/bin/", "755"],
+    ["../../README.md", "usr/share/doc/smartclock-utils/README.md", "644"],
+    ["../../docs/commands.md", "usr/share/doc/smartclock-utils/commands.md", "644"],
+    ["../../docs/scpi/z3801-keywords.md", "usr/share/doc/smartclock-utils/z3801-keywords.md", "644"],
+    ["../../docs/firmware/console.md", "usr/share/doc/smartclock-utils/firmware/console.md", "644"],
+    ["../../docs/firmware/restart.md", "usr/share/doc/smartclock-utils/firmware/restart.md", "644"],
+]
+changelog = "../../packaging/debian/changelog"

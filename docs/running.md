@@ -2,17 +2,39 @@
 
 ## Installing
 
+There are two Debian packages, of one version, built from one tree:
+
+| Package | Programs | For |
+| - | - | - |
+| `smartclock-utils` | `smartclock-cli`, `smartclock-sim` | a receiver on the bench, a flash or ROM read, a daemon on another host; no service, no user |
+| `smartclockmon` | `smartclockd`, `smartclockmon`, `smartclock-web`, `smartclock-exporter`, `smartclock-sensord` | a host that logs a receiver: the units, their `/etc/default` files and the `smartclockd` user |
+
+`smartclockmon` requires `smartclock-utils` of exactly its own
+version, so installing it installs both, and the two upgrade together.
+It recommends `temper`, whose udev rules let `smartclock-sensord` read
+TEMPer sticks; without it the service reads only hwmon and IIO sensors
+(`docs/sensors.md`).
+
+    sudo apt install ./smartclock-utils_<version>_amd64.deb      # the tools alone
+    sudo apt install ./smartclock-utils_<version>_amd64.deb \
+                     ./smartclockmon_<version>_amd64.deb         # the daemon and monitors too
+
+From the APT repository, `sudo apt install smartclockmon` brings
+`smartclock-utils` along.
+
 The daemon is a template unit, `smartclockd@.service`, one instance
 per serial port, named by the port as `serial-getty@` is:
 `smartclockd@ttyUSB0` opens `/dev/ttyUSB0`.  Instances are named for
 ports and logs for receivers, since receivers move between ports.
 
-    sudo apt install ./smartclockmon_<version>_amd64.deb
     sudo systemctl enable --now smartclockd@ttyUSB0
     sudo usermod -aG smartclockd $USER        # then log in again
 
-The package puts the binaries in `/usr/bin`, creates a `smartclockd`
-system user in `dialout`, and enables nothing: you name the port.
+The packages put the binaries in `/usr/bin`; `smartclockmon` creates a
+`smartclockd` system user in `dialout`, and enables nothing: you name
+the port.  `smartclock-utils` alone creates nobody, so `smartclock-cli`
+run directly on a port needs your own access to it, `dialout` on
+Debian.
 
 `ttyUSB0` moves when another adapter is plugged in.  For a stable
 name, either escape the by-id path into the instance name:
@@ -83,6 +105,19 @@ refuse, saying which service to start once to convert it.  Converting
 takes a few seconds per log, during which the receiver is not read, and
 leaves the file smaller.  The same holds for the sensor log and
 `smartclock-sensord`, whose first schema with integer timestamps is 2.
+
+Up to 1.6.11, one package, `smartclockmon`, carried every program but
+the simulator.  From 1.6.12, `smartclock-cli` is in `smartclock-utils`,
+which takes the file over from the older package (`Replaces` and
+`Breaks` on any `smartclockmon` older than itself), and `smartclockmon`
+requires it.  Install both at once, from files or with
+`sudo apt install smartclockmon` from the APT repository.  With
+`dpkg -i` rather than apt, name `smartclockmon` first, or pass
+`--auto-deconfigure`: given `smartclock-utils` first, dpkg refuses it,
+since it breaks the `smartclockmon` still installed.  An upgrade
+that will not add a package keeps `smartclockmon` back at the old
+version instead: `apt-get upgrade` does, and so does
+unattended-upgrades; `apt upgrade` and `apt full-upgrade` add it.
 
 ## What the daemon does to the receiver
 

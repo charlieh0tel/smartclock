@@ -530,11 +530,63 @@ and a test fails if they disagree.
 
 ### The package version is derived
 
-`make deb` builds `<version>-<commits>+g<sha>`, with `+dirty` for an
-unclean tree, so different code never shares a version; dpkg treats
+`make deb` builds `<version>-0~git<commits>.g<sha>`, with `+dirty` for
+an unclean tree, so different code never shares a version; dpkg treats
 reinstalling an identical version as a no-op.  The hand-written
 `packaging/debian/changelog` records releases; a derived version is a
 build.
+
+### Two packages, in lockstep
+
+`smartclock-utils` (on `smartclock-cli`'s manifest) is `smartclock-cli`
+and `smartclock-sim` with the documents a CLI user reads: the command
+table, the Z3801A keyword spellings, the flasher's and the console's
+notes.  `smartclockmon` (on `smartclockd`'s) is the daemon, the
+monitors, the exporter, the sensor service, their units and defaults,
+the `smartclockd` user and the operational documents.  Split from one
+package at 1.6.12: the CLI is wanted on machines that will never log a
+receiver -- a bench laptop, a flashing station, a client of a daemon
+elsewhere -- and the one package brought a service user, four units and
+`temper` along with it.  The simulator was in no package before.
+
+- `smartclockmon` Depends on `smartclock-utils (= <its version>)`,
+  and `smartclock-utils` Breaks and Replaces `smartclockmon
+  (<< <its version>)`.  Exact, not `>=`: the CLI and the daemon share
+  the socket protocol and the command table, and nothing tests one
+  version of either against another.  Breaks and Replaces track the
+  package's own version rather than staying at the first split one: a
+  fixed `<< 1.6.12-1` would also break a split snapshot, 1.6.12-0~git...,
+  which sorts below it, so the snapshots built on the bench between
+  releases could not be installed together.
+- cargo-deb has no variable for the package's version.  So the
+  relations are written into the manifests as the release version
+  (Cargo.toml's, revision 1, which is what CI builds), `make release`
+  moves them when it opens the next version, a test
+  (`crates/smartclockd/tests/packages.rs`) fails if they and the
+  workspace version part or a file is in both packages, and `make deb`
+  rewrites a snapshot's to its stamp (`packaging/retarget-deb.sh`,
+  `dpkg-deb -R` and `-b`).
+- `temper` went from Depends to Recommends.  `smartclock-sensord.service`
+  joins group `temper`, and systemd will not start a unit naming a
+  group that does not exist, so postinst makes it when `temper` has
+  not; temper's own postinst checks first, so either order works.
+  Without temper's udev rules a TEMPer stick's hidraw node is root's
+  and unreadable; hwmon and IIO sensors are unaffected.
+- Release CI calls the shared `rust-build-deb.yml` once per package
+  (`package:`, `artifact-suffix:`), which needs its proposed
+  `build-workspace` input: with `package:` set it builds that crate's
+  binaries alone, and each package ships other crates'.
+
+What it costs: release CI builds the workspace twice per architecture,
+and each call releases on its own, so a failure in one can leave a
+release with one package, which apt then holds back rather than
+installs.  `apt-get upgrade` and unattended-upgrades keep
+`smartclockmon` back at the upgrade that first needs `smartclock-utils`,
+since neither adds a package.  The packaged documents are split along
+the same line, so a relative link between them -- `running.md` to
+`firmware/restart.md` -- no longer resolves in `/usr/share/doc`.  The
+Windows zip stays one zip of every program: it has no dependency
+resolution or services to separate.
 
 ### CI is shared; the Makefile is what you run
 
@@ -549,7 +601,7 @@ make test-hw    cargo test -- --ignored
 make web-deps   install the browser tests' Playwright and Chromium
 make test-web   the browser tests
 make docs       regenerate docs/commands.md from the command table
-make deb        a snapshot package
+make deb        both packages, as snapshots
 make release    tag the version Cargo.toml already names
 make release-notes  the GitHub release notes the tag will get
 ```

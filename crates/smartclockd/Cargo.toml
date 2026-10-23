@@ -23,6 +23,7 @@ smartclock-log = { path = "../smartclock-log" }
 
 [dev-dependencies]
 smartclock-sim = { path = "../smartclock-sim" }
+toml = "1.1.8"
 
 [target."cfg(windows)".dependencies]
 windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_System_Console"] }
@@ -30,26 +31,41 @@ windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Syste
 [target."cfg(unix)".dependencies]
 signal-hook = "0.4.4"
 
-# Packaging lives on this crate because cargo-deb wants a single
-# package, and the daemon is what the deb exists to install.  The other
-# binaries ride along as assets, so "make deb" builds the workspace
-# first and then packages without rebuilding.
+# The monitoring package, smartclockmon, lives on this crate because the
+# daemon is what it exists to install; smartclock-utils, the tools,
+# lives on smartclock-cli.  cargo-deb makes one package per crate, so
+# the other binaries ride along as assets, and "make deb" builds the
+# workspace first and then packages without rebuilding.
+#
+# The two packages move in lockstep: this one requires smartclock-utils
+# of exactly its own version.  cargo-deb has no variable for the
+# package's version, so it is written out, as the version plus the
+# revision cargo-deb gives a release, and kept in step three ways:
+# "make release" moves it with the workspace version, "make deb" gives
+# a snapshot its own version in place of it (packaging/retarget-deb.sh),
+# and tests/packages.rs fails if it and the workspace version disagree.
+#
+# temper is recommended, not required: without its udev rules a TEMPer
+# stick's hidraw node is root's alone, so smartclock-sensord cannot read
+# one, and hwmon and IIO sensors are read as before.  postinst makes
+# group temper, which the sensor service joins, if temper has not.
 [package.metadata.deb]
 name = "smartclockmon"
 maintainer = "Christopher Hoover <ch@murgatroid.com>"
 copyright = "2026, Christopher Hoover"
 extended-description = """\
-Library, logging daemon and terminal monitor for HP / Symmetricom \
-SmartClock GPS time and frequency reference receivers, spoken to over \
-RS-232.  The daemon holds the serial port open and records oscillator \
-and holdover history so it accumulates whether or not anyone is \
-watching."""
+Logging daemon, terminal monitor, web view, Prometheus exporter and \
+room-sensor logger for HP / Symmetricom SmartClock GPS time and \
+frequency reference receivers, spoken to over RS-232.  The daemon \
+holds the serial port open and records oscillator and holdover \
+history so it accumulates whether or not anyone is watching.  The \
+command-line tools come from smartclock-utils."""
 section = "utils"
 priority = "optional"
-depends = "$auto, adduser, temper (>= 1.3.0)"
+depends = "$auto, adduser, smartclock-utils (= 1.6.12-1)"
+recommends = "temper (>= 1.3.0)"
 assets = [
     ["target/release/smartclockd", "usr/bin/", "755"],
-    ["target/release/smartclock-cli", "usr/bin/", "755"],
     ["target/release/smartclockmon", "usr/bin/", "755"],
     ["target/release/smartclock-exporter", "usr/bin/", "755"],
     ["target/release/smartclock-web", "usr/bin/", "755"],
@@ -61,16 +77,12 @@ assets = [
     ["../../packaging/systemd/smartclock-sensord.default", "etc/default/smartclock-sensord", "644"],
     ["../../README.md", "usr/share/doc/smartclockmon/README.md", "644"],
     ["../../docs/screen-format-strings.md", "usr/share/doc/smartclockmon/screen-format-strings.md", "644"],
-    ["../../docs/scpi/z3801-keywords.md", "usr/share/doc/smartclockmon/z3801-keywords.md", "644"],
     ["../../docs/running.md", "usr/share/doc/smartclockmon/running.md", "644"],
-    ["../../docs/commands.md", "usr/share/doc/smartclockmon/commands.md", "644"],
     ["../../docs/firmware/README.md", "usr/share/doc/smartclockmon/firmware/README.md", "644"],
     ["../../docs/firmware/gps.md", "usr/share/doc/smartclockmon/firmware/gps.md", "644"],
     ["../../docs/firmware/interval.md", "usr/share/doc/smartclockmon/firmware/interval.md", "644"],
     ["../../docs/firmware/loop.md", "usr/share/doc/smartclockmon/firmware/loop.md", "644"],
     ["../../docs/firmware/ovens.md", "usr/share/doc/smartclockmon/firmware/ovens.md", "644"],
-    ["../../docs/firmware/console.md", "usr/share/doc/smartclockmon/firmware/console.md", "644"],
-    ["../../docs/firmware/restart.md", "usr/share/doc/smartclockmon/firmware/restart.md", "644"],
     ["../../docs/efc.md", "usr/share/doc/smartclockmon/efc.md", "644"],
     ["../../docs/ocxo.md", "usr/share/doc/smartclockmon/ocxo.md", "644"],
     ["../../docs/sensors.md", "usr/share/doc/smartclockmon/sensors.md", "644"],

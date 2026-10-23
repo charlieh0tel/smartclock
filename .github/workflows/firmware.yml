@@ -3,8 +3,8 @@ name: firmware
 # The Z3805A 3543B firmware's checks (docs/firmware/README.md, "The
 # checks in CI"): the C's format, the layouts, the decompiled C's bytes
 # and bindings, every decompiled function run against the image's own
-# and the figures the documents give, the SCPI trees, and the module
-# and pForth figures.
+# and the figures the documents give, the SCPI trees, the module and
+# pForth figures, and every image's chip-select tables.
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs an m68k toolchain,
@@ -61,6 +61,8 @@ jobs:
       - run: make check-scpi-tree
         if: ${{ !cancelled() }}
       - run: make check-pforth-words
+        if: ${{ !cancelled() }}
+      - run: make check-chip-selects
         if: ${{ !cancelled() }}
       - run: make check-decompiled
         if: ${{ !cancelled() }}

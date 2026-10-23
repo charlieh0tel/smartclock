@@ -27,7 +27,8 @@ DOCUMENTED_IMAGE = z3805a-3543b
 IMAGE_TARGETS = check-types check-decompiled report-decompiled scpi-tree check-scpi-tree handlers
 # The rest, run once.
 TARGETS = format-c check-format-c check-module-figures module-figures check-pforth-words \
-	pforth-words check-report-figures report-figures check-unicorn
+	pforth-words check-report-figures report-figures check-unicorn \
+	check-chip-selects chip-selects
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
@@ -78,6 +79,16 @@ pforth-words:
 # status register").
 check-unicorn:
 	uv run -q $(ROOT)/tools/firmware/unicorn_check.py
+
+# Fail if docs/firmware/chip-selects.md, or a map docs/firmware/restart.md
+# or docs/firmware/README.md gives between its markers, is not what the
+# images' reset code writes to the SIM's chip-select registers;
+# chip-selects rewrites them, keeping the maps' Device column.
+check-chip-selects:
+	python3 -I $(ROOT)/tools/firmware/chip_selects.py
+
+chip-selects:
+	python3 -I $(ROOT)/tools/firmware/chip_selects.py --write
 
 # The decompiled C's flags.  -fno-defer-pop has gcc pop a call's
 # arguments after the call, so that from a task in user mode an argument

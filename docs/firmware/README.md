@@ -26,27 +26,44 @@ CPU as "U33 / MC68331" and the oven's control line as PGP5 (see
 `ovens.md`).
 
 The reset code at `0x2466e` sets the SIM up as follows (register
-names and encodings from MC68331UM appendix D; block sizes from Table
-D-11).  This is the Z3816A's map, and the Z3815A's; the Z3801A,
-Z3805A and 58503A use another, `0x300000` to `0x30ffff` one chip
-select, CS5, and the flash two banks (`restart.md`, "The chip
-selects"):
+names and encodings from MC68331UM appendix D):
 
 | Register | Value | Meaning |
 | -------- | ----- | ------- |
 | SYPCR `0xfffa21` | `0xcc` | SWE, SWP, HME, BME: software watchdog on and prescaled by 512, halt and bus monitors on (D.3.12) |
-| CSBARBT `0xfffa48` | `0x0006` | boot chip select: `0x000000`, 512 KB -- the ROM this image is |
-| CSBAR0, 2, 3 | `0x1003` | `0x100000`, 64 KB -- the RAM: CSOR0 `0x6830` reads both bytes, CSOR2 `0x5030` writes the upper, CSOR3 `0x3030` the lower |
-| CSBAR1 | `0x3000` | `0x300000`, 2 KB; CSOR1 `0x7030`: both bytes, write only |
-| CSBAR4 | `0xfff8` | all ones, 2 KB; CSOR4 `0x2bc4`: CPU space, interrupt acknowledge at level 2, external DSACK, as CS10 is in the Z3805A's map |
-| CSBAR5 | `0x3040` | `0x304000`, 2 KB |
-| CSBAR6 | `0x0006` | `0x000000`, 512 KB, CSOR6 `0x7070`: write only -- the boot ROM's own range, for writing it |
-| CSBAR7 | `0x3020` | `0x302000`, 2 KB -- the word G is chosen by; CSOR7 `0x6870`: both bytes, read only, one wait state, and CSPAR1 `0x2af` makes CS7 a 16-bit port (Tables D-9, D-10, D-12) |
-| CSBAR8 | `0x2000` | `0x200000`, 2 KB -- the DUART |
-| CSBAR9 | `0x4001` | `0x400000`, 8 KB -- the checksummed block at `0x400080` |
-| CSBAR10 | `0x5000` | `0x500000`, 2 KB; CSOR10 `0x7bf0`: both bytes, read and write, external DSACK |
-| SYNCR `0xfffa04` | `0xcf80` | W = 1, X = 1, Y = 15: f = f_ref · 4 · 16 · 8 (section 4.3.2): 16.777 MHz from the 32.768 kHz reference the manual's frequency tables assume (4.3.2, appendix A) |
+| SYNCR `0xfffa04` | `0xcf80` | W = 1, X = 1, Y = 15: f = f_ref · 4 · 16 · 8 (section 4.3.2): 16.777 MHz from the 32.768 kHz reference the manual's frequency tables assume (4.3.2, appendix A); EDIV 1, ECLK f / 16 (D.3.3) |
 | PORTE0 `0xfffa11` | `0x40` | port E bit 6 high; `0x22e30` later pulses it low and high |
+
+and its chip selects so, from `tools/firmware/chip_selects.py`
+(`restart.md`, "The chip selects"; block sizes from Table D-11, the
+fields from Table D-12).  This is the Z3816A's map, and the Z3815A's
+(below); the Z3801A, Z3805A and 58503A use another, `0x300000`
+to `0x30ffff` one chip select, CS5, and the flash two banks, and the
+Z3816A's boot code a third, which `chip-selects.md` gives with every
+other image's:
+
+<!-- chip_selects.py z3816a-4001 primary z3815a-4010 primary -->
+Pins: CSPAR0 `0x2fff` at `0x24676`, CSPAR1 `0x02af` at `0x2467e`.
+
+| Window | Select | Pin | CSBAR, CSOR; written at | Port | BYTE, R/W, DSACK | Device |
+| ------ | ------ | --- | ----------------------- | ---- | ---------------- | ------ |
+| `0x000000`--`0x07ffff`, 512 KiB | CSBOOT | 112 | `0x0006`, `0x6870`; `0x24686`, `0x2468e` | 16-bit | both, read, 1 wait | the ROM this image is |
+| the same | CS6 | 121, PC3/ADDR19 | `0x0006`, `0x7070`; `0x246f6`, `0x246fe` | 16-bit | both, write, 1 wait | the boot ROM's own range, for writing it |
+| `0x100000`--`0x10ffff`, 64 KiB | CS0 | 113, BR | `0x1003`, `0x6830`; `0x24696`, `0x2469e` | 16-bit | both, read, 0 wait | the RAM, read |
+| the same | CS2 | 115, BGACK | `0x1003`, `0x5030`; `0x246b6`, `0x246be` | 16-bit | upper, write, 0 wait | the RAM, writes to the upper byte |
+| the same | CS3 | 118, PC0/FC0 | `0x1003`, `0x3030`; `0x246c6`, `0x246ce` | 16-bit | lower, write, 0 wait | the RAM, writes to the lower byte |
+| `0x200000`--`0x2007ff`, 2 KiB | CS8 | 123, PC5/ADDR21 | `0x2000`, `0x3bf0`; `0x24716`, `0x2471e` | 8-bit | lower, read and write, external | the DUART |
+| `0x300000`--`0x3007ff`, 2 KiB | CS1 | 114, BG | `0x3000`, `0x7030`; `0x246a6`, `0x246ae` | 16-bit | both, write, 0 wait |  |
+| `0x302000`--`0x3027ff`, 2 KiB | CS7 | 122, PC4/ADDR20 | `0x3020`, `0x6870`; `0x24706`, `0x2470e` | 16-bit | both, read, 1 wait | the word G is chosen by (`loop.md`, "τ and G") |
+| `0x304000`--`0x3047ff`, 2 KiB | CS5 | 120, PC2/FC2 | `0x3040`, `0x7930`; `0x246e6`, `0x246ee` | 8-bit | both, read and write, 4 wait |  |
+| `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x24726`, `0x2472e` | 8-bit | both, read and write, 3 wait | the checksummed block at `0x400080` |
+| `0x500000`--`0x5007ff`, 2 KiB | CS10 | 125, ECLK/ADDR23 | `0x5000`, `0x7bf0`; `0x24736`, `0x2473e` | 8-bit | both, read and write, external |  |
+| CPU space, interrupt acknowledge at level 2 | CS4 | 119, PC1/FC1 | `0xfff8`, `0x2bc4`; `0x246d6`, `0x246de` | 16-bit | lower, read, external; CPU space, IPL 2 | the interrupt acknowledge at level 2, as CS10 is in the Z3805A's map |
+
+The boot code (`0x418` to `0x4d0`) writes CSPAR1 `0x03ab`, CSOR4 `0x7805`, CSBAR7 `0x3060`, CSOR7 `0x7070`, CSOR8 `0xb830` and writes no CSBAR10, CSOR10.
+
+The Z3815A 4010's primary (`0x24b3e` to `0x24c06`) writes the same 26 values.
+<!-- end chip_selects.py -->
 
 The SCI's baud rate is f / (32 · SCBR), SCBR in SCCR0 at `0xfffc08`
 (section 6.4.3.3).  `FUN_0002e610` sets it from a setting byte: 437,
@@ -85,6 +102,8 @@ request scripts in `oncore/`.
 - [The ovens](ovens.md)
 - [The debug console](console.md)
 - [Restarting](restart.md)
+- [Chip selects](chip-selects.md), every image's, generated from its
+  reset code
 - [Pulse, time-tag and output commands](outputs.md)
 - [58503A 3633 against 3704](revisions.md)
 - [The floating-point library](softfloat.md)
@@ -188,6 +207,41 @@ Not pursued further, each with the limit of what was checked.
   debug console, in user mode, reads as zero; reading it takes
   supervisor access, such as the CPU's background debug port on an
   open board.
+- The DUART's command registers are written fast enough apart.  The
+  SCC68692's data sheet (`third_party/philips/SCC68692.pdf`, 2004 Mar
+  03) asks "at least three edges of the X1 clock between writes" to
+  the same command register (AC characteristics, note 5, page 8), and
+  that "access to the upper four bits of the command register should
+  be separated by three (3) edges of the X1 clock" (CRA, page 15; the
+  miscellaneous commands, page 13): three edges, a period and a half,
+  407 ns at 3.6864 MHz, not three periods (814 ns).  The six images
+  that drive a 68681 (not the 58503B, whose part at `0x200000` is
+  written 3 and read at `0x200002` on a synchronous select,
+  `chip-selects.md`) write a command register twice with nothing
+  between in 79 places, 15 in the Z3805A 3543B, all from ROM: two
+  `move.b #imm,(xxx).l`, 8 bytes each, reset receiver then
+  transmitter (`0x20`, `0x30`; `duartb_loopback_check` at `0x1ec88`,
+  `duartb.c`'s end), transmitter then MR pointer (`0x30`, `0x10`;
+  `duart_early_init` at `0x1ecf6`), or, the lower bits only, receiver
+  then transmitter disabled (`0x02`, `0x08`; `duart_stop` at
+  `0x1ebbc`, `0x1ebcc`); any other two writes to one
+  register have more code between.  Counted at 16.777 MHz (59.6 ns a
+  clock), assuming of the CPU32's pipeline, whose reference manual
+  (CPU32RM) is not in `third_party/`, only that at most two of the
+  second instruction's four words are fetched before the first one's
+  write: the other two are fetched between the writes, each a bus
+  cycle of at least three clocks (MC68331UM 4.5.1) and one wait state
+  (CSORBT and CSOR1, DSACK `0001`), 8 clocks, 477 ns, more than three
+  edges.  With all four fetched between, 16 clocks, 954 ns, it is more
+  than three periods too.  The write itself is not counted: CS8 takes
+  external DSACK in every map these writes run under, and if U3's
+  DTACKN is that DSACK (`../hardware-investigations.md` item 21), each
+  write lasts until DTACKN, two rising X1 edges after /CS (Figure 5,
+  page 19), which only adds to the gap from one write's latching edge
+  to the next.  The installers, packed in the image, were not swept;
+  under the Z3815A's and Z3816A's boot map, where CS8 is synchronous
+  (`chip-selects.md`) and SYNCR's EDIV makes ECLK f / 16 (D.3.3), each
+  access is its own 954 ns E cycle (Table A-8).
 
 ## Note on the disassembly
 
@@ -1617,12 +1671,13 @@ it.
 every push and pull request, a job of its own beside the Rust CI so
 that each fails alone: `make check-format-c`, `check-types`,
 `check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
-`check-decompiled`, which runs `check-unicorn` first, and
-`report-decompiled`, which
+`check-chip-selects`, `check-decompiled`, which runs `check-unicorn`
+first, and `report-decompiled`, which
 also checks this document's figures from the function check against
 the report it writes, so that every function agreeing is checked in
 public.  `IMAGE=z3805a-3543b` is set for the job.  None of the targets
-builds the workspace.
+builds the workspace; `check-chip-selects` reads every image's reset
+code (`restart.md`, "The chip selects").
 
 On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15)
 and `binutils-m68k-linux-gnu` from the archive and uv 0.13.2 through

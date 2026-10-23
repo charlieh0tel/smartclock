@@ -20,7 +20,7 @@ between two parts was followed end to end.
 
 ## Working on the open Z3805A board
 
-The procedures under items 13, 20 and 21 are written for the bench
+The procedures under items 13, 20, 21 and 23 are written for the bench
 Z3805A (Z3805-68001, `z3805a-board.html`) with the power off, with an
 ohmmeter.  The photos they call for are in `bench.md`, "Photos still
 wanted".  These rules hold for all of them.
@@ -92,6 +92,7 @@ The other parts' pinouts are from their data sheets in
 | U44 (Z3801A), 74ABT574A SO-20 | /OE 1, D0 to D7 2 to 9, GND 10, CP 11, Q7 to Q0 12 to 19, VCC 20 | `philips/74ABT574A.pdf`, Table 2 |
 | U22, U23, U25, U27, 74AC138 | A0 to A2 1 to 3, /E1 4, /E2 5, E3 6, /Y7 7, GND 8, /Y6 to /Y0 9 to 15, VCC 16 | `fairchild/74AC138.pdf`, connection diagram (page 1; it names the outputs /O0 to /O7) |
 | U29, DM74ALS09 | inputs 1, 2, 4, 5, 9, 10, 12, 13; open-collector outputs 3, 6, 8, 11; GND 7, VCC 14 | `fairchild/DM74ALS09.pdf`, connection diagram (page 1) |
+| U37, MC144110DW SOG-20 | Din 1, ENB 8, VSS 9, CLK 12, Dout 19, VDD 20; no-connects 10 and 11 | `motorola/MC144110.pdf`, Figure 2 (the DW package) |
 
 PLCC pins are numbered from pin 1 at the middle of the edge with the
 chamfered corner nearest it, counterclockwise seen from above.
@@ -1121,3 +1122,66 @@ decompiled C, so the firmware is taken not to use it.
 *Changes:* the harness's and the emulator's EEPROM model can follow
 the part's data sheet: its write time, page mode, toggle or data
 polling.
+
+## 23. The hex DAC's supply
+
+*Open item:* which rail feeds U37's VDD, and so whether the
+firmware's clock to it is in the part's specification.  U37 is the
+MC144110DW hex 6-bit DAC (`firmware/ovens.md`, "What `hdac` is not"),
+QSPI device 2, which `qspi_queue_setup` sends with SPCR0's divider 70
+in SPI mode 2 (`firmware/structures.md`, "The QSPI's devices"): SCK
+is 16.777 MHz over 140, 119.8 kHz, high and low 70 clocks each, so
+CLK is low 4.17 µs a bit.  The data sheet (`third_party/motorola/
+MC144110.pdf`, Rev. 2, Table 3, Switching Characteristics) gives the
+least negative CLK pulse width, twL, as 5 µs at VDD 5 V, 3.5 µs at
+10 V and 2 µs at 15 V, and the same 5, 3.5 and 2 µs for the ENB setup
+and hold and the Din hold.  So at 5 V the firmware's low time is
+0.83 µs short, and from the 10 V point up it is in range; between 5
+and 10 V the table gives nothing.  The part runs from 4.5 to 15 V
+(page 1), VDD scaling its outputs (4.3), so the board may run it from
+the analog +15 V rather than +5 V; nothing in the firmware says
+which.
+
+- [ ] TODO: with power off, find the rail U37 pin 20 is on; then, with
+  power on, read its voltage and the CLK low time.
+
+*Photos:* U37 is at the upper middle of the CPU board
+(`z3805a-board.html`, its marker; `z3805a-cpu-fpga-flash.jpg`), its
+pin 20 trace not followable from the component side.
+
+*Procedure, unpowered ("Working on the open Z3805A board" above).*
+Confirm the pin count first: pin 9 (VSS) reads 0 Ω to ground; if it
+does not, recount from pin 1.
+
+1. Read U37 pin 20 (VDD) to ground, both ways round.
+2. Read pin 20 to +5 V (U33 pin 63).
+3. Find a point on each of +15 V and -15 V away from U37 (a
+   regulator's output or a supply connector's pin; record which) and
+   read pin 20 to each.
+4. Read pin 12 (CLK), pin 8 (ENB) and pin 1 (Din) to ground and to
+   +5 V, for the series parts or pull-ups between them and the QSPI's
+   SCK, select and MOSI.
+
+*Procedure, powered (needs the board running; ask first).*  The
+daemon may run.  Ground the probe's clip at the J4 or J5 shell; probe
+one pin at a time with a sharpened tip on the lead's toe, never
+across two leads (1.27 mm pitch).
+
+5. DC volts, U37 pin 20 to ground.
+6. A scope on pin 12, triggered on its falling edge, during the
+   interpolator's calibration after power-up (`ovens.md`) or an
+   `hdac_write` from the console (a spare unit only, item 9): the low
+   time, the high time and the edge times, and pin 8's level around
+   the burst.
+
+Expected:
+
+| Hypothesis | Reads |
+| ---------- | ----- |
+| VDD on +5 V | step 2 under 1 Ω; step 5 about 5 V: the low time, 4.17 µs, is under the 5 µs twL, and the part works out of specification, by margin only |
+| VDD on +15 V | step 3's +15 V under 1 Ω; step 5 about 15 V: in specification with room |
+| VDD on its own rail | none of steps 2 and 3 under 1 Ω, a resistor or regulator on the way: record the value; from about 10 V up in specification by Table 3's points |
+| Clock not the QSPI's | step 6's low time not 4.17 µs: something between SCK and pin 12; record it |
+
+*Changes:* whether `quirks.md` records the hex DAC's clock as too
+fast for its part.

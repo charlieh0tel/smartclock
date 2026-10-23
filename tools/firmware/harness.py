@@ -198,6 +198,14 @@ HALTED = "halted"
 # task's loop waiting for its next message or tick, ends there, before
 # making it, and is compared up to there, both calls alike.
 KERNEL_CALL_LIMIT = 1000
+# A case's outcome when both copies stopped for the same reason
+# (stopped_outcome), the reason after it.
+SKIPPED = "skipped: "
+# The most differences a comparison of a case's memory or effects
+# lists, past which it says only that more differ, a difference no
+# Known pattern matches.
+DIFFERENCES_KEPT = 16
+MORE_DIFFERENCES = "more differ"
 STILL_RUNNING = "still running"
 # A call whose loop never ends and makes no kernel call, root_task's
 # idle loop, ends where the machine's counter, a variable the loop
@@ -2446,6 +2454,18 @@ LEVEL_MASK = 7
 TRACE_BITS = 0xC000
 NONMASKABLE = 7
 RETURN_FROM_INTERRUPT = TRAP_VECTORS + 5
+# A supervisor's status register with its interrupts unmasked, as the
+# kernel's I/O functions run for a task, whose mask is 0.
+UNMASKED = 0x2000
+# The QSPI's interrupt: vector 65 and level 4, as qsm_init sets QILR and
+# QIVR (startup.h: ILQSPI 4, QIVR 0x40, the QSPI's vector its odd one;
+# MC68331UM D.4.3), the end of a queue, which sets SPIF in SPSR
+# (Devices), and whose handler, primary_user_65 (0x20a10), clears
+# qspi.running through qspi_isr, and qspi.copy_pending once it has
+# copied what the transfer received.
+SPSR = 0xFFFC1F
+QSPI_VECTOR = 0x41
+QSPI_LEVEL = 4
 # Where A6 points in a case at the stack's edge
 # (RebuiltMachine.stack_edge), at no mapped memory, so that a read of
 # the caller's frame faults: the value a modeled service returns.
@@ -2690,9 +2710,13 @@ class Run:
     and the flash after, its effects, the ENDING vector, HALTED,
     STILL_RUNNING, COUNTED or a console session's INPUT_ENDED or
     TASK_DELETED it ended at instead of returning, and the fault or trap
-    that stopped it, if one did.  The machine's interrupts are taken as
-    their events come (Interrupt), and the kernel's return from
-    interrupt, trap #5, returns from one taken."""
+    that stopped it, if one did, with the addresses (stopped) and its
+    kind alone (stop_reason), which the two copies' calls compare: the
+    fault's kind, the trap and its call, or no return.  Each copy's code
+    lies at its own addresses, and on an argument that names nothing the
+    two may fault first at different fields of it.  The machine's
+    interrupts are taken as their events come (Interrupt), and the
+    kernel's return from interrupt, trap #5, returns from one taken."""
 
     def __init__(self, m: RebuiltMachine, start: int, stack_arguments: bytes = b"", entry: bool = False):
         trapped, invalid, ended = [], [], []
@@ -2903,9 +2927,11 @@ class Run:
                 at = m.uc.reg_read(UC_M68K_REG_PC)
                 frames.append(take_interrupt(m.uc, m.profile.vectors, due.pop(), at, m.status()))
                 at = m.uc.reg_read(UC_M68K_REG_PC)
-            self.stopped = f"trap {trapped[0]}" if trapped else None
+            self.stop_reason = f"trap {trapped[0]}" if trapped else None
+            self.stopped = self.stop_reason
         except UcError as error:
             of = f" of {invalid[0]:x}" if invalid else ""
+            self.stop_reason = None if ended else str(error)
             self.stopped = None if ended else f"{error}{of} at {m.uc.reg_read(UC_M68K_REG_PC):x}"
         finally:
             for hook in hooks:
@@ -2914,7 +2940,7 @@ class Run:
                 m.uc.ctl_flush_tb()
         if m.stray_write:
             ended.append(BUS_ERROR)
-            self.stopped = None
+            self.stopped = self.stop_reason = None
         pc = m.uc.reg_read(UC_M68K_REG_PC)
         # the flash's arrays, which memory then holds again in place of
         # what the call's commands and status reads left there
@@ -2924,12 +2950,13 @@ class Run:
         for address, contents in reversed(written):
             m.uc.mem_write(address, contents)
         if written and not ended:
-            self.stopped = f"write to code of {invalid[0]:x} at {pc:x}"
+            self.stop_reason = "write to code"
+            self.stopped = f"{self.stop_reason} of {invalid[0]:x} at {pc:x}"
         if self.stopped is None and not ended and pc != RETURN:
             if any(m.read(pc, len(branch)) == branch for branch in SELF_BRANCHES):
                 ended.append(HALTED)
             else:
-                self.stopped = f"no return in {STEP_LIMIT} steps"
+                self.stopped = self.stop_reason = f"no return in {STEP_LIMIT} steps"
         self.ended = ended[0] if ended else None
         self.registers = {name: m.uc.reg_read(register) for name, register in REGISTERS.items()}
         self.deepest = deepest
@@ -3012,12 +3039,14 @@ def same_pointer(m: RebuiltMachine, a: int, b: int) -> bool:
     return same_literal(m, a, b)
 
 
-def pointers_difference(m: RebuiltMachine, a: bytes, b: bytes) -> int | None:
-    """None if two copies of memory are the same, but for pointers, at
-    even offsets as the 68k keeps a long, that name the same thing
-    (same_pointer); else the offset where they first differ."""
+def pointers_differences(m: RebuiltMachine, a: bytes, b: bytes) -> list[int]:
+    """The offset of each run of bytes where two copies of memory
+    differ, but for pointers, at even offsets as the 68k keeps a long,
+    that name the same thing (same_pointer); at most DIFFERENCES_KEPT
+    and one more, which says there are more (kept)."""
+    found: list[int] = []
     at = 0
-    while a[at:] != b[at:]:
+    while a[at:] != b[at:] and len(found) <= DIFFERENCES_KEPT:
         first = next(i for i in range(at, len(a)) if a[i] != b[i])
         even = first - first % POINTER_ALIGNMENT
         starts = range(max(at, even - POINTER_SIZE + POINTER_ALIGNMENT), even + 1, POINTER_ALIGNMENT)
@@ -3030,29 +3059,43 @@ def pointers_difference(m: RebuiltMachine, a: bytes, b: bytes) -> int | None:
             ),
             None,
         )
-        if literal is None:
-            return first
-        at = literal + POINTER_SIZE
-    return None
+        if literal is not None:
+            at = literal + POINTER_SIZE
+            continue
+        found.append(first)
+        at = first
+        while at < len(a) and a[at] != b[at]:
+            at += 1
+    return found
 
 
-def ram_difference(m: RebuiltMachine, a: Run, b: Run) -> str | None:
-    """None if two calls left the memory_compared and the COMPARED
-    memory the same, but for pointers to the same literal, function or
-    place in an object and its twin; else where it first differs."""
+def kept(differences: list[str]) -> list[str]:
+    """At most DIFFERENCES_KEPT of a comparison's differences, then one
+    saying that more differ, which no Known pattern matches."""
+    if len(differences) <= DIFFERENCES_KEPT:
+        return differences
+    return differences[:DIFFERENCES_KEPT] + [MORE_DIFFERENCES]
+
+
+def ram_differences(m: RebuiltMachine, a: Run, b: Run) -> list[str]:
+    """Where two calls left the memory_compared and the COMPARED memory
+    differing, each run of differing bytes on its own, but for pointers
+    to the same literal, function or place in an object and its twin;
+    empty if nowhere."""
+    differences = []
     for start, memory in a.memory.items():
-        first = pointers_difference(m, memory, b.memory[start])
-        if first is not None:
-            name = "RAM" if start == RAM else "the arguments' buffers"
-            return f"{name} differs from {start + first:x}"
+        name = "RAM" if start == RAM else "the arguments' buffers"
+        differences += [
+            f"{name} differs from {start + at:x}" for at in pointers_differences(m, memory, b.memory[start])
+        ]
     for name, (start, _) in COMPARED.items():
-        first = pointers_difference(m, a.compared[name], b.compared[name])
-        if first is not None:
-            return f"{name} differs from {start + first:x}"
+        differences += [
+            f"{name} differs from {start + at:x}" for at in pointers_differences(m, a.compared[name], b.compared[name])
+        ]
     if a.flash != b.flash:
         first = next(i for i in range(FLASH_SIZE) if a.flash[i] != b.flash[i])
-        return f"the flash differs from {ROM + first:x}"
-    return None
+        differences.append(f"the flash differs from {ROM + first:x}")
+    return kept(differences)
 
 
 def preserved_registers(convention: dict) -> tuple[str, ...]:
@@ -3081,22 +3124,25 @@ def registers_difference(m: RebuiltMachine, a: Run, b: Run, registers: tuple[str
     return "register " + ", ".join(differing) if differing else None
 
 
-def effects_difference(a: Run, b: Run, names: tuple[str, str]) -> str | None:
-    """None if two calls made the same kernel calls and device reads and
-    writes in the same order; else the first that differs."""
-    for i, (first, second) in enumerate(zip(a.effects, b.effects)):
-        if first != second:
-            return f"effect {i} {second}, {names[0]}'s {first}"
+def effects_differences(a: Run, b: Run, names: tuple[str, str]) -> list[str]:
+    """Each of the kernel calls and device reads and writes two calls
+    made that differs, place by place, and their counts if those do;
+    empty if they made the same in the same order."""
+    differences = [
+        f"effect {i} {second}, {names[0]}'s {first}"
+        for i, (first, second) in enumerate(zip(a.effects, b.effects))
+        if first != second
+    ]
     if len(a.effects) != len(b.effects):
-        return f"effects {len(b.effects)}, {names[0]}'s {len(a.effects)}"
-    return None
+        differences.append(f"effects {len(b.effects)}, {names[0]}'s {len(a.effects)}")
+    return kept(differences)
 
 
 @dataclass(frozen=True)
 class Known:
     """A difference between a routine's image copy and gcc's whose cause
-    is found and is not the C's to fix: its cause, and a pattern each
-    failing case's outcome matches."""
+    is found and is not the C's to fix: its cause, and a pattern every
+    difference of each failing case matches whole."""
 
     cause: str
     outcome: str
@@ -3104,31 +3150,40 @@ class Known:
 
 def stopped_outcome(a: Run, b: Run, names: tuple[str, str]) -> str | None:
     """None if both calls returned or ended at the same vector; a skip if
-    both stopped, what the harness does not model deciding; else the
-    difference."""
+    both stopped for the same reason, what the harness does not model
+    deciding, wherever in each copy's code; else the difference."""
     if a.stopped is None and b.stopped is None:
         return None if a.ended == b.ended else f"one ended: {names[0]} {a.end()}, {names[1]} {b.end()}"
     if a.stopped is not None and b.stopped is not None:
-        return "skipped: " + a.stopped
+        if a.stop_reason == b.stop_reason:
+            return SKIPPED + a.stopped
+        return f"stopped differently: {names[0]} {a.stopped}, {names[1]} {b.stopped}"
     return f"one stopped: {names[0]} {a.stopped}, {names[1]} {b.stopped}"
 
 
-def report(name: str, outcomes: list[tuple[str, str | None]], known: "Known | None" = None) -> str:
-    """ok, skip, known or FAIL for a routine's cases, printing why; which
-    of agreeing, skipped, known or failed it counts as.  A routine with a
-    known difference whose every failing case is that difference counts
-    as known; one failing otherwise fails as any does."""
-    failures = [(d, o) for d, o in outcomes if o and not o.startswith("skipped")]
-    skips = [o for _, o in outcomes if o and o.startswith("skipped")]
-    if failures and known is not None and all(re.search(known.outcome, o) for _, o in failures):
+def skipped(outcome: tuple[str, ...]) -> bool:
+    """Whether a case's outcome is a skip (stopped_outcome)."""
+    return len(outcome) == 1 and outcome[0].startswith(SKIPPED)
+
+
+def report(name: str, outcomes: list[tuple[str, tuple[str, ...]]], known: "Known | None" = None) -> str:
+    """ok, skip, known or FAIL for a routine's cases, each case's outcome
+    its differences, none if it agrees, printing why; which of agreeing,
+    skipped, known or failed it counts as.  A routine with a known
+    difference whose every failing case's every difference is that
+    difference counts as known; one failing otherwise fails as any
+    does."""
+    failures = [(d, o) for d, o in outcomes if o and not skipped(o)]
+    skips = [o[0] for _, o in outcomes if o and skipped(o)]
+    if failures and known is not None and all(re.fullmatch(known.outcome, d) for _, o in failures for d in o):
         print(f"known {name}: {len(failures)} of {len(outcomes)} cases, {known.cause}")
         return "known"
     if failures:
         for description, outcome in failures:
-            print(f"FAIL {name} {description}: {outcome}")
+            print(f"FAIL {name} {description}: {'; '.join(outcome)}")
         return "failed"
     if len(skips) == len(outcomes):
-        print(f"skip {name}: {skips[0].removeprefix('skipped: ')}")
+        print(f"skip {name}: {skips[0].removeprefix(SKIPPED)}")
         return "skipped"
     print(f"ok {name}: {len(outcomes) - len(skips)} of {len(outcomes)} cases run")
     return "agreeing"

@@ -175,8 +175,10 @@ The status register's high nibble is a count of seconds modulo 16:
 a warm restart `clock_set_from_reference` (`0x46290`) takes the
 seconds elapsed from it, 0 to 59, to set the clock.  **Inferred:** it
 counts the internal 1 PPS, and the FPGA keeps counting across a warm
-restart (only power-up reloads it); which 1 PPS it counts is not in the
-code.
+restart (the firmware reloads it at power-up, and again only when
+`pll_check_reference` finds its first reading invalid and calls
+`counter_reset`, `0x46222`, before the clock is set from it); which
+1 PPS it counts is not in the code.
 
 ## The reading
 

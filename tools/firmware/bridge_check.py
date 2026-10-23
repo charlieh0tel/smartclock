@@ -47,18 +47,25 @@ from harness import (
     CALLEE_SAVED,
     CASES,
     PRIMARY,
+    SKIPPED,
+    QSPI_LEVEL,
+    QSPI_VECTOR,
     REGISTERS,
+    SPSR,
     STARTING,
+    SUPERVISOR,
+    UNMASKED,
+    Interrupt,
     Machine,
     Run,
     Types,
     arguments,
-    effects_difference,
+    effects_differences,
     fresh_ram,
     gcc_slots,
     installer_profile,
     overlay,
-    ram_difference,
+    ram_differences,
     rebuilt_machine,
     report,
     reset,
@@ -91,6 +98,54 @@ KEPT_ARRAY = "binding_check_kept"
 LIVE_VALUE = 0x6C000000
 LIVE_STRIDE = 0x01010101
 LONG = struct.Struct(">I")
+
+
+@dataclass(frozen=True)
+class Given:
+    """A binding's case beside the generated ones, where those never
+    reach its routine's path: its arguments, made for the machine, the
+    interrupts it takes (harness.Interrupt, its watch an address) and
+    the status register it starts with.  A given case must run: one that
+    stops, skipped, fails."""
+
+    values: object
+    interrupts: tuple[Interrupt, ...] = ()
+    status: int = SUPERVISOR
+
+
+# qspi_transfer_raw's transfers, which the generated cases never
+# complete, their devices unsupported or no interrupt ending the wait:
+# devices 2 and 7, which select their own number, and the FPGA's
+# readback, 12, whose count it makes 1 (0x20a76); D0 the device, A1 two
+# pointers, to the words to send and to where the received ones go, and
+# D2 the count.  The QSPI's end of queue is taken after qspi_start's
+# first read of qspi.running (0x20866), whose handler clears it and,
+# having copied the received words, qspi.copy_pending, which
+# qspi_transfer_raw waits on (0x20aa6).
+QSPI_RUNNING = 0x1032F3
+QSPI_WORDS = struct.pack(">3H", 0x123, 0x456, 0x789)
+QSPI_COUNT = 3
+QSPI_RAW_DEVICES = (2, 7, 12)
+
+
+def qspi_raw_values(device: int):
+    def values(m: Machine) -> list[bytes]:
+        buffers = m.buffer(LONG.pack(m.buffer(QSPI_WORDS)) + LONG.pack(m.buffer()))
+        return [bytes([device]), LONG.pack(buffers), struct.pack(">h", QSPI_COUNT)]
+
+    return values
+
+
+GIVEN = {
+    "qspi_transfer_raw": [
+        Given(
+            qspi_raw_values(device),
+            (Interrupt(QSPI_VECTOR, QSPI_LEVEL, QSPI_RUNNING, 1, ready=(SPSR,)),),
+            UNMASKED,
+        )
+        for device in QSPI_RAW_DEVICES
+    ],
+}
 
 
 @dataclass
@@ -186,25 +241,38 @@ def live_values() -> list[int]:
 
 
 def check(m: Machine, types: Types, binding: Binding, function: int, address: int, live: int, kept_at: int):
-    """Yields (description, outcome) for each case: outcome None if the
-    binding agrees with its routine, else what differs."""
-    for case in range(CASES):
-        fresh_ram(m, case)
-        values = arguments(m, types, binding.parameters, case)
+    """Yields (description, outcome) for each case, the generated ones,
+    then the binding's GIVEN: outcome empty if the binding agrees with
+    its routine, else each thing that differs."""
+    given = GIVEN.get(binding.name, [])
+    for case in range(CASES + len(given)):
+        extra = given[case - CASES] if case >= CASES else None
+        description = f"case {case}" if extra is None else f"given case {case - CASES}"
+        fresh_ram(m, case if extra is None else 0)
+        values = arguments(m, types, binding.parameters, case) if extra is None else extra.values(m)
         memory = snapshot(m)
+        if extra is not None:
+            m.interrupts = [(interrupt, interrupt.watch) for interrupt in extra.interrupts]
+            m.starting_status = extra.status
 
-        reset(m, memory)
-        load_registers(m, binding.registers, values)
-        direct = Run(m, address)
-        reset(m, memory)
-        m.uc.mem_write(live, b"".join(LONG.pack(v) for v in live_values()))
-        m.uc.mem_write(kept_at, bytes(LONG.size * LIVE))
-        bound = Run(m, function, gcc_slots(values))
+        try:
+            reset(m, memory)
+            load_registers(m, binding.registers, values)
+            direct = Run(m, address)
+            reset(m, memory)
+            m.uc.mem_write(live, b"".join(LONG.pack(v) for v in live_values()))
+            m.uc.mem_write(kept_at, bytes(LONG.size * LIVE))
+            bound = Run(m, function, gcc_slots(values))
+        finally:
+            m.interrupts = []
+            m.starting_status = SUPERVISOR
         kept = [LONG.unpack(m.read(kept_at + LONG.size * i, LONG.size))[0] for i in range(LIVE)]
 
         stopped = stopped_outcome(direct, bound, ("direct", "bound"))
+        if stopped and extra is not None and stopped.startswith(SKIPPED):
+            stopped = f"a given case not run: {stopped.removeprefix(SKIPPED)}"
         if stopped:
-            yield f"case {case}", stopped
+            yield description, (stopped,)
             continue
         differences = []
         returned = direct.ended is None
@@ -220,13 +288,9 @@ def check(m: Machine, types: Types, binding: Binding, function: int, address: in
         lost = [f"{i}: {got:x}" for i, (got, wanted) in enumerate(zip(kept, live_values())) if returned and got != wanted]
         if lost:
             differences.append(f"live values lost: {', '.join(lost)}")
-        ram_differs = ram_difference(m, direct, bound)
-        if ram_differs:
-            differences.append(ram_differs)
-        effects_differ = effects_difference(direct, bound, ("direct", "bound"))
-        if effects_differ:
-            differences.append(effects_differ)
-        yield f"case {case}", "; ".join(differences) or None
+        differences += ram_differences(m, direct, bound)
+        differences += effects_differences(direct, bound, ("direct", "bound"))
+        yield description, tuple(differences)
 
 
 def main() -> int:

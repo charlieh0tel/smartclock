@@ -52,8 +52,8 @@ console's task it creates, on lines typed at the console
 (CONSOLE_SESSIONS).  The
 installer's functions run on a machine of its own, whose RAM is the
 installer as the boot code unpacks it (harness.installer_profile), and
-are counted apart.  This is the rebuild's measure, not a gate: it exits
-zero whatever it finds.
+are counted apart.  Exits nonzero if any function fails, in either
+image.
 """
 
 import json
@@ -78,6 +78,10 @@ from harness import (
     REGISTERS,
     STARTING,
     TRAP_VECTORS,
+    QSPI_LEVEL,
+    QSPI_VECTOR,
+    SPSR,
+    UNMASKED,
     Interrupt,
     FIRST_ARGUMENT,
     HANDLER_ENTRIES,
@@ -105,7 +109,7 @@ from harness import (
     Run,
     Types,
     arguments,
-    effects_difference,
+    effects_differences,
     fresh_ram,
     gcc_slots,
     give,
@@ -117,7 +121,7 @@ from harness import (
     pointer_at,
     preserved_registers,
     protect_code,
-    ram_difference,
+    ram_differences,
     rebuilt_machine,
     report,
     registers_difference,
@@ -385,18 +389,9 @@ FLASH = "flash"
 STACK_EDGE = "edge"
 CALLERS_REGISTERS = "registers"
 INPUT_PORT = "input port"
-# A supervisor's status register with its interrupts unmasked, as the
-# kernel's I/O functions run for a task, whose mask is 0.
-UNMASKED = 0x2000
-# The QSPI's interrupt: vector 65 and level 4, as qsm_init sets QILR and
-# QIVR (startup.h: ILQSPI 4, QIVR 0x40, the QSPI's vector its odd one;
-# MC68331UM D.4.3), the end of a queue, which sets SPIF (Devices); taken
-# after the first, second or third read of qspi.running in qspi_start's
-# wait (0x20866), which its handler, primary_user_65 (0x20a10), clears
-# through qspi_isr.
-SPSR = 0xFFFC1F
-QSPI_VECTOR = 0x41
-QSPI_LEVEL = 4
+# The QSPI's end of a queue (harness.QSPI_VECTOR), taken after the
+# first, second or third read of qspi.running in qspi_start's wait
+# (0x20866).
 
 
 def qspi_end_of_queue(first: int) -> Interrupt:
@@ -1756,8 +1751,9 @@ def return_from_hook(m: Machine, result: int | None) -> None:
 
 
 # The differences whose cause is found and is not the C's (PLAN.md,
-# "A rebuild that runs"), each counted as known while every failing case
-# is that difference, so that another in the same routine still fails.
+# "A rebuild that runs"), each counted as known while every difference
+# of every failing case is that difference, so that another in the same
+# routine, in the same case or another, still fails.
 # The firmware's own: os_report_processes holds
 # the address of "%s" in D5 across its calls (0x16768), which
 # os_report_process prints as a task's stack share.  And what C cannot
@@ -1772,7 +1768,7 @@ SHARE_LINE = (
 )
 D5_SHARE = Known(
     "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16768)",
-    rf"^effect \d+ {SHARE_LINE}, image's trap #4 service 4 (?P=registers)data (?P=head)(?:3[0-9]|2d|20)+(?P=tail)$",
+    rf"effect \d+ {SHARE_LINE}, image's trap #4 service 4 (?P=registers)data (?P=head)(?:3[0-9]|2d|20)+(?P=tail)",
 )
 # And gps_debug_status, which cuts the last comma from its last
 # channel's text by clearing the byte before the text's end (0x49384):
@@ -1781,16 +1777,31 @@ D5_SHARE = Known(
 # movem saved (0x49214), which it returns with.
 EMPTY_PART = Known(
     "gps_debug_status clears the byte below an empty part, its saved A4's lowest (0x49384)",
-    r"^register A4 5a5a000c, image's 5a5a0000$",
+    r"register A4 5a5a000c, image's 5a5a0000",
+)
+# And satellite_status_list, whose list of the satellites visible and
+# not in the set holds 12 (0x4985e): a visibility record with more
+# overflows it, in the image over its end pointer (-0xc(a6)), so that
+# its blank entries run to the end of RAM (0x499de), in gcc's frame
+# over whatever gcc put above it.
+OTHERS_OVERFLOW = Known(
+    "satellite_status_list overflows its 12 satellites on more, each copy's frame its own (0x4985e)",
+    r"stopped differently: image Invalid memory write \(UC_ERR_WRITE_UNMAPPED\) of 110000 at 499de, gcc .*",
 )
 KNOWN = {
     **{name: D5_SHARE for name in ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")},
-    # and writes the checksum to the EEPROM, an effect
+    # its first page's checksum, in RAM (0x101d50) and the EEPROM
+    # (0x400d42), covers the entry "Log cleared" makes, whose format is
+    # the literal's address in each copy (0x400d4c); writing them to
+    # the EEPROM, effects, which compare bytes, not pointers, differs
+    # at the checksum's two bytes and the address's low three
     "log_erase": Known(
         "log_erase checksums a pointer's bytes",
-        r"^RAM differs from 101d50(; effect \d+ write of \w+ to 400d42, image's write of \w+ to 400d42)?$",
+        r"RAM differs from 101d50|EEPROM differs from 400d42"
+        r"|effect \d+ write of \w+ to (400d4[23def]), image's write of \w+ to \1",
     ),
     "gps_debug_status": EMPTY_PART,
+    "satellite_status_list": OTHERS_OVERFLOW,
 }
 
 
@@ -2207,8 +2218,8 @@ def install_hooks(m: Machine, types: Types, states: States, context: Context, dr
 
 
 def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int, context: Context):
-    """Yields (description, outcome) for each case: outcome None if gcc's
-    copy agrees with the image's, else what differs."""
+    """Yields (description, outcome) for each case: outcome empty if gcc's
+    copy agrees with the image's, else each thing that differs."""
     linked_symbols = context.linked_symbols
     states = STATES.get(function.name, States())
     drawn: list[Drawn] = []
@@ -2341,7 +2352,7 @@ def check_cases(
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
         if stopped:
-            yield description, stopped
+            yield description, (stopped,)
             continue
         differences = []
         wanted, got = result(function, types, original), result(function, types, gcc)
@@ -2366,18 +2377,14 @@ def check_cases(
         registers_differ = registers_difference(m, original, gcc, function.preserves)
         if registers_differ:
             differences.append(registers_differ)
-        ram_differs = ram_difference(m, original, gcc)
-        if ram_differs:
-            differences.append(ram_differs)
-        effects_differ = effects_difference(original, gcc, ("image", "gcc"))
-        if effects_differ:
-            differences.append(effects_differ)
+        differences += ram_differences(m, original, gcc)
+        differences += effects_differences(original, gcc, ("image", "gcc"))
         depths = stack_depths(function.name, description, original, gcc)
         context.depths += depths
         stack_differs = stack_difference(depths)
         if stack_differs:
             differences.append(stack_differs)
-        yield description, "; ".join(differences) or None
+        yield description, tuple(differences)
 
 
 # The names files, which label the image's objects, in the image's
@@ -2412,6 +2419,7 @@ def main() -> int:
         function = json.loads(line)
         conventions[function["name"]] = function
     labels = image_labels(names_files(c_path))
+    failed = 0
     for profile in (PRIMARY, installer_profile(image_bytes)):
         machine = rebuilt_machine(
             image_bytes, linked, linked_symbols, profile, twins(linked_objects, labels, profile)
@@ -2438,7 +2446,7 @@ def main() -> int:
             for description, outcome in outcomes:
                 if description.startswith(CONSOLE_SESSION):
                     sessions["run"] += 1
-                    sessions["agreeing"] += outcome is None
+                    sessions["agreeing"] += not outcome
         label = f"{profile.overlay} " if profile.overlay else ""
         print(
             f"{label}functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, "
@@ -2454,7 +2462,8 @@ def main() -> int:
         if sessions["run"]:
             print(f"{label}console sessions agreeing: {sessions['agreeing']} of {sessions['run']}")
         print_stacks(label, context.depths)
-    return 0
+        failed += counts["failed"]
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

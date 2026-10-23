@@ -13,8 +13,8 @@ this says what each is and where.
   are kept as the image's own assembly, reassembled byte-identical.
 - Each hand-written function is run in Unicorn beside the image's own
   copy, from the same state, and must leave the same results, RAM,
-  registers and device and kernel calls, in the same order.  1313 of
-  the primary's functions agree, 5 differ for known reasons, none
+  registers and device and kernel calls, in the same order.  1312 of
+  the primary's functions agree, 6 differ for known reasons, none
   fail; the installer's 236 agree.
 - It is a checked reading of the firmware, not a replacement for it:
   it does not build a flashable image, and it has never run on a board.
@@ -206,16 +206,24 @@ The constructed state:
   exception frame (`harness.Interrupt`).
 
 A difference whose cause is found and is not the C's is known
-(`KNOWN`), and counts so only while every failing case matches its
-pattern:
+(`KNOWN`), and counts so only while every difference of every failing
+case matches its pattern: each case's comparisons list everything that
+differs, every run of differing memory and every differing effect, so
+that a known difference hides no other:
 
 - `os_report_process` and its three callers print D5, which
   `os_report_processes` leaves holding the address of `"%s"`
   (`0x16768`): a firmware fault.
 - `log_erase` checksums a pointer's bytes, which differ between the
-  copies.
+  copies: the format of the entry "Log cleared" makes, which it writes
+  to the EEPROM with the checksum.
 - `gps_debug_status` clears the byte below an empty text, the lowest of
   its saved A4 (`0x49384`): a firmware fault.
+- `satellite_status_list` keeps the visible satellites not in its set
+  in a local list of 12 (`0x4985e`), which more overflow: in the image
+  over its end pointer, so that its blank entries run to the end of RAM
+  (`0x499de`), in gcc's frame over whatever gcc put there.  A firmware
+  fault, in each copy's own frame.
 
 **Planted bugs.**  Each part of the harness catches a bug planted in
 the hand-written C that the generated cases alone miss, for example: a
@@ -223,7 +231,10 @@ clobber left out of a binding (A1 of `float_add`, D7 of the mutexes,
 D6 of the clock record); a wrong `Scc`; `volatile` removed from a
 polled wait; a debounce one read short; a wrong flash unlock address;
 two SCPI root children swapped; a pForth diagnostic word's arguments
-swapped.  (README.md, "Hand-written C"; PLAN.md.)
+swapped; a wrong RAM write or console line after a known difference
+(`log_erase`, `os_process_report`); a copy stopping differently from
+the image's (`installer_status_register_setup`); D1 or A0 out of
+`qspi_transfer_raw`'s clobbers, seen only on a completed transfer.  (README.md, "Hand-written C"; PLAN.md.)
 
 **Other checks**, in `make check-decompiled`:
 
@@ -231,7 +242,9 @@ swapped.  (README.md, "Hand-written C"; PLAN.md.)
   assembly piece is the image's bytes, assembled alone and in the link.
 - `bridge_check.py`: each binding, called from a gcc-compiled function
   that keeps 14 values live across it, against its routine called from
-  registers.
+  registers; `qspi_transfer_raw` also on transfers the QSPI's interrupt
+  completes, which the generated cases never reach (`GIVEN`), each of
+  which must run.
 - `module_figures.py`: `modules.md`'s figures.
 
 And `make check-scpi-tree` (`scpi_tree_check.py`): each record of the
@@ -246,15 +259,18 @@ check-scpi-tree`):
 | assembly (`check-decompiled`) | 474 routines in 494 pieces, all identical, alone and linked |
 | bindings | 73 of the primary's and 18 of the installer's agree, every `register` routine's |
 | SCPI trees (`check-scpi-tree`) | 2055 and 38 objects identical |
-| function check, primary | 1313 agree, 5 known, 0 failed |
-| function check, installer | 236 agree, 1 skipped, 0 failed |
+| function check, primary | 1312 agree, 6 known, 0 skipped, 0 failed |
+| function check, installer | 236 agree, 0 known, 1 skipped, 0 failed |
 | pForth console sessions | 8 of 8 agree |
-| cases, in the agreeing functions | 17,850 of 18,455 compared, the rest skipped |
+| cases, in the agreeing functions | 17,848 of 18,447 compared, the rest skipped |
 | stack headroom | no case deeper than the image's by more than 192 bytes, or 16 above a floor; the console's data stack 56 bytes clear, the image's 58 |
 
 A case is skipped where both copies stop at something the harness does
-not model (an unmapped address, an unanswered service); a function is
-skipped when all its cases are: `installer_status_register_setup`,
+not model, and for the same reason: the same kind of fault (an
+unmapped read, write or fetch, at whatever address each copy's code
+reaches first), the same trap and call, or no return.  Stopping for
+different reasons fails.  A function is skipped when all its cases
+are: `installer_status_register_setup`,
 whose image copy writes unmapped memory on the harness's state.  The
 user-mode counts are in [`README.md`](README.md#hand-written-c),
 checked by `make check-report-figures`.
@@ -281,11 +297,13 @@ the check is against the model, not the board.
   harness reads them with a probe of its own and takes an interrupt
   between runs ([`README.md`, "Hand-written C"](README.md#hand-written-c)).
 - **Untraced hardware.**  Which wires reach what (the DUART's interrupt
-  level, the EEPROM's part, the SCI's connector, the switch word at
-  `0x302000`) is inferred from the firmware, not traced on a board:
+  level, the EEPROM's select line, the SCI's connector, the switch word
+  at `0x302000`) is inferred from the firmware, not traced on a board:
   [`../hardware-investigations.md`](../hardware-investigations.md)
-  lists each with its bench test.  The primary's own stray writes to
-  the flash range are ended as bus errors, not modeled.
+  lists each with its bench test.  The EEPROM's part is identified, from
+  photographs: U4, an AT28C64B-20JC, chip select 9's by elimination.
+  The primary's own stray writes to the flash range are ended as bus
+  errors, not modeled.
 - **Inferred.**  The calling convention, the pSOS 4.1 service
   semantics (no 4.1 manual at hand; [`psos.md`](psos.md)), and every
   name and type are readings of the image, each row of `names.tsv`

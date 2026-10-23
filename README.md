@@ -42,7 +42,7 @@ of it and of the installer it unpacks into RAM, 1318 and 236, was
 decompiled by Ghidra through the project's scripts and then written
 again by hand, and each runs in an emulator harness against the
 image's own copy from the same state, its results, memory, kernel
-calls and device accesses compared: all agree but five whose
+calls and device accesses compared: all agree but six whose
 difference is the firmware's own or one C cannot express, and one the
 harness cannot run.  The 474 routines that are not C, the pSOS and
 pForth kernels among them, are the image's instructions, reassembled

@@ -12,7 +12,16 @@ The images are third_party/firmware/*.bin.  The registers' addresses
 are third_party/firmware/include/mc68331.h's sim_registers.  Each image
 must write them only with move.w #imm,(xxx).l, in runs of consecutive
 instructions: every long in the image that is one of their addresses
-must be such an instruction's operand, or the image is refused.  The
+must be such an instruction's operand, or the image is refused.  Nor
+may a register be loaded with an address in the SIM (move.l #imm,Dn,
+movea.l or movea.w #imm,An, lea or pea (xxx).l or (xxx).w) unless it
+is an address register used after only through (An), at an address
+below the chip selects or above them, until it is loaded again or the
+routine returns; anything else after it, a displacement, an index, an
+increment, a copy or a call, refuses the image (sim_loads).  What this
+does not see: a chip-select register reached by a displacement or an
+index from a base outside the SIM, or through an address computed or
+read from memory, or named by an absolute short address.  The
 boot code's runs are those below the primary's vector table, the one
 the boot code loads into VBR (move.l #TABLE,a0, movec a0,vbr), the
 primary's those above it; the first run of each must start within a
@@ -78,6 +87,49 @@ RESET_VECTOR = 4
 PROLOGUE = 32
 # a word of an instruction lies on an even address
 ALIGNMENT = 2
+
+# Table D-3: the SIM's registers, 128 bytes from its base
+SIM_SIZE = 0x80
+# The instructions that load a register with an address (sim_loads),
+# by opcode with the register field, bits 11 to 9, clear, each with its
+# operand's size: move.l #imm,Dn; movea.l #imm,An and lea (xxx).l,An;
+# movea.w #imm,An and lea (xxx).w,An, sign-extended; pea (xxx).l and
+# pea (xxx).w, which name no register.
+REGISTER_FIELD = 0x0e00
+REGISTER_SHIFT = 9
+LONG_LOADS = {0x203c: 'move.l #imm,Dn', 0x207c: 'movea.l #imm,An', 0x41f9: 'lea (xxx).l,An'}
+WORD_LOADS = {0x307c: 'movea.w #imm,An', 0x41f8: 'lea (xxx).w,An'}
+PUSHES = {0x4879: 'pea (xxx).l', 0x4878: 'pea (xxx).w'}
+ADDRESS_LOADS = ('movea.l #imm,An', 'lea (xxx).l,An', 'movea.w #imm,An', 'lea (xxx).w,An')
+LONG_LOAD_LENGTH, WORD_LOAD_LENGTH = 6, 4
+# An address's top byte, which a 24-bit bus ignores, as the images
+# write it: zero, or all ones from a sign extension
+ADDRESS_BITS = 0xffffff
+ADDRESS_TOP_SHIFT = 24
+ADDRESS_TOPS = (0, 0xff)
+LONG_BITS = 0xffffffff
+# How far past a load register_uses reads for the routine's return,
+# and the words that end what it reads: rts and rte, and jmp's opcodes
+LOAD_REACH = 64
+RETURNS = (0x4e75, 0x4e73)
+JUMP, JUMP_MASK = 0x4ec0, 0xffc0
+# Calls, which may use the register: jsr (xxx).l, (xxx).w and d16(PC),
+# and bsr's opcode byte
+CALLS = (0x4eb9, 0x4eb8, 0x4eba)
+BSR = 0x61
+OPCODE_BYTE_SHIFT = 8
+# An effective address's mode and register fields, the low six bits of
+# an opcode word, and a move's destination's, bits 11 to 6 reversed:
+# the modes of An itself, (An)+, -(An), d16(An) and d8(An,Xn)
+EA_MASK = 0x3f
+EA_MODE_SHIFT, EA_FIELD_MASK = 3, 0x7
+MODE_DIRECT, MODE_INCREMENT, MODE_DECREMENT, MODE_DISPLACEMENT, MODE_INDEX = 1, 3, 4, 5, 6
+REACHING_MODES = (MODE_INCREMENT, MODE_DECREMENT, MODE_DISPLACEMENT, MODE_INDEX)
+# a move's size field, bits 13 and 12, and where its destination's
+# mode lies
+MOVE_SIZES = (1, 2, 3)
+OPERATION_SHIFT = 12
+DESTINATION_MODE_SHIFT = 6
 
 # Table D-11: BLKSZ to the block's size
 BLOCK_SIZES = (2 << 10, 8 << 10, 16 << 10, 64 << 10, 128 << 10, 256 << 10, 512 << 10, 1 << 20)
@@ -159,11 +211,16 @@ class Map:
     before: str
 
 
+def sim_base():
+    """The SIM's base, from mc68331.h."""
+    return int(SIM_BASE.search(HEADER.read_text()).group(1), 16)
+
+
 def register_names():
     """Each chip-select register's address, from mc68331.h, to its
     name, in the SIM's order."""
     text = HEADER.read_text()
-    base = int(SIM_BASE.search(text).group(1), 16)
+    base = sim_base()
     offsets = {name: int(offset, 16) for name, offset in SIM_FIELD.findall(text)}
     if set(offsets) != {'cspar0', 'cspar1', 'csboot', 'cs[11]'}:
         sys.exit('%s: no chip-select fields in sim_registers' % HEADER)
@@ -173,6 +230,63 @@ def register_names():
         at = base + offsets['cs[11]'] + 2 * REGISTER_SIZE * n
         names[at], names[at + REGISTER_SIZE] = 'CSBAR%d' % n, 'CSOR%d' % n
     return dict(sorted(names.items()))
+
+
+def sim_loads(image, sim_base, low, high):
+    """Each load of an address in the SIM (LONG_LOADS, WORD_LOADS,
+    PUSHES) that may reach a chip-select register, from low up to but
+    not including high, as (its address, the instruction, the address
+    loaded, why it may): every load but one of an address register with
+    an address outside the chip selects whose uses, until it is loaded
+    again or the routine returns, are (An) alone (register_uses)."""
+    found = []
+    for at in range(0, len(image) - LONG_LOAD_LENGTH, ALIGNMENT):
+        opcode = struct.unpack_from('>H', image, at)[0]
+        register = (opcode & REGISTER_FIELD) >> REGISTER_SHIFT
+        kind = LONG_LOADS.get(opcode & ~REGISTER_FIELD) or PUSHES.get(opcode)
+        if kind is not None:
+            value, length = long_at(image, at + 2), LONG_LOAD_LENGTH
+        elif opcode & ~REGISTER_FIELD in WORD_LOADS:
+            kind = WORD_LOADS[opcode & ~REGISTER_FIELD]
+            value, length = struct.unpack_from('>h', image, at + 2)[0] & LONG_BITS, WORD_LOAD_LENGTH
+        else:
+            continue
+        address = value & ADDRESS_BITS
+        if value >> ADDRESS_TOP_SHIFT not in ADDRESS_TOPS or not sim_base <= address < sim_base + SIM_SIZE:
+            continue
+        if kind not in ADDRESS_LOADS:
+            why = 'not into an address register'
+        elif low <= address < high:
+            why = 'a chip-select register itself'
+        else:
+            why = register_uses(image, at + length, register)
+        if why is not None:
+            found.append((at, kind, address, why))
+    return found
+
+
+def register_uses(image, start, register):
+    """None if, from start until it is loaded again or the routine
+    returns, address register register is used only as (An); else what
+    else may use it.  Every even word is read as an instruction's, so
+    that a word that only looks like a use, an operand's, refuses: the
+    scan may refuse more than it must, never less."""
+    for at in range(start, min(start + LOAD_REACH, len(image) - 1), ALIGNMENT):
+        word = struct.unpack_from('>H', image, at)[0]
+        if word in RETURNS or word & JUMP_MASK == JUMP:
+            return None
+        if word in CALLS or word >> OPCODE_BYTE_SHIFT == BSR:
+            return 'a call at 0x%x' % at
+        source = word & EA_MASK
+        if source & EA_FIELD_MASK == register and source >> EA_MODE_SHIFT in (MODE_DIRECT,) + REACHING_MODES:
+            return 'a use at 0x%x' % at
+        if word >> OPERATION_SHIFT in MOVE_SIZES and (word & REGISTER_FIELD) >> REGISTER_SHIFT == register:
+            mode = (word >> DESTINATION_MODE_SHIFT) & EA_FIELD_MASK
+            if mode == MODE_DIRECT:
+                return None
+            if mode in REACHING_MODES:
+                return 'a use at 0x%x' % at
+    return 'no return within %d bytes' % LOAD_REACH
 
 
 def image_title(stem):
@@ -208,6 +322,11 @@ def read_maps(stem, names):
     if stray:
         sys.exit('%s: a chip-select address not written by move.w #imm,(xxx).l at %s'
                  % (where, ', '.join('0x%x' % at for at in stray)))
+    loads = sim_loads(image, sim_base(), min(names), max(names) + REGISTER_SIZE)
+    if loads:
+        sys.exit('%s: a SIM address loaded where it may reach a chip select: %s'
+                 % (where, ', '.join('%s 0x%x at 0x%x, %s' % (kind, address, at, why)
+                                     for at, kind, address, why in loads)))
     boot_entry = long_at(image, RESET_VECTOR)
     tables = {long_at(image, m.start(1)) for m in VBR_LOAD.finditer(image)} - {0}
     if len(tables) != 1:
@@ -432,7 +551,12 @@ def generated_tables(images):
            '`restart.md`, "The chip selects", says what the Z3805A\'s selects reach.', '',
            'Each image\'s primary writes the SIM\'s chip-select registers in one',
            'run of `move.w #imm,(xxx).l` from its reset entry, and its boot code in',
-           'one or two, and nothing else in the image writes them.  Where the boot',
+           'one or two.  No other instruction names one by its long address, and',
+           'a SIM address loaded into a register, PICR\'s alone in each image, is',
+           'used only as `(An)` until the register is loaded again or the routine',
+           'returns.  Not ruled out: a select reached by a displacement or an index',
+           'from a base outside the SIM, through an address computed or read from',
+           'memory, or by an absolute short address.  Where the boot',
            'code has two runs, the first sets a map to check the primary\'s',
            'checksum under and jumps into the primary, and the second, the boot',
            'code\'s own map, runs when the primary is refused.  The installer runs',

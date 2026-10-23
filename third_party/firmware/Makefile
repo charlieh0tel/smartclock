@@ -13,6 +13,12 @@
 ROOT ?= ../..
 FIRMWARE = $(ROOT)/third_party/firmware
 
+# bash, so that a pipeline fails when any command in it does: the
+# function check's report through tee, a generated tree through
+# clang-format.
+SHELL = /bin/bash
+.SHELLFLAGS = -o pipefail -c
+
 CARGO ?= cargo
 CLANG_FORMAT ?= clang-format
 M68K_CC ?= m68k-linux-gnu-gcc
@@ -99,7 +105,7 @@ DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fwrapv -fno-toplevel-reorder -fn
 	-Wno-error=int-conversion -Wno-error=incompatible-pointer-types
 
 # How many of the decompiled C functions, as gcc compiles them, agree
-# with the image's own in the emulator; a measure, never a failure.
+# with the image's own in the emulator; fails if any function fails.
 # The report is saved in the image's work folder, and check-report-figures
 # reads DOCUMENTED_IMAGE's, which report-decompiled checks right after
 # writing it.
@@ -107,10 +113,13 @@ REPORT = report-decompiled.txt
 REPORT_DECOMPILED = $(call work,$(DOCUMENTED_IMAGE))/$(REPORT)
 CHECK_REPORT_FIGURES = python3 -I $(ROOT)/tools/firmware/report_figures.py $(REPORT_DECOMPILED)
 
-# Fail if docs/firmware/README.md's figures from the function check --
-# the functions run in user mode alone and in both modes, and the
-# console sessions agreeing -- are not what the last make
-# report-decompiled saved; report-figures rewrites them.
+# Fail if the documents' figures from the function check --
+# docs/firmware/README.md's functions run in user mode alone and in both
+# modes and console sessions agreeing, docs/firmware/rewrite.md's and
+# README.md's counts of functions agreeing, known, skipped and failed
+# and the agreeing ones' cases -- are not what the last make
+# report-decompiled saved, or if any function failed; report-figures
+# rewrites them.
 check-report-figures:
 	$(CHECK_REPORT_FIGURES)
 

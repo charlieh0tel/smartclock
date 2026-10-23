@@ -66,6 +66,7 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make check-decompiled
         if: ${{ !cancelled() }}
-      # Also checks docs/firmware/README.md's figures against the report.
+      # Fails on a failed function, and checks the documents' figures
+      # from the function check against the report.
       - run: make report-decompiled
         if: ${{ !cancelled() }}

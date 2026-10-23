@@ -588,7 +588,9 @@ void selftest_all(char_slot run) {
 void selftest_execute(selftest_test_number test) {
   selftest.running = 1;
   watchdog_pll++;
-  selftest_test* entry = selftest_table[test];
+  /* The test indexes the table sign-extended, as the image's (0x18300),
+   * so that one past 0x7f reads below it. */
+  selftest_test* entry = selftest_table[(int8_t)test];
   selftest_begin();
   entry((char_slot){.value = 0});
   entry((char_slot){.value = 1});

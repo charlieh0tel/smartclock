@@ -666,25 +666,24 @@ view cannot drift apart.  The library, bottom up:
      of the caller's arguments (`stack0xN`) are read from gcc's frame
      pointer; its views into a function's own frame or a register fault
      in the harness until the function is rewritten.
-  2. Bridges between gcc's C and the rest.  Started: a routine whose
-     arguments and result Setup put in registers, from a convention
-     with every item typed, gets a real prototype naming a generated
-     wrapper, `c_NAME`, which saves gcc's callee-saved registers, loads
-     each argument from gcc's 4-byte slot (gcc promotes a `char` or
-     `short` to a whole int there) and calls the routine; 85 routines,
-     the soft-float ones among them, so C calls the image's own float
-     arithmetic without promoting a float to double.  Left: 10 calls
-     into routines a wrapper of this kind cannot reach -- `stack_usage`
-     returns two values, `forth_compile_code` is Forth's, the rest an
-     exception entry or a kernel's -- and the other direction,
-     assembly calling C, where the original passes a `char` or `short`
-     in 2 bytes where gcc reads 4.  The kernel internals'
-     `undetermined` conventions must be settled first.
+  2. Bridges between gcc's C and the rest.  Done 2026-10-22 (below,
+     "Done 2026-10-22, the bindings"): no generated wrapper remains.  A
+     routine that takes its arguments and gives its result in registers
+     is called through a typed binding of `rewritten/bindings/`, its
+     registers bound and its changes named in one asm statement, or by
+     its own prototype where it is in gcc's convention already; every
+     routine of the sidecar's `register` convention has one, 73 of the
+     primary's and 18 of the installer's (docs/firmware/README.md,
+     **ExportC**).  Not done, and needed only by a link for the board
+     (step 3), which is not planned: the other direction, assembly
+     calling C, where the original passes a `char` or `short` in 2
+     bytes where gcc reads 4.
   3. A link that keeps the ROM's data -- strings, the SCPI tree,
      descriptors, tables -- at its own addresses, which the code names
      absolutely, and places the rebuilt functions around it.  Done for
      the harness: `tools/firmware/rebuild_link.py` puts every piece of
-     assembly at its address, all 418 the image's bytes, and gcc's code
+     assembly at its address, the 474 routines' 494 pieces, all the
+     image's bytes, and gcc's code
      at `0x600000`, above every chip select; the ROM's data and its original C stay where they
      are, and the assembly calls the original C (`__image_NAME`).  A
      link for the board, gcc's C in the ROM's free space and the
@@ -692,22 +691,33 @@ view cannot drift apart.  The library, bottom up:
   4. The emulator harness: a function's original and rebuilt code on
      the same inputs and memory.  Done, as `tools/firmware/harness.py`.
      `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
-     wrapper as gcc would and its routine from its registers, from the
+     binding as gcc would and its routine from its registers, from the
      same RAM, and requires the same result, RAM and effects and gcc's
-     callee-saved registers kept; 83 of 91 agree, none disagree.
+     callee-saved registers kept: all 73 and 18 agree, and
+     `qspi_transfer_raw` also on given transfers the QSPI's interrupt
+     completes, which must run.
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1249 run, 1238 agree, 1 reaches what the
-     harness does not model and is skipped, 10 differ as known, and
-     none otherwise.  A known difference is one whose cause is
-     found and is not the C's, `function_check.py`'s `KNOWN`: the
-     firmware's own reads of what nothing set (`task_stack_info`'s
-     locals, `os_report_processes`' D5) and what C cannot say
-     (`setjmp`, the 64-bit divides' overflow, `log_erase`'s checksum of
-     a pointer); each is counted so only while every failing case
-     matches its pattern, so that a new difference in the same function
-     still fails.  The harness models what lies
+     original reads them: the primary's 1312 agree, 6 differ as known
+     and none fail; the installer's 236 agree and 1, whose image copy
+     writes unmapped memory on the harness's state, is skipped
+     (`docs/firmware/rewrite.md`, "Figures").  A known difference is
+     one whose cause is found and is not the C's, `function_check.py`'s
+     `KNOWN`: the firmware's own (`os_report_processes`' D5, printed by
+     three callers; `gps_debug_status`'s cleared byte below an empty
+     text; `satellite_status_list`'s list of 12 overflowed, over each
+     copy's own frame) and what C cannot say (`log_erase`'s checksum of
+     a pointer).  Each counts so only while every difference of every
+     failing case matches its pattern, and a case lists every
+     difference, every run of differing memory and every differing
+     effect, so that a known difference hides no other; a case is
+     skipped only where both copies stop for the same reason, the same
+     kind of fault, trap and call, or no return.  Decided 2026-10-23,
+     reversing its start as a measure that exited zero: the check exits
+     nonzero on any failed function, and `make report-decompiled`, and
+     so CI, fails with it; `report_figures.py` checks the counts
+     `rewrite.md` and `README.md` give.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
      the kernel's traps are answered by a model of each service, from
@@ -722,8 +732,12 @@ view cannot drift apart.  The library, bottom up:
   5. Replace, check, repeat, making the C readable and idiomatic as
      each function is taken: names for locals, real types, loops and
      structures in place of pointer arithmetic, the decompiler's
-     idioms (CONCAT, SUB, pieces, unaff_ registers) undone.  Started
-     with what the harness found across many functions at once: every
+     idioms (CONCAT, SUB, pieces, unaff_ registers) undone.  Done:
+     every C function of the primary and the installer is written by
+     hand (`docs/firmware/rewrite.md`, "Scope"), with the figures step
+     4 gives.  What follows is the dated record of how, not the current
+     state.  It started with what the harness found across many
+     functions at once: every
      SCPI handler now has the prototype `scpi_call_handler` calls it
      with, `(parameters, response, call)`, where each showed only the
      arguments it reads, so that its image copy read a third argument
@@ -1682,12 +1696,13 @@ view cannot drift apart.  The library, bottom up:
   parser's functions, which return nodes and lists, are proven on it.
   Costs: thousands of generated lines in `rewritten/`; the harness's
   address map; the records `dump-scpi` does not yet read.
-  Started: `--c` and `--names` read every record of every image's
-  tree, the installer's too, and `make scpi-tree` writes the Z3805A
-  3543B's, `scpi_tree_data.c`, whose 2055 objects, 1933 records and
-  122 lists' children, `make check-scpi-tree` finds the image's bytes
-  (docs/scpi/README.md, "As C"); the other images' and the installers'
-  C waits on names for their converters and formatters.  The types
+  Done for the Z3805A 3543B: `--c` and `--names` read every record of
+  every image's tree, the installer's too, and `make scpi-tree` writes
+  the Z3805A 3543B's, `scpi_tree_data.c`, whose 2055 objects, 1933
+  records and 122 lists' children, and its installer's,
+  `installer_scpi_tree_data.c`, 38 objects, `make check-scpi-tree`
+  finds the image's bytes (docs/scpi/README.md, "As C"); the other
+  images' C waits on names for their converters and formatters.  The types
   settled first: a node is `0x32` bytes, its last 14 zero and read by
   nothing; a parameter's kinds hold six converters, not a flexible
   array; a response item's third field is `scpi_choices *`, as is
@@ -2013,15 +2028,16 @@ view cannot drift apart.  The library, bottom up:
   `set_interrupt_mask` stays assembly, and `hmon_task` and
   `interpolator_verify` are written with the register helper.
 
-  Also later: the SCPI command table as C, generated from the image,
-  each subtree's nodes in its tree's file beside their handlers: the
-  ROM's table exactly, every node, list, keyword, descriptor and entry
-  in its order, the unused and unsupported ones too, and a check that
-  the compiled table is the ROM's bytes, its pointers compared by what
-  they point at; and
-  the pForth words, which are hand-written assembly, not C (one
-  branches into another's body; A6 is the data stack), as assembly
-  files beside the hand-written C rather than the export's listing.
+  The SCPI command table as C, generated from the image, is done
+  (above, "Done for the Z3805A 3543B"): its trees,
+  every node, list, keyword, descriptor and entry in the ROM's order,
+  the unused and unsupported ones too, in one generated file per tree,
+  not each subtree beside its handlers, and `make check-scpi-tree`
+  finds the compiled records the ROM's bytes, pointers compared by
+  what they point at.  Not done: the pForth words, which are
+  hand-written assembly, not C (one branches into another's body; A6
+  is the data stack), as assembly files beside the hand-written C;
+  they are still the export's listing.
 
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each

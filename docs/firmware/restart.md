@@ -417,9 +417,13 @@ same day `smartclock-cli read-memory` took the bench Z3805A
 3543B-A in PRIMARY with an empty error queue.  The 58503A phrases have
 not been tried.
 
-The console is itself reached only through `LANG "PFORTH"` from the
-SCPI parser (see `console.md`, "Getting to it"), so it helps only a primary whose
-parser still runs.
+The console is reached through `LANG "PFORTH"` from the SCPI parser
+(see `console.md`, "Getting to it"), or at power-up, in place of the
+parser, when `:DIAGnostic:SYSTem:PSTartup` has set the toggle that
+starts it (above; `root_task` tests it at `0x131ca` and calls
+`console_init` instead of `scpi_task_start`).  So it helps a primary
+whose parser still runs, or one set to start the console before the
+parser stopped working; either way the primary itself must start.
 
 How S1, a flash-read fault or the CPU's background debug mode might
 reach the installer without a working primary is speculative; see
@@ -430,11 +434,15 @@ reach the installer without a working primary is speculative; see
 In the Z3805A 3543B the boot code's reset (`boot_reset`, `0x550`)
 programs the MC68331's chip selects after only the SYPCR write, and
 the primary's reset code (`primary_reset`, `0x144ca`) writes the same
-values again; the table below gives both runs.  Nothing else in the
-image writes them: the SIM's chip-select addresses, `0xfffa44` to
+values again; the table below gives both runs.  No other instruction
+writes them by address: the SIM's chip-select addresses, `0xfffa44` to
 `0xfffa77`, appear in its bytes only in those two runs, and the only
-instruction that puts a SIM address in an address register is for
-PICR (`0x1200a`, `0xfffa22`).  The installer's packed records have
+instruction that puts a SIM address in a register is for PICR
+(`0x1200a`, `0xfffa22`), used only as `(a2)` before the routine
+returns; `chip_selects.py` refuses an image otherwise.  What that does
+not rule out is a select reached by a displacement or an index from a
+base outside the SIM, through an address computed or read from memory,
+or by an absolute short address.  The installer's packed records have
 no such write either, so the installer runs on the boot code's map.
 `tools/firmware/chip_selects.py` reads every image's map from its
 reset code and writes `chip-selects.md` with each image's tables and
@@ -483,7 +491,7 @@ Pins: CSPAR0 `0x2bff` at `0x568`, CSPAR1 `0x03af` at `0x570`.
 | `0x200000`--`0x2007ff`, 2 KiB | CS8 | 123, PC5/ADDR21 | `0x2000`, `0x3bf0`; `0x608`, `0x610` | 8-bit | lower, read and write, external | U3, the SCC68692 DUART, driven as a 68681; on an 8-bit port any BYTE but 00 enables the select (4.8.1.3) |
 | `0x300000`--`0x30ffff`, 64 KiB | CS5 | 120, PC2/FC2 | `0x3003`, `0x7b30`; `0x5d8`, `0x5e0` | 8-bit | both, read and write, 12 wait | shared: the latch, the switch byte, the FPGA and the EFC strobe (below) |
 | `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x618`, `0x620` | 8-bit | both, read and write, 3 wait | U4, the AT28C64B EEPROM, by elimination (`../z3805a-board.html`) |
-| `0x500000`--`0x5007ff`, 2 KiB | CS4 | 119, PC1/FC1 | `0x5000`, `0x7830`; `0x5c8`, `0x5d0` | 8-bit | both, read and write, 0 wait | none: no instruction addresses it and no part is tied to it |
+| `0x500000`--`0x5007ff`, 2 KiB | CS4 | 119, PC1/FC1 | `0x5000`, `0x7830`; `0x5c8`, `0x5d0` | 8-bit | both, read and write, 0 wait | none the firmware uses: no instruction addresses it; whether a part is wired to it is not traced (`../hardware-investigations.md`) |
 | CPU space, interrupt acknowledge at level 2 | CS10 | 125, ECLK/ADDR23 | `0xfff8`, `0x2bc4`; `0x628`, `0x630` | 16-bit | lower, read, external; CPU space, IPL 2 | the DUART's acknowledge: it answers with the vector its IVR holds, so its interrupt is level 2, vectored |
 
 The primary (`0x144d2` to `0x1459a`) writes the same 26 values, each `0x13f6a` above.

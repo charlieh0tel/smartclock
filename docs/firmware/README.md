@@ -543,7 +543,14 @@ and an explicit `R_68K_PC8` relocation, a few instructions gas cannot
 spell are their bytes, and a routine whose code lies about another's
 is in pieces, each a section `.text.NAME.ADDRESS`.  Each piece carries
 the bytes after it up to the next routine, at most 256, which are its
-tables.  C calls these routines through `int NAME();`.
+tables.  How C calls these routines depends on where they take their
+arguments: one with any on the stack through `int NAME();`; one with
+every argument and its result in registers by a real prototype when it
+is in gcc's convention already (no arguments, the result in D0 or
+D0:D1, gcc's callee-saved registers kept), and otherwise through a
+typed register binding in `rewritten/bindings/`, or not at all where
+none binds it (below, **ExportC**, and "Hand-written C", register-bound
+calls).
 `tools/firmware/decompiled_check.py` (`make check-decompiled`)
 assembles them alone and compares every piece with the image, every
 relocated field resolved at the image's own addresses: all 474
@@ -784,7 +791,14 @@ stores them to an array of their own, zeroed before the call, not back
 where it loaded them: gcc may keep all 14 in its frame and only its
 pointer to the arrays in a register, so that a clobber left out showed
 only as a store through that pointer gone astray
-(`scpi_decimal_to_text_unused` with A2 left out passed until then).  The
+(`scpi_decimal_to_text_unused` with A2 left out passed until then).
+Its generated cases never complete a `qspi_transfer_raw` transfer: they
+name devices the QSPI's table does not take, or wait for an interrupt
+none takes, so its given cases (`GIVEN`) send three words to devices 2,
+7 and 12 and take the QSPI's end of queue after `qspi_start`'s first
+read of `qspi.running`, whose handler copies the received words and
+clears the flag the routine waits on (`0x20aa6`); a given case must
+run, and with D1 or A0 left out of its clobbers it fails.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
 C library has no `puts`, `strlen` or `strcmp` for gcc to call, and
@@ -1106,11 +1120,16 @@ as operators.  A C function the assembly calls is the image's own copy,
 callees and argument layout until a function is replaced; gcc's C calls
 gcc's.  `tools/firmware/function_check.py` (`make report-decompiled`)
 then calls each C function's image copy and gcc's copy in Unicorn, from
-the same RAM, and compares result and RAM: a measure of the decompiled
-C, not a gate (PLAN.md, "A rebuild that runs, in readable C").  A
+the same RAM, and compares result and RAM; any function failing, in
+either image, fails it, and so CI (PLAN.md, "A rebuild that runs, in
+readable C").  Each case lists everything that differs, every run of
+differing memory and every differing effect, not the first alone.  A
 difference whose cause is found and is not the C's is known
-(`KNOWN`): the function counts as known while each failing case
-matches the difference's pattern, and fails as any does otherwise.  A
+(`KNOWN`): the function counts as known while every difference of each
+failing case matches the difference's pattern, and fails as any does
+otherwise.  A case where both copies stop at what the harness does not
+model is skipped only when they stop for the same reason, the same
+kind of fault, trap and call, or no return; otherwise it fails.  A
 pattern names only what differs: `os_report_process`'s callers print
 its stack share from D5, which `os_report_processes` leaves holding the
 address of `"%s"` (`0x16768`), so their pattern takes a line alike but
@@ -1739,12 +1758,15 @@ every push and pull request, a job of its own beside the Rust CI so
 that each fails alone: `make check-format-c`, `check-types`,
 `check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
 `check-chip-selects`, `check-decompiled`, which runs `check-unicorn`
-first, and `report-decompiled`, which
-also checks this document's figures from the function check against
-the report it writes, so that every function agreeing is checked in
-public.  `IMAGE=z3805a-3543b` is set for the job.  None of the targets
-builds the workspace; `check-chip-selects` reads every image's reset
-code (`restart.md`, "The chip selects").
+first, and `report-decompiled`, which fails if any function fails
+and checks the figures this document, `rewrite.md` and the top
+`README.md` give from the function check -- the user-mode and console
+counts, each image's agreeing, known, skipped and failed functions and
+the agreeing ones' cases -- against the report it writes, so that every
+function agreeing is checked in public.  `IMAGE=z3805a-3543b` is set
+for the job.  None of the targets builds the workspace;
+`check-chip-selects` reads every image's reset code (`restart.md`,
+"The chip selects").
 
 On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15)
 and `binutils-m68k-linux-gnu` from the archive and uv 0.13.2 through

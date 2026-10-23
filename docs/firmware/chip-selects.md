@@ -7,7 +7,12 @@ give; `make check-chip-selects` fails when they and the images disagree.
 
 Each image's primary writes the SIM's chip-select registers in one
 run of `move.w #imm,(xxx).l` from its reset entry, and its boot code in
-one or two, and nothing else in the image writes them.  Where the boot
+one or two.  No other instruction names one by its long address, and
+a SIM address loaded into a register, PICR's alone in each image, is
+used only as `(An)` until the register is loaded again or the routine
+returns.  Not ruled out: a select reached by a displacement or an index
+from a base outside the SIM, through an address computed or read from
+memory, or by an absolute short address.  Where the boot
 code has two runs, the first sets a map to check the primary's
 checksum under and jumps into the primary, and the second, the boot
 code's own map, runs when the primary is refused.  The installer runs

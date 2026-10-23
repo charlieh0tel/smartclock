@@ -655,9 +655,17 @@ register-bound calls); the C has a comment naming the header, or saying
 that none binds the routine, and then no C can call it.  `softfloat.h`
 binds the soft-float library, `mutex.h` the mutexes, and `stack.h`,
 `clock_record.h`, `pforth.h`, `sci_token.h` and `scpi_decimal.h` the
-rest the C calls, 55 of the primary's and 11 of the installer's; 31,
-the kernel's internals, the I/O devices' entries, `psos_pack_name`
-(which `os.h`'s `OS_PACK_NAME` calls in line) and the like, have none.
+rest the C calls; those and `kernel.h`, `drtb.h`, `string_device.h`
+and `qspi.h` the 25 that no C calls, the kernel's checks and tick
+count, the I/O devices' entries and the like, so that every routine of
+the sidecar's `register` convention has a binding, checked whether
+called or not: 73 of the primary's and 18 of the installer's.  Six have
+none, none of them that convention: `kernel_dispatch_io` and its
+installer copy, trap #4's handler, which returns with `rte`;
+`psos_pack_name` and its copy, which read their caller's first stack
+argument through A6 (`0x16f50`), and which `os.h`'s `OS_PACK_NAME`
+calls in line; and `forth_print_string` and `forth_pack_name`, pForth
+words' routines that work on the console's user area through A5.
 One that takes no argument, gives its result in D0 and keeps gcc's
 callee-saved registers itself is declared and called directly.
 `enter_supervisor` (`0x13422`) and the installer's copy are such:
@@ -676,11 +684,16 @@ another task's kernel call may overwrite between the call and its
 caller's reads.  `tools/firmware/bridge_check.py` runs each binding in
 Unicorn, through a check function gcc compiles in its own convention,
 against its routine called directly, from the registers the sidecar
-names, the installer's on the installer's machine (below): all 66 give
+names, the installer's on the installer's machine (below): all 91 give
 the same result, RAM and effects, keep gcc's callee-saved registers,
 and keep the 14 values the check function holds across the call, which
 gcc puts in every register the statement leaves it, so that a register
-the routine changes and the statement does not name loses one.  The
+the routine changes and the statement does not name loses one.  It
+stores them to an array of their own, zeroed before the call, not back
+where it loaded them: gcc may keep all 14 in its frame and only its
+pointer to the arrays in a register, so that a clobber left out showed
+only as a store through that pointer gone astray
+(`scpi_decimal_to_text_unused` with A2 left out passed until then).  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
 C library has no `puts`, `strlen` or `strcmp` for gcc to call, and
@@ -942,9 +955,15 @@ clobbers.  One that returns in the condition codes or beside its result
 reads a flag with `Scc` before anything sets the condition codes again.
 `os.h` has the pSOS binding's: `os_psos_call` and `os_psos_io_call`,
 and `os_installer_` copies, take the service's registers as an
-`os_registers` and give back D0 to D3, A0 and A1, D7, and `failed`, Z
-clear, which `sne` reads and the stubs branch on as the image's do
-(`bne` at `0x16fda`).  Each service has a shape of its own
+`os_registers` and give back D0 to D3, A0 and A1, D7, and `failed`, D7
+not 0: the stubs branch on Z as set from D7, by the binding's own last
+move to it (`bne` at `0x16fda`) or by their move of it to D0
+(`0x171ea`), so the C reads D7 as they do, not the flag through
+`sne`, whose own data register gcc took from those the stubs leave
+alone, D2, D3 or D4, and saved, in 15 of the 16 stubs whose saves
+differed from the image's (`psos_create_x` at `0x171d2` saves D2 and
+D7 alone; `psos_get_time` still differs, gcc keeping a pointer in A2
+where the image uses D3).  Each service has a shape of its own
 (`OS_SERVICES`, `OS_IO_FUNCTIONS`): a register is loaded only if the
 service reads it and named changed only if its handler changes it, read
 from the handler (the table at `0x14b6e`) and its calls -- its results,
@@ -1000,7 +1019,11 @@ the same RAM, and compares result and RAM: a measure of the decompiled
 C, not a gate (PLAN.md, "A rebuild that runs, in readable C").  A
 difference whose cause is found and is not the C's is known
 (`KNOWN`): the function counts as known while each failing case
-matches the difference's pattern, and fails as any does otherwise.  Both
+matches the difference's pattern, and fails as any does otherwise.  A
+pattern names only what differs: `os_report_process`'s callers print
+its stack share from D5, which `os_report_processes` leaves holding the
+address of `"%s"` (`0x16768`), so their pattern takes a line alike but
+for that column, and its memory column, which D6 starts, is compared.  Both
 checks (`tools/firmware/harness.py`) take a pointer left in RAM, at an
 even address, as the same when the two point at the same place in the
 same text, in ROM or among gcc's constants: gcc keeps its
@@ -1102,13 +1125,21 @@ A0 for a service that checks an id, D0 for one that may wait, D0, D1,
 A0 and A1 for a device's read, write and control), keeping the
 others; `request_x` fills its
 buffer with that value, a read reads nothing and a write writes all it
-is given.  A write to the QSPI (device 1) is recorded by the words
+is given.  A write to the QSPI (device 1) is recorded by the transfers
 `qspi_queue_setup` (`0x20578`) queues from its buffer for the minor
-device in D0's low byte, a 16-bit transmit entry a transfer whatever
-the device's bits a transfer: three for the hex DAC and device 0, two
-for devices 5 and 9, one for the others, and the count, up to 16, for
-the FPGA's block (`harness.qspi_write_bytes`), where D2's count of
-bytes recorded only the first of a DAC's words.  But a case starts with an id, another such address, in
+device in D0's low byte, each at its width: a word of the buffer is a
+transmit RAM entry, sent right-justified (MC68331UM 6.3.2.2), its low
+bits as many as the transfer takes, 8, or SPCR0's BITS, 8 to 16, where
+its command byte sets BITSE (6.3.5.1, Table 6-3; D.4.10, D.4.16), and a
+transfer is recorded as those bits in the fewest bytes that hold them
+(`harness.qspi_write_data`), so that bits it does not send are not
+compared: three 12-bit transfers for the hex DAC and device 0, one
+8-bit for device 11, two 16-bit for devices 5 and 9, one 16-bit for the
+others, D2's count of 16-bit ones, up to 16, for the FPGA's block, and
+one of D2's count of bits, 8 to 16, for its readback (`structures.md`,
+"The QSPI's devices").  With the hex DAC's words recorded as 16 bits,
+a planted 0xf000 in an unsent nibble failed `hdac_write_all`; at 12 it
+passes, and a planted 0x0800, a sent bit, fails.  But a case starts with an id, another such address, in
 `spoo_exchange` and `pllc_exchange`, as `root_task`'s creates leave
 one, and `request_x` from either receives the message its receiver
 expects (`structures.md`): a `spoo_request` for `scpi_task_create` at
@@ -1223,7 +1254,35 @@ wait or the loopback's, gcc reads the variable once and spins, and
 the case fails, as does storing `interval_tick_wait` after the wait.
 A case may also lay its arguments at the stack's edge, the caller's
 frame unmapped, so that a read past those the image reads faults:
-`float_raise`'s, each with only the operands its cause reads.  A
+`float_raise`'s, each with only the operands its cause reads.  A case
+may start registers its function reads as its caller left them
+(`cpu.h`'s `CPU_CALLERS_REGISTER`) at values it can use, so that one
+read for another shows, and give an SCPI handler's call record another
+input port than the console's: `:DIAGnostic:QUERy:RESPonse?` from
+another port copies the count at A3 of the text at A4 to A2, each a
+buffer of its own, and `os_report_process` and its callers start D5 and
+D6 a kilobyte and more apart.  With `CPU_CALLERS_REGISTER`'s asm
+statement not `volatile`, as before `90b768e`, gcc reads one register
+for two or three and all four fail; they pass with it.
+
+Each case also measures the stack: a write on a stack is its own when
+it lies at or above the stack pointer less 64 bytes, the most one
+instruction pushes (`movem.l` of sixteen registers), so that a pForth
+push on the data stack through A6 is not, and each copy's depth, from
+where its call started the stack, so that gcc's 4-byte argument slots
+do not count, is taken on its own stack and on the supervisor stack a
+task's exceptions take.  A case differs when gcc's goes more than 192
+bytes deeper than the image's, the next 64 bytes above the deepest it
+goes now (`float_raise`'s soft-float frames, 176), or, on a stack with
+a floor, memory of another use below it, more than 16 bytes deeper or
+past a floor the image's stays above.  A console session's floor is the
+pForth data stack's base, `0x70fbc4`, below its 1 KB return stack: the
+image's `mem_rep` leaves 58 bytes of it, gcc's 56, and with
+`libc_doprnt` called, not in line, 4 (and none under gcc 13), which
+fails; a planted 256-byte frame fails anywhere.  The report counts
+the cases deeper than the image's and lists the ten functions that go
+furthest beyond it, each by its deepest case, and the room each console
+session leaves above its floor.  A
 branch to itself, `fatal_error`'s spin, ends a call halted, since no
 interrupt comes but those a case takes;
 and a call still running at its 1000th kernel call, a task's loop,

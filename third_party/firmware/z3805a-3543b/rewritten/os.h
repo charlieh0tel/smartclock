@@ -21,8 +21,10 @@ typedef struct os_registers {
   /* D7 after the call: 0, or the service or I/O function and its error
    * (0x16f26 to 0x16f2c, 0x16f42 to 0x16f46) */
   uint32_t error;
-  /* Z clear after the call, which the image's stubs branch on (bne at
-   * 0x16fda): the call failed, D7 not 0 */
+  /* D7 not 0 after the call, the call failed: Z clear, which the
+   * image's stubs branch on, set from D7 by the binding's own last move
+   * to it (bne at 0x16fda after 0x16f2c's move.w) or by their move of it
+   * to D0 (bne at 0x171ea) */
   bool failed;
 } os_registers;
 
@@ -51,14 +53,13 @@ typedef struct os_registers {
 #define OS_AFTER_OUT(variable, value) (variable)
 #define OS_AFTER_IN_OUT(variable, value) (variable)
 
-/* A shape's outputs, after the flag and D7, and its inputs, after an
- * immediate the template does not use, which opens them, since the
- * shape may leave them empty. */
+/* A shape's outputs, after D7, and its inputs, after an immediate the
+ * template does not use, which opens them, since the shape may leave
+ * them empty. */
 #define OS_OUTPUTS(shape_d0, shape_d1, shape_d2, shape_d3, shape_a0, shape_a1) \
-  [failed] "=&d"(os_failed),                                                   \
-      "+r"(os_d7)OS_OUTPUT_##shape_d0(os_d0) OS_OUTPUT_##shape_d1(os_d1)       \
-          OS_OUTPUT_##shape_d2(os_d2) OS_OUTPUT_##shape_d3(os_d3)              \
-              OS_OUTPUT_##shape_a0(os_a0) OS_OUTPUT_##shape_a1(os_a1)
+  "+r"(os_d7)OS_OUTPUT_##shape_d0(os_d0) OS_OUTPUT_##shape_d1(os_d1)           \
+      OS_OUTPUT_##shape_d2(os_d2) OS_OUTPUT_##shape_d3(os_d3)                  \
+          OS_OUTPUT_##shape_a0(os_a0) OS_OUTPUT_##shape_a1(os_a1)
 #define OS_INPUTS(shape_d0, shape_d1, shape_d2, shape_d3, shape_a0, shape_a1) \
   [unused] "i"(0)OS_INPUT_##shape_d0(os_d0) OS_INPUT_##shape_d1(os_d1)        \
       OS_INPUT_##shape_d2(os_d2) OS_INPUT_##shape_d3(os_d3)                   \
@@ -68,7 +69,11 @@ typedef struct os_registers {
  * primary's or the installer's, with the service or function number in
  * D7 and the registers arguments gives, in one asm statement, so that
  * what it returns stays in the caller's registers as the image's stubs
- * keep it, and Z is read with sne before anything sets it again.  The
+ * keep it, and whether it failed is D7's being not 0, as the stubs
+ * read Z, set from D7 (os_registers.failed): a flag of its own, read
+ * with sne, would take a data register the stubs leave alone, D2 or D3
+ * where the service keeps both, which gcc would then save (psos_create_x
+ * at 0x171d2 saves D2 and D7 alone).  The
  * call loads D0 to D3, A0 and A1 as the service's shape says, its
  * parts d0 to a1, names as changed those the service changes, D7 and
  * the condition codes, and keeps the rest, so that gcc keeps a value
@@ -86,9 +91,8 @@ typedef struct os_registers {
     OS_DECLARE_##shape_a0(void*, os_a0, "a0", os_arguments.a0);           \
     OS_DECLARE_##shape_a1(void*, os_a1, "a1", os_arguments.a1);           \
     register uint32_t os_d7 __asm__("d7") = (number);                     \
-    uint8_t os_failed;                                                    \
                                                                           \
-    __asm__ volatile("jsr " routine "\n\tsne %[failed]"                   \
+    __asm__ volatile("jsr " routine                                       \
                      : OS_OUTPUTS(shape_d0, shape_d1, shape_d2, shape_d3, \
                                   shape_a0, shape_a1)                     \
                      : OS_INPUTS(shape_d0, shape_d1, shape_d2, shape_d3,  \
@@ -101,7 +105,7 @@ typedef struct os_registers {
                    OS_AFTER_##shape_a0(os_a0, os_arguments.a0),           \
                    OS_AFTER_##shape_a1(os_a1, os_arguments.a1),           \
                    os_d7,                                                 \
-                   os_failed != 0};                                       \
+                   os_d7 != 0};                                           \
   })
 
 /* Each service's shape, X(routine, service, D0, D1, D2, D3, A0, A1).

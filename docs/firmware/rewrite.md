@@ -244,12 +244,13 @@ check-scpi-tree`):
 | Check | Result |
 | ----- | ------ |
 | assembly (`check-decompiled`) | 474 routines in 494 pieces, all identical, alone and linked |
-| bindings | 55 of the primary's and 11 of the installer's agree |
+| bindings | 73 of the primary's and 18 of the installer's agree, every `register` routine's |
 | SCPI trees (`check-scpi-tree`) | 2055 and 38 objects identical |
 | function check, primary | 1313 agree, 5 known, 0 failed |
 | function check, installer | 236 agree, 1 skipped, 0 failed |
 | pForth console sessions | 8 of 8 agree |
-| cases, in the agreeing functions | 17,750 of 18,355 compared, the rest skipped |
+| cases, in the agreeing functions | 17,850 of 18,455 compared, the rest skipped |
+| stack headroom | no case deeper than the image's by more than 192 bytes, or 16 above a floor; the console's data stack 56 bytes clear, the image's 58 |
 
 A case is skipped where both copies stop at something the harness does
 not model (an unmapped address, an unanswered service); a function is

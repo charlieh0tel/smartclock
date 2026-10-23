@@ -77,10 +77,15 @@ BINDING = re.compile(r"static inline\s+([^;{}()]*?)\b(\w+)\s*\(([^()]*)\)\s*\{")
 # has registers to keep them in, D0 to D7 and A0 to A5, so that it uses
 # every one the binding's statement leaves it.
 LIVE = 14
-# The check functions' names, their binding's after it, and the array
-# they load their live values from and store them back to.
+# The check functions' names, their binding's after it, the array they
+# load their live values from and the one they store them to, zeroed
+# before each call, so that a store gcc makes through a register the
+# routine changed and the statement does not name, its own pointer to
+# the arrays, is lost too: gcc may keep every live value in its frame,
+# a register the routine changes then holding only that pointer.
 CHECK_PREFIX = "binding_check_"
 LIVE_ARRAY = "binding_check_live"
+KEPT_ARRAY = "binding_check_kept"
 # The live values a call starts with: distinct, and no address mapped
 # memory lies at.
 LIVE_VALUE = 0x6C000000
@@ -137,8 +142,9 @@ def bindings(declared: dict, conventions: dict, image: str | None) -> list[Bindi
 
 def check_functions(declared: dict) -> str:
     """C for each binding's check function: it loads LIVE values, calls
-    the binding with its own arguments and stores the values back."""
-    lines = [f"volatile uint32_t {LIVE_ARRAY}[{LIVE}];"]
+    the binding with its own arguments and stores the values to the
+    kept array."""
+    lines = [f"volatile uint32_t {LIVE_ARRAY}[{LIVE}];", f"volatile uint32_t {KEPT_ARRAY}[{LIVE}];"]
     for name, (result, types) in declared.items():
         parameters = ", ".join(f"{kind} p{i}" for i, kind in enumerate(types)) or "void"
         passed = ", ".join(f"p{i}" for i in range(len(types)))
@@ -146,7 +152,7 @@ def check_functions(declared: dict) -> str:
         lines += [f"  const uint32_t live{i} = {LIVE_ARRAY}[{i}];" for i in range(LIVE)]
         call = f"{name}({passed})"
         lines.append(f"  {call};" if result == "void" else f"  const {result} result = {call};")
-        lines += [f"  {LIVE_ARRAY}[{i}] = live{i};" for i in range(LIVE)]
+        lines += [f"  {KEPT_ARRAY}[{i}] = live{i};" for i in range(LIVE)]
         if result != "void":
             lines.append("  return result;")
         lines.append("}")
@@ -179,7 +185,7 @@ def live_values() -> list[int]:
     return [LIVE_VALUE + LIVE_STRIDE * i for i in range(LIVE)]
 
 
-def check(m: Machine, types: Types, binding: Binding, function: int, address: int, live: int):
+def check(m: Machine, types: Types, binding: Binding, function: int, address: int, live: int, kept_at: int):
     """Yields (description, outcome) for each case: outcome None if the
     binding agrees with its routine, else what differs."""
     for case in range(CASES):
@@ -192,8 +198,9 @@ def check(m: Machine, types: Types, binding: Binding, function: int, address: in
         direct = Run(m, address)
         reset(m, memory)
         m.uc.mem_write(live, b"".join(LONG.pack(v) for v in live_values()))
+        m.uc.mem_write(kept_at, bytes(LONG.size * LIVE))
         bound = Run(m, function, gcc_slots(values))
-        kept = [LONG.unpack(m.read(live + LONG.size * i, LONG.size))[0] for i in range(LIVE)]
+        kept = [LONG.unpack(m.read(kept_at + LONG.size * i, LONG.size))[0] for i in range(LIVE)]
 
         stopped = stopped_outcome(direct, bound, ("direct", "bound"))
         if stopped:
@@ -252,6 +259,7 @@ def main() -> int:
                 linked_symbols[CHECK_PREFIX + binding.name],
                 linked_symbols[binding.name],
                 linked_symbols[LIVE_ARRAY],
+                linked_symbols[KEPT_ARRAY],
             )
             counts[report(binding.name, list(outcomes))] += 1
         label = f"{profile.overlay} " if profile.overlay else ""

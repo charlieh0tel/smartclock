@@ -70,6 +70,8 @@ from unicorn import UC_HOOK_CODE, UcError
 from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_D0, UC_M68K_REG_PC
 
 from harness import (
+    CALL,
+    CALL_INPUT,
     CASES,
     CONDITION_CODES,
     COUNT,
@@ -92,9 +94,12 @@ from harness import (
     RECEIVED,
     SCPI_COMMON_LIST,
     SCPI_MAIN_TREE,
+    STACK_END,
     SUPERVISOR,
     SYSTEM_BYTE,
+    TASK_RECORD_SIZE,
     UNSIGNED,
+    USER_STACK_BASE,
     Known,
     Machine,
     Run,
@@ -103,6 +108,7 @@ from harness import (
     effects_difference,
     fresh_ram,
     gcc_slots,
+    give,
     give_twins,
     header_text,
     image_labels,
@@ -367,12 +373,18 @@ class Pointed:
 # as a Preset's target; the flash's contents, the installer's; and
 # whether its stack arguments end at the stack's edge, the caller's
 # frame unmapped (harness.UNMAPPED_FRAME), so that a read past what the
-# image reads faults.
+# image reads faults; the registers it starts with, by name, a value or
+# one made for the machine, where its routine reads them as its caller
+# left them (harness.RebuiltMachine.starting_registers); and an SCPI
+# handler's call record's input port, made for the machine, in place of
+# the console port's object.
 INTERRUPTS = "interrupts"
 STARTING_STATUS = "status"
 PRESETS = "presets"
 FLASH = "flash"
 STACK_EDGE = "edge"
+CALLERS_REGISTERS = "registers"
+INPUT_PORT = "input port"
 # A supervisor's status register with its interrupts unmasked, as the
 # kernel's I/O functions run for a task, whose mask is 0.
 UNMASKED = 0x2000
@@ -688,7 +700,34 @@ BOOT_RESULTS = {
     "boot_selftest.ram_address_lines": 0x40020,
     "boot_selftest.uart": 0x10,
 }
+# :DIAGnostic:QUERy:RESPonse?'s from a port not the console's, which
+# copies the count at A3 of the text at A4 to A2 as its caller left them
+# (0x2b91a; docs/firmware/quirks.md): another port's object, a buffer
+# the handler only compares; each count, none, part and all of the
+# text, its bytes apart from the copy's fill; and the three registers
+# each a buffer of its own, so that one read for another shows.
+QUERY_ECHO = b"+0,\"No error\"\r\n"
+QUERY_ECHO_COUNTS = (0, 5, len(QUERY_ECHO))
+QUERY_RESPONSE_CASES = [
+    {
+        INPUT_PORT: lambda m: m.buffer(),
+        CALLERS_REGISTERS: {
+            "A2": lambda m: m.buffer(),
+            "A3": lambda m, count=count: m.buffer(bytes([count])),
+            "A4": lambda m: m.buffer(QUERY_ECHO),
+        },
+    }
+    for count in QUERY_ECHO_COUNTS
+]
+# os_report_process's: a zeroed task record, its segments none, with D5
+# and D6 as its caller left them, the stack share it prints for a task
+# whose supervisor stack is in no segment and the memory it adds the
+# task's segments to (0x1632e), a kilobyte and more apart, so that its
+# kB column shows the one read for the other.
+REPORT_REGISTERS = [{"D5": 0x400, "D6": 0x20000}, {"D5": 0x20000, "D6": 0x400}]
+REPORT_CASES = [{0: bytes(TASK_RECORD_SIZE), CALLERS_REGISTERS: registers} for registers in REPORT_REGISTERS]
 HANDLER_CASES = {
+    "scpi_query_DIAGnostic_QUERy_RESPonse": QUERY_RESPONSE_CASES,
     **{
         name: [{0: text_parameter(text)} for text in LANGUAGES]
         for name in ("scpi_set_SYSTem_LANGuage", "installer_scpi_set_SYSTem_LANGuage")
@@ -804,6 +843,11 @@ GIVEN_CASES = {
         {0: text_parameter(record), FLASH: erased_flash} for record in FLASH_RECORDS
     ],
     "scpi_parse_text": [{0: token} for token in TEXT_TOKENS],
+    "os_report_process": REPORT_CASES,
+    **{
+        name: [{CALLERS_REGISTERS: registers} for registers in REPORT_REGISTERS]
+        for name in ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")
+    },
     **{
         reader: [
             {0: bytes(ECHO_LINE), 1: ECHO_LINE, PRESETS: {echo: routine}}
@@ -1150,7 +1194,7 @@ CREATE = 1
 # a reset nor a halt: adc_read (1 -- 1), hdac_all (6 -- 0), then
 # hdac_write (2 -- 0), a value and a channel, after it, so that the
 # DAC's shadow it leaves shows in RAM as well as in the QSPI write's
-# words (harness.qspi_write_bytes), dmes_all (1 -- 0), pr_efc (0 -- 0),
+# transfers (harness.qspi_write_data), dmes_all (1 -- 0), pr_efc (0 -- 0),
 # mem_rep,
 # console_init's own (0 -- 0), and wr_eeprom (2 -- 1), whose write the
 # harness's EEPROM takes; the word list; and halt, after which the
@@ -1192,6 +1236,7 @@ def console_task_run(m: Machine, first: Run, task: int) -> Run:
         m.uc.reg_write(register, STARTING[name])
     starting_status, m.starting_status = m.starting_status, TASK_STATUS
     run = Run(m, task, create.data[COUNT.size :], entry=True)
+    run.floor = pointer_at(m, run.registers["A5"] - USER_STACK_BASE)
     m.starting_status = starting_status
     run.effects = first.effects + run.effects
     return run
@@ -1717,9 +1762,17 @@ def return_from_hook(m: Machine, result: int | None) -> None:
 # the address of "%s" in D5 across its calls (0x16768), which
 # os_report_process prints as a task's stack share.  And what C cannot
 # say: log_erase checksums a pointer's bytes.
+# Only that column of the line, the "%2d%%" after the memory column's
+# "kB " (the format at 0x513b8, printed at 0x1646c), differs: the rest,
+# the memory column that D6 starts (REPORT_REGISTERS) among it, is
+# compared as any effect is.
+SHARE_LINE = (
+    r"trap #4 service 4 (?P<registers>[^,]*)data (?P<head>(?:[0-9a-f]{2})*?6b4220)(?:3[0-9]|2d|20)+"
+    r"(?P<tail>2520(?:[0-9a-f]{2})*)"
+)
 D5_SHARE = Known(
     "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16768)",
-    r"^effect \d+ trap #4 service 4 ",
+    rf"^effect \d+ {SHARE_LINE}, image's trap #4 service 4 (?P=registers)data (?P=head)(?:3[0-9]|2d|20)+(?P=tail)$",
 )
 # And gps_debug_status, which cuts the last comma from its last
 # channel's text by clearing the byte before the text's end (0x49384):
@@ -1985,6 +2038,15 @@ def given(m: Machine, types: Types, kind: str, value: int | float | bytes) -> by
     return (value & ((1 << 8 * size) - 1)).to_bytes(size, "big")
 
 
+def give_input_port(m: Machine, function: Function, values: list[bytes], port: int) -> None:
+    """Gives an SCPI handler's call record, its argument named CALL,
+    port as its input in place of the console port's object, and gcc's
+    copy the same, not the object's twin."""
+    at = struct.unpack(">I", values[function.names.index(CALL)])[0] + CALL_INPUT
+    m.given.pop(at, None)
+    give(m, at, port)
+
+
 def cases(m: Machine, function: Function) -> list[tuple[str, int, dict[int, int | float | bytes]]]:
     """Each case's description, the generated case it starts from and the
     arguments GIVEN_CASES gives it."""
@@ -2001,18 +2063,123 @@ def cases(m: Machine, function: Function) -> list[tuple[str, int, dict[int, int 
     )
 
 
+# The stack's headroom: how much deeper than the image's copy gcc's may
+# write on a stack in a case, its own or the supervisor stack a task's
+# exceptions take (harness.Run.deepest), before the case differs; and
+# how many functions the report lists, the deepest beyond the image's,
+# beside the cases with the least room above a floor (harness.Run.floor).
+# The image's tasks were sized for its own frames, so a deeper copy may
+# overrun a stack whose use the image leaves close to full, as the
+# pForth console's printing did its data stack: 1 KB of return stack,
+# of which the image's mem_rep leaves 58 bytes (docs/firmware/README.md,
+# "Hand-written C").  gcc's frames and saves go deeper than the image's
+# in most cases, at most float_raise's 176 bytes, its soft-float frames;
+# the margin is the next 64 bytes up, so that a frame grown past what
+# gcc's code takes now differs.  Above a floor the image's own room is
+# what the stack was sized to, so gcc's may take only FLOOR_MARGIN more,
+# a few saved registers, and never pass the floor where the image's
+# does not: doprnt called, not in line, leaves 4 bytes of mem_rep's 58
+# under gcc 15 and reached the data stack under gcc 13.
+STACK_MARGIN = 192
+FLOOR_MARGIN = 16
+WORST_STACKS = 10
+
+
+@dataclass(frozen=True)
+class StackDepth:
+    """A case's use of one stack, by the top of its memory: the bytes
+    below where the call started it that gcc's copy and the image's
+    wrote, 0 for a copy that never wrote there; gcc's lowest write; and
+    the floor below the stack, if any, with the image's lowest write."""
+
+    function: str
+    case: str
+    top: int
+    gcc: int
+    image: int
+    lowest: int
+    floor: int | None
+    image_lowest: int
+
+    def deeper(self) -> int:
+        """How many bytes deeper gcc's copy wrote than the image's."""
+        return self.gcc - self.image
+
+
+def stack_depths(name: str, description: str, original: Run, gcc: Run) -> list[StackDepth]:
+    """A case's StackDepth on each stack gcc's copy wrote, its own stack's
+    floor the run's.  Each copy's depth is from where its own call
+    started the stack, so that gcc's arguments, each in a 4-byte slot, do
+    not count as its use."""
+    depths = []
+    for top, lowest in sorted(gcc.deepest.items()):
+        image_lowest = original.deepest.get(top, original.stack_starts[top])
+        depths.append(
+            StackDepth(
+                name,
+                description,
+                top,
+                gcc.stack_starts[top] - lowest,
+                original.stack_starts[top] - image_lowest,
+                lowest,
+                gcc.floor if top == STACK_END else None,
+                image_lowest,
+            )
+        )
+    return depths
+
+
+def stack_difference(depths: list[StackDepth]) -> str | None:
+    """None if gcc's copy kept within STACK_MARGIN of the image's on each
+    stack, FLOOR_MARGIN on one with a floor, and above each floor the
+    image's kept above; else how not."""
+    for depth in depths:
+        if depth.deeper() > (STACK_MARGIN if depth.floor is None else FLOOR_MARGIN):
+            return f"stack {depth.gcc} bytes deep, {depth.deeper()} deeper than the image's, to {depth.lowest:x}"
+        if depth.floor is not None and depth.lowest < depth.floor <= depth.image_lowest:
+            return f"stack to {depth.lowest:x}, below {depth.floor:x}, image's to {depth.image_lowest:x}"
+    return None
+
+
+def print_stacks(label: str, depths: list[StackDepth]) -> None:
+    """The stack's figures: the cases whose gcc copy went deeper than the
+    image's, the deepest case of each of the WORST_STACKS functions
+    deepest beyond the image's, and the least room left above a floor."""
+    deeper = sorted((d for d in depths if d.deeper() > 0), key=lambda d: -d.deeper())
+    print(
+        f"{label}stack deeper than the image's: {len(deeper)} of {len(depths)} cases, "
+        f"margin {STACK_MARGIN} bytes, {FLOOR_MARGIN} above a floor"
+    )
+    worst = {}
+    for depth in deeper:
+        worst.setdefault(depth.function, depth)
+    for depth in list(worst.values())[:WORST_STACKS]:
+        print(
+            f"  {depth.function} {depth.case}: {depth.gcc} bytes, {depth.deeper()} deeper than the image's, "
+            f"of the stack below {depth.top:x}"
+        )
+    floored = sorted((d for d in depths if d.floor is not None), key=lambda d: d.lowest - d.floor)
+    for depth in floored[:WORST_STACKS]:
+        print(
+            f"  {depth.function} {depth.case}: {depth.lowest - depth.floor} bytes above {depth.floor:x}, "
+            f"image's {depth.image_lowest - depth.floor}"
+        )
+
+
 @dataclass
 class Context:
     """What a check finds beyond the function: the link's symbols, each
     Preset target's address and size, the runnable functions, by name,
-    for a Hook's prototype, and the functions that run in a task in user
-    mode, only so and in both modes (task_context)."""
+    for a Hook's prototype, the functions that run in a task in user
+    mode, only so and in both modes (task_context), and each case's
+    StackDepth so far."""
 
     linked_symbols: dict[str, int]
     located: dict[str, tuple[int, int]]
     by_name: dict[str, Function]
     in_task: set[str]
     both_modes: set[str]
+    depths: list[StackDepth]
 
 
 def install_hooks(m: Machine, types: Types, states: States, context: Context, drawn: list[Drawn]) -> list[int]:
@@ -2060,6 +2227,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         m.frame_fill = None
         m.interrupts = []
         m.stack_edge = False
+        m.starting_registers = {}
         if m.flash is not None:
             m.flash.start = m.flash.image
 
@@ -2131,6 +2299,8 @@ def check_cases(
         if m.flash is not None:
             m.flash.start = m.flash.image if flash is None else flash(m.flash.image)
         m.stack_edge = values_given.pop(STACK_EDGE, False)
+        registers = values_given.pop(CALLERS_REGISTERS, {})
+        input_port = values_given.pop(INPUT_PORT, None)
         m.interrupts = [
             (interrupt, context.located[interrupt.watch][0] if isinstance(interrupt.watch, str) else interrupt.watch)
             for interrupt in values_given.pop(INTERRUPTS, ())
@@ -2157,6 +2327,9 @@ def check_cases(
             values[position] = given(m, types, function.parameters[position], case % count)
         for position, value in values_given.items():
             values[position] = given(m, types, function.parameters[position], value)
+        m.starting_registers = {name: value(m) if callable(value) else value for name, value in registers.items()}
+        if input_port is not None:
+            give_input_port(m, function, values, input_port(m))
         memory = snapshot(m)
 
         original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed, session)
@@ -2199,6 +2372,11 @@ def check_cases(
         effects_differ = effects_difference(original, gcc, ("image", "gcc"))
         if effects_differ:
             differences.append(effects_differ)
+        depths = stack_depths(function.name, description, original, gcc)
+        context.depths += depths
+        stack_differs = stack_difference(depths)
+        if stack_differs:
+            differences.append(stack_differs)
         yield description, "; ".join(differences) or None
 
 
@@ -2242,7 +2420,7 @@ def main() -> int:
         runnable, unrunnable = functions(c, types, conventions, profile.overlay)
         in_task, both_modes = task_context(c, conventions, {root_function(machine, located, conventions)})
         by_name = {function.name: function for function in runnable}
-        context = Context(linked_symbols, located, by_name, in_task, both_modes)
+        context = Context(linked_symbols, located, by_name, in_task, both_modes, [])
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         modes = {"user mode alone": 0, "both modes": 0}
         condition_codes_compared = 0
@@ -2275,6 +2453,7 @@ def main() -> int:
         # the pForth console's sessions, console_init's cases apart
         if sessions["run"]:
             print(f"{label}console sessions agreeing: {sessions['agreeing']} of {sessions['run']}")
+        print_stacks(label, context.depths)
     return 0
 
 

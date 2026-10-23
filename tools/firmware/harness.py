@@ -131,6 +131,16 @@ CLEAN_STACK = b"\xa5" * STACK_SIZE
 # The supervisor stack a call started in user mode takes its exceptions
 # on, well below its own stack in the same memory.
 SUPERVISOR_STACK = STACK + STACK_SIZE // 2
+# The stacks a call's writes are measured on, by the top each grows
+# down from: its own, from the stack's end, and in user mode the
+# supervisor stack, from SUPERVISOR_STACK, a write on which has the
+# stack pointer below that (Run.deepest).  A write is a stack's own when it
+# is at or above the stack pointer less the most one instruction pushes
+# below it, movem.l of all sixteen registers; one further down, through
+# another register, is not, such as a pForth word's push on its data
+# stack below its return stack (console.md, "The kernel's registers").
+STACK_END = STACK + STACK_SIZE
+PUSH_REACH = 16 * 4
 # link.w An,#d: its opcode, with the register's bits masked, and its
 # bytes with the displacement.  Each frame it makes starts as
 # CLEAN_STACK, so that a local read before it is written does not read
@@ -254,8 +264,8 @@ class Service:
     its result registers return beside KERNEL_RESULT's, where a caller
     uses it; the registers its code changes beside those, which it
     sets to KERNEL_SCRATCH (os.h, the services' shapes); and whether
-    the bytes it reads are a QSPI write's, by its minor device and
-    count (qspi_write_bytes), not the length's.  An argument read only
+    the bytes it reads are a QSPI write's transfers, by its minor
+    device and count (qspi_write_data), not the length's.  An argument read only
     in part names its width, D1.b for the low byte, and is recorded
     so."""
 
@@ -374,35 +384,63 @@ IO_FUNCTIONS = {
 # configuration"); and that write.  The QSPI's, device 1, the one other
 # device written, sends what qspi_queue_setup (0x20578) queues from the
 # buffer at A0 by the minor device, D0's low byte, which IO_FUNCTIONS'
-# write reads: a 16-bit transmit RAM entry a transfer, whatever bits a
-# transfer the device takes, so many transfers a device
-# (QSPI_TRANSFERS), and for the FPGA's block D2's count, up to the
-# queue's 16 entries; none for a device it does not know.
+# write reads (structures.md, "The QSPI's devices"): a word of the
+# buffer a transmit RAM entry, sent right-justified, its low bits as
+# many as the transfer's width (MC68331UM 6.3.2.2), which is 8 bits, or
+# SPCR0's BITS, 8 to 16, where the entry's command byte sets BITSE
+# (6.3.5.1, Table 6-3; D.4.10, D.4.16), as qspi_queue_setup sets each
+# up; so many transfers a device (QSPI_WIDTHS), for the FPGA's block
+# D2's count of 16-bit ones, up to the queue's 16 entries, and for its
+# readback one of D2's count of bits, 8 to 16; none for a device it
+# does not know.  A write is recorded by its transfers, each its width's
+# bits in the fewest bytes that hold them, so that the bits a transfer
+# does not send are not compared.  Device 4's queue ends at entry 1,
+# which it does not load (docs/firmware/quirks.md), so only its first
+# transfer is the buffer's.
 DEVICE_SHIFT = 8
 DEVICE_MASK = 0xFF
 QSPI_MINOR_MASK = 0xFF
-QSPI_TRANSFERS = {
-    0: 3,  # QSPI_UNUSED_36_BIT
-    1: 1,  # QSPI_ADC
-    2: 3,  # QSPI_HDAC
-    4: 1,  # QSPI_UNUSED_WORD
-    5: 2,  # QSPI_UNUSED_TWO_WORDS
-    7: 1,  # QSPI_EFC
-    9: 2,  # QSPI_FPGA_TAIL
-    0xA: 1,  # QSPI_FPGA_WORD
-    0xB: 1,  # QSPI_FPGA_BYTE
-    0xC: 1,  # QSPI_FPGA_READBACK
+QSPI_WIDEST = 16
+QSPI_NARROWEST = 8
+QSPI_WIDTHS = {
+    0: (12,) * 3,  # QSPI_UNUSED_36_BIT
+    1: (16,),  # QSPI_ADC
+    2: (12,) * 3,  # QSPI_HDAC
+    4: (16,),  # QSPI_UNUSED_WORD
+    5: (16,) * 2,  # QSPI_UNUSED_TWO_WORDS
+    7: (16,),  # QSPI_EFC
+    9: (16,) * 2,  # QSPI_FPGA_TAIL
+    0xA: (16,),  # QSPI_FPGA_WORD
+    0xB: (8,),  # QSPI_FPGA_BYTE
 }
 QSPI_FPGA_BLOCK = 6
+QSPI_FPGA_READBACK = 0xC
 QSPI_QUEUE_ENTRIES = 16
 QSPI_ENTRY = struct.Struct(">H")
+BITS_PER_BYTE = 8
 
 
-def qspi_write_bytes(minor: int, count: int) -> int:
-    """The bytes of its buffer a QSPI write to a minor device sends."""
+def qspi_widths(minor: int, count: int) -> tuple[int, ...]:
+    """The width in bits of each transfer a QSPI write to a minor device
+    of a count makes, in order."""
+    count &= WIDTHS[".w"]
     if minor == QSPI_FPGA_BLOCK:
-        return QSPI_ENTRY.size * min(count & WIDTHS[".w"], QSPI_QUEUE_ENTRIES)
-    return QSPI_ENTRY.size * QSPI_TRANSFERS.get(minor, 0)
+        return (QSPI_WIDEST,) * min(count, QSPI_QUEUE_ENTRIES)
+    if minor == QSPI_FPGA_READBACK:
+        return (min(max(count, QSPI_NARROWEST), QSPI_WIDEST),)
+    return QSPI_WIDTHS.get(minor, ())
+
+
+def qspi_write_data(uc: Uc, minor: int, count: int, buffer: int) -> bytes:
+    """A QSPI write's transfers from its buffer, each the low bits of its
+    word its width sends, in the fewest bytes that hold them."""
+    data = b""
+    for index, width in enumerate(qspi_widths(minor, count)):
+        (word,) = QSPI_ENTRY.unpack(uc.mem_read(buffer + QSPI_ENTRY.size * index, QSPI_ENTRY.size))
+        data += (word & (1 << width) - 1).to_bytes(-(-width // BITS_PER_BYTE), "big")
+    return data
+
+
 STRING_DEVICES = {0, 2, 3}
 STRING_WRITE = Service(("D0",), text=("A0", "D2"), changes=("D0", "D1", "A1"))
 # A pForth console session (RebuiltMachine.console_input) models the two
@@ -604,8 +642,8 @@ class ConsoleLine:
 
 
 # The devices' chip selects and the MC68331's own modules, whose
-# registers the firmware reads and writes (docs/firmware/README.md and
-# restart.md, "The switch byte at 0x302000"), the QSPI's RAM and the
+# registers the firmware reads and writes (docs/firmware/restart.md,
+# "The chip selects" and "The switch byte at 0x302000"), the QSPI's RAM and the
 # FPGA's ports behind it among them: each mapped, page by page, as
 # memory zeroed at a call's start, so that a read finds zero or what the
 # call last wrote there, but for the registers modeled below; and each
@@ -616,7 +654,9 @@ DEVICES = [
     (0x200000, 0x1000),  # the DUART
     (0x300000, 0x10000),  # the latch, the switch byte and the registers at 0x304000 and 0x306000
     (0x500000, 0x1000),
-    (0xFFF000, 0x1000),  # the GPT, SIM and QSM, and the chip select at 0xfff800
+    # the GPT, SIM and QSM; 0xfff800 is no memory select, CS10 matching
+    # CPU space, the DUART's interrupt acknowledge at level 2
+    (0xFFF000, 0x1000),
 ]
 
 
@@ -727,8 +767,10 @@ class Flash:
     "Erase and download"): two pairs of AM29F010s, 128 KB each, at 0 and
     PAIR_SIZE, a pair's parts the high and low bytes of each word, and
     so a part's address the bus's offset in its pair halved.  Writes
-    reach it through chip select 6, write only over the boot ROM's range
-    (CSBAR6 0x0006, CSOR6 0x7070; docs/firmware/README.md).  Each part
+    reach it through chip selects 6 and 7, write only, CS6 over the
+    lower bank, the boot ROM's range (CSBAR 0x0005), and CS7 over the
+    upper (CSBAR 0x0405), both CSOR 0x7070 (docs/firmware/restart.md,
+    "The chip selects").  Each part
     is a command state machine, as AMD's Am29F010B data sheet gives it
     (third_party/amd/Am29F010B.pdf): two unlock cycles, 0xaa at 0x5555 and 0x55 at
     0x2aaa, then the command at 0x5555: program, 0xa0, the next write
@@ -1599,6 +1641,11 @@ class RebuiltMachine(Machine):
         # (Interrupt); and whether its arguments end at the stack's edge
         self.interrupts: list[tuple[Interrupt, int]] = []
         self.stack_edge = False
+        # the registers a call starts with in place of STARTING's, by
+        # name: those a routine reads as its caller left them, given
+        # values it can use, so that reading one register for another
+        # shows (CPU_CALLERS_REGISTER in the C's cpu.h)
+        self.starting_registers: dict[str, int] = {}
         # what each page of the pointees holds at a call's start
         self.pointees = b""
         # RAM as the profile has it but the kernel's tables, its data area
@@ -2335,7 +2382,7 @@ def reset(m: RebuiltMachine, memory: dict[int, bytes]) -> None:
         m.stray_write = False
     m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
     for name, register in REGISTERS.items():
-        m.uc.reg_write(register, STARTING[name])
+        m.uc.reg_write(register, m.starting_registers.get(name, STARTING[name]))
 
 
 def system_status(uc: Uc) -> int:
@@ -2568,12 +2615,13 @@ def answer_kernel(m: RebuiltMachine, vector: int, sr: int) -> KernelCall | Conso
         if service.reads:
             pointer, length = service.reads
             size = MESSAGE_SIZE if length is None else uc.reg_read(REGISTERS[length])
-            if service.qspi_transfers:
-                size = qspi_write_bytes(uc.reg_read(UC_M68K_REG_D0) & QSPI_MINOR_MASK, size)
-            if size > LONGEST_BUFFER:
-                return out_of_reach
             start = uc.reg_read(REGISTERS[pointer]) + (MESSAGE_OFFSET if length is None else 0)
-            data = bytes(uc.mem_read(start, size))
+            if service.qspi_transfers:
+                data = qspi_write_data(uc, uc.reg_read(UC_M68K_REG_D0) & QSPI_MINOR_MASK, size, start)
+            elif size > LONGEST_BUFFER:
+                return out_of_reach
+            else:
+                data = bytes(uc.mem_read(start, size))
             if length is None:
                 # a message's longs, a routine spoo_run sends among them
                 longs = struct.unpack(f">{MESSAGE_LONGS}I", data)
@@ -2780,7 +2828,20 @@ class Run:
                 ended.append(COUNTED)
                 uc.emu_stop()
 
-        def clean_frame(uc, access, address, size, value, _):
+        # the lowest address the call has written on each stack, by the
+        # top of its memory, STACK_END or SUPERVISOR_STACK
+        deepest: dict[int, int] = {}
+
+        def stack_write(uc, access, address, size, value, _):
+            # the stack pointer before the writing instruction's own
+            # decrement, which the write lies below
+            sp = uc.reg_read(UC_M68K_REG_A7)
+            if address >= sp - PUSH_REACH:
+                top = STACK_END if sp >= SUPERVISOR_STACK else SUPERVISOR_STACK
+                deepest[top] = min(deepest.get(top, address), address)
+            clean_frame(uc, address)
+
+        def clean_frame(uc, address):
             # at link's push of the frame pointer, the frame below it
             opcode, displacement = LINK_INSTRUCTION.unpack(
                 uc.mem_read(uc.reg_read(UC_M68K_REG_PC), LINK_INSTRUCTION.size)
@@ -2812,10 +2873,13 @@ class Run:
             m.uc.reg_write(UC_M68K_REG_A7, SUPERVISOR_STACK)
         m.uc.reg_write(UC_M68K_REG_SR, m.starting_status)
         m.uc.reg_write(UC_M68K_REG_A7, sp)
+        # where each stack starts, which a case's arguments, gcc's slots
+        # or the original's layout, move
+        self.stack_starts = {STACK_END: sp, SUPERVISOR_STACK: SUPERVISOR_STACK}
         hooks = [
             m.uc.hook_add(UC_HOOK_INTR, trap),
             m.uc.hook_add(UC_HOOK_MEM_INVALID, fault),
-            m.uc.hook_add(UC_HOOK_MEM_WRITE, clean_frame, begin=STACK, end=STACK + STACK_SIZE - 1),
+            m.uc.hook_add(UC_HOOK_MEM_WRITE, stack_write, begin=STACK, end=STACK_END - 1),
         ]
         for index, (interrupt, at) in enumerate(interrupts):
             kind = UC_HOOK_MEM_WRITE if interrupt.write else UC_HOOK_MEM_READ
@@ -2868,6 +2932,11 @@ class Run:
                 self.stopped = f"no return in {STEP_LIMIT} steps"
         self.ended = ended[0] if ended else None
         self.registers = {name: m.uc.reg_read(register) for name, register in REGISTERS.items()}
+        self.deepest = deepest
+        # the lowest address the call's own stack may reach, above
+        # memory another use has, where one is known: a pForth console
+        # session's data stack, below its return stack (console_task_run)
+        self.floor: int | None = None
         self.status = m.status()
         self.memory = snapshot(m)
         self.compared = {name: m.read(start, size) for name, (start, size) in COMPARED.items()}

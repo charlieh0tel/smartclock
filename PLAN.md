@@ -1825,6 +1825,34 @@ view cannot drift apart.  The library, bottom up:
   `dev` keeps the second bug, and so the stopped-run workaround, is
   untested.
 
+  Done 2026-10-23, the harness's checks of what the gcc 13 sweep
+  found: cases start the registers a function reads as its caller left
+  them (`CPU_CALLERS_REGISTER`), so that `:DIAGnostic:QUERy:RESPonse?`
+  from another port and `os_report_process` and its callers fail with
+  the asm statement not `volatile` and pass with it; the callers'
+  `KNOWN` pattern takes only the stack-share column, so that the D6
+  column is compared.  Decided: the stack's headroom is a difference,
+  not a figure alone: a case differs where gcc's copy goes more than
+  192 bytes deeper than the image's on a stack (176 the deepest now,
+  `float_raise`), or more than 16 bytes, or past the floor, where
+  another use's memory lies below (a console session's data stack); a
+  figure alone would let `libc_doprnt`'s stack, 54 bytes deeper and 4
+  above the data stack under gcc 15, pass unremarked, as it did until
+  gcc 13 crossed it.  What cannot be told so: a task whose image use
+  is near full elsewhere, whose stack the harness does not model.
+  Every `register` routine has a binding, the 25 no C calls in
+  `kernel.h`, `drtb.h`, `string_device.h`, `qspi.h`, `stack.h`,
+  `clock_record.h` and `scpi_decimal.h`, 91 checked, the check
+  function's live values stored to an array of their own, which caught
+  a planted clobber the old one missed; six of other conventions have
+  none (docs/firmware/README.md).  The pSOS binding's `failed` is D7
+  not 0, as the stubs' Z is, not an `sne` whose register, D2, D3 or D4,
+  gcc saved: 15 of 16 stubs now save what the image's do, and the
+  binding has no `Scc` left to plant wrong.  A QSPI
+  write is recorded transfer by transfer at its width, BITSE and
+  SPCR0's BITS (MC68331UM 6.3.5.1), so that unsent bits are not
+  compared.  Counts unchanged.
+
   Decided 2026-10-22: the pForth kernel's 154 words (183 routines in all) stay the
   image's assembly, exact by construction (check-decompiled proves the
   bytes); the C diagnostic words are tested further by pForth console

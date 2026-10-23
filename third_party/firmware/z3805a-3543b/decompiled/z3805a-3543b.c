@@ -11557,9 +11557,15 @@ int32_t installer_vsprintf(char *s,char *format,void *arg);
 
 #include "../rewritten/bindings/clock_record.h"
 
+#include "../rewritten/bindings/drtb.h"
+
+#include "../rewritten/bindings/kernel.h"
+
 #include "../rewritten/bindings/mutex.h"
 
 #include "../rewritten/bindings/pforth.h"
+
+#include "../rewritten/bindings/qspi.h"
 
 #include "../rewritten/bindings/sci_token.h"
 
@@ -11568,6 +11574,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg);
 #include "../rewritten/bindings/softfloat.h"
 
 #include "../rewritten/bindings/stack.h"
+
+#include "../rewritten/bindings/string_device.h"
 
 /* 00000400 */
 #if 0 /* the decompiler's reading; rewritten in boot.c */
@@ -16027,7 +16035,7 @@ __asm__(
 	"	.size stack_fill, .-stack_fill\n"
 	"	.popsection\n"
 );
-/* stack_fill takes its arguments in registers: no binding, so C cannot call it */
+/* stack_fill takes its arguments in registers: bindings/stack.h binds it */
 
 /* 000132b8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -16079,7 +16087,7 @@ __asm__(
 	"	.size region_find_segment, .-region_find_segment\n"
 	"	.popsection\n"
 );
-/* region_find_segment takes its arguments in registers: no binding, so C cannot call it */
+/* region_find_segment takes its arguments in registers: bindings/stack.h binds it */
 
 /* 000132da */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -17159,7 +17167,7 @@ __asm__(
 	"	.size clock_record_store, .-clock_record_store\n"
 	"	.popsection\n"
 );
-/* clock_record_store takes its arguments in registers: no binding, so C cannot call it */
+/* clock_record_store takes its arguments in registers: bindings/clock_record.h binds it */
 
 /* 00013882 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -21340,7 +21348,7 @@ __asm__(
 	"	.size kernel_service_none, .-kernel_service_none\n"
 	"	.popsection\n"
 );
-/* kernel_service_none takes its arguments in registers: no binding, so C cannot call it */
+/* kernel_service_none takes its arguments in registers: bindings/kernel.h binds it */
 
 /* 0001537e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -23772,7 +23780,7 @@ __asm__(
 	"	.size kernel_check_task, .-kernel_check_task\n"
 	"	.popsection\n"
 );
-/* kernel_check_task takes its arguments in registers: no binding, so C cannot call it */
+/* kernel_check_task takes its arguments in registers: bindings/kernel.h binds it */
 
 /* 00015b6c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -23819,7 +23827,7 @@ __asm__(
 	"	.size kernel_check_exchange, .-kernel_check_exchange\n"
 	"	.popsection\n"
 );
-/* kernel_check_exchange takes its arguments in registers: no binding, so C cannot call it */
+/* kernel_check_exchange takes its arguments in registers: bindings/kernel.h binds it */
 
 /* 00015b96 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -23854,7 +23862,7 @@ __asm__(
 	"	.size kernel_check_segment, .-kernel_check_segment\n"
 	"	.popsection\n"
 );
-/* kernel_check_segment takes its arguments in registers: no binding, so C cannot call it */
+/* kernel_check_segment takes its arguments in registers: bindings/kernel.h binds it */
 
 /* 00015baa */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -26216,7 +26224,7 @@ __asm__(
 	"	.size tick_account, .-tick_account\n"
 	"	.popsection\n"
 );
-/* tick_account takes its arguments in registers: no binding, so C cannot call it */
+/* tick_account takes its arguments in registers: bindings/kernel.h binds it */
 
 /* 00016ee6 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -37831,7 +37839,7 @@ __asm__(
 	"	.size string_device_open, .-string_device_open\n"
 	"	.popsection\n"
 );
-/* string_device_open takes its arguments in registers: no binding, so C cannot call it */
+/* string_device_open takes its arguments in registers: bindings/string_device.h binds it */
 
 /* 0001af84 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -37861,7 +37869,7 @@ __asm__(
 	"	.size string_device_init, .-string_device_init\n"
 	"	.popsection\n"
 );
-/* string_device_init takes its arguments in registers: no binding, so C cannot call it */
+/* string_device_init takes its arguments in registers: bindings/string_device.h binds it */
 
 /* 0001af8e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -37892,7 +37900,7 @@ __asm__(
 	"	.size string_device_control, .-string_device_control\n"
 	"	.popsection\n"
 );
-/* string_device_control takes its arguments in registers: no binding, so C cannot call it */
+/* string_device_control takes its arguments in registers: bindings/string_device.h binds it */
 
 /* 0001af98 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -40390,7 +40398,7 @@ __asm__(
 	"	.size drtb_unlock, .-drtb_unlock\n"
 	"	.popsection\n"
 );
-/* drtb_unlock takes its arguments in registers: no binding, so C cannot call it */
+/* drtb_unlock takes its arguments in registers: bindings/drtb.h binds it */
 
 /* 0001d922 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -40430,7 +40438,7 @@ __asm__(
 	"	.size drtb_lock, .-drtb_lock\n"
 	"	.popsection\n"
 );
-/* drtb_lock takes its arguments in registers: no binding, so C cannot call it */
+/* drtb_lock takes its arguments in registers: bindings/drtb.h binds it */
 
 /* 0001d93e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -44467,7 +44475,7 @@ __asm__(
 	"	.size qspi_control, .-qspi_control\n"
 	"	.popsection\n"
 );
-/* qspi_control takes its arguments in registers: no binding, so C cannot call it */
+/* qspi_control takes its arguments in registers: bindings/qspi.h binds it */
 
 /* 000208fe */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -44495,7 +44503,7 @@ __asm__(
 	"	.size qspi_open, .-qspi_open\n"
 	"	.popsection\n"
 );
-/* qspi_open takes its arguments in registers: no binding, so C cannot call it */
+/* qspi_open takes its arguments in registers: bindings/qspi.h binds it */
 
 /* 00020902 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -44730,7 +44738,7 @@ __asm__(
 	"	.size qspi_transfer_raw, .-qspi_transfer_raw\n"
 	"	.popsection\n"
 );
-/* qspi_transfer_raw takes its arguments in registers: no binding, so C cannot call it */
+/* qspi_transfer_raw takes its arguments in registers: bindings/qspi.h binds it */
 
 /* 00020ab0 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -44771,7 +44779,7 @@ __asm__(
 	"	.size qspi_device_write, .-qspi_device_write\n"
 	"	.popsection\n"
 );
-/* qspi_device_write takes its arguments in registers: no binding, so C cannot call it */
+/* qspi_device_write takes its arguments in registers: bindings/qspi.h binds it */
 
 /* 00020acc */
 #if 0 /* the decompiler's reading; rewritten in qspi.c */
@@ -46755,7 +46763,7 @@ __asm__(
 	"	.size scpi_decimal_to_text_unused, .-scpi_decimal_to_text_unused\n"
 	"	.popsection\n"
 );
-/* scpi_decimal_to_text_unused takes its arguments in registers: no binding, so C cannot call it */
+/* scpi_decimal_to_text_unused takes its arguments in registers: bindings/scpi_decimal.h binds it */
 
 /* 00024e18 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -89777,7 +89785,7 @@ __asm__(
 	"	.size installer_region_find_segment, .-installer_region_find_segment\n"
 	"	.popsection\n"
 );
-/* installer_region_find_segment takes its arguments in registers: no binding, so C cannot call it */
+/* installer_region_find_segment takes its arguments in registers: bindings/stack.h binds it */
 
 /* installer::00100e64 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -92651,7 +92659,7 @@ __asm__(
 	"	.size installer_kernel_service_none, .-installer_kernel_service_none\n"
 	"	.popsection\n"
 );
-/* installer_kernel_service_none takes its arguments in registers: no binding, so C cannot call it */
+/* installer_kernel_service_none takes its arguments in registers: bindings/kernel.h binds it */
 
 /* installer::00101d84 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -95071,7 +95079,7 @@ __asm__(
 	"	.size installer_kernel_check_task, .-installer_kernel_check_task\n"
 	"	.popsection\n"
 );
-/* installer_kernel_check_task takes its arguments in registers: no binding, so C cannot call it */
+/* installer_kernel_check_task takes its arguments in registers: bindings/kernel.h binds it */
 
 /* installer::00102572 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -95118,7 +95126,7 @@ __asm__(
 	"	.size installer_kernel_check_exchange, .-installer_kernel_check_exchange\n"
 	"	.popsection\n"
 );
-/* installer_kernel_check_exchange takes its arguments in registers: no binding, so C cannot call it */
+/* installer_kernel_check_exchange takes its arguments in registers: bindings/kernel.h binds it */
 
 /* installer::0010259c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -95153,7 +95161,7 @@ __asm__(
 	"	.size installer_kernel_check_segment, .-installer_kernel_check_segment\n"
 	"	.popsection\n"
 );
-/* installer_kernel_check_segment takes its arguments in registers: no binding, so C cannot call it */
+/* installer_kernel_check_segment takes its arguments in registers: bindings/kernel.h binds it */
 
 /* installer::001025b0 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -97853,7 +97861,7 @@ __asm__(
 	"	.size installer_drtb_unlock, .-installer_drtb_unlock\n"
 	"	.popsection\n"
 );
-/* installer_drtb_unlock takes its arguments in registers: no binding, so C cannot call it */
+/* installer_drtb_unlock takes its arguments in registers: bindings/drtb.h binds it */
 
 /* installer::00103394 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -97893,7 +97901,7 @@ __asm__(
 	"	.size installer_drtb_lock, .-installer_drtb_lock\n"
 	"	.popsection\n"
 );
-/* installer_drtb_lock takes its arguments in registers: no binding, so C cannot call it */
+/* installer_drtb_lock takes its arguments in registers: bindings/drtb.h binds it */
 
 /* installer::00103868 */
 #if 0 /* the decompiler's reading; rewritten in installer_duartb.c */

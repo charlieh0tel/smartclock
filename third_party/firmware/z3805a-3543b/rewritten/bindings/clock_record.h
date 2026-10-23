@@ -64,3 +64,25 @@ __attribute__((always_inline)) static inline void clock_set_leap_year(
                    : "r"(a0)
                    : "cc", "memory");
 }
+
+/* Checks a date, D0, and a time, D1, and stores them in the record,
+ * marking it set for a mark, D2, not 0; 0 in D7's low byte, or 2 for a
+ * bad time, 1 for a bad date (0x1380c): changes D1, which it masks to
+ * 24 bits, D6, D7 and A0, which it points at the record's days of
+ * February for clock_set_leap_year.  No C calls it: set_timedate's and
+ * set_timedate_unflagged's assembly does (0x137f6, 0x137c2). */
+__attribute__((always_inline)) static inline void clock_record_store(
+    clock_record* record, int32_t date, int32_t time, int32_t mark) {
+  register int32_t d0 __asm__("d0") = date;
+  register int32_t d1 __asm__("d1") = time;
+  register int32_t d2 __asm__("d2") = mark;
+
+  __asm__ volatile(
+      "move.l %%a6,-(%%sp)\n\t"
+      "movea.l %[record],%%a6\n\t"
+      "jsr clock_record_store\n\t"
+      "movea.l (%%sp)+,%%a6"
+      : "+r"(d1)
+      : [record] "a"(record), "r"(d0), "r"(d2)
+      : "d6", "d7", "a0", "cc", "memory");
+}

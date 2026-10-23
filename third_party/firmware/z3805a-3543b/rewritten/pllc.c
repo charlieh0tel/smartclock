@@ -280,7 +280,7 @@ uint32_t pll_scpi_send_to_loop(gps_request_sender sender, uint8_t* status) {
   request.field_04 = 0;
   request.code = code;
   request.argument_mode = GPS_ARGUMENTS_SET;
-  request.result = 1;
+  request.result = GPS_RESULT_REJECT;
   request.sender = sender;
   /* gps_request_entry's arguments are longs the export declares
    * unsigned. */

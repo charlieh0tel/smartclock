@@ -14,13 +14,24 @@ static const uint8_t RECORDS_ERASED = 0xff;
  * store, and the firmware revision the NV register's must match. */
 static const char RECORDS_TAG[] = "S";
 
+/* log.c's results that the :LOG setters tell apart: the log full
+ * (log_append), a page write failed, the low byte of
+ * LOG_PAGE_WRITE_FAILED, which log_erase has already reported, and a
+ * count not the log's (log_erase_checked). */
+static const int16_t RECORDS_LOG_FULL = 0xfc;
+
+static const int16_t RECORDS_LOG_WRITE_FAILED = 0xfe;
+
+static const int16_t RECORDS_LOG_COUNT_DIFFERS = 0xff;
+
+/* The identification record's default suffix. */
+static const char RECORDS_DEFAULT_SUFFIX = 'A';
+
 /* A date's and a time's fields, a byte each (docs/firmware/structures.md,
  * "A date and time"). */
 static const uint8_t RECORDS_FIELD_BITS = 8;
 
 static const uint32_t RECORDS_FIELD_MASK = 0xffu;
-
-static const uint8_t RECORDS_LONG_BITS = 32;
 
 /* The sum of so many bytes, as every record checksum takes it. */
 static uint8_t records_byte_sum(const uint8_t* bytes, uint32_t count) {
@@ -47,7 +58,7 @@ static uint32_t records_sign_extend_bits(uint32_t value, uint8_t width) {
   if (width == 16) {
     return (uint32_t)(int16_t)value;
   }
-  if (width == 0 || width >= RECORDS_LONG_BITS) {
+  if (width == 0 || width >= CPU_LONG_BITS) {
     return value;
   }
   if (value & (uint32_t)1 << (width - 1)) {

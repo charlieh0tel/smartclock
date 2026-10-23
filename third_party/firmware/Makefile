@@ -20,6 +20,7 @@ SHELL = /bin/bash
 .SHELLFLAGS = -o pipefail -c
 
 CARGO ?= cargo
+CLANG ?= clang
 CLANG_FORMAT ?= clang-format
 M68K_CC ?= m68k-linux-gnu-gcc
 
@@ -30,7 +31,8 @@ IMAGES = $(patsubst $(FIRMWARE)/%/names.tsv,%,$(wildcard $(FIRMWARE)/*/names.tsv
 DOCUMENTED_IMAGE = z3805a-3543b
 
 # The targets run for each image.
-IMAGE_TARGETS = check-types check-decompiled report-decompiled scpi-tree check-scpi-tree handlers
+IMAGE_TARGETS = check-types check-decompiled report-decompiled scpi-tree check-scpi-tree handlers \
+	check-magic-numbers magic-numbers
 # The rest, run once.
 TARGETS = format-c check-format-c check-module-figures module-figures check-pforth-words \
 	pforth-words check-report-figures report-figures check-unicorn \
@@ -190,6 +192,21 @@ check-scpi-tree:
 		$(SCPI_TREE_C) $(SCPI_TREE_NAMES) $(NAMES) $(CONVENTIONS) $(IMAGE_BIN)
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" python3 $(ROOT)/tools/firmware/scpi_tree_check.py \
 		$(INSTALLER_SCPI_TREE_C) $(INSTALLER_SCPI_TREE_NAMES) $(NAMES) $(CONVENTIONS) $(IMAGE_BIN)
+
+# The magic numbers in the image's hand-written C, as clang parses it
+# within the export (tools/firmware/magic_check.py): a literal where an
+# enumerator, a register header's bit or a named constant is, and a
+# constant defined twice.  check-magic-numbers fails on a finding of a
+# checked kind that the image's magic-allow.tsv does not justify, or on
+# a row there no finding matches; magic-numbers prints every finding,
+# the unchecked kinds too.
+MAGIC_NUMBERS = CLANG="$(CLANG)" DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" \
+	python3 -I $(ROOT)/tools/firmware/magic_check.py --image $(IMAGE)
+check-magic-numbers:
+	$(MAGIC_NUMBERS) --check
+
+magic-numbers:
+	$(MAGIC_NUMBERS)
 
 # Each SCPI path of the image with its query handler's and setter's
 # addresses, for SmartClockSetup.java's scpi= (docs/firmware/README.md,

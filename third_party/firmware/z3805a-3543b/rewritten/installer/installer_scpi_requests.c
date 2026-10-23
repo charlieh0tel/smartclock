@@ -17,10 +17,6 @@ void installer_send_x_retry(uint32_t exchange, void* message, uint32_t ticks) {
  * stale one first (installer::0x107736).  get_v's 1 and wait_v's 0s are
  * as the image passes them. */
 void installer_request_and_wait(uint32_t exchange, void* message) {
-  /* The ticks installer_send_x_retry pauses between tries; pllc.h's
-   * PLLC_DONE_EVENT the event waited for (installer::0x107746,
-   * installer::0x107768). */
-  static const uint32_t PLLC_RETRY_TICKS = 5;
   uint32_t events = 0;
 
   installer_psos_get_v(PLLC_DONE_EVENT, 1, &events);

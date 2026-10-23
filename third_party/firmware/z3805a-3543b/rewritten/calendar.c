@@ -179,9 +179,8 @@ uint32_t oncore_date_pack(oncore_date_fields fields) {
 /* Seconds as a time of day, the hours not wrapped past 24 but kept to a
  * byte (0x11186). */
 uint32_t seconds_to_hms(uint32_t seconds) {
-  static const uint16_t SECONDS_PER_HOUR = 60 * 60;
-  uint8_t hour = seconds / SECONDS_PER_HOUR;
-  uint32_t rest = seconds % SECONDS_PER_HOUR;
+  uint8_t hour = seconds / CLOCK_SECONDS_PER_HOUR;
+  uint32_t rest = seconds % CLOCK_SECONDS_PER_HOUR;
 
   return clock_pack(hour, rest / CLOCK_SECONDS_PER_MINUTE,
                     rest % CLOCK_SECONDS_PER_MINUTE);

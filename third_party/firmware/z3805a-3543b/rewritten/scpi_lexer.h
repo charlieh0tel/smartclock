@@ -13,6 +13,9 @@ enum {
   SCPI_RADIX_BINARY = 'B',
 };
 
+/* A letter's bits less its lower case's, which the lexer clears. */
+static const uint8_t SCPI_LEXER_UPPER_CASE = 0xdf;
+
 /* A lexer's failure on a character: its port error, or else the
  * error given, the character given back. */
 static int32_t scpi_engine_reject(const scpi_char_class* classes,
@@ -30,7 +33,6 @@ static int32_t scpi_engine_reject(const scpi_char_class* classes,
 static int32_t scpi_engine_scan_keyword(const scpi_char_class* classes,
                                         scpi_port* input, scpi_keyword* keyword,
                                         int16_t first) {
-  static const uint8_t UPPER_CASE = 0xdf;
   /* A keyword's most characters. */
   static const int16_t KEYWORD_MOST = 16;
   int16_t count = 0;
@@ -38,8 +40,9 @@ static int32_t scpi_engine_scan_keyword(const scpi_char_class* classes,
   scpi_char_class class = SCPI_CLASS_LETTER;
 
   for (;;) {
-    keyword->text[count++] =
-        class == SCPI_CLASS_LETTER ? character & UPPER_CASE : character;
+    keyword->text[count++] = class == SCPI_CLASS_LETTER
+                                 ? character & SCPI_LEXER_UPPER_CASE
+                                 : character;
     character = scpi_engine_read(input);
     class = scpi_engine_class(classes, character);
     /* Signed, as the image compares it (0x26fc0): a byte before the
@@ -93,12 +96,10 @@ static int32_t scpi_engine_scan_block(const scpi_char_class* classes,
 static int32_t scpi_engine_scan_radix(const scpi_char_class* classes,
                                       scpi_port* input, scpi_token* token,
                                       int16_t base, int16_t bits) {
-  static const uint8_t UPPER_CASE = 0xdf;
-  static const int16_t LONG_BITS = 32;
   /* The value of a letter digit in upper case, 'A' as 10. */
   static const int16_t LETTER_DIGIT_BIAS = 'A' - 10;
   /* The value's top digit, which must be clear for another. */
-  uint32_t top = (uint32_t)(base - 1) << (LONG_BITS - bits);
+  uint32_t top = (uint32_t)(base - 1) << (CPU_LONG_BITS - bits);
   uint32_t value = 0;
   bool first = true;
   bool fits = true;
@@ -109,7 +110,7 @@ static int32_t scpi_engine_scan_radix(const scpi_char_class* classes,
     int16_t digit;
 
     if (class == SCPI_CLASS_LETTER) {
-      digit = (character & UPPER_CASE) - LETTER_DIGIT_BIAS;
+      digit = (character & SCPI_LEXER_UPPER_CASE) - LETTER_DIGIT_BIAS;
     } else if (class == SCPI_CLASS_DIGIT) {
       digit = character - '0';
     } else if (first) {
@@ -143,22 +144,18 @@ static int32_t scpi_engine_scan_radix(const scpi_char_class* classes,
  * radix letter (0x27064). */
 static int32_t scpi_engine_scan_hash(const scpi_char_class* classes,
                                      scpi_port* input, scpi_token* token) {
-  static const uint8_t UPPER_CASE = 0xdf;
-  static const int16_t HEXADECIMAL = 16;
-  static const int16_t OCTAL = 8;
-  static const int16_t BINARY = 2;
   int16_t character = scpi_engine_read(input);
 
   if (scpi_engine_class(classes, character) == SCPI_CLASS_DIGIT) {
     return scpi_engine_scan_block(classes, input, &token->block, character);
   }
-  switch (character & UPPER_CASE) {
+  switch (character & SCPI_LEXER_UPPER_CASE) {
     case SCPI_RADIX_HEXADECIMAL:
-      return scpi_engine_scan_radix(classes, input, token, HEXADECIMAL, 4);
+      return scpi_engine_scan_radix(classes, input, token, LIBC_HEXADECIMAL, 4);
     case SCPI_RADIX_BINARY:
-      return scpi_engine_scan_radix(classes, input, token, BINARY, 1);
+      return scpi_engine_scan_radix(classes, input, token, LIBC_BINARY, 1);
     case SCPI_RADIX_OCTAL:
-      return scpi_engine_scan_radix(classes, input, token, OCTAL, 3);
+      return scpi_engine_scan_radix(classes, input, token, LIBC_OCTAL, 3);
   }
   return scpi_engine_reject(classes, input, character,
                             STATUS_SCPI_INVALID_RADIX);

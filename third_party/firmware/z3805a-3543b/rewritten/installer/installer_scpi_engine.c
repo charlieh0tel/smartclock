@@ -6,8 +6,6 @@
 /* Has the installer's spool create its SCPI task, at priority 0x19, and
  * leaves the console to it (installer::0x100d20). */
 void installer_scpi_task_start(void) {
-  static const uint32_t SCPI_TASK_PRIORITY = 0x19;
-
   /* spoo_run calls it with three longs; it reads the first. */
   installer_spoo_run((spoo_function*)installer_scpi_task_create,
                      SCPI_TASK_PRIORITY, 0, 0);
@@ -17,26 +15,21 @@ void installer_scpi_task_start(void) {
 /* Creates and starts the SCPI task at a priority; -1 when it exists,
  * else the kernel's error (installer::0x107886). */
 uint32_t installer_scpi_task_create(uint32_t priority) {
-  static const uint32_t ERROR_BITS = 0xff;
-  /* The SCPI task's stacks in words, supervisor and user (psos.md,
-   * "spawn"). */
-  static const uint32_t TASK_SUPERVISOR_STACK_WORDS = 0x300;
-  static const uint32_t TASK_USER_STACK_WORDS = 0x400;
   uint32_t existing;
 
   if ((uint8_t)installer_psos_ident("scpi", &existing, 0) == 0) {
     return -1;
   }
-  uint32_t error =
-      installer_psos_create("scpi", 0, priority, TASK_SUPERVISOR_STACK_WORDS,
-                            TASK_USER_STACK_WORDS, 0, &installer_task_scpi) &
-      ERROR_BITS;
+  uint32_t error = installer_psos_create(
+                       "scpi", 0, priority, SCPI_TASK_SUPERVISOR_STACK_WORDS,
+                       SCPI_TASK_USER_STACK_WORDS, 0, &installer_task_scpi) &
+                   OS_ERROR_BITS;
 
   if (error != 0) {
     return error;
   }
   return installer_psos_start(installer_task_scpi, installer_scpi_task) &
-         ERROR_BITS;
+         OS_ERROR_BITS;
 }
 
 /* Clears the SCPI input, opens the port and prompts; the console port
@@ -170,13 +163,12 @@ void installer_scpi_task(void) {
    * its others: the task's D2, as it saved it. */
   const uint32_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
   static const uint32_t ARENA_SIZE = 1500;
-  static const uint32_t ERROR_BITS = 0xff;
   void* arena;
 
   installer_psos_mode(PSOS_MODE_TIME_SLICE, PSOS_MODE_TIME_SLICE, NULL);
   const uint32_t error =
       installer_psos_service_8(ARENA_SIZE, 0, 1, 0, (uint32_t*)&arena) &
-      ERROR_BITS;
+      OS_ERROR_BITS;
 
   if (error != 0) {
     installer_printf("scpi: alloc_seg error %#0x\n", error);
@@ -194,5 +186,5 @@ void installer_scpi_task(void) {
   installer_psos_free_segment(arena);
   port->methods->close(port);
   installer_restart();
-  installer_psos_delete(0);
+  installer_psos_delete(OS_TASK_SELF);
 }

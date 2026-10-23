@@ -126,27 +126,20 @@ void lamp_test(void) {
  * and -15 V within -16 to -14, the bounds hmon_check_supplies applies:
  * 10 percent of 5 V, 1 V of 15 (0x18546). */
 void supplies_test(void) {
-  static const float PLUS_5V_LEAST = 4.5f;
-  static const float PLUS_5V_MOST = 5.5f;
-  static const float PLUS_15V_LEAST = 14.0f;
-  static const float PLUS_15V_MOST = 16.0f;
-  static const float MINUS_15V_LEAST = -16.0f;
-  static const float MINUS_15V_MOST = -14.0f;
-
   selftest.power = 0;
   float volts = read_adc_5v();
-  if (float_compare(volts, PLUS_5V_LEAST) < 0 ||
-      float_compare(volts, PLUS_5V_MOST) > 0) {
+  if (float_compare(volts, MONITORS_PLUS_5V_LEAST) < 0 ||
+      float_compare(volts, MONITORS_PLUS_5V_MOST) > 0) {
     selftest.power |= SELFTEST_POWER_5V;
   }
   volts = read_adc_p15v();
-  if (float_compare(volts, PLUS_15V_LEAST) < 0 ||
-      float_compare(volts, PLUS_15V_MOST) > 0) {
+  if (float_compare(volts, MONITORS_PLUS_15V_LEAST) < 0 ||
+      float_compare(volts, MONITORS_PLUS_15V_MOST) > 0) {
     selftest.power |= SELFTEST_POWER_P15V;
   }
   volts = read_adc_m15v();
-  if (float_compare(volts, MINUS_15V_LEAST) < 0 ||
-      float_compare(volts, MINUS_15V_MOST) > 0) {
+  if (float_compare(volts, MONITORS_MINUS_15V_LEAST) < 0 ||
+      float_compare(volts, MONITORS_MINUS_15V_MOST) > 0) {
     selftest.power |= SELFTEST_POWER_M15V;
   }
 }
@@ -822,7 +815,6 @@ void selftest_print_failure(char clear_eeprom) {
 uint32_t rom_lane_checksum(uint8_t* rom, uint32_t count) {
   static const uint16_t HIGH_BYTE = 0xff00;
   static const uint16_t LOW_BYTE = 0x00ff;
-  static const uint32_t BYTE_BITS = 8;
   uint16_t even = 0;
   uint16_t odd = 0;
   uint16_t remaining = (uint16_t)(count - 2);
@@ -832,7 +824,7 @@ uint32_t rom_lane_checksum(uint8_t* rom, uint32_t count) {
     odd += rom[1] + rom[3];
     rom += 4;
   } while (remaining-- != 0);
-  return (uint32_t)(even & HIGH_BYTE) << (2 * BYTE_BITS) |
-         (uint32_t)(odd & HIGH_BYTE) << BYTE_BITS |
-         (uint32_t)(even & LOW_BYTE) << BYTE_BITS | (odd & LOW_BYTE);
+  return (uint32_t)(even & HIGH_BYTE) << (2 * CPU_BYTE_BITS) |
+         (uint32_t)(odd & HIGH_BYTE) << CPU_BYTE_BITS |
+         (uint32_t)(even & LOW_BYTE) << CPU_BYTE_BITS | (odd & LOW_BYTE);
 }

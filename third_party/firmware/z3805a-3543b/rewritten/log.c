@@ -184,14 +184,13 @@ int32_t log_erase_locked(request_source source) {
 
 /* log_erase under log_mutex when the log holds count entries (0x3161a). */
 int32_t log_erase_checked(int32_t count, request_source source) {
-  /* The result for a count not the log's. */
-  static const uint8_t LOG_COUNT_DIFFERS = 0xff;
   int32_t error = mutex_lock(&log_mutex);
 
   if (error != 0) {
     return error;
   }
-  int32_t status = count == log_entries ? log_erase(source) : LOG_COUNT_DIFFERS;
+  int32_t status =
+      count == log_entries ? log_erase(source) : RECORDS_LOG_COUNT_DIFFERS;
   mutex_unlock(&log_mutex);
   return status;
 }
@@ -409,11 +408,8 @@ uint8_t log_flush(void) {
  * and writes its page, moving to the next page after its last entry
  * (0x31c42). */
 uint32_t log_append(char* format, int32_t argument_1, int32_t argument_2) {
-  /* The result when the log is full. */
-  static const uint8_t LOG_FULL = 0xfc;
-
   if (log_full) {
-    return LOG_FULL;
+    return RECORDS_LOG_FULL;
   }
   log_cursor->format = format;
   log_cursor->argument_1 = argument_1;

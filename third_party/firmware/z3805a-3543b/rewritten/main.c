@@ -17,8 +17,6 @@ void system_init(void) {
   /* RSR's EXT and POW, bits 7 and 6: an external or a power-up reset
    * (MC68331UM D.3.4; restart.md). */
   static const uint8_t RESET_EXTERNAL_OR_POWER_UP = 0xc0;
-  /* preserved_region.restore's value for a region to restore. */
-  static const uint16_t RESTORE = 1;
 
   kernel_running = 0;
   status_ready = 0;
@@ -44,12 +42,12 @@ void system_init(void) {
       record_checksum(&preserved_region, sizeof preserved_region) ==
           preserved_region.checksum &&
       (sim.rsr & RESET_EXTERNAL_OR_POWER_UP) == 0;
-  if (region_good && preserved_region.restore == RESTORE) {
+  if (region_good && preserved_region.restore == PRESERVED_REGION_RESTORE) {
     memcpy(&retained_block, preserved_region.values,
            sizeof preserved_region.values);
     gps = preserved_region.gps;
     pll = preserved_region.pll;
-    preserved_region.restore = RESTORE;
+    preserved_region.restore = PRESERVED_REGION_RESTORE;
     warm_start = true;
   } else {
     memcpy(&retained_block, retained_block_defaults,
@@ -57,10 +55,10 @@ void system_init(void) {
     gps_init();
     pll_init();
     if (region_good) {
-      preserved_region.restore = 0;
+      preserved_region.restore = PRESERVED_REGION_DISCARD;
       warm_start = false;
     } else {
-      preserved_region.restore = RESTORE;
+      preserved_region.restore = PRESERVED_REGION_RESTORE;
       warm_start = false;
       sim.porte0 &= ~FPGA_PROGRAM;
       sim.porte0 |= FPGA_PROGRAM;

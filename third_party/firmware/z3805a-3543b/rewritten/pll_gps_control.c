@@ -30,7 +30,7 @@ uint8_t gpsx_send(int16_t code, gps_argument_mode argument_mode,
   request.field_04 = 0;
   request.code = code;
   request.argument_mode = argument_mode;
-  request.result = 1;
+  request.result = GPS_RESULT_REJECT;
   request.sender = GPS_SENDER_SEQUENCE;
   request.arguments = (int32_t*)gpsx_arguments;
   if ((uint8_t)psos_send_x(gpsx_exchange, &request) != 0) {
@@ -588,7 +588,7 @@ void gps_command_send(void) {
       return;
   }
   gpsx_send(code, argument_mode, gps_command.arguments, GPS_ACK_COMMAND);
-  gps_command.code = 0;
+  gps_command.code = GPS_CONSOLE_NONE;
 }
 
 /* A diagnostic send or acknowledgment wait that has not succeeded: one

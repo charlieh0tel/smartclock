@@ -46,7 +46,7 @@ uint64_t div(int32_t numerator, int32_t denominator) {
   int32_t quotient = numerator / denominator;
   int32_t remainder = numerator - denominator * quotient;
 
-  return (uint64_t)quotient << LIBC_WORD_BITS | (uint32_t)remainder;
+  return (uint64_t)quotient << CPU_LONG_BITS | (uint32_t)remainder;
 }
 
 /* The same, ldiv (0x5eed2). */
@@ -203,16 +203,14 @@ void call_atexit_functions(void) {
  * never returns (0x149bc).  The digits are built backward from a stop
  * byte at the buffer's end, where they stay. */
 void program_end_report(uint32_t value, uint32_t return_address) {
-  static const int32_t DIGITS_END = 0x2d;
-  static const uint8_t DIGITS_STOP = 0xff;
-  uint8_t* digit = &program_end_message[DIGITS_END];
+  uint8_t* digit = &program_end_message[LIBC_PROGRAM_END_DIGITS_END];
   uint32_t magnitude = value;
 
   program_end_message[0] = 0;
   for (const char* text = "Prog end, returned "; *text != '\0'; text++) {
     libc_message_append(program_end_message, *text);
   }
-  *digit = DIGITS_STOP;
+  *digit = LIBC_PROGRAM_END_DIGITS_STOP;
   if ((int32_t)value < 0) {
     magnitude = -value;
     libc_message_append(program_end_message, '-');
@@ -221,7 +219,7 @@ void program_end_report(uint32_t value, uint32_t return_address) {
     *--digit = magnitude % 10;
     magnitude /= 10;
   } while (magnitude != 0);
-  for (; *digit != DIGITS_STOP; digit++) {
+  for (; *digit != LIBC_PROGRAM_END_DIGITS_STOP; digit++) {
     libc_message_append(program_end_message, '0' + *digit);
   }
   fatal_error_with_code((char*)program_end_message,

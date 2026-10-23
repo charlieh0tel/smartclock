@@ -31,10 +31,9 @@ uint16_t record_checksum(void* record, uint16_t length) {
 /* Reads the lifetime record into lifetime, or its defaults; true when its
  * checksum holds (0x30a3e). */
 uint8_t lifetime_record_read(void) {
-  /* The lifetime record's defaults: 1994-01-01 (year << 16 | month << 8
-   * | day) and the EFC at mid-scale. */
+  /* The lifetime record's default date: 1994-01-01 (year << 16 |
+   * month << 8 | day); its EFC is PLL_EFC_MID_SCALE. */
   static const uint32_t LIFETIME_DEFAULT_DATE = 1994u << 16 | 1u << 8 | 1u;
-  static const float EFC_MID_SCALE = 524288.0f;
   /* An EFC in the record with these bits all set, as an erased
    * record's 0xffffffff has, is taken as mid-scale. */
   static const uint32_t LIFETIME_EFC_INVALID_BITS = 0xe8000000u;
@@ -43,7 +42,7 @@ uint8_t lifetime_record_read(void) {
       eeprom_lifetime_record.checksum) {
     lifetime.date = LIFETIME_DEFAULT_DATE;
     lifetime.count = 0;
-    lifetime.efc = EFC_MID_SCALE;
+    lifetime.efc = PLL_EFC_MID_SCALE;
     return 0;
   }
   lifetime.date = eeprom_lifetime_record.date;
@@ -54,7 +53,7 @@ uint8_t lifetime_record_read(void) {
   float efc = eeprom_lifetime_record.efc;
   memcpy(&efc_bits, &efc, sizeof efc_bits);
   if ((efc_bits & LIFETIME_EFC_INVALID_BITS) == LIFETIME_EFC_INVALID_BITS) {
-    lifetime.efc = EFC_MID_SCALE;
+    lifetime.efc = PLL_EFC_MID_SCALE;
   } else {
     lifetime.efc = efc;
   }
@@ -244,15 +243,12 @@ void idn_model_default(void) { strncpy(idn_model, "Z3805A", sizeof idn_model); }
 /* Reads the model, serial and suffix from the identification record, or
  * their defaults; true when its checksum holds (0x32e5c). */
 uint8_t identification_record_read(void) {
-  /* The identification record's default suffix. */
-  static const char DEFAULT_SUFFIX = 'A';
-
   if (record_checksum(&eeprom_identification_record,
                       sizeof eeprom_identification_record) !=
       eeprom_identification_record.checksum) {
     idn_model_default();
     strncpy(idn_serial, "0", sizeof idn_serial);
-    idn_suffix = DEFAULT_SUFFIX;
+    idn_suffix = RECORDS_DEFAULT_SUFFIX;
     return 0;
   }
   if (strncmp(eeprom_identification_record.tag, (char*)RECORDS_TAG,

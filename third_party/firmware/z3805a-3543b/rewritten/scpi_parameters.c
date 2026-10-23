@@ -192,12 +192,12 @@ void scpi_numeric_set(scpi_numeric_param* param, int32_t index, int16_t kind,
     uint32_t* bounds =
         bound == SCPI_BOUND_MINIMUM ? param->minimum : param->maximum;
 
-    if (param->is_integer == 0) {
+    if (param->is_integer == PLLC_VALUE_FLOAT) {
       real = &bounds[index];
     } else {
       integer = bounds[index];
     }
-  } else if (param->is_integer == 0) {
+  } else if (param->is_integer == PLLC_VALUE_FLOAT) {
     real = &float_value;
   } else {
     integer = integer_value;
@@ -267,7 +267,7 @@ float scpi_numeric_get(scpi_numeric_param* param, int32_t index, int16_t which,
   } else {
     value.bits = ((uint32_t*)param->value)[index];
   }
-  if (param->is_integer != 0) {
+  if (param->is_integer != PLLC_VALUE_FLOAT) {
     return integer_to_float(value.bits);
   }
   return value.real;

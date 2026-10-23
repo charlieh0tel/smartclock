@@ -20,7 +20,7 @@ installer_float_raise_kept(const uint32_t* arguments) {
   if (raised.report) {
     installer_float_exception_report(code, raised.address);
   }
-  return (uint64_t)raised.high << LIBC_WORD_BITS | raised.low;
+  return (uint64_t)raised.high << CPU_LONG_BITS | raised.low;
 }
 
 CPU_KEEPING_A0_A1(installer_float_raise, installer_float_raise_kept);

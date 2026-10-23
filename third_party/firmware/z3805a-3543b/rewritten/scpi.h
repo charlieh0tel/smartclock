@@ -50,6 +50,12 @@ static const uint8_t SCPI_NUMBER_BASE = 10;
  * double's least exponent, and which it converts zero at too. */
 static const int16_t SCPI_REAL_EVERY_DIGIT = -308;
 
+/* The significant digits scpi_real_to_text is given for a double and
+ * for a float (the formatters; format_si). */
+static const int16_t SCPI_REAL_DOUBLE_DIGITS = 15;
+
+static const int16_t SCPI_REAL_FLOAT_DIGITS = 6;
+
 /* A string parameter as scpi_parse_string gives it its handler. */
 typedef struct scpi_engine_string_value {
   char* text;      /* +0x00 */

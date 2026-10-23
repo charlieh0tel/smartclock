@@ -15,8 +15,11 @@
 /* A TI reading in seconds as the debug messages print it, in ns. */
 static const float PLL_STAGES_NANOSECONDS = 1e+09f;
 
-/* Readings to a block of the loops' and holdover's steering. */
+/* Readings to a block of the loops' and holdover's steering, and the
+ * same as a float. */
 static const uint8_t PLL_STAGES_BLOCK_SECONDS = 10;
+
+static const float PLL_STAGES_BLOCK_LENGTH = 10.0f;
 
 /* The aging fit's time unit, an EFC history entry's 2700 seconds. */
 static const float PLL_STAGES_ENTRY_SECONDS = 2700.0f;
@@ -98,7 +101,7 @@ pll_stage_result powerup(bool same_stage) {
           (pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) == HOLD_CAUSE_NONE &&
           (int8_t)pll.gps_init_state > PLL_GPS_INIT_HOLD_OFF_ACK) {
         pll.powerup_state = PLL_POWERUP_COARSE;
-        pll.coarse_state = 0;
+        pll.coarse_state = PLL_COARSE_SYNC;
       }
       break;
     case PLL_POWERUP_COARSE: {
@@ -107,7 +110,7 @@ pll_stage_result powerup(bool same_stage) {
       if (coarse_result == PLL_STAGE_RESULT_DONE) {
         pll.tfom = COARSE_TFOM;
         pll.powerup_state = PLL_POWERUP_FINE;
-        pll.fine_state = 0;
+        pll.fine_state = PLL_FINE_START;
       } else if (coarse_result == PLL_STAGE_RESULT_FAILED) {
         result = PLL_STAGE_RESULT_FAILED;
       }
@@ -663,7 +666,6 @@ static pll_stages_gains pll_stages_gains_for(float time_constant) {
 static void pll_stages_steer(pll_stages_gains gains, float current,
                              float loop_time) {
   static const float ONE = 1.0f;
-  static const float BLOCK = 10.0f;
   float error = float_subtract(loop_steering.ti_sum, ti_setpoint);
 
   pll.ti_filtered = float_add(
@@ -685,9 +687,9 @@ static void pll_stages_steer(pll_stages_gains gains, float current,
                                        PLL_STAGES_ENTRY_SECONDS),
                           pll.ti_filtered);
 
-  float_add_in_place(
-      &loop_steering.integral,
-      float_multiply(float_multiply(drift, gains.integral), BLOCK));
+  float_add_in_place(&loop_steering.integral,
+                     float_multiply(float_multiply(drift, gains.integral),
+                                    PLL_STAGES_BLOCK_LENGTH));
   float efc =
       float_add(float_add(float_multiply(gains.proportional, pll.ti_filtered),
                           pll.efc_base),
@@ -899,7 +901,6 @@ uint8_t holdover_correction_valid(void) {
   static const float INDEX_SUM = 45.0f;
   static const float SLOPE_DENOMINATOR = 825.0f;
   static const float EFC_LEAST = 0.0f;
-  static const float EFC_MOST = 1048560.0f;
   static const int32_t FEWEST_READINGS = 10;
   float slope = float_divide(
       float_subtract(
@@ -909,7 +910,7 @@ uint8_t holdover_correction_valid(void) {
   float efc = float_add(float_divide(slope, efc_gains.gain), pll.efc);
 
   return float_compare(efc, EFC_LEAST) >= 0 &&
-         float_compare(EFC_MOST, efc) >= 0 &&
+         float_compare(PLL_EFC_MOST, efc) >= 0 &&
          holdover_steering.ti_count >= FEWEST_READINGS;
 }
 
@@ -1047,7 +1048,6 @@ void enter_holdover(void) {
 pll_stage_result holdover(bool same_stage) {
   static const float AGING_LIMIT = 2e-09f;
   static const float AGING_LIMIT_PER_SECOND = 2.3148148e-14f;
-  static const float BLOCK = 10.0f;
   static const float TWO = 2.0f;
   static const float HALF = 0.5f;
   static const float SECONDS_PER_DAY_SQUARED = 7.46496e+09f;
@@ -1091,7 +1091,8 @@ pll_stage_result holdover(bool same_stage) {
     }
   } else if (gps_reference_good != 0) {
     holdover_ti_add(ti);
-    float_add_in_place(&holdover_steering.ti_mean, float_divide(ti, BLOCK));
+    float_add_in_place(&holdover_steering.ti_mean,
+                       float_divide(ti, PLL_STAGES_BLOCK_LENGTH));
     holdover_steering.readings++;
   }
   holdover_steering.seconds++;
@@ -1117,7 +1118,7 @@ pll_stage_result holdover(bool same_stage) {
     float_multiply_in_place(
         &holdover_steering.ti_mean,
         float_divide_reversed(unsigned_to_float(holdover_steering.readings),
-                              BLOCK));
+                              PLL_STAGES_BLOCK_LENGTH));
   }
   if (pll_debug_enabled != 0) {
     char message[100];
@@ -1179,7 +1180,6 @@ pll_stage_result holdover_recovery(bool same_stage) {
   static const uint8_t MOST_FAILURES = 5;
   static const float SHORT_HOLDOVER = 500.0f;
   static const double CLOSE_TI = 5e-07;
-  static const float FIRST_TIME_CONSTANT = 150.0f;
   pll_stage_result result = PLL_STAGE_RESULT_RUNNING;
   uint8_t valid = 0;
   float ti;
@@ -1248,7 +1248,7 @@ pll_stage_result holdover_recovery(bool same_stage) {
           pll.hold_causes |= HOLD_CAUSE_TI_ERROR;
         }
       } else {
-        pll.fine_state = 0;
+        pll.fine_state = PLL_FINE_START;
         pll.recovery_state = PLL_RECOVERY_FINE;
       }
       break;
@@ -1282,6 +1282,6 @@ pll_stage_result holdover_recovery(bool same_stage) {
           0) {
     return PLL_STAGE_RESULT_DONE;
   }
-  pll.loop_time_constant = FIRST_TIME_CONSTANT;
+  pll.loop_time_constant = PLL_FIRST_TIME_CONSTANT;
   return result;
 }

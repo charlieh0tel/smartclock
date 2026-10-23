@@ -222,11 +222,41 @@ os_installer_psos_io_call(psos_io_function function, os_registers arguments) {
 /* A task's supervisor and user stack sizes, in words, as spawn takes
  * them in D3: a word each, the supervisor's high (psos.md, service 1). */
 static uint32_t os_stack_sizes(uint32_t supervisor, uint32_t user) {
-  static const uint32_t WORD_BITS = 16;
-  static const uint32_t WORD_MASK = 0xffff;
-
-  return supervisor << WORD_BITS | (user & WORD_MASK);
+  return supervisor << CPU_WORD_BITS | (user & CPU_WORD_MASK);
 }
+
+/* The kernel's ticks a second, and the longest pause sleep_seconds
+ * takes, 2^21 seconds. */
+static const float OS_TICKS_PER_SECOND = 1024;
+
+static const float OS_SLEEP_LONGEST = 1 << 21;
+
+/* The spool task's stack sizes in words (supervisor and user), its
+ * exchange's create_x arguments, which psos.md leaves unnamed, and the
+ * ticks it waits for a message before it prints the deferred ones
+ * instead (structures.md, "Others"); spoo_task_create's and
+ * installer_spoo_task_create's (0x20c96). */
+static const uint32_t SPOOL_SUPERVISOR_STACK = 0x600;
+
+static const uint32_t SPOOL_USER_STACK = 0x10;
+
+static const uint32_t SPOOL_EXCHANGE_A = 2;
+
+static const uint32_t SPOOL_EXCHANGE_B = 5;
+
+static const uint32_t SPOOL_WAIT_TICKS = 0x400;
+
+/* The bytes between a task's supervisor stack's top and its user stack,
+ * which stack_measure skips (0x1321a). */
+static const uint32_t OS_USER_STACK_GAP = 4;
+
+/* A service's result's low byte, the kernel's error (psos_error). */
+static const uint32_t OS_ERROR_BITS = 0xff;
+
+/* The task a service's task argument of 0 is: the caller's own
+ * (docs/firmware/psos.md, service 10; console_halt_hook deletes its own
+ * task so, 0x12f50). */
+static const uint32_t OS_TASK_SELF = 0;
 
 /* What exception_hook_per_task holds while set, and what
  * exception_hook_set returns when a hook was set before (0x118b6,

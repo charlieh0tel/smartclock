@@ -63,6 +63,10 @@ static const int32_t TI_SPREAD = 200;
  * interpolator_calibrate. */
 static const int32_t TI_CALIBRATE_TRIES = 20;
 
+/* The nonzero the image sets the preset bit with, through fpga_set_bit
+ * and counter_configuration_init's fields. */
+static const uint8_t TI_PRESET_ON = 8;
+
 /* The interpolator's calibration's defaults, both DACs in the middle
  * (0x40000). */
 void interpolator_calibration_init(interpolator_calibration* calibration) {
@@ -82,7 +86,9 @@ void interpolator_calibration_init(interpolator_calibration* calibration) {
 void counter_configuration_init(counter_configuration_fields* configuration) {
   /* The fields by fpga_bits entry: preset and the high reference
    * flagged, the rest 0. */
-  uint8_t fields[] = {0, 8, 0, 1, 0, 0};
+  uint8_t fields[] = {[FPGA_BIT_PRESET] = TI_PRESET_ON,
+                      [FPGA_BIT_REFERENCE] = INTERPOLATOR_REFERENCE_HIGH,
+                      [FPGA_BIT_SYNC] = 0};
 
   fpga_fields_to_registers(fields, configuration->fpga_registers);
   fpga_fields_to_registers(fields, fconf_regs);
@@ -162,7 +168,7 @@ void counter_arm(interval_reading_fields* reading,
     return;
   }
   ti_registers_load_wanted(configuration);
-  fpga_set_bit(FPGA_BIT_PRESET, 8);
+  fpga_set_bit(FPGA_BIT_PRESET, TI_PRESET_ON);
   fpga_set_field(FPGA_BIT_MODE, 0); /* count */
   fpga_set_bit(FPGA_BIT_START, 0);
   fpga_set_field(FPGA_BIT_ADDRESS, 0);
@@ -285,7 +291,7 @@ void counter_read(interval_reading_fields* reading,
  * to measure the interpolator's references; 1 (0x401c4). */
 uint32_t interpolator_prepare(void) {
   ti_registers_load_wanted(&counter_configuration);
-  fpga_set_bit(FPGA_BIT_PRESET, 8);
+  fpga_set_bit(FPGA_BIT_PRESET, TI_PRESET_ON);
   fpga_set_field(FPGA_BIT_MODE, 3); /* the interpolator's references */
   fpga_set_bit(FPGA_BIT_START, 0);
   fpga_set_field(FPGA_BIT_ADDRESS, 0);
@@ -296,7 +302,7 @@ uint32_t interpolator_prepare(void) {
  * returns its reading (0x40030). */
 uint8_t interpolator_measure(interpolator_reference reference) {
   fpga_set_bit(FPGA_BIT_REFERENCE, reference);
-  fpga_set_bit(FPGA_BIT_PRESET, 8);
+  fpga_set_bit(FPGA_BIT_PRESET, TI_PRESET_ON);
   fpga_set_bit(FPGA_BIT_START, 1);
   fpga_set_bit(FPGA_BIT_PRESET, 0);
   fpga_set_bit(FPGA_BIT_START, 0);
@@ -611,6 +617,6 @@ void interpolator_sample_test(void) {
 /* The FPGA's self-test: fails unless the preset counter reads zero
  * (0x40f98). */
 void counter_selftest(void) {
-  fpga_set_bit(FPGA_BIT_PRESET, 8);
+  fpga_set_bit(FPGA_BIT_PRESET, TI_PRESET_ON);
   selftest.fpga = counter_read_raw() != 0;
 }

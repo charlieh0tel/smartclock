@@ -13,13 +13,10 @@
 /* Clamps an EFC to 0 to 1048560, reporting each clamp, and the first
  * value back in range (0x2426e). */
 float efc_clamp(float efc) {
-  /* The EFC's clamp, the top of its 20 bits. */
-  static const float EFC_MOST = 1048560.0f;
-
   if (float_compare(0.0f, efc) > 0) {
     efc = 0.0f;
-  } else if (float_compare(efc, EFC_MOST) > 0) {
-    efc = EFC_MOST;
+  } else if (float_compare(efc, PLL_EFC_MOST) > 0) {
+    efc = PLL_EFC_MOST;
   } else {
     if (efc_range.clamped) {
       status_happening(STATUS_EFC_AT_LIMIT_CLEARED);
@@ -210,15 +207,8 @@ static const monitors_supply monitors_minus_15v = {
  * and reports the supplies' and the double oven's tolerances; then
  * steps on (0x23d80). */
 void hmon_check_supplies(void) {
-  /* The supplies' tolerances and the readings outside one that count
-   * as leaving it. */
+  /* The readings outside a tolerance that count as leaving it. */
   static const uint8_t TOLERANCE_LIMIT = 5;
-  static const float PLUS_5V_LEAST = 4.5f;
-  static const float PLUS_5V_MOST = 5.5f;
-  static const float PLUS_15V_LEAST = 14.0f;
-  static const float PLUS_15V_MOST = 16.0f;
-  static const float MINUS_15V_LEAST = -16.0f;
-  static const float MINUS_15V_MOST = -14.0f;
   static const float DOUBLE_OVEN_LEAST = -1e37f;
   static const float DOUBLE_OVEN_MOST = 6.8f;
   adc_monitor* monitor = &adc_monitors[hmon_supply_step];
@@ -240,8 +230,8 @@ void hmon_check_supplies(void) {
       monitor_average_add(monitor, read_adc_p15v());
       monitors_supply_report(
           &monitors_plus_15v,
-          monitor_out_of_range(monitor, PLUS_15V_LEAST, PLUS_15V_MOST,
-                               TOLERANCE_LIMIT));
+          monitor_out_of_range(monitor, MONITORS_PLUS_15V_LEAST,
+                               MONITORS_PLUS_15V_MOST, TOLERANCE_LIMIT));
       break;
     case MONITORS_STEP_OSCILLATOR_CURRENT:
       monitor_filter_add(monitor, read_adc_osc_curr());
@@ -249,8 +239,9 @@ void hmon_check_supplies(void) {
     case MONITORS_STEP_5V:
       monitor_average_add(monitor, read_adc_5v());
       monitors_supply_report(
-          &monitors_5v, monitor_out_of_range(monitor, PLUS_5V_LEAST,
-                                             PLUS_5V_MOST, TOLERANCE_LIMIT));
+          &monitors_5v,
+          monitor_out_of_range(monitor, MONITORS_PLUS_5V_LEAST,
+                               MONITORS_PLUS_5V_MOST, TOLERANCE_LIMIT));
       break;
     case MONITORS_STEP_OVEN:
       monitor_average_add(monitor, read_adc_oven());
@@ -259,8 +250,8 @@ void hmon_check_supplies(void) {
       monitor_average_add(monitor, read_adc_m15v());
       monitors_supply_report(
           &monitors_minus_15v,
-          monitor_out_of_range(monitor, MINUS_15V_LEAST, MINUS_15V_MOST,
-                               TOLERANCE_LIMIT));
+          monitor_out_of_range(monitor, MONITORS_MINUS_15V_LEAST,
+                               MONITORS_MINUS_15V_MOST, TOLERANCE_LIMIT));
       break;
     case MONITORS_STEP_ANTENNA_CURRENT:
       monitor_average_add(monitor, read_adc_ant_curr());

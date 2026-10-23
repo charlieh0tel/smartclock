@@ -64,15 +64,6 @@ enum {
   SCPI_DIAGNOSTIC_RESET_LOG = 1,
 };
 
-/* log.c's results that the :LOG setters tell apart (its LOG_FULL,
- * LOG_PAGE_WRITE_FAILED's low byte, which log_erase has already
- * reported, and log_erase_checked's count that differs). */
-static const int16_t SCPI_DIAGNOSTIC_LOG_FULL = 0xfc;
-
-static const int16_t SCPI_DIAGNOSTIC_LOG_WRITE_FAILED = 0xfe;
-
-static const int16_t SCPI_DIAGNOSTIC_LOG_COUNT_DIFFERS = 0xff;
-
 /* STATUS_NO_CONDITION when the receiver takes @@Bn, Time RAIM; else
  * unknown before it has sent its ID, or -241 Hardware missing. */
 static status_condition_code scpi_diagnostic_raim_missing(
@@ -409,10 +400,10 @@ int32_t scpi_set_DIAGnostic_LOG_CLEar(void* parameters, void* response,
   } else {
     result = log_erase_checked(given->given.value, return_zero(call->input));
   }
-  if (result == 0 || result == SCPI_DIAGNOSTIC_LOG_WRITE_FAILED) {
+  if (result == 0 || result == RECORDS_LOG_WRITE_FAILED) {
     return 0;
   }
-  status_report_from(result == SCPI_DIAGNOSTIC_LOG_COUNT_DIFFERS
+  status_report_from(result == RECORDS_LOG_COUNT_DIFFERS
                          ? STATUS_DATA_OUT_OF_RANGE
                          : STATUS_DEVICE_SPECIFIC_ERROR,
                      return_zero(call->input));
@@ -509,9 +500,9 @@ int32_t scpi_set_DIAGnostic_LOG_WRITe(void* parameters, void* response,
   if (result == 0) {
     return 0;
   }
-  if (result == SCPI_DIAGNOSTIC_LOG_FULL) {
+  if (result == RECORDS_LOG_FULL) {
     status_report_from(STATUS_EXECUTION_ERROR, return_zero(call->input));
-  } else if (result == SCPI_DIAGNOSTIC_LOG_WRITE_FAILED) {
+  } else if (result == RECORDS_LOG_WRITE_FAILED) {
     status_report_from(STATUS_MEMORY_ERROR, return_zero(call->input));
   } else {
     status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, return_zero(call->input));
@@ -614,11 +605,10 @@ int32_t scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute(void* parameters,
 int32_t scpi_query_DIAGnostic_ROSCillator_EFControl_RELative(void* parameters,
                                                              void* response,
                                                              scpi_call* call) {
-  static const float EFC_MID_SCALE = 524288.0f;
   static const double PERCENT = 100.0;
   scpi_diagnostic_float* efc = response;
-  float offset = float_add(float_identity(pll.efc), -EFC_MID_SCALE);
-  float fraction = float_divide(offset, EFC_MID_SCALE);
+  float offset = float_add(float_identity(pll.efc), -PLL_EFC_MID_SCALE);
+  float fraction = float_divide(offset, PLL_EFC_MID_SCALE);
 
   efc->value =
       double_to_float(double_multiply(PERCENT, float_to_double(fraction)));

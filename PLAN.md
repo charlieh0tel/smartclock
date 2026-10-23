@@ -1893,6 +1893,25 @@ view cannot drift apart.  The library, bottom up:
   SPCR0's BITS (MC68331UM 6.3.5.1), so that unsent bits are not
   compared.  Counts unchanged.
 
+  Done 2026-10-23, the magic-number check: `make check-magic-numbers`
+  (`tools/firmware/magic_check.py`, docs/firmware/README.md,
+  "Hand-written C") reads the hand-written C through clang's syntax
+  tree within the export and fails on a literal where an enumerator, a
+  register header's bit or a named constant of its value is, and on a
+  constant defined twice; a justified one is a row of the image's
+  `magic-allow.tsv`, with its reason.  Decided: a check, in CI, since
+  the checked kinds leave three rows to justify; whether a literal
+  passed as a parameter, or given to one thing in several functions,
+  means the same each time is a reader's call, so those are reported,
+  never checked.  Its first pass found 13 literals with enumerators,
+  three without, which `GPS_SENDER_NONE` and `FPGA_CONFIGURATION_LAST`
+  now name (and `PSOS_TASK_READY` the status `task_status_name` calls
+  " RDY"), one for a coded field (`selftest.eeprom`), two where a
+  constant was named elsewhere (`preserved_region.restore`, now a
+  `preserved_region_restore`), and 64 constants defined in more than
+  one place, now in the headers the files share; the compiled
+  functions are the same instructions.
+
   Decided 2026-10-22: the pForth kernel's 154 words (183 routines in all) stay the
   image's assembly, exact by construction (check-decompiled proves the
   bytes); the C diagnostic words are tested further by pForth console

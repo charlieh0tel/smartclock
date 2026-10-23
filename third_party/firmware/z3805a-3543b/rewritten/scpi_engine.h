@@ -59,6 +59,15 @@ static const int8_t scpi_engine_token_parameter_kinds[] = {
     SCPI_PARAMETER_CHARACTER,
 };
 
+/* The SCPI task's priority, which scpi_task_start has spoo create it at,
+ * and its stacks in words, supervisor and user (psos.md, "spawn"); the
+ * installer's copies' too. */
+static const uint32_t SCPI_TASK_PRIORITY = 0x19;
+
+static const uint32_t SCPI_TASK_SUPERVISOR_STACK_WORDS = 0x300;
+
+static const uint32_t SCPI_TASK_USER_STACK_WORDS = 0x400;
+
 /* The greatest of scpi_parse_message_unit's results it returns as they
  * are, without reporting them. */
 static const int32_t SCPI_STATUS_UNREPORTED_GREATEST = -60;

@@ -50,12 +50,10 @@ static bool fpga_init_wait(bool high) {
  * (0x22da4). */
 uint8_t fpga_program(fpga_configuration_index configuration,
                      char with_task_name) {
-  /* The bitstream goes out 16 words at a time, its last bytes 2 words
-   * at a time. */
+  /* The bitstream goes out 16 words at a time. */
   static const uint16_t BLOCK_WORDS = 16;
-  static const uint16_t TAIL_WORDS = 2;
   const uint32_t BLOCK_BYTES = BLOCK_WORDS * sizeof(uint16_t);
-  const uint32_t TAIL_BYTES = TAIL_WORDS * sizeof(uint16_t);
+  const uint32_t TAIL_BYTES = FPGA_TAIL_WORDS * sizeof(uint16_t);
 
   if (configuration > fpga_configurations.last) {
     return 0;
@@ -91,14 +89,14 @@ uint8_t fpga_program(fpga_configuration_index configuration,
       qspi_write(QSPI_FPGA_BLOCK, next, BLOCK_WORDS);
     }
     for (; next < end; next += TAIL_BYTES) {
-      qspi_write(QSPI_FPGA_TAIL, next, TAIL_WORDS);
+      qspi_write(QSPI_FPGA_TAIL, next, FPGA_TAIL_WORDS);
     }
   } else {
     for (; next + BLOCK_BYTES < end; next += BLOCK_BYTES) {
       qspi_send(QSPI_FPGA_BLOCK, (uint16_t*)next, BLOCK_WORDS);
     }
     for (; next < end; next += TAIL_BYTES) {
-      qspi_send(QSPI_FPGA_TAIL, (uint16_t*)next, TAIL_WORDS);
+      qspi_send(QSPI_FPGA_TAIL, (uint16_t*)next, FPGA_TAIL_WORDS);
     }
   }
   fpga_pause(2, with_task_name);
@@ -255,7 +253,6 @@ static void fpga_readback_finish(const fpga_readback* readback, char* format) {
 bool fpga_verify_first(uint8_t* configuration, uint8_t* mask,
                        char with_task_name) {
   static const uint16_t START_BITS = 11;
-  static const uint16_t BYTE_BITS = 8;
   static const uint16_t LAST_BITS = 10;
   static const int32_t WORDS = 5;
   fpga_readback readback;
@@ -269,7 +266,7 @@ bool fpga_verify_first(uint8_t* configuration, uint8_t* mask,
   fpga_readback_advance(&readback);
   fpga_readback_words(&readback, WORDS);
   if (readback.matches) {
-    fpga_readback_read(&readback, BYTE_BITS);
+    fpga_readback_read(&readback, CPU_BYTE_BITS);
     fpga_readback_compare(&readback, fpga_readback_low(&readback),
                           FPGA_BYTE_ALL, readback.byte_format);
     fpga_readback_advance(&readback);

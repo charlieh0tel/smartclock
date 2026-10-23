@@ -48,6 +48,21 @@ enum {
 /* errno's value for a result out of range. */
 static const int32_t LIBC_ERANGE = 34;
 
+/* The bases strtol and the SCPI lexer read numbers in. */
+static const int32_t LIBC_BINARY = 2;
+
+static const int32_t LIBC_OCTAL = 8;
+
+static const int32_t LIBC_DECIMAL = 10;
+
+static const int32_t LIBC_HEXADECIMAL = 16;
+
+/* program_end_report's digits: built backward from a stop byte at the
+ * message's offset 0x2d, where they stay (0x149bc). */
+static const int32_t LIBC_PROGRAM_END_DIGITS_END = 0x2d;
+
+static const uint8_t LIBC_PROGRAM_END_DIGITS_STOP = 0xff;
+
 /* Fields of a double's high word, and of its 64 bits; an infinity's
  * high word is the exponent's mask, all ones. */
 static const uint32_t LIBC_SIGN = 0x80000000u;
@@ -61,8 +76,6 @@ static const int32_t LIBC_EXPONENT_SHIFT = 20;
 static const int32_t LIBC_EXPONENT_MAX = 0x7ff;
 
 static const int32_t LIBC_EXPONENT_BIAS = 0x3ff;
-
-static const int32_t LIBC_WORD_BITS = 32;
 
 /* A subnormal's mantissa shifted left until its top bit is the
  * implicit one's, and the shift: double_normalize's work (0x5e882), and
@@ -90,11 +103,10 @@ static uint32_t libc_length(const char* text) {
 /* ldiv's quotient, its result's high long, leaving the remainder, its
  * low long, in *numerator. */
 static int32_t libc_divide(int32_t* numerator, int32_t denominator) {
-  static const int32_t LONG_BITS = 32;
   int64_t result = ldiv(*numerator, denominator);
 
   *numerator = (int32_t)result;
-  return result >> LONG_BITS;
+  return result >> CPU_LONG_BITS;
 }
 
 /* Copies a text with its NUL, as the image does in line. */
@@ -167,11 +179,11 @@ static void libc_double_to_digits_multiply(uint32_t* product) {
   uint64_t cross_1 = a_low * b_high;
   uint64_t cross_2 = a_high * b_low;
   uint64_t middle =
-      (low >> LIBC_WORD_BITS) + (uint32_t)cross_1 + (uint32_t)cross_2;
-  uint64_t high = a_high * b_high + (cross_1 >> LIBC_WORD_BITS) +
-                  (cross_2 >> LIBC_WORD_BITS) + (middle >> LIBC_WORD_BITS);
+      (low >> CPU_LONG_BITS) + (uint32_t)cross_1 + (uint32_t)cross_2;
+  uint64_t high = a_high * b_high + (cross_1 >> CPU_LONG_BITS) +
+                  (cross_2 >> CPU_LONG_BITS) + (middle >> CPU_LONG_BITS);
 
-  product[0] = high >> LIBC_WORD_BITS;
+  product[0] = high >> CPU_LONG_BITS;
   product[1] = high;
   product[2] = middle;
   product[3] = low;
@@ -185,7 +197,7 @@ enum {
 
 /* A 64-bit number from two words, high first, as the tables keep them. */
 static uint64_t libc_words(const uint32_t* words) {
-  return (uint64_t)words[0] << LIBC_WORD_BITS | words[1];
+  return (uint64_t)words[0] << CPU_LONG_BITS | words[1];
 }
 
 /* 10^n, n 0 to 17: the image's powers_of_ten_64 (0x5fa46). */
@@ -219,7 +231,7 @@ static uint64_t libc_power_of_ten(int32_t n) {
  * double_to_digits's integer, in the image's cases.  A shift that is
  * a multiple of 32 other than 64 leaves the high 64 bits. */
 static uint64_t libc_digits_round(const uint32_t product[4], int16_t shift) {
-  int16_t bit = shift & (LIBC_WORD_BITS - 1);
+  int16_t bit = shift & (CPU_LONG_BITS - 1);
   int16_t word = 2 - (shift >> 5);
   uint32_t round_bit;
 
@@ -243,10 +255,10 @@ static uint64_t libc_digits_round(const uint32_t product[4], int16_t shift) {
   uint64_t integer;
 
   if (bit == 0) {
-    integer = shift == 2 * LIBC_WORD_BITS ? product[0] : high;
-  } else if (shift < LIBC_WORD_BITS) {
-    integer = high << (LIBC_WORD_BITS - bit) | product[2] >> bit;
-  } else if (shift > 2 * LIBC_WORD_BITS) {
+    integer = shift == 2 * CPU_LONG_BITS ? product[0] : high;
+  } else if (shift < CPU_LONG_BITS) {
+    integer = high << (CPU_LONG_BITS - bit) | product[2] >> bit;
+  } else if (shift > 2 * CPU_LONG_BITS) {
     integer = product[0] >> bit;
   } else {
     integer = high >> bit;
@@ -402,7 +414,7 @@ static void libc_double_to_digits(double value, int32_t count,
     uint32_t product[4];
 
     if (small == 0 && big == 0) {
-      product[0] = mantissa >> LIBC_WORD_BITS;
+      product[0] = mantissa >> CPU_LONG_BITS;
       product[1] = mantissa;
       product[2] = 0;
       product[3] = 0;
@@ -435,7 +447,7 @@ static void libc_double_to_digits(double value, int32_t count,
           }
         }
       }
-      product[2] = mantissa >> LIBC_WORD_BITS;
+      product[2] = mantissa >> CPU_LONG_BITS;
       product[3] = mantissa;
       libc_double_to_digits_multiply(product);
     }
@@ -472,7 +484,7 @@ static void libc_double_to_digits(double value, int32_t count,
   int16_t place = significant;
   char* out = digits;
 
-  while (--place, integer >> LIBC_WORD_BITS != 0) {
+  while (--place, integer >> CPU_LONG_BITS != 0) {
     uint64_t power = libc_power_of_ten(place);
 
     *out = '0';
@@ -482,7 +494,7 @@ static void libc_double_to_digits(double value, int32_t count,
     out++;
   }
   /* Places worth 2^32 or more are zeros now, written once a digit has been. */
-  while (libc_power_of_ten(place) >> LIBC_WORD_BITS != 0) {
+  while (libc_power_of_ten(place) >> CPU_LONG_BITS != 0) {
     place--;
     if (out > digits) {
       *out++ = '0';
@@ -554,7 +566,7 @@ enum {
 };
 
 #define LIBC_RAISE_CODE(routine, cause) \
-  ((uint32_t)(LIBC_RAISE_MATH | (routine)) << LIBC_WORD_BITS / 2 | (cause))
+  ((uint32_t)(LIBC_RAISE_MATH | (routine)) << CPU_LONG_BITS / 2 | (cause))
 
 /* float_exception_report's and its installer copy's body: builds
  * float_raise's report, "fp <cause>: <routine>", a length byte and its
@@ -583,7 +595,7 @@ static void libc_float_exception_message(uint8_t* message, uint32_t code) {
   static const int32_t NAME_LENGTH = 8;
   const char* cause = "fp unknown exception: ";
   const uint16_t cause_bits = code;
-  uint16_t routine = code >> LIBC_WORD_BITS / 2;
+  uint16_t routine = code >> CPU_LONG_BITS / 2;
   const char* names;
 
   message[0] = 0;
@@ -687,29 +699,28 @@ static uint32_t libc_raise_inexact_address(uint32_t routine,
 /* A long shifted right by a count, as lsr.l shifts by a register: the
  * count modulo 64, nothing left from 32 on (MC68000PRM, LSR). */
 static uint32_t libc_shift_right(uint32_t value, uint32_t count) {
-  count &= 2 * LIBC_WORD_BITS - 1;
-  return count < (uint32_t)LIBC_WORD_BITS ? value >> count : 0;
+  count &= CPU_SHIFT_COUNT_MASK;
+  return count < (uint32_t)CPU_LONG_BITS ? value >> count : 0;
 }
 
 /* The same left, as lsl.l does it. */
 static uint32_t libc_shift_left(uint32_t value, uint32_t count) {
-  count &= 2 * LIBC_WORD_BITS - 1;
-  return count < (uint32_t)LIBC_WORD_BITS ? value << count : 0;
+  count &= CPU_SHIFT_COUNT_MASK;
+  return count < (uint32_t)CPU_LONG_BITS ? value << count : 0;
 }
 
 /* A long rotated right by a count, as ror.l rotates by a register:
  * the count modulo 64, a rotation by 32 the long as it was (MC68000PRM,
  * ROL, ROR). */
 static uint32_t libc_rotate_right(uint32_t value, uint32_t count) {
-  count &= LIBC_WORD_BITS - 1;
-  return count == 0 ? value
-                    : value >> count | value << (LIBC_WORD_BITS - count);
+  count &= CPU_LONG_BITS - 1;
+  return count == 0 ? value : value >> count | value << (CPU_LONG_BITS - count);
 }
 
 /* The same left, as rol.l does it. */
 static uint32_t libc_rotate_left(uint32_t value, uint32_t count) {
   return libc_rotate_right(value,
-                           LIBC_WORD_BITS - (count & (LIBC_WORD_BITS - 1)));
+                           CPU_LONG_BITS - (count & (CPU_LONG_BITS - 1)));
 }
 
 /* What setjmp saves in its buffer, a jmp_buf of 0x42 bytes, and longjmp
@@ -847,9 +858,9 @@ static uint32_t libc_raise_double_underflow(libc_raised* raised, uint32_t count,
   uint32_t guard;
 
   high = (high & HIGH_MANTISSA) | IMPLICIT_ONE;
-  if (places != LIBC_WORD_BITS) {
+  if (places != CPU_LONG_BITS) {
     const uint32_t shift =
-        places < LIBC_WORD_BITS ? count : count - LIBC_WORD_BITS;
+        places < CPU_LONG_BITS ? count : count - CPU_LONG_BITS;
     const uint32_t kept = libc_shift_right(~0u, shift);
     const uint32_t rotated_high = libc_rotate_right(high, shift);
     const uint32_t rotated_low = libc_rotate_right(low, shift);
@@ -862,7 +873,7 @@ static uint32_t libc_raise_double_underflow(libc_raised* raised, uint32_t count,
     }
     sticky = guard;
   }
-  if (places >= LIBC_WORD_BITS) {
+  if (places >= CPU_LONG_BITS) {
     guard = low | (sticky != 0);
     low = high;
     high = 0;
@@ -922,7 +933,7 @@ static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
   static const int16_t DOUBLE_UNDERFLOW_MOST = 55;
   static const uint32_t HIGH_WORD = 0xffff0000;
   const uint16_t cause = code;
-  const uint16_t routine = code >> LIBC_WORD_BITS / 2;
+  const uint16_t routine = code >> CPU_LONG_BITS / 2;
   const bool single = (routine & LIBC_RAISE_SINGLE) != 0;
   const bool math = (routine & LIBC_RAISE_MATH) != 0;
   libc_raised raised = {.high = 0,
@@ -1087,19 +1098,18 @@ static int32_t libc_print_run(const char* text, int32_t count,
  * precision was given. */
 static char* libc_print_decimal(uint32_t value, char* start,
                                 bool precision_given) {
-  static const int32_t BASE = 10;
   int32_t rest = value;
 
-  if (rest < BASE) {
+  if (rest < LIBC_DECIMAL) {
     if (rest != 0 || !precision_given) {
       *--start = '0' + rest;
     }
     return start;
   }
   do {
-    *--start = '0' + rest % BASE;
-    rest /= BASE;
-  } while (rest >= BASE);
+    *--start = '0' + rest % LIBC_DECIMAL;
+    rest /= LIBC_DECIMAL;
+  } while (rest >= LIBC_DECIMAL);
   *--start = '0' + rest;
   return start;
 }

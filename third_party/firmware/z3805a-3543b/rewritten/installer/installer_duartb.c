@@ -7,12 +7,7 @@
 /* DUART channel B's mode registers from the serial settings: parity,
  * data bits and stop bits (installer::0x103016). */
 void installer_duartb_mode_from_settings(void) {
-  /* The 68681's channel B settings (MC68681 Table 4-5). */
-  static const uint8_t MR1_KEEP = MR1_RXRTS | MR1_RXIRQ_FFULL | MR1_ERROR_BLOCK;
-  static const uint8_t MR1_SEVEN_BITS = 2;
-  static const uint8_t MR2_TWO_STOP_BITS = 0x0f;
-
-  installer_duart_shadow.mr1b &= MR1_KEEP;
+  installer_duart_shadow.mr1b &= DUART_MR1_KEEP;
   if (installer_duartb_settings.parity == SERIAL_PARITY_NONE) {
     installer_duartb.parity = 0;
     installer_duart_shadow.mr1b |= MR1_PARITY_NONE;
@@ -24,10 +19,10 @@ void installer_duartb_mode_from_settings(void) {
   }
   installer_duart_shadow.mr1b |= installer_duartb_settings.eight_bits
                                      ? DUART_MR1_EIGHT_BITS
-                                     : MR1_SEVEN_BITS;
+                                     : DUART_MR1_SEVEN_BITS;
   installer_duart_shadow.mr2b =
       (installer_duart_shadow.mr2b & ~MR2_STOP_MASK) |
-      (installer_duartb_settings.two_stop_bits ? MR2_TWO_STOP_BITS
+      (installer_duartb_settings.two_stop_bits ? DUART_MR2_TWO_STOP_BITS
                                                : DUART_MR2_ONE_STOP_BIT);
   duart.b.cr = CR_RESET_MR_POINTER;
   duart.b.mr = installer_duart_shadow.mr1b;
@@ -41,24 +36,20 @@ void installer_duartb_mode_from_settings(void) {
 /* DUART channel B's baud rate from the serial settings, 19200 for a
  * code out of range (installer::0x1030b4). */
 void installer_duartb_baud_from_settings(void) {
-  /* baud-rate set 2's clock selects, which ACR_BRG_SET_2 picks */
-  static const uint8_t CSR_1200 = 0x6;
-  static const uint8_t CSR_2400 = 0x8;
-  static const uint8_t CSR_19200 = 0xc;
   uint8_t clock;
 
   switch (installer_duartb_settings.baud) {
     case SERIAL_BAUD_1200:
-      clock = CSR_1200;
+      clock = DUART_CSR_1200;
       break;
     case SERIAL_BAUD_2400:
-      clock = CSR_2400;
+      clock = DUART_CSR_2400;
       break;
     case SERIAL_BAUD_9600:
       clock = DUART_CSR_9600;
       break;
     default:
-      clock = CSR_19200;
+      clock = DUART_CSR_19200;
       break;
   }
   clock |= clock << DUART_CSR_CLOCK_BITS;
@@ -158,23 +149,16 @@ int32_t installer_console_write_polled(char* s) {
  * hold transmission, and a ring running out of room sends XOFF.
  * Returns the overrun bit of the status register (installer::0x103aa8). */
 uint8_t installer_duartb_isr(void) {
-  /* The 68681's receive errors (MC68681 Table 4-5). */
-  static const uint8_t RECEIVE_ERRORS =
-      SR_RECEIVED_BREAK | SR_FRAMING_ERROR | SR_PARITY_ERROR;
-  static const uint8_t ASCII_MASK = 0x7f;
-  /* XON/XOFF threshold, in free bytes of a 256-byte ring. */
-  static const uint8_t XOFF_BELOW_FREE =
-      0x40; /* the interrupt sends XOFF with fewer free */
   bool received = false;
   uint8_t status;
 
   while ((duart.b.sr_csr & SR_RXRDY) != 0) {
     uint8_t character;
 
-    installer_duartb.receive_errors |= duart.b.sr_csr & RECEIVE_ERRORS;
+    installer_duartb.receive_errors |= duart.b.sr_csr & DUART_RECEIVE_ERRORS;
     character = duart.b.rb_tb;
     if (!installer_duartb_applied.eight_bits) {
-      character &= ASCII_MASK;
+      character &= DUART_ASCII_MASK;
     }
     if (character == DUART_CTRL_C &&
         installer_duartb.read_token.task == installer_task_console) {
@@ -215,7 +199,7 @@ uint8_t installer_duartb_isr(void) {
       }
       received = true;
       if ((uint8_t)(installer_duartb_ring.read - installer_duartb_ring.write) <
-          XOFF_BELOW_FREE) {
+          DUART_XOFF_BELOW_FREE) {
         installer_duartb.flow |= DUART_FLOW_XOFF_SENT;
         if (installer_duartb.xon_xoff) {
           installer_duartb_putc_polled(DUART_XOFF);
@@ -244,10 +228,6 @@ uint8_t installer_duartb_isr(void) {
  * the interrupt off and signals the write token's task, and at the
  * block's end signals the SCPI task (installer::0x103c90). */
 void installer_duartb_transmit_interrupt(void) {
-  /* The signal it gives the SCPI task when an asynchronous send ends;
-   * psos-signals.h has no name for it. */
-  static const uint32_t SIGNAL_ASYNC_DONE = 0x0020;
-
   installer_duartb.in_transmit_interrupt = 1;
   if (installer_duartb.async_count != 0) {
     duart.b.rb_tb = *installer_duartb.async_next++;
@@ -270,7 +250,7 @@ void installer_duartb_transmit_interrupt(void) {
     installer_duartb.async_pending = 0;
     installer_duartb.async_allowed = 0;
     if (installer_task_scpi != 0) {
-      installer_psos_signal_v(installer_task_scpi, SIGNAL_ASYNC_DONE);
+      installer_psos_signal_v(installer_task_scpi, DUART_SIGNAL_ASYNC_DONE);
     }
   }
   installer_duartb.in_transmit_interrupt = 0;

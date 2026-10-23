@@ -32,8 +32,6 @@ void duart_test_tx_b(void) { duart_test_transmit(&duart.b, IMR_TXRDYB); }
 /* At reset, before interrupts: sends "DUART" through channel B in local
  * loopback by polling and checks each character back (0x1ebe4). */
 void duartb_loopback_check(void) {
-  /* How long duartb_loopback_check spins for each character back. */
-  static const int32_t LOOPBACK_CHECK_SPINS = 3000;
   char* text = "DUART";
 
   (void)duart.b.mr;
@@ -43,7 +41,7 @@ void duartb_loopback_check(void) {
   duart.b.cr = CR_TX_ENABLE | CR_RX_ENABLE;
   duart.b.rb_tb = *loopback_send_next++;
   while (*loopback_expect_next != 0 && selftest.uart == 0) {
-    for (int32_t spins = LOOPBACK_CHECK_SPINS;
+    for (int32_t spins = DUART_LOOPBACK_CHECK_SPINS;
          spins > 0 && (duart.b.sr_csr & SR_RXRDY) == 0; spins--) {
     }
     if ((duart.b.sr_csr & SR_RXRDY) != 0) {
@@ -72,12 +70,7 @@ void duartb_echo_none(char c) {}
 /* DUART channel B's mode registers from the serial settings: parity,
  * data bits and stop bits (0x1d594). */
 void duartb_mode_from_settings(void) {
-  /* The 68681's channel B settings (MC68681 Table 4-5). */
-  static const uint8_t MR1_KEEP = MR1_RXRTS | MR1_RXIRQ_FFULL | MR1_ERROR_BLOCK;
-  static const uint8_t MR1_SEVEN_BITS = 2;
-  static const uint8_t MR2_TWO_STOP_BITS = 0x0f;
-
-  duart_shadow.mr1b &= MR1_KEEP;
+  duart_shadow.mr1b &= DUART_MR1_KEEP;
   if (duartb_settings.parity == SERIAL_PARITY_NONE) {
     duartb.parity = 0;
     duart_shadow.mr1b |= MR1_PARITY_NONE;
@@ -88,9 +81,9 @@ void duartb_mode_from_settings(void) {
     }
   }
   duart_shadow.mr1b |=
-      duartb_settings.eight_bits ? DUART_MR1_EIGHT_BITS : MR1_SEVEN_BITS;
+      duartb_settings.eight_bits ? DUART_MR1_EIGHT_BITS : DUART_MR1_SEVEN_BITS;
   duart_shadow.mr2b = (duart_shadow.mr2b & ~MR2_STOP_MASK) |
-                      (duartb_settings.two_stop_bits ? MR2_TWO_STOP_BITS
+                      (duartb_settings.two_stop_bits ? DUART_MR2_TWO_STOP_BITS
                                                      : DUART_MR2_ONE_STOP_BIT);
   duart.b.cr = CR_RESET_MR_POINTER;
   duart.b.mr = duart_shadow.mr1b;
@@ -103,24 +96,20 @@ void duartb_mode_from_settings(void) {
 /* DUART channel B's baud rate from the serial settings, 19200 for a
  * code out of range (0x1d632). */
 void duartb_baud_from_settings(void) {
-  /* baud-rate set 2's clock selects, which ACR_BRG_SET_2 picks */
-  static const uint8_t CSR_1200 = 0x6;
-  static const uint8_t CSR_2400 = 0x8;
-  static const uint8_t CSR_19200 = 0xc;
   uint8_t clock;
 
   switch (duartb_settings.baud) {
     case SERIAL_BAUD_1200:
-      clock = CSR_1200;
+      clock = DUART_CSR_1200;
       break;
     case SERIAL_BAUD_2400:
-      clock = CSR_2400;
+      clock = DUART_CSR_2400;
       break;
     case SERIAL_BAUD_9600:
       clock = DUART_CSR_9600;
       break;
     default:
-      clock = CSR_19200;
+      clock = DUART_CSR_19200;
       break;
   }
   clock |= clock << DUART_CSR_CLOCK_BITS;
@@ -314,23 +303,16 @@ uint8_t drtb_release_for_timecode(void) {
  * hold transmission, and a ring running out of room sends XOFF.
  * Returns the overrun bit of the status register (0x1e7f6). */
 uint8_t duartb_isr(void) {
-  /* The 68681's receive errors (MC68681 Table 4-5). */
-  static const uint8_t RECEIVE_ERRORS =
-      SR_RECEIVED_BREAK | SR_FRAMING_ERROR | SR_PARITY_ERROR;
-  static const uint8_t ASCII_MASK = 0x7f;
-  /* XON/XOFF threshold, in free bytes of a 256-byte ring. */
-  static const uint8_t XOFF_BELOW_FREE =
-      0x40; /* the interrupt sends XOFF with fewer free */
   bool received = false;
   uint8_t status;
 
   while ((duart.b.sr_csr & SR_RXRDY) != 0) {
     uint8_t character;
 
-    duartb.receive_errors |= duart.b.sr_csr & RECEIVE_ERRORS;
+    duartb.receive_errors |= duart.b.sr_csr & DUART_RECEIVE_ERRORS;
     character = duart.b.rb_tb;
     if (!duartb_applied.eight_bits) {
-      character &= ASCII_MASK;
+      character &= DUART_ASCII_MASK;
     }
     if (character == DUART_CTRL_C && duartb.read_token.task == task_console) {
       if (duartb.read_token.task != 0 &&
@@ -368,7 +350,8 @@ uint8_t duartb_isr(void) {
         duartb.receive_errors |= SR_OVERRUN;
       }
       received = true;
-      if ((uint8_t)(duartb_ring.read - duartb_ring.write) < XOFF_BELOW_FREE) {
+      if ((uint8_t)(duartb_ring.read - duartb_ring.write) <
+          DUART_XOFF_BELOW_FREE) {
         duartb.flow |= DUART_FLOW_XOFF_SENT;
         if (duartb.xon_xoff) {
           duartb_putc_polled(DUART_XOFF);
@@ -397,10 +380,6 @@ uint8_t duartb_isr(void) {
  * the interrupt off and signals the write token's task, and at the
  * block's end signals the SCPI task (0x1ea10). */
 void duartb_transmit_interrupt(void) {
-  /* The signal it gives the SCPI task when an asynchronous send ends;
-   * psos-signals.h has no name for it. */
-  static const uint32_t SIGNAL_ASYNC_DONE = 0x0020;
-
   duartb.in_transmit_interrupt = 1;
   if (duartb.async_count != 0) {
     duart.b.rb_tb = *duartb.async_next++;
@@ -421,7 +400,7 @@ void duartb_transmit_interrupt(void) {
     duartb.async_pending = 0;
     duartb.async_allowed = 0;
     if (task_scpi != 0) {
-      psos_signal_v(task_scpi, SIGNAL_ASYNC_DONE);
+      psos_signal_v(task_scpi, DUART_SIGNAL_ASYNC_DONE);
     }
   }
   duartb.in_transmit_interrupt = 0;

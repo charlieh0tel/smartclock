@@ -12,6 +12,9 @@
 
 #include <stddef.h>
 
+/* A whole, as the reports' percentages take it. */
+static const uint32_t OS_PERCENT = 100;
+
 /* The kernel's data area. */
 static psos_kernel* os_kernel_data(void) { return psos_config.data_area; }
 
@@ -586,7 +589,7 @@ int32_t task_table_build(void) {
       continue;
     }
     task_table[count].task = task;
-    if (task->status == 0) {
+    if (task->status == PSOS_TASK_READY) {
       task_table[count].state = PSOS_TABLE_READY;
     } else if (!os_task_paused(task)) {
       task_table[count].state = PSOS_TABLE_BLOCKED;
@@ -649,7 +652,7 @@ char* task_status_name(void* record) {
   if (task->status & PSOS_TASK_SUSPENDED) {
     return "susp";
   }
-  if (task->status == 0) {
+  if (task->status == PSOS_TASK_READY) {
     return " RDY";
   }
   return " ?? ";
@@ -751,7 +754,6 @@ void os_report_process(void* record, char* status, int32_t position,
   /* The registers as the caller left them, which the image reads. */
   uint32_t caller_d5 = CPU_CALLERS_REGISTER(uint32_t, "d5");
   int32_t caller_d6 = CPU_CALLERS_REGISTER(int32_t, "d6");
-  static const int32_t PERCENT = 100;
   psos_task* task = record;
   char* name = task_name(task);
   char place[16];
@@ -776,14 +778,14 @@ void os_report_process(void* record, char* status, int32_t position,
 
   if (region_segment_containing(task, task->supervisor_pointer) != NULL) {
     uint32_t top = task->user_top;
-    uint32_t size = task->user_top - task->supervisor_top - 4;
+    uint32_t size = task->user_top - task->supervisor_top - OS_USER_STACK_GAP;
 
     if (size == 0) {
       size = task->supervisor_top - task->stack_bottom;
       pointer = task->supervisor_pointer;
       top = task->supervisor_top;
     }
-    stack_share = size == 0 ? 0 : (top - pointer) * PERCENT / size;
+    stack_share = size == 0 ? 0 : (top - pointer) * OS_PERCENT / size;
   }
   uint32_t task_ticks = task->ticks;
   uint32_t cpu_share = 0;
@@ -791,7 +793,7 @@ void os_report_process(void* record, char* status, int32_t position,
   task->ticks = 0;
   if (task_ticks_total != 0) {
     cpu_share =
-        (task_ticks_total / 2 + task_ticks * PERCENT) / task_ticks_total;
+        (task_ticks_total / 2 + task_ticks * OS_PERCENT) / task_ticks_total;
   }
   libc_copy(state, status);
   if (task->mode & (PSOS_MODE_TIME_SLICE | PSOS_MODE_NO_PREEMPTION)) {
@@ -1075,19 +1077,17 @@ void os_memory_report(request_source source) {
  * stack_usage measures them, its used bytes in D0's half of the result
  * and the size in D1's (0x1321a). */
 int32_t stack_measure(void* record, uint32_t* usage) {
-  static const uint32_t HALF_BITS = 32;
-  static const uint32_t USER_STACK_GAP = 4;
   psos_task* task = record;
   uint64_t supervisor =
       stack_usage((uint16_t*)task->stack_bottom, (char*)task->supervisor_top);
 
-  usage[2] = supervisor >> HALF_BITS;
+  usage[2] = supervisor >> CPU_LONG_BITS;
   usage[3] = supervisor;
   uint64_t user =
-      stack_usage((uint16_t*)(task->supervisor_top + USER_STACK_GAP),
+      stack_usage((uint16_t*)(task->supervisor_top + OS_USER_STACK_GAP),
                   (char*)task->user_top);
 
-  usage[0] = user >> HALF_BITS;
+  usage[0] = user >> CPU_LONG_BITS;
   usage[1] = user;
   return 0;
 }
@@ -1116,7 +1116,6 @@ void task_stack_info(void* record, uint32_t* user_top, uint32_t* user_pointer,
                      uint32_t* supervisor_pointer, uint32_t* supervisor_size) {
   /* The image's user stack is 4 bytes short of the gap, and a segment's
    * use 0x12 short of its size. */
-  static const uint32_t USER_STACK_GAP = 4;
   static const uint32_t SEGMENT_OVERHEAD = 0x12;
   psos_task* task = record;
   volatile uint32_t unset_top;
@@ -1128,7 +1127,7 @@ void task_stack_info(void* record, uint32_t* user_top, uint32_t* user_pointer,
     *supervisor_top = task->supervisor_top;
     *supervisor_size = task->supervisor_top - task->stack_bottom;
     *user_top = task->user_top;
-    *user_size = task->user_top - task->supervisor_top - USER_STACK_GAP;
+    *user_size = task->user_top - task->supervisor_top - OS_USER_STACK_GAP;
     return;
   }
   task_debug_message("no system stack found\r\n");
@@ -1143,9 +1142,7 @@ void task_stack_info(void* record, uint32_t* user_top, uint32_t* user_pointer,
 /* A percentage as the stack report computes it: of a stack's size, the
  * bytes from a word to its top. */
 static uint16_t os_stack_percent(uint32_t top, uint32_t at, uint32_t size) {
-  static const uint32_t PERCENT = 100;
-
-  return (top - at) * PERCENT / size;
+  return (top - at) * OS_PERCENT / size;
 }
 
 /* A task stack's use for the stack report, of a size that is not 0: up
@@ -1174,13 +1171,9 @@ static uint16_t os_stack_use(uint32_t top, uint32_t size, uint32_t pointer) {
  * (0x16e06; docs/firmware/quirks.md, "Reads of what nothing set"). */
 void task_stack_report(request_source source) {
   uint16_t supervisor_use = CPU_CALLERS_REGISTER(uint32_t, "d2");
-  /* task_stack_info's user size leaves out the 4 bytes above the
-   * supervisor stack, which the report puts back. */
-  static const uint32_t USER_STACK_GAP = 4;
   /* The kernel's supervisor stack starts this far into its data area
    * (structures.md, "The tasks' stacks"). */
   static const uint32_t SYSTEM_STACK_OFFSET = 200;
-  static const uint16_t PERCENT = 100;
   static char* const ROW = "$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n";
   static char* const TOPS = "               $%08X (TOS)       $%08X (TOS)\r\n";
 
@@ -1209,9 +1202,11 @@ void task_stack_report(request_source source) {
         supervisor_size != 0
             ? os_stack_use(supervisor_top, supervisor_size, supervisor_pointer)
             : 0;
+    /* task_stack_info's user size leaves out the gap, which the report
+     * puts back. */
     printf(ROW, (uint32_t)task, task_name(task), user_pointer,
-           user_size + USER_STACK_GAP, (uint32_t)user_use, supervisor_pointer,
-           supervisor_size, (uint32_t)supervisor_use);
+           user_size + OS_USER_STACK_GAP, (uint32_t)user_use,
+           supervisor_pointer, supervisor_size, (uint32_t)supervisor_use);
     printf(TOPS, user_top, supervisor_top);
   }
 
@@ -1227,7 +1222,7 @@ void task_stack_report(request_source source) {
          word++) {
       if (*word != 0) {
         supervisor_use =
-            PERCENT - os_stack_percent((uint32_t)word, bottom, system_size);
+            OS_PERCENT - os_stack_percent((uint32_t)word, bottom, system_size);
         break;
       }
     }
@@ -1259,17 +1254,13 @@ void busy_wait(uint32_t count) { os_busy_wait(count); }
  * time pauses a tick, and one past 2^21 seconds that long; nothing calls
  * it (0x13448). */
 void sleep_seconds(float seconds) {
-  /* The kernel's ticks a second, and the shortest and longest pauses
-   * it takes, a tick and 2^21 seconds. */
-  static const float TICKS_PER_SECOND = 1024;
-  static const float SLEEP_LONGEST = 1 << 21;
-
   if (float_compare(0.0f, seconds) > 0) {
-    seconds = 1.0f / TICKS_PER_SECOND;
-  } else if (float_compare(seconds, SLEEP_LONGEST) > 0) {
-    seconds = SLEEP_LONGEST;
+    seconds = 1.0f / OS_TICKS_PER_SECOND;
+  } else if (float_compare(seconds, OS_SLEEP_LONGEST) > 0) {
+    seconds = OS_SLEEP_LONGEST;
   }
-  uint32_t ticks = float_to_unsigned(float_multiply(seconds, TICKS_PER_SECOND));
+  uint32_t ticks =
+      float_to_unsigned(float_multiply(seconds, OS_TICKS_PER_SECOND));
 
   psos_pause(ticks == 0 ? 1 : ticks);
 }

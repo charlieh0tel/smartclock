@@ -252,7 +252,7 @@ void qspi_fpga_block_write(uint16_t* words, uint16_t count) {
  * qspi_write, the argument's own slot the buffer; nothing calls it
  * (0x1f680). */
 void qspi_fpga_tail_write(uint32_t words) {
-  qspi_write(QSPI_FPGA_TAIL, &words, 2);
+  qspi_write(QSPI_FPGA_TAIL, &words, FPGA_TAIL_WORDS);
 }
 
 /* Writes a word to the FPGA through qspi_write, the argument's own slot

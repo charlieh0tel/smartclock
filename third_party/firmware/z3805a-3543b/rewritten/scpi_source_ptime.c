@@ -46,11 +46,10 @@ static void scpi_source_ptime_date_items(uint32_t date,
                                          scpi_source_ptime_fields* fields) {
   static const uint32_t YEAR_SHIFT = 16;
   static const uint32_t MONTH_SHIFT = 8;
-  static const uint32_t BYTE_MASK = 0xff;
 
   fields->first.value = (uint16_t)(date >> YEAR_SHIFT);
-  fields->second.value = (date >> MONTH_SHIFT) & BYTE_MASK;
-  fields->third.value = date & BYTE_MASK;
+  fields->second.value = (date >> MONTH_SHIFT) & CPU_BYTE_MASK;
+  fields->third.value = date & CPU_BYTE_MASK;
 }
 
 /* :PTIMe:PPS:EDGE: a stub; -113, Undefined header (0x2dc68). */

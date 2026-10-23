@@ -197,9 +197,6 @@ uint32_t error_queue_create(status_error_queue** slot, int32_t capacity,
  * overflows, else 0 (0x285d4). */
 int16_t error_queue_push(status_error_queue* queue, int32_t code,
                          uint32_t value) {
-  /* The error the queue's last free entry takes, "Queue overflow" in
-   * scpi_error_messages (0x28610). */
-  static const int16_t ERROR_QUEUE_OVERFLOW = -350;
   status_model* status = queue->status;
   int16_t error = code;
   int16_t full = 0;
@@ -212,7 +209,7 @@ int16_t error_queue_push(status_error_queue* queue, int32_t code,
     full = 1;
   } else {
     if (room == 2) {
-      error = ERROR_QUEUE_OVERFLOW;
+      error = STATUS_ERROR_QUEUE_OVERFLOW;
       value = 0;
       full = 1;
     }
@@ -311,11 +308,9 @@ void status_register_setup(int32_t model, int32_t index, uint32_t positive,
  * filter pointers are NULL, so its filters are ROM's first long's low
  * word, the reset stack pointer's, as the image reads them. */
 uint32_t status_init(void) {
-  static const int32_t ERROR_QUEUE_ROOM = 0x1e;
-
   status_request_service = 0;
   uint32_t error = status_create(&status_object, STATUS_REGISTERS,
-                                 ERROR_QUEUE_ROOM, status_conditions, 0);
+                                 STATUS_ERROR_QUEUE_ROOM, status_conditions, 0);
 
   if (error != 0) {
     return error;

@@ -274,13 +274,10 @@ void diag_words_define(void) {
 /* The hook halt runs: lowers the console task below the SCPI task's
  * creator, has it run, and deletes the console's task (0x12f50). */
 void console_halt_hook(void) {
-  /* Task 0, the caller. */
-  static const uint32_t SELF = 0;
-
-  psos_priority(SELF, CONSOLE_HALT_PRIORITY, NULL);
+  psos_priority(OS_TASK_SELF, CONSOLE_HALT_PRIORITY, NULL);
   spoo_run(scpi_task_create, CONSOLE_SCPI_CREATOR_PRIORITY, 0, 0);
   task_console = 0;
-  psos_delete(SELF);
+  psos_delete(OS_TASK_SELF);
 }
 
 /* The word cal: samples the oven current and the EFC every 10 seconds

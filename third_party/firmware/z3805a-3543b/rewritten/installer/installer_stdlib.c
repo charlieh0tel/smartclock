@@ -17,16 +17,14 @@ void installer_program_exit(uint32_t value) {
  * never returns (installer::0x1013c2; program_end_report, 0x149bc).  The digits
  * are built backward from a stop byte at the buffer's end, where they stay. */
 void installer_program_end_report(uint32_t value, uint32_t return_address) {
-  static const int32_t DIGITS_END = 0x2d;
-  static const uint8_t DIGITS_STOP = 0xff;
-  uint8_t* digit = &installer_program_end_message[DIGITS_END];
+  uint8_t* digit = &installer_program_end_message[LIBC_PROGRAM_END_DIGITS_END];
   uint32_t magnitude = value;
 
   installer_program_end_message[0] = 0;
   for (const char* text = "Prog end, returned "; *text != '\0'; text++) {
     libc_message_append(installer_program_end_message, *text);
   }
-  *digit = DIGITS_STOP;
+  *digit = LIBC_PROGRAM_END_DIGITS_STOP;
   if ((int32_t)value < 0) {
     magnitude = -value;
     libc_message_append(installer_program_end_message, '-');
@@ -35,7 +33,7 @@ void installer_program_end_report(uint32_t value, uint32_t return_address) {
     *--digit = magnitude % 10;
     magnitude /= 10;
   } while (magnitude != 0);
-  for (; *digit != DIGITS_STOP; digit++) {
+  for (; *digit != LIBC_PROGRAM_END_DIGITS_STOP; digit++) {
     libc_message_append(installer_program_end_message, '0' + *digit);
   }
   installer_fatal_error_with_code((char*)installer_program_end_message,
@@ -64,9 +62,6 @@ int32_t installer_strtol(char* s, char** end, int32_t base) {
   static const int32_t BASE_MOST = 36;
   static const int32_t LONG_LEAST = (int32_t)LIBC_SIGN;
   static const int32_t LONG_MOST = (int32_t)(LIBC_SIGN - 1);
-  static const int32_t HEXADECIMAL = 16;
-  static const int32_t OCTAL = 8;
-  static const int32_t DECIMAL = 10;
   /* A letter's digit: 10 for a or A on. */
   static const int32_t LOWER_CASE = 0x20;
   static const int32_t LETTER_TO_DIGIT = 'a' - 10;
@@ -99,9 +94,9 @@ int32_t installer_strtol(char* s, char** end, int32_t base) {
     }
   }
   if (base == 0) {
-    base = c != '0'                     ? DECIMAL
-           : s[1] == 'x' || s[1] == 'X' ? HEXADECIMAL
-                                        : OCTAL;
+    base = c != '0'                     ? LIBC_DECIMAL
+           : s[1] == 'x' || s[1] == 'X' ? LIBC_HEXADECIMAL
+                                        : LIBC_OCTAL;
   }
   if ((classes[c] & ALPHANUMERIC) == 0) {
     return 0;
@@ -113,7 +108,7 @@ int32_t installer_strtol(char* s, char** end, int32_t base) {
   if (digit >= base) {
     return 0;
   }
-  if (base == HEXADECIMAL && c == '0' &&
+  if (base == LIBC_HEXADECIMAL && c == '0' &&
       (classes[(int8_t)s[2]] & LIBC_CTYPE_HEX) != 0 &&
       (s[1] == 'x' || s[1] == 'X')) {
     s += 2;

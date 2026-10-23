@@ -515,19 +515,17 @@ int32_t installer_exception_hook_clear_task(void) {
  * installer_stack_usage measures them, its used bytes in D0's half of
  * the result and the size in D1's (installer::0x100da4). */
 int32_t installer_stack_measure(void* record, uint32_t* usage) {
-  static const uint32_t HALF_BITS = 32;
-  static const uint32_t USER_STACK_GAP = 4;
   psos_task* task = record;
   uint64_t supervisor = installer_stack_usage((uint16_t*)task->stack_bottom,
                                               (char*)task->supervisor_top);
 
-  usage[2] = supervisor >> HALF_BITS;
+  usage[2] = supervisor >> CPU_LONG_BITS;
   usage[3] = supervisor;
-  uint64_t user =
-      installer_stack_usage((uint16_t*)(task->supervisor_top + USER_STACK_GAP),
-                            (char*)task->user_top);
+  uint64_t user = installer_stack_usage(
+      (uint16_t*)(task->supervisor_top + OS_USER_STACK_GAP),
+      (char*)task->user_top);
 
-  usage[0] = user >> HALF_BITS;
+  usage[0] = user >> CPU_LONG_BITS;
   usage[1] = user;
   return 0;
 }
@@ -555,18 +553,13 @@ void installer_busy_wait(uint32_t count) { os_busy_wait(count); }
  * time pauses a tick, and one past 2^21 seconds that long
  * (installer::0x100f60). */
 void installer_sleep_seconds(float seconds) {
-  /* The kernel's ticks a second, and the shortest and longest pauses
-   * it takes, a tick and 2^21 seconds. */
-  static const float TICKS_PER_SECOND = 1024;
-  static const float SLEEP_LONGEST = 1 << 21;
-
   if (installer_float_compare(0.0f, seconds) > 0) {
-    seconds = 1.0f / TICKS_PER_SECOND;
-  } else if (installer_float_compare(seconds, SLEEP_LONGEST) > 0) {
-    seconds = SLEEP_LONGEST;
+    seconds = 1.0f / OS_TICKS_PER_SECOND;
+  } else if (installer_float_compare(seconds, OS_SLEEP_LONGEST) > 0) {
+    seconds = OS_SLEEP_LONGEST;
   }
   uint32_t ticks = installer_float_to_unsigned(
-      installer_float_multiply(seconds, TICKS_PER_SECOND));
+      installer_float_multiply(seconds, OS_TICKS_PER_SECOND));
 
   installer_psos_pause(ticks == 0 ? 1 : ticks);
 }

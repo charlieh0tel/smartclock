@@ -8,17 +8,17 @@
  * declares are in scope; each function here keeps its generated
  * prototype. */
 
-/* The senders whose requests the task takes, ending in 0: the image's
- * table at 0x4cfc0. */
+/* The senders whose requests the task takes, ending in GPS_SENDER_NONE:
+ * the image's table at 0x4cfc0. */
 static const gps_request_sender gps_requests_senders[] = {
     GPS_SENDER_SEQUENCE, GPS_SENDER_SETTING, GPS_SENDER_COMMAND_MONITOR,
-    GPS_SENDER_STATUS_MONITOR, 0};
+    GPS_SENDER_STATUS_MONITOR, GPS_SENDER_NONE};
 
 /* 1 for a sender the task takes requests from (0x4bc58). */
 uint32_t request_kind_valid(gps_request_sender sender) {
   const gps_request_sender* known = gps_requests_senders;
 
-  while (*known != 0) {
+  while (*known != GPS_SENDER_NONE) {
     if (*known++ == sender) {
       return 1;
     }

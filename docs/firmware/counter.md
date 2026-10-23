@@ -77,7 +77,8 @@ loads, `fpga_address_sweep_debug`):
 ## The registers at start
 
 `counter_configuration_init` (`0x40ed8`) builds the field values
-`{0, 8, 0, 1, 0, 0}` (the preset and the high reference set) into both
+`{0, 8, 0, 1, 0, 0}` (the preset set, `TI_PRESET_ON`, and the high
+reference, `INTERPOLATOR_REFERENCE_HIGH`) into both
 `counter_configuration.fpga_registers` and `fconf_regs`:
 
 | Register | Value |
@@ -88,14 +89,16 @@ loads, `fpga_address_sweep_debug`):
 | 3 | `0x00`: no sync |
 
 It also sets the calibration to 0.4000003 s (below), the interpolator
-scale to 200, `calibrate_mode` 3 (always), and both work states to 2
-(wanted); `counter_init` (`0x40f76`) calls it and arms the reading.
+scale to 200, `calibrate_mode` to `COUNTER_CALIBRATE_ALWAYS` (3), and
+both work states to `COUNTER_WORK_WANTED` (2); `counter_init`
+(`0x40f76`) calls it and arms the reading.
 The registers reach the FPGA two ways: `counter_load_registers`
 (`0x40ea2`), from `counter_reset` (`0x24976`), which `pllp_task`
 (`0x47528`) runs at power-up and `pll_check_reference` (`0x46188`)
 runs after an invalid first reading, both after reloading the FPGA
 (`fpga_setup`, `0x22d70`); and the first `counter_arm`, which loads them
-while `registers_state` is 2 and sets it to 1.
+while `registers_state` is `COUNTER_WORK_WANTED` (2) and sets it to
+`COUNTER_WORK_DONE` (1).
 
 ## Each second
 
@@ -114,15 +117,17 @@ separately; the order is the same.
    `pps_interrupt`; the reading is then invalid.
 2. **Rearm.**  `interval_rearm` sets `interval_reading.armed`
    (`0x101fa8`), clears its errors, then by its `interval_arm_mode`:
-   0 calibrates the interpolator (`counter_calibrate`, below), 1 does
-   nothing more, 2 asks for a full sync (`sync_request(3, 1)`); then
-   calls `counter_arm` (`0x40c6a`).
+   `INTERVAL_ARM_CALIBRATE` (0) calibrates the interpolator
+   (`counter_calibrate`, below), `INTERVAL_ARM_PLAIN` (1) does nothing
+   more, `INTERVAL_ARM_SYNC` (2) asks for a full sync
+   (`sync_request(COUNTER_SYNC_FULL, 1)`); then calls `counter_arm`
+   (`0x40c6a`).
 
 `counter_arm`'s writes, in order (read from `0x40c6a`):
 
 | # | Register | Value | Why |
 | - | -------- | ----- | --- |
-| 1 | 0 to 3 | the configuration's | only while `registers_state` is 2 |
+| 1 | 0 to 3 | the configuration's | only while `registers_state` is `COUNTER_WORK_WANTED` |
 | 2 | 0 | `\| 0x40` | preset on |
 | 3 | 0 | mode 0 | count |
 | 4 | 1 | start clear | |
@@ -212,12 +217,14 @@ enter the result.
 ## The interpolator's calibration
 
 `counter_calibrate` (`0x405bc`) runs whenever `interval_rearm` is given
-mode 0, because `calibrate_mode` is 3 (always), before `counter_arm`.
+`INTERVAL_ARM_CALIBRATE`, because `calibrate_mode` is
+`COUNTER_CALIBRATE_ALWAYS`, before `counter_arm`.
 It tries `interpolator_calibrate` (`0x40248`) up to 20 times, falling
 back on `interpolator_verify` (`0x4047c`), and on success stores
 `offset = reading_low` and `scale = reading_high − reading_low`; on
-failure `scale = 200`, `offset = 0` and error `0x10`, "Interpolator
-calibration failure", which makes the reading that follows invalid.
+failure `scale = 200`, `offset = 0` and error
+`COUNTER_CALIBRATION_FAILURE` (`0x10`), "Interpolator calibration
+failure", which makes the reading that follows invalid.
 
 `interpolator_prepare` (`0x401c4`) sets the preset, mode 3, start
 clear, address 0.  Each measurement, `interpolator_measure`
@@ -366,11 +373,13 @@ What the loop does with it (read; `loop.md` has the update in full):
   firmware takes one EFC count to raise the frequency by 6.25e−13
   (inferred; the two signs are one assumption).
 - **Steps.**  `fine_sync_adjust` (`0x44e8e`): for |TI| of 100 ns to
-  300 ns it asks for TI / 100 ns steps, kind 1 for a positive TI, kind
-  2 for a negative; at 300 ns or more, one step and a slew.  Under
+  300 ns it asks for TI / 100 ns steps, `COUNTER_SYNC_POSITIVE` for a
+  positive TI, `COUNTER_SYNC_NEGATIVE` for a negative; at 300 ns or
+  more, one step and a slew.  Under
   100 ns, none.
 - **Sync.**  `sync_perform` (`0x44f5e`): when |TI| passes
-  `limit_threshold` or a sync was asked for, `sync_request(3, 1)` and
+  `limit_threshold` or a sync was asked for,
+  `sync_request(COUNTER_SYNC_FULL, 1)` and
   "Peforming sync" (sic).  The coarse stage starts with one
   (`interval_next_reading(INTERVAL_ARM_SYNC)`).
 
@@ -387,7 +396,7 @@ keeps the kind: nothing clears it.  The kinds (`counter_sync_kind`):
 | ---- | ---- | -------- |
 | 1 | `COUNTER_SYNC_POSITIVE` | `fine_sync_adjust`, a positive TI; the console's `clk_synch` |
 | 2 | `COUNTER_SYNC_NEGATIVE` | `fine_sync_adjust`, a negative TI; `clk_synch` |
-| 3 | `COUNTER_SYNC_FULL` | `sync_perform`, mode 2's rearm, `sync_imm` (`diag_sync_imm`, `0x1b2ec`) |
+| 3 | `COUNTER_SYNC_FULL` | `sync_perform`, `INTERVAL_ARM_SYNC`'s rearm, `sync_imm` (`diag_sync_imm`, `0x1b2ec`) |
 
 `clk_synch` (`diag_clk_synch`, `0x1b2d8`) passes its two arguments
 straight to `sync_request`.

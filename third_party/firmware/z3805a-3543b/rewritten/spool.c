@@ -9,24 +9,19 @@
  * exchange, and starts it; returns 0, else the kernel's error, or 1 for
  * a spool task already there (0x20c96). */
 uint32_t spoo_task_create(uint32_t priority) {
-  /* The spool task: its name, its stack sizes in words (supervisor
-   * and user), and its exchange's create_x arguments, which psos.md
-   * leaves unnamed (structures.md, "Others"). */
+  /* The spool task's name. */
   static const char NAME[] = "spoo";
-  static const uint32_t SUPERVISOR_STACK = 0x600;
-  static const uint32_t USER_STACK = 0x10;
-  static const uint32_t EXCHANGE_A = 2;
-  static const uint32_t EXCHANGE_B = 5;
   uint32_t error = (uint8_t)psos_ident((char*)NAME, 0, 0) == 0;
   char text[80];
 
   if (error == 0) {
-    error = (uint8_t)psos_create_x((char*)NAME, EXCHANGE_A, EXCHANGE_B,
-                                   &spoo_exchange);
+    error = (uint8_t)psos_create_x((char*)NAME, SPOOL_EXCHANGE_A,
+                                   SPOOL_EXCHANGE_B, &spoo_exchange);
   }
   if (error == 0) {
-    error = (uint8_t)psos_create((char*)NAME, 0, priority, SUPERVISOR_STACK,
-                                 USER_STACK, 0, &task_spoo);
+    error =
+        (uint8_t)psos_create((char*)NAME, 0, priority, SPOOL_SUPERVISOR_STACK,
+                             SPOOL_USER_STACK, 0, &task_spoo);
   }
   if (error == 0) {
     error = (uint8_t)psos_start(task_spoo, spoo_task);
@@ -88,14 +83,10 @@ int32_t deferred_vprintf(char* format, void* arguments) {
  * deferred messages when its request times out
  * (0x20e4e). */
 void spoo_task(void) {
-  /* The ticks it waits for a message before it prints the deferred
-   * ones instead (structures.md, "Others"). */
-  static const uint32_t WAIT_TICKS = 0x400;
-
   psos_supervisor();
   for (;;) {
-    spoo_receive_error =
-        (uint8_t)psos_request_x(spoo_exchange, &spoo_message, 0, WAIT_TICKS);
+    spoo_receive_error = (uint8_t)psos_request_x(spoo_exchange, &spoo_message,
+                                                 0, SPOOL_WAIT_TICKS);
     watchdog_spool++;
     if (spoo_receive_error == 0) {
       spoo_message.function(spoo_message.arguments[0],

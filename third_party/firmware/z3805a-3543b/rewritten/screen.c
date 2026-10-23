@@ -64,7 +64,6 @@ static void screen_band_add(satellite_kind kind, uint8_t id, int8_t mode,
  * (0x49474). */
 void satellite_sets_build(oncore_channel_status* channels,
                           satellite_sets* sets) {
-  static const uint8_t CHANNELS = 6;
   bool visible_known;
   bool used_known;
   const oncore_channel_status* channel;
@@ -77,7 +76,7 @@ void satellite_sets_build(oncore_channel_status* channels,
   if (!visible_known || !used_known) {
     return;
   }
-  for (channel = channels; channel < channels + CHANNELS; channel++) {
+  for (channel = channels; channel < channels + GPS_CHANNELS; channel++) {
     uint8_t id = channel->satellite;
     int8_t mode = (int8_t)channel->mode;
 
@@ -236,7 +235,6 @@ void satellite_status_list(uint8_t tracked, uint8_t entries,
                            satellite_list_entry* list, uint8_t* count) {
   /* The not-tracked list's length, status_snapshot's. */
   static const int32_t SHOWN = 12;
-  static const uint8_t CHANNELS = 6;
   const satellite_list_entry* end = list + entries;
   const satellite_list_entry blank = satellite_status_blank_entry;
   uint32_t set;
@@ -286,7 +284,7 @@ void satellite_status_list(uint8_t tracked, uint8_t entries,
     list->satellite = id;
     if (tracked == 1) {
       for (const oncore_channel_status* channel = channels;
-           channel < channels + CHANNELS; channel++) {
+           channel < channels + GPS_CHANNELS; channel++) {
         if (id == channel->satellite) {
           list->level = channel->signal_strength;
           break;
@@ -455,9 +453,6 @@ void format_dms(int32_t mas, char longitude, char* text) {
  * E or W, then "%4d:%02d:%06.7f" degrees, minutes and seconds
  * (0x47fb6). */
 void format_dms_precise(char* text, double mas, char latitude) {
-  static const int32_t MAS_PER_DEGREE = 3600000;
-  static const int32_t MAS_PER_MINUTE = 60000;
-  static const double MAS_PER_SECOND = 1000.0;
   uint8_t degrees;
   uint8_t minutes;
   double seconds;
@@ -470,12 +465,14 @@ void format_dms_precise(char* text, double mas, char latitude) {
     hemisphere = latitude == 0 ? 'E' : 'N';
   }
   degrees = double_to_unsigned(
-      double_divide_reversed_pointer((double)MAS_PER_DEGREE, &mas));
-  double_subtract_in_place(&mas, integer_to_double(degrees * MAS_PER_DEGREE));
+      double_divide_reversed_pointer((double)GPS_MAS_PER_DEGREE, &mas));
+  double_subtract_in_place(&mas,
+                           integer_to_double(degrees * GPS_MAS_PER_DEGREE));
   minutes = double_to_unsigned(
-      double_divide_reversed_pointer((double)MAS_PER_MINUTE, &mas));
-  double_subtract_in_place(&mas, integer_to_double(minutes * MAS_PER_MINUTE));
-  seconds = double_divide_reversed_pointer(MAS_PER_SECOND, &mas);
+      double_divide_reversed_pointer((double)GPS_MAS_PER_MINUTE, &mas));
+  double_subtract_in_place(&mas,
+                           integer_to_double(minutes * GPS_MAS_PER_MINUTE));
+  seconds = double_divide_reversed_pointer(GPS_MAS_PER_SECOND, &mas);
   sprintf(text, "%c%4d:%02d:%06.7f", hemisphere, degrees, minutes, seconds);
 }
 
@@ -484,13 +481,15 @@ void format_dms_precise(char* text, double mas, char latitude) {
 static const char SCREEN_SI_PREFIXES[] = {'p',  'n', 'u', 'm',
                                           '\0', 'k', 'M', 'G'};
 
+/* format_si's digits for every digit a double has. */
+static const uint8_t SCREEN_EVERY_DIGIT = 0;
+
 /* A value as scpi_real_to_text gives it to the resolution and digits,
  * 15 for 0, its exponent made a multiple of 3 and an SI prefix, "*" past
  * them, then a space, the prefix and the unit; "--" if it gives none.
  * The text keeps scpi_real_to_text's sign first (0x49b88). */
 void format_si(double value, char resolution, uint8_t digits, char* unit,
                char* text) {
-  static const uint8_t DOUBLE_DIGITS = 15;
   static const int16_t EXPONENT_DIGITS = 2;
   static const char POINT_AS_NEEDED = 0;
   static const int16_t SMALLEST_EXPONENT = -12; /* p */
@@ -509,7 +508,7 @@ void format_si(double value, char resolution, uint8_t digits, char* unit,
   uint8_t counted;
 
   if (digits == 0) {
-    digits = DOUBLE_DIGITS;
+    digits = SCPI_REAL_DOUBLE_DIGITS;
   }
   if (scpi_real_to_text(bits.words[0], bits.words[1], (uint8_t*)text, digits,
                         EXPONENT_DIGITS, resolution, POINT_AS_NEEDED) != 0) {
@@ -575,8 +574,6 @@ void format_si(double value, char resolution, uint8_t digits, char* unit,
 /* A duration in seconds as minutes and seconds below an hour, hours and
  * minutes below 1000, else "1000+ hr" (0x49d14). */
 void format_duration_short(uint32_t seconds, char* text) {
-  static const uint32_t SECONDS_PER_MINUTE = 60;
-  static const uint32_t SECONDS_PER_HOUR = 3600;
   static const uint32_t LONGEST = 1000 * 3600;
   uint32_t large_unit;
   uint32_t small_unit;
@@ -587,16 +584,16 @@ void format_duration_short(uint32_t seconds, char* text) {
     libc_copy(text, "1000+ hr");
     return;
   }
-  if (seconds < SECONDS_PER_HOUR) {
+  if (seconds < CLOCK_SECONDS_PER_HOUR) {
     large_letter = 'm';
     small_letter = 's';
-    large_unit = SECONDS_PER_MINUTE;
+    large_unit = CLOCK_SECONDS_PER_MINUTE;
     small_unit = 1;
   } else {
     large_letter = 'h';
     small_letter = 'm';
-    large_unit = SECONDS_PER_HOUR;
-    small_unit = SECONDS_PER_MINUTE;
+    large_unit = CLOCK_SECONDS_PER_HOUR;
+    small_unit = CLOCK_SECONDS_PER_MINUTE;
   }
   sprintf(text, "%3d%c %02d%c", seconds / large_unit, large_letter,
           seconds % large_unit / small_unit, small_letter);
@@ -785,9 +782,6 @@ static uint32_t screen_survey_done(const status_snapshot_record* snapshot) {
 /* The mode row's survey: "Survey:  ", the percent done, "% complete"
  * (0x4a066). */
 static void screen_survey_line(status_snapshot_record* snapshot, char* line) {
-  static const float PERCENT = 100.0f;
-  static const float LEAST = 0.1f;
-  static const float MOST = 99.9f;
   uint32_t done = screen_survey_done(snapshot);
   char percent_text[16];
   char* percent;
@@ -799,11 +793,11 @@ static void screen_survey_line(status_snapshot_record* snapshot, char* line) {
     float fraction = float_multiply(
         float_divide(unsigned_to_float(done),
                      integer_to_float(snapshot->douglas_duration)),
-        PERCENT);
+        GPS_SURVEY_PERCENT);
 
-    if (float_compare(LEAST, fraction) > 0) {
+    if (float_compare(GPS_SURVEY_LEAST, fraction) > 0) {
       percent = " <0.1";
-    } else if (float_compare(fraction, MOST) <= 0 ||
+    } else if (float_compare(fraction, GPS_SURVEY_MOST_UNFINISHED) <= 0 ||
                done >= (uint32_t)snapshot->douglas_duration) {
       sprintf(percent_text, "%5.1f", float_to_double(fraction));
       percent = percent_text;
@@ -855,7 +849,6 @@ void status_screen_position(uint8_t row, status_snapshot_record* snapshot,
                             char* line) {
   static const double NANOSECONDS = 1e9;
   static const char NANOSECOND_RESOLUTION = -9;
-  static const uint8_t EVERY_DIGIT = 0;
   char delay[16];
   char* reason;
 
@@ -863,7 +856,8 @@ void status_screen_position(uint8_t row, status_snapshot_record* snapshot,
     case SCREEN_ROW_ANTENNA_DELAY:
       format_si(double_divide_reversed(
                     NANOSECONDS, unsigned_to_double(snapshot->pps_cable_delay)),
-                NANOSECOND_RESOLUTION, EVERY_DIGIT, SCREEN_SECONDS, delay);
+                NANOSECOND_RESOLUTION, SCREEN_EVERY_DIGIT, SCREEN_SECONDS,
+                delay);
       sprintf(line, "ANT DLY  %s", delay + 1);
       break;
     case SCREEN_ROW_POSITION:
@@ -924,7 +918,6 @@ void status_screen_tfom(uint8_t row, status_snapshot_record* snapshot,
                         char* line) {
   static const char TI_RESOLUTION = -10;
   static const char THRESHOLD_RESOLUTION = -9;
-  static const uint8_t EVERY_DIGIT = 0;
   static const uint8_t LIMIT_OFF = 1; /* holdover_limit_state: no limit */
   static const uint8_t ROOMY = 10;    /* TI texts that fit the long name */
   static const uint8_t CLOSE = 15;    /* the short */
@@ -947,7 +940,7 @@ void status_screen_tfom(uint8_t row, status_snapshot_record* snapshot,
         libc_copy(text, " --");
       } else {
         format_si(float_to_double(snapshot->interval_mean), TI_RESOLUTION,
-                  EVERY_DIGIT, "s ", text);
+                  SCREEN_EVERY_DIGIT, "s ", text);
         length = libc_length(text);
         if (length <= ROOMY) {
           strcat(text, "relative to GPS");
@@ -964,7 +957,8 @@ void status_screen_tfom(uint8_t row, status_snapshot_record* snapshot,
         libc_copy(text, " Off");
       } else {
         format_si(float_to_double(snapshot->holdover_limit_threshold),
-                  THRESHOLD_RESOLUTION, EVERY_DIGIT, SCREEN_SECONDS, text);
+                  THRESHOLD_RESOLUTION, SCREEN_EVERY_DIGIT, SCREEN_SECONDS,
+                  text);
       }
       sprintf(line, "HOLD THR %s", text + 1);
       break;

@@ -572,12 +572,10 @@ static uint32_t gps_receiver_survey_count(void) {
 
 /* The percentage of the survey's duration a count of positions is. */
 static float gps_receiver_survey_percent(uint32_t count) {
-  static const float PERCENT = 100.0f;
-
   return float_multiply(
       float_divide(unsigned_to_float(count),
                    integer_to_float(nv_settings.douglas_duration)),
-      PERCENT);
+      GPS_SURVEY_PERCENT);
 }
 
 /* The survey's progress in whole percent, 1 for any start and 100 only
@@ -609,9 +607,6 @@ uint32_t survey_progress_percent(uint16_t* percent) {
  * at most 99.9 until complete, when a finite survey runs; else empty
  * (0x4f4ca). */
 bool survey_progress_text(char* text) {
-  static const float LEAST = 0.1f;
-  static const float MOST_UNFINISHED = 99.9f;
-
   if (!gps_receiver_surveying()) {
     *text = 0;
     return false;
@@ -621,11 +616,11 @@ bool survey_progress_text(char* text) {
 
   if (count != 0) {
     progress = gps_receiver_survey_percent(count);
-    if (float_compare(LEAST, progress) > 0) {
-      progress = LEAST;
-    } else if (float_compare(progress, MOST_UNFINISHED) > 0 &&
+    if (float_compare(GPS_SURVEY_LEAST, progress) > 0) {
+      progress = GPS_SURVEY_LEAST;
+    } else if (float_compare(progress, GPS_SURVEY_MOST_UNFINISHED) > 0 &&
                count < (uint32_t)nv_settings.douglas_duration) {
-      progress = MOST_UNFINISHED;
+      progress = GPS_SURVEY_MOST_UNFINISHED;
     }
   }
   sprintf(text, "%+.1f", float_to_double(progress));
@@ -636,26 +631,21 @@ bool survey_progress_text(char* text) {
  * and seconds of its magnitude (0x47e32). */
 void mas_to_dms(int32_t mas, uint16_t* degrees, uint8_t* minutes,
                 double* seconds) {
-  static const int32_t PER_DEGREE = 3600000;
-  static const int32_t PER_MINUTE = 60000;
-  static const double PER_SECOND = 1000.0;
   int32_t rest = labs(mas);
 
-  *degrees = libc_divide(&rest, PER_DEGREE);
-  *minutes = libc_divide(&rest, PER_MINUTE);
-  *seconds = double_divide_reversed(PER_SECOND, integer_to_double(rest));
+  *degrees = libc_divide(&rest, GPS_MAS_PER_DEGREE);
+  *minutes = libc_divide(&rest, GPS_MAS_PER_MINUTE);
+  *seconds =
+      double_divide_reversed(GPS_MAS_PER_SECOND, integer_to_double(rest));
 }
 
 /* Degrees, minutes and seconds as milliarcseconds, the seconds'
  * magnitude (0x47eb0). */
 void dms_to_mas(int32_t* mas, uint16_t degrees, uint8_t minutes,
                 double seconds) {
-  static const uint32_t PER_DEGREE = 3600000;
-  static const uint32_t PER_MINUTE = 60000;
-  static const double PER_SECOND = 1000.0;
-  const double whole =
-      integer_to_double(minutes * PER_MINUTE + degrees * PER_DEGREE);
+  const double whole = integer_to_double(minutes * GPS_MAS_PER_MINUTE +
+                                         degrees * GPS_MAS_PER_DEGREE);
 
   *mas = double_to_integer(
-      double_add(whole, double_multiply(PER_SECOND, fabs(seconds))));
+      double_add(whole, double_multiply(GPS_MAS_PER_SECOND, fabs(seconds))));
 }

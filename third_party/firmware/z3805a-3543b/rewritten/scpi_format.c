@@ -6,16 +6,10 @@
  * prototype.  scpi_format.h holds the bodies its installer copies
  * share. */
 
-/* What scpi_real_to_text is given: 15 significant digits for a double,
- * 6 for a float, and SCPI_REAL_EVERY_DIGIT (scpi.h) for the resolution
- * (its exponent digits and point in scpi_engine_real_to_text); and the
- * text's length
- * with every digit, the sign, the point, "E", the exponent's sign and
- * three digits.  The text's size is an array's, so #define. */
-static const int16_t SCPI_REAL_DOUBLE_DIGITS = 15;
-
-static const int16_t SCPI_REAL_FLOAT_DIGITS = 6;
-
+/* The text scpi_real_to_text gives with every digit (scpi.h's
+ * SCPI_REAL_DOUBLE_DIGITS): its length past them, the sign, the point,
+ * "E", the exponent's sign and three digits, and its size.  The size is
+ * an array's, so #define. */
 static const int16_t SCPI_REAL_TEXT_OVERHEAD = 4 + 3;
 
 #define SCPI_REAL_TEXT_SIZE 24

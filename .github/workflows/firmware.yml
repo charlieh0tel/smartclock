@@ -4,12 +4,13 @@ name: firmware
 # checks in CI"): the C's format, the layouts, the decompiled C's bytes
 # and bindings, every decompiled function run against the image's own
 # and the figures the documents give, the SCPI trees, the module and
-# pForth figures, and every image's chip-select tables.
+# pForth figures, every image's chip-select tables, and the
+# hand-written C's magic numbers.
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs an m68k toolchain,
-# clang-format and uv the others do not; and so that it fails on its
-# own.  No Rust: none of these targets builds the workspace.  About
+# clang, clang-format and uv the others do not; and so that it fails
+# on its own.  No Rust: none of these targets builds the workspace.  About
 # five minutes, most of it report-decompiled.
 #
 # On every push, not main's alone, so a firmware branch's own pushes
@@ -34,12 +35,14 @@ jobs:
       # Named, so that a newer default cannot change the format: 19, 20
       # and 21 format the C alike, and 18 three of the files otherwise.
       CLANG_FORMAT: clang-format-21
+      # check-magic-numbers parses the hand-written C with it.
+      CLANG: clang-21
     steps:
       # The pin audit.yml carries; moved by hand to match it.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: >-
           sudo apt-get update && sudo apt-get install -y --no-install-recommends
-          gcc-m68k-linux-gnu binutils-m68k-linux-gnu "$CLANG_FORMAT"
+          gcc-m68k-linux-gnu binutils-m68k-linux-gnu "$CLANG_FORMAT" "$CLANG"
       # The tools' script dependencies, Unicorn and Capstone, are each
       # script's own inline metadata, pinned there, which `uv run`
       # resolves; uv itself is pinned here, and the cache is keyed on
@@ -49,7 +52,9 @@ jobs:
           version: "0.13.2"
           enable-cache: true
           cache-dependency-glob: "tools/firmware/*.py"
-      - run: m68k-linux-gnu-gcc --version && "$CLANG_FORMAT" --version && python3 --version && uv --version
+      - run: >-
+          m68k-linux-gnu-gcc --version && "$CLANG_FORMAT" --version && "$CLANG" --version
+          && python3 --version && uv --version
       # Each check runs whatever the one before it did, so that one run
       # names every failing check.
       - run: make check-format-c
@@ -63,6 +68,8 @@ jobs:
       - run: make check-pforth-words
         if: ${{ !cancelled() }}
       - run: make check-chip-selects
+        if: ${{ !cancelled() }}
+      - run: make check-magic-numbers
         if: ${{ !cancelled() }}
       - run: make check-decompiled
         if: ${{ !cancelled() }}

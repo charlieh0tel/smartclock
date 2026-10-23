@@ -1222,8 +1222,9 @@ typedef struct selftest_results {
  * setting (pll_scpi_complete), and gps_request_post for the command
  * and status monitors, whose results gps_count_response keeps in
  * command_monitor_result and status_monitor_result.  request_kind_valid
- * takes 1 to 4. */
+ * takes 1 to 4, from its table at 0x4cfc0, which GPS_SENDER_NONE ends. */
 typedef enum __attribute__((packed)) gps_request_sender {
+  GPS_SENDER_NONE = 0,
   GPS_SENDER_SEQUENCE = 1,
   GPS_SENDER_SETTING = 2,
   GPS_SENDER_COMMAND_MONITOR = 3,
@@ -2840,6 +2841,9 @@ typedef enum __attribute__((packed)) interval_arm_mode {
  * (outputs.md, "The FPGA bitstreams"). */
 typedef enum __attribute__((packed)) fpga_configuration_index {
   FPGA_CONFIGURATION_COUNTER = 0,
+  FPGA_CONFIGURATION_LAST = 1, /* fpga_configurations.last (0x21e2c), past
+                                  the one configuration; pll_init's
+                                  immediate (0x473d2) */
 } fpga_configuration_index;
 
 /* The chip of a configuration fpga_verify_chip reads back: the first
@@ -3582,6 +3586,14 @@ typedef struct counter_configuration_fields {
   int32_t interpolator_scale;  /* the spread it is divided by */
 } counter_configuration_fields;
 
+/* preserved_region_fields.restore, a word: whether system_init restores
+ * the region (0x12bb4).  pllp_task sets it each pass; nv_clear_and_reset
+ * and system_init's defaults clear it. */
+typedef enum __attribute__((packed)) preserved_region_restore {
+  PRESERVED_REGION_DISCARD = 0,
+  PRESERVED_REGION_RESTORE = 1,
+} preserved_region_restore;
+
 /* The battery-backed RAM a warm restart restores, preserved_region at
  * 0x100000: pllp_task copies gps, pll and the 0x19 bytes from 0x101e70
  * into it each pass and checksums it, and system_init copies them back
@@ -3591,8 +3603,7 @@ typedef struct counter_configuration_fields {
 typedef struct preserved_region_fields {
   uint16_t
       checksum; /* +0x000: record_checksum's sum and complement of the rest */
-  uint16_t restore;     /* +0x002: 1, system_init restores; pllp_task sets it,
-                           nv_clear_and_reset and system_init's defaults clear it */
+  uint16_t restore;     /* +0x002: a preserved_region_restore */
   gps_state gps;        /* +0x004 */
   pll_state pll;        /* +0x55e */
   uint8_t values[0x19]; /* +0x934: 0x101e70 to 0x101e88 */
@@ -3860,6 +3871,7 @@ typedef struct diag_word_entry {
  * the kernel"). */
 /* A task record's status byte, +0x13, by task_status_name's text. */
 typedef enum __attribute__((packed)) psos_task_status {
+  PSOS_TASK_READY = 0x00,         /* " RDY": none of the rest */
   PSOS_TASK_SUSPENDED = 0x04,     /* "susp" */
   PSOS_TASK_PAUSED = 0x08,        /* "paus", as a nonzero delay is */
   PSOS_TASK_VARIABLE_WAIT = 0x10, /* "vblk": in wait_v */

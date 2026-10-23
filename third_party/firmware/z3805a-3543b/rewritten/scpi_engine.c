@@ -166,13 +166,12 @@ void scpi_task(void) {
    * others: the task's D2, as it saved it. */
   const uint32_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
   static const uint32_t ARENA_SIZE = 2000;
-  static const uint32_t ERROR_BITS = 0xff;
   static const uint32_t CONSOLE_PRIORITY = 0x33;
   void* arena;
 
   psos_mode(PSOS_MODE_TIME_SLICE, PSOS_MODE_TIME_SLICE, NULL);
   const uint32_t error =
-      psos_service_8(ARENA_SIZE, 0, 1, 0, (uint32_t*)&arena) & ERROR_BITS;
+      psos_service_8(ARENA_SIZE, 0, 1, 0, (uint32_t*)&arena) & OS_ERROR_BITS;
 
   if (error != 0) {
     printf("scpi: alloc_seg error %#0x\n", error);
@@ -190,19 +189,17 @@ void scpi_task(void) {
   psos_free_segment(arena);
   port->methods->close(port);
   if (scpi_language == SCPI_LANGUAGE_PFORTH) {
-    psos_priority(0, CONSOLE_PRIORITY, NULL);
+    psos_priority(OS_TASK_SELF, CONSOLE_PRIORITY, NULL);
     spoo_run((spoo_function*)console_init, 0, 0, 0);
   } else if (scpi_language == SCPI_LANGUAGE_INSTALL) {
     enter_installer();
   }
-  psos_delete(0);
+  psos_delete(OS_TASK_SELF);
 }
 
 /* Has spoo create the SCPI task, at priority 0x19, and leaves the
  * console to it (0x12f30). */
 void scpi_task_start(void) {
-  static const uint32_t SCPI_TASK_PRIORITY = 0x19;
-
   /* spoo_run calls it with three longs; it reads the first. */
   spoo_run((spoo_function*)scpi_task_create, SCPI_TASK_PRIORITY, 0, 0);
   task_console = 0;
@@ -211,22 +208,18 @@ void scpi_task_start(void) {
 /* Creates and starts the SCPI task at a priority; -1 when it exists,
  * else the kernel's error (0x29fce). */
 uint32_t scpi_task_create(uint32_t priority) {
-  static const uint32_t ERROR_BITS = 0xff;
-  /* The SCPI task's stacks in words, supervisor and user (psos.md,
-   * "spawn"). */
-  static const uint32_t TASK_SUPERVISOR_STACK_WORDS = 0x300;
-  static const uint32_t TASK_USER_STACK_WORDS = 0x400;
   uint32_t existing;
 
   if ((uint8_t)psos_ident("scpi", &existing, 0) == 0) {
     return -1;
   }
-  uint32_t error = psos_create("scpi", 0, priority, TASK_SUPERVISOR_STACK_WORDS,
-                               TASK_USER_STACK_WORDS, 0, &task_scpi) &
-                   ERROR_BITS;
+  uint32_t error =
+      psos_create("scpi", 0, priority, SCPI_TASK_SUPERVISOR_STACK_WORDS,
+                  SCPI_TASK_USER_STACK_WORDS, 0, &task_scpi) &
+      OS_ERROR_BITS;
 
   if (error != 0) {
     return error;
   }
-  return psos_start(task_scpi, scpi_task) & ERROR_BITS;
+  return psos_start(task_scpi, scpi_task) & OS_ERROR_BITS;
 }

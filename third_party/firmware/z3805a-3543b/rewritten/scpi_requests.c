@@ -17,9 +17,6 @@ void send_x_retry(uint32_t exchange, void* message, uint32_t ticks) {
  * stale one first (0x29e7e).  get_v's 1 and wait_v's 0s are as the
  * image passes them. */
 void request_and_wait(uint32_t exchange, void* message) {
-  /* The ticks send_x_retry pauses between tries; pllc.h's
-   * PLLC_DONE_EVENT the event waited for (0x29e8e, 0x29eb0). */
-  static const uint32_t PLLC_RETRY_TICKS = 5;
   uint32_t events = 0;
 
   psos_get_v(PLLC_DONE_EVENT, 1, &events);

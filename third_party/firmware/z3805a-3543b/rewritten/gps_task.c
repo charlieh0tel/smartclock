@@ -14,10 +14,10 @@ void gps_init(void) {
   gps.field_504[0] = 0; /* again, as the image does */
   gps_commands_blocked = 0;
   gps_receiver_status_reset();
-  gps.reference_valid_override = 0;
+  gps.reference_valid_override = GPS_REFERENCE_OVERRIDE_NONE;
   status_screen_print_interval = 0;
   gps.pps_check_disabled = 0;
-  reference_valid_override_request = 0;
+  reference_valid_override_request = GPS_REFERENCE_OVERRIDE_NONE;
   command_monitor_init();
 }
 

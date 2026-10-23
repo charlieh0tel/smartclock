@@ -18,6 +18,8 @@ static const uint8_t CLOCK_SECONDS_PER_MINUTE = 60;
 
 static const uint8_t CLOCK_MINUTES_PER_HOUR = 60;
 
+static const int32_t CLOCK_SECONDS_PER_HOUR = 60 * 60;
+
 static const uint8_t CLOCK_HOURS_PER_DAY = 24;
 
 static const int32_t CLOCK_SECONDS_PER_DAY = 60 * 60 * 24;

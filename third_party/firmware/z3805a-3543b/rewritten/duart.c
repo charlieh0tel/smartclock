@@ -52,15 +52,14 @@ void duart_op1_set(char on) {
 /* Resets the output port's bits 2 to 7 in reset and sets those in set,
  * as duart_output_bit_set does (0x1e126). */
 void duart_output_bits(board_led reset, board_led set) {
-  /* The output port's bits 2 to 7, by duart_shadow.output_reset. */
-  static const uint8_t OP_BITS = 0xfc;
   uint16_t sr = set_interrupt_mask(CPU_IPL_6_UNSHIFTED);
-  uint8_t resets = (reset | duart_shadow.output_reset) & OP_BITS;
+  uint8_t resets = (reset | duart_shadow.output_reset) & DUART_OP_BITS;
 
   duart.stop_ropbc = resets;
   duart_shadow.output_reset =
-      (reset & OP_BITS | duart_shadow.output_reset) & ~(set & OP_BITS);
-  duart.start_sopbc = ~duart_shadow.output_reset & OP_BITS;
+      (reset & DUART_OP_BITS | duart_shadow.output_reset) &
+      ~(set & DUART_OP_BITS);
+  duart.start_sopbc = ~duart_shadow.output_reset & DUART_OP_BITS;
   set_interrupt_mask(sr);
 }
 
@@ -128,12 +127,10 @@ void duart_counter_test(void) {
   /* The counter test: the 68681's counter, preloaded with 0xffff,
    * counts down from the crystal over 16 for ten ticks, at the highest
    * priority. */
-  static const uint8_t ACR_COUNTER_CRYSTAL_16 = 0x30; /* MC68681 Table 4-4 */
   static const uint32_t COUNTER_PAUSES = 10;
   static const uint16_t COUNTER_LEAST = 0xf533;
   static const uint16_t COUNTER_MOST = 0xf8cc;
   static const uint32_t PRIORITY_HIGHEST = 0xff;
-  static const uint8_t BYTE_BITS = 8;
   uint8_t priority;
   uint8_t upper;
   uint8_t lower;
@@ -141,9 +138,9 @@ void duart_counter_test(void) {
 
   (void)duart.stop_ropbc;
   duart_counter_preload();
-  psos_priority(0, PRIORITY_HIGHEST, &priority);
+  psos_priority(OS_TASK_SELF, PRIORITY_HIGHEST, &priority);
   duart_shadow.acr =
-      (duart_shadow.acr & ~ACR_COUNTER_MASK) | ACR_COUNTER_CRYSTAL_16;
+      (duart_shadow.acr & ~ACR_COUNTER_MASK) | DUART_ACR_COUNTER_CRYSTAL_16;
   duart.ipcr_acr = duart_shadow.acr;
   (void)duart.start_sopbc;
   psos_pause(COUNTER_PAUSES);
@@ -154,8 +151,8 @@ void duart_counter_test(void) {
       (duart_shadow.acr & ~ACR_COUNTER_MASK) | DUART_ACR_COUNTER_TXCB;
   duart.ipcr_acr = duart_shadow.acr;
   duart_counter_preload();
-  task_set_priority(0, priority);
-  count = upper << BYTE_BITS | lower;
+  task_set_priority(OS_TASK_SELF, priority);
+  count = upper << CPU_BYTE_BITS | lower;
   if (count > COUNTER_MOST || count < COUNTER_LEAST) {
     selftest.uart |= SELFTEST_UART_COUNTER;
   }
@@ -170,20 +167,13 @@ static bool duart_ivr_holds(uint8_t value) {
 /* Tests the interrupt vector register with two patterns, then sets the
  * vector. */
 static void duart_ivr_test(void) {
-  /* Values the self-tests write to the interrupt vector register and
-   * read back, and the vector it is left with, user vector 67, whose
-   * handler is primary_user_67. */
-  static const uint8_t IVR_PATTERN_1 = 0x55;
-  static const uint8_t IVR_PATTERN_2 = 0xaa;
-  static const uint8_t IVR_VECTOR = 0x43;
-
-  if (!duart_ivr_holds(IVR_PATTERN_1)) {
+  if (!duart_ivr_holds(DUART_IVR_PATTERN_1)) {
     selftest.uart |= SELFTEST_UART_REGISTER;
   }
-  if (!duart_ivr_holds(IVR_PATTERN_2)) {
+  if (!duart_ivr_holds(DUART_IVR_PATTERN_2)) {
     selftest.uart |= SELFTEST_UART_REGISTER;
   }
-  duart.ivr = IVR_VECTOR;
+  duart.ivr = DUART_IVR_VECTOR;
 }
 
 /* The DUART self-test: its interrupt vector register, then its counter

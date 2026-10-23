@@ -52,7 +52,7 @@ double frexp(double value, int32_t* exponent) {
   int16_t field = magnitude >> LIBC_EXPONENT_SHIFT;
 
   if (field == 0) {
-    uint64_t mantissa = v.bits & ~((uint64_t)LIBC_SIGN << LIBC_WORD_BITS);
+    uint64_t mantissa = v.bits & ~((uint64_t)LIBC_SIGN << CPU_LONG_BITS);
 
     if (mantissa == 0) {
       *exponent = 0;
@@ -104,7 +104,7 @@ double modf(double value, double* iptr) {
 
   if (whole_bits <= 0) {
     union libc_double zero = {.bits = (uint64_t)(v.word.high & LIBC_SIGN)
-                                      << LIBC_WORD_BITS};
+                                      << CPU_LONG_BITS};
 
     *iptr = zero.value;
     return value;
@@ -221,7 +221,7 @@ double log(double x) {
         float_raise(LIBC_RAISE_CODE(LIBC_RAISE_LOG, LIBC_CAUSE_SIGNALING_NAN),
                     v.word.high, v.word.low));
   }
-  bool zero = (v.bits & ~((uint64_t)LIBC_SIGN << LIBC_WORD_BITS)) == 0;
+  bool zero = (v.bits & ~((uint64_t)LIBC_SIGN << CPU_LONG_BITS)) == 0;
 
   if (zero || (v.word.high & LIBC_SIGN) != 0) {
     double result = libc_from_bits(
@@ -229,7 +229,7 @@ double log(double x) {
 
     if (zero) {
       union libc_double minus_infinity = {
-          .bits = (uint64_t)(LIBC_SIGN | LIBC_INFINITY_HIGH) << LIBC_WORD_BITS};
+          .bits = (uint64_t)(LIBC_SIGN | LIBC_INFINITY_HIGH) << CPU_LONG_BITS};
 
       result = minus_infinity.value;
       errno = LIBC_ERANGE;
@@ -296,7 +296,7 @@ double sqrt(double x) {
         float_raise(LIBC_RAISE_CODE(LIBC_RAISE_SQRT, LIBC_CAUSE_SIGNALING_NAN),
                     v.word.high, v.word.low));
   }
-  if ((v.bits & ~((uint64_t)LIBC_SIGN << LIBC_WORD_BITS)) == 0 ||
+  if ((v.bits & ~((uint64_t)LIBC_SIGN << CPU_LONG_BITS)) == 0 ||
       (v.word.high == LIBC_INFINITY_HIGH && v.word.low == 0)) {
     return x;
   }
@@ -412,7 +412,7 @@ double pow(double x, double y) {
   union libc_double power = {.value = y};
   union libc_double one = {.value = 1.0};
   union libc_double result = {.bits = (uint64_t)LIBC_INFINITY_HIGH
-                                      << LIBC_WORD_BITS};
+                                      << CPU_LONG_BITS};
   bool base_negative = (base.word.high & LIBC_SIGN) != 0;
   bool power_negative = (power.word.high & LIBC_SIGN) != 0;
   /* Whether the result is negated: a negative base, an odd power. */
@@ -657,7 +657,7 @@ libc_float_raise_kept(const uint32_t* arguments) {
   if (raised.report) {
     float_exception_report(code, raised.address);
   }
-  return (uint64_t)raised.high << LIBC_WORD_BITS | raised.low;
+  return (uint64_t)raised.high << CPU_LONG_BITS | raised.low;
 }
 
 CPU_KEEPING_A0_A1(float_raise, libc_float_raise_kept);

@@ -11,11 +11,6 @@
 /* power_of_ten_double and _float's tables hold 1e-30 to 1e30. */
 static const int16_t ARITHMETIC_POWER_OF_TEN_LIMIT = 30;
 
-/* The 68000's shifts take their count modulo 64. */
-static const uint32_t ARITHMETIC_SHIFT_COUNT_MASK = 63;
-
-static const uint32_t ARITHMETIC_LONG_BITS = 32;
-
 /* An int's magnitude; nothing calls it (0x120e6). */
 int32_t int_abs(int32_t value) { return value < 0 ? -value : value; }
 
@@ -64,13 +59,13 @@ uint32_t crc16_with_sum(uint8_t* bytes, int16_t count) {
 /* A long shifted as the processor shifts it: the count modulo 64, and 32
  * or more shifting every bit out. */
 static uint32_t arithmetic_shift_left(uint32_t value, uint32_t count) {
-  count &= ARITHMETIC_SHIFT_COUNT_MASK;
-  return count >= ARITHMETIC_LONG_BITS ? 0 : value << count;
+  count &= CPU_SHIFT_COUNT_MASK;
+  return count >= CPU_LONG_BITS ? 0 : value << count;
 }
 
 static int32_t arithmetic_shift_right(int32_t value, uint32_t count) {
-  count &= ARITHMETIC_SHIFT_COUNT_MASK;
-  if (count >= ARITHMETIC_LONG_BITS) {
+  count &= CPU_SHIFT_COUNT_MASK;
+  if (count >= CPU_LONG_BITS) {
     return value < 0 ? -1 : 0;
   }
   return value >> count;
@@ -152,11 +147,10 @@ char count_bits(uint32_t word) {
 /* Four bytes, high first, as a long; returns the byte after them
  * (0x4ef8e). */
 uint8_t* bytes_to_long(uint8_t* bytes, uint32_t* value) {
-  static const int32_t LONG_BYTES = 4;
   uint32_t result = 0;
 
-  for (int32_t i = 0; i < LONG_BYTES; i++) {
-    result = result << 8 | *bytes++;
+  for (int32_t i = 0; i < CPU_LONG_BYTES; i++) {
+    result = result << CPU_BYTE_BITS | *bytes++;
   }
   *value = result;
   return bytes;
@@ -179,7 +173,7 @@ uint32_t bytes_equal_n(uint8_t* a, int16_t a_length, uint8_t* b,
 
 /* The 64-bit routines pass a number as two longs, the high first. */
 static uint64_t arithmetic_int64(uint32_t high, uint32_t low) {
-  return (uint64_t)high << ARITHMETIC_LONG_BITS | low;
+  return (uint64_t)high << CPU_LONG_BITS | low;
 }
 
 /* The sum of two 64-bit numbers (0x410fa). */
@@ -201,9 +195,9 @@ int32_t int64_compare(int64_t a, int64_t b) {
   if (a == b) {
     return 0;
   }
-  const uint64_t negated = int64_negate(a >> ARITHMETIC_LONG_BITS, a);
-  const int64_t difference = int64_add(negated >> ARITHMETIC_LONG_BITS, negated,
-                                       b >> ARITHMETIC_LONG_BITS, b);
+  const uint64_t negated = int64_negate(a >> CPU_LONG_BITS, a);
+  const int64_t difference =
+      int64_add(negated >> CPU_LONG_BITS, negated, b >> CPU_LONG_BITS, b);
 
   return difference < 0 ? -1 : 1;
 }
@@ -244,14 +238,14 @@ uint32_t uint64_divide(uint32_t divisor, uint32_t high, uint32_t low) {
  * high long times 2^32 (two_to_32, 0x41300), the sign set after
  * (0x4119c). */
 double int64_to_double(int64_t value) {
-  uint32_t high = (uint64_t)value >> ARITHMETIC_LONG_BITS;
+  uint32_t high = (uint64_t)value >> CPU_LONG_BITS;
   uint32_t low = value;
   const bool negative = (high & LIBC_SIGN) != 0;
 
   if (negative) {
     const uint64_t magnitude = int64_negate(high, low);
 
-    high = magnitude >> ARITHMETIC_LONG_BITS;
+    high = magnitude >> CPU_LONG_BITS;
     low = magnitude;
   }
   union libc_double result = {.value = unsigned_to_double(low)};

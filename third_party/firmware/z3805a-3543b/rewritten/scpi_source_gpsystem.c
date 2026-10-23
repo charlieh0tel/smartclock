@@ -51,6 +51,9 @@ enum {
 /* MIN's value in a numeric node's list (0x53d40). */
 static const int16_t SCPI_SOURCE_GPSYSTEM_MINIMUM = 1;
 
+/* The antenna delay's unit, a nanosecond, in seconds. */
+static const float SCPI_SOURCE_GPSYSTEM_NANOSECOND = 1e-9f;
+
 /* The response items, as the formatters read them: a short and a float
  * each take two bytes more (scpi_format_short, scpi_format_float). */
 typedef struct scpi_source_gpsystem_real_item {
@@ -115,7 +118,6 @@ static int32_t scpi_source_gpsystem_steps(float* value,
  * delay in nanoseconds, MIN or MAX the descriptor's limits (0x2c1ee). */
 int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
                                         scpi_call* call) {
-  static const float NANOSECOND = 1e-9f;
   scpi_float_parameter* delay = parameters;
   scpi_numeric_param* param = &scpi_param_SOURce_GPSystem_ADELay;
   int32_t nanoseconds;
@@ -128,8 +130,9 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
 
     nanoseconds = *limit;
   } else {
-    nanoseconds = scpi_source_gpsystem_steps(
-        &delay->value, param, 0, NANOSECOND, return_zero(call->input));
+    nanoseconds = scpi_source_gpsystem_steps(&delay->value, param, 0,
+                                             SCPI_SOURCE_GPSYSTEM_NANOSECOND,
+                                             return_zero(call->input));
   }
   pllc_request_c(param, 0, nanoseconds, 0, return_zero(call->input));
   return 0;
@@ -139,13 +142,12 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
  * (0x2c2e4). */
 int32_t scpi_query_SOURce_GPSystem_ADELay(void* parameters, void* response,
                                           scpi_call* call) {
-  static const float NANOSECOND = 1e-9f;
   scpi_word_parameter* bound = parameters;
   float* seconds = response;
 
   *seconds = float_multiply(scpi_numeric_get(&scpi_param_SOURce_GPSystem_ADELay,
                                              0, bound->kind, bound->value),
-                            NANOSECOND);
+                            SCPI_SOURCE_GPSYSTEM_NANOSECOND);
   return 0;
 }
 
@@ -549,19 +551,18 @@ bool satellite_mask_remove(char number, uint32_t* mask) {
  * as they are (0x2d1cc, its jump table at 0x2d1f0). */
 void satellite_list_limits(satellite_list kind, uint8_t* id_count,
                            uint8_t* max_listed, uint8_t* id_base) {
-  static const uint8_t CHANNELS = 6;
   static const uint8_t VISIBLE = 12;
   static const uint8_t PSEUDOLITES = 5;
 
   switch (kind) {
     case SATELLITE_LIST_TRACKING:
       *id_count = SCPI_SOURCE_GPSYSTEM_SATELLITES;
-      *max_listed = CHANNELS;
+      *max_listed = GPS_CHANNELS;
       *id_base = 0;
       break;
     case SATELLITE_LIST_TRACKING_PSEUDOLITES:
       *id_count = PSEUDOLITES;
-      *max_listed = CHANNELS;
+      *max_listed = GPS_CHANNELS;
       *id_base = SCPI_SOURCE_GPSYSTEM_SATELLITES;
       break;
     case SATELLITE_LIST_VISIBLE:

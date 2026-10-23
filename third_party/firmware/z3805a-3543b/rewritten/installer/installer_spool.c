@@ -8,25 +8,20 @@
  * exchange, and starts it; returns 0, else the kernel's error, or 1 for
  * a spool task already there (installer::0x103efe). */
 uint32_t installer_spoo_task_create(uint32_t priority) {
-  /* The spool task: its name, its stack sizes in words (supervisor
-   * and user), and its exchange's create_x arguments (structures.md,
-   * "Others"). */
+  /* The spool task's name. */
   static const char NAME[] = "spoo";
-  static const uint32_t SUPERVISOR_STACK = 0x600;
-  static const uint32_t USER_STACK = 0x10;
-  static const uint32_t EXCHANGE_A = 2;
-  static const uint32_t EXCHANGE_B = 5;
   uint32_t error = (uint8_t)installer_psos_ident((char*)NAME, 0, 0) == 0;
   char text[80];
 
   if (error == 0) {
-    error = (uint8_t)installer_psos_create_x(
-        (char*)NAME, EXCHANGE_A, EXCHANGE_B, &installer_spoo_exchange);
+    error = (uint8_t)installer_psos_create_x((char*)NAME, SPOOL_EXCHANGE_A,
+                                             SPOOL_EXCHANGE_B,
+                                             &installer_spoo_exchange);
   }
   if (error == 0) {
-    error = (uint8_t)installer_psos_create((char*)NAME, 0, priority,
-                                           SUPERVISOR_STACK, USER_STACK, 0,
-                                           &installer_task_spoo);
+    error = (uint8_t)installer_psos_create(
+        (char*)NAME, 0, priority, SPOOL_SUPERVISOR_STACK, SPOOL_USER_STACK, 0,
+        &installer_task_spoo);
   }
   if (error == 0) {
     error =
@@ -68,13 +63,10 @@ uint32_t installer_spoo_run(spoo_function* function, uint32_t a, uint32_t b,
  * deferred messages, and keeps the request's error as a long
  * (installer::0x10403a). */
 void installer_spoo_task(void) {
-  /* The ticks it waits for a message before it asks again. */
-  static const uint32_t WAIT_TICKS = 0x400;
-
   installer_psos_supervisor();
   for (;;) {
     installer_spoo_receive_error = (uint8_t)installer_psos_request_x(
-        installer_spoo_exchange, &installer_spoo_message, 0, WAIT_TICKS);
+        installer_spoo_exchange, &installer_spoo_message, 0, SPOOL_WAIT_TICKS);
     if (installer_spoo_receive_error == 0) {
       installer_spoo_message.function(installer_spoo_message.arguments[0],
                                       installer_spoo_message.arguments[1],

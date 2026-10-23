@@ -6,6 +6,22 @@
  * file before the hand-written .c files, after its own declarations, so
  * every one of them can use it.  The registers are mc68331.h's. */
 
+/* A byte's bits and its mask, a word's, and a long's bits and bytes. */
+static const uint32_t CPU_BYTE_BITS = 8;
+
+static const uint32_t CPU_BYTE_MASK = 0xff;
+
+static const uint32_t CPU_WORD_BITS = 16;
+
+static const uint32_t CPU_WORD_MASK = 0xffff;
+
+static const int32_t CPU_LONG_BITS = 32;
+
+static const int32_t CPU_LONG_BYTES = 4;
+
+/* A shift by a register takes its count modulo 64 (MC68000PRM, LSL). */
+static const uint32_t CPU_SHIFT_COUNT_MASK = 0x3f;
+
 /* The status register's interrupt mask, bits 10 to 8, as
  * set_interrupt_mask takes it (0x1338e).  Level 7, all three bits,
  * masks every interrupt but the nonmaskable. */
@@ -165,9 +181,17 @@ static inline uint16_t cpu_interrupts_at(uint16_t level) {
 
 /* An exception frame's format and vector word: the format in the top
  * four bits, the vector's offset, 4 times its number, in the rest
- * (the CPU32's exception stack frame); debug.c's exception_name masks the
- * offset. */
+ * (the CPU32's exception stack frame). */
 static const uint16_t CPU_VECTOR_FORMAT_MASK = 0xf000;
+
+static const uint16_t CPU_VECTOR_OFFSET_MASK = 0x0fff;
+
+/* exception_names and installer_exception_names name the vectors from 2,
+ * bus error, to 58 (offset 0xe8), by an exception frame's vector
+ * offset. */
+static const uint16_t CPU_VECTOR_OFFSET_FIRST_NAMED = 2 * 4;
+
+static const uint16_t CPU_VECTOR_OFFSET_LAST_NAMED = 0xe8;
 
 /* The status register's low byte, the condition code register. */
 static const uint16_t CPU_SR_CCR_MASK = 0x00ff;
@@ -198,11 +222,8 @@ static uint16_t cpu_interrupt_mask_set(uint16_t saved, uint16_t mask) {
 /* 1 shifted left by count as lsl.l shifts by a register: the count
  * modulo 64, and the bit shifted out from 32 on (MC68000PRM, LSL). */
 static uint32_t cpu_long_bit(uint32_t count) {
-  static const uint32_t COUNT_MASK = 0x3f;
-  static const uint32_t LONG_BITS = 32;
-
-  count &= COUNT_MASK;
-  return count < LONG_BITS ? (uint32_t)1 << count : 0;
+  count &= CPU_SHIFT_COUNT_MASK;
+  return count < CPU_LONG_BITS ? (uint32_t)1 << count : 0;
 }
 
 /* The SIM's software watchdog is serviced by writing these two to SWSR

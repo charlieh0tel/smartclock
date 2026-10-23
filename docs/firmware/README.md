@@ -1007,6 +1007,29 @@ channel or a task's state, is an `enum`.  A `#define` names a constant
 only where C wants a constant expression, a `case` label, an array's
 size or a static initializer, which a `const` object is not before
 C23.  A string used in one place is a literal there.
+
+`make check-magic-numbers` holds the C to that
+(`tools/firmware/magic_check.py`).  It reads the hand-written C as
+clang parses it within the export, its JSON syntax tree for
+`--target=m68k-linux-gnu` and `DECOMPILED_CFLAGS`' parsing flags, the
+generated SCPI trees and the decompiler's `#if 0` readings left out,
+and fails on a literal compared with, assigned to, returned as,
+passed as or a case label of something typed with an enum that has an
+enumerator of it (or none, a missing enumerator), or of an integer
+field or global whose `smartclock.h` comment or `names.tsv` note
+names the enum; a hex literal masking or set into a register where
+`mc68331.h` or `mc68681.h` names that bit; a literal given to a field
+or variable a named constant of its value is given to elsewhere; and
+a constant of one name and value defined in two functions or files,
+which belongs in the header both see (`cpu.h`'s `CPU_BYTE_BITS`,
+`duart.h`'s `DUART_CSR_1200`).  0 for an enum of bits is the empty
+set.  A finding that stays, with its reason, is a row of the image's
+`magic-allow.tsv`, kept without line numbers; a row no finding
+matches fails too.  `make magic-numbers` also prints what it only
+reports: a literal passed as a parameter a constant is passed as
+elsewhere, whose meaning may differ by call (`pllc_request_b`'s
+index), a function's constant of a file-scope constant's value and
+name, and a literal given to the same thing in several functions.
 A table in ROM that only hand-written code reads is a `static const`
 the same way, its values taken from the image and its comment naming
 the image's label and address: `fpga.c`'s `fpga_bits` is
@@ -1757,8 +1780,9 @@ it.
 every push and pull request, a job of its own beside the Rust CI so
 that each fails alone: `make check-format-c`, `check-types`,
 `check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
-`check-chip-selects`, `check-decompiled`, which runs `check-unicorn`
-first, and `report-decompiled`, which fails if any function fails
+`check-chip-selects`, `check-magic-numbers`, `check-decompiled`,
+which runs `check-unicorn` first, and `report-decompiled`, which fails
+if any function fails
 and checks the figures this document, `rewrite.md` and the top
 `README.md` give from the function check -- the user-mode and console
 counts, each image's agreeing, known, skipped and failed functions and
@@ -1768,8 +1792,9 @@ for the job.  None of the targets builds the workspace;
 `check-chip-selects` reads every image's reset code (`restart.md`,
 "The chip selects").
 
-On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15)
-and `binutils-m68k-linux-gnu` from the archive and uv 0.13.2 through
+On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15),
+`binutils-m68k-linux-gnu` and `clang-21`, which `check-magic-numbers`
+parses the C with, from the archive and uv 0.13.2 through
 `astral-sh/setup-uv`, whose cache holds Unicorn 2.1.4 and Capstone
 5.0.9, each tool's inline dependencies, pinned in the scripts, keyed
 on `tools/firmware/*.py`.  26.04,

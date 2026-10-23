@@ -107,9 +107,6 @@ void installer_error_queue_read(status_model* status, int32_t* code,
  * overflows, else 0 (installer::0x106282). */
 int16_t installer_error_queue_push(status_error_queue* queue, int32_t code,
                                    uint32_t value) {
-  /* The error the queue's last free entry takes, "Queue overflow" in
-   * scpi_error_messages. */
-  static const int16_t ERROR_QUEUE_OVERFLOW = -350;
   status_model* status = queue->status;
   int16_t error = code;
   int16_t full = 0;
@@ -122,7 +119,7 @@ int16_t installer_error_queue_push(status_error_queue* queue, int32_t code,
     full = 1;
   } else {
     if (room == 2) {
-      error = ERROR_QUEUE_OVERFLOW;
+      error = STATUS_ERROR_QUEUE_OVERFLOW;
       value = 0;
       full = 1;
     }
@@ -173,12 +170,11 @@ char* installer_error_message_lookup(int32_t code) {
  * positive filter its defined bits (installer::0x107a00). */
 uint32_t installer_status_init(void) {
   static const int32_t REGISTERS = 2;
-  static const int32_t ERROR_QUEUE_ROOM = 0x1e;
   const installer_status_register_layout* layout =
       &installer_status_register_layouts[1];
-  const uint32_t error =
-      installer_status_create(&installer_status_object, REGISTERS,
-                              ERROR_QUEUE_ROOM, installer_status_conditions, 0);
+  const uint32_t error = installer_status_create(
+      &installer_status_object, REGISTERS, STATUS_ERROR_QUEUE_ROOM,
+      installer_status_conditions, 0);
 
   if (error != 0) {
     return error;

@@ -147,7 +147,7 @@ descriptor in ROM, `0x2c` bytes, its small tables just before it.
 `scpi_numeric_get` (`0x298fc`) and `scpi_numeric_set` (`0x2982c`) are
 given one.  Every setter that calls `scpi_numeric_set` pushes both a
 float's value (`+0x10`) and an integer's (`+0x14`), the one it does
-not use 0: for `is_integer` 0 it sends the float's address, from
+not use 0: for `is_integer` `PLLC_VALUE_FLOAT` it sends the float's address, from
 which `pllc_request_c` takes `values[1]`, and otherwise the integer as
 `values[0]` (the pushes at `0x2e5f4` and `0x2e4e6`, the reads at
 `0x29886` and `0x2988e`).  Its validate routines
@@ -168,7 +168,7 @@ and the position setters send.
 | `+0x16` | `value`, the current value, in RAM | `scpi_numeric_get` reads it; `finish_scpi_cmd` stores it |
 | `+0x1a` | `done` | `finish_scpi_cmd` calls it once the values are stored |
 | `+0x1e` | `flags` | 2: `finish_scpi_cmd` calls `nv_save`; 4: it writes the EEPROM record at `0x400000` (`0x30dea`) |
-| `+0x26` | `is_integer`: 0 a float, 1 an integer, 2 or 3 several | `scpi_numeric_get` converts an integer to float for the reply; `validate_num` takes 2 and 3 as several values |
+| `+0x26` | `is_integer`, a `pllc_value_kind`: `PLLC_VALUE_FLOAT` (0) a float, `PLLC_VALUE_INTEGER` (1) an integer, `PLLC_VALUE_LIST` (2) or `PLLC_VALUE_PAIR` (3) several | `scpi_numeric_get` converts an integer to float for the reply; `validate_num` takes 2 and 3 as several values |
 
 | Descriptor | Parameter | Minimum | Maximum | Value |
 | ---------- | --------- | ------- | ------- | ----- |
@@ -261,8 +261,8 @@ store each value through a setting descriptor (`0x33328` to `0x333dc`, and
 
 | Field | Values | Read by |
 | --- | --- | --- |
-| `baud` (`+2`) | 0 1200, 1 2400, 2 9600, 3 19200 | `duartb_baud_from_settings` (`0x1d632`); `sci_init` and `sci_reconfigure` pass it to `sci_baud_set` (`0x1f6ca`); `:BAUD?` (`0x302c4`) |
-| `parity` (`+3`) | 0 none, 1 even, 2 odd; the SCI's also 3 `ONE`, its top bit set | `duartb_mode_from_settings` (`0x1d594`), `sci_init` (`0x1fdb6`), `sci_reconfigure` (`0x1fffa`), `:PARity?` (`0x3051a`) |
+| `baud` (`+2`) | `serial_baud`: `SERIAL_BAUD_1200` (0), `SERIAL_BAUD_2400` (1), `SERIAL_BAUD_9600` (2), `SERIAL_BAUD_19200` (3) | `duartb_baud_from_settings` (`0x1d632`); `sci_init` and `sci_reconfigure` pass it to `sci_baud_set` (`0x1f6ca`); `:BAUD?` (`0x302c4`) |
+| `parity` (`+3`) | `serial_parity`: `SERIAL_PARITY_NONE` (0), `SERIAL_PARITY_EVEN` (1), `SERIAL_PARITY_ODD` (2); the SCI's also `SERIAL_PARITY_ONE` (3), `ONE`, its top bit set | `duartb_mode_from_settings` (`0x1d594`), `sci_init` (`0x1fdb6`), `sci_reconfigure` (`0x1fffa`), `:PARity?` (`0x3051a`) |
 | `xon_xoff` (`+4`) | nonzero `XON`, 0 `NONE` | `duart_init` (`0x1d93e`), `duartb_reconfigure` (`0x1dc7e`), the SCI's two, `:PACE?` (`0x30460`) |
 | `eight_bits` (B `+6`) | 1 eight, 0 seven | `duartb_mode_from_settings`, `:BITS?` (`0x30388`) |
 | `two_stop_bits` (B `+7`) | 1 two, 0 one | `duartb_mode_from_settings`, `:SBITs?` (`0x305be`) |
@@ -330,7 +330,7 @@ tables" gives each table's extent.
 | `+0x08e` | `almanac_update` | `@@An` | |
 | `+0x0a4`, `+0x0a5` | `ionospheric_correction`, `fix_algorithm` | `@@Aq`, `@@Ar` | `FIX ALG` |
 | `+0x0a6` | `hold_position`: latitude, longitude, height | `@@As` | `POS HOLD` |
-| `+0x0b2` | `hold_height_type`: 0 GPS ellipsoid, 1 MSL | `@@As` | |
+| `+0x0b2` | `hold_height_type`: `ONCORE_HEIGHT_GPS` (0), the GPS ellipsoid, `ONCORE_HEIGHT_MSL` (1) | `@@As` | |
 | `+0x0b4` | `position_hold` | `@@At` | |
 | `+0x0bb`, `+0x0bc` | `altitude_hold`, `utc_time` | `@@Av`, `@@Aw` | |
 | `+0x0be` | `epoch_offset`, ms | `@@Ax` | |
@@ -354,7 +354,7 @@ tables" gives each table's extent.
 | `+0x506` | `average_count` | | |
 | `+0x50a`--`+0x522` | `average_latitude`, `_longitude`, `_height_gps`, `_height_msl`, doubles | | `AVG LAT`, `LON`, `HGT` |
 | `+0x52a`--`+0x534` | the receiver status: `reference_valid`, `pps_dead`, `status_code`, `reference_valid_override`, `validation_start`, `status_code_reset` | | |
-| `+0x53a`--`+0x53c` | `surveying`, `raim_assessment` (0 inactive, 1 OK, 2 alarm detected, 3 alarm), `pps_check_disabled` | | `Assessment:` |
+| `+0x53a`--`+0x53c` | `surveying`, `raim_assessment` (`GPS_RAIM_INACTIVE`, `GPS_RAIM_OK`, `GPS_RAIM_ALARM_DETECTED`, `GPS_RAIM_ALARM`, 0 to 3), `pps_check_disabled` | | `Assessment:` |
 | `+0x53d`--`+0x556` | the monitors: `receiver_health_failed`; the command monitor's `enabled`, `state`, `query`, `time`, `error`, `failed`; the status monitor's `enabled`, `state`, `time`, `status_last_time`, `status_repeat_count`, `timed_out`, `failed` | | `GPS Receiver Health`, `Command Monitor`, `Status Monitor` |
 
 `@@Ba`'s decoder `0x4f59a`, in fix mode, adds its latitude, longitude
@@ -368,12 +368,16 @@ stores it at `hold_position.height` and its type at
 triangle the reference numbers it in.
 
 `gps_receiver_status_update` keeps the receiver status the holdover
-code reports: `status_code` is 1 while the PPS is dead, 2 after a
-reset, 3 while tracking, 4 while holding or surveying, and once the
-receiver qualifies, 5 to 8 through a 30 s validation, at 27, 53 and
-77 % of it, then 9, when `reference_valid` is set
-(`:GPS:REFerence:VALid?`).  The byte at `0x100c68` overrides it, 1
-valid and 0xff invalid; `gps_init` clears it and no code sets it.
+code reports, a `gps_sync_status`: `status_code` is `GPS_SYNC_ABSENT`
+(1) while the PPS is dead, `GPS_SYNC_NOT_TRACKING` (2) after a reset,
+`GPS_SYNC_INACCURATE_POSITION` (3) while tracking,
+`GPS_SYNC_RAIM_ERROR` (4) while holding or surveying, and once the
+receiver qualifies, `GPS_SYNC_ASSESSING` to `GPS_SYNC_ASSESSING_77`
+(5 to 8) through a 30 s validation, at 27, 53 and 77 % of it, then
+`GPS_SYNC_SYNCHRONIZED` (9), when `reference_valid` is set
+(`:GPS:REFerence:VALid?`).  The byte at `0x100c68` overrides it,
+`GPS_REFERENCE_OVERRIDE_VALID` (1) valid and
+`GPS_REFERENCE_OVERRIDE_INVALID` (0xff) invalid; `gps_init` clears it and no code sets it.
 The command monitor queries the receiver from the list at `0x50e5e`
 while it is idle and fails when a command goes unanswered; the
 status monitor watches that `@@Ba` keeps coming, at most 15 times its
@@ -429,15 +433,15 @@ Its other named fields, by the routines that use them:
 | `+0x04` | `powerup_reference_lost` | set past state 3 when GPS or its PPS goes or temporary mode starts; `powerup` returns to state 3 |
 | `+0x06` | `reference_check_state` | `pll_check_reference`'s sub-state |
 | `+0x0c`, `+0x0e`, `+0x10` | `startup_state`, `normal_state`, `holdover_state` | `startup_pll`'s, `pll_normal`'s and `holdover`'s sub-states |
-| `+0x11` | `hold_causes` | why the loop holds over, a set of `pll_hold_cause` bits as the console's `pr_hold_cause` prints them: manual 1, GPS 2, TI error 4, TI limit exceeded 8, hardware failure 0x10, temporary mode 0x20, 1PPS selection 0x40; 0x80, which `pr_hold_cause` does not print, is set by `holdover_recovery` while `gps.command_monitor_failed` is set and cleared by `holdover` once it is not, and `enter_holdover` logs it as code 0x14, a plain "Holdover started" |
+| `+0x11` | `hold_causes` | why the loop holds over, a set of `pll_hold_cause` bits as the console's `pr_hold_cause` prints them: `HOLD_CAUSE_MANUAL` (1), `HOLD_CAUSE_GPS` (2), `HOLD_CAUSE_TI_ERROR` (4), `HOLD_CAUSE_TI_LIMIT_EXCEEDED` (8), `HOLD_CAUSE_HARDWARE_FAILURE` (0x10), `HOLD_CAUSE_TEMPORARY_MODE` (0x20), `HOLD_CAUSE_1PPS_SELECTION` (0x40); `HOLD_CAUSE_GPS_COMMAND_MONITOR` (0x80), which `pr_hold_cause` does not print, is set by `holdover_recovery` while `gps.command_monitor_failed` is set and cleared by `holdover` once it is not, and `enter_holdover` logs it as `LOG_HOLDOVER_STARTED` (0x14), a plain "Holdover started" |
 | `+0x13` | `ti_limit_override` | `holdover` checks the TI limit while it is 0; `pll_init` and `holdover` clear it, and `holdover_recovery_limit_ignore` (`0x45b0c`), `:ROSC:HOLDover:RECovery:LIMit:IGNore`'s action, sets it in holdover with no cause but the TI limit's |
 | `+0x14` | `recovery_countdown` | `holdover_recovery`'s, as `powerup_countdown` |
 | `+0x16` | `coarse_state` | `coarse`'s sub-state |
 | `+0x18` | `frequency_adjusted` | set when `fine` applies a frequency correction; `holdover_within_limit` counts the limit exceeded while it is |
 | `+0x1a` | `fine_retries` | `fine`'s failed attempts, a word; it gives up past 9 |
-| `+0x20` | `aging_state` | `efc_history_update`'s: 1 once it has stored the EFC and the first uncertainty, 3 once the ring holds the aging fit's entry; holdover uses the fit only at 3 |
+| `+0x20` | `aging_state` | `efc_history_update`'s: `PLL_AGING_SETTLING` (1) once it has stored the EFC and the first uncertainty, `PLL_AGING_COLLECTING` (3) once the ring holds the aging fit's entry; holdover uses the fit only at `PLL_AGING_COLLECTING` |
 | `+0x24`, `+0x25` | `gps_diag_state`, `gps_diag_substate` | `gps_diag_sequence`'s |
-| `+0x26` | `gps_init_state` | `gps_init_sequence`'s, which `powerup` waits past 13 for |
+| `+0x26` | `gps_init_state` | `gps_init_sequence`'s, which `powerup` waits past `PLL_GPS_INIT_HOLD_OFF_ACK` (13) for |
 | `+0x28`, `+0x2a` | `leap_check_timer`, `leap_check_requested` | `gps_leap_sequence` asks again when the word wraps; `pll_stage_status` sets the request |
 | `+0x2b` | `leap_check_state` | `gps_leap_sequence`'s |
 | `+0x2c` to `+0x30` | `leap_ack_state`, `leap_ack_requested`, `leap_ack_done`, `leap_ack_again` | `gps_leap_ack`'s, which measures the GPS-UTC offset: it switches `@@Aw` to the other time scale, takes the difference of the two times and sets the offset, then switches back; `powerup` and `holdover_recovery` wait for it |
@@ -449,14 +453,14 @@ Its other named fields, by the routines that use them:
 | `+0x3bc`, `+0x3c0` | `holdover_start_time`, `holdover_start_date` | `get_date_time`'s as `holdover` starts |
 | `+0x3c8` | `holdover_duration` | `:ROSCillator:HOLDover:DURation?` |
 | `+0x3cc`, `+0x3d0` | `reference_uptime`, `reference_seconds` | the uptime and the FPGA's seconds count `clock_set_from_reference` sets the clock from |
-| `+0x3d1` to `+0x3d3` | `fpga_configuration`, `fpga_loaded`, `loop_running` | the first is a `fpga_configuration_index`: `pll_init` starts it at `fpga_configurations.last` (ROM `0x21e2c`, 1), `fpga_setup` sets it to the configuration it loaded, `FPGA_CONFIGURATION_COUNTER`, and `fpga_load_test` loads it again if it is below `last`, else configuration 0, so always 0; `fpga_setup` also sets the second, which the PPS checks wait for, and `pll_restart` keeps both; the third is 0 in diagnostic mode and read by nothing |
+| `+0x3d1` to `+0x3d3` | `fpga_configuration`, `fpga_loaded`, `loop_running` | the first is a `fpga_configuration_index`: `pll_init` starts it at `FPGA_CONFIGURATION_LAST` (1), `fpga_configurations.last` (ROM `0x21e2c`), `fpga_setup` sets it to the configuration it loaded, `FPGA_CONFIGURATION_COUNTER`, and `fpga_load_test` loads it again if it is below `last`, else `FPGA_CONFIGURATION_COUNTER` (0), so always that; `fpga_setup` also sets the second, which the PPS checks wait for, and `pll_restart` keeps both; the third is 0 in diagnostic mode and read by nothing |
 | `+0x3d4` | `sync_requested` | `sync_perform` syncs whatever the TI while it is set, then clears it |
 | `+0x3d5` | `field_3d5` | read by the GPS receiver status and `status_snapshot`; nothing writes it but the block copy |
 
 | Offset | Field | Shown by |
 | ------ | ----- | -------- |
 | `+0x000`, `+0x001` | `start_ptr`, `stop_ptr` | `pll_rep`'s `start ptr`, `stop_ptr`; the ring's indexes, `& 0x3f` |
-| `+0x002` | `loop_settled` | set by `startup_pll` when it settles with no aging fit yet; `efc_history_update` then takes `aging_state` to 3 |
+| `+0x002` | `loop_settled` | set by `startup_pll` when it settles with no aging fit yet; `efc_history_update` then takes `aging_state` to `PLL_AGING_COLLECTING` (3) |
 | `+0x004` | `sample_count` | counted to 2700 |
 | `+0x008` | `summed_count` | the samples summed |
 | `+0x00a` | `averages[64]` | `e_avg`, `efc_sum / summed_count`; `pll_rep`'s `last efc average` |
@@ -813,9 +817,12 @@ calibration double `counter_read` subtracts (`+4`), and the
 interpolator's offset and scale (`+0x18`, `+0x1c`), which
 `counter_calibrate` stores from `reading_low` and the spread.  Between
 them are pairs of a mode and a state: `counter_arm` loads the registers
-when `registers_mode` is 1 and `registers_state` 2, and sets the state
-to 1; `counter_calibrate` calibrates when `calibrate_mode` is 3, or 1
-with `calibrate_state` 2; a third pair at `+0x10` counts `+0x14` down.
+when `registers_mode` is `COUNTER_REGISTERS_WHEN_WANTED` (1) and
+`registers_state` `COUNTER_WORK_WANTED` (2), and sets the state to
+`COUNTER_WORK_DONE` (1); `counter_calibrate` calibrates when
+`calibrate_mode` is `COUNTER_CALIBRATE_ALWAYS` (3), or
+`COUNTER_CALIBRATE_WHEN_WANTED` (1) with `calibrate_state`
+`COUNTER_WORK_WANTED`; a third pair at `+0x10` counts `+0x14` down.
 
 ## The pllc task's SCPI requests
 
@@ -924,7 +931,8 @@ are padding: nothing refers to them, and each comes before a long.
 `field_1e`, `field_b8` (0 to 50000) and `field_bc` are saved and
 restored, but only their descriptors refer to them.  In
 `counter_configuration` the third mode and state are the clock sync's:
-`sync_request` sets `sync_mode` and `sync_state` to 2 with a
+`sync_request` sets `sync_mode` to `COUNTER_SYNC_WHEN_WANTED` and
+`sync_state` to `COUNTER_WORK_WANTED`, both 2, with a
 `sync_kind` and a `sync_count`, and `counter_arm` writes the kind into
 `fconf_regs[3]` (`counter_set_sync`, `0x40a84`) while counting the
 count down.
@@ -1049,15 +1057,18 @@ checksum word, then the fields of `selftest`'s first 14 bytes in their
 order.  `boot_reset` (`0x550`), once a byte-lane sum fails (`restart.md`,
 "Boot check") and it stays out of the primary, ORs 2 and 1 into
 `checksum` for the two lanes of `0x10000` to `0x3ffff` and 8 and 4
-for `0x40000` to `0x7ffff`, sets `cpu` to 1 if its register test
+for `0x40000` to `0x7ffff`, sets `cpu` to `SELFTEST_FAILED` (1) if its register test
 fails (`0x76e`), and runs the RAM test into `ram`, `ram_data_bits`
 and `ram_address_lines` as `primary_reset` does into `selftest`;
 `boot_duart_early_init` (`0x4cc`) and `boot_duartb_loopback_check`
 (`0x400`) report at `uart` as the primary's report at `selftest.uart`:
-1 if the IVR does not read back, `0x10` ORed for a character back
-wrong, `0x20` for none.  On this path it writes the DUART's reset
-output port bits command with 8, then `0x10`, `0x20` or `0x40` for a
-CPU, RAM or UART failure, OP4 to OP6 as the primary lights them, and
+`SELFTEST_UART_REGISTER` (1) if the IVR does not read back,
+`SELFTEST_UART_CHANNEL_B_DATA` (`0x10`) ORed for a character back
+wrong, `SELFTEST_UART_CHANNEL_B_TIMEOUT` (`0x20`) for none.  On this
+path it writes the DUART's reset output port bits command with
+`BOARD_LED_INSTALLER` (8), then `BOARD_LED_CPU`, `BOARD_LED_RAM` or
+`BOARD_LED_DUART` (`0x10`, `0x20`, `0x40`) for a CPU, RAM or UART
+failure, OP4 to OP6 as the primary lights them, and
 ORs each into `lamp_mask`, which nothing reads.  The installer's
 `:DIAGnostic:TEST?` (`restart.md`: 1 checksum flags, 2 CPU, 3 RAM, 4
 DUART) returns `checksum`, `cpu`, `ram` with its two details and
@@ -1246,10 +1257,10 @@ clear `+0x00` and `+0x04`.
 
 | Offset | Field | Filled by | Read by |
 | ------ | ----- | --------- | ------- |
-| `+0x08` | `sender` | `gps_request_sender`: 1 `gpsx_send`, the loop's GPS sequences; 2 `pll_scpi_send_to_loop`, a setting; 3 or 4 `gps_request_post`, the command and status monitors | `request_kind_valid` (1 to 4), `gps_count_response`, `pllp_task` |
-| `+0x09` | `result` | 1; `gps_count_response` its kind before sending it back to `plla` | `pllp_task`, as `gps_ack_code` for sender 1 and `pll_scpi_complete`'s success for 2 |
+| `+0x08` | `sender` | `gps_request_sender`: `GPS_SENDER_SEQUENCE` (1) `gpsx_send`, the loop's GPS sequences; `GPS_SENDER_SETTING` (2) `pll_scpi_send_to_loop`, a setting; `GPS_SENDER_COMMAND_MONITOR` or `GPS_SENDER_STATUS_MONITOR` (3 or 4) `gps_request_post`, the command and status monitors | `request_kind_valid` (1 to 4, its table ended by `GPS_SENDER_NONE`), `gps_count_response`, `pllp_task` |
+| `+0x09` | `result` | `GPS_RESULT_REJECT` (1), as every sender sends it; `gps_count_response` its kind before sending it back to `plla` | `pllp_task`, as `gps_ack_code` for `GPS_SENDER_SEQUENCE` and `pll_scpi_complete`'s success for `GPS_SENDER_SETTING` |
 | `+0x0a` | `code` | the request, a `gps_request_code`: an Oncore message below `0x31`, a step to `0x46`, a script to `0x59` | `gps_request_class`, `gpsm_task` |
-| `+0x0c` | `argument_mode` | `gpsx_send`'s argument, 0 from the others but a `gps_request_post` of code 4 | `gps_request_class`, `gps_request_step` |
+| `+0x0c` | `argument_mode` | `gpsx_send`'s argument, `GPS_ARGUMENTS_SET` (0) from the others but a `gps_request_post` of code `GPS_POST_STEP` (4) | `gps_request_class`, `gps_request_step` |
 | `+0x0e` | `arguments` | `gpsx_arguments`, `pll_scpi_gps_arguments`, or `gps_request_post`'s | four longs `gpsm_task` copies to `gps_request_step` |
 | `+0x12` | `sent` | `gps_request_post`'s last argument: 0 for the command monitor's request, 1 for the status monitor's `0x4b` | `request_ring_newest_replaceable` |
 
@@ -1486,13 +1497,14 @@ command's `message` at `+0x1e`, and the code `gps_request_post`,
 `0x4fba2`, `0x4b9c0`), `gps_response_index`, and the command log's
 `code` and `message`, `0x4c686` and `0x4c68c`); for
 class 1, a script, it copies only the arguments.  A step whose
-`argument_mode` is 2 takes its arguments from `gps_request_step`'s,
+`argument_mode` is `GPS_ARGUMENTS_FROM_REQUEST` (2) takes its arguments from `gps_request_step`'s,
 from the index in its own first argument.  `raim_request_arguments`
 (`0x4c4e8`) sets the four.
 
 Around it: `raim_suspect_time` (`0x101b4e`) is the uptime at which
-`raim_monitor` (`0x4b01e`) sets `gps.raim_assessment` to 2, an alarm
-detected; four seconds on with the solution still not OK it makes it 3.
+`raim_monitor` (`0x4b01e`) sets `gps.raim_assessment` to
+`GPS_RAIM_ALARM_DETECTED` (2); four seconds on with the solution still
+not OK it makes it `GPS_RAIM_ALARM` (3).
 `status_message_arrived` and `traim_message_arrived` (`0x101b54`,
 `0x101b55`) are set by `oncore_position_message` and
 `oncore_traim_message` (`0x4f85c`) and taken by the status monitor in
@@ -1754,11 +1766,13 @@ both.
 bytes) is the RAM a warm restart restores (`restart.md`): a checksum
 word, the word `restore`, a copy of `gps` at `+4`, of `pll` at
 `+0x55e` and of the `0x19` bytes from `0x101e70` at `+0x934`.  Each
-`pllp_task` (`0x47528`) pass copies the three in, sets `restore` to 1
+`pllp_task` (`0x47528`) pass copies the three in, sets `restore` to
+`PRESERVED_REGION_RESTORE` (1)
 and stores `record_checksum` (`0x3082e`) of the `0x94e` bytes.
 `system_init` (`0x12bb4`) copies them back when the checksum matches,
-RSR's EXT and POW bits (`0xc0`) are clear and `restore` is 1;
-`nv_clear_and_reset` (`0x45c92`) clears `restore` and re-sums before
+RSR's EXT and POW bits (`0xc0`) are clear and `restore` is
+`PRESERVED_REGION_RESTORE`; `nv_clear_and_reset` (`0x45c92`) sets
+`restore` to `PRESERVED_REGION_DISCARD` (0) and re-sums before
 `trap #12`.  `crash_message` (`0x10094e`) follows it, outside the sum.
 
 The `0x19` bytes from `0x101e70` are a block the code copies whole,
@@ -1915,11 +1929,12 @@ negative, which it then makes positive, and then each time that many
 seconds have passed.  `gps_init` (`0x4bef6`) clears both.
 
 `gps_request_post` (`0x4bd2c`) sets `command_monitor_result`
-(`0x101428`) to 9 for a request from sender 3, the command monitor,
-and `status_monitor_result` (`0x101429`) for any other, the status
-monitor's 4; `gps_count_response` (`0x4b9e6`) stores the request's
-result code there in place of sending it to `plla`.
-`command_monitor` (`0x4b46e`) waits on each while it is 9.
+(`0x101428`) to `GPS_RESULT_PENDING` (9) for a request from
+`GPS_SENDER_COMMAND_MONITOR` (3), and `status_monitor_result`
+(`0x101429`) for any other, `GPS_SENDER_STATUS_MONITOR`'s (4);
+`gps_count_response` (`0x4b9e6`) stores the request's result code
+there in place of sending it to `plla`.  `command_monitor`
+(`0x4b46e`) waits on each while it is `GPS_RESULT_PENDING`.
 `status_without_traim_count` (`0x10142a`) is its count of `@@Ba` with a
 new time since the last `@@Bn`, while `gps.raim.rate` is set; at 7 the
 status monitor requests the messages again.

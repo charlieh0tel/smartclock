@@ -42,20 +42,13 @@ void installer_print_exception(uint16_t sr, uint32_t pc, uint16_t vector,
  * bytes from vector 2's, the first named, unchecked below it and unaligned as
  * the image's is (installer::0x100658). */
 char* installer_exception_name(uint16_t vector) {
-  /* The vector's offset in an exception frame's format and vector
-   * word, below the format (CPU_VECTOR_FORMAT_MASK). */
-  static const uint16_t VECTOR_OFFSET_MASK = 0x0fff;
-  /* exception_names names the vectors from 2, bus error, to 58
-   * (offset 0xe8), by an exception frame's vector offset. */
-  static const uint16_t VECTOR_OFFSET_FIRST_NAMED = 2 * 4;
-  static const uint16_t VECTOR_OFFSET_LAST = 0xe8;
-  uint16_t offset = vector & VECTOR_OFFSET_MASK;
+  uint16_t offset = vector & CPU_VECTOR_OFFSET_MASK;
 
-  if (offset > VECTOR_OFFSET_LAST) {
+  if (offset > CPU_VECTOR_OFFSET_LAST_NAMED) {
     return "Oooh! That tickles. I don't know that vector.";
   }
   return *(char**)((char*)installer_exception_names + offset -
-                   VECTOR_OFFSET_FIRST_NAMED);
+                   CPU_VECTOR_OFFSET_FIRST_NAMED);
 }
 
 /* Sets the interrupt mask to level 4 and spins until the watchdog

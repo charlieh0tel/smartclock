@@ -322,10 +322,9 @@ uint8_t* oncore_as_height_decode(uint8_t* cursor, uint8_t* record) {
 
 /* Decodes @@Ai's byte into record at its channel, 1 to 6 (0x4efd6). */
 uint8_t* oncore_ai_decode(uint8_t* cursor, uint8_t* record) {
-  static const uint8_t CHANNELS = 6;
   const uint8_t channel = cursor[0];
 
-  if (channel != 0 && channel <= CHANNELS) {
+  if (channel != 0 && channel <= GPS_CHANNELS) {
     byte_copy_optional(&cursor[1], &record[channel - 1]);
   }
   return cursor + 2;

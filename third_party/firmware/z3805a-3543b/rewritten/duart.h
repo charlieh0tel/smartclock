@@ -31,17 +31,63 @@ static const uint8_t DUART_FLOW_XOFF_RECEIVED = 0x80; /* transmission held */
  * XON once more are free. */
 static const uint8_t DUART_XON_ABOVE_FREE = 0x10;
 
-/* The 68681's channel B settings (MC68681 Table 4-5) that several
- * functions use; the rest are in the functions that use them. */
+/* The receive interrupt sends XOFF with fewer free than this. */
+static const uint8_t DUART_XOFF_BELOW_FREE = 0x40;
+
+/* A received byte's 7 bits, which the receive interrupt tests for a
+ * control character. */
+static const uint8_t DUART_ASCII_MASK = 0x7f;
+
+/* The 68681's receive errors (MC68681 Table 4-5). */
+static const uint8_t DUART_RECEIVE_ERRORS =
+    SR_RECEIVED_BREAK | SR_FRAMING_ERROR | SR_PARITY_ERROR;
+
+/* The signal channel B's transmit interrupt gives the SCPI task when an
+ * asynchronous send ends; psos-signals.h has no name for it. */
+static const uint32_t DUART_SIGNAL_ASYNC_DONE = 0x0020;
+
+/* The 68681's channel B settings (MC68681 Table 4-5). */
 static const uint8_t DUART_MR1_EIGHT_BITS = 3;
 
+static const uint8_t DUART_MR1_SEVEN_BITS = 2;
+
+/* MR1's bits a mode change keeps. */
+static const uint8_t DUART_MR1_KEEP =
+    MR1_RXRTS | MR1_RXIRQ_FFULL | MR1_ERROR_BLOCK;
+
 static const uint8_t DUART_MR2_ONE_STOP_BIT = 0x07;
+
+static const uint8_t DUART_MR2_TWO_STOP_BITS = 0x0f;
+
+/* The counter clocked by the crystal over 16 (MC68681 Table 4-4). */
+static const uint8_t DUART_ACR_COUNTER_CRYSTAL_16 = 0x30;
+
+/* The output port's bits 2 to 7, by duart_shadow.output_reset. */
+static const uint8_t DUART_OP_BITS = 0xfc;
+
+/* Values the reset code's and the self-tests' checks write to the
+ * interrupt vector register and read back, and the vector it is left
+ * with, user vector 67, whose handler is primary_user_67. */
+static const uint8_t DUART_IVR_PATTERN_1 = 0x55;
+
+static const uint8_t DUART_IVR_PATTERN_2 = 0xaa;
+
+static const uint8_t DUART_IVR_VECTOR = 0x43;
+
+/* How long a channel B loopback check spins for each character back. */
+static const int32_t DUART_LOOPBACK_CHECK_SPINS = 3000;
 
 static const uint8_t DUART_CSR_CLOCK_BITS =
     4; /* the receiver's clock in the high nibble, the transmitter's in the low
         */
-/* baud-rate set 2's clock select for 9600, which ACR_BRG_SET_2 picks */
+/* baud-rate set 2's clock selects, which ACR_BRG_SET_2 picks */
+static const uint8_t DUART_CSR_1200 = 0x6;
+
+static const uint8_t DUART_CSR_2400 = 0x8;
+
 static const uint8_t DUART_CSR_9600 = 0xb;
+
+static const uint8_t DUART_CSR_19200 = 0xc;
 
 /* How long a reconfiguration waits for the transmitter to empty, in
  * ticks. */

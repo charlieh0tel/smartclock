@@ -48,15 +48,12 @@ void installer_idn_model_default(void) {
 /* Reads the model, serial and suffix from the identification record, or
  * their defaults; true when its checksum holds (installer::0x10824a). */
 uint8_t installer_identification_record_read(void) {
-  /* The identification record's default suffix. */
-  static const char DEFAULT_SUFFIX = 'A';
-
   if (installer_record_checksum(&eeprom_identification_record,
                                 sizeof eeprom_identification_record) !=
       eeprom_identification_record.checksum) {
     installer_idn_model_default();
     installer_strncpy(installer_idn_serial, "0", sizeof installer_idn_serial);
-    installer_idn_suffix = DEFAULT_SUFFIX;
+    installer_idn_suffix = RECORDS_DEFAULT_SUFFIX;
     return 0;
   }
   installer_strncpy(installer_idn_model, eeprom_identification_record.model,

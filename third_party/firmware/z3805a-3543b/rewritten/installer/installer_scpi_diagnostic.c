@@ -133,9 +133,6 @@ int32_t installer_scpi_set_DIAGnostic_DOWNload(void* parameters, void* response,
   static const int32_t CHECKSUM_DIGITS = 2;
   static const int32_t BYTE_DIGITS = 2;
   static const int32_t WORD_DIGITS = 4;
-  static const uint8_t BYTE_BITS = 8;
-  static const uint32_t BYTE_MASK = 0xff;
-  static const int32_t HEXADECIMAL = 16;
   /* What follows the last byte, the value an odd last byte is
    * programmed with beside it. */
   static const uint16_t ERASED_BYTE = 0xff;
@@ -180,7 +177,7 @@ int32_t installer_scpi_set_DIAGnostic_DOWNload(void* parameters, void* response,
     pair[0] = text[TYPE_DIGITS + digit];
     pair[1] = text[TYPE_DIGITS + digit + 1];
     pair[2] = 0;
-    const int32_t byte = installer_strtol(pair, 0, HEXADECIMAL);
+    const int32_t byte = installer_strtol(pair, 0, LIBC_HEXADECIMAL);
 
     sum += byte;
     bytes[count++] = byte;
@@ -189,7 +186,7 @@ int32_t installer_scpi_set_DIAGnostic_DOWNload(void* parameters, void* response,
   pair[0] = text[length - CHECKSUM_DIGITS];
   pair[1] = text[length - CHECKSUM_DIGITS + 1];
   pair[2] = 0;
-  if ((~sum & BYTE_MASK) != installer_strtol(pair, 0, HEXADECIMAL)) {
+  if ((~sum & CPU_BYTE_MASK) != installer_strtol(pair, 0, LIBC_HEXADECIMAL)) {
     return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   /* The count, of the address's, the data's and the checksum's bytes. */
@@ -202,14 +199,14 @@ int32_t installer_scpi_set_DIAGnostic_DOWNload(void* parameters, void* response,
   uint32_t address = 0;
 
   for (int32_t index = 0; index < address_bytes; index++) {
-    address = (address << BYTE_BITS) + bytes[1 + index];
+    address = (address << CPU_BYTE_BITS) + bytes[1 + index];
   }
   const int32_t data_digits =
       record_bytes * BYTE_DIGITS - address_digits - CHECKSUM_DIGITS;
   int32_t index = 1 + address_bytes;
 
   for (int32_t digit = 0; digit < data_digits; digit += WORD_DIGITS) {
-    const uint32_t word = (bytes[index] << BYTE_BITS) + bytes[index + 1];
+    const uint32_t word = (bytes[index] << CPU_BYTE_BITS) + bytes[index + 1];
 
     if (address < INSTALLER_SCPI_DIAGNOSTIC_FLASH_START ||
         address >= INSTALLER_SCPI_DIAGNOSTIC_FLASH_END) {

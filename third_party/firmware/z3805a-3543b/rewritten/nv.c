@@ -17,8 +17,8 @@ typedef struct records_bit_stream {
 
 /* Stores the long being filled, its bits moved to the top. */
 static void records_pack_flush(records_bit_stream* stream) {
-  if (stream->used > 0 && stream->used < RECORDS_LONG_BITS) {
-    stream->bits <<= RECORDS_LONG_BITS - stream->used;
+  if (stream->used > 0 && stream->used < CPU_LONG_BITS) {
+    stream->bits <<= CPU_LONG_BITS - stream->used;
   }
   *stream->next++ = stream->bits;
   stream->bits = 0;
@@ -38,10 +38,10 @@ static const uint32_t records_low_bit_masks[] = {
 /* Packs a value's low bits. */
 static void records_pack(records_bit_stream* stream, uint32_t value,
                          uint8_t width) {
-  if ((uint8_t)(width + stream->used) > RECORDS_LONG_BITS) {
+  if ((uint8_t)(width + stream->used) > CPU_LONG_BITS) {
     records_pack_flush(stream);
   }
-  stream->bits = (width >= RECORDS_LONG_BITS ? 0 : stream->bits << width) |
+  stream->bits = (width >= CPU_LONG_BITS ? 0 : stream->bits << width) |
                  (value & records_low_bit_masks[width]);
   stream->used += width;
 }
@@ -49,7 +49,7 @@ static void records_pack(records_bit_stream* stream, uint32_t value,
 /* Unpacks a value of so many bits.  For 32 the image takes the long as it
  * is; rotating it a whole turn is the same. */
 static uint32_t records_unpack(records_bit_stream* stream, uint8_t width) {
-  if ((uint8_t)(width + stream->used) > RECORDS_LONG_BITS) {
+  if ((uint8_t)(width + stream->used) > CPU_LONG_BITS) {
     stream->used = 0;
     stream->bits = *stream->next++;
   }
@@ -137,7 +137,7 @@ void clear_nv(void) {
 void nv_clear_and_reset(void) {
   clear_nv();
   enter_supervisor_mode();
-  preserved_region.restore = 0;
+  preserved_region.restore = PRESERVED_REGION_DISCARD;
   preserved_region.checksum =
       record_checksum(&preserved_region, sizeof preserved_region);
   __m68k_trap(12);
@@ -187,7 +187,7 @@ void nv_restore(void) {
     return;
   }
 
-  selftest.eeprom = 1;
+  selftest.eeprom = SELFTEST_FAILED;
   memcpy(&nv_settings, &NV_DEFAULTS, sizeof nv_settings);
   uint32_t sequence_0 = (uint32_t)nv_records[0].sequence;
   uint32_t sequence_1 = (uint32_t)nv_records[1].sequence;

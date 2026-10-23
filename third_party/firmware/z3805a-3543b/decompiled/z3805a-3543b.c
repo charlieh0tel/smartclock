@@ -687,7 +687,8 @@ struct fpga_configuration_entry {
 };
 
 typedef enum __attribute__((packed)) fpga_configuration_index {
-    FPGA_CONFIGURATION_COUNTER=0
+    FPGA_CONFIGURATION_COUNTER=0,
+    FPGA_CONFIGURATION_LAST=1
 } fpga_configuration_index;
 
 typedef struct fpga_configuration_table fpga_configuration_table, *Pfpga_configuration_table;
@@ -744,6 +745,7 @@ typedef enum __attribute__((packed)) gps_request_code_word {
 } gps_request_code_word;
 
 typedef enum __attribute__((packed)) gps_request_sender {
+    GPS_SENDER_NONE=0,
     GPS_SENDER_SEQUENCE=1,
     GPS_SENDER_SETTING=2,
     GPS_SENDER_COMMAND_MONITOR=3,
@@ -2240,6 +2242,11 @@ struct preserved_region_fields {
     uint8_t field_94d;
 };
 
+typedef enum __attribute__((packed)) preserved_region_restore {
+    PRESERVED_REGION_DISCARD=0,
+    PRESERVED_REGION_RESTORE=1
+} preserved_region_restore;
+
 typedef int (printf_function)(char *, ...);
 
 typedef struct psos_configuration psos_configuration, *Ppsos_configuration;
@@ -2260,6 +2267,7 @@ typedef enum __attribute__((packed)) psos_task_mode {
 } psos_task_mode;
 
 typedef enum __attribute__((packed)) psos_task_status {
+    PSOS_TASK_READY=0,
     PSOS_TASK_SUSPENDED=4,
     PSOS_TASK_PAUSED=8,
     PSOS_TASK_VARIABLE_WAIT=16,
@@ -3791,6 +3799,7 @@ _Static_assert(sizeof(pllc_request) == 24, "pllc_request");
 _Static_assert(sizeof(pllc_value_kind) == 1, "pllc_value_kind");
 _Static_assert(sizeof(pps_exchange_message) == 24, "pps_exchange_message");
 _Static_assert(sizeof(preserved_region_fields) == 2382, "preserved_region_fields");
+_Static_assert(sizeof(preserved_region_restore) == 1, "preserved_region_restore");
 _Static_assert(sizeof(psos_configuration) == 98, "psos_configuration");
 _Static_assert(sizeof(psos_error) == 1, "psos_error");
 _Static_assert(sizeof(psos_exchange) == 34, "psos_exchange");
@@ -19007,7 +19016,7 @@ __exception void kernel_dispatch_service(uint16_t param_1)
     uVar9 = CONCAT22((int16_t)((uint64_t)uVar15 >> 0x10),(int16_t)ppVar1->region_request);
   }
   if ((ppVar1 != ppVar6->ready) &&
-     (((ppVar1->mode & PSOS_MODE_NO_PREEMPTION) == 0 || (ppVar1->status != 0)))) {
+     (((ppVar1->mode & PSOS_MODE_NO_PREEMPTION) == 0 || (ppVar1->status != PSOS_TASK_READY)))) {
     ppVar1->field_4e = (uint32_t)((uint64_t)uVar15 >> 0x20);
     ppVar1->region_request = uVar9;
     ppVar1->region_wait = unaff_D2;
@@ -24246,7 +24255,7 @@ __exception void kernel_init_checked(void)
   ppVar5->free_tasks = ppVar13;
   do {
     ppVar14 = ppVar13;
-    ppVar14->status = 0xff;
+    ppVar14->status = ~PSOS_TASK_READY;
     ppVar14->id_check = CONCAT22((int16_t)((uint32_t)ppVar14 >> 0x10),~(uint16_t)ppVar14);
     ppVar14->list_next = ppVar14 + 1;
     bVar16 = uVar7 != 0;
@@ -24454,7 +24463,7 @@ __exception void kernel_init(void)
   ppVar5->free_tasks = ppVar10;
   do {
     ppVar11 = ppVar10;
-    ppVar11->status = 0xff;
+    ppVar11->status = ~PSOS_TASK_READY;
     ppVar11->id_check = CONCAT22((int16_t)((uint32_t)ppVar11 >> 0x10),~(uint16_t)ppVar11);
     ppVar11->list_next = ppVar11 + 1;
     bVar13 = uVar6 != 0;
@@ -25523,10 +25532,10 @@ int32_t task_table_build(void)
       ppVar4 = ppVar4->list_next) {
     if (ppVar4 != ppVar1) {
       task_table[iVar2].task = ppVar4;
-      if (ppVar4->status == 0) {
+      if (ppVar4->status == PSOS_TASK_READY) {
         task_table[iVar2].state = PSOS_TABLE_READY;
       }
-      else if (ppVar4->delay == 0 && (ppVar4->status & PSOS_TASK_PAUSED) == 0) {
+      else if (ppVar4->delay == 0 && (ppVar4->status & PSOS_TASK_PAUSED) == PSOS_TASK_READY) {
         task_table[iVar2].state = PSOS_TABLE_BLOCKED;
       }
       else {
@@ -44950,7 +44959,7 @@ uint8_t fpga_program(fpga_configuration_index configuration,char with_task_name)
   char acStack_54 [80];
   
   uVar6 = 1;
-  if (1 < configuration) {
+  if (FPGA_CONFIGURATION_LAST < configuration) {
     return 0;
   }
   fpga_programming = 1;
@@ -74392,7 +74401,7 @@ uint32_t request_kind_valid(gps_request_sender sender)
   
   pgVar2 = &DAT_0004cfc0;
   do {
-    if (*pgVar2 == 0) {
+    if (*pgVar2 == GPS_SENDER_NONE) {
       return 0;
     }
     gVar1 = *pgVar2;

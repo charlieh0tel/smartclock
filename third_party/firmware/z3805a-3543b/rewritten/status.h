@@ -13,6 +13,14 @@
  * status_model_error_class. */
 static const int16_t STATUS_COMMAND_ERROR_GREATEST = -100;
 
+/* The error the error queue's last free entry takes, "Queue overflow" in
+ * scpi_error_messages (error_queue_push, 0x28610). */
+static const int16_t STATUS_ERROR_QUEUE_OVERFLOW = -350;
+
+/* The error queue's room, which status_init gives status_create
+ * (0x2f480). */
+static const int32_t STATUS_ERROR_QUEUE_ROOM = 0x1e;
+
 /* Each sets or clears its parent's summary bit through the other. */
 static void status_model_propagate(status_model* status, status_register* reg);
 

@@ -11,7 +11,6 @@
  * read back against the text; a wrong one sets SELFTEST_UART_CHANNEL_B_DATA,
  * none within the spins SELFTEST_UART_CHANNEL_B_TIMEOUT (0x400). */
 void boot_duartb_loopback_check(void) {
-  static const int32_t LOOPBACK_CHECK_SPINS = 3000;
   char* text = "DUART";
 
   (void)duart.b.mr;
@@ -21,7 +20,7 @@ void boot_duartb_loopback_check(void) {
   duart.b.cr = CR_TX_ENABLE | CR_RX_ENABLE;
   duart.b.rb_tb = *boot_loopback_send_next++;
   while (*boot_loopback_expect_next != 0 && boot_selftest.uart == 0) {
-    for (int32_t spins = LOOPBACK_CHECK_SPINS;
+    for (int32_t spins = DUART_LOOPBACK_CHECK_SPINS;
          spins > 0 && (duart.b.sr_csr & SR_RXRDY) == 0; spins--) {
     }
     if ((duart.b.sr_csr & SR_RXRDY) != 0) {
@@ -47,23 +46,16 @@ void boot_duartb_loopback_check(void) {
  * its vector, then, if it held them, sets channel B up for 9600 8N1 and
  * checks it in loopback (0x4cc). */
 void boot_duart_early_init(void) {
-  /* The patterns and the vector, user vector 67, as duart.c's. */
-  static const uint8_t IVR_PATTERN_1 = 0x55;
-  static const uint8_t IVR_PATTERN_2 = 0xaa;
-  static const uint8_t IVR_VECTOR = 0x43;
-  /* The counter clocked by the crystal over 16 (MC68681 Table 4-4). */
-  static const uint8_t ACR_COUNTER_CRYSTAL_16 = 0x30;
-
   boot_selftest.uart = 0;
-  duart.ivr = IVR_PATTERN_1;
-  if (duart.ivr != IVR_PATTERN_1) {
+  duart.ivr = DUART_IVR_PATTERN_1;
+  if (duart.ivr != DUART_IVR_PATTERN_1) {
     boot_selftest.uart |= SELFTEST_UART_REGISTER;
   }
-  duart.ivr = IVR_PATTERN_2;
-  if (duart.ivr != IVR_PATTERN_2) {
+  duart.ivr = DUART_IVR_PATTERN_2;
+  if (duart.ivr != DUART_IVR_PATTERN_2) {
     boot_selftest.uart |= SELFTEST_UART_REGISTER;
   }
-  duart.ivr = IVR_VECTOR;
+  duart.ivr = DUART_IVR_VECTOR;
   if (boot_selftest.uart == 0) {
     duart.b.cr = CR_RESET_RECEIVER;
     duart.b.cr = CR_RESET_TRANSMITTER;
@@ -71,7 +63,7 @@ void boot_duart_early_init(void) {
     duart.b.mr = MR1_PARITY_NONE | DUART_MR1_EIGHT_BITS;
     duart.b.mr = DUART_MR2_ONE_STOP_BIT;
     duart.b.sr_csr = DUART_CSR_9600 << DUART_CSR_CLOCK_BITS | DUART_CSR_9600;
-    duart.ipcr_acr = ACR_BRG_SET_2 | ACR_COUNTER_CRYSTAL_16;
+    duart.ipcr_acr = ACR_BRG_SET_2 | DUART_ACR_COUNTER_CRYSTAL_16;
     boot_duartb_loopback_check();
   }
 }
@@ -107,11 +99,10 @@ static const int32_t BOOT_RECORDS_LEAST = 2;
 
 /* A long, high byte first, at a cursor, which it advances past it. */
 static uint32_t boot_read_long(const uint8_t** cursor) {
-  static const int32_t LONG_BYTES = 4;
   uint32_t value = 0;
 
-  for (int32_t i = 0; i < LONG_BYTES; i++) {
-    value = value << 8 | *(*cursor)++;
+  for (int32_t i = 0; i < CPU_LONG_BYTES; i++) {
+    value = value << CPU_BYTE_BITS | *(*cursor)++;
   }
   return value;
 }

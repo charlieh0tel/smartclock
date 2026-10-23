@@ -9,9 +9,6 @@
  * its own, so the types and prototypes it declares are in scope; each
  * function here keeps its generated prototype. */
 
-/* The loop's first time constant. */
-static const float PLLP_FIRST_TIME_CONSTANT = 150.0f;
-
 /* Clears pll and sets its defaults: the EFC the lifetime record saved,
  * a TFOM of 1 s, the first time constant and tolerance (0x473d2). */
 void pll_init(void) {
@@ -23,12 +20,12 @@ void pll_init(void) {
   pll.gps_init_state = PLL_GPS_INIT_START;
   pll.aging_state = PLL_AGING_START;
   pll.efc = efc_clamp(lifetime.efc);
-  pll.loop_time_constant = PLLP_FIRST_TIME_CONSTANT;
+  pll.loop_time_constant = PLL_FIRST_TIME_CONSTANT;
   holdover_recovery_auto = 1;
   pll.hold_causes = HOLD_CAUSE_NONE;
   pll.manual = 0;
   pll.ti_limit_override = 0;
-  pll.fpga_configuration = 1; /* fpga_configurations' last (structures.md) */
+  pll.fpga_configuration = FPGA_CONFIGURATION_LAST;
   leap_recheck_requested = 0;
   pll.tfom = FIRST_TFOM;
   pll.sync_requested = 0;
@@ -625,7 +622,7 @@ void pllp_task(void) {
   efc_gain_set(EFC_GAIN);
   if (pll.stage == PLL_STAGE_INVALID) {
     pll.stage = PLL_STAGE_POWERUP;
-    system_preset = preserved_region.restore != 1;
+    system_preset = preserved_region.restore != PRESERVED_REGION_RESTORE;
     if (system_preset) {
       log_event(LOG_SYSTEM_PRESET);
     } else {
@@ -696,7 +693,8 @@ void pllp_task(void) {
       gps_leap_ack();
     }
     gps_leap_sequence();
-    if (gps_command.code != 0 && gps_ack_awaited == GPS_ACK_NONE) {
+    if (gps_command.code != GPS_CONSOLE_NONE &&
+        gps_ack_awaited == GPS_ACK_NONE) {
       gps_command_send();
     }
     pll_scpi_receive();
@@ -704,7 +702,7 @@ void pllp_task(void) {
            sizeof preserved_region.values);
     preserved_region.gps = gps;
     preserved_region.pll = pll;
-    preserved_region.restore = 1;
+    preserved_region.restore = PRESERVED_REGION_RESTORE;
     preserved_region.checksum =
         record_checksum(&preserved_region, sizeof preserved_region);
     leds_update();

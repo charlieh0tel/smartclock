@@ -5,6 +5,16 @@
  * C includes the hand-written headers after its own declarations and
  * before the hand-written .c files, so every one of them can use it. */
 
+/* The EFC's top, its 20 bits' (efc_clamp, 0x2426e), and its mid-scale,
+ * the lifetime record's default. */
+static const float PLL_EFC_MOST = 1048560.0f;
+
+static const float PLL_EFC_MID_SCALE = 524288.0f;
+
+/* The loop's first time constant, in s, which pll_init and a restarted
+ * recovery set. */
+static const float PLL_FIRST_TIME_CONSTANT = 150.0f;
+
 /* The history's entries, a ring indexed modulo its size. */
 #define PLL_AGING_ENTRIES 64
 

@@ -404,18 +404,19 @@ pub(crate) struct DumpScpiArgs {
     /// disassembler (tools/ghidra/).
     #[arg(long, conflicts_with = "models")]
     handlers: bool,
-    /// Print every record of the tree as C data, for
-    /// `third_party/firmware/rewritten/` (docs/scpi/README.md, "As C").
+    /// Print every record of the tree as C data, for an image folder's
+    /// `rewritten/` (docs/scpi/README.md, "As C").
     #[arg(long, conflicts_with_all = ["models", "handlers", "names"])]
     c: bool,
     /// Print a label and type row for every record of the tree, in the
     /// names-file format, for tools/ghidra/SmartClockSetup.java.
     #[arg(long, conflicts_with_all = ["models", "handlers"])]
     names: bool,
-    /// With `--c` or `--names`, a names file (tools/ghidra/names/)
-    /// whose name for an address replaces the one made from the path,
-    /// and names the routines the tree points at; with `--names`, rows
-    /// for the addresses it names are left out.
+    /// With `--c` or `--names`, a names file
+    /// (`third_party/firmware/IMAGE/names.tsv`) whose name for an
+    /// address replaces the one made from the path, and names the
+    /// routines the tree points at; with `--names`, rows for the
+    /// addresses it names are left out.
     #[arg(long)]
     names_file: Option<PathBuf>,
     /// With `--c` or `--names`, the installer's tree, which the boot
@@ -545,6 +546,29 @@ mod tests {
         ] {
             assert!(lines.iter().any(|line| line == wanted), "{wanted}");
         }
+    }
+
+    /// The image folder's handlers.txt, SmartClockSetup.java's `scpi=`,
+    /// is what `make handlers` writes from the image.
+    #[test]
+    fn the_handlers_file_is_what_the_image_gives() {
+        let root = format!("{}/../..", env!("CARGO_MANIFEST_DIR"));
+        let image = std::fs::read(format!("{root}/third_party/firmware/z3805a-3543b.bin"))
+            .expect("the image is in the repository");
+        let held = std::fs::read_to_string(format!(
+            "{root}/third_party/firmware/z3805a-3543b/handlers.txt"
+        ))
+        .expect("the handlers file is in the repository");
+        let lines: Vec<String> = entries(&image)
+            .expect("the image has a tree")
+            .iter()
+            .map(Entry::handler_line)
+            .collect();
+        assert_eq!(
+            lines,
+            held.lines().collect::<Vec<_>>(),
+            "handlers.txt is stale; run make handlers"
+        );
     }
 
     #[test]

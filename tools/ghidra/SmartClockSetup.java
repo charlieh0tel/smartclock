@@ -9,15 +9,15 @@
 //   dry-run
 //       report the functions in data that would be removed, and do not
 //       remove them; everything else is applied.
-//   types=tools/ghidra/types/smartclock.h, then
+//   types=third_party/firmware/z3805a-3543b/smartclock.h, then
 //       types=third_party/firmware/include/mc68331.h
 //       C declarations of the firmware's structures and the CPU's
 //       modules, parsed into the program in the order given, before
 //       the names, so that names can use them; their #defines are
 //       skipped, as Ghidra's C parser takes none.
-//   names=tools/ghidra/names/IMAGE.tsv (more than one may be given, as
-//       IMAGE.scpi-tree.tsv and IMAGE.installer-scpi-tree.tsv, dump-scpi
-//       --names' rows for the two trees, after it)
+//   names=third_party/firmware/IMAGE/names.tsv (more than one may be
+//       given, as IMAGE/scpi-tree.tsv and IMAGE/installer-scpi-tree.tsv,
+//       dump-scpi --names' rows for the two trees, after it)
 //       address, "function", "label" or "local", name, source, and
 //       optionally a note saying what it is or does, a function's C
 //       prototype, a label's data type or a local's "TYPE @ OFFSET",
@@ -30,10 +30,10 @@
 //       and the note too, for SmartClockExportC.java's sidecar:
 //       names the firmware notes establish.  These replace names the
 //       other two gave, but not names given by hand.
-//   scpi=FILE
-//       smartclock-cli dump-scpi --handlers IMAGE: a path, its query
-//       handler and its setter, "-" for none; named scpi_query_PATH and
-//       scpi_set_PATH.
+//   scpi=third_party/firmware/IMAGE/handlers.txt
+//       smartclock-cli dump-scpi --handlers IMAGE, as make handlers
+//       writes it: a path, its query handler and its setter, "-" for
+//       none; named scpi_query_PATH and scpi_set_PATH.
 //   pforth=docs/firmware/pforth/IMAGE.txt
 //       table, word and code address; kernel words named forth_WORD,
 //       diagnostic words diag_WORD, punctuation spelled out.

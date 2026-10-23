@@ -13,10 +13,10 @@ string at an odd address and a child list's children, an array of
 their own, not right after the list.
 
     DECOMPILED_CFLAGS='...' python3 tools/firmware/scpi_tree_check.py \\
-        third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c \\
-        tools/ghidra/names/z3805a-3543b.scpi-tree.tsv \\
-        tools/ghidra/names/z3805a-3543b.tsv \\
-        third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl \\
+        third_party/firmware/z3805a-3543b/rewritten/scpi_tree_data.c \\
+        third_party/firmware/z3805a-3543b/scpi-tree.tsv \\
+        third_party/firmware/z3805a-3543b/names.tsv \\
+        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl \\
         third_party/firmware/z3805a-3543b.bin
 
 make check-scpi-tree runs it with the Makefile's flags.  Needs
@@ -34,8 +34,9 @@ import tempfile
 from decompiled_check import RAM, TOOLS, installer_image, run
 from rebuild_link import tree_layout
 
-# what -include gives the C, which includes nothing of its own but stddef.h
-TYPES = os.path.join(os.path.dirname(__file__), '..', 'ghidra', 'types', 'smartclock.h')
+# what -include gives the C, which includes nothing of its own but
+# stddef.h: the image folder's, beside its names file
+TYPES = 'smartclock.h'
 # the macro under which the C declares the routines it points at
 ALONE = 'SCPI_TREE_DATA_ALONE'
 INSTALLER = 'installer::'
@@ -82,7 +83,8 @@ def main(work):
     base = {'primary': 0, 'installer': RAM}
     obj = work + '/tree.o'
     flags = shlex.split(os.environ.get('DECOMPILED_CFLAGS', ''))
-    compiled = subprocess.run([TOOLS + 'gcc', *flags, '-D' + ALONE, '-include', TYPES, '-c',
+    types = os.path.join(os.path.dirname(names_file), TYPES)
+    compiled = subprocess.run([TOOLS + 'gcc', *flags, '-D' + ALONE, '-include', types, '-c',
                                '-o', obj, c_path], capture_output=True, text=True)
     if compiled.returncode != 0:
         print(compiled.stderr)

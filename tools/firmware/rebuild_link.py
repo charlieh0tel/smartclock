@@ -19,7 +19,7 @@ reads them: each child list's children right after the list, and every
 record but text at an even address.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/rebuild_link.py \\
-        third_party/firmware/decompiled/z3805a-3543b.c \\
+        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \\
         third_party/firmware/z3805a-3543b.bin [ELF]
 
 make check-decompiled runs it with its flags.  Needs m68k-linux-gnu gcc

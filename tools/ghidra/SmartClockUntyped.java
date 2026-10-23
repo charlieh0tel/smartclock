@@ -5,7 +5,7 @@
 // the names, or at any later step; it changes nothing in the program.
 //
 // Arguments:
-//   output=FILE  the TSV to write (docs/firmware/untyped/IMAGE.tsv)
+//   output=FILE  the TSV to write (third_party/firmware/IMAGE/untyped.tsv)
 //   min=N        the shortest run listed, in bytes; 4 if not given
 //
 // Each run is classified, the first that fits:

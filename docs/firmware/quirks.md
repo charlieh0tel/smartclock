@@ -2,7 +2,7 @@
 
 What the Z3805A 3543B image does that its code plainly did not mean,
 or that only works by what lies next to it.  The hand-written C
-(`third_party/firmware/rewritten/z3805a-3543b/`) does each the same
+(`third_party/firmware/z3805a-3543b/rewritten/`) does each the same
 where C can, with a comment where it happens, and says where it
 cannot; none of them is fixed, since the C is a reading of the image.
 The harness runs its cases of each, not every input or caller's

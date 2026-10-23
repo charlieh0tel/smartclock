@@ -248,17 +248,17 @@ caller extends it if it needs to.  How a structure is passed or
 returned is not established.
 
 Ghidra cannot model this convention: its 68000 language justifies a
-small value to the end of its slot, a property of the language, not of
-a convention a program can add.  Hence `SmartClockStackParameters.java`,
+small value to the end of its slot, a property of the language, not of a
+convention a program can add.  Hence `SmartClockStackParameters.java`,
 below, which pins each argument's bytes in custom storage.  A pointer's
 prototype cannot carry custom storage, so a call through one -- the
 self-test tables at `0x18458` and `0x17fe0`, the measurements
 `dac_search_bisect` and `dac_search_step` are given -- passes its `char`
-as `char_slot` (`tools/ghidra/types/smartclock.h`), a 4-byte structure
-whose first byte, its value, lies where this compiler puts a `char`'s,
-at the slot's start, for Ghidra and gcc alike; gcc pads a 2-byte one to
-the slot's end.  The routines called that way take it too, and a `call`
-row gives each such call its callee's prototype.
+as `char_slot` (the image's `smartclock.h`), a 4-byte structure whose
+first byte, its value, lies where this compiler puts a `char`'s, at the
+slot's start, for Ghidra and gcc alike; gcc pads a 2-byte one to the
+slot's end.  The routines called that way take it too, and a `call` row
+gives each such call its callee's prototype.
 
 ## Decompiling with Ghidra
 
@@ -274,27 +274,34 @@ part of what they change.  In order:
    Z3801A 3543 and Z3805A 3543B (`restart.md`, "Forced installer entry
    with an unusable primary").
 3. `SmartClockSetup.java` again, now over the installer too, with
-   `types=tools/ghidra/types/smartclock.h`,
+   `types=third_party/firmware/IMAGE/smartclock.h`,
    `types=third_party/firmware/include/mc68331.h`,
    `types=third_party/firmware/include/mc68681.h`,
-   `names=tools/ghidra/names/IMAGE.tsv`, and
-   `names=tools/ghidra/names/IMAGE.scpi-tree.tsv` and
-   `names=tools/ghidra/names/IMAGE.installer-scpi-tree.tsv` where `make
-   scpi-tree` made them (the SCPI trees' records, and the installer's
-   handlers), `scpi=FILE` from
-   `smartclock-cli dump-scpi --handlers IMAGE` and
+   `names=third_party/firmware/IMAGE/names.tsv`, and
+   `names=third_party/firmware/IMAGE/scpi-tree.tsv` and
+   `names=third_party/firmware/IMAGE/installer-scpi-tree.tsv` where
+   `make scpi-tree` made them (the SCPI trees' records, and the
+   installer's handlers),
+   `scpi=third_party/firmware/IMAGE/handlers.txt`, which `make handlers`
+   writes from `smartclock-cli dump-scpi --handlers IMAGE`, and
    `pforth=docs/firmware/pforth/IMAGE.txt`.
 4. `SmartClockForth.java`.
 5. `SmartClockStackParameters.java`.
 6. `SmartClockFormatStrings.java`.
-7. `SmartClockExportC.java FILE defines=third_party/firmware/include/mc68331.h
+7. `SmartClockExportC.java third_party/firmware/IMAGE/decompiled/IMAGE.c
+   defines=third_party/firmware/include/mc68331.h
    defines=third_party/firmware/include/mc68681.h
    defines=third_party/firmware/include/psos-signals.h
-   results=tools/ghidra/names/results.tsv rewritten=third_party/firmware/rewritten/IMAGE`.
+   results=third_party/firmware/IMAGE/results.tsv
+   rewritten=third_party/firmware/IMAGE/rewritten`.
+
+Each path is from the repository's root, and IMAGE is the image's
+name, `z3805a-3543b`: its folder, `third_party/firmware/IMAGE/`, beside
+`IMAGE.bin`, holds everything that image's work is.
 
 Optionally, after step 3 or any later one,
-`SmartClockUntyped.java output=docs/firmware/untyped/IMAGE.tsv` lists
-the ROM that is neither code nor typed data, and the installer's
+`SmartClockUntyped.java output=third_party/firmware/IMAGE/untyped.tsv`
+lists the ROM that is neither code nor typed data, and the installer's
 overlay's: each run of 4 or more undefined bytes (`min=N` for another
 length), with the references into it, the defined item on each side,
 and a class, `padding`, `erased`, `code-like` (a prologue or `rts` that
@@ -353,7 +360,7 @@ function calls.  It does this in one pass, since removing one function
 leaves its callees looking stray; `dry-run` reports them and removes
 nothing, and more than 20 is refused as a rule gone wrong.
 
-Names come from what the project has established.  `names/IMAGE.tsv`
+Names come from what the project has established.  `IMAGE/names.tsv`
 holds those the notes give for that image, each row citing its note:
 the float and C libraries (`softfloat.md`, `libc.md`), the kernel's
 service calls (`psos.md`), the interval's routine and cells
@@ -411,8 +418,8 @@ its registers the convention `pforth`, and `SmartClockSetup.java` each
 exception handler `exception`, naming the vectors that enter it and how
 it returns, unless the names file gives one.  `SmartClockExportC.java`
 writes them all beside the C, in
-`third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl`: one
-JSON object a line for every function, its address, name, note and
+`third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl`:
+one JSON object a line for every function, its address, name, note and
 convention, with its lists split into register, type and name, or
 `"convention":"unknown"`, and, for a function whose arguments are all on
 the stack, `"stack"`: each one's offset from the stack pointer at entry
@@ -503,7 +510,7 @@ code is never split into bits that do not mean it.  The code's shadow of
 the DUART's write-only registers, `duart_shadow`, is named by the same
 bits: `duart_shadow.imr & ~IMR_TXRDYB`.
 
-`types/smartclock.h` declares the structures (`structures.md`), parsed
+The image's `smartclock.h` declares the structures (`structures.md`), parsed
 into the program before the names so a row may use them: a label's
 row may give its data type, `gps_state` or `uint8_t[6]`.  Parsing adds
 and replaces types but removes none, and they sit beside Ghidra's own,
@@ -767,7 +774,7 @@ decompiler wrote it, and reported.
   table's entry instead, labeled by its value, as the machine does,
   and that is left.
 - A local variable a call's result is assigned to is named as
-  `names/results.tsv` names the callee's result, `uptime =
+  `IMAGE/results.tsv` names the callee's result, `uptime =
   get_uptime()`, so that a result reads the same at every call: only a
   variable every value of which is a result so named, whose name is the
   decompiler's own rather than one given on purpose, and where no other
@@ -818,12 +825,13 @@ decompiler wrote it, and reported.
 ## Hand-written C
 
 A function rewritten by hand lives in
-`third_party/firmware/rewritten/IMAGE/`, beside the decompiled C, a file to a
-subsystem (`clock.c`).  The exporter finds the functions those files
-define (`rewritten=`), keeps the decompiler's reading of each in the
-exported C inside `#if 0`, for reference, and includes the files after
-its own C, so that they see the types, globals and prototypes it
-declares, and before them the folder's `.h` files, what the files
+`third_party/firmware/IMAGE/rewritten/`, beside the decompiled C in
+`IMAGE/decompiled/`, a file to a subsystem (`clock.c`).  The exporter
+finds the functions those files define (`rewritten=`), keeps the
+decompiler's reading of each in the exported C inside `#if 0`, for
+reference, and includes the files after its own C, so that they see
+the types it declares, the image's `smartclock.h`'s, and its globals
+and prototypes, and before them the folder's `.h` files, what the files
 share (`cpu.h`, the status register's helpers); a function keeps its
 generated prototype.  The files are
 included in sorted order and compiled as one translation unit, so each
@@ -933,8 +941,9 @@ and a pointer to a C
 function's image copy and one to gcc's copy are the same (a driver's
 echo routine); and so are pointers into the same place of an image
 object and its twin among gcc's constants, an object the C defines that
-a names file labels in ROM (`tools/ghidra/names/IMAGE.tsv` and
-`IMAGE.*.tsv`, the generated tree's rows among them; `harness.Twins`):
+a names file labels in ROM (`third_party/firmware/IMAGE/names.tsv`,
+`scpi-tree.tsv` and `installer-scpi-tree.tsv`, the generated trees'
+rows; `harness.Twins`):
 a node `scpi_node_find` returns, a list `scpi_header_step` leaves in
 the path.  So too in a call's pointer result, the memory beside RAM
 compared after it, and its effects, a kernel call's argument or a
@@ -1404,7 +1413,7 @@ the ten thunks decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`,
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
 (`docs/scpi/README.md`).  1813 of the functions are named.  The output
-is `third_party/firmware/decompiled/z3805a-3543b.c`.
+is `third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,
 a Ghidra archive in Git LFS (install `git-lfs` to fetch it): restore it (File, Restore Project, or ghidra-mcp's

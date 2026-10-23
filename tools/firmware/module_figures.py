@@ -1,10 +1,13 @@
 """Computes docs/firmware/modules.md's figures -- the functions in each
 layer and module, the callers and calls it cites, the calls the wrong
-way -- from tools/ghidra/names/modules.tsv and the direct calls of
-third_party/firmware/decompiled/z3805a-3543b.c, and checks them, or with
---write rewrites them in place.
+way -- from an image folder's modules.tsv and the direct calls of its
+exported C, third_party/firmware/IMAGE/decompiled/IMAGE.c, and checks
+them, or with --write rewrites them in place.
 
-    python3 -I tools/firmware/module_figures.py [--write]
+    python3 -I tools/firmware/module_figures.py [--image IMAGE] [--write]
+
+IMAGE is the Z3805A 3543B's, z3805a-3543b, which modules.md describes,
+if not given.
 
 The calls are those the exported C makes by name from each function's
 body: the decompiler's reading, which the export keeps (under #if 0) for
@@ -22,8 +25,9 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-MODULES = ROOT / 'tools/ghidra/names/modules.tsv'
-EXPORT = ROOT / 'third_party/firmware/decompiled/z3805a-3543b.c'
+FIRMWARE = ROOT / 'third_party/firmware'
+# the image modules.md describes
+DOCUMENTED_IMAGE = 'z3805a-3543b'
 DOCUMENT = ROOT / 'docs/firmware/modules.md'
 
 # lowest first; a call from a layer to a later one goes the wrong way
@@ -85,18 +89,18 @@ class Program:
                 > LAYERS.index(self.layer(caller))}
 
 
-def read_modules():
+def read_modules(image):
     module = {}
-    for line in MODULES.read_text().splitlines():
+    for line in (FIRMWARE / image / 'modules.tsv').read_text().splitlines():
         if line and not line.startswith('#'):
             _, name, path = line.split('\t')[:3]
             module[name] = path
     return module
 
 
-def read_program():
-    module = read_modules()
-    text = EXPORT.read_text()
+def read_program(image):
+    module = read_modules(image)
+    text = (FIRMWARE / image / 'decompiled' / f'{image}.c').read_text()
     starts = [match.start() for match in FUNCTION_START.finditer(text)]
     calls = {}
     for start, end in zip(starts, starts[1:] + [len(text)]):
@@ -197,10 +201,12 @@ def spelled(value, old):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
+    parser.add_argument('--image', default=DOCUMENTED_IMAGE,
+                        help='the image folder whose modules and export to read')
     parser.add_argument('--write', action='store_true',
                         help='rewrite the figures in modules.md')
     arguments = parser.parse_args()
-    program = read_program()
+    program = read_program(arguments.image)
     text = DOCUMENT.read_text()
     errors = []
     edits = []

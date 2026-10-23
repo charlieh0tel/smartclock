@@ -16,7 +16,7 @@ in an asm statement that binds its registers, and the function check
 runs those callers.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/bridge_check.py \\
-        third_party/firmware/decompiled/z3805a-3543b.c \\
+        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \\
         third_party/firmware/z3805a-3543b.bin
 
 A routine that reaches beyond what the harness maps, calls a kernel

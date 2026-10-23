@@ -1177,12 +1177,13 @@ view cannot drift apart.  The library, bottom up:
      That routine keeps D0, and what the `dbf` leaves there is the count
      less one in its low word, which the exporter now assigns after the
      call (1240 agreeing to 1241, 11 differing to 10).
-     And a call's result has a name, `names/results.tsv`, which the
+     And a call's result has a name, `IMAGE/results.tsv`, which the
      variable it is assigned to takes where every value the variable
      holds is so named: `uptime = get_uptime()` at every call.
-     And a function can be written by hand, in `third_party/firmware/rewritten/IMAGE/`, a file
-     to a subsystem: the exported C keeps the decompiler's reading inside
-     `#if 0` and includes the file, and the harness checks the hand's
+     And a function can be written by hand, in
+     `third_party/firmware/IMAGE/rewritten/`, a file to a subsystem:
+     the exported C keeps the decompiler's reading inside `#if 0` and
+     includes the file, and the harness checks the hand's
      version as it did the decompiler's (`clock.c`'s time conversions
      first).
      Then the harness's own blind spots, found by an agent: cases a
@@ -1286,7 +1287,7 @@ view cannot drift apart.  The library, bottom up:
      Then the plan for regrouping all 1300 C functions, hand-written
      or not, by subject in four layers, platform, devices, services and
      applications, each calling only its own or a lower one:
-     `tools/ghidra/names/modules.tsv` gives each its module and
+     `third_party/firmware/IMAGE/modules.tsv` gives each its module and
      `docs/firmware/modules.md` the layers, the modules, the eleven
      calls that go the wrong way and the 61 hand-written functions
      whose file is not their module's.
@@ -1554,7 +1555,8 @@ view cannot drift apart.  The library, bottom up:
      reached but through the tree's slots, from the SCPI task.
      Then a survey of ROM that is neither code nor typed data: about
      110 KB, two thirds of it erased; `SmartClockUntyped.java` repeats
-     it, into `docs/firmware/untyped/IMAGE.tsv`.  The GPS scripts' ROM steps, the
+     it, into `third_party/firmware/IMAGE/untyped.tsv`.  The GPS
+     scripts' ROM steps, the
      Oncore ID pool, the pForth headers' head, the diagnostic words'
      table, the FPGA bitstreams and the unused I/O stubs are typed;
      13 routines nothing calls are named, three of them, which the
@@ -1683,7 +1685,7 @@ view cannot drift apart.  The library, bottom up:
   (`rebuild_link.py`): each list's children right after it, every
   record but text even.  The installer's tree is C too,
   `installer/installer_scpi_tree_data.c` and
-  `IMAGE.installer-scpi-tree.tsv`, 38 objects: its six converters and
+  `IMAGE/installer-scpi-tree.tsv`, 38 objects: its six converters and
   formatters and their five callees are named for their primary twins,
   matched by bytes, and its nine handlers for their paths, by the
   generated rows, which Setup takes as a third names file; the harness

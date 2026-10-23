@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled check-module-figures module-figures check-pforth-words pforth-words report-decompiled check-report-figures report-figures scpi-tree check-scpi-tree clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled check-module-figures module-figures check-pforth-words pforth-words report-decompiled check-report-figures report-figures scpi-tree check-scpi-tree handlers clean deb release release-notes install-service
 
 all: build
 
@@ -47,10 +47,12 @@ fmt-check:
 clippy:
 	$(CARGO) clippy --workspace --all-targets --all-features -- -D warnings
 
-# The project's own C, the Ghidra type headers and the hand-written
-# firmware, in .clang-format's style; needs clang-format, not part of ci.
+# The project's own C, the image-independent headers, each image's type
+# header and layout check and its hand-written firmware, in
+# .clang-format's style; needs clang-format, not part of ci.
 CLANG_FORMAT ?= clang-format
-C_SOURCES = $(wildcard tools/ghidra/types/*.[ch] third_party/firmware/include/*.h third_party/firmware/rewritten/*/*.[ch] third_party/firmware/rewritten/*/*/*.[ch])
+C_SOURCES = $(wildcard third_party/firmware/include/*.h third_party/firmware/*/*.[ch] \
+	third_party/firmware/*/rewritten/*.[ch] third_party/firmware/*/rewritten/*/*.[ch])
 format-c:
 	$(CLANG_FORMAT) -i $(C_SOURCES)
 
@@ -130,13 +132,13 @@ docs:
 check-pages:
 	./tools/check-pages.sh
 
-# Fail if a structure tools/ghidra/types/smartclock.h declares for
-# Ghidra does not have the size and offsets the image shows.  Needs an
-# m68k compiler, so that int, long and pointers are the target's; not
-# part of ci.
+# Fail if a structure third_party/firmware/z3805a-3543b/smartclock.h
+# declares for Ghidra does not have the size and offsets the image
+# shows.  Needs an m68k compiler, so that int, long and pointers are the
+# target's; not part of ci.
 M68K_CC ?= m68k-linux-gnu-gcc
 check-types:
-	$(M68K_CC) -mcpu=cpu32 -fsyntax-only tools/ghidra/types/check-layout.c
+	$(M68K_CC) -mcpu=cpu32 -fsyntax-only third_party/firmware/z3805a-3543b/check-layout.c
 
 # Fail if the decompiled C does not compile, its assembly is not the
 # image's own bytes, alone or linked, or a bridge disagrees with its
@@ -149,18 +151,18 @@ DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fwrapv -fno-toplevel-reorder -fn
 	-fno-tree-loop-distribute-patterns -fno-omit-frame-pointer -fno-defer-pop -w \
 	-Wno-error=int-conversion -Wno-error=incompatible-pointer-types
 check-decompiled: check-module-figures
-	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o target/decompiled.o third_party/firmware/decompiled/z3805a-3543b.c
-	python3 tools/firmware/decompiled_check.py third_party/firmware/decompiled/z3805a-3543b.c \
+	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o target/decompiled.o third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c
+	python3 tools/firmware/decompiled_check.py third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \
 		third_party/firmware/z3805a-3543b.bin target/decompiled.o
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q tools/firmware/rebuild_link.py \
-		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
+		third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q tools/firmware/bridge_check.py \
-		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
+		third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
 
 # Fail if a figure in docs/firmware/modules.md -- a module's or layer's
 # functions, a function's callers or calls, the calls the wrong way --
-# is not what tools/ghidra/names/modules.tsv and the exported C's direct
-# calls give; module-figures rewrites them.
+# is not what third_party/firmware/z3805a-3543b/modules.tsv and the
+# exported C's direct calls give; module-figures rewrites them.
 check-module-figures:
 	python3 -I tools/firmware/module_figures.py
 
@@ -179,11 +181,11 @@ pforth-words:
 # The Z3805A 3543B's SCPI tree as C data and as names-file rows, from
 # the image (docs/scpi/README.md, "As C"); cargo test fails while they
 # are stale.  Needs clang-format.
-SCPI_TREE_C = third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c
-SCPI_TREE_NAMES = tools/ghidra/names/z3805a-3543b.scpi-tree.tsv
-INSTALLER_SCPI_TREE_C = third_party/firmware/rewritten/z3805a-3543b/installer/installer_scpi_tree_data.c
-INSTALLER_SCPI_TREE_NAMES = tools/ghidra/names/z3805a-3543b.installer-scpi-tree.tsv
-SCPI_TREE_IMAGE = --names-file tools/ghidra/names/z3805a-3543b.tsv third_party/firmware/z3805a-3543b.bin
+SCPI_TREE_C = third_party/firmware/z3805a-3543b/rewritten/scpi_tree_data.c
+SCPI_TREE_NAMES = third_party/firmware/z3805a-3543b/scpi-tree.tsv
+INSTALLER_SCPI_TREE_C = third_party/firmware/z3805a-3543b/rewritten/installer/installer_scpi_tree_data.c
+INSTALLER_SCPI_TREE_NAMES = third_party/firmware/z3805a-3543b/installer-scpi-tree.tsv
+SCPI_TREE_IMAGE = --names-file third_party/firmware/z3805a-3543b/names.tsv third_party/firmware/z3805a-3543b.bin
 scpi-tree:
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --c $(SCPI_TREE_IMAGE) \
 		| $(CLANG_FORMAT) --assume-filename=$(SCPI_TREE_C) > $(SCPI_TREE_C)
@@ -193,18 +195,25 @@ scpi-tree:
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --names --installer $(SCPI_TREE_IMAGE) \
 		> $(INSTALLER_SCPI_TREE_NAMES)
 
+# The Z3805A 3543B's SCPI paths, each with its query handler's and
+# setter's addresses, for SmartClockSetup.java's scpi=; cargo test fails
+# while it is stale.
+handlers:
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --handlers third_party/firmware/z3805a-3543b.bin \
+		> third_party/firmware/z3805a-3543b/handlers.txt
+
 # Fail if a record of a generated SCPI tree, the primary's or the
 # installer's, as m68k gcc lays it out, is not the image's bytes, its
 # pointers compared by what they point at.  Needs an m68k gcc and
 # binutils; not part of ci.
 check-scpi-tree:
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" python3 tools/firmware/scpi_tree_check.py \
-		$(SCPI_TREE_C) $(SCPI_TREE_NAMES) tools/ghidra/names/z3805a-3543b.tsv \
-		third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl \
+		$(SCPI_TREE_C) $(SCPI_TREE_NAMES) third_party/firmware/z3805a-3543b/names.tsv \
+		third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl \
 		third_party/firmware/z3805a-3543b.bin
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" python3 tools/firmware/scpi_tree_check.py \
-		$(INSTALLER_SCPI_TREE_C) $(INSTALLER_SCPI_TREE_NAMES) tools/ghidra/names/z3805a-3543b.tsv \
-		third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl \
+		$(INSTALLER_SCPI_TREE_C) $(INSTALLER_SCPI_TREE_NAMES) third_party/firmware/z3805a-3543b/names.tsv \
+		third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl \
 		third_party/firmware/z3805a-3543b.bin
 
 # How many of the decompiled C functions, as gcc compiles them, agree with
@@ -214,7 +223,7 @@ REPORT_DECOMPILED = target/report-decompiled.txt
 report-decompiled:
 	mkdir -p $(dir $(REPORT_DECOMPILED))
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q tools/firmware/function_check.py \
-		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin \
+		third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin \
 		| tee $(REPORT_DECOMPILED)
 
 # Fail if docs/firmware/README.md's figures from the function check --

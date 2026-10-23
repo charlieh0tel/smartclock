@@ -106642,252 +106642,252 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #endif
 
-#include "../rewritten/z3805a-3543b/clock.h"
+#include "../rewritten/clock.h"
 
-#include "../rewritten/z3805a-3543b/cpu.h"
+#include "../rewritten/cpu.h"
 
-#include "../rewritten/z3805a-3543b/duart.h"
+#include "../rewritten/duart.h"
 
-#include "../rewritten/z3805a-3543b/fpga.h"
+#include "../rewritten/fpga.h"
 
-#include "../rewritten/z3805a-3543b/gps.h"
+#include "../rewritten/gps.h"
 
-#include "../rewritten/z3805a-3543b/libc.h"
+#include "../rewritten/libc.h"
 
-#include "../rewritten/z3805a-3543b/monitors.h"
+#include "../rewritten/monitors.h"
 
-#include "../rewritten/z3805a-3543b/os.h"
+#include "../rewritten/os.h"
 
-#include "../rewritten/z3805a-3543b/pll.h"
+#include "../rewritten/pll.h"
 
-#include "../rewritten/z3805a-3543b/pllc.h"
+#include "../rewritten/pllc.h"
 
-#include "../rewritten/z3805a-3543b/records.h"
+#include "../rewritten/records.h"
 
-#include "../rewritten/z3805a-3543b/scpi.h"
+#include "../rewritten/scpi.h"
 
-#include "../rewritten/z3805a-3543b/scpi_convert.h"
+#include "../rewritten/scpi_convert.h"
 
-#include "../rewritten/z3805a-3543b/scpi_engine.h"
+#include "../rewritten/scpi_engine.h"
 
-#include "../rewritten/z3805a-3543b/scpi_format.h"
+#include "../rewritten/scpi_format.h"
 
-#include "../rewritten/z3805a-3543b/scpi_lexer.h"
+#include "../rewritten/scpi_lexer.h"
 
-#include "../rewritten/z3805a-3543b/scpi_parameters.h"
+#include "../rewritten/scpi_parameters.h"
 
-#include "../rewritten/z3805a-3543b/scpi_tree.h"
+#include "../rewritten/scpi_tree.h"
 
-#include "../rewritten/z3805a-3543b/startup.h"
+#include "../rewritten/startup.h"
 
-#include "../rewritten/z3805a-3543b/status.h"
+#include "../rewritten/status.h"
 
-#include "../rewritten/z3805a-3543b/adc.c"
+#include "../rewritten/adc.c"
 
-#include "../rewritten/z3805a-3543b/arithmetic.c"
+#include "../rewritten/arithmetic.c"
 
-#include "../rewritten/z3805a-3543b/boot.c"
+#include "../rewritten/boot.c"
 
-#include "../rewritten/z3805a-3543b/calendar.c"
+#include "../rewritten/calendar.c"
 
-#include "../rewritten/z3805a-3543b/clock.c"
+#include "../rewritten/clock.c"
 
-#include "../rewritten/z3805a-3543b/console.c"
+#include "../rewritten/console.c"
 
-#include "../rewritten/z3805a-3543b/cpu.c"
+#include "../rewritten/cpu.c"
 
-#include "../rewritten/z3805a-3543b/dac.c"
+#include "../rewritten/dac.c"
 
-#include "../rewritten/z3805a-3543b/debug.c"
+#include "../rewritten/debug.c"
 
-#include "../rewritten/z3805a-3543b/duart.c"
+#include "../rewritten/duart.c"
 
-#include "../rewritten/z3805a-3543b/duarta.c"
+#include "../rewritten/duarta.c"
 
-#include "../rewritten/z3805a-3543b/duartb.c"
+#include "../rewritten/duartb.c"
 
-#include "../rewritten/z3805a-3543b/eeprom.c"
+#include "../rewritten/eeprom.c"
 
-#include "../rewritten/z3805a-3543b/fpga.c"
+#include "../rewritten/fpga.c"
 
-#include "../rewritten/z3805a-3543b/gps_oncore.c"
+#include "../rewritten/gps_oncore.c"
 
-#include "../rewritten/z3805a-3543b/gps_receiver.c"
+#include "../rewritten/gps_receiver.c"
 
-#include "../rewritten/z3805a-3543b/gps_reports.c"
+#include "../rewritten/gps_reports.c"
 
-#include "../rewritten/z3805a-3543b/gps_requests.c"
+#include "../rewritten/gps_requests.c"
 
-#include "../rewritten/z3805a-3543b/gps_task.c"
+#include "../rewritten/gps_task.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_arithmetic.c"
+#include "../rewritten/installer/installer_arithmetic.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_cpu.c"
+#include "../rewritten/installer/installer_cpu.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_debug.c"
+#include "../rewritten/installer/installer_debug.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_duart.c"
+#include "../rewritten/installer/installer_duart.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_duarta.c"
+#include "../rewritten/installer/installer_duarta.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_duartb.c"
+#include "../rewritten/installer/installer_duartb.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_main.c"
+#include "../rewritten/installer/installer_main.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_math.c"
+#include "../rewritten/installer/installer_math.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_os.c"
+#include "../rewritten/installer/installer_os.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_records.c"
+#include "../rewritten/installer/installer_records.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_common.c"
+#include "../rewritten/installer/installer_scpi_common.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_convert.c"
+#include "../rewritten/installer/installer_scpi_convert.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_diagnostic.c"
+#include "../rewritten/installer/installer_scpi_diagnostic.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_engine.c"
+#include "../rewritten/installer/installer_scpi_engine.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_format.c"
+#include "../rewritten/installer/installer_scpi_format.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_lexer.c"
+#include "../rewritten/installer/installer_scpi_lexer.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_parameters.c"
+#include "../rewritten/installer/installer_scpi_parameters.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_port.c"
+#include "../rewritten/installer/installer_scpi_port.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_requests.c"
+#include "../rewritten/installer/installer_scpi_requests.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_system.c"
+#include "../rewritten/installer/installer_scpi_system.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_tree.c"
+#include "../rewritten/installer/installer_scpi_tree.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_scpi_tree_data.c"
+#include "../rewritten/installer/installer_scpi_tree_data.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_spool.c"
+#include "../rewritten/installer/installer_spool.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_startup.c"
+#include "../rewritten/installer/installer_startup.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_status.c"
+#include "../rewritten/installer/installer_status.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_stdio.c"
+#include "../rewritten/installer/installer_stdio.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_stdlib.c"
+#include "../rewritten/installer/installer_stdlib.c"
 
-#include "../rewritten/z3805a-3543b/installer/installer_string.c"
+#include "../rewritten/installer/installer_string.c"
 
-#include "../rewritten/z3805a-3543b/klok.c"
+#include "../rewritten/klok.c"
 
-#include "../rewritten/z3805a-3543b/leap.c"
+#include "../rewritten/leap.c"
 
-#include "../rewritten/z3805a-3543b/leds.c"
+#include "../rewritten/leds.c"
 
-#include "../rewritten/z3805a-3543b/log.c"
+#include "../rewritten/log.c"
 
-#include "../rewritten/z3805a-3543b/main.c"
+#include "../rewritten/main.c"
 
-#include "../rewritten/z3805a-3543b/math.c"
+#include "../rewritten/math.c"
 
-#include "../rewritten/z3805a-3543b/monitors.c"
+#include "../rewritten/monitors.c"
 
-#include "../rewritten/z3805a-3543b/nv.c"
+#include "../rewritten/nv.c"
 
-#include "../rewritten/z3805a-3543b/os.c"
+#include "../rewritten/os.c"
 
-#include "../rewritten/z3805a-3543b/pll_aging.c"
+#include "../rewritten/pll_aging.c"
 
-#include "../rewritten/z3805a-3543b/pll_gps_control.c"
+#include "../rewritten/pll_gps_control.c"
 
-#include "../rewritten/z3805a-3543b/pll_reading.c"
+#include "../rewritten/pll_reading.c"
 
-#include "../rewritten/z3805a-3543b/pll_stages.c"
+#include "../rewritten/pll_stages.c"
 
-#include "../rewritten/z3805a-3543b/pllc.c"
+#include "../rewritten/pllc.c"
 
-#include "../rewritten/z3805a-3543b/pllp.c"
+#include "../rewritten/pllp.c"
 
-#include "../rewritten/z3805a-3543b/pps.c"
+#include "../rewritten/pps.c"
 
-#include "../rewritten/z3805a-3543b/qspi.c"
+#include "../rewritten/qspi.c"
 
-#include "../rewritten/z3805a-3543b/records.c"
+#include "../rewritten/records.c"
 
-#include "../rewritten/z3805a-3543b/sci.c"
+#include "../rewritten/sci.c"
 
-#include "../rewritten/z3805a-3543b/scpi_common.c"
+#include "../rewritten/scpi_common.c"
 
-#include "../rewritten/z3805a-3543b/scpi_convert.c"
+#include "../rewritten/scpi_convert.c"
 
-#include "../rewritten/z3805a-3543b/scpi_diagnostic.c"
+#include "../rewritten/scpi_diagnostic.c"
 
-#include "../rewritten/z3805a-3543b/scpi_douglas.c"
+#include "../rewritten/scpi_douglas.c"
 
-#include "../rewritten/z3805a-3543b/scpi_engine.c"
+#include "../rewritten/scpi_engine.c"
 
-#include "../rewritten/z3805a-3543b/scpi_format.c"
+#include "../rewritten/scpi_format.c"
 
-#include "../rewritten/z3805a-3543b/scpi_format_data.c"
+#include "../rewritten/scpi_format_data.c"
 
-#include "../rewritten/z3805a-3543b/scpi_kenneth.c"
+#include "../rewritten/scpi_kenneth.c"
 
-#include "../rewritten/z3805a-3543b/scpi_led.c"
+#include "../rewritten/scpi_led.c"
 
-#include "../rewritten/z3805a-3543b/scpi_lexer.c"
+#include "../rewritten/scpi_lexer.c"
 
-#include "../rewritten/z3805a-3543b/scpi_misc.c"
+#include "../rewritten/scpi_misc.c"
 
-#include "../rewritten/z3805a-3543b/scpi_output.c"
+#include "../rewritten/scpi_output.c"
 
-#include "../rewritten/z3805a-3543b/scpi_parameters.c"
+#include "../rewritten/scpi_parameters.c"
 
-#include "../rewritten/z3805a-3543b/scpi_port.c"
+#include "../rewritten/scpi_port.c"
 
-#include "../rewritten/z3805a-3543b/scpi_requests.c"
+#include "../rewritten/scpi_requests.c"
 
-#include "../rewritten/z3805a-3543b/scpi_robin.c"
+#include "../rewritten/scpi_robin.c"
 
-#include "../rewritten/z3805a-3543b/scpi_sample.c"
+#include "../rewritten/scpi_sample.c"
 
-#include "../rewritten/z3805a-3543b/scpi_sense.c"
+#include "../rewritten/scpi_sense.c"
 
-#include "../rewritten/z3805a-3543b/scpi_source_gpsystem.c"
+#include "../rewritten/scpi_source_gpsystem.c"
 
-#include "../rewritten/z3805a-3543b/scpi_source_ptime.c"
+#include "../rewritten/scpi_source_ptime.c"
 
-#include "../rewritten/z3805a-3543b/scpi_source_pulse.c"
+#include "../rewritten/scpi_source_pulse.c"
 
-#include "../rewritten/z3805a-3543b/scpi_source_roscillator.c"
+#include "../rewritten/scpi_source_roscillator.c"
 
-#include "../rewritten/z3805a-3543b/scpi_status.c"
+#include "../rewritten/scpi_status.c"
 
-#include "../rewritten/z3805a-3543b/scpi_system.c"
+#include "../rewritten/scpi_system.c"
 
-#include "../rewritten/z3805a-3543b/scpi_tree.c"
+#include "../rewritten/scpi_tree.c"
 
-#include "../rewritten/z3805a-3543b/scpi_tree_data.c"
+#include "../rewritten/scpi_tree_data.c"
 
-#include "../rewritten/z3805a-3543b/scpi_unsupported.c"
+#include "../rewritten/scpi_unsupported.c"
 
-#include "../rewritten/z3805a-3543b/scpi_validators.c"
+#include "../rewritten/scpi_validators.c"
 
-#include "../rewritten/z3805a-3543b/screen.c"
+#include "../rewritten/screen.c"
 
-#include "../rewritten/z3805a-3543b/selftest.c"
+#include "../rewritten/selftest.c"
 
-#include "../rewritten/z3805a-3543b/spool.c"
+#include "../rewritten/spool.c"
 
-#include "../rewritten/z3805a-3543b/startup.c"
+#include "../rewritten/startup.c"
 
-#include "../rewritten/z3805a-3543b/status.c"
+#include "../rewritten/status.c"
 
-#include "../rewritten/z3805a-3543b/stdio.c"
+#include "../rewritten/stdio.c"
 
-#include "../rewritten/z3805a-3543b/stdlib.c"
+#include "../rewritten/stdlib.c"
 
-#include "../rewritten/z3805a-3543b/string.c"
+#include "../rewritten/string.c"
 
-#include "../rewritten/z3805a-3543b/ti.c"
+#include "../rewritten/ti.c"
 
-#include "../rewritten/z3805a-3543b/timecode.c"
+#include "../rewritten/timecode.c"
 
-#include "../rewritten/z3805a-3543b/timers.c"
+#include "../rewritten/timers.c"

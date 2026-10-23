@@ -33,7 +33,7 @@ convention returns in them (returns=ccr), and the registers the
 function's convention keeps for its caller (harness.preserved_registers).
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
-        third_party/firmware/decompiled/z3805a-3543b.c \\
+        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \\
         third_party/firmware/z3805a-3543b.bin [NAME...]
 
 With NAMEs, only those.  gcc's copy calls gcc's C and, through their
@@ -56,7 +56,6 @@ are counted apart.  This is the rebuild's measure, not a gate: it exits
 zero whatever it finds.
 """
 
-import glob
 import json
 import os
 import random
@@ -2135,16 +2134,17 @@ def check_cases(
         yield description, "; ".join(differences) or None
 
 
-# The names files, which label the image's objects, by the C file's
-# image: NAMES/IMAGE.tsv and NAMES/IMAGE.*.tsv, the generated SCPI
-# tree's rows among them.
-NAMES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ghidra", "names")
+# The names files, which label the image's objects, in the image's
+# folder, the one holding the C file's decompiled/: the names file and
+# the generated SCPI trees' rows.
+NAMES_FILES = ("names.tsv", "scpi-tree.tsv", "installer-scpi-tree.tsv")
 
 
 def names_files(c_path: str) -> list[str]:
     """The names files of the image a C file is of."""
-    image = os.path.basename(c_path).removesuffix(".c")
-    return sorted(glob.glob(os.path.join(NAMES, image + ".tsv")) + glob.glob(os.path.join(NAMES, image + ".*.tsv")))
+    folder = os.path.dirname(os.path.dirname(os.path.abspath(c_path)))
+    paths = [os.path.join(folder, name) for name in NAMES_FILES]
+    return [path for path in paths if os.path.exists(path)]
 
 
 def main() -> int:

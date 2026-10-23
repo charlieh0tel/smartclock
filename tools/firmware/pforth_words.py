@@ -63,9 +63,10 @@ is negative)".  Cells count from the top, 1.
 
 A diagnostic word's effect is its table entry's argument and result
 counts, which the wrapper pforth_define_word compiles around its
-routine pops and pushes.  A word's description is its routine's note in the names file, in the
-Z3805A 3543B's table only, or what docs/firmware/console.md says of
-it.  Exits nonzero on drift.
+routine pops and pushes.  A word's description is its routine's note
+in the image's names file, third_party/firmware/IMAGE/names.tsv, for an
+image that has one (the Z3805A 3543B's), or what
+docs/firmware/console.md says of it.  Exits nonzero on drift.
 
 Needs Capstone, which uv installs from the script's dependencies, for the instructions'
 lengths and operands.
@@ -86,9 +87,9 @@ except ImportError:
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 IMAGES = ROOT / 'third_party/firmware'
 OUTPUT = ROOT / 'docs/firmware/pforth'
-NAMES = ROOT / 'tools/ghidra/names/z3805a-3543b.tsv'
-# the image the names file's notes are of, the only one they describe
-NAMES_IMAGE = 'z3805a-3543b.bin'
+# an image's names file, in its folder beside it, whose notes describe
+# its routines
+NAMES = 'names.tsv'
 SCRIPT = 'tools/firmware/pforth_words.py'
 
 # pforth_word_header: link, code, inline_size, flags, then the name
@@ -1069,10 +1070,14 @@ def spell(word):
     return name.removesuffix('_')
 
 
-def names_notes():
-    """The names file's function notes, by function name."""
+def names_notes(path):
+    """The function notes of an image's names file, by function name;
+    none for an image without one."""
     notes = {}
-    for line in NAMES.read_text().splitlines():
+    names = path.with_suffix('') / NAMES
+    if not names.exists():
+        return notes
+    for line in names.read_text().splitlines():
         if line.startswith('#') or not line.strip():
             continue
         fields = line.split('\t')
@@ -1194,7 +1199,6 @@ def main():
     parser.add_argument('--sanity', action='store_true',
                         help='compare well-known words\' effects with the standard\'s')
     arguments = parser.parse_args()
-    notes = names_notes()
     drift = []
     for path in sorted(IMAGES.glob('*.bin')):
         try:
@@ -1204,7 +1208,7 @@ def main():
         if arguments.sanity:
             report(path, words)
             continue
-        text = render(path, words, notes if path.name == NAMES_IMAGE else {})
+        text = render(path, words, names_notes(path))
         output = output_path(path)
         if arguments.write:
             output.write_text(text)

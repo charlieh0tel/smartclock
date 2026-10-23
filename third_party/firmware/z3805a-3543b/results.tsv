@@ -80,7 +80,7 @@ modf	fraction
 double_is_integer	integral	whether an integer
 double_truncate_sixteenths	truncated
 pow	power
-# The drivers, 0x1d000 to 0x24fff (rewritten/z3805a-3543b/, the devices' files)
+# The drivers, 0x1d000 to 0x24fff (rewritten/, the devices' files)
 gp_port_select	port_bits	the selection shifted to GP port bits 2 to 4
 duartb_putc_polled	ready	SR_TXRDY, the status bit it waited on
 drtb_puts	sent	the characters the interrupt sent
@@ -197,7 +197,7 @@ pps_wait_time	status	0 or the kernel's error
 stack_measure	status	0
 enter_supervisor_mode	sr	the status register as it was
 set_interrupt_mask	sr	the status register as it was
-# The SCPI engine, 0x25000 to 0x29fff (rewritten/z3805a-3543b/scpi_*.c)
+# The SCPI engine, 0x25000 to 0x29fff (rewritten/scpi_*.c)
 scpi_bcd_to_double	converted	Z set when the number does not fit a double
 scpi_scale_by_power_of_ten	scaled
 scpi_double_multiply	product
@@ -268,7 +268,7 @@ status_clear_events	error	always 0
 error_queue_create	error	0, or -56 for no memory
 error_queue_push	full	1 when the queue was full or overflows
 error_message_lookup	message	NULL for none
-# services/status's setup, presets, reports and summary (rewritten/z3805a-3543b/status.c)
+# services/status's setup, presets, reports and summary (rewritten/status.c)
 status_init	error	0, or status_create's
 status_preset_register	accepted	1, or 0 for a source other than 0
 status_report	error	always 0
@@ -313,15 +313,15 @@ interpolator_measure_high	reading	the high reference's reading
 interpolator_calibrate	calibrated	1 when the references read 200 apart, or 199 or 201
 interpolator_selftest_calibrate	calibrated	1 when a calibration took, else interpolator_verify's
 interval_next_reading	valid	interval_reading.valid before the rearm
-# The FPGA's registers and self-tests, 0x17000 to 0x18fff and 0x40000 to 0x40fff (rewritten/z3805a-3543b/fpga.c)
+# The FPGA's registers and self-tests, 0x17000 to 0x18fff and 0x40000 to 0x40fff (rewritten/fpga.c)
 fpga_read	value	the register addressed
 fpga_read_byte	value	two registers' low nibbles
 fpga_bit_test	set	any of the bits set
 fpga_read_seconds	seconds	register 0's high nibble, modulo 16
 selftest_fpga_with_lamp	failures	selftest.fpga
-# A double parameter's validate, 0x32596 (rewritten/z3805a-3543b/pllc.c)
+# A double parameter's validate, 0x32596 (rewritten/pllc.c)
 clamp_double_to_step_and_limits	steps	the clamped value in steps, rounded half away from zero
-# The kernel's binding and records, platform/os (rewritten/z3805a-3543b/os.c)
+# The kernel's binding and records, platform/os (rewritten/os.c)
 psos_start	error	0, or the service in the high byte and the kernel's error in the low
 psos_ident	error	0, or the service and the kernel's error
 psos_my_pid	task	the running task's id
@@ -366,7 +366,7 @@ task_status_name	status	the report's four characters
 region_segment_containing	segment	the task's segment holding the address, or null
 ready_queue_position	position	from 0, or -1 off the ready queue
 timer_ticks_until	ticks	the delay list's ticks up to the task
-# pllc's settings server and the descriptors' validators, 0x31ff8 to 0x433fc (rewritten/z3805a-3543b/pllc.c)
+# pllc's settings server and the descriptors' validators, 0x31ff8 to 0x433fc (rewritten/pllc.c)
 pll_scpi_needs_loop	needs_loop	1 when the request goes to the GPS before it is stored
 pll_scpi_send_to_loop	sent	1 when gpsx_exchange took the request
 scpi_param_saved_in_nv	saved	the descriptor's NV register flag
@@ -378,7 +378,7 @@ float_max_of	larger
 float_min_of	smaller
 load_long_unit_step	step	the step record's own step
 load_long	step	the step record's own step
-# devices and services, but services/status (rewritten/z3805a-3543b/: ti.c, leds.c, calendar.c, clock.c)
+# devices and services, but services/status (rewritten/: ti.c, leds.c, calendar.c, clock.c)
 dac_search_bisect	dac	the DAC value the search ends on
 dac_search_step	dac	the DAC value the steps end on
 hdac_nudge	hdac	the low reference DAC, moved a step or not
@@ -406,7 +406,7 @@ boot_unpack_installer	status	0, 1 without the S, 2 at a bad record
 primary_unpack_records	status	as boot_unpack_installer's
 boot_memcpy	destination
 debug_is_enabled	enabled	debug_enabled
-# The :SOURce:ROSCillator, :SAMPle and :SYSTem handlers (rewritten/z3805a-3543b/scpi_source_roscillator.c, scpi_sample.c, scpi_system.c)
+# The :SOURce:ROSCillator, :SAMPle and :SYSTem handlers (rewritten/scpi_source_roscillator.c, scpi_sample.c, scpi_system.c)
 scpi_set_SAMPle_ACTion	error	0, or a status condition for scpi_call_handler
 scpi_set_SAMPle_BARR	error	0, or a status condition for scpi_call_handler
 scpi_query_SAMPle_BARR	error	0, or a status condition for scpi_call_handler
@@ -472,12 +472,12 @@ scpi_query_SYSTem_LANGuage	error	0, or a status condition for scpi_call_handler
 scpi_set_SYSTem_PRESet	error	0, or a status condition for scpi_call_handler
 scpi_query_SYSTem_PRINt	error	0, or a status condition for scpi_call_handler
 scpi_query_SYSTem_PRINt_LENGth	error	0, or a status condition for scpi_call_handler
-# The :ROBin parser, 0x2e730 to 0x2eba8 (rewritten/z3805a-3543b/scpi_robin.c); the SCPI handlers, called through their nodes only, have no row
+# The :ROBin parser, 0x2e730 to 0x2eba8 (rewritten/scpi_robin.c); the SCPI handlers, called through their nodes only, have no row
 robin_keyword_match	match	STATUS_SCPI_INVALID_STRING for none, 0 for a branch, else the code less SCPI_ROBIN_BRANCH
 robin_lookup	error	0, or STATUS_SCPI_INVALID_STRING for a name it does not know
 robin_parse_arguments	error	0, or STATUS_SCPI_INVALID_STRING; a form past 6 gives itself less 6
 robin_parse	error	0, or STATUS_SCPI_INVALID_STRING
-# The :SOURce:GPSystem, :PTIMe, :PULSe, :KENneth and :DOUGlas handlers (rewritten/z3805a-3543b/: scpi_source_gpsystem.c, scpi_source_ptime.c, scpi_source_pulse.c, scpi_kenneth.c, scpi_douglas.c)
+# The :SOURce:GPSystem, :PTIMe, :PULSe, :KENneth and :DOUGlas handlers (rewritten/: scpi_source_gpsystem.c, scpi_source_ptime.c, scpi_source_pulse.c, scpi_kenneth.c, scpi_douglas.c)
 scpi_set_SOURce_GPSystem_ADELay	error	always 0
 scpi_query_SOURce_GPSystem_ADELay	error	always 0
 scpi_set_SOURce_GPSystem_EMANgle	error	always 0
@@ -549,7 +549,7 @@ scpi_set_DOUGlas_STATe	error	always 0
 scpi_query_DOUGlas_STATe	error	always 0
 scpi_set_DOUGlas_STATe_POWerup	error	always 0
 scpi_query_DOUGlas_STATe_POWerup	error	always 0
-# The SCPI :DIAGnostic, :STATus and common-command handlers (rewritten/z3805a-3543b/scpi_diagnostic.c, scpi_status.c, scpi_common.c)
+# The SCPI :DIAGnostic, :STATus and common-command handlers (rewritten/scpi_diagnostic.c, scpi_status.c, scpi_common.c)
 scpi_query_DIAGnostic_GPSystem_POSition_DEGRees	error	always 0
 scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe	error	always 0
 scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe	error	always 0
@@ -629,7 +629,7 @@ scpi_query_common_SRE	error	always 0
 scpi_query_common_STB	error	always 0
 scpi_query_common_TST	error	always 0
 scpi_set_common_WAI	error	always 0
-# The disciplining loop, applications/pll: aging, gps_control, pllp, stages (rewritten/z3805a-3543b/: pll_aging.c, pll_gps_control.c, pllp.c, pll_stages.c)
+# The disciplining loop, applications/pll: aging, gps_control, pllp, stages (rewritten/: pll_aging.c, pll_gps_control.c, pllp.c, pll_stages.c)
 fit_linear_halves	failed	always 0
 fit_linear	failed	linear_regression's
 fit_constant	failed	1 when no entry has the weight
@@ -671,7 +671,7 @@ clamp_float_to_step_double	steps	the clamped value in steps, rounded half away f
 clamp_double_to_limits	clamped	the value within its limits
 load_double	step	the step record's double
 load_double_param	step	the step record's double
-# The self-tests, applications/selftest (rewritten/z3805a-3543b/selftest.c)
+# The self-tests, applications/selftest (rewritten/selftest.c)
 selftest_aborted	aborted	selftest's abort flag set
 selftest_may_report	may_report	the first pass, or the test not aborted
 selftest_abort_wait	was_running	1 when a test was running, and it has stopped
@@ -735,7 +735,7 @@ gps_response_match	match	whether the response answers the command, GPS_MATCH_ANS
 pforth_define_word	defined	0, or -1 with no dictionary
 diag_adc_read	reading	the ADC channel's raw byte
 diag_wr_eeprom	written	true when the byte reads back
-# The status screen, applications/screen (rewritten/z3805a-3543b/screen.c)
+# The status screen, applications/screen (rewritten/screen.c)
 satellite_in_set	set	1 if the satellite's bit of the set is set
 satellite_track_class	class	the @@Bb record's satellite_health_class
 satellite_compare	order	-1, 0 or 1, qsort's order of two satellites
@@ -764,13 +764,13 @@ survey_progress_percent	surveying	whether a finite survey runs
 survey_progress_text	surveying	whether a finite survey runs
 command_log_add	logged	1
 gps_print_command	printed	0 when the log is empty, else 1
-# Wave 4, os: the remaining I/O stubs (rewritten/z3805a-3543b/os.c)
+# Wave 4, os: the remaining I/O stubs (rewritten/os.c)
 psos_io_close	error	0, or the function and the device's error
 psos_io_control	error	0, or the function and the device's error
 # wave 4, pll: the fine stage and its neighbors
 fine	result	a stage's: 0 running, 1 done, 2 failed
 clamp_double	clamped	1 when the value was clamped
-# wave 4, harness: the stack report (rewritten/z3805a-3543b/scpi_diagnostic.c)
+# wave 4, harness: the stack report (rewritten/scpi_diagnostic.c)
 scpi_query_DIAGnostic_OS_STACk	error	always 0
 # the last of the decompiler's: the printf family, float_raise, the parser's loop, setjmp and the stragglers
 printf	length	console_write's length
@@ -782,7 +782,7 @@ scpi_parse_text	error	0, or -21 for a NUL inside the text
 duart_input_0_debounced	level	the input bit, 0 or 1
 duart_input_1_debounced	level	the input bit, 0 or 1
 duart_input_2_debounced	level	the input bit, 0 or 1
-# the installer's last 25: its converters' and formatters' copies, its handlers and its flash word programmer (rewritten/z3805a-3543b/installer/)
+# the installer's last 25: its converters' and formatters' copies, its handlers and its flash word programmer (rewritten/installer/)
 installer_scpi_parse_text	error	0, or -21 for a NUL inside the text
 installer_scpi_parse_short	error	0, or a negative condition
 installer_scpi_number_to_short	error	0, or -11 out of range

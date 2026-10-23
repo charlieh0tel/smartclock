@@ -97,24 +97,23 @@ image.
 ## As C
 
 `dump-scpi --c IMAGE` prints a tree as C data, every record its roots
-reach, each a `const` object of the type
-`tools/ghidra/types/smartclock.h` declares, for
-`third_party/firmware/rewritten/` (PLAN.md, "Decided 2026-10-22");
+reach, each a `const` object of the type the image's `smartclock.h`
+declares, for its folder's `rewritten/` (PLAN.md, "Decided 2026-10-22");
 `--names` prints a label and type row for each, in the names-file
 format, for `SmartClockSetup.java`'s `names=`.  `--installer` reads the
-installer's tree instead, unpacked into RAM from the boot code's
-records as `tools/firmware/decompiled_check.py` unpacks it: the one
-stream of copy records below `0x20000`, the flash the installer lives
-in (`docs/firmware/restart.md`).  `--names-file` takes a names file:
-its name for an address replaces the one made, a routine is named only
-by it or, for a handler, by the rule below, and with `--names` an
-address it names gets no row, so that its own row, and its type, stand.
+installer's tree instead, unpacked into RAM from the boot code's records
+as `tools/firmware/decompiled_check.py` unpacks it: the one stream of
+copy records below `0x20000`, the flash the installer lives in
+(`docs/firmware/restart.md`).  `--names-file` takes a names file: its
+name for an address replaces the one made, a routine is named only by it
+or, for a handler, by the rule below, and with `--names` an address it
+names gets no row, so that its own row, and its type, stand.
 
 `make scpi-tree` writes the Z3805A 3543B's,
-`third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c` through
-clang-format and `tools/ghidra/names/z3805a-3543b.scpi-tree.tsv`, and
+`third_party/firmware/z3805a-3543b/rewritten/scpi_tree_data.c` through
+clang-format and `third_party/firmware/z3805a-3543b/scpi-tree.tsv`, and
 its installer's, `installer/installer_scpi_tree_data.c` beside the
-installer's other copies and `z3805a-3543b.installer-scpi-tree.tsv`,
+installer's other copies and `installer-scpi-tree.tsv`,
 and a test fails while any is stale, the C compared without its white
 space.  The installer's rows also name its nine handlers, for their
 paths as the C names them, since nothing else does: Setup names the

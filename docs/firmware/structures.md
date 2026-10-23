@@ -1,24 +1,25 @@
 # Structures
 
-The firmware's data structures and named globals, as the code that
-uses them shows them, in the Z3805A 3543B image.
-`tools/ghidra/types/smartclock.h` declares the structures for Ghidra, a
-field named only where this note gives the code that shows what it is;
-`tools/ghidra/names/z3805a-3543b.tsv` names and types their instances
-and the globals.  The header uses `<stdint.h>`'s types.
+The firmware's data structures and named globals, as the code that uses
+them shows them, in the Z3805A 3543B image.
+`third_party/firmware/z3805a-3543b/smartclock.h` declares the structures
+for Ghidra, a field named only where this note gives the code that shows
+what it is; `third_party/firmware/z3805a-3543b/names.tsv` names and
+types their instances and the globals.  The header uses `<stdint.h>`'s
+types.
 
-`make check-types` compiles `tools/ghidra/types/check-layout.c` with an
-m68k compiler (`m68k-linux-gnu-gcc`, or `M68K_CC`) and fails if a
-structure's size or a named field's offset is not the one given here,
-an offset read from the image written as the difference of its
-addresses.  The header packs its structures.  Every one but the GPS
-task's records, and `preserved_region_fields`, which holds a copy of
-one, has the same layout unpacked, under the 68000's 2-byte
-alignment, but for the pad byte a compiler would add after
-`nv_settings_fields`, `interval_reading_fields` and `clock_record`,
-which have an odd size: they are what a 68000 compiler lays out, not
-byte layouts that happen to fit.  The GPS task's are not ("The GPS
-task's state", below).
+`make check-types` compiles
+`third_party/firmware/z3805a-3543b/check-layout.c` with an m68k compiler
+(`m68k-linux-gnu-gcc`, or `M68K_CC`) and fails if a structure's size or
+a named field's offset is not the one given here, an offset read from
+the image written as the difference of its addresses.  The header packs
+its structures.  Every one but the GPS task's records, and
+`preserved_region_fields`, which holds a copy of one, has the same
+layout unpacked, under the 68000's 2-byte alignment, but for the pad
+byte a compiler would add after `nv_settings_fields`,
+`interval_reading_fields` and `clock_record`, which have an odd size:
+they are what a 68000 compiler lays out, not byte layouts that happen to
+fit.  The GPS task's are not ("The GPS task's state", below).
 
 ## The tasks and exchanges
 
@@ -1709,7 +1710,7 @@ select answers and Ghidra has no memory to label.
 
 ## What is left untyped
 
-`docs/firmware/untyped/IMAGE.tsv`, which
+`third_party/firmware/IMAGE/untyped.tsv`, which
 `tools/ghidra/SmartClockUntyped.java` writes (`README.md`, "Decompiling
 with Ghidra"), lists every run of ROM, and of the installer's overlay,
 that is neither code nor typed data: its references, the items beside

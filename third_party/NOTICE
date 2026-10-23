@@ -169,7 +169,7 @@ against its images.
   z3815a.bit         Z3815A 4010 at 0x316a6; SHA-1 9fe2370e...
   z3816a.bit         Z3816A 4001 at 0x2ffb8; SHA-1 8061d2bb...
 
-Decompiled C, in `firmware/decompiled/`: Ghidra 12.1.4's decompiler
+Decompiled C, in `firmware/IMAGE/decompiled/`: Ghidra 12.1.4's decompiler
 output for an image, produced by the scripts in `tools/ghidra/`
 (`docs/firmware/README.md`, "Decompiling with Ghidra").  Derived from
 the image, so no more ours than the image is; machine output, named
@@ -184,12 +184,13 @@ name (`docs/firmware/README.md`, "Decompiling with Ghidra").
                      one's note and calling convention, from the names
                      file and the scripts, or "unknown".
 
-Hand-written C, in `firmware/rewritten/`, a folder to an image: its
+Hand-written C, in `firmware/IMAGE/rewritten/`: its
 functions written by hand in place of the decompiled ones, each checked
 against the image's own code (`docs/firmware/README.md`, "Hand-written
 C").  Derived from the image as the decompiled C is.
 
-  z3805a-3543b/      Z3805A 3543B: clock.c, the time-of-day
+  z3805a-3543b/rewritten/
+                     Z3805A 3543B: clock.c, the time-of-day
                      conversions.
 
 The Ghidra project the decompiled C was exported from, in `firmware/ghidra/`, as a

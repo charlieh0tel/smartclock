@@ -432,7 +432,8 @@ each one's fall-through at itself, which the C shows as a loop with a
 comment: `stop`, which ends failure paths, and `trap #5`, which ends
 every interrupt handler in the primary and the installer in place of
 `rte` -- the pSOS kernel's return from interrupt, read from those
-handlers rather than documented.  It clears word and long data at odd
+handlers rather than documented; one an earlier run ended without the
+comment gets it.  It clears word and long data at odd
 addresses, which the 68000 cannot read, and resumes flow such data or
 stray code blocked, clearing only what is in no function.  It removes
 unnamed functions made in data: one at an odd address, or one whose
@@ -440,6 +441,23 @@ own code reaches an odd address or bytes that do not decode, that no
 function calls.  It does this in one pass, since removing one function
 leaves its callees looking stray; `dry-run` reports them and removes
 nothing, and more than 20 is refused as a rule gone wrong.
+
+After the names it removes two more kinds of unnamed function analysis
+makes.  One is a shared tail: code the function before it reaches by a
+conditional branch, which other functions jump into and nothing calls,
+`forth_equal`'s `move.l #-1,(A6)` and `rts` at `0x192c8`, which
+`forth_greater`, `forth_less` and `forth_0_less` branch to.  Analysis's
+shared-return pass makes it a function and marks the jumps to it
+calls; it goes back into `forth_equal`'s body, and the jumps are
+jumps again.  The other is a function in memory with no bytes, at
+`0x10135c` in plain RAM, where the boot code's jump into the
+installer leads.  Then each unconditional jump from a function to
+another function's entry is marked a call that returns, a tail call,
+as the shared-return pass does only where the target was already a
+function when it ran; the string tables are typed again, since the
+repairs can leave stray code that a table's text ran into; and every
+function's body is recomputed from its entry, so that it is what the
+function's flow reaches, whatever the repairs before it left.
 
 Names come from what the project has established.  `IMAGE/names.tsv`
 holds those the notes give for that image, each row citing its note:
@@ -538,16 +556,31 @@ words `forth_WORD` and `diag_WORD`, and each has a note saying so -- the
 query handler for its path, the setter, the pForth word or diagnostic
 word -- unless the names file gives it one.  A name replaces one Ghidra made
 up, and one from the names file also one these tables gave, but none
-replaces a name given by hand.  A table vouches that its entries are code, so the
+replaces a name given by hand.  A routine on several paths or words
+keeps the first one's name, the rest further labels:
+`scpi_query_STATus_OPERation_EVENt` also answers
+`:STATus:QUEStionable:EVENt?`, and `forth_endif` is `then` too.  A
+table vouches that its entries are code, so the
 script disassembles each, and splits a function whose body ran into
-it.
+it.  Nothing an earlier run named outlives its row: each label the
+naming arguments gave (Ghidra's `IMPORTED`) that no row, path, word
+or word header gives now is removed, as `dmes_gpsm`, the old name of
+the `dmes` array, was.
 
 A row may give a C prototype, which types the function's arguments at
 every call.  The float library passes its operands in registers, which
 C cannot say, so a prototype may put a value in registers with `@`:
 `float float_add(float a @ D0, float b @ D1) @ D0`, a double in a pair,
 high register first, `@ D0:D1`.  An argument without `@` goes on the
-stack.  Ghidra's 68000 convention returns a float or double in the FPU
+stack: in this compiler's slots ("The calling convention", above), or,
+where a prototype has a `char` or `short`, at the offsets the function
+reads, when it reads as many arguments as the prototype has, each of
+its size or a whole long for a narrower one, which then lies at that
+slot's end.  A routine compiled to take its arguments promoted reads
+them that way: the console's diagnostic words, which the code
+`pforth_define_word` compiles calls with the data stack's 4-byte
+cells, `diag_adc_read` its `uint8_t` at `+7`; and `log_status` reads
+its `char` at `+12`, past an argument it ignores.  Ghidra's 68000 convention returns a float or double in the FPU
 register FP0, but these images have no FPU and return one in D0 or
 D0:D1, so every function returning one has its return annotated.
 
@@ -594,9 +627,11 @@ bits: `duart_shadow.imr & ~IMR_TXRDYB`.
 The image's `smartclock.h` declares the structures (`structures.md`), parsed
 into the program before the names so a row may use them: a label's
 row may give its data type, `gps_state` or `uint8_t[6]`.  Parsing adds
-and replaces types but removes none, and they sit beside Ghidra's own,
-so a type renamed or dropped from the header stays in the project, and
-in the exported C, until it is deleted there by hand.  The header and
+and replaces types, beside Ghidra's own, and a structure, union, enum
+or typedef at the top category that no header declares any more is
+removed, so that a type renamed or dropped from the header leaves the
+project and the exported C: `robin_format`, now `data_format`, and
+`scpi_root_children`, now `scpi_child_list`.  The header and
 the firmware's own prototypes use `<stdint.h>`'s types, the header
 defining them, since Ghidra's C parser reads no includes; a published
 API keeps its own spelling, the C library's and pSOS's.  The script
@@ -659,7 +694,9 @@ instructions, sized by each instruction; a lone byte or word read at
 the end of a 4-byte slot is taken as part of a 4-byte `int`.  The
 parameters go into custom storage at those offsets and sizes, which
 pins each value's bytes as no calling convention here can, and the
-decompiler's types for them are committed.  The decompiler's own list
+decompiler's types for them are committed; the commit would give a
+function that is not C the default convention, so it keeps the unknown
+one Setup gave it.  The decompiler's own list
 of a function's stack inputs is not used: it drops an argument that is
 only copied into a local buffer whose address escapes, as the `pllc`
 requests' are.  A signature from the names file or given by hand is
@@ -1658,10 +1695,40 @@ is `third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c`.
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,
 a Ghidra archive in Git LFS (install `git-lfs` to fetch it): restore it (File, Restore Project, or ghidra-mcp's
 `restore_project`) to work on it, and archive it over that file after
-work worth keeping.  Run over it, the scripts reproduce the checked-in
-export; over the bare image, not yet, and
-[`rewrite.md`, "Reproducing"](rewrite.md#reproducing) gives both
-command lines and what differs.  An exception in a script does not roll
+work worth keeping.  Run over the bare image, imported raw at zero
+and analyzed, or over the archive, the scripts reproduce the
+checked-in export, sidecar and `.symbols.ld` byte for byte; from the
+repository's root, with `GHIDRA` the install and `PROJECT` a new
+directory outside the repository:
+
+    "$GHIDRA"/support/analyzeHeadless "$PROJECT" smartclock \
+      -import third_party/firmware/z3805a-3543b.bin \
+      -loader BinaryLoader -loader-baseAddr 0 -processor 68000:BE:32:CPU32 \
+      -scriptPath tools/ghidra \
+      -postScript SmartClockSetup.java \
+      -postScript SmartClockInstaller.java 0xbbc 0x10135c \
+      -postScript SmartClockSetup.java \
+        types=third_party/firmware/z3805a-3543b/smartclock.h \
+        types=third_party/firmware/include/mc68331.h \
+        types=third_party/firmware/include/mc68681.h \
+        names=third_party/firmware/z3805a-3543b/names.tsv \
+        names=third_party/firmware/z3805a-3543b/scpi-tree.tsv \
+        names=third_party/firmware/z3805a-3543b/installer-scpi-tree.tsv \
+        scpi=third_party/firmware/z3805a-3543b/handlers.txt \
+        pforth=docs/firmware/pforth/z3805a-3543b.txt \
+      -postScript SmartClockForth.java \
+      -postScript SmartClockStackParameters.java \
+      -postScript SmartClockFormatStrings.java \
+      -postScript SmartClockExportC.java \
+        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \
+        defines=third_party/firmware/include/mc68331.h \
+        defines=third_party/firmware/include/mc68681.h \
+        defines=third_party/firmware/include/psos-signals.h \
+        results=third_party/firmware/z3805a-3543b/results.tsv \
+        rewritten=third_party/firmware/z3805a-3543b/rewritten
+
+[`rewrite.md`, "Reproducing"](rewrite.md#reproducing) gives the
+archive's form too.  An exception in a script does not roll
 back what it did, so save the program before each script that changes
 it.
 

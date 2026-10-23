@@ -93,6 +93,7 @@ import java.util.stream.LongStream;
 
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.cmd.function.CreateFunctionCmd;
+import ghidra.app.cmd.function.NewFunctionStackAnalysisCmd;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.PseudoDisassembler;
@@ -126,9 +127,12 @@ import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.TerminatedStringDataType;
 import ghidra.program.model.data.TypeDef;
 import ghidra.program.model.data.TypedefDataType;
+import ghidra.program.model.data.StandAloneDataTypeManager;
+import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.WordDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
@@ -144,13 +148,16 @@ import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.program.model.pcode.JumpTable;
 import ghidra.program.model.util.StringPropertyMap;
+import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.StackReference;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.data.DataTypeParser;
 
@@ -403,11 +410,92 @@ public class SmartClockSetup extends GhidraScript {
 		removeDataFunctions();
 		applyNames();
 		repairFlow();
+		removeSharedTails();
+		removeFunctionsWithoutBytes();
+		// the repairs can leave stray code that a string table's text ran into
+		typeStrings();
+		markTailCalls();
+		fixupBodies();
 		typePforthHeaders();
+		removeStaleNames();
 		commentVectors(BOOT_VECTORS, "boot");
 		commentVectors(PRIMARY_VECTORS, "primary");
 		nameConventions();
 	}
+
+	/**
+	 * Recomputes every function's body from its entry, so that a body is
+	 * what its flow reaches now, whatever the repairs and removals before
+	 * left it.
+	 */
+	private void fixupBodies() throws Exception {
+		int changed = 0;
+		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
+			AddressSetView before = new AddressSet(function.getBody());
+			CreateFunctionCmd.fixupFunctionBody(currentProgram, function, monitor);
+			if (!before.equals(function.getBody())) {
+				changed++;
+			}
+		}
+		println("function bodies recomputed: " + changed + " changed");
+	}
+
+	/**
+	 * Removes the names and types an earlier run gave that the names and
+	 * types given now do not: a row renamed or removed leaves its old label
+	 * behind otherwise (the console's dmes_gpsm on the dmes array), and a
+	 * header's type renamed its old type (robin_format, now data_format;
+	 * scpi_root_children, now scpi_child_list), which the export would
+	 * declare.  Only labels these arguments made, IMPORTED, and only the
+	 * headers' own kinds of type, at the top category, are removed; with
+	 * no naming or types argument nothing is.
+	 */
+	private void removeStaleNames() throws Exception {
+		if (namingGiven) {
+			List<Symbol> stale = new ArrayList<>();
+			for (Symbol symbol : currentProgram.getSymbolTable().getAllSymbols(true)) {
+				if (symbol.getSymbolType() == SymbolType.LABEL
+						&& symbol.getSource() == SourceType.IMPORTED
+						&& !applied.contains(appliedKey(symbol.getAddress(), symbol.getName()))) {
+					stale.add(symbol);
+				}
+			}
+			for (Symbol symbol : stale) {
+				println("removing stale label " + symbol.getName() + " at " + symbol.getAddress());
+				symbol.delete();
+			}
+			println("stale labels removed: " + stale.size());
+		}
+		if (declaredTypes != null) {
+			DataTypeManager types = currentProgram.getDataTypeManager();
+			List<DataType> stale = new ArrayList<>();
+			types.getAllDataTypes().forEachRemaining(type -> {
+				if (type.getCategoryPath().isRoot()
+						&& (type instanceof Composite || type instanceof Enum || type instanceof TypeDef)
+						&& type.getSourceArchive().getArchiveType() == ArchiveType.PROGRAM
+						&& !declaredTypes.contains(type.getName())) {
+					stale.add(type);
+				}
+			});
+			for (DataType type : stale) {
+				println("removing stale type " + type.getName());
+				types.remove(type, monitor);
+			}
+			println("stale types removed: " + stale.size());
+		}
+	}
+
+	/** An applied name's key: its address and the name. */
+	private static String appliedKey(Address address, String name) {
+		return address + "\t" + name;
+	}
+
+	/** Every name this run's naming arguments gave, as appliedKey. */
+	private final Set<String> applied = new HashSet<>();
+	/** True if a names, scpi or pforth argument was given. */
+	private boolean namingGiven;
+	/** The names of the types the types arguments declare, or null if none was given. */
+	private Set<String> declaredTypes;
 
 	/**
 	 * Gives each function C calls the default convention, the C one the
@@ -462,17 +550,32 @@ public class SmartClockSetup extends GhidraScript {
 	 * though a names-file label becomes the primary one at its address.
 	 */
 	private void applyNames() throws Exception {
-		for (String arg : getScriptArgs()) {
-			if (arg.startsWith(TYPES + "=")) {
-				// Ghidra's C parser takes no preprocessor lines but #pragma; a
-				// header's #defines are for gcc and the exported C
-				String header = DEFINE.matcher(
-					Files.readString(Path.of(arg.substring(TYPES.length() + 1)))).replaceAll("");
-				new CParser(currentProgram.getDataTypeManager(), true, null).parse(header);
-				bindByteTypes();
-				sizeEnums();
-				println("types parsed from " + arg.substring(TYPES.length() + 1));
+		StandAloneDataTypeManager declared = new StandAloneDataTypeManager(TYPES);
+		int transaction = declared.startTransaction(TYPES);
+		try {
+			for (String arg : getScriptArgs()) {
+				if (arg.startsWith(TYPES + "=")) {
+					// Ghidra's C parser takes no preprocessor lines but #pragma; a
+					// header's #defines are for gcc and the exported C
+					String header = DEFINE.matcher(
+						Files.readString(Path.of(arg.substring(TYPES.length() + 1)))).replaceAll("");
+					new CParser(currentProgram.getDataTypeManager(), true, null).parse(header);
+					new CParser(declared, true, null).parse(header);
+					bindByteTypes();
+					sizeEnums();
+					println("types parsed from " + arg.substring(TYPES.length() + 1));
+					if (declaredTypes == null) {
+						declaredTypes = new HashSet<>();
+					}
+				}
 			}
+			if (declaredTypes != null) {
+				declared.getAllDataTypes().forEachRemaining(type -> declaredTypes.add(type.getName()));
+			}
+		}
+		finally {
+			declared.endTransaction(transaction, false);
+			declared.close();
 		}
 		int[] counts = new int[NameCount.values().length];
 		for (String kind : List.of(NAMES, SCPI, PFORTH)) {
@@ -480,6 +583,7 @@ public class SmartClockSetup extends GhidraScript {
 				if (!arg.startsWith(kind + "=")) {
 					continue;
 				}
+				namingGiven = true;
 				List<String> lines = Files.readAllLines(Path.of(arg.substring(kind.length() + 1)));
 				for (String line : lines) {
 					applyNameLine(kind, line, counts);
@@ -654,11 +758,14 @@ public class SmartClockSetup extends GhidraScript {
 	 * the way, and splitting a function whose body ran into it.  A function
 	 * Ghidra named is renamed, and with curated so is one these arguments
 	 * named, on this run or an earlier one; one named otherwise, by hand,
-	 * gets the name as a further label.  The SCPI and pForth names a
-	 * curated name displaces come back as labels when they are applied.
+	 * gets the name as a further label, the primary one with curated.  The
+	 * SCPI and pForth names a curated name displaces come back as labels
+	 * when they are applied, and a routine on several paths or words keeps
+	 * the first one's name, the rest further labels.
 	 */
 	private void nameFunction(Address address, String name, boolean curated, int[] counts)
 			throws Exception {
+		applied.add(appliedKey(address, name));
 		Function function = getFunctionAt(address);
 		if (function == null) {
 			if (getInstructionAt(address) == null) {
@@ -687,8 +794,12 @@ public class SmartClockSetup extends GhidraScript {
 			function.setName(name, SourceType.IMPORTED);
 			counts[NameCount.NAMED.ordinal()]++;
 		}
-		else {
+		else if (curated) {
 			label(address, name, counts);
+		}
+		else {
+			// a routine on several SCPI paths or Forth words keeps the first one's name
+			addLabel(address, name, counts);
 		}
 	}
 
@@ -727,7 +838,8 @@ public class SmartClockSetup extends GhidraScript {
 	 * short in a 2-byte slot, its value at the slot's start, where Ghidra's
 	 * default convention would look at the end of a 4-byte slot; so a
 	 * prototype with an argument narrower than 4 bytes is laid out this way
-	 * too, and so is one returning a float or double: Ghidra's default
+	 * too, at the offsets the function reads where those fit its arguments
+	 * (readOffsets), and so is one returning a float or double: Ghidra's default
 	 * convention returns those in FP0, but these images have no FPU and
 	 * return them in D0 or D0:D1.  Any other takes the default
 	 * convention.
@@ -762,13 +874,25 @@ public class SmartClockSetup extends GhidraScript {
 			return;
 		}
 		ParameterDefinition[] types = signature.getArguments();
+		List<Integer> stackSizes = new ArrayList<>();
+		for (int i = 0; i < types.length; i++) {
+			if (!declared[i].contains("@")) {
+				stackSizes.add(types[i].getDataType().getLength());
+			}
+		}
+		List<Integer> readOffsets = readOffsets(getFunctionAt(address), stackSizes);
 		List<Parameter> parameters = new ArrayList<>();
 		int stackOffset = FIRST_ARGUMENT_OFFSET;
+		int stackIndex = 0;
 		for (int i = 0; i < types.length; i++) {
 			DataType type = types[i].getDataType();
 			VariableStorage storage;
 			if (declared[i].contains("@")) {
 				storage = registerStorage(declared[i], address);
+			}
+			else if (readOffsets != null) {
+				storage = new VariableStorage(currentProgram, readOffsets.get(stackIndex++),
+					type.getLength());
 			}
 			else {
 				int size = Math.max(type.getLength(), STACK_SLOT_MINIMUM);
@@ -793,6 +917,96 @@ public class SmartClockSetup extends GhidraScript {
 			throw new IllegalArgumentException("cannot lay out prototype at " + address + ": "
 				+ prototype + ": " + e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * The offsets of the stack arguments of these sizes, in order, from
+	 * the function's own reads of its stack above the return address: each
+	 * read is .b 1, .w 2, .l 4, an address taken 4, reads that overlap one;
+	 * a narrower argument read as a whole long, the int it was promoted to,
+	 * lies at that slot's end.  Null unless there are as many reads as
+	 * sizes, each of its size or such a long.  A routine compiled to take
+	 * promoted arguments reads its char that way (the console's diagnostic
+	 * words, which the code pforth_define_word compiles calls with the data
+	 * stack's cells), and one that ignores an argument reads past its slot
+	 * (log_status's char at +12); the slots alone would misplace them.  A
+	 * function with no stack references and no locals, which analysis has
+	 * not yet reached, has its stack analyzed for both first; one with
+	 * locals keeps them, and its slots.
+	 */
+	private List<Integer> readOffsets(Function function, List<Integer> sizes) {
+		if (function == null || sizes.isEmpty()) {
+			return null;
+		}
+		TreeMap<Integer, Integer> reads = stackReads(function);
+		if (reads == null && function.getLocalVariables().length == 0) {
+			// its locals too, as analysis would have made them
+			new NewFunctionStackAnalysisCmd(new AddressSet(function.getEntryPoint()), false, true,
+				true).applyTo(currentProgram, monitor);
+			reads = stackReads(function);
+		}
+		if (reads == null) {
+			return null;
+		}
+		List<int[]> merged = new ArrayList<>();
+		for (Map.Entry<Integer, Integer> read : reads.entrySet()) {
+			int[] last = merged.isEmpty() ? null : merged.get(merged.size() - 1);
+			if (last != null && read.getKey() < last[0] + last[1]) {
+				last[1] = Math.max(last[0] + last[1], read.getKey() + read.getValue()) - last[0];
+			}
+			else {
+				merged.add(new int[] { read.getKey(), read.getValue() });
+			}
+		}
+		if (merged.size() != sizes.size()) {
+			return null;
+		}
+		List<Integer> offsets = new ArrayList<>();
+		for (int i = 0; i < merged.size(); i++) {
+			int offset = merged.get(i)[0];
+			int read = merged.get(i)[1];
+			int size = sizes.get(i);
+			if (read == size) {
+				offsets.add(offset);
+			}
+			else if (read == STACK_SLOT && size < STACK_SLOT) {
+				offsets.add(offset + STACK_SLOT - size);
+			}
+			else {
+				return null;
+			}
+		}
+		return offsets;
+	}
+
+	/**
+	 * The function's reads of its stack above the return address, offset
+	 * to size, from the stack references on its instructions; null if it
+	 * has no stack references at all.
+	 */
+	private TreeMap<Integer, Integer> stackReads(Function function) {
+		TreeMap<Integer, Integer> reads = new TreeMap<>();
+		boolean any = false;
+		for (Instruction instruction : currentProgram.getListing()
+				.getInstructions(function.getBody(), true)) {
+			for (Reference reference : instruction.getReferencesFrom()) {
+				if (!(reference instanceof StackReference stack)) {
+					continue;
+				}
+				any = true;
+				if (stack.getStackOffset() >= FIRST_ARGUMENT_OFFSET
+						&& !reference.getReferenceType().isWrite()) {
+					reads.merge(stack.getStackOffset(), readSize(instruction), Math::max);
+				}
+			}
+		}
+		return any ? reads : null;
+	}
+
+	/** The bytes an instruction reads, by its mnemonic's size: an address taken, a long's. */
+	private static int readSize(Instruction instruction) {
+		String mnemonic = instruction.getMnemonicString();
+		return mnemonic.endsWith(".b") ? 1 : mnemonic.endsWith(".w") ? 2 : STACK_SLOT;
 	}
 
 	/**
@@ -1012,6 +1226,7 @@ public class SmartClockSetup extends GhidraScript {
 	 * should read by the name it gives.
 	 */
 	private void label(Address address, String name, int[] counts) throws Exception {
+		applied.add(appliedKey(address, name));
 		Symbol existing = getSymbols(name, null).stream()
 			.filter(s -> s.getAddress().equals(address)).findFirst().orElse(null);
 		if (existing == null) {
@@ -1020,6 +1235,17 @@ public class SmartClockSetup extends GhidraScript {
 		}
 		else if (!existing.isPrimary()) {
 			existing.setPrimary();
+		}
+	}
+
+	/** Adds name as a further label at address, unless it is there already; the primary stays. */
+	private void addLabel(Address address, String name, int[] counts) throws Exception {
+		applied.add(appliedKey(address, name));
+		boolean present = getSymbols(name, null).stream()
+			.anyMatch(s -> s.getAddress().equals(address));
+		if (!present) {
+			createLabel(address, name, false, SourceType.IMPORTED);
+			counts[NameCount.LABELED.ordinal()]++;
 		}
 	}
 
@@ -1124,6 +1350,126 @@ public class SmartClockSetup extends GhidraScript {
 		println("functions in data " + (dryRun ? "found: " : "removed: ") + data.size());
 	}
 
+	/**
+	 * Removes the unnamed functions analysis made at a shared tail: code
+	 * the function before it reaches by a conditional branch, and other
+	 * functions jump into, but nothing calls.  Analysis's shared-return
+	 * pass makes one where several functions jump to the same code
+	 * (forth_equal's tail at 0x192c8 in the Z3805A 3543B, which
+	 * forth_greater, forth_less and forth_0_less branch to), and marks the
+	 * unconditional jumps to it calls.  The tail is the function before's
+	 * own: its body takes the tail back, and the jumps are jumps again.
+	 * Code reached only by unconditional jumps is a routine tail-called,
+	 * not a tail.
+	 */
+	private void removeSharedTails() throws Exception {
+		List<Function> tails = new ArrayList<>();
+		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
+			if (function.getSymbol().getSource() == SourceType.DEFAULT && isSharedTail(function)) {
+				tails.add(function);
+			}
+		}
+		for (Function tail : tails) {
+			Address entry = tail.getEntryPoint();
+			Function before = getFunctionContaining(entry.previous());
+			println("removing function " + tail.getName() + ", the tail of " + before.getName());
+			removeFunction(tail);
+			for (Reference reference : getReferencesTo(entry)) {
+				Instruction jump = getInstructionAt(reference.getFromAddress());
+				if (jump != null && jump.getFlowOverride() == FlowOverride.CALL_RETURN) {
+					jump.setFlowOverride(FlowOverride.NONE);
+				}
+			}
+			CreateFunctionCmd.fixupFunctionBody(currentProgram, before, monitor);
+		}
+		println("shared tails removed: " + tails.size());
+	}
+
+	/**
+	 * True if function is reached only by jumps, one of them a conditional
+	 * branch from the function whose body ends where it begins.
+	 */
+	private boolean isSharedTail(Function function) {
+		Address entry = function.getEntryPoint();
+		Address previous = entry.previous();
+		Function before = previous == null ? null : getFunctionContaining(previous);
+		if (before == null || before.equals(function)) {
+			return false;
+		}
+		boolean fromBefore = false;
+		for (Reference reference : getReferencesTo(entry)) {
+			Instruction from = getInstructionAt(reference.getFromAddress());
+			if (from == null || !unoverriddenFlow(from).isJump()) {
+				return false;
+			}
+			fromBefore |= unoverriddenFlow(from).isConditional()
+				&& before.getBody().contains(from.getAddress());
+		}
+		return fromBefore;
+	}
+
+	/** The instruction's flow as it decodes, before any override. */
+	private static FlowType unoverriddenFlow(Instruction instruction) {
+		return instruction.getPrototype().getFlowType(instruction.getInstructionContext());
+	}
+
+	/**
+	 * Removes the unnamed functions analysis made in memory with no bytes,
+	 * where there is no code: in RAM at the installer's plain address
+	 * (0x10135c in the Z3805A 3543B), where the boot code's jump into the
+	 * installer, marked a call by SmartClockInstaller.java, leads.  The
+	 * call reads func_0x0010135c without one.
+	 */
+	private void removeFunctionsWithoutBytes() throws Exception {
+		Memory memory = currentProgram.getMemory();
+		List<Function> empty = new ArrayList<>();
+		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
+			MemoryBlock block = memory.getBlock(function.getEntryPoint());
+			if (function.getSymbol().getSource() == SourceType.DEFAULT
+					&& (block == null || !block.isInitialized())) {
+				empty.add(function);
+			}
+		}
+		for (Function function : empty) {
+			println("removing function " + function.getName() + " in memory with no bytes");
+			removeFunction(function);
+		}
+		println("functions in memory with no bytes removed: " + empty.size());
+	}
+
+	/**
+	 * Marks each unconditional jump from a function to another function's
+	 * entry a call that returns, as analysis's shared-return pass does
+	 * when the target is a function by then: a tail call, which the
+	 * decompiler then shows as a call rather than following the jump into
+	 * the other function's body.  A thunk, a function that is only such a
+	 * jump, is left as it is.
+	 */
+	private void markTailCalls() throws Exception {
+		int marked = 0;
+		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
+			if (function.isThunk()) {
+				continue;
+			}
+			for (Instruction instruction : currentProgram.getListing()
+					.getInstructions(function.getBody(), true)) {
+				FlowType flow = unoverriddenFlow(instruction);
+				if (!flow.isJump() || flow.isConditional() || flow.isComputed()
+						|| instruction.getFlowOverride() != FlowOverride.NONE) {
+					continue;
+				}
+				for (Address target : instruction.getFlows()) {
+					Function callee = getFunctionAt(target);
+					if (callee != null && !callee.equals(function)) {
+						instruction.setFlowOverride(FlowOverride.CALL_RETURN);
+						marked++;
+					}
+				}
+			}
+		}
+		println("tail calls marked: " + marked);
+	}
+
 	private static boolean isOdd(Address address) {
 		return (address.getOffset() & 1) != 0;
 	}
@@ -1179,7 +1525,14 @@ public class SmartClockSetup extends GhidraScript {
 		for (Instruction instruction : currentProgram.getListing().getInstructions(true)) {
 			Address address = instruction.getAddress();
 			String comment = noReturnComment(instruction);
-			if (comment == null || address.equals(instruction.getFallThrough())) {
+			if (comment == null) {
+				continue;
+			}
+			if (address.equals(instruction.getFallThrough())) {
+				// ended on an earlier run, which may not have said why
+				if (getPreComment(address) == null) {
+					setPreComment(address, comment);
+				}
 				continue;
 			}
 			Address next = instruction.getMaxAddress().add(1);

@@ -80,7 +80,10 @@ word down, skipping hidden ones; `forth_parse_number` (`0x18f68`)
 converts it in `base` through `forth_digit`, or prints `: not found`.
 Defining and compiling use `forth_create_header` (`0x1968c`),
 `forth_align`, `forth_compile_code`, `forth_compile_constant`,
-`forth_resolve_branch` and `forth_check_pairs` ("ERROR: Mismatched");
+`forth_resolve_branch` and `forth_check_pairs` ("ERROR: Mismatched"),
+`forth_compile_code` copying the control words' code runs,
+`forth_code_do` to `forth_code_repeat` (`0x1939c` to `0x19417`) and
+`forth_code_does` (`0x19dce`);
 the arithmetic, `forth_multiply`, `forth_divide_signed` and
 `_unsigned` and `forth_divide_short`; printing a number,
 `forth_digit_char` and `forth_print_number`; `spawn` pads a task's
@@ -618,5 +621,10 @@ of its own, as "Reading memory through it" does; and it left with
 `"PRIMARY"`.  `watch` is a kernel word in every image (`0x2a0fa` in the
 58503B's) that begins by saving every register to a block at
 `0x101098`; what it does after that, and whether the unit restarted on
-the way back to SCPI, was not traced.
+the way back to SCPI, was not traced.  In the Z3805A 3543B's
+(`forth_watch`, `0x19e90`) the block is `forth_watch_before`
+(`0x100b28`), D0 to D7 then A0 to A7; it calls the word on the data
+stack, saves the registers again in `forth_watch_after` (`0x100b68`),
+replaces the word with a mask of a bit for each register that changed,
+and loads D0 to A5 back from `forth_watch_before`.
 

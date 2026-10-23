@@ -483,7 +483,7 @@
 0x330ee	function	log_count	structures.md	"Log status: %-3d entries"; sets *full when more than 31	int log_count(uint8_t *full)
 0x101f8e	label	log_entry_count	structures.md	log_count returns it	int16_t
 0x12e24	function	pps_init	structures.md	"Pps_init error %#04x" prints its result
-0x137d8	function	set_timedate	structures.md	the set_time word's, "set_timedate error: %2X": enter_supervisor, then clock_record_store, marking the record set, clock_record_derive and clock_record_checksum on the record in A6, and the status register restored from the stack, which C cannot say; returns clock_record_store's D7		convention=other; confidence=read; family=clock
+0x137d8	function	set_timedate	structures.md	the set_time word's, "set_timedate error: %2X": enter_supervisor, then clock_record_store, marking the record set, clock_record_derive and clock_record_checksum on the record in A6, and the status register restored from the stack, which C cannot say; returns clock_record_store's D7		convention=other; confidence=read; in=uint32_t date, uint32_t time; out=D0 int32_t error; family=clock
 0x111cc	function	gps_seconds	structures.md	the T1 time code's #H%08X, seconds since 1980 from a date and time	int gps_seconds(uint32_t date, uint32_t time)
 0x11284	function	leap_gps_time	structures.md	:PTIM:LEAP:GPST?'s "#H%08X", from nv_settings.leap_pending and leap_minute_length	int leap_gps_time(void)
 0x136d6	function	get_clock_date	structures.md	returns clock.date; the T2 time code's date	uint32_t get_clock_date(void)
@@ -742,7 +742,7 @@
 0x1d6ba	function	drtb_puts	the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts"	writes a string to DUART channel B, waiting for room	int drtb_puts(char *param_1)
 0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B	reads a character from DUART channel B, waiting for one	uint8_t drtb_getc(void)
 0x1e18a	function	drta_send_message	the firmware's own name, "wait_v SIG_SOQA error in drta_send_message"	sends a message to the GPS engine on DUART channel A	uint8_t drta_send_message(uint8_t *message, int16_t length)
-0x1e238	function	drta_get_byte	the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine with it	reads a byte from the GPS engine on DUART channel A, waiting for one
+0x1e238	function	drta_get_byte	the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine with it	reads a byte from the GPS engine on DUART channel A, waiting for one	uint8_t drta_get_byte(char *overrun)
 0x1f76c	function	sci_puts	the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts"	writes a string to the SCI port, waiting for room	int sci_puts(char *text)
 0x1f7d0	function	sci_getc	"wait_v SIG_SIQ_SCI error in getc"	reads a character from the SCI port, waiting for one	uint8_t sci_getc(void)
 0x17a96	function	selftest_cpu	the self-test table 0x18458's entry 2; "CPU:"	the self-test of the CPU	void selftest_cpu(char_slot run)
@@ -833,7 +833,7 @@
 0x29b0e	function	scpi_prompt	"scpi > ", "E%+04d> "	makes the SCPI prompt, with the latest error when there is one
 0x31ba2	function	log_first_satellite	log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d")	logs the time the first satellite was tracked	void log_first_satellite(undefined4 param_1,undefined4 param_2)
 0x3305e	function	log_clear	"Log cleared"	clears the event log
-0x2b4c2	function	log_status	"Log status: Error", "Empty", "One entry", "%-3d entries", "Full"	prints the event log's state
+0x2b4c2	function	log_status	"Log status: Error", "Empty", "One entry", "%-3d entries", "Full"	prints the event log's state	void log_status(char *text, char reset_causes)
 0x1d7e4	function	drtb_gets	context	reads a line of up to the given length from DUART channel B; "DRTB receiver error"	int32_t drtb_gets(char *buffer, int32_t length)
 0x1f868	function	sci_gets	context	reads a line of up to the given length from the SCI; "SCI receiver error ocurred"	int sci_gets(char *param_1,int param_2)
 0x1ea10	function	duartb_transmit_interrupt	context	with channel B's queue empty, disables its transmit interrupt and signals the writer; "DUARTB isr signaling SIG_SOQ"
@@ -1149,7 +1149,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x470aa	function	gps_command_send	context	maps the pending GPS command code at 0x10256c to an Oncore command and sends it
 0x433b6	function	pll_scpi_complete	context	once the reply flag is set: clears it, reports failure, finishes the SCPI command and signals its task; otherwise counts
 0x433fc	function	gps_diag_complete	context	once the reply flag is set: clears it and signals the waiting task; otherwise counts
-0x30b66	function	lifetime_update	context	on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event
+0x30b66	function	lifetime_update	context	on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event	void lifetime_update(int32_t date)
 0x30b30	function	lifetime_event_run	lifetime_update's clock event	takes the GPS date into lifetime.date when time_valid, counts lifetime.count, takes pll.efc in normal PLL, and lifetime_record_write	void lifetime_event_run(void)
 0x30b66	local	event	read	the clock event it copies from 0x30cec and gives clk_do	klok_entry @ -0x1e
 #
@@ -1170,7 +1170,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x11606	local	date	read	the date it returns: get_gps_date's (0x11610), its month (0x11616) set to the quarter's last and its day to 30 or 31 (0x11648 to 0x11672)	calendar_date @ -0x8
 0x11680	function	leap_second_near	context	1 at 23:59:46 or later, in UTC, on the last day of a quarter
 0x13740	function	get_gps_datetime	context	gps_date and gps_time through pointers; 1 if the clock is valid	bool get_gps_datetime(uint32_t *date, time_of_day *time)
-0x137a4	function	set_timedate_unflagged	context	set_timedate's twin: sets the clock record's date and time without marking it set; assembly as set_timedate is		convention=other; confidence=read; family=clock
+0x137a4	function	set_timedate_unflagged	context	set_timedate's twin: sets the clock record's date and time without marking it set; assembly as set_timedate is		convention=other; confidence=read; in=uint32_t date, uint32_t time; out=D0 int32_t error; family=clock
 0x13428	function	busy_wait	context	spins 729 empty loops for each count
 0x1380c	function	clock_record_store	context	checks a date and time and stores them in the clock record, marking it set if D2 says so		convention=register; confidence=read; in=A6 clock_record *record, D0 int date, D1 int time, D2 int mark; family=clock
 0x13882	function	clock_record_derive	context	reads the clock record's date and time until two reads agree, converts them and stores the result at +6 and +0xa		convention=register; confidence=read; in=A6 clock_record *record; family=clock
@@ -1258,7 +1258,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x429c6	function	kenneth_predicted_get	undocumented.md, ":KENneth"	for :KENneth:PREDicted?: from startup PLL on, the float at pll +0x3a, resolution 1e-7, and whether in holdover	bool kenneth_predicted_get(float *value, int8_t *resolution, uint8_t *holdover)
 0x49b06	function	status_screen_height	context	the status screen's height line, HGT and %+9.2f m (MSL)	void status_screen_height(status_snapshot_record *snapshot, char *line)
 0x49d14	function	format_duration_short	context	a duration as minutes and seconds or hours and minutes, or 1000+ hr
-0x499f2	function	format_satellite_number	context	a satellite number as %2d, or blanks for none
+0x499f2	function	format_satellite_number	context	a satellite number as %2d, or blanks for none	void format_satellite_number(char satellite, char *text)
 0x49a3c	function	format_level	context	a level as %3d, or blanks when negative
 0x49a26	function	mark_flag	context	writes * for a set flag	bool mark_flag(char flag, char *text)
 0x12984	function	tfom_table_index	context	tfom_code's bisection of the table at 0x129fc; compares the float's bits, its sign cleared (0x12990), with the table's; the index a word (0x129c6)	int16_t tfom_table_index(uint32_t tfom)
@@ -1273,7 +1273,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x12f86	function	ps_word	console_init's word ps	os_process_report(0)	void ps_word(void)
 0x12f92	function	mem_rep_word	console_init's word mem_rep	os_memory_report(0)	void mem_rep_word(void)
 0x12f9e	function	s_rep_word	console_init's word s_rep	task_stack_report(0)	void s_rep_word(void)
-0x1ad28	function	pforth_dictionary_init	console.md	allocates the dictionary's segment through trap #3, service 8 in line with the size in D1 and its segment back in A0, which C cannot say, and clears its pointers		convention=other; confidence=read; family=pforth
+0x1ad28	function	pforth_dictionary_init	console.md	allocates the dictionary's segment through trap #3, service 8 in line with the size in D1 and its segment back in A0, which C cannot say, and clears its pointers		convention=other; confidence=read; in=int32_t size; family=pforth
 0x1ad8a	function	pforth_define_word	console.md	adds a word to the dictionary: links it, copies its name and compiles its code
 0x1c18e	function	diag_words_define	console.md	defines every diagnostic word in the table at 0x1c8ac
 0x1ae46	function	console_set_halt_hook	context	stores the routine the console calls on halt
@@ -1421,9 +1421,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x162b2	function	region_segment_containing	context	the segment of a region that holds an address	void *region_segment_containing(void *region, uint32_t address)
 0x164f2	function	timer_ticks_until	context	the ticks until a task's delay expires: the sum of the delta list's ticks up to it	int timer_ticks_until(void *task)
 0x16540	function	task_table_build	context	snapshots the kernel's tasks and their states into task_table for the reports
-0x16730	function	ready_queue_position	context	a task's place in the ready queue; -1 if it is not there
+0x16730	function	ready_queue_position	context	a task's place in the ready queue; -1 if it is not there	int32_t ready_queue_position(uint32_t *record)
 0x169fa	function	exchange_id_valid	context	1 if an exchange ID is one, by the swapped address its record holds; called by nothing
-0x16a20	function	task_id_valid	context	1 if a task ID is one, by the complemented address its record holds; called by nothing
+0x16a20	function	task_id_valid	context	1 if a task ID is one, by the complemented address its record holds; called by nothing	uint32_t task_id_valid(uint32_t id)
 0x16eb6	function	tick_account	read	counts a tick by D6: below 1 at +0x9a of the kernel's data area (through 0x51226), at 1 at +0x9e, above 1 to the running task through task_count_tick, which follows it		convention=register; confidence=read; in=D6 short mode; family=psos
 0x16ee6	function	task_count_tick	context	counts a tick to the running task, at +0xae of its record; called by nothing
 0x17628	function	ram_pattern_test	context, read	the RAM self-test's pattern pass, saving and restoring each block around 0xaaaaaaaa and its complement; called as C, but saves each 48-byte block of RAM on the stack and walks all of it, which C cannot say		convention=other; confidence=read; family=selftest
@@ -1567,10 +1567,10 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2b60e	call	print	read	an entry: log_read's or log_entry_text's header, then its text	int print(char *format, char *header, char *text)
 0x2d148	function	satellite_number_valid	context	1 for a satellite number from 1 to 32
 0x2d160	function	satellite_in_mask	context	1 if a satellite's bit is set in a mask
-0x2d17a	function	satellite_mask_add	context	sets a valid satellite's bit in a mask
+0x2d17a	function	satellite_mask_add	context	sets a valid satellite's bit in a mask	bool satellite_mask_add(char number, uint32_t *mask)
 #
 # SCPI helpers, ROBin and the early status events
-0x2d1a2	function	satellite_mask_remove	context	clears a valid satellite's bit in a mask
+0x2d1a2	function	satellite_mask_remove	context	clears a valid satellite's bit in a mask	bool satellite_mask_remove(char number, uint32_t *mask)
 0x2e0d8	function	time_zone_split	context	a time zone's minutes as signed hours and minutes (a signed char result, 1 or -1, 0x2e14a, which the caller tests with ble at 0x2e2ba)	int8_t time_zone_split(int8_t hours, int8_t minutes, int8_t *hours_out, int8_t *minutes_out)
 0x2e6c0	function	string_upper	context	a string in upper case, in place	void string_upper(char *text)
 0x2e714	function	string_trim_right	context	strips a string's trailing spaces	void string_trim_right(char **text)
@@ -1589,7 +1589,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2f64a	function	happening_buffer_clear	context	clears a buffer of status events kept before the status model is ready
 0x2f668	function	happening_buffers_clear	context	clears both buffers of early status events
 0x2f680	function	happening_replay	context	replays buffered status events through status_report or status_happening	void happening_replay(char *events, status_replay_mode mode, char first, char last)
-0x2f6dc	function	happening_flush	context	replays one of the two buffers of early status events
+0x2f6dc	function	happening_flush	context	replays one of the two buffers of early status events	void happening_flush(char *bytes)
 0x30a3e	function	lifetime_record_read	context	reads the lifetime record from EEPROM 0x400060, or sets its defaults: 1994-01-01 and the EFC at mid-scale (a char result, 0x30aac)	uint8_t lifetime_record_read(void)
 0x101d00	label	lifetime	structures.md	the lifetime record in RAM, its EFC, date and count, which lifetime_record_read loads from EEPROM 0x400060	lifetime_state
 0x101d14	label	lifetime_event	structures.md	the clock event lifetime_update schedules, clk_do's return; only written	klok_entry *
@@ -1603,7 +1603,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x202ac	function	sci_settings_done	read	the done hook of the SCI's setting descriptors (0x33ab2 on) and of its PRESet at 0x30ed4: psos_io_control(0x300, 0, 0)	void sci_settings_done(void)
 0x3145a	function	sign_extend_bits	context	sign-extends a value of so many bits to a long
 0x3161a	function	log_erase_checked	context	erases the event log under log_mutex if its count is the one given, else 0xff	int32_t log_erase_checked(int32_t count, request_source source)
-0x31662	function	log_entry_total	context	the event log's entry count, and whether it is full
+0x31662	function	log_entry_total	context	the event log's entry count, and whether it is full	int32_t log_entry_total(uint8_t *full)
 0x3202a	function	float_table_index	context	the index of a float's magnitude in the table at 0x32700, by bisection; called by nothing
 0x32104	function	clamp_double	context	clamps a double to its minimum and maximum, reporting each clamp; 1 if it clamped	uint32_t clamp_double(double *value, double *clamped, double *minimum, double *maximum, request_source source)
 0x322aa	function	load_double	context	the double at a pointer	double load_double(scpi_double_step *step, double *value, int32_t index)
@@ -1622,7 +1622,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x406c8	function	interpolator_selftest	context	the interpolator's self-test: its failure flag from the calibration
 0x406e2	function	interpolator_sample_test	context	samples the interpolator with its calibrated DACs and keeps both ends' readings; self-test 13, selftest_interpolator_sample
 0x406e2	local	calibration	read	interpolator_calibration_init's record, which interpolator_sample takes	interpolator_calibration @ -0xe
-0x407d4	function	fpga_bit_test	context	1 if bits are set in an FPGA register; called by nothing
+0x407d4	function	fpga_bit_test	context	1 if bits are set in an FPGA register; called by nothing	bool fpga_bit_test(uint8_t bits, char reg)
 0x4085e	function	fpga_address_sweep_debug	context	steps an FPGA register's address bits through 32 values, printing each; called by nothing
 0x40bda	function	counter_offset_apply	context	takes 0x555555 off the counter's 64-bit count
 0x40f98	function	counter_selftest	context	the FPGA self-test: presets the counters and fails unless the count reads zero
@@ -2031,6 +2031,42 @@ installer::0x108578	label	installer_io_table_defaults	structures.md	installer_ps
 0x19688	function	forth_parse_create_header	console.md	forth_parse_word, then falls into forth_create_header, four bytes on		convention=pforth; confidence=read; in=D3; family=pforth
 0x1a01c	function	forth_pack_name	console.md	the first four characters of the word in pad, a NUL made a space, packed into D0 for the kernel		convention=pforth; confidence=read; out=D0 int name; family=pforth
 0x19f42	function	forth_spawned_task	console.md	the code spawn starts its task at: takes its arguments from the stack, builds the interpreter's frame at A5 and jumps to the word in D2		convention=other; confidence=read; family=pforth
+#
+# the code runs the kernel's control words hand forth_compile_code, each
+# run of instructions ended by a zero and the last by an empty run; a
+# branch's offset is the resolve routines' to patch; console.md
+0x1939c	label	forth_code_do	read	do's: the limit and the index from the data stack to the return stack	uint16_t[4]
+0x193a4	label	forth_code_query_do	read	?do's, before forth_code_do: both dropped and a branch past the loop when the limit and the index are equal	uint16_t[9]
+0x193b6	label	forth_code_loop	read	loop's: the index advanced by one, and a branch back while it is below the limit; forth_code_loop_exit follows	uint16_t[10]
+0x193ca	label	forth_code_loop_exit	read	loop's and +loop's after the branch back: the index and the limit dropped from the return stack	uint16_t[3]
+0x193d0	label	forth_code_plus_loop	read	+loop's: the index advanced by the top of the data stack, and a branch back until it crosses the limit; forth_code_loop_exit follows	uint16_t[18]
+0x193f4	label	forth_code_if	read	if's: a branch forward when the top of the data stack is zero	uint16_t[5]
+0x193fe	label	forth_code_else	read	else's: a branch forward	uint16_t[4]
+0x19406	label	forth_code_while	read	while's and until's: a branch when the top of the data stack is zero	uint16_t[5]
+0x19410	label	forth_code_repeat	read	repeat's and again's: a branch back	uint16_t[4]
+0x19418	label	forth_code_illegal	read	0x4afc, illegal, after the runs; nothing reads or reaches it	uint16_t
+0x19dce	label	forth_code_does	read	does>'s: clears bit 3 of the latest word's header at +10 and makes its code a jsr to what follows, which pushes the word's data address	uint16_t[17]
+#
+# the console's diagnostic words the C calls with their arguments'
+# types, as rewritten/console.c defines them, and the cells and text of
+# kernel words; console.md
+0x1afd6	function	diag_adc_read	context	an ADC channel's raw byte; the number's low bit is the channel's bit 2, its others the channel's low bits	uint32_t diag_adc_read(uint8_t number)
+0x1b2d8	function	diag_clk_synch	context	a counter step or sync, through sync_request	void diag_clk_synch(counter_sync_kind kind, int32_t count)
+0x1b4a0	function	diag_set_time	context	sets the clock's date and time, printing set_timedate's error	void diag_set_time(uint32_t year, uint32_t month, uint32_t day, uint32_t hour, uint32_t minute, uint32_t second)
+0x100b28	label	forth_watch_before	read	watch's registers, D0 to D7 then A0 to A7, as it saves them before it calls the word on the data stack and loads D0 to A5 back from after	uint32_t[16]
+0x100b68	label	forth_watch_after	read	the same as the word leaves them, which watch compares with forth_watch_before to push a bit for each register the word changed	uint32_t[16]
+0x1a044	label	forth_ver_text	read	ver's "pSOS version ID:", which it prints before the kernel's version in hex	char[17]
+#
+# the boot code's CPU self-test constants, read by absolute and
+# PC-relative addressing
+0x766	label	boot_cpu_test_pattern	read	0xaaaaaaaa, which boot_reset compares by absolute word and long addresses	uint32_t
+0x76a	label	boot_cpu_test_inverse	read	0x55555555, which boot_reset compares by absolute long address	uint32_t
+0x840	label	boot_cpu_test_relative	read	0xaaaaaaaa, which boot_reset compares PC-relative, its whole and by an indexed byte	uint32_t
+#
+# the installer's strings right after its code's last instructions, so
+# that neither takes those instructions' bytes
+installer::0x1079c2	label	installer_scpi_task_name	read	"scpi", the name installer_scpi_task_create gives psos_ident and psos_create	char[5]
+installer::0x108138	label	installer_idn_format	read	"HEWLETT-PACKARD,%s,%s,%s-%c", installer_scpi_query_common_IDN's *IDN? response	char[28]
 #
 # the decompiled C names these tables and cells
 0x12b32	label	dither_table	context	random_dither's 128 bytes, read from both ends by the top bits of a random number	char[128]

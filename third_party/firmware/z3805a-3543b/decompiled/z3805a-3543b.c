@@ -3076,15 +3076,6 @@ typedef int16_t scpi_response_list[32];
 
 typedef char scpi_response_text[282];
 
-typedef struct scpi_root_children scpi_root_children, *Pscpi_root_children;
-
-struct scpi_root_children {
-    uint16_t id;
-    int16_t count;
-    int16_t default_child;
-    struct scpi_node *children[49];
-};
-
 typedef struct scpi_setting_param scpi_setting_param, *Pscpi_setting_param;
 
 struct scpi_setting_param {
@@ -3866,7 +3857,6 @@ _Static_assert(sizeof(scpi_port_methods) == 68, "scpi_port_methods");
 _Static_assert(sizeof(scpi_precise_double) == 12, "scpi_precise_double");
 _Static_assert(sizeof(scpi_resolution_array) == 12, "scpi_resolution_array");
 _Static_assert(sizeof(scpi_response_item) == 10, "scpi_response_item");
-_Static_assert(sizeof(scpi_root_children) == 202, "scpi_root_children");
 _Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
 _Static_assert(sizeof(scpi_step) == 8, "scpi_step");
 _Static_assert(sizeof(scpi_token) == 38, "scpi_token");
@@ -4101,6 +4091,9 @@ _Static_assert(sizeof(timecode_format) == 1, "timecode_format");
 #define SIG_SIQ     0x4000  /* "wait_v SIG_SIQ error in getc"; in: drtb_getc installer_drtb_getc drta_get_byte duarta_isr duartb_isr installer_duartb_isr */
 
 extern void *boot_vectors; /* 00000000 */
+extern uint32_t boot_cpu_test_pattern; /* 00000766 */
+extern uint32_t boot_cpu_test_inverse; /* 0000076a */
+extern uint32_t boot_cpu_test_relative; /* 00000840 */
 extern uint8_t installer_records[42861]; /* 00000bbc */
 extern void *primary_vectors; /* 00010000 */
 extern klok_entry leap_event_gps_template; /* 00010cb0 */
@@ -4126,12 +4119,24 @@ extern selftest_entry selftest_table[14]; /* 00018458 */
 extern char console_first_phrase[9]; /* 00018dbc */
 extern uint8_t forth_character_classes[128]; /* 00018de2 */
 extern char forth_base_letters[15]; /* 00019086 */
+extern uint16_t forth_code_do[4]; /* 0001939c */
+extern uint16_t forth_code_query_do[9]; /* 000193a4 */
+extern uint16_t forth_code_loop[10]; /* 000193b6 */
+extern uint16_t forth_code_loop_exit[3]; /* 000193ca */
+extern uint16_t forth_code_plus_loop[18]; /* 000193d0 */
+extern uint16_t forth_code_if[5]; /* 000193f4 */
+extern uint16_t forth_code_else[4]; /* 000193fe */
+extern uint16_t forth_code_while[5]; /* 00019406 */
+extern uint16_t forth_code_repeat[4]; /* 00019410 */
+extern uint16_t forth_code_illegal; /* 00019418 */
 extern char forth_do_tag[16]; /* 0001942d */
 extern char forth_if_tag[7]; /* 000194de */
 extern char forth_begin_tag[10]; /* 00019556 */
 extern char forth_while_tag[10]; /* 0001956a */
 extern char forth_until_tag[10]; /* 000195f6 */
 extern int32_t forth_sine_table[91]; /* 00019a2c */
+extern uint16_t forth_code_does[17]; /* 00019dce */
+extern char forth_ver_text[17]; /* 0001a044 */
 extern pforth_word_header forth_header_over; /* 0001a296 */
 extern char forth_header_over_name[6]; /* 0001a2a2 */
 extern pforth_word_header forth_header_abs; /* 0001a2a8 */
@@ -6872,6 +6877,8 @@ extern char forth_terminal_input[134]; /* 00100a04 */
 extern char forth_pad_buffer[134]; /* 00100a8a */
 extern uint32_t console_task_id; /* 00100b10 */
 extern char forth_prompt[10]; /* 00100b14 */
+extern uint32_t forth_watch_before[16]; /* 00100b28 */
+extern uint32_t forth_watch_after[16]; /* 00100b68 */
 extern char * string_device_cursor; /* 00100ba8 */
 extern pps_exchange_message pps_message; /* 00100bac */
 extern uint32_t pps_exchange; /* 00100bc4 */
@@ -7138,7 +7145,6 @@ extern uint32_t task_curv; /* 001037f8 */
 extern uint32_t gpsx_exchange; /* 001037fc */
 extern uint32_t plla_exchange; /* 00103800 */
 extern uint32_t pllc_exchange; /* 00103804 */
-extern uint32_t dmes_gpsm[9]; /* 00103808 */
 extern uint32_t dmes[9]; /* 00103808 */
 extern uint32_t idle_loops; /* 0010382c */
 extern uint8_t es_ascii; /* 00103830 */
@@ -7240,9 +7246,11 @@ extern uint32_t installer_scpi_message_end_code; /* installer::00107294 */
 extern uint32_t installer_scpi_input_end_code; /* installer::00107298 */
 extern scpi_port_methods installer_console_port_methods; /* installer::0010768c */
 extern scpi_port installer_console_port; /* installer::001076d0 */
+extern char installer_scpi_task_name[5]; /* installer::001079c2 */
 extern installer_status_register_layout installer_status_register_layouts[2]; /* installer::00107ad6 */
 extern status_condition installer_status_conditions[5]; /* installer::00107aea */
 extern char * installer_status_report_messages[5]; /* installer::00107b08 */
+extern char installer_idn_format[28]; /* installer::00108138 */
 extern duartb_settings_record installer_duartb_settings_defaults; /* installer::001081a2 */
 extern char installer_unknown_text[8]; /* installer::001082cf */
 extern char installer_serial_default_text[2]; /* installer::001082d7 */
@@ -7319,7 +7327,6 @@ extern uint8_t UNK_0001af72; /* 0001af72 */
 extern uint8_t UNK_0001af78; /* 0001af78 */
 extern uint8_t UNK_00061c0f; /* 00061c0f */
 extern uint8_t UNK_0007a120; /* 0007a120 */
-extern uint8_t UNK_00100b84; /* 00100b84 */
 extern uint8_t UNK_00103dd9; /* 00103dd9 */
 extern uint8_t UNK_00103dfc; /* 00103dfc */
 extern uint8_t UNK_00103e93; /* 00103e93 */
@@ -7333,11 +7340,9 @@ extern uint8_t UNK_00105fd4; /* 00105fd4 */
 extern uint8_t UNK_001076d8; /* 001076d8 */
 extern uint8_t UNK_001076e1; /* 001076e1 */
 extern uint8_t UNK_001076e9; /* 001076e9 */
-extern uint8_t UNK_001079bc; /* 001079bc */
 extern uint8_t UNK_001079c7; /* 001079c7 */
 extern uint8_t UNK_001079e3; /* 001079e3 */
 extern uint8_t UNK_001080b8; /* 001080b8 */
-extern uint8_t UNK_00108136; /* 00108136 */
 extern uint8_t UNK_00108154; /* 00108154 */
 extern uint8_t UNK_0010815c; /* 0010815c */
 extern uint8_t UNK_00108164; /* 00108164 */
@@ -7468,7 +7473,6 @@ __asm__(".set UNK_0001af72, 0x0001af72");
 __asm__(".set UNK_0001af78, 0x0001af78");
 __asm__(".set UNK_00061c0f, 0x00061c0f");
 __asm__(".set UNK_0007a120, 0x0007a120");
-__asm__(".set UNK_00100b84, 0x00100b84");
 __asm__(".set UNK_00103dd9, 0x00103dd9");
 __asm__(".set UNK_00103dfc, 0x00103dfc");
 __asm__(".set UNK_00103e93, 0x00103e93");
@@ -7482,11 +7486,9 @@ __asm__(".set UNK_00105fd4, 0x00105fd4");
 __asm__(".set UNK_001076d8, 0x001076d8");
 __asm__(".set UNK_001076e1, 0x001076e1");
 __asm__(".set UNK_001076e9, 0x001076e9");
-__asm__(".set UNK_001079bc, 0x001079bc");
 __asm__(".set UNK_001079c7, 0x001079c7");
 __asm__(".set UNK_001079e3, 0x001079e3");
 __asm__(".set UNK_001080b8, 0x001080b8");
-__asm__(".set UNK_00108136, 0x00108136");
 __asm__(".set UNK_00108154, 0x00108154");
 __asm__(".set UNK_0010815c, 0x0010815c");
 __asm__(".set UNK_00108164, 0x00108164");
@@ -7508,6 +7510,9 @@ __asm__(".set atexit_count, 0x00103934");
 __asm__(".set atexit_functions, 0x001038b4");
 __asm__(".set bcd_to_binary, 0x00025b7e");
 __asm__(".set binary_to_bcd, 0x00025c1e");
+__asm__(".set boot_cpu_test_inverse, 0x0000076a");
+__asm__(".set boot_cpu_test_pattern, 0x00000766");
+__asm__(".set boot_cpu_test_relative, 0x00000840");
 __asm__(".set boot_loopback_expect_next, 0x0010afb6");
 __asm__(".set boot_loopback_send_next, 0x0010afb2");
 __asm__(".set boot_selftest, 0x0010ab20");
@@ -7542,7 +7547,6 @@ __asm__(".set diag_leapsec_argument_2, 0x00102726");
 __asm__(".set diag_words, 0x0001c8ac");
 __asm__(".set dither_table, 0x00012b32");
 __asm__(".set dmes, 0x00103808");
-__asm__(".set dmes_gpsm, 0x00103808");
 __asm__(".set doprnt_hex_prefix, 0x00060890");
 __asm__(".set doprnt_minus, 0x00060868");
 __asm__(".set doprnt_plus, 0x0006086a");
@@ -7603,6 +7607,17 @@ __asm__(".set float_status, 0x001038b0");
 __asm__(".set forth_base_letters, 0x00019086");
 __asm__(".set forth_begin_tag, 0x00019556");
 __asm__(".set forth_character_classes, 0x00018de2");
+__asm__(".set forth_code_do, 0x0001939c");
+__asm__(".set forth_code_does, 0x00019dce");
+__asm__(".set forth_code_else, 0x000193fe");
+__asm__(".set forth_code_if, 0x000193f4");
+__asm__(".set forth_code_illegal, 0x00019418");
+__asm__(".set forth_code_loop, 0x000193b6");
+__asm__(".set forth_code_loop_exit, 0x000193ca");
+__asm__(".set forth_code_plus_loop, 0x000193d0");
+__asm__(".set forth_code_query_do, 0x000193a4");
+__asm__(".set forth_code_repeat, 0x00019410");
+__asm__(".set forth_code_while, 0x00019406");
 __asm__(".set forth_do_tag, 0x0001942d");
 __asm__(".set forth_header_0_equal, 0x0001a4d8");
 __asm__(".set forth_header_0_equal_name, 0x0001a4e4");
@@ -7918,6 +7933,9 @@ __asm__(".set forth_prompt, 0x00100b14");
 __asm__(".set forth_sine_table, 0x00019a2c");
 __asm__(".set forth_terminal_input, 0x00100a04");
 __asm__(".set forth_until_tag, 0x000195f6");
+__asm__(".set forth_ver_text, 0x0001a044");
+__asm__(".set forth_watch_after, 0x00100b68");
+__asm__(".set forth_watch_before, 0x00100b28");
 __asm__(".set forth_while_tag, 0x0001956a");
 __asm__(".set fpga_bit_table, 0x00041310");
 __asm__(".set fpga_bitstream, 0x00020f18");
@@ -8109,6 +8127,7 @@ __asm__(".set installer_float_exception_message, 0x0010aad2");
 __asm__(".set installer_float_status, 0x0010b038");
 __asm__(".set installer_huge_value, 0x00109158");
 __asm__(".set installer_idle_loops, 0x0010b034");
+__asm__(".set installer_idn_format, 0x00108138");
 __asm__(".set installer_idn_model, 0x0010ab3a");
 __asm__(".set installer_idn_response, 0x0010ad0a");
 __asm__(".set installer_idn_serial, 0x0010ab4c");
@@ -8152,6 +8171,7 @@ __asm__(".set installer_scpi_parameter_kind_errors, 0x00105678");
 __asm__(".set installer_scpi_port_echo_length, 0x0010abe7");
 __asm__(".set installer_scpi_prompt_text, 0x0010acf8");
 __asm__(".set installer_scpi_response_begin_code, 0x00107290");
+__asm__(".set installer_scpi_task_name, 0x001079c2");
 __asm__(".set installer_scpi_trg_keyword, 0x00105c72");
 __asm__(".set installer_serial_default_text, 0x001082d7");
 __asm__(".set installer_service_request_enable, 0x0010abef");
@@ -9312,12 +9332,6 @@ extern uint8_t LAB_installer__0010a474;
 __asm__(".set LAB_installer__0010a474, 0x0010a474");
 extern uint32_t * PTR_PTR_installer__001014c8;
 __asm__(".set PTR_PTR_installer__001014c8, 0x001014c8");
-extern uint8_t UNK_00019406;
-__asm__(".set UNK_00019406, 0x00019406");
-extern uint8_t UNK_00019410;
-__asm__(".set UNK_00019410, 0x00019410");
-extern uint8_t UNK_00019dce;
-__asm__(".set UNK_00019dce, 0x00019dce");
 extern word WORD_installer__001030d2;
 __asm__(".set WORD_installer__001030d2, 0x001030d2");
 extern word WORD_installer__00104922;
@@ -9342,28 +9356,6 @@ extern uint32_t _sci_puts;
 __asm__(".set _sci_puts, 0x0001f76c");
 extern code func_0x0010135c;
 __asm__(".set func_0x0010135c, 0x0010135c");
-extern code *pcRam00100b48;
-__asm__(".set pcRam00100b48, 0x00100b48");
-extern char * pcRam00100b54;
-__asm__(".set pcRam00100b54, 0x00100b54");
-extern char * pcRam00100b94;
-__asm__(".set pcRam00100b94, 0x00100b94");
-extern int32_t * plRam00100b60;
-__asm__(".set plRam00100b60, 0x00100b60");
-extern int32_t * plRam00100ba0;
-__asm__(".set plRam00100ba0, 0x00100ba0");
-extern uint32_t * puRam00100b5c;
-__asm__(".set puRam00100b5c, 0x00100b5c");
-extern uint32_t * puRam00100b64;
-__asm__(".set puRam00100b64, 0x00100b64");
-extern uint32_t * puRam00100b9c;
-__asm__(".set puRam00100b9c, 0x00100b9c");
-extern uint32_t * puRam00100ba4;
-__asm__(".set puRam00100ba4, 0x00100ba4");
-extern void * pvRam00100b58;
-__asm__(".set pvRam00100b58, 0x00100b58");
-extern void * pvRam00100b98;
-__asm__(".set pvRam00100b98, 0x00100b98");
 extern char s_00000000000000000000_installer__0010a9fb[];
 __asm__(".set s_00000000000000000000_installer__0010a9fb, 0x0010a9fb");
 extern char s_0123456789ABCDEF_installer__0010aa16[];
@@ -9384,8 +9376,6 @@ extern char s_E__04d__installer__001076d8[];
 __asm__(".set s_E__04d__installer__001076d8, 0x001076d8");
 extern char s_INSTALL_installer__0010815c[];
 __asm__(".set s_INSTALL_installer__0010815c, 0x0010815c");
-extern char s_NuHEWLETT_PACKARD__s__s__s__c_installer__00108136[];
-__asm__(".set s_NuHEWLETT_PACKARD__s__s__s__c_installer__00108136, 0x00108136");
 extern char s_Oooh__That_tickles__I_don_t_know_installer__00100b84[];
 __asm__(".set s_Oooh__That_tickles__I_don_t_know_installer__00100b84, 0x00100b84");
 extern char s_PRIMARY_installer__00108154[];
@@ -9396,8 +9386,6 @@ extern char s_RESET_to_recover__installer__001007bc[];
 __asm__(".set s_RESET_to_recover__installer__001007bc, 0x001007bc");
 extern char s_Spool_go_error___04x_installer__0010408d[];
 __asm__(".set s_Spool_go_error___04x_installer__0010408d, 0x0010408d");
-extern char s___N_Nuscpi_installer__001079bc[];
-__asm__(".set s___N_Nuscpi_installer__001079bc, 0x001079bc");
 extern char s___PC_____8x__SR_____04x_installer__00100793[];
 __asm__(".set s___PC_____8x__SR_____04x_installer__00100793, 0x00100793");
 extern char s____08X_installer__001040ec[];
@@ -9438,46 +9426,6 @@ extern uint32_t uRam00045554;
 __asm__(".set uRam00045554, 0x00045554");
 extern uint32_t uRam0004aaaa;
 __asm__(".set uRam0004aaaa, 0x0004aaaa");
-extern uint32_t uRam00100b28;
-__asm__(".set uRam00100b28, 0x00100b28");
-extern uint32_t uRam00100b2c;
-__asm__(".set uRam00100b2c, 0x00100b2c");
-extern uint32_t uRam00100b30;
-__asm__(".set uRam00100b30, 0x00100b30");
-extern uint32_t uRam00100b34;
-__asm__(".set uRam00100b34, 0x00100b34");
-extern uint32_t uRam00100b38;
-__asm__(".set uRam00100b38, 0x00100b38");
-extern uint32_t uRam00100b3c;
-__asm__(".set uRam00100b3c, 0x00100b3c");
-extern uint32_t uRam00100b40;
-__asm__(".set uRam00100b40, 0x00100b40");
-extern uint32_t uRam00100b44;
-__asm__(".set uRam00100b44, 0x00100b44");
-extern uint32_t uRam00100b4c;
-__asm__(".set uRam00100b4c, 0x00100b4c");
-extern uint32_t uRam00100b50;
-__asm__(".set uRam00100b50, 0x00100b50");
-extern uint32_t uRam00100b68;
-__asm__(".set uRam00100b68, 0x00100b68");
-extern uint32_t uRam00100b70;
-__asm__(".set uRam00100b70, 0x00100b70");
-extern uint32_t uRam00100b74;
-__asm__(".set uRam00100b74, 0x00100b74");
-extern uint32_t uRam00100b78;
-__asm__(".set uRam00100b78, 0x00100b78");
-extern uint32_t uRam00100b7c;
-__asm__(".set uRam00100b7c, 0x00100b7c");
-extern uint32_t uRam00100b80;
-__asm__(".set uRam00100b80, 0x00100b80");
-extern uint32_t uRam00100b84;
-__asm__(".set uRam00100b84, 0x00100b84");
-extern uint32_t uRam00100b88;
-__asm__(".set uRam00100b88, 0x00100b88");
-extern uint32_t uRam00100b8c;
-__asm__(".set uRam00100b8c, 0x00100b8c");
-extern uint32_t uRam00100b90;
-__asm__(".set uRam00100b90, 0x00100b90");
 /*
  * The decompiler's views of the stack at entry: stack0xN the bytes N
  * above the return address, so N + 4 above gcc's frame pointer.  A view
@@ -9730,11 +9678,11 @@ int32_t task_table_build(void);
 void os_report_process_summary(printf_function *print);
 void os_report_exchanges(printf_function *print);
 void os_report_exchange_summary(printf_function *print);
-int32_t ready_queue_position(uint32_t *param_1);
+int32_t ready_queue_position(uint32_t *record);
 int32_t os_report_processes(printf_function *print);
 void os_report_regions(printf_function *print);
 uint32_t exchange_id_valid(uint32_t param_1);
-uint32_t task_id_valid(uint32_t param_1);
+uint32_t task_id_valid(uint32_t id);
 void os_process_report(request_source source);
 void os_memory_report(request_source source);
 void task_stack_info(void *task,uint32_t *user_top,uint32_t *user_pointer,uint32_t *user_size,
@@ -10026,7 +9974,7 @@ void console_set_device(int32_t device);
 int32_t console_task_create();
 int32_t console_task();
 int32_t console_read_from_string();
-uint32_t diag_adc_read(uint8_t param_1);
+uint32_t diag_adc_read(uint8_t number);
 void diag_adc_temp(void);
 void diag_adc_5v(void);
 void diag_adc_p15v(void);
@@ -10040,14 +9988,14 @@ void diag_efc_write(uint32_t param_1);
 void diag_hdac_write(uint32_t param_1,uint32_t param_2);
 void diag_hdac_all(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
                   uint32_t param_5,uint32_t param_6);
-void diag_clk_synch(counter_sync_kind param_1,int32_t param_2);
+void diag_clk_synch(counter_sync_kind kind,int32_t count);
 void diag_sync_imm(void);
 void diag_loop_time(int32_t param_1);
 void diag_pll_rep(void);
 void diag_efc_rep(void);
 void diag_get_time(void);
-void diag_set_time(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
-                  uint32_t param_5,uint32_t param_6);
+void diag_set_time(uint32_t year,uint32_t month,uint32_t day,uint32_t hour,uint32_t minute,
+                  uint32_t second);
 void diag_print_stat(void);
 void diag_print_vis(void);
 void diag_pr_avg(void);
@@ -10150,7 +10098,7 @@ uint8_t duart_input_2_debounced(void);
 void duart_output_bits(board_led reset,board_led set);
 uint8_t drta_send_message(uint8_t *message,int16_t length);
 bool duarta_rx_pending(void);
-uint8_t drta_get_byte(char *param_1);
+uint8_t drta_get_byte(char *overrun);
 void duart_loopback_test_a(void);
 void duart_loopback_test_b(void);
 void duart_counter_test(void);
@@ -10483,7 +10431,7 @@ int32_t scpi_query_DIAGnostic_LIFetime_COUNt(void *parameters,void *response,scp
 int32_t scpi_set_DIAGnostic_LOG_CLEar(void *parameters,void *response,scpi_call *call);
 int32_t scpi_set_DIAGnostic_SLOG_CLEar(void *parameters,void *response,scpi_call *call);
 int32_t scpi_query_DIAGnostic_LOG_COUNt(void *parameters,void *response,scpi_call *call);
-void log_status(char *param_1,char param_2);
+void log_status(char *text,char reset_causes);
 void log_print(char param_1,write_function *write,printf_function *print);
 int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,scpi_call *call);
 int32_t scpi_query_DIAGnostic_LOG_READ_ALL(void *parameters,void *response,scpi_call *call);
@@ -10557,8 +10505,8 @@ int32_t scpi_query_DOUGlas_STATe_POWerup(void *parameters,void *response,scpi_ca
 int32_t scpi_query_SOURce_GPSystem_REFerence_VALid(void *parameters,void *response,scpi_call *call);
 uint32_t satellite_number_valid(uint8_t param_1);
 bool satellite_in_mask(char param_1,uint32_t param_2);
-bool satellite_mask_add(char param_1,uint32_t *param_2);
-bool satellite_mask_remove(char param_1,uint32_t *param_2);
+bool satellite_mask_add(char number,uint32_t *mask);
+bool satellite_mask_remove(char number,uint32_t *mask);
 void satellite_list_limits
                (satellite_list kind,uint8_t *id_count,uint8_t *max_listed,uint8_t *id_base);
 uint8_t satellites_in_mask(uint32_t param_1,uint8_t param_2,int16_t *param_3,uint8_t param_4,uint8_t param_5);
@@ -10690,7 +10638,7 @@ uint16_t status_hardware_condition(void);
 void happening_buffer_clear(uint8_t *param_1);
 void happening_buffers_clear(void);
 void happening_replay(char *events,status_replay_mode mode,char first,char last);
-void happening_flush(char *param_1);
+void happening_flush(char *bytes);
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation(void *parameters,void *response,scpi_call *call);
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold
               (void *parameters,void *response,scpi_call *call);
@@ -10776,7 +10724,7 @@ void douglas_duration_changed(void);
 uint8_t lifetime_record_read(void);
 uint32_t lifetime_record_write(void);
 void lifetime_event_run(void);
-void lifetime_update(int32_t param_1);
+void lifetime_update(int32_t date);
 bool calibration_block_read(void);
 uint32_t save_calibration_block(int32_t index,int32_t source);
 uint8_t parameter_record_read(void);
@@ -10797,7 +10745,7 @@ uint32_t sign_extend_bits(uint32_t param_1,uint8_t param_2);
 char log_erase(request_source source);
 int32_t log_erase_locked(request_source source);
 int32_t log_erase_checked(int32_t count,request_source source);
-int32_t log_entry_total(uint8_t *param_1);
+int32_t log_entry_total(uint8_t *full);
 int32_t log_init(void);
 int32_t log_read(int32_t number,char *text,char *heading);
 int32_t log_write(char *format,...);
@@ -10876,7 +10824,7 @@ void interpolator_selftest(void);
 void interpolator_sample_test(void);
 void fpga_write(uint8_t reg,uint8_t value);
 uint8_t fpga_read(uint8_t reg);
-bool fpga_bit_test(uint8_t param_1,char param_2);
+bool fpga_bit_test(uint8_t bits,char reg);
 char fpga_read_seconds(void);
 void fpga_address_sweep_debug(void);
 uint8_t counter_wait_ready(uint8_t mask);
@@ -11041,7 +10989,7 @@ int32_t satellite_compare(void *first,void *second);
 void satellite_status_list
                (uint8_t tracked,uint8_t entries,satellite_sets *sets,oncore_channel_status *channels
                ,gps_visibility_record *visibility,satellite_list_entry *list,uint8_t *count);
-void format_satellite_number(char param_1,char *param_2);
+void format_satellite_number(char satellite,char *text);
 bool mark_flag(char flag,char *text);
 void format_level(int16_t param_1,char *param_2);
 void format_satellite_cell(satellite_cell cell,char *text);
@@ -12063,8 +12011,7 @@ __asm__(
 	".Lg_766:\n"
 	"	.byte 0xaa,0xaa,0xaa,0xaa\n"
 	".Lg_76a:\n"
-	"	.byte 0x55,0x55 | subq.w #0x2,(A5)\n"
-	"	.byte 0x55,0x55 | subq.w #0x2,(A5)\n"
+	"	.byte 0x55,0x55,0x55,0x55\n"
 	".Lg_76e:\n"
 	"	clr.w (__ghidra_10ab22).l\n"
 	"	move.b #0x55,%d0\n"
@@ -16982,12 +16929,12 @@ void clock_record_refresh(void)
 /* 000137a4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: Unknown calling convention -- yet parameter storage is locked */
 /* set_timedate's twin: sets the clock record's date and time without marking it set; assembly as
    set_timedate is
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
-   called. */
+   called.  In: uint32_t date, uint32_t time.  Out: D0 int32_t error. */
 
+/* out D0 int32_t error */
 __naked int32_t set_timedate_unflagged(uint32_t date,uint32_t time)
 
 {
@@ -17030,14 +16977,14 @@ __asm__(
 /* 000137d8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: Unknown calling convention -- yet parameter storage is locked */
 /* the set_time word's, "set_timedate error: %2X": enter_supervisor, then clock_record_store,
    marking the record set, clock_record_derive and clock_record_checksum on the record in A6, and
    the status register restored from the stack, which C cannot say; returns clock_record_store's D7
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
-   called.
+   called.  In: uint32_t date, uint32_t time.  Out: D0 int32_t error.
    structures.md */
 
+/* out D0 int32_t error */
 __naked int32_t set_timedate(uint32_t date,uint32_t time)
 
 {
@@ -24790,6 +24737,7 @@ __naked void kernel_halt(void)
 
 {
   do {
+                    /* stop: halts here; the loop stands for not continuing */
     stop();
   } while( true );
 }
@@ -25710,7 +25658,7 @@ void os_report_exchange_summary(printf_function *print)
 
 /* a task's place in the ready queue; -1 if it is not there */
 
-int32_t ready_queue_position(uint32_t *param_1)
+int32_t ready_queue_position(uint32_t *record)
 
 {
   int32_t iVar1;
@@ -25718,7 +25666,7 @@ int32_t ready_queue_position(uint32_t *param_1)
   
   iVar1 = 0;
   for (ppVar2 = (psos_config.data_area)->ready;
-      (ppVar2 != (psos_task *)0x0 && (ppVar2 != (psos_task *)param_1)); ppVar2 = ppVar2->next) {
+      (ppVar2 != (psos_task *)0x0 && (ppVar2 != (psos_task *)record)); ppVar2 = ppVar2->next) {
     iVar1 = iVar1 + 1;
   }
   if (ppVar2 == (psos_task *)0x0) {
@@ -25738,45 +25686,46 @@ int32_t ready_queue_position(uint32_t *param_1)
 int32_t os_report_processes(printf_function *print)
 
 {
-  psos_task *task;
-  bool bVar1;
-  int32_t iVar2;
-  uint32_t uVar3;
+  psos_task *record;
+  int32_t iVar1;
+  bool bVar2;
+  int32_t position;
+  uint32_t uVar4;
   char *status;
-  int32_t iVar5;
   int32_t iVar6;
+  int32_t iVar7;
   printf_function *print_00;
   
   (*print)("%s","    pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CPU\r\n");
   os_report_process(task_table[0].task," RUN",0,(uint32_t)(task_table[0].task)->slice_ticks,print);
   (*print)("%s","\r\n");
-  iVar5 = 0;
+  iVar6 = 0;
   do {
-    bVar1 = false;
-    for (iVar6 = 1; iVar6 < task_count; iVar6 = iVar6 + 1) {
-      if ((char)task_table[iVar6].state == iVar5) {
-        task = task_table[iVar6].task;
-        iVar2 = ready_queue_position(&task->next);
-        if (iVar5 == 1) {
-          uVar3 = timer_ticks_until(task);
+    bVar2 = false;
+    for (iVar7 = 1; iVar7 < task_count; iVar7 = iVar7 + 1) {
+      if ((char)task_table[iVar7].state == iVar6) {
+        record = task_table[iVar7].task;
+        position = ready_queue_position((uint32_t *)record);
+        if (iVar6 == 1) {
+          uVar4 = timer_ticks_until(record);
         }
         else {
-          uVar3 = (uint32_t)task->slice_ticks;
+          uVar4 = (uint32_t)record->slice_ticks;
         }
         print_00 = print;
-        status = task_status_name(task);
-        os_report_process(task,status,iVar2,uVar3,print_00);
-        bVar1 = true;
+        status = task_status_name(record);
+        os_report_process(record,status,position,uVar4,print_00);
+        bVar2 = true;
       }
     }
-    if (bVar1) {
+    if (bVar2) {
       (*print)("%s","\r\n");
     }
-    iVar6 = iVar5 + 1;
-    iVar2 = iVar5 + -1;
-    iVar5 = iVar6;
-  } while (iVar2 == 0 || iVar6 < 2);
-  return iVar2;
+    iVar7 = iVar6 + 1;
+    iVar1 = iVar6 + -1;
+    iVar6 = iVar7;
+  } while (iVar1 == 0 || iVar7 < 2);
+  return iVar1;
 }
 
 #endif
@@ -25902,13 +25851,13 @@ uint32_t exchange_id_valid(uint32_t param_1)
 
 /* 1 if a task ID is one, by the complemented address its record holds; called by nothing */
 
-uint32_t task_id_valid(uint32_t param_1)
+uint32_t task_id_valid(uint32_t id)
 
 {
   uint32_t uVar1;
   
-  if (((param_1 < psos_config.data_area) || (psos_config.data_end < param_1)) ||
-     ((*(uint32_t *)(param_1 + 0x28) ^ 0xffff) != param_1)) {
+  if (((id < psos_config.data_area) || (psos_config.data_end < id)) ||
+     ((*(uint32_t *)(id + 0x28) ^ 0xffff) != id)) {
     uVar1 = 0;
   }
   else {
@@ -31898,68 +31847,16 @@ __asm__(
 	"	movea.l (-0x16,%a5),%a0\n"
 	"	move.l (%a0),(-0x16,%a5)\n"
 	"	rts\n"
-	"	.byte 0x2f,0x1e | move.l (A6)+,-(SP)\n"
-	"	.byte 0x2f,0x1e | move.l (A6)+,-(SP)\n"
-	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
-	"	.byte 0x20,0x16 | move.l (A6),D0\n"
-	"	.byte 0xb0,0xae,0x00,0x04 | cmp.l (0x4,A6),D0\n"
-	"	bne.b .Lg_193b2\n"
-	"	.byte 0x50,0x8e | addq.l #0x8,A6\n"
-	"	bra.w .Lg_19418\n"
-	".Lg_193b2:\n"
-	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
-	"	.byte 0x20,0x2f,0x00,0x04 | move.l (0x4,SP),D0\n"
-	"	.byte 0x52,0x80 | addq.l #0x1,D0\n"
-	"	.byte 0x2f,0x40,0x00,0x04 | move.l D0,(0x4,SP)\n"
-	"	.byte 0xb0,0x97 | cmp.l (SP),D0\n"
-	"	blt.w .Lg_19418\n"
-	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
-	"	.byte 0x50,0x8f | addq.l #0x8,SP\n"
-	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
-	"	.byte 0x22,0x1e | move.l (A6)+,D1\n"
-	"	.byte 0x20,0x2f,0x00,0x04 | move.l (0x4,SP),D0\n"
-	"	.byte 0xd0,0x81 | add.l D1,D0\n"
-	"	.byte 0x2f,0x40,0x00,0x04 | move.l D0,(0x4,SP)\n"
-	"	.byte 0x4a,0x81 | tst.l D1\n"
-	"	bmi.w .Lg_193e8\n"
-	"	.byte 0xb0,0x97 | cmp.l (SP),D0\n"
-	"	bge.b .Lg_193f0\n"
-	"	bra.b .Lg_193ec\n"
-	".Lg_193e8:\n"
-	"	.byte 0xb0,0x97 | cmp.l (SP),D0\n"
-	"	blt.b .Lg_193f0\n"
-	".Lg_193ec:\n"
-	"	bra.w .Lg_19418\n"
-	".Lg_193f0:\n"
-	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
-	"	.byte 0x4a,0x9e | tst.l (A6)+\n"
-	"	beq.w .Lg_19418\n"
-	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
-	"	bra.w .Lg_19418\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x4a\n"
-	"	.byte 0x9e\n"
-	"	.byte 0x67\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x0e\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x60\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x06\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	".Lg_19418:\n"
-	"	.byte 0x4a,0xfc | illegal\n"
+	"	.byte 0x2f,0x1e,0x2f,0x1e,0x00,0x00,0x00,0x00\n"
+	"	.byte 0x20,0x16,0xb0,0xae,0x00,0x04,0x66,0x06,0x50,0x8e,0x60,0x00,0x00,0x68,0x00,0x00,0x00,0x00\n"
+	"	.byte 0x20,0x2f,0x00,0x04,0x52,0x80,0x2f,0x40,0x00,0x04,0xb0,0x97,0x6d,0x00,0x00,0x54,0x00,0x00,0x00,0x00\n"
+	"	.byte 0x50,0x8f,0x00,0x00,0x00,0x00\n"
+	"	.byte 0x22,0x1e,0x20,0x2f,0x00,0x04,0xd0,0x81,0x2f,0x40,0x00,0x04,0x4a,0x81,0x6b,0x00,0x00,0x08,0xb0,0x97,0x6c,0x0a,0x60,0x04,0xb0,0x97,0x6d,0x04,0x60,0x00,0x00,0x2a,0x00,0x00,0x00,0x00\n"
+	"	.byte 0x4a,0x9e,0x67,0x00,0x00,0x20,0x00,0x00,0x00,0x00\n"
+	"	.byte 0x60,0x00,0x00,0x18,0x00,0x00,0x00,0x00\n"
+	"	.byte 0x4a,0x9e,0x67,0x00,0x00,0x0e,0x00,0x00,0x00,0x00\n"
+	"	.byte 0x60,0x00,0x00,0x06,0x00,0x00,0x00,0x00\n"
+	"	.byte 0x4a,0xfc\n"
 	"	.byte 0x45,0x52,0x52,0x4f,0x52,0x3a,0x20,0x4d,0x69,0x73,0x6d,0x61,0x74,0x63,0x68,0x65,0x64,0x20,0x00\n"
 	"	.byte 0x22,0x64,0x6f,0x22,0x20,0x6f,0x72,0x20,0x22,0x3f,0x64,0x6f,0x22,0x0d,0x0a,0x00\n"
 	"	.byte 0xff\n"
@@ -31980,7 +31877,7 @@ __pforth void forth_do(int32_t *sp,void *dp)
 {
   void *pvVar1;
   
-  pvVar1 = forth_compile_code((uint16_t *)0x1939c,dp);
+  pvVar1 = forth_compile_code(forth_code_do,dp);
   sp[-1] = (int32_t)pvVar1;
   sp[-2] = (int32_t)pvVar1;
   sp[-3] = (int32_t)"\"do\" or \"?do\"\r\n";
@@ -32017,9 +31914,9 @@ __pforth void forth_query_do(int32_t *sp,void *dp)
 {
   void *pvVar1;
   
-  pvVar1 = forth_compile_code((uint16_t *)0x193a4,dp);
+  pvVar1 = forth_compile_code(forth_code_query_do,dp);
   sp[-1] = (int32_t)pvVar1;
-  pvVar1 = forth_compile_code((uint16_t *)0x1939c,pvVar1);
+  pvVar1 = forth_compile_code(forth_code_do,pvVar1);
   sp[-2] = (int32_t)pvVar1;
   sp[-3] = (int32_t)"\"do\" or \"?do\"\r\n";
   return;
@@ -32065,10 +31962,10 @@ __pforth void forth_plus_loop(void)
   uint8_t uVar2;
   
   forth_check_pairs(unaff_A6);
-  pvVar1 = forth_compile_code((uint16_t *)0x193d0,unaff_A4);
+  pvVar1 = forth_compile_code(forth_code_plus_loop,unaff_A4);
   uVar2 = *unaff_A6 == unaff_A6[1];
   forth_resolve_branch(unaff_A6,pvVar1);
-  pvVar1 = forth_compile_code((uint16_t *)0x193ca,pvVar1);
+  pvVar1 = forth_compile_code(forth_code_loop_exit,pvVar1);
   if (!(bool)uVar2) {
     forth_resolve_forward(unaff_A6,pvVar1);
     return;
@@ -32111,10 +32008,10 @@ __pforth void forth_loop(int32_t *sp)
   uint8_t uVar2;
   
   forth_check_pairs(sp);
-  pvVar1 = forth_compile_code((uint16_t *)0x193b6,unaff_A4);
+  pvVar1 = forth_compile_code(forth_code_loop,unaff_A4);
   uVar2 = *sp == sp[1];
   forth_resolve_branch(sp,pvVar1);
-  pvVar1 = forth_compile_code((uint16_t *)0x193ca,pvVar1);
+  pvVar1 = forth_compile_code(forth_code_loop_exit,pvVar1);
   if (!(bool)uVar2) {
     forth_resolve_forward(sp,pvVar1);
     return;
@@ -32164,7 +32061,7 @@ __pforth void forth_if(int32_t *sp,void *dp)
 {
   void *pvVar1;
   
-  pvVar1 = forth_compile_code((uint16_t *)0x193f4,dp);
+  pvVar1 = forth_compile_code(forth_code_if,dp);
   sp[-1] = (int32_t)pvVar1;
   sp[-2] = (int32_t)"\"if\"\r\n";
   return;
@@ -32210,7 +32107,7 @@ __pforth void forth_else(int32_t *sp,void *dp)
   void *dp_00;
   
   forth_check_pairs(sp);
-  dp_00 = forth_compile_code((uint16_t *)0x193fe,dp);
+  dp_00 = forth_compile_code(forth_code_else,dp);
   forth_resolve_forward(sp,dp_00);
   sp[-1] = (int32_t)dp_00;
   sp[-2] = (int32_t)"\"if\"\r\n";
@@ -32318,7 +32215,7 @@ __pforth void forth_while(int32_t *sp,void *dp)
   void *pvVar1;
   
   forth_check_pairs(sp);
-  pvVar1 = forth_compile_code((uint16_t *)&UNK_00019406,dp);
+  pvVar1 = forth_compile_code(forth_code_while,dp);
   sp[-1] = (int32_t)pvVar1;
   sp[-2] = (int32_t)"\"while\"\r\n";
   return;
@@ -32373,7 +32270,7 @@ __pforth void forth_repeat(void)
   int32_t *unaff_A6 = (int32_t *)*(void **)__builtin_frame_address(0);
   
   forth_check_pairs(unaff_A6);
-  dp = forth_compile_code((uint16_t *)&UNK_00019410,unaff_A4);
+  dp = forth_compile_code(forth_code_repeat,unaff_A4);
   forth_swap(unaff_A6);
   forth_resolve_branch(unaff_A6,dp);
   forth_resolve_forward(unaff_A6,dp);
@@ -32426,7 +32323,7 @@ __pforth void forth_again(void)
   int32_t *unaff_A6 = (int32_t *)*(void **)__builtin_frame_address(0);
   
   forth_check_pairs(unaff_A6);
-  dp = forth_compile_code((uint16_t *)&UNK_00019410,unaff_A4);
+  dp = forth_compile_code(forth_code_repeat,unaff_A4);
   forth_resolve_branch(unaff_A6,dp);
   return;
 }
@@ -32466,7 +32363,7 @@ __pforth void forth_until(void)
   int32_t *unaff_A6 = (int32_t *)*(void **)__builtin_frame_address(0);
   
   forth_check_pairs(unaff_A6);
-  dp = forth_compile_code((uint16_t *)&UNK_00019406,unaff_A4);
+  dp = forth_compile_code(forth_code_while,unaff_A4);
   forth_resolve_branch(unaff_A6,dp);
   return;
 }
@@ -35287,10 +35184,10 @@ __asm__(
 __pforth void forth_query_caret_C(void)
 
 {
-  int32_t unaff_A6 = (int32_t)*(void **)__builtin_frame_address(0);
+  int32_t *unaff_A6 = (int32_t *)*(void **)__builtin_frame_address(0);
   
   __m68k_trap(3);
-  *(uint32_t *)(unaff_A6 + -4) = 0;
+  forth_false(unaff_A6);
   return;
 }
 
@@ -35356,40 +35253,7 @@ __asm__(
 	"	.size forth_expect, .-forth_expect\n"
 	"	.popsection\n"
 	"	.pushsection .text.forth_expect.19dce,\"ax\",@progbits\n"
-	"	.byte 0x20\n"
-	"	.byte 0x6d\n"
-	"	.byte 0xff\n"
-	"	.byte 0xea\n"
-	"	.byte 0x02\n"
-	"	.byte 0x68\n"
-	"	.byte 0xff\n"
-	"	.byte 0xf7\n"
-	"	.byte 0x00\n"
-	"	.byte 0x0a\n"
-	"	.byte 0x20\n"
-	"	.byte 0x68\n"
-	"	.byte 0x00\n"
-	"	.byte 0x04\n"
-	"	.byte 0x30\n"
-	"	.byte 0xfc\n"
-	"	.byte 0x4e\n"
-	"	.byte 0xb9\n"
-	"	.byte 0x43\n"
-	"	.byte 0xfa\n"
-	"	.byte 0x00\n"
-	"	.byte 0x06\n"
-	"	.byte 0x20\n"
-	"	.byte 0x89\n"
-	"	.byte 0x4e\n"
-	"	.byte 0x75\n"
-	"	.byte 0x2d\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x54\n"
-	"	.byte 0x96\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
+	"	.byte 0x20,0x6d,0xff,0xea,0x02,0x68,0xff,0xf7,0x00,0x0a,0x20,0x68,0x00,0x04,0x30,0xfc,0x4e,0xb9,0x43,0xfa,0x00,0x06,0x20,0x89,0x4e,0x75,0x2d,0x1f,0x54,0x96,0x00,0x00,0x00,0x00\n"
 	"	.popsection\n"
 	"	.pushsection .text.forth_expect.19edc,\"ax\",@progbits\n"
 	"	.byte 0x70\n"
@@ -35606,40 +35470,7 @@ __asm__(
 	"forth_pad:\n"
 	"	move.l (-0x22,%a5),-(%a6)\n"
 	"	rts\n"
-	"	.byte 0x20\n"
-	"	.byte 0x6d\n"
-	"	.byte 0xff\n"
-	"	.byte 0xea\n"
-	"	.byte 0x02\n"
-	"	.byte 0x68\n"
-	"	.byte 0xff\n"
-	"	.byte 0xf7\n"
-	"	.byte 0x00\n"
-	"	.byte 0x0a\n"
-	"	.byte 0x20\n"
-	"	.byte 0x68\n"
-	"	.byte 0x00\n"
-	"	.byte 0x04\n"
-	"	.byte 0x30\n"
-	"	.byte 0xfc\n"
-	"	.byte 0x4e\n"
-	"	.byte 0xb9\n"
-	"	.byte 0x43\n"
-	"	.byte 0xfa\n"
-	"	.byte 0x00\n"
-	"	.byte 0x06\n"
-	"	.byte 0x20\n"
-	"	.byte 0x89\n"
-	"	.byte 0x4e\n"
-	"	.byte 0x75\n"
-	"	.byte 0x2d\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x54\n"
-	"	.byte 0x96\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
+	"	.byte 0x20,0x6d,0xff,0xea,0x02,0x68,0xff,0xf7,0x00,0x0a,0x20,0x68,0x00,0x04,0x30,0xfc,0x4e,0xb9,0x43,0xfa,0x00,0x06,0x20,0x89,0x4e,0x75,0x2d,0x1f,0x54,0x96,0x00,0x00,0x00,0x00\n"
 	"	.size forth_pad, .-forth_pad\n"
 	"	.popsection\n"
 );
@@ -35657,7 +35488,7 @@ __pforth void forth_does_greater(void)
 {
   void *unaff_A4 = ({ register int32_t __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   
-  forth_compile_code((uint16_t *)&UNK_00019dce,unaff_A4);
+  forth_compile_code(forth_code_does,unaff_A4);
   return;
 }
 
@@ -35993,8 +35824,8 @@ __pforth uint64_t forth_watch(forth_user_end user,int32_t *sp,void *dp,char *inp
 
 {
   uint16_t uVar1;
-  int32_t iVar2;
-  int32_t iVar3;
+  uint32_t uVar2;
+  uint32_t uVar3;
   uint32_t in_D0;
   uint32_t uVar4;
   uint32_t in_D1;
@@ -36006,60 +35837,60 @@ __pforth uint64_t forth_watch(forth_user_end user,int32_t *sp,void *dp,char *inp
   uint32_t unaff_D6 = ({ register int32_t __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   uint32_t unaff_D7 = ({ register int32_t __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   uint32_t extraout_A0;
-  int32_t *piVar6;
+  uint32_t *puVar6;
   uint32_t in_A1;
   uint32_t extraout_A1;
-  int32_t *piVar7;
+  uint32_t *puVar7;
   uint32_t unaff_A2 = ({ register int32_t __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   
-  pcRam00100b48 = *(code **)*sp;
-  uRam00100b28 = in_D0;
-  uRam00100b2c = in_D1;
-  uRam00100b30 = unaff_D2;
-  uRam00100b34 = unaff_D3;
-  uRam00100b38 = unaff_D4;
-  uRam00100b3c = unaff_D5;
-  uRam00100b40 = unaff_D6;
-  uRam00100b44 = unaff_D7;
-  uRam00100b4c = in_A1;
-  uRam00100b50 = unaff_A2;
-  pcRam00100b54 = input;
-  pvRam00100b58 = dp;
-  puRam00100b5c = user;
-  plRam00100b60 = sp + 1;
-  puRam00100b64 = (uint8_t *)register0x0000003c;
-  uRam00100b68 = (*pcRam00100b48)();
+  forth_watch_before[8] = *(uint32_t *)*sp;
+  forth_watch_before[0] = in_D0;
+  forth_watch_before[1] = in_D1;
+  forth_watch_before[2] = unaff_D2;
+  forth_watch_before[3] = unaff_D3;
+  forth_watch_before[4] = unaff_D4;
+  forth_watch_before[5] = unaff_D5;
+  forth_watch_before[6] = unaff_D6;
+  forth_watch_before[7] = unaff_D7;
+  forth_watch_before[9] = in_A1;
+  forth_watch_before[10] = unaff_A2;
+  forth_watch_before[0xb] = (uint32_t)input;
+  forth_watch_before[0xc] = (uint32_t)dp;
+  forth_watch_before[0xd] = (uint32_t)user;
+  forth_watch_before[0xe] = (uint32_t)(sp + 1);
+  forth_watch_before[0xf] = (uint32_t)register0x0000003c;
+  __ghidra_piece(uint64_t, forth_watch_after, 0) = (*(code *)forth_watch_before[8])();
   uVar4 = 0;
   uVar5 = 0;
-  piVar6 = (int32_t *)0x100b28;
-  piVar7 = (int32_t *)0x100b68;
+  puVar6 = forth_watch_before;
+  puVar7 = forth_watch_after;
   do {
-    iVar2 = *piVar6;
-    piVar6 = piVar6 + 1;
-    iVar3 = *piVar7;
-    piVar7 = piVar7 + 1;
-    if (iVar3 != iVar2) {
+    uVar2 = *puVar6;
+    puVar6 = puVar6 + 1;
+    uVar3 = *puVar7;
+    puVar7 = puVar7 + 1;
+    if (uVar3 != uVar2) {
       uVar4 = uVar4 | 1 << (uVar5 & 0x1f);
     }
     uVar1 = (int16_t)uVar5 + 1;
     uVar5 = (uint32_t)uVar1;
   } while ((int16_t)uVar1 < 0x10);
-  uRam00100b70 = unaff_D2;
-  uRam00100b74 = unaff_D3;
-  uRam00100b78 = unaff_D4;
-  uRam00100b7c = unaff_D5;
-  uRam00100b80 = unaff_D6;
-  uRam00100b84 = unaff_D7;
-  uRam00100b88 = extraout_A0;
-  uRam00100b8c = extraout_A1;
-  uRam00100b90 = unaff_A2;
-  pcRam00100b94 = input;
-  pvRam00100b98 = dp;
-  puRam00100b9c = user;
-  plRam00100ba0 = sp + 1;
-  puRam00100ba4 = (uint8_t *)register0x0000003c;
+  forth_watch_after[2] = unaff_D2;
+  forth_watch_after[3] = unaff_D3;
+  forth_watch_after[4] = unaff_D4;
+  forth_watch_after[5] = unaff_D5;
+  forth_watch_after[6] = unaff_D6;
+  forth_watch_after[7] = unaff_D7;
+  forth_watch_after[8] = extraout_A0;
+  forth_watch_after[9] = extraout_A1;
+  forth_watch_after[10] = unaff_A2;
+  forth_watch_after[0xb] = (uint32_t)input;
+  forth_watch_after[0xc] = (uint32_t)dp;
+  forth_watch_after[0xd] = (uint32_t)user;
+  forth_watch_after[0xe] = (uint32_t)(sp + 1);
+  forth_watch_after[0xf] = (uint32_t)register0x0000003c;
   *sp = uVar4;
-  return CONCAT44(uRam00100b28,uRam00100b2c);
+  return CONCAT44(forth_watch_before[0],forth_watch_before[1]);
 }
 
 
@@ -36433,11 +36264,8 @@ __asm__(
 	"	move.b #0x20,%d0\n"
 	".Lg_1a042:\n"
 	"	rts\n"
-	"	.byte 0x70,0x53 | moveq 0x53,D0\n"
-	"	.byte 0x4f\n"
-	"	.byte 0x53\n"
-	"	.byte 0x20,0x76,0x65,0x72,0x73,0x69,0x6f,0x6e,0x20,0x49 | movea.l ([0x73696f6e,A6],0x2049),A0\n"
-	"	.byte 0x44,0x3a,0x00,0xff | neg.b (0xff,PC)\n"
+	"	.byte 0x70,0x53,0x4f,0x53,0x20,0x76,0x65,0x72,0x73,0x69,0x6f,0x6e,0x20,0x49,0x44,0x3a,0x00\n"
+	"	.byte 0xff\n"
 	"	.size forth_space_if_zero, .-forth_space_if_zero\n"
 	"	.popsection\n"
 );
@@ -37421,7 +37249,7 @@ __asm__(
 /* allocates the dictionary's segment through trap #3, service 8 in line with the size in D1 and its
    segment back in A0, which C cannot say, and clears its pointers
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
-   called.
+   called.  In: int32_t size.
    console.md */
 
 __naked void pforth_dictionary_init(int32_t size)
@@ -37983,19 +37811,20 @@ __asm__(
 /* 0001afd6 */
 #if 0 /* the decompiler's reading; rewritten in console.c */
 
-/* the pForth diagnostic word adc_read */
+/* an ADC channel's raw byte; the number's low bit is the channel's bit 2, its others the channel's
+   low bits */
 
-uint32_t diag_adc_read(uint8_t param_1)
+uint32_t diag_adc_read(uint8_t number)
 
 {
   uint32_t reading;
   adc_channel channel;
   
-  if ((param_1 & 1) == 0) {
-    channel = param_1 >> 1;
+  if ((number & 1) == 0) {
+    channel = number >> 1;
   }
   else {
-    channel = (adc_channel)((int32_t)(uint32_t)param_1 >> 1) | ADC_5V;
+    channel = (adc_channel)((int32_t)(uint32_t)number >> 1) | ADC_5V;
   }
   reading = adc_read(channel);
   return reading & 0xff;
@@ -38264,12 +38093,12 @@ void diag_hdac_all(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t p
 /* 0001b2d8 */
 #if 0 /* the decompiler's reading; rewritten in console.c */
 
-/* the pForth diagnostic word clk_synch */
+/* a counter step or sync, through sync_request */
 
-void diag_clk_synch(counter_sync_kind param_1,int32_t param_2)
+void diag_clk_synch(counter_sync_kind kind,int32_t count)
 
 {
-  sync_request(param_1,param_2);
+  sync_request(kind,count);
   return;
 }
 
@@ -38386,19 +38215,17 @@ void diag_get_time(void)
 /* 0001b4a0 */
 #if 0 /* the decompiler's reading; rewritten in console.c */
 
-/* the pForth diagnostic word set_time */
+/* sets the clock's date and time, printing set_timedate's error */
 
-void diag_set_time(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
-                  uint32_t param_5,uint32_t param_6)
+void diag_set_time(uint32_t year,uint32_t month,uint32_t day,uint32_t hour,uint32_t minute,
+                  uint32_t second)
 
 {
   uint32_t uVar1;
   uint32_t local_8;
   
-  local_8 = CONCAT31(CONCAT21(CONCAT11(__ghidra_piece(uint8_t, local_8, 0),(uint8_t)param_4),(uint8_t)param_5),
-                     (uint8_t)param_6);
-  uVar1 = set_timedate(CONCAT31(CONCAT21(__ghidra_piece(uint16_t, param_1, 2),(uint8_t)param_2),(uint8_t)param_3),
-                       local_8);
+  local_8 = CONCAT31(CONCAT21(CONCAT11(__ghidra_piece(uint8_t, local_8, 0),(char)hour),(char)minute),(char)second);
+  uVar1 = set_timedate(CONCAT31(CONCAT21((int16_t)year,(char)month),(char)day),local_8);
   if ((char)uVar1 != 0) {
     printf("set_timedate error: %2X\r\n",uVar1 & 0xff);
   }
@@ -41376,14 +41203,14 @@ bool duarta_rx_pending(void)
    the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine
    with it */
 
-uint8_t drta_get_byte(char *param_1)
+uint8_t drta_get_byte(char *overrun)
 
 {
   uint8_t uVar1;
   uint32_t error;
   
-  if (param_1 != (char *)0x0) {
-    *param_1 = duarta.overrun;
+  if (overrun != (char *)0x0) {
+    *overrun = duarta.overrun;
   }
   if (duarta.overrun != 0) {
     task_debug_message("DRTA receiver overrun ocurred\r\n");
@@ -54346,24 +54173,26 @@ int32_t scpi_set_DIAGnostic_SLOG_CLEar(void *parameters,void *response,scpi_call
 int32_t scpi_query_DIAGnostic_LOG_COUNt(void *parameters,void *response,scpi_call *call)
 
 {
-  int16_t sVar2;
-  int32_t iVar1;
+  int32_t entries;
+  int32_t iVar2;
+  int16_t sVar3;
   
   if (*(int16_t *)parameters == 0) {
-    sVar2 = log_entry_total((uint8_t *)0x0);
+    entries = log_entry_total((uint8_t *)0x0);
+    sVar3 = (int16_t)entries;
   }
   else {
-    iVar1 = log_count((uint8_t *)0x0);
-    sVar2 = (int16_t)iVar1;
+    iVar2 = log_count((uint8_t *)0x0);
+    sVar3 = (int16_t)iVar2;
   }
-  if (sVar2 < 0) {
-    iVar1 = scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR,call);
+  if (sVar3 < 0) {
+    iVar2 = scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR,call);
   }
   else {
-    *(int16_t *)response = sVar2;
-    iVar1 = 0;
+    *(int16_t *)response = sVar3;
+    iVar2 = 0;
   }
-  return iVar1;
+  return iVar2;
 }
 
 #endif
@@ -54374,43 +54203,45 @@ int32_t scpi_query_DIAGnostic_LOG_COUNt(void *parameters,void *response,scpi_cal
 /* prints the event log's state
    "Log status: Error", "Empty", "One entry", "%-3d entries", "Full" */
 
-void log_status(char *param_1,char param_2)
+void log_status(char *text,char reset_causes)
 
 {
-  int16_t sVar2;
-  int32_t iVar1;
-  char local_6;
+  int32_t entries;
+  int32_t iVar2;
+  uint8_t local_6;
   uint8_t local_5;
+  int16_t sVar3;
   
   local_6 = 0;
   local_5 = 0;
-  if (param_2 == 0) {
-    sVar2 = log_entry_total(&local_6);
+  if (reset_causes == 0) {
+    entries = log_entry_total(&local_6);
+    sVar3 = (int16_t)entries;
   }
   else {
-    iVar1 = log_count(&local_5);
-    sVar2 = (int16_t)iVar1;
+    iVar2 = log_count(&local_5);
+    sVar3 = (int16_t)iVar2;
   }
   if ((local_6 == 0) && (local_5 == 0)) {
-    iVar1 = sVar2 + -1;
-    if ((int32_t)sVar2 + 1U < 2U || iVar1 == 0) {
+    iVar2 = sVar3 + -1;
+    if ((int32_t)sVar3 + 1U < 2U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&switchD_0002b52a_index_zero)[(int16_t)iVar1]) {
+      switch((&switchD_0002b52a_index_zero)[(int16_t)iVar2]) {
       case 6:
-        sprintf(param_1,"Log status: Error");
+        sprintf(text,"Log status: Error");
       case 0x12:
-        sprintf(param_1,"Log status: Empty");
+        sprintf(text,"Log status: Empty");
         break;
       case 0x20:
-        sprintf(param_1,"Log status: One entry");
+        sprintf(text,"Log status: One entry");
       }
     }
     else {
-      sprintf(param_1,"Log status: %-3d entries",(int32_t)sVar2);
+      sprintf(text,"Log status: %-3d entries",(int32_t)sVar3);
     }
   }
   else {
-    sprintf(param_1,"Log status: Full");
+    sprintf(text,"Log status: Full");
   }
   return;
 }
@@ -54425,28 +54256,30 @@ void log_status(char *param_1,char param_2)
 void log_print(char param_1,write_function *write,printf_function *print)
 
 {
-  int16_t sVar2;
+  int32_t entries;
   int32_t count;
-  int16_t sVar3;
+  int16_t sVar4;
   char acStack_a4 [80];
   char acStack_54 [80];
+  int16_t sVar3;
   
   if (param_1 == 0) {
-    sVar2 = log_entry_total((uint8_t *)0x0);
+    entries = log_entry_total((uint8_t *)0x0);
+    sVar3 = (int16_t)entries;
   }
   else {
     count = log_count((uint8_t *)0x0);
-    sVar2 = (int16_t)count;
+    sVar3 = (int16_t)count;
   }
   log_status(acStack_a4,param_1);
   (*print)("%s\r\n",acStack_a4);
   (*write)("\r\n");
-  for (sVar3 = 1; sVar3 <= sVar2; sVar3 = sVar3 + 1) {
+  for (sVar4 = 1; sVar4 <= sVar3; sVar4 = sVar4 + 1) {
     if (param_1 == 0) {
-      log_read((int32_t)sVar3,acStack_a4,acStack_54);
+      log_read((int32_t)sVar4,acStack_a4,acStack_54);
     }
     else {
-      log_entry_text((int32_t)sVar3,acStack_a4,acStack_54);
+      log_entry_text((int32_t)sVar4,acStack_a4,acStack_54);
     }
     (*print)("%s:  %s\r\n",acStack_54,acStack_a4);
   }
@@ -54465,9 +54298,9 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,scpi_call
 
 {
   uint32_t zero;
-  int16_t sVar4;
+  int32_t iVar2;
   int32_t count;
-  int32_t error;
+  int16_t sVar4;
   char local_11e [255];
   char local_1f [27];
   
@@ -54476,7 +54309,8 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,scpi_call
   local_1f[0] = 0;
   scpi_response_texts[zero & 0xff][0] = 0;
   if (*(int16_t *)parameters == 0) {
-    sVar4 = log_entry_total((uint8_t *)0x0);
+    iVar2 = log_entry_total((uint8_t *)0x0);
+    sVar4 = (int16_t)iVar2;
   }
   else {
     count = log_count((uint8_t *)0x0);
@@ -54485,14 +54319,14 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,scpi_call
   if (0 < sVar4) {
     if (*(int16_t *)((int32_t)parameters + 2) != -1) {
       if ((*(int16_t *)((int32_t)parameters + 4) < 1) || (sVar4 < *(int16_t *)((int32_t)parameters + 4))) {
-        error = scpi_query_failed(STATUS_DATA_OUT_OF_RANGE,call);
-        return error;
+        iVar2 = scpi_query_failed(STATUS_DATA_OUT_OF_RANGE,call);
+        return iVar2;
       }
       sVar4 = *(int16_t *)((int32_t)parameters + 4);
     }
     if (*(int16_t *)parameters == 0) {
-      error = log_read((int32_t)sVar4,local_11e,local_1f);
-      sVar4 = (int16_t)error;
+      iVar2 = log_read((int32_t)sVar4,local_11e,local_1f);
+      sVar4 = (int16_t)iVar2;
     }
     else {
       sVar4 = log_entry_text((int32_t)sVar4,local_11e,local_1f);
@@ -54505,8 +54339,8 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,scpi_call
       return 0;
     }
   }
-  error = scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR,call);
-  return error;
+  iVar2 = scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR,call);
+  return iVar2;
 }
 
 #endif
@@ -56355,14 +56189,14 @@ bool satellite_in_mask(char param_1,uint32_t param_2)
 
 /* sets a valid satellite's bit in a mask */
 
-bool satellite_mask_add(char param_1,uint32_t *param_2)
+bool satellite_mask_add(char number,uint32_t *mask)
 
 {
   char valid;
   
-  valid = satellite_number_valid(param_1);
+  valid = satellite_number_valid(number);
   if (valid != 0) {
-    *param_2 = __ghidra_shl(1, (param_1 - 1U & 0x3f)) | *param_2;
+    *mask = __ghidra_shl(1, (number - 1U & 0x3f)) | *mask;
   }
   return valid != 0;
 }
@@ -56374,14 +56208,14 @@ bool satellite_mask_add(char param_1,uint32_t *param_2)
 
 /* clears a valid satellite's bit in a mask */
 
-bool satellite_mask_remove(char param_1,uint32_t *param_2)
+bool satellite_mask_remove(char number,uint32_t *mask)
 
 {
   char valid;
   
-  valid = satellite_number_valid(param_1);
+  valid = satellite_number_valid(number);
   if (valid != 0) {
-    *param_2 = ~(__ghidra_shl(1, (param_1 - 1U & 0x3f))) & *param_2;
+    *mask = ~(__ghidra_shl(1, (number - 1U & 0x3f))) & *mask;
   }
   return valid != 0;
 }
@@ -56564,25 +56398,25 @@ int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore
               (void *parameters,void *response,scpi_call *call)
 
 {
-  char valid;
+  bool bVar2;
+  bool valid;
   int32_t zero;
-  uint8_t bVar3;
-  bool bVar4;
+  uint8_t bVar4;
   uint32_t local_8;
   
   local_8 = nv_settings.ignored_satellites;
-  valid = satellite_mask_add((char)*(uint16_t *)((int32_t)parameters + 2),&local_8);
-  bVar4 = valid == 0;
-  bVar3 = 0;
-  while ((bVar3 < 0x1f && (*(int16_t *)((int32_t)parameters + (uint32_t)bVar3 * 6 + 6) == 0))) {
-    valid = satellite_mask_add((char)*(uint16_t *)((int32_t)parameters + (uint32_t)bVar3 * 6 + 8),&local_8
+  bVar2 = satellite_mask_add((char)*(uint16_t *)((int32_t)parameters + 2),&local_8);
+  bVar2 = !bVar2;
+  bVar4 = 0;
+  while ((bVar4 < 0x1f && (*(int16_t *)((int32_t)parameters + (uint32_t)bVar4 * 6 + 6) == 0))) {
+    valid = satellite_mask_add((char)*(uint16_t *)((int32_t)parameters + (uint32_t)bVar4 * 6 + 8),&local_8
                               );
-    if (valid == 0) {
-      bVar4 = true;
+    if (!valid) {
+      bVar2 = true;
     }
-    bVar3 = bVar3 + 1;
+    bVar4 = bVar4 + 1;
   }
-  if (bVar4) {
+  if (bVar2) {
     zero = return_zero(call->input);
     status_report_from(9,(request_source)zero);
   }
@@ -56730,25 +56564,25 @@ int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude
               (void *parameters,void *response,scpi_call *call)
 
 {
-  char valid;
+  bool bVar2;
+  bool valid;
   int32_t zero;
-  uint8_t bVar3;
-  bool bVar4;
+  uint8_t bVar4;
   uint32_t local_8;
   
   local_8 = nv_settings.ignored_satellites;
-  valid = satellite_mask_remove((char)*(uint16_t *)((int32_t)parameters + 2),&local_8);
-  bVar4 = valid == 0;
-  bVar3 = 0;
-  while ((bVar3 < 0x1f && (*(int16_t *)((int32_t)parameters + (uint32_t)bVar3 * 6 + 6) == 0))) {
+  bVar2 = satellite_mask_remove((char)*(uint16_t *)((int32_t)parameters + 2),&local_8);
+  bVar2 = !bVar2;
+  bVar4 = 0;
+  while ((bVar4 < 0x1f && (*(int16_t *)((int32_t)parameters + (uint32_t)bVar4 * 6 + 6) == 0))) {
     valid = satellite_mask_remove
-                      ((char)*(uint16_t *)((int32_t)parameters + (uint32_t)bVar3 * 6 + 8),&local_8);
-    if (valid == 0) {
-      bVar4 = true;
+                      ((char)*(uint16_t *)((int32_t)parameters + (uint32_t)bVar4 * 6 + 8),&local_8);
+    if (!valid) {
+      bVar2 = true;
     }
-    bVar3 = bVar3 + 1;
+    bVar4 = bVar4 + 1;
   }
-  if (bVar4) {
+  if (bVar2) {
     zero = return_zero(call->input);
     status_report_from(9,(request_source)zero);
   }
@@ -59494,30 +59328,30 @@ void happening_replay(char *events,status_replay_mode mode,char first,char last)
 
 /* replays one of the two buffers of early status events */
 
-void happening_flush(char *param_1)
+void happening_flush(char *bytes)
 
 {
   char cVar1;
   status_replay_mode unaff_D2b = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (status_replay_mode)__entry; });
   
-  if ((early_status_events *)param_1 == &early_status_reports) {
+  if ((early_status_events *)bytes == &early_status_reports) {
     unaff_D2b = STATUS_REPLAY_REPORTS;
   }
-  else if ((early_status_events *)param_1 == &early_status_happenings) {
+  else if ((early_status_events *)bytes == &early_status_happenings) {
     unaff_D2b = STATUS_REPLAY_HAPPENINGS;
   }
-  if (*param_1 < 6) {
-    cVar1 = *param_1;
+  if (*bytes < 6) {
+    cVar1 = *bytes;
   }
   else {
     cVar1 = 5;
   }
   cVar1 = cVar1 + -1;
-  if ((5 < *param_1) && (param_1[1] != 0)) {
-    happening_replay(param_1 + 2,unaff_D2b,param_1[1],cVar1);
-    cVar1 = param_1[1] + -1;
+  if ((5 < *bytes) && (bytes[1] != 0)) {
+    happening_replay(bytes + 2,unaff_D2b,bytes[1],cVar1);
+    cVar1 = bytes[1] + -1;
   }
-  happening_replay(param_1 + 2,unaff_D2b,0,cVar1);
+  happening_replay(bytes + 2,unaff_D2b,0,cVar1);
   happening_buffers_clear();
   return;
 }
@@ -61177,7 +61011,7 @@ void lifetime_event_run(void)
 /* on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules
    its clock event */
 
-void lifetime_update(int32_t param_1)
+void lifetime_update(int32_t date)
 
 {
   klok_entry *pkVar1;
@@ -61195,8 +61029,8 @@ void lifetime_update(int32_t param_1)
     pkVar1 = (klok_entry *)((int32_t)&pkVar1->next + 1);
     pkVar4 = (klok_entry *)((int32_t)&pkVar4->next + 1);
   } while (sVar3 != -1);
-  if (lifetime.date != param_1) {
-    lifetime.date = param_1;
+  if (lifetime.date != date) {
+    lifetime.date = date;
     lifetime.count = lifetime.count + 1;
     if (pll.stage == PLL_STAGE_NORMAL_PLL) {
       lifetime.efc = pll.efc;
@@ -61862,11 +61696,11 @@ int32_t log_erase_checked(int32_t count,request_source source)
 
 /* the event log's entry count, and whether it is full */
 
-int32_t log_entry_total(uint8_t *param_1)
+int32_t log_entry_total(uint8_t *full)
 
 {
-  if (param_1 != (uint8_t *)0x0) {
-    *param_1 = log_full;
+  if (full != (uint8_t *)0x0) {
+    *full = log_full;
   }
   return (int32_t)log_entries;
 }
@@ -63997,13 +63831,13 @@ uint8_t fpga_read(uint8_t reg)
 
 /* 1 if bits are set in an FPGA register; called by nothing */
 
-bool fpga_bit_test(uint8_t param_1,char param_2)
+bool fpga_bit_test(uint8_t bits,char reg)
 
 {
   uint8_t value;
   
-  value = fpga_read(param_2);
-  return (param_1 & value) != 0;
+  value = fpga_read(reg);
+  return (bits & value) != 0;
 }
 
 #endif
@@ -72082,23 +71916,23 @@ void satellite_status_list
 
 /* a satellite number as %2d, or blanks for none */
 
-void format_satellite_number(char param_1,char *param_2)
+void format_satellite_number(char satellite,char *text)
 
 {
   char cVar1;
   char *pcVar2;
   
-  if (param_1 == 0) {
+  if (satellite == 0) {
     pcVar2 = "   ";
     do {
       cVar1 = *pcVar2;
-      *param_2 = cVar1;
+      *text = cVar1;
       pcVar2 = pcVar2 + 1;
-      param_2 = param_2 + 1;
+      text = text + 1;
     } while (cVar1 != 0);
   }
   else {
-    sprintf(param_2," %2d",(uint32_t)(uint8_t)param_1);
+    sprintf(text," %2d",(uint32_t)(uint8_t)satellite);
   }
   return;
 }
@@ -74137,11 +73971,10 @@ gps_framing_state gps_receive(void)
 {
   int32_t iVar1;
   uint8_t *puVar2;
-  uint8_t c;
+  uint8_t uint8_t;
   uint32_t found;
-  uint8_t checksum;
+  uint8_t uVar4;
   char pending;
-  uint8_t expected;
   
 LAB_0004b98c:
   do {
@@ -74149,30 +73982,30 @@ LAB_0004b98c:
     if ((pending == 0) || (gps_receive_state == GPS_FRAMING_COMPLETE)) {
       return gps_receive_state;
     }
-    c = drta_get_byte((char *)0x0);
+    uint8_t = drta_get_byte((char *)0x0);
     iVar1 = (int32_t)(char)gps_receive_state - 6;
   } while (5 < (uint32_t)(int32_t)(char)gps_receive_state && iVar1 != 0);
                     /* WARNING: Switch is manually overridden */
   switch((&switchD_0004b88e_index_zero)[(int16_t)iVar1]) {
   case 0xe:
-    expected = 0x40;
+    uVar4 = 0x40;
     break;
   case 0x16:
-    if ((ctype_table[c + 1] & 1) != 0) {
+    if ((ctype_table[uint8_t + 1] & 1) != 0) {
       puVar2 = gps_response_cursor + 1;
-      *gps_response_cursor = c;
+      *gps_response_cursor = uint8_t;
       gps_response_cursor = puVar2;
       goto LAB_0004b8c0;
     }
     gps_counts.frame_errors = gps_counts.frame_errors + 1;
-    if (c != 0x40) {
+    if (uint8_t != 0x40) {
       gps_response_reset();
     }
     goto LAB_0004b98c;
   case 0x4a:
-    if ((ctype_table[c + 1] & 3) == 0) {
+    if ((ctype_table[uint8_t + 1] & 3) == 0) {
       gps_counts.frame_errors = gps_counts.frame_errors + 1;
-      if (c == 0x40) {
+      if (uint8_t == 0x40) {
         gps_response_cursor = gps_response_buffer + 1;
         gps_response_buffer[0] = 0x40;
         gps_receive_state = GPS_FRAMING_SECOND_AT;
@@ -74183,7 +74016,7 @@ LAB_0004b98c:
     }
     else {
       puVar2 = gps_response_cursor + 1;
-      *gps_response_cursor = c;
+      *gps_response_cursor = uint8_t;
       gps_response_cursor = puVar2;
       found = gps_response_lookup(gps_response_cursor[-2],gps_response_cursor[-1],
                                   &gps_response_length,&gps_response_index);
@@ -74196,21 +74029,21 @@ LAB_0004b98c:
   case 0xb8:
     goto override_jmp_0004b88e_case_4;
   case 0xea:
-    expected = 0xd;
+    uVar4 = 0xd;
     break;
   case 0xf0:
-    expected = 10;
+    uVar4 = 10;
   }
-  gps_receive_expect(c,expected);
+  gps_receive_expect(uint8_t,uVar4);
   goto LAB_0004b98c;
 override_jmp_0004b88e_case_4:
   puVar2 = gps_response_cursor + 1;
-  *gps_response_cursor = c;
+  *gps_response_cursor = uint8_t;
   gps_response_cursor = puVar2;
   gps_response_remaining = gps_response_remaining + -1;
   if (gps_response_remaining == 0) {
-    checksum = oncore_checksum(gps_response_buffer + 2,gps_response_cursor + -1);
-    if (c == checksum) {
+    uVar4 = oncore_checksum(gps_response_buffer + 2,gps_response_cursor + -1);
+    if (uint8_t == uVar4) {
 LAB_0004b8c0:
       gps_receive_state = gps_receive_state + GPS_FRAMING_SECOND_AT;
     }
@@ -96087,6 +95920,7 @@ __naked void installer_kernel_halt(void)
 
 {
   do {
+                    /* stop: halts here; the loop stands for not continuing */
     stop();
   } while( true );
 }
@@ -99246,7 +99080,7 @@ int32_t installer_scpi_scan_token(scpi_port *input,scpi_token *token,scpi_arena 
   int16_t sVar11;
   uint32_t uVar10;
   uint32_t uVar12;
-  int16_t local_e;
+  int16_t sStack_e;
   
   pcVar1 = (code *)input->read;
   uVar7 = (*pcVar1)(input);
@@ -99279,7 +99113,7 @@ LAB_installer__0010502e:
             (*(code *)input->methods->unread)(input);
             return 0x13;
           }
-          goto switchD_installer__00104bca_caseD_1b;
+          goto override_jmp_installer__00104bca_case_27;
         }
         sVar11 = sVar8;
         if (0xf < sVar8) goto LAB_installer__00104c64;
@@ -99320,7 +99154,7 @@ LAB_installer__00104cf8:
               (*(code *)input->methods->unread)(input);
               return -0x12;
             }
-            goto switchD_installer__00104bca_caseD_1b;
+            goto override_jmp_installer__00104bca_case_27;
           }
           uVar10 = (int16_t)uVar7 + -0x30 + uVar10 * 10;
         }
@@ -99332,7 +99166,7 @@ LAB_installer__00104cf8:
     uVar9 = uVar7 & 0xdf;
     if (uVar9 == 0x48) {
       sVar8 = 0x10;
-      local_e = 4;
+      sStack_e = 4;
 LAB_installer__00104df6:
       bVar3 = true;
       bVar4 = true;
@@ -99361,15 +99195,15 @@ LAB_installer__00104df6:
                 return 0xd;
               }
             }
-            goto switchD_installer__00104bca_caseD_1b;
+            goto override_jmp_installer__00104bca_case_27;
           }
           sVar11 = uVar7 - 0x30;
         }
         if (sVar8 <= sVar11) {
           return -0x14;
         }
-        if ((__ghidra_shl(sVar8 + -1, (0x20U - (int32_t)local_e & 0x3f)) & uVar12) == 0) {
-          uVar12 = (int32_t)sVar11 | __ghidra_shl(uVar12, (int32_t)local_e);
+        if ((__ghidra_shl(sVar8 + -1, (0x20U - (int32_t)sStack_e & 0x3f)) & uVar12) == 0) {
+          uVar12 = (int32_t)sVar11 | __ghidra_shl(uVar12, (int32_t)sStack_e);
           bVar3 = false;
         }
         else {
@@ -99379,12 +99213,12 @@ LAB_installer__00104df6:
     }
     if (uVar9 == 0x42) {
       sVar8 = 2;
-      local_e = 1;
+      sStack_e = 1;
       goto LAB_installer__00104df6;
     }
     if (uVar9 == 0x51) {
       sVar8 = 8;
-      local_e = 3;
+      sStack_e = 3;
       goto LAB_installer__00104df6;
     }
     if (installer_scpi_char_classes[(int16_t)uVar7] != SCPI_CLASS_PORT_ERROR) {
@@ -99392,7 +99226,7 @@ LAB_installer__00104df6:
       return -0x13;
     }
   case 0x1b:
-switchD_installer__00104bca_caseD_1b:
+override_jmp_installer__00104bca_case_27:
     if (uVar7 == 0x103) {
       iVar6 = -0x66;
     }
@@ -99461,7 +99295,7 @@ switchD_installer__00104bca_caseD_1b:
       (*(code *)input->methods->unread)(input);
       return -0x11;
     }
-    goto switchD_installer__00104bca_caseD_1b;
+    goto override_jmp_installer__00104bca_case_27;
   case 0x14:
     iVar6 = 9;
     break;
@@ -99482,7 +99316,7 @@ switchD_installer__00104bca_caseD_1b:
       (*(code *)input->methods->unread)(input);
       return -0x27;
     }
-    goto switchD_installer__00104bca_caseD_1b;
+    goto override_jmp_installer__00104bca_case_27;
   case 0x1f:
     iVar6 = 6;
   }
@@ -99493,7 +99327,7 @@ LAB_installer__00104f54:
     (*(code *)input->methods->unread)(input);
     return -0x15;
   }
-  goto switchD_installer__00104bca_caseD_1b;
+  goto override_jmp_installer__00104bca_case_27;
 }
 
 #endif
@@ -101895,13 +101729,13 @@ uint32_t installer_scpi_task_create(uint32_t priority)
   uint32_t uVar2;
   uint32_t uStack_8;
   
-  uVar1 = installer_psos_ident(s___N_Nuscpi_installer__001079bc + 6,&uStack_8,(uint8_t *)0x0);
+  uVar1 = installer_psos_ident(installer_scpi_task_name,&uStack_8,(uint8_t *)0x0);
   if ((char)uVar1 == 0) {
     uVar2 = 0xffffffff;
   }
   else {
     uVar1 = installer_psos_create
-                      (s___N_Nuscpi_installer__001079bc + 6,0,priority,0x300,0x400,(void *)0x0,
+                      (installer_scpi_task_name,0,priority,0x300,0x400,(void *)0x0,
                        &installer_task_scpi);
     uVar2 = uVar1 & 0xff;
     if (uVar2 == 0) {
@@ -102041,9 +101875,8 @@ int32_t installer_scpi_query_common_IDN(void *parameters,void *response,scpi_cal
   int16_t sVar2;
   char *pcVar3;
   
-  installer_sprintf(installer_idn_response,s_NuHEWLETT_PACKARD__s__s__s__c_installer__00108136 + 2,
-                    installer_idn_model,installer_idn_serial,installer_revision_text,
-                    (int32_t)installer_idn_suffix);
+  installer_sprintf(installer_idn_response,installer_idn_format,installer_idn_model,
+                    installer_idn_serial,installer_revision_text,(int32_t)installer_idn_suffix);
   *(char **)((int32_t)response + 2) = installer_idn_response;
   sVar2 = -1;
   pcVar3 = *(char **)((int32_t)response + 2);

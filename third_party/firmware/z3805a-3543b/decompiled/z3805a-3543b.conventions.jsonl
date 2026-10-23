@@ -144,8 +144,8 @@
 {"address":"000136fe","name":"get_date_time","note":":PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns 1 while clock.set is clear, the clock not set since power-up","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00013740","name":"get_gps_datetime","note":"gps_date and gps_time through pointers; 1 if the clock is valid","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00013782","name":"clock_record_refresh","note":"recomputes the clock record's local time from its UTC and checksums it, in supervisor mode","convention":"unknown"}
-{"address":"000137a4","name":"set_timedate_unflagged","note":"set_timedate's twin: sets the clock record's date and time without marking it set; assembly as set_timedate is","convention":"other","confidence":"read","family":"clock"}
-{"address":"000137d8","name":"set_timedate","note":"the set_time word's, \"set_timedate error: %2X\": enter_supervisor, then clock_record_store, marking the record set, clock_record_derive and clock_record_checksum on the record in A6, and the status register restored from the stack, which C cannot say; returns clock_record_store's D7","convention":"other","confidence":"read","family":"clock"}
+{"address":"000137a4","name":"set_timedate_unflagged","note":"set_timedate's twin: sets the clock record's date and time without marking it set; assembly as set_timedate is","convention":"other","confidence":"read","in":[{"type":"uint32_t","name":"date"},{"type":"uint32_t","name":"time"}],"out":[{"register":"D0","type":"int32_t","name":"error"}],"family":"clock"}
+{"address":"000137d8","name":"set_timedate","note":"the set_time word's, \"set_timedate error: %2X\": enter_supervisor, then clock_record_store, marking the record set, clock_record_derive and clock_record_checksum on the record in A6, and the status register restored from the stack, which C cannot say; returns clock_record_store's D7","convention":"other","confidence":"read","in":[{"type":"uint32_t","name":"date"},{"type":"uint32_t","name":"time"}],"out":[{"register":"D0","type":"int32_t","name":"error"}],"family":"clock"}
 {"address":"0001380c","name":"clock_record_store","note":"checks a date and time and stores them in the clock record, marking it set if D2 says so","convention":"register","confidence":"read","in":[{"register":"A6","type":"clock_record *","name":"record"},{"register":"D0","type":"int","name":"date"},{"register":"D1","type":"int","name":"time"},{"register":"D2","type":"int","name":"mark"}],"family":"clock"}
 {"address":"00013882","name":"clock_record_derive","note":"reads the clock record's date and time until two reads agree, converts them and stores the result at +6 and +0xa","convention":"register","confidence":"read","in":[{"register":"A6","type":"clock_record *","name":"record"}],"family":"clock"}
 {"address":"000138e4","name":"clock_set_leap_year","note":"sets February's days at A0, 28 or 29 by the Gregorian rule for the year in D7's high word; kernel_set_leap_year's copy","convention":"register","confidence":"read","in":[{"register":"A0","type":"char *","name":"february"},{"register":"D7","type":"int","name":"year"}],"family":"clock"}
@@ -544,7 +544,7 @@
 {"address":"0001a26a","name":"forth_dev_ctrl","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001a278","name":"forth_store_iodev","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001ad20","name":"forth_user","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001ad28","name":"pforth_dictionary_init","note":"allocates the dictionary's segment through trap #3, service 8 in line with the size in D1 and its segment back in A0, which C cannot say, and clears its pointers","convention":"other","confidence":"read","family":"pforth"}
+{"address":"0001ad28","name":"pforth_dictionary_init","note":"allocates the dictionary's segment through trap #3, service 8 in line with the size in D1 and its segment back in A0, which C cannot say, and clears its pointers","convention":"other","confidence":"read","in":[{"type":"int32_t","name":"size"}],"family":"pforth"}
 {"address":"0001ad8a","name":"pforth_define_word","note":"adds a word to the dictionary: links it, copies its name and compiles its code","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"0001ae36","name":"pforth_link_word","note":"links the word at A4 to the latest in the dictionary, leaving A4 past the link and the word in D0","convention":"register","confidence":"read","in":[{"register":"A4","type":"void *","name":"word"}],"out":[{"register":"A4","type":"void *","name":"dp"}],"results":["D0"],"family":"pforth"}
 {"address":"0001ae46","name":"console_set_halt_hook","note":"stores the routine the console calls on halt","convention":"unknown","stack":[{"offset":4,"size":4}]}
@@ -555,7 +555,7 @@
 {"address":"0001af84","name":"string_device_init","note":"the console string device's init: clears the string at 0x100ba8","convention":"register","confidence":"read","out":[{"register":"D7","type":"int","name":"error"}],"family":"device"}
 {"address":"0001af8e","name":"string_device_control","note":"the console string device's control: sets the string console_read_from_string reads","convention":"register","confidence":"read","in":[{"register":"D2","type":"char *","name":"string"}],"out":[{"register":"D7","type":"int","name":"error"}],"family":"device"}
 {"address":"0001af98","name":"console_read_from_string","note":"reads a line into the buffer at A1, D2 long, from the string at 0x100ba8 while one is set, else from the console device","convention":"register","confidence":"read","in":[{"register":"A1"},{"register":"D2"}],"family":"pforth"}
-{"address":"0001afd6","name":"diag_adc_read","convention":"unknown","stack":[{"offset":7,"size":1}]}
+{"address":"0001afd6","name":"diag_adc_read","note":"an ADC channel's raw byte; the number's low bit is the channel's bit 2, its others the channel's low bits","convention":"unknown","stack":[{"offset":7,"size":1}]}
 {"address":"0001b008","name":"diag_adc_temp","convention":"unknown"}
 {"address":"0001b02a","name":"diag_adc_5v","convention":"unknown"}
 {"address":"0001b04c","name":"diag_adc_p15v","convention":"unknown"}
@@ -568,13 +568,13 @@
 {"address":"0001b282","name":"diag_efc_write","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001b292","name":"diag_hdac_write","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001b2a8","name":"diag_hdac_all","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
-{"address":"0001b2d8","name":"diag_clk_synch","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":8,"size":4}]}
+{"address":"0001b2d8","name":"diag_clk_synch","note":"a counter step or sync, through sync_request","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":8,"size":4}]}
 {"address":"0001b2ec","name":"diag_sync_imm","convention":"unknown"}
 {"address":"0001b2fe","name":"diag_loop_time","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001b310","name":"diag_pll_rep","convention":"unknown"}
 {"address":"0001b3de","name":"diag_efc_rep","convention":"unknown"}
 {"address":"0001b430","name":"diag_get_time","convention":"unknown"}
-{"address":"0001b4a0","name":"diag_set_time","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
+{"address":"0001b4a0","name":"diag_set_time","note":"sets the clock's date and time, printing set_timedate's error","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
 {"address":"0001b504","name":"diag_print_stat","convention":"unknown"}
 {"address":"0001b50e","name":"diag_print_vis","convention":"unknown"}
 {"address":"0001b518","name":"diag_pr_avg","convention":"unknown"}

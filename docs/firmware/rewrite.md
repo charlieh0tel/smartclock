@@ -100,8 +100,8 @@ order over the image imported raw at 0 as `68000:BE:32:CPU32`
 
 `SmartClockUntyped.java`, optional, surveys what is left untyped.  The
 project is `third_party/firmware/ghidra/smartclock.gar` (Git LFS); run
-over it, the scripts reproduce the checked-in export, and over the bare
-image not yet (Reproducing, below).  The scripts run under `analyzeHeadless` (Reproducing, below)
+over the bare image or over it, the scripts reproduce the checked-in
+export byte for byte (Reproducing, below).  The scripts run under `analyzeHeadless` (Reproducing, below)
 or [ghidra-mcp](https://github.com/bethington/ghidra-mcp)'s
 `run_ghidra_script` (7.0.0, at `cf8b12d`).
 
@@ -310,20 +310,14 @@ land in `target/firmware/z3805a-3543b/` (`decompiled.o`,
 `report-decompiled.txt`).
 
 To export again, from the repository's root, with `GHIDRA` the Ghidra
-install and `PROJECT` a new directory outside the repository (Ghidra
-refuses a project path with an element starting with `.`), unpack the
-archive as File, Restore Project would:
-
-    mkdir -p "$PROJECT"/smartclock.rep
-    unzip -q third_party/firmware/ghidra/smartclock.gar -d "$PROJECT"/smartclock.rep
-    mv "$PROJECT"/smartclock.rep/smartclock.gpr "$PROJECT"/
-    rm "$PROJECT"/smartclock.rep/JAR_FORMAT
-
-then run every script in order, in one session, the program saved at
-the end:
+install and `PROJECT` a new, empty directory outside the repository
+(Ghidra refuses a project path with an element starting with `.`),
+import the bare image and run every script in order, in one session,
+after auto-analysis, the program saved at the end:
 
     "$GHIDRA"/support/analyzeHeadless "$PROJECT" smartclock \
-      -process z3805a-3543b.bin -noanalysis \
+      -import third_party/firmware/z3805a-3543b.bin \
+      -loader BinaryLoader -loader-baseAddr 0 -processor 68000:BE:32:CPU32 \
       -scriptPath tools/ghidra \
       -postScript SmartClockSetup.java \
       -postScript SmartClockInstaller.java 0xbbc 0x10135c \
@@ -350,38 +344,31 @@ the end:
 
 The export is written in place, its `#include`s of `rewritten/` being
 relative to it.  `SmartClockForth.java` prints `kernel span 00018ed6 -
-0001ad27`.  The sidecar and `.symbols.ld` come out identical; the C
-differs only by an enum `robin_format`, which the archive holds and no
-input declares, and in `installer_scpi_scan_token`
-(`installer::0x104b8e`, under `#if 0`), where Setup's rerun renames
-the switch's shared case label and the decompiler a local.
+0001ad27`.  The C, the sidecar and `.symbols.ld` come out identical to
+the checked-in ones, and the same from a second import.
 
-From the bare image instead, replace `-process z3805a-3543b.bin
--noanalysis` with `-import third_party/firmware/z3805a-3543b.bin
--loader BinaryLoader -loader-baseAddr 0 -processor 68000:BE:32:CPU32`,
-so that the scripts run after auto-analysis.  That export is not yet
-the checked-in one: 286 of the 2041 functions differ, besides
-declarations, and it has two more.
+Over the archive instead, unpack it as File, Restore Project would:
 
-- Analysis makes a function at `0x192c8`, the tail of `forth_equal`
-  that `forth_greater`, `forth_less` and `forth_0_less` branch into.
-  It breaks the run of `forth_` names, so the kernel span printed is
-  `000192d0 - 0001ad27`, `forth_abort` to `forth_equal` get no pForth
-  convention, and 106 functions of the kernel and console differ.
-- A handler on several SCPI paths takes the last path's name in
-  `handlers.txt` (each later `label` is made primary), the archive's
-  the first: `scpi_query_OUTPut_PINS_DELay` for `..._PIN1_...`,
-  `STATus_QUEStionable` for `STATus_OPERation`, `GARY` for
-  `DIAGnostic_LOG`.  Its `rewritten/` definition then matches nothing
-  and the decompiler's C stays live: 148 functions.
-- Analysis makes a function at the primary's `0x10135c`, where the boot
-  code jumps to the installer's entry, and `boot_reset` and
-  `boot_trap_11` call it.
-- The other 30 are the archive's own: a type and a label given by hand
-  (`scpi_root_children`, `dmes_gpsm`), `set_timedate_unflagged`'s
-  prototype, parameter types the decompiler committed in earlier
-  passes (`char` for `uint8_t`, `uint32_t *` for `psos_task *`), and
-  bytes decoded as instructions in one and as data in the other.
+    mkdir -p "$PROJECT"/smartclock.rep
+    unzip -q third_party/firmware/ghidra/smartclock.gar -d "$PROJECT"/smartclock.rep
+    mv "$PROJECT"/smartclock.rep/smartclock.gpr "$PROJECT"/
+    rm "$PROJECT"/smartclock.rep/JAR_FORMAT
+
+and replace the `-import` and `-loader` lines with `-process
+z3805a-3543b.bin -noanalysis`.  That export is identical too, and so is
+one run over the project a bare import left: each script is run again
+over its own output.  What an earlier run or analysis left in a
+project does not reach the export.  Setup removes the shared tails and
+the functions with no bytes analysis makes, and the labels and types
+an earlier run's names and headers gave that no row or header gives
+now (`dmes_gpsm`, `robin_format`, `scpi_root_children`), and
+recomputes every body.  The names file types what was left to history,
+the code runs the pForth control words compile, `watch`'s register
+blocks and the boot code's self-test constants, and gives the
+prototypes the hand-written C defines, which the decompiler had
+committed in earlier passes.  `SmartClockStackParameters.java` keeps a
+function that is not C at the unknown convention Setup gives it
+([`README.md`, "Decompiling with Ghidra"](README.md#decompiling-with-ghidra)).
 
 ## Provenance and licensing
 

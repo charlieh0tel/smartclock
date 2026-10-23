@@ -121,6 +121,7 @@ public class SmartClockStackParameters extends GhidraScript {
 				if (dryRun) {
 					continue;
 				}
+				String convention = function.getCallingConventionName();
 				setParameters(function, arguments);
 				DecompileResults results = decompile(decompiler, function);
 				if (!results.decompileCompleted()) {
@@ -129,6 +130,11 @@ public class SmartClockStackParameters extends GhidraScript {
 				}
 				HighFunctionDBUtil.commitParamsToDatabase(results.getHighFunction(), true,
 					ReturnCommitOption.NO_COMMIT, SourceType.ANALYSIS);
+				// the commit gives the decompiler's convention, the default, to
+				// one not C, which SmartClockSetup.java leaves unknown
+				if (!convention.equals(function.getCallingConventionName())) {
+					function.setCallingConvention(convention);
+				}
 			}
 		}
 		finally {

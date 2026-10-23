@@ -1790,6 +1790,28 @@ view cannot drift apart.  The library, bottom up:
   `check-report-figures` checks; and `report-decompiled` runs
   `check-report-figures` after writing the report.
 
+  Done 2026-10-22, the harness's status register: Unicorn 2.1.4's m68k
+  read of SR (`qemu/target/m68k/unicorn.c`) sets QEMU's `cc_op` to
+  `CC_OP_FLAGS` before computing the CCR, so it returns the last
+  flag-setting instruction's operands read as flags and, from an
+  interrupt hook or after a run stops, leaves the CPU with them; a
+  write of PC from a code hook loses the codes as well, `cc_op` being
+  the translated block's until it ends.  The emulator found it first
+  (`crates/smartclock-emu/src/cpu/unicorn.rs`).  The harness read SR so
+  in trap #1 and #7, kernel service 33, interrupts, `rtr`,
+  `move (SP)+,SR` and a call's final status, and took interrupts by a
+  PC write from its step hook.  Now the system byte comes from a saved
+  context, the CCR from a probe, `move.w %ccr,(abs).l`, which a trap's
+  hook sends the CPU through and a call's end runs, and an interrupt is
+  taken between runs, the step hook stopping the first and counting
+  instructions to STEP_LIMIT across them.  A planted wrong flag
+  (`1 cmp 2` against `2 cmp 1`, then `rts`) read `00` in both copies
+  before and is caught now; service 33 and an interrupt between a
+  compare and its `scs` now keep the compare's C.  Every figure is
+  unchanged: no function the harness runs returns in the condition
+  codes, the system byte was always read right, and no case's result
+  depended on the codes across a trap or interrupt.
+
   Decided 2026-10-22: the pForth kernel's 154 words (183 routines in all) stay the
   image's assembly, exact by construction (check-decompiled proves the
   bytes); the C diagnostic words are tested further by pForth console

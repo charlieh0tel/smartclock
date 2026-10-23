@@ -275,7 +275,10 @@ the check is against the model, not the board.
 - **Timing.**  No time is modeled: a poll's count and order are
   compared, its duration is not.  Unicorn has no CPU32; the 68020
   stands in, the image using none of the instructions where they differ
-  (PLAN.md).
+  (PLAN.md).  Unicorn's read of the status register spoils the
+  condition codes, and so does a write of PC from a code hook; the
+  harness reads them with a probe of its own and takes an interrupt
+  between runs ([`README.md`, "Hand-written C"](README.md#hand-written-c)).
 - **Untraced hardware.**  Which wires reach what (the DUART's interrupt
   level, the EEPROM's part, the SCI's connector, the switch word at
   `0x302000`) is inferred from the firmware, not traced on a board:

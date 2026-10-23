@@ -1053,7 +1053,22 @@ supervisor bit makes A7 from a task's user stack, and `rte` returns from
 it, which Unicorn leaves to its interrupt hook; and `rtr`, which ends
 pForth's code words (`forth_compile_code`, `0x19338`) and which Unicorn
 takes for an illegal instruction, pops the condition codes and the
-return address as the processor does (MC68331UM, table 5-1).  The kernel's traps, `#3` and `#4`, are
+return address as the processor does (MC68331UM, table 5-1).  Nor
+does the harness read the status register through Unicorn: its m68k
+read (`qemu/target/m68k/unicorn.c`) marks QEMU's lazy condition codes
+as computed before it computes them, so that it returns the operands
+of the last compare read as flags and, from a trap's hook or after a
+run stops, leaves the CPU to go on with them; and a write of PC from
+a code hook loses them too.  The harness reads the system byte from a
+copy of the CPU's state and the condition codes with a probe of its
+own, `move.w %ccr` to memory (`harness.PROBE`): a trap's hook sends
+the CPU through it before it takes the exception or answers the
+kernel, a call's status register after it is read through it, and an
+interrupt is taken between two runs, the first stopped before the
+instruction the interrupt comes before.  Before, the `returns=ccr`
+compare would have read `1 cmp 2` and `2 cmp 1` both as `00`, and
+kernel service 33 or an interrupt between a compare and its branch
+changed the branch; no figure changed with the fix.  The kernel's traps, `#3` and `#4`, are
 answered: for each service and I/O function (`psos.md`) the harness
 knows, from the binding's stubs, the registers it reads and returns
 in; a call records the service and those registers, a message by the

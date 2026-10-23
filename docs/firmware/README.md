@@ -418,7 +418,11 @@ at `switchD_JMP_index_zero`, which the decompiler reads the case value
 from.  It removes the case
 labels analysis put at its late reading's targets; one that had become
 a function's name gives the function back its default name rather than
-deleting it, since deleting a function's name deletes the function.
+deleting it, since deleting a function's name deletes the function.  So
+does any other label of the switch's that names a function, a table
+being no function: analysis's reading of the 58503A 3704's switch at
+`0x2eb22` labeled `0x32b62` `switchdataD_00032b62`, and the function
+later made there, which `0x327e4` calls, took it.
 
 It recovers the pSOS kernel's service dispatch, in the primary and in
 the installer: a `jsr (d8,PC,D7.w)` into a table of `bra.w`, one a
@@ -451,7 +455,10 @@ shared-return pass makes it a function and marks the jumps to it
 calls; it goes back into `forth_equal`'s body, and the jumps are
 jumps again.  The other is a function in memory with no bytes, at
 `0x10135c` in plain RAM, where the boot code's jump into the
-installer leads.  Then each unconditional jump from a function to
+installer leads, or with no instruction at its entry, where analysis
+typed a string or data over the code it began (the 58503A 3704's
+`0x1c74e`, inside `"Log test message %d"`, and `0x5a634`, called by
+stray code decoded from a table).  Then each unconditional jump from a function to
 another function's entry is marked a call that returns, a tail call,
 as the shared-return pass does only where the target was already a
 function when it ran; the string tables are typed again, since the
@@ -569,7 +576,11 @@ keeps the first one's name, the rest further labels:
 `:STATus:QUEStionable:EVENt?`, and `forth_endif` is `then` too.  A
 table vouches that its entries are code, so the
 script disassembles each, and splits a function whose body ran into
-it.  Nothing an earlier run named outlives its row: each label the
+it.  A string over an entry is cleared first, unless a names-file
+label typed it: the 58503A 3704's `decimal_digit_pairs`, `"00"` to
+`"99"`, runs on to the NUL in `scpi_parse_text`'s first instruction
+at `0x24f9e`, which nothing calls, and the string tables typed it so.
+Nothing an earlier run named outlives its row: each label the
 naming arguments gave (Ghidra's `IMPORTED`) that no row, path, word
 or word header gives now is removed, as `dmes_gpsm`, the old name of
 the `dmes` array, was.

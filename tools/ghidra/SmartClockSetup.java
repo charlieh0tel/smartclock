@@ -769,6 +769,7 @@ public class SmartClockSetup extends GhidraScript {
 		Function function = getFunctionAt(address);
 		if (function == null) {
 			if (getInstructionAt(address) == null) {
+				clearStringOver(address);
 				repairFrom(List.of(address), new AddressSet(address, address.add(ENTRY_WINDOW)),
 					false);
 			}
@@ -801,6 +802,27 @@ public class SmartClockSetup extends GhidraScript {
 			// a routine on several SCPI paths or Forth words keeps the first one's name
 			addLabel(address, name, counts);
 		}
+	}
+
+	/**
+	 * Clears a string over an entry the arguments vouch for, one analysis
+	 * or the string tables typed: text running on into the code after it,
+	 * as decimal_digit_pairs' "00" to "99" runs on to the NUL in the first
+	 * instruction of scpi_parse_text, at 0x24f9e in the 58503A 3704, which
+	 * nothing calls yet.  A string a names-file label typed is left, for
+	 * the skip to report.
+	 */
+	private void clearStringOver(Address address) throws Exception {
+		Data string = getDataContaining(address);
+		if (string == null || !string.hasStringValue()) {
+			return;
+		}
+		Symbol symbol = getSymbolAt(string.getMinAddress());
+		if (symbol != null && symbol.getSource() == SourceType.IMPORTED) {
+			return;
+		}
+		println("clearing the string at " + string.getMinAddress() + ", over " + address);
+		clearListing(string.getMinAddress(), string.getMaxAddress());
 	}
 
 	/**
@@ -1418,16 +1440,26 @@ public class SmartClockSetup extends GhidraScript {
 	 * where there is no code: in RAM at the installer's plain address
 	 * (0x10135c in the Z3805A 3543B), where the boot code's jump into the
 	 * installer, marked a call by SmartClockInstaller.java, leads.  The
-	 * call reads func_0x0010135c without one.
+	 * call reads func_0x0010135c without one.  So are the unnamed functions
+	 * with no instruction at their entry, which analysis leaves where a
+	 * string or data was typed over the code it began: in the 58503A 3704,
+	 * 0x1c74e inside the string "Log test message %d", and 0x5a634, which
+	 * stray code decoded from a table calls.
 	 */
 	private void removeFunctionsWithoutBytes() throws Exception {
 		Memory memory = currentProgram.getMemory();
 		List<Function> empty = new ArrayList<>();
+		List<Function> codeless = new ArrayList<>();
 		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
+			if (function.getSymbol().getSource() != SourceType.DEFAULT) {
+				continue;
+			}
 			MemoryBlock block = memory.getBlock(function.getEntryPoint());
-			if (function.getSymbol().getSource() == SourceType.DEFAULT
-					&& (block == null || !block.isInitialized())) {
+			if (block == null || !block.isInitialized()) {
 				empty.add(function);
+			}
+			else if (getInstructionAt(function.getEntryPoint()) == null) {
+				codeless.add(function);
 			}
 		}
 		for (Function function : empty) {
@@ -1435,6 +1467,11 @@ public class SmartClockSetup extends GhidraScript {
 			removeFunction(function);
 		}
 		println("functions in memory with no bytes removed: " + empty.size());
+		for (Function function : codeless) {
+			println("removing function " + function.getName() + " with no code");
+			removeFunction(function);
+		}
+		println("functions with no code removed: " + codeless.size());
 	}
 
 	/**
@@ -2554,8 +2591,11 @@ public class SmartClockSetup extends GhidraScript {
 	 * a switch's table, which are not the switch's cases.  Such a label can
 	 * be another function's name, and deleting a function's name deletes
 	 * the function, so that function is given back its default name in the
-	 * global namespace instead.  With dry-run, only counts.  Returns how
-	 * many were removed or given back.
+	 * global namespace instead.  So is a function the switch's other
+	 * labels name, a table being no function: switchdataD_00032b62, for
+	 * the table analysis read for the switch at 0x2eb22 in the 58503A
+	 * 3704, named the function made there later.  With dry-run, only
+	 * counts.  Returns how many were removed or given back.
 	 */
 	private int removeStaleCases(Switch recovered) throws Exception {
 		SymbolTable symbols = currentProgram.getSymbolTable();
@@ -2566,8 +2606,9 @@ public class SmartClockSetup extends GhidraScript {
 		}
 		List<Symbol> stale = new ArrayList<>();
 		for (Symbol symbol : symbols.getSymbols(namespace)) {
-			if (symbol.getName().startsWith(CASE_LABEL_PREFIX)
-					&& !recovered.targets().contains(symbol.getAddress())) {
+			boolean caseLabel = symbol.getName().startsWith(CASE_LABEL_PREFIX);
+			if ((caseLabel && !recovered.targets().contains(symbol.getAddress()))
+					|| (!caseLabel && symbol.getSymbolType() == SymbolType.FUNCTION)) {
 				stale.add(symbol);
 			}
 		}
@@ -2577,9 +2618,10 @@ public class SmartClockSetup extends GhidraScript {
 		for (Symbol symbol : stale) {
 			Function function = getFunctionAt(symbol.getAddress());
 			if (function != null && function.getSymbol().equals(symbol)) {
+				String former = symbol.getName(true);
 				function.setParentNamespace(currentProgram.getGlobalNamespace());
 				function.setName(null, SourceType.DEFAULT);
-				println("function at " + symbol.getAddress() + " was named " + symbol.getName()
+				println("function at " + symbol.getAddress() + " was named " + former
 					+ "; given back its default name");
 			}
 			else {

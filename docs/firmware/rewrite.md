@@ -377,9 +377,10 @@ z3805a-3543b.bin -noanalysis`.  That export is identical too, and so is
 one run over the project a bare import left: each script is run again
 over its own output.  What an earlier run or analysis left in a
 project does not reach the export.  Setup removes the shared tails and
-the functions with no bytes analysis makes, and the labels and types
-an earlier run's names and headers gave that no row or header gives
-now (`dmes_gpsm`, `robin_format`, `scpi_root_children`), and
+the functions with no bytes or no code that analysis makes, and the
+labels and types an earlier run's names and headers gave that no row
+or header gives now (`dmes_gpsm`, `robin_format`,
+`scpi_root_children`), and
 recomputes every body.  The names file types what was left to history,
 the code runs the pForth control words compile, `watch`'s register
 blocks and the boot code's self-test constants, and gives the

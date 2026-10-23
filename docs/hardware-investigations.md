@@ -9,6 +9,15 @@ marked as wanting a spare unit.
 
 Stop the daemon before any direct-mode work; it holds the port.
 
+*Photos* paragraphs record what the bench's board photos settle, read
+on 2026-10-23: the photo under `images/`, and the region as pixels
+x0,y0 to x1,y1 of the full-size photo after its EXIF rotation.  The
+Z3805A's parts are mapped in
+[`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/z3805a-board.html).
+Only the component sides were photographed, and most signal lines
+leave a part's pins through vias within a few millimeters, so no line
+between two parts was followed end to end.
+
 ## 1. The word that chooses G
 
 *Open item:* what drives bit 8 of the read-only port at `0x302000`
@@ -104,6 +113,19 @@ image; that it is the RS-422 port on J3 is inferred, not traced.
 - On the Z3801A, follow the 68681 DUART's channel B (TXB/RXB) the
   same way, since that image drives its host port there.
 
+*Photos:* on the board the serial connector is J1, silkscreened RS232
+and RS422 (`z3805a-cpu-fpga-flash.jpg`, 150,2850 to 1050,3072); J3 is
+the rear panel's designator for it (`z3801a-rear-panel.jpg`, "Port 1
+J3").  Beside J1 sit U2, a Linear Technology LT1180ACS RS-232 driver
+and receiver, two of each (`z3805a-interior.jpg`, 450,900 to
+1000,1250), and the footprints U5, U6 and U7, bare on the Z3805A.  The
+58503A fits U7 alone (`58503a-interior.jpg`, 1120,3650 to 1300,3830,
+an SO-8, marking not legible); the Z3801A, whose port the manual makes
+RS-422, fits an AT&T part at U5 or U6 (`z3801a-main-board.jpg`,
+1500,2550 to 2150,3072), which suggests the RS-422 driver goes there.
+The lines from U33's PQS6 and PQS7 leave through vias; not followed.
+Still needs the bench.
+
 *Changes:* closes "That the SCI is the port wired to J3".
 
 ## 4. Whether DUART channel B reaches a header
@@ -117,14 +139,30 @@ loopback self-test; a 59551A would need a second port for PORT 2.
   spare connector they reach; no firmware talks on it, so this is
   documentation only.
 
+*Photos:* the DUART, U3, is a Philips SCC68692C1A44, the 68681's
+44-pin PLCC successor, read across `z3805a-main-board.jpg` (380,2150
+to 680,2560), `z3805a-board-right.jpg` (2680,950 to 3072,1350) and
+`z3805a-cpu-fpga-flash.jpg` (1950,2800 to 2550,3072); the 58503A's is
+the same part.  The unfitted footprints near it on the Z3805A, J2 and
+the one at J3's place on the 58503A, both boxed headers on the 58503A
+(`58503a-interior.jpg`), are the candidates; TXB and RXB leave U3
+through vias and were not followed.  Still needs the bench.
+
 ## 5. The outer oven's enable and readback
 
 *Open items:* that PORTGP bit 5 (PGP5) reaches P2/8, that the ADC is
 an ADC0838, and how the Z3801A's "Oven" and "Secondary oven voltage"
 channels map to volts at P2/9 are owners' reports, not traced here.
 
-- [ ] TODO: trace PGP5 to P2/8, identify the ADC, and calibrate the P2/9
-  channel against a meter.
+- [x] The ADC, from photos, 2026-10-23: U35 is a National ADC0838CCV
+  on the Z3805A (`z3805a-cpu-fpga-flash.jpg`, 700,500 to 1700,1000)
+  and on the 58503A (`58503a-interior.jpg`, 50,2100 to 800,2900).
+  Public data sheet: National ADC0831/2/4/8.  Beside it, U36 is a TI
+  TLC0820AC, a second 8-bit converter with a parallel output, on all
+  three boards.
+- [ ] TODO: trace PGP5 to P2/8 and calibrate the P2/9 channel against
+  a meter.  P2 is not in the Z3805A photos, which are out of focus
+  over the oscillator side; PGP5 leaves U33 through a via.
 
 - Trace PGP5 (MC68331 pin, see the manual's pinout) to P2/8 and
   confirm the level changes when the firmware's state passes
@@ -309,6 +347,18 @@ not, in the engine.  The 58503A's power supply has been replaced.
 
 - [ ] TODO: fit a Z380x engine into the 58503A.
 
+*Photos:* the Z3805A engine's antenna connector joints, on the side
+away from the connector (`z3805a-gps-engine-antenna-input.jpg`,
+1550,1650 to 2900,2800), carry brown and black residue around the
+center pin's joint and its pad, and on the trace that leaves it.  The
+Z3801A engine's same five joints show no black residue
+(`z3801a-gps-engine-top-unshielded.jpg`, 550,1100 to 1050,1650), but
+that engine tracks worse, so the comparison proves nothing.  Flux left
+from a rework, or contamination;
+the photo cannot say whether it loads the RF input.  Suggests cleaning
+those joints and checking the center pin's resistance to ground before
+the engine swap; settles nothing.
+
 ## 12. Field upgrades -- Z3801A reinstall verified
 
 The flasher (now `smartclock-cli flash`) reinstalled the Z3801A's own
@@ -354,6 +404,21 @@ faults that preserve the installer while failing primary checks.
   reset has initialized the memory interfaces; see `firmware/restart.md`,
   "Forced installer entry with an unusable primary".  Neither the
   board connection nor that recovery method has been tested.
+
+*Photos:* S1 is an 8-position DIP switch on the Z3805A and 58503A.  On the
+Z3805A it is under the oven cable in the close-up and whole in
+`z3805a-main-board.jpg` (2390,1960 to 2620,2120), too blurred to say
+which way any position is set; on the 58503A it is a CTS part marked
+ON at position 1's end (`58503a-interior.jpg`, 1170,1770 to
+1350,2100), all eight actuators alike.  Its lines leave through vias.
+A fitted right-angle pin header, J12, sits at the board edge beside
+U33 (`z3805a-cpu-fpga-flash.jpg`, 3500,750 to 3850,1150), five
+positions seen in one row and partly behind a bracket: the place the
+MC68331 manual recommends for its 10-pin BDM header (MC68331UM
+5.10.2.8, Figure 5-11), but whether it carries BKPT/DSCLK,
+IFETCH/DSI and IPIPE/DSO needs a continuity check.  J9, a 2 x 5
+socket near U24 (3250,1550 to 3500,1850), is the other unexplained
+connector.
 
 *Changes:* a verified switch map and, if the board supports it, a
 recovery procedure for a primary whose checksums pass but which cannot
@@ -612,6 +677,16 @@ of the bank").
   code sets, the DUART's output port, or a write `:DIAGnostic:OUTPut`
   or the self-test makes.
 
+*Photos:* the Z3805A and Z3801A carry the same row of six
+surface-mount LEDs at the board's rear edge, beside the RAM at U8 and
+U9 (`z3805a-main-board.jpg`, 100,3300 to 700,3750;
+`z3801a-main-board.jpg`, 3150,2700 to 3700,3072), with U1, an SO-14,
+beside them; the Z3801A's U1 is a Motorola ACT-family part whose
+number is not legible, the Z3805A's not legible at all.  The 58503A's
+row is the same (`58503a-interior.jpg`, 2100,3800 to 2600,4080).  An
+unpowered photo cannot show a color, and the LEDs' lines leave
+through vias, so nothing here is settled.
+
 *Changes:* what can be read off an open board without a serial link.
 
 ## 18. Whether loading 10 MHz OUT B disturbs OUT A
@@ -656,6 +731,18 @@ output where the 58503A's is unregistered (`firmware/outputs.md`).
   beside J4 and J5, are TI 74ABT245A octal bus transceivers with
   3-state outputs, and U19 and U20 are ACT11245s.
 
+*Photos:* U17 and U18 are both marked TI 66CK05K ABT245A
+(`z3805a-pps-transceivers.jpg`; `z3805a-board-right.jpg`, 1350,2300
+to 2400,3350); U24 is a third of the same lot; U19, U20 and U38 are
+TI 66AL5CT ACT11245.  Public data sheets: TI SN74ABT245 (DIR pin 1,
+/OE pin 19) and 74ACT11245.  On the Z3805A J4's and J5's center pins
+are under the cable lugs, and the lines from U17 and U18 toward them
+leave through vias at the transceivers' pins: not followable.  The
+58503A's U17 and U18 are fitted, their markings under a cable
+(`58503a-gps-engine.jpg`, 1550,3450 to 2000,4080), so no transceiver
+is missing on the component side.  The back sides remain
+unphotographed.
+
 *Changes:* whether the 58503A can have a second 1 PPS, and whether
 that takes parts or the Z3805A's FPGA bitstream.
 
@@ -685,6 +772,26 @@ The board's own bank, the DUART's OP2 to OP7, is item 17's and
   the board's reset, or keeps its outputs through a reset.  The
   emulator keeps them through a watchdog reset, assuming it has none.
 
+*Photos:* no part on the Z3805A's component side can be tied to chip
+select 1 by its traces.  The board's lamps are on a separate narrow
+board at the front of the chassis, reached by a ribbon cable from a
+header at the upper right of the main board (`z3805a-interior.jpg`,
+2500,1050 to 4080,2450); that board's back shows a column of two-pad
+joints, as for lamps, its parts facing away, and its lamps were not
+counted.  At about the same place on the Z3801A is J13, bare, beside U44,
+a Philips 74ABT574AD (`z3801a-main-board.jpg`, 1600,0 to 2200,500):
+an octal D flip-flop with 3-state outputs, its outputs enabled by
+/OE, and no clear or reset input (public data sheet: Philips
+74ABT574).  An 8-bit register the firmware writes whole, beside the
+front-panel header, is what chip select 1's latch looks like, so U44
+is the candidate.  On the Z3805A that corner is out of focus in every
+photo (`z3805a-main-board-2026-09-27.jpg`, 2350,2250 to 3150,3072):
+neither U44's designator nor its marking was read there.  If U44 is
+the latch, the part itself keeps its outputs through a reset,
+unless its /OE is tied to the reset line, as the emulator assumes it
+is not.  Suggests; the bench still has to tie chip select 1 to U44's
+clock and follow its outputs.
+
 *Changes:* whether the firmware's lamp table is the board's, and
 whether bits 3, 6 and 7 are free.
 
@@ -700,10 +807,23 @@ interrupt should be level 2.  Nothing in the firmware shows the wire.
   the MC68331's /IRQ2, and from chip select 10's pin to the 68681's
   /IACK.
 
+*Photos:* not followable.  U3, the SCC68692C1A44, is at the board's
+bottom edge (`z3805a-cpu-fpga-flash.jpg`, 1950,2800 to 2550,3072) and
+U33, the MC68331, at the upper right (2100,500 to 3000,1500), with the
+FPGA, the logic and the flash sockets between them; the lines from
+U3's pins drop into vias within a few millimeters, and the visible
+layer carries no line from one part to the other.  /INTR, the 68681's
+IRQ, is an active-low open-drain output (MC68681.pdf, 2.10), so it
+could share
+/IRQ2 with other sources; U29, a DM74ALS09 quad AND with open-collector
+outputs beside U33 (3250,1050 to 3550,1350), is the kind of part that
+would merge such lines, but nothing ties it to /IRQ2.  Still needs the
+continuity check.
+
 *Changes:* whether the harness's level-2 DUART interrupt is the
 board's.
 
-## 22. Which EEPROM the Z3805A carries
+## 22. Which EEPROM the Z3805A carries -- done
 
 *Open item:* the 8 KiB EEPROM on chip select 9 (`0x400000`;
 `firmware/restart.md`, the chip-select table) holds the records and
@@ -712,10 +832,28 @@ it wrote until it reads back (`eeprom.c`, `0x31136` on), the data
 polling of a parallel EEPROM such as an X28C64 or AT28C64.  The
 harness models that write cycle generically, the polled byte reading
 its complement until the write is done, because the part is not
-identified (the AT28C64B in `bench.md` is on the Oncore engine).
+identified (the AT28C64B in `bench.md` is on the Oncore engine).  Now
+identified, below.
 
-- [ ] TODO: read the part's marking at chip select 9 on a Z3805A main
-  board, and note its package and whether it is socketed.
+- [x] Read from photos, 2026-10-23: U4, an Atmel AT28C64B-20JC date
+  code 9625, 8 K x 8, 200 ns, in a 32-lead PLCC soldered to the board,
+  not socketed (`z3805a-board-right.jpg`, 2700,300 to 3072,700;
+  `z3805a-cpu-fpga-flash.jpg`, 2550,2850 to 3100,3072;
+  `z3805a-main-board.jpg`, 380,2650 to 680,2950).  The 58503A's U4 is
+  an AT28C64B too (`58503a-interior.jpg`, 700,3550 to 2600,4080), and
+  the Z3801A's an Atmel part (`z3801a-main-board.jpg`, 2700,2650 to
+  3050,3000).  It is the board's only parallel EEPROM, so chip select
+  9's by elimination; the select line was not traced.
+
+The part's public data sheet (Atmel, now Microchip, AT28C64B) gives
+byte or 1- to 64-byte page writes, a write cycle of at most 10 ms,
+and two ways to see its end: DATA polling, where a read of the last
+byte written returns the complement of its bit 7 until the write is
+done, and toggle bit, bit 6 alternating on each read.  The data sheet
+names bits 7 and 6 only; the harness complements the whole byte,
+which the firmware's whole-byte compare ends on the same way.  Its
+write time and page mode are now the part's to model.  The data sheet
+is not in `third_party/`.
 
 *Changes:* the harness's and the emulator's EEPROM model can follow
 the part's data sheet (its write time, page mode, toggle or data

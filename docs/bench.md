@@ -104,6 +104,10 @@ label 7VGN4.
 
 ![The main board](images/Z3801-68001/z3801a-main-board.jpg)
 
+A hand-wired board, carrying a Motorola MC74ACT14N hex Schmitt
+inverter, sits over the main board's J3 footprint, wired with blue
+wire; it is not HP's, and its wiring was not traced.
+
 ![The GPS engine module, top](images/Z3801-68001/z3801a-gps-engine-top.jpg)
 
 ![The GPS engine module, bottom](images/Z3801-68001/z3801a-gps-engine-bottom.jpg)
@@ -209,7 +213,11 @@ Oscillator serial 3505A05096, from its label.  Main board Z3805-68001, no revisi
 marked, serial 6E9008G, date code 3627.  Its four flash parts are
 labeled Z3805-80001 to -80004, Rev C, at U11 (2L), U12 (1L), U13 (2M)
 and U14 (1M).  The FPGA, U32, is a Xilinx XC3042-70 PC84C, and the
-CPU, U33, a Motorola MC68331CFC16.  Its jacks
+CPU, U33, a Motorola MC68331CFC16.  The DUART, U3, is a Philips
+SCC68692C1A44 and the EEPROM, U4, an Atmel AT28C64B-20JC, soldered.
+Its parts, numbered on the close-up:
+[`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/z3805a-board.html).
+Its jacks
 carry the same designators as the 58503A's: J4 (OUT A) and J5 (OUT B)
 go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to
 the two rear 10 MHz outputs, and J6, J7 and J8 are not fitted.

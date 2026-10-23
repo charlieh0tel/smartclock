@@ -146,13 +146,18 @@ following, and how.
   measure, beyond the ADC inputs and coefficients above.
 - The units of the oscillator current: nominal 250 and limit 650 after
   a scale of 4.489 per ADC count.
-- That `0xfff907` bit 5 reaches P2/8 and that the ADC is an ADC0838
-  are an owner's report of a Z3801A board, not traced here; how the
-  Z3801A firmware's "Oven" and "Secondary oven voltage" values relate
-  to the volts at P2/9 was not worked out.
+- That `0xfff907` bit 5 reaches P2/8 is an owner's report of a Z3801A
+  board, not traced here; how the Z3801A firmware's "Oven" and
+  "Secondary oven voltage" values relate to the volts at P2/9 was not
+  worked out.  The ADC part is settled by the bench's photos: U35 is a
+  National ADC0838CCV on the Z3805A and 58503A boards
+  (`hardware-investigations.md`, item 5).
 - Which CPU32 part this is: the register map matches the MC68331
   manual's and the `0xfff900` block rules out the 68332, but the part
   name comes from an owner's description of the board, not the image.
+  The Z3801A and Z3805A boards on the bench carry an MC68331CFC16 at
+  U33 (`z3801a-main-board.jpg`, `z3805a-cpu-fpga-flash.jpg`); the
+  58503A's was not photographed, and no Z3816A board has been seen.
 - What drives bit 8 of the read-only port at `0x302000`, which
   chooses between the Z3816A's two values of G.  The image reads it
   once and examines nothing else in that block.

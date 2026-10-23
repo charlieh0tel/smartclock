@@ -145,6 +145,12 @@ spread of exactly 200, and stores the result.  `FUN_00048aea` runs it,
 called with 1 by the power-up machine's state 0 and with 0 by the
 recovery machine.  These DACs trim the counter, not an oven.
 
+The Z3805A and 58503A boards carry a Motorola MC144110DW at U37, a hex
+6-bit D/A converter with a serial input: six channels of six bits, as
+`hdac` writes
+([`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/z3805a-board.html)).  That it is QSPI device 2 is by
+that match; its select line was not traced.
+
 ## The health monitor
 
 Task `hmon`'s loop is `FUN_00033dc8`.  Every tenth pass it advances

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Z3805A Board Parts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: the photo with numbered pins beside the list they key, then
+   the notes and the full parts table.  One column below 860 px. */
+:root {
+  --bg: #eef0ee; --panel: #ffffff; --ink: #1b2320; --muted: #5a6661; --line: #d3d9d6;
+  --pri: #c8401f; --sec: #1f7a6c; --other: #a26a00; --ring: #ffffff;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121715; --panel: #1b2220; --ink: #e4ebe8; --muted: #9aa7a2; --line: #2e3834;
+    --pri: #ff7650; --sec: #4cc3ae; --other: #e6ac3a; --ring: #121715; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121715; --panel: #1b2220; --ink: #e4ebe8; --muted: #9aa7a2; --line: #2e3834;
+  --pri: #ff7650; --sec: #4cc3ae; --other: #e6ac3a; --ring: #121715; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 "IBM Plex Sans", system-ui, sans-serif; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 48px; display: grid; gap: 20px; }
+header h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; font-weight: 600; }
+header p { margin: 4px 0 0; color: var(--muted); }
+a { color: inherit; }
+code { font: 13px "IBM Plex Mono", monospace; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tag { font: 600 11px/1 "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.main { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: 1fr; } }
+.photo { position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); line-height: 0; }
+.photo img { width: 100%; height: auto; display: block; }
+.pin { position: absolute; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid var(--ring); color: #fff; font: 600 13px/26px "IBM Plex Mono", monospace; text-align: center;
+  cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); padding: 0; }
+.pri { background: var(--pri); } .sec { background: var(--sec); } .other { background: var(--other); }
+.pin:focus-visible, .pin.on { outline: 3px solid #fff; outline-offset: 2px; transform: translate(-50%, -50%) scale(1.2); }
+@media (max-width: 520px) { .pin { width: 22px; height: 22px; font-size: 11px; line-height: 18px; } }
+#list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 900px; overflow-y: auto; }
+#list li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+#list li.on { border-color: var(--ink); }
+.n { width: 24px; height: 24px; border-radius: 50%; color: #fff; font: 600 12px/24px "IBM Plex Mono", monospace; text-align: center; }
+.n.off { outline: 2px dashed var(--muted); outline-offset: 1px; }
+#list b { display: block; font-weight: 600; }
+#list span { color: var(--muted); font-size: 14px; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+.card h2 { font: 600 12px/1.4 "IBM Plex Mono", monospace; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 8px; color: var(--muted); }
+.card p { margin: 0 0 8px; }
+.card p:last-child { margin: 0; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; width: 100%; }
+th, td { text-align: left; vertical-align: top; padding: 4px 12px 4px 0; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; }
+td:first-child { white-space: nowrap; font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>HP Z3805A main board, Z3805-68001</h1>
+    <p>Serial 3625A01487, board serial 6E9008G, date code 3627, firmware 3543B.  The component side only, read from the bench's photos on 2026-10-23; nothing here was traced with a meter.  See <a href="bench.md#hp-z3805a-serial-3625a01487"><code>bench.md</code></a> and <a href="hardware-investigations.md"><code>hardware-investigations.md</code></a>.</p>
+    <div class="tags"><span class="tag">Photo: z3805a-cpu-fpga-flash.jpg</span><span class="tag">GPS engine module removed</span><span class="tag">Parts off this photo listed without a pin</span></div>
+  </header>
+
+  <div class="legend">
+    <span><i class="pri"></i>Processor, memory and logic</span>
+    <span><i class="sec"></i>Serial, 1 PPS and analog I/O</span>
+    <span><i class="other"></i>Unfitted, unread or not identified</span>
+  </div>
+
+  <div class="main">
+    <div class="photo" id="photo">
+      <img src="images/Z3805-68001/z3805a-cpu-fpga-flash.jpg"
+           onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/charlieh0tel/smartclockmon/main/docs/images/Z3805-68001/z3805a-cpu-fpga-flash.jpg'"
+           alt="The Z3805A main board with its GPS engine module removed: the MC68331 at the upper right, the XC3042 FPGA at the center left, the four flash sockets across the lower middle, the DUART and EEPROM at the bottom edge">
+    </div>
+    <ol id="list"></ol>
+  </div>
+
+  <div class="notes">
+    <div class="card">
+      <h2>What the photos cannot show</h2>
+      <p>The board's back side was not photographed.  Most signal lines leave a part's pins through vias within a few millimeters, so no line between two parts was followed end to end on the visible layer: not the DUART's interrupt to the processor, not the 1 PPS buffers to J4 and J5, not chip select 1 to the lamp latch.</p>
+      <p>The analog section above the processor, the oscillator's side, is out of focus in every Z3805A photo.</p>
+    </div>
+    <div class="card">
+      <h2>Across the three boards</h2>
+      <p>The 58503A (58503-60001 Rev C, <code>58503a-interior.jpg</code>) carries the same parts at the same designators where they can be read: SCC68692C1A44 at U3, AT28C64B at U4, LT1180ACSW at U2, ADC0838CCV at U35, TLC0820AC at U36, MC144110 at U37, XC3042 at U32.  On the Z3801A (Z3801-68001, <code>z3801a-main-board.jpg</code>) U4 is an Atmel part, its type under the wires, U2 an LT1180ACS, U36 a TLC0820AC, U33 an MC68331CFC16 and U32 an XC3042-70; U3 is under the add-on board.</p>
+      <p>They differ in what is fitted.  U31: an empty PLCC-84 socket on the 58503A, bare pads on the Z3801A and Z3805A.  U5, U6 and U7, beside the serial connector: bare on the Z3805A; on the 58503A U7 alone is fitted; on the Z3801A, whose port is RS-422 (097-z3801-01), an AT&amp;T part sits at U5 or U6, the photo does not show which label is its.  J2 and J3: boxed headers on the 58503A, bare on the Z3805A; on the Z3801A J2 is bare and a hand-wired add-on board, an MC74ACT14N on it, sits over J3.  J13 on the Z3801A, a bare five-position footprint; an AMP connector at that place on the 58503A; on the Z3805A the front board's ribbon plugs in near there, but the designator was not read.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Parts table</h2>
+    <div class="scroll"><table id="table">
+      <tr><th>Ref</th><th>Marking</th><th>Identification</th><th>Photo</th></tr>
+    </table></div>
+  </div>
+</div>
+
+<script>
+// Each part: its position on the photo in percent (none when it is off
+// the photo), its class, reference designator, marking as read,
+// identification, notes with the data sheet, and the photo the
+// marking was read from.
+const CLOSEUP = "z3805a-cpu-fpga-flash.jpg";
+const items = [
+  { x: 69.7, y: 30.7, c: "pri", r: "U33", m: "MC68331CFC16 0E93N DEQF9603",
+    id: "Motorola MC68331, CPU32 microcontroller, 132-pin QFP",
+    d: "Data sheet: third_party/motorola/MC68331UM.pdf.", p: CLOSEUP },
+  { x: 81.3, y: 28.2, c: "pri", r: "Y2", m: "32.768K",
+    id: "32.768 kHz crystal",
+    d: "The reference for the MC68331's clock synthesizer; the firmware's SYNCR gives 512 times it, 16.777 MHz.", p: CLOSEUP },
+  { x: 89.4, y: 31.6, c: "other", r: "J12", m: "none; a fitted right-angle pin header, five positions seen in one row",
+    id: "Not identified",
+    d: "At the board edge beside U33, partly behind a bracket.  MC68331UM 5.10.2.8 (Figure 5-11) recommends a 10-pin, 2 × 5 header for BDM; whether this header is one, and has a second row, the photo does not show.  A continuity check to BKPT/DSCLK, IFETCH/DSI and IPIPE/DSO would settle it.", p: CLOSEUP },
+  { x: 37.2, y: 37.0, c: "pri", r: "U32", m: "XILINX XC3042 -70 PC84C A50558A BKI9612",
+    id: "Xilinx XC3042-70, FPGA, PLCC-84",
+    d: "Public data sheet: Xilinx XC3000 series.  Its bitstream: third_party/firmware/fpga/z3805a.bit.", p: CLOSEUP },
+  { x: 16.9, y: 37.4, c: "other", r: "U31", m: "unfitted",
+    id: "PLCC-84 footprint, no part",
+    d: "The 58503A has an empty socket here.", p: CLOSEUP },
+  { x: 43.8, y: 72.3, c: "pri", r: "U11", m: "label: Z3805-80001 U11/2L REV. C, W5",
+    id: "Flash, PLCC-32 in a socket",
+    d: "The chip's own marking is under the label.  The firmware programs it with the Am29F010's commands (third_party/amd/Am29F010B.pdf).", p: CLOSEUP },
+  { x: 55.0, y: 72.3, c: "pri", r: "U12", m: "label: Z3805-80002 U12/1L REV C, W5",
+    id: "Flash, PLCC-32 in a socket", d: "As U11.", p: CLOSEUP },
+  { x: 64.4, y: 72.3, c: "pri", r: "U13", m: "label: Z3805-80003 U13/2M REV C, W5",
+    id: "Flash, PLCC-32 in a socket", d: "As U11.", p: CLOSEUP },
+  { x: 75.3, y: 72.3, c: "pri", r: "U14", m: "label: Z3805-80004 U14/1M REV C, W5",
+    id: "Flash, PLCC-32 in a socket", d: "As U11.", p: CLOSEUP },
+  { x: 87.2, y: 76.0, c: "pri", r: "U15 or U16", m: "M5M51008BFP -70L 609107",
+    id: "Mitsubishi M5M51008B, 128 K × 8 static RAM, 70 ns",
+    d: "Both designators are printed beside it; which names it was not settled.  Public data sheet: Mitsubishi M5M51008B.", p: CLOSEUP },
+  { x: 87.2, y: 90.9, c: "pri", r: "U8 or U9", m: "M5M51008BFP -70L 609107",
+    id: "Mitsubishi M5M51008B, 128 K × 8 static RAM, 70 ns", d: "As the other RAM.", p: CLOSEUP },
+  { x: 55.0, y: 97.2, c: "sec", r: "U3", m: "PHILIPS SCC68692C1A44 225A329 9601hA",
+    id: "Philips SCC68692, DUART, PLCC-44",
+    d: "The cable hides part of the type on this photo; read whole from z3805a-main-board.jpg and z3805a-interior.jpg.  Public data sheet: Philips SCC68692, not in third_party/.  The firmware drives it as an MC68681 (third_party/motorola/MC68681.pdf).",
+    p: "z3805a-main-board.jpg, z3805a-interior.jpg" },
+  { x: 70.6, y: 97.2, c: "pri", r: "U4", m: "ATMEL AT28C64B 20JC 9625",
+    id: "Atmel AT28C64B-20JC, 8 K × 8 parallel EEPROM, 200 ns, PLCC-32, soldered",
+    d: "Read whole from z3805a-board-right.jpg.  The board's one parallel EEPROM, so by elimination chip select 9's; the select line was not traced.  Public data sheet: Atmel (now Microchip) AT28C64B.",
+    p: "z3805a-board-right.jpg" },
+  { x: 20.1, y: 59.6, c: "sec", r: "U17", m: "TI 66CK05K ABT245A",
+    id: "TI 74ABT245A, octal bus transceiver, 3-state",
+    d: "Beside J4 and J5.  Public data sheet: TI SN74ABT245.", p: "z3805a-pps-transceivers.jpg" },
+  { x: 26.1, y: 59.6, c: "sec", r: "U18", m: "TI 66CK05K ABT245A",
+    id: "TI 74ABT245A, octal bus transceiver, 3-state", d: "As U17.", p: "z3805a-pps-transceivers.jpg" },
+  { x: 34.7, y: 59.4, c: "pri", r: "U19", m: "TI 66AL5CT ACT11245",
+    id: "TI 74ACT11245, octal bus transceiver, flow-through pinout",
+    d: "Public data sheet: TI 74ACT11245.", p: CLOSEUP },
+  { x: 43.1, y: 59.4, c: "pri", r: "U20", m: "TI 66AL5CT ACT11245",
+    id: "TI 74ACT11245, octal bus transceiver", d: "As U19.", p: CLOSEUP },
+  { x: 55.0, y: 26.2, c: "pri", r: "U38", m: "TI 66AL5CT ACT11245",
+    id: "TI 74ACT11245, octal bus transceiver", d: "As U19.", p: "z3805a-main-board-2026-09-27.jpg" },
+  { x: 73.8, y: 52.3, c: "pri", r: "U24", m: "TI 66CK05K ABT245A",
+    id: "TI 74ABT245A, octal bus transceiver",
+    d: "The same lot code as U17 and U18.", p: CLOSEUP },
+  { x: 38.1, y: 71.4, c: "pri", r: "U10", m: "Motorola ACT08 XAB615",
+    id: "74ACT08, quad 2-input AND", d: "Public data sheet: Motorola MC74ACT08.", p: CLOSEUP },
+  { x: 51.4, y: 44.5, c: "pri", r: "U27", m: "National P58AB 74AC138",
+    id: "74AC138, 3-to-8 decoder", d: "Public data sheet: National 74AC138.", p: CLOSEUP },
+  { x: 51.4, y: 53.6, c: "pri", r: "U23", m: "National P58AB 74AC138",
+    id: "74AC138, 3-to-8 decoder", d: "As U27.", p: CLOSEUP },
+  { x: 57.7, y: 51.3, c: "pri", r: "U25", m: "National P58AB 74AC138",
+    id: "74AC138, 3-to-8 decoder", d: "As U27.", p: CLOSEUP },
+  { x: 63.6, y: 60.4, c: "pri", r: "U22", m: "National P58AB 74AC138",
+    id: "74AC138, 3-to-8 decoder", d: "As U27.", p: CLOSEUP },
+  { x: 57.7, y: 60.4, c: "pri", r: "U21", m: "National P61AB 74AC251",
+    id: "74AC251, 8-input multiplexer, 3-state",
+    d: "Public data sheet: National 74AC251.", p: CLOSEUP },
+  { x: 63.6, y: 51.3, c: "pri", r: "U26", m: "National P59AF 74ACT00",
+    id: "74ACT00, quad 2-input NAND", d: "Public data sheet: National 74ACT00.", p: CLOSEUP },
+  { x: 57.7, y: 43.8, c: "pri", r: "U28", m: "7705AC, date code partly legible",
+    id: "TI TL7705A, supply-voltage supervisor and reset generator, SO-8",
+    d: "Public data sheet: TI TL7705A.  Which reset lines it drives was not traced.", p: CLOSEUP },
+  { x: 83.4, y: 41.1, c: "pri", r: "U29", m: "National DM74ALS 09M",
+    id: "DM74ALS09, quad 2-input AND, open-collector outputs, SO-14",
+    d: "Read as DM74ALS on the second line and 09M on the third.  Beside U33; where its outputs go was not traced.  Public data sheet: National DM74ALS09.", p: CLOSEUP },
+  { x: 19.6, y: 22.2, c: "sec", r: "U35", m: "National S61AH ADC0838CCV",
+    id: "National ADC0838, 8-bit A/D converter, 8-channel multiplexer, serial I/O",
+    d: "Public data sheet: National ADC0831/ADC0832/ADC0834/ADC0838.  The firmware's ADC protocol is this part's (firmware/ovens.md).", p: CLOSEUP },
+  { x: 31.4, y: 23.1, c: "sec", r: "U36", m: "TI TLC0820AC 61A95EW",
+    id: "TI TLC0820A, 8-bit A/D converter, parallel output",
+    d: "Public data sheet: TI TLC0820A.  What reads it was not traced.", p: CLOSEUP },
+  { x: 38.3, y: 22.5, c: "sec", r: "U37", m: "Motorola MC144110DW XAA9533",
+    id: "Motorola MC144110, hex 6-bit D/A converter, serial input",
+    d: "Six channels of six bits: the firmware's hex DAC, QSPI device 2 (firmware/ovens.md, \"What hdac is not\").  Public data sheet: Motorola MC144110/MC144111.", p: CLOSEUP },
+  { x: 30.9, y: 16.9, c: "other", r: "U40", m: "BL12A (or 8L12A) XADYC",
+    id: "Not identified, 8-pin", d: "", p: CLOSEUP },
+  { x: 13.0, y: 21.8, c: "other", r: "U34, U39", m: "not read",
+    id: "Small-outline parts", d: "U39 is under a cable.", p: CLOSEUP },
+  { x: 18.5, y: 8.7, c: "other", r: "U41, U42", m: "unfitted",
+    id: "Small-outline footprints, no part", d: "", p: CLOSEUP },
+  { x: 48.1, y: 15.8, c: "other", r: "S1", m: "positions 1 to 8",
+    id: "8-position DIP switch",
+    d: "Under the oven cable sleeve here; seen whole in z3805a-main-board.jpg, where all eight positions look alike and which way they are set cannot be read.  The 58503A's is a CTS part marked ON.", p: "z3805a-main-board.jpg" },
+  { x: 82.5, y: 54.8, c: "other", r: "J9", m: "none; 2 × 5 socket",
+    id: "Not identified", d: "", p: CLOSEUP },
+  { c: "sec", r: "U2", m: "LT 9612 LT1180ACS",
+    id: "Linear Technology LT1180A, RS-232 driver/receiver, two of each",
+    d: "Beside J1, the RS-232/RS-422 connector.  Public data sheet: Linear Technology LT1180A/LT1181A.", p: "z3805a-interior.jpg" },
+  { x: 43.1, y: 90.5, c: "other", r: "U5, U6, U7", m: "unfitted",
+    id: "Small-outline footprints, no part",
+    d: "Beside U2 and J1, the connector marked RS232 and RS422.  The 58503A fits U7 alone; the Z3801A an AT&T part at U5 or U6.", p: CLOSEUP },
+  { c: "sec", r: "Y1", m: "M3.68EL",
+    id: "Crystal, 3.68… MHz as marked",
+    d: "Beside U3; 3.6864 MHz is the 68681 family's usual crystal, but the marking gives only 3.68.", p: "z3805a-main-board.jpg, z3805a-interior.jpg" },
+  { c: "other", r: "U1", m: "not legible",
+    id: "SO-14 beside the board's six LEDs", d: "The Z3801A's U1 is a Motorola ACT-family part, its number not legible.", p: "z3805a-main-board.jpg" },
+  { x: 85.6, y: 98.4, c: "other", r: "six LEDs", m: "designators not read",
+    id: "Surface-mount LEDs in a row at the rear edge, beside the RAM",
+    d: "Cut off at the bottom edge here; whole in z3805a-main-board.jpg.  The same row is on the Z3801A and the 58503A.", p: "z3805a-main-board.jpg" },
+  { x: 14.4, y: 73.1, c: "sec", r: "J4, J5", m: "OUT A, OUT B",
+    id: "1 PPS outputs, both cabled to the rear panel",
+    d: "Their center pins are under the cable lugs; the lines from U17 and U18 leave through vias.", p: CLOSEUP },
+  { x: 26.3, y: 70.6, c: "other", r: "J6, J7, J8", m: "unfitted",
+    id: "Jack footprints, no part", d: "", p: CLOSEUP },
+  { x: 26.3, y: 84.7, c: "other", r: "J2", m: "unfitted",
+    id: "Two-row header footprint, no part", d: "A boxed header on the 58503A.", p: CLOSEUP },
+  { x: 59.4, y: 84.7, c: "other", r: "J3 (by position)", m: "unfitted",
+    id: "Two-row header footprint, no part", d: "A boxed header on the 58503A, labeled J3 there.", p: CLOSEUP },
+  { c: "other", r: "U44", m: "not legible",
+    id: "SO-20 in the analog section, beside S1",
+    d: "On the Z3801A, U44 is a Philips 74ABT574AD, an octal D flip-flop with 3-state outputs and no clear input, beside J13 (z3801a-main-board.jpg).  Public data sheet: Philips 74ABT574.", p: "z3805a-main-board-2026-09-27.jpg" },
+  { c: "other", r: "ribbon header", m: "designator not read",
+    id: "A ribbon cable to a narrow board at the front of the chassis",
+    d: "Plugged in at the upper right of the board, near the oscillator; out of focus.  The front board's back shows a column of two-pad joints, as for lamps; its parts face away.  Whether this is J13, the header beside U44 on the Z3801A and the AMP connector on the 58503A, the photos do not show.", p: "z3805a-interior.jpg" },
+];
+const photo = document.getElementById("photo"), list = document.getElementById("list");
+const table = document.getElementById("table");
+function select(i) {
+  document.querySelectorAll(".on").forEach((e) => e.classList.remove("on"));
+  document.querySelectorAll(`[data-i="${i}"]`).forEach((e) => e.classList.add("on"));
+}
+items.forEach((it, i) => {
+  const onPhoto = it.x !== undefined;
+  if (onPhoto) {
+    const pin = document.createElement("button");
+    pin.className = `pin ${it.c}`;
+    pin.textContent = i + 1;
+    pin.dataset.i = i;
+    pin.style.left = `${it.x}%`;
+    pin.style.top = `${it.y}%`;
+    pin.setAttribute("aria-label", `${i + 1}: ${it.r}`);
+    pin.onclick = () => { select(i); list.children[i].scrollIntoView({ block: "nearest", behavior: "smooth" }); };
+    photo.appendChild(pin);
+  }
+  const li = document.createElement("li");
+  li.dataset.i = i;
+  li.innerHTML = `<div class="n ${it.c}${onPhoto ? "" : " off"}">${i + 1}</div><div><b></b><span></span></div>`;
+  li.querySelector("b").textContent = `${it.r}: ${it.id}`;
+  li.querySelector("span").textContent = `Marked ${it.m}.  ${it.d}${onPhoto ? "" : "  Not on this photo: " + it.p + "."}`;
+  li.onclick = () => select(i);
+  list.appendChild(li);
+  const tr = table.insertRow();
+  [it.r, it.m, it.id, it.p].forEach((v) => { tr.insertCell().textContent = v; });
+});
+</script>
+</body>
+</html>

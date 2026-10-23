@@ -1502,9 +1502,10 @@ public.  `IMAGE=z3805a-3543b` is set for the job.  None of the targets
 builds the workspace.
 
 On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15)
-and `binutils-m68k-linux-gnu` from the archive and uv through
-`astral-sh/setup-uv`, whose cache holds Unicorn and Capstone, each
-tool's inline dependencies, keyed on `tools/firmware/*.py`.  Not
+and `binutils-m68k-linux-gnu` from the archive and uv 0.13.2 through
+`astral-sh/setup-uv`, whose cache holds Unicorn 2.1.4 and Capstone
+5.0.9, each tool's inline dependencies, pinned in the scripts, keyed
+on `tools/firmware/*.py`.  Not
 24.04: its gcc 13 compiles the decompiled C so that
 `set_interrupt_mask`, its installer copy, `fit_quality` and console
 session 4 disagree with the image, and the figures above fail.  The

@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["unicorn>=2.1"]
+# dependencies = ["unicorn==2.1.4"]
 # ///
 """Confirms the C library routines named in docs/firmware/libc.md by running
 them: each is called in a Unicorn 68k emulator on known inputs and its

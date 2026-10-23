@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["capstone>=5"]
+# dependencies = ["capstone==5.0.9"]
 # ///
 """Writes docs/firmware/pforth/IMAGE-words.md, a table of each firmware
 image's pForth words, for every image in third_party/firmware/*.bin, and

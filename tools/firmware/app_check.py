@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["unicorn>=2.1"]
+# dependencies = ["unicorn==2.1.4"]
 # ///
 """Confirms application routines named from the decompiled firmware by
 running them, as libc_check.py does the C library's: each is called in a

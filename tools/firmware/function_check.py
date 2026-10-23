@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["unicorn>=2.1"]
+# dependencies = ["unicorn==2.1.4"]
 # ///
 """Runs each decompiled C function, as gcc compiled it, against the
 image's own: in the rebuilt image (rebuild_link.py), the image's copy is

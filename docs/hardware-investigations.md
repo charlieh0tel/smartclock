@@ -681,6 +681,9 @@ The board's own bank, the DUART's OP2 to OP7, is item 17's and
   lamp.
 - [ ] TODO: note whether the Z3805A fits all six lamps of the
   Z3801A's panel, or a header for them, and what Power is wired to.
+- [ ] TODO: note whether the latch has a reset or clear input tied to
+  the board's reset, or keeps its outputs through a reset.  The
+  emulator keeps them through a watchdog reset, assuming it has none.
 
 *Changes:* whether the firmware's lamp table is the board's, and
 whether bits 3, 6 and 7 are free.

@@ -54,7 +54,12 @@ use crate::flash::chips::JoinArgs;
 use crate::flash::chips::SplitArgs;
 
 #[derive(Parser)]
-#[command(about, version = smartclock::VERSION)]
+// The crate's description is the smartclock-utils package's summary,
+// which names the simulator too; the CLI's own help says what it is.
+#[command(
+    about = "One-shot queries, diagnostics, and transcript capture for SmartClock receivers",
+    version = smartclock::VERSION
+)]
 struct Cli {
     /// Serial device, or `tcp://host:port` for a receiver on the
     /// network or the simulator.

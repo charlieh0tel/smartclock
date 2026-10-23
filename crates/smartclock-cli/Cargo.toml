@@ -1,6 +1,6 @@
 [package]
 name = "smartclock-cli"
-description = "One-shot queries, diagnostics, and transcript capture for SmartClock receivers"
+description = "Command-line tools and a simulator for SmartClock GPS receivers"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

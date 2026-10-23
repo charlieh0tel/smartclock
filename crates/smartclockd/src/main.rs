@@ -64,7 +64,9 @@ use smartclock::types::BaudRate;
 use smartclock::types::Framing;
 
 #[derive(Parser)]
-#[command(about, version = smartclock::VERSION)]
+// The crate's description is the smartclockmon package's summary, which
+// names the whole monitoring stack; the daemon's own help says what it is.
+#[command(about = "Logging daemon for a SmartClock receiver", version = smartclock::VERSION)]
 struct Cli {
     /// Serial device, or `tcp://host:port` for a receiver on the
     /// network or the simulator.

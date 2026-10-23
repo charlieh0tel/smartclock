@@ -1,6 +1,6 @@
 [package]
 name = "smartclockd"
-description = "Logging daemon for a SmartClock receiver"
+description = "Logging daemon, monitor, web view and exporter for SmartClock GPS receivers"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

@@ -684,3 +684,18 @@ The board's own bank, the DUART's OP2 to OP7, is item 17's and
 
 *Changes:* whether the firmware's lamp table is the board's, and
 whether bits 3, 6 and 7 are free.
+
+## 21. The DUART's interrupt line
+
+*Open item:* the reset code makes chip select 10 the interrupt
+acknowledge for level 2 with external DSACK (CSBAR10 `0xfff8`, CSOR10
+`0x2bc4`, `0x628`/`0x630`; `firmware/restart.md`, the chip-select
+table), and the DUART answers with the vector its IVR holds, so its
+interrupt should be level 2.  Nothing in the firmware shows the wire.
+
+- [ ] TODO: with power off, check continuity from the 68681's /INTR to
+  the MC68331's /IRQ2, and from chip select 10's pin to the 68681's
+  /IACK.
+
+*Changes:* whether the harness's level-2 DUART interrupt is the
+board's.

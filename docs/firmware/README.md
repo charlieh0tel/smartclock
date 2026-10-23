@@ -1026,9 +1026,13 @@ kernel's return from interrupt, but from an interrupt the harness has
 the case take, below, and `#11` and `#12`, which restart --
 ends a call, as does a zero divide, which the common exception entry,
 with no task's handler set, records before it spins (`restart.md`,
-"Both end in the watchdog"), and a write to code, which on the board
-raises a bus error (the boot chip select is read only, CSORBT
-`0x6870`, and the bus monitor on, SYPCR `0xcc`).  The installer's
+"Both end in the watchdog"), and a write to code.  On the board the
+boot chip select is read only (CSORBT `0x6870`), but chip select 6
+is write only over the same range (`CSBAR6`, above), so a stray write
+by the primary reaches the flash's command decoder rather than raising
+a bus error; with no unlock cycle before it the flash ignores it.  The
+harness ends it as a bus error, which keeps a stray pointer from
+passing unseen.  The installer's
 writes to ROM's range are to the flash, as chip select 6, write only
 over the boot ROM's range, makes them on the board (`CSBAR6`, above),
 and the flash is modeled (`harness.Flash`): its two pairs of

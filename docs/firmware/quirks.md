@@ -67,6 +67,14 @@ state.  Each is by the routine and the address that shows it.
   (`0x19206`).  It is
   the image's assembly, which the export keeps as it is.
 
+- **pForth's digit (`0x1995a`)**, which `.` and `u.` print through,
+  compares the digit as a signed byte (`cmpi.b #9; bgt`), so that a
+  digit of 128 or more takes `'0' + d`; for a `base` of 209 or more a
+  digit of 208 comes out a zero byte, which the print loop
+  (`0x1996c`) takes for the marker it pushed first: printing stops
+  early and the digits above it stay on the data stack.  Read from the
+  code, not run.
+
 ## Overruns
 
 - **The installer's `:DIAGnostic:DOWNload` (`installer::0x107cb8`)**

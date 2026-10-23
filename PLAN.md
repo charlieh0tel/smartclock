@@ -1747,8 +1747,23 @@ view cannot drift apart.  The library, bottom up:
   table entry's counts.  All eleven well-known words checked agree with
   the standard effects.
   A word's use is a one-line description, from the names file's note
-  (Z3805A 3543B only) or console.md, blank for most.  Left: the console
-  sessions.
+  (Z3805A 3543B only) or console.md, blank for most.
+  Progress: the console sessions run, as `console_init`'s cases in
+  `function_check.py` (`CONSOLE_SESSIONS`, `CONSOLE_LINES`): each copy's
+  `console_init`, then its `console_task` entered as the kernel starts
+  a task, on eight sessions of lines (arithmetic, hex, a definition, an
+  unknown word, seven diagnostic words across their argument and result
+  counts, `words`, `halt`), the harness giving the string device's
+  phrase and DUART channel B's lines as their drivers do and ending at
+  the input's end or the task's delete of itself; the output, each
+  read's data stack, user area and dictionary pointer, and RAM are
+  compared.  All agree.  A wrong result planted in `diag_adc_read`, an
+  argument order swapped in `diag_hdac_write` and a dropped result push
+  in `pforth_define_word` each fail a session.  They found
+  `diag_hdac_write`'s parameters misnamed (value, then channel, as
+  `hdac_write` takes them; renamed), and that a QSPI write's recorded
+  bytes are its count's, not its words', so that a later word's
+  difference shows only in RAM (harness, open).
 
   Decided 2026-10-22, the firmware layout: one folder per image under
   `third_party/firmware/`, holding everything that image's work is:

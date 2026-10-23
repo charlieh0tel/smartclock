@@ -412,8 +412,8 @@ void diag_pr_hold_cause(void) {
  * (0x1b282, 0x1b292, 0x1b2a8). */
 void diag_efc_write(uint32_t value) { efc_write(value); }
 
-void diag_hdac_write(uint32_t channel, uint32_t value) {
-  hdac_write(channel, value);
+void diag_hdac_write(uint32_t value, uint32_t channel) {
+  hdac_write(value, channel);
 }
 
 void diag_hdac_all(uint32_t value_1, uint32_t value_2, uint32_t value_3,

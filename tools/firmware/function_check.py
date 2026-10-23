@@ -46,8 +46,10 @@ reaches beyond what the harness maps, calls a kernel service the
 harness does not model, or traps the same way both times is skipped.  A function whose prototype has an
 argument of no known size, a structure passed whole, or an argument
 not on the stack is not run; a variadic one runs on its callers' lists
-(VARIADIC_CASES), and the parser's loop on SCPI lines a session's
-console reads (SCPI_SESSIONS).  The
+(VARIADIC_CASES), the parser's loop on SCPI lines a session's
+console reads (SCPI_SESSIONS), and console_init, then the pForth
+console's task it creates, on lines typed at the console
+(CONSOLE_SESSIONS).  The
 installer's functions run on a machine of its own, whose RAM is the
 installer as the boot code unpacks it (harness.installer_profile), and
 are counted apart.  This is the rebuild's measure, not a gate: it exits
@@ -71,10 +73,15 @@ from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_D0, UC_M68K_REG_PC
 from harness import (
     CASES,
     CONDITION_CODES,
+    COUNT,
+    REGISTERS,
+    STARTING,
+    TRAP_VECTORS,
     Interrupt,
     FIRST_ARGUMENT,
     HANDLER_ENTRIES,
     HANDLER_ENTRY_SIZE,
+    KernelCall,
     MESSAGE_OFFSET,
     NULL_LONG,
     OVERLAY_SEPARATOR,
@@ -1052,6 +1059,79 @@ def session_cases(m: Machine, function: "Function") -> list[tuple[str, int, dict
     return [(f"session case {i}", i % CASES, {SCPI_LINE: i}) for i in range(len(session_lines(m, function)))]
 
 
+# The pForth console's sessions, as console_init (0x12faa) starts the
+# console: console_init, which sets up the dictionary and its words
+# (pforth_define_word, diag_words_define) and creates the console's
+# task, then that task, console_task (0x1aedc), entered as the kernel
+# starts it, its stack the words the create call gave it, in user mode,
+# from registers as a call starts with them.  The console reads the
+# phrase console_init gives its string device, then, once `0 !iodev`
+# has made it so, its port, DUART channel B (console.md, "Getting to
+# it"), each a line of the session's in turn (harness.READ); the
+# session ends when its lines run out or its task deletes itself, as
+# halt has it do.  Each line's read records the console's dictionary
+# pointer, data stack and user area (harness.ConsoleLine), and its
+# output is the trap #4 writes, so that both are compared as effects,
+# and the dictionary, in RAM, as RAM.  By function, the task's entry.
+CONSOLE_SESSIONS = {"console_init": "console_task"}
+# Service 1, create, whose counted block is the new task's stack.
+KERNEL_TRAP = TRAP_VECTORS + 3
+CREATE = 1
+# Each session's lines: arithmetic and printing, the stack left; a
+# definition, used and leaving its result; an unknown word part way
+# along a line, which aborts and empties the stack, then a word with
+# the stack empty; numbers in hex, one negative; diagnostic words of
+# each argument and result count that touches neither the GPS engine,
+# a reset nor a halt: adc_read (1 -- 1), hdac_all (6 -- 0), then
+# hdac_write (2 -- 0), a value and a channel, after it, so that the
+# DAC's shadow it leaves shows in RAM (the QSPI write's recorded bytes
+# are its count's, not its words'), dmes_all (1 -- 0), pr_efc (0 -- 0),
+# mem_rep,
+# console_init's own (0 -- 0), and wr_eeprom (2 -- 1), whose write the
+# harness's EEPROM takes; the word list; and halt, after which the
+# session's last line is never read.
+CONSOLE_LINES = [
+    (b"1 2 + .", b"hex 10 . ff .", b"decimal -7 3 * . 7 2 /mod . .", b"2 3 .s"),
+    (b": sq dup * ;", b"3 sq .", b"5 sq"),
+    (b"1 2 nope 3", b"."),
+    (b"hex 1a2b 10 + .", b"-ff . decimal"),
+    (b"3 adc_read .", b"1 2 3 4 5 6 hdac_all", b"9 2 hdac_write", b"1 dmes_all 0 dmes_all", b"pr_efc mem_rep"),
+    (b"hex 400100 5a wr_eeprom . decimal",),
+    (b"words",),
+    (b"1 2", b"halt", b"3 ."),
+]
+CONSOLE_SESSION = "console session"
+
+
+def console_session_cases(function: "Function") -> list[tuple[str, int, dict]]:
+    """A console session's cases, as cases gives them, each with its
+    session's index under CONSOLE_SESSION."""
+    if function.name not in CONSOLE_SESSIONS:
+        return []
+    return [(f"console session {i}", i % CASES, {CONSOLE_SESSION: i}) for i in range(len(CONSOLE_LINES))]
+
+
+def console_task_run(m: Machine, first: Run, task: int) -> Run:
+    """A console session's task's run after the call that created it,
+    the two calls' effects as one; the call alone if it did not return
+    or created no task."""
+    if first.stopped is not None or first.ended is not None:
+        return first
+    create = next(
+        (e for e in first.effects if isinstance(e, KernelCall) and e.trap == KERNEL_TRAP and e.service == CREATE),
+        None,
+    )
+    if create is None:
+        return first
+    for name, register in REGISTERS.items():
+        m.uc.reg_write(register, STARTING[name])
+    starting_status, m.starting_status = m.starting_status, TASK_STATUS
+    run = Run(m, task, create.data[COUNT.size :], entry=True)
+    m.starting_status = starting_status
+    run.effects = first.effects + run.effects
+    return run
+
+
 # The routines that step into a node's children, which run a case for
 # every node of their profile's tree that has them (harness.tree_steps),
 # by the index of its step among their arguments.
@@ -1850,6 +1930,7 @@ def cases(m: Machine, function: Function) -> list[tuple[str, int, dict[int, int 
         + [(f"given case {i}", i % CASES, values) for i, values in enumerate(own)]
         + variadic_cases(function)
         + session_cases(m, function)
+        + console_session_cases(function)
         + step_cases(m, function)
         + [(f"state case {i}", i % CASES, {}) for i in range(states.cases)]
     )
@@ -1927,18 +2008,29 @@ def both_runs(
     values: list[bytes],
     memory,
     listed: bytes = b"",
+    session: tuple[tuple[bytes, ...], int, int] | None = None,
 ) -> tuple[Run, Run]:
     """The image's copy and gcc's, each run from memory on a case's
     arguments, a variable list's bytes after the declared ones, gcc's
     given the C's twins of the image's objects; UNDECLARED after them
-    but at the stack's edge."""
+    but at the stack's edge.  In a console session, given as its lines
+    and its task's two copies, the image's and gcc's, each then runs its
+    own copy of the task (console_task_run)."""
     after = b"" if m.stack_edge else UNDECLARED
     reset(m, memory)
+    m.console_input = None if session is None else list(session[0])
     original = Run(m, image, original_layout(function, values).removesuffix(UNDECLARED) + listed + after)
+    if session is not None:
+        original = console_task_run(m, original, session[1])
     reset(m, memory)
     give_twins(m)
-    gcc = gcc_slots(twin_arguments(m, types, function.parameters, values))
-    return original, Run(m, rebuilt, gcc + listed + after)
+    m.console_input = None if session is None else list(session[0])
+    gcc_arguments = gcc_slots(twin_arguments(m, types, function.parameters, values))
+    gcc = Run(m, rebuilt, gcc_arguments + listed + after)
+    if session is not None:
+        gcc = console_task_run(m, gcc, session[2])
+    m.console_input = None
+    return original, gcc
 
 
 def check_cases(
@@ -1960,6 +2052,11 @@ def check_cases(
         values_given = dict(values_given)
         listed = values_given.pop(VARIADIC, b"")
         line = values_given.pop(SCPI_LINE, None)
+        console = values_given.pop(CONSOLE_SESSION, None)
+        session = None
+        if console is not None:
+            task = CONSOLE_SESSIONS[function.name]
+            session = (CONSOLE_LINES[console], linked_symbols[IMAGE_PREFIX + task], linked_symbols[task])
         step = values_given.pop(TREE_STEP, None)
         status = values_given.pop(STARTING_STATUS, None)
         if status is not None:
@@ -1995,11 +2092,11 @@ def check_cases(
             values[position] = given(m, types, function.parameters[position], value)
         memory = snapshot(m)
 
-        original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed)
+        original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed, session)
         privileged = f"trap {PRIVILEGE_VIOLATION}"
         if original.stopped == gcc.stopped == privileged and m.starting_status != SUPERVISOR:
             starting_status, m.starting_status = m.starting_status, SUPERVISOR
-            original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed)
+            original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed, session)
             m.starting_status = starting_status
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))

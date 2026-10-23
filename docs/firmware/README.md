@@ -1325,6 +1325,31 @@ each followed by `:SYSTem:ERRor?`, each a message of its own, so that
 a header the C's tree resolves otherwise shows in what the session
 writes (`tree_lines`).  The installer's tree pair is the image's, the
 C's twin, gcc's copy given the C's.
+And `console_init` runs pForth console sessions (`CONSOLE_SESSIONS`,
+`CONSOLE_LINES`), the real interpreter on lines typed at it: each copy
+runs its own `console_init`, which builds the dictionary with its own
+`pforth_define_word` and `diag_words_define` and creates the console's
+task, then its own copy of that task, `console_task`, entered as the
+kernel starts it, its stack the words the create call gave it, in user
+mode.  The kernel words are the image's assembly in both, and the
+diagnostic words each copy's own C, through the wrappers its
+`pforth_define_word` compiled.  The harness models the two devices the
+console reads as their drivers read (`harness.READ`): the string
+device gives the phrase `console_init` set, `0 !iodev`, and the
+console's port, DUART channel B, then gives the session's lines, one a
+read, as `drtb_read` gives a line; the session ends when the lines run
+out or the task deletes itself, as `halt`'s hook has it do.  The output
+is the trap #4 writes, compared in order as any kernel call is; each
+read records the dictionary pointer, the data stack and the user area
+(`harness.ConsoleLine`), compared as effects; and the dictionary, in
+RAM, is compared as RAM.  The sessions: arithmetic and printing in
+decimal and hex, the stack left, a definition used, an unknown word
+part way along a line and a word on the empty stack after it, hex
+numbers, a negative one, the diagnostic words `adc_read` (1 -- 1),
+`hdac_all` (6 -- 0), `hdac_write` (2 -- 0), `dmes_all` (1 -- 0),
+`pr_efc` and `mem_rep` (0 -- 0) and `wr_eeprom` (2 -- 1), `words`, and
+`halt` with a line after it, never read.  No word that would send to the
+GPS engine, reset the unit or halt it is run.
 And the stack between and above the arguments where the original reads
 them holds the same pointers into the pointees in both calls, the
 seventh case's fill, so that a function whose prototype leaves out an

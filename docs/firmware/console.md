@@ -121,7 +121,14 @@ phrase `0 !iodev` (`0x28f98`) and prints `pForth $Revision: 1.2 $`
 `trap #4`, the pSOS device supervisor at `0x24dae`, whose device number
 is D0 with the major number in its high byte and whose function code
 is D7, 0 to 5 -- `emit` writes with code 4 (`0x2932c`) and `expect`
-reads with code 3 (`0x29f3a`).  So the console's port is pSOS device
+reads with code 3 (`0x29f3a`).  `!iodev` (Z3805A 3543B `0x1a278`)
+pushes the device it replaces (`0x1a28e`), so the console starts with
+one cell on its stack, the string device's number, and `.s` in a fresh
+console prints `512`.  And `.` on an empty stack prints the cell below
+the stack's base before ` ?Stack empty`: `interpret` checks the depth
+only before each word (`0x18f0e`).  Both were read from the code and
+seen in the harness's console sessions (`README.md`, "Hand-written
+C"), not tried on a unit.  So the console's port is pSOS device
 0.  Major number 0 is the SCI: the start-up code at `0x57fc4` copies
 the pSOS configuration from `0x581bc` to `0x102cfc` and the I/O switch
 table from `0x58670` to `0x102c90` (the configuration's word at +0x22,

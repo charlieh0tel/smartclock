@@ -21,7 +21,8 @@ image's own object for a parameter whose callers pass one.  The harness
 stands in for what lies outside memory, the same for both calls: traps
 #1 and #7 run the image's own handlers, and rtr, which Unicorn lacks,
 is done in its place; the kernel's traps, #3 and #4, are answered by a
-model of each service; a trap that never returns, a zero divide, a
+model of each service, and in a pForth console session the console's
+reads by its lines (READ); a trap that never returns, a zero divide, a
 write to code, a branch to itself, the KERNEL_CALL_LIMIT'th kernel
 call and a machine's counter's count (COUNTED) end a call; a case may
 take an interrupt part way, after an event of its own instructions
@@ -360,6 +361,32 @@ DEVICE_SHIFT = 8
 DEVICE_MASK = 0xFF
 STRING_DEVICES = {0, 2, 3}
 STRING_WRITE = Service(("D0",), text=("A0", "D2"))
+# A pForth console session (RebuiltMachine.console_input) models the two
+# devices the console reads, by major number, as their drivers read:
+# DUART channel B, the console's port, gives the session's next line,
+# as drtb_read (0x1ddd6) gives what drtb_gets read, a line without its
+# CR or LF, at most the length less one, then a NUL, its count in D2
+# and its end in A1, with no error; and the console's string device
+# gives the string its control function was last given in D2
+# (string_device_control, 0x1af8e), as console_read_from_string
+# (0x1af98) copies it, up to D2 bytes or its NUL, leaving its end in A1
+# and in D2.  Either with nothing left to give, which would leave the
+# console waiting (drtb_getc's wait_v, 0x1d74a; the suspend at 0x1afce),
+# and the console's task deleting itself (service 4, A0 0, the halt
+# hook's last call, console.md "Leaving it"), end the session.
+READ = 3
+CONTROL = 5
+CONSOLE_PORT_DEVICE = 0
+CONSOLE_STRING_DEVICE = 2
+DELETE = 4
+SELF = 0
+INPUT_ENDED = "input ended"
+TASK_DELETED = "task deleted"
+# The console's user area, the bytes below A5 (console_task's link,
+# 0x1aef4), and the offset below A5 of its cell holding the data
+# stack's base (console.md, "The kernel's registers").
+USER_AREA_SIZE = 0x28
+USER_STACK_BASE = 8
 # The traps the harness answers for the kernel, by vector.  Each takes
 # its service or function in D7's low byte and returns its error there.
 KERNEL_TRAPS = {TRAP_VECTORS + 3: KERNEL_SERVICES, IO_TRAP: IO_FUNCTIONS}
@@ -488,6 +515,28 @@ class KernelCall:
         if self.data:
             parts.append(f"data {self.data.hex()}")
         return " ".join(parts)
+
+
+@dataclass(frozen=True)
+class ConsoleLine:
+    """A line a console session's port gave the pForth console, None at
+    the end of its input, and the console's state as it asked for it,
+    after the line before: the dictionary pointer, A4, the data stack's
+    pointer, A6, its user area and its data stack's cells, from A6 to
+    the base its user area holds (empty if A6 is not below the base)."""
+
+    text: bytes | None
+    dictionary: int
+    stack_pointer: int
+    user_area: bytes
+    stack: bytes
+
+    def __str__(self) -> str:
+        return (
+            ("end of console input" if self.text is None else f"console line {self.text!r}")
+            + f" after A4={self.dictionary:x} A6={self.stack_pointer:x} "
+            f"user area {self.user_area.hex()} stack {self.stack.hex()}"
+        )
 
 
 # The devices' chip selects and the MC68331's own modules, whose
@@ -1420,7 +1469,12 @@ class RebuiltMachine(Machine):
         # where literals lie, and whether the code there is kept read-only
         self.literals = LITERALS + ([profile.code] if profile.code else [])
         self.protected = False
-        self.effects: list[KernelCall | DeviceRead | DeviceWrite | RoutineCall] = []
+        self.effects: list[KernelCall | DeviceRead | DeviceWrite | RoutineCall | ConsoleLine] = []
+        # in a pForth console session, the lines its port has yet to
+        # give, else None, and the string its string device gives
+        # (READ)
+        self.console_input: list[bytes] | None = None
+        self.string_cursor = 0
         # each C function's two copies, gcc's address and the image's
         self.copies: set[tuple[int, int]] = set()
         # and the image's copy by gcc's, which a kernel call records in
@@ -2151,6 +2205,7 @@ def reset(m: RebuiltMachine, memory: dict[int, bytes]) -> None:
     for start, size in DEVICES:
         m.uc.mem_write(start, bytes(size))
     m.devices.reset(m.device_case)
+    m.string_cursor = 0
     if m.flash is not None:
         m.flash.reset(m.flash.start, m.device_case)
         m.uc.mem_write(ROM, m.flash.start)
@@ -2286,14 +2341,78 @@ def allocate(m: RebuiltMachine, size: int) -> int | None:
     return segment
 
 
-def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
-    """Answers a kernel trap as KERNEL_TRAPS models it, returning past
-    the trap; or, nothing done, why it cannot: a service it does not
-    model, a buffer it cannot read or fill, or a segment too large."""
+def console_read(m: RebuiltMachine, vector: int) -> int | None:
+    """In a console session, the device a trap reads that the session
+    models (READ), else None."""
+    if m.console_input is None or vector != IO_TRAP:
+        return None
     uc = m.uc
+    device = uc.reg_read(UC_M68K_REG_D0) >> DEVICE_SHIFT & DEVICE_MASK
+    if uc.reg_read(REGISTERS[SERVICE_REGISTER]) & SERVICE_MASK != READ:
+        return None
+    return device if device in (CONSOLE_PORT_DEVICE, CONSOLE_STRING_DEVICE) else None
+
+
+def console_state(m: RebuiltMachine, text: bytes | None) -> ConsoleLine:
+    """The console's state as it reads its port, and the line given."""
+    uc = m.uc
+    a5, a6 = uc.reg_read(UC_M68K_REG_A5), uc.reg_read(UC_M68K_REG_A6)
+    user = m.read(a5 - USER_AREA_SIZE, USER_AREA_SIZE)
+    base = pointer_at(m, a5 - USER_STACK_BASE)
+    stack = m.read(a6, base - a6) if a6 < base and base - a6 <= LONGEST_BUFFER else b""
+    return ConsoleLine(text, uc.reg_read(UC_M68K_REG_A4), a6, user, stack)
+
+
+def console_session_ended(m: RebuiltMachine, vector: int) -> bool:
+    """Whether a trap ends a console session: a read of a device with
+    nothing left to give (READ)."""
+    device = console_read(m, vector)
+    if device == CONSOLE_PORT_DEVICE:
+        return not m.console_input
+    return device == CONSOLE_STRING_DEVICE and not (m.string_cursor and m.read(m.string_cursor, 1) != b"\0")
+
+
+def answer_console_read(m: RebuiltMachine, device: int) -> ConsoleLine | KernelCall:
+    """Answers a console session's read of a device as READ models it,
+    returning past the trap."""
+    uc = m.uc
+    buffer, length = uc.reg_read(UC_M68K_REG_A1), uc.reg_read(REGISTERS["D2"])
+    if device == CONSOLE_PORT_DEVICE:
+        line = m.console_input.pop(0)
+        given, rest = line[: length - 1], line[length - 1 :]
+        if rest:
+            m.console_input.insert(0, rest)
+        uc.mem_write(buffer, given + b"\0")
+        end, count = buffer + len(given), len(given)
+        call = console_state(m, given)
+    else:
+        text = m.read(m.string_cursor, length)
+        given = text[: text.index(0) + 1] if 0 in text else text
+        m.string_cursor += len(given)
+        uc.mem_write(buffer, given)
+        end = count = buffer + len(given)
+        call = KernelCall(IO_TRAP, READ, (("D0", uc.reg_read(UC_M68K_REG_D0)), ("D2", length)), given)
+    uc.reg_write(UC_M68K_REG_A1, end)
+    uc.reg_write(REGISTERS["D2"], count)
+    uc.reg_write(REGISTERS[SERVICE_REGISTER], NO_ERROR)
+    uc.reg_write(UC_M68K_REG_PC, uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE)
+    return call
+
+
+def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | ConsoleLine | str:
+    """Answers a kernel trap as KERNEL_TRAPS models it, or a console
+    session's read as READ does, returning past the trap; or, nothing
+    done, why it cannot: a service it does not model, a buffer it cannot
+    read or fill, or a segment too large."""
+    uc = m.uc
+    read = console_read(m, vector)
+    if read is not None:
+        return answer_console_read(m, read)
     number = uc.reg_read(REGISTERS[SERVICE_REGISTER]) & SERVICE_MASK
     service = KERNEL_TRAPS[vector].get(number)
     device = uc.reg_read(UC_M68K_REG_D0) >> DEVICE_SHIFT & DEVICE_MASK
+    if m.console_input is not None and vector == IO_TRAP and number == CONTROL and device == CONSOLE_STRING_DEVICE:
+        m.string_cursor = uc.reg_read(REGISTERS["D2"])
     if vector == IO_TRAP and number == WRITE and device in m.profile.string_devices:
         service = STRING_WRITE
     if service is None:
@@ -2369,16 +2488,17 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
 
 
 class Run:
-    """One call: its stack arguments laid above the return address, or
-    at the stack's edge, its registers and status register after, the
-    memory_compared, the COMPARED memory and the flash after, its
-    effects, the ENDING vector, HALTED, STILL_RUNNING or COUNTED it
-    ended at instead of returning, and the fault or trap that stopped
-    it, if one did.  The machine's interrupts are taken as their events
-    come (Interrupt), and the kernel's return from interrupt, trap #5,
-    returns from one taken."""
+    """One call: its stack arguments laid above the return address, at
+    the stack's edge, or, for a task's entry, at SP alone, its registers
+    and status register after, the memory_compared, the COMPARED memory
+    and the flash after, its effects, the ENDING vector, HALTED,
+    STILL_RUNNING, COUNTED or a console session's INPUT_ENDED or
+    TASK_DELETED it ended at instead of returning, and the fault or trap
+    that stopped it, if one did.  The machine's interrupts are taken as
+    their events come (Interrupt), and the kernel's return from
+    interrupt, trap #5, returns from one taken."""
 
-    def __init__(self, m: RebuiltMachine, start: int, stack_arguments: bytes = b""):
+    def __init__(self, m: RebuiltMachine, start: int, stack_arguments: bytes = b"", entry: bool = False):
         trapped, invalid, ended = [], [], []
         # writes to an overlay's code, which Unicorn protects only by
         # whole pages: each one's address and the bytes it overwrote
@@ -2451,11 +2571,20 @@ class Run:
                 ended.append(STILL_RUNNING)
                 uc.emu_stop()
                 return
+            if number in KERNEL_TRAPS and console_session_ended(m, number):
+                if console_read(m, number) == CONSOLE_PORT_DEVICE:
+                    m.effects.append(console_state(m, None))
+                ended.append(INPUT_ENDED)
+                uc.emu_stop()
+                return
             if number in KERNEL_TRAPS:
                 call = answer_kernel(m, number)
-                if isinstance(call, KernelCall):
+                if isinstance(call, (KernelCall, ConsoleLine)):
                     kernel_calls += 1
                     m.effects.append(call)
+                    if m.console_input is not None and call == KernelCall(number, DELETE, (("A0", SELF),)):
+                        ended.append(TASK_DELETED)
+                        uc.emu_stop()
                     return
                 trapped.append(f"{number}, {call}")
             else:
@@ -2497,7 +2626,12 @@ class Run:
                 else:
                     uc.mem_write(address + displacement, (fill * (-displacement // len(fill) + 1))[displacement:])
 
-        if m.stack_edge:
+        if entry:
+            # a task's entry, as the kernel starts it: its stack's words
+            # at SP, no return address below them
+            sp = STACK_TOP - len(stack_arguments)
+            m.uc.mem_write(sp, stack_arguments)
+        elif m.stack_edge:
             # the arguments end where the stack's memory does, and the
             # caller's frame is nowhere mapped (UNMAPPED_FRAME)
             sp = STACK + STACK_SIZE - 4 - len(stack_arguments)

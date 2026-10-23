@@ -6,7 +6,8 @@
 # A target of an image's runs for IMAGE, or without it for every image
 # folder present: IMAGE/, beside IMAGE.bin, which holds that image's
 # work (PLAN.md, "Decided 2026-10-22, the firmware layout").  Needs an
-# m68k gcc and binutils, clang-format and uv; none is part of ci.
+# m68k gcc and binutils, clang-format and uv; none is part of `make ci`,
+# and .github/workflows/firmware.yml runs the Z3805A's checks.
 
 # The repository's root, from which every path is written.
 ROOT ?= ../..

@@ -1,0 +1,68 @@
+name: firmware
+
+# The Z3805A 3543B firmware's checks (docs/firmware/README.md, "The
+# checks in CI"): the C's format, the layouts, the decompiled C's bytes
+# and bindings, every decompiled function run against the image's own
+# and the figures the documents give, the SCPI trees, and the module
+# and pForth figures.
+#
+# Separate from ci.yml because that one is the shared definition every
+# repository in the fleet calls, and this needs an m68k toolchain,
+# clang-format and uv the others do not; and so that it fails on its
+# own.  No Rust: none of these targets builds the workspace.  About
+# five minutes, most of it report-decompiled.
+#
+# On every push, not main's alone, so a firmware branch's own pushes
+# are checked too.
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    # 26.04, not latest (24.04): its gcc 13 compiles the decompiled C so
+    # that three functions and a console session disagree with the
+    # image, where 26.04's gcc 15, the one it is developed with, agrees.
+    # A preview image as of 2026-10.
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      # The one image with an export.  A folder only seeded so far
+      # (names, types) is never reached, whatever the folders present.
+      IMAGE: z3805a-3543b
+      # Named, so that a newer default cannot change the format: 19, 20
+      # and 21 format the C alike, and 18 three of the files otherwise.
+      CLANG_FORMAT: clang-format-21
+    steps:
+      # The pin audit.yml carries; moved by hand to match it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: >-
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends
+          gcc-m68k-linux-gnu binutils-m68k-linux-gnu "$CLANG_FORMAT"
+      # The tools' script dependencies, Unicorn and Capstone, are each
+      # script's own inline metadata, which `uv run` resolves; the cache
+      # is keyed on the scripts.
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "tools/firmware/*.py"
+      - run: m68k-linux-gnu-gcc --version && "$CLANG_FORMAT" --version && python3 --version && uv --version
+      # Each check runs whatever the one before it did, so that one run
+      # names every failing check.
+      - run: make check-format-c
+        if: ${{ !cancelled() }}
+      - run: make check-types
+        if: ${{ !cancelled() }}
+      - run: make check-module-figures
+        if: ${{ !cancelled() }}
+      - run: make check-scpi-tree
+        if: ${{ !cancelled() }}
+      - run: make check-pforth-words
+        if: ${{ !cancelled() }}
+      - run: make check-decompiled
+        if: ${{ !cancelled() }}
+      # Also checks docs/firmware/README.md's figures against the report.
+      - run: make report-decompiled
+        if: ${{ !cancelled() }}

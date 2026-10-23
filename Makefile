@@ -125,7 +125,7 @@ check-pages:
 # IMAGE=... or every image folder: the C's format, the layouts, the
 # decompiled C, the SCPI trees, the module, pForth and report figures.
 # They need an m68k gcc and binutils, clang-format and uv; none is part
-# of ci.
+# of ci, and .github/workflows/firmware.yml runs the Z3805A's checks.
 FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled report-decompiled \
 	scpi-tree check-scpi-tree handlers check-module-figures module-figures \
 	check-pforth-words pforth-words check-report-figures report-figures

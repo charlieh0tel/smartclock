@@ -104,7 +104,10 @@ Without a receiver, use the simulator; every tool takes
     smartclockd     --device tcp://127.0.0.1:5025 ...
     smartclock-cli  --device tcp://127.0.0.1:5025 diagnose
 
-`make ci` runs CI's checks; `make test-web` runs the browser tests,
+`make ci` runs CI's Rust checks; CI also runs the Z3805A firmware's
+checks, `.github/workflows/firmware.yml`
+([`docs/firmware/README.md`](docs/firmware/README.md), "The checks in
+CI").  `make test-web` runs the browser tests,
 after `make web-deps` once.  `make hooks`, once per clone, sets up the
 repository's git hooks.  `make check-pages` loads each HTML page in `docs/`
 in headless Chrome and fails if anything on it scrolls sideways at

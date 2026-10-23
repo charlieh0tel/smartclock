@@ -563,7 +563,11 @@ notes everywhere.
 CI calls the fleet's reusable `rust-ci.yml`, since one repository doing
 it differently costs more than one definition; `make ci` is stricter.
 The browser tests need Node and Chromium, so CI runs them in
-`.github/workflows/web.yml` and `make ci` leaves them out.
+`.github/workflows/web.yml` and `make ci` leaves them out.  The
+Z3805A firmware's checks need an m68k gcc, clang-format and uv, so CI
+runs them in `.github/workflows/firmware.yml`, its own job, which
+fails apart from the Rust CI (`docs/firmware/README.md`, "The checks
+in CI").
 
 ### Dialects
 

@@ -1488,3 +1488,28 @@ work worth keeping.  The scripts rebuild everything in it from the
 image but names given by hand.  An exception in a script does not roll
 back what it did, so save the program before each script that changes
 it.
+
+## The checks in CI
+
+`.github/workflows/firmware.yml` runs the Z3805A 3543B's checks on
+every push and pull request, a job of its own beside the Rust CI so
+that each fails alone: `make check-format-c`, `check-types`,
+`check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
+`check-decompiled` and `report-decompiled`, which
+also checks this document's figures from the function check against
+the report it writes, so that every function agreeing is checked in
+public.  `IMAGE=z3805a-3543b` is set for the job.  None of the targets
+builds the workspace.
+
+On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15)
+and `binutils-m68k-linux-gnu` from the archive and uv through
+`astral-sh/setup-uv`, whose cache holds Unicorn and Capstone, each
+tool's inline dependencies, keyed on `tools/firmware/*.py`.  Not
+24.04: its gcc 13 compiles the decompiled C so that
+`set_interrupt_mask`, its installer copy, `fit_quality` and console
+session 4 disagree with the image, and the figures above fail.  The
+function check measures the C as a given gcc compiles it, so a gcc
+that changes its code changes the figures.  clang-format is
+`clang-format-21`, named through `CLANG_FORMAT`: 19, 20 and 21 format
+the C alike, and 18 formats three of the files otherwise.  The job
+takes about five minutes, two and a half of them `report-decompiled`'s.

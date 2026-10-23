@@ -1812,6 +1812,19 @@ view cannot drift apart.  The library, bottom up:
   codes, the system byte was always read right, and no case's result
   depended on the codes across a trap or interrupt.
 
+  Done 2026-10-23, the check of the Unicorn bugs:
+  `tools/firmware/unicorn_check.py` (`make check-unicorn`, run first
+  by `check-decompiled`, so in CI) asserts both bugs as Unicorn 2.1.4
+  shows them, the read after a stop and in a trap's hook returning
+  `00` and the CPU going on with it, and a code hook's PC write losing
+  the codes, and that the harness's workarounds give the right codes,
+  so that a Unicorn whose behavior differs fails it and the workarounds
+  are revisited rather than kept by habit.  Upstream, #2380 reports the
+  read and `dev`'s `5d5da58` (#2420, 2026-10-17) removes the
+  assignment, unreleased; the PC write's loss has no report.  Whether
+  `dev` keeps the second bug, and so the stopped-run workaround, is
+  untested.
+
   Decided 2026-10-22: the pForth kernel's 154 words (183 routines in all) stay the
   image's assembly, exact by construction (check-decompiled proves the
   bytes); the C diagnostic words are tested further by pForth console

@@ -123,12 +123,13 @@ check-pages:
 # The firmware's checks and generated files, which
 # third_party/firmware/Makefile runs, alone or from here by name, for
 # IMAGE=... or every image folder: the C's format, the layouts, the
-# decompiled C, the SCPI trees, the module, pForth and report figures.
+# decompiled C, the SCPI trees, the module, pForth and report figures,
+# Unicorn's recorded bugs.
 # They need an m68k gcc and binutils, clang-format and uv; none is part
 # of ci, and .github/workflows/firmware.yml runs the Z3805A's checks.
 FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled report-decompiled \
 	scpi-tree check-scpi-tree handlers check-module-figures module-figures \
-	check-pforth-words pforth-words check-report-figures report-figures
+	check-pforth-words pforth-words check-report-figures report-figures check-unicorn
 .PHONY: $(FIRMWARE_TARGETS)
 $(FIRMWARE_TARGETS):
 	$(MAKE) -C third_party/firmware $@

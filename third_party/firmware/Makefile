@@ -27,7 +27,7 @@ DOCUMENTED_IMAGE = z3805a-3543b
 IMAGE_TARGETS = check-types check-decompiled report-decompiled scpi-tree check-scpi-tree handlers
 # The rest, run once.
 TARGETS = format-c check-format-c check-module-figures module-figures check-pforth-words \
-	pforth-words check-report-figures report-figures
+	pforth-words check-report-figures report-figures check-unicorn
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
@@ -70,6 +70,14 @@ check-pforth-words:
 
 pforth-words:
 	uv run -q $(ROOT)/tools/firmware/pforth_words.py --write
+
+# Fail if Unicorn's two m68k bugs the harness works around, its status
+# register read and a code hook's write of PC losing the condition
+# codes, no longer show as recorded, or if the harness's workarounds do
+# not give the right codes (PLAN.md, "Done 2026-10-22, the harness's
+# status register").
+check-unicorn:
+	uv run -q $(ROOT)/tools/firmware/unicorn_check.py
 
 # The decompiled C's flags.  -fno-defer-pop has gcc pop a call's
 # arguments after the call, so that from a task in user mode an argument
@@ -122,8 +130,8 @@ check-types:
 
 # Fail if the decompiled C does not compile, its assembly is not the
 # image's own bytes, alone or linked, or a binding disagrees with its
-# routine.
-check-decompiled: check-module-figures
+# routine; and first if the figures or Unicorn's recorded bugs drift.
+check-decompiled: check-module-figures check-unicorn
 	mkdir -p $(WORK)
 	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o $(WORK)/decompiled.o $(DECOMPILED)
 	python3 $(ROOT)/tools/firmware/decompiled_check.py $(DECOMPILED) $(IMAGE_BIN) $(WORK)/decompiled.o

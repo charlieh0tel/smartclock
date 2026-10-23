@@ -1073,7 +1073,18 @@ interrupt is taken between two runs, the first stopped before the
 instruction the interrupt comes before.  Before, the `returns=ccr`
 compare would have read `1 cmp 2` and `2 cmp 1` both as `00`, and
 kernel service 33 or an interrupt between a compare and its branch
-changed the branch; no figure changed with the fix.  The kernel's traps, `#3` and `#4`, are
+changed the branch; no figure changed with the fix.
+`tools/firmware/unicorn_check.py` (`make check-unicorn`, which `make
+check-decompiled` runs first, and so CI) keeps both bugs in view: on
+a compare of 2 with 2 and of 1 with 2, each then recorded by `scs` and
+`seq`, it checks that Unicorn's read after a stop and in a trap's
+hook, and a code hook's write of PC, still give the codes and the
+branches recorded wrong, and that the harness's `system_status`, probe
+and stopped run give the right ones.  It fails if a bug changes, in a
+new Unicorn say, so that the workarounds here are revisited; Unicorn's
+`dev` branch already drops the read's assignment (`5d5da58`, "Don't
+clobber condition codes when reading SR", #2420), which no release has
+yet.  The kernel's traps, `#3` and `#4`, are
 answered: for each service and I/O function (`psos.md`) the harness
 knows, from the binding's stubs, the registers it reads and returns
 in; a call records the service and those registers, a message by the
@@ -1533,7 +1544,8 @@ it.
 every push and pull request, a job of its own beside the Rust CI so
 that each fails alone: `make check-format-c`, `check-types`,
 `check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
-`check-decompiled` and `report-decompiled`, which
+`check-decompiled`, which runs `check-unicorn` first, and
+`report-decompiled`, which
 also checks this document's figures from the function check against
 the report it writes, so that every function agreeing is checked in
 public.  `IMAGE=z3805a-3543b` is set for the job.  None of the targets

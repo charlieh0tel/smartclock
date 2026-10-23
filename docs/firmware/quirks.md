@@ -189,7 +189,17 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
 - **`installer_strtol` (`installer::0x1091ac`)** indexes the ctype
   table by a signed character (`installer::0x1091e0`), so that `0x80` to
   `0xfe` read the 127 bytes of code before the table, and `0xff` its EOF
-  entry.
+  entry.  The primary's `atoi` (`0x5ecfa`) does the same with
+  `ctype_table` (`0x5ed0a`), reading its own code: `0x90` is a space,
+  `0x95` a digit.
+- **The SCPI lexer (`0x26ee0` to `0x277d2`) and its installer copy**
+  index `scpi_char_classes` by a port's value as a signed word
+  (`0x26f02`), and `console_port_read` gives a high-bit character sign
+  extended (`0x29c4e`), so that `0x80` to `0xff` read the 128 bytes of
+  code before the table: `0xfe` reads `0x4e`, no class, and is an
+  invalid character; `0xf8` reads 0, a letter's; and a keyword, which
+  compares its class signed (`0x26fc0`), takes `0xf9`, whose byte is
+  `0xdf`, as one of its characters.
 - **`clock_days_before_month`'s callers** that take a date index
   `days_before_month` and `days_before_month_leap` (`0x1186c`) by an
   unchecked month (`0x10e16`, `0x10e26`, `0x10f8a`, `0x11000`): 0 reads

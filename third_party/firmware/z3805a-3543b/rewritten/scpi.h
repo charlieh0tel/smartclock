@@ -50,14 +50,7 @@ static const uint8_t SCPI_NUMBER_BASE = 10;
  * double's least exponent, and which it converts zero at too. */
 static const int16_t SCPI_REAL_EVERY_DIGIT = -308;
 
-enum {
-  SCPI_ARRAY_BLOCK = 0,
-  SCPI_ARRAY_DOUBLES = 1,
-  SCPI_ARRAY_SHORTS = 2,
-};
-
-/* A string parameter as scpi_parse_string gives it its handler, and a
- * text response as scpi_query_failed empties it. */
+/* A string parameter as scpi_parse_string gives it its handler. */
 typedef struct scpi_engine_string_value {
   char* text;      /* +0x00 */
   uint16_t length; /* +0x04 */
@@ -201,7 +194,8 @@ static bool scpi_parameters_same(const char* text, const char* other) {
 /* scpi_suffix_compare_tail's and its installer copy's body: how many
  * characters of a unit's reversed name match the suffix's end, 0 unless
  * all of the name does. */
-static int16_t scpi_compare_suffix_tail(char* suffix, int32_t length, char* name) {
+static int16_t scpi_compare_suffix_tail(char* suffix, int32_t length,
+                                        char* name) {
   int16_t count = length;
   int16_t matched = 0;
 
@@ -248,46 +242,13 @@ enum {
  * "A numeric parameter's units"). */
 static const int8_t SCPI_NO_MULTIPLIER = -128;
 
-/* A port value's character class, by the image's scpi_char_classes
- * (0x277ec), 0 to 0x105; the installer's at installer::0x10549a are the
- * same. */
-static scpi_char_class scpi_engine_class(int32_t character) {
-  static const scpi_char_class CLASSES[] = {
-      [0x00 ... 0x09] = SCPI_CLASS_WHITE,
-      [0x0a] = SCPI_CLASS_NEWLINE,
-      [0x0b ... ' '] = SCPI_CLASS_WHITE,
-      ['!'] = SCPI_CLASS_OTHER,
-      ['"'] = SCPI_CLASS_QUOTE,
-      ['#'] = SCPI_CLASS_HASH,
-      ['$'] = SCPI_CLASS_DOLLAR,
-      ['%' ... '&'] = SCPI_CLASS_OTHER,
-      [0x27] = SCPI_CLASS_QUOTE,
-      ['('] = SCPI_CLASS_OPEN,
-      [')'] = SCPI_CLASS_CLOSE,
-      ['*'] = SCPI_CLASS_STAR,
-      ['+'] = SCPI_CLASS_PLUS,
-      [','] = SCPI_CLASS_COMMA,
-      ['-'] = SCPI_CLASS_MINUS,
-      ['.'] = SCPI_CLASS_POINT,
-      ['/'] = SCPI_CLASS_SLASH,
-      ['0' ... '9'] = SCPI_CLASS_DIGIT,
-      [':'] = SCPI_CLASS_COLON,
-      [';'] = SCPI_CLASS_SEMICOLON,
-      ['<' ... '>'] = SCPI_CLASS_OTHER,
-      ['?'] = SCPI_CLASS_QUESTION,
-      ['@'] = SCPI_CLASS_AT,
-      ['A' ... 'Z'] = SCPI_CLASS_LETTER,
-      ['[' ... '^'] = SCPI_CLASS_OTHER,
-      ['_'] = SCPI_CLASS_UNDERSCORE,
-      ['`'] = SCPI_CLASS_OTHER,
-      ['a' ... 'z'] = SCPI_CLASS_LETTER,
-      ['{' ... 0xff] = SCPI_CLASS_OTHER,
-      [0x100 ... 0x101] = SCPI_CLASS_END,
-      [0x102] = SCPI_CLASS_SKIPPED_END,
-      [0x103 ... 0x105] = SCPI_CLASS_PORT_ERROR,
-  };
-
-  return CLASSES[character];
+/* A port value's character class, by its image's class table, 0 to
+ * 0x105, which the lexer indexes unchecked by the value as a signed
+ * word (0x26f02): a high-bit character a port gives sign extended, as
+ * console_port_read does (0x29c4e), reads the bytes before it. */
+static scpi_char_class scpi_engine_class(const scpi_char_class* classes,
+                                         int32_t character) {
+  return classes[(int16_t)character];
 }
 
 /* The next value from a port, its own routine's (0x26ef6). */
@@ -308,7 +269,8 @@ static int32_t scpi_engine_port_error(int16_t character) {
 
 /* scpi_char_upper's and its installer copy's body: a letter in upper
  * case, by its image's class table, which it indexes unchecked. */
-static uint32_t scpi_engine_upper(const scpi_char_class* classes, uint32_t character) {
+static uint32_t scpi_engine_upper(const scpi_char_class* classes,
+                                  uint32_t character) {
   /* Clears the lower-case bit, and the high byte of the value's
    * word with it (0x277e2). */
   static const uint32_t UPPER_CASE = 0xffff00df;
@@ -323,14 +285,16 @@ static uint32_t scpi_engine_upper(const scpi_char_class* classes, uint32_t chara
  * exponent, E and a signed integer, after its mantissa; an E with no
  * digits after it starts the suffix; classes is its image's class
  * table. */
-static int32_t scpi_engine_scan_exponent(const scpi_char_class* classes, int32_t character,
-                                         scpi_number* number, scpi_port* input) {
+static int32_t scpi_engine_scan_exponent(const scpi_char_class* classes,
+                                         int32_t character, scpi_number* number,
+                                         scpi_port* input) {
   static const char EXPONENT_LETTER = 'E';
   /* The most an exponent takes before another digit, a word's
    * tenth. */
   static const int16_t EXPONENT_MOST_TENTHS = 0xccb;
 
-  if ((int16_t)scpi_engine_upper(classes, (int16_t)character) != EXPONENT_LETTER) {
+  if ((int16_t)scpi_engine_upper(classes, (int16_t)character) !=
+      EXPONENT_LETTER) {
     input->methods->unread(input);
     number->exponent = 0;
     return 0;
@@ -338,8 +302,8 @@ static int32_t scpi_engine_scan_exponent(const scpi_char_class* classes, int32_t
   int16_t next = scpi_engine_read(input);
   scpi_char_class class = classes[next];
 
-  if (class != SCPI_CLASS_DIGIT && class != SCPI_CLASS_PLUS && class != SCPI_CLASS_MINUS &&
-      class != SCPI_CLASS_WHITE) {
+  if (class != SCPI_CLASS_DIGIT && class != SCPI_CLASS_PLUS &&
+      class != SCPI_CLASS_MINUS && class != SCPI_CLASS_WHITE) {
     number->suffix[number->suffix_length++] = EXPONENT_LETTER;
     input->methods->unread(input);
     number->exponent = 0;
@@ -414,14 +378,15 @@ static int8_t scpi_engine_multiplier(int32_t name) {
 /* scpi_match_suffix's and its installer copy's body: the unit a suffix
  * names, its index plus one, and its power of ten, allowing a one- or
  * two-letter multiplier before a unit that takes one; 0 for none. */
-static int16_t scpi_engine_match_suffix(int32_t length, char* suffix, scpi_unit* units,
-                                        int16_t* scale) {
+static int16_t scpi_engine_match_suffix(int32_t length, char* suffix,
+                                        scpi_unit* units, int16_t* scale) {
   static const int16_t MULTIPLIER_MOST = 2;
   static const uint8_t LETTER_BITS = 8;
   int16_t count = length;
 
   for (int16_t index = 0; units[index].name != 0; index++) {
-    int16_t matched = scpi_compare_suffix_tail(suffix, count, units[index].name);
+    int16_t matched =
+        scpi_compare_suffix_tail(suffix, count, units[index].name);
 
     if (matched == 0 || count - matched > MULTIPLIER_MOST) {
       continue;
@@ -459,8 +424,8 @@ static int32_t scpi_engine_apply_suffix(scpi_number* number, scpi_unit* units) {
   if (units == 0) {
     return STATUS_SCPI_SUFFIX_NOT_ALLOWED;
   }
-  number->unit =
-      scpi_engine_match_suffix(number->suffix_length, number->suffix, units, &number->scale);
+  number->unit = scpi_engine_match_suffix(number->suffix_length, number->suffix,
+                                          units, &number->scale);
   if (number->unit == 0) {
     return STATUS_SCPI_INVALID_SUFFIX;
   }

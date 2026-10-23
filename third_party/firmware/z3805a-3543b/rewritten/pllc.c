@@ -19,21 +19,6 @@ typedef union pllc_param {
   scpi_action_param action;
 } pllc_param;
 
-/* The descriptor type validate_or_doaction, get_setup_vars and
- * finish_scpi_cmd accept and do nothing with (scpi_param_type has no
- * member for it). */
-#define PLLC_PARAM_TYPE_IGNORED 3
-
-/* A numeric descriptor's is_integer values (structures.md, "The pllc
- * task's SCPI requests"): a float, an integer, index + 1 longs, two. */
-#define PLLC_VALUE_FLOAT 0
-
-#define PLLC_VALUE_INTEGER 1
-
-#define PLLC_VALUE_LIST 2
-
-#define PLLC_VALUE_PAIR 3
-
 /* A descriptor's flags: the request goes to the GPS through
  * pll_scpi_send_to_loop, the value is saved in the NV register, and in
  * the EEPROM record at 0x400000. */
@@ -104,7 +89,7 @@ void get_setup_vars(pllc_request* request) {
       pll_scpi_setting = request->setting;
       break;
     case SCPI_PARAM_ACTION:
-    case PLLC_PARAM_TYPE_IGNORED:
+    case SCPI_PARAM_DOUBLE:
       break;
     default:
       fatal_error("pll_scpi: get_setup_vars() -- unknown structure type");
@@ -191,7 +176,7 @@ void validate_or_doaction(char* needs_loop, char* reply_pending) {
       *needs_loop = 0;
       pll_scpi_do_action((uint8_t*)reply_pending);
       break;
-    case PLLC_PARAM_TYPE_IGNORED:
+    case SCPI_PARAM_DOUBLE:
       break;
     default:
       fatal_error("pll_scpi: validate_or_doaction() -- unknown structure type");
@@ -358,7 +343,7 @@ void finish_scpi_cmd(void) {
                                                      (int8_t)pll_scpi_source);
       break;
     case SCPI_PARAM_ACTION:
-    case PLLC_PARAM_TYPE_IGNORED:
+    case SCPI_PARAM_DOUBLE:
       break;
     default:
       fatal_error("pll_scpi: finish_scpi_cmd() -- unknown structure type");

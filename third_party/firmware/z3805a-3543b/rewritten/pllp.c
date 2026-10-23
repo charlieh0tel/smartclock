@@ -276,8 +276,8 @@ pll_screen_mode pll_mode(void) {
 
 /* Whether the fine sub-state slews the phase. */
 static bool pllp_fine_slewing(void) {
-  return (int8_t)pll.fine_state >= PLL_FINE_SLEW_FIRST &&
-         (int8_t)pll.fine_state <= PLL_FINE_SLEW_LAST;
+  return (int8_t)pll.fine_state >= PLL_FINE_SLEW &&
+         (int8_t)pll.fine_state <= PLL_FINE_FINE_SLEW;
 }
 
 /* The power-up mode's suffix, the screen's ladder: 0 none, OCXO

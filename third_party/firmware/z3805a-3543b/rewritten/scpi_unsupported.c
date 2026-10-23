@@ -7,9 +7,9 @@
  * its own, so the types and prototypes it declares are in scope; each function
  * here keeps its generated prototype.
  *
- * Each stub hands scpi_query_failed the call where it takes the
- * response, as the image does (0x2a1be): emptying that "text" zeroes the
- * call's query word, scpi_call.query, at +4.  Some report the engine's
+ * Each stub hands scpi_query_failed the call (0x2a1be), which reports
+ * the code with the call's input, at +0x12, and clears its query word,
+ * scpi_call.query, at +4 (0x29ade to 0x29b00).  Some report the engine's
  * undefined header, STATUS_SCPI_UNDEFINED_HEADER, and the rest the
  * status table's, STATUS_UNDEFINED_HEADER; both are -113. */
 

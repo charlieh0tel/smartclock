@@ -261,7 +261,16 @@ as `char_slot` (the image's `smartclock.h`), a 4-byte structure whose
 first byte, its value, lies where this compiler puts a `char`'s, at the
 slot's start, for Ghidra and gcc alike; gcc pads a 2-byte one to the
 slot's end.  The routines called that way take it too, and a `call` row
-gives each such call its callee's prototype.
+gives each such call its callee's prototype.  Where the hand-written C
+calls the image's own routine through a pointer and keeps its
+prototype, it lays the slots itself: the GPS task's argument encoders,
+from `oncore_messages` (`0x4f9c4`), take the index and the output
+pointer as one structure at the 2-byte slot's start
+(`gps_requests_encode`); and a port's echo, which holds the image's
+`drtb_putc` or `sci_putc` where the image's reconfiguration stored it
+(`0x1dd54`) and gcc's where the C's did, is given its character at both
+ends of a 4-byte slot (`duart.h`, `duart_echo_slot`), where either
+copy reads it.
 
 ## Decompiling with Ghidra
 
@@ -874,12 +883,11 @@ A table in ROM that only hand-written code reads is a `static const`
 the same way, its values taken from the image and its comment naming
 the image's label and address: `fpga.c`'s `fpga_bits` is
 `fpga_bit_table` (`0x41310`).  A table the decompiler's functions
-read too keeps the image's name and is `const` but not `static`:
-`stdlib.c` defines `ctype_table`, which `gps_receive` and `doprnt` read,
-and the exporter, finding the definition in a file of the folder,
-all of which it includes, declares its extern `const` and gives it no
-`.set`, so that they read the C's; a table of pointers is itself
-`const`, `T *const name[n]`, as its definition.  So with the generated
+read too keeps the image's name and is `const` but not `static`, and
+the exporter, finding the definition in a file of the folder, all of
+which it includes, declares its extern `const` and gives it no `.set`,
+so that they read the C's; a table of pointers is itself `const`,
+`T *const name[n]`, as its definition.  So with the generated
 SCPI tree, `scpi_tree_data.c`, a file of data alone, every record of
 it, and the installer's, `installer/installer_scpi_tree_data.c`
 (docs/scpi/README.md, "As C"): the parser's routines, decompiled
@@ -890,7 +898,10 @@ table: `clock_days_before_month`'s unchecked month reads the word
 before `days_before_month` and those after it, `exception_name` reads
 `exception_names` by an unchecked, unaligned offset, and
 `status_negative_conditions` is indexed by any negative condition, so
-it keeps the image's, and `status_report_messages` with it; `random_dither` reads the
+it keeps the image's, and `status_report_messages` with it; `atoi`
+reads `ctype_table` (`0x5ed98`) and the SCPI lexer `scpi_char_classes`
+(`0x277ec`) by a sign-extended character, a high-bit one before the
+table (`0x5ed0a`, `0x26f02`), so both are the image's; `random_dither` reads the
 byte after `dither_table`, which its copy keeps as a 129th entry.  Not
 where a table's address outlives the call in RAM, which the harness
 compares: the DUART's loopback test leaves pointers into its strings,
@@ -1359,7 +1370,11 @@ state, its tail wrapping, for `error_queue_pop`; `:SYSTem:LANGuage`'s
 texts in each case, `:DIAGnostic:TEST?`'s every choice and one past,
 the installer's with the boot code's results set; `longjmp`'s buffer
 and values, `atexit`'s NULL and full table, `sign_extend_bits`' every
-kind of width, and `console_port_read`'s read errors.  `setjmp`
+kind of width, and `console_port_read`'s read errors; each GPS message
+through `gps_request_build`'s encoders; the line readers' echo as a
+routine reading where the image's do, off and 0; `atoi`'s high-bit
+characters; and SCPI lines with high-bit characters, before and in
+a keyword and after a number.  `setjmp`
 leaves D1, A0 and A1 as it found them too (`KEPT_BESIDE`), and the
 kernel's priority service returns an old priority of `0x40`, so that
 `task_set_priority`'s step from it shows.

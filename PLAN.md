@@ -1309,16 +1309,16 @@ view cannot drift apart.  The library, bottom up:
      `scpi_handlers.c`.
      Then the ROM tables only hand-written code reads become its own
      `static const` tables, their values from the image: `fpga_bits`,
-     the lexer's character classes, the unit multipliers, the
+     the unit multipliers, the
      parameter kinds' errors, the serial and NV defaults, the klok
      templates, the bit masks, and libc's powers of ten and
      coefficients.  The image indexes `fpga_bit_table` unchecked, so
      the harness passes `fpga_set_bit` and `fpga_set_field` only its
      six entries (`IN_RANGE`).
-     And `ctype_table`, which the decompiler's `gps_receive` and
-     `doprnt` read too, is `libc.c`'s, its bits named: the exporter
-     declares a table the hand-written C defines `const` and gives it
-     no `.set`.
+     `ctype_table` and the lexer's character classes stay the
+     image's: `atoi` and the lexer index them by a sign-extended
+     character, which reads the bytes before each (2026-10-22, reversing
+     `ctype_table`'s definition in the C).
      Then the SCPI engine's types named by subject, `scpi_engine_`
      dropped (`scpi_node`, `scpi_call`, `scpi_arena`, ...), its error
      queue the status model's (`status_error_queue`), and the main
@@ -1891,6 +1891,19 @@ view cannot drift apart.  The library, bottom up:
   parts ignore, a stray pointer's, ends the call as a write to ROM did.
   Not modeled: the primary's own writes
   to ROM's range, which on the board reach the flash too.
+
+  A pre-publication review of the rewrite (2026-10-22) found three
+  calls into the image's code in gcc's layout or against the image's
+  table, each now with its case and planted bug: `gps_request_build`
+  called the ROM encoders with gcc's 4-byte slots, so the index's high
+  bytes made the output pointer; the SCPI lexer looked up a
+  sign-extended high-bit character in a C copy of its class table, not
+  the bytes before the image's, and so `atoi` in the C's `ctype_table`;
+  and the line readers passed their echo the character where gcc reads
+  it, not at the 2-byte slot's start the image's `drtb_putc` reads.  The
+  C copies of the two tables are gone; the encoders take one structure
+  laid as the image's slots; the echo is given the character at both
+  ends of its slot, since it may hold either copy.
 
   Left for a later pass: the firmware routines' names do not carry
   their file's prefix as the hand-written helpers do (`ti.c`'s

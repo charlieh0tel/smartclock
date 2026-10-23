@@ -1,10 +1,10 @@
 /* What the SCPI lexer shares with the installer's copy of it
  * (scpi_lexer.c, installer_scpi_lexer.c): the lexer's bodies, which
- * both copies' routines call, each with its image's class table where
- * it reads one unchecked.  The exported C includes the hand-written
- * headers after its own declarations and before the hand-written .c
- * files, so every one of them can use it.  docs/firmware/structures.md,
- * "The SCPI lexer's token and port", has the records. */
+ * both copies' routines call, each with its image's class table, which
+ * it reads unchecked (scpi_engine_class).  The exported C includes the
+ * hand-written headers after its own declarations and before the hand-written
+ * .c files, so every one of them can use it.  docs/firmware/structures.md, "The
+ * SCPI lexer's token and port", has the records. */
 
 /* A non-decimal number's radix letters. */
 enum {
@@ -15,9 +15,10 @@ enum {
 
 /* A lexer's failure on a character: its port error, or else the
  * error given, the character given back. */
-static int32_t scpi_engine_reject(scpi_port* input, int16_t character,
+static int32_t scpi_engine_reject(const scpi_char_class* classes,
+                                  scpi_port* input, int16_t character,
                                   int32_t error) {
-  if (scpi_engine_class(character) == SCPI_CLASS_PORT_ERROR) {
+  if (scpi_engine_class(classes, character) == SCPI_CLASS_PORT_ERROR) {
     return scpi_engine_port_error(character);
   }
   input->methods->unread(input);
@@ -26,7 +27,8 @@ static int32_t scpi_engine_reject(scpi_port* input, int16_t character,
 
 /* A keyword from its first character: letters in upper case, digits and
  * underscores as they are, to 16 (0x26f8c). */
-static int32_t scpi_engine_scan_keyword(scpi_port* input, scpi_keyword* keyword,
+static int32_t scpi_engine_scan_keyword(const scpi_char_class* classes,
+                                        scpi_port* input, scpi_keyword* keyword,
                                         int16_t first) {
   static const uint8_t UPPER_CASE = 0xdf;
   /* A keyword's most characters. */
@@ -39,8 +41,10 @@ static int32_t scpi_engine_scan_keyword(scpi_port* input, scpi_keyword* keyword,
     keyword->text[count++] =
         class == SCPI_CLASS_LETTER ? character & UPPER_CASE : character;
     character = scpi_engine_read(input);
-    class = scpi_engine_class(character);
-    if (class > SCPI_CLASS_UNDERSCORE) {
+    class = scpi_engine_class(classes, character);
+    /* Signed, as the image compares it (0x26fc0): a byte before the
+     * table above 0x7f continues the keyword. */
+    if ((int8_t)class > SCPI_CLASS_UNDERSCORE) {
       break;
     }
     if (count >= KEYWORD_MOST) {
@@ -54,12 +58,13 @@ static int32_t scpi_engine_scan_keyword(scpi_port* input, scpi_keyword* keyword,
   if (character == ':') {
     return SCPI_TOKEN_KEYWORD_COLON;
   }
-  return scpi_engine_reject(input, character, SCPI_TOKEN_KEYWORD);
+  return scpi_engine_reject(classes, input, character, SCPI_TOKEN_KEYWORD);
 }
 
 /* A block's header after its #: a digit, 0 for an indefinite block, or
  * the count of the length's digits and the length (0x27076). */
-static int32_t scpi_engine_scan_block(scpi_port* input, scpi_token_block* block,
+static int32_t scpi_engine_scan_block(const scpi_char_class* classes,
+                                      scpi_port* input, scpi_token_block* block,
                                       int16_t count_digit) {
   int16_t digits = count_digit - '0';
 
@@ -73,8 +78,9 @@ static int32_t scpi_engine_scan_block(scpi_port* input, scpi_token_block* block,
   for (int16_t index = 0; index < digits; index++) {
     int16_t character = scpi_engine_read(input);
 
-    if (scpi_engine_class(character) != SCPI_CLASS_DIGIT) {
-      return scpi_engine_reject(input, character, STATUS_SCPI_INVALID_BLOCK);
+    if (scpi_engine_class(classes, character) != SCPI_CLASS_DIGIT) {
+      return scpi_engine_reject(classes, input, character,
+                                STATUS_SCPI_INVALID_BLOCK);
     }
     length = length * SCPI_NUMBER_BASE + (character - '0');
   }
@@ -84,7 +90,8 @@ static int32_t scpi_engine_scan_block(scpi_port* input, scpi_token_block* block,
 
 /* A non-decimal number after its # and radix letter, base 2 to the
  * bits; digits past 32 bits make it out of range (0x27148). */
-static int32_t scpi_engine_scan_radix(scpi_port* input, scpi_token* token,
+static int32_t scpi_engine_scan_radix(const scpi_char_class* classes,
+                                      scpi_port* input, scpi_token* token,
                                       int16_t base, int16_t bits) {
   static const uint8_t UPPER_CASE = 0xdf;
   static const int16_t LONG_BITS = 32;
@@ -98,7 +105,7 @@ static int32_t scpi_engine_scan_radix(scpi_port* input, scpi_token* token,
 
   for (;;) {
     int16_t character = scpi_engine_read(input);
-    scpi_char_class class = scpi_engine_class(character);
+    scpi_char_class class = scpi_engine_class(classes, character);
     int16_t digit;
 
     if (class == SCPI_CLASS_LETTER) {
@@ -106,7 +113,8 @@ static int32_t scpi_engine_scan_radix(scpi_port* input, scpi_token* token,
     } else if (class == SCPI_CLASS_DIGIT) {
       digit = character - '0';
     } else if (first) {
-      return scpi_engine_reject(input, character, STATUS_SCPI_INVALID_DIGIT);
+      return scpi_engine_reject(classes, input, character,
+                                STATUS_SCPI_INVALID_DIGIT);
     } else {
       input->methods->unread(input);
       if (class == SCPI_CLASS_PORT_ERROR) {
@@ -133,30 +141,33 @@ static int32_t scpi_engine_scan_radix(scpi_port* input, scpi_token* token,
 
 /* What follows a #: a block's header, or a non-decimal number by its
  * radix letter (0x27064). */
-static int32_t scpi_engine_scan_hash(scpi_port* input, scpi_token* token) {
+static int32_t scpi_engine_scan_hash(const scpi_char_class* classes,
+                                     scpi_port* input, scpi_token* token) {
   static const uint8_t UPPER_CASE = 0xdf;
   static const int16_t HEXADECIMAL = 16;
   static const int16_t OCTAL = 8;
   static const int16_t BINARY = 2;
   int16_t character = scpi_engine_read(input);
 
-  if (scpi_engine_class(character) == SCPI_CLASS_DIGIT) {
-    return scpi_engine_scan_block(input, &token->block, character);
+  if (scpi_engine_class(classes, character) == SCPI_CLASS_DIGIT) {
+    return scpi_engine_scan_block(classes, input, &token->block, character);
   }
   switch (character & UPPER_CASE) {
     case SCPI_RADIX_HEXADECIMAL:
-      return scpi_engine_scan_radix(input, token, HEXADECIMAL, 4);
+      return scpi_engine_scan_radix(classes, input, token, HEXADECIMAL, 4);
     case SCPI_RADIX_BINARY:
-      return scpi_engine_scan_radix(input, token, BINARY, 1);
+      return scpi_engine_scan_radix(classes, input, token, BINARY, 1);
     case SCPI_RADIX_OCTAL:
-      return scpi_engine_scan_radix(input, token, OCTAL, 3);
+      return scpi_engine_scan_radix(classes, input, token, OCTAL, 3);
   }
-  return scpi_engine_reject(input, character, STATUS_SCPI_INVALID_RADIX);
+  return scpi_engine_reject(classes, input, character,
+                            STATUS_SCPI_INVALID_RADIX);
 }
 
 /* A quoted string, each doubled quote one, into room the arena gives:
  * its text, NUL-terminated, the room after it given back (0x27212). */
-static int32_t scpi_engine_scan_string(scpi_port* input,
+static int32_t scpi_engine_scan_string(const scpi_char_class* classes,
+                                       scpi_port* input,
                                        scpi_token_string* string, int16_t quote,
                                        scpi_arena* arena) {
   /* A string's most characters with its NUL, the room scpi_scan_token
@@ -196,7 +207,8 @@ static int32_t scpi_engine_scan_string(scpi_port* input,
   input->methods->unread(input);
   return STATUS_SCPI_TOO_MUCH_DATA;
 ended:
-  return scpi_engine_reject(input, character, STATUS_SCPI_INVALID_STRING);
+  return scpi_engine_reject(classes, input, character,
+                            STATUS_SCPI_INVALID_STRING);
 }
 
 /* The token scanner reads a number with it. */
@@ -214,9 +226,10 @@ static int32_t scpi_engine_scan_token(const scpi_char_class* classes,
                                       scpi_arena* arena) {
   int16_t character = scpi_engine_read(input);
 
-  switch (scpi_engine_class(character)) {
+  switch (scpi_engine_class(classes, character)) {
     case SCPI_CLASS_LETTER:
-      return scpi_engine_scan_keyword(input, &token->keyword, character);
+      return scpi_engine_scan_keyword(classes, input, &token->keyword,
+                                      character);
     case SCPI_CLASS_DIGIT:
     case SCPI_CLASS_POINT:
       token->number.negative = 0;
@@ -226,31 +239,35 @@ static int32_t scpi_engine_scan_token(const scpi_char_class* classes,
     case SCPI_CLASS_MINUS: {
       token->number.negative = character == '-';
       int16_t next = scpi_engine_read(input);
-      scpi_char_class class = scpi_engine_class(next);
+      scpi_char_class class = scpi_engine_class(classes, next);
 
       if (class == SCPI_CLASS_DIGIT || class == SCPI_CLASS_POINT) {
         return scpi_engine_scan_number(classes, &token->number, 1, next, input);
       }
-      return scpi_engine_reject(input, next, STATUS_SCPI_INVALID_NUMBER);
+      return scpi_engine_reject(classes, input, next,
+                                STATUS_SCPI_INVALID_NUMBER);
     }
     case SCPI_CLASS_WHITE:
       do {
         character = scpi_engine_read(input);
-      } while (scpi_engine_class(character) == SCPI_CLASS_WHITE);
+      } while (scpi_engine_class(classes, character) == SCPI_CLASS_WHITE);
       input->methods->unread(input);
       return SCPI_TOKEN_WHITE;
     case SCPI_CLASS_HASH:
-      return scpi_engine_scan_hash(input, token);
+      return scpi_engine_scan_hash(classes, input, token);
     case SCPI_CLASS_QUOTE:
-      return scpi_engine_scan_string(input, &token->string, character, arena);
+      return scpi_engine_scan_string(classes, input, &token->string, character,
+                                     arena);
     case SCPI_CLASS_DOLLAR: {
       int16_t digit = scpi_engine_read(input);
 
-      if (scpi_engine_class(digit) == SCPI_CLASS_DIGIT && digit != '0') {
+      if (scpi_engine_class(classes, digit) == SCPI_CLASS_DIGIT &&
+          digit != '0') {
         token->digit = digit - '0';
         return SCPI_TOKEN_DOLLAR;
       }
-      return scpi_engine_reject(input, digit, STATUS_SCPI_INVALID_CHARACTER);
+      return scpi_engine_reject(classes, input, digit,
+                                STATUS_SCPI_INVALID_CHARACTER);
     }
     case SCPI_CLASS_PORT_ERROR:
       return scpi_engine_port_error(character);
@@ -281,7 +298,8 @@ static int32_t scpi_engine_scan_token(const scpi_char_class* classes,
 
 /* scpi_skip_to_terminator's and its installer copy's body: reads to the
  * next newline or an end, then gives the last value back. */
-static void scpi_engine_skip_to_terminator(scpi_port* input) {
+static void scpi_engine_skip_to_terminator(const scpi_char_class* classes,
+                                           scpi_port* input) {
   scpi_port_read_function* read = input->read;
   int16_t character;
 
@@ -291,7 +309,7 @@ static void scpi_engine_skip_to_terminator(scpi_port* input) {
         character != SCPI_PORT_SKIPPED_END) {
       break;
     }
-  } while (scpi_engine_class(character) != SCPI_CLASS_NEWLINE);
+  } while (scpi_engine_class(classes, character) != SCPI_CLASS_NEWLINE);
   input->methods->unread(input);
 }
 
@@ -316,14 +334,15 @@ static int32_t scpi_engine_scan_number(const scpi_char_class* classes,
   int16_t next = (int16_t)have_character != 0
                      ? (int16_t)character
                      : (int16_t)scpi_engine_read(input);
-  scpi_char_class class = scpi_engine_class(next);
+  scpi_char_class class = scpi_engine_class(classes, next);
   int16_t digits = 0;
   int16_t point = 0;
   int16_t shift = 0;
   bool leading_zero = false;
 
   /* Leading zeros and the point before the first other digit. */
-  for (;; next = scpi_engine_read(input), class = scpi_engine_class(next)) {
+  for (;; next = scpi_engine_read(input),
+          class = scpi_engine_class(classes, next)) {
     if (next == '0') {
       shift -= point;
       leading_zero = true;
@@ -346,7 +365,8 @@ static int32_t scpi_engine_scan_number(const scpi_char_class* classes,
     }
   }
   /* The digits kept. */
-  for (;; next = scpi_engine_read(input), class = scpi_engine_class(next)) {
+  for (;; next = scpi_engine_read(input),
+          class = scpi_engine_class(classes, next)) {
     if (class == SCPI_CLASS_DIGIT) {
       number->digits[digits++] = next - '0';
       shift -= point;
@@ -377,7 +397,7 @@ static int32_t scpi_engine_scan_number(const scpi_char_class* classes,
   /* The digits past 16, dropped. */
   for (;;) {
     next = scpi_engine_read(input);
-    class = scpi_engine_class(next);
+    class = scpi_engine_class(classes, next);
     if (class == SCPI_CLASS_DIGIT) {
       if (point == 0 && ++shift > WORD_MOST - 1) {
         return STATUS_SCPI_TOO_MANY_DIGITS;
@@ -394,7 +414,7 @@ static int32_t scpi_engine_scan_number(const scpi_char_class* classes,
 exponent:
   while (class == SCPI_CLASS_WHITE) {
     next = scpi_engine_read(input);
-    class = scpi_engine_class(next);
+    class = scpi_engine_class(classes, next);
   }
   number->suffix_length = 0;
   int32_t error = scpi_engine_scan_exponent(classes, next, number, input);
@@ -410,7 +430,7 @@ exponent:
   number->exponent = exponent;
   do {
     next = scpi_engine_read(input);
-    class = scpi_engine_class(next);
+    class = scpi_engine_class(classes, next);
   } while (class == SCPI_CLASS_WHITE);
   /* The units suffix, which starts with a letter or a slash. */
   int16_t length = number->suffix_length;
@@ -424,7 +444,7 @@ exponent:
       }
       number->suffix[length++] = scpi_engine_upper(classes, next);
       next = scpi_engine_read(input);
-      class = scpi_engine_class(next);
+      class = scpi_engine_class(classes, next);
     }
   }
   if (class == SCPI_CLASS_PORT_ERROR) {

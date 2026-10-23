@@ -7,26 +7,10 @@
 /* |j| (0x5ec9e). */
 int32_t abs(int32_t j) { return j < 0 ? -j : j; }
 
-/* Each character's ctype bits, indexed by the character plus one, so
- * that EOF, -1, has a slot, and 0 above 0x7f: the image's table at
- * 0x5ed98, which atoi and, through the export's extern, gps_receive
- * and doprnt read. */
-const uint8_t ctype_table[257] = {
-    [1 + 0x00 ... 1 + 0x08] = LIBC_CTYPE_CONTROL,
-    [1 + 0x09 ... 1 + 0x0d] = LIBC_CTYPE_SPACE | LIBC_CTYPE_CONTROL,
-    [1 + 0x0e ... 1 + 0x1f] = LIBC_CTYPE_CONTROL,
-    [1 + ' '] = LIBC_CTYPE_SPACE | LIBC_CTYPE_BLANK,
-    [1 + '!' ... 1 + '/'] = LIBC_CTYPE_PUNCTUATION,
-    [1 + '0' ... 1 + '9'] = LIBC_CTYPE_DIGIT | LIBC_CTYPE_HEX,
-    [1 + ':' ... 1 + '@'] = LIBC_CTYPE_PUNCTUATION,
-    [1 + 'A' ... 1 + 'F'] = LIBC_CTYPE_UPPER | LIBC_CTYPE_HEX,
-    [1 + 'G' ... 1 + 'Z'] = LIBC_CTYPE_UPPER,
-    [1 + '[' ... 1 + '`'] = LIBC_CTYPE_PUNCTUATION,
-    [1 + 'a' ... 1 + 'f'] = LIBC_CTYPE_LOWER | LIBC_CTYPE_HEX,
-    [1 + 'g' ... 1 + 'z'] = LIBC_CTYPE_LOWER,
-    [1 + '{' ... 1 + '~'] = LIBC_CTYPE_PUNCTUATION,
-    [1 + 0x7f] = LIBC_CTYPE_CONTROL,
-};
+/* ctype_table (0x5ed98), each character's ctype bits indexed by the
+ * character plus one, so that EOF, -1, has a slot, is the image's: atoi
+ * indexes it by a sign-extended character (0x5ed0a), which reads the
+ * 128 bytes before it, its own code, for 0x80 to 0xfe. */
 
 /* A decimal integer after any spaces and a sign (0x5ecfa).  It counts
  * down from zero, so that the most negative int parses. */

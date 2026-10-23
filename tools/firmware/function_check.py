@@ -24,9 +24,9 @@ in one, every case, or every other if supervisor code runs it too
 (TASK_STATUS, task_context); end its endless loop at a count
 (COUNTED_LOOPS); for the stack report, find the running task's stacks
 (TASK_STACKS); and, in a given case, take an interrupt part way
-(INTERRUPTS), start with variables set (PRESETS), the installer's
-flash erased (FLASH), or its arguments at the stack's edge
-(STACK_EDGE).  Each case's devices answer as harness.DEVICE_CASES
+(INTERRUPTS), start with variables set (PRESETS), a value or one
+made for the machine, the installer's flash erased (FLASH), or its
+arguments at the stack's edge (STACK_EDGE).  Each case's devices answer as harness.DEVICE_CASES
 says, by the case.  Both copies must leave the status register's
 system byte the same, its condition codes too for a function whose
 convention returns in them (returns=ccr), and the registers the
@@ -118,6 +118,7 @@ from harness import (
     reset,
     snapshot,
     stopped_outcome,
+    stub,
     tree_steps,
     twin_arguments,
     twins,
@@ -720,7 +721,14 @@ SIGN_WIDTHS = [0, 1, 4, 5, 8, 11, 12, 16, 17, 24, 31, 32, 33, 255]
 # gives them (stdio.c): none, each bit, and all; with the line read, its
 # next past its end, so that the port reads the console.
 READ_ERRORS = [0, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF]
+# atoi's texts with a high-bit character, which it indexes ctype_table
+# by sign extended (0x5ed0a), reading the 128 bytes before the table,
+# atoi's own code: 0x90, whose byte there has the space bit, before a
+# number, 0x95, the digit's, in one and after one, and 0xa0, both, and
+# 0xff, the EOF entry, neither.
+ATOI_TEXTS = [b"\x9012\0", b"1\x952\0", b"\x95\0", b"\xa0-3\0", b"\xff4\0", b"7\x90\0"]
 LIBRARY_CASES = {
+    "atoi": [{0: text} for text in ATOI_TEXTS],
     **{name: [{0: JUMP_BUFFER, 1: value} for value in JUMP_VALUES] for name in ("longjmp", "installer_longjmp")},
     **{
         f"{prefix}atexit": [{0: 0}, {0: 0, PRESETS: {f"{prefix}atexit_count": ATEXIT_MOST}}]
@@ -745,6 +753,41 @@ LIBRARY_CASES = {
         for prefix in ("", "installer_")
     },
 }
+# The line readers' echoes as a routine of the image's reads its
+# character, at the start of a 2-byte slot, as drtb_putc, sci_putc and
+# installer_drtb_putc do (0x1ddfa, 0x201b4, installer::0x10386c), which
+# the image's reconfiguration stores there (0x1dd54): a routine at
+# harness.ROUTINES, whose calls are compared, its parameter's position
+# past the reader's two.  And the echo off, as the image's
+# reconfiguration leaves it, its echo_none routine, a bare rts (0x1d570,
+# 0x1f6c8), which the installer has none of, never setting its echo;
+# and 0, as RAM starts, which the reader calls as it calls any echo, not
+# testing for none (0x1d8ca).  By reader, its port's echo and its
+# echo_none; each in four cases, reading a line into a buffer of 32
+# bytes.
+ECHO_POSITION = 2
+ECHO_CASES = 4
+ECHO_LINE = 32
+IMAGE_ECHOES = {
+    "drtb_gets": ("duartb.echo", 0x1D570),
+    "sci_gets": ("sci.echo", 0x1F6C8),
+    "installer_drtb_gets": ("installer_duartb.echo", None),
+}
+
+
+def echo_routine(m: Machine, types: Types) -> int:
+    """A routine at harness.ROUTINES of the echoes' type, putc_function."""
+    return stub(m, types, types.routine("putc_function *"), ECHO_POSITION)
+
+
+# gps_request_build's requests with their arguments, each of the GPS
+# task's 49 messages, GPS_ARGUMENTS_SET, the 0 mode (smartclock.h),
+# which runs the message's encoders, the image's own routines, taking an
+# index in a 2-byte slot (0x4f9c6); with eight distinct arguments and
+# room for the longest message.
+GPS_MESSAGES = 49
+GPS_ARGUMENTS = struct.pack(">8I", *(0x01020304 * (i + 1) for i in range(8)))
+GPS_MESSAGE_ROOM = 128
 GIVEN_CASES = {
     **INTERRUPT_CASES,
     **STATUS_CASES,
@@ -761,6 +804,18 @@ GIVEN_CASES = {
         {0: text_parameter(record), FLASH: erased_flash} for record in FLASH_RECORDS
     ],
     "scpi_parse_text": [{0: token} for token in TEXT_TOKENS],
+    **{
+        reader: [
+            {0: bytes(ECHO_LINE), 1: ECHO_LINE, PRESETS: {echo: routine}}
+            for routine in (echo_routine, echo_none, 0)
+            if routine is not None
+            for _ in range(ECHO_CASES)
+        ]
+        for reader, (echo, echo_none) in IMAGE_ECHOES.items()
+    },
+    "gps_request_build": [
+        {0: message, 1: 0, 2: GPS_ARGUMENTS, 3: bytes(GPS_MESSAGE_ROOM)} for message in range(GPS_MESSAGES)
+    ],
     "vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "installer_vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "clamp_double_to_step_and_limits": [
@@ -959,8 +1014,14 @@ class ScpiSession:
 # (scpi_led.c), and the messages after it, and :DIAGnostic:TEST? on a
 # choice; the installer's "PFORTH", an execution error, and its
 # :DIAGnostic:TEST? on a test and past the last, alone and with units
-# after it in its message, which its failure skips.  And from the
-# session's tree, lines that reach every child list (tree_lines).
+# after it in its message, which its failure skips.  High-bit
+# characters, which console_port_read gives sign extended (0x29c4e) and
+# the lexer looks up so, before its class table (0x26f02): 0xfe, -2,
+# whose byte there, 0x4e, is no class, 0xf8, -8, whose is a letter's,
+# and 0xf9, -7, whose, 0xdf, a keyword reads as a signed class, below
+# the letters' (0x26fc0): alone, in a keyword and after a number.  And
+# from the session's tree, lines that reach every child list
+# (tree_lines).
 # LANGUAGE in a line is its session's language; ENDING the message
 # that ends it.
 LANGUAGE = b"{language}"
@@ -973,6 +1034,10 @@ SCPI_LINES = [
     b":SYST:ERR?;:SYST:ERR?;*OPC?\n" + ENDING,
     b":SYST:LANG " + LANGUAGE + b" junk\n" + ENDING,
     b"*IDN?;\n",
+    b"\xfe\n:SYST:ERR?\n" + ENDING,
+    b"\xf8\n:SYST:ERR?\n" + ENDING,
+    b"*ES\xf8E?\n:SYST:ERR?;*ES\xfeE?\n:SYST:ERR?;*ESE\xf9?\n:SYST:ERR?\n" + ENDING,
+    b"*ESE 1\xfe;*ESE 2\xf8\n:SYST:ERR?\n" + ENDING,
 ]
 SCPI_SESSIONS = {
     "scpi_interpret": ScpiSession(
@@ -2083,6 +2148,8 @@ def check_cases(
             m.uc.mem_write(address, contents)
         for target, value in presets.items():
             address, size = context.located[target]
+            if callable(value):
+                value = value(m, types)
             m.uc.mem_write(address, preset_bytes(value, size))
         target = None if step is None else tree_steps(m)[step]
         values = arguments(m, types, function.parameters, case, function.names, function.name, target)

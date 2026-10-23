@@ -56,7 +56,7 @@ int32_t installer_scpi_scan_token(scpi_port* input, scpi_token* token,
 /* Reads to the next newline or an end, then gives the last value back
  * (installer::0x105036). */
 void installer_scpi_skip_to_terminator(scpi_port* input) {
-  scpi_engine_skip_to_terminator(input);
+  scpi_engine_skip_to_terminator(installer_scpi_char_classes, input);
 }
 
 /* Scans a decimal number's mantissa, exponent and units suffix into a

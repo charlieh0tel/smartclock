@@ -1510,7 +1510,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2458c	function	gps_pps_monitor_reset	context	clears the GPS 1PPS monitor's state
 0x2470c	function	internal_pps_monitor_reset	context	clears the internal 1PPS monitor's state
 0x24984	function	pps_monitors_reset	context	clears both 1PPS monitors
-0x26a80	function	scpi_context_init	context	fills a parser context's eight fields; called by nothing	int32_t scpi_context_init(scpi_context *context, scpi_port *input, uint32_t word, scpi_path *path, scpi_call *call, scpi_arena *arena, uint32_t field_1e, scpi_child_list *main_tree, scpi_child_list *common_list)
+0x26a80	function	scpi_context_init	context	fills a parser context's eight fields; scpi_interpret calls it (0x2936a)	int32_t scpi_context_init(scpi_context *context, scpi_port *input, uint32_t word, scpi_path *path, scpi_call *call, scpi_arena *arena, uint32_t field_1e, scpi_child_list *main_tree, scpi_child_list *common_list)
 0x26ab6	function	scpi_parse_message_unit	context	parses one program message unit: its header, then its parameters, token by token; sets *reset_path, which has scpi_interpret reset the path before the next	int scpi_parse_message_unit(scpi_context *context, short *reset_path)
 0x26ab6	local	token	read	the lexer's token, which scpi_scan_token fills (0x26ad8) and the header routines and converters read (0x26ba0, 0x26c98); 0x26 bytes, to the word at -0x2 of A6	scpi_token @ -0x2c
 0x27388	function	scpi_skip_to_terminator	context	reads characters until a message terminator	void scpi_skip_to_terminator(scpi_port *input)

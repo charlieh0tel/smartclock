@@ -48,9 +48,3 @@ static pll_stage_result pll_stages_check_causes(pll_stage_result result) {
   }
   return pll.hold_causes != HOLD_CAUSE_NONE ? PLL_STAGE_RESULT_FAILED : result;
 }
-
-/* The fine sub-states that slew the phase, "fine slew" to "fine fine
- * slew" (docs/screen-format-strings.md, "Mode suffixes"); fine's other
- * states are not named yet. */
-static const uint8_t PLL_FINE_SLEW_FIRST = 7;
-static const uint8_t PLL_FINE_SLEW_LAST = 9;

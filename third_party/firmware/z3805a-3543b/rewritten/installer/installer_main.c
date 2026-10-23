@@ -1,5 +1,5 @@
 /* The installer's copy of the system's start (`applications/main`; the
- * primary's system_init, still the decompiler's, does far more).
+ * primary's system_init, in main.c, does far more).
  * Written by hand in place of the decompiler's (docs/firmware/README.md,
  * "Hand-written C"); it keeps its generated prototype. */
 

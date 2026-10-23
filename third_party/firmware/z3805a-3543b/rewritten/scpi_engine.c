@@ -7,8 +7,8 @@
  * prototype.  scpi_engine.h holds the parser's bodies, which the
  * installer's copies share. */
 
-/* Fills a parser context, the word from its long's low half; nothing
- * calls it (0x26a80). */
+/* Fills a parser context, the word from its long's low half;
+ * scpi_interpret calls it (0x2936a, 0x26a80). */
 int32_t scpi_context_init(scpi_context* context, scpi_port* input,
                           uint32_t word, scpi_path* path, scpi_call* call,
                           scpi_arena* arena, uint32_t field_1e,

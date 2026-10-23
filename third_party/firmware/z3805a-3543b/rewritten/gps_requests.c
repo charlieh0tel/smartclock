@@ -257,14 +257,23 @@ void gps_parse_options(void) {
 
 /* Runs an argument encoder of oncore_messages.  The table holds the
  * image's own routines, which return where the next byte goes in D0
- * alone, where gcc takes a pointer result from A0; so it is called as
- * returning a long. */
+ * alone, where gcc takes a pointer result from A0, so it is called as
+ * returning a long; and which take the index in a 2-byte slot, at SP+8,
+ * and out after it, at SP+10 (0x4eec2, as gps_request_build pushes them
+ * at 0x4f9c4), where gcc gives each a 4-byte slot; so the two are
+ * passed as one structure, which gcc lays from the slot's start. */
 static uint8_t* gps_requests_encode(oncore_encoder* encoder, int32_t* arguments,
                                     uint8_t index, uint8_t* out) {
-  typedef uint32_t encode_in_d0(int32_t* arguments, uint8_t index,
-                                uint8_t* out);
+  /* The index and out as the image's encoders read them. */
+  typedef struct __attribute__((packed)) encoder_slots {
+    uint8_t index;    /* +0x00: the argument's index */
+    uint8_t field_01; /* unread: the rest of the index's slot */
+    uint8_t* out;     /* +0x02: where its bytes go */
+  } encoder_slots;
+  typedef uint32_t encode_in_d0(int32_t* arguments, encoder_slots slots);
 
-  return (uint8_t*)((encode_in_d0*)encoder)(arguments, index, out);
+  return (uint8_t*)((encode_in_d0*)encoder)(
+      arguments, (encoder_slots){.index = index, .out = out});
 }
 
 /* Builds a request's message at out: "@@" and its ID, then its

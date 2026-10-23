@@ -2213,6 +2213,13 @@ struct pllc_request {
     uint32_t values[2];
 };
 
+typedef enum __attribute__((packed)) pllc_value_kind {
+    PLLC_VALUE_FLOAT=0,
+    PLLC_VALUE_INTEGER=1,
+    PLLC_VALUE_LIST=2,
+    PLLC_VALUE_PAIR=3
+} pllc_value_kind;
+
 typedef struct pps_exchange_message pps_exchange_message, *Ppps_exchange_message;
 
 struct pps_exchange_message {
@@ -2647,7 +2654,8 @@ typedef struct scpi_action_param scpi_action_param, *Pscpi_action_param;
 typedef enum __attribute__((packed)) scpi_param_type {
     SCPI_PARAM_NUMERIC=0,
     SCPI_PARAM_SETTING=1,
-    SCPI_PARAM_ACTION=2
+    SCPI_PARAM_ACTION=2,
+    SCPI_PARAM_DOUBLE=3
 } scpi_param_type;
 
 struct scpi_action_param {
@@ -2670,10 +2678,16 @@ struct scpi_array {
     void *values;
 };
 
+typedef enum __attribute__((packed)) scpi_array_kind {
+    SCPI_ARRAY_BLOCK=0,
+    SCPI_ARRAY_DOUBLES=1,
+    SCPI_ARRAY_SHORTS=2
+} scpi_array_kind;
+
 typedef struct scpi_array_record scpi_array_record, *Pscpi_array_record;
 
 struct scpi_array_record {
-    int8_t kind;
+    enum scpi_array_kind kind;
     uint8_t unused;
     void *array;
 };
@@ -3036,7 +3050,7 @@ struct scpi_numeric_param {
     enum gps_request_code gps_request;
     uint8_t field_21;
     void *group_cell;
-    uint8_t is_integer;
+    enum pllc_value_kind is_integer;
     uint8_t field_27;
     void *steps;
 };
@@ -3783,6 +3797,7 @@ _Static_assert(sizeof(pll_stage_result) == 1, "pll_stage_result");
 _Static_assert(sizeof(pll_startup_state) == 1, "pll_startup_state");
 _Static_assert(sizeof(pll_state) == 982, "pll_state");
 _Static_assert(sizeof(pllc_request) == 24, "pllc_request");
+_Static_assert(sizeof(pllc_value_kind) == 1, "pllc_value_kind");
 _Static_assert(sizeof(pps_exchange_message) == 24, "pps_exchange_message");
 _Static_assert(sizeof(preserved_region_fields) == 2382, "preserved_region_fields");
 _Static_assert(sizeof(psos_configuration) == 98, "psos_configuration");
@@ -3818,6 +3833,7 @@ _Static_assert(sizeof(sci_settings_record) == 6, "sci_settings_record");
 _Static_assert(sizeof(scpi_action_param) == 6, "scpi_action_param");
 _Static_assert(sizeof(scpi_arena) == 8, "scpi_arena");
 _Static_assert(sizeof(scpi_array) == 8, "scpi_array");
+_Static_assert(sizeof(scpi_array_kind) == 1, "scpi_array_kind");
 _Static_assert(sizeof(scpi_array_record) == 6, "scpi_array_record");
 _Static_assert(sizeof(scpi_bcd) == 12, "scpi_bcd");
 _Static_assert(sizeof(scpi_block) == 8, "scpi_block");
@@ -6796,7 +6812,7 @@ extern const scpi_node scpi_node_DIAGnostic_GPSystem_POSition; /* 0005cf7e */
 extern const scpi_node scpi_node_DIAGnostic_GPSystem; /* 0005cfb0 */
 extern const scpi_node scpi_node_DIAGnostic; /* 0005cfe2 */
 extern const scpi_tree_pair scpi_trees; /* 0005d014 */
-extern const uint8_t ctype_table[257]; /* 0005ed98 */
+extern uint8_t ctype_table[257]; /* 0005ed98 */
 extern double huge_value; /* 0005ee9a */
 extern uint32_t powers_of_ten_by_25_mantissas[54]; /* 0005f860 */
 extern int16_t powers_of_ten_by_25_exponents[27]; /* 0005f938 */
@@ -7511,6 +7527,7 @@ __asm__(".set console_task_id, 0x00100b10");
 __asm__(".set copyright_text, 0x00012ef4");
 __asm__(".set counter_configuration, 0x00101fae");
 __asm__(".set crash_message, 0x0010094e");
+__asm__(".set ctype_table, 0x0005ed98");
 __asm__(".set day_names, 0x0004cf80");
 __asm__(".set days_before_month, 0x0001186c");
 __asm__(".set days_before_month_leap, 0x00011884");
@@ -49420,8 +49437,8 @@ int32_t scpi_format_array(scpi_port *output,scpi_array_record *record)
 {
   int32_t iVar1;
   
-  iVar1 = (int32_t)record->kind - 2;
-  if ((uint32_t)(int32_t)record->kind < 2 || iVar1 == 0) {
+  iVar1 = (int32_t)(char)record->kind - 2;
+  if ((uint32_t)(int32_t)(char)record->kind < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_000267d8_index_zero)[(int16_t)iVar1]) {
     case 6:
@@ -49637,7 +49654,7 @@ int32_t scpi_format_float_resolution(scpi_port *output,scpi_float_resolution *va
 /* 00026a80 */
 #if 0 /* the decompiler's reading; rewritten in scpi_engine.c */
 
-/* fills a parser context's eight fields; called by nothing */
+/* fills a parser context's eight fields; scpi_interpret calls it (0x2936a) */
 
 int32_t scpi_context_init(scpi_context *context,scpi_port *input,uint32_t word,scpi_path *path,
                          scpi_call *call,scpi_arena *arena,uint32_t field_1e,
@@ -52059,7 +52076,7 @@ void scpi_numeric_set(scpi_numeric_param *param,int32_t index,int16_t kind,int16
   
   if (kind == 2) {
     if (bound == 1) {
-      if (param->is_integer == 0) {
+      if (param->is_integer == PLLC_VALUE_FLOAT) {
         second = (uint32_t *)((int32_t)param->minimum + index * 4);
         first = 0;
         goto LAB_00029896;
@@ -52067,7 +52084,7 @@ void scpi_numeric_set(scpi_numeric_param *param,int32_t index,int16_t kind,int16
       first = *(uint32_t *)((int32_t)param->minimum + index * 4);
     }
     else {
-      if (param->is_integer == 0) {
+      if (param->is_integer == PLLC_VALUE_FLOAT) {
         second = (uint32_t *)((int32_t)param->maximum + index * 4);
         first = 0;
         goto LAB_00029896;
@@ -52077,7 +52094,7 @@ void scpi_numeric_set(scpi_numeric_param *param,int32_t index,int16_t kind,int16
   }
   else {
     first = integer_value;
-    if (param->is_integer == 0) {
+    if (param->is_integer == PLLC_VALUE_FLOAT) {
       second = &float_value;
       first = 0;
       goto LAB_00029896;
@@ -52144,7 +52161,7 @@ float scpi_numeric_get(scpi_numeric_param *param,int32_t index,int16_t which,int
   else {
     local_8 = *(float *)((int32_t)__ghidra_bits(param->value) + index * 4);
   }
-  if (param->is_integer != 0) {
+  if (param->is_integer != PLLC_VALUE_FLOAT) {
     local_8 = integer_to_float((int32_t)__ghidra_bits(local_8));
   }
   return local_8;
@@ -52265,14 +52282,14 @@ void robin_store(scpi_array_record *response,int16_t *points,int32_t count,data_
       uVar2 = (uint32_t)source;
       robin_blocks[uVar2].length = count * 2;
       robin_blocks[uVar2].data = points;
-      response->kind = 0;
+      response->kind = SCPI_ARRAY_BLOCK;
       psVar3 = (scpi_array *)(robin_blocks + uVar2);
       break;
     case 0x22:
       uVar2 = (uint32_t)source;
       robin_arrays[uVar2].count = count;
       robin_arrays[uVar2].values = points;
-      response->kind = 2;
+      response->kind = SCPI_ARRAY_SHORTS;
       psVar3 = robin_arrays + uVar2;
     }
     response->array = psVar3;

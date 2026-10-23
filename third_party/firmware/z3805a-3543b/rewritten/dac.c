@@ -46,16 +46,16 @@ void hdac_set(uint8_t value, uint8_t slot) {
 }
 
 /* Two channels' values as one of hdac_shadow's words. */
-static uint16_t adc_hdac_word(uint8_t low, uint8_t high) {
+static uint16_t dac_hdac_word(uint8_t low, uint8_t high) {
   return (low & DAC_HDAC_MASK) | (high & DAC_HDAC_MASK) << DAC_HDAC_BITS;
 }
 
 /* The hdac_all word's: all six channels at once (0x1f5bc). */
 void hdac_write_all(uint8_t channel_1, uint8_t channel_2, uint8_t channel_3,
                     uint8_t channel_4, uint8_t channel_5, uint8_t channel_6) {
-  hdac_shadow[0] = adc_hdac_word(channel_5, channel_6);
-  hdac_shadow[1] = adc_hdac_word(channel_3, channel_4);
-  hdac_shadow[2] = adc_hdac_word(channel_1, channel_2);
+  hdac_shadow[0] = dac_hdac_word(channel_5, channel_6);
+  hdac_shadow[1] = dac_hdac_word(channel_3, channel_4);
+  hdac_shadow[2] = dac_hdac_word(channel_1, channel_2);
   qspi_write(QSPI_HDAC, hdac_shadow, DAC_HDAC_WORDS);
   psos_pause(1);
 }

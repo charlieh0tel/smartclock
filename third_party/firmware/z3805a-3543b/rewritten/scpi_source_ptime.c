@@ -68,9 +68,9 @@ int32_t scpi_query_SOURce_PTIMe_PPS_EDGE(void* parameters, void* response,
 }
 
 /* :PTIMe:DATE?: the clock's year, month and day (0x2dcd0).  It answers
- * when get_date_time gives 0, which by the names is while the clock has
- * no date, and refuses with -230, Data corrupt or stale, when it gives 1
- * (the test at 0x2dcea). */
+ * when get_date_time gives 0, once clock.set is set, and refuses with
+ * -230, Data corrupt or stale, when it gives 1, before (0x13730 to
+ * 0x13736; the test at 0x2dcea). */
 int32_t scpi_query_SOURce_PTIMe_DATE(void* parameters, void* response,
                                      scpi_call* call) {
   uint32_t date;

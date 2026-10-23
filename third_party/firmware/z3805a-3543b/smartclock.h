@@ -400,12 +400,13 @@ typedef enum __attribute__((packed)) counter_error {
 } counter_error;
 
 /* A SCPI parameter descriptor's structure, its first byte, which the
- * pllc task's validate_or_doaction and finish_scpi_cmd switch on; both
- * accept 3 and do nothing with it. */
+ * pllc task's validate_or_doaction, get_setup_vars and finish_scpi_cmd
+ * switch on; each accepts 3 and does nothing with it. */
 typedef enum __attribute__((packed)) scpi_param_type {
   SCPI_PARAM_NUMERIC = 0, /* scpi_numeric_param */
   SCPI_PARAM_SETTING = 1, /* scpi_setting_param */
-  SCPI_PARAM_ACTION = 2   /* scpi_action_param */
+  SCPI_PARAM_ACTION = 2,  /* scpi_action_param */
+  SCPI_PARAM_DOUBLE = 3   /* a double's scpi_numeric_param (0x33724) */
 } scpi_param_type;
 
 /* The VP Oncore reference's codes (third_party/motorola/VPCommands.pdf). */
@@ -1596,6 +1597,16 @@ typedef struct scpi_error_message {
   char* text;   /* +0x02 */
 } scpi_error_message;
 
+/* A numeric descriptor's is_integer: how a pllc request carries its
+ * values, pllc_request.values (structures.md, "The pllc task's SCPI
+ * requests"). */
+typedef enum __attribute__((packed)) pllc_value_kind {
+  PLLC_VALUE_FLOAT = 0,   /* a float, in values[1] */
+  PLLC_VALUE_INTEGER = 1, /* an integer, in values[0] */
+  PLLC_VALUE_LIST = 2,    /* index + 1 longs, at values[0] */
+  PLLC_VALUE_PAIR = 3     /* two, in values[0] and values[1] */
+} pllc_value_kind;
+
 typedef struct scpi_numeric_param {
   scpi_param_type type; /* SCPI_PARAM_NUMERIC */
   uint8_t last_index;   /* +0x01: values less one */
@@ -1610,11 +1621,13 @@ typedef struct scpi_numeric_param {
   uint16_t flags; /* +0x1e: 2 saved in the NV register, 4 at 0x400000 */
   gps_request_code gps_request; /* +0x20: as scpi_setting_param's */
   uint8_t field_21;
-  void* group_cell;   /* +0x22: a scpi_group_cells word, as
-                         scpi_setting_param's; a double parameter's (type 3,
-                         0x33724) is instead its scpi_double_step (0x33718),
-                         which scpi_numeric_get_double alone reads */
-  uint8_t is_integer; /* +0x26: 0 float, 1 integer, 2 or 3 several */
+  void* group_cell;           /* +0x22: a scpi_group_cells word, as
+                                 scpi_setting_param's; a double
+                                 parameter's (SCPI_PARAM_DOUBLE, 0x33724)
+                                 is instead its scpi_double_step
+                                 (0x33718), which scpi_numeric_get_double
+                                 alone reads */
+  pllc_value_kind is_integer; /* +0x26 */
   uint8_t field_27;
   void* steps; /* +0x28: 8 bytes a value, whose routine at +4 gives validate the
                   step */
@@ -2044,10 +2057,18 @@ typedef struct scpi_block {
   void* data;      /* +0x04: its bytes */
 } scpi_block;
 
+/* An array response's kind, scpi_array_record.kind, by the jump table
+ * at 0x267dc. */
+typedef enum __attribute__((packed)) scpi_array_kind {
+  SCPI_ARRAY_BLOCK = 0,   /* a scpi_block */
+  SCPI_ARRAY_DOUBLES = 1, /* a scpi_array of doubles */
+  SCPI_ARRAY_SHORTS = 2   /* a scpi_array of shorts */
+} scpi_array_kind;
+
 /* An array response by its kind, as scpi_format_array takes it and
  * robin_store makes it. */
 typedef struct scpi_array_record {
-  int8_t kind; /* +0x00: the jump table at 0x267dc */
+  scpi_array_kind kind; /* +0x00 */
   uint8_t unused;
   void* array; /* +0x02: a scpi_block or scpi_array */
 } scpi_array_record;
@@ -3059,8 +3080,8 @@ typedef struct pll_state {
       recovery_countdown; /* +0x14: holdover_recovery's, as powerup_countdown */
   pll_recovery_state recovery_state; /* +0x15 */
   pll_coarse_state coarse_state;     /* +0x16: coarse's */
-  pll_fine_state fine_state;         /* +0x17: fine's; 7 to 9 slew the phase
-                                 (PLL_FINE_SLEW_FIRST, _LAST) */
+  pll_fine_state fine_state;         /* +0x17: fine's; PLL_FINE_SLEW to
+                                 PLL_FINE_FINE_SLEW slew the phase */
   uint8_t frequency_adjusted; /* +0x18: fine applied a frequency correction */
   uint8_t fine_index;         /* fine acquisition's "i= %d" */
   uint16_t fine_retries; /* +0x1a: fine's failed attempts, given up past 9 */

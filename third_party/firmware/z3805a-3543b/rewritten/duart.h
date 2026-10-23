@@ -47,6 +47,25 @@ static const uint8_t DUART_CSR_9600 = 0xb;
  * ticks. */
 static const int32_t DUART_DRAIN_PAUSES = 100;
 
+/* A character as either copy of an echo routine reads it: the image's
+ * at the start of a 2-byte slot (drtb_putc, 0x1ddfa; sci_putc,
+ * 0x201b4; installer::0x10386c), gcc's at the end of its 4-byte one.
+ * A port's echo holds the image's routine where the image's
+ * reconfiguration stored it (0x1dd54), gcc's where the C's did. */
+typedef struct duart_echo_slot {
+  char image;       /* +0x00: where the image's routines read it */
+  uint8_t field_01; /* unread: the rest of the 2-byte slot */
+  uint8_t field_02; /* unread */
+  char gcc;         /* +0x03: where gcc's read it */
+} duart_echo_slot;
+
+/* Echoes a character through a port's echo, whichever copy it is. */
+static void duart_echo(putc_function* echo, char character) {
+  typedef void echo_either(duart_echo_slot slot);
+
+  ((echo_either*)echo)((duart_echo_slot){.image = character, .gcc = character});
+}
+
 /* A port's line reader, which drtb_gets and sci_gets share: reads into
  * a buffer of length bytes until CR or LF, or until it is full,
  * echoing through the port's echo; backspace takes back a character,
@@ -78,7 +97,7 @@ static int32_t duart_gets(char* buffer, int32_t length, uint8_t (*getc)(void),
       *last_terminator = character;
       *next++ = character;
       left--;
-      (*echo)(character);
+      duart_echo(*echo, character);
       continue;
     }
     switch (character) {
@@ -86,7 +105,7 @@ static int32_t duart_gets(char* buffer, int32_t length, uint8_t (*getc)(void),
         if (count != left) {
           next--;
           left++;
-          (*echo)(character);
+          duart_echo(*echo, character);
         }
         break;
       case DUART_LF:
@@ -95,8 +114,8 @@ static int32_t duart_gets(char* buffer, int32_t length, uint8_t (*getc)(void),
             (*last_terminator == DUART_LF && character == DUART_CR)) {
           *last_terminator = 0;
         } else {
-          (*echo)(DUART_CR);
-          (*echo)(DUART_LF);
+          duart_echo(*echo, DUART_CR);
+          duart_echo(*echo, DUART_LF);
           count -= left;
           left = 0;
           *last_terminator = character;
@@ -106,13 +125,13 @@ static int32_t duart_gets(char* buffer, int32_t length, uint8_t (*getc)(void),
         if (count != left) {
           next = buffer;
           left = count;
-          (*echo)(DUART_CR);
-          (*echo)(DUART_LF);
+          duart_echo(*echo, DUART_CR);
+          duart_echo(*echo, DUART_LF);
         }
         break;
       default:
-        (*echo)(CARET);
-        (*echo)(character + CONTROL_TO_LETTER);
+        duart_echo(*echo, CARET);
+        duart_echo(*echo, character + CONTROL_TO_LETTER);
         break;
     }
   }

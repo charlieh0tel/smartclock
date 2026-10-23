@@ -23,7 +23,8 @@ RestartPreventExitStatus=2
 
 # The same user as the other services, so the web view and the
 # exporter can read its log.  Group temper, from the temper package,
-# is what its udev rules give TEMPer sticks' hidraw nodes to.
+# is what its udev rules give TEMPer sticks' hidraw nodes to; temper is
+# only recommended, so the package makes the group when temper has not.
 User=smartclockd
 Group=smartclockd
 SupplementaryGroups=temper

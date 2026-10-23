@@ -1,5 +1,5 @@
 #!/bin/sh
-# Creates the service account the unit runs as.
+# Creates the service account the units run as, and group temper.
 set -e
 
 case "$1" in
@@ -13,6 +13,14 @@ configure)
     # The receiver's serial port is owned by the dialout group.
     if getent group dialout >/dev/null; then
         adduser smartclockd dialout || true
+    fi
+    # smartclock-sensord.service joins group temper, and systemd will
+    # not start a unit naming a group that does not exist.  The temper
+    # package makes it, with its udev rules; it is only recommended, so
+    # without it the group is made here, empty of devices.  temper's own
+    # postinst checks first in the same way, so either order works.
+    if ! getent group temper >/dev/null; then
+        addgroup --system temper
     fi
     # The units' StateDirectory= makes these only when a service first
     # starts; made here, with the same owner and mode, a log can be put

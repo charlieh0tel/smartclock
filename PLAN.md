@@ -572,15 +572,13 @@ elsewhere -- and the one package brought a service user, four units and
   not; temper's own postinst checks first, so either order works.
   Without temper's udev rules a TEMPer stick's hidraw node is root's
   and unreadable; hwmon and IIO sensors are unaffected.
-- Release CI calls the shared `rust-build-deb.yml` once per package
-  (`package:`, `artifact-suffix:`), which needs its proposed
-  `build-workspace` input: with `package:` set it builds that crate's
-  binaries alone, and each package ships other crates'.
+- Release CI calls the shared `rust-build-deb.yml` once, with its
+  `packages:` list (`smartclockd smartclock-cli`): it builds the whole
+  workspace once per architecture, since each package ships other
+  crates' binaries, packages each crate, and releases both together.
 
-What it costs: release CI builds the workspace twice per architecture,
-and each call releases on its own, so a failure in one can leave a
-release with one package, which apt then holds back rather than
-installs.  `apt-get upgrade` and unattended-upgrades keep
+What it costs: release CI needs `deb-workflows` with its `packages`
+input, so a tag before that lands fails outright.  `apt-get upgrade` and unattended-upgrades keep
 `smartclockmon` back at the upgrade that first needs `smartclock-utils`,
 since neither adds a package.  The packaged documents are split along
 the same line, so a relative link between them -- `running.md` to

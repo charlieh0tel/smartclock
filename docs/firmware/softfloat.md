@@ -27,12 +27,12 @@ fall into the next routine, the double divide jumps to it.
 | D1 ÷ D0 | `0x5d77e` | `0x5d7e4` | `0x61518` | `0x619e8` | `0x652b8` | `0x6d4e6` | `0x68ae6` |
 | absolute value of the float on the stack | `0x133e2` | `0x133e2` | `0x1349e` | `0x135fa` | `0x234f2` | `0x235ee` | `0x235f4` |
 | compare D0 with D1 | `0x5d5f6` | `0x5d65c` | `0x61390` | `0x61860` | `0x65130` | `0x6d35e` | `0x6895e` |
-| integer to float | `0x5e1a8` | `0x5e20e` | `0x61f42` | `0x62412` | `0x65ce2` | `0x6df10` | `0x69510` |
-| integer to float | `0x5e102` | `0x5e168` | `0x61e9c` | `0x6236c` | `0x65c3c` | `0x6de6a` | `0x6946a` |
-| float to integer | `0x5df56` | `0x5dfbc` | `0x61cf0` | `0x621c0` | `0x65a90` | `0x6dcbe` | `0x692be` |
-| float to integer | `0x5dfe8` | `0x5e04e` | `0x61d82` | `0x62252` | `0x65b22` | `0x6dd50` | `0x69350` |
+| unsigned integer to float | `0x5e1a8` | `0x5e20e` | `0x61f42` | `0x62412` | `0x65ce2` | `0x6df10` | `0x69510` |
+| signed integer to float | `0x5e102` | `0x5e168` | `0x61e9c` | `0x6236c` | `0x65c3c` | `0x6de6a` | `0x6946a` |
+| float to signed integer | `0x5df56` | `0x5dfbc` | `0x61cf0` | `0x621c0` | `0x65a90` | `0x6dcbe` | `0x692be` |
+| float to unsigned integer | `0x5dfe8` | `0x5e04e` | `0x61d82` | `0x62252` | `0x65b22` | `0x6dd50` | `0x69350` |
 | float to double, in D0:D1 | `0x5debe` | `0x5df24` | `0x61c58` | `0x62128` | `0x659f8` | `0x6dc26` | `0x69226` |
-| integer to double | `0x5e0a2` | `0x5e108` | `0x61e3c` | `0x6230c` | `0x65bdc` | `0x6de0a` | `0x6940a` |
+| unsigned integer to double | `0x5e0a2` | `0x5e108` | `0x61e3c` | `0x6230c` | `0x65bdc` | `0x6de0a` | `0x6940a` |
 | double to float | `0x5dc6c` | `0x5dcd2` | `0x61a06` | `0x61ed6` | `0x657a6` | `0x6d9d4` | `0x68fd4` |
 | divide the float at A0 by D1, in place | `0x5d774` | `0x5d7da` | `0x6150e` | `0x619de` | `0x652ae` | `0x6d4dc` | `0x68adc` |
 | add D1 to the float at A0, in place | `0x5d024` | `0x5d08a` | `0x60dbe` | `0x6128e` | `0x64b5e` | `0x6cd8c` | `0x6838c` |
@@ -45,6 +45,22 @@ fall into the next routine, the double divide jumps to it.
 | compare doubles: negative when A0:A1 < D0:D1 | `0x5d660` | `0x5d6c6` | `0x613fa` | `0x618ca` | `0x6519a` | `0x6d3c8` | `0x689c8` |
 | natural log of the double on the stack | `0x609aa` | `0x60a10` | `0x64772` | `0x64c42` | `0x684e4` | `0x70dba` | `0x6c068` |
 | square root of the double on the stack | `0x618b6` | `0x6191c` | `0x6567e` | `0x65b4e` | `0x693f0` | `0x71cc6` | `0x6cf74` |
+
+Which of a pair of conversions is signed was read from the Z3805A
+3543B's routines and confirmed by running them (`libc.md`): the signed
+one negates a negative operand first.  The other images' routines are
+the same code, by the match above.  The signed integer to double, and
+the double to integer pair, are in `libc.md`.  The pow, natural log
+and square root rows are the C library's `pow`, `log` and `sqrt`.
+
+Inside the library, read in the Z3805A 3543B only: `float_normalize`
+and `double_normalize` (`0x5e83c`, `0x5e882`) shift an unpacked
+mantissa on the caller's stack until its top bit is set, adjusting the
+exponent beside it, for the subnormal operands of the multiplies,
+divides and float to double; the double divides call
+`double_divide_first_word` (`0x5dc0a`) once and
+`double_divide_next_word` (`0x5dbfe`) three times, each giving 16 bits
+of the quotient.
 
 `3 crash` uses two more, read rather than emulated: in the Z3801A it
 subtracts a double from itself (`0x5d2a0`) and divides the zero by

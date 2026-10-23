@@ -74,7 +74,7 @@ regulators on the output bracket, the -15 V one an LM7915.
 ![The 58503A's original power supply, Power-One MAP55-4003, out of the receiver: the outputs at the left, AC input at the right](images/58503A-60001_RevC/58503a-power-supply.jpg)
 
 Its parts, numbered on the photo:
-[`map55-4003.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/map55-4003.html).
+[`map55-4003.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/map55-4003.html).
 
 ## HP Z3801A, serial 3542A01548
 
@@ -103,6 +103,10 @@ label 7VGN4.
 ![Inside, the oscillator at the top](images/Z3801-68001/z3801a-interior.jpg)
 
 ![The main board](images/Z3801-68001/z3801a-main-board.jpg)
+
+A hand-wired board, carrying a Motorola MC74ACT14N hex Schmitt
+inverter, sits over the main board's J3 footprint, wired with blue
+wire; it is not HP's, and its wiring was not traced.
 
 ![The GPS engine module, top](images/Z3801-68001/z3801a-gps-engine-top.jpg)
 
@@ -209,7 +213,11 @@ Oscillator serial 3505A05096, from its label.  Main board Z3805-68001, no revisi
 marked, serial 6E9008G, date code 3627.  Its four flash parts are
 labeled Z3805-80001 to -80004, Rev C, at U11 (2L), U12 (1L), U13 (2M)
 and U14 (1M).  The FPGA, U32, is a Xilinx XC3042-70 PC84C, and the
-CPU, U33, a Motorola MC68331CFC16.  Its jacks
+CPU, U33, a Motorola MC68331CFC16.  The DUART, U3, is a Philips
+SCC68692C1A44 and the EEPROM, U4, an Atmel AT28C64B-20JC, soldered.
+Its parts, numbered on the close-up:
+[`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/z3805a-board.html).
+Its jacks
 carry the same designators as the 58503A's: J4 (OUT A) and J5 (OUT B)
 go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to
 the two rear 10 MHz outputs, and J6, J7 and J8 are not fitted.
@@ -264,6 +272,51 @@ DC-DC power module.
 ![The power supply, Nortel A0696033 on HP board 58503-60002 Rev D, with the RIFA capacitors replaced](images/Z3805-68001/z3805a-power-supply-top.jpg)
 
 ![The power supply, reverse: its part number and labels](images/Z3805-68001/z3805a-power-supply-bottom.jpg)
+
+### Photos still wanted
+
+What the photos above leave open (`hardware-investigations.md`,
+items 13, 19, 20 and 21).  Power off throughout, as in
+`hardware-investigations.md`, "Working on the open Z3805A board".
+For all of them: the full-resolution file, no crop, the camera's own
+EXIF rotation; a tripod or a rest, and focus set on the part, not the
+board's edge; a scale (a ruler or the part's own pin pitch) in frame
+for close-ups.
+
+1. *The U44 corner* (item 20).  Square on, straight down, the lens
+   parallel to the board, from 10 to 15 cm, with two lights low on
+   opposite sides at about 30° so the laser-etched marking reads by
+   raking light rather than glare; turn the lights, not the camera,
+   until it reads.  In frame: U44's marking, its designator, S1, the
+   ribbon header and its designator, and the parts between them.
+   Then one at 45° from the header's side to show its pin count and
+   any pin-1 mark.  The corner is out of focus in every photo so far
+   (`z3805a-main-board-2026-09-27.jpg`, 2350,2250 to 3150,3072): if
+   the analog section's height stops the lens getting square on, use
+   a phone's macro mode between the cables.
+2. *The back side under J4 and J5* (item 19).  Needs the board out
+   of the chassis: ask, and note each cable as it comes off.  Diffuse
+   light from straight above (a white sheet or a bounce card), the
+   whole J4, J5, U17 and U18 area in one frame, then a close-up of
+   each jack's footprint.  Take the same views of the 58503A for
+   comparison.
+3. *The back side between U3 and U33* (items 20 and 21): the same
+   setup, one frame from U3 to U33 so the vias from U3's /INTR side
+   and U33's bottom row can be followed, and a close-up of the area
+   under U29 and the 74AC138s.
+4. *J12 from behind its bracket* (item 13): side on and from above at
+   45°, to count its rows and read any silkscreen beside it.
+5. *The front panel and lamp board* (item 20).  The panel from the
+   front, square on, all lamps in frame with their legends legible.
+   Then the lamp board's parts side, square on and in focus, with
+   any designators and the ribbon's connector and its pin-1 stripe;
+   if the parts face the panel, the board has to come off its
+   standoffs, which wants the owner's agreement.  A third, with the
+   unit running if the owner agrees, after lock: which lamps are lit.
+
+Name each file as the others are, `z3805a-<what>.jpg`, under
+`images/Z3805-68001/`, add it to the list above, and read it into the
+item it serves as the *Photos* paragraphs do.
 
 Found at 9600 8N1, moved to 19200 to match the other unit.  No
 front-panel display -- the Z3801A and Z3805A never had one -- so the
@@ -348,7 +401,7 @@ Later results (`hardware-investigations.md`, item 11):
 - 2026-10-03, 24 hours on one splitter beside the 58503A and a u-blox
   NEO-M8T, with that gain ahead of it alone: 2.9 satellites on average, none held below 39 dB-Hz where
   the 58503A held 88% at 36 to 39
-  ([bench-sky-2026-10-03.html](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/bench-sky-2026-10-03.html)).
+  ([bench-sky-2026-10-03.html](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/bench-sky-2026-10-03.html)).
 - The 24 hours to 21:00 UTC on 2026-10-05, with the 20 dB LNA still in
   place: lock 88.3% of the time, on about 2.7 satellites on average
   while locked.

@@ -150,7 +150,7 @@ here, where they go stale unnoticed.
 - Link an HTML file in the repo from Markdown through
   `https://htmlpreview.github.io/?` followed by its GitHub URL, so it
   renders:
-  `https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/loop.html`.
+  `https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html`.
 
 ## Working style
 

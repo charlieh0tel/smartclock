@@ -1,15 +1,122 @@
 Third-party material
 ====================
 
-Nothing in this directory is part of this project, and the project's
-license does not apply to any of it.  Each document is the property of
-its copyright holder.  They are included for reference because they are
-the specification this software is written against: the SCPI command
-table cites them by page, and a claim in the code that is not backed by
-a receiver on the bench is backed by one of these.
+The material listed under the headings below -- AMD, Fairchild,
+Hewlett-Packard, the firmware images, Microchip, Motorola, the Z3801A
+owner's description, NIST, Philips, Texas Instruments and Xilinx -- is
+not part of this project, and the project's license does not apply to
+any of it.  Each document is the property of its copyright
+holder.  They are included for reference because they are the
+specification this software is written against: the SCPI command table
+cites them by page, and a claim in the code that is not backed by a
+receiver on the bench is backed by one of these.
 
 No license to any of this material is granted or implied by its
 presence here.
+
+That material is the manuals, papers and data sheets in `hp/`,
+`motorola/`, `amd/`, `fairchild/`, `microchip/`, `philips/`, `ti/`,
+`nist/`, `xilinx/` and `community/`, and in `firmware/` the images (`IMAGE.bin`),
+the console log one was rebuilt from, the EEPROM contents in
+`firmware/eeprom/` and the FPGA bitstreams in `firmware/fpga/`.  The
+Ghidra archive in `firmware/ghidra/` is both: the image it holds is the
+vendor's, and the names, types and comments laid over it are the
+project's.
+
+The project's own work
+----------------------
+
+The rest of `firmware/` is the project's own work, its analysis of the
+vendors' images, not vendor material:
+
+  include/           the image-independent headers: the MC68331's
+                     modules (mc68331.h) and the 68681 DUART's
+                     (mc68681.h), from the manuals in `motorola/`, and
+                     the kernel's signals (psos-signals.h), from the
+                     images' own messages.
+  IMAGE/             a folder to an image, beside IMAGE.bin, holding
+                     that image's work: its type header and layout
+                     check (smartclock.h, check-layout.c), its names
+                     files (names.tsv, scpi-tree.tsv,
+                     installer-scpi-tree.tsv, modules.tsv,
+                     results.tsv), its SCPI paths' handlers
+                     (handlers.txt), the survey of its untyped ROM
+                     (untyped.tsv), and its decompiled and hand-written
+                     C, below.
+  Makefile           the checks and generated files of those folders,
+                     to which the top Makefile delegates.
+
+What this work reproduces of an image -- the routines the decompiled
+C carries as their bytes, the tables it and the hand-written C copy --
+is the image's, and remains its copyright holder's.
+
+Decompiled C, in `firmware/IMAGE/decompiled/`: Ghidra 12.1.4's
+decompiler output for an image, produced by the scripts in
+`tools/ghidra/` (`docs/firmware/README.md`, "Decompiling with Ghidra"):
+machine output, named where the project's notes and tables establish a
+name; the decompiler's own text is not reviewed, and each function it
+reads is kept under `#if 0` beside the hand-written C that replaces it,
+which is reviewed and proven against the image (`docs/firmware/
+rewrite.md`).  The exporter rewrites the decompiler's text where
+its C would not compile or would not do what the image does, and names
+what the tables name (`docs/firmware/README.md`, "Decompiling with
+Ghidra").
+
+  z3805a-3543b/decompiled/z3805a-3543b.c
+                     Z3805A 3543B, every function in address order.
+  z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl
+                     the same functions, one JSON object a line: each
+                     one's note and calling convention, from the names
+                     file and the scripts, or "unknown".
+  z3805a-3543b/decompiled/z3805a-3543b.symbols.ld
+                     the addresses its assembly names outside any
+                     routine, for the linker.
+
+Hand-written C, in `firmware/IMAGE/rewritten/`: an image's functions
+written by hand in place of the decompiled ones, each checked against
+the image's own code (`docs/firmware/README.md`, "Hand-written C"), a
+file to a module (`docs/firmware/modules.md`).
+
+  z3805a-3543b/rewritten/
+                     Z3805A 3543B.
+
+AMD
+---
+
+In `amd/`.
+
+  Am29F010B.pdf              "Am29F010B 1 Megabit (128 K x 8-bit) CMOS
+                             5.0 Volt-only, Uniform Sector Flash
+                             Memory", AMD publication 22336 Rev C
+                             Amendment/0, November 28, 2000, as hosted
+                             by CERN (sy-dep-epc-lpc.web.cern.ch,
+                             components/datasheets/.../amd29f010b.pdf).
+                             The flash parts the installer erases and
+                             programs: their command cycles, status
+                             polling and sector map, which the
+                             harness's flash model follows.
+
+Fairchild
+---------
+
+In `fairchild/`.  Logic on the Z3805A board (`docs/z3805a-board.html`),
+whose pinouts the bench procedures in `docs/hardware-investigations.md`
+use.  The board's parts are marked National; these are the copies of
+Fairchild, which took over National's logic lines in 1997, as hosted
+by Fairchild (fairchildsemi.com) and archived by the Internet Archive
+(web.archive.org); National's own could not be found.
+
+  74AC138.pdf                "74AC138, 74ACT138 1-of-8 Decoder/
+                             Demultiplexer", Fairchild DS009925,
+                             revised July 2003, with ON Semiconductor's
+                             cover page; www.fairchildsemi.com/
+                             datasheets/74/74AC138.pdf as archived on
+                             2017-10-16.  U22, U23, U25 and U27.
+  DM74ALS09.pdf              "DM74ALS09 Quad 2-Input AND Gate with Open
+                             Collector Outputs", Fairchild DS006179,
+                             revised February 2000; www.fairchildsemi.com/
+                             ds/DM/DM74ALS09.pdf as archived on
+                             2013-06-04.  U29.
 
 Hewlett-Packard / Agilent / Symmetricom
 ---------------------------------------
@@ -153,6 +260,14 @@ against its images.
   z3815a.bit         Z3815A 4010 at 0x316a6; SHA-1 9fe2370e...
   z3816a.bit         Z3816A 4001 at 0x2ffb8; SHA-1 8061d2bb...
 
+The Ghidra project the decompiled C was exported from, in
+`firmware/ghidra/`, as a Ghidra archive, derived from the images:
+
+  smartclock.gar     Ghidra 12.1.4 project "smartclock": the Z3805A
+                     3543B image after the scripts' steps.  The image is
+                     the vendor's; the names, types and comments the
+                     scripts put over it are the project's.
+
 The revision is the string the firmware puts in the third field of its
 `*IDN?` answer, stored just before the image's second copyright notice
 (`0x12eee` in the Z3801A image, `0x22ff8` in the Z3816A's, `0x12fea` in
@@ -160,6 +275,29 @@ the 58503A 3633's, `0x1309c` in the 3704's, `0x12eee` in the Z3805A
 3543B's, `0x23090` in the Z3815A's, `0x2307c` in the 58503B's).  The letter
 that follows it in a real answer, as in 3704-C, is read from RAM and is
 not in the image.
+
+Microchip / Atmel
+-----------------
+
+In `microchip/`.
+
+  AT28C64B.pdf               "AT28C64B 64-Kbit (8K x 8) Industrial
+                             Parallel EEPROM with Page Write and
+                             Software Data Protection", Microchip
+                             DS20006432B, revision B, August 2023, which
+                             replaces Atmel document 0270; ww1.microchip.
+                             com/downloads/aemDocuments/documents/MPD/
+                             ProductDocuments/DataSheets/AT28C64B-64-
+                             Kbit-8Kx8-Parallel-EEPROM-with-Page-Write-
+                             and-Software-Data-Protection-DS20006432.pdf.
+                             U4, the EEPROM on chip select 9: its byte
+                             and page writes, write cycle, DATA polling
+                             and toggle bit, which the EEPROM model
+                             follows.  The board's part is an Atmel
+                             AT28C64B-20JC of 1996, 200 ns and
+                             commercial range; this revision lists only
+                             the -15 industrial parts, the write timing
+                             the same.
 
 Motorola
 --------
@@ -174,6 +312,26 @@ In `motorola/`.
                              status bits, chip-select encoding and
                              SCI baud-rate formula, cited from
                              `docs/firmware/`.
+  MC68681.pdf                "MC68681 Dual Asynchronous Receiver/
+                             Transmitter (DUART)", Motorola, Advance
+                             Information, September 1985, as scanned
+                             by bitsavers.org (components/motorola/
+                             68000/).  The DUART on chip select 8:
+                             its register map and bits.  The
+                             firmware programs the IVR, so the part
+                             is a 68681, not a 2681; its maker and
+                             exact part are not confirmed from a
+                             board.  The Z3805A's and 58503A's is a
+                             Philips SCC68692 (`philips/`).
+  MC144110.pdf               "MC144110 and MC144111 Digital-to-Analog
+                             Converters with Serial Interface",
+                             Freescale MC144110/D, Rev. 2, January 2005,
+                             as published by NXP, nxp.com/docs/en/
+                             data-sheet/MC144110.pdf, archived by the
+                             Internet Archive on 2026-02-10 (NXP no
+                             longer serves it).  U37, the hex DAC on
+                             QSPI device 2: its 36-bit shift, channel
+                             order and clock timing.
 
 Motorola / Synergy Systems
 --------------------------
@@ -268,3 +426,61 @@ published values the Allan deviation is checked against.
                              Publication 1065, July 2008.  Section 12.4
                              defines a 1000-point test data set and
                              Table 31 gives its deviations.
+
+Philips / NXP
+-------------
+
+In `philips/`.  Neither is served by NXP any longer; both are NXP's
+own files as archived by the Internet Archive.
+
+  SCC68692.pdf               "SCC68692 Dual asynchronous receiver/
+                             transmitter (DUART)", Philips
+                             Semiconductors, product data, 2004 Mar 03,
+                             superseding 1998 Sep 04; nxp.com/docs/en/
+                             data-sheet/SCC68692.pdf as archived on
+                             2025-03-18.  U3, the DUART on chip select
+                             8: its PLCC-44 pinout and what it adds to
+                             the MC68681 (`motorola/MC68681.pdf`).
+  74ABT574A.pdf              "74ABT574A Octal D-type flip-flop;
+                             3-state", NXP product data sheet, Rev. 2,
+                             23 November 2012; www.nxp.com/documents/
+                             data_sheet/74ABT574A.pdf as archived on
+                             2013-07-21.  The Z3801A's U44, a Philips
+                             74ABT574AD, the lamp latch's candidate.
+
+Texas Instruments
+-----------------
+
+In `ti/`.
+
+  sn74abt245b.pdf            "SN54ABT245A, SN74ABT245B Octal Bus
+                             Transceivers with 3-State Outputs", TI
+                             SCBS081L, revised April 2005,
+                             www.ti.com/lit/ds/symlink/sn74abt245b.pdf.
+                             U17, U18 and U24 are SN74ABT245As, which TI
+                             no longer documents; the B has the same
+                             pinout and function.
+  tl7705a.pdf                "TL77xxA Supply-Voltage Supervisors", TI
+                             SLVS028K, revised September 2016,
+                             www.ti.com/lit/ds/symlink/tl7705a.pdf.
+                             U28, the reset generator.
+
+Xilinx
+------
+
+In `xilinx/`.
+
+  xc3000.pdf                 "XC3000 Series Field Programmable Gate
+                             Arrays (XC3000A/L, XC3100A/L)", Xilinx,
+                             November 9, 1998 (Version 3.1), with the
+                             original XC3000 family's product
+                             specification, as hosted by Iowa State
+                             University (www.ece.iastate.edu/~zambreno/
+                             classes/cpre583/documents/xilinx/3000.pdf;
+                             Xilinx's own copy, now behind AMD's
+                             documentation portal, could not be
+                             fetched).  The Z3805A's FPGA is an XC3042
+                             (docs/images/Z3805-68001/
+                             z3805a-cpu-fpga-flash.jpg, U32): its
+                             configuration states, length count, frame
+                             layout (Figure 21) and readback.

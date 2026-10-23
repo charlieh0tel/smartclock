@@ -48,7 +48,7 @@ frequency offset.  Its messages:
 
 ## The loop
 
-[`loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/loop.html)
+[`loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html)
 draws what follows as a block diagram, with the constants and the
 closed-loop poles.
 
@@ -105,7 +105,7 @@ loop this is -- proportional-integral on the prefiltered error, with
 gains that alone would give a double pole at −1/(2τ), and closed-loop
 poles at −0.37/τ and (−1.35 ± 0.51j)/τ once the prefilter is counted
 -- is worked out in
-[`loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/loop.html),
+[`loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html),
 "What kind of loop that is"; this file is the evidence for its
 numbers.
 
@@ -242,6 +242,26 @@ to 4 at `0x4b36a`), seeds a with u − c·s when a is zero (`0x47440` to
 
 The console's `last efc average = %.1f` (`0x2c3a5`) prints the newest
 e; `dmes_curv` (`0x2befe`) sets the byte at `0x103d8a`.
+
+### The aging fit in the Z3805A 3543B
+
+The record is `aging_curve` (`0x101fd8`, `structures.md`), the same
+layout, and the ring is `pll.efc_history`.
+
+| Above | Here | |
+| ----- | ---- | - |
+| `FUN_00045116` | `aging_fit` (`0x417c6`) | |
+| `FUN_00045680` | `fit_span` (`0x41d30`) | |
+| `FUN_00045392` | `fit_linear_halves` (`0x41a42`) | mode 4 |
+| `FUN_00045ce0` | `fit_linear` (`0x41ba0`) | through `linear_regression` (`0x42390`) |
+| `FUN_000455de` | `fit_logarithmic` (`0x41c8e`) | |
+| `FUN_00045570` | `fit_constant` (`0x41c20`) | mode 0 |
+| `FUN_00045782` | `fit_log_initial` (`0x41e32`) | |
+| `FUN_0004587a` | `fit_log_search` (`0x41f2a`) | |
+| `FUN_00045a78` | `fit_three_point` (`0x42128`) | |
+| `FUN_0004571c` | `fit_evaluate_latest` (`0x41dcc`) | |
+| `FUN_00045f94` | `fit_quality` (`0x42644`) | |
+| `FUN_0004508e` | `aging_fit_collect` (`0x4173e`) | into `fit_a` to `fit_c` and `predicted_uncertainty` |
 
 ## s, the oscillator current
 
@@ -385,15 +405,18 @@ G is a constant.  `FUN_0004b088` reads the hardware word at
 `0x302000` and passes −1.25 × 10⁻¹² if bit 8 is set and
 −2.125 × 10⁻¹² if clear (`0x4b14c` to `0x4b166`); the Z3801A's image
 passes a fixed +6.25 × 10⁻¹³ (`0x475bc`).  That word is all the
-firmware does with chip select 7: the reset code makes `0x302000` a
-2 KB, 16-bit, read-only block with one wait state (see the chip-select
-table above), `0x4b14c` is the only access to it in the image -- every
-other form of the address was searched for -- and only bit 8 is
-examined.  So it is an input port the processor reads once, when the
+firmware does with chip select 7: the primary's reset code makes
+`0x302000` a 2 KB, 16-bit, read-only block with one wait state
+(CSBAR7 `0x3020`, CSOR7 `0x6870` at `0x24706`, `0x2470e`;
+`README.md`'s chip-select table), `0x4b14c` is the only access to it
+in the image -- every other form of the address was searched for --
+and only bit 8 is examined.  So it is an input port the processor reads once, when the
 loop task starts; what drives bit 8 -- a link, a switch, or a signal
 from the oscillator or DAC board -- is on the board, not in the image.
-The Z3801A's reset code sets no chip select there and its image never
-reads the address.  What the sign of G stands for was not traced.
+In the Z3801A the address is only inside chip select 5's 64 KiB
+window, with the latch and the FPGA (`restart.md`, "The chip
+selects"), and its image never reads it.  What the sign of G stands
+for was not traced.
 
 `FUN_0004b022(G)` stores G, sets both gain constants to 1/G, sets M to
 6.25 × 10⁻¹⁰ / |G|, and sets a second limit at `0x102c3c` to
@@ -408,7 +431,10 @@ the fit's `pts= %d a=` and `failed line fit`, the sampler's `e_avg= `,
 the console's `loop_time` -- and the constants of the update and the
 fit: 29.75, 2700.0, the clamp's 6.25 × 10⁻¹⁰ and HQ's 4.32 × 10⁻⁴.  The
 update law above was transcribed from the Z3816A only; in the others
-these show the same code is there, not that it is unchanged.  What
+these show the same code is there, not that it is unchanged -- but for
+the Z3805A 3543B, whose decompiled `pll_normal` (`0x4824a`, gcc's
+build of it agreeing with the image in the harness) gives the same
+law term for term, below.  What
 does differ is where τ and G come from.  Read on 2026-10-09.
 
 | Image | τ, as the ROM block sets it | Startup's constant | G |
@@ -534,6 +560,29 @@ oscillator current" is in the Z3816A, Z3815A and 58503B; the Z3801A,
 Z3805A and 58503A 3633 name `Double oven` instead, and 3704 neither.
 The console word `xcal` is in the Z3816A only, and its `tempco = `
 message in all but the Z3815A and 58503B.
+
+### The update in the Z3805A 3543B
+
+`pll_normal` keeps its block in `loop_steering` (`0x10205e`,
+`structures.md`) and its error and filtered error in `pll`
+(`0x102162`); τ is `max_loop_time` (`0x101e84`) and G
+`efc_gains.gain` (`0x102554`).
+
+| Symbol | Where | |
+| ------ | ----- | - |
+| x̄ | `loop_steering.ti_sum` | the ten seconds' valid readings, then their mean, copied to `interval_mean` |
+| x₀ | `0x10254a` | the setpoint, which the console word `phase_off` sets |
+| f | `pll.ti_filtered` | |
+| a | `loop_steering.filter_weight` | 29.75 / τ |
+| M | `efc_gains.step_limit` | 6.25 × 10⁻¹⁰ / \|G\| |
+| k | `loop_steering.integral_gain` | (1/G) / τ² / 4 |
+| I | `loop_steering.integral` | |
+| K | `loop_steering.proportional_gain` | (1/G) / τ |
+| B | `pll.efc_base` | |
+
+`startup_pll` uses the same block, and counts in
+`large_offset_blocks` the consecutive updates whose mean passes
+150 ns, to 15.
 
 ## How this was read
 

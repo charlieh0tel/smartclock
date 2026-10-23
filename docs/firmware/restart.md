@@ -295,6 +295,43 @@ unpacked into `0x100400` to `0x10ac50`.
   instruction, at `0x45e`.  Its erase handler
   starts at `0x20000` and erases three 128 KiB blocks.  All five
   images pass their own sums.
+- *Erase and download (Peru installer, read).*  A command word goes
+  to both parts of a pair at once, the command in both bytes, at the
+  pair's base plus twice the parts' unlock addresses: `0xaaaa` and
+  `0x5554` for pair 1, `0x4aaaa` and `0x45554` for pair 2, `0xaaaa`
+  then `0x5555` written to them, then the command at the first.
+  `:DIAGnostic:ERASe` (`installer_scpi_set_DIAGnostic_ERASe`,
+  `0x107e6e`) masks interrupts (`installer_enter_supervisor_mode`),
+  sends each pair erase setup, `0x8080`, unlocks it again and writes
+  sector erase, `0x3030`, at each 32 KiB sector pair of the writable
+  range: `0x10000` to `0x38000` in pair 1, sectors 0 and 1 kept, and
+  `0x40000` to `0x78000` in pair 2; then restores the mask and polls
+  the words at `0x10000` and `0x40000`, up to a million reads, until
+  each byte of both shows DQ7 or DQ5 (`0xa000`, `0xa0`).  It makes the
+  whole sequence up to five times and answers -200, Execution error,
+  once the fifth is made, even when it succeeds (`quirks.md`).
+  `:DIAGnostic:ERASe?` (`0x107f5c`) answers 1 when every word from
+  `0x10000` to `0x7fffe` reads `0xffff`.  `:DIAGnostic:DOWNload`
+  (`0x107cb8`) copies its string into its frame, takes `S1` to `S3`
+  and `S7` to `S9` (4, 6 and 8 address digits; `S0` and `S5` it accepts
+  and ignores, `S4` and `S6` it refuses, -222, as any other text),
+  converts each pair of hex digits with `installer_strtol`, checks the
+  ones' complement of their sum's low byte against the last pair and
+  the count against the text's length, and programs the data a word at
+  a time, high byte first, from the record's address, refusing,
+  -222, an address outside `0x10000` to `0x7ffff`; an odd last byte is
+  paired with `0xff`, which leaves its neighbor erased.  The word
+  programmer, `installer_flash_program_word` (`0x107c18`), refuses an
+  address outside that range, sends program, `0xa0a0`, writes the
+  word, reads it back up to 100 times until it reads the word or both
+  bytes show DQ5 (`0x2020`), up to five tries, then sends read/reset,
+  `0xf0f0`, and answers -200 once the fifth try is made, as the erase
+  does.  The command words are the AM29F010's (AMD's Am29F010B data sheet,
+  `third_party/amd/Am29F010B.pdf`); the decompiled reading names the polled word at
+  `0x40000` `_interpolator_calibration_init`, the primary's code that
+  lies there.  The harness runs both to their end on a model of the
+  parts' commands and status, comparing the flash's contents after
+  (README.md, "Hand-written C"; `harness.Flash`).
 
 On 2026-09-28 the bench Z3801A was taken into the installer and back,
 with queries only: `*IDN?` answered `Peru-A`, `:DIAGnostic:TEST? 1`
@@ -327,7 +364,8 @@ installer through `0xaa0`, copies its vectors to RAM at `0x100000`,
 sets VBR there and jumps to `0x10135c`.  The unpacker at `0xaa0` reads
 records from `0xbbc`: an `S`, then records of a `C`, a 32-bit count, a
 32-bit RAM destination and that many bytes inline, up to an `E` at
-`0xb328`.  So everything it copies comes from below `0x10000`, into
+`0xb328`: 17 records, 42861 bytes in all, the length the unpacker
+loads at `0xaa8` before the address.  So everything it copies comes from below `0x10000`, into
 `0x100400`--`0x10aad2`.  This entry and unpacker are identical in the
 two dumps.  The normal PRIMARY trap handler reaches this entry, but
 the entry itself calls no PRIMARY code.
@@ -379,29 +417,163 @@ same day `smartclock-cli read-memory` took the bench Z3805A
 3543B-A in PRIMARY with an empty error queue.  The 58503A phrases have
 not been tried.
 
-The console is itself reached only through `LANG "PFORTH"` from the
-SCPI parser (see `console.md`, "Getting to it"), so it helps only a primary whose
-parser still runs.
+The console is reached through `LANG "PFORTH"` from the SCPI parser
+(see `console.md`, "Getting to it"), or at power-up, in place of the
+parser, when `:DIAGnostic:SYSTem:PSTartup` has set the toggle that
+starts it (above; `root_task` tests it at `0x131ca` and calls
+`console_init` instead of `scpi_task_start`).  So it helps a primary
+whose parser still runs, or one set to start the console before the
+parser stopped working; either way the primary itself must start.
 
 How S1, a flash-read fault or the CPU's background debug mode might
 reach the installer without a working primary is speculative; see
 [the recovery hypotheses](../hardware-investigations.md#recovery-hypotheses).
 
+## The chip selects
+
+In the Z3805A 3543B the boot code's reset (`boot_reset`, `0x550`)
+programs the MC68331's chip selects after only the SYPCR write, and
+the primary's reset code (`primary_reset`, `0x144ca`) writes the same
+values again; the table below gives both runs.  No other instruction
+writes them by address: the SIM's chip-select addresses, `0xfffa44` to
+`0xfffa77`, appear in its bytes only in those two runs, and the only
+instruction that puts a SIM address in a register is for PICR
+(`0x1200a`, `0xfffa22`), used only as `(a2)` before the routine
+returns; `chip_selects.py` refuses an image otherwise.  What that does
+not rule out is a select reached by a displacement or an index from a
+base outside the SIM, through an address computed or read from memory,
+or by an absolute short address.  The installer's packed records have
+no such write either, so the installer runs on the boot code's map.
+`tools/firmware/chip_selects.py` reads every image's map from its
+reset code and writes `chip-selects.md` with each image's tables and
+how each map differs from the Z3805A's (`make chip-selects`; `make
+check-chip-selects` fails when the tables here, in `README.md` and
+there drift from the images).  The Z3801A 3543's map is the
+Z3805A's.  The 58503A writes no CSBAR4 or CSOR4, so CS4 keeps its
+reset state, its BYTE field disabled (MC68331UM 4.8.4), and 3633's
+boot code makes the CS4 pin a discrete output, PC1.  The Z3816A 4001
+and Z3815A 4010 use another map (`README.md`'s table): there
+`0x300000` is chip select 1, `0x302000` chip select 7 and `0x304000`
+chip select 5, which none of the Z3801A, Z3805A and 58503A has, and
+their boot code's map is not their primary's.  The Z3815A's and the
+58503B's boot code first sets CSBOOT and the RAM's selects alone, to
+1 MiB blocks, sums the primary under them and jumps into it, and sets
+its own map only when the sum fails.
+
+*Pins* (the CSPAR line below; MC68331UM D.3.23, D.3.24, Tables D-8
+to D-10, 4.8.1.1).  CSBOOT, CS0
+to CS3, CS6, CS7 and CS10 are 16-bit chip selects, CS4, CS5, CS8 and
+CS9 8-bit ones.  Every pin that could instead be BR, BG, BGACK, FC0
+to FC2 or ADDR19 to ADDR23 is a chip select, so the board's address
+bus is ADDR0 to ADDR18, no function code or bus arbitration line
+leaves the processor, and any further decode on the board takes
+ADDR18 and below inside one chip select.  Pin numbers are the 132-pin
+QFP's (Figure 3-2); CS3 to CS10 as `../hardware-investigations.md`'s
+pin table reads that figure.
+
+*Option fields* (Table D-12, 4.8.1.3).  Every select is asynchronous
+(MODE 0), asserted on the address strobe (STRB 0) and asks no
+autovector (AVEC 0); all but CS10 match supervisor and user space
+(SPACE 11) at any level (IPL 0).
+
+<!-- chip_selects.py z3805a-3543b boot -->
+Pins: CSPAR0 `0x2bff` at `0x568`, CSPAR1 `0x03af` at `0x570`.
+
+| Window | Select | Pin | CSBAR, CSOR; written at | Port | BYTE, R/W, DSACK | Device |
+| ------ | ------ | --- | ----------------------- | ---- | ---------------- | ------ |
+| `0x000000`--`0x03ffff`, 256 KiB | CSBOOT | 112 | `0x0005`, `0x6870`; `0x578`, `0x580` | 16-bit | both, read, 1 wait | flash, lower bank: two of U11 to U14 (Am29F010, 128 K × 8), a word's two bytes |
+| the same | CS6 | 121, PC3/ADDR19 | `0x0005`, `0x7070`; `0x5e8`, `0x5f0` | 16-bit | both, write, 1 wait | the same parts' writes: command cycles and programming |
+| `0x040000`--`0x07ffff`, 256 KiB | CS1 | 114, BG | `0x0405`, `0x6870`; `0x598`, `0x5a0` | 16-bit | both, read, 1 wait | flash, upper bank: the other two |
+| the same | CS7 | 122, PC4/ADDR20 | `0x0405`, `0x7070`; `0x5f8`, `0x600` | 16-bit | both, write, 1 wait | the upper bank's writes |
+| `0x100000`--`0x10ffff`, 64 KiB | CS0 | 113, BR | `0x1003`, `0x6830`; `0x588`, `0x590` | 16-bit | both, read, 0 wait | RAM, read: the two M5M51008B (128 K × 8), of whose 256 KiB the selects reach 64 KiB (*The RAM*, below) |
+| the same | CS2 | 115, BGACK | `0x1003`, `0x5030`; `0x5a8`, `0x5b0` | 16-bit | upper, write, 0 wait | RAM, writes to the upper byte (even addresses, DATA15 to DATA8) |
+| the same | CS3 | 118, PC0/FC0 | `0x1003`, `0x3030`; `0x5b8`, `0x5c0` | 16-bit | lower, write, 0 wait | RAM, writes to the lower byte |
+| `0x200000`--`0x2007ff`, 2 KiB | CS8 | 123, PC5/ADDR21 | `0x2000`, `0x3bf0`; `0x608`, `0x610` | 8-bit | lower, read and write, external | U3, the SCC68692 DUART, driven as a 68681; on an 8-bit port any BYTE but 00 enables the select (4.8.1.3) |
+| `0x300000`--`0x30ffff`, 64 KiB | CS5 | 120, PC2/FC2 | `0x3003`, `0x7b30`; `0x5d8`, `0x5e0` | 8-bit | both, read and write, 12 wait | shared: the latch, the switch byte, the FPGA and the EFC strobe (below) |
+| `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x618`, `0x620` | 8-bit | both, read and write, 3 wait | U4, the AT28C64B EEPROM, by elimination (`../z3805a-board.html`) |
+| `0x500000`--`0x5007ff`, 2 KiB | CS4 | 119, PC1/FC1 | `0x5000`, `0x7830`; `0x5c8`, `0x5d0` | 8-bit | both, read and write, 0 wait | none the firmware uses: no instruction addresses it; whether a part is wired to it is not traced (`../hardware-investigations.md`) |
+| CPU space, interrupt acknowledge at level 2 | CS10 | 125, ECLK/ADDR23 | `0xfff8`, `0x2bc4`; `0x628`, `0x630` | 16-bit | lower, read, external; CPU space, IPL 2 | the DUART's acknowledge: it answers with the vector its IVR holds, so its interrupt is level 2, vectored |
+
+The primary (`0x144d2` to `0x1459a`) writes the same 26 values, each `0x13f6a` above.
+<!-- end chip_selects.py -->
+
+CS10 is set up as 4.8.3 asks for a 16-bit port: base all ones, a
+2 KiB block so that ADDR[19:16] are compared, read only, the lower
+byte, the one an acknowledge at an odd address is.  Its DSACK is
+external, so the device's acknowledge sets the cycle's width (Table
+4-12); `../hardware-investigations.md` item 21 expects the DUART's
+/DTACK on DSACK0, which would make it an 8-bit cycle on DATA15 to
+DATA8; not yet read on the board.  The flash and
+RAM selects split one window between reads and writes, or between
+the bytes of a word, so that each part's /OE and /WE can take a chip
+select directly; that wiring was not traced.  Which pair of U11 to
+U14 is the lower bank was not read from the photos.
+
+*The RAM.*  The Z3805A carries 256 KiB, two M5M51008B (128 K × 8),
+a word's two bytes, of which CS0, CS2 and CS3 reach 64 KiB, `0x100000`
+to `0x10ffff` (CSBAR `0x1003`).  No image maps more, and none uses
+more.  Every map of every image gives the three selects that block
+(`chip-selects.md`) but the first run of the Z3815A's and 58503B's
+boot code, which makes them 1 MiB (`0x1007`) only while it sums the
+primary, and writes RAM there once, a flag at `0x10ac50` (`0x458`).
+Inside the block:
+
+| Image | Start-up stack | pSOS configuration: region 1, region 2 | RAM test's end |
+| ----- | -------------- | -------------------------------------- | -------------- |
+| Z3801A 3543 | `0x10fffe` (`0x1462a`) | `0x1037c4` to `0x10fffe`, none (`0x511e8`) | `0x110000` (`0x91c`) |
+| Z3805A 3543B | `0x10fffe` (`0x14922`) | `0x103948` to `0x10fffe`, none (`0x5122a`) | `0x110000` (`0x91c`, `0x1461c`) |
+| 58503A 3633 | `0x10fffe` (`0x14804`) | `0x103b0c` to `0x10fffe`, none (`0x540dc`) | `0x110000` (`0x90c`) |
+| 58503A 3704 | `0x10fffe` (`0x1497c`) | `0x103b24` to `0x10fffe`, none (`0x53f6c`) | `0x110000` (`0x908`) |
+| Z3816A 4001 | `0x10fffe` (`0x24ac6`) | `0x103eb0` to `0x10fffe`, none (`0x581bc`) | `0x110000` (`0x738`) |
+| Z3815A 4010 | `0x10fffe` (`0x24f8e`) | `0x104594` to `0x10fffe`, none (`0x5ed0a`) | `0x110000` (`0x78e`) |
+| 58503B 1.01.04 | `0x10fffe` (`0x249f8`) | `0x10469c` to `0x10fffe`, none (`0x5bb8a`) | `0x110000` (`0x78e`) |
+
+The stack is the `lea` into SP before the primary's start; the
+configuration (`structures.md`'s `psos_configuration`) is the ROM
+table the kernel's configuration is copied from, region 1 from its
+data area to `data_end`, and region 2's start and end both 0, so that
+`kernel_init` leaves it empty; the RAM test's end is its
+`movea.l #0x110000`.  The Z3805A's RAM test (`0x916` to `0xa1a`) runs
+its patterns from `0x100000` to that end and its address-line test
+over offsets 2 to `0x8000`, ADDR1 to ADDR15: the firmware is written
+for 64 KiB, 32 K words.  In a disassembly of each whole image the
+only operands from `0x110000` to `0x1fffff` but the RAM test's end
+are constants, none an address: `0x112000`, `0x114000` and `0x130200`
+pushed for `float_raise` and the installer's copy (in the Z3805A
+`0x5e2a2`; `0x9282`, `0x9294` in the installer's records), `0x180000` stored to a local (`0x1067e`), 1800000 and
+`0x199999` compared, and `0x1fffff` a mask.  So the parts'
+upper address pins, beyond A14, are held by the board, tied or on
+ADDR16 and above, which the block holds at 0.  Why the board carries
+four times the RAM it maps the image does not show.
+
+*CS5's window.*  It is the only chip select the image uses for more
+than one device:
+
+| Address | Name | In the Z3805A image | Device |
+| ------- | ---- | ------------------- | ------ |
+| `0x300000` | `lamp_latch` | written whole by `leds_update` (`0x464de`) and `lamp_test` (`0x184ee`) | the lamp latch (`outputs.md`, "The Z3805A's lamps"); U44 the candidate |
+| `0x302000` | -- | never accessed; only 58503A 3633's Oman installer reads it (below) | the switch byte; whether it is S1 is open |
+| `0x304000` | `fpga_port` | read by `fpga_read` (`0x4076a`), written by `fpga_write` (`0x40756`) | U32, the XC3042 FPGA (`interval.md`) |
+| `0x306000` | `efc_strobe` | written 0 by `efc_write` (`0x1f646`) after the EFC goes out to QSPI device 7 | not identified |
+
+The four lie 8 KiB apart, so an access's device is ADDR13 and ADDR14;
+no access in the image sets ADDR15, so the image does not show
+whether `0x308000` to `0x30e000` decode to more devices, alias these,
+or select nothing.  A 74AC138 enabled by CS5 with ADDR13 to ADDR15 on
+its A inputs would give these four as /Y0 to /Y3; which of U22, U23,
+U25 and U27 it is, if any, is for the bench
+(`../hardware-investigations.md` item 20).  Every device in the
+window takes CS5's 12 wait states.  Nothing in the chip selects says
+what the other '138s decode; the QSPI's PCS0 to PCS3 carry a device
+number the board decodes (`structures.md`, "The QSPI's devices"),
+which wants one too.
+
 ## The switch byte at `0x302000`
 
-The Z3801A and Z3805A reset code sets up these chip selects (CSPAR0
-`0x2bff`, CSPAR1 `0x03af`; MC68331UM 4.8).  The 58503A's are the same
-but for CS4, which it lacks.
-
-| Select | Base, size | Port | Access | Use in the firmware |
-| ------ | ---------- | ---- | ------ | ------------------- |
-| BOOT, CS1 | `0x0`, `0x40000`; 256 KiB each | 16-bit | read | flash |
-| CS6, CS7 | the same | 16-bit | write | flash |
-| CS0, CS2, CS3 | `0x100000`, 64 KiB | 16-bit | | RAM |
-| CS4 | `0x500000`, 2 KiB, 0 wait | 8-bit | R/W | none |
-| CS5 | `0x300000`, 64 KiB, 12 wait | 8-bit | R/W | latch at `0x300000`, registers at `0x304000` and `0x306000`, byte at `0x302000` |
-| CS8 | `0x200000`, 2 KiB, external DSACK | 8-bit | | 68681 DUART |
-| CS9 | `0x400000`, 8 KiB | 8-bit | | EEPROM |
+In the Z3801A, Z3805A and 58503A the byte lies in CS5's window ("The
+chip selects", above); in the Z3816A and Z3815A primaries it is chip
+select 7's own block (CSBAR7 `0x3020`, CSOR7 `0x6870`: Z3816A
+`0x24706`, `0x2470e`; Z3815A `0x24bce`, `0x24bd6`).
 
 The only read of `0x302000` in any installer is in the Oman installer
 that 58503A 3633 carries (unpacked address `0x108290`).  The installer
@@ -518,7 +690,8 @@ parsed as a mnemonic; the bench Z3801A rejects it with -112, "Program
 mnemonic too long".  The tool does not write the boot area or EEPROM.
 It checks for blank flash after erasing, waits for each record's
 prompt and checks the error queue before continuing.  The installer's
-word programmer (`0x107c18` in the unpacked Z3801A installer) compares
+word programmer (`installer_flash_program_word`, `0x107c18` in the
+unpacked Z3801A and Z3805A installer; "The installer" above) compares
 the flash word to the requested word and reports failure if
 programming fails.
 

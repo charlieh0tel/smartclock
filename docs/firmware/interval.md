@@ -79,6 +79,10 @@ and reads back four bits; `FUN_000444e2` reads two nibbles for a byte;
 the count is assembled from three bytes, register selectors `0x16`,
 `0x14` and `0x12`.
 
+`counter.md` follows the counter in the Z3805A 3543B in detail: its
+registers, the order it is armed and read in, the calibration and the
+1 PPS edges.
+
 ## In every image
 
 The same code is in all seven images, at other addresses: the

@@ -33,6 +33,62 @@ a name followed by the address of its code.  Among them:
     gps_query   gps_query_all         pr_time_raim            pr_satview
     pr_hold_cause         wr_eeprom   clear_nv    master_reset  crash
 
+## The kernel's registers
+
+The words run with four registers given over to the interpreter, read
+from the Z3805A 3543B image (addresses below are its):
+
+- A6 is the data stack, growing down: `(A6)+` pops, `-(A6)` pushes.
+- A5 points just past the task's user area, which the words read at
+  negative offsets.
+- A4 is the dictionary pointer: `,` stores through it, and `;`
+  compiles an `rts` with `move.w #0x4e75,(A4)+`.
+- A3 is the input, the next character of the text interpreted.
+
+The words that show each user variable name it:
+
+| Offset from A5 | Variable | Shown by |
+| -------------- | -------- | -------- |
+| `-0x28` | `iodev`, a word | `expect` reads it, `!iodev` sets it |
+| `-0x22` | `pad` | `pad` pushes it |
+| `-0x1e` | `tib` | `tib` pushes it |
+| `-0x1a` | `fence` | `fence` pushes its address, `unfence` resets it |
+| `-0x16` | the latest word defined | `forget`, `immediate`, `recurse`, `words`, `;` |
+| `-0x12` | `here` | `here` stores A4 there and pushes its address |
+| `-0xe` | `base` | `decimal` stores 10, `hex` 16, `base` pushes its address |
+| `-0xa` | `state`, a word | `[` clears it, `]` sets it, `state` pushes it |
+| `-0x8` | the data stack's base | `depth` is it less A6, over 4; `abort` reloads A6 from it |
+| `-0x4` | the return stack's base | `abort` reloads SP from it |
+
+`console_task` points `tib` at `forth_terminal_input` (`0x100a04`) and
+`pad` at `forth_pad_buffer` (`0x100a8a`), 134 bytes each, the second
+up to `console_task_id` (`0x100b10`), the p4th task's id, which
+`console_task_create` stores and the word `root` pushes the address
+of.  `forth_build_prompt` writes `forth_prompt` (`0x100b14`, 10
+bytes) from `-0x26` and `forth_base_letters`.
+`-0x26` to `-0x23` are not read by any word.  `0x19150` writes the
+string in D0 to `iodev` with I/O function 4, which is `type`'s work.
+
+The words share a few internal routines, named for what they do (Z3805A
+3543B): `forth_refill` (`0x1912a`) skips spaces (`forth_skip_spaces`,
+`forth_is_space`) and, at the end of the input, prints the prompt
+`forth_build_prompt` (`0x19096`) makes -- `p4th`, the base's letter,
+then `>`, or `>>` while compiling -- and reads a line
+(`forth_read_line`); `forth_parse_word` (`0x1910e`) copies the next
+word into `pad`; `forth_find` (`0x18fcc`) looks it up from the latest
+word down, skipping hidden ones; `forth_parse_number` (`0x18f68`)
+converts it in `base` through `forth_digit`, or prints `: not found`.
+Defining and compiling use `forth_create_header` (`0x1968c`),
+`forth_align`, `forth_compile_code`, `forth_compile_constant`,
+`forth_resolve_branch` and `forth_check_pairs` ("ERROR: Mismatched"),
+`forth_compile_code` copying the control words' code runs,
+`forth_code_do` to `forth_code_repeat` (`0x1939c` to `0x19417`) and
+`forth_code_does` (`0x19dce`);
+the arithmetic, `forth_multiply`, `forth_divide_signed` and
+`_unsigned` and `forth_divide_short`; printing a number,
+`forth_digit_char` and `forth_print_number`; `spawn` pads a task's
+name with spaces through `forth_space_if_zero`.
+
 ## Getting to it
 
 `:SYSTem:LANGuage` is the way in.  097-59551-02 4-15 documents two
@@ -68,7 +124,14 @@ phrase `0 !iodev` (`0x28f98`) and prints `pForth $Revision: 1.2 $`
 `trap #4`, the pSOS device supervisor at `0x24dae`, whose device number
 is D0 with the major number in its high byte and whose function code
 is D7, 0 to 5 -- `emit` writes with code 4 (`0x2932c`) and `expect`
-reads with code 3 (`0x29f3a`).  So the console's port is pSOS device
+reads with code 3 (`0x29f3a`).  `!iodev` (Z3805A 3543B `0x1a278`)
+pushes the device it replaces (`0x1a28e`), so the console starts with
+one cell on its stack, the string device's number, and `.s` in a fresh
+console prints `512`.  And `.` on an empty stack prints the cell below
+the stack's base before ` ?Stack empty`: `interpret` checks the depth
+only before each word (`0x18f0e`).  Both were read from the code and
+seen in the harness's console sessions (`README.md`, "Hand-written
+C"), not tried on a unit.  So the console's port is pSOS device
 0.  Major number 0 is the SCI: the start-up code at `0x57fc4` copies
 the pSOS configuration from `0x581bc` to `0x102cfc` and the I/O switch
 table from `0x58670` to `0x102c90` (the configuration's word at +0x22,
@@ -558,5 +621,10 @@ of its own, as "Reading memory through it" does; and it left with
 `"PRIMARY"`.  `watch` is a kernel word in every image (`0x2a0fa` in the
 58503B's) that begins by saving every register to a block at
 `0x101098`; what it does after that, and whether the unit restarted on
-the way back to SCPI, was not traced.
+the way back to SCPI, was not traced.  In the Z3805A 3543B's
+(`forth_watch`, `0x19e90`) the block is `forth_watch_before`
+(`0x100b28`), D0 to D7 then A0 to A7; it calls the word on the data
+stack, saves the registers again in `forth_watch_after` (`0x100b68`),
+replaces the word with a mask of a bit for each register that changed,
+and loads D0 to A5 back from `forth_watch_before`.
 

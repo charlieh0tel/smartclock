@@ -35,6 +35,22 @@ measurement, the disciplining loop, the GPS engine interface and the
 FPGA bitstreams.  See [`docs/firmware/`](docs/firmware/) and
 [`docs/scpi/`](docs/scpi/).
 
+### The Z3805A 3543B in C
+
+One image, the Z3805A's 3543B, is read whole as C.  Every C function
+of it and of the installer it unpacks into RAM, 1318 and 236, was
+decompiled by Ghidra through the project's scripts and then written
+again by hand, and each runs in an emulator harness against the
+image's own copy from the same state, its results, memory, kernel
+calls and device accesses compared: all agree but six whose
+difference is the firmware's own or one C cannot express, and one the
+harness cannot run.  The 474 routines that are not C, the pSOS and
+pForth kernels among them, are the image's instructions, reassembled
+byte for byte, and the generated SCPI trees are the ROM's bytes.  It is
+a reading of the firmware, not a buildable or flashable image, and the
+firmware's faults are kept, not fixed.  Method, checks and limits:
+[`docs/firmware/rewrite.md`](docs/firmware/rewrite.md).
+
 ## Status
 
 In daily use, logging continuously.  [`PLAN.md`](PLAN.md) holds the
@@ -88,7 +104,10 @@ Without a receiver, use the simulator; every tool takes
     smartclockd     --device tcp://127.0.0.1:5025 ...
     smartclock-cli  --device tcp://127.0.0.1:5025 diagnose
 
-`make ci` runs CI's checks; `make test-web` runs the browser tests,
+`make ci` runs CI's Rust checks; CI also runs the Z3805A firmware's
+checks, `.github/workflows/firmware.yml`
+([`docs/firmware/README.md`](docs/firmware/README.md), "The checks in
+CI").  `make test-web` runs the browser tests,
 after `make web-deps` once.  `make hooks`, once per clone, sets up the
 repository's git hooks.  `make check-pages` loads each HTML page in `docs/`
 in headless Chrome and fails if anything on it scrolls sideways at
@@ -136,10 +155,11 @@ describes the bench.
 | [`docs/58503a-second-10mhz.md`](docs/58503a-second-10mhz.md) | enabling the 58503A's 10 MHz OUT B, J15 |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
 | [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, and the pForth console |
-| [`docs/loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |
+| [`docs/loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |
 | [`docs/hardware-investigations.md`](docs/hardware-investigations.md) | what only a bench can settle |
+| [`docs/hp5313x.md`](docs/hp5313x.md) | the HP 53131A-family counters, the same platform as the receivers, and what they could tell us |
 | [`docs/sessions/`](docs/sessions/) | sessions with the bench receivers as captured: pForth consoles and early wire transcripts |
-| [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, the trees side by side against the manuals, and what bench receivers answered |
+| [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, and as C data, the trees side by side against the manuals, and what bench receivers answered |
 | [`docs/screen-format-strings.md`](docs/screen-format-strings.md) | the status screen's templates, and what drives its mode line |
 
 Vendor manuals are in `third_party/`; `097-59551-02` (59551A/58503A)

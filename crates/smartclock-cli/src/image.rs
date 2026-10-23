@@ -61,6 +61,15 @@ pub(crate) fn name(path: &Path) -> Result<String> {
         .with_context(|| format!("{} has no usable name", path.display()))
 }
 
+/// A file's name, without its directory, to name it in generated output
+/// the same wherever the tool runs.
+pub(crate) fn file_name(path: &Path) -> Result<String> {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .map(str::to_owned)
+        .with_context(|| format!("{} has no usable name", path.display()))
+}
+
 /// The image at `path`, read by `parse`.
 pub(crate) fn load<T>(path: &Path, parse: impl Fn(&[u8]) -> Result<T>) -> Result<T> {
     let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;

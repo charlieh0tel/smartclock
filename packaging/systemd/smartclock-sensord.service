@@ -1,6 +1,6 @@
 [Unit]
 Description=Sensors beside SmartClock GPS receivers
-Documentation=https://github.com/charlieh0tel/smartclockmon
+Documentation=https://github.com/charlieh0tel/smartclock
 # One per host: sensors belong to the host, not to a receiver, so this
 # logs them whether or not any receiver is attached.  It reads hwmon
 # and IIO files in /sys, or the symlinks a helper keeps under /run, and

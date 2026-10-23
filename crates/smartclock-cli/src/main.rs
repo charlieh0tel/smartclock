@@ -48,6 +48,7 @@ use smartclock::wire::Reading;
 use smartclock_log::reader::Fact;
 use smartclock_log::reader::Log;
 
+use crate::dump_scpi::DumpScpiArgs;
 use crate::flash::FlashArgs;
 use crate::flash::chips::JoinArgs;
 use crate::flash::chips::SplitArgs;
@@ -162,20 +163,7 @@ enum Command {
     SplitChips(SplitArgs),
     /// Print every command path a flash image's SCPI parser knows, read
     /// out of its tables (docs/scpi/README.md).  Needs no receiver.
-    DumpScpi {
-        /// Full 512 KiB images, as `read-flash` writes or `join-chips`
-        /// makes: one, or with `--models` any number.
-        #[arg(required = true)]
-        images: Vec<PathBuf>,
-        /// Print the trees side by side against the manuals and the
-        /// command table, as Markdown (docs/scpi/models.md).
-        #[arg(long)]
-        models: bool,
-        /// With `--models`, print a page that filters the table instead
-        /// of Markdown (docs/scpi/models.html).
-        #[arg(long, requires = "models")]
-        html: bool,
-    },
+    DumpScpi(DumpScpiArgs),
     /// Print every word a flash image's pForth console knows, from its
     /// dictionary and its diagnostic table (docs/firmware/pforth/README.md).
     /// Needs no receiver.
@@ -346,13 +334,8 @@ fn main() -> Result<()> {
     if let Command::SplitChips(args) = &cli.command {
         return flash::chips::run_split(args);
     }
-    if let Command::DumpScpi {
-        images,
-        models,
-        html,
-    } = &cli.command
-    {
-        return dump_scpi::run(images, *models, *html);
+    if let Command::DumpScpi(args) = &cli.command {
+        return dump_scpi::run(args);
     }
     if let Command::DumpPforth { images, models } = &cli.command {
         return dump_pforth::run(images, *models);
@@ -588,7 +571,7 @@ fn run<T: Transport>(mut session: Session<T>, command: &Command, checked: &[Stri
         | Command::Flash(_)
         | Command::JoinChips(_)
         | Command::SplitChips(_)
-        | Command::DumpScpi { .. }
+        | Command::DumpScpi(_)
         | Command::DumpPforth { .. }
         | Command::DumpOncore { .. } => unreachable!("handled before the session is opened"),
         Command::Note { .. } | Command::Fact { .. } => {
@@ -625,7 +608,7 @@ fn typed(command: &Command) -> Result<Vec<String>> {
         | Command::Flash(_)
         | Command::JoinChips(_)
         | Command::SplitChips(_)
-        | Command::DumpScpi { .. }
+        | Command::DumpScpi(_)
         | Command::DumpPforth { .. }
         | Command::DumpOncore { .. }
         | Command::Note { .. }
@@ -1030,11 +1013,7 @@ fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
         Command::Sensors { sensord } => sensors(sensord),
         Command::JoinChips(args) => flash::chips::run_join(args),
         Command::SplitChips(args) => flash::chips::run_split(args),
-        Command::DumpScpi {
-            images,
-            models,
-            html,
-        } => dump_scpi::run(images, *models, *html),
+        Command::DumpScpi(args) => dump_scpi::run(args),
         Command::DumpPforth { images, models } => dump_pforth::run(images, *models),
         Command::DumpOncore { images, models } => dump_oncore::run(images, *models),
         Command::Probe { .. } | Command::Sweep { .. } => anyhow::bail!(

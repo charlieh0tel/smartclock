@@ -6,6 +6,6 @@ page, the Debian packages supported and the Windows zip not.  The
 Windows build is tested only by CI, not on a receiver.
 
 What the programs are and how to run them:
-https://github.com/charlieh0tel/smartclockmon
+https://github.com/charlieh0tel/smartclock
 
 Built from commit:

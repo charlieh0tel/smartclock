@@ -1,6 +1,6 @@
 [Unit]
 Description=Prometheus exporter for SmartClock GPS receivers
-Documentation=https://github.com/charlieh0tel/smartclockmon
+Documentation=https://github.com/charlieh0tel/smartclock
 # The exporter answers a scrape from the daemon's last reading, so it is
 # useless without it, but it need not fail when the daemon restarts: it
 # reports up 0 for as long as that lasts, which is the honest answer and

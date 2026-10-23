@@ -1,6 +1,6 @@
 [Unit]
 Description=SmartClock GPS receiver logging daemon on /dev/%I
-Documentation=https://github.com/charlieh0tel/smartclockmon
+Documentation=https://github.com/charlieh0tel/smartclock
 # The only daemon unit: one instance per port, even where there is
 # one port, named by the port as getty does it.
 # `systemctl enable --now smartclockd@ttyUSB0` opens /dev/ttyUSB0 and

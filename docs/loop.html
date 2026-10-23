@@ -99,7 +99,7 @@ a{color:var(--accent)}
       <tr><td>startup τ</td><td>the constant <code>startup_pll</code> ramps from, +5 s per update, until within 5 s of τ</td><td>150 s</td></tr>
     </tbody>
   </table></div>
-  <p class="note">The clamp figures come from M = 6.25 × 10⁻¹⁰ / |G| with the gains below. Evidence for each value: <a href="https://github.com/charlieh0tel/smartclockmon/blob/main/docs/firmware/loop.md#the-loop">The loop</a>, <a href="https://github.com/charlieh0tel/smartclockmon/blob/main/docs/firmware/loop.md#τ-and-g">τ and G</a>, <a href="https://github.com/charlieh0tel/smartclockmon/blob/main/docs/firmware/loop.md#s-the-oscillator-current">s, the oscillator current</a>.</p>
+  <p class="note">The clamp figures come from M = 6.25 × 10⁻¹⁰ / |G| with the gains below. Evidence for each value: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#the-loop">The loop</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#τ-and-g">τ and G</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#s-the-oscillator-current">s, the oscillator current</a>.</p>
 
   <h3>By model</h3>
   <div class="wide"><table>
@@ -112,7 +112,7 @@ a{color:var(--accent)}
       <tr><td>58503B 1.01.04</td><td>700 s, settable: <code>LTIMe:MAX</code>*</td><td>−1.25 × 10⁻¹² or +6.25 × 10⁻¹³, by <code>TYPE</code>*</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s, from <code>LTIMe:INIT</code>*</td></tr>
     </tbody>
   </table></div>
-  <p class="note">* Under <code>:DIAGnostic:ROSCillator</code>, undocumented; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, the Z3801A and the 58503B's defaults; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in, below. What the bits of the word at <code>0x302000</code> read was not traced. Evidence: <a href="https://github.com/charlieh0tel/smartclockmon/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
+  <p class="note">* Under <code>:DIAGnostic:ROSCillator</code>, undocumented; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, the Z3801A and the 58503B's defaults; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in, below. What the bits of the word at <code>0x302000</code> read was not traced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
 </section>
 
 <section>
@@ -151,7 +151,7 @@ a{color:var(--accent)}
 <section>
   <h2>Starting up</h2>
   <p>Before <code>pll_normal</code>, <code>startup_pll</code> runs the same update law with its own time constant, recomputing K, k and a from it every update. It first waits for sixteen consecutive ten-second means within ±150 ns, then lengthens its constant from 150 s by 5 s per update until it is within 5 s of τ, sets it to τ, and hands over. The Z3801A's firmware does the same; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
-  <p class="note">Source: <a href="https://github.com/charlieh0tel/smartclockmon/blob/main/docs/firmware/loop.md"><code>docs/firmware/loop.md</code></a>, which holds the addresses and the routine identities behind each number; this page explains, that one is the evidence.</p>
+  <p class="note">Source: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md"><code>docs/firmware/loop.md</code></a>, which holds the addresses and the routine identities behind each number; this page explains, that one is the evidence.</p>
 </section>
 </main>
 

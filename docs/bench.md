@@ -74,7 +74,7 @@ regulators on the output bracket, the -15 V one an LM7915.
 ![The 58503A's original power supply, Power-One MAP55-4003, out of the receiver: the outputs at the left, AC input at the right](images/58503A-60001_RevC/58503a-power-supply.jpg)
 
 Its parts, numbered on the photo:
-[`map55-4003.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/map55-4003.html).
+[`map55-4003.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/map55-4003.html).
 
 ## HP Z3801A, serial 3542A01548
 
@@ -216,7 +216,7 @@ and U14 (1M).  The FPGA, U32, is a Xilinx XC3042-70 PC84C, and the
 CPU, U33, a Motorola MC68331CFC16.  The DUART, U3, is a Philips
 SCC68692C1A44 and the EEPROM, U4, an Atmel AT28C64B-20JC, soldered.
 Its parts, numbered on the close-up:
-[`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/z3805a-board.html).
+[`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/z3805a-board.html).
 Its jacks
 carry the same designators as the 58503A's: J4 (OUT A) and J5 (OUT B)
 go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to
@@ -401,7 +401,7 @@ Later results (`hardware-investigations.md`, item 11):
 - 2026-10-03, 24 hours on one splitter beside the 58503A and a u-blox
   NEO-M8T, with that gain ahead of it alone: 2.9 satellites on average, none held below 39 dB-Hz where
   the 58503A held 88% at 36 to 39
-  ([bench-sky-2026-10-03.html](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/bench-sky-2026-10-03.html)).
+  ([bench-sky-2026-10-03.html](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/bench-sky-2026-10-03.html)).
 - The 24 hours to 21:00 UTC on 2026-10-05, with the 20 dB LNA still in
   place: lock 88.3% of the time, on about 2.7 satellites on average
   while locked.

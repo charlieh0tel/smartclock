@@ -13,7 +13,7 @@ Stop the daemon before any direct-mode work; it holds the port.
 on 2026-10-23: the photo under `images/`, and the region as pixels
 x0,y0 to x1,y1 of the full-size photo after its EXIF rotation.  The
 Z3805A's parts are mapped in
-[`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/z3805a-board.html).
+[`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/z3805a-board.html).
 Only the component sides were photographed, and most signal lines
 leave a part's pins through vias within a few millimeters, so no line
 between two parts was followed end to end.
@@ -437,7 +437,7 @@ Checked on 2026-09-27:
 On 2026-10-03, over 24 hours on one splitter beside a 58503A and a
 u-blox NEO-M8T, the Z3805A held no satellite the NEO-M8T read below
 39 dB-Hz, with a 20 dB LNA ahead of it that the others lacked; the
-58503A held 88% of those at 36 to 39 dB-Hz ([`bench-sky-2026-10-03.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/bench-sky-2026-10-03.html)).
+58503A held 88% of those at 36 to 39 dB-Hz ([`bench-sky-2026-10-03.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/bench-sky-2026-10-03.html)).
 
 *Next:* one of these engines in the 58503A (3710A01056), whose
 firmware takes a six-channel engine (`firmware/gps.md`, "Six or eight

@@ -726,9 +726,9 @@ for (const p of PAGES) {
       await expect(colophon).toContainText("© 2026 Christopher Hoover");
       await expect(colophon).toContainText("GPL-3.0-or-later");
       await expect(colophon.locator("a", { hasText: "source" }))
-        .toHaveAttribute("href", "https://github.com/charlieh0tel/smartclockmon");
+        .toHaveAttribute("href", "https://github.com/charlieh0tel/smartclock");
       await expect(colophon.locator("a", { hasText: "issues" }))
-        .toHaveAttribute("href", "https://github.com/charlieh0tel/smartclockmon/issues");
+        .toHaveAttribute("href", "https://github.com/charlieh0tel/smartclock/issues");
     });
 
     test("a change of receiver clears at once, then shows the new one", async ({ page }) => {

@@ -48,7 +48,7 @@ frequency offset.  Its messages:
 
 ## The loop
 
-[`loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/loop.html)
+[`loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html)
 draws what follows as a block diagram, with the constants and the
 closed-loop poles.
 
@@ -105,7 +105,7 @@ loop this is -- proportional-integral on the prefiltered error, with
 gains that alone would give a double pole at −1/(2τ), and closed-loop
 poles at −0.37/τ and (−1.35 ± 0.51j)/τ once the prefilter is counted
 -- is worked out in
-[`loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/loop.html),
+[`loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html),
 "What kind of loop that is"; this file is the evidence for its
 numbers.
 

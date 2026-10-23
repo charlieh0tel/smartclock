@@ -14,7 +14,7 @@ found by reading the code.
 A path here means the parser knows it, not that a receiver answers it.
 Nothing here was sent to a receiver.
 
-[`models.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/scpi/models.html)
+[`models.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/scpi/models.html)
 is the same table as a page that filters it -- by text, by whether a
 manual lists a path, whether the images differ, whether it has a
 handler, and by image; `dump-scpi --models --html` writes it, and the

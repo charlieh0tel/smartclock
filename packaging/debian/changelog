@@ -1,3 +1,11 @@
+smartclockmon (1.7.1-1) unstable; urgency=low
+
+  * The packages' summaries say what each holds: smartclockmon the
+    logging daemon, monitor, web view and exporter; smartclock-utils
+    the command-line tools and the simulator.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Fri, 23 Oct 2026 15:12:42 -0700
+
 smartclockmon (1.7.0-1) unstable; urgency=low
 
   * The Debian package splits in two.  smartclock-utils carries

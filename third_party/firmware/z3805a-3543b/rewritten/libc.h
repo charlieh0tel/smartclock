@@ -509,9 +509,12 @@ static void libc_double_to_digits(double value, int32_t count,
 
 /* sprintf_put's and its installer copy's body: copies so many items of
  * doprnt's output, of a size of 1 only, to sprintf's buffer; returns
- * the count copied, 0 for another size. */
-static int32_t libc_sprintf_put(char* text, int32_t size, int32_t count,
-                                sprintf_output* output) {
+ * the count copied, 0 for another size.  Always in line, as doprnt's
+ * body is, so that a call through doprnt runs in no more stack than
+ * the image's: a pForth word printing from the console's task, whose
+ * return stack is right above its data stack (mem_rep). */
+__attribute__((always_inline)) static inline int32_t libc_sprintf_put(
+    char* text, int32_t size, int32_t count, sprintf_output* output) {
   if (size != 1) {
     return 0;
   }
@@ -1108,9 +1111,11 @@ static char* libc_print_decimal(uint32_t value, char* start,
  * as libc.md describes it: flags ' ', '#', '+', '-' and '0', a width and a
  * precision, each a number or '*', the sizes h, l and L, and the
  * conversions c, d, e, E, f, g, G, i, n, o, p, P, s, S, u, x, X and %;
- * another character is printed as itself. */
-static int32_t libc_doprnt(const uint8_t* ctype, char* format, void* arguments,
-                           sprintf_put_function* put, sprintf_output* output) {
+ * another character is printed as itself.  Always in line, as
+ * libc_sprintf_put is. */
+__attribute__((always_inline)) static inline int32_t libc_doprnt(
+    const uint8_t* ctype, char* format, void* arguments,
+    sprintf_put_function* put, sprintf_output* output) {
   /* The most digits double_to_digits gives significant, and the most a
    * fixed-point fraction takes. */
   static const int32_t SIGNIFICANT_MOST = 17;

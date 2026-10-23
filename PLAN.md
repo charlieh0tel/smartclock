@@ -1645,6 +1645,23 @@ view cannot drift apart.  The library, bottom up:
      its caller's return address, as the image does (`0x5ec00`, a quiet
      NaN, returns without it).  The primary's 1313 agree, 5 known; the
      installer's 235, 1 skipped.
+     Then the C agrees under gcc 13 too (Ubuntu 24.04's), where three
+     functions and console session 4 had differed, each the C relying
+     on what gcc 15 happened to do: `set_interrupt_mask` and
+     `enter_supervisor_mode`, and their installer copies, are bodies
+     inside `cpu.h`'s `CPU_GIVING_CALLERS_CCR`, a wrapper that reads
+     the caller's condition codes before gcc's code can set them, since
+     no constraint says an asm statement reads them;
+     `fit_quality`'s unset local is volatile, so it is read from the
+     frame's slot as the image's; and `libc_doprnt` and
+     `libc_sprintf_put` are always in line, so that `mem_rep`'s
+     printing, one call shallower each, no longer reaches the console's
+     data stack, 1 KB below its return stack's top.  A sweep found
+     `CPU_CALLERS_REGISTER`'s asm statements, without inputs and of one
+     template, merged by both compilers where a function reads two or
+     three registers (`os_report_process`'s D6 read as D5,
+     `:DIAGnostic:QUERy:RESPonse?`'s A3 and A4 as A2); volatile, now.
+     Counts unchanged.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -7,20 +7,25 @@
  * each function here keeps its generated prototype. */
 
 /* Masks every interrupt in supervisor mode; returns the status register
- * as it was (0x13368). */
-uint16_t enter_supervisor_mode(void) {
-  const uint16_t sr = cpu_enter_supervisor();
-
-  cpu_sr_write(sr | CPU_IPL_7);
-  return sr;
+ * as it was (0x13368), its condition codes its caller's: the body of
+ * enter_supervisor_mode. */
+static __attribute__((used, noipa)) uint16_t enter_supervisor_mode_with_ccr(
+    uint32_t callers_ccr, const uint32_t* arguments) {
+  return cpu_interrupts_mask_all(
+      cpu_sr_at_call(cpu_enter_supervisor(), callers_ccr));
 }
 
-/* Sets the interrupt mask, in supervisor mode, to mask's; returns the
- * status register as it was (0x13378). */
-uint16_t set_interrupt_mask(uint16_t mask) {
-  /* First, so that the status register it returns keeps the caller's
-   * condition codes, as the image's does. */
-  const uint16_t saved = cpu_enter_supervisor();
+CPU_GIVING_CALLERS_CCR(enter_supervisor_mode, enter_supervisor_mode_with_ccr);
 
-  return cpu_interrupt_mask_set(saved, mask);
+/* Sets the interrupt mask, in supervisor mode, to mask's, the
+ * argument; returns the status register as it was (0x13378), its
+ * condition codes its caller's: the body of set_interrupt_mask. */
+static __attribute__((used, noipa)) uint16_t
+set_interrupt_mask_with_ccr(uint32_t callers_ccr, const uint32_t* arguments) {
+  const uint16_t mask = arguments[0];
+
+  return cpu_interrupt_mask_set(
+      cpu_sr_at_call(cpu_enter_supervisor(), callers_ccr), mask);
 }
+
+CPU_GIVING_CALLERS_CCR(set_interrupt_mask, set_interrupt_mask_with_ccr);

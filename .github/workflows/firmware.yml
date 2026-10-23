@@ -20,10 +20,9 @@ on:
 
 jobs:
   checks:
-    # 26.04, not latest (24.04): its gcc 13 compiles the decompiled C so
-    # that three functions and a console session disagree with the
-    # image, where 26.04's gcc 15, the one it is developed with, agrees.
-    # A preview image as of 2026-10.
+    # 26.04, not latest (24.04), for gcc 15, the one the C is developed
+    # with; 24.04's gcc 13 gives the same figures (docs/firmware/README.md,
+    # "The checks in CI").  A preview image as of 2026-10.
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:

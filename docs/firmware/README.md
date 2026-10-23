@@ -1505,12 +1505,15 @@ On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15)
 and `binutils-m68k-linux-gnu` from the archive and uv 0.13.2 through
 `astral-sh/setup-uv`, whose cache holds Unicorn 2.1.4 and Capstone
 5.0.9, each tool's inline dependencies, pinned in the scripts, keyed
-on `tools/firmware/*.py`.  Not
-24.04: its gcc 13 compiles the decompiled C so that
-`set_interrupt_mask`, its installer copy, `fit_quality` and console
-session 4 disagree with the image, and the figures above fail.  The
+on `tools/firmware/*.py`.  26.04,
+not 24.04, for gcc 15, the one the C is developed with; 24.04's gcc 13
+gives the same figures.  It did not until the C stopped depending on
+what gcc happened to do: the condition codes before an asm statement
+(`quirks.md`, `set_interrupt_mask`), a local never set
+(`fit_quality`), and the stack a pForth word's printing takes, which
+reached the console's data stack (`libc.h`'s `libc_doprnt`).  The
 function check measures the C as a given gcc compiles it, so a gcc
-that changes its code changes the figures.  clang-format is
+that changes its code can change the figures.  clang-format is
 `clang-format-21`, named through `CLANG_FORMAT`: 19, 20 and 21 format
 the C alike, and 18 formats three of the files otherwise.  The job
 takes about five minutes, two and a half of them `report-decompiled`'s.

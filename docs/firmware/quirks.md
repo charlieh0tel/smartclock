@@ -100,6 +100,11 @@ state.  Each is by the routine and the address that shows it.
   check fills the stack report's frames with one segment's address, so
   that both slots hold it in both copies (`function_check.py`,
   `TASK_STACKS`).
+- **`fit_quality` (`0x42644`)**, in a mode other than 2, 3 and 4,
+  stores as the HQ its frame's local at `-4(A6)`, which nothing set
+  (`0x4298e`); `aging_fit` calls it in none.  The C's local is
+  volatile, so that it is read from the frame, the same slot as the
+  image's, where gcc 13 had read a register.
 - **`task_stack_report`** prints the kernel's supervisor stack's use
   from D2 when its words are all zero (`0x16e06`): the last printed
   task's supervisor stack's use, or, with none printed, D2 as its
@@ -220,14 +225,18 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
 - **`int64_divide` and `uint64_divide`**, on a quotient too wide for 32
   bits, return the dividend's low long, as `divs.l` and `divu.l` leave
   it (`0x41170`, `0x41190`); the C does the same.
-- **`set_interrupt_mask` (`0x13378`) and its installer copy** return
-  the status register trap #7 saved, whose condition codes are their
-  caller's.  The C enters supervisor mode first, with `cpu.h`'s
-  `cpu_enter_supervisor` and `cpu_installer_enter_supervisor`, asm
-  statements, and agrees.  Called as C, as the export declares them,
-  `enter_supervisor` and `installer_enter_supervisor` come after gcc's
-  copy of the narrow argument, which sets them, so that the low byte of
-  the result can differ.
+- **`set_interrupt_mask` (`0x13378`), `enter_supervisor_mode`
+  (`0x13368`) and their installer copies** return the status register
+  trap #7 saved, whose condition codes are their caller's.  No C says
+  that an asm statement reads the condition codes, and gcc's code
+  before one may set them: gcc 13 loads the mask with `move.l` before
+  `enter_supervisor`, setting N for a mask with bit 31 set, and a
+  callee-saved register's push sets them too, so that the low byte of
+  the result differed by compiler.  The C is each one's body, and
+  `cpu.h`'s `CPU_GIVING_CALLERS_CCR` defines the routine as a wrapper
+  that reads its caller's condition codes with `move.w %ccr` before
+  anything sets them and passes them to the body, which puts them in
+  the status register enter_supervisor gives.
 - **`float_raise` (`0x5e93c`) and its installer copy** keep A0 and A1
   for their callers (`movem` at `0x5e940`), which the m68k C
   convention does not, for the soft-float routines that hold a value

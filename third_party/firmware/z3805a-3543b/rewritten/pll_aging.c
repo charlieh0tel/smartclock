@@ -603,7 +603,10 @@ static float pll_aging_residual(aging_curve_state* curve, uint32_t entry) {
 /* The HQ: from half the summed squares of successive residuals'
  * differences, over the fitted span, the rms's and the aging's terms
  * combined, for modes 2, 3 and 4 (0x42644).  In others the image stores
- * its frame's unset local (0x4298e); aging_fit calls it in none. */
+ * its frame's unset local (0x4298e), which is volatile so that it is
+ * read from the frame as the image reads it, whatever the compiler
+ * (docs/firmware/quirks.md, "Reads of what nothing set"); aging_fit
+ * calls it in none. */
 void fit_quality(aging_curve_state* curve) {
   static const double HALF = 0.5;
   static const float SECONDS_PER_DAY = 86400.0f;
@@ -622,7 +625,7 @@ void fit_quality(aging_curve_state* curve) {
   int32_t steps = 0;
   float aging_term;
   float span_weight;
-  float uncertainty;
+  volatile float uncertainty;
 
   float previous = pll_aging_residual(curve, curve->oldest_index);
   uint32_t end = (curve->newest_index + 1) & PLL_AGING_INDEX_MASK;

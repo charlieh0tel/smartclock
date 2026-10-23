@@ -87,16 +87,46 @@ static inline void cpu_sr_write(uint16_t sr) {
           "\n"                                         \
           "\t.popsection\n")
 
+/* Defines routine, a function the export declares, as a wrapper that
+ * reads its caller's condition codes before anything sets them and
+ * passes them to body, with a pointer to the routine's stack arguments
+ * where its caller pushed them, past the return address: body is
+ * uint16_t (uint32_t callers_ccr, const uint32_t* arguments), and its
+ * result is the routine's.  For a routine that returns the status
+ * register trap #7 saved, whose condition codes are its caller's
+ * (enter_supervisor_mode, set_interrupt_mask): in C, gcc's code before
+ * an asm statement may set them, a callee-saved register's push or an
+ * argument's load, and no constraint says that the statement reads
+ * them (docs/firmware/quirks.md, "What C does not say").  The wrapper's
+ * pushes are on the stack it was called on, and body returns there:
+ * body enters supervisor mode and moves back a status register of its
+ * caller's mode before it returns. */
+#define CPU_GIVING_CALLERS_CCR(routine, body)          \
+  __asm__("\t.pushsection .text." #routine             \
+          ",\"ax\",@progbits\n"                        \
+          "\t.globl " #routine                         \
+          "\n"                                         \
+          "\t.type " #routine ", @function\n" #routine \
+          ":\n"                                        \
+          "\tpea (4,%sp)\n"                            \
+          "\tmove.w %ccr,-(%sp)\n"                     \
+          "\tclr.w -(%sp)\n"                           \
+          "\tjsr " #body                               \
+          "\n"                                         \
+          "\taddq.l #8,%sp\n"                          \
+          "\trts\n"                                    \
+          "\t.size " #routine ", .-" #routine          \
+          "\n"                                         \
+          "\t.popsection\n")
+
 /* enter_supervisor (0x13422), called in an asm statement: from a task
  * in user mode it returns, through trap #7's rte (0x1341a), on the
  * supervisor stack.  It pops its return address into A0 and returns the
  * status register as it was in D0's low word, the rest of D0 as it found
- * it, its condition codes the caller's.  Called as a C function, which
- * the export declares, gcc may first copy an argument the caller goes on
- * to use, which sets them: set_interrupt_mask's narrow mask, so that the
- * low byte of the status register it returns differs from the image's
- * (docs/firmware/quirks.md).  CPU_ENTER_SUPERVISOR calls routine, the
- * primary's or the installer's copy (installer::0x100f3a), so. */
+ * it, its condition codes those at the call, which gcc's code before it
+ * may have set (CPU_GIVING_CALLERS_CCR).  CPU_ENTER_SUPERVISOR calls
+ * routine, the primary's or the installer's copy (installer::0x100f3a),
+ * so. */
 #define CPU_ENTER_SUPERVISOR(routine)               \
   ({                                                \
     register uint32_t cpu_entered_sr __asm__("d0"); \
@@ -139,6 +169,24 @@ static inline uint16_t cpu_interrupts_at(uint16_t level) {
  * offset. */
 static const uint16_t CPU_VECTOR_FORMAT_MASK = 0xf000;
 
+/* The status register's low byte, the condition code register. */
+static const uint16_t CPU_SR_CCR_MASK = 0x00ff;
+
+/* The status register enter_supervisor gave, entered_sr, with the
+ * condition codes at the call of the function it was entered for,
+ * callers_ccr, which CPU_GIVING_CALLERS_CCR gives. */
+static uint16_t cpu_sr_at_call(uint16_t entered_sr, uint32_t callers_ccr) {
+  return (entered_sr & ~CPU_SR_CCR_MASK) | (callers_ccr & CPU_SR_CCR_MASK);
+}
+
+/* Masks every interrupt, from sr, the status register as it was at the
+ * call: enter_supervisor_mode's and its installer copy's body; returns
+ * sr. */
+static uint16_t cpu_interrupts_mask_all(uint16_t sr) {
+  cpu_sr_write(sr | CPU_IPL_7);
+  return sr;
+}
+
 /* Moves saved, the status register as it was, back with its interrupt
  * mask, bits 10 to 8, mask's: set_interrupt_mask's and its installer
  * copy's body; returns saved. */
@@ -165,12 +213,15 @@ static const uint8_t CPU_SWSR_SECOND = 0xaa;
 /* A register as the function's caller left it: the image's code reads
  * some it never sets (docs/firmware/quirks.md, "Reads of what nothing
  * set").  Use it first in the function, before gcc's code uses the
- * register: CPU_CALLERS_REGISTER(uint32_t, "d3"). */
-#define CPU_CALLERS_REGISTER(type, reg)           \
-  ({                                              \
-    register type cpu_callers_value __asm__(reg); \
-    __asm__("" : "=r"(cpu_callers_value));        \
-    cpu_callers_value;                            \
+ * register: CPU_CALLERS_REGISTER(uint32_t, "d3").  Volatile, since
+ * without inputs two such statements with one template are the same
+ * expression to gcc, which then reads only the first's register for
+ * both. */
+#define CPU_CALLERS_REGISTER(type, reg)             \
+  ({                                                \
+    register type cpu_callers_value __asm__(reg);   \
+    __asm__ volatile("" : "=r"(cpu_callers_value)); \
+    cpu_callers_value;                              \
   })
 
 /* The index'th long of the stack arguments where a caller would have

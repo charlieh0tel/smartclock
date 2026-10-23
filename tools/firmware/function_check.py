@@ -22,8 +22,12 @@ answered in their place and their calls compared (STATES); find no
 task by name (IDENT_FAILS); start in user mode, as a task, if it runs
 in one, every case, or every other if supervisor code runs it too
 (TASK_STATUS, task_context); end its endless loop at a count
-(COUNTED_LOOPS); and, for the stack report, find the running task's
-stacks (TASK_STACKS).  Both copies must leave the status register's
+(COUNTED_LOOPS); for the stack report, find the running task's stacks
+(TASK_STACKS); and, in a given case, take an interrupt part way
+(INTERRUPTS), start with variables set (PRESETS), the installer's
+flash erased (FLASH), or its arguments at the stack's edge
+(STACK_EDGE).  Each case's devices answer as harness.DEVICE_CASES
+says, by the case.  Both copies must leave the status register's
 system byte the same, and the registers the function's convention
 keeps for its caller (harness.preserved_registers).
 
@@ -65,6 +69,7 @@ from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_D0, UC_M68K_REG_PC
 
 from harness import (
     CASES,
+    Interrupt,
     FIRST_ARGUMENT,
     HANDLER_ENTRIES,
     HANDLER_ENTRY_SIZE,
@@ -109,7 +114,7 @@ from harness import (
     twin_arguments,
     twins,
 )
-from libc_check import BUFFER_SPACING
+from libc_check import BUFFER_SPACING, RETURN
 from rebuild_link import IMAGE_PREFIX, REBUILT, Section, link, objects, symbols
 
 # The widest argument or result the harness lays out.
@@ -337,7 +342,410 @@ TEXT_TOKENS = [
         (0x8000 | ROM_TEXT_LENGTH, ROM_TEXT),
     )
 ]
+
+
+@dataclass(frozen=True)
+class Pointed:
+    """A buffer a given argument points at, its parts in order: bytes as
+    they are, and another Pointed as a pointer to a buffer of its own."""
+
+    parts: tuple["bytes | Pointed", ...]
+
+
+# What a given case may set beside its arguments, by key: the interrupts
+# it takes (harness.Interrupt); the status register it starts with, in
+# place of the generated case's; variables at values, lvalues of the C
+# as a Preset's target; the flash's contents, the installer's; and
+# whether its stack arguments end at the stack's edge, the caller's
+# frame unmapped (harness.UNMAPPED_FRAME), so that a read past what the
+# image reads faults.
+INTERRUPTS = "interrupts"
+STARTING_STATUS = "status"
+PRESETS = "presets"
+FLASH = "flash"
+STACK_EDGE = "edge"
+# A supervisor's status register with its interrupts unmasked, as the
+# kernel's I/O functions run for a task, whose mask is 0.
+UNMASKED = 0x2000
+# The QSPI's interrupt: vector 65 and level 4, as qsm_init sets QILR and
+# QIVR (startup.h: ILQSPI 4, QIVR 0x40, the QSPI's vector its odd one;
+# MC68331UM D.4.3), the end of a queue, which sets SPIF (Devices); taken
+# after the first, second or third read of qspi.running in qspi_start's
+# wait (0x20866), which its handler, primary_user_65 (0x20a10), clears
+# through qspi_isr.
+SPSR = 0xFFFC1F
+QSPI_VECTOR = 0x41
+QSPI_LEVEL = 4
+
+
+def qspi_end_of_queue(first: int) -> Interrupt:
+    return Interrupt(QSPI_VECTOR, QSPI_LEVEL, "qspi.running", first, ready=(SPSR,))
+
+
+# The DUART's interrupt: vector 67, which duart_ivr_test leaves in IVR
+# (0x43, duart.c) and whose handler, primary_user_67 (0x1eaf4), runs a
+# channel's loopback receive and transmit while its loopback_test is
+# set, as ISR shows RxRDY and TxRDY under the shadow IMR; its level, not
+# set by software, at 2, the mask the firmware raises around its DUART
+# accesses (duart_b_putc_polled, duart.h).  Taken after each read of
+# loopback_expect_next in duart_loopback_test's wait (0x1e398): the
+# first firing shows TxRDY alone, which sends the first character, and
+# each after RxRDY as well, which takes back the character sent before,
+# TB and RB one register in the harness's memory, as local loopback has
+# them, until the text, "DUART test string", is all back.
+DUART_VECTOR = 0x43
+DUART_LEVEL = 2
+DUART_ISR = 0x20000B
+LOOPBACK_FIRINGS = 20
+
+
+def duart_loopback(receive: int, transmit: int) -> Interrupt:
+    return Interrupt(
+        DUART_VECTOR,
+        DUART_LEVEL,
+        "loopback_expect_next",
+        1,
+        every=1,
+        times=LOOPBACK_FIRINGS,
+        presents=(((DUART_ISR, 1, transmit),), ((DUART_ISR, 1, receive | transmit),)),
+    )
+
+
+# The periodic interrupt, primary_user_66 (0x11f82): vector 66 at level
+# 5, as periodic_interrupt_enable sets PICR (startup.h), taken after
+# interval_wait_reading sets interval_tick_wait, with ticks_since_pps one
+# short of the 0x199 at which the tick signals the wait's event, and a
+# 1PPS dead, which takes it to the wait.
+PERIODIC = Interrupt(0x42, 5, "interval_tick_wait", 1, write=True)
+TICK_WAIT_PRESETS = {"gps_pps_dead": 1, "ticks_since_pps": 0x198}
+QSPI_WORDS = struct.pack(">3H", 0x123, 0x456, 0x789)
+INTERRUPT_CASES = {
+    "qspi_start": [
+        {0: device, 1: QSPI_WORDS, 2: 3, 3: 0, INTERRUPTS: (qspi_end_of_queue(first),), STARTING_STATUS: UNMASKED}
+        for device in (2, 7)
+        for first in (1, 2, 3)
+    ],
+    "duart_loopback_test_a": [
+        {INTERRUPTS: (duart_loopback(0x02, 0x01),), STARTING_STATUS: status} for status in (UNMASKED, 0)
+    ],
+    "duart_loopback_test_b": [
+        {INTERRUPTS: (duart_loopback(0x20, 0x10),), STARTING_STATUS: status} for status in (UNMASKED, 0)
+    ],
+    "interval_wait_reading": [{PRESETS: TICK_WAIT_PRESETS, INTERRUPTS: (PERIODIC,), STARTING_STATUS: UNMASKED}],
+}
+# The flash's cases, the installer's, each from the device case its
+# generated case gives (harness.DEVICE_CASES), busy for some polls, or
+# failing: installer_flash_program_word's addresses, the writable
+# range's ends, each pair's, and past each end, and words, one that only
+# clears bits and one the erased flash takes whole; :ERASe?'s flash
+# erased, wholly and all but its last word, which the range's end
+# reads; and :DOWNload's records (FLASH_RECORDS).
+FLASH_ADDRESSES = (0x10000, 0x3FFFE, 0x40000, 0x7FFFE, 0xFFFE, 0x80000)
+FLASH_WORDS = (0x1234, 0x0000)
+FLASH_START = 0x10000
+FLASH_END = 0x80000
+
+
+def erased_flash(image: bytes, last: bytes = b"") -> bytes:
+    """The image's flash with its writable range erased, its last bytes
+    last."""
+    erased = image[:FLASH_START] + b"\xff" * (FLASH_END - FLASH_START)
+    return erased[: len(erased) - len(last)] + last
+
+
+def s_record(kind: int, address: int, data: bytes, address_bytes: int, checksum: int | None = None) -> bytes:
+    """An S-record's text, its count the address's, data's and checksum's
+    bytes and its checksum their sum's ones' complement, or checksum."""
+    body = bytes([address_bytes + len(data) + 1]) + address.to_bytes(address_bytes, "big") + data
+    total = ~sum(body) & 0xFF if checksum is None else checksum
+    return b"S%d" % kind + (body + bytes([total])).hex().upper().encode()
+
+
+# :DOWNload's parameter, a scpi_text_parameter, its kind and its text
+# (scpi.h): an S1, whose 16-bit address is always below the range, an
+# S2 and S3 of data at the range's start, an S2 of an
+# odd count, which an erased byte pads, one across the second pair's
+# start, one at the range's end that runs past it, one below it, an S0
+# and an S5, which do nothing, an S9, which programs its data as an S1,
+# and, each else an S2 the range takes, a bad checksum, an S4 and a
+# text that is no record, "X2..." and "s2...".
+FLASH_RECORDS = [
+    s_record(1, 0x1000, b"\x12\x34", 2),
+    s_record(2, 0x010000, bytes(range(8)), 3),
+    s_record(3, 0x00010000, b"\xa5\x5a\x00\xff", 4),
+    s_record(2, 0x020000, b"\x01\x02\x03", 3),
+    s_record(2, 0x03FFFC, bytes(range(8)), 3),
+    s_record(2, 0x07FFFC, bytes(range(8)), 3),
+    s_record(2, 0x00FFFE, b"\x11\x22", 3),
+    s_record(0, 0, b"HDR", 2),
+    s_record(5, 3, b"", 2),
+    s_record(9, 0x1000, b"", 2),
+    s_record(2, 0x010000, b"\x12\x34", 3, checksum=0),
+    *(kind + s_record(2, 0x010000, b"\x12\x34", 3)[2:] for kind in (b"S4", b"X2", b"s2")),
+]
+
+
+def text_parameter(text: bytes) -> Pointed:
+    """A scpi_text_parameter of a text: its kind word, 0, and its pointer."""
+    return Pointed((bytes(2), Pointed((text + b"\0",))))
+
+
+# The SCPI suffix matchers' units, the generated tree's tables in ROM,
+# which both copies read: :OUTPut:PIN1:FREQuency's MHZ at 6 and HZ,
+# which takes a multiplier (0x53d6e), and :OUTPut:PIN1:DELay's S, which
+# does too (0x53d4c); and suffixes, in upper case as the lexer keeps
+# them (smartclock.h, scpi_number): each unit whole, with each length of
+# multiplier, one and two letters, known and not, and with three, too
+# many; one the units do not end, and none.
+FREQUENCY_UNITS = 0x53D6E
+SECONDS_UNITS = 0x53D4C
+SUFFIXES = [
+    (FREQUENCY_UNITS, b"MHZ"),
+    (FREQUENCY_UNITS, b"HZ"),
+    (FREQUENCY_UNITS, b"KHZ"),
+    (FREQUENCY_UNITS, b"MAHZ"),
+    (FREQUENCY_UNITS, b"EXHZ"),
+    (FREQUENCY_UNITS, b"XHZ"),
+    (FREQUENCY_UNITS, b"XYHZ"),
+    (FREQUENCY_UNITS, b"KMAHZ"),
+    (FREQUENCY_UNITS, b"S"),
+    (SECONDS_UNITS, b"S"),
+    (SECONDS_UNITS, b"MS"),
+    (SECONDS_UNITS, b"US"),
+    (SECONDS_UNITS, b"PES"),
+    (SECONDS_UNITS, b"MAS"),
+    (SECONDS_UNITS, b"SS"),
+    (SECONDS_UNITS, b""),
+]
+# A scpi_number's digits and suffix (smartclock.h), and the word its
+# scale and unit start as, apart from what a match leaves.
+SCPI_NUMBER_DIGITS = 16
+SUFFIX_ROOM = 12
+UNSET_WORD = 0x5A5A
+
+
+def scpi_number(text: str, suffix: bytes = b"") -> bytes:
+    """A scpi_number of a decimal text, '-' first for a negative and a
+    point where it has one, and a suffix, as the lexer leaves it
+    (smartclock.h): its digits from the first nonzero, the exponent such
+    that its integer part is the digits before the point, its places at
+    scale 0 (scpi_engine_places, scpi_convert.h), and its scale and unit
+    set apart from what a match leaves."""
+    negative = text.startswith("-")
+    whole, _, fraction = text.lstrip("-").partition(".")
+    digits = (whole + fraction).lstrip("0")
+    exponent = len(whole.lstrip("0")) - SCPI_NUMBER_DIGITS
+    laid = [int(d) for d in digits[:SCPI_NUMBER_DIGITS]]
+    return struct.pack(
+        f">h{SCPI_NUMBER_DIGITS}bhh{SUFFIX_ROOM}shh",
+        int(negative),
+        *laid + [0] * (SCPI_NUMBER_DIGITS - len(laid)),
+        exponent,
+        len(suffix),
+        suffix,
+        UNSET_WORD,
+        UNSET_WORD,
+    )
+
+
+# The converters' numbers about each type's limits: below, at and past
+# the most, positive and negative, one that rounds over it, those whose
+# integer part's tenths pass the limit the converter tests them against
+# (MOST_TENTHS, scpi_convert.h), past what the type's arithmetic then
+# wraps to, and one with a digit too many, and zero.
+SHORT_NUMBERS = [
+    *("32767", "32768", "-32768", "-32769", "32767.5", "32770"),
+    *("65535", "65536", "65539", "-65537", "65540", "99999", "123456", "0", "-5.5"),
+]
+LONG_NUMBERS = [
+    "2147483647",
+    "2147483648",
+    "-2147483648",
+    "-2147483649",
+    "4294967295",
+    "4294967296",
+    "4294967295.5",
+    "4294967300",
+    "9999999999",
+    "42949672960",
+    "1.25",
+]
+CONVERTER_CASES = {
+    f"{prefix}scpi_number_to_{kind}": [{0: scpi_number(text), 2: 0} for text in numbers]
+    for prefix in ("", "installer_")
+    for kind, numbers in (
+        ("short", SHORT_NUMBERS),
+        ("unsigned_short", SHORT_NUMBERS),
+        ("long", LONG_NUMBERS),
+        ("unsigned_long", LONG_NUMBERS),
+    )
+}
+# The numbers the parameter parsers are given, each with a suffix and
+# units of SUFFIXES', some of which take it and some not, and with a
+# suffix and no units.
+PARSED_NUMBERS = ["12", "-7", "40000", "3000000000", "0.5"]
+SUFFIX_CASES = {
+    **{
+        name: [{0: len(suffix), 1: suffix + b"\0", 2: units, 3: bytes(2)} for units, suffix in SUFFIXES]
+        for name in ("scpi_match_suffix", "installer_scpi_match_suffix")
+    },
+    **{
+        name: [{0: scpi_number("1", suffix), 1: units} for units, suffix in SUFFIXES]
+        + [{0: scpi_number("1", b"MHZ"), 1: 0}, {0: scpi_number("1"), 1: 0}]
+        for name in ("scpi_apply_suffix", "installer_scpi_apply_suffix")
+    },
+    **{
+        f"{prefix}scpi_parse_{kind}": [
+            {0: scpi_number(text, suffix), 3: units}
+            for i, text in enumerate(PARSED_NUMBERS)
+            for units, suffix in SUFFIXES[i % 3 :: 3] + [(0, b"MS")]
+        ]
+        for prefix in ("", "installer_")
+        for kind in ("short", "unsigned_short", "long", "unsigned_long")
+    },
+    "installer_scpi_parse_text": [{0: token} for token in TEXT_TOKENS],
+}
+
+
+def status_register(event: int, parent: "Pointed | None", parent_bit: int) -> Pointed:
+    """A status_register record (smartclock.h) with an event word, no
+    enable, and its parent, none for the top register."""
+    return Pointed((struct.pack(">5H", 0, 0, 0, 0, event), parent or NULL_LONG, struct.pack(">h", parent_bit)))
+
+
+def two_register_model(m: Machine) -> Pointed:
+    """A status_model (smartclock.h) of two registers, neither the top
+    one, which status_clear_events reads from the last down to the
+    second, each reporting into a top register of its own, whose status
+    byte is the profile's console port's."""
+    registers = [status_register(event, status_register(0, None, 0), bit) for event, bit in ((0x55, 4), (0x33, 8))]
+    return Pointed(
+        (struct.pack(">hIIIi", len(registers), m.profile.scpi.console_port, 0, 0, 0), *registers)
+        + (NULL_LONG,) * (STATUS_MODEL_REGISTERS - len(registers))
+    )
+
+
+# An error queue's entries, a status_error_entry each, and the queue's
+# states, as (head, tail): one entry, two, the tail at the last entry,
+# which then wraps to the first, the head there too, and empty; each
+# reporting into the status model status_init builds.
+STATUS_MODEL_REGISTERS = 7
+QUEUE_SIZE = 4
+QUEUE_STATES = [(1, 0), (2, 0), (0, 3), (1, 3), (3, 3), (0, 0)]
+
+
+def error_queue(head: int, tail: int):
+    """A maker of a status_error_queue of QUEUE_SIZE distinct entries in
+    a state (smartclock.h)."""
+
+    def make(m: Machine) -> bytes:
+        status = pointer_at(m, m.profile.status_object)
+        entries = b"".join(struct.pack(">hI", -100 - i, 0x1000 + i) for i in range(QUEUE_SIZE))
+        return struct.pack(">hhIh", head, tail, status, QUEUE_SIZE) + entries
+
+    return make
+
+
+STATUS_CASES = {
+    **{name: [{0: two_register_model}] for name in ("status_clear_events", "installer_status_clear_events")},
+    **{
+        name: [{0: error_queue(head, tail)} for head, tail in QUEUE_STATES]
+        for name in ("error_queue_pop", "installer_error_queue_pop")
+    },
+}
+# :SYSTem:LANGuage's texts, which it puts in upper case in place: each
+# language, in lower and mixed case and as given, of the primary and the
+# installer; another; and the longest a byte index reaches, 127
+# characters (0x30680, installer::0x107f92).
+LANGUAGES = [b"pforth", b"Install", b"primary", b"PRIMARY", b"INSTALL", b"bogus", b"a" * 127]
+# :DIAGnostic:TEST?'s choices, a choice word after its kind (0x2bc2e):
+# each of the primary's 14 and one past them, which the parser never
+# gives; the installer's test, a short, each of its five, one past and
+# a negative (installer::0x108088), with the boot code's results each
+# its own, so that each test's word shows.
+PRIMARY_TESTS = 14
+INSTALLER_TESTS = 5
+BOOT_RESULTS = {
+    "boot_selftest.checksum": 2,
+    "boot_selftest.cpu": 1,
+    "boot_selftest.ram": 3,
+    "boot_selftest.ram_data_bits": 0x8001,
+    "boot_selftest.ram_address_lines": 0x40020,
+    "boot_selftest.uart": 0x10,
+}
+HANDLER_CASES = {
+    **{
+        name: [{0: text_parameter(text)} for text in LANGUAGES]
+        for name in ("scpi_set_SYSTem_LANGuage", "installer_scpi_set_SYSTem_LANGuage")
+    },
+    "scpi_query_DIAGnostic_TEST": [{0: struct.pack(">hH", 0, choice)} for choice in range(PRIMARY_TESTS + 1)],
+    "installer_scpi_query_DIAGnostic_TEST": [
+        {0: struct.pack(">hhh", 0, test, 0), PRESETS: BOOT_RESULTS} for test in (*range(INSTALLER_TESTS + 1), -1)
+    ],
+}
+# longjmp's buffer, a jmp_buf as setjmp fills it (libc.h,
+# libc_jump_buffer): D1 to D7 and A1 to A5, each distinct, A0, the
+# frame, the return address the harness's own, so that the call ends
+# there, the stack pointer at it, in the harness's stack below its
+# frames, and the status register, which trap #1 restores for a value
+# but 0; and the values, 0, which it saves the status register for
+# again and returns as 0, and others.
+JUMP_STACK = 0x708000
+JUMP_BUFFER = struct.pack(
+    ">12IIIIIH", *(0x11110000 + i for i in range(12)), 0x2222AAAA, 0x3333BBBB, RETURN, JUMP_STACK, 0x2704
+)
+JUMP_VALUES = [0, 1, -1, 0x12345678]
+# atexit's table, its count at the most and one short, given a NULL and
+# a routine (smartclock.h, atexit_functions[32]).
+ATEXIT_MOST = 32
+# sign_extend_bits' values and widths: the byte and word widths it takes
+# apart, every other from 1 to 31, and those it leaves the value at.
+SIGN_VALUES = [0x00000010, 0xFFFFFFF0, 0x0000001F, 0x00000800, 0x7FFFFFFF, 0x80000001]
+SIGN_WIDTHS = [0, 1, 4, 5, 8, 11, 12, 16, 17, 24, 31, 32, 33, 255]
+# console_port_read's read errors, DUART channel B's as console_read
+# gives them (stdio.c): none, each bit, and all; with the line read, its
+# next past its end, so that the port reads the console.
+READ_ERRORS = [0, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF]
+LIBRARY_CASES = {
+    **{name: [{0: JUMP_BUFFER, 1: value} for value in JUMP_VALUES] for name in ("longjmp", "installer_longjmp")},
+    **{
+        f"{prefix}atexit": [{0: 0}, {0: 0, PRESETS: {f"{prefix}atexit_count": ATEXIT_MOST}}]
+        + [{PRESETS: {f"{prefix}atexit_count": count}} for count in (ATEXIT_MOST, ATEXIT_MOST - 1)]
+        for prefix in ("", "installer_")
+    },
+    **{
+        name: [{0: value, 1: width} for value in SIGN_VALUES for width in SIGN_WIDTHS]
+        for name in ("sign_extend_bits", "installer_sign_extend_bits")
+    },
+    **{
+        f"{prefix}console_port_read": [
+            {
+                PRESETS: {
+                    f"{prefix}scpi_input_next": 2,
+                    f"{prefix}scpi_input_end": 1,
+                    f"{prefix}duartb.read_errors": errors,
+                }
+            }
+            for errors in READ_ERRORS
+        ]
+        for prefix in ("", "installer_")
+    },
+}
 GIVEN_CASES = {
+    **INTERRUPT_CASES,
+    **STATUS_CASES,
+    **HANDLER_CASES,
+    **LIBRARY_CASES,
+    **SUFFIX_CASES,
+    **CONVERTER_CASES,
+    "installer_flash_program_word": [{0: address, 1: word} for address in FLASH_ADDRESSES for word in FLASH_WORDS],
+    "installer_scpi_query_DIAGnostic_ERASe": [
+        {FLASH: erased_flash},
+        {FLASH: lambda image: erased_flash(image, b"\x00\x01")},
+    ],
+    "installer_scpi_set_DIAGnostic_DOWNload": [
+        {0: text_parameter(record), FLASH: erased_flash} for record in FLASH_RECORDS
+    ],
     "scpi_parse_text": [{0: token} for token in TEXT_TOKENS],
     "vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "installer_vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
@@ -457,6 +865,27 @@ RAISE_CASES = [
         for mantissa in UNDERFLOW_MANTISSAS
     ),
 ]
+# And float_raise's at the stack's edge (STACK_EDGE), its caller's frame
+# unmapped, each with only the operands the image reads, so that a read
+# of another, or of the frame, faults: a float's quiet NaN, of two
+# (0x5ebf8, 0x5ebfc), and a double's, of three (0x5ec34, 0x5ec3a), each
+# returned at once; a code of no cause, of none (0x5e986); an operand
+# error, an overflow and a divide by zero of the arithmetic, of their
+# report address alone, which read no frame (0x5eb16, 0x5eb50, 0x5eba6);
+# the math library's inexact and precision lost, likewise
+# (0x5ebdc, 0x5ec4c); and the math library's float underflow, of its
+# count, its mantissa and the half long its report address straddles
+# into (0x5ea6c).
+EDGE = {STACK_EDGE: True}
+RAISE_EDGE_CASES = [
+    ({0: 0x00074000, **EDGE}, struct.pack(">II", 0x7FC00001, 0x31400040)),
+    ({0: 0x00084000, **EDGE}, struct.pack(">III", 0x7FF80000, 1, 0x31400040)),
+    ({0: 0x00070000, **EDGE}, b""),
+    *(({0: 0x0007 << 16 | cause, **EDGE}, struct.pack(">I", 0x31400040)) for cause in (0x2000, 0x1000, 0x0400)),
+    *(({0: 0x0087 << 16 | cause, **EDGE}, struct.pack(">I", 0x31400040)) for cause in (0x0200, 0x0080)),
+    ({0: 0x00870800, **EDGE}, struct.pack(">iIIH", 5, 0x00012345, 0x6789ABCD, 0x3140)),
+]
+RAISE_CASES = RAISE_CASES + RAISE_EDGE_CASES
 VARIADIC_CASES = {
     **{name: PRINTF_CASES for name in ("printf", "printf_polled", "sci_printf", "installer_printf", "installer_printf_polled")},
     **{name: SHORT_PRINTF_CASES for name in ("debug_printf", "debug_printf_polled", "sci_printf_polled")},
@@ -515,7 +944,8 @@ class ScpiSession:
 # whose handler fails, :LED:ALARm:MINor?'s undefined header
 # (scpi_led.c), and the messages after it, and :DIAGnostic:TEST? on a
 # choice; the installer's "PFORTH", an execution error, and its
-# :DIAGnostic:TEST? on a test and past the last.  And from the
+# :DIAGnostic:TEST? on a test and past the last, alone and with units
+# after it in its message, which its failure skips.  And from the
 # session's tree, lines that reach every child list (tree_lines).
 # LANGUAGE in a line is its session's language; ENDING the message
 # that ends it.
@@ -556,6 +986,7 @@ SCPI_SESSIONS = {
         (
             b':SYST:LANG "PFORTH"\n:SYST:ERR?;:SYST:LANG?\n' + ENDING,
             b":DIAG:TEST? 3\n:DIAG:TEST? 9\n:SYST:ERR?\n" + ENDING,
+            b":DIAG:TEST? 9;:SYST:ERR?;*IDN?\n:SYST:ERR?\n" + ENDING,
         ),
     ),
 }
@@ -1030,6 +1461,12 @@ def targets() -> list[str]:
         for preset in states.presets + tuple(p for hook in states.hooks for p in hook.leaves):
             if preset.target not in found:
                 found.append(preset.target)
+    for own in GIVEN_CASES.values():
+        for values in own:
+            watches = [i.watch for i in values.get(INTERRUPTS, ()) if isinstance(i.watch, str)]
+            for target in [*values.get(PRESETS, {}), *watches]:
+                if target not in found:
+                    found.append(target)
     return found
 
 
@@ -1142,9 +1579,21 @@ EMPTY_PART = Known(
 )
 KNOWN = {
     **{name: D5_SHARE for name in ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")},
-    "log_erase": Known("log_erase checksums a pointer's bytes", r"^RAM differs from 101d50$"),
+    # and writes the checksum to the EEPROM, an effect
+    "log_erase": Known(
+        "log_erase checksums a pointer's bytes",
+        r"^RAM differs from 101d50(; effect \d+ write of \w+ to 400d42, image's write of \w+ to 400d42)?$",
+    ),
     "gps_debug_status": EMPTY_PART,
 }
+
+
+# The registers a function leaves as it found them beside those its
+# convention keeps, compared after it as those are: setjmp's, which
+# changes only D0 (0x5112a to 0x51156: A0 put back from the buffer, A1
+# and D1 untouched), so that the C's restores show.
+SETJMP_KEPT = ("D1", "A0", "A1")
+KEPT_BESIDE = {"setjmp": SETJMP_KEPT, "installer_setjmp": SETJMP_KEPT}
 
 
 @dataclass
@@ -1192,7 +1641,8 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
             continue
         names = [re.search(r"\w*$", p).group() for p in declared]
         offsets = [item["offset"] for item in stack]
-        found.append(Function(name, result, kinds, offsets, names, variadic, preserved_registers(convention)))
+        preserves = preserved_registers(convention) + KEPT_BESIDE.get(name, ())
+        found.append(Function(name, result, kinds, offsets, names, variadic, preserves))
     return found, unrunnable
 
 
@@ -1353,10 +1803,22 @@ def establish(m: Machine, function: Function, linked_symbols: dict[str, int], ca
         m.uc.mem_write(linked_symbols[variable], contents(case))
 
 
+def pointed(m: Machine, value: Pointed) -> int:
+    """A Pointed's buffer, among the arguments' buffers, its own pointed
+    buffers first."""
+    laid = b"".join(part if isinstance(part, bytes) else struct.pack(">I", pointed(m, part)) for part in value.parts)
+    return area(m, laid)
+
+
 def given(m: Machine, types: Types, kind: str, value: int | float | bytes) -> bytes:
-    """A value of GIVEN_CASES as a parameter of a type has it."""
+    """A value of GIVEN_CASES as a parameter of a type has it; one made
+    for the machine, the value its maker gives."""
+    if callable(value):
+        value = value(m)
     if isinstance(value, bytes):
         return struct.pack(">I", m.buffer(value))
+    if isinstance(value, Pointed):
+        return struct.pack(">I", pointed(m, value))
     if kind in ("double", "float"):
         return struct.pack(">d" if kind == "double" else ">f", value)
     size = types.size(kind)
@@ -1435,6 +1897,10 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         m.ident_fails = False
         m.starting_status = SUPERVISOR
         m.frame_fill = None
+        m.interrupts = []
+        m.stack_edge = False
+        if m.flash is not None:
+            m.flash.start = m.flash.image
 
 
 def both_runs(
@@ -1449,13 +1915,15 @@ def both_runs(
 ) -> tuple[Run, Run]:
     """The image's copy and gcc's, each run from memory on a case's
     arguments, a variable list's bytes after the declared ones, gcc's
-    given the C's twins of the image's objects."""
+    given the C's twins of the image's objects; UNDECLARED after them
+    but at the stack's edge."""
+    after = b"" if m.stack_edge else UNDECLARED
     reset(m, memory)
-    original = Run(m, image, original_layout(function, values).removesuffix(UNDECLARED) + listed + UNDECLARED)
+    original = Run(m, image, original_layout(function, values).removesuffix(UNDECLARED) + listed + after)
     reset(m, memory)
     give_twins(m)
     gcc = gcc_slots(twin_arguments(m, types, function.parameters, values))
-    return original, Run(m, rebuilt, gcc + listed + UNDECLARED)
+    return original, Run(m, rebuilt, gcc + listed + after)
 
 
 def check_cases(
@@ -1478,6 +1946,18 @@ def check_cases(
         listed = values_given.pop(VARIADIC, b"")
         line = values_given.pop(SCPI_LINE, None)
         step = values_given.pop(TREE_STEP, None)
+        status = values_given.pop(STARTING_STATUS, None)
+        if status is not None:
+            m.starting_status = status
+        presets = values_given.pop(PRESETS, {})
+        flash = values_given.pop(FLASH, None)
+        if m.flash is not None:
+            m.flash.start = m.flash.image if flash is None else flash(m.flash.image)
+        m.stack_edge = values_given.pop(STACK_EDGE, False)
+        m.interrupts = [
+            (interrupt, context.located[interrupt.watch][0] if isinstance(interrupt.watch, str) else interrupt.watch)
+            for interrupt in values_given.pop(INTERRUPTS, ())
+        ]
         drawn[:] = [draw(states, context.located, function.name, description)]
         m.ident_fails = case in IDENT_FAILS.get(function.name, ())
         m.frame_fill = None
@@ -1489,6 +1969,9 @@ def check_cases(
             task_stacks(m, context.located, case)
         for address, contents in drawn[0].presets.items():
             m.uc.mem_write(address, contents)
+        for target, value in presets.items():
+            address, size = context.located[target]
+            m.uc.mem_write(address, preset_bytes(value, size))
         target = None if step is None else tree_steps(m)[step]
         values = arguments(m, types, function.parameters, case, function.names, function.name, target)
         for position, count in IN_RANGE.get(function.name, {}).items():

@@ -151,8 +151,10 @@ static int32_t scpi_engine_number_to_long(scpi_number* number, int32_t* value,
 static int32_t scpi_engine_number_to_unsigned_long(scpi_number* number,
                                                    uint32_t* value,
                                                    int32_t scale) {
-  const uint32_t most_tenths = 0xffffffff / SCPI_NUMBER_BASE,
-                 most_units = 0xffffffff % SCPI_NUMBER_BASE;
+  /* A const object is not a constant expression, so the base is 10 here
+   * (0x262e2, 0x26310). */
+  static const uint32_t MOST_TENTHS = 0xffffffff / 10;
+  static const uint32_t MOST_UNITS = 0xffffffff % 10;
 
   if (number->digits[0] == 0) {
     *value = 0;
@@ -168,7 +170,7 @@ static int32_t scpi_engine_number_to_unsigned_long(scpi_number* number,
 
   if (places > 0) {
     tens = scpi_engine_digits_value(number, places - 1);
-    if (tens > most_tenths) {
+    if (tens > MOST_TENTHS) {
       return STATUS_SCPI_DATA_OUT_OF_RANGE;
     }
     tens *= SCPI_NUMBER_BASE;
@@ -177,7 +179,7 @@ static int32_t scpi_engine_number_to_unsigned_long(scpi_number* number,
   if (scpi_engine_rounds_up(number, places)) {
     units++;
   }
-  if (tens == most_tenths * SCPI_NUMBER_BASE && units > most_units) {
+  if (tens == MOST_TENTHS * SCPI_NUMBER_BASE && units > MOST_UNITS) {
     return STATUS_SCPI_DATA_OUT_OF_RANGE;
   }
   *value = tens + units;

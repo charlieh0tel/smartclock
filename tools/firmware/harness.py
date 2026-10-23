@@ -12,7 +12,10 @@ RAM zeroed but the kernel's tables, its data area as kernel_init makes
 it, with the exchanges root_task creates, what the image's own
 INITIALIZERS make, the running task's record and the exchanges' ids; the EEPROM erased and the pointees filled, each
 compared after it as RAM is; the devices' registers zeroed but the
-status bits the routines poll for; a routine of the harness's own for
+status registers the routines poll, ready after a case's busy polls,
+the input port's case-varying reads and the EEPROM's write cycle
+(DeviceCase); the installer's flash a model of its parts' commands
+(Flash), compared after it; a routine of the harness's own for
 each parameter that points at one, whose calls are effects; and the
 image's own object for a parameter whose callers pass one.  The harness
 stands in for what lies outside memory, the same for both calls: traps
@@ -20,9 +23,10 @@ stands in for what lies outside memory, the same for both calls: traps
 is done in its place; the kernel's traps, #3 and #4, are answered by a
 model of each service; a trap that never returns, a zero divide, a
 write to code, a branch to itself, the KERNEL_CALL_LIMIT'th kernel
-call and a machine's counter's count (COUNTED) end a call; and the
-kernel calls and device writes a call makes,
-in order, are its effects, compared as RAM is.
+call and a machine's counter's count (COUNTED) end a call; a case may
+take an interrupt part way, after an event of its own instructions
+(Interrupt); and the kernel calls and device reads and writes a call
+makes, in order, are its effects, compared as RAM is.
 Unicorn has no CPU32; the 68020 stands in, and the image uses none of
 the instructions either has alone (PLAN.md, "A rebuild that runs").
 """
@@ -34,6 +38,7 @@ import zlib
 from dataclasses import dataclass
 
 from unicorn import (
+    UC_HOOK_BLOCK,
     UC_HOOK_CODE,
     UC_HOOK_INTR,
     UC_HOOK_MEM_INVALID,
@@ -242,9 +247,10 @@ class Service:
     first time a call names it; a block it reads through a pointer,
     unless null, as a word count and that many words after it, recorded
     by its contents; and whether it returns to its caller in supervisor
-    mode, the old status register in D0's low word.  An argument read
-    only in part names its width, D1.b for the low byte, and is
-    recorded so."""
+    mode, the old status register in D0's low word; and the low byte
+    its result registers return beside KERNEL_RESULT's, where a caller
+    uses it.  An argument read only in part names its width, D1.b for
+    the low byte, and is recorded so."""
 
     arguments: tuple[str, ...] = ()
     results: tuple[str, ...] = ()
@@ -256,6 +262,7 @@ class Service:
     identifies: tuple[str, str] | None = None
     counted: str | None = None
     supervisor: bool = False
+    result_low: int = 0
 
 
 # A counted block's word count, and each of its words.
@@ -272,7 +279,9 @@ def service_argument(m: "RebuiltMachine", name: str) -> tuple[str, int]:
     return name, m.as_image(value)
 
 
-# The kernel's services, trap #3, by number.
+# The kernel's services, trap #3, by number; and the old priority the
+# priority service returns, a task's in the middle of the range.
+OLD_PRIORITY = 0x40
 KERNEL_SERVICES = {
     0: Service(),
     # create: the name, the time slice and the priority from D1's and
@@ -285,7 +294,10 @@ KERNEL_SERVICES = {
     4: Service(("A0",)),
     5: Service(("A0",)),
     6: Service(("A0",)),
-    7: Service(("A0", "D0"), ("D0",)),
+    # priority: the task and the step, the old priority in D0's low byte
+    # (docs/firmware/psos.md, "Calls"), which task_set_priority steps
+    # from (0x1339e)
+    7: Service(("A0", "D0"), ("D0",), result_low=OLD_PRIORITY),
     8: Service(("D0", "D1", "D2", "D3"), allocates=("D1", "A0")),
     9: Service(("A0",)),
     10: Service(("A0", "A1")),
@@ -475,10 +487,13 @@ class KernelCall:
 
 # The devices' chip selects and the MC68331's own modules, whose
 # registers the firmware reads and writes (docs/firmware/README.md and
-# restart.md, "The switch byte at 0x302000"): each mapped, page by page,
-# as memory zeroed at a call's start, so that a read finds zero or what
-# the call last wrote there, and each write is a call's effect, compared
-# as kernel calls are.
+# restart.md, "The switch byte at 0x302000"), the QSPI's RAM and the
+# FPGA's ports behind it among them: each mapped, page by page, as
+# memory zeroed at a call's start, so that a read finds zero or what the
+# call last wrote there, but for the registers modeled below; and each
+# read and each write is a call's effect, in order with its kernel
+# calls, so that a routine's polls, how many and in what order, are
+# compared, not only what it leaves.
 DEVICES = [
     (0x200000, 0x1000),  # the DUART
     (0x300000, 0x10000),  # the latch, the switch byte and the registers at 0x304000 and 0x306000
@@ -490,33 +505,341 @@ DEVICES = [
 @dataclass(frozen=True)
 class Status:
     """A device register a routine polls, which reads as the bits its
-    data sheet says the device sets when what the routine waits for has
-    happened, whatever was written there: its address, its bytes, the
-    bits a write leaves, and the bits set."""
+    data sheet says the device shows by what it has done, whatever was
+    written there: its address and bytes; the bits a read gives as last
+    written; the bits the device sets once ready, after the case's busy
+    polls of the register (DeviceCase.busy) since the call's start or the
+    last write to one of triggers, which starts the device again, and,
+    while it is busy, the bits a read gives as written in place of kept;
+    and the bits it shows while data waits, for the case's first waiting
+    reads of it, with errors beside them where the case has a receive
+    error."""
 
     address: int
     size: int
     kept: int
-    set: int
+    ready: int
+    triggers: tuple[int, ...]
+    busy_kept: int = 0
+    waiting: int = 0
+    errors: int = 0
 
 
-# The registers the routines poll, read alike in both calls; every other
-# bit reads as zero, or as written where kept says.
+# The registers the routines poll, read alike in both calls.
 STATUS_REGISTERS = [
-    # the DUART's SRA and SRB: TxRDY (MC68681, "Channel A status register
-    # (SRA) and channel B status register (SRB)"), which
-    # duartb_putc_polled waits for; a write there is to CSRA or CSRB
-    Status(0x200003, 1, 0, 0x04),
-    Status(0x200013, 1, 0, 0x04),
-    # the SCI's SCSR: TDRE (MC68331UM, D.4.6), which sci_putc_polled
-    # waits for
-    Status(0xFFFC0C, 2, 0, 0x0100),
+    # the DUART's SRA and SRB: TxRDY and TxEMT, which a write of the
+    # channel's TB clears until the character has gone, RxRDY while a
+    # character waits, and the framing error beside it (MC68681, "Channel
+    # A status register (SRA) and channel B status register (SRB)");
+    # duartb_putc_polled waits for TxRDY, duartb_isr reads while RxRDY;
+    # a write there is to CSRA or CSRB
+    Status(0x200003, 1, 0, 0x0C, (0x200007,), waiting=0x01, errors=0x40),
+    Status(0x200013, 1, 0, 0x0C, (0x200017,), waiting=0x01, errors=0x40),
+    # the SCI's SCSR: TDRE and TC, which a write of SCDR clears, RDRF and
+    # the framing error (MC68331UM, D.4.6), which sci_putc_polled waits
+    # for
+    Status(0xFFFC0C, 2, 0, 0x0180, (0xFFFC0E,), waiting=0x0040, errors=0x0002),
     # the QSPI's SPCR1, whose SPE the QSPI clears at the end of its queue
-    # (6.3.5.1), and SPSR, whose SPIF it then sets (D.4.13): qspi_send
-    # waits for both
-    Status(0xFFFC1A, 2, 0x7FFF, 0),
-    Status(0xFFFC1F, 1, 0, 0x80),
+    # (6.3.5.1), and SPSR, whose SPIF it then sets (D.4.13), each queue
+    # started by a write of SPCR1: qspi_send waits for both
+    Status(0xFFFC1A, 2, 0x7FFF, 0, (0xFFFC1A,), busy_kept=0xFFFF),
+    Status(0xFFFC1F, 1, 0, 0x80, (0xFFFC1A,)),
 ]
+STATUS_AT = {status.address: status for status in STATUS_REGISTERS}
+# The DUART's input port, IP (MC68681, "Input port"), which
+# duart_input_debounced reads until ten reads agree: each read gives the
+# case's next input (DeviceCase.inputs), the last repeated.
+INPUT_PORT = 0x20001B
+
+
+@dataclass(frozen=True)
+class DeviceCase:
+    """How a case's devices answer, the same for both calls: the polls
+    of a status register, the EEPROM's cell being written or a busy
+    flash part before it is ready; the reads a status register with data
+    waiting shows it for, and whether the data comes with a receive
+    error; the input port's successive values; and whether an EEPROM
+    write or a flash part's program or erase fails, the cell never
+    taking its value and the part showing its time-out (Flash)."""
+
+    busy: int
+    waiting: int
+    errors: bool
+    inputs: tuple[int, ...]
+    fails: bool = False
+
+
+# The cases' devices, by the case: the first as the devices were before
+# any was modeled, ready at once with nothing waiting; then busy for a
+# poll and more, characters waiting, with and without an error, and an
+# input that bounces before it settles, high or low; and failures.
+DEVICE_CASES = [
+    DeviceCase(0, 0, False, (0,)),
+    DeviceCase(1, 1, False, (0xFF,)),
+    DeviceCase(3, 0, False, (0, 0xFF, 0, 0)),
+    DeviceCase(2, 2, True, (0xFF, 0, 0xFF, 0xFF, 0xFF)),
+    DeviceCase(1, 0, False, (0,), fails=True),
+    DeviceCase(5, 3, False, (0xFF, 0xFF, 0, 0xFF)),
+]
+
+
+@dataclass(frozen=True)
+class DeviceRead:
+    """A read of a device: its address and its bytes."""
+
+    address: int
+    size: int
+
+    def __str__(self) -> str:
+        return f"read of {self.size} bytes at {self.address:x}"
+
+
+# The EEPROM's write cycle, as the harness models it: the part is not
+# identified (docs/firmware/README.md), so a generic byte-write
+# EEPROM's, polled by reading the cell back: after a write, the case's
+# busy reads of the cell give its value's complement and the next its
+# value, or, where the case fails, every read the complement.  Its
+# writes are effects, and its reads from its first write on, where the
+# routines poll it (eeprom_write_byte, eeprom_write_page).
+BYTE_MASK = 0xFF
+
+
+class Flash:
+    """The flash, as the installer writes it (docs/firmware/restart.md,
+    "Erase and download"): two pairs of AM29F010s, 128 KB each, at 0 and
+    PAIR_SIZE, a pair's parts the high and low bytes of each word, and
+    so a part's address the bus's offset in its pair halved.  Writes
+    reach it through chip select 6, write only over the boot ROM's range
+    (CSBAR6 0x0006, CSOR6 0x7070; docs/firmware/README.md).  Each part
+    is a command state machine, as AMD's Am29F010 data sheet gives it
+    (not in third_party/): two unlock cycles, 0xaa at 0x5555 and 0x55 at
+    0x2aaa, then the command at 0x5555: program, 0xa0, the next write
+    the byte, which can only clear bits; erase, 0x80, a second unlock
+    and then chip erase, 0x10, at 0x5555, or sector erase, 0x30, at a
+    sector, more sectors' 0x30 following without unlocks until the first
+    read ends the window; and read/reset, 0xf0, alone or after the
+    unlocks, which also clears a time-out; any other write puts the part
+    back to reading.  While a program or erase runs, each read of the
+    part gives its status: DQ7 the complement of the byte's top bit, 0
+    for an erase; DQ6 toggling; DQ3 for an erase; and DQ5 once it has
+    timed out; after the case's busy reads (DeviceCase.busy) the next
+    finds it done and reads the array, or, where the case fails, DQ5
+    set from then on until a reset.  Its contents, a part's bytes, are
+    compared after a call as RAM is, and its reads and writes are
+    effects; a write no part takes, a stray pointer's, ends the call
+    (RebuiltMachine.flash_write)."""
+
+    def __init__(self, image: bytes):
+        # the image's bytes, and what a call starts with, the image's
+        # unless a case gives its own
+        self.image = image[ROM : ROM + FLASH_SIZE]
+        self.start = self.image
+        self.parts = [FlashPart() for _ in range(PAIRS * LANES)]
+        self.reset(self.image, DEVICE_CASES[0])
+
+    def reset(self, contents: bytes, case: DeviceCase) -> None:
+        """Each part holds its bytes of contents and reads its array."""
+        for index, part in enumerate(self.parts):
+            pair, lane = divmod(index, LANES)
+            part.reset(contents[pair * PAIR_SIZE + lane : (pair + 1) * PAIR_SIZE : LANES], case)
+
+    def contents(self) -> bytes:
+        """The flash's bytes as the bus reads its arrays."""
+        found = bytearray(FLASH_SIZE)
+        for index, part in enumerate(self.parts):
+            pair, lane = divmod(index, LANES)
+            found[pair * PAIR_SIZE + lane : (pair + 1) * PAIR_SIZE : LANES] = part.array
+        return bytes(found)
+
+    @staticmethod
+    def locate(address: int) -> tuple[int, int]:
+        """The part a bus byte is in and its address in the part."""
+        pair, offset = divmod(address - ROM, PAIR_SIZE)
+        return pair * LANES + offset % LANES, offset // LANES
+
+    def write(self, address: int, size: int, value: int) -> bool:
+        """Gives a write to its parts; whether one of them took it as a
+        command's cycle, not a write a reading part ignores."""
+        taken = False
+        for i in range(size):
+            part, at = Flash.locate(address + i)
+            taken |= self.parts[part].write(at, value >> 8 * (size - 1 - i) & BYTE_MASK)
+        return taken
+
+    def read(self, address: int, size: int) -> bytes:
+        return bytes(self.parts[part].read(at) for part, at in map(Flash.locate, range(address, address + size)))
+
+    def arrays(self, address: int, size: int) -> bytes:
+        """The arrays' bytes at an address, as memory holds them between
+        reads."""
+        return bytes(self.parts[part].array[at] for part, at in map(Flash.locate, range(address, address + size)))
+
+
+# The flash's layout and the parts' commands and status bits (Flash).
+FLASH_SIZE = 0x80000
+PAIRS = 2
+LANES = 2
+PAIR_SIZE = FLASH_SIZE // PAIRS
+PART_SIZE = PAIR_SIZE // LANES
+PART_SECTOR = 0x4000
+UNLOCK_FIRST = (0x5555, 0xAA)
+UNLOCK_SECOND = (0x2AAA, 0x55)
+PROGRAM = 0xA0
+ERASE = 0x80
+CHIP_ERASE = 0x10
+SECTOR_ERASE = 0x30
+READ_RESET = 0xF0
+DQ7 = 0x80
+DQ6 = 0x40
+DQ5 = 0x20
+DQ3 = 0x08
+ERASED_BYTE = 0xFF
+# A part's states (FlashPart): reading its array; after one unlock
+# cycle, or two, of a command or of an erase's second unlock; a
+# program's byte awaited; sector erase's window, open to more sectors;
+# a program or erase running; and timed out.
+(
+    READING,
+    UNLOCKED_ONCE,
+    UNLOCKED,
+    PROGRAMMING_NEXT,
+    ERASE_UNLOCKING,
+    ERASE_UNLOCKED_ONCE,
+    ERASE_UNLOCKED,
+    SECTORS_OPEN,
+    RUNNING,
+    TIMED_OUT,
+) = range(10)
+
+
+class FlashPart:
+    """One AM29F010 (Flash): its array; its state; the case's busy
+    reads and whether it fails; a running program's byte and address,
+    None for an erase, and the sectors an erase clears; the reads it has
+    answered with status since it started; and DQ6's toggle."""
+
+    def reset(self, contents: bytes, case: DeviceCase) -> None:
+        self.array = bytearray(contents)
+        self.state = READING
+        self.busy = case.busy
+        self.fails = case.fails
+        self.programming: tuple[int, int] | None = None
+        self.sectors: set[int] = set()
+        self.polls = 0
+        self.toggle = 0
+
+    def write(self, at: int, data: int) -> bool:
+        """A write's cycle; whether the part took it, not a write it
+        ignores while reading its array."""
+        state = self.state
+        if state == RUNNING:
+            return True
+        if data == READ_RESET and state in (READING, UNLOCKED, TIMED_OUT):
+            self.state = READING
+            return True
+        if state == TIMED_OUT:
+            return True
+        if state == READING and (at, data) != UNLOCK_FIRST:
+            return False
+        if state in (READING, ERASE_UNLOCKING) and (at, data) == UNLOCK_FIRST:
+            self.state = UNLOCKED_ONCE if state == READING else ERASE_UNLOCKED_ONCE
+        elif state in (UNLOCKED_ONCE, ERASE_UNLOCKED_ONCE) and (at, data) == UNLOCK_SECOND:
+            self.state = UNLOCKED if state == UNLOCKED_ONCE else ERASE_UNLOCKED
+        elif state == UNLOCKED and at == UNLOCK_FIRST[0] and data in (PROGRAM, ERASE):
+            self.state = PROGRAMMING_NEXT if data == PROGRAM else ERASE_UNLOCKING
+        elif state == PROGRAMMING_NEXT:
+            self.start((at, data), set())
+        elif state == ERASE_UNLOCKED and at == UNLOCK_FIRST[0] and data == CHIP_ERASE:
+            self.start(None, set(range(PART_SIZE // PART_SECTOR)))
+        elif state in (ERASE_UNLOCKED, SECTORS_OPEN) and data == SECTOR_ERASE:
+            self.sectors.add(at // PART_SECTOR)
+            self.state = SECTORS_OPEN
+        else:
+            self.state = READING
+            self.sectors = set()
+        return True
+
+    def start(self, programming: tuple[int, int] | None, sectors: set[int]) -> None:
+        self.programming = programming
+        self.sectors = sectors
+        self.polls = 0
+        self.state = RUNNING
+
+    def read(self, at: int) -> int:
+        if self.state == SECTORS_OPEN:
+            self.start(None, self.sectors)
+        if self.state not in (RUNNING, TIMED_OUT):
+            return self.array[at]
+        if self.state == RUNNING:
+            self.polls += 1
+            if self.polls > self.busy and not self.fails:
+                self.finish()
+                return self.array[at]
+            if self.polls > self.busy:
+                self.state = TIMED_OUT
+        self.toggle ^= DQ6
+        top = ~self.programming[1] & DQ7 if self.programming else DQ3
+        return top | self.toggle | (DQ5 if self.state == TIMED_OUT else 0)
+
+    def finish(self) -> None:
+        if self.programming:
+            at, data = self.programming
+            self.array[at] &= data
+        for sector in self.sectors:
+            self.array[sector * PART_SECTOR : (sector + 1) * PART_SECTOR] = bytes([ERASED_BYTE]) * PART_SECTOR
+        self.state = READING
+        self.sectors = set()
+
+
+class Devices:
+    """What the modeled devices have done in a call, from its start
+    (reset): each status register's reads since the device last
+    started, and all its reads; the value last written to each; the
+    input port's reads; the EEPROM's cell being written and its value,
+    and the reads of it since, and whether the call has written the
+    EEPROM; and the case it answers as."""
+
+    def reset(self, case: DeviceCase) -> None:
+        self.case = case
+        self.since_start = {address: 0 for address in STATUS_AT}
+        self.reads = {address: 0 for address in STATUS_AT}
+        self.written = {address: 0 for address in STATUS_AT}
+        self.inputs = 0
+        self.eeprom_cell: tuple[int, int] | None = None
+        self.eeprom_polls = 0
+        self.eeprom_written = False
+
+    def status_value(self, status: Status) -> int:
+        """What a status register reads as now, counting the read."""
+        written = self.written[status.address]
+        ready = self.since_start[status.address] >= self.case.busy
+        waiting = self.reads[status.address] < self.case.waiting
+        self.since_start[status.address] += 1
+        self.reads[status.address] += 1
+        value = written & status.kept | status.ready if ready else written & status.busy_kept
+        if waiting:
+            value |= status.waiting | (status.errors if self.case.errors else 0)
+        return value
+
+    def make_ready(self, address: int) -> None:
+        """Has a status register's device finish, as its interrupt says."""
+        self.since_start[address] = max(self.since_start[address], self.case.busy)
+
+    def written_to(self, address: int, size: int, value: int) -> None:
+        """Notes a device write: a status register's value, or a write
+        that starts a device again."""
+        for status in STATUS_REGISTERS:
+            if address <= status.address < address + size:
+                shift = 8 * (address + size - status.address - status.size)
+                self.written[status.address] = value >> shift & ((1 << 8 * status.size) - 1)
+            if any(address <= trigger < address + size for trigger in status.triggers):
+                self.since_start[status.address] = 0
+
+    def next_input(self) -> int:
+        inputs = self.case.inputs
+        value = inputs[min(self.inputs, len(inputs) - 1)]
+        self.inputs += 1
+        return value
 
 
 @dataclass(frozen=True)
@@ -1084,7 +1407,7 @@ def twins(objects: dict[str, tuple[int, int]], labels: dict[str, str], profile: 
 class RebuiltMachine(Machine):
     """The image with the rebuilt image's code, run as a profile has it,
     and the effects the call running has had on what lies outside
-    memory, in order: kernel calls and device writes."""
+    memory, in order: kernel calls and device reads and writes."""
 
     def __init__(self, image: bytes, profile: Profile):
         super().__init__(image)
@@ -1092,7 +1415,7 @@ class RebuiltMachine(Machine):
         # where literals lie, and whether the code there is kept read-only
         self.literals = LITERALS + ([profile.code] if profile.code else [])
         self.protected = False
-        self.effects: list[KernelCall | DeviceWrite | RoutineCall] = []
+        self.effects: list[KernelCall | DeviceRead | DeviceWrite | RoutineCall] = []
         # each C function's two copies, gcc's address and the image's
         self.copies: set[tuple[int, int]] = set()
         # and the image's copy by gcc's, which a kernel call records in
@@ -1124,6 +1447,10 @@ class RebuiltMachine(Machine):
         # copy puts the local
         self.frame_fill: bytes | None = None
         self.counter: tuple[int, int] | None = None
+        # the interrupts a call takes, each with its watch's address
+        # (Interrupt); and whether its arguments end at the stack's edge
+        self.interrupts: list[tuple[Interrupt, int]] = []
+        self.stack_edge = False
         # what each page of the pointees holds at a call's start
         self.pointees = b""
         # RAM as the profile has it but the kernel's tables, its data area
@@ -1141,13 +1468,28 @@ class RebuiltMachine(Machine):
             for at in range(0, len(contents) - 1, len(STATUS_POP)):
                 if contents[at : at + len(STATUS_POP)] == STATUS_POP:
                     self.uc.hook_add(UC_HOOK_CODE, self.status_pop, begin=base + at, end=base + at)
+        # the devices' state in the running call, and the flash, which
+        # only the installer writes (Flash), None for the primary
+        self.devices = Devices()
+        self.devices.reset(DEVICE_CASES[0])
+        self.device_case = DEVICE_CASES[0]
+        self.flash = Flash(image) if profile.overlay == INSTALLER else None
+        # where the call's writes and status reads have left other than
+        # the arrays in memory, and whether it has written the flash
+        self.flash_written: list[tuple[int, int]] = []
+        self.flash_touched = False
+        # whether the call has written the flash where no part takes it
+        self.stray_write = False
         for start, size in DEVICES:
             self.uc.mem_map(start, size)
             self.uc.hook_add(UC_HOOK_MEM_WRITE, self.device_write, begin=start, end=start + size - 1)
-        for status in STATUS_REGISTERS:
-            self.uc.hook_add(
-                UC_HOOK_MEM_READ, self.status_read, status, begin=status.address, end=status.address + status.size - 1
-            )
+            self.uc.hook_add(UC_HOOK_MEM_READ, self.device_read, begin=start, end=start + size - 1)
+        if self.flash is not None:
+            self.uc.hook_add(UC_HOOK_MEM_WRITE, self.flash_write, begin=ROM, end=ROM + FLASH_SIZE - 1)
+            self.uc.hook_add(UC_HOOK_MEM_READ, self.flash_read, begin=ROM, end=ROM + FLASH_SIZE - 1)
+            self.uc.hook_add(UC_HOOK_BLOCK, self.flash_restore, begin=ROM, end=ROM + FLASH_SIZE - 1)
+        self.uc.hook_add(UC_HOOK_MEM_WRITE, self.eeprom_write, begin=EEPROM, end=EEPROM + EEPROM_SIZE - 1)
+        self.uc.hook_add(UC_HOOK_MEM_READ, self.eeprom_read, begin=EEPROM, end=EEPROM + EEPROM_SIZE - 1)
 
     def as_image(self, value: int) -> int:
         """A value as the image's copy would have it: a C function's gcc
@@ -1158,13 +1500,80 @@ class RebuiltMachine(Machine):
         twin = self.twins.image_address(value)
         return value if twin is None else twin
 
-    def status_read(self, uc: Uc, access: int, address: int, size: int, value: int, status: Status) -> None:
-        """Sets a polled register to what it reads as, before the read."""
-        written = int.from_bytes(uc.mem_read(status.address, status.size), "big")
-        uc.mem_write(status.address, (written & status.kept | status.set).to_bytes(status.size, "big"))
+    def device_read(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+        """Records a device read and, before it, sets each modeled
+        register it covers to what it reads as."""
+        self.effects.append(DeviceRead(address, size))
+        for at in range(address, address + size):
+            status = STATUS_AT.get(at)
+            if status is not None:
+                uc.mem_write(at, self.devices.status_value(status).to_bytes(status.size, "big"))
+            elif at == INPUT_PORT:
+                uc.mem_write(at, bytes([self.devices.next_input()]))
 
     def device_write(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
-        self.effects.append(DeviceWrite(address, size, value & ((1 << 8 * size) - 1)))
+        value &= (1 << 8 * size) - 1
+        self.effects.append(DeviceWrite(address, size, value))
+        self.devices.written_to(address, size, value)
+
+    def eeprom_write(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+        """Records an EEPROM write and starts the write cycle of its last
+        byte, finishing the cell written before it."""
+        value &= (1 << 8 * size) - 1
+        self.effects.append(DeviceWrite(address, size, value))
+        devices = self.devices
+        if devices.eeprom_cell is not None:
+            uc.mem_write(devices.eeprom_cell[0], bytes([devices.eeprom_cell[1]]))
+        devices.eeprom_cell = (address + size - 1, value & BYTE_MASK)
+        devices.eeprom_polls = 0
+        devices.eeprom_written = True
+
+    def eeprom_read(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+        """Records an EEPROM read from the call's first write on, and gives
+        the cell being written its complement until its cycle is done."""
+        devices = self.devices
+        if not devices.eeprom_written:
+            return
+        self.effects.append(DeviceRead(address, size))
+        cell = devices.eeprom_cell
+        if cell is None or not address <= cell[0] < address + size:
+            return
+        devices.eeprom_polls += 1
+        done = devices.eeprom_polls > devices.case.busy and not devices.case.fails
+        uc.mem_write(cell[0], bytes([cell[1] if done else ~cell[1] & BYTE_MASK]))
+        if done:
+            devices.eeprom_cell = None
+
+    def flash_write(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+        """Records a write to the flash and gives it to its parts.  The
+        write lands in memory after the hook; the arrays are put back
+        there before the next read of the flash or block of code run from
+        it (flash_restore)."""
+        value &= (1 << 8 * size) - 1
+        self.effects.append(DeviceWrite(address, size, value))
+        self.flash_written.append((address, size))
+        self.flash_touched = True
+        if not self.flash.write(address, size, value):
+            # a write the parts ignore, through a stray pointer: the call
+            # ends there, as one to the primary's ROM does (BUS_ERROR)
+            self.stray_write = True
+            uc.emu_stop()
+
+    def flash_restore(self, uc: Uc, *_) -> None:
+        """Puts the arrays back where writes landed in memory."""
+        for address, size in self.flash_written:
+            uc.mem_write(address, self.flash.arrays(address, size))
+        self.flash_written = []
+
+    def flash_read(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+        """Sets what a read of the flash reads as, before it, and records
+        it from the call's first write of the flash on, where the
+        installer polls it."""
+        self.flash_restore(uc)
+        if self.flash_touched:
+            self.effects.append(DeviceRead(address, size))
+        uc.mem_write(address, self.flash.read(address, size))
+        self.flash_written.append((address, size))
 
     def status_pop(self, uc: Uc, address: int, size: int, _) -> None:
         """Does a move (SP)+,SR, STATUS_POP, in supervisor mode, as the
@@ -1257,8 +1666,10 @@ def rebuilt_machine(
 def protect_code(m: RebuiltMachine) -> None:
     """Keeps the image's code read-only, ROM's, gcc's and the overlay's,
     so that a stray write to it faults, rather than changing later
-    cases."""
-    m.uc.mem_protect(ROM, ROM_SIZE, UC_PROT_READ | UC_PROT_EXEC)
+    cases; but for the installer's, whose writes to ROM's range are to
+    the flash (Flash), reset for each call."""
+    if m.flash is None:
+        m.uc.mem_protect(ROM, ROM_SIZE, UC_PROT_READ | UC_PROT_EXEC)
     m.uc.mem_protect(REBUILT, REBUILT_DATA - REBUILT, UC_PROT_READ | UC_PROT_EXEC)
     m.protected = True
 
@@ -1701,6 +2112,7 @@ def fresh_ram(m: RebuiltMachine, case: int = 0) -> None:
     start, size = m.profile.buffers
     m.next_buffer = start
     m.given = {}
+    m.device_case = DEVICE_CASES[case % len(DEVICE_CASES)]
     if m.profile.buffers_apart():
         m.uc.mem_write(start, bytes(size))
     m.pointees = pointer_fill(case) * (POINTEES_SIZE // len(pointer_fill(case)))
@@ -1733,6 +2145,13 @@ def reset(m: RebuiltMachine, memory: dict[int, bytes]) -> None:
     m.uc.mem_write(STACK, CLEAN_STACK)
     for start, size in DEVICES:
         m.uc.mem_write(start, bytes(size))
+    m.devices.reset(m.device_case)
+    if m.flash is not None:
+        m.flash.reset(m.flash.start, m.device_case)
+        m.uc.mem_write(ROM, m.flash.start)
+        m.flash_written = []
+        m.flash_touched = False
+        m.stray_write = False
     m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
     for name, register in REGISTERS.items():
         m.uc.reg_write(register, STARTING[name])
@@ -1751,6 +2170,66 @@ def take_exception(uc: Uc, vectors: int, vector: int) -> None:
     uc.mem_write(sp, frame)
     uc.reg_write(UC_M68K_REG_A7, sp)
     uc.reg_write(UC_M68K_REG_PC, struct.unpack(">I", uc.mem_read(vectors + vector * VECTOR_SIZE, VECTOR_SIZE))[0])
+
+
+@dataclass(frozen=True)
+class Interrupt:
+    """An interrupt a case takes part way through its call, in both
+    copies at the same point of each one's own instructions: after the
+    first'th read, or write, of a variable or register, its watch, an
+    lvalue of the exported C or an address, by the routine itself, not
+    by a handler, and every every'th after (0 for once), at most times
+    in all, each taken before the next instruction once the interrupt
+    mask lets its level in.  The device's vector and level, as the
+    firmware sets them up (startup.h, boot.c); the status registers it
+    makes ready (Devices.make_ready); and the registers it presents to
+    its handler, as each firing's (address, bytes, value), the last
+    repeated."""
+
+    vector: int
+    level: int
+    watch: str | int
+    first: int
+    write: bool = False
+    every: int = 0
+    times: int = 1
+    ready: tuple[int, ...] = ()
+    presents: tuple[tuple[tuple[int, int, int], ...], ...] = ()
+
+
+# The status register's interrupt mask, bits 10 to 8, and its trace
+# bits; level 7, which the mask never keeps out (MC68331UM, 5.8.2,
+# "Interrupts"); and trap #5, the kernel's return from interrupt, which
+# the firmware's handlers end with (docs/firmware/psos.md).
+MASK_SHIFT = 8
+LEVEL_MASK = 7
+TRACE_BITS = 0xC000
+NONMASKABLE = 7
+RETURN_FROM_INTERRUPT = TRAP_VECTORS + 5
+# Where A6 points in a case at the stack's edge
+# (RebuiltMachine.stack_edge), at no mapped memory, so that a read of
+# the caller's frame faults: the value a modeled service returns.
+UNMAPPED_FRAME = KERNEL_RESULT
+
+
+def take_interrupt(uc: Uc, vectors: int, interrupt: Interrupt, pc: int) -> int:
+    """Enters an interrupt's handler as the CPU32 does (MC68331UM, 5.8.2
+    and "Exception Stack Frames"): the status register copied, then
+    supervisor mode, trace off and the mask at the interrupt's level; a
+    four-word frame of format 0, the status register, the address of the
+    next instruction and the vector's offset, on the supervisor stack;
+    and the handler's address from the vector table at the vector base.
+    Returns the frame's address."""
+    sr = uc.reg_read(UC_M68K_REG_SR)
+    frame = struct.pack(FRAME_FORMAT, sr, pc, interrupt.vector * VECTOR_SIZE)
+    mask = LEVEL_MASK << MASK_SHIFT
+    uc.reg_write(UC_M68K_REG_SR, (sr | SUPERVISOR_BIT) & ~TRACE_BITS & ~mask | interrupt.level << MASK_SHIFT)
+    sp = uc.reg_read(UC_M68K_REG_A7) - len(frame)
+    uc.mem_write(sp, frame)
+    uc.reg_write(UC_M68K_REG_A7, sp)
+    handler = struct.unpack(">I", uc.mem_read(vectors + interrupt.vector * VECTOR_SIZE, VECTOR_SIZE))[0]
+    uc.reg_write(UC_M68K_REG_PC, handler)
+    return sp
 
 
 def return_and_restore(uc: Uc) -> bool:
@@ -1867,7 +2346,7 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
         uc.reg_write(REGISTERS[pointer], record)
     call = KernelCall(vector, number, tuple(service_argument(m, name) for name in service.arguments), data)
     for name in service.results:
-        uc.reg_write(REGISTERS[name], KERNEL_RESULT)
+        uc.reg_write(REGISTERS[name], KERNEL_RESULT | service.result_low)
     if service.none_done:
         uc.reg_write(REGISTERS[service.none_done], 0)
     if service.text:
@@ -1885,11 +2364,14 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
 
 
 class Run:
-    """One call: its stack arguments laid above the return address, its
-    registers and status register after, the memory_compared and the
-    COMPARED memory after, its effects, the ENDING vector, HALTED,
-    STILL_RUNNING or COUNTED it ended at instead of returning, and the
-    fault or trap that stopped it, if one did."""
+    """One call: its stack arguments laid above the return address, or
+    at the stack's edge, its registers and status register after, the
+    memory_compared, the COMPARED memory and the flash after, its
+    effects, the ENDING vector, HALTED, STILL_RUNNING or COUNTED it
+    ended at instead of returning, and the fault or trap that stopped
+    it, if one did.  The machine's interrupts are taken as their events
+    come (Interrupt), and the kernel's return from interrupt, trap #5,
+    returns from one taken."""
 
     def __init__(self, m: RebuiltMachine, start: int, stack_arguments: bytes = b""):
         trapped, invalid, ended = [], [], []
@@ -1899,8 +2381,56 @@ class Run:
         self.effects = m.effects = []
         kernel_calls = 0
 
+        # the interrupts the case takes (Interrupt): each one's events
+        # and firings so far; those due and not yet taken, by index; and
+        # the frame of each taken and not yet returned from, innermost
+        # last
+        interrupts = m.interrupts
+        events = [0] * len(interrupts)
+        fired = [0] * len(interrupts)
+        pending: list[int] = []
+        frames: list[int] = []
+
+        def watched(uc, access, address, size, value, index):
+            if frames:
+                return
+            interrupt = interrupts[index][0]
+            events[index] += 1
+            after = events[index] - interrupt.first
+            if fired[index] + len([i for i in pending if i == index]) < interrupt.times and (
+                after == 0 or after > 0 and interrupt.every and after % interrupt.every == 0
+            ):
+                pending.append(index)
+
+        def step(uc, address, size, _):
+            # before each instruction, the first interrupt due, if the
+            # mask lets it in
+            if not pending:
+                return
+            index = pending[0]
+            interrupt = interrupts[index][0]
+            sr = uc.reg_read(UC_M68K_REG_SR)
+            if interrupt.level != NONMASKABLE and interrupt.level <= sr >> MASK_SHIFT & LEVEL_MASK:
+                return
+            pending.pop(0)
+            presented = interrupt.presents[min(fired[index], len(interrupt.presents) - 1)] if interrupt.presents else ()
+            fired[index] += 1
+            for at, length, shown in presented:
+                uc.mem_write(at, shown.to_bytes(length, "big"))
+            for at in interrupt.ready:
+                m.devices.make_ready(at)
+            frames.append(take_interrupt(uc, m.profile.vectors, interrupt, address))
+
         def trap(uc, number, _):
             nonlocal kernel_calls
+            if frames and number == RETURN_FROM_INTERRUPT:
+                # the kernel's return from interrupt, as it returns when
+                # the interrupt readied no task to switch to: the rte
+                return_from_exception(uc)
+                frames.pop()
+                return
+            if frames and number == RETURN_FROM_EXCEPTION and uc.reg_read(UC_M68K_REG_A7) == frames[-1]:
+                frames.pop()
             if number in HANDLED:
                 take_exception(uc, m.profile.vectors, number)
                 return
@@ -1962,19 +2492,34 @@ class Run:
                 else:
                     uc.mem_write(address + displacement, (fill * (-displacement // len(fill) + 1))[displacement:])
 
-        sp = STACK_TOP - 4 - len(stack_arguments)
-        frame = FRAME_CONTENTS.pack(0, RETURN, m.profile.caller_name)
-        m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments + frame)
+        if m.stack_edge:
+            # the arguments end where the stack's memory does, and the
+            # caller's frame is nowhere mapped (UNMAPPED_FRAME)
+            sp = STACK + STACK_SIZE - 4 - len(stack_arguments)
+            m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments)
+            m.uc.reg_write(UC_M68K_REG_A6, UNMAPPED_FRAME)
+        else:
+            sp = STACK_TOP - 4 - len(stack_arguments)
+            frame = FRAME_CONTENTS.pack(0, RETURN, m.profile.caller_name)
+            m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments + frame)
         if not m.starting_status & SUPERVISOR_BIT:
             # A7 is then the user stack, the supervisor's kept apart
             m.uc.reg_write(UC_M68K_REG_A7, SUPERVISOR_STACK)
-            m.uc.reg_write(UC_M68K_REG_SR, m.starting_status)
+        m.uc.reg_write(UC_M68K_REG_SR, m.starting_status)
         m.uc.reg_write(UC_M68K_REG_A7, sp)
         hooks = [
             m.uc.hook_add(UC_HOOK_INTR, trap),
             m.uc.hook_add(UC_HOOK_MEM_INVALID, fault),
             m.uc.hook_add(UC_HOOK_MEM_WRITE, clean_frame, begin=STACK, end=STACK + STACK_SIZE - 1),
         ]
+        for index, (interrupt, at) in enumerate(interrupts):
+            kind = UC_HOOK_MEM_WRITE if interrupt.write else UC_HOOK_MEM_READ
+            hooks.append(m.uc.hook_add(kind, watched, index, begin=at, end=at))
+        if interrupts:
+            # every instruction, which a block translated before the hook
+            # would run without
+            hooks.append(m.uc.hook_add(UC_HOOK_CODE, step))
+            m.uc.ctl_flush_tb()
         if m.counter is not None:
             hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, counted, begin=m.counter[0], end=m.counter[0]))
         if m.protected and m.profile.code:
@@ -1989,7 +2534,17 @@ class Run:
         finally:
             for hook in hooks:
                 m.uc.hook_del(hook)
+            if interrupts:
+                m.uc.ctl_flush_tb()
+        if m.stray_write:
+            ended.append(BUS_ERROR)
+            self.stopped = None
         pc = m.uc.reg_read(UC_M68K_REG_PC)
+        # the flash's arrays, which memory then holds again in place of
+        # what the call's commands and status reads left there
+        self.flash = None if m.flash is None else m.flash.contents()
+        if self.flash is not None:
+            m.uc.mem_write(ROM, self.flash)
         for address, contents in reversed(written):
             m.uc.mem_write(address, contents)
         if written and not ended:
@@ -2113,6 +2668,9 @@ def ram_difference(m: RebuiltMachine, a: Run, b: Run) -> str | None:
         first = pointers_difference(m, a.compared[name], b.compared[name])
         if first is not None:
             return f"{name} differs from {start + first:x}"
+    if a.flash != b.flash:
+        first = next(i for i in range(FLASH_SIZE) if a.flash[i] != b.flash[i])
+        return f"the flash differs from {ROM + first:x}"
     return None
 
 
@@ -2143,8 +2701,8 @@ def registers_difference(m: RebuiltMachine, a: Run, b: Run, registers: tuple[str
 
 
 def effects_difference(a: Run, b: Run, names: tuple[str, str]) -> str | None:
-    """None if two calls made the same kernel calls and device writes in
-    the same order; else the first that differs."""
+    """None if two calls made the same kernel calls and device reads and
+    writes in the same order; else the first that differs."""
     for i, (first, second) in enumerate(zip(a.effects, b.effects)):
         if first != second:
             return f"effect {i} {second}, {names[0]}'s {first}"

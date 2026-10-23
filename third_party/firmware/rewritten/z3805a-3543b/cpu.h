@@ -36,36 +36,33 @@ static inline void cpu_sr_write(uint16_t sr) {
   __asm__ volatile("move.w %0,%%sr" : : "d"(sr) : "memory", "cc");
 }
 
-/* A macro argument's expansion as text, for an asm statement. */
-#define CPU_TEXT(x) #x
-#define CPU_EXPANDED_TEXT(x) CPU_TEXT(x)
-
 /* Defines routine, a function the export declares, as a wrapper that
  * keeps A0 and A1 for its caller, which the m68k C convention does not,
- * around body, a C function of the same prototype: the image's routine
+ * around body: the image's routine
  * keeps them where an assembly caller holds a value in one across the
  * call (float_raise's movem at 0x5e940, for the soft-float routines).
- * body is given the first longs longs of the routine's stack arguments,
- * each of the same place above its return address, and D1 and A6 as the
- * caller left them, so that it reads the caller's frame as the routine
- * does; its result, in D0:D1, is the routine's.  Past the two kept
- * registers, the return address and the arguments before it, each
- * argument, the last first, lies 8 + 4 * longs bytes above the stack
- * pointer as it is pushed again. */
-#define CPU_KEEPING_A0_A1(routine, body, longs) \
-  __asm__("\t.pushsection .text." #routine ",\"ax\",@progbits\n"       \
-          "\t.globl " #routine "\n"                                   \
-          "\t.type " #routine ", @function\n" #routine                \
-          ":\n"                                                       \
-          "\tmovem.l %a0/%a1,-(%sp)\n"                                \
-          "\t.rept " CPU_EXPANDED_TEXT(longs) "\n"                    \
-          "\tmove.l (8+4*" CPU_EXPANDED_TEXT(longs) ",%sp),-(%sp)\n" \
-          "\t.endr\n"                                                 \
-          "\tjsr " #body "\n"                                         \
-          "\tlea (4*" CPU_EXPANDED_TEXT(longs) ",%sp),%sp\n"          \
-          "\tmovem.l (%sp)+,%a0/%a1\n"                                \
-          "\trts\n"                                                   \
-          "\t.size " #routine ", .-" #routine "\n"                    \
+ * body, a C function of one argument, is given a pointer to the
+ * routine's stack arguments where its caller pushed them, past the two
+ * kept registers and the return address, so that it reads only those
+ * the routine reads, and D1 and A6 as the caller left them, so that it
+ * reads the caller's frame as the routine does; its result, in D0:D1,
+ * is the routine's. */
+#define CPU_KEEPING_A0_A1(routine, body)               \
+  __asm__("\t.pushsection .text." #routine             \
+          ",\"ax\",@progbits\n"                        \
+          "\t.globl " #routine                         \
+          "\n"                                         \
+          "\t.type " #routine ", @function\n" #routine \
+          ":\n"                                        \
+          "\tmovem.l %a0/%a1,-(%sp)\n"                 \
+          "\tpea (12,%sp)\n"                           \
+          "\tjsr " #body                               \
+          "\n"                                         \
+          "\taddq.l #4,%sp\n"                          \
+          "\tmovem.l (%sp)+,%a0/%a1\n"                 \
+          "\trts\n"                                    \
+          "\t.size " #routine ", .-" #routine          \
+          "\n"                                         \
           "\t.popsection\n")
 
 /* Defines routine, a function the export declares void (void) that the

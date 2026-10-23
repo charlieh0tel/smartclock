@@ -225,7 +225,10 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
   convention does not, for the soft-float routines that hold a value
   in them across the call.  The C is the body, and `cpu.h`'s
   `CPU_KEEPING_A0_A1` defines `float_raise` as a wrapper of it that
-  saves and restores them, and agrees.
+  saves and restores them and passes it a pointer to the arguments
+  where the caller pushed them, so that it reads only the operands the
+  image reads for the cause (none for a code of no cause, two for a
+  float's NaN, `0x5ebf8`), and agrees, at the stack's edge too.
 - **`duartb_reconfigure` (`0x1dc7e`) and `sci_reconfigure`
   (`0x1fffa`)**, the I/O control functions of DUART channel B and the
   SCI in the kernel's I/O table (`0x5173a`, `0x517a6`), return no error

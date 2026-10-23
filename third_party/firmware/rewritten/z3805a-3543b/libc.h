@@ -625,17 +625,15 @@ static void libc_float_exception_message(uint8_t* message, uint32_t code) {
 /* errno's value for an argument out of a function's domain. */
 static const int32_t LIBC_EDOM = 33;
 
-/* The longs float_raise reads after its code, as its callers push them:
- * a NaN's bits, then the address the math library's report gives; an
+/* The longs float_raise reads after its code, as its callers push them,
+ * each only on the branches that read it (0x5e93c to 0x5ec8c): a NaN's
+ * bits, then the address the math library's report gives; an
  * underflow's shift count and its mantissa, a double's in three longs
- * and a float's in two.  An underflow's report address for the math
- * library overlaps the mantissa: a double's is its third long, which
- * the image loads from A6+0x18 (0x5e990), a float's the low word of its
- * second and the high word of the long after, from A6+0x16 (0x5ea6c).
- * An array size, so #define. */
-#define LIBC_RAISE_OPERANDS 4
-/* And its stack arguments, the code first, as many as it reads. */
-#define LIBC_RAISE_ARGUMENTS (1 + LIBC_RAISE_OPERANDS)
+ * and a float's in two; another cause's report address.  An underflow's
+ * report address for the math library overlaps the mantissa: a
+ * double's is its third long, which the image loads from A6+0x18
+ * (0x5e990), a float's the low word of its second and the high word of
+ * the long after, the long it loads from A6+0x16 (0x5ea6c). */
 
 /* What float_raise's body decides: the double it returns, its bits in
  * D0:D1, high first, and whether it reports instead, with the address
@@ -656,14 +654,11 @@ typedef struct libc_raise_state {
   int32_t* error;
 } libc_raise_state;
 
-/* The operands from float_raise's variable list, all LIBC_RAISE_OPERANDS
- * of them whatever the cause, as the image reads them from its
- * caller's frame. */
-static void libc_raise_operands(va_list list,
-                                uint32_t operand[LIBC_RAISE_OPERANDS]) {
-  for (int32_t i = 0; i < LIBC_RAISE_OPERANDS; i++) {
-    operand[i] = va_arg(list, uint32_t);
-  }
+/* A float underflow's report address for the math library: the long
+ * starting half way into its mantissa's second long, which the image
+ * loads from A6+0x16 whatever the routine (0x5ea6c). */
+static uint32_t libc_raise_single_underflow_address(const uint32_t* operand) {
+  return *(const uint32_t*)((const uint16_t*)&operand[2] + 1);
 }
 
 /* float_raise's caller's frame, through which the image reads the
@@ -908,9 +903,12 @@ static uint32_t libc_raise_single_underflow(libc_raised* raised, uint32_t count,
  * through callers_frame on the branches that give it, or 0 for a code
  * of no cause, chosen by the routine's bit 7 but for two: the signaling
  * NaN's tests the cause's bit 7, the precision lost (0x5ec24), and an
- * underflow's inexact report the result's (0x5ebe0). */
+ * underflow's inexact report the result's (0x5ebe0).  operand is the
+ * longs after the code where the caller pushed them, each read only on
+ * a branch where the image reads it: none for a code of no cause, two
+ * for a float's NaN (0x5ebf8, 0x5ebfc). */
 static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
-                                    const uint32_t operand[LIBC_RAISE_OPERANDS],
+                                    const uint32_t* operand,
                                     const uint32_t* callers_frame,
                                     libc_raise_state state) {
   static const uint32_t SINGLE_QUIET = 0x00400000;
@@ -977,9 +975,10 @@ static libc_raised libc_float_raise(uint32_t code, uint32_t callers_d1,
     const int16_t places = operand[0];
 
     if (single) {
-      raised.address = math ? operand[2] << LIBC_WORD_BITS / 2 |
-                                  operand[3] >> LIBC_WORD_BITS / 2
-                            : libc_frame_return(callers_frame);
+      const uint32_t math_address =
+          libc_raise_single_underflow_address(operand);
+
+      raised.address = math ? math_address : libc_frame_return(callers_frame);
     } else {
       raised.address = math ? operand[3] : libc_frame_return(callers_frame);
     }

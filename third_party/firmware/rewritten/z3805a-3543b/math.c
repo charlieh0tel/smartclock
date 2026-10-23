@@ -642,22 +642,17 @@ double pow(double x, double y) {
 /* Raises a floating-point exception for the soft-float library and the
  * math routines: records its cause in float_status and returns the
  * double to give, or, where float_control enables the cause, reports it
- * (0x5e93c).  Variadic in name: whatever the code, it reads the
- * LIBC_RAISE_OPERANDS longs after it, and D1 as its caller left it.
- * float_raise is this, keeping A0 and A1 for its caller. */
+ * (0x5e93c).  Variadic in name: arguments is its code and the longs
+ * after it where its caller pushed them, of which it reads those the
+ * cause needs, and D1 as its caller left it.  float_raise is this,
+ * keeping A0 and A1 for its caller. */
 static __attribute__((used, noipa)) uint64_t
-libc_float_raise_kept(uint32_t code, ...) {
+libc_float_raise_kept(const uint32_t* arguments) {
   const uint32_t callers_d1 = CPU_CALLERS_REGISTER(uint32_t, "d1");
-  uint32_t operand[LIBC_RAISE_OPERANDS];
-  va_list list;
-
-  va_start(list, code);
-  libc_raise_operands(list, operand);
-  va_end(list);
-
+  const uint32_t code = arguments[0];
   const libc_raise_state state = {&float_status, float_control, &errno};
-  const libc_raised raised =
-      libc_float_raise(code, callers_d1, operand, LIBC_CALLERS_FRAME(), state);
+  const libc_raised raised = libc_float_raise(code, callers_d1, &arguments[1],
+                                              LIBC_CALLERS_FRAME(), state);
 
   if (raised.report) {
     float_exception_report(code, raised.address);
@@ -665,7 +660,7 @@ libc_float_raise_kept(uint32_t code, ...) {
   return (uint64_t)raised.high << LIBC_WORD_BITS | raised.low;
 }
 
-CPU_KEEPING_A0_A1(float_raise, libc_float_raise_kept, LIBC_RAISE_ARGUMENTS);
+CPU_KEEPING_A0_A1(float_raise, libc_float_raise_kept);
 
 /* Builds float_raise's report, "fp <cause>: <routine>", in
  * float_exception_message and stops with fatal_error_with_code

@@ -9,19 +9,13 @@
  * (installer::0x108ca8).  installer_float_raise is this, keeping A0 and
  * A1 for its caller, as float_raise does. */
 static __attribute__((used, noipa)) uint64_t
-installer_float_raise_kept(uint32_t code, ...) {
+installer_float_raise_kept(const uint32_t* arguments) {
   const uint32_t callers_d1 = CPU_CALLERS_REGISTER(uint32_t, "d1");
-  uint32_t operand[LIBC_RAISE_OPERANDS];
-  va_list list;
-
-  va_start(list, code);
-  libc_raise_operands(list, operand);
-  va_end(list);
-
+  const uint32_t code = arguments[0];
   const libc_raise_state state = {&installer_float_status,
                                   installer_float_control, &installer_errno};
-  const libc_raised raised =
-      libc_float_raise(code, callers_d1, operand, LIBC_CALLERS_FRAME(), state);
+  const libc_raised raised = libc_float_raise(code, callers_d1, &arguments[1],
+                                              LIBC_CALLERS_FRAME(), state);
 
   if (raised.report) {
     installer_float_exception_report(code, raised.address);
@@ -29,8 +23,7 @@ installer_float_raise_kept(uint32_t code, ...) {
   return (uint64_t)raised.high << LIBC_WORD_BITS | raised.low;
 }
 
-CPU_KEEPING_A0_A1(installer_float_raise, installer_float_raise_kept,
-                  LIBC_RAISE_ARGUMENTS);
+CPU_KEEPING_A0_A1(installer_float_raise, installer_float_raise_kept);
 
 /* Builds float_raise's report, "fp <cause>: <routine>", in
  * installer_float_exception_message and stops with

@@ -995,22 +995,88 @@ is, the segments it allocates kept: `status_object` and its seven
 registers, its error queue and `status_ready` (`structures.md`, "The
 status system"), which `root_task` sets up before it creates the tasks.  The devices -- the DUART
 at `0x200000`, `0x300000` to `0x30ffff`, `0x500000` and the MC68331's
-modules from `0xfff000` -- are memory zeroed for each call, and each
-write to them is recorded; but the registers the polled routines wait
-on read as the data sheets say they do once the wait is over: the
-DUART's SRA and SRB with TxRDY, the SCI's SCSR with TDRE, the QSPI's
-SPSR with SPIF and its SPCR1 with SPE clear (MC68681; MC68331UM
-D.4.6, D.4.13, 6.3.5.1).  The kernel calls and device writes, in
-order, are a call's effects, which the two calls must make alike; a
+modules from `0xfff000`, the QSPI's RAM and the FPGA's ports behind it
+among them -- are memory zeroed for each call, and each read and each
+write of them is recorded; but the registers the polled routines wait
+on read as the data sheets say the device shows them, by what it has
+done (`harness.Status`): the DUART's SRA and SRB with TxRDY and TxEMT,
+the SCI's SCSR with TDRE and TC, the QSPI's SPSR with SPIF and its
+SPCR1 with SPE clear (MC68681; MC68331UM D.4.6, D.4.13, 6.3.5.1), each
+after the case's busy polls of it since the call's start or the write
+that starts the device again (TB, SCDR, SPCR1), and SRA, SRB and SCSR
+with RxRDY or RDRF for the case's first reads, a framing error beside
+it in some cases; and the DUART's input port reads a case's sequence,
+one that bounces before it settles among them, which
+`duart_input_debounced` reads until ten reads agree.  The EEPROM's
+write cycle is modeled too, its part not identified: after a write,
+the case's busy reads of the cell give its complement and the next
+its value, or, in a failing case, every read the complement; its
+writes are effects, and its reads from the call's first write on,
+where the routines poll it.  The cases' devices
+(`harness.DEVICE_CASES`), by the case, are ready at once with nothing
+waiting in the first, as before any was modeled, then busy for one to
+five polls, with characters waiting, and failing.  So a poll's count
+and order, `qspi_send`'s reads of SPSR, the debounce's reads and the
+EEPROM's polls, are compared, not only what the routine leaves.  The
+kernel calls and device reads and writes, in order, are a call's
+effects, which the two calls must make alike; a
 service the harness does not model stops a call, as an unmapped
 address does.  A trap whose handler never comes back -- `#5`, the
-kernel's return from interrupt, and `#11` and `#12`, which restart --
+kernel's return from interrupt, but from an interrupt the harness has
+the case take, below, and `#11` and `#12`, which restart --
 ends a call, as does a zero divide, which the common exception entry,
 with no task's handler set, records before it spins (`restart.md`,
 "Both end in the watchdog"), and a write to code, which on the board
 raises a bus error (the boot chip select is read only, CSORBT
-`0x6870`, and the bus monitor on, SYPCR `0xcc`).  A branch to itself,
-`fatal_error`'s spin, ends a call halted, since no interrupt comes;
+`0x6870`, and the bus monitor on, SYPCR `0xcc`).  The installer's
+writes to ROM's range are to the flash, as chip select 6, write only
+over the boot ROM's range, makes them on the board (`CSBAR6`, above),
+and the flash is modeled (`harness.Flash`): its two pairs of
+AM29F010s, a pair's parts a word's two bytes, each a command state
+machine as AMD's Am29F010 data sheet gives it (not in `third_party/`;
+`restart.md`, "Erase and download"): the unlock cycles, program,
+sector erase with more sectors in its window, chip erase and
+read/reset, and while a program or erase runs, its status, DQ7's
+data polling, DQ6 toggling, DQ3 for an erase, done after the case's
+busy reads, or timed out, DQ5, in a failing case, until a reset.  So
+`installer_flash_program_word`, `:DIAGnostic:ERASe` and
+`:DIAGnostic:DOWNload` run to their end, the flash's contents compared
+after a call as RAM is and its writes, and its reads from the call's
+first write on, effects; the primary's ROM stays read only.  A write
+the parts ignore, to a part reading its array that starts no command,
+a stray pointer's, ends the call there, as one to the primary's ROM
+does.  A case may take
+an interrupt part way (`harness.Interrupt`), in both copies at the
+same point of each one's own instructions: after the k'th read or
+write of a variable by the routine itself, not by a handler, and every
+so many after, before the next instruction once the mask lets its
+level in, as the CPU32 takes one (MC68331UM 5.8.2): the status
+register copied, supervisor mode, trace off and the mask at the
+level, a four-word frame of format 0 on the supervisor stack, and the
+handler from the vector table at the profile's vector base, the
+device's own vector; and the kernel's return from interrupt, `trap
+#5`, which the firmware's handlers end with, returns from it as `rte`
+does, as the kernel does when the interrupt readied no task to switch
+to.  The interrupt may present registers to its handler and make a
+status register ready.  The QSPI's end of queue (vector 65, level 4,
+as `qsm_init` sets QILR and QIVR) is taken after the first, second or
+third read of `qspi.running` in `qspi_start`'s wait, its handler
+`primary_user_65` clearing it through `qspi_isr`; the DUART's (vector
+67, `duart_ivr_test`'s IVR, its level, not set by software, taken as
+2, the mask the firmware raises around its DUART accesses) after each
+read of `loopback_expect_next` in the loopback test's wait, ISR
+showing TxRDY and then RxRDY as well, TB and RB one register of the
+harness's memory, as local loopback has them, until the text is all
+back; and the periodic interrupt (vector 66, level 5) after
+`interval_wait_reading` sets `interval_tick_wait`, a tick short of the
+one that signals its wait.  Without the `volatile` in `qspi_start`'s
+wait or the loopback's, gcc reads the variable once and spins, and
+the case fails, as does storing `interval_tick_wait` after the wait.
+A case may also lay its arguments at the stack's edge, the caller's
+frame unmapped, so that a read past those the image reads faults:
+`float_raise`'s, each with only the operands its cause reads.  A
+branch to itself, `fatal_error`'s spin, ends a call halted, since no
+interrupt comes but those a case takes;
 and a call still running at its 1000th kernel call, a task's loop,
 ends there, before making it.  A loop that makes no kernel call ends
 where it counts to a count of the function's (`COUNTED_LOOPS`):
@@ -1175,6 +1241,23 @@ found its loop's count read back from a register nothing set),
 `bytes_equal_n`'s two strings of one length, `double_to_digits`'
 digit count and mode as `doprnt` passes them, and a subnormal, an
 infinity and a NaN for `frexp`, `modf`, `sqrt`, `log` and `fabs`.
+And, each found by a bug planted in the hand-written C that the
+generated cases let pass: the suffix matchers', primary's and
+installer's, units from the generated tree's tables in ROM and
+suffixes of each length of multiplier, known and not; the number
+converters' numbers about each type's limits, past the tenths each
+tests and past what its arithmetic wraps to; the parameter parsers'
+numbers with a suffix, with and without units; `scpi_parse_text`'s
+tokens for the installer's copy too; a status model of two registers
+below the top for `status_clear_events`, and an error queue in each
+state, its tail wrapping, for `error_queue_pop`; `:SYSTem:LANGuage`'s
+texts in each case, `:DIAGnostic:TEST?`'s every choice and one past,
+the installer's with the boot code's results set; `longjmp`'s buffer
+and values, `atexit`'s NULL and full table, `sign_extend_bits`' every
+kind of width, and `console_port_read`'s read errors.  `setjmp`
+leaves D1, A0 and A1 as it found them too (`KEPT_BESIDE`), and the
+kernel's priority service returns an old priority of `0x40`, so that
+`task_set_priority`'s step from it shows.
 A variadic function runs too, its list after its declared arguments,
 each a 4-byte slot, laid out alike for both copies as its callers push
 it (`VARIADIC_CASES`): the printf family is given `vsprintf`'s

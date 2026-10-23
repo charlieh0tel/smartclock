@@ -1718,6 +1718,34 @@ view cannot drift apart.  The library, bottom up:
   (Z3805A 3543B only) or console.md, blank for most.  Left: the console
   sessions.
 
+  Then a coverage push on the harness itself (2026-10-22), each part
+  proved by a bug planted in the hand-written C that it catches and
+  the generated cases let pass.  Device reads are effects, in order
+  with the writes and kernel calls, and the polled registers answer by
+  a case's devices (`harness.DEVICE_CASES`): busy for some polls,
+  characters waiting, a receive error, an input that bounces, an
+  EEPROM write cycle and its failure; a debounce one read short or a
+  dropped read of SPSR fails.  The installer's flash is a model of its
+  AM29F010s' commands and status (`harness.Flash`), so that the word
+  programmer, `:ERASe` and `:DOWNload` run to their end and their
+  contents and polls compare; a wrong unlock address, the range's end
+  and an `s` taken for `S` fail.  A case may take an interrupt part
+  way, after the k'th read or write of a variable, as the CPU32 takes
+  one (`harness.Interrupt`): the QSPI's end of queue in `qspi_start`'s
+  wait, the DUART's receive and transmit in the loopback test's, the
+  tick in `interval_wait_reading`; removing either wait's `volatile`
+  fails.  And cases of their own for the paths recent batches reported
+  unreached (README.md, "Hand-written C"), each found by its planted
+  bug.  Two C changes came with it: `float_raise`'s wrapper passes
+  its body the arguments in place, so that it reads only the operands
+  the image reads for the cause, which a case at the stack's edge
+  checks; and named constants for the unsigned long converter and the
+  pllc request's event.  The installer's writes to ROM's range now
+  reach the flash, as chip select 6 makes them on the board; one the
+  parts ignore, a stray pointer's, ends the call as a write to ROM did.
+  Not modeled: the primary's own writes
+  to ROM's range, which on the board reach the flash too.
+
   Left for a later pass: the firmware routines' names do not carry
   their file's prefix as the hand-written helpers do (`ti.c`'s
   `counter_arm` and `interpolator_calibrate` beside `ti_measure_both`);

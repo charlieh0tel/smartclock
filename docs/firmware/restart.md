@@ -329,8 +329,9 @@ unpacked into `0x100400` to `0x10ac50`.
   does.  The command words are the AM29F010's (AMD's data sheet, not in
   `third_party/`); the decompiled reading names the polled word at
   `0x40000` `_interpolator_calibration_init`, the primary's code that
-  lies there.  The harness runs both only as far as their first write
-  to flash, which faults there as code (README.md, "Hand-written C").
+  lies there.  The harness runs both to their end on a model of the
+  parts' commands and status, comparing the flash's contents after
+  (README.md, "Hand-written C"; `harness.Flash`).
 
 On 2026-09-28 the bench Z3801A was taken into the installer and back,
 with queries only: `*IDN?` answered `Peru-A`, `:DIAGnostic:TEST? 1`

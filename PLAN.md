@@ -1791,7 +1791,13 @@ view cannot drift apart.  The library, bottom up:
   keeps the name `smartclock.h`.  Done as refactor commits, each with
   the export unchanged and every check green: the shared headers, then
   the image folder, then the Makefile, then NOTICE; after the pForth
-  console sessions land and before the 58503A port.
+  console sessions land and before the 58503A port.  Done 2026-10-22,
+  in those four commits.  The export changed in its includes only,
+  `"../rewritten/FILE"` for `"../rewritten/z3805a-3543b/FILE"`, which
+  the exporter computes from the export's folder to `rewritten=`; the
+  counts are unchanged.  `handlers.txt` is checked in, written by `make
+  handlers`, and a test fails while it is stale; an image's checks keep
+  what they make in `target/firmware/IMAGE/`.
 
   Then a coverage push on the harness itself (2026-10-22), each part
   proved by a bug planted in the hand-written C that it catches and

@@ -1,15 +1,77 @@
 Third-party material
 ====================
 
-Nothing in this directory is part of this project, and the project's
-license does not apply to any of it.  Each document is the property of
-its copyright holder.  They are included for reference because they are
-the specification this software is written against: the SCPI command
-table cites them by page, and a claim in the code that is not backed by
-a receiver on the bench is backed by one of these.
+The material listed under the headings below -- AMD, Hewlett-Packard,
+the firmware images, Motorola, the Z3801A owner's description and NIST
+-- is not part of this project, and the project's license does not
+apply to any of it.  Each document is the property of its copyright
+holder.  They are included for reference because they are the
+specification this software is written against: the SCPI command table
+cites them by page, and a claim in the code that is not backed by a
+receiver on the bench is backed by one of these.
 
 No license to any of this material is granted or implied by its
 presence here.
+
+That material is the manuals and papers in `hp/`, `motorola/`, `amd/`,
+`nist/` and `community/`, and in `firmware/` the images (`IMAGE.bin`),
+the console log one was rebuilt from, the EEPROM contents in
+`firmware/eeprom/`, the FPGA bitstreams in `firmware/fpga/` and the
+Ghidra archive in `firmware/ghidra/`.
+
+The project's own work
+----------------------
+
+The rest of `firmware/` is the project's own work, its analysis of the
+vendors' images, not vendor material:
+
+  include/           the image-independent headers: the MC68331's
+                     modules (mc68331.h) and the 68681 DUART's
+                     (mc68681.h), from the manuals in `motorola/`, and
+                     the kernel's signals (psos-signals.h), from the
+                     images' own messages.
+  IMAGE/             a folder to an image, beside IMAGE.bin, holding
+                     that image's work: its type header and layout
+                     check (smartclock.h, check-layout.c), its names
+                     files (names.tsv, scpi-tree.tsv,
+                     installer-scpi-tree.tsv, modules.tsv,
+                     results.tsv), its SCPI paths' handlers
+                     (handlers.txt), the survey of its untyped ROM
+                     (untyped.tsv), and its decompiled and hand-written
+                     C, below.
+  Makefile           the checks and generated files of those folders,
+                     to which the top Makefile delegates.
+
+What this work reproduces of an image -- the routines the decompiled
+C carries as their bytes, the tables it and the hand-written C copy --
+is the image's, and remains its copyright holder's.
+
+Decompiled C, in `firmware/IMAGE/decompiled/`: Ghidra 12.1.4's
+decompiler output for an image, produced by the scripts in
+`tools/ghidra/` (`docs/firmware/README.md`, "Decompiling with Ghidra"):
+machine output, named where the project's notes and tables establish a
+name, not reviewed.  The exporter rewrites the decompiler's text where
+its C would not compile or would not do what the image does, and names
+what the tables name (`docs/firmware/README.md`, "Decompiling with
+Ghidra").
+
+  z3805a-3543b/decompiled/z3805a-3543b.c
+                     Z3805A 3543B, every function in address order.
+  z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl
+                     the same functions, one JSON object a line: each
+                     one's note and calling convention, from the names
+                     file and the scripts, or "unknown".
+  z3805a-3543b/decompiled/z3805a-3543b.symbols.ld
+                     the addresses its assembly names outside any
+                     routine, for the linker.
+
+Hand-written C, in `firmware/IMAGE/rewritten/`: an image's functions
+written by hand in place of the decompiled ones, each checked against
+the image's own code (`docs/firmware/README.md`, "Hand-written C"), a
+file to a module (`docs/firmware/modules.md`).
+
+  z3805a-3543b/rewritten/
+                     Z3805A 3543B.
 
 AMD
 ---
@@ -169,32 +231,8 @@ against its images.
   z3815a.bit         Z3815A 4010 at 0x316a6; SHA-1 9fe2370e...
   z3816a.bit         Z3816A 4001 at 0x2ffb8; SHA-1 8061d2bb...
 
-Decompiled C, in `firmware/IMAGE/decompiled/`: Ghidra 12.1.4's decompiler
-output for an image, produced by the scripts in `tools/ghidra/`
-(`docs/firmware/README.md`, "Decompiling with Ghidra").  Derived from
-the image, so no more ours than the image is; machine output, named
-where the project's notes and tables establish a name, not reviewed.
-The exporter rewrites the decompiler's text where its C would not
-compile or would not do what the image does, and names what the tables
-name (`docs/firmware/README.md`, "Decompiling with Ghidra").
-
-  z3805a-3543b.c     Z3805A 3543B, every function in address order.
-  z3805a-3543b.conventions.jsonl
-                     the same functions, one JSON object a line: each
-                     one's note and calling convention, from the names
-                     file and the scripts, or "unknown".
-
-Hand-written C, in `firmware/IMAGE/rewritten/`: its
-functions written by hand in place of the decompiled ones, each checked
-against the image's own code (`docs/firmware/README.md`, "Hand-written
-C").  Derived from the image as the decompiled C is.
-
-  z3805a-3543b/rewritten/
-                     Z3805A 3543B: clock.c, the time-of-day
-                     conversions.
-
-The Ghidra project the decompiled C was exported from, in `firmware/ghidra/`, as a
-Ghidra archive, derived from the images the same way:
+The Ghidra project the decompiled C was exported from, in
+`firmware/ghidra/`, as a Ghidra archive, derived from the images:
 
   smartclock.gar     Ghidra 12.1.4 project "smartclock": the Z3805A
                      3543B image after the scripts' steps.

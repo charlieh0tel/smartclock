@@ -5,30 +5,49 @@ on:
     tags: ["v*"]
 
 jobs:
-  deb:
-    # No `package:` input.  With one, the shared workflow builds only
-    # that crate, and this package ships three binaries from three
-    # crates: cargo-deb then fails with "Static file asset has not been
-    # built".  Left empty, it builds the whole workspace and cargo-deb
-    # picks the single crate carrying [package.metadata.deb].
+  # One call of the shared workflow per package, each naming the crate
+  # that carries its [package.metadata.deb]: smartclock-cli makes
+  # smartclock-utils, smartclockd makes smartclockmon.  Each package
+  # ships binaries of crates other than its own, which `package:` alone
+  # would not build (cargo-deb: "Static file asset has not been built"),
+  # so `build-workspace` builds the whole workspace first.  Each call
+  # releases its own package onto the same tag; the release jobs share a
+  # concurrency group, so they write the release one after the other.
+  # The jobs below wait for both, so the notes, the zip and the apt
+  # repository follow a release that carries both packages.
+  #
+  # Scoped to each job.  At workflow level it would also be granted to
+  # the dispatch job below, which writes nothing here.
+  #
+  # serialport needs libudev on Linux.  No toolchain input:
+  # rust-build-deb reads the channel out of rust-toolchain.toml itself,
+  # so the published packages are built by the compiler this repo names,
+  # without the version having to be kept equal in two places.
+  deb-utils:
     uses: charlieh0tel/deb-workflows/.github/workflows/rust-build-deb.yml@v1
-    # Scoped to this job.  At workflow level it would also be granted to
-    # the dispatch job below, which writes nothing here.
     permissions:
       contents: write
     with:
-      # serialport needs libudev on Linux.
+      package: smartclock-cli
+      artifact-suffix: smartclock-utils
+      build-workspace: true
       build-deps: "libudev-dev"
-      # No toolchain input: rust-build-deb reads the channel out of
-      # rust-toolchain.toml itself now, so the published package is still
-      # built by the compiler this repo names, without the version having
-      # to be kept equal in two places.
 
-  # The release the deb job created carries only a compare link; its
+  deb-monitor:
+    uses: charlieh0tel/deb-workflows/.github/workflows/rust-build-deb.yml@v1
+    permissions:
+      contents: write
+    with:
+      package: smartclockd
+      artifact-suffix: smartclockmon
+      build-workspace: true
+      build-deps: "libudev-dev"
+
+  # The release the deb jobs created carries only a compare link; its
   # notes are the changelog entry the release commit wrote, so the page
   # says what changed without anyone pasting it in.
   notes:
-    needs: deb
+    needs: [deb-utils, deb-monitor]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -41,10 +60,10 @@ jobs:
           ./packaging/release-notes.sh > notes.md
           gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
 
-  # The Windows programs, zipped onto the release the deb job created.
+  # The Windows programs, zipped onto the release the deb jobs created.
   # Unsupported, as their README and the release notes say.
   windows:
-    needs: deb
+    needs: [deb-utils, deb-monitor]
     runs-on: windows-latest
     permissions:
       contents: write
@@ -63,7 +82,7 @@ jobs:
           gh release upload "$GITHUB_REF_NAME" "dist/$name.zip"
 
   trigger-apt-repo:
-    needs: deb
+    needs: [deb-utils, deb-monitor]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-22.04
     steps:

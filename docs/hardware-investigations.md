@@ -699,3 +699,21 @@ interrupt should be level 2.  Nothing in the firmware shows the wire.
 
 *Changes:* whether the harness's level-2 DUART interrupt is the
 board's.
+
+## 22. Which EEPROM the Z3805A carries
+
+*Open item:* the 8 KiB EEPROM on chip select 9 (`0x400000`;
+`firmware/restart.md`, the chip-select table) holds the records and
+the log.  The firmware writes it a byte at a time and polls the byte
+it wrote until it reads back (`eeprom.c`, `0x31136` on), the data
+polling of a parallel EEPROM such as an X28C64 or AT28C64.  The
+harness models that write cycle generically, the polled byte reading
+its complement until the write is done, because the part is not
+identified (the AT28C64B in `bench.md` is on the Oncore engine).
+
+- [ ] TODO: read the part's marking at chip select 9 on a Z3805A main
+  board, and note its package and whether it is socketed.
+
+*Changes:* the harness's and the emulator's EEPROM model can follow
+the part's data sheet (its write time, page mode, toggle or data
+polling), which would then go in `third_party/`.

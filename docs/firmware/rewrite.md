@@ -1,10 +1,10 @@
 # The Z3805A 3543B in C: method and verification
 
-How the Z3805A 3543B firmware, an HP SmartClock GPS receiver's CPU32
-(MC68331) image, came to be read as hand-written C, and how far that C is
-proven against the image.  For a reader who knows C and the 68000
-family but not this project.  Every step is detailed elsewhere; this
-says what each is and where it is.
+The Z3805A 3543B firmware, an HP SmartClock GPS receiver's CPU32
+(MC68331) image, as hand-written C, and how that C is checked against
+the image.  For a reader who knows C and the 68000 family but not this
+project.  Each step is detailed elsewhere; this says what each is and
+where.
 
 ## What it is and is not
 
@@ -19,15 +19,11 @@ says what each is and where it is.
   reassembled and checked byte for byte.  Left as the decompiler's: 12
   thunks, and one bare `rts` in the installer nothing calls.
 - **Is not:** a buildable or flashable image.  The C is a *reading* of
-  the firmware, proven function by function; it is compiled as one
+  the firmware, checked function by function; it is compiled as one
   translation unit with the export, and the installer's copies share
   static bodies with the primary's through headers, which the real
-  installer, alone in RAM, could not.  No board has run it.
-  ([`PLAN.md`](../../PLAN.md), "A rebuild that runs, in readable C",
-  states the earlier aim of a runnable image and its narrowing,
-  2026-10-22.)
-- The decompiler's own C is kept beside each function, inside `#if 0`,
-  as its reading: what Ghidra saw, against what a person wrote.
+  installer, alone in RAM, could not.
+- The decompiler's own C is kept beside each function, inside `#if 0`.
 - Faults of the firmware are reproduced, not fixed
   ([`quirks.md`](quirks.md)).
 
@@ -35,7 +31,7 @@ The compiler that built the image is not known; its calling
 convention, read from the image's 5125 calls, matches no documented
 one (`char` and `short` in 2-byte stack slots, value at the slot's
 start; [`README.md`, "The calling convention"](README.md#the-calling-convention)).
-That is why the target is readable C proven by running it, not a
+So the target is readable C checked by running it, not a
 byte-identical rebuild.
 
 ## The pipeline
@@ -209,15 +205,15 @@ pattern:
 
 - `os_report_process` and its three callers print D5, which
   `os_report_processes` leaves holding the address of `"%s"`
-  (`0x16768`): the firmware's.
+  (`0x16768`): a firmware fault.
 - `log_erase` checksums a pointer's bytes, which differ between the two
-  copies: what C cannot say.
+  copies.
 - `gps_debug_status` clears the byte below an empty text, the lowest of
-  its saved A4 (`0x49384`): the firmware's.
+  its saved A4 (`0x49384`): a firmware fault.
 
-**Planted bugs.**  Each part of the harness was proven by a bug planted
-in the hand-written C that it catches and the generated cases let
-pass, for example: a clobber left out of a binding (A1 of `float_add`,
+**Planted bugs.**  Each part of the harness has a bug, planted in the
+hand-written C, that it catches and the generated cases alone miss, for
+example: a clobber left out of a binding (A1 of `float_add`,
 D7 of the mutexes, D6 of the clock record); a wrong `Scc`; `volatile`
 removed from a polled wait; a debounce one read short; a wrong flash
 unlock address; two SCPI root children swapped; a pForth diagnostic
@@ -236,7 +232,8 @@ And `make check-scpi-tree` (`scpi_tree_check.py`): each record of the
 generated trees, as gcc lays it out, is the image's bytes, pointers
 compared by what they point at.
 
-**Figures**, at `d3198c1`:
+**Figures** (`make report-decompiled`, `make check-decompiled`, `make
+check-scpi-tree`):
 
 | Check | Result |
 | ----- | ------ |
@@ -263,7 +260,7 @@ compared ("6 of 8 cases run").  They are one function at a time, the
 rest of the system the image's or a model.  And the devices and the
 kernel are models: written from data sheets and the image, the same
 for both copies, so a wrong model is wrong for both and hides nothing
-between them, but a function proven against one is proven against the
+between them, but a function checked against one is checked against the
 model, not the board.
 
 ## Limits

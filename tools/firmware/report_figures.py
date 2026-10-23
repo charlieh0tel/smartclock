@@ -1,8 +1,8 @@
 """Checks docs/firmware/README.md's figures from the function check's
 report -- how many of the functions run, the primary's and the
-installer's, run in user mode alone and in both modes -- against a saved
-report, the output of make report-decompiled, or with --write rewrites
-them in place.
+installer's, run in user mode alone and in both modes, and how many of
+the pForth console sessions agree -- against a saved report, the output
+of make report-decompiled, or with --write rewrites them in place.
 
     python3 -I tools/firmware/report_figures.py REPORT [--write]
 
@@ -29,6 +29,33 @@ SENTENCE = re.compile(
     r'Of the functions run,\s+(\d+)\s+of the primary\'s and\s+(\d+)\s+of'
     r'\s+the installer\'s run in user mode alone, and\s+(\d+)\s+and\s+'
     r'(\d+)\s+in both\b')
+# function_check.py's line of the primary's console sessions, and the
+# README's sentence of them, the sessions run and those agreeing
+SESSIONS = re.compile(r'^console sessions agreeing: (\d+) of (\d+)$', re.M)
+SESSIONS_SENTENCE = re.compile(
+    r'of the\s+(\d+)\s+console sessions,\s+(\d+)\s+agree\b')
+
+
+def check(text, sentence, want, what, write):
+    """The text with its sentence's figures want, or None if they are;
+    exits if the sentence is not there, and with write False reports a
+    drift."""
+    match = sentence.search(text)
+    if match is None:
+        sys.exit(f'{DOCUMENT}: no sentence of the {what}')
+    have = match.groups()
+    if have == want:
+        return None
+    if not write:
+        print(f'{DOCUMENT}: the {what} are {", ".join(have)}; the report '
+              f'gives {", ".join(want)}')
+        return text
+    pieces, last = [], match.start()
+    for index, new in enumerate(want, 1):
+        start, end = match.span(index)
+        pieces.append(text[last:start] + new)
+        last = end
+    return text[:match.start()] + ''.join(pieces) + text[last:]
 
 
 def main():
@@ -36,31 +63,29 @@ def main():
     parser.add_argument('report', type=pathlib.Path)
     parser.add_argument('--write', action='store_true')
     args = parser.parse_args()
+    report = args.report.read_text()
     found = {bool(label): (user, both)
-             for label, user, both in FIGURES.findall(args.report.read_text())}
-    if set(found) != {False, True}:
+             for label, user, both in FIGURES.findall(report)}
+    sessions = SESSIONS.search(report)
+    if set(found) != {False, True} or sessions is None:
         sys.exit(f'{args.report}: no figures for both images; '
                  'run make report-decompiled')
     text = DOCUMENT.read_text()
-    match = SENTENCE.search(text)
-    if match is None:
-        sys.exit(f'{DOCUMENT}: no sentence of the figures')
-    want = (found[False][0], found[True][0], found[False][1], found[True][1])
-    have = match.groups()
-    if have == want:
+    drifted = False
+    for sentence, want, what in (
+            (SENTENCE, (found[False][0], found[True][0], found[False][1],
+                        found[True][1]),
+             'user mode alone and both modes figures'),
+            (SESSIONS_SENTENCE, (sessions.group(2), sessions.group(1)),
+             'console sessions run and agreeing')):
+        changed = check(text, sentence, want, what, args.write)
+        if changed is not None:
+            drifted = True
+            text = changed
+    if drifted and args.write:
+        DOCUMENT.write_text(text)
         return 0
-    if not args.write:
-        print(f'{DOCUMENT}: user mode alone {have[0]} and {have[1]}, both '
-              f'{have[2]} and {have[3]}; the report gives {want[0]} and '
-              f'{want[1]}, {want[2]} and {want[3]}')
-        return 1
-    pieces, last = [], match.start()
-    for index, new in enumerate(want, 1):
-        start, end = match.span(index)
-        pieces.append(text[last:start] + new)
-        last = end
-    DOCUMENT.write_text(text[:match.start()] + ''.join(pieces) + text[last:])
-    return 0
+    return 1 if drifted else 0
 
 
 if __name__ == '__main__':

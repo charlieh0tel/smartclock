@@ -81,15 +81,18 @@ DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fwrapv -fno-toplevel-reorder -fn
 # How many of the decompiled C functions, as gcc compiles them, agree
 # with the image's own in the emulator; a measure, never a failure.
 # The report is saved in the image's work folder, and check-report-figures
-# reads DOCUMENTED_IMAGE's.
+# reads DOCUMENTED_IMAGE's, which report-decompiled checks right after
+# writing it.
 REPORT = report-decompiled.txt
 REPORT_DECOMPILED = $(call work,$(DOCUMENTED_IMAGE))/$(REPORT)
+CHECK_REPORT_FIGURES = python3 -I $(ROOT)/tools/firmware/report_figures.py $(REPORT_DECOMPILED)
 
 # Fail if docs/firmware/README.md's figures from the function check --
-# the functions run in user mode alone and in both modes -- are not what
-# the last make report-decompiled saved; report-figures rewrites them.
+# the functions run in user mode alone and in both modes, and the
+# console sessions agreeing -- are not what the last make
+# report-decompiled saved; report-figures rewrites them.
 check-report-figures:
-	python3 -I $(ROOT)/tools/firmware/report_figures.py $(REPORT_DECOMPILED)
+	$(CHECK_REPORT_FIGURES)
 
 report-figures:
 	python3 -I $(ROOT)/tools/firmware/report_figures.py $(REPORT_DECOMPILED) --write
@@ -117,7 +120,7 @@ check-types:
 	$(M68K_CC) -mcpu=cpu32 -fsyntax-only $(IMAGE_FOLDER)/check-layout.c
 
 # Fail if the decompiled C does not compile, its assembly is not the
-# image's own bytes, alone or linked, or a bridge disagrees with its
+# image's own bytes, alone or linked, or a binding disagrees with its
 # routine.
 check-decompiled: check-module-figures
 	mkdir -p $(WORK)
@@ -132,6 +135,7 @@ report-decompiled:
 	mkdir -p $(WORK)
 	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q $(ROOT)/tools/firmware/function_check.py \
 		$(DECOMPILED) $(IMAGE_BIN) | tee $(WORK)/$(REPORT)
+	$(if $(filter $(DOCUMENTED_IMAGE),$(IMAGE)),$(CHECK_REPORT_FIGURES))
 
 # The image's SCPI tree as C data and as names-file rows, from the image
 # (docs/scpi/README.md, "As C"); cargo test fails while they are stale.

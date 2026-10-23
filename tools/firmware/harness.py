@@ -250,11 +250,17 @@ class Service:
     by its contents; and whether it returns to its caller in supervisor
     mode, the old status register in D0's low word; and the low byte
     its result registers return beside KERNEL_RESULT's, where a caller
-    uses it.  An argument read only in part names its width, D1.b for
-    the low byte, and is recorded so."""
+    uses it; the registers its code changes beside those, which it
+    sets to KERNEL_SCRATCH (os.h, the services' shapes); and whether
+    the bytes it reads are a QSPI write's, by its minor device and
+    count (qspi_write_bytes), not the length's.  An argument read only
+    in part names its width, D1.b for the low byte, and is recorded
+    so."""
 
     arguments: tuple[str, ...] = ()
     results: tuple[str, ...] = ()
+    changes: tuple[str, ...] = ()
+    qspi_transfers: bool = False
     reads: tuple[str, str | None] | None = None
     fills: tuple[str, str] | None = None
     none_done: str | None = None
@@ -289,21 +295,21 @@ KERNEL_SERVICES = {
     # D2's low bytes, the two stack sizes in D3's words, and through A0,
     # unless null, a word count and that many words for the new stack
     # (kernel_create, 0x14dac: 0x14e2e, 0x14db0, 0x14dc8, 0x14ddc)
-    1: Service(("D0", "D1.b", "D2.b", "D3"), ("A0",), counted="A0"),
-    2: Service(("A0", "A1")),
+    1: Service(("D0", "D1.b", "D2.b", "D3"), ("A0",), counted="A0", changes=("D0",)),
+    2: Service(("A0", "A1"), changes=("A0",)),
     3: Service(("D0",), ("D0",), identifies=("D0", "A0")),
     4: Service(("A0",)),
-    5: Service(("A0",)),
-    6: Service(("A0",)),
+    5: Service(("A0",), changes=("A0",)),
+    6: Service(("A0",), changes=("A0",)),
     # priority: the task and the step, the old priority in D0's low byte
     # (docs/firmware/psos.md, "Calls"), which task_set_priority steps
     # from (0x1339e)
-    7: Service(("A0", "D0"), ("D0",), result_low=OLD_PRIORITY),
-    8: Service(("D0", "D1", "D2", "D3"), allocates=("D1", "A0")),
+    7: Service(("A0", "D0"), ("D0",), result_low=OLD_PRIORITY, changes=("A0",)),
+    8: Service(("D0", "D1", "D2", "D3"), allocates=("D1", "A0"), changes=("D0",)),
     9: Service(("A0",)),
-    10: Service(("A0", "A1")),
+    10: Service(("A0", "A1"), changes=("A0",)),
     **{number: Service() for number in (11, 12, 13, 14, 15, 17, 34)},
-    16: Service(("A0", "A1")),
+    16: Service(("A0", "A1"), changes=("A0",)),
     # broadcast: the exchange, the message through A1, its five longs
     # from +4 as send_x reads them, and the number of copies in D0's low
     # byte; the tasks woken in D1's low byte (kernel_broadcast_x, 0x154ae:
@@ -314,11 +320,11 @@ KERNEL_SERVICES = {
     21: Service(("D0",), ("A0", "D1", "D2")),
     22: Service(("A0",)),
     23: Service(("A0",), reads=("A1", None)),
-    24: Service(("A0", "D0", "D1"), fills=("A1", "A0")),
-    25: Service(("A0", "D1")),
-    26: Service(("D0", "D1", "D2"), ("D1",)),
-    27: Service(("D1", "D2"), ("D1",)),
-    28: Service(("D0",)),
+    24: Service(("A0", "D0", "D1"), fills=("A1", "A0"), changes=("D0", "D1")),
+    25: Service(("A0", "D1"), changes=("A0",)),
+    26: Service(("D0", "D1", "D2"), ("D1",), changes=("D0",)),
+    27: Service(("D1", "D2"), ("D1",), changes=("D0",)),
+    28: Service(("D0",), changes=("D0",)),
     29: Service(),
     30: Service((), ("D0", "D1", "D2")),
     # set the time of day: the date, the time, whose top byte it
@@ -333,34 +339,70 @@ KERNEL_SERVICES = {
     # 0x158f6), which klok_task and spoo_task open with
     33: Service(supervisor=True),
     # create a partition: the area, the block size and the count of
-    # blocks in D1's low word (kernel_create_partition, 0x15a10: 0x15a32)
-    35: Service(("A0", "D0", "D1.w"), ("A0",)),
+    # blocks in D1's low word (kernel_create_partition, 0x15a10: 0x15a32),
+    # every register it uses kept (0x15a10, 0x15a4a): the partition's id,
+    # which the stub stores, is the area, A0 as given
+    35: Service(("A0", "D0", "D1.w")),
     36: Service(("A0", "D0")),
     37: Service(("A0", "D0"), ("A1",)),
     38: Service(("A0", "A1")),
 }
-# The I/O functions, trap #4, by number: a read reads nothing, a write
-# writes all it is given.
+# The I/O functions, trap #4, by number: a read reads nothing, its end
+# in A1 the buffer it was given, a write writes all it is given.  A
+# read, a write and a control change D0, D1 and A0, and a write and a
+# control A1, through the C routines DUART channel B's and the SCI's
+# call (drtb_read's drtb_gets, 0x1dde2; os.h, the I/O functions'
+# shapes).
 IO_TRAP = TRAP_VECTORS + 4
 WRITE = 4
+IO_SCRATCH = ("D0", "D1", "A0", "A1")
 IO_FUNCTIONS = {
     0: Service(("D0",)),
     1: Service(("D0", "D1")),
     2: Service(("D0",)),
-    3: Service(("D0", "D2"), none_done="D2"),
-    WRITE: Service(("D0", "D2"), reads=("A0", "D2")),
-    5: Service(("D0", "D2", "D3")),
+    3: Service(("D0", "D2"), none_done="D2", changes=("D0", "D1", "A0")),
+    WRITE: Service(("D0", "D2"), reads=("A0", "D2"), changes=IO_SCRATCH, qspi_transfers=True),
+    5: Service(("D0", "D2", "D3"), changes=IO_SCRATCH),
 }
 # A device is D0's bits 8 to 15 (kernel_dispatch_io, 0x14c0a).  Those
 # whose write sends the string at A0 whatever D2 holds and returns its
 # length in D2 and its end in A0: DUART channel B and the console's
 # string device, through drtb_write (0x1dd98), and the SCI, through
 # sci_write (0x20152) (docs/firmware/structures.md, "The kernel's
-# configuration"); and that write.  The QSPI's, device 1, takes D2.
+# configuration"); and that write.  The QSPI's, device 1, the one other
+# device written, sends what qspi_queue_setup (0x20578) queues from the
+# buffer at A0 by the minor device, D0's low byte, which IO_FUNCTIONS'
+# write reads: a 16-bit transmit RAM entry a transfer, whatever bits a
+# transfer the device takes, so many transfers a device
+# (QSPI_TRANSFERS), and for the FPGA's block D2's count, up to the
+# queue's 16 entries; none for a device it does not know.
 DEVICE_SHIFT = 8
 DEVICE_MASK = 0xFF
+QSPI_MINOR_MASK = 0xFF
+QSPI_TRANSFERS = {
+    0: 3,  # QSPI_UNUSED_36_BIT
+    1: 1,  # QSPI_ADC
+    2: 3,  # QSPI_HDAC
+    4: 1,  # QSPI_UNUSED_WORD
+    5: 2,  # QSPI_UNUSED_TWO_WORDS
+    7: 1,  # QSPI_EFC
+    9: 2,  # QSPI_FPGA_TAIL
+    0xA: 1,  # QSPI_FPGA_WORD
+    0xB: 1,  # QSPI_FPGA_BYTE
+    0xC: 1,  # QSPI_FPGA_READBACK
+}
+QSPI_FPGA_BLOCK = 6
+QSPI_QUEUE_ENTRIES = 16
+QSPI_ENTRY = struct.Struct(">H")
+
+
+def qspi_write_bytes(minor: int, count: int) -> int:
+    """The bytes of its buffer a QSPI write to a minor device sends."""
+    if minor == QSPI_FPGA_BLOCK:
+        return QSPI_ENTRY.size * min(count & WIDTHS[".w"], QSPI_QUEUE_ENTRIES)
+    return QSPI_ENTRY.size * QSPI_TRANSFERS.get(minor, 0)
 STRING_DEVICES = {0, 2, 3}
-STRING_WRITE = Service(("D0",), text=("A0", "D2"))
+STRING_WRITE = Service(("D0",), text=("A0", "D2"), changes=("D0", "D1", "A1"))
 # A pForth console session (RebuiltMachine.console_input) models the two
 # devices the console reads, by major number, as their drivers read:
 # DUART channel B, the console's port, gives the session's next line,
@@ -373,8 +415,21 @@ STRING_WRITE = Service(("D0",), text=("A0", "D2"))
 # and in D2.  Either with nothing left to give, which would leave the
 # console waiting (drtb_getc's wait_v, 0x1d74a; the suspend at 0x1afce),
 # and the console's task deleting itself (service 4, A0 0, the halt
-# hook's last call, console.md "Leaving it"), end the session.
+# hook's last call, console.md "Leaving it"), end the session.  The
+# port's read echoes the line as drtb_gets does, through duartb.echo
+# (CONSOLE_ECHO, +0x50 of duartb at 0x1030ec): each character it gives,
+# then CR and LF when the line ended within the length, unless the echo
+# is duartb_echo_none, the bare rts the settings' echo off puts there
+# (0x1d570); a session starts with it unset, so that it echoes.  The
+# echo is recorded with the line (ConsoleLine) and compared as it is,
+# beside the console's own writes.  The read
+# changes D0, D1 and A0 too, through drtb_gets, which drtb_read calls
+# saving none of them (0x1dde2).
 READ = 3
+CONSOLE_ECHO = 0x10313C
+ECHO_NONE = 0x1D570
+LINE_END_ECHO = b"\r\n"
+PORT_READ_CHANGES = ("D0", "D1", "A0")
 CONTROL = 5
 CONSOLE_PORT_DEVICE = 0
 CONSOLE_STRING_DEVICE = 2
@@ -394,14 +449,18 @@ SERVICE_REGISTER = "D7"
 SERVICE_MASK = 0xFF
 # What a modeled service returns: no error, and in each result register
 # a value no mapped memory lies at, so that one used as an address
-# faults.  Every other register it leaves as it was, as the kernel does:
-# the image's own code keeps values across the trap in registers the
+# faults; in each register its code changes beside them KERNEL_SCRATCH.
+# Every other register it leaves as it was, as the kernel does: the
+# image's own code keeps values across the trap in registers the
 # binding's convention lists among its results, mutex_acquire its lock
 # in A1 across ident (0x10442 to 0x1044a), so that code calling the
-# binding in asm must name as changed each register the service
-# returns in, and may name more.
+# binding in asm must name as changed each register the service changes
+# (os.h, the services' shapes), and a register left out of them shows.
 NO_ERROR = 0
 KERNEL_RESULT = 0x6B000000
+# What a modeled service leaves in a register its code changes beside
+# its results (Service.changes): another value no mapped memory lies at.
+KERNEL_SCRATCH = 0x6A000000
 # A message's five longs from +4, which the kernel copies from a sender's
 # record to a receiver's (moveml a1@(4),d3-d7 at 0x1562e and 0x156c6;
 # +0 is the kernel's link); the one a service fills a buffer with, every
@@ -523,17 +582,20 @@ class ConsoleLine:
     the end of its input, and the console's state as it asked for it,
     after the line before: the dictionary pointer, A4, the data stack's
     pointer, A6, its user area and its data stack's cells, from A6 to
-    the base its user area holds (empty if A6 is not below the base)."""
+    the base its user area holds (empty if A6 is not below the base);
+    and the port's output echoing the line (console_echo)."""
 
     text: bytes | None
     dictionary: int
     stack_pointer: int
     user_area: bytes
     stack: bytes
+    echoed: bytes = b""
 
     def __str__(self) -> str:
         return (
             ("end of console input" if self.text is None else f"console line {self.text!r}")
+            + (f" echoed {self.echoed!r}" if self.echoed else "")
             + f" after A4={self.dictionary:x} A6={self.stack_pointer:x} "
             f"user area {self.user_area.hex()} stack {self.stack.hex()}"
         )
@@ -2353,14 +2415,24 @@ def console_read(m: RebuiltMachine, vector: int) -> int | None:
     return device if device in (CONSOLE_PORT_DEVICE, CONSOLE_STRING_DEVICE) else None
 
 
-def console_state(m: RebuiltMachine, text: bytes | None) -> ConsoleLine:
-    """The console's state as it reads its port, and the line given."""
+def console_state(m: RebuiltMachine, text: bytes | None, echoed: bytes = b"") -> ConsoleLine:
+    """The console's state as it reads its port, the line given and what
+    the port echoed reading it."""
     uc = m.uc
     a5, a6 = uc.reg_read(UC_M68K_REG_A5), uc.reg_read(UC_M68K_REG_A6)
     user = m.read(a5 - USER_AREA_SIZE, USER_AREA_SIZE)
     base = pointer_at(m, a5 - USER_STACK_BASE)
     stack = m.read(a6, base - a6) if a6 < base and base - a6 <= LONGEST_BUFFER else b""
-    return ConsoleLine(text, uc.reg_read(UC_M68K_REG_A4), a6, user, stack)
+    return ConsoleLine(text, uc.reg_read(UC_M68K_REG_A4), a6, user, stack, echoed)
+
+
+def console_echo(m: RebuiltMachine, given: bytes, ended: bool) -> bytes:
+    """What drtb_gets echoes through duartb.echo reading a line: each
+    character it keeps, and CR and LF for the CR or LF that ends it
+    (duart_gets, 0x1d7e4); nothing when the echo is duartb_echo_none."""
+    if m.as_image(pointer_at(m, CONSOLE_ECHO)) == ECHO_NONE:
+        return b""
+    return given + (LINE_END_ECHO if ended else b"")
 
 
 def console_session_ended(m: RebuiltMachine, vector: int) -> bool:
@@ -2384,7 +2456,9 @@ def answer_console_read(m: RebuiltMachine, device: int) -> ConsoleLine | KernelC
             m.console_input.insert(0, rest)
         uc.mem_write(buffer, given + b"\0")
         end, count = buffer + len(given), len(given)
-        call = console_state(m, given)
+        call = console_state(m, given, console_echo(m, given, not rest))
+        for name in PORT_READ_CHANGES:
+            uc.reg_write(REGISTERS[name], KERNEL_SCRATCH)
     else:
         text = m.read(m.string_cursor, length)
         given = text[: text.index(0) + 1] if 0 in text else text
@@ -2423,6 +2497,8 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | ConsoleLine | 
         if service.reads:
             pointer, length = service.reads
             size = MESSAGE_SIZE if length is None else uc.reg_read(REGISTERS[length])
+            if service.qspi_transfers:
+                size = qspi_write_bytes(uc.reg_read(UC_M68K_REG_D0) & QSPI_MINOR_MASK, size)
             if size > LONGEST_BUFFER:
                 return out_of_reach
             start = uc.reg_read(REGISTERS[pointer]) + (MESSAGE_OFFSET if length is None else 0)
@@ -2469,6 +2545,8 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | ConsoleLine | 
                 return too_large
         uc.reg_write(REGISTERS[pointer], record)
     call = KernelCall(vector, number, tuple(service_argument(m, name) for name in service.arguments), data)
+    for name in service.changes:
+        uc.reg_write(REGISTERS[name], KERNEL_SCRATCH)
     for name in service.results:
         uc.reg_write(REGISTERS[name], KERNEL_RESULT | service.result_low)
     if service.none_done:

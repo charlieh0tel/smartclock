@@ -4,8 +4,8 @@
 """Links the decompiled C into a rebuilt image and confirms its assembly
 lands on the image's own bytes.
 
-Two objects are linked.  The assembly -- every routine that is not C,
-and the bridges -- is assembled alone, as decompiled_check.py assembles
+Two objects are linked.  The assembly, every routine that is not C,
+is assembled alone, as decompiled_check.py assembles
 it, and each piece (a section .text.NAME.ADDRESS) placed at its address,
 the installer's at theirs in RAM.  A C function it calls is the image's
 own, at the function's address, renamed __image_NAME so that it is not
@@ -13,7 +13,8 @@ gcc's: the original's callers keep the original's callees, and its
 2-byte slots, until a function is replaced.  The C is compiled without
 the assembly, its globals kept, and placed at REBUILT, clear of
 everything the board decodes; it calls gcc's C, and the assembly
-through its names and the bridges.  gcc's helpers come from libgcc.
+through its names (the bindings' asm statements).  gcc's helpers come
+from libgcc.
 The generated SCPI trees' records must lie in the link as the parser
 reads them: each child list's children right after the list, and every
 record but text at an even address.
@@ -52,7 +53,7 @@ GOT = ".got"
 LOADED = (".rebuilt", ".rebuilt_data", GOT)
 # A piece's section, its routine's name and its address.
 PIECE = re.compile(r"^\.text\.(\w+)\.([0-9a-f]+)$")
-# An __asm__ block that holds code: a routine's pieces or a bridge.
+# An __asm__ block that holds code: a routine's pieces.
 CODE_BLOCK = re.compile(r"^__asm__\(\n.*?\.pushsection.*?^\);$", re.S | re.M)
 # The prefix of the image's own copy of a C function.
 IMAGE_PREFIX = "__image_"

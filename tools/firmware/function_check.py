@@ -37,7 +37,7 @@ function's convention keeps for its caller (harness.preserved_registers).
         third_party/firmware/z3805a-3543b.bin [NAME...]
 
 With NAMEs, only those.  gcc's copy calls gcc's C and, through their
-names and the bridges, the assembly; so a difference may lie in a
+names, by the bindings' asm statements, the assembly; so a difference may lie in a
 callee.  A call that ends at a trap that never returns, a zero divide,
 a write to code, a branch to itself, its KERNEL_CALL_LIMIT'th kernel
 call or its counter's count is compared up to there, but for its
@@ -1069,8 +1069,9 @@ def session_cases(m: Machine, function: "Function") -> list[tuple[str, int, dict
 # it"), each a line of the session's in turn (harness.READ); the
 # session ends when its lines run out or its task deletes itself, as
 # halt has it do.  Each line's read records the console's dictionary
-# pointer, data stack and user area (harness.ConsoleLine), and its
-# output is the trap #4 writes, so that both are compared as effects,
+# pointer, data stack and user area and the port's echo of the line
+# (harness.ConsoleLine), and its output is the trap #4 writes, so that
+# both are compared as effects,
 # and the dictionary, in RAM, as RAM.  By function, the task's entry.
 CONSOLE_SESSIONS = {"console_init": "console_task"}
 # Service 1, create, whose counted block is the new task's stack.
@@ -1083,8 +1084,8 @@ CREATE = 1
 # each argument and result count that touches neither the GPS engine,
 # a reset nor a halt: adc_read (1 -- 1), hdac_all (6 -- 0), then
 # hdac_write (2 -- 0), a value and a channel, after it, so that the
-# DAC's shadow it leaves shows in RAM (the QSPI write's recorded bytes
-# are its count's, not its words'), dmes_all (1 -- 0), pr_efc (0 -- 0),
+# DAC's shadow it leaves shows in RAM as well as in the QSPI write's
+# words (harness.qspi_write_bytes), dmes_all (1 -- 0), pr_efc (0 -- 0),
 # mem_rep,
 # console_init's own (0 -- 0), and wr_eeprom (2 -- 1), whose write the
 # harness's EEPROM takes; the word list; and halt, after which the
@@ -2178,6 +2179,7 @@ def main() -> int:
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         modes = {"user mode alone": 0, "both modes": 0}
         condition_codes_compared = 0
+        sessions = {"agreeing": 0, "run": 0}
         for function in runnable:
             image = linked_symbols.get(IMAGE_PREFIX + function.name)
             rebuilt = linked_symbols.get(function.name)
@@ -2188,6 +2190,10 @@ def main() -> int:
             modes["user mode alone"] += function.name in in_task
             modes["both modes"] += function.name in both_modes
             condition_codes_compared += function.condition_codes
+            for description, outcome in outcomes:
+                if description.startswith(CONSOLE_SESSION):
+                    sessions["run"] += 1
+                    sessions["agreeing"] += outcome is None
         label = f"{profile.overlay} " if profile.overlay else ""
         print(
             f"{label}functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, "
@@ -2199,6 +2205,9 @@ def main() -> int:
             + ", ".join(f"{what}: {count}" for what, count in modes.items())
             + f"; condition codes compared (returns=ccr): {condition_codes_compared}"
         )
+        # the pForth console's sessions, console_init's cases apart
+        if sessions["run"]:
+            print(f"{label}console sessions agreeing: {sessions['agreeing']} of {sessions['run']}")
     return 0
 
 

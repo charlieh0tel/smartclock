@@ -93,7 +93,17 @@ A program calls the kernel with `trap #3`, the service's number in D7
 and its arguments in D0 to D3, A0 and A1; the kernel's handler,
 `0x14b26`, takes 0 to `0x26` through the table at `0x14b6e` and answers
 any other number with error `0x55`.  The error comes back in the low
-byte of D7, zero for none, and results in D0, D1, D2, A0 and A1.
+byte of D7, zero for none, and results in D0, D1, D2, A0 and A1.  The
+entry keeps D6, A5 and A6 around the handler (`0x14b26`, `0x14b62`) and
+a task switch the rest, so a service changes only what its handler
+does: its results, A0 in each that checks an id, whose check gives the
+running task's record for 0 (`0x15b68`), and D0 in each that may wait,
+whose wait counts its ticks down there (`0x15be2`), create's and
+allocate's for a region's memory; mode complements D1 and complements
+it back (`0x158e4`, `0x158ea`), and create partition keeps every
+register it uses (`0x15a10`, `0x15a4a`), its partition's id the area
+in A0.  `os.h` gives each service that shape (`OS_SERVICES`), and the
+harness's model sets those registers (`KERNEL_SERVICES`).
 
 I/O goes through `trap #4`, `0x14c0a`: a function, 0 to 5, in D7 and a
 device in the high byte of D0, which indexes a table of six routines a
@@ -101,7 +111,11 @@ device at `0x24` in the kernel's configuration.  The kernel jumps to the
 routine with the caller's registers, and the routine's error in D7 and
 its results in the others go back through the `rte`; so these are
 register routines, not C, the names file's `family=device`
-(`structures.md`, `io_table`, lists them).  The ROM table the kernel's
+(`structures.md`, `io_table`, lists them).  Init, open and close change
+at most D7; read, write and control D0, D1, A0 and A1 too, where DUART
+channel B's and the SCI's call C (`drtb_read` calls `drtb_gets`,
+`0x1dde2`), read and write D2, their length, and a read A1 and a write
+A0, the buffer's end.  The ROM table the kernel's
 is copied from, `io_table_defaults` (`0x5171a`), is followed by a fifth
 device's six slots, `io_device_unused_stubs` (`0x517aa`), each `rts;
 nop; nop` in place of a `jmp.l`; `psos_config_init` copies only the

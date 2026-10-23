@@ -254,8 +254,9 @@ public class SmartClockExportC extends GhidraScript {
 		decompiler.setOptions(new DecompileOptions());
 		decompiler.openProgram(currentProgram);
 		int written = 0;
-		int bridged = 0;
+		int direct = 0;
 		int bound = 0;
+		int unbound = 0;
 		int failed = 0;
 		try (PrintWriter writer = new PrintWriter(output)) {
 			writer.println("/* " + currentProgram.getName() + ", "
@@ -296,18 +297,22 @@ public class SmartClockExportC extends GhidraScript {
 					if (notCMacro(function) != null) {
 						functions.append(READING).append(c).append("\n#endif\n")
 							.append(assembly(function, declared, madeSymbols));
-						Bridge bridge = bridge(function);
-						if (bridge == null) {
+						RegisterCall call = registerCall(function);
+						if (call == null) {
 							prototypes.add("int " + function.getName() + "();");
 						}
 						else {
-							prototypes.add(bridge.prototype());
-							functions.append(bridge.assembly());
-							if (bridge.prototype() == null) {
+							prototypes.add(call.prototype());
+							functions.append(call.comment());
+							if (call.prototype() != null) {
+								direct++;
+							}
+							else if (bindings().containsKey(function.getName())
+								|| returnsConditionCodes(function) || !results(function).isEmpty()) {
 								bound++;
 							}
 							else {
-								bridged++;
+								unbound++;
 							}
 						}
 					}
@@ -342,14 +347,18 @@ public class SmartClockExportC extends GhidraScript {
 					writer.println(prototype);
 				}
 			}
+			// the register routines' bindings, in their prototypes' place
+			for (File file : bindingHeaders()) {
+				writer.println();
+				writer.println(include(output, file));
+			}
 			writer.print(functions);
 			// a folder's headers first, what its files share, then its files
 			List<File> included = new ArrayList<>(rewrittenHeaders());
 			included.addAll(rewrittenSources());
 			for (File file : included) {
 				writer.println();
-				writer.println("#include \"" + output.getAbsoluteFile().getParentFile().toPath()
-					.relativize(file.getAbsoluteFile().toPath()) + "\"");
+				writer.println(include(output, file));
 			}
 		}
 		finally {
@@ -360,7 +369,8 @@ public class SmartClockExportC extends GhidraScript {
 		println("decompiled " + written + ", failed " + failed + " -> " + output);
 		println(standardTypes(output));
 		println(reinterpretConversions(output));
-		println("bridged for C: " + bridged + ", bound in asm by the hand-written C: " + bound);
+		println("register routines called directly: " + direct + ", bound in asm: " + bound
+			+ ", with no binding: " + unbound);
 		println("conventions recorded for " + recorded + " -> " + sidecar);
 	}
 
@@ -521,149 +531,96 @@ public class SmartClockExportC extends GhidraScript {
 	}
 
 	/**
-	 * A routine's C prototype and the wrapper that calls it from gcc's
-	 * convention; for a routine C calls only in asm, no prototype, null,
-	 * and a comment saying so.
+	 * How C calls a routine that takes its arguments and gives its result
+	 * in registers: by its prototype, for one in gcc's convention already,
+	 * or else through a binding, the prototype null; and the comment the C
+	 * has in the routine's place.
 	 */
-	private record Bridge(String prototype, String assembly) {}
+	private record RegisterCall(String prototype, String comment) {}
 
-	/** The prefix of a wrapper's symbol: c_ and the routine's name. */
-	private static final String BRIDGE_PREFIX = "c_";
-	/** The registers gcc's callee saves, which a routine of another convention may not. */
-	private static final String SAVED = "%d2-%d7/%a2-%a6";
-	/** SAVED's registers, as a convention's preserves names them. */
+	/** The registers gcc's callee saves, as a convention's preserves names them. */
 	private static final Set<String> SAVED_REGISTERS =
 		Set.of("D2", "D3", "D4", "D5", "D6", "D7", "A2", "A3", "A4", "A5", "A6");
-	/** Bytes the wrapper pushes saving SAVED, and the return address under them. */
-	private static final int SAVED_BYTES = SAVED_REGISTERS.size() * 4;
 	private static final int RETURN_ADDRESS_BYTES = 4;
 	/** A stack argument's first offset from the stack pointer at entry, above the return address. */
 	private static final int FIRST_ARGUMENT = RETURN_ADDRESS_BYTES;
 	/** gcc's stack slot for an argument narrower than it. */
 	private static final int SLOT = 4;
+	/** A double's bytes, which a routine takes or gives in a register pair. */
+	private static final int PAIR_BYTES = 8;
 
 	/**
-	 * The C prototype and wrapper for a routine that takes its arguments
-	 * and gives its result in registers, from the prototype Setup gave it
-	 * from its convention: the prototype names the wrapper, c_NAME, by an
-	 * assembler label, and the wrapper saves what gcc's callee must, loads
-	 * each argument from gcc's stack slot into its register, calls the
-	 * routine and leaves its result where gcc takes it.  A routine that
-	 * takes no argument, gives its result where gcc takes it and keeps
-	 * SAVED itself has no wrapper: its prototype names it, and C calls it
-	 * directly, so that it returns on whichever stack it returns on, as in
-	 * the image.  enter_supervisor (0x13422), called from a task in user
-	 * mode, returns through trap #7's rte on the supervisor stack, from
-	 * which a wrapper would restore SAVED and pop its own return.  A
-	 * routine that returns in the condition codes or leaves results in
-	 * registers beside its result's has no wrapper and no prototype: a
-	 * wrapper could keep them only in globals, which another task's call
-	 * may overwrite before its caller reads them, so the hand-written C
-	 * calls it in an asm statement that binds its registers, its results
-	 * staying in its caller's registers as in the image
-	 * (docs/firmware/README.md, "Hand-written C").  Null unless every argument
+	 * How C calls a routine that takes its arguments and gives its result
+	 * in registers, from the prototype Setup gave it from its convention.
+	 * One that takes no argument, gives its result where gcc takes it, in
+	 * D0 or D0:D1, and keeps gcc's callee-saved registers itself is called
+	 * directly, its prototype naming it, so that it returns on whichever
+	 * stack it returns on, as in the image: enter_supervisor (0x13422),
+	 * called from a task in user mode, returns through trap #7's rte on
+	 * the supervisor stack.  Any other has no prototype and no wrapper
+	 * from gcc's convention: a header of the rewritten= folder's BINDINGS,
+	 * which the C includes after its prototypes, defines a function under
+	 * its name and prototype that binds each argument to its register and
+	 * makes the jsr in one asm statement, naming as changed each register
+	 * the routine changes, so that what gcc keeps in the others survives
+	 * the call, as the image's callers' values do; the C has a comment
+	 * naming the header, or saying that none binds it, and then C cannot
+	 * call it.  So too one that returns in the condition codes or leaves
+	 * results in registers beside its result's, which the hand-written C
+	 * calls in an asm statement of its own, its results staying in its
+	 * caller's registers as in the image (docs/firmware/README.md,
+	 * "Hand-written C", register-bound calls).  Null unless every argument
 	 * and the result are in registers.
 	 */
-	private Bridge bridge(Function function) {
+	private RegisterCall registerCall(Function function) throws Exception {
 		if (!function.hasCustomVariableStorage()) {
 			return null;
 		}
 		String name = function.getName();
 		if (returnsConditionCodes(function) || !results(function).isEmpty()) {
-			return new Bridge(null, "/* " + name + " returns in registers C has no names for:"
-				+ " no bridge, the hand-written C binds them */\n");
+			return new RegisterCall(null, "/* " + name + " returns in registers C has no names for:"
+				+ " the hand-written C binds them */\n");
 		}
-		List<String> parameters = new ArrayList<>();
-		StringBuilder load = new StringBuilder();
-		int offset = SAVED_BYTES + RETURN_ADDRESS_BYTES;
 		for (Parameter parameter : function.getParameters()) {
-			List<String> registers = registers(parameter.getVariableStorage());
-			int size = parameter.getLength();
-			if (registers == null) {
+			if (!inRegisters(parameter.getVariableStorage(), parameter.getLength())) {
 				return null;
 			}
-			parameters.add(declaration(parameter.getDataType(), parameter.getName()));
-			if (registers.size() == 2 && size == 8) {
-				load.append(line("move.l (" + offset + ",%sp),%" + registers.get(0)))
-					.append(line("move.l (" + (offset + 4) + ",%sp),%" + registers.get(1)));
-			}
-			else if (registers.size() == 1 && size <= SLOT) {
-				// gcc promotes a narrow argument to int in its slot, so the
-				// register gets it extended, as the original's moveq does
-				if (size < SLOT && registers.get(0).startsWith("a")) {
-					return null;
-				}
-				load.append(line("move.l (" + offset + ",%sp),%" + registers.get(0)));
-			}
-			else {
-				return null;
-			}
-			offset += Math.max(size, SLOT);
 		}
 		Parameter returned = function.getReturn();
 		DataType resultType = returned.getDataType();
 		String result = declaration(resultType, "").strip();
-		StringBuilder give = new StringBuilder();
+		// whether the result is where gcc takes it: in D0, a double in
+		// D0:D1, not narrower than a slot, which gcc would have extended,
+		// nor a pointer, which gcc takes from A0
+		boolean whereGccTakes = true;
 		if (resultType.getLength() > 0 && !"void".equals(resultType.getName())) {
-			List<String> registers = registers(returned.getVariableStorage());
 			int size = resultType.getLength();
-			if (registers == null) {
+			if (!inRegisters(returned.getVariableStorage(), size)) {
 				return null;
 			}
-			if (size == 8 && registers.size() == 2) {
-				if (!registers.equals(List.of("d0", "d1"))) {
-					give.append(line("move.l %" + registers.get(0) + ",-(%sp)"))
-						.append(line("move.l %" + registers.get(1) + ",%d1"))
-						.append(line("move.l (%sp)+,%d0"));
-				}
-			}
-			else if (registers.size() == 1 && size <= SLOT) {
-				if (!registers.get(0).equals("d0")) {
-					give.append(line("move.l %" + registers.get(0) + ",%d0"));
-				}
-				DataType base = resultType instanceof TypeDef typedef
-					? typedef.getBaseDataType() : resultType;
-				boolean signed = base instanceof AbstractIntegerDataType integer
-					&& integer.isSigned();
-				give.append(size == 1 ? line(signed ? "extb.l %d0" : "and.l #0xff,%d0")
-					: size == 2 ? line(signed ? "ext.l %d0" : "and.l #0xffff,%d0")
-					: "");
-				if (base instanceof Pointer) {
-					give.append(line("move.l %d0,%a0"));
-				}
-			}
-			else {
-				return null;
-			}
+			DataType base = resultType instanceof TypeDef typedef ? typedef.getBaseDataType() : resultType;
+			whereGccTakes = registers(returned.getVariableStorage())
+				.equals(size == PAIR_BYTES ? List.of("d0", "d1") : List.of("d0"))
+				&& (size == SLOT || size == PAIR_BYTES) && !(base instanceof Pointer);
 		}
-		String declared = result + (result.endsWith("*") ? "" : " ") + name + "("
-			+ (parameters.isEmpty() ? "void" : String.join(", ", parameters)) + ")";
 		Set<String> preserved = preserves(function);
-		if (load.isEmpty() && give.isEmpty()
+		if (function.getParameterCount() == 0 && whereGccTakes
 			&& (preserved.contains(ALL_PRESERVED) || preserved.containsAll(SAVED_REGISTERS))) {
-			return new Bridge(declared + ";",
+			String declared = result + (result.endsWith("*") ? "" : " ") + name + "(void)";
+			return new RegisterCall(declared + ";",
 				"/* " + name + " in gcc's convention already: C calls it directly */\n");
 		}
-		String wrapper = BRIDGE_PREFIX + name;
-		String prototype = declared + " __asm__(\"" + wrapper + "\");";
-		StringBuilder assembly = new StringBuilder("/* ").append(name)
-			.append(" from gcc's convention: its arguments from the stack into its registers */\n")
-			.append("__asm__(\n")
-			.append(quoted("\t.pushsection .text." + wrapper + ",\"ax\",@progbits"))
-			.append(quoted("\t.globl " + wrapper)).append(quoted("\t.type " + wrapper + ", @function"))
-			.append(quoted(wrapper + ":"))
-			.append(quoted("\tmovem.l " + SAVED + ",-(%sp)"));
-		for (String part : (load.toString() + line("jsr " + name) + give
-				+ line("movem.l (%sp)+," + SAVED) + line("rts")).split("\n")) {
-			assembly.append(quoted(part));
-		}
-		assembly.append(quoted("\t.size " + wrapper + ", .-" + wrapper))
-			.append(quoted("\t.popsection")).append(");\n");
-		return new Bridge(prototype, assembly.toString());
+		File binding = bindings().get(name);
+		return new RegisterCall(null, "/* " + name + " takes its arguments in registers: "
+			+ (binding == null ? "no binding, so C cannot call it" : BINDINGS + "/" + binding.getName() + " binds it")
+			+ " */\n");
 	}
 
-	private static String line(String instruction) {
-		return "\t" + instruction + "\n";
+	/** Whether storage is one register, for a value of a slot or less, or a pair, for a double. */
+	private boolean inRegisters(VariableStorage storage, int size) {
+		List<String> registers = registers(storage);
+		return registers != null
+			&& (registers.size() == 2 && size == PAIR_BYTES || registers.size() == 1 && size <= SLOT);
 	}
 
 	/**
@@ -4194,7 +4151,11 @@ public class SmartClockExportC extends GhidraScript {
 	/** Each hand-written function's file, by its name, from the rewritten= folder. */
 	private Map<String, File> rewritten;
 
-	/** The rewritten= folder's .h files, what its .c files share, which the C includes before them. */
+	/**
+	 * The rewritten= folder's .h files, what its .c files share, which the
+	 * C includes before them; not BINDINGS', which it includes after its
+	 * prototypes.
+	 */
 	private List<File> rewrittenHeaders() {
 		List<File> headers = new ArrayList<>();
 		for (String arg : getScriptArgs()) {
@@ -4202,7 +4163,56 @@ public class SmartClockExportC extends GhidraScript {
 				headers.addAll(rewrittenFiles(arg, ".h"));
 			}
 		}
+		headers.removeAll(bindingHeaders());
 		return headers;
+	}
+
+	/**
+	 * The folder of the rewritten= folder whose headers bind the routines
+	 * that take their arguments in registers, one function under each
+	 * routine's name and prototype (registerCall).
+	 */
+	private static final String BINDINGS = "bindings";
+	/**
+	 * A binding's definition: a static inline function's name, before its
+	 * parameters, its result type before it on the line or the one before.
+	 */
+	private static final Pattern BINDING_DEFINITION = Pattern.compile("static inline\\s[^;{}()]*?\\b(\\w+)\\s*\\(");
+
+	/** BINDINGS' headers, sorted by path. */
+	private List<File> bindingHeaders() {
+		List<File> headers = new ArrayList<>();
+		for (String arg : getScriptArgs()) {
+			if (arg.startsWith(REWRITTEN)) {
+				File folder = new File(arg.substring(REWRITTEN.length()), BINDINGS);
+				if (folder.isDirectory()) {
+					headers.addAll(rewrittenFiles(REWRITTEN + folder.getPath(), ".h"));
+				}
+			}
+		}
+		return headers;
+	}
+
+	/** The routines BINDINGS' headers bind, by name, and the header of each. */
+	private Map<String, File> bindings;
+
+	private Map<String, File> bindings() throws IOException {
+		if (bindings == null) {
+			bindings = new TreeMap<>();
+			for (File file : bindingHeaders()) {
+				Matcher definition = BINDING_DEFINITION.matcher(Files.readString(file.toPath()));
+				while (definition.find()) {
+					bindings.put(definition.group(1), file);
+				}
+			}
+		}
+		return bindings;
+	}
+
+	/** The C's line including file, by its path from the C's own folder. */
+	private static String include(File output, File file) {
+		return "#include \"" + output.getAbsoluteFile().getParentFile().toPath()
+			.relativize(file.getAbsoluteFile().toPath()) + "\"";
 	}
 
 	/**

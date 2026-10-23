@@ -620,35 +620,44 @@ compare, extension, shift or division, so that `datetime_subtract`'s
 writes a sign extension, and unsigned elsewhere.  A thunk is a comment, since the decompiler gives it its
 target's name, and one named otherwise an alias of its target.  A
 routine that is not C and whose prototype has every argument and its
-result in registers is declared under that prototype as an assembler
-label, `c_NAME`: a generated wrapper that moves the arguments from
-gcc's stack into the routine's registers and its result into D0, D0:D1
-or A0.  One that takes no argument, gives its result in D0 and keeps
-gcc's callee-saved registers itself has no wrapper: its prototype
-names it, and C calls it directly.  `enter_supervisor` (`0x13422`) and
-the installer's copy are such: called from a task in user mode, they
-return through trap #7's `rte` on the supervisor stack, from which a
-wrapper would restore the registers it saved on the user stack, and
-pop its own return.  A routine whose convention returns in the
-condition codes (`returns=ccr`) or lists `results` in registers beside
-its result's -- the pSOS binding's `psos_call` and `psos_io_call`,
-`clock_record_sum`, `pforth_link_word`, the SCPI engine's number
-routines, and the installer's copies -- has neither wrapper nor
-prototype, only a comment saying so: a wrapper could hand them on only
-in globals, which another task's kernel call may overwrite between the
-call and its caller's reads, where the image keeps them in registers
-(`installer::0x102eda` to `0x102eee`).  The hand-written C calls each in
-an asm statement that binds its registers ("Hand-written C",
-register-bound calls); no generated C calls one.
-`tools/firmware/bridge_check.py` runs each wrapper in Unicorn
+result in registers has no prototype and no wrapper from gcc's
+convention: a header of `rewritten/bindings/`, which the exported C
+includes after its prototypes, in their place, defines a function under
+the routine's own name and prototype that binds each argument to its
+register with a local register variable and makes the `jsr` in one asm
+statement, naming as outputs or clobbers exactly the registers the
+routine changes, so that gcc keeps its own values in the rest across
+the call, as the image's callers keep theirs ("Hand-written C",
+register-bound calls); the C has a comment naming the header, or saying
+that none binds the routine, and then no C can call it.  `softfloat.h`
+binds the soft-float library, `mutex.h` the mutexes, and `stack.h`,
+`clock_record.h`, `pforth.h`, `sci_token.h` and `scpi_decimal.h` the
+rest the C calls, 55 of the primary's and 11 of the installer's; 31,
+the kernel's internals, the I/O devices' entries, `psos_pack_name`
+(which `os.h`'s `OS_PACK_NAME` calls in line) and the like, have none.
+One that takes no argument, gives its result in D0 and keeps gcc's
+callee-saved registers itself is declared and called directly.
+`enter_supervisor` (`0x13422`) and the installer's copy are such:
+called from a task in user mode, they return through trap #7's `rte`
+on the supervisor stack, from which a wrapper would restore the
+registers it saved on the user stack, and pop its own return.  A
+routine whose convention returns in the condition codes
+(`returns=ccr`) or lists `results` in registers beside its result's --
+the pSOS binding's `psos_call` and `psos_io_call`, `clock_record_sum`,
+`pforth_link_word`, the SCPI engine's number routines, and the
+installer's copies -- has a comment saying so: the hand-written C calls
+each in an asm statement of its own, its results staying in its
+caller's registers as in the image (`installer::0x102eda` to
+`0x102eee`), where a wrapper could hand them on only in globals, which
+another task's kernel call may overwrite between the call and its
+caller's reads.  `tools/firmware/bridge_check.py` runs each binding in
+Unicorn, through a check function gcc compiles in its own convention,
 against its routine called directly, from the registers the sidecar
-names, the installer's on the installer's machine (below): of the 97,
-93 give the same result, RAM and effects and keep gcc's callee-saved
-registers, 74 the primary's and 19 the installer's, and 4 are not run:
-two with a register the sidecar does not name, and
-`kernel_dispatch_io`'s and `installer_kernel_dispatch_io`'s, exception
-handlers that `trap #4` enters with a frame for its `rte`, which a
-wrapper's `jsr` cannot give.  The
+names, the installer's on the installer's machine (below): all 66 give
+the same result, RAM and effects, keep gcc's callee-saved registers,
+and keep the 14 values the check function holds across the call, which
+gcc puts in every register the statement leaves it, so that a register
+the routine changes and the statement does not name loses one.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
 C library has no `puts`, `strlen` or `strcmp` for gcc to call, and
@@ -836,7 +845,9 @@ decompiler's reading of each in the exported C inside `#if 0`, for
 reference, and includes the files after its own C, so that they see
 the types it declares, the image's `smartclock.h`'s, and its globals
 and prototypes, and before them the folder's `.h` files, what the files
-share (`cpu.h`, the status register's helpers); a function keeps its
+share (`cpu.h`, the status register's helpers), but `bindings/`'s,
+which it includes after its prototypes, in the place of the register
+routines' (register-bound calls, below); a function keeps its
 generated prototype.  The files are
 included in sorted order and compiled as one translation unit, so each
 file-scope name takes its file's name as a prefix (`DUART_`,
@@ -883,35 +894,66 @@ and `status_init` keeps `status_conditions`' in the status model.  A
 returned string is compared by its text, so `error_message_lookup`'s
 table is its own.
 
-A routine that returns in registers C has no names for, the condition
-codes or registers beside its result's, is called in one asm statement
-that binds each argument to its register with a local register
-variable, `register uint32_t d0 __asm__("d0")`, makes the `jsr`, reads
-a flag with `Scc` before anything sets the condition codes again, and
-names as outputs or clobbers every register the routine changes, so
-that what it returns stays in its caller's registers and locals, as in
-the image, and not in globals another task's call could overwrite.
+A routine that takes its arguments in registers is called in one asm
+statement that binds each argument to its register with a local
+register variable, `register uint32_t d0 __asm__("d0")`, makes the
+`jsr`, and names as outputs or clobbers exactly the registers the
+routine changes, read from its code and its callees' (its entry's and
+exit's `movem`, what it moves aside and back), so that gcc keeps its
+own values in the others across the call, as the image's callers do,
+and what the routine returns stays in its caller's registers and
+locals, not in globals another task's call could overwrite.  One that
+returns only its result is bound under its own name and prototype, a
+function of `rewritten/bindings/` (the exporter, "Decompiling with
+Ghidra"), so that its callers, decompiled or hand-written, call it as
+before: `softfloat.h`'s, a shape macro to each register layout and its
+changed registers as clobbers (`float_add` changes D1 and A1 beside its
+result, `float_multiply` D1 alone, `double_compare` D1 and A0 and keeps
+A1, so `b`'s halves are bound apart), the installer's copies by the
+same macros; `mutex.h`'s, which change D7 alone, saving what their
+kernel calls change; `clock_record.h`'s, with the record in A6, the
+frame pointer, which the statement saves around the call, D6 among the
+clobbers.  One that returns in the condition codes or beside its result
+reads a flag with `Scc` before anything sets the condition codes again.
 `os.h` has the pSOS binding's: `os_psos_call` and `os_psos_io_call`,
 and `os_installer_` copies, take the service's registers as an
-`os_registers` and give back D0 to D3, A0 and A1 as the trap left them,
-D7, and `failed`, Z clear, which `sne` reads and the stubs branch on as
-the image's do (`bne` at `0x16fda`); every call is one shape, D0 to D3,
-A0, A1 and D7 in and out, though a service that does not return in D2
-or D3 keeps them, so gcc saves them where the image's stub does not.
+`os_registers` and give back D0 to D3, A0 and A1, D7, and `failed`, Z
+clear, which `sne` reads and the stubs branch on as the image's do
+(`bne` at `0x16fda`).  Each service has a shape of its own
+(`OS_SERVICES`, `OS_IO_FUNCTIONS`): a register is loaded only if the
+service reads it and named changed only if its handler changes it, read
+from the handler (the table at `0x14b6e`) and its calls -- its results,
+and A0 where a check gives the running task's record for an id of 0
+(`0x15b68`), D0 where a wait counts ticks down in it (`0x15be2`) -- and
+an I/O function's the union of its four devices' routines (the table
+at `0x5171a`), so that gcc keeps D2 and D3 across a service that keeps
+them and saves them only where it uses them, as the image's stubs do
+(`psos_pause` saves D7 alone).  `os_psos_call` switches on its
+service, always a constant, which folds to the one call.
 `OS_PACK_NAME` calls `psos_pack_name`, which reads the stub's name at
 `8(A6)`, in line in the stub.  `clock.c` calls `clock_record_sum`
-with the record in A6, the frame pointer, which the statement saves
-around it, `console.c` `pforth_link_word` with A4, and `scpi_convert.c`
-the engine's number routines, a flag `seq` stores in memory where the
-routine changes every data register.  In the image `psos_ident`,
-`psos_service_21`, `psos_broadcast_x` and `scpi_real_to_text` are
-assembly a C caller calls, their callees' flags and registers read in
-place; they stay hand-written C, which says the same.  The harness's
-kernel sets each register a service returns in, so a result register
-left out of an asm statement's outputs shows; it keeps the others, as
+with the record in A6 too, `console.c` `pforth_link_word` with A4, and
+`scpi_convert.c` the engine's number routines, a flag `seq` stores in
+memory where the routine changes every data register.  In the image
+`psos_ident`, `psos_service_21`, `psos_broadcast_x` and
+`scpi_real_to_text` are assembly a C caller calls, their callees' flags
+and registers read in place; they stay hand-written C, which says the
+same.  The harness's kernel sets each register a service returns in,
+and each other register its code changes to a value of its own
+(`harness.Service.changes`), so that a register left out of a shape's
+changed ones shows where gcc keeps a value in it; it keeps the rest, as
 the kernel does: the image's `mutex_acquire` keeps its lock in A1
 across ident (`0x10442` to `0x1044a`), and a model that changed them
-stopped 32 functions there.
+stopped 32 functions there.  A bug planted in each family fails: A1
+left out of `float_add`'s clobbers loses a value the binding check
+keeps in it and fails four of its callers in the function check; D7
+left out of the mutexes' outputs fails `mutex_lock`, `mutex_unlock`,
+`drtb_putc` and `drtb_try_lock_write` by the preserved registers, and
+D6 out of the clock record's clobbers fails `clock_init`,
+`clock_record_refresh` and `clock_tick` so; attach exchange's D2 taken
+as kept fails `psos_service_21`.  An input register taken as kept that
+the routine changes cannot fail where nothing reads the variable after
+the call, as none of the bindings does.
 
 The hand-written C and the Ghidra type headers are in Google's style
 (`.clang-format`), with braces on every control statement's body:
@@ -921,7 +963,7 @@ line, which is how the exporter reads it.
 
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the
-image's bytes, and gcc's code -- the C, the bridges, its constants -- at
+image's bytes, and gcc's code -- the C, its constants -- at
 `0x600000`, above every chip select the reset code programs, and its
 data at `0x6f0000`, with libgcc for the float comparisons the decompiler wrote
 as operators.  A C function the assembly calls is the image's own copy,
@@ -1003,10 +1045,19 @@ in; a call records the service and those registers, a message by the
 20 bytes from its `+4` the kernel copies and a write's buffer by its
 contents, since a caller's buffer on its stack lies where its own
 frame puts it, and returns no error and `0x6b000000`, an address
-nothing is mapped at, in each result register, keeping the others;
-`request_x` fills its
+nothing is mapped at, in each result register, and `0x6a000000` in
+each other register its code changes (`os.h`, the services' shapes:
+A0 for a service that checks an id, D0 for one that may wait, D0, D1,
+A0 and A1 for a device's read, write and control), keeping the
+others; `request_x` fills its
 buffer with that value, a read reads nothing and a write writes all it
-is given.  But a case starts with an id, another such address, in
+is given.  A write to the QSPI (device 1) is recorded by the words
+`qspi_queue_setup` (`0x20578`) queues from its buffer for the minor
+device in D0's low byte, a 16-bit transmit entry a transfer whatever
+the device's bits a transfer: three for the hex DAC and device 0, two
+for devices 5 and 9, one for the others, and the count, up to 16, for
+the FPGA's block (`harness.qspi_write_bytes`), where D2's count of
+bytes recorded only the first of a DAC's words.  But a case starts with an id, another such address, in
 `spoo_exchange` and `pllc_exchange`, as `root_task`'s creates leave
 one, and `request_x` from either receives the message its receiver
 expects (`structures.md`): a `spoo_request` for `scpi_task_create` at
@@ -1351,10 +1402,17 @@ device gives the phrase `console_init` set, `0 !iodev`, and the
 console's port, DUART channel B, then gives the session's lines, one a
 read, as `drtb_read` gives a line; the session ends when the lines run
 out or the task deletes itself, as `halt`'s hook has it do.  The output
-is the trap #4 writes, compared in order as any kernel call is; each
-read records the dictionary pointer, the data stack and the user area
+is the trap #4 writes, compared in order as any kernel call is, and the
+port's echo of each line, as `drtb_gets` echoes it through
+`duartb.echo` (`0x10313c`): its characters, then CR and LF where the
+line ends within the read's length, nothing when the echo is
+`duartb_echo_none` (`0x1d570`), the settings' echo off (a session
+starts with it unset, so its lines are echoed); each read records the
+echo, the dictionary pointer, the data stack and the user area
 (`harness.ConsoleLine`), compared as effects; and the dictionary, in
-RAM, is compared as RAM.  The sessions: arithmetic and printing in
+RAM, is compared as RAM.  The report counts the sessions on a line of
+their own: of the 8 console sessions, 8 agree (`make
+check-report-figures` checks the figures).  The sessions: arithmetic and printing in
 decimal and hex, the stack left, a definition used, an unknown word
 part way along a line and a word on the empty stack after it, hex
 numbers, a negative one, the diagnostic words `adc_read` (1 -- 1),

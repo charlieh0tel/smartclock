@@ -1722,9 +1722,45 @@ view cannot drift apart.  The library, bottom up:
   kernel model that changed the registers a service does not return in
   stopped 32 functions in `mutex_acquire`, which keeps its lock in A1
   across ident (`0x10442` to `0x1044a`): the kernel keeps them, and the
-  model does.  Left: the soft-float, mutex and other routines that
-  return only their result are still called through their bridges,
-  which hold no state.
+  model does.  Left then: the soft-float, mutex and other routines that
+  return only their result, still called through their bridges, which
+  hold no state; done below.
+
+  Done 2026-10-22, the bindings: the exporter writes no bridge at all.
+  A routine that takes its arguments in registers and returns only its
+  result has no prototype and no `c_` wrapper; a header of
+  `rewritten/bindings/`, which the exported C includes after its
+  prototypes, in their place, defines a function under the routine's
+  name and prototype that binds its registers and makes the `jsr` in
+  one asm statement whose outputs and clobbers are exactly what the
+  routine changes, read from its code and its callees' (a register-flow
+  reading of the image, every path and call, pushes and moves aside
+  kept as kept, cross-checked by the run): `softfloat.h` (40 and the
+  installer's 5), `mutex.h` (5 and 5), and `stack.h`, `clock_record.h`,
+  `pforth.h`, `sci_token.h` and `scpi_decimal.h`, those of the rest the
+  C calls; 31 that no C calls, the kernel's internals and the devices'
+  entries among them, have none.  `bridge_check.py` now runs each
+  binding through a check function gcc compiles, which keeps 14 values
+  across it in whatever registers the statement leaves gcc, against the
+  routine called directly: all 66 agree.  The pSOS binding has a shape
+  for each service and I/O function (`os.h`, `OS_SERVICES`,
+  `OS_IO_FUNCTIONS`): it loads only what the service reads and names
+  changed only what its handler changes, results and scratch alike (A0
+  where an id of 0 gives the running task, D0 where a wait counts
+  down), so that gcc keeps D2 and D3 across a service that keeps them,
+  as the image's stubs do; the harness's kernel sets each such scratch
+  register too (`harness.Service.changes`), and its model of create
+  partition no longer changes A0, which the kernel keeps.  Planted bugs
+  fail, one a family: A1 out of `float_add`'s clobbers, D7 out of the
+  mutexes' outputs, D6 out of the clock record's clobbers, attach
+  exchange's D2 taken as kept; an input register taken as kept cannot
+  fail where nothing reads it after the call.  With them: a QSPI write
+  is recorded by the words `qspi_queue_setup` sends for its minor
+  device, every one, not D2's count of bytes; the console port echoes
+  each line as `drtb_gets` does, recorded with the line; the report
+  counts the console sessions on a line of their own, which
+  `check-report-figures` checks; and `report-decompiled` runs
+  `check-report-figures` after writing the report.
 
   Decided 2026-10-22: the pForth kernel's 154 words (183 routines in all) stay the
   image's assembly, exact by construction (check-decompiled proves the
@@ -1766,7 +1802,8 @@ view cannot drift apart.  The library, bottom up:
   `diag_hdac_write`'s parameters misnamed (value, then channel, as
   `hdac_write` takes them; renamed), and that a QSPI write's recorded
   bytes are its count's, not its words', so that a later word's
-  difference shows only in RAM (harness, open).
+  difference shows only in RAM (harness; done since, the bindings'
+  entry).
 
   Decided 2026-10-22, the firmware layout: one folder per image under
   `third_party/firmware/`, holding everything that image's work is:

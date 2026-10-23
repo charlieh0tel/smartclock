@@ -9487,11 +9487,6 @@ int32_t boot_reset();
 int32_t boot_trap_11();
 uint32_t boot_unpack_installer(void);
 uint8_t * boot_memcpy(uint8_t *param_1,uint8_t *param_2,int32_t param_3);
-int32_t mutex_init(int32_t name, mutex *lock) __asm__("c_mutex_init");
-int32_t mutex_acquire(mutex *lock) __asm__("c_mutex_acquire");
-int32_t mutex_release(mutex *lock) __asm__("c_mutex_release");
-uint32_t mutex_get_owner(mutex *lock) __asm__("c_mutex_get_owner");
-void mutex_clear(mutex *lock) __asm__("c_mutex_clear");
 uint32_t mutex_create(char *name,mutex *lock);
 uint32_t mutex_lock(mutex *lock);
 uint32_t mutex_unlock(mutex *lock);
@@ -9596,9 +9591,6 @@ void console_init(void);
 uint32_t klok_take_pending(void);
 void root_task(void);
 int32_t stack_measure(void *task,uint32_t *usage);
-void stack_fill(void *task) __asm__("c_stack_fill");
-void *region_find_segment(void *region, char *address) __asm__("c_region_find_segment");
-int64_t stack_usage(uint16_t *bottom, char *top) __asm__("c_stack_usage");
 void stack_usage_report(void *task);
 uint16_t enter_supervisor_mode(void);
 uint16_t set_interrupt_mask(uint16_t sr);
@@ -9610,10 +9602,7 @@ int32_t primary_trap_7();
 uint32_t enter_supervisor(void);
 void busy_wait(uint32_t param_1);
 void sleep_seconds(float param_1);
-void clock_record_checksum(clock_record *record) __asm__("c_clock_record_checksum");
 void clock_tick(void);
-void clock_record_advance(clock_record *record) __asm__("c_clock_record_advance");
-void clock_record_advance_utc(clock_record *record) __asm__("c_clock_record_advance_utc");
 void leap_minute_59_arm(void);
 void leap_minute_61_arm(void);
 void offset_step_down_arm(void);
@@ -9628,9 +9617,6 @@ bool get_gps_datetime(uint32_t *date,time_of_day *time);
 void clock_record_refresh(void);
 int32_t set_timedate_unflagged();
 int32_t set_timedate();
-void clock_record_store(clock_record *record, int32_t date, int32_t time, int32_t mark) __asm__("c_clock_record_store");
-void clock_record_derive(clock_record *record) __asm__("c_clock_record_derive");
-void clock_set_leap_year(char *february, int32_t year) __asm__("c_clock_set_leap_year");
 void clock_init(int16_t param_1);
 uint8_t time_valid(void);
 void set_gps_utc_offset(uint16_t param_1);
@@ -9657,7 +9643,6 @@ int32_t primary_trap_4();
 int32_t primary_trap_6();
 int32_t primary_trap_5();
 int32_t kernel_dispatch_service();
-void kernel_dispatch_io(char function, int32_t device) __asm__("c_kernel_dispatch_io");
 int32_t kernel_io_return();
 int32_t kernel_switch_task();
 int32_t kernel_process_ticks();
@@ -9677,7 +9662,6 @@ int32_t kernel_allocate();
 int32_t kernel_region_allocate();
 int32_t kernel_assign_segment();
 int32_t kernel_reclaim_segment();
-char kernel_service_none(void) __asm__("c_kernel_service_none");
 int32_t kernel_create_x();
 int32_t kernel_service_21();
 int32_t kernel_delete_x();
@@ -9703,9 +9687,6 @@ int32_t kernel_get_block();
 int32_t kernel_return_block();
 int32_t kernel_advance_date();
 int32_t kernel_set_leap_year();
-void *kernel_check_task(int32_t task, void *running) __asm__("c_kernel_check_task");
-void kernel_check_exchange(int32_t exchange, void *running) __asm__("c_kernel_check_exchange");
-void kernel_check_segment(void *segment) __asm__("c_kernel_check_segment");
 int32_t kernel_timer_cancel();
 int32_t kernel_timer_unlink();
 int32_t kernel_timer_insert();
@@ -9743,9 +9724,7 @@ void task_stack_info(void *task,uint32_t *user_top,uint32_t *user_pointer,uint32
                     uint32_t *supervisor_top,uint32_t *supervisor_pointer,uint32_t *supervisor_size);
 void task_stack_report(request_source source);
 void psos_debug_output(char param_1);
-void tick_account(int16_t mode) __asm__("c_tick_account");
 void task_count_tick(void);
-int32_t psos_pack_name(void) __asm__("c_psos_pack_name");
 uint16_t psos_version(void);
 uint32_t psos_create(char *name,uint32_t a,uint32_t priority,uint32_t stack_a,uint32_t stack_b,void *e,uint32_t *task);
 uint32_t psos_start(uint32_t task,void *entry);
@@ -9854,7 +9833,6 @@ int32_t forth_build_prompt();
 int32_t forth_read_line();
 int32_t forth_parse_word();
 int32_t forth_refill();
-void forth_print_string(char *s, forth_user_end user) __asm__("c_forth_print_string");
 int32_t forth_input_buffer();
 int32_t forth_over();
 int32_t forth_abs();
@@ -9902,7 +9880,6 @@ int32_t forth_cmove_greater();
 int32_t forth_2drop();
 int32_t forth_drop();
 int32_t forth_depth();
-void *forth_compile_code(uint16_t *code, void *dp) __asm__("c_forth_compile_code");
 int32_t forth_resolve_branch();
 int32_t forth_resolve_forward();
 int32_t forth_check_pairs();
@@ -9999,7 +9976,6 @@ int32_t forth_watch();
 int32_t forth_psos_call();
 int32_t forth_spawned_task();
 int32_t forth_spawn();
-int32_t forth_pack_name(forth_user_end user) __asm__("c_forth_pack_name");
 int32_t forth_space_if_zero();
 int32_t forth_ver();
 int32_t forth_ident();
@@ -10032,9 +10008,6 @@ void console_set_halt_hook(void *param_1);
 void console_set_device(int32_t device);
 int32_t console_task_create();
 int32_t console_task();
-int32_t string_device_open(void) __asm__("c_string_device_open");
-int32_t string_device_init(void) __asm__("c_string_device_init");
-int32_t string_device_control(char *string) __asm__("c_string_device_control");
 int32_t console_read_from_string();
 uint32_t diag_adc_read(uint8_t param_1);
 void diag_adc_temp(void);
@@ -10136,8 +10109,6 @@ uint8_t duartb_putc_polled(uint8_t param_1);
 int32_t drtb_puts(char *param_1);
 uint8_t drtb_getc(void);
 int32_t drtb_gets(char *buffer,int32_t length);
-void drtb_unlock(char write) __asm__("c_drtb_unlock");
-void drtb_lock(char write) __asm__("c_drtb_lock");
 int32_t duart_init();
 void duartb_reconfigure(void);
 int32_t drtb_write();
@@ -10213,8 +10184,6 @@ int32_t sci_puts(char *text);
 uint8_t sci_getc(void);
 int32_t sci_gets(char *param_1,int32_t param_2);
 int32_t primary_user_64();
-char sci_unlock(char write) __asm__("c_sci_unlock");
-char sci_lock(char write) __asm__("c_sci_lock");
 int32_t sci_init();
 void sci_reconfigure(void);
 int32_t sci_write();
@@ -10232,13 +10201,9 @@ uint8_t qspi_queue_setup(qspi_device device,uint16_t *transmit,uint16_t count,ui
                         uint16_t *spcr1);
 void qspi_start(qspi_device device,uint16_t *transmit,uint16_t count,char read);
 void qspi_acquire(void);
-int32_t qspi_control(void) __asm__("c_qspi_control");
-int32_t qspi_open(void) __asm__("c_qspi_open");
 int32_t qspi_init();
 void qspi_isr(void);
 int32_t primary_user_65();
-void qspi_transfer_raw(char device, void *buffers, int16_t count) __asm__("c_qspi_transfer_raw");
-void qspi_device_write(char device, void *buffers, int16_t count) __asm__("c_qspi_device_write");
 void qspi_write(qspi_device device,void *buffers,uint32_t count);
 void qspi_read(qspi_device device,void *buffers,uint32_t count);
 void qspi_send(qspi_device device,uint16_t *transmit,uint16_t count);
@@ -10278,8 +10243,6 @@ uint8_t internal_pps_check(void);
 void hmon_task(void);
 void counter_reset(void);
 void pps_monitors_reset(void);
-void scpi_round_decimal(char *record, int16_t digits) __asm__("c_scpi_round_decimal");
-void scpi_decimal_to_text_unused(char *record, char *text, int16_t digits) __asm__("c_scpi_decimal_to_text_unused");
 int32_t scpi_double_multiply_short();
 int32_t scpi_number_to_double(scpi_number *number,double *value,int32_t scale);
 uint32_t
@@ -11183,50 +11146,10 @@ int32_t primary_trap_1();
 uint64_t longjmp(uint32_t *param_1,uint32_t param_2);
 uint32_t setjmp(uint32_t *param_1);
 uint32_t primary_unpack_records(void);
-float float_subtract_in_place(float *x, float y) __asm__("c_float_subtract_in_place");
-float float_add_in_place(float *x, float y) __asm__("c_float_add_in_place");
-float float_subtract_reversed(float a, float b) __asm__("c_float_subtract_reversed");
-float float_subtract(float a, float b) __asm__("c_float_subtract");
-float float_add(float a, float b) __asm__("c_float_add");
-double double_subtract_in_place(double *x, double y) __asm__("c_double_subtract_in_place");
-double double_subtract_pointer(double a, double *b) __asm__("c_double_subtract_pointer");
-double double_subtract_reversed_pointers(double *a, double *b) __asm__("c_double_subtract_reversed_pointers");
-double double_subtract_reversed_pointer(double a, double *b) __asm__("c_double_subtract_reversed_pointer");
-double double_subtract_reversed(double a, double b) __asm__("c_double_subtract_reversed");
-double double_add_in_place(double *x, double y) __asm__("c_double_add_in_place");
-double double_add_pointers(double *a, double *b) __asm__("c_double_add_pointers");
-double double_add_pointer(double a, double *b) __asm__("c_double_add_pointer");
-double double_add(double a, double b) __asm__("c_double_add");
-int32_t float_compare(float a, float b) __asm__("c_float_compare");
-int32_t double_compare(double a, double b) __asm__("c_double_compare");
-float float_divide_in_place(float *x, float y) __asm__("c_float_divide_in_place");
-float float_divide_reversed(float a, float b) __asm__("c_float_divide_reversed");
-float float_divide(float a, float b) __asm__("c_float_divide");
-double double_divide_in_place(double *x, double y) __asm__("c_double_divide_in_place");
-double double_divide(double a, double b) __asm__("c_double_divide");
-double double_divide_reversed_pointers(double *a, double *b) __asm__("c_double_divide_reversed_pointers");
-double double_divide_reversed_pointer(double a, double *b) __asm__("c_double_divide_reversed_pointer");
-double double_divide_reversed(double a, double b) __asm__("c_double_divide_reversed");
 int32_t double_divide_operand_error();
 int32_t double_divide_by_zero();
 int32_t double_divide_next_word();
 int32_t double_divide_first_word();
-float double_to_float(double d) __asm__("c_double_to_float");
-int32_t double_to_integer(double d) __asm__("c_double_to_integer");
-uint32_t double_to_unsigned(double d) __asm__("c_double_to_unsigned");
-double float_to_double(float f) __asm__("c_float_to_double");
-int32_t float_to_integer(float f) __asm__("c_float_to_integer");
-uint32_t float_to_unsigned(float f) __asm__("c_float_to_unsigned");
-double integer_to_double(int32_t i) __asm__("c_integer_to_double");
-double unsigned_to_double(uint32_t u) __asm__("c_unsigned_to_double");
-float integer_to_float(int32_t i) __asm__("c_integer_to_float");
-float unsigned_to_float(uint32_t u) __asm__("c_unsigned_to_float");
-float float_multiply_in_place(float *x, float y) __asm__("c_float_multiply_in_place");
-float float_multiply(float a, float b) __asm__("c_float_multiply");
-double double_multiply_in_place(double *x, double y) __asm__("c_double_multiply_in_place");
-double double_multiply_pointers(double *a, double *b) __asm__("c_double_multiply_pointers");
-double double_multiply_pointer(double a, double *b) __asm__("c_double_multiply_pointer");
-double double_multiply(double a, double b) __asm__("c_double_multiply");
 int32_t double_multiply_operand_error();
 int32_t float_normalize();
 int32_t double_normalize();
@@ -11267,11 +11190,6 @@ uint32_t double_is_integer(uint32_t param_1,uint32_t param_2,uint32_t *param_3);
 double double_truncate_sixteenths(double value);
 double pow(double x,double y);
 double sqrt(double x);
-int32_t installer_mutex_init(int32_t name, mutex *lock) __asm__("c_installer_mutex_init");
-int32_t installer_mutex_acquire(void *mutex) __asm__("c_installer_mutex_acquire");
-int32_t installer_mutex_release(void *mutex) __asm__("c_installer_mutex_release");
-uint32_t installer_mutex_get_owner(mutex *lock) __asm__("c_installer_mutex_get_owner");
-void installer_mutex_clear(mutex *lock) __asm__("c_installer_mutex_clear");
 uint32_t installer_mutex_create(char *name,mutex *lock);
 uint32_t installer_mutex_lock(mutex *lock);
 uint32_t installer_mutex_unlock(mutex *lock);
@@ -11305,8 +11223,6 @@ void installer_start(void);
 void installer_restart(void);
 void installer_scpi_task_start(void);
 int32_t installer_stack_measure(void *task,uint32_t *usage);
-void *installer_region_find_segment(void *region, char *address) __asm__("c_installer_region_find_segment");
-int64_t installer_stack_usage(uint16_t *bottom, char *top) __asm__("c_installer_stack_usage");
 void installer_stack_usage_report(void);
 uint16_t installer_enter_supervisor_mode(void);
 uint16_t installer_set_interrupt_mask(uint16_t sr);
@@ -11328,7 +11244,6 @@ int32_t installer_trap_4();
 int32_t installer_trap_6();
 int32_t installer_trap_5();
 int32_t installer_kernel_dispatch_service();
-void installer_kernel_dispatch_io(char function, int32_t device) __asm__("c_installer_kernel_dispatch_io");
 int32_t installer_kernel_switch_task();
 int32_t installer_kernel_process_ticks();
 int32_t installer_kernel_service_0();
@@ -11347,7 +11262,6 @@ int32_t installer_kernel_allocate();
 int32_t installer_kernel_region_allocate();
 int32_t installer_kernel_assign_segment();
 int32_t installer_kernel_reclaim_segment();
-char installer_kernel_service_none(void) __asm__("c_installer_kernel_service_none");
 int32_t installer_kernel_create_x();
 int32_t installer_kernel_service_21();
 int32_t installer_kernel_delete_x();
@@ -11373,9 +11287,6 @@ int32_t installer_kernel_get_block();
 int32_t installer_kernel_return_block();
 int32_t installer_kernel_advance_date();
 int32_t installer_kernel_set_leap_year();
-void *installer_kernel_check_task(int32_t task, void *running) __asm__("c_installer_kernel_check_task");
-void installer_kernel_check_exchange(int32_t exchange, void *running) __asm__("c_installer_kernel_check_exchange");
-void installer_kernel_check_segment(void *segment) __asm__("c_installer_kernel_check_segment");
 int32_t installer_kernel_timer_cancel();
 int32_t installer_kernel_timer_unlink();
 int32_t installer_kernel_timer_insert();
@@ -11388,7 +11299,6 @@ int32_t installer_kernel_halt();
 int32_t installer_kernel_region_init();
 int32_t installer_kernel_idle_task();
 int32_t installer_kernel_return_from_interrupt();
-int32_t installer_psos_pack_name(void) __asm__("c_installer_psos_pack_name");
 uint16_t installer_psos_version(void);
 uint32_t installer_psos_create
                 (char *name,uint32_t a,uint32_t priority,uint32_t stack_a,uint32_t stack_b,void *e,uint32_t *task);
@@ -11438,8 +11348,6 @@ uint8_t installer_duartb_putc_polled(uint8_t param_1);
 int32_t installer_drtb_puts(char *text);
 uint8_t installer_drtb_getc(void);
 int32_t installer_drtb_gets(char *buffer,int32_t length);
-void installer_drtb_unlock(char write) __asm__("c_installer_drtb_unlock");
-void installer_drtb_lock(char write) __asm__("c_installer_drtb_lock");
 void installer_drtb_putc(char c);
 void installer_drtb_send_async(char *block,uint8_t count);
 uint32_t installer_console_write(char *s);
@@ -11610,11 +11518,6 @@ uint32_t installer_current_task_id(void);
 int32_t installer_trap_1();
 uint64_t installer_longjmp(uint32_t *buffer,uint32_t value);
 uint32_t installer_setjmp(uint32_t *buffer);
-int32_t installer_float_compare(float a, float b) __asm__("c_installer_float_compare");
-int32_t installer_float_to_integer(float f) __asm__("c_installer_float_to_integer");
-uint32_t installer_float_to_unsigned(float f) __asm__("c_installer_float_to_unsigned");
-float installer_float_multiply_in_place(float *x, float y) __asm__("c_installer_float_multiply_in_place");
-float installer_float_multiply(float a, float b) __asm__("c_installer_float_multiply");
 int32_t installer_float_normalize();
 uint64_t installer_float_raise(uint32_t code,...);
 int32_t installer_atexit(atexit_function *function);
@@ -11634,6 +11537,20 @@ int32_t installer_doprnt(char *format,void *arguments,sprintf_put_function *put,
 int32_t installer_sprintf(char *s,char *format,...);
 int32_t installer_sprintf_put(char *text,int32_t size,int32_t count,sprintf_output *output);
 int32_t installer_vsprintf(char *s,char *format,void *arg);
+
+#include "../rewritten/bindings/clock_record.h"
+
+#include "../rewritten/bindings/mutex.h"
+
+#include "../rewritten/bindings/pforth.h"
+
+#include "../rewritten/bindings/sci_token.h"
+
+#include "../rewritten/bindings/scpi_decimal.h"
+
+#include "../rewritten/bindings/softfloat.h"
+
+#include "../rewritten/bindings/stack.h"
 
 /* 00000400 */
 #if 0 /* the decompiler's reading; rewritten in boot.c */
@@ -12559,22 +12476,7 @@ __asm__(
 	"	.size mutex_init, .-mutex_init\n"
 	"	.popsection\n"
 );
-/* mutex_init from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_mutex_init,\"ax\",@progbits\n"
-	"	.globl c_mutex_init\n"
-	"	.type c_mutex_init, @function\n"
-	"c_mutex_init:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%a1\n"
-	"	jsr mutex_init\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_mutex_init, .-c_mutex_init\n"
-	"	.popsection\n"
-);
+/* mutex_init takes its arguments in registers: bindings/mutex.h binds it */
 
 /* 0001043a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -12651,21 +12553,7 @@ __asm__(
 	"	.size mutex_acquire, .-mutex_acquire\n"
 	"	.popsection\n"
 );
-/* mutex_acquire from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_mutex_acquire,\"ax\",@progbits\n"
-	"	.globl c_mutex_acquire\n"
-	"	.type c_mutex_acquire, @function\n"
-	"c_mutex_acquire:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	jsr mutex_acquire\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_mutex_acquire, .-c_mutex_acquire\n"
-	"	.popsection\n"
-);
+/* mutex_acquire takes its arguments in registers: bindings/mutex.h binds it */
 
 /* 00010484 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -12739,21 +12627,7 @@ __asm__(
 	"	.size mutex_release, .-mutex_release\n"
 	"	.popsection\n"
 );
-/* mutex_release from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_mutex_release,\"ax\",@progbits\n"
-	"	.globl c_mutex_release\n"
-	"	.type c_mutex_release, @function\n"
-	"c_mutex_release:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	jsr mutex_release\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_mutex_release, .-c_mutex_release\n"
-	"	.popsection\n"
-);
+/* mutex_release takes its arguments in registers: bindings/mutex.h binds it */
 
 /* 000104c8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -12785,21 +12659,7 @@ __asm__(
 	"	.size mutex_get_owner, .-mutex_get_owner\n"
 	"	.popsection\n"
 );
-/* mutex_get_owner from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_mutex_get_owner,\"ax\",@progbits\n"
-	"	.globl c_mutex_get_owner\n"
-	"	.type c_mutex_get_owner, @function\n"
-	"c_mutex_get_owner:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	jsr mutex_get_owner\n"
-	"	move.l %a0,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_mutex_get_owner, .-c_mutex_get_owner\n"
-	"	.popsection\n"
-);
+/* mutex_get_owner takes its arguments in registers: bindings/mutex.h binds it */
 
 /* 000104d2 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -12840,20 +12700,7 @@ __asm__(
 	"	.size mutex_clear, .-mutex_clear\n"
 	"	.popsection\n"
 );
-/* mutex_clear from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_mutex_clear,\"ax\",@progbits\n"
-	"	.globl c_mutex_clear\n"
-	"	.type c_mutex_clear, @function\n"
-	"c_mutex_clear:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	jsr mutex_clear\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_mutex_clear, .-c_mutex_clear\n"
-	"	.popsection\n"
-);
+/* mutex_clear takes its arguments in registers: bindings/mutex.h binds it */
 
 /* 000104e6 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -16163,20 +16010,7 @@ __asm__(
 	"	.size stack_fill, .-stack_fill\n"
 	"	.popsection\n"
 );
-/* stack_fill from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_stack_fill,\"ax\",@progbits\n"
-	"	.globl c_stack_fill\n"
-	"	.type c_stack_fill, @function\n"
-	"c_stack_fill:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	jsr stack_fill\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_stack_fill, .-c_stack_fill\n"
-	"	.popsection\n"
-);
+/* stack_fill takes its arguments in registers: no binding, so C cannot call it */
 
 /* 000132b8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -16228,23 +16062,7 @@ __asm__(
 	"	.size region_find_segment, .-region_find_segment\n"
 	"	.popsection\n"
 );
-/* region_find_segment from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_region_find_segment,\"ax\",@progbits\n"
-	"	.globl c_region_find_segment\n"
-	"	.type c_region_find_segment, @function\n"
-	"c_region_find_segment:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d0\n"
-	"	jsr region_find_segment\n"
-	"	move.l %a1,%d0\n"
-	"	move.l %d0,%a0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_region_find_segment, .-c_region_find_segment\n"
-	"	.popsection\n"
-);
+/* region_find_segment takes its arguments in registers: no binding, so C cannot call it */
 
 /* 000132da */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -16300,21 +16118,7 @@ __asm__(
 	"	.size stack_usage, .-stack_usage\n"
 	"	.popsection\n"
 );
-/* stack_usage from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_stack_usage,\"ax\",@progbits\n"
-	"	.globl c_stack_usage\n"
-	"	.type c_stack_usage, @function\n"
-	"c_stack_usage:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	move.l (52,%sp),%d0\n"
-	"	jsr stack_usage\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_stack_usage, .-c_stack_usage\n"
-	"	.popsection\n"
-);
+/* stack_usage takes its arguments in registers: bindings/stack.h binds it */
 
 /* 000132f4 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -16607,20 +16411,7 @@ __asm__(
 	"	.size clock_record_checksum, .-clock_record_checksum\n"
 	"	.popsection\n"
 );
-/* clock_record_checksum from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_clock_record_checksum,\"ax\",@progbits\n"
-	"	.globl c_clock_record_checksum\n"
-	"	.type c_clock_record_checksum, @function\n"
-	"c_clock_record_checksum:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a6\n"
-	"	jsr clock_record_checksum\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_clock_record_checksum, .-c_clock_record_checksum\n"
-	"	.popsection\n"
-);
+/* clock_record_checksum takes its arguments in registers: bindings/clock_record.h binds it */
 
 /* 000134ca */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -16666,7 +16457,7 @@ __asm__(
 	"	.size clock_record_sum, .-clock_record_sum\n"
 	"	.popsection\n"
 );
-/* clock_record_sum returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* clock_record_sum returns in registers C has no names for: the hand-written C binds them */
 
 /* 000134e8 */
 #if 0 /* the decompiler's reading; rewritten in clock.c */
@@ -16846,20 +16637,7 @@ __asm__(
 	"	.size clock_record_advance, .-clock_record_advance\n"
 	"	.popsection\n"
 );
-/* clock_record_advance from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_clock_record_advance,\"ax\",@progbits\n"
-	"	.globl c_clock_record_advance\n"
-	"	.type c_clock_record_advance, @function\n"
-	"c_clock_record_advance:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a6\n"
-	"	jsr clock_record_advance\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_clock_record_advance, .-c_clock_record_advance\n"
-	"	.popsection\n"
-);
+/* clock_record_advance takes its arguments in registers: bindings/clock_record.h binds it */
 
 /* 000135f0 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -16971,20 +16749,7 @@ __asm__(
 	"	.size clock_record_advance_utc, .-clock_record_advance_utc\n"
 	"	.popsection\n"
 );
-/* clock_record_advance_utc from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_clock_record_advance_utc,\"ax\",@progbits\n"
-	"	.globl c_clock_record_advance_utc\n"
-	"	.type c_clock_record_advance_utc, @function\n"
-	"c_clock_record_advance_utc:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a6\n"
-	"	jsr clock_record_advance_utc\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_clock_record_advance_utc, .-c_clock_record_advance_utc\n"
-	"	.popsection\n"
-);
+/* clock_record_advance_utc takes its arguments in registers: bindings/clock_record.h binds it */
 
 /* 00013666 */
 #if 0 /* the decompiler's reading; rewritten in leap.c */
@@ -17377,23 +17142,7 @@ __asm__(
 	"	.size clock_record_store, .-clock_record_store\n"
 	"	.popsection\n"
 );
-/* clock_record_store from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_clock_record_store,\"ax\",@progbits\n"
-	"	.globl c_clock_record_store\n"
-	"	.type c_clock_record_store, @function\n"
-	"c_clock_record_store:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a6\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%d1\n"
-	"	move.l (60,%sp),%d2\n"
-	"	jsr clock_record_store\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_clock_record_store, .-c_clock_record_store\n"
-	"	.popsection\n"
-);
+/* clock_record_store takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00013882 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -17464,20 +17213,7 @@ __asm__(
 	"	.size clock_record_derive, .-clock_record_derive\n"
 	"	.popsection\n"
 );
-/* clock_record_derive from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_clock_record_derive,\"ax\",@progbits\n"
-	"	.globl c_clock_record_derive\n"
-	"	.type c_clock_record_derive, @function\n"
-	"c_clock_record_derive:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a6\n"
-	"	jsr clock_record_derive\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_clock_record_derive, .-c_clock_record_derive\n"
-	"	.popsection\n"
-);
+/* clock_record_derive takes its arguments in registers: bindings/clock_record.h binds it */
 
 /* 000138e4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -17529,21 +17265,7 @@ __asm__(
 	"	.size clock_set_leap_year, .-clock_set_leap_year\n"
 	"	.popsection\n"
 );
-/* clock_set_leap_year from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_clock_set_leap_year,\"ax\",@progbits\n"
-	"	.globl c_clock_set_leap_year\n"
-	"	.type c_clock_set_leap_year, @function\n"
-	"c_clock_set_leap_year:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d7\n"
-	"	jsr clock_set_leap_year\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_clock_set_leap_year, .-c_clock_set_leap_year\n"
-	"	.popsection\n"
-);
+/* clock_set_leap_year takes its arguments in registers: bindings/clock_record.h binds it */
 
 /* 00013908 */
 #if 0 /* the decompiler's reading; rewritten in clock.c */
@@ -19554,21 +19276,7 @@ __asm__(
 	"	rte\n"
 	"	.popsection\n"
 );
-/* kernel_dispatch_io from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_kernel_dispatch_io,\"ax\",@progbits\n"
-	"	.globl c_kernel_dispatch_io\n"
-	"	.type c_kernel_dispatch_io, @function\n"
-	"c_kernel_dispatch_io:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d7\n"
-	"	move.l (52,%sp),%d0\n"
-	"	jsr kernel_dispatch_io\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_kernel_dispatch_io, .-c_kernel_dispatch_io\n"
-	"	.popsection\n"
-);
+/* kernel_dispatch_io takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00014c64 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -21615,21 +21323,7 @@ __asm__(
 	"	.size kernel_service_none, .-kernel_service_none\n"
 	"	.popsection\n"
 );
-/* kernel_service_none from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_kernel_service_none,\"ax\",@progbits\n"
-	"	.globl c_kernel_service_none\n"
-	"	.type c_kernel_service_none, @function\n"
-	"c_kernel_service_none:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr kernel_service_none\n"
-	"	move.l %d7,%d0\n"
-	"	extb.l %d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_kernel_service_none, .-c_kernel_service_none\n"
-	"	.popsection\n"
-);
+/* kernel_service_none takes its arguments in registers: no binding, so C cannot call it */
 
 /* 0001537e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -24061,23 +23755,7 @@ __asm__(
 	"	.size kernel_check_task, .-kernel_check_task\n"
 	"	.popsection\n"
 );
-/* kernel_check_task from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_kernel_check_task,\"ax\",@progbits\n"
-	"	.globl c_kernel_check_task\n"
-	"	.type c_kernel_check_task, @function\n"
-	"c_kernel_check_task:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a5\n"
-	"	jsr kernel_check_task\n"
-	"	move.l %a0,%d0\n"
-	"	move.l %d0,%a0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_kernel_check_task, .-c_kernel_check_task\n"
-	"	.popsection\n"
-);
+/* kernel_check_task takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00015b6c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -24124,21 +23802,7 @@ __asm__(
 	"	.size kernel_check_exchange, .-kernel_check_exchange\n"
 	"	.popsection\n"
 );
-/* kernel_check_exchange from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_kernel_check_exchange,\"ax\",@progbits\n"
-	"	.globl c_kernel_check_exchange\n"
-	"	.type c_kernel_check_exchange, @function\n"
-	"c_kernel_check_exchange:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a5\n"
-	"	jsr kernel_check_exchange\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_kernel_check_exchange, .-c_kernel_check_exchange\n"
-	"	.popsection\n"
-);
+/* kernel_check_exchange takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00015b96 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -24173,20 +23837,7 @@ __asm__(
 	"	.size kernel_check_segment, .-kernel_check_segment\n"
 	"	.popsection\n"
 );
-/* kernel_check_segment from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_kernel_check_segment,\"ax\",@progbits\n"
-	"	.globl c_kernel_check_segment\n"
-	"	.type c_kernel_check_segment, @function\n"
-	"c_kernel_check_segment:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	jsr kernel_check_segment\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_kernel_check_segment, .-c_kernel_check_segment\n"
-	"	.popsection\n"
-);
+/* kernel_check_segment takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00015baa */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -26548,20 +26199,7 @@ __asm__(
 	"	.size tick_account, .-tick_account\n"
 	"	.popsection\n"
 );
-/* tick_account from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_tick_account,\"ax\",@progbits\n"
-	"	.globl c_tick_account\n"
-	"	.type c_tick_account, @function\n"
-	"c_tick_account:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d6\n"
-	"	jsr tick_account\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_tick_account, .-c_tick_account\n"
-	"	.popsection\n"
-);
+/* tick_account takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00016ee6 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -26625,7 +26263,7 @@ __asm__(
 	"	.size psos_call, .-psos_call\n"
 	"	.popsection\n"
 );
-/* psos_call returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* psos_call returns in registers C has no names for: the hand-written C binds them */
 
 /* 00016f36 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -26674,7 +26312,7 @@ __asm__(
 	"	.size psos_io_call, .-psos_io_call\n"
 	"	.popsection\n"
 );
-/* psos_io_call returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* psos_io_call returns in registers C has no names for: the hand-written C binds them */
 
 /* 00016f50 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -26720,19 +26358,7 @@ __asm__(
 	"	.size psos_pack_name, .-psos_pack_name\n"
 	"	.popsection\n"
 );
-/* psos_pack_name from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_psos_pack_name,\"ax\",@progbits\n"
-	"	.globl c_psos_pack_name\n"
-	"	.type c_psos_pack_name, @function\n"
-	"c_psos_pack_name:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr psos_pack_name\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_psos_pack_name, .-c_psos_pack_name\n"
-	"	.popsection\n"
-);
+/* psos_pack_name takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00016f68 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -30411,21 +30037,7 @@ __asm__(
 	"	.size forth_print_string, .-forth_print_string\n"
 	"	.popsection\n"
 );
-/* forth_print_string from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_forth_print_string,\"ax\",@progbits\n"
-	"	.globl c_forth_print_string\n"
-	"	.type c_forth_print_string, @function\n"
-	"c_forth_print_string:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%a5\n"
-	"	jsr forth_print_string\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_forth_print_string, .-c_forth_print_string\n"
-	"	.popsection\n"
-);
+/* forth_print_string takes its arguments in registers: no binding, so C cannot call it */
 
 /* 0001916e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -32095,23 +31707,7 @@ __asm__(
 	"	.size forth_compile_code, .-forth_compile_code\n"
 	"	.popsection\n"
 );
-/* forth_compile_code from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_forth_compile_code,\"ax\",@progbits\n"
-	"	.globl c_forth_compile_code\n"
-	"	.type c_forth_compile_code, @function\n"
-	"c_forth_compile_code:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a4\n"
-	"	jsr forth_compile_code\n"
-	"	move.l %a4,%d0\n"
-	"	move.l %d0,%a0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_forth_compile_code, .-c_forth_compile_code\n"
-	"	.popsection\n"
-);
+/* forth_compile_code takes its arguments in registers: bindings/pforth.h binds it */
 
 /* 0001934e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -36784,20 +36380,7 @@ __asm__(
 	"	.size forth_pack_name, .-forth_pack_name\n"
 	"	.popsection\n"
 );
-/* forth_pack_name from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_forth_pack_name,\"ax\",@progbits\n"
-	"	.globl c_forth_pack_name\n"
-	"	.type c_forth_pack_name, @function\n"
-	"c_forth_pack_name:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a5\n"
-	"	jsr forth_pack_name\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_forth_pack_name, .-c_forth_pack_name\n"
-	"	.popsection\n"
-);
+/* forth_pack_name takes its arguments in registers: no binding, so C cannot call it */
 
 /* 0001a03c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -37962,7 +37545,7 @@ __asm__(
 	"	.size pforth_link_word, .-pforth_link_word\n"
 	"	.popsection\n"
 );
-/* pforth_link_word returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* pforth_link_word returns in registers C has no names for: the hand-written C binds them */
 
 /* 0001ae46 */
 #if 0 /* the decompiler's reading; rewritten in console.c */
@@ -38231,20 +37814,7 @@ __asm__(
 	"	.size string_device_open, .-string_device_open\n"
 	"	.popsection\n"
 );
-/* string_device_open from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_string_device_open,\"ax\",@progbits\n"
-	"	.globl c_string_device_open\n"
-	"	.type c_string_device_open, @function\n"
-	"c_string_device_open:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr string_device_open\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_string_device_open, .-c_string_device_open\n"
-	"	.popsection\n"
-);
+/* string_device_open takes its arguments in registers: no binding, so C cannot call it */
 
 /* 0001af84 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -38274,20 +37844,7 @@ __asm__(
 	"	.size string_device_init, .-string_device_init\n"
 	"	.popsection\n"
 );
-/* string_device_init from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_string_device_init,\"ax\",@progbits\n"
-	"	.globl c_string_device_init\n"
-	"	.type c_string_device_init, @function\n"
-	"c_string_device_init:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr string_device_init\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_string_device_init, .-c_string_device_init\n"
-	"	.popsection\n"
-);
+/* string_device_init takes its arguments in registers: no binding, so C cannot call it */
 
 /* 0001af8e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -38318,21 +37875,7 @@ __asm__(
 	"	.size string_device_control, .-string_device_control\n"
 	"	.popsection\n"
 );
-/* string_device_control from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_string_device_control,\"ax\",@progbits\n"
-	"	.globl c_string_device_control\n"
-	"	.type c_string_device_control, @function\n"
-	"c_string_device_control:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d2\n"
-	"	jsr string_device_control\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_string_device_control, .-c_string_device_control\n"
-	"	.popsection\n"
-);
+/* string_device_control takes its arguments in registers: no binding, so C cannot call it */
 
 /* 0001af98 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -40830,20 +40373,7 @@ __asm__(
 	"	.size drtb_unlock, .-drtb_unlock\n"
 	"	.popsection\n"
 );
-/* drtb_unlock from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_drtb_unlock,\"ax\",@progbits\n"
-	"	.globl c_drtb_unlock\n"
-	"	.type c_drtb_unlock, @function\n"
-	"c_drtb_unlock:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr drtb_unlock\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_drtb_unlock, .-c_drtb_unlock\n"
-	"	.popsection\n"
-);
+/* drtb_unlock takes its arguments in registers: no binding, so C cannot call it */
 
 /* 0001d922 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -40883,20 +40413,7 @@ __asm__(
 	"	.size drtb_lock, .-drtb_lock\n"
 	"	.popsection\n"
 );
-/* drtb_lock from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_drtb_lock,\"ax\",@progbits\n"
-	"	.globl c_drtb_lock\n"
-	"	.type c_drtb_lock, @function\n"
-	"c_drtb_lock:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr drtb_lock\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_drtb_lock, .-c_drtb_lock\n"
-	"	.popsection\n"
-);
+/* drtb_lock takes its arguments in registers: no binding, so C cannot call it */
 
 /* 0001d93e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -43912,22 +43429,7 @@ __asm__(
 	"	.size sci_unlock, .-sci_unlock\n"
 	"	.popsection\n"
 );
-/* sci_unlock from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_sci_unlock,\"ax\",@progbits\n"
-	"	.globl c_sci_unlock\n"
-	"	.type c_sci_unlock, @function\n"
-	"c_sci_unlock:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr sci_unlock\n"
-	"	move.l %d7,%d0\n"
-	"	extb.l %d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_sci_unlock, .-c_sci_unlock\n"
-	"	.popsection\n"
-);
+/* sci_unlock takes its arguments in registers: bindings/sci_token.h binds it */
 
 /* 0001fd0e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -44038,22 +43540,7 @@ __asm__(
 	"	.size sci_lock, .-sci_lock\n"
 	"	.popsection\n"
 );
-/* sci_lock from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_sci_lock,\"ax\",@progbits\n"
-	"	.globl c_sci_lock\n"
-	"	.type c_sci_lock, @function\n"
-	"c_sci_lock:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr sci_lock\n"
-	"	move.l %d7,%d0\n"
-	"	extb.l %d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_sci_lock, .-c_sci_lock\n"
-	"	.popsection\n"
-);
+/* sci_lock takes its arguments in registers: bindings/sci_token.h binds it */
 
 /* 0001fdb6 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -44963,20 +44450,7 @@ __asm__(
 	"	.size qspi_control, .-qspi_control\n"
 	"	.popsection\n"
 );
-/* qspi_control from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_qspi_control,\"ax\",@progbits\n"
-	"	.globl c_qspi_control\n"
-	"	.type c_qspi_control, @function\n"
-	"c_qspi_control:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr qspi_control\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_qspi_control, .-c_qspi_control\n"
-	"	.popsection\n"
-);
+/* qspi_control takes its arguments in registers: no binding, so C cannot call it */
 
 /* 000208fe */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -45004,20 +44478,7 @@ __asm__(
 	"	.size qspi_open, .-qspi_open\n"
 	"	.popsection\n"
 );
-/* qspi_open from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_qspi_open,\"ax\",@progbits\n"
-	"	.globl c_qspi_open\n"
-	"	.type c_qspi_open, @function\n"
-	"c_qspi_open:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr qspi_open\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_qspi_open, .-c_qspi_open\n"
-	"	.popsection\n"
-);
+/* qspi_open takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00020902 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -45252,22 +44713,7 @@ __asm__(
 	"	.size qspi_transfer_raw, .-qspi_transfer_raw\n"
 	"	.popsection\n"
 );
-/* qspi_transfer_raw from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_qspi_transfer_raw,\"ax\",@progbits\n"
-	"	.globl c_qspi_transfer_raw\n"
-	"	.type c_qspi_transfer_raw, @function\n"
-	"c_qspi_transfer_raw:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%a1\n"
-	"	move.l (56,%sp),%d2\n"
-	"	jsr qspi_transfer_raw\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_qspi_transfer_raw, .-c_qspi_transfer_raw\n"
-	"	.popsection\n"
-);
+/* qspi_transfer_raw takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00020ab0 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -45308,22 +44754,7 @@ __asm__(
 	"	.size qspi_device_write, .-qspi_device_write\n"
 	"	.popsection\n"
 );
-/* qspi_device_write from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_qspi_device_write,\"ax\",@progbits\n"
-	"	.globl c_qspi_device_write\n"
-	"	.type c_qspi_device_write, @function\n"
-	"c_qspi_device_write:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%a0\n"
-	"	move.l (56,%sp),%d2\n"
-	"	jsr qspi_device_write\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_qspi_device_write, .-c_qspi_device_write\n"
-	"	.popsection\n"
-);
+/* qspi_device_write takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00020acc */
 #if 0 /* the decompiler's reading; rewritten in qspi.c */
@@ -47185,21 +46616,7 @@ __asm__(
 	"	.size scpi_round_decimal, .-scpi_round_decimal\n"
 	"	.popsection\n"
 );
-/* scpi_round_decimal from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_scpi_round_decimal,\"ax\",@progbits\n"
-	"	.globl c_scpi_round_decimal\n"
-	"	.type c_scpi_round_decimal, @function\n"
-	"c_scpi_round_decimal:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a2\n"
-	"	move.l (52,%sp),%d0\n"
-	"	jsr scpi_round_decimal\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_scpi_round_decimal, .-c_scpi_round_decimal\n"
-	"	.popsection\n"
-);
+/* scpi_round_decimal takes its arguments in registers: bindings/scpi_decimal.h binds it */
 
 /* 00024d88 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -47321,22 +46738,7 @@ __asm__(
 	"	.size scpi_decimal_to_text_unused, .-scpi_decimal_to_text_unused\n"
 	"	.popsection\n"
 );
-/* scpi_decimal_to_text_unused from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_scpi_decimal_to_text_unused,\"ax\",@progbits\n"
-	"	.globl c_scpi_decimal_to_text_unused\n"
-	"	.type c_scpi_decimal_to_text_unused, @function\n"
-	"c_scpi_decimal_to_text_unused:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a1\n"
-	"	move.l (56,%sp),%d0\n"
-	"	jsr scpi_decimal_to_text_unused\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_scpi_decimal_to_text_unused, .-c_scpi_decimal_to_text_unused\n"
-	"	.popsection\n"
-);
+/* scpi_decimal_to_text_unused takes its arguments in registers: no binding, so C cannot call it */
 
 /* 00024e18 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -47722,7 +47124,7 @@ __asm__(
 	"	.byte 0x00,0x00\n"
 	"	.popsection\n"
 );
-/* scpi_double_to_decimal returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* scpi_double_to_decimal returns in registers C has no names for: the hand-written C binds them */
 
 /* 0002507a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -48173,7 +47575,7 @@ __asm__(
 	"	.size scpi_bcd_to_double, .-scpi_bcd_to_double\n"
 	"	.popsection\n"
 );
-/* scpi_bcd_to_double returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* scpi_bcd_to_double returns in registers C has no names for: the hand-written C binds them */
 
 /* 000251e4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -48297,7 +47699,7 @@ __asm__(
 	"	.size scpi_scale_by_power_of_ten, .-scpi_scale_by_power_of_ten\n"
 	"	.popsection\n"
 );
-/* scpi_scale_by_power_of_ten returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* scpi_scale_by_power_of_ten returns in registers C has no names for: the hand-written C binds them */
 
 /* 000252bc */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -48708,7 +48110,7 @@ __asm__(
 	"	.size scpi_double_multiply, .-scpi_double_multiply\n"
 	"	.popsection\n"
 );
-/* scpi_double_multiply returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* scpi_double_multiply returns in registers C has no names for: the hand-written C binds them */
 
 /* 00025468 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -48918,7 +48320,7 @@ __asm__(
 	"	.size scpi_number_to_bcd, .-scpi_number_to_bcd\n"
 	"	.popsection\n"
 );
-/* scpi_number_to_bcd returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* scpi_number_to_bcd returns in registers C has no names for: the hand-written C binds them */
 
 /* 0002553a */
 #if 0 /* the decompiler's reading; rewritten in scpi_convert.c */
@@ -77967,21 +77369,7 @@ __asm__(
 	"	.size float_subtract_in_place, .-float_subtract_in_place\n"
 	"	.popsection\n"
 );
-/* float_subtract_in_place from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_subtract_in_place,\"ax\",@progbits\n"
-	"	.globl c_float_subtract_in_place\n"
-	"	.type c_float_subtract_in_place, @function\n"
-	"c_float_subtract_in_place:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_subtract_in_place\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_subtract_in_place, .-c_float_subtract_in_place\n"
-	"	.popsection\n"
-);
+/* float_subtract_in_place takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d08a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -78017,21 +77405,7 @@ __asm__(
 	"	.size float_add_in_place, .-float_add_in_place\n"
 	"	.popsection\n"
 );
-/* float_add_in_place from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_add_in_place,\"ax\",@progbits\n"
-	"	.globl c_float_add_in_place\n"
-	"	.type c_float_add_in_place, @function\n"
-	"c_float_add_in_place:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_add_in_place\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_add_in_place, .-c_float_add_in_place\n"
-	"	.popsection\n"
-);
+/* float_add_in_place takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d094 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -78204,21 +77578,7 @@ __asm__(
 	"	.size float_subtract_reversed, .-float_subtract_reversed\n"
 	"	.popsection\n"
 );
-/* float_subtract_reversed from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_subtract_reversed,\"ax\",@progbits\n"
-	"	.globl c_float_subtract_reversed\n"
-	"	.type c_float_subtract_reversed, @function\n"
-	"c_float_subtract_reversed:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_subtract_reversed\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_subtract_reversed, .-c_float_subtract_reversed\n"
-	"	.popsection\n"
-);
+/* float_subtract_reversed takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d096 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -78444,21 +77804,7 @@ __asm__(
 	"	.size float_subtract, .-float_subtract\n"
 	"	.popsection\n"
 );
-/* float_subtract from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_subtract,\"ax\",@progbits\n"
-	"	.globl c_float_subtract\n"
-	"	.type c_float_subtract, @function\n"
-	"c_float_subtract:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_subtract\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_subtract, .-c_float_subtract\n"
-	"	.popsection\n"
-);
+/* float_subtract takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d0ba */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -78792,21 +78138,7 @@ __asm__(
 	"	.size float_add, .-float_add\n"
 	"	.popsection\n"
 );
-/* float_add from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_add,\"ax\",@progbits\n"
-	"	.globl c_float_add\n"
-	"	.type c_float_add, @function\n"
-	"c_float_add:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_add\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_add, .-c_float_add\n"
-	"	.popsection\n"
-);
+/* float_add takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d2e2 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -78847,22 +78179,7 @@ __asm__(
 	"	.size double_subtract_in_place, .-double_subtract_in_place\n"
 	"	.popsection\n"
 );
-/* double_subtract_in_place from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_subtract_in_place,\"ax\",@progbits\n"
-	"	.globl c_double_subtract_in_place\n"
-	"	.type c_double_subtract_in_place, @function\n"
-	"c_double_subtract_in_place:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%d1\n"
-	"	jsr double_subtract_in_place\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_subtract_in_place, .-c_double_subtract_in_place\n"
-	"	.popsection\n"
-);
+/* double_subtract_in_place takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d2f8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -78899,22 +78216,7 @@ __asm__(
 	"	.size double_subtract_pointer, .-double_subtract_pointer\n"
 	"	.popsection\n"
 );
-/* double_subtract_pointer from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_subtract_pointer,\"ax\",@progbits\n"
-	"	.globl c_double_subtract_pointer\n"
-	"	.type c_double_subtract_pointer, @function\n"
-	"c_double_subtract_pointer:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a1\n"
-	"	jsr double_subtract_pointer\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_subtract_pointer, .-c_double_subtract_pointer\n"
-	"	.popsection\n"
-);
+/* double_subtract_pointer takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d306 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -79237,21 +78539,7 @@ __asm__(
 	"	.size double_subtract_reversed_pointers, .-double_subtract_reversed_pointers\n"
 	"	.popsection\n"
 );
-/* double_subtract_reversed_pointers from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_subtract_reversed_pointers,\"ax\",@progbits\n"
-	"	.globl c_double_subtract_reversed_pointers\n"
-	"	.type c_double_subtract_reversed_pointers, @function\n"
-	"c_double_subtract_reversed_pointers:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a1\n"
-	"	jsr double_subtract_reversed_pointers\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_subtract_reversed_pointers, .-c_double_subtract_reversed_pointers\n"
-	"	.popsection\n"
-);
+/* double_subtract_reversed_pointers takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d30a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -79574,22 +78862,7 @@ __asm__(
 	"	.size double_subtract_reversed_pointer, .-double_subtract_reversed_pointer\n"
 	"	.popsection\n"
 );
-/* double_subtract_reversed_pointer from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_subtract_reversed_pointer,\"ax\",@progbits\n"
-	"	.globl c_double_subtract_reversed_pointer\n"
-	"	.type c_double_subtract_reversed_pointer, @function\n"
-	"c_double_subtract_reversed_pointer:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a1\n"
-	"	jsr double_subtract_reversed_pointer\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_subtract_reversed_pointer, .-c_double_subtract_reversed_pointer\n"
-	"	.popsection\n"
-);
+/* double_subtract_reversed_pointer takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d30e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -80011,23 +79284,7 @@ __asm__(
 	"	.size double_subtract_reversed, .-double_subtract_reversed\n"
 	"	.popsection\n"
 );
-/* double_subtract_reversed from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_subtract_reversed,\"ax\",@progbits\n"
-	"	.globl c_double_subtract_reversed\n"
-	"	.type c_double_subtract_reversed, @function\n"
-	"c_double_subtract_reversed:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a0\n"
-	"	move.l (60,%sp),%a1\n"
-	"	jsr double_subtract_reversed\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_subtract_reversed, .-c_double_subtract_reversed\n"
-	"	.popsection\n"
-);
+/* double_subtract_reversed takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d338 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -80064,22 +79321,7 @@ __asm__(
 	"	.size double_add_in_place, .-double_add_in_place\n"
 	"	.popsection\n"
 );
-/* double_add_in_place from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_add_in_place,\"ax\",@progbits\n"
-	"	.globl c_double_add_in_place\n"
-	"	.type c_double_add_in_place, @function\n"
-	"c_double_add_in_place:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%d1\n"
-	"	jsr double_add_in_place\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_add_in_place, .-c_double_add_in_place\n"
-	"	.popsection\n"
-);
+/* double_add_in_place takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d34a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -80399,21 +79641,7 @@ __asm__(
 	"	.size double_add_pointers, .-double_add_pointers\n"
 	"	.popsection\n"
 );
-/* double_add_pointers from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_add_pointers,\"ax\",@progbits\n"
-	"	.globl c_double_add_pointers\n"
-	"	.type c_double_add_pointers, @function\n"
-	"c_double_add_pointers:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a1\n"
-	"	jsr double_add_pointers\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_add_pointers, .-c_double_add_pointers\n"
-	"	.popsection\n"
-);
+/* double_add_pointers takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d34e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -80729,22 +79957,7 @@ __asm__(
 	"	.size double_add_pointer, .-double_add_pointer\n"
 	"	.popsection\n"
 );
-/* double_add_pointer from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_add_pointer,\"ax\",@progbits\n"
-	"	.globl c_double_add_pointer\n"
-	"	.type c_double_add_pointer, @function\n"
-	"c_double_add_pointer:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a1\n"
-	"	jsr double_add_pointer\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_add_pointer, .-c_double_add_pointer\n"
-	"	.popsection\n"
-);
+/* double_add_pointer takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d352 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -81382,23 +80595,7 @@ __asm__(
 	"	.size double_add, .-double_add\n"
 	"	.popsection\n"
 );
-/* double_add from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_add,\"ax\",@progbits\n"
-	"	.globl c_double_add\n"
-	"	.type c_double_add, @function\n"
-	"c_double_add:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a0\n"
-	"	move.l (60,%sp),%a1\n"
-	"	jsr double_add\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_add, .-c_double_add\n"
-	"	.popsection\n"
-);
+/* double_add takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d65c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -81501,21 +80698,7 @@ __asm__(
 	"	.size float_compare, .-float_compare\n"
 	"	.popsection\n"
 );
-/* float_compare from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_compare,\"ax\",@progbits\n"
-	"	.globl c_float_compare\n"
-	"	.type c_float_compare, @function\n"
-	"c_float_compare:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_compare\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_compare, .-c_float_compare\n"
-	"	.popsection\n"
-);
+/* float_compare takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d6c6 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -81665,23 +80848,7 @@ __asm__(
 	"	.size double_compare, .-double_compare\n"
 	"	.popsection\n"
 );
-/* double_compare from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_compare,\"ax\",@progbits\n"
-	"	.globl c_double_compare\n"
-	"	.type c_double_compare, @function\n"
-	"c_double_compare:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a0\n"
-	"	move.l (60,%sp),%a1\n"
-	"	jsr double_compare\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_compare, .-c_double_compare\n"
-	"	.popsection\n"
-);
+/* double_compare takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d7da */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -81717,21 +80884,7 @@ __asm__(
 	"	.size float_divide_in_place, .-float_divide_in_place\n"
 	"	.popsection\n"
 );
-/* float_divide_in_place from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_divide_in_place,\"ax\",@progbits\n"
-	"	.globl c_float_divide_in_place\n"
-	"	.type c_float_divide_in_place, @function\n"
-	"c_float_divide_in_place:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_divide_in_place\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_divide_in_place, .-c_float_divide_in_place\n"
-	"	.popsection\n"
-);
+/* float_divide_in_place takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d7e4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -81913,21 +81066,7 @@ __asm__(
 	"	.size float_divide_reversed, .-float_divide_reversed\n"
 	"	.popsection\n"
 );
-/* float_divide_reversed from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_divide_reversed,\"ax\",@progbits\n"
-	"	.globl c_float_divide_reversed\n"
-	"	.type c_float_divide_reversed, @function\n"
-	"c_float_divide_reversed:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_divide_reversed\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_divide_reversed, .-c_float_divide_reversed\n"
-	"	.popsection\n"
-);
+/* float_divide_reversed takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005d7e6 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -82357,21 +81496,7 @@ __asm__(
 	"	.size float_divide, .-float_divide\n"
 	"	.popsection\n"
 );
-/* float_divide from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_divide,\"ax\",@progbits\n"
-	"	.globl c_float_divide\n"
-	"	.type c_float_divide, @function\n"
-	"c_float_divide:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_divide\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_divide, .-c_float_divide\n"
-	"	.popsection\n"
-);
+/* float_divide takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005da3e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -82416,22 +81541,7 @@ __asm__(
 	"	.size double_divide_in_place, .-double_divide_in_place\n"
 	"	.popsection\n"
 );
-/* double_divide_in_place from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_divide_in_place,\"ax\",@progbits\n"
-	"	.globl c_double_divide_in_place\n"
-	"	.type c_double_divide_in_place, @function\n"
-	"c_double_divide_in_place:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%d1\n"
-	"	jsr double_divide_in_place\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_divide_in_place, .-c_double_divide_in_place\n"
-	"	.popsection\n"
-);
+/* double_divide_in_place takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005da58 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -82466,23 +81576,7 @@ __asm__(
 	"	.size double_divide, .-double_divide\n"
 	"	.popsection\n"
 );
-/* double_divide from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_divide,\"ax\",@progbits\n"
-	"	.globl c_double_divide\n"
-	"	.type c_double_divide, @function\n"
-	"c_double_divide:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a0\n"
-	"	move.l (60,%sp),%a1\n"
-	"	jsr double_divide\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_divide, .-c_double_divide\n"
-	"	.popsection\n"
-);
+/* double_divide takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005da62 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -82649,21 +81743,7 @@ __asm__(
 	"	.size double_divide_reversed_pointers, .-double_divide_reversed_pointers\n"
 	"	.popsection\n"
 );
-/* double_divide_reversed_pointers from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_divide_reversed_pointers,\"ax\",@progbits\n"
-	"	.globl c_double_divide_reversed_pointers\n"
-	"	.type c_double_divide_reversed_pointers, @function\n"
-	"c_double_divide_reversed_pointers:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a1\n"
-	"	jsr double_divide_reversed_pointers\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_divide_reversed_pointers, .-c_double_divide_reversed_pointers\n"
-	"	.popsection\n"
-);
+/* double_divide_reversed_pointers takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005da66 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -82824,22 +81904,7 @@ __asm__(
 	"	.size double_divide_reversed_pointer, .-double_divide_reversed_pointer\n"
 	"	.popsection\n"
 );
-/* double_divide_reversed_pointer from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_divide_reversed_pointer,\"ax\",@progbits\n"
-	"	.globl c_double_divide_reversed_pointer\n"
-	"	.type c_double_divide_reversed_pointer, @function\n"
-	"c_double_divide_reversed_pointer:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a1\n"
-	"	jsr double_divide_reversed_pointer\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_divide_reversed_pointer, .-c_double_divide_reversed_pointer\n"
-	"	.popsection\n"
-);
+/* double_divide_reversed_pointer takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005da6a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -83232,23 +82297,7 @@ __asm__(
 	"	.size double_divide_reversed, .-double_divide_reversed\n"
 	"	.popsection\n"
 );
-/* double_divide_reversed from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_divide_reversed,\"ax\",@progbits\n"
-	"	.globl c_double_divide_reversed\n"
-	"	.type c_double_divide_reversed, @function\n"
-	"c_double_divide_reversed:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a0\n"
-	"	move.l (60,%sp),%a1\n"
-	"	jsr double_divide_reversed\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_divide_reversed, .-c_double_divide_reversed\n"
-	"	.popsection\n"
-);
+/* double_divide_reversed takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005dbde */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -83757,21 +82806,7 @@ __asm__(
 	"	.size double_to_float, .-double_to_float\n"
 	"	.popsection\n"
 );
-/* double_to_float from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_to_float,\"ax\",@progbits\n"
-	"	.globl c_double_to_float\n"
-	"	.type c_double_to_float, @function\n"
-	"c_double_to_float:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr double_to_float\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_to_float, .-c_double_to_float\n"
-	"	.popsection\n"
-);
+/* double_to_float takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005ddde */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -83910,21 +82945,7 @@ __asm__(
 	"	.size double_to_integer, .-double_to_integer\n"
 	"	.popsection\n"
 );
-/* double_to_integer from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_to_integer,\"ax\",@progbits\n"
-	"	.globl c_double_to_integer\n"
-	"	.type c_double_to_integer, @function\n"
-	"c_double_to_integer:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr double_to_integer\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_to_integer, .-c_double_to_integer\n"
-	"	.popsection\n"
-);
+/* double_to_integer takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005de9e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -84038,21 +83059,7 @@ __asm__(
 	"	.size double_to_unsigned, .-double_to_unsigned\n"
 	"	.popsection\n"
 );
-/* double_to_unsigned from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_to_unsigned,\"ax\",@progbits\n"
-	"	.globl c_double_to_unsigned\n"
-	"	.type c_double_to_unsigned, @function\n"
-	"c_double_to_unsigned:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr double_to_unsigned\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_to_unsigned, .-c_double_to_unsigned\n"
-	"	.popsection\n"
-);
+/* double_to_unsigned takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005df24 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -84170,20 +83177,7 @@ __asm__(
 	"	.size float_to_double, .-float_to_double\n"
 	"	.popsection\n"
 );
-/* float_to_double from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_to_double,\"ax\",@progbits\n"
-	"	.globl c_float_to_double\n"
-	"	.type c_float_to_double, @function\n"
-	"c_float_to_double:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr float_to_double\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_to_double, .-c_float_to_double\n"
-	"	.popsection\n"
-);
+/* float_to_double takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005dfbc */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -84307,20 +83301,7 @@ __asm__(
 	"	.size float_to_integer, .-float_to_integer\n"
 	"	.popsection\n"
 );
-/* float_to_integer from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_to_integer,\"ax\",@progbits\n"
-	"	.globl c_float_to_integer\n"
-	"	.type c_float_to_integer, @function\n"
-	"c_float_to_integer:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr float_to_integer\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_to_integer, .-c_float_to_integer\n"
-	"	.popsection\n"
-);
+/* float_to_integer takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e04e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -84400,20 +83381,7 @@ __asm__(
 	"	.size float_to_unsigned, .-float_to_unsigned\n"
 	"	.popsection\n"
 );
-/* float_to_unsigned from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_to_unsigned,\"ax\",@progbits\n"
-	"	.globl c_float_to_unsigned\n"
-	"	.type c_float_to_unsigned, @function\n"
-	"c_float_to_unsigned:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr float_to_unsigned\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_to_unsigned, .-c_float_to_unsigned\n"
-	"	.popsection\n"
-);
+/* float_to_unsigned takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e08e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -84549,20 +83517,7 @@ __asm__(
 	"	.size integer_to_double, .-integer_to_double\n"
 	"	.popsection\n"
 );
-/* integer_to_double from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_integer_to_double,\"ax\",@progbits\n"
-	"	.globl c_integer_to_double\n"
-	"	.type c_integer_to_double, @function\n"
-	"c_integer_to_double:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr integer_to_double\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_integer_to_double, .-c_integer_to_double\n"
-	"	.popsection\n"
-);
+/* integer_to_double takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e108 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -84684,20 +83639,7 @@ __asm__(
 	"	.size unsigned_to_double, .-unsigned_to_double\n"
 	"	.popsection\n"
 );
-/* unsigned_to_double from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_unsigned_to_double,\"ax\",@progbits\n"
-	"	.globl c_unsigned_to_double\n"
-	"	.type c_unsigned_to_double, @function\n"
-	"c_unsigned_to_double:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr unsigned_to_double\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_unsigned_to_double, .-c_unsigned_to_double\n"
-	"	.popsection\n"
-);
+/* unsigned_to_double takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e168 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -84857,20 +83799,7 @@ __asm__(
 	"	.size integer_to_float, .-integer_to_float\n"
 	"	.popsection\n"
 );
-/* integer_to_float from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_integer_to_float,\"ax\",@progbits\n"
-	"	.globl c_integer_to_float\n"
-	"	.type c_integer_to_float, @function\n"
-	"c_integer_to_float:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr integer_to_float\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_integer_to_float, .-c_integer_to_float\n"
-	"	.popsection\n"
-);
+/* integer_to_float takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e20e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -85028,20 +83957,7 @@ __asm__(
 	"	.size unsigned_to_float, .-unsigned_to_float\n"
 	"	.popsection\n"
 );
-/* unsigned_to_float from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_unsigned_to_float,\"ax\",@progbits\n"
-	"	.globl c_unsigned_to_float\n"
-	"	.type c_unsigned_to_float, @function\n"
-	"c_unsigned_to_float:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr unsigned_to_float\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_unsigned_to_float, .-c_unsigned_to_float\n"
-	"	.popsection\n"
-);
+/* unsigned_to_float takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e316 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -85077,21 +83993,7 @@ __asm__(
 	"	.size float_multiply_in_place, .-float_multiply_in_place\n"
 	"	.popsection\n"
 );
-/* float_multiply_in_place from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_multiply_in_place,\"ax\",@progbits\n"
-	"	.globl c_float_multiply_in_place\n"
-	"	.type c_float_multiply_in_place, @function\n"
-	"c_float_multiply_in_place:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_multiply_in_place\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_multiply_in_place, .-c_float_multiply_in_place\n"
-	"	.popsection\n"
-);
+/* float_multiply_in_place takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e320 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -85414,21 +84316,7 @@ __asm__(
 	"	.size float_multiply, .-float_multiply\n"
 	"	.popsection\n"
 );
-/* float_multiply from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_float_multiply,\"ax\",@progbits\n"
-	"	.globl c_float_multiply\n"
-	"	.type c_float_multiply, @function\n"
-	"c_float_multiply:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr float_multiply\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_float_multiply, .-c_float_multiply\n"
-	"	.popsection\n"
-);
+/* float_multiply takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e5e6 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -85465,22 +84353,7 @@ __asm__(
 	"	.size double_multiply_in_place, .-double_multiply_in_place\n"
 	"	.popsection\n"
 );
-/* double_multiply_in_place from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_multiply_in_place,\"ax\",@progbits\n"
-	"	.globl c_double_multiply_in_place\n"
-	"	.type c_double_multiply_in_place, @function\n"
-	"c_double_multiply_in_place:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d0\n"
-	"	move.l (56,%sp),%d1\n"
-	"	jsr double_multiply_in_place\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_multiply_in_place, .-c_double_multiply_in_place\n"
-	"	.popsection\n"
-);
+/* double_multiply_in_place takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e5f8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -85757,21 +84630,7 @@ __asm__(
 	"	.size double_multiply_pointers, .-double_multiply_pointers\n"
 	"	.popsection\n"
 );
-/* double_multiply_pointers from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_multiply_pointers,\"ax\",@progbits\n"
-	"	.globl c_double_multiply_pointers\n"
-	"	.type c_double_multiply_pointers, @function\n"
-	"c_double_multiply_pointers:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a1\n"
-	"	jsr double_multiply_pointers\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_multiply_pointers, .-c_double_multiply_pointers\n"
-	"	.popsection\n"
-);
+/* double_multiply_pointers takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e5fc */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -86042,22 +84901,7 @@ __asm__(
 	"	.size double_multiply_pointer, .-double_multiply_pointer\n"
 	"	.popsection\n"
 );
-/* double_multiply_pointer from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_multiply_pointer,\"ax\",@progbits\n"
-	"	.globl c_double_multiply_pointer\n"
-	"	.type c_double_multiply_pointer, @function\n"
-	"c_double_multiply_pointer:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a1\n"
-	"	jsr double_multiply_pointer\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_multiply_pointer, .-c_double_multiply_pointer\n"
-	"	.popsection\n"
-);
+/* double_multiply_pointer takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e600 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -86729,23 +85573,7 @@ __asm__(
 	"	.byte 0\n"
 	"	.popsection\n"
 );
-/* double_multiply from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_double_multiply,\"ax\",@progbits\n"
-	"	.globl c_double_multiply\n"
-	"	.type c_double_multiply, @function\n"
-	"c_double_multiply:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	move.l (56,%sp),%a0\n"
-	"	move.l (60,%sp),%a1\n"
-	"	jsr double_multiply\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_double_multiply, .-c_double_multiply\n"
-	"	.popsection\n"
-);
+/* double_multiply takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* 0005e81c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -89839,22 +88667,7 @@ __asm__(
 	"	.size installer_mutex_init, .-installer_mutex_init\n"
 	"	.popsection\n"
 );
-/* installer_mutex_init from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_mutex_init,\"ax\",@progbits\n"
-	"	.globl c_installer_mutex_init\n"
-	"	.type c_installer_mutex_init, @function\n"
-	"c_installer_mutex_init:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%a1\n"
-	"	jsr installer_mutex_init\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_mutex_init, .-c_installer_mutex_init\n"
-	"	.popsection\n"
-);
+/* installer_mutex_init takes its arguments in registers: bindings/mutex.h binds it */
 
 /* installer::0010043a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -89931,21 +88744,7 @@ __asm__(
 	"	.size installer_mutex_acquire, .-installer_mutex_acquire\n"
 	"	.popsection\n"
 );
-/* installer_mutex_acquire from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_mutex_acquire,\"ax\",@progbits\n"
-	"	.globl c_installer_mutex_acquire\n"
-	"	.type c_installer_mutex_acquire, @function\n"
-	"c_installer_mutex_acquire:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	jsr installer_mutex_acquire\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_mutex_acquire, .-c_installer_mutex_acquire\n"
-	"	.popsection\n"
-);
+/* installer_mutex_acquire takes its arguments in registers: bindings/mutex.h binds it */
 
 /* installer::00100484 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -90019,21 +88818,7 @@ __asm__(
 	"	.size installer_mutex_release, .-installer_mutex_release\n"
 	"	.popsection\n"
 );
-/* installer_mutex_release from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_mutex_release,\"ax\",@progbits\n"
-	"	.globl c_installer_mutex_release\n"
-	"	.type c_installer_mutex_release, @function\n"
-	"c_installer_mutex_release:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	jsr installer_mutex_release\n"
-	"	move.l %d7,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_mutex_release, .-c_installer_mutex_release\n"
-	"	.popsection\n"
-);
+/* installer_mutex_release takes its arguments in registers: bindings/mutex.h binds it */
 
 /* installer::001004c8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -90063,21 +88848,7 @@ __asm__(
 	"	.size installer_mutex_get_owner, .-installer_mutex_get_owner\n"
 	"	.popsection\n"
 );
-/* installer_mutex_get_owner from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_mutex_get_owner,\"ax\",@progbits\n"
-	"	.globl c_installer_mutex_get_owner\n"
-	"	.type c_installer_mutex_get_owner, @function\n"
-	"c_installer_mutex_get_owner:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	jsr installer_mutex_get_owner\n"
-	"	move.l %a0,%d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_mutex_get_owner, .-c_installer_mutex_get_owner\n"
-	"	.popsection\n"
-);
+/* installer_mutex_get_owner takes its arguments in registers: bindings/mutex.h binds it */
 
 /* installer::001004d2 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -90118,20 +88889,7 @@ __asm__(
 	"	.size installer_mutex_clear, .-installer_mutex_clear\n"
 	"	.popsection\n"
 );
-/* installer_mutex_clear from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_mutex_clear,\"ax\",@progbits\n"
-	"	.globl c_installer_mutex_clear\n"
-	"	.type c_installer_mutex_clear, @function\n"
-	"c_installer_mutex_clear:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	jsr installer_mutex_clear\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_mutex_clear, .-c_installer_mutex_clear\n"
-	"	.popsection\n"
-);
+/* installer_mutex_clear takes its arguments in registers: bindings/mutex.h binds it */
 
 /* installer::001004e6 */
 #if 0 /* the decompiler's reading; rewritten in installer_os.c */
@@ -91002,23 +89760,7 @@ __asm__(
 	"	.size installer_region_find_segment, .-installer_region_find_segment\n"
 	"	.popsection\n"
 );
-/* installer_region_find_segment from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_region_find_segment,\"ax\",@progbits\n"
-	"	.globl c_installer_region_find_segment\n"
-	"	.type c_installer_region_find_segment, @function\n"
-	"c_installer_region_find_segment:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d0\n"
-	"	jsr installer_region_find_segment\n"
-	"	move.l %a1,%d0\n"
-	"	move.l %d0,%a0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_region_find_segment, .-c_installer_region_find_segment\n"
-	"	.popsection\n"
-);
+/* installer_region_find_segment takes its arguments in registers: no binding, so C cannot call it */
 
 /* installer::00100e64 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -91073,21 +89815,7 @@ __asm__(
 	"	.size installer_stack_usage, .-installer_stack_usage\n"
 	"	.popsection\n"
 );
-/* installer_stack_usage from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_stack_usage,\"ax\",@progbits\n"
-	"	.globl c_installer_stack_usage\n"
-	"	.type c_installer_stack_usage, @function\n"
-	"c_installer_stack_usage:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a1\n"
-	"	move.l (52,%sp),%d0\n"
-	"	jsr installer_stack_usage\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_stack_usage, .-c_installer_stack_usage\n"
-	"	.popsection\n"
-);
+/* installer_stack_usage takes its arguments in registers: bindings/stack.h binds it */
 
 /* installer::00100e7e */
 #if 0 /* the decompiler's reading; rewritten in installer_os.c */
@@ -91891,21 +90619,7 @@ __asm__(
 	"	.size installer_kernel_dispatch_io, .-installer_kernel_dispatch_io\n"
 	"	.popsection\n"
 );
-/* installer_kernel_dispatch_io from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_kernel_dispatch_io,\"ax\",@progbits\n"
-	"	.globl c_installer_kernel_dispatch_io\n"
-	"	.type c_installer_kernel_dispatch_io, @function\n"
-	"c_installer_kernel_dispatch_io:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d7\n"
-	"	move.l (52,%sp),%d0\n"
-	"	jsr installer_kernel_dispatch_io\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_kernel_dispatch_io, .-c_installer_kernel_dispatch_io\n"
-	"	.popsection\n"
-);
+/* installer_kernel_dispatch_io takes its arguments in registers: no binding, so C cannot call it */
 
 /* installer::00101680 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -93920,21 +92634,7 @@ __asm__(
 	"	.size installer_kernel_service_none, .-installer_kernel_service_none\n"
 	"	.popsection\n"
 );
-/* installer_kernel_service_none from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_kernel_service_none,\"ax\",@progbits\n"
-	"	.globl c_installer_kernel_service_none\n"
-	"	.type c_installer_kernel_service_none, @function\n"
-	"c_installer_kernel_service_none:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr installer_kernel_service_none\n"
-	"	move.l %d7,%d0\n"
-	"	extb.l %d0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_kernel_service_none, .-c_installer_kernel_service_none\n"
-	"	.popsection\n"
-);
+/* installer_kernel_service_none takes its arguments in registers: no binding, so C cannot call it */
 
 /* installer::00101d84 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -96354,23 +95054,7 @@ __asm__(
 	"	.size installer_kernel_check_task, .-installer_kernel_check_task\n"
 	"	.popsection\n"
 );
-/* installer_kernel_check_task from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_kernel_check_task,\"ax\",@progbits\n"
-	"	.globl c_installer_kernel_check_task\n"
-	"	.type c_installer_kernel_check_task, @function\n"
-	"c_installer_kernel_check_task:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a5\n"
-	"	jsr installer_kernel_check_task\n"
-	"	move.l %a0,%d0\n"
-	"	move.l %d0,%a0\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_kernel_check_task, .-c_installer_kernel_check_task\n"
-	"	.popsection\n"
-);
+/* installer_kernel_check_task takes its arguments in registers: no binding, so C cannot call it */
 
 /* installer::00102572 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -96417,21 +95101,7 @@ __asm__(
 	"	.size installer_kernel_check_exchange, .-installer_kernel_check_exchange\n"
 	"	.popsection\n"
 );
-/* installer_kernel_check_exchange from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_kernel_check_exchange,\"ax\",@progbits\n"
-	"	.globl c_installer_kernel_check_exchange\n"
-	"	.type c_installer_kernel_check_exchange, @function\n"
-	"c_installer_kernel_check_exchange:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%a5\n"
-	"	jsr installer_kernel_check_exchange\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_kernel_check_exchange, .-c_installer_kernel_check_exchange\n"
-	"	.popsection\n"
-);
+/* installer_kernel_check_exchange takes its arguments in registers: no binding, so C cannot call it */
 
 /* installer::0010259c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -96466,20 +95136,7 @@ __asm__(
 	"	.size installer_kernel_check_segment, .-installer_kernel_check_segment\n"
 	"	.popsection\n"
 );
-/* installer_kernel_check_segment from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_kernel_check_segment,\"ax\",@progbits\n"
-	"	.globl c_installer_kernel_check_segment\n"
-	"	.type c_installer_kernel_check_segment, @function\n"
-	"c_installer_kernel_check_segment:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	jsr installer_kernel_check_segment\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_kernel_check_segment, .-c_installer_kernel_check_segment\n"
-	"	.popsection\n"
-);
+/* installer_kernel_check_segment takes its arguments in registers: no binding, so C cannot call it */
 
 /* installer::001025b0 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -97850,7 +96507,7 @@ __asm__(
 	"	.size installer_psos_call, .-installer_psos_call\n"
 	"	.popsection\n"
 );
-/* installer_psos_call returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* installer_psos_call returns in registers C has no names for: the hand-written C binds them */
 
 /* installer::00102a8a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -97898,7 +96555,7 @@ __asm__(
 	"	.size installer_psos_io_call, .-installer_psos_io_call\n"
 	"	.popsection\n"
 );
-/* installer_psos_io_call returns in registers C has no names for: no bridge, the hand-written C binds them */
+/* installer_psos_io_call returns in registers C has no names for: the hand-written C binds them */
 
 /* installer::00102aa4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -97944,19 +96601,7 @@ __asm__(
 	"	.size installer_psos_pack_name, .-installer_psos_pack_name\n"
 	"	.popsection\n"
 );
-/* installer_psos_pack_name from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_psos_pack_name,\"ax\",@progbits\n"
-	"	.globl c_installer_psos_pack_name\n"
-	"	.type c_installer_psos_pack_name, @function\n"
-	"c_installer_psos_pack_name:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	jsr installer_psos_pack_name\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_psos_pack_name, .-c_installer_psos_pack_name\n"
-	"	.popsection\n"
-);
+/* installer_psos_pack_name takes its arguments in registers: no binding, so C cannot call it */
 
 /* installer::00102abc */
 #if 0 /* the decompiler's reading; rewritten in installer_os.c */
@@ -99191,20 +97836,7 @@ __asm__(
 	"	.size installer_drtb_unlock, .-installer_drtb_unlock\n"
 	"	.popsection\n"
 );
-/* installer_drtb_unlock from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_drtb_unlock,\"ax\",@progbits\n"
-	"	.globl c_installer_drtb_unlock\n"
-	"	.type c_installer_drtb_unlock, @function\n"
-	"c_installer_drtb_unlock:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr installer_drtb_unlock\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_drtb_unlock, .-c_installer_drtb_unlock\n"
-	"	.popsection\n"
-);
+/* installer_drtb_unlock takes its arguments in registers: no binding, so C cannot call it */
 
 /* installer::00103394 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -99244,20 +97876,7 @@ __asm__(
 	"	.size installer_drtb_lock, .-installer_drtb_lock\n"
 	"	.popsection\n"
 );
-/* installer_drtb_lock from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_drtb_lock,\"ax\",@progbits\n"
-	"	.globl c_installer_drtb_lock\n"
-	"	.type c_installer_drtb_lock, @function\n"
-	"c_installer_drtb_lock:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr installer_drtb_lock\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_drtb_lock, .-c_installer_drtb_lock\n"
-	"	.popsection\n"
-);
+/* installer_drtb_lock takes its arguments in registers: no binding, so C cannot call it */
 
 /* installer::00103868 */
 #if 0 /* the decompiler's reading; rewritten in installer_duartb.c */
@@ -104239,21 +102858,7 @@ __asm__(
 	"	.size installer_float_compare, .-installer_float_compare\n"
 	"	.popsection\n"
 );
-/* installer_float_compare from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_float_compare,\"ax\",@progbits\n"
-	"	.globl c_installer_float_compare\n"
-	"	.type c_installer_float_compare, @function\n"
-	"c_installer_float_compare:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr installer_float_compare\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_float_compare, .-c_installer_float_compare\n"
-	"	.popsection\n"
-);
+/* installer_float_compare takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* installer::001089d4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -104377,20 +102982,7 @@ __asm__(
 	"	.size installer_float_to_integer, .-installer_float_to_integer\n"
 	"	.popsection\n"
 );
-/* installer_float_to_integer from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_float_to_integer,\"ax\",@progbits\n"
-	"	.globl c_installer_float_to_integer\n"
-	"	.type c_installer_float_to_integer, @function\n"
-	"c_installer_float_to_integer:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr installer_float_to_integer\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_float_to_integer, .-c_installer_float_to_integer\n"
-	"	.popsection\n"
-);
+/* installer_float_to_integer takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* installer::00108a66 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -104470,20 +103062,7 @@ __asm__(
 	"	.size installer_float_to_unsigned, .-installer_float_to_unsigned\n"
 	"	.popsection\n"
 );
-/* installer_float_to_unsigned from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_float_to_unsigned,\"ax\",@progbits\n"
-	"	.globl c_installer_float_to_unsigned\n"
-	"	.type c_installer_float_to_unsigned, @function\n"
-	"c_installer_float_to_unsigned:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	jsr installer_float_to_unsigned\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_float_to_unsigned, .-c_installer_float_to_unsigned\n"
-	"	.popsection\n"
-);
+/* installer_float_to_unsigned takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* installer::00108b02 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -104518,21 +103097,7 @@ __asm__(
 	"	.size installer_float_multiply_in_place, .-installer_float_multiply_in_place\n"
 	"	.popsection\n"
 );
-/* installer_float_multiply_in_place from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_float_multiply_in_place,\"ax\",@progbits\n"
-	"	.globl c_installer_float_multiply_in_place\n"
-	"	.type c_installer_float_multiply_in_place, @function\n"
-	"c_installer_float_multiply_in_place:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%a0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr installer_float_multiply_in_place\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_float_multiply_in_place, .-c_installer_float_multiply_in_place\n"
-	"	.popsection\n"
-);
+/* installer_float_multiply_in_place takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* installer::00108b0c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -104857,21 +103422,7 @@ __asm__(
 	"	.size installer_float_multiply, .-installer_float_multiply\n"
 	"	.popsection\n"
 );
-/* installer_float_multiply from gcc's convention: its arguments from the stack into its registers */
-__asm__(
-	"	.pushsection .text.c_installer_float_multiply,\"ax\",@progbits\n"
-	"	.globl c_installer_float_multiply\n"
-	"	.type c_installer_float_multiply, @function\n"
-	"c_installer_float_multiply:\n"
-	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
-	"	move.l (48,%sp),%d0\n"
-	"	move.l (52,%sp),%d1\n"
-	"	jsr installer_float_multiply\n"
-	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
-	"	rts\n"
-	"	.size c_installer_float_multiply, .-c_installer_float_multiply\n"
-	"	.popsection\n"
-);
+/* installer_float_multiply takes its arguments in registers: bindings/softfloat.h binds it */
 
 /* installer::00108c62 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */

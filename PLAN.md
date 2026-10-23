@@ -1821,9 +1821,34 @@ view cannot drift apart.  The library, bottom up:
   so that a Unicorn whose behavior differs fails it and the workarounds
   are revisited rather than kept by habit.  Upstream, #2380 reports the
   read and `dev`'s `5d5da58` (#2420, 2026-10-17) removes the
-  assignment, unreleased; the PC write's loss has no report.  Whether
-  `dev` keeps the second bug, and so the stopped-run workaround, is
-  untested.
+  assignment, unreleased; the PC write's loss has no report.
+
+  Done 2026-10-23, the check keyed on behavior: each case of
+  `unicorn_check.py` says whether the installed Unicorn shows its bug
+  or the fix and fails where that differs from its `Bug.expected`,
+  printing the planned action; the version is only reported, since
+  `dev` (2a05c41831, 2026-10-18) still calls itself 2.1.4.  On `dev`
+  bug 1 shows fixed and bug 2 present, so the check fails saying to
+  drop the SR-read workaround and keep the PC-write one.  Bug 2 has
+  three more symptoms, all of the translator not storing its lazy
+  `cc_op` before a code hook part way through a block, now pinned as
+  present on 2.1.4 and `dev`: a read of SR from the hook returns stale
+  codes; a write of SR from it is read by the rest of the block as the
+  operands of the instruction that set the codes; and a write of SR
+  from it on an instruction that then faults is undone by
+  `restore_state_to_opc()`.  Audit: the harness's code hooks read SR
+  only through a saved context and keep only its
+  system byte, which is not lazy, and write SR only with PC
+  (`status_pop` and `probed` going on with a trap), the PC write ending the block before the instruction runs,
+  so neither the rest of the block nor a fault sees the write; every
+  other SR read or write is in an interrupt hook, where QEMU has
+  stored `cc_op`, or outside a run.  The check pins that last pattern
+  too.  Planned upstream, filed by the user: an issue and a PR for bug
+  2, storing `cc_op` in `m68k_tr_insn_start()` for an instruction a
+  code hook covers and going on `CC_OP_DYNAMIC`, with four unit tests;
+  with it `dev`'s ctest and `test_m68k` pass and the check shows both
+  bugs fixed.  When a release has #2420, bump the pin, drop the probe,
+  set `BUG_1.expected` to fixed; likewise bug 2 and the stopped run.
 
   Done 2026-10-23, the harness's checks of what the gcc 13 sweep
   found: cases start the registers a function reads as its caller left

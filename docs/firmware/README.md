@@ -1103,16 +1103,24 @@ compare would have read `1 cmp 2` and `2 cmp 1` both as `00`, and
 kernel service 33 or an interrupt between a compare and its branch
 changed the branch; no figure changed with the fix.
 `tools/firmware/unicorn_check.py` (`make check-unicorn`, which `make
-check-decompiled` runs first, and so CI) keeps both bugs in view: on
-a compare of 2 with 2 and of 1 with 2, each then recorded by `scs` and
-`seq`, it checks that Unicorn's read after a stop and in a trap's
-hook, and a code hook's write of PC, still give the codes and the
-branches recorded wrong, and that the harness's `system_status`, probe
-and stopped run give the right ones.  It fails if a bug changes, in a
-new Unicorn say, so that the workarounds here are revisited; Unicorn's
-`dev` branch already drops the read's assignment (`5d5da58`, "Don't
-clobber condition codes when reading SR", #2420), which no release has
-yet.  The kernel's traps, `#3` and `#4`, are
+check-decompiled` runs first, and so CI) keeps both bugs in view, by
+what Unicorn does rather than by its version, which a `dev` build
+reports as 2.1.4 too: on a compare of 2 with 2 and of 1 with 2, each
+then recorded by `scs` and `seq`, each case says whether Unicorn shows
+its bug or the fix, and fails where that is not what the workarounds
+expect, today both bugs present, printing what to do: for the read
+fixed, drop the probe and keep the stopped run.  Bug 1's cases are the
+read after a stop and in a trap's hook; bug 2's, all from a code hook
+part way through a block after the compare, a write of PC, a read of
+SR, which returns stale codes, a write of SR, which the rest of the
+block reads as the compare's operands, and a write of SR on a load
+that then faults, which the fault undoes.  It also checks that the
+harness's `system_status`, probe and stopped run, and a write of SR
+with PC from a code hook as `move (SP)+,SR` does, give the right
+codes.  Nothing here reads SR's codes or writes SR without PC from a
+code hook (PLAN.md).  Unicorn's `dev` branch already drops the read's
+assignment (`5d5da58`, "Don't clobber condition codes when reading
+SR", #2420), which no release has yet, and keeps bug 2.  The kernel's traps, `#3` and `#4`, are
 answered: for each service and I/O function (`psos.md`) the harness
 knows, from the binding's stubs, the registers it reads and returns
 in; a call records the service and those registers, a message by the

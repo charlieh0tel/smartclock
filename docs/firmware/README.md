@@ -267,7 +267,8 @@ gives each such call its callee's prototype.
 
 Six GhidraScripts in `tools/ghidra/` take an image imported raw at
 address zero as `68000:BE:32:CPU32` to C, under `analyzeHeadless
--postScript` or ghidra-mcp's `run_ghidra_script`, and a seventh,
+-postScript` or [ghidra-mcp](https://github.com/bethington/ghidra-mcp)'s
+`run_ghidra_script` (7.0.0, at `cf8b12d`), and a seventh,
 optional, surveys what they leave untyped.  Each is meant to be
 run again over its own earlier output; their dry-run modes cover only
 part of what they change.  In order:
@@ -1484,8 +1485,10 @@ is `third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c`.
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,
 a Ghidra archive in Git LFS (install `git-lfs` to fetch it): restore it (File, Restore Project, or ghidra-mcp's
 `restore_project`) to work on it, and archive it over that file after
-work worth keeping.  The scripts rebuild everything in it from the
-image but names given by hand.  An exception in a script does not roll
+work worth keeping.  Run over it, the scripts reproduce the checked-in
+export; over the bare image, not yet, and
+[`rewrite.md`, "Reproducing"](rewrite.md#reproducing) gives both
+command lines and what differs.  An exception in a script does not roll
 back what it did, so save the program before each script that changes
 it.
 

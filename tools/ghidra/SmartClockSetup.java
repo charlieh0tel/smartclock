@@ -9,7 +9,8 @@
 //   dry-run
 //       report the functions in data that would be removed, and do not
 //       remove them; everything else is applied.
-//   types=tools/ghidra/types/smartclock.h, then types=.../mc68331.h
+//   types=tools/ghidra/types/smartclock.h, then
+//       types=third_party/firmware/include/mc68331.h
 //       C declarations of the firmware's structures and the CPU's
 //       modules, parsed into the program in the order given, before
 //       the names, so that names can use them; their #defines are

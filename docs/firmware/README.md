@@ -275,8 +275,8 @@ part of what they change.  In order:
    with an unusable primary").
 3. `SmartClockSetup.java` again, now over the installer too, with
    `types=tools/ghidra/types/smartclock.h`,
-   `types=tools/ghidra/types/mc68331.h`,
-   `types=tools/ghidra/types/mc68681.h`,
+   `types=third_party/firmware/include/mc68331.h`,
+   `types=third_party/firmware/include/mc68681.h`,
    `names=tools/ghidra/names/IMAGE.tsv`, and
    `names=tools/ghidra/names/IMAGE.scpi-tree.tsv` and
    `names=tools/ghidra/names/IMAGE.installer-scpi-tree.tsv` where `make
@@ -287,9 +287,9 @@ part of what they change.  In order:
 4. `SmartClockForth.java`.
 5. `SmartClockStackParameters.java`.
 6. `SmartClockFormatStrings.java`.
-7. `SmartClockExportC.java FILE defines=tools/ghidra/types/mc68331.h
-   defines=tools/ghidra/types/mc68681.h
-   defines=tools/ghidra/types/psos-signals.h
+7. `SmartClockExportC.java FILE defines=third_party/firmware/include/mc68331.h
+   defines=third_party/firmware/include/mc68681.h
+   defines=third_party/firmware/include/psos-signals.h
    results=tools/ghidra/names/results.tsv rewritten=third_party/firmware/rewritten/IMAGE`.
 
 Optionally, after step 3 or any later one,
@@ -463,46 +463,45 @@ stack.  Ghidra's 68000 convention returns a float or double in the FPU
 register FP0, but these images have no FPU and return one in D0 or
 D0:D1, so every function returning one has its return annotated.
 
-`types/psos-signals.h` names, as `#define`s, the signals the drivers
-send their tasks, bits of the events `signal_v` ORs into a task's
-pending word, by the firmware's own messages: `"wait_v SIG_SIQ error in
-getc"` beside `psos_wait_v(0x4000,...)`.  A bit is a task's -- 0x800 is
-`SIGINTR` to the console's and `SIG_SOQA` to the GPS task, 0x200 the
-SCI's output queue and the interpolator's reading -- so each name lists
-the functions of the driver its message comes from, and the exporter
-names a constant signal a call to `signal_v`, `wait_v` or `get_v`
-passes only there: `psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0)`.  1, 0x20
-and 0x100, which no message names, stay numbers.
+`third_party/firmware/include/psos-signals.h` names, as `#define`s, the
+signals the drivers send their tasks, bits of the events `signal_v` ORs
+into a task's pending word, by the firmware's own messages: `"wait_v
+SIG_SIQ error in getc"` beside `psos_wait_v(0x4000,...)`.  A bit is a
+task's -- 0x800 is `SIGINTR` to the console's and `SIG_SOQA` to the GPS
+task, 0x200 the SCI's output queue and the interpolator's reading -- so
+each name lists the functions of the driver its message comes from, and
+the exporter names a constant signal a call to `signal_v`, `wait_v` or
+`get_v` passes only there: `psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0)`.  1,
+0x20 and 0x100, which no message names, stay numbers.
 
-`types/mc68331.h` lays out the CPU's own modules as the names file
-types them: `gpt` (`0xfff900`), `sim` (`0xfffa00`) and `qsm`
-(`0xfffc00`), each register a field at its offset in MC68331UM Tables
-D-2, D-3 and D-13; and it names their bits, `SCCR1_TIE`, from the
+`third_party/firmware/include/mc68331.h` lays out the CPU's own modules
+as the names file types them: `gpt` (`0xfff900`), `sim` (`0xfffa00`) and
+`qsm` (`0xfffc00`), each register a field at its offset in MC68331UM
+Tables D-2, D-3 and D-13; and it names their bits, `SCCR1_TIE`, from the
 registers' pages in Appendix D, as `#define`s, which Setup leaves out of
-what Ghidra parses and the exporter copies into the C (`defines=`).
-The exporter then names the constants written to or tested in a
-register by those bits, where every bit has a name, so that the C
-reads `qsm.sccr1 = uVar1 | SCCR1_TIE` and `uVar1 & ~SCCR1_PE`.  A pair
-of byte registers the firmware only ever moves as a word is one field,
-named for both, with bits named across the word: `gpt.tmsk` for TMSK1
-and TMSK2, so that `gpt.tmsk = uVar2 | TMSK_OCI3`, and `gpt.tflg`.  The
-ports' bits, the board's wiring, stay numbers.  A register the
-decompiler reads into a local first, as it does a volatile one, names
-the local's tests too, `uVar1 = qsm.scsr;` then `(uVar1 & SCSR_TDRE)
-== 0`, where every copy into the local is of that one register or the
-test is the statement after the copy: `duarta_isr` reads `sr_csr` and
-`rb_tb` into one local.  `types/mc68681.h` does
-the same for the DUART, `duart` (`0x200000`), from Motorola's MC68681
-data sheet (Tables 4-1 and 4-5): a channel's registers are a
-`duart_channel`, `duart.a` and `duart.b`, and a register read and the
-one written at its address are one field, named read then write,
-`sr_csr`, whose constant a store names by the written register's bits
-and a test by the read one's.  A register whose codes are not single
-bits, the command register's, is named only by a code it equals, so
-that `duart.b.cr = CR_RESET_RECEIVER`, and a code is never split into
-bits that do not mean it.  The code's shadow of the DUART's write-only
-registers, `duart_shadow`, is named by the same bits:
-`duart_shadow.imr & ~IMR_TXRDYB`.
+what Ghidra parses and the exporter copies into the C (`defines=`).  The
+exporter then names the constants written to or tested in a register by
+those bits, where every bit has a name, so that the C reads `qsm.sccr1 =
+uVar1 | SCCR1_TIE` and `uVar1 & ~SCCR1_PE`.  A pair of byte registers
+the firmware only ever moves as a word is one field, named for both,
+with bits named across the word: `gpt.tmsk` for TMSK1 and TMSK2, so that
+`gpt.tmsk = uVar2 | TMSK_OCI3`, and `gpt.tflg`.  The ports' bits, the
+board's wiring, stay numbers.  A register the decompiler reads into a
+local first, as it does a volatile one, names the local's tests too,
+`uVar1 = qsm.scsr;` then `(uVar1 & SCSR_TDRE) == 0`, where every copy
+into the local is of that one register or the test is the statement
+after the copy: `duarta_isr` reads `sr_csr` and `rb_tb` into one local.
+`third_party/firmware/include/mc68681.h` does the same for the DUART,
+`duart` (`0x200000`), from Motorola's MC68681 data sheet (Tables 4-1 and
+4-5): a channel's registers are a `duart_channel`, `duart.a` and
+`duart.b`, and a register read and the one written at its address are
+one field, named read then write, `sr_csr`, whose constant a store names
+by the written register's bits and a test by the read one's.  A register
+whose codes are not single bits, the command register's, is named only
+by a code it equals, so that `duart.b.cr = CR_RESET_RECEIVER`, and a
+code is never split into bits that do not mean it.  The code's shadow of
+the DUART's write-only registers, `duart_shadow`, is named by the same
+bits: `duart_shadow.imr & ~IMR_TXRDYB`.
 
 `types/smartclock.h` declares the structures (`structures.md`), parsed
 into the program before the names so a row may use them: a label's

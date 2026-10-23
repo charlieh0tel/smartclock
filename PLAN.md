@@ -1125,7 +1125,8 @@ view cannot drift apart.  The library, bottom up:
      (`__ghidra_piece`, `CONCAT22`, `CONCAT31` on `local_8`), the soft
      float library's own bit work, and then by hand.  Named, too: the
      signals the drivers send their tasks, by the firmware's messages
-     (`SIG_SIQ`, `SIG_SOQA`; `types/psos-signals.h`), and a device
+     (`SIG_SIQ`, `SIG_SOQA`;
+     `third_party/firmware/include/psos-signals.h`), and a device
      register's bits where the decompiler reads it into a local first
      (`SCSR_TDRE`, `SR_RXRDY`).  Then types, in the shared headers
      where they can be, so the other images take them: a

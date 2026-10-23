@@ -149,7 +149,7 @@ or created: `kernel_allocate_for_task` (`0x150dc`),
 (`0x157f0`), `signal_v`'s body, which ORs the events into a task's
 pending word and wakes it if they satisfy its wait.  The drivers' events
 are named by the firmware's own messages, `SIG_SIQ` and the like, in
-`tools/ghidra/types/psos-signals.h`.  `jam_x` is
+`third_party/firmware/include/psos-signals.h`.  `jam_x` is
 `send_x`'s body with A4 set.
 
 A6 holds the kernel's configuration and state throughout.  The ready

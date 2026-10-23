@@ -1,3 +1,21 @@
+smartclockmon (1.7.0-1) unstable; urgency=low
+
+  * The Debian package splits in two.  smartclock-utils carries
+    smartclock-cli and, new to the packages, smartclock-sim;
+    smartclockmon carries the daemon, the terminal monitor, the web
+    view, the exporter and smartclock-sensord, and depends on
+    smartclock-utils.  apt upgrade or apt full-upgrade installs the new
+    package; apt-get upgrade and unattended-upgrades hold smartclockmon
+    back until one of them runs.
+  * temper is recommended, no longer required: without it
+    smartclock-sensord still reads hwmon and IIO sensors.
+  * smartclock-cli dump-scpi prints handler addresses (--handlers) and
+    writes an image's SCPI trees as C and as names-file rows.
+  * The repository is now charlieh0tel/smartclock, and carries the
+    Z3805A 3543B's firmware rewritten as C, checked against the image.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Fri, 23 Oct 2026 14:53:53 -0700
+
 smartclockmon (1.6.11-1) unstable; urgency=low
 
   * The live page gives each of a receiver's facts its own line in

@@ -171,8 +171,10 @@ lag, or to leave out a stretch such as a crystal trim.  "Locked only", on by def
 recovery and at power-up, when the EFC is frozen or being slewed;
 `/api/history` takes it as `locked=1`.
 
-`/kiosk`: one screen for an unattended 1920x1280 display; no
-controls, no pointer, no scrolling.  Left, the snapshot in large type
+`/kiosk`: one screen for an unattended landscape display; no
+controls, no pointer, no scrolling.  Full size from 1440x1080 CSS
+pixels inside the inset, scaled down to fit a smaller page (a player's
+display zoom can make one).  Left, the snapshot in large type
 (mode, receiver UTC and date, TI, EFC, TFOM, FFOM, satellites,
 temperature, holdover, alarms) over the journal, cut to fit; right,
 the live page's TI, EFC, satellites and temperature stack, with the
@@ -183,16 +185,17 @@ host's temperature sensors, and the MDEV/ADEV chart.
 | `receiver` | serial; default the first listed |
 | `last` | range in seconds, default 86400 (`from`/`to` as on the other pages) |
 | `inset` | overscan margin: `N` percent (of width at the sides, of height top and bottom, at most 25), `Npx` pixels; one value for every edge or `X,Y` for sides, then top and bottom (`3`, `2,4`, `40px`, `24px,32px`); anything else is ignored |
-| `debug` | the foot leads with how many times this browser has loaded the page with `debug`, and this load's uptime |
+| `debug` | the foot leads with how many times this browser has loaded the page with `debug`, whether this load was a navigation or a reload, its uptime, the Chrome version, the viewport, device pixel ratio and scale, and the last uncaught error |
 
 | What | Every |
 | --- | --- |
 | snapshot (large type) | 1 s |
-| clock | 1 s, counted on locally from the last fast poll; stops, dims and shows its age once that poll is over 3 s old or the link is not live |
+| clock | 1 s, counted on from the receiver's time at the last fast poll, by the display's own clock from when it saw that poll; stops, dims and shows its age once no new poll has come for 3 s or the link is not live |
 | stack, journal | Auto: 60 s, longer once `last` over the window's width in pixels exceeds 60 s |
 | MDEV/ADEV | 10 min |
 
-Never reads `/api/status`, so no status screen and no sky plot.  Each
+Never reads `/api/status`, so no status screen and no sky plot.  Never
+changes its address or history.  Each
 update writes only what changed: tiles, clock and charts are kept and
 updated in place, a y axis refits without redrawing its chart, and a
 lost link dims the last values rather than blanking them.

@@ -290,11 +290,14 @@ const AXIS_RULE = "#2b3038";
 // An axis as every chart draws one.
 const AXIS = { stroke: AXIS_INK, grid: { stroke: AXIS_RULE }, ticks: { stroke: AXIS_RULE } };
 // The least room between time labels, in CSS pixels, with a larger
-// font: uPlot's own 50 suits its own 12 px text.
+// font of WIDE_FONT_PX: uPlot's own 50 suits its own 12 px text.
 const WIDE_TIME_SPACE = 140;
-// The time axis's height with a larger font, for its two lines of
-// labels: uPlot's own 50 clips the second.
+// The time axis's height with that font, for its two lines of labels:
+// uPlot's own 50 clips the second.
 const WIDE_TIME_SIZE = 66;
+// The font size the two above are for; another is given room in
+// proportion.
+const WIDE_FONT_PX = 17;
 
 // The options every chart in a stack of time charts shares:
 //   width, height  its size
@@ -312,7 +315,8 @@ const WIDE_TIME_SIZE = 66;
 //                  the range
 function stackOptions(stack) {
   const font = stack.font ? { font: stack.font } : {};
-  const timeRoom = stack.font ? { space: WIDE_TIME_SPACE, size: WIDE_TIME_SIZE } : {};
+  const wide = stack.font ? parseFloat(stack.font) / WIDE_FONT_PX : 0;
+  const timeRoom = stack.font ? { space: WIDE_TIME_SPACE * wide, size: WIDE_TIME_SIZE * wide } : {};
   return {
     width: stack.width,
     height: stack.height,

@@ -136,8 +136,9 @@ function liveQuery() {
 // a reload or a shared link -- the receiver, the range, the columns --
 // goes through here, so none of them wipes another's setting.  `push`
 // makes the change a step the browser's Back button undoes; only a
-// change of range is one.
+// change of range is one.  Nothing is written while `addressFixed`.
 function remember(params, push = false) {
+  if (addressFixed) return;
   const q = new URLSearchParams(location.search);
   for (const [k, v] of Object.entries(params)) {
     if (v === null || v === undefined) q.delete(k);
@@ -149,6 +150,10 @@ function remember(params, push = false) {
   else history.replaceState(null, "", url);
   remembered = location.search;
 }
+// Whether the page leaves its address as it was loaded.  The kiosk
+// does: a signage player may take a changed address as a cue to load
+// its own again.
+let addressFixed = false;
 // The address as this page last wrote it.  Back restores an older
 // address whole, and only its range is wanted from it.
 let remembered = location.search;

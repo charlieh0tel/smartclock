@@ -919,3 +919,35 @@ test("the kiosk redraws in place: the same tiles and charts, new y axes, nothing
     expect(after.written).not.toContain(id);
   }
 });
+
+test("the kiosk never changes its address, and never runs past the screen", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1280 });
+  await page.addInitScript(() => {
+    window.addressWrites = 0;
+    for (const name of ["pushState", "replaceState"]) {
+      const original = history[name].bind(history);
+      history[name] = (...args) => {
+        window.addressWrites++;
+        return original(...args);
+      };
+    }
+  });
+  await twoUnits().install(page);
+  const address = `/kiosk?receiver=${A}`;
+  await page.goto(address, { waitUntil: "domcontentloaded" });
+  const fits = () => page.evaluate(() =>
+    Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) <= innerHeight);
+  expect(await fits()).toBe(true);
+  await page.waitForFunction(() => charts.length > 0 && deviation && $("kiosk-journal-rows").textContent);
+  expect(await fits()).toBe(true);
+  const length = await page.evaluate(() => history.length);
+  for (let n = 0; n < 3; n++) {
+    await page.evaluate(() => renew(true));
+    await page.waitForTimeout(1500);
+    expect(await fits()).toBe(true);
+  }
+  const after = await page.evaluate(() => ({ href: location.href, length: history.length, writes: addressWrites }));
+  expect(new URL(after.href).pathname + new URL(after.href).search).toBe(address);
+  expect(after.length).toBe(length);
+  expect(after.writes).toBe(0);
+});

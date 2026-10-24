@@ -58,6 +58,25 @@ const haveUplot = typeof uPlot !== "undefined";
 // stability curve to reach past the loop's time constant.
 readRange(86400);
 
+// The margin a display that overscans hides at its edges, from
+// `?inset=`: one length for every edge, or two, the sides' then the
+// top and bottom's.  A bare number is a percent of the screen's width
+// (the sides) or height (top and bottom), as overscan is given; a
+// number with `px` is pixels.  Anything else is ignored.
+const INSET = /^(\d+(?:\.\d+)?)(px)?$/;
+const INSET_MOST = 25;
+function inset() {
+  const asked = new URLSearchParams(location.search).get("inset");
+  if (!asked) return;
+  const parts = asked.split(",").map((x) => x.trim().match(INSET));
+  if (!parts.length || parts.length > 2 || parts.some((m) => !m)) return;
+  const [sides, ends = sides] = parts;
+  const length = (m, unit) => m[2] ? `${m[1]}px` : `${Math.min(Number(m[1]), INSET_MOST)}${unit}`;
+  document.body.style.setProperty("--inset-x", length(sides, "vw"));
+  document.body.style.setProperty("--inset-y", length(ends, "vh"));
+}
+inset();
+
 // The live page's columns that are worth a glance from across a room:
 // the time error, the steering, the sky's health, and the temperature
 // the steering follows.  The figures of merit and the holdover

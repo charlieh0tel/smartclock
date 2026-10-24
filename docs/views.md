@@ -187,7 +187,11 @@ the oldest field's age are a quiet line at the foot.  The right column
 is the live page's stack of 1 PPS TI, EFC, satellites and internal
 temperature, with the host's temperature sensors joined below it, and
 the stability page's MDEV and ADEV, all over a day unless the address
-says otherwise (`?last=`, and `?receiver=`).  The figures of merit and
+says otherwise (`?last=`, and `?receiver=`).  A display that overscans,
+cutting off its edges, takes `?inset=`: a percent of the screen for
+every edge (`?inset=3`), or the sides' and the top and bottom's
+(`?inset=2,4`), or pixels (`?inset=40px`, `?inset=24px,32px`); the
+page lays itself out inside what is left.  The figures of merit and
 the holdover prediction are not charted, since their current value is
 what a glance wants; oven current, its coefficient, raw EFC, TDEV,
 MTIE and the stability table are for diagnosis, not watching.  There

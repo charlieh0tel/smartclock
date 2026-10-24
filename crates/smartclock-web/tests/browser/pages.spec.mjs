@@ -863,3 +863,20 @@ test("a sensor read less often than the buckets are wide is still drawn as a lin
   expect(drawn.points).toBeGreaterThan(1);
   expect(drawn.missing).toBe(0);
 });
+
+test("the kiosk lays itself out inside the inset an overscanning display asks for", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1280 });
+  await twoUnits().install(page);
+  await page.goto(`/kiosk?receiver=${A}&inset=2,4`);
+  const padding = await page.evaluate(() => {
+    const style = getComputedStyle(document.body);
+    return [style.paddingLeft, style.paddingTop].map(parseFloat);
+  });
+  // 12px of the page's own, and 2% of the width at the sides, 4% of the
+  // height at the top and bottom.
+  expect(padding[0]).toBeCloseTo(12 + 0.02 * 1920, 0);
+  expect(padding[1]).toBeCloseTo(12 + 0.04 * 1280, 0);
+  // Nothing scrolls: the page still fits the screen.
+  const fits = await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight);
+  expect(fits).toBe(true);
+});

@@ -1,3 +1,13 @@
+smartclockmon (1.7.4-1) unstable; urgency=low
+
+  * A reload of the kiosk page paints dark at once, with the last
+    state it saw, instead of white then empty panels.
+  * Charts in a stack are the same height: the bottom one no longer
+    loses its plot to the time axis.  The host's sensors are titled by
+    name, and keep their colors on every chart.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sat, 24 Oct 2026 14:25:16 -0700
+
 smartclockmon (1.7.3-1) unstable; urgency=low
 
   * The kiosk page takes ?inset= for a display that overscans, and

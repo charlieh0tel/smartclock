@@ -735,8 +735,8 @@ function stackCharts(container, read, style) {
   const fits = stackFits(read, height);
   const ySize = stackWidth(fits);
   const charts = read.drawn.map((drawing, n) => {
-    // Lines are colored, and named in the title, only to tell several
-    // apart.
+    // A receiver's lines are colored, and named in the title, only to
+    // tell several apart.
     const several = drawing.lines.length > 1;
     const host = document.createElement("div");
     container.appendChild(host);
@@ -780,8 +780,9 @@ function stackCharts(container, read, style) {
     chart.smartclockAxis = held;
     // Which lines this chart draws, and from which series, so a shared
     // readout can label them without reaching back into the request
-    // that built it.  A line's color is said only where there are
-    // several to tell apart.  A sensor's line is read out with its
+    // that built it.  A receiver's line's color is said only where
+    // there are several to tell apart; a sensor's always, since it is
+    // that sensor's on every chart.  A sensor's line is read out with its
     // quantity and unit, which its chart's title says but the readout
     // does not.
     chart.smartclockLines = drawing.lines.map((l, i) => ({
@@ -789,7 +790,7 @@ function stackCharts(container, read, style) {
       name: l.name,
       reading: l.reading,
       series: 1 + (drawing.envelope ? 2 : 0) + i,
-      color: several ? l.color : null,
+      color: several || l.name ? l.color : null,
     }));
     if (drawing.hint) hintAs(chart, drawing.hint);
     else hint(chart, ...drawing.lines.map((l) => l.column));

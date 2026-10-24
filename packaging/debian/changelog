@@ -1,3 +1,13 @@
+smartclockmon (1.7.3-1) unstable; urgency=low
+
+  * The kiosk page takes ?inset= for a display that overscans, and
+    updates in place without redrawing.  It no longer rewrites its
+    address, which a signage player took for navigation.  ?debug
+    shows its load count, uptime, browser and viewport.
+  * smartclock-sim reports the host's UTC time of day.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sat, 24 Oct 2026 13:22:11 -0700
+
 smartclockmon (1.7.2-1) unstable; urgency=low
 
   * The web view has a kiosk page, /kiosk: one receiver's state in

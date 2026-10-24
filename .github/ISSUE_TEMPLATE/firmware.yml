@@ -1,0 +1,21 @@
+name: Firmware or hardware finding
+description: A correction or observation about a receiver's firmware, board or behavior on the bench
+labels: [firmware]
+body:
+  - type: textarea
+    id: finding
+    attributes:
+      label: Finding
+      description: What you found, and which document or code it corrects or adds to (e.g. docs/firmware/..., docs/hardware-investigations.md item N).
+    validations:
+      required: true
+  - type: input
+    id: unit
+    attributes:
+      label: Unit
+      description: The model and firmware revision, and the board or option if it matters.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Image addresses, measurements, photos, transcripts or manual citations.

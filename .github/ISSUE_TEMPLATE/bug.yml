@@ -1,0 +1,34 @@
+name: Bug report
+description: Something in the tools misbehaves with a receiver, the simulator or a firmware image
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The output of `smartclockd --version` or `smartclock-cli --version`, or a commit.
+    validations:
+      required: true
+  - type: input
+    id: receiver
+    attributes:
+      label: Receiver
+      description: The model and firmware, as `*IDN?` gives them (`smartclock-cli --device ... diagnose` heads its report with them), or "simulator".
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: OS and how the tools were installed (Debian package, Windows zip, built from source).
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output or logs
+      description: Commands run and their output, or the daemon's journal.
+      render: text

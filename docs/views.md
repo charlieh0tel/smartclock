@@ -171,6 +171,43 @@ lag, or to leave out a stretch such as a crystal trim.  "Locked only", on by def
 recovery and at power-up, when the EFC is frozen or being slewed;
 `/api/history` takes it as `locked=1`.
 
+`/kiosk` is one screen for an unattended display, laid out for
+1920x1280 landscape: no navigation, no controls, no pointer and no
+scrolling, and it reads itself again as the other pages do.  The left
+column is the receiver's state in large type, from the snapshot the
+strip polls every second: a dot for the link and the model; the mode
+(locked, holdover, recovering and so on), green when locked; the
+receiver's UTC and its corrected date; the 1 PPS TI, EFC, TFOM, FFOM
+with its meaning, satellites tracked of visible, internal temperature;
+holdover, its duration and error while in it and otherwise the 24
+hour prediction or why it is waiting; the alarms, or "no alarms"; and
+the newest of what the receiver recorded, a few transitions and as
+much of its own log as fits.  The serial, firmware, the daemon and
+the oldest field's age are a quiet line at the foot.  The right column
+is the live page's stack of 1 PPS TI, EFC, satellites and internal
+temperature, with the host's temperature sensors joined below it, and
+the stability page's MDEV and ADEV, all over a day unless the address
+says otherwise (`?last=`, and `?receiver=`).  The figures of merit and
+the holdover prediction are not charted, since their current value is
+what a glance wants; oven current, its coefficient, raw EFC, TDEV,
+MTIE and the stability table are for diagnosis, not watching.  There
+is no sky plot: drawing one needs a status screen, which costs the
+link 1.5 s a read, and the kiosk never asks for one.  Its charts and
+journal refit to the window whenever it changes size.
+
+The large type follows the snapshot, read every second.  The clock,
+unlike the strip's, counts on a second at a time from the receiver's
+time at its last fast poll, so it moves evenly however the polls
+arrive; it is the receiver's whole second counted on, so it can trail
+a wall clock by a second or two.  Once that poll is more than 3 s old,
+or the link is not live, it stops counting, dims, and says how old the
+time it shows is.  The stack and the journal are read every minute
+(Auto's interval for a day at that width; a shorter `?last=` reads
+more often), and the stability curve, which measures the whole range
+each time, every ten minutes.  The charts are given their new data in
+place, and drawn afresh only when what they show changes -- a chart
+appears or goes, or a y axis needs another range.
+
 The live, status, stability and correlation pages show one
 receiver at a time, chosen by a selector that appears once there is
 more than one and follows receivers and daemons as they come and go.

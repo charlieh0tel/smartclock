@@ -75,6 +75,10 @@ const COMPARE: &str = include_str!("compare.html");
 /// against the other, and at a lag.
 const CORRELATION: &str = include_str!("correlation.html");
 
+/// One screen for an unattended display: the state in large type, the
+/// live page's stack and the stability curve, with nothing to click.
+const KIOSK: &str = include_str!("kiosk.html");
+
 /// Shared by every page.
 const STYLE: &str = include_str!("style.css");
 
@@ -170,6 +174,7 @@ fn main() -> Result<()> {
             "/adev" => Response::ok("text/html; charset=utf-8", DEVIATION.to_owned()),
             "/compare" => Response::ok("text/html; charset=utf-8", COMPARE.to_owned()),
             "/correlation" => Response::ok("text/html; charset=utf-8", CORRELATION.to_owned()),
+            "/kiosk" => Response::ok("text/html; charset=utf-8", KIOSK.to_owned()),
             "/style.css" => Response::ok("text/css; charset=utf-8", STYLE.to_owned()),
             "/common.js" => Response::ok("text/javascript; charset=utf-8", COMMON.to_owned()),
             "/charts.js" => Response::ok("text/javascript; charset=utf-8", CHARTS.to_owned()),
@@ -771,6 +776,7 @@ mod tests {
     use super::CORRELATION;
     use super::Cache;
     use super::DEVIATION;
+    use super::KIOSK;
     use super::Logs;
     use super::PAGE;
     use super::SKY;
@@ -877,6 +883,17 @@ mod tests {
         assert_eq!(listed, vec![("X", "a.sqlite"), ("Y", "b.sqlite")]);
     }
 
+    /// The kiosk is left on a display for days: nothing it or the
+    /// scripts it loads asks for may cost the receiver a status screen,
+    /// which only `/api/status` reads.
+    #[test]
+    fn the_kiosk_never_reads_a_status_screen() {
+        for script in [KIOSK, COMMON, CHARTS] {
+            assert!(!script.contains("/api/status"));
+        }
+        assert!(!KIOSK.contains("/sky.js"));
+    }
+
     /// No two top-level names in a page and the scripts it loads clash.
     ///
     /// A page's scripts share one global scope, and JavaScript lets a
@@ -909,6 +926,7 @@ mod tests {
             ("adev.html", DEVIATION),
             ("compare.html", COMPARE),
             ("correlation.html", CORRELATION),
+            ("kiosk.html", KIOSK),
         ] {
             let mut scripts = vec![COMMON, page];
             for (path, script) in [("/charts.js", CHARTS), ("/sky.js", SKY)] {

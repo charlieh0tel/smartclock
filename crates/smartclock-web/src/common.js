@@ -190,6 +190,8 @@ async function listReceivers() {
     carryUnit();
   }
   const bar = $("unit-bar");
+  // A page without the picker, the kiosk, is shown the first unit.
+  if (!bar) return;
   if (list.length < 2) {
     bar.hidden = true;
     return;
@@ -212,6 +214,44 @@ async function listReceivers() {
   bar.hidden = false;
 }
 
+// ------------------------------------------------------------- journal
+//
+// The rows of `/api/journal`'s streams, as [when, what] in HTML, for
+// the live page's journal and the kiosk's.
+
+// The receiver's calendar can be behind by whole GPS epochs, so its own
+// stamps are shown as written and never silently corrected -- the
+// correction belongs where the rollover is known, not here.
+const journalRows = {
+  events: (r) => [local(r.at), `${esc(r.decoded)} <span class="muted">(${esc(r.register)} ${r.bits})</span>`],
+  entries: (r) => [stamped(r), `<span class="muted">#${r.entry}</span> ${esc(r.message)}`],
+  errors: (r) => [local(r.at), `<span class="muted">${r.code}</span> ${esc(r.message)}`],
+  notes: (r) => [
+    local(r.at),
+    `<span class="note-link" data-at="${Date.parse(r.at) / 1000}" ` +
+      `title="Show an hour either side on the charts">${esc(r.text)}</span>`,
+  ],
+};
+
+// The receiver's own stamp as it wrote it, or when the daemon read the
+// entry if it wrote none.  The Z3801A's hex stamp is seconds of GPS
+// time since 1980-01-06 (097-z3801-01 4-13), shown as a date with the
+// hex in the tooltip; like the calendar stamps, it is on the receiver's
+// clock and carries whatever week rollover that clock has.
+const GPS_EPOCH_MS = Date.UTC(1980, 0, 6);
+function stamped(r) {
+  if (!r.stamp) return local(r.at);
+  const hex = /^H([0-9A-F]{8})$/i.exec(r.stamp);
+  if (!hex) return esc(r.stamp);
+  const at = new Date(GPS_EPOCH_MS + parseInt(hex[1], 16) * 1000);
+  return `<span title="${esc(r.stamp)}">${esc(at.toISOString().slice(0, 19).replace("T", " "))} GPS</span>`;
+}
+
+const local = (iso) => {
+  const at = new Date(iso);
+  return isNaN(at) ? esc(iso) : esc(at.toLocaleString());
+};
+
 // ---------------------------------------------------------------- strip
 
 // Whether the last poll found a daemon with its receiver attached.
@@ -233,7 +273,7 @@ async function tick() {
     // numbers must not be painted under the new one's name.
     if (asked !== unit) return;
     if (s.error) {
-      lost("no daemon", s.error);
+      paintLost("no daemon", s.error);
       linkIs(false);
       return;
     }
@@ -245,7 +285,7 @@ async function tick() {
     } catch (e) {
       // A browser refusing storage costs the flash, nothing else.
     }
-    render(s, false);
+    paint(s, false);
     linkIs(s.freshness !== "Disconnected");
   } finally {
     ticking = false;
@@ -379,6 +419,10 @@ function render(s, cached) {
     sensorStrip();
 }
 
+// Paint the strip, or what the page shows in its place.
+const paint = (s, cached) => (page?.render ?? render)(s, cached);
+const paintLost = (what, why) => (page?.lost ?? lost)(what, why);
+
 // Nothing is known any more.
 function lost(what, why) {
   $("status").innerHTML =
@@ -436,7 +480,7 @@ function paintCached() {
   const asked = new URLSearchParams(location.search).get("receiver");
   try {
     const last = sessionStorage.getItem(`snapshot:${asked}`);
-    if (last) render(JSON.parse(last), true);
+    if (last) paint(JSON.parse(last), true);
   } catch (e) {
     // No cache, or unreadable: the strip just starts empty.
   }
@@ -473,6 +517,9 @@ function paintCached() {
 //                    for a page without a range
 //   floor            for a page with one, the shortest period its
 //                    refresh picker offers, in seconds
+//   render(s, cached), lost(what, why)
+//                    optional: paint the snapshot, or its absence, in
+//                    place of the strip, as `render` and `lost` do
 //   chosen()         optional: set up anything that depends on which
 //                    receiver it is, such as what it measures; called
 //                    once the receiver is known and on every change
@@ -581,7 +628,7 @@ async function content(spec) {
   paintCached();
   await listReceivers();
   carryUnit();
-  $("unit").onchange = () => switchTo($("unit").value);
+  if ($("unit")) $("unit").onchange = () => switchTo($("unit").value);
   page.chosen?.();
   tick();
   setInterval(tick, STRIP_EVERY);
@@ -604,7 +651,7 @@ async function content(spec) {
 // the server cannot say.
 async function colophon() {
   const about = await getJson("/api/about");
-  if (about.error) return;
+  if (about.error || !$("colophon")) return;
   const link = (href, text) => `<a href="${esc(href)}">${esc(text)}</a>`;
   $("colophon").innerHTML = [
     `© ${esc(about.copyright)}`,

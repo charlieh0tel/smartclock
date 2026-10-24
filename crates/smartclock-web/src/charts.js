@@ -289,6 +289,12 @@ const AXIS_INK = "#8b929c";
 const AXIS_RULE = "#2b3038";
 // An axis as every chart draws one.
 const AXIS = { stroke: AXIS_INK, grid: { stroke: AXIS_RULE }, ticks: { stroke: AXIS_RULE } };
+// The least room between time labels, in CSS pixels, with a larger
+// font: uPlot's own 50 suits its own 12 px text.
+const WIDE_TIME_SPACE = 140;
+// The time axis's height with a larger font, for its two lines of
+// labels: uPlot's own 50 clips the second.
+const WIDE_TIME_SIZE = 66;
 
 // The options every chart in a stack of time charts shares:
 //   width, height  its size
@@ -299,11 +305,14 @@ const AXIS = { stroke: AXIS_INK, grid: { stroke: AXIS_RULE }, ticks: { stroke: A
 //   last           whether it is the bottom chart, the one that
 //                  carries the time labels
 //   yStroke        the y axis labels' color, when not the usual
-//   font           the axes' font, when not uPlot's own
+//   font           the axes' font, when not uPlot's own; larger
+//                  labels get more room between times, or uPlot's
+//                  first, dated, label runs into the next
 //   legend, hooks  uPlot's, the hooks added to the drag that sets
 //                  the range
 function stackOptions(stack) {
   const font = stack.font ? { font: stack.font } : {};
+  const timeRoom = stack.font ? { space: WIDE_TIME_SPACE, size: WIDE_TIME_SIZE } : {};
   return {
     width: stack.width,
     height: stack.height,
@@ -311,7 +320,7 @@ function stackOptions(stack) {
     title: stack.title,
     series: [{}, ...stack.series],
     axes: [
-      { ...AXIS, ...font, show: stack.last },
+      { ...AXIS, ...font, ...timeRoom, show: stack.last },
       { ...AXIS, ...font, ...(stack.yStroke ? { stroke: stack.yStroke } : {}), ...stack.fitted.axis, size: stack.ySize },
     ],
     scales: {
@@ -595,6 +604,25 @@ async function readStack(signal, wanted, listed) {
   return { why, x, drawn: drawn.filter(filled) };
 }
 
+// Each chart's y axis, fitted to what it draws.  The scale has to
+// cover the envelope, not just the lines: the min and max are drawn,
+// and an axis that ends below them would clip the very excursions they
+// exist to show.
+const stackFits = (read, height) =>
+  read.drawn.map((chart) =>
+    yAxis(chart.column, drawingArrays(chart).flat().filter((v) => v != null && isFinite(v)), height));
+
+// What a chart of the stack is drawn as, less its data: its lines, its
+// y axis and the stack's axis width.  Two reads that give a chart the
+// same shape can share it.
+const stackShape = (drawing, fitted, ySize) =>
+  JSON.stringify([
+    drawing.lines.map((l) => [l.column, l.name, l.color]),
+    Boolean(drawing.envelope),
+    fitted.range,
+    ySize,
+  ]);
+
 // Draw the stack `readStack` read into `container`, and answer its
 // charts.  `style` is
 //   height(count)  each chart's height, given how many there are
@@ -603,11 +631,7 @@ async function readStack(signal, wanted, listed) {
 //   font           the axes' font, when not uPlot's own
 function stackCharts(container, read, style) {
   const height = style.height(read.drawn.length);
-  // The scale has to cover the envelope, not just the lines: the min
-  // and max are drawn, and an axis that ends below them would clip the
-  // very excursions they exist to show.
-  const fits = read.drawn.map((chart) =>
-    yAxis(chart.column, drawingArrays(chart).flat().filter((v) => v != null && isFinite(v)), height));
+  const fits = stackFits(read, height);
   const ySize = stackWidth(fits);
   const charts = read.drawn.map((drawing, n) => {
     // A chart of named lines, a sensor's, says the names whatever their
@@ -651,6 +675,7 @@ function stackCharts(container, read, style) {
       hooks: style.hooks,
     });
     const chart = ranged(new uPlot(opts, [read.x, ...drawingArrays(drawing)], host));
+    chart.smartclockShape = stackShape(drawing, fits[n], ySize);
     // Which lines this chart draws, and from which series, so a shared
     // readout can label them without reaching back into the request
     // that built it.  A line's color is said only where there are
@@ -676,6 +701,25 @@ function stackCharts(container, read, style) {
   });
   settleWidths(charts, container);
   return charts;
+}
+
+// The stack `charts`, drawn in `container`, brought up to `read`: each
+// chart given its new data in place while the stack keeps its shape --
+// the same charts, lines and y axes -- so a page read again on a timer
+// neither flashes nor moves, and drawn afresh when it does not.
+// Answers the charts, the same ones or new.
+function restack(container, charts, read, style) {
+  const fits = stackFits(read, style.height(read.drawn.length));
+  const ySize = stackWidth(fits);
+  const kept = charts.length === read.drawn.length &&
+    charts.every((c, n) => c.smartclockShape === stackShape(read.drawn[n], fits[n], ySize));
+  if (kept) {
+    charts.forEach((c, n) => c.setData([read.x, ...drawingArrays(read.drawn[n])]));
+    return charts;
+  }
+  for (const c of charts) c.destroy();
+  container.innerHTML = "";
+  return stackCharts(container, read, style);
 }
 
 // -------------------------------------------------------------- sensors
@@ -1077,7 +1121,12 @@ function deviationCurves(points) {
 //   show            { MDEV, ADEV }, whether each is drawn
 //   legend, cursor  uPlot's
 //   hooks           uPlot's, beside the shading
+//   font            the axes' font, when not AXIS_FONT
+// Its bands are kept on it, as `smartclockBands`, so `resigma` can
+// give it new curves in place.
 function sigmaChart(el, size, curves, opts) {
+  const font = opts.font ? { font: opts.font, labelFont: opts.font } : {};
+  const held = { bands: curves.sigmaBands };
   const curve = (name, stroke) => ({
     label: name,
     stroke,
@@ -1086,13 +1135,16 @@ function sigmaChart(el, size, curves, opts) {
     points: { show: true, size: 5 },
     value: (_, v) => decade(v),
   });
-  return new uPlot(
+  const chart = new uPlot(
     {
       width: size.width,
       height: size.height,
       title: "Stability of the 1 PPS against GPS, shaded to one sigma",
-      scales: { x: TAU_SCALE, y: sigmaScale(curves.sigmaBands) },
-      axes: [tauAxis(), sigmaAxis("deviation σy")],
+      scales: {
+        x: TAU_SCALE,
+        y: { ...LOG, range: (u, min, max) => sigmaScale(held.bands).range(u, min, max) },
+      },
+      axes: [{ ...tauAxis(), ...font }, { ...sigmaAxis("deviation σy"), ...font }],
       series: [
         { label: "τ", value: (_, v) => seconds(v) },
         curve("MDEV", "#38bdf8"),
@@ -1100,11 +1152,21 @@ function sigmaChart(el, size, curves, opts) {
       ],
       legend: opts.legend,
       cursor: opts.cursor,
-      hooks: { ...opts.hooks, draw: [shadeBands(curves.sigmaBands)] },
+      hooks: { ...opts.hooks, draw: [(u) => shadeBands(held.bands)(u)] },
     },
-    [curves.tau, curves.modified, curves.plain],
+    sigmaData(curves),
     el,
   );
+  chart.smartclockBands = held;
+  return chart;
+}
+
+const sigmaData = (curves) => [curves.tau, curves.modified, curves.plain];
+
+// Give a chart `sigmaChart` drew new curves, in place.
+function resigma(chart, curves) {
+  chart.smartclockBands.bands = curves.sigmaBands;
+  chart.setData(sigmaData(curves));
 }
 
 // ---------------------------------------------------------- correlation

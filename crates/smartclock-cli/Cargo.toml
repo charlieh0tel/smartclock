@@ -50,8 +50,8 @@ simulated receiver.  The daemon and monitors are in smartclockmon."""
 section = "utils"
 priority = "optional"
 depends = "$auto"
-breaks = "smartclockmon (<< 1.7.2-1)"
-replaces = "smartclockmon (<< 1.7.2-1)"
+breaks = "smartclockmon (<< 1.7.3-1)"
+replaces = "smartclockmon (<< 1.7.3-1)"
 assets = [
     ["target/release/smartclock-cli", "usr/bin/", "755"],
     ["target/release/smartclock-sim", "usr/bin/", "755"],

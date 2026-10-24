@@ -15,6 +15,7 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::sync::LazyLock;
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
@@ -78,6 +79,32 @@ const CORRELATION: &str = include_str!("correlation.html");
 /// One screen for an unattended display: the state in large type, the
 /// live page's stack and the stability curve, with nothing to click.
 const KIOSK: &str = include_str!("kiosk.html");
+
+/// The kiosk as served: its stylesheet and this server's scripts
+/// inlined, so a reload paints from one answer and waits on no other
+/// request, which a signage player shows as a white screen.
+static KIOSK_SERVED: LazyLock<String> = LazyLock::new(|| inlined(KIOSK));
+
+/// What `inlined` replaces: each tag, and the element and text it
+/// becomes.
+const INLINED: [(&str, &str, &str); 3] = [
+    (
+        "<link rel=\"stylesheet\" href=\"/style.css\">",
+        "style",
+        STYLE,
+    ),
+    ("<script src=\"/common.js\"></script>", "script", COMMON),
+    ("<script src=\"/charts.js\"></script>", "script", CHARTS),
+];
+
+/// `page` with the files `INLINED` names written into it.
+fn inlined(page: &str) -> String {
+    INLINED
+        .iter()
+        .fold(page.to_owned(), |page, (tag, element, text)| {
+            page.replace(tag, &format!("<{element}>\n{text}</{element}>"))
+        })
+}
 
 /// Shared by every page.
 const STYLE: &str = include_str!("style.css");
@@ -174,7 +201,7 @@ fn main() -> Result<()> {
             "/adev" => Response::ok("text/html; charset=utf-8", DEVIATION.to_owned()),
             "/compare" => Response::ok("text/html; charset=utf-8", COMPARE.to_owned()),
             "/correlation" => Response::ok("text/html; charset=utf-8", CORRELATION.to_owned()),
-            "/kiosk" => Response::ok("text/html; charset=utf-8", KIOSK.to_owned()),
+            "/kiosk" => Response::ok("text/html; charset=utf-8", KIOSK_SERVED.clone()),
             "/style.css" => Response::ok("text/css; charset=utf-8", STYLE.to_owned()),
             "/common.js" => Response::ok("text/javascript; charset=utf-8", COMMON.to_owned()),
             "/charts.js" => Response::ok("text/javascript; charset=utf-8", CHARTS.to_owned()),
@@ -776,11 +803,14 @@ mod tests {
     use super::CORRELATION;
     use super::Cache;
     use super::DEVIATION;
+    use super::INLINED;
     use super::KIOSK;
     use super::Logs;
     use super::PAGE;
     use super::SKY;
     use super::STATUS_PAGE;
+    use super::STYLE;
+    use super::inlined;
     use smartclock_log::timestamp::Stored;
     use std::path::Path;
     use std::sync::Arc;
@@ -892,6 +922,20 @@ mod tests {
             assert!(!script.contains("/api/status"));
         }
         assert!(!KIOSK.contains("/sky.js"));
+    }
+
+    /// The kiosk is served whole: every file it would ask this server
+    /// for is in it, and nothing an inlined file says ends its element
+    /// early.
+    #[test]
+    fn the_kiosk_is_served_with_its_files_inlined() {
+        let served = inlined(KIOSK);
+        for (tag, element, text) in INLINED {
+            assert!(KIOSK.contains(tag), "{tag} is not in kiosk.html");
+            assert!(!served.contains(tag));
+            assert!(!text.contains(&format!("</{element}")));
+        }
+        assert!(served.contains(STYLE));
     }
 
     /// No two top-level names in a page and the scripts it loads clash.

@@ -481,6 +481,16 @@ disagrees with the host's still ticks.  It is sized in kiosk pixels,
 `--u`, one CSS pixel from 1440x1080 up and fewer below, rather than
 for one screen: a player's display zoom decides the CSS viewport.
 
+A player reloading the page showed white until the first paint, which
+waited on style.css and the CDN's uPlot stylesheet.  So the server
+inlines style.css, common.js and charts.js into `/kiosk` alone (the
+other pages are opened by people, and the files stay one copy in the
+source), uPlot's stylesheet is applied when it arrives, and the last
+snapshot and journal are kept in localStorage, not the tab's session,
+to paint before the first poll.  The cause on the bench was AbleSign's
+item duration re-opening the page; the fix for that is the player's
+setting, and this only makes a reload hard to see.
+
 ### The time range follows Grafana
 
 The browser view's range control copies Grafana's dashboards -- half-

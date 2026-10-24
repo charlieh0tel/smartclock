@@ -951,3 +951,16 @@ test("the kiosk never changes its address, and never runs past the screen", asyn
   expect(after.length).toBe(length);
   expect(after.writes).toBe(0);
 });
+
+test("a kiosk reloaded paints its last snapshot and journal before the first poll answers", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1280 });
+  const fake = twoUnits();
+  await fake.install(page);
+  await page.goto("/kiosk");
+  await page.waitForFunction(() => $("kiosk-tiles").children.length && $("kiosk-journal-rows").textContent);
+  fake.unit(A).delay = { snapshot: 5000, journal: 5000 };
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => $("kiosk-tiles").children.length && $("kiosk-journal-rows").textContent,
+    null, { timeout: 2000 });
+  expect(await page.locator("#kiosk-head").textContent()).toContain("LAST SEEN");
+});

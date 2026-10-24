@@ -212,8 +212,12 @@ body.kiosk { --u: 1px; font-size: calc(13 * var(--u));
                      font-variant-numeric: tabular-nums; }
 #kiosk-mode .clock .muted { font-size: calc(24 * var(--u)); }
 /* The receiver's last time, no longer counted on: dimmed, with its age. */
-#kiosk-mode .clock.stale { color: var(--dim); }
-#kiosk-mode .clock .age { font-size: calc(20 * var(--u)); color: var(--warn); }
+#kiosk-mode .clock.dim { color: var(--dim); }
+/* In the corner, not after the time, where it would wrap and move
+   everything below it. */
+#kiosk-mode { position: relative; }
+#kiosk-mode .clock .age { font-size: calc(20 * var(--u)); color: var(--warn);
+                          position: absolute; right: calc(12 * var(--u)); bottom: calc(12 * var(--u)); }
 #kiosk-mode > .muted { font-size: calc(18 * var(--u)); }
 #kiosk-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: calc(14 * var(--u)) calc(20 * var(--u)); }
 .tile { display: flex; flex-direction: column; min-width: 0; }
@@ -224,7 +228,7 @@ body.kiosk { --u: 1px; font-size: calc(13 * var(--u));
 .tile.warn .v { color: var(--warn); }
 .tile.bad .v { color: var(--bad); }
 /* What the receiver said last, while the link is lost: kept, dimmed. */
-#kiosk-tiles.stale, #kiosk-alarms.stale { opacity: 0.4; }
+#kiosk-tiles.dim, #kiosk-alarms.dim { opacity: 0.4; }
 #kiosk-alarms { display: flex; flex-wrap: wrap; gap: calc(8 * var(--u)); }
 #kiosk-alarms .pill { font-size: calc(18 * var(--u)); padding: calc(4 * var(--u)) calc(14 * var(--u)); }
 /* The journal takes what the column has left, and loses its oldest

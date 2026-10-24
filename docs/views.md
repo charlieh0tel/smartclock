@@ -200,6 +200,12 @@ update writes only what changed: tiles, clock and charts are kept and
 updated in place, a y axis refits without redrawing its chart, and a
 lost link dims the last values rather than blanking them.
 
+A reload paints dark at once and with the last state: the page comes
+with style.css, common.js and charts.js inlined, uPlot's stylesheet
+does not hold the first paint, and the last snapshot and journal are
+kept in localStorage.  A signage player must still not re-open the
+page on a timer: set AbleSign's item duration to 0, for one.
+
 The live, status, stability and correlation pages show one
 receiver at a time, chosen by a selector that appears once there is
 more than one and follows receivers and daemons as they come and go.

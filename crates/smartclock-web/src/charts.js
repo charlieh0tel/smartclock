@@ -290,11 +290,14 @@ const AXIS_RULE = "#2b3038";
 // An axis as every chart draws one.
 const AXIS = { stroke: AXIS_INK, grid: { stroke: AXIS_RULE }, ticks: { stroke: AXIS_RULE } };
 // The least room between time labels, in CSS pixels, with a larger
-// font: uPlot's own 50 suits its own 12 px text.
+// font of WIDE_FONT_PX: uPlot's own 50 suits its own 12 px text.
 const WIDE_TIME_SPACE = 140;
-// The time axis's height with a larger font, for its two lines of
-// labels: uPlot's own 50 clips the second.
+// The time axis's height with that font, for its two lines of labels:
+// uPlot's own 50 clips the second.
 const WIDE_TIME_SIZE = 66;
+// The font size the two above are for; another is given room in
+// proportion.
+const WIDE_FONT_PX = 17;
 
 // The options every chart in a stack of time charts shares:
 //   width, height  its size
@@ -312,7 +315,8 @@ const WIDE_TIME_SIZE = 66;
 //                  the range
 function stackOptions(stack) {
   const font = stack.font ? { font: stack.font } : {};
-  const timeRoom = stack.font ? { space: WIDE_TIME_SPACE, size: WIDE_TIME_SIZE } : {};
+  const wide = stack.font ? parseFloat(stack.font) / WIDE_FONT_PX : 0;
+  const timeRoom = stack.font ? { space: WIDE_TIME_SPACE * wide, size: WIDE_TIME_SIZE * wide } : {};
   return {
     width: stack.width,
     height: stack.height,
@@ -612,16 +616,37 @@ const stackFits = (read, height) =>
   read.drawn.map((chart) =>
     yAxis(chart.column, drawingArrays(chart).flat().filter((v) => v != null && isFinite(v)), height));
 
-// What a chart of the stack is drawn as, less its data: its lines, its
-// y axis and the stack's axis width.  Two reads that give a chart the
-// same shape can share it.
-const stackShape = (drawing, fitted, ySize) =>
+// What a chart of the stack is drawn as, less its data and its y
+// axis's range, ticks and width: its lines, and the kind of y axis.
+// Two reads that give a chart the same shape can share it.
+const stackShape = (drawing, fitted) =>
   JSON.stringify([
     drawing.lines.map((l) => [l.column, l.name, l.color]),
     Boolean(drawing.envelope),
-    fitted.range,
-    ySize,
+    Boolean(fitted.range),
+    Boolean(fitted.axis.splits),
+    Boolean(fitted.scale),
   ]);
+
+// A fitted y axis, as `yAxis` gives it, that reads its range, ticks
+// and labels from `held.fit`, and its width from `held.ySize`, each
+// time the chart draws: `restack` refits a chart in place by changing
+// `held`, without drawing it afresh.
+function heldAxis(held) {
+  const { fit } = held;
+  return {
+    axis: {
+      ...(fit.axis.splits
+        ? {
+            splits: (...args) => held.fit.axis.splits(...args),
+            values: (...args) => held.fit.axis.values(...args),
+          }
+        : {}),
+    },
+    range: fit.range && (() => held.fit.range),
+    scale: fit.scale,
+  };
+}
 
 // Draw the stack `readStack` read into `container`, and answer its
 // charts.  `style` is
@@ -640,6 +665,7 @@ function stackCharts(container, read, style) {
     const several = drawing.lines.length > 1 || Boolean(drawing.named);
     const host = document.createElement("div");
     container.appendChild(host);
+    const held = { fit: fits[n], ySize };
     const opts = stackOptions({
       width: container.clientWidth || 800,
       height,
@@ -658,8 +684,8 @@ function stackCharts(container, read, style) {
           points: { show: false },
         })),
       ],
-      fitted: fits[n],
-      ySize,
+      fitted: heldAxis(held),
+      ySize: () => held.ySize,
       // Only the bottom chart carries the time labels.  Repeating them
       // under every plot costs the height that makes the stack worth
       // having, and says the axes might differ when the whole point is
@@ -675,7 +701,8 @@ function stackCharts(container, read, style) {
       hooks: style.hooks,
     });
     const chart = ranged(new uPlot(opts, [read.x, ...drawingArrays(drawing)], host));
-    chart.smartclockShape = stackShape(drawing, fits[n], ySize);
+    chart.smartclockShape = stackShape(drawing, fits[n]);
+    chart.smartclockAxis = held;
     // Which lines this chart draws, and from which series, so a shared
     // readout can label them without reaching back into the request
     // that built it.  A line's color is said only where there are
@@ -704,17 +731,26 @@ function stackCharts(container, read, style) {
 }
 
 // The stack `charts`, drawn in `container`, brought up to `read`: each
-// chart given its new data in place while the stack keeps its shape --
-// the same charts, lines and y axes -- so a page read again on a timer
-// neither flashes nor moves, and drawn afresh when it does not.
+// chart given its new data and y axis in place while the stack keeps
+// its shape -- the same charts and lines -- so a page read again on a
+// timer neither flashes nor moves, and drawn afresh when it does not.
 // Answers the charts, the same ones or new.
 function restack(container, charts, read, style) {
   const fits = stackFits(read, style.height(read.drawn.length));
   const ySize = stackWidth(fits);
   const kept = charts.length === read.drawn.length &&
-    charts.every((c, n) => c.smartclockShape === stackShape(read.drawn[n], fits[n], ySize));
+    charts.every((c, n) => c.smartclockShape === stackShape(read.drawn[n], fits[n]));
   if (kept) {
-    charts.forEach((c, n) => c.setData([read.x, ...drawingArrays(read.drawn[n])]));
+    charts.forEach((c, n) => {
+      const held = c.smartclockAxis;
+      const widened = held.ySize !== ySize;
+      held.fit = fits[n];
+      held.ySize = ySize;
+      c.setData([read.x, ...drawingArrays(read.drawn[n])]);
+      // A new width alone changes no scale, which is what uPlot measures
+      // its axes again on.
+      if (widened) c.redraw(false, true);
+    });
     return charts;
   }
   for (const c of charts) c.destroy();

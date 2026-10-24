@@ -863,3 +863,91 @@ test("a sensor read less often than the buckets are wide is still drawn as a lin
   expect(drawn.points).toBeGreaterThan(1);
   expect(drawn.missing).toBe(0);
 });
+
+test("the kiosk lays itself out inside the inset an overscanning display asks for", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1280 });
+  await twoUnits().install(page);
+  await page.goto(`/kiosk?receiver=${A}&inset=2,4`);
+  const padding = await page.evaluate(() => {
+    const style = getComputedStyle(document.body);
+    return [style.paddingLeft, style.paddingTop].map(parseFloat);
+  });
+  // 12px of the page's own, and 2% of the width at the sides, 4% of the
+  // height at the top and bottom.
+  expect(padding[0]).toBeCloseTo(12 + 0.02 * 1920, 0);
+  expect(padding[1]).toBeCloseTo(12 + 0.04 * 1280, 0);
+  // Nothing scrolls: the page still fits the screen.
+  const fits = await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight);
+  expect(fits).toBe(true);
+});
+
+test("the kiosk redraws in place: the same tiles and charts, new y axes, nothing written that did not change", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1280 });
+  const fake = twoUnits();
+  await fake.install(page);
+  await page.goto(`/kiosk?receiver=${A}`);
+  await page.waitForFunction(() => charts.length > 0 && deviation && $("kiosk-tiles").children.length);
+  await page.evaluate(() => {
+    window.first = { charts: [...charts], deviation, tiles: [...$("kiosk-tiles").children], top: charts[0].scales.y.max };
+    window.written = new Set();
+    window.plotsGone = 0;
+    new MutationObserver((list) => {
+      for (const m of list) {
+        for (const n of m.removedNodes) if (n.classList?.contains("uplot")) window.plotsGone++;
+        written.add(m.target.closest?.("[id]")?.id ?? m.target.parentElement?.closest("[id]")?.id);
+      }
+    }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true });
+  });
+  // A history ten times larger needs other y axes.
+  fake.unit(A).gain = 10;
+  await page.evaluate(() => renew(true));
+  await page.waitForFunction(() => charts[0].scales.y.max !== first.top);
+  const after = await page.evaluate(() => ({
+    sameCharts: charts.length === first.charts.length && charts.every((c, n) => c === first.charts[n]),
+    sameDeviation: deviation === first.deviation,
+    sameTiles: [...$("kiosk-tiles").children].every((t, n) => t === first.tiles[n]),
+    plotsGone,
+    written: [...written],
+  }));
+  expect(after.sameCharts).toBe(true);
+  expect(after.sameDeviation).toBe(true);
+  expect(after.sameTiles).toBe(true);
+  expect(after.plotsGone).toBe(0);
+  // The snapshot is the same each second: the head, the alarms and the
+  // journal are not written again.
+  for (const id of ["kiosk-head", "kiosk-alarms", "kiosk-journal-rows", "kiosk-mode-word"]) {
+    expect(after.written).not.toContain(id);
+  }
+});
+
+test("the kiosk never changes its address, and never runs past the screen", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1280 });
+  await page.addInitScript(() => {
+    window.addressWrites = 0;
+    for (const name of ["pushState", "replaceState"]) {
+      const original = history[name].bind(history);
+      history[name] = (...args) => {
+        window.addressWrites++;
+        return original(...args);
+      };
+    }
+  });
+  await twoUnits().install(page);
+  const address = `/kiosk?receiver=${A}`;
+  await page.goto(address, { waitUntil: "domcontentloaded" });
+  const fits = () => page.evaluate(() =>
+    Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) <= innerHeight);
+  expect(await fits()).toBe(true);
+  await page.waitForFunction(() => charts.length > 0 && deviation && $("kiosk-journal-rows").textContent);
+  expect(await fits()).toBe(true);
+  const length = await page.evaluate(() => history.length);
+  for (let n = 0; n < 3; n++) {
+    await page.evaluate(() => renew(true));
+    await page.waitForTimeout(1500);
+    expect(await fits()).toBe(true);
+  }
+  const after = await page.evaluate(() => ({ href: location.href, length: history.length, writes: addressWrites }));
+  expect(new URL(after.href).pathname + new URL(after.href).search).toBe(address);
+  expect(after.length).toBe(length);
+  expect(after.writes).toBe(0);
+});

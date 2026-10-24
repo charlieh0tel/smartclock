@@ -34,9 +34,15 @@ const FROM_DAEMON = new Set(["snapshot", "info", "status"]);
 //            the history serves, unless a test says otherwise
 //   skew     seconds its history's times move, each kept inside its
 //            bucket as the server's mean times are
+//   gain     what its history's values are multiplied by
 export function receiver(serial, mode, present, columns = RECORDED.history.plottable) {
-  return { serial, up: true, mode, present, delay: {}, columns, skew: 0 };
+  return { serial, up: true, mode, present, delay: {}, columns, skew: 0, gain: 1 };
 }
+
+// A plot's values multiplied by `gain`.
+const scaledPlot = (plot, gain) => Object.fromEntries(
+  Object.entries(plot).map(([k, v]) => [k, Array.isArray(v) ? v.map((x) => (x == null ? x : x * gain)) : v]),
+);
 
 // `at` moved by `skew` seconds, wrapping inside the bucket each time
 // falls in for the window `query` asks for, since the server's mean
@@ -103,7 +109,7 @@ export class Fake {
         const plots = this.everyColumn && asked.length
           ? asked.map((column) => body.plots.find((p) => p.column === column) ?? { ...body.plots[0], column })
           : body.plots;
-        return { ...body, plots, at: skewed(body.at, u.skew, query) };
+        return { ...body, plots: plots.map((p) => scaledPlot(p, u.gain)), at: skewed(body.at, u.skew, query) };
       }
       case "sensors":
         return {

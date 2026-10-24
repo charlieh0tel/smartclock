@@ -447,7 +447,7 @@ text and cannot be averaged into a bucket after the fact.
 ### The kiosk is a page over the shared code
 
 `/kiosk` is a page of its own, not a flag on the live page: a fixed
-layout for a 1920x1280 display shares little with a page built to
+layout for one landscape screen shares little with a page built to
 scroll and be clicked.  It draws with the same code as the others --
 the stack, the MDEV/ADEV chart, the strip's readings and alarms and
 the journal's rows live in `charts.js` and `common.js`, and the
@@ -462,6 +462,24 @@ stalls and jumps looks broken, so it is counted on from the last fast
 poll while that is live and under 3 s old, and otherwise shown as it
 was with its age.  The stability curve is measured every ten minutes,
 not at the stack's minute, since each measurement reads the whole day.
+
+A refresh writes only what changed and never blanks a panel: on a
+low-power signage player (a Fire OS WebView) every replaced element
+or rebuilt chart is a visible repaint.  The tiles and clock are kept
+and their text set in place, unchanged HTML is not written again, the
+journal is fitted in a hidden copy and written once, a stack chart
+whose y range changes keeps its uPlot instance and reads its range,
+ticks and axis width from a holder `restack` swaps, and a lost link
+dims the last values instead of clearing them.
+
+It never writes its address (`addressFixed` in `common.js`): the other
+pages keep the receiver and range in it with `replaceState`, and a
+signage player may take a changed address as a cue to reload.  Its
+clock ages a poll by the display's own monotonic clock from when the
+page saw it, not by the host's stamp, so a display whose clock
+disagrees with the host's still ticks.  It is sized in kiosk pixels,
+`--u`, one CSS pixel from 1440x1080 up and fewer below, rather than
+for one screen: a player's display zoom decides the CSS viewport.
 
 ### The time range follows Grafana
 

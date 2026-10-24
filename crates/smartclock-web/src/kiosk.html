@@ -16,12 +16,21 @@
   <div id="kiosk-head"><span class="muted">connecting...</span></div>
   <div class="panel" id="kiosk-mode">
     <div class="mode" id="kiosk-mode-word"></div>
-    <div class="clock" id="kiosk-clock"></div>
+    <div class="clock" id="kiosk-clock"><span id="kiosk-time">--:--:--</span> <span class="muted">UTC</span>
+      <span class="age" id="kiosk-age" hidden></span></div>
     <div class="muted" id="kiosk-date"></div>
   </div>
   <div class="panel" id="kiosk-tiles"></div>
   <div class="panel" id="kiosk-alarms"></div>
-  <div class="panel" id="kiosk-journal"></div>
+  <div class="panel" id="kiosk-journal">
+    <div id="kiosk-journal-rows"></div>
+    <!-- A hidden copy of the journal, laid out whole to see how much
+         fits.  Hidden here rather than in style.css, so it never paints
+         even before or without the stylesheet. -->
+    <div id="kiosk-journal-measure" aria-hidden="true"
+         style="position: absolute; top: 0; left: 0; width: 100%; box-sizing: border-box;
+                padding: inherit; visibility: hidden; pointer-events: none"></div>
+  </div>
   <div id="kiosk-foot" class="muted"></div>
 </section>
 
@@ -54,9 +63,93 @@
 
 const haveUplot = typeof uPlot !== "undefined";
 
+addressFixed = true;
+
 // A day: one turn of the room's temperature, and long enough for the
 // stability curve to reach past the loop's time constant.
 readRange(86400);
+
+// The margin a display that overscans hides at its edges, from
+// `?inset=`: one length for every edge, or two, the sides' then the
+// top and bottom's.  A bare number is a percent of the screen's width
+// (the sides) or height (top and bottom), as overscan is given; a
+// number with `px` is pixels.  Anything else is ignored.
+const INSET = /^(\d+(?:\.\d+)?)(px)?$/;
+const INSET_MOST = 25;
+function inset() {
+  const asked = new URLSearchParams(location.search).get("inset");
+  if (!asked) return;
+  const parts = asked.split(",").map((x) => x.trim().match(INSET));
+  if (!parts.length || parts.length > 2 || parts.some((m) => !m)) return;
+  const [sides, ends = sides] = parts;
+  const length = (m, unit) => m[2] ? `${m[1]}px` : `${Math.min(Number(m[1]), INSET_MOST)}${unit}`;
+  document.body.style.setProperty("--inset-x", length(sides, "vw"));
+  document.body.style.setProperty("--inset-y", length(ends, "vh"));
+}
+inset();
+
+// The least room, in CSS pixels inside the inset, the kiosk is drawn
+// full size in.  On less it is scaled down to fit: a player's display
+// zoom can leave a 1920x1080 screen a 1280x720 page.
+const FULL_SIZE = { width: 1440, height: 1080 };
+// One of the stylesheet's kiosk pixels in CSS pixels, as `--u`: 1 at
+// full size, less on a smaller page.
+let unitPx = 1;
+// Set `--u` for the room the page has now.  Answers whether it changed.
+function scale() {
+  const style = getComputedStyle(document.body);
+  const padding = (a, b) => parseFloat(style[a]) + parseFloat(style[b]);
+  // The inset alone: the padding less the stylesheet's own 12 a side.
+  const room = {
+    width: innerWidth - padding("paddingLeft", "paddingRight") + 24 * unitPx,
+    height: innerHeight - padding("paddingTop", "paddingBottom") + 24 * unitPx,
+  };
+  const next = Math.min(1, room.width / FULL_SIZE.width, room.height / FULL_SIZE.height);
+  if (next === unitPx) return false;
+  unitPx = next;
+  document.body.style.setProperty("--u", `${next}px`);
+  return true;
+}
+scale();
+
+// With `?debug`, the foot leads with how many times this browser has
+// loaded it so, how this load came about (navigate, reload), how long
+// it has been up, the browser's Chrome version, and the last error the
+// page did not catch: a display that flashes now and then may be its
+// player reloading the page, which this tells apart from the page
+// redrawing itself, and a display has no console to read.
+const DEBUG = new URLSearchParams(location.search).has("debug");
+const loadedHow = performance.getEntriesByType?.("navigation")[0]?.type ?? "?";
+const chrome = navigator.userAgent.match(/Chrome\/(\d+)/)?.[1] ?? "?";
+let lastError = null;
+// Shown at once, as well as with the snapshot: an error that stops the
+// snapshot being painted would otherwise never be.
+function caught(message) {
+  lastError = message;
+  update($("kiosk-foot"), "textContent", loads());
+}
+if (DEBUG) {
+  document.body.classList.add("debug");
+  addEventListener("error", (e) => caught(e.message));
+  addEventListener("unhandledrejection", (e) => caught(String(e.reason?.message ?? e.reason)));
+}
+const LOADS_KEY = "kiosk:loads";
+const loadedAt = Date.now();
+function countLoad() {
+  try {
+    const n = Number(localStorage.getItem(LOADS_KEY) ?? 0) + 1;
+    localStorage.setItem(LOADS_KEY, String(n));
+    return n;
+  } catch (e) {
+    return "?";
+  }
+}
+const loadCount = DEBUG ? countLoad() : null;
+const loads = () => DEBUG
+  ? `load ${loadCount} (${loadedHow}), up ${seconds((Date.now() - loadedAt) / 1000)}, Chrome ${chrome}, ` +
+    `${innerWidth}x${innerHeight} at ${devicePixelRatio}x, scale ${unitPx.toFixed(2)}` +
+    (lastError ? `, error: ${lastError}` : "")
+  : null;
 
 // The live page's columns that are worth a glance from across a room:
 // the time error, the steering, the sky's health, and the temperature
@@ -68,15 +161,17 @@ const KIOSK_COLUMNS = ["time_interval_s", "efc_percent", "tracking", "not_tracki
 // temperature is read against, and no other.
 const KIOSK_SENSORS = ["temperature"];
 
-// Each chart title's height in CSS pixels, as style.css sets it, taken
-// from the room each chart is given.
+// Each chart title's height in the stylesheet's kiosk pixels (`--u`),
+// as style.css sets it, taken from the room each chart is given.
 const TITLE_HEIGHT = 30;
 // The stability chart's legend, under its plot, likewise.
-const LEGEND_HEIGHT = 32;
-// The least a chart is drawn at, however little room there is.
+const LEGEND_HEIGHT = 36;
+// The least a chart is drawn at, however little room there is, in
+// kiosk pixels.
 const SHORTEST_CHART = 60;
 // Axis text larger than the other pages', to be read from further away.
-const KIOSK_FONT = "17px system-ui, sans-serif";
+// Whole pixels: uPlot reads a font's size as the digits before "px".
+const kioskFont = () => `${Math.round(17 * unitPx)}px system-ui, sans-serif`;
 // The cursor's sync key: the stack shares one, though nobody points.
 const KIOSK_SYNC = "kiosk";
 // The shortest refresh: each read measures the range's stability again.
@@ -103,9 +198,10 @@ let charts = [];
 let deviation = null;
 // When the stability curve was last asked for, in ms; 0 for never.
 let deviationAt = 0;
-// The receiver's time of day at its last fast poll, in seconds, when
-// that poll was, in ms, and whether the snapshot it came in was live;
-// null before the first.
+// The receiver's time of day at its last fast poll, in seconds; that
+// poll's stamp; when this page first saw it, in ms by its own
+// monotonic clock; and whether the snapshot it came in was live.  Null
+// before the first.
 let clockFrom = null;
 
 // The frequency figure of merit's meanings (097-59551-02 5-23).
@@ -113,12 +209,29 @@ const FFOM_MEANS = ["stable", "stabilizing", "holdover", "unlocked"];
 
 // ------------------------------------------------------------ the state
 
-// A tile: a reading in large type over what it is, and a line of
-// detail under it.  `tone` is "", "warn" or "bad".
-const tile = (k, v, detail = "", tone = "") =>
-  `<div class="tile ${tone}"><span class="v">${esc(v)}</span>` +
-  `<span class="k">${esc(k)}</span>` +
-  `<span class="d">${esc(detail)}</span></div>`;
+// A tile: a reading `v` in large type over what it is, `k`, and a line
+// of detail `d` under it.  `tone` is "", "warn" or "bad".
+const tile = (k, v, d = "", tone = "") => ({ k, v: String(v), d, tone });
+
+// The tiles, kept and their text changed in place, so a reading that
+// changes repaints only itself.  Drawn afresh only when which tiles
+// there are changes.
+function showTiles(list) {
+  const el = $("kiosk-tiles");
+  const which = list.map((t) => t.k).join("\n");
+  if (el.dataset.which !== which) {
+    el.dataset.which = which;
+    el.innerHTML = list.map((t) =>
+      `<div class="tile"><span class="v"></span><span class="k">${esc(t.k)}</span><span class="d"></span></div>`,
+    ).join("");
+  }
+  list.forEach((t, n) => {
+    const shown = el.children[n];
+    update(shown, "className", `tile ${t.tone}`);
+    update(shown.children[0], "textContent", t.v);
+    update(shown.children[2], "textContent", t.d);
+  });
+}
 
 // The mode, and how it should be read.
 function modeOf(s) {
@@ -159,26 +272,31 @@ function renderKiosk(s, cached) {
   // The model and whether it is live, and nothing else up here: the
   // state below is what the screen is for.  The link's state is named
   // only when it is not live.
-  $("kiosk-head").innerHTML =
+  showHtml($("kiosk-head"),
     `<span class="dot ${state[0]}"></span>` +
     `<span>${esc(listed?.model ?? unitName(unit))}</span>` +
-    (state[0] === "live" ? "" : `<span class="pill ${state[0]}">${state[1]}</span>`);
-  $("kiosk-foot").textContent = [
+    (state[0] === "live" ? "" : `<span class="pill ${state[0]}">${state[1]}</span>`));
+  update($("kiosk-foot"), "textContent", [
+    loads(),
     listed?.serial ?? unit,
     listed?.firmware,
     source(listed?.instance) && `on ${source(listed.instance)}`,
     oldest === null ? null : `oldest field ${oldest.toFixed(0)} s`,
-  ].filter(Boolean).join(" · ");
+  ].filter(Boolean).join(" · "));
   const [mode, tone] = modeOf(s);
-  $("kiosk-mode-word").textContent = mode;
-  $("kiosk-mode-word").className = `mode ${tone}`;
-  $("kiosk-date").textContent = `${r.date.v} (${r.date.k})`;
-  $("kiosk-date").title = r.date.hint ?? "";
-  const polled = Date.parse(s.polled?.fast?.at);
-  clockFrom = s.time && Number.isFinite(polled)
-    ? { second: s.time.hour * 3600 + s.time.minute * 60 + s.time.second, at: polled,
-        live: !cached && s.freshness === "Live" }
-    : null;
+  showMode(mode, tone);
+  update($("kiosk-date"), "textContent", `${r.date.v} (${r.date.k})`);
+  update($("kiosk-date"), "title", r.date.hint ?? "");
+  // Aged from when this page first saw the poll, not from the host's
+  // stamp on it: the display's clock need not agree with the host's,
+  // and one a few seconds off would stop the clock for good.
+  const polled = s.polled?.fast?.at;
+  const live = !cached && s.freshness === "Live";
+  if (!s.time || !polled) clockFrom = null;
+  else if (polled !== clockFrom?.polled) {
+    clockFrom = { second: s.time.hour * 3600 + s.time.minute * 60 + s.time.second, polled,
+      at: performance.now(), live };
+  } else clockFrom.live = live;
   drawClock();
   const tiles = [
     r.ti && tile("1 PPS TI, time error", r.ti.v, "against GPS, 10 s mean"),
@@ -193,8 +311,22 @@ function renderKiosk(s, cached) {
       .filter((x) => KIOSK_SENSORS.includes(x.quantity))
       .map((x) => tile(`${x.name} ${x.quantity}`, sensorValue(x), "the host's sensor")),
   ].filter(Boolean);
-  $("kiosk-tiles").innerHTML = tiles.join("");
-  $("kiosk-alarms").innerHTML = alarms(s) || `<span class="pill live">no alarms</span>`;
+  showTiles(tiles);
+  showHtml($("kiosk-alarms"), alarms(s) || `<span class="pill live">no alarms</span>`);
+  stale(false);
+}
+
+function showMode(mode, tone) {
+  update($("kiosk-mode-word"), "textContent", mode);
+  update($("kiosk-mode-word"), "className", `mode ${tone}`);
+}
+
+// The tiles and alarms dimmed, while what they say is the last seen
+// rather than current: kept, so a poll that fails once does not blank
+// them for a second.
+function stale(dim) {
+  $("kiosk-tiles").classList.toggle("stale", dim);
+  $("kiosk-alarms").classList.toggle("stale", dim);
 }
 
 // The receiver's time, counted on a second at a time from its last
@@ -204,30 +336,23 @@ function renderKiosk(s, cached) {
 // shown as it was, with its age, rather than a confident time the
 // page made up.
 function drawClock() {
-  const el = $("kiosk-clock");
-  if (!clockFrom) {
-    el.innerHTML = `<span>--:--:--</span> <span class="muted">UTC</span>`;
-    return;
-  }
-  const age = (Date.now() - clockFrom.at) / 1000;
-  const trusted = clockFrom.live && age >= -CLOCK_TRUSTED_FOR && age <= CLOCK_TRUSTED_FOR;
-  const t = (((clockFrom.second + Math.floor(trusted ? Math.max(0, age) : 0)) % SECONDS_PER_DAY)
-    + SECONDS_PER_DAY) % SECONDS_PER_DAY;
-  const shown = `${pad(Math.floor(t / 3600))}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`;
-  el.classList.toggle("stale", !trusted);
-  el.innerHTML = `<span>${esc(shown)}</span> <span class="muted">UTC</span>` +
-    (trusted ? "" : ` <span class="age">as of ${esc(seconds(Math.max(0, age)))} ago</span>`);
+  const age = clockFrom ? (performance.now() - clockFrom.at) / 1000 : 0;
+  const trusted = !clockFrom || (clockFrom.live && age <= CLOCK_TRUSTED_FOR);
+  const t = clockFrom ? (clockFrom.second + Math.floor(trusted ? age : 0)) % SECONDS_PER_DAY : null;
+  update($("kiosk-time"), "textContent", t === null ? "--:--:--"
+    : `${pad(Math.floor(t / 3600))}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`);
+  update($("kiosk-age"), "textContent", trusted ? "" : `as of ${seconds(age)} ago`);
+  update($("kiosk-age"), "hidden", trusted);
+  $("kiosk-clock").classList.toggle("stale", !trusted);
 }
 
 function lostKiosk(what, why) {
-  $("kiosk-head").innerHTML = `<span class="dot down"></span><span class="pill down">${esc(what)}</span>`;
-  $("kiosk-mode-word").textContent = "no link";
-  $("kiosk-mode-word").className = "mode bad";
-  $("kiosk-date").textContent = why ?? "";
+  showHtml($("kiosk-head"), `<span class="dot down"></span><span class="pill down">${esc(what)}</span>`);
+  showMode("no link", "bad");
+  update($("kiosk-date"), "textContent", why ?? "");
   if (clockFrom) clockFrom.live = false;
   drawClock();
-  $("kiosk-tiles").innerHTML = "";
-  $("kiosk-alarms").innerHTML = "";
+  stale(true);
 }
 
 // ------------------------------------------------------------- journal
@@ -253,13 +378,23 @@ function drawJournal() {
         }).join("")}</tbody></table>`
       : `<span class="muted">nothing recorded</span>`);
   const events = (journal.events ?? []).slice(0, KIOSK_TRANSITIONS);
-  const entries = [...(journal.entries ?? [])];
+  const entries = journal.entries ?? [];
   const panel = $("kiosk-journal");
+  const drawn = (n) => stream("events", "transitions", events) + stream("entries", "receiver log", entries.slice(0, n));
   // As many of the receiver's log as fit, newest first, rather than
-  // a fixed count that leaves the panel half empty or cut off.
-  do {
-    panel.innerHTML = stream("events", "transitions", events) + stream("entries", "receiver log", entries);
-  } while (panel.scrollHeight > panel.clientHeight && entries.pop());
+  // a fixed count that leaves the panel half empty or cut off.  Laid
+  // out whole in a hidden copy to see how many that is, so what is
+  // shown is written once.
+  const measure = $("kiosk-journal-measure");
+  showHtml(measure, drawn(entries.length));
+  const box = panel.getBoundingClientRect();
+  const room = box.top + panel.clientTop + panel.clientHeight - parseFloat(getComputedStyle(panel).paddingBottom);
+  const log = measure.querySelectorAll("table")[events.length ? 1 : 0];
+  const below = log ? parseFloat(getComputedStyle(log).marginBottom) : 0;
+  const fit = entries.length
+    ? [...log.rows].filter((row) => row.getBoundingClientRect().bottom + below <= room).length
+    : 0;
+  showHtml($("kiosk-journal-rows"), drawn(fit));
 }
 
 // ------------------------------------------------------------- history
@@ -268,7 +403,7 @@ function clearCharts(why) {
   for (const c of charts) c.destroy();
   charts = [];
   $("charts").innerHTML = "";
-  $("note").textContent = why;
+  update($("note"), "textContent", why);
 }
 
 function clearDeviation(why) {
@@ -279,12 +414,12 @@ function clearDeviation(why) {
 
 // Each chart's height, so the stack fills its panel and no more.
 const stackHeight = (count) =>
-  Math.max(SHORTEST_CHART, Math.floor($("charts").clientHeight / Math.max(1, count)) - TITLE_HEIGHT);
+  Math.max(SHORTEST_CHART, Math.floor($("charts").clientHeight / Math.max(1, count) / unitPx) - TITLE_HEIGHT) * unitPx;
 
 // The stability chart's size: its panel, less its title and legend.
 const deviationSize = () => ({
   width: $("chart").clientWidth,
-  height: Math.max(SHORTEST_CHART, $("chart").clientHeight - TITLE_HEIGHT - LEGEND_HEIGHT),
+  height: Math.max(SHORTEST_CHART, $("chart").clientHeight / unitPx - TITLE_HEIGHT - LEGEND_HEIGHT) * unitPx,
 });
 
 async function drawStack(signal) {
@@ -306,11 +441,11 @@ async function drawStack(signal) {
     clearCharts(read.why);
     return;
   }
-  $("note").textContent = "";
+  update($("note"), "textContent", "");
   charts = restack($("charts"), charts, read, {
     height: stackHeight,
     sync: KIOSK_SYNC,
-    font: KIOSK_FONT,
+    font: kioskFont(),
     hooks: { draw: [(u) => drawNoteLines(u, notes)] },
   });
 }
@@ -340,7 +475,7 @@ async function drawDeviation(signal) {
     legend: { show: true, live: false },
     cursor: { show: false },
     hooks: {},
-    font: KIOSK_FONT,
+    font: kioskFont(),
   });
 }
 
@@ -348,6 +483,14 @@ async function drawDeviation(signal) {
 // reading anything: the window a kiosk's browser opens at is not
 // always the one it settles at.
 function fit() {
+  // At another scale the charts' type is another size, which uPlot
+  // takes only when a chart is made.
+  if (scale() && haveUplot) {
+    clearCharts("");
+    clearDeviation("");
+    deviationAt = 0;
+    renew();
+  }
   drawJournal();
   const height = stackHeight(charts.length);
   for (const c of charts) c.setSize({ width: $("charts").clientWidth, height });
@@ -384,11 +527,11 @@ content({
     clearDeviation(why);
     deviationAt = 0;
     journal = null;
-    $("kiosk-journal").innerHTML = "";
+    update($("kiosk-journal-rows"), "textContent", "");
   },
   load: (signal) =>
     Promise.all([
-      part(readJournal, signal, (why) => ($("kiosk-journal").textContent = why)),
+      part(readJournal, signal, (why) => update($("kiosk-journal-rows"), "textContent", why)),
       ...(haveUplot
         ? [
             part(drawStack, signal, clearCharts),

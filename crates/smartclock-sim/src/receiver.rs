@@ -63,14 +63,21 @@ const QUEUE_OVERFLOW_MESSAGE: &str = "Queue overflow";
 /// precisely the path the date display exists for.
 fn rolled_back_date() -> jiff::civil::Date {
     const EPOCH_DAYS: i32 = 1024 * 7;
-    // UTC, as the receiver reports and as the daemon's rollover check
-    // compares against.  The local date differs from it for part of
-    // every day, and on those hours the offset is not a whole epoch, so
-    // the check correctly declines to call it a rollover.
-    jiff::Timestamp::now()
-        .to_zoned(jiff::tz::TimeZone::UTC)
+    utc_now()
         .date()
         .saturating_sub(jiff::Span::new().days(EPOCH_DAYS))
+}
+
+/// The host's time in UTC, as the receiver reports its own and as the
+/// daemon's rollover check compares against.  The local date differs
+/// from it for part of every day, and on those hours the offset is not
+/// a whole epoch, so the check correctly declines to call it a
+/// rollover.  The time of day follows it too, so a clock drawn from the
+/// receiver's time moves as a real one's does.
+fn utc_now() -> jiff::civil::DateTime {
+    jiff::Timestamp::now()
+        .to_zoned(jiff::tz::TimeZone::UTC)
+        .datetime()
 }
 
 /// How many diagnostic log entries the simulated receiver holds.  The
@@ -662,7 +669,10 @@ impl Receiver {
                 Answer::line(format!("{:+},{:+},{:+}", d.year(), d.month(), d.day()))
             }
             CommandId::Time if self.no_fix => self.reject(-230, "Data corrupt or stale"),
-            CommandId::Time => Answer::line("+20,+4,+31"),
+            CommandId::Time => {
+                let t = utc_now();
+                Answer::line(format!("{:+},{:+},{:+}", t.hour(), t.minute(), t.second()))
+            }
             CommandId::LogCount => Answer::line(format!("{:+}", self.log_entries)),
             // The count is a compare-and-swap: the instrument refuses
             // if it does not match, which is what stops an entry

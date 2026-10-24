@@ -152,10 +152,12 @@ function drawPickers() {
   const fallback = defaults();
   if (!keys.includes(chosenX)) chosenX = fallback.x;
   if (!keys.includes(chosenY)) chosenY = fallback.y;
+  // Written only on a change, which also leaves a list the reader has
+  // open alone.
   for (const [id, chosen] of [["pick-x", chosenX], ["pick-y", chosenY]]) {
-    $(id).innerHTML = offeredMeasures
+    showHtml($(id), offeredMeasures
       .map((m) => `<option value="${esc(m.key)}">${esc(m.name)}</option>`)
-      .join("");
+      .join(""));
     $(id).value = chosen ?? "";
   }
 }
@@ -239,51 +241,43 @@ async function measureOver(measure, win, signal) {
 // ---------------------------------------------------------------- charts
 
 function clearCorrelation(why) {
-  hold($("time-charts"), why === "");
   for (const c of timeCharts) c.destroy();
   timeCharts = [];
   scatterChart?.destroy();
   scatterChart = null;
   lagChart?.destroy();
   lagChart = null;
-  for (const id of ["time-charts", "scatter", "readout", "lag", "lag-note", "numbers"]) $(id).innerHTML = "";
-  $("note").textContent = why;
-  $("scatter-title").textContent = SCATTER_TITLE;
+  for (const id of ["time-charts", "scatter", "lag"]) $(id).innerHTML = "";
+  for (const id of ["readout", "numbers"]) showHtml($(id), "");
+  update($("lag-note"), "textContent", "");
+  update($("note"), "textContent", why);
+  update($("scatter-title"), "textContent", SCATTER_TITLE);
 }
 
 const chartWidth = (id) => $(id).clientWidth || 800;
 const timeOf = (win) => Array.from({ length: win.points }, (_, i) => win.from + (i + 0.5) * win.width);
 
+// Each measure against time, Y above X, as `restack` takes them: each
+// on its own times, only the buckets holding a reading or a gap, so the
+// line runs on across empty ones.
 function drawTime(win, x, y, xs, ys) {
-  const lines = [[y, ys, Y_COLOR], [x, xs, X_COLOR]];
-  const height = plotHeight(lines.length);
-  const fits = lines.map(([m, v]) => yAxis(m.key, v.filter((n) => n != null), height));
-  const ySize = stackWidth(fits);
   const at = timeOf(win);
-  lines.forEach(([m, values, color], place) => {
-    // Only the buckets holding a reading or a gap, so the line runs on
-    // across empty ones.
+  const drawn = [[y, ys, Y_COLOR], [x, xs, X_COLOR]].map(([m, values, color]) => {
     const kept = values.flatMap((v, i) => (v === undefined ? [] : [i]));
-    const host = document.createElement("div");
-    $("time-charts").appendChild(host);
-    const chart = ranged(new uPlot(
-      stackOptions({
-        width: chartWidth("time-charts"),
-        height: stackChartHeight(height, place, lines.length),
-        title: m.name,
-        series: [{ label: m.name, stroke: color, width: 1.5, points: { show: false } }],
-        fitted: fits[place],
-        ySize,
-        last: place === lines.length - 1,
-        sync: SYNC.key,
-      }),
-      [kept.map((i) => at[i]), kept.map((i) => values[i])],
-      host,
-    ));
-    timeCharts.push(chart);
+    return {
+      column: m.key,
+      envelope: null,
+      title: m.name,
+      x: kept.map((i) => at[i]),
+      lines: [{ column: m.key, name: m.name, color, values: kept.map((i) => values[i]) }],
+    };
   });
-  settleWidths(timeCharts, $("time-charts"));
-  release($("time-charts"));
+  timeCharts = restack($("time-charts"), timeCharts, { x: null, drawn }, {
+    height: plotHeight,
+    sync: SYNC.key,
+    legend: { show: true, live: true },
+    yStroke: AXIS_INK,
+  });
 }
 
 // The dot nearest the cursor, by distance on the plot rather than along
@@ -317,16 +311,34 @@ function dots(u, seriesIdx) {
   return { stroke: dot, fill: dot };
 }
 
+// A figure's size in the pane `id`, as the scatter and the lag curve
+// are drawn.
+function figureSize(id) {
+  const width = Math.max(DEVIATION_PLOT.min, chartWidth(id));
+  return { width, height: figureHeight(width) };
+}
+
+// The scatter, given new dots in place while it plots the same two
+// measures, and drawn afresh when it does not.
 function drawScatter(win, x, y, pairs, fit) {
   const dx = pairs.map((p) => p.x), dy = pairs.map((p) => p.y);
   const lo = Math.min(...dx), hi = Math.max(...dx);
   const line = fit ? [[lo, hi], [fit.slope * lo + fit.intercept, fit.slope * hi + fit.intercept]] : [[], []];
-  const width = Math.max(DEVIATION_PLOT.min, chartWidth("scatter"));
+  const data = [null, [dx, dy], line];
+  const shape = JSON.stringify([x.key, y.key]);
+  if (scatterChart?.smartclockShape === shape) {
+    scatterChart.smartclockPairs.pairs = pairs;
+    redata(scatterChart, data, figureSize("scatter"));
+    return;
+  }
+  scatterChart?.destroy();
+  $("scatter").innerHTML = "";
+  // Read by the readout, which outlives this read's dots.
+  const held = { pairs };
   scatterChart = new uPlot(
     {
       mode: 2,
-      width,
-      height: figureHeight(width),
+      ...figureSize("scatter"),
       scales: { x: { time: false }, y: {} },
       axes: [
         { ...AXIS, label: x.name, labelFont: AXIS_FONT, font: AXIS_FONT },
@@ -353,18 +365,21 @@ function drawScatter(win, x, y, pairs, fit) {
         setCursor: [
           (u) => {
             const i = u.cursor.idxs?.[1];
-            $("readout").innerHTML = i == null
+            const pair = held.pairs[i];
+            showHtml($("readout"), pair == null
               ? ""
-              : `<span class="k">at</span> <span class="v">${esc(new Date(pairs[i].at * 1000).toISOString().slice(0, 16).replace("T", " "))}Z</span>` +
-                `<span class="k">${esc(x.name)}</span> <span class="v">${fmt(pairs[i].x, 4)}</span>` +
-                `<span class="k">${esc(y.name)}</span> <span class="v">${fmt(pairs[i].y, 4)}</span>`;
+              : `<span class="k">at</span> <span class="v">${esc(new Date(pair.at * 1000).toISOString().slice(0, 16).replace("T", " "))}Z</span>` +
+                `<span class="k">${esc(x.name)}</span> <span class="v">${fmt(pair.x, 4)}</span>` +
+                `<span class="k">${esc(y.name)}</span> <span class="v">${fmt(pair.y, 4)}</span>`);
           },
         ],
       },
     },
-    [null, [dx, dy], line],
+    data,
     $("scatter"),
   );
+  scatterChart.smartclockShape = shape;
+  scatterChart.smartclockPairs = held;
 }
 
 // The lag curve's peak, a ringed dot with its lag and r beside it.
@@ -397,13 +412,20 @@ function markPeak(u, peak, win) {
   ctx.restore();
 }
 
+// The lag curve, given in place once drawn.
 function drawLag(curve, win, peak) {
   const minutes = curve.map(([lag]) => (lag * win.width) / 60);
-  const width = Math.max(DEVIATION_PLOT.min, chartWidth("lag"));
+  const data = [minutes, curve.map(([, r]) => r)];
+  if (lagChart) {
+    Object.assign(lagChart.smartclockPeak, { peak, win });
+    redata(lagChart, data, figureSize("lag"));
+    return;
+  }
+  // Read by the peak's mark each time the curve draws.
+  const held = { peak, win };
   lagChart = new uPlot(
     {
-      width,
-      height: figureHeight(width),
+      ...figureSize("lag"),
       scales: { x: { time: false } },
       axes: [
         {
@@ -421,11 +443,12 @@ function drawLag(curve, win, peak) {
         { label: "r", stroke: Y_COLOR, width: 1.5, points: { show: false }, value: (_, v) => (v == null ? "" : v.toFixed(3)) },
       ],
       legend: { show: true, live: true },
-      hooks: { draw: [(u) => markPeak(u, peak, win)] },
+      hooks: { draw: [(u) => markPeak(u, held.peak, held.win)] },
     },
-    [minutes, curve.map(([, r]) => r)],
+    data,
     $("lag"),
   );
+  lagChart.smartclockPeak = held;
 }
 
 // The strongest agreement along the lag curve: [lag, r].
@@ -453,12 +476,12 @@ function drawNumbers(win, x, y, n, r, rChanges, fit, peak) {
     ["window", spanText(win.to - win.from), "one slow swing makes any two drifting things look related"],
     ["readings", lockedOnly ? "locked only" : "every mode", ""],
   ];
-  $("numbers").innerHTML =
+  showHtml($("numbers"),
     `<table class="numbers"><tbody>` +
     rows
       .map(([k, v, why]) => `<tr><th>${esc(k)}</th><td class="v">${esc(v)}</td><td class="muted">${esc(why)}</td></tr>`)
       .join("") +
-    `</tbody></table>`;
+    `</tbody></table>`);
 }
 
 // ------------------------------------------------------------------ load
@@ -494,15 +517,15 @@ async function load(signal) {
   const reach = Math.max(1, Math.min(Math.floor(win.points / LAG_SHARE), Math.ceil(LAG_REACH / win.width)));
   const curve = lagCurve(xs, ys, reach);
   const peak = peakOf(curve);
-  clearCorrelation("");
-  $("scatter-title").textContent =
+  update($("note"), "textContent", "");
+  update($("scatter-title"), "textContent",
     `${y.name} against ${x.name}: ` +
     (r == null ? "no r" : `r ${r >= 0 ? "+" : ""}${r.toFixed(3)}, r² ${(r * r).toFixed(3)}`) +
-    (fit ? `, slope ${fit.slope.toPrecision(4)}` : "");
+    (fit ? `, slope ${fit.slope.toPrecision(4)}` : ""));
   drawTime(win, x, y, xs, ys);
   drawScatter(win, x, y, pairs, fit);
   drawLag(curve, win, peak);
-  $("lag-note").textContent = `Each step is one bucket, ${spanText(win.width)}: zoom in for a finer lag.`;
+  update($("lag-note"), "textContent", `Each step is one bucket, ${spanText(win.width)}: zoom in for a finer lag.`);
   drawNumbers(win, x, y, pairs.length, r, rChanges, fit, peak);
 }
 

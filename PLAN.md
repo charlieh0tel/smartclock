@@ -470,7 +470,12 @@ and their text set in place, unchanged HTML is not written again, the
 journal is fitted in a hidden copy and written once, a stack chart
 whose y range changes keeps its uPlot instance and reads its range,
 ticks and axis width from a holder `restack` swaps, and a lost link
-dims the last values instead of clearing them.
+dims the last values instead of clearing them.  The other pages
+refresh the same way, through the same `restack`, `showHtml` and
+`update`: the live page refreshes every 5 s by default and rebuilt
+six charts each time.  A chart is drawn afresh only when its lines or
+the kind of its y axis change, as a pick of columns, receivers or
+measures does.
 
 It never writes its address (`addressFixed` in `common.js`): the other
 pages keep the receiver and range in it with `replaceState`, and a

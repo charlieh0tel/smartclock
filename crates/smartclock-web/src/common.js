@@ -210,7 +210,7 @@ async function listReceivers() {
   // repeats the live and stability pages.  Read again with the list, so
   // the tab comes back when a second receiver's log appears.
   for (const link of document.querySelectorAll('nav a[href*="/compare"]')) {
-    link.hidden = list.length < 2;
+    update(link, "hidden", list.length < 2);
   }
   if (unit === null && list.length) {
     const asked = new URLSearchParams(location.search).get("receiver");
@@ -221,7 +221,7 @@ async function listReceivers() {
   // A page without the picker, the kiosk, is shown the first unit.
   if (!bar) return;
   if (list.length < 2) {
-    bar.hidden = true;
+    update(bar, "hidden", true);
     return;
   }
   // A unit chosen earlier that the server no longer lists stays chosen,
@@ -230,16 +230,18 @@ async function listReceivers() {
   const options = list.some((r) => r.serial === unit) ? list : [...list, { serial: unit }];
   // The port too, for a live unit: it is how the bench names them.
   const label = (r) => unitName(r.serial) + (r.instance ? ` on ${r.instance}` : "");
-  $("unit").innerHTML = options
+  // Written only on a change, which also leaves a list the reader has
+  // open alone.
+  showHtml($("unit"), options
     .map((r) => `<option value="${esc(r.serial)}">${esc(label(r))}</option>`)
-    .join("");
+    .join(""));
   $("unit").value = unit;
   const r = list.find((x) => x.serial === unit);
-  $("unit-seen").textContent = !r ? "no longer listed"
+  update($("unit-seen"), "textContent", !r ? "no longer listed"
     : r.instance !== null ? `live on smartclockd@${r.instance}`
     : r.last_seen ? `last seen ${r.last_seen.slice(0, 19)}Z`
-    : "";
-  bar.hidden = false;
+    : "");
+  update(bar, "hidden", false);
 }
 
 // ------------------------------------------------------------- journal
@@ -1154,11 +1156,11 @@ function readStarted() {
   readAt = Date.now();
   schedule();
   const shownEl = $("range-shown");
-  if (shownEl) shownEl.textContent = shownSpan();
+  if (shownEl) update(shownEl, "textContent", shownSpan());
   const picker = $("range-refresh");
   if (picker) {
-    picker.disabled = !growing();
-    picker.title = refreshTitle();
+    update(picker, "disabled", !growing());
+    update(picker, "title", refreshTitle());
   }
 }
 

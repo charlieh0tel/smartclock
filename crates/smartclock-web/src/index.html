@@ -121,13 +121,12 @@ const noteNear = (u) => noteAt(u, notes);
 
 // Take the charts down, saying why in their place.
 function clearCharts(why) {
-  hold($("charts"), why === "");
   for (const c of charts) c.destroy();
   charts = [];
   $("charts").innerHTML = "";
-  $("readout").innerHTML = "";
+  showHtml($("readout"), "");
   noteTip(null, null);
-  $("note").textContent = why;
+  update($("note"), "textContent", why);
 }
 
 async function draw(signal) {
@@ -152,9 +151,16 @@ async function draw(signal) {
     return;
   }
   const read = await readStack(signal, wanted, listed);
-  clearCharts(read.why);
-  if (!read.drawn.length) return;
-  charts = stackCharts($("charts"), read, {
+  if (!read.drawn.length) {
+    clearCharts(read.why);
+    return;
+  }
+  // Under the charts too: the sensors may be drawn over a range the
+  // receiver has nothing in.
+  update($("note"), "textContent", read.why);
+  // In place while the stack keeps its shape, so a read on the timer
+  // does not flash.
+  charts = restack($("charts"), charts, read, {
     height: plotHeight,
     sync: SYNC.key,
     hooks: {
@@ -162,7 +168,6 @@ async function draw(signal) {
       draw: [drawNotes],
     },
   });
-  release($("charts"));
   // Say what the row is for before anything has been hovered, rather
   // than leaving an empty strip that looks like a rendering fault.
   readout();
@@ -174,7 +179,7 @@ async function draw(signal) {
 // too.
 function readout() {
   const el = $("readout");
-  if (!charts.length) { el.innerHTML = ""; return; }
+  if (!charts.length) { showHtml(el, ""); return; }
   // Synced, so whichever chart is under the pointer has the index and
   // the rest agree; when the pointer leaves, none of them do.
   const idx = charts.map((c) => c.cursor.idx).find((i) => i != null);
@@ -214,10 +219,10 @@ function readout() {
   noteTip(under, under ? noteNear(under) : null);
   // The note has a line of its own, there whether or not one is near,
   // so the panel keeps its height when a note comes and goes.
-  el.innerHTML =
+  showHtml(el,
     `<span class="v">${at ? esc(at.toLocaleTimeString()) : "--:--:--"}</span>` +
     cells.join("") +
-    `<span class="note">${note ? `<span class="k" style="color:${NOTE}">note</span> ${esc(note)}` : "&nbsp;"}</span>`;
+    `<span class="note">${note ? `<span class="k" style="color:${NOTE}">note</span> ${esc(note)}` : "&nbsp;"}</span>`);
 }
 
 function pickers(plottable) {
@@ -304,32 +309,36 @@ function drawJournal(journal) {
   if (stream === null || !(journal[stream] ?? []).length) {
     stream = JOURNAL.map(([key]) => key).find((key) => journal[key]?.length) ?? "events";
   }
-  $("journal-tabs").innerHTML = JOURNAL.map(
+  showTabs(journal);
+  showStream(journal);
+}
+
+// The tabs, the one shown marked.  Their handlers are given this
+// journal whether or not the tabs were written again.
+function showTabs(journal) {
+  showHtml($("journal-tabs"), JOURNAL.map(
     ([key, name]) =>
       `<button data-stream="${key}" class="${key === stream ? "on" : ""}">${name}` +
       ` (${journal[key]?.length ?? 0})</button>`,
-  ).join(" ");
+  ).join(" "));
   for (const button of $("journal-tabs").querySelectorAll("button")) {
     button.onclick = () => {
       // Deliberate, so an empty tab the operator chose stays chosen
-      // rather than being redirected by the rule above.
+      // rather than being redirected by the rule in `drawJournal`.
       stream = button.dataset.stream;
-      $("journal-tabs")
-        .querySelectorAll("button")
-        .forEach((b) => b.classList.toggle("on", b.dataset.stream === stream));
+      showTabs(journal);
       showStream(journal);
     };
   }
-  showStream(journal);
 }
 
 function showStream(journal) {
   const list = journal[stream] ?? [];
-  $("journal").innerHTML = list.length
+  showHtml($("journal"), list.length
     ? `<table><tbody>${list
         .map((r) => `<tr><td>${journalRows[stream](r)[0]}</td><td>${journalRows[stream](r)[1]}</td></tr>`)
         .join("")}</tbody></table>`
-    : `<span class="muted">nothing recorded</span>`;
+    : `<span class="muted">nothing recorded</span>`);
   for (const link of $("journal").querySelectorAll(".note-link")) {
     link.onclick = () => showNote(Number(link.dataset.at));
   }
@@ -352,23 +361,19 @@ async function loadJournal(signal) {
 // What the daemon says it is attached to, in the footer.
 async function loadAbout(signal) {
   const info = await ask("/api/info" + liveQuery(), signal);
-  $("about").textContent =
+  update($("about"), "textContent",
     [info.identity, info.dialect, `smartclockd ${info.version ?? "?"}`, "read only"]
       .filter(Boolean)
-      .join("  --  ");
+      .join("  --  "));
 }
 
 // What a person recorded the unit is made of, in the footer: each
 // fact at its current value, since when, a line each.
 async function loadFacts(signal) {
   const facts = await ask("/api/facts?" + withUnit(new URLSearchParams()), signal);
-  $("facts").replaceChildren(
-    ...facts.map((f) => {
-      const line = document.createElement("div");
-      line.textContent = `${f.key} ${f.value} (since ${new Date(f.since).toLocaleDateString()})`;
-      return line;
-    }),
-  );
+  showHtml($("facts"), facts
+    .map((f) => `<div>${esc(`${f.key} ${f.value} (since ${new Date(f.since).toLocaleDateString()})`)}</div>`)
+    .join(""));
 }
 
 // Each part reports its own failure in its own place, so a daemon that
@@ -406,16 +411,16 @@ const HISTORY_FLOOR = 5;
     clear(why) {
       clearCharts(why);
       notes = [];
-      $("journal").innerHTML = muted(why);
-      $("about").textContent = "";
-      $("facts").textContent = "";
+      showHtml($("journal"), muted(why));
+      update($("about"), "textContent", "");
+      update($("facts"), "textContent", "");
     },
     load: (signal) =>
       Promise.all([
         part(draw, signal, clearCharts),
-        part(loadJournal, signal, (why) => ($("journal").innerHTML = muted(why))),
-        part(loadAbout, signal, (why) => ($("about").textContent = why)),
-        part(loadFacts, signal, (why) => ($("facts").textContent = why)),
+        part(loadJournal, signal, (why) => showHtml($("journal"), muted(why))),
+        part(loadAbout, signal, (why) => update($("about"), "textContent", why)),
+        part(loadFacts, signal, (why) => update($("facts"), "textContent", why)),
       ]),
   });
 })();

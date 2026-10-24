@@ -471,6 +471,50 @@ for (const path of ["/", "/compare"]) {
   });
 }
 
+// Each page that reads again on a timer: once drawn, the charts it
+// keeps across a read, as an expression, and the parts whose text a
+// read of a history with other values leaves as it was.
+const IN_PLACE = [
+  { path: "/", drawn: "charts.length > 1", kept: "[...charts]",
+    same: ["journal", "journal-tabs", "about", "facts", "readout", "note", "columns"] },
+  { path: "/compare", drawn: "charts.length > 1 && deviationChart", kept: "[...charts, deviationChart]",
+    same: ["compared", "note", "deviation-note"] },
+];
+
+for (const p of IN_PLACE) {
+  test(`${p.path} redraws in place: the same charts, new y axes, nothing written that did not change`, async ({ page }) => {
+    const fake = twoUnits();
+    await open(page, fake, p.path, B);
+    await page.waitForFunction(p.drawn);
+    await page.evaluate((kept) => {
+      window.first = { charts: (0, eval)(kept), top: charts[0].scales.y.max };
+      window.written = new Set();
+      window.plotsGone = 0;
+      new MutationObserver((list) => {
+        for (const m of list) {
+          for (const n of m.removedNodes) if (n.classList?.contains("uplot")) window.plotsGone++;
+          written.add(m.target.closest?.("[id]")?.id ?? m.target.parentElement?.closest("[id]")?.id);
+        }
+      }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true });
+    }, p.kept);
+    // A history ten times larger needs other y axes.
+    for (const u of fake.units) u.gain = 10;
+    await page.evaluate(() => renew(true));
+    await page.waitForFunction(() => charts[0].scales.y.max !== first.top);
+    const after = await page.evaluate((kept) => {
+      const now = (0, eval)(kept);
+      return {
+        same: now.length === first.charts.length && now.every((c, n) => c === first.charts[n]),
+        plotsGone,
+        written: [...written],
+      };
+    }, p.kept);
+    expect(after.same).toBe(true);
+    expect(after.plotsGone).toBe(0);
+    for (const id of p.same) expect(after.written, id).not.toContain(id);
+  });
+}
+
 test("the compare page keeps its charts up while it reads them again", async ({ page }) => {
   const fake = withSensors();
   // A stability measurement takes time; the old curves stay meanwhile.

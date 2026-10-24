@@ -110,6 +110,14 @@ read when its range or measures change.  ⟳ reads at once.  Reading pauses whil
 tab is hidden, while a read is still running, while the pointer is on
 a chart, and while text is selected.
 
+A read updates the page in place, so a slow display does not flash:
+each chart keeps its place and takes the new readings, y axis and
+width, and text is written only where it changed.  A chart is drawn
+afresh only when what it draws changes -- the columns, the sensors,
+the receivers ticked, the measures, the receiver chosen.  The
+stability page keeps its last figures up while it measures the same
+range again, and says it is measuring a new one.
+
 Two things differ from Grafana.  A range moved or zoomed out to end
 within half its length of now becomes the moving range of that length,
 where Grafana would slide on into the future.  And a fixed range is

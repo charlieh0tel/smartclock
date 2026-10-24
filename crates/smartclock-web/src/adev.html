@@ -161,7 +161,22 @@ function resettable(u) {
   });
 }
 
+// The time deviation chart's bands, which its scale and shading read
+// each time it draws, so new curves can be given to it in place.
+const tdevBands = { bands: {} };
+
+const tdevData = (curves) => [curves.tau, curves.time, curves.mtie];
+
+// Both charts, given new curves in place once drawn, so a measurement
+// read again on the timer does not flash; drawn afresh after nothing.
 function draw(points) {
+  if (chart && points.length) {
+    const curves = deviationCurves(points);
+    resigma(chart, curves);
+    tdevBands.bands = curves.timeBands;
+    tdevChart.setData(tdevData(curves));
+    return;
+  }
   for (const old of [chart, tdevChart]) {
     if (old) old.destroy();
   }
@@ -193,12 +208,13 @@ function draw(points) {
     hooks: { setSeries: [followLegend(0)] },
   });
   resettable(chart);
+  tdevBands.bands = curves.timeBands;
   tdevChart = new uPlot(
     {
       width: size.width,
       height: Math.round(size.height * 0.6),
       title: "Time deviation, shaded to one sigma",
-      scales: { x: TAU_SCALE, y: sigmaScale(curves.timeBands) },
+      scales: { x: TAU_SCALE, y: heldSigmaScale(tdevBands) },
       axes: [tauAxis(), sigmaAxis("seconds")],
       series: [
         { label: "τ", value: (_, v) => seconds(v) },
@@ -221,9 +237,9 @@ function draw(points) {
       ],
       legend: { show: true, live: true },
       cursor,
-      hooks: { setSeries: [followLegend(1)], draw: [shadeBands(curves.timeBands)] },
+      hooks: { setSeries: [followLegend(1)], draw: [(u) => shadeBands(tdevBands.bands)(u)] },
     },
-    [curves.tau, curves.time, curves.mtie],
+    tdevData(curves),
     $("chart-tdev"),
   );
   resettable(tdevChart);
@@ -239,13 +255,13 @@ const noiseName = (alpha) => `${NOISE[alpha] ?? "?"} (α=${alpha})`;
 
 function table(d) {
   if (!d.points.length) {
-    $("table").innerHTML =
+    showHtml($("table"),
       `<tbody class="muted"><tr><td>` +
       `not enough unbroken readings here to measure anything` +
-      `</td></tr></tbody>`;
+      `</td></tr></tbody>`);
     return;
   }
-  $("table").innerHTML =
+  showHtml($("table"),
     "<thead><tr><th>averaging time</th>" +
     `<th title="modified Allan deviation: exact for these readings, ` +
     `which are already ten-second means">MDEV</th>` +
@@ -284,7 +300,7 @@ function table(d) {
           `<td class="muted">${p.differences}</td></tr>`,
       )
       .join("") +
-    "</tbody>";
+    "</tbody>");
 }
 
 // How long one measurement may take: a long range is a lot of log to
@@ -300,8 +316,15 @@ function measured(d) {
   table(d ?? { points: [] });
 }
 
+// The receiver and range last measured.  A read of another says it is
+// measuring, which takes seconds; one of the same, on the timer, leaves
+// the last measurement's figures up meanwhile.
+let lastAsked = null;
+
 async function load(signal) {
-  $("state").innerHTML = pill("measuring...");
+  const asked = JSON.stringify([unit, range]);
+  if (asked !== lastAsked) showHtml($("state"), pill("measuring..."));
+  lastAsked = asked;
   const q = new URLSearchParams();
   const { from, to } = rangeBounds();
   q.set("from", String(Math.floor(from)));
@@ -316,7 +339,7 @@ async function load(signal) {
   const stat = (v, k) =>
     `<span class="stat"><span class="v">${esc(v)}</span>` +
     `<span class="k">${esc(k)}</span></span>`;
-  $("state").innerHTML =
+  showHtml($("state"),
     stat(d.present, "readings") +
     stat(seconds(d.tau0), "spacing") +
     stat(d.segments, "unbroken runs") +
@@ -324,7 +347,7 @@ async function load(signal) {
     stat(d.holes, "holes") +
     (d.truncated
       ? ` <span class="pill stale">longer than one measurement reads; this is its newest part</span>`
-      : "");
+      : ""));
 }
 
 rangeControl($("ranges"), renew);
@@ -358,7 +381,8 @@ content({
   floor: MEASURE_FLOOR,
   clear(why, bad) {
     measured(null);
-    $("state").innerHTML = pill(why, bad);
+    lastAsked = null;
+    showHtml($("state"), pill(why, bad));
   },
   load,
 });

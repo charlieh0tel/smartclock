@@ -309,7 +309,8 @@ async function tick() {
     // not blank the strip while the first poll is in flight.  Per tab,
     // per receiver, and not shared: it is a paint, not a record.
     try {
-      sessionStorage.setItem(`snapshot:${unit}`, JSON.stringify(s));
+      snapshots().setItem(`snapshot:${unit}`, JSON.stringify(s));
+      snapshots().setItem(SNAPSHOT_UNIT, unit);
     } catch (e) {
       // A browser refusing storage costs the flash, nothing else.
     }
@@ -502,12 +503,21 @@ function sensorStrip() {
     .join("");
 }
 
+// Where the last snapshot is kept: the tab's session, or for a page
+// that is `lasting` the browser's storage, which a reload of a page
+// in a player that starts a new session each time also finds.
+const snapshots = () => (page?.lasting ? localStorage : sessionStorage);
+// The key under which the receiver last polled is kept.
+const SNAPSHOT_UNIT = "snapshot-unit";
+
 // Paint the strip for the cached snapshot of the receiver the address
-// names, if this tab has one.
+// names, if this tab has one.  A `lasting` page whose address names
+// none takes the receiver it last polled.
 function paintCached() {
-  const asked = new URLSearchParams(location.search).get("receiver");
   try {
-    const last = sessionStorage.getItem(`snapshot:${asked}`);
+    const asked = new URLSearchParams(location.search).get("receiver") ??
+      (page?.lasting ? snapshots().getItem(SNAPSHOT_UNIT) : null);
+    const last = snapshots().getItem(`snapshot:${asked}`);
     if (last) paint(JSON.parse(last), true);
   } catch (e) {
     // No cache, or unreadable: the strip just starts empty.
@@ -551,6 +561,9 @@ function paintCached() {
 //   chosen()         optional: set up anything that depends on which
 //                    receiver it is, such as what it measures; called
 //                    once the receiver is known and on every change
+//   lasting          optional: the last snapshot is kept in the
+//                    browser's storage, not the tab's, so a reload
+//                    paints it at once whatever the session
 let page = null;
 let running = null;
 let again = false;

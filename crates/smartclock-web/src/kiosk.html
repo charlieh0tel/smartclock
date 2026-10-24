@@ -1,9 +1,15 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
 <title>SmartClock kiosk</title>
 
-<link rel="stylesheet"
+<!-- Nothing here waits on the network before the first paint, which a
+     player that reloads the page would otherwise show as a white
+     screen: the server inlines style.css, common.js and charts.js
+     into this page, and uPlot's stylesheet, which only the charts need
+     and which they are drawn well after, is applied once it arrives. -->
+<link rel="stylesheet" media="print" onload="this.media = 'all'"
       href="https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.min.css"
       integrity="sha384-IfV0B7MIOYuO95kO9G5ySKPz/85zqFNOAs8iy4tkK5zd9izhJAB8b7lHrwYqqmYE"
       crossorigin="anonymous">
@@ -120,7 +126,7 @@ scale();
 // redrawing itself, and a display has no console to read.
 const DEBUG = new URLSearchParams(location.search).has("debug");
 const loadedHow = performance.getEntriesByType?.("navigation")[0]?.type ?? "?";
-const chrome = navigator.userAgent.match(/Chrome\/(\d+)/)?.[1] ?? "?";
+const chromeVersion = navigator.userAgent.match(/Chrome\/(\d+)/)?.[1] ?? "?";
 let lastError = null;
 // Shown at once, as well as with the snapshot: an error that stops the
 // snapshot being painted would otherwise never be.
@@ -146,7 +152,7 @@ function countLoad() {
 }
 const loadCount = DEBUG ? countLoad() : null;
 const loads = () => DEBUG
-  ? `load ${loadCount} (${loadedHow}), up ${seconds((Date.now() - loadedAt) / 1000)}, Chrome ${chrome}, ` +
+  ? `load ${loadCount} (${loadedHow}), up ${seconds((Date.now() - loadedAt) / 1000)}, Chrome ${chromeVersion}, ` +
     `${innerWidth}x${innerHeight} at ${devicePixelRatio}x, scale ${unitPx.toFixed(2)}` +
     (lastError ? `, error: ${lastError}` : "")
   : null;
@@ -292,10 +298,13 @@ function renderKiosk(s, cached) {
   // and one a few seconds off would stop the clock for good.
   const polled = s.polled?.fast?.at;
   const live = !cached && s.freshness === "Live";
+  // A snapshot kept from the last load is not live and is shown as of
+  // the host's stamp: the best there is for how old it is.
+  const seen = performance.now() - (cached ? Math.max(0, Date.now() - Date.parse(polled)) : 0);
   if (!s.time || !polled) clockFrom = null;
   else if (polled !== clockFrom?.polled) {
     clockFrom = { second: s.time.hour * 3600 + s.time.minute * 60 + s.time.second, polled,
-      at: performance.now(), live };
+      at: seen, live };
   } else clockFrom.live = live;
   drawClock();
   const tiles = [
@@ -325,8 +334,8 @@ function showMode(mode, tone) {
 // rather than current: kept, so a poll that fails once does not blank
 // them for a second.
 function stale(dim) {
-  $("kiosk-tiles").classList.toggle("stale", dim);
-  $("kiosk-alarms").classList.toggle("stale", dim);
+  $("kiosk-tiles").classList.toggle("dim", dim);
+  $("kiosk-alarms").classList.toggle("dim", dim);
 }
 
 // The receiver's time, counted on a second at a time from its last
@@ -343,7 +352,7 @@ function drawClock() {
     : `${pad(Math.floor(t / 3600))}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`);
   update($("kiosk-age"), "textContent", trusted ? "" : `as of ${seconds(age)} ago`);
   update($("kiosk-age"), "hidden", trusted);
-  $("kiosk-clock").classList.toggle("stale", !trusted);
+  $("kiosk-clock").classList.toggle("dim", !trusted);
 }
 
 function lostKiosk(what, why) {
@@ -362,7 +371,27 @@ function lostKiosk(what, why) {
 // holdover and survey.  From the log, so it holds when the daemon goes.
 async function readJournal(signal) {
   journal = await ask("/api/journal?" + withUnit(new URLSearchParams()), signal);
+  try {
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify({ unit, journal }));
+  } catch (e) {
+    // Not kept: a reload draws it once read again.
+  }
   drawJournal();
+}
+
+// Where the journal last read is kept, so a reload draws it at once.
+const JOURNAL_KEY = "kiosk:journal";
+
+// The journal kept by the last load, if it is the receiver the address
+// names, or the address names none.
+function lastJournal() {
+  try {
+    const kept = JSON.parse(localStorage.getItem(JOURNAL_KEY));
+    const asked = new URLSearchParams(location.search).get("receiver");
+    return kept && (!asked || asked === kept.unit) ? kept.journal : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 // The journal last read, or null.
@@ -412,9 +441,12 @@ function clearDeviation(why) {
   $("chart").innerHTML = why ? `<p class="muted pad">${esc(why)}</p>` : "";
 }
 
-// Each chart's height, so the stack fills its panel and no more.
-const stackHeight = (count) =>
-  Math.max(SHORTEST_CHART, Math.floor($("charts").clientHeight / Math.max(1, count) / unitPx) - TITLE_HEIGHT) * unitPx;
+// Each chart's height, so the stack, with the time axis under its
+// bottom chart, fills its panel and no more.
+const stackHeight = (count) => {
+  const room = ($("charts").clientHeight - timeAxisRoom(kioskFont())) / unitPx;
+  return Math.max(SHORTEST_CHART, Math.floor(room / Math.max(1, count)) - TITLE_HEIGHT) * unitPx;
+};
 
 // The stability chart's size: its panel, less its title and legend.
 const deviationSize = () => ({
@@ -493,7 +525,8 @@ function fit() {
   }
   drawJournal();
   const height = stackHeight(charts.length);
-  for (const c of charts) c.setSize({ width: $("charts").clientWidth, height });
+  charts.forEach((c, n) =>
+    c.setSize({ width: $("charts").clientWidth, height: stackChartHeight(height, n, charts.length, kioskFont()) }));
   deviation?.setSize(deviationSize());
 }
 
@@ -517,7 +550,10 @@ setInterval(drawClock, 1000);
 if (!haveUplot) {
   clearCharts("The chart library did not load. It comes from a CDN, so this page needs internet access; the readings do not.");
 }
+journal = lastJournal();
+drawJournal();
 content({
+  lasting: true,
   daemon: false,
   floor: KIOSK_FLOOR,
   render: renderKiosk,

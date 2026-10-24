@@ -3,6 +3,14 @@
 // it.  Loaded after common.js.
 "use strict";
 
+// What each of the host's sensor quantities is called in a title,
+// after whose it is.
+const SENSOR_NAMES = {
+  temperature: "temperature, C",
+  humidity: "relative humidity, %",
+  pressure: "pressure, kPa",
+};
+
 // Name, the factor that puts the column in units worth reading, and
 // an optional qualifier said beside the name in the chart's title
 // only: the menu and the cursor readout use the bare name.
@@ -24,10 +32,11 @@ const LABELS = {
   tracking: ["# sats tracked", 1],
   not_tracking: ["# sats not tracked", 1],
   holdover_predicted_s: ["Predicted holdover uncertainty, µs", 1e6],
-  // The host's sensors, a chart per quantity.
-  "sensor:temperature": ["Sensors, temperature, C", 1],
-  "sensor:humidity": ["Sensors, relative humidity, %", 1],
-  "sensor:pressure": ["Sensors, pressure, kPa", 1],
+  // The host's sensors, a chart per quantity: of the air around the
+  // receiver, as against its own.
+  ...Object.fromEntries(
+    Object.entries(SENSOR_NAMES).map(([quantity, name]) => [`sensor:${quantity}`, [`Ambient ${name}`, 1]]),
+  ),
 };
 // Hover text for every series, by column: what each is and where it
 // comes from, which a name and a unit cannot carry, and for the figures
@@ -133,9 +142,10 @@ const COUNTS = { tracking: 8, not_tracking: 12, tfom: 9, ffom: 3 };
 // after it against zero.
 const LOG_COLUMNS = new Set(["holdover_predicted_s"]);
 
-function countScale(max, pinned, target) {
+// `room`, as `mostTicks` gives it, caps the gaps between labels.
+function countScale(max, pinned, target, room) {
   const top = Math.max(pinned, Math.ceil(max) || 0, 1);
-  const most = Math.max(4, target + 3);
+  const most = Math.min(Math.max(4, target + 3), room);
   // A step that divides the top exactly, so the axis ends on the pin
   // rather than above it: TFOM runs to 9, and rounding up to a step of
   // 2 gave it an axis to 10 and a grid line at a figure of merit the
@@ -153,7 +163,9 @@ function countScale(max, pinned, target) {
   return { lo: 0, hi: top, step: top, n: 1 };
 }
 
-function niceScale(min, max, target) {
+// `room`, as `mostTicks` gives it, caps the gaps between labels, unless
+// no round step fits under it.
+function niceScale(min, max, target, room) {
   if (!isFinite(min) || !isFinite(max)) return null;
   // A series that never moved still needs an axis with room around it.
   //
@@ -171,15 +183,27 @@ function niceScale(min, max, target) {
     max += pad;
   }
   const span = max - min;
-  const mag = Math.pow(10, Math.floor(Math.log10(span / target)));
+  const aim = Math.min(target, room);
+  const mag = Math.pow(10, Math.floor(Math.log10(span / aim)));
+  // Under a cap, a step a decade up as well: a span just under a power
+  // of ten otherwise has no round step that few ticks cover.
+  return roundScale(min, max, span, mag, aim, Math.min(room, MOST_TICKS), [1, 2, 5, 10, 20, 50]) ??
+    roundScale(min, max, span, mag, aim, MOST_TICKS, [1, 2, 5, 10]);
+}
+
+// Two lines is not an axis; nine is a grid.
+const MOST_TICKS = 8;
+
+// The best step of `multiples` of `mag` over `min` to `max`, with at
+// most `most` gaps, as `niceScale` scores them; null for none.
+function roundScale(min, max, span, mag, target, most, multiples) {
   let best = null;
-  for (const m of [1, 2, 5, 10]) {
+  for (const m of multiples) {
     const step = m * mag;
     const lo = Math.floor(min / step) * step;
     const hi = Math.ceil(max / step) * step;
     const n = Math.round((hi - lo) / step);
-    // Two lines is not an axis; nine is a grid.
-    if (n < 2 || n > 8) continue;
+    if (n < 2 || n > most) continue;
     // Both matter and the balance is empirical.  Weighting the tick
     // count heavily gave internal temperature an axis of 30 to 45 for
     // data spanning 33.8 to 40.3 -- round, correctly bounded, and
@@ -198,7 +222,17 @@ function tickTarget(height) {
   return Math.min(6, Math.max(3, Math.round(height / 40)));
 }
 
-// How tall each chart is, given how many there are.  One gets the room
+// The least room a y label needs, in CSS pixels, with the gap to the
+// next: closer and they overprint, as the kiosk's large labels did on
+// a stack of short plots.
+const LABEL_ROOM = 24;
+
+// The most gaps between labels a stack chart of this height has room
+// for, on the plot inside its ends.
+const mostTicks = (height) => Math.max(2, Math.floor((height - 2 * STACK_END) / LABEL_ROOM));
+
+// How tall each chart of a stack is, given how many there are, less
+// the time axis under the bottom one.  One gets the room
 // it always had; a stack divides a similar budget, with a floor below
 // which a plot stops being readable.
 function plotHeight(count) {
@@ -216,6 +250,20 @@ function tickLabel(v, places) {
   });
 }
 
+// The least span a column's y axis covers, in its plotted units, for
+// readings whose noise would otherwise fill the plot: a room that holds
+// to a tenth of a degree is drawn as steady, not as a jagged swing.
+const LEAST_SPAN = { "sensor:temperature": 0.5, "sensor:humidity": 2, "sensor:pressure": 0.2 };
+
+// `lo` and `hi` widened about their middle to the column's least span.
+// A single sensor, `sensor:QUANTITY:NAME`, takes its quantity's.
+function leastSpan(col, lo, hi) {
+  const least = LEAST_SPAN[col.split(":", 2).join(":")] ?? 0;
+  if (hi - lo >= least) return [lo, hi];
+  const middle = (lo + hi) / 2;
+  return [middle - least / 2, middle + least / 2];
+}
+
 // A y axis for `values` of column `col` on a plot `height` pixels
 // tall: the range its scale is snapped to, and the axis's ticks,
 // labels and width to match, so the lines and the range cannot
@@ -225,8 +273,8 @@ function yAxis(col, values, height) {
   const nice = !values.length
     ? null
     : col in COUNTS
-      ? countScale(Math.max(...values), COUNTS[col], tickTarget(height))
-      : niceScale(Math.min(...values), Math.max(...values), tickTarget(height));
+      ? countScale(Math.max(...values), COUNTS[col], tickTarget(height), mostTicks(height))
+      : niceScale(...leastSpan(col, Math.min(...values), Math.max(...values)), tickTarget(height), mostTicks(height));
   const places = nice ? Math.max(0, -Math.floor(Math.log10(nice.step))) : 0;
   const ticks = [];
   if (nice) {
@@ -295,12 +343,39 @@ const WIDE_TIME_SPACE = 140;
 // The time axis's height with that font, for its two lines of labels:
 // uPlot's own 50 clips the second.
 const WIDE_TIME_SIZE = 66;
+// uPlot's own time axis height, for its own font.
+const TIME_SIZE = 50;
 // The font size the two above are for; another is given room in
 // proportion.
 const WIDE_FONT_PX = 17;
 
+// The height of the time axis under a stack's bottom chart, in CSS
+// pixels, for the axes' `font`, or uPlot's own when none is given.
+const timeAxisHeight = (font) => (font ? WIDE_TIME_SIZE * parseFloat(font) / WIDE_FONT_PX : TIME_SIZE);
+
+// The room above and below a stack chart's plot, for half its top and
+// bottom y labels: uPlot's own default, a third of its time axis.
+// Under the bottom chart the time axis takes its place.
+const STACK_END = Math.round(TIME_SIZE / 3);
+
+// That room for the axes' `font`: a line of its type, which a kiosk
+// scaled down to a small screen would otherwise lose to padding.
+const stackEnd = (font) => (font ? Math.round(parseFloat(font)) : STACK_END);
+
+// How much taller than the rest a stack's bottom chart is, for the
+// axes' `font`: its time axis, less the room under its plot the axis
+// takes the place of.
+const timeAxisRoom = (font) => timeAxisHeight(font) - stackEnd(font);
+
+// The height of chart `n` of a stack of `count`, each given `height`,
+// with the axes' font `font`.  The bottom chart's time axis is drawn
+// inside its height, so it is given the axis's room on top: otherwise
+// its plot is that much shorter than the others', which on the kiosk's
+// large type left it a few pixels.
+const stackChartHeight = (height, n, count, font) => height + (n === count - 1 ? timeAxisRoom(font) : 0);
+
 // The options every chart in a stack of time charts shares:
-//   width, height  its size
+//   width, height  its size, as `stackChartHeight` gives the height
 //   title          its title
 //   series         its series after the time
 //   fitted, ySize  its y axis as `yAxis` fitted it, and the stack's
@@ -316,11 +391,11 @@ const WIDE_FONT_PX = 17;
 function stackOptions(stack) {
   const font = stack.font ? { font: stack.font } : {};
   const wide = stack.font ? parseFloat(stack.font) / WIDE_FONT_PX : 0;
-  const timeRoom = stack.font ? { space: WIDE_TIME_SPACE * wide, size: WIDE_TIME_SIZE * wide } : {};
+  const timeRoom = { size: timeAxisHeight(stack.font), ...(stack.font ? { space: WIDE_TIME_SPACE * wide } : {}) };
   return {
     width: stack.width,
     height: stack.height,
-    padding: [null, STACK_RIGHT, null, null],
+    padding: [stackEnd(stack.font), STACK_RIGHT, stack.last ? 0 : stackEnd(stack.font), null],
     title: stack.title,
     series: [{}, ...stack.series],
     axes: [
@@ -570,7 +645,7 @@ async function readStack(signal, wanted, listed) {
   const sensorDrawings = groups.map((group) => ({
     column: `sensor:${group.quantity}`,
     envelope: null,
-    named: true,
+    title: sensorTitle(group.quantity, group.lines.map((l) => l.name)),
     hint: sensorHint(group.lines),
     lines: group.lines.map((line) => ({
       column: `sensor:${group.quantity}`,
@@ -650,7 +725,8 @@ function heldAxis(held) {
 
 // Draw the stack `readStack` read into `container`, and answer its
 // charts.  `style` is
-//   height(count)  each chart's height, given how many there are
+//   height(count)  each chart's height, given how many there are; the
+//                  bottom one is given its time axis on top
 //   sync           the cursor's sync key
 //   hooks          uPlot's, as `stackOptions` takes them
 //   font           the axes' font, when not uPlot's own
@@ -659,17 +735,16 @@ function stackCharts(container, read, style) {
   const fits = stackFits(read, height);
   const ySize = stackWidth(fits);
   const charts = read.drawn.map((drawing, n) => {
-    // A chart of named lines, a sensor's, says the names whatever their
-    // number; a receiver's chart colors its lines only to tell several
-    // apart.
-    const several = drawing.lines.length > 1 || Boolean(drawing.named);
+    // A receiver's lines are colored, and named in the title, only to
+    // tell several apart.
+    const several = drawing.lines.length > 1;
     const host = document.createElement("div");
     container.appendChild(host);
     const held = { fit: fits[n], ySize };
     const opts = stackOptions({
       width: container.clientWidth || 800,
-      height,
-      title: drawing.lines.map((l) => label(l.column)).join(" and "),
+      height: stackChartHeight(height, n, read.drawn.length, style.font),
+      title: drawing.title ?? drawing.lines.map((l) => label(l.column)).join(" and "),
       series: [
         ...(drawing.envelope
           ? [
@@ -705,8 +780,9 @@ function stackCharts(container, read, style) {
     chart.smartclockAxis = held;
     // Which lines this chart draws, and from which series, so a shared
     // readout can label them without reaching back into the request
-    // that built it.  A line's color is said only where there are
-    // several to tell apart.  A sensor's line is read out with its
+    // that built it.  A receiver's line's color is said only where
+    // there are several to tell apart; a sensor's always, since it is
+    // that sensor's on every chart.  A sensor's line is read out with its
     // quantity and unit, which its chart's title says but the readout
     // does not.
     chart.smartclockLines = drawing.lines.map((l, i) => ({
@@ -714,7 +790,7 @@ function stackCharts(container, read, style) {
       name: l.name,
       reading: l.reading,
       series: 1 + (drawing.envelope ? 2 : 0) + i,
-      color: several ? l.color : null,
+      color: several || l.name ? l.color : null,
     }));
     if (drawing.hint) hintAs(chart, drawing.hint);
     else hint(chart, ...drawing.lines.map((l) => l.column));
@@ -825,6 +901,14 @@ async function sensorGroups(listed, win, signal) {
   );
   return groups.filter((g) => g && g.lines.length);
 }
+
+// A sensor chart's title, of `quantity` read by the sensors `names`:
+// the one sensor's name, or for several the quantity's own, which
+// their colors then name.
+const sensorTitle = (quantity, names) =>
+  names.length === 1
+    ? `${names[0].charAt(0).toUpperCase()}${names[0].slice(1)} ${SENSOR_NAMES[quantity]}`
+    : label(`sensor:${quantity}`);
 
 // A sensor reading's name where its chart's title does not say the
 // quantity and unit: one sensor can read several quantities.

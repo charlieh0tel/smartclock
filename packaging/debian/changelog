@@ -1,3 +1,12 @@
+smartclockmon (1.7.2-1) unstable; urgency=low
+
+  * The web view has a kiosk page, /kiosk: one receiver's state in
+    large type, its alarms and log, and the last day's time error,
+    EFC, satellites, temperature and stability, laid out for an
+    unattended 1920x1280 display.  It never reads the status screen.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sat, 24 Oct 2026 10:45:37 -0700
+
 smartclockmon (1.7.1-1) unstable; urgency=low
 
   * The packages' summaries say what each holds: smartclockmon the

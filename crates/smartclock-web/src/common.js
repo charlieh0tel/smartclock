@@ -256,25 +256,37 @@ async function tick() {
   }
 }
 
-// Paint the strip.  `cached` says the snapshot came from the last page
-// rather than from the daemon just now: the values are still the last
-// ones seen, and the age beside them still counts up honestly, but the
-// receiver may have stopped in between -- so the state pill says where
-// the numbers came from rather than asserting a link nobody has
-// checked since the page loaded.
-function render(s, cached) {
-  const state = cached ? ["seen", "LAST SEEN"]
-              : s.freshness === "Live" ? ["live", "LIVE"]
-              : s.freshness === "Stale" ? ["stale", "STALE"]
-              : ["down", "DISCONNECTED"];
-  // Age of the slowest group of fields: the honest headline, since the
-  // rest of this strip is only as current as its least current part.
+// The link's state as a pill's class and text.  `cached` says the
+// snapshot came from the last page rather than from the daemon just
+// now: the values are still the last ones seen, and the age beside
+// them still counts up honestly, but the receiver may have stopped in
+// between -- so the state pill says where the numbers came from rather
+// than asserting a link nobody has checked since the page loaded.
+function linkState(s, cached) {
+  return cached ? ["seen", "LAST SEEN"]
+    : s.freshness === "Live" ? ["live", "LIVE"]
+    : s.freshness === "Stale" ? ["stale", "STALE"]
+    : ["down", "DISCONNECTED"];
+}
+
+// Age of the slowest group of fields, in seconds, or null: the honest
+// headline, since the rest of the strip is only as current as its
+// least current part.
+function oldestAge(s) {
   const ages = ["fast", "medium", "slow"]
     .map((t) => s.polled?.[t]?.at)
     .filter(Boolean)
     .map((at) => (Date.now() - Date.parse(at)) / 1000);
-  const oldest = ages.length ? Math.max(...ages) : null;
+  return ages.length ? Math.max(0, ...ages) : null;
+}
 
+// The snapshot's readings, as the strip shows them: each
+//   id    which reading it is, for a page that lays them out itself
+//   k, v  its name and its value as text
+//   hint  hover text, or undefined
+// What the unit does not measure is left out rather than shown as a
+// permanent "--".
+function readings(s) {
   // The receiver's own clock, not the browser's.  Shown as of the last
   // fast poll rather than ticking: a clock animated between polls
   // would be the page's arithmetic presented as the receiver's time.
@@ -299,42 +311,39 @@ function render(s, cached) {
     : s.date?.rollover
       ? "date, as the receiver reports it"
       : "date";
-  const stats = [
-    ["receiver UTC", utc],
-    [dateKey, s.date_corrected ?? s.date?.raw ?? "--", s.date?.raw],
-    ["mode", s.mode ?? "--"],
-    ["TFOM / FFOM", `${s.tfom ?? "--"} / ${s.ffom ?? "--"}`],
-    ["EFC", s.efc === null || s.efc === undefined ? "--" : fmt(s.efc, 3) + "%"],
-    ["EFC raw", s.efc_raw ?? "--"],
-    ["internal temp", s.temperature_c == null ? "--" : fmt(s.temperature_c, 2) + " C"],
-    ["1 PPS TI", s.time_interval_ns === null ? "--" : fmt(s.time_interval_ns, 1) + " ns"],
+  const hinted = (raw) => (raw ? `the receiver reports ${raw}` : undefined);
+  // Each reading with the column it is, so what the unit does not
+  // measure can be left out.
+  return [
+    { id: "utc", k: "receiver UTC", v: utc },
+    { id: "date", k: dateKey, v: s.date_corrected ?? s.date?.raw ?? "--", hint: hinted(s.date?.raw) },
+    { id: "mode", k: "mode", v: s.mode ?? "--" },
+    { id: "fom", k: "TFOM / FFOM", v: `${s.tfom ?? "--"} / ${s.ffom ?? "--"}`, column: "tfom" },
+    { id: "efc", k: "EFC", v: s.efc == null ? "--" : fmt(s.efc, 3) + "%", column: "efc_percent" },
+    { id: "efc_raw", k: "EFC raw", v: s.efc_raw ?? "--", column: "efc_dac" },
+    {
+      id: "temperature", k: "internal temp",
+      v: s.temperature_c == null ? "--" : fmt(s.temperature_c, 2) + " C", column: "temperature_c",
+    },
+    {
+      id: "ti", k: "1 PPS TI",
+      v: s.time_interval_ns == null ? "--" : fmt(s.time_interval_ns, 1) + " ns", column: "time_interval_s",
+    },
     // Both numbers, each said in full.  "6 of 7 up" under the word
     // "tracking" left the second number to be guessed at, and the one
     // that matters when a receiver is struggling is the difference.
-    ["satellites", s.tracking == null ? "--" :
-      s.visible == null
-        ? `${s.tracking} tracked`
-        : `${s.tracking} tracked / ${s.visible} visible`],
-  ];
-  // Each reading with the column it is, so what the unit does not
-  // measure is left out rather than shown as a permanent "--".
-  const column = {
-    "TFOM / FFOM": "tfom", EFC: "efc_percent", "EFC raw": "efc_dac",
-    "internal temp": "temperature_c", "1 PPS TI": "time_interval_s", satellites: "tracking",
-  };
-  const shown = stats.filter(([k]) => !column[k] || measures(column[k]));
-  $("status").innerHTML =
-    `<span class="pill ${state[0]}">${state[1]}</span>` +
-    (oldest === null
-      ? ""
-      : `<span class="muted" id="age">oldest field ${Math.max(0, oldest).toFixed(0)}s</span>`) +
-    shown
-      .map(
-        ([k, v, hint]) =>
-          `<span class="stat"${hint ? ` title="the receiver reports ${esc(hint)}"` : ""}>` +
-          `<span class="v">${esc(v)}</span><span class="k">${esc(k)}</span></span>`,
-      )
-      .join("") +
+    {
+      id: "satellites", k: "satellites", column: "tracking",
+      v: s.tracking == null ? "--"
+        : s.visible == null ? `${s.tracking} tracked`
+        : `${s.tracking} tracked / ${s.visible} visible`,
+    },
+  ].filter((r) => !r.column || measures(r.column));
+}
+
+// The receiver's faults and alarms, as pills; "" with none.
+function alarms(s) {
+  return (
     (s.hardware_faults?.length
       ? `<span class="pill down">${s.hardware_faults.map(esc).join(", ")}</span>`
       : "") +
@@ -347,7 +356,26 @@ function render(s, cached) {
       : "") +
     (s.alarming && !s.time_reset
       ? `<span class="pill stale">receiver alarm: ${(s.alarm_summary ?? []).map(esc).join(", ")}</span>`
-      : "") +
+      : "")
+  );
+}
+
+// One reading as a tile: its value over its name.
+const statTile = (r) =>
+  `<span class="stat"${r.hint ? ` title="${esc(r.hint)}"` : ""}>` +
+  `<span class="v">${esc(r.v)}</span><span class="k">${esc(r.k)}</span></span>`;
+
+// Paint the strip.  `cached` as for `linkState`.
+function render(s, cached) {
+  const state = linkState(s, cached);
+  const oldest = oldestAge(s);
+  $("status").innerHTML =
+    `<span class="pill ${state[0]}">${state[1]}</span>` +
+    (oldest === null
+      ? ""
+      : `<span class="muted" id="age">oldest field ${oldest.toFixed(0)}s</span>`) +
+    readings(s).map(statTile).join("") +
+    alarms(s) +
     sensorStrip();
 }
 

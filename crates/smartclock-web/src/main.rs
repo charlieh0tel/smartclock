@@ -83,6 +83,8 @@ const STYLE: &str = include_str!("style.css");
 /// what it does when the receiver changes or its daemon goes away.
 const COMMON: &str = include_str!("common.js");
 const CHARTS: &str = include_str!("charts.js");
+/// The sky plot, for the pages that draw one.
+const SKY: &str = include_str!("sky.js");
 
 #[derive(Parser)]
 #[command(about, version = smartclock::VERSION)]
@@ -171,6 +173,7 @@ fn main() -> Result<()> {
             "/style.css" => Response::ok("text/css; charset=utf-8", STYLE.to_owned()),
             "/common.js" => Response::ok("text/javascript; charset=utf-8", COMMON.to_owned()),
             "/charts.js" => Response::ok("text/javascript; charset=utf-8", CHARTS.to_owned()),
+            "/sky.js" => Response::ok("text/javascript; charset=utf-8", SKY.to_owned()),
             "/api/about" => json(Ok(about())),
             "/api/snapshot" => {
                 json(choose(&daemons, &cache, query).and_then(|s| cache.snapshot(&s)))
@@ -770,6 +773,7 @@ mod tests {
     use super::DEVIATION;
     use super::Logs;
     use super::PAGE;
+    use super::SKY;
     use super::STATUS_PAGE;
     use smartclock_log::timestamp::Stored;
     use std::path::Path;
@@ -907,8 +911,10 @@ mod tests {
             ("correlation.html", CORRELATION),
         ] {
             let mut scripts = vec![COMMON, page];
-            if page.contains("/charts.js") {
-                scripts.push(CHARTS);
+            for (path, script) in [("/charts.js", CHARTS), ("/sky.js", SKY)] {
+                if page.contains(path) {
+                    scripts.push(script);
+                }
             }
             let mut seen: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
             for script in scripts {

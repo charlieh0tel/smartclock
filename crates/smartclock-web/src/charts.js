@@ -299,9 +299,11 @@ const AXIS = { stroke: AXIS_INK, grid: { stroke: AXIS_RULE }, ticks: { stroke: A
 //   last           whether it is the bottom chart, the one that
 //                  carries the time labels
 //   yStroke        the y axis labels' color, when not the usual
+//   font           the axes' font, when not uPlot's own
 //   legend, hooks  uPlot's, the hooks added to the drag that sets
 //                  the range
 function stackOptions(stack) {
+  const font = stack.font ? { font: stack.font } : {};
   return {
     width: stack.width,
     height: stack.height,
@@ -309,8 +311,8 @@ function stackOptions(stack) {
     title: stack.title,
     series: [{}, ...stack.series],
     axes: [
-      { ...AXIS, show: stack.last },
-      { ...AXIS, ...(stack.yStroke ? { stroke: stack.yStroke } : {}), ...stack.fitted.axis, size: stack.ySize },
+      { ...AXIS, ...font, show: stack.last },
+      { ...AXIS, ...font, ...(stack.yStroke ? { stroke: stack.yStroke } : {}), ...stack.fitted.axis, size: stack.ySize },
     ],
     scales: {
       x: { time: true },
@@ -403,6 +405,277 @@ function figureHeight(width) {
   return Math.round(
     Math.max(DEVIATION_PLOT.shortest, Math.min(DEVIATION_PLOT.tallest, width / DEVIATION_PLOT.ratio)),
   );
+}
+
+// ---------------------------------------------------------------- stack
+//
+// The live page's stack of time charts, a chart per column sharing one
+// time axis, with the host's sensors joined in below the receiver's
+// temperature.  Shared with the kiosk, which draws the same stack from
+// fewer columns.
+
+// The two trace colors, named once.  Both the plot and the things
+// that say which line is which read them from here, because a key that
+// disagrees with the lines is worse than no key.
+const TRACE = "#38bdf8";
+const MATE = "#fbbf24";
+
+function seriesQuery(cols, from, to, seconds) {
+  const q = new URLSearchParams({ columns: cols.join(","), points: pointsFor(seconds) });
+  if (from) q.set("from", Math.round(from));
+  if (to) q.set("to", Math.round(to));
+  return "/api/history?" + withUnit(q);
+}
+
+const fetchSeries = (signal, ...args) => ask(seriesQuery(...args), signal, HISTORY_TIMEOUT);
+
+// Tracked and not tracked are one measurement split two ways: their
+// sum is the satellites the receiver knows about, so a chart apiece
+// hides the relationship that matters.  Drawn together, the only
+// columns that are.
+const PAIRED = ["tracking", "not_tracking"];
+
+// Split two labels into what they have in common and what each adds,
+// on a word boundary.  "# sats tracked" and "# sats not tracked"
+// become "# sats " with "tracked" and "not tracked", so the title
+// says the subject once and colors only the part that tells the two
+// lines apart.
+function shareName(a, b) {
+  const x = a.split(" ");
+  const y = b.split(" ");
+  let n = 0;
+  while (n < x.length && n < y.length && x[n] === y[n]) n++;
+  if (n === 0) return ["", a, b];
+  return [x.slice(0, n).join(" ") + " ", x.slice(n).join(" "), y.slice(n).join(" ")];
+}
+
+// The colors of a chart's lines, in order.  A chart of one line draws
+// it in the first.
+const LINE_COLORS = [TRACE, MATE];
+
+// The charts of the stack, from the server's plots: a chart per
+// column, with the paired columns sharing one.  Each chart is
+//   column    what its y axis is fitted to and its hover text is for
+//   envelope  { min, max }, drawn behind the first line, or null
+//   lines     [{ column, values, color }] on one y axis, in order
+function chartsOf(plots) {
+  const line = (plot, n) => ({
+    column: plot.column,
+    values: scaled(plot.mean, plot.column),
+    color: LINE_COLORS[n],
+  });
+  const partner = plots.find((p) => p.column === PAIRED[1]);
+  const paired = plots.some((p) => p.column === PAIRED[0]) && partner;
+  return plots
+    .filter((p) => !(paired && p.column === PAIRED[1]))
+    .map((plot) => ({
+      column: plot.column,
+      envelope: { min: scaled(plot.min, plot.column), max: scaled(plot.max, plot.column) },
+      lines: [line(plot, 0), ...(paired && plot.column === PAIRED[0] ? [line(partner, 1)] : [])],
+    }));
+}
+
+// A multi-line chart's title, each line's own words in its color, so
+// the title says which line is which with the legend off.
+function groupTitle(lines) {
+  if (lines.some((l) => l.name)) {
+    return (
+      esc(label(lines[0].column)) +
+      '<span class="muted">: </span>' +
+      lines
+        .map((l) => `<span style="color:${l.color}">${esc(l.name)}</span>`)
+        .join('<span class="muted">, </span>')
+    );
+  }
+  if (lines.length === 2) {
+    const [shared, mine, theirs] = shareName(label(lines[0].column), label(lines[1].column));
+    return (
+      esc(shared) +
+      `<span style="color:${lines[0].color}">${esc(mine)}</span>` +
+      `<span class="muted"> and </span>` +
+      `<span style="color:${lines[1].color}">${esc(theirs)}</span>`
+    );
+  }
+  return lines
+    .map((l) => `<span style="color:${l.color}">${esc(label(l.column))}</span>`)
+    .join('<span class="muted">, </span>');
+}
+
+// Every value a drawing plots, its envelope's as well as its lines'.
+const drawingArrays = (d) => [
+  ...(d.envelope ? [d.envelope.min, d.envelope.max] : []),
+  ...d.lines.map((l) => l.values),
+];
+
+// Read the stack over the range: `wanted`, the receiver's columns, and
+// the sensors `listed`, as `sensorsListed` gives them.  Answers
+//   why     "" with something to draw, or what to say in its place
+//   x       the shared time axis
+//   drawn   the charts, as `chartsOf` makes them, with the sensors'
+//           below the receiver's temperature, and none left empty
+async function readStack(signal, wanted, listed) {
+  const bounds = rangeBounds();
+  let { from, to } = bounds;
+  if (from === 0) from = null;
+  let seconds = bounds.seconds;
+
+  let got;
+  if (wanted.length) {
+    got = await fetchSeries(signal, wanted, from, to, seconds);
+    // How far back the log goes is only knowable once it has been
+    // asked, so "all" costs a second request: the first answers with
+    // the server's default hour and the extent, the second asks for
+    // the extent.  Without this the button quietly showed the last
+    // hour -- the range it names is the one range it did not fetch.
+    if (range.last === "all" && got.first && got.last > got.first) {
+      seconds = got.last - got.first;
+      got = await fetchSeries(signal, wanted, got.first, got.last, seconds);
+    }
+  } else {
+    // The sensors alone: their own extent stands in for the receiver's.
+    if (range.last === "all" && listed.first != null) {
+      from = listed.first;
+      to = listed.last;
+      seconds = to - from;
+    }
+    got = { at: [], plots: [], from: Math.round(from ?? 0), to: Math.round(to ?? Date.now() / 1000) };
+  }
+  // The grid the server bucketed on, which the sensors are asked for
+  // and snapped to as well.
+  const win = { from: got.from, to: got.to, points: pointsFor(seconds) };
+  const groups = await sensorGroups(listed, win, signal);
+  const anything = got.at.length || groups.length;
+  const why = !anything ? "no readings in this range"
+    : wanted.length && !got.at.length ? "no readings from the receiver in this range"
+    : "";
+  if (!anything) return { why, x: [], drawn: [] };
+
+  const drawn = chartsOf(got.plots);
+  // One time axis for the receiver's charts and the sensors', joined
+  // on the grid; without sensors the receiver's own times are kept.
+  let x = got.at;
+  const sensorDrawings = groups.map((group) => ({
+    column: `sensor:${group.quantity}`,
+    envelope: null,
+    named: true,
+    hint: sensorHint(group.lines),
+    lines: group.lines.map((line) => ({
+      column: `sensor:${group.quantity}`,
+      name: line.name,
+      reading: sensorReadingName(line.name, group.quantity, line.unit),
+      values: line.values,
+      color: line.color,
+      at: line.at,
+    })),
+  }));
+  if (sensorDrawings.length) {
+    const joined = joinTables([
+      [onGrid(got.at, win), ...drawn.flatMap(drawingArrays)],
+      ...sensorDrawings.flatMap((d) => d.lines.map((l) => [l.at, l.values])),
+    ]);
+    x = joined[0];
+    let k = 1;
+    for (const d of [...drawn, ...sensorDrawings]) {
+      if (d.envelope) {
+        d.envelope.min = joined[k++];
+        d.envelope.max = joined[k++];
+      }
+      for (const l of d.lines) l.values = joined[k++];
+    }
+    // Right below the receiver's own temperature, which is what a room
+    // temperature is read against; at the end without it.
+    const after = drawn.findIndex((d) => d.column === "temperature_c");
+    drawn.splice(after < 0 ? drawn.length : after + 1, 0, ...sensorDrawings);
+  }
+  // Only charts with something to draw: one with no data has no y axis,
+  // which would shift its plot out of line with the rest, as the
+  // receiver's charts are beside sensors in a range it has no readings
+  // in.
+  const filled = (d) => drawingArrays(d).flat().some((v) => v != null && isFinite(v));
+  return { why, x, drawn: drawn.filter(filled) };
+}
+
+// Draw the stack `readStack` read into `container`, and answer its
+// charts.  `style` is
+//   height(count)  each chart's height, given how many there are
+//   sync           the cursor's sync key
+//   hooks          uPlot's, as `stackOptions` takes them
+//   font           the axes' font, when not uPlot's own
+function stackCharts(container, read, style) {
+  const height = style.height(read.drawn.length);
+  // The scale has to cover the envelope, not just the lines: the min
+  // and max are drawn, and an axis that ends below them would clip the
+  // very excursions they exist to show.
+  const fits = read.drawn.map((chart) =>
+    yAxis(chart.column, drawingArrays(chart).flat().filter((v) => v != null && isFinite(v)), height));
+  const ySize = stackWidth(fits);
+  const charts = read.drawn.map((drawing, n) => {
+    // A chart of named lines, a sensor's, says the names whatever their
+    // number; a receiver's chart colors its lines only to tell several
+    // apart.
+    const several = drawing.lines.length > 1 || Boolean(drawing.named);
+    const host = document.createElement("div");
+    container.appendChild(host);
+    const opts = stackOptions({
+      width: container.clientWidth || 800,
+      height,
+      title: drawing.lines.map((l) => label(l.column)).join(" and "),
+      series: [
+        ...(drawing.envelope
+          ? [
+              { label: "min", stroke: "#0e7490", width: 1, points: { show: false } },
+              { label: "max", stroke: "#0e7490", width: 1, points: { show: false } },
+            ]
+          : []),
+        ...drawing.lines.map((l) => ({
+          label: l.name ?? label(l.column),
+          stroke: l.color,
+          width: 1.5,
+          points: { show: false },
+        })),
+      ],
+      fitted: fits[n],
+      ySize,
+      // Only the bottom chart carries the time labels.  Repeating them
+      // under every plot costs the height that makes the stack worth
+      // having, and says the axes might differ when the whole point is
+      // that they cannot.
+      last: n === read.drawn.length - 1,
+      yStroke: TRACE,
+      font: style.font,
+      // No per-chart legend.  With the cursor synced there is one
+      // instant being pointed at, not one per plot, so the values
+      // belong in one row, which the page builds if it wants one.
+      legend: { show: false },
+      sync: style.sync,
+      hooks: style.hooks,
+    });
+    const chart = ranged(new uPlot(opts, [read.x, ...drawingArrays(drawing)], host));
+    // Which lines this chart draws, and from which series, so a shared
+    // readout can label them without reaching back into the request
+    // that built it.  A line's color is said only where there are
+    // several to tell apart.  A sensor's line is read out with its
+    // quantity and unit, which its chart's title says but the readout
+    // does not.
+    chart.smartclockLines = drawing.lines.map((l, i) => ({
+      column: l.column,
+      name: l.name,
+      reading: l.reading,
+      series: 1 + (drawing.envelope ? 2 : 0) + i,
+      color: several ? l.color : null,
+    }));
+    if (drawing.hint) hintAs(chart, drawing.hint);
+    else hint(chart, ...drawing.lines.map((l) => l.column));
+    // uPlot's title is plain text, and with the legend off a chart of
+    // several lines otherwise names them without saying which is which.
+    if (several) {
+      const heading = chart.root.querySelector(".u-title");
+      if (heading) heading.innerHTML = groupTitle(drawing.lines);
+    }
+    return chart;
+  });
+  settleWidths(charts, container);
+  return charts;
 }
 
 // -------------------------------------------------------------- sensors
@@ -713,6 +986,125 @@ function sigmaScale(bands) {
     ...LOG,
     range: (_, min, max) => [snapDown(Math.min(min, lo)), snapUp(Math.max(max, hi))],
   };
+}
+
+// The one-sigma interval on each curve, drawn as a shaded band between
+// its lower and upper bounds.  Painted by hand rather than as two more
+// uPlot series with a fill between them: series appear in the legend
+// and take a color, and a band is not a curve.  `bands` maps a series
+// index to its [lower, upper] arrays; a point without an interval is a
+// break in the band, as it is in the line.
+function shadeBands(bands) {
+  return (u) => {
+    const { ctx } = u;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+    ctx.clip();
+    for (const [idx, [lower, upper]] of Object.entries(bands)) {
+      const series = u.series[Number(idx)];
+      if (!series.show) continue;
+      ctx.fillStyle = series.stroke() + "30";
+      const xs = u.data[0];
+      let run = [];
+      const flush = () => {
+        if (run.length < 2) {
+          run = [];
+          return;
+        }
+        ctx.beginPath();
+        run.forEach(([x, hi], i) => {
+          const px = u.valToPos(x, "x", true), py = u.valToPos(hi, "y", true);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+        for (let i = run.length - 1; i >= 0; i--) {
+          const [x, , lo] = run[i];
+          ctx.lineTo(u.valToPos(x, "x", true), u.valToPos(lo, "y", true));
+        }
+        ctx.closePath();
+        ctx.fill();
+        run = [];
+      };
+      xs.forEach((x, i) => {
+        if (lower[i] === null || upper[i] === null) flush();
+        else run.push([x, upper[i], lower[i]]);
+      });
+      flush();
+    }
+    ctx.restore();
+  };
+}
+
+const bound = (b, side) => (b ? b[side] : null);
+
+// The curves of one `/api/adev` answer's points, each ending where its
+// band grows too wide (MAX_BAND):
+//   tau                    the averaging times
+//   modified, plain        MDEV and ADEV, dimensionless
+//   time, mtie             TDEV and MTIE, in seconds
+//   sigmaBands, timeBands  `shadeBands`' bands for the sigma chart's
+//                          series and for TDEV's
+// A point the modified form lacks (it needs three whole windows) is a
+// hole in its series, which uPlot leaves as a break in the line.
+function deviationCurves(points) {
+  const modifiedBounds = points.map((p) => p.modified?.bounds);
+  const band = (pick) => {
+    const bounds = points.map(pick);
+    return [
+      untilWide(bounds.map((b) => bound(b, "lower")), bounds),
+      untilWide(bounds.map((b) => bound(b, "upper")), bounds),
+    ];
+  };
+  return {
+    tau: points.map((p) => p.tau),
+    modified: untilWide(points.map((p) => (p.modified ? p.modified.deviation : null)), modifiedBounds),
+    time: untilWide(points.map((p) => (p.modified ? p.modified.time : null)), modifiedBounds),
+    plain: untilWide(points.map((p) => p.deviation), points.map((p) => p.bounds)),
+    mtie: points.map((p) => (p.mtie ? p.mtie.peak : null)),
+    sigmaBands: { 1: band((p) => p.modified?.bounds), 2: band((p) => p.bounds) },
+    timeBands: { 1: band((p) => p.modified?.time_bounds) },
+  };
+}
+
+// MDEV and ADEV on one chart in `el`, shaded to one sigma.  The
+// modified deviation is the one this record supports exactly -- the
+// receiver's reading is already a ten-second mean, which is the
+// innermost block of the modified form's own averaging; the plain
+// Allan deviation is kept because data sheets quote that one.  Both
+// are measured curves and both are drawn at full strength, told apart
+// by color and legend: a dashed or dimmed line reads as a reference or
+// a fit.  `opts` is
+//   show            { MDEV, ADEV }, whether each is drawn
+//   legend, cursor  uPlot's
+//   hooks           uPlot's, beside the shading
+function sigmaChart(el, size, curves, opts) {
+  const curve = (name, stroke) => ({
+    label: name,
+    stroke,
+    width: 1.5,
+    show: opts.show[name],
+    points: { show: true, size: 5 },
+    value: (_, v) => decade(v),
+  });
+  return new uPlot(
+    {
+      width: size.width,
+      height: size.height,
+      title: "Stability of the 1 PPS against GPS, shaded to one sigma",
+      scales: { x: TAU_SCALE, y: sigmaScale(curves.sigmaBands) },
+      axes: [tauAxis(), sigmaAxis("deviation σy")],
+      series: [
+        { label: "τ", value: (_, v) => seconds(v) },
+        curve("MDEV", "#38bdf8"),
+        curve("ADEV", "#a78bfa"),
+      ],
+      legend: opts.legend,
+      cursor: opts.cursor,
+      hooks: { ...opts.hooks, draw: [shadeBands(curves.sigmaBands)] },
+    },
+    [curves.tau, curves.modified, curves.plain],
+    el,
+  );
 }
 
 // ---------------------------------------------------------- correlation

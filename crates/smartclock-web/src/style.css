@@ -197,7 +197,7 @@ body.kiosk { height: 100vh; overflow: hidden; cursor: none;
 .dot.stale { background: var(--warn); }
 .dot.down { background: var(--bad); }
 #kiosk-foot { font-size: 13px; padding: 0 2px; white-space: nowrap; overflow: hidden;
-              text-overflow: ellipsis; }
+              text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 #kiosk-mode .mode { font: 700 104px/1 system-ui, sans-serif; color: var(--ok);
                     text-transform: uppercase; letter-spacing: .02em; }
 #kiosk-mode .mode.warn { color: var(--warn); }
@@ -217,11 +217,16 @@ body.kiosk { height: 100vh; overflow: hidden; cursor: none;
 .tile .d { font-size: 15px; color: var(--dim); min-height: 1.4em; }
 .tile.warn .v { color: var(--warn); }
 .tile.bad .v { color: var(--bad); }
+/* What the receiver said last, while the link is lost: kept, dimmed. */
+#kiosk-tiles.stale, #kiosk-alarms.stale { opacity: 0.4; }
 #kiosk-alarms { display: flex; flex-wrap: wrap; gap: 8px; }
 #kiosk-alarms .pill { font-size: 18px; padding: 4px 14px; }
 /* The journal takes what the column has left, and loses its oldest
    rows rather than scroll. */
-#kiosk-journal { flex: 1 1 0; min-height: 0; overflow: hidden; font-size: 15px; }
+#kiosk-journal { flex: 1 1 0; min-height: 0; overflow: hidden; font-size: 15px; position: relative; }
+/* A hidden copy of the journal, laid out whole to see how much fits. */
+#kiosk-journal-measure { position: absolute; top: 0; left: 0; width: 100%; box-sizing: border-box;
+                         padding: inherit; visibility: hidden; }
 #kiosk-journal h2 { margin: 0 0 4px; }
 #kiosk-journal table { font-size: 15px; margin-bottom: 10px; table-layout: fixed; }
 #kiosk-journal td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -16,12 +16,16 @@
   <div id="kiosk-head"><span class="muted">connecting...</span></div>
   <div class="panel" id="kiosk-mode">
     <div class="mode" id="kiosk-mode-word"></div>
-    <div class="clock" id="kiosk-clock"></div>
+    <div class="clock" id="kiosk-clock"><span id="kiosk-time">--:--:--</span> <span class="muted">UTC</span>
+      <span class="age" id="kiosk-age" hidden></span></div>
     <div class="muted" id="kiosk-date"></div>
   </div>
   <div class="panel" id="kiosk-tiles"></div>
   <div class="panel" id="kiosk-alarms"></div>
-  <div class="panel" id="kiosk-journal"></div>
+  <div class="panel" id="kiosk-journal">
+    <div id="kiosk-journal-rows"></div>
+    <div id="kiosk-journal-measure"></div>
+  </div>
   <div id="kiosk-foot" class="muted"></div>
 </section>
 
@@ -76,6 +80,25 @@ function inset() {
   document.body.style.setProperty("--inset-y", length(ends, "vh"));
 }
 inset();
+
+// With `?debug`, the foot leads with how many times this browser has
+// loaded it so, and how long this load has been up: a display that
+// flashes now and then may be its player reloading the page, which
+// this tells apart from the page redrawing itself.
+const DEBUG = new URLSearchParams(location.search).has("debug");
+const LOADS_KEY = "kiosk:loads";
+const loadedAt = Date.now();
+function countLoad() {
+  try {
+    const n = Number(localStorage.getItem(LOADS_KEY) ?? 0) + 1;
+    localStorage.setItem(LOADS_KEY, String(n));
+    return n;
+  } catch (e) {
+    return "?";
+  }
+}
+const loadCount = DEBUG ? countLoad() : null;
+const loads = () => DEBUG ? `load ${loadCount}, up ${seconds((Date.now() - loadedAt) / 1000)}` : null;
 
 // The live page's columns that are worth a glance from across a room:
 // the time error, the steering, the sky's health, and the temperature
@@ -132,12 +155,29 @@ const FFOM_MEANS = ["stable", "stabilizing", "holdover", "unlocked"];
 
 // ------------------------------------------------------------ the state
 
-// A tile: a reading in large type over what it is, and a line of
-// detail under it.  `tone` is "", "warn" or "bad".
-const tile = (k, v, detail = "", tone = "") =>
-  `<div class="tile ${tone}"><span class="v">${esc(v)}</span>` +
-  `<span class="k">${esc(k)}</span>` +
-  `<span class="d">${esc(detail)}</span></div>`;
+// A tile: a reading `v` in large type over what it is, `k`, and a line
+// of detail `d` under it.  `tone` is "", "warn" or "bad".
+const tile = (k, v, d = "", tone = "") => ({ k, v: String(v), d, tone });
+
+// The tiles, kept and their text changed in place, so a reading that
+// changes repaints only itself.  Drawn afresh only when which tiles
+// there are changes.
+function showTiles(list) {
+  const el = $("kiosk-tiles");
+  const which = list.map((t) => t.k).join("\n");
+  if (el.dataset.which !== which) {
+    el.dataset.which = which;
+    el.innerHTML = list.map((t) =>
+      `<div class="tile"><span class="v"></span><span class="k">${esc(t.k)}</span><span class="d"></span></div>`,
+    ).join("");
+  }
+  list.forEach((t, n) => {
+    const shown = el.children[n];
+    update(shown, "className", `tile ${t.tone}`);
+    update(shown.children[0], "textContent", t.v);
+    update(shown.children[2], "textContent", t.d);
+  });
+}
 
 // The mode, and how it should be read.
 function modeOf(s) {
@@ -178,21 +218,21 @@ function renderKiosk(s, cached) {
   // The model and whether it is live, and nothing else up here: the
   // state below is what the screen is for.  The link's state is named
   // only when it is not live.
-  $("kiosk-head").innerHTML =
+  showHtml($("kiosk-head"),
     `<span class="dot ${state[0]}"></span>` +
     `<span>${esc(listed?.model ?? unitName(unit))}</span>` +
-    (state[0] === "live" ? "" : `<span class="pill ${state[0]}">${state[1]}</span>`);
-  $("kiosk-foot").textContent = [
+    (state[0] === "live" ? "" : `<span class="pill ${state[0]}">${state[1]}</span>`));
+  update($("kiosk-foot"), "textContent", [
+    loads(),
     listed?.serial ?? unit,
     listed?.firmware,
     source(listed?.instance) && `on ${source(listed.instance)}`,
     oldest === null ? null : `oldest field ${oldest.toFixed(0)} s`,
-  ].filter(Boolean).join(" · ");
+  ].filter(Boolean).join(" · "));
   const [mode, tone] = modeOf(s);
-  $("kiosk-mode-word").textContent = mode;
-  $("kiosk-mode-word").className = `mode ${tone}`;
-  $("kiosk-date").textContent = `${r.date.v} (${r.date.k})`;
-  $("kiosk-date").title = r.date.hint ?? "";
+  showMode(mode, tone);
+  update($("kiosk-date"), "textContent", `${r.date.v} (${r.date.k})`);
+  update($("kiosk-date"), "title", r.date.hint ?? "");
   const polled = Date.parse(s.polled?.fast?.at);
   clockFrom = s.time && Number.isFinite(polled)
     ? { second: s.time.hour * 3600 + s.time.minute * 60 + s.time.second, at: polled,
@@ -212,8 +252,22 @@ function renderKiosk(s, cached) {
       .filter((x) => KIOSK_SENSORS.includes(x.quantity))
       .map((x) => tile(`${x.name} ${x.quantity}`, sensorValue(x), "the host's sensor")),
   ].filter(Boolean);
-  $("kiosk-tiles").innerHTML = tiles.join("");
-  $("kiosk-alarms").innerHTML = alarms(s) || `<span class="pill live">no alarms</span>`;
+  showTiles(tiles);
+  showHtml($("kiosk-alarms"), alarms(s) || `<span class="pill live">no alarms</span>`);
+  stale(false);
+}
+
+function showMode(mode, tone) {
+  update($("kiosk-mode-word"), "textContent", mode);
+  update($("kiosk-mode-word"), "className", `mode ${tone}`);
+}
+
+// The tiles and alarms dimmed, while what they say is the last seen
+// rather than current: kept, so a poll that fails once does not blank
+// them for a second.
+function stale(dim) {
+  $("kiosk-tiles").classList.toggle("stale", dim);
+  $("kiosk-alarms").classList.toggle("stale", dim);
 }
 
 // The receiver's time, counted on a second at a time from its last
@@ -223,30 +277,27 @@ function renderKiosk(s, cached) {
 // shown as it was, with its age, rather than a confident time the
 // page made up.
 function drawClock() {
-  const el = $("kiosk-clock");
-  if (!clockFrom) {
-    el.innerHTML = `<span>--:--:--</span> <span class="muted">UTC</span>`;
-    return;
-  }
-  const age = (Date.now() - clockFrom.at) / 1000;
-  const trusted = clockFrom.live && age >= -CLOCK_TRUSTED_FOR && age <= CLOCK_TRUSTED_FOR;
-  const t = (((clockFrom.second + Math.floor(trusted ? Math.max(0, age) : 0)) % SECONDS_PER_DAY)
-    + SECONDS_PER_DAY) % SECONDS_PER_DAY;
-  const shown = `${pad(Math.floor(t / 3600))}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`;
-  el.classList.toggle("stale", !trusted);
-  el.innerHTML = `<span>${esc(shown)}</span> <span class="muted">UTC</span>` +
-    (trusted ? "" : ` <span class="age">as of ${esc(seconds(Math.max(0, age)))} ago</span>`);
+  const age = clockFrom ? (Date.now() - clockFrom.at) / 1000 : 0;
+  const trusted = !clockFrom ||
+    (clockFrom.live && age >= -CLOCK_TRUSTED_FOR && age <= CLOCK_TRUSTED_FOR);
+  const t = clockFrom
+    ? (((clockFrom.second + Math.floor(trusted ? Math.max(0, age) : 0)) % SECONDS_PER_DAY)
+      + SECONDS_PER_DAY) % SECONDS_PER_DAY
+    : null;
+  update($("kiosk-time"), "textContent", t === null ? "--:--:--"
+    : `${pad(Math.floor(t / 3600))}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`);
+  update($("kiosk-age"), "textContent", trusted ? "" : `as of ${seconds(Math.max(0, age))} ago`);
+  update($("kiosk-age"), "hidden", trusted);
+  $("kiosk-clock").classList.toggle("stale", !trusted);
 }
 
 function lostKiosk(what, why) {
-  $("kiosk-head").innerHTML = `<span class="dot down"></span><span class="pill down">${esc(what)}</span>`;
-  $("kiosk-mode-word").textContent = "no link";
-  $("kiosk-mode-word").className = "mode bad";
-  $("kiosk-date").textContent = why ?? "";
+  showHtml($("kiosk-head"), `<span class="dot down"></span><span class="pill down">${esc(what)}</span>`);
+  showMode("no link", "bad");
+  update($("kiosk-date"), "textContent", why ?? "");
   if (clockFrom) clockFrom.live = false;
   drawClock();
-  $("kiosk-tiles").innerHTML = "";
-  $("kiosk-alarms").innerHTML = "";
+  stale(true);
 }
 
 // ------------------------------------------------------------- journal
@@ -272,13 +323,23 @@ function drawJournal() {
         }).join("")}</tbody></table>`
       : `<span class="muted">nothing recorded</span>`);
   const events = (journal.events ?? []).slice(0, KIOSK_TRANSITIONS);
-  const entries = [...(journal.entries ?? [])];
+  const entries = journal.entries ?? [];
   const panel = $("kiosk-journal");
+  const drawn = (n) => stream("events", "transitions", events) + stream("entries", "receiver log", entries.slice(0, n));
   // As many of the receiver's log as fit, newest first, rather than
-  // a fixed count that leaves the panel half empty or cut off.
-  do {
-    panel.innerHTML = stream("events", "transitions", events) + stream("entries", "receiver log", entries);
-  } while (panel.scrollHeight > panel.clientHeight && entries.pop());
+  // a fixed count that leaves the panel half empty or cut off.  Laid
+  // out whole in a hidden copy to see how many that is, so what is
+  // shown is written once.
+  const measure = $("kiosk-journal-measure");
+  showHtml(measure, drawn(entries.length));
+  const box = panel.getBoundingClientRect();
+  const room = box.top + panel.clientTop + panel.clientHeight - parseFloat(getComputedStyle(panel).paddingBottom);
+  const log = measure.querySelectorAll("table")[events.length ? 1 : 0];
+  const below = log ? parseFloat(getComputedStyle(log).marginBottom) : 0;
+  const fit = entries.length
+    ? [...log.rows].filter((row) => row.getBoundingClientRect().bottom + below <= room).length
+    : 0;
+  showHtml($("kiosk-journal-rows"), drawn(fit));
 }
 
 // ------------------------------------------------------------- history
@@ -287,7 +348,7 @@ function clearCharts(why) {
   for (const c of charts) c.destroy();
   charts = [];
   $("charts").innerHTML = "";
-  $("note").textContent = why;
+  update($("note"), "textContent", why);
 }
 
 function clearDeviation(why) {
@@ -325,7 +386,7 @@ async function drawStack(signal) {
     clearCharts(read.why);
     return;
   }
-  $("note").textContent = "";
+  update($("note"), "textContent", "");
   charts = restack($("charts"), charts, read, {
     height: stackHeight,
     sync: KIOSK_SYNC,
@@ -403,11 +464,11 @@ content({
     clearDeviation(why);
     deviationAt = 0;
     journal = null;
-    $("kiosk-journal").innerHTML = "";
+    update($("kiosk-journal-rows"), "textContent", "");
   },
   load: (signal) =>
     Promise.all([
-      part(readJournal, signal, (why) => ($("kiosk-journal").textContent = why)),
+      part(readJournal, signal, (why) => update($("kiosk-journal-rows"), "textContent", why)),
       ...(haveUplot
         ? [
             part(drawStack, signal, clearCharts),

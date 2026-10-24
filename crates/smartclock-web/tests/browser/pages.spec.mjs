@@ -880,3 +880,42 @@ test("the kiosk lays itself out inside the inset an overscanning display asks fo
   const fits = await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight);
   expect(fits).toBe(true);
 });
+
+test("the kiosk redraws in place: the same tiles and charts, new y axes, nothing written that did not change", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1280 });
+  const fake = twoUnits();
+  await fake.install(page);
+  await page.goto(`/kiosk?receiver=${A}`);
+  await page.waitForFunction(() => charts.length > 0 && deviation && $("kiosk-tiles").children.length);
+  await page.evaluate(() => {
+    window.first = { charts: [...charts], deviation, tiles: [...$("kiosk-tiles").children], top: charts[0].scales.y.max };
+    window.written = new Set();
+    window.plotsGone = 0;
+    new MutationObserver((list) => {
+      for (const m of list) {
+        for (const n of m.removedNodes) if (n.classList?.contains("uplot")) window.plotsGone++;
+        written.add(m.target.closest?.("[id]")?.id ?? m.target.parentElement?.closest("[id]")?.id);
+      }
+    }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true });
+  });
+  // A history ten times larger needs other y axes.
+  fake.unit(A).gain = 10;
+  await page.evaluate(() => renew(true));
+  await page.waitForFunction(() => charts[0].scales.y.max !== first.top);
+  const after = await page.evaluate(() => ({
+    sameCharts: charts.length === first.charts.length && charts.every((c, n) => c === first.charts[n]),
+    sameDeviation: deviation === first.deviation,
+    sameTiles: [...$("kiosk-tiles").children].every((t, n) => t === first.tiles[n]),
+    plotsGone,
+    written: [...written],
+  }));
+  expect(after.sameCharts).toBe(true);
+  expect(after.sameDeviation).toBe(true);
+  expect(after.sameTiles).toBe(true);
+  expect(after.plotsGone).toBe(0);
+  // The snapshot is the same each second: the head, the alarms and the
+  // journal are not written again.
+  for (const id of ["kiosk-head", "kiosk-alarms", "kiosk-journal-rows", "kiosk-mode-word"]) {
+    expect(after.written).not.toContain(id);
+  }
+});

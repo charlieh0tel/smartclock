@@ -27,6 +27,29 @@ const fmt = (v, digits = 3) =>
 // A state pill: `bad` for an error or a lost link, plain otherwise.
 const pill = (text, bad) => `<span class="pill${bad ? " down" : ""}">${esc(text)}</span>`;
 
+// The HTML each element was last given by `showHtml`.  A page that
+// paints every second writes only what changed: a write replaces an
+// element's children, which a slow display's browser repaints, and
+// can be seen to, even when they are the same.
+const shownHtml = new WeakMap();
+
+// Give `el` this HTML, unless it was the last it was given.  An
+// element painted this way is written only through this and `update`.
+function showHtml(el, html) {
+  if (shownHtml.get(el) === html) return;
+  shownHtml.set(el, html);
+  el.innerHTML = html;
+}
+
+// Set one of `el`'s properties -- its text, class, title -- unless it
+// already has that value.
+function update(el, property, value) {
+  if (el[property] === value) return;
+  // Its children may be changed, and with them what `showHtml` gave it.
+  shownHtml.delete(el);
+  el[property] = value;
+}
+
 // How long the strip and the picker wait for the server.
 const QUICK_TIMEOUT = 5000;
 // How long a read of the logs waits: a history over days is a scan of
@@ -409,14 +432,14 @@ const statTile = (r) =>
 function render(s, cached) {
   const state = linkState(s, cached);
   const oldest = oldestAge(s);
-  $("status").innerHTML =
+  showHtml($("status"),
     `<span class="pill ${state[0]}">${state[1]}</span>` +
     (oldest === null
       ? ""
       : `<span class="muted" id="age">oldest field ${oldest.toFixed(0)}s</span>`) +
     readings(s).map(statTile).join("") +
     alarms(s) +
-    sensorStrip();
+    sensorStrip());
 }
 
 // Paint the strip, or what the page shows in its place.
@@ -425,10 +448,10 @@ const paintLost = (what, why) => (page?.lost ?? lost)(what, why);
 
 // Nothing is known any more.
 function lost(what, why) {
-  $("status").innerHTML =
+  showHtml($("status"),
     `<span class="pill down">${esc(what)}</span>` +
     (why ? ` <span class="muted">${esc(why)}</span>` : "") +
-    sensorStrip();
+    sensorStrip());
 }
 
 // ---------------------------------------------------------- sensors
@@ -608,7 +631,7 @@ function switchTo(serial) {
   carryUnit();
   linkUp = null;
   // The strip too: the last unit's numbers are not this one's.
-  $("status").innerHTML = `<span class="muted">reading ${esc(unitName(unit))}...</span>`;
+  showHtml($("status"), `<span class="muted">reading ${esc(unitName(unit))}...</span>`);
   paintCached();
   listReceivers();
   tick();

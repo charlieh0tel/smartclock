@@ -463,6 +463,15 @@ poll while that is live and under 3 s old, and otherwise shown as it
 was with its age.  The stability curve is measured every ten minutes,
 not at the stack's minute, since each measurement reads the whole day.
 
+A refresh writes only what changed and never blanks a panel: on a
+low-power signage player (a Fire OS WebView) every replaced element
+or rebuilt chart is a visible repaint.  The tiles and clock are kept
+and their text set in place, unchanged HTML is not written again, the
+journal is fitted in a hidden copy and written once, a stack chart
+whose y range changes keeps its uPlot instance and reads its range,
+ticks and axis width from a holder `restack` swaps, and a lost link
+dims the last values instead of clearing them.
+
 ### The time range follows Grafana
 
 The browser view's range control copies Grafana's dashboards -- half-

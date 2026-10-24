@@ -1,0 +1,405 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SmartClock kiosk</title>
+
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.min.css"
+      integrity="sha384-IfV0B7MIOYuO95kO9G5ySKPz/85zqFNOAs8iy4tkK5zd9izhJAB8b7lHrwYqqmYE"
+      crossorigin="anonymous">
+
+<link rel="stylesheet" href="/style.css">
+
+<body class="kiosk">
+
+<section id="kiosk-state">
+  <div id="kiosk-head"><span class="muted">connecting...</span></div>
+  <div class="panel" id="kiosk-mode">
+    <div class="mode" id="kiosk-mode-word"></div>
+    <div class="clock" id="kiosk-clock"></div>
+    <div class="muted" id="kiosk-date"></div>
+  </div>
+  <div class="panel" id="kiosk-tiles"></div>
+  <div class="panel" id="kiosk-alarms"></div>
+  <div class="panel" id="kiosk-journal"></div>
+  <div id="kiosk-foot" class="muted"></div>
+</section>
+
+<section id="kiosk-history">
+  <div class="panel" id="kiosk-stack">
+    <div id="charts"></div>
+    <div id="note" class="muted"></div>
+  </div>
+  <div class="panel" id="kiosk-deviation">
+    <div id="chart"></div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.iife.min.js"
+        integrity="sha384-Gx3t0zdBAuQOuvvmaLZj7HKEiSgWTAs+VdtNY7wt19QDPTDQjFIwAuXDj0zeN00c"
+        crossorigin="anonymous"></script>
+<script src="/common.js"></script>
+<script src="/charts.js"></script>
+<script>
+"use strict";
+
+// One page for an unattended display: everything at a glance, nothing
+// to click, no scrolling.  The receiver's state in large type on the
+// left, from the snapshot the strip polls every second, and what it
+// recorded lately; on the right the live page's stack and the
+// stability page's MDEV and ADEV, over one range, read again as the
+// other pages are.  `?receiver=` and the range (`?last=`, a day by
+// default) are read from the address as on every page; there is
+// nothing to change them with.
+
+const haveUplot = typeof uPlot !== "undefined";
+
+// A day: one turn of the room's temperature, and long enough for the
+// stability curve to reach past the loop's time constant.
+readRange(86400);
+
+// The live page's columns that are worth a glance from across a room:
+// the time error, the steering, the sky's health, and the temperature
+// the steering follows.  The figures of merit and the holdover
+// prediction are in the large type, where their current value is what
+// matters; the rest are for diagnosis, not watching.
+const KIOSK_COLUMNS = ["time_interval_s", "efc_percent", "tracking", "not_tracking", "temperature_c"];
+// The host's sensors are drawn for the quantity the receiver's own
+// temperature is read against, and no other.
+const KIOSK_SENSORS = ["temperature"];
+
+// Each chart title's height in CSS pixels, as style.css sets it, taken
+// from the room each chart is given.
+const TITLE_HEIGHT = 30;
+// The stability chart's legend, under its plot, likewise.
+const LEGEND_HEIGHT = 32;
+// The least a chart is drawn at, however little room there is.
+const SHORTEST_CHART = 60;
+// Axis text larger than the other pages', to be read from further away.
+const KIOSK_FONT = "17px system-ui, sans-serif";
+// The cursor's sync key: the stack shares one, though nobody points.
+const KIOSK_SYNC = "kiosk";
+// The shortest refresh: each read measures the range's stability again.
+const KIOSK_FLOOR = 60;
+// How long one read may take: a day is a lot of log to measure.
+const KIOSK_TIMEOUT = 60000;
+// How often the stability curve is measured again, in ms: a day's
+// curve moves slowly, and each measurement reads the whole day, where
+// the stack's buckets cost one query.
+const DEVIATION_EVERY = 600000;
+// How old the fast tier's reading of the time may be, in seconds,
+// before the clock stops counting on from it and says how old it is.
+const CLOCK_TRUSTED_FOR = 3;
+const SECONDS_PER_DAY = 86400;
+// How many transitions are shown, at most; the receiver's log fills
+// what room is left.
+const KIOSK_TRANSITIONS = 4;
+
+// A person's note, drawn as a dashed line across the stack, as on the
+// live page.
+const KIOSK_NOTE = "#4ade80";
+let notes = [];
+let charts = [];
+let deviation = null;
+// When the stability curve was last asked for, in ms; 0 for never.
+let deviationAt = 0;
+// The receiver's time of day at its last fast poll, in seconds, when
+// that poll was, in ms, and whether the snapshot it came in was live;
+// null before the first.
+let clockFrom = null;
+
+// The frequency figure of merit's meanings (097-59551-02 5-23).
+const FFOM_MEANS = ["stable", "stabilizing", "holdover", "unlocked"];
+
+// ------------------------------------------------------------ the state
+
+// A tile: a reading in large type over what it is, and a line of
+// detail under it.  `tone` is "", "warn" or "bad".
+const tile = (k, v, detail = "", tone = "") =>
+  `<div class="tile ${tone}"><span class="v">${esc(v)}</span>` +
+  `<span class="k">${esc(k)}</span>` +
+  `<span class="d">${esc(detail)}</span></div>`;
+
+// The mode, and how it should be read.
+function modeOf(s) {
+  if (s.freshness === "Disconnected") return ["no link", "bad"];
+  switch (s.mode) {
+    case "Locked": return ["locked", ""];
+    case "Holdover": return ["holdover", "bad"];
+    case "Recovery": return ["recovering", "warn"];
+    case "Waiting": return ["waiting", "warn"];
+    case "PowerUp": return ["power-up", "warn"];
+    default: return [s.mode ?? "--", "warn"];
+  }
+}
+
+// Holdover: how long and how far, while in it; why it is not left,
+// while waiting; otherwise what the loop predicts a day of it would
+// cost.
+function holdover(s) {
+  if (s.holdover_active) {
+    const present = s.holdover_present_s == null ? "" : `${fmt(s.holdover_present_s * 1e6, 2)} µs so far`;
+    return tile("in holdover", seconds(s.holdover_seconds ?? NaN), present, "bad");
+  }
+  const predicted = s.holdover_predicted_s == null ? "--" : `${fmt(s.holdover_predicted_s * 1e6, 1)} µs`;
+  const waiting = s.holdover_waiting && s.holdover_waiting !== "None";
+  return tile("24 h holdover predicted", predicted,
+    waiting ? `waiting on ${s.holdover_waiting}` : "not in holdover", waiting ? "warn" : "");
+}
+
+// Where the receiver is read from, short: an instance named by its
+// directory is its name, and one named by its endpoint is the end of it.
+const source = (instance) => instance?.split("/").filter(Boolean).at(-1) ?? "";
+
+function renderKiosk(s, cached) {
+  const state = linkState(s, cached);
+  const oldest = oldestAge(s);
+  const r = Object.fromEntries(readings(s).map((x) => [x.id, x]));
+  const listed = receivers.find((x) => x.serial === unit);
+  // The model and whether it is live, and nothing else up here: the
+  // state below is what the screen is for.  The link's state is named
+  // only when it is not live.
+  $("kiosk-head").innerHTML =
+    `<span class="dot ${state[0]}"></span>` +
+    `<span>${esc(listed?.model ?? unitName(unit))}</span>` +
+    (state[0] === "live" ? "" : `<span class="pill ${state[0]}">${state[1]}</span>`);
+  $("kiosk-foot").textContent = [
+    listed?.serial ?? unit,
+    listed?.firmware,
+    source(listed?.instance) && `on ${source(listed.instance)}`,
+    oldest === null ? null : `oldest field ${oldest.toFixed(0)} s`,
+  ].filter(Boolean).join(" · ");
+  const [mode, tone] = modeOf(s);
+  $("kiosk-mode-word").textContent = mode;
+  $("kiosk-mode-word").className = `mode ${tone}`;
+  $("kiosk-date").textContent = `${r.date.v} (${r.date.k})`;
+  $("kiosk-date").title = r.date.hint ?? "";
+  const polled = Date.parse(s.polled?.fast?.at);
+  clockFrom = s.time && Number.isFinite(polled)
+    ? { second: s.time.hour * 3600 + s.time.minute * 60 + s.time.second, at: polled,
+        live: !cached && s.freshness === "Live" }
+    : null;
+  drawClock();
+  const tiles = [
+    r.ti && tile("1 PPS TI, time error", r.ti.v, "against GPS, 10 s mean"),
+    r.efc && tile("EFC", r.efc.v, s.efc_raw == null ? "" : `${s.efc_raw} raw`),
+    tile("TFOM", s.tfom ?? "--", "1 PPS error decade", s.tfom >= 5 ? "warn" : ""),
+    tile("FFOM", s.ffom ?? "--", FFOM_MEANS[s.ffom] ?? "", s.ffom >= 3 ? "bad" : s.ffom >= 2 ? "warn" : ""),
+    r.satellites && tile("satellites tracked", s.tracking ?? "--",
+      s.visible == null ? "" : `of ${s.visible} visible`, s.tracking === 0 ? "bad" : ""),
+    r.temperature && tile("internal temperature", r.temperature.v),
+    holdover(s),
+    ...(sensorsLatest?.readings ?? [])
+      .filter((x) => KIOSK_SENSORS.includes(x.quantity))
+      .map((x) => tile(`${x.name} ${x.quantity}`, sensorValue(x), "the host's sensor")),
+  ].filter(Boolean);
+  $("kiosk-tiles").innerHTML = tiles.join("");
+  $("kiosk-alarms").innerHTML = alarms(s) || `<span class="pill live">no alarms</span>`;
+}
+
+// The receiver's time, counted on a second at a time from its last
+// fast poll, so the clock moves evenly between polls rather than in
+// whatever steps the polls arrive in.  Counted on only while that
+// reading is live and recent: past that the receiver's last time is
+// shown as it was, with its age, rather than a confident time the
+// page made up.
+function drawClock() {
+  const el = $("kiosk-clock");
+  if (!clockFrom) {
+    el.innerHTML = `<span>--:--:--</span> <span class="muted">UTC</span>`;
+    return;
+  }
+  const age = (Date.now() - clockFrom.at) / 1000;
+  const trusted = clockFrom.live && age >= -CLOCK_TRUSTED_FOR && age <= CLOCK_TRUSTED_FOR;
+  const t = (((clockFrom.second + Math.floor(trusted ? Math.max(0, age) : 0)) % SECONDS_PER_DAY)
+    + SECONDS_PER_DAY) % SECONDS_PER_DAY;
+  const shown = `${pad(Math.floor(t / 3600))}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`;
+  el.classList.toggle("stale", !trusted);
+  el.innerHTML = `<span>${esc(shown)}</span> <span class="muted">UTC</span>` +
+    (trusted ? "" : ` <span class="age">as of ${esc(seconds(Math.max(0, age)))} ago</span>`);
+}
+
+function lostKiosk(what, why) {
+  $("kiosk-head").innerHTML = `<span class="dot down"></span><span class="pill down">${esc(what)}</span>`;
+  $("kiosk-mode-word").textContent = "no link";
+  $("kiosk-mode-word").className = "mode bad";
+  $("kiosk-date").textContent = why ?? "";
+  if (clockFrom) clockFrom.live = false;
+  drawClock();
+  $("kiosk-tiles").innerHTML = "";
+  $("kiosk-alarms").innerHTML = "";
+}
+
+// ------------------------------------------------------------- journal
+
+// The newest of what the receiver recorded: the changes in its alarm
+// registers as the daemon saw them, and its own log, which names each
+// holdover and survey.  From the log, so it holds when the daemon goes.
+async function readJournal(signal) {
+  journal = await ask("/api/journal?" + withUnit(new URLSearchParams()), signal);
+  drawJournal();
+}
+
+// The journal last read, or null.
+let journal = null;
+
+function drawJournal() {
+  if (!journal) return;
+  const stream = (key, title, list) =>
+    `<h2>${title}</h2>` + (list.length
+      ? `<table><tbody>${list.map((r) => {
+          const [when, what] = journalRows[key](r);
+          return `<tr><td>${when}</td><td>${what}</td></tr>`;
+        }).join("")}</tbody></table>`
+      : `<span class="muted">nothing recorded</span>`);
+  const events = (journal.events ?? []).slice(0, KIOSK_TRANSITIONS);
+  const entries = [...(journal.entries ?? [])];
+  const panel = $("kiosk-journal");
+  // As many of the receiver's log as fit, newest first, rather than
+  // a fixed count that leaves the panel half empty or cut off.
+  do {
+    panel.innerHTML = stream("events", "transitions", events) + stream("entries", "receiver log", entries);
+  } while (panel.scrollHeight > panel.clientHeight && entries.pop());
+}
+
+// ------------------------------------------------------------- history
+
+function clearCharts(why) {
+  for (const c of charts) c.destroy();
+  charts = [];
+  $("charts").innerHTML = "";
+  $("note").textContent = why;
+}
+
+function clearDeviation(why) {
+  deviation?.destroy();
+  deviation = null;
+  $("chart").innerHTML = why ? `<p class="muted pad">${esc(why)}</p>` : "";
+}
+
+// Each chart's height, so the stack fills its panel and no more.
+const stackHeight = (count) =>
+  Math.max(SHORTEST_CHART, Math.floor($("charts").clientHeight / Math.max(1, count)) - TITLE_HEIGHT);
+
+// The stability chart's size: its panel, less its title and legend.
+const deviationSize = () => ({
+  width: $("chart").clientWidth,
+  height: Math.max(SHORTEST_CHART, $("chart").clientHeight - TITLE_HEIGHT - LEGEND_HEIGHT),
+});
+
+async function drawStack(signal) {
+  const wanted = receivers.length ? KIOSK_COLUMNS.filter(measures) : [];
+  const listing = await sensorsListed(signal);
+  const listed = { ...listing, sensors: listing.sensors.filter((x) => KIOSK_SENSORS.includes(x.quantity)) };
+  if (!wanted.length && !listed.sensors.length) {
+    clearCharts("no receiver is logged");
+    return;
+  }
+  const read = await readStack(signal, wanted, listed);
+  const q = withUnit(new URLSearchParams());
+  const { from, to } = rangeBounds();
+  if (from) q.set("from", Math.floor(from));
+  if (to) q.set("to", Math.ceil(to));
+  const marked = await ask("/api/notes?" + q, signal);
+  notes = marked.map((n) => ({ at: Date.parse(n.at) / 1000, text: n.text, color: KIOSK_NOTE }));
+  if (read.why) {
+    clearCharts(read.why);
+    return;
+  }
+  $("note").textContent = "";
+  charts = restack($("charts"), charts, read, {
+    height: stackHeight,
+    sync: KIOSK_SYNC,
+    font: KIOSK_FONT,
+    hooks: { draw: [(u) => drawNoteLines(u, notes)] },
+  });
+}
+
+// Measured every DEVIATION_EVERY, and kept between.
+async function drawDeviation(signal) {
+  if (Date.now() - deviationAt < DEVIATION_EVERY) return;
+  deviationAt = Date.now();
+  const q = withUnit(new URLSearchParams());
+  const { from, to } = rangeBounds();
+  q.set("from", String(Math.floor(from)));
+  q.set("to", String(Math.ceil(to ?? 2000000000)));
+  const d = await ask(`/api/adev?${q}`, signal, KIOSK_TIMEOUT);
+  if (!d.points.length) {
+    clearDeviation("not enough unbroken readings to measure stability");
+    return;
+  }
+  const curves = deviationCurves(d.points);
+  if (deviation) {
+    resigma(deviation, curves);
+    return;
+  }
+  clearDeviation("");
+  deviation = sigmaChart($("chart"), deviationSize(), curves, {
+    show: { MDEV: true, ADEV: true },
+    // A key, not a readout: nobody points.
+    legend: { show: true, live: false },
+    cursor: { show: false },
+    hooks: {},
+    font: KIOSK_FONT,
+  });
+}
+
+// Fit the charts and the journal to their panels again without
+// reading anything: the window a kiosk's browser opens at is not
+// always the one it settles at.
+function fit() {
+  drawJournal();
+  const height = stackHeight(charts.length);
+  for (const c of charts) c.setSize({ width: $("charts").clientWidth, height });
+  deviation?.setSize(deviationSize());
+}
+
+// Each part says its own failure in its own place, so a stability
+// measurement that fails leaves the stack up.
+async function part(read, signal, failed) {
+  try {
+    await read(signal);
+  } catch (e) {
+    if (e instanceof Superseded) throw e;
+    failed(e.message);
+  }
+}
+
+new ResizeObserver(fit).observe(document.body);
+// The journal's room changes with the panels above it, as well as the
+// window's.
+new ResizeObserver(() => drawJournal()).observe($("kiosk-journal"));
+setInterval(drawClock, 1000);
+
+if (!haveUplot) {
+  clearCharts("The chart library did not load. It comes from a CDN, so this page needs internet access; the readings do not.");
+}
+content({
+  daemon: false,
+  floor: KIOSK_FLOOR,
+  render: renderKiosk,
+  lost: lostKiosk,
+  clear(why) {
+    clearCharts(why);
+    clearDeviation(why);
+    deviationAt = 0;
+    journal = null;
+    $("kiosk-journal").innerHTML = "";
+  },
+  load: (signal) =>
+    Promise.all([
+      part(readJournal, signal, (why) => ($("kiosk-journal").textContent = why)),
+      ...(haveUplot
+        ? [
+            part(drawStack, signal, clearCharts),
+            // A measurement that failed is tried again at the next read,
+            // not DEVIATION_EVERY later.
+            part(drawDeviation, signal, (why) => {
+              deviationAt = 0;
+              clearDeviation(why);
+            }),
+          ]
+        : []),
+    ]),
+});
+</script>

@@ -444,6 +444,25 @@ uPlot's own mode 2, its dots drawn by the page, so it looks like every
 other chart.  The one server change is `locked=1`, because the mode is
 text and cannot be averaged into a bucket after the fact.
 
+### The kiosk is a page over the shared code
+
+`/kiosk` is a page of its own, not a flag on the live page: a fixed
+layout for a 1920x1280 display shares little with a page built to
+scroll and be clicked.  It draws with the same code as the others --
+the stack, the MDEV/ADEV chart, the strip's readings and alarms and
+the journal's rows live in `charts.js` and `common.js`, and the
+lifecycle takes a page's own painter for the snapshot in place of the
+strip -- so there is no second copy to drift.  It reads only what the
+daemon already polls and what the logs hold, never `/api/status`,
+because a display left on for days must not cost the receiver a
+status screen every few seconds; that is why it has no sky plot, and
+a test holds it to that.  Its clock counts on between polls, where the
+strip's does not: on a display read from across a room a clock that
+stalls and jumps looks broken, so it is counted on from the last fast
+poll while that is live and under 3 s old, and otherwise shown as it
+was with its age.  The stability curve is measured every ten minutes,
+not at the stack's minute, since each measurement reads the whole day.
+
 ### The time range follows Grafana
 
 The browser view's range control copies Grafana's dashboards -- half-

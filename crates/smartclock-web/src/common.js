@@ -190,6 +190,8 @@ async function listReceivers() {
     carryUnit();
   }
   const bar = $("unit-bar");
+  // A page without the picker, the kiosk, is shown the first unit.
+  if (!bar) return;
   if (list.length < 2) {
     bar.hidden = true;
     return;
@@ -212,6 +214,44 @@ async function listReceivers() {
   bar.hidden = false;
 }
 
+// ------------------------------------------------------------- journal
+//
+// The rows of `/api/journal`'s streams, as [when, what] in HTML, for
+// the live page's journal and the kiosk's.
+
+// The receiver's calendar can be behind by whole GPS epochs, so its own
+// stamps are shown as written and never silently corrected -- the
+// correction belongs where the rollover is known, not here.
+const journalRows = {
+  events: (r) => [local(r.at), `${esc(r.decoded)} <span class="muted">(${esc(r.register)} ${r.bits})</span>`],
+  entries: (r) => [stamped(r), `<span class="muted">#${r.entry}</span> ${esc(r.message)}`],
+  errors: (r) => [local(r.at), `<span class="muted">${r.code}</span> ${esc(r.message)}`],
+  notes: (r) => [
+    local(r.at),
+    `<span class="note-link" data-at="${Date.parse(r.at) / 1000}" ` +
+      `title="Show an hour either side on the charts">${esc(r.text)}</span>`,
+  ],
+};
+
+// The receiver's own stamp as it wrote it, or when the daemon read the
+// entry if it wrote none.  The Z3801A's hex stamp is seconds of GPS
+// time since 1980-01-06 (097-z3801-01 4-13), shown as a date with the
+// hex in the tooltip; like the calendar stamps, it is on the receiver's
+// clock and carries whatever week rollover that clock has.
+const GPS_EPOCH_MS = Date.UTC(1980, 0, 6);
+function stamped(r) {
+  if (!r.stamp) return local(r.at);
+  const hex = /^H([0-9A-F]{8})$/i.exec(r.stamp);
+  if (!hex) return esc(r.stamp);
+  const at = new Date(GPS_EPOCH_MS + parseInt(hex[1], 16) * 1000);
+  return `<span title="${esc(r.stamp)}">${esc(at.toISOString().slice(0, 19).replace("T", " "))} GPS</span>`;
+}
+
+const local = (iso) => {
+  const at = new Date(iso);
+  return isNaN(at) ? esc(iso) : esc(at.toLocaleString());
+};
+
 // ---------------------------------------------------------------- strip
 
 // Whether the last poll found a daemon with its receiver attached.
@@ -233,7 +273,7 @@ async function tick() {
     // numbers must not be painted under the new one's name.
     if (asked !== unit) return;
     if (s.error) {
-      lost("no daemon", s.error);
+      paintLost("no daemon", s.error);
       linkIs(false);
       return;
     }
@@ -245,7 +285,7 @@ async function tick() {
     } catch (e) {
       // A browser refusing storage costs the flash, nothing else.
     }
-    render(s, false);
+    paint(s, false);
     linkIs(s.freshness !== "Disconnected");
   } finally {
     ticking = false;
@@ -256,25 +296,37 @@ async function tick() {
   }
 }
 
-// Paint the strip.  `cached` says the snapshot came from the last page
-// rather than from the daemon just now: the values are still the last
-// ones seen, and the age beside them still counts up honestly, but the
-// receiver may have stopped in between -- so the state pill says where
-// the numbers came from rather than asserting a link nobody has
-// checked since the page loaded.
-function render(s, cached) {
-  const state = cached ? ["seen", "LAST SEEN"]
-              : s.freshness === "Live" ? ["live", "LIVE"]
-              : s.freshness === "Stale" ? ["stale", "STALE"]
-              : ["down", "DISCONNECTED"];
-  // Age of the slowest group of fields: the honest headline, since the
-  // rest of this strip is only as current as its least current part.
+// The link's state as a pill's class and text.  `cached` says the
+// snapshot came from the last page rather than from the daemon just
+// now: the values are still the last ones seen, and the age beside
+// them still counts up honestly, but the receiver may have stopped in
+// between -- so the state pill says where the numbers came from rather
+// than asserting a link nobody has checked since the page loaded.
+function linkState(s, cached) {
+  return cached ? ["seen", "LAST SEEN"]
+    : s.freshness === "Live" ? ["live", "LIVE"]
+    : s.freshness === "Stale" ? ["stale", "STALE"]
+    : ["down", "DISCONNECTED"];
+}
+
+// Age of the slowest group of fields, in seconds, or null: the honest
+// headline, since the rest of the strip is only as current as its
+// least current part.
+function oldestAge(s) {
   const ages = ["fast", "medium", "slow"]
     .map((t) => s.polled?.[t]?.at)
     .filter(Boolean)
     .map((at) => (Date.now() - Date.parse(at)) / 1000);
-  const oldest = ages.length ? Math.max(...ages) : null;
+  return ages.length ? Math.max(0, ...ages) : null;
+}
 
+// The snapshot's readings, as the strip shows them: each
+//   id    which reading it is, for a page that lays them out itself
+//   k, v  its name and its value as text
+//   hint  hover text, or undefined
+// What the unit does not measure is left out rather than shown as a
+// permanent "--".
+function readings(s) {
   // The receiver's own clock, not the browser's.  Shown as of the last
   // fast poll rather than ticking: a clock animated between polls
   // would be the page's arithmetic presented as the receiver's time.
@@ -299,42 +351,39 @@ function render(s, cached) {
     : s.date?.rollover
       ? "date, as the receiver reports it"
       : "date";
-  const stats = [
-    ["receiver UTC", utc],
-    [dateKey, s.date_corrected ?? s.date?.raw ?? "--", s.date?.raw],
-    ["mode", s.mode ?? "--"],
-    ["TFOM / FFOM", `${s.tfom ?? "--"} / ${s.ffom ?? "--"}`],
-    ["EFC", s.efc === null || s.efc === undefined ? "--" : fmt(s.efc, 3) + "%"],
-    ["EFC raw", s.efc_raw ?? "--"],
-    ["internal temp", s.temperature_c == null ? "--" : fmt(s.temperature_c, 2) + " C"],
-    ["1 PPS TI", s.time_interval_ns === null ? "--" : fmt(s.time_interval_ns, 1) + " ns"],
+  const hinted = (raw) => (raw ? `the receiver reports ${raw}` : undefined);
+  // Each reading with the column it is, so what the unit does not
+  // measure can be left out.
+  return [
+    { id: "utc", k: "receiver UTC", v: utc },
+    { id: "date", k: dateKey, v: s.date_corrected ?? s.date?.raw ?? "--", hint: hinted(s.date?.raw) },
+    { id: "mode", k: "mode", v: s.mode ?? "--" },
+    { id: "fom", k: "TFOM / FFOM", v: `${s.tfom ?? "--"} / ${s.ffom ?? "--"}`, column: "tfom" },
+    { id: "efc", k: "EFC", v: s.efc == null ? "--" : fmt(s.efc, 3) + "%", column: "efc_percent" },
+    { id: "efc_raw", k: "EFC raw", v: s.efc_raw ?? "--", column: "efc_dac" },
+    {
+      id: "temperature", k: "internal temp",
+      v: s.temperature_c == null ? "--" : fmt(s.temperature_c, 2) + " C", column: "temperature_c",
+    },
+    {
+      id: "ti", k: "1 PPS TI",
+      v: s.time_interval_ns == null ? "--" : fmt(s.time_interval_ns, 1) + " ns", column: "time_interval_s",
+    },
     // Both numbers, each said in full.  "6 of 7 up" under the word
     // "tracking" left the second number to be guessed at, and the one
     // that matters when a receiver is struggling is the difference.
-    ["satellites", s.tracking == null ? "--" :
-      s.visible == null
-        ? `${s.tracking} tracked`
-        : `${s.tracking} tracked / ${s.visible} visible`],
-  ];
-  // Each reading with the column it is, so what the unit does not
-  // measure is left out rather than shown as a permanent "--".
-  const column = {
-    "TFOM / FFOM": "tfom", EFC: "efc_percent", "EFC raw": "efc_dac",
-    "internal temp": "temperature_c", "1 PPS TI": "time_interval_s", satellites: "tracking",
-  };
-  const shown = stats.filter(([k]) => !column[k] || measures(column[k]));
-  $("status").innerHTML =
-    `<span class="pill ${state[0]}">${state[1]}</span>` +
-    (oldest === null
-      ? ""
-      : `<span class="muted" id="age">oldest field ${Math.max(0, oldest).toFixed(0)}s</span>`) +
-    shown
-      .map(
-        ([k, v, hint]) =>
-          `<span class="stat"${hint ? ` title="the receiver reports ${esc(hint)}"` : ""}>` +
-          `<span class="v">${esc(v)}</span><span class="k">${esc(k)}</span></span>`,
-      )
-      .join("") +
+    {
+      id: "satellites", k: "satellites", column: "tracking",
+      v: s.tracking == null ? "--"
+        : s.visible == null ? `${s.tracking} tracked`
+        : `${s.tracking} tracked / ${s.visible} visible`,
+    },
+  ].filter((r) => !r.column || measures(r.column));
+}
+
+// The receiver's faults and alarms, as pills; "" with none.
+function alarms(s) {
+  return (
     (s.hardware_faults?.length
       ? `<span class="pill down">${s.hardware_faults.map(esc).join(", ")}</span>`
       : "") +
@@ -347,9 +396,32 @@ function render(s, cached) {
       : "") +
     (s.alarming && !s.time_reset
       ? `<span class="pill stale">receiver alarm: ${(s.alarm_summary ?? []).map(esc).join(", ")}</span>`
-      : "") +
+      : "")
+  );
+}
+
+// One reading as a tile: its value over its name.
+const statTile = (r) =>
+  `<span class="stat"${r.hint ? ` title="${esc(r.hint)}"` : ""}>` +
+  `<span class="v">${esc(r.v)}</span><span class="k">${esc(r.k)}</span></span>`;
+
+// Paint the strip.  `cached` as for `linkState`.
+function render(s, cached) {
+  const state = linkState(s, cached);
+  const oldest = oldestAge(s);
+  $("status").innerHTML =
+    `<span class="pill ${state[0]}">${state[1]}</span>` +
+    (oldest === null
+      ? ""
+      : `<span class="muted" id="age">oldest field ${oldest.toFixed(0)}s</span>`) +
+    readings(s).map(statTile).join("") +
+    alarms(s) +
     sensorStrip();
 }
+
+// Paint the strip, or what the page shows in its place.
+const paint = (s, cached) => (page?.render ?? render)(s, cached);
+const paintLost = (what, why) => (page?.lost ?? lost)(what, why);
 
 // Nothing is known any more.
 function lost(what, why) {
@@ -408,7 +480,7 @@ function paintCached() {
   const asked = new URLSearchParams(location.search).get("receiver");
   try {
     const last = sessionStorage.getItem(`snapshot:${asked}`);
-    if (last) render(JSON.parse(last), true);
+    if (last) paint(JSON.parse(last), true);
   } catch (e) {
     // No cache, or unreadable: the strip just starts empty.
   }
@@ -445,6 +517,9 @@ function paintCached() {
 //                    for a page without a range
 //   floor            for a page with one, the shortest period its
 //                    refresh picker offers, in seconds
+//   render(s, cached), lost(what, why)
+//                    optional: paint the snapshot, or its absence, in
+//                    place of the strip, as `render` and `lost` do
 //   chosen()         optional: set up anything that depends on which
 //                    receiver it is, such as what it measures; called
 //                    once the receiver is known and on every change
@@ -553,7 +628,7 @@ async function content(spec) {
   paintCached();
   await listReceivers();
   carryUnit();
-  $("unit").onchange = () => switchTo($("unit").value);
+  if ($("unit")) $("unit").onchange = () => switchTo($("unit").value);
   page.chosen?.();
   tick();
   setInterval(tick, STRIP_EVERY);
@@ -576,7 +651,7 @@ async function content(spec) {
 // the server cannot say.
 async function colophon() {
   const about = await getJson("/api/about");
-  if (about.error) return;
+  if (about.error || !$("colophon")) return;
   const link = (href, text) => `<a href="${esc(href)}">${esc(text)}</a>`;
   $("colophon").innerHTML = [
     `© ${esc(about.copyright)}`,

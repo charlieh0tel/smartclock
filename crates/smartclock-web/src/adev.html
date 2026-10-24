@@ -161,55 +161,6 @@ function resettable(u) {
   });
 }
 
-// The one-sigma interval on each curve, drawn as a shaded band between
-// its lower and upper bounds.  Painted by hand rather than as two more
-// uPlot series with a fill between them: series appear in the legend
-// and take a color, and a band is not a curve.  `bands` maps a series
-// index to its [lower, upper] arrays; a point without an interval is a
-// break in the band, as it is in the line.
-function shadeBands(bands) {
-  return (u) => {
-    const { ctx } = u;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
-    ctx.clip();
-    for (const [idx, [lower, upper]] of Object.entries(bands)) {
-      const series = u.series[Number(idx)];
-      if (!series.show) continue;
-      ctx.fillStyle = series.stroke() + "30";
-      const xs = u.data[0];
-      let run = [];
-      const flush = () => {
-        if (run.length < 2) {
-          run = [];
-          return;
-        }
-        ctx.beginPath();
-        run.forEach(([x, hi], i) => {
-          const px = u.valToPos(x, "x", true), py = u.valToPos(hi, "y", true);
-          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-        });
-        for (let i = run.length - 1; i >= 0; i--) {
-          const [x, , lo] = run[i];
-          ctx.lineTo(u.valToPos(x, "x", true), u.valToPos(lo, "y", true));
-        }
-        ctx.closePath();
-        ctx.fill();
-        run = [];
-      };
-      xs.forEach((x, i) => {
-        if (lower[i] === null || upper[i] === null) flush();
-        else run.push([x, upper[i], lower[i]]);
-      });
-      flush();
-    }
-    ctx.restore();
-  };
-}
-
-const bound = (b, side) => (b ? b[side] : null);
-
 function draw(points) {
   for (const old of [chart, tdevChart]) {
     if (old) old.destroy();
@@ -229,79 +180,25 @@ function draw(points) {
   }
   const size = { width: width(), height: 0 };
   size.height = figureHeight(size.width);
-  // Two curves on the first chart.  The modified deviation is the one
-  // this record supports exactly -- the receiver's reading is already
-  // a ten-second mean, which is the innermost block of the modified
-  // form's own averaging; the plain Allan deviation is kept because
-  // data sheets quote that one.  Both are measured curves and both
-  // are drawn at full strength, told apart by color and legend: a
-  // dashed or dimmed line reads as a reference or a fit.  A point
-  // the modified form lacks (it needs three whole windows) is a hole
-  // in its series, which uPlot leaves as a break in the line.
-  // Each curve ends where its band grows too wide (MAX_BAND).
-  const tau = points.map((p) => p.tau);
-  const modifiedBounds = points.map((p) => p.modified?.bounds);
-  const modified = untilWide(points.map((p) => (p.modified ? p.modified.deviation : null)), modifiedBounds);
-  const time = untilWide(points.map((p) => (p.modified ? p.modified.time : null)), modifiedBounds);
-  const plain = untilWide(points.map((p) => p.deviation), points.map((p) => p.bounds));
-  const mtie = points.map((p) => (p.mtie ? p.mtie.peak : null));
-  const band = (pick) => {
-    const bounds = points.map(pick);
-    return [
-      untilWide(bounds.map((b) => bound(b, "lower")), bounds),
-      untilWide(bounds.map((b) => bound(b, "upper")), bounds),
-    ];
-  };
-  const sigmaBands = {
-    1: band((p) => p.modified?.bounds),
-    2: band((p) => p.bounds),
-  };
-  const timeBands = { 1: band((p) => p.modified?.time_bounds) };
+  const curves = deviationCurves(points);
   // uPlot's legend is a live cursor readout, which is worth having on
   // a curve whose points are decades apart and hard to read off an
   // axis; the symbols say these are the coordinates of the point
   // under the cursor.  The cursor is shared between the two charts.
   const cursor = { points: { size: 8 }, sync: { key: SYNC, setSeries: false } };
-  chart = new uPlot(
-    {
-      width: size.width,
-      height: size.height,
-      title: "Stability of the 1 PPS against GPS, shaded to one sigma",
-      scales: { x: TAU_SCALE, y: sigmaScale(sigmaBands) },
-      axes: [tauAxis(), sigmaAxis("deviation σy")],
-      series: [
-        { label: "τ", value: (_, v) => seconds(v) },
-        {
-          label: "MDEV",
-          stroke: "#38bdf8",
-          width: 1.5,
-          show: shown.has("MDEV"),
-          points: { show: true, size: 5 },
-          value: (_, v) => decade(v),
-        },
-        {
-          label: "ADEV",
-          stroke: "#a78bfa",
-          width: 1.5,
-          show: shown.has("ADEV"),
-          points: { show: true, size: 5 },
-          value: (_, v) => decade(v),
-        },
-      ],
-      legend: { show: true, live: true },
-      cursor,
-      hooks: { setSeries: [followLegend(0)], draw: [shadeBands(sigmaBands)] },
-    },
-    [tau, modified, plain],
-    $("chart"),
-  );
+  chart = sigmaChart($("chart"), size, curves, {
+    show: { MDEV: shown.has("MDEV"), ADEV: shown.has("ADEV") },
+    legend: { show: true, live: true },
+    cursor,
+    hooks: { setSeries: [followLegend(0)] },
+  });
   resettable(chart);
   tdevChart = new uPlot(
     {
       width: size.width,
       height: Math.round(size.height * 0.6),
       title: "Time deviation, shaded to one sigma",
-      scales: { x: TAU_SCALE, y: sigmaScale(timeBands) },
+      scales: { x: TAU_SCALE, y: sigmaScale(curves.timeBands) },
       axes: [tauAxis(), sigmaAxis("seconds")],
       series: [
         { label: "τ", value: (_, v) => seconds(v) },
@@ -324,9 +221,9 @@ function draw(points) {
       ],
       legend: { show: true, live: true },
       cursor,
-      hooks: { setSeries: [followLegend(1)], draw: [shadeBands(timeBands)] },
+      hooks: { setSeries: [followLegend(1)], draw: [shadeBands(curves.timeBands)] },
     },
-    [tau, time, mtie],
+    [curves.tau, curves.time, curves.mtie],
     $("chart-tdev"),
   );
   resettable(tdevChart);

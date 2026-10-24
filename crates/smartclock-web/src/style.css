@@ -180,3 +180,55 @@ table.numbers { border-collapse: collapse; }
 table.numbers th { text-align: left; font-weight: 400; color: var(--dim); padding: 3px 18px 3px 0; white-space: nowrap; }
 table.numbers td { padding: 3px 18px 3px 0; vertical-align: baseline; }
 table.numbers td.v { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* The kiosk: one screen for an unattended display, made for 1920x1280.
+   The receiver's state in large type on the left, the history on the
+   right, filling the window and never scrolling; nothing to click, so
+   no pointer either. */
+body.kiosk { height: 100vh; overflow: hidden; cursor: none;
+             grid-template-columns: 560px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.kiosk section { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+#kiosk-head { display: flex; gap: 12px; align-items: center; font-size: 20px; padding: 0 2px; }
+#kiosk-head .pill { font-size: 15px; }
+/* The link's state at a glance: green while live. */
+.dot { width: 14px; height: 14px; border-radius: 50%; background: var(--dim); flex: none; }
+.dot.live { background: var(--ok); }
+.dot.stale { background: var(--warn); }
+.dot.down { background: var(--bad); }
+#kiosk-foot { font-size: 13px; padding: 0 2px; white-space: nowrap; overflow: hidden;
+              text-overflow: ellipsis; }
+#kiosk-mode .mode { font: 700 104px/1 system-ui, sans-serif; color: var(--ok);
+                    text-transform: uppercase; letter-spacing: .02em; }
+#kiosk-mode .mode.warn { color: var(--warn); }
+#kiosk-mode .mode.bad { color: var(--bad); }
+#kiosk-mode .clock { font-size: 64px; line-height: 1.2; margin-top: 8px;
+                     font-variant-numeric: tabular-nums; }
+#kiosk-mode .clock .muted { font-size: 24px; }
+/* The receiver's last time, no longer counted on: dimmed, with its age. */
+#kiosk-mode .clock.stale { color: var(--dim); }
+#kiosk-mode .clock .age { font-size: 20px; color: var(--warn); }
+#kiosk-mode > .muted { font-size: 18px; }
+#kiosk-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+.tile { display: flex; flex-direction: column; min-width: 0; }
+.tile .v { font-size: 42px; line-height: 1.1; font-variant-numeric: tabular-nums;
+           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .k { font-size: 17px; color: var(--dim); }
+.tile .d { font-size: 15px; color: var(--dim); min-height: 1.4em; }
+.tile.warn .v { color: var(--warn); }
+.tile.bad .v { color: var(--bad); }
+#kiosk-alarms { display: flex; flex-wrap: wrap; gap: 8px; }
+#kiosk-alarms .pill { font-size: 18px; padding: 4px 14px; }
+/* The journal takes what the column has left, and loses its oldest
+   rows rather than scroll. */
+#kiosk-journal { flex: 1 1 0; min-height: 0; overflow: hidden; font-size: 15px; }
+#kiosk-journal h2 { margin: 0 0 4px; }
+#kiosk-journal table { font-size: 15px; margin-bottom: 10px; table-layout: fixed; }
+#kiosk-journal td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#kiosk-journal td:first-child { color: var(--dim); width: 15em; }
+#kiosk-stack, #kiosk-deviation { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+#kiosk-stack { flex: 1 1 0; }
+#kiosk-deviation { flex: 0 0 440px; }
+#kiosk-stack #charts, #kiosk-deviation #chart { flex: 1 1 0; min-height: 0; overflow: hidden; }
+/* Titles a fixed height, which the page takes from each chart's room. */
+.kiosk .u-title { font-size: 20px; line-height: 30px; height: 30px; }
+.kiosk .u-legend { font-size: 17px; }

@@ -41,7 +41,7 @@ simulator; `make screenshots` takes them again.
 | - | - |
 | `smartclockd` | holds the serial port, logs to SQLite, serves clients over a Unix socket and, if asked, TCP |
 | `smartclockmon` | terminal monitor: dashboard, history graphs, journal, status screen and stability |
-| `smartclock-web` | browser view: live state, zoomable history, the status screen, stability, receivers compared, and measures correlated |
+| `smartclock-web` | browser view: live state, zoomable history, the status screen, stability, receivers compared, measures correlated, and a kiosk screen for an unattended display |
 | `smartclock-exporter` | Prometheus metrics for every receiver, from the daemons' readings |
 | `smartclock-sensord` | logs room temperature, humidity and pressure from hwmon, IIO and TEMPer USB sticks ([design](docs/sensors.md)) |
 | `smartclock-cli` | queries, `diagnose`, notes and facts, transcripts, sweeps for undocumented commands, ROM and EEPROM reads, chip dumps joined and split, firmware loading ([notes](docs/firmware/restart.md#the-flasher)), and readers of a firmware image's SCPI tree, console words and Oncore messages |

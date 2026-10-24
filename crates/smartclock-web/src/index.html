@@ -101,11 +101,6 @@ let offeredColumns = [];
 // cursor on all of them, which is most of what makes a stack readable.
 const SYNC = haveUplot ? uPlot.sync("smartclock") : null;
 
-// The two trace colors, named once.  Both the plot and the things
-// that say which line is which read them from here, because a key that
-// disagrees with the lines is worse than no key.
-const TRACE = "#38bdf8";
-const MATE = "#fbbf24";
 // A person's note, drawn as a dashed line across every chart.
 const NOTE = "#4ade80";
 // How far either side of a note the charts show when it is clicked in
@@ -123,89 +118,6 @@ function showNote(at) {
 
 const drawNotes = (u) => drawNoteLines(u, notes);
 const noteNear = (u) => noteAt(u, notes);
-
-// ---------------------------------------------------------------- charts
-
-function seriesQuery(cols, from, to, seconds) {
-  const q = new URLSearchParams({ columns: cols.join(","), points: pointsFor(seconds) });
-  if (from) q.set("from", Math.round(from));
-  if (to) q.set("to", Math.round(to));
-  return "/api/history?" + withUnit(q);
-}
-
-const fetchSeries = (signal, ...args) => ask(seriesQuery(...args), signal, HISTORY_TIMEOUT);
-
-// Tracked and not tracked are one measurement split two ways: their
-// sum is the satellites the receiver knows about, so a chart apiece
-// hides the relationship that matters.  Drawn together, the only
-// columns that are.
-const PAIRED = ["tracking", "not_tracking"];
-
-// Split two labels into what they have in common and what each adds,
-// on a word boundary.  "# sats tracked" and "# sats not tracked"
-// become "# sats " with "tracked" and "not tracked", so the title
-// says the subject once and colors only the part that tells the two
-// lines apart.
-function shareName(a, b) {
-  const x = a.split(" ");
-  const y = b.split(" ");
-  let n = 0;
-  while (n < x.length && n < y.length && x[n] === y[n]) n++;
-  if (n === 0) return ["", a, b];
-  return [x.slice(0, n).join(" ") + " ", x.slice(n).join(" "), y.slice(n).join(" ")];
-}
-
-// The colors of a chart's lines, in order.  A chart of one line draws
-// it in the first.
-const LINE_COLORS = [TRACE, MATE];
-
-// The charts of the stack, from the server's plots: a chart per
-// column, with the paired columns sharing one.  Each chart is
-//   column    what its y axis is fitted to and its hover text is for
-//   envelope  { min, max }, drawn behind the first line, or null
-//   lines     [{ column, values, color }] on one y axis, in order
-function chartsOf(plots) {
-  const line = (plot, n) => ({
-    column: plot.column,
-    values: scaled(plot.mean, plot.column),
-    color: LINE_COLORS[n],
-  });
-  const partner = plots.find((p) => p.column === PAIRED[1]);
-  const paired = plots.some((p) => p.column === PAIRED[0]) && partner;
-  return plots
-    .filter((p) => !(paired && p.column === PAIRED[1]))
-    .map((plot) => ({
-      column: plot.column,
-      envelope: { min: scaled(plot.min, plot.column), max: scaled(plot.max, plot.column) },
-      lines: [line(plot, 0), ...(paired && plot.column === PAIRED[0] ? [line(partner, 1)] : [])],
-    }));
-}
-
-// A multi-line chart's title, each line's own words in its color, so
-// the title says which line is which with the legend off.
-function groupTitle(lines) {
-  if (lines.some((l) => l.name)) {
-    return (
-      esc(label(lines[0].column)) +
-      '<span class="muted">: </span>' +
-      lines
-        .map((l) => `<span style="color:${l.color}">${esc(l.name)}</span>`)
-        .join('<span class="muted">, </span>')
-    );
-  }
-  if (lines.length === 2) {
-    const [shared, mine, theirs] = shareName(label(lines[0].column), label(lines[1].column));
-    return (
-      esc(shared) +
-      `<span style="color:${lines[0].color}">${esc(mine)}</span>` +
-      `<span class="muted"> and </span>` +
-      `<span style="color:${lines[1].color}">${esc(theirs)}</span>`
-    );
-  }
-  return lines
-    .map((l) => `<span style="color:${l.color}">${esc(label(l.column))}</span>`)
-    .join('<span class="muted">, </span>');
-}
 
 // Take the charts down, saying why in their place.
 function clearCharts(why) {
@@ -239,190 +151,17 @@ async function draw(signal) {
     clearCharts(receivers.length ? "nothing selected" : "no receiver is logged");
     return;
   }
-  const bounds = rangeBounds();
-  let { from, to } = bounds;
-  if (from === 0) from = null;
-  let seconds = bounds.seconds;
-
-  let got;
-  if (wanted.length) {
-    got = await fetchSeries(signal, wanted, from, to, seconds);
-    // How far back the log goes is only knowable once it has been
-    // asked, so "all" costs a second request: the first answers with
-    // the server's default hour and the extent, the second asks for
-    // the extent.  Without this the button quietly showed the last
-    // hour -- the range it names is the one range it did not fetch.
-    if (range.last === "all" && got.first && got.last > got.first) {
-      seconds = got.last - got.first;
-      got = await fetchSeries(signal, wanted, got.first, got.last, seconds);
-    }
-  } else {
-    // The sensors alone: their own extent stands in for the receiver's.
-    if (range.last === "all" && listed.first != null) {
-      from = listed.first;
-      to = listed.last;
-      seconds = to - from;
-    }
-    got = { at: [], plots: [], from: Math.round(from ?? 0), to: Math.round(to ?? Date.now() / 1000) };
-  }
-  // The grid the server bucketed on, which the sensors are asked for
-  // and snapped to as well.
-  const win = { from: got.from, to: got.to, points: pointsFor(seconds) };
-  const groups = await sensorGroups(listed, win, signal);
-  const anything = got.at.length || groups.length;
-  clearCharts(
-    !anything ? "no readings in this range"
-      : wanted.length && !got.at.length ? "no readings from the receiver in this range"
-      : "",
-  );
-  if (!anything) return;
-
-  const drawn = chartsOf(got.plots);
-  // One time axis for the receiver's charts and the sensors', joined
-  // on the grid; without sensors the receiver's own times are kept.
-  let x = got.at;
-  const sensorDrawings = groups.map((group) => ({
-    column: `sensor:${group.quantity}`,
-    envelope: null,
-    named: true,
-    hint: sensorHint(group.lines),
-    lines: group.lines.map((line, i) => ({
-      column: `sensor:${group.quantity}`,
-      name: line.name,
-      reading: sensorReadingName(line.name, group.quantity, line.unit),
-      values: line.values,
-      color: line.color,
-      at: line.at,
-    })),
-  }));
-  if (sensorDrawings.length) {
-    const arrays = (d) => [
-      ...(d.envelope ? [d.envelope.min, d.envelope.max] : []),
-      ...d.lines.map((l) => l.values),
-    ];
-    const joined = joinTables([
-      [onGrid(got.at, win), ...drawn.flatMap(arrays)],
-      ...sensorDrawings.flatMap((d) => d.lines.map((l) => [l.at, l.values])),
-    ]);
-    x = joined[0];
-    let k = 1;
-    for (const d of [...drawn, ...sensorDrawings]) {
-      if (d.envelope) {
-        d.envelope.min = joined[k++];
-        d.envelope.max = joined[k++];
-      }
-      for (const l of d.lines) l.values = joined[k++];
-    }
-    // Right below the receiver's own temperature, which is what a room
-    // temperature is read against; at the end without it.
-    const after = drawn.findIndex((d) => d.column === "temperature_c");
-    drawn.splice(after < 0 ? drawn.length : after + 1, 0, ...sensorDrawings);
-  }
-  // Only charts with something to draw: one with no data has no y axis,
-  // which would shift its plot out of line with the rest, as the
-  // receiver's charts are beside sensors in a range it has no readings
-  // in.
-  const filled = (d) =>
-    [...(d.envelope ? [d.envelope.min, d.envelope.max] : []), ...d.lines.map((l) => l.values)]
-      .flat()
-      .some((v) => v != null && isFinite(v));
-  drawn.splice(0, drawn.length, ...drawn.filter(filled));
-  const height = plotHeight(drawn.length);
-  // The scale has to cover the envelope, not just the lines: the min
-  // and max are drawn, and an axis that ends below them would clip the
-  // very excursions they exist to show.
-  const fits = drawn.map((chart) => {
-    const values = [
-      ...(chart.envelope ? [chart.envelope.min, chart.envelope.max] : []),
-      ...chart.lines.map((l) => l.values),
-    ]
-      .flat()
-      .filter((v) => v != null && isFinite(v));
-    return yAxis(chart.column, values, height);
+  const read = await readStack(signal, wanted, listed);
+  clearCharts(read.why);
+  if (!read.drawn.length) return;
+  charts = stackCharts($("charts"), read, {
+    height: plotHeight,
+    sync: SYNC.key,
+    hooks: {
+      setCursor: [() => readout()],
+      draw: [drawNotes],
+    },
   });
-  const ySize = stackWidth(fits);
-  drawn.forEach((drawing, n) => {
-    const fitted = fits[n];
-    // A chart of named lines, a sensor's, says the names whatever their
-    // number; a receiver's chart colors its lines only to tell several
-    // apart.
-    const several = drawing.lines.length > 1 || Boolean(drawing.named);
-    // Only the bottom chart carries the time labels.  Repeating them
-    // under every plot costs the height that makes the stack worth
-    // having, and says the axes might differ when the whole point is
-    // that they cannot.
-    const last = n === drawn.length - 1;
-    const host = document.createElement("div");
-    $("charts").appendChild(host);
-
-    const opts = stackOptions({
-      width: $("charts").clientWidth || 800,
-      height,
-      title: drawing.lines.map((l) => label(l.column)).join(" and "),
-      series: [
-        ...(drawing.envelope
-          ? [
-              { label: "min", stroke: "#0e7490", width: 1, points: { show: false } },
-              { label: "max", stroke: "#0e7490", width: 1, points: { show: false } },
-            ]
-          : []),
-        ...drawing.lines.map((l) => ({
-          label: l.name ?? label(l.column),
-          stroke: l.color,
-          width: 1.5,
-          points: { show: false },
-        })),
-      ],
-      fitted,
-      ySize,
-      last,
-      yStroke: "#38bdf8",
-      // No per-chart legend.  With the cursor synced there is one
-      // instant being pointed at, not one per plot, so the values
-      // belong in one row -- and `show: last` meant only the bottom
-      // plot had any readout at all, which is the opposite of what
-      // aligning them is for.  Every chart moves together, which is
-      // what makes reading one value across the stack possible at all.
-      legend: { show: false },
-      sync: SYNC.key,
-      hooks: {
-        setCursor: [() => readout()],
-        draw: [drawNotes],
-      },
-    });
-    const chart = ranged(new uPlot(
-      opts,
-      [
-        x,
-        ...(drawing.envelope ? [drawing.envelope.min, drawing.envelope.max] : []),
-        ...drawing.lines.map((l) => l.values),
-      ],
-      host,
-    ));
-    // Which lines this chart draws, and from which series, so the
-    // shared readout can label them without reaching back into the
-    // request that built it.  A line's color is said only where there
-    // are several to tell apart.  A sensor's line is read out with its
-    // quantity and unit, which its chart's title says but the readout
-    // does not.
-    chart.smartclockLines = drawing.lines.map((l, i) => ({
-      column: l.column,
-      name: l.name,
-      reading: l.reading,
-      series: 1 + (drawing.envelope ? 2 : 0) + i,
-      color: several ? l.color : null,
-    }));
-    if (drawing.hint) hintAs(chart, drawing.hint);
-    else hint(chart, ...drawing.lines.map((l) => l.column));
-    // uPlot's title is plain text, and with the legend off a chart of
-    // several lines otherwise names them without saying which is which.
-    if (several) {
-      const heading = chart.root.querySelector(".u-title");
-      if (heading) heading.innerHTML = groupTitle(drawing.lines);
-    }
-    charts.push(chart);
-  });
-  settleWidths(charts, $("charts"));
   release($("charts"));
   // Say what the row is for before anything has been hovered, rather
   // than leaving an empty strip that looks like a rendering fault.
@@ -561,39 +300,6 @@ const JOURNAL = [
 // log entries one tab away.
 let stream = view.get("journal");
 
-// The receiver's calendar can be behind by whole GPS epochs, so its own
-// stamps are shown as written and never silently corrected -- the
-// correction belongs where the rollover is known, not here.
-const rows = {
-  events: (r) => [local(r.at), `${esc(r.decoded)} <span class="muted">(${esc(r.register)} ${r.bits})</span>`],
-  entries: (r) => [stamped(r), `<span class="muted">#${r.entry}</span> ${esc(r.message)}`],
-  errors: (r) => [local(r.at), `<span class="muted">${r.code}</span> ${esc(r.message)}`],
-  notes: (r) => [
-    local(r.at),
-    `<span class="note-link" data-at="${Date.parse(r.at) / 1000}" ` +
-      `title="Show an hour either side on the charts">${esc(r.text)}</span>`,
-  ],
-};
-
-// The receiver's own stamp as it wrote it, or when the daemon read the
-// entry if it wrote none.  The Z3801A's hex stamp is seconds of GPS
-// time since 1980-01-06 (097-z3801-01 4-13), shown as a date with the
-// hex in the tooltip; like the calendar stamps, it is on the receiver's
-// clock and carries whatever week rollover that clock has.
-const GPS_EPOCH_MS = Date.UTC(1980, 0, 6);
-function stamped(r) {
-  if (!r.stamp) return local(r.at);
-  const hex = /^H([0-9A-F]{8})$/i.exec(r.stamp);
-  if (!hex) return esc(r.stamp);
-  const at = new Date(GPS_EPOCH_MS + parseInt(hex[1], 16) * 1000);
-  return `<span title="${esc(r.stamp)}">${esc(at.toISOString().slice(0, 19).replace("T", " "))} GPS</span>`;
-}
-
-const local = (iso) => {
-  const at = new Date(iso);
-  return isNaN(at) ? esc(iso) : esc(at.toLocaleString());
-};
-
 function drawJournal(journal) {
   if (stream === null || !(journal[stream] ?? []).length) {
     stream = JOURNAL.map(([key]) => key).find((key) => journal[key]?.length) ?? "events";
@@ -621,7 +327,7 @@ function showStream(journal) {
   const list = journal[stream] ?? [];
   $("journal").innerHTML = list.length
     ? `<table><tbody>${list
-        .map((r) => `<tr><td>${rows[stream](r)[0]}</td><td>${rows[stream](r)[1]}</td></tr>`)
+        .map((r) => `<tr><td>${journalRows[stream](r)[0]}</td><td>${journalRows[stream](r)[1]}</td></tr>`)
         .join("")}</tbody></table>`
     : `<span class="muted">nothing recorded</span>`;
   for (const link of $("journal").querySelectorAll(".note-link")) {

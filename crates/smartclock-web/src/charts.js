@@ -67,8 +67,8 @@ const HINTS = {
     + "(097-59551-02 5-24, docs/firmware/loop.md).",
 };
 
-// The hover text for the columns a chart draws.
-const hintText = (...cols) => cols.map((c) => HINTS[c]).filter(Boolean).join(" ");
+// The hover text for the columns a chart draws, each once.
+const hintText = (...cols) => [...new Set(cols)].map((c) => HINTS[c]).filter(Boolean).join(" ");
 
 // Give a chart's title the hover text for its columns, underlined so it
 // is found.
@@ -495,6 +495,12 @@ function figureHeight(width) {
   );
 }
 
+// Give a chart drawn earlier `data` in place, at `size`.
+function redata(chart, data, size) {
+  chart.setData(data);
+  if (size.width !== chart.width || size.height !== chart.height) chart.setSize(size);
+}
+
 // ---------------------------------------------------------------- stack
 //
 // The live page's stack of time charts, a chart per column sharing one
@@ -595,6 +601,10 @@ const drawingArrays = (d) => [
   ...d.lines.map((l) => l.values),
 ];
 
+// Whether a drawing has anything to plot.  One with no data has no y
+// axis, which would shift its plot out of line with the rest of a stack.
+const drawsAnything = (d) => drawingArrays(d).flat().some((v) => v != null && isFinite(v));
+
 // Read the stack over the range: `wanted`, the receiver's columns, and
 // the sensors `listed`, as `sensorsListed` gives them.  Answers
 //   why     "" with something to draw, or what to say in its place
@@ -675,12 +685,9 @@ async function readStack(signal, wanted, listed) {
     const after = drawn.findIndex((d) => d.column === "temperature_c");
     drawn.splice(after < 0 ? drawn.length : after + 1, 0, ...sensorDrawings);
   }
-  // Only charts with something to draw: one with no data has no y axis,
-  // which would shift its plot out of line with the rest, as the
-  // receiver's charts are beside sensors in a range it has no readings
-  // in.
-  const filled = (d) => drawingArrays(d).flat().some((v) => v != null && isFinite(v));
-  return { why, x, drawn: drawn.filter(filled) };
+  // Only charts with something to draw, as the receiver's are not
+  // beside sensors in a range it has no readings in.
+  return { why, x, drawn: drawn.filter(drawsAnything) };
 }
 
 // Each chart's y axis, fitted to what it draws.  The scale has to
@@ -724,12 +731,15 @@ function heldAxis(held) {
 }
 
 // Draw the stack `readStack` read into `container`, and answer its
-// charts.  `style` is
+// charts.  A drawing with an `x` of its own is plotted against that
+// rather than the stack's.  `style` is
 //   height(count)  each chart's height, given how many there are; the
 //                  bottom one is given its time axis on top
 //   sync           the cursor's sync key
 //   hooks          uPlot's, as `stackOptions` takes them
 //   font           the axes' font, when not uPlot's own
+//   yStroke        the y labels' color, when not the trace's
+//   legend         uPlot's, when each chart has one; none by default
 function stackCharts(container, read, style) {
   const height = style.height(read.drawn.length);
   const fits = stackFits(read, height);
@@ -766,16 +776,16 @@ function stackCharts(container, read, style) {
       // having, and says the axes might differ when the whole point is
       // that they cannot.
       last: n === read.drawn.length - 1,
-      yStroke: TRACE,
+      yStroke: style.yStroke ?? TRACE,
       font: style.font,
-      // No per-chart legend.  With the cursor synced there is one
-      // instant being pointed at, not one per plot, so the values
-      // belong in one row, which the page builds if it wants one.
-      legend: { show: false },
+      // No per-chart legend unless asked for.  With the cursor synced
+      // there is one instant being pointed at, not one per plot, so the
+      // values belong in one row, which the page builds if it wants one.
+      legend: style.legend ?? { show: false },
       sync: style.sync,
       hooks: style.hooks,
     });
-    const chart = ranged(new uPlot(opts, [read.x, ...drawingArrays(drawing)], host));
+    const chart = ranged(new uPlot(opts, stackData(read, drawing), host));
     chart.smartclockShape = stackShape(drawing, fits[n]);
     chart.smartclockAxis = held;
     // Which lines this chart draws, and from which series, so a shared
@@ -796,7 +806,7 @@ function stackCharts(container, read, style) {
     else hint(chart, ...drawing.lines.map((l) => l.column));
     // uPlot's title is plain text, and with the legend off a chart of
     // several lines otherwise names them without saying which is which.
-    if (several) {
+    if (several && !opts.legend.show) {
       const heading = chart.root.querySelector(".u-title");
       if (heading) heading.innerHTML = groupTitle(drawing.lines);
     }
@@ -806,13 +816,17 @@ function stackCharts(container, read, style) {
   return charts;
 }
 
+// What a chart of the stack plots: its time axis, then its series.
+const stackData = (read, drawing) => [drawing.x ?? read.x, ...drawingArrays(drawing)];
+
 // The stack `charts`, drawn in `container`, brought up to `read`: each
-// chart given its new data and y axis in place while the stack keeps
-// its shape -- the same charts and lines -- so a page read again on a
-// timer neither flashes nor moves, and drawn afresh when it does not.
-// Answers the charts, the same ones or new.
+// chart given its new data, y axis and size in place while the stack
+// keeps its shape -- the same charts and lines -- so a page read again
+// on a timer neither flashes nor moves, and drawn afresh when it does
+// not.  Answers the charts, the same ones or new.
 function restack(container, charts, read, style) {
-  const fits = stackFits(read, style.height(read.drawn.length));
+  const height = style.height(read.drawn.length);
+  const fits = stackFits(read, height);
   const ySize = stackWidth(fits);
   const kept = charts.length === read.drawn.length &&
     charts.every((c, n) => c.smartclockShape === stackShape(read.drawn[n], fits[n]));
@@ -822,16 +836,24 @@ function restack(container, charts, read, style) {
       const widened = held.ySize !== ySize;
       held.fit = fits[n];
       held.ySize = ySize;
-      c.setData([read.x, ...drawingArrays(read.drawn[n])]);
+      c.setData(stackData(read, read.drawn[n]));
+      const size = {
+        width: container.clientWidth || c.width,
+        height: stackChartHeight(height, n, charts.length, style.font),
+      };
+      if (size.width !== c.width || size.height !== c.height) c.setSize(size);
       // A new width alone changes no scale, which is what uPlot measures
       // its axes again on.
-      if (widened) c.redraw(false, true);
+      else if (widened) c.redraw(false, true);
     });
     return charts;
   }
+  hold(container, true);
   for (const c of charts) c.destroy();
   container.innerHTML = "";
-  return stackCharts(container, read, style);
+  const drawn = stackCharts(container, read, style);
+  release(container);
+  return drawn;
 }
 
 // -------------------------------------------------------------- sensors
@@ -1152,6 +1174,10 @@ function sigmaScale(bands) {
   };
 }
 
+// `sigmaScale` over `held.bands`, read each time the chart draws, so a
+// chart can be given new bands in place.
+const heldSigmaScale = (held) => ({ ...LOG, range: (u, min, max) => sigmaScale(held.bands).range(u, min, max) });
+
 // The one-sigma interval on each curve, drawn as a shaded band between
 // its lower and upper bounds.  Painted by hand rather than as two more
 // uPlot series with a fill between them: series appear in the legend
@@ -1262,7 +1288,7 @@ function sigmaChart(el, size, curves, opts) {
       title: "Stability of the 1 PPS against GPS, shaded to one sigma",
       scales: {
         x: TAU_SCALE,
-        y: { ...LOG, range: (u, min, max) => sigmaScale(held.bands).range(u, min, max) },
+        y: heldSigmaScale(held),
       },
       axes: [{ ...tauAxis(), ...font }, { ...sigmaAxis("deviation σy"), ...font }],
       series: [

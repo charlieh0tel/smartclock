@@ -350,7 +350,7 @@ test("the host's sensors are charted below the receiver's temperature, on its ti
     const title = chart.root.querySelector(".u-title");
     return { text: title.textContent, hover: title.title };
   });
-  expect(heading.text).toBe("Sensors, temperature, C: bench, room");
+  expect(heading.text).toBe("Ambient temperature, C: bench, room");
   expect(heading.hover).toContain("/sys/fake/room");
 });
 
@@ -415,10 +415,13 @@ for (const path of ["/", "/status"]) {
 test("the compare page charts the sensors below the receivers, on their time axis", async ({ page }) => {
   await withSensors().install(page);
   await page.goto(`/compare?receiver=${B}&last=86400`);
-  await page.waitForFunction(() => charts.some((c) => c.root.querySelector(".u-title").textContent.startsWith("Sensors")));
+  const sensorTitle = "Ambient temperature, C";
+  await page.waitForFunction((t) => charts.some((c) => c.root.querySelector(".u-title").textContent === t), sensorTitle);
   const titles = await page.evaluate(() => charts.map((c) => c.root.querySelector(".u-title").textContent));
-  const first = titles.findIndex((t) => t.startsWith("Sensors"));
-  expect(titles.slice(first)).toEqual(["Sensors, temperature, C", "Sensors, relative humidity, %"]);
+  // Two thermometers, under the quantity's name; one hygrometer, under
+  // its own.
+  const first = titles.indexOf(sensorTitle);
+  expect(titles.slice(first)).toEqual([sensorTitle, "Room relative humidity, %"]);
   expect(await page.evaluate(() => new Set(charts.map((c) => c.data[0].join(","))).size)).toBe(1);
 });
 
@@ -879,6 +882,57 @@ test("the kiosk lays itself out inside the inset an overscanning display asks fo
   // Nothing scrolls: the page still fits the screen.
   const fits = await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight);
   expect(fits).toBe(true);
+});
+
+// The kiosk's stack at 1920x1080, once drawn: each chart's first
+// column, its line count, its title, and its plot's height in CSS
+// pixels.
+async function kioskStack(page, fake, drawn) {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await fake.install(page);
+  await page.goto(`/kiosk?receiver=${B}`);
+  await page.waitForFunction(drawn);
+  return page.evaluate(() => charts.map((c) => ({
+    column: c.smartclockLines[0].column,
+    lines: c.smartclockLines.length,
+    title: c.root.querySelector(".u-title").textContent,
+    plot: c.bbox.height / devicePixelRatio,
+  })));
+}
+
+// The least plot height a kiosk chart is drawn at, at 1920x1080 with a
+// sensor chart: as tall as each of the receiver's four.
+const KIOSK_LEAST_PLOT = 36;
+
+test("the kiosk charts the host's thermometers together, as tall as every other chart", async ({ page }) => {
+  const stack = await kioskStack(page, withSensors(), () => charts.some((c) => c.smartclockLines[0].column.startsWith("sensor:")));
+  // Temperature only, both thermometers on the one chart, last.
+  const sensors = stack.filter((c) => c.column.startsWith("sensor:"));
+  expect(sensors.map((c) => [c.column, c.lines])).toEqual([["sensor:temperature", 2]]);
+  expect(stack.at(-1).column).toBe("sensor:temperature");
+  expect(sensors[0].title).toBe("Ambient temperature, C: bench, room");
+  expect(sensors[0].plot).toBeGreaterThanOrEqual(KIOSK_LEAST_PLOT);
+  // The bottom chart's time axis comes on top of its plot, not out of it.
+  for (const c of stack) expect(c.plot, c.column).toBeCloseTo(stack[0].plot, 0);
+});
+
+test("the kiosk titles one thermometer by its name", async ({ page }) => {
+  const fake = twoUnits();
+  fake.everyColumn = true;
+  fake.sensors = [{ name: "room", quantity: "temperature", unit: "C", value: 21.5 }];
+  const stack = await kioskStack(page, fake, () => charts.some((c) => c.smartclockLines[0].column.startsWith("sensor:")));
+  expect(stack.at(-1).title).toBe("Room temperature, C");
+  expect(stack.at(-1).plot).toBeGreaterThanOrEqual(KIOSK_LEAST_PLOT);
+});
+
+test("a kiosk without sensors has no sensor chart, and its charts take the room", async ({ page }) => {
+  const fake = twoUnits();
+  fake.everyColumn = true;
+  const stack = await kioskStack(page, fake, () => charts.length > 0);
+  expect(stack.filter((c) => c.column.startsWith("sensor:"))).toEqual([]);
+  expect(stack.at(-1).column).toBe("temperature_c");
+  for (const c of stack) expect(c.plot, c.column).toBeCloseTo(stack[0].plot, 0);
+  expect(stack[0].plot).toBeGreaterThan(KIOSK_LEAST_PLOT);
 });
 
 test("the kiosk redraws in place: the same tiles and charts, new y axes, nothing written that did not change", async ({ page }) => {

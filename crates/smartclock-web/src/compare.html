@@ -235,6 +235,7 @@ function drawHistory(shown, got, groups) {
     })),
     ...groups.map((g) => ({
       col: `sensor:${g.quantity}`,
+      title: sensorTitle(g.quantity, g.lines.map((l) => l.name)),
       hint: sensorHint(g.lines),
       lines: g.lines.map((l, i) => ({
         label: l.name,
@@ -259,8 +260,8 @@ function drawHistory(shown, got, groups) {
     const chart = ranged(new uPlot(
       stackOptions({
         width: $("charts").clientWidth || 800,
-        height,
-        title: label(col),
+        height: stackChartHeight(height, place, drawn.length),
+        title: drawing.title ?? label(col),
         series: drawing.lines.map((l) => ({
           label: l.label,
           stroke: l.color,

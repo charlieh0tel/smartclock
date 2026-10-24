@@ -129,7 +129,13 @@ changing it recomputes.
 
 The host's sensors, from `smartclock-sensord`, are charted a quantity
 apiece and a line per sensor, right below the receiver's internal
-temperature, on the same time axis; a sensors box in the column menu
+temperature, on the same time axis.  A chart of one sensor is titled
+with its name ("Room temperature, C"), one of several with the
+quantity's ("Ambient temperature, C") and each name in its line's
+color.  A sensor's y axis spans at least 0.5 C, 2 %RH or 0.2 kPa, so
+a steady room's noise is not drawn as a swing.  Every chart of a
+stack, the bottom one with the time axis too, has a plot as tall as
+the rest, with no more y labels than fit.  A sensors box in the column menu
 leaves them out (`sensors=off`).  Their current readings end the live
 strip on every page.  A host without the service shows neither, and
 with no receiver logged the sensors are charted alone.
@@ -178,7 +184,9 @@ display zoom can make one).  Left, the snapshot in large type
 (mode, receiver UTC and date, TI, EFC, TFOM, FFOM, satellites,
 temperature, holdover, alarms) over the journal, cut to fit; right,
 the live page's TI, EFC, satellites and temperature stack, with the
-host's temperature sensors, and the MDEV/ADEV chart.
+host's temperature sensors on one chart below it, and the MDEV/ADEV
+chart.  The stack's charts share its height evenly; a host without
+temperature sensors has no sensor chart, and the rest take its room.
 
 | Parameter | |
 | --- | --- |

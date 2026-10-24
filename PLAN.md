@@ -491,6 +491,15 @@ to paint before the first poll.  The cause on the bench was AbleSign's
 item duration re-opening the page; the fix for that is the player's
 setting, and this only makes a reload hard to see.
 
+A stack divides its height among plots, not charts: uPlot draws the
+bottom chart's time axis inside that chart's height, so giving every
+chart one share left the bottom plot short by the axis.  On the
+kiosk's large type that was 66 of 85 pixels, and the host's
+temperature chart, always at the bottom, drew a few pixels tall.  The
+bottom chart is given the axis on top of its share
+(`stackChartHeight`), on every page, and a short plot gets only as
+many y labels as fit.
+
 ### The time range follows Grafana
 
 The browser view's range control copies Grafana's dashboards -- half-

@@ -269,7 +269,7 @@ function drawTime(win, x, y, xs, ys) {
     const chart = ranged(new uPlot(
       stackOptions({
         width: chartWidth("time-charts"),
-        height,
+        height: stackChartHeight(height, place, lines.length),
         title: m.name,
         series: [{ label: m.name, stroke: color, width: 1.5, points: { show: false } }],
         fitted: fits[place],

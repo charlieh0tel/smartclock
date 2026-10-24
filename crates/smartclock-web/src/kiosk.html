@@ -441,9 +441,12 @@ function clearDeviation(why) {
   $("chart").innerHTML = why ? `<p class="muted pad">${esc(why)}</p>` : "";
 }
 
-// Each chart's height, so the stack fills its panel and no more.
-const stackHeight = (count) =>
-  Math.max(SHORTEST_CHART, Math.floor($("charts").clientHeight / Math.max(1, count) / unitPx) - TITLE_HEIGHT) * unitPx;
+// Each chart's height, so the stack, with the time axis under its
+// bottom chart, fills its panel and no more.
+const stackHeight = (count) => {
+  const room = ($("charts").clientHeight - timeAxisRoom(kioskFont())) / unitPx;
+  return Math.max(SHORTEST_CHART, Math.floor(room / Math.max(1, count)) - TITLE_HEIGHT) * unitPx;
+};
 
 // The stability chart's size: its panel, less its title and legend.
 const deviationSize = () => ({
@@ -522,7 +525,8 @@ function fit() {
   }
   drawJournal();
   const height = stackHeight(charts.length);
-  for (const c of charts) c.setSize({ width: $("charts").clientWidth, height });
+  charts.forEach((c, n) =>
+    c.setSize({ width: $("charts").clientWidth, height: stackChartHeight(height, n, charts.length, kioskFont()) }));
   deviation?.setSize(deviationSize());
 }
 

@@ -74,8 +74,8 @@ from the reset timing; they were not observed:
 
 The error lasted 7 to 9 minutes, not exactly 8; whole-second readings
 and poll timing add about 1 s.  The check shows when a mismatch was
-corrected, not why it arose.  A steady TI, the 1 PPS phase against GPS,
-cannot reveal a mislabeled second, because the edge stayed put.
+corrected, not why it arose.  A steady TI cannot distinguish time
+labels a whole second apart.
 
 Recovery preceded the next scheduled UTC parameters (subframe 4 page
 18) at 00:08:30 (IS-GPS-200N 20.3.2, 20.3.4.1).
@@ -118,11 +118,6 @@ equal offsets or other corrupt state, such as a cached UTC offset.
   LeoNTP units on u-blox engines
   ([Steven Sommars, weberblog](https://weberblog.net/partial-ntp-pool-the-leap-second-that-wasnt/);
   [LeoNTP firmware 1.24](https://www.leontp.com/firmware/)).
-- **2026-10-25 predicted.**  In November 2025, LeoNTP 1200 units
-  announced a leap for this date.  Firmware 2.07 fixed it
-  ([NTP Pool forum](https://community.ntppool.org/t/leap-second-in-october-2026/4132);
-  [time-nuts, Steven Sommars](https://febo.com/pipermail/time-nuts_lists.febo.com/2025-November/110275.html);
-  [time-nuts, Tom Van Baak](https://febo.com/pipermail/time-nuts_lists.febo.com/2025-November/110284.html)).
 
 ## Alternatives
 
@@ -132,9 +127,9 @@ equal offsets or other corrupt state, such as a cached UTC offset.
   exchange switches the Oncore between GPS and UTC to measure GPS-UTC,
   and a check requests it just after setting the clock.
 
-The 58503A's own leap logic is ruled out.  It decodes no leap fields,
-acts only on the Oncore's pending flag `@@Bj`, and books leaps for a
-quarter's end
+The 58503A's own leap scheduling cannot explain this event.  It decodes
+no leap fields, acts only on the Oncore's pending flag `@@Bj`, and
+books leaps for a quarter's end
 ([`firmware/58503a-3704.md`](firmware/58503a-3704.md#time-reset-and-the-oncores-time)).
 An emulator ran it with this unit's EEPROM and a synthetic Oncore
 (`@@Bj` 0, a correct 2026 date, no WN_LSF model) from 2026-10-24 23:35

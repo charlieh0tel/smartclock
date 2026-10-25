@@ -87,10 +87,12 @@ The update:
 
 and `FUN_00033798(u)` converts the result.  On entry the integrator is
 cleared and B is set to the EFC in force less c·s (`0x4835c`), so
-starting the loop does not move the oscillator.  That is the only
-store to B; the update (`0x4863a`) is the only read.  `startup_pll`,
-holdover and the aging fit leave it alone, so B stays where the
-hand-over put it, and the oscillator's drift accumulates in I.
+starting the loop does not move the oscillator; the update (`0x4863a`)
+reads it.  In the Z3805A and 58503A, `startup_pll` clears I and sets B
+the same way on its own entry and reads B in its update, and holdover
+recovery hands back to `startup_pll` ("Starting up"), so B is set again
+at each entry to either loop stage.  Holdover and the aging fit leave it
+alone; between entries the oscillator's drift accumulates in I.
 
 q is the seconds counter `FUN_00023818` returns, which `FUN_00023624`
 advances once a second; it lies in the region a warm restart preserves
@@ -119,16 +121,36 @@ and `0x4af58`.
 
 Its first state counts ten-second means whose magnitude is below
 150 ns -- the double 1.5 × 10⁻⁷, loaded as two halves at `0x47e60` and
-`0x47e66` -- and clears the count at the first that is not; sixteen in
-a row (`0x47e46`) end the state.  Then, at `0x47ede` to `0x47fce`, it
+`0x47e66` -- and clears the count at the first that is not; once the
+count reaches fifteen (`0x47e46`, `moveq #15` and `ble`) the next
+update ends the state.  Then, at `0x47ede` to `0x47fce`, it
 lengthens its constant by 5 s (`0x47efe`) each update until it is
 within 5 s of τ, sets it to τ, and hands over to `pll_normal`.  The
 Z3801A's `FUN_000442ca` does the same.
 
-At `0x475b8` to `0x476b4` it also sets the EFC from the aging fit
-below: u = FUN_00033798(a + b·y + c·ln y + c·s), with y = q / 2700 and
-the ln term omitted when y ≤ 1.  Which of its states runs that code
-was not traced.
+The Z3805A's `startup_pll` (`0x4429e`) and the 58503A 3704's
+(`0x4429e`) have a state between those two.  On entry each clears f,
+I and the count and sets B (see "The loop").  After the fifteen, if
+the aging fit's sampler is already collecting, the constant starts to
+lengthen; otherwise -- after a power-up -- the state sets the flag
+that starts the sampler and waits until the EFC history holds its
+first three samples (`stop_ptr` 3, `start_ptr` 0), three windows of
+2700 s, before it lengthens.  So after a power-up the loop runs at
+150 s for about 2¼ hours before the ramp.
+
+Holdover recovery hands back to `startup_pll`, not `pll_normal`.  It
+leaves the start-up constant as it was -- τ, if the loop had got there,
+so the hand-over follows the fifteen -- when the holdover lasted at
+most 500 s (Z3805A, `0x441ba`; 350 s in 3704, `0x441b0`) and the
+interval is within 500 ns; otherwise it sets it back to 150 s
+(`holdover_recovery`, Z3805A `0x43f9a`, 3704 `0x43fc0`).  `pll_init`
+sets it to 150 s too (Z3805A `0x473d2`, 3704 `0x475ac`).
+
+The `holdover` stage (`FUN_000473de`), not `startup_pll`, sets the EFC
+from the aging fit below, at `0x475b8` to `0x476b4`: u =
+FUN_00033798(a + b·y + c·ln y + c·s), with y = q / 2700 and the ln term
+omitted when y ≤ 1.  The Z3805A's `holdover` (`0x43a90`) and 3704's
+(`0x43ab8`) do it every ten seconds.
 
 ## The aging fit
 
@@ -316,8 +338,12 @@ current.  It stores nothing; the value is entered afterwards with the
 SCPI command.
 
 The 58503A images 3633 and 3704 apply the same term (`console.md`,
-"The 58503A image"), though the bench 58503A's DAC word does not jump at a step of
-its reported oven current (`efc.md`, "The regression").  The Z3801A's
+"The 58503A image"), and the bench 58503A does: setting the coefficient
+to 0 moved its DAC word by c·s at the next update (`efc.md`, "The
+regression").  The Z3805A's loop reads channel 3 of its monitors
+(`adc_average`, `0x2410e`), the oscillator current, and 3704's channel
+6, `Primary oven current` (`0x222a6`); each is the 0.1 / 0.9
+exponential average, 250 until the first reading.  The Z3801A's
 image reads channel 3 of its own function, `FUN_00022fd2`; its report
 strings list Temperature, 5V, +15V, −15V, Oven, Double oven and Antenna
 current, but which is its channel 3 was not traced.
@@ -432,18 +458,19 @@ the console's `loop_time` -- and the constants of the update and the
 fit: 29.75, 2700.0, the clamp's 6.25 × 10⁻¹⁰ and HQ's 4.32 × 10⁻⁴.  The
 update law above was transcribed from the Z3816A only; in the others
 these show the same code is there, not that it is unchanged -- but for
-the Z3805A 3543B, whose decompiled `pll_normal` (`0x4824a`, gcc's
+the Z3805A 3543B, whose decompiled `pll_normal` (`0x448fc`, gcc's
 build of it agreeing with the image in the harness) gives the same
-law term for term, below.  What
+law term for term, below, and the 58503A 3704, whose `pll_normal`
+(`0x4495a`) does too.  What
 does differ is where τ and G come from.  Read on 2026-10-09.
 
 | Image | τ, as the ROM block sets it | Startup's constant | G |
 | ----- | --------------------------- | ------------------ | - |
 | Z3816A 4001 | 500 s (`0x40174`) | 150 s | −1.25 × 10⁻¹² or −2.125 × 10⁻¹², bit 8 of the word at `0x302000` |
 | Z3801A 3543 | 1000 s (`0x2f846`) | 150 s | +6.25 × 10⁻¹³ (`0x475be`) |
-| Z3805A 3543B | 1000 s (`0x3094c`) | 150.0 present, not traced | +6.25 × 10⁻¹³ (`0x475f4`) |
+| Z3805A 3543B | 1000 s (`0x3094c`) | 150 s (`0x47404`, `0x441f4`) | +6.25 × 10⁻¹³ (`0x475f4`) |
 | 58503A 3633 | 700 s (`0x305ae`) | 150.0 present, not traced | +6.25 × 10⁻¹³ (`0x476bc`) |
-| 58503A 3704 | 700 s (`0x30840`) | 150.0 present, not traced | +6.25 × 10⁻¹³ (`0x477dc`) |
+| 58503A 3704 | 700 s (`0x30840`) | 150 s (`0x475e2`, `0x441ea`) | +6.25 × 10⁻¹³ (`0x477dc`) |
 | Z3815A 4010 | 500 s (`0x44c9e`); 1000 or 500 s by bit 12 of the word at `0x302000` (`0x50be8`) | 150.0 present, not traced | +1.2 × 10⁻¹² or −2.125 × 10⁻¹², bit 12 of the same word (`0x4503c`) |
 | 58503B 1.01.04 | 700 s, `:DIAGnostic:ROSCillator:LTIMe:MAX` | 150 s, `:LTIMe:INIT` | by oscillator type: −1.25 × 10⁻¹² or +6.25 × 10⁻¹³ |
 
@@ -581,8 +608,21 @@ message in all but the Z3815A and 58503B.
 | B | `pll.efc_base` | |
 
 `startup_pll` uses the same block, and counts in
-`large_offset_blocks` the consecutive updates whose mean passes
-150 ns, to 15.
+`large_offset_blocks` the consecutive updates whose mean is within
+150 ns, to 15; one outside clears it.
+
+The mean is of that ten seconds' readings within the holdover limit
+threshold, not always ten.  The loop clamps u to 0 to 1048560
+(`efc_clamp`, `0x2426e`), and the health monitor's task, not `pllp`,
+writes it on each tick: `efc_write_dithered` (`0x2421c`) rounds it,
+adds a small random dither and sends the top 16 of its 20 bits to the
+DAC.
+
+The 58503A 3704 runs the same update (`pll_normal`, `0x4495a`;
+`efc_write_dithered`, `0x23540`), with two differences: s is channel 6
+("s, the oscillator current"), and while the GPS reference is
+questionable its readings are not summed, and a ten seconds with none
+skips the update without adding a hold cause, the EFC left as it was.
 
 ## How this was read
 

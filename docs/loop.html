@@ -76,7 +76,7 @@ a{color:var(--accent)}
     <figcaption>x is the interval between the GPS 1 PPS and the 1 PPS derived from the oscillator. Everything left of the DAC runs in the <code>pllp</code> task in single-precision floating point; the aging fit runs in the <code>curv</code> task.</figcaption>
   </figure>
 
-  <p>Once a second the firmware reads one interval from the FPGA counter. Every tenth second it takes the mean x̄ of the ten readings — the number <code>:SYNChronization:TINTerval?</code> reports — and runs one update:</p>
+  <p>Once a second the firmware reads one interval from the FPGA counter. Every tenth second it takes the mean x̄ of those ten seconds' readings within the holdover limit — the number <code>:SYNChronization:TINTerval?</code> reports — and runs one update:</p>
   <div class="eq eqgrid"><span>e  = x̄ − x₀</span><span>x₀ is a setpoint, normally 0</span><span>f ← (1 − a)·f + a·e</span><span>a = 29.75 / τ</span><span>d  = clamp(b + c / y, −M, +M)</span><span>y = t / 2700 s, from the aging fit</span><span>I ← I + 10·k·f + 10·d / 2700</span><span>k = 1 / (4·G·τ²)</span><span>u  = K·f + B + I + c₀·s</span><span>K = 1 / (G·τ)</span></div>
   <p>u is the EFC word sent to the DAC. B is the EFC that was in force when the loop closed, less c₀·s, so closing the loop does not move the oscillator; s is the health monitor's exponential average of the oscillator's oven current (0.1 of each fresh reading, 0.9 of the last), and c₀ is the value <code>:DIAGnostic:ROSCillator:TCOefficient</code> reads and writes — a calibration constant in the EEPROM block, in EFC units per unit of the current channel, applied at every update and adjusted by nothing but its own setter. That term tracks the oven rather than the phase; the console word <code>xcal</code> measures it by fitting EFC against current.</p>
 </section>
@@ -91,11 +91,11 @@ a{color:var(--accent)}
       <tr><td>a</td><td>prefilter coefficient, 29.75 / τ per 10 s update</td><td>by model, below</td></tr>
       <tr><td>K</td><td>proportional gain, 1 / (G·τ)</td><td>EFC units per second of error</td></tr>
       <tr><td>k</td><td>integral gain per update, 1 / (4·G·τ²), applied ×10 for the ten seconds</td><td></td></tr>
-      <tr><td>B</td><td>base EFC: the EFC in force when <code>pll_normal</code> takes over, less c₀·s, so closing the loop does not move the oscillator</td><td>set once at the hand-over, then fixed; drift accumulates in I</td></tr>
+      <tr><td>B</td><td>base EFC: the EFC in force when <code>pll_normal</code> takes over, less c₀·s, so closing the loop does not move the oscillator</td><td>set again on each entry to <code>startup_pll</code> or <code>pll_normal</code>, after every holdover too, and fixed in between; drift accumulates in I</td></tr>
       <tr><td>M</td><td>clamp on the drift term, 6.25 × 10⁻¹⁰ / |G|</td><td>±500 or ±294 EFC units per 2700 s on the Z3816A; ±1000 where G is +6.25 × 10⁻¹³</td></tr>
       <tr><td>x₀</td><td>phase setpoint</td><td>0 unless set from the console word <code>phase_off</code></td></tr>
-      <tr><td>c₀</td><td>coefficient on the oscillator current; <code>:DIAGnostic:ROSCillator:TCOefficient</code>, limits ±200, in EEPROM</td><td>a calibration value per unit; −33.65 on the bench 58503A, whose loop does not appear to apply it this way</td></tr>
-      <tr><td>s</td><td>oscillator current as the health monitor holds it: an exponential average, not the fresh reading <code>:DIAGnostic:ROSCillator:CURRent?</code> returns</td><td>Z3816A: nominal 250; Z3801A: channel 3 of its own monitor</td></tr>
+      <tr><td>c₀</td><td>coefficient on the oscillator current; <code>:DIAGnostic:ROSCillator:TCOefficient</code>, limits ±200, in EEPROM</td><td>a calibration value per unit; −33.65 on the bench 58503A, which applies it at every update</td></tr>
+      <tr><td>s</td><td>oscillator current as the health monitor holds it: an exponential average, not the fresh reading <code>:DIAGnostic:ROSCillator:CURRent?</code> returns</td><td>Z3816A, Z3805A, 58503A 3704: 250 until the first reading; Z3801A, Z3805A: channel 3; 58503A 3704: channel 6, <code>Primary oven current</code></td></tr>
       <tr><td>startup τ</td><td>the constant <code>startup_pll</code> ramps from, +5 s per update, until within 5 s of τ</td><td>150 s</td></tr>
     </tbody>
   </table></div>
@@ -112,7 +112,7 @@ a{color:var(--accent)}
       <tr><td>58503B 1.01.04</td><td>700 s, settable: <code>LTIMe:MAX</code>*</td><td>−1.25 × 10⁻¹² or +6.25 × 10⁻¹³, by <code>TYPE</code>*</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s, from <code>LTIMe:INIT</code>*</td></tr>
     </tbody>
   </table></div>
-  <p class="note">* Under <code>:DIAGnostic:ROSCillator</code>, undocumented; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, the Z3801A and the 58503B's defaults; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in, below. What the bits of the word at <code>0x302000</code> read was not traced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
+  <p class="note">* Under <code>:DIAGnostic:ROSCillator</code>, undocumented; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, Z3801A, Z3805A, 58503A 3704 and 58503B; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in, below. What the bits of the word at <code>0x302000</code> read was not traced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
 </section>
 
 <section>
@@ -142,7 +142,7 @@ a{color:var(--accent)}
   <h2>The aging feed-forward</h2>
   <p>The dashed path is what makes the receiver's holdover good. While the loop is closed, <code>pllp</code> averages the current-compensated EFC, u − c₀·s, over each 2700 s (45 min) window and pushes one sample into a ring of 64 — 48 hours. The <code>curv</code> task fits</p>
   <div class="eq eqgrid"><span>EFC(t) = a + b·y + c·ln y</span><span>y = t / 2700 s, t the seconds since cold start</span></div>
-  <p>to those samples (a least-squares line, plus a one-dimensional search on c once there are enough points). The slope of that curve now, b + c/y, is d: the EFC change per 2700 s the fit predicts. Each update the integrator advances by 10·d/2700 — the predicted change over ten seconds — before the loop sees any phase error from it. In holdover the same curve keeps advancing the EFC with nothing to correct it; <code>startup_pll</code> also takes its first EFC from it after a restart.</p>
+  <p>to those samples (a least-squares line, plus a one-dimensional search on c once there are enough points). The slope of that curve now, b + c/y, is d: the EFC change per 2700 s the fit predicts. Each update the integrator advances by 10·d/2700 — the predicted change over ten seconds — before the loop sees any phase error from it. In holdover the EFC is set from the same curve every ten seconds, with nothing to correct it.</p>
   <p>The Z3815A and 58503B compute the same slope once per fit, not every ten seconds, and each update moves a running value toward it with time constant τ, so a new fit's change of slope reaches the oscillator over about τ rather than at once.</p>
   <p>The Z3815A and 58503B also run an EFC calibration that measures the frequency offset at ten EFC settings and takes the slope of a straight line through them as G. They carry a second coefficient B that nothing in the firmware computes: the calibration sets it to zero, and the loop never applies it. B, zero unless set over SCPI, enters only the measured holdover uncertainty that <code>:SYNChronization:HOLDover:TUNCertainty:MEASured?</code> reports, which takes the gain as A + B·e² at EFC e.</p>
   <p>Samples are weighted by how much of the window was averaged: 3 if all 2700 seconds, 2 if at least 675, else 1; and everything in the first three hours after a cold start gets weight 1. A fit needs at least three samples, so d is zero for the first hours after a power-up.</p>
@@ -150,7 +150,8 @@ a{color:var(--accent)}
 
 <section>
   <h2>Starting up</h2>
-  <p>Before <code>pll_normal</code>, <code>startup_pll</code> runs the same update law with its own time constant, recomputing K, k and a from it every update. It first waits for sixteen consecutive ten-second means within ±150 ns, then lengthens its constant from 150 s by 5 s per update until it is within 5 s of τ, sets it to τ, and hands over. The Z3801A's firmware does the same; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
+  <p>Before <code>pll_normal</code>, <code>startup_pll</code> runs the same update law with its own time constant, recomputing K, k and a from it every update; on entry it clears f and I and sets B. It first waits for fifteen consecutive ten-second means within ±150 ns. In the Z3805A and 58503A, after a power-up it then waits, still at 150 s, for the aging fit's first three samples, about 2¼ hours. Then it lengthens its constant by 5 s per update until it is within 5 s of τ, sets it to τ, and hands over. The Z3801A's firmware ramps the same way; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
+  <p>In those two, holdover recovery returns to <code>startup_pll</code>. After a holdover of more than 500 s (350 s in the 58503A 3704), or with the interval past 500 ns, the constant starts again from 150 s; otherwise it keeps its value — τ, once the loop got there, so the hand-over follows the fifteen means.</p>
   <p class="note">Source: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md"><code>docs/firmware/loop.md</code></a>, which holds the addresses and the routine identities behind each number; this page explains, that one is the evidence.</p>
 </section>
 </main>
@@ -245,7 +246,7 @@ a{color:var(--accent)}
   label(130,Y2-8,'− t₍OCXO₎',{mono:true,anchor:'start'});
   // ---- aging feed-forward (row y = 400) ----
   const Y3=410;
-  label(120,Y3-52,'aging feed-forward (curv task)',{anchor:'start',color:ff,size:12.5});
+  label(120,Y3-52,'aging feed-forward (fit in the curv task)',{anchor:'start',color:ff,size:12.5});
   const fA=block(120,Y3-22,150,44,['45-min mean','of u − c₀·s'],true);
   const fB=block(300,Y3-22,150,44,['ring of 64','48 h of samples'],true);
   const fC=block(480,Y3-22,180,44,['fit a + b·y + c·ln y','least squares, weighted'],true);

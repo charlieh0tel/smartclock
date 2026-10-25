@@ -485,11 +485,7 @@ page saw it, not by the host's stamp, so a display whose clock
 disagrees with the host's still ticks.  It is sized in kiosk pixels,
 `--u`, one CSS pixel from 1440x1080 up and fewer below, rather than
 for one screen: a player's display zoom decides the CSS viewport.
-The mode word is 80 kiosk pixels and never wraps: at 104 a TV showed
-"POWER-UP" broken at its hyphen, and 80 is the largest at which
-"RECOVERING", the longest of the page's words, fits its 560-pixel
-column in Noto Sans Bold; a test holds every word to one line.  A raw
-mode name longer than those is cut with an ellipsis.
+The mode word is 70, to fit "RECOVERING" on one line in wide fonts.
 
 A player reloading the page showed white until the first paint, which
 waited on style.css and the CDN's uPlot stylesheet.  So the server

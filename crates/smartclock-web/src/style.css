@@ -6,6 +6,13 @@
   --font: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
 }
 * { box-sizing: border-box; }
+/* The scrollbar's room kept whether or not the page is long enough to
+   need it, so the right-aligned controls do not jump sideways by its
+   width when the charts arrive or go.  Not on the kiosk, which never
+   scrolls: the property reserves the gutter under `overflow: hidden`
+   too, and the kiosk would lose a strip of its screen to it. */
+html { scrollbar-gutter: stable; }
+html:has(> body.kiosk) { scrollbar-gutter: auto; }
 /* One column.  There was a 340px sidebar for the sky plot; the sky
    moved to a page of its own and left the column empty, which stopped
    the charts spanning the window for no reason a reader could see. */

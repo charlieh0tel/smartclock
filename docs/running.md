@@ -155,31 +155,35 @@ reads it only when a client asks.
 It does not read the event registers, so it leaves the front-panel
 Alarm LED and the BITE output alone, and reads one for a client only
 when started with `--allow-control`.  Reading an event register clears
-it, which clears the alarm that summarizes it.  The daemon watches the
-same state through `*STB?`, which changes nothing, so the alarm stays
-lit until cleared at the instrument.  The monitor's header and the
-browser's status strip show what the daemon recorded, so clearing the
-lamp loses no history.
+it (`097-59551-02` 5-46), and presumably the alarm that summarizes it;
+the manual says that only of `*CLS` (5-40 to 5-41).  The daemon
+watches the same state through `*STB?`, which changes nothing, so the
+alarm stays lit until cleared at the instrument.  The monitor's header
+and the browser's status strip show what the daemon recorded, so
+clearing the lamp loses no history.
 
 ### Time Reset at a GPS week boundary
 
 `*STB?` reads the status byte; 72 is bit 3, questionable summary (8),
-plus bit 6, master summary (64) (`097-59551-02` 5-44).  With the user-reported bit unused, the
-questionable group's one other bit is Time Reset: the receiver found
-its time different from the satellites' and reset it to GPS (5-40).  It
-is an event, latched until `:STATus:QUEStionable:EVENt?` reads it
-(5-46), `*CLS` (5-40) or power-up; the daemon sends neither.
-`:SYSTem:STATus?` can look clean meanwhile.  A 2015 correspondent
-reported a lit Alarm LED on a 58503A despite a clean status display; it
-cleared after `*CLS` followed by `:SYSTEM:STATUS?`, and the poster could not say
-which cleared it
+plus bit 6, master summary (64) (`097-59551-02` 5-44).  With the
+user-reported bit unused, the questionable group's one other bit is
+Time Reset: the receiver found its time different from the satellites'
+and reset it to GPS (5-40).  It is an event, latched until
+`:STATus:QUEStionable:EVENt?` reads it (5-46), `*CLS` (5-40) or
+power-up; the daemon sends neither.  `*CLS` releases the Alarm LED and
+Alarm BITE output (5-40 to 5-41).  Reading the event register clears
+the event; the alarm presumably follows, but the manual does not say
+so.  `:SYSTem:STATus?` can look clean meanwhile.  A 2015 correspondent
+reported a lit Alarm LED on a 58503A despite a clean status display;
+it cleared after `*CLS` followed by `:SYSTEM:STATUS?`, and the poster
+could not say which cleared it
 ([febo.com](https://www.febo.com/pipermail/time-nuts/2015-April/091388.html)).
 
 The bench 58503A latched it at 00:00:15 UTC on 2026-10-25, just after
 GPS week 2441 ended.  Its time of day ran 1 s slow for about eight
-minutes; lock, TI and EFC showed no disturbance.  This fits a known class of 256-week
-leap-parameter bugs in GPS engines, mechanism unknown, and may recur
-after week 2697, about 2031-09-21:
+minutes; lock, TI and EFC showed no disturbance.  This fits a known
+class of 256-week leap-parameter bugs in GPS engines, mechanism
+unknown, and may recur after week 2697, about 2031-09-21:
 [`oncore-leap-week.md`](oncore-leap-week.md).
 
 ## Configuring

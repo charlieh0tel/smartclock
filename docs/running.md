@@ -173,17 +173,16 @@ and reset it to GPS (5-40).  It is an event, latched until
 power-up; the daemon sends neither.  `*CLS` releases the Alarm LED and
 Alarm BITE output (5-40 to 5-41).  Reading the event register clears
 the event; the alarm presumably follows, but the manual does not say
-so.  `:SYSTem:STATus?` can look clean meanwhile.  A 2015 correspondent
-reported a lit Alarm LED on a 58503A despite a clean status display;
-it cleared after `*CLS` followed by `:SYSTEM:STATUS?`, and the poster
-could not say which cleared it
+so.  `:SYSTem:STATus?` can look clean meanwhile: in 2015 a 58503A's
+Alarm LED stayed lit with a clean status display until `*CLS` then
+`:SYSTEM:STATUS?`, and the poster could not say which cleared it
 ([febo.com](https://www.febo.com/pipermail/time-nuts/2015-April/091388.html)).
 
 The bench 58503A latched it at 00:00:15 UTC on 2026-10-25, just after
-GPS week 2441 ended.  Its time of day ran 1 s slow for about eight
-minutes; lock, TI and EFC showed no disturbance.  This fits a known
-class of 256-week leap-parameter bugs in GPS engines, mechanism
-unknown, and may recur after week 2697, about 2031-09-21:
+GPS week 2441 ended, and ran 1 s slow for about eight minutes, lock,
+TI and EFC undisturbed.  This fits a known class of 256-week
+leap-parameter bugs in GPS engines, mechanism unknown, and may recur
+after week 2697, about 2031-09-21:
 [`oncore-leap-week.md`](oncore-leap-week.md).
 
 ## Configuring

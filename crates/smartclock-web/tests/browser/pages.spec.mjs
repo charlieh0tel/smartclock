@@ -684,6 +684,16 @@ test("the stability page offers no refresh faster than a minute, and shows one a
   expect(new URL(page.url()).searchParams.get("refresh")).toBe("1m");
 });
 
+test("the stability page says how much start-up it left out, and nothing when none or not told", async ({ page }) => {
+  const fake = twoUnits();
+  fake.unit(A).startup = 7200;
+  await open(page, fake, "/adev", A);
+  await expect(page.locator("#state")).toContainText("2.0 hstart-up excluded");
+  await page.locator("#unit").selectOption(B);
+  await expect(page.locator("#state")).toContainText("222readings");
+  await expect(page.locator("#state")).not.toContainText("start-up");
+});
+
 test("a fixed range that reaches past now is read again; one wholly past is not", async ({ page }) => {
   const now = Math.round(Date.now() / 1000);
   await openAt(page, "/", `from=${now - 600}&to=${now + 3000}&refresh=5s`);

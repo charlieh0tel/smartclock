@@ -895,7 +895,12 @@ fn stability(frame: &mut Frame, area: Rect, app: &App) {
 
     let curve = &app.deviation;
     if curve.points.is_empty() {
-        let why = if curve.present == 0 {
+        let why = if curve.present == 0 && curve.startup > 0.0 {
+            format!(
+                "no 1 PPS readings in this window past the loop's start-up ({} excluded)",
+                elapsed(curve.startup)
+            )
+        } else if curve.present == 0 {
             "no 1 PPS readings in this window".to_owned()
         } else {
             format!(
@@ -971,8 +976,13 @@ fn stability(frame: &mut Frame, area: Rect, app: &App) {
     } else {
         100.0 * curve.present as f64 / total as f64
     };
+    let startup = if curve.startup > 0.0 {
+        format!(", start-up excluded {}", elapsed(curve.startup))
+    } else {
+        String::new()
+    };
     let title = format!(
-        "Stability  {}   tau0 {:.3} s   {} readings, {} runs, {complete:.0}% complete",
+        "Stability  {}   tau0 {:.3} s   {} readings, {} runs, {complete:.0}% complete{startup}",
         app.window.label(),
         curve.tau0,
         curve.present,

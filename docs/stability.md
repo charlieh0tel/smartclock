@@ -26,6 +26,37 @@ receiver).
   Segments are pooled.  State is checked on every logged row, including
   held repeats and rows without an interval, where a short holdover can
   lie wholly.
+- **No start-up.**  From each start of locked operation the loop runs
+  at a time constant of 150 s and lengthens it to its own
+  (`docs/firmware/loop.md`, "Starting up"): fifteen 10 s means, at
+  least 150 s; after a power-up a wait for three aging samples,
+  3 × 2700 s; then the ramp, 1100 s on the 58503A and 1700 s on the
+  Z3805A.  Its wider bandwidth would bias the curve, and no query
+  reports the loop's stage, so the first 3 h after each start is left
+  out and the run cut either side (`adev::startup::STARTUP`) -- an
+  estimate from the firmware's timing, about 2.8 h and 3 h, not an
+  observation.  A start is the first locked row, mode `Locked` and the
+  holdover flag clear, after either a power-up -- mode `PowerUp`, or
+  the powerup register's bit 2, "date and time valid", seen clear
+  after it was seen set (097-59551-02, Powerup Status Register) -- or a
+  spell out of lock, from the last locked poll to the next, longer
+  than the holdover recovery keeps the time constant through: 500 s on
+  the Z3805A, 350 s on the 58503A 3704 and on any other model.  A gap
+  with locked rows either side and no power-up shown is not a start,
+  so a receiver power-cycled and relocked wholly inside a gap is not
+  seen.  The rows up to 3 h before a range are read too, to find a
+  start just before it.  The curve carries how many starts the range
+  held and how much was left out.  On the bench 58503A's log from 20
+  September to 25 October 2026 that found eight starts, 15.3 h in all:
+  the power cycles of 26 September and 11 October and the power loss
+  of 25 October (locked until 21:20:24 UTC, `PowerUp` from 21:22:28,
+  locked at 21:40:44); its holdovers, the longest 163 s, were not.
+  Over the half day of 25 October the start-up moved MDEV at 1000 s
+  from 3.80 to 4.33 × 10⁻¹², the loop at 150 s having held the phase
+  tighter.  Over the whole log ADEV moved under 2 % and MDEV up to 8 %
+  (lower at 200 s, higher by 5 % from 2000 to 10 000 s), and MTIE at
+  10 to 50 s fell from 2.9 to 14 µs to 100 to 150 ns: those excursions were
+  the phase pulling in after lock.
 - **A hole stays a hole.**  Readings go on a time-indexed grid, so a
   missing reading is an empty slot, not a phase step.
 - **A grid point with no reading near it stays empty.**  Nearest wins

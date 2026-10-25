@@ -265,7 +265,9 @@ misreadings visible without predicting their shape.  Goldens come from
 readings, so the overlapping estimators run over segments cut at every
 discontinuity, holes left as holes.  Because of that averaging MDEV and
 TDEV are the primary curves; ADEV is kept, labeled, because data sheets
-quote it.  Method and checks: `docs/stability.md`.
+quote it.  The first 3 h after each start of locked operation is left
+out: the loop runs wider then, and no query reports its stage, so the
+span is the firmware's timing.  Method and checks: `docs/stability.md`.
 
 ### Notes, facts and sensors
 

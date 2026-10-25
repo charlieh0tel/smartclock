@@ -4,6 +4,10 @@
 
 use rusqlite::Connection;
 
+use smartclock::adev::startup::STARTUP;
+use smartclock::types::PowerupCondition;
+
+use super::FIRST_LOCK_BIT;
 use super::Log;
 use super::MAX_PHASE_ROWS;
 use super::Modes;
@@ -234,6 +238,81 @@ fn a_range_with_too_little_in_it_yields_no_curve() {
         .expect("a deviation");
     assert!(deviation.points.is_empty());
     assert_eq!(deviation.present, 9);
+}
+
+#[test]
+fn the_loops_start_up_is_left_out() {
+    // One-second rows on a 58503A, whose holdover limit is 350 s:
+    // powering up, then locked from 600; a 100 s holdover from 12 400; a
+    // 400 s one from 14 000; an hour with nothing logged from 26 200,
+    // the receiver locked either side of it.  The power-up and the long
+    // holdover start the loop; the short holdover and the gap do not.
+    // Every reading differs from every other, so none is a held repeat.
+    const BASE: i64 = 1_700_000_000;
+    let spans: [(i64, i64, &str, i64, i64); 7] = [
+        (0, 600, "PowerUp", 0, 3),
+        (600, 12_400, "Locked", 0, 7),
+        (12_400, 12_500, "Holdover", 1, 7),
+        (12_500, 14_000, "Locked", 0, 7),
+        (14_000, 14_400, "Holdover", 1, 7),
+        (14_400, 26_200, "Locked", 0, 7),
+        (30_000, 31_000, "Locked", 0, 7),
+    ];
+    let scratch = phase_log("adev-startup", &[]);
+    let mut conn = scratch.connect();
+    let transaction = conn.transaction().expect("a transaction");
+    for (from, to, mode, holdover, bits) in spans {
+        for second in from..to {
+            let when = at(BASE + second);
+            transaction
+                .execute(
+                    "INSERT INTO snapshot
+                     (at, freshness, fast_at, time_interval_s, mode, holdover_active,
+                      powerup_bits, receiver_id)
+                     VALUES (?1, 'live', ?1, ?2, ?3, ?4, ?5, 1)",
+                    rusqlite::params![when, 1e-12 * second as f64, mode, holdover, bits],
+                )
+                .expect("a row");
+        }
+    }
+    transaction.commit().expect("commit");
+    drop(conn);
+    let log = Log::open(scratch.path()).expect("open");
+    let startup = STARTUP.as_secs();
+
+    let (whole, _) = log
+        .phase(1, BASE, BASE + 31_000, MAX_PHASE_ROWS)
+        .expect("a deviation");
+    assert_eq!(whole.startups, 2);
+    assert_eq!(whole.startup, 2.0 * startup as f64);
+    // Power-up 600, then each locked or holdover run less what fell in
+    // a start-up: 12 400 - (600 + 3 h), 100, 1500, 400,
+    // 26 200 - (14 400 + 3 h), 1000.
+    assert_eq!(whole.present, 600 + 1000 + 100 + 1500 + 400 + 1000 + 1000);
+    // Each of those its own run.
+    assert_eq!(whole.segments, 7);
+
+    // A range starting inside the first start-up finds it by looking
+    // back, and counts only the part it holds.
+    let from = 5000;
+    let (late, _) = log
+        .phase(1, BASE + from, BASE + 31_000, MAX_PHASE_ROWS)
+        .expect("a deviation");
+    assert_eq!(late.startups, 2);
+    assert_eq!(late.startup, (600 + startup - from + startup) as f64);
+    assert_eq!(late.present, 1000 + 100 + 1500 + 400 + 1000 + 1000);
+
+    // Past both, nothing is left out.
+    let (after, _) = log
+        .phase(1, BASE + 27_000, BASE + 31_000, MAX_PHASE_ROWS)
+        .expect("a deviation");
+    assert_eq!((after.startups, after.startup), (0, 0.0));
+    assert_eq!(after.present, 1000);
+}
+
+#[test]
+fn the_first_lock_bit_is_the_one_the_register_names() {
+    assert!(PowerupCondition::from_bits(1 << FIRST_LOCK_BIT).date_time_valid());
 }
 
 /// A log holding two receivers, each with its own snapshots, log

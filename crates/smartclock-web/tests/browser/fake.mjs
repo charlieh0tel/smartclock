@@ -29,6 +29,9 @@ const FROM_DAEMON = new Set(["snapshot", "info", "status"]);
 //   up       whether its daemon is attached
 //   mode     the strip's mode, so the strip says whose snapshot it is
 //   present  the stability page's reading count, for the same reason
+//   startup  seconds the stability answer left out as start-up, or
+//            null for an answer without the field, as an older
+//            server's is
 //   delay    milliseconds to hold each endpoint's answer, by name
 //   columns  what it measures, as the server lists it: every column
 //            the history serves, unless a test says otherwise
@@ -36,7 +39,7 @@ const FROM_DAEMON = new Set(["snapshot", "info", "status"]);
 //            bucket as the server's mean times are
 //   gain     what its history's values are multiplied by
 export function receiver(serial, mode, present, columns = RECORDED.history.plottable) {
-  return { serial, up: true, mode, present, delay: {}, columns, skew: 0, gain: 1 };
+  return { serial, up: true, mode, present, startup: null, delay: {}, columns, skew: 0, gain: 1 };
 }
 
 // A plot's values multiplied by `gain`.
@@ -99,7 +102,9 @@ export class Fake {
         body.screen.text = `screen of ${u.serial}\n${body.screen.text}`;
         return body;
       case "adev":
-        return { ...body, present: u.present };
+        return u.startup == null
+          ? { ...body, present: u.present }
+          : { ...body, present: u.present, startups: 1, startup: u.startup };
       case "history": {
         // With `everyColumn`, every column asked for: the recorded ones
         // as recorded, any other in the first recorded one's shape, so

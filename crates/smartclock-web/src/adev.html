@@ -333,7 +333,8 @@ async function load(signal) {
   measured(d);
   // Coverage travels with the curve because the curve cannot show
   // it: one drawn from a run that is mostly holes, or that broke into
-  // forty pieces, looks exactly like one drawn from a clean day.
+  // forty pieces, looks exactly like one drawn from a clean day.  So
+  // does how much was left out as the loop's start-up.
   const total = d.present + d.holes;
   const complete = total ? ((100 * d.present) / total).toFixed(1) : "0.0";
   const stat = (v, k) =>
@@ -345,6 +346,8 @@ async function load(signal) {
     stat(d.segments, "unbroken runs") +
     stat(`${complete}%`, "complete") +
     stat(d.holes, "holes") +
+    // Absent from a server that predates it.
+    (d.startup > 0 ? stat(seconds(d.startup), "start-up excluded") : "") +
     (d.truncated
       ? ` <span class="pill stale">longer than one measurement reads; this is its newest part</span>`
       : ""));

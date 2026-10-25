@@ -74,9 +74,10 @@ the OCXO is steered to follow it, so the curve is of the pair and of
 the loop between them rather than of the OCXO alone; the page says
 so.  Gaps stay unfilled: the run is cut where a relock, a holdover
 or an absence makes the phase either side incomparable, only the
-second differences that exist are counted, and the curve carries the
-number of readings, holes and unbroken runs behind it.  `PLAN.md` has
-the decisions behind it.
+second differences that exist are counted, the loop's start-up after
+each power-up or long holdover is left out, and the curve carries the
+number of readings, holes and unbroken runs behind it and the hours of
+start-up excluded.  `PLAN.md` has the decisions behind it.
 
 ## The browser
 

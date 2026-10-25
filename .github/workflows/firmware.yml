@@ -77,6 +77,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make check-chip-selects
         if: ${{ !cancelled() }}
+      - run: make check-loop-trace
+        if: ${{ !cancelled() }}
       - run: make check-magic-numbers
         if: ${{ !cancelled() }}
       - run: make check-magic-numbers IMAGE=58503a-3704

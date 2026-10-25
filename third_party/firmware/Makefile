@@ -44,7 +44,7 @@ IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS)
 TARGETS = format-c check-format-c check-module-figures module-figures check-image-diff image-diff \
 	check-comment-addresses check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
-	check-chip-selects chip-selects
+	check-chip-selects chip-selects check-loop-trace loop-trace
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
@@ -159,6 +159,17 @@ check-chip-selects:
 
 chip-selects:
 	python3 -I $(ROOT)/tools/firmware/chip_selects.py --write
+
+# Fail if crates/smartclock/tests/fixtures/loop/IMAGE.tsv, what the
+# Z3805A's and 58503A 3704's own startup_pll and pll_normal do on
+# synthetic readings in Unicorn, which cargo test's loop_firmware.rs
+# replays against docs/firmware/loop.md's update law, is not what the
+# images give; loop-trace rewrites them.
+check-loop-trace:
+	uv run -q $(ROOT)/tools/firmware/loop_trace.py --check
+
+loop-trace:
+	uv run -q $(ROOT)/tools/firmware/loop_trace.py
 
 # The decompiled C's flags.  -fno-defer-pop has gcc pop a call's
 # arguments after the call, so that from a task in user mode an argument

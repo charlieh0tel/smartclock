@@ -1910,8 +1910,8 @@ it.
 images on every push and pull request, a job of its own beside the
 Rust CI so that each fails alone: `make check-format-c`, `check-types`,
 `check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
-`check-image-diff`, `check-chip-selects`, `check-magic-numbers`,
-`check-comment-addresses`, `check-decompiled`, which runs
+`check-image-diff`, `check-chip-selects`, `check-loop-trace`,
+`check-magic-numbers`, `check-comment-addresses`, `check-decompiled`, which runs
 `check-unicorn` first, and `report-decompiled`, which fails if any
 function fails
 and checks the figures this document, `rewrite.md`, `58503a-3704.md`,
@@ -1928,6 +1928,12 @@ the Z3805A, its seeded names and its document's figures, and
 `check-comment-addresses` the addresses its C's comments cite.  None
 of the targets builds the workspace; `check-chip-selects` reads every
 image's reset code (`restart.md`, "The chip selects").
+`check-loop-trace` runs both images' own `startup_pll` and
+`pll_normal` in Unicorn on synthetic readings, the routines that reach
+outside the loop's arithmetic stood in for
+(`tools/firmware/loop_trace.py`), and fails if the traces
+`crates/smartclock/tests/loop_firmware.rs` replays against `loop.md`'s
+update law are not what the images give.
 
 On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15),
 `binutils-m68k-linux-gnu` and `clang-21`, which `check-magic-numbers`

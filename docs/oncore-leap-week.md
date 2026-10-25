@@ -17,13 +17,10 @@ gives the firmware's check and its addresses.
 ## What was observed
 
 From 2026-10-24 23:00 to 10-25 01:00 UTC, the daemon logged receiver
-`time_utc` and host receive time `fast_at` once per second.  Times below
-include an approximately 12-second host-clock correction and are
-accurate to about 1 s.  The host ran no time daemon then; it runs
-chrony now.  Its clock measured 11.84 s slow against NTP later that day;
-an earlier estimate, comparing its HTTP `Date` with a
-chrony-synchronized host, gave about 12.4 s.  The receiver read a
-steady 12.1 s ahead of it until the event.
+`time_utc` and host receive time `fast_at` once per second.  The host
+clock ran 11.84 s slow, undisciplined; times below are corrected, to
+about 1 s.  The receiver read a steady 12.1 s ahead of it until the
+event.
 
 - Two polls 1 s apart both read 00:00:15.  Later the receiver skipped
   00:08:16, reading 00:08:15 and then 00:08:17.  These are the only two
@@ -169,8 +166,7 @@ came right.
   (`gps_leap_ack`), which a check requests just after setting the
   clock.
 - Whole-second readings and poll timing add about 1 s of uncertainty to
-  the duration.  A constant host offset shifts the absolute times; it
-  does not change the duration.
+  the duration.
 
 Raw `@@Ea` time stamps, message arrival times, a capture of the GPS and
 UTC mode exchanges and the host clock's log would tell these apart.

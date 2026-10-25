@@ -24,7 +24,6 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 README = ROOT / 'docs/firmware/README.md'
 REWRITE = ROOT / 'docs/firmware/rewrite.md'
 SUMMARY = ROOT / 'README.md'
-PLAN = ROOT / 'PLAN.md'
 DOCUMENT_58503A = ROOT / 'docs/firmware/58503a-3704.md'
 
 # function_check.py's line of a profile's counts, the installer's
@@ -125,12 +124,6 @@ CHECKS = {
                     word(f['primary_skipped'] + f['primary_failed']),
                     f['installer_agree'], f['installer_skipped'], f['sessions_agree'],
                     f['sessions_run'])),
-        (PLAN, sentence(
-            'primary {} agreeing, {} known, {} skipped, {} failed; installer {}, {} '
-            "skipped (the Z3805A's own), {} failed; console sessions {} of {}"),
-         lambda f: (f['primary_agree'], f['primary_known'], f['primary_skipped'],
-                    f['primary_failed'], f['installer_agree'], f['installer_skipped'],
-                    f['installer_failed'], f['sessions_agree'], f['sessions_run'])),
     ),
 }
 

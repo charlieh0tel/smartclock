@@ -3,7 +3,7 @@
 # dependencies = ["unicorn==2.1.4"]
 # ///
 """Checks which of the Unicorn m68k bugs the harness works around
-(PLAN.md, "Done 2026-10-22, the harness's status register") the
+(docs/firmware/README.md) the
 installed Unicorn shows, against what the workarounds expect, and
 that the workarounds give the right condition codes:
 
@@ -155,7 +155,7 @@ BUG_2 = Bug(
     "not in a Unicorn release; see PLAN.md",
     Behavior.PRESENT,
     "the PC-write workaround (Run in harness.py, an interrupt taken between runs) may go; nothing else relies "
-    "on bug 2 (PLAN.md); set BUG_2.expected to FIXED here",
+    "on bug 2 (docs/firmware/README.md); set BUG_2.expected to FIXED here",
     "Unicorn has bug 2 again: keep or restore the PC-write workaround and set BUG_2.expected to PRESENT here",
 )
 

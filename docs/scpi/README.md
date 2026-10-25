@@ -142,7 +142,7 @@ larger.
 
 `dump-scpi --c IMAGE` prints a tree as C data, every record its roots
 reach, each a `const` object of the type the image's `smartclock.h`
-declares, for its folder's `rewritten/` (PLAN.md, "Decided 2026-10-22");
+declares, for its folder's `rewritten/` (PLAN.md, "The firmware in C");
 `--names` prints a label and type row for each, in the names-file
 format, for `SmartClockSetup.java`'s `names=`.  `--installer` reads the
 installer's tree instead, unpacked into RAM from the boot code's records

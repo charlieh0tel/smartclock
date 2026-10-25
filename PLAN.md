@@ -2,727 +2,26 @@
 
 A Rust library for talking to HP / Symmetricom SmartClock GPS receivers
 over serial, a logging daemon that runs as a system service, a TUI, and
-browser and Prometheus views.  A GUI is not planned.
+browser and Prometheus views.  A GUI is not planned.  This file records
+the decisions that are not obvious, each with its reason, and the open
+work with no other home.  `README.md` says what the project is,
+`docs/running.md` how it is deployed.
 
-## Status
+## Goals and constraints
 
-Installed from the package as a service, one daemon per port, logging
-to `/var/lib/smartclockd/<model>-<serial>.sqlite`; `docs/running.md` is
-the deployment note.  **Next** lists pending work.  `make ci` is the
-local check; `make test-hw`, the hardware-only set, never runs in CI.
-
-Review diffs, not only the tree: the defects found in September 2026
-each produced a wrong value rather than an error while every test
-passed, because fixtures covered only the cases the code was written
-from.
-
-## Goals
-
-- Read-only monitoring of a 58503A first; control commands later.
 - Unattended long-term logging of EFC and holdover state for drift
-  analysis, independent of whether anyone is watching.
-- Support the wider SmartClock family, notably the Z3801A.
-
-## Constraints
-
+  analysis, independent of whether anyone is watching.  Read-only
+  monitoring first; control commands opt-in.
+- The wider SmartClock family, notably the Z3801A; the 58503A is the
+  reference.  Other variants' table entries come from their manuals and
+  firmware.
 - **Single-operator machine**, as a standing assumption.  It justifies
   socket permissions as the whole of authorization, an audit trail with
   no notion of who, and one daemon per device rather than a fleet.
   Revisit these together if it stops being true.
-- **58503A first.**  Other variants' table entries come from their
-  manuals and firmware.  A Z3801A and a Z3805A on the bench answer the
-  z3801 dialect.
-
-## Decisions
-
-### Flashing is a direct-port command of the CLI
-
-`smartclock-cli flash` loads firmware with the library's session,
-console and line-settings code, so there is one tool to learn.  Like
-`read-memory` it is a fixed procedure, outside the forbidden-command
-check, run with the port's daemon stopped.
-
-An image must match an audited profile (Z3801A, Z3805A, 58503A,
-Z3816A), each with its own protected regions and checksums; filenames
-and model strings cannot establish compatibility.  Before erase it
-checks the image SHA-256, boot checksums, model, running revision and
-expected serial, and refuses anything unknown, with no force override.
-It never sends `*CLS`.  Afterwards it reads the whole flash back
-through the debug console, compares it with the image, and returns to
-SCPI with `halt`, or failing that through the installer, by the same
-code as `read-memory` (`smartclock::console`).  Revision changes have
-simulator coverage, not hardware validation
-(`docs/firmware/restart.md`, "The flasher").
-
-### No client-side SCPI crate
-
-Surveyed: `scpi` + `scpi-contrib` (server side, no_std), `scpify` (TCP
-and HiSLIP only), `scpi-client` 0.1.1 (thin, immature),
-`instrument-core` 0.1.0 (VISA/GPIB oriented).  None fit: the receiver
-echoes, prompts with `scpi > ` / `E-nnn> `, and its richest response is
-an ASCII status screen, where generic clients assume a clean write /
-read-to-terminator cycle.  The standard parts are shallow and specified
-in `097-59551-02`: `:SYSTem:ERRor?` returns `<code>,"<text>"`, and the
-status registers are IEEE 488.2.  The simulator skips `scpi` too: it
-does not model the prompt, echo and screen, the parts worth emulating.
-
-### No separate document for the socket protocol
-
-All four clients -- monitor, CLI, exporter, browser view -- are built
-from this tree, and the compiler checks the wire type.
-`smartclock::wire::Reading` is not `Snapshot`, so an internal rename is
-a compile error, not a protocol change.  `smartclock::protocol`
-documents what a type cannot: newline-delimited JSON over a local
-socket; unsolicited snapshots, so every request carries an id its reply
-echoes; and a `VERSION` the daemon refuses a mismatch on.  A client
-outside this tree would need a specification and a stability
-commitment.
-
-### The daemon owns the port
-
-`smartclockd` runs as a systemd system service and holds the serial
-port open, so every other component is its client and multi-day EFC
-history does not depend on a TUI being up.
-
-One `DeviceTask` thread owns the `Session`, and so the fd, and issues
-every command: an interleaved command's half-read prompt desynchronizes
-every later read.  `Session` moves into that thread at construction, so
-a second writer is a compile error.  A command that errors must not
-leave its reply in flight, or the next poll reads it as its own (TFOM
-recorded as FFOM).  Client requests are served between polls, at most
-`REQUESTS_PER_POLL` before the schedule's turn, so neither starves the
-other.
-
-One daemon per socket: a stale socket file is removed before binding
-only when nothing answers on it, and a second daemon pointed at a live
-socket refuses to start.
-
-### A receiver's line settings are found, not assumed
-
-Rate and framing belong to the unit, not the port, and ports
-re-enumerate: the 58503A's are settable, the Z3801A's fixed at 19200
-7O1 (`097-z3801-01` 1-8, 2-10).  `--baud` and `--framing` give the
-settings to try first; with no identity, 19200 and 9600 at 8N1 and 7O1
-are tried in turn (`smartclock::attach`).  The daemon, monitor and CLI
-probe; `read-memory` (pForth console) and networked receivers do not.
-Per-port framing in a drop-in only saves the probe.
-
-A probe at the wrong framing queues errors on the receiver.  They are
-read off at the working settings before anything else and counted in
-the journal; `*CLS` would also clear the event registers, which drive
-the front-panel alarm.
-
-### The simulator is not PTY-backed
-
-A PTY would make it Unix-only, when systemd is to be the one
-Linux-specific piece.
-Tests use `SimTransport` in `smartclock-sim`, an in-process
-`Transport`; end-to-end runs use the same simulator on a TCP listener,
-through the `TcpTransport` ser2net needs anyway.
-
-### The protocol stays JSON
-
-gRPC in Rust means `tonic` and an async runtime the rest of the
-workspace does without.  Protobuf would add a codegen step and lose
-watching the socket with `socat`, for a message a second between two
-ends we control.  Revisit if a non-Rust client appears.  The socket
-carries its own type, converted from `Snapshot`, so a field rename does
-not change the wire format.
-
-### Two channels to the daemon
-
-- **A socket, via `smartclock::link`**, for the live snapshot stream
-  and commands, newline-delimited JSON.  A client gets the current
-  snapshot on connect, then updates.  A daemon binds an AF_UNIX
-  socket at `--socket PATH`, and listens on TCP at `--listen
-  HOST:PORT`, either or both; its sixteen clients are counted across
-  both.  A client names the daemon it asks with `--daemon` (or
-  `--sensord`): the socket's path, or `tcp://HOST:PORT`.  A bare
-  `HOST:PORT` there is refused rather than looked for as a file.  The
-  socket is a filesystem path, so systemd's `RuntimeDirectory` owns its
-  lifetime and file permissions gate access; over TCP nothing does.
-  Where there are no Unix sockets, Windows, TCP is all there is: a
-  daemon given neither listens on `127.0.0.1:9978`, and the monitor,
-  exporter and web view ask `tcp://127.0.0.1:9978` when told no daemon.
-  A second daemon there needs a port of its own and its clients told
-  which.  The sensor service listens on `127.0.0.1:9977` there, and
-  offers no hwmon or IIO.  `smartclock::defaults` holds where things are
-  on each, `smartclock::link`'s `unix.rs` and `windows.rs` how a
-  connection is made, `smartclockd::stop` how the daemon is stopped,
-  and `smartclock_sensord::platform`'s `linux.rs` and `other.rs` which
-  sensors there are beyond TEMPer sticks.
-  Windows named pipes were tried and dropped: they have no read or
-  write timeout, and a daemon that accepts and then wedges must not
-  hold its client.
-- **SQLite file, opened read-only**, for history.  `journal_mode=WAL`
-  lets readers run beside the daemon's single writer.  A read-only
-  reader needs `-shm` and cannot create it in `/var/lib/smartclockd`,
-  so the daemon sets persistent WAL and closing a log leaves `-wal` and
-  `-shm` in place.  rusqlite has no safe call for it; the workspace
-  denies `unsafe_code` rather than forbidding it, and this one call
-  carries the `expect`.  A log closed by anything else, such as a hand
-  `sqlite3` session, loses `-shm`; the readers then open it immutable,
-  which is safe because no writer holds it.
-
-The socket keeps the TUI's live pane off SQLite at 1 Hz and makes
-reconnection after a daemon restart trivial.  Protocol and schema each
-carry a version, since daemon and clients upgrade independently.
-
-### Commands go through the daemon too
-
-A client sends SCPI text (op `query`; the others are `latest`,
-`status`, `info`, `note` and `fact`), which the daemon classifies
-against the command table and gates by class.  A reply reports what the
-device said, not that the operation finished: a survey takes hours but
-acks in milliseconds, and clients watch progress in later snapshots.
-
-| Class     | Examples                                              | Gate                     |
-| --------- | ----------------------------------------------------- | ------------------------ |
-| Query     | `:GPS:POSition?`, `:SYNC:TINT?`                        | none                     |
-| Control   | holdover initiate and recover, survey, antenna delay, elevation mask; reading an event register or `*ESR?`, which clears it; reading `:SYSTem:ERRor?`, which removes the entry | `--allow-control` |
-| Dangerous | `:SYSTem:PRESet`, `:SYSTem:COMMunicate:SERial1:*`, `:DIAGnostic:ERASe`, `:SYSTem:LANGuage "INSTALL"` | `--allow-dangerous` |
-
-Each gate is a daemon flag, set outside any client, so a daemon
-started without it cannot be talked into the command.  A command
-containing `;`, a control character or non-ASCII is refused before
-classification, since a query chained to a setter would classify as a
-query.  Argument ranges sit in the table beside the class, so the
-table, not the typed `Control` API, is the safety boundary.  The TUI's
-raw console bypasses the table, so it has its own flag, `--allow-raw`.
-
-Authorization is socket permissions alone (`RuntimeDirectoryMode`,
-group ownership); no peer credentials or tokens.  Every command that is
-not a scheduled poll is audited -- time, text, class, outcome, receiver
--- so one log answers "what did I do to it, and what did EFC do
-afterwards".  A successful non-query brings every tier's next poll
-forward.
-
-### Disconnection is a first-class state
-
-USB serial adapters drop and receivers are power-cycled; the daemon
-reconnects rather than exiting, and records the gap.  A failed poll
-republishes the last snapshot unchanged, so clients see it go stale,
-and the log writes that moment once, so the outage is a gap.
-
-Freshness is per tier: each group of fields carries when it last
-succeeded and its own error, over the wire and into the log, and each
-pane shows the age of what it displays.  A medium or slow value counts
-while its tier's timestamp is within three of its intervals
-(`Cadence::current_window`) and is null past that, so a failing tier's
-line breaks rather than running flat.  History queries, the monitor and
-the exporter share that window, with the cadence the daemon records in
-`meta`.
-
-Each opening of the receiver is an attachment (`AttachmentId`), which
-starts from an empty snapshot.  A command that reaches a later
-attachment than it was sent under is answered `Reattached` and not
-sent, since it was meant and audited for the earlier unit.  The daemon
-has no default device, since a wrong one sends SCPI at whatever is
-there.
-
-### The receiver's own records
-
-The receiver keeps two records that are lost unread: its error queue,
-where `:SYSTem:ERRor?` removes the entry it returns and a full queue
-replaces its last entry with -350 and discards the newest (097-59551-02
-5-31), and its diagnostic log, which holds 222 entries and then stops
-recording.  The daemon journals both, each under the receiver that
-wrote it; how the log is copied and ordered is in `docs/running.md`.
-The journal runs on the thread that owns the database, through the
-request queue, since a channel between reading an entry and writing it
-is a gap a shutdown can lose it in.  It starts afresh on each
-attachment: the unit may have been power cycled, swapped or
-reconfigured.
-
-**Condition registers, never event registers.**  Reading an event
-register clears it, and with it the front-panel Alarm LED and the BITE
-output, which belong to whoever is at the instrument.  The daemon polls
-the condition registers and `*STB?`, which reading "does not change"
-(5-44); Time Reset is event-only (5-40).  So the logger never writes to
-the receiver, `*CLS` included, and a client needs `--allow-control` to
-read an event register.  The transition filters, without which events
-mean nothing, are recorded once per attachment and never written: they
-are non-volatile and only `:SYSTem:PRESet` resets them.  The bench
-58503A's negative filters are zero, so a missing clear-event is not
-evidence a fault persisted.
-
-**`--adopt-log` erases the receiver's log** once it is copied, so the
-log records again.  It is opt-in because erasing is irreversible, and
-fires only when the copy is complete and gap-free, the log-almost-full
-bit is set, and `*IDN?` confirms the unit is the one copied.  Clearing
-unsets the bit, so a flapping link cannot erase twice, and the entry
-count goes with the command so the receiver refuses with -222 if an
-entry arrived in between.
-
-### Rows belong to a receiver, not to a file
-
-Units are swapped on a bench, and two oscillators' history in one file
-reads as one oscillator with a step.  So a `receiver` table has one row
-per unit and every per-unit table a `receiver_id`, keyed on the serial
-alone; keying on all of `*IDN?` would make a firmware upgrade a new
-receiver.  Firmware is recorded as last seen.
-
-A snapshot is filed under the receiver it was read from, not the one
-attached when it is written, since the old unit's snapshots are still
-queued at a swap.  Journal rows go under the receiver attached at the
-time.  Rows from before this keep a NULL id; backfilling would put one
-unit's history under another's name.
-
-The slow tier asks `*IDN?` first, and a different model or serial (not
-firmware) stops the task, so the daemon reopens under the new serial
-even when the link stays up.  Readings between the swap and that check,
-at most one slow interval (a minute by default), are filed under the
-old unit, so stop the daemon before moving a cable.  Asking more often
-would cost a query on a faster tier.  The journal does not wait for
-that check: it asks `*IDN?` at the start of every pass and again before
-erasing the receiver's log, and skips on a different unit, so the new
-unit's log is neither filed under the old one nor erased on the old
-one's progress.
-
-### Storage: SQLite
-
-Chosen over JSONL because trending means range queries over time.
-`rusqlite` with bundled SQLite, in `StateDirectory=smartclockd`
-(`/var/lib/smartclockd`).  Retention is unbounded; the timestamp index
-keeps it queryable, and a second on `(receiver_id, at)` serves the
-per-receiver range and extent every chart reads.  Without it, the
-extent alone scanned the whole table: 4 s on an AMD GX-412TC with
-1.7M rows.  JSONL is kept for raw wire transcripts:
-append-only, greppable, reusable as parser fixtures.
-
-Every timestamp we record is an integer: nanoseconds since the Unix
-epoch, UTC, in 64 bits, which run to 2262.  An integer reads back
-exactly as written, compares exactly -- the readers tell a measured row
-from a repeated one by `fast_at = at` -- and orders as time does, so
-the index on `at` serves every range bound and `ORDER BY at`.  Not
-text: until schema 12 they were RFC 3339 strings, which sorted as time
-only at a fixed width, cost about 30 bytes each, and wanted a date
-function in every comparison.  Not a float: a double resolves about
-240 ns today, coarsening as the count grows, and equality on two floats
-holds only while both went through the same arithmetic.  The browser
-is never sent the integer, which JavaScript cannot hold exactly; the
-web view converts at its edge, to seconds for the charts and RFC 3339
-for the rest.  The receiver's own times -- its log stamps, its date and
-time of day -- are what it said, and stay text.  How a time is stored,
-and the SQL that reads it back, is `smartclock_log::timestamp`, and
-nowhere else.
-
-The tables are STRICT, so a value of the wrong type is refused rather
-than stored.
-
-Opening a schema 11 log converts it: each table rebuilt as STRICT with
-its timestamps exact to the nanosecond, the whole of it and the new
-stamp in one transaction, so a log is left at one schema or the other
-however the process ends.  Every timestamp is checked first, and one in
-another form, a column the tables no longer have that still holds
-values, or a row pointing at nothing refuses the conversion and changes
-nothing.  The file is vacuumed after.  On the bench's logs, of up to
-1.4 million rows, it took 1 to 5 s and left them 35 to 44 % smaller.
-The readers refuse an unconverted log, naming the service that
-converts it, rather than finding nothing in it.
-
-No rollups.  A chart reads every raw row in its span, about 5.7 us
-each on an AMD GX-412TC: 1.1 s for 48 h and 4.1 s for a week there.
-A per-minute table of count, sum, min and max, kept in the snapshot's
-own transaction, would cut a week to a small fraction of that, and an
-adversarial review found it workable but not small:
-- NULL-safe sums and extrema, with a non-NULL count per column.
-- A non-NULL key for rows whose receiver or mode is unknown.
-- A row count and timestamp sum, since a point sits at its rows' mean
-  time.
-- A minute-aligned bucket grid, or raw reads for the partial minutes
-  at each end.
-- A fingerprint of the rules and cadence that invalidates the table.
-- A schema bump, so an older daemon cannot append without it.
-- A backfill that does not hold up logging at startup.
-- Tests across all of the above.
-Not worth it while a week loads in seconds.  ADEV and correlation
-would read raw rows regardless.
-
-### Poll scheduling is a link budget
-
-The status screen is about 1.6 KB: 0.94 s of wire time at 19200 8N1
-and 0.5 s of the receiver composing it, so it cannot be polled at 1 Hz
-beside anything else.  19200 is the ceiling: `097-59551-02` 5-80 lists
-four rates up to 19200, and the 58503A answers
-`:SYSTem:COMMunicate:SERial1:BAUD 38400` with `+0,"No error"` while
-keeping 19200.  `BaudRate` still knows 4800, 38400, 57600 and 115200,
-so a receiver another tool moved there can be moved back.
-
-On a 58503A a whole fast pass costs 0.38 s.  So the screen is on no
-tier: everything on it but per-satellite elevation, azimuth and signal
-strength has its own query.  It is read on request and every `--sky`
-seconds (300 by default), half a percent of the link, and never stored
-as the latest snapshot, which every poll starts from.
-
-Each tier is a list of steps, one taken per turn.  The fast tier is one
-step, because its fields are compared against each other, and a time
-interval from one second beside an EFC from the next is a correlation
-nobody measured.  A part-done tier yields to any tier come due, and a
-refresh moves deadlines, not step cursors, so no tier starves.
-
-| Tier  | Contents                                                    |
-| ----- | ----------------------------------------------------------- |
-| ~1 s  | `:SYNC:TINT?`, `:SYNC:TFOM?`, `:SYNC:FFOM?`, `:DIAG:ROSC:EFC:REL?`, `:STAT:OPER:HARD:COND?`, `:SYNC:STATE?`, `:SYNC:HOLD:WAIT?`, `:PTIM:TIME?` |
-| ~10 s | satellite counts, oven temperature and current, the EFC DAC, `*STB?` and the operation and holdover condition registers, holdover duration and uncertainty |
-| ~60 s | `*IDN?`, position, date, diagnostic log count, the oscillator-current constant (`TCOefficient`), the powerup condition register |
-|       | `:SYST:STAT?` (satellite table, health line) is on no tier; it is read every `--sky` seconds and on request. |
-|       | The receiver's UTC is on the fast tier, not with the date: a clock read once a minute is wrong for the other fifty-nine seconds. |
-| ~10 s | the error queue and any new diagnostic log entries, off the schedule; see "The receiver's own records" |
-
-### Allan deviation is computed over segments, not over a series
-
-The phase reading, `:SYNChronization:TINTerval?`, is already a mean of
-ten one-second readings, so the overlapping estimators run over
-segments cut at every discontinuity -- a relock, holdover, power cycle,
-swap or long absence -- with holes left as holes rather than bridged.
-Because of that averaging, MDEV and TDEV are the primary curves; ADEV is
-kept, labeled, because data sheets quote it.  Each carries a one-sigma
-interval from Greenhall's equivalent degrees of freedom; MTIE is
-computed, not inferred.  The method, its checks against NIST SP 1065
-and allantools, and the bench measurements are in
-`docs/stability.md`.
-
-### One log per receiver, named by its serial
-
-Several receivers on a host means one daemon per port,
-`smartclockd@<port>`, each with its own device and socket, so nothing
-in a daemon becomes concurrent.  The instance is named by the port, as
-`serial-getty@` is, and the unit derives device and socket from it;
-anything else per port goes in a drop-in, and shared settings in
-`/etc/default/smartclockd`.  The daemon and monitor have no socket
-default, which would guess an instance name; `smartclock-web` and the
-exporter scan `/run/smartclockd/*/socket` unless given one.
-
-The receiver, not the port, chooses the log: after `*IDN?` the daemon
-opens `/var/lib/smartclockd/<model>-<serial>.sqlite`, and nothing
-before.  A swap switches files, a unit moved to another port keeps one
-history, and two instances cannot collide on a file.  A receiver whose
-identity does not parse gets a file named after the device and a loud
-log line, not a shared "unknown" file.  `smartclock-web` lists every
-`*.sqlite` in the log directory and keys everything by serial
-(`?receiver=`).
-
-A schema change is migrated by the daemon on open, in `migrate()`, and
-tested: released logs live on hosts other than the bench.
-
-### Exporter metrics keep their names and labels
-
-Exporter metrics are not renamed and their labels are not changed:
-`oven_tempco` stays, and a stopped daemon's `up 0` carries only its
-instance label.
-
-### Notes and facts live in the receiver's log
-
-Bench events and a unit's internals are invisible to the receiver, and
-kept only in `docs/hardware-investigations.md` they cannot be lined up
-against the log.  So each log has a `note` table, timestamped free text
-such as "ran `master_reset`", and a `fact` table of `key=value` about
-the unit, such as `ocxo.serial`; a fact records when it became true, so
-a replaced part keeps its old value, and setting one also leaves a
-note.  Both are written through the daemon (ops `note`, `fact`) and
-never sent to the receiver.  A note is filed under the receiver
-attached when it is written, even when `--at` backdates it past a swap;
-a bench-wide note, such as a splitter change, is written to each daemon
-in turn.  `docs/running.md`, "Notes and facts", says where they show.
-
-### Comparing receivers is a page over the existing API
-
-`/compare` shows every receiver over the same range -- 1 PPS TI, EFC,
-temperature, TFOM and FFOM overlaid, and ADEV and MDEV curves on one
-plot -- from `/api/history`, `/api/adev` and `/api/notes`, asked once
-per receiver and joined in the browser.  The live, status and stability
-pages stay one receiver each.
-
-### Correlation is computed in the browser
-
-`/correlation` sets two measures against each other from the same
-bucketed `/api/history` and `/api/sensors/history` the other pages
-read, and works out r, the fit and the lag curve in the page: nothing
-else needs those numbers yet, so they get no endpoint.  The scatter is
-uPlot's own mode 2, its dots drawn by the page, so it looks like every
-other chart.  The one server change is `locked=1`, because the mode is
-text and cannot be averaged into a bucket after the fact.
-
-### The kiosk is a page over the shared code
-
-`/kiosk` is a page of its own, not a flag on the live page: a fixed
-layout for one landscape screen shares little with a page built to
-scroll and be clicked.  It draws with the same code as the others --
-the stack, the MDEV/ADEV chart, the strip's readings and alarms and
-the journal's rows live in `charts.js` and `common.js`, and the
-lifecycle takes a page's own painter for the snapshot in place of the
-strip -- so there is no second copy to drift.  It reads only what the
-daemon already polls and what the logs hold, never `/api/status`,
-because a display left on for days must not cost the receiver a
-status screen every few seconds; that is why it has no sky plot, and
-a test holds it to that.  Its clock counts on between polls, where the
-strip's does not: on a display read from across a room a clock that
-stalls and jumps looks broken, so it is counted on from the last fast
-poll while that is live and under 3 s old, and otherwise shown as it
-was with its age.  The stability curve is measured every ten minutes,
-not at the stack's minute, since each measurement reads the whole day.
-
-A refresh writes only what changed and never blanks a panel: on a
-low-power signage player (a Fire OS WebView) every replaced element
-or rebuilt chart is a visible repaint.  The tiles and clock are kept
-and their text set in place, unchanged HTML is not written again, the
-journal is fitted in a hidden copy and written once, a stack chart
-whose y range changes keeps its uPlot instance and reads its range,
-ticks and axis width from a holder `restack` swaps, and a lost link
-dims the last values instead of clearing them.  The other pages
-refresh the same way, through the same `restack`, `showHtml` and
-`update`: the live page refreshes every 5 s by default and rebuilt
-six charts each time.  A chart is drawn afresh only when its lines or
-the kind of its y axis change, as a pick of columns, receivers or
-measures does.
-
-It never writes its address (`addressFixed` in `common.js`): the other
-pages keep the receiver and range in it with `replaceState`, and a
-signage player may take a changed address as a cue to reload.  Its
-clock ages a poll by the display's own monotonic clock from when the
-page saw it, not by the host's stamp, so a display whose clock
-disagrees with the host's still ticks.  It is sized in kiosk pixels,
-`--u`, one CSS pixel from 1440x1080 up and fewer below, rather than
-for one screen: a player's display zoom decides the CSS viewport.
-The mode word is 70, to fit "RECOVERING" on one line in wide fonts.
-
-A player reloading the page showed white until the first paint, which
-waited on style.css and the CDN's uPlot stylesheet.  So the server
-inlines style.css, common.js and charts.js into `/kiosk` alone (the
-other pages are opened by people, and the files stay one copy in the
-source), uPlot's stylesheet is applied when it arrives, and the last
-snapshot and journal are kept in localStorage, not the tab's session,
-to paint before the first poll.  The cause on the bench was AbleSign's
-item duration re-opening the page; the fix for that is the player's
-setting, and this only makes a reload hard to see.
-
-A stack divides its height among plots, not charts: uPlot draws the
-bottom chart's time axis inside that chart's height, so giving every
-chart one share left the bottom plot short by the axis.  On the
-kiosk's large type that was 66 of 85 pixels, and the host's
-temperature chart, always at the bottom, drew a few pixels tall.  The
-bottom chart is given the axis on top of its share
-(`stackChartHeight`), on every page, and a short plot gets only as
-many y labels as fit.
-
-### The time range follows Grafana
-
-The browser view's range control copies Grafana's dashboards -- half-
-window steps, zoom out about the center, the `t` keys, Back undoing a
-change of range, a refresh picker with Auto -- because people who read
-time series know them.  It departs twice: a range moved to end near now
-becomes the moving one rather than sliding into the future, and a fixed
-range is not read again once a read has started after its end.  Each
-page sets its fastest refresh by what one read costs.  `docs/views.md`
-has the details.
-
-### Sensors are the host's
-
-Room temperature and the like are read by `smartclock-sensord`, a
-service of its own with its own log and socket, not by smartclockd into
-the receivers' logs.  A sensor belongs to the host: in a receiver's log
-it would go dark with every outage and swap, a swap would start it
-afresh in another file, and two daemons would log it twice.  Reading
-it on the device thread would also put sysfs reads, which can block
-for seconds on a wedged bus, in the path of the serial link.
-`docs/sensors.md` has the design.
-
-### systemd unit
-
-- `Type=exec`: the daemon retries with no receiver attached, so no
-  moment honestly counts as ready for `Type=notify`.
-- `Restart=on-failure` with a backoff and a start limit, so a bad
-  setting lands the unit in `failed` rather than restarting forever.
-- No `BindsTo=` / `After=` for the adapter's `.device` unit: the
-  daemon reconnects on its own, binding would stop it while an adapter
-  is unplugged, and naming a device would mean editing the unit.  A
-  drop-in recipe is in `docs/running.md`.
-- Every option readable from `SMARTCLOCKD_*`, so operators edit only
-  `/etc/default/smartclockd` and drop-ins, and `ExecStart=` names no
-  settings.  The unit sets the device and socket from the instance
-  name.
-- `StateDirectory=smartclockd` for the logs, shared by every instance;
-  `RuntimeDirectory=smartclockd/<instance>` for the socket.
-- Dedicated user with `SupplementaryGroups=dialout`;
-  `RuntimeDirectoryMode` and socket group ownership let the TUI run
-  unprivileged.
-- Hardening: `ProtectSystem=strict`, `PrivateTmp`, `NoNewPrivileges`.
-  `RestrictAddressFamilies=` admits `AF_INET` and `AF_INET6` as well as
-  `AF_UNIX`, for the `tcp://host:port` device form.  No
-  `PrivateDevices`: it would hide the serial port.
-
-systemd is the only Linux-specific piece; `serialport` and `rusqlite`
-are portable, and a daemon listens on TCP alone where there is no
-AF_UNIX.  Porting means a launchd plist or a Windows service wrapper,
-not touching the protocol.
-
-### The command table is data
-
-Commands live in `crates/smartclock/commands.toml`, from which
-`build.rs` generates the `Dialect` and `CommandId` enums and the specs.
-Each entry has a stable id and a class, and one block per dialect:
-
-```toml
-[[command]]
-id = "holdover_waiting"
-class = "query"
-
-  [command.dialect.hp58503]
-  scpi = ":SYNChronization:HOLDover:WAITing?"
-  response = "enum:HoldoverWaitReason"
-  models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-36"
-  evidence = "hardware"
-```
-
-Tree divergence, per-model availability and citations sit in one table
-that can be diffed against the documents, and a typo in an id is a
-compile error.  `evidence` is `manual`, `firmware` (every keyword found
-in the firmware's own keyword table) or `hardware` (a receiver answered
-it), so an unconfirmed command is a known risk.
-
-An entry may declare its argument -- `integer` with `min` and `max`,
-`word` with `allowed`, `none` or `free` -- which the daemon checks
-before anything reaches the receiver; none declared means none taken.
-`free` must be asked for by name, and a test pins the entries that ask:
-as a default it let `:SYSTem:LANGuage? "INSTALL"` through a daemon
-started with no flags.  `docs/commands.md` is generated from the table,
-and a test fails if they disagree.
-
-### The package version is derived
-
-`make deb` builds `<version>-0~git<commits>.g<sha>`, with `+dirty` for
-an unclean tree, so different code never shares a version; dpkg treats
-reinstalling an identical version as a no-op.  The hand-written
-`packaging/debian/changelog` records releases; a derived version is a
-build.
-
-### Two packages, in lockstep
-
-`smartclock-utils` (on `smartclock-cli`'s manifest) is `smartclock-cli`
-and `smartclock-sim` with the documents a CLI user reads: the command
-table, the Z3801A keyword spellings, the flasher's and the console's
-notes.  `smartclockmon` (on `smartclockd`'s) is the daemon, the
-monitors, the exporter, the sensor service, their units and defaults,
-the `smartclockd` user and the operational documents.  Split from one
-package at 1.7.0: the CLI is wanted on machines that will never log a
-receiver -- a bench laptop, a flashing station, a client of a daemon
-elsewhere -- and the one package brought a service user, four units and
-`temper` along with it.  The simulator was in no package before.
-
-- `smartclockmon` Depends on `smartclock-utils (= <its version>)`,
-  and `smartclock-utils` Breaks and Replaces `smartclockmon
-  (<< <its version>)`.  Exact, not `>=`: the CLI and the daemon share
-  the socket protocol and the command table, and nothing tests one
-  version of either against another.  Breaks and Replaces track the
-  package's own version rather than staying at the first split one: a
-  fixed `<< 1.7.0-1` would also break a split snapshot, 1.7.0-0~git...,
-  which sorts below it, so the snapshots built on the bench between
-  releases could not be installed together.
-- cargo-deb has no variable for the package's version.  So the
-  relations are written into the manifests as the release version
-  (Cargo.toml's, revision 1, which is what CI builds), `make release`
-  moves them when it opens the next version, a test
-  (`crates/smartclockd/tests/packages.rs`) fails if they and the
-  workspace version part or a file is in both packages, and `make deb`
-  rewrites a snapshot's to its stamp (`packaging/retarget-deb.sh`,
-  `dpkg-deb -R` and `-b`).
-- `temper` went from Depends to Recommends.  `smartclock-sensord.service`
-  joins group `temper`, and systemd will not start a unit naming a
-  group that does not exist, so postinst makes it when `temper` has
-  not; temper's own postinst checks first, so either order works.
-  Without temper's udev rules a TEMPer stick's hidraw node is root's
-  and unreadable; hwmon and IIO sensors are unaffected.
-- Release CI calls the shared `rust-build-deb.yml` once, with its
-  `packages:` list (`smartclockd smartclock-cli`): it builds the whole
-  workspace once per architecture, since each package ships other
-  crates' binaries, packages each crate, and releases both together.
-
-What it costs: release CI needs `deb-workflows` with its `packages`
-input, so a tag before that lands fails outright.  `apt-get upgrade` and unattended-upgrades keep
-`smartclockmon` back at the upgrade that first needs `smartclock-utils`,
-since neither adds a package.  The packaged documents are split along
-the same line, so a relative link between them -- `running.md` to
-`firmware/restart.md` -- no longer resolves in `/usr/share/doc`.  The
-Windows zip stays one zip of every program: it has no dependency
-resolution or services to separate.
-
-### CI is shared; the Makefile is what you run
-
-```
-make            build
-make windows    cross-build for Windows
-make ci         fmt-check clippy test
-make fmt        cargo fmt
-make clippy     cargo clippy --all-targets -- -D warnings
-make test       cargo test
-make test-hw    cargo test -- --ignored
-make web-deps   install the browser tests' Playwright and Chromium
-make test-web   the browser tests
-make docs       regenerate docs/commands.md from the command table
-make deb        both packages, as snapshots
-make release    tag the version Cargo.toml already names
-make release-notes  the GitHub release notes the tag will get
-```
-
-Pushing a release tag builds the packages, sets the GitHub release's
-notes from the newest `packaging/debian/changelog` entry
-(`packaging/release-notes.sh`), and rebuilds the apt repository.  The
-changelog entry is written once, in `make release`, and is the release
-notes everywhere.
-
-CI calls the fleet's reusable `rust-ci.yml`, since one repository doing
-it differently costs more than one definition; `make ci` is stricter.
-The browser tests need Node and Chromium, so CI runs them in
-`.github/workflows/web.yml` and `make ci` leaves them out.  The
-Z3805A firmware's checks need an m68k gcc, clang-format and uv, so CI
-runs them in `.github/workflows/firmware.yml`, its own job, which
-fails apart from the Rust CI (`docs/firmware/README.md`, "The checks
-in CI").
-
-### Dialects
-
-Two branches, not four; `097-59551-02` shows the 58503A tree is
-essentially the 58503B's:
-
-| Family                  | Tree                                      |
-| ----------------------- | ----------------------------------------- |
-| 58503A / 58503B / 59551A| `:GPS:`, `:SYNChronization:`, `:PTIMe:`   |
-| Z3801A / Z3816A         | `:PTIME:GPSYSTEM:`, `:ROSCillator:`       |
-
-The Z3805A answers the z3801 dialect.  Availability is per model, and
-an unsupported operation returns a typed `Unsupported` error without
-reaching the device.  Response formats differ too: `:DIAG:ROSC:EFC:REL?`
-returns `+-d.dEe` on the 58503A but is documented as a plain integer on
-the Z3801A.
-
-The bench Z3801A (3543-A) does not echo, and stamps its diagnostic log
-in hex seconds of GPS time (`097-z3801-01` 4-13) where the others write
-a date; the stamp is stored as written.  Its `-230 Data corrupt or
-stale` while tracking no satellites is the manual's answer for an
-unavailable value (4-6, 4-7), taken as a state refusal.
-
-### The status screen scraper is mandatory
-
-`:GPS:SATellite:TRACking?` returns PRN numbers only; per-satellite
-elevation, azimuth and C/N exist only in the `:SYSTem:STATus?` screen,
-so the scraper is a first-class parser.  `097-59551-02` chapter 3 has
-five sample screens of distinct states -- survey in progress,
-`*nn Acq..` acquiring markers, `nn -- ---` untracked rows, `Predict --`
-unavailable, "Locked to GPS: stabilizing frequency" -- and
-`097-58503-13` more.  These are scraper goldens.
-
-The scraper reads by label, not column.  An asterisk ends the preceding
-cell, and groups carry their heading column so a blank cell differs
-from a missing one; otherwise a blank signal cell takes the next
-satellite's asterisk, and a short tracked column lets the first group
-claim the second's rows.  The tracked count is the `Tracking:` not
-preceded by `Not `.
-
-The table is checked against the screen's tracked and untracked
-counts.  A disagreeing table is still shown, with the pane saying so,
-which makes misreadings visible without predicting their shape.
+- Review diffs, not only the tree: the worst defects so far each gave a
+  wrong value rather than an error while every test passed, because the
+  fixtures covered only the cases the code was written from.
 
 ## Architecture
 
@@ -739,1594 +38,469 @@ view cannot drift apart.  The library, bottom up:
 6. `task` -- `DeviceTask`: the schedule, requests, snapshots.
 7. `protocol`, `wire`, `client` -- the socket and its client.
 
-## Next
+## Decisions
 
-- **Later: compacting old logs**, perhaps into Parquet.  The logs grow
-  without bound.
-- **Bench work:** the open items in `docs/hardware-investigations.md`,
-  each with its TODO.
-- **A rebuild that runs, in readable C.**  Decided 2026-10-20: the
-  goal is idiomatic C a person can read and change that gcc builds into
-  firmware that runs, not a byte-identical rebuild, which would need the
-  original compiler, unknown (`docs/firmware/README.md`, "The calling
-  convention").  The way there is one function at a time from the
-  original image, which runs: recompile one function with gcc, link it
-  in with the rest still the image's, and before trusting it run it and
-  the original side by side in the emulator the libc and app checks use
-  (`tools/firmware/`), comparing results and memory.  A failure then
-  points at one function, and every step leaves a working image.
-  Narrowed 2026-10-22: the hand-written C is a reading of the image
-  proven function by function, not a working image.  It compiles as one
+### The daemon owns the port
+
+`smartclockd` holds the serial port open, so every other component is
+its client and multi-day history does not depend on a TUI being up.
+One `DeviceTask` thread owns the `Session` and issues every command: an
+interleaved command's half-read prompt desynchronizes every later read.
+`Session` moves into that thread at construction, so a second writer is
+a compile error.  A command that errors must not leave its reply in
+flight, or the next poll reads it as its own (TFOM recorded as FFOM).
+Client requests are served between polls, at most `REQUESTS_PER_POLL`
+before the schedule's turn, so neither starves the other.  A second
+daemon pointed at a live socket refuses to start.
+
+### No client-side SCPI crate
+
+`scpi`/`scpi-contrib` are server side, `scpify` TCP and HiSLIP only,
+`scpi-client` and `instrument-core` immature or VISA-oriented.  All
+assume a clean write / read-to-terminator cycle; the receiver echoes,
+prompts with `scpi > ` / `E-nnn> `, and its richest response is an
+ASCII status screen.  The standard parts are shallow (`097-59551-02`).
+The simulator skips `scpi` too: prompt, echo and screen are the parts
+worth emulating.
+
+### The protocol stays JSON, and has no separate specification
+
+Newline-delimited JSON over a local socket: gRPC would mean `tonic` and
+an async runtime the workspace does without, and protobuf a codegen
+step and the loss of watching the socket with `socat`, for a message a
+second.  Revisit if a non-Rust client appears.  Every client is built
+from this tree and the compiler checks the wire type;
+`smartclock::wire::Reading` is not `Snapshot`, so an internal rename is
+a compile error, not a protocol change.  `smartclock::protocol`
+documents what a type cannot (request ids, `VERSION`).  Protocol and
+schema each carry a version, since daemon and clients upgrade
+independently.
+
+### Transports and readers
+
+- Windows named pipes were tried and dropped: they have no read or
+  write timeout, and a daemon that accepts and then wedges must not
+  hold its client.  Windows uses TCP on `127.0.0.1:9978`.
+- A bare `HOST:PORT` given as `--daemon` is refused rather than looked
+  for as a file; TCP is `tcp://HOST:PORT`.
+- History is read from the SQLite file, read-only, beside the daemon's
+  single writer (WAL).  A read-only reader needs `-shm` and cannot
+  create it in `/var/lib/smartclockd`, so the daemon sets persistent
+  WAL.  rusqlite has no safe call for it; the workspace denies
+  `unsafe_code` rather than forbidding it, and that one call carries the
+  `expect`.  A log closed by anything else loses `-shm`; readers then
+  open it immutable, safe because no writer holds it.
+- The simulator is not PTY-backed, which would make it Unix-only:
+  tests use the in-process `SimTransport`, end-to-end runs the same
+  simulator over the `TcpTransport` ser2net needs anyway.
+
+### A receiver's line settings are found, not assumed
+
+Rate and framing belong to the unit, not the port, and ports
+re-enumerate.  With no identity, 19200 and 9600 at 8N1 and 7O1 are tried
+in turn (`smartclock::attach`).  A probe at the wrong framing queues
+errors on the receiver; they are read off at the working settings and
+counted, never cleared with `*CLS`, which would also clear the event
+registers that drive the front-panel alarm.
+
+### Commands are gated by class, at the daemon
+
+A client sends SCPI text, which the daemon classifies against the
+command table: Query (no gate), Control (`--allow-control`: setters,
+and reads that clear state -- an event register, `*ESR?`,
+`:SYSTem:ERRor?`), Dangerous (`--allow-dangerous`).  Each gate is a
+daemon flag, set outside any client, so a daemon started without it
+cannot be talked into the command.  A command containing `;`, a control
+character or non-ASCII is refused before classification, since a query
+chained to a setter would classify as a query.  Argument ranges sit in
+the table beside the class, so the table, not the typed `Control` API,
+is the safety boundary.  The TUI's raw console bypasses the table and
+has its own flag, `--allow-raw`.  A reply reports what the device said,
+not that the operation finished (a survey acks in milliseconds).  Every
+non-poll command is audited in the log, so one file answers "what did I
+do to it, and what did EFC do afterwards".
+
+### The command table is data
+
+`crates/smartclock/commands.toml` generates the `Dialect` and
+`CommandId` enums and the specs, so divergence between trees,
+per-model availability and citations sit in one table diffable against
+the manuals, and a typo in an id is a compile error.  `evidence` is
+`manual`, `firmware` or `hardware`, so an unconfirmed command is a
+known risk.  An argument kind of `free` must be asked for by name, and a
+test pins the entries that ask: as a default it let
+`:SYSTem:LANGuage? "INSTALL"` through a daemon started with no flags.
+
+Two dialects, not four (`097-59551-02` shows the 58503A tree is
+essentially the 58503B's): 58503A/B and 59551A, and Z3801A/Z3816A; the
+Z3805A answers the z3801 one.  An operation a model lacks returns
+`Unsupported` without reaching the device.
+
+### Condition registers, never event registers
+
+Reading an event register clears it, and with it the front-panel Alarm
+LED and the BITE output, which belong to whoever is at the instrument.
+The daemon polls the condition registers and `*STB?`, which reading
+"does not change" (`097-59551-02` 5-44), so the logger never writes to
+the receiver, `*CLS` included.  The transition filters are recorded once
+per attachment and never written: they are non-volatile and only
+`:SYSTem:PRESet` resets them.  Time Reset is event-only (5-40), so it is
+not seen.
+
+### The receiver's own records
+
+The error queue (`:SYSTem:ERRor?` removes what it returns; a full queue
+discards the newest, 5-31) and the diagnostic log (222 entries, then it
+stops recording) are lost unread, so the daemon journals both, under
+the receiver that wrote them.  The journal runs on the thread that owns
+the database, since a channel between reading an entry and writing it
+is a gap a shutdown can lose it in, and starts afresh on each
+attachment.  `--adopt-log` erases the receiver's log once copied, so it
+records again: opt-in because irreversible, and only when the copy is
+complete and gap-free, the log-almost-full bit is set and `*IDN?`
+confirms the unit; the entry count goes with the command so the
+receiver refuses (-222) if an entry arrived in between.
+
+### Disconnection is a first-class state
+
+The daemon reconnects rather than exiting, and an outage is a gap, not
+a flat line.  Freshness is per tier: a medium or slow value counts while
+its tier's timestamp is within three of its intervals
+(`Cadence::current_window`) and is null past that, so a failing tier's
+line breaks.  Each opening of the receiver is an attachment
+(`AttachmentId`); a command that reaches a later attachment than it was
+sent under is answered `Reattached` and not sent, since it was meant and
+audited for the earlier unit.  The daemon has no default device, since
+a wrong one sends SCPI at whatever is there.
+
+### Rows belong to a receiver, not to a file
+
+Two oscillators' history in one file reads as one oscillator with a
+step.  A `receiver` table keys every per-unit row, on the serial alone:
+keying on all of `*IDN?` would make a firmware upgrade a new receiver.
+A snapshot is filed under the receiver it was read from, not the one
+attached when written, since the old unit's snapshots are still queued
+at a swap.  Old rows keep a NULL id; backfilling would put one unit's
+history under another's name.
+
+The slow tier asks `*IDN?` first, and a different model or serial stops
+the task.  Readings between a swap and that check, at most one slow
+interval (a minute by default), are filed under the old unit, so stop
+the daemon before moving a cable; asking more often would cost a query
+on a faster tier.  The journal asks `*IDN?` at every pass and before
+erasing, so it never files or erases across a swap.
+
+### One daemon per port, one log per receiver
+
+`smartclockd@<port>`, so nothing in a daemon becomes concurrent.  The
+receiver, not the port, chooses the log: after `*IDN?` the daemon opens
+`<model>-<serial>.sqlite`, and nothing before, so a swap switches files,
+a unit moved to another port keeps one history, and two instances cannot
+collide.  A receiver whose identity does not parse gets a file named
+after the device, not a shared "unknown" file.  The daemon and monitor
+have no socket default, which would guess an instance name.
+
+### Storage: SQLite, integer nanoseconds, no rollups
+
+SQLite over JSONL because trending means range queries; JSONL stays for
+raw wire transcripts, which double as parser fixtures.  Retention is
+unbounded; an index on `(receiver_id, at)` serves the per-receiver range
+and extent every chart reads (without it the extent alone took 4 s on an
+AMD GX-412TC).  Tables are STRICT.
+
+Every timestamp we record is a 64-bit integer of nanoseconds since the
+Unix epoch, UTC: it reads back exactly, compares exactly -- readers tell
+a measured row from a repeated one by `fast_at = at` -- and orders as
+time does.  Was RFC 3339 text until schema 12, which sorted only at a
+fixed width, cost about 30 bytes and wanted a date function in every
+comparison; not a double, which resolves about 240 ns today and makes
+equality fragile.  The browser is never sent the integer, which
+JavaScript cannot hold exactly.  The receiver's own times stay text, as
+it said them.  `smartclock_log::timestamp` is the only place that knows
+the encoding.
+
+No rollups while a week loads in seconds.  A per-minute table was
+reviewed and found workable but not small: NULL-safe aggregates with
+per-column counts, a key for unknown receiver or mode, a timestamp sum
+for each point's mean time, a minute-aligned grid or raw reads at the
+ends, a fingerprint of the rules and cadence, a schema bump and a
+non-blocking backfill.  ADEV and correlation would read raw rows
+regardless.
+
+Every schema change is migrated by the daemon on open (`migrate()`) and
+tested: released logs live on hosts other than the bench.
+
+### Poll scheduling is a link budget
+
+The status screen is about 1.6 KB: 0.94 s of wire at 19200 8N1 plus
+0.5 s of composing, so it is on no tier.  Everything on it but
+per-satellite elevation, azimuth and C/N has its own query; it is read
+on request and every `--sky` seconds (300 by default), and never stored
+as the latest snapshot.  19200 is the ceiling: the 58503A answers
+`:SYSTem:COMMunicate:SERial1:BAUD 38400` with `+0,"No error"` and keeps
+19200; `BaudRate` still knows faster rates so a receiver moved there
+can be moved back.
+
+The fast tier is one step, because its fields are compared against each
+other, and a time interval from one second beside an EFC from the next
+is a correlation nobody measured.  The receiver's UTC is on the fast
+tier: a clock read once a minute is wrong for the other fifty-nine
+seconds.  A part-done tier yields to any tier come due, and a refresh
+moves deadlines, not step cursors, so no tier starves.
+
+### The status screen scraper is mandatory
+
+`:GPS:SATellite:TRACking?` returns PRNs only; per-satellite elevation,
+azimuth and C/N exist only in `:SYSTem:STATus?`.  The scraper reads by
+label, not column: an asterisk ends the preceding cell, and groups
+carry their heading column so a blank cell differs from a missing one.
+The table is checked against the screen's tracked and untracked counts,
+and a disagreeing table is still shown, flagged, which makes
+misreadings visible without predicting their shape.  Goldens come from
+`097-59551-02` chapter 3 and `097-58503-13`.
+
+### Allan deviation is computed over segments, not over a series
+
+`:SYNChronization:TINTerval?` is already a mean of ten one-second
+readings, so the overlapping estimators run over segments cut at every
+discontinuity, holes left as holes.  Because of that averaging MDEV and
+TDEV are the primary curves; ADEV is kept, labeled, because data sheets
+quote it.  Method and checks: `docs/stability.md`.
+
+### Notes, facts and sensors
+
+- Notes (timestamped text) and facts (`key=value` about a unit, with
+  when it became true) live in the receiver's log, so bench events line
+  up against the data.  Written through the daemon, never sent to the
+  receiver; a note is filed under the receiver attached when written.
+- Sensors are the host's: `smartclock-sensord` has its own log and
+  socket.  In a receiver's log a room temperature would go dark with
+  every outage and swap and be logged twice by two daemons, and sysfs
+  reads, which can block for seconds, would sit in the serial link's
+  path.  `docs/sensors.md`.
+
+### The web views
+
+- Correlation is computed in the browser: nothing else needs r, the fit
+  or the lag curve, so they get no endpoint.  The one server change is
+  `locked=1`, because the mode is text and cannot be averaged into a
+  bucket after the fact.
+- The range control copies Grafana's, because people who read time
+  series know it, and departs twice: a range moved to end near now
+  becomes the moving one, and a fixed range is not read again once a
+  read has started after its end.  `docs/views.md`.
+- `/kiosk` is a page of its own over the shared drawing code, not a flag
+  on the live page.  It never reads `/api/status`, because a display
+  left on for days must not cost the receiver a status screen every few
+  seconds (hence no sky plot; a test holds it).  Its clock counts on
+  between polls by the display's monotonic clock, since a clock that
+  stalls and jumps looks broken across a room.  It never writes its
+  address, which a signage player may take as a cue to reload, and
+  inlines its CSS and scripts and keeps its last data in localStorage,
+  to paint at once on a reload.  Its mode word is a fixed 70 kiosk
+  pixels, small enough for "RECOVERING" on one line in a wide default
+  font, rather than fitted to each display's font.
+- Every page refreshes in place and never blanks a panel: on a
+  low-power signage player every replaced element or rebuilt chart is a
+  visible repaint.  A chart is rebuilt only when its lines or the kind
+  of its y axis change.
+- Exporter metrics are not renamed and their labels not changed.
+
+### systemd and packaging
+
+- `Type=exec`: the daemon retries with no receiver attached, so no
+  moment honestly counts as ready for `Type=notify`.
+- No `BindsTo=` the adapter's `.device`: the daemon reconnects itself,
+  binding would stop it while an adapter is unplugged, and naming a
+  device would mean editing the unit.  No `PrivateDevices`: it hides the
+  serial port.  `RestrictAddressFamilies=` admits IP for `tcp://`
+  devices.
+- systemd is the only Linux-specific piece; porting means a launchd
+  plist or a Windows service wrapper, not touching the protocol.
+- `make deb` derives `<version>-0~git<commits>.g<sha>[+dirty]`, so
+  different code never shares a version (dpkg treats reinstalling one
+  as a no-op).
+- Two packages: `smartclock-utils` (CLI, simulator) and `smartclockmon`
+  (daemon, monitors, exporter, sensor service), because the CLI is
+  wanted on machines that will never log a receiver.  They depend on
+  each other's exact version, not `>=`: they share the socket protocol
+  and the command table, and nothing tests one version against another.
+  Breaks/Replaces track the package's own version, since a fixed
+  `<< 1.7.0-1` would also break the snapshots that sort below it.
+  cargo-deb has no variable for this, so `make release` moves the
+  relations and a test (`crates/smartclockd/tests/packages.rs`) fails if
+  they and the workspace version part.  Cost: `apt-get upgrade` holds
+  `smartclockmon` back at the first upgrade needing the new package, and
+  relative links between the two packages' documents break in
+  `/usr/share/doc`.
+- CI calls the fleet's shared `rust-ci.yml`, since one repository doing
+  it differently costs more than one definition; `make ci` is stricter
+  and is what you run.  The browser and firmware checks need Node,
+  Chromium, an m68k gcc and uv, so they are jobs of their own.
+
+### Flashing is a direct-port command of the CLI
+
+`smartclock-cli flash` reuses the library's session, console and line
+settings code, so there is one tool.  An image must match an audited
+profile, with its own protected regions and checksums: filenames and
+model strings cannot establish compatibility, and there is no force
+override.  It never sends `*CLS`.  It reads the whole flash back and
+compares it before returning to SCPI.  `docs/firmware/restart.md`, "The
+flasher".
+
+### The firmware in C
+
+The goal is idiomatic C a person can read, proven function by function
+against the original image in an emulator, not a byte-identical rebuild,
+which would need the unknown original compiler.  Method, scope and
+figures: `docs/firmware/rewrite.md`; the toolchain:
+`docs/firmware/README.md`.
+
+- **A rebuild that runs, in readable C**, narrowed: the hand-written C
+  is a proven reading, not a working image.  It compiles as one
   translation unit with the export, and the installer's copies share
   static bodies with the primary's through headers, which the real
-  installer, alone in RAM, could not; splitting them is not planned
-  unless a runnable image is the aim again
-  (`docs/firmware/rewrite.md`).
+  installer, alone in RAM, could not.  Splitting them is not planned
+  unless a runnable image is the aim again.
+- The function check fails (and CI with it) on any failed function.
+  Was a measure that exited zero; changed so that a regression cannot
+  pass unnoticed.  A known difference is one whose cause is found and
+  is not the C's (`function_check.py`'s `KNOWN`), and counts only while
+  every difference of the case matches its pattern, so it hides no
+  other.
+- Unicorn has no CPU32; its 68020 stands in, since the image uses none
+  of the instructions either has alone.  Because the 68020 runs what a
+  CPU32 traps on, the link takes a libgcc built for the CPU32 with soft
+  float from GCC's source (`tools/firmware/cpu32_libgcc.py`, vendored in
+  `third_party/gcc/`), not the toolchain's 68020/68881 one, and the
+  build fails on any instruction the CPU32 lacks.
+- Unicorn's m68k status register bugs are checked by behavior, not by
+  version (`make check-unicorn`), since `dev` still calls itself 2.1.4;
+  a Unicorn that differs fails, so the workarounds are revisited rather
+  than kept by habit (`docs/firmware/README.md`).
+- A routine that returns in the condition codes or in registers beside
+  its result is called through one register-bound asm statement, not a
+  generated bridge: the bridges kept those results in globals, which
+  another task's kernel call could overwrite between a call and its
+  caller's reads.  The exporter now writes no bridge at all.
+- A register the image uses as its caller left it is read by one helper
+  (`cpu.h`'s `CPU_CALLERS_REGISTER`, volatile, since gcc merges such asm
+  statements otherwise), and listed in `docs/firmware/quirks.md`.  A
+  firmware fault the C can reproduce, it does.
+- Stack headroom is a difference, not a figure: a case differs where
+  gcc's copy goes more than 192 bytes deeper than the image's, or past
+  the floor where another use's memory lies.  A figure alone let
+  `libc_doprnt`'s stack sit 4 bytes above a console data stack
+  unremarked until gcc 13 crossed it.
+- `ctype_table` and the lexer's character classes stay the image's:
+  `atoi` and the lexer index them by a sign-extended character, which
+  reads the bytes before each.  Calls into image code use the image's
+  2-byte slots, not gcc's 4.
+- The SCPI tree is generated C data (`smartclock-cli dump-scpi --c`,
+  `--names`), not hand-written, and the C reads it in place of ROM's.
+  It is for every image, so it refuses a record it cannot check rather
+  than guess; `cargo test` pins its output.  The harness maps an
+  address in the C's tree to its twin in ROM's, so the parser is proven
+  on it.  Left: Setup taking the generated rows, so that Ghidra labels
+  each record.
+- The pForth kernel's words stay the image's assembly, exact by
+  construction (one branches into another's body; A6 is the data
+  stack); the C diagnostic words are proven by console sessions in the
+  harness.
+- The export leaves out the decompiled reading of a hand-written
+  function, so that names inside a reading cannot change the file;
+  three bare imports of an image give byte-identical exports.
+- A field's or global's coded values are an enum in the image's
+  `smartclock.h` typing it, never a local enum.
+- Hand-written C must not use a bare literal where an enumerator or
+  named constant exists (`make check-magic-numbers`, in CI); whether a
+  literal passed as a parameter means the same each time is a reader's
+  call, so that is reported, never checked.
+- **Firmware layout**: one folder per image under
+  `third_party/firmware/` with everything that image's work is (its
+  `smartclock.h`, names files, `rewritten/`, `decompiled/`), image-
+  independent headers in `third_party/firmware/include/`, and its own
+  `third_party/firmware/Makefile` that the top Makefile delegates to.
+- **A second image is ported by copying the first's work**, not by
+  sharing it from the start: the 58503A's `rewritten/` and
+  `smartclock.h` began as copies of the Z3805A's, seeded from
+  `tools/firmware/image_diff.py`, and the Z3805A's tree is not touched.
+  Shared functions move to a common folder only if a third image comes.
+  Cost: about 30,000 lines held twice, and a fix to a shared function
+  made in both, in the same commit.
+- **Per-image tool tables**: what the function check gives an image
+  other than the Z3805A 3543B is kept in tables keyed by image or held
+  by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`, ...), each
+  entry cited in that image's code, never a base entry widened, so a
+  port's quirks show as that port's and the Z3805A's figures cannot
+  move.  `make check-comment-addresses` makes a copied address show.
 
-  Steps, in order:
+## Next
 
-  1. The C compiles.  Done: `make check-decompiled` compiles the whole
-     file to an object, every function defined, and confirms its
-     assembly is the image's own bytes.  The calls that disagreed with
-     their callees were fixed in the names file's prototypes, from each
-     callee's body and the bytes its callers push.  What the object
-     still needs from a link: a few of gcc's helpers -- 20 float
-     comparisons the decompiler wrote as C operators and two 64-bit
-     divisions, which the image's own float_compare and 64-bit routines
-     can stand in for, or libgcc, which the link uses -- and the made
-     symbols `z3805a-3543b.symbols.ld` places.  The decompiler's views
-     of the caller's arguments (`stack0xN`) are read from gcc's frame
-     pointer; its views into a function's own frame or a register fault
-     in the harness until the function is rewritten.
-  2. Bridges between gcc's C and the rest.  Done 2026-10-22 (below,
-     "Done 2026-10-22, the bindings"): no generated wrapper remains.  A
-     routine that takes its arguments and gives its result in registers
-     is called through a typed binding of `rewritten/bindings/`, its
-     registers bound and its changes named in one asm statement, or by
-     its own prototype where it is in gcc's convention already; every
-     routine of the sidecar's `register` convention has one, 73 of the
-     primary's and 18 of the installer's (docs/firmware/README.md,
-     **ExportC**).  Not done, and needed only by a link for the board
-     (step 3), which is not planned: the other direction, assembly
-     calling C, where the original passes a `char` or `short` in 2
-     bytes where gcc reads 4.
-  3. A link that keeps the ROM's data -- strings, the SCPI tree,
-     descriptors, tables -- at its own addresses, which the code names
-     absolutely, and places the rebuilt functions around it.  Done for
-     the harness: `tools/firmware/rebuild_link.py` puts every piece of
-     assembly at its address, the 474 routines' 494 pieces, all the
-     image's bytes, and gcc's code
-     at `0x600000`, above every chip select; the ROM's data and its original C stay where they
-     are, and the assembly calls the original C (`__image_NAME`).  A
-     link for the board, gcc's C in the ROM's free space and the
-     original C gone, waits on the replaced functions.
-  4. The emulator harness: a function's original and rebuilt code on
-     the same inputs and memory.  Done, as `tools/firmware/harness.py`.
-     `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
-     binding as gcc would and its routine from its registers, from the
-     same RAM, and requires the same result, RAM and effects and gcc's
-     callee-saved registers kept: all 73 and 18 agree, and
-     `qspi_transfer_raw` also on given transfers the QSPI's interrupt
-     completes, which must run.
-     `tools/firmware/function_check.py` (`make report-decompiled`) does
-     the same for each C function, the image's copy against gcc's, the
-     image's arguments where the sidecar's `stack` layout says the
-     original reads them: the primary's 1312 agree, 6 differ as known
-     and none fail; the installer's 236 agree and 1, whose image copy
-     writes unmapped memory on the harness's state, is skipped
-     (`docs/firmware/rewrite.md`, "Figures").  A known difference is
-     one whose cause is found and is not the C's, `function_check.py`'s
-     `KNOWN`: the firmware's own (`os_report_processes`' D5, printed by
-     three callers; `gps_debug_status`'s cleared byte below an empty
-     text; `satellite_status_list`'s list of 12 overflowed, over each
-     copy's own frame) and what C cannot say (`log_erase`'s checksum of
-     a pointer).  Each counts so only while every difference of every
-     failing case matches its pattern, and a case lists every
-     difference, every run of differing memory and every differing
-     effect, so that a known difference hides no other; a case is
-     skipped only where both copies stop for the same reason, the same
-     kind of fault, trap and call, or no return.  Decided 2026-10-23,
-     reversing its start as a measure that exited zero: the check exits
-     nonzero on any failed function, and `make report-decompiled`, and
-     so CI, fails with it; `report_figures.py` checks the counts
-     `rewrite.md` and `README.md` give.  The harness models what lies
-     outside memory at its boundary, the same for both calls
-     (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
-     the kernel's traps are answered by a model of each service, from
-     the registers the binding's stubs load and store, and of those
-     only the bits the kernel reads (`create`'s D1 and D2 low bytes and
-     the block through A0); the devices are
-     memory zeroed for each call; and the kernel calls and device
-     writes a call makes, in order, are compared as RAM is.
-     Unicorn has no CPU32 and the 68020 stands in: the image uses none
-     of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
-     its words finds none), and none of the 68020's the CPU32 lacks.
-  5. Replace, check, repeat, making the C readable and idiomatic as
-     each function is taken: names for locals, real types, loops and
-     structures in place of pointer arithmetic, the decompiler's
-     idioms (CONCAT, SUB, pieces, unaff_ registers) undone.  Done:
-     every C function of the primary and the installer is written by
-     hand (`docs/firmware/rewrite.md`, "Scope"), with the figures step
-     4 gives.  What follows is the dated record of how, not the current
-     state.  It started with what the harness found across many
-     functions at once: every
-     SCPI handler now has the prototype `scpi_call_handler` calls it
-     with, `(parameters, response, call)`, where each showed only the
-     arguments it reads, so that its image copy read a third argument
-     the harness never gave (92 differing to 78); and the record
-     `sprintf` and `vsprintf` give `doprnt`, which the decompiler split
-     into two locals gcc laid apart, is typed by a `local` row in the
-     names file (78 to 64), as are seven doubles split the same way,
-     which the harness found in `sqrt`.  And the C now moves bits where
-     the decompiler does: a cast between a floating type and an
-     integer, which without an FPU is never a conversion, and the
-     implicit conversions gcc finds, are reinterpretations
-     (`__ghidra_as`, `__ghidra_bits`), so `sqrt`, `frexp`, `modf` and
-     the EFC queries agree (64 to 59); and a shift by a count that is
-     not a literal is defined for every count, as the decompiler's is
-     (59 to 58).  Then the date and time records `datetime_add` takes,
-     split as `sprintf`'s was, the vector names `exception_name` reads
-     from 12 bytes into a string whose NUL is the table's first byte,
-     and a string result compared by its text, gcc's copy returning its
-     own copy of a literal (58 to 53).  Left as they are:
-     `int64_divide` and `uint64_divide`, called by nothing, which on a
-     quotient too wide for 32 bits return the dividend's low long, as
-     `divs.l` leaves it, where the C truncates the quotient.  Then every
-     function still on the analyzer's empty signature gets the stack
-     parameters its callers push (329 of them), so that its callers'
-     C calls it as it is defined, and a piece under a signed cast is
-     read signed, the decompiler's sign extension (53 to 49).  Left as
-     the harness's own: a function copying a string it is pointed at
-     into a small local overruns it on the harness's garbage, and lands
-     differently in gcc's frame (`status_screen_height`).  Then the
-     harness itself: a pointer left in RAM to the same text, the
-     image's in ROM and gcc's in its constants, is the same, and a call
-     starts with A6 at a caller's frame, which the image's
-     `float_raise` walks where gcc's caller keeps none (41 to 35).
-     Five routines the names file marks `convention=other` -- the
-     divide's and multiply's error tails, entered by a branch and left
-     through their callers' epilogues, and the CPU and RAM self-tests --
-     are assembly and no longer run, and `long_array_get_byte` and
-     `happening_replay` take pointers, as do the other `long_array_`
-     routines (35 to 28).  Then the exporter: a piece is read signed
-     where its p-code reads it so, a constant in an unsigned compare
-     with arithmetic takes a `U`, and a switch's cases are labeled as the
-     table indexes them, from its first index, not 0 (28 to 23).  The
-     soft-float routines' copy of their result in A0:A1 is passed on
-     (`__ghidra_also`), as is `float_raise`'s and
-     `double_truncate_sixteenths`'s in D0:D1 where `pow` calls them
-     through a register, and an infinity assigned to an integer variable
-     is its bits (23 to 21: `log`, `pow`).  A routine that returns its
-     result in the condition codes has its bridge keep them, and the C
-     reads its flags after the call from there, not from a compare made
-     before it (`clock_init`); and an equality test of a narrow unsigned
-     operand with a negative constant compares its unsigned value.  The
-     harness has an EEPROM, and gcc's code moved above every chip
-     select, off it: twelve functions that agreed reading gcc's code as
-     the EEPROM's records agree on an erased one (21 to 20).  The
-     Oncore field tables and the installer's records, which the
-     decompiler took for short strings, are typed byte arrays (20 to 18:
-     `oncore_traim_message`, `boot_unpack_installer`).
-     Then
-     the harness's models of the kernel, the devices and `trap #7`
-     turned 317 of the 541 skipped into comparisons: 107 agree and 210
-     differ, nearly all through a few callees whose C is wrong where
-     the harness could not see before -- `enter_supervisor`, whose
-     `trap #7` and jump back through its popped return address the
-     decompiler reads as a call through an unset pointer (61 callers
-     jump to 0); `psos_pack_name`, which reads its caller's name
-     argument from the caller's frame (12, by `psos_ident` and the
-     task and exchange creators); the I/O stubs, whose C drops the
-     buffer, length and other registers the binding loads (43); the
-     stubs that store a result the kernel returns in A0 through a
-     pointer, which the C reads from an unset local (`psos_my_pid`,
-     `memory_allocate`, eight in all); and the messages the SCPI
-     setters and `pllc_request_*` build on their stacks, split into
-     locals gcc lays apart (61).  Five that agreed differ in a case
-     now run (`eeprom_write`, `eeprom_write_page`,
-     `gps_receiver_status_update`: `enter_supervisor`; `fpga_verify`,
-     `hdac_nudge`: the I/O stubs), and `duartb_putc_polled`, which
-     agreed by reading what an earlier call left at the DUART, polls
-     a zeroed one forever and is skipped (12 to 222).
-     `enter_supervisor` is assembly, as it is: its `trap #7` and jump
-     back through the address it pops run as the image's own;
-     `psos_io_call` takes every register, as `psos_call` does, so the
-     I/O stubs pass their buffer and length; and gcc keeps a frame
-     pointer, which `psos_pack_name` reads its caller's argument
-     through (222 to 154).  The kernel's results in D0 to D3, A0 and
-     A1, past the error in D7, reach the C through the bindings'
-     bridges, as the condition codes do (154 to 134).  The messages
-     the SCPI setters send the loop task through pllc_request_a to _e,
-     and the GPS requests, are typed records on their senders' stacks,
-     which the decompiler had split into locals gcc lays apart (141 to
-     92); three status setters whose first case now runs differ there.
-     A message is compared by the 20 bytes from its `+4` the kernel
-     copies, not 16, which shows five setters sending a value's low half
-     where the image sends all of it (92 to 97).  The self-tests and the
-     interpolator's measurements, called through tables with a char in
-     a 2-byte slot, take it as `char_slot`, whose first byte lies where
-     the slot's does; the pSOS device routines are register routines,
-     and `set_timedate`, `console_task_create` and
-     `pforth_dictionary_init`, which take traps in line, assembly (97 to
-     83).  The EEPROM records, the QSPI's buffer pair, the GPS position's
-     three longs and the SCPI step entries the routines that build them
-     keep on their stacks are typed; libgcc's soft-float exception
-     handler reaches `_fpCCR` through a GOT the link now places and the
-     harness loads; and `psos_supervisor`, which pops its return address,
-     traps and jumps back, is assembly (83 to 51).  A loop to a stack
-     record's end, which the decompiler writes as the frame offset where
-     it ends, runs to the record's end (51 to 48).  A pointer to an
-     empty text, the image's in ROM and gcc's `""` among its constants,
-     is the same: gcc keeps `""` as another literal's end, so nothing
-     before it shows (the DUART loopback tests, `sci_puts`).  A rotate is
-     a rotate; an argument the kernel returns a result in is read back
-     after the call; a copied result reaches a byte piece of it; and
-     `si_prefixes` is bytes, not a literal (48 to 38).  Then
-     the harness
-     turned 92 of the 233 skipped into comparisons (980 agreeing to
-     1048, 38 differing to 62): the string devices' write, which sends a
-     string and returns its length, where the model had taken an unset
-     local as a length (`console_write`); trap #1 through the image's
-     handler; `alloc_seg` and `ident` returning memory a caller can
-     use; traps #5, #11 and #12, and a write to code, which raises a bus
-     error on the board, ending a call; and the status bits the polled
-     DUART, SCI and QSPI routines wait for.  The new differences are the
-     C's: `psos_io_write` and `sci_port_write` store back the length
-     they passed, not the one the device returns; the QSPI self-tests
-     pass `&local_c` as the buffer pair gcc lays apart from `local_8`
-     (and `selftest_execute`, which agreed, through them); `duart_init`
-     returns D0:D1 it never sets; `setjmp` reads registers C cannot;
-     and printf's `%e` and `%#x` (`diag_pll_rep`, `diag_pr_gps_debug`).
-     Then each frame a `link` makes is filled afresh, as the stack is at
-     a call's start, so that the bytes of a message its sender never
-     writes match; `scpi_numeric_set` takes its float and integer values,
-     two slots StackParameters missed because only their address
-     escapes; the two step validators return their results; and
-     `gps_init_sequence`'s four arguments are one array (62 to 45).  A
-     register a function reads as its caller left it is that value, not
-     an unset local (45 to 36).  A call through a pointer loaded from a
-     table, the self-tests' and the DAC searches' measurement, is given
-     its callee's prototype at the call, which the decompiler took as
-     code with no arguments, and a structure it builds from the bytes
-     pushed is those bytes (36 to 28).  77 routines a parameter of
-     which the harness found dereferenced take a pointer to their record,
-     where Ghidra had an integer; 19 that agreed now follow a pointer in
-     the buffer the harness gives them and are skipped (1082 agreeing to
-     1063).  `doprnt`'s precision, count and exponent text are an int, an
-     int and one array, where Ghidra had a pointer that printed 6 as the
-     text at address 6; the QSPI tests' buffers are one record; a switch
-     is relabeled though the decompiler gives its default a case token
-     (`%x`); `HOLD_CAUSE_NONE` names a byte's 0; `duart_init` preserves
-     what it returns nothing in; a register a preserving call's
-     INDIRECT made up is the value the code last wrote it, back through
-     a lone branch (`modf`'s A0, `set_gps_utc_offset`'s D1); and a shift
-     inside another's left operand is rewritten where it now is (28 to
-     5).  Left: `setjmp`, the 64-bit divides' overflow, `log_erase`'s
-     checksum over a pointer and the DIAG query's caller's registers.
-     Then the harness turned 59 of the 141 skipped into comparisons
-     (1085 agreeing to 1159, 5 differing to 14), each model the same
-     for both calls: a branch to itself, `fatal_error`'s spin, ends a
-     call halted, a zero divide at its vector, and a task's loop at its
-     1000th kernel call, still running (16); RAM starts with the
-     kernel's configuration and I/O table and the running task's
-     record (5); `request_x` from `spoo` and `pllc` receives a
-     well-formed `spoo_request` and `pllc_request` (2); and two cases
-     more give each pointer a buffer of pointers, into compared memory
-     of the harness's own (36).  The limit cuts short no call that
-     returned before it; `selftest_execute`, whose gcc copy outran the
-     step limit, now agrees.  The new differences: `program_exit`
-     prints its return address, which gcc's copy reads as 0;
-     `stack_measure` and `stack_usage_report` on the buffers of
-     pointers; `task_stack_info`,
-     whose image copy reads an unset local the decompiled C keeps
-     (`task_stack_report`, `s_rep_word`,
-     `scpi_query_DIAGnostic_OS_STACk`); and `fpga_verify_first`,
-     `_odd` and `_even`, which agreed, return 0 where the image's
-     return 1 on the buffers of pointers, after the first QSPI read.
-     Their causes: the FPGA checks' buffer pair, kept as two locals gcc
-     lays apart, and `stack_usage_report`'s four longs, are each one
-     local by a `local` row; `stack_usage`, which returns two values in
-     D0 and D1, gets one `long long` from D0:D1, as `ldiv`, and so a
-     bridge, where `stack_measure` called it with no arguments;
-     `program_end_report` reads the long above its argument, which
-     `program_exit` does not push, its own return address, and takes it
-     as a second argument, which the exporter reads from gcc's frame, N
-     + 4 above its frame pointer, for each `in_stack_N` where every
-     argument is a long in its slot; `stack_usage` preserves the A0
-     `stack_measure` reads after it (1159 agreeing to 1166, 14
-     differing to 8).  `task_stack_info`'s two locals, which the image
-     reads unset ("no system stack found" at `0x16c28` to `0x16c32`),
-     still differ: gcc takes them as 0, where the image faults on the
-     filled frame.
-     Then the kernel's data area as `kernel_init` makes it, its own
-     code run once on the configuration but for the devices' function 0
-     and the creates of ROOT and IDLE: the queue of tasks waiting on a
-     region, at `+0x64`, points at itself, where a zeroed one led
-     `os_report_regions` through address 0 past RAM (77 skipped to 71,
-     8 differing to 14).  The six now run differ, every one through two
-     reports: `os_report_process` prints a stack share from D5 its
-     caller left (`unaff_D5`) when no segment holds the stack, and
-     `os_report_regions` a region's use, 7232 kB where the image's
-     prints 0 (`ps_word`, `mem_rep_word`, `os_process_report`,
-     `os_memory_report` and the DIAG OS queries).  And a parameter that
-     points at a routine of a function typedef is given a routine of the
-     harness's own, whose call and arguments are an effect, `printf`'s
-     text by the image's own `vsprintf`; the names file types the kernel
-     reports', `spoo_run`'s, `log_print`'s and the status screen's
-     routines, and Setup now gives a prototype's parameter a pointer to
-     a function typedef's function, which Ghidra's parser drops and the
-     decompiler prints as a byte pointer when it points at the typedef,
-     as `os_report_process`'s and the DAC searches' showed (`undefined1
-     *`).  Of the 71 skipped, 14 now run: 10 agree and four differ,
-     `log_print`, whose C passes its formats' low words, `os_report_regions`, and
-     `status_screen` and `status_screen_print`, whose C hands `strcat`
-     a text's bytes as its address.  `scpi_parameter_match` and
-     `scpi_parameters_finish` take a pointer to a record with a pointer
-     at `+0xa`, where Ghidra had an integer, and the first then agrees
-     (1166 agreeing to 1176, 71 skipped to 57, 14 differing to 18).
-     Then the names file's rows for three of those causes.
-     `os_report_regions` keeps its counts, free and used bytes and
-     starts in arrays of two the decompiler took as one `int[4]` and
-     loose longs, which its C read past: `local` rows.  `log_print`,
-     the status screen and `status_screen_position` call `print`, or
-     `sprintf` through A0, with arguments at stack offsets that a
-     `move.b` or `move.w` push for another call writes, and the
-     decompiler sizes a variadic call's arguments by those pieces,
-     passing an address's low word or byte: `call` rows give each such
-     call its prototype.  `status_screen` walks its mode lines, a table
-     at `0x4d032` the decompiler took as the string `"\x03"`: a label,
-     `status_screen_mode_lines`.  Its line buffer, 80 bytes after the
-     byte `gps_message_supported` fills, and `status_screen_position`'s
-     16-byte text were split into short arrays and loose bytes gcc lays
-     apart: `local` rows.  Regenerated, 1176 agreeing to 1183, 18
-     differing to 11.  The
-     stack share `os_report_process` prints from D5 is the firmware's:
-     `region_segment_containing` (`0x162b2`) touches only D0, D1, A0
-     and A1, and `os_report_processes` holds the address of `"%s"` in
-     D5 (`0x16768`) across both of its calls, so the image prints
-     332674% for a task whose stack is in no segment; its MEMORY sum
-     starts from the caller's D6 the same way.  Like
-     `task_stack_info`'s, it is left.
-     Then the image's own state where the skipped read it, each model
-     the same for both calls.  RAM starts as `status_init` leaves it,
-     the image's own run once as `kernel_init` is, its segments kept:
-     `status_object`, its registers and queue, where a zeroed pointer had
-     led 14 through ROM's first bytes (57 skipped to 46; three
-     `:STATus:OPERation:HARDware` queries, which agreed reading ROM
-     there, now index the registers by their parameters' garbage past
-     RAM and are skipped).  `qsort`'s size and comparator, which its
-     swaps read as 0 and looped 2^32 times, are as its one call sets
-     them (2).  The second pointer case's fill points each of a record's
-     first three longs at the next and the third at a NULL, where every
-     long of the first's holds itself, so that a list through them ends
-     (7; one fill for both cases gained seven and lost eight, an error
-     queue's indexes among them, so each fill has a case).  The pllc
-     task's request is in the variables its readers take it from, as the
-     image's own `get_setup_vars` stores it (4).  A parameter is given the
-     image's object its callers pass: an SCPI formatter's `output` the
-     console port (8); the status model, its registers and `aging_curve`
-     by type, and a `scpi_step` (8); a header `path` set back to the
-     main tree (2).  A trap from a task's user stack takes its frame on
-     the supervisor stack, which ran `primary_start` through the boot,
-     and `rtr`, which Unicorn lacks, is done in its place, which runs
-     `console_init` and finds gcc's `pforth_define_word` calling
-     `forth_compile_code` without its dictionary pointer in A4.  Prototypes
-     that name `scpi_scan_token`'s and `scpi_skip_to_terminator`'s
-     `input`, `scpi_format_text`'s and `scpi_format_choice`'s `output`,
-     `scpi_header_step`'s `path` and `error_queue_push`'s `error_queue`
-     run four more (1183 agreeing to 1230, 57 skipped to 9, 11 differing
-     to 12).  Then an SCPI handler is given the parameters and call
-     record `scpi_call_handler` passes it for its path, its nodes' ids
-     first (the three HARDware queries, and `:DIAGnostic:QUERy:RESPonse?`,
-     which compares the record's input with the console port); the
-     parser's routines a record, its items and slot and a parser context
-     by name (`scpi_parse_message_unit`, `scpi_call_handler`,
-     `scpi_format_response`, by the names file's prototypes); and a `status_snapshot_record *` `status_screen_snapshot`
-     (`status_screen_height`, whose `position_source` lay past the
-     harness's buffer) (1230 agreeing to 1238, 9 skipped to 2, 12
-     differing to 11).  Left
-     skipped: an exchange's queue (`os_report_exchange`), whose callers
-     take it from the kernel's list, empty in the harness, and
-     `scpi_format_resolution_array_record`.  `forth_compile_code` takes
-     its code at A0 and leaves A4, the dictionary pointer, past it,
-     keeping D0; `pforth_link_word` leaves A4 past the link; their
-     conventions now say so (`out=A4`), so that `pforth_define_word`
-     appends where the routines leave A4 and counts its loop in D0.
-     `console_init` then defines its words as the image does, and differs
-     at `console_task_create`'s service 1: the high word of D1, which its
-     `clr.w` leaves as its caller had it, and A0, the parameter block on
-     its own stack, neither of which C can give.
-     Then the kernel's list of exchanges, which RAM now starts with as
-     `root_task`'s three creates leave it, `gpsx`, `plla` and `pllc`,
-     each made by the kernel's own `kernel_create_x` (`0x1537e`) run on
-     the data area, and `os_report_exchange` given one of them, as
-     `os_report_exchanges` passes each (1238 agreeing to 1239, 2
-     skipped to 1).  The caller's frame a call starts with holds a
-     first argument, `"gpsx"`'s address, which `psos_pack_name` reads
-     through A6 as its callers' name: its bridge agrees (82 to 83).
-     `kernel_dispatch_io`'s bridge is not run: trap #4 enters it with
-     an exception frame, which its `rte` returns through, and a
-     wrapper's `jsr` leaves only a return address, so no wrapper of
-     this kind can call it, and nothing in the C does.  The exporter
-     should give an exception entry no bridge, or one that enters by
-     its trap.  Left skipped: `scpi_format_resolution_array_record`
-     (`0x26816`), which nothing in the image calls.  It reads its
-     output at `+4` and its record at `+8` (`move.l (8,fp)` pushed to
-     `scpi_format_block`, `movea.l (12,fp),a2`), where the C has only the
-     record and reads the output from it: the names file now gives
-     the prototype `(void *output, char *record)`.  It ends by calling the routine at the record's `+6`,
-     which no caller shows and the harness's buffer does not hold.
-     Then the installer's copies, 79 C functions whose prototypes lay
-     out and 5 bridges (`installer::` in the sidecar), which run where
-     the boot code unpacks them, in RAM from `0x100400` to `0x10aad2`
-     (`docs/firmware/restart.md`, "Forced installer entry with an
-     unusable primary"), the RAM the harness had started as the
-     primary's.  Each module-level constant of `harness.py` that names
-     the primary's state is now a field of a profile, one for each
-     image (`harness.Profile`): the installer's has RAM the unpacked
-     image, with ROM's first `0x400` bytes, the boot vector table, at
-     `0x100000`, as the entry at `0xa58` copies them, so that traps #1
-     and #7 take its own handlers; its configuration and I/O table as
-     `installer_psos_config_init` (`0x1083b6`) copies them, its data
-     area from `installer_kernel_init` (`0x1026de`), `kernel_init`'s
-     bytes, and its status object from `0x107a00`, as its root task
-     (`0x100d40`) calls it; its spool's exchange (`0x10afbe`) and the
-     message the root task sends it, its caller's name (`"spoo"`), its
-     one string device and its own `vsprintf`; the arguments' buffers at
-     `0x900000`, outside RAM, compared as RAM is; and the unpacked image
-     read-only and a place literals lie, as ROM is (docs/firmware/README.md).
-     The primary's results are unchanged (1239 agreeing, 1 skipped, 11
-     differing; bridges 83).  The installer's: 43 agree, 5 are skipped
-     and 31 differ; 4 bridges agree, and `installer_kernel_dispatch_io`'s,
-     an exception entry, is not run (91 bridges: 87 agreeing, 4 not run).
-     What differs is the installer's rows, not the harness: their
-     primary twins have conventions the installer's copies lack, so
-     that the exporter wrote them as C, and gcc's copies of their
-     callers call that C.  `installer_psos_call` (`psos_call`,
-     `register`, the service in D7) runs every binding's trap with no
-     service (`installer_psos_my_pid` to `_service_29`, `_mutex_acquire`
-     and `_release`, `_periodic_interrupt`, `_drtb_getc`, `_gets` and
-     `_putc`); `installer_enter_supervisor` (`other`, a `jmp (a0)`
-     through its popped return address) jumps nowhere, which every
-     polled print reaches (`installer_set_interrupt_mask`,
-     `_enter_supervisor_mode`, `_console_write_polled`, `_fatal_error`,
-     `_print_exception`, `_float_raise`, `_float_exception_report`,
-     `_program_exit`, `_program_end_report`); `installer_psos_pack_name`
-     (`other`, its caller's A6) reads no frame; `installer_trap_1`,
-     `_trap_7`, `_default_exception` and `installer_return`, an `rte`,
-     are exception entries (`exception`) run as functions.  And two
-     prototypes are not their twins': `installer_identification_record_read`
-     returns a short where `identification_record_read` returns a
-     byte, and `installer_duarta_receive` a `uint` it never sets.  The 5
-     skipped are the status system's (`installer_status_propagate`,
-     `_set_bit`, `_apply_condition`, `_read_event`,
-     `installer_error_queue_push`), whose prototypes take `int` where
-     their twins take a `status_model *` and `status_register *`, which
-     the harness gives by type, and `installer_status_set_bit` two
-     parameters where `status_set_bit` has three: their models are
-     garbage.  The fix is the Ghidra project's, giving each installer
-     copy its twin's convention and prototype; with them, the installer's
-     profile would need the primary's objects by type, its status object
-     at `0x10ad06`.  So the names file now gives each installer copy
-     whose instructions match its twin's, mnemonic for mnemonic, the
-     twin's convention and prototype: 29 of them, `installer_psos_call`,
-     `_enter_supervisor`, `_psos_pack_name`, the mutexes, the status
-     system's and `installer_program_end_report` among them.  The
-     installer's: 63 agree, 3 are skipped and 8 differ; 9 bridges agree.
-     Left: the four exception entries run as functions,
-     `installer_duarta_receive`, `_print_exception`, `_program_exit`
-     and `_program_end_report`, and the status system's three, which
-     wait for the installer's status object.  The status object is now
-     a profile's (`Profile.status_object`), the primary's `0x102eb8`
-     and the installer's `0x10ad06`, where `0x107a00` has
-     `status_create`'s copy (`0x105d98`) keep the model; every profile
-     gives its model, registers and error queue by type and name, and
-     only the primary its other objects.  The three agree: installer
-     66 agree, 0 skipped, 8 differ.  The rest are the names file's.
-     `installer_trap_1`, `_trap_7`, `_default_exception` and
-     `installer_spurious_interrupt` (`installer_return` was named for
-     its `rte` before the boot vector table's vector 24 was seen to
-     enter it) are the vectors' targets, byte for byte their primary
-     twins, and get their `exception` convention.
-     `installer_duarta_receive` returns nothing: its D0 is what is left
-     of its overrun test, and its one caller does not read it.
-     `installer_print_exception` calls `installer_printf_polled`
-     through A2, so Ghidra guessed the variadic arguments: a `short` for
-     the name's pointer and the address's low word, where the code
-     pushes longs (`0x1005f0`, `0x10061c`); two `call` rows give them.
-     And `installer_program_end_report`, and with it `_program_exit`:
-     the label `installer_program_end_digits_end` (`0x10ab1f`), typed
-     `uint8_t`, inside `installer_program_end_message`, had Ghidra clear
-     the message's array, so the C wrote the digits down from a lone
-     byte, out of its object, and gcc dropped the store of its `0xff`;
-     the label is gone, as the primary has none at `0x100c21`.  The
-     exception entries, and the periodic and DUART interrupts, vector
-     targets as the primary's are, are written as assembly and left
-     out: the installer's 68 agree and none is skipped or differs (63
-     agreeing, 3 skipped and 8 differing before).  The
-     primary's are unchanged.
-     Then the idioms themselves, now that the harness checks every
-     function after each change.  The C that compiles held 1546 in 224
-     functions (`__ghidra_piece` 521, `CONCAT` 416, `__ghidra_bits`
-     210, `__ghidra_as` 154; the assembly routines' `#if 0` readings
-     aside).  A value pushed and popped around a call, which the
-     decompiler took a byte at a time where the slot is also written at
-     other widths, is a variable of its own, `pushed_n`, where the
-     p-code shows the pieces are its own (1546 to 1263, most of
-     `holdover`'s, `startup_pll`'s and `fine`'s); a character constant
-     that is no text, `'\0'` and `'\x01'` for a byte's 0 and 1, is an
-     integer; and every function that is C has Ghidra's default
-     convention, so no longer reads "Unknown calling convention" (219
-     to 8, the rest not C).  The counts are unchanged.  Left: the
-     byte and word pieces of variables the decompiler types too wide
-     (`__ghidra_piece`, `CONCAT22`, `CONCAT31` on `local_8`), the soft
-     float library's own bit work, and then by hand.  Named, too: the
-     signals the drivers send their tasks, by the firmware's messages
-     (`SIG_SIQ`, `SIG_SOQA`;
-     `third_party/firmware/include/psos-signals.h`), and a device
-     register's bits where the decompiler reads it into a local first
-     (`SCSR_TDRE`, `SR_RXRDY`).  Then types, in the shared headers
-     where they can be, so the other images take them: a
-     `time_of_day` the clock routines carry byte by byte
-     (`datetime_add`, `time_next_second`), the GPT's TMSK and TFLG
-     pairs as the words the firmware moves, and `error_queue_push`'s
-     code an `int` whose low word it reads (1263 to 1157; the counts
-     unchanged).  The clock's own times, the Oncore status's date and
-     time, the reset record's, and the getters' and setters' are
-     `time_of_day` too, and a structure the decompiler reads as an
-     integer -- cast, compared, computed with -- reads its bytes
-     (`__ghidra_aggregate_bits`), the tokens saying which operands are
-     structures (1157 to 1098).  A conversion routine that shifts a
-     time's bytes out of the whole (`hms_to_seconds`) keeps it an
-     integer: the decompiler does not map those shifts to fields.
-     Then four agents, one a subsystem, typed what they could read from
-     the code, each change checked here in the harness: the clock's,
-     NV records' and drivers' (`calendar_date`; byte and word results;
-     a date or time local where the code works on its bytes; 1098 to
-     1053), and the GPS side's (the snapshot's `satellite_sets`, the
-     command log's time, the GPS time query's; 1053 to 1043, and
-     `satellites_in_use`, whose prototype it now has, runs and agrees:
-     1240), and the loop's (`format_si`'s double and char arguments,
-     `efc_clamp`'s float result, the snapshot's time and interval
-     status, byte and word results; 1043 to 1009), and the SCPI
-     engine's (`scpi_number`, `scpi_token` and `scpi_port` for the
-     lexer, its number and its port; 1009 to 1000).  A short its
-     callers pass in a long slot is an `int`, not an `int16_t`, which
-     Setup lays out at the slot's start: so typed, 106 more functions
-     differed.  And a TFOM the code compares by its bits stays a
-     `uint32_t`: as a `float` the decompiler writes `ABS(tfom)`, a
-     conversion.
-     Then the exporter: a double moved as its two longs, read, stored a
-     constant or another double, is moved whole (1000 to 898), and a
-     sign extension built of `CONCAT`s is a cast (898 to 859), and a
-     call's double read back from a register pair, its copy in A0:A1
-     or D0:D1 the decompiler took to be elsewhere, is kept in a
-     variable (859 to 788).
-     And `console_init`, which differed at `console_task_create`'s
-     `create`: the kernel reads only D1's and D2's low bytes and the
-     block A0 points at (`kernel_create`, `0x14dac`), so the high word
-     the `clr.w` leaves and the block's address on each build's stack are
-     no difference, and the model records what the kernel reads.  What
-     then differed was the dictionary, 0x32 bytes short: gcc's
-     `pforth_define_word` compiled one argument push where `hdac_write`
-     takes two, its `dbf` loop around `forth_compile_code` reading the
-     count back from a register the decompiler takes the call to change.
-     That routine keeps D0, and what the `dbf` leaves there is the count
-     less one in its low word, which the exporter now assigns after the
-     call (1240 agreeing to 1241, 11 differing to 10).
-     And a call's result has a name, `IMAGE/results.tsv`, which the
-     variable it is assigned to takes where every value the variable
-     holds is so named: `uptime = get_uptime()` at every call.
-     And a function can be written by hand, in
-     `third_party/firmware/IMAGE/rewritten/`, a file to a subsystem:
-     the exported C keeps the decompiler's reading inside `#if 0` and
-     includes the file, and the harness checks the hand's
-     version as it did the decompiler's (`clock.c`'s time conversions
-     first).
-     Then the harness's own blind spots, found by an agent: cases a
-     function's callers make that the generated ones never did
-     (`function_check.py`'s `CALLED_FIRST`, `GIVEN_CASES`, several
-     `SET_UP_REQUESTS`, and the stack around the declared arguments
-     filled so that one the prototype leaves out shows).  They found
-     `pforth_define_word`'s bug again on the C before its fix, and six
-     more: `robin_store`, `validate_or_doaction` and
-     `scpi_long_resolve_bound` read arguments their prototypes left out
-     (now in them); `sqrt` and `log` on a subnormal loop forever under
-     gcc, the decompiler's doubling loop overflowing a signed int
-     (`-fwrapv`); `modf` on a NaN stores through an A0 two branches
-     reach (the walk back now takes every path); and `frexp` on a
-     subnormal calls `double_normalize`, which takes and returns its
-     double in its own stack slots, as plain C, to be written by hand.
-     The scan also found the exporter missing a pointer-typed `unaff_`
-     register and A6, now read, and byte results with garbage above
-     (`drtb_getc`, `sci_getc`, `coarse`, now `uint8_t`).
-     And every integer type named by its size on the machine, the
-     decompiler's `undefined4` and `uint` and C's `int` and `long`, is
-     written as the `<stdint.h>` type it is here, `uint32_t` and
-     `int32_t`; `char` stays for text.
-     Then the rewrite, by agents a subsystem each: `records.c`, the
-     EEPROM, the NV register, the parameter, identification, lifetime and
-     calibration records and the two logs, 47 functions written by hand,
-     each agreeing (`log_page_read` and `log_page_write` wait on their
-     prototypes, which should take a `log_page *`).
-     `libc.c`, the C library, 29 functions: `frexp`, the last that
-     differed, agrees, normalizing a subnormal in C where the decompiled
-     call of `double_normalize` lost the shift; and `pow` on a negative
-     base, which the decompiled C got wrong (`ABS` of a `uint64_t`) and
-     no case tried, does too, now a given case (`POWERS`).  Of 1252 run,
-     1241 agree, 1 is skipped, 10 differ as known and none otherwise.
-     Left: `doprnt`, `sprintf_put` and `vsprintf` on their prototypes,
-     `call_atexit_functions` on the type of `atexit_functions`.
-     `drivers.c`, 104 functions: the DUART's channels, their rings and
-     self-tests, the SCI, the QSPI, the spool and deferred messages, the
-     ADC and DACs, the health monitor and the PPS monitors; and the
-     clock's five files, 84 more, the calendar and time arithmetic,
-     leap seconds, the klok task, the time code, the start-up and the
-     small arithmetic.  264 functions are written by hand, every one
-     agreeing.  Found on the way: the decompiled C drops every write of
-     the status register, the interrupt mask a driver raises around a
-     DUART, SCI or QSPI access and restores, which the harness does not
-     compare (the hand-written drivers write them with `move` to and
-     from SR in a line of assembly); and the image's `duart_op0_set` and
-     its kin pass 6 to `set_interrupt_mask`, which keeps only bits 10 to
-     8, so the mask they set is level 0.
-     Those six files, split by address range, are regrouped by subject,
-     the bodies unchanged but for their file-scope names' prefixes:
-     `clock.c`, the calendar, leap seconds and the clock record;
-     `arithmetic.c`; `startup.c`; `os.c`, the mutexes, task reports,
-     waits and exceptions; `klok.c`; `timecode.c`; and the drivers by
-     device, `duart.c`, `sci.c`, `qspi.c`, `adc.c` (with the DACs and
-     the EFC), `monitors.c` and `spool.c`; then `fpga.c` from
-     `startup.c`, and `cpu.h`, the status register's helpers, interrupt
-     levels, exception frame masks and watchdog service values, each
-     constant that two files held merged into one.
-     `scpi.c`, the SCPI engine, 122 more: the converters and parsers,
-     the formatters, the lexer, keyword and suffix matching, the status
-     system and error queue, and the call path, checked beyond the
-     harness's cases on real command lines and numbers; 386 written by
-     hand in all.  Its structures are its own for now and belong in
-     `smartclock.h`; seven of its routines wait on prototypes that skip
-     an argument's slot.
-     Then the prototypes the rewriters found wrong, those whose callers
-     are still the decompiler's: `doprnt` and `sprintf_put` take a
-     `sprintf_output` and a `sprintf_put_function`, `atexit_functions`
-     is 32 `atexit_function` pointers (Setup now parses an array of a
-     named function pointer), the SCPI parsers and port methods take
-     the slot they skipped, `duarta_isr` returns a byte, three print
-     routines are variadic, and the harness, which does not run a
-     variadic function, runs three fewer (1241 to 1238).
-     Then the shared values named: `status_condition_code`, the
-     conditions `status_happening` raises, by the Z3801A guide's status
-     bits; `fpga_configuration_index` and `fpga_chip`, which the FPGA's
-     loader and checks take, the ROM table `fpga_configurations` and
-     `pll.fpga_configuration`; a `mutex`; the klok lists as
-     `klok_entry **`, the log pages as `log_page *` and `qspi_transfer`'s
-     `qspi_buffers *`, the hand-written callers' casts gone.  The C is in
-     Google's style with braces everywhere (`make format-c`).
-     And two more subjects by hand: `fpga.c`, the FPGA's loading,
-     readback checks, registers and self-tests (19 functions), and
-     `ti.c`, the time-interval counter and interpolator (25); 428 in
-     all, every one agreeing.  `interpolator_verify` stays the
-     decompiler's, returning on its failure paths a register its caller
-     left.
-     Then the SCPI engine's structures move to `smartclock.h` and its
-     routines take them, and `memory_allocate` and `memory_free` a
-     `void *`: 65 casts of pointers as integers gone.  And a blind spot:
-     the harness read only prototypes on one line, and Ghidra wraps a
-     long one, after its result or before its parameters, so 43
-     functions had never run; of them 36 agree, 6 the image's own code
-     faults on (skipped), and `clamp_double_to_step_and_limits`
-     differed in `float_status`: the decompiler took its step routine's
-     double result for an int and lost D1 (0x325d2), and dropped the
-     steps it returns.  Written by hand, with the step record a
-     `scpi_double_step` and given cases of real ones, it agrees (1273
-     agreeing, 7 skipped, 10 known, none differing).
-     Then the plan for regrouping all 1300 C functions, hand-written
-     or not, by subject in four layers, platform, devices, services and
-     applications, each calling only its own or a lower one:
-     `third_party/firmware/IMAGE/modules.tsv` gives each its module and
-     `docs/firmware/modules.md` the layers, the modules, the eleven
-     calls that go the wrong way and the 61 hand-written functions
-     whose file is not their module's.
-     Then the first moves by that plan: `scpi.c`'s 27 status-model and
-     error-queue functions to `status.c`, `services/status`;
-     `clamp_double_to_step_and_limits` and `scpi_param_hook_nothing`
-     to `pllc.c`; and the `:ROBin` and `:RTCM` handlers to
-     `scpi_handlers.c`.
-     Then the ROM tables only hand-written code reads become its own
-     `static const` tables, their values from the image: `fpga_bits`,
-     the unit multipliers, the
-     parameter kinds' errors, the serial and NV defaults, the klok
-     templates, the bit masks, and libc's powers of ten and
-     coefficients.  The image indexes `fpga_bit_table` unchecked, so
-     the harness passes `fpga_set_bit` and `fpga_set_field` only its
-     six entries (`IN_RANGE`).
-     `ctype_table` and the lexer's character classes stay the
-     image's: `atoi` and the lexer index them by a sign-extended
-     character, which reads the bytes before each (2026-10-22, reversing
-     `ctype_table`'s definition in the C).
-     Then the SCPI engine's types named by subject, `scpi_engine_`
-     dropped (`scpi_node`, `scpi_call`, `scpi_arena`, ...), its error
-     queue the status model's (`status_error_queue`), and the main
-     tree's root list a `scpi_child_list` with its 49 children counted
-     (its third word the default child, `0x24`, not flags).
-     Then one enum for every status condition: `status_condition_code`
-     gains the error-queue conditions 1 to 0x16, named by their SCPI
-     errors, and the SCPI engine's negative ones, -1 to -4 the Standard
-     Event bits (`STATUS_ESR_*`) and the rest `STATUS_SCPI_*`, which
-     `scpi.c` and `status.c` now share; `scpi_query_failed` takes it,
-     so its 72 callers name theirs.  The functions that take a word or a
-     long (`status_report`, `status_set_bit`) keep their width, the
-     enum being a byte.
-     Then the other tables only the hand-written code, or it and the
-     decompiler's bisections, read: the powers of ten `arithmetic.c`
-     defines (the image's 1e23 an ulp high), the SCPI error messages
-     and the NV register's descriptor lists; those read past their
-     ends, or whose addresses stay in RAM, keep the image's.
-     And the firmware's own faults the C reproduces, collected in
-     `docs/firmware/quirks.md`.
-     And the decompiled `doprnt`'s `%u` of a value with its top bit
-     set, which ended in the quotient's low byte (`0xffffffff` printed
-     `429496729` and `0x99`): Ghidra took `next_decimal_digit`'s result
-     for D0:D1, where `divsl.l` leaves the quotient in D1, and the
-     caller's byte for D1's.  Pinned as `int` (the digit in D0), it
-     agrees, and `vsprintf` has `%u`, `%d` and `%x` cases of it.
-     The same fault anywhere else: of the fourteen results Ghidra
-     takes as 64 bits, each is one (doubles, `int64_add`, `div`,
-     `stack_usage`'s usage and size), and every function reading a
-     register its callee does not return (`extraout_`) runs in the
-     harness but variadic `float_raise`, whose D0:D1 are its own.
-     `doprnt` ran all along, its generated formats never making a
-     conversion; `vsprintf` now has cases of each conversion and flag
-     its switch takes, floats too, and agrees.
-     Then the hand-written files regrouped by the module map, a file to
-     a module (`calendar.c`, `dac.c`, `eeprom.c`, `nv.c`, `log.c`,
-     `debug.c`, `string.c`, `scpi_lexer.c`, ...; 42 files from 20), what
-     a group shares in a header named for the file it came from
-     (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
-     `scpi.h`), the bodies unchanged: gcc's code is the same to the
-     byte.
-     Then the modules by hand, five agents at a time: `platform/os`,
-     64 more in `os.c` (the pSOS binding, the kernel's records, the
-     `:DIAG:OS` reports), its task, exchange, segment and kernel records
-     local to it until they move to `smartclock.h`.
-     `applications/pll/pll_scpi`, 44 in `pllc.c`: the settings server,
-     the clamps and the descriptors' hooks and actions.
-     And the rest of `platform` (36: the arithmetic, the boot code,
-     start-up, the C library's), of the devices and services (35: the
-     log's pages, the clock record, the leap events, the PPS, the
-     timers, the LEDs) and `services/status` with the SCPI engine's
-     remainder (31); the two 64-bit divides reproduce `divs.l`'s wide
-     quotient now and agree (1277 agreeing, 8 skipped, 5 known, none
-     failed).  On the way: the decompiled `scpi_real_to_text` read the
-     digit pairs at `0x25c82` as a string literal, which past its end is
-     gcc's data, not the image's; typed `uint16_t[100]`, it reads the
-     ROM's.
-     Then a GPS request's sender and code named (`gps_request_sender`,
-     `gps_request_code`): the code's Oncore messages by the VP Oncore
-     Command Reference, its steps by `gps_console_request`, its
-     scripts by what they send.
-     Then the SCPI commands a file to a tree or subtree
-     (`scpi_source_gpsystem.c`, `scpi_source_ptime.c`,
-     `scpi_diagnostic.c`, ...), each with the hooks and actions pllc runs
-     for its settings, found from the descriptors and action records
-     that point at them; `pllc.c` keeps the server, the clamps and what
-     no one command owns.
-     Then the handlers by tree, five agents again: `:ROSCillator`,
-     `:SAMPle` and `:SYSTem` (65), `:ROBin`, `:LED`, `:OUTPut`,
-     `:FORMat`, `:SENSe` and the root's unsupported entries (66), all
-     agreeing; the names they shared through the include order moved to
-     `scpi.h`, and the exporter finds a definition whose result type
-     clang-format put on the line before.
-     `:FORMat:DATA`'s setting is `data_format`, ASCii or INTeger, by
-     097-59551-02, not ROBin's: ROBin's queries are only its users;
-     `:FORMat` and `:SENSe` take a file each.
-     And `:DIAGnostic`, `:STATus` and the common commands (78), and
-     `:GPS`, `:PTIMe`, `:PULSe`, `:KENneth` and `:DOUGlas` (72), all
-     agreeing; the firmware revision moves to `records.h` for `*IDN?`.
-     And the disciplining loop (56: `pllp.c`, `pll_stages.c`,
-     `pll_aging.c`, `pll_gps_control.c`), all agreeing, what its files
-     share in `pll.h`; `fine` waits on a label for its readings at
-     `0x10207c`, `enter_holdover` on a `void` prototype.
-     Then the loop's values where its records hold them: a stage's
-     result (`pll_stage_result`) and its `bool same_stage`, each `pll`
-     state field's own enum (`pll_coarse_state`, `pll_startup_state`,
-     ...), the screen's mode and suffixes, the FFOM by 097-z3801-01's
-     table, the aging fit's mode and the GPS acknowledgment awaited, in
-     `smartclock.h` and typed there, not as enums inside the functions
-     that write them.
-     Then the layout the owner asked for: DUART channel A's and B's
-     routines, self-tests included, in `duarta.c` and `duartb.c` beside
-     `duart.c`'s shared ones; the numeric descriptors' validators and
-     step routines out of `pllc.c` into `scpi_validators.c`; `:DANA?`
-     and `:RTCM?`, which work, out of the unsupported entries into
-     `scpi_misc.c`; and the board's six LEDs, OP2 to OP7, named
-     (`board_led`), the heartbeat `hmon_task`'s alone.
-     Then the names decided: `clock` +0x2f is `set`,
-     `holdover_within_limit`, the bridges' result registers and
-     condition codes `bridge_result_*` and `bridge_ccr` (not only pSOS's:
-     any bridged routine's second result), and one `cpu.h` macro,
-     `CPU_CALLERS_REGISTER`, for the registers the image reads as its
-     callers left them.
-     And the kernel's records and codes moved from `os.c` to
-     `smartclock.h` as `psos_task`, `psos_exchange`, `psos_kernel`,
-     `psos_service` and the rest, which `psos_call` and `psos_io_call`
-     take, so that every decompiled call names its service.
-     Then the prototypes the rewrites showed wrong: the text cursors
-     `char **`, the double routines `double` and `int64_t`,
-     `save_calibration_block`'s unread index, `status_report_from`
-     void, `load_double` a double step's routine.
-     Every SCPI handler takes its call as `scpi_call *`, and
-     `return_zero` the call's input port, which all 167 callers push
-     (`move.l (0x12,An),-(SP)`); `scpi_query_failed` clears the call's
-     `query`, so that no response is formatted, where the C had read a
-     response's length.
-     And the validators take the descriptor's six arguments with their
-     own types, the step routines `scpi_step_function`'s three; with
-     real step records the three the harness skipped run (1280
-     agreeing, 5 skipped, 5 known), and all of them are written by hand.
-     Then the results callers read as a byte: `qspi_queue_setup`'s,
-     which sets only `D0`'s low byte, a `uint8_t`, and the truth values
-     (`get_ffom`, `kenneth_*_get`, `get_date_time`, `format_time`,
-     `visible_satellites`, `satellites_in_use`, `position_settable`,
-     `survey_progress_text`) `bool`; the :KENneth resolution, -7, an
-     `int8_t`; `drtb_read` and `sci_read` the register routines
-     `drtb_write` and `sci_write` are (buffer in A1, length in D2), so
-     no longer C; `scpi_context_init` the context's fields, written by
-     hand.
-     And the data the C reached by address is labeled: the SCPI task's
-     response areas, a record for each of two sources (structures.md,
-     "The SCPI task's response areas"), the serial, `:SAMPle`,
-     `:PRINt` and `:INITial:POSition` descriptors, `klok_now`, and three
-     bytes nothing reads.
-     And the shapes the handler files each declared are shared:
-     `scpi.h`'s parameter and response item records
-     (`scpi_word_parameter`, `scpi_short_parameter`,
-     `scpi_float_parameter`, `scpi_long_parameter`, `scpi_short_item`)
-     in place of 22 private copies, and `smartclock.h`'s
-     `status_register_layout`, whose table `status_register_layouts`
-     (`0x2f79e`) status.c and scpi_status.c both read.
-     A rewrite that needs a field's coded values adds their enum to
-     smartclock.h's marked proposed section, never one of its own; the
-     lead moves it to its subject and types the fields on merging.
-     Wave 3: the self-tests, 47, all hand-written, with their test
-     numbers (`selftest_test_number`, which types `selftest_results.test`
-     and `selftest_execute`'s) and each test's failure bits in
-     `smartclock.h`, the DUART's and the GPS control's copies of them
-     gone.
-     And the GPS engine (91 functions: 75 hand-written, the rest on
-     prototypes still wrong), the status screen (30 of 32) and the
-     console's words (93 of 94), in gps_requests.c, gps_oncore.c,
-     gps_task.c, gps_receiver.c, gps_reports.c, screen.c and console.c.
-     Their enums are smartclock.h's coded values now, typing the gps,
-     pll, counter and snapshot fields and the globals they name; a
-     satellite list entry and its cell, which format_satellite_cell
-     takes by value as the image's callers push it, are shared
-     records, and the snapshot's lists are named for what they hold,
-     tracked and not.
-     Then the prototypes wave 3 showed wrong, each checked in the image:
-     the Oncore decoders return the next cursor, gps_request_build a
-     word, raim_monitor and diag_pr_hold_cause nothing; the screen's
-     list routines take the records they are given
-     (gps_visibility_record, satellite_list_entry), and format_date a
-     calendar_date, the long its callers push.
-     With those, the rest of the GPS engine, the screen and the console
-     by hand (all 91, 32 and 94): the Oncore's message table typed,
-     its encoders and decoders `oncore_encoder` and
-     `oncore_decode_function`, its kinds and match kinds enums; a step's
-     argument mode (`gps_argument_mode`), the match's verdict and the
-     kernel's timeout error (`psos_error`) shared enums.  The table holds
-     the image's own routines, which return a pointer in D0 alone, so
-     the C calls them as returning a long (gcc takes a pointer from A0).
-     The in-line string length and copy and the `lsl.l` bit, each
-     written three times, are one each (`libc.h`, `cpu.h`), and the
-     satellite IDs are `gps.h`'s.
-     Then the installer's C, in `installer/installer_<module>.c` files
-     (modules.md, "The hand-written files"): a copy that reads nothing
-     of the installer's own shares its twin's body through the group's
-     header, the rest are written on the installer's globals.  Typing
-     the installer's kernel configuration and I/O table, and naming its
-     tasks' entries, made Ghidra find about 60 installer functions it had not
-     (its root, spool and SCPI tasks, its I/O calls and its SCPI
-     engine), each named after the primary function it copies.  The
-     SCPI parser's bodies moved to headers (`scpi_lexer.h`,
-     `scpi_tree.h`, `scpi_parameters.h`, `scpi_engine.h`), each taking
-     its image's tables, so that the installer's parser is wrappers;
-     `scpi_header_resolve` and both `scpi_task`s are written by hand.
-     The installer's `float_raise` is variadic, as the primary's is, and
-     `scpi_interpret`'s harness cases all skip, so those stay the
-     decompiler's in both.  `doprnt`, the C library's printf engine,
-     is one body in `libc.h` for both images, proven by 24 vsprintf
-     formats, six of them new: strings, argument widths and
-     precisions, zero padding, the alternate forms and three-digit
-     exponents.
-     Wave 4, the stragglers: the kernel's I/O close and control and
-     the OS reports, the QSPI queue and `scpi_real_to_text`, the
-     self-test's failure report and its run, the loop's `fine` and
-     `enter_holdover`, and the system's start, `system_init` and
-     `root_task`, in a `main.c` of their own.  `system_init`'s cases
-     give the preserved region a good checksum, restored or not, and a
-     bad one, so that the warm start runs; `fine` and `enter_holdover`
-     were also run from random loop states outside the harness, 11200
-     cases with none differing.  The nine debug flags are one array,
-     `dmes`, by `task_debug_flag`, and the counter's mode and state
-     pairs are enums.
-     Then the harness: `root_task` runs as a task in user mode with
-     `ident` failing, to the end of its idle loop's 101st count
-     (`IDENT_FAILS`, `COUNTED_LOOPS`); `STATES` presets C variables and
-     hooks routines by case, for `fine`, `enter_holdover` and
-     `root_task`; a parameter of type `status_error_queue *` is given a
-     real queue; and the running task's stacks are filled
-     (`TASK_STACKS`), so that `task_stack_report` and
-     `:DIAGnostic:OS:STACk?` run and are written by hand.  Starting
-     `root_task` in user mode showed that the exporter's
-     `enter_supervisor` bridge saves registers on the user stack and
-     restores them from the supervisor's, so the hand-written C calls
-     the routine itself (`cpu.h`'s `cpu_enter_supervisor`).
-     Then the exporter gives a routine that needs no moves and keeps
-     gcc's callee-saved registers no wrapper: `enter_supervisor` and the
-     installer's copy, the only bridged routines that change stacks, are
-     called directly.  gcc pops each call's arguments at once
-     (`-fno-defer-pop`).  And every function that runs only in a task,
-     663 found from the export's direct calls (`task_context`), starts
-     in user mode, a case falling back to supervisor mode on a
-     privilege violation (none does); kernel service 33 returns in
-     supervisor mode and `move (SP)+,SR` is done by the harness, since
-     Unicorn increments the stack it switches to.  User mode found one
-     bug of the hand-written C, `eeprom_lock` and `eeprom_unlock`
-     leaving their caller in supervisor mode where the image moves the
-     status register back at once (`0x30fc8`, `0x3107c`); the counts
-     are unchanged.  `cpu_enter_supervisor` stays, an asm statement, so
-     that `set_interrupt_mask`'s result keeps its caller's condition
-     codes; as a C call it differs as the installer's does.
-     Then the installer's `set_interrupt_mask` enters supervisor mode
-     the same way (`cpu_installer_enter_supervisor`) and agrees, its
-     `KNOWN` entry gone.  `psos_start` passes no mode: the kernel's
-     start reads only the task and its entry (`0x14ea0`), and every
-     task starts in user mode with its interrupts unmasked, from its
-     record's `+0x44`, which `kernel_create` clears (`0x14e5c`).  The
-     tasks that open with service 33, `klok_task` and `spoo_task` and
-     the installer's, run on in supervisor mode, so what only they
-     reach is no longer started in user mode (610 and 40 functions of
-     the two images in place of 621 and 42); and no SCPI handler is
-     reached but through the tree's slots, from the SCPI task.
-     Then a survey of ROM that is neither code nor typed data: about
-     110 KB, two thirds of it erased; `SmartClockUntyped.java` repeats
-     it, into `third_party/firmware/IMAGE/untyped.tsv`.  The GPS
-     scripts' ROM steps, the
-     Oncore ID pool, the pForth headers' head, the diagnostic words'
-     table, the FPGA bitstreams and the unused I/O stubs are typed;
-     13 routines nothing calls are named, three of them, which the
-     decompiler read wrong, written by hand.  The SCPI tree's records
-     are the generator's.
-     Then the last of the decompiler's C functions, 0 left in either
-     image but thunks: the harness runs a variadic function on its
-     callers' lists (`VARIADIC_CASES`), and the parser's loop on SCPI
-     sessions read from the console's line (`SCPI_SESSIONS`).  The
-     printf family, `sprintf`, `log_write` (two longs, whatever the
-     format) and `float_raise`, its body one in `libc.h` for both
-     images, are written by hand, as are `scpi_interpret`, its body in
-     `scpi_engine.h` calling each image's routines through a table, and
-     `setjmp` and `longjmp`, the image's instructions in asm statements,
-     which agree: `setjmp`'s `KNOWN` entry is gone.  The 11 routines the
-     ROM survey named are written by hand too.  `float_raise`'s cases
-     found that its reports' addresses are chosen three ways
-     (`quirks.md`).
-     Then the installer's 25 that its generated tree brought in, 0
-     left in either image again: its 11 converters' and formatters'
-     copies share their twins' bodies, moved to `scpi.h`,
-     `scpi_parameters.h`, `status.h` and two new headers,
-     `scpi_convert.h` and `scpi_format.h`; its nine handlers are
-     written on its own globals (`installer_scpi_common.c`,
-     `_system.c`, `_diagnostic.c`); and the five routines analysis
-     found are named, four by their bytes as the status system's
-     (`installer_status_clear_events`, `installer_error_queue_clear`,
-     `_read`, `_pop`) and one by what it does,
-     `installer_flash_program_word`.  Typed as their twins, the queue's
-     three run all eight cases, not one.  `:DIAGnostic:ERASe` and
-     `:DOWNload` are read in `restart.md`, "The installer"; the harness
-     runs them only to their first flash write.  Counts unchanged:
-     the primary's 1308 agree, 4 known; the installer's 155, 1 skipped.
-     Then the harness compares what its cases had not.  The registers
-     a function's convention keeps for its caller, D2 to D7 and A2 to
-     A6 for C and those the sidecar's `preserves` adds, are compared
-     after both copies return (`harness.preserved_registers`): three
-     hand-written functions did not keep what the image's do --
-     `float_raise` and its installer copy A0 and A1, for the soft-float
-     routines, and `duartb_reconfigure` and `sci_reconfigure`, I/O
-     control functions, which return no error in D7 -- and are now a
-     C body inside an asm wrapper (`cpu.h`'s `CPU_KEEPING_A0_A1` and
-     `CPU_IO_FUNCTION`); `gps_debug_status` clears its own saved A4's
-     low byte when a channel's text is empty, the firmware's, known
-     (`quirks.md`).  The SCPI parser's lookups are drawn from the whole
-     tree, not its root: a path, a child list and a keyword from any of
-     the 121 lists, `scpi_header_step` a case for each of the 147 nodes
-     with children, and the sessions a query below every list, so that
-     a node's child list planted wrong fails `scpi_header_step` and
-     `scpi_interpret`, and the installer's `installer_scpi_interpret`,
-     whose sessions had read the C's tree in both copies.  A pointer
-     into an object with a twin is the same only as its twin's, not as
-     an empty text.  A handler's choice parameter is in range, and the
-     installer's handlers get call records; the installer's sessions
-     end with its `"PRIMARY"`.  `console_task` and the tasks `spawn`
-     starts are task entries, and a function `spoo_run` is given runs
-     in the spool task's supervisor mode too: a function that a task in
-     user mode and code in supervisor mode both reach runs every other
-     case in each (225 of the primary's, 20 of the installer's).  The
-     primary's 1307 agree, 5 known; the installer's 155, 1 skipped;
-     about the same 2 minutes 15.
-     Then the functions a survey of the installer's code and RAM found,
-     and six nothing calls in the primary, 0 left in either image again
-     but thunks and assembly: `psos_version`, whose service 0 returns
-     the version in D7, where the decompiler's trap set no service; the
-     exception hook's three setters, `current_task_id` and `atexit`; and
-     about 80 installer copies, those that read nothing of the
-     installer's own sharing their twins' bodies, moved to `os.h`,
-     `libc.h` (`setjmp` and `longjmp`'s asm, now one for both images),
-     `records.h`, `status.h`, `scpi.h` and the SCPI headers, the rest
-     written on the installer's globals, `installer_pllc_request_a` to
-     `_e` on a `pllc_request` as their twins, where the decompiler's
-     loose locals laid the message out wrong.  `float_raise`'s body
-     reads its caller's frame only on the branches whose report gives
-     its caller's return address, as the image does (`0x5ec00`, a quiet
-     NaN, returns without it).  The primary's 1313 agree, 5 known; the
-     installer's 235, 1 skipped.
-     Then the C agrees under gcc 13 too (Ubuntu 24.04's), where three
-     functions and console session 4 had differed, each the C relying
-     on what gcc 15 happened to do: `set_interrupt_mask` and
-     `enter_supervisor_mode`, and their installer copies, are bodies
-     inside `cpu.h`'s `CPU_GIVING_CALLERS_CCR`, a wrapper that reads
-     the caller's condition codes before gcc's code can set them, since
-     no constraint says an asm statement reads them;
-     `fit_quality`'s unset local is volatile, so it is read from the
-     frame's slot as the image's; and `libc_doprnt` and
-     `libc_sprintf_put` are always in line, so that `mem_rep`'s
-     printing, one call shallower each, no longer reaches the console's
-     data stack, 1 KB below its return stack's top.  A sweep found
-     `CPU_CALLERS_REGISTER`'s asm statements, without inputs and of one
-     template, merged by both compilers where a function reads two or
-     three registers (`os_report_process`'s D6 read as D5,
-     `:DIAGnostic:QUERy:RESPonse?`'s A3 and A4 as A2); volatile, now.
-     Counts unchanged.
-
-  Costs: the wrappers, the harness and the link; then the long tail of
-  decompiled functions that are wrong in ways only running them shows.
-  A whole image is proven only on a unit or a model of the board.
-
-  Decided 2026-10-22: the SCPI command tree becomes C data, every node,
-  child list, keyword pair, handler entry, parameter, response item and
-  choice list, generated, not written by hand, by `smartclock-cli
-  dump-scpi`, which already finds each image's tree by its shape: a
-  `--c` output for the C and a `--names` output of label and type rows
-  for Ghidra's Setup, records named by their command path
-  (`scpi_node_SYSTem_LANGuage`).  It is for every image, not only this
-  one, so it refuses a record it cannot check rather than guess, and
-  `cargo test` pins its output for each image as it pins `models.md`.
-  The firmware C reads the generated tree in place of ROM's (the
-  exporter drops the `.set` of a global the C defines), and the harness
-  maps an address in the C's tree to its twin in ROM's, so that the
-  parser's functions, which return nodes and lists, are proven on it.
-  Costs: thousands of generated lines in `rewritten/`; the harness's
-  address map; the records `dump-scpi` does not yet read.
-  Done for the Z3805A 3543B: `--c` and `--names` read every record of
-  every image's tree, the installer's too, and `make scpi-tree` writes
-  the Z3805A 3543B's, `scpi_tree_data.c`, whose 2055 objects, 1933
-  records and 122 lists' children, and its installer's,
-  `installer_scpi_tree_data.c`, 38 objects, `make check-scpi-tree`
-  finds the image's bytes (docs/scpi/README.md, "As C"); the other
-  images' C waits on names for their converters and formatters.  The types
-  settled first: a node is `0x32` bytes, its last 14 zero and read by
-  nothing; a parameter's kinds hold six converters, not a flexible
-  array; a response item's third field is `scpi_choices *`, as is
-  `scpi_parse_choice`'s list; a handler takes `void *` parameters, as
-  Setup types every one; and every child list, the main tree's too, is
-  a `scpi_child_list`, its children an array of their own, which Ghidra
-  types from a names row and the C defines, since Ghidra exports a
-  flexible array as one of no elements, which C cannot initialize.
-  The fields stay pointers to non-`const`: Ghidra's types, which the
-  exported C compiles the tree with, keep no `const`, so a record's
-  pointer is cast.  Wired in: the exporter includes every `.c` file of
-  the folder, data alone too, and so declares the tree's globals
-  `const` with no `.set`; the harness maps a pointer into a C object to
-  its twin's place in ROM (`harness.Twins`, from the link's objects and
-  the names files' labels) and gives gcc's copy the twin of each image
-  object it gives a call, and gives a lookup's keyword a real one, so
-  that the parser's routines are proven on the C's tree: a planted swap
-  of two root children, or a changed keyword, fails
-  `scpi_node_find_with_defaults`, `scpi_header_resolve` and
-  `scpi_header_step`.  A record's even address is
-  `__attribute__((aligned(2)))` at the record, not a `#define`, and
-  `make check-decompiled` checks the full link's layout too
-  (`rebuild_link.py`): each list's children right after it, every
-  record but text even.  The installer's tree is C too,
-  `installer/installer_scpi_tree_data.c` and
-  `IMAGE/installer-scpi-tree.tsv`, 38 objects: its six converters and
-  formatters and their five callees are named for their primary twins,
-  matched by bytes, and its nine handlers for their paths, by the
-  generated rows, which Setup takes as a third names file; the harness
-  gives each profile its own parser objects (`harness.ScpiObjects`), so
-  that a keyword or child planted wrong in the installer's tree fails
-  `installer_scpi_node_find_with_defaults`,
-  `installer_scpi_header_resolve` and `installer_scpi_header_step`.
-  Left: Setup taking the generated rows, so that Ghidra labels each
-  record and the exporter declares it.
-
-  Done 2026-10-22, the bridge rework (option B): a routine that returns
-  in the condition codes or in registers beside its result's --
-  `psos_call`, `psos_io_call`, `clock_record_sum`, `pforth_link_word`,
-  the SCPI engine's number routines and the installer's copies, 11 --
-  has no bridge and no prototype, and the globals the bridges kept them
-  in, `bridge_ccr` and `bridge_result_*`, are gone: another task's
-  kernel call could overwrite them between a call and its caller's
-  reads, where the image keeps them in registers.  The hand-written C
-  calls each in one asm statement that binds its registers and reads a
-  flag with `Scc` (`os.h`'s `os_psos_call` and the like, `clock.c`,
-  `console.c`, `scpi_convert.c`; docs/firmware/README.md, "Hand-written
-  C"); the exporter's passes that wrote the readings' assignments from
-  the globals went with them.  The function check compares the
-  condition codes after a function whose convention returns in them
-  and no other (none it runs has one), prints the user-mode figures
-  `docs/firmware/README.md` gives, which `make check-report-figures`
-  checks against the saved report, and runs `scpi_number_to_double` on
-  numbers that convert, which its generated cases never did.  Planted
-  bugs fail: a wrong result register (`psos_get_block`'s A0 for A1), a
-  wrong `Scc` (`seq` for the binding's `sne`, `sne` for
-  `clock_record_sum`'s and `scpi_bcd_to_double`'s `seq`), and a
-  wrong clobber (D2 an input of the binding's call; D2 to D7 left out
-  of `scpi_bcd_to_double`'s, which the preserved registers show).  A
-  kernel model that changed the registers a service does not return in
-  stopped 32 functions in `mutex_acquire`, which keeps its lock in A1
-  across ident (`0x10442` to `0x1044a`): the kernel keeps them, and the
-  model does.  Left then: the soft-float, mutex and other routines that
-  return only their result, still called through their bridges, which
-  hold no state; done below.
-
-  Done 2026-10-22, the bindings: the exporter writes no bridge at all.
-  A routine that takes its arguments in registers and returns only its
-  result has no prototype and no `c_` wrapper; a header of
-  `rewritten/bindings/`, which the exported C includes after its
-  prototypes, in their place, defines a function under the routine's
-  name and prototype that binds its registers and makes the `jsr` in
-  one asm statement whose outputs and clobbers are exactly what the
-  routine changes, read from its code and its callees' (a register-flow
-  reading of the image, every path and call, pushes and moves aside
-  kept as kept, cross-checked by the run): `softfloat.h` (40 and the
-  installer's 5), `mutex.h` (5 and 5), and `stack.h`, `clock_record.h`,
-  `pforth.h`, `sci_token.h` and `scpi_decimal.h`, those of the rest the
-  C calls; 31 that no C calls, the kernel's internals and the devices'
-  entries among them, have none.  `bridge_check.py` now runs each
-  binding through a check function gcc compiles, which keeps 14 values
-  across it in whatever registers the statement leaves gcc, against the
-  routine called directly: all 66 agree.  The pSOS binding has a shape
-  for each service and I/O function (`os.h`, `OS_SERVICES`,
-  `OS_IO_FUNCTIONS`): it loads only what the service reads and names
-  changed only what its handler changes, results and scratch alike (A0
-  where an id of 0 gives the running task, D0 where a wait counts
-  down), so that gcc keeps D2 and D3 across a service that keeps them,
-  as the image's stubs do; the harness's kernel sets each such scratch
-  register too (`harness.Service.changes`), and its model of create
-  partition no longer changes A0, which the kernel keeps.  Planted bugs
-  fail, one a family: A1 out of `float_add`'s clobbers, D7 out of the
-  mutexes' outputs, D6 out of the clock record's clobbers, attach
-  exchange's D2 taken as kept; an input register taken as kept cannot
-  fail where nothing reads it after the call.  With them: a QSPI write
-  is recorded by the words `qspi_queue_setup` sends for its minor
-  device, every one, not D2's count of bytes; the console port echoes
-  each line as `drtb_gets` does, recorded with the line; the report
-  counts the console sessions on a line of their own, which
-  `check-report-figures` checks; and `report-decompiled` runs
-  `check-report-figures` after writing the report.
-
-  Done 2026-10-22, the harness's status register: Unicorn 2.1.4's m68k
-  read of SR (`qemu/target/m68k/unicorn.c`) sets QEMU's `cc_op` to
-  `CC_OP_FLAGS` before computing the CCR, so it returns the last
-  flag-setting instruction's operands read as flags and, from an
-  interrupt hook or after a run stops, leaves the CPU with them; a
-  write of PC from a code hook loses the codes as well, `cc_op` being
-  the translated block's until it ends.  The harness read SR so
-  in trap #1 and #7, kernel service 33, interrupts, `rtr`,
-  `move (SP)+,SR` and a call's final status, and took interrupts by a
-  PC write from its step hook.  Now the system byte comes from a saved
-  context, the CCR from a probe, `move.w %ccr,(abs).l`, which a trap's
-  hook sends the CPU through and a call's end runs, and an interrupt is
-  taken between runs, the step hook stopping the first and counting
-  instructions to STEP_LIMIT across them.  A planted wrong flag
-  (`1 cmp 2` against `2 cmp 1`, then `rts`) read `00` in both copies
-  before and is caught now; service 33 and an interrupt between a
-  compare and its `scs` now keep the compare's C.  Every figure is
-  unchanged: no function the harness runs returns in the condition
-  codes, the system byte was always read right, and no case's result
-  depended on the codes across a trap or interrupt.
-
-  Done 2026-10-23, the check of the Unicorn bugs:
-  `tools/firmware/unicorn_check.py` (`make check-unicorn`, run first
-  by `check-decompiled`, so in CI) asserts both bugs as Unicorn 2.1.4
-  shows them, the read after a stop and in a trap's hook returning
-  `00` and the CPU going on with it, and a code hook's PC write losing
-  the codes, and that the harness's workarounds give the right codes,
-  so that a Unicorn whose behavior differs fails it and the workarounds
-  are revisited rather than kept by habit.  Upstream, #2380 reports the
-  read and `dev`'s `5d5da58` (#2420, 2026-10-17) removes the
-  assignment, unreleased; the PC write's loss has no report.
-
-  Done 2026-10-23, the check keyed on behavior: each case of
-  `unicorn_check.py` says whether the installed Unicorn shows its bug
-  or the fix and fails where that differs from its `Bug.expected`,
-  printing the planned action; the version is only reported, since
-  `dev` (2a05c41831, 2026-10-18) still calls itself 2.1.4.  On `dev`
-  bug 1 shows fixed and bug 2 present, so the check fails saying to
-  drop the SR-read workaround and keep the PC-write one.  Bug 2 has
-  three more symptoms, all of the translator not storing its lazy
-  `cc_op` before a code hook part way through a block, now pinned as
-  present on 2.1.4 and `dev`: a read of SR from the hook returns stale
-  codes; a write of SR from it is read by the rest of the block as the
-  operands of the instruction that set the codes; and a write of SR
-  from it on an instruction that then faults is undone by
-  `restore_state_to_opc()`.  Audit: the harness's code hooks read SR
-  only through a saved context and keep only its
-  system byte, which is not lazy, and write SR only with PC
-  (`status_pop` and `probed` going on with a trap), the PC write ending the block before the instruction runs,
-  so neither the rest of the block nor a fault sees the write; every
-  other SR read or write is in an interrupt hook, where QEMU has
-  stored `cc_op`, or outside a run.  The check pins that last pattern
-  too.  Planned upstream, filed by the user: an issue and a PR for bug
-  2, storing `cc_op` in `m68k_tr_insn_start()` for an instruction a
-  code hook covers and going on `CC_OP_DYNAMIC`, with four unit tests;
-  with it `dev`'s ctest and `test_m68k` pass and the check shows both
-  bugs fixed.  When a release has #2420, bump the pin, drop the probe,
-  set `BUG_1.expected` to fixed; likewise bug 2 and the stopped run.
-
-  Done 2026-10-23, the harness's checks of what the gcc 13 sweep
-  found: cases start the registers a function reads as its caller left
-  them (`CPU_CALLERS_REGISTER`), so that `:DIAGnostic:QUERy:RESPonse?`
-  from another port and `os_report_process` and its callers fail with
-  the asm statement not `volatile` and pass with it; the callers'
-  `KNOWN` pattern takes only the stack-share column, so that the D6
-  column is compared.  Decided: the stack's headroom is a difference,
-  not a figure alone: a case differs where gcc's copy goes more than
-  192 bytes deeper than the image's on a stack (176 the deepest now,
-  `float_raise`), or more than 16 bytes, or past the floor, where
-  another use's memory lies below (a console session's data stack); a
-  figure alone would let `libc_doprnt`'s stack, 54 bytes deeper and 4
-  above the data stack under gcc 15, pass unremarked, as it did until
-  gcc 13 crossed it.  What cannot be told so: a task whose image use
-  is near full elsewhere, whose stack the harness does not model.
-  Every `register` routine has a binding, the 25 no C calls in
-  `kernel.h`, `drtb.h`, `string_device.h`, `qspi.h`, `stack.h`,
-  `clock_record.h` and `scpi_decimal.h`, 91 checked, the check
-  function's live values stored to an array of their own, which caught
-  a planted clobber the old one missed; six of other conventions have
-  none (docs/firmware/README.md).  The pSOS binding's `failed` is D7
-  not 0, as the stubs' Z is, not an `sne` whose register, D2, D3 or D4,
-  gcc saved: 15 of 16 stubs now save what the image's do, and the
-  binding has no `Scc` left to plant wrong.  A QSPI
-  write is recorded transfer by transfer at its width, BITSE and
-  SPCR0's BITS (MC68331UM 6.3.5.1), so that unsent bits are not
-  compared.  Counts unchanged.
-
-  Done 2026-10-23, the magic-number check: `make check-magic-numbers`
-  (`tools/firmware/magic_check.py`, docs/firmware/README.md,
-  "Hand-written C") reads the hand-written C through clang's syntax
-  tree within the export and fails on a literal where an enumerator, a
-  register header's bit or a named constant of its value is, and on a
-  constant defined twice; a justified one is a row of the image's
-  `magic-allow.tsv`, with its reason.  Decided: a check, in CI, since
-  the checked kinds leave three rows to justify; whether a literal
-  passed as a parameter, or given to one thing in several functions,
-  means the same each time is a reader's call, so those are reported,
-  never checked.  Its first pass found 13 literals with enumerators,
-  three without, which `GPS_SENDER_NONE` and `FPGA_CONFIGURATION_LAST`
-  now name (and `PSOS_TASK_READY` the status `task_status_name` calls
-  " RDY"), one for a coded field (`selftest.eeprom`), two where a
-  constant was named elsewhere (`preserved_region.restore`, now a
-  `preserved_region_restore`), and 64 constants defined in more than
-  one place, now in the headers the files share; the compiled
-  functions are the same instructions.
-
-  Decided 2026-10-22: the pForth kernel's 154 words (183 routines in all) stay the
-  image's assembly, exact by construction (check-decompiled proves the
-  bytes); the C diagnostic words are tested further by pForth console
-  sessions in the harness (the real interpreter on input lines, its
-  output, stack and dictionary compared), and every image gets a
-  generated table of its words' stack effects, flags and use in
-  docs/firmware/pforth/, checked as module_figures checks modules.md.
-  Both after the bridge rework (option B: register-bound inline asm in
-  place of the exporter's bridges, Scc for a returns=ccr result).
-  Progress: the table is written, `docs/firmware/pforth/IMAGE-words.md`
-  from `tools/firmware/pforth_words.py` (no Ghidra; python3's
-  capstone), checked by `make check-pforth-words` and rewritten by
-  `make pforth-words`.  It finds the dictionary by shape (`user`'s
-  header, the one whose code pushes it) and the diagnostic table as
-  dump-scpi finds the tree, refusing rather than guessing; reads each
-  kernel word's stack effect from its code, every path and callee, A6's
-  pops and pushes, with a sentinel rule for the printing words' push
-  and pop loops, an index rule for `pick` and `.s`, and a split rule for
-  `?dup` and `fill`, whose effects hang on a cell: 147 of 154 in every
-  image, `abort` not returning and 6 `?` (`interpret`, `number`, `0x`,
-  `execute`, `watch`, `halt`); and takes a diagnostic word's from its
-  table entry's counts.  All eleven well-known words checked agree with
-  the standard effects.
-  A word's use is a one-line description, from the names file's note
-  (Z3805A 3543B only) or console.md, blank for most.
-  Progress: the console sessions run, as `console_init`'s cases in
-  `function_check.py` (`CONSOLE_SESSIONS`, `CONSOLE_LINES`): each copy's
-  `console_init`, then its `console_task` entered as the kernel starts
-  a task, on eight sessions of lines (arithmetic, hex, a definition, an
-  unknown word, seven diagnostic words across their argument and result
-  counts, `words`, `halt`), the harness giving the string device's
-  phrase and DUART channel B's lines as their drivers do and ending at
-  the input's end or the task's delete of itself; the output, each
-  read's data stack, user area and dictionary pointer, and RAM are
-  compared.  All agree.  A wrong result planted in `diag_adc_read`, an
-  argument order swapped in `diag_hdac_write` and a dropped result push
-  in `pforth_define_word` each fail a session.  They found
-  `diag_hdac_write`'s parameters misnamed (value, then channel, as
-  `hdac_write` takes them; renamed), and that a QSPI write's recorded
-  bytes are its count's, not its words', so that a later word's
-  difference shows only in RAM (harness; done since, the bindings'
-  entry).
-
-  Decided 2026-10-22, the firmware layout: one folder per image under
-  `third_party/firmware/`, holding everything that image's work is:
-  `third_party/firmware/IMAGE/` with its `smartclock.h` and
-  `check-layout.c` (from `tools/ghidra/types/`), its names files
-  (`names.tsv`, `scpi-tree.tsv`, `installer-scpi-tree.tsv`,
-  `modules.tsv`, `results.tsv`, from `tools/ghidra/names/`), the
-  generated `handlers.txt` (from `tmp/`), `rewritten/` (from
-  `third_party/firmware/rewritten/IMAGE/`), `decompiled/` (from
-  `third_party/firmware/decompiled/`) and `untyped.tsv` (from
-  `docs/firmware/untyped/`).  The image-independent headers,
-  `mc68331.h`, `mc68681.h` and `psos-signals.h`, go to
-  `third_party/firmware/include/`.  The images, the EEPROM dumps, the
-  bitstreams and the Ghidra archive stay where they are, and tables
-  written for reading (the pForth word tables) stay in
-  `docs/firmware/`.  The firmware's make targets move to
-  `third_party/firmware/Makefile`, which runs on its own (`make -C
-  third_party/firmware TARGET IMAGE=...`, every image without
-  `IMAGE=`), the top Makefile delegating each by name.  `third_party/
-  NOTICE` is amended to say the image folders and the Makefile are the
-  project's own analysis of the vendor's material.  Each image's header
-  keeps the name `smartclock.h`.  Done as refactor commits, each with
-  the export unchanged and every check green: the shared headers, then
-  the image folder, then the Makefile, then NOTICE; after the pForth
-  console sessions land.  Done 2026-10-22,
-  in those four commits.  The export changed in its includes only,
-  `"../rewritten/FILE"` for `"../rewritten/z3805a-3543b/FILE"`, which
-  the exporter computes from the export's folder to `rewritten=`; the
-  counts are unchanged.  `handlers.txt` is checked in, written by `make
-  handlers`, and a test fails while it is stale; an image's checks keep
-  what they make in `target/firmware/IMAGE/`.
-
-  Then a coverage push on the harness itself (2026-10-22), each part
-  proved by a bug planted in the hand-written C that it catches and
-  the generated cases let pass.  Device reads are effects, in order
-  with the writes and kernel calls, and the polled registers answer by
-  a case's devices (`harness.DEVICE_CASES`): busy for some polls,
-  characters waiting, a receive error, an input that bounces, an
-  EEPROM write cycle and its failure; a debounce one read short or a
-  dropped read of SPSR fails.  The installer's flash is a model of its
-  AM29F010s' commands and status (`harness.Flash`), so that the word
-  programmer, `:ERASe` and `:DOWNload` run to their end and their
-  contents and polls compare; a wrong unlock address, the range's end
-  and an `s` taken for `S` fail.  A case may take an interrupt part
-  way, after the k'th read or write of a variable, as the CPU32 takes
-  one (`harness.Interrupt`): the QSPI's end of queue in `qspi_start`'s
-  wait, the DUART's receive and transmit in the loopback test's, the
-  tick in `interval_wait_reading`; removing either wait's `volatile`
-  fails.  And cases of their own for the paths recent batches reported
-  unreached (README.md, "Hand-written C"), each found by its planted
-  bug.  Two C changes came with it: `float_raise`'s wrapper passes
-  its body the arguments in place, so that it reads only the operands
-  the image reads for the cause, which a case at the stack's edge
-  checks; and named constants for the unsigned long converter and the
-  pllc request's event.  The installer's writes to ROM's range now
-  reach the flash, as chip selects 6 and 7 make them on the board; one the
-  parts ignore, a stray pointer's, ends the call as a write to ROM did.
-  Not modeled: the primary's own writes
-  to ROM's range, which on the board reach the flash too.
-
-  A pre-publication review of the rewrite (2026-10-22) found three
-  calls into the image's code in gcc's layout or against the image's
-  table, each now with its case and planted bug: `gps_request_build`
-  called the ROM encoders with gcc's 4-byte slots, so the index's high
-  bytes made the output pointer; the SCPI lexer looked up a
-  sign-extended high-bit character in a C copy of its class table, not
-  the bytes before the image's, and so `atoi` in the C's `ctype_table`;
-  and the line readers passed their echo the character where gcc reads
-  it, not at the 2-byte slot's start the image's `drtb_putc` reads.  The
-  C copies of the two tables are gone; the encoders take one structure
-  laid as the image's slots; the echo is given the character at both
-  ends of its slot, since it may hold either copy.
-
-  Left for a later pass: the firmware routines' names do not carry
-  their file's prefix as the hand-written helpers do (`ti.c`'s
-  `counter_arm` and `interpolator_calibrate` beside `ti_measure_both`);
-  renaming them is a names-file change, through the pipeline, of each
-  routine and its callers.
-
-  Decided 2026-10-21: a register the image's code uses as its caller
-  left it (D2, D3, D5, D6) is read at entry by one inline-asm helper in
-  `cpu.h`, commented at each use and listed in `quirks.md`; the
-  bridges' result registers are named `psos_result_d0` and on, not
-  `__ghidra_`; a firmware fault the C can reproduce, it does, even
-  where its callers are then skipped; a hook keeping a module's own
-  state sits with that module; `clock` +0x2f is `set` (written by
-  `set_timedate` and cleared by `clock_init`; `get_date_time` returns 1
-  for not set); `holdover_limit_exceeded` is `holdover_within_limit`;
-  the kernel's records are `smartclock.h`'s `psos_*`; `doprnt` is
-  written once `vsprintf` has cases of its every path,
-  `set_interrupt_mask` stays assembly, and `hmon_task` and
-  `interpolator_verify` are written with the register helper.
-
-  The SCPI command table as C, generated from the image, is done
-  (above, "Done for the Z3805A 3543B"): its trees,
-  every node, list, keyword, descriptor and entry in the ROM's order,
-  the unused and unsupported ones too, in one generated file per tree,
-  not each subtree beside its handlers, and `make check-scpi-tree`
-  finds the compiled records the ROM's bytes, pointers compared by
-  what they point at.  Not done: the pForth words, which are
-  hand-written assembly, not C (one branches into another's body; A6
-  is the data stack), as assembly files beside the hand-written C;
-  they are still the export's listing.
-
-  Done 2026-10-24, the 58503A 3704 in C (`docs/firmware/58503a-3704.md`,
-  "The function check"): the same standard as the Z3805A's, nothing skipped that
-  can run and every known difference a firmware fault.  Figures:
-  primary 1415 agreeing, 5 known, 0 skipped, 0 failed; installer 247,
-  1 skipped (the Z3805A's own), 0 failed; console sessions 8 of 8; the
-  Z3805A's unchanged; `make check-report-figures` checks these and the
-  rest the documents quote against its report, as the Z3805A's against
-  its own.  `.github/workflows/firmware.yml` runs its
-  checks beside the Z3805A's, and `make check-image-diff` its diff
-  against the Z3805A (`tools/firmware/image_diff.py`) and the names
-  seeded from it (`tools/firmware/seed_names.py`).
-
-  Decided 2026-10-22: a second image is ported by copying the first's
-  work, not by sharing it from the start.  The 58503A's `rewritten/`
-  and `smartclock.h` began as copies of the Z3805A's, its names and
-  modules seeded from `tools/firmware/image_diff.py`'s matches of the
-  two images (`make image-diff`), then named, typed and rewritten from its own code; the Z3805A's tree
-  is not touched.  Shared functions move to a common folder only if a
-  third image comes.  Cost: about 30,000 lines held twice, and a fix to
-  a function the two share made in both, in the same commit.
-
-  Decided 2026-10-24, per-image tool tables: what the function check
-  gives an image other than the base, the Z3805A 3543B, whose addresses
-  its tables are, is kept in tables keyed by image or held by the
-  image's profile, each entry found in that image's own code and cited
-  there (`harness.IMAGE_PROFILES`; `function_check.py`'s `IMAGE_KNOWN`,
-  `IMAGE_GIVEN_CASES`, `IMAGE_SET_UP_REQUESTS`; `Profile.bounded`,
-  `Profile.qspi_widths`), never a base entry widened.  Why: a port's
-  quirks show as that port's, and the Z3805A's figures cannot move.
-  Cost: each known difference needs its cause in the image's code.
-
-  Decided 2026-10-23: the export leaves out the decompiled reading of a
-  function written by hand, a line `/* NAME: rewritten in FILE */` in
-  its place, so that the names an analysis gives inside a reading
-  cannot change the file; the reading's calls go in the sidecar
-  (`"rewritten"`, `"calls"`, `"passed"`).  Three bare imports of each
-  image give byte-identical exports.
-
-  Decided 2026-10-24, the CPU32's libgcc: the link takes a libgcc built
-  for the CPU32 with soft float from GCC's own source
-  (`tools/firmware/cpu32_libgcc.py`), not the toolchain's, which is a
-  68020's with a 68881, whose float conversions use the FPU and whose
-  64-bit division uses `bfffo`: a CPU32 traps on both, and Unicorn's
-  68020 runs them, so the checks could not see it.  GCC 15.2.0's files
-  the build reads, and no more, are vendored in `third_party/gcc/`
-  under GCC's licenses (`third_party/NOTICE`), over a host dependency on
-  a GCC source package.  The build and the link fail on any
-  instruction the CPU32 lacks.  Decided the same day: an object the C
-  would put at an odd address, where the image's is at an even one, is
-  aligned, since gcc's m68k code ignores `-mstrict-align` for packed
-  objects and local texts; and `longjmp`'s cases start with their
-  buffer's status register untraced, as `setjmp` leaves it.
-
-  Decided 2026-10-24, `make check-comment-addresses`: an address the
-  58503A's C cites in a comment, which the Z3805A's C cites too, must be
-  the 58503A's own (in the function or a named thing, or the same bytes
-  in both), so that a copied address shows.
-
-  Fixed with it, in the Z3805A's C: `pps_interrupt` keeps the scratch
-  registers, as the image's does, since the internal 1PPS interrupt
-  calls it having saved none (`cpu.h`'s `CPU_KEEPING_SCRATCH`, the
-  sidecar's `preserves`); and the event log's formats are the image's
-  own texts (`log_text_*`), since an entry keeps its format by address
-  in the EEPROM, so that `log_erase`'s known difference is gone and
-  `log_event`'s entry fill is known in its place (`LOG_EVENT_FILL`).
-
+- **Compacting old logs**, perhaps into Parquet.  The logs grow without
+  bound.
+- **Bench work:** the open items in `docs/hardware-investigations.md`.
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.
+- **Firmware C:** when a Unicorn release has #2420 (bug 1), bump the
+  pin, drop the probe and set `BUG_1.expected` to fixed; likewise bug 2.
+  Give the firmware routines their file's prefix, as the hand-written
+  helpers have, through the names files.  The exporter should give an
+  exception entry no bridge.  The primary's own writes to ROM's range
+  are not modeled.
 
 ## Open questions
 
-1. **What the firmware leaves open.**  The mode suffixes are now read
-   from the firmware: the loop's stage byte and its sub-states choose
-   them (`docs/screen-format-strings.md`, "Mode suffixes").  What
-   remains is in `docs/firmware/README.md`, "What is not established".
+1. **What the firmware leaves open:** `docs/firmware/README.md`, "What
+   is not established".
 
-2. **How far the z3801 dialect is confirmed.**  Of the z3801 entries,
-   62 are `evidence = "hardware"`, 19 `firmware` and one `manual`;
-   those 20 stay unconfirmed until a receiver answers them.  All but
-   one of the 20 change settings, which no probe sends; the query left,
+2. **How far the z3801 dialect is confirmed.**  The `firmware` and
+   `manual` entries stay unconfirmed until a receiver answers them; all
+   but one change settings, which no probe sends.  The query left,
    `:PTIMe:GPSystem:POSition:SURVey:PROGress?`, answers only while a
-   survey runs, and the bench Z3801A refused it in position hold
-   (-221).  The
-   keyword table they were checked against is `docs/scpi/z3801-keywords.md`.
+   survey runs.
 
 3. **Managing the receiver's position.**  Not now.  A receiver told
-   where it is goes straight to position hold and serves time; a survey
-   leaves the 1 PPS invalid while it runs.  A Z3805A on an antenna a
-   58503A had already surveyed spent an hour unable to serve time;
-   asserting the position by hand took two commands.  The receiver
-   already stores a held position, so the work is in controlling it:
-
-   - set a fixed position, from the configuration or by hand;
-   - control the startup mode -- survey on power-up or hold;
-   - start the receiver's own survey;
-   - run a 24-hour survey in the daemon, averaging the receiver's fixes
-     far longer than its own survey does, and assert the result;
-   - take a position from gpsd.
-
-   Constraints, whatever form it takes:
-
-   - Each is a control command, so it needs the same opt-in and must
-     not fire under a daemon started read-only.
-   - The position is non-volatile, so a stale value outlives the
-     configuration that set it.  Holding it means turning off
-     survey-on-powerup, or the next power cycle discards it; with both
-     set, a receiver whose antenna has moved never notices.  Whatever
-     asserts a position must be able to release it.
-   - Writing the antenna delay forces a holdover, and so does writing
-     the position, through a different cause: on the bench 58503A,
-     rewriting its held `:GPS:POSition` unchanged took over 5 s to
-     answer, then `Holdover: GPS 1PPS invalid` for about a minute, and
-     two more to lock (`docs/screen-format-strings.md`).  In the
-     firmware the setter only stores the position and leaves a request
-     the power-up machine reads (Z3816A `FUN_00049da2`, `0x4a774`).
-   - Datum.  Every image selects WGS-84 (`@@Ao` 49), so latitude and
-     longitude need no conversion.  Heights do: the 58503B surveys,
-     holds and reports the Oncore's ellipsoid height (`@@As` type 0),
-     the Z380x and 58503A its MSL height (type 1), and MSL is each
-     device's own geoid -- on the bench the Oncore's separation was
-     −28.4 m, the u-blox's −30.0 m and gpsd's −32.3 m
-     (`docs/firmware/gps.md`, "Requests").  So a position should be
-     carried as ellipsoid height and converted to an MSL receiver with
-     its engine's own separation, which its decoded `@@Ba` record holds
-     (the two heights' difference) -- readable from RAM with
-     `smartclock-cli read-memory`, not over SCPI on the Z380x.
+   where it is goes straight to position hold; a survey leaves the
+   1 PPS invalid while it runs.  Candidates: a fixed position from the
+   configuration, control of survey-on-powerup, starting the receiver's
+   survey, a 24-hour survey in the daemon, a position from gpsd.
+   Constraints:
+   - each is a control command, so needs the opt-in;
+   - the position is non-volatile, so a stale value outlives the
+     configuration that set it, and holding it means turning off
+     survey-on-powerup; whatever asserts a position must be able to
+     release it;
+   - writing the position, like the antenna delay, forces a holdover
+     (`docs/screen-format-strings.md`);
+   - heights: the 58503B holds ellipsoid height, the Z380x and 58503A
+     MSL by each engine's own geoid, so a position should be carried as
+     ellipsoid height and converted with the engine's own separation
+     (`docs/firmware/gps.md`, "Requests").
 
 4. **Whether acknowledging from the monitor is wanted.**  Reading an
-   event register says which bit latched rather than which group, and
-   clears the alarm: right for a deliberate acknowledgment, wrong on a
-   timer.  Nothing needs it yet.
+   event register clears the alarm: right for a deliberate
+   acknowledgment, wrong on a timer.  Nothing needs it yet.
 
 5. **Maybe: a Host allowlist for the web view.**  `smartclock-http`
-   checks neither `Host` nor `Origin`, so a page in the operator's
-   browser can rebind its own name to the web view's address and read
-   `/api/status`, position included, or force screen reads at 1.5 s of
-   link each.  Likely shape: `--allow-host NAME`, repeatable, loopback
-   always allowed, a non-loopback bind refused without one.  Deferred:
-   no access-control work for now.
+   checks neither `Host` nor `Origin`, so a DNS-rebinding page could read
+   `/api/status` or force screen reads.  Likely shape: `--allow-host
+   NAME`, loopback always allowed, a non-loopback bind refused without
+   one.  Deferred.
 
 ## Known defects
 
 Known and unfixed, each because the fix is not yet worth its cost.  The
 threat model is a careless operator on a single-operator machine, not
-an attacker, so two things are not defended against:
+an attacker:
 
 - Socket permissions are the whole of the authorization, and over TCP
-  there is none: anyone who can reach the port may connect.  On
-  Windows, where TCP is all there is, a program that takes
-  `127.0.0.1:9978` before the daemon does is the daemon to every
-  client asking there by default.
-  A connection ends at its first line that is not a request, so a web
-  page posting to the port does not have the request in its body
-  answered.
+  there is none.  On Windows a program that takes `127.0.0.1:9978`
+  before the daemon is the daemon to every default client.  A
+  connection ends at its first line that is not a request, so a web page
+  posting to the port does not have its body answered.
 - A client that connects and only reads holds one of the sixteen slots
   while connected; a watcher does exactly that, so it is not refused.
   One that stops reading is cut off once a write has waited
-  `client::DEADLINE`, and when either half of a connection ends the
-  socket is shut both ways.  A client half-closing its sending side releases its slot
-  and stops the push thread, and is tested.
+  `client::DEADLINE`.

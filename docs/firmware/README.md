@@ -1111,7 +1111,7 @@ SCPI tree, `scpi_tree_data.c`, a file of data alone, every record of
 it, and the installer's, `installer/installer_scpi_tree_data.c`
 (docs/scpi/README.md, "As C"): the parser's routines, decompiled
 and hand-written, the installer's copies too, read the C's tree, not
-ROM's or the installer's RAM's (PLAN.md, 2026-10-22).  Not where the
+ROM's or the installer's RAM's (PLAN.md, "The firmware in C").  Not where the
 image reads past the
 table: `clock_days_before_month`'s unchecked month reads the word
 before `days_before_month` and those after it, `exception_name` reads
@@ -1345,7 +1345,7 @@ that then faults, which the fault undoes.  It also checks that the
 harness's `system_status`, probe and stopped run, and a write of SR
 with PC from a code hook as `move (SP)+,SR` does, give the right
 codes.  Nothing here reads SR's codes or writes SR without PC from a
-code hook (PLAN.md).  Unicorn's `dev` branch already drops the read's
+code hook.  Unicorn's `dev` branch already drops the read's
 assignment (`5d5da58`, "Don't clobber condition codes when reading
 SR", #2420), which no release has yet, and keeps bug 2.  The kernel's traps, `#3` and `#4`, are
 answered: for each service and I/O function (`psos.md`) the harness
@@ -1914,8 +1914,8 @@ Rust CI so that each fails alone: `make check-format-c`, `check-types`,
 `check-magic-numbers`, `check-comment-addresses`, `check-decompiled`, which runs
 `check-unicorn` first, and `report-decompiled`, which fails if any
 function fails
-and checks the figures this document, `rewrite.md`, `58503a-3704.md`,
-the top `README.md` and `PLAN.md` give from each image's function
+and checks the figures this document, `rewrite.md`, `58503a-3704.md`
+and the top `README.md` give from each image's function
 check -- the user-mode and console counts, the agreeing, known, skipped
 and failed functions and the agreeing ones' cases -- against the report
 it writes, so that every function agreeing is checked in public.  `IMAGE=z3805a-3543b` is set

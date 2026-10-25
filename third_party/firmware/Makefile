@@ -5,7 +5,7 @@
 #
 # A target of an image's runs for IMAGE, or without it for every image
 # folder present: IMAGE/, beside IMAGE.bin, which holds that image's
-# work (PLAN.md, "Decided 2026-10-22, the firmware layout").  Needs an
+# work (PLAN.md, "Firmware layout").  Needs an
 # m68k gcc and binutils, clang-format and uv; none is part of `make ci`,
 # and .github/workflows/firmware.yml runs both images' checks.
 
@@ -145,8 +145,7 @@ pforth-words:
 # Fail if Unicorn's two m68k bugs the harness works around, its status
 # register read and a code hook's write of PC losing the condition
 # codes, no longer show as recorded, or if the harness's workarounds do
-# not give the right codes (PLAN.md, "Done 2026-10-22, the harness's
-# status register").
+# not give the right codes (docs/firmware/README.md).
 check-unicorn:
 	uv run -q $(ROOT)/tools/firmware/unicorn_check.py
 
@@ -209,8 +208,8 @@ report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1
 # check -- its functions agreeing, known, skipped and failed, those run
 # in user mode alone and in both modes, its console sessions agreeing
 # and the agreeing functions' cases, as docs/firmware/README.md,
-# docs/firmware/rewrite.md, docs/firmware/58503a-3704.md, README.md and
-# PLAN.md quote them -- are not what the last make report-decompiled
+# docs/firmware/rewrite.md, docs/firmware/58503a-3704.md and README.md
+# quote them -- are not what the last make report-decompiled
 # saved, or if any function failed; report-figures rewrites them.
 check-report-figures:
 	status=0; $(foreach image,$(REPORTED_IMAGES),$(call report_figures,$(image)) || status=1;) \

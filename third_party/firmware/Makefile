@@ -45,8 +45,8 @@ NAMED_TARGETS = check-types handlers scpi-tree
 EXPORTED_TARGETS = check-decompiled check-scpi-tree check-magic-numbers magic-numbers
 IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS) report-decompiled
 # The rest, run once.
-TARGETS = format-c check-format-c check-module-figures module-figures check-pforth-words \
-	pforth-words check-report-figures report-figures check-unicorn \
+TARGETS = format-c check-format-c check-module-figures module-figures check-comment-addresses \
+	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects
 
 # Where an image's checks keep what they make.
@@ -81,6 +81,19 @@ check-module-figures:
 
 module-figures:
 	python3 -I $(ROOT)/tools/firmware/module_figures.py --image $(DOCUMENTED_IMAGE) --write
+
+# The image whose hand-written C was copied from BASE_IMAGE's, the
+# Z3805A's (docs/firmware/58503a-3704.md).
+BASE_IMAGE = z3805a-3543b
+PORTED_IMAGE = 58503a-3704
+
+# Fail if an address PORTED_IMAGE's hand-written C cites in a comment is
+# one BASE_IMAGE's C, which it was copied from, cites too and is not
+# PORTED_IMAGE's own: not in the function the comment is in or comes
+# before, nor in a function or label the comment names, nor holding the
+# same bytes or label in both images (tools/firmware/comment_addresses.py).
+check-comment-addresses:
+	python3 -I $(ROOT)/tools/firmware/comment_addresses.py --image $(PORTED_IMAGE) --base $(BASE_IMAGE)
 
 # Fail if a table in docs/firmware/pforth/IMAGE-words.md -- each image's
 # pForth words, their headers, flags and stack effects -- is not what

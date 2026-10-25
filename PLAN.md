@@ -2168,6 +2168,23 @@ view cannot drift apart.  The library, bottom up:
   is the data stack), as assembly files beside the hand-written C;
   they are still the export's listing.
 
+  Done 2026-10-24, the 58503A 3704 in C (`docs/firmware/58503a-3704.md`,
+  "Finished"): the same standard as the Z3805A's, nothing skipped that
+  can run and every known difference a firmware fault.  Figures:
+  primary 1415 agreeing, 5 known, 0 skipped, 0 failed; installer 247,
+  1 skipped (the Z3805A's own), 0 failed; console sessions 8 of 8; the
+  Z3805A's unchanged.  `.github/workflows/firmware.yml` runs its
+  function check beside the Z3805A's checks.
+
+  Decided 2026-10-22: a second image is ported by copying the first's
+  work, not by sharing it from the start.  The 58503A's `rewritten/`
+  and `smartclock.h` began as copies of the Z3805A's, its names and
+  modules seeded from a function-by-function match of the two images,
+  then named, typed and rewritten from its own code; the Z3805A's tree
+  is not touched.  Shared functions move to a common folder only if a
+  third image comes.  Cost: about 30,000 lines held twice, and a fix to
+  a function the two share made in both, in the same commit.
+
   Decided 2026-10-24, per-image tool tables: what the function check
   gives an image other than the base, the Z3805A 3543B, whose addresses
   its tables are, is kept in tables keyed by image or held by the
@@ -2200,15 +2217,18 @@ view cannot drift apart.  The library, bottom up:
   objects and local texts; and `longjmp`'s cases start with their
   buffer's status register untraced, as `setjmp` leaves it.
 
-  Fixed in the Z3805A's C: `pps_interrupt` keeps the scratch
+  Decided 2026-10-24, `make check-comment-addresses`: an address the
+  58503A's C cites in a comment, which the Z3805A's C cites too, must be
+  the 58503A's own (in the function or a named thing, or the same bytes
+  in both), so that a copied address shows.
+
+  Fixed with it, in the Z3805A's C: `pps_interrupt` keeps the scratch
   registers, as the image's does, since the internal 1PPS interrupt
   calls it having saved none (`cpu.h`'s `CPU_KEEPING_SCRATCH`, the
   sidecar's `preserves`); and the event log's formats are the image's
   own texts (`log_text_*`), since an entry keeps its format by address
   in the EEPROM, so that `log_erase`'s known difference is gone and
   `log_event`'s entry fill is known in its place (`LOG_EVENT_FILL`).
-
-  In progress, to follow on its own: the 58503A 3704 port.
 
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each

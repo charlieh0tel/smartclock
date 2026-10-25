@@ -106,6 +106,7 @@ request scripts in `oncore/`.
   reset code
 - [Pulse, time-tag and output commands](outputs.md)
 - [58503A 3633 against 3704](revisions.md)
+- [58503A 3704 against Z3805A 3543B](58503a-3704.md)
 - [The floating-point library](softfloat.md)
 - [The C library](libc.md)
 - [The real-time kernel](psos.md)
@@ -359,15 +360,19 @@ part of what they change.  In order:
 1. `SmartClockSetup.java`.
 2. `SmartClockInstaller.java RECORDS ENTRY`: `0xbbc 0x10135c` for the
    Z3801A 3543 and Z3805A 3543B (`restart.md`, "Forced installer entry
-   with an unusable primary").
+   with an unusable primary"); `0xbc4 0x10136c` for the 58503A 3704,
+   whose boot vector 43 is `0xa46`, which calls the unpacker at `0xaa8`
+   (its records at `0xbc4`, 43025 bytes, the count it loads at
+   `0xab0`) and jumps to `0x10136c` (`0xaa2`); its overlay is
+   `installer::0x100000` to `0x10ab75`.
 3. `SmartClockSetup.java` again, now over the installer too, with
    `types=third_party/firmware/IMAGE/smartclock.h`,
    `types=third_party/firmware/include/mc68331.h`,
    `types=third_party/firmware/include/mc68681.h`,
    `names=third_party/firmware/IMAGE/names.tsv`, and
    `names=third_party/firmware/IMAGE/scpi-tree.tsv` and
-   `names=third_party/firmware/IMAGE/installer-scpi-tree.tsv` where
-   `make scpi-tree` made them (the SCPI trees' records, and the
+   `names=third_party/firmware/IMAGE/installer-scpi-tree.tsv`, which
+   `make scpi-tree` makes (the SCPI trees' records, and the
    installer's handlers),
    `scpi=third_party/firmware/IMAGE/handlers.txt`, which `make handlers`
    writes from `smartclock-cli dump-scpi --handlers IMAGE`, and
@@ -384,11 +389,23 @@ part of what they change.  In order:
 
 Each path is from the repository's root, and IMAGE is the image's
 name, `z3805a-3543b`: its folder, `third_party/firmware/IMAGE/`, beside
-`IMAGE.bin`, holds everything that image's work is.  The make targets
+`IMAGE.bin`, holds everything that image's work is.  The 58503A
+3704's folder, `third_party/firmware/58503a-3704/`, holds the same:
+its `names.tsv` and `modules.tsv`, seeded from the Z3805A's by a
+function-by-function match of the two images (`58503a-3704.md`,
+"Method"; the names file's header gives the rules) and then named and
+typed from the 58503A's own code, its `handlers.txt`, SCPI trees,
+`smartclock.h`, `check-layout.c` and `results.tsv`, its export, from a
+bare import as above with the 58503A's inputs (`58503a-3704.md`, "The
+first wave"), and its `rewritten/`, begun as the Z3805A's and written
+to the 58503A's code, with its SCPI trees' C, which `make scpi-tree
+IMAGE=58503a-3704` writes as it does the Z3805A's.  The make targets
 that check and generate it are `third_party/firmware/Makefile`'s, which
 runs alone, `make -C third_party/firmware TARGET IMAGE=z3805a-3543b`,
-for every image folder without `IMAGE=`, and to which the top Makefile
-hands each target by name, so that `make check-decompiled` is the same.
+for every image folder without `IMAGE=` (but `report-decompiled`, which
+runs the Z3805A's alone; the 58503A's runs with `IMAGE=58503a-3704`),
+and to which the top Makefile hands each target by name, so that `make
+check-decompiled` is the same.
 
 Optionally, after step 3 or any later one,
 `SmartClockUntyped.java output=third_party/firmware/IMAGE/untyped.tsv`
@@ -503,6 +520,21 @@ passes an address's low byte or word (`log_print`, `status_screen`,
 `status_screen_position`).  Every SCPI handler takes what `scpi_call_handler`
 gives it, `int NAME(void *parameters, void *response, scpi_call *call)`,
 unless its row gives a prototype.
+
+An `entry` row, its name field empty, makes a function at its address
+that no wave has named yet, which keeps Ghidra's name: the 58503A
+3704's new functions, which the match that seeded its names found
+(`58503a-3704.md`, "Method"), their note the extent and how each was
+found, many of them reached only through a pointer, which analysis
+does not follow.  Its
+address is the match's reading, not a table's, so nothing in the way
+is cleared as it is for a named entry: one that would be inside an
+instruction, inside typed data such as a string, or inside another
+function's body, or whose bytes do not disassemble, is reported
+skipped, with why.  Undefined bytes are disassembled from it.  The
+removals of unnamed functions above leave the functions entry rows
+give.  A wave that names one makes its row a `function` row; an
+`entry` row that gives a name is refused.
 
 The convention is `key=value` pairs, which the names file's header sets
 out: its kind (`c`, `register`, `exception`, `pforth`, `psos-service`,
@@ -1255,8 +1287,9 @@ structure of four bytes, or fills a local text, by longs wherever the
 object lies, and accesses a packed table's members by their offsets
 from wherever the table does.  So an object gcc would put at an odd
 address, where the image's is at an even one, is
-`__attribute__((aligned(2)))`: the unit multipliers, the OS reports'
-local texts and `timecode_update`'s next time of day.  A run on a model of the CPU32 that takes an address
+`__attribute__((aligned(2)))`: the 58503A's `hmon_channels`, the unit
+multipliers, the OS reports' local texts and `timecode_update`'s next
+time of day.  A run on a model of the CPU32 that takes an address
 error for a misaligned word or long, as the CPU32 does, found them.
 
 What lies outside memory the harness models, the same for both calls,
@@ -1783,7 +1816,7 @@ handler's record is, from the installer's tree.
 Each image has its two profiles, chosen by the image's name
 (`harness.IMAGE_PROFILES`, `harness.image_profiles`), the addresses
 read from that image's own code: the Z3805A 3543B's above, and the
-58503A 3704's.  The installer's
+58503A 3704's (`58503a-3704.md`, "The first wave").  The installer's
 records are found in the image wherever they lie (`decompiled_check.py`'s
 `installer_records`), not at the Z3805A's `0xbbd`.  The tables of
 `function_check.py` and `bridge_check.py` were written for the Z3805A,
@@ -1859,17 +1892,20 @@ it.
 every push and pull request, a job of its own beside the Rust CI so
 that each fails alone: `make check-format-c`, `check-types`,
 `check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
-`check-chip-selects`, `check-magic-numbers`, `check-decompiled`,
-which runs `check-unicorn` first, and `report-decompiled`, which fails
-if any function fails
+`check-chip-selects`, `check-magic-numbers`, `check-decompiled`, which
+runs `check-unicorn` first, and `report-decompiled`, which fails if any
+function fails
 and checks the figures this document, `rewrite.md` and the top
 `README.md` give from the function check -- the user-mode and console
 counts, each image's agreeing, known, skipped and failed functions and
 the agreeing ones' cases -- against the report it writes, so that every
 function agreeing is checked in public.  `IMAGE=z3805a-3543b` is set
-for the job.  None of the targets builds the workspace;
-`check-chip-selects` reads every image's reset code (`restart.md`,
-"The chip selects").
+for the job; it runs the 58503A 3704's too, `make report-decompiled
+IMAGE=58503a-3704`, which fails if any of its functions fails
+(`58503a-3704.md`, "Finished"), and `make check-comment-addresses`,
+the addresses its C's comments cite.  None of the targets builds the
+workspace; `check-chip-selects` reads every image's reset code
+(`restart.md`, "The chip selects").
 
 On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15),
 `binutils-m68k-linux-gnu` and `clang-21`, which `check-magic-numbers`
@@ -1887,4 +1923,4 @@ function check measures the C as a given gcc compiles it, so a gcc
 that changes its code can change the figures.  clang-format is
 `clang-format-21`, named through `CLANG_FORMAT`: 19, 20 and 21 format
 the C alike, and 18 formats three of the files otherwise.  The job
-takes about five minutes, two and a half of them `report-decompiled`'s.
+takes about eight minutes, five of them the two `report-decompiled`s.

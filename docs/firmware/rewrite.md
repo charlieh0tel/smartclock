@@ -330,7 +330,11 @@ The checks need no Ghidra: the export is checked in.
     make -C third_party/firmware check-scpi-tree IMAGE=z3805a-3543b
     make -C third_party/firmware check-format-c
 
-Each is also a top-level target (`make check-decompiled`).  Results
+Each is also a top-level target (`make check-decompiled`).  Without
+`IMAGE` each runs for every image folder it can, but
+`report-decompiled` runs the Z3805A's alone; the 58503A 3704's
+function check, held to the same standard, runs with
+`IMAGE=58503a-3704` ([`58503a-3704.md`](58503a-3704.md), "Finished").  Results
 land in `target/firmware/z3805a-3543b/` (`decompiled.o`,
 `report-decompiled.txt`).
 
@@ -409,4 +413,8 @@ manual consulted (Integrated Systems, *pSOSystem System Calls*,
 000-5070-002) is cited, not included.  The harness runs on Unicorn,
 GPL-2.0-only, as a local tool.
 
-The 58503A 3704 port is in progress and not covered here.
+The 58503A 3704 port has its own document,
+[`58503a-3704.md`](58503a-3704.md), held to this one's method and
+checks (its "Finished"): of its function check, the primary's 1415
+agree, 5 are known and none skipped or failed, and the installer's 247
+agree, 1 skipped; its console sessions agree, 8 of 8.

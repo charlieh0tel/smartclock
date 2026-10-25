@@ -89,19 +89,18 @@ from harness import (
     KernelCall,
     MESSAGE_OFFSET,
     NULL_LONG,
+    NUMERIC_DESCRIPTOR_58503A,
     OVERLAY_SEPARATOR,
     PLLC_EXCHANGE,
     POINTER_ALIGNMENT,
     POINTER_FILLS,
     POINTER_SIZE,
-    PRIMARY,
     RECEIVED,
-    SCPI_COMMON_LIST,
-    SCPI_MAIN_TREE,
     STACK_END,
     SUPERVISOR,
     SYSTEM_BYTE,
     TASK_RECORD_SIZE,
+    TRACE_BITS,
     UNSIGNED,
     USER_STACK_BASE,
     Known,
@@ -116,7 +115,8 @@ from harness import (
     give_twins,
     header_text,
     image_labels,
-    installer_profile,
+    image_name,
+    image_profiles,
     overlay,
     pointer_at,
     preserved_registers,
@@ -133,6 +133,7 @@ from harness import (
     twin_arguments,
     twins,
 )
+from event_log import EEPROM_BASE, LOG_ENTRIES, LOG_PAGE_CHECKSUM, entry_argument_offsets, page_offsets
 from libc_check import BUFFER_SPACING, RETURN
 from rebuild_link import IMAGE_PREFIX, REBUILT, Section, link, objects, symbols
 
@@ -278,14 +279,19 @@ FLOAT_STEPS = [0.5, 0.001, 1e-12, 100.0]
 # status_register_setup's arguments as status_init passes them
 # (0x2f4b8 to 0x2f50a): a status model, its first argument, whose
 # seven register pointers point into the pointee memory, and the
-# console port's object (0x29e18) for the Status Byte, register 0,
-# which has no parent; the others report into register 0 or 2, at a
-# bit, with no port.
+# console port's object (0x29e18, the profile's) for the Status Byte,
+# register 0, which has no parent; the others report into register 0
+# or 2, at a bit, with no port.
 SETUP_REGISTERS = struct.pack(">7I", *(0x31300000 + 0x10 * index for index in range(7)))
 SETUP_MODEL = struct.pack(">hIIII", 7, 0, 0, 0, 0) + SETUP_REGISTERS
-CONSOLE_PORT = 0x29E18
+
+
+def console_port(m: Machine) -> int:
+    return m.profile.scpi.console_port
+
+
 SETUP_CASES = [
-    (0, 0, 0, 0, 0, CONSOLE_PORT),
+    (0, 0, 0, 0, 0, console_port),
     (1, 0x0010FFFE, 0x0010FFFE, 0, 0x20, 0),
     (3, 0xFFFF0002, 0x12345678, 2, 8, 0),
     (6, 0x13FF, 0, 2, 1, 0),
@@ -374,14 +380,17 @@ class Pointed:
 # What a given case may set beside its arguments, by key: the interrupts
 # it takes (harness.Interrupt); the status register it starts with, in
 # place of the generated case's; variables at values, lvalues of the C
-# as a Preset's target; the flash's contents, the installer's; and
+# as a Preset's target, a value being a number, one made for the
+# machine, or a routine's name, its image copy's address; the flash's contents, the installer's; and
 # whether its stack arguments end at the stack's edge, the caller's
 # frame unmapped (harness.UNMAPPED_FRAME), so that a read past what the
 # image reads faults; the registers it starts with, by name, a value or
 # one made for the machine, where its routine reads them as its caller
 # left them (harness.RebuiltMachine.starting_registers); and an SCPI
 # handler's call record's input port, made for the machine, in place of
-# the console port's object.
+# the console port's object.  Every case of a routine that restores the
+# status register from its buffer, given or generated, starts with that
+# word's trace bits clear (JUMP_FUNCTIONS).
 INTERRUPTS = "interrupts"
 STARTING_STATUS = "status"
 PRESETS = "presets"
@@ -744,6 +753,16 @@ JUMP_BUFFER = struct.pack(
     ">12IIIIIH", *(0x11110000 + i for i in range(12)), 0x2222AAAA, 0x3333BBBB, RETURN, JUMP_STACK, 0x2704
 )
 JUMP_VALUES = [0, 1, -1, 0x12345678]
+# The routines that restore a status register from their buffer, the
+# first argument, at JUMP_STATUS (libc_jump_buffer's sr), and the
+# offset: in every case of theirs, the generated ones' too, the word's
+# trace bits are cleared before the run, since setjmp, which fills the
+# buffer, runs untraced.  A generated case's buffer may set them (case
+# 0's 0xc0, case 1's 0xe5), which a CPU that traces as the CPU32 does
+# then takes: each instruction after the restore traces to the handler,
+# which prints its PC.
+JUMP_FUNCTIONS = ("longjmp", "installer_longjmp")
+JUMP_STATUS = 0x40
 # atexit's table, its count at the most and one short, given a NULL and
 # a routine (smartclock.h, atexit_functions[32]).
 ATEXIT_MOST = 32
@@ -793,8 +812,9 @@ LIBRARY_CASES = {
 # the image's reconfiguration stores there (0x1dd54): a routine at
 # harness.ROUTINES, whose calls are compared, its parameter's position
 # past the reader's two.  And the echo off, as the image's
-# reconfiguration leaves it, its echo_none routine, a bare rts (0x1d570,
-# 0x1f6c8), which the installer has none of, never setting its echo;
+# reconfiguration leaves it, its echo_none routine, a bare rts, by name
+# (the Z3805A's at 0x1d570 and 0x1f6c8, the 58503A's at 0x1d3d0 and
+# 0x1f328), which the installer has none of, never setting its echo;
 # and 0, as RAM starts, which the reader calls as it calls any echo, not
 # testing for none (0x1d8ca).  By reader, its port's echo and its
 # echo_none; each in four cases, reading a line into a buffer of 32
@@ -803,8 +823,8 @@ ECHO_POSITION = 2
 ECHO_CASES = 4
 ECHO_LINE = 32
 IMAGE_ECHOES = {
-    "drtb_gets": ("duartb.echo", 0x1D570),
-    "sci_gets": ("sci.echo", 0x1F6C8),
+    "drtb_gets": ("duartb.echo", "duartb_echo_none"),
+    "sci_gets": ("sci.echo", "sci_echo_none"),
     "installer_drtb_gets": ("installer_duartb.echo", None),
 }
 
@@ -822,6 +842,13 @@ def echo_routine(m: Machine, types: Types) -> int:
 GPS_MESSAGES = 49
 GPS_ARGUMENTS = struct.pack(">8I", *(0x01020304 * (i + 1) for i in range(8)))
 GPS_MESSAGE_ROOM = 128
+
+
+def gps_request_build_cases(messages: int) -> list[dict[int, int | bytes]]:
+    """gps_request_build's given cases, one for each of an image's messages."""
+    return [{0: message, 1: 0, 2: GPS_ARGUMENTS, 3: bytes(GPS_MESSAGE_ROOM)} for message in range(messages)]
+
+
 GIVEN_CASES = {
     **INTERRUPT_CASES,
     **STATUS_CASES,
@@ -852,9 +879,7 @@ GIVEN_CASES = {
         ]
         for reader, (echo, echo_none) in IMAGE_ECHOES.items()
     },
-    "gps_request_build": [
-        {0: message, 1: 0, 2: GPS_ARGUMENTS, 3: bytes(GPS_MESSAGE_ROOM)} for message in range(GPS_MESSAGES)
-    ],
+    "gps_request_build": gps_request_build_cases(GPS_MESSAGES),
     "vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "installer_vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "clamp_double_to_step_and_limits": [
@@ -1018,16 +1043,16 @@ class ScpiSession:
     SCPI task gives it (scpi_task, 0x2a04a; the installer's, 0x107902):
     the console port's object, as both its input and its output, the
     port's methods its table at the object's +4 (docs/firmware/
-    structures.md, "The SCPI session"); the pair of trees, main and
-    common, whose two pointers it passes; the arena's size, a segment
+    structures.md, "The SCPI session"), the profile's; the pair of
+    trees, main and common, whose two pointers it passes, the C's pair
+    by name or, None, the profile's root lists; the arena's size, a segment
     of which it takes from the kernel; the console's line buffer and
     its two pointers, the next character and the line's end, which the
     port reads from before it reads the console; the language whose
     :SYSTem:LANGuage ends the session, its handler's -60; and the lines
     of its own, after SCPI_LINES."""
 
-    port: int
-    trees: tuple[int, int] | str
+    trees: str | None
     arena: int
     line: str
     next: str
@@ -1080,8 +1105,7 @@ SCPI_LINES = [
 ]
 SCPI_SESSIONS = {
     "scpi_interpret": ScpiSession(
-        CONSOLE_PORT,
-        (SCPI_MAIN_TREE, SCPI_COMMON_LIST),
+        None,
         2000,
         "scpi_input_line",
         "scpi_input_next",
@@ -1094,7 +1118,6 @@ SCPI_SESSIONS = {
         ),
     ),
     "installer_scpi_interpret": ScpiSession(
-        0x1076D0,
         "installer_scpi_trees",
         1500,
         "installer_scpi_input_line",
@@ -1154,10 +1177,16 @@ def session_lines(m: Machine, function: "Function") -> list[bytes]:
     return [line.replace(LANGUAGE, session.language) for line in SCPI_LINES + list(session.lines) + tree_lines(m)]
 
 
-def session_cases(m: Machine, function: "Function") -> list[tuple[str, int, dict]]:
+def session_cases(m: Machine, function: "Function", linked_symbols: dict[str, int]) -> list[tuple[str, int, dict]]:
     """The parser's loop's session cases, as cases gives them, each with
-    its line's index under SCPI_LINE."""
-    if function.name not in SCPI_SESSIONS:
+    its line's index under SCPI_LINE; none where the image's C names
+    none of its console's line buffer and pointers, or of its pair of
+    trees, as an image not yet labeled so may not."""
+    session = SCPI_SESSIONS.get(function.name)
+    if session is None:
+        return []
+    named = (session.line, session.next, session.end) + (() if session.trees is None else (session.trees,))
+    if not all(name in linked_symbols for name in named):
         return []
     return [(f"session case {i}", i % CASES, {SCPI_LINE: i}) for i in range(len(session_lines(m, function)))]
 
@@ -1262,15 +1291,16 @@ def scpi_session(m: Machine, function: "Function", linked_symbols: dict[str, int
     m.uc.mem_write(buffer, b"\0" + text + b"\0")
     m.uc.mem_write(linked_symbols[session.next], struct.pack(">I", buffer + 1))
     m.uc.mem_write(linked_symbols[session.end], struct.pack(">I", buffer + 1 + len(text)))
-    trees = session.trees if isinstance(session.trees, tuple) else None
-    if trees is None:
+    scpi = m.profile.scpi
+    trees = (scpi.main_tree, scpi.common_list)
+    if session.trees is not None:
         # the image's scpi_tree_pair, the C's twin, gcc's copy given the
         # C's lists: the common list first, then the main tree
         at = m.twins.image_address(linked_symbols[session.trees])
         trees = (pointer_at(m, at + POINTER_SIZE), pointer_at(m, at))
     return {
-        SESSION_INPUT: session.port,
-        SESSION_OUTPUT: session.port,
+        SESSION_INPUT: scpi.console_port,
+        SESSION_OUTPUT: scpi.console_port,
         SESSION_ARENA: area(m, bytes(session.arena)),
         SESSION_SIZE: session.arena,
         SESSION_MAIN: trees[0],
@@ -1380,7 +1410,10 @@ PLL_CASES = 2000
 # through, at log_write_page's entries (0x101d4e, +4), its first, its
 # second and its last, after which it moves to the next page, with the
 # log's lock set up, its exchange an id as a create leaves one, or not,
-# which mutex_acquire fails (smartclock.h, mutex).  And the
+# which mutex_acquire fails (smartclock.h, mutex): log_write's and
+# log_event's, whose entry keeps its format's address, which its page
+# takes to the EEPROM, where effects compare bytes, not pointers, so
+# that the C must log the image's own text (log.c).  And the
 # SCI's flow, whose XOFF bits sci_transmit_allowed tests (0x2031c), the
 # one received and the one sent (duart.h).
 DEBUG_ENABLED = Preset("debug_enabled", (0, 1))
@@ -1393,7 +1426,10 @@ STRAGGLER_STATES = {
         name: States(presets=(DEBUG_ENABLED,))
         for name in ("debug_printf", "debug_printf_polled", "debug_sprintf", "gps_debug_status")
     },
-    "log_write": States(presets=(Preset("log_cursor", LOG_CURSORS), Preset("log_mutex.exchange", LOCK_EXCHANGES))),
+    **{
+        name: States(presets=(Preset("log_cursor", LOG_CURSORS), Preset("log_mutex.exchange", LOCK_EXCHANGES)))
+        for name in ("log_write", "log_event")
+    },
     "sci_transmit_allowed": States(presets=(Preset("sci.flow", SCI_FLOWS),)),
     "float_raise": States(presets=(Preset("float_control", FLOAT_CONTROLS),)),
     "installer_float_raise": States(presets=(Preset("installer_float_control", FLOAT_CONTROLS),)),
@@ -1510,14 +1546,17 @@ PRIVILEGE_VIOLATION = 8
 # spool task starts, and after sends to the spool task, which calls it
 # in supervisor mode.
 ROOT_ENTRY = "((psos_configuration *)0)->root_entry"
-TASK_START = re.compile(r"\b(?:installer_)?psos_start\s*\(\s*\w+\s*,\s*(\w+)\s*\)")
+TASK_STARTER = r"(?:installer_)?psos_start"
+TASK_START = re.compile(rf"\b{TASK_STARTER}\s*\(\s*\w+\s*,\s*(\w+)\s*\)")
 FORTH_TASK_ENTRIES = {"console_task", "forth_spawned_task"}
 SUPERVISOR_SERVICES = {"psos_supervisor", "installer_psos_supervisor"}
-SPOOLED = re.compile(r"\b(?:installer_)?spoo_run\s*\(\s*(?:\([^()]*\)\s*)?(\w+)")
+SPOOLER = r"(?:installer_)?spoo_run"
+SPOOLED = re.compile(rf"\b{SPOOLER}\s*\(\s*(?:\([^()]*\)\s*)?(\w+)")
 # A function's block in the export, from the line giving its address to
-# the next; a direct call in its C, the decompiler's reading of the
-# image's (kept for a function written by hand), or in its assembly; a
-# thunk's target; and a comment, whose text is not a call.
+# the next; a direct call in its C or in its assembly (for a function
+# written by hand, those of the decompiler's reading of the image's,
+# which the sidecar lists instead, "calls" and "passed"); a thunk's
+# target; and a comment, whose text is not a call.
 EXPORT_BLOCK = re.compile(r"^/\* ((?:\w+::)?[0-9a-f]{8}) \*/$", re.M)
 C_CALL = re.compile(r"\b(\w+)\s*\(")
 ASSEMBLY_CALL = re.compile(r"\b(?:jsr|jmp|bsr\S*|bra\S*)\s+\(?(\w+)")
@@ -1585,7 +1624,7 @@ TASK_FIELDS = {
 }
 SEGMENT_SIZE = "((psos_segment *)0)->size"
 SYSTEM_STACK = 200
-SYSTEM_STACK_SIZE = "psos_config.supervisor_stack_size"
+SYSTEM_STACK_SIZE = "((psos_configuration *)0)->supervisor_stack_size"
 # The names of the probes gcc compiles for each Preset's target and
 # each of those, by its index: its address and its size.
 PROBE_ADDRESS = "function_check_address_{}"
@@ -1639,43 +1678,66 @@ def task_stacks(m: Machine, located: dict[str, tuple[int, int]], case: int) -> N
         top = area(m, user + bytes(segment)) + stacks.user
         field("supervisor_pointer", into(top, stacks.user))
         m.frame_fill = struct.pack(">I", top)
-    size_at, size = located[SYSTEM_STACK_SIZE]
+    offset, size = located[SYSTEM_STACK_SIZE]
+    size_at = m.profile.psos_config + offset
     system = pointer_at(m, m.profile.psos_config) + SYSTEM_STACK
     length = int.from_bytes(m.read(size_at, size), "big")
     unused = length - stacks.system_used
     m.uc.mem_write(system, bytes(unused) + USED_STACK * (stacks.system_used // len(USED_STACK)))
 
 
-def targets() -> list[str]:
-    """Every Preset's target and the task stacks' fields, each once, in
-    a fixed order."""
+# A target's leading cast of a null pointer, which only a type's
+# declaration makes probeable; and its root, the variable it names first,
+# which the image's C declares as the export does a global, by its .set.
+NULL_CAST = re.compile(r"\(\([^()]*\)0\)")
+ROOT = re.compile(r"[A-Za-z_]\w*")
+# a field a target names after its root, as gps.status_reported's
+MEMBER = re.compile(r"\.([A-Za-z_]\w*)")
+
+
+def probeable(c: str, target: str) -> bool:
+    """Whether the C has what a target names: a structure's field, or a
+    global the export sets and each field of it the target names, which
+    another image's C may not have."""
+    if NULL_CAST.match(target) is not None:
+        return True
+    return f'__asm__(".set {ROOT.match(target).group(0)}, ' in c and all(
+        re.search(rf"(?m)^\s+[A-Za-z_][\w \*]*\b{field}\s*(?:\[[^\]]*\]\s*)*;", c) for field in MEMBER.findall(target)
+    )
+
+
+def targets(c: str) -> list[str]:
+    """Every Preset's target, a given case's, every image's, the task
+    stacks' fields and the regions, each once, in a fixed order, that the
+    C has (probeable)."""
     found = [*TASK_FIELDS.values(), SEGMENT_SIZE, SYSTEM_STACK_SIZE, ROOT_ENTRY]
+    found += [variable for variable, _ in REGIONS.values()]
     for states in STATES.values():
         for preset in states.presets + tuple(p for hook in states.hooks for p in hook.leaves):
             if preset.target not in found:
                 found.append(preset.target)
-    for own in GIVEN_CASES.values():
+    for own in [*GIVEN_CASES.values(), *(own for image in IMAGE_GIVEN_CASES.values() for own in image.values())]:
         for values in own:
             watches = [i.watch for i in values.get(INTERRUPTS, ()) if isinstance(i.watch, str)]
             for target in [*values.get(PRESETS, {}), *watches]:
                 if target not in found:
                     found.append(target)
-    return found
+    return [target for target in found if probeable(c, target)]
 
 
-def probes() -> str:
+def probes(c: str) -> str:
     """The C that has gcc find each target's address and size."""
     return (
         "".join(
             f"\nvoid *const {PROBE_ADDRESS.format(i)} = (void *)&({target});"
             f"\nconst uint32_t {PROBE_SIZE.format(i)} = sizeof({target});"
-            for i, target in enumerate(targets())
+            for i, target in enumerate(targets(c))
         )
         + "\n"
     )
 
 
-def probed(linked: list[Section], linked_symbols: dict[str, int]) -> dict[str, tuple[int, int]]:
+def probed(c: str, linked: list[Section], linked_symbols: dict[str, int]) -> dict[str, tuple[int, int]]:
     """Each target's address and size, from the probes in the link."""
 
     def long_at(name: str) -> int:
@@ -1684,7 +1746,8 @@ def probed(linked: list[Section], linked_symbols: dict[str, int]) -> dict[str, t
         return struct.unpack_from(">I", section.data, address - section.address)[0]
 
     return {
-        target: (long_at(PROBE_ADDRESS.format(i)), long_at(PROBE_SIZE.format(i))) for i, target in enumerate(targets())
+        target: (long_at(PROBE_ADDRESS.format(i)), long_at(PROBE_SIZE.format(i)))
+        for i, target in enumerate(targets(c))
     }
 
 
@@ -1714,6 +1777,8 @@ def draw(states: States, located: dict[str, tuple[int, int]], name: str, descrip
     def values(presets: tuple[Preset, ...]) -> dict[int, bytes]:
         drawn = {}
         for preset in presets:
+            if preset.target not in located:
+                continue
             address, size = located[preset.target]
             drawn[address] = preset_bytes(generator.choice(preset.values), size)
         return drawn
@@ -1756,8 +1821,7 @@ def return_from_hook(m: Machine, result: int | None) -> None:
 # routine, in the same case or another, still fails.
 # The firmware's own: os_report_processes holds
 # the address of "%s" in D5 across its calls (0x16768), which
-# os_report_process prints as a task's stack share.  And what C cannot
-# say: log_erase checksums a pointer's bytes.
+# os_report_process prints as a task's stack share.
 # Only that column of the line, the "%2d%%" after the memory column's
 # "kB " (the format at 0x513b8, printed at 0x1646c), differs: the rest,
 # the memory column that D6 starts (REPORT_REGISTERS) among it, is
@@ -1788,20 +1852,153 @@ OTHERS_OVERFLOW = Known(
     "satellite_status_list overflows its 12 satellites on more, each copy's frame its own (0x4985e)",
     r"stopped differently: image Invalid memory write \(UC_ERR_WRITE_UNMAPPED\) of 110000 at 499de, gcc .*",
 )
+# And what C cannot say: log_event pushes only its message's format
+# (0x31a0a), so log_write keeps as the entry's two longs whatever lies
+# above it, log_event's return address and the long holding its char,
+# each copy's own; they differ, with the page's checksum, in the RAM's
+# pages, log_write_page (0x101d4e) and log_page_buffer (0x101d94), and
+# the EEPROM's (0x400d40, 64 bytes each), and nowhere else: the format,
+# the image's text in each, does not (log.c).
+LOG_ENTRY_ARGUMENTS = [at for entry in range(LOG_ENTRIES) for argument in entry_argument_offsets(entry) for at in argument]
+LOG_PAGES = [0x101D4E, 0x101D94] + [EEPROM_BASE + at for at in page_offsets()]
+LOG_FILL = "|".join(
+    f"{page + at:x}" for page in LOG_PAGES for at in [*LOG_PAGE_CHECKSUM, *LOG_ENTRY_ARGUMENTS]
+)
+LOG_EVENT_FILL = Known(
+    "log_event's entry keeps log_event's own stack as its arguments, each copy's (0x31a0a)",
+    rf"(?:RAM|EEPROM) differs from (?:{LOG_FILL})"
+    rf"|effect \d+ write of \w+ to ({LOG_FILL}), image's write of \w+ to \1",
+)
+# The image the tables of this file were written for, whose ROM their
+# addresses are: another image's function check runs every case with
+# them but KNOWN's differences, which are its failures until a wave
+# finds their causes in its own code (IMAGE_KNOWN), and
+# SET_UP_REQUESTS', whose descriptors are the base's.
+BASE_IMAGE = "z3805a-3543b"
+REPORT_FUNCTIONS = ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")
 KNOWN = {
-    **{name: D5_SHARE for name in ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")},
-    # its first page's checksum, in RAM (0x101d50) and the EEPROM
-    # (0x400d42), covers the entry "Log cleared" makes, whose format is
-    # the literal's address in each copy (0x400d4c); writing them to
-    # the EEPROM, effects, which compare bytes, not pointers, differs
-    # at the checksum's two bytes and the address's low three
-    "log_erase": Known(
-        "log_erase checksums a pointer's bytes",
-        r"RAM differs from 101d50|EEPROM differs from 400d42"
-        r"|effect \d+ write of \w+ to (400d4[23def]), image's write of \w+ to \1",
-    ),
+    **{name: D5_SHARE for name in REPORT_FUNCTIONS},
     "gps_debug_status": EMPTY_PART,
     "satellite_status_list": OTHERS_OVERFLOW,
+    "log_event": LOG_EVENT_FILL,
+}
+# Each image's known differences, each found in its own code: the
+# 58503A 3704's os_report_processes holds "%s"'s address, 0x540c4, in
+# D5 as the Z3805A's does (0x167c2), and its os_report_process is the
+# Z3805A's (0x1632e).  Its primary's session reaches :DIAG:OS:PROC?
+# (tree_lines), where the first line's memory column also starts from
+# D6 as each copy of scpi_interpret leaves it, which the given cases
+# set (REPORT_REGISTERS) and a session does not.
+D5_SHARE_58503A = (
+    "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x167c2)"
+)
+SESSION_SHARE_LINE = (
+    r"trap #4 service 4 (?P<registers>[^,]*)data (?P<head>(?:[0-9a-f]{2})*?)(?:3[0-9]|20)+6b4220(?:3[0-9]|2d|20)+"
+    r"(?P<tail>2520(?:[0-9a-f]{2})*)"
+)
+IMAGE_KNOWN = {
+    BASE_IMAGE: KNOWN,
+    "58503a-3704": {
+        **{name: Known(D5_SHARE_58503A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
+        "scpi_interpret": Known(
+            D5_SHARE_58503A + ", and adds D6, which scpi_interpret leaves",
+            rf"effect \d+ {SESSION_SHARE_LINE}, image's trap #4 service 4 (?P=registers)data (?P=head)"
+            r"(?:3[0-9]|20)+6b4220(?:3[0-9]|2d|20)+(?P=tail)",
+        ),
+        # as the base's: the first page's checksum at 0x10205c in RAM and
+        # 0x400d82 in the EEPROM, the format at 0x400d8c (log_erase,
+        # 0x31426; the literal at 0x31c7c)
+        "log_erase": Known(
+            "log_erase checksums a pointer's bytes",
+            r"RAM differs from 10205c|EEPROM differs from 400d82"
+            r"|effect \d+ write of \w+ to (400d8[23def]), image's write of \w+ to \1",
+        ),
+    },
+}
+# Another image's own given cases, in place of the base's of the same
+# function: the 58503A 3704's 56 messages (oncore_messages, 0x51178);
+# its step records' routines, load_double (0x3220e) and load_long
+# (0x32e3a), where the base's are; clamp_to_limits on a long's steps,
+# as the descriptors that validate with it give them (0x33bd8's, load_long_unit_step
+# 0x32e32); the send filters' messages, the six- and eight-channel
+# ones and one of neither, on six and eight channels (gps.md, "Six or
+# eight channels"), with an encoder of the table's, long_array_get_byte
+# (0x4fe5a), and gps.field_592's Time RAIM bit set and clear;
+# scpi_task_run and installer_scpi_task_run on port 2, the one their
+# port layers serve, and on another.
+GPS_MESSAGES_58503A = 56
+LOAD_DOUBLE_58503A = 0x3220E
+LOAD_LONG_58503A = 0x32E3A
+LOAD_LONG_UNIT_STEP_58503A = 0x32E32
+FILTERED_MESSAGES = (0x1E, 0x27, 0x29, 0x32, 0x33, 0x34, 0x2A)
+CHANNEL_COUNTS = (6, 8)
+FILTER_ENCODER_58503A = 0x4FE5A
+FILTER_ARGUMENTS = (struct.pack(">I", 0), struct.pack(">I", 1))
+TIME_RAIM = 0x40
+SCPI_TASK_PORTS = (2, 0)
+FILTER_CASES_58503A = [
+    {0: message, 1: FILTER_ENCODER_58503A, 2: arguments,
+     PRESETS: {"gps.channel_count": channels, "gps.field_592": TIME_RAIM}}
+    for message in FILTERED_MESSAGES
+    for channels in CHANNEL_COUNTS
+    for arguments in FILTER_ARGUMENTS
+]
+# The 58503A 3704's numeric request, its pllc_exchange's
+# (harness.RECEIVED's shape, NUMERIC_DESCRIPTOR_58503A), and *TST?'s
+# action, its descriptor at 0x413e2, for SET_UP_REQUESTS' functions and
+# pll_scpi_command, which passes validate_or_doaction what
+# get_setup_vars stored (0x4333a), as validate_or_doaction's callers
+# do: each of the two in turn.
+NUMERIC_REQUEST_58503A = struct.pack(">IIBBBBII", 0, NUMERIC_DESCRIPTOR_58503A, 0, 0, 0, 0, 60, 0)
+ACTION_REQUEST_58503A = struct.pack(">IIBBBBII", 0, 0x413E2, 0, 0, 0, 0, 0, 0)
+# The 58503A 3704's Primary oven current check, 1 while pll.stage is
+# holdover to normal, 3 to 6, which it compares as a signed byte
+# (0x221c4): each stage from powerup recovery to diag, the bounds' either
+# side, and the bytes a signed compare takes as negative; and the
+# health monitor's step at that channel (ADC_OVEN_CURRENT), whose report
+# the check gates (0x2220a), the oven warm and not: the Oven channel's
+# monitor (ADC_OVEN) without a value, its nominal 4.0 not below -2.0,
+# and with one below it (double_oven_warmed_up, adc_average).
+PLL_CHECK_STAGES = (*range(2, 8), 0x80, 0xFF)
+ADC_OVEN = 3
+ADC_OVEN_CURRENT = 6
+WARM_OVEN = {f"adc_monitors[{ADC_OVEN}].valid": 1, f"adc_monitors[{ADC_OVEN}].value": -3.0}
+OVEN_CHECK_CASES = [{PRESETS: {"pll.stage": stage}} for stage in PLL_CHECK_STAGES]
+IMAGE_GIVEN_CASES = {
+    "58503a-3704": {
+        "hmon_check_pll_stage": OVEN_CHECK_CASES,
+        "hmon_channel_step": [
+            {PRESETS: {**case[PRESETS], "hmon_channel_index": ADC_OVEN_CURRENT, **oven}}
+            for case in OVEN_CHECK_CASES
+            for oven in ({}, WARM_OVEN)
+        ],
+        "gps_request_build": gps_request_build_cases(GPS_MESSAGES_58503A),
+        "clamp_double_to_step_and_limits": [
+            {4: struct.pack(">dI", step, LOAD_DOUBLE_58503A)} for step in DOUBLE_STEPS
+        ],
+        "clamp_to_step_and_limits": [{4: struct.pack(">II", step, LOAD_LONG_58503A)} for step in LONG_STEPS],
+        "clamp_to_limits": [{4: struct.pack(">II", step, LOAD_LONG_UNIT_STEP_58503A)} for step in LONG_STEPS],
+        **{
+            name: [{4: struct.pack(">fI", step, LOAD_LONG_58503A)} for step in FLOAT_STEPS]
+            for name in ("clamp_float_to_step_and_limits", "clamp_float_to_step_double")
+        },
+        "oncore_filter_channels": FILTER_CASES_58503A,
+        "oncore_filter_traim": FILTER_CASES_58503A
+        + [{**case, PRESETS: {**case[PRESETS], "gps.field_592": 0}} for case in FILTER_CASES_58503A],
+        **{name: [{0: port} for port in SCPI_TASK_PORTS] for name in ("scpi_task_run", "installer_scpi_task_run")},
+    },
+}
+# Another image's own requests for SET_UP_REQUESTS' functions, the
+# 58503A 3704's (IMAGE_SET_UP_REQUESTS above).
+IMAGE_SET_UP_REQUESTS = {
+    "58503a-3704": {
+        name: tuple(
+            {NUMERIC_REQUEST: NUMERIC_REQUEST_58503A, ACTION_REQUEST: ACTION_REQUEST_58503A}[request]
+            for request in (requests if isinstance(requests, tuple) else (requests,))
+        )
+        for name, requests in SET_UP_REQUESTS.items()
+    }
+    | {"pll_scpi_command": (NUMERIC_REQUEST_58503A, ACTION_REQUEST_58503A)},
 }
 
 
@@ -1903,8 +2100,16 @@ def task_context(c: str, conventions: dict, roots: set[str]) -> tuple[set[str], 
         spooled |= set(SPOOLED.findall(text)) & calls.keys()
         callees |= set(SPOOLED.findall(text))
         calls[caller] |= {name for name in callees if name in calls and name != caller}
+    started = set(TASK_START.findall(c))
+    for caller, convention in conventions.items():
+        passed = convention.get("passed", [])
+        started |= {function for callee, function in passed if re.fullmatch(TASK_STARTER, callee)}
+        spools = {function for callee, function in passed if re.fullmatch(SPOOLER, callee)}
+        spooled |= spools & calls.keys()
+        callees = set(convention.get("calls", [])) | spools
+        calls[caller] |= {name for name in callees if name in calls and name != caller}
     handlers = {name for _, name, parameters in PROTOTYPE.findall(c) if SCPI_HANDLER.match(parameters)}
-    entries = (roots | set(TASK_START.findall(c)) | FORTH_TASK_ENTRIES | handlers) & calls.keys()
+    entries = (roots | started | FORTH_TASK_ENTRIES | handlers) & calls.keys()
     called = set().union(*calls.values())
 
     def reached(starts: set[str]) -> set[str]:
@@ -1982,17 +2187,15 @@ def call_first(m: Machine, linked_symbols: dict[str, int], routine: str, stack_a
         raise RuntimeError(f"{routine}: {run.stopped or run.end()}")
 
 
-# system_init's battery-backed region (preserved_region, 0x94e bytes: a
-# checksum word, the restore word, then the rest), which RAM's zeros fail
-# the checksum of, so that only the cold start after a bad region would
-# run: by case, a good checksum with restore 1, the warm start, or 0, the
-# cold start that clears it, and a bad one (0x12c74 to 0x12d34).
-PRESERVED_LENGTH = 0x94E
-
-
-def preserved_region(case: int) -> bytes:
-    """preserved_region's bytes for a case of system_init."""
-    body = bytearray((i * 7 + case * 13 + 1) & 0xFF for i in range(PRESERVED_LENGTH - 2))
+# system_init's battery-backed region (preserved_region, 0x94e bytes in
+# the Z3805A 3543B, its size the C's: a checksum word, the restore word,
+# then the rest), which RAM's zeros fail the checksum of, so that only
+# the cold start after a bad region would run: by case, a good checksum
+# with restore 1, the warm start, or 0, the cold start that clears it,
+# and a bad one (0x12c74 to 0x12d34).
+def preserved_region(case: int, length: int) -> bytes:
+    """preserved_region's bytes, of its length, for a case of system_init."""
+    body = bytearray((i * 7 + case * 13 + 1) & 0xFF for i in range(length - 2))
     body[0:2] = struct.pack(">H", 0 if case % 4 == 1 else 1)
     total = sum(body) & 0xFF
     checksum = total << 8 | (~total & 0xFF)
@@ -2004,17 +2207,21 @@ def preserved_region(case: int) -> bytes:
 REGIONS = {"system_init": ("preserved_region", preserved_region)}
 
 
-def establish(m: Machine, function: Function, linked_symbols: dict[str, int], case: int) -> None:
+def establish(m: Machine, function: Function, context: "Context", case: int) -> None:
     """Sets the variables ESTABLISHED says a function's callers set, runs
     SET_UP on its request for each of SET_UP_REQUESTS, the case'th of
     those it has, the routine CALLED_FIRST names, and a region's bytes
     by REGIONS."""
+    linked_symbols, located = context.linked_symbols, context.located
     for variable, value in ESTABLISHED.get(function.name, {}).items():
+        # what an image's C does not name is left as RAM starts it
+        if variable not in linked_symbols or isinstance(value, str) and IMAGE_PREFIX + value not in linked_symbols:
+            continue
         if isinstance(value, str):
             value = linked_symbols[IMAGE_PREFIX + value]
         m.uc.mem_write(linked_symbols[variable], struct.pack(">I", value))
-    if function.name in SET_UP_REQUESTS:
-        requests = SET_UP_REQUESTS[function.name]
+    if function.name in context.set_up_requests:
+        requests = context.set_up_requests[function.name]
         if isinstance(requests, bytes):
             requests = (requests,)
         request = m.buffer(bytes(MESSAGE_OFFSET) + requests[case % len(requests)])
@@ -2022,9 +2229,9 @@ def establish(m: Machine, function: Function, linked_symbols: dict[str, int], ca
     if function.name in CALLED_FIRST:
         routine, longs = CALLED_FIRST[function.name]
         call_first(m, linked_symbols, routine, struct.pack(f">{len(longs)}I", *longs))
-    if function.name in REGIONS:
+    if function.name in REGIONS and REGIONS[function.name][0] in located:
         variable, contents = REGIONS[function.name]
-        m.uc.mem_write(linked_symbols[variable], contents(case))
+        m.uc.mem_write(linked_symbols[variable], contents(case, located[variable][1]))
 
 
 def pointed(m: Machine, value: Pointed) -> int:
@@ -2058,16 +2265,19 @@ def give_input_port(m: Machine, function: Function, values: list[bytes], port: i
     give(m, at, port)
 
 
-def cases(m: Machine, function: Function) -> list[tuple[str, int, dict[int, int | float | bytes]]]:
+def cases(
+    m: Machine, function: Function, linked_symbols: dict[str, int], given_cases: dict[str, list]
+) -> list[tuple[str, int, dict[int, int | float | bytes]]]:
     """Each case's description, the generated case it starts from and the
-    arguments GIVEN_CASES gives it."""
-    own = GIVEN_CASES.get(function.name, [])
+    arguments given_cases, GIVEN_CASES with the image's IMAGE_GIVEN_CASES,
+    gives it."""
+    own = given_cases.get(function.name, [])
     states = STATES.get(function.name, States())
     return (
         [(f"case {case}", case, {}) for case in range(CASES)]
         + [(f"given case {i}", i % CASES, values) for i, values in enumerate(own)]
         + variadic_cases(function)
-        + session_cases(m, function)
+        + session_cases(m, function, linked_symbols)
         + console_session_cases(function)
         + step_cases(m, function)
         + [(f"state case {i}", i % CASES, {}) for i in range(states.cases)]
@@ -2182,8 +2392,9 @@ class Context:
     """What a check finds beyond the function: the link's symbols, each
     Preset target's address and size, the runnable functions, by name,
     for a Hook's prototype, the functions that run in a task in user
-    mode, only so and in both modes (task_context), and each case's
-    StackDepth so far."""
+    mode, only so and in both modes (task_context), each case's
+    StackDepth so far, the image's SET_UP_REQUESTS (BASE_IMAGE) and its
+    given cases (cases)."""
 
     linked_symbols: dict[str, int]
     located: dict[str, tuple[int, int]]
@@ -2191,13 +2402,18 @@ class Context:
     in_task: set[str]
     both_modes: set[str]
     depths: list[StackDepth]
+    set_up_requests: dict[str, bytes | tuple[bytes, ...]]
+    given_cases: dict[str, list]
 
 
 def install_hooks(m: Machine, types: Types, states: States, context: Context, drawn: list[Drawn]) -> list[int]:
     """Hooks each of the States' routines, the image's copy and gcc's, to
-    answer as the current case drew (drawn's one entry); the hooks."""
+    answer as the current case drew (drawn's one entry); the hooks.  A
+    routine the image's C does not have under its name runs unhooked."""
     handles = []
     for hook in states.hooks:
+        if hook.routine not in context.by_name:
+            continue
         routine = context.by_name[hook.routine]
         image = context.linked_symbols[IMAGE_PREFIX + hook.routine]
 
@@ -2225,7 +2441,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
     drawn: list[Drawn] = []
     handles = install_hooks(m, types, states, context, drawn)
     counter = COUNTED_LOOPS.get(function.name)
-    m.counter = (linked_symbols[counter[0]], counter[1]) if counter else None
+    m.counter = (linked_symbols[counter[0]], counter[1]) if counter and counter[0] in linked_symbols else None
     try:
         yield from check_cases(m, types, function, image, rebuilt, context, states, drawn)
     finally:
@@ -2290,7 +2506,7 @@ def check_cases(
     """check's cases, with its hooks in place, each drawing its States
     into drawn."""
     linked_symbols = context.linked_symbols
-    for ordinal, (description, case, values_given) in enumerate(cases(m, function)):
+    for ordinal, (description, case, values_given) in enumerate(cases(m, function, context.linked_symbols, context.given_cases)):
         in_task = function.name in context.in_task or function.name in context.both_modes and ordinal % 2 == 0
         m.starting_status = TASK_STATUS if in_task else SUPERVISOR
         values_given = dict(values_given)
@@ -2312,15 +2528,18 @@ def check_cases(
         m.stack_edge = values_given.pop(STACK_EDGE, False)
         registers = values_given.pop(CALLERS_REGISTERS, {})
         input_port = values_given.pop(INPUT_PORT, None)
+        # an interrupt, a preset or a region whose target the image's C
+        # does not have (probeable) is left out
         m.interrupts = [
             (interrupt, context.located[interrupt.watch][0] if isinstance(interrupt.watch, str) else interrupt.watch)
             for interrupt in values_given.pop(INTERRUPTS, ())
+            if not isinstance(interrupt.watch, str) or interrupt.watch in context.located
         ]
         drawn[:] = [draw(states, context.located, function.name, description)]
         m.ident_fails = case in IDENT_FAILS.get(function.name, ())
         m.frame_fill = None
         fresh_ram(m, case)
-        establish(m, function, linked_symbols, case)
+        establish(m, function, context, case)
         if line is not None:
             values_given = {**scpi_session(m, function, linked_symbols, line), **values_given}
         if function.name in TASK_STACKS:
@@ -2328,9 +2547,13 @@ def check_cases(
         for address, contents in drawn[0].presets.items():
             m.uc.mem_write(address, contents)
         for target, value in presets.items():
+            if target not in context.located:
+                continue
             address, size = context.located[target]
             if callable(value):
                 value = value(m, types)
+            elif isinstance(value, str):
+                value = context.linked_symbols[IMAGE_PREFIX + value]
             m.uc.mem_write(address, preset_bytes(value, size))
         target = None if step is None else tree_steps(m)[step]
         values = arguments(m, types, function.parameters, case, function.names, function.name, target)
@@ -2341,6 +2564,8 @@ def check_cases(
         m.starting_registers = {name: value(m) if callable(value) else value for name, value in registers.items()}
         if input_port is not None:
             give_input_port(m, function, values, input_port(m))
+        if function.name in JUMP_FUNCTIONS:
+            untraced_jump(m, struct.unpack(">I", values[0])[0])
         memory = snapshot(m)
 
         original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed, session)
@@ -2387,6 +2612,14 @@ def check_cases(
         yield description, tuple(differences)
 
 
+def untraced_jump(m: Machine, buffer: int) -> None:
+    """Clears the trace bits of the status register a jump buffer holds
+    (JUMP_FUNCTIONS)."""
+    at = buffer + JUMP_STATUS
+    status = int.from_bytes(m.uc.mem_read(at, 2), "big")
+    m.uc.mem_write(at, (status & ~TRACE_BITS).to_bytes(2, "big"))
+
+
 # The names files, which label the image's objects, in the image's
 # folder, the one holding the C file's decompiled/: the names file and
 # the generated SCPI trees' rows.
@@ -2408,10 +2641,10 @@ def main() -> int:
     c = open(c_path).read()
     with tempfile.TemporaryDirectory() as work:
         elf = work + "/rebuilt.elf"
-        linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf, probes())
+        linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf, probes(c))
         linked_symbols = symbols(elf)
         linked_objects = objects(elf)
-    located = probed(linked, linked_symbols)
+    located = probed(c, linked, linked_symbols)
     image_bytes = open(image_path, "rb").read()
     types = Types(c)
     conventions = {}
@@ -2420,7 +2653,11 @@ def main() -> int:
         conventions[function["name"]] = function
     labels = image_labels(names_files(c_path))
     failed = 0
-    for profile in (PRIMARY, installer_profile(image_bytes)):
+    base = image_name(image_path) == BASE_IMAGE
+    known = IMAGE_KNOWN.get(image_name(image_path), {})
+    given_cases = {**GIVEN_CASES, **IMAGE_GIVEN_CASES.get(image_name(image_path), {})}
+    set_up_requests = SET_UP_REQUESTS if base else IMAGE_SET_UP_REQUESTS.get(image_name(image_path), {})
+    for profile in image_profiles(image_path, image_bytes):
         machine = rebuilt_machine(
             image_bytes, linked, linked_symbols, profile, twins(linked_objects, labels, profile)
         )
@@ -2428,7 +2665,7 @@ def main() -> int:
         runnable, unrunnable = functions(c, types, conventions, profile.overlay)
         in_task, both_modes = task_context(c, conventions, {root_function(machine, located, conventions)})
         by_name = {function.name: function for function in runnable}
-        context = Context(linked_symbols, located, by_name, in_task, both_modes, [])
+        context = Context(linked_symbols, located, by_name, in_task, both_modes, [], set_up_requests, given_cases)
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         modes = {"user mode alone": 0, "both modes": 0}
         condition_codes_compared = 0
@@ -2439,7 +2676,7 @@ def main() -> int:
             if names and function.name not in names or image is None or rebuilt is None or rebuilt < REBUILT:
                 continue
             outcomes = list(check(machine, types, function, image, rebuilt, context))
-            counts[report(function.name, outcomes, KNOWN.get(function.name))] += 1
+            counts[report(function.name, outcomes, known.get(function.name))] += 1
             modes["user mode alone"] += function.name in in_task
             modes["both modes"] += function.name in both_modes
             condition_codes_compared += function.condition_codes

@@ -573,9 +573,11 @@ pll_stage_result fine(void) {
 /* A loop's one-second reading: summed into the block within the hold
  * threshold, else printed; and, with GPS and no leap second
  * acknowledgment pending, the clock checked against GPS at second 14 or
- * after a mismatch, a matching check asking for the leap second's
- * acknowledgment.  A reading that failed with both 1PPS good is a
- * measurement failure, failure_message printed. */
+ * after a mismatch.  A check that has just set the clock, a second
+ * mismatch in a row (a 0 result with clock_gps_mismatch cleared), asks
+ * gps_leap_ack to measure GPS-UTC again (0x44442 to 0x44454).  A
+ * reading that failed with both 1PPS good is a measurement failure,
+ * failure_message printed. */
 static void pll_stages_loop_reading(uint8_t valid, float ti,
                                     char* failure_message) {
   static const uint32_t CHECK_SECOND = 14;

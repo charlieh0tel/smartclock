@@ -495,7 +495,7 @@ int32_t scpi_query_DIAGnostic_LOG_READ_ALL(void* parameters, void* response,
 int32_t scpi_set_DIAGnostic_LOG_WRITe(void* parameters, void* response,
                                       scpi_call* call) {
   const scpi_diagnostic_indexed_word* given = parameters;
-  int16_t result = log_write("diag entry %d", given->given.value);
+  int16_t result = log_write(log_text_diag_entry, given->given.value);
 
   if (result == 0) {
     return 0;

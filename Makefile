@@ -122,8 +122,9 @@ check-pages:
 
 # The firmware's checks and generated files, which
 # third_party/firmware/Makefile runs, alone or from here by name, for
-# IMAGE=... or every image folder: the C's format, the layouts, the
-# decompiled C, the SCPI trees, the module, pForth and report figures,
+# IMAGE=... or every image folder (report-decompiled for the Z3805A's
+# alone): the C's format, the layouts, the decompiled C, the SCPI trees,
+# the module, pForth and report figures,
 # Unicorn's recorded bugs, every image's chip-select tables, the
 # hand-written C's magic numbers.
 # They need an m68k gcc and binutils, clang, clang-format and uv; none is part

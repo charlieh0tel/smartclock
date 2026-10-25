@@ -34,7 +34,9 @@ this says what each is and where.
   unit with the export, and the installer's copies share static bodies
   with the primary's through headers, which the real installer, alone
   in RAM, could not.
-- The decompiler's C is kept beside each function under `#if 0`.
+- The decompiler's C is kept beside each assembly routine under
+  `#if 0`; a function written by hand has a one-line marker in its
+  place, and the sidecar lists its reading's calls.
 - The firmware's faults are reproduced, not fixed
   ([`quirks.md`](quirks.md)).
 
@@ -118,8 +120,9 @@ out the image's arguments from it.
 - One file to a module, in four layers (platform, devices, services,
   applications), each calling its own or a lower one but for the calls
   `modules.md` lists.  SCPI handlers go a file to a command tree.  The
-  exporter includes every file of `rewritten/` and keeps the
-  decompiler's version of each function found there under `#if 0`.
+  exporter includes every file of `rewritten/` and leaves the
+  decompiler's version of each function found there out, a
+  `/* NAME: rewritten in FILE */` line in its place.
 - Installer copies are in `rewritten/installer/`.  A copy that reads
   none of the installer's own state shares its twin's body, a static
   function in the group's header (`libc.h`, `scpi_*.h`, `status.h`,
@@ -214,9 +217,12 @@ that a known difference hides no other:
 - `os_report_process` and its three callers print D5, which
   `os_report_processes` leaves holding the address of `"%s"`
   (`0x16768`): a firmware fault.
-- `log_erase` checksums a pointer's bytes, which differ between the
-  copies: the format of the entry "Log cleared" makes, which it writes
-  to the EEPROM with the checksum.
+- `log_event` pushes only its message's format (`0x31a0a`), so the
+  entry's two longs are whatever lies above it, its return address and
+  the long holding its `char`, each copy's own: they differ, with their
+  page's checksum, and nothing else does (`LOG_EVENT_FILL`).  The C
+  logs the image's own texts (`log_text_*` in `names.tsv`), so that an
+  entry's format, an address kept in the EEPROM, is the image's.
 - `gps_debug_status` clears the byte below an empty text, the lowest of
   its saved A4 (`0x49384`): a firmware fault.
 - `satellite_status_list` keeps the visible satellites not in its set
@@ -243,7 +249,7 @@ the image's (`installer_status_register_setup`); D1 or A0 out of
 - `bridge_check.py`: each binding, called from a gcc-compiled function
   that keeps 14 values live across it, against its routine called from
   registers; `qspi_transfer_raw` also on transfers the QSPI's interrupt
-  completes, which the generated cases never reach (`GIVEN`), each of
+  completes, which the generated cases never reach (`given_cases`), each of
   which must run.
 - `module_figures.py`: `modules.md`'s figures.
 
@@ -308,7 +314,8 @@ the check is against the model, not the board.
   semantics (no 4.1 manual at hand; [`psos.md`](psos.md)), and every
   name and type are readings of the image, each row of `names.tsv`
   citing its evidence and confidence.
-- **Not run.**  The whole system: no rebuilt image has booted.
+- **Not run.**  The whole system: no rebuilt image has booted on a
+  board.
 
 ## Reproducing
 

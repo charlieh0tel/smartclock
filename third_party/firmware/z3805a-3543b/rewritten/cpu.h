@@ -81,6 +81,28 @@ static inline void cpu_sr_write(uint16_t sr) {
           "\n"                                         \
           "\t.popsection\n")
 
+/* Defines routine, a function the export declares void (void), as a
+ * wrapper that keeps the scratch registers too, D0, D1, A0 and A1, which
+ * the m68k C convention does not, around body, a C function of that
+ * prototype: the image's routine keeps every register it uses where an
+ * interrupt calls it having saved none (pps_interrupt's movem at
+ * 0x12db6, which primary_user_81 calls at 0x12e20). */
+#define CPU_KEEPING_SCRATCH(routine, body)             \
+  __asm__("\t.pushsection .text." #routine             \
+          ",\"ax\",@progbits\n"                        \
+          "\t.globl " #routine                         \
+          "\n"                                         \
+          "\t.type " #routine ", @function\n" #routine \
+          ":\n"                                        \
+          "\tmovem.l %d0-%d1/%a0-%a1,-(%sp)\n"         \
+          "\tjsr " #body                               \
+          "\n"                                         \
+          "\tmovem.l (%sp)+,%d0-%d1/%a0-%a1\n"         \
+          "\trts\n"                                    \
+          "\t.size " #routine ", .-" #routine          \
+          "\n"                                         \
+          "\t.popsection\n")
+
 /* Defines routine, a function the export declares void (void) that the
  * kernel's I/O table names, as body, a C function of that prototype,
  * then D7 0: kernel_dispatch_io (0x14c0a) jumps to the table's entry,

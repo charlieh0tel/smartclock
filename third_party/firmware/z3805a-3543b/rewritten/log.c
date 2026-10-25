@@ -88,12 +88,13 @@ static const int32_t RECORDS_LOG_PAGE_ENTRIES =
  * full. */
 static const uint8_t RECORDS_LOG_ENTRIES_REPORTED = 180;
 
-/* The one format log_read gives a date and a time, not a byte and a
- * long; log_read knows it by its address, so log_first_satellite and
- * log_read share the one copy.  The casts drop const for the exported
- * prototypes, which have none. */
-static const char records_first_satellite_format[] =
-    "First satellite tracked at %04d%02d%02d.%02d:%02d:%02d";
+/* An entry keeps its format by address, in the EEPROM, where the log
+ * outlives a restart and the code that wrote it: every format the C
+ * logs is the image's own text, at its own address, so that an entry
+ * the image wrote reads back as it does and one the C writes is the
+ * image's, byte for byte.  log_read knows by that address the one
+ * format it gives a date and a time, not a byte and a long:
+ * log_text_first_satellite_tracked_at. */
 
 /* The sum and its complement of an event log page's entries (0x3137a). */
 uint16_t log_page_checksum(log_page* page) {
@@ -165,7 +166,7 @@ char log_erase(request_source source) {
   log_full = 0;
   status_happening(STATUS_LOG_ALMOST_FULL_CLEARED);
   if (status == 0) {
-    log_append("Log cleared", 0, 0);
+    log_append(log_text_log_cleared, 0, 0);
   }
   return status;
 }
@@ -285,10 +286,10 @@ int32_t log_read(int32_t number, char* text, char* heading) {
     records_log_unused(text, heading, index + 1);
   } else {
     if (text != 0) {
-      if (found->format == records_first_satellite_format) {
+      if (found->format == log_text_first_satellite_tracked_at) {
         uint32_t date = found->argument_1;
         uint32_t time = found->argument_2;
-        sprintf(text, (char*)records_first_satellite_format,
+        sprintf(text, log_text_first_satellite_tracked_at,
                 date >> (2 * RECORDS_FIELD_BITS),
                 date >> RECORDS_FIELD_BITS & RECORDS_FIELD_MASK,
                 date & RECORDS_FIELD_MASK,
@@ -316,38 +317,38 @@ int32_t log_read(int32_t number, char* text, char* heading) {
 /* Logs when the first satellite was tracked, a date and a time
  * (0x31ba2). */
 void log_first_satellite(uint32_t date, uint32_t time) {
-  log_write((char*)records_first_satellite_format, date, time);
+  log_write(log_text_first_satellite_tracked_at, date, time);
 }
 
-/* log_event's messages, by code. */
+/* log_event's messages, by code: the image's texts. */
 static char* const records_log_events[] = {
-    "Log cleared",
-    "Power on",
-    "Re-boot",
-    "Survey mode started",
-    "Position hold mode started",
-    "EXT lock started",
-    "GPS lock started",
-    "Holdover started, manual",
-    "Holdover started, EXT",
-    "Holdover started, invalid EXT 1PPS",
-    "Holdover started, GPS",
-    "Holdover started, invalid GPS 1PPS",
-    "Holdover started, not tracking GPS",
-    "Holdover started, GPS RAIM alarm",
-    "Holdover started, GPS alarm",
-    "Holdover started, HW error",
-    "Holdover started, TI error",
-    "Holdover started, TI limit exceeded",
-    "Holdover started, temporary",
-    "Holdover started, selecting 1PPS",
-    "Holdover started",
-    "Output specifications exceeded",
-    "Hardware failure",
-    "Self-test failed",
-    "EEPROM save failed",
-    "Clk_do: out of event buffers",
-    "System preset",
+    log_text_log_cleared,
+    log_text_power_on,
+    log_text_re_boot,
+    log_text_survey_mode_started,
+    log_text_position_hold_mode_started,
+    log_text_ext_lock_started,
+    log_text_gps_lock_started,
+    log_text_holdover_started_manual,
+    log_text_holdover_started_ext,
+    log_text_holdover_started_invalid_ext_1pps,
+    log_text_holdover_started_gps,
+    log_text_holdover_started_invalid_gps_1pps,
+    log_text_holdover_started_not_tracking_gps,
+    log_text_holdover_started_gps_raim_alarm,
+    log_text_holdover_started_gps_alarm,
+    log_text_holdover_started_hw_error,
+    log_text_holdover_started_ti_error,
+    log_text_holdover_started_ti_limit_exceeded,
+    log_text_holdover_started_temporary,
+    log_text_holdover_started_selecting_1pps,
+    log_text_holdover_started,
+    log_text_output_specifications_exceeded,
+    log_text_hardware_failure,
+    log_text_self_test_failed,
+    log_text_eeprom_save_failed,
+    log_text_clk_do_out_of_event_buffers,
+    log_text_system_preset,
 };
 
 /* Appends an entry to the event log under its lock; returns the lock's

@@ -198,7 +198,7 @@ th .sym,th.sym{text-transform:none;letter-spacing:0;font-size:.9375rem}
 
 <section>
   <h2>How it is checked</h2>
-  <p>For the Z3805A and 58503A, tests check this page against the firmware itself. They read every constant from each ROM at its cited address. They run each ROM's own <code>startup_pll</code> and <code>pll_normal</code> in a CPU emulator on synthetic readings, and require the update law above to reproduce the firmware's state at every step, about 3000 steps per image. The poles, damping and step response here are recomputed from that law. A reversed sign, a missing ten-second mean or a missing integrator rescaling each fails the tests. The other models' rows are read by hand. Details: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#how-this-is-checked">How this is checked</a>.</p>
+  <p>The page's first tests checked it against a copy of its own model and missed four errors that an outside review found: a reversed sign, poles without the ten-second mean, a start-up without the integrator's rescaling, and a misdescribed aging fit. The tests now check it against the Z3805A's and 58503A's firmware. They read every constant from each ROM, run each ROM's own loop routines in a CPU emulator, and require the update law above to reproduce the firmware's state at every step. The first three errors each fail them. The other models' rows are read by hand. Details: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#how-this-is-checked">How this is checked</a>.</p>
 </section>
 </main>
 

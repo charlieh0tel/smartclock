@@ -174,16 +174,11 @@ meanwhile, as in [a 2015 report](https://www.febo.com/pipermail/time-nuts/2015-A
 of a 58503A cleared with `*CLS`.
 
 The bench 58503A latched it at 00:00:15 UTC on 2026-10-25, just after
-GPS week 2441 ended.  Its time of day stepped back 1 s then and forward
-1 s about 8 minutes later, each a time reset; it stayed locked
-throughout.  Reading `:STATus:QUEStionable:EVENt?` afterward returned
-`+1`: Time Reset, not the user-reported bit.  The cause suspected, strongly supported but unconfirmed,
-is the GPS engine's: 2441 mod 256 is 137, the 8-bit leap-second week
-(WN_LSF) broadcast since the 2016-12-31 leap second, so an engine
-comparing it with its own 8-bit week would insert a phantom leap second
-there, until the next UTC parameters correct it.  If so, after the
-week boundary around 2031-09-21 (the end of week 2697) the time of day
-may again be off by 1 s for a few minutes, and the alarm will latch.
+GPS week 2441 ended, with its time of day 1 s slow for 7 to 9 minutes;
+it stayed locked.  This is consistent with a known class of 256-week
+leap-parameter bugs in GPS engines, the mechanism unknown, and may
+recur after week 2697, about 2031-09-21:
+[`oncore-leap-week.md`](oncore-leap-week.md).
 
 ## Configuring
 

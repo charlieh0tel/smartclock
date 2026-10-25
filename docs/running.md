@@ -163,8 +163,8 @@ lamp loses no history.
 
 ### Time Reset at a GPS week boundary
 
-`*STB?` 72 is the questionable summary and the master summary
-(`097-59551-02` 5-44).  With the user-reported bit unused, the
+`*STB?` reads the status byte; 72 is bit 3, questionable summary (8),
+plus bit 6, master summary (64) (`097-59551-02` 5-44).  With the user-reported bit unused, the
 questionable group's one other bit is Time Reset: the receiver found
 its time different from the satellites' and reset it to GPS (5-40).  It
 is an event, latched until `:STATus:QUEStionable:EVENt?` reads it
@@ -174,10 +174,10 @@ meanwhile, as in [a 2015 report](https://www.febo.com/pipermail/time-nuts/2015-A
 of a 58503A cleared with `*CLS`.
 
 The bench 58503A latched it at 00:00:15 UTC on 2026-10-25, just after
-GPS week 2441 ended, with its time of day 1 s slow for 7 to 9 minutes;
-it stayed locked.  This is consistent with a known class of 256-week
-leap-parameter bugs in GPS engines, the mechanism unknown, and may
-recur after week 2697, about 2031-09-21:
+GPS week 2441 ended; its time of day ran 1 s slow for 7 to 9 minutes,
+and it stayed locked.  This fits a known class of 256-week
+leap-parameter bugs in GPS engines, mechanism unknown, and may recur
+after week 2697, about 2031-09-21:
 [`oncore-leap-week.md`](oncore-leap-week.md).
 
 ## Configuring

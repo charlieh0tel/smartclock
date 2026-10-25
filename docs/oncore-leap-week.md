@@ -104,6 +104,12 @@ WN_LSF and the DN, is not necessary"
 20.3.3.5.2.4, and case a(1)).  A false leap needs mishandled
 equal offsets or other corrupt state, such as a cached UTC offset.
 
+If the fields stay unchanged, week 2697 matches again, ending
+Saturday 2031-09-20 (00:00 UTC on Sunday 2031-09-21).  Anything using
+the receiver's time of day, rather than its 1 PPS edge, may then run
+1 s off for minutes.  Capturing the Oncore's line across that
+boundary, or any later logged one, could settle the mechanism.
+
 ## Precedents
 
 - **2003-11-27.**  256 weeks after the 1998-12-31 leap second, an
@@ -140,15 +146,3 @@ Raw `@@Ea` time stamps, arrival times, the GPS and UTC mode exchanges
 and the host clock's log would separate these.  Per-second reads against
 a disciplined host clock would narrow the 58503A's step times.  Only the
 Oncore's serial line shows its own transition.
-
-## What to do
-
-No clock correction is needed.  To clear the event, see
-[`running.md`](running.md#time-reset-at-a-gps-week-boundary).
-
-If the fields stay unchanged, week 2697 matches again, ending
-Saturday 2031-09-20 (00:00 UTC on Sunday 2031-09-21).  Anything using
-the receiver's time of day, rather than its 1 PPS edge, may then run
-1 s off for minutes.  Capturing the Oncore's line across
-that boundary, or any later logged one, could settle the
-mechanism.

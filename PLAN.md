@@ -2169,7 +2169,7 @@ view cannot drift apart.  The library, bottom up:
   they are still the export's listing.
 
   Done 2026-10-24, the 58503A 3704 in C (`docs/firmware/58503a-3704.md`,
-  "Finished"): the same standard as the Z3805A's, nothing skipped that
+  "The function check"): the same standard as the Z3805A's, nothing skipped that
   can run and every known difference a firmware fault.  Figures:
   primary 1415 agreeing, 5 known, 0 skipped, 0 failed; installer 247,
   1 skipped (the Z3805A's own), 0 failed; console sessions 8 of 8; the
@@ -2179,8 +2179,8 @@ view cannot drift apart.  The library, bottom up:
   Decided 2026-10-22: a second image is ported by copying the first's
   work, not by sharing it from the start.  The 58503A's `rewritten/`
   and `smartclock.h` began as copies of the Z3805A's, its names and
-  modules seeded from a function-by-function match of the two images,
-  then named, typed and rewritten from its own code; the Z3805A's tree
+  modules seeded from `tools/firmware/image_diff.py`'s matches of the
+  two images (`make image-diff`), then named, typed and rewritten from its own code; the Z3805A's tree
   is not touched.  Shared functions move to a common folder only if a
   third image comes.  Cost: about 30,000 lines held twice, and a fix to
   a function the two share made in both, in the same commit.

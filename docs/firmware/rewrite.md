@@ -334,7 +334,7 @@ Each is also a top-level target (`make check-decompiled`).  Without
 `IMAGE` each runs for every image folder it can, but
 `report-decompiled` runs the Z3805A's alone; the 58503A 3704's
 function check, held to the same standard, runs with
-`IMAGE=58503a-3704` ([`58503a-3704.md`](58503a-3704.md), "Finished").  Results
+`IMAGE=58503a-3704` ([`58503a-3704.md`](58503a-3704.md), "The function check").  Results
 land in `target/firmware/z3805a-3543b/` (`decompiled.o`,
 `report-decompiled.txt`).
 
@@ -415,6 +415,6 @@ GPL-2.0-only, as a local tool.
 
 The 58503A 3704 port has its own document,
 [`58503a-3704.md`](58503a-3704.md), held to this one's method and
-checks (its "Finished"): of its function check, the primary's 1415
+checks (its "The function check"): of its function check, the primary's 1415
 agree, 5 are known and none skipped or failed, and the installer's 247
 agree, 1 skipped; its console sessions agree, 8 of 8.

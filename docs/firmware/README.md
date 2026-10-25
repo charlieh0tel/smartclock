@@ -391,16 +391,24 @@ Each path is from the repository's root, and IMAGE is the image's
 name, `z3805a-3543b`: its folder, `third_party/firmware/IMAGE/`, beside
 `IMAGE.bin`, holds everything that image's work is.  The 58503A
 3704's folder, `third_party/firmware/58503a-3704/`, holds the same:
-its `names.tsv` and `modules.tsv`, seeded from the Z3805A's by a
-function-by-function match of the two images (`58503a-3704.md`,
-"Method"; the names file's header gives the rules) and then named and
-typed from the 58503A's own code, its `handlers.txt`, SCPI trees,
-`smartclock.h`, `check-layout.c` and `results.tsv`, its export, from a
-bare import as above with the 58503A's inputs (`58503a-3704.md`, "The
-first wave"), and its `rewritten/`, begun as the Z3805A's and written
-to the 58503A's code, with its SCPI trees' C, which `make scpi-tree
-IMAGE=58503a-3704` writes as it does the Z3805A's.  The make targets
-that check and generate it are `third_party/firmware/Makefile`'s, which
+its `names.tsv` and `modules.tsv`, seeded from the Z3805A's through
+`image_diff.py`'s matches (`58503a-3704.md`, "Method"; the names file's
+header gives the rules) and then named and typed from the 58503A's own
+code, its `handlers.txt`, SCPI trees, `smartclock.h`, `check-layout.c`
+and `results.tsv`, its export, from a bare import as above with the
+58503A's inputs (`58503a-3704.md`, "The export"), and its
+`rewritten/`, begun as the Z3805A's and written to the 58503A's code,
+with its SCPI trees' C, which `make scpi-tree IMAGE=58503a-3704` writes
+as it does the Z3805A's.  `make image-diff` regenerates the matches,
+the TSV `58503a-3704.md` describes, that document's figures and,
+through `make seed-names` (`tools/firmware/seed_names.py`), the
+58503A's seeded `names.tsv` and `modules.tsv`; `make check-image-diff`
+fails while any is stale.  A change to the Z3805A's `names.tsv`,
+`modules.tsv` or export regenerates them with `make image-diff` in the
+same commit, and the 58503A's tree rows, which its names file shapes,
+with `make scpi-tree IMAGE=58503a-3704`; a seeding rule or exception
+is changed in `seed_names.py`, not in a row.  The make targets that
+check and generate it are `third_party/firmware/Makefile`'s, which
 runs alone, `make -C third_party/firmware TARGET IMAGE=z3805a-3543b`,
 for every image folder without `IMAGE=` (but `report-decompiled`, which
 runs the Z3805A's alone; the 58503A's runs with `IMAGE=58503a-3704`),
@@ -523,11 +531,10 @@ unless its row gives a prototype.
 
 An `entry` row, its name field empty, makes a function at its address
 that no wave has named yet, which keeps Ghidra's name: the 58503A
-3704's new functions, which the match that seeded its names found
-(`58503a-3704.md`, "Method"), their note the extent and how each was
-found, many of them reached only through a pointer, which analysis
-does not follow.  Its
-address is the match's reading, not a table's, so nothing in the way
+3704's new functions, which `image_diff.py` finds and `seed_names.py`
+lists, their note the extent and how each was found, many of them
+reached only through a pointer, which analysis does not follow.  Its
+address is image_diff's reading, not a table's, so nothing in the way
 is cleared as it is for a named entry: one that would be inside an
 instruction, inside typed data such as a string, or inside another
 function's body, or whose bytes do not disassemble, is reported
@@ -1816,8 +1823,8 @@ handler's record is, from the installer's tree.
 Each image has its two profiles, chosen by the image's name
 (`harness.IMAGE_PROFILES`, `harness.image_profiles`), the addresses
 read from that image's own code: the Z3805A 3543B's above, and the
-58503A 3704's (`58503a-3704.md`, "The first wave").  The installer's
-records are found in the image wherever they lie (`decompiled_check.py`'s
+58503A 3704's (`58503a-3704.md`, "The function check").  The installer's
+records are found in the image wherever they lie (`image_diff.py`'s
 `installer_records`), not at the Z3805A's `0xbbd`.  The tables of
 `function_check.py` and `bridge_check.py` were written for the Z3805A,
 its `BASE_IMAGE`: another image runs every case with them, its
@@ -1902,7 +1909,7 @@ the agreeing ones' cases -- against the report it writes, so that every
 function agreeing is checked in public.  `IMAGE=z3805a-3543b` is set
 for the job; it runs the 58503A 3704's too, `make report-decompiled
 IMAGE=58503a-3704`, which fails if any of its functions fails
-(`58503a-3704.md`, "Finished"), and `make check-comment-addresses`,
+(`58503a-3704.md`, "The function check"), and `make check-comment-addresses`,
 the addresses its C's comments cite.  None of the targets builds the
 workspace; `check-chip-selects` reads every image's reset code
 (`restart.md`, "The chip selects").

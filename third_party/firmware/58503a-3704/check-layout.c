@@ -2,8 +2,8 @@
  * size and offset here is one docs/firmware/structures.md gives, and
  * where it was read from addresses in the Z3805A 3543B image it is
  * written as their difference.  This is the 58503A 3704's copy: the
- * types wave's layouts (docs/firmware/58503a-3704.md, "The types
- * wave") are checked at the 58503A's addresses, each block's comment
+ * 58503A's own layouts (docs/firmware/58503a-3704.md, "The
+ * structures") are checked at the 58503A's addresses, each block's comment
  * saying so; the rest are still the Z3805A's figures, for a layout the
  * two share.  Compiled, never run, by "make
  * check-types" with an m68k compiler, so that int, long and pointers

@@ -1901,11 +1901,11 @@ Rust CI so that each fails alone: `make check-format-c`, `check-types`,
 `check-comment-addresses`, `check-decompiled`, which runs
 `check-unicorn` first, and `report-decompiled`, which fails if any
 function fails
-and checks the figures this document, `rewrite.md` and the top
-`README.md` give from the function check -- the user-mode and console
-counts, each image's agreeing, known, skipped and failed functions and
-the agreeing ones' cases -- against the report it writes, so that every
-function agreeing is checked in public.  `IMAGE=z3805a-3543b` is set
+and checks the figures this document, `rewrite.md`, `58503a-3704.md`,
+the top `README.md` and `PLAN.md` give from each image's function
+check -- the user-mode and console counts, the agreeing, known, skipped
+and failed functions and the agreeing ones' cases -- against the report
+it writes, so that every function agreeing is checked in public.  `IMAGE=z3805a-3543b` is set
 for the job; `check-types`, `check-scpi-tree`, `check-magic-numbers`
 and `check-decompiled` run again with `IMAGE=58503a-3704`, and
 `report-decompiled` runs without `IMAGE`, for both images, the

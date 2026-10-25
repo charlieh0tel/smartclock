@@ -115,8 +115,8 @@ boundary, or any later logged one, could settle the mechanism.
 
 - **2003-11-27.**  256 weeks after the 1998-12-31 leap second, an
   Oncore VP sent one garbled `@@Ba` (11/29/2003 62:28:15) at UTC
-  midnight, then correct ones.  Motorola's application note, on the same
-  page, blames the 8-bit leap week: VP, UT, GT and M12 Oncores, not the
+  midnight, then correct ones.  Motorola's July 2003 application note,
+  on the same page, blames the 8-bit leap week: VP, UT, GT and M12 Oncores, not the
   M12+, report the date a day ahead for one second, with the time and
   1PPS unaffected
   ([Tom Van Baak, leapsecond.com](http://www.leapsecond.com/notes/leapsec256.htm);

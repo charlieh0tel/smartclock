@@ -646,6 +646,38 @@ skips the update, the EFC left as it was: without a hold cause if a
 second in it was questionable, else with the Z3805A's 4 or 8
 (`0x44c0a` to `0x44c32`).
 
+## How this is checked
+
+The tests hold this document to the Z3805A 3543B's and 58503A 3704's
+images, not to a copy of its own model
+(`crates/smartclock/tests/loop_firmware.rs`):
+
+- Each constant above is read from the image at the address cited and
+  matched to its receiver's row: τ, G, the startup's 150 s, 29.75,
+  2700, M, the clamp, the fifteen means, and holdover recovery's 500
+  and 350 s.
+- `tools/firmware/loop_trace.py` runs each image's own `startup_pll`
+  and `pll_normal` in Unicorn, once per second of synthetic
+  readings.  The image's soft-float routines run as they are; only the
+  routines that reach outside the loop (the interval reading, the ADC,
+  the clocks, the reports) are stood in for, and a call to any other
+  routine fails the run.  The traces are fixtures in
+  `crates/smartclock/tests/fixtures/loop/`; `make check-loop-trace`
+  regenerates and compares them.
+- A replay of the update law as written here must give the traced f,
+  I, B, u, constant and stage at every step: about 3000 per image,
+  through the wait for fifteen means and for the aging samples, the
+  start-up ramp, the hand-over, the aging slope's clamp and blocks with
+  no reading.  Reversing the error's sign, using the last
+  reading for the mean, or dropping the integrator's rescaling each
+  fails it.
+- The poles, damping, overshoot and times `loop.html` gives are
+  recomputed from the traced law.  That model takes a change of EFC as
+  acting from the next second; the DAC's latency is not modeled.
+
+The Z3815A, Z3816A, Z3801A and 58503B rows are read from their images
+by hand and not checked this way.
+
 ## How this was read
 
 A software floating-point library does the arithmetic; the decompiler

@@ -213,7 +213,7 @@ body.kiosk { --u: 1px; font-size: calc(13 * var(--u));
 .kiosk.debug #kiosk-foot { white-space: normal; }
 /* On one line, never broken at a hyphen ("POWER-" / "UP"); a mode
    name the page does not know, longer than its own words, is cut. */
-#kiosk-mode .mode { font: 700 calc(80 * var(--u))/1 system-ui, sans-serif; color: var(--ok);
+#kiosk-mode .mode { font: 700 calc(70 * var(--u))/1 system-ui, sans-serif; color: var(--ok);
                     text-transform: uppercase; letter-spacing: .02em;
                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #kiosk-mode .mode.warn { color: var(--warn); }

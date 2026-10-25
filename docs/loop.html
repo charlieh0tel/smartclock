@@ -10,6 +10,7 @@
   --bg:#f6f5f1; --ink:#1d2126; --muted:#5d646c; --rule:#d9d6ce;
   --panel:#ffffff; --accent:#1f6f8b; --ff:#b0661a; --line:#2b3138;
   --box:#ffffff; --boxline:#2b3138; --sumfill:#f6f5f1;
+  --measure:44rem; --flow:1rem; --gap:1.5rem; --section:3.5rem;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -25,38 +26,74 @@
   --panel:#1c2025; --accent:#5fb3d0; --ff:#e0a05a; --line:#d5d9de;
   --box:#1c2025; --boxline:#d5d9de; --sumfill:#15181c;
 }
-body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.5;margin:0;padding-block:32px 64px;padding-inline:20px}
-main{max-width:920px;margin:0 auto;display:grid;gap:40px}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.5;margin:0;padding:2rem 16px 4rem}
+main{max-width:920px;margin:0 auto;display:grid;gap:var(--section)}
 main>*{min-width:0}
-h1{font-size:2rem;font-weight:600;line-height:1.15;margin:0 0 6px;text-wrap:balance}
-h2{font-size:1.25rem;font-weight:600;margin:0 0 12px;text-wrap:balance}
-h3{font-size:1rem;font-weight:600;margin:20px 0 6px}
-p{margin:0 0 12px;max-width:66ch}
-.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.lede{color:var(--muted);max-width:66ch}
-code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.92em}
-.wide{overflow-x:auto}
-.splane svg{min-width:0;max-width:640px;margin:0 auto}
+/* One vertical rhythm: blocks carry no margins of their own; the space
+   between siblings is --flow, or --gap around figures, tables and equations. */
+header>*,section>*,.cols>div>*,figure{margin:0}
+header>*+*,section>*+*,.cols>div>*+*{margin-top:var(--flow)}
+section>:is(.fig,.wide,.cols),section>:is(.fig,.wide,.cols)+*{margin-top:var(--gap)}
+section>h2+*{margin-top:var(--flow)}
+section>h3{margin-top:2.5rem}
+section>h3+*{margin-top:.75rem}
+section>.wide+.note{margin-top:.75rem}
+h1{font-size:2rem;font-weight:600;line-height:1.15;text-wrap:balance}
+h2{font-size:1.375rem;font-weight:600;line-height:1.25;text-wrap:balance}
+h3{font-size:1rem;font-weight:600;line-height:1.5}
+p,.lede,.note{max-width:var(--measure)}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header>.eyebrow+h1{margin-top:.5rem}
+.lede{color:var(--muted);font-size:1.0625rem}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.92em;overflow-wrap:anywhere}
+.note{font-size:.875rem;color:var(--muted)}
+a{color:var(--accent)}
+sub{line-height:0}
+
+/* Figures: the diagram scrolls inside its frame below 800 px rather than
+   shrinking its text; the s-plane scales and centers. */
+.fig{border:1px solid var(--rule);background:var(--panel);padding:16px;overflow-x:auto}
+.fig svg{display:block;min-width:800px;width:100%;height:auto}
+.fig.splane svg{min-width:0;max-width:600px;margin-inline:auto}
+.fig figcaption{font-size:.875rem;color:var(--muted);margin-top:.75rem}
+.legend{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;font-size:.875rem;color:var(--muted);margin-top:.75rem}
+.legend span::before{content:"";display:inline-block;width:22px;height:0;border-top:2.5px solid var(--line);margin-right:6px;vertical-align:middle}
+.legend span.ffl::before{border-top-color:var(--ff);border-top-style:dashed}
 .sp-t{font:12px "IBM Plex Mono",monospace;fill:var(--muted)}
 .sp-l{font:12.5px "IBM Plex Mono",monospace;fill:var(--accent)}
 .sp-m{font:11.5px "IBM Plex Sans",sans-serif;fill:var(--muted)}
+
+/* Equations: monospace, the definitions in a second, aligned column. */
+.eq{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.9375rem;line-height:1.75;background:var(--panel);border-left:3px solid var(--accent);padding:.75rem 1rem;white-space:pre-wrap;overflow-x:auto}
 .eqgrid{display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:4ch}
-@media (max-width:720px){.eqgrid{grid-template-columns:1fr}.eqgrid span:nth-child(even){padding-left:3ch;margin-bottom:6px;color:var(--muted)}}
-.sym{text-transform:none;letter-spacing:0;font-size:.95rem}
-.fig{border:1px solid var(--rule);background:var(--panel);padding:16px 12px 8px;overflow-x:auto}
-.fig svg{display:block;min-width:800px;width:100%;height:auto}
-.fig figcaption{font-size:.85rem;color:var(--muted);padding:8px 4px 4px;max-width:none}
-.eq{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.95rem;line-height:1.7;background:var(--panel);border-left:3px solid var(--accent);padding:12px 16px;margin:12px 0;white-space:pre-wrap}
-table{border-collapse:collapse;width:100%;font-size:.95rem;font-variant-numeric:tabular-nums}
-th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
-th{font-weight:600;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-td:first-child{white-space:nowrap}
-.legend{display:flex;gap:20px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin-top:4px}
-.legend span::before{content:"";display:inline-block;width:22px;height:0;border-top:2.5px solid var(--line);margin-right:6px;vertical-align:middle}
-.legend span.ffl::before{border-top-color:var(--ff);border-top-style:dashed}
-.note{font-size:.9rem;color:var(--muted)}
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
-a{color:var(--accent)}
+.eqgrid span:nth-child(even){color:var(--muted)}
+
+/* Tables: the first column flush with the text; columns fixed by colgroup. */
+.wide{overflow-x:auto}
+table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:.9375rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:.5rem .75rem;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{padding-left:0}
+th:last-child,td:last-child{padding-right:0}
+thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);vertical-align:bottom;border-bottom-color:var(--muted)}
+th .sym,th.sym{text-transform:none;letter-spacing:0;font-size:.9375rem}
+.models{min-width:46rem}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:var(--gap) 2.5rem;align-items:start}
+
+@media (max-width:720px){
+  body{padding-top:1.5rem}
+  h1{font-size:1.75rem}
+  .eqgrid{grid-template-columns:minmax(0,1fr)}
+  .eqgrid span:nth-child(even){padding-left:2ch}
+  .eqgrid span:nth-child(odd):not(:first-child){margin-top:.375rem}
+  /* The symbols stack: symbol beside meaning, value under the meaning. */
+  .defs,.defs tbody{display:block}
+  .defs thead{display:none}
+  .defs tr{display:grid;grid-template-columns:4.5rem minmax(0,1fr);column-gap:.75rem;padding-block:.5rem;border-bottom:1px solid var(--rule)}
+  .defs td{padding:0;border:0}
+  .defs td:nth-child(3){grid-column:2;color:var(--muted);margin-top:.25rem}
+  .defs td:empty{display:none}
+}
 </style>
 </head>
 <body>
@@ -65,44 +102,47 @@ a{color:var(--accent)}
 <header>
   <div class="eyebrow">HP / Symmetricom SmartClock · firmware Z3816A 4001, Z3815A 4010, Z3801A 3543, Z3805A 3543B, 58503A 3633 and 3704, 58503B 1.01.04</div>
   <h1>SmartClock Disciplining Loop</h1>
-  <p class="lede">How the receiver steers its 10811 oscillator to GPS, as read from the firmware images: a proportional–integral loop on the ten-second mean of the phase error, with the oscillator's own aging curve fed forward into the integrator. Every constant below is one the code contains.</p>
+  <p class="lede">How the receiver steers its 10811 oscillator to GPS, read from the firmware images: a proportional–integral loop on the ten-second mean of the phase error, with the oscillator's aging curve fed forward into the integrator. Every constant below comes from the code.</p>
 </header>
 
 <section>
   <h2>The loop</h2>
   <figure class="fig">
-    <svg id="loop" viewBox="0 0 1020 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Block diagram of the disciplining loop"></svg>
+    <svg id="loop" viewBox="0 24 1020 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Block diagram of the disciplining loop"></svg>
     <div class="legend"><span>signal path, one update every 10 s</span><span class="ffl">aging feed-forward, one sample every 2700 s</span></div>
-    <figcaption>x = t<sub>OCXO</sub> − t<sub>GPS</sub>, the interval from the GPS 1 PPS to the oscillator's, positive when the oscillator's comes later. That physical sign is inferred (<a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/counter.md#the-sign-and-the-loop">counter.md</a>); it is the one that makes the loop's positive gains negative feedback. The update runs in the <code>pllp</code> task in single-precision floating point; the health monitor's <code>hmon</code> task writes u to the DAC; the aging fit runs in the <code>curv</code> task.</figcaption>
+    <figcaption>x = t<sub>OCXO</sub> − t<sub>GPS</sub>: the interval from the GPS 1 PPS to the oscillator's, positive when the oscillator's comes later. That physical sign is inferred (<a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/counter.md#the-sign-and-the-loop">counter.md</a>); it makes the loop's positive gains negative feedback. The <code>pllp</code> task runs the update in single-precision floating point, the health monitor's <code>hmon</code> task writes u to the DAC, and the <code>curv</code> task runs the aging fit.</figcaption>
   </figure>
 
-  <p>Once a second the firmware reads one interval from the FPGA counter. Every tenth second it takes the mean x̄ of those ten seconds' readings within the holdover limit — the number <code>:SYNChronization:TINTerval?</code> reports — and runs one update:</p>
+  <p>Once a second the firmware reads one interval from the FPGA counter. Every tenth second it takes x̄, the mean of those ten seconds' readings within the holdover limit (the number <code>:SYNChronization:TINTerval?</code> reports), and runs one update:</p>
   <div class="eq eqgrid"><span>e  = x̄ − x₀</span><span>x₀ is a setpoint, normally 0</span><span>f ← (1 − a)·f + a·e</span><span>a = 29.75 / τ</span><span>d  = clamp(b + c / y, −M, +M)</span><span>y = t / 2700 s, from the aging fit</span><span>I ← I + 10·k·f + 10·d / 2700</span><span>k = 1 / (4·G·τ²)</span><span>u  = clamp(K·f + B + I + c₀·s, 0, 1048560)</span><span>K = 1 / (G·τ)</span></div>
-  <p>u is the EFC in 20 bits. The update only stores it; on each of its ticks the health monitor's task rounds it, adds a small random dither and writes the top 16 bits to the DAC (<code>efc_write_dithered</code>: Z3805A <code>0x2421c</code>, 58503A <code>0x23540</code>). B is the EFC that was in force when the loop closed, less c₀·s, so closing the loop does not move the oscillator; s is the health monitor's exponential average of the oscillator's oven current (0.1 of each fresh reading, 0.9 of the last), and c₀ is the value <code>:DIAGnostic:ROSCillator:TCOefficient</code> reads and writes — a calibration constant in the EEPROM block, in EFC units per unit of the current channel, applied at every update and adjusted by nothing but its own setter. That term tracks the oven rather than the phase; in the Z3816A the console word <code>xcal</code> measures it by fitting EFC against current.</p>
+  <p>u is the EFC in 20 bits. The update only stores it. On each of its ticks the health monitor's task rounds u, adds a small random dither and writes the top 16 bits to the DAC (<code>efc_write_dithered</code>: Z3805A <code>0x2421c</code>, 58503A <code>0x23540</code>).</p>
+  <p>B is the EFC in force when the loop closed, less c₀·s, so closing the loop does not move the oscillator. s is the health monitor's exponential average of the oscillator's oven current: 0.1 of each fresh reading, 0.9 of the last. c₀ is the value <code>:DIAGnostic:ROSCillator:TCOefficient</code> reads and writes: a calibration constant in the EEPROM block, in EFC units per unit of the current channel. Every update applies it; only its own setter adjusts it. The c₀·s term tracks the oven, not the phase; in the Z3816A the console word <code>xcal</code> measures it by fitting EFC against current.</p>
 </section>
 
 <section>
   <h2>Symbols and constants</h2>
-  <div class="wide"><table>
+  <div class="wide"><table class="defs">
+    <colgroup><col style="width:12%"><col style="width:50%"><col style="width:38%"></colgroup>
     <thead><tr><th>Symbol</th><th>Meaning</th><th>Value</th></tr></thead>
     <tbody>
       <tr><td>τ</td><td>loop time constant; <code>loop_time</code> on the console; kept across a warm restart</td><td>by model, below</td></tr>
-      <tr><td>G</td><td>oscillator gain the firmware assumes, fractional frequency per EFC unit</td><td>by model, below</td></tr>
+      <tr><td>G</td><td>oscillator gain the firmware assumes, in fractional frequency per EFC unit</td><td>by model, below</td></tr>
       <tr><td>a</td><td>prefilter coefficient, 29.75 / τ per 10 s update</td><td>by model, below</td></tr>
       <tr><td>K</td><td>proportional gain, 1 / (G·τ)</td><td>EFC units per second of error</td></tr>
       <tr><td>k</td><td>integral gain per update, 1 / (4·G·τ²), applied ×10 for the ten seconds</td><td></td></tr>
       <tr><td>B</td><td>base EFC: the EFC in force when <code>pll_normal</code> takes over, less c₀·s, so closing the loop does not move the oscillator</td><td>set again on each entry to <code>startup_pll</code> or <code>pll_normal</code>, after every holdover too, and fixed in between; drift accumulates in I</td></tr>
       <tr><td>M</td><td>clamp on the drift term, 6.25 × 10⁻¹⁰ / |G|</td><td>±500 or ±294 EFC units per 2700 s on the Z3816A; ±1000 where G is +6.25 × 10⁻¹³</td></tr>
-      <tr><td>x₀</td><td>phase setpoint</td><td>0 unless set from the console word <code>phase_off</code></td></tr>
+      <tr><td>x₀</td><td>phase setpoint</td><td>0 unless the console word <code>phase_off</code> sets it</td></tr>
       <tr><td>c₀</td><td>coefficient on the oscillator current; <code>:DIAGnostic:ROSCillator:TCOefficient</code>, limits ±200, in EEPROM</td><td>a calibration value per unit; −33.65 on the bench 58503A, which applies it at every update</td></tr>
       <tr><td>s</td><td>oscillator current as the health monitor holds it: an exponential average, not the fresh reading <code>:DIAGnostic:ROSCillator:CURRent?</code> returns</td><td>Z3816A, Z3805A, 58503A 3704: 250 until the first reading; Z3801A, Z3805A: channel 3; 58503A 3704: channel 6, <code>Primary oven current</code></td></tr>
       <tr><td>startup τ</td><td>the constant <code>startup_pll</code> ramps from, +5 s per update, until within 5 s of τ</td><td>150 s</td></tr>
     </tbody>
   </table></div>
-  <p class="note">The clamp figures come from M = 6.25 × 10⁻¹⁰ / |G| with the gains below. Evidence for each value: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#the-loop">The loop</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#τ-and-g">τ and G</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#s-the-oscillator-current">s, the oscillator current</a>.</p>
+  <p class="note">The clamp figures come from M = 6.25 × 10⁻¹⁰ / |G| and the gains below. Evidence for each value: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#the-loop">The loop</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#τ-and-g">τ and G</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#s-the-oscillator-current">s, the oscillator current</a>.</p>
 
   <h3>By model</h3>
-  <div class="wide"><table>
+  <div class="wide"><table class="models">
+    <colgroup><col style="width:19%"><col style="width:17%"><col style="width:25%"><col style="width:12%"><col style="width:13%"><col style="width:14%"></colgroup>
     <thead><tr><th>Firmware</th><th class="sym">τ</th><th class="sym">G</th><th class="sym">a</th><th>Slowest pole, <span class="sym">≈ 2.7τ</span></th><th>Startup ramp</th></tr></thead>
     <tbody>
       <tr><td>Z3816A 4001</td><td>500 s</td><td>−1.25 × 10⁻¹² or −2.125 × 10⁻¹², by bit 8 of the word at <code>0x302000</code></td><td>0.0595</td><td>1360 s</td><td>≈ 700 s</td></tr>
@@ -112,24 +152,24 @@ a{color:var(--accent)}
       <tr><td>58503B 1.01.04</td><td>700 s, settable: <code>LTIMe:MAX</code>*</td><td>−1.25 × 10⁻¹² or +6.25 × 10⁻¹³, by <code>TYPE</code>*</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s, from <code>LTIMe:INIT</code>*</td></tr>
     </tbody>
   </table></div>
-  <p class="note">* Under <code>:DIAGnostic:ROSCillator</code>, undocumented; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, Z3801A, Z3805A, 58503A 3704 and 58503B; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in, below. What the bits of the word at <code>0x302000</code> read was not traced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
+  <p class="note">* Undocumented, under <code>:DIAGnostic:ROSCillator</code>; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, Z3801A, Z3805A, 58503A 3704 and 58503B; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in (below). What the bits of the word at <code>0x302000</code> read is untraced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
 </section>
 
 <section>
   <h2>What kind of loop that is</h2>
   <div class="cols">
     <div>
-      <p>Take the oscillator as an integrator: an EFC change of Δu shifts its fractional frequency by G·Δu, and frequency integrates into phase. With the proportional gain K = 1/(Gτ) and an integral gain of k per second, and leaving the prefilter out, the closed loop is second order:</p>
+      <p>Take the oscillator as an integrator: an EFC change of Δu shifts its fractional frequency by G·Δu, and frequency integrates into phase. Leave the prefilter out. With proportional gain K = 1/(Gτ) and integral gain k per second, the closed loop is second order:</p>
       <div class="eq">s² + (G·K)·s + G·k
   = s² + s/τ + 1/(4τ²)
   = (s + 1/(2τ))²</div>
-      <p>A double real pole at −1/(2τ), damping ratio exactly 1: that is what the gains are chosen to give. The prefilter moves it.</p>
+      <p>The gains are chosen to give a double real pole at −1/(2τ), damping ratio exactly 1. The prefilter moves it.</p>
     </div>
     <div>
-      <p>The prefilter on the error is a first-order low-pass at p = 2.975/τ (time constant τ / 2.975, about 168 s at τ = 500 s), and it sits inside the loop, ahead of both gains. The characteristic equation becomes s²(s + p) + p·(s/τ + 1/(4τ²)) = 0, a cubic. For the 10 s update itself its roots are a real pole at −0.37/τ and a pair at (−1.34 ± 0.55j)/τ, damping ratio 0.92 (the s-plane below).</p>
+      <p>The prefilter is a first-order low-pass on the error at p = 2.975/τ (time constant τ / 2.975, about 168 s at τ = 500 s). It sits inside the loop, ahead of both gains, and makes the characteristic equation a cubic: s²(s + p) + p·(s/τ + 1/(4τ²)) = 0. For the 10 s update itself its roots are a real pole at −0.37/τ and a pair at (−1.34 ± 0.55j)/τ, damping ratio 0.92 (the s-plane below).</p>
       <p>The slow real pole sets the tail: about 2.7τ, 1360 s at τ = 500 s, 1900 s at 700 s, 2710 s at 1000 s. Started from a phase error, the loop removes 63 % of it in about τ, overshoots by about 20 % near 3τ, and settles back from the other side at the slow pole's rate.</p>
-      <p>The update is discrete at 10 s; the factor 10 on the integrator term is the sample period. The poles above are the discrete update's, mapped to the s-plane, and count the ten-reading mean: with the EFC held over the ten seconds, the mean lags the last reading, x̄<sub>n</sub> = x<sub>n</sub> + 4.5·G·u<sub>n−1</sub>. They take the counter read and the DAC write as immediate; those latencies are the idealization left. The continuous cubic gives nearly the same, −0.37/τ and (−1.30 ± 0.56j)/τ.</p>
-      <p>G cancels out of the closed-loop dynamics: it only scales the gains so the poles land where they do whatever the oscillator's actual sensitivity. If the real oscillator gain differs from the assumed G, the loop gain is off by that ratio and the poles move.</p>
+      <p>The update is discrete at 10 s; the factor 10 on the integrator term is the sample period. The poles above are the discrete update's, mapped to the s-plane. They count the ten-reading mean: with the EFC held over the ten seconds, the mean lags the last reading, x̄<sub>n</sub> = x<sub>n</sub> + 4.5·G·u<sub>n−1</sub>. They take the counter read and the DAC write as immediate; those latencies are the idealization left. The continuous cubic gives nearly the same poles, −0.37/τ and (−1.30 ± 0.56j)/τ.</p>
+      <p>G cancels out of the closed-loop dynamics: it only scales the gains, so the poles land in the same place whatever the oscillator's sensitivity. If the real gain differs from the assumed G, the loop gain is off by that ratio and the poles move.</p>
     </div>
   </div>
   <figure class="fig splane">
@@ -140,19 +180,20 @@ a{color:var(--accent)}
 
 <section>
   <h2>The aging feed-forward</h2>
-  <p>The dashed path is what makes the receiver's holdover good. While the loop is closed, <code>pllp</code> averages the current-compensated EFC, u − c₀·s, over each 2700 s (45 min) window and pushes that mean e, with its time y and the window's mean of ln y, w, into a ring of 64 samples — 48 hours. The <code>curv</code> task regresses those window means:</p>
+  <p>The dashed path makes the receiver's holdover good. While the loop is closed, <code>pllp</code> averages the current-compensated EFC, u − c₀·s, over each 2700 s (45 min) window. It pushes that mean e, its time y, and w, the window's mean of ln y, into a ring of 64 samples: 48 hours. The <code>curv</code> task regresses those window means:</p>
   <div class="eq eqgrid"><span>e = a + b·y + c·w</span><span>y = t / 2700 s, t the seconds since cold start</span><span>w = mean of ln y over the window</span><span>the window from y − 1 to y</span></div>
-  <p>by least squares — a straight line, plus a one-dimensional search on c once there are enough samples. The curve is then taken as a + b·y + c·ln y; its slope now, b + c/y, is d: the EFC change per 2700 s the fit predicts. Each update the integrator advances by 10·d/2700 — the predicted change over ten seconds — before the loop sees any phase error from it. In holdover the EFC is set from the same curve every ten seconds, with nothing to correct it.</p>
-  <p>The Z3815A and 58503B compute the same slope once per fit, not every ten seconds, and each update moves a running value toward it with time constant τ, so a new fit's change of slope reaches the oscillator over about τ rather than at once.</p>
-  <p>The Z3815A and 58503B also run an EFC calibration that measures the frequency offset at ten EFC settings and takes the slope of a straight line through them as G. They carry a second coefficient B that nothing in the firmware computes: the calibration sets it to zero, and the loop never applies it. B, zero unless set over SCPI, enters only the measured holdover uncertainty that <code>:SYNChronization:HOLDover:TUNCertainty:MEASured?</code> reports, which takes the gain as A + B·e² at EFC e.</p>
-  <p>Each sample carries a grade for how much of the window was averaged: 3 if all 2700 seconds, 2 if at least 675, else 1; and everything in the first three hours after a cold start gets 1. The grade only selects: a fit takes the samples at or above a minimum grade, 2 when there are enough of them, else 1, and weights each it takes equally. With fewer than three samples the fit is a constant, their mean; a slope needs three, so d is zero for the first hours after a power-up.</p>
+  <p>by least squares: a straight line, plus a one-dimensional search on c once there are enough samples. The curve is then taken as a + b·y + c·ln y. Its slope now, b + c/y, is d: the EFC change per 2700 s the fit predicts. Each update advances the integrator by 10·d/2700, the predicted change over ten seconds, before the loop sees any phase error from it. In holdover the same curve sets the EFC every ten seconds, and nothing corrects it.</p>
+  <p>The Z3815A and 58503B compute the same slope once per fit, not every ten seconds. Each update moves a running value toward it with time constant τ, so a new fit's change of slope reaches the oscillator over about τ, not at once.</p>
+  <p>The Z3815A and 58503B also run an EFC calibration. It measures the frequency offset at ten EFC settings and takes the slope of a straight line through them as G. They carry a second coefficient, B, that nothing in the firmware computes: the calibration sets it to zero, and the loop never applies it. B, zero unless set over SCPI, enters only the measured holdover uncertainty that <code>:SYNChronization:HOLDover:TUNCertainty:MEASured?</code> reports, which takes the gain as A + B·e² at EFC e.</p>
+  <p>Each sample carries a grade for how much of the window was averaged: 3 for all 2700 seconds, 2 for at least 675, else 1. Every sample in the first three hours after a cold start gets 1. The grade only selects: a fit takes the samples at or above a minimum grade, 2 when there are enough of them, else 1, and weights them equally. With fewer than three samples the fit is a constant, their mean. A slope needs three, so d is zero for the first hours after a power-up.</p>
 </section>
 
 <section>
   <h2>Starting up</h2>
-  <p>Before <code>pll_normal</code>, <code>startup_pll</code> runs the same update law with its own time constant, recomputing K, k and a from it every update; on entry it clears f and I and sets B. In the Z3805A and 58503A each lengthening of the constant from τ<sub>old</sub> to τ<sub>new</sub> also adds (f/G)·(1/τ<sub>old</sub> − 1/τ<sub>new</sub>) to I, so the change in K leaves K·f + I where it was. It first waits for fifteen consecutive ten-second means within ±150 ns. In the Z3805A and 58503A, after a power-up it then waits, still at 150 s, for the aging fit's first three samples, about 2¼ hours. Then it lengthens its constant by 5 s per update until it is within 5 s of τ, sets it to τ, and hands over. <code>pll_normal</code> then clears I and sets B to the EFC in force less c₀·s, but keeps f, so its first update moves u by about K·f. The Z3801A's firmware ramps the same way; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
-  <p>In those two, holdover recovery returns to <code>startup_pll</code>. After a holdover of more than 500 s (350 s in the 58503A 3704), or with the interval past 500 ns, the constant starts again from 150 s; otherwise it keeps its value — τ, once the loop got there, so the hand-over follows the fifteen means.</p>
-  <p class="note">Source: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md"><code>docs/firmware/loop.md</code></a>, which holds the addresses and the routine identities behind each number; this page explains, that one is the evidence.</p>
+  <p>Before <code>pll_normal</code>, <code>startup_pll</code> runs the same update law with its own time constant and recomputes K, k and a from it every update. On entry it clears f and I and sets B. In the Z3805A and 58503A, each lengthening of the constant from τ<sub>old</sub> to τ<sub>new</sub> also adds (f/G)·(1/τ<sub>old</sub> − 1/τ<sub>new</sub>) to I, so the change in K leaves K·f + I where it was.</p>
+  <p><code>startup_pll</code> first waits for fifteen consecutive ten-second means within ±150 ns. In the Z3805A and 58503A, after a power-up, it then waits, still at 150 s, for the aging fit's first three samples, about 2¼ hours. It then lengthens its constant by 5 s per update until within 5 s of τ, sets it to τ, and hands over. <code>pll_normal</code> clears I and sets B to the EFC in force less c₀·s, but keeps f, so its first update moves u by about K·f. The Z3801A ramps the same way; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
+  <p>In the Z3805A and 58503A, holdover recovery returns to <code>startup_pll</code>. The constant starts again from 150 s after a holdover of more than 500 s (350 s in the 58503A 3704) or with the interval past 500 ns. Otherwise it keeps its value: τ, once the loop got there, so the hand-over follows the fifteen means.</p>
+  <p class="note">Source: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md"><code>docs/firmware/loop.md</code></a>, which holds the addresses and routine identities behind each number. This page explains; that one is the evidence.</p>
 </section>
 </main>
 

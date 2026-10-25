@@ -189,7 +189,7 @@ recovery and at power-up, when the EFC is frozen or being slewed;
 controls, no pointer, no scrolling.  Full size from 1440x1080 CSS
 pixels inside the inset, scaled down to fit a smaller page (a player's
 display zoom can make one).  Left, the snapshot in large type
-(mode, receiver UTC and date, TI, EFC, TFOM, FFOM, satellites,
+(mode, on one line, receiver UTC and date, TI, EFC, TFOM, FFOM, satellites,
 temperature, holdover, alarms) over the journal, cut to fit; right,
 the live page's TI, EFC, satellites and temperature stack, with the
 host's temperature sensors on one chart below it, and the MDEV/ADEV

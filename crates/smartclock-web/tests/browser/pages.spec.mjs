@@ -940,6 +940,34 @@ test("the kiosk lays itself out inside the inset an overscanning display asks fo
   expect(fits).toBe(true);
 });
 
+test("every mode word the kiosk shows fits its panel on one line, at full size and scaled down", async ({ page }) => {
+  await twoUnits().install(page);
+  for (const [width, height] of [[1440, 1080], [1280, 720]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(`/kiosk?receiver=${A}`);
+    // The page's own words, from its own `modeOf`, measured in the one
+    // task so a poll cannot write over them.
+    const words = await page.evaluate(() => {
+      const snapshots = [{ freshness: "Disconnected" },
+        ...["Locked", "Holdover", "Recovery", "Waiting", "PowerUp"].map((mode) => ({ freshness: "Live", mode }))];
+      const word = $("kiosk-mode-word");
+      return snapshots.map((s) => {
+        const [mode, tone] = modeOf(s);
+        showMode(mode, tone);
+        const range = document.createRange();
+        range.selectNodeContents(word);
+        return { mode, lines: new Set([...range.getClientRects()].map((r) => r.top)).size,
+          ink: range.getBoundingClientRect().width, room: word.clientWidth };
+      });
+    });
+    expect(words.map((w) => w.mode)).toContain("recovering");
+    for (const w of words) {
+      expect(w.lines, `${w.mode} at ${width}x${height}`).toBe(1);
+      expect(w.ink, `${w.mode} at ${width}x${height}`).toBeLessThanOrEqual(w.room);
+    }
+  }
+});
+
 // The kiosk's stack at 1920x1080, once drawn: each chart's first
 // column, its line count, its title, and its plot's height in CSS
 // pixels.

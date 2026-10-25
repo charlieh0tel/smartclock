@@ -64,6 +64,11 @@ const STARTUP_LENGTHENING: u8 = 3;
 /// smartclock.h's `pll_stage_result` for a stage that is done.
 const RESULT_DONE: u8 = 1;
 
+/// smartclock.h's `pll_hold_cause` bits a block with no reading summed
+/// adds: a reading failed, or every one was past the limit.
+const HOLD_CAUSE_TI_ERROR: u16 = 0x04;
+const HOLD_CAUSE_TI_LIMIT_EXCEEDED: u16 = 0x08;
+
 fn read(path: &str) -> String {
     let path = format!("{ROOT}/{path}");
     fs::read_to_string(&path).unwrap_or_else(|error| panic!("{path}: {error}"))
@@ -475,6 +480,7 @@ struct Row {
     collecting: bool,
     history_ready: bool,
     result: u8,
+    hold_causes: u16,
     ti_filtered: f32,
     integral: f32,
     efc_base: f32,
@@ -533,6 +539,7 @@ impl Trace {
                 collecting: flag("collecting"),
                 history_ready: flag("history_ready"),
                 result: u8::try_from(integer("result")).expect("a result"),
+                hold_causes: u16::try_from(integer("hold_causes")).expect("causes"),
                 ti_filtered: float("ti_filtered"),
                 integral: float("integral"),
                 efc_base: float("efc_base"),
@@ -675,6 +682,8 @@ struct Loop {
     readings: u8,
     seconds: u8,
     questionable_seen: bool,
+    failed: bool,
+    causes: u16,
     tau: f32,
     state: u8,
     blocks: i32,
@@ -706,6 +715,8 @@ impl Loop {
             readings: 0,
             seconds: 0,
             questionable_seen: false,
+            failed: false,
+            causes: 0,
             tau: trace.constant(scenario, "first_time_constant"),
             state: 0,
             blocks: 0,
@@ -719,9 +730,11 @@ impl Loop {
         if self.receiver.reference_gates_readings && row.questionable {
             self.questionable_seen = true;
         }
-        if !row.valid
-            || (self.receiver.reference_gates_readings && (!row.reference_good || row.questionable))
-        {
+        if !row.valid {
+            self.failed = true;
+            return;
+        }
+        if self.receiver.reference_gates_readings && (!row.reference_good || row.questionable) {
             return;
         }
         if row.reading.abs() < self.threshold {
@@ -732,9 +745,18 @@ impl Loop {
     }
 
     /// The block's mean into `sum`; whether any reading was summed.
+    /// A block with none adds a hold cause, unless a second in it was
+    /// questionable.
     fn mean(&mut self) -> bool {
         if self.readings == 0 {
             self.sum = 0.0;
+            if !self.questionable_seen {
+                self.causes |= if self.failed {
+                    HOLD_CAUSE_TI_ERROR
+                } else {
+                    HOLD_CAUSE_TI_LIMIT_EXCEEDED
+                };
+            }
             return false;
         }
         self.sum = if self.variant == Variant::LastReading {
@@ -750,6 +772,7 @@ impl Loop {
         self.readings = 0;
         self.seconds = 0;
         self.questionable_seen = false;
+        self.failed = false;
     }
 
     /// The update: loop.md's "The update", then the clamp.
@@ -862,6 +885,7 @@ impl Loop {
 
     fn step(&mut self, row: &Row) {
         self.result = 0;
+        self.causes = 0;
         if row.stage == "startup_pll" {
             self.startup(row);
         } else {
@@ -925,6 +949,12 @@ fn replay(receiver: &'static Receiver, variant: Variant) -> Result<usize, String
                     receiver.image, state.result, row.result
                 ));
             }
+            if state.causes != row.hold_causes {
+                return Err(format!(
+                    "{} {scenario} row {index}: hold causes replayed {:#x}, firmware {:#x}",
+                    receiver.image, state.causes, row.hold_causes
+                ));
+            }
             checked += 1;
         }
     }
@@ -936,6 +966,42 @@ fn the_firmware_runs_the_evidence_s_update_law() {
     for receiver in &RECEIVERS {
         let rows = replay(receiver, Variant::Firmware).unwrap_or_else(|error| panic!("{error}"));
         assert!(rows > 1000, "{}: {rows} rows", receiver.image);
+    }
+}
+
+#[test]
+fn a_block_with_no_reading_updates_on_the_z3805a_and_not_on_the_3704() {
+    let evidence = flat(&read("docs/firmware/loop.md"));
+    assert!(evidence.contains("and still updates, with the mean taken as 0: e = −x₀"));
+    assert!(evidence.contains("a ten seconds with none skips the update"));
+    for receiver in &RECEIVERS {
+        let trace = Trace::load(receiver.image);
+        let normal: Vec<&Row> = trace
+            .rows
+            .iter()
+            .filter(|row| row.scenario == "normal")
+            .collect();
+        let mut seen = Vec::new();
+        for pair in normal.windows(2) {
+            let (before, after) = (pair[0], pair[1]);
+            if after.hold_causes == 0 {
+                continue;
+            }
+            assert_eq!(
+                after.ti_filtered != before.ti_filtered,
+                receiver.empty_block_steers,
+                "{}: a block with none summed at uptime {}",
+                receiver.image,
+                after.uptime
+            );
+            seen.push(after.hold_causes);
+        }
+        assert_eq!(
+            seen,
+            [HOLD_CAUSE_TI_ERROR, HOLD_CAUSE_TI_LIMIT_EXCEEDED],
+            "{}: the trace's empty blocks",
+            receiver.image
+        );
     }
 }
 

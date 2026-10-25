@@ -73,13 +73,8 @@ readings and poll timing add about 1 s.  The check shows when a mismatch was cor
 not why it arose.  A steady TI, the 1 PPS phase against GPS, cannot
 show a mislabeled second: the edge stayed put.
 
-Recovery preceded the next scheduled UTC parameters, subframe 4 page
-18.  A frame is five 6 s subframes, 30 s; subframes 4 and 5 cycle 25
-pages in 12.5 minutes, restarting at page 1 at the week boundary
-(IS-GPS-200N 20.3.2, 20.3.4.1).  Page 18 is in frame 18, time of week
-528 to 534 s, 00:08:30 to 00:08:36 UTC.  The previous one, at time of
-week 805 x 750 + 528 = 604278 s of week 2441, 23:51:00 to 23:51:06 UTC,
-came 522 s before the rollover, 17.5 minutes earlier.
+Recovery preceded the next scheduled UTC parameters (subframe 4 page
+18) at 00:08:30 (IS-GPS-200N 20.3.2, 20.3.4.1).
 
 ## Why week 2441
 
@@ -106,29 +101,23 @@ offsets or other corrupt state, such as a cached UTC offset.
 
 ## Precedents
 
-- **2003-11-27.**  256 weeks after the 1998-12-31 leap second, none
-  pending, an Oncore VP sent one bad `@@Ba` date and time at the day's
-  86401st second; an HP 59551A beside it was unaffected
+- **2003-11-27.**  256 weeks after the 1998-12-31 leap second, an
+  Oncore VP sent one bad `@@Ba`, not minutes 1 s off
   ([Tom Van Baak, leapsecond.com](http://www.leapsecond.com/notes/leapsec256.htm);
   BIPM appendix
   [figure 33](https://www.bipm.org/documents/d/guest/towards-continuous-utc-appendix-only-news-from-the-press-nov-2022);
   time-nuts,
   [2019](https://febo.com/pipermail/time-nuts_lists.febo.com/2019-June/096730.html)).
-  The same family in Oncore firmware, but one message, not minutes.
-- **2021-11-28, the previous match.**  Many NTP servers applied an
-  unscheduled leap; most recovered within a second, but eight stayed
-  1 s off for 2 to 8 minutes, one for 39 min 26 s.  At least 42 advertising it were LeoNTP units, whose
-  u-blox engine reported week 2185 as 1929; the source does not name
-  the prolonged ones' models
-  ([Steven Sommars, weberblog](https://weberblog.net/partial-ntp-pool-the-leap-second-that-wasnt/)).
-  LeoNTP firmware 1.24 "Fixed erroneous indication of scheduled leap
-  second" ([LeoNTP](https://www.leontp.com/firmware/)).
-- **2026-10-25 predicted.**  In November 2025 LeoNTP 1200 units, 512
-  weeks after 1929, announced a leap for 2026-10-25 00:00:00
+- **2021-11-28, the previous match.**  NTP servers, many of them LeoNTP
+  units on u-blox engines, applied an unscheduled leap; some stayed 1 s
+  off for minutes
+  ([Steven Sommars, weberblog](https://weberblog.net/partial-ntp-pool-the-leap-second-that-wasnt/);
+  [LeoNTP firmware 1.24](https://www.leontp.com/firmware/)).
+- **2026-10-25 predicted.**  In November 2025 LeoNTP 1200 units
+  announced a leap for this date; firmware 2.07 fixed it
   ([NTP Pool forum](https://community.ntppool.org/t/leap-second-in-october-2026/4132);
-  [time-nuts, Steven Sommars](https://febo.com/pipermail/time-nuts_lists.febo.com/2025-November/110275.html));
-  LeoNTP firmware 2.07 fixed its server
-  ([time-nuts, Tom Van Baak](https://febo.com/pipermail/time-nuts_lists.febo.com/2025-November/110284.html)).
+  [time-nuts, Steven Sommars](https://febo.com/pipermail/time-nuts_lists.febo.com/2025-November/110275.html);
+  [time-nuts, Tom Van Baak](https://febo.com/pipermail/time-nuts_lists.febo.com/2025-November/110284.html)).
 
 ## Alternatives
 
@@ -154,11 +143,8 @@ the Oncore's serial line shows its own transition.
 
 ## What to do
 
-No clock correction is needed.  `*CLS` clears the event and releases
-the Alarm LED and Alarm BITE output (`097-59551-02` 5-40 to 5-41).
-Reading `:STATus:QUEStionable:EVENt?` also clears it (5-46); the alarm
-presumably follows, but the manual does not say
-([`running.md`](running.md#time-reset-at-a-gps-week-boundary)).
+No clock correction is needed; to clear the event, see
+[`running.md`](running.md#time-reset-at-a-gps-week-boundary).
 
 If the fields stay unchanged, week 2697 matches again, ending Saturday
 2031-09-20 (00:00 UTC on Sunday 2031-09-21).  The receiver's time of

@@ -387,14 +387,15 @@ FIRST_TIME_CONSTANT = 150.0
 
 def normal_seconds(random: Random) -> list[Second]:
     """pll_normal from its entry: 400 s of readings within 300 ns, some
-    failed, some past the threshold, a block with none valid, a block
-    with the reference questionable, and fit slopes that pass the clamp
+    failed, some past the threshold, a block with none valid, one with
+    every reading past the threshold, a block with the reference
+    questionable, and fit slopes that pass the clamp
     either way."""
     seconds = [Second('pll_normal', 0, 0, 0.0, FIRST_UPTIME, 1.0)]
     for second in range(1, 401):
         reading = 3e-7 * random.uniform() + 1e-7
         valid = 0 if second % 37 == 0 or 200 < second <= 210 else 1
-        if second % 53 == 0:
+        if second % 53 == 0 or 370 < second <= 380:
             reading = 2 * THRESHOLD
         fit_b = 5000.0 if 250 < second <= 290 else -5000.0 if 330 < second <= 360 else 3.0
         seconds.append(
@@ -534,14 +535,17 @@ def run(machine: Machine, name: str, seconds: list[Second], stop_when_done: bool
             machine.write(machine.field('pll_state', 'efc_history.stop_ptr'), 'B', 3)
             machine.write(machine.field('pll_state', 'efc_history.start_ptr'), 'B', 0)
         result = machine.call(second.stage, bytes([second.same_stage, 0])) & 0xFF
-        # The causes cleared, so that a row's result is its own call's.
+        # The causes the call added, then cleared, so that a row's
+        # result and causes are its own call's.
+        causes_at = machine.field('pll_state', 'hold_causes')
         size = machine.layout['pll_state.hold_causes'][1]
-        machine.uc.mem_write(machine.field('pll_state', 'hold_causes'), bytes(size))
+        causes = int.from_bytes(machine.uc.mem_read(causes_at, size), 'big')
+        machine.uc.mem_write(causes_at, bytes(size))
         row = [name] + [
             cell(getattr(second, key), 'f' if key in ('reading', 'current', 'fit_b', 'fit_c') else 'd')
             for key in INPUTS
         ]
-        row.append(str(result))
+        row += [str(result), str(causes)]
         for member, structure, fmt in OUTPUTS:
             row.append(cell(machine.read(machine.field(structure, member), fmt), fmt))
         lines.append('\t'.join(row))
@@ -559,7 +563,7 @@ def trace(image: str) -> str:
         sys.exit(f'{image}: no address for {missing}')
     machine = Machine(image, rom, routines, addresses, layout(image))
     check_callees(machine)
-    columns = ['scenario', *INPUTS, 'result', *(member for member, _, _ in OUTPUTS)]
+    columns = ['scenario', *INPUTS, 'result', 'hold_causes', *(member for member, _, _ in OUTPUTS)]
     lines = [
         f'# {image}: startup_pll and pll_normal run in Unicorn by tools/firmware/loop_trace.py;',
         '# do not edit.  Floats are IEEE single bits in hex.',

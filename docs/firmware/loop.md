@@ -629,7 +629,10 @@ message in all but the Z3815A and 58503B.
 150 ns, to 15; one outside clears it.
 
 The mean is of that ten seconds' readings within the holdover limit
-threshold, not always ten.  The loop clamps u to 0 to 1048560
+threshold, not always ten.  A ten seconds with none adds a hold cause
+-- a TI error, 4, if a reading failed, else the limit exceeded, 8
+(`0x44b88` to `0x44ba0`) -- and still updates, with the mean taken as
+0: e = −x₀, and f, I and u move.  The loop clamps u to 0 to 1048560
 (`efc_clamp`, `0x2426e`), and the health monitor's task, not `pllp`,
 writes it on each tick: `efc_write_dithered` (`0x2421c`) rounds it,
 adds a small random dither and sends the top 16 of its 20 bits to the
@@ -639,7 +642,9 @@ The 58503A 3704 runs the same update (`pll_normal`, `0x4495a`;
 `efc_write_dithered`, `0x23540`), with two differences: s is channel 6
 ("s, the oscillator current"), and while the GPS reference is
 questionable its readings are not summed, and a ten seconds with none
-skips the update without adding a hold cause, the EFC left as it was.
+skips the update, the EFC left as it was: without a hold cause if a
+second in it was questionable, else with the Z3805A's 4 or 8
+(`0x44c0a` to `0x44c32`).
 
 ## How this was read
 

@@ -249,6 +249,16 @@ static uint32_t cpu_long_bit(uint32_t count) {
   return count < CPU_LONG_BITS ? (uint32_t)1 << count : 0;
 }
 
+/* Adds 1 to the long at counter in one instruction, addq.l #1 to
+ * memory, as root_task's idle loop does (0x133ee): an interrupt comes
+ * before it or after it, never between its read and its write, so that
+ * a clear another task makes meanwhile, klok_take_pending's, is kept.
+ * gcc's increment of a volatile is a load, an add and a store, between
+ * which the clear is lost. */
+static inline void cpu_long_increment(volatile uint32_t* counter) {
+  __asm__ volatile("addq.l #1,%0" : "+m"(*counter) : : "cc");
+}
+
 /* The SIM's software watchdog is serviced by writing these two to SWSR
  * in turn (MC68331UM, "Software Watchdog"; D.3.15). */
 static const uint8_t CPU_SWSR_FIRST = 0x55;

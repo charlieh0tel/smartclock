@@ -1517,7 +1517,13 @@ and a call still running at its 1000th kernel call, a task's loop,
 ends there, before making it.  A loop that makes no kernel call ends
 where it counts to a count of the function's (`COUNTED_LOOPS`):
 `root_task`'s idle loop at `idle_loops`' 101st write, odd, so that a
-loop counting by more passes it.  Two calls that end the same way are
+loop counting by more passes it.  Once the loop has read its counter, a
+write of it by any instruction but the one that read it ends the call
+too, as a split increment: the image's is one instruction, `addq.l #1`
+to memory (`0x131dc`), which no interrupt divides, and a load, an add
+and a store would lose a clear made between them, `klok_take_pending`'s
+from the klok task at each 1PPS.  The C increments with `cpu.h`'s
+`cpu_long_increment`, the same instruction.  Two calls that end the same way are
 compared as if they had returned, but for their result, and both
 leave the status register's system byte, its supervisor bit and
 interrupt mask, the same.  Two that return leave its condition codes

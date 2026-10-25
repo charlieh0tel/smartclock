@@ -1,9 +1,10 @@
 # The Time Reset at the end of GPS week 2441
 
 Just after GPS week 2441 ended, on 2026-10-25, the bench 58503A latched
-Time Reset; its time of day ran 1 s slow for about eight minutes.  This
-fits a known class of 256-week leap-parameter bugs in GPS engines, but
-the mechanism is unknown.
+Time Reset; its time of day ran 1 s slow for about eight minutes.  The
+trigger matches the Oncore's known 256-week leap-week alias at UTC
+midnight, but the eight minutes need more than that alias's documented
+one-second anomaly.
 [`running.md`](running.md#time-reset-at-a-gps-week-boundary) explains
 Time Reset and how to clear it;
 [`firmware/58503a-3704.md`](firmware/58503a-3704.md#time-reset-and-the-oncores-time)
@@ -113,7 +114,11 @@ boundary, or any later logged one, could settle the mechanism.
 ## Precedents
 
 - **2003-11-27.**  256 weeks after the 1998-12-31 leap second, an
-  Oncore VP sent one bad `@@Ba`, rather than running 1 s off for minutes
+  Oncore VP sent one garbled `@@Ba` (11/29/2003 62:28:15) at UTC
+  midnight, then correct ones.  Motorola's application note, on the same
+  page, blames the 8-bit leap week: VP, UT, GT and M12 Oncores, not the
+  M12+, report the date a day ahead for one second, with the time and
+  1PPS unaffected
   ([Tom Van Baak, leapsecond.com](http://www.leapsecond.com/notes/leapsec256.htm);
   BIPM appendix
   [figure 33](https://www.bipm.org/documents/d/guest/towards-continuous-utc-appendix-only-news-from-the-press-nov-2022);
@@ -127,11 +132,21 @@ boundary, or any later logged one, could settle the mechanism.
 
 ## Alternatives
 
+A one-second anomaly like 2003's cannot cause this through the 58503A's
+firmware, by a trace of its decompiled C.  Each `@@Ea` overwrites
+`gps.status` unchecked, and midnight rollover (`clock_tick`,
+`0x137f6`) never reads it.  The check installs the Oncore's time as
+received, through `clock_set` (`0x10b00`), whose setter rejects
+out-of-range fields.  No timer delays a correction; only the check's
+guards could.  So the Oncore's UTC labels stayed 1 s slow for minutes,
+or something else failed:
+
 - The Oncore's cached UTC offset, or its handling of the week
   transition, failed without any leap logic.
 - A race in the 58503A's status message or in `gps_leap_ack`.  That
   exchange switches the Oncore between GPS and UTC to measure GPS-UTC,
-  and a check requests it just after setting the clock.
+  and a check requests it just after setting the clock.  Its offset
+  cannot step the UTC clock, but while pending it blocks the check.
 
 The 58503A's own leap scheduling cannot explain this event.  It decodes
 no leap fields, acts only on the Oncore's pending flag `@@Bj`, and
@@ -142,7 +157,6 @@ An emulator ran it with this unit's EEPROM and a synthetic Oncore
 UTC, and `*STB?` stayed 0 through 00:25.  This narrow control says
 nothing about the races or the Oncore.
 
-Raw `@@Ea` time stamps, arrival times, the GPS and UTC mode exchanges
-and the host clock's log would separate these.  Per-second reads against
-a disciplined host clock would narrow the 58503A's step times.  Only the
-Oncore's serial line shows its own transition.
+A 1PPS-timestamped capture of the Oncore's line, both directions, across
+both steps would decide.  Per-second reads against a disciplined host
+clock would narrow the 58503A's step times.

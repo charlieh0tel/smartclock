@@ -1618,9 +1618,10 @@ def installer_profile(image: bytes, addresses: InstallerAddresses = INSTALLER_AD
 # 60, whose steps a step parameter is given (load_long_unit_step,
 # 0x32e32).  status_screen_snapshot is at 0x1016ae (status_screen_print,
 # 0x4b6ec).  An ADC channel is 0 to 7, the entries of hmon_channels
-# (0x2238a), which the C defines (docs/firmware/58503a-3704.md, "After
-# the types wave"): the image's routines that index it by a channel
-# unchecked read past it for others, where gcc's read other data.
+# (0x2238a), which the C defines (docs/firmware/58503a-3704.md, "What
+# the 58503A's C does otherwise"): the image's routines that index it
+# by a channel unchecked read past it for others, where gcc's read
+# other data.
 PLLC_EXCHANGE_58503A = 0x1039D8
 NUMERIC_DESCRIPTOR_58503A = 0x33DD2
 PRIMARY_58503A_3704 = Profile(

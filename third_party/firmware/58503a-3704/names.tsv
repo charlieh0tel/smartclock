@@ -1,13 +1,14 @@
 # Names for the 58503A 3704 image, for SmartClockSetup.java, seeded from
 # the Z3805A 3543B's (third_party/firmware/z3805a-3543b/names.tsv) by the
-# matches a function-by-function matcher, image_diff, which is not part
-# of this repository, finds between the two images
+# matches tools/firmware/image_diff.py finds between the two images
 # (docs/firmware/58503a-3704.md; PLAN.md, "a second image is ported by
 # copying the first's work").  Each carried row keeps the Z3805A's name,
 # source, note, prototype and convention, its note ending in how it was
 # matched.  A note's addresses, and an address its source gives, are the
-# Z3805A's unless the note says otherwise.  The seeding wrote this file
-# and modules.tsv by these rules, from those matches.
+# Z3805A's unless the note says otherwise.  tools/firmware/seed_names.py
+# writes this file and modules.tsv by these rules, make seed-names;
+# make check-image-diff fails while they are not what the matches give,
+# so a rule or an exception is changed there, not a row here.
 #
 # - A function matched identical or relocated (the same bytes, or the
 #   same with every outward address masked), or inside one such, is
@@ -91,7 +92,8 @@
 # - A row whose note says "written by hand for the 58503A 3704" is kept
 #   as it is, in place of the row the matches give at its address and
 #   kind (and name, for a local or call row), or, with none there, after
-#   the carried rows; the rest are the seeding's.  A hand row may take a name the matches give
+#   the carried rows; the rest are the seeding's, which make
+#   check-image-diff checks.  A hand row may take a name the matches give
 #   another place only where a hand row takes that place too.  The types
 #   wave's hand rows place the RAM
 #   labels the rules leave unplaced where the 58503A's code shows them,

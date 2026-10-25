@@ -31,9 +31,9 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIRMWARE = ROOT / 'third_party/firmware'
-spec = importlib.util.spec_from_file_location('decompiled_check', ROOT / 'tools/firmware/decompiled_check.py')
-decompiled_check = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(decompiled_check)
+spec = importlib.util.spec_from_file_location('image_diff', ROOT / 'tools/firmware/image_diff.py')
+image_diff = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(image_diff)
 
 NAMES_FILES = ('names.tsv', 'scpi-tree.tsv', 'installer-scpi-tree.tsv')
 # the generated C's files: scpi_tree_data.c and installer_scpi_tree_data.c
@@ -95,9 +95,10 @@ class Image:
         self.function_starts = {r: sorted(a for rr, a in self.functions if rr == r) for r in regions}
         self.label_starts = {r: sorted(a for rr, a in self.labels if rr == r) for r in regions}
         data = (FIRMWARE / (name + '.bin')).read_bytes()
+        records = image_diff.installer_records(data)
         self.memory = {'': (0, data)}
-        if decompiled_check.find_installer_records(data) is not None:
-            self.memory[OVERLAY] = (decompiled_check.RAM, decompiled_check.installer_image(data))
+        if records is not None:
+            self.memory[OVERLAY] = (image_diff.RAM, image_diff.installer_image(records[0]))
 
     def function_at(self, region, address):
         """The name of the function whose extent, to the next function's

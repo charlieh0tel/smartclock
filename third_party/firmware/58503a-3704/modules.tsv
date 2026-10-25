@@ -1,7 +1,7 @@
 # The 58503A 3704 firmware's C functions by module, seeded from the
 # Z3805A 3543B's (third_party/firmware/z3805a-3543b/modules.tsv): each
 # Z3805A row re-keyed to its function's 58503A address through
-# the matches names.tsv's header describes, as names.tsv is (identical,
+# tools/firmware/image_diff.py's matches, as names.tsv is (identical,
 # relocated, or changed at a similarity of 0.70 or more under its own
 # name; from 0.50 a lead, named as names.tsv names it, with the suffix
 # _58503a where names.tsv has a row for it).  A Z3805A function missing
@@ -9,7 +9,7 @@
 # new functions have none yet.  docs/firmware/modules.md gives the
 # layers, what each module holds and the calls that cross layers the
 # wrong way; docs/firmware/58503a-3704.md what differs.
-# The seeding wrote this file, as it did names.tsv.
+# tools/firmware/seed_names.py writes this file, as it does names.tsv.
 #
 # Tab-separated: the function's address, its name, its module path
 # (LAYER/MODULE or LAYER/MODULE/PART), and a reason when the name does not

@@ -24,16 +24,14 @@ import collections
 import json
 import os
 import re
-import struct
 import subprocess
 import sys
 import tempfile
 
+import image_diff
+
 TOOLS = 'm68k-linux-gnu-'
 RAM = 0x100000
-RAM_SIZE = 0x10000
-# where the boot code's records are looked for from: past the vectors
-LOWEST_ADDRESS = 0x400
 # each routine's piece is a section .text.NAME.ADDRESS
 PIECE = re.compile(r'^\s*\[\s*\d+\] \.text\.(\w+)\.([0-9a-f]+)\s')
 RELOCATIONS = re.compile(r"^Relocation section '\.rela(\S*)'")
@@ -46,36 +44,18 @@ def run(*command):
     return subprocess.run(command, capture_output=True, text=True).stdout
 
 
-def find_installer_records(image):
-    """The boot code's installer records: an S, then for each record C,
-    a count, a destination in RAM and the bytes.  Each record's
-    destination and bytes, wherever the image keeps them; None if the
-    image has none."""
-    start = image.find(b'SC', LOWEST_ADDRESS)
-    if start < 0:
-        return None
-    records, at = [], start + 1
-    while image[at:at + 1] == b'C':
-        count, destination = struct.unpack('>II', image[at + 1:at + 9])
-        if not RAM <= destination <= destination + count <= RAM + RAM_SIZE:
-            return None
-        records.append((destination, image[at + 9:at + 9 + count]))
-        at += 9 + count
-    return records
-
-
 def installer_records(image):
-    """The boot code's records, each one's RAM destination and bytes
-    (find_installer_records); exits if the image has none."""
-    found = find_installer_records(image)
+    """The boot code's records, each one's RAM destination and bytes,
+    wherever the image keeps them (image_diff.installer_records)."""
+    found = image_diff.installer_records(image)
     if found is None:
         sys.exit('no installer records in the image')
-    return found
+    return found[0]
 
 
 def installer_image(image):
     """The installer's RAM, from RAM up, as the boot code unpacks it."""
-    ram = bytearray(RAM_SIZE)
+    ram = bytearray(0x10000)
     for destination, data in installer_records(image):
         ram[destination - RAM:destination - RAM + len(data)] = data
     return bytes(ram)

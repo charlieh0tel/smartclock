@@ -4,11 +4,10 @@
 #     make -C third_party/firmware TARGET [IMAGE=z3805a-3543b]
 #
 # A target of an image's runs for IMAGE, or without it for every image
-# folder present (report-decompiled for the Z3805A's alone, below):
-# IMAGE/, beside IMAGE.bin, which holds that image's
+# folder present: IMAGE/, beside IMAGE.bin, which holds that image's
 # work (PLAN.md, "Decided 2026-10-22, the firmware layout").  Needs an
 # m68k gcc and binutils, clang-format and uv; none is part of `make ci`,
-# and .github/workflows/firmware.yml runs the Z3805A's checks.
+# and .github/workflows/firmware.yml runs both images' checks.
 
 # The repository's root, from which every path is written.
 ROOT ?= ../..
@@ -37,15 +36,13 @@ DOCUMENTED_IMAGE = z3805a-3543b
 EXPORTED_IMAGES = $(foreach image,$(IMAGES),$(if $(wildcard $(FIRMWARE)/$(image)/decompiled/$(image).c),$(image)))
 
 # The targets run for each image: those that need only its names and
-# types, and those that need its export too; and the function check,
-# which without IMAGE runs for DOCUMENTED_IMAGE alone, the image the
-# documents' figures describe (another's: make
-# report-decompiled IMAGE=58503a-3704).
+# types, and those that need its export too.
 NAMED_TARGETS = check-types handlers scpi-tree
-EXPORTED_TARGETS = check-decompiled check-scpi-tree check-magic-numbers magic-numbers
-IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS) report-decompiled
+EXPORTED_TARGETS = check-decompiled check-scpi-tree check-magic-numbers magic-numbers report-decompiled
+IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS)
 # The rest, run once.
-TARGETS = format-c check-format-c check-module-figures module-figures check-comment-addresses \
+TARGETS = format-c check-format-c check-module-figures module-figures check-image-diff image-diff \
+	check-comment-addresses check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects
 
@@ -82,18 +79,59 @@ check-module-figures:
 module-figures:
 	python3 -I $(ROOT)/tools/firmware/module_figures.py --image $(DOCUMENTED_IMAGE) --write
 
-# The image whose hand-written C was copied from BASE_IMAGE's, the
-# Z3805A's (docs/firmware/58503a-3704.md).
-BASE_IMAGE = z3805a-3543b
-PORTED_IMAGE = 58503a-3704
+# What tools/firmware/image_diff.py matches of DIFF_BASE_IMAGE's named
+# functions and labels in DIFF_IMAGE: the TSV docs/firmware/58503a-3704.md
+# describes, from the base's names, modules, sidecar and handlers and the
+# other's handlers.  image-diff rewrites it, the document's figures and,
+# through seed-names, DIFF_IMAGE's seeded names; check-image-diff fails
+# if any is not what the images give.  Its
+# counts by status and module go to the work folder's image-diff.err.
+DIFF_BASE_IMAGE = z3805a-3543b
+DIFF_IMAGE = 58503a-3704
+DIFF_BASE = $(FIRMWARE)/$(DIFF_BASE_IMAGE)
+DIFF_BASE_DECOMPILED = $(DIFF_BASE)/decompiled/$(DIFF_BASE_IMAGE)
+IMAGE_DIFF = $(ROOT)/docs/firmware/diff/$(DIFF_IMAGE)-vs-$(DIFF_BASE_IMAGE).tsv
+IMAGE_DIFF_WORK = $(call work,$(DIFF_IMAGE))
+IMAGE_DIFF_RUN = mkdir -p $(IMAGE_DIFF_WORK) && python3 -I $(ROOT)/tools/firmware/image_diff.py \
+	--functions $(DIFF_BASE_DECOMPILED).conventions.jsonl --names $(DIFF_BASE)/names.tsv \
+	--modules $(DIFF_BASE)/modules.tsv --handlers $(DIFF_BASE)/handlers.txt \
+	$(FIRMWARE)/$(DIFF_IMAGE)/handlers.txt --installer $(DIFF_BASE).bin $(FIRMWARE)/$(DIFF_IMAGE).bin \
+	> $(IMAGE_DIFF_WORK)/image-diff.tsv 2> $(IMAGE_DIFF_WORK)/image-diff.err
+DIFF_FIGURES = python3 -I $(ROOT)/tools/firmware/diff_figures.py $(IMAGE_DIFF) \
+	--functions $(DIFF_BASE_DECOMPILED).conventions.jsonl
 
-# Fail if an address PORTED_IMAGE's hand-written C cites in a comment is
-# one BASE_IMAGE's C, which it was copied from, cites too and is not
-# PORTED_IMAGE's own: not in the function the comment is in or comes
+image-diff: seed-names
+	$(IMAGE_DIFF_RUN)
+	cp $(IMAGE_DIFF_WORK)/image-diff.tsv $(IMAGE_DIFF)
+	$(DIFF_FIGURES) --write
+
+check-image-diff: check-seed-names
+	$(IMAGE_DIFF_RUN)
+	diff -u $(IMAGE_DIFF) $(IMAGE_DIFF_WORK)/image-diff.tsv
+	$(DIFF_FIGURES)
+
+# Fail if an address DIFF_IMAGE's hand-written C cites in a comment is
+# one DIFF_BASE_IMAGE's C, which it was copied from, cites too and is not
+# DIFF_IMAGE's own: not in the function the comment is in or comes
 # before, nor in a function or label the comment names, nor holding the
 # same bytes or label in both images (tools/firmware/comment_addresses.py).
 check-comment-addresses:
-	python3 -I $(ROOT)/tools/firmware/comment_addresses.py --image $(PORTED_IMAGE) --base $(BASE_IMAGE)
+	python3 -I $(ROOT)/tools/firmware/comment_addresses.py --image $(DIFF_IMAGE) --base $(DIFF_BASE_IMAGE)
+
+# DIFF_IMAGE's names.tsv and modules.tsv, seeded from DIFF_BASE_IMAGE's
+# by the same matches (tools/firmware/seed_names.py; the names file's
+# header gives the rules and exceptions).  seed-names rewrites them;
+# check-seed-names, which check-image-diff runs, fails if either is not
+# what the matches give.  The counts carried go to the work folder's
+# seed-names.txt.
+SEED_NAMES = mkdir -p $(IMAGE_DIFF_WORK) && python3 -I $(ROOT)/tools/firmware/seed_names.py $(DIFF_BASE) \
+	$(FIRMWARE)/$(DIFF_IMAGE) --counts $(IMAGE_DIFF_WORK)/seed-names.txt
+
+seed-names:
+	$(SEED_NAMES) --write
+
+check-seed-names:
+	$(SEED_NAMES)
 
 # Fail if a table in docs/firmware/pforth/IMAGE-words.md -- each image's
 # pForth words, their headers, flags and stack effects -- is not what
@@ -174,9 +212,6 @@ $(NAMED_TARGETS):
 
 $(EXPORTED_TARGETS):
 	@for image in $(EXPORTED_IMAGES); do $(MAKE) --no-print-directory $@ IMAGE=$$image || exit 1; done
-
-report-decompiled:
-	@$(MAKE) --no-print-directory $@ IMAGE=$(DOCUMENTED_IMAGE)
 
 else
 

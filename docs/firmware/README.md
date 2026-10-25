@@ -20,8 +20,8 @@ and the 68332 lacks -- it has a TPU there.  The MC68331 User's Manual
 (`third_party/motorola/MC68331UM.pdf`) places the SIM at $YFFA00 (Table D-3),
 the GPT at $YFF900 with the port GP data register PORTGP at $YFF907
 (Table D-2, D.5) and the QSM at $YFFC00 (Table D-13), where this image
-finds them; bit 5 of PORTGP is the pin PGP5/OC3/OC1 (section 7.2).  An
-owner's description of the Z3801A's outer-oven circuit names the main
+finds them; bit 5 of PORTGP is the pin PGP5/OC3/OC1 (section 7.2).  Stefan
+Hegnauer's description of the Z3801A's outer-oven circuit names the main
 CPU as "U33 / MC68331" and the oven's control line as PGP5 (see
 `ovens.md`).
 

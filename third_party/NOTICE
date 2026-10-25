@@ -403,20 +403,27 @@ Z3801A owner's description
 In `community/`.
 
   Z3801A-Outer-Oven-Description.pdf
-                             "Z3801A Outer Oven Description", by an
-                             owner who does not name themself, from
-                             their own unit (the PDF's metadata names
-                             David G. Mason as its maker, in 2018): the
+                             "Z3801A Outer Oven Description", by Stefan
+                             Hegnauer, from his own unit: the
                              outer-oven controller's schematic and how
-                             the processor enables it.  Once on
-                             ko4bb.com as `Z3801A_Outer_Oven/Web_Page`;
-                             this copy is the PDF attached to a
-                             time-nuts message of 7 December 2022,
-                             febo.com/pipermail/time-nuts_lists.febo.com/
-                             attachments/20221207/86329414/attachment.pdf.
-                             Its own terms: "intended for academic
-                             purposes only and may not be used for
-                             businesses of any kind."
+                             the processor enables it.  He keeps it, and
+                             a description of the 38-60 V power supply,
+                             at hegnauer.selfhost.eu/web/electronics/
+                             e_index.html, as archived copies made after
+                             his original documents were lost in 2009.
+                             Once on ko4bb.com as
+                             `Z3801A_Outer_Oven/Web_Page`; this copy is
+                             the PDF attached to a time-nuts message of
+                             7 December 2022, febo.com/pipermail/
+                             time-nuts_lists.febo.com/attachments/
+                             20221207/86329414/attachment.pdf (its
+                             metadata names David G. Mason as the PDF's
+                             maker, in 2018).  The document's own terms
+                             read "intended for academic purposes only
+                             and may not be used for businesses of any
+                             kind"; its author wrote in October 2026
+                             that no copyright is attached and that it
+                             may be copied or linked.
 
   z3801a_oven_cont.pdf       "HP Z3801A Outer Oven Controller", issue
                              1.3, signed JRM, 11 November 2002: a circuit

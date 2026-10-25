@@ -674,7 +674,7 @@ compare it with the Z3805A 3543B's and 58503A 3704's images
 
 The other models' rows are read by hand and not checked this way.
 
-## How this was read
+## The soft-float arithmetic and its constants
 
 A software floating-point library does the arithmetic; the decompiler
 shows it only as calls with the operands hidden.  Each routine was

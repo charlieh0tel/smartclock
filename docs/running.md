@@ -171,7 +171,7 @@ is an event, latched until `:STATus:QUEStionable:EVENt?` reads it
 (5-46), `*CLS` (5-40) or power-up; the daemon sends neither.
 `:SYSTem:STATus?` can look clean meanwhile.  A 2015 correspondent
 reported a lit Alarm LED on a 58503A despite a clean status display; it
-cleared after `*CLS` followed by `:SYSTEM:STATUS?`, and he could not say
+cleared after `*CLS` followed by `:SYSTEM:STATUS?`, and the poster could not say
 which cleared it
 ([febo.com](https://www.febo.com/pipermail/time-nuts/2015-April/091388.html)).
 

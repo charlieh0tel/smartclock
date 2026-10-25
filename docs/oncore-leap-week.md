@@ -1,12 +1,14 @@
 # The Time Reset at the end of GPS week 2441
 
 On 2026-10-25, just after GPS week 2441 ended, the bench 58503A
-(firmware 3704-C; Oncore software 98-P36830P, version 8, revision 8,
-dated 1996-08-06) latched Time Reset.  The receiver's time of day ran 1 s
-slow for about eight minutes.  Under the Oncore-error interpretation,
-the engine's error lasted roughly seven to nine minutes.  This fits a
-known class of 256-week leap-parameter bugs in GPS engines; the exact
-mechanism is unknown.
+(firmware 3704-C; Motorola Oncore, model B4121P1115, software
+98-P36830P, version 8, revision 8, dated 1996-08-06) latched Time
+Reset.  Model B4 is an eight-channel Oncore VP (Synergy's model
+table, `third_party/motorola/VPCommands.pdf` p. 2).  The receiver's
+time of day ran 1 s slow for about eight minutes.  Under the
+Oncore-error interpretation, the engine's error lasted roughly seven
+to nine minutes.  This fits a known class of 256-week leap-parameter
+bugs in GPS engines; the exact mechanism is unknown.
 [`running.md`](running.md#time-reset-at-a-gps-week-boundary) says what
 Time Reset is and how to clear it;
 [`firmware/58503a-3704.md`](firmware/58503a-3704.md#time-reset-and-the-oncores-time)
@@ -30,8 +32,9 @@ steady 12.1 s ahead of it until the event.
   timing: one sample late, then back.
 - At the first medium poll after the first step, about 00:00:25 UTC,
   `*STB?` read status byte 72: bit 3, questionable summary (8), plus
-  bit 6, master summary (64) (`097-59551-02` 5-44).  `:STATus:QUEStionable:EVENt?`, read
-  afterward, returned `+1`, Time Reset (5-40).
+  bit 6, master summary (64) (`097-59551-02` 5-44).
+  `:STATus:QUEStionable:EVENt?`, read afterward, returned `+1`, Time
+  Reset (5-40).
 - Lock, mode `Locked`, operation bits 27, TI, EFC, TFOM and the
   satellites stayed unchanged throughout.  The receiver's diagnostic log
   gained nothing.
@@ -189,10 +192,10 @@ races above, and says nothing about the Oncore.
 
 ## What to do
 
-The latched event requires no clock correction.  Clear it to release
-the Alarm LED and Alarm BITE output: read
-`:STATus:QUEStionable:EVENt?` (`097-59551-02` 5-46) or send `*CLS`
-(5-40 to 5-41)
+The latched event requires no clock correction.  `*CLS` clears it and
+releases the Alarm LED and Alarm BITE output (`097-59551-02` 5-40 to
+5-41).  Reading `:STATus:QUEStionable:EVENt?` also clears the event
+(5-46); the alarm presumably follows, but the manual does not say so
 ([`running.md`](running.md#time-reset-at-a-gps-week-boundary)).
 
 If the broadcast fields stay unchanged, with WN_LSF still 137 and no

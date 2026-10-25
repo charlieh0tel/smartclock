@@ -331,10 +331,9 @@ The checks need no Ghidra: the export is checked in.
     make -C third_party/firmware check-format-c
 
 Each is also a top-level target (`make check-decompiled`).  Without
-`IMAGE` each runs for every image folder it can, but
-`report-decompiled` runs the Z3805A's alone; the 58503A 3704's
-function check, held to the same standard, runs with
-`IMAGE=58503a-3704` ([`58503a-3704.md`](58503a-3704.md), "The function check").  Results
+`IMAGE` each runs for every image folder it can: `report-decompiled`
+for the 58503A 3704's too, its function check held to the same
+standard ([`58503a-3704.md`](58503a-3704.md), "The function check").  Results
 land in `target/firmware/z3805a-3543b/` (`decompiled.o`,
 `report-decompiled.txt`).
 

@@ -1,18 +1,19 @@
 name: firmware
 
-# The Z3805A 3543B firmware's checks (docs/firmware/README.md, "The
-# checks in CI"): the C's format, the layouts, the decompiled C's bytes
-# and bindings, every decompiled function run against the image's own
-# and the figures the documents give, the SCPI trees, the module and
-# pForth figures, every image's chip-select tables, and the
-# hand-written C's magic numbers; and the 58503A 3704's function check
-# and the addresses its C's comments cite.
+# The Z3805A 3543B and 58503A 3704 firmware's checks
+# (docs/firmware/README.md, "The checks in CI"): the C's format, the
+# layouts, the decompiled C's bytes and bindings, every decompiled
+# function run against the image's own and the figures the documents
+# give, the SCPI trees, the module and pForth figures, the 58503A's diff
+# against the Z3805A and the names seeded from it, every image's
+# chip-select tables, the hand-written C's magic numbers, and the
+# addresses the 58503A's C's comments cite.
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs an m68k toolchain,
 # clang, clang-format and uv the others do not; and so that it fails
 # on its own.  No Rust: none of these targets builds the workspace.  About
-# eight minutes, most of it the two report-decompiled.
+# ten minutes, most of it report-decompiled's two images.
 #
 # On every push, not main's alone, so a firmware branch's own pushes
 # are checked too.
@@ -30,7 +31,8 @@ jobs:
     permissions:
       contents: read
     env:
-      # The image the checks run for, but those naming another.
+      # The image the checks run for, but those naming another; the
+      # 58503A's run as steps of their own.
       IMAGE: z3805a-3543b
       # Named, so that a newer default cannot change the format: 19, 20
       # and 21 format the C alike, and 18 three of the files otherwise.
@@ -61,24 +63,32 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make check-types
         if: ${{ !cancelled() }}
+      - run: make check-types IMAGE=58503a-3704
+        if: ${{ !cancelled() }}
       - run: make check-module-figures
         if: ${{ !cancelled() }}
       - run: make check-scpi-tree
         if: ${{ !cancelled() }}
+      - run: make check-scpi-tree IMAGE=58503a-3704
+        if: ${{ !cancelled() }}
       - run: make check-pforth-words
+        if: ${{ !cancelled() }}
+      - run: make check-image-diff
         if: ${{ !cancelled() }}
       - run: make check-chip-selects
         if: ${{ !cancelled() }}
       - run: make check-magic-numbers
         if: ${{ !cancelled() }}
+      - run: make check-magic-numbers IMAGE=58503a-3704
+        if: ${{ !cancelled() }}
       - run: make check-comment-addresses
         if: ${{ !cancelled() }}
       - run: make check-decompiled
         if: ${{ !cancelled() }}
-      # Fails on a failed function, and checks the documents' figures
-      # from the function check against the report.
-      - run: make report-decompiled
+      - run: make check-decompiled IMAGE=58503a-3704
         if: ${{ !cancelled() }}
-      # The 58503A 3704's, which fails on a failed function.
-      - run: make report-decompiled IMAGE=58503a-3704
+      # Without IMAGE, for every image: fails on a failed function, and
+      # checks the documents' figures from the function check against
+      # the Z3805A's report.
+      - run: make report-decompiled IMAGE=
         if: ${{ !cancelled() }}

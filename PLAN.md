@@ -2174,7 +2174,9 @@ view cannot drift apart.  The library, bottom up:
   primary 1415 agreeing, 5 known, 0 skipped, 0 failed; installer 247,
   1 skipped (the Z3805A's own), 0 failed; console sessions 8 of 8; the
   Z3805A's unchanged.  `.github/workflows/firmware.yml` runs its
-  function check beside the Z3805A's checks.
+  checks beside the Z3805A's, and `make check-image-diff` its diff
+  against the Z3805A (`tools/firmware/image_diff.py`) and the names
+  seeded from it (`tools/firmware/seed_names.py`).
 
   Decided 2026-10-22: a second image is ported by copying the first's
   work, not by sharing it from the start.  The 58503A's `rewritten/`

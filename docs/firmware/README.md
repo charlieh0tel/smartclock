@@ -410,9 +410,7 @@ with `make scpi-tree IMAGE=58503a-3704`; a seeding rule or exception
 is changed in `seed_names.py`, not in a row.  The make targets that
 check and generate it are `third_party/firmware/Makefile`'s, which
 runs alone, `make -C third_party/firmware TARGET IMAGE=z3805a-3543b`,
-for every image folder without `IMAGE=` (but `report-decompiled`, which
-runs the Z3805A's alone; the 58503A's runs with `IMAGE=58503a-3704`),
-and to which the top Makefile hands each target by name, so that `make
+for every image folder without `IMAGE=`, and to which the top Makefile hands each target by name, so that `make
 check-decompiled` is the same.
 
 Optionally, after step 3 or any later one,
@@ -1895,24 +1893,28 @@ it.
 
 ## The checks in CI
 
-`.github/workflows/firmware.yml` runs the Z3805A 3543B's checks on
-every push and pull request, a job of its own beside the Rust CI so
-that each fails alone: `make check-format-c`, `check-types`,
+`.github/workflows/firmware.yml` runs the firmware's checks for both
+images on every push and pull request, a job of its own beside the
+Rust CI so that each fails alone: `make check-format-c`, `check-types`,
 `check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
-`check-chip-selects`, `check-magic-numbers`, `check-decompiled`, which
-runs `check-unicorn` first, and `report-decompiled`, which fails if any
+`check-image-diff`, `check-chip-selects`, `check-magic-numbers`,
+`check-comment-addresses`, `check-decompiled`, which runs
+`check-unicorn` first, and `report-decompiled`, which fails if any
 function fails
 and checks the figures this document, `rewrite.md` and the top
 `README.md` give from the function check -- the user-mode and console
 counts, each image's agreeing, known, skipped and failed functions and
 the agreeing ones' cases -- against the report it writes, so that every
 function agreeing is checked in public.  `IMAGE=z3805a-3543b` is set
-for the job; it runs the 58503A 3704's too, `make report-decompiled
-IMAGE=58503a-3704`, which fails if any of its functions fails
-(`58503a-3704.md`, "The function check"), and `make check-comment-addresses`,
-the addresses its C's comments cite.  None of the targets builds the
-workspace; `check-chip-selects` reads every image's reset code
-(`restart.md`, "The chip selects").
+for the job; `check-types`, `check-scpi-tree`, `check-magic-numbers`
+and `check-decompiled` run again with `IMAGE=58503a-3704`, and
+`report-decompiled` runs without `IMAGE`, for both images, the
+58503A's failing if any of its functions fails (`58503a-3704.md`, "The
+function check").  `check-image-diff` checks the 58503A's diff against
+the Z3805A, its seeded names and its document's figures, and
+`check-comment-addresses` the addresses its C's comments cite.  None
+of the targets builds the workspace; `check-chip-selects` reads every
+image's reset code (`restart.md`, "The chip selects").
 
 On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15),
 `binutils-m68k-linux-gnu` and `clang-21`, which `check-magic-numbers`
@@ -1930,4 +1932,4 @@ function check measures the C as a given gcc compiles it, so a gcc
 that changes its code can change the figures.  clang-format is
 `clang-format-21`, named through `CLANG_FORMAT`: 19, 20 and 21 format
 the C alike, and 18 formats three of the files otherwise.  The job
-takes about eight minutes, five of them the two `report-decompiled`s.
+takes about ten minutes, five of them `report-decompiled`'s.

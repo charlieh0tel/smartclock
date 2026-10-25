@@ -4,11 +4,10 @@
 #     make -C third_party/firmware TARGET [IMAGE=z3805a-3543b]
 #
 # A target of an image's runs for IMAGE, or without it for every image
-# folder present (report-decompiled for the Z3805A's alone, below):
-# IMAGE/, beside IMAGE.bin, which holds that image's
+# folder present: IMAGE/, beside IMAGE.bin, which holds that image's
 # work (PLAN.md, "Decided 2026-10-22, the firmware layout").  Needs an
 # m68k gcc and binutils, clang-format and uv; none is part of `make ci`,
-# and .github/workflows/firmware.yml runs the Z3805A's checks.
+# and .github/workflows/firmware.yml runs both images' checks.
 
 # The repository's root, from which every path is written.
 ROOT ?= ../..
@@ -37,13 +36,10 @@ DOCUMENTED_IMAGE = z3805a-3543b
 EXPORTED_IMAGES = $(foreach image,$(IMAGES),$(if $(wildcard $(FIRMWARE)/$(image)/decompiled/$(image).c),$(image)))
 
 # The targets run for each image: those that need only its names and
-# types, and those that need its export too; and the function check,
-# which without IMAGE runs for DOCUMENTED_IMAGE alone, the image the
-# documents' figures describe (another's: make
-# report-decompiled IMAGE=58503a-3704).
+# types, and those that need its export too.
 NAMED_TARGETS = check-types handlers scpi-tree
-EXPORTED_TARGETS = check-decompiled check-scpi-tree check-magic-numbers magic-numbers
-IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS) report-decompiled
+EXPORTED_TARGETS = check-decompiled check-scpi-tree check-magic-numbers magic-numbers report-decompiled
+IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS)
 # The rest, run once.
 TARGETS = format-c check-format-c check-module-figures module-figures check-image-diff image-diff \
 	check-comment-addresses check-seed-names seed-names \
@@ -216,9 +212,6 @@ $(NAMED_TARGETS):
 
 $(EXPORTED_TARGETS):
 	@for image in $(EXPORTED_IMAGES); do $(MAKE) --no-print-directory $@ IMAGE=$$image || exit 1; done
-
-report-decompiled:
-	@$(MAKE) --no-print-directory $@ IMAGE=$(DOCUMENTED_IMAGE)
 
 else
 

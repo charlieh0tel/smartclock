@@ -73,12 +73,12 @@ a{color:var(--accent)}
   <figure class="fig">
     <svg id="loop" viewBox="0 0 1020 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Block diagram of the disciplining loop"></svg>
     <div class="legend"><span>signal path, one update every 10 s</span><span class="ffl">aging feed-forward, one sample every 2700 s</span></div>
-    <figcaption>x is the interval between the GPS 1 PPS and the 1 PPS derived from the oscillator. Everything left of the DAC runs in the <code>pllp</code> task in single-precision floating point; the aging fit runs in the <code>curv</code> task.</figcaption>
+    <figcaption>x = t<sub>OCXO</sub> − t<sub>GPS</sub>, the interval from the GPS 1 PPS to the oscillator's, positive when the oscillator's comes later. That physical sign is inferred (<a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/counter.md#the-sign-and-the-loop">counter.md</a>); it is the one that makes the loop's positive gains negative feedback. The update runs in the <code>pllp</code> task in single-precision floating point; the health monitor's <code>hmon</code> task writes u to the DAC; the aging fit runs in the <code>curv</code> task.</figcaption>
   </figure>
 
   <p>Once a second the firmware reads one interval from the FPGA counter. Every tenth second it takes the mean x̄ of those ten seconds' readings within the holdover limit — the number <code>:SYNChronization:TINTerval?</code> reports — and runs one update:</p>
-  <div class="eq eqgrid"><span>e  = x̄ − x₀</span><span>x₀ is a setpoint, normally 0</span><span>f ← (1 − a)·f + a·e</span><span>a = 29.75 / τ</span><span>d  = clamp(b + c / y, −M, +M)</span><span>y = t / 2700 s, from the aging fit</span><span>I ← I + 10·k·f + 10·d / 2700</span><span>k = 1 / (4·G·τ²)</span><span>u  = K·f + B + I + c₀·s</span><span>K = 1 / (G·τ)</span></div>
-  <p>u is the EFC word sent to the DAC. B is the EFC that was in force when the loop closed, less c₀·s, so closing the loop does not move the oscillator; s is the health monitor's exponential average of the oscillator's oven current (0.1 of each fresh reading, 0.9 of the last), and c₀ is the value <code>:DIAGnostic:ROSCillator:TCOefficient</code> reads and writes — a calibration constant in the EEPROM block, in EFC units per unit of the current channel, applied at every update and adjusted by nothing but its own setter. That term tracks the oven rather than the phase; the console word <code>xcal</code> measures it by fitting EFC against current.</p>
+  <div class="eq eqgrid"><span>e  = x̄ − x₀</span><span>x₀ is a setpoint, normally 0</span><span>f ← (1 − a)·f + a·e</span><span>a = 29.75 / τ</span><span>d  = clamp(b + c / y, −M, +M)</span><span>y = t / 2700 s, from the aging fit</span><span>I ← I + 10·k·f + 10·d / 2700</span><span>k = 1 / (4·G·τ²)</span><span>u  = clamp(K·f + B + I + c₀·s, 0, 1048560)</span><span>K = 1 / (G·τ)</span></div>
+  <p>u is the EFC in 20 bits. The update only stores it; on each of its ticks the health monitor's task rounds it, adds a small random dither and writes the top 16 bits to the DAC (<code>efc_write_dithered</code>: Z3805A <code>0x2421c</code>, 58503A <code>0x23540</code>). B is the EFC that was in force when the loop closed, less c₀·s, so closing the loop does not move the oscillator; s is the health monitor's exponential average of the oscillator's oven current (0.1 of each fresh reading, 0.9 of the last), and c₀ is the value <code>:DIAGnostic:ROSCillator:TCOefficient</code> reads and writes — a calibration constant in the EEPROM block, in EFC units per unit of the current channel, applied at every update and adjusted by nothing but its own setter. That term tracks the oven rather than the phase; in the Z3816A the console word <code>xcal</code> measures it by fitting EFC against current.</p>
 </section>
 
 <section>
@@ -126,31 +126,31 @@ a{color:var(--accent)}
       <p>A double real pole at −1/(2τ), damping ratio exactly 1: that is what the gains are chosen to give. The prefilter moves it.</p>
     </div>
     <div>
-      <p>The prefilter on the error is a first-order low-pass at p = 2.975/τ (time constant τ / 2.975, about 168 s at τ = 500 s), and it sits inside the loop, ahead of both gains. The characteristic equation becomes s²(s + p) + p·(s/τ + 1/(4τ²)) = 0, a cubic. For the 10 s update itself its roots are a real pole at −0.37/τ and a pair at (−1.35 ± 0.51j)/τ, damping ratio 0.94 (the s-plane below).</p>
+      <p>The prefilter on the error is a first-order low-pass at p = 2.975/τ (time constant τ / 2.975, about 168 s at τ = 500 s), and it sits inside the loop, ahead of both gains. The characteristic equation becomes s²(s + p) + p·(s/τ + 1/(4τ²)) = 0, a cubic. For the 10 s update itself its roots are a real pole at −0.37/τ and a pair at (−1.34 ± 0.55j)/τ, damping ratio 0.92 (the s-plane below).</p>
       <p>The slow real pole sets the tail: about 2.7τ, 1360 s at τ = 500 s, 1900 s at 700 s, 2710 s at 1000 s. Started from a phase error, the loop removes 63 % of it in about τ, overshoots by about 20 % near 3τ, and settles back from the other side at the slow pole's rate.</p>
-      <p>The update is discrete at 10 s; the factor 10 on the integrator term is the sample period. The poles above are the discrete update's, mapped to the s-plane; the continuous cubic gives nearly the same, −0.37/τ and (−1.30 ± 0.56j)/τ.</p>
+      <p>The update is discrete at 10 s; the factor 10 on the integrator term is the sample period. The poles above are the discrete update's, mapped to the s-plane, and count the ten-reading mean: with the EFC held over the ten seconds, the mean lags the last reading, x̄<sub>n</sub> = x<sub>n</sub> + 4.5·G·u<sub>n−1</sub>. They take the counter read and the DAC write as immediate; those latencies are the idealization left. The continuous cubic gives nearly the same, −0.37/τ and (−1.30 ± 0.56j)/τ.</p>
       <p>G cancels out of the closed-loop dynamics: it only scales the gains so the poles land where they do whatever the oscillator's actual sensitivity. If the real oscillator gain differs from the assumed G, the loop gain is off by that ratio and the poles move.</p>
     </div>
   </div>
   <figure class="fig splane">
     <svg id="splane" viewBox="0 0 520 290" role="img" aria-label="Closed-loop poles of the disciplining loop in the s-plane, scaled by tau"></svg>
-    <figcaption><span style="color:var(--accent)">×</span> closed-loop poles of the 10 s update at τ = 500 s (within 6 % at 700 and 1000 s) · <span style="color:var(--ff)">◇</span> the double pole without the prefilter · □ open-loop poles · ○ open-loop zero. Both axes in units of 1/τ.</figcaption>
+    <figcaption><span style="color:var(--accent)">×</span> closed-loop poles of the 10 s update at τ = 500 s (within 2 % at 700 and 1000 s) · <span style="color:var(--ff)">◇</span> the double pole without the prefilter · □ open-loop poles · ○ open-loop zero. Both axes in units of 1/τ.</figcaption>
   </figure>
 </section>
 
 <section>
   <h2>The aging feed-forward</h2>
-  <p>The dashed path is what makes the receiver's holdover good. While the loop is closed, <code>pllp</code> averages the current-compensated EFC, u − c₀·s, over each 2700 s (45 min) window and pushes one sample into a ring of 64 — 48 hours. The <code>curv</code> task fits</p>
-  <div class="eq eqgrid"><span>EFC(t) = a + b·y + c·ln y</span><span>y = t / 2700 s, t the seconds since cold start</span></div>
-  <p>to those samples (a least-squares line, plus a one-dimensional search on c once there are enough points). The slope of that curve now, b + c/y, is d: the EFC change per 2700 s the fit predicts. Each update the integrator advances by 10·d/2700 — the predicted change over ten seconds — before the loop sees any phase error from it. In holdover the EFC is set from the same curve every ten seconds, with nothing to correct it.</p>
+  <p>The dashed path is what makes the receiver's holdover good. While the loop is closed, <code>pllp</code> averages the current-compensated EFC, u − c₀·s, over each 2700 s (45 min) window and pushes that mean e, with its time y and the window's mean of ln y, w, into a ring of 64 samples — 48 hours. The <code>curv</code> task regresses those window means:</p>
+  <div class="eq eqgrid"><span>e = a + b·y + c·w</span><span>y = t / 2700 s, t the seconds since cold start</span><span>w = mean of ln y over the window</span><span>the window from y − 1 to y</span></div>
+  <p>by least squares — a straight line, plus a one-dimensional search on c once there are enough samples. The curve is then taken as a + b·y + c·ln y; its slope now, b + c/y, is d: the EFC change per 2700 s the fit predicts. Each update the integrator advances by 10·d/2700 — the predicted change over ten seconds — before the loop sees any phase error from it. In holdover the EFC is set from the same curve every ten seconds, with nothing to correct it.</p>
   <p>The Z3815A and 58503B compute the same slope once per fit, not every ten seconds, and each update moves a running value toward it with time constant τ, so a new fit's change of slope reaches the oscillator over about τ rather than at once.</p>
   <p>The Z3815A and 58503B also run an EFC calibration that measures the frequency offset at ten EFC settings and takes the slope of a straight line through them as G. They carry a second coefficient B that nothing in the firmware computes: the calibration sets it to zero, and the loop never applies it. B, zero unless set over SCPI, enters only the measured holdover uncertainty that <code>:SYNChronization:HOLDover:TUNCertainty:MEASured?</code> reports, which takes the gain as A + B·e² at EFC e.</p>
-  <p>Samples are weighted by how much of the window was averaged: 3 if all 2700 seconds, 2 if at least 675, else 1; and everything in the first three hours after a cold start gets weight 1. A fit needs at least three samples, so d is zero for the first hours after a power-up.</p>
+  <p>Each sample carries a grade for how much of the window was averaged: 3 if all 2700 seconds, 2 if at least 675, else 1; and everything in the first three hours after a cold start gets 1. The grade only selects: a fit takes the samples at or above a minimum grade, 2 when there are enough of them, else 1, and weights each it takes equally. With fewer than three samples the fit is a constant, their mean; a slope needs three, so d is zero for the first hours after a power-up.</p>
 </section>
 
 <section>
   <h2>Starting up</h2>
-  <p>Before <code>pll_normal</code>, <code>startup_pll</code> runs the same update law with its own time constant, recomputing K, k and a from it every update; on entry it clears f and I and sets B. It first waits for fifteen consecutive ten-second means within ±150 ns. In the Z3805A and 58503A, after a power-up it then waits, still at 150 s, for the aging fit's first three samples, about 2¼ hours. Then it lengthens its constant by 5 s per update until it is within 5 s of τ, sets it to τ, and hands over. The Z3801A's firmware ramps the same way; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
+  <p>Before <code>pll_normal</code>, <code>startup_pll</code> runs the same update law with its own time constant, recomputing K, k and a from it every update; on entry it clears f and I and sets B. In the Z3805A and 58503A each lengthening of the constant from τ<sub>old</sub> to τ<sub>new</sub> also adds (f/G)·(1/τ<sub>old</sub> − 1/τ<sub>new</sub>) to I, so the change in K leaves K·f + I where it was. It first waits for fifteen consecutive ten-second means within ±150 ns. In the Z3805A and 58503A, after a power-up it then waits, still at 150 s, for the aging fit's first three samples, about 2¼ hours. Then it lengthens its constant by 5 s per update until it is within 5 s of τ, sets it to τ, and hands over. <code>pll_normal</code> then clears I and sets B to the EFC in force less c₀·s, but keeps f, so its first update moves u by about K·f. The Z3801A's firmware ramps the same way; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
   <p>In those two, holdover recovery returns to <code>startup_pll</code>. After a holdover of more than 500 s (350 s in the 58503A 3704), or with the interval past 500 ns, the constant starts again from 150 s; otherwise it keeps its value — τ, once the loop got there, so the hand-over follows the fifteen means.</p>
   <p class="note">Source: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md"><code>docs/firmware/loop.md</code></a>, which holds the addresses and the routine identities behind each number; this page explains, that one is the evidence.</p>
 </section>
@@ -201,9 +201,9 @@ a{color:var(--accent)}
   const Y=110;
   label(48,Y-16,'GPS 1 PPS',{anchor:'middle',color:ink,size:13});
   label(48,Y+2,'t₍GPS₎',{anchor:'middle',mono:true});
-  const s1=sum(110,Y,{l:'+',b:'−'});
+  const s1=sum(110,Y,{l:'−',b:'+'});
   wire([[70,Y],s1.l]);
-  label(140,Y-34,'x, the interval',{anchor:'start',mono:true});
+  label(140,Y-34,'x = t₍OCXO₎ − t₍GPS₎',{anchor:'start',mono:true});
   const b1=block(150,Y-22,120,44,['FPGA counter','1 reading / s'],true);
   wire([s1.r,b1.l]);
   const b2=block(298,Y-22,104,44,['mean of 10','x̄ per 10 s'],true);
@@ -236,27 +236,29 @@ a{color:var(--accent)}
   wire([[985,Y+98],s4.b]);
   // ---- return path: DAC, OCXO, divider (row y = 250) ----
   const Y2=250;
-  const bD=block(800,Y2-22,120,44,['DAC','FUN_33798(u)'],true);
-  wire([s4.r,[1012,Y+50],[1012,Y2],bD.r]);  label(1006,Y+42,'u',{mono:true,anchor:'end',size:13});
-  const bO=block(540,Y2-22,224,44,['10811 OCXO','Δf/f = G·Δu, ∫ → phase'],true);
+  const bC=block(880,Y2-22,110,44,['clamp','0…1048560'],true);
+  wire([s4.r,[1012,Y+50],[1012,Y2],bC.r]);  label(1006,Y+42,'u',{mono:true,anchor:'end',size:13});
+  const bD=block(615,Y2-22,160,44,['DAC, hmon task','dither, top 16 bits'],true);
+  wire([bC.l,bD.r]);
+  const bO=block(450,Y2-22,135,44,['10811 OCXO','Δf/f = G·Δu'],true);
   wire([bD.l,bO.r]);
-  const bP=block(300,Y2-22,190,44,['1 PPS divider','t₍OCXO₎ from 10 MHz'],true);
+  const bP=block(230,Y2-22,190,44,['1 PPS divider','dt₍OCXO₎/dt = −Δf/f'],true);
   wire([bO.l,bP.r]);
   wire([bP.l,[110,Y2],s1.b]);
-  label(130,Y2-8,'− t₍OCXO₎',{mono:true,anchor:'start'});
+  label(130,Y2-8,'t₍OCXO₎',{mono:true,anchor:'start'});
   // ---- aging feed-forward (row y = 400) ----
   const Y3=410;
   label(120,Y3-52,'aging feed-forward (fit in the curv task)',{anchor:'start',color:ff,size:12.5});
   const fA=block(120,Y3-22,150,44,['45-min mean','of u − c₀·s'],true);
   const fB=block(300,Y3-22,150,44,['ring of 64','48 h of samples'],true);
-  const fC=block(480,Y3-22,180,44,['fit a + b·y + c·ln y','least squares, weighted'],true);
+  const fC=block(480,Y3-22,180,44,['fit e = a + b·y + c·w','graded, equal weights'],true);
   const fD=block(690,Y3-22,120,44,['d = b + c/y','clamp ±M'],true);
   wire([fA.r,fB.l],{ff:true}); wire([fB.r,fC.l],{ff:true}); wire([fC.r,fD.l],{ff:true});
-  // tap of u from the DAC path down to the fit
-  dot(1012,Y2); wire([[1012,Y2],[1012,Y3+60],[60,Y3+60],[60,Y3],fA.l],{ff:true});
+  // tap of the clamped u, ahead of the DAC, down to the fit
+  dot(852,Y2); wire([[852,Y2],[852,Y3+60],[60,Y3+60],[60,Y3],fA.l],{ff:true});
   label(470,Y3+48,'u − c₀·s, sampled every 2700 s',{mono:true,anchor:'middle',color:ff});
   // d into the integrator sum
-  wire([fD.r,[850,Y3],[850,Y3-40],[792,Y3-40],s3.b],{ff:true});
+  wire([fD.r,[830,Y3],[830,Y3-40],[792,Y3-40],s3.b],{ff:true});
   label(780,Y3-48,'10·d / 2700 per update',{mono:true,anchor:'end',color:ff});
 })();
 </script>
@@ -264,10 +266,13 @@ a{color:var(--accent)}
 // The s-plane: the closed-loop poles of the ten-second update, computed
 // here from the update law, so the figure cannot drift from it.  The
 // state is (phase error, filtered error, integrator), G taken as 1 since
-// it cancels; crates/smartclock/tests/loop_dynamics.rs checks the page's
-// figures against the same arithmetic.
+// it cancels.  The filter takes the ten readings' mean, which lags the
+// last reading by LAG seconds of the EFC held since the last update, the
+// counter read and the DAC write taken as immediate;
+// crates/smartclock/tests/loop_dynamics.rs checks the page's figures
+// against the same arithmetic.
 (function(){
-  const PERIOD=10, PREFILTER=29.75, TAU=500;
+  const PERIOD=10, READING=1, LAG=(PERIOD-READING)/2, PREFILTER=29.75, TAU=500;
   const svg=document.getElementById('splane'), NS='http://www.w3.org/2000/svg';
   function el(n,a,txt){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;}
   // complex arithmetic, enough for the roots of a cubic
@@ -282,7 +287,7 @@ a{color:var(--accent)}
   }
   function poles(tau){
     const a=PREFILTER/tau, K=1/tau, k=1/(4*tau*tau);
-    const F=[a,1-a,0], I=[PERIOD*k*F[0],PERIOD*k*F[1],1+PERIOD*k*F[2]];
+    const F=[a,1-a+a*LAG*K,a*LAG], I=[PERIOD*k*F[0],PERIOD*k*F[1],1+PERIOD*k*F[2]];
     const D=[0,1,2].map(i=>K*F[i]+I[i]), X=[1-PERIOD*D[0],-PERIOD*D[1],-PERIOD*D[2]];
     const m=[X,F,I];
     const tr=m[0][0]+m[1][1]+m[2][2];

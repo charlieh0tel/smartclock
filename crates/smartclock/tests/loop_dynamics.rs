@@ -8,6 +8,14 @@ use std::fs;
 /// Seconds between updates.
 const PERIOD: f64 = 10.0;
 
+/// Seconds between the counter's readings, ten of which an update
+/// averages.
+const READING: f64 = 1.0;
+
+/// How far the ten readings' mean lags the last of them, in seconds of
+/// the EFC held since the last update: x̄ = x + `LAG`·G·u.
+const LAG: f64 = (PERIOD - READING) / 2.0;
+
 /// The prefilter's numerator: a = `PREFILTER` / τ.
 const PREFILTER: f64 = 29.75;
 
@@ -86,14 +94,16 @@ fn cubic_roots(b: f64, c: f64, d: f64) -> [Complex; 3] {
 }
 
 /// One update as a matrix on the state (phase error, filtered error,
-/// integrator), with G taken as 1 since it cancels: f ← (1 − a)·f + a·x,
-/// I ← I + 10·k·f, u = K·f + I, and the oscillator moves the phase by
-/// −10·u over the ten seconds.
+/// integrator), with G taken as 1 since it cancels: f ← (1 − a)·f + a·x̄,
+/// x̄ = x + `LAG`·u with u the last update's K·f + I, I ← I + 10·k·f,
+/// u = K·f + I, and the oscillator moves the phase, x = `t_OCXO − t_GPS`,
+/// by −10·u over the ten seconds.  The counter read and the DAC write
+/// are taken as immediate.
 fn update(tau: f64) -> [[f64; 3]; 3] {
     let a = PREFILTER / tau;
     let proportional = 1.0 / tau;
     let integral = 1.0 / (4.0 * tau * tau);
-    let filter = [a, 1.0 - a, 0.0];
+    let filter = [a, 1.0 - a + a * LAG * proportional, a * LAG];
     let integrator = [
         PERIOD * integral * filter[0],
         PERIOD * integral * filter[1],
@@ -152,7 +162,7 @@ fn page() -> String {
     .expect("the page")
 }
 
-/// A pole written as the page writes it: "−0.37" or "(−1.35 ± 0.51j)".
+/// A pole written as the page writes it: "−0.37" or "(−1.34 ± 0.55j)".
 fn written(pole: Complex) -> String {
     if pole.im.abs() < 1e-9 {
         format!("−{:.2}", -pole.re)
@@ -182,7 +192,7 @@ fn the_page_states_the_poles_of_the_update() {
         })
         .fold(0.0, f64::max);
     assert!(
-        worst < 0.06 && page.contains("within 6 %"),
+        worst < 0.02 && page.contains("within 2 %"),
         "the poles move {:.1} % across the table's time constants",
         worst * 100.0
     );

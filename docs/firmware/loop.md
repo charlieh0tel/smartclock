@@ -64,11 +64,11 @@ point.  The values and their addresses:
 
 | Symbol | Address | What it is |
 | ------ | ------- | ---------- |
-| x̄ | `0x102c0c` | the mean of the ten readings -- what the query returns |
+| x̄ | `0x102c0c` | the mean of the ten readings -- what the query returns; t_internal − t_GPS, the physical sign inferred (`counter.md`, "The sign, and the loop") |
 | x₀ | `0x102c1c` | the setpoint subtracted from it: cleared at `0x4b1dc`, otherwise written only by the console word `phase_off` (`0x2b87c`), which nothing else calls |
 | f | `0x102be0` | the filtered error, kept between updates |
 | I | `0x102728` | the integrator |
-| B | `0x102be4` | a base EFC, set once as `pll_normal` takes over |
+| B | `0x102be4` | a base EFC, set on each entry to `pll_normal` (and, in the Z3805A and 58503A, to `startup_pll`) and fixed in between |
 | τ | `0x102548` | the loop's time constant |
 | G | `0x102c28` | a gain; `0x102c30` and `0x102c34` hold 1/G |
 | c | `0x1023cc` | the value `:DIAGnostic:ROSCillator:TCOefficient?` reports, from the checksummed block at `0x400080`; see "s, the oscillator current" |
@@ -105,8 +105,8 @@ change the fit predicts over the ten seconds between updates.
 The factor 10 matches the ten seconds between updates.  What kind of
 loop this is -- proportional-integral on the prefiltered error, with
 gains that alone would give a double pole at −1/(2τ), and closed-loop
-poles at −0.37/τ and (−1.35 ± 0.51j)/τ once the prefilter is counted
--- is worked out in
+poles at −0.37/τ and (−1.34 ± 0.55j)/τ at τ = 500 s once the prefilter
+and the ten-reading mean are counted -- is worked out in
 [`loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html),
 "What kind of loop that is"; this file is the evidence for its
 numbers.
@@ -127,6 +127,19 @@ update ends the state.  Then, at `0x47ede` to `0x47fce`, it
 lengthens its constant by 5 s (`0x47efe`) each update until it is
 within 5 s of τ, sets it to τ, and hands over to `pll_normal`.  The
 Z3801A's `FUN_000442ca` does the same.
+
+In the Z3805A and 58503A 3704 (`startup_pll`, the lengthening state;
+Z3805A `rewritten/pll_stages.c`, `pll_stages_rescale_integral`), each
+step of the constant, the last to τ included, also adjusts the
+integrator,
+
+    I ← I + (f / G)·(1/τ_old − 1/τ_new)        τ_old taken as τ_new − 5
+
+which offsets the change in K·f, so the step does not move u.  The
+hand-over is not so smooth: `pll_normal`'s entry (see "The loop") clears
+I and sets B to the EFC in force less c·s but leaves f, so its first
+update moves u by about K·f -- the proportional term counted again,
+once in B.
 
 The Z3805A's `startup_pll` (`0x4429e`) and the 58503A 3704's
 (`0x4429e`) have a state between those two.  On entry each clears f,
@@ -180,9 +193,12 @@ is printed as `e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e`
 (`0x463a6`), time being y / 32 -- days.
 
 w is ∫ ln t dt over the window from y − 1 to y, since ∫ ln t dt =
-t·ln t − t: the mean of ln t over the 2700 s the sample averages.  So
-the curve fitted below, a + b·y + c·w, is the window mean of
-a + b·t + c·ln t.
+t·ln t − t: the mean of ln t over the 2700 s the sample averages.  The
+fit below regresses e on y and w, so a + b·y + c·w is the window mean
+of a′ + b·t + c·ln t with a′ = a + b/2, the linear term's mean being
+b·(y − ½): b and c carry over to the instantaneous curve, the intercept
+is off by half a window's change.  The weight only selects samples: a
+fit takes those at or above a minimum weight and weights each equally.
 
 **The fit.**  `FUN_00045116` runs on each event.  Its record is at
 `0x1026a2`: mode byte at +0, a at +0x12, b at +0x16, c at +0x1a, rms at
@@ -256,8 +272,9 @@ start of each sampling pass `FUN_0004508e` asks for that event
 `0x102bd8` -- the loop's r -- c to `0x102bdc` -- its p -- and HQ to
 `0x102866`.  All four sit in the loop block a warm restart preserves,
 so after such a restart the loop starts with the last fit.  After a
-power-up they are zero until a fit with at least three samples --
-mode 1 or above -- so d is zero for the loop's first hours.  The
+power-up b and c are zero until a slope fit, which needs three
+samples -- mode 1 or above; mode 0 sets a alone, from as few as one --
+so d is zero for the loop's first hours.  The
 `holdover` stage, `FUN_000473de` (its return of 1 moves the stage byte
 to 4 at `0x4b36a`), seeds a with u − c·s when a is zero (`0x47440` to
 `0x47460`).

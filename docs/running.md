@@ -161,6 +161,29 @@ lit until cleared at the instrument.  The monitor's header and the
 browser's status strip show what the daemon recorded, so clearing the
 lamp loses no history.
 
+### Time Reset at a GPS week boundary
+
+`*STB?` 72 is the questionable summary and the master summary
+(`097-59551-02` 5-44).  With the user-reported bit unused, the
+questionable group's one other bit is Time Reset: the receiver found
+its time different from the satellites' and reset it to GPS (5-40).  It
+is an event, latched until `:STATus:QUEStionable:EVENt?` reads it
+(5-46), `*CLS` (5-40) or power-up; the daemon sends neither.  1 PPS
+phase and 10 MHz are not disturbed.  `:SYSTem:STATus?` can look clean
+meanwhile, as in [a 2015 report](https://www.febo.com/pipermail/time-nuts/2015-April/091388.html)
+of a 58503A cleared with `*CLS`.
+
+The bench 58503A latched it at 00:00:15 UTC on 2026-10-25, just after
+GPS week 2441 ended.  Its time of day stepped back 1 s then and forward
+1 s about 8 minutes later, each a time reset; it stayed locked
+throughout.  The cause suspected, strongly supported but unconfirmed,
+is the GPS engine's: 2441 mod 256 is 137, the 8-bit leap-second week
+(WN_LSF) broadcast since the 2016-12-31 leap second, so an engine
+comparing it with its own 8-bit week would insert a phantom leap second
+there, until the next UTC parameters correct it.  If so, after the
+week boundary around 2031-09-21 (the end of week 2697) the time of day
+may again be off by 1 s for a few minutes, and the alarm will latch.
+
 ## Configuring
 
 The unit derives the device, `/dev/<port>`, and the socket,

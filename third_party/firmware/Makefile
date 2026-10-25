@@ -234,7 +234,8 @@ check-types:
 	$(M68K_CC) -mcpu=cpu32 -fsyntax-only $(IMAGE_FOLDER)/check-layout.c
 
 # Fail if the decompiled C does not compile, its assembly is not the
-# image's own bytes, alone or linked, or a binding disagrees with its
+# image's own bytes, alone or linked, gcc's code accesses a word or
+# long at an odd frame or stack offset, or a binding disagrees with its
 # routine; and first if the figures or Unicorn's recorded bugs drift.
 check-decompiled: check-module-figures check-unicorn $(CPU32_LIBGCC)
 	mkdir -p $(WORK)

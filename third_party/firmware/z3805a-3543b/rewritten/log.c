@@ -589,7 +589,10 @@ uint32_t reset_record_write(uint32_t date, time_of_day time, char* text) {
   if (full) {
     return 1;
   }
-  reset_record record;
+  /* Even, since gcc writes its words and longs as such, misaligned at an
+   * odd address (MC68331UM, 4.4.4): smartclock.h packs it, and beside
+   * full it lies at one. */
+  reset_record __attribute__((aligned(2))) record;
   record.date = date;
   record.time = time;
   strncpy(record.text, text, sizeof record.text);

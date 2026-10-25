@@ -1293,9 +1293,16 @@ object lies, and accesses a packed table's members by their offsets
 from wherever the table does.  So an object gcc would put at an odd
 address, where the image's is at an even one, is
 `__attribute__((aligned(2)))`: the 58503A's `hmon_channels`, the unit
-multipliers, the OS reports' local texts and `timecode_update`'s next
-time of day.  A run on a model of the CPU32 that takes an address
-error for a misaligned word or long, as the CPU32 does, found them.
+multipliers, the OS reports' local texts, `timecode_update`'s next
+time of day and `reset_record_write`'s record.  A run on a model of the
+CPU32 that takes an address error for a misaligned word or long, as
+the CPU32 does, found those before the last; `rebuild_link.py` finds
+an access at an odd offset from the frame or stack pointer in gcc's
+code, as linked and compiled again with no function inlined
+(`-fno-inline`), since where a frame's objects lie changes with what
+is inlined into it, and fails on one.  `reset_record_write`'s record
+lay at an odd offset beside its `full` flag only where `log_count` was
+not inlined, as where a link calls the image's copy of it.
 
 What lies outside memory the harness models, the same for both calls,
 at its boundary rather than routine by routine.  `trap #7`, and

@@ -32,8 +32,8 @@ The project has three parts:
 
 The whole pages: [compare](docs/images/web-compare.png),
 [correlation](docs/images/web-correlation-page.png).  The history pages
-are shown from the bench's logs, the status page against the
-simulator; `make screenshots` takes them again.
+are shown from the bench's logs, the status page and the terminal
+monitor against the simulator; `make screenshots` takes them again.
 
 ## Monitoring
 

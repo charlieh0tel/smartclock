@@ -182,6 +182,7 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`docs/efc.md`](docs/efc.md) | how the receiver reports its control voltage, measured at the oscillator's EFC pin |
 | [`docs/ocxo.md`](docs/ocxo.md) | the oscillator |
 | [`docs/58503a-second-10mhz.md`](docs/58503a-second-10mhz.md) | enabling the 58503A's 10 MHz OUT B, J15 |
+| [`docs/oncore-leap-week.md`](docs/oncore-leap-week.md) | the 58503A's Time Reset at the end of GPS week 2441, and the 256-week leap-parameter bugs it resembles |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
 | [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the Z3805A 3543B and 58503A 3704 in C |
 | [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md) | the Z3805A rewrite's method, checks and limits |

@@ -68,7 +68,7 @@ td:first-child { white-space: nowrap; font-family: "IBM Plex Mono", monospace; f
 <div class="wrap">
   <header>
     <h1>HP Z3805A main board, Z3805-68001</h1>
-    <p>Serial 3625A01487, board serial 6E9008G, date code 3627, firmware 3543B.  The component side only, read from the bench's photos on 2026-10-23; nothing here was traced with a meter.  See <a href="bench.md#hp-z3805a-serial-3625a01487"><code>bench.md</code></a> and <a href="hardware-investigations.md"><code>hardware-investigations.md</code></a>.</p>
+    <p>Serial 3625A01487, board serial 6E9008G, date code 3627, firmware 3543B.  The component side only, read from the bench's photos on 2026-10-23; nothing here was traced with a meter.  See <a href="bench.md#hp-z3805a-serial-3625a01487" data-href="bench.md#hp-z3805a-serial-3625a01487"><code>bench.md</code></a> and <a href="hardware-investigations.md"><code>hardware-investigations.md</code></a>.</p>
     <div class="tags"><span class="tag">Photo: z3805a-cpu-fpga-flash.jpg</span><span class="tag">GPS engine module removed</span><span class="tag">Parts off this photo listed without a pin</span></div>
   </header>
 
@@ -267,6 +267,11 @@ items.forEach((it, i) => {
   const tr = table.insertRow();
   [it.r, it.m, it.id, it.p].forEach((v) => { tr.insertCell().textContent = v; });
 });
+</script>
+<script>
+// htmlpreview.github.io points every link with a fragment at this page's
+// own anchor; put back the ones that lead to another document.
+for (const a of document.querySelectorAll("a[data-href]")) a.href = a.dataset.href;
 </script>
 </body>
 </html>

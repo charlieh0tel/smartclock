@@ -66,7 +66,7 @@ th { color: var(--muted); font-weight: 500; }
 <div class="wrap">
   <header>
     <h1>Power-One MAP55-4003</h1>
-    <p>The HP 58503A's original power supply (serial 3710A01056), out of the receiver.  It hiccups at startup; the receiver has run on a replacement of the same model since 2026-10-01.  See <a href="bench.md#power-supplies"><code>bench.md</code>, "Power supplies"</a>.</p>
+    <p>The HP 58503A's original power supply (serial 3710A01056), out of the receiver.  It hiccups at startup; the receiver has run on a replacement of the same model since 2026-10-01.  See <a href="bench.md#power-supplies" data-href="bench.md#power-supplies"><code>bench.md</code>, "Power supplies"</a>.</p>
     <div class="tags"><span class="tag">Date code 07/97</span><span class="tag">+5 / +15 / −5 / −15 V</span><span class="tag">55 W flyback</span><span class="tag">Assembled in Dominican Republic</span></div>
   </header>
 
@@ -160,6 +160,11 @@ items.forEach((it, i) => {
   li.onclick = () => select(i);
   list.appendChild(li);
 });
+</script>
+<script>
+// htmlpreview.github.io points every link with a fragment at this page's
+// own anchor; put back the ones that lead to another document.
+for (const a of document.querySelectorAll("a[data-href]")) a.href = a.dataset.href;
 </script>
 </body>
 </html>

@@ -110,7 +110,7 @@ th .sym,th.sym{text-transform:none;letter-spacing:0;font-size:.9375rem}
   <figure class="fig">
     <svg id="loop" viewBox="0 24 1020 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Block diagram of the disciplining loop"></svg>
     <div class="legend"><span>signal path, one update every 10 s</span><span class="ffl">aging feed-forward, one sample every 2700 s</span></div>
-    <figcaption>x = t<sub>OCXO</sub> − t<sub>GPS</sub>: the interval from the GPS 1 PPS to the oscillator's, positive when the oscillator's comes later. That physical sign is inferred (<a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/counter.md#the-sign-and-the-loop">counter.md</a>); it makes the loop's positive gains negative feedback. The <code>pllp</code> task runs the update in single-precision floating point, the health monitor's <code>hmon</code> task writes u to the DAC, and the <code>curv</code> task runs the aging fit.</figcaption>
+    <figcaption>x = t<sub>OCXO</sub> − t<sub>GPS</sub>: the interval from the GPS 1 PPS to the oscillator's, positive when the oscillator's comes later. That physical sign is inferred (<a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/counter.md#the-sign-and-the-loop" data-href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/counter.md#the-sign-and-the-loop">counter.md</a>); it makes the loop's positive gains negative feedback. The <code>pllp</code> task runs the update in single-precision floating point, the health monitor's <code>hmon</code> task writes u to the DAC, and the <code>curv</code> task runs the aging fit.</figcaption>
   </figure>
 
   <p>Once a second the firmware reads one interval from the FPGA counter. Every tenth second it takes x̄, the mean of those ten seconds' readings within the holdover limit (the number <code>:SYNChronization:TINTerval?</code> reports), and runs one update:</p>
@@ -138,7 +138,7 @@ th .sym,th.sym{text-transform:none;letter-spacing:0;font-size:.9375rem}
       <tr><td>startup τ</td><td>the constant <code>startup_pll</code> ramps from, +5 s per update, until within 5 s of τ</td><td>150 s</td></tr>
     </tbody>
   </table></div>
-  <p class="note">The clamp figures come from M = 6.25 × 10⁻¹⁰ / |G| and the gains below. Evidence for each value: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#the-loop">The loop</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#τ-and-g">τ and G</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#s-the-oscillator-current">s, the oscillator current</a>.</p>
+  <p class="note">The clamp figures come from M = 6.25 × 10⁻¹⁰ / |G| and the gains below. Evidence for each value: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#the-loop" data-href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#the-loop">The loop</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#τ-and-g" data-href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#τ-and-g">τ and G</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#s-the-oscillator-current" data-href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#s-the-oscillator-current">s, the oscillator current</a>.</p>
 
   <h3>By model</h3>
   <div class="wide"><table class="models">
@@ -152,7 +152,7 @@ th .sym,th.sym{text-transform:none;letter-spacing:0;font-size:.9375rem}
       <tr><td>58503B 1.01.04</td><td>700 s, settable: <code>LTIMe:MAX</code>*</td><td>−1.25 × 10⁻¹² or +6.25 × 10⁻¹³, by <code>TYPE</code>*</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s, from <code>LTIMe:INIT</code>*</td></tr>
     </tbody>
   </table></div>
-  <p class="note">* Undocumented, under <code>:DIAGnostic:ROSCillator</code>; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, Z3801A, Z3805A, 58503A 3704 and 58503B; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in (below). What the bits of the word at <code>0x302000</code> read is untraced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
+  <p class="note">* Undocumented, under <code>:DIAGnostic:ROSCillator</code>; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, Z3801A, Z3805A, 58503A 3704 and 58503B; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in (below). What the bits of the word at <code>0x302000</code> read is untraced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image" data-href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
 </section>
 
 <section>
@@ -198,7 +198,7 @@ th .sym,th.sym{text-transform:none;letter-spacing:0;font-size:.9375rem}
 
 <section>
   <h2>How it is checked</h2>
-  <p>Until October 2026 the tests compared this page with a copy of its own model, and a review found four errors in it: the sign of the error, the poles, start-up's integrator rescaling and the aging fit's description. The tests now compare it with the Z3805A's and 58503A's firmware. They read each constant from the ROM, run each ROM's own loop routines in a CPU emulator, and require the update law above to reproduce the firmware's state at every step. The other models' rows are read by hand. Details: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#how-this-is-checked">How this is checked</a>.</p>
+  <p>Until October 2026 the tests compared this page with a copy of its own model, and a review found four errors in it: the sign of the error, the poles, start-up's integrator rescaling and the aging fit's description. The tests now compare it with the Z3805A's and 58503A's firmware. They read each constant from the ROM, run each ROM's own loop routines in a CPU emulator, and require the update law above to reproduce the firmware's state at every step. The other models' rows are read by hand. Details: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#how-this-is-checked" data-href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#how-this-is-checked">How this is checked</a>.</p>
 </section>
 </main>
 
@@ -367,6 +367,11 @@ th .sym,th.sym{text-transform:none;letter-spacing:0;font-size:.9375rem}
   text(X(pair.re),Y(pair.im)-14,minus((-pair.re).toFixed(2))+' \u00b1 '+pair.im.toFixed(2)+'j','sp-l','middle');
   line(X(slow.re)-4,118,X(slow.re),140,'stroke:var(--accent);stroke-width:1'); text(X(slow.re)-6,116,minus((-slow.re).toFixed(2)),'sp-l','end');
 })();
+</script>
+<script>
+// htmlpreview.github.io points every link with a fragment at this page's
+// own anchor; put back the ones that lead to another document.
+for (const a of document.querySelectorAll("a[data-href]")) a.href = a.dataset.href;
 </script>
 </body>
 </html>

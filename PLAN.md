@@ -238,7 +238,7 @@ reconfigured.
 register clears it, and with it the front-panel Alarm LED and the BITE
 output, which belong to whoever is at the instrument.  The daemon polls
 the condition registers and `*STB?`, which reading "does not change"
-(5-44); Time Reset is event-only (5-39).  So the logger never writes to
+(5-44); Time Reset is event-only (5-40).  So the logger never writes to
 the receiver, `*CLS` included, and a client needs `--allow-control` to
 read an event register.  The transition filters, without which events
 mean nothing, are recorded once per attachment and never written: they

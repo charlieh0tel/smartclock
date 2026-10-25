@@ -93,10 +93,12 @@ pub struct Reading {
     pub alarm_summary: Vec<String>,
     /// Whether the receiver has anything latched at all.
     pub alarming: Option<bool>,
-    /// The receiver reset its clock to match the satellites.
+    /// The questionable summary: the receiver reset its clock to match
+    /// the satellites, or the user-reported bit is set.
     ///
-    /// The questionable group holds only this and a bit no one here
-    /// sets, so the group summary names it exactly.  A step in the time
+    /// The questionable group holds only Time Reset and a bit no one
+    /// here sets, so while that bit is unused the summary is Time
+    /// Reset (097-59551-02 5-40).  A step in the time
     /// output invalidates every interval measurement across it.
     pub time_reset: Option<bool>,
 

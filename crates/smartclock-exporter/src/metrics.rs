@@ -316,9 +316,10 @@ fn one(out: &mut Families, scrape: &Scrape) {
     );
     out.maybe(
         "time_reset",
-        "1 once the receiver has stepped its own clock to match the satellites, \
-         which invalidates interval measurements taken across the step; \
-         stays set until the alarm is cleared at the receiver",
+        "1 while the questionable group is latched: the receiver has reset its \
+         time to match the satellites, which invalidates interval measurements \
+         taken across the step, or the user-reported bit is set; stays set until \
+         *CLS, a read of the event register or power-up",
         labels,
         r.time_reset
             .filter(|_| medium)

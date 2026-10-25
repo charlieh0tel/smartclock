@@ -419,11 +419,12 @@ function alarms(s) {
       ? `<span class="pill down">${s.hardware_faults.map(esc).join(", ")}</span>`
       : "") +
     // The receiver's own alarm, which is latched and stays latched
-    // until cleared at the front panel.  Named separately where it is
-    // a clock step, since that invalidates the measurements either
-    // side of it and is not just another fault.
+    // until *CLS, a read of the event register or power-up.  Named
+    // separately where it may be a clock step, since that invalidates
+    // the measurements either side of it and is not just another
+    // fault; the summary bit also covers the user-reported bit.
     (s.time_reset
-      ? `<span class="pill down">receiver reset its clock to match GPS</span>`
+      ? `<span class="pill down">time reset (questionable)</span>`
       : "") +
     (s.alarming && !s.time_reset
       ? `<span class="pill stale">receiver alarm: ${(s.alarm_summary ?? []).map(esc).join(", ")}</span>`

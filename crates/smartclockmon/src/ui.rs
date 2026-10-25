@@ -444,14 +444,16 @@ fn header(frame: &mut Frame, area: Rect, app: &App) {
         Span::raw(app.attachment.describe()),
     ];
     // The receiver's own alarm, which latches and stays latched until
-    // someone clears it at the front panel.  Put in the header rather
+    // someone clears it: *CLS, a read of the event register or
+    // power-up.  `time_reset` is the questionable summary, which also
+    // covers the user-reported bit.  Put in the header rather
     // than a pane because it is the one thing that should be seen
     // whatever else is on screen, and because the daemon deliberately
     // does not clear it: what is shown here is what the lamp is showing.
     if let Some(snapshot) = app.snapshot.as_ref() {
         if snapshot.time_reset == Some(true) {
             spans.push(Span::styled(
-                "  [CLOCK STEPPED]",
+                "  [TIME RESET (QUESTIONABLE)]",
                 Style::new().fg(Color::Red).add_modifier(Modifier::BOLD),
             ));
         } else if snapshot.alarming == Some(true) {

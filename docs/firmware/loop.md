@@ -648,12 +648,11 @@ second in it was questionable, else with the Z3805A's 4 or 8
 
 ## How this is checked
 
-The earlier tests checked this document against a copy of its own
-model, so they could not catch its errors.  An outside review in
-October 2026 found four: a reversed sign, a pole model without the
-ten-second mean, a start-up that missed the integrator's rescaling,
-and a misdescribed aging fit.  The tests now hold the document to the
-Z3805A 3543B's and 58503A 3704's images
+Until October 2026 the tests compared this document with a copy of
+its own model.  A review then found four errors: the sign of the
+error, poles computed without the ten-second mean, the integrator's
+rescaling in start-up, and the aging fit's description.  The tests now
+compare it with the Z3805A 3543B's and 58503A 3704's images
 (`crates/smartclock/tests/loop_firmware.rs`):
 
 - They read each constant above from its image at the cited address,
@@ -667,8 +666,8 @@ Z3805A 3543B's and 58503A 3704's images
 - A replay of the update law as written here must reproduce the traced
   f, I, B, u, constant and stage at every step, about 3000 per image.
   The run covers the waits, the ramp, the hand-over, the aging slope's
-  clamp and blocks with no reading.  The first three errors each fail
-  it.
+  clamp and blocks with no reading.  Each of the first three errors
+  fails it.
 - The poles, damping and step response in `loop.html` are recomputed
   from the traced law, taking a change of EFC as acting from the next
   second; the DAC's latency is not modeled.

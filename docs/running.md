@@ -168,14 +168,16 @@ plus bit 6, master summary (64) (`097-59551-02` 5-44).  With the user-reported b
 questionable group's one other bit is Time Reset: the receiver found
 its time different from the satellites' and reset it to GPS (5-40).  It
 is an event, latched until `:STATus:QUEStionable:EVENt?` reads it
-(5-46), `*CLS` (5-40) or power-up; the daemon sends neither.  1 PPS
-phase and 10 MHz are not disturbed.  `:SYSTem:STATus?` can look clean
-meanwhile, as in [a 2015 report](https://www.febo.com/pipermail/time-nuts/2015-April/091388.html)
-of a 58503A cleared with `*CLS`.
+(5-46), `*CLS` (5-40) or power-up; the daemon sends neither.
+`:SYSTem:STATus?` can look clean meanwhile.  A 2015 correspondent
+reported a lit Alarm LED on a 58503A despite a clean status display; it
+cleared after `*CLS` followed by `:SYSTEM:STATUS?`, and he could not say
+which cleared it
+([febo.com](https://www.febo.com/pipermail/time-nuts/2015-April/091388.html)).
 
 The bench 58503A latched it at 00:00:15 UTC on 2026-10-25, just after
-GPS week 2441 ended; its time of day ran 1 s slow for 7 to 9 minutes,
-and it stayed locked.  This fits a known class of 256-week
+GPS week 2441 ended.  Its time of day ran 1 s slow for about eight
+minutes; lock, TI and EFC showed no disturbance.  This fits a known class of 256-week
 leap-parameter bugs in GPS engines, mechanism unknown, and may recur
 after week 2697, about 2031-09-21:
 [`oncore-leap-week.md`](oncore-leap-week.md).

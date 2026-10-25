@@ -1293,9 +1293,16 @@ object lies, and accesses a packed table's members by their offsets
 from wherever the table does.  So an object gcc would put at an odd
 address, where the image's is at an even one, is
 `__attribute__((aligned(2)))`: the 58503A's `hmon_channels`, the unit
-multipliers, the OS reports' local texts and `timecode_update`'s next
-time of day.  A run on a model of the CPU32 that takes an address
-error for a misaligned word or long, as the CPU32 does, found them.
+multipliers, the OS reports' local texts, `timecode_update`'s next
+time of day and `reset_record_write`'s record.  A run on a model of the
+CPU32 that takes an address error for a misaligned word or long, as
+the CPU32 does, found those before the last; `rebuild_link.py` finds
+an access at an odd offset from the frame or stack pointer in gcc's
+code, as linked and compiled again with no function inlined
+(`-fno-inline`), since where a frame's objects lie changes with what
+is inlined into it, and fails on one.  `reset_record_write`'s record
+lay at an odd offset beside its `full` flag only where `log_count` was
+not inlined, as where a link calls the image's copy of it.
 
 What lies outside memory the harness models, the same for both calls,
 at its boundary rather than routine by routine.  `trap #7`, and
@@ -1517,7 +1524,13 @@ and a call still running at its 1000th kernel call, a task's loop,
 ends there, before making it.  A loop that makes no kernel call ends
 where it counts to a count of the function's (`COUNTED_LOOPS`):
 `root_task`'s idle loop at `idle_loops`' 101st write, odd, so that a
-loop counting by more passes it.  Two calls that end the same way are
+loop counting by more passes it.  Once the loop has read its counter, a
+write of it by any instruction but the one that read it ends the call
+too, as a split increment: the image's is one instruction, `addq.l #1`
+to memory (`0x131dc`), which no interrupt divides, and a load, an add
+and a store would lose a clear made between them, `klok_take_pending`'s
+from the klok task at each 1PPS.  The C increments with `cpu.h`'s
+`cpu_long_increment`, the same instruction.  Two calls that end the same way are
 compared as if they had returned, but for their result, and both
 leave the status register's system byte, its supervisor bit and
 interrupt mask, the same.  Two that return leave its condition codes

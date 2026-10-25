@@ -27,9 +27,11 @@ record but text at an even address.
 make check-decompiled runs it with its flags and library, as make runs
 the function and bridge checks, which link the same way.  Needs
 m68k-linux-gnu gcc and binutils.  Exits nonzero if the link fails, a
-piece is not the image's bytes, a tree's record is misplaced or gcc's
+piece is not the image's bytes, a tree's record is misplaced, gcc's
 code holds an instruction the CPU32 does not have
-(cpu32_libgcc.NOT_CPU32).
+(cpu32_libgcc.NOT_CPU32) or, as linked or compiled with no function
+inlined, a word or long access at an odd offset from the frame or
+stack pointer (misaligned).
 """
 
 import json
@@ -79,6 +81,26 @@ NOBITS = 8
 # readelf's type and binding of a global data object's symbol.
 OBJECT = "OBJECT"
 GLOBAL = "GLOBAL"
+# objdump's m68k listing: a function's heading, an instruction's address,
+# mnemonic and operands, and a displacement from the frame or stack
+# pointer, in decimal (an indexed operand's, in hex, has an index of no
+# known parity).  A mnemonic's last letter is its size; those that take
+# an address without accessing it are not accesses, nor is movep, which
+# moves its word or long a byte at a time (and which gcc does not make:
+# objdump finds it in a switch's table of offsets read as code).
+FUNCTION = re.compile(r"^[0-9a-f]+ <(\S+)>:$")
+INSTRUCTION = re.compile(r"^\s*([0-9a-f]+):\s+(\S+)\s*(.*)$")
+STACK_OFFSET = re.compile(r"%(?:fp|sp)@\((-?\d+)\)")
+WORD_LONG = "wl"
+# The CPU32's alignment of a word or long access: at an odd address it
+# takes an address error (MC68331UM, 4.4.4).
+ACCESS_ALIGNMENT = 2
+NOT_ACCESSES = ("lea", "pea", "jsr", "jmp", "movepw", "movepl")
+# The C compiled again with no function inlined, each function in a
+# frame of its own alone: where a frame's objects lie, and so their
+# parity, changes with what is inlined into it, and a link that calls
+# the image's copy of a callee in place of gcc's inlines none of it.
+NO_INLINE = "-fno-inline"
 
 
 @dataclass
@@ -106,6 +128,50 @@ def sections(elf: bytes) -> list[Section]:
 
 def run(*command: str) -> str:
     return subprocess.run(command, capture_output=True, text=True, check=True).stdout
+
+
+def compile_c(c_path: str, cflags: list[str], source: str, compiled: str) -> None:
+    """Compiles `source`, the C file's C without its assembly, to
+    `compiled`, the hand-written C it includes named from the C file's
+    own folder."""
+    run(TOOLS + "gcc", *cflags, "-I", os.path.dirname(os.path.abspath(c_path)), "-c", "-o", compiled, source)
+
+
+def disassembly(path: str, section: str | None = None) -> str:
+    """objdump's listing of an object's code, or of an ELF's section."""
+    selected = ("-j", section) if section else ()
+    return run(TOOLS + "objdump", "-d", "--no-show-raw-insn", *selected, path)
+
+
+def misaligned(listing: str) -> list[str]:
+    """The word and long accesses at an odd offset from the frame or
+    stack pointer, both even, in objdump's listing, each as its function
+    and instruction.  gcc makes them for an object smartclock.h packs
+    (#pragma pack(1)) that it puts at an odd offset, -mstrict-align
+    notwithstanding.  An access through another register is not seen:
+    its base's parity is not in the listing."""
+    found, function = [], None
+    for line in listing.splitlines():
+        heading = FUNCTION.match(line)
+        if heading:
+            function = heading.group(1)
+            continue
+        instruction = INSTRUCTION.match(line)
+        if not function or not instruction or instruction.group(2) in NOT_ACCESSES:
+            continue
+        if instruction.group(2)[-1] in WORD_LONG and any(
+                int(offset) % ACCESS_ALIGNMENT for offset in STACK_OFFSET.findall(instruction.group(3))):
+            found.append(f"{function}: {instruction.group(1)}: {instruction.group(2)} {instruction.group(3)}")
+    return found
+
+
+def misaligned_c(c_path: str, cflags: list[str], work: str, elf_path: str) -> list[str]:
+    """misaligned's accesses in gcc's code as link() linked it in work,
+    and in its C compiled again with NO_INLINE."""
+    no_inline = work + "/c-no-inline.o"
+    compile_c(c_path, [*cflags, NO_INLINE], work + "/c.c", no_inline)
+    return misaligned(disassembly(elf_path, REBUILT_SECTION)) + [
+        f"{access} ({NO_INLINE})" for access in misaligned(disassembly(no_inline))]
 
 
 def script(pieces: list[str], image_names: dict[str, int]) -> str:
@@ -138,8 +204,7 @@ def link(c_path: str, cflags: list[str], work: str, elf_path: str, extra: str = 
 
     c_only, compiled = work + "/c.c", work + "/c.o"
     open(c_only, "w").write(CODE_BLOCK.sub("", c) + extra)
-    # the hand-written C it includes is named from the C file's own folder
-    run(TOOLS + "gcc", *cflags, "-I", os.path.dirname(os.path.abspath(c_path)), "-c", "-o", compiled, c_only)
+    compile_c(c_path, cflags, c_only, compiled)
     # what the C defines that is not a function: the data the assembly may name
     c_data = {
         name for kind, name in re.findall(r"^\S* ([BCDRbdr]) (\S+)$", run(TOOLS + "nm", compiled), re.M)
@@ -241,6 +306,7 @@ def main() -> int:
             return 1
         linked_objects = objects(elf)
         foreign = not_cpu32(elf, REBUILT_SECTION)
+        unaligned = misaligned_c(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf)
     records, texts = tree_records(c_path)
     missing = sorted(records - linked_objects.keys())
     broken = tree_layout({name: linked_objects[name] for name in records & linked_objects.keys()}, texts)
@@ -264,7 +330,10 @@ def main() -> int:
     if foreign:
         print(f"  gcc's code: {', '.join(sorted(set(foreign)))}")
     print(f"gcc's instructions the CPU32 does not have: {len(foreign)}")
-    return 1 if differing or missing or broken or foreign else 0
+    for access in unaligned:
+        print(f"  misaligned: {access}")
+    print(f"gcc's word or long accesses at odd frame or stack offsets, which the CPU32 faults on: {len(unaligned)}")
+    return 1 if differing or missing or broken or foreign or unaligned else 0
 
 
 if __name__ == "__main__":

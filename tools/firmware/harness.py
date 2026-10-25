@@ -25,7 +25,8 @@ spoils the condition codes (PROBE); the kernel's traps, #3 and #4, are answered 
 model of each service, and in a pForth console session the console's
 reads by its lines (READ); a trap that never returns, a zero divide, a
 write to code, a branch to itself, the KERNEL_CALL_LIMIT'th kernel
-call and a machine's counter's count (COUNTED) end a call; a case may
+call and a machine's counter's count (COUNTED), or a write of it by an
+instruction other than the one that read it (SPLIT), end a call; a case may
 take an interrupt part way, after an event of its own instructions
 (Interrupt); and the kernel calls and device reads and writes a call
 makes, in order, are its effects, compared as RAM is.
@@ -215,6 +216,13 @@ STILL_RUNNING = "still running"
 # compared up to there, both calls alike.
 COUNTED = "counted"
 COUNTER = struct.Struct(">I")
+# Once the loop has read its counter, a write of it by an instruction
+# other than the one that last read it ends the call too: an increment
+# as a load, an add and a store, which an interrupt can split, so that a
+# clear made between, klok_take_pending's of idle_loops from another
+# task, is lost.  The image's is one instruction, addq.l #1 to memory
+# (0x131dc), taken whole or not at all.
+SPLIT = "counter's increment split"
 # A write to code, the image's ROM or gcc's, which the checks protect,
 # made by code, not by data a call runs, ends the call the same way, at
 # the bus error it would raise: the boot chip select is read only
@@ -2891,7 +2899,7 @@ class Run:
     the stack's edge, or, for a task's entry, at SP alone, its registers
     and status register after, the memory_compared, the COMPARED memory
     and the flash after, its effects, the ENDING vector, HALTED,
-    STILL_RUNNING, COUNTED or a console session's INPUT_ENDED or
+    STILL_RUNNING, COUNTED, SPLIT or a console session's INPUT_ENDED or
     TASK_DELETED it ended at instead of returning, and the fault or trap
     that stopped it, if one did, with the addresses (stopped) and its
     kind alone (stop_reason), which the two copies' calls compare: the
@@ -3027,9 +3035,23 @@ class Run:
                 invalid.append(address)
             uc.emu_stop()
 
+        # the instructions begun, and the one that last read the counter
+        # (SPLIT)
+        counter_reads = [0, None]
+
+        def counter_instruction(uc, address, size, _):
+            counter_reads[0] += 1
+
+        def counter_read(uc, access, address, size, value, _):
+            counter_reads[1] = counter_reads[0]
+
         def counted(uc, access, address, size, value, _):
             # before the write; made here too, in case it is not after
             counter, count = m.counter
+            if counter_reads[1] not in (None, counter_reads[0]):
+                ended.append(SPLIT)
+                uc.emu_stop()
+                return
             if address == counter and size == COUNTER.size and value & 0xFFFFFFFF == count:
                 uc.mem_write(counter, COUNTER.pack(count))
                 ended.append(COUNTED)
@@ -3098,6 +3120,9 @@ class Run:
             m.uc.ctl_flush_tb()
         if m.counter is not None:
             hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, counted, begin=m.counter[0], end=m.counter[0]))
+            hooks.append(m.uc.hook_add(UC_HOOK_MEM_READ, counter_read, begin=m.counter[0], end=m.counter[0]))
+            hooks.append(m.uc.hook_add(UC_HOOK_CODE, counter_instruction))
+            m.uc.ctl_flush_tb()
         if m.protected and m.profile.code:
             code, size = m.profile.code
             hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, code_write, begin=code, end=code + size - 1))

@@ -133,8 +133,7 @@ void root_task(void) {
   }
 
   /* klok_take_pending reads and clears the count from another task. */
-  volatile uint32_t* const loops = &idle_loops;
   for (;;) {
-    (*loops)++;
+    cpu_long_increment(&idle_loops);
   }
 }

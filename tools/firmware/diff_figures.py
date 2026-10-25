@@ -5,12 +5,13 @@ would cost -- against image_diff.py's TSV,
 docs/firmware/diff/58503a-3704-vs-z3805a-3543b.tsv, or with --write
 rewrites them in place.
 
-    python3 -I tools/firmware/diff_figures.py DIFF.tsv --functions SIDECAR [--write]
+    python3 -I tools/firmware/diff_figures.py DIFF.tsv --functions SIDECAR [--write | --by-file]
 
 SIDECAR is the base image's .conventions.jsonl, which image_diff.py
 read, whose functions with a "rewritten" file are the functions written
-by hand.  Exits nonzero on drift, or if a figure's sentence is not in
-the document exactly once.
+by hand; --by-file prints how they matched for each file of
+rewritten/ instead.  Exits nonzero on drift, or if a figure's sentence
+is not in the document exactly once.
 """
 
 import argparse
@@ -31,6 +32,8 @@ GROUPED = ('platform', 'services', 'unassigned')
 # a changed function at this similarity has the same instructions over
 # other immediates and displacements
 SAME_SHAPE = '1.000'
+# the statuses of a function written by hand, in --by-file's order
+REWRITTEN_STATUSES = ('identical', 'relocated', 'same shape', 'changed', 'missing')
 BYTES_PER_KB = 1024
 # the counts table: its header, its rule and its rows up to a blank line
 TABLE = re.compile(r'^\| Module \|.*\n\|[- |:]+\|\n(?:\|.*\n)+', re.M)
@@ -101,14 +104,14 @@ def subject_counts(rows):
 
 
 def rewritten_statuses(sidecar, rows):
-    """How each function written by hand matched: its status, a changed
-    one of the same shape apart."""
+    """How the functions written by hand matched, by their file: each
+    one's status, a changed one of the same shape apart."""
     status = {}
     for row in rows:
         if row['kind'] == 'function':
             same_shape = row['status'] == 'changed' and row['similarity'] == SAME_SHAPE
             status[row['name']] = 'same shape' if same_shape else row['status']
-    found = collections.Counter()
+    found = collections.defaultdict(collections.Counter)
     for line in open(sidecar):
         function = json.loads(line)
         if 'rewritten' not in function:
@@ -116,7 +119,7 @@ def rewritten_statuses(sidecar, rows):
         name = function['name']
         if name not in status:
             sys.exit(f'{sidecar}: {name} is not in the diff; run make image-diff')
-        found[status[name]] += 1
+        found[function['rewritten']][status[name]] += 1
     return found
 
 
@@ -135,7 +138,7 @@ def figures(rows, sidecar):
     platform_named = sum(platform[s] for s in STATUSES if s != 'new')
     new_bytes = sum(int(r['other_size']) for r in rows
                     if r['region'] == 'primary' and r['kind'] == 'function' and r['status'] == 'new')
-    rewritten = rewritten_statuses(sidecar, rows)
+    rewritten = sum(rewritten_statuses(sidecar, rows).values(), collections.Counter())
     sidecar_functions = sum(1 for line in open(sidecar) if line.strip())
     return [
         ('the `.conventions.jsonl` sidecar, # functions', [sidecar_functions]),
@@ -153,10 +156,10 @@ def figures(rows, sidecar):
          "stand, # changed and # not at all; the 58503A adds # functions of about # KB.",
          [carried, named, round(100 * carried / named), primary['changed'], primary['missing'],
           primary['new'], round(new_bytes / BYTES_PER_KB)]),
-        ('of the # functions written there: # identical and # relocated',
+        ('Of its # functions # are identical and # relocated',
          [sum(rewritten.values()), rewritten['identical'], rewritten['relocated']]),
-        ('callees they name; # with the same instructions', [rewritten['same shape']]),
-        ('not the bodies; # changed; and # with no counterpart',
+        ("the 58503A's addresses; # have the same instructions", [rewritten['same shape']]),
+        ('not the bodies; # changed; and # have no counterpart',
          [rewritten['changed'], rewritten['missing']]),
         ("the # new functions and the # missing pieces' and # changed pieces' successors",
          [primary['new'], pieces['missing'], pieces['changed']]),
@@ -180,9 +183,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('diff', type=pathlib.Path)
     parser.add_argument('--functions', required=True, type=pathlib.Path)
-    parser.add_argument('--write', action='store_true')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--write', action='store_true')
+    group.add_argument('--by-file', action='store_true',
+                       help="print the functions written by hand by file and status")
     args = parser.parse_args()
     rows = read_rows(args.diff)
+    if args.by_file:
+        print('file', *(s.replace(' ', '-') for s in REWRITTEN_STATUSES), sep='\t')
+        for file, found in sorted(rewritten_statuses(args.functions, rows).items()):
+            print(file, *(found[s] for s in REWRITTEN_STATUSES), sep='\t')
+        return 0
     text = DOCUMENT.read_text()
     drift = []
     table, _ = counts_table(rows)

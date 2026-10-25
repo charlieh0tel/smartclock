@@ -176,7 +176,8 @@ of a 58503A cleared with `*CLS`.
 The bench 58503A latched it at 00:00:15 UTC on 2026-10-25, just after
 GPS week 2441 ended.  Its time of day stepped back 1 s then and forward
 1 s about 8 minutes later, each a time reset; it stayed locked
-throughout.  The cause suspected, strongly supported but unconfirmed,
+throughout.  Reading `:STATus:QUEStionable:EVENt?` afterward returned
+`+1`: Time Reset, not the user-reported bit.  The cause suspected, strongly supported but unconfirmed,
 is the GPS engine's: 2441 mod 256 is 137, the 8-bit leap-second week
 (WN_LSF) broadcast since the 2016-12-31 leap second, so an engine
 comparing it with its own 8-bit week would insert a phantom leap second

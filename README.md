@@ -98,7 +98,7 @@ Z3815A and Z3816A -- read off bench units through the pForth debug
 console or gathered from others.  [`docs/firmware/`](docs/firmware/)
 documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 
-### The Z3805A 3543B in C
+### The Z3805A 3543B and 58503A 3704 in C
 
 One image, the Z3805A's 3543B, is read whole as C.  Every C function
 of it and of the installer it unpacks into RAM, 1318 and 236, was
@@ -112,8 +112,15 @@ pForth kernels among them, are the image's instructions, reassembled
 byte for byte, and the generated SCPI trees are the ROM's bytes.  It is
 a reading of the firmware, not a buildable or flashable image, and the
 firmware's faults are kept, not fixed.  Method, checks and limits:
-[`docs/firmware/rewrite.md`](docs/firmware/rewrite.md).  The 58503A
-3704 follows.
+[`docs/firmware/rewrite.md`](docs/firmware/rewrite.md).
+
+The 58503A's 3704 is read whole as C too, its C begun as the
+Z3805A's and rewritten to its own code, and held to the same
+checks: of the primary's functions 1415 agree and 5 differ for the
+firmware's own reasons, and the installer's 247 agree, one the harness
+cannot run; its console sessions agree, 8 of 8.  What it has that the
+Z3805A does not, the front panel among it:
+[`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md).
 
 The checks run in CI (`.github/workflows/firmware.yml`;
 [`docs/firmware/README.md`](docs/firmware/README.md), "The checks in
@@ -176,8 +183,9 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`docs/ocxo.md`](docs/ocxo.md) | the oscillator |
 | [`docs/58503a-second-10mhz.md`](docs/58503a-second-10mhz.md) | enabling the 58503A's 10 MHz OUT B, J15 |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
-| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the Z3805A 3543B in C |
+| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the Z3805A 3543B and 58503A 3704 in C |
 | [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md) | the Z3805A rewrite's method, checks and limits |
+| [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md) | the 58503A 3704 against the Z3805A 3543B, and its rewrite |
 | [`docs/loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |
 | [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, and as C data, the trees side by side against the manuals, and what bench receivers answered |
 | [`docs/screen-format-strings.md`](docs/screen-format-strings.md) | the status screen's templates, and what drives its mode line |

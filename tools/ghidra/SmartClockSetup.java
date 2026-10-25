@@ -18,11 +18,16 @@
 //   names=third_party/firmware/IMAGE/names.tsv (more than one may be
 //       given, as IMAGE/scpi-tree.tsv and IMAGE/installer-scpi-tree.tsv,
 //       dump-scpi --names' rows for the two trees, after it)
-//       address, "function", "label" or "local", name, source, and
-//       optionally a note saying what it is or does, a function's C
-//       prototype, a label's data type or a local's "TYPE @ OFFSET",
-//       and a function's calling convention, tab-separated; an address
-//       in the installer's overlay is written installer::0x....  The names file's header sets out the
+//       address, "function", "label", "local", "call" or "entry", name,
+//       source, and optionally a note saying what it is or does, a
+//       function's C prototype, a label's data type or a local's "TYPE @
+//       OFFSET", and a function's calling convention, tab-separated; an
+//       address in the installer's overlay is written installer::0x....
+//       An entry row, its name empty, makes a function at its address
+//       that keeps Ghidra's name, and the removals of what analysis made
+//       leave it; nothing in its way is cleared, as it is for a named
+//       one, and one that would be inside an instruction, typed data or
+//       another function is reported skipped.  The names file's header sets out the
 //       convention's keys.  A register prototype is built from its in
 //       and out, at confidence run, read or documented only.  A
 //       function's note, its convention and its source make the comment
@@ -216,6 +221,8 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String LOCAL = "local";
 	/** A names row giving an indirect call the prototype of what it calls. */
 	private static final String CALL = "call";
+	/** A names row making a function no wave has named yet, its name field empty. */
+	private static final String ENTRY = "entry";
 	/**
 	 * Stack offsets are from SP at entry, where the return address occupies
 	 * 0..3; arguments start at 4, each in a slot of at least 2 bytes.
@@ -288,7 +295,7 @@ public class SmartClockSetup extends GhidraScript {
 	private static final int ENTRY_WINDOW = 0x400;
 
 	/** What applying names did to a name. */
-	private enum NameCount { NAMED, LABELED, SKIPPED }
+	private enum NameCount { NAMED, LABELED, MADE, SKIPPED }
 
 	/**
 	 * The pForth console's dictionary in ROM (docs/firmware/structures.md,
@@ -591,7 +598,8 @@ public class SmartClockSetup extends GhidraScript {
 			}
 		}
 		println("named " + counts[NameCount.NAMED.ordinal()] + ", labeled "
-			+ counts[NameCount.LABELED.ordinal()] + ", skipped "
+			+ counts[NameCount.LABELED.ordinal()] + ", made "
+			+ counts[NameCount.MADE.ordinal()] + ", skipped "
 			+ counts[NameCount.SKIPPED.ordinal()]);
 	}
 
@@ -633,6 +641,9 @@ public class SmartClockSetup extends GhidraScript {
 				}
 				else if (fields[1].equals(CALL)) {
 					applyCall(address, field(fields, PROTOTYPE_FIELD), line);
+				}
+				else if (fields[1].equals(ENTRY)) {
+					makeEntry(address, fields[2], line, counts);
 				}
 				else {
 					label(address, fields[2], counts);
@@ -802,6 +813,77 @@ public class SmartClockSetup extends GhidraScript {
 			// a routine on several SCPI paths or Forth words keeps the first one's name
 			addLabel(address, name, counts);
 		}
+	}
+
+	/**
+	 * Makes the function an entry row gives, one image_diff finds that no
+	 * wave has named yet, keeping Ghidra's name; the removals of what
+	 * analysis made leave it.  A name belongs in a function row.  Unlike a
+	 * named entry, which a table in the image vouches for, this one is
+	 * image_diff's reading, so nothing in its way is cleared: one that
+	 * would be odd, inside an instruction, inside typed data or inside
+	 * another function's body, or does not disassemble, is reported
+	 * skipped with why.
+	 */
+	private void makeEntry(Address address, String name, String line, int[] counts)
+			throws Exception {
+		if (!name.isEmpty()) {
+			throw new IllegalArgumentException("an entry row names nothing; a function row does: "
+				+ line);
+		}
+		if (getFunctionAt(address) == null) {
+			String refused = entryRefused(address);
+			if (refused == null) {
+				new CreateFunctionCmd(address).applyTo(currentProgram, monitor);
+				refused = getFunctionAt(address) == null ? "Ghidra made none" : null;
+			}
+			if (refused != null) {
+				println("skipped entry " + address + ": no function could be made, " + refused);
+				counts[NameCount.SKIPPED.ordinal()]++;
+				return;
+			}
+			counts[NameCount.MADE.ordinal()]++;
+		}
+		entries.add(address);
+	}
+
+	/**
+	 * Why no function is made at an entry row's address, disassembling
+	 * from it where its bytes are undefined; null if one may be.
+	 */
+	private String entryRefused(Address address) throws Exception {
+		if (isOdd(address)) {
+			return "an odd address";
+		}
+		Instruction containing = getInstructionContaining(address);
+		if (containing != null && !containing.getAddress().equals(address)) {
+			return "inside the instruction at " + containing.getAddress();
+		}
+		Data data = getDataContaining(address);
+		if (data != null && data.isDefined()) {
+			return "inside " + data.getDataType().getName() + " at " + data.getMinAddress();
+		}
+		Function function = getFunctionContaining(address);
+		if (function != null) {
+			return "inside " + function.getName() + "'s body";
+		}
+		if (containing == null && !disassemble(address)) {
+			return "its bytes do not disassemble";
+		}
+		return null;
+	}
+
+	/** The entry rows' functions, which the removals of what analysis made leave. */
+	private final Set<Address> entries = new HashSet<>();
+
+	/**
+	 * True if analysis made function and nothing vouches for it: it has
+	 * Ghidra's name, and no entry row gives it.  Only such a function is
+	 * removed as data, a shared tail or without code.
+	 */
+	private boolean madeByAnalysis(Function function) {
+		return function.getSymbol().getSource() == SourceType.DEFAULT
+			&& !entries.contains(function.getEntryPoint());
 	}
 
 	/**
@@ -1351,7 +1433,7 @@ public class SmartClockSetup extends GhidraScript {
 	private void removeDataFunctions() throws Exception {
 		List<Function> data = new ArrayList<>();
 		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
-			if (function.getSymbol().getSource() == SourceType.DEFAULT
+			if (madeByAnalysis(function)
 					&& !calledFromFunction(function)
 					&& (isOdd(function.getEntryPoint()) || reachesNonCode(function))) {
 				data.add(function);
@@ -1387,7 +1469,7 @@ public class SmartClockSetup extends GhidraScript {
 	private void removeSharedTails() throws Exception {
 		List<Function> tails = new ArrayList<>();
 		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
-			if (function.getSymbol().getSource() == SourceType.DEFAULT && isSharedTail(function)) {
+			if (madeByAnalysis(function) && isSharedTail(function)) {
 				tails.add(function);
 			}
 		}
@@ -1451,7 +1533,7 @@ public class SmartClockSetup extends GhidraScript {
 		List<Function> empty = new ArrayList<>();
 		List<Function> codeless = new ArrayList<>();
 		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
-			if (function.getSymbol().getSource() != SourceType.DEFAULT) {
+			if (!madeByAnalysis(function)) {
 				continue;
 			}
 			MemoryBlock block = memory.getBlock(function.getEntryPoint());

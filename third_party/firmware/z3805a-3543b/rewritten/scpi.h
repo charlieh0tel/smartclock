@@ -354,8 +354,10 @@ static int32_t scpi_engine_scan_exponent(const scpi_char_class* classes,
  * SCPI_NO_MULTIPLIER for none. */
 static int8_t scpi_engine_multiplier(int32_t name) {
   /* The image's table at 0x27b2e, scpi_multipliers, to a name of 0; the
-   * installer's at installer::0x1057dc holds the same. */
-  static const scpi_multiplier MULTIPLIERS[] = {
+   * installer's at installer::0x1057dc holds the same.  Even, as the
+   * image's is, since a name at an odd address is misaligned (MC68331UM,
+   * 4.4.4) and the type is packed. */
+  static const scpi_multiplier __attribute__((aligned(2))) MULTIPLIERS[] = {
       {.name = 'M', .exponent = -3},
       {.name = 'K', .exponent = 3},
       {.name = 'U', .exponent = -6},

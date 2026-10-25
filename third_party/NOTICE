@@ -23,6 +23,12 @@ Ghidra archive in `firmware/ghidra/` is both: the image it holds is the
 vendor's, and the names, types and comments laid over it are the
 project's.
 
+GCC's source in `gcc/` is not part of the project either, and the
+project's license does not apply to it, but it is not reference
+material: it is built into the rebuilt image's libgcc, and it is free
+software under its own licenses, which its heading below gives and
+which come with it.
+
 The project's own work
 ----------------------
 
@@ -117,6 +123,25 @@ by Fairchild (fairchildsemi.com) and archived by the Internet Archive
                              revised February 2000; www.fairchildsemi.com/
                              ds/DM/DM74ALS09.pdf as archived on
                              2013-06-04.  U29.
+
+GCC
+---
+
+In `gcc/`.  The files of GCC 15.2.0's source, unmodified, from which
+`tools/firmware/cpu32_libgcc.py` builds the CPU32's libgcc the rebuilt
+image links: libgcc2.c and its headers, config/m68k/lb1sf68.S and
+config/m68k/fpgnulib.c (`gcc/README.md` lists them, with the release
+tarball's sha256).  Copyright the Free Software Foundation, but
+fpgnulib.c, Pipeline Associates', under its own permission to do
+anything with it.  libgcc2.c, libgcc2.h, lb1sf68.S, coretypes.h and
+tsystem.h are under the GNU General Public License, version 3 or
+later, with the GCC Runtime Library Exception, version 3.1
+(`gcc/COPYING3`, `gcc/COPYING.RUNTIME`); ansidecl.h, filenames.h and
+hashtab.h under the GNU General Public License, version 2 or later;
+longlong.h under the GNU Lesser General Public License, version 2.1 or
+later (`gcc/COPYING.LIB`), with permission to link its compiled form
+without restriction.  The headers in `gcc/generated/`, written in place
+of those GCC's build generates, are the project's.
 
 Hewlett-Packard / Agilent / Symmetricom
 ---------------------------------------

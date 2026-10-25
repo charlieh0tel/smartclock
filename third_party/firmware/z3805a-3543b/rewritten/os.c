@@ -733,7 +733,10 @@ void os_report_cpu(printf_function* print) {
 
 /* Prints the tasks, those free and the ticks they ran (0x1660a). */
 void os_report_process_summary(printf_function* print) {
-  char format[] = "\t%d Process(s) (%d avail); Total time: %-d ticks.\r\n";
+  /* Even, since gcc fills it by longs, misaligned at an odd address
+   * (MC68331UM, 4.4.4). */
+  char __attribute__((aligned(2))) format[] =
+      "\t%d Process(s) (%d avail); Total time: %-d ticks.\r\n";
   int32_t free = 0;
 
   for (psos_task* task = os_kernel_data()->free_tasks; task != NULL;
@@ -889,7 +892,9 @@ void os_report_exchange(uint32_t* id, printf_function* print) {
 
 /* Prints the exchange report, an exchange a line (0x1665e). */
 void os_report_exchanges(printf_function* print) {
-  char header[] = "    xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED\r\n";
+  /* Even, as os_report_process_summary's format. */
+  char __attribute__((aligned(2))) header[] =
+      "    xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED\r\n";
 
   print("%s", header);
   for (psos_exchange* exchange = os_kernel_data()->exchanges; exchange != NULL;

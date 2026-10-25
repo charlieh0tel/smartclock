@@ -10,9 +10,10 @@ IMAGE is the Z3805A 3543B's, z3805a-3543b, which modules.md describes,
 if not given.
 
 The calls are those the exported C makes by name from each function's
-body: the decompiler's reading, which the export keeps (under #if 0) for
-a function written by hand too, so that the figures are the image's and
-not a rewrite's.  A call through a pointer is not one; nor is a call
+body, and for a function written by hand those of its decompiled
+reading, which the export leaves out and its .conventions.jsonl sidecar
+lists ("calls"), so that the figures are the image's and not a
+rewrite's.  A call through a pointer is not one; nor is a call
 from a function modules.tsv leaves out (the installer's copies, the
 assembly routines, the pForth kernel).  Exits nonzero on drift.
 """
@@ -20,6 +21,7 @@ assembly routines, the pForth kernel).  Exits nonzero on drift.
 import argparse
 import collections
 import dataclasses
+import json
 import pathlib
 import re
 import sys
@@ -100,9 +102,14 @@ def read_modules(image):
 
 def read_program(image):
     module = read_modules(image)
-    text = (FIRMWARE / image / 'decompiled' / f'{image}.c').read_text()
+    export = FIRMWARE / image / 'decompiled' / f'{image}.c'
+    text = export.read_text()
     starts = [match.start() for match in FUNCTION_START.finditer(text)]
     calls = {}
+    for line in open(export.with_suffix('.conventions.jsonl')):
+        function = json.loads(line)
+        if 'calls' in function and function['name'] in module:
+            calls[function['name']] = collections.Counter(function['calls'])
     for start, end in zip(starts, starts[1:] + [len(text)]):
         piece = text[start:end]
         body = BODY.search(piece)

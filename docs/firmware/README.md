@@ -32,7 +32,7 @@ names and encodings from MC68331UM appendix D):
 | -------- | ----- | ------- |
 | SYPCR `0xfffa21` | `0xcc` | SWE, SWP, HME, BME: software watchdog on and prescaled by 512, halt and bus monitors on (D.3.12) |
 | SYNCR `0xfffa04` | `0xcf80` | W = 1, X = 1, Y = 15: f = f_ref · 4 · 16 · 8 (section 4.3.2): 16.777 MHz from the 32.768 kHz reference the manual's frequency tables assume (4.3.2, appendix A); EDIV 1, ECLK f / 16 (D.3.3) |
-| PORTE0 `0xfffa11` | `0x40` | port E bit 6 high; `0x22e30` later pulses it low and high |
+| PORTE0 `0xfffa11` | `0x40` | port E bit 6 high, the FPGA's PROGRAM line (`outputs.md`, "The FPGA bitstreams"); a cold start pulses it low and high (`0x22e30`), and the FPGA loader holds it low until INIT goes low (`0x32812` to `0x3285a`) |
 
 and its chip selects so, from `tools/firmware/chip_selects.py`
 (`restart.md`, "The chip selects"; block sizes from Table D-11, the
@@ -106,6 +106,7 @@ request scripts in `oncore/`.
   reset code
 - [Pulse, time-tag and output commands](outputs.md)
 - [58503A 3633 against 3704](revisions.md)
+- [58503A 3704 against Z3805A 3543B](58503a-3704.md)
 - [The floating-point library](softfloat.md)
 - [The C library](libc.md)
 - [The real-time kernel](psos.md)
@@ -152,8 +153,18 @@ request scripts in `oncore/`.
 following, and how.
 
 - Whether the port's second open matters.
-- What PE6 drives, pulsed only on a cold start; what 3704's PWMA pin,
-  low while the holdover-recovery flag is set, is wired to (`loop.md`).
+- Which of the FPGA's pins PE6 reaches.  The code makes it the FPGA's
+  PROGRAM line (`outputs.md`, "The FPGA bitstreams"): an output (DDRE
+  `0x40`, `0x2476e`), which the loader drives low with DONE (PF3) and
+  holds low until INIT reads low ("FPGA INIT did not go low"), then
+  raises before it waits for INIT high ("FPGA INIT did not go high";
+  `0x32812` to `0x3285a`), and which a cold start pulses (`0x22e30`;
+  `restart.md`).  A Low on DONE/PROGRAM and RESET together is how the
+  XC3000 clears its configuration (`third_party/xilinx/xc3000.pdf`,
+  Figure 20, 7-19), so PE6 is taken to be the part's RESET; that is
+  inferred, not traced on a board.
+- What 3704's PWMA pin, low while the holdover-recovery flag is set,
+  is wired to (`loop.md`).
 - Whether anything reaches the rest of the ROM defaults block by a
   computed address: no reader of it was found (`loop.md`, "τ and G").
 - What the letters HQ stand for.  It is the predicted holdover
@@ -349,15 +360,19 @@ part of what they change.  In order:
 1. `SmartClockSetup.java`.
 2. `SmartClockInstaller.java RECORDS ENTRY`: `0xbbc 0x10135c` for the
    Z3801A 3543 and Z3805A 3543B (`restart.md`, "Forced installer entry
-   with an unusable primary").
+   with an unusable primary"); `0xbc4 0x10136c` for the 58503A 3704,
+   whose boot vector 43 is `0xa46`, which calls the unpacker at `0xaa8`
+   (its records at `0xbc4`, 43025 bytes, the count it loads at
+   `0xab0`) and jumps to `0x10136c` (`0xaa2`); its overlay is
+   `installer::0x100000` to `0x10ab75`.
 3. `SmartClockSetup.java` again, now over the installer too, with
    `types=third_party/firmware/IMAGE/smartclock.h`,
    `types=third_party/firmware/include/mc68331.h`,
    `types=third_party/firmware/include/mc68681.h`,
    `names=third_party/firmware/IMAGE/names.tsv`, and
    `names=third_party/firmware/IMAGE/scpi-tree.tsv` and
-   `names=third_party/firmware/IMAGE/installer-scpi-tree.tsv` where
-   `make scpi-tree` made them (the SCPI trees' records, and the
+   `names=third_party/firmware/IMAGE/installer-scpi-tree.tsv`, which
+   `make scpi-tree` makes (the SCPI trees' records, and the
    installer's handlers),
    `scpi=third_party/firmware/IMAGE/handlers.txt`, which `make handlers`
    writes from `smartclock-cli dump-scpi --handlers IMAGE`, and
@@ -374,11 +389,23 @@ part of what they change.  In order:
 
 Each path is from the repository's root, and IMAGE is the image's
 name, `z3805a-3543b`: its folder, `third_party/firmware/IMAGE/`, beside
-`IMAGE.bin`, holds everything that image's work is.  The make targets
+`IMAGE.bin`, holds everything that image's work is.  The 58503A
+3704's folder, `third_party/firmware/58503a-3704/`, holds the same:
+its `names.tsv` and `modules.tsv`, seeded from the Z3805A's by a
+function-by-function match of the two images (`58503a-3704.md`,
+"Method"; the names file's header gives the rules) and then named and
+typed from the 58503A's own code, its `handlers.txt`, SCPI trees,
+`smartclock.h`, `check-layout.c` and `results.tsv`, its export, from a
+bare import as above with the 58503A's inputs (`58503a-3704.md`, "The
+first wave"), and its `rewritten/`, begun as the Z3805A's and written
+to the 58503A's code, with its SCPI trees' C, which `make scpi-tree
+IMAGE=58503a-3704` writes as it does the Z3805A's.  The make targets
 that check and generate it are `third_party/firmware/Makefile`'s, which
 runs alone, `make -C third_party/firmware TARGET IMAGE=z3805a-3543b`,
-for every image folder without `IMAGE=`, and to which the top Makefile
-hands each target by name, so that `make check-decompiled` is the same.
+for every image folder without `IMAGE=` (but `report-decompiled`, which
+runs the Z3805A's alone; the 58503A's runs with `IMAGE=58503a-3704`),
+and to which the top Makefile hands each target by name, so that `make
+check-decompiled` is the same.
 
 Optionally, after step 3 or any later one,
 `SmartClockUntyped.java output=third_party/firmware/IMAGE/untyped.tsv`
@@ -494,6 +521,21 @@ passes an address's low byte or word (`log_print`, `status_screen`,
 gives it, `int NAME(void *parameters, void *response, scpi_call *call)`,
 unless its row gives a prototype.
 
+An `entry` row, its name field empty, makes a function at its address
+that no wave has named yet, which keeps Ghidra's name: the 58503A
+3704's new functions, which the match that seeded its names found
+(`58503a-3704.md`, "Method"), their note the extent and how each was
+found, many of them reached only through a pointer, which analysis
+does not follow.  Its
+address is the match's reading, not a table's, so nothing in the way
+is cleared as it is for a named entry: one that would be inside an
+instruction, inside typed data such as a string, or inside another
+function's body, or whose bytes do not disassemble, is reported
+skipped, with why.  Undefined bytes are disassembled from it.  The
+removals of unnamed functions above leave the functions entry rows
+give.  A wave that names one makes its row a `function` row; an
+`entry` row that gives a name is refused.
+
 The convention is `key=value` pairs, which the names file's header sets
 out: its kind (`c`, `register`, `exception`, `pforth`, `psos-service`,
 `other` or `undetermined`), a confidence (`run`, `read`, `documented`,
@@ -532,7 +574,16 @@ the stack, `"stack"`: each one's offset from the stack pointer at entry
 and its size, from the decompiler's prototype.  The original packs a
 `char` or `short` in 2 bytes, or several into one long (`format_date`
 takes its date so), where gcc gives each 4; the emulator harness lays
-the image's arguments from it.
+the image's arguments from it.  A function written by hand ("Hand-written
+C", below) has `"rewritten"`, its file, `"calls"`, the functions its
+decompiled reading calls by name, one entry to a call, and `"passed"`,
+any `[callee, function]` pairs of a function its reading gives a call
+as an argument (`psos_start`'s task entry, `spoo_run`'s function): the
+image's calls, which `tools/firmware/module_figures.py` and the
+function check's user-mode reach read, since the C leaves the reading
+out.  A reading's local and label names vary between bare imports
+(`switchD_` against `override_jmp_`, `local_54` against `acStack_54`);
+its calls do not.
 
 A function that is not C is not written as C.  Its decompiled C stays
 in the file for reading, under `#if 0`, its signature led by a macro
@@ -805,7 +856,7 @@ only as a store through that pointer gone astray
 (`scpi_decimal_to_text_unused` with A2 left out passed until then).
 Its generated cases never complete a `qspi_transfer_raw` transfer: they
 name devices the QSPI's table does not take, or wait for an interrupt
-none takes, so its given cases (`GIVEN`) send three words to devices 2,
+none takes, so its given cases (`given_cases`) send three words to devices 2,
 7 and 12 and take the QSPI's end of queue after `qspi_start`'s first
 read of `qspi.running`, whose handler copies the received words and
 clears the flag the routine waits on (`0x20aa6`); a given case must
@@ -992,9 +1043,10 @@ decompiler wrote it, and reported.
 A function rewritten by hand lives in
 `third_party/firmware/IMAGE/rewritten/`, beside the decompiled C in
 `IMAGE/decompiled/`, a file to a subsystem (`clock.c`).  The exporter
-finds the functions those files define (`rewritten=`), keeps the
-decompiler's reading of each in the exported C inside `#if 0`, for
-reference, and includes the files after its own C, so that they see
+finds the functions those files define (`rewritten=`), leaves the
+decompiler's reading of each out of the exported C, a line
+`/* NAME: rewritten in FILE */` in its place, and includes the files
+after its own C, so that they see
 the types it declares, the image's `smartclock.h`'s, and its globals
 and prototypes, and before them the folder's `.h` files, what the files
 share (`cpu.h`, the status register's helpers), but `bindings/`'s,
@@ -1149,7 +1201,17 @@ piece of assembly at its own address, where it must be, and is, the
 image's bytes, and gcc's code -- the C, its constants -- at
 `0x600000`, above every chip select the reset code programs, and its
 data at `0x6f0000`, with libgcc for the float comparisons the decompiler wrote
-as operators.  A C function the assembly calls is the image's own copy,
+as operators.  The libgcc is the CPU32's, with soft float, which
+`tools/firmware/cpu32_libgcc.py` builds from GCC's source with the m68k
+gcc, as m68k-elf's gcc builds its CPU32 multilib: the toolchain has no
+such multilib, and its own libgcc is a 68020's with a 68881, whose
+float conversions use the FPU and whose 64-bit division and counts of
+leading zeros use `bfffo`, which a CPU32 traps on and Unicorn's 68020
+runs.  The source, GCC 15.2.0's files the build reads and no more, is
+vendored in `third_party/gcc/` (its `README.md`), so that the checks
+need no package beyond the m68k gcc; the build warns when that gcc is
+another version.  The build, and `rebuild_link.py`'s link, fail on any
+instruction the CPU32 does not have.  A C function the assembly calls is the image's own copy,
 `__image_NAME`, so that the original's callers keep the original's
 callees and argument layout until a function is replaced; gcc's C calls
 gcc's.  `tools/firmware/function_check.py` (`make report-decompiled`)
@@ -1216,10 +1278,19 @@ lie.  The EEPROM, chip select 9's 8 KB at
 gcc's code is above every chip select so that a read of the EEPROM
 finds no code, and its data, libgcc's `_fpCCR` among it, apart from
 its code, which the function check keeps
-read-only.  libgcc's float routines are PIC and reach `_fpCCR` through
-the GOT, which the link gives an output section of its own, as ld's
-default script does (ld takes a GOT entry's offset from that section's
-start), and the harness loads.
+read-only.  The CPU32's libgcc is not PIC, so the link has no GOT, which
+the toolchain's PIC float routines reached `_fpCCR` through.
+
+gcc does not keep a word or long of its own at an even address
+everywhere, `-mstrict-align` notwithstanding: it stores a packed
+structure of four bytes, or fills a local text, by longs wherever the
+object lies, and accesses a packed table's members by their offsets
+from wherever the table does.  So an object gcc would put at an odd
+address, where the image's is at an even one, is
+`__attribute__((aligned(2)))`: the 58503A's `hmon_channels`, the unit
+multipliers, the OS reports' local texts and `timecode_update`'s next
+time of day.  A run on a model of the CPU32 that takes an address
+error for a misaligned word or long, as the CPU32 does, found them.
 
 What lies outside memory the harness models, the same for both calls,
 at its boundary rather than routine by routine.  `trap #7`, and
@@ -1479,9 +1550,11 @@ task that opens with service 33 and runs on in supervisor mode,
 installer's `spoo_task`, and a function `spoo_run` (`0x20d66`) is
 given, which it calls in its caller's mode before the spool task
 starts and sends to the spool task after (`console_init`, from
-`root_task` and spooled from `scpi_task`).  Of the functions run, 605
-of the primary's and 55 of the installer's run in user mode alone, and
-225 and 23 in both, figures the report prints and `make check-report-figures` checks against the last one it saved.  The image refers to a handler only from its node's setter
+`root_task` and spooled from `scpi_task`).  A function written by
+hand is reached through its decompiled reading's calls, which the
+sidecar lists ("calls", "passed"), not through the hand's.
+Of the functions run, 606 of the primary's and 55 of
+the installer's run in user mode alone, and 224 and 23 in both, figures the report prints and `make check-report-figures` checks against the last one it saved.  The image refers to a handler only from its node's setter
 or query slot, 499 slots in 459 nodes, which only `scpi_call_handler`
 (`0x29642`) calls through, from `scpi_interpret`, from `scpi_task`: no
 console word, spooled request or timer reaches one.  A case of one whose copies both stop at a
@@ -1617,8 +1690,11 @@ below the top for `status_clear_events`, and an error queue in each
 state, its tail wrapping, for `error_queue_pop`; `:SYSTem:LANGuage`'s
 texts in each case, `:DIAGnostic:TEST?`'s every choice and one past,
 the installer's with the boot code's results set; `longjmp`'s buffer
-and values, `atexit`'s NULL and full table, `sign_extend_bits`' every
-kind of width, and `console_port_read`'s read errors; each GPS message
+and values, the status register it restores from the buffer, in every
+case, its trace bits cleared (`JUMP_FUNCTIONS`), as `setjmp`, untraced,
+would leave them, so that the CPU32 does not trace on from it;
+`atexit`'s NULL and full table, `sign_extend_bits`' every kind of
+width, and `console_port_read`'s read errors; each GPS message
 through `gps_request_build`'s encoders; the line readers' echo as a
 routine reading where the image's do, off and 0; `atoi`'s high-bit
 characters; and SCPI lines with high-bit characters, before and in
@@ -1737,6 +1813,26 @@ undone and ends the call as one to ROM does.  The primary's other objects,
 from `aging_curve` to the kernel's exchanges, are not given; an SCPI
 handler's record is, from the installer's tree.
 
+Each image has its two profiles, chosen by the image's name
+(`harness.IMAGE_PROFILES`, `harness.image_profiles`), the addresses
+read from that image's own code: the Z3805A 3543B's above, and the
+58503A 3704's (`58503a-3704.md`, "The first wave").  The installer's
+records are found in the image wherever they lie (`decompiled_check.py`'s
+`installer_records`), not at the Z3805A's `0xbbd`.  The tables of
+`function_check.py` and `bridge_check.py` were written for the Z3805A,
+its `BASE_IMAGE`: another image runs every case with them, its
+profile's objects given in place of the Z3805A's, but for what its C
+does not name -- a Preset, or a field one names, an interrupt's watch,
+a hook's routine, a region, a session's buffers, left out -- and for
+`KNOWN` and
+`SET_UP_REQUESTS`, which name the Z3805A's ROM and are its alone; a
+given case's other ROM addresses are still the Z3805A's, given to both
+copies alike.  Another image's known differences are its own, each
+found in its code (`IMAGE_KNOWN`): the 58503A 3704's are the process
+report's D5 share, as the Z3805A's, and its SCPI session's, which
+reaches `:DIAG:OS:PROC?` and whose memory column also starts from the
+D6 each copy of `scpi_interpret` leaves.
+
 In the Z3805A 3543B image this gives 2041 functions, 1700 the
 primary's and 341 the installer's, and every one but the 12 thunks
 decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a
@@ -1796,17 +1892,20 @@ it.
 every push and pull request, a job of its own beside the Rust CI so
 that each fails alone: `make check-format-c`, `check-types`,
 `check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
-`check-chip-selects`, `check-magic-numbers`, `check-decompiled`,
-which runs `check-unicorn` first, and `report-decompiled`, which fails
-if any function fails
+`check-chip-selects`, `check-magic-numbers`, `check-decompiled`, which
+runs `check-unicorn` first, and `report-decompiled`, which fails if any
+function fails
 and checks the figures this document, `rewrite.md` and the top
 `README.md` give from the function check -- the user-mode and console
 counts, each image's agreeing, known, skipped and failed functions and
 the agreeing ones' cases -- against the report it writes, so that every
 function agreeing is checked in public.  `IMAGE=z3805a-3543b` is set
-for the job.  None of the targets builds the workspace;
-`check-chip-selects` reads every image's reset code (`restart.md`,
-"The chip selects").
+for the job; it runs the 58503A 3704's too, `make report-decompiled
+IMAGE=58503a-3704`, which fails if any of its functions fails
+(`58503a-3704.md`, "Finished"), and `make check-comment-addresses`,
+the addresses its C's comments cite.  None of the targets builds the
+workspace; `check-chip-selects` reads every image's reset code
+(`restart.md`, "The chip selects").
 
 On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15),
 `binutils-m68k-linux-gnu` and `clang-21`, which `check-magic-numbers`
@@ -1824,4 +1923,4 @@ function check measures the C as a given gcc compiles it, so a gcc
 that changes its code can change the figures.  clang-format is
 `clang-format-21`, named through `CLANG_FORMAT`: 19, 20 and 21 format
 the C alike, and 18 formats three of the files otherwise.  The job
-takes about five minutes, two and a half of them `report-decompiled`'s.
+takes about eight minutes, five of them the two `report-decompiled`s.

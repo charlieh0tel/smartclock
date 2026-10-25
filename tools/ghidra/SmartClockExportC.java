@@ -7,7 +7,9 @@
 // address order.  Beside it, with .conventions.jsonl for .c, one JSON
 // object a line for every function: its address and name, its note, the
 // calling convention SmartClockSetup.java and SmartClockForth.java
-// recorded, or "unknown", and where its stack arguments are; and with
+// recorded, or "unknown", where its stack arguments are, and for a
+// function written by hand its file and the calls of its decompiled
+// reading, which the C leaves out (readingCalls); and with
 // .symbols.ld, a linker script placing
 // the symbols the assembly makes for addresses in no routine.
 //
@@ -319,8 +321,14 @@ public class SmartClockExportC extends GhidraScript {
 					else {
 						String reading = signals(function.getName(), registerBits(rotates(registerShifts(reinterpretingCasts(c)))));
 						File by = rewritten().get(function.getName());
-						functions.append(by == null ? reading : "#if 0 /* the decompiler's reading; rewritten in "
-							+ by.getName() + " */\n" + reading + "#endif\n");
+						if (by == null) {
+							functions.append(reading);
+						}
+						else {
+							functions.append("/* ").append(function.getName()).append(": rewritten in ")
+								.append(by.getName()).append(" */\n");
+							rewrittenCalls.put(function.getEntryPoint(), readingCalls(function, by, reading));
+						}
 						collectGlobals(results.getHighFunction(), referenced);
 						String stack = stackArguments(results.getHighFunction());
 						if (stack != null) {
@@ -376,7 +384,9 @@ public class SmartClockExportC extends GhidraScript {
 
 	/**
 	 * One line a function: {"address", "name", "note"?, then the recorded
-	 * convention's members, then "stack"?}.  Returns how many had a convention recorded.
+	 * convention's members, then "stack"?, then for a function written by
+	 * hand "rewritten", "calls" and "passed"? (readingCalls)}.  Returns
+	 * how many had a convention recorded.
 	 */
 	private int writeConventions(File sidecar) throws Exception {
 		StringPropertyMap conventions =
@@ -405,6 +415,10 @@ public class SmartClockExportC extends GhidraScript {
 				if (stack != null) {
 					line.append(",\"stack\":").append(stack);
 				}
+				String calls = rewrittenCalls.get(function.getEntryPoint());
+				if (calls != null) {
+					line.append(calls);
+				}
 				writer.println(line.append("}"));
 			}
 		}
@@ -413,6 +427,98 @@ public class SmartClockExportC extends GhidraScript {
 
 	/** Each C function's stack arguments, as stackArguments gives them. */
 	private final Map<Address, String> stackLayouts = new HashMap<>();
+
+	/**
+	 * Each function written by hand's sidecar members, as readingCalls
+	 * gives them, in the place of its decompiled reading, which the C
+	 * leaves out so that the analysis's names inside it cannot change the
+	 * export.
+	 */
+	private final Map<Address, String> rewrittenCalls = new HashMap<>();
+
+	/** A call by name, or a name a macro or cast puts before a parenthesis. */
+	private static final Pattern CALL_BY_NAME = Pattern.compile("\\b([A-Za-z_]\\w*)\\s*\\(");
+	/** A comment or a string or character literal, which holds no call. */
+	private static final Pattern NOT_CALLS = Pattern.compile(
+		"/\\*.*?\\*/|//[^\\n]*|\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'", Pattern.DOTALL);
+	/** A cast before an argument. */
+	private static final Pattern LEADING_CAST = Pattern.compile("^\\([^()]*\\)\\s*");
+
+	/** The program's functions' names. */
+	private Set<String> functionNames;
+
+	private Set<String> functionNames() {
+		if (functionNames == null) {
+			functionNames = new HashSet<>();
+			for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
+				functionNames.add(function.getName());
+			}
+		}
+		return functionNames;
+	}
+
+	/**
+	 * A function written by hand's sidecar members: "rewritten", its
+	 * file; "calls", the functions its decompiled reading calls by name,
+	 * one entry to a call, in the reading's order; and "passed", any
+	 * [callee, function] pairs of a function given a call as an argument
+	 * (the task entry psos_start is given, the function spoo_run runs).
+	 * The image's call graph, which tools/firmware/module_figures.py and
+	 * function_check.py read, without the reading's local names.
+	 */
+	private String readingCalls(Function function, File by, String reading) {
+		int brace = reading.indexOf("\n{\n");
+		String body = NOT_CALLS.matcher(reading.substring(Math.max(brace, 0))).replaceAll(" ");
+		List<String> calls = new ArrayList<>();
+		List<String> passed = new ArrayList<>();
+		Matcher call = CALL_BY_NAME.matcher(body);
+		while (call.find()) {
+			String callee = call.group(1);
+			if (!functionNames().contains(callee) || callee.equals(function.getName())) {
+				continue;
+			}
+			calls.add(jsonString(callee));
+			for (String argument : callArguments(body, call.end())) {
+				String value = argument;
+				for (Matcher cast = LEADING_CAST.matcher(value); cast.find(); cast = LEADING_CAST.matcher(value)) {
+					value = value.substring(cast.end());
+				}
+				if (functionNames().contains(value)) {
+					passed.add("[" + jsonString(callee) + "," + jsonString(value) + "]");
+				}
+			}
+		}
+		StringBuilder members = new StringBuilder(",\"rewritten\":").append(jsonString(by.getName()))
+			.append(",\"calls\":[").append(String.join(",", calls)).append("]");
+		if (!passed.isEmpty()) {
+			members.append(",\"passed\":[").append(String.join(",", passed)).append("]");
+		}
+		return members.toString();
+	}
+
+	/** A call's arguments, stripped, from just after its opening parenthesis. */
+	private static List<String> callArguments(String text, int start) {
+		List<String> arguments = new ArrayList<>();
+		int depth = 0;
+		int from = start;
+		for (int i = start; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (c == '(' || c == '[' || c == '{') {
+				depth++;
+			}
+			else if ((c == ')' || c == ']' || c == '}') && depth > 0) {
+				depth--;
+			}
+			else if (c == ')' || (c == ',' && depth == 0)) {
+				arguments.add(text.substring(from, i).strip());
+				if (c == ')') {
+					break;
+				}
+				from = i + 1;
+			}
+		}
+		return arguments;
+	}
 
 	/**
 	 * Where a decompiled function's arguments are, if each is on the
@@ -2054,6 +2160,12 @@ public class SmartClockExportC extends GhidraScript {
 				i = last;
 				continue;
 			}
+			// a piece of the operand, v._n_m_, is read at its offset (pieces), not as the whole's bits
+			int pieceField = after < 0 || !tokens.get(after).getText().equals(".") ? -1 : nextPrinted(tokens, after, 1);
+			if (pieceField >= 0 && PIECE_FIELD.matcher(tokens.get(pieceField).getText()).matches()) {
+				i = pieceField;
+				continue;
+			}
 			int close = nextPrinted(tokens, i, -1);
 			int castType = close < 0 ? -1 : nextPrinted(tokens, close, -1);
 			// a pointer cast's stars come between its type and the close
@@ -3215,7 +3327,9 @@ public class SmartClockExportC extends GhidraScript {
 			symbol = function.getName();
 		}
 		else if (function != null) {
-			symbol = function.getThunkedFunction(true).getName();
+			// a thunk's name is its target's alias in the C, so the operand
+			// names the thunk's own address, which it must be in the bytes
+			symbol = madeSymbols.computeIfAbsent(address, a -> ADDRESS_SYMBOL + Long.toHexString(a.getOffset()));
 		}
 		else if (containing != null && !containing.isThunk()) {
 			long offset = address.subtract(containing.getEntryPoint());
@@ -4218,8 +4332,9 @@ public class SmartClockExportC extends GhidraScript {
 	/**
 	 * The functions the rewritten= folder's .c files define, by name, and
 	 * the file of each: C written by hand in place of the decompiler's,
-	 * which the exported C keeps as a reading and includes the files after
-	 * its own (docs/firmware/README.md, "Hand-written C").
+	 * which the exported C leaves out, a marker line in its place, and
+	 * includes the files after its own (docs/firmware/README.md,
+	 * "Hand-written C").
 	 */
 	private Map<String, File> rewritten() throws Exception {
 		if (rewritten == null) {

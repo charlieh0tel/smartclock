@@ -14,18 +14,22 @@ gcc's: the original's callers keep the original's callees, and its
 the assembly, its globals kept, and placed at REBUILT, clear of
 everything the board decodes; it calls gcc's C, and the assembly
 through its names (the bindings' asm statements).  gcc's helpers come
-from libgcc.
+from CPU32_LIBGCC, the CPU32's soft-float libgcc that cpu32_libgcc.py
+builds, not the toolchain's 68020 one.
 The generated SCPI trees' records must lie in the link as the parser
 reads them: each child list's children right after the list, and every
 record but text at an even address.
 
-    DECOMPILED_CFLAGS='...' uv run tools/firmware/rebuild_link.py \\
+    DECOMPILED_CFLAGS='...' CPU32_LIBGCC=... uv run tools/firmware/rebuild_link.py \\
         third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \\
         third_party/firmware/z3805a-3543b.bin [ELF]
 
-make check-decompiled runs it with its flags.  Needs m68k-linux-gnu gcc
-and binutils.  Exits nonzero if the link fails, a piece is not the
-image's bytes or a tree's record is misplaced.
+make check-decompiled runs it with its flags and library, as make runs
+the function and bridge checks, which link the same way.  Needs
+m68k-linux-gnu gcc and binutils.  Exits nonzero if the link fails, a
+piece is not the image's bytes, a tree's record is misplaced or gcc's
+code holds an instruction the CPU32 does not have
+(cpu32_libgcc.NOT_CPU32).
 """
 
 import json
@@ -38,6 +42,7 @@ import sys
 import tempfile
 from dataclasses import dataclass
 
+from cpu32_libgcc import not_cpu32
 from decompiled_check import RAM, TOOLS, assembly_lines, installer_image
 
 # Where gcc's code is linked: above the chip selects the reset code
@@ -46,12 +51,13 @@ from decompiled_check import RAM, TOOLS, assembly_lines, installer_image
 # EEPROM at 0x400000 reaches no code.
 REBUILT = 0x600000
 # Where gcc's own data is, apart from its code, which the harness keeps
-# read-only: libgcc's _fpCCR and its GOT.
+# read-only: libgcc's _fpCCR among it.
 REBUILT_DATA = 0x6F0000
-# The rebuilt image's sections the harness loads: its code, its data
-# and, after the data, the GOT.
-GOT = ".got"
-LOADED = (".rebuilt", ".rebuilt_data", GOT)
+# The rebuilt image's sections the harness loads: its code and its data.
+REBUILT_SECTION = ".rebuilt"
+LOADED = (REBUILT_SECTION, ".rebuilt_data")
+# The variable naming the CPU32's libgcc.
+LIBGCC_VARIABLE = "CPU32_LIBGCC"
 # A piece's section, its routine's name and its address.
 PIECE = re.compile(r"^\.text\.(\w+)\.([0-9a-f]+)$")
 # An __asm__ block that holds code: a routine's pieces.
@@ -111,13 +117,9 @@ def script(pieces: list[str], image_names: dict[str, int]) -> str:
         address = int(PIECE.match(piece).group(2), 16)
         lines.append(f"  {piece} 0x{address:x} : {{ *({piece}) }}")
     lines.append(
-        f"  .rebuilt 0x{REBUILT:x} : {{ *(.text) *(.text.*) *(.rodata) *(.rodata.*) }}"
+        f"  {REBUILT_SECTION} 0x{REBUILT:x} : {{ *(.text) *(.text.*) *(.rodata) *(.rodata.*) }}"
     )
     lines.append(f"  .rebuilt_data 0x{REBUILT_DATA:x} : {{ *(.data) *(.data.*) *(.bss) *(.bss.*) *(COMMON) }}")
-    # libgcc's float routines are PIC: their status word, _fpCCR, is
-    # reached through the GOT, an output section of its own as in ld's
-    # default script, since ld takes a GOT entry's offset from its start
-    lines.append(f"  {GOT} : {{ *(.got.plt) *(.igot.plt) *(.got) *(.igot) }}")
     lines.append("  /DISCARD/ : { *(.comment) *(.note.*) }")
     lines.append("}")
     return "\n".join(lines) + "\n"
@@ -157,7 +159,9 @@ def link(c_path: str, cflags: list[str], work: str, elf_path: str, extra: str = 
 
     listing = run(TOOLS + "readelf", "-SW", renamed)
     pieces = [name for name in re.findall(r"\]\s+(\.text\.\S+)", listing) if PIECE.match(name)]
-    libgcc = run(TOOLS + "gcc", "-mcpu=cpu32", "-print-libgcc-file-name").strip()
+    libgcc = os.environ.get(LIBGCC_VARIABLE)
+    if not libgcc:
+        raise SystemExit(f"{LIBGCC_VARIABLE} unset: the CPU32's libgcc, which make builds (cpu32_libgcc.py)")
     linker_script = work + "/rebuilt.ld"
     # every function's image copy is named, the harness's to call
     open(linker_script, "w").write(script(pieces, addresses))
@@ -236,6 +240,7 @@ def main() -> int:
             print(error.stderr, file=sys.stderr)
             return 1
         linked_objects = objects(elf)
+        foreign = not_cpu32(elf, REBUILT_SECTION)
     records, texts = tree_records(c_path)
     missing = sorted(records - linked_objects.keys())
     broken = tree_layout({name: linked_objects[name] for name in records & linked_objects.keys()}, texts)
@@ -254,9 +259,12 @@ def main() -> int:
             differing += 1
             first = next(i for i in range(size) if section.data[i] != original[i])
             print(f"  {section.name}: differs from +{first:x}")
-    rebuilt = next(s for s in linked if s.name == ".rebuilt")
+    rebuilt = next(s for s in linked if s.name == REBUILT_SECTION)
     print(f"linked pieces identical: {identical}, differing: {differing}; gcc's code: {len(rebuilt.data)} bytes")
-    return 1 if differing or missing or broken else 0
+    if foreign:
+        print(f"  gcc's code: {', '.join(sorted(set(foreign)))}")
+    print(f"gcc's instructions the CPU32 does not have: {len(foreign)}")
+    return 1 if differing or missing or broken or foreign else 0
 
 
 if __name__ == "__main__":

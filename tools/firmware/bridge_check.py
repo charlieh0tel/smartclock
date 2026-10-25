@@ -46,7 +46,6 @@ from dataclasses import dataclass
 from harness import (
     CALLEE_SAVED,
     CASES,
-    PRIMARY,
     SKIPPED,
     QSPI_LEVEL,
     QSPI_VECTOR,
@@ -63,7 +62,8 @@ from harness import (
     effects_differences,
     fresh_ram,
     gcc_slots,
-    installer_profile,
+    image_name,
+    image_profiles,
     overlay,
     ram_differences,
     rebuilt_machine,
@@ -121,8 +121,10 @@ class Given:
 # D2 the count.  The QSPI's end of queue is taken after qspi_start's
 # first read of qspi.running (0x20866), whose handler clears it and,
 # having copied the received words, qspi.copy_pending, which
-# qspi_transfer_raw waits on (0x20aa6).
-QSPI_RUNNING = 0x1032F3
+# qspi_transfer_raw waits on (0x20aa6).  qspi.running by image: the
+# Z3805A 3543B's, and the 58503A 3704's, which its qspi_start clears and
+# reads (0x1f624, 0x1f664).
+QSPI_RUNNING = {"z3805a-3543b": 0x1032F3, "58503a-3704": 0x1034C3}
 QSPI_WORDS = struct.pack(">3H", 0x123, 0x456, 0x789)
 QSPI_COUNT = 3
 QSPI_RAW_DEVICES = (2, 7, 12)
@@ -136,16 +138,18 @@ def qspi_raw_values(device: int):
     return values
 
 
-GIVEN = {
-    "qspi_transfer_raw": [
-        Given(
-            qspi_raw_values(device),
-            (Interrupt(QSPI_VECTOR, QSPI_LEVEL, QSPI_RUNNING, 1, ready=(SPSR,)),),
-            UNMASKED,
-        )
-        for device in QSPI_RAW_DEVICES
-    ],
-}
+def given_cases(image: str) -> dict[str, list[Given]]:
+    """The bindings' given cases for an image, by binding."""
+    return {
+        "qspi_transfer_raw": [
+            Given(
+                qspi_raw_values(device),
+                (Interrupt(QSPI_VECTOR, QSPI_LEVEL, QSPI_RUNNING[image], 1, ready=(SPSR,)),),
+                UNMASKED,
+            )
+            for device in QSPI_RAW_DEVICES
+        ],
+    }
 
 
 @dataclass
@@ -240,11 +244,19 @@ def live_values() -> list[int]:
     return [LIVE_VALUE + LIVE_STRIDE * i for i in range(LIVE)]
 
 
-def check(m: Machine, types: Types, binding: Binding, function: int, address: int, live: int, kept_at: int):
+def check(
+    m: Machine,
+    types: Types,
+    binding: Binding,
+    function: int,
+    address: int,
+    live: int,
+    kept_at: int,
+    given: list[Given],
+):
     """Yields (description, outcome) for each case, the generated ones,
-    then the binding's GIVEN: outcome empty if the binding agrees with
-    its routine, else each thing that differs."""
-    given = GIVEN.get(binding.name, [])
+    then the binding's given_cases: outcome empty if the binding agrees
+    with its routine, else each thing that differs."""
     for case in range(CASES + len(given)):
         extra = given[case - CASES] if case >= CASES else None
         description = f"case {case}" if extra is None else f"given case {case - CASES}"
@@ -311,7 +323,8 @@ def main() -> int:
     image = open(image_path, "rb").read()
     types = Types(c)
     run, failed = 0, 0
-    for profile in (PRIMARY, installer_profile(image)):
+    given = given_cases(image_name(image_path))
+    for profile in image_profiles(image_path, image):
         machine = rebuilt_machine(image, linked, linked_symbols, profile)
         counts = {"agreeing": 0, "skipped": 0, "failed": 0}
         runnable = bindings(declared, conventions, profile.overlay)
@@ -324,6 +337,7 @@ def main() -> int:
                 linked_symbols[binding.name],
                 linked_symbols[LIVE_ARRAY],
                 linked_symbols[KEPT_ARRAY],
+                given.get(binding.name, []),
             )
             counts[report(binding.name, list(outcomes))] += 1
         label = f"{profile.overlay} " if profile.overlay else ""

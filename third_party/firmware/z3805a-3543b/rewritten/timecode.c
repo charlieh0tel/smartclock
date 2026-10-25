@@ -231,7 +231,10 @@ void timecode_update(void) {
     tcode_length = timecode_finish();
   } else if (tcode_format == TIMECODE_T2_TEST || tcode_format == TIMECODE_T2) {
     uint32_t next_date = get_clock_date();
-    time_of_day next = clock_time_of(get_clock_time());
+    /* Even, since gcc stores it as a long, misaligned at an odd address
+     * (MC68331UM, 4.4.4). */
+    time_of_day __attribute__((aligned(2))) next =
+        clock_time_of(get_clock_time());
 
     time_next_second(&next_date, &next);
     uint32_t year = next_date >> 16;

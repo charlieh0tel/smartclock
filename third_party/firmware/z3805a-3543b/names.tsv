@@ -241,6 +241,36 @@
 0x22d4a	function	debug_message	context	task_debug_message when with_task_name is set, else debug_write; callers push the flag with move.b	void debug_message(char *message, char with_task_name)
 0x1ef74	function	debug_write	context	writes through 0x1df12 while debug_enabled
 0x319a2	function	log_event	context	log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode started"...	int32_t log_event(log_event_code code)
+0x1c804	label	log_text_log_test_message	read	"Log test message %d", the format diag_log_send logs it (0x1bde6), the number its argument	char[20]
+0x2be8d	label	log_text_diag_entry	read	"diag entry %d", the format scpi_set_DIAGnostic_LOG_WRITe logs it (0x2b7b6)	char[14]
+0x31cf4	label	log_text_first_satellite_tracked_at	read	"First satellite tracked at %04d%02d%02d.%02d:%02d:%02d", the format log_first_satellite logs it (0x31baa); log_read knows the entry by this address	char[55]
+0x31d2b	label	log_text_log_cleared	read	"Log cleared", log_event's message for code 0 (its case at 0x319c4) and the one log_erase logs (0x315ce)	char[12]
+0x31d83	label	log_text_power_on	read	"Power on", log_event's message for code 1 (its case at 0x319c4)	char[9]
+0x31d8c	label	log_text_re_boot	read	"Re-boot", log_event's message for code 2 (its case at 0x319c4)	char[8]
+0x31d94	label	log_text_survey_mode_started	read	"Survey mode started", log_event's message for code 3 (its case at 0x319c4)	char[20]
+0x31da8	label	log_text_position_hold_mode_started	read	"Position hold mode started", log_event's message for code 4 (its case at 0x319c4)	char[27]
+0x31dc3	label	log_text_ext_lock_started	read	"EXT lock started", log_event's message for code 5 (its case at 0x319c4)	char[17]
+0x31dd4	label	log_text_gps_lock_started	read	"GPS lock started", log_event's message for code 6 (its case at 0x319c4)	char[17]
+0x31de5	label	log_text_holdover_started_manual	read	"Holdover started, manual", log_event's message for code 7 (its case at 0x319c4)	char[25]
+0x31dfe	label	log_text_holdover_started_not_tracking_gps	read	"Holdover started, not tracking GPS", log_event's message for code 12 (its case at 0x319c4)	char[35]
+0x31e21	label	log_text_holdover_started_gps_raim_alarm	read	"Holdover started, GPS RAIM alarm", log_event's message for code 13 (its case at 0x319c4)	char[33]
+0x31e42	label	log_text_holdover_started_gps_alarm	read	"Holdover started, GPS alarm", log_event's message for code 14 (its case at 0x319c4)	char[28]
+0x31e5e	label	log_text_holdover_started_gps	read	"Holdover started, GPS", log_event's message for code 10 (its case at 0x319c4)	char[22]
+0x31e74	label	log_text_holdover_started_invalid_gps_1pps	read	"Holdover started, invalid GPS 1PPS", log_event's message for code 11 (its case at 0x319c4)	char[35]
+0x31e97	label	log_text_holdover_started_ext	read	"Holdover started, EXT", log_event's message for code 8 (its case at 0x319c4)	char[22]
+0x31ead	label	log_text_holdover_started_invalid_ext_1pps	read	"Holdover started, invalid EXT 1PPS", log_event's message for code 9 (its case at 0x319c4)	char[35]
+0x31ed0	label	log_text_holdover_started_hw_error	read	"Holdover started, HW error", log_event's message for code 15 (its case at 0x319c4)	char[27]
+0x31eeb	label	log_text_holdover_started_ti_error	read	"Holdover started, TI error", log_event's message for code 16 (its case at 0x319c4)	char[27]
+0x31f06	label	log_text_holdover_started_ti_limit_exceeded	read	"Holdover started, TI limit exceeded", log_event's message for code 17 (its case at 0x319c4)	char[36]
+0x31f2a	label	log_text_holdover_started_temporary	read	"Holdover started, temporary", log_event's message for code 18 (its case at 0x319c4)	char[28]
+0x31f46	label	log_text_holdover_started_selecting_1pps	read	"Holdover started, selecting 1PPS", log_event's message for code 19 (its case at 0x319c4)	char[33]
+0x31f67	label	log_text_holdover_started	read	"Holdover started", log_event's message for code 20 (its case at 0x319c4)	char[17]
+0x31f78	label	log_text_output_specifications_exceeded	read	"Output specifications exceeded", log_event's message for code 21 (its case at 0x319c4)	char[31]
+0x31f97	label	log_text_hardware_failure	read	"Hardware failure", log_event's message for code 22 (its case at 0x319c4)	char[17]
+0x31fa8	label	log_text_self_test_failed	read	"Self-test failed", log_event's message for code 23 (its case at 0x319c4)	char[17]
+0x31fb9	label	log_text_eeprom_save_failed	read	"EEPROM save failed", log_event's message for code 24 (its case at 0x319c4)	char[19]
+0x31fcc	label	log_text_clk_do_out_of_event_buffers	read	"Clk_do: out of event buffers", log_event's message for code 25 (its case at 0x319c4)	char[29]
+0x31fe9	label	log_text_system_preset	read	"System preset", log_event's message for code 26 (its case at 0x319c4)	char[14]
 0x18334	function	debug_is_enabled	context	returns debug_enabled	char debug_is_enabled(void)
 0x29a18	function	return_byte	context	returns its argument; the LED and DOUGlas queries call it	char return_byte(char b)
 0x40756	function	fpga_write	context	writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port)	void fpga_write(uint8_t reg, uint8_t value)
@@ -1389,7 +1419,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x129d0	function	power_of_ten_float	context	10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing
 0x12bb4	function	system_init	context	the start-up's setup: status, NV settings restored, debug flags, the battery-backed RAM's checksum and the reset's cause
 0x12d6e	function	primary_start	context	the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the kernel with trap #6
-0x12db6	function	pps_interrupt	context	the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange	void pps_interrupt(void)
+0x12db6	function	pps_interrupt	context	the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange; it saves D0 to D2, D7 to A1, A5 and A6 (0x12db6), the scratch registers among them, since the internal 1PPS interrupt, primary_user_81, calls it having saved none (0x12e20)	void pps_interrupt(void)	convention=c; confidence=read; preserves=D0, D1, A0, A1
 0x12e6c	function	pps_interrupt_stop	context	stops the 1PPS interrupt, clearing its GPT enable and flag
 0x1321a	function	stack_measure	context	a task's supervisor and user stacks, each the used part of its size, for stack_usage_report	int stack_measure(void *task, uint32_t *usage)
 0x132da	function	stack_usage	context	measures a stack from A1, its bottom, to D0, its top: the bytes above the 0xabcd fill left at its bottom back in D0, its size in D1, a long long's high and low halves		convention=register; confidence=read; in=A1 uint16_t *bottom, D0 char *top; out=D0:D1 long long usage; preserves=D2, D3, D4, D5, D6, D7, A0, A2, A3, A4, A5, A6; family=stack

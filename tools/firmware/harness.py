@@ -34,6 +34,7 @@ the instructions either has alone (PLAN.md, "A rebuild that runs").
 """
 
 import bisect
+import os
 import re
 import struct
 import zlib
@@ -397,7 +398,8 @@ IO_FUNCTIONS = {
 # many as the transfer's width (MC68331UM 6.3.2.2), which is 8 bits, or
 # SPCR0's BITS, 8 to 16, where the entry's command byte sets BITSE
 # (6.3.5.1, Table 6-3; D.4.10, D.4.16), as qspi_queue_setup sets each
-# up; so many transfers a device (QSPI_WIDTHS), for the FPGA's block
+# up; so many transfers a device (QSPI_WIDTHS, the Z3805A's; an image's
+# profile gives its own, Profile.qspi_widths), for the FPGA's block
 # D2's count of 16-bit ones, up to the queue's 16 entries, and for its
 # readback one of D2's count of bits, 8 to 16; none for a device it
 # does not know.  A write is recorded by its transfers, each its width's
@@ -421,6 +423,10 @@ QSPI_WIDTHS = {
     0xA: (16,),  # QSPI_FPGA_WORD
     0xB: (8,),  # QSPI_FPGA_BYTE
 }
+# The 58503A 3704's: the Z3805A's but for minor device 0, the front
+# panel's, one 8-bit transfer (qspi_queue_setup, 0x1f3fc: one entry,
+# BITSE, SPCR0 0xa302's 8 BITS), where the Z3805A's sends three of 12.
+QSPI_WIDTHS_58503A_3704 = {**QSPI_WIDTHS, 0: (8,)}
 QSPI_FPGA_BLOCK = 6
 QSPI_FPGA_READBACK = 0xC
 QSPI_QUEUE_ENTRIES = 16
@@ -428,22 +434,23 @@ QSPI_ENTRY = struct.Struct(">H")
 BITS_PER_BYTE = 8
 
 
-def qspi_widths(minor: int, count: int) -> tuple[int, ...]:
+def qspi_widths(widths: dict[int, tuple[int, ...]], minor: int, count: int) -> tuple[int, ...]:
     """The width in bits of each transfer a QSPI write to a minor device
-    of a count makes, in order."""
+    of a count makes, in order, by an image's widths (QSPI_WIDTHS)."""
     count &= WIDTHS[".w"]
     if minor == QSPI_FPGA_BLOCK:
         return (QSPI_WIDEST,) * min(count, QSPI_QUEUE_ENTRIES)
     if minor == QSPI_FPGA_READBACK:
         return (min(max(count, QSPI_NARROWEST), QSPI_WIDEST),)
-    return QSPI_WIDTHS.get(minor, ())
+    return widths.get(minor, ())
 
 
-def qspi_write_data(uc: Uc, minor: int, count: int, buffer: int) -> bytes:
+def qspi_write_data(uc: Uc, widths: dict[int, tuple[int, ...]], minor: int, count: int, buffer: int) -> bytes:
     """A QSPI write's transfers from its buffer, each the low bits of its
-    word its width sends, in the fewest bytes that hold them."""
+    word its width sends, in the fewest bytes that hold them, by an
+    image's widths (QSPI_WIDTHS)."""
     data = b""
-    for index, width in enumerate(qspi_widths(minor, count)):
+    for index, width in enumerate(qspi_widths(widths, minor, count)):
         (word,) = QSPI_ENTRY.unpack(uc.mem_read(buffer + QSPI_ENTRY.size * index, QSPI_ENTRY.size))
         data += (word & (1 << width) - 1).to_bytes(-(-width // BITS_PER_BYTE), "big")
     return data
@@ -528,10 +535,11 @@ MESSAGE_SIZE = len(MESSAGE)
 # source 0 and values[0] 7, in its range of 0 to 256 ("The pllc task's
 # SCPI requests" and "Numeric SCPI parameters").
 SPOO_EXCHANGE = 0x1032F8
+SPOOLED_PRIORITY = 0x19
 PLLC_EXCHANGE = 0x103804
 SAMPLE_INTEGER = 0x334DE
 RECEIVED = {
-    SPOO_EXCHANGE: struct.pack(">5I", 0, 0x29FCE, 0x19, 0, 0),
+    SPOO_EXCHANGE: struct.pack(">5I", 0, 0x29FCE, SPOOLED_PRIORITY, 0, 0),
     PLLC_EXCHANGE: struct.pack(">IIBBBBII", 0, SAMPLE_INTEGER, 0, 0, 0, 0, 7, 0),
 }
 FIRST_EXCHANGE_ID = KERNEL_RESULT + 1
@@ -1115,6 +1123,9 @@ ROUTINES_SIZE = 0x1000
 ROUTINE_SPACING = 0x20
 ROUTINE_TEXT = ROUTINES + ROUTINES_SIZE // 2
 ROUTINE_RESULT = KERNEL_RESULT
+# What a routine's call records for an argument that points into the
+# stack, in place of its value.
+STACK_ARGUMENT = b"(the stack)"
 VSPRINTF = 0x608FE
 # The routines' code: an rts, and printf's: pea (8,sp), the arguments
 # after the format; move.l (8,sp),-(sp), the format; pea ROUTINE_TEXT;
@@ -1405,10 +1416,17 @@ class Profile:
     VSPRINTF; buffers its arguments' buffers, as (start, bytes), in RAM
     or apart from it; status_object where its status set-up keeps the
     status model, as STATUS_OBJECT; objects whether its parameters
-    are given the primary's other objects, VARIABLES to
-    EXCHANGE_PARAMETERS and an SCPI handler's; and scpi the SCPI
-    parser's objects its parameters are given, its own tree's, as
-    PRIMARY_SCPI and INSTALLER_SCPI."""
+    are given the primary's other objects, variables, the descriptor
+    whose steps scpi_step gives, EXCHANGE_PARAMETERS and an SCPI
+    handler's, as VARIABLES and SAMPLE_INTEGER are the primary's;
+    scpi the SCPI parser's objects its parameters are given, its own
+    tree's, as PRIMARY_SCPI and INSTALLER_SCPI; console_echo the
+    console port's echo cell and the routine that echoes nothing, as
+    CONSOLE_ECHO and ECHO_NONE, None for a profile with no console
+    sessions; qspi_widths its QSPI devices' transfers, as QSPI_WIDTHS;
+    and bounded the types whose parameters are given a value below a
+    bound, by the type's name, the case's modulo the bound, so that an
+    index into a table gcc's C defines stays inside it."""
 
     overlay: str | None
     ram: bytes
@@ -1428,6 +1446,11 @@ class Profile:
     status_object: int
     objects: bool
     scpi: ScpiObjects
+    variables: dict[str, int]
+    scpi_step: int | None
+    console_echo: tuple[int, int] | None
+    qspi_widths: dict[int, tuple[int, ...]]
+    bounded: dict[str, int]
 
     def exchange_ids(self) -> dict[int, int]:
         """A distinct id for each cell of received, as its creates leave one."""
@@ -1461,6 +1484,11 @@ PRIMARY = Profile(
     status_object=STATUS_OBJECT,
     objects=True,
     scpi=PRIMARY_SCPI,
+    variables=VARIABLES,
+    scpi_step=SAMPLE_INTEGER,
+    console_echo=(CONSOLE_ECHO, ECHO_NONE),
+    qspi_widths=QSPI_WIDTHS,
+    bounded={},
 )
 # The installer (docs/firmware/restart.md, "Forced installer entry with
 # an unusable primary"): the entry at 0xa58 unpacks its records into RAM
@@ -1492,7 +1520,43 @@ INSTALLER_STATUS_OBJECT = 0x10AD06
 INSTALLER_BUFFERS = 0x900000
 
 
-def installer_profile(image: bytes) -> Profile:
+@dataclass(frozen=True)
+class InstallerAddresses:
+    """Where an image's installer keeps what its profile starts from, as
+    the Z3805A 3543B's are above: kernel_tables to initializers,
+    caller_name, vsprintf, status_object and scpi as the Profile's; and
+    the cell of its spool's exchange and the SCPI task's creator the
+    spool receives from it."""
+
+    kernel_tables: tuple[tuple[int, int, int], ...]
+    psos_config: int
+    kernel_init: tuple[tuple[int, int], ...]
+    kernel_create: tuple[int, int]
+    initializers: tuple[int, ...]
+    spoo_exchange: int
+    scpi_task_create: int
+    caller_name: int
+    vsprintf: int
+    status_object: int
+    scpi: ScpiObjects
+
+
+INSTALLER_ADDRESSES = InstallerAddresses(
+    kernel_tables=((0x1084DA, INSTALLER_PSOS_CONFIG, 0x62), (0x108578, 0x10AB60, 0x24)),
+    psos_config=INSTALLER_PSOS_CONFIG,
+    kernel_init=((0x1026DE, 0x102840), (0x102862, 0x102870)),
+    kernel_create=(0x101D84, 0x101DE4),
+    initializers=(0x107A00,),
+    spoo_exchange=INSTALLER_SPOO_EXCHANGE,
+    scpi_task_create=0x107886,
+    caller_name=0x104088,
+    vsprintf=0x10AAA6,
+    status_object=INSTALLER_STATUS_OBJECT,
+    scpi=INSTALLER_SCPI,
+)
+
+
+def installer_profile(image: bytes, addresses: InstallerAddresses = INSTALLER_ADDRESSES) -> Profile:
     """The installer's profile, its RAM as the boot code leaves it."""
     ram = bytearray(image[ROM : ROM + VECTOR_TABLE_SIZE].ljust(RAM_SIZE, b"\0"))
     records = installer_records(image)
@@ -1505,21 +1569,130 @@ def installer_profile(image: bytes) -> Profile:
         ram=bytes(ram),
         code=(start, end - start),
         vectors=RAM,
-        kernel_tables=((0x1084DA, INSTALLER_PSOS_CONFIG, 0x62), (0x108578, 0x10AB60, 0x24)),
-        psos_config=INSTALLER_PSOS_CONFIG,
-        kernel_init=((0x1026DE, 0x102840), (0x102862, 0x102870)),
-        kernel_create=(0x101D84, 0x101DE4),
+        kernel_tables=addresses.kernel_tables,
+        psos_config=addresses.psos_config,
+        kernel_init=addresses.kernel_init,
+        kernel_create=addresses.kernel_create,
         root_exchanges=(),
-        initializers=(0x107A00,),
-        received={INSTALLER_SPOO_EXCHANGE: struct.pack(">5I", 0, 0x107886, 0x19, 0, 0)},
+        initializers=addresses.initializers,
+        received={
+            addresses.spoo_exchange: struct.pack(">5I", 0, addresses.scpi_task_create, SPOOLED_PRIORITY, 0, 0)
+        },
         string_devices=frozenset({0}),
-        caller_name=0x104088,
-        vsprintf=0x10AAA6,
+        caller_name=addresses.caller_name,
+        vsprintf=addresses.vsprintf,
         buffers=(INSTALLER_BUFFERS, PRIMARY.buffers[1]),
-        status_object=INSTALLER_STATUS_OBJECT,
+        status_object=addresses.status_object,
         objects=False,
-        scpi=INSTALLER_SCPI,
+        scpi=addresses.scpi,
+        variables={},
+        scpi_step=None,
+        console_echo=None,
+        qspi_widths=QSPI_WIDTHS,
+        bounded={},
     )
+
+
+# The 58503A 3704's profiles (docs/firmware/58503a-3704.md, "The
+# function check"), each address read from that image's own code, as
+# the Z3805A's above are from its.  The primary's: psos_config_init
+# (0x53972) copies the configuration from 0x53f6c to 0x10294c, and an
+# I/O table of three devices, not four, from 0x54420 to 0x1028e0: DUART
+# channel B, the QSPI and the console's string device, whose writes are
+# both drtb_write's (0x1dbf0), and no SCI.  kernel_init and
+# kernel_create_x are the Z3805A's bytes, 0x5a higher (0x15d32,
+# 0x153d8).  root_task (0x1321e) creates the same three exchanges,
+# passing "gpsx" from 0x1340a, and calls status_init (0x2f0d8), which
+# builds status_object (0x1031d6); scpi_task_start sends spoo_exchange
+# (0x1034c8) scpi_task_create (0x294f8); vsprintf is at 0x64b30;
+# scpi_console_port (0x28db4) returns 0x29090; the trees' root lists
+# are scpi_list_main (0x55eae) and scpi_list_common (0x55430);
+# aging_curve is at 0x1022ea; and drtb_gets (0x1d636) echoes through
+# the cell at 0x103462, duartb's +0x50 as in the Z3805A, which
+# duartb_echo_none (0x1d3d0) makes echo nothing; its QSPI's minor device 0
+# is one 8-bit transfer (QSPI_WIDTHS_58503A_3704).  It has no :SAMPle:
+# pllc_exchange (0x1039d8) gives the request of NUMERIC_DESCRIPTOR_58503A,
+# a numeric descriptor nv_save's table alone names (0x32d72), with
+# :SAMPle:INTeger's shape (no NV register, no GPS request,
+# scpi_param_hook_nothing done, one integer value), 59 to 61, values[0]
+# 60, whose steps a step parameter is given (load_long_unit_step,
+# 0x32e32).  status_screen_snapshot is at 0x1016ae (status_screen_print,
+# 0x4b6ec).  An ADC channel is 0 to 7, the entries of hmon_channels
+# (0x2238a), which the C defines (docs/firmware/58503a-3704.md, "After
+# the types wave"): the image's routines that index it by a channel
+# unchecked read past it for others, where gcc's read other data.
+PLLC_EXCHANGE_58503A = 0x1039D8
+NUMERIC_DESCRIPTOR_58503A = 0x33DD2
+PRIMARY_58503A_3704 = Profile(
+    overlay=None,
+    ram=bytes(RAM_SIZE),
+    code=None,
+    vectors=VECTORS,
+    kernel_tables=((0x53F6C, 0x10294C, 0x62), (0x54420, 0x1028E0, 0x6C)),
+    psos_config=0x10294C,
+    kernel_init=((0x15D32, 0x15E94), (0x15EB6, 0x15EC4)),
+    kernel_create=(0x153D8, 0x15438),
+    root_exchanges=tuple(ROOT_EXCHANGES),
+    initializers=(0x2F0D8,),
+    received={
+        0x1034C8: struct.pack(">5I", 0, 0x294F8, SPOOLED_PRIORITY, 0, 0),
+        PLLC_EXCHANGE_58503A: struct.pack(">IIBBBBII", 0, NUMERIC_DESCRIPTOR_58503A, 0, 0, 0, 0, 60, 0),
+    },
+    string_devices=frozenset({0, 2}),
+    caller_name=0x1340A,
+    vsprintf=0x64B30,
+    buffers=(BUFFER, ALLOCATIONS - BUFFER),
+    status_object=0x1031D6,
+    objects=True,
+    scpi=ScpiObjects(0x29090, 0x55EAE, 0x55430, tuple(KEYWORDS), SAMPLE_CALL),
+    variables={"aging_curve_state *": 0x1022EA, "status_snapshot_record *": 0x1016AE},
+    scpi_step=NUMERIC_DESCRIPTOR_58503A,
+    console_echo=(0x103462, 0x1D3D0),
+    qspi_widths=QSPI_WIDTHS_58503A_3704,
+    bounded={"adc_channel": 8},
+)
+# The installer's: installer_psos_config_init (installer::0x108496)
+# copies its configuration from 0x1085ba to 0x10ac2c and its I/O table
+# from 0x10861c to 0x10ac08; its kernel_init and kernel_create_x are the
+# Z3805A's bytes, 0x10 higher (0x1026ee, 0x101d94); installer_status_init
+# (0x107ad0) builds installer_status_object (0x10adc0); the spool's name
+# is at 0x103fda and its exchange's cell at 0x10af6e, and the root task
+# sends it installer_scpi_task_create (0x107a18); its vsprintf is at
+# 0x10ab4a, its console port's object at 0x107658 and its trees' root
+# lists at 0x1086aa and 0x10867c.
+INSTALLER_58503A_3704 = InstallerAddresses(
+    kernel_tables=((0x1085BA, 0x10AC2C, 0x62), (0x10861C, 0x10AC08, 0x24)),
+    psos_config=0x10AC2C,
+    kernel_init=((0x1026EE, 0x102850), (0x102872, 0x102880)),
+    kernel_create=(0x101D94, 0x101DF4),
+    initializers=(0x107AD0,),
+    spoo_exchange=0x10AF6E,
+    scpi_task_create=0x107A18,
+    caller_name=0x103FDA,
+    vsprintf=0x10AB4A,
+    status_object=0x10ADC0,
+    scpi=ScpiObjects(0x107658, 0x1086AA, 0x10867C, INSTALLER_KEYWORDS, INSTALLER_SAMPLE_CALL),
+)
+# Each image's profiles, its primary's and its installer's addresses, by
+# the image's name, its .bin's and its folder's.
+IMAGE_PROFILES = {
+    "z3805a-3543b": (PRIMARY, INSTALLER_ADDRESSES),
+    "58503a-3704": (PRIMARY_58503A_3704, INSTALLER_58503A_3704),
+}
+
+
+def image_name(image_path: str) -> str:
+    """An image's name, its .bin's without the suffix."""
+    return os.path.basename(image_path).removesuffix(".bin")
+
+
+def image_profiles(image_path: str, image: bytes) -> tuple[Profile, Profile]:
+    """The image's profiles, its primary's and its installer's."""
+    name = image_name(image_path)
+    if name not in IMAGE_PROFILES:
+        raise SystemExit(f"{name}: no profile in harness.IMAGE_PROFILES")
+    primary, installer = IMAGE_PROFILES[name]
+    return primary, installer_profile(image, installer)
 
 
 def overlay(convention: dict) -> str | None:
@@ -1840,6 +2013,11 @@ class RebuiltMachine(Machine):
                 contents = string(uc, value) if text else None
             except UcError:
                 contents = None
+            # a pointer into the stack, a local of the caller's, which
+            # each copy's frame puts where it does
+            # (oncore_filter_channels' encoder's out, 0x50aea)
+            if contents is None and length == POINTER_SIZE and STACK <= value < STACK_END:
+                contents = STACK_ARGUMENT
             arguments.append(self.as_image(value) if contents is None else contents)
         self.effects.append(RoutineCall(stub.position, tuple(arguments)))
         uc.reg_write(UC_M68K_REG_D0, ROUTINE_RESULT)
@@ -1969,6 +2147,8 @@ def argument(
     if kind == "float":
         return struct.pack(">f", real)
     size = types.size(kind)
+    if kind in m.profile.bounded:
+        return (case % m.profile.bounded[kind]).to_bytes(size, "big")
     if size == 1:
         return struct.pack(">b", CHARS[case % len(CHARS)])
     if size == 2:
@@ -2290,10 +2470,10 @@ def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int, targ
         text = target.keyword if name == HEADER_KEYWORD else scpi.keywords[case % len(scpi.keywords)]
         return m.buffer(KEYWORD_LENGTH.pack(len(text)) + text + b"\0")
     if m.profile.objects:
-        if kind in VARIABLES:
-            return VARIABLES[kind]
-        if kind == SCPI_STEP:
-            return pointer_at(m, SAMPLE_INTEGER + DESCRIPTOR_STEPS)
+        if kind in m.profile.variables:
+            return m.profile.variables[kind]
+        if kind == SCPI_STEP and m.profile.scpi_step is not None:
+            return pointer_at(m, m.profile.scpi_step + DESCRIPTOR_STEPS)
     if kind not in (STATUS_MODEL, STATUS_REGISTER, ERROR_QUEUE):
         return None
     status = pointer_at(m, m.profile.status_object)
@@ -2567,7 +2747,8 @@ def console_echo(m: RebuiltMachine, given: bytes, ended: bool) -> bytes:
     """What drtb_gets echoes through duartb.echo reading a line: each
     character it keeps, and CR and LF for the CR or LF that ends it
     (duart_gets, 0x1d7e4); nothing when the echo is duartb_echo_none."""
-    if m.as_image(pointer_at(m, CONSOLE_ECHO)) == ECHO_NONE:
+    cell, none = m.profile.console_echo
+    if m.as_image(pointer_at(m, cell)) == none:
         return b""
     return given + (LINE_END_ECHO if ended else b"")
 
@@ -2637,7 +2818,8 @@ def answer_kernel(m: RebuiltMachine, vector: int, sr: int) -> KernelCall | Conso
             size = MESSAGE_SIZE if length is None else uc.reg_read(REGISTERS[length])
             start = uc.reg_read(REGISTERS[pointer]) + (MESSAGE_OFFSET if length is None else 0)
             if service.qspi_transfers:
-                data = qspi_write_data(uc, uc.reg_read(UC_M68K_REG_D0) & QSPI_MINOR_MASK, size, start)
+                minor = uc.reg_read(UC_M68K_REG_D0) & QSPI_MINOR_MASK
+                data = qspi_write_data(uc, m.profile.qspi_widths, minor, size, start)
             elif size > LONGEST_BUFFER:
                 return out_of_reach
             else:

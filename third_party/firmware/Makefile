@@ -4,7 +4,8 @@
 #     make -C third_party/firmware TARGET [IMAGE=z3805a-3543b]
 #
 # A target of an image's runs for IMAGE, or without it for every image
-# folder present: IMAGE/, beside IMAGE.bin, which holds that image's
+# folder present (report-decompiled for the Z3805A's alone, below):
+# IMAGE/, beside IMAGE.bin, which holds that image's
 # work (PLAN.md, "Decided 2026-10-22, the firmware layout").  Needs an
 # m68k gcc and binutils, clang-format and uv; none is part of `make ci`,
 # and .github/workflows/firmware.yml runs the Z3805A's checks.
@@ -30,12 +31,22 @@ IMAGES = $(patsubst $(FIRMWARE)/%/names.tsv,%,$(wildcard $(FIRMWARE)/*/names.tsv
 # figures describe.
 DOCUMENTED_IMAGE = z3805a-3543b
 
-# The targets run for each image.
-IMAGE_TARGETS = check-types check-decompiled report-decompiled scpi-tree check-scpi-tree handlers \
-	check-magic-numbers magic-numbers
+# The image folders with an export, decompiled/IMAGE.c, and rewritten C:
+# the ones the export's and the SCPI tree's targets can run for.  A
+# folder only seeded so far (names, types) has neither.
+EXPORTED_IMAGES = $(foreach image,$(IMAGES),$(if $(wildcard $(FIRMWARE)/$(image)/decompiled/$(image).c),$(image)))
+
+# The targets run for each image: those that need only its names and
+# types, and those that need its export too; and the function check,
+# which without IMAGE runs for DOCUMENTED_IMAGE alone, the image the
+# documents' figures describe (another's: make
+# report-decompiled IMAGE=58503a-3704).
+NAMED_TARGETS = check-types handlers scpi-tree
+EXPORTED_TARGETS = check-decompiled check-scpi-tree check-magic-numbers magic-numbers
+IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS) report-decompiled
 # The rest, run once.
-TARGETS = format-c check-format-c check-module-figures module-figures check-pforth-words \
-	pforth-words check-report-figures report-figures check-unicorn \
+TARGETS = format-c check-format-c check-module-figures module-figures check-comment-addresses \
+	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects
 
 # Where an image's checks keep what they make.
@@ -71,6 +82,19 @@ check-module-figures:
 module-figures:
 	python3 -I $(ROOT)/tools/firmware/module_figures.py --image $(DOCUMENTED_IMAGE) --write
 
+# The image whose hand-written C was copied from BASE_IMAGE's, the
+# Z3805A's (docs/firmware/58503a-3704.md).
+BASE_IMAGE = z3805a-3543b
+PORTED_IMAGE = 58503a-3704
+
+# Fail if an address PORTED_IMAGE's hand-written C cites in a comment is
+# one BASE_IMAGE's C, which it was copied from, cites too and is not
+# PORTED_IMAGE's own: not in the function the comment is in or comes
+# before, nor in a function or label the comment names, nor holding the
+# same bytes or label in both images (tools/firmware/comment_addresses.py).
+check-comment-addresses:
+	python3 -I $(ROOT)/tools/firmware/comment_addresses.py --image $(PORTED_IMAGE) --base $(BASE_IMAGE)
+
 # Fail if a table in docs/firmware/pforth/IMAGE-words.md -- each image's
 # pForth words, their headers, flags and stack effects -- is not what
 # the image gives; pforth-words rewrites them.
@@ -102,9 +126,24 @@ chip-selects:
 # arguments after the call, so that from a task in user mode an argument
 # is not pushed on one stack and popped from the other across
 # enter_supervisor or a move back of the status register.
-DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fwrapv -fno-toplevel-reorder -fno-builtin -ffunction-sections \
-	-fno-tree-loop-distribute-patterns -fno-omit-frame-pointer -fno-defer-pop -w \
+# -mstrict-align, which -mcpu=cpu32 implies, is named, since the CPU32
+# reads and writes words and longs at even addresses alone (MC68331UM,
+# 4.4.4).
+DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -mstrict-align -O1 -fwrapv -fno-toplevel-reorder -fno-builtin \
+	-ffunction-sections -fno-tree-loop-distribute-patterns -fno-omit-frame-pointer -fno-defer-pop -w \
 	-Wno-error=int-conversion -Wno-error=incompatible-pointer-types
+
+# The libgcc the rebuilt image links, the CPU32's with soft float,
+# built from GCC's source vendored in third_party/gcc/
+# (tools/firmware/cpu32_libgcc.py): the toolchain's own is a 68020's
+# with a 68881, whose float conversions and 64-bit division the CPU32
+# traps on.
+GCC_VENDORED = $(shell find $(ROOT)/third_party/gcc -type f)
+CPU32_LIBGCC = $(ROOT)/target/firmware/libgcc-cpu32/libgcc.a
+LINK_ENV = DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" CPU32_LIBGCC="$(CPU32_LIBGCC)"
+
+$(CPU32_LIBGCC): $(ROOT)/tools/firmware/cpu32_libgcc.py $(GCC_VENDORED)
+	M68K_CC="$(M68K_CC)" python3 -I $< $@
 
 # How many of the decompiled C functions, as gcc compiles them, agree
 # with the image's own in the emulator; fails if any function fails.
@@ -130,8 +169,14 @@ report-figures:
 
 ifeq ($(IMAGE),)
 
-$(IMAGE_TARGETS):
+$(NAMED_TARGETS):
 	@for image in $(IMAGES); do $(MAKE) --no-print-directory $@ IMAGE=$$image || exit 1; done
+
+$(EXPORTED_TARGETS):
+	@for image in $(EXPORTED_IMAGES); do $(MAKE) --no-print-directory $@ IMAGE=$$image || exit 1; done
+
+report-decompiled:
+	@$(MAKE) --no-print-directory $@ IMAGE=$(DOCUMENTED_IMAGE)
 
 else
 
@@ -153,34 +198,35 @@ check-types:
 # Fail if the decompiled C does not compile, its assembly is not the
 # image's own bytes, alone or linked, or a binding disagrees with its
 # routine; and first if the figures or Unicorn's recorded bugs drift.
-check-decompiled: check-module-figures check-unicorn
+check-decompiled: check-module-figures check-unicorn $(CPU32_LIBGCC)
 	mkdir -p $(WORK)
 	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o $(WORK)/decompiled.o $(DECOMPILED)
 	python3 $(ROOT)/tools/firmware/decompiled_check.py $(DECOMPILED) $(IMAGE_BIN) $(WORK)/decompiled.o
-	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q $(ROOT)/tools/firmware/rebuild_link.py \
-		$(DECOMPILED) $(IMAGE_BIN)
-	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q $(ROOT)/tools/firmware/bridge_check.py \
-		$(DECOMPILED) $(IMAGE_BIN)
+	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/rebuild_link.py $(DECOMPILED) $(IMAGE_BIN)
+	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/bridge_check.py $(DECOMPILED) $(IMAGE_BIN)
 
-report-decompiled:
+report-decompiled: $(CPU32_LIBGCC)
 	mkdir -p $(WORK)
-	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q $(ROOT)/tools/firmware/function_check.py \
+	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/function_check.py \
 		$(DECOMPILED) $(IMAGE_BIN) | tee $(WORK)/$(REPORT)
 	$(if $(filter $(DOCUMENTED_IMAGE),$(IMAGE)),$(CHECK_REPORT_FIGURES))
 
 # The image's SCPI tree as C data and as names-file rows, from the image
 # (docs/scpi/README.md, "As C"); cargo test fails while they are stale.
+# An image with no rewritten/ yet gets the rows alone.
 SCPI_TREE_C = $(IMAGE_FOLDER)/rewritten/scpi_tree_data.c
 SCPI_TREE_NAMES = $(IMAGE_FOLDER)/scpi-tree.tsv
 INSTALLER_SCPI_TREE_C = $(IMAGE_FOLDER)/rewritten/installer/installer_scpi_tree_data.c
 INSTALLER_SCPI_TREE_NAMES = $(IMAGE_FOLDER)/installer-scpi-tree.tsv
 SCPI_TREE_IMAGE = --names-file $(NAMES) $(IMAGE_BIN)
 scpi-tree:
+ifneq ($(wildcard $(IMAGE_FOLDER)/rewritten),)
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --c $(SCPI_TREE_IMAGE) \
 		| $(CLANG_FORMAT) --assume-filename=$(SCPI_TREE_C) > $(SCPI_TREE_C)
-	$(CARGO) run -q -p smartclock-cli -- dump-scpi --names $(SCPI_TREE_IMAGE) > $(SCPI_TREE_NAMES)
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --c --installer $(SCPI_TREE_IMAGE) \
 		| $(CLANG_FORMAT) --assume-filename=$(INSTALLER_SCPI_TREE_C) > $(INSTALLER_SCPI_TREE_C)
+endif
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --names $(SCPI_TREE_IMAGE) > $(SCPI_TREE_NAMES)
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --names --installer $(SCPI_TREE_IMAGE) \
 		> $(INSTALLER_SCPI_TREE_NAMES)
 

@@ -623,7 +623,7 @@ void diag_phase_off(int32_t setpoint) {
 
 /* The words log_send and print_clk_list (0x1bde2, 0x1bdf6). */
 void diag_log_send(uint32_t number) {
-  log_write("Log test message %d", number);
+  log_write(log_text_log_test_message, number);
 }
 
 void diag_print_clk_list(void) { klok_print_entries(); }

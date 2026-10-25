@@ -244,6 +244,16 @@ test("the range buttons stay where they are as the range changes", async ({ page
   const places = () =>
     page.locator("#ranges button").evaluateAll((bs) =>
       bs.map((b) => `${b.id || b.textContent}@${Math.round(b.getBoundingClientRect().x)}`));
+  // Measured once the page is drawn, and again once each new range is:
+  // the charts make the page taller than the window, and the scrollbar
+  // that brings shifts the right-aligned buttons by its width.  Returns
+  // when the read that drew it started, for the next wait to pass.
+  const drawn = async (since) =>
+    (await page.waitForFunction(
+      (t) => readAt > t && running === null && charts.length > 0 && readAt,
+      since,
+    )).jsonValue();
+  const first = await drawn(0);
   const live = await places();
   // One height and one top for every control, so their text lines up.
   const boxes = await page.locator("#ranges button, #ranges select, #ranges input").evaluateAll((es) =>
@@ -251,9 +261,11 @@ test("the range buttons stay where they are as the range changes", async ({ page
   expect(new Set(boxes).size, boxes.join(" ")).toBe(1);
   await page.locator("#range-back").click();
   await expect.poll(() => shown(page).last).toBeNull();
+  const back = await drawn(first);
   expect(await places()).toEqual(live);
   await page.locator("#range-forward").click();
   await expect.poll(() => shown(page).last).toBe("3600");
+  await drawn(back);
   expect(await places()).toEqual(live);
 });
 

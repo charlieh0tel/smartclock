@@ -74,6 +74,7 @@
 //! costs it `3 m` triples where the plain form loses three.
 
 pub mod confidence;
+pub mod startup;
 
 use std::collections::BTreeMap;
 use std::collections::VecDeque;
@@ -83,6 +84,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::adev::confidence::Bounds;
+use crate::adev::startup::Condition;
 
 /// One phase reading.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -609,6 +611,15 @@ pub struct Curve {
     pub present: usize,
     /// Places on the grid where a reading was expected and missing.
     pub holes: usize,
+    /// How many starts of locked operation the range held the start-up
+    /// of; see [`startup`].  Absent from a curve measured before it was
+    /// counted.
+    #[serde(default)]
+    pub startups: usize,
+    /// How much of the range was left out as the loop's start-up, in
+    /// seconds.
+    #[serde(default)]
+    pub startup: f64,
     /// The curve itself.
     pub points: Vec<Point>,
 }
@@ -687,6 +698,65 @@ impl Curve {
         Self::from_readings(&samples, &states, &fresh)
     }
 
+    /// As [`Curve::from_logged`], leaving out the loop's start-up and
+    /// every row before `from`.
+    ///
+    /// The rows before `from` are there to be looked back over: a start
+    /// up to [`startup::STARTUP`] before the range leaves out the
+    /// range's beginning, and is found only from the rows around it.
+    /// Each start-up's rows are dropped and the run cut either side, so
+    /// no second difference spans one.
+    pub fn after_startups<S: PartialEq>(
+        rows: impl IntoIterator<Item = (Logged<S>, Condition)>,
+        from: Timestamp,
+        holdover_limit: jiff::SignedDuration,
+    ) -> Self {
+        let rows: Vec<(Logged<S>, Condition)> = rows.into_iter().collect();
+        let starts = startup::starts(
+            rows.iter()
+                .map(|(row, condition)| (row.at, row.last, *condition)),
+            holdover_limit,
+        );
+        let spans = startup::spans(&starts);
+        let end = rows.iter().map(|(row, _)| row.last).max();
+        // How much of the spans falls in the range, folded from zero
+        // because an empty sum of floats is negative zero.
+        let excluded = spans.iter().fold(0.0, |total, &(start, until)| {
+            let (start, until) = (start.max(from), end.map_or(until, |end| until.min(end)));
+            total + until.duration_since(start).as_secs_f64().max(0.0)
+        });
+        let kept = rows.into_iter().filter_map(|(row, _)| {
+            if row.at < from
+                || spans
+                    .iter()
+                    .any(|&(start, until)| (start..until).contains(&row.at))
+            {
+                return None;
+            }
+            // How many spans ended before this row, so that rows either
+            // side of one differ in state and the run is cut there.
+            let after = spans.iter().filter(|&&(_, until)| until <= row.at).count();
+            Some(Logged {
+                at: row.at,
+                interval: row.interval,
+                state: (row.state, after),
+                polls: row.polls,
+                last: row.last,
+                widest: row.widest,
+            })
+        });
+        Self {
+            startups: starts
+                .iter()
+                .filter(|&&start| {
+                    start + startup::STARTUP > from && end.is_some_and(|end| start < end)
+                })
+                .count(),
+            startup: excluded,
+            ..Self::from_logged(kept)
+        }
+    }
+
     /// Measure a set of readings, splitting them where `discontinuous`
     /// says the phase either side is incomparable.
     ///
@@ -708,6 +778,8 @@ impl Curve {
             segments: run.segments(),
             present,
             holes,
+            startups: 0,
+            startup: 0.0,
             points: run.curve(),
         }
     }

@@ -18,6 +18,7 @@
 
 use std::path::Path;
 
+use jiff::Timestamp;
 use rusqlite::Connection;
 use rusqlite::OpenFlags;
 use rusqlite::OptionalExtension as _;
@@ -26,6 +27,11 @@ use serde::Serialize;
 use smartclock::adev::Curve;
 use smartclock::adev::Logged;
 use smartclock::adev::MAX_SAMPLES;
+use smartclock::adev::startup::Condition;
+use smartclock::adev::startup::FirstLock;
+use smartclock::adev::startup::Lock;
+use smartclock::adev::startup::STARTUP;
+use smartclock::adev::startup::holdover_limit;
 use smartclock::snapshot::Tier;
 use smartclock::task::Cadence;
 use smartclock::types::SmartClockMode;
@@ -49,6 +55,11 @@ use crate::timestamp::whole_seconds;
 /// once.  A longer range is measured over its newest rows and says so,
 /// rather than reading a year of the log into memory.
 pub const MAX_PHASE_ROWS: usize = 2 * MAX_SAMPLES;
+
+/// The powerup register's bit "date and time valid", set at the first
+/// lock after a power-up: `PowerupCondition::date_time_valid`
+/// (097-59551-02 5-39).
+const FIRST_LOCK_BIT: u32 = 2;
 
 /// The most series one request will bucket together.
 ///
@@ -561,13 +572,27 @@ impl Log {
     /// and the holdover flag are what the log records about that; a
     /// plain gap in the timestamps is caught by the estimator itself.
     ///
+    /// The loop's start-up is left out (`Curve::after_startups`), found
+    /// from the mode, the holdover flag and the powerup register's
+    /// first-lock bit, so rows up to [`STARTUP`] before `from` are read
+    /// as well, to find a start just before the range.
+    ///
     /// Also whether the range held more than `limit` changes, in which
     /// case the curve is of the newest that many.
     pub fn phase(&self, receiver: i64, from: i64, to: i64, limit: usize) -> Result<(Curve, bool)> {
         if from > to {
             return Err(Error::Request("the range ends before it starts".to_owned()));
         }
-        let (lower, upper) = (bound("?2"), bound("?3 + 1"));
+        let model: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT model FROM receiver WHERE id = ?1",
+                [receiver],
+                |row| row.get(0),
+            )
+            .optional()?
+            .flatten();
+        let (lower, upper) = (bound("?2 - ?5"), bound("?3 + 1"));
         let mut statement = self.conn.prepare(&format!(
             // `at` as stored, not in whole seconds: the sub-second part
             // is what decides which grid point a reading belongs to.
@@ -585,13 +610,20 @@ impl Log {
             // id after `at`, so two rows at one instant still have an
             // order.  Newest first, so the limit keeps the end of the
             // range.
+            //
+            // The first-lock bit, where read, as whether a poll of the
+            // run saw it clear and whether one saw it set; it changes
+            // seldom enough to ride along rather than start runs.  A
+            // run also starts at `from`, so the rows before it, read
+            // only to look back over, are runs of their own.
             "SELECT MIN(at), time_interval_s, mode, holdover, COUNT(*), MAX(at),
-                    {widest} FROM (
-                 SELECT at, time_interval_s, mode, holdover,
+                    {widest},
+                    COALESCE(MIN(first_lock) = 0, 0), COALESCE(MAX(first_lock) = 1, 0) FROM (
+                 SELECT at, time_interval_s, mode, holdover, first_lock,
                         CASE WHEN starts THEN 0 ELSE at - was_at END AS gap,
                         SUM(starts) OVER (ORDER BY at, id ROWS UNBOUNDED PRECEDING) AS run
                  FROM (
-                     SELECT at, id, was_at, time_interval_s, mode, holdover,
+                     SELECT at, id, was_at, time_interval_s, mode, holdover, first_lock,
                             -- IS NOT rather than <>, so a missing
                             -- interval counts as different from a
                             -- present one: a row without one still
@@ -600,12 +632,14 @@ impl Log {
                             was_mode IS NULL
                                 OR time_interval_s IS NOT was_interval
                                 OR mode <> was_mode
-                                OR holdover <> was_holdover AS starts
+                                OR holdover <> was_holdover
+                                OR (at >= {from} AND was_at < {from}) AS starts
                      FROM (
                          SELECT at, id, time_interval_s,
                                 LAG(at) OVER previous AS was_at,
                                 COALESCE(mode, 'unknown') AS mode,
                                 COALESCE(holdover_active, 0) AS holdover,
+                                (powerup_bits >> {FIRST_LOCK_BIT}) & 1 AS first_lock,
                                 LAG(time_interval_s) OVER previous AS was_interval,
                                 LAG(COALESCE(mode, 'unknown')) OVER previous AS was_mode,
                                 LAG(COALESCE(holdover_active, 0)) OVER previous AS was_holdover
@@ -619,43 +653,69 @@ impl Log {
              ORDER BY run DESC
              LIMIT ?4",
             widest = seconds("MAX(gap)"),
+            from = bound("?2"),
         ))?;
         // One more than the limit, to know whether there were more.
         let asked = i64::try_from(limit.saturating_add(1)).unwrap_or(i64::MAX);
-        let rows = statement.query_map(rusqlite::params![receiver, from, to, asked], |row| {
-            Ok((
-                row.get::<_, Stored>(0).ok(),
-                row.get::<_, Option<f64>>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, i64>(3)? != 0,
-                row.get::<_, i64>(4)?,
-                row.get::<_, Stored>(5).ok(),
-                row.get::<_, f64>(6)?,
-            ))
-        })?;
+        let rows = statement.query_map(
+            rusqlite::params![receiver, from, to, asked, STARTUP.as_secs()],
+            |row| {
+                Ok((
+                    row.get::<_, Stored>(0).ok(),
+                    row.get::<_, Option<f64>>(1)?,
+                    row.get::<_, String>(2)?,
+                    row.get::<_, i64>(3)? != 0,
+                    row.get::<_, i64>(4)?,
+                    row.get::<_, Stored>(5).ok(),
+                    row.get::<_, f64>(6)?,
+                    FirstLock {
+                        clear: row.get(7)?,
+                        set: row.get(8)?,
+                    },
+                ))
+            },
+        )?;
 
+        // The modes as the daemon writes them.
+        let locked = format!("{:?}", SmartClockMode::Locked);
+        let powering_up = format!("{:?}", SmartClockMode::PowerUp);
         // Rows without an interval are kept for their state; see
         // `Curve::from_logged`.
         let mut logged = Vec::new();
         for row in rows {
-            let (at, interval, mode, holdover, polls, last, widest) = row?;
+            let (at, interval, mode, holdover, polls, last, widest, first_lock) = row?;
             let (Some(Stored(at)), Some(Stored(last))) = (at, last) else {
                 continue;
             };
-            logged.push(Logged {
-                at,
-                interval,
-                state: (mode, holdover),
-                polls: usize::try_from(polls).unwrap_or(1).max(1),
-                last,
-                widest,
-            });
+            let lock = if mode == locked && !holdover {
+                Lock::Locked
+            } else if mode == powering_up {
+                Lock::PowerUp
+            } else {
+                Lock::Other
+            };
+            let condition = Condition { lock, first_lock };
+            logged.push((
+                Logged {
+                    at,
+                    interval,
+                    state: (mode, holdover),
+                    polls: usize::try_from(polls).unwrap_or(1).max(1),
+                    last,
+                    widest,
+                },
+                condition,
+            ));
         }
         let truncated = logged.len() > limit;
         logged.truncate(limit);
         logged.reverse();
 
-        Ok((Curve::from_logged(logged), truncated))
+        let from = Timestamp::from_second(from).map_err(|e| Error::Request(e.to_string()))?;
+        Ok((
+            Curve::after_startups(logged, from, holdover_limit(model.as_deref())),
+            truncated,
+        ))
     }
 
     /// The oldest and newest readings, in unix seconds, so a view can

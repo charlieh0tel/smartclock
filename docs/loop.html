@@ -195,6 +195,11 @@ th .sym,th.sym{text-transform:none;letter-spacing:0;font-size:.9375rem}
   <p>In the Z3805A and 58503A, holdover recovery returns to <code>startup_pll</code>. The constant starts again from 150 s after a holdover of more than 500 s (350 s in the 58503A 3704) or with the interval past 500 ns. Otherwise it keeps its value: τ, once the loop got there, so the hand-over follows the fifteen means.</p>
   <p class="note">Source: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md"><code>docs/firmware/loop.md</code></a>, which holds the addresses and routine identities behind each number. This page explains; that one is the evidence.</p>
 </section>
+
+<section>
+  <h2>How it is checked</h2>
+  <p>For the Z3805A and 58503A, tests check this page against the firmware itself. They read every constant from each ROM at its cited address. They run each ROM's own <code>startup_pll</code> and <code>pll_normal</code> in a CPU emulator on synthetic readings, and require the update law above to reproduce the firmware's state at every step, about 3000 steps per image. The poles, damping and step response here are recomputed from that law. A reversed sign, a missing ten-second mean or a missing integrator rescaling each fails the tests. The other models' rows are read by hand. Details: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#how-this-is-checked">How this is checked</a>.</p>
+</section>
 </main>
 
 <script>

@@ -701,7 +701,7 @@ async function colophon() {
     `© ${esc(about.copyright)}`,
     esc(about.license),
     `smartclock-web ${esc(about.version)}`,
-    link(about.repository, "source"),
+    link(about.repository, "github"),
     link(`${about.repository}/issues`, "issues"),
   ].join(" · ");
 }

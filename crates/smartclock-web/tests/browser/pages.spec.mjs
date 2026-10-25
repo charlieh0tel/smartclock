@@ -767,12 +767,12 @@ for (const p of PAGES) {
       await expect(page.locator("#unit")).toHaveValue(B);
     });
 
-    test("links to the source and the issues, under the copyright", async ({ page }) => {
+    test("links to github and the issues, under the copyright", async ({ page }) => {
       await open(page, twoUnits(), p.path);
       const colophon = page.locator("#colophon");
       await expect(colophon).toContainText("© 2026 Christopher Hoover");
       await expect(colophon).toContainText("GPL-3.0-or-later");
-      await expect(colophon.locator("a", { hasText: "source" }))
+      await expect(colophon.locator("a", { hasText: "github" }))
         .toHaveAttribute("href", "https://github.com/charlieh0tel/smartclock");
       await expect(colophon.locator("a", { hasText: "issues" }))
         .toHaveAttribute("href", "https://github.com/charlieh0tel/smartclock/issues");

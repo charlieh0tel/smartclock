@@ -185,25 +185,28 @@ $(CPU32_LIBGCC): $(ROOT)/tools/firmware/cpu32_libgcc.py $(GCC_VENDORED)
 
 # How many of the decompiled C functions, as gcc compiles them, agree
 # with the image's own in the emulator; fails if any function fails.
-# The report is saved in the image's work folder, and check-report-figures
-# reads DOCUMENTED_IMAGE's, which report-decompiled checks right after
-# writing it.
+# The report is saved in the image's work folder, and report-decompiled
+# checks the figures the documents quote from it right after writing it.
 REPORT = report-decompiled.txt
-REPORT_DECOMPILED = $(call work,$(DOCUMENTED_IMAGE))/$(REPORT)
-CHECK_REPORT_FIGURES = python3 -I $(ROOT)/tools/firmware/report_figures.py $(REPORT_DECOMPILED)
+# The images whose function check the documents quote, each one's
+# sentences report_figures.py's CHECKS.
+REPORTED_IMAGES = z3805a-3543b 58503a-3704
+report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1) \
+	$(call work,$(1))/$(REPORT)
 
-# Fail if the documents' figures from the function check --
-# docs/firmware/README.md's functions run in user mode alone and in both
-# modes and console sessions agreeing, docs/firmware/rewrite.md's and
-# README.md's counts of functions agreeing, known, skipped and failed
-# and the agreeing ones' cases -- are not what the last make
-# report-decompiled saved, or if any function failed; report-figures
-# rewrites them.
+# Fail if the documents' figures from each reported image's function
+# check -- its functions agreeing, known, skipped and failed, those run
+# in user mode alone and in both modes, its console sessions agreeing
+# and the agreeing functions' cases, as docs/firmware/README.md,
+# docs/firmware/rewrite.md, docs/firmware/58503a-3704.md, README.md and
+# PLAN.md quote them -- are not what the last make report-decompiled
+# saved, or if any function failed; report-figures rewrites them.
 check-report-figures:
-	$(CHECK_REPORT_FIGURES)
+	status=0; $(foreach image,$(REPORTED_IMAGES),$(call report_figures,$(image)) || status=1;) \
+	exit $$status
 
 report-figures:
-	python3 -I $(ROOT)/tools/firmware/report_figures.py $(REPORT_DECOMPILED) --write
+	$(foreach image,$(REPORTED_IMAGES),$(call report_figures,$(image)) --write &&) true
 
 ifeq ($(IMAGE),)
 
@@ -244,7 +247,7 @@ report-decompiled: $(CPU32_LIBGCC)
 	mkdir -p $(WORK)
 	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/function_check.py \
 		$(DECOMPILED) $(IMAGE_BIN) | tee $(WORK)/$(REPORT)
-	$(if $(filter $(DOCUMENTED_IMAGE),$(IMAGE)),$(CHECK_REPORT_FIGURES))
+	$(if $(filter $(IMAGE),$(REPORTED_IMAGES)),$(call report_figures,$(IMAGE)))
 
 # The image's SCPI tree as C data and as names-file rows, from the image
 # (docs/scpi/README.md, "As C"); cargo test fails while they are stale.

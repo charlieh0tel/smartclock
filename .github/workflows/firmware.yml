@@ -88,7 +88,7 @@ jobs:
       - run: make check-decompiled IMAGE=58503a-3704
         if: ${{ !cancelled() }}
       # Without IMAGE, for every image: fails on a failed function, and
-      # checks the documents' figures from the function check against
-      # the Z3805A's report.
+      # checks the documents' figures from each image's function check
+      # against its report.
       - run: make report-decompiled IMAGE=
         if: ${{ !cancelled() }}

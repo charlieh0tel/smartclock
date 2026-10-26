@@ -1,3 +1,12 @@
+smartclockmon (1.8.2-1) unstable; urgency=low
+
+  * The stability curves leave out the loop's start-up: 3 h from the
+    first lock after each power-up, or after a holdover too long for the
+    loop to keep its time constant.  The stability page and the terminal
+    monitor say how much was left out.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sun, 25 Oct 2026 17:25:01 -0700
+
 smartclockmon (1.8.1-1) unstable; urgency=low
 
   * The kiosk's mode word is smaller, and stays on one line.

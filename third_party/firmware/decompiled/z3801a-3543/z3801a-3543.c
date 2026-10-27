@@ -4102,6 +4102,7 @@ extern uint16_t forth_code_if[5]; /* 000190fc */
 extern uint16_t forth_code_else[4]; /* 00019106 */
 extern uint16_t forth_code_while[5]; /* 0001910e */
 extern uint16_t forth_code_repeat[4]; /* 00019118 */
+extern uint16_t forth_code_illegal; /* 00019120 */
 extern char forth_do_tag[16]; /* 00019135 */
 extern char forth_if_tag[7]; /* 000191e6 */
 extern char forth_begin_tag[10]; /* 0001925e */
@@ -4451,6 +4452,8 @@ extern status_condition status_conditions[79]; /* 0002e73e */
 extern char error_message_none[1]; /* 0002f710 */
 extern uint8_t sample_values_defaults[148]; /* 0002f7b0 */
 extern uint8_t retained_block_defaults[25]; /* 0002f846 */
+extern nv_settings_fields nv_settings_defaults; /* 0002f860 */
+extern duartb_settings_record duartb_settings_defaults; /* 0002f92a */
 extern klok_entry lifetime_event_template; /* 0002fbe2 */
 extern uint32_t low_bit_masks[33]; /* 0003033a */
 extern char log_text_first_satellite_tracked_at[33]; /* 00030b2c */
@@ -7207,8 +7210,6 @@ extern uint32_t installer_powers_of_ten_64[36]; /* installer::00109bee */
 
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
-extern uint8_t DAT_0002f860; /* 0002f860 */
-extern uint8_t DAT_0002f92a; /* 0002f92a */
 extern uint8_t DAT_0004cf7e; /* 0004cf7e */
 extern uint8_t DAT_0005128b; /* 0005128b */
 extern uint8_t DAT_00051290; /* 00051290 */
@@ -7362,8 +7363,6 @@ extern word switchD_0004f0a8_index_zero; /* 0004f0b0 */
 extern word switchD_0004fc46_index_zero; /* 0004fc4e */
 extern word switchD_0005ecda_index_zero; /* 0005ece2 */
 
-__asm__(".set DAT_0002f860, 0x0002f860");
-__asm__(".set DAT_0002f92a, 0x0002f92a");
 __asm__(".set DAT_0004cf7e, 0x0004cf7e");
 __asm__(".set DAT_0005128b, 0x0005128b");
 __asm__(".set DAT_00051290, 0x00051290");
@@ -7472,6 +7471,7 @@ __asm__(".set duartb, 0x001030be");
 __asm__(".set duartb_applied, 0x00102e9e");
 __asm__(".set duartb_ring, 0x00102fbc");
 __asm__(".set duartb_settings, 0x00101f52");
+__asm__(".set duartb_settings_defaults, 0x0002f92a");
 __asm__(".set early_status_happenings, 0x00102e96");
 __asm__(".set early_status_reports, 0x00102e8e");
 __asm__(".set eeprom_calibration_block, 0x00400080");
@@ -7514,6 +7514,7 @@ __asm__(".set forth_code_do, 0x000190a4");
 __asm__(".set forth_code_does, 0x00019ad6");
 __asm__(".set forth_code_else, 0x00019106");
 __asm__(".set forth_code_if, 0x000190fc");
+__asm__(".set forth_code_illegal, 0x00019120");
 __asm__(".set forth_code_loop, 0x000190be");
 __asm__(".set forth_code_loop_exit, 0x000190d2");
 __asm__(".set forth_code_plus_loop, 0x000190d8");
@@ -8165,6 +8166,7 @@ __asm__(".set nv_param_leap_pending, 0x00032b42");
 __asm__(".set nv_records, 0x004000c0");
 __asm__(".set nv_setting_params, 0x00031bb6");
 __asm__(".set nv_settings, 0x00101e88");
+__asm__(".set nv_settings_defaults, 0x0002f860");
 __asm__(".set nv_slot, 0x00101f5c");
 __asm__(".set object_name_text, 0x00102684");
 __asm__(".set offset_step, 0x00100bce");
@@ -24669,8 +24671,7 @@ __asm__(
 	"	.byte 0x60,0x00,0x00,0x18,0x00,0x00,0x00,0x00\n"
 	"	.byte 0x4a,0x9e,0x67,0x00,0x00,0x0e,0x00,0x00,0x00,0x00\n"
 	"	.byte 0x60,0x00,0x00,0x06,0x00,0x00,0x00,0x00\n"
-	"	.byte 0x4a\n"
-	"	.byte 0xfc\n"
+	"	.byte 0x4a,0xfc\n"
 	"	.byte 0x45,0x52,0x52,0x4f,0x52,0x3a,0x20,0x4d,0x69,0x73,0x6d,0x61,0x74,0x63,0x68,0x65,0x64,0x20,0x00\n"
 	"	.byte 0x22,0x64,0x6f,0x22,0x20,0x6f,0x72,0x20,0x22,0x3f,0x64,0x6f,0x22,0x0d,0x0a,0x00\n"
 	"	.byte 0xff\n"

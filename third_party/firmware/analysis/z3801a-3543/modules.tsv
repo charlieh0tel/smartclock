@@ -1319,3 +1319,11 @@
 0x1be10	diag_leapsec	applications/console	pForth diagnostic word
 0x1be2c	diag_es_ascii	applications/console	pForth diagnostic word
 0x1be44	diag_fp_u	applications/console	pForth diagnostic word
+#
+# The Z3801A's own functions, which no Z3805A row re-keys: rows added
+# by hand, by module as above.
+0x2c85a	scpi_set_LED_ALARm_USER	applications/scpi/handlers/led	row added by hand for the Z3801A 3543
+0x2c88a	scpi_query_LED_ALARm_USER	applications/scpi/handlers/led	row added by hand for the Z3801A 3543
+0x2f060	scpi_set_SYSTem_COMMunicate_SER1_FDUPlex	applications/scpi/handlers/system	row added by hand for the Z3801A 3543
+0x2f0e4	scpi_set_SYSTem_COMMunicate_SER1_PRESet	applications/scpi/handlers/system	row added by hand for the Z3801A 3543
+0x2f2ea	scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE	applications/scpi/handlers/system	row added by hand for the Z3801A 3543

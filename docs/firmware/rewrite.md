@@ -24,7 +24,7 @@ this says what each is and where.
 ## Scope
 
 - Hand-written: 1318 of the primary's functions and 236 of the
-  installer's (`third_party/firmware/z3805a-3543b.bin`), a file to a
+  installer's (`third_party/firmware/images/z3805a-3543b.bin`), a file to a
   module.  Kept as the image's instructions, reassembled and checked
   byte for byte: 474 routines -- the pSOS kernel's, the pForth
   kernel's 183, the exception entries, the soft-float library's
@@ -50,7 +50,7 @@ rebuild.
 ## The pipeline
 
 Each image's work lives in
-[`third_party/firmware/z3805a-3543b/`](../../third_party/firmware/z3805a-3543b/),
+[`third_party/firmware/analysis/z3805a-3543b/`](../../third_party/firmware/analysis/z3805a-3543b/),
 beside the image.
 
 | File | What it is |
@@ -153,7 +153,7 @@ out the image's arguments from it.
 ## Shared C
 
 C that more than one image runs lives once, in
-`third_party/firmware/common/`; everything else stays in the image's
+`third_party/firmware/rewritten/common/`; everything else stays in the image's
 own `rewritten/`.  A function moves there only by these rules, so that
 nothing is taken for common that is not:
 
@@ -184,7 +184,7 @@ nothing is taken for common that is not:
 
 How the build uses it.  `common/` is laid out as `rewritten/` is
 (`bindings/`, `installer/`), and an image that shares it gives the
-exporter two folders, `rewritten=third_party/firmware/common` before
+exporter two folders, `rewritten=third_party/firmware/rewritten/common` before
 its own: the export includes `common/`'s headers, then its own, and
 `common/`'s files, then its own, so each image compiles the shared C
 in its own translation unit, against its own export's types,
@@ -394,7 +394,7 @@ The checks need no Ghidra: the export is checked in.
     make -C third_party/firmware check-format-c
 
 Each is also a top-level target (`make check-decompiled`).  Without
-`IMAGE` each runs for every image folder it can: `report-decompiled`
+`IMAGE` each runs for every image it can: `report-decompiled`
 for the 58503A 3704's too, its function check held to the same
 standard ([`58503a-3704.md`](58503a-3704.md), "The function check").  Results
 land in `target/firmware/z3805a-3543b/` (`decompiled.o`,
@@ -407,32 +407,32 @@ import the bare image and run every script in order, in one session,
 after auto-analysis, the program saved at the end:
 
     "$GHIDRA"/support/analyzeHeadless "$PROJECT" smartclock \
-      -import third_party/firmware/z3805a-3543b.bin \
+      -import third_party/firmware/images/z3805a-3543b.bin \
       -loader BinaryLoader -loader-baseAddr 0 -processor 68000:BE:32:CPU32 \
       -scriptPath tools/ghidra \
       -postScript SmartClockSetup.java \
       -postScript SmartClockInstaller.java 0xbbc 0x10135c \
       -postScript SmartClockSetup.java \
-        types=third_party/firmware/z3805a-3543b/smartclock.h \
+        types=third_party/firmware/rewritten/z3805a-3543b/types/smartclock.h \
         types=third_party/firmware/include/mc68331.h \
         types=third_party/firmware/include/mc68681.h \
-        names=third_party/firmware/z3805a-3543b/names.tsv \
-        names=third_party/firmware/z3805a-3543b/scpi-tree.tsv \
-        names=third_party/firmware/z3805a-3543b/installer-scpi-tree.tsv \
-        scpi=third_party/firmware/z3805a-3543b/handlers.txt \
+        names=third_party/firmware/analysis/z3805a-3543b/names.tsv \
+        names=third_party/firmware/analysis/z3805a-3543b/scpi-tree.tsv \
+        names=third_party/firmware/analysis/z3805a-3543b/installer-scpi-tree.tsv \
+        scpi=third_party/firmware/analysis/z3805a-3543b/handlers.txt \
         pforth=docs/firmware/pforth/z3805a-3543b.txt \
       -postScript SmartClockForth.java \
       -postScript SmartClockStackParameters.java \
       -postScript SmartClockFormatStrings.java \
       -postScript SmartClockExportC.java \
-        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \
+        third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c \
         defines=third_party/firmware/include/mc68331.h \
         defines=third_party/firmware/include/mc68681.h \
         defines=third_party/firmware/include/psos-signals.h \
-        results=third_party/firmware/z3805a-3543b/results.tsv \
-        rewritten=third_party/firmware/common \
-        rewritten=third_party/firmware/z3805a-3543b/rewritten
-    git diff --stat third_party/firmware/z3805a-3543b/decompiled/
+        results=third_party/firmware/analysis/z3805a-3543b/results.tsv \
+        rewritten=third_party/firmware/rewritten/common \
+        rewritten=third_party/firmware/rewritten/z3805a-3543b
+    git diff --stat third_party/firmware/decompiled/z3805a-3543b/
 
 The export is written in place, its `#include`s of `rewritten/` being
 relative to it.  `SmartClockForth.java` prints `kernel span 00018ed6 -
@@ -467,7 +467,7 @@ function that is not C at the unknown convention Setup gives it
 
 [`third_party/NOTICE`](../../third_party/NOTICE) splits it.  The image,
 the EEPROM dumps, the FPGA bitstreams and the manuals are the
-vendors'.  The image folder, `include/` and the Makefile are the
+vendors'.  `analysis/`, `rewritten/`, `include/` and the Makefile are the
 project's analysis; what they reproduce of the image -- the routines
 carried as bytes, the tables copied -- remains the image's copyright
 holder's.  The decompiled C is Ghidra's machine output, rewritten where

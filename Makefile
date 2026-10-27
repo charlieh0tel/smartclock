@@ -62,7 +62,7 @@ WEB_TESTS := crates/smartclock-web/tests/browser
 
 # The images for an Oncore engine: all but the Z3815A's, whose engine
 # is a Furuno.
-ONCORE_IMAGES := $(filter-out %/z3815a-4010.bin,$(wildcard third_party/firmware/*.bin))
+ONCORE_IMAGES := $(filter-out %/z3815a-4010.bin,$(wildcard third_party/firmware/images/*.bin))
 web-deps:
 	cd $(WEB_TESTS) && npm ci --no-fund --no-audit && npm run install-browser
 
@@ -99,19 +99,19 @@ doc:
 # A test fails if docs/commands.md and the table disagree.
 docs:
 	$(CARGO) run -q -p smartclock-cli -- commands > docs/commands.md
-	for image in third_party/firmware/*.bin; do \
+	for image in third_party/firmware/images/*.bin; do \
 		$(CARGO) run -q -p smartclock-cli -- dump-scpi $$image \
 			> docs/scpi/$$(basename $$image .bin).txt || exit 1; \
 	done
-	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models third_party/firmware/*.bin \
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models third_party/firmware/images/*.bin \
 		> docs/scpi/models.md
-	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models --html third_party/firmware/*.bin \
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models --html third_party/firmware/images/*.bin \
 		> docs/scpi/models.html
-	for image in third_party/firmware/*.bin; do \
+	for image in third_party/firmware/images/*.bin; do \
 		$(CARGO) run -q -p smartclock-cli -- dump-pforth $$image \
 			> docs/firmware/pforth/$$(basename $$image .bin).txt || exit 1; \
 	done
-	$(CARGO) run -q -p smartclock-cli -- dump-pforth --models third_party/firmware/*.bin \
+	$(CARGO) run -q -p smartclock-cli -- dump-pforth --models third_party/firmware/images/*.bin \
 		> docs/firmware/pforth/models.md
 	for image in $(ONCORE_IMAGES); do \
 		$(CARGO) run -q -p smartclock-cli -- dump-oncore $$image \
@@ -127,13 +127,13 @@ check-pages:
 
 # The firmware's checks and generated files, which
 # third_party/firmware/Makefile runs, alone or from here by name, for
-# IMAGE=... or every image folder: the C's format, the layouts, the
+# IMAGE=... or every image: the C's format, the layouts, the
 # decompiled C, the SCPI trees, the module, pForth and report figures,
 # the 58503A's and Z3801A's diffs against the Z3805A and the names
 # seeded from them, the addresses their C cites from the Z3805A's,
 # Unicorn's recorded bugs, every image's chip-select tables, the
 # hand-written C's magic numbers, the loop's traces, the images' shared
-# C, common/.  They need
+# C, rewritten/common/.  They need
 # an m68k gcc and binutils, clang, clang-format and uv; none is part of
 # ci, and .github/workflows/firmware.yml runs the images' checks.
 FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled report-decompiled \

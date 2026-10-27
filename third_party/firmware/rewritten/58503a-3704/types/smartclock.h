@@ -26,7 +26,7 @@ typedef long long int64_t;
  * SmartClockSetup.java sizes them so in Ghidra, whose C parser makes
  * every enum 4 bytes. */
 
-#include "../common/types/task_debug_flag.h"
+#include "../../common/types/task_debug_flag.h"
 
 /* preserved_region_fields.restore, a word: whether system_init restores
  * the region (0x12bb4).  pllp_task sets it each pass; nv_clear_and_reset
@@ -39,9 +39,9 @@ typedef enum __attribute__((packed)) preserved_region_restore {
 /* BEGIN PROPOSED ENUMS */
 /* END PROPOSED ENUMS */
 
-#include "../common/types/gps_framing_state.h"
+#include "../../common/types/gps_framing_state.h"
 
-#include "../common/types/gps_request_result.h"
+#include "../../common/types/gps_request_result.h"
 
 /* gps_request_class's sorting of a request code (gps_request_code). */
 typedef enum __attribute__((packed)) gps_code_class {
@@ -52,9 +52,9 @@ typedef enum __attribute__((packed)) gps_code_class {
   GPS_CLASS_INVALID = 3,
 } gps_code_class;
 
-#include "../common/types/oncore_field_code.h"
+#include "../../common/types/oncore_field_code.h"
 
-#include "../common/types/oncore_receiver_status.h"
+#include "../../common/types/oncore_receiver_status.h"
 
 /* Which receiver gps_receiver_status_update updates: the Oncore's
  * status, or the alternate receiver's, which it ignores, returning at
@@ -73,9 +73,9 @@ typedef enum __attribute__((packed)) gps_reference_override {
   GPS_REFERENCE_OVERRIDE_INVALID = 0xff,
 } gps_reference_override;
 
-#include "../common/types/counter_sync_kind.h"
+#include "../../common/types/counter_sync_kind.h"
 
-#include "../common/types/satellite_health_class.h"
+#include "../../common/types/satellite_health_class.h"
 
 /* A mode line of the status screen, status_screen_mode_line.mode, which
  * status_screen picks by pll_screen_mode (0x4a9be, its table at
@@ -225,13 +225,13 @@ typedef enum __attribute__((packed)) adc_channel {
   ADC_ANTENNA_CURRENT = 7, /* "Antenna current"; :DIAG:GPS:ACURrent? */
 } adc_channel;
 
-#include "../common/types/satellite_kind.h"
+#include "../../common/types/satellite_kind.h"
 
-#include "../common/types/satellite_list.h"
+#include "../../common/types/satellite_list.h"
 
-#include "../common/types/counter_error.h"
+#include "../../common/types/counter_error.h"
 
-#include "../common/types/scpi_param_type.h"
+#include "../../common/types/scpi_param_type.h"
 
 /* The VP Oncore reference's codes (third_party/motorola/VPCommands.pdf). */
 
@@ -263,7 +263,7 @@ typedef enum __attribute__((packed)) oncore_xdop_type {
   ONCORE_XDOP_TDOP = 4
 } oncore_xdop_type;
 
-#include "../common/types/oncore_health.h"
+#include "../../common/types/oncore_health.h"
 
 /* @@Aw: the time the engine reports. */
 typedef enum __attribute__((packed)) oncore_time_mode {
@@ -319,11 +319,11 @@ typedef enum __attribute__((packed)) oncore_raim_status {
   ONCORE_RAIM_NEITHER = 2
 } oncore_raim_status;
 
-#include "../common/types/scpi_validate_function.h"
+#include "../../common/types/scpi_validate_function.h"
 
-#include "../common/types/stdlib.h"
+#include "../../common/types/stdlib.h"
 
-#include "../common/types/holdover_steering_state.h"
+#include "../../common/types/holdover_steering_state.h"
 
 /* startup_pll's and pll_normal's steering, at 0x10205e: a
  * proportional-integral loop on each 10-second block's mean time
@@ -346,7 +346,7 @@ typedef struct loop_steering_state {
   float filter_weight; /* +0x18: 29.75 over max_loop_time, pll.ti_filtered's */
 } loop_steering_state;
 
-#include "../common/types/serial_ring.h"
+#include "../../common/types/serial_ring.h"
 
 /* A serial port's parity code, in its settings record (:PARity). */
 typedef enum __attribute__((packed)) serial_parity {
@@ -431,20 +431,20 @@ typedef enum __attribute__((packed)) front_panel_lamp {
   FRONT_PANEL_LAMP_SHIFT = 0x80,
 } front_panel_lamp;
 
-#include "../common/types/io_device.h"
+#include "../../common/types/io_device.h"
 
-#include "../common/types/data_format.h"
+#include "../../common/types/data_format.h"
 
-#include "../common/types/timecode_format.h"
+#include "../../common/types/timecode_format.h"
 
 /* tcode_send's routine, which timecode_schedule sends the time code
  * through (0x14128): drtb_send_async's shape, which tcode_request stores
  * (0x13d6a). */
 typedef void tcode_send_function(char* block, uint8_t count);
 
-#include "../common/types/klok_event_class.h"
+#include "../../common/types/klok_event_class.h"
 
-#include "../common/types/duartb_settings_record.h"
+#include "../../common/types/duartb_settings_record.h"
 
 /* The SCI's serial settings, SERial2's, at 0x101f50: one byte for
  * parity and data bits together and no stop-bit setting, as 097-59551-02
@@ -462,12 +462,12 @@ typedef struct sci_settings_record {
   uint8_t echo;         /* +0x05: :FDUPlex ON, each character received echoed */
 } sci_settings_record;
 
-#include "../common/types/duartb_applied_settings.h"
+#include "../../common/types/duartb_applied_settings.h"
 
 /* A routine that writes a character to a port. */
 typedef void putc_function(char c);
 
-#include "../common/types/char_slot.h"
+#include "../../common/types/char_slot.h"
 
 /* A self-test, in the tables at 0x18458 and 0x17fe0: run is 1 to run the
  * test, as selftest_execute's second call and selftest_run_all_counted
@@ -476,7 +476,7 @@ typedef void selftest_test(char_slot run);
 /* An entry of the self-test tables. */
 typedef selftest_test* selftest_entry;
 
-#include "../common/types/dac_measure.h"
+#include "../../common/types/dac_measure.h"
 
 /* The 16-byte message a driver sends its exchange once, at start-up, so
  * that a task takes the exchange as a token before using the port: its
@@ -579,7 +579,7 @@ typedef struct sci_driver {
   uint8_t field_1b;
 } sci_driver;
 
-#include "../common/types/qspi_state.h"
+#include "../../common/types/qspi_state.h"
 
 /* A device on the QSPI, by the minor number of I/O device 1, which
  * qspi_queue_setup (0x1f396) takes and sets up a queue for, by its jump
@@ -597,10 +597,10 @@ typedef struct sci_driver {
  * qspi_fpga_byte_write (0x1f2fa, 0x1f312) send. */
 typedef enum __attribute__((packed)) qspi_device {
   QSPI_FRONT_PANEL = 0,
-#include "../common/types/qspi_device.h"
+#include "../../common/types/qspi_device.h"
 } qspi_device;
 
-#include "../common/types/qspi_buffers.h"
+#include "../../common/types/qspi_buffers.h"
 
 /* The EFC's gain and what efc_gain_set derives from it, at 0x102554:
  * pllp_task sets the gain, the fractional frequency one EFC count
@@ -619,9 +619,9 @@ typedef struct efc_gain_values {
                         */
 } efc_gain_values;
 
-#include "../common/types/efc_range_state.h"
+#include "../../common/types/efc_range_state.h"
 
-#include "../common/types/gps_command_mailbox.h"
+#include "../../common/types/gps_command_mailbox.h"
 
 /* One of the health monitor's eight ADC monitors, adc_monitors at
  * 0x101b72 to 0x101cf1, by hmon_check_supplies' step: temperature,
@@ -814,7 +814,7 @@ typedef enum __attribute__((packed)) selftest_ram_failure {
   SELFTEST_RAM_ADDRESS_LINE = 0x02,
 } selftest_ram_failure;
 
-#include "../common/types/selftest_uart_failure.h"
+#include "../../common/types/selftest_uart_failure.h"
 
 /* selftest_results.qspi, the QSPI devices that failed, as
  * qspi_tests_run sets them (0x189f2) and selftest_qspi reports them. */
@@ -915,7 +915,7 @@ typedef struct selftest_results {
   uint8_t in_run; /* +0x47: set during selftest_run; nothing reads it */
 } selftest_results;
 
-#include "../common/types/gps_request_sender.h"
+#include "../../common/types/gps_request_sender.h"
 
 /* A GPS request's code (gps_request_entry.code, a descriptor's
  * gps_request), which gps_request_class (0x4c7c4) sorts: in the 58503A
@@ -1046,7 +1046,7 @@ typedef enum __attribute__((packed)) gps_request_code {
   GPS_REQUEST_NONE = 0xff,            /* a descriptor's, for none */
 } gps_request_code;
 
-#include "../common/types/gps_request_entry.h"
+#include "../../common/types/gps_request_entry.h"
 
 /* gpsm_task's ring of waiting GPS requests: six entries in the 58503A
  * 3704, where the Z3805A 3543B has five (request_ring_put's bound,
@@ -1078,21 +1078,21 @@ typedef struct gps_running_command {
                                     gps_command_message */
 } gps_running_command;
 
-#include "../common/types/time_of_day.h"
+#include "../../common/types/time_of_day.h"
 
-#include "../common/types/gps_command_log_entry.h"
+#include "../../common/types/gps_command_log_entry.h"
 
-#include "../common/types/packed_datetime.h"
+#include "../../common/types/packed_datetime.h"
 
-#include "../common/types/lifetime_state.h"
+#include "../../common/types/lifetime_state.h"
 
 /* The EEPROM's records ("EEPROM records" in structures.md), each
  * checksummed by record_checksum in its first two bytes, as their
  * writers build them on their stacks: erased to 0xff, then filled. */
 
-#include "../common/types/parameter_record.h"
+#include "../../common/types/parameter_record.h"
 
-#include "../common/types/identification_record.h"
+#include "../../common/types/identification_record.h"
 
 /* The calibration block at 0x400080: save_calibration_block's TC and
  * time offset. */
@@ -1120,15 +1120,15 @@ typedef struct nv_record {
   uint32_t packed[36]; /* +0x10: the settings packed into longs, then 0xff */
 } nv_record;
 
-#include "../common/types/reset_record.h"
+#include "../../common/types/reset_record.h"
 
-#include "../common/types/sprintf.h"
+#include "../../common/types/sprintf.h"
 
-#include "../common/types/scpi_decimal.h"
+#include "../../common/types/scpi_decimal.h"
 
-#include "../common/types/scpi_error_message.h"
+#include "../../common/types/scpi_error_message.h"
 
-#include "../common/types/scpi.h"
+#include "../../common/types/scpi.h"
 
 /* The two command trees scpi_task gives scpi_task_run, a pair in ROM at
  * 0x61218 (0x294d8), and the installer's at installer::0x1089d4, which
@@ -1152,15 +1152,15 @@ typedef enum __attribute__((packed)) scpi_language_choice {
   SCPI_LANGUAGE_INSTALL = 1, /* the installer */
 } scpi_language_choice;
 
-#include "../common/types/scpi_call.h"
+#include "../../common/types/scpi_call.h"
 
-#include "../common/types/scpi_staged_values.h"
+#include "../../common/types/scpi_staged_values.h"
 
-#include "../common/types/scpi_context.h"
+#include "../../common/types/scpi_context.h"
 
-#include "../common/types/scpi_array.h"
+#include "../../common/types/scpi_array.h"
 
-#include "../common/types/status_register.h"
+#include "../../common/types/status_register.h"
 
 /* One of port_error_reports' four entries, which scpi_session_init_58503a
  * fills (0x28dfc to 0x28e24) and port_report_errors reads: receive status
@@ -1187,9 +1187,9 @@ typedef enum __attribute__((packed)) installer_status_condition {
   INSTALLER_STATUS_INPUT_OVERRUN = 4,       /* -363 */
 } installer_status_condition;
 
-#include "../common/types/status_condition_kind.h"
+#include "../../common/types/status_condition_kind.h"
 
-#include "../common/types/status_condition.h"
+#include "../../common/types/status_condition.h"
 
 /* A condition of the status system, the code status_happening,
  * status_report and the SCPI engine raise.  From 0, an index of the
@@ -1215,7 +1215,7 @@ typedef enum __attribute__((packed)) installer_status_condition {
  * image, are common/types/status_scpi.h's, included as the head of the
  * members. */
 typedef enum __attribute__((packed)) status_condition_code {
-#include "../common/types/status_scpi.h"
+#include "../../common/types/status_scpi.h"
   STATUS_POWER_ON = 0x19,   /* *ESR? bit 7 */
   STATUS_LOCKED_SET = 0x1a, /* :OPERation bit 1, locked to GPS */
   STATUS_LOCKED_CLEARED = 0x1b,
@@ -1313,11 +1313,11 @@ typedef struct hmon_channel_entry {
   uint8_t field_29;
 } hmon_channel_entry;
 
-#include "../common/types/status_byte_bit.h"
+#include "../../common/types/status_byte_bit.h"
 
-#include "../common/types/status_error_entry.h"
+#include "../../common/types/status_error_entry.h"
 
-#include "../common/types/status_register_layout.h"
+#include "../../common/types/status_register_layout.h"
 
 /* One register's entry in the installer's status_register_layouts
  * (installer::0x107ad6), two of them: status_register_layout's first ten
@@ -1333,11 +1333,11 @@ typedef struct installer_status_register_layout {
   uint16_t defined_bits; /* +0x08 */
 } installer_status_register_layout;
 
-#include "../common/types/status_register_mask.h"
+#include "../../common/types/status_register_mask.h"
 
-#include "../common/types/status_preset_form.h"
+#include "../../common/types/status_preset_form.h"
 
-#include "../common/types/status_model.h"
+#include "../../common/types/status_model.h"
 
 /* The GPS engine's data, as its message decoders store it: each field
  * is a field of the message, in the message's order, as the VP Oncore
@@ -1357,7 +1357,7 @@ typedef struct oncore_gmt_offset_fields {
   int8_t minutes; /* the printer also takes a negative one as negative */
 } oncore_gmt_offset_fields;
 
-#include "../common/types/oncore_date_fields.h"
+#include "../../common/types/oncore_date_fields.h"
 
 /* @@Ad, @@Ae and @@Af, the current position: angles in milliarcseconds,
  * heights in cm. */
@@ -1438,7 +1438,7 @@ typedef enum __attribute__((packed)) aging_fit_mode {
   AGING_FIT_HALVES = 4,   /* a line from a full history's halves */
 } aging_fit_mode;
 
-#include "../common/types/aging_curve_state.h"
+#include "../../common/types/aging_curve_state.h"
 
 /* @@Ba, the position/status/data message: one channel's status. */
 typedef struct oncore_channel_status {
@@ -1471,7 +1471,7 @@ typedef struct oncore_status_fields {
   oncore_receiver_status receiver_status;
 } oncore_status_fields;
 
-#include "../common/types/oncore_visible_satellite.h"
+#include "../../common/types/oncore_visible_satellite.h"
 
 /* @@Bc: one combination of satellites and its xDOP. */
 typedef struct oncore_xdop_combination {
@@ -1765,16 +1765,16 @@ typedef struct gps_state {
  * adds entry 6, which fpga_fields_to_registers (0x40c24) and
  * counter_configuration_init (0x40f84) bound by. */
 typedef enum __attribute__((packed)) fpga_bit_index {
-#include "../common/types/fpga_bit_index.h"
+#include "../../common/types/fpga_bit_index.h"
   FPGA_BIT_SYNC = 5,  /* register 3, 0x03: counter_set_sync */
   FPGA_BIT_ALARM = 6, /* register 3, 0x04, a flag: the alarm, which 0x40828
                          sets with PORTF0 bit 5 (docs/firmware/58503a-3704.md,
                          "The alarm outputs") */
 } fpga_bit_index;
 
-#include "../common/types/fpga_mode.h"
+#include "../../common/types/fpga_mode.h"
 
-#include "../common/types/interval_arm_mode.h"
+#include "../../common/types/interval_arm_mode.h"
 
 /* An FPGA configuration, a bitstream fpga_program loads and
  * fpga_verify checks, by its index in fpga_configurations.  The table
@@ -1787,7 +1787,7 @@ typedef enum __attribute__((packed)) fpga_configuration_index {
                                   immediate (0x473d2) */
 } fpga_configuration_index;
 
-#include "../common/types/fpga_chip.h"
+#include "../../common/types/fpga_chip.h"
 
 /* What a stage of the loop gives pllp_task each pass: go on in it, it is
  * done (pllp_task moves to the next stage), or it failed. */
@@ -1923,7 +1923,7 @@ typedef enum __attribute__((packed)) pll_leap_ack_state {
   PLL_LEAP_ACK_BACK_ACK = 7,
 } pll_leap_ack_state;
 
-#include "../common/types/pll_screen_mode.h"
+#include "../../common/types/pll_screen_mode.h"
 
 /* The power-up mode's suffix on the status screen, pll_powerup_suffix_index's
  * result by powerup's sub-state (docs/screen-format-strings.md, "Mode
@@ -1956,7 +1956,7 @@ typedef enum __attribute__((packed)) frequency_figure_of_merit {
   FFOM_UNLOCKED = 3,    /* PLL unlocked, not in holdover: do not use */
 } frequency_figure_of_merit;
 
-#include "../common/types/gps_ack_awaited_kind.h"
+#include "../../common/types/gps_ack_awaited_kind.h"
 
 /* The disciplining loop's state block: the stage the status screen
  * shows (docs/screen-format-strings.md, "Mode suffixes") and the PLL's
@@ -2058,11 +2058,11 @@ typedef struct pll_state {
   uint8_t field_3e7;
 } pll_state;
 
-#include "../common/types/gps_statistics.h"
+#include "../../common/types/gps_statistics.h"
 
-#include "../common/types/exception_record.h"
+#include "../../common/types/exception_record.h"
 
-#include "../common/types/os.h"
+#include "../../common/types/os.h"
 
 /* A fixed event log message, by the code log_event (0x3189a) takes
  * and its jump table's order (0x318bc, 28 cases); the names are the
@@ -2100,13 +2100,13 @@ typedef enum __attribute__((packed)) log_event_code {
   LOG_SYSTEM_PRESET = 0x1b,            /* "System preset" */
 } log_event_code;
 
-#include "../common/types/log_entry.h"
+#include "../../common/types/log_entry.h"
 
-#include "../common/types/fpga_bit.h"
+#include "../../common/types/fpga_bit.h"
 
-#include "../common/types/interpolator_calibration.h"
+#include "../../common/types/interpolator_calibration.h"
 
-#include "../common/types/scpi_setting_param.h"
+#include "../../common/types/scpi_setting_param.h"
 
 /* The words the numeric and setting descriptors' group_cell points at,
  * one for each command group (scpi_group_cells, 0x101f90, 12 bytes, up
@@ -2122,11 +2122,11 @@ typedef struct scpi_group_cells_fields {
   uint16_t rest;     /* +0x0a: every other descriptor's, 0x33c8a to 0x34374 */
 } scpi_group_cells_fields;
 
-#include "../common/types/scpi_action_param.h"
+#include "../../common/types/scpi_action_param.h"
 
-#include "../common/types/request_source.h"
+#include "../../common/types/request_source.h"
 
-#include "../common/types/pllc_request.h"
+#include "../../common/types/pllc_request.h"
 
 /* An Oncore argument encoder: puts a request's argument by its index
  * at out, and returns where the next byte goes (long_array_get_byte and
@@ -2221,7 +2221,7 @@ typedef struct oncore_message_entry {
   oncore_send_filter* filter; /* +0x38: zero for none */
 } oncore_message_entry;
 
-#include "../common/types/holdover_limit_setting.h"
+#include "../../common/types/holdover_limit_setting.h"
 
 /* The settings nv_save keeps in the NV register and nv_restore loads:
  * each field the value of the descriptor in nv_save's tables that points
@@ -2279,9 +2279,9 @@ typedef struct nv_settings_fields {
   uint8_t debug_output;          /* :DIAG:SYSTem:DOUTput */
 } nv_settings_fields;
 
-#include "../common/types/interval_reading_fields.h"
+#include "../../common/types/interval_reading_fields.h"
 
-#include "../common/types/counter_work_state.h"
+#include "../../common/types/counter_work_state.h"
 
 /* The battery-backed RAM a warm restart restores, preserved_region at
  * 0x100000: pllp_task copies gps, pll and the RAM blocks below into it
@@ -2302,13 +2302,13 @@ typedef struct preserved_region_fields {
   uint8_t field_b2d;           /* in the checksum; nothing else refers to it */
 } preserved_region_fields;
 
-#include "../common/types/clock_record.h"
+#include "../../common/types/clock_record.h"
 
-#include "../common/types/pps_exchange_message.h"
+#include "../../common/types/pps_exchange_message.h"
 
-#include "../common/types/gps_process_state.h"
+#include "../../common/types/gps_process_state.h"
 
-#include "../common/types/satellite_sets.h"
+#include "../../common/types/satellite_sets.h"
 
 /* A satellite_status_list entry, 8 bytes: status_snapshot keeps twelve
  * not tracked and six tracked
@@ -2405,10 +2405,10 @@ typedef struct status_snapshot_record {
   uint16_t hardware_condition; /* +0x168: status_hardware_condition's */
 } status_snapshot_record;
 
-#include "../common/types/psos.h"
+#include "../../common/types/psos.h"
 
-#include "../common/types/spoo_request.h"
+#include "../../common/types/spoo_request.h"
 
-#include "../common/types/early_status_events.h"
+#include "../../common/types/early_status_events.h"
 
-#include "../common/types/installer_test_choice.h"
+#include "../../common/types/installer_test_choice.h"

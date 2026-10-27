@@ -1,4 +1,4 @@
-"""Checks that the C in third_party/firmware/common/ is what docs/firmware/
+"""Checks that the C in third_party/firmware/rewritten/common/ is what docs/firmware/
 rewrite.md's "Shared C" lets be shared, in every image whose export
 includes it.
 
@@ -44,7 +44,10 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIRMWARE = ROOT / 'third_party/firmware'
-COMMON = FIRMWARE / 'common'
+DECOMPILED = FIRMWARE / 'decompiled'
+REWRITTEN = FIRMWARE / 'rewritten'
+COMMON = REWRITTEN / 'common'
+INCLUDE_FOLDER = FIRMWARE / 'include'
 DIFFS = ROOT / 'docs/firmware/diff'
 
 
@@ -59,7 +62,9 @@ magic_check = load('magic_check')
 comment_addresses = load('comment_addresses')
 
 # The folder of common/ holding the types the images' smartclock.h
-# include, which the exporter skips (SmartClockExportC.java, TYPES_FOLDER).
+# include, and of each image's rewritten C holding its smartclock.h and
+# check-layout.c, which the exporter skips (SmartClockExportC.java,
+# TYPES_FOLDER).
 TYPES = 'types'
 # The image the others' diffs are against, whose C common/ came from.
 BASE = 'z3805a-3543b'
@@ -94,10 +99,10 @@ ARITHMETIC = re.compile(r'^[\s0-9a-fA-FxX+\-*/()]+$')
 def sharing_images():
     """The images whose export includes a common/ file, by name."""
     images = []
-    for export in sorted(FIRMWARE.glob('*/decompiled/*.c')):
+    for export in sorted(DECOMPILED.glob('*/*.c')):
         text = export.read_text()
         if any((export.parent / path).resolve().is_relative_to(COMMON) for path in INCLUDE.findall(text)):
-            images.append(export.parent.parent.name)
+            images.append(export.parent.name)
     return images
 
 
@@ -161,8 +166,9 @@ class Export:
 
     def __init__(self, image):
         self.image = image
-        self.folder = FIRMWARE / image
-        export = self.folder / 'decompiled' / f'{image}.c'
+        self.rewritten = REWRITTEN / image
+        self.decompiled = DECOMPILED / image
+        export = self.decompiled / f'{image}.c'
         flags = [flag for flag in shlex.split(os.environ.get('DECOMPILED_CFLAGS', magic_check.DEFAULT_CFLAGS))
                  if magic_check.PARSING_FLAG.match(flag)]
         command = [magic_check.CLANG, magic_check.CLANG_TARGET, *flags, *magic_check.CLANG_LENIENCY,
@@ -180,7 +186,9 @@ class Export:
                                  if node.get('kind') == 'FunctionDecl' and node.get('storageClass') == 'static'
                                  and any(child.get('kind') == 'CompoundStmt' for child in node.get('inner', ()))}
         self.macros = collections.defaultdict(list)
-        for path in [*(self.folder / 'rewritten').rglob('*.[ch]'), *(FIRMWARE / 'include').glob('*.h'),
+        for path in [*(path for path in self.rewritten.rglob('*.[ch]')
+                       if TYPES not in path.relative_to(self.rewritten).parts),
+                     *INCLUDE_FOLDER.glob('*.h'),
                      *common_files()]:
             for match in MACRO.finditer(COMMENT.sub(' ', path.read_text())):
                 body = ' '.join((match.group(2) + match.group(3)).split())
@@ -211,13 +219,13 @@ class Export:
         include:NAME or system."""
         if file is None:
             return 'none'
-        path = pathlib.Path(file) if os.path.isabs(file) else (self.folder / 'decompiled' / file).resolve()
-        for prefix, folder in (('common:', COMMON), ('rewritten:', self.folder / 'rewritten')):
+        path = pathlib.Path(file) if os.path.isabs(file) else (self.decompiled / file).resolve()
+        for prefix, folder in (('common:', COMMON), ('rewritten:', self.rewritten)):
             if path.is_relative_to(folder):
                 return prefix + str(path.relative_to(folder))
-        if path.is_relative_to(self.folder / 'decompiled'):
+        if path.is_relative_to(self.decompiled):
             return 'export'
-        if path.is_relative_to(FIRMWARE / 'include'):
+        if path.is_relative_to(INCLUDE_FOLDER):
             return 'include:' + path.name
         return 'system'
 
@@ -229,7 +237,7 @@ class Export:
         begin, end = node.get('_extent', (None, None))
         if not begin or not end or begin.file != end.file:
             return None
-        data = (self.folder / 'decompiled' / begin.file).resolve().read_bytes()
+        data = (self.decompiled / begin.file).resolve().read_bytes()
         return ' '.join(COMMENT.sub(' ', data[begin.offset:end.offset + end.length].decode()).split())
 
     @staticmethod
@@ -355,7 +363,7 @@ class Export:
         """Each type's sizes and offsets that check-layout.c asserts, as
         values where they are arithmetic."""
         asserted = collections.defaultdict(set)
-        text = COMMENT.sub(' ', (self.folder / 'check-layout.c').read_text())
+        text = COMMENT.sub(' ', (self.rewritten / TYPES / 'check-layout.c').read_text())
         for kind, type_name, field, expression in CHECK.findall(text):
             expression = ' '.join(expression.split())
             if ARITHMETIC.match(expression):
@@ -368,9 +376,9 @@ def split_enum(image, name):
     """Whether the image's smartclock.h defines an enum with a common/types/
     header included in its members: its shared head (rewrite.md, "Shared
     C")."""
-    text = (FIRMWARE / image / 'smartclock.h').read_text()
+    text = (REWRITTEN / image / TYPES / 'smartclock.h').read_text()
     match = re.search(r'(?ms)^typedef enum\b[^{;]*\{((?:(?!^\}).)*)^\}\s*%s\s*;' % name, text)
-    return bool(match) and any(path.startswith(f'../common/{TYPES}/') for path in INCLUDE.findall(match.group(1)))
+    return bool(match) and any(path.startswith(f'../../common/{TYPES}/') for path in INCLUDE.findall(match.group(1)))
 
 
 def field_types(fields):
@@ -393,9 +401,9 @@ def same_data(images, failures):
     layouts = [export.layout() for export in exports]
     types = sorted((COMMON / TYPES).glob('*.h'))
     # include/'s headers, the CPU's and the DUART's, every image's types= too
-    headers = '\n'.join(path.read_text() for path in [*types, *(FIRMWARE / 'include').glob('*.h')])
+    headers = '\n'.join(path.read_text() for path in [*types, *INCLUDE_FOLDER.glob('*.h')])
     for image in images:
-        header = FIRMWARE / image / 'smartclock.h'
+        header = REWRITTEN / image / TYPES / 'smartclock.h'
         included = {(header.parent / path).resolve() for path in INCLUDE.findall(header.read_text())}
         for path in types:
             if path.resolve() not in included:
@@ -430,7 +438,7 @@ def same_data(images, failures):
             asserted = [layout.get(name, set()) for layout in layouts]
             if any(each != asserted[0] for each in asserted):
                 failures.append(f'{relative}: type {name} is laid out differently by '
-                                + ', '.join(f'{image}/check-layout.c' for image in images))
+                                + ', '.join(f'rewritten/{image}/{TYPES}/check-layout.c' for image in images))
 
 
 def main():

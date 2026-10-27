@@ -9,15 +9,15 @@
 //   dry-run
 //       report the functions in data that would be removed, and do not
 //       remove them; everything else is applied.
-//   types=third_party/firmware/z3805a-3543b/smartclock.h, then
+//   types=third_party/firmware/rewritten/z3805a-3543b/types/smartclock.h, then
 //       types=third_party/firmware/include/mc68331.h
 //       C declarations of the firmware's structures and the CPU's
 //       modules, parsed into the program in the order given, before
 //       the names, so that names can use them; their #defines are
 //       skipped, as Ghidra's C parser takes none, and an #include
 //       "PATH" is replaced by that header (common/'s shared types).
-//   names=third_party/firmware/IMAGE/names.tsv (more than one may be
-//       given, as IMAGE/scpi-tree.tsv and IMAGE/installer-scpi-tree.tsv,
+//   names=third_party/firmware/analysis/IMAGE/names.tsv (more than one may be
+//       given, as analysis/IMAGE/scpi-tree.tsv and installer-scpi-tree.tsv,
 //       dump-scpi --names' rows for the two trees, after it)
 //       address, "function", "label", "local", "call" or "entry", name,
 //       source, and optionally a note saying what it is or does, a
@@ -36,7 +36,7 @@
 //       and the note too, for SmartClockExportC.java's sidecar:
 //       names the firmware notes establish.  These replace names the
 //       other two gave, but not names given by hand.
-//   scpi=third_party/firmware/IMAGE/handlers.txt
+//   scpi=third_party/firmware/analysis/IMAGE/handlers.txt
 //       smartclock-cli dump-scpi --handlers IMAGE, as make handlers
 //       writes it: a path, its query handler and its setter, "-" for
 //       none; named scpi_query_PATH and scpi_set_PATH.

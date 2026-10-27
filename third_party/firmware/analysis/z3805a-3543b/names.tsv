@@ -2505,7 +2505,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 #
 # installer code the untyped survey found (2026-10-22): each the installer's copy of
 # the primary routine its name follows, its bytes the primary's but where noted;
-# tools/ghidra/SmartClockUntyped.java, third_party/firmware/z3805a-3543b/untyped.tsv
+# tools/ghidra/SmartClockUntyped.java, third_party/firmware/analysis/z3805a-3543b/untyped.tsv
 installer::0x100400	function	installer_mutex_init	context	the installer's copy of mutex_init, at 0x10400 plus 0xf0000, byte for byte but for its jsr.l targets, installer_psos_call (installer::0x100406, installer::0x100416, installer::0x10042a)		convention=register; confidence=read; in=D0 int name, A1 mutex *lock; out=D7 int error; error=D7 3 service 21 finds the name; preserves=D1, D2, A0; family=mutex
 installer::0x1004d2	function	installer_mutex_clear	context	the installer's copy of mutex_clear, at 0x104d2 plus 0xf0000, byte for byte		convention=register; confidence=read; in=A1 mutex *lock; family=mutex
 installer::0x1004e6	function	installer_mutex_create	context	the installer's copy of mutex_create, at 0x104e6 plus 0xf0000, byte for byte but for its jsr.l targets, installer_psos_pack_name (installer::0x1004ec)	uint32_t installer_mutex_create(char *name, mutex *lock)

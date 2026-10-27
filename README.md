@@ -125,7 +125,7 @@ Z3805A does not, the front panel among it:
 The Z3801A's 3543, the Z3805A's sibling without its SCI driver, is read
 whole as C the same way, held to the same checks:
 [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md).  The C
-the three images run alike lies once in `third_party/firmware/common/`,
+the three images run alike lies once in `third_party/firmware/rewritten/common/`,
 by the rules of [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md),
 "Shared C".
 

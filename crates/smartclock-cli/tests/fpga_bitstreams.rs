@@ -1,4 +1,4 @@
-//! The FPGA bitstreams in `third_party/firmware/fpga/` are byte-for-byte
+//! The FPGA bitstreams in `third_party/firmware/images/fpga/` are byte-for-byte
 //! copies of the ones the firmware images load, at the offsets
 //! `docs/firmware/outputs.md` gives.
 
@@ -25,7 +25,7 @@ const BITSTREAMS: [(&str, usize, &str); 7] = [
 fn firmware(name: &str) -> Vec<u8> {
     let path: PathBuf = [
         env!("CARGO_MANIFEST_DIR"),
-        "../../third_party/firmware",
+        "../../third_party/firmware/images",
         name,
     ]
     .iter()

@@ -62,7 +62,7 @@ a line, by kind:
 
 --check fails (exits 1) if a finding of a checked kind, all but
 argument, similar and repeated, since whether two uses mean the same is
-a reader's call, is not in the allowlist, IMAGE/magic-allow.tsv, or if
+a reader's call, is not in the allowlist, analysis/IMAGE/magic-allow.tsv, or if
 an allowlist row matches no finding; it prints those findings alone.
 The allowlist is tab-separated: kind, file (relative to rewritten/, or
 common/ and its path there),
@@ -88,7 +88,7 @@ FIRMWARE = ROOT / 'third_party/firmware'
 # A header's #include of another by its path from the header's folder.
 HEADER_INCLUDE = re.compile(r'(?m)^#include "([^"]+)"$')
 # The images' shared hand-written C (docs/firmware/rewrite.md, "Shared C").
-COMMON = FIRMWARE / 'common'
+COMMON = FIRMWARE / 'rewritten/common'
 INCLUDE = FIRMWARE / 'include'
 DEFAULT_IMAGE = 'z3805a-3543b'
 ALLOWLIST = 'magic-allow.tsv'
@@ -275,9 +275,9 @@ class Image:
     """An image's export parsed, with what the checker looks up in it."""
 
     def __init__(self, image):
-        self.folder = FIRMWARE / image
-        self.rewritten = self.folder / 'rewritten'
-        self.export = self.folder / 'decompiled' / f'{image}.c'
+        self.folder = FIRMWARE / 'analysis' / image
+        self.rewritten = FIRMWARE / 'rewritten' / image
+        self.export = FIRMWARE / 'decompiled' / image / f'{image}.c'
         self.sources = {}
         self.enums = {}          # enum -> {value: [enumerator]}
         self.functions = {}      # function declaration id -> [parameter type]
@@ -411,7 +411,7 @@ class Image:
         not typed with it: {record.field or global: enum}."""
         coded = {}
         enum_word = re.compile(r'\b(' + '|'.join(sorted(self.enums, key=len, reverse=True)) + r')\b')
-        lines = included(self.folder / 'smartclock.h').splitlines()
+        lines = included(self.rewritten / 'types/smartclock.h').splitlines()
         pending = []
         for number, line in enumerate(lines):
             if line.startswith('typedef'):

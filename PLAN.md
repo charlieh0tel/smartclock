@@ -418,12 +418,23 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   named constant exists (`make check-magic-numbers`, in CI); whether a
   literal passed as a parameter means the same each time is a reader's
   call, so that is reported, never checked.
-- **Firmware layout**: one folder per image under
-  `third_party/firmware/` with everything that image's work is (its
-  `smartclock.h`, names files, `rewritten/`, `decompiled/`), image-
-  independent headers in `third_party/firmware/include/`, C several
-  images share in `third_party/firmware/common/`, and its own
-  `third_party/firmware/Makefile` that the top Makefile delegates to.
+- **Firmware layout**: `third_party/firmware/` is split by kind, not
+  by image, so that what is the vendors', what Ghidra made and what we
+  wrote can be told apart at a glance: `images/` what we were given
+  (the ROMs, the console log one was rebuilt from, EEPROM dumps, FPGA
+  bitstreams), `decompiled/IMAGE/` Ghidra's exports, `rewritten/` our
+  C (`common/`, what several images share, and `IMAGE/`, with its
+  `types/smartclock.h` and `types/check-layout.c`), and
+  `analysis/IMAGE/` what we learned about each ROM (names files,
+  modules, handlers, allowlists).  Image-independent headers stay in
+  `include/`, the Ghidra archive in `ghidra/`, and its own `Makefile`,
+  which the top Makefile delegates to.  `third_party/firmware/README.md`
+  maps each image to its places.  It replaced one folder per image
+  holding everything about it, where vendor, generated and hand-written
+  files sat side by side.  Keeping `decompiled/`, `rewritten/` and
+  `analysis/` under `third_party/`, though they are derived from the
+  vendor images rather than vendor material, is deliberate: they are
+  about those images and inseparable from them.
 - **A second image is ported by copying the first's work**, not by
   sharing it from the start: the 58503A's `rewritten/` and
   `smartclock.h` began as copies of the Z3805A's, seeded from

@@ -1,6 +1,6 @@
 # What the firmware shows
 
-What `third_party/firmware/z3816a-4001.bin` shows about how the receiver
+What `third_party/firmware/images/z3816a-4001.bin` shows about how the receiver
 measures the 1 PPS time interval, how it disciplines the oscillator
 from it, and whether the Oncore's sawtooth correction enters either.
 Addresses are in that image, loaded at address zero, except where a
@@ -367,33 +367,33 @@ part of what they change.  In order:
    `0xab0`) and jumps to `0x10136c` (`0xaa2`); its overlay is
    `installer::0x100000` to `0x10ab75`.
 3. `SmartClockSetup.java` again, now over the installer too, with
-   `types=third_party/firmware/IMAGE/smartclock.h`,
+   `types=third_party/firmware/rewritten/IMAGE/types/smartclock.h`,
    `types=third_party/firmware/include/mc68331.h`,
    `types=third_party/firmware/include/mc68681.h`,
-   `names=third_party/firmware/IMAGE/names.tsv`, and
-   `names=third_party/firmware/IMAGE/scpi-tree.tsv` and
-   `names=third_party/firmware/IMAGE/installer-scpi-tree.tsv`, which
+   `names=third_party/firmware/analysis/IMAGE/names.tsv`, and
+   `names=third_party/firmware/analysis/IMAGE/scpi-tree.tsv` and
+   `names=third_party/firmware/analysis/IMAGE/installer-scpi-tree.tsv`, which
    `make scpi-tree` makes (the SCPI trees' records, and the
    installer's handlers),
-   `scpi=third_party/firmware/IMAGE/handlers.txt`, which `make handlers`
+   `scpi=third_party/firmware/analysis/IMAGE/handlers.txt`, which `make handlers`
    writes from `smartclock-cli dump-scpi --handlers IMAGE`, and
    `pforth=docs/firmware/pforth/IMAGE.txt`.
 4. `SmartClockForth.java`.
 5. `SmartClockStackParameters.java`.
 6. `SmartClockFormatStrings.java`.
-7. `SmartClockExportC.java third_party/firmware/IMAGE/decompiled/IMAGE.c
+7. `SmartClockExportC.java third_party/firmware/decompiled/IMAGE/IMAGE.c
    defines=third_party/firmware/include/mc68331.h
    defines=third_party/firmware/include/mc68681.h
    defines=third_party/firmware/include/psos-signals.h
-   results=third_party/firmware/IMAGE/results.tsv
-   rewritten=third_party/firmware/common
-   rewritten=third_party/firmware/IMAGE/rewritten`, `common/` for an
+   results=third_party/firmware/analysis/IMAGE/results.tsv
+   rewritten=third_party/firmware/rewritten/common
+   rewritten=third_party/firmware/rewritten/IMAGE`, `common/` for an
    image that shares it.
 
 Each path is from the repository's root, and IMAGE is the image's
-name, `z3805a-3543b`: its folder, `third_party/firmware/IMAGE/`, beside
+name, `z3805a-3543b`: its folder, `third_party/firmware/analysis/IMAGE/`, beside
 `IMAGE.bin`, holds everything that image's work is.  The 58503A
-3704's folder, `third_party/firmware/58503a-3704/`, holds the same:
+3704's folder, `third_party/firmware/analysis/58503a-3704/`, holds the same:
 its `names.tsv` and `modules.tsv`, seeded from the Z3805A's through
 `image_diff.py`'s matches (`58503a-3704.md`, "Method"; the names file's
 header gives the rules) and then named and typed from the 58503A's own
@@ -403,12 +403,12 @@ and `results.tsv`, its export, from a bare import as above with the
 `rewritten/`, begun as the Z3805A's and written to the 58503A's code,
 with its SCPI trees' C, which `make scpi-tree IMAGE=58503a-3704` writes
 as it does the Z3805A's; the C the images share lies in
-`third_party/firmware/common/` (`rewrite.md`, "Shared C").  `make
+`third_party/firmware/rewritten/common/` (`rewrite.md`, "Shared C").  `make
 image-diff` regenerates the matches, the TSV `58503a-3704.md`
 describes, that document's figures and, through `make seed-names`
 (`tools/firmware/seed_names.py`), the 58503A's seeded `names.tsv` and
 `modules.tsv`; `make check-image-diff` fails while any is stale.  The
-Z3801A 3543's folder, `third_party/firmware/z3801a-3543/`, is seeded
+Z3801A 3543's folder, `third_party/firmware/analysis/z3801a-3543/`, is seeded
 the same way from the Z3805A's ([`z3801a-3543.md`](z3801a-3543.md)),
 its `rewritten/` the Z3805A's own C less the SCI's, beside `common/`,
 which it shares with the other two.  A change to the Z3805A's `names.tsv`,
@@ -418,11 +418,11 @@ with `make scpi-tree IMAGE=58503a-3704`; a seeding rule or exception
 is changed in `seed_names.py`, not in a row.  The make targets that
 check and generate it are `third_party/firmware/Makefile`'s, which
 runs alone, `make -C third_party/firmware TARGET IMAGE=z3805a-3543b`,
-for every image folder without `IMAGE=`, and to which the top Makefile hands each target by name, so that `make
+for every image without `IMAGE=`, and to which the top Makefile hands each target by name, so that `make
 check-decompiled` is the same.
 
 Optionally, after step 3 or any later one,
-`SmartClockUntyped.java output=third_party/firmware/IMAGE/untyped.tsv`
+`SmartClockUntyped.java output=third_party/firmware/analysis/IMAGE/untyped.tsv`
 lists the ROM that is neither code nor typed data, and the installer's
 overlay's: each run of 4 or more undefined bytes (`min=N` for another
 length), with the references into it, the defined item on each side,
@@ -510,7 +510,7 @@ repairs can leave stray code that a table's text ran into; and every
 function's body is recomputed from its entry, so that it is what the
 function's flow reaches, whatever the repairs before it left.
 
-Names come from what the project has established.  `IMAGE/names.tsv`
+Names come from what the project has established.  `analysis/IMAGE/names.tsv`
 holds those the notes give for that image, each row citing its note:
 the float and C libraries (`softfloat.md`, `libc.md`), the kernel's
 service calls (`psos.md`), the interval's routine and cells
@@ -582,7 +582,7 @@ its registers the convention `pforth`, and `SmartClockSetup.java` each
 exception handler `exception`, naming the vectors that enter it and how
 it returns, unless the names file gives one.  `SmartClockExportC.java`
 writes them all beside the C, in
-`third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl`:
+`third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.conventions.jsonl`:
 one JSON object a line for every function, its address, name, note and
 convention, with its lists split into register, type and name, or
 `"convention":"unknown"`, and, for a function whose arguments are all on
@@ -1006,7 +1006,7 @@ decompiler wrote it, and reported.
   table's entry instead, labeled by its value, as the machine does,
   and that is left.
 - A local variable a call's result is assigned to is named as
-  `IMAGE/results.tsv` names the callee's result, `uptime =
+  `analysis/IMAGE/results.tsv` names the callee's result, `uptime =
   get_uptime()`, so that a result reads the same at every call: only a
   variable every value of which is a result so named, whose name is the
   decompiler's own rather than one given on purpose, and where no other
@@ -1057,9 +1057,9 @@ decompiler wrote it, and reported.
 ## Hand-written C
 
 A function rewritten by hand lives in
-`third_party/firmware/IMAGE/rewritten/`, beside the decompiled C in
-`IMAGE/decompiled/`, a file to a subsystem (`clock.c`), or, when
-several images run it, once in `third_party/firmware/common/`
+`third_party/firmware/rewritten/IMAGE/`, apart from the decompiled C in
+`decompiled/IMAGE/`, a file to a subsystem (`clock.c`), or, when
+several images run it, once in `third_party/firmware/rewritten/common/`
 ([`rewrite.md`, "Shared C"](rewrite.md#shared-c)).  The exporter
 finds the functions those files define (`rewritten=`), leaves the
 decompiler's reading of each out of the exported C, a line
@@ -1259,7 +1259,7 @@ and a pointer to a C
 function's image copy and one to gcc's copy are the same (a driver's
 echo routine); and so are pointers into the same place of an image
 object and its twin among gcc's constants, an object the C defines that
-a names file labels in ROM (`third_party/firmware/IMAGE/names.tsv`,
+a names file labels in ROM (`third_party/firmware/analysis/IMAGE/names.tsv`,
 `scpi-tree.tsv` and `installer-scpi-tree.tsv`, the generated trees'
 rows; `harness.Twins`):
 a node `scpi_node_find` returns, a list `scpi_header_step` leaves in
@@ -1870,7 +1870,7 @@ decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
 (`docs/scpi/README.md`).  Every function is named.  The output
-is `third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c`.
+is `third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,
 a Ghidra archive in Git LFS (install `git-lfs` to fetch it): restore it (File, Restore Project, or ghidra-mcp's
@@ -1887,31 +1887,31 @@ repository's root, with `GHIDRA` the install and `PROJECT` a new
 directory outside the repository:
 
     "$GHIDRA"/support/analyzeHeadless "$PROJECT" smartclock \
-      -import third_party/firmware/z3805a-3543b.bin \
+      -import third_party/firmware/images/z3805a-3543b.bin \
       -loader BinaryLoader -loader-baseAddr 0 -processor 68000:BE:32:CPU32 \
       -scriptPath tools/ghidra \
       -postScript SmartClockSetup.java \
       -postScript SmartClockInstaller.java 0xbbc 0x10135c \
       -postScript SmartClockSetup.java \
-        types=third_party/firmware/z3805a-3543b/smartclock.h \
+        types=third_party/firmware/rewritten/z3805a-3543b/types/smartclock.h \
         types=third_party/firmware/include/mc68331.h \
         types=third_party/firmware/include/mc68681.h \
-        names=third_party/firmware/z3805a-3543b/names.tsv \
-        names=third_party/firmware/z3805a-3543b/scpi-tree.tsv \
-        names=third_party/firmware/z3805a-3543b/installer-scpi-tree.tsv \
-        scpi=third_party/firmware/z3805a-3543b/handlers.txt \
+        names=third_party/firmware/analysis/z3805a-3543b/names.tsv \
+        names=third_party/firmware/analysis/z3805a-3543b/scpi-tree.tsv \
+        names=third_party/firmware/analysis/z3805a-3543b/installer-scpi-tree.tsv \
+        scpi=third_party/firmware/analysis/z3805a-3543b/handlers.txt \
         pforth=docs/firmware/pforth/z3805a-3543b.txt \
       -postScript SmartClockForth.java \
       -postScript SmartClockStackParameters.java \
       -postScript SmartClockFormatStrings.java \
       -postScript SmartClockExportC.java \
-        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \
+        third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c \
         defines=third_party/firmware/include/mc68331.h \
         defines=third_party/firmware/include/mc68681.h \
         defines=third_party/firmware/include/psos-signals.h \
-        results=third_party/firmware/z3805a-3543b/results.tsv \
-        rewritten=third_party/firmware/common \
-        rewritten=third_party/firmware/z3805a-3543b/rewritten
+        results=third_party/firmware/analysis/z3805a-3543b/results.tsv \
+        rewritten=third_party/firmware/rewritten/common \
+        rewritten=third_party/firmware/rewritten/z3805a-3543b
 
 [`rewrite.md`, "Reproducing"](rewrite.md#reproducing) gives the
 archive's form too.  An exception in a script does not roll

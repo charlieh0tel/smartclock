@@ -2,7 +2,7 @@
 # requires-python = ">=3.11"
 # ///
 """Confirms the decompiled C's assembly: assembles the __asm__ blocks of
-an image's exported C, third_party/firmware/IMAGE/decompiled/IMAGE.c,
+an image's exported C, third_party/firmware/decompiled/IMAGE/IMAGE.c,
 alone and compares each piece of each routine with the image -- every byte, and every relocated
 field resolved at the image's own addresses: the routines' from the
 .conventions.jsonl sidecar, the made symbols' from .symbols.ld, the
@@ -11,8 +11,8 @@ installer the boot code unpacks from its records (docs/firmware/restart.md,
 "Forced installer entry with an unusable primary").
 
     python3 tools/firmware/decompiled_check.py \\
-        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \\
-        third_party/firmware/z3805a-3543b.bin [OBJECT]
+        third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c \\
+        third_party/firmware/images/z3805a-3543b.bin [OBJECT]
 
 Given OBJECT, the whole file compiled, it also requires each piece's
 section there to be the same size as assembled alone: that gcc's own

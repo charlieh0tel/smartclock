@@ -6,10 +6,11 @@ are what the matches give: the 58503A 3704's and the Z3801A 3543's from the Z380
 
     python3 -I tools/firmware/seed_names.py BASE_FOLDER FOLDER [--write] [--counts PATH]
 
-BASE_FOLDER is the base image's folder, third_party/firmware/z3805a-3543b,
-whose names, modules, handlers and export sidecar are read, beside its
-.bin; FOLDER the seeded image's, whose handlers are read, beside its
-.bin, and which PORTS must name with BASE_FOLDER as its base.
+BASE_FOLDER is the base image's analysis folder,
+third_party/firmware/analysis/z3805a-3543b, whose names, modules and
+handlers are read, with its export's sidecar in decompiled/ and its
+image in images/; FOLDER the seeded image's, whose handlers are read,
+with its image, and which PORTS must name with BASE_FOLDER as its base.
 Without --write, exits nonzero with the difference when either file is
 not what the matches give.  --counts writes the rows carried and not,
 by kind, region and status, and the labels dropped for sharing an
@@ -30,6 +31,7 @@ import tempfile
 import textwrap
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+FIRMWARE = ROOT / 'third_party/firmware'
 spec = importlib.util.spec_from_file_location('image_diff', ROOT / 'tools/firmware/image_diff.py')
 image_diff = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(image_diff)
@@ -228,7 +230,7 @@ def place_key(fields):
 
 HEADER = """\
 # Names for the %(image)s image, for SmartClockSetup.java, seeded from
-# the %(base)s's (third_party/firmware/%(base_folder)s/names.tsv) by the
+# the %(base)s's (third_party/firmware/analysis/%(base_folder)s/names.tsv) by the
 # matches tools/firmware/image_diff.py finds between the two images
 # (docs/firmware/%(document_name)s; PLAN.md, "a second image is ported by
 # copying the first's work").  Each carried row keeps the %(base_model)s's name,
@@ -278,7 +280,7 @@ HEADER = """\
 """
 MODULES_HEADER = """\
 # The %(image)s firmware's C functions by module, seeded from the
-# %(base)s's (third_party/firmware/%(base_folder)s/modules.tsv): each
+# %(base)s's (third_party/firmware/analysis/%(base_folder)s/modules.tsv): each
 # %(base_model)s row re-keyed to its function's %(model)s address through
 # tools/firmware/image_diff.py's matches, as names.tsv is (identical,
 # relocated, or changed at a similarity of %(threshold).2f or more under its own
@@ -459,8 +461,9 @@ def label_sizes(base_folder, types):
     with tempfile.TemporaryDirectory() as scratch:
         source = os.path.join(scratch, 'sizes.c')
         with open(source, 'w') as c:
-            c.write('#include "%s/smartclock.h"\n#include "third_party/firmware/include/mc68331.h"\n'
-                    '#include "third_party/firmware/include/mc68681.h"\n' % os.path.relpath(base_folder, ROOT))
+            c.write('#include "third_party/firmware/rewritten/%s/types/smartclock.h"\n'
+                    '#include "third_party/firmware/include/mc68331.h"\n'
+                    '#include "third_party/firmware/include/mc68681.h"\n' % os.path.basename(base_folder))
             for n, t in enumerate(types):
                 c.write('const unsigned long size_%d = sizeof(%s);\n' % (n, t))
         asm = subprocess.run(['m68k-linux-gnu-gcc', '-mcpu=cpu32', '-S', '-w', '-I', str(ROOT), '-o', '-', source],
@@ -490,12 +493,12 @@ class Seeding:
         self.port = PORTS.get(os.path.basename(folder))
         if self.port is None or self.port.base_folder != base_name:
             sys.exit('%s: no port from %s in seed_names.PORTS' % (folder, base_name))
-        base_image = open(base_folder + '.bin', 'rb').read()
-        other_image = open(folder + '.bin', 'rb').read()
+        base_image = (FIRMWARE / 'images' / (base_name + '.bin')).read_bytes()
+        other_image = (FIRMWARE / 'images' / (os.path.basename(folder) + '.bin')).read_bytes()
         self.other_image = other_image
         image_diff.ADDRESS_RANGES[:] = [(image_diff.LOWEST_ADDRESS, max(len(base_image), len(other_image))),
                                         (image_diff.RAM, image_diff.RAM + image_diff.RAM_SIZE)]
-        items, starts = image_diff.load_base(os.path.join(base_folder, 'decompiled', base_name + '.conventions.jsonl'),
+        items, starts = image_diff.load_base(str(FIRMWARE / 'decompiled' / base_name / (base_name + '.conventions.jsonl')),
                                              os.path.join(base_folder, 'names.tsv'),
                                              os.path.join(base_folder, 'modules.tsv'))
         ours, theirs = image_diff.installer_records(base_image), image_diff.installer_records(other_image)

@@ -7,7 +7,7 @@
 // (OUT/OUTQ output, unregistered or registered, with NOT and FAST;
 // TRI tristate control; I and IQ inputs; PULLUP; "-" for none).
 //
-//     node tools/fpga/iobdump.js ~/src/xc3000/html third_party/firmware/fpga/z3805a.bit
+//     node tools/fpga/iobdump.js ~/src/xc3000/html third_party/firmware/images/fpga/z3805a.bit
 //
 // Not run in CI: it needs a clone of the viewer.  docs/firmware/outputs.md
 // says what it showed.

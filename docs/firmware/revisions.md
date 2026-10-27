@@ -1,7 +1,7 @@
 # 58503A 3633 against 3704
 
 What changed between the two 58503A images,
-`third_party/firmware/58503a-3633.bin` and `58503a-3704.bin`.  The
+`third_party/firmware/images/58503a-3633.bin` and `58503a-3704.bin`.  The
 bench 58503A runs 3704-C.  Addresses are given as 3633 → 3704.
 [58503A 3704 against Z3805A 3543B](58503a-3704.md) sets 3704 against
 the image whose every function is named, function by function.

@@ -341,7 +341,7 @@ EEPROM, and `halt` returns the port to SCPI (item 14).
 
 ## 10. A 58503A image -- done
 
-`third_party/firmware/58503a-3633.bin`, assembled from willhb's flash dumps
+`third_party/firmware/images/58503a-3633.bin`, assembled from willhb's flash dumps
 (`NOTICE`), answered the first questions (`firmware/console.md`, "The 58503A
 image"): the loop has the c·s term, `TCOefficient` is that c and its
 setter writes it, the oscillator current is channel 3 with the same

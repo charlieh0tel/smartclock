@@ -272,7 +272,7 @@ unpacked into `0x100400` to `0x10ac50`.
   pairs, labeled 1L, 1M, 2L and 2M (U12, U14, U11 and U13 on a
   58503A): the M part holds the even bytes and the L part the odd;
   pair 1 is `0x0`--`0x3ffff` and pair 2 `0x40000`--`0x7ffff`, the
-  order that reproduces `third_party/firmware/58503a-3633.bin` and
+  order that reproduces `third_party/firmware/images/58503a-3633.bin` and
   `58503a-3704.bin` from their chip dumps (`third_party/NOTICE`).
   `smartclock-cli join-chips` puts four dumps together that way and
   `split-chips` takes an image apart, whatever the bytes hold, and

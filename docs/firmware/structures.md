@@ -2,14 +2,14 @@
 
 The firmware's data structures and named globals, as the code that uses
 them shows them, in the Z3805A 3543B image.
-`third_party/firmware/z3805a-3543b/smartclock.h` declares the structures
+`third_party/firmware/rewritten/z3805a-3543b/types/smartclock.h` declares the structures
 for Ghidra, a field named only where this note gives the code that shows
-what it is; `third_party/firmware/z3805a-3543b/names.tsv` names and
+what it is; `third_party/firmware/analysis/z3805a-3543b/names.tsv` names and
 types their instances and the globals.  The header uses `<stdint.h>`'s
 types.
 
 `make check-types` compiles
-`third_party/firmware/z3805a-3543b/check-layout.c` with an m68k compiler
+`third_party/firmware/rewritten/z3805a-3543b/types/check-layout.c` with an m68k compiler
 (`m68k-linux-gnu-gcc`, or `M68K_CC`) and fails if a structure's size or
 a named field's offset is not the one given here, an offset read from
 the image written as the difference of its addresses.  The header packs
@@ -1722,7 +1722,7 @@ select answers and Ghidra has no memory to label.
 
 ## What is left untyped
 
-`third_party/firmware/IMAGE/untyped.tsv`, which
+`third_party/firmware/analysis/IMAGE/untyped.tsv`, which
 `tools/ghidra/SmartClockUntyped.java` writes (`README.md`, "Decompiling
 with Ghidra"), lists every run of ROM, and of the installer's overlay,
 that is neither code nor typed data: its references, the items beside

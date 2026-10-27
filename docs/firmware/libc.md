@@ -9,7 +9,7 @@ and those marked *run* were then confirmed by running them:
 known inputs, edge cases among them, and compares the result with what
 the C routine of that name gives.
 
-    uv run tools/firmware/libc_check.py third_party/firmware/z3805a-3543b.bin
+    uv run tools/firmware/libc_check.py third_party/firmware/images/z3805a-3543b.bin
 
 `strlen`, `strcpy` and `strcmp` are not in the block; the compiler
 expands them in line.

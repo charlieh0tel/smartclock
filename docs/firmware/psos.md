@@ -202,7 +202,7 @@ it lies; the long that depends on where the firmware put its
 configuration, `0x51226` at `0x14ac2`, lies before it, as do the trap
 entries.  Nor is it a wrong end: no run of words that starts between
 `0x14a00` and `0x14d00` sums to the stored value.  Every image in
-`third_party/firmware/` -- the 58503A's 3633 and 3704, the 58503B's
+`third_party/firmware/images/` -- the 58503A's 3633 and 3704, the 58503B's
 1.01.04, the Z3801A's 3543, this one, the Z3815A's 4010 and the
 Z3816A's 4001 -- has the same stored sum in both its copies of the
 kernel, and every copy sums to `0x028d24cc` but the 58503A 3633's

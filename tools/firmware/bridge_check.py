@@ -23,8 +23,8 @@ has no binding of this kind: the hand-written C calls it in an asm
 statement of its own, and the function check runs those callers.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/bridge_check.py \\
-        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \\
-        third_party/firmware/z3805a-3543b.bin
+        third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c \\
+        third_party/firmware/images/z3805a-3543b.bin
 
 A routine that reaches beyond what the harness maps, calls a kernel
 service the harness does not model, or traps, the same way both times

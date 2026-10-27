@@ -587,8 +587,8 @@ pub(crate) struct DumpScpiArgs {
     /// disassembler (tools/ghidra/).
     #[arg(long, conflicts_with = "models")]
     handlers: bool,
-    /// Print every record of the tree as C data, for an image folder's
-    /// `rewritten/` (docs/scpi/README.md, "As C").
+    /// Print every record of the tree as C data, for an image's
+    /// `rewritten/IMAGE/` (docs/scpi/README.md, "As C").
     #[arg(long, conflicts_with_all = ["models", "handlers", "names"])]
     c: bool,
     /// Print a label and type row for every record of the tree, in the
@@ -596,7 +596,7 @@ pub(crate) struct DumpScpiArgs {
     #[arg(long, conflicts_with_all = ["models", "handlers"])]
     names: bool,
     /// With `--c` or `--names`, a names file
-    /// (`third_party/firmware/IMAGE/names.tsv`) whose name for an
+    /// (`third_party/firmware/analysis/IMAGE/names.tsv`) whose name for an
     /// address replaces the one made from the path, and names the
     /// routines the tree points at; with `--names`, rows for the
     /// addresses it names are left out.
@@ -700,7 +700,7 @@ mod tests {
             .collect())
     }
 
-    /// Each image in `third_party/firmware/`, by the name its tree has
+    /// Each image in `third_party/firmware/images/`, by the name its tree has
     /// in `docs/scpi/`.
     pub(super) const IMAGES: [&str; 7] = [
         "58503a-3633",
@@ -716,7 +716,7 @@ mod tests {
     fn every_image_gives_the_tree_its_document_holds() {
         let root = format!("{}/../..", env!("CARGO_MANIFEST_DIR"));
         for name in IMAGES {
-            let image = std::fs::read(format!("{root}/third_party/firmware/{name}.bin"))
+            let image = std::fs::read(format!("{root}/third_party/firmware/images/{name}.bin"))
                 .expect("the image is in the repository");
             let held = std::fs::read_to_string(format!("{root}/docs/scpi/{name}.txt"))
                 .expect("the tree is in the repository");
@@ -730,8 +730,10 @@ mod tests {
     #[test]
     fn handler_lines_give_the_handlers_the_firmware_notes_found() {
         let root = format!("{}/../..", env!("CARGO_MANIFEST_DIR"));
-        let image = std::fs::read(format!("{root}/third_party/firmware/z3805a-3543b.bin"))
-            .expect("the image is in the repository");
+        let image = std::fs::read(format!(
+            "{root}/third_party/firmware/images/z3805a-3543b.bin"
+        ))
+        .expect("the image is in the repository");
         let lines: Vec<String> = entries(&image)
             .expect("the image has a tree")
             .iter()
@@ -745,15 +747,17 @@ mod tests {
         }
     }
 
-    /// The image folder's handlers.txt, SmartClockSetup.java's `scpi=`,
+    /// The image's analysis/IMAGE/handlers.txt, SmartClockSetup.java's `scpi=`,
     /// is what `make handlers` writes from the image.
     #[test]
     fn the_handlers_file_is_what_the_image_gives() {
         let root = format!("{}/../..", env!("CARGO_MANIFEST_DIR"));
-        let image = std::fs::read(format!("{root}/third_party/firmware/z3805a-3543b.bin"))
-            .expect("the image is in the repository");
+        let image = std::fs::read(format!(
+            "{root}/third_party/firmware/images/z3805a-3543b.bin"
+        ))
+        .expect("the image is in the repository");
         let held = std::fs::read_to_string(format!(
-            "{root}/third_party/firmware/z3805a-3543b/handlers.txt"
+            "{root}/third_party/firmware/analysis/z3805a-3543b/handlers.txt"
         ))
         .expect("the handlers file is in the repository");
         let lines: Vec<String> = entries(&image)
@@ -774,7 +778,7 @@ mod tests {
         let trees: Vec<(String, Vec<Entry>)> = IMAGES
             .iter()
             .map(|name| {
-                let image = std::fs::read(format!("{root}/third_party/firmware/{name}.bin"))
+                let image = std::fs::read(format!("{root}/third_party/firmware/images/{name}.bin"))
                     .expect("the image is in the repository");
                 (
                     (*name).to_owned(),
@@ -804,7 +808,7 @@ mod tests {
         let trees: Vec<Vec<Entry>> = IMAGES
             .iter()
             .map(|name| {
-                let image = std::fs::read(format!("{root}/third_party/firmware/{name}.bin"))
+                let image = std::fs::read(format!("{root}/third_party/firmware/images/{name}.bin"))
                     .expect("the image is in the repository");
                 entries(&image).expect("the image has a tree")
             })

@@ -1,5 +1,5 @@
 # The Z3801A 3543 firmware's C functions by module, seeded from the
-# Z3805A 3543B's (third_party/firmware/z3805a-3543b/modules.tsv): each
+# Z3805A 3543B's (third_party/firmware/analysis/z3805a-3543b/modules.tsv): each
 # Z3805A row re-keyed to its function's Z3801A address through
 # tools/firmware/image_diff.py's matches, as names.tsv is (identical,
 # relocated, or changed at a similarity of 0.70 or more under its own

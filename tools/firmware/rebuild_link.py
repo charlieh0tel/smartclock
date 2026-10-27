@@ -21,8 +21,8 @@ reads them: each child list's children right after the list, and every
 record but text at an even address.
 
     DECOMPILED_CFLAGS='...' CPU32_LIBGCC=... uv run tools/firmware/rebuild_link.py \\
-        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \\
-        third_party/firmware/z3805a-3543b.bin [ELF]
+        third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c \\
+        third_party/firmware/images/z3805a-3543b.bin [ELF]
 
 make check-decompiled runs it with its flags and library, as make runs
 the function and bridge checks, which link the same way.  Needs

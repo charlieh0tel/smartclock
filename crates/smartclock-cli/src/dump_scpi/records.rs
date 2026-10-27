@@ -1,5 +1,5 @@
 //! The records of an SCPI command tree, every one its roots reach,
-//! read by the layouts an image folder's `smartclock.h` declares and
+//! read by the layouts an image's `types/smartclock.h` declares and
 //! named by the command path that first reaches them, for `--c` and
 //! `--names` (docs/scpi/README.md, "As C").
 //!
@@ -62,7 +62,7 @@ const CHOICES_SLOT: u32 = 8;
 /// Where their converters start, one for each parameter kind.
 const CONVERTERS_SLOT: u32 = 0xc;
 /// How many converters: `SCPI_PARAMETER_DECIMAL` to `_EXPRESSION`
-/// (z3805a-3543b/rewritten/scpi.h), which the records' stride confirms.
+/// (rewritten/z3805a-3543b/scpi.h), which the records' stride confirms.
 const PARAMETER_KINDS: usize = 6;
 /// A parameter's kinds' bytes (`scpi_parameter_kinds`).
 const KINDS_SIZE: u32 = CONVERTERS_SLOT + 4 * PARAMETER_KINDS as u32;
@@ -151,7 +151,7 @@ pub(super) enum Space {
     Installer,
 }
 
-/// What a names file names, by address (`third_party/firmware/IMAGE/names.tsv`).
+/// What a names file names, by address (`third_party/firmware/analysis/IMAGE/names.tsv`).
 #[derive(Debug, Default)]
 pub(super) struct NamesFile {
     /// Each function row's name.
@@ -1078,7 +1078,7 @@ mod tests {
         let held = std::fs::read_to_string(format!("{root}/docs/scpi/README.md"))
             .expect("the document is in the repository");
         for name in IMAGES {
-            let image = std::fs::read(format!("{root}/third_party/firmware/{name}.bin"))
+            let image = std::fs::read(format!("{root}/third_party/firmware/images/{name}.bin"))
                 .expect("the image is in the repository");
             for tree in [Tree::Primary, Tree::Installer] {
                 let records = Records::read(&image, tree, None).expect("the image has the tree");

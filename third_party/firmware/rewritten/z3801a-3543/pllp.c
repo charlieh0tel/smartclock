@@ -364,3 +364,304 @@ static void pllp_ack_done(void) {
     task_dmessage("GPS command completed\r\n");
   }
 }
+
+/* Takes a reply from plla_exchange, if one waits: a sequence's is the
+ * acknowledgment, a setting's completes it. */
+static void pllp_take_reply(void) {
+  gps_request_entry reply;
+
+  if ((uint8_t)psos_request_x(plla_exchange, &reply, 1, 0) != 0) {
+    return;
+  }
+  if (reply.result != PLL_GPS_CONTROL_ACK_OK) {
+    plla_failed_count++;
+  }
+  if (reply.sender == GPS_SENDER_SEQUENCE) {
+    if (gps_ack_awaited == GPS_ACK_NONE) {
+      plla_unexpected_count++;
+    }
+    gps_ack_code = reply.result;
+    gps_ack_ready = 1;
+    gps_ack_wait_count = 0;
+    pllp_ack_done();
+  } else if (reply.sender == GPS_SENDER_SETTING) {
+    pll_scpi_complete((int32_t*)&plla_unexpected_count,
+                      reply.result == PLL_GPS_CONTROL_ACK_OK);
+  } else {
+    plla_unknown_count++;
+  }
+  plla_received_count++;
+}
+
+/* Counts a second of an awaited acknowledgment: one in is no longer
+ * awaited after 10, and one not in times out after 1200. */
+static void pllp_ack_wait(void) {
+  static const uint16_t READY_SECONDS = 10;
+  static const uint16_t TIMEOUT_SECONDS = 1200;
+
+  if (gps_ack_awaited == GPS_ACK_NONE) {
+    return;
+  }
+  gps_ack_wait_count++;
+  if (gps_ack_wait_count > READY_SECONDS && gps_ack_ready != 0) {
+    gps_ack_awaited = GPS_ACK_NONE;
+  } else if (gps_ack_wait_count > TIMEOUT_SECONDS) {
+    gps_ack_code = PLL_GPS_CONTROL_ACK_TIMED_OUT;
+    gps_ack_ready = 1;
+    gps_ack_wait_count = 0;
+    task_dmessage("GPS acknowledgment timed out\r\n");
+    pllp_ack_done();
+  }
+}
+
+/* Reports the GPS reference's coming and going as satellites
+ * sufficient. */
+static void pllp_reference_status(void) {
+  if (gps.reference_qualified == 0 || gps_pps_dead != 0) {
+    if (gps_reference_good != 0) {
+      gps_reference_good = 0;
+      status_happening(STATUS_SATELLITES_SUFFICIENT_CLEARED);
+    }
+  } else if (gps_reference_good == 0) {
+    gps_reference_good = 1;
+    status_happening(STATUS_SATELLITES_SUFFICIENT_SET);
+  }
+}
+
+/* Steps the stage a second, reporting one just entered. */
+static void pllp_step_stage(bool same_stage) {
+  /* The ticks an idle or failed loop pauses for. */
+  static const uint32_t IDLE_TICKS = 0x400;
+
+  switch (pll.stage) {
+    case PLL_STAGE_POWERUP: {
+      if (!same_stage) {
+        pll_lock = 0;
+        pll_stage_status();
+        task_dmessage("PLL powerup\r\n");
+      }
+      pll_stage_result result = powerup(same_stage);
+
+      if (result == PLL_STAGE_RESULT_DONE) {
+        pll.stage = PLL_STAGE_STARTUP_PLL;
+      } else if (result == PLL_STAGE_RESULT_FAILED) {
+        pll_restart();
+      }
+      return;
+    }
+    case PLL_STAGE_POWERUP_RECOVERY: {
+      if (!same_stage) {
+        pll_stage_status();
+        task_dmessage("Went into powerup recovery\r\n");
+        leap_recheck_requested = 1;
+      }
+      pll_stage_result result = pll_check_reference(same_stage);
+
+      if (result == PLL_STAGE_RESULT_DONE) {
+        pll.stage = PLL_STAGE_HOLDOVER_RECOVERY;
+      } else if (result == PLL_STAGE_RESULT_FAILED) {
+        enter_holdover();
+      }
+      return;
+    }
+    case PLL_STAGE_HOLDOVER:
+      if (!same_stage) {
+        pll_stage_status();
+        task_dmessage("Went into holdover\r\n");
+      }
+      if (holdover(same_stage) == PLL_STAGE_RESULT_DONE) {
+        pll.stage = PLL_STAGE_HOLDOVER_RECOVERY;
+      }
+      return;
+    case PLL_STAGE_HOLDOVER_RECOVERY: {
+      if (!same_stage) {
+        pll_lock = 1;
+        pll_stage_status();
+        task_dmessage("Went into holdover recovery\r\n");
+      }
+      pll_stage_result result = holdover_recovery(same_stage);
+
+      if (result == PLL_STAGE_RESULT_DONE) {
+        pll.stage = PLL_STAGE_STARTUP_PLL;
+      } else if (result == PLL_STAGE_RESULT_FAILED) {
+        enter_holdover();
+      }
+      return;
+    }
+    case PLL_STAGE_STARTUP_PLL: {
+      if (!same_stage) {
+        pll_lock = 1;
+        pll_stage_status();
+        task_dmessage("Went into PLL startup\r\n");
+      }
+      pll_stage_result result = startup_pll(same_stage);
+
+      if (result == PLL_STAGE_RESULT_DONE) {
+        pll.stage = PLL_STAGE_NORMAL_PLL;
+      } else if (result == PLL_STAGE_RESULT_FAILED) {
+        enter_holdover();
+      }
+      return;
+    }
+    case PLL_STAGE_NORMAL_PLL:
+      if (!same_stage) {
+        pll_stage_status();
+        task_dmessage("Went into PLL normal\r\n");
+      }
+      if (pll_normal(same_stage) == PLL_STAGE_RESULT_FAILED) {
+        enter_holdover();
+      }
+      return;
+    case PLL_STAGE_DIAG:
+      if (!same_stage) {
+        pll_stage_status();
+        pll.loop_running = 0;
+        task_dmessage("Went into Diag\r\n");
+      }
+      if (gps_diag_sequence(same_stage)) {
+        pll_restart();
+      }
+      return;
+    case PLL_STAGE_IDLE:
+      if (!same_stage) {
+        pll_stage_status();
+        task_dmessage("Went into Idle\r\n");
+      }
+      break;
+    case PLL_STAGE_FATAL_ERROR:
+      if (!same_stage) {
+        pll_stage_status();
+        task_dmessage("Went into fatal error\r\n");
+      }
+      break;
+    default:
+      pll.stage = PLL_STAGE_POWERUP;
+      break;
+  }
+  psos_pause(IDLE_TICKS);
+}
+
+/* The pllp task: sets the loop up, from power-up or after a reboot as
+ * power-up recovery, then each second steps its stage, takes the GPS's
+ * acknowledgments, steps the GPS sequences and the settings server and
+ * keeps the GPS's and the loop's state in the preserved region.
+ * The Z3805A's also enables the ES message and updates status_summary
+ * (0x474f2). */
+void pllp_task(void) {
+  /* The EFC's gain, fractional frequency a count. */
+  static const float EFC_GAIN = 6.25e-13f;
+  bool system_preset = false;
+  pll_stage last_stage;
+
+  watchdog_pll++;
+  interval_tick_wait = 0;
+  pll_unread_flag_1 = 0;
+  pll_unread_flag_2 = 0;
+  pll_restart_requested = 0;
+  gps_ack_wait_count = 0;
+  gps_ack_code = 1;
+  pll_scpi_reply_pending = 0;
+  pll_scpi_signal_delay = 0;
+  gps_ack_ready = 0;
+  gps_ack_awaited = GPS_ACK_NONE;
+  last_stage = PLL_STAGE_INVALID;
+  gps_ack_abandoned = 0;
+  douglas_start_requested = 0;
+  douglas_stop_requested = 0;
+  douglas_finish_requested = 0;
+  douglas_finish_nv_argument = REQUEST_SOURCE_INTERNAL;
+  selftest_requested = 0;
+  clock_change_applied = 0;
+  clock_change_armed = 0;
+  pll_debug_enabled = 0;
+  restart_reference_seconds = pll.reference_seconds;
+  restart_reference_uptime = pll.reference_uptime;
+  interval_mean_flag = 0;
+  clock_gps_mismatch = 0;
+  efc_gain_set(EFC_GAIN);
+  if (pll.stage == PLL_STAGE_INVALID) {
+    pll.stage = PLL_STAGE_POWERUP;
+    system_preset = preserved_region.restore != PRESERVED_REGION_RESTORE;
+    if (system_preset) {
+      log_event(LOG_SYSTEM_PRESET);
+    } else {
+      status_happening(STATUS_POWER_ON);
+      log_event(LOG_POWER_ON);
+    }
+    if (nv_settings.douglas_state_powerup != 0) {
+      nv_settings.douglas_state = 0;
+    }
+  } else {
+    pll.previous_stage = pll.stage;
+    if (pll.stage != PLL_STAGE_POWERUP) {
+      pll.stage = PLL_STAGE_POWERUP_RECOVERY;
+    }
+    log_event(LOG_REBOOT);
+  }
+  ti_setpoint = 0.0f;
+  counter_init();
+  pllp_start_nothing_a();
+  pllp_start_nothing_b();
+  gpsx_sent_count = 0;
+  plla_received_count = 0;
+  plla_unexpected_count = 0;
+  plla_unknown_count = 0;
+  plla_failed_count = 0;
+  watchdog_pll++;
+  if (pll.stage == PLL_STAGE_POWERUP) {
+    counter_reset();
+    selftest_print_failure(system_preset);
+  }
+  pll_stage_status();
+  pll.loop_running = 1;
+  for (;;) {
+    if (pll_restart_requested != 0) {
+      pll_restart();
+      last_stage = PLL_STAGE_INVALID;
+      pll_restart_requested = 0;
+    }
+    if (selftest_requested != 0) {
+      pll.stage = PLL_STAGE_DIAG;
+    }
+    bool same_stage = pll.stage == last_stage;
+
+    if (!same_stage) {
+      last_stage = pll.stage;
+      if (gps_ack_awaited == GPS_ACK_SELFTEST) {
+        pllp_abandon_ack();
+      }
+      pll.sync_requested = 0;
+      clock_gps_mismatch = 0;
+    }
+    pllp_reference_status();
+    pllp_step_stage(same_stage);
+    pll.reference_seconds = fpga_read_seconds();
+    pll.reference_uptime = get_uptime();
+    watchdog_pll++;
+    if (clock_change_applied != 0) {
+      nv_save(REQUEST_SOURCE_INTERNAL);
+      clock_change_applied = 0;
+      clock_change_armed = 0;
+    }
+    pllp_take_reply();
+    pllp_ack_wait();
+    gps_init_sequence();
+    if ((int8_t)pll.gps_init_state > PLL_GPS_INIT_HOLD_OFF_ACK) {
+      gps_leap_ack();
+    }
+    gps_leap_sequence();
+    if (gps_command.code != GPS_CONSOLE_NONE &&
+        gps_ack_awaited == GPS_ACK_NONE) {
+      gps_command_send();
+    }
+    pll_scpi_receive();
+    memcpy(preserved_region.values, &retained_block,
+           sizeof preserved_region.values);
+    preserved_region.gps = gps;
+    preserved_region.pll = pll;
+    preserved_region.restore = PRESERVED_REGION_RESTORE;
+    preserved_region.checksum =
+        record_checksum(&preserved_region, sizeof preserved_region);
+    leds_update();
+  }
+}

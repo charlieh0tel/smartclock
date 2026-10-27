@@ -135,6 +135,29 @@ uint32_t save_calibration_block(int32_t index, int32_t source) {
   return 1;
 }
 
+/* Reads DUART channel B's settings from the parameter record, or their
+ * defaults; true when its checksum holds.  The Z3805A's also sets the
+ * SCI's defaults (0x2fc24). */
+uint8_t parameter_record_read(void) {
+  bool valid = record_checksum(&eeprom_parameter_record,
+                               sizeof eeprom_parameter_record) ==
+               eeprom_parameter_record.checksum;
+
+  if (valid) {
+    duartb_settings.baud = eeprom_parameter_record.duartb_baud;
+    duartb_settings.parity = eeprom_parameter_record.duartb_parity;
+    duartb_settings.xon_xoff = eeprom_parameter_record.duartb_xon_xoff;
+    duartb_settings.field_05 = eeprom_parameter_record.duartb_field_05;
+    duartb_settings.eight_bits = eeprom_parameter_record.duartb_eight_bits;
+    duartb_settings.two_stop_bits =
+        eeprom_parameter_record.duartb_two_stop_bits;
+    duartb_settings.echo = eeprom_parameter_record.duartb_echo;
+  } else {
+    memcpy(&duartb_settings, &records_duartb_defaults, sizeof duartb_settings);
+  }
+  return valid;
+}
+
 /* Writes the serial port's settings to the parameter record, a memory
  * error for the source when it fails (0x2fca6). */
 bool save_parameter_record(request_source source) {

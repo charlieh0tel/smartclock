@@ -246,6 +246,24 @@ pll_stage_result coarse(void) {
   return result;
 }
 
+/* Syncs the outputs to GPS when a sync is asked for or, in the power-up
+ * stage only, the TI passes the limit threshold; whether it did.  The
+ * Z3805A's syncs on the threshold in any stage (0x44f8a). */
+uint8_t sync_perform(float ti) {
+  if (pll.sync_requested == 0 &&
+      (pll.stage != PLL_STAGE_POWERUP ||
+       float_compare(float_absolute_on_stack(ti),
+                     nv_settings.limit_threshold) <= 0)) {
+    return 0;
+  }
+  sync_request(COUNTER_SYNC_FULL, 1);
+  pll.sync_requested = 0;
+  if (pll_debug_enabled != 0) {
+    task_dmessage("Peforming sync\r\n");
+  }
+  return 1;
+}
+
 /* fine's readings to its fit, fine_readings' entries. */
 static const uint8_t PLL_STAGES_FINE_READINGS =
     sizeof fine_readings / sizeof fine_readings[0];
@@ -662,6 +680,106 @@ static void pll_stages_steer(pll_stages_gains gains, float current,
   loop_steering.readings = 0;
   loop_steering.seconds = 0;
   loop_steering.measurement_failed = 0;
+}
+
+/* The loop's steps from a time constant to the next: integral + the
+ * filtered TI's change of scale, 1 / (tau - 5) - 1 / tau. */
+static void pll_stages_rescale_integral(float previous_tau) {
+  static const float ONE = 1.0f;
+  static const float MINUS_ONE = -1.0f;
+  float scale = float_add(float_divide_reversed(previous_tau, ONE),
+                          float_divide(MINUS_ONE, pll.loop_time_constant));
+
+  float_add_in_place(
+      &loop_steering.integral,
+      float_multiply(float_multiply(efc_gains.reciprocal_ti, pll.ti_filtered),
+                     scale));
+}
+
+/* The start-up loop: a proportional-integral loop on 10-second blocks
+ * whose time constant grows 5 s a block to max_loop_time, settling once
+ * 15 blocks in a row are within 150 ns and the EFC history has its
+ * first entries; done at the full time constant (0x442ca). */
+pll_stage_result startup_pll(bool same_stage) {
+  static const int32_t SETTLED_BLOCKS = 15;
+  static const double SETTLED_TI = 1.5e-07;
+  static const float SETTLED_TFOM = 1e-06f;
+  static const uint8_t FIRST_ENTRIES = 3;
+  static const float TAU_STEP = 5.0f;
+  static const float MINUS_TAU_STEP = -5.0f;
+  pll_stage_result result = PLL_STAGE_RESULT_RUNNING;
+  float ti;
+  float current = adc_average(ADC_CURRENT);
+
+  if (!same_stage || (int8_t)pll.startup_state > PLL_STARTUP_LENGTHENING) {
+    pll.frequency_adjusted = 0;
+    pll.ti_filtered = 0.0f;
+    loop_steering.integral = 0.0f;
+    pll.efc_base = pll_efc_less_temperature(current);
+    loop_steering.ti_sum = 0.0f;
+    loop_steering.readings = 0;
+    loop_steering.seconds = 0;
+    loop_steering.measurement_failed = 0;
+    loop_steering.large_offset_blocks = 0;
+    interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
+    pll.startup_state = PLL_STARTUP_SETTLING;
+    return pll_stages_check_causes(result);
+  }
+  uint8_t valid = interval_next_reading(INTERVAL_ARM_CALIBRATE, &ti);
+
+  pll_stages_loop_reading(valid, ti,
+                          "startup_pll - Error with measurement\r\n");
+  loop_steering.seconds++;
+  if (loop_steering.seconds < PLL_STAGES_BLOCK_SECONDS) {
+    return pll_stages_check_causes(result);
+  }
+  if (!pll_stages_loop_mean()) {
+    result = PLL_STAGE_RESULT_FAILED;
+  }
+  switch (pll.startup_state) {
+    case PLL_STARTUP_SETTLING:
+      if (loop_steering.large_offset_blocks < SETTLED_BLOCKS) {
+        if (double_compare(
+                float_to_double(float_absolute_on_stack(loop_steering.ti_sum)),
+                SETTLED_TI) <= 0) {
+          loop_steering.large_offset_blocks = 0;
+        } else {
+          loop_steering.large_offset_blocks++;
+        }
+      } else if (pll.aging_state == PLL_AGING_COLLECTING) {
+        pll.startup_state = PLL_STARTUP_LENGTHENING;
+      } else {
+        pll.tfom = SETTLED_TFOM;
+        pll.efc_history.loop_settled = 1;
+        pll.startup_state = PLL_STARTUP_WAITING_FOR_HISTORY;
+      }
+      break;
+    case PLL_STARTUP_WAITING_FOR_HISTORY:
+      if (pll.efc_history.stop_ptr == FIRST_ENTRIES &&
+          pll.efc_history.start_ptr == 0) {
+        pll.startup_state = PLL_STARTUP_LENGTHENING;
+      }
+      break;
+    case PLL_STARTUP_LENGTHENING:
+      if (float_compare(float_add(max_loop_time, MINUS_TAU_STEP),
+                        pll.loop_time_constant) <= 0) {
+        if (result != PLL_STAGE_RESULT_FAILED) {
+          pll.loop_time_constant = max_loop_time;
+          pll_stages_rescale_integral(float_add(max_loop_time, MINUS_TAU_STEP));
+          result = PLL_STAGE_RESULT_DONE;
+        }
+      } else {
+        float_add_in_place(&pll.loop_time_constant, TAU_STEP);
+        pll_stages_rescale_integral(
+            float_add(pll.loop_time_constant, MINUS_TAU_STEP));
+      }
+      break;
+    default:
+      break;
+  }
+  pll_stages_steer(pll_stages_gains_for(pll.loop_time_constant), current,
+                   pll.loop_time_constant);
+  return pll_stages_check_causes(result);
 }
 
 /* The normal loop: the start-up loop's at max_loop_time, its gains kept

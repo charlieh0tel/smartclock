@@ -512,13 +512,13 @@ void selftest_run(uint32_t number) {
   }
 }
 
-/* "PROC": selftest.cpu, the reset code's CPU test (0x182f4). */
+/* "PROC": selftest.cpu, the reset code's CPU test (0x182ea). */
 uint32_t selftest_cpu_result(void) { return (uint16_t)selftest.cpu; }
 
-/* "RAM": selftest.ram, the reset code's RAM test (0x182fe). */
+/* "RAM": selftest.ram, the reset code's RAM test (0x182f4). */
 uint32_t selftest_ram_result(void) { return selftest.ram; }
 
-/* "EEPROM": selftest.eeprom (0x189ea). */
+/* "EEPROM": selftest.eeprom (0x182fe). */
 uint32_t selftest_eeprom_result(void) { return (uint16_t)selftest.eeprom; }
 
 /* "UART": duart_test, lighting OP6 on a failure; selftest.uart

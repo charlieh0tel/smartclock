@@ -834,12 +834,12 @@ void gps_receiver_status_update_58503a(gps_receiver_number receiver,
 
   if (reference->override == GPS_REFERENCE_OVERRIDE_NONE) {
     if (next == GPS_SYNC_VALID) {
-      reference->valid = 1;
+      reference->valid = GPS_REFERENCE_VALID;
     } else if (next == GPS_SYNC_QUESTIONABLE ||
                next == GPS_SYNC_QUESTIONABLE_CLEARING) {
-      reference->valid = 2;
+      reference->valid = GPS_REFERENCE_QUESTIONABLE;
     } else {
-      reference->valid = 0;
+      reference->valid = GPS_REFERENCE_INVALID;
     }
   } else {
     reference->valid = reference->override == GPS_REFERENCE_OVERRIDE_VALID;

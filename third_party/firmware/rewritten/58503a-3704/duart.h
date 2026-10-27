@@ -9,6 +9,10 @@
  * The registers are mc68681.h's; the critical sections use cpu.h's
  * status register helpers. */
 
+/* The counter's clock from TxCB, as the reset leaves it and the boot
+ * code sets it (MC68681 Table 4-4; 0x53c). */
+static const uint8_t DUART_ACR_COUNTER_TXCB = 0x20;
+
 /* A driver's flow byte (duartb_driver.flow). */
 static const uint8_t DUART_FLOW_XOFF_SENT = 0x20;
 

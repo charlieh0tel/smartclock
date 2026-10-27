@@ -2136,7 +2136,7 @@ typedef struct gps_statistics {
 
 #include "../../common/types/os.h"
 
-/* A fixed event log message, by the code log_event (0x3189a) takes
+/* A fixed event log message, by the code log_event_58503a (0x3189a) takes
  * and its jump table's order (0x318bc, 28 cases); the names are the
  * messages'.  enter_holdover (0x4396e) picks a holdover's by its cause.
  * The 58503A 3704 adds "EXT reference valid" as 0x15, moving the

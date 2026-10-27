@@ -241,7 +241,7 @@ void log_ext_reference_valid(uint32_t date, uint32_t time) {
   log_write(LOG_TEXT_EXT_REFERENCE_VALID_AT, date, time);
 }
 
-/* log_event's messages, by code: the image's texts at their addresses,
+/* log_event_58503a's messages, by code: the image's texts at their addresses,
  * which an entry keeps; the export declares objects for some
  * (log_text_*), not all. */
 static char* const records_log_events[] = {
@@ -275,7 +275,7 @@ static char* const records_log_events[] = {
     [LOG_SYSTEM_PRESET] = (char*)0x31f4e,
 };
 
-/* Logs one of log_event's messages by its code (0x3189a). */
+/* Logs one of log_event_58503a's messages by its code (0x3189a). */
 int32_t log_event_58503a(log_event_code code) {
   /* The result for a code it has no message for. */
   static const uint8_t LOG_EVENT_UNKNOWN = 0xfd;

@@ -1279,6 +1279,7 @@
 0x31ac4	log_ext_reference_valid	services/log	written by hand for the 58503A 3704
 0x21b48	hmon_convert_temperature	services/monitors	written by hand for the 58503A 3704
 0x21b62	hmon_convert_5v	services/monitors	written by hand for the 58503A 3704
+0x21b7c	hmon_convert_oven_unused	services/monitors	unreferenced, among the monitors; written by hand for the 58503A 3704
 0x21bc4	hmon_convert_oven	services/monitors	written by hand for the 58503A 3704
 0x21c0c	hmon_convert_15v	services/monitors	written by hand for the 58503A 3704
 0x21c26	hmon_convert_minus_15v	services/monitors	written by hand for the 58503A 3704
@@ -1297,6 +1298,7 @@
 0x2220a	hmon_channel_step	services/monitors	written by hand for the 58503A 3704
 0x222a6	adc_average	services/monitors	written by hand for the 58503A 3704
 0x222f2	hmon_check_antenna_current	services/monitors	written by hand for the 58503A 3704
+0x23464	porte_read_steady	services/monitors	unreferenced, among the monitors; written by hand for the 58503A 3704
 0x234ae	portf0_read_steady	services/monitors	unreferenced, among the monitors; written by hand for the 58503A 3704
 0x234f8	portgp_read_steady	services/monitors	unreferenced, among the monitors; written by hand for the 58503A 3704
 0x32b62	nv_records_valid	services/nv	written by hand for the 58503A 3704

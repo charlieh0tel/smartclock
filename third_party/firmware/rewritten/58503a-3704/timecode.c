@@ -141,20 +141,20 @@ void timecode_update(void) {
 }
 
 /* Clears the time code's state, the Z3805A's ES message's remnants, and
- * sets the :DIAGnostic:TCODe masks, which nothing else reads, to 0xff
- * and 0 (0x14010). */
+ * sets the :DIAGnostic:TCODe masks, which only their SCPI handlers read,
+ * to 0xff and 0 (0x14010). */
 void timecode_init(void) {
-  static const uint8_t TCODE_AMASK_ALL = 0xff;
+  static const uint8_t TCODE_AND_MASK_ALL = 0xff;
 
   tcode_length = 0;
   tcode_pending = 0;
   es_length = 0;
   es_ascii = 0;
   es_enabled = 0;
-  tcode_error_amask = TCODE_AMASK_ALL;
-  tcode_error_omask = 0;
-  tcode_status_amask = TCODE_AMASK_ALL;
-  tcode_status_omask = 0;
+  tcode_error_and_mask = TCODE_AND_MASK_ALL;
+  tcode_error_or_mask = 0;
+  tcode_status_and_mask = TCODE_AND_MASK_ALL;
+  tcode_status_or_mask = 0;
 }
 
 /* Sets output compare 3 to send the time code a delay, in GPT ticks, after

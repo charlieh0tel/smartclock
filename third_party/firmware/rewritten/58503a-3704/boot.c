@@ -11,11 +11,6 @@
  * B's transmitter (0x53c), where the Z3805A's takes the crystal over
  * 16. */
 void boot_duart_early_init(void) {
-  /* The counter clocked by channel B's transmitter (MC68681 Table 4-4);
-   * duart.c's DUART_ACR_COUNTER_TXCB, which that file, compiled after
-   * this one, keeps to itself. */
-  static const uint8_t BOOT_ACR_COUNTER_TXCB = 0x20;
-
   boot_selftest.uart = 0;
   duart.ivr = DUART_IVR_PATTERN_1;
   if (duart.ivr != DUART_IVR_PATTERN_1) {
@@ -33,7 +28,7 @@ void boot_duart_early_init(void) {
     duart.b.mr = MR1_PARITY_NONE | DUART_MR1_EIGHT_BITS;
     duart.b.mr = DUART_MR2_ONE_STOP_BIT;
     duart.b.sr_csr = DUART_CSR_9600 << DUART_CSR_CLOCK_BITS | DUART_CSR_9600;
-    duart.ipcr_acr = ACR_BRG_SET_2 | BOOT_ACR_COUNTER_TXCB;
+    duart.ipcr_acr = ACR_BRG_SET_2 | DUART_ACR_COUNTER_TXCB;
     boot_duartb_loopback_check();
   }
 }

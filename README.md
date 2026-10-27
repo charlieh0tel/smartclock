@@ -116,7 +116,7 @@ firmware's faults are kept, not fixed.  Method, checks and limits:
 
 The 58503A's 3704 is read whole as C too, its C begun as the
 Z3805A's and rewritten to its own code, and held to the same
-checks: of the primary's functions 1415 agree and 5 differ for the
+checks: of the primary's functions 1418 agree and 4 differ for the
 firmware's own reasons, and the installer's 247 agree, one the harness
 cannot run; its console sessions agree, 8 of 8.  What it has that the
 Z3805A does not, the front panel among it:

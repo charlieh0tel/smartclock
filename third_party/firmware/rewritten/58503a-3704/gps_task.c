@@ -357,8 +357,10 @@ static void gps_task_wait(gps_running_command* command, bool complete,
 void gpsm_task(void) {
   static const uint32_t REQUEST_WAIT_TICKS = 10;
   uint8_t tries = CPU_CALLERS_REGISTER(uint32_t, "d4");
-  gps_request_entry received;
-  gps_request_entry next;
+  /* Even, since gcc reads their words as such, misaligned at an odd
+   * frame offset (MC68331UM, 4.4.4) and the type packed. */
+  gps_request_entry __attribute__((aligned(2))) received;
+  gps_request_entry __attribute__((aligned(2))) next;
   gps_running_command command;
   uint32_t sent_time;
   uint8_t rejected_length;

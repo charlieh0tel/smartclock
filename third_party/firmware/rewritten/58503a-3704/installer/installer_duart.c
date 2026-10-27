@@ -23,3 +23,13 @@ void installer_duart_output_bits(board_led reset, board_led set) {
 void installer_output_bits_set(board_led reset, board_led set) {
   installer_duart_output_bits(reset, set);
 }
+
+/* Channel A's receive interrupt's loop, which its entry,
+ * installer_duarta_drain, branches to: reads each character waiting into
+ * installer_duarta_received, which nothing reads, keeping no ring, where
+ * the Z3805A's installer_duarta_receive fills one (installer::0x103a20). */
+void installer_duarta_drain_loop(void) {
+  while ((duart.a.sr_csr & SR_RXRDY) != 0) {
+    installer_duarta_received = duart.a.rb_tb;
+  }
+}

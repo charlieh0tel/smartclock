@@ -23,7 +23,13 @@ includes it.
    same to common/ code when its storage is (packed, signed, size) and
    each member that code names has the same value and is in the head;
    an enum it names no member of, a field's type in a shared record,
-   need only have the same storage.
+   need only have the same storage.  And each field common/'s code
+   reaches through a global, global.field, whose offset is then part of
+   an absolute address in the image's code, which rule 1's masking
+   cannot see, is asserted in each image's check-layout.c, where
+   tools/firmware/layout_addresses.py checks that a seeded image's
+   addresses are its own; a field of a register block, include/'s, is
+   the board's.
 3. No address: no comment in common/ cites a ROM, RAM or installer
    address (comment_addresses.py's ranges), nor does its code cast such
    a literal to a pointer or write an installer address; a device's
@@ -33,6 +39,7 @@ Prints each failure; exits nonzero if any.  Needs clang.
 """
 
 import collections
+import functools
 import importlib.util
 import json
 import os
@@ -94,6 +101,10 @@ BUILTIN_TYPE = re.compile(r'^(u?int\d+_t|u?(byte|word|short|int|long|longlong)|s
                           r'float\d*|double|ulonglong|dword|qword|wchar_t|size_t)$')
 CHECK = re.compile(r'CHECK_(SIZE|FIELD)\(\s*(\w+)\s*,\s*(?:(\w+(?:\.\w+|\[\d+\])*)\s*,\s*)?([^;]*)\);', re.S)
 ARITHMETIC = re.compile(r'^[\s0-9a-fA-FxX+\-*/()]+$')
+RECORD_QUALIFIERS = re.compile(r'^(?:(?:const|volatile|struct|union)\s+)+')
+# The register blocks include/'s headers define, the board's.
+BOARD_TYPES = {match.group(1) for path in INCLUDE_FOLDER.glob('*.h')
+               for match in re.finditer(r'(?m)^\}\s*(\w+)\s*;', path.read_text())}
 
 
 def sharing_images():
@@ -214,6 +225,7 @@ class Export:
             if kind in ('RecordDecl', 'EnumDecl') or current is node:
                 stack.extend(current.get('inner', ()))
 
+    @functools.cache
     def place(self, file):
         """Where a declaration is: common:PATH, rewritten:PATH, export,
         include:NAME or system."""
@@ -228,6 +240,11 @@ class Export:
         if path.is_relative_to(INCLUDE_FOLDER):
             return 'include:' + path.name
         return 'system'
+
+    @functools.cache
+    def declared(self, place):
+        """The top-level declarations a file holds, by its place."""
+        return [node for node in self.top if self.place_of(node) == place]
 
     def place_of(self, node):
         location = node.get('_spelling')
@@ -320,7 +337,7 @@ class Export:
         """Everything a common/ file's code names that it does not
         define, by kind and name, with its signature here."""
         place = 'common:' + str(path.relative_to(COMMON))
-        declarations = [node for node in self.top if self.place_of(node) == place]
+        declarations = self.declared(place)
         own = {node.get('name') for node in declarations}
         found, type_names = {}, set()
         stack = list(declarations)
@@ -358,6 +375,40 @@ class Export:
             if word in self.macros:
                 found['macro ' + word] = tuple(sorted(self.macros[word]))
         return found
+
+    def global_fields(self, path):
+        """Each (record, field) a common/ file's code reaches through a
+        global, by a chain of . and constant subscripts, whose offset an
+        absolute address holds; a register block include/ defines, which
+        the export declares again, is the board's, and left out."""
+        place = 'common:' + str(path.relative_to(COMMON))
+        found = set()
+        stack = list(self.declared(place))
+        while stack:
+            node = stack.pop()
+            stack.extend(node.get('inner', ()))
+            if node.get('kind') != 'MemberExpr' or node.get('isArrow') or not self.from_global(node['inner'][0]):
+                continue
+            record = RECORD_QUALIFIERS.sub('', node['inner'][0]['type']['qualType']).strip()
+            if record not in BOARD_TYPES:
+                found.add((record, node['name']))
+        return found
+
+    def from_global(self, node):
+        while node.get('kind') in ('ImplicitCastExpr', 'ParenExpr'):
+            node = node['inner'][0]
+        kind = node.get('kind')
+        if kind == 'DeclRefExpr':
+            reference = node['referencedDecl']
+            return reference['kind'] == 'VarDecl' and reference['id'] in self.by_id
+        if kind == 'MemberExpr' and not node.get('isArrow'):
+            return self.from_global(node['inner'][0])
+        if kind == 'ArraySubscriptExpr':
+            index = node['inner'][1]
+            while index.get('kind') in ('ImplicitCastExpr', 'ParenExpr'):
+                index = index['inner'][0]
+            return index.get('kind') == 'IntegerLiteral' and self.from_global(node['inner'][0])
+        return False
 
     def layout(self):
         """Each type's sizes and offsets that check-layout.c asserts, as
@@ -411,6 +462,11 @@ def same_data(images, failures):
     for path in common_files():
         found = [export.named(path) for export in exports]
         relative = path.relative_to(ROOT)
+        for record, field in sorted(set().union(*(export.global_fields(path) for export in exports))):
+            for image, layout in zip(images, layouts):
+                if not any(asserted == field for asserted, _ in layout.get(record, ())):
+                    failures.append(f'{relative}: {record}.{field}, reached through a global, is not asserted in '
+                                    f'rewritten/{image}/{TYPES}/check-layout.c')
         for key in sorted(set().union(*found)):
             signatures = [names.get(key) for names in found]
             if any(signature != signatures[0] for signature in signatures):

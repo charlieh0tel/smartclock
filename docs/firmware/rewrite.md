@@ -171,7 +171,9 @@ nothing is taken for common that is not:
    *changed* function, however small the change, stays per image.
 2. **Same data.**  Every type it touches is the same in each image:
    it comes from a header in `common/`, and each image's
-   `check-layout.c` asserts the same offsets for it.  A function that
+   `check-layout.c` asserts the same offsets for it, each read at that
+   image's own addresses, and every field it reaches through a global,
+   whose offset an absolute address in the image's code holds.  A function that
    touches a structure laid out differently in some image stays per
    image, or is compiled once per image against that image's own
    header; it is never compiled once for all.
@@ -219,7 +221,18 @@ names (types, enumerators, constants, macros, callees' and globals'
 types), each shared type in a `common/types/` header every sharing
 `smartclock.h` includes or in `include/`, with the same layout in each
 `check-layout.c`, each enumerator it names in one too, a split enum's
-storage the same, and no address.
+storage the same, each field it reaches through a global asserted in
+every `check-layout.c`, and no address.  The layouts compared are each
+image's own: `tools/firmware/layout_addresses.py`, which `check-common`
+runs first, fails where a seeded image's `check-layout.c` asserts a
+layout at the Z3805A's addresses, as it began, rather than at its own,
+derived from the image's code (the address an instruction aligned with
+the Z3805A's names) and its export (a global's address), so that a
+field the image's code reaches elsewhere fails `check-types`.  Rule 1
+masks addresses and so cannot see an offset an absolute address holds:
+the 58503A's `gps_receive` counted frame and checksum errors at the
+Z3805A's offsets while its `check-layout.c` asserted the Z3805A's
+addresses.
 
 ## The verification
 

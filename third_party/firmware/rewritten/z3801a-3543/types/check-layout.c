@@ -1,7 +1,9 @@
 /* The layouts smartclock.h declares, checked against the image: each
  * size and offset here is one docs/firmware/structures.md gives, and
- * where it was read from addresses in the Z3805A 3543B image it is
- * written as their difference.  Compiled, never run, by "make
+ * where it was read from addresses in the image it is written as their
+ * difference: the Z3801A 3543's, each derived again from its code and
+ * export where it began as the Z3805A 3543B's
+ * (tools/firmware/layout_addresses.py).  Compiled, never run, by "make
  * check-types" with an m68k compiler, so that int, long and pointers
  * are the target's 32 bits. */
 
@@ -788,3 +790,43 @@ CHECK_SIZE(diag_word_entry, 0x1c5da - 0x1c5b4);
 CHECK_SIZE(diag_word_entry[86], 0x1d278 - 0x1c5b4);
 CHECK_FIELD(diag_word_entry, argument_count, 0x1e);
 CHECK_FIELD(diag_word_entry, result_count, 0x22);
+
+/* The fields common/'s C reaches through a global, whose offsets an
+ * absolute address in the image's code holds, where rule 1's masking of
+ * addresses cannot see them: each where the image's code names it, or,
+ * where it does not, at its offset in the global (make check-common;
+ * docs/firmware/rewrite.md, "Shared C"). */
+CHECK_FIELD(boot_selftest_results, checksum, 0x10ab20 - 0x10ab20);
+CHECK_FIELD(counter_configuration_fields, sync_state, 0x101fb7 - 0x101fa6);
+CHECK_FIELD(duarta_driver, held, 0x102fba - 0x102fb2);
+CHECK_FIELD(duarta_driver, transmit_count, 0x102fb6 - 0x102fb2);
+CHECK_FIELD(duarta_driver, transmit_next, 0x102fb2 - 0x102fb2);
+CHECK_FIELD(duartb_applied_settings, baud, 0x102e9e - 0x102e9e);
+CHECK_FIELD(duartb_applied_settings, baud, 0x10ad3c - 0x10ad3c);
+CHECK_FIELD(eeprom_lock_token, exchange, 0x101d1e - 0x101d1a);
+CHECK_FIELD(eeprom_lock_token, status, 0x101d1a - 0x101d1a);
+CHECK_FIELD(efc_range_state, clamped, 0x101cf2 - 0x101cf2);
+CHECK_FIELD(efc_range_state, near_end, 0x101cf3 - 0x101cf2);
+CHECK_FIELD(exception_record, pending, 0x10099e - 0x10099e);
+CHECK_FIELD(fpga_configuration_table, last, 0x20cf0 - 0x20cf0);
+CHECK_FIELD(gps_command_log, entries, 0x1017f4 - 0x1017f4);
+CHECK_FIELD(gps_command_mailbox, code, 0x102562 - 0x102562);
+CHECK_FIELD(holdover_steering_state, ti_largest, 0x10204e - 0x10203a);
+CHECK_FIELD(holdover_steering_state, ti_weighted_sum, 0x10204a - 0x10203a);
+CHECK_FIELD(identification_record, checksum, 0x400010 - 0x400010);
+CHECK_FIELD(identification_record, model, 0x400012 - 0x400010);
+CHECK_FIELD(identification_record, serial, 0x400024 - 0x400010);
+CHECK_FIELD(interpolator_calibration, calibrated, 0x101fc7 - 0x101fc6);
+CHECK_FIELD(interpolator_calibration, reading_low, 0x101fcd - 0x101fc6);
+CHECK_FIELD(interval_reading_fields, value, 0x101f94 - 0x101f94);
+CHECK_FIELD(lifetime_state, efc, 0x101cfe - 0x101cfe);
+CHECK_FIELD(psos_configuration, data_area, 0x10261e - 0x10261e);
+CHECK_FIELD(qspi_state, copy_pending, 0x10316e - 0x103122);
+CHECK_FIELD(qspi_state, field_00, 0x103122 - 0x103122);
+CHECK_FIELD(qspi_state, read, 0x103124 - 0x103122);
+CHECK_FIELD(qspi_state, receive_count, 0x10316c - 0x103122);
+CHECK_FIELD(qspi_state, write, 0x103123 - 0x103122);
+CHECK_FIELD(serial_ring, data, 0x102eb1 - 0x102eaf);
+CHECK_FIELD(serial_ring, read, 0x102eb0 - 0x102eaf);
+CHECK_FIELD(serial_ring, write, 0x102eaf - 0x102eaf);
+CHECK_FIELD(task_table_entry, state, 0x102688 - 0x102688);

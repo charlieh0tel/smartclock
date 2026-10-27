@@ -141,8 +141,11 @@ check-comment-addresses:
 # Fail if C in rewritten/common/, which every image whose export includes it
 # compiles as its own, is not what docs/firmware/rewrite.md's "Shared C"
 # lets be shared: the same code and data in each, and no address
-# (tools/firmware/common_check.py).
+# (tools/firmware/common_check.py); or if a seeded image's check-layout.c,
+# which rule 2 compares, asserts a layout at its base's addresses rather
+# than its own (tools/firmware/layout_addresses.py).
 check-common:
+	python3 -I $(ROOT)/tools/firmware/layout_addresses.py
 	python3 -I $(ROOT)/tools/firmware/common_check.py
 
 # Each seeded image's analysis/IMAGE/names.tsv and modules.tsv, seeded from its base's

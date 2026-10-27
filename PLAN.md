@@ -461,7 +461,13 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   all of it, so a function of it that differs there goes back to every
   image's own C first (the Z3801A 3543, the third to share, sent back
   `counter_set_sync`, the `:LED:ALARm:USER` handlers, and the FPGA bit
-  setters with each image's own table).
+  setters with each image's own table).  Each seeded image's
+  `check-layout.c`, which rule 2 compares, asserts its layouts at its
+  own addresses, derived from its code and export
+  (`tools/firmware/layout_addresses.py`, run by `make check-common`),
+  and every field shared C reaches through a global is asserted: the
+  58503A's began as the Z3805A's addresses, copied, which let the
+  shared `gps_receive` count errors at the Z3805A's offsets unseen.
 - **Per-image tool tables**: what the function check gives an image
   other than the Z3805A 3543B is kept in tables keyed by image or held
   by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`,

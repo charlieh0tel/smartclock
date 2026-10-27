@@ -803,3 +803,43 @@ CHECK_SIZE(diag_word_entry, 0x1c8d2 - 0x1c8ac);
 CHECK_SIZE(diag_word_entry[86], 0x1d570 - 0x1c8ac);
 CHECK_FIELD(diag_word_entry, argument_count, 0x1e);
 CHECK_FIELD(diag_word_entry, result_count, 0x22);
+
+/* The fields common/'s C reaches through a global, whose offsets an
+ * absolute address in the image's code holds, where rule 1's masking of
+ * addresses cannot see them: each where the image's code names it, or,
+ * where it does not, at its offset in the global (make check-common;
+ * docs/firmware/rewrite.md, "Shared C"). */
+CHECK_FIELD(boot_selftest_results, checksum, 0x10ab20 - 0x10ab20);
+CHECK_FIELD(counter_configuration_fields, sync_state, 0x101fbf - 0x101fae);
+CHECK_FIELD(duarta_driver, held, 0x102fe8 - 0x102fe0);
+CHECK_FIELD(duarta_driver, transmit_count, 0x102fe4 - 0x102fe0);
+CHECK_FIELD(duarta_driver, transmit_next, 0x102fe0 - 0x102fe0);
+CHECK_FIELD(duartb_applied_settings, baud, 0x102ecc - 0x102ecc);
+CHECK_FIELD(duartb_applied_settings, baud, 0x10ad3c - 0x10ad3c);
+CHECK_FIELD(eeprom_lock_token, exchange, 0x101d20 - 0x101d1c);
+CHECK_FIELD(eeprom_lock_token, status, 0x101d1c - 0x101d1c);
+CHECK_FIELD(efc_range_state, clamped, 0x101cf4 - 0x101cf4);
+CHECK_FIELD(efc_range_state, near_end, 0x101cf5 - 0x101cf4);
+CHECK_FIELD(exception_record, pending, 0x10099e - 0x10099e);
+CHECK_FIELD(fpga_configuration_table, last, 0x21e2c - 0x21e2c);
+CHECK_FIELD(gps_command_log, entries, 0x1017f6 - 0x1017f6);
+CHECK_FIELD(gps_command_mailbox, code, 0x10256c - 0x10256c);
+CHECK_FIELD(holdover_steering_state, ti_largest, 0x102056 - 0x102042);
+CHECK_FIELD(holdover_steering_state, ti_weighted_sum, 0x102052 - 0x102042);
+CHECK_FIELD(identification_record, checksum, 0x400010 - 0x400010);
+CHECK_FIELD(identification_record, model, 0x400012 - 0x400010);
+CHECK_FIELD(identification_record, serial, 0x400024 - 0x400010);
+CHECK_FIELD(interpolator_calibration, calibrated, 0x101fcf - 0x101fce);
+CHECK_FIELD(interpolator_calibration, reading_low, 0x101fd5 - 0x101fce);
+CHECK_FIELD(interval_reading_fields, value, 0x101f9c - 0x101f9c);
+CHECK_FIELD(lifetime_state, efc, 0x101d00 - 0x101d00);
+CHECK_FIELD(psos_configuration, data_area, 0x10264c - 0x10264c);
+CHECK_FIELD(qspi_state, copy_pending, 0x1032f2 - 0x1032a6);
+CHECK_FIELD(qspi_state, field_00, 0x1032a6 - 0x1032a6);
+CHECK_FIELD(qspi_state, read, 0x1032a8 - 0x1032a6);
+CHECK_FIELD(qspi_state, receive_count, 0x1032f0 - 0x1032a6);
+CHECK_FIELD(qspi_state, write, 0x1032a7 - 0x1032a6);
+CHECK_FIELD(serial_ring, data, 0x102edf - 0x102edd);
+CHECK_FIELD(serial_ring, read, 0x102ede - 0x102edd);
+CHECK_FIELD(serial_ring, write, 0x102edd - 0x102edd);
+CHECK_FIELD(task_table_entry, state, 0x1026b6 - 0x1026b6);

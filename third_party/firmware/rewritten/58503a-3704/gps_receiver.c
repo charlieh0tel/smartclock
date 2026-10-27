@@ -219,16 +219,17 @@ static uint8_t gps_receiver_strength_bits(uint8_t strength) {
 
 /* Packs each channel's satellite, mode and strength into gps.track_words
  * for the tracking log, three channels a long from the top, 10 bits each,
- * satellite 32 as 10, then moves the longs' unused bits out (0x4da70). */
+ * satellite 32 as 10, then moves the longs' unused bits out, so that the
+ * channels run on as 80 bits and [2]'s low half is free (0x4da70). */
 void gps_track_words_pack(void) {
   static const uint8_t SATELLITE_32 = 32;
   static const uint8_t SATELLITE_32_PACKED = 10;
-  uint32_t* word = gps.field_596;
+  uint32_t* word = gps.track_words;
   uint8_t shift = GPS_RECEIVER_WORD_BITS;
 
-  gps.field_596[0] = 0;
-  gps.field_596[1] = 0;
-  gps.field_596[2] = 0;
+  gps.track_words[0] = 0;
+  gps.track_words[1] = 0;
+  gps.track_words[2] = 0;
   for (uint8_t channel = 1; channel <= gps.channel_count; channel++) {
     const oncore_channel_status* status = &gps.status.channels[channel - 1];
     uint8_t satellite = status->satellite;
@@ -255,10 +256,10 @@ void gps_track_words_pack(void) {
     shift -= 2;
     *word |= (uint32_t)strength << shift;
   }
-  gps.field_596[0] |= gps.field_596[1] >> 30;
-  gps.field_596[1] <<= 2;
-  gps.field_596[1] |= gps.field_596[2] >> 28;
-  gps.field_596[2] <<= 4;
+  gps.track_words[0] |= gps.track_words[1] >> 30;
+  gps.track_words[1] <<= 2;
+  gps.track_words[1] |= gps.track_words[2] >> 28;
+  gps.track_words[2] <<= 4;
 }
 
 /* A channel's mode in two bits: 0 searching, 1 acquiring to bit sync,
@@ -274,8 +275,8 @@ static uint8_t gps_receiver_mode_bits(uint8_t mode) {
 }
 
 /* Packs each channel's mode and strength, two bits each, into
- * gps.field_5a2 from the top, and starts gps.field_5a6, the lowest mode
- * each channel has had, at all ones (0x4db52). */
+ * gps.channel_word from the top, and starts gps.channel_word_lowest, the
+ * lowest mode each channel has had, at all ones (0x4db52). */
 void gps_channel_word_pack(void) {
   static const uint16_t ALL_HIGH = 0xffff;
   uint32_t packed = 0;
@@ -291,12 +292,12 @@ void gps_channel_word_pack(void) {
     shift -= 2;
     packed |= (uint32_t)strength << shift;
   }
-  gps.field_5a2 = packed;
-  gps.field_5a6 = ALL_HIGH;
+  gps.channel_word = packed;
+  gps.channel_word_lowest = ALL_HIGH;
 }
 
-/* Lowers each channel's two bits of gps.field_5a6, from the top of
- * the word, to its mode's, when that is less (0x4dbe8). */
+/* Lowers each channel's two bits of gps.channel_word_lowest, from the
+ * top of the word, to its mode's, when that is less (0x4dbe8). */
 void gps_channel_word_lowest(void) {
   static const uint8_t HALF_WORD_BITS = 16;
   static const uint16_t TWO_BITS = 3;
@@ -307,9 +308,10 @@ void gps_channel_word_lowest(void) {
         gps_receiver_mode_bits(gps.status.channels[channel - 1].mode);
 
     shift -= 2;
-    if ((int32_t)(gps.field_5a6 >> shift & TWO_BITS) > (int32_t)bits) {
-      gps.field_5a6 &= ~(TWO_BITS << shift);
-      gps.field_5a6 |= bits << shift;
+    if ((int32_t)(gps.channel_word_lowest >> shift & TWO_BITS) >
+        (int32_t)bits) {
+      gps.channel_word_lowest &= ~(TWO_BITS << shift);
+      gps.channel_word_lowest |= bits << shift;
     }
   }
 }
@@ -715,14 +717,14 @@ static void gps_receiver_track_log(gps_sync_status previous,
     gps_channel_word_lowest();
   }
   if (previous_good && (next == GPS_SYNC_QUESTIONABLE || next_invalid)) {
-    gps_log_track_change(1, previous, gps.field_596[0], gps.field_596[1]);
+    gps_log_track_change(1, previous, gps.track_words[0], gps.track_words[1]);
     gps_channel_word_pack();
     gps_channel_word_lowest();
   } else if ((previous == GPS_SYNC_QUESTIONABLE ||
               previous == GPS_SYNC_QUESTIONABLE_CLEARING || previous_invalid) &&
              (next == GPS_SYNC_VALID || next == GPS_SYNC_ASSESSING)) {
-    gps.field_596[2] |= gps.field_5a6;
-    gps_log_track_change(0, previous, gps.field_596[2], gps.field_5a2);
+    gps.track_words[2] |= gps.channel_word_lowest;
+    gps_log_track_change(0, previous, gps.track_words[2], gps.channel_word);
   }
 }
 

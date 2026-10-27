@@ -119,7 +119,9 @@ image that has it.
 ### `:DIAGnostic:GPSystem:TRACking:LOG`
 
 - **Images:** 58503A 3633 and 3704, 58503B, Z3815A, Z3816A.
-- **Handler:** returns a flag.
+- **Handler:** returns a flag.  On, the 58503A 3704 logs each track
+  lost or resumed with packed channel words
+  (`../firmware/gps.md`, "Channel mode and signal strength").
 - **Read:** 58503A 3704-C, 2026-10-09: `0`.
 
 ### `:DIAGnostic:GPSystem:UTC`

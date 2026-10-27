@@ -478,6 +478,10 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.
+- **Tracking log decoder:** a 58503A's `Track lost` and `Track resumed`
+  event log entries carry packed channel words
+  (`docs/firmware/gps.md`, "Channel mode and signal strength");
+  `smartclock-cli` could unpack them when it reads the log.
 - **Firmware C:** when a Unicorn release has #2420 (bug 1), bump the
   pin, drop the probe and set `BUG_1.expected` to fixed; likewise bug 2.
   Give the firmware routines their file's prefix, as the hand-written

@@ -1599,9 +1599,9 @@ struct gps_state {
     uint8_t field_593;
     uint8_t tracking_log;
     uint8_t tracking_log_active;
-    uint32_t field_596[3];
-    uint32_t field_5a2;
-    uint16_t field_5a6;
+    uint32_t track_words[3];
+    uint32_t channel_word;
+    uint16_t channel_word_lowest;
 };
 
 typedef struct gps_statistics gps_statistics, *Pgps_statistics;

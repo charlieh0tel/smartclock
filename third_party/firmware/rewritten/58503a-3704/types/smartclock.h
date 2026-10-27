@@ -1790,9 +1790,23 @@ typedef struct gps_state {
   uint8_t tracking_log; /* nv_settings.tracking_log, copied by gps_init */
   uint8_t tracking_log_active; /* tracking_log, as the receiver state
                                   update takes it (0x4ba8a) */
-  uint32_t field_596[3];       /* 0x4da70 clears and sets them, by satellite */
-  uint32_t field_5a2;
-  uint16_t field_5a6;
+  /* The tracking log's channels, packed by gps_track_words_pack
+     (0x4da70) at each update that leaves the reference valid, assessing
+     or clearing: 10 bits a channel from the top of [0], 5 of satellite
+     (32 as 10), 3 of mode (0; 1 for 1 and 2; else mode - 1) and 2 of
+     signal strength (gps_receiver_strength_bits), 80 bits in all.  A
+     track lost logs [0] and [1], the last good update's; a track resumed
+     ORs channel_word_lowest into [2]'s free low half and logs it
+     (0x4bb5c to 0x4bc16). */
+  uint32_t track_words[3];
+  /* Each channel's 2-bit mode (gps_receiver_mode_bits) and 2-bit signal
+     strength from the top, packed when a track is lost
+     (gps_channel_word_pack, 0x4db52); logged when it resumes. */
+  uint32_t channel_word;
+  /* Each channel's lowest 2-bit mode since the track was lost, 2 bits a
+     channel from the top: 0xffff at the loss, lowered at each update
+     while it is out (gps_channel_word_lowest, 0x4dbe8). */
+  uint16_t channel_word_lowest;
 } gps_state;
 
 /* An entry of fpga_bit_table (0x413ac in the 58503A 3704, seven

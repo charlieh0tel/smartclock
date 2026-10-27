@@ -437,8 +437,28 @@ LABELS_TEXT_Z3801A = '''.
 #   text; a hand row places it at 0x12ef3, after revision_text, where
 #   the Z3805A's follows its own.
 '''
-PORT_Z3801A_3543 = Port(folder='z3801a-3543', base_folder='z3805a-3543b', dropped=DROPPED_Z3801A,
-                        labels_text=LABELS_TEXT_Z3801A,
+DOCUMENT_Z3801A = 'docs/firmware/z3801a-3543.md'
+# image_diff's pairings the self-test table corrects, base function's
+# (region, address) to the Z3801A address and why: the three results
+# are byte for byte the Z3805A's, but selftest moved 2 bytes lower, so
+# that each Z3805A result's bytes are the next result's here, and the
+# EEPROM's are the tail of selftest_fpga_with_lamp (0x189ea)
+CORRECTIONS_Z3801A = {
+    ('primary', 0x185e2): (0x182ea, "%s: the self-test table's PROC entry (0x183c0)" % DOCUMENT_Z3801A),
+    ('primary', 0x185ec): (0x182f4, "%s: the self-test table's RAM entry (0x183c8)" % DOCUMENT_Z3801A),
+    ('primary', 0x185f6): (0x182fe, "%s: the self-test table's EEPROM entry (0x183d0)" % DOCUMENT_Z3801A),
+}
+CORRECTIONS_TEXT_Z3801A = (
+    "#   docs/firmware/z3801a-3543.md corrects three pairings, which the\n"
+    "#   image settles, and carries them under their names: the self-test\n"
+    "#   table names selftest_cpu_result, selftest_ram_result and\n"
+    "#   selftest_eeprom_result 0x182ea, 0x182f4 and 0x182fe (0x183c0),\n"
+    "#   where image_diff pairs the first two by their bytes with the next\n"
+    "#   result's, selftest having moved 2 bytes lower, and the third with\n"
+    "#   selftest_fpga_with_lamp's last instructions (0x189ea).\n")
+PORT_Z3801A_3543 = Port(folder='z3801a-3543', base_folder='z3805a-3543b', corrections=CORRECTIONS_Z3801A,
+                        confirmed=frozenset(CORRECTIONS_Z3801A), dropped=DROPPED_Z3801A,
+                        corrections_text=CORRECTIONS_TEXT_Z3801A, labels_text=LABELS_TEXT_Z3801A,
                         hand_figures=(('names.tsv', r'(\d+) hand rows \("'),))
 # Each seeded image's port, by its folder's name.
 PORTS = {port.folder: port for port in (PORT_58503A_3704, PORT_Z3801A_3543)}

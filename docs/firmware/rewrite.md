@@ -485,9 +485,9 @@ against the diff").  Of its function check, the primary's 1415
 agree, 5 are known and none skipped or failed, and the installer's 247
 agree, 1 skipped; its console sessions agree, 8 of 8.  The Z3801A
 3543's, [`z3801a-3543.md`](z3801a-3543.md), seeded from the Z3805A's and
-the third image to share `common/`, is held to the same standard, its
-C 1277 of the primary's functions and 236 of the installer's by hand
-and 24 of the primary's still the decompiler's reading: of its function
-check, the primary's 1290 agree, 6 are known and 5
+the third image to share `common/`, has its C functions written by
+hand too, the primary's 1300 and the installer's 236, none left as the
+decompiler's reading, the rest the image's assembly, and is held to the same standard: of
+its function check, the primary's 1289 agree, 6 are known and 5
 skipped, none failed, and the installer's 236 agree, 1 skipped; its
 console sessions agree, 8 of 8.

@@ -126,8 +126,8 @@ Z3805A does not, the front panel among it:
 [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md).
 
 The Z3801A's 3543, the Z3805A's sibling without its SCI driver, is read
-whole as C the same way, 1277 of the primary's C functions and 236 of
-the installer's by hand and 24 of the primary's remaining as the
+whole as C the same way, 1300 of the primary's C functions and 236 of
+the installer's by hand and none of the primary's remaining as the
 decompiler's reading, held to the same checks:
 [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md).  The C
 the three images run alike lies once in `third_party/firmware/rewritten/common/`,

@@ -165,6 +165,164 @@ void gps_print_1pps(void) {
   command_log_snapshot.read = read;
 }
 
+/* "OK" or "Fail" for a monitor's failed flag. */
+static const char* gps_reports_failed(uint8_t failed) {
+  return failed == 0 ? "OK" : "Fail";
+}
+
+/* Prints the GPS Process Monitor: the GPS task's state and counters,
+ * its last request and program message, the response buffer in hex,
+ * and the monitors' health (0x4ca2a). */
+void gps_print_process_monitor(void) {
+  const char* text;
+  const char* detail;
+
+  psos_pause(1);
+  console_write("\r\n");
+  switch (gps_task_state) {
+    case GPS_PROCESS_TASK_IDLE:
+      text = "________ State: Task Idle";
+      break;
+    case GPS_PROCESS_SEND_COMMAND:
+      text = "_____ State: Send Command";
+      break;
+    case GPS_PROCESS_WAIT_FOR_RESPONSE:
+      text = " State: Wait for Response";
+      break;
+    default:
+      text = "________________ State: ?";
+      break;
+  }
+  printf("GPS Process Monitor _________________%s\r\n", text);
+  printf("\r\nProcess Messages   Net:   %+6d              Rcvr Messages\r\n",
+         (uint32_t)gps_counts.jam_errors - gps_counts.jammed +
+             gps_counts.received - gps_counts.sent);
+  console_write("--------------------------------");
+  console_write("              ----------------\r\n");
+  printf("%-9s  %5d   %6s  %5d%14s%-9s  %5d\r\n", "Msgs Rcvd",
+         (uint32_t)gps_counts.received, "Errors",
+         (uint32_t)gps_counts.received_errors, "", "Resp Read",
+         (uint32_t)gps_counts.responses_read);
+  printf("%-9s  %5d   %6s  %5d%14s%-9s  %5d\r\n", "Msgs Sent",
+         (uint32_t)gps_counts.sent, "Errors", (uint32_t)gps_counts.sent_errors,
+         "", "Cmds Sent", (uint32_t)gps_counts.commands_sent);
+  printf("%-9s  %5d   %6s  %5d%16s%-7s  %5d\r\n", "Msgs Jam",
+         (uint32_t)gps_counts.jammed, "Errors", (uint32_t)gps_counts.jam_errors,
+         "", "E Retry", (uint32_t)gps_counts.e_retries);
+  printf("%48s%-7s  %5d\r\n", "", "T Retry", (uint32_t)gps_counts.t_retries);
+  console_write(
+      "Execution Status:                             Response Errors:\r\n");
+  printf("%-9s  %5d", "Success", (uint32_t)gps_counts.successes);
+  console_write("\r\n");
+  printf("%-9s  %5d   %-6s  %5d%14s%-9s  %5d\r\n", "Reject",
+         (uint32_t)gps_counts.rejects, "? Cmd",
+         (uint32_t)gps_counts.unknown_command, "", "? Resp",
+         (uint32_t)gps_counts.unknown_response);
+  printf("%-9s  %5d   %-6s  %5d%14s%-9s  %5d\r\n", "Timeout",
+         (uint32_t)gps_counts.timeouts, "? Sndr",
+         (uint32_t)gps_counts.unknown_sender, "", "Frame",
+         (uint32_t)gps_counts.frame_errors);
+  printf("%-9s  %5d   %-6s  %5d%14s%-9s  %5d\r\n", "Busy",
+         (uint32_t)gps_counts.busy, "No Cmd", (uint32_t)gps_counts.no_command,
+         "", "Cksum", (uint32_t)gps_counts.checksum_errors);
+  printf("%-9s  %5d   %-6s  %5d\r\n", "Abort", (uint32_t)gps_counts.aborts,
+         "No Qry", (uint32_t)gps_counts.no_query);
+
+  console_write("\r\nLast Valid pSOS Msg:  ");
+  if (gps_last_command == NULL) {
+    console_write("(none received)\r\n");
+  } else {
+    gps_request_entry* request = &gps_last_command->request;
+
+    if (request->argument_mode == GPS_ARGUMENTS_QUERY) {
+      detail = "query setting";
+    } else if (request->argument_mode == GPS_ARGUMENTS_SET) {
+      detail = "change/execute";
+    } else {
+      detail = "? action";
+    }
+    printf("Sender: %-5s Cmd #: %-2d (%s)\r\n",
+           gps_reports_sender_name(request->sender), (int32_t)request->code,
+           detail);
+  }
+  console_write("Last Rcvr Prgm Msg:   ");
+  if (gps_last_program_message[0] == 0) {
+    console_write("(none issued)\r\n");
+  } else {
+    printf("%s\r\n", gps_last_program_message);
+  }
+
+  /* Each byte as two hex digits; the loop that would strip a third
+   * digit's leading 0 or f never finds one. */
+  char hex[5];
+  /* The buffer's first 20 bytes, two digits each. */
+  static const uint32_t SHOWN = 20;
+  char bytes[2 * 20 + 1];
+
+  console_write("Response Buffer:  ");
+  bytes[0] = 0;
+  for (gps_print_cursor = gps_response_buffer;
+       gps_print_cursor < gps_response_buffer + SHOWN; gps_print_cursor++) {
+    char* digits = hex;
+
+    sprintf(hex, "%hx", (uint16_t)*gps_print_cursor);
+    if (libc_length(digits) < 2) {
+      hex[2] = 0;
+      hex[1] = hex[0];
+      hex[0] = '0';
+    } else {
+      while (libc_length(digits) >= 3 && (*digits == '0' || *digits == 'f')) {
+        digits++;
+      }
+    }
+    strcat(bytes, digits);
+  }
+  printf("%s\r\n", bytes);
+  if (gps_commands_blocked != 0) {
+    console_write("\r\n** GPS receiver commands are blocked **\r\n");
+  }
+
+  printf("\r\nGPS Receiver Health _____________________________________%s\r\n",
+         gps.receiver_health_failed == 0 ? "__ OK" : " Fail");
+  switch (gps.command_monitor_state) {
+    case GPS_COMMAND_MONITOR_DISABLED:
+      text = "disabled";
+      break;
+    case GPS_COMMAND_MONITOR_STANDBY:
+      text = "standby";
+      break;
+    case GPS_COMMAND_MONITOR_QUERY:
+      text = "query";
+      break;
+    case GPS_COMMAND_MONITOR_QUERY_ACK:
+      text = "query-ack";
+      break;
+    default:
+      text = "? state";
+      break;
+  }
+  printf("Command Monitor    %-9s   %-7s          %5d failures\r\n", text,
+         gps_reports_failed(gps.command_monitor_failed),
+         (uint32_t)gps_counts.command_monitor_failures);
+  switch (gps.status_monitor_state) {
+    case GPS_STATUS_MONITOR_DISABLED:
+      text = "disabled";
+      break;
+    case GPS_STATUS_MONITOR_STANDBY:
+      text = "standby";
+      break;
+    case GPS_STATUS_MONITOR_RECOVERY:
+      text = "recovery";
+      break;
+    default:
+      text = "? state";
+      break;
+  }
+  printf("Status Monitor     %-9s   %-7s          %5d failures\r\n", text,
+         gps_reports_failed(gps.status_monitor_failed),
+         (uint32_t)gps_counts.status_monitor_failures);
+}
+
 /* Prints @@Cj, the receiver's identification (0x4937e). */
 void gps_print_id(void) {
   psos_pause(1);

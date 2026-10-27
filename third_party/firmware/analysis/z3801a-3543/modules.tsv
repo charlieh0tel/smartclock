@@ -555,9 +555,9 @@
 0x17c34	selftest_power	applications/selftest
 0x17cc8	selftest_interpolator_calibration	applications/selftest
 0x17cd8	selftest_interpolator_sample	applications/selftest
-0x182f4	selftest_cpu_result	applications/selftest
-0x182fe	selftest_ram_result	applications/selftest
-0x189ea	selftest_eeprom_result	applications/selftest
+0x182ea	selftest_cpu_result	applications/selftest
+0x182f4	selftest_ram_result	applications/selftest
+0x182fe	selftest_eeprom_result	applications/selftest
 0x1897c	selftest_nv_slot	applications/selftest
 0x18996	selftest_qspi_run	applications/selftest
 0x189a4	selftest_qspi_with_lamp	applications/selftest

@@ -6,3 +6,4 @@
 # still finds, their addresses the Z3805A's.
 duplicate	common/fpga.c	fpga_verify_first	10	LAST_BITS	each readback frame's own last bits, the first frame's and an odd frame's both 10 (0x22fc6, 0x23304), an even frame's 14
 duplicate	common/fpga.c	fpga_verify_first	5	WORDS	each readback frame's own words, the first frame's and an even frame's both 5 (0x22fc6, 0x2353a), an odd frame's 6
+duplicate	common/scpi_source_gpsystem.c	scpi_source_gpsystem_location_answer	100.0	CENTIMETERS_PER_METER	the same constant again in front_panel.c's front_panel_height_text, the 58503A's own, for the Alt key's height (0x53548); the shared one is local to a common/ function

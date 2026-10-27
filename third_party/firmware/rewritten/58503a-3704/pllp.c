@@ -164,3 +164,28 @@ static void pllp_ack_wait(void) {
     pllp_ack_done();
   }
 }
+
+/* For :KENneth:PRESent?: in holdover or its recovery, the TFOM and its
+ * resolution; whether it was (0x42a46). */
+bool kenneth_present_get(float* value, int8_t* resolution) {
+  if (!pllp_holding()) {
+    return false;
+  }
+  *value = pll.tfom;
+  *resolution = PLLP_KENNETH_RESOLUTION;
+  return true;
+}
+
+/* For :KENneth:PREDicted?: from start-up PLL on, the HQ and its
+ * resolution; whether in holdover through holding, and whether there
+ * was a value (0x42a70). */
+bool kenneth_predicted_get(float* value, int8_t* resolution, uint8_t* holding) {
+  *holding = pllp_holding();
+  if (pll.stage != PLL_STAGE_STARTUP_PLL && pll.stage != PLL_STAGE_NORMAL_PLL &&
+      !pllp_holding()) {
+    return false;
+  }
+  *value = pll.predicted_uncertainty;
+  *resolution = PLLP_KENNETH_RESOLUTION;
+  return true;
+}

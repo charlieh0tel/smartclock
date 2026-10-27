@@ -1113,7 +1113,7 @@ installer::0x1029a0	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x11150	function	hms_to_seconds	context	hours, minutes and seconds as seconds (from the Z3805A 3543B, by image_diff: identical)	int hms_to_seconds(uint32_t time)
 0x111b8	function	seconds_to_hms	context	seconds as hours, minutes and seconds (from the Z3805A 3543B, by image_diff: identical)
 0x1160a	function	gps_to_utc	context	applies the GPS-UTC offset to a date and time (leap_second_near passes get_gps_datetime's time_of_day) (from the Z3805A 3543B, by image_diff: changed, similar at 0.975)	void gps_to_utc(uint32_t *date, time_of_day *time)
-0x11750	function	leap_opportunity_date	context	the end of the coming quarter, when a leap second may come: Mar 31, Jun 30, Sep 30 or Dec 31 (a calendar_date local, 0x11610 to 0x11678) (from the Z3805A 3543B, by image_diff: changed, similar at 0.949)	uint32_t leap_opportunity_date(void)
+0x11750	function	leap_opportunity_date	read	the end of a date's quarter, when a leap second may come: Mar 31, Jun 30, Sep 30 or Dec 31; it takes the date (leap_event_create pushes it, 0x46658; read at 0x11754), where the Z3805A's calls get_gps_date; written by hand for the 58503A 3704	uint32_t leap_opportunity_date(uint32_t from)
 0x117c6	function	leap_second_near	context	1 at 23:59:46 or later, in UTC, on the last day of a quarter (from the Z3805A 3543B, by image_diff: relocated)
 0x13a4e	function	get_gps_datetime	context	gps_date and gps_time through pointers; 1 if the clock is valid (from the Z3805A 3543B, by image_diff: relocated)	bool get_gps_datetime(uint32_t *date, time_of_day *time)
 0x13ab2	function	set_timedate_unflagged	context	set_timedate's twin: sets the clock record's date and time without marking it set; assembly as set_timedate is (from the Z3805A 3543B, by image_diff: relocated)		convention=other; confidence=read; in=uint32_t date, uint32_t time; out=D0 int32_t error; family=clock
@@ -2413,7 +2413,7 @@ installer::0x10768a	function	installer_port_status_report	58503a-3704.md	the ins
 0x2c0f8	local	step	read	the step clamp_float_to_step_double is given, 1e-9 and load_long; its frame the Z3805A's; written by hand for the 58503A 3704	scpi_step @ -0xc
 0x30b24	local	block	read	the calibration block it builds and writes; its frame the Z3805A's; written by hand for the 58503A 3704	calibration_block @ -0x44
 0x105ee	local	event	read	the entry clk_do copies; its frame the Z3805A's; written by hand for the 58503A 3704	klok_entry @ -0x1e
-0x11750	local	date	read	the date it returns: get_gps_date's (0x11610), its month (0x11616) set to the quarter's last and its day to 30 or 31 (0x11648 to 0x11672); its frame the Z3805A's; written by hand for the 58503A 3704	calendar_date @ -0x8
+0x11750	local	date	read	the date it returns: its argument's copy (0x11754), its month set to the quarter's last and its day to 30 or 31 (0x11796 to 0x117b8); written by hand for the 58503A 3704	calendar_date @ -0x4
 0x30c6c	local	record	read	the parameter record it builds and writes; its frame the Z3805A's; written by hand for the 58503A 3704	parameter_record @ -0x14
 0x4c722	local	request	structures.md	the request it sends gpsx_exchange; its frame the Z3805A's; written by hand for the 58503A 3704	gps_request_entry @ -0x1e
 0x33244	local	record	read	the reset-cause record it builds and writes; its frame the Z3805A's; written by hand for the 58503A 3704	reset_record @ -0x60
@@ -2537,6 +2537,12 @@ installer::0x100cde	label	installer_revision_text	read	"USA", the revision insta
 0x13778	function	latch_rewrite	58503a-3704.md	writes selftest.latch to the latch again, or diag_tmode_data in test mode; nothing calls it; written by hand for the 58503A 3704	void latch_rewrite(void)
 0x101e76	label	diag_tmode_state	read	:DIAGnostic:TMODe:STATe, set by its setter (0x2ba2a); while it is set the latch's writers write diag_tmode_data in place of selftest.latch and lamps_write writes nothing; written by hand for the 58503A 3704	uint8_t
 0x101e77	label	diag_tmode_data	read	:DIAGnostic:TMODe:DATA, its setter's byte (0x2ba5a), what the latch's writers write in test mode; written by hand for the 58503A 3704	uint8_t
+0x103a05	label	es_enabled	read	the Z3805A's es_enabled's place; the 58503A has no ES message, and only timecode_init writes it (0x14028); written by hand for the 58503A 3704	uint8_t
+0x103a06	label	tcode_error_amask	read	:DIAGnostic:TCODe:ERRor:AMASk's value (0x2ba92); timecode_init sets it to 0xff (0x1402e), and nothing else reads it; written by hand for the 58503A 3704	uint8_t
+0x103a07	label	tcode_error_omask	read	:DIAGnostic:TCODe:ERRor:OMASk's value; timecode_init clears it (0x14036), and nothing else reads it; written by hand for the 58503A 3704	uint8_t
+0x103a08	label	tcode_status_amask	read	:DIAGnostic:TCODe:STATus:AMASk's value; timecode_init sets it to 0xff (0x1403c), and nothing else reads it; written by hand for the 58503A 3704	uint8_t
+0x103a09	label	tcode_status_omask	read	:DIAGnostic:TCODe:STATus:OMASk's value; timecode_init clears it (0x14044), and nothing else reads it; written by hand for the 58503A 3704	uint8_t
+0x103a46	label	es_length	read	the Z3805A's es_length's place, before tcode_message as there; only timecode_init writes it (0x1401c); written by hand for the 58503A 3704	uint8_t
 0x103a86	label	tcode_send	read	the routine timecode_schedule sends the time code through, with tcode_message and tcode_length (0x14128); tcode_request stores drtb_send_async in it (0x13d6a); written by hand for the 58503A 3704	tcode_send_function *
 0x189f6	function	qspi_adc_test_read	read	one transfer to the ADC, QSPI device 1, of the word 0xe000, returning its reply; qspi_adc_test_58503a checks the reply's bits; written by hand for the 58503A 3704	uint16_t qspi_adc_test_read(void)
 0x1de46	function	duart_input_port_read	read	the DUART's input port (IP, 0x20001a); nothing calls it; written by hand for the 58503A 3704	uint8_t duart_input_port_read(void)
@@ -2664,6 +2670,28 @@ installer::0x100fbe	function	installer_output_bits_set	read	installer_duart_outp
 0x18134	label	selftest_list	read	the self-tests selftest_run_all and selftest_run_all_counted run, selftest_table's entries 1 to 11, then a null (0x17808, 0x1782e); written by hand for the 58503A 3704	selftest_entry[12]
 0x4ed82	label	satellite_status_blank_entry	structures.md	satellite_status_list copies it over each unused entry of the list (0x49c30); written by hand for the 58503A 3704	satellite_list_entry
 0x1b150	function	diag_pr_adc_avg	read	the word pr_adc_avg: each of hmon_channels' entries with its byte at +0x28 set, its name and adc_average (0x1b162 to 0x1b19c); written by hand for the 58503A 3704	void diag_pr_adc_avg(void)	convention=c; confidence=read
+0x521f4	label	gps_script_52	read	script 0x52, gps_script_lookup's first (0x4c80e), which also calls gps_init_58503a; to its NULL; written by hand for the 58503A 3704	gps_script_step *[34]
+0x5227c	label	gps_script_53	read	script 0x53, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[33]
+0x52300	label	gps_script_54	read	script 0x54, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[5]
+0x52314	label	gps_script_55	read	script 0x55, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[8]
+0x52334	label	gps_script_56	read	script 0x56, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[6]
+0x5234c	label	gps_script_57	read	script 0x57, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[6]
+0x52364	label	gps_script_58	read	script 0x58, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[27]
+0x5243c	label	gps_script_59	read	script 0x59, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[4]
+0x5244c	label	gps_script_5a	read	script 0x5a, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[10]
+0x52474	label	gps_script_5b	read	script 0x5b, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[8]
+0x52494	label	gps_script_5c	read	script 0x5c, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[11]
+0x524c0	label	gps_script_5d	read	script 0x5d, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[14]
+0x524f8	label	gps_script_5e	read	script 0x5e, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[6]
+0x52510	label	gps_script_5f	read	script 0x5f, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[6]
+0x52528	label	gps_script_60	read	script 0x60, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[9]
+0x5254c	label	gps_script_61	read	script 0x61, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[6]
+0x52564	label	gps_script_62	read	script 0x62, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[3]
+0x52570	label	gps_script_63	read	script 0x63, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[6]
+0x52588	label	gps_script_64	read	script 0x64, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[6]
+0x525a0	label	gps_script_65	read	script 0x65, gps_script_lookup's (0x4c80e); to its NULL; written by hand for the 58503A 3704	gps_script_step *[11]
+0x51174	label	gps_script_none	read	the empty script gps_script_lookup returns for a code outside 0x52 to 0x65 (0x4c902); written by hand for the 58503A 3704	gps_script_step *[1]
+0x523d0	label	command_monitor_queries	read	the command monitor's queries, a null-ended list of steps it posts in turn, one at a time, from the start again at the null (command_monitor_init, 0x4bcd4; command_monitor); written by hand for the 58503A 3704	gps_script_step *[27]
 #
 # New functions: the 58503A's functions no Z3805A function or piece
 # matched (image_diff's "new"), and those found "called, by Ghidra's

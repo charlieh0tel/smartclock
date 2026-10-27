@@ -8,6 +8,25 @@
  * declares are in scope; each function here keeps its generated
  * prototype. */
 
+/* A request code's class, by its range and, for a message, its argument
+ * mode, 0 to send it and 1 to query it (0x4c7c4). */
+gps_code_class gps_request_class(gps_request_code_word code,
+                                 gps_argument_mode argument_mode) {
+  if (code >= GPS_REQUEST_TIME_OF_DAY &&
+      code <= GPS_REQUEST_FIX_ALGORITHM_SECOND &&
+      (argument_mode == GPS_ARGUMENTS_SET ||
+       argument_mode == GPS_ARGUMENTS_QUERY)) {
+    return GPS_CLASS_MESSAGE;
+  }
+  if (code >= GPS_STEP_STATUS_SNAPSHOT && code < GPS_SCRIPT_INIT_DEFAULTS) {
+    return GPS_CLASS_STEP;
+  }
+  if (code >= GPS_SCRIPT_INIT_DEFAULTS && code <= GPS_SCRIPT_SATELLITE_SELECT) {
+    return GPS_CLASS_SCRIPT;
+  }
+  return GPS_CLASS_INVALID;
+}
+
 /* The ring's entry after one, back to the first after the last. */
 static gps_request_entry* gps_requests_after(gps_request_entry* entry) {
   static const uint32_t COUNT =
@@ -20,6 +39,233 @@ static gps_request_entry* gps_requests_after(gps_request_entry* entry) {
 /* 1 if the ring holds no request (0x4c48a). */
 bool request_ring_empty(void) {
   return gps_requests.read == gps_requests.write;
+}
+
+/* Empties the ring of waiting requests (0x4c39a). */
+void request_ring_clear(void) {
+  gps_requests.write = gps_requests.entries;
+  gps_requests.read = gps_requests.entries;
+}
+
+/* 1 if the ring has no room for another (0x4c4a0). */
+bool request_ring_full(void) {
+  return gps_requests_after(gps_requests.write) == gps_requests.read;
+}
+
+/* Adds a request as the newest; 0 if the ring is full (0x4c3aa). */
+bool request_ring_put(gps_request_entry* entry) {
+  gps_request_entry* next = gps_requests_after(gps_requests.write);
+
+  if (next == gps_requests.read) {
+    return 0;
+  }
+  *gps_requests.write = *entry;
+  gps_requests.write = next;
+  return 1;
+}
+
+/* Takes the oldest request; 0 if the ring is empty (0x4c3f2). */
+int32_t request_ring_get(gps_request_entry* entry) {
+  if (gps_requests.read == gps_requests.write) {
+    return 0;
+  }
+  *entry = *gps_requests.read;
+  gps_requests.read = gps_requests_after(gps_requests.read);
+  return 1;
+}
+
+/* Takes back the newest request; 0 if the ring is empty (0x4c43e). */
+int32_t request_ring_unput(gps_request_entry* entry) {
+  static const uint32_t LAST =
+      sizeof gps_requests.entries / sizeof gps_requests.entries[0] - 1;
+
+  if (gps_requests.read == gps_requests.write) {
+    return 0;
+  }
+  if (gps_requests.entries < gps_requests.write) {
+    gps_requests.write--;
+  } else {
+    gps_requests.write = &gps_requests.entries[LAST];
+  }
+  *entry = *gps_requests.write;
+  return 1;
+}
+
+/* Whether a request from the sender is running, the task not idle, or
+ * is waiting in the ring (0x4c4c6). */
+bool request_ring_contains(gps_process_state state, gps_request_sender sender,
+                           gps_request_sender running_sender) {
+  if (state != GPS_PROCESS_TASK_IDLE && sender == running_sender) {
+    return true;
+  }
+  for (gps_request_entry* entry = gps_requests.read;
+       entry != gps_requests.write; entry = gps_requests_after(entry)) {
+    if (entry->sender == sender) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/* The oldest waiting request with the code; NULL with none (0x4c548). */
+gps_request_entry* request_ring_find(gps_request_code_word code) {
+  for (gps_request_entry* entry = gps_requests.read;
+       entry != gps_requests.write; entry = gps_requests_after(entry)) {
+    if (entry->code == code) {
+      return entry;
+    }
+  }
+  return NULL;
+}
+
+/* Runs the oldest waiting request with the code at once, out of turn, as
+ * gps_console_request does a console line's, and counts it a success:
+ * taken from the ring's oldest end, or by turning the ring once round,
+ * every other request put back in its order (0x4c57e).  The image takes
+ * it from the newest end when it is at gps_requests.write, which
+ * request_ring_find never returns, the newest being the entry before. */
+void gps_request_run_queued(gps_request_code_word code) {
+  gps_request_entry* found = request_ring_find(code);
+  gps_request_entry* end = gps_requests.write;
+  gps_request_entry taken;
+  gps_request_entry entry;
+  bool done = false;
+
+  if (found == NULL) {
+    return;
+  }
+  if (found == gps_requests.read) {
+    request_ring_get(&taken);
+  } else if (found == gps_requests.write) {
+    request_ring_unput(&taken);
+  } else {
+    while (end != gps_requests.read) {
+      request_ring_get(&entry);
+      if (done || entry.code != code) {
+        request_ring_put(&entry);
+      } else {
+        taken = entry;
+        done = true;
+      }
+    }
+  }
+  gps_console_request_58503a(taken.code, taken.arguments, taken.sender);
+  gps_count_response(GPS_RESULT_SUCCESS, &taken);
+}
+
+/* Queues a request the task has received: a link reset aborts the
+ * running request and every waiting one and goes in alone; another is
+ * refused as busy while one from its sender runs or waits, or when the
+ * ring is full, unless it can replace the newest, which is answered busy
+ * in its place (0x4c66a). */
+void gps_request_queue(gps_process_state state, gps_request_entry* request,
+                       gps_request_entry* running) {
+  gps_request_entry waiting;
+
+  if (request->code == GPS_STEP_LINK_RESET) {
+    if (state != GPS_PROCESS_TASK_IDLE) {
+      gps_count_response(GPS_RESULT_ABORT, running);
+    }
+    while (request_ring_get(&waiting) != 0) {
+      gps_count_response(GPS_RESULT_ABORT, &waiting);
+    }
+    request_ring_put(request);
+    gps_task_state = GPS_PROCESS_TASK_IDLE;
+    return;
+  }
+  if (request_ring_contains(state, request->sender, running->sender)) {
+    gps_count_response(GPS_RESULT_BUSY, request);
+    return;
+  }
+  if (request_ring_empty() == 0) {
+    if (request_ring_newest_replaceable() != 0) {
+      request_ring_unput(&waiting);
+      gps_count_response(GPS_RESULT_BUSY, &waiting);
+    } else if (request_ring_full() != 0) {
+      gps_count_response(GPS_RESULT_BUSY, request);
+      return;
+    }
+  }
+  request_ring_put(request);
+}
+
+/* Sends a monitor's request to the task's exchange, marking the command
+ * or the status monitor's result pending, as the sender is either: the
+ * code's, without arguments, or for GPS_POST_STEP the code, mode and
+ * arguments of the step arguments[0] points at (0x4c722). */
+bool gps_request_post(gps_request_sender sender, gps_request_code_word code,
+                      int32_t* arguments, uint8_t sent) {
+  gps_request_entry request;
+
+  request.field_00 = 0;
+  request.field_04 = 0;
+  request.sender = sender;
+  if (code == GPS_POST_STEP) {
+    /* The argument long holds the step's address. */
+    gps_script_step* step = (gps_script_step*)arguments[0];
+
+    request.code = step->code;
+    request.argument_mode = step->argument_mode;
+    request.arguments = step->arguments;
+  } else {
+    request.code = code;
+    request.argument_mode = GPS_ARGUMENTS_SET;
+    request.arguments = 0;
+  }
+  request.sent = sent;
+  request.result = GPS_RESULT_REJECT;
+  if (sender == GPS_SENDER_COMMAND_MONITOR) {
+    command_monitor_result = GPS_RESULT_PENDING;
+  } else if (sender == GPS_SENDER_STATUS_MONITOR) {
+    status_monitor_result = GPS_RESULT_PENDING;
+  }
+  return (uint8_t)psos_send_x(gpsx_exchange, &request) == 0;
+}
+
+/* Whether the task takes a request from a sender: always.  The image
+ * would look a sequence's or a setting's code up in a list at 0x4dd66,
+ * refusing none found, but the list is empty, its end mark alone, and
+ * the test the compiler made of it is always true (0x4c994). */
+uint8_t gps_request_admitted(gps_request_sender sender,
+                             gps_request_code_word code) {
+  return 1;
+}
+
+/* The scripts by their codes from GPS_SCRIPT_INIT_DEFAULTS on. */
+static gps_script_step** const gps_requests_scripts[] = {
+    gps_script_52, gps_script_53, gps_script_54, gps_script_55, gps_script_56,
+    gps_script_57, gps_script_58, gps_script_59, gps_script_5a, gps_script_5b,
+    gps_script_5c, gps_script_5d, gps_script_5e, gps_script_5f, gps_script_60,
+    gps_script_61, gps_script_62, gps_script_63, gps_script_64, gps_script_65};
+
+/* A script code's steps, the empty script for any other; the first
+ * script also resets gps (0x4c80e). */
+gps_script_step** gps_script_lookup(gps_request_code_word code) {
+  static const uint32_t COUNT =
+      sizeof gps_requests_scripts / sizeof gps_requests_scripts[0];
+  uint32_t index = (uint32_t)(code - GPS_SCRIPT_INIT_DEFAULTS);
+
+  if (index >= COUNT) {
+    return gps_script_none;
+  }
+  if (code == GPS_SCRIPT_INIT_DEFAULTS) {
+    gps_init_58503a();
+  }
+  return gps_requests_scripts[index];
+}
+
+/* Whether the engine's Time RAIM option is known to decide a message:
+ * 1 for @@Bn or @@En once the receiver's ID has come, with, through
+ * supported, whether the engine has the option; 0 for any other message
+ * or before the ID, supported left as it was (0x50b7c).  The Z3805A's
+ * returns 1 for every message but @@Bn before the ID. */
+uint32_t gps_message_supported(gps_request_code_word code, uint8_t* supported) {
+  if ((code != GPS_REQUEST_TRAIM && code != GPS_REQUEST_TRAIM_8) ||
+      gps.receiver_id_received == 0) {
+    return 0;
+  }
+  *supported = (gps.field_592 & GPS_FIELD_592_OPTION_I) != 0;
+  return 1;
 }
 
 /* Runs an argument encoder of oncore_messages.  The table holds the

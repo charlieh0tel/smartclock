@@ -54075,18 +54075,7 @@ __asm__(
 /* installer_psos_io_control: rewritten in installer_os.c */
 
 /* installer::00102ff2 */
-
-/* a bare rts where the primary has cpu_register_test (0x1749e), next after
-   installer_psos_io_control as there; nothing calls it (from the Z3805A 3543B, by image_diff:
-   identical)
-   read */
-
-void installer_cpu_register_test(void)
-
-{
-  return;
-}
-
+/* installer_cpu_register_test: rewritten in installer_os.c */
 
 /* installer::00102ff4 */
 /* installer_gp_port_select: rewritten in installer_duart.c */

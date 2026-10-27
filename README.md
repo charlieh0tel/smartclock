@@ -101,7 +101,7 @@ documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 ### The Z3805A 3543B, 58503A 3704 and Z3801A 3543 in C
 
 One image, the Z3805A's 3543B, is read whole as C.  Every C function
-of it and of the installer it unpacks into RAM, 1318 and 236, was
+of it and of the installer it unpacks into RAM, 1318 and 237, was
 decompiled by Ghidra through the project's scripts and then written
 again by hand, and each runs in an emulator harness against the
 image's own copy from the same state, its results, memory, kernel

@@ -444,6 +444,10 @@ uint32_t installer_psos_io_control(uint32_t device, uint32_t a, uint32_t b) {
       .error;
 }
 
+/* Nothing: a bare rts where the primary has cpu_register_test, next after
+ * installer_psos_io_control as there; nothing calls it. */
+void installer_cpu_register_test(void) {}
+
 /* Packs the name and creates the mutex as an exchange of that name;
  * installer_psos_pack_name reads the name as this function's caller's
  * first argument. */

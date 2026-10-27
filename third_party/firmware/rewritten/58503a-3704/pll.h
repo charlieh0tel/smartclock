@@ -1,6 +1,13 @@
 /* The PLL's static helpers that read pll_state, laid out differently
- * in each image, so this image's own; common/pll.h has the PLL's
- * shared constants. */
+ * in each image, so this image's own, and the flags the 58503A's loop
+ * shares that the export declares no object for; common/pll.h has the
+ * PLL's shared constants. */
+
+/* Set while a reading is replaced by a wait for a dead 1PPS, cleared
+ * when one is read (interval_wait_reading, interval_next_reading); while
+ * it is set holdover, startup_pll and pll_normal post no "Error with
+ * measurement" (revisions.md, "Measurement errors"). */
+static uint8_t* const PLL_READING_REPLACED = (uint8_t*)0x10238d;
 
 /* The EFC less its temperature correction, the TC times the oscillator
  * current (0x414b2, 0x44302). */

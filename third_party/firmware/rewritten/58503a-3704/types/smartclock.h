@@ -1266,6 +1266,11 @@ typedef enum __attribute__((packed)) status_condition_code {
                                  STATUS_HOLDOVER_THRESHOLD_CLEARED (0x47668),
                                  the Z3805A 3543B's number for
                                  STATUS_SELFTEST_FAILURE_CLEARED */
+  STATUS_CONDITION_36 = 0x36, /* does nothing; status_happening clears it
+                                 entering holdover, waiting or recovery
+                                 (0x2f29a) */
+  STATUS_CONDITION_37 = 0x37, /* does nothing; status_happening clears it
+                                 entering lock (0x2f272) */
   STATUS_SELFTEST_FAILURE_SET = 0x38, /* :HARDware bit 0, selftest_summary's
                                          (0x178de) */
   STATUS_SELFTEST_FAILURE_CLEARED = 0x39,

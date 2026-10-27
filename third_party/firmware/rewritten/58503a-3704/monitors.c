@@ -221,7 +221,7 @@ void hmon_task(void) {
       checked = gps_pps_check();
     }
     if (checked != 0) {
-      if (gps_pps_dead == 0 || gps.references[0].valid != 1) {
+      if (gps_pps_dead == 0 || gps.references[0].valid != GPS_REFERENCE_VALID) {
         gps_dead_checks = 0;
         if (gps_failure) {
           status_happening(STATUS_GPS_PPS_FAILURE_CLEARED);

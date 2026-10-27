@@ -76,3 +76,26 @@ int32_t scpi_query_DOUGlas_STATe_POWerup(void* parameters, void* response,
   *state = (int8_t)nv_settings.douglas_state_powerup;
   return 0;
 }
+
+/* :DOUGlas:DURation: INF, or a number that is SCPI's infinity, sets the
+ * duration infinite; else the number, as a long, or MAX or MIN, to pllc
+ * (0x2ce4e). */
+int32_t scpi_set_DOUGlas_DURation(void* parameters, void* response,
+                                  scpi_call* call) {
+  scpi_float_parameter* duration = parameters;
+
+  if ((duration->kind == SCPI_PARAMETER_CHARACTER &&
+       duration->keyword == SCPI_DOUGLAS_INFINITY) ||
+      (duration->kind == SCPI_PARAMETER_DECIMAL &&
+       float_compare(duration->value, SCPI_DOUGLAS_INFINITE) == 0)) {
+    pllc_request_a(&scpi_param_DOUGlas_DURation_INFinity, 0, 1,
+                   return_zero(call->input));
+    return 0;
+  }
+  /* The image converts the value whatever the kind (0x2ce9c). */
+  int32_t seconds = float_to_integer(duration->value);
+
+  scpi_numeric_set(&scpi_param_DOUGlas_DURation, 0, duration->kind,
+                   duration->keyword, 0, seconds, return_zero(call->input));
+  return 0;
+}

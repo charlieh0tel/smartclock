@@ -73,6 +73,25 @@ typedef enum __attribute__((packed)) gps_reference_override {
   GPS_REFERENCE_OVERRIDE_INVALID = 0xff,
 } gps_reference_override;
 
+/* A reference's validity, gps_reference_record.valid, from its state:
+ * :SOURce:GPSystem:REFerence:VALid? answers 1 for valid with its 1PPS
+ * alive, or questionable (0x2d0a0). */
+typedef enum __attribute__((packed)) gps_reference_validity {
+  GPS_REFERENCE_INVALID = 0,
+  GPS_REFERENCE_VALID = 1,        /* GPS_SYNC_VALID, or forced valid */
+  GPS_REFERENCE_QUESTIONABLE = 2, /* GPS_SYNC_QUESTIONABLE and _CLEARING */
+} gps_reference_validity;
+
+/* The EFC's mode, diag_efc_mode, :DIAGnostic:ROSCillator:EFControl:MODE
+ * NORM, USER or TIM (0x2b5a8, 0x2b5f6): in either of the last two
+ * efc_mode_done holds the loop over for HOLD_CAUSE_EFC_CONTROL, and in
+ * the timed one efc_mode_expire ends it after 600 passes. */
+typedef enum __attribute__((packed)) efc_mode {
+  EFC_MODE_NORMAL = 0,
+  EFC_MODE_USER = 1,
+  EFC_MODE_TIMED = 2,
+} efc_mode;
+
 #include "../../common/types/counter_sync_kind.h"
 
 #include "../../common/types/satellite_health_class.h"
@@ -1608,8 +1627,8 @@ typedef struct oncore_receiver_id_line {
  * state to 1, 0x4b858 and 0x4b882 the GPS's and the external's
  * hysteresis.  22 bytes (0x101394 and 0x1013aa, 0x4b830). */
 typedef struct gps_reference_record {
-  uint8_t valid; /* 1 at state 8, 2 at 6 and 7, else 0; while override is
-                    set, 1 for 1 and 0 for any other (0x4bc2a) */
+  gps_reference_validity valid;    /* while override is set, valid for 1 and
+                                      invalid for any other (0x4bc2a) */
   gps_sync_status state;           /* its jump tables' (0x4ba16, 0x4bb70) */
   gps_reference_override override; /* 1 forces valid, 0xff invalid; gps_init
                                       clears it, diag_force_gps_1pps and

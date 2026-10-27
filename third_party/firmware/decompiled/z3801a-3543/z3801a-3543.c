@@ -4557,7 +4557,8 @@ extern scpi_numeric_param scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THRe
 extern scpi_numeric_param scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; /* 000330c2 */
 extern scpi_numeric_param nv_param_field_b8; /* 00033100 */
 extern double two_to_32; /* 00041312 */
-extern fpga_bit fpga_bit_table[6]; /* 00041322 */
+extern fpga_bit fpga_bit_table[10]; /* 00041322 */
+extern fpga_bit fpga_bit_table_register_2_copy[4]; /* 0004134a */
 extern scpi_action_param scpi_action_DIAGnostic_PTIMe_TINTerval; /* 0004135c */
 extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate; /* 00041362 */
 extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_INITiate; /* 00041368 */
@@ -7841,6 +7842,7 @@ __asm__(".set forth_watch_after, 0x00100b68");
 __asm__(".set forth_watch_before, 0x00100b28");
 __asm__(".set forth_while_tag, 0x00019272");
 __asm__(".set fpga_bit_table, 0x00041322");
+__asm__(".set fpga_bit_table_register_2_copy, 0x0004134a");
 __asm__(".set fpga_configurations, 0x00020cf0");
 __asm__(".set fpga_port, 0x00304000");
 __asm__(".set fpga_programming, 0x00101b6a");

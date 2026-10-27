@@ -1,19 +1,20 @@
 # smartclock
 
-Tools for HP / Agilent / Symmetricom SmartClock GPS time and frequency
-receivers -- the 58503A/B, 59551A and Z3801A, Z3805A, Z3815A and Z3816A
--- and a study of how they work, down to their firmware and boards.
-
-The project has three parts:
+HP / Agilent / Symmetricom SmartClock GPS time and frequency receivers
+-- the 58503A/B, 59551A and Z3801A, Z3805A, Z3815A and Z3816A: tools to
+monitor them, their firmware read and rewritten as C, and their boards
+mapped.  It began as a monitor and became a study of how the receivers
+work.
 
 - **Monitoring** (`smartclockmon`): a Rust library, a logging daemon,
   a terminal monitor, a browser view and a Prometheus exporter, for
   receivers on a serial port.  In daily use, logging continuously.
 - **The firmware**: seven ROM images read and documented -- the SCPI
   command trees, the 1 PPS measurement, the disciplining loop, the GPS
-  engine interface, the pForth console, the FPGA bitstreams -- and one,
-  the Z3805A's 3543B, read whole as hand-written C and checked against
-  the image function by function.
+  engine interface, the pForth console, the FPGA bitstreams -- and
+  three, the Z3805A's 3543B, the 58503A's 3704 and the Z3801A's 3543,
+  rewritten whole as C by hand and checked against the image function
+  by function.
 - **The hardware**: the boards' parts mapped from photographs, the
   parts' data sheets, and what only a bench can settle, with the
   procedures to settle it.
@@ -98,38 +99,43 @@ Z3815A and Z3816A -- read off bench units through the pForth debug
 console or gathered from others.  [`docs/firmware/`](docs/firmware/)
 documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 
-### The Z3805A 3543B, 58503A 3704 and Z3801A 3543 in C
+### Three images in C
 
-One image, the Z3805A's 3543B, is read whole as C.  Every C function
-of it and of the installer it unpacks into RAM, 1318 and 237, was
-decompiled by Ghidra through the project's scripts and then written
-again by hand, and each runs in an emulator harness against the
-image's own copy from the same state, its results, memory, kernel
-calls and device accesses compared: all agree but six whose
-difference is the firmware's own or one C cannot express, and one the
-harness cannot run.  The 474 routines that are not C, the pSOS and
-pForth kernels among them, are the image's instructions, reassembled
-byte for byte, and the generated SCPI trees are the ROM's bytes.  It is
-a reading of the firmware, not a buildable or flashable image, and the
-firmware's faults are kept, not fixed.  Method, checks and limits:
-[`docs/firmware/rewrite.md`](docs/firmware/rewrite.md).
+Three images are rewritten whole as C: every C function of each, and of
+the installer it unpacks into RAM, was decompiled by Ghidra through the
+project's scripts and then written again by hand.  The routines that are
+not C, the pSOS and pForth kernels among them, are the image's
+instructions, reassembled byte for byte, and the generated SCPI trees
+are the ROM's bytes.  Each hand-written function runs beside the image's
+own copy from the same state, its results, memory, kernel calls and
+device accesses compared.  It is a reading of the firmware, not a
+buildable or flashable image, and the firmware's faults are kept, not
+fixed.
 
-The 58503A's 3704 is read whole as C too, its C begun as the
-Z3805A's and rewritten to its own code, and held to the same
-checks: of the primary's functions 1418 agree and 4 differ for the
+| Image | C functions by hand, primary and installer | Routines kept as assembly | Document |
+| ----- | ------------------------------------------ | ------------------------- | -------- |
+| Z3805A 3543B | 1318 and 237 | 474 | [`rewrite.md`](docs/firmware/rewrite.md) |
+| 58503A 3704 | 1422 and 248 | 468 | [`58503a-3704.md`](docs/firmware/58503a-3704.md) |
+| Z3801A 3543 | 1300 and 237 | 467 | [`z3801a-3543.md`](docs/firmware/z3801a-3543.md) |
+
+The Z3805A's came first; its function check finds all agree but six
+whose difference is the firmware's own or one C cannot express, and one
+the harness cannot run.  Its method, checks and limits are those of all
+three.  The 58503A's C began as the Z3805A's and was rewritten to its
+own code: of the primary's functions 1418 agree and 4 differ for the
 firmware's own reasons, and the installer's 247 agree, one the harness
-cannot run; its console sessions agree, 8 of 8.  What it has that the
-Z3805A does not, the front panel among it:
-[`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md).
+cannot run; its console sessions agree, 8 of 8.  Its document says what
+it has that the Z3805A does not, the front panel among it.  The Z3801A's
+3543, the Z3805A's sibling without its SCI driver, is held to the same
+checks.
 
-The Z3801A's 3543, the Z3805A's sibling without its SCI driver, is read
-whole as C the same way, held to the same checks:
-[`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md).  The C
-the three images run alike lies once in `third_party/firmware/rewritten/common/`,
-by the rules of [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md),
-"Shared C".
-
-The checks run in CI (`.github/workflows/firmware.yml`;
+The C the three run alike lies once, in
+`third_party/firmware/rewritten/common/`, moved there only by the rules
+of [`rewrite.md`](docs/firmware/rewrite.md), "Shared C"; each image's
+own C is in `rewritten/IMAGE/`.  The firmware tree is split by kind --
+the vendors' images, Ghidra's exports, our C and our analysis --
+as [`third_party/firmware/README.md`](third_party/firmware/README.md)
+maps.  The checks run in CI (`.github/workflows/firmware.yml`;
 [`docs/firmware/README.md`](docs/firmware/README.md), "The checks in
 CI"), and a Ghidra run from the bare image reproduces the checked-in
 export byte for byte.
@@ -142,9 +148,9 @@ in SCPI.
 
 | Model  | Tested | Notes |
 | ------ | ------ | ----- |
-| 58503A | yes | Primary development target |
-| Z3801A | yes | Different response formats |
-| Z3805A | yes | Answers as the Z3801A; its firmware read as C |
+| 58503A | yes | Primary development target; its 3704 firmware in C |
+| Z3801A | yes | Different response formats; its 3543 firmware in C |
+| Z3805A | yes | Answers as the Z3801A; its 3543B firmware in C |
 | 58503B | no; may work | Firmware studied |
 | 59551A | no; may work | No commands for its pulse output or time tags |
 | Z3816A | no; may work | Firmware studied |
@@ -191,9 +197,11 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`docs/58503a-second-10mhz.md`](docs/58503a-second-10mhz.md) | enabling the 58503A's 10 MHz OUT B, J15 |
 | [`docs/oncore-leap-week.md`](docs/oncore-leap-week.md) | the 58503A's Time Reset at the end of GPS week 2441, and the 256-week leap-parameter bugs it resembles |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
-| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the Z3805A 3543B, 58503A 3704 and Z3801A 3543 in C |
-| [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md) | the Z3805A rewrite's method, checks and limits |
+| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the three images in C |
+| [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md) | the rewrite's method, checks and limits, shown on the Z3805A 3543B, and the rules for shared C |
 | [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md) | the 58503A 3704 against the Z3805A 3543B, and its rewrite |
+| [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |
+| [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
 | [`docs/loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |
 | [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, and as C data, the trees side by side against the manuals, and what bench receivers answered |
 | [`docs/screen-format-strings.md`](docs/screen-format-strings.md) | the status screen's templates, and what drives its mode line |

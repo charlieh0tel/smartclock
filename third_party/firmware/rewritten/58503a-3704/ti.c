@@ -106,3 +106,197 @@ void counter_set_sync(uint8_t kind) {
   fconf_regs[3] |= kind;
   fpga_write(3, fconf_regs[3]);
 }
+
+/* The counter's configuration's defaults, its registers into fconf_regs
+ * too, and the reading marked invalid (0x40f70). */
+void counter_configuration_init(counter_configuration_fields* configuration) {
+  /* The fields by fpga_bits entry: the count, preset and the high
+   * reference flagged, the rest 0, the alarm's among them.  Even, since
+   * gcc fills it by words and longs, misaligned at an odd address. */
+  uint8_t __attribute__((aligned(2))) fields[] = {
+      [FPGA_BIT_MODE] = FPGA_MODE_COUNT,
+      [FPGA_BIT_PRESET] = TI_PRESET_ON,
+      [FPGA_BIT_REFERENCE] = INTERPOLATOR_REFERENCE_HIGH,
+      [FPGA_BIT_ALARM] = 0};
+
+  fpga_fields_to_registers(fields, configuration->fpga_registers);
+  fpga_fields_to_registers(fields, fconf_regs);
+  configuration->calibration = 0.4000003; /* the image's, 0x3fd9999adbb8f8da */
+  configuration->interpolator_scale = TI_SPREAD;
+  configuration->calibrate_mode = COUNTER_CALIBRATE_ALWAYS;
+  configuration->calibrate_state = COUNTER_WORK_WANTED;
+  configuration->registers_mode = COUNTER_REGISTERS_WHEN_WANTED;
+  configuration->registers_state = COUNTER_WORK_WANTED;
+  interval_reading.value = TI_NOT_A_NUMBER;
+  interval_reading.valid = 0;
+}
+
+/* Sets the interpolator's reference back to the high one, as
+ * counter_configuration_init's fields have it: the 58503A's counter_arm
+ * and interpolator routines end so (0x40d82, 0x40474), where the
+ * Z3805A's leave it as their last measurement set it. */
+static void ti_reference_high(void) {
+  fpga_set_bit(FPGA_BIT_REFERENCE, INTERPOLATOR_REFERENCE_HIGH);
+}
+
+/* Reloads the FPGA's registers if the configuration asks, presets the
+ * counter, syncs it if asked, and releases it to count (0x40cf8). */
+void counter_arm(interval_reading_fields* reading,
+                 counter_configuration_fields* configuration) {
+  if (!interval_reading.armed) {
+    reading->errors |= COUNTER_MEASUREMENT_ABORTED;
+  }
+  if (reading->errors != 0) {
+    return;
+  }
+  ti_registers_load_wanted(configuration);
+  fpga_set_bit(FPGA_BIT_PRESET, TI_PRESET_ON);
+  fpga_set_field(FPGA_BIT_MODE, FPGA_MODE_COUNT);
+  fpga_set_bit(FPGA_BIT_START, 0);
+  fpga_set_field(FPGA_BIT_ADDRESS, 0);
+  ti_reference_high();
+  if (configuration->sync_mode == COUNTER_SYNC_WHEN_WANTED &&
+      configuration->sync_state == COUNTER_WORK_WANTED) {
+    counter_set_sync(configuration->sync_kind);
+    configuration->sync_count--;
+    if (configuration->sync_count < 1) {
+      configuration->sync_state = COUNTER_WORK_DONE;
+    }
+  }
+  fpga_set_bit(FPGA_BIT_PRESET, 0);
+}
+
+/* interpolator_calibrate's trim: the DACs until the references read in
+ * their ranges, 200 apart, or within one of it after 20 nudges; false,
+ * and the calibration started afresh, if not. */
+static uint8_t ti_calibrate(interpolator_calibration* calibration) {
+  static const uint8_t HDAC_MINIMUM = 0;
+  /* the high reference's DAC is first stepped to put its reading this
+   * window below the low's, as a uint8_t wraps */
+  static const uint8_t STEP_BELOW_FAR = 0x3c;
+  static const uint8_t STEP_BELOW_NEAR = 0x34;
+  static const uint8_t NUDGES = 20;
+  bool calibrated = false;
+  int32_t spread;
+
+  interpolator_prepare();
+  if (!calibration->initialized) {
+    calibration->initialized = 1;
+    calibration->hdac_2 = TI_HDAC_START;
+    calibration->hdac_3 = TI_HDAC_START;
+  }
+  ti_measure_both(calibration);
+  spread = calibration->reading_high - calibration->reading_low;
+  if (spread == TI_SPREAD && ti_low_in_range(calibration->reading_low) &&
+      ti_high_in_range(calibration->reading_high)) {
+    calibration->calibrated = 1;
+    return 1;
+  }
+
+  if (!ti_high_in_range(calibration->reading_high)) {
+    calibration->hdac_3 = dac_search_bisect(
+        calibration->hdac_3, HDAC_MINIMUM, TI_HDAC_MAXIMUM, TI_HIGH_MINIMUM,
+        TI_HIGH_MAXIMUM, interpolator_measure_high);
+  }
+  calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
+  if (!ti_low_in_range(calibration->reading_low)) {
+    calibration->hdac_2 = dac_search_bisect(
+        calibration->hdac_2, HDAC_MINIMUM, TI_HDAC_MAXIMUM, TI_LOW_MINIMUM,
+        TI_LOW_MAXIMUM, interpolator_measure_low);
+  }
+  calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
+  calibration->hdac_3 = dac_search_step(
+      calibration->hdac_3, HDAC_MINIMUM, TI_HDAC_MAXIMUM,
+      calibration->reading_low - STEP_BELOW_FAR,
+      calibration->reading_low - STEP_BELOW_NEAR, interpolator_measure_high);
+  calibration->reading_high = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
+  calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
+
+  for (uint8_t nudge = 0; nudge < NUDGES && !calibrated; nudge++) {
+    calibration->hdac_2 = hdac_nudge(
+        calibration->reading_high - calibration->reading_low - TI_SPREAD,
+        calibration->hdac_2);
+    if (!ti_high_in_range(calibration->reading_high)) {
+      calibration->hdac_3 = dac_search_step(
+          calibration->hdac_3, HDAC_MINIMUM, TI_HDAC_MAXIMUM, TI_HIGH_MINIMUM,
+          TI_HIGH_MAXIMUM, interpolator_measure_high);
+    }
+    calibration->reading_high =
+        interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
+    calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
+    spread = calibration->reading_high - calibration->reading_low;
+    calibrated = spread == TI_SPREAD;
+  }
+  if (!calibrated) {
+    calibrated = spread == TI_SPREAD - 1 || spread == TI_SPREAD + 1;
+  }
+  if (calibrated) {
+    ti_calibration_keep(calibration);
+  } else {
+    calibration->initialized = 0;
+    calibration->calibrated = 0;
+  }
+  return calibrated;
+}
+
+/* Trims the DACs as ti_calibrate does, then sets the reference back to
+ * the high one (0x40248). */
+uint8_t interpolator_calibrate(interpolator_calibration* calibration) {
+  const uint8_t calibrated = ti_calibrate(calibration);
+
+  ti_reference_high();
+  return calibrated;
+}
+
+/* interpolator_verify's check: both DACs set and both references read in
+ * their ranges, again with the last good DACs if not; 1 if so, 0 for a
+ * calibration never initialized.  On a failure it returns the caller's
+ * D2's low byte, which interpolator_verify passes it. */
+static uint8_t ti_verify(interpolator_calibration* calibration,
+                         uint8_t caller_d2) {
+  if (calibration->initialized == 0) {
+    return 0;
+  }
+  calibration->calibrated = 0;
+  interpolator_prepare();
+  ti_measure_both(calibration);
+  if (!ti_readings_in_range(calibration)) {
+    if (calibration->result_valid == 0) {
+      return caller_d2;
+    }
+    calibration->hdac_2 = calibration->result_hdac_2;
+    calibration->hdac_3 = calibration->result_hdac_3;
+    ti_measure_both(calibration);
+    if (!ti_readings_in_range(calibration)) {
+      return caller_d2;
+    }
+  }
+  calibration->calibrated = 1;
+  return 1;
+}
+
+/* Checks the calibration as ti_verify does, then sets the reference
+ * back to the high one (0x4048c).  On a failure it returns D2's low
+ * byte as its caller left it, as the Z3805A's does
+ * (docs/firmware/quirks.md). */
+uint8_t interpolator_verify(interpolator_calibration* calibration) {
+  const uint8_t verified =
+      ti_verify(calibration, CPU_CALLERS_REGISTER(uint32_t, "d2"));
+
+  ti_reference_high();
+  return verified;
+}
+
+/* Takes both references' readings with the calibration's DACs, both in
+ * the middle the first time; "First-time interp test." Then sets the
+ * reference back to the high one (0x40576). */
+void interpolator_sample(interpolator_calibration* calibration) {
+  interpolator_prepare();
+  if (!calibration->initialized) {
+    calibration->hdac_2 = TI_HDAC_START;
+    calibration->hdac_3 = TI_HDAC_START;
+    task_dmessage("First-time interp test. \r\n");
+  }
+  ti_measure_both(calibration);
+  ti_reference_high();
+}

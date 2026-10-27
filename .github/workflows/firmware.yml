@@ -27,7 +27,8 @@ jobs:
     # with; 24.04's gcc 13 gives the same figures (docs/firmware/README.md,
     # "The checks in CI").  A preview image as of 2026-10.
     runs-on: ubuntu-26.04
-    timeout-minutes: 30
+    # Three images' function checks take some 28 minutes.
+    timeout-minutes: 50
     permissions:
       contents: read
     env:

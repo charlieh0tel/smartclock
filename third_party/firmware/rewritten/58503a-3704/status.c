@@ -351,3 +351,28 @@ uint8_t alarm_text(char* text) {
   libc_copy(text, cursor.text);
   return taken;
 }
+
+/* Sets a register's enable or transition filter in the status model of
+ * the request's port, and 1; 0 for a port with none (0x2f014).  The
+ * Z3805A's takes status_object for SCPI's requests alone. */
+uint32_t status_preset_register(status_register_mask mask,
+                                request_source source, int16_t index,
+                                int16_t value) {
+  status_model* status = port_status_model(source);
+
+  if (status == NULL) {
+    return 0;
+  }
+  switch (mask) {
+    case STATUS_MASK_ENABLE:
+      status_register_set_enable(status, index, value);
+      break;
+    case STATUS_MASK_POSITIVE_TRANSITION:
+      status_register_set_ptr(status, index + STATUS_FIRST_FILTERED, value);
+      break;
+    case STATUS_MASK_NEGATIVE_TRANSITION:
+      status_register_set_ntr(status, index + STATUS_FIRST_FILTERED, value);
+      break;
+  }
+  return 1;
+}

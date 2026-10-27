@@ -193,3 +193,327 @@ void diag_pr_pll(void) {
   print_gps_init_state();
   print_leap_check_state();
 }
+
+/* A diagnostic word: its routine, name and argument and result counts. */
+typedef struct console_word {
+  const void* code;
+  char* name;
+  int32_t argument_count;
+  uint32_t result_count;
+} console_word;
+
+/* The diagnostic words, in the order diag_words_define defines them:
+ * the image's table at 0x1c7f0, 0x26 bytes an entry, to its null code at
+ * 0x1d3aa.  The Z3805A's adc_temp to adc_ant_curr are gone, and its
+ * force_1pps is force_gps_1pps and force_ext_1pps. */
+static const console_word console_words[] = {
+    {diag_cal, "cal", 1, 0},
+    {diag_adc_read, "adc_read", 1, 1},
+    {diag_pr_adc_avg, "pr_adc_avg", 0, 0},
+    {diag_efc_write, "efc_write", 1, 0},
+    {diag_hdac_write, "hdac_write", 2, 0},
+    {diag_hdac_all, "hdac_all", 6, 0},
+    {diag_doven, "doven", 1, 0},
+    {diag_dmessage, "dmessage", 1, 0},
+    {diag_dmes_gpsm, "dmes_gpsm", 1, 0},
+    {diag_dmes_hmon, "dmes_hmon", 1, 0},
+    {diag_dmes_klok, "dmes_klok", 1, 0},
+    {diag_dmes_pllp, "dmes_pllp", 1, 0},
+    {diag_dmes_root, "dmes_root", 1, 0},
+    {diag_dmes_scpi, "dmes_scpi", 1, 0},
+    {diag_dmes_spoo, "dmes_spoo", 1, 0},
+    {diag_dmes_curv, "dmes_curv", 1, 0},
+    {diag_dmes_all, "dmes_all", 1, 0},
+    {diag_wr_eeprom, "wr_eeprom", 2, 1},
+    {diag_clear_nv, "clear_nv", 0, 0},
+    {diag_debug_psos, "debug_psos", 1, 0},
+    {diag_clk_synch, "clk_synch", 2, 0},
+    {diag_get_time, "get_time", 0, 0},
+    {diag_set_time, "set_time", 6, 0},
+    {diag_abr_stat, "abr_stat", 1, 0},
+    {diag_print_stat, "print_stat", 0, 0},
+    {diag_stat_rate, "stat_rate", 1, 0},
+    {diag_vis_stat_rate, "vis_stat_rate", 1, 0},
+    {diag_print_vis, "print_vis", 0, 0},
+    {diag_ext_msg_rate, "ext_msg_rate", 1, 0},
+    {diag_xdop_stat_rate, "xdop_stat_rate", 1, 0},
+    {diag_print_ext_msg, "print_ext_msg", 0, 0},
+    {diag_print_bc, "print_bc", 0, 0},
+    {diag_gps_time, "gps_time", 3, 0},
+    {diag_gps_date, "gps_date", 3, 0},
+    {diag_gps_php, "gps_php", 4, 0},
+    {diag_gps_ph, "gps_ph", 1, 0},
+    {diag_gps_cable_dly, "gps_cable_dly", 1, 0},
+    {diag_force_gps_1pps, "force_gps_1pps", 1, 0},
+    {diag_force_ext_1pps, "force_ext_1pps", 1, 0},
+    {diag_efc_wr, "efc_wr", 1, 0},
+    {diag_pr_efc, "pr_efc", 0, 0},
+    {diag_pll_restart, "pll_restart", 0, 0},
+    {diag_pll_debug, "pll_debug", 1, 0},
+    {diag_lock, "lock", 0, 0},
+    {diag_phase_off, "phase_off", 0, 0},
+    {diag_pr_pll, "pr_pll", 0, 0},
+    {diag_log_send, "log_send", 1, 0},
+    {diag_print_clk_list, "print_clk_list", 0, 0},
+    {diag_crash, "crash", 1, 0},
+    {diag_leapsec, "leapsec", 2, 0},
+    {diag_eman, "eman", 1, 0},
+    {diag_q_eman, "q_eman", 0, 0},
+    {diag_q_gps_php, "q_gps_php", 0, 0},
+    {diag_q_gps_cable_dly, "q_gps_cable_dly", 0, 0},
+    {diag_avg, "avg", 1, 0},
+    {diag_clr_avg, "clr_avg", 0, 0},
+    {diag_init_gps, "init_gps", 0, 0},
+    {diag_gps_query_all, "gps_query_all", 0, 0},
+    {diag_quiet_status, "quiet_status", 0, 0},
+    {diag_master_reset, "master_reset", 0, 0},
+    {diag_pr_gps_debug, "pr_gps_debug", 0, 0},
+    {diag_clr_gps_debug, "clr_gps_debug", 0, 0},
+    {diag_pr_gps_cmds, "pr_gps_cmds", 0, 0},
+    {diag_pr_avg, "pr_avg", 0, 0},
+    {diag_pr_gps_istate, "pr_gps_istate", 0, 0},
+    {diag_pr_gps_id, "pr_gps_id", 0, 0},
+    {diag_pr_1pps, "pr_1pps", 0, 0},
+    {diag_pr_time_raim, "pr_time_raim", 0, 0},
+    {diag_disable_gps_cmds, "disable_gps_cmds", 1, 0},
+    {diag_pstat, "pstat", 1, 0},
+    {diag_gps_change, "gps_change", 5, 0},
+    {diag_gps_query, "gps_query", 1, 0},
+    {diag_pr_hold_cause, "pr_hold_cause", 0, 0},
+    {diag_loop_time, "loop_time", 1, 0},
+    {diag_pll_rep, "pll_rep", 0, 0},
+    {diag_efc_rep, "efc_rep", 0, 0},
+    {diag_sync_imm, "sync_imm", 0, 0},
+    {diag_es_ascii, "es_ascii", 1, 0},
+    {diag_fp_u, "fp_u", 0, 0},
+};
+
+/* Defines every diagnostic word (0x1c1b2). */
+void diag_words_define(void) {
+  for (size_t i = 0; i < sizeof console_words / sizeof console_words[0]; i++) {
+    const console_word* word = &console_words[i];
+
+    pforth_define_word(word->name, (uint32_t)word->code, word->argument_count,
+                       word->result_count);
+  }
+}
+
+/* The word cal: samples the oven current and the EFC every 10 seconds
+ * for the given seconds and prints the least-squares slope of the EFC on
+ * the current, scaled (0x1befc). */
+void diag_cal(uint32_t seconds) {
+  static const uint16_t STEP_SECONDS = 10;
+  /* About 10 seconds at 1024 ticks a second. */
+  static const uint32_t STEP_TICKS = 10000;
+  /* 1 / 1.02, the image's 0x3f7afafb. */
+  static const float SLOPE_SCALE = 0.98039216f;
+  double sum_current = 0.0;
+  double sum_efc = 0.0;
+  double sum_product = 0.0;
+  double sum_current_squared = 0.0;
+  float count = 0.0f;
+
+  for (uint16_t elapsed = 0; elapsed < seconds; elapsed += STEP_SECONDS) {
+    const uint16_t current = (uint8_t)adc_read(ADC_OVEN_CURRENT);
+    const float efc = pll.efc;
+
+    double_add_in_place(&sum_current, integer_to_double(current));
+    double_add_in_place(&sum_efc, float_to_double(efc));
+    double_add_in_place(&sum_product, float_to_double(float_multiply(
+                                          unsigned_to_float(current), efc)));
+    double_add_in_place(&sum_current_squared,
+                        integer_to_double(current * current));
+    count = float_add(count, 1.0f);
+    printf("curr= %d efc= %.1f, sec remaining= %d\r\n", (uint32_t)current,
+           float_to_double(efc), seconds - elapsed);
+    psos_pause(STEP_TICKS);
+  }
+  printf("now do a least square line fit to data...\r\n");
+  const double numerator = double_subtract_reversed(
+      double_multiply_pointer(float_to_double(count), &sum_product),
+      double_multiply_pointers(&sum_efc, &sum_current));
+  const double denominator = double_subtract_reversed(
+      double_multiply_pointer(float_to_double(count), &sum_current_squared),
+      double_multiply_pointers(&sum_current, &sum_current));
+  const float slope =
+      double_to_float(double_divide_reversed(denominator, numerator));
+  printf("tempco = %f\r\n",
+         float_to_double(float_multiply(slope, SLOPE_SCALE)));
+}
+
+/* The word adc_read: an ADC channel's raw byte, adc_read taking the
+ * number for the channel, where the Z3805A's maps it (0x1b13a). */
+uint32_t diag_adc_read(uint32_t number) {
+  return (uint8_t)adc_read((adc_channel)number);
+}
+
+/* The word pr_adc_avg: the monitored average of each health monitor
+ * channel marked for it, by its name (0x1b150). */
+void diag_pr_adc_avg(void) {
+  static const uint32_t CHANNELS =
+      sizeof(hmon_channels) / sizeof(hmon_channels[0]);
+
+  for (uint32_t channel = 0; channel < CHANNELS; channel++) {
+    if (hmon_channels[channel].field_28 != 0) {
+      printf("%s: %.2f\r\n", hmon_channels[channel].name,
+             float_to_double(adc_average(channel)));
+    }
+  }
+}
+
+/* The word pr_hold_cause: each reason the loop holds over, or none
+ * (0x1b1b2). */
+void diag_pr_hold_cause(void) {
+  static const struct {
+    pll_hold_cause cause;
+    char* text;
+  } CAUSES[] = {
+      {HOLD_CAUSE_HARDWARE_FAILURE, "Holdover due to hardware failure\r\n"},
+      {HOLD_CAUSE_MANUAL, "Holdover due to manual\r\n"},
+      {HOLD_CAUSE_GPS, "Holdover due to GPS\r\n"},
+      {HOLD_CAUSE_TI_ERROR, "Holdover due to TI error\r\n"},
+      {HOLD_CAUSE_TI_LIMIT_EXCEEDED, "Holdover due to TI limit exceeded\r\n"},
+      {HOLD_CAUSE_TEMPORARY_MODE, "Holdover due to temporary mode\r\n"},
+      {HOLD_CAUSE_1PPS_SELECTION, "Holdover due to 1PPS selection\r\n"},
+  };
+
+  if (pll.hold_causes == HOLD_CAUSE_NONE) {
+    printf("No holdover cause\r\n");
+    return;
+  }
+  for (uint32_t i = 0; i < sizeof CAUSES / sizeof CAUSES[0]; i++) {
+    if ((pll.hold_causes & CAUSES[i].cause) != 0) {
+      printf(CAUSES[i].text);
+    }
+  }
+}
+
+/* A reference's override from the words force_gps_1pps and
+ * force_ext_1pps: -1 forces it invalid, 1 valid, any other clears it. */
+static void console_force_reference(gps_reference_record* reference,
+                                    int32_t force) {
+  switch (force) {
+    case -1:
+      reference->override = GPS_REFERENCE_OVERRIDE_INVALID;
+      break;
+    case 1:
+      reference->override = GPS_REFERENCE_OVERRIDE_VALID;
+      break;
+    default:
+      reference->override = GPS_REFERENCE_OVERRIDE_NONE;
+      break;
+  }
+}
+
+/* The word force_gps_1pps: the GPS reference's override (0x1b66e). */
+void diag_force_gps_1pps(int32_t force) {
+  console_force_reference(&gps.references[0], force);
+}
+
+/* The word force_ext_1pps: the external 1PPS reference's override
+ * (0x1b6a6). */
+void diag_force_ext_1pps(int32_t force) {
+  console_force_reference(&gps.references[1], force);
+}
+
+/* The word pll_rep: the EFC history's ends, the loop time, the figures of
+ * merit, the last average and the drift (0x1b2f2). */
+void diag_pll_rep(void) {
+  /* The drift as a fraction a day. */
+  static const float DRIFT_PER_DAY = 5.4e-08f;
+  frequency_figure_of_merit ffom;
+
+  printf("start ptr = %d    stop_ptr = %d\r\n",
+         (uint32_t)pll.efc_history.start_ptr,
+         (uint32_t)pll.efc_history.stop_ptr);
+  printf("max loop time = %d\r\n", float_to_integer(max_loop_time));
+  get_ffom(&ffom);
+  printf("ffom = %1d\r\n", (uint32_t)ffom);
+  printf("tfom = %.1e secs\r\n", float_to_double(pll.tfom));
+  printf("last efc average = %.1f\r\n",
+         float_to_double(pll.efc_history.averages[pll.efc_history.stop_ptr]));
+  printf("current drift = %.1e / day\r\n",
+         float_to_double(float_multiply(pll.efc_history.drift, DRIFT_PER_DAY)));
+}
+
+/* The word efc_rep: every EFC history entry's time, average and weight
+ * (0x1b3c0). */
+void diag_efc_rep(void) {
+  for (int32_t i = 0; i < PLL_AGING_ENTRIES; i++) {
+    printf("%f %.1f %d\r\n", float_to_double(pll.efc_history.times[i]),
+           float_to_double(pll.efc_history.averages[i]),
+           (uint32_t)pll.efc_history.weights[i]);
+  }
+}
+
+/* gps_init_sequence's state, named, copied to the original's 80 bytes
+ * and printed (0x1b80e). */
+void print_gps_init_state(void) {
+  /* The name's buffer, the original's 80 bytes (link -80), so #define. */
+  enum { CONSOLE_STATE_SIZE = 80 };
+  char text[CONSOLE_STATE_SIZE];
+  char* name;
+
+  console_write("Gen GPS state: ");
+  switch (pll.gps_init_state) {
+    case PLL_GPS_INIT_START:
+      name = "start";
+      break;
+    case PLL_GPS_INIT_ACK:
+      name = "init ack";
+      break;
+    case PLL_GPS_INIT_UTC_SEND:
+      name = "UTC corr send";
+      break;
+    case PLL_GPS_INIT_UTC_ACK:
+      name = "UTC corr ack";
+      break;
+    case PLL_GPS_INIT_MASK_ANGLE_SEND:
+      name = "mask angle send";
+      break;
+    case PLL_GPS_INIT_MASK_ANGLE_ACK:
+      name = "mask angle ack";
+      break;
+    case PLL_GPS_INIT_ANTENNA_DELAY_SEND:
+      name = "antenna delay send";
+      break;
+    case PLL_GPS_INIT_ANTENNA_DELAY_ACK:
+      name = "antenna delay ack";
+      break;
+    case PLL_GPS_INIT_IGNORE_SEND:
+      name = "sat ignore send";
+      break;
+    case PLL_GPS_INIT_IGNORE_ACK:
+      name = "sat ignore ack";
+      break;
+    case PLL_GPS_INIT_POSITION_SEND:
+      name = "pos location send";
+      break;
+    case PLL_GPS_INIT_POSITION_ACK:
+      name = "pos location ack";
+      break;
+    case PLL_GPS_INIT_HOLD_OFF_SEND:
+      name = "disable pos hold send";
+      break;
+    case PLL_GPS_INIT_HOLD_OFF_ACK:
+      name = "disable pos hold ack";
+      break;
+    case PLL_GPS_INIT_SURVEY:
+      name = "survey";
+      break;
+    case PLL_GPS_INIT_SURVEY_POSITION_SEND:
+      name = "set_survey location send";
+      break;
+    case PLL_GPS_INIT_SURVEY_POSITION_ACK:
+      name = "set_survey location ack";
+      break;
+    case PLL_GPS_INIT_DONE:
+      name = "done";
+      break;
+    default:
+      name = "unknown";
+      break;
+  }
+  libc_copy(text, name);
+  printf("%s\r\n", text);
+}

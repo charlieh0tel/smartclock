@@ -325,7 +325,7 @@ uint32_t selftest_eeprom_result(void) { return (uint16_t)selftest.eeprom; }
 uint32_t selftest_uart_with_lamp(void) {
   duart_test();
   if (selftest.uart != 0) {
-    duart_output_bits(BOARD_LED_DUART, 0);
+    board_leds_change(BOARD_LED_DUART, 0);
   }
   return (uint16_t)selftest.uart;
 }
@@ -335,7 +335,7 @@ uint32_t selftest_uart_with_lamp(void) {
 uint32_t selftest_qspi_with_lamp(void) {
   selftest_qspi_run();
   if (selftest.qspi != 0) {
-    duart_output_bits(BOARD_LED_SELFTEST, 0);
+    board_leds_change(BOARD_LED_SELFTEST, 0);
   }
   return (uint16_t)selftest.qspi;
 }
@@ -345,7 +345,7 @@ uint32_t selftest_qspi_with_lamp(void) {
 uint32_t selftest_fpga_with_lamp(void) {
   counter_selftest();
   if (selftest.fpga != 0) {
-    duart_output_bits(BOARD_LED_SELFTEST, 0);
+    board_leds_change(BOARD_LED_SELFTEST, 0);
   }
   return (uint16_t)selftest.fpga;
 }
@@ -356,7 +356,7 @@ uint32_t selftest_interpolator_with_lamp(void) {
   selftest.interpolator = 0;
   interpolator_selftest();
   if (selftest.interpolator != 0) {
-    duart_output_bits(BOARD_LED_SELFTEST, 0);
+    board_leds_change(BOARD_LED_SELFTEST, 0);
   }
   return (uint16_t)selftest.interpolator;
 }
@@ -367,7 +367,7 @@ uint32_t selftest_internal_reference_with_lamp(void) {
   selftest.internal_reference = 0;
   internal_pps_test();
   if (selftest.internal_reference != 0) {
-    duart_output_bits(BOARD_LED_SELFTEST, 0);
+    board_leds_change(BOARD_LED_SELFTEST, 0);
   }
   return (uint16_t)selftest.internal_reference;
 }
@@ -378,7 +378,318 @@ uint32_t selftest_internal_reference_with_lamp(void) {
 uint32_t selftest_gps_with_lamp(void) {
   gps_selftest_run();
   if (selftest.gps != 0) {
-    duart_output_bits(BOARD_LED_SELFTEST, 0);
+    board_leds_change(BOARD_LED_SELFTEST, 0);
   }
   return selftest.gps;
+}
+
+/* Lights the latch's three lamps, then none, then each in turn, then
+ * asks hmon_task to restore them; lamps_write leaves the latch alone
+ * meanwhile (0x18664). */
+void lamp_test(void) {
+  /* How long each step lights its lamps. */
+  static const uint32_t STEP_TICKS = 307;
+
+  selftest.lamp_testing = 1;
+  latch_bits_set(LATCH_LAMPS, 1);
+  psos_pause(STEP_TICKS);
+  latch_bits_set(LATCH_LAMPS, 0);
+  psos_pause(STEP_TICKS);
+  watchdog_pll++;
+  for (uint16_t lamp = LATCH_GPS_LOCK; lamp <= LATCH_ALARM; lamp <<= 1) {
+    latch_lamps_write(lamp);
+    psos_pause(STEP_TICKS);
+    watchdog_pll++;
+  }
+  selftest.lamp_testing = 0;
+  lamps_request();
+}
+
+/* Checks each of the health monitor's channels with a self-test bit,
+ * the supplies', against its tolerance, setting the bit in
+ * selftest.power if it is out (0x186da). */
+void supplies_test(void) {
+  static const uint32_t CHANNELS =
+      sizeof(hmon_channels) / sizeof(hmon_channels[0]);
+
+  selftest.power = 0;
+  for (uint32_t channel = 0; channel < CHANNELS; channel++) {
+    const hmon_channel_entry* entry = &hmon_channels[channel];
+
+    if (entry->bit == 0) {
+      continue;
+    }
+    const float reading = hmon_channel_read(channel);
+
+    if (float_compare(reading, entry->minimum) < 0 ||
+        float_compare(reading, entry->maximum) > 0) {
+      selftest.power |= entry->bit;
+    }
+  }
+}
+
+/* The self-test of the supplies, entry 11: each of hmon_channels' bits
+ * set in selftest.power reported while debugging, "POWER: " and the
+ * channel's name (0x18046). */
+void selftest_power(char_slot run) {
+  /* selftest_power's text, the original's 80 bytes. */
+  enum { SELFTEST_POWER_TEXT_LENGTH = 80 };
+  static const uint32_t CHANNELS =
+      sizeof(hmon_channels) / sizeof(hmon_channels[0]);
+  char text[SELFTEST_POWER_TEXT_LENGTH];
+
+  if (run.value == 1 && !selftest_aborted()) {
+    supplies_test();
+  }
+  if (!selftest_may_report(run.value) || run.value != 1 ||
+      selftest.power == 0 || !debug_is_enabled()) {
+    return;
+  }
+  for (uint32_t channel = 0; channel < CHANNELS; channel++) {
+    const uint16_t bit = hmon_channels[channel].bit;
+
+    if ((bit & selftest.power) != 0) {
+      libc_copy(text, "POWER: ");
+      strcat(text, hmon_channels[channel].name);
+      selftest_report_fail(bit, text, 0);
+    }
+  }
+}
+
+/* How far an eight-channel engine's @@Fa result moves @@Ca's bits from
+ * the 1 kHz test on, past its two more channels (0x17e9e). */
+static const uint8_t SELFTEST_GPS_EIGHT_CHANNEL_SHIFT = 2;
+
+/* The self-test of the GPS engine, entry 10: runs nothing, since the
+ * loop runs the engine's own (gps_diag_sequence), and reports each of
+ * its bits while debugging, an eight-channel engine's by @@Fa's places
+ * (0x17dee). */
+void selftest_gps(char_slot run) {
+  if (run.value == 1) {
+    /* its result unused (0x17e0e) */
+    selftest_aborted();
+  }
+  if (!selftest_may_report(run.value) || run.value != 1 || selftest.gps == 0 ||
+      !debug_is_enabled()) {
+    return;
+  }
+  const uint32_t result = selftest.gps;
+  uint8_t shift = 0;
+
+  selftest_report_fail(result & SELFTEST_GPS_CHANNEL_1,
+                       "GPS: Channel 1 Correlation", 0);
+  selftest_report_fail(result & SELFTEST_GPS_CHANNEL_2,
+                       "GPS: Channel 2 Correlation", 0);
+  selftest_report_fail(result & SELFTEST_GPS_CHANNEL_3,
+                       "GPS: Channel 3 Correlation", 0);
+  selftest_report_fail(result & SELFTEST_GPS_CHANNEL_4,
+                       "GPS: Channel 4 Correlation", 0);
+  selftest_report_fail(result & SELFTEST_GPS_CHANNEL_5,
+                       "GPS: Channel 5 Correlation", 0);
+  selftest_report_fail(result & SELFTEST_GPS_CHANNEL_6,
+                       "GPS: Channel 6 Correlation", 0);
+  if ((gps.field_592 & GPS_FIELD_592_EA_SEEN) != 0) {
+    selftest_report_fail(result & SELFTEST_GPS_CHANNEL_6 << 1,
+                         "GPS: Channel 7 Correlation", 0);
+    selftest_report_fail(result & SELFTEST_GPS_CHANNEL_6 << 2,
+                         "GPS: Channel 8 Correlation", 0);
+    shift = SELFTEST_GPS_EIGHT_CHANNEL_SHIFT;
+  }
+  selftest_report_fail(result & SELFTEST_GPS_1_KHZ << shift,
+                       "GPS: 1 KHz Presence", 0);
+  selftest_report_fail(result & SELFTEST_GPS_ROM_LOW_BYTE << shift,
+                       "GPS: ROM LSByte", 0);
+  selftest_report_fail(result & SELFTEST_GPS_ROM_HIGH_BYTE << shift,
+                       "GPS: ROM MSByte", 0);
+  selftest_report_fail(result & SELFTEST_GPS_RAM_LOW_BYTE << shift,
+                       "GPS: RAM LSByte", 0);
+  selftest_report_fail(result & SELFTEST_GPS_RAM_HIGH_BYTE << shift,
+                       "GPS: RAM MSByte", 0);
+  selftest_report_fail(result & SELFTEST_GPS_EEPROM << shift, "GPS: EEPROM", 0);
+  selftest_report_fail(result & SELFTEST_GPS_DCXO << shift,
+                       "GPS: DCXO SPI Comm", 0);
+  selftest_report_fail(result & SELFTEST_GPS_RTC << shift,
+                       "GPS: RTC Comm & Time", 0);
+  selftest_report_fail(result & SELFTEST_GPS_NO_ANSWER, "GPS: SW problem", 0);
+  selftest_report_fail(result & SELFTEST_GPS_TIMED_OUT, "GPS: Engine timeout",
+                       0);
+}
+
+/* The failures as selftest_summary_bit flags in selftest.summary;
+ * reports the self-test failure condition set or cleared (0x17854). */
+void selftest_summary(void) {
+  selftest.summary = 0;
+  if (selftest.cpu != 0) {
+    selftest.summary = SELFTEST_SUMMARY_CPU;
+  }
+  if (selftest.ram != 0) {
+    selftest.summary |= SELFTEST_SUMMARY_RAM;
+  }
+  if (selftest.eeprom != 0) {
+    selftest.summary |= SELFTEST_SUMMARY_EEPROM;
+  }
+  if (selftest.uart != 0) {
+    selftest.summary |= SELFTEST_SUMMARY_UART;
+  }
+  if (selftest.qspi != 0) {
+    selftest.summary |= SELFTEST_SUMMARY_QSPI;
+  }
+  if (selftest.fpga != 0) {
+    selftest.summary |= SELFTEST_SUMMARY_FPGA;
+  }
+  if (selftest.interpolator != 0) {
+    selftest.summary |= SELFTEST_SUMMARY_INTERPOLATOR;
+  }
+  if (selftest.internal_reference != 0) {
+    selftest.summary |= SELFTEST_SUMMARY_INTERNAL_REFERENCE;
+  }
+  if (selftest.gps != 0) {
+    selftest.summary |= SELFTEST_SUMMARY_GPS;
+  }
+  if (selftest.power != 0) {
+    selftest.summary |= SELFTEST_SUMMARY_POWER;
+  }
+  status_happening(selftest.summary == 0 ? STATUS_SELFTEST_FAILURE_CLEARED
+                                         : STATUS_SELFTEST_FAILURE_SET);
+}
+
+/* Runs each self-test in selftest_list with run 0, the second slot's
+ * char 1 (0x17806). */
+void selftest_run_all(void) {
+  for (selftest_entry* test = selftest_list; *test != NULL; test++) {
+    (*test)((char_slot){.value = 0, .next = 1});
+  }
+}
+
+/* Runs each self-test in selftest_list with run 1, counting
+ * watchdog_pll before the first and after each (0x17826). */
+void selftest_run_all_counted(void) {
+  watchdog_pll++;
+  for (selftest_entry* test = selftest_list; *test != NULL; test++) {
+    (*test)((char_slot){.value = 1, .next = 1});
+    watchdog_pll++;
+  }
+}
+
+/* One transfer to the ADC, QSPI device 1, of the word 0xe000; its reply
+ * (0x189f6). */
+uint16_t qspi_adc_test_read(void) {
+  static const uint16_t COMMAND = 0xe000;
+  uint16_t command = COMMAND;
+  uint16_t reply;
+  qspi_buffers buffers = {.transmit = &command, .receive = &reply};
+
+  qspi_transfer(QSPI_ADC, &buffers, 1);
+  return reply;
+}
+
+/* Reads the ADC once and checks its reply: 1 when bit 10 is clear,
+ * bits 4 and 3 repeat bits 0 and 1, and the byte in bits 9 to 2 is
+ * neither 0 nor 0xff (0x18a2c). */
+uint8_t qspi_adc_test(void) {
+  static const uint16_t BIT_10 = 0x400;
+  static const uint8_t BYTE_ALL = 0xff;
+  const uint16_t reply = qspi_adc_test_read();
+  const uint8_t byte = (uint8_t)(reply >> 2);
+
+  return (reply & BIT_10) == 0 && ((reply >> 4) & 1) == (reply & 1) &&
+         ((reply >> 3) & 1) == ((reply >> 1) & 1) && byte != 0 &&
+         byte != BYTE_ALL;
+}
+
+/* Runs the ADC, hex DAC, FPGA and EFC tests, each with interrupts held
+ * off, a failure bit for each (0x18b5c). */
+void qspi_tests_run(void) {
+  uint16_t sr = set_interrupt_mask(CPU_IPL_7);
+  if (!qspi_adc_test()) {
+    selftest.qspi |= SELFTEST_QSPI_ADC;
+  }
+  set_interrupt_mask(sr);
+  sr = set_interrupt_mask(CPU_IPL_7);
+  if (!qspi_hex_dac_test()) {
+    selftest.qspi |= SELFTEST_QSPI_HEX_DAC;
+  }
+  set_interrupt_mask(sr);
+  sr = set_interrupt_mask(CPU_IPL_7);
+  if (!fpga_load_test()) {
+    selftest.qspi |= SELFTEST_QSPI_FPGA;
+  }
+  set_interrupt_mask(sr);
+  sr = set_interrupt_mask(CPU_IPL_7);
+  if (!qspi_efc_test()) {
+    selftest.qspi |= SELFTEST_QSPI_EFC;
+  }
+  set_interrupt_mask(sr);
+}
+
+/* "POWER": supplies_test, lighting OP7 on a failure; selftest.power
+ * (0x18efa). */
+uint32_t selftest_power_with_lamp(void) {
+  supplies_test();
+  if (selftest.power != 0) {
+    board_leds_change(BOARD_LED_SELFTEST, 0);
+  }
+  return (uint16_t)selftest.power;
+}
+
+/* A power-up check: runs its test and returns its failures, 0 if
+ * none. */
+typedef uint32_t selftest_check_function(void);
+
+/* An entry of selftest_print_failure's table. */
+typedef struct selftest_check {
+  selftest_check_function* run; /* +0x00 */
+  char* name;                   /* +0x04: what a failure prints */
+} selftest_check;
+
+/* selftest_print_failure's "FAIL: " and the longest check's name,
+ * "INT_REF", with its end: the original's 14 bytes. */
+#define SELFTEST_FAILURE_LENGTH 14
+
+/* The power-up checks in order, the image's table at 0x18814, which
+ * ends with a null entry. */
+static const selftest_check selftest_checks[] = {
+    {lamp_test_command, "DISP"},
+    {selftest_cpu_result, "PROC"},
+    {selftest_ram_result, "RAM"},
+    {selftest_eeprom_result, "EEPROM"},
+    {selftest_uart_with_lamp, "UART"},
+    {selftest_qspi_with_lamp, "QSPI"},
+    {selftest_fpga_with_lamp, "FPGA"},
+    {selftest_interpolator_with_lamp, "INTERP"},
+    {selftest_internal_reference_with_lamp, "INT_REF"},
+    {selftest_gps_with_lamp, "GPS"},
+    {selftest_power_with_lamp, "POWER"},
+};
+
+/* The power-up self-test: runs each check, printing the name and code
+ * of each that fails, then summarizes and logs a failure; clear_eeprom
+ * clears the EEPROM's result first (0x18764). */
+void selftest_print_failure(char clear_eeprom) {
+  static const uint32_t CHECKS =
+      sizeof(selftest_checks) / sizeof(selftest_check);
+  char text[SELFTEST_FAILURE_LENGTH];
+
+  selftest.passed = 1;
+  if (clear_eeprom != 0) {
+    selftest.eeprom = 0;
+  }
+  selftest.running = 1;
+  for (uint32_t check = 0; check < CHECKS; check++) {
+    const uint32_t code = selftest_checks[check].run();
+    if (code != 0) {
+      selftest.passed = 0;
+      libc_copy(text, "FAIL: ");
+      strcat(text, selftest_checks[check].name);
+      debug_printf("%s, error code: %02XH\r\n", text, code);
+    }
+    watchdog_pll++;
+  }
+  selftest_summary();
+  selftest.result = selftest.summary;
+  selftest.test = SELFTEST_TEST_ALL;
+  selftest.running = 0;
+  if (selftest.passed == 0) {
+    log_event_58503a(LOG_SELFTEST_FAILED);
+  }
 }

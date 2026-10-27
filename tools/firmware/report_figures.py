@@ -199,16 +199,18 @@ CHECKS = {
                     f['installer_agree'], f['installer_skipped'], f['sessions_agree'],
                     f['sessions_run'])),
         (DOCUMENT_Z3801A, sentence(
-            "In all, {} of the primary's C functions and {} of the installer's are written "
-            "by hand, and {} of the primary's remain the decompiler's reading"),
-         lambda f: (f['primary_hand'], f['installer_hand'], word(f['primary_reading']))),
+            "Every C function of the image is written by hand: the primary's {} and the "
+            "installer's {}, {} left as the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    word(f['primary_reading'] + f['installer_reading']))),
         (DOCUMENT_Z3801A, sentence('| `check-decompiled` | {} routines in'),
          lambda f: (f['assembly'],)),
         summary_row('Z3801A 3543'),
         (REWRITE, sentence(
             "has its C functions written by hand too, the primary's {} and the installer's {}, "
             "{} left as the decompiler's reading"),
-         lambda f: (f['primary_hand'], f['installer_hand'], word(f['primary_reading']))),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    word(f['primary_reading'] + f['installer_reading']))),
     ),
 }
 

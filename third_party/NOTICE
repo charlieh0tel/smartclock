@@ -76,15 +76,19 @@ its C would not compile or would not do what the image does, and names
 what the tables name (`docs/firmware/README.md`, "Decompiling with
 Ghidra").
 
-  z3805a-3543b/z3805a-3543b.c
-                     Z3805A 3543B, every function in address order.
-  z3805a-3543b/z3805a-3543b.conventions.jsonl
+Each image's folder holds three files, IMAGE being its folder's name:
+
+  IMAGE.c            the image, every function in address order.
+  IMAGE.conventions.jsonl
                      the same functions, one JSON object a line: each
                      one's note and calling convention, from the names
                      file and the scripts, or "unknown".
-  z3805a-3543b/z3805a-3543b.symbols.ld
-                     the addresses its assembly names outside any
+  IMAGE.symbols.ld   the addresses its assembly names outside any
                      routine, for the linker.
+
+  z3805a-3543b/      Z3805A 3543B.
+  58503a-3704/       58503A 3704.
+  z3801a-3543/       Z3801A 3543.
 
 Hand-written C, in `firmware/rewritten/IMAGE/`: an image's functions
 written by hand in place of the decompiled ones, each checked against
@@ -92,6 +96,10 @@ the image's own code (`docs/firmware/README.md`, "Hand-written C"), a
 file to a module (`docs/firmware/modules.md`).
 
   z3805a-3543b/      Z3805A 3543B.
+  58503a-3704/       58503A 3704.
+  z3801a-3543/       Z3801A 3543.
+  common/            what several images share
+                     (`docs/firmware/rewrite.md`, "Shared C").
 
 AMD
 ---

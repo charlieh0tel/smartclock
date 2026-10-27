@@ -131,8 +131,14 @@ float hmon_convert_5v(uint8_t reading) {
   return monitors_scaled(reading, MONITORS_5V_SCALE);
 }
 
-/* hmon_channels' Oven convert routine (0x21bc4); 0x21b7c, which
- * nothing names, is its copy. */
+/* hmon_convert_oven's instructions again, byte for byte, which no
+ * table entry, call or pointer names (0x21b7c). */
+float hmon_convert_oven_unused(uint8_t reading) {
+  return monitors_scaled_less_5v(reading, MONITORS_OVEN_SCALE,
+                                 MONITORS_OVEN_5V_SCALE);
+}
+
+/* hmon_channels' Oven convert routine (0x21bc4). */
 float hmon_convert_oven(uint8_t reading) {
   return monitors_scaled_less_5v(reading, MONITORS_OVEN_SCALE,
                                  MONITORS_OVEN_5V_SCALE);
@@ -424,13 +430,23 @@ static uint8_t monitors_read_steady(volatile uint8_t* port, uint8_t mask,
   return steady != 0;
 }
 
+/* How many reads in a row must agree, and within how many reads, for
+ * PORTE0 and PORTF0. */
+static const int32_t MONITORS_STEADY_AGREEING = 10;
+static const int32_t MONITORS_STEADY_READS = 1000;
+
+/* PORTE0's bits of mask, ten reads in a row within 1000; nothing calls
+ * it (0x23464). */
+uint8_t porte_read_steady(uint8_t mask) {
+  return monitors_read_steady(&sim.porte0, mask, MONITORS_STEADY_AGREEING,
+                              MONITORS_STEADY_READS);
+}
+
 /* PORTF0's bits of mask, ten reads in a row within 1000; nothing calls
  * it (0x234ae). */
 uint8_t portf0_read_steady(uint8_t mask) {
-  static const int32_t AGREEING = 10;
-  static const int32_t READS = 1000;
-
-  return monitors_read_steady(&sim.portf0, mask, AGREEING, READS);
+  return monitors_read_steady(&sim.portf0, mask, MONITORS_STEADY_AGREEING,
+                              MONITORS_STEADY_READS);
 }
 
 /* PORTGP's bits of mask, four reads in a row within 100; nothing calls

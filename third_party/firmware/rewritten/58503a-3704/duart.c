@@ -40,10 +40,6 @@ void duart_output_bit_set(uint8_t bits, char set) {
   set_interrupt_mask(sr);
 }
 
-/* The counter's clock from TxCB, as the reset leaves it (MC68681
- * Table 4-4). */
-static const uint8_t DUART_ACR_COUNTER_TXCB = 0x20;
-
 /* Preloads the DUART's counter with 0xffff, both halves, shadowed. */
 static void duart_counter_preload(void) {
   static const uint8_t COUNTER_PRELOAD = 0xff; /* each half */

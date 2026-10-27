@@ -478,8 +478,9 @@ GPL-2.0-only, as a local tool.
 
 The 58503A 3704 port has its own document,
 [`58503a-3704.md`](58503a-3704.md), held to this one's method and
-checks (its "The function check"): of its function check, the primary's 1415
-agree, 5 are known and none skipped or failed, and the installer's 247
+checks (its "The function check"), every C function of it written by
+hand as this one's are (its "The hand-written C"): of its function check, the primary's 1418
+agree, 4 are known and none skipped or failed, and the installer's 247
 agree, 1 skipped; its console sessions agree, 8 of 8.  The Z3801A
 3543's, [`z3801a-3543.md`](z3801a-3543.md), seeded from the Z3805A's and
 the third image to share `common/`, has every C function written by

@@ -274,17 +274,15 @@ void time_offset_done(void) {
   calibration_block_save_reported(index, source);
 }
 
-/* The EFC control mode at which the hold cause expires, and after how
- * many of pllp_task's passes. */
-static const uint8_t PLLC_EFC_MODE_EXPIRING = 2;
-
+/* After how many of pllp_task's passes the timed EFC control mode
+ * expires. */
 static const uint32_t PLLC_EFC_MODE_PASSES = 600;
 
 /* :DIAG:ROSC:EFControl:MODE's done hook: the EFC control hold cause
  * while a mode is set, signaling the SCPI task a pass late, and the
  * passes toward its expiry cleared (0x45c1c). */
 void efc_mode_done(void) {
-  if (diag_efc_mode == 0) {
+  if (diag_efc_mode == EFC_MODE_NORMAL) {
     pll.hold_causes &= ~HOLD_CAUSE_EFC_CONTROL;
   } else {
     pll.hold_causes |= HOLD_CAUSE_EFC_CONTROL;
@@ -296,11 +294,11 @@ void efc_mode_done(void) {
 /* pllp_task's: in EFC control mode 2, after 600 passes, the hold cause
  * and the mode cleared (revisions.md, "Holdover cause") (0x45c46). */
 void efc_mode_expire(void) {
-  if (diag_efc_mode == PLLC_EFC_MODE_EXPIRING &&
+  if (diag_efc_mode == EFC_MODE_TIMED &&
       ++pll.efc_control_passes > PLLC_EFC_MODE_PASSES) {
     pll.hold_causes &= ~HOLD_CAUSE_EFC_CONTROL;
     pll.efc_control_passes = 0;
-    diag_efc_mode = 0;
+    diag_efc_mode = EFC_MODE_NORMAL;
   }
 }
 

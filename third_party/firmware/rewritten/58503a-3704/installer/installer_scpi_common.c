@@ -18,8 +18,3 @@ int32_t installer_scpi_query_common_IDN(void* parameters, void* response,
   identification->length = scpi_engine_length(identification->text);
   return 0;
 }
-
-/* The installer's return_zero: 0, the request source
- * installer_scpi_format_response picks its echo count by
- * (installer::0x1077a0). */
-int32_t installer_return_zero(scpi_port* input) { return 0; }

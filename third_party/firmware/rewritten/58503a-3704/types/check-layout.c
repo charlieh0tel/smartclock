@@ -826,7 +826,6 @@ CHECK_SIZE(gps_running_command, 0x72);
 CHECK_FIELD(gps_running_command, script, 0x1a);
 CHECK_FIELD(gps_running_command, message, 0x1e);
 CHECK_FIELD(gps_running_command, sent, 0x22);
-CHECK_SIZE(reset_record, 0x5c);
 
 CHECK_SIZE(scpi_bcd, 0x0c);
 CHECK_FIELD(scpi_bcd, digits, 0x02);

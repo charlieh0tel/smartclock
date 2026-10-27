@@ -15,3 +15,6 @@ void enter_installer(void) {
   }
   __asm__ volatile("trap #11");
 }
+
+/* Sets the GPT up (0x12196). */
+void gpt_init(void) { startup_gpt_init_58503a(); }

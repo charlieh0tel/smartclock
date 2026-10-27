@@ -11,3 +11,13 @@
 void duart_test_rx_a(void) {
   duart_test_receive(&duart.a, SELFTEST_UART_CHANNEL_A_DATA);
 }
+
+/* The loopback test on channel A, the GPS receiver's (0x1e10e). */
+void duart_loopback_test_a(void) {
+  const duart_loopback_channel channel = {
+      &duart.a,     &duart_shadow.mr2a,    IMR_RXRDYA | IMR_TXRDYA,
+      &duarta.held, &duarta.loopback_test, SELFTEST_UART_CHANNEL_A_TIMEOUT,
+  };
+
+  duart_loopback_test(&channel);
+}

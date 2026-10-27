@@ -272,3 +272,55 @@ int32_t scpi_query_STATus_OPERation_HARDware_NTRansition(void* parameters,
   scpi_status_negative_query(given->index, response, call->input);
   return 0;
 }
+
+/* :STATus:OPERation:CRITical and :HARDware:CRITical, which
+ * 097-59551-02 does not list: an undefined header, as are their queries
+ * (0x2a6b6 to 0x2a708). */
+int32_t scpi_set_STATus_OPERation_CRITical(void* parameters, void* response,
+                                           scpi_call* call) {
+  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  return 0;
+}
+
+int32_t scpi_query_STATus_OPERation_CRITical(void* parameters, void* response,
+                                             scpi_call* call) {
+  return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
+}
+
+int32_t scpi_set_STATus_OPERation_HARDware_CRITical(void* parameters,
+                                                    void* response,
+                                                    scpi_call* call) {
+  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  return 0;
+}
+
+int32_t scpi_query_STATus_OPERation_HARDware_CRITical(void* parameters,
+                                                      void* response,
+                                                      scpi_call* call) {
+  return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
+}
+
+/* :STATus:OPERation:HARDware:CONDition:TI and :EEPRom, and
+ * :STATus:QUEStionable:CONDition:TRESet: an undefined header.  None
+ * sets a result: each returns the D0 status_report_from leaves, 0
+ * (0x29ec4, 0x29ee2, 0x29f00). */
+int32_t scpi_set_STATus_OPERation_HARDware_CONDition_TI(void* parameters,
+                                                        void* response,
+                                                        scpi_call* call) {
+  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  return 0;
+}
+
+int32_t scpi_set_STATus_OPERation_HARDware_CONDition_EEPRom(void* parameters,
+                                                            void* response,
+                                                            scpi_call* call) {
+  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  return 0;
+}
+
+int32_t scpi_set_STATus_QUEStionable_CONDition_TRESet(void* parameters,
+                                                      void* response,
+                                                      scpi_call* call) {
+  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  return 0;
+}

@@ -291,3 +291,134 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt(
   *count = scpi_source_gpsystem_mask_list(~nv_settings.ignored_satellites, 0);
   return 0;
 }
+
+/* The antenna delay's upper limit's margin, 0.1 ns, that :GPS:ADELay
+ * adds to its descriptor's maximum (0x2c196). */
+static const float SCPI_SOURCE_GPSYSTEM_DELAY_MARGIN = 1e-10f;
+
+/* :GPS:ADELay: holds the loop in temporary mode, then sends the antenna
+ * delay in nanoseconds, MIN or MAX the descriptor's limits; a number
+ * clamped to them, the upper a tenth of a nanosecond over (0x2c0f8). */
+int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
+                                        scpi_call* call) {
+  scpi_float_parameter* delay = parameters;
+  scpi_numeric_param* param = &scpi_param_SOURce_GPSystem_ADELay;
+  int32_t nanoseconds;
+
+  pllc_request_b(&scpi_action_temporary_hold, 0, return_zero(call->input));
+  if (delay->kind == SCPI_PARAMETER_CHARACTER) {
+    int32_t* limit = delay->keyword == SCPI_SOURCE_GPSYSTEM_MINIMUM
+                         ? param->minimum
+                         : param->maximum;
+
+    nanoseconds = *limit;
+  } else {
+    int32_t* minimum = param->minimum;
+    int32_t* maximum = param->maximum;
+    scpi_step step = scpi_source_gpsystem_step(
+        scpi_source_gpsystem_float_bits(SCPI_SOURCE_GPSYSTEM_NANOSECOND),
+        load_long);
+    float lowest = float_multiply(integer_to_float(*minimum),
+                                  SCPI_SOURCE_GPSYSTEM_NANOSECOND);
+    float highest = float_add(float_multiply(integer_to_float(*maximum),
+                                             SCPI_SOURCE_GPSYSTEM_NANOSECOND),
+                              SCPI_SOURCE_GPSYSTEM_DELAY_MARGIN);
+
+    nanoseconds = clamp_float_to_step_double(
+        &delay->value, 0, &lowest, &highest, &step, return_zero(call->input));
+  }
+  pllc_request_c(param, 0, nanoseconds, 0, return_zero(call->input));
+  return 0;
+}
+
+/* The antenna delay in feet, a foot 1.2 ns of cable, :GPS:ADELay's
+ * nanoseconds over it (0x2c286, 0x2c23c). */
+static const float SCPI_SOURCE_GPSYSTEM_FOOT_NANOSECONDS = 1.2f;
+
+static const float SCPI_SOURCE_GPSYSTEM_FOOT = 1.2e-9f;
+
+/* :GPS:ADELay:FEET: a number of feet as seconds, then :GPS:ADELay; MIN
+ * and MAX as they are (0x2c22c). */
+int32_t scpi_set_SOURce_GPSystem_ADELay_FEET(void* parameters, void* response,
+                                             scpi_call* call) {
+  scpi_float_parameter* delay = parameters;
+
+  if (delay->kind != SCPI_PARAMETER_CHARACTER) {
+    float_multiply_in_place(&delay->value, SCPI_SOURCE_GPSYSTEM_FOOT);
+  }
+  return scpi_set_SOURce_GPSystem_ADELay(parameters, response, call);
+}
+
+/* :GPS:ADELay:FEET?: the antenna delay, or its MIN or MAX, in feet
+ * (0x2c25e). */
+int32_t scpi_query_SOURce_GPSystem_ADELay_FEET(void* parameters, void* response,
+                                               scpi_call* call) {
+  scpi_word_parameter* bound = parameters;
+  float* feet = response;
+
+  *feet = float_divide(scpi_numeric_get(&scpi_param_SOURce_GPSystem_ADELay, 0,
+                                        bound->kind, bound->value),
+                       SCPI_SOURCE_GPSYSTEM_FOOT_NANOSECONDS);
+  return 0;
+}
+
+/* :GPS:REFerence:BIAS: the GPS reference's bias in nanoseconds, MIN or
+ * MAX the descriptor's limits (0x2bfe8). */
+int32_t scpi_set_SOURce_GPSystem_REFerence_BIAS(void* parameters,
+                                                void* response,
+                                                scpi_call* call) {
+  scpi_float_parameter* bias = parameters;
+  scpi_numeric_param* param = &scpi_param_SOURce_GPSystem_REFerence_BIAS;
+  int32_t nanoseconds;
+
+  if (bias->kind == SCPI_PARAMETER_CHARACTER) {
+    int32_t* limit = bias->keyword == SCPI_SOURCE_GPSYSTEM_MINIMUM
+                         ? param->minimum
+                         : param->maximum;
+
+    nanoseconds = *limit;
+  } else {
+    nanoseconds = scpi_source_gpsystem_steps(&bias->value, param, 0,
+                                             SCPI_SOURCE_GPSYSTEM_NANOSECOND,
+                                             return_zero(call->input));
+  }
+  pllc_request_c(param, 0, nanoseconds, 0, return_zero(call->input));
+  return 0;
+}
+
+/* :GPS:REFerence:BIAS?: the bias, or its MIN or MAX, in seconds
+ * (0x2c0c6). */
+int32_t scpi_query_SOURce_GPSystem_REFerence_BIAS(void* parameters,
+                                                  void* response,
+                                                  scpi_call* call) {
+  scpi_word_parameter* bound = parameters;
+  float* seconds = response;
+
+  *seconds = float_multiply(
+      scpi_numeric_get(&scpi_param_SOURce_GPSystem_REFerence_BIAS, 0,
+                       bound->kind, bound->value),
+      SCPI_SOURCE_GPSYSTEM_NANOSECOND);
+  return 0;
+}
+
+/* :GPS:POSition:BINary?: not in this firmware, the engine's undefined
+ * header as its result (0x2cbce). */
+int32_t scpi_query_SOURce_GPSystem_POSition_BINary(void* parameters,
+                                                   void* response,
+                                                   scpi_call* call) {
+  return STATUS_SCPI_UNDEFINED_HEADER;
+}
+
+/* :GPS:REFerence:VALid?: 1 while the GPS reference is valid with its 1
+ * PPS alive, or questionable (0x2d0a0). */
+int32_t scpi_query_SOURce_GPSystem_REFerence_VALid(void* parameters,
+                                                   void* response,
+                                                   scpi_call* call) {
+  const gps_reference_record* reference = &gps.references[0];
+  uint16_t* valid = response;
+
+  *valid =
+      (reference->valid == GPS_REFERENCE_VALID && reference->pps_dead == 0) ||
+      reference->valid == GPS_REFERENCE_QUESTIONABLE;
+  return 0;
+}

@@ -259,3 +259,408 @@ int32_t scpi_query_DIAGnostic_TEST_RESult(void* parameters, void* response,
   }
   return 0;
 }
+
+/* :DIAGnostic:GPSystem:ACURrent?: the antenna's current (0x2b34c). */
+int32_t scpi_query_DIAGnostic_GPSystem_ACURrent(void* parameters,
+                                                void* response,
+                                                scpi_call* call) {
+  scpi_diagnostic_float* current = response;
+
+  current->value = adc_average(ADC_ANTENNA_CURRENT);
+  return 0;
+}
+
+/* :DIAGnostic:GPSystem:ACURrent:ALARm: whether the antenna's current
+ * alarms, by pllc (0x2b302). */
+int32_t scpi_set_DIAGnostic_GPSystem_ACURrent_ALARm(void* parameters,
+                                                    void* response,
+                                                    scpi_call* call) {
+  const scpi_diagnostic_word* given = parameters;
+
+  pllc_request_a(&scpi_param_DIAGnostic_GPSystem_ACURrent_ALARm, 0,
+                 given->value, return_zero(call->input));
+  return 0;
+}
+
+/* :DIAGnostic:GPSystem:ACURrent:ALARm? (0x2b332). */
+int32_t scpi_query_DIAGnostic_GPSystem_ACURrent_ALARm(void* parameters,
+                                                      void* response,
+                                                      scpi_call* call) {
+  int16_t* alarm = response;
+
+  *alarm = return_byte(nv_settings.antenna_current_alarm);
+  return 0;
+}
+
+/* :DIAGnostic:GPSystem:TRACking:LOG: the receiver's tracking log, by
+ * pllc (0x2bbba). */
+int32_t scpi_set_DIAGnostic_GPSystem_TRACking_LOG(void* parameters,
+                                                  void* response,
+                                                  scpi_call* call) {
+  const scpi_diagnostic_word* given = parameters;
+
+  pllc_request_a(&scpi_param_DIAGnostic_GPSystem_TRACking_LOG, 0, given->value,
+                 return_zero(call->input));
+  return 0;
+}
+
+/* :DIAGnostic:GPSystem:TRACking:LOG? (0x2bbea). */
+int32_t scpi_query_DIAGnostic_GPSystem_TRACking_LOG(void* parameters,
+                                                    void* response,
+                                                    scpi_call* call) {
+  int16_t* enabled = response;
+
+  *enabled = return_byte(nv_settings.tracking_log);
+  return 0;
+}
+
+/* :DIAGnostic:IDENtification:GPSystem?: the receiver's ten ID lines,
+ * -230 before it has sent them (0x2ac6e). */
+int32_t scpi_query_DIAGnostic_IDENtification_GPSystem(void* parameters,
+                                                      void* response,
+                                                      scpi_call* call) {
+  const char** lines = response;
+  oncore_receiver_id* id = &gps.receiver_id;
+
+  if (gps.receiver_id_received == 0) {
+    return scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE, call);
+  }
+  lines[0] = id->copyright;
+  lines[1] = id->software_part_number;
+  lines[2] = id->software_version;
+  lines[3] = id->software_revision;
+  lines[4] = id->software_date;
+  lines[5] = id->model_number;
+  lines[6] = id->hardware_part_number;
+  lines[7] = id->serial_number;
+  lines[8] = id->manufacture_date;
+  lines[9] = id->options;
+  return 0;
+}
+
+/* :DIAGnostic:INPut:DATA?: 0 (0x2bb24). */
+int32_t scpi_query_DIAGnostic_INPut_DATA(void* parameters, void* response,
+                                         scpi_call* call) {
+  scpi_diagnostic_long* data = response;
+
+  data->value = 0;
+  return 0;
+}
+
+/* :DIAGnostic:LOG:READ:ALL? and :SLOG's: prints the log to the console,
+ * where the Z3805A's prints it only when the query came from it; an
+ * empty response (0x2b23a). */
+int32_t scpi_query_DIAGnostic_LOG_READ_ALL(void* parameters, void* response,
+                                           scpi_call* call) {
+  const int16_t* log = parameters;
+  scpi_token_string* text = response;
+
+  text->length = 0;
+  log_print(*log, console_write, printf);
+  return 0;
+}
+
+/* :DIAGnostic:ME?: an undefined header, where the Z3805A's answers 0
+ * (0x2b2f0). */
+int32_t scpi_query_DIAGnostic_ME(void* parameters, void* response,
+                                 scpi_call* call) {
+  return scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER, call);
+}
+
+/* :DIAGnostic:QUERy:RESPonse?: from source 0, the console's, the
+ * responses it has echoed since the last command, scpi_echo_text,
+ * copied into scpi_echo_response and NUL-terminated (0x2b470).  From
+ * another source, which return_zero never gives, the count, the text
+ * and the copy would be A3's, A4's and A2's as the caller left them
+ * (docs/firmware/quirks.md). */
+int32_t scpi_query_DIAGnostic_QUERy_RESPonse(void* parameters, void* response,
+                                             scpi_call* call) {
+  char* copy = CPU_CALLERS_REGISTER(char*, "a2");
+  uint8_t* length = CPU_CALLERS_REGISTER(uint8_t*, "a3");
+  char* echo = CPU_CALLERS_REGISTER(char*, "a4");
+  char** text = response;
+  uint8_t index;
+
+  if ((int8_t)return_zero(call->input) == REQUEST_SOURCE_SCPI) {
+    length = &scpi_echo_length;
+    echo = scpi_echo_text;
+    copy = scpi_echo_response;
+  }
+  for (index = 0; index < *length; index++) {
+    copy[index] = echo[index];
+  }
+  copy[index] = 0;
+  *text = copy;
+  return 0;
+}
+
+/* :DIAGnostic:REFerence:EXTernal:QUEStionable:HYSTeresis and its query:
+ * an undefined header, each through scpi_query_failed (0x2bb96,
+ * 0x2bba8). */
+int32_t scpi_set_DIAGnostic_REFerence_EXTernal_QUEStionable_HYSTeresis(
+    void* parameters, void* response, scpi_call* call) {
+  return scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER, call);
+}
+
+int32_t scpi_query_DIAGnostic_REFerence_EXTernal_QUEStionable_HYSTeresis(
+    void* parameters, void* response, scpi_call* call) {
+  return scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER, call);
+}
+
+/* :DIAGnostic:REFerence:GPSystem:QUEStionable:HYSTeresis: the GPS
+ * reference's questionable hysteresis, or MIN or MAX (0x2bb30). */
+int32_t scpi_set_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis(
+    void* parameters, void* response, scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+
+  scpi_numeric_set(
+      &scpi_param_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis, 0,
+      given->kind, given->bound, 0, given->integer, return_zero(call->input));
+  return 0;
+}
+
+/* :DIAGnostic:REFerence:GPSystem:QUEStionable:HYSTeresis?, or its bound
+ * (0x2bb6a). */
+int32_t scpi_query_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis(
+    void* parameters, void* response, scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+  scpi_diagnostic_long* hysteresis = response;
+
+  hysteresis->value = float_to_unsigned(scpi_numeric_get(
+      &scpi_param_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis, 0,
+      given->kind, given->bound));
+  return 0;
+}
+
+/* :DIAGnostic:ROSCillator:CURRent?: the oven's current (0x2b526). */
+int32_t scpi_query_DIAGnostic_ROSCillator_CURRent(void* parameters,
+                                                  void* response,
+                                                  scpi_call* call) {
+  scpi_diagnostic_float* current = response;
+
+  current->value = hmon_channel_read(ADC_OVEN_CURRENT);
+  return 0;
+}
+
+/* :DIAGnostic:ROSCillator:EFControl:DATA: the EFC that the USER mode
+ * holds, a word, or MIN or MAX (0x2b620). */
+int32_t scpi_set_DIAGnostic_ROSCillator_EFControl_DATA(void* parameters,
+                                                       void* response,
+                                                       scpi_call* call) {
+  const scpi_diagnostic_word* given = parameters;
+
+  scpi_numeric_set(&scpi_param_DIAGnostic_ROSCillator_EFControl_DATA, 0,
+                   given->kind, given->value, 0, (uint16_t)given->value,
+                   return_zero(call->input));
+  return 0;
+}
+
+/* :DIAGnostic:ROSCillator:EFControl:DATA?, or its bound (0x2b65e). */
+int32_t scpi_query_DIAGnostic_ROSCillator_EFControl_DATA(void* parameters,
+                                                         void* response,
+                                                         scpi_call* call) {
+  const scpi_diagnostic_word* given = parameters;
+  int16_t* efc = response;
+
+  *efc = float_to_unsigned(
+      scpi_numeric_get(&scpi_param_DIAGnostic_ROSCillator_EFControl_DATA, 0,
+                       given->kind, given->value));
+  return 0;
+}
+
+/* :DIAGnostic:ROSCillator:EFControl:MODE's choices, the node's list
+ * (0x569f8). */
+enum {
+  SCPI_DIAGNOSTIC_EFC_NORMAL = 0,
+  SCPI_DIAGNOSTIC_EFC_TIMED = 1,
+  SCPI_DIAGNOSTIC_EFC_USER = 2,
+};
+
+/* :DIAGnostic:ROSCillator:EFControl:MODE NORM, TIM or USER, as
+ * diag_efc_mode's EFC_MODE_NORMAL, _TIMED and _USER, by pllc
+ * (0x2b5a8). */
+int32_t scpi_set_DIAGnostic_ROSCillator_EFControl_MODE(void* parameters,
+                                                       void* response,
+                                                       scpi_call* call) {
+  const scpi_diagnostic_word* given = parameters;
+  efc_mode mode;
+
+  if (given->value == SCPI_DIAGNOSTIC_EFC_USER) {
+    mode = EFC_MODE_USER;
+  } else if (given->value == SCPI_DIAGNOSTIC_EFC_TIMED) {
+    mode = EFC_MODE_TIMED;
+  } else {
+    mode = EFC_MODE_NORMAL;
+  }
+  pllc_request_a(&scpi_param_DIAGnostic_ROSCillator_EFControl_MODE, 0, mode,
+                 return_zero(call->input));
+  return 0;
+}
+
+/* :DIAGnostic:ROSCillator:EFControl:MODE? (0x2b5f6). */
+int32_t scpi_query_DIAGnostic_ROSCillator_EFControl_MODE(void* parameters,
+                                                         void* response,
+                                                         scpi_call* call) {
+  uint16_t* choice = response;
+
+  if (diag_efc_mode == EFC_MODE_USER) {
+    *choice = SCPI_DIAGNOSTIC_EFC_USER;
+  } else if (diag_efc_mode == EFC_MODE_TIMED) {
+    *choice = SCPI_DIAGNOSTIC_EFC_TIMED;
+  } else {
+    *choice = SCPI_DIAGNOSTIC_EFC_NORMAL;
+  }
+  return 0;
+}
+
+/* :DIAGnostic:STATus:HAPPening n: the nth happening, the condition n
+ * past the last error, 0 to STATUS_USER_REPORTED_CLEARED's; -222 for
+ * another (0x2b740). */
+int32_t scpi_set_DIAGnostic_STATus_HAPPening(void* parameters, void* response,
+                                             scpi_call* call) {
+  const scpi_diagnostic_word* given = parameters;
+
+  if (given->value < 0 ||
+      given->value > STATUS_USER_REPORTED_CLEARED - STATUS_INPUT_OVERRUN) {
+    status_report_from(STATUS_DATA_OUT_OF_RANGE, return_zero(call->input));
+  } else {
+    status_happening(STATUS_INPUT_OVERRUN + given->value);
+  }
+  return 0;
+}
+
+/* The time code's masks, :DIAGnostic:TCODe:ERRor and :STATus's AMASk
+ * and OMASk: the low byte of a long (0x2ba84 to 0x2bb12). */
+int32_t scpi_set_DIAGnostic_TCODe_ERRor_AMASk(void* parameters, void* response,
+                                              scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+
+  tcode_error_and_mask = given->integer;
+  return 0;
+}
+
+int32_t scpi_query_DIAGnostic_TCODe_ERRor_AMASk(void* parameters,
+                                                void* response,
+                                                scpi_call* call) {
+  scpi_diagnostic_long* mask = response;
+
+  mask->value = tcode_error_and_mask;
+  return 0;
+}
+
+int32_t scpi_set_DIAGnostic_TCODe_ERRor_OMASk(void* parameters, void* response,
+                                              scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+
+  tcode_error_or_mask = given->integer;
+  return 0;
+}
+
+int32_t scpi_query_DIAGnostic_TCODe_ERRor_OMASk(void* parameters,
+                                                void* response,
+                                                scpi_call* call) {
+  scpi_diagnostic_long* mask = response;
+
+  mask->value = tcode_error_or_mask;
+  return 0;
+}
+
+int32_t scpi_set_DIAGnostic_TCODe_STATus_AMASk(void* parameters, void* response,
+                                               scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+
+  tcode_status_and_mask = given->integer;
+  return 0;
+}
+
+int32_t scpi_query_DIAGnostic_TCODe_STATus_AMASk(void* parameters,
+                                                 void* response,
+                                                 scpi_call* call) {
+  scpi_diagnostic_long* mask = response;
+
+  mask->value = tcode_status_and_mask;
+  return 0;
+}
+
+int32_t scpi_set_DIAGnostic_TCODe_STATus_OMASk(void* parameters, void* response,
+                                               scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+
+  tcode_status_or_mask = given->integer;
+  return 0;
+}
+
+int32_t scpi_query_DIAGnostic_TCODe_STATus_OMASk(void* parameters,
+                                                 void* response,
+                                                 scpi_call* call) {
+  scpi_diagnostic_long* mask = response;
+
+  mask->value = tcode_status_or_mask;
+  return 0;
+}
+
+/* :DIAGnostic:TEMPerature?: the board's temperature (0x2b830). */
+int32_t scpi_query_DIAGnostic_TEMPerature(void* parameters, void* response,
+                                          scpi_call* call) {
+  scpi_diagnostic_float* temperature = response;
+
+  temperature->value = hmon_channel_read(ADC_TEMPERATURE);
+  return 0;
+}
+
+/* :DIAGnostic:TMODe:STATe: test mode, in which the latch's writers write
+ * diag_tmode_data (0x2ba2a). */
+int32_t scpi_set_DIAGnostic_TMODe_STATe(void* parameters, void* response,
+                                        scpi_call* call) {
+  const scpi_diagnostic_word* given = parameters;
+
+  diag_tmode_state = given->value != 0;
+  return 0;
+}
+
+/* :DIAGnostic:TMODe:STATe? (0x2ba48). */
+int32_t scpi_query_DIAGnostic_TMODe_STATe(void* parameters, void* response,
+                                          scpi_call* call) {
+  uint16_t* state = response;
+
+  *state = diag_tmode_state;
+  return 0;
+}
+
+/* :DIAGnostic:TMODe:DATA: the latch's byte in test mode, a long's low
+ * byte (0x2ba5a). */
+int32_t scpi_set_DIAGnostic_TMODe_DATA(void* parameters, void* response,
+                                       scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+
+  diag_tmode_data = given->integer;
+  return 0;
+}
+
+/* :DIAGnostic:TMODe:DATA? (0x2ba72). */
+int32_t scpi_query_DIAGnostic_TMODe_DATA(void* parameters, void* response,
+                                         scpi_call* call) {
+  scpi_diagnostic_long* data = response;
+
+  data->value = diag_tmode_data;
+  return 0;
+}
+
+/* :DIAGnostic:TSET and its query: an undefined header, each through
+ * scpi_query_failed (0x2b362, 0x2b374). */
+int32_t scpi_set_DIAGnostic_TSET(void* parameters, void* response,
+                                 scpi_call* call) {
+  return scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER, call);
+}
+
+int32_t scpi_query_DIAGnostic_TSET(void* parameters, void* response,
+                                   scpi_call* call) {
+  return scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER, call);
+}
+
+/* :DIAGnostic:TVALid:NOW: marks the time valid now (0x2bc04). */
+int32_t scpi_set_DIAGnostic_TVALid_NOW(void* parameters, void* response,
+                                       scpi_call* call) {
+  clock_mark_set();
+  return 0;
+}

@@ -2,8 +2,9 @@ name: firmware
 
 # The Z3805A 3543B, 58503A 3704 and Z3801A 3543 firmware's checks
 # (docs/firmware/README.md, "The checks in CI"): the C's format, the
-# layouts, the decompiled C's bytes and bindings, every decompiled
-# function run against the image's own and the figures the documents
+# layouts, the decompiled C's bytes and bindings, each image's link
+# from its hand-written C and assembly alone, every function required,
+# every decompiled function run against the image's own and the figures the documents
 # give, the SCPI trees, the module and pForth figures, the 58503A's and
 # Z3801A's diffs against the Z3805A and the names seeded from them, every image's
 # chip-select tables, the hand-written C's magic numbers, the addresses
@@ -99,6 +100,11 @@ jobs:
       - run: make check-decompiled IMAGE=58503a-3704
         if: ${{ !cancelled() }}
       - run: make check-decompiled IMAGE=z3801a-3543
+        if: ${{ !cancelled() }}
+      # Without IMAGE, for every image: fails if an image does not link
+      # from its hand-written C and assembly alone, every function
+      # required, and saves the summary the figures check reads.
+      - run: make check-link IMAGE=
         if: ${{ !cancelled() }}
       # Without IMAGE, for every image: fails on a failed function, and
       # checks the documents' figures from each image's function check

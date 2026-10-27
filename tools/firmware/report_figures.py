@@ -8,16 +8,20 @@ compared.  With them, the figures of the export the report ran,
 third_party/firmware/decompiled/IMAGE/IMAGE.c, and its sidecar: how
 many functions there are, the primary's and the installer's; how many
 of each are written by hand and how many run as the decompiler's
-reading; and how many are assembly routines and thunks.  CHECKS lists,
-for each image, the sentences that quote them.
+reading; and how many are assembly routines and thunks.  And the
+figures of the image's link check, link_check.py's summary line: how
+many functions it requires, and how many the hand-written C, the
+assembly and another routine's name define.  CHECKS lists, for each
+image, the sentences that quote them.
 
-    python3 -I tools/firmware/report_figures.py --image IMAGE REPORT [--write]
+    python3 -I tools/firmware/report_figures.py --image IMAGE --link SUMMARY REPORT [--write]
 
 make report-decompiled saves an image's report in
-target/firmware/IMAGE/report-decompiled.txt.  Exits nonzero on drift,
-if the report lacks the figures, if a sentence is not in its document
-exactly once, or if any function failed, which no document's figures
-may say.
+target/firmware/IMAGE/report-decompiled.txt, and make check-link its
+summary in link-check.txt beside it.  Exits nonzero on drift, if the
+report or the summary lacks the figures, if the summary is not the
+export's, if a sentence is not in its document exactly once, or if any
+function failed, which no document's figures may say.
 """
 
 import argparse
@@ -48,6 +52,11 @@ FIGURES = re.compile(
 SESSIONS = re.compile(r'^console sessions agreeing: (\d+) of (\d+)$', re.M)
 # its line of an agreeing function's cases, those run and all
 CASES = re.compile(r'^ok \S+: (\d+) of (\d+) cases run$', re.M)
+# link_check.py's summary line: the image, the functions required, and
+# those the hand-written C, the assembly and another's name define
+LINK = re.compile(
+    r"^(\S+): functions required: (\d+), all defined: (\d+) hand-written C, "
+    r"(\d+) assembly, (\d+) another routine's name$", re.M)
 # the export's line before each function: its address, the installer's
 # prefixed
 FUNCTION_START = re.compile(r'^/\* ((installer::)?[0-9a-f]{8}) \*/$', re.M)
@@ -86,6 +95,14 @@ def counts_row(profile):
                     '{} skipped, {} failed |')
 
 
+def link_sentence(image):
+    """rewrite.md's sentence of an image's link check."""
+    return (REWRITE, sentence(f"The {image}'s link requires all {{}} of its functions and finds "
+                              "each defined: {} by hand-written C, {} by assembly and {} as another "
+                              "routine's name"),
+            lambda f: (f['link_required'], f['link_hand'], f['link_assembly'], f['link_named']))
+
+
 def summary_row(image):
     """README.md's table row of an image's functions written by hand,
     the primary's and the installer's, and its assembly routines."""
@@ -100,7 +117,8 @@ def summary_row(image):
 # sum the agreeing functions' of both profiles.  The export's are keyed
 # primary_ and installer_ functions and each of FORMS but assembly and
 # thunk, which are both regions'; functions, both regions', and
-# decompiled, those not thunks.
+# decompiled, those not thunks.  The link check's are keyed link_
+# required, hand, assembly and named.
 CHECKS = {
     'z3805a-3543b': (
         (README, sentence("Of the functions run, {} of the primary's and {} of "
@@ -133,6 +151,7 @@ CHECKS = {
         (REWRITE, sentence('| assembly (`check-decompiled`) | {} routines in'),
          lambda f: (f['assembly'],)),
         summary_row('Z3805A 3543B'),
+        link_sentence('Z3805A 3543B'),
         (README, sentence('all {} routines, in'), lambda f: (f['assembly'],)),
         (README, sentence("this gives {} functions, {} the primary's and {} the installer's, "
                           "and every one but the {} thunks decompiles"),
@@ -177,6 +196,7 @@ CHECKS = {
          lambda f: (f['primary_hand'], f['installer_hand'],
                     word(f['primary_reading'] + f['installer_reading']))),
         summary_row('58503A 3704'),
+        link_sentence('58503A 3704'),
         (REWRITE, sentence(
             "(its \"The hand-written C\"), {} of the primary's and {} of the installer's, {} "
             "left as the decompiler's reading"),
@@ -206,6 +226,7 @@ CHECKS = {
         (DOCUMENT_Z3801A, sentence('| `check-decompiled` | {} routines in'),
          lambda f: (f['assembly'],)),
         summary_row('Z3801A 3543'),
+        link_sentence('Z3801A 3543'),
         (REWRITE, sentence(
             "has its C functions written by hand too, the primary's {} and the installer's {}, "
             "{} left as the decompiler's reading"),
@@ -282,13 +303,35 @@ def export_figures(image):
     return figures
 
 
+def link_figures(path, image, export):
+    """The link check's figures, keyed as CHECKS has them; exits if the
+    summary lacks them or is not of the image's export: another image's,
+    other functions required, or other functions hand-written."""
+    found = LINK.search(path.read_text()) if path.exists() else None
+    if found is None:
+        sys.exit(f'{path}: no link check summary; run make check-link')
+    if found.group(1) != image:
+        sys.exit(f'{path}: the summary of {found.group(1)}, not {image}')
+    figures = dict(zip(('link_required', 'link_hand', 'link_assembly', 'link_named'),
+                       map(int, found.groups()[1:])))
+    if figures['link_required'] != export['functions']:
+        sys.exit(f"{path}: {figures['link_required']} functions required, "
+                 f"the export's {export['functions']}")
+    if figures['link_hand'] != export['primary_hand'] + export['installer_hand']:
+        sys.exit(f"{path}: {figures['link_hand']} functions of hand-written C, the export "
+                 f"marks {export['primary_hand'] + export['installer_hand']}")
+    return figures
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--image', required=True, choices=sorted(CHECKS))
+    parser.add_argument('--link', required=True, type=pathlib.Path)
     parser.add_argument('report', type=pathlib.Path)
     parser.add_argument('--write', action='store_true')
     args = parser.parse_args()
-    figures = report_figures(args.report) | export_figures(args.image)
+    export = export_figures(args.image)
+    figures = report_figures(args.report) | export | link_figures(args.link, args.image, export)
     texts = {}
     drifted = False
     for document, pattern, want in CHECKS[args.image]:

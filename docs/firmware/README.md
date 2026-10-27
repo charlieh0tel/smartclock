@@ -1081,6 +1081,24 @@ hand-written files").  The checks run
 the hand-written function as they ran the decompiled one, against the
 image's own.
 
+That every function is written, by hand or as assembly, is a link's
+result, not a count: `make check-link` (`tools/firmware/link_check.py`)
+compiles the export's declarations, everything before its first
+function, with the hand-written C it includes, the decompiled C left
+out whether under `#if 0` or not, assembles the export's assembly and
+links the two with the CPU32's libgcc, `ld --require-defined` naming
+every function of the export's `.conventions.jsonl`, so that one
+missing fails the link, named, whether anything calls it or not.  A
+thunk that a `.set` makes another routine's name requires that
+routine; a thunk the export carries as assembly counts as assembly.
+The link's layout is `rebuild_link.py`'s, each piece at its address,
+since its short branches reach only there, and no byte is compared:
+the function check shows that what is there agrees, this that nothing
+is missing.  Its summary line, each image's functions required and how
+each is defined, saved as `target/firmware/IMAGE/link-check.txt`, is
+the one source of a statement that an image is complete; `rewrite.md`
+quotes each image's, and `check-report-figures` checks them.
+
 A constant is typed: `static const uint32_t SECONDS_PER_MINUTE = 60;`,
 inside the function that uses it when only one does, at file scope with
 the file's prefix when several do.  A set of coded values, an ADC
@@ -1930,17 +1948,20 @@ the Rust CI so that each fails alone: `make check-format-c`,
 `check-pforth-words`, `check-image-diff`, `check-chip-selects`,
 `check-loop-trace`, `check-magic-numbers`, `check-comment-addresses`,
 `check-common`, `check-decompiled`, which runs `check-unicorn` first,
-and `report-decompiled`, which fails if any function fails and checks
+`check-link`, which fails if an image does not link from its
+hand-written C and assembly alone, every function required ("Hand-written
+C"), and `report-decompiled`, which fails if any function fails and checks
 the figures this document, `rewrite.md`, `58503a-3704.md`,
 `z3801a-3543.md` and the top `README.md` give from each image's
 function check -- the user-mode and console counts, the agreeing,
 known, skipped and failed functions and the agreeing ones' cases --
-against the report it writes, so that every function agreeing is
+and from its link check against the report it writes and the link
+check's summary, so that every function agreeing is
 checked in public.  `IMAGE=z3805a-3543b` is set for the job;
 `check-types`, `check-scpi-tree`, `check-magic-numbers` and
 `check-decompiled` run again with `IMAGE=58503a-3704` and
-`IMAGE=z3801a-3543`, and `report-decompiled` runs without `IMAGE`, for
-the three, each failing if any of its functions fails (`58503a-3704.md`
+`IMAGE=z3801a-3543`, and `check-link` and `report-decompiled` run
+without `IMAGE`, for the three, each failing if any of its functions fails (`58503a-3704.md`
 and `z3801a-3543.md`, "The function check").  `check-image-diff`
 checks the 58503A's and the Z3801A's diffs against the Z3805A, their
 seeded names and the 58503A's document's figures;

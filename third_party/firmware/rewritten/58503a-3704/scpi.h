@@ -37,3 +37,12 @@ static bool scpi_tcode_send(timecode_format format, void* response,
   call->query = 0;
   return true;
 }
+
+/* The installer's echo count, the byte after its prompt text's ten, as
+ * scpi_echo_length follows scpi_prompt_text: installer_scpi_session_init_58503a
+ * and installer_scpi_format_response clear it (installer::0x1073de,
+ * installer::0x10729c).  installer_scpi_prompt_text is typed twelve
+ * bytes, the Z3805A's, as common/'s installer C shares it. */
+static uint8_t* installer_scpi_echo_length(void) {
+  return (uint8_t*)&installer_scpi_prompt_text[sizeof scpi_prompt_text];
+}

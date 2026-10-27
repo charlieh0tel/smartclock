@@ -1928,7 +1928,7 @@ installer::0x10861c	label	installer_io_table_defaults	structures.md	installer_ps
 # the console's diagnostic words the C calls with their arguments'
 # types, as rewritten/console.c defines them, and the cells and text of
 # kernel words; console.md
-0x1b13a	function	diag_adc_read_58503a	context	an ADC channel's raw byte; the number's low bit is the channel's bit 2, its others the channel's low bits (from the Z3805A 3543B, by image_diff: changed, similar at 0.571, below 0.70; a lead, its prototype and convention not carried)
+0x1b13a	function	diag_adc_read	read	the word adc_read: an ADC channel's raw byte, adc_read of the number's low byte, which adc_read maps to the ADC's input itself (0x1b140); written by hand for the 58503A 3704	uint32_t diag_adc_read(uint32_t number)	convention=c; confidence=read
 0x1b2ba	function	diag_clk_synch	context	a counter step or sync, through sync_request (from the Z3805A 3543B, by image_diff: relocated)	void diag_clk_synch(counter_sync_kind kind, int32_t count)
 0x1b482	function	diag_set_time	context	sets the clock's date and time, printing set_timedate's error (from the Z3805A 3543B, by image_diff: relocated)	void diag_set_time(uint32_t year, uint32_t month, uint32_t day, uint32_t hour, uint32_t minute, uint32_t second)
 0x100d08	label	forth_watch_before	read	watch's registers, D0 to D7 then A0 to A7, as it saves them before it calls the word on the data stack and loads D0 to A5 back from after (from the Z3805A 3543B, by image_diff: moved +0x1e0 by 3 references at its start)	uint32_t[16]
@@ -2662,6 +2662,8 @@ installer::0x10791c	function	installer_scpi_task_run	58503a-3704.md	the installe
 installer::0x100fbe	function	installer_output_bits_set	read	installer_duart_output_bits of its two bytes; the installer's root task resets bit 2 with it (0x100d90); written by hand for the 58503A 3704	void installer_output_bits_set(board_led reset, board_led set)
 0x300000	label	lamp_latch	58503a-3704.md	the latch at 0x300000: the GPS Lock, Holdover and Alarm lamps and the front panel's two lines; latch_bits_set and its kin write selftest.latch, its shadow, here, or diag_tmode_data in test mode (0x136f2, 0x136fa); written by hand for the 58503A 3704	latch_bit
 0x18134	label	selftest_list	read	the self-tests selftest_run_all and selftest_run_all_counted run, selftest_table's entries 1 to 11, then a null (0x17808, 0x1782e); written by hand for the 58503A 3704	selftest_entry[12]
+0x4ed82	label	satellite_status_blank_entry	structures.md	satellite_status_list copies it over each unused entry of the list (0x49c30); written by hand for the 58503A 3704	satellite_list_entry
+0x1b150	function	diag_pr_adc_avg	read	the word pr_adc_avg: each of hmon_channels' entries with its byte at +0x28 set, its name and adc_average (0x1b162 to 0x1b19c); written by hand for the 58503A 3704	void diag_pr_adc_avg(void)	convention=c; confidence=read
 #
 # New functions: the 58503A's functions no Z3805A function or piece
 # matched (image_diff's "new"), and those found "called, by Ghidra's
@@ -2670,7 +2672,6 @@ installer::0x100fbe	function	installer_output_bits_set	read	installer_duart_outp
 # Ghidra's name, their note the extent in bytes and image_diff's
 # summary.  A wave that names one makes it a function row.
 installer::0x103a20	entry		image_diff	14 bytes; 4 instructions, found called, by Ghidra's analysis; after installer_duarta_receive
-0x1b150	entry		image_diff	98 bytes; 34 instructions, found pointer; after diag_adc_read; calls: adc_average, float_to_double, printf
 0x29ec4	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: return_zero, status_report_from
 0x29ee2	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: return_zero, status_report_from
 0x29f00	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: return_zero, status_report_from

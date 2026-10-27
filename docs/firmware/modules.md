@@ -1,11 +1,11 @@
 # Modules
 
 The plan for regrouping the Z3805A 3543B's hand-written C
-(`third_party/firmware/z3805a-3543b/rewritten/`, README.md,
+(`third_party/firmware/rewritten/z3805a-3543b/`, README.md,
 "Hand-written C") by subject.
-`third_party/firmware/z3805a-3543b/modules.tsv` puts each of 1320
+`third_party/firmware/analysis/z3805a-3543b/modules.tsv` puts each of 1320
 functions of the exported C
-(`third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c`)
+(`third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c`)
 in a module, all 1318 it gives as C written by hand and two, `drtb_read`
 and `sci_read`, assembly; the other assembly routines, the pForth kernel
 (`0x18ed6` to `0x1ad27`) and the installer's copies are left out.  The
@@ -237,7 +237,7 @@ Not in the direct calls above, and not counted:
 
 ## The hand-written files
 
-The hand-written C (`third_party/firmware/z3805a-3543b/rewritten/`)
+The hand-written C (`third_party/firmware/rewritten/z3805a-3543b/`)
 follows the modules: one file to a module, named by it (`calendar.c`,
 `devices/dac`'s `dac.c`, `platform/string`'s `string.c`), an
 application's submodules prefixed (`scpi_lexer.c`, `pll_reading.c`),
@@ -251,7 +251,7 @@ first function written by hand starts its file (`boot.c`, `cpu.c`,
 them shares, from the file they were split from, is in a header named
 for it (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
 `scpi.h`), keeping that file's prefix.  A file several images share is in
-`third_party/firmware/common/` under the same name and folder
+`third_party/firmware/rewritten/common/` under the same name and folder
 ([`rewrite.md`, "Shared C"](rewrite.md#shared-c)); a header split
 between the two keeps its name in both, the image's holding what is
 its own (`records.h`'s tag and firmware revision).

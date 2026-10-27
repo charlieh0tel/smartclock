@@ -6,7 +6,7 @@
 them: each is called in a Unicorn 68k emulator on known inputs and its
 result compared with what the C routine of that name gives.
 
-    uv run tools/firmware/libc_check.py third_party/firmware/z3805a-3543b.bin
+    uv run tools/firmware/libc_check.py third_party/firmware/images/z3805a-3543b.bin
 
 Only routines that touch nothing but their arguments and RAM are run.  The
 addresses are the Z3805A 3543B's.  Exits nonzero if any check fails.

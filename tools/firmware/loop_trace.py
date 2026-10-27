@@ -23,8 +23,8 @@ call into any other routine, a trap or an access outside ROM and RAM
 fails the run.
 
 The globals' addresses are the exported C's (.set lines of
-IMAGE/decompiled/IMAGE.c), the routines' IMAGE/names.tsv's, and the
-structures' offsets IMAGE/smartclock.h's as m68k gcc lays them out
+decompiled/IMAGE/IMAGE.c), the routines' analysis/IMAGE/names.tsv's, and the
+structures' offsets rewritten/IMAGE/types/smartclock.h's as m68k gcc lays them out
 (M68K_CC, by default m68k-linux-gnu-gcc).  The gain is the constant
 pllp_task passes efc_gain_set, the time constant the ROM's default
 (TAU_BLOCKS).  Floats are written as their IEEE single bits, in hex.
@@ -181,7 +181,7 @@ HOLDOVER_LIMIT_ON = 0
 def names(image: str) -> dict[str, int]:
     """The primary's functions by name, from names.tsv."""
     found = {}
-    for line in (FIRMWARE / image / 'names.tsv').read_text().splitlines():
+    for line in (FIRMWARE / 'analysis' / image / 'names.tsv').read_text().splitlines():
         cells = line.split('\t')
         if line.startswith('#') or len(cells) < 3 or cells[1] != 'function' or '::' in cells[0]:
             continue
@@ -191,14 +191,14 @@ def names(image: str) -> dict[str, int]:
 
 def globals_of(image: str) -> dict[str, int]:
     """Every global's address, from the exported C's .set lines."""
-    text = (FIRMWARE / image / 'decompiled' / f'{image}.c').read_text()
+    text = (FIRMWARE / 'decompiled' / image / f'{image}.c').read_text()
     return {name: int(address, 16) for name, address in re.findall(r'\.set (\w+), (0x[0-9a-f]+)"', text)}
 
 
 def layout(image: str) -> dict[str, tuple[int, int]]:
     """Each FIELDS entry's offset and size, as m68k gcc lays out
     smartclock.h."""
-    lines = ['#include <stddef.h>', f'#include "{FIRMWARE / image / "smartclock.h"}"']
+    lines = ['#include <stddef.h>', f'#include "{FIRMWARE / "rewritten" / image / "types/smartclock.h"}"']
     keys = []
     for structure, members in FIELDS.items():
         for member in members:
@@ -555,7 +555,7 @@ def run(machine: Machine, name: str, seconds: list[Second], stop_when_done: bool
 
 
 def trace(image: str) -> str:
-    rom = (FIRMWARE / f'{image}.bin').read_bytes()
+    rom = (FIRMWARE / 'images' / f'{image}.bin').read_bytes()
     routines = names(image)
     addresses = globals_of(image)
     missing = [name for name in GLOBALS if name not in addresses]

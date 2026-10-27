@@ -10797,27 +10797,27 @@ int32_t installer_sprintf(char *s,char *format,...);
 int32_t installer_sprintf_put(char *text,int32_t size,int32_t count,sprintf_output *output);
 int32_t installer_vsprintf(char *s,char *format,void *arg);
 
-#include "../../common/bindings/clock_record.h"
+#include "../../rewritten/common/bindings/clock_record.h"
 
-#include "../../common/bindings/kernel.h"
+#include "../../rewritten/common/bindings/kernel.h"
 
-#include "../../common/bindings/mutex.h"
+#include "../../rewritten/common/bindings/mutex.h"
 
-#include "../../common/bindings/pforth.h"
+#include "../../rewritten/common/bindings/pforth.h"
 
-#include "../../common/bindings/scpi_decimal.h"
+#include "../../rewritten/common/bindings/scpi_decimal.h"
 
-#include "../../common/bindings/softfloat.h"
+#include "../../rewritten/common/bindings/softfloat.h"
 
-#include "../../common/bindings/stack.h"
+#include "../../rewritten/common/bindings/stack.h"
 
-#include "../rewritten/bindings/clock_record.h"
+#include "../../rewritten/z3801a-3543/bindings/clock_record.h"
 
-#include "../rewritten/bindings/drtb.h"
+#include "../../rewritten/z3801a-3543/bindings/drtb.h"
 
-#include "../rewritten/bindings/qspi.h"
+#include "../../rewritten/z3801a-3543/bindings/qspi.h"
 
-#include "../rewritten/bindings/string_device.h"
+#include "../../rewritten/z3801a-3543/bindings/string_device.h"
 
 /* 00000400 */
 /* boot_duartb_loopback_check: rewritten in boot.c */
@@ -55524,396 +55524,396 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 /* installer::0010aaa6 */
 /* installer_vsprintf: rewritten in installer_stdio.c */
 
-#include "../../common/clock.h"
+#include "../../rewritten/common/clock.h"
 
-#include "../../common/cpu.h"
+#include "../../rewritten/common/cpu.h"
 
-#include "../../common/duart.h"
+#include "../../rewritten/common/duart.h"
 
-#include "../../common/fpga.h"
+#include "../../rewritten/common/fpga.h"
 
-#include "../../common/gps.h"
+#include "../../rewritten/common/gps.h"
 
-#include "../../common/libc.h"
+#include "../../rewritten/common/libc.h"
 
-#include "../../common/monitors.h"
+#include "../../rewritten/common/monitors.h"
 
-#include "../../common/os.h"
+#include "../../rewritten/common/os.h"
 
-#include "../../common/pll.h"
+#include "../../rewritten/common/pll.h"
 
-#include "../../common/pllc.h"
+#include "../../rewritten/common/pllc.h"
 
-#include "../../common/records.h"
+#include "../../rewritten/common/records.h"
 
-#include "../../common/scpi.h"
+#include "../../rewritten/common/scpi.h"
 
-#include "../../common/scpi_convert.h"
+#include "../../rewritten/common/scpi_convert.h"
 
-#include "../../common/scpi_engine.h"
+#include "../../rewritten/common/scpi_engine.h"
 
-#include "../../common/scpi_format.h"
+#include "../../rewritten/common/scpi_format.h"
 
-#include "../../common/scpi_lexer.h"
+#include "../../rewritten/common/scpi_lexer.h"
 
-#include "../../common/scpi_parameters.h"
+#include "../../rewritten/common/scpi_parameters.h"
 
-#include "../../common/scpi_tree.h"
+#include "../../rewritten/common/scpi_tree.h"
 
-#include "../../common/startup.h"
+#include "../../rewritten/common/startup.h"
 
-#include "../../common/status.h"
+#include "../../rewritten/common/status.h"
 
-#include "../rewritten/duart.h"
+#include "../../rewritten/z3801a-3543/duart.h"
 
-#include "../rewritten/gps.h"
+#include "../../rewritten/z3801a-3543/gps.h"
 
-#include "../rewritten/pll.h"
+#include "../../rewritten/z3801a-3543/pll.h"
 
-#include "../rewritten/records.h"
+#include "../../rewritten/z3801a-3543/records.h"
 
-#include "../rewritten/scpi.h"
+#include "../../rewritten/z3801a-3543/scpi.h"
 
-#include "../../common/arithmetic.c"
+#include "../../rewritten/common/arithmetic.c"
 
-#include "../../common/boot.c"
+#include "../../rewritten/common/boot.c"
 
-#include "../../common/calendar.c"
+#include "../../rewritten/common/calendar.c"
 
-#include "../../common/clock.c"
+#include "../../rewritten/common/clock.c"
 
-#include "../../common/console.c"
+#include "../../rewritten/common/console.c"
 
-#include "../../common/cpu.c"
+#include "../../rewritten/common/cpu.c"
 
-#include "../../common/dac.c"
+#include "../../rewritten/common/dac.c"
 
-#include "../../common/debug.c"
+#include "../../rewritten/common/debug.c"
 
-#include "../../common/duart.c"
+#include "../../rewritten/common/duart.c"
 
-#include "../../common/duarta.c"
+#include "../../rewritten/common/duarta.c"
 
-#include "../../common/duartb.c"
+#include "../../rewritten/common/duartb.c"
 
-#include "../../common/eeprom.c"
+#include "../../rewritten/common/eeprom.c"
 
-#include "../../common/fpga.c"
+#include "../../rewritten/common/fpga.c"
 
-#include "../../common/gps_oncore.c"
+#include "../../rewritten/common/gps_oncore.c"
 
-#include "../../common/gps_receiver.c"
+#include "../../rewritten/common/gps_receiver.c"
 
-#include "../../common/gps_reports.c"
+#include "../../rewritten/common/gps_reports.c"
 
-#include "../../common/gps_requests.c"
+#include "../../rewritten/common/gps_requests.c"
 
-#include "../../common/gps_task.c"
+#include "../../rewritten/common/gps_task.c"
 
-#include "../../common/installer/installer_arithmetic.c"
+#include "../../rewritten/common/installer/installer_arithmetic.c"
 
-#include "../../common/installer/installer_cpu.c"
+#include "../../rewritten/common/installer/installer_cpu.c"
 
-#include "../../common/installer/installer_debug.c"
+#include "../../rewritten/common/installer/installer_debug.c"
 
-#include "../../common/installer/installer_duarta.c"
+#include "../../rewritten/common/installer/installer_duarta.c"
 
-#include "../../common/installer/installer_duartb.c"
+#include "../../rewritten/common/installer/installer_duartb.c"
 
-#include "../../common/installer/installer_main.c"
+#include "../../rewritten/common/installer/installer_main.c"
 
-#include "../../common/installer/installer_math.c"
+#include "../../rewritten/common/installer/installer_math.c"
 
-#include "../../common/installer/installer_os.c"
+#include "../../rewritten/common/installer/installer_os.c"
 
-#include "../../common/installer/installer_records.c"
+#include "../../rewritten/common/installer/installer_records.c"
 
-#include "../../common/installer/installer_scpi_common.c"
+#include "../../rewritten/common/installer/installer_scpi_common.c"
 
-#include "../../common/installer/installer_scpi_convert.c"
+#include "../../rewritten/common/installer/installer_scpi_convert.c"
 
-#include "../../common/installer/installer_scpi_diagnostic.c"
+#include "../../rewritten/common/installer/installer_scpi_diagnostic.c"
 
-#include "../../common/installer/installer_scpi_engine.c"
+#include "../../rewritten/common/installer/installer_scpi_engine.c"
 
-#include "../../common/installer/installer_scpi_format.c"
+#include "../../rewritten/common/installer/installer_scpi_format.c"
 
-#include "../../common/installer/installer_scpi_lexer.c"
+#include "../../rewritten/common/installer/installer_scpi_lexer.c"
 
-#include "../../common/installer/installer_scpi_parameters.c"
+#include "../../rewritten/common/installer/installer_scpi_parameters.c"
 
-#include "../../common/installer/installer_scpi_port.c"
+#include "../../rewritten/common/installer/installer_scpi_port.c"
 
-#include "../../common/installer/installer_scpi_requests.c"
+#include "../../rewritten/common/installer/installer_scpi_requests.c"
 
-#include "../../common/installer/installer_scpi_system.c"
+#include "../../rewritten/common/installer/installer_scpi_system.c"
 
-#include "../../common/installer/installer_scpi_tree.c"
+#include "../../rewritten/common/installer/installer_scpi_tree.c"
 
-#include "../../common/installer/installer_spool.c"
+#include "../../rewritten/common/installer/installer_spool.c"
 
-#include "../../common/installer/installer_startup.c"
+#include "../../rewritten/common/installer/installer_startup.c"
 
-#include "../../common/installer/installer_status.c"
+#include "../../rewritten/common/installer/installer_status.c"
 
-#include "../../common/installer/installer_stdio.c"
+#include "../../rewritten/common/installer/installer_stdio.c"
 
-#include "../../common/installer/installer_stdlib.c"
+#include "../../rewritten/common/installer/installer_stdlib.c"
 
-#include "../../common/installer/installer_string.c"
+#include "../../rewritten/common/installer/installer_string.c"
 
-#include "../../common/klok.c"
+#include "../../rewritten/common/klok.c"
 
-#include "../../common/leap.c"
+#include "../../rewritten/common/leap.c"
 
-#include "../../common/log.c"
+#include "../../rewritten/common/log.c"
 
-#include "../../common/math.c"
+#include "../../rewritten/common/math.c"
 
-#include "../../common/monitors.c"
+#include "../../rewritten/common/monitors.c"
 
-#include "../../common/nv.c"
+#include "../../rewritten/common/nv.c"
 
-#include "../../common/os.c"
+#include "../../rewritten/common/os.c"
 
-#include "../../common/pll_aging.c"
+#include "../../rewritten/common/pll_aging.c"
 
-#include "../../common/pll_gps_control.c"
+#include "../../rewritten/common/pll_gps_control.c"
 
-#include "../../common/pll_reading.c"
+#include "../../rewritten/common/pll_reading.c"
 
-#include "../../common/pll_stages.c"
+#include "../../rewritten/common/pll_stages.c"
 
-#include "../../common/pllc.c"
+#include "../../rewritten/common/pllc.c"
 
-#include "../../common/pllp.c"
+#include "../../rewritten/common/pllp.c"
 
-#include "../../common/pps.c"
+#include "../../rewritten/common/pps.c"
 
-#include "../../common/qspi.c"
+#include "../../rewritten/common/qspi.c"
 
-#include "../../common/records.c"
+#include "../../rewritten/common/records.c"
 
-#include "../../common/scpi_common.c"
+#include "../../rewritten/common/scpi_common.c"
 
-#include "../../common/scpi_convert.c"
+#include "../../rewritten/common/scpi_convert.c"
 
-#include "../../common/scpi_diagnostic.c"
+#include "../../rewritten/common/scpi_diagnostic.c"
 
-#include "../../common/scpi_douglas.c"
+#include "../../rewritten/common/scpi_douglas.c"
 
-#include "../../common/scpi_engine.c"
+#include "../../rewritten/common/scpi_engine.c"
 
-#include "../../common/scpi_format.c"
+#include "../../rewritten/common/scpi_format.c"
 
-#include "../../common/scpi_format_data.c"
+#include "../../rewritten/common/scpi_format_data.c"
 
-#include "../../common/scpi_kenneth.c"
+#include "../../rewritten/common/scpi_kenneth.c"
 
-#include "../../common/scpi_led.c"
+#include "../../rewritten/common/scpi_led.c"
 
-#include "../../common/scpi_lexer.c"
+#include "../../rewritten/common/scpi_lexer.c"
 
-#include "../../common/scpi_misc.c"
+#include "../../rewritten/common/scpi_misc.c"
 
-#include "../../common/scpi_output.c"
+#include "../../rewritten/common/scpi_output.c"
 
-#include "../../common/scpi_parameters.c"
+#include "../../rewritten/common/scpi_parameters.c"
 
-#include "../../common/scpi_port.c"
+#include "../../rewritten/common/scpi_port.c"
 
-#include "../../common/scpi_requests.c"
+#include "../../rewritten/common/scpi_requests.c"
 
-#include "../../common/scpi_robin.c"
+#include "../../rewritten/common/scpi_robin.c"
 
-#include "../../common/scpi_sense.c"
+#include "../../rewritten/common/scpi_sense.c"
 
-#include "../../common/scpi_source_gpsystem.c"
+#include "../../rewritten/common/scpi_source_gpsystem.c"
 
-#include "../../common/scpi_source_ptime.c"
+#include "../../rewritten/common/scpi_source_ptime.c"
 
-#include "../../common/scpi_source_pulse.c"
+#include "../../rewritten/common/scpi_source_pulse.c"
 
-#include "../../common/scpi_source_roscillator.c"
+#include "../../rewritten/common/scpi_source_roscillator.c"
 
-#include "../../common/scpi_status.c"
+#include "../../rewritten/common/scpi_status.c"
 
-#include "../../common/scpi_system.c"
+#include "../../rewritten/common/scpi_system.c"
 
-#include "../../common/scpi_tree.c"
+#include "../../rewritten/common/scpi_tree.c"
 
-#include "../../common/scpi_unsupported.c"
+#include "../../rewritten/common/scpi_unsupported.c"
 
-#include "../../common/scpi_validators.c"
+#include "../../rewritten/common/scpi_validators.c"
 
-#include "../../common/screen.c"
+#include "../../rewritten/common/screen.c"
 
-#include "../../common/selftest.c"
+#include "../../rewritten/common/selftest.c"
 
-#include "../../common/spool.c"
+#include "../../rewritten/common/spool.c"
 
-#include "../../common/startup.c"
+#include "../../rewritten/common/startup.c"
 
-#include "../../common/status.c"
+#include "../../rewritten/common/status.c"
 
-#include "../../common/stdio.c"
+#include "../../rewritten/common/stdio.c"
 
-#include "../../common/stdlib.c"
+#include "../../rewritten/common/stdlib.c"
 
-#include "../../common/string.c"
+#include "../../rewritten/common/string.c"
 
-#include "../../common/ti.c"
+#include "../../rewritten/common/ti.c"
 
-#include "../../common/timecode.c"
+#include "../../rewritten/common/timecode.c"
 
-#include "../../common/timers.c"
+#include "../../rewritten/common/timers.c"
 
-#include "../rewritten/adc.c"
+#include "../../rewritten/z3801a-3543/adc.c"
 
-#include "../rewritten/boot.c"
+#include "../../rewritten/z3801a-3543/boot.c"
 
-#include "../rewritten/calendar.c"
+#include "../../rewritten/z3801a-3543/calendar.c"
 
-#include "../rewritten/clock.c"
+#include "../../rewritten/z3801a-3543/clock.c"
 
-#include "../rewritten/console.c"
+#include "../../rewritten/z3801a-3543/console.c"
 
-#include "../rewritten/cpu.c"
+#include "../../rewritten/z3801a-3543/cpu.c"
 
-#include "../rewritten/dac.c"
+#include "../../rewritten/z3801a-3543/dac.c"
 
-#include "../rewritten/duart.c"
+#include "../../rewritten/z3801a-3543/duart.c"
 
-#include "../rewritten/duarta.c"
+#include "../../rewritten/z3801a-3543/duarta.c"
 
-#include "../rewritten/duartb.c"
+#include "../../rewritten/z3801a-3543/duartb.c"
 
-#include "../rewritten/eeprom.c"
+#include "../../rewritten/z3801a-3543/eeprom.c"
 
-#include "../rewritten/fpga.c"
+#include "../../rewritten/z3801a-3543/fpga.c"
 
-#include "../rewritten/gps_oncore.c"
+#include "../../rewritten/z3801a-3543/gps_oncore.c"
 
-#include "../rewritten/gps_receiver.c"
+#include "../../rewritten/z3801a-3543/gps_receiver.c"
 
-#include "../rewritten/gps_reports.c"
+#include "../../rewritten/z3801a-3543/gps_reports.c"
 
-#include "../rewritten/gps_requests.c"
+#include "../../rewritten/z3801a-3543/gps_requests.c"
 
-#include "../rewritten/gps_task.c"
+#include "../../rewritten/z3801a-3543/gps_task.c"
 
-#include "../rewritten/installer/installer_cpu.c"
+#include "../../rewritten/z3801a-3543/installer/installer_cpu.c"
 
-#include "../rewritten/installer/installer_duart.c"
+#include "../../rewritten/z3801a-3543/installer/installer_duart.c"
 
-#include "../rewritten/installer/installer_duarta.c"
+#include "../../rewritten/z3801a-3543/installer/installer_duarta.c"
 
-#include "../rewritten/installer/installer_duartb.c"
+#include "../../rewritten/z3801a-3543/installer/installer_duartb.c"
 
-#include "../rewritten/installer/installer_records.c"
+#include "../../rewritten/z3801a-3543/installer/installer_records.c"
 
-#include "../rewritten/installer/installer_scpi_common.c"
+#include "../../rewritten/z3801a-3543/installer/installer_scpi_common.c"
 
-#include "../rewritten/installer/installer_scpi_engine.c"
+#include "../../rewritten/z3801a-3543/installer/installer_scpi_engine.c"
 
-#include "../rewritten/installer/installer_scpi_format.c"
+#include "../../rewritten/z3801a-3543/installer/installer_scpi_format.c"
 
-#include "../rewritten/installer/installer_scpi_port.c"
+#include "../../rewritten/z3801a-3543/installer/installer_scpi_port.c"
 
-#include "../rewritten/installer/installer_scpi_tree_data.c"
+#include "../../rewritten/z3801a-3543/installer/installer_scpi_tree_data.c"
 
-#include "../rewritten/installer/installer_startup.c"
+#include "../../rewritten/z3801a-3543/installer/installer_startup.c"
 
-#include "../rewritten/installer/installer_status.c"
+#include "../../rewritten/z3801a-3543/installer/installer_status.c"
 
-#include "../rewritten/installer/installer_stdio.c"
+#include "../../rewritten/z3801a-3543/installer/installer_stdio.c"
 
-#include "../rewritten/klok.c"
+#include "../../rewritten/z3801a-3543/klok.c"
 
-#include "../rewritten/leap.c"
+#include "../../rewritten/z3801a-3543/leap.c"
 
-#include "../rewritten/leds.c"
+#include "../../rewritten/z3801a-3543/leds.c"
 
-#include "../rewritten/log.c"
+#include "../../rewritten/z3801a-3543/log.c"
 
-#include "../rewritten/main.c"
+#include "../../rewritten/z3801a-3543/main.c"
 
-#include "../rewritten/monitors.c"
+#include "../../rewritten/z3801a-3543/monitors.c"
 
-#include "../rewritten/nv.c"
+#include "../../rewritten/z3801a-3543/nv.c"
 
-#include "../rewritten/os.c"
+#include "../../rewritten/z3801a-3543/os.c"
 
-#include "../rewritten/pll_aging.c"
+#include "../../rewritten/z3801a-3543/pll_aging.c"
 
-#include "../rewritten/pll_gps_control.c"
+#include "../../rewritten/z3801a-3543/pll_gps_control.c"
 
-#include "../rewritten/pll_reading.c"
+#include "../../rewritten/z3801a-3543/pll_reading.c"
 
-#include "../rewritten/pll_stages.c"
+#include "../../rewritten/z3801a-3543/pll_stages.c"
 
-#include "../rewritten/pllc.c"
+#include "../../rewritten/z3801a-3543/pllc.c"
 
-#include "../rewritten/pllp.c"
+#include "../../rewritten/z3801a-3543/pllp.c"
 
-#include "../rewritten/pps.c"
+#include "../../rewritten/z3801a-3543/pps.c"
 
-#include "../rewritten/qspi.c"
+#include "../../rewritten/z3801a-3543/qspi.c"
 
-#include "../rewritten/records.c"
+#include "../../rewritten/z3801a-3543/records.c"
 
-#include "../rewritten/scpi_common.c"
+#include "../../rewritten/z3801a-3543/scpi_common.c"
 
-#include "../rewritten/scpi_diagnostic.c"
+#include "../../rewritten/z3801a-3543/scpi_diagnostic.c"
 
-#include "../rewritten/scpi_douglas.c"
+#include "../../rewritten/z3801a-3543/scpi_douglas.c"
 
-#include "../rewritten/scpi_engine.c"
+#include "../../rewritten/z3801a-3543/scpi_engine.c"
 
-#include "../rewritten/scpi_format.c"
+#include "../../rewritten/z3801a-3543/scpi_format.c"
 
-#include "../rewritten/scpi_format_data.c"
+#include "../../rewritten/z3801a-3543/scpi_format_data.c"
 
-#include "../rewritten/scpi_led.c"
+#include "../../rewritten/z3801a-3543/scpi_led.c"
 
-#include "../rewritten/scpi_misc.c"
+#include "../../rewritten/z3801a-3543/scpi_misc.c"
 
-#include "../rewritten/scpi_output.c"
+#include "../../rewritten/z3801a-3543/scpi_output.c"
 
-#include "../rewritten/scpi_port.c"
+#include "../../rewritten/z3801a-3543/scpi_port.c"
 
-#include "../rewritten/scpi_robin.c"
+#include "../../rewritten/z3801a-3543/scpi_robin.c"
 
-#include "../rewritten/scpi_sample.c"
+#include "../../rewritten/z3801a-3543/scpi_sample.c"
 
-#include "../rewritten/scpi_source_gpsystem.c"
+#include "../../rewritten/z3801a-3543/scpi_source_gpsystem.c"
 
-#include "../rewritten/scpi_source_ptime.c"
+#include "../../rewritten/z3801a-3543/scpi_source_ptime.c"
 
-#include "../rewritten/scpi_source_pulse.c"
+#include "../../rewritten/z3801a-3543/scpi_source_pulse.c"
 
-#include "../rewritten/scpi_source_roscillator.c"
+#include "../../rewritten/z3801a-3543/scpi_source_roscillator.c"
 
-#include "../rewritten/scpi_status.c"
+#include "../../rewritten/z3801a-3543/scpi_status.c"
 
-#include "../rewritten/scpi_system.c"
+#include "../../rewritten/z3801a-3543/scpi_system.c"
 
-#include "../rewritten/scpi_tree_data.c"
+#include "../../rewritten/z3801a-3543/scpi_tree_data.c"
 
-#include "../rewritten/scpi_validators.c"
+#include "../../rewritten/z3801a-3543/scpi_validators.c"
 
-#include "../rewritten/screen.c"
+#include "../../rewritten/z3801a-3543/screen.c"
 
-#include "../rewritten/selftest.c"
+#include "../../rewritten/z3801a-3543/selftest.c"
 
-#include "../rewritten/startup.c"
+#include "../../rewritten/z3801a-3543/startup.c"
 
-#include "../rewritten/status.c"
+#include "../../rewritten/z3801a-3543/status.c"
 
-#include "../rewritten/stdio.c"
+#include "../../rewritten/z3801a-3543/stdio.c"
 
-#include "../rewritten/ti.c"
+#include "../../rewritten/z3801a-3543/ti.c"
 
-#include "../rewritten/timecode.c"
+#include "../../rewritten/z3801a-3543/timecode.c"
 
-#include "../rewritten/timers.c"
+#include "../../rewritten/z3801a-3543/timers.c"

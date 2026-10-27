@@ -1,7 +1,7 @@
 """Computes docs/firmware/modules.md's figures -- the functions in each
 layer and module, the callers and calls it cites, the calls the wrong
-way -- from an image folder's modules.tsv and the direct calls of its
-exported C, third_party/firmware/IMAGE/decompiled/IMAGE.c, and checks
+way -- from an image's analysis/IMAGE/modules.tsv and the direct calls of its
+exported C, third_party/firmware/decompiled/IMAGE/IMAGE.c, and checks
 them, or with --write rewrites them in place.
 
     python3 -I tools/firmware/module_figures.py [--image IMAGE] [--write]
@@ -93,7 +93,7 @@ class Program:
 
 def read_modules(image):
     module = {}
-    for line in (FIRMWARE / image / 'modules.tsv').read_text().splitlines():
+    for line in (FIRMWARE / 'analysis' / image / 'modules.tsv').read_text().splitlines():
         if line and not line.startswith('#'):
             _, name, path = line.split('\t')[:3]
             module[name] = path
@@ -102,7 +102,7 @@ def read_modules(image):
 
 def read_program(image):
     module = read_modules(image)
-    export = FIRMWARE / image / 'decompiled' / f'{image}.c'
+    export = FIRMWARE / 'decompiled' / image / f'{image}.c'
     text = export.read_text()
     starts = [match.start() for match in FUNCTION_START.finditer(text)]
     calls = {}
@@ -209,7 +209,7 @@ def spelled(value, old):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--image', default=DOCUMENTED_IMAGE,
-                        help='the image folder whose modules and export to read')
+                        help='the image whose modules and export to read')
     parser.add_argument('--write', action='store_true',
                         help='rewrite the figures in modules.md')
     arguments = parser.parse_args()

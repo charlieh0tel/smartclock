@@ -6,11 +6,11 @@ functions and labels are named, to another image by their bytes, and
 reports what moved, what changed and what the other image adds.
 
     python3 -I tools/firmware/image_diff.py \\
-        --functions third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl \\
-        --names third_party/firmware/z3805a-3543b/names.tsv \\
-        --modules third_party/firmware/z3805a-3543b/modules.tsv \\
+        --functions third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.conventions.jsonl \\
+        --names third_party/firmware/analysis/z3805a-3543b/names.tsv \\
+        --modules third_party/firmware/analysis/z3805a-3543b/modules.tsv \\
         [--handlers BASE.txt OTHER.txt] [--installer] [--diff NAME ...] \\
-        third_party/firmware/z3805a-3543b.bin OTHER.bin > OUT.tsv
+        third_party/firmware/images/z3805a-3543b.bin OTHER.bin > OUT.tsv
 
 A base function's body runs from its start to the first unconditional
 transfer (rts, rte, jmp, bra) that no branch before it jumps past, and

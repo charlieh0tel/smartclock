@@ -20,7 +20,7 @@ const ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../..");
 /// A receiver whose loop is checked, and what its firmware does that
 /// the other's does not.
 struct Receiver {
-    /// Its image's name: `third_party/firmware/IMAGE.bin` and `IMAGE/`.
+    /// Its image's name: `third_party/firmware/images/IMAGE.bin`, and its folder in each of `decompiled/`, `rewritten/` and `analysis/`.
     image: &'static str,
     /// Its row's first cell in loop.md's "In every image" table.
     evidence_row: &'static str,
@@ -202,10 +202,10 @@ struct Firmware {
 
 impl Firmware {
     fn load(image: &'static str) -> Self {
-        let path = format!("{ROOT}/third_party/firmware/{image}.bin");
+        let path = format!("{ROOT}/third_party/firmware/images/{image}.bin");
         let rom = fs::read(&path).unwrap_or_else(|error| panic!("{path}: {error}"));
         let mut functions: Vec<(usize, String)> =
-            read(&format!("third_party/firmware/{image}/names.tsv"))
+            read(&format!("third_party/firmware/analysis/{image}/names.tsv"))
                 .lines()
                 .filter(|line| !line.starts_with('#'))
                 .filter_map(|line| {

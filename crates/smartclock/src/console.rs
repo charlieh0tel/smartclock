@@ -897,7 +897,7 @@ mod tests {
             "58503a-3704.bin",
         ]) {
             let path = format!(
-                "{}/../../third_party/firmware/{name}",
+                "{}/../../third_party/firmware/images/{name}",
                 env!("CARGO_MANIFEST_DIR")
             );
             let image = std::fs::read(&path).expect(&path);

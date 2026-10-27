@@ -8,8 +8,8 @@ covers the same routines in the Z3816A image at a coarser grain; this
 file goes as far as a model of the counter needs.
 
 Addresses are in the Z3805A image.  Function names are those of
-`third_party/firmware/z3805a-3543b/names.tsv`, the code is the
-hand-written C in `third_party/firmware/z3805a-3543b/rewritten/`
+`third_party/firmware/analysis/z3805a-3543b/names.tsv`, the code is the
+hand-written C in `third_party/firmware/rewritten/z3805a-3543b/`
 (`ti.c`, `fpga.c`, `pll_reading.c`, `pll_stages.c`, `monitors.c`) and
 the types are `smartclock.h`'s; each was checked against the image's
 own instructions with `m68k-linux-gnu-objdump -D -b binary -m

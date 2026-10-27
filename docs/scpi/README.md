@@ -1,7 +1,7 @@
 # SCPI trees
 
 Every command path each firmware image's parser knows, one file per
-image in `third_party/firmware/`, as `smartclock-cli dump-scpi IMAGE`
+image in `third_party/firmware/images/`, as `smartclock-cli dump-scpi IMAGE`
 prints it.  A test regenerates each and fails if it differs from the
 file here, so the files and the images cannot drift apart.
 
@@ -154,8 +154,8 @@ or, for a handler, by the rule below, and with `--names` an address it
 names gets no row, so that its own row, and its type, stand.
 
 `make scpi-tree` writes the Z3805A 3543B's,
-`third_party/firmware/z3805a-3543b/rewritten/scpi_tree_data.c` through
-clang-format and `third_party/firmware/z3805a-3543b/scpi-tree.tsv`, and
+`third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c` through
+clang-format and `third_party/firmware/analysis/z3805a-3543b/scpi-tree.tsv`, and
 its installer's, `installer/installer_scpi_tree_data.c` beside the
 installer's other copies and `installer-scpi-tree.tsv`,
 and a test fails while any is stale, the C compared without its white
@@ -344,7 +344,7 @@ instruction it can reach is already disassembled.
 The converters, `scpi_real_to_text` and the engine are run on known values by
 `tools/firmware/app_check.py`:
 
-    uv run tools/firmware/app_check.py third_party/firmware/z3805a-3543b.bin
+    uv run tools/firmware/app_check.py third_party/firmware/images/z3805a-3543b.bin
 
 ## Between images
 

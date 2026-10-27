@@ -31,11 +31,19 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIRMWARE = ROOT / 'third_party/firmware'
+IMAGES = FIRMWARE / 'images'
+DECOMPILED = FIRMWARE / 'decompiled'
+REWRITTEN = FIRMWARE / 'rewritten'
+ANALYSIS = FIRMWARE / 'analysis'
 spec = importlib.util.spec_from_file_location('image_diff', ROOT / 'tools/firmware/image_diff.py')
 image_diff = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(image_diff)
 
 NAMES_FILES = ('names.tsv', 'scpi-tree.tsv', 'installer-scpi-tree.tsv')
+# The folder of an image's rewritten C holding its smartclock.h and
+# check-layout.c, not hand-written firmware (SmartClockExportC.java,
+# TYPES_FOLDER).
+TYPES = 'types'
 # the generated C's files: scpi_tree_data.c and installer_scpi_tree_data.c
 GENERATED = 'scpi_tree_data.c'
 OVERLAY = 'installer'
@@ -73,9 +81,10 @@ class Image:
     bytes by region (the installer's as its records unpack it)."""
 
     def __init__(self, name):
-        self.folder = FIRMWARE / name
+        self.name = name
+        self.folder = ANALYSIS / name
         self.named, self.functions, self.labels = {}, {}, {}
-        for line in open(self.folder / 'decompiled' / (name + '.conventions.jsonl')):
+        for line in open(DECOMPILED / name / (name + '.conventions.jsonl')):
             row = json.loads(line)
             region, address = split(row['address'])
             self.functions[region, address] = row['name']
@@ -94,7 +103,7 @@ class Image:
         regions = {region for region, _ in self.functions} | {region for region, _ in self.labels}
         self.function_starts = {r: sorted(a for rr, a in self.functions if rr == r) for r in regions}
         self.label_starts = {r: sorted(a for rr, a in self.labels if rr == r) for r in regions}
-        data = (FIRMWARE / (name + '.bin')).read_bytes()
+        data = (IMAGES / (name + '.bin')).read_bytes()
         records = image_diff.installer_records(data)
         self.memory = {'': (0, data)}
         if records is not None:
@@ -147,8 +156,9 @@ class Image:
     def sources(self):
         """The hand-written C, less the SCPI trees generated from the
         image itself (dump-scpi --c), whose addresses are its own."""
-        return sorted(path for path in (self.folder / 'rewritten').rglob('*.[ch]')
-                      if not path.name.endswith(GENERATED))
+        folder = REWRITTEN / self.name
+        return sorted(path for path in folder.rglob('*.[ch]')
+                      if not path.name.endswith(GENERATED) and TYPES not in path.relative_to(folder).parts)
 
 
 def checked(region, address):

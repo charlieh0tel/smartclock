@@ -12,8 +12,8 @@
 #include <stddef.h>
 
 #include "smartclock.h"
-#include "../include/mc68331.h"
-#include "../include/mc68681.h"
+#include "../../../include/mc68331.h"
+#include "../../../include/mc68681.h"
 
 #define CHECK_SIZE(type, size) _Static_assert(sizeof(type) == (size), #type)
 #define CHECK_FIELD(type, field, offset) \

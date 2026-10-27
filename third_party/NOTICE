@@ -16,9 +16,10 @@ presence here.
 
 That material is the manuals, papers and data sheets in `hp/`,
 `motorola/`, `amd/`, `fairchild/`, `microchip/`, `philips/`, `ti/`,
-`nist/`, `xilinx/` and `community/`, and in `firmware/` the images (`IMAGE.bin`),
-the console log one was rebuilt from, the EEPROM contents in
-`firmware/eeprom/` and the FPGA bitstreams in `firmware/fpga/`.  The
+`nist/`, `xilinx/` and `community/`, and `firmware/images/`: the images
+(`IMAGE.bin`), the console log one was rebuilt from, the EEPROM contents
+in `firmware/images/eeprom/` and the FPGA bitstreams in
+`firmware/images/fpga/`.  The
 Ghidra archive in `firmware/ghidra/` is both: the image it holds is the
 vendor's, and the names, types and comments laid over it are the
 project's.
@@ -33,30 +34,37 @@ The project's own work
 ----------------------
 
 The rest of `firmware/` is the project's own work, its analysis of the
-vendors' images, not vendor material:
+vendors' images, not vendor material (`firmware/README.md`).  Unlike
+the rest of `third_party/`, `firmware/decompiled/`, `firmware/rewritten/`
+and `firmware/analysis/` are derived from the vendor images:
 
   include/           the image-independent headers: the MC68331's
                      modules (mc68331.h) and the 68681 DUART's
                      (mc68681.h), from the manuals in `motorola/`, and
                      the kernel's signals (psos-signals.h), from the
                      images' own messages.
-  IMAGE/             a folder to an image, beside IMAGE.bin, holding
-                     that image's work: its type header and layout
-                     check (smartclock.h, check-layout.c), its names
-                     files (names.tsv, scpi-tree.tsv,
+  analysis/IMAGE/    what the project learned about an image: its
+                     names files (names.tsv, scpi-tree.tsv,
                      installer-scpi-tree.tsv, modules.tsv,
                      results.tsv), its SCPI paths' handlers
                      (handlers.txt), the survey of its untyped ROM
-                     (untyped.tsv), and its decompiled and hand-written
-                     C, below.
+                     (untyped.tsv) and its magic-number allowlist
+                     (magic-allow.tsv).
+  decompiled/IMAGE/  an image's decompiled C, below.
+  rewritten/IMAGE/   an image's hand-written C, below, with its type
+                     header and layout check (types/smartclock.h,
+                     types/check-layout.c).
+  rewritten/common/  the hand-written C several images share, and the
+                     types their headers share (types/).
   Makefile           the checks and generated files of those folders,
                      to which the top Makefile delegates.
+  README.md          the layout.
 
 What this work reproduces of an image -- the routines the decompiled
 C carries as their bytes, the tables it and the hand-written C copy --
 is the image's, and remains its copyright holder's.
 
-Decompiled C, in `firmware/IMAGE/decompiled/`: Ghidra 12.1.4's
+Decompiled C, in `firmware/decompiled/IMAGE/`: Ghidra 12.1.4's
 decompiler output for an image, produced by the scripts in
 `tools/ghidra/` (`docs/firmware/README.md`, "Decompiling with Ghidra"):
 machine output, named where the project's notes and tables establish a
@@ -68,23 +76,22 @@ its C would not compile or would not do what the image does, and names
 what the tables name (`docs/firmware/README.md`, "Decompiling with
 Ghidra").
 
-  z3805a-3543b/decompiled/z3805a-3543b.c
+  z3805a-3543b/z3805a-3543b.c
                      Z3805A 3543B, every function in address order.
-  z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl
+  z3805a-3543b/z3805a-3543b.conventions.jsonl
                      the same functions, one JSON object a line: each
                      one's note and calling convention, from the names
                      file and the scripts, or "unknown".
-  z3805a-3543b/decompiled/z3805a-3543b.symbols.ld
+  z3805a-3543b/z3805a-3543b.symbols.ld
                      the addresses its assembly names outside any
                      routine, for the linker.
 
-Hand-written C, in `firmware/IMAGE/rewritten/`: an image's functions
+Hand-written C, in `firmware/rewritten/IMAGE/`: an image's functions
 written by hand in place of the decompiled ones, each checked against
 the image's own code (`docs/firmware/README.md`, "Hand-written C"), a
 file to a module (`docs/firmware/modules.md`).
 
-  z3805a-3543b/rewritten/
-                     Z3805A 3543B.
+  z3805a-3543b/      Z3805A 3543B.
 
 AMD
 ---
@@ -177,7 +184,7 @@ In `hp/`.
 Firmware images
 ---------------
 
-In `firmware/`, the EEPROM contents in `firmware/eeprom/`.
+In `firmware/images/`, the EEPROM contents in `firmware/images/eeprom/`.
 
 Read-only images of the instruments' own program ROMs, from which the
 SCPI command tree in `docs/scpi/z3801a.md` was extracted and against
@@ -272,7 +279,7 @@ EEPROM contents, read the same way, 8 KB from `0x400000` (chip select
   z3801a-3542A01548-eeprom.bin  the bench Z3801A, 3543-A.
   z3805a-3625A01487-eeprom.bin  the bench Z3805A, 3543B-A.
 
-FPGA bitstreams, in `firmware/fpga/`: the 3860 bytes each image loads
+FPGA bitstreams, in `firmware/images/fpga/`: the 3860 bytes each image loads
 into its Xilinx XC3042, copied unchanged from the image at the offset
 given (`docs/firmware/outputs.md`, "The FPGA bitstreams").  A test in
 `crates/smartclock-cli/tests/fpga_bitstreams.rs` checks each copy

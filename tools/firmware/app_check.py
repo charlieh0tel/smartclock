@@ -7,7 +7,7 @@ running them, as libc_check.py does the C library's: each is called in a
 Unicorn 68k emulator on known inputs and its result compared with what
 its name says.
 
-    uv run tools/firmware/app_check.py third_party/firmware/z3805a-3543b.bin
+    uv run tools/firmware/app_check.py third_party/firmware/images/z3805a-3543b.bin
 
 So far the SCPI parser's numeric converters, its real formatter and the
 number engine under them (docs/scpi/README.md, "Parameters and

@@ -13,11 +13,11 @@ string at an odd address and a child list's children, an array of
 their own, not right after the list.
 
     DECOMPILED_CFLAGS='...' python3 tools/firmware/scpi_tree_check.py \\
-        third_party/firmware/z3805a-3543b/rewritten/scpi_tree_data.c \\
-        third_party/firmware/z3805a-3543b/scpi-tree.tsv \\
-        third_party/firmware/z3805a-3543b/names.tsv \\
-        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.conventions.jsonl \\
-        third_party/firmware/z3805a-3543b.bin
+        third_party/firmware/rewritten/z3805a-3543b/scpi_tree_data.c \\
+        third_party/firmware/analysis/z3805a-3543b/scpi-tree.tsv \\
+        third_party/firmware/analysis/z3805a-3543b/names.tsv \\
+        third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.conventions.jsonl \\
+        third_party/firmware/images/z3805a-3543b.bin
 
 make check-scpi-tree runs it with the Makefile's flags.  Needs
 m68k-linux-gnu gcc and binutils.  Exits nonzero on any difference.
@@ -35,8 +35,8 @@ from decompiled_check import RAM, TOOLS, installer_image, run
 from rebuild_link import tree_layout
 
 # what -include gives the C, which includes nothing of its own but
-# stddef.h: the image folder's, beside its names file
-TYPES = 'smartclock.h'
+# stddef.h: the image's, in rewritten/IMAGE/, IMAGE its names file's folder's name
+TYPES = 'types/smartclock.h'
 # the macro under which the C declares the routines it points at
 ALONE = 'SCPI_TREE_DATA_ALONE'
 INSTALLER = 'installer::'
@@ -83,7 +83,9 @@ def main(work):
     base = {'primary': 0, 'installer': RAM}
     obj = work + '/tree.o'
     flags = shlex.split(os.environ.get('DECOMPILED_CFLAGS', ''))
-    types = os.path.join(os.path.dirname(names_file), TYPES)
+    # the image's rewritten C, named as its analysis/ folder, the names file's, is
+    analysis = os.path.dirname(os.path.abspath(names_file))
+    types = os.path.join(os.path.dirname(os.path.dirname(analysis)), 'rewritten', os.path.basename(analysis), TYPES)
     compiled = subprocess.run([TOOLS + 'gcc', *flags, '-D' + ALONE, '-include', types, '-c',
                                '-o', obj, c_path], capture_output=True, text=True)
     if compiled.returncode != 0:

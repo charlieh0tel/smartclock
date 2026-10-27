@@ -33,8 +33,8 @@ convention returns in them (returns=ccr), and the registers the
 function's convention keeps for its caller (harness.preserved_registers).
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
-        third_party/firmware/z3805a-3543b/decompiled/z3805a-3543b.c \\
-        third_party/firmware/z3805a-3543b.bin [NAME...]
+        third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c \\
+        third_party/firmware/images/z3805a-3543b.bin [NAME...]
 
 With NAMEs, only those.  gcc's copy calls gcc's C and, through their
 names, by the bindings' asm statements, the assembly; so a difference may lie in a
@@ -2670,14 +2670,15 @@ def untraced_jump(m: Machine, buffer: int) -> None:
 
 
 # The names files, which label the image's objects, in the image's
-# folder, the one holding the C file's decompiled/: the names file and
-# the generated SCPI trees' rows.
+# analysis/ folder, named as the C file's decompiled/ folder is: the
+# names file and the generated SCPI trees' rows.
 NAMES_FILES = ("names.tsv", "scpi-tree.tsv", "installer-scpi-tree.tsv")
 
 
 def names_files(c_path: str) -> list[str]:
     """The names files of the image a C file is of."""
-    folder = os.path.dirname(os.path.dirname(os.path.abspath(c_path)))
+    decompiled = os.path.dirname(os.path.abspath(c_path))
+    folder = os.path.join(os.path.dirname(os.path.dirname(decompiled)), "analysis", os.path.basename(decompiled))
     paths = [os.path.join(folder, name) for name in NAMES_FILES]
     return [path for path in paths if os.path.exists(path)]
 

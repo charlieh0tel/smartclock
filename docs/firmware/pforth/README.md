@@ -1,7 +1,7 @@
 # pForth words
 
 Every word each firmware image's pForth console knows, one file per
-image in `third_party/firmware/`, as `smartclock-cli dump-pforth IMAGE`
+image in `third_party/firmware/images/`, as `smartclock-cli dump-pforth IMAGE`
 prints it, and [`models.md`](models.md) setting them side by side,
 as `dump-pforth --models` writes it.  A test regenerates each and fails
 if it differs from the file here; `make docs` rewrites them all.

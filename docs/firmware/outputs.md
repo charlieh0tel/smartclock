@@ -234,7 +234,7 @@ points to it, but `fpga_verify_chip` reads it from 5 bytes in,
 under (`structures.md`, "ROM tables").  That it is the same in every
 image fits a mask, which belongs to the part rather than the design.
 
-Copies of the five designs are in `third_party/firmware/fpga/`.
+Copies of the five designs are in `third_party/firmware/images/fpga/`.
 `tools/fpga/iobdump.js` prints a bitstream's I/O blocks, using the
 decoder of the XC3000 viewer at <https://github.com/Arisotura/xc3000>.
 

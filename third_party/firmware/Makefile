@@ -4,14 +4,20 @@
 #     make -C third_party/firmware TARGET [IMAGE=z3805a-3543b]
 #
 # A target of an image's runs for IMAGE, or without it for every image
-# folder present: IMAGE/, beside IMAGE.bin, which holds that image's
-# work (PLAN.md, "Firmware layout").  Needs an
+# with an analysis/IMAGE/ folder (README.md, and PLAN.md, "Firmware
+# layout").  Needs an
 # m68k gcc and binutils, clang-format and uv; none is part of `make ci`,
 # and .github/workflows/firmware.yml runs the images' checks.
 
 # The repository's root, from which every path is written.
 ROOT ?= ../..
 FIRMWARE = $(ROOT)/third_party/firmware
+# The tree by kind: the vendor's images, Ghidra's exports, our C, and
+# what we learned about each image (README.md).
+IMAGES_FOLDER = $(FIRMWARE)/images
+DECOMPILED_FOLDER = $(FIRMWARE)/decompiled
+REWRITTEN_FOLDER = $(FIRMWARE)/rewritten
+ANALYSIS_FOLDER = $(FIRMWARE)/analysis
 
 # bash, so that a pipeline fails when any command in it does: the
 # function check's report through tee, a generated tree through
@@ -24,16 +30,16 @@ CLANG ?= clang
 CLANG_FORMAT ?= clang-format
 M68K_CC ?= m68k-linux-gnu-gcc
 
-# The image folders: each one holding a names file.
-IMAGES = $(patsubst $(FIRMWARE)/%/names.tsv,%,$(wildcard $(FIRMWARE)/*/names.tsv))
+# The images analyzed: each one with a names file.
+IMAGES = $(patsubst $(ANALYSIS_FOLDER)/%/names.tsv,%,$(wildcard $(ANALYSIS_FOLDER)/*/names.tsv))
 # The image docs/firmware/modules.md and docs/firmware/README.md's
 # figures describe.
 DOCUMENTED_IMAGE = z3805a-3543b
 
-# The image folders with an export, decompiled/IMAGE.c, and rewritten C:
-# the ones the export's and the SCPI tree's targets can run for.  A
-# folder only seeded so far (names, types) has neither.
-EXPORTED_IMAGES = $(foreach image,$(IMAGES),$(if $(wildcard $(FIRMWARE)/$(image)/decompiled/$(image).c),$(image)))
+# The images with an export, decompiled/IMAGE/IMAGE.c, and rewritten C:
+# the ones the export's and the SCPI tree's targets can run for.  An
+# image only seeded so far (names, types) has neither.
+EXPORTED_IMAGES = $(foreach image,$(IMAGES),$(if $(wildcard $(DECOMPILED_FOLDER)/$(image)/$(image).c),$(image)))
 
 # The targets run for each image: those that need only its names and
 # types, and those that need its export too.
@@ -59,12 +65,12 @@ help:
 	@echo "each image's: $(IMAGE_TARGETS)"
 	@echo "once: $(TARGETS)"
 
-# The project's own C, in .clang-format's style: include/'s headers,
-# each image's type header and layout check, and its hand-written
-# firmware, rewritten/ and the folders under it, and the images' shared
-# C, common/ and its folders.
-C_SOURCES = $(wildcard $(FIRMWARE)/*/*.[ch] $(FIRMWARE)/*/rewritten/*.[ch] \
-	$(FIRMWARE)/*/rewritten/*/*.[ch] $(FIRMWARE)/common/*/*.[ch])
+# The project's own C, in .clang-format's style: include/'s headers and
+# rewritten/'s C, each image's and the images' shared common/, and the
+# folders under each (an image's types/ holds its type header and layout
+# check).
+C_SOURCES = $(wildcard $(FIRMWARE)/include/*.[ch] $(REWRITTEN_FOLDER)/*/*.[ch] \
+	$(REWRITTEN_FOLDER)/*/*/*.[ch])
 format-c:
 	$(CLANG_FORMAT) -i $(C_SOURCES)
 
@@ -102,16 +108,16 @@ diff_base = $(word 2,$(subst :, ,$(1)))
 image_diff_tsv = $(ROOT)/docs/firmware/diff/$(call diff_image,$(1))-vs-$(call diff_base,$(1)).tsv
 image_diff_work = $(call work,$(call diff_image,$(1)))/image-diff-vs-$(call diff_base,$(1))
 image_diff_run = mkdir -p $(call work,$(call diff_image,$(1))) && python3 -I $(ROOT)/tools/firmware/image_diff.py \
-	--functions $(FIRMWARE)/$(call diff_base,$(1))/decompiled/$(call diff_base,$(1)).conventions.jsonl \
-	--names $(FIRMWARE)/$(call diff_base,$(1))/names.tsv --modules $(FIRMWARE)/$(call diff_base,$(1))/modules.tsv \
-	--handlers $(FIRMWARE)/$(call diff_base,$(1))/handlers.txt $(FIRMWARE)/$(call diff_image,$(1))/handlers.txt \
-	--installer $(FIRMWARE)/$(call diff_base,$(1)).bin $(FIRMWARE)/$(call diff_image,$(1)).bin \
+	--functions $(DECOMPILED_FOLDER)/$(call diff_base,$(1))/$(call diff_base,$(1)).conventions.jsonl \
+	--names $(ANALYSIS_FOLDER)/$(call diff_base,$(1))/names.tsv --modules $(ANALYSIS_FOLDER)/$(call diff_base,$(1))/modules.tsv \
+	--handlers $(ANALYSIS_FOLDER)/$(call diff_base,$(1))/handlers.txt $(ANALYSIS_FOLDER)/$(call diff_image,$(1))/handlers.txt \
+	--installer $(IMAGES_FOLDER)/$(call diff_base,$(1)).bin $(IMAGES_FOLDER)/$(call diff_image,$(1)).bin \
 	> $(call image_diff_work,$(1)).tsv 2> $(call image_diff_work,$(1)).err
 # The diff whose figures docs/firmware/58503a-3704.md gives
 # (tools/firmware/diff_figures.py).
 FIGURES_DIFF = 58503a-3704:z3805a-3543b
 DIFF_FIGURES = python3 -I $(ROOT)/tools/firmware/diff_figures.py $(call image_diff_tsv,$(FIGURES_DIFF)) \
-	--functions $(FIRMWARE)/$(call diff_base,$(FIGURES_DIFF))/decompiled/$(call diff_base,$(FIGURES_DIFF)).conventions.jsonl
+	--functions $(DECOMPILED_FOLDER)/$(call diff_base,$(FIGURES_DIFF))/$(call diff_base,$(FIGURES_DIFF)).conventions.jsonl
 
 image-diff: seed-names
 	$(foreach diff,$(IMAGE_DIFFS),$(call image_diff_run,$(diff)) && \
@@ -132,21 +138,21 @@ check-comment-addresses:
 	$(foreach image,$(SEEDED_IMAGES),python3 -I $(ROOT)/tools/firmware/comment_addresses.py \
 		--image $(image) --base $(DIFF_BASE_$(image)) &&) true
 
-# Fail if C in common/, which every image whose export includes it
+# Fail if C in rewritten/common/, which every image whose export includes it
 # compiles as its own, is not what docs/firmware/rewrite.md's "Shared C"
 # lets be shared: the same code and data in each, and no address
 # (tools/firmware/common_check.py).
 check-common:
 	python3 -I $(ROOT)/tools/firmware/common_check.py
 
-# Each seeded image's names.tsv and modules.tsv, seeded from its base's
+# Each seeded image's analysis/IMAGE/names.tsv and modules.tsv, seeded from its base's
 # by the same matches (tools/firmware/seed_names.py; the names file's
 # header gives the rules and exceptions).  seed-names rewrites them;
 # check-seed-names, which check-image-diff runs, fails if either is not
 # what the matches give.  The counts carried go to the image's work
 # folder's seed-names.txt.
 seed_names_run = mkdir -p $(call work,$(1)) && python3 -I $(ROOT)/tools/firmware/seed_names.py \
-	$(FIRMWARE)/$(DIFF_BASE_$(1)) $(FIRMWARE)/$(1) --counts $(call work,$(1))/seed-names.txt
+	$(ANALYSIS_FOLDER)/$(DIFF_BASE_$(1)) $(ANALYSIS_FOLDER)/$(1) --counts $(call work,$(1))/seed-names.txt
 
 seed-names:
 	$(foreach image,$(SEEDED_IMAGES),$(call seed_names_run,$(image)) --write &&) true
@@ -250,20 +256,21 @@ $(EXPORTED_TARGETS):
 
 else
 
-# The image's folder, its image, its exported C and where its checks
-# keep what they make.
-IMAGE_FOLDER = $(FIRMWARE)/$(IMAGE)
-IMAGE_BIN = $(FIRMWARE)/$(IMAGE).bin
-DECOMPILED = $(IMAGE_FOLDER)/decompiled/$(IMAGE).c
-CONVENTIONS = $(IMAGE_FOLDER)/decompiled/$(IMAGE).conventions.jsonl
-NAMES = $(IMAGE_FOLDER)/names.tsv
+# The image's analysis and rewritten C, its image, its exported C and
+# where its checks keep what they make.
+ANALYSIS = $(ANALYSIS_FOLDER)/$(IMAGE)
+REWRITTEN = $(REWRITTEN_FOLDER)/$(IMAGE)
+IMAGE_BIN = $(IMAGES_FOLDER)/$(IMAGE).bin
+DECOMPILED = $(DECOMPILED_FOLDER)/$(IMAGE)/$(IMAGE).c
+CONVENTIONS = $(DECOMPILED_FOLDER)/$(IMAGE)/$(IMAGE).conventions.jsonl
+NAMES = $(ANALYSIS)/names.tsv
 WORK = $(call work,$(IMAGE))
 
-# Fail if a structure the image's smartclock.h declares for Ghidra does
+# Fail if a structure the image's types/smartclock.h declares for Ghidra does
 # not have the size and offsets the image shows.  Needs an m68k
 # compiler, so that int, long and pointers are the target's.
 check-types:
-	$(M68K_CC) -mcpu=cpu32 -fsyntax-only $(IMAGE_FOLDER)/check-layout.c
+	$(M68K_CC) -mcpu=cpu32 -fsyntax-only $(REWRITTEN)/types/check-layout.c
 
 # Fail if the decompiled C does not compile, its assembly is not the
 # image's own bytes, alone or linked, gcc's code accesses a word or
@@ -285,13 +292,13 @@ report-decompiled: $(CPU32_LIBGCC)
 # The image's SCPI tree as C data and as names-file rows, from the image
 # (docs/scpi/README.md, "As C"); cargo test fails while they are stale.
 # An image with no rewritten/ yet gets the rows alone.
-SCPI_TREE_C = $(IMAGE_FOLDER)/rewritten/scpi_tree_data.c
-SCPI_TREE_NAMES = $(IMAGE_FOLDER)/scpi-tree.tsv
-INSTALLER_SCPI_TREE_C = $(IMAGE_FOLDER)/rewritten/installer/installer_scpi_tree_data.c
-INSTALLER_SCPI_TREE_NAMES = $(IMAGE_FOLDER)/installer-scpi-tree.tsv
+SCPI_TREE_C = $(REWRITTEN)/scpi_tree_data.c
+SCPI_TREE_NAMES = $(ANALYSIS)/scpi-tree.tsv
+INSTALLER_SCPI_TREE_C = $(REWRITTEN)/installer/installer_scpi_tree_data.c
+INSTALLER_SCPI_TREE_NAMES = $(ANALYSIS)/installer-scpi-tree.tsv
 SCPI_TREE_IMAGE = --names-file $(NAMES) $(IMAGE_BIN)
 scpi-tree:
-ifneq ($(wildcard $(IMAGE_FOLDER)/rewritten),)
+ifneq ($(wildcard $(REWRITTEN)),)
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --c $(SCPI_TREE_IMAGE) \
 		| $(CLANG_FORMAT) --assume-filename=$(SCPI_TREE_C) > $(SCPI_TREE_C)
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --c --installer $(SCPI_TREE_IMAGE) \
@@ -314,7 +321,7 @@ check-scpi-tree:
 # within the export (tools/firmware/magic_check.py): a literal where an
 # enumerator, a register header's bit or a named constant is, and a
 # constant defined twice.  check-magic-numbers fails on a finding of a
-# checked kind that the image's magic-allow.tsv does not justify, or on
+# checked kind that the image's analysis/IMAGE/magic-allow.tsv does not justify, or on
 # a row there no finding matches; magic-numbers prints every finding,
 # the unchecked kinds too.
 MAGIC_NUMBERS = CLANG="$(CLANG)" DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" \
@@ -329,6 +336,6 @@ magic-numbers:
 # addresses, for SmartClockSetup.java's scpi= (docs/firmware/README.md,
 # "Decompiling with Ghidra"); cargo test fails while it is stale.
 handlers:
-	$(CARGO) run -q -p smartclock-cli -- dump-scpi --handlers $(IMAGE_BIN) > $(IMAGE_FOLDER)/handlers.txt
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --handlers $(IMAGE_BIN) > $(ANALYSIS)/handlers.txt
 
 endif

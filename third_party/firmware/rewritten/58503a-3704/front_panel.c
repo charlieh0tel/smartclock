@@ -652,3 +652,270 @@ void front_panel_demo(void) {
   }
   front_panel_send_line(FRONT_PANEL_LAMPS_NONE, "EXITING...");
 }
+
+/* One frame of the start-up show: its key lamps and text. */
+typedef struct front_panel_frame {
+  front_panel_lamp lamps; /* +0x00 */
+  char* text;             /* +0x04 */
+} front_panel_frame;
+
+/* The show's key lamps, sweeping out from the middle pair, Alt and
+ * Shift, to all eight. */
+enum {
+  FRONT_PANEL_SWEEP_0 = 0,
+  FRONT_PANEL_SWEEP_1 = FRONT_PANEL_LAMP_ALT | FRONT_PANEL_LAMP_SHIFT,
+  FRONT_PANEL_SWEEP_2 =
+      FRONT_PANEL_SWEEP_1 | FRONT_PANEL_LAMP_LAT | FRONT_PANEL_LAMP_SERIAL_PORT,
+  FRONT_PANEL_SWEEP_3 =
+      FRONT_PANEL_SWEEP_2 | FRONT_PANEL_LAMP_LONG | FRONT_PANEL_LAMP_STATUS,
+  FRONT_PANEL_SWEEP_4 =
+      FRONT_PANEL_SWEEP_3 | FRONT_PANEL_LAMP_TIME | FRONT_PANEL_LAMP_SAT,
+};
+
+/* The start-up show (0x52e14 to 0x52f68): HP scrolling in from the
+ * right, the key lamps sweeping out, then 58503A typed after it, the
+ * lamps sweeping back; 100 ticks a frame. */
+static const front_panel_frame FRONT_PANEL_SHOW[] = {
+    {FRONT_PANEL_SWEEP_0, "           H"},
+    {FRONT_PANEL_SWEEP_0, "          HP"},
+    {FRONT_PANEL_SWEEP_1, "         HP "},
+    {FRONT_PANEL_SWEEP_1, "        HP  "},
+    {FRONT_PANEL_SWEEP_2, "       HP   "},
+    {FRONT_PANEL_SWEEP_2, "      HP    "},
+    {FRONT_PANEL_SWEEP_2, "     HP     "},
+    {FRONT_PANEL_SWEEP_3, "    HP      "},
+    {FRONT_PANEL_SWEEP_3, "   HP       "},
+    {FRONT_PANEL_SWEEP_3, "  HP        "},
+    {FRONT_PANEL_SWEEP_4, " HP         "},
+    {FRONT_PANEL_SWEEP_4, "HP          "},
+    {FRONT_PANEL_SWEEP_3, "HP 5"},
+    {FRONT_PANEL_SWEEP_3, "HP 58"},
+    {FRONT_PANEL_SWEEP_2, "HP 585"},
+    {FRONT_PANEL_SWEEP_2, "HP 5850"},
+    {FRONT_PANEL_SWEEP_1, "HP 58503"},
+    {FRONT_PANEL_SWEEP_0, "HP 58503A"},
+};
+
+/* The show's frames whose keys are taken, HP's scroll (0x52e1e to
+ * 0x52ef8). */
+static const uint32_t FRONT_PANEL_SHOW_KEYED = 12;
+
+static const uint32_t FRONT_PANEL_SHOW_TICKS = 100;
+
+/* How many passes a warm-up message a key showed is held, counted from
+ * 1, and the count the Alt and Shift keys' clears set, which ends it at
+ * the next pass (0x5317e, 0x5307e). */
+static const uint8_t FRONT_PANEL_HOLD_PASSES = 35;
+
+/* Passes without a refresh before the Status lamp goes out
+ * (0x5327c). */
+static const uint8_t FRONT_PANEL_LAMP_IDLE_PASSES = 5;
+
+/* Polls, 100 counts apart, the alarm's Shift waits for Alt
+ * (0x5330a). */
+static const uint8_t FRONT_PANEL_ALARM_POLLS = 30;
+
+static const uint32_t FRONT_PANEL_ALARM_POLL_WAIT = 100;
+
+/* The warm-up's most satellites; more shows 0 (0x531f8). */
+static const uint8_t FRONT_PANEL_WARM_UP_SATELLITES_MOST = 8;
+
+/* The warm-up's message for a pll_powerup_suffix_index result, with
+ * the lamps as they are; a key poll for another (0x531b0). */
+static front_panel_mode front_panel_warm_up_text(pll_powerup_suffix suffix,
+                                                 char* text) {
+  switch (suffix) {
+    case PLL_POWERUP_SUFFIX_NONE:
+      return front_panel_send_text("HP 58503A");
+    case PLL_POWERUP_SUFFIX_WARM_UP:
+      return front_panel_send_text("OCXO WARM UP");
+    case PLL_POWERUP_SUFFIX_GPS_ACQUISITION: {
+      uint8_t satellites = front_panel_satellites();
+
+      if (satellites > FRONT_PANEL_WARM_UP_SATELLITES_MOST) {
+        satellites = 0;
+      }
+      sprintf(text, "%01d SAT AQUIRD", (int32_t)satellites);
+      return front_panel_send_text(text);
+    }
+    case PLL_POWERUP_SUFFIX_COARSE:
+      return front_panel_send_text("COARSE F ADJ");
+    case PLL_POWERUP_SUFFIX_FINE_FREQUENCY:
+      return front_panel_send_text("FINE F ADJ");
+    case PLL_POWERUP_SUFFIX_PHASE_ALIGNMENT:
+      return front_panel_send_text("PHASE ALIGN");
+    case PLL_POWERUP_SUFFIX_LEAP_SECOND:
+      return front_panel_send_text("LEAPSEC CALC");
+    default:
+      return front_panel_poll_key();
+  }
+}
+
+/* While the alarm is on, its text; Shift then shows SHIFT and waits up
+ * to 30 polls for Alt, which clears the alarm, ALRM CLEARED, or Shift
+ * again.  The last key back is the caller's; true if the alarm was shown
+ * (0x53294 to 0x53312). */
+static bool front_panel_warm_up_alarm(char* text, front_panel_mode* last) {
+  bool shown = false;
+  front_panel_mode key = *last;
+
+  while (led_alarm != 0) {
+    shown = true;
+    alarm_text(text);
+    key = front_panel_send_text(text);
+    if (key != FRONT_PANEL_SHIFT) {
+      continue;
+    }
+    key = front_panel_send_line(FRONT_PANEL_LAMP_SHIFT, "SHIFT");
+    bool done = false;
+
+    for (uint8_t poll = 0; poll < FRONT_PANEL_ALARM_POLLS && !done; poll++) {
+      if (key == FRONT_PANEL_ALT) {
+        status_events_clear();
+        front_panel_send_line(FRONT_PANEL_LAMPS_NONE, "ALRM CLEARED");
+        done = true;
+      } else if (key == FRONT_PANEL_SHIFT) {
+        done = true;
+      }
+      busy_wait(FRONT_PANEL_ALARM_POLL_WAIT);
+      key = front_panel_poll_key();
+    }
+  }
+  *last = key;
+  return shown;
+}
+
+/* The start-up show; the demonstration if Shift came during HP's scroll,
+ * the display test and the demonstration if Sat (or keys ORing to 5);
+ * then, until the loop locks, the warm-up's messages at each 1PPS or
+ * change, the keys' placeholder lines held a while, and the alarm's text
+ * while it is on; OUTPUT VALID for 3 s at the end (0x52dea). */
+void front_panel_startup(void) {
+  static const uint32_t FRAMES =
+      sizeof FRONT_PANEL_SHOW / sizeof FRONT_PANEL_SHOW[0];
+  /* A line's text, the original's 25 bytes (0x52ffc), so #define. */
+  enum { STARTUP_TEXT_SIZE = 25 };
+  char text[STARTUP_TEXT_SIZE];
+  front_panel_mode keys = FRONT_PANEL_NO_KEY;
+
+  for (uint32_t frame = 0; frame < FRAMES; frame++) {
+    const front_panel_mode key = front_panel_send_line(
+        FRONT_PANEL_SHOW[frame].lamps, FRONT_PANEL_SHOW[frame].text);
+
+    if (frame < FRONT_PANEL_SHOW_KEYED) {
+      keys |= key;
+    }
+    psos_pause(FRONT_PANEL_SHOW_TICKS);
+  }
+  if (keys == FRONT_PANEL_SHIFT) {
+    front_panel_demo();
+  } else if (keys == FRONT_PANEL_SAT) {
+    front_panel_display_test();
+    front_panel_demo();
+  }
+
+  front_panel_mode key = FRONT_PANEL_NO_KEY;
+  uint8_t idle = 0;
+  uint8_t hold = 0;
+  bool armed = false;
+  /* The image compares the first pass's suffix with a byte of its frame
+   * nothing set (0x52fae); the C takes it for no suffix's. */
+  pll_powerup_suffix previous = (pll_powerup_suffix)-1;
+
+  while (pll_mode() != PLL_MODE_LOCKED) {
+    const pll_powerup_suffix suffix = pll_powerup_suffix_index();
+    bool refresh =
+        (uint8_t)psos_wait_v(FRONT_PANEL_PPS_EVENT, 0,
+                             FRONT_PANEL_PPS_WAIT_TICKS, NULL) == 0 ||
+        suffix != previous;
+
+    previous = suffix;
+    if (armed && key != FRONT_PANEL_ALT && key != FRONT_PANEL_SHIFT) {
+      key = FRONT_PANEL_NO_KEY;
+    }
+    bool held = true;
+
+    switch (key) {
+      case FRONT_PANEL_TIME:
+        libc_copy(text, "TIME: **:**:**");
+        front_panel_send_line(FRONT_PANEL_LAMP_TIME, text);
+        break;
+      case FRONT_PANEL_LONG:
+        libc_copy(text, "LONG: **:**:**.*");
+        front_panel_send_line(FRONT_PANEL_LAMP_LONG, text);
+        break;
+      case FRONT_PANEL_LAT:
+        libc_copy(text, "LAT: ***:**:**.*");
+        front_panel_send_line(FRONT_PANEL_LAMP_LAT, text);
+        break;
+      case FRONT_PANEL_ALT:
+        if (armed) {
+          armed = false;
+          libc_copy(text, "NO ALARM");
+          front_panel_send_text(text);
+          sleep_seconds(3.0f);
+          hold = FRONT_PANEL_HOLD_PASSES;
+          held = false;
+          break;
+        }
+        libc_copy(text, "ALT: +**.**m");
+        front_panel_send_line(FRONT_PANEL_LAMP_ALT, text);
+        break;
+      case FRONT_PANEL_SAT:
+        front_panel_satellites();
+        sprintf(text, "%01d TRACKED", (int32_t)front_panel_satellites());
+        front_panel_send_line(FRONT_PANEL_LAMP_SAT, text);
+        break;
+      case FRONT_PANEL_STATUS:
+        if (hold != 0) {
+          armed = false;
+          hold = 0;
+          refresh = true;
+        }
+        held = false;
+        break;
+      case FRONT_PANEL_SERIAL_PORT:
+        front_panel_serial_text(text);
+        front_panel_send_line(FRONT_PANEL_LAMP_SERIAL_PORT, text);
+        break;
+      case FRONT_PANEL_SHIFT:
+        if (armed) {
+          armed = false;
+          hold = FRONT_PANEL_HOLD_PASSES;
+          held = false;
+          break;
+        }
+        libc_copy(text, "SHIFT");
+        front_panel_send_line(FRONT_PANEL_LAMP_SHIFT, text);
+        armed = true;
+        break;
+      default:
+        held = false;
+        break;
+    }
+    if (held) {
+      hold = 1;
+    }
+    key = front_panel_poll_key();
+    if (hold != 0 && hold++ >= FRONT_PANEL_HOLD_PASSES) {
+      armed = false;
+      hold = 0;
+      refresh = true;
+    }
+    if (hold == 0) {
+      if (refresh) {
+        idle = 0;
+        key |= front_panel_send_lamps(FRONT_PANEL_LAMP_STATUS);
+        key |= front_panel_warm_up_text(suffix, text);
+      } else if (++idle >= FRONT_PANEL_LAMP_IDLE_PASSES) {
+        key |= front_panel_send_lamps(FRONT_PANEL_LAMPS_NONE);
+      }
+    }
+    if (front_panel_warm_up_alarm(text, &key)) {
+      front_panel_send_line(FRONT_PANEL_LAMPS_NONE, "ALRM CLEARED");
+      sleep_seconds(2.0f);
+    }
+  }
+  front_panel_send_line(FRONT_PANEL_LAMPS_NONE, "OUTPUT VALID");
+  sleep_seconds(3.0f);
+}

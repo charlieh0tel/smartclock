@@ -69,3 +69,55 @@ void fpga_set_field(fpga_bit_index field, uint8_t value) {
   fconf_regs[entry->reg] = (fconf_regs[entry->reg] & ~entry->mask) | value;
   fpga_write(entry->reg, fconf_regs[entry->reg]);
 }
+
+/* Builds the four registers' images from a value for each of
+ * fpga_bits's fields: a flag's mask for a nonzero value, any
+ * other's value ORed in (0x40b8c).  Seven fields, where the Z3805A's
+ * has six. */
+void fpga_fields_to_registers(uint8_t* fields, uint8_t* registers) {
+  static const uint8_t REGISTERS = sizeof(fconf_regs);
+  static const uint8_t FIELDS = sizeof(fpga_bits) / sizeof(fpga_bit);
+
+  for (uint8_t reg = 0; reg < REGISTERS; reg++) {
+    registers[reg] = 0;
+  }
+  for (uint8_t field = 0; field < FIELDS; field++) {
+    const fpga_bit* entry = &fpga_bits[field];
+
+    if (entry->is_flag == 1) {
+      if (fields[field] != 0) {
+        registers[entry->reg] |= entry->mask;
+      } else {
+        registers[entry->reg] &= ~entry->mask;
+      }
+    } else {
+      registers[entry->reg] &= ~entry->mask;
+      registers[entry->reg] |= fields[field];
+    }
+  }
+}
+
+/* PORTF0's pins the alarm moves (docs/firmware/58503a-3704.md, "The
+ * alarm outputs"): PF5, low while the alarm is on, and PF3, cleared
+ * either way. */
+static const uint8_t ALARM_PORTF_PF3 = 0x08;
+
+static const uint8_t ALARM_PORTF_PF5 = 0x20;
+
+/* Drives the alarm's outputs: PF3 low, PF5 low while on and high while
+ * off, under enter_supervisor_mode, then the FPGA's FPGA_BIT_ALARM
+ * (0x40828). */
+void alarm_outputs_set(char alarm) {
+  const bool on = alarm == 1;
+  const uint16_t sr = enter_supervisor_mode();
+  uint8_t port = sim.portf0 & ~ALARM_PORTF_PF3;
+
+  if (on) {
+    port &= ~ALARM_PORTF_PF5;
+  } else {
+    port |= ALARM_PORTF_PF5;
+  }
+  sim.portf0 = port;
+  set_interrupt_mask(sr);
+  fpga_set_bit(FPGA_BIT_ALARM, on);
+}

@@ -2082,7 +2082,42 @@ typedef struct pll_state {
   uint8_t field_3e7;
 } pll_state;
 
-#include "../../common/types/gps_statistics.h"
+/* The GPS link's counters, which the "GPS Process Monitor" page
+ * (gps_print_process_monitor) prints.  The 58503A's differs from the
+ * Z3805A's and the Z3801A's: its count of responses
+ * read is a long, which the page prints "Resp" %10d (0x4d626), so that
+ * the counters after it are a word on, and the record is 0x38 bytes,
+ * as clear_gps_debug clears it (0x4d40a).  All words but that one. */
+typedef struct gps_statistics {
+  uint16_t received;                 /* +0x00: Msgs Rcvd */
+  uint16_t sent;                     /* +0x02: Msgs Sent */
+  uint16_t jammed;                   /* +0x04: Msgs Jam */
+  uint16_t sent_errors;              /* +0x06 */
+  uint16_t received_errors;          /* +0x08 */
+  uint16_t jam_errors;               /* +0x0a */
+  uint16_t successes;                /* +0x0c: Success */
+  uint16_t field_0e;                 /* +0x0e: NOP; gpsm_task counts a request
+                                        gps_request_admitted refuses, which is none */
+  uint16_t rejects;                  /* +0x10: Reject */
+  uint16_t timeouts;                 /* +0x12: Timeout */
+  uint16_t busy;                     /* +0x14: Busy */
+  uint16_t aborts;                   /* +0x16: Abort */
+  uint16_t no_command;               /* +0x18: No Cmd */
+  uint16_t no_query;                 /* +0x1a: No Qry */
+  uint16_t unknown_command;          /* +0x1c: ? Cmd */
+  uint16_t unknown_sender;           /* +0x1e: ? Sndr */
+  uint16_t commands_sent;            /* +0x20: Cmds Sent */
+  uint32_t responses_read;           /* +0x22: Resp */
+  uint16_t e_retries;                /* +0x26: E Retry */
+  uint16_t t_retries;                /* +0x28: T Retry */
+  uint16_t raim_detected;            /* +0x2a: Time RAIM page: (%d detected) */
+  uint16_t raim_alarms;              /* +0x2c: # Alarms */
+  uint16_t unknown_response;         /* +0x2e: ? Resp */
+  uint16_t frame_errors;             /* +0x30: Frame */
+  uint16_t checksum_errors;          /* +0x32: Cksum */
+  uint16_t command_monitor_failures; /* +0x34 */
+  uint16_t status_monitor_failures;  /* +0x36 */
+} gps_statistics;
 
 #include "../../common/types/exception_record.h"
 

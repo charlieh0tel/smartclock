@@ -16,6 +16,8 @@ static const uint16_t PLL_AGING_SAMPLES = 2700;
 
 static const float PLL_AGING_SAMPLES_FLOAT = 2700.0f;
 
+static const double PLL_AGING_SAMPLES_DOUBLE = 2700.0;
+
 /* An entry's time over this is in days (32 entries of 2700 s a day). */
 static const float PLL_AGING_ENTRIES_PER_DAY = 32.0f;
 
@@ -257,7 +259,6 @@ void fit_quality(aging_curve_state* curve) {
   static const float SECONDS_PER_DAY = 86400.0f;
   static const float HALF_DEGREE = -0.5f;
   static const double AGING_EXPONENT = 1.5;
-  static const double SAMPLES_DOUBLE = 2700.0;
   static const double FREQUENCY_SCALE = 1.6e12;
   static const double LOG_RATE_SCALE = 0.00025;
   static const double LOG_UNIT = 1e-11;
@@ -308,9 +309,9 @@ void fit_quality(aging_curve_state* curve) {
         float_add(integer_to_float(steps), HALF_DEGREE), variation)));
     double rate = double_divide_reversed(
         LINE_UNIT, double_multiply(noise, LINE_RATE_SCALE));
-    double growth =
-        pow(double_divide_reversed(SAMPLES_DOUBLE, float_to_double(span)),
-            AGING_EXPONENT);
+    double growth = pow(
+        double_divide_reversed(PLL_AGING_SAMPLES_DOUBLE, float_to_double(span)),
+        AGING_EXPONENT);
 
     aging_term = double_to_float(double_divide_reversed(growth, rate));
     span_weight = LINE_SPAN_WEIGHT;
@@ -433,4 +434,134 @@ void aging_fit(void) {
                 float_to_double(aging_curve.predicted_uncertainty),
                 (uint32_t)aging_curve.mode);
   task_dmessage(message);
+}
+
+/* Takes the curv task's fit into pll when it has signaled one is done
+ * (0x417e8). */
+void aging_fit_collect(void) {
+  if ((uint8_t)psos_get_v(PLL_AGING_FIT_EVENT, 0, NULL) == 0) {
+    pll.efc_history.fit_a = aging_curve.a;
+    pll.efc_history.fit_b = aging_curve.b;
+    pll.efc_history.fit_c = aging_curve.c;
+    pll.predicted_uncertainty = aging_curve.predicted_uncertainty;
+  }
+}
+
+/* Once a second: takes a fit the curv task has done, and while
+ * collecting sums the EFC less its temperature correction, in normal
+ * PLL or start-up PLL past settling, and each 2700 seconds of uptime
+ * stores their average as an entry of the history, with its weight,
+ * time and log term, and signals the curv task (0x41418).  Unlike the
+ * Z3805A's, it times an entry by the uptime, pll.efc_history.field_34a
+ * the next entry's, not by its samples, and leaves fit_a as it is when
+ * it starts. */
+void efc_history_update(void) {
+  /* Of an entry's samples, a quarter or more summed make its weight
+   * more than partial, as does an uptime of three hours. */
+  static const uint16_t QUARTER_SAMPLES = 675;
+  static const uint32_t PARTIAL_UPTIME = 10800;
+  static const float MINUS_ONE = -1.0f;
+  char message[100];
+
+  aging_fit_collect();
+  switch (pll.aging_state) {
+    case PLL_AGING_START:
+      pll.aging_state = PLL_AGING_SETTLING;
+      pll.predicted_uncertainty = PLL_AGING_UNFITTED_UNCERTAINTY;
+      return;
+    case PLL_AGING_SETTLING:
+      if (pll.efc_history.loop_settled == 1) {
+        pll.efc_history.field_34a = get_uptime() + PLL_AGING_SAMPLES;
+        pll.aging_state = PLL_AGING_COLLECTING;
+      }
+      return;
+    case PLL_AGING_COLLECTING:
+      break;
+    default:
+      return;
+  }
+
+  float current = adc_average(ADC_OVEN_CURRENT);
+
+  if (pll.stage == PLL_STAGE_NORMAL_PLL ||
+      (pll.stage == PLL_STAGE_STARTUP_PLL &&
+       pll.startup_state != PLL_STARTUP_SETTLING)) {
+    if (pll.efc_history.summed_count == 0) {
+      pll.efc_history.efc_sum = 0.0f;
+    }
+    float_add_in_place(&pll.efc_history.efc_sum,
+                       pll_efc_less_temperature(current));
+    pll.efc_history.summed_count++;
+  } else if (pll.efc_history.summed_count == 0) {
+    float_add_in_place(&pll.efc_history.efc_sum,
+                       pll_efc_less_temperature(current));
+  }
+  pll.efc_history.sample_count++;
+
+  uint32_t uptime = get_uptime();
+  if (uptime < pll.efc_history.field_34a) {
+    return;
+  }
+  pll.efc_history.field_34a += PLL_AGING_SAMPLES;
+
+  if (pll.efc_history.summed_count == 0) {
+    if (pll_debug_enabled != 0) {
+      double tfom = float_to_double(pll.tfom);
+      float time = float_divide(unsigned_to_float(get_uptime()),
+                                PLL_AGING_SAMPLES_FLOAT);
+      double days =
+          float_to_double(float_divide(time, PLL_AGING_ENTRIES_PER_DAY));
+      double average = float_to_double(
+          float_divide(pll.efc_history.efc_sum, PLL_AGING_SAMPLES_FLOAT));
+
+      debug_sprintf(message,
+                    "e_avg= %.1f time= %f weight= %d log= %.2f  tfom= %.1e\r\n",
+                    average, days, 0, 0.0, tfom);
+      task_dmessage(message);
+    }
+  } else {
+    uint8_t entry = pll.efc_history.stop_ptr;
+
+    if ((pll.efc_history.summed_count < QUARTER_SAMPLES &&
+         pll.efc_history.summed_count != 0) ||
+        get_uptime() < PARTIAL_UPTIME) {
+      pll.efc_history.weights[entry] = PLL_AGING_WEIGHT_PARTIAL;
+    } else if (pll.efc_history.summed_count == PLL_AGING_SAMPLES) {
+      pll.efc_history.weights[entry] = PLL_AGING_WEIGHT_FULL;
+    } else if (pll.efc_history.summed_count >= QUARTER_SAMPLES) {
+      pll.efc_history.weights[entry] = PLL_AGING_WEIGHT_MOST;
+    }
+    pll.efc_history.averages[entry] =
+        float_divide_reversed(unsigned_to_float(pll.efc_history.summed_count),
+                              pll.efc_history.efc_sum);
+    float time = double_to_float(double_divide_reversed(
+        PLL_AGING_SAMPLES_DOUBLE, unsigned_to_double(uptime)));
+
+    pll.efc_history.times[entry] = time;
+    pll.efc_history.logs[entry] =
+        uptime <= PLL_AGING_SAMPLES ? MINUS_ONE : pll_aging_log_term(time);
+    if (pll_debug_enabled != 0) {
+      double tfom = float_to_double(pll.tfom);
+      double log_term = float_to_double(pll.efc_history.logs[entry]);
+      uint32_t weight = pll.efc_history.weights[entry];
+      double days =
+          float_to_double(float_divide(time, PLL_AGING_ENTRIES_PER_DAY));
+      double average = float_to_double(pll.efc_history.averages[entry]);
+
+      debug_sprintf(message,
+                    "e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e\r\n",
+                    average, days, weight, log_term, tfom);
+      task_dmessage(message);
+    }
+    pll.efc_history.stop_ptr =
+        (pll.efc_history.stop_ptr + 1) & PLL_AGING_INDEX_MASK;
+    if (pll.efc_history.stop_ptr == pll.efc_history.start_ptr) {
+      pll.efc_history.start_ptr =
+          (pll.efc_history.start_ptr + 1) & PLL_AGING_INDEX_MASK;
+    }
+    curv_signal();
+  }
+  pll.efc_history.sample_count = 0;
+  pll.efc_history.summed_count = 0;
+  pll.efc_history.efc_sum = 0.0f;
 }

@@ -138,25 +138,16 @@ def export_key(row):
 
 def forms(rows):
     """How the 58503A's primary functions are in its export: each
-    status's functions by form, a changed one of the same shape counted
-    apart too, and the readings no row of the diff gives."""
+    status's functions by form."""
     functions = report_figures.export_functions(IMAGE)
     found = collections.defaultdict(collections.Counter)
-    paired = set()
     for row in rows:
         if row['kind'] != 'function' or row['region'] != 'primary' or not row['other_address']:
             continue
         key = export_key(row)
-        if key not in functions:
-            continue
-        paired.add(key)
-        form = functions[key][1]
-        found[row['status']][form] += 1
-        if row['status'] == 'changed' and row['similarity'] == SAME_SHAPE:
-            found['same shape'][form] += 1
-    unpaired = sum(1 for key, (region, form) in functions.items()
-                   if region == 'primary' and form == 'reading' and key not in paired)
-    return found, unpaired
+        if key in functions:
+            found[row['status']][functions[key][1]] += 1
+    return found
 
 
 def figures(rows, sidecar):
@@ -176,7 +167,7 @@ def figures(rows, sidecar):
                     if r['region'] == 'primary' and r['kind'] == 'function' and r['status'] == 'new')
     rewritten = sum(rewritten_statuses(sidecar, rows).values(), collections.Counter())
     sidecar_functions = sum(1 for line in open(sidecar) if line.strip())
-    form, unpaired = forms(rows)
+    form = forms(rows)
     return [
         ('the `.conventions.jsonl` sidecar, # functions', [sidecar_functions]),
         ('the platform layer is # % identical or relocated',
@@ -202,13 +193,10 @@ def figures(rows, sidecar):
          [primary['new'], pieces['missing'], pieces['changed']]),
         ('The # typed labels not placed, and the # missing functions',
          [tables['missing'] + installer_tables['missing'], primary['missing']]),
-        ('Of the new functions # are written by hand', [form['new']['hand']]),
-        ("and # run as the decompiler's reading, the rest assembly; of the # changed, # are written by hand "
-         "and # run as the reading, # of them of the same shape, the rest assembly; and # the diff finds "
-         "identical or relocated, and # it neither pairs nor lists",
-         [form['new']['reading'], primary['changed'], form['changed']['hand'], form['changed']['reading'],
-          form['same shape']['reading'], form['identical']['reading'] + form['relocated']['reading'],
-          unpaired]),
+        ("Of the new functions # are written by hand and of the # changed #, the rest assembly; # of "
+         "either runs as the decompiler's reading",
+         [form['new']['hand'], primary['changed'], form['changed']['hand'],
+          form['new']['reading'] + form['changed']['reading']]),
     ] + subject_counts(rows)
 
 

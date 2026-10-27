@@ -1,6 +1,8 @@
 /* The functions of gps_oncore.c the images share, the same in each
  * (docs/firmware/rewrite.md, "Shared C"); each image's own
- * rewritten/gps_oncore.c describes the module and holds the rest.  Written by
+ * rewritten/gps_oncore.c describes the module and holds the rest,
+ * among them gps_receive, which counts in gps_counts, laid out
+ * otherwise in the 58503A.  Written by
  * hand in place of the decompiler's (docs/firmware/README.md,
  * "Hand-written C"); each keeps its generated prototype. */
 
@@ -17,19 +19,6 @@ void gps_response_reset(void) {
 /* Stores a received byte at gps_response_cursor. */
 static void gps_oncore_store(uint8_t c) { *gps_response_cursor++ = c; }
 
-/* Counts a frame error and starts the message again, from the byte if
- * it is an @. */
-static void gps_oncore_restart(uint8_t c) {
-  gps_counts.frame_errors++;
-  if (c == '@') {
-    gps_response_cursor = gps_response_buffer;
-    gps_oncore_store(c);
-    gps_receive_state = GPS_FRAMING_SECOND_AT;
-  } else {
-    gps_response_reset();
-  }
-}
-
 /* The XOR of the bytes from start up to end. */
 uint8_t oncore_checksum(uint8_t* start, uint8_t* end) {
   uint8_t sum = 0;
@@ -38,73 +27,6 @@ uint8_t oncore_checksum(uint8_t* start, uint8_t* end) {
     sum ^= *start;
   }
   return sum;
-}
-
-/* Reads the bytes the engine has sent, framing a message from its @@
- * into gps_response_buffer, until none is left or a message is complete;
- * the framing state. */
-uint8_t gps_receive(void) {
-  /* A message's bytes besides those its body counts down: "@@", the ID,
-   * and CR LF. */
-  static const int16_t FRAMING_BYTES = 6;
-
-  while (duarta_rx_pending() && gps_receive_state != GPS_FRAMING_COMPLETE) {
-    uint8_t c = drta_get_byte(0);
-
-    switch (gps_receive_state) {
-      case GPS_FRAMING_FIRST_AT:
-      case GPS_FRAMING_SECOND_AT:
-        gps_receive_expect(c, '@');
-        break;
-      case GPS_FRAMING_ID_FIRST:
-        if ((ctype_table[c + 1] & LIBC_CTYPE_UPPER) != 0) {
-          gps_oncore_store(c);
-          gps_receive_state++;
-        } else {
-          gps_counts.frame_errors++;
-          if (c != '@') {
-            gps_response_reset();
-          }
-        }
-        break;
-      case GPS_FRAMING_ID_SECOND:
-        if ((ctype_table[c + 1] & (LIBC_CTYPE_UPPER | LIBC_CTYPE_LOWER)) == 0) {
-          gps_oncore_restart(c);
-        } else {
-          gps_oncore_store(c);
-          /* gps_response_lookup takes the length as unsigned. */
-          if (gps_response_lookup(
-                  gps_response_cursor[-2], gps_response_cursor[-1],
-                  (uint16_t*)&gps_response_length, &gps_response_index) != 0) {
-            gps_response_remaining = gps_response_length - FRAMING_BYTES;
-            gps_receive_state++;
-          }
-        }
-        break;
-      case GPS_FRAMING_BODY:
-        gps_oncore_store(c);
-        if (--gps_response_remaining == 0) {
-          /* The checksum, the body's last byte, covers the ID on. */
-          if (c == oncore_checksum(gps_response_buffer + 2,
-                                   gps_response_cursor - 1)) {
-            gps_receive_state++;
-          } else {
-            gps_counts.checksum_errors++;
-            gps_response_reset();
-          }
-        }
-        break;
-      case GPS_FRAMING_CR:
-        gps_receive_expect(c, '\r');
-        break;
-      case GPS_FRAMING_LF:
-        gps_receive_expect(c, '\n');
-        break;
-      default:
-        break;
-    }
-  }
-  return gps_receive_state;
 }
 
 /* A message as text for the command log: its "@@" and ID, each byte

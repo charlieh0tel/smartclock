@@ -4,14 +4,6 @@
  * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
  * prototype. */
 
-static const uint8_t CLOCK_MARCH = 3;
-
-static const uint8_t CLOCK_JUNE = 6;
-
-static const uint8_t CLOCK_SEPTEMBER = 9;
-
-static const uint8_t CLOCK_DECEMBER = 12;
-
 /* The pending leap second's GPS seconds, at the end of its date's last
  * minute, for :PTIM:LEAP:GPST?; 0 with none pending (0x1130e). */
 int32_t leap_gps_time(void) {
@@ -86,6 +78,46 @@ uint8_t leap_second_near(void) {
          time.minute == CLOCK_LAST_MINUTE && time.second > LEAP_NEAR_SECOND;
 }
 
+/* The last day of a date's quarter, when a leap second may come: March
+ * 31, June 30, September 30 or December 31; March 31 for a month not 1 to
+ * 12 (0x11750).  The 58503A's takes the date, where the Z3805A's reads
+ * get_gps_date. */
+uint32_t leap_opportunity_date(uint32_t from) {
+  uint8_t month = clock_middle(from);
+  calendar_date date = {
+      .year = clock_year(from), .month = CLOCK_MARCH, .day = 31};
+
+  if (month >= CLOCK_APRIL && month <= CLOCK_JUNE) {
+    date = (calendar_date){.year = date.year, .month = CLOCK_JUNE, .day = 30};
+  } else if (month > CLOCK_JUNE && month <= CLOCK_SEPTEMBER) {
+    date =
+        (calendar_date){.year = date.year, .month = CLOCK_SEPTEMBER, .day = 30};
+  } else if (month > CLOCK_SEPTEMBER && month <= CLOCK_DECEMBER) {
+    date =
+        (calendar_date){.year = date.year, .month = CLOCK_DECEMBER, .day = 31};
+  }
+  return clock_pack(date.year, date.month, date.day);
+}
+
+/* Queues the clock event that makes the leap date's last minute 59 or 61
+ * seconds, in GPS time; NULL for a 60-second minute or any other
+ * (0x105ee). */
+klok_entry* leap_event_schedule_gps(uint32_t date, int32_t minute_length) {
+  /* At 23:59:55, the image's leap_event_gps_template (0x10cd6). */
+  klok_entry event = {.time = 23 << 16 | 59 << 8 | 55,
+                      .event_class = KLOK_EVENT_LEAP};
+
+  event.date = date;
+  if (minute_length == CLOCK_LEAP_MINUTE_SHORT) {
+    event.function = leap_minute_59_arm;
+  } else if (minute_length == CLOCK_LEAP_MINUTE_LONG) {
+    event.function = leap_minute_61_arm;
+  } else {
+    return NULL;
+  }
+  return clk_do(&event);
+}
+
 /* Queues the leap minute's clock event in UTC or GPS time, as
  * :DIAG:GPS:UTC says (0x1075a). */
 klok_entry* leap_event_schedule(uint32_t date, int32_t minute_length) {
@@ -103,4 +135,56 @@ void leap_settings_clear(void) {
   nv_settings.leap_pending = 0;
   nv_settings.leap_minute_length = CLOCK_SECONDS_PER_MINUTE;
   nv_settings.leap_date = clock_pack(NO_LEAP_YEAR, 1, 1);
+}
+
+/* Follows the GPS receiver's leap second, on the GPS date, as UTC unless
+ * the clock keeps GPS time (0x465ba): with none pending, clears the NV
+ * settings' and its event, but only off a quarter's first and last days,
+ * so that the receiver's dropping it as it passes keeps it; with one,
+ * but not on a quarter's first day, saves its minute and date to the NV
+ * settings when they change and queues its event afresh. */
+void leap_event_create(void) {
+  int32_t minute_length;
+  uint32_t date;
+  time_of_day time;
+
+  get_gps_datetime(&date, &time);
+  if (nv_settings.gps_utc == 0) {
+    gps_to_utc(&date, &time);
+  }
+  if (gps.leap_second_pending == ONCORE_NO_LEAP_SECOND) {
+    if (nv_settings.leap_pending && !date_at_quarter_edge(date)) {
+      leap_settings_clear();
+      nv_save(REQUEST_SOURCE_INTERNAL);
+      leap_event_delete();
+    }
+    return;
+  }
+  if (date_starts_quarter(date)) {
+    return;
+  }
+  switch (gps.leap_second_pending) {
+    case ONCORE_LEAP_SECOND_ADD:
+      minute_length = CLOCK_LEAP_MINUTE_LONG;
+      break;
+    case ONCORE_LEAP_SECOND_SUBTRACT:
+      minute_length = CLOCK_LEAP_MINUTE_SHORT;
+      break;
+    default:
+      minute_length = CLOCK_SECONDS_PER_MINUTE;
+      break;
+  }
+  date = leap_opportunity_date(date);
+  if (!nv_settings.leap_pending ||
+      minute_length != nv_settings.leap_minute_length ||
+      date != nv_settings.leap_date) {
+    nv_settings.leap_pending = 1;
+    nv_settings.leap_date = date;
+    nv_settings.leap_minute_length = minute_length;
+    nv_save(REQUEST_SOURCE_INTERNAL);
+  }
+  leap_event_delete();
+  if (leap_event_schedule(date, minute_length) == NULL) {
+    task_debug_message("Error in creating leapsecond event\r\n");
+  }
 }

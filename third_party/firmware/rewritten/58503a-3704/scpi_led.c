@@ -34,3 +34,15 @@ int32_t scpi_query_LED_ALARm_USER(void* parameters, void* response,
                                   scpi_call* call) {
   return STATUS_SCPI_UNDEFINED_HEADER;
 }
+
+/* :LED:ALARm:CRITical? and :ACO?: an undefined header (0x2d90c,
+ * 0x2d91e). */
+int32_t scpi_query_LED_ALARm_CRITical(void* parameters, void* response,
+                                      scpi_call* call) {
+  return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
+}
+
+int32_t scpi_query_LED_ALARm_ACO(void* parameters, void* response,
+                                 scpi_call* call) {
+  return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
+}

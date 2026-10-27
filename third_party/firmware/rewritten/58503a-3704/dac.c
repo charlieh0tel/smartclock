@@ -4,6 +4,17 @@
  * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
  * prototype. */
 
+/* The EFC DAC's strobe, which efc_write writes after the value; the
+ * export declares no object for it. */
+static volatile uint8_t* const DAC_EFC_STROBE = (volatile uint8_t*)0x306000;
+
+/* The efc_write word's: the value to the EFC's DAC, then its strobe
+ * (0x1f2a8). */
+void efc_write(uint16_t value) {
+  qspi_write(QSPI_EFC, &value, 1);
+  *DAC_EFC_STROBE = 0;
+}
+
 /* Writes pll.efc, rounded, plus random_dither, clamped to 0 to
  * 0xffff0, to the EFC's DAC (0x23540). */
 void efc_write_dithered(void) {

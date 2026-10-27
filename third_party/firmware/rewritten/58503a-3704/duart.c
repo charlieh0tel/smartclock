@@ -40,10 +40,6 @@ void duart_output_bit_set(uint8_t bits, char set) {
   set_interrupt_mask(sr);
 }
 
-/* The counter's clock from TxCB, as the reset leaves it (MC68681
- * Table 4-4). */
-static const uint8_t DUART_ACR_COUNTER_TXCB = 0x20;
-
 /* Preloads the DUART's counter with 0xffff, both halves, shadowed. */
 static void duart_counter_preload(void) {
   static const uint8_t COUNTER_PRELOAD = 0xff; /* each half */
@@ -141,4 +137,21 @@ void duart_early_init(void) {
     duart.ipcr_acr = ACR_BRG_SET_2 | DUART_ACR_COUNTER_TXCB;
     duartb_loopback_check();
   }
+}
+
+/* The DUART's input port (MC68681 4.3.13); nothing calls it (0x1de46). */
+uint8_t duart_input_port_read(void) { return duart.ip_opcr; }
+
+/* Resets the output port's bits 2 to 7 in reset and sets those in set,
+ * as duart_output_bit_set does, in supervisor mode (0x1df78). */
+void duart_output_bits(board_led reset, board_led set) {
+  uint16_t sr = enter_supervisor_mode();
+  uint8_t resets = (reset | duart_shadow.output_reset) & DUART_OP_BITS;
+
+  duart.stop_ropbc = resets;
+  duart_shadow.output_reset =
+      (reset & DUART_OP_BITS | duart_shadow.output_reset) &
+      ~(set & DUART_OP_BITS);
+  duart.start_sopbc = ~duart_shadow.output_reset & DUART_OP_BITS;
+  set_interrupt_mask(sr);
 }

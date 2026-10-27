@@ -101,7 +101,7 @@ documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 ### The Z3805A 3543B, 58503A 3704 and Z3801A 3543 in C
 
 One image, the Z3805A's 3543B, is read whole as C.  Every C function
-of it and of the installer it unpacks into RAM, 1318 and 236, was
+of it and of the installer it unpacks into RAM, 1318 and 237, was
 decompiled by Ghidra through the project's scripts and then written
 again by hand, and each runs in an emulator harness against the
 image's own copy from the same state, its results, memory, kernel
@@ -115,20 +115,15 @@ firmware's faults are kept, not fixed.  Method, checks and limits:
 [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md).
 
 The 58503A's 3704 is read whole as C too, its C begun as the
-Z3805A's, and its writing by hand under way: 1005 of the primary's C
-functions and 215 of the installer's are written by hand, and 415 and
-33 remain the decompiler's reading, which compiles and agrees with the
-image as it stands.  All are held to the same checks: of the
-primary's functions 1415 agree and 5 differ for the firmware's own
-reasons, and the installer's 247 agree, one the harness
+Z3805A's and rewritten to its own code, and held to the same
+checks: of the primary's functions 1418 agree and 4 differ for the
+firmware's own reasons, and the installer's 247 agree, one the harness
 cannot run; its console sessions agree, 8 of 8.  What it has that the
 Z3805A does not, the front panel among it:
 [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md).
 
 The Z3801A's 3543, the Z3805A's sibling without its SCI driver, is read
-whole as C the same way, 1300 of the primary's C functions and 236 of
-the installer's by hand and none of the primary's remaining as the
-decompiler's reading, held to the same checks:
+whole as C the same way, held to the same checks:
 [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md).  The C
 the three images run alike lies once in `third_party/firmware/rewritten/common/`,
 by the rules of [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md),

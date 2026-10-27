@@ -692,3 +692,423 @@ void status_screen(status_snapshot_record* snapshot, char clear,
   print("%s\r\n", failed ? " [ ERROR ]" : "... [ OK ]");
   print("%s", line);
 }
+
+/* For status_snapshot: the sets of satellites visible, used and
+ * tracked, the tracked by their channels' modes when the used set is
+ * known, and those not used; all empty unless the visible set is known
+ * (0x498a2).  The Z3805A's leaves the tracked sets empty too when the
+ * used set is not known, and walks six channels where this walks the
+ * engine's. */
+void satellite_sets_build(oncore_channel_status* channels,
+                          satellite_sets* sets) {
+  memset(sets, 0, sizeof *sets);
+  const bool visible_known =
+      visible_satellites(&sets->visible_count, &sets->visible);
+  const bool used_known =
+      satellites_in_use(&sets->used_count, &sets->pseudolites_used_count,
+                        &sets->used, &sets->pseudolites_used);
+
+  if (!visible_known) {
+    return;
+  }
+  for (const oncore_channel_status* channel = channels;
+       channel < channels + gps.channel_count; channel++) {
+    const uint8_t id = channel->satellite;
+    const int8_t mode = (int8_t)channel->mode;
+
+    if (satellite_id_valid(SATELLITE_GPS, id) != 0) {
+      satellite_add_to_set(SATELLITE_GPS, id, &sets->tracked);
+      if (used_known) {
+        screen_band_add(SATELLITE_GPS, id, mode, &sets->acquiring,
+                        &sets->synchronized, &sets->ephemeris);
+      }
+    } else if (satellite_id_valid(SATELLITE_PSEUDOLITE, id) != 0) {
+      satellite_add_to_set(SATELLITE_PSEUDOLITE, id,
+                           &sets->pseudolites_tracked);
+      if (used_known) {
+        screen_band_add(
+            SATELLITE_PSEUDOLITE, id, mode, &sets->pseudolites_acquiring,
+            &sets->pseudolites_synchronized, &sets->pseudolites_ephemeris);
+      }
+    }
+  }
+  sets->tracked_unused = sets->tracked & ~sets->used;
+  sets->acquiring &= sets->tracked_unused;
+  sets->synchronized &= sets->tracked_unused;
+  sets->ephemeris &= sets->tracked_unused;
+  sets->unused = (sets->visible | sets->tracked) & ~sets->used;
+  sets->pseudolites_tracked_unused =
+      sets->pseudolites_tracked & ~sets->pseudolites_used;
+  sets->pseudolites_acquiring &= sets->pseudolites_tracked_unused;
+  sets->pseudolites_synchronized &= sets->pseudolites_tracked_unused;
+  sets->pseudolites_ephemeris &= sets->pseudolites_tracked_unused;
+}
+
+/* The screen's list of satellites, tracked (those used) or not (the
+ * rest, visible or tracked), by number, the GPS satellites first, each
+ * with its cell, then blank entries to the list's end; count the
+ * satellites listed.  When more than the list's entries are not
+ * tracked, those on a channel are kept, then the highest of the rest
+ * (0x49c04).  The rest are gathered in a list of 12 (0x49c9e), which
+ * more than 12 overflow, a firmware fault; the Z3805A's list is 12 long
+ * and so its room, the 58503A's twice the engine's channels. */
+void satellite_status_list(uint8_t tracked, uint8_t entries,
+                           satellite_sets* sets,
+                           oncore_channel_status* channels,
+                           gps_visibility_record* visibility,
+                           satellite_list_entry* list, uint8_t* count) {
+  const satellite_list_entry* end = list + entries;
+  const satellite_list_entry blank = satellite_status_blank_entry;
+  uint32_t set;
+  uint8_t pseudolites;
+
+  if (tracked == 1) {
+    set = sets->used;
+    pseudolites = sets->pseudolites_used;
+  } else {
+    set = sets->unused;
+    pseudolites = sets->pseudolites_tracked_unused;
+    if ((int32_t)(count_bits(pseudolites) + count_bits(set)) > entries) {
+      const oncore_visibility_fields* visible = &visibility->visibility;
+      screen_satellite_elevation others[12];
+      screen_satellite_elevation* next = others;
+      int8_t room;
+
+      set &= sets->tracked;
+      for (const oncore_visible_satellite* satellite = visible->satellites;
+           satellite < visible->satellites + visible->count; satellite++) {
+        if (satellite_in_set(SATELLITE_GPS, satellite->satellite, set) == 0) {
+          next->satellite = satellite->satellite;
+          next->elevation = satellite->elevation;
+          next++;
+        }
+      }
+      qsort(others, next - others, sizeof others[0], satellite_compare);
+      /* Byte arithmetic, as the image's. */
+      room = (int8_t)(entries - (uint8_t)count_bits(set) -
+                      (uint8_t)count_bits(pseudolites));
+      while (room-- != 0) {
+        next--;
+        satellite_add_to_set(SATELLITE_GPS, next->satellite, &set);
+      }
+    }
+  }
+  *count = 0;
+  for (uint8_t id = GPS_FIRST_SATELLITE;
+       list < end && (set != 0 || pseudolites != 0); id++, set >>= 1) {
+    if (id == GPS_FIRST_PSEUDOLITE) {
+      set = pseudolites;
+      pseudolites = 0;
+    }
+    if ((set & 1) == 0) {
+      continue;
+    }
+    list->satellite = id;
+    if (tracked == 1) {
+      for (const oncore_channel_status* channel = channels;
+           channel < channels + gps.channel_count; channel++) {
+        if (id == channel->satellite) {
+          list->level = channel->signal_strength;
+          break;
+        }
+      }
+    } else {
+      list->attempting =
+          satellite_in_set(SATELLITE_GPS, id, sets->tracked_unused) != 0 ||
+          satellite_in_set(SATELLITE_PSEUDOLITE, id,
+                           sets->pseudolites_tracked_unused) != 0;
+    }
+    satellite_status(tracked, id, sets, visibility, &list->cell);
+    (*count)++;
+    list++;
+  }
+  for (; list < end; list++) {
+    *list = blank;
+  }
+}
+
+/* Takes the snapshot status_screen prints: the loop's state under a
+ * raised interrupt mask, then the GPS engine's, both references'
+ * records, its channel count, its satellites, twice as many not tracked
+ * listed as it has channels, and its position, held, averaged by the
+ * survey or as the engine reports it (0x4ac56). */
+void status_snapshot(status_snapshot_record* snapshot) {
+  uint32_t date;
+  time_of_day time;
+  uint8_t holdover; /* kenneth_predicted_get's third output, unused */
+  const uint16_t sr = set_interrupt_mask(CPU_IPL_1);
+  gps_reference_record* const gps_reference = &gps.references[0];
+  gps_reference_record* const external_reference = &gps.references[1];
+
+  snapshot->stage = pll.stage;
+  snapshot->mode = pll_mode();
+  snapshot->powerup_suffix = pll_powerup_suffix_index();
+  snapshot->recovery_suffix = recovery_suffix_index();
+  snapshot->interval = interval_reading.value;
+  snapshot->interval_valid = interval_reading.valid;
+  snapshot->interval_errors = interval_reading.errors;
+  snapshot->interval_tag = interval_reading.tag;
+  snapshot->interval_mean = interval_mean;
+  /* The flag and the byte after it, as a word. */
+  memcpy(&snapshot->interval_mean_flag, &interval_mean_flag,
+         sizeof snapshot->interval_mean_flag);
+  snapshot->tfom = pll.tfom;
+  snapshot->ffom_valid = get_ffom((frequency_figure_of_merit*)&snapshot->ffom);
+  snapshot->kenneth_present_valid = kenneth_present_get(
+      &snapshot->kenneth_present, &snapshot->kenneth_present_resolution);
+  snapshot->kenneth_predicted_valid =
+      kenneth_predicted_get(&snapshot->kenneth_predicted,
+                            &snapshot->kenneth_predicted_resolution, &holdover);
+  snapshot->holdover_waiting_reason = holdover_waiting_reason_58503a();
+  snapshot->holdover_duration = pll.holdover_duration;
+  snapshot->holdover_limit_state = nv_settings.holdover_limit_state;
+  snapshot->holdover_limit_threshold = nv_settings.holdover_limit_threshold;
+  snapshot->time_zone[0] = nv_settings.time_zone[0];
+  snapshot->time_zone[1] = nv_settings.time_zone[1];
+  if (get_date_time(&date, &time)) {
+    snapshot->from_clock = 0;
+    snapshot->time = gps.status.time;
+    snapshot->date = oncore_date_pack(gps.status.date);
+    utc_to_local(&snapshot->date, &snapshot->time);
+  } else {
+    snapshot->from_clock = 1;
+    snapshot->time = time;
+    snapshot->date = date;
+  }
+  snapshot->pll_field_3d5 = pll.field_3e5;
+  gps_receiver_status_update_58503a(GPS_RECEIVER_ONCORE, 0);
+  gps_receiver_status_update_58503a(GPS_RECEIVER_ALTERNATE,
+                                    gps_status_alternate());
+  snapshot->douglas_duration_infinite = nv_settings.douglas_duration_infinite;
+  snapshot->hardware_condition = status_hardware_condition();
+  set_interrupt_mask(sr);
+
+  snapshot->fix_mode = gps.fix_mode;
+  snapshot->reference_valid = gps_reference->valid;
+  snapshot->pps_dead = gps_reference->pps_dead;
+  snapshot->status_code = gps_reference->state;
+  snapshot->reference_elapsed = gps_reference->elapsed;
+  snapshot->external_valid = external_reference->valid;
+  snapshot->external_pps_dead = external_reference->pps_dead;
+  snapshot->external_status_code = external_reference->state;
+  snapshot->external_elapsed = external_reference->elapsed;
+  if (nv_settings.leap_minute_length == CLOCK_LEAP_MINUTE_SHORT) {
+    snapshot->leap_second_pending = ONCORE_LEAP_SECOND_SUBTRACT;
+  } else if (nv_settings.leap_minute_length == CLOCK_LEAP_MINUTE_LONG) {
+    snapshot->leap_second_pending = ONCORE_LEAP_SECOND_ADD;
+  } else {
+    snapshot->leap_second_pending = ONCORE_NO_LEAP_SECOND;
+  }
+  snapshot->receiver_status = gps.status.receiver_status;
+  snapshot->utc_time = gps.utc_time;
+  snapshot->pps_cable_delay = gps.pps_cable_delay;
+  snapshot->mask_angle = gps.mask_angle;
+  snapshot->position_hold = gps.position_hold;
+  snapshot->average_count = gps.average_count;
+  snapshot->douglas_duration = nv_settings.douglas_duration;
+  snapshot->channel_count = gps.channel_count;
+  snapshot->status_received = gps.status_received;
+  satellite_sets_build(gps.status.channels, &snapshot->satellites);
+  satellite_status_list(SCREEN_LIST_NOT_TRACKED, snapshot->channel_count * 2,
+                        &snapshot->satellites, gps.status.channels,
+                        (gps_visibility_record*)&gps.visibility_received,
+                        snapshot->not_tracked, &snapshot->not_tracked_count);
+  satellite_status_list(SCREEN_LIST_TRACKED, snapshot->channel_count,
+                        &snapshot->satellites, gps.status.channels,
+                        (gps_visibility_record*)&gps.visibility_received,
+                        snapshot->tracked, &snapshot->tracked_count);
+
+  if (snapshot->position_hold != 0) {
+    snapshot->position_source = "";
+    snapshot->position[0] = gps.hold_position.latitude;
+    snapshot->position[1] = gps.hold_position.longitude;
+    snapshot->position[2] = gps.hold_position.height;
+  } else if (snapshot->average_count == 0 ||
+             snapshot->douglas_duration_infinite == 1) {
+    snapshot->position_source =
+        snapshot->douglas_duration_infinite == 1 ? "" : "INIT ";
+    snapshot->position[0] = gps.status.latitude;
+    snapshot->position[1] = gps.status.longitude;
+    snapshot->position[2] = gps.status.height_msl;
+  } else {
+    snapshot->position_source = "AVG ";
+    snapshot->position[0] = double_to_integer(gps.average_latitude);
+    snapshot->position[1] = double_to_integer(gps.average_longitude);
+    snapshot->position[2] = double_to_integer(gps.average_height_msl);
+  }
+}
+
+/* A satellite's cell: "%2d %3d" elevation and azimuth, or what its
+ * status says (0x49eb8). */
+void format_satellite_cell(satellite_cell cell, char* text) {
+  char* words;
+
+  switch (cell.status) {
+    case SATELLITE_CELL_POSITION:
+      sprintf(text, "%2d %3d", cell.elevation, cell.azimuth);
+      return;
+    case SATELLITE_CELL_NO_POSITION:
+      words = "-- ---";
+      break;
+    case SATELLITE_CELL_IGNORED:
+      words = "Ignore";
+      break;
+    case SATELLITE_CELL_UNHEALTHY:
+      words = "Not OK";
+      break;
+    case SATELLITE_CELL_ACQUIRING:
+      words = "Acq   ";
+      break;
+    case SATELLITE_CELL_SYNCHRONIZED:
+      words = "Acq . ";
+      break;
+    case SATELLITE_CELL_EPHEMERIS:
+      words = "Acq ..";
+      break;
+    default:
+      words = "      ";
+      break;
+  }
+  libc_copy(text, words);
+}
+
+/* The screen's height line: the position's source, HGT, and the height
+ * in m above mean sea level (0x49f50). */
+void status_screen_height(status_snapshot_record* snapshot, char* line) {
+  static const float CENTIMETERS_PER_METER = 100.0f;
+  float height = float_divide(integer_to_float(snapshot->position[2]),
+                              CENTIMETERS_PER_METER);
+  char value[21];
+  char label[9];
+
+  libc_copy(label, snapshot->position_source);
+  strcat(label, "HGT");
+  sprintf(value, "%+9.2f m  (MSL)", float_to_double(height));
+  sprintf(line, "%-15s%s", label, value);
+}
+
+/* A state's text by how much of its period has passed: the last, with
+ * three dots, from 77 percent, then two from 53, one from 27, else the
+ * first (0x4a27a to 0x4a316). */
+static char* screen_progress_text(uint32_t elapsed, uint16_t period,
+                                  char* const texts[4]) {
+  static const double FRACTIONS[] = {0.77, 0.53, 0.27};
+  static const uint32_t STEPS = sizeof FRACTIONS / sizeof FRACTIONS[0];
+
+  for (uint32_t step = 0; step < STEPS; step++) {
+    if (elapsed >= double_to_unsigned(double_multiply(
+                       unsigned_to_double(period), FRACTIONS[step]))) {
+      return texts[STEPS - step];
+    }
+  }
+  return texts[0];
+}
+
+/* The screen's GPS 1PPS state, by the GPS reference's state as the
+ * snapshot keeps it: "Absent or freq error" while it is valid with its
+ * 1PPS dead; assessing and questionable with dots by the time passed
+ * of their periods (0x4a1fa). */
+void status_screen_sync(status_snapshot_record* snapshot, char* line) {
+  static char* const ASSESSING[] = {
+      "Assessing stability", "Assessing stability .", "Assessing stability ..",
+      "Assessing stability ..."};
+  static char* const QUESTIONABLE[] = {
+      "Questionable accuracy", "Questionable accuracy .",
+      "Questionable accuracy ..", "Questionable accuracy..."};
+  const gps_reference_record* reference = &gps.references[0];
+  char* words;
+
+  if (snapshot->reference_valid == 1 && snapshot->pps_dead != 0) {
+    libc_copy(line, "Absent or freq error");
+    return;
+  }
+  switch (snapshot->status_code) {
+    case GPS_SYNC_RECEIVER_FAILED:
+      words = "Invalid: GPS rcvr failed";
+      break;
+    case GPS_SYNC_NOT_TRACKING:
+      words = "Invalid: not tracking";
+      break;
+    case GPS_SYNC_INACCURATE_POSITION:
+      words = "Invalid: inacc position";
+      break;
+    case GPS_SYNC_NO_UTC_DATA:
+      words = "Invalid: No UTC data";
+      break;
+    case GPS_SYNC_RAIM_ERROR:
+      words = "Invalid: Time RAIM error";
+      break;
+    case GPS_SYNC_ASSESSING:
+      words = screen_progress_text(snapshot->reference_elapsed,
+                                   reference->validation_time, ASSESSING);
+      break;
+    case GPS_SYNC_QUESTIONABLE:
+    case GPS_SYNC_QUESTIONABLE_CLEARING:
+      words = screen_progress_text(snapshot->reference_elapsed,
+                                   reference->hysteresis, QUESTIONABLE);
+      break;
+    case GPS_SYNC_VALID:
+      words = snapshot->utc_time == ONCORE_TIME_UTC
+                  ? "Synchronized to UTC"
+                  : "Synchronized to GPS Time";
+      break;
+    default:
+      words = "";
+      break;
+  }
+  libc_copy(line, words);
+}
+
+/* The screen's time line: the time's scale, GPS or UTC, local with a
+ * time zone, the time, "[?]" while the clock is not set, and the date
+ * (0x4a4c6). */
+void status_screen_time(status_snapshot_record* snapshot, char* line) {
+  char* scale;
+  char time_text[9];
+  char date_text[13];
+
+  format_time(snapshot->time, time_text);
+  format_date(clock_date_of(snapshot->date), date_text);
+  if (snapshot->time_zone[0] == 0 && snapshot->time_zone[1] == 0) {
+    scale = snapshot->utc_time == ONCORE_TIME_UTC ? "UTC" : "GPS";
+  } else {
+    scale = snapshot->utc_time == ONCORE_TIME_UTC ? "LOCAL" : "LOCL GPS";
+  }
+  sprintf(line, "%-9.9s%8s %3s %11s", scale, time_text,
+          snapshot->from_clock == 0 ? "[?]" : "", date_text);
+}
+
+/* Whether bit bit of a value is set, the value sign-extended, the bit a
+ * long (0x4aa5a). */
+uint8_t bit_is_set(int16_t value, int32_t bit) {
+  return (value & cpu_long_bit(bit)) != 0;
+}
+
+/* Bit 12, the internal reference's (0x4aa74). */
+uint8_t bit_12_set(int16_t value) { return bit_is_set(value, 12); }
+
+/* 1 if any of bits 1 to 3 is set: the internal power supplies'
+ * (0x4aa84). */
+uint32_t bits_1_to_3_any(int16_t value) {
+  return bit_is_set(value, 2) | bit_is_set(value, 1) | bit_is_set(value, 3);
+}
+
+/* Bit 4, the oven's supply (0x4aad0). */
+uint8_t bit_4_set(int16_t value) { return bit_is_set(value, 4); }
+
+/* 1 if bit 6 or 7 is set: the EFC's (0x4aae0). */
+uint8_t bits_6_7_any(int16_t value) {
+  return bit_is_set(value, 6) | bit_is_set(value, 7);
+}
+
+/* 1 if bit 8 or 9 is set: the GPS receiver's (0x4ab0c). */
+uint8_t bits_8_9_any(int16_t value) {
+  return bit_is_set(value, 8) | bit_is_set(value, 9);
+}
+
+/* Prints the status screen from status_screen_snapshot, for
+ * :SYSTem:PRINt?; its first argument unread (0x4b6ec). */
+void status_screen_print(uint8_t unread, write_function* write,
+                         printf_function* print) {
+  status_screen(&status_screen_snapshot, 0, write, print);
+}

@@ -121,8 +121,8 @@ CHECKS = {
          lambda f: (f['primary_hand'], f['installer_hand'])),
         (REWRITE, sentence("byte for byte: {} routines -- the pSOS kernel's"),
          lambda f: (f['assembly'],)),
-        (REWRITE, sentence("Left as the decompiler's: {} thunks, and {} unreferenced"),
-         lambda f: (f['thunk'], word(f['primary_reading'] + f['installer_reading']))),
+        (REWRITE, sentence("Left as the decompiler's: {} thunks, each a"),
+         lambda f: (f['thunk'],)),
         (REWRITE, sentence('| assembly (`check-decompiled`) | {} routines in'),
          lambda f: (f['assembly'],)),
         (SUMMARY, sentence('of the installer it unpacks into RAM, {} and {}, was'),
@@ -168,19 +168,14 @@ CHECKS = {
          lambda f: (f['decompiled'],)),
         (DOCUMENT_58503A, sentence(
             "In all, {} of the primary's C functions and {} of the installer's are written "
-            "by hand, and {} and {} remain the decompiler's reading"),
-         lambda f: (f['primary_hand'], f['installer_hand'], f['primary_reading'],
-                    f['installer_reading'])),
-        (SUMMARY, sentence(
-            "{} of the primary's C functions and {} of the installer's are written by hand, "
-            "and {} and {} remain the decompiler's reading"),
-         lambda f: (f['primary_hand'], f['installer_hand'], f['primary_reading'],
-                    f['installer_reading'])),
+            "by hand, and {} of either is the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    word(f['primary_reading'] + f['installer_reading']))),
         (REWRITE, sentence(
-            "hand yet: {} of the primary's C functions and {} of the installer's are, and {} "
-            "and {} remain the decompiler's reading"),
-         lambda f: (f['primary_hand'], f['installer_hand'], f['primary_reading'],
-                    f['installer_reading'])),
+            "(its \"The hand-written C\"), {} of the primary's and {} of the installer's, {} "
+            "left as the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    word(f['primary_reading'] + f['installer_reading']))),
     ),
     'z3801a-3543': (
         (DOCUMENT_Z3801A, sentence('| primary | {} | {} | {} | {} |'),
@@ -203,10 +198,6 @@ CHECKS = {
          lambda f: (f['primary_hand'], f['installer_hand'], word(f['primary_reading']))),
         (DOCUMENT_Z3801A, sentence('| `check-decompiled` | {} routines in'),
          lambda f: (f['assembly'],)),
-        (SUMMARY, sentence(
-            "the same way, {} of the primary's C functions and {} of the installer's by hand "
-            "and {} of the primary's remaining as the decompiler's reading"),
-         lambda f: (f['primary_hand'], f['installer_hand'], word(f['primary_reading']))),
         (REWRITE, sentence(
             "has its C functions written by hand too, the primary's {} and the installer's {}, "
             "{} left as the decompiler's reading"),

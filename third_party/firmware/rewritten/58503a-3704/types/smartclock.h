@@ -73,6 +73,27 @@ typedef enum __attribute__((packed)) gps_reference_override {
   GPS_REFERENCE_OVERRIDE_INVALID = 0xff,
 } gps_reference_override;
 
+/* A reference's validity, gps_reference_record.valid, from its state:
+ * :SOURce:GPSystem:REFerence:VALid? answers 1 for valid with its 1PPS
+ * alive, or questionable (0x2d0a0); the loop takes a valid reference with
+ * its 1PPS alive, and a questionable one in its PLL stages
+ * (gps_reference_update, 0x44f48). */
+typedef enum __attribute__((packed)) gps_reference_validity {
+  GPS_REFERENCE_INVALID = 0,
+  GPS_REFERENCE_VALID = 1,        /* GPS_SYNC_VALID, or forced valid */
+  GPS_REFERENCE_QUESTIONABLE = 2, /* GPS_SYNC_QUESTIONABLE and _CLEARING */
+} gps_reference_validity;
+
+/* The EFC's mode, diag_efc_mode, :DIAGnostic:ROSCillator:EFControl:MODE
+ * NORM, USER or TIM (0x2b5a8, 0x2b5f6): in either of the last two
+ * efc_mode_done holds the loop over for HOLD_CAUSE_EFC_CONTROL, and in
+ * the timed one efc_mode_expire ends it after 600 passes. */
+typedef enum __attribute__((packed)) efc_mode {
+  EFC_MODE_NORMAL = 0,
+  EFC_MODE_USER = 1,
+  EFC_MODE_TIMED = 2,
+} efc_mode;
+
 #include "../../common/types/counter_sync_kind.h"
 
 #include "../../common/types/satellite_health_class.h"
@@ -1247,6 +1268,11 @@ typedef enum __attribute__((packed)) status_condition_code {
                                  STATUS_HOLDOVER_THRESHOLD_CLEARED (0x47668),
                                  the Z3805A 3543B's number for
                                  STATUS_SELFTEST_FAILURE_CLEARED */
+  STATUS_CONDITION_36 = 0x36, /* does nothing; status_happening clears it
+                                 entering holdover, waiting or recovery
+                                 (0x2f29a) */
+  STATUS_CONDITION_37 = 0x37, /* does nothing; status_happening clears it
+                                 entering lock (0x2f272) */
   STATUS_SELFTEST_FAILURE_SET = 0x38, /* :HARDware bit 0, selftest_summary's
                                          (0x178de) */
   STATUS_SELFTEST_FAILURE_CLEARED = 0x39,
@@ -1602,14 +1628,25 @@ typedef struct oncore_receiver_id_line {
   uint8_t field_0b;               /* unread */
 } oncore_receiver_id_line;
 
+/* gps.status_received in the 58503A 3704: whether @@Ba has come, and
+ * lately, as the status monitor keeps it (command_monitor, 0x4bf70 and
+ * 0x4bf9a); channel_position_satellite takes a channel's satellite only
+ * while it is fresh (0x50190).  The Z3805A's is 0 or 1. */
+typedef enum __attribute__((packed)) gps_status_freshness {
+  GPS_STATUS_NONE = 0,  /* none since the monitor last failed */
+  GPS_STATUS_STALE = 1, /* none for three of its periods */
+  GPS_STATUS_FRESH = 2,
+} gps_status_freshness;
+
 /* One reference's validation, the GPS's or the external 1PPS's: in
  * the 58503A 3704, gps_receiver_status_update's (0x4b8a2) state for
  * each, gps.references[index]; 0x4b82a sets valid from override and
  * state to 1, 0x4b858 and 0x4b882 the GPS's and the external's
  * hysteresis.  22 bytes (0x101394 and 0x1013aa, 0x4b830). */
 typedef struct gps_reference_record {
-  uint8_t valid; /* 1 at state 8, 2 at 6 and 7, else 0; while override is
-                    set, 1 for 1 and 0 for any other (0x4bc2a) */
+  gps_reference_validity valid;    /* 1 at state 8, 2 at 6 and 7, else 0; while
+                                      override is set, 1 for 1 and 0 for any
+                                      other (0x4bc2a) */
   gps_sync_status state;           /* its jump tables' (0x4ba16, 0x4bb70) */
   gps_reference_override override; /* 1 forces valid, 0xff invalid; gps_init
                                       clears it, diag_force_gps_1pps and
@@ -1684,7 +1721,7 @@ typedef struct gps_state {
   oncore_application_type application_type; /* @@AB */
   uint8_t position_fix_threshold;           /* @@AD, s */
   uint8_t differential_output_threshold;    /* @@AD, s */
-  uint8_t status_received;     /* @@Ba has come; the status monitor sets it */
+  gps_status_freshness status_received;     /* the status monitor sets it */
   uint8_t status_rate;         /* s between @@Ba, as last requested */
   oncore_status_fields status; /* @@Ba, @@Ea */
   uint8_t field_11b;
@@ -2058,13 +2095,48 @@ typedef struct pll_state {
   uint8_t field_3e7;
 } pll_state;
 
-#include "../../common/types/gps_statistics.h"
+/* The GPS link's counters, which the "GPS Process Monitor" page
+ * (gps_print_process_monitor) prints.  The 58503A's differs from the
+ * Z3805A's and the Z3801A's: its count of responses
+ * read is a long, which the page prints "Resp" %10d (0x4d626), so that
+ * the counters after it are a word on, and the record is 0x38 bytes,
+ * as clear_gps_debug clears it (0x4d40a).  All words but that one. */
+typedef struct gps_statistics {
+  uint16_t received;                 /* +0x00: Msgs Rcvd */
+  uint16_t sent;                     /* +0x02: Msgs Sent */
+  uint16_t jammed;                   /* +0x04: Msgs Jam */
+  uint16_t sent_errors;              /* +0x06 */
+  uint16_t received_errors;          /* +0x08 */
+  uint16_t jam_errors;               /* +0x0a */
+  uint16_t successes;                /* +0x0c: Success */
+  uint16_t field_0e;                 /* +0x0e: NOP; gpsm_task counts a request
+                                        gps_request_admitted refuses, which is none */
+  uint16_t rejects;                  /* +0x10: Reject */
+  uint16_t timeouts;                 /* +0x12: Timeout */
+  uint16_t busy;                     /* +0x14: Busy */
+  uint16_t aborts;                   /* +0x16: Abort */
+  uint16_t no_command;               /* +0x18: No Cmd */
+  uint16_t no_query;                 /* +0x1a: No Qry */
+  uint16_t unknown_command;          /* +0x1c: ? Cmd */
+  uint16_t unknown_sender;           /* +0x1e: ? Sndr */
+  uint16_t commands_sent;            /* +0x20: Cmds Sent */
+  uint32_t responses_read;           /* +0x22: Resp */
+  uint16_t e_retries;                /* +0x26: E Retry */
+  uint16_t t_retries;                /* +0x28: T Retry */
+  uint16_t raim_detected;            /* +0x2a: Time RAIM page: (%d detected) */
+  uint16_t raim_alarms;              /* +0x2c: # Alarms */
+  uint16_t unknown_response;         /* +0x2e: ? Resp */
+  uint16_t frame_errors;             /* +0x30: Frame */
+  uint16_t checksum_errors;          /* +0x32: Cksum */
+  uint16_t command_monitor_failures; /* +0x34 */
+  uint16_t status_monitor_failures;  /* +0x36 */
+} gps_statistics;
 
 #include "../../common/types/exception_record.h"
 
 #include "../../common/types/os.h"
 
-/* A fixed event log message, by the code log_event (0x3189a) takes
+/* A fixed event log message, by the code log_event_58503a (0x3189a) takes
  * and its jump table's order (0x318bc, 28 cases); the names are the
  * messages'.  enter_holdover (0x4396e) picks a holdover's by its cause.
  * The 58503A 3704 adds "EXT reference valid" as 0x15, moving the

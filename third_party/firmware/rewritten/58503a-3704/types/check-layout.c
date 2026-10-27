@@ -548,16 +548,16 @@ CHECK_FIELD(oncore_receiver_id_line, label, 6);
 CHECK_FIELD(oncore_receiver_id_line, label_length, 10);
 CHECK_FIELD(oncore_receiver_id, model_number, 0x1012e7 - 0x101259);
 CHECK_FIELD(oncore_receiver_id, options, 0x101353 - 0x101259);
-CHECK_SIZE(gps_statistics, 0x36);
-CHECK_FIELD(gps_statistics, successes, 0x1017c8 - 0x1017bc);
-CHECK_FIELD(gps_statistics, rejects, 0x1017cc - 0x1017bc);
-CHECK_FIELD(gps_statistics, t_retries, 0x1017e2 - 0x1017bc);
-CHECK_FIELD(gps_statistics, raim_detected, 0x1017e4 - 0x1017bc);
-CHECK_FIELD(gps_statistics, raim_alarms, 0x1017e6 - 0x1017bc);
-CHECK_FIELD(gps_statistics, unknown_response, 0x1017e8 - 0x1017bc);
-CHECK_FIELD(gps_statistics, checksum_errors, 0x1017ec - 0x1017bc);
-CHECK_FIELD(gps_statistics, command_monitor_failures, 0x1017ee - 0x1017bc);
-CHECK_FIELD(gps_statistics, status_monitor_failures, 0x1017f0 - 0x1017bc);
+/* gps_counts at 0x101524, 0x38 bytes (clear_gps_debug, 0x4d40a): its
+ * fields as the 58503A's code reaches them. */
+CHECK_SIZE(gps_statistics, 0x38);
+CHECK_FIELD(gps_statistics, responses_read, 0x22);
+CHECK_FIELD(gps_statistics, raim_detected, 0x10154e - 0x101524);
+CHECK_FIELD(gps_statistics, raim_alarms, 0x101550 - 0x101524);
+CHECK_FIELD(gps_statistics, unknown_response, 0x101552 - 0x101524);
+CHECK_FIELD(gps_statistics, frame_errors, 0x101554 - 0x101524);
+CHECK_FIELD(gps_statistics, command_monitor_failures, 0x101558 - 0x101524);
+CHECK_FIELD(gps_statistics, status_monitor_failures, 0x10155a - 0x101524);
 CHECK_SIZE(exception_record, 0x1009b0 - 0x10099e);
 CHECK_FIELD(exception_record, name, 0x10099f - 0x10099e);
 CHECK_FIELD(exception_record, sr, 0x1009a4 - 0x10099e);
@@ -585,6 +585,7 @@ CHECK_SIZE(pll_stage, 1);
 CHECK_SIZE(adc_channel, 1);
 CHECK_SIZE(oncore_channel_mode, 1);
 CHECK_SIZE(oncore_raim_status, 1);
+CHECK_SIZE(gps_reference_validity, 1);
 
 /* nv_settings, each field where its descriptor's value points (below),
  * and the two descriptors' sizes. */
@@ -825,7 +826,6 @@ CHECK_SIZE(gps_running_command, 0x72);
 CHECK_FIELD(gps_running_command, script, 0x1a);
 CHECK_FIELD(gps_running_command, message, 0x1e);
 CHECK_FIELD(gps_running_command, sent, 0x22);
-CHECK_SIZE(reset_record, 0x5c);
 
 CHECK_SIZE(scpi_bcd, 0x0c);
 CHECK_FIELD(scpi_bcd, digits, 0x02);

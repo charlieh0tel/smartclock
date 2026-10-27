@@ -12,3 +12,9 @@ int32_t scpi_query_OUTPut_STATe(void* parameters, void* response,
   *value = (int8_t)nv_settings.output_state;
   return 0;
 }
+
+/* :OUTPut:STATe's done hook (0x4800a). */
+void output_state_done(void) { output_state_program(nv_settings.output_state); }
+
+/* Programs the output's state; this firmware does nothing (0x47fa6). */
+void output_state_program(uint8_t state) {}

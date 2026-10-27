@@ -338,7 +338,7 @@
 0x29272	function	request_and_wait	context	raises a variable, send_x_retry, waits on the variable (from the Z3805A 3543B, by image_diff: relocated)
 0x22584	function	debug_message	context	task_debug_message when with_task_name is set, else debug_write; callers push the flag with move.b (from the Z3805A 3543B, by image_diff: relocated)	void debug_message(char *message, char with_task_name)
 0x1ede8	function	debug_write	context	writes through 0x1df12 while debug_enabled (from the Z3805A 3543B, by image_diff: relocated)
-0x3189a	function	log_event_58503a	context	log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode started"... (from the Z3805A 3543B, by image_diff: changed, similar at 0.667, below 0.70; a lead, its prototype and convention not carried)
+0x3189a	function	log_event_58503a	context	log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode started"... (from the Z3805A 3543B, by image_diff: changed, similar at 0.667, below 0.70; a lead, its prototype and convention not carried)	int32_t log_event_58503a(log_event_code code)
 0x1c748	label	log_text_log_test_message	read	"Log test message %d", the format diag_log_send logs it (0x1bde6), the number its argument (from the Z3805A 3543B, by image_diff: identical table, placed by references)	char[20]
 0x2bc87	label	log_text_diag_entry	read	"diag entry %d", the format scpi_set_DIAGnostic_LOG_WRITe logs it (0x2b7b6) (from the Z3805A 3543B, by image_diff: identical table, placed by references)	char[14]
 0x31c7c	label	log_text_log_cleared	read	"Log cleared", log_event's message for code 0 (its case at 0x319c4) and the one log_erase logs (0x315ce) (from the Z3805A 3543B, by image_diff: identical table, placed by references)	char[12]
@@ -1517,7 +1517,7 @@ installer::0x1029a0	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x102008	label	lifetime	structures.md	the lifetime record in RAM, its EFC, date and count, which lifetime_record_read loads from EEPROM 0x400060 (from the Z3805A 3543B, by image_diff: moved +0x308 by 19 references at its start)	lifetime_state
 #
 # the EEPROM records, the clamps and the counter's self-tests
-0x30ba8	function	calibration_block_read	interval.md's calibration block	reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its checksum fails (from the Z3805A 3543B, by image_diff: changed, similar at 0.766)
+0x30ba8	function	calibration_block_read	interval.md's calibration block	reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its checksum fails (from the Z3805A 3543B, by image_diff: changed, similar at 0.766)	uint8_t calibration_block_read(void)
 0x30d12	function	parameter_record_read_58503a	structures.md	reads DUART channel B's serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails; always sets the SCI's defaults (a char result, 0x30de0) (from the Z3805A 3543B, by image_diff: changed, similar at 0.625, below 0.70; a lead, its prototype and convention not carried)
 0x10226c	label	duartb_settings	structures.md	DUART channel B's serial settings, SERial1's, from the parameter record at EEPROM 0x400000 (from the Z3805A 3543B, by image_diff: moved +0x314 by 20 references at its start)	duartb_settings_record
 0x1dd58	function	duartb_settings_done	read	the done hook of DUART channel B's setting descriptors (0x33338 on) and of its PRESet at 0x30ea0: psos_io_control(0, 0, 0) (from the Z3805A 3543B, by image_diff: relocated)	void duartb_settings_done(void)

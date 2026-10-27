@@ -86,6 +86,13 @@ def counts_row(profile):
                     '{} skipped, {} failed |')
 
 
+def summary_row(image):
+    """README.md's table row of an image's functions written by hand,
+    the primary's and the installer's, and its assembly routines."""
+    return (SUMMARY, sentence(f'| {image} | {{}} and {{}} | {{}} |'),
+            lambda f: (f['primary_hand'], f['installer_hand'], f['assembly']))
+
+
 # Each image's sentences: the document, the sentence, and its figures
 # from the report's, in the sentence's order.  A report's figures are
 # keyed primary_ and installer_ agree, skipped, known, failed, user and
@@ -125,9 +132,7 @@ CHECKS = {
          lambda f: (f['thunk'],)),
         (REWRITE, sentence('| assembly (`check-decompiled`) | {} routines in'),
          lambda f: (f['assembly'],)),
-        (SUMMARY, sentence('of the installer it unpacks into RAM, {} and {}, was'),
-         lambda f: (f['primary_hand'], f['installer_hand'])),
-        (SUMMARY, sentence('The {} routines that are not C'), lambda f: (f['assembly'],)),
+        summary_row('Z3805A 3543B'),
         (README, sentence('all {} routines, in'), lambda f: (f['assembly'],)),
         (README, sentence("this gives {} functions, {} the primary's and {} the installer's, "
                           "and every one but the {} thunks decompiles"),
@@ -171,6 +176,7 @@ CHECKS = {
             "by hand, and {} of either is the decompiler's reading"),
          lambda f: (f['primary_hand'], f['installer_hand'],
                     word(f['primary_reading'] + f['installer_reading']))),
+        summary_row('58503A 3704'),
         (REWRITE, sentence(
             "(its \"The hand-written C\"), {} of the primary's and {} of the installer's, {} "
             "left as the decompiler's reading"),
@@ -198,6 +204,7 @@ CHECKS = {
          lambda f: (f['primary_hand'], f['installer_hand'], word(f['primary_reading']))),
         (DOCUMENT_Z3801A, sentence('| `check-decompiled` | {} routines in'),
          lambda f: (f['assembly'],)),
+        summary_row('Z3801A 3543'),
         (REWRITE, sentence(
             "has its C functions written by hand too, the primary's {} and the installer's {}, "
             "{} left as the decompiler's reading"),

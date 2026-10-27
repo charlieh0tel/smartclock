@@ -118,8 +118,9 @@ The 58503A's 3704 is read whole as C too, its C begun as the
 Z3805A's, and its writing by hand under way: 1005 of the primary's C
 functions and 215 of the installer's are written by hand, and 415 and
 33 remain the decompiler's reading, which compiles and agrees with the
-image as it stands.  All are held to the same checks: of the primary's functions 1415 agree and 5 differ for the
-firmware's own reasons, and the installer's 247 agree, one the harness
+image as it stands.  All are held to the same checks: of the
+primary's functions 1415 agree and 5 differ for the firmware's own
+reasons, and the installer's 247 agree, one the harness
 cannot run; its console sessions agree, 8 of 8.  What it has that the
 Z3805A does not, the front panel among it:
 [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md).

@@ -23,13 +23,15 @@ this says what each is and where.
 
 ## Scope
 
-- Hand-written: 1318 of the primary's functions and 236 of the
+- Hand-written: 1318 of the primary's functions and 237 of the
   installer's (`third_party/firmware/images/z3805a-3543b.bin`), a file to a
   module.  Kept as the image's instructions, reassembled and checked
   byte for byte: 474 routines -- the pSOS kernel's, the pForth
   kernel's 183, the exception entries, the soft-float library's
-  register routines.  Left as the decompiler's: 12 thunks, and one
-  unreferenced `rts` in the installer.
+  register routines.  Left as the decompiler's: 12 thunks, each a
+  branch Ghidra takes for one.  No C is left as the decompiler's; the
+  last, `installer_cpu_register_test`, an unreferenced `rts` the three
+  images share, is `common/`'s.
 - Not buildable or flashable.  The C is compiled as one translation
   unit with the export, and the installer's copies share static bodies
   with the primary's through headers, which the real installer, alone

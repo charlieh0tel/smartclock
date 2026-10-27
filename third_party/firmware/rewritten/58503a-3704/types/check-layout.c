@@ -451,9 +451,9 @@ CHECK_FIELD(gps_state, channel_count, 0x1013e0 - 0x100e50);
 CHECK_FIELD(gps_state, field_592, 0x1013e2 - 0x100e50);
 CHECK_FIELD(gps_state, tracking_log, 0x594);
 CHECK_FIELD(gps_state, tracking_log_active, 0x595);
-CHECK_FIELD(gps_state, field_596, 0x596);
-CHECK_FIELD(gps_state, field_5a2, 0x5a2);
-CHECK_FIELD(gps_state, field_5a6, 0x5a6);
+CHECK_FIELD(gps_state, track_words, 0x596);
+CHECK_FIELD(gps_state, channel_word, 0x5a2);
+CHECK_FIELD(gps_state, channel_word_lowest, 0x5a6);
 
 /* The 58503A 3704's loop state at 0x102476, memset(&pll, 0, 1000) by
  * pll_init (0x475ac), each field where its code addresses it: the hold

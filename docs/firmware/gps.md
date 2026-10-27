@@ -407,6 +407,185 @@ command times out or is rejected, fails and every 20 s posts the
 next query of `command_monitor_queries` (3704 list `0x523d0`: `Cj`,
 step `0x4d`, then the queries of `Aa` to `Cg`) until one is answered.
 
+## Channel mode and signal strength
+
+`@@Ba` and `@@Ea` give each channel a satellite ID, a tracking mode, a
+signal strength and a status byte (VPCommands p. 72, p. 126), kept as
+`gps.status.channels` (`oncore_channel_status`).  The modes:
+
+| Mode | VPCommands |
+| ---- | ---------- |
+| 0 | Code Search |
+| 1 | Code Acquire |
+| 2 | AGC Set |
+| 3 | Freq Acquire |
+| 4 | Bit Sync Detect |
+| 5 | Message Sync Detect |
+| 6 | Satellite Time Available |
+| 7 | Ephemeris Acquire |
+| 8 | Avail for Position |
+
+`channels_reset` (3704 `0x501fc`, Z3805A `0x4f18c`, Z3801A `0x4f14a`)
+sets every mode to 0: in the Z380x when a `@@Ba` comes outside
+position-fix mode, in the 58503A from `command_monitor` while the fix
+mode is idle, `@@Ba` is not fresh or the 1PPS check is off.
+
+**Position.**  A channel counts only at mode 8.
+`channel_position_satellite` (3704 `0x50182`, Z3805A `0x4f118`,
+Z3801A `0x4f0d6`) gives a channel's satellite when its mode is 8, its
+ID a valid GPS or pseudolite ID, and `@@Ba` received: in the 58503A,
+fresh (`GPS_STATUS_FRESH`, not stale); in the Z380x,
+`gps.status_received` set, which the status monitor clears only when
+it fails.  Else 0.  VPCommands p. 70 lets a satellite be used for
+position in modes 5 to 8 once its ephemeris is in; the firmware takes 8
+alone.  Its users:
+
+- `satellites_in_use` (3704 `0x50302`, Z3805A `0x4f28e`, Z3801A
+  `0x4f24c`): the used sets and counts, so `:GPS:SATellite:TRACking?`
+  and `:COUNt?` (`common/scpi_source_gpsystem.c`), the screen's
+  tracked list, the first-satellite event (`pll_stages.c`) and the
+  58503A front panel's `N TRACKED` (`front_panel_satellites`,
+  `0x528be`).
+- `satellite_used_for_position` (3704 `0x501ce`, Z3805A `0x4f162`):
+  the `@@Ce` corrections' mean (`oncore_corrections_message`) and the
+  `*` by a used satellite on the Time RAIM page
+  (`gps_print_time_raim`).
+- Reference qualification: at least one channel at mode 8, in
+  position-fix mode, or the GPS reference is not tracking
+  (`gps_receiver_status_update`, Z3805A `0x4b168`;
+  `gps_receiver_status_update_58503a`, 3704 `0x4b8a2`).
+
+**The status screen.**  `satellite_sets_build` (3704 `0x498a2`) puts
+each tracked satellite in a band by its channel's mode,
+`screen_band_add` (3704 `0x4991e` to `0x4994a`, Z3805A `0x494f0` to
+`0x4951a`, Z3801A `0x494ae` to `0x494d8`), in each image's
+`screen.c`; the mode is compared signed, as an `int8_t`.  The bands
+are kept only for satellites tracked and not used for position, and
+`satellite_status` (`common/screen.c`) marks those cells by them, in
+`format_satellite_cell` (3704 `0x49eb8`):
+
+| Mode | Cell |
+| ---- | ---- |
+| 0, or negative (128 to 255) | no band: elevation and azimuth, as for a used one |
+| 1 to 4 | `Acq   ` |
+| 5, 6 | `Acq . ` |
+| 7, 8 | `Acq ..` |
+
+A mode of 9 to 127 would show `Acq ..`.  A used satellite, at mode 8,
+shows its elevation and azimuth.
+
+**The 58503A's tracking log.**  With `:DIAGnostic:GPSystem:TRACking:LOG`
+on, the 58503A logs each track lost or resumed to the event log
+(`gps_log_track_change`, `0x4dc5c`) as `Track lost    [SY] %08X %08X`
+and the like, the bracket the reference state left, the two longs
+packed channel words, from `gps_receiver_status_update_58503a`
+(`0x4bb5c` to `0x4bc16`).  The Z380x have no such log.  Three fields
+of `gps`, all in `gps_receiver.c`:
+
+- `gps.track_words[3]` (`gps + 0x596`, `0x1013e6`), packed by
+  `gps_track_words_pack` (`0x4da70`) at each update that leaves the
+  reference valid, assessing or clearing.  10 bits a channel from the
+  top of `[0]`, run on across the longs, 80 bits for eight channels:
+  - 5 bits of satellite, 32 packed as 10;
+  - 3 bits of mode: 0 stays 0, 1 and 2 become 1, 3 to 8 become 2 to 7;
+  - 2 bits of signal strength (below).
+- `gps.channel_word` (`gps + 0x5a2`), packed by
+  `gps_channel_word_pack` (`0x4db52`) when a track is lost: per
+  channel from the top, 2 bits of mode (`gps_receiver_mode_bits`: 0
+  is 0, 1 to 4 is 1, 5 is 2, 6 to 8 is 3), then 2 of strength.
+- `gps.channel_word_lowest` (`gps + 0x5a6`, 16 bits): each channel's
+  lowest 2-bit mode since the loss, 2 bits a channel from the top, set
+  to `0xffff` at the loss and lowered at each update while the track is
+  out (`gps_channel_word_lowest`, `0x4dbe8`).
+
+`Track lost` logs `track_words[0]` and `[1]`, as the last good update
+packed them: channels 1 to 6 and the top 4 bits of channel 7's
+satellite.  `Track resumed` ORs `channel_word_lowest` into the low half
+of `track_words[2]`, just packed, so channels 7 and 8 now (less those
+4 bits) over the lowest modes, and logs it with `channel_word`, the
+channels at the loss.  Nothing else reads the three fields: a scan of
+the ROM for their displacements from `gps` and their absolute
+addresses finds only these routines and `0x4bbb2` to `0x4bc0a`, with
+the usual caveat for a stepped pointer.  So they reach no SCPI query,
+console word or screen but through the event log, where
+`:DIAGnostic:LOG:READ?` prints them in hex.
+
+**Signal strength.**  VPCommands gives it as 0 to 255, "number
+proportional to SNR", with no scale (p. 72, and p. 126 for `@@Ea`); it
+is meaningless at mode 0 (p. 70).  The firmware prints it raw, without
+units: the screen's `SS` column for used satellites (`format_level`,
+`common/screen.c`; 3704 `0x49e86`), the console's `CHN SVID MODE SS
+STATUS` table (`gps_print_status`, 3704 `0x49472`, Z3805A `0x49054`)
+and `abr_stat`'s `gs:` line (`gps_debug_status`, 3704 `0x49636`).  The only arithmetic
+is the 58503A's 2-bit bucket for the tracking log,
+`gps_receiver_strength_bits` (inline in each packer): 0 up to 30, 1 up
+to 60, 2 up to 120, else 3, each cut point double the last.  The C
+calls the cut points `WEAK`, `FAIR` and `GOOD`; the names are ours, not
+HP's.
+
+### The scale against C/N0
+
+For a healthy VP engine of either model, the B4121 in the 58503A or
+the B1121 in the Z3805A:
+
+    C/N0 ≈ 20·log10(SS) + 3 dB-Hz, ±2 dB
+
+The reasoning is inference:
+
+1. SS is the engine's own SNR estimate, taken after its front end.  A
+   deaf front end lowers SS for the same sky but does not change what
+   an SS value means.
+2. The engine drops a channel at a fixed SS, a constant of its
+   tracking loop.
+3. Motorola's tracking threshold is −143 dBm (Synergy, VP Oncore
+   Engineering Notes Archive, SSLLC, 14 JUL 02, §3,
+   <https://synergy-gps.com/wp-content/uploads/2018/11/vponcoreengnotesarchive.pdf>),
+   about 29 ± 1 dB-Hz against −174 dBm/Hz with an assumed noise figure
+   of 1.5 to 2.5 dB.
+4. Both bench units stop tracking near SS 20 (58503A 12 to 22, Z3805A
+   18 to 20), so K ≈ 29 − 26 ≈ 3.
+5. The full scale agrees: SS 255 is about 51 dB-Hz, about the
+   strongest signal a good antenna gives.
+
+The two models share the scale: paired, the slope is 1.05 in log-log,
+and both stop at about the same SS; a different scale would put the
+Z3805A's cutoff near SS 6.  The successor UT Plus Oncore's note (§5,
+Testing, <https://synergy-gps.com/wp-content/uploads/2018/11/ut-engg-notes.pdf>)
+calls the Position/Status/Data message's signal strength "C/No" and
+takes a 2 dB difference between receivers as significant.  Trimble's
+AMU has the same form, C/N0 ≈ 20·log10(AMU) + 23.5 to 27
+(<https://www.febo.com/pipermail/time-nuts/2010-February/044972.html>).
+
+So a healthy unit on a good antenna reads SS about 20 at its tracking
+cutoff and 100 to 200 overhead, about 43 to 49 dB-Hz, and the
+firmware's cut points, SS 30, 60 and 120, are about 32.5, 38.6 and
+44.6 dB-Hz: 6 dB a doubling.
+
+**The measurement**, the 2026-10-03 run on the bench, not a tool's
+output.  The 58503A and a u-blox NEO-M8T shared one antenna through a
+splitter for 24 h
+([`bench-sky-2026-10-03.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/bench-sky-2026-10-03.html)),
+with C/N0 in dB-Hz as the NEO-M8T reports it.  A quantile match, not a
+paired fit: the u-blox's per-satellite data was lost, so its per-band
+counts and the 58503A's tracked shares give the C/N0 distribution of
+the satellites the 58503A tracked, and its logged SS was matched to it
+quantile by quantile at the band edges, 30 to 45 dB-Hz, taking SS to
+rise monotonically with C/N0.
+
+- The exponent: SS is proportional to amplitude.  Fitted free, n =
+  2.09 (amplitude 2, power 1; 1.9 to 2.3 realistic); the Z3805A,
+  fitted the same way, 1.98.  A power model (RMS 2.7 dB, residuals
+  trending) and one linear in dB (residuals curved) were rejected.
+- The bench 58503A: K = 3.5, ±0.5 dB systematic and about ±1 dB per
+  satellite-minute, within error of healthy.  It peaked at SS 148 of
+  255, so no clipping.
+- The bench Z3805A, against the 58503A on the same antenna, same
+  minute and satellite, 4105 pairs: about 11 dB (10.5 to 10.9) lower
+  despite its 20 dB LNA, K = 14.4, about 11 dB short of healthy.  That
+  unit has lost sensitivity.
+- The NEO-M8T's own C/N0 calibration and integer rounding add ±1 to
+  2 dB to any comparison against it.
+
 ## Emulating the engine
 
 What an engine in a Z380x or 58503A must do, from the above:
@@ -450,7 +629,8 @@ What an engine in a Z380x or 58503A must do, from the above:
 - **Keep state.**  The firmware takes fix mode from `@@Cg` and position
   hold from `@@At` as the engine reports them.  Keep `@@Ba`/`@@Ea`
   time advancing, and at least one channel with a satellite in mode 8,
-  available for position (p. 72), for the reference to qualify.
+  available for position (p. 72), for the reference to qualify
+  ("Channel mode and signal strength").
 - **Time RAIM.**  Send `Bn` or `En` at the rate asked, with the on byte
   and the solution and Time RAIM statuses as wanted; the rest is shown
   and not used.

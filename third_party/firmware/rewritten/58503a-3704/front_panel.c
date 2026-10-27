@@ -819,16 +819,18 @@ void front_panel_startup(void) {
   uint8_t hold = 0;
   bool armed = false;
   /* The image compares the first pass's suffix with a byte of its frame
-   * nothing set (0x52fae); the C takes it for no suffix's. */
-  pll_powerup_suffix previous = (pll_powerup_suffix)-1;
+   * nothing set (0x52fae); the C takes it for a change. */
+  bool first = true;
+  pll_powerup_suffix previous = PLL_POWERUP_SUFFIX_NONE;
 
   while (pll_mode() != PLL_MODE_LOCKED) {
     const pll_powerup_suffix suffix = pll_powerup_suffix_index();
     bool refresh =
         (uint8_t)psos_wait_v(FRONT_PANEL_PPS_EVENT, 0,
                              FRONT_PANEL_PPS_WAIT_TICKS, NULL) == 0 ||
-        suffix != previous;
+        first || suffix != previous;
 
+    first = false;
     previous = suffix;
     if (armed && key != FRONT_PANEL_ALT && key != FRONT_PANEL_SHIFT) {
       key = FRONT_PANEL_NO_KEY;

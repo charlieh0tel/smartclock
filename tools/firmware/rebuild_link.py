@@ -96,6 +96,11 @@ WORD_LONG = "wl"
 # takes an address error (MC68331UM, 4.4.4).
 ACCESS_ALIGNMENT = 2
 NOT_ACCESSES = ("lea", "pea", "jsr", "jmp", "movepw", "movepl")
+# objdump's heading of a section, and a mark past the last
+SECTION_HEADING = re.compile(r"^Disassembly of section (\S+):$")
+SECTION_HEADING_END = "\0"
+# A switch's jump through its table of offsets (code_listing).
+SWITCH_JUMP = re.compile(r"\tjmp %pc@\(([0-9a-f]+) <[^>]*>,%d\d:w\)")
 # The C compiled again with no function inlined, each function in a
 # frame of its own alone: where a frame's objects lie, and so their
 # parity, changes with what is inlined into it, and a link that calls
@@ -143,6 +148,79 @@ def disassembly(path: str, section: str | None = None) -> str:
     return run(TOOLS + "objdump", "-d", "--no-show-raw-insn", *selected, path)
 
 
+def code_listing(path: str, section: str | None = None) -> str:
+    """disassembly's listing with each switch's table of offsets left
+    out, and the code after a table disassembled again from the table's
+    end where objdump, reading the table as code, ran past it.  gcc's
+    switch is a movew and a jmp through %pc@(TABLE,%dN:w), its table
+    words from TABLE, each an offset from it to a case: the table ends
+    at the nearest case."""
+    data = {found.name: found for found in sections(open(path, "rb").read())}
+    lines, name, listing = [], section, []
+    for line in disassembly(path, section).splitlines() + [SECTION_HEADING_END]:
+        heading = SECTION_HEADING.match(line)
+        if heading or line == SECTION_HEADING_END:
+            if name in data:
+                lines += without_tables(path, name, data[name], listing)
+            name, listing = (heading.group(1) if heading else None), []
+            continue
+        listing.append(line)
+    return "\n".join(lines)
+
+
+def without_tables(path: str, name: str, section: Section, listing: list[str]) -> list[str]:
+    """One section's listing, code_listing's way."""
+    done: set[int] = set()
+    while True:
+        table = next((found for found in tables(listing, section) if found[0] not in done), None)
+        if table is None:
+            return listing
+        start, end = table
+        done.add(start)
+        starts = {int(found.group(1), 16) for found in map(INSTRUCTION.match, listing) if found}
+        heads = [int(line.split()[0], 16) for line in listing if FUNCTION.match(line)]
+        stop = min([head for head in heads if head > start], default=section.address + len(section.data))
+        again = []
+        if end not in starts and end < stop:
+            again = [line for line in run(TOOLS + "objdump", "-d", "--no-show-raw-insn", "-j", name,
+                                          f"--start-address={end:#x}", f"--stop-address={stop:#x}",
+                                          path).splitlines() if INSTRUCTION.match(line)]
+        else:
+            stop = end
+        at = next((i for i, line in enumerate(listing) if in_range(line, start, stop)), len(listing))
+        listing = [line for line in listing[:at] if not in_range(line, start, stop)] + again + [
+            line for line in listing[at:] if not in_range(line, start, stop)]
+
+
+def in_range(line: str, start: int, end: int) -> bool:
+    """Whether a listing's instruction line lies from start up to end."""
+    found = INSTRUCTION.match(line)
+    return bool(found) and not FUNCTION.match(line) and start <= int(found.group(1), 16) < end
+
+
+def tables(listing: list[str], section: Section) -> list[tuple[int, int]]:
+    """Each switch's table in a listing, its start and end (code_listing)."""
+    found = []
+    for line in listing:
+        dispatch = SWITCH_JUMP.search(line)
+        if not dispatch:
+            continue
+        start = int(dispatch.group(1), 16)
+        at, end = start, None
+        while end is None or at < end:
+            offset = at - section.address
+            if offset + 2 > len(section.data):
+                break
+            entry = struct.unpack_from(">h", section.data, offset)[0]
+            if entry <= 0:
+                break
+            end = start + entry if end is None else min(end, start + entry)
+            at += 2
+        if end is not None:
+            found.append((start, end))
+    return found
+
+
 def misaligned(listing: str) -> list[str]:
     """The word and long accesses at an odd offset from the frame or
     stack pointer, both even, in objdump's listing, each as its function
@@ -170,8 +248,8 @@ def misaligned_c(c_path: str, cflags: list[str], work: str, elf_path: str) -> li
     and in its C compiled again with NO_INLINE."""
     no_inline = work + "/c-no-inline.o"
     compile_c(c_path, [*cflags, NO_INLINE], work + "/c.c", no_inline)
-    return misaligned(disassembly(elf_path, REBUILT_SECTION)) + [
-        f"{access} ({NO_INLINE})" for access in misaligned(disassembly(no_inline))]
+    return misaligned(code_listing(elf_path, REBUILT_SECTION)) + [
+        f"{access} ({NO_INLINE})" for access in misaligned(code_listing(no_inline))]
 
 
 def script(pieces: list[str], image_names: dict[str, int]) -> str:

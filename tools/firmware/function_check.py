@@ -1419,6 +1419,8 @@ PLL_CASES = 2000
 DEBUG_ENABLED = Preset("debug_enabled", (0, 1))
 FLOAT_CONTROLS = (0, 0, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x0080, 0x3E80)
 LOG_CURSORS = (0x101D52, 0x101D66, 0x101D7A)
+# The Z3801A 3543's, at its log_write_page's entries (0x101d4c, +4).
+LOG_CURSORS_Z3801A = (0x101D50, 0x101D64, 0x101D78)
 LOCK_EXCHANGES = (0x6B000010, 0x6B000010, 0)
 SCI_FLOWS = (0, 0x20, 0x80, 0xA0)
 STRAGGLER_STATES = {
@@ -1485,6 +1487,14 @@ STATES = {
     # root_task's choice of the SCPI task or the pForth console (0x131ca)
     "root_task": States(presets=(Preset("nv_settings.pforth_at_startup", (0, 1)),)),
     **STRAGGLER_STATES,
+}
+# Another image's own States in place of STATES' of the same name, each
+# preset's values that image's.
+IMAGE_STATES = {
+    "z3801a-3543": {
+        name: States(presets=(Preset("log_cursor", LOG_CURSORS_Z3801A), Preset("log_mutex.exchange", LOCK_EXCHANGES)))
+        for name in ("log_write", "log_event")
+    },
 }
 # The functions whose cases find no task by name (harness.IDENT_NOT_FOUND),
 # by the generated cases that do so, the others finding one: those that
@@ -1860,15 +1870,25 @@ OTHERS_OVERFLOW = Known(
 # the EEPROM's (0x400d40, 64 bytes each), and nowhere else: the format,
 # the image's text in each, does not (log.c).
 LOG_ENTRY_ARGUMENTS = [at for entry in range(LOG_ENTRIES) for argument in entry_argument_offsets(entry) for at in argument]
-LOG_PAGES = [0x101D4E, 0x101D94] + [EEPROM_BASE + at for at in page_offsets()]
-LOG_FILL = "|".join(
-    f"{page + at:x}" for page in LOG_PAGES for at in [*LOG_PAGE_CHECKSUM, *LOG_ENTRY_ARGUMENTS]
-)
-LOG_EVENT_FILL = Known(
-    "log_event's entry keeps log_event's own stack as its arguments, each copy's (0x31a0a)",
-    rf"(?:RAM|EEPROM) differs from (?:{LOG_FILL})"
-    rf"|effect \d+ write of \w+ to ({LOG_FILL}), image's write of \w+ to \1",
-)
+
+
+def log_event_fill(pages: list[int], log_event: int) -> Known:
+    """LOG_EVENT_FILL for an image whose RAM pages, log_write_page and
+    log_page_buffer, are at pages, and whose log_event pushes its format
+    at log_event."""
+    fill = "|".join(
+        f"{page + at:x}"
+        for page in pages + [EEPROM_BASE + at for at in page_offsets()]
+        for at in [*LOG_PAGE_CHECKSUM, *LOG_ENTRY_ARGUMENTS]
+    )
+    return Known(
+        f"log_event's entry keeps log_event's own stack as its arguments, each copy's ({log_event:#x})",
+        rf"(?:RAM|EEPROM) differs from (?:{fill})"
+        rf"|effect \d+ write of \w+ to ({fill}), image's write of \w+ to \1",
+    )
+
+
+LOG_EVENT_FILL = log_event_fill([0x101D4E, 0x101D94], 0x31A0A)
 # The image the tables of this file were written for, whose ROM their
 # addresses are: another image's function check runs every case with
 # them but KNOWN's differences, which are its failures until a wave
@@ -1896,8 +1916,29 @@ SESSION_SHARE_LINE = (
     r"trap #4 service 4 (?P<registers>[^,]*)data (?P<head>(?:[0-9a-f]{2})*?)(?:3[0-9]|20)+6b4220(?:3[0-9]|2d|20)+"
     r"(?P<tail>2520(?:[0-9a-f]{2})*)"
 )
+# The Z3801A 3543's, the Z3805A's own in its code: os_report_processes
+# holds "%s"'s address in D5 (0x16470); gps_debug_status clears the
+# byte below an empty part (0x49342); satellite_status_list overflows
+# its list (0x4981c), the image's blank entries running to the end of
+# RAM at 0x4999c; and log_event pushes only its format (0x30842), its
+# RAM pages at log_write_page (0x101d4c) and log_page_buffer (0x101d92).
+D5_SHARE_Z3801A = (
+    "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16470)"
+)
 IMAGE_KNOWN = {
     BASE_IMAGE: KNOWN,
+    "z3801a-3543": {
+        **{name: Known(D5_SHARE_Z3801A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
+        "gps_debug_status": Known(
+            "gps_debug_status clears the byte below an empty part, its saved A4's lowest (0x49342)",
+            EMPTY_PART.outcome,
+        ),
+        "satellite_status_list": Known(
+            "satellite_status_list overflows its 12 satellites on more, each copy's frame its own (0x4981c)",
+            r"stopped differently: image Invalid memory write \(UC_ERR_WRITE_UNMAPPED\) of 110000 at 4999c, gcc .*",
+        ),
+        "log_event": log_event_fill([0x101D4C, 0x101D92], 0x30842),
+    },
     "58503a-3704": {
         **{name: Known(D5_SHARE_58503A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
         "scpi_interpret": Known(
@@ -1965,6 +2006,14 @@ ADC_OVEN_CURRENT = 6
 WARM_OVEN = {f"adc_monitors[{ADC_OVEN}].valid": 1, f"adc_monitors[{ADC_OVEN}].value": -3.0}
 OVEN_CHECK_CASES = [{PRESETS: {"pll.stage": stage}} for stage in PLL_CHECK_STAGES]
 IMAGE_GIVEN_CASES = {
+    # the Z3801A 3543's eight zero bytes and return_zero for
+    # scpi_format_resolution_array_record's records (ARRAY_RECORD_KINDS):
+    # the status presets' tables (0x2e674) and 0x2899e
+    "z3801a-3543": {
+        "scpi_format_resolution_array_record": [
+            {1: struct.pack(">bBII", kind, 0, 0x2E674, 0x2899E)} for kind in ARRAY_RECORD_KINDS
+        ],
+    },
     "58503a-3704": {
         "hmon_check_pll_stage": OVEN_CHECK_CASES,
         "hmon_channel_step": [
@@ -2266,13 +2315,12 @@ def give_input_port(m: Machine, function: Function, values: list[bytes], port: i
 
 
 def cases(
-    m: Machine, function: Function, linked_symbols: dict[str, int], given_cases: dict[str, list]
+    m: Machine, function: Function, linked_symbols: dict[str, int], given_cases: dict[str, list], states: States
 ) -> list[tuple[str, int, dict[int, int | float | bytes]]]:
     """Each case's description, the generated case it starts from and the
     arguments given_cases, GIVEN_CASES with the image's IMAGE_GIVEN_CASES,
     gives it."""
     own = given_cases.get(function.name, [])
-    states = STATES.get(function.name, States())
     return (
         [(f"case {case}", case, {}) for case in range(CASES)]
         + [(f"given case {i}", i % CASES, values) for i, values in enumerate(own)]
@@ -2393,8 +2441,8 @@ class Context:
     Preset target's address and size, the runnable functions, by name,
     for a Hook's prototype, the functions that run in a task in user
     mode, only so and in both modes (task_context), each case's
-    StackDepth so far, the image's SET_UP_REQUESTS (BASE_IMAGE) and its
-    given cases (cases)."""
+    StackDepth so far, the image's SET_UP_REQUESTS (BASE_IMAGE), its
+    given cases (cases) and its States, STATES with its IMAGE_STATES."""
 
     linked_symbols: dict[str, int]
     located: dict[str, tuple[int, int]]
@@ -2404,6 +2452,7 @@ class Context:
     depths: list[StackDepth]
     set_up_requests: dict[str, bytes | tuple[bytes, ...]]
     given_cases: dict[str, list]
+    states: dict[str, States]
 
 
 def install_hooks(m: Machine, types: Types, states: States, context: Context, drawn: list[Drawn]) -> list[int]:
@@ -2437,7 +2486,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
     """Yields (description, outcome) for each case: outcome empty if gcc's
     copy agrees with the image's, else each thing that differs."""
     linked_symbols = context.linked_symbols
-    states = STATES.get(function.name, States())
+    states = context.states.get(function.name, States())
     drawn: list[Drawn] = []
     handles = install_hooks(m, types, states, context, drawn)
     counter = COUNTED_LOOPS.get(function.name)
@@ -2506,7 +2555,7 @@ def check_cases(
     """check's cases, with its hooks in place, each drawing its States
     into drawn."""
     linked_symbols = context.linked_symbols
-    for ordinal, (description, case, values_given) in enumerate(cases(m, function, context.linked_symbols, context.given_cases)):
+    for ordinal, (description, case, values_given) in enumerate(cases(m, function, context.linked_symbols, context.given_cases, states)):
         in_task = function.name in context.in_task or function.name in context.both_modes and ordinal % 2 == 0
         m.starting_status = TASK_STATUS if in_task else SUPERVISOR
         values_given = dict(values_given)
@@ -2656,6 +2705,7 @@ def main() -> int:
     base = image_name(image_path) == BASE_IMAGE
     known = IMAGE_KNOWN.get(image_name(image_path), {})
     given_cases = {**GIVEN_CASES, **IMAGE_GIVEN_CASES.get(image_name(image_path), {})}
+    states = {**STATES, **IMAGE_STATES.get(image_name(image_path), {})}
     set_up_requests = SET_UP_REQUESTS if base else IMAGE_SET_UP_REQUESTS.get(image_name(image_path), {})
     for profile in image_profiles(image_path, image_bytes):
         machine = rebuilt_machine(
@@ -2665,7 +2715,9 @@ def main() -> int:
         runnable, unrunnable = functions(c, types, conventions, profile.overlay)
         in_task, both_modes = task_context(c, conventions, {root_function(machine, located, conventions)})
         by_name = {function.name: function for function in runnable}
-        context = Context(linked_symbols, located, by_name, in_task, both_modes, [], set_up_requests, given_cases)
+        context = Context(
+            linked_symbols, located, by_name, in_task, both_modes, [], set_up_requests, given_cases, states
+        )
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         modes = {"user mode alone": 0, "both modes": 0}
         condition_codes_compared = 0

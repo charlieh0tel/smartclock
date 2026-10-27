@@ -125,12 +125,6 @@ void nv_slot_erase(uint8_t slot) {
   }
 }
 
-/* Erases both NV register slots; the clear_nv word's (0x3281a). */
-void clear_nv(void) {
-  nv_slot_erase(0);
-  nv_slot_erase(1);
-}
-
 /* Clears the NV settings, makes the battery-backed RAM's checksum good
  * with its restore flag clear, so that system_init does not restore it,
  * and restarts through trap #12 (docs/firmware/restart.md) (0x45c92). */

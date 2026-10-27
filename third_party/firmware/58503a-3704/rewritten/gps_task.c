@@ -7,14 +7,6 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
-/* Idles the task, resets the response framing and empties the request
- * ring (0x4c97e). */
-void gps_link_reset(void) {
-  gps_task_state = GPS_PROCESS_TASK_IDLE;
-  gps_response_reset();
-  request_ring_clear();
-}
-
 /* Fills gps_request_step's arguments for @@Bn, the Time RAIM setup:
  * each second, the algorithm on or off and its alarm limit as set for
  * position hold or not, and the 1PPS on all the time (VPCommands.pdf,

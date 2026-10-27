@@ -250,7 +250,11 @@ first function written by hand starts its file (`boot.c`, `cpu.c`,
 `leds.c`, `pps.c`, `timers.c`).  What a group of
 them shares, from the file they were split from, is in a header named
 for it (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
-`scpi.h`), keeping that file's prefix.
+`scpi.h`), keeping that file's prefix.  A file several images share is in
+`third_party/firmware/common/` under the same name and folder
+([`rewrite.md`, "Shared C"](rewrite.md#shared-c)); a header split
+between the two keeps its name in both, the image's holding what is
+its own (`records.h`'s tag and firmware revision).
 
 The installer's copies of the primary's functions (`installer::` in
 the names file, by their twins' names prefixed `installer_`) are

@@ -1,0 +1,866 @@
+# The name of each function's result, which the exporter gives the local
+# variable a call's result is assigned to (SmartClockExportC.java,
+# resultVariables): function, the result's name, a note.  Shared by the
+# images, whose names files name their functions alike.
+get_uptime	uptime	seconds since the clock started (clock.uptime)
+sqrt	root
+float_multiply	product
+double_multiply	product
+float_divide	quotient
+double_divide	quotient
+float_add	sum
+double_add	sum
+float_subtract	difference
+double_subtract	difference
+# 0x30000 to 0x33fff: the EEPROM, its lock and records, the NV register, the logs (records.c)
+record_checksum	checksum	a record's byte sum and its complement
+lifetime_record_read	valid	1 when the record's checksum holds
+lifetime_record_write	written	1 when the EEPROM holds the record
+calibration_block_read	valid	true when the block's checksum holds
+save_calibration_block	saved	1 unless the EEPROM write failed
+parameter_record_read	valid	1 when the record's checksum holds
+save_parameter_record	written	true unless the EEPROM write failed
+eeprom_lock	locked	0 when the lock is held, else 1 or request_x's error
+eeprom_write_byte	written	true when the byte reads back
+eeprom_write_page	written	true when the bytes read back
+eeprom_write	written	1 unless a page's write failed
+log_page_checksum	checksum	an event log page's byte sum and its complement
+log_page_write	status	0, or 0xfffffffe when the EEPROM write failed
+log_page_read	status	0, or 0xff when the page's checksum fails
+sign_extend_bits	extended	the value sign-extended to a long
+log_erase	status	log_page_write's status
+log_erase_locked	status	log_erase's, or mutex_lock's error
+log_erase_checked	status	log_erase's, 0xff for another count, or mutex_lock's error
+log_entry_total	entries	the event log's entry count
+log_init	error	mutex_create's, mutex_lock's or mutex_unlock's error
+log_read	error	0, or mutex_lock's error
+log_write	status	log_append's, or mutex_lock's error
+log_event	status	log_write's, 0xfd for an unknown code
+log_page_free_entry	entry	the page's first entry with no format, or 0
+log_flush	status	log_page_write's status
+log_append	status	log_flush's, 0xfc when the log is full
+nv_checksum	checksum	an NV register record's byte sum and its complement
+nv_record_differs	differs	nonzero when the records differ but in sequence
+nv_save	saved	nonzero unless the EEPROM write failed
+nv_slot_valid	invalid	0 when slot nv_slot's record is good
+nv_load_slot	loaded	1 when slot nv_slot's record was good and loaded
+identification_record_read	valid	1 when the record's checksum holds
+identification_record_write	written	1 when the EEPROM holds the record
+reset_record_checksum	checksum	a reset-cause record's byte sum and its complement
+reset_record_valid	valid	1 when the record's checksum holds
+log_clear	failed	1 when a record's erasure failed
+log_count	count	the reset-cause log's entry count
+log_entry_text	clamped	1 when the number was clamped or the entry is unused
+reset_record_write	failed	1 when the log is full or the write failed
+# The C library, 0x5e000 to 0x61fff (libc.md); sqrt is above
+float_raise	raised	the routine's result in D0:D1, a double
+abs	magnitude
+atoi	value
+div	quotient_remainder	quotient in the high word, remainder in the low
+ldiv	quotient_remainder	quotient in the high word, remainder in the low
+labs	magnitude
+memcmp	difference	the first differing bytes', as signed
+memcpy	destination
+memset	destination
+rand	random_value
+strcat	destination
+strchr	found	null when absent
+strncmp	difference
+strncpy	destination
+toupper	upper
+next_decimal_digit	digit	'0' plus the remainder
+doprnt	length	the characters written
+sprintf	length	the characters written
+sprintf_put	written	the count copied, 0 for an element size other than 1
+vsprintf	length	the characters written
+fabs	magnitude
+frexp	mantissa	in [0.5, 1)
+log	logarithm
+modf	fraction
+double_is_integer	integral	whether an integer
+double_truncate_sixteenths	truncated
+pow	power
+# The drivers, 0x1d000 to 0x24fff (rewritten/, the devices' files)
+gp_port_select	port_bits	the selection shifted to GP port bits 2 to 4
+duartb_putc_polled	ready	SR_TXRDY, the status bit it waited on
+drtb_puts	sent	the characters the interrupt sent
+drtb_getc	character	the character read
+drtb_gets	count	the characters read
+console_write	length	the length written
+console_read	length	the length read
+console_write_polled	count	the characters written
+drtb_try_lock_write	busy	another task holds the write lock
+drtb_release_for_timecode	released	the console's device was closed
+drta_send_message	refused	1 when the caller is not the GPS task
+duarta_rx_pending	pending	the receive ring holds a byte
+drta_get_byte	byte	the byte read
+duarta_isr	overrun	SR_OVERRUN from the status register, in D0's low byte
+duartb_isr	overrun	SR_OVERRUN from the status register
+debug_sprintf	count	vsprintf's count, 0 with debug output off
+debug_write	count	the characters written, 0 with debug output off
+debug_printf_polled	count	the characters written, 0 with debug output off
+adc_read	reading	the ADC's reply shifted down 2
+read_adc_temp	temperature
+read_adc_5v	volts
+read_adc_doven	volts
+read_adc_oven	volts
+read_adc_p15v	volts
+read_adc_m15v	volts
+read_adc_osc_curr	current
+read_adc_ant_curr	current
+sci_putc_polled	data	the word written to SCDR
+sci_puts	sent	the characters the interrupt sent
+sci_getc	character	the character read
+sci_gets	count	the characters read
+sci_port_write	length	the length written
+sci_puts_polled	count	the characters written
+qspi_queue_setup	unknown_device	1 for a device it does not know
+spoo_task_create	error	the kernel's error, or 1 for a spool task already there
+spoo_run	result	1 when run at once, else send_x's error; 0 for no function
+deferred_vprintf	count	vsprintf's count, -1 with no room
+fpga_program	programmed
+fpga_verify_first	matches
+fpga_verify_odd	matches
+fpga_verify_even	matches
+fpga_verify_chip	matches
+fpga_verify	matches
+fpga_load_test	passed
+monitor_out_of_range	out_of_range	past the limit
+adc_average	average	the monitor's value, or the channel's default
+double_oven_warmed_up	warm
+oven_warmed_up	warm
+efc_clamp	clamped	the EFC clamped to 0 to 1048560
+gps_pps_check	checked	0 when the monitor could not check
+internal_pps_check	checked	0 when the monitor could not check
+# The clock and calendar, the primary's 0x10000 to 0x15fff.
+mutex_create	status	mutex_init's: 0 or the kernel's error
+mutex_lock	status	mutex_acquire's: 0 or the kernel's error
+mutex_unlock	status	mutex_release's: 0 or the kernel's error
+mutex_owner	owner	the task holding a mutex, at its +8
+idle_count	idle	idle loops in the last second
+clk_do	entry	the clock entry queued, or NULL
+leap_event_schedule_gps	entry	the clock entry queued, or NULL
+leap_event_schedule_utc	entry	the clock entry queued, or NULL
+leap_event_schedule	entry	the clock entry queued, or NULL
+klok_cancel	status	0, the mutex's error, -2 not on the list or -3 not in the pool
+klok_find	entry	the first clock entry of a class, or NULL
+klok_entry_state	state	0 on the clock list, 1 on the free list, -1 on neither
+klok_task_create	status	0 or the first error
+list_unlink	status	0, or -2 for an item not on the list
+klok_take_pending	loops	the idle loops counted since the last call
+is_leap_year	leap	1 for a leap year
+day_of_year	day	1 to 366
+days_to_date	date	year << 16 | month << 8 | day
+date_to_days	days	a Modified Julian Day
+date_to_mjd	days	a Modified Julian Day, of an Oncore date
+days_in_month	days	28 to 31
+date_normalize	date	the date with its overflows carried
+oncore_date_unpack	oncore_date	month << 24 | day << 16 | year
+oncore_date_pack	date	year << 16 | month << 8 | day
+hms_to_seconds	seconds	since midnight
+time_to_seconds	seconds	since midnight
+time_packed_to_seconds	seconds	since midnight
+seconds_to_hms	time	hour << 16 | minute << 8 | second
+gps_seconds	seconds	since the GPS epoch, 1980-01-06
+leap_gps_time	leap_seconds	the pending leap second's GPS seconds, or 0
+datetime_compare	order	negative, 0 or positive, by days then seconds
+leap_opportunity_date	date	the last day of the GPS date's quarter
+leap_second_near	near	1 in a quarter's last 14 seconds
+get_clock_date	date	clock.date
+get_clock_time	time	clock.time
+get_gps_date	gps_date	clock.gps_date
+get_gps_time	gps_time	clock.gps_time
+get_date_time	not_set	1 while clock.set is clear, the clock not set since power-up
+get_gps_datetime	not_set	1 while clock.set is clear
+time_valid	clock_set	clock.set: the clock has been set since power-up
+get_gps_utc_offset	offset_valid	clock.gps_utc_offset_valid
+tcode_checksum	checksum	the time code's characters' sum
+tcode_request	released	drtb_release_for_timecode's, 0 for a request refused
+tfom_code	tfom_digit	the time code's t, 0 to 9
+tfom_table_index	exponent	the decimal exponent of the TFOM's magnitude
+exception_name	name	the exception's text
+exception_hook_get	hook	the running task's exception hook, or the global one
+exception_hook_set_task	status	0
+int_abs	magnitude
+int_clamp	clamped
+crc16_with_sum	crc	~sum << 24 | sum << 16 | crc
+round_shift_right	rounded
+round_divide	quotient	rounded half away from zero
+double_round_to_long	rounded
+power_of_ten_double	power
+power_of_ten_float	power
+random_dither	dither	a small signed value
+task_set_priority	old_priority
+pps_init	status	0 or the kernel's error
+pps_interrupt_stop	status	0, 4 with no exchange, or the kernel's error
+pps_wait_time	status	0 or the kernel's error
+stack_measure	status	0
+enter_supervisor_mode	sr	the status register as it was
+set_interrupt_mask	sr	the status register as it was
+# The SCPI engine, 0x25000 to 0x29fff (rewritten/scpi_*.c)
+scpi_bcd_to_double	converted	Z set when the number does not fit a double
+scpi_scale_by_power_of_ten	scaled
+scpi_double_multiply	product
+scpi_double_multiply_short	product
+scpi_number_to_double	error	0, or -1 when the number does not fit a double
+scpi_number_to_bcd	error	0, or -1 for an exponent beyond 309
+scpi_real_to_text	error	0, or 1 when the text cannot be made
+scpi_parse_string	error	always 0
+scpi_parse_boolean	error	0, or a negative condition
+scpi_parse_boolean_number	error	0, or a negative condition
+scpi_parse_choice	error	0, or a negative condition
+scpi_parse_short	error	0, or a negative condition
+scpi_parse_unsigned_short	error	0, or a negative condition
+scpi_parse_long	error	0, or a negative condition
+scpi_parse_unsigned_long	error	0, or a negative condition
+scpi_parse_float	error	0, or a negative condition
+scpi_parse_double	error	0, or a negative condition
+scpi_number_to_short	error	0, or -11 out of range
+scpi_number_to_unsigned_short	error	0, or -11 out of range
+scpi_number_to_long	error	0, or -11 out of range
+scpi_number_to_unsigned_long	error	0, or -11 out of range
+scpi_format_text	error	0, or a negative condition
+scpi_format_string	error	0, or a negative condition
+scpi_format_boolean	error	0, or a negative condition
+scpi_format_counted_text	error	-90, the response's end
+scpi_format_choice	error	0, or a negative condition
+scpi_unsigned_to_digits	error	0, or -40 when the digits do not fit
+scpi_format_long	error	0, or a negative condition
+scpi_format_short	error	0, or a negative condition
+scpi_format_unsigned_long	error	0, or a negative condition
+scpi_format_unsigned_short	error	0, or a negative condition
+scpi_format_block	error	0, or a negative condition
+scpi_format_double_array	error	0, or a negative condition
+scpi_format_short_array	error	0, or a negative condition
+scpi_format_resolution_array	error	0, or a negative condition
+scpi_format_array	error	0, or a negative condition
+scpi_format_resolution_array_record	error	0, or a negative condition
+scpi_format_double	error	0, or scpi_real_to_text's
+scpi_format_float	error	0, or scpi_real_to_text's
+scpi_format_double_precision	error	0, or scpi_real_to_text's
+scpi_format_double_resolution	error	0, or scpi_real_to_text's
+scpi_format_float_resolution	error	0, or scpi_real_to_text's
+scpi_context_init	error	always 0
+scpi_parse_message_unit	error	0, a negative condition, or -100 and -101 for an empty unit and SCPI_PORT_SKIPPED_END
+scpi_scan_token	kind	the token's kind, or a negative condition
+scpi_scan_number	kind	14, a decimal number's kind, or a negative condition
+scpi_scan_exponent	error	0, or a negative condition
+scpi_char_upper	upper	a letter in upper case, else the character
+scpi_parameter_match	error	0, or a negative condition
+scpi_parameters_finish	error	0, or -37 for a required parameter left out
+scpi_suffix_compare_tail	matched	the characters of the name matched, 0 unless all
+scpi_multiplier_exponent	exponent	the multiplier's power of ten, -128 for none
+scpi_match_suffix	unit	the unit's index plus one, 0 for none
+scpi_apply_suffix	error	0, or a negative condition
+scpi_keyword_compare	order	-1, 0 or 1 as the token sorts before, is, or sorts after the keyword
+scpi_node_find	node	NULL for none
+scpi_node_find_with_defaults	node	0 for none
+scpi_node_find_numbered	node	0 for none
+scpi_header_resolve	error	0, or a negative condition
+scpi_header_step	error	0, or a negative condition
+scpi_common_header_resolve	error	0, or a negative condition
+scpi_trg_defined	node	_TRG's, NULL for none
+status_create	error	0, or -56 for no memory
+status_set_bit	result	1, or error_queue_push's for an error
+status_clear_bit	result	as status_set_bit's
+condition_is_command_error	command_error	1 for a command error's condition
+status_clear_events	error	always 0
+error_queue_create	error	0, or -56 for no memory
+error_queue_push	full	1 when the queue was full or overflows
+error_message_lookup	message	NULL for none
+# services/status's setup, presets, reports and summary (rewritten/status.c)
+status_init	error	0, or status_create's
+status_preset_register	accepted	1, or 0 for a source other than 0
+status_report	error	always 0
+status_hardware_condition	condition	:STATus:OPERation:HARDware's condition word
+scpi_interpret	error
+scpi_call_handler	error	the handler's, or -56 for no room for the response
+scpi_format_response	error	0, or a formatter's
+arena_alloc	start	the room's address, 0 when the arena does not hold it
+arena_remaining	next	the arena's next free byte; the bytes left through the first argument
+arena_take	start	the buffer given
+arena_current	next	the arena's next free byte
+scpi_check_range	in_range	1 within the bounds
+scpi_long_resolve_bound	error	always 0
+scpi_numeric_get	value
+scpi_numeric_get_double	value
+return_byte	value
+long_identity	value
+float_identity	value
+return_zero	zero
+scpi_query_failed	error	always 0
+rtcm_supported	supported	0
+scpi_session_init	port	the console port's object
+scpi_console_port	port	the console port's object, 0x29e18
+scpi_console_return_zero	zero
+scpi_console_read	count	the characters read
+console_port_read	character	or above 0xff an end
+status_sre_get	enable	the service request enable
+status_byte_get	summary	the Status Byte
+scpi_message_done	error	always 0
+scpi_input_closed	error	always 0
+scpi_task_create	error	-1 when the task exists, else the kernel's
+# The time-interval counter and its interpolator (ti.c)
+counter_load_registers	zero	what the loop leaves in D0, 0
+counter_wait_ready	ready	1 when the FPGA's status bit came
+counter_offset_apply	count	the count less its preset, 0x555555
+counter_read_raw	count	the counter's 100 ns ticks less its preset
+interpolator_read	reading	the complement of FPGA register 0x10's byte
+interpolator_prepare	prepared	always 1
+interpolator_measure	reading	the interpolator's reading at a reference
+interpolator_measure_low	reading	the low reference's reading
+interpolator_measure_high	reading	the high reference's reading
+interpolator_calibrate	calibrated	1 when the references read 200 apart, or 199 or 201
+interpolator_selftest_calibrate	calibrated	1 when a calibration took, else interpolator_verify's
+interval_next_reading	valid	interval_reading.valid before the rearm
+# The FPGA's registers and self-tests, 0x17000 to 0x18fff and 0x40000 to 0x40fff (rewritten/fpga.c)
+fpga_read	value	the register addressed
+fpga_read_byte	value	two registers' low nibbles
+fpga_bit_test	set	any of the bits set
+fpga_read_seconds	seconds	register 0's high nibble, modulo 16
+selftest_fpga_with_lamp	failures	selftest.fpga
+# A double parameter's validate, 0x32596 (rewritten/pllc.c)
+clamp_double_to_step_and_limits	steps	the clamped value in steps, rounded half away from zero
+# The kernel's binding and records, platform/os (rewritten/os.c)
+psos_start	error	0, or the service in the high byte and the kernel's error in the low
+psos_ident	error	0, or the service and the kernel's error
+psos_my_pid	task	the running task's id
+psos_delete	error	0, or the service and the kernel's error
+psos_suspend	error	0, or the service and the kernel's error
+psos_resume	error	0, or the service and the kernel's error
+psos_priority	error	0, or the service and the kernel's error
+psos_pause	error	0, or the service and the kernel's error
+psos_mode	error	0, or the service and the kernel's error
+psos_service_8	error	0, or the service and the kernel's error
+psos_free_segment	error	0, or the service and the kernel's error
+psos_assign_segment	error	0, or the service and the kernel's error
+psos_reclaim_segment	error	0, or the service and the kernel's error
+psos_create_partition	error	0, or the service and the kernel's error
+psos_delete_partition	error	0, or the service and the kernel's error
+psos_get_block	error	0, or the service and the kernel's error
+psos_return_block	error	0, or the service and the kernel's error
+psos_create_x	error	0, or the service and the kernel's error
+psos_service_21	error	0, or the service and the kernel's error
+psos_delete_x	error	0, or the service and the kernel's error
+psos_send_x	error	0, or the service and the kernel's error
+psos_jam_x	error	0, or the service and the kernel's error
+psos_broadcast_x	error	0, or the service and the kernel's error
+psos_request_x	error	0, or the service and the kernel's error
+psos_signal_v	error	0, or the service and the kernel's error
+psos_wait_v	error	0, or the service and the kernel's error
+psos_get_v	error	0, or the service and the kernel's error
+psos_announce_tick	error	0, or the service and the kernel's error
+psos_get_time	error	0, or the service and the kernel's error
+psos_set_time	error	0, or the service and the kernel's error
+psos_io_init	error	0, or the function in the high byte and the device's error in the low
+psos_io_open	error	0, or the function and the device's error
+psos_io_read	error	0, or the function and the device's error
+psos_io_write	error	0, or the function and the device's error
+memory_allocate	segment	service 8's segment
+exchange_id_valid	valid	1 for an exchange's id
+task_id_valid	valid	1 for a task's id
+task_table_build	count	the tasks in task_table
+task_name	name	task_name_text, or null
+object_name	name	object_name_text, or null
+task_status_name	status	the report's four characters
+region_segment_containing	segment	the task's segment holding the address, or null
+ready_queue_position	position	from 0, or -1 off the ready queue
+timer_ticks_until	ticks	the delay list's ticks up to the task
+# pllc's settings server and the descriptors' validators, 0x31ff8 to 0x433fc (rewritten/pllc.c)
+pll_scpi_needs_loop	needs_loop	1 when the request goes to the GPS before it is stored
+pll_scpi_send_to_loop	sent	1 when gpsx_exchange took the request
+scpi_param_saved_in_nv	saved	the descriptor's NV register flag
+scpi_param_saved_in_record	saved	the descriptor's EEPROM record flag
+clamp_float	clamped	1 when the value was clamped
+round_float_to_step	rounded	the nearest multiple of the step
+clamp_to_limits	clamped	the value on its step, within its limits
+float_max_of	larger
+float_min_of	smaller
+load_long_unit_step	step	the step record's own step
+load_long	step	the step record's own step
+# devices and services, but services/status (rewritten/: ti.c, leds.c, calendar.c, clock.c)
+dac_search_bisect	dac	the DAC value the search ends on
+dac_search_step	dac	the DAC value the steps end on
+hdac_nudge	hdac	the low reference DAC, moved a step or not
+leds_update	lamps	the byte written to the lamp latch
+time_zone_split	sign	-1 if the hours or minutes were negative, else 1
+uptime_elapsed	reached	the uptime has reached the start
+# platform: arithmetic, boot, debug (arithmetic.c, boot.c, debug.c)
+isqrt16	root	the square root rounded to nearest
+rotate_left	rotated
+count_bits	count	the set bits
+bytes_to_long	next	the byte after the four read
+bytes_equal_n	equal	1 if the lengths and bytes match
+int64_add	sum
+int64_negate	negated
+int64_add_long	sum
+int64_divide	quotient	or the dividend's low long on overflow
+uint64_divide	quotient	or the dividend's low long on overflow
+int64_to_double	value
+double_to_int64	value
+float_abs	magnitude
+float_absolute_on_stack	magnitude
+double_abs	magnitude
+float_table_index	power	the table entry past the bisection's, less the offset
+boot_unpack_installer	status	0, 1 without the S, 2 at a bad record
+primary_unpack_records	status	as boot_unpack_installer's
+boot_memcpy	destination
+debug_is_enabled	enabled	debug_enabled
+# The :SOURce:ROSCillator, :SAMPle and :SYSTem handlers (rewritten/scpi_source_roscillator.c, scpi_sample.c, scpi_system.c)
+scpi_set_SAMPle_ACTion	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_BARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_BARR	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_BOOLean	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_BOOLean	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_DARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_DARR	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_DOUBle	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_DOUBle	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_FARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_FARR	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_FLOat	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_FLOat	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_IARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_IARR	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_IMULtiple	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_IMULtiple	error	0, or a status condition for scpi_call_handler
+scpi_set_SAMPle_INTeger	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_INTeger	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_TARR	error	0, or a status condition for scpi_call_handler
+scpi_query_SAMPle_TOGGle	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_INITiate	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_HOLDover_WAITing	error	0, or a status condition for scpi_call_handler
+scpi_set_SOURce_ROSCillator_LIMit_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_LIMit_THReshold	error	0, or a status condition for scpi_call_handler
+scpi_query_SOURce_ROSCillator_STATe	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_ADDRess	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_FDUPlex	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_FDUPlex	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_PRESet	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_PROMpt	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_PROMpt	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_BITS	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_LANGuage	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_LANGuage	error	0, or a status condition for scpi_call_handler
+scpi_set_SYSTem_PRESet	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_PRINt	error	0, or a status condition for scpi_call_handler
+scpi_query_SYSTem_PRINt_LENGth	error	0, or a status condition for scpi_call_handler
+# The :ROBin parser, 0x2e730 to 0x2eba8 (rewritten/scpi_robin.c); the SCPI handlers, called through their nodes only, have no row
+robin_keyword_match	match	STATUS_SCPI_INVALID_STRING for none, 0 for a branch, else the code less SCPI_ROBIN_BRANCH
+robin_lookup	error	0, or STATUS_SCPI_INVALID_STRING for a name it does not know
+robin_parse_arguments	error	0, or STATUS_SCPI_INVALID_STRING; a form past 6 gives itself less 6
+robin_parse	error	0, or STATUS_SCPI_INVALID_STRING
+# The :SOURce:GPSystem, :PTIMe, :PULSe, :KENneth and :DOUGlas handlers (rewritten/: scpi_source_gpsystem.c, scpi_source_ptime.c, scpi_source_pulse.c, scpi_kenneth.c, scpi_douglas.c)
+scpi_set_SOURce_GPSystem_ADELay	error	always 0
+scpi_query_SOURce_GPSystem_ADELay	error	always 0
+scpi_set_SOURce_GPSystem_EMANgle	error	always 0
+scpi_query_SOURce_GPSystem_EMANgle	error	always 0
+scpi_set_SOURce_GPSystem_INITial_DATE	error	always 0
+scpi_set_SOURce_GPSystem_INITial_POSition	error	always 0
+scpi_set_SOURce_GPSystem_INITial_TIME	error	always 0
+scpi_set_SOURce_GPSystem_POSition	error	always 0
+scpi_query_SOURce_GPSystem_POSition	error	always 0
+scpi_query_SOURce_GPSystem_POSition_ACTual	error	always 0
+scpi_query_SOURce_GPSystem_POSition_HOLD_LAST	error	always 0
+scpi_query_SOURce_GPSystem_POSition_HOLD_STATe	error	always 0
+scpi_query_SOURce_GPSystem_REFerence_VALid	error	always 0
+scpi_query_SOURce_GPSystem_SATellite_TRACking	error	always 0
+scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt	error	always 0
+scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore	error	always 0
+scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore	error	always 0
+scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL	error	always 0
+scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt	error	always 0
+scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE	error	always 0
+scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe	error	always 0
+scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude	error	always 0
+scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude	error	always 0
+scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt	error	always 0
+scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted	error	always 0
+scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt	error	always 0
+satellite_in_mask	set	the satellite's bit is set
+satellite_mask_add	valid	the number was 1 to 32, and its bit set
+satellite_mask_remove	valid	the number was 1 to 32, and its bit cleared
+satellite_number_valid	valid	1 for 1 to 32
+satellites_in_mask	listed	the satellites listed, or counted
+scpi_query_SOURce_PTIMe_DATE	error	always 0
+scpi_query_SOURce_PTIMe_FFOMerit	error	always 0
+scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated	error	always 0
+scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate	error	always 0
+scpi_query_SOURce_PTIMe_LEAPsecond_DATE	error	always 0
+scpi_query_SOURce_PTIMe_LEAPsecond_DURation	error	always 0
+scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime	error	always 0
+scpi_query_SOURce_PTIMe_LEAPsecond_STATe	error	always 0
+scpi_set_SOURce_PTIMe_PPS_EDGE	error	always 0
+scpi_query_SOURce_PTIMe_PPS_EDGE	error	always 0
+scpi_set_SOURce_PTIMe_SYNChronization_IMMediate	error	always 0
+scpi_query_SOURce_PTIMe_TCODe	error	always 0
+scpi_set_SOURce_PTIMe_TCODe_FORMat	error	always 0
+scpi_query_SOURce_PTIMe_TCODe_FORMat	error	always 0
+scpi_query_SOURce_PTIMe_TIME	error	always 0
+scpi_query_SOURce_PTIMe_TIME_STRing	error	always 0
+scpi_query_SOURce_PTIMe_TINTerval	error	always 0
+scpi_set_SOURce_PTIMe_TZONe	error	always 0
+scpi_query_SOURce_PTIMe_TZONe	error	always 0
+scpi_set_SOURce_PULSe_CONTinuous_PERiod	error	always 0
+scpi_query_SOURce_PULSe_CONTinuous_PERiod	error	always 0
+scpi_set_SOURce_PULSe_CONTinuous_STATe	error	always 0
+scpi_query_SOURce_PULSe_CONTinuous_STATe	error	always 0
+scpi_set_SOURce_PULSe_REFerence_EDGE	error	always 0
+scpi_query_SOURce_PULSe_REFerence_EDGE	error	always 0
+scpi_set_SOURce_PULSe_STARt_DATE	error	always 0
+scpi_query_SOURce_PULSe_STARt_DATE	error	always 0
+scpi_set_SOURce_PULSe_STARt_TIME	error	always 0
+scpi_query_SOURce_PULSe_STARt_TIME	error	always 0
+scpi_query_KENneth_PREDicted	error	always 0
+scpi_set_KENneth_PREDicted_DURation	error	always 0
+scpi_query_KENneth_PREDicted_DURation	error	always 0
+scpi_query_KENneth_PRESent	error	always 0
+scpi_set_DOUGlas_DURation	error	always 0
+scpi_query_DOUGlas_DURation	error	always 0
+scpi_query_DOUGlas_PROGress	error	always 0
+scpi_set_DOUGlas_STATe	error	always 0
+scpi_query_DOUGlas_STATe	error	always 0
+scpi_set_DOUGlas_STATe_POWerup	error	always 0
+scpi_query_DOUGlas_STATe_POWerup	error	always 0
+# The SCPI :DIAGnostic, :STATus and common-command handlers (rewritten/scpi_diagnostic.c, scpi_status.c, scpi_common.c)
+scpi_query_DIAGnostic_GPSystem_POSition_DEGRees	error	always 0
+scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe	error	always 0
+scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe	error	always 0
+scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	error	always 0
+scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	error	always 0
+scpi_query_DIAGnostic_GPSystem_POSition_MSEConds	error	always 0
+scpi_query_DIAGnostic_GPSystem_TIME	error	always 0
+scpi_set_DIAGnostic_GPSystem_UTC	error	always 0
+scpi_query_DIAGnostic_GPSystem_UTC	error	always 0
+scpi_query_DIAGnostic_IDENtification_DEFault	error	always 0
+scpi_query_DIAGnostic_IDENtification_GPSystem	error	always 0
+scpi_set_DIAGnostic_IDENtification_HARDware	error	always 0
+scpi_set_DIAGnostic_IDENtification_MODel	error	always 0
+scpi_set_DIAGnostic_IDENtification_SERial	error	always 0
+scpi_query_DIAGnostic_LIFetime_COUNt	error	always 0
+scpi_set_DIAGnostic_LOG_CLEar	error	always 0
+scpi_query_DIAGnostic_LOG_COUNt	error	always 0
+scpi_query_DIAGnostic_LOG_READ	error	always 0
+scpi_query_DIAGnostic_LOG_READ_ALL	error	always 0
+scpi_set_DIAGnostic_LOG_WRITe	error	always 0
+scpi_set_DIAGnostic_ME	error	always 0
+scpi_query_DIAGnostic_ME	error	always 0
+scpi_query_DIAGnostic_OS_MEMory	error	always 0
+scpi_query_DIAGnostic_OS_PROCess	error	always 0
+scpi_query_DIAGnostic_PTIMe_TINTerval	error	always 0
+scpi_query_DIAGnostic_ROSCillator_CURRent	error	always 0
+scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute	error	always 0
+scpi_query_DIAGnostic_ROSCillator_EFControl_RELative	error	always 0
+scpi_set_DIAGnostic_ROSCillator_TCOefficient	error	always 0
+scpi_query_DIAGnostic_ROSCillator_TCOefficient	error	always 0
+scpi_set_DIAGnostic_SER1_EGResponse	error	STATUS_SCPI_UNDEFINED_HEADER, -113
+scpi_query_DIAGnostic_SER1_EGResponse	error	always 0
+scpi_set_DIAGnostic_SER1_RESTricted	error	always 0
+scpi_query_DIAGnostic_SER1_RESTricted	error	always 0
+scpi_set_DIAGnostic_SLOG_CLEar	error	always 0
+scpi_set_DIAGnostic_STATus_ERRor	error	always 0
+scpi_set_DIAGnostic_STATus_HAPPening	error	always 0
+scpi_set_DIAGnostic_SYSTem_DOUTput	error	always 0
+scpi_query_DIAGnostic_SYSTem_DOUTput	error	always 0
+scpi_set_DIAGnostic_SYSTem_PSTartup	error	always 0
+scpi_query_DIAGnostic_SYSTem_PSTartup	error	always 0
+scpi_query_DIAGnostic_TEMPerature	error	always 0
+scpi_query_DIAGnostic_TEST	error	always 0
+scpi_query_DIAGnostic_TEST_RESult	error	always 0
+scpi_set_DIAGnostic_TOFFset	error	always 0
+scpi_query_DIAGnostic_TOFFset	error	always 0
+scpi_query_STATus_OPERation_CONDition	error	always 0
+scpi_set_STATus_OPERation_ENABle	error	always 0
+scpi_query_STATus_OPERation_ENABle	error	always 0
+scpi_query_STATus_OPERation_EVENt	error	always 0
+scpi_query_STATus_OPERation_HARDware_CONDition	error	always 0
+scpi_set_STATus_OPERation_HARDware_ENABle	error	always 0
+scpi_query_STATus_OPERation_HARDware_ENABle	error	always 0
+scpi_query_STATus_OPERation_HARDware_EVENt	error	always 0
+scpi_set_STATus_OPERation_HARDware_NTRansition	error	always 0
+scpi_query_STATus_OPERation_HARDware_NTRansition	error	always 0
+scpi_set_STATus_OPERation_HARDware_PTRansition	error	always 0
+scpi_query_STATus_OPERation_HARDware_PTRansition	error	always 0
+scpi_set_STATus_OPERation_NTRansition	error	always 0
+scpi_query_STATus_OPERation_NTRansition	error	always 0
+scpi_set_STATus_OPERation_PTRansition	error	always 0
+scpi_query_STATus_OPERation_PTRansition	error	always 0
+scpi_set_STATus_PRESet	error	always 0
+scpi_set_STATus_PRESet_ALARm	error	always 0
+scpi_set_STATus_QUEStionable_CONDition_USER	error	always 0
+scpi_set_STATus_QUEStionable_EVENt_USER	error	always 0
+scpi_set_common_CLS	error	always 0
+scpi_set_common_ESE	error	always 0
+scpi_query_common_ESE	error	always 0
+scpi_query_common_ESR	error	always 0
+scpi_query_common_IDN	error	always 0
+scpi_set_common_OPC	error	always 0
+scpi_query_common_OPC	error	always 0
+scpi_set_common_RST	error	always 0
+scpi_set_common_SRE	error	always 0
+scpi_query_common_SRE	error	always 0
+scpi_query_common_STB	error	always 0
+scpi_query_common_TST	error	always 0
+scpi_set_common_WAI	error	always 0
+# The disciplining loop, applications/pll: aging, gps_control, pllp, stages (rewritten/: pll_aging.c, pll_gps_control.c, pllp.c, pll_stages.c)
+fit_linear_halves	failed	always 0
+fit_linear	failed	linear_regression's
+fit_constant	failed	1 when no entry has the weight
+fit_logarithmic	failed	fit_log_search's last
+fit_log_initial	failed	linear_regression's
+fit_log_search	failed	its routines' failures ORed
+fit_log_residuals	failed	linear_regression's
+fit_three_point	failed	1 when the points give no vertex
+linear_regression	failed	1 with two entries or fewer, or all their x the same
+gpsx_send	sent	1 when gpsx_exchange took the request
+gps_ack_received	received	gps_ack_ready
+gps_diag_sequence	done	true once the self-test has run
+pll_check_reference	result	a stage's: 0 running, 1 done, 2 failed
+clock_check_against_gps	matches	1 when the clock's GPS date and time are gps.status's
+pll_mode	mode	the status screen's mode line, 0 none to 5 locked
+pll_powerup_suffix_index	suffix	the power-up mode's suffix, 0 none
+recovery_suffix_index	suffix	the recovery mode's suffix, 0 none
+holdover_waiting_reason	reason	the hold cause holdover waits on, or 0
+leap_ack_pending	pending	1 while the leap second's acknowledgment is asked for or under way
+get_ffom	valid	always 1
+kenneth_present_get	valid	1 in holdover or its recovery
+kenneth_predicted_get	valid	1 from start-up PLL on
+powerup	result	a stage's: 0 running, 1 done, 2 failed (a restart)
+coarse	result	a stage's: 0 running, 1 done, 2 failed
+fine_sync_adjust	steps	the 100 ns steps asked for, 4 for too far, 0 within 100 ns
+sync_perform	synced	1 when it asked for a sync
+startup_pll	result	a stage's: 0 running, 1 done, 2 failed
+pll_normal	result	a stage's: 0 running, 2 failed
+holdover	result	a stage's: 0 running, 1 done
+holdover_recovery	result	a stage's: 0 running, 1 done, 2 failed
+holdover_correction_valid	valid	1 when the TI's slope leaves the EFC in range
+holdover_ti_max	ti_max	holdover_steering.ti_largest
+holdover_within_limit	within_limit	0 when the TI has reached the hold limit
+# The numeric validators and step routines
+clamp_to_step_and_limits	clamped	the unsigned value on its step, within its limits
+mask_to_limits	masked	the value's bits within the mask
+clamp_float_to_step_and_limits	rounded	the clamped value on its step
+clamp_float_to_step_double	steps	the clamped value in steps, rounded half away from zero
+clamp_double_to_limits	clamped	the value within its limits
+load_double	step	the step record's double
+load_double_param	step	the step record's double
+# The self-tests, applications/selftest (rewritten/selftest.c)
+selftest_aborted	aborted	selftest's abort flag set
+selftest_may_report	may_report	the first pass, or the test not aborted
+selftest_abort_wait	was_running	1 when a test was running, and it has stopped
+shift_right_36	carry	the bit carried from the first word into the second
+qspi_hex_dac_test	passed	1 when both patterns read back
+qspi_adc_test	passed	1 when the ADC's reply checks
+qspi_efc_test	passed	true when both patterns read back
+selftest_cpu_result	failures	selftest.cpu
+selftest_ram_result	failures	selftest.ram, selftest_ram_failure bits
+selftest_eeprom_result	failures	selftest.eeprom
+selftest_uart_with_lamp	failures	selftest.uart, selftest_uart_failure bits
+selftest_qspi_with_lamp	failures	selftest.qspi, selftest_qspi_failure bits
+selftest_interpolator_with_lamp	failures	selftest.interpolator
+selftest_internal_reference_with_lamp	failures	selftest.internal_reference
+selftest_gps_with_lamp	failures	selftest.gps, selftest_gps_failure bits
+selftest_power_with_lamp	failures	selftest.power, selftest_power_failure bits
+lamp_test_command	failures	always 0
+rom_lane_checksum	checksum	both byte lanes' sums, high bytes then low
+# The GPS engine: its requests, Oncore framing and decoding, and task
+request_kind_valid	valid	1 for a sender the task takes requests from
+gps_request_class	class	gps_code_class: message, script, step or invalid
+request_ring_empty	empty	1 if the request ring holds none
+request_ring_full	full	1 if the request ring has no room
+request_ring_put	put	0 if the ring was full
+request_ring_get	got	0 if the ring was empty
+request_ring_unput	got	0 if the ring was empty
+request_ring_contains	waiting	true if one from the sender runs or waits
+request_ring_newest_replaceable	replaceable	1 if the newest is a monitor's not yet sent
+gps_request_post	posted	1 if sent to gpsx_exchange
+gps_script_lookup	script	the script's steps, gps_script_none for another code
+gps_message_supported	known	0 for @@Bn before the receiver ID
+gps_response_lookup	found	0 for an ID not in oncore_messages
+oncore_checksum	checksum	the XOR of the bytes
+gps_receive	framing	gps_receive_state, GPS_FRAMING_COMPLETE for a whole message
+gps_response_timed_out	timed_out	1 once the message's timeout has passed
+gps_count_response	delivered	1 if the result reached its sender
+gps_message_to_text	length	the text's
+long_array_get	argument	the long at the index
+long_array_get_byte	next	where the next encoder writes
+long_array_get_word	next	where the next encoder writes
+long_array_get_long	next	where the next encoder writes
+word_copy_advance	next	the cursor past the word
+word_copy_14_bits	next	the cursor past the word
+oncore_decode_fields	next	the cursor past the fields read
+oncore_position_message	next	the cursor past the fields read
+oncore_corrections_message	next	the cursor past the fields read
+long_array_get_long_prefixed	next	where the next encoder writes
+byte_copy_optional	next	the cursor past the byte
+oncore_as_height_decode	next	the cursor past the fields read
+oncore_ai_decode	next	the cursor past the channel and its byte
+oncore_visibility_message	next	the cursor past the fields read
+oncore_dop_message	next	the cursor past the fields read
+oncore_almanac_status_message	next	the cursor past the fields read
+oncore_extension_message	next	the cursor past the fields read
+oncore_traim_message	next	the cursor past the fields read
+oncore_receiver_id_message	next	the cursor past the fields read
+gps_response_decode	next	the cursor past what the decoders read
+gps_request_build	length	the message's; 0 for none, -1 for one the receiver does not take
+gps_response_match	match	whether the response answers the command, GPS_MATCH_ANSWERED if so
+# Wave 3, console: the pForth console's setup and diagnostic words
+pforth_define_word	defined	0, or -1 with no dictionary
+diag_adc_read	reading	the ADC channel's raw byte
+diag_wr_eeprom	written	true when the byte reads back
+# The status screen, applications/screen (rewritten/screen.c)
+satellite_in_set	set	1 if the satellite's bit of the set is set
+satellite_track_class	class	the @@Bb record's satellite_health_class
+satellite_compare	order	-1, 0 or 1, qsort's order of two satellites
+satellite_find	satellite	the satellite's @@Bb record, or NULL
+mark_flag	marked	the flag was set and the number marked
+format_time	valid	the time was one and is printed
+format_date	valid	1 if the date was one and is printed
+bit_is_set	set	the bit of the value is set
+bits_1_to_3_any	failed	any of bits 1 to 3 is set
+bits_4_5_any	failed	bit 4 or 5 is set
+bits_6_7_any	failed	bit 6 or 7 is set
+bits_8_9_any	failed	bit 8 or 9 is set
+status_screen_length	lines	the screen's lines, 23
+
+# wave 3, gps-receiver: the GPS receiver's state and the console's GPS reports
+satellite_id_valid	valid	whether the ID is one of the kind's satellites
+channel_position_satellite	satellite	the channel's satellite when available for position, else 0
+satellite_used_for_position	used	whether a channel uses the satellite for position
+visible_satellites	received	whether @@Bb has come
+satellites_in_use	received	whether @@Ba has come
+position_settable	settable	neither held nor surveyed
+gps_position_get	received	whether @@Ba has come
+gps_time_local_get	received	whether @@Ba has come
+gps_status_alternate	alternate_status	the alternate receiver's status, 0
+survey_progress_percent	surveying	whether a finite survey runs
+survey_progress_text	surveying	whether a finite survey runs
+command_log_add	logged	1
+gps_print_command	printed	0 when the log is empty, else 1
+# Wave 4, os: the remaining I/O stubs (rewritten/os.c)
+psos_io_close	error	0, or the function and the device's error
+psos_io_control	error	0, or the function and the device's error
+# wave 4, pll: the fine stage and its neighbors
+fine	result	a stage's: 0 running, 1 done, 2 failed
+clamp_double	clamped	1 when the value was clamped
+# wave 4, harness: the stack report (rewritten/scpi_diagnostic.c)
+scpi_query_DIAGnostic_OS_STACk	error	always 0
+# the last of the decompiler's: the printf family, float_raise, the parser's loop, setjmp and the stragglers
+printf	length	console_write's length
+setjmp	jumped	0, or the value longjmp returns it with
+int64_compare	order	0 equal, 1 for a below b, -1 above
+double_decimal_exponent_floor	exponent	floor(log10), -30 to 30
+sci_transmit_allowed	allowed	0 while an XOFF holds the SCI
+scpi_parse_text	error	0, or -21 for a NUL inside the text
+duart_input_0_debounced	level	the input bit, 0 or 1
+duart_input_1_debounced	level	the input bit, 0 or 1
+duart_input_2_debounced	level	the input bit, 0 or 1
+# the installer's last 25: its converters' and formatters' copies, its handlers and its flash word programmer (rewritten/installer/)
+installer_scpi_parse_text	error	0, or -21 for a NUL inside the text
+installer_scpi_parse_short	error	0, or a negative condition
+installer_scpi_number_to_short	error	0, or -11 out of range
+installer_scpi_unsigned_to_digits	error	0, or -40 when the digits do not fit
+installer_scpi_format_string	error	always 0
+installer_scpi_format_counted_text	error	-90, the response's end
+installer_scpi_format_long	error	0, or a negative condition
+installer_scpi_format_short	error	0, or a negative condition
+installer_scpi_format_unsigned_long	error	0, or a negative condition
+installer_scpi_match_suffix	unit	the unit's index plus one, 0 for none
+installer_scpi_apply_suffix	error	0, or a negative condition
+installer_status_clear_events	error	always 0
+installer_flash_program_word	error	0, -11 outside 0x10000 to 0x7ffff, -8 at the fifth try
+installer_scpi_set_common_CLS	error	always 0
+installer_scpi_query_common_IDN	error	always 0
+installer_scpi_query_SYSTem_ERRor	error	always 0
+installer_scpi_set_SYSTem_LANGuage	error	-60 for PRIMARY, which ends the session; 0 for INSTALL, else -8
+installer_scpi_query_SYSTem_LANGuage	error	always 0
+installer_scpi_set_DIAGnostic_DOWNload	error	0, -11 for a bad record or address, or the flash's -8
+installer_scpi_set_DIAGnostic_ERASe	error	0, or -8 at the fifth try
+installer_scpi_query_DIAGnostic_ERASe	error	always 0
+installer_scpi_query_DIAGnostic_TEST	error	0, or -8 for a choice past 4
+# the batch that writes every function of the export by hand (2026-10-22)
+psos_version	version	the kernel's version, 0x3341
+installer_psos_version	version	the kernel's version, 0x3341
+exception_hook_enable_per_task	status	always 0
+installer_exception_hook_enable_per_task	status	always 0
+exception_hook_set	was_set	0xff when a hook was set before, else 0
+installer_exception_hook_set	was_set	0xff when a hook was set before, else 0
+exception_hook_clear_task	status	always 0
+installer_exception_hook_clear_task	status	always 0
+current_task_id	task	the running task's id
+installer_current_task_id	task	the running task's id
+atexit	full	1 for NULL or a full table, else 0
+installer_atexit	full	1 for NULL or a full table, else 0
+installer_arena_remaining	next	the arena's next free byte; the bytes left through the first argument
+installer_console_port_read	character	or above 0xff an end
+installer_double_abs	magnitude
+installer_exception_hook_set_task	status	0
+installer_float_absolute_on_stack	magnitude
+installer_mutex_create	status	mutex_init's: 0 or the kernel's error
+installer_mutex_lock	status	mutex_acquire's: 0 or the kernel's error
+installer_mutex_owner	owner	the task holding a mutex, at its +8
+installer_mutex_unlock	status	mutex_release's: 0 or the kernel's error
+installer_psos_assign_segment	error	0, or the service and the kernel's error
+installer_psos_broadcast_x	error	0, or the service and the kernel's error
+installer_psos_create_partition	error	0, or the service and the kernel's error
+installer_psos_delete_partition	error	0, or the service and the kernel's error
+installer_psos_delete_x	error	0, or the service and the kernel's error
+installer_psos_get_block	error	0, or the service and the kernel's error
+installer_psos_get_time	error	0, or the service and the kernel's error
+installer_psos_io_close	error	0, or the function and the device's error
+installer_psos_io_control	error	0, or the function and the device's error
+installer_psos_io_init	error	0, or the function in the high byte and the device's error in the low
+installer_psos_jam_x	error	0, or the service and the kernel's error
+installer_psos_priority	error	0, or the service and the kernel's error
+installer_psos_reclaim_segment	error	0, or the service and the kernel's error
+installer_psos_resume	error	0, or the service and the kernel's error
+installer_psos_return_block	error	0, or the service and the kernel's error
+installer_psos_service_21	error	0, or the service and the kernel's error
+installer_psos_set_time	error	0, or the service and the kernel's error
+installer_psos_suspend	error	0, or the service and the kernel's error
+installer_rotate_left	rotated
+installer_scpi_console_read	count	the characters read
+installer_scpi_console_return_zero	zero
+installer_scpi_format_text	error	0, or a negative condition
+installer_scpi_format_unsigned_short	error	0, or a negative condition
+installer_scpi_keyword_compare	order	-1, 0 or 1 as the token sorts before, is, or sorts after the keyword
+installer_scpi_number_to_long	error	0, or -11 out of range
+installer_scpi_number_to_unsigned_long	error	0, or -11 out of range
+installer_scpi_number_to_unsigned_short	error	0, or -11 out of range
+installer_scpi_parse_long	error	0, or a negative condition
+installer_scpi_parse_string	error	always 0
+installer_scpi_parse_unsigned_long	error	0, or a negative condition
+installer_scpi_parse_unsigned_short	error	0, or a negative condition
+installer_setjmp	jumped	0, or the value longjmp returns it with
+installer_sign_extend_bits	extended	the value sign-extended to a long
+installer_stack_measure	status	0
+installer_status_byte_get	summary	the Status Byte
+installer_status_sre_get	enable	the service request enable
+installer_task_set_priority	old_priority

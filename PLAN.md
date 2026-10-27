@@ -421,18 +421,26 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
 - **Firmware layout**: one folder per image under
   `third_party/firmware/` with everything that image's work is (its
   `smartclock.h`, names files, `rewritten/`, `decompiled/`), image-
-  independent headers in `third_party/firmware/include/`, and its own
+  independent headers in `third_party/firmware/include/`, C several
+  images share in `third_party/firmware/common/`, and its own
   `third_party/firmware/Makefile` that the top Makefile delegates to.
 - **A second image is ported by copying the first's work**, not by
   sharing it from the start: the 58503A's `rewritten/` and
   `smartclock.h` began as copies of the Z3805A's, seeded from
   `tools/firmware/image_diff.py`, and the Z3805A's tree is not touched.
-  Shared functions move to a common folder only if a third image comes.
-  Cost: about 30,000 lines held twice, and a fix to a shared function
-  made in both, in the same commit.
+  A third image is the trigger to share: C that several images run
+  moves to `common/`, but only by the rules in `rewrite.md`, "Shared
+  C": identical or relocated code, identical data layouts, and every
+  sharing image's checks unchanged after each move.  What differs, even
+  slightly, stays per image.  A new image that shares `common/` takes
+  all of it, so a function of it that differs there goes back to every
+  image's own C first (the Z3801A 3543, the third to share, sent back
+  `counter_set_sync`, the `:LED:ALARm:USER` handlers, and the FPGA bit
+  setters with each image's own table).
 - **Per-image tool tables**: what the function check gives an image
   other than the Z3805A 3543B is kept in tables keyed by image or held
-  by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`, ...), each
+  by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`,
+  `IMAGE_GIVEN_CASES`, `IMAGE_STATES`, ...), each
   entry cited in that image's code, never a base entry widened, so a
   port's quirks show as that port's and the Z3805A's figures cannot
   move.  `make check-comment-addresses` makes a copied address show.

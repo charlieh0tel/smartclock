@@ -11047,25 +11047,27 @@ int32_t installer_sprintf(char *s,char *format,...);
 int32_t installer_sprintf_put(char *text,int32_t size,int32_t count,sprintf_output *output);
 int32_t installer_vsprintf(char *s,char *format,void *arg);
 
+#include "../../common/bindings/clock_record.h"
+
+#include "../../common/bindings/kernel.h"
+
+#include "../../common/bindings/mutex.h"
+
+#include "../../common/bindings/pforth.h"
+
+#include "../../common/bindings/scpi_decimal.h"
+
+#include "../../common/bindings/softfloat.h"
+
+#include "../../common/bindings/stack.h"
+
 #include "../rewritten/bindings/clock_record.h"
 
 #include "../rewritten/bindings/drtb.h"
 
-#include "../rewritten/bindings/kernel.h"
-
-#include "../rewritten/bindings/mutex.h"
-
-#include "../rewritten/bindings/pforth.h"
-
 #include "../rewritten/bindings/qspi.h"
 
 #include "../rewritten/bindings/sci_token.h"
-
-#include "../rewritten/bindings/scpi_decimal.h"
-
-#include "../rewritten/bindings/softfloat.h"
-
-#include "../rewritten/bindings/stack.h"
 
 #include "../rewritten/bindings/string_device.h"
 
@@ -55243,49 +55245,251 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 /* installer::0010aaa6 */
 /* installer_vsprintf: rewritten in installer_stdio.c */
 
-#include "../rewritten/clock.h"
+#include "../../common/clock.h"
 
-#include "../rewritten/cpu.h"
+#include "../../common/cpu.h"
+
+#include "../../common/duart.h"
+
+#include "../../common/fpga.h"
+
+#include "../../common/gps.h"
+
+#include "../../common/libc.h"
+
+#include "../../common/monitors.h"
+
+#include "../../common/os.h"
+
+#include "../../common/pll.h"
+
+#include "../../common/pllc.h"
+
+#include "../../common/records.h"
+
+#include "../../common/scpi.h"
+
+#include "../../common/scpi_convert.h"
+
+#include "../../common/scpi_engine.h"
+
+#include "../../common/scpi_format.h"
+
+#include "../../common/scpi_lexer.h"
+
+#include "../../common/scpi_parameters.h"
+
+#include "../../common/scpi_tree.h"
+
+#include "../../common/startup.h"
+
+#include "../../common/status.h"
 
 #include "../rewritten/duart.h"
 
-#include "../rewritten/fpga.h"
-
 #include "../rewritten/gps.h"
 
-#include "../rewritten/libc.h"
-
-#include "../rewritten/monitors.h"
-
-#include "../rewritten/os.h"
-
 #include "../rewritten/pll.h"
-
-#include "../rewritten/pllc.h"
 
 #include "../rewritten/records.h"
 
 #include "../rewritten/scpi.h"
 
-#include "../rewritten/scpi_convert.h"
+#include "../../common/arithmetic.c"
 
-#include "../rewritten/scpi_engine.h"
+#include "../../common/boot.c"
 
-#include "../rewritten/scpi_format.h"
+#include "../../common/calendar.c"
 
-#include "../rewritten/scpi_lexer.h"
+#include "../../common/clock.c"
 
-#include "../rewritten/scpi_parameters.h"
+#include "../../common/console.c"
 
-#include "../rewritten/scpi_tree.h"
+#include "../../common/cpu.c"
 
-#include "../rewritten/startup.h"
+#include "../../common/dac.c"
 
-#include "../rewritten/status.h"
+#include "../../common/debug.c"
+
+#include "../../common/duart.c"
+
+#include "../../common/duarta.c"
+
+#include "../../common/duartb.c"
+
+#include "../../common/eeprom.c"
+
+#include "../../common/fpga.c"
+
+#include "../../common/gps_oncore.c"
+
+#include "../../common/gps_receiver.c"
+
+#include "../../common/gps_reports.c"
+
+#include "../../common/gps_requests.c"
+
+#include "../../common/gps_task.c"
+
+#include "../../common/installer/installer_arithmetic.c"
+
+#include "../../common/installer/installer_cpu.c"
+
+#include "../../common/installer/installer_debug.c"
+
+#include "../../common/installer/installer_duarta.c"
+
+#include "../../common/installer/installer_duartb.c"
+
+#include "../../common/installer/installer_main.c"
+
+#include "../../common/installer/installer_math.c"
+
+#include "../../common/installer/installer_os.c"
+
+#include "../../common/installer/installer_records.c"
+
+#include "../../common/installer/installer_scpi_common.c"
+
+#include "../../common/installer/installer_scpi_convert.c"
+
+#include "../../common/installer/installer_scpi_diagnostic.c"
+
+#include "../../common/installer/installer_scpi_engine.c"
+
+#include "../../common/installer/installer_scpi_format.c"
+
+#include "../../common/installer/installer_scpi_lexer.c"
+
+#include "../../common/installer/installer_scpi_parameters.c"
+
+#include "../../common/installer/installer_scpi_port.c"
+
+#include "../../common/installer/installer_scpi_requests.c"
+
+#include "../../common/installer/installer_scpi_system.c"
+
+#include "../../common/installer/installer_scpi_tree.c"
+
+#include "../../common/installer/installer_spool.c"
+
+#include "../../common/installer/installer_startup.c"
+
+#include "../../common/installer/installer_status.c"
+
+#include "../../common/installer/installer_stdio.c"
+
+#include "../../common/installer/installer_stdlib.c"
+
+#include "../../common/installer/installer_string.c"
+
+#include "../../common/klok.c"
+
+#include "../../common/leap.c"
+
+#include "../../common/log.c"
+
+#include "../../common/math.c"
+
+#include "../../common/monitors.c"
+
+#include "../../common/nv.c"
+
+#include "../../common/os.c"
+
+#include "../../common/pll_aging.c"
+
+#include "../../common/pll_gps_control.c"
+
+#include "../../common/pll_reading.c"
+
+#include "../../common/pll_stages.c"
+
+#include "../../common/pllc.c"
+
+#include "../../common/pllp.c"
+
+#include "../../common/pps.c"
+
+#include "../../common/qspi.c"
+
+#include "../../common/records.c"
+
+#include "../../common/scpi_common.c"
+
+#include "../../common/scpi_convert.c"
+
+#include "../../common/scpi_diagnostic.c"
+
+#include "../../common/scpi_douglas.c"
+
+#include "../../common/scpi_engine.c"
+
+#include "../../common/scpi_format.c"
+
+#include "../../common/scpi_format_data.c"
+
+#include "../../common/scpi_kenneth.c"
+
+#include "../../common/scpi_led.c"
+
+#include "../../common/scpi_lexer.c"
+
+#include "../../common/scpi_misc.c"
+
+#include "../../common/scpi_output.c"
+
+#include "../../common/scpi_parameters.c"
+
+#include "../../common/scpi_port.c"
+
+#include "../../common/scpi_requests.c"
+
+#include "../../common/scpi_robin.c"
+
+#include "../../common/scpi_sense.c"
+
+#include "../../common/scpi_source_gpsystem.c"
+
+#include "../../common/scpi_source_ptime.c"
+
+#include "../../common/scpi_source_pulse.c"
+
+#include "../../common/scpi_source_roscillator.c"
+
+#include "../../common/scpi_status.c"
+
+#include "../../common/scpi_system.c"
+
+#include "../../common/scpi_tree.c"
+
+#include "../../common/scpi_unsupported.c"
+
+#include "../../common/scpi_validators.c"
+
+#include "../../common/screen.c"
+
+#include "../../common/selftest.c"
+
+#include "../../common/spool.c"
+
+#include "../../common/startup.c"
+
+#include "../../common/status.c"
+
+#include "../../common/stdio.c"
+
+#include "../../common/stdlib.c"
+
+#include "../../common/string.c"
+
+#include "../../common/ti.c"
+
+#include "../../common/timecode.c"
+
+#include "../../common/timers.c"
 
 #include "../rewritten/adc.c"
-
-#include "../rewritten/arithmetic.c"
 
 #include "../rewritten/boot.c"
 
@@ -55298,8 +55502,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../rewritten/cpu.c"
 
 #include "../rewritten/dac.c"
-
-#include "../rewritten/debug.c"
 
 #include "../rewritten/duart.c"
 
@@ -55321,11 +55523,7 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../rewritten/gps_task.c"
 
-#include "../rewritten/installer/installer_arithmetic.c"
-
 #include "../rewritten/installer/installer_cpu.c"
-
-#include "../rewritten/installer/installer_debug.c"
 
 #include "../rewritten/installer/installer_duart.c"
 
@@ -55333,49 +55531,23 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../rewritten/installer/installer_duartb.c"
 
-#include "../rewritten/installer/installer_main.c"
-
-#include "../rewritten/installer/installer_math.c"
-
-#include "../rewritten/installer/installer_os.c"
-
 #include "../rewritten/installer/installer_records.c"
 
 #include "../rewritten/installer/installer_scpi_common.c"
-
-#include "../rewritten/installer/installer_scpi_convert.c"
-
-#include "../rewritten/installer/installer_scpi_diagnostic.c"
 
 #include "../rewritten/installer/installer_scpi_engine.c"
 
 #include "../rewritten/installer/installer_scpi_format.c"
 
-#include "../rewritten/installer/installer_scpi_lexer.c"
-
-#include "../rewritten/installer/installer_scpi_parameters.c"
-
 #include "../rewritten/installer/installer_scpi_port.c"
 
-#include "../rewritten/installer/installer_scpi_requests.c"
-
-#include "../rewritten/installer/installer_scpi_system.c"
-
-#include "../rewritten/installer/installer_scpi_tree.c"
-
 #include "../rewritten/installer/installer_scpi_tree_data.c"
-
-#include "../rewritten/installer/installer_spool.c"
 
 #include "../rewritten/installer/installer_startup.c"
 
 #include "../rewritten/installer/installer_status.c"
 
 #include "../rewritten/installer/installer_stdio.c"
-
-#include "../rewritten/installer/installer_stdlib.c"
-
-#include "../rewritten/installer/installer_string.c"
 
 #include "../rewritten/klok.c"
 
@@ -55386,8 +55558,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../rewritten/log.c"
 
 #include "../rewritten/main.c"
-
-#include "../rewritten/math.c"
 
 #include "../rewritten/monitors.c"
 
@@ -55417,8 +55587,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../rewritten/scpi_common.c"
 
-#include "../rewritten/scpi_convert.c"
-
 #include "../rewritten/scpi_diagnostic.c"
 
 #include "../rewritten/scpi_douglas.c"
@@ -55429,27 +55597,17 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../rewritten/scpi_format_data.c"
 
-#include "../rewritten/scpi_kenneth.c"
-
 #include "../rewritten/scpi_led.c"
-
-#include "../rewritten/scpi_lexer.c"
 
 #include "../rewritten/scpi_misc.c"
 
 #include "../rewritten/scpi_output.c"
 
-#include "../rewritten/scpi_parameters.c"
-
 #include "../rewritten/scpi_port.c"
-
-#include "../rewritten/scpi_requests.c"
 
 #include "../rewritten/scpi_robin.c"
 
 #include "../rewritten/scpi_sample.c"
-
-#include "../rewritten/scpi_sense.c"
 
 #include "../rewritten/scpi_source_gpsystem.c"
 
@@ -55463,11 +55621,7 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../rewritten/scpi_system.c"
 
-#include "../rewritten/scpi_tree.c"
-
 #include "../rewritten/scpi_tree_data.c"
-
-#include "../rewritten/scpi_unsupported.c"
 
 #include "../rewritten/scpi_validators.c"
 
@@ -55475,17 +55629,11 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../rewritten/selftest.c"
 
-#include "../rewritten/spool.c"
-
 #include "../rewritten/startup.c"
 
 #include "../rewritten/status.c"
 
 #include "../rewritten/stdio.c"
-
-#include "../rewritten/stdlib.c"
-
-#include "../rewritten/string.c"
 
 #include "../rewritten/ti.c"
 

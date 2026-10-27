@@ -1682,11 +1682,59 @@ INSTALLER_58503A_3704 = InstallerAddresses(
     status_object=0x10ADC0,
     scpi=ScpiObjects(0x107658, 0x1086AA, 0x10867C, INSTALLER_KEYWORDS, INSTALLER_SAMPLE_CALL),
 )
+# The Z3801A 3543's profile (docs/firmware/z3801a-3543.md, "The
+# function check"), each address read from that image's own code: the
+# Z3805A's with no SCI.  psos_config_init (0x50ff6) copies the
+# configuration from 0x511e8 to 0x10261e, and an I/O table of three
+# devices, not four, from 0x516d8 to 0x1025b2: DUART channel B, the QSPI
+# and the console's string device, whose write is drtb_write's
+# (0x1daa0), as the 58503A's.  kernel_init and kernel_create_x are the
+# Z3805A's bytes, 0x2f8 lower (0x159e0, 0x15086).  root_task creates the
+# same three exchanges, passing "gpsx" from the Z3805A's 0x131f7, and
+# calls status_init (0x2e386), which builds status_object (0x102e8a);
+# scpi_task_start sends spoo_exchange (0x103174) scpi_task_create
+# (0x28e92); vsprintf is at 0x60898; scpi_console_port returns 0x28cdc;
+# the trees' root lists are scpi_main_tree (0x52fce) and
+# scpi_common_list (0x52690), as scpi_trees (0x5cfae) holds them;
+# aging_curve is at 0x101fd0 and status_screen_snapshot at 0x10142a;
+# pllc_exchange (0x103680) gives :SAMPle:INTeger's descriptor
+# (0x322e2); and drtb_gets echoes through duartb's +0x50, 0x10310e,
+# which duartb_echo_none (0x1d278) makes echo nothing.  Its installer
+# is the Z3805A's, byte for byte, at the same addresses.
+PRIMARY_Z3801A_3543 = Profile(
+    overlay=None,
+    ram=bytes(RAM_SIZE),
+    code=None,
+    vectors=VECTORS,
+    kernel_tables=((0x511E8, 0x10261E, 0x62), (0x516D8, 0x1025B2, 0x6C)),
+    psos_config=0x10261E,
+    kernel_init=((0x159E0, 0x15B42), (0x15B64, 0x15B72)),
+    kernel_create=(0x15086, 0x150E6),
+    root_exchanges=tuple(ROOT_EXCHANGES),
+    initializers=(0x2E386,),
+    received={
+        0x103174: struct.pack(">5I", 0, 0x28E92, SPOOLED_PRIORITY, 0, 0),
+        0x103680: struct.pack(">IIBBBBII", 0, 0x322E2, 0, 0, 0, 0, 7, 0),
+    },
+    string_devices=frozenset({0, 2}),
+    caller_name=CALLER_NAME,
+    vsprintf=0x60898,
+    buffers=(BUFFER, ALLOCATIONS - BUFFER),
+    status_object=0x102E8A,
+    objects=True,
+    scpi=ScpiObjects(0x28CDC, 0x52FCE, 0x52690, tuple(KEYWORDS), SAMPLE_CALL),
+    variables={"aging_curve_state *": 0x101FD0, "status_snapshot_record *": 0x10142A},
+    scpi_step=0x322E2,
+    console_echo=(0x10310E, 0x1D278),
+    qspi_widths=QSPI_WIDTHS,
+    bounded={},
+)
 # Each image's profiles, its primary's and its installer's addresses, by
 # the image's name, its .bin's and its folder's.
 IMAGE_PROFILES = {
     "z3805a-3543b": (PRIMARY, INSTALLER_ADDRESSES),
     "58503a-3704": (PRIMARY_58503A_3704, INSTALLER_58503A_3704),
+    "z3801a-3543": (PRIMARY_Z3801A_3543, INSTALLER_ADDRESSES),
 }
 
 

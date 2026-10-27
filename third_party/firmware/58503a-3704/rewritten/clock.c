@@ -1,10 +1,8 @@
-/* The clock record, written by hand in place of the decompiler's
- * (docs/firmware/README.md, "Hand-written C"; docs/firmware/modules.md,
- * `services/clock`).  The exported C includes this file after its own,
- * so the types and prototypes it declares are in scope; each function
- * here keeps its generated prototype.  It is the record's
- * initialization, its tick and its readers and setters
- * (docs/firmware/structures.md, "The clock record"). */
+/* clock.c's functions that are this image's own: the rest are
+ * common/clock.c's, the same in every image (docs/firmware/rewrite.md,
+ * "Shared C").  Written by hand in place of the decompiler's
+ * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
+ * prototype. */
 
 /* Whether the clock record's checksum is good: clock_record_sum
  * (0x137d8) sums the bytes of +0x02 to +0x32 of the record at A6 and
@@ -62,13 +60,6 @@ void clock_init(int16_t force) {
   offset_step = 0;
 }
 
-/* Sets the clock's date and time, then the lifetime record's date
- * (0x10b00). */
-void clock_set(time_of_day time, uint32_t date) {
-  set_timedate(date, clock_time_bits(time));
-  lifetime_update(date);
-}
-
 /* Derives the clock's local date and time from its GPS time again and
  * checksums its record, in supervisor mode (0x13a90). */
 void clock_record_refresh(void) {
@@ -77,113 +68,4 @@ void clock_record_refresh(void) {
   clock_record_derive(&clock);
   clock_record_checksum(&clock);
   cpu_sr_write(sr);
-}
-
-/* Sets the GPS-UTC offset, in seconds, and marks it valid, in
- * supervisor mode (0x13cd4). */
-void set_gps_utc_offset(uint16_t seconds) {
-  uint16_t sr = cpu_enter_supervisor();
-
-  clock.gps_utc_offset = seconds;
-  clock.gps_utc_offset_valid = 1;
-  clock_record_checksum(&clock);
-  cpu_sr_write(sr);
-}
-
-/* Advances the clock a second and checksums its record (0x137f6). */
-void clock_tick(void) {
-  clock_record_advance_utc(&clock);
-  clock_record_advance(&clock);
-  clock_record_checksum(&clock);
-}
-
-/* The clock's date, the T2 time code's (0x139e4). */
-uint32_t get_clock_date(void) { return clock.date; }
-
-/* The clock's time, the T2 time code's (0x139ec). */
-uint32_t get_clock_time(void) { return clock_time_bits(clock.time); }
-
-/* The GPS date, with get_gps_time the T1 time code's GPS time (0x139f4). */
-uint32_t get_gps_date(void) { return clock.gps_date; }
-
-/* The GPS time (0x139fc). */
-uint32_t get_gps_time(void) { return clock_time_bits(clock.gps_time); }
-
-/* Seconds since the clock started (0x13a04). */
-uint32_t get_uptime(void) { return clock.uptime; }
-
-/* Whether the uptime has reached a start, and through elapsed the
- * seconds since it; a start in the future, which a restarted clock
- * leaves, is moved to now (0x4b708).  The GPS task's timers use it. */
-bool uptime_elapsed(uint32_t* start, int32_t* elapsed) {
-  uint32_t uptime = get_uptime();
-  uint32_t started = *start;
-
-  if (started <= uptime) {
-    *elapsed = uptime - started;
-  } else {
-    *start = uptime;
-    *elapsed = 0;
-  }
-  return started <= uptime;
-}
-
-/* A time and its date read as one: the time, a single long read, read
- * again after the date until it has not changed, so that the 1PPS
- * interrupt's tick cannot come between them (0x13a1a to 0x13a26). */
-static uint32_t clock_read(const time_of_day* time, const uint32_t* date,
-                           uint32_t* date_read) {
-  const volatile uint32_t* time_bits = (const volatile uint32_t*)time;
-  const volatile uint32_t* date_bits = date;
-  uint32_t bits;
-
-  do {
-    bits = *time_bits;
-    *date_read = *date_bits;
-  } while (bits != *time_bits);
-  return bits;
-}
-
-/* The clock's date and time through pointers, either NULL to skip it; 1
- * unless clock.set (0x13a0c).  :PTIM:DATE? passes the first,
- * :PTIM:TIME? the second. */
-bool get_date_time(uint32_t* date, time_of_day* time) {
-  uint32_t date_read;
-  uint32_t time_read = clock_read(&clock.time, &clock.date, &date_read);
-
-  if (date) {
-    *date = date_read;
-  }
-  if (time) {
-    *time = clock_time_of(time_read);
-  }
-  return clock.set == 0;
-}
-
-/* The same of the GPS date and time (0x13a4e). */
-bool get_gps_datetime(uint32_t* date, time_of_day* time) {
-  uint32_t date_read;
-  uint32_t time_read = clock_read(&clock.gps_time, &clock.gps_date, &date_read);
-
-  if (date) {
-    *date = date_read;
-  }
-  if (time) {
-    *time = clock_time_of(time_read);
-  }
-  return clock.set == 0;
-}
-
-/* Whether the clock has been set, from GPS or by the console, since
- * power-up: clock.set, which set_timedate sets and clock_init clears
- * (0x13ccc). */
-uint8_t time_valid(void) { return clock.set; }
-
-/* Whether the GPS-UTC offset is valid, and the offset through a pointer,
- * NULL to skip it (0x13d00). */
-uint8_t get_gps_utc_offset(int16_t* seconds) {
-  if (seconds) {
-    *seconds = clock.gps_utc_offset;
-  }
-  return clock.gps_utc_offset_valid;
 }

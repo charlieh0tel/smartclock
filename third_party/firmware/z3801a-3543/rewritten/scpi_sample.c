@@ -1,0 +1,309 @@
+/* The SCPI :SAMPle tree (docs/scpi/README.md): its handlers, and the
+ * hooks and actions pllc runs for its settings, written by hand in place
+ * of the decompiler's (docs/firmware/README.md, "Hand-written C";
+ * docs/firmware/modules.md, `applications/scpi/handlers/sample`).  The
+ * exported C includes this file after its own, so the types and
+ * prototypes it declares are in scope; each function here keeps its
+ * generated prototype.
+ *
+ * :SAMPle is a test tree, one node for each kind of parameter, and no
+ * guide documents it.  A handler's parameters are the words its path
+ * adds (an ARRay node's index), then each parameter's kind word and its
+ * value; a number's value is scpi_engine_long_parameter's. */
+
+/* An ARRay node's parameters: its index, the path's word, then its
+ * value. */
+typedef struct scpi_sample_indexed_word {
+  int16_t index;             /* +0x00 */
+  scpi_word_parameter given; /* +0x02 */
+} scpi_sample_indexed_word;
+
+typedef struct scpi_sample_indexed_number {
+  int16_t index;                     /* +0x00 */
+  scpi_engine_long_parameter number; /* +0x02 */
+} scpi_sample_indexed_number;
+
+/* A number in a list of them: its value, then the unit word its
+ * converter stores after it. */
+typedef struct scpi_sample_listed_number {
+  scpi_engine_long_parameter number; /* +0x00 */
+  int16_t unit;                      /* +0x06 */
+} scpi_sample_listed_number;
+
+/* A long in a response, and the resolution word its formatter reads
+ * after it, which these handlers leave as it is. */
+typedef struct scpi_sample_long_response {
+  int32_t value;      /* +0x00 */
+  int16_t resolution; /* +0x04 */
+} scpi_sample_long_response;
+
+_Static_assert(sizeof(scpi_sample_listed_number) == 8,
+               "scpi_sample_listed_number");
+
+_Static_assert(sizeof(scpi_sample_long_response) == 6,
+               "scpi_sample_long_response");
+
+/* :SAMPle:IMULtiple's count of numbers. */
+static const int32_t SCPI_SAMPLE_IMULTIPLE_COUNT = 4;
+
+/* :SAMPle:ACTion: requests the action the number names (0x2d20c). */
+int32_t scpi_set_SAMPle_ACTion(void* parameters, void* response,
+                               scpi_call* call) {
+  scpi_engine_long_parameter* given = parameters;
+  request_source source = return_zero(call->input);
+
+  pllc_request_b(&scpi_action_SAMPle_ACTion, (uint8_t)given->value, source);
+  return 0;
+}
+
+/* :SAMPle:BOOLean: sets the boolean (0x2d23a). */
+int32_t scpi_set_SAMPle_BOOLean(void* parameters, void* response,
+                                scpi_call* call) {
+  scpi_word_parameter* given = parameters;
+  request_source source = return_zero(call->input);
+
+  pllc_request_a(&scpi_param_SAMPle_BOOLean, 0, (uint8_t)given->value, source);
+  return 0;
+}
+
+/* :SAMPle:BOOLean? (0x2d26a). */
+int32_t scpi_query_SAMPle_BOOLean(void* parameters, void* response,
+                                  scpi_call* call) {
+  int16_t* state = response;
+
+  *state = (int8_t)scpi_value_SAMPle_BOOLean;
+  return 0;
+}
+
+/* :SAMPle:BARRay: sets one of the booleans (0x2d27c). */
+int32_t scpi_set_SAMPle_BARR(void* parameters, void* response,
+                             scpi_call* call) {
+  scpi_sample_indexed_word* given = parameters;
+  request_source source = return_zero(call->input);
+
+  pllc_request_a(&scpi_param_SAMPle_BARR, (uint8_t)given->index,
+                 (uint8_t)given->given.value, source);
+  return 0;
+}
+
+/* :SAMPle:BARRay? (0x2d2ae). */
+int32_t scpi_query_SAMPle_BARR(void* parameters, void* response,
+                               scpi_call* call) {
+  int16_t* index = parameters;
+  int16_t* state = response;
+
+  *state = (int8_t)scpi_value_SAMPle_BARR[*index];
+  return 0;
+}
+
+/* A toggle's choice, T0 or T1, its value; another answers nothing. */
+static void scpi_sample_toggle_answer(int8_t toggle, uint16_t* choice) {
+  if (toggle == 0 || toggle == 1) {
+    *choice = toggle;
+  }
+}
+
+/* :SAMPle:TOGGle: sets the setting to its choice (0x2d2c8). */
+int32_t scpi_set_SAMPle_TOGGle(void* parameters, void* response,
+                               scpi_call* call) {
+  const uint8_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
+  scpi_word_parameter* given = parameters;
+
+  pllc_request_a(&scpi_param_SAMPle_TOGGle, 0,
+                 scpi_two_choice(given->value, caller_d2),
+                 return_zero(call->input));
+  return 0;
+}
+
+/* :SAMPle:TOGGle? (0x2d318). */
+int32_t scpi_query_SAMPle_TOGGle(void* parameters, void* response,
+                                 scpi_call* call) {
+  scpi_sample_toggle_answer((int8_t)scpi_value_SAMPle_TOGGle, response);
+  return 0;
+}
+
+/* :SAMPle:TARRay: sets one of the settings to its choice (0x2d348). */
+int32_t scpi_set_SAMPle_TARR(void* parameters, void* response,
+                             scpi_call* call) {
+  const uint8_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
+  scpi_sample_indexed_word* given = parameters;
+
+  pllc_request_a(&scpi_param_SAMPle_TARR, (uint8_t)given->index,
+                 scpi_two_choice(given->given.value, caller_d2),
+                 return_zero(call->input));
+  return 0;
+}
+
+/* :SAMPle:TARRay? (0x2d39e). */
+int32_t scpi_query_SAMPle_TARR(void* parameters, void* response,
+                               scpi_call* call) {
+  int16_t* index = parameters;
+
+  scpi_sample_toggle_answer((int8_t)scpi_value_SAMPle_TARR[*index], response);
+  return 0;
+}
+
+/* :SAMPle:INTeger: sets the integer, or its minimum or maximum
+ * (0x2d3d6). */
+int32_t scpi_set_SAMPle_INTeger(void* parameters, void* response,
+                                scpi_call* call) {
+  scpi_engine_long_parameter* given = parameters;
+  request_source source = return_zero(call->input);
+
+  scpi_numeric_set(&scpi_param_SAMPle_INTeger, 0, given->kind, given->bound, 0,
+                   given->value, source);
+  return 0;
+}
+
+/* :SAMPle:INTeger? (0x2d410). */
+int32_t scpi_query_SAMPle_INTeger(void* parameters, void* response,
+                                  scpi_call* call) {
+  int32_t* value = response;
+
+  *value = scpi_value_SAMPle_INTeger;
+  return 0;
+}
+
+/* :SAMPle:IARRay: sets one of the integers (0x2d41e). */
+int32_t scpi_set_SAMPle_IARR(void* parameters, void* response,
+                             scpi_call* call) {
+  scpi_sample_indexed_number* given = parameters;
+  request_source source = return_zero(call->input);
+
+  scpi_numeric_set(&scpi_param_SAMPle_IARR, given->index, given->number.kind,
+                   given->number.bound, 0, given->number.value, source);
+  return 0;
+}
+
+/* :SAMPle:IARRay? (0x2d45c). */
+int32_t scpi_query_SAMPle_IARR(void* parameters, void* response,
+                               scpi_call* call) {
+  int16_t* index = parameters;
+  int32_t* values = scpi_value_SAMPle_IARR;
+  int32_t* value = response;
+
+  *value = values[*index];
+  return 0;
+}
+
+/* :SAMPle:IMULtiple: sets the four integers at once, by their last
+ * index, through a copy of them whose address the request carries as
+ * its value (0x2d472). */
+int32_t scpi_set_SAMPle_IMULtiple(void* parameters, void* response,
+                                  scpi_call* call) {
+  scpi_sample_listed_number* given = parameters;
+
+  for (int32_t i = 0; i < SCPI_SAMPLE_IMULTIPLE_COUNT; i++) {
+    scpi_values_SAMPle_IMULtiple[i] = given[i].number.value;
+  }
+  request_source source = return_zero(call->input);
+
+  pllc_request_d(&scpi_param_SAMPle_IMULtiple, SCPI_SAMPLE_IMULTIPLE_COUNT - 1,
+                 (uint32_t)scpi_values_SAMPle_IMULtiple, source);
+  return 0;
+}
+
+/* :SAMPle:IMULtiple? (0x2d4c0). */
+int32_t scpi_query_SAMPle_IMULtiple(void* parameters, void* response,
+                                    scpi_call* call) {
+  scpi_sample_long_response* values = response;
+
+  for (int32_t i = 0; i < SCPI_SAMPLE_IMULTIPLE_COUNT; i++) {
+    values[i].value = scpi_value_SAMPle_IMULtiple[i];
+  }
+  return 0;
+}
+
+/* :SAMPle:FLOat: sets the real, or its minimum or maximum; the value's
+ * long is the float's bits (0x2d4e2). */
+int32_t scpi_set_SAMPle_FLOat(void* parameters, void* response,
+                              scpi_call* call) {
+  scpi_engine_long_parameter* given = parameters;
+  request_source source = return_zero(call->input);
+
+  scpi_numeric_set(&scpi_param_SAMPle_FLOat, 0, given->kind, given->bound,
+                   (uint32_t)given->value, 0, source);
+  return 0;
+}
+
+/* :SAMPle:FLOat? (0x2d51c). */
+int32_t scpi_query_SAMPle_FLOat(void* parameters, void* response,
+                                scpi_call* call) {
+  float* value = response;
+
+  *value = scpi_value_SAMPle_FLOat;
+  return 0;
+}
+
+/* :SAMPle:FARRay: sets one of the reals; the value's long is the
+ * float's bits (0x2d52a). */
+int32_t scpi_set_SAMPle_FARR(void* parameters, void* response,
+                             scpi_call* call) {
+  scpi_sample_indexed_number* given = parameters;
+  request_source source = return_zero(call->input);
+
+  scpi_numeric_set(&scpi_param_SAMPle_FARR, given->index, given->number.kind,
+                   given->number.bound, (uint32_t)given->number.value, 0,
+                   source);
+  return 0;
+}
+
+/* :SAMPle:FARRay?: one of the reals, or its minimum or maximum
+ * (0x2d568). */
+int32_t scpi_query_SAMPle_FARR(void* parameters, void* response,
+                               scpi_call* call) {
+  scpi_sample_indexed_number* given = parameters;
+  float* value = response;
+
+  *value = scpi_numeric_get(&scpi_param_SAMPle_FARR, given->index,
+                            given->number.kind, given->number.bound);
+  return 0;
+}
+
+/* :SAMPle:DOUBle: does nothing (0x2d592). */
+int32_t scpi_set_SAMPle_DOUBle(void* parameters, void* response,
+                               scpi_call* call) {
+  return 0;
+}
+
+/* :SAMPle:DOUBle? (0x2d596). */
+int32_t scpi_query_SAMPle_DOUBle(void* parameters, void* response,
+                                 scpi_call* call) {
+  double* value = response;
+
+  *value = scpi_value_SAMPle_DOUBle;
+  return 0;
+}
+
+/* :SAMPle:DARRay: does nothing (0x2d5a8). */
+int32_t scpi_set_SAMPle_DARR(void* parameters, void* response,
+                             scpi_call* call) {
+  return 0;
+}
+
+/* :SAMPle:DARRay? (0x2d5ac). */
+int32_t scpi_query_SAMPle_DARR(void* parameters, void* response,
+                               scpi_call* call) {
+  int16_t* index = parameters;
+  double* value = response;
+
+  *value = scpi_value_SAMPle_DARR[*index];
+  return 0;
+}
+
+/* :SAMPle's action: prints which of three it was (0x43452). */
+void sample_action_print(int32_t index, int32_t source) {
+  switch ((int8_t)index) {
+    case 1:
+      task_debug_message("sample action 1\r\n");
+      break;
+    case 2:
+      task_debug_message("sample action 2\r\n");
+      break;
+    case 3:
+      task_debug_message("sample action 3\r\n");
+      break;
+    default:
+      break;
+  }
+}

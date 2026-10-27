@@ -49,8 +49,9 @@ by following calls and jumps, by pointers to the end of a known body,
 and by decoding on from the end of one body while the code decodes
 cleanly to an unconditional transfer.  The installer's packed records
 are data, and so is a start a call, a pointer or such decoding gives
-whose bytes are text to a NUL (SHORTEST_TEXT printable at least) or
-whose first long is zero or an address, a table of pointers; one
+whose bytes are text to a NUL (SHORTEST_TEXT printable at least), or a
+NUL and then such text, or whose first long is zero or an address, a
+table of pointers; one
 inside a base function's bytes matched there, inside the instructions
 of the start before it decoded on past it, or inside code that decodes
 cleanly from that one's end, unless the end is padding or data, is not
@@ -513,9 +514,12 @@ class Discovery:
         return None
 
     def data(self, start):
-        """Why a start is data, or None: it is text, or a table of
+        """Why a start is data, or None: it is text, or a NUL, the end of
+        the string before it, and then text (0x30aa0 in the Z3815A 4010,
+        before "wait_v SIG_SOQ_SCI error in _sci_puts"), or a table of
         pointers, its first long zero or an address."""
-        if is_text(self.memory, start):
+        if is_text(self.memory, start) or (self.memory.bytes(start, start + 1) == b'\0'
+                                           and is_text(self.memory, start + 1)):
             return 'text'
         first = int.from_bytes(self.memory.bytes(start, start + 4), 'big')
         if first == 0 or is_address(first):

@@ -26,31 +26,6 @@ void gps_receiver_status_reset(void) {
   channels_reset();
 }
 
-/* Whether an ID is one of a kind's satellites; 0 for an unknown kind
- * (0x4f0d6). */
-int32_t satellite_id_valid(satellite_kind kind, uint8_t id) {
-  uint8_t first;
-  uint8_t last;
-
-  switch (kind) {
-    case SATELLITE_GPS:
-      first = GPS_FIRST_SATELLITE;
-      last = GPS_LAST_SATELLITE;
-      break;
-    case SATELLITE_PSEUDOLITE:
-      first = GPS_FIRST_PSEUDOLITE;
-      last = GPS_LAST_PSEUDOLITE;
-      break;
-    case SATELLITE_ANY:
-      first = GPS_FIRST_SATELLITE;
-      last = GPS_LAST_PSEUDOLITE;
-      break;
-    default:
-      return 0;
-  }
-  return first <= id && id <= last;
-}
-
 /* The satellite a channel, 1 to 6, tracks, when @@Ba has come and the
  * channel's satellite is available for position; else 0 (0x4f118). */
 uint8_t channel_position_satellite(uint8_t channel) {
@@ -81,16 +56,6 @@ uint32_t satellite_used_for_position(uint8_t satellite) {
 void channels_reset(void) {
   for (uint8_t channel = 0; channel < GPS_RECEIVER_CHANNELS; channel++) {
     gps.status.channels[channel].mode = ONCORE_CODE_SEARCH;
-  }
-}
-
-/* Adds a satellite to a set: a GPS satellite as bit id - 1 of a long, a
- * pseudolite as bit id - 0x21 of a byte (0x4f1a6). */
-void satellite_add_to_set(satellite_kind kind, uint8_t id, void* set) {
-  if (kind == SATELLITE_GPS) {
-    *(uint32_t*)set |= cpu_long_bit(id - GPS_FIRST_SATELLITE);
-  } else {
-    *(uint8_t*)set |= (uint8_t)cpu_long_bit(id - GPS_FIRST_PSEUDOLITE);
   }
 }
 
@@ -261,10 +226,6 @@ void gps_receiver_status_update(gps_receiver_number receiver,
   gps.reference_qualified = valid;
   set_interrupt_mask(sr);
 }
-
-/* The alternate receiver's status, which status_snapshot hands to
- * gps_receiver_status_update: none (0x4b420). */
-uint8_t gps_status_alternate(void) { return 0; }
 
 /* Clears the monitors' failures, reports the GPS failure cleared, and
  * enables the command monitor at the head of its query list (0x4b426). */
@@ -625,27 +586,4 @@ bool survey_progress_text(char* text) {
   }
   sprintf(text, "%+.1f", float_to_double(progress));
   return true;
-}
-
-/* The milliarcseconds of a position's coordinate, as degrees, minutes
- * and seconds of its magnitude (0x47e32). */
-void mas_to_dms(int32_t mas, uint16_t* degrees, uint8_t* minutes,
-                double* seconds) {
-  int32_t rest = labs(mas);
-
-  *degrees = libc_divide(&rest, GPS_MAS_PER_DEGREE);
-  *minutes = libc_divide(&rest, GPS_MAS_PER_MINUTE);
-  *seconds =
-      double_divide_reversed(GPS_MAS_PER_SECOND, integer_to_double(rest));
-}
-
-/* Degrees, minutes and seconds as milliarcseconds, the seconds'
- * magnitude (0x47eb0). */
-void dms_to_mas(int32_t* mas, uint16_t degrees, uint8_t minutes,
-                double seconds) {
-  const double whole = integer_to_double(minutes * GPS_MAS_PER_MINUTE +
-                                         degrees * GPS_MAS_PER_DEGREE);
-
-  *mas = double_to_integer(
-      double_add(whole, double_multiply(GPS_MAS_PER_SECOND, fabs(seconds))));
 }

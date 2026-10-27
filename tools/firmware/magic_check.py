@@ -64,7 +64,8 @@ a line, by kind:
 argument, similar and repeated, since whether two uses mean the same is
 a reader's call, is not in the allowlist, IMAGE/magic-allow.tsv, or if
 an allowlist row matches no finding; it prints those findings alone.
-The allowlist is tab-separated: kind, file (relative to rewritten/),
+The allowlist is tab-separated: kind, file (relative to rewritten/, or
+common/ and its path there),
 function, literal as written, target as the report prints it, and the
 reason it stays a literal; no line numbers, so that a row survives
 edits around it.  --all prints the allowed findings too.  The counts by
@@ -84,6 +85,10 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIRMWARE = ROOT / 'third_party/firmware'
+# A header's #include of another by its path from the header's folder.
+HEADER_INCLUDE = re.compile(r'(?m)^#include "([^"]+)"$')
+# The images' shared hand-written C (docs/firmware/rewrite.md, "Shared C").
+COMMON = FIRMWARE / 'common'
 INCLUDE = FIRMWARE / 'include'
 DEFAULT_IMAGE = 'z3805a-3543b'
 ALLOWLIST = 'magic-allow.tsv'
@@ -195,6 +200,12 @@ class Locator:
             return self.bare(location['spellingLoc']), self.bare(location['expansionLoc'])
         here = self.bare(location)
         return here, here
+
+
+def included(header):
+    """A header's text with each #include "PATH" replaced by that
+    header's, so expanded in turn: smartclock.h with common/'s types."""
+    return HEADER_INCLUDE.sub(lambda match: included(header.parent / match.group(1)), header.read_text())
 
 
 def annotate(tree):
@@ -318,11 +329,16 @@ class Image:
         return data[start:end if end >= 0 else len(data)].decode(errors='replace')
 
     def hand_written(self, name):
-        """The file relative to rewritten/, if it is hand-written C."""
+        """The file relative to rewritten/, if it is hand-written C, or
+        common/ and its path in it, if it is the images' shared C."""
         if name is None:
             return None
         path = self.path(name)
-        if not path.is_relative_to(self.rewritten) or GENERATED.search(path.name):
+        if GENERATED.search(path.name):
+            return None
+        if path.is_relative_to(COMMON):
+            return str(COMMON.name / path.relative_to(COMMON))
+        if not path.is_relative_to(self.rewritten):
             return None
         return str(path.relative_to(self.rewritten))
 
@@ -395,7 +411,7 @@ class Image:
         not typed with it: {record.field or global: enum}."""
         coded = {}
         enum_word = re.compile(r'\b(' + '|'.join(sorted(self.enums, key=len, reverse=True)) + r')\b')
-        lines = (self.folder / 'smartclock.h').read_text().splitlines()
+        lines = included(self.folder / 'smartclock.h').splitlines()
         pending = []
         for number, line in enumerate(lines):
             if line.startswith('typedef'):

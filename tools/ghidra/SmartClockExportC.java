@@ -2181,14 +2181,21 @@ public class SmartClockExportC extends GhidraScript {
 				edits.before.merge(tokens.get(i), AGGREGATE_BITS + "(", String::concat);
 				edits.after.merge(tokens.get(last), ")", String::concat);
 			}
-			else if (cast && isComposite(castTo) && !isComposite(type) && op.getOpcode() == PcodeOp.CAST
-				&& onlyIntegerReads(op.getOutput())) {
+			else if (cast && isComposite(castTo) && (!isComposite(type) && op.getOpcode() == PcodeOp.CAST
+				&& onlyIntegerReads(op.getOutput())
+				// a constant cast to a structure only to compare it, which no CAST op carries
+				|| constant(tokens.get(i)) && INTEGER_READS.contains(op.getOpcode()))) {
 				for (int k = open; k <= close; k++) {
 					edits.replaced.put(tokens.get(k), "");
 				}
 			}
 			i = last;
 		}
+	}
+
+	/** Whether a token prints a constant. */
+	private static boolean constant(ClangToken token) {
+		return token.getVarnode() != null && token.getVarnode().isConstant();
 	}
 
 	/** The type of the member a field token prints, or null. */
@@ -4169,7 +4176,10 @@ public class SmartClockExportC extends GhidraScript {
 	private static final String READING =
 		"#if 0 /* the decompiler's reading; the routine is the assembly after it */\n";
 
-	/** The argument naming the folder of hand-written C: rewritten=DIR. */
+	/**
+	 * The argument naming a folder of hand-written C, rewritten=DIR, given
+	 * once for each: the images' shared common/, then the image's own.
+	 */
 	private static final String REWRITTEN = "rewritten=";
 	/**
 	 * A function's definition in hand-written C: its name, at a line's
@@ -4197,13 +4207,22 @@ public class SmartClockExportC extends GhidraScript {
 			+ "\\b(\\w+)(?:\\s*\\[[^\\]]*\\])*\\s*=");
 
 	/**
+	 * The folder of the rewritten= folder whose headers are types the
+	 * images' smartclock.h include, for Setup's types=, which the
+	 * export declares from the program instead (common/types/).
+	 */
+	private static final String TYPES_FOLDER = "types";
+
+	/**
 	 * The files of a rewritten=DIR argument with a suffix, in DIR and the
-	 * folders under it (the installer's, installer/), sorted by path.
+	 * folders under it (the installer's, installer/), sorted by path; not
+	 * TYPES_FOLDER's.
 	 */
 	private static List<File> rewrittenFiles(String arg, String suffix) {
-		try (Stream<Path> paths = Files.walk(Path.of(arg.substring(REWRITTEN.length())))) {
-			return paths.filter(path -> path.toString().endsWith(suffix) && Files.isRegularFile(path))
-				.sorted().map(Path::toFile).toList();
+		Path folder = Path.of(arg.substring(REWRITTEN.length()));
+		try (Stream<Path> paths = Files.walk(folder)) {
+			return paths.filter(path -> path.toString().endsWith(suffix) && Files.isRegularFile(path)
+				&& !path.startsWith(folder.resolve(TYPES_FOLDER))).sorted().map(Path::toFile).toList();
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
@@ -4238,17 +4257,20 @@ public class SmartClockExportC extends GhidraScript {
 	}
 
 	/**
-	 * The rewritten= folder's .c files, sorted, which the C includes after
-	 * its own: those that define functions and those of data alone.
+	 * The rewritten= folders' .c files, which the C includes after its
+	 * own: those that define functions and those of data alone, each
+	 * folder's sorted, the folders in their arguments' order (the shared
+	 * folder, common/, before the image's own; README.md, "Hand-written
+	 * C").
 	 */
 	private List<File> rewrittenSources() {
-		Set<File> sources = new TreeSet<>();
+		List<File> sources = new ArrayList<>();
 		for (String arg : getScriptArgs()) {
 			if (arg.startsWith(REWRITTEN)) {
 				sources.addAll(rewrittenFiles(arg, ".c"));
 			}
 		}
-		return new ArrayList<>(sources);
+		return sources;
 	}
 
 	/**

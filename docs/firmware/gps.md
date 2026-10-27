@@ -1,7 +1,24 @@
 # The GPS receiver link
 
+How the Z3801A 3543, the Z3805A 3543B and the 58503A 3633 and 3704
+talk to their Motorola VP Oncore engine, and so what an engine in
+their place must do.  The source is the hand-written C of each image,
+`third_party/firmware/rewritten/IMAGE/` (`gps_oncore.c`,
+`gps_requests.c`, `gps_task.c`, `gps_receiver.c`,
+`pll_gps_control.c`, `types/smartclock.h`), and the ROMs.  Addresses
+are the 58503A 3704's unless an image is named.  3633 has no C: its
+facts here were read from its ROM and are marked so.  Message
+layouts are `third_party/motorola/VPCommands.pdf`, cited by page.  The
+Z3816A, the 58503B and the Z3815A come in where named, and in "In
+every image".
+
+## The serial link
+
 The Oncore is on channel A of a 68681 DUART at `0x200000`, whose
 sixteen registers sit on odd byte addresses (`0x200001` + 2*n).
+`rewritten/common/duarta.c` is the driver: `duarta_isr` puts each
+received byte in a ring, `drta_get_byte` takes one, and
+`drta_send_message` sends a command by interrupt.  In the Z3816A 4001:
 
 | Function | Role |
 | -------- | ---- |
@@ -16,42 +33,140 @@ sends `DUART` and checks the echo.
 
 ## Framing
 
-`FUN_00050314` is a seven-state machine, its state at `0x1016e7`:
+`gps_receive` (3704 `0x4c124`, Z3805A `0x4b846`, Z3801A `0x4b804`;
+the Z3816A's `FUN_00050314`, state at `0x1016e7`) frames one message
+at a time into `gps_response_buffer`, 294 bytes:
 
-| State | Does |
-| ----- | ---- |
-| 0, 1 | expect `@` |
-| 2 | first ID character |
-| 3 | second ID character, then look the ID up for its length |
-| 4 | body bytes; at the end, checksum (`FUN_00055e84`) against the last byte |
-| 5, 6 | expect CR, then LF |
+| State | Takes |
+| ----- | ----- |
+| 0, 1 | `@` |
+| 2 | first ID character, an upper-case letter |
+| 3 | second ID character, a letter; then looks the ID up in the message table for its length (`gps_response_lookup`, `0x4c090`) |
+| 4 | the body, to the table's length; the last byte is the checksum, the XOR of every byte from the ID on (`oncore_checksum`) |
+| 5, 6 | CR, then LF |
 
-A complete message is left in the buffer at `0x1014dc`, starting with
-the `@@`.
+A wrong byte counts a frame error and starts again, from that byte if
+it is an `@`; a bad checksum counts and starts again.  So:
+
+- The engine must send each message at exactly the table's length
+  (below).
+- An ID not in the table is counted and not framed: the framer stays
+  in state 3 and tests each further letter with the one before as an
+  ID.
+- Never send `@@Ao`, `@@Bh` or `@@Ci`.  Their table length is 0, so
+  the body count starts at -6 in a 16-bit counter
+  (`gps_response_remaining`) and runs about 65530 bytes, past the
+  buffer and into `gps_response_cursor` behind it.  Read in the C and
+  the ROMs of all four images; not run.
+
+A complete message is decoded at once, whatever the task is waiting
+for (`gps_response_decode`, `0x50d3e`): its decoders unpack it into
+the task's records.  So the firmware's view of the engine, its fix
+mode (`@@Cg`) and position hold (`@@At`) among it, is what the engine
+last sent, not what the firmware commanded.
 
 ## The message table
 
-`FUN_00050286` looks an ID up in a table of 64 descriptors of 60 bytes
-at `0x56732` (`FUN_000560fc` returns descriptor *i* as
-`0x56732 + 60 * i`).  Each holds a pointer to its two-character ID at
-+0, its length at +28, a decoder at +0x20 and a post-handler at +0x38.
-The two Time RAIM messages have the lengths the VP Oncore reference
-gives:
+Each image's GPS task holds one table of the messages it sends and
+takes: Z3801A at `0x4fe8c`, Z3805A `0x4fece`, 3633 `0x50f82`, 3704
+`0x51178`, Z3816A `0x56732`.  `oncore/README.md` gives an entry's
+layout, `oncore/models.md` the tables' sizes, and `oncore/IMAGE.txt`
+each table, from `smartclock-cli dump-oncore`.
 
-| Entry | ID | Length | Decoder | Post-handler |
-| ----- | -- | ------ | ------- | ------------ |
-| 41 | `@@Bn`, six channels | 59 | `0x55bb0` | `0x5605a` |
-| 53 | `@@En`, eight channels | 69 | `0x55c40` | `0x5605a` |
+An entry's timeout and match kind say how long the task waits for an
+answer and what answers.  The messages, with each one's length, `@@`
+to LF, and timeout, the same in each of the four images that has the
+message:
 
-`FUN_00055f68`, reached from the post-handler, accepts `Bn` for a
-six-channel receiver and `En` for an eight-channel one, by the channel
-count at `0x100ebc + 0x606`.
+| Message | Length | Timeout, s | Answered by | Images |
+| ------- | ------ | ---------- | ----------- | ------ |
+| `Aa`, `Ac` | 10, 11 | 10 | any `Aa`, `Ac` | all |
+| `Ab` | 10 | 10 | an echo, fixed up (below) | all |
+| `Ad`, `Ae` | 11 | 10 | an echo | all |
+| `Af` | 15 | 10 | the height (below) | all |
+| `Ag`, `Ah`, `Aj`, `An`, `Aq`, `Ar`, `At`, `Av`, `Aw`, `AB` | 8 | 10 | an echo | all |
+| `Ai` | 9 | 20 | an echo | all |
+| `Ak`, `Al`, `Ax`, `AC`, `AD` | 9 | 10 | an echo | all |
+| `Am`, `Au` | 12 | 10 | an echo | all; `Au` 58503A only |
+| `Ay`, `Az` | 11 | 10 | an echo | all |
+| `Ao` | 0 | 10 | `@@Ap`, 25 bytes | all |
+| `As` | 20 | 10 | the position (below) | all |
+| `Ba` | 68 | 10 | any `Ba` | all |
+| `Bb`, `Bc`, `Bd` | 92, 82, 23 | 10 | any of the same ID | all |
+| `Bh` | 0 | 10 | `@@Ce`, 52 bytes | all |
+| `Bj` | 8 | 10 | any `Bj` | all |
+| `Bk` | 69 | 10 | any `Bk` | all |
+| `Bn` | 59 | 10 | any `Bn` | all |
+| `Ca` | 9 | 20 | any `Ca` | all |
+| `Cf` | 7 | 10 | an echo | all |
+| `Cg` | 8 | 20 | an echo; mode 2, any `Cg` | all |
+| `Ci` | 0 | -- | nothing; not waited for | all |
+| `Cj` | 294 | 10 | any `Cj` | all |
+| `Ea` | 76 | 10 | any `Ea` | 58503A |
+| `Ek`, `En` | 71, 69 | 10 | any of the same ID | 58503A |
+| `Fa` | 9 | 20 | any `Fa` | 58503A |
+| second `Ea`, entry `0x36` | 76 | 4 (3633: 5) | any `Ea` | 58503A |
+| second `Ar`, entry `0x37` | 8 | 10 | an echo; see below | 58503A |
+
+Tables, lengths, timeouts and kinds were read from the ROMs; 3633's
+differ from 3704's only in the second `Ea`'s timeout and the filters'
+addresses.
+
+## Answer matching
+
+After sending a message the task waits for its answer
+(`gps_task_wait`, 3704 `0x4cdda`, Z3805A `0x4c31a`).
+`gps_response_match_58503a` (3704 `0x50e16`, jump table `0x50e54`;
+3633 `0x50c1a`, read from the ROM) and the Z380x's
+`gps_response_match` (Z3805A `0x4fb86`, Z3801A `0x4fb44`) judge each
+complete message by the sent message's kind (`oncore_match_kind`).
+The 58503A adds kinds 4 and 11, so the Z380x's 4 to 9 are its 5 to 10:
+
+| 58503A | Z380x | Kind | Answered by |
+| ------ | ----- | ---- | ----------- |
+| 0 | 0 | any | nothing; the task goes on at once (`@@Ci`) |
+| 1 | 1 | echo | the same ID, every byte after it the same, checksum included |
+| 2 | 2 | GMT offset | an echo, but a negative offset under an hour, sign `0xff`, hours 0, minutes *m*, is compared as sign 0, hours 0, minutes -*m* (VPCommands p. 10) |
+| 3 | 3 | height | the 4-byte height alone, in the response's GPS height for type 0 and its MSL height, 4 bytes on, for type 1 (p. 26) |
+| 4 | -- | second `Ar` | an echo, taken as entry `0x37`'s |
+| 5 | 4 | hold position | an echo; latitude and longitude alone when the type is the same, the height sent is -100000 to 1800000 cm and the response's is within 2 cm of it (p. 55) |
+| 6 | 5 | fix mode | an echo; mode 2, the query, by any `@@Cg` (p. 119) |
+| 7 | 6 | same | any message of the same ID, its bytes not compared |
+| 8 | 7 | user datum | `@@Ap` |
+| 9 | 8 | never | no message has it |
+| 10 | 9 | corrections | `@@Ce` |
+| 11 | -- | `Ea` | `@@Ea`, decoded as entry `0x32` |
+
+A query (argument mode 1) of kinds 1 to 6 is answered by any message
+of the same ID.  The verdict is 2, answered; 1, the answer but its
+bytes differ; or 0, not the answer.  The task then:
+
+- On 2, goes to the script's next step.
+- On 1, sends again, unless the response is the one that differed
+  last (its first 25 bytes kept), which is a REJECT and ends the
+  request.
+- On 0, keeps waiting.
+- When uptime seconds since the send exceed the timeout, sends again;
+  after 3 sends, TIMEOUT, ending the request.  The second `@@Ea` is the
+  exception: after 3 sends the script passes it over (3704 `0x4ce02`;
+  3633 `0x4cc82`, read from the ROM).
+
+Kind 4 sets the response's index to `0x37` before comparing whatever
+it is (`0x50e6c`).  So while it waits on the second `@@Ar`, any other
+message, a continuous `@@Ba` say, is compared as its echo, differs in
+length and makes the task send `@@Ar` again.
+
+`@@Ao` (p. 46) is answered by `@@Ap` in every image, where the
+reference gives `@@Ao` itself, 25 bytes.  With `@@Ao`'s table length
+0, a 25-byte `@@Ao` would overrun the framer (above), so these engines
+presumably answer with `@@Ap`.  `@@Ap` has no decoder; only its ID,
+length and checksum matter.
 
 ## Decoding
 
-Both decoders unpack through `FUN_00054ec8`, driven by a byte program
-rather than code, so no instruction reads a field of the raw message
-directly.  The opcodes:
+Decoders unpack a message through a byte program rather than code, so
+no instruction reads a field of the raw message directly.  In the
+Z3816A, through `FUN_00054ec8`; the opcodes:
 
 | Byte | Meaning |
 | ---- | ------- |
@@ -65,17 +180,286 @@ directly.  The opcodes:
 | `0x85` | write a sign-extension byte from the next source byte |
 | other negative | start a repeat group of that count |
 
-The `En` program, at `0x57e39`:
+The Z3816A's `En` program, at `0x57e39`:
 
     02 84 84 03 00 84 03 04 00 0a 00 f8 01 00 04 81 80
 
-Against the message layout in `VPCommands.pdf` (message byte 0 being
+Against the layout in VPCommands pp. 141-142 (message byte 0 being
 the first `@`), its fifth copy moves message bytes 16 to 25 -- hours,
 minutes, seconds, pulse status, 1 PPS sync, Time RAIM solution status,
 Time RAIM status, the two-byte one-sigma estimate, and the negative
-sawtooth -- to record offsets 17 to 26.  The `Bn` program at `0x57e25`
+sawtooth -- to record offsets 17 to 26.  Its `Bn` program at `0x57e25`
 differs only in its channel count.  The sawtooth is at offset 26 of
 the decoded record.
+
+The Z380x and 58503A programs put it one byte earlier, at record + 25
+(`oncore_raim_fields`):
+
+| Image | `Bn` | `En` |
+| ----- | ---- | ---- |
+| Z3805A, `0x50fe6` | `02 00 03 00 85 03 04 00 0a 00 fa 01 00 04 81 80` | -- |
+| 3704, `0x525ef`, `0x52602` | `02 00 03 00 84 03 04 00 0a 00 fa 01 00 04 81 f4 84 81 80` | `02 00 03 00 84 03 04 00 0a 00 f8 01 00 04 81 80` |
+
+The 58503A writes zero for the top byte of the 1PPS rate where the
+Z380x sign-extends it, and its `Bn` zero-fills channels 7 and 8, so
+one record serves both messages.
+
+## Six or eight channels
+
+Which engines each image can take, by the two message pairs the VP
+Oncore reference gives in six- and eight-channel forms: position/status
+`@@Ba` / `@@Ea` (pp. 70, 124) and Time RAIM `@@Bn` / `@@En` (pp. 102,
+138).  A message counts as handled when the image holds a pointer to
+its ID:
+
+| Image | `Ba` | `Ea` | `Bn` | `En` |
+| ----- | ---- | ---- | ---- | ---- |
+| Z3801A 3543 | yes | no | yes | no |
+| Z3805A 3543B | yes | no | yes | no |
+| 58503A 3633 | yes | yes | yes | yes |
+| 58503A 3704 | yes | yes | yes | yes |
+| Z3816A 4001 | yes | yes | yes | yes |
+
+The Z380x send every message to any engine but `@@Bn`, which
+`gps_message_supported` (Z3805A `0x4f8fc`) refuses before `@@Cj` has
+come and after one without an `I` in its `OPTIONS LIST`
+(`gps_parse_options`, `0x4f8b6`).
+
+The 58503A decides at run time, from three bits of `gps.field_592`
+(`0x1013e2`, `gps_field_592_bit`) and the channel count
+`gps.channel_count` (`0x1013e0`):
+
+- **Bit 5**, an `@@Ea` seen, is set only by the `@@Ea` decoders,
+  `oncore_position_status_8_message` (`0x506e2`) and
+  `oncore_eight_channels_seen` (`0x5098a`), and cleared only when `gps`
+  is.  `gps_channel_count_update` (`0x509fe`) makes the count 8 with
+  it and 6 without.
+- **Bit 6**, the Time RAIM option, and **bit 7**, software 8.4, come
+  from `@@Cj` in `gps_receiver_abilities_update` (`0x50a16`), step
+  `0x4d` of the scripts: bit 6 when the line starting `OPTIONS LIST `
+  contains an `I`, bit 7 when the `SOFTWARE VER #` value × 10 plus the
+  `SOFTWARE REV #` value is 84.  Before a `@@Cj` it clears both.  The
+  labels are matched from the table at `0x5262c`; a line without its
+  label gives `strchr` and `atoi` a null pointer.
+- `gps` is cleared at start (`main`) and by the master reset script
+  `0x52` (`gps_script_lookup` calls `gps_init_58503a`).  The count is
+  then 0, which refuses `Ba`, `Bn`, `Ea`, `Ek` and `En`, until step
+  `0x4d` after `@@Cj` makes it 6.
+
+`gps_request_build` (`0x50bc8`) sends nothing when an entry's send
+filter, at `+0x38`, returns 0:
+
+| Entry | Filter | Passes |
+| ----- | ------ | ------ |
+| `Ba` `0x1e` | `oncore_filter_channels`, `0x50ad8` | count 6; count 8 at rate 0, its first argument |
+| `Bn` `0x29` | `oncore_filter_traim`, `0x50b48` | bit 6, then as `Ba` |
+| `Ca` `0x2a` | `oncore_filter_six_channels`, `0x50ab8` | bit 5 clear |
+| `Ea` `0x32`, `Ek` `0x33` | `oncore_filter_channels` | count 8 |
+| `En` `0x34` | `oncore_filter_traim` | bit 6 and count 8 |
+| `Fa` `0x35` | `oncore_filter_eight_channels`, `0x50ac8` | bit 5 set |
+| second `Ar` `0x37` | `oncore_filter_software_8_4`, `0x50b6c` | bit 7 |
+
+`@@Bk` (`0x27`) has no filter, so goes to every engine:
+`oncore_filter_channels` tests for it, but no entry gives it that
+filter.  Neither has the second `@@Ea` (`0x36`).  So an eight-channel
+engine is polled with `Ba` and `Bn` (rate 0) and given continuous
+output only in `Ea` and `En`; `Bk` is polled whatever the count.  A
+refused message is skipped and the script goes on.
+
+**The second `@@Ea`** opens script `0x55`, the engine self-test:
+`Ea`(`0x36`)/0(0), step `0x49`, `Ca`, `Fa`, `Cg`(1), step `0x49`,
+`Ea`(`0x32`)/0(1).  With no filter it goes to every engine, at rate
+0, a poll.  An `@@Ea` answers it (kind 11); the framer looks the ID up
+as entry `0x32`, whose decoder sets bit 5, so the count becomes 8, and
+entry `0x36`'s own decoder never runs.  After 3 unanswered sends the
+script goes on, so a six-channel engine costs it about 3 × (timeout +
+1) seconds.  The script then runs whichever self-test the count
+passes and, with eight channels, turns `Ea` on.  Only a requested
+self-test runs script `0x55` (`gps_selftest_run`, `0x4687e`;
+`gps_diag_sequence`, `0x473c6`; the console's); nothing found runs it
+at power-on.  So
+after power-on the count reaches 8 only if an `@@Ea` arrives some
+other way.  That this script is how the firmware means to find an
+eight-channel engine is inference.
+
+**The second `@@Ar`**, argument 65 (`0x41`), follows `Ar`(1) in 3704's
+scripts `0x52` and `0x53` and 3633's `0x53`; 3633's `0x52` sends
+`Ar`(65) alone (read from the ROM).  It goes only to software 8.4.
+VPCommands p. 53 defines 0, Best-4, and 1, N-in-View; what 65 does is
+not known.  The Z380x send only `Ar`(1); the Z3816A and the 58503B
+also send 65.
+
+3633 has the same selector at `0x50802`, the same two `bset` sites at
+`0x5051c` and `0x5078e`, the same identity tests at `0x50834` and
+`0x5088e`, and filters at `0x508dc`, `0x508bc`, `0x508cc` and
+`0x5094c` (read from the ROM).  The three bench engines all report
+options `IB`; the two Z380x engines report software 8.4 and the
+58503A's 8.8.  None of this has been run with an engine other than
+the one each unit came with.
+
+## The cable delay
+
+`@@Az` sets the 1PPS cable delay, `tttt`, a signed 32-bit count of ns
+(p. 69, 0 to 999999).  The Z380x send the `:GPS:ADELay` setting as
+given.  The 58503A adds `pps_cable_delay_offset` (`0x10201c`) in
+`oncore_cable_delay_encode` (3704 `0x4feec`; 3633 `0x4fd64`, the same
+code, read from the ROM), with no clamp.
+
+- The offset is `:GPS:REFerence:BIAS`, 0 to 999 ns: the descriptor at
+  `0x33c8e` holds its value there, and its done hook,
+  `calibration_block_save_reported` (`0x30c0a`), writes it to the
+  EEPROM calibration block (`save_calibration_block_58503a`,
+  `0x30b24`).  3633 has a pointer to the same address at `0x3395a`
+  (read from the ROM).  The Z3805A has no such command
+  (`58503a-3704.md`, "The SCPI trees").
+- `calibration_block_read` (`0x30ba8`) loads it from the block's word
+  at `0x40008a`, unsigned, so 0 to 65534; `0xffff` or a bad checksum
+  gives 0.
+- The decoder, `oncore_cable_delay_decode` (`0x5003e`), keeps the
+  engine's value in `gps.pps_cable_delay_given` and, less the offset,
+  in `gps.pps_cable_delay`, which the status screen shows as
+  `CABLE DLY`.
+- `@@Az` is an echo: the engine must return `tttt` exactly.  Start-up
+  sends it from `gps_init_sequence` (`0x46a00`), which on any failure
+  logs `ant delay ack failure` and sends it again, without end.
+
+## Time RAIM
+
+`@@Bn` (pp. 102-106) and `@@En` (pp. 138-142) carry Time RAIM's
+settings and status.  The decoders (3704 `0x50924`, `0x50946`; 3633
+`0x50728`, `0x5074a`, read from the ROM) fill `gps.raim` and set
+`traim_message_arrived`.  By message byte, `@` being 0:
+
+| Byte | Field | Used by |
+| ---- | ----- | ------- |
+| 4 | output rate | the status monitor (below) |
+| 5 | Time RAIM on | `raim_monitor`: must be 1 |
+| 6-7 | alarm limit, 100 ns | display |
+| 8 | 1PPS control mode | display |
+| 9-18 | 1PPS rate, time of next pulse | nothing |
+| 19, 20 | pulse status, pulse sync | display |
+| 21 | solution status: 0 OK, 1 ALARM, 2 UNKNOWN | `raim_monitor` |
+| 22 | Time RAIM status: 2, neither detection nor isolation | `raim_monitor` |
+| 23-24 | one-sigma estimate, ns | display |
+| 25 | negative sawtooth, ns | display ("Where the sawtooth is read") |
+| 26 on | per channel: satellite, time estimate | display |
+
+`raim_monitor` (3704 `0x4b734`, 3633 `0x4b5e0` read from the ROM,
+Z3805A `0x4b01e`, Z3801A `0x4afdc`) is the same in all four:
+
+- Inactive unless Time RAIM is on (1), a `Bn` or `En` has been
+  received (`gps.raim_received`, which the status monitor sets), the
+  Time RAIM status is not 2 and the solution status not 2.
+- From inactive, OK on an OK solution, else alarm detected.  From OK,
+  alarm detected on solution 1.  Alarm detected becomes an alarm
+  after 4 s not OK.  An OK solution clears either.
+- An alarm makes the GPS reference invalid, state
+  `GPS_SYNC_RAIM_ERROR`, "Invalid: Time RAIM error", when the unit
+  holds position or surveys; the loop then enters holdover, logged as
+  the RAIM alarm (`pll_stages_gps_holdover_event`).  In the 58503A
+  (`gps_receiver_status_update_58503a`, `0x4b8a2`) it goes there
+  directly, not through questionable.
+
+What the firmware sends: `raim_request_arguments` (`0x4cfbc`), step
+`0x4a`, gives rate 1, Time RAIM on or off from
+`nv_settings.raim_state` and the alarm limit from
+`nv_settings.raim_threshold`, each the in-hold setting `[0]` or the
+other `[1]`, and 1PPS mode 1; `gps_request_build` adds 1PPS rate and
+time `0 0 1 0 0 0 0 0 0 0`.  The 58503A's init scripts also poll
+`Bn`/0(0, 0, 10, 1).  1PPS mode is always 1, on all the time, so the
+engine's pulse gating is never used, and no code outside the display
+and `raim_monitor` reads the record.  For an engine, only the rate
+and on bytes, the two statuses and the steady arrival of `Bn` or `En`
+change the firmware's behavior.
+
+The SCPI Time RAIM commands (`:DIAG:GPS:POS:HOLD:RAIM:STATe` and
+`THReshold`) ask `gps_message_supported` too: before `@@Cj` they fail
+with an execution error, or for a query data stale; without the
+option, with -241, hardware missing.
+
+## The monitors
+
+Both run on each pass of the GPS task (`command_monitor`, 3704
+`0x4bce6`); while either has failed, the receiver's health is failed.
+
+**The status monitor** (3704 `0x4be5c` to `0x4c02a`) watches while
+script step `0x4e` has enabled it and the last `Ba` or `Ea` sent asked
+a nonzero rate (`gps.status_rate`); in the Z380x also only in
+position-fix mode.  Each `Ba` or `Ea` decoded is fresh.  With *r* the
+rate:
+
+| | 58503A | Z380x |
+| - | ------ | ----- |
+| stale after, s | 3*r* | -- |
+| missing after, s | 36*r* | 15*r* |
+| new `Ba` times without a `Bn` or `En`, while the last `Bn`'s rate is nonzero | 20 | 7 |
+| `Ba`s with the same time | 46 | 45 |
+
+The 58503A's figures were read from the C and checked against both
+ROMs' compares.  On any of the last three it posts script `0x56`
+(Z380x `0x4b`), outputs on, and watches again; a second miss in a row
+fails the monitor, and the reference becomes "Invalid: GPS rcvr
+failed".  So the engine's `Ba` or `Ea` time must advance, and with
+Time RAIM output on, `Bn` or `En` must keep coming.
+
+**The command monitor** (3704 `0x4bd16` to `0x4be4a`), after a
+command times out or is rejected, fails and every 20 s posts the
+next query of `command_monitor_queries` (3704 list `0x523d0`: `Cj`,
+step `0x4d`, then the queries of `Aa` to `Cg`) until one is answered.
+
+## Emulating the engine
+
+What an engine in a Z380x or 58503A must do, from the above:
+
+- **Frame exactly.**  Send each message at its table length with a
+  correct checksum.  Send nothing outside the table, and never
+  `@@Ao`, `@@Bh` or `@@Ci`.
+- **Answer in time.**  Within the timeout, 10 s for most; 20 s for
+  `Ai`, `Ca`, `Fa`, `Cg`; 4 s for the 58503A's second `Ea` (3633: 5 s).
+  Three unanswered sends fail the request.
+- **Echo settings byte for byte**, checksum included: every kind-1
+  message, `Az` and `Cf` among them.  Special cases:
+  - `Ab`: a negative offset under an hour comes back as sign 0, hours
+    0, minutes negated (two's complement).
+  - `Af`: the commanded height in the GPS height field for type 0 and
+    the MSL field for type 1.
+  - `As`: latitude, longitude and type as sent; the height within
+    2 cm.
+  - `Cg` query (mode 2): any `@@Cg`.
+- **Answer queries** (mode 1, the query forms) with the message of the
+  same ID, and polls and output requests (kind 7) with one message of
+  the same ID: `Aa`, `Ac`, `Ba`, `Bb`, `Bc`, `Bd`, `Bj`, `Bk`, `Bn`,
+  `Ca`, `Cj`, `Ea`, `Ek`, `En`, `Fa`.  A request for continuous output
+  is answered by the first output.
+- **Answer `@@Ao` with a 25-byte `@@Ap`**, `@@Bh` with a 52-byte
+  `@@Ce`, and nothing to `@@Ci`.  The Z380x send `Ci`(0) first in their
+  start-up scripts; VPCommands p. 121 defines only 1 and 2, so stay in
+  binary.
+- **Answer `@@Cj`** with the 294-byte identity (pp. 122-123); start-up
+  fails without it.  Each line must start with its label.  `OPTIONS
+  LIST` must contain `I`, or no Time RAIM is sent.  In the 58503A,
+  software 8.4 brings the second `Ar`(65), which must be echoed; any
+  other version avoids it.
+- **Six or eight channels**, in the 58503A:
+  - Six: answer `Ba`, `Bk`, `Bn`, `Ca`; ignore `Ea` (the self-test
+    waits about 15 s, 3633 18 s).
+  - Eight: answer the second `Ea` (rate 0) with one 76-byte `@@Ea`, or
+    send `@@Ea` unasked; from then on, `Ea`, `Ek`, `En` and `Fa`, but
+    still `Ba` and `Bn` polls at rate 0 and `Bk` polls, 69 bytes.
+  - The Z380x are six-channel only.
+- **Keep state.**  The firmware takes fix mode from `@@Cg` and position
+  hold from `@@At` as the engine reports them.  Keep `@@Ba`/`@@Ea`
+  time advancing, and at least one channel with a satellite in mode 8,
+  available for position (p. 72), for the reference to qualify.
+- **Time RAIM.**  Send `Bn` or `En` at the rate asked, with the on byte
+  and the solution and Time RAIM statuses as wanted; the rest is shown
+  and not used.
+
+The start-up the engine sees: the init script (Z380x `0x48`, 58503A
+`0x53`, in `oncore/IMAGE.txt`), then from `gps_init_sequence` `@@Aw`
+(UTC or GPS time), `@@Ag` (`:GPS:EMANgle`), `@@Az`, `@@Am`
+(ignored satellites), then a hold or survey script.  The console can
+send any message in the table.
 
 ## The engines on the bench
 
@@ -103,65 +487,10 @@ is first seen or changes.
 The Z3801A's engine answered while tracking no satellites on an
 antenna the 58503A tracks on.
 
-## Six or eight channels
-
-Which engines each image can take, by the two message pairs the VP
-Oncore reference gives in six- and eight-channel forms: position/status
-`@@Ba` / `@@Ea` and Time RAIM `@@Bn` / `@@En`.  A message counts as
-handled when the image holds a pointer to its ID:
-
-| Image | `Ba` | `Ea` | `Bn` | `En` |
-| ----- | ---- | ---- | ---- | ---- |
-| Z3801A 3543 | yes | no | yes | no |
-| Z3805A 3543B | yes | no | yes | no |
-| 58503A 3633 | yes | yes | yes | yes |
-| 58503A 3704 | yes | yes | yes | yes |
-| Z3816A 4001 | yes | yes | yes | yes |
-
-The 58503A images decide at run time.  In 3704:
-
-- The message table (60-byte entries, `Bn` at `0x51b14`) has `Ea` at
-  entries 50 and 54, decoders `0x506e2` and `0x5098a`.  Both set bit 5
-  of the byte at `0x1013e2` and call `FUN_000509fe`, which stores 8 at
-  `0x1013e0` when that bit is set and 6 when it is clear.  No other
-  code sets or clears the bit by address.
-- The descriptor's last long, at +0x38, is a send filter.  The command
-  builder `FUN_00050bc8` calls it with the entry number and the
-  command's first argument and sends nothing when it returns zero.
-  `FUN_00050ad8`, the filter of `Ba`, `Ea` and `Ek` and, through
-  `0x50b48`, of `Bn` and `En`, passes `Ba`, `Bk` and `Bn` (entries 30,
-  39, 41) when the count is 6 and `Ea`, `Ek` and `En` (50 to 52) only
-  when it is 8.  With the count at 8 it still passes the six-channel
-  three when their first argument, the output rate, is 0: the
-  reference's "output response message once".  So an eight-channel
-  engine is polled with the six-channel messages but given continuous
-  output only in the eight-channel ones.  Entry 54, the second `Ea`,
-  has no filter and no destination.
-- `Ca` and `Fa`, the six- and eight-channel self-tests, are filtered
-  on bit 5 alone (`0x50ab8`, `0x50ac8`).
-- Bits 6 and 7 of `0x1013e2` come from the engine's `@@Cj` identity,
-  in `FUN_00050a16`, which addresses the byte as `0x592` off
-  `0x100e50`.  Once a `Cj` has been received (`0x101258`, set by its
-  decoder), bit 6 is set when the `OPTIONS LIST` value contains an
-  `I`, and bit 7 when `SOFTWARE VER` × 10 + `SOFTWARE REV` is 84:
-  software 8.4.  Run before a `Cj` arrives, it clears both.  `Bn` and
-  `En` go out only with bit 6 set (`0x50b48`); entry 55, a second
-  `@@Ar` (position fix algorithm), only with bit 7 (`0x50b6c`).  The
-  field labels are matched from the table at `0x5262c`.
-
-So the count is 6 until an `@@Ea` arrives from the engine and 8 after.
-The three bench engines all report options `IB`, so each would get
-Time RAIM commands; the two Z380x engines report software 8.4 and the
-58503A's 8.8.  3633 has the same selector at `0x50802`, the same two
-`bset` sites at `0x5051c` and `0x5078e`, and the same identity tests
-at `0x50834` and `0x5088e`.  Neither Z380x image has an `Ea` or `En`
-entry or these tests.  None of this has been run with an engine other
-than the one each unit came with.
-
 ## Where the sawtooth is read
 
-The one reader of offset 26 found is `FUN_0004c062`, at `0x4c2b4`,
-which sign-extends it and prints it on a Time RAIM status page whose
+In the Z3816A, the one reader of offset 26 found is `FUN_0004c062`,
+at `0x4c2b4`, which sign-extends it and prints it on a Time RAIM status page whose
 format strings are:
 
     ALARM LIM  %-24s   TIME REF  %s
@@ -169,7 +498,11 @@ format strings are:
 
 `SIGMA EST` is read from record offset 24 and `SAWT ERR` from offset
 26, matching the layout above.  The page is reached through a pointer
-table; the command that shows it has not been identified.
+table; the command that shows it has not been identified.  In the
+Z380x and 58503A the page is `gps_print_time_raim` (3704 `0x4888c`,
+Z3805A `0x484de`, Z3801A `0x4849c`), the task's step
+`GPS_STEP_PRINT_TIME_RAIM` (58503A `0x40`, Z380x `0x39`), which the
+console asks for.
 
 ## The 58503B's height datum
 
@@ -329,9 +662,8 @@ code at those displacements are of other blocks (`0x4cff0`,
 copy of the whole record, would still escape it.
 
 The same sweep over the Z3801A, Z3805A and both 58503A images finds
-the same.  Their programs (`02 00 03 00 84 ...`, the Z380x with `85`
-for `84`, where the Z3816A's is `02 84 84 03 00 84 ...`) put the
-sawtooth one byte earlier, at record + 25, which the display reaches
+the same.  Their programs ("Decoding") put the sawtooth one byte earlier, at
+record + 25, which the display reaches
 as offset `0x1a` from the T-RAIM-present flag just below the record:
 Z3801A `0x486ec`, Z3805A `0x4872e`, 3633 `0x489c0`, 3704 `0x48ae6`.
 The only other code that points into the record is the Time RAIM alarm
@@ -341,3 +673,14 @@ status and the T-RAIM status, never the sawtooth; no other long in
 any of the four images points into the record.  So in every image the
 sawtooth is displayed and not applied, with the same caveat for
 stepped pointers and whole-record copies.
+
+## Not known
+
+- What `@@Ar` 65 does on a software 8.4 engine.
+- Whether these engines answer `@@Ao` with `@@Ap`, as the tables
+  imply, and whether a 25-byte `@@Ao` would overrun the framer: read,
+  not run.
+- Whether a six-channel engine stays silent on `@@Ea`, and whether an
+  eight-channel one answers `@@Bk`.
+- Whether the bench 58503A's B4121 ever runs at a count of 8.
+  `gps.channel_count`, `0x1013e0`, read with `read-memory`, would say.

@@ -31,13 +31,16 @@ before the send filter.  An entry holds:
 | `+0x04` | 1 | kind |
 | `+0x06` | 16 | up to four argument encoders |
 | `+0x16` | 4 | pointer to the query form, zero if none |
+| `+0x1a` | 1 | timeout, in seconds of uptime |
 | `+0x1c` | 2 | length of the message the engine sends, `@@` to line end |
+| `+0x1e` | 1 | match kind: what answers the message (`../gps.md`, "Answer matching") |
 | `+0x20` | 24 | up to three pairs: a decoder and the record it fills |
 | `+0x38` | 4 | send filter, zero if none (60-byte entries only) |
 
-The sender, `FUN_000584c0`, composes only kinds 1 and 3; what bit 1
-means was not traced.  An encoder takes its argument as a long, four
-bytes in the argument block, and sends its low one, two or four bytes
+The sender, `FUN_000584c0`, composes only kinds 1 and 3: bit 0 means
+the task sends the message, bit 1 that the engine does.  An encoder
+takes its argument as a long, four bytes in the argument block, and
+sends its low one, two or four bytes
 (read in the Z3801A, `0x4ee4a` to `0x4eef6`).  A table may hold an ID
 twice: the 58503B's entries `0x3a` to `0x3e` repeat `Ea`, `Ca` and
 `Fa` without decoders, and `Ar`, each with another filter.  The table

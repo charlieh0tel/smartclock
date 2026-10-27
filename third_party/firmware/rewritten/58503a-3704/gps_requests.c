@@ -384,13 +384,14 @@ int16_t gps_request_build(gps_request_code_word message, gps_argument_mode mode,
 }
 
 /* @@Ba's, @@Ea's and @@Ek's send filter (oncore_messages entries 30, 50
- * and 51): the six-channel messages, @@Ba, @@Bk and @@Bn, to a
- * six-channel engine, or to an eight-channel one when the first argument,
- * the output rate, encodes as 0, a response once; the eight-channel ones,
- * @@Ea, @@Ek and @@En, to an eight-channel engine alone (0x50ad8;
- * docs/firmware/gps.md, "Six or eight channels").  Written by hand: it
- * runs the message's first encoder, which takes its index in a 2-byte
- * slot. */
+ * and 51), and through oncore_filter_traim @@Bn's and @@En's: the
+ * six-channel messages, @@Ba and @@Bn, to a six-channel engine, or to
+ * an eight-channel one when the first argument, the output rate, encodes
+ * as 0, a response once; the eight-channel ones, @@Ea, @@Ek and @@En,
+ * to an eight-channel engine alone (0x50ad8; docs/firmware/gps.md, "Six
+ * or eight channels").  It passes @@Bk as it does @@Ba, but @@Bk's entry,
+ * 39, has no filter, so goes to every engine.  Written by hand: it runs
+ * the message's first encoder, which takes its index in a 2-byte slot. */
 uint8_t oncore_filter_channels(int16_t index, oncore_encoder* encoder,
                                int32_t* arguments) {
   const uint8_t channels = gps.channel_count;

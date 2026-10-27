@@ -115,15 +115,19 @@ firmware's faults are kept, not fixed.  Method, checks and limits:
 [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md).
 
 The 58503A's 3704 is read whole as C too, its C begun as the
-Z3805A's and rewritten to its own code, and held to the same
-checks: of the primary's functions 1415 agree and 5 differ for the
+Z3805A's, and its writing by hand under way: 1005 of the primary's C
+functions and 215 of the installer's are written by hand, and 415 and
+33 remain the decompiler's reading, which compiles and agrees with the
+image as it stands.  All are held to the same checks: of the primary's functions 1415 agree and 5 differ for the
 firmware's own reasons, and the installer's 247 agree, one the harness
 cannot run; its console sessions agree, 8 of 8.  What it has that the
 Z3805A does not, the front panel among it:
 [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md).
 
 The Z3801A's 3543, the Z3805A's sibling without its SCI driver, is read
-whole as C the same way, held to the same checks:
+whole as C the same way, 1277 of the primary's C functions and 236 of
+the installer's by hand and 24 of the primary's remaining as the
+decompiler's reading, held to the same checks:
 [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md).  The C
 the three images run alike lies once in `third_party/firmware/rewritten/common/`,
 by the rules of [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md),

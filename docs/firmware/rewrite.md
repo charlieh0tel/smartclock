@@ -478,11 +478,16 @@ GPL-2.0-only, as a local tool.
 
 The 58503A 3704 port has its own document,
 [`58503a-3704.md`](58503a-3704.md), held to this one's method and
-checks (its "The function check"): of its function check, the primary's 1415
+checks (its "The function check").  Not all of its C is written by
+hand yet: 1005 of the primary's C functions and 215 of the installer's are,
+and 415 and 33 remain the decompiler's reading (its "The Z3805A's C
+against the diff").  Of its function check, the primary's 1415
 agree, 5 are known and none skipped or failed, and the installer's 247
 agree, 1 skipped; its console sessions agree, 8 of 8.  The Z3801A
 3543's, [`z3801a-3543.md`](z3801a-3543.md), seeded from the Z3805A's and
-the third image to share `common/`, is held to the same standard: of
-its function check, the primary's 1290 agree, 6 are known and 5
+the third image to share `common/`, is held to the same standard, its
+C 1277 of the primary's functions and 236 of the installer's by hand
+and 24 of the primary's still the decompiler's reading: of its function
+check, the primary's 1290 agree, 6 are known and 5
 skipped, none failed, and the installer's 236 agree, 1 skipped; its
 console sessions agree, 8 of 8.

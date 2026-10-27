@@ -1,9 +1,10 @@
 """Checks docs/firmware/58503a-3704.md's figures -- the counts table, the
 pieces, tables and labels matched, the share of functions carried, the
 changed functions of each subject, what a port of the hand-written C
-would cost -- against image_diff.py's TSV,
-docs/firmware/diff/58503a-3704-vs-z3805a-3543b.tsv, or with --write
-rewrites them in place.
+would cost, how many of the 58503A's new and changed functions are
+written by hand -- against image_diff.py's TSV,
+docs/firmware/diff/58503a-3704-vs-z3805a-3543b.tsv, and the 58503A's
+export, or with --write rewrites them in place.
 
     python3 -I tools/firmware/diff_figures.py DIFF.tsv --functions SIDECAR [--write | --by-file]
 
@@ -16,6 +17,7 @@ is not in the document exactly once.
 
 import argparse
 import collections
+import importlib.util
 import json
 import pathlib
 import re
@@ -24,6 +26,11 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DOCUMENT = ROOT / 'docs/firmware/58503a-3704.md'
+# the image the document describes, whose export gives each function's form
+IMAGE = '58503a-3704'
+spec = importlib.util.spec_from_file_location('report_figures', ROOT / 'tools/firmware/report_figures.py')
+report_figures = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(report_figures)
 
 # image_diff.py's statuses, in the counts table's order
 STATUSES = ('identical', 'relocated', 'changed', 'missing', 'new')
@@ -123,6 +130,35 @@ def rewritten_statuses(sidecar, rows):
     return found
 
 
+def export_key(row):
+    """A row's function's address as the export gives it."""
+    address = '%08x' % int(row['other_address'], 16)
+    return 'installer::' + address if row['region'] == 'installer' else address
+
+
+def forms(rows):
+    """How the 58503A's primary functions are in its export: each
+    status's functions by form, a changed one of the same shape counted
+    apart too, and the readings no row of the diff gives."""
+    functions = report_figures.export_functions(IMAGE)
+    found = collections.defaultdict(collections.Counter)
+    paired = set()
+    for row in rows:
+        if row['kind'] != 'function' or row['region'] != 'primary' or not row['other_address']:
+            continue
+        key = export_key(row)
+        if key not in functions:
+            continue
+        paired.add(key)
+        form = functions[key][1]
+        found[row['status']][form] += 1
+        if row['status'] == 'changed' and row['similarity'] == SAME_SHAPE:
+            found['same shape'][form] += 1
+    unpaired = sum(1 for key, (region, form) in functions.items()
+                   if region == 'primary' and form == 'reading' and key not in paired)
+    return found, unpaired
+
+
 def figures(rows, sidecar):
     """Each template of the document's sentences with its figures."""
     _, by_group = counts_table(rows)
@@ -140,6 +176,7 @@ def figures(rows, sidecar):
                     if r['region'] == 'primary' and r['kind'] == 'function' and r['status'] == 'new')
     rewritten = sum(rewritten_statuses(sidecar, rows).values(), collections.Counter())
     sidecar_functions = sum(1 for line in open(sidecar) if line.strip())
+    form, unpaired = forms(rows)
     return [
         ('the `.conventions.jsonl` sidecar, # functions', [sidecar_functions]),
         ('the platform layer is # % identical or relocated',
@@ -165,6 +202,13 @@ def figures(rows, sidecar):
          [primary['new'], pieces['missing'], pieces['changed']]),
         ('The # typed labels not placed, and the # missing functions',
          [tables['missing'] + installer_tables['missing'], primary['missing']]),
+        ('Of the new functions # are written by hand', [form['new']['hand']]),
+        ("and # run as the decompiler's reading, the rest assembly; of the # changed, # are written by hand "
+         "and # run as the reading, # of them of the same shape, the rest assembly; and # the diff finds "
+         "identical or relocated, and # it neither pairs nor lists",
+         [form['new']['reading'], primary['changed'], form['changed']['hand'], form['changed']['reading'],
+          form['same shape']['reading'], form['identical']['reading'] + form['relocated']['reading'],
+          unpaired]),
     ] + subject_counts(rows)
 
 

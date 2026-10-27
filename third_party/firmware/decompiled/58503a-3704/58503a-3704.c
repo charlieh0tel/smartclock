@@ -13106,7 +13106,7 @@ uint32_t days_to_date(uint32_t days)
 /* 000112b6 */
 
 /* gps_seconds' inverse: seconds since 1980 as a packed date, days_to_date of the day count from MJD
-   44244, and a packed time, hours, minutes and seconds in bytes 2 to 0; nothing calls it; written
+   44244, and a packed time, hours, minutes and seconds in bytes 2 to 0; nothing calls it; row added
    by hand for the 58503A 3704
    read */
 
@@ -13183,7 +13183,7 @@ void gps_to_utc(uint32_t *date,time_of_day *time)
 
 /* 1 for a packed date that is a quarter's first or last day, January 1, March 31, April 1, June 30,
    July 1, September 30, October 1 or December 31; leap_event_create clears a pending leap second
-   the engine no longer reports on any other day (0x465ec); written by hand for the 58503A 3704
+   the engine no longer reports on any other day (0x465ec); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t date_at_quarter_edge(uint32_t date)
@@ -13230,8 +13230,8 @@ uint8_t date_at_quarter_edge(uint32_t date)
 /* 0001170a */
 
 /* 1 for a packed date that is a quarter's first day, January 1, April 1, July 1 or October 1;
-   leap_event_create schedules the leap second the engine reports on any other day (0x46618);
-   written by hand for the 58503A 3704
+   leap_event_create schedules the leap second the engine reports on any other day (0x46618); row
+   added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t date_starts_quarter(uint32_t date)
@@ -14462,7 +14462,7 @@ __asm__(
 
 /* sets the bits of the latch at 0x300000 given, or clears them, in selftest.latch, and writes it,
    but diag_tmode_data while :DIAGnostic:TMODe:STATe is on; lamp_test's and the front panel's end
-   and reset (0x53796, 0x537b2) call it; written by hand for the 58503A 3704
+   and reset (0x53796, 0x537b2) call it; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t latch_bits_set(latch_bit bits,char set)
@@ -14489,7 +14489,7 @@ uint8_t latch_bits_set(latch_bit bits,char set)
 /* 00013702 */
 
 /* selftest.latch with the bits of clear cleared and those of set set, written as latch_bits_set
-   writes; the front panel's command start (0x53752) sets bit 7 and clears bit 6; written by hand
+   writes; the front panel's command start (0x53752) sets bit 7 and clears bit 6; row added by hand
    for the 58503A 3704
    58503a-3704.md */
 
@@ -14511,7 +14511,8 @@ uint8_t latch_bits_write(latch_bit set,latch_bit clear)
 /* 0001373c */
 
 /* the latch's low three bits, the lamps GPS Lock, Holdover and Alarm, from its argument's, written
-   as latch_bits_set writes; lamps_write and lamp_test call it; written by hand for the 58503A 3704
+   as latch_bits_set writes; lamps_write and lamp_test call it; row added by hand for the 58503A
+   3704
    58503a-3704.md */
 
 void latch_lamps_write(latch_bit lamps)
@@ -14532,8 +14533,8 @@ void latch_lamps_write(latch_bit lamps)
 
 /* 00013778 */
 
-/* writes selftest.latch to the latch again, or diag_tmode_data in test mode; nothing calls it;
-   written by hand for the 58503A 3704
+/* writes selftest.latch to the latch again, or diag_tmode_data in test mode; nothing calls it; row
+   added by hand for the 58503A 3704
    58503a-3704.md */
 
 void latch_rewrite(void)
@@ -14552,7 +14553,7 @@ void latch_rewrite(void)
 /* 000137a4 */
 
 /* duart_output_bits with its two arguments (0x137ac): hmon_task's heartbeat and the power-on
-   self-tests' lamps (0x18e1c to 0x18f0e); written by hand for the 58503A 3704
+   self-tests' lamps (0x18e1c to 0x18f0e); row added by hand for the 58503A 3704
    read */
 
 void board_leds_change(board_led reset,board_led set)
@@ -15082,7 +15083,7 @@ __asm__(
 
 /* enter_supervisor, then marks the clock record set (+0x2f) and checksums it, A6 the record, and
    the status register restored from the stack, which C cannot say; :DIAGnostic:TVALid:NOW's setter
-   calls it (0x2bc04); written by hand for the 58503A 3704
+   calls it (0x2bc04); row added by hand for the 58503A 3704
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
    called.
    read */
@@ -24093,7 +24094,7 @@ void selftest_print_failure(char param_1)
 /* 000189f6 */
 
 /* one transfer to the ADC, QSPI device 1, of the word 0xe000, returning its reply;
-   qspi_adc_test_58503a checks the reply's bits; written by hand for the 58503A 3704
+   qspi_adc_test_58503a checks the reply's bits; row added by hand for the 58503A 3704
    read */
 
 uint16_t qspi_adc_test_read(void)
@@ -24220,7 +24221,7 @@ void qspi_tests_run(void)
 /* 00018efa */
 
 /* 0x186da, which tests the health monitor's channels against their ranges into selftest.power,
-   lighting OP7 on a failure; returns selftest.power; the self-test table's last check; written by
+   lighting OP7 on a failure; returns selftest.power; the self-test table's last check; row added by
    hand for the 58503A 3704
    table 0x18814, "POWER" */
 
@@ -34242,7 +34243,7 @@ uint8_t drtb_release_for_timecode(void)
 
 /* 0001de46 */
 
-/* the DUART's input port (IP, 0x20001a); nothing calls it; written by hand for the 58503A 3704
+/* the DUART's input port (IP, 0x20001a); nothing calls it; row added by hand for the 58503A 3704
    read */
 
 uint8_t duart_input_port_read(void)
@@ -35325,7 +35326,7 @@ __asm__(
 
 /* 00021b48 */
 
-/* hmon_channels' entry 0's convert routine, Temperature: the reading times 0.273; written by hand
+/* hmon_channels' entry 0's convert routine, Temperature: the reading times 0.273; row added by hand
    for the 58503A 3704 */
 
 float hmon_convert_temperature(uint8_t reading)
@@ -35341,7 +35342,7 @@ float hmon_convert_temperature(uint8_t reading)
 
 /* 00021b62 */
 
-/* hmon_channels' entry 1's convert routine, 5V: the reading times 0.0242; written by hand for the
+/* hmon_channels' entry 1's convert routine, 5V: the reading times 0.0242; row added by hand for the
    58503A 3704 */
 
 float hmon_convert_5v(uint8_t reading)
@@ -35358,7 +35359,7 @@ float hmon_convert_5v(uint8_t reading)
 /* 00021bc4 */
 
 /* hmon_channels' entry 3's convert routine, Oven: the reading times 0.0743 less the 5V channel's,
-   adc_read(1), times 0.0472; 0x21b7c, which nothing names, is its copy; written by hand for the
+   adc_read(1), times 0.0472; 0x21b7c, which nothing names, is its copy; row added by hand for the
    58503A 3704 */
 
 float hmon_convert_oven(uint8_t reading)
@@ -35381,8 +35382,8 @@ float hmon_convert_oven(uint8_t reading)
 
 /* 00021c0c */
 
-/* hmon_channels' entry 4's convert routine, 15V: the reading times 0.0763; written by hand for the
-   58503A 3704 */
+/* hmon_channels' entry 4's convert routine, 15V: the reading times 0.0763; row added by hand for
+   the 58503A 3704 */
 
 float hmon_convert_15v(uint8_t reading)
 
@@ -35398,7 +35399,7 @@ float hmon_convert_15v(uint8_t reading)
 /* 00021c26 */
 
 /* hmon_channels' entry 5's convert routine, -15V: the reading times 0.0438 less the 5V channel's,
-   adc_read(1), times 0.0840; written by hand for the 58503A 3704 */
+   adc_read(1), times 0.0840; row added by hand for the 58503A 3704 */
 
 float hmon_convert_minus_15v(uint8_t reading)
 
@@ -35420,8 +35421,8 @@ float hmon_convert_minus_15v(uint8_t reading)
 
 /* 00021c6e */
 
-/* hmon_channels' entry 6's convert routine, Primary oven current: the reading times 250/255;
-   written by hand for the 58503A 3704 */
+/* hmon_channels' entry 6's convert routine, Primary oven current: the reading times 250/255; row
+   added by hand for the 58503A 3704 */
 
 float hmon_convert_oven_current(uint8_t reading)
 
@@ -35436,8 +35437,8 @@ float hmon_convert_oven_current(uint8_t reading)
 
 /* 00021c88 */
 
-/* hmon_channels' entry 7's convert routine, Antenna current: the reading times 250/255; written by
-   hand for the 58503A 3704 */
+/* hmon_channels' entry 7's convert routine, Antenna current: the reading times 250/255; row added
+   by hand for the 58503A 3704 */
 
 float hmon_convert_antenna_current(uint8_t reading)
 
@@ -35456,7 +35457,8 @@ float hmon_convert_antenna_current(uint8_t reading)
 /* 00021cfc */
 
 /* clears every adc_monitors entry's valid, sample_index, out_of_range_count and out_of_tolerance,
-   the Z3805A's monitors_reset's loop; monitors_reset calls it; written by hand for the 58503A 3704
+   the Z3805A's monitors_reset's loop; monitors_reset calls it; row added by hand for the 58503A
+   3704
    read */
 
 void adc_monitors_reset(void)
@@ -35479,7 +35481,7 @@ void adc_monitors_reset(void)
 /* 00021d26 */
 
 /* clears 0x101e6e and sets hmon_channel_index to its first channel; pps_monitors_reset calls it;
-   written by hand for the 58503A 3704
+   row added by hand for the 58503A 3704
    read */
 
 void hmon_reset(void)
@@ -35495,7 +35497,7 @@ void hmon_reset(void)
 
 /* adds the channel's reading, hmon_channel_read's, to its monitor in adc_monitors, a 10-sample
    moving average; hmon_channels' add routine but for the Primary oven current's; in the 58503A it
-   takes the channel (0x21d3a), where the Z3805A's takes a monitor and a reading; written by hand
+   takes the channel (0x21d3a), where the Z3805A's takes a monitor and a reading; row added by hand
    for the 58503A 3704 */
 
 void monitor_average_add(adc_channel channel)
@@ -35567,7 +35569,7 @@ void monitor_filter_add_58503a(adc_channel param_1)
 
 /* a channel's reading into its monitor as 0.1 of it and 0.9 of the last, the first taken whole, and
    every 75th call the change since; nothing calls it or names it in hmon_channels (revisions.md);
-   written by hand for the 58503A 3704
+   row added by hand for the 58503A 3704
    read */
 
 void hmon_smoothed_add(adc_channel channel)
@@ -35629,7 +35631,7 @@ void hmon_smoothed_add(adc_channel channel)
 
 /* a channel's tolerance report, out of tolerance ("%s is out of tolerance, value: %.2f", logged,
    and its entry's first happening) or back within it (its second), each once, by its monitor's
-   out_of_tolerance; hmon_report_range and hmon_report_oven_warm call it; written by hand for the
+   out_of_tolerance; hmon_report_range and hmon_report_oven_warm call it; row added by hand for the
    58503A 3704
    read */
 
@@ -35701,7 +35703,7 @@ uint8_t monitor_out_of_range(adc_monitor *monitor,float minimum,float maximum,ui
 /* 00022104 */
 
 /* counts a channel's monitor's readings outside its entry's range, up to 5, and returns whether
-   more than 5 came in a row; hmon_report_range calls it; written by hand for the 58503A 3704
+   more than 5 came in a row; hmon_report_range calls it; row added by hand for the 58503A 3704
    read */
 
 uint8_t hmon_channel_out_of_range(uint8_t channel)
@@ -35735,7 +35737,7 @@ uint8_t hmon_channel_out_of_range(uint8_t channel)
 /* 00022194 */
 
 /* hmon_channels' 5V, 15V and -15V entries' report routine: the channel's range count (0x22104),
-   then its report, out of tolerance or back within it (0x21f68); written by hand for the 58503A
+   then its report, out of tolerance or back within it (0x21f68); row added by hand for the 58503A
    3704 */
 
 void hmon_report_range(adc_channel channel)
@@ -35752,7 +35754,8 @@ void hmon_report_range(adc_channel channel)
 /* 000221aa */
 
 /* hmon_channels' Primary oven current entry's report routine: the channel out of tolerance while
-   double_oven_warmed_up is 0, else back within it (0x21f68); written by hand for the 58503A 3704 */
+   double_oven_warmed_up is 0, else back within it (0x21f68); row added by hand for the 58503A 3704
+    */
 
 void hmon_report_oven_warm(adc_channel channel)
 
@@ -35771,7 +35774,7 @@ void hmon_report_oven_warm(adc_channel channel)
 /* 000221e0 */
 
 /* whether the uptime passes the channel's entry's field_0c, a check of hmon_channel_entry's kind;
-   no entry names it; written by hand for the 58503A 3704
+   no entry names it; row added by hand for the 58503A 3704
    read */
 
 uint8_t hmon_channel_settled(uint8_t channel)
@@ -35790,7 +35793,7 @@ uint8_t hmon_channel_settled(uint8_t channel)
 /* 000222a6 */
 
 /* a channel's average, 7 at most (0x222ac): its monitor's value, or its hmon_channels entry's
-   nominal value while the monitor has none; written by hand for the 58503A 3704
+   nominal value while the monitor has none; row added by hand for the 58503A 3704
    read */
 
 float adc_average(adc_channel channel)
@@ -35814,7 +35817,7 @@ float adc_average(adc_channel channel)
 /* 000222f2 */
 
 /* 1 while nv_settings.antenna_current_alarm is set and the antenna current's average is below 10 or
-   above 200; nothing calls it (revisions.md); written by hand for the 58503A 3704
+   above 200; nothing calls it (revisions.md); row added by hand for the 58503A 3704
    read */
 
 uint8_t hmon_check_antenna_current(void)
@@ -35902,7 +35905,7 @@ bool double_oven_warmed_up(void)
 /* 000234ae */
 
 /* PORTF0's bits of mask read until ten reads in a row within 1000 agree; 1 if any is set; nothing
-   calls it ("Reads until steady"); written by hand for the 58503A 3704
+   calls it ("Reads until steady"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t portf0_read_steady(uint8_t mask)
@@ -35933,7 +35936,7 @@ uint8_t portf0_read_steady(uint8_t mask)
 /* 000234f8 */
 
 /* PORTGP's bits of mask read until four reads in a row within 100 agree; 1 if any is set; nothing
-   calls it ("Reads until steady"); written by hand for the 58503A 3704
+   calls it ("Reads until steady"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t portgp_read_steady(uint8_t mask)
@@ -36182,7 +36185,7 @@ uint8_t internal_pps_check(void)
 /* 00023b10 */
 
 /* lamp_bits from :LED:GPSLock?'s, :LED:HOLDover?'s and :LED:ALARm?'s flags, bits 0 to 2, and
-   lamp_blink cleared; written by hand for the 58503A 3704
+   lamp_blink cleared; row added by hand for the 58503A 3704
    read */
 
 void lamps_compose(void)
@@ -36203,7 +36206,7 @@ void lamps_compose(void)
 /* 00023b46 */
 
 /* sets lamps_requested, so that hmon_task writes the lamps on its next pass; lamp_test calls it as
-   it ends; written by hand for the 58503A 3704
+   it ends; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void lamps_request(void)
@@ -36217,8 +36220,8 @@ void lamps_request(void)
 /* 00023b50 */
 
 /* writes lamp_bits, with lamp_blink flipped in when blink is set, through the latch's low three
-   bits (0x1373c), but while :DIAGnostic:TMODe:STATe (0x101e76) or lamp_test (0x100e38) runs;
-   written by hand for the 58503A 3704
+   bits (0x1373c), but while :DIAGnostic:TMODe:STATe (0x101e76) or lamp_test (0x100e38) runs; row
+   added by hand for the 58503A 3704
    read */
 
 void lamps_write(uint8_t blink)
@@ -38281,8 +38284,8 @@ __asm__(
 /* 0002775a */
 
 /* a register's event word, as status_read_event reads it, without clearing it: the top register's
-   the port's status byte; alarm_text_collect reads each register so; written by hand for the 58503A
-   3704
+   the port's status byte; alarm_text_collect reads each register so; row added by hand for the
+   58503A 3704
    58503a-3704.md */
 
 void status_peek_event(status_model *status,int32_t index,uint16_t *event)
@@ -38449,7 +38452,7 @@ int32_t scpi_query_failed(status_condition_code code,scpi_call *call)
 
 /* 00028da2 */
 
-/* sets scpi_prompt_enabled; port_prompt_set's for port 2; written by hand for the 58503A 3704
+/* sets scpi_prompt_enabled; port_prompt_set's for port 2; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void scpi_prompt_set(uint8_t enabled)
@@ -38462,7 +38465,7 @@ void scpi_prompt_set(uint8_t enabled)
 
 /* 00028dac */
 
-/* scpi_prompt_enabled; port_prompt_get's for port 2; written by hand for the 58503A 3704
+/* scpi_prompt_enabled; port_prompt_get's for port 2; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t scpi_prompt_get(void)
@@ -38628,7 +38631,7 @@ void status_sre_set(scpi_port *port,int32_t bits)
 /* 00029032 */
 
 /* port_update_rqs of the Status Byte and the Service Request Enable for port 2; its callers are the
-   Z3805A's status_update_rqs's ("The alarm outputs"); written by hand for the 58503A 3704
+   Z3805A's status_update_rqs's ("The alarm outputs"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void status_update_rqs(void)
@@ -38652,8 +38655,8 @@ void status_update_rqs(void)
 
 /* the port layer's status_report: status_report(code) for port 2, the one port its switch has a
    case for, its result returned; for another port D0 is the port less 2 ("SCPI on more than one
-   port"); written by hand for the 58503A 3704, so that the C of its caller, which takes its result,
-   compiles
+   port"); row added by hand for the 58503A 3704, so that the C of its caller, which takes its
+   result, compiles
    58503a-3704.md */
 
 uint32_t port_status_report(char port,int16_t code)
@@ -38673,8 +38676,8 @@ uint32_t port_status_report(char port,int16_t code)
 /* 000290f8 */
 
 /* for port 2, port_status_report of the condition of each of port_error_reports' four entries whose
-   mask the receive status has a bit of; console_port_read calls it on a read error; written by hand
-   for the 58503A 3704
+   mask the receive status has a bit of; console_port_read calls it on a read error; row added by
+   hand for the 58503A 3704
    58503a-3704.md */
 
 uint32_t port_report_errors(char port,uint8_t status)
@@ -38701,7 +38704,7 @@ uint32_t port_report_errors(char port,uint8_t status)
 
 /* 00029154 */
 
-/* for port 2 scpi_prompt_get, else 0; the ALARm port's :PROMpt? asks it; written by hand for the
+/* for port 2 scpi_prompt_get, else 0; the ALARm port's :PROMpt? asks it; row added by hand for the
    58503A 3704
    58503a-3704.md */
 
@@ -38723,7 +38726,7 @@ uint8_t port_prompt_get(char port)
 
 /* 0002917c */
 
-/* for port 2 scpi_prompt_set; scpi_task_run and the ALARm port's :PROMpt set it; written by hand
+/* for port 2 scpi_prompt_set; scpi_task_run and the ALARm port's :PROMpt set it; row added by hand
    for the 58503A 3704
    58503a-3704.md */
 
@@ -38740,7 +38743,7 @@ void port_prompt_set(char port,uint8_t enabled)
 
 /* 000291a6 */
 
-/* for port 2 scpi_session_init_58503a's port, else null; scpi_task_run's; written by hand for the
+/* for port 2 scpi_session_init_58503a's port, else null; scpi_task_run's; row added by hand for the
    58503A 3704
    58503a-3704.md */
 
@@ -38763,7 +38766,7 @@ scpi_port * port_session_init(char port)
 /* 000291ce */
 
 /* for port 2 scpi_console_port's object, else null; status_init gives it the status model
-   (0x2f122); written by hand for the 58503A 3704
+   (0x2f122); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 scpi_port * port_object(char port)
@@ -38786,8 +38789,8 @@ scpi_port * port_object(char port)
 
 /* sets or clears RQS, bit 6, in the status byte by whether it shares a bit with the enable, RQS
    left out; for port 2 also stores that in status_request_service and led_alarm and drives the
-   alarm outputs (alarm_outputs_set); status_update_rqs's ("The alarm outputs"); written by hand for
-   the 58503A 3704
+   alarm outputs (alarm_outputs_set); status_update_rqs's ("The alarm outputs"); row added by hand
+   for the 58503A 3704
    58503a-3704.md */
 
 void port_update_rqs(uint8_t *status_byte,uint8_t enable,char port)
@@ -38841,7 +38844,7 @@ void port_update_rqs(uint8_t *status_byte,uint8_t enable,char port)
 /* the SCPI task's body for a port: time sliced, a 2000-byte arena, the port's prompt on and its
    session, scpi_interpret over the trees given, then pForth or the installer by :SYSTem:LANGuage,
    as the Z3805A's scpi_task does; write and print are its error messages' routines; scpi_task gives
-   it port 2; written by hand for the 58503A 3704
+   it port 2; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void scpi_task_run(char port,status_model *status,scpi_child_list *main,scpi_child_list *common,
@@ -38929,7 +38932,7 @@ uint32_t scpi_task_create(uint32_t param_1)
 
 /* walks an alarm_text node's entries: for each event bit both enabled in nv_settings.status_enable
    and pending (status_peek_event), the most severe so far replaces the cursor's text with its own
-   and a sign by its transition filters; recurses into a child; 1 if any; written by hand for the
+   and a sign by its transition filters; recurses into a child; 1 if any; row added by hand for the
    58503A 3704
    58503a-3704.md */
 
@@ -39027,7 +39030,7 @@ LAB_000296fe:
 /* 00029740 */
 
 /* the alarm's text, from alarm_text_root through alarm_text_collect, at most severity 4: the front
-   panel's mode 9 and :ALARm?; 1 if any; written by hand for the 58503A 3704
+   panel's mode 9 and :ALARm?; 1 if any; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t alarm_text(char *text)
@@ -40549,7 +40552,7 @@ int32_t scpi_query_LED_ALARm_ACO(void *parameters,void *response,scpi_call *call
 /* 0002de64 */
 
 /* whether a request source may ask for a time code: always while tcode_continuous is clear, else
-   for sources 0 and 1; :PTIMe:TCODe? and :RTCM? ask; written by hand for the 58503A 3704
+   for sources 0 and 1; :PTIMe:TCODe? and :RTCM? ask; row added by hand for the 58503A 3704
    read */
 
 uint8_t tcode_query_allowed(request_source source)
@@ -40785,7 +40788,7 @@ int32_t scpi_set_SOURce_PTIMe_UTC(void *parameters,void *response,scpi_call *cal
 
 /* 0002eff0 */
 
-/* scpi_status_model for port 0 or 2, else the port less 2; status_preset_register's; written by
+/* scpi_status_model for port 0 or 2, else the port less 2; status_preset_register's; row added by
    hand for the 58503A 3704
    58503a-3704.md */
 
@@ -40910,8 +40913,8 @@ void status_event_hook(uint32_t param_1,uint8_t param_2)
 
 /* 0002f1ba */
 
-/* a register's condition word from status_object once status_ready, else 0; nothing calls it;
-   written by hand for the 58503A 3704
+/* a register's condition word from status_object once status_ready, else 0; nothing calls it; row
+   added by hand for the 58503A 3704
    read */
 
 uint16_t status_condition_word(uint8_t index)
@@ -40932,7 +40935,7 @@ uint16_t status_condition_word(uint8_t index)
 /* 0002f1ee */
 
 /* status_clear_events of status_object, *CLS's: the front panel's Shift then Alt clears the alarm
-   with it; written by hand for the 58503A 3704
+   with it; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void status_events_clear(void)
@@ -41956,8 +41959,8 @@ int32_t scpi_query_ALARm_ACO(void *parameters,void *response,scpi_call *call)
 
 /* 00030a26 */
 
-/* lifetime.efc from pll.efc, then lifetime_record_write; nothing calls it; written by hand for the
-   58503A 3704
+/* lifetime.efc from pll.efc, then lifetime_record_write; nothing calls it; row added by hand for
+   the 58503A 3704
    read */
 
 void lifetime_efc_save(void)
@@ -42046,7 +42049,7 @@ uint32_t calibration_block_read(void)
 
 /* save_calibration_block_58503a, reporting event 0x10 to the source when it fails, as a descriptor
    hook is given an index and a source; nonzero once saved; time_offset_done and three descriptors'
-   hooks; written by hand for the 58503A 3704
+   hooks; row added by hand for the 58503A 3704
    read */
 
 uint8_t calibration_block_save_reported(int32_t index,int32_t source)
@@ -42129,7 +42132,7 @@ uint8_t parameter_record_read_58503a(void)
 /* 00030da4 */
 
 /* save_parameter_record_58503a, reporting event 0x10 to the source when it fails; nonzero once
-   saved; finish_scpi_cmd and duartb_settings_preset; written by hand for the 58503A 3704
+   saved; finish_scpi_cmd and duartb_settings_preset; row added by hand for the 58503A 3704
    read */
 
 uint8_t parameter_record_save_reported(request_source source)
@@ -42616,7 +42619,7 @@ int32_t log_event_58503a(uint8_t param_1)
 
 /* 00031ac4 */
 
-/* logs "EXT reference valid at" a date and time; nothing calls it; written by hand for the 58503A
+/* logs "EXT reference valid at" a date and time; nothing calls it; row added by hand for the 58503A
    3704
    read */
 
@@ -42981,8 +42984,8 @@ uint8_t nv_slot_valid(void)
 
 /* 00032b62 */
 
-/* whether either NV record has the tag "CQ" and its checksum; nv_restore asks (0x327e4); written by
-   hand for the 58503A 3704
+/* whether either NV record has the tag "CQ" and its checksum; nv_restore asks (0x327e4); row added
+   by hand for the 58503A 3704
    read */
 
 uint8_t nv_records_valid(void)
@@ -43487,7 +43490,7 @@ void interpolator_sample(interpolator_calibration *calibration)
 /* 00040828 */
 
 /* PF5 low and PF3 low while the alarm is on, PF5 high and PF3 low while off, with interrupts held
-   off, then FPGA_BIT_ALARM ("The alarm outputs"); written by hand for the 58503A 3704
+   off, then FPGA_BIT_ALARM ("The alarm outputs"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void alarm_outputs_set(char alarm)
@@ -44504,7 +44507,7 @@ LAB_00043a6a:
 
 /* counts pll.holdover_duration and, the first time it passes nv_settings.holdover_status_threshold,
    raises STATUS_HOLDOVER_THRESHOLD_SET and forces PWM A's level; holdover and holdover_recovery
-   call it; written by hand for the 58503A 3704
+   call it; row added by hand for the 58503A 3704
    read */
 
 void holdover_duration_count(void)
@@ -45343,7 +45346,7 @@ pll_stage_result pll_normal(bool same_stage)
 
 /* gps_reference_questionable while gps.references[0].valid is 2, and gps_reference_good while the
    reference is valid with its 1PPS, or questionable in a PLL stage, raising the satellites'
-   condition as it changes (revisions.md, "Reference state"); written by hand for the 58503A 3704
+   condition as it changes (revisions.md, "Reference state"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void gps_reference_update(void)
@@ -45926,7 +45929,7 @@ void holdover_recovery_initiate(int32_t index,int32_t source)
 /* 00045c1c */
 
 /* diag_efc_mode's done hook (0x33662): hold cause HOLD_CAUSE_EFC_CONTROL while it is set, signaling
-   the SCPI task a pass late, and pll.efc_control_passes cleared; written by hand for the 58503A
+   the SCPI task a pass late, and pll.efc_control_passes cleared; row added by hand for the 58503A
    3704
    58503a-3704.md */
 
@@ -45948,7 +45951,7 @@ void efc_mode_done(void)
 /* 00045c46 */
 
 /* pllp_task's: in EFC mode 2, after 600 passes, the EFC control hold cause and the mode cleared
-   (revisions.md, "Holdover cause"); written by hand for the 58503A 3704
+   (revisions.md, "Holdover cause"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void efc_mode_expire(void)
@@ -45995,7 +45998,7 @@ void holdover_initiate(int32_t index,int32_t source)
 /* 00045cd6 */
 
 /* clears the temporary-mode hold cause temporary_hold_set sets; time_offset_done and a descriptor's
-   hook; written by hand for the 58503A 3704
+   hook; row added by hand for the 58503A 3704
    read */
 
 void temporary_hold_clear(void)
@@ -46145,7 +46148,7 @@ void nv_clear_and_reset(void)
 /* 00045e94 */
 
 /* :SYSTem:PON's action: clears each preserved_region block's checksum and restore flag in
-   supervisor mode, then trap #12, the restart; written by hand for the 58503A 3704
+   supervisor mode, then trap #12, the restart; row added by hand for the 58503A 3704
    console.md */
 
 void power_on_reset(void)
@@ -46166,8 +46169,8 @@ void power_on_reset(void)
 
 /* 00045eb4 */
 
-/* pll.field_3e6 from tfom_code of a TFOM; nothing calls it (revisions.md, "Not traced"); written by
-   hand for the 58503A 3704
+/* pll.field_3e6 from tfom_code of a TFOM; nothing calls it (revisions.md, "Not traced"); row added
+   by hand for the 58503A 3704
    read */
 
 void pll_tfom_digit_store(uint32_t tfom)
@@ -46348,7 +46351,7 @@ override_jmp_000460ee_case_0:
 
 /* pllp_task's reference check by pll.reference_check_state: started afresh, or on 0, it raises the
    outer oven's enable and arms the interval; then on a reading sets the clock from the reference
-   and returns 1 with no hold cause, 2 with one, 0 while waiting; written by hand for the 58503A
+   and returns 1 with no hold cause, 2 with one, 0 while waiting; row added by hand for the 58503A
    3704
    58503a-3704.md */
 
@@ -47538,7 +47541,7 @@ void output_state_done(void)
 
 /* the front panel's task, fpnl: root_task's psos_start of it (0x13398); blanks the display, waits
    for lamp_test, runs the start-up show (0x52dea), then each 1PPS signal or key
-   front_panel_update's line, else a key poll ("When"); written by hand for the 58503A 3704
+   front_panel_update's line, else a key poll ("When"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void front_panel_task(void)
@@ -47595,7 +47598,7 @@ void front_panel_task(void)
 
 /* the panel's self-test (0x537ea), and on a failure its reset (0x537b2) and the test again: nonzero
    if the panel answers; root_task creates fpnl only then (0x1335a), quietly, its argument 0;
-   front_panel_task verbosely ("The self-test"); written by hand for the 58503A 3704
+   front_panel_task verbosely ("The self-test"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t front_panel_check(char verbose)
@@ -47616,7 +47619,7 @@ uint8_t front_panel_check(char verbose)
 
 /* command 1: the lamp byte, then the text to its NUL, each through qspi_write 2 ticks apart, framed
    by 0x53736 and 0x53796; returns the key the command's byte brought back ("The front panel", the
-   commands' table); written by hand for the 58503A 3704
+   commands' table); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 front_panel_mode front_panel_send_line(front_panel_lamp lamps,char *text)
@@ -48782,7 +48785,7 @@ void status_screen_height(status_snapshot_record *snapshot,char *line)
 /* the status screen's GPS 1PPS state, by the GPS reference's state (snapshot +0x124, its jump table
    at 0x4a236): "Invalid: GPS rcvr failed" to "Synchronized to UTC", "Assessing stability" and
    "Questionable accuracy" with dots by the time elapsed, or "Absent or freq error" while its valid
-   is 1 and its 1PPS dead (0x4a208); written by hand for the 58503A 3704
+   is 1 and its 1PPS dead (0x4a208); row added by hand for the 58503A 3704
    read */
 
 void status_screen_sync(status_snapshot_record *snapshot,char *line)
@@ -48903,7 +48906,7 @@ void status_screen_sync(status_snapshot_record *snapshot,char *line)
 /* 0004a4c6 */
 
 /* the screen's time with its reference, "GPS", "UTC", "LOCL GPS" or "LOCAL"; status_screen's
-   (0x4b452); written by hand for the 58503A 3704
+   (0x4b452); row added by hand for the 58503A 3704
    read */
 
 void status_screen_time(status_snapshot_record *snapshot,char *line)
@@ -48949,7 +48952,7 @@ void status_screen_time(status_snapshot_record *snapshot,char *line)
 
 /* 0004aa5a */
 
-/* value & 1 << bit, the bit a long (0x4aa5c); written by hand for the 58503A 3704
+/* value & 1 << bit, the bit a long (0x4aa5c); row added by hand for the 58503A 3704
    read */
 
 uint8_t bit_is_set(int16_t value,int32_t bit)
@@ -48962,7 +48965,7 @@ uint8_t bit_is_set(int16_t value,int32_t bit)
 /* 0004aa74 */
 
 /* bit_is_set(value, 12): the health monitor's OCXO, the internal reference's failure
-   (status_screen's parts, 0x4de4c); written by hand for the 58503A 3704
+   (status_screen's parts, 0x4de4c); row added by hand for the 58503A 3704
    read */
 
 uint8_t bit_12_set(int16_t value)
@@ -48999,7 +49002,7 @@ uint32_t bits_1_to_3_any(int16_t param_1)
 /* 0004aad0 */
 
 /* bit_is_set(value, 4): the health monitor's Oven Pwr, the oven supply's (status_screen's parts,
-   0x4de3c); written by hand for the 58503A 3704
+   0x4de3c); row added by hand for the 58503A 3704
    read */
 
 uint8_t bit_4_set(int16_t value)
@@ -49015,7 +49018,7 @@ uint8_t bit_4_set(int16_t value)
 /* 0004aae0 */
 
 /* 1 if bit 6 or 7 is set: the health monitor's EFC (status_screen's parts, 0x4de5c); image_diff
-   pairs the Z3805A 3543B's bits_4_5_any here; written by hand for the 58503A 3704
+   pairs the Z3805A 3543B's bits_4_5_any here; row added by hand for the 58503A 3704
    read */
 
 uint8_t bits_6_7_any(int16_t value)
@@ -49033,7 +49036,7 @@ uint8_t bits_6_7_any(int16_t value)
 /* 0004ab0c */
 
 /* 1 if bit 8 or 9 is set: the health monitor's GPS Rcv (status_screen's parts, 0x4de6c); image_diff
-   pairs the Z3805A 3543B's bits_6_7_any here; written by hand for the 58503A 3704
+   pairs the Z3805A 3543B's bits_6_7_any here; row added by hand for the 58503A 3704
    read */
 
 uint8_t bits_8_9_any(int16_t value)
@@ -49289,7 +49292,7 @@ void raim_monitor(void)
 /* 0004b82a */
 
 /* a reference record, the GPS's for 0 and the external's otherwise: valid set from its override
-   being 1, and its state to 1; gps_init_58503a's; written by hand for the 58503A 3704
+   being 1, and its state to 1; gps_init_58503a's; row added by hand for the 58503A 3704
    read */
 
 void gps_reference_reset(char external)
@@ -49312,7 +49315,7 @@ void gps_reference_reset(char external)
 /* 0004b858 */
 
 /* the GPS reference's hysteresis and its margin, 0 for 0, the hysteresis less 1 for 1 and 2, else
-   1; written by hand for the 58503A 3704
+   1; row added by hand for the 58503A 3704
    read */
 
 void gps_reference_hysteresis_set(int32_t hysteresis)
@@ -49334,7 +49337,7 @@ void gps_reference_hysteresis_set(int32_t hysteresis)
 
 /* 0004b882 */
 
-/* the external 1PPS reference's hysteresis, its margin always left 0; written by hand for the
+/* the external 1PPS reference's hysteresis, its margin always left 0; row added by hand for the
    58503A 3704
    read */
 
@@ -50119,7 +50122,7 @@ LAB_0004c4de:
 /* 0004c548 */
 
 /* the oldest request in the GPS request ring with the code, null for none;
-   gps_request_run_queued's; written by hand for the 58503A 3704
+   gps_request_run_queued's; row added by hand for the 58503A 3704
    read */
 
 gps_request_entry * request_ring_find(gps_request_code_word code)
@@ -50145,8 +50148,8 @@ gps_request_entry * request_ring_find(gps_request_code_word code)
 /* 0004c57e */
 
 /* takes the queued request with the code out of the ring, the rest kept in their order, runs it at
-   once through gps_console_request_58503a and counts it done; gpsm_task's request path; written by
-   hand for the 58503A 3704
+   once through gps_console_request_58503a and counts it done; gpsm_task's request path; row added
+   by hand for the 58503A 3704
    58503a-3704.md */
 
 void gps_request_run_queued(gps_request_code_word code)
@@ -50470,7 +50473,7 @@ void gps_init_58503a(void)
 /* WARNING: Removing unreachable block (ram,0x0004c9b8) */
 /* WARNING: Removing unreachable block (ram,0x0004c9aa) */
 /* 0 for a request from sender 1 or 2 whose code is in the 0xff-ended list at 0x4dd66, which is
-   empty, so always 1; gpsm_task counts a request it refuses done; written by hand for the 58503A
+   empty, so always 1; gpsm_task counts a request it refuses done; row added by hand for the 58503A
    3704
    58503a-3704.md */
 
@@ -51237,7 +51240,7 @@ void gps_print_process_monitor(void)
 /* 0004da70 */
 
 /* packs each channel's satellite, mode and signal level into gps.field_596's three longs;
-   gps_receiver_status_update_58503a's, ahead of the track-change log; written by hand for the
+   gps_receiver_status_update_58503a's, ahead of the track-change log; row added by hand for the
    58503A 3704
    58503a-3704.md */
 
@@ -51305,7 +51308,7 @@ void gps_track_words_pack(void)
 /* 0004db52 */
 
 /* packs each channel's 2-bit state and signal level from the @@Ba channel bytes into gps.field_5a2,
-   and sets gps.field_5a6 to 0xffff; gps_receiver_status_update_58503a's; written by hand for the
+   and sets gps.field_5a6 to 0xffff; gps_receiver_status_update_58503a's; row added by hand for the
    58503A 3704
    58503a-3704.md */
 
@@ -51360,8 +51363,8 @@ void gps_channel_word_pack(void)
 
 /* 0004dbe8 */
 
-/* keeps in gps.field_5a6 each channel's lowest 2-bit state since gps_channel_word_pack; written by
-   hand for the 58503A 3704
+/* keeps in gps.field_5a6 each channel's lowest 2-bit state since gps_channel_word_pack; row added
+   by hand for the 58503A 3704
    58503a-3704.md */
 
 void gps_channel_word_lowest(void)
@@ -51405,8 +51408,8 @@ void gps_channel_word_lowest(void)
 /* 0004dc5c */
 
 /* logs "Track resumed [..] %08X %08X" (lost 0) or "Track lost    [..] %08X %08X" with the reason's
-   tag and two words; gps_receiver_status_update_58503a's (revisions.md, "Reference state"); written
-   by hand for the 58503A 3704
+   tag and two words; gps_receiver_status_update_58503a's (revisions.md, "Reference state"); row
+   added by hand for the 58503A 3704
    58503a-3704.md */
 
 void gps_log_track_change(char lost,char reason,uint32_t first,uint32_t second)
@@ -51499,7 +51502,7 @@ LAB_0004dd10:
 /* 0004feec */
 
 /* @@Az's encoder (oncore_messages entry 25): the argument plus pps_cable_delay_offset, as
-   long_array_get_long puts it; written by hand for the 58503A 3704
+   long_array_get_long puts it; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t * oncore_cable_delay_encode(int32_t *arguments,uint8_t index,uint8_t *out)
@@ -51574,7 +51577,7 @@ uint8_t * oncore_ai_decode(uint8_t *cursor,uint8_t *record)
 /* 0005003e */
 
 /* @@Az's decoder (entry 25): the four bytes as gps.pps_cable_delay_given, and less
-   pps_cable_delay_offset at the record; written by hand for the 58503A 3704
+   pps_cable_delay_offset at the record; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t * oncore_cable_delay_decode(uint8_t *cursor,int32_t *record)
@@ -51937,7 +51940,7 @@ void oncore_position_message(void)
 
 /* 000506bc */
 
-/* @@Ba's decoder (entry 30): its fields, then oncore_position_message; written by hand for the
+/* @@Ba's decoder (entry 30): its fields, then oncore_position_message; row added by hand for the
    58503A 3704
    58503a-3704.md */
 
@@ -51955,8 +51958,8 @@ uint8_t * oncore_position_status_message(uint8_t *cursor,uint8_t *record)
 /* 000506e2 */
 
 /* @@Ea's decoder (entry 50): its fields, gps.field_592's bit 5 set and the channel count with it
-   (gps_channel_count_update), then oncore_position_message (gps.md, "Six or eight channels");
-   written by hand for the 58503A 3704
+   (gps_channel_count_update), then oncore_position_message (gps.md, "Six or eight channels"); row
+   added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t * oncore_position_status_8_message(uint8_t *cursor,uint8_t *record)
@@ -52061,7 +52064,7 @@ uint8_t * oncore_extension_message(uint8_t *cursor,uint8_t *record)
 
 /* 0005090a */
 
-/* @@Ek's decoder (entry 51): its fields; written by hand for the 58503A 3704
+/* @@Ek's decoder (entry 51): its fields; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void oncore_extension_8_message(uint8_t *cursor,uint8_t *record)
@@ -52093,7 +52096,7 @@ uint8_t * oncore_traim_message(uint8_t *cursor,uint8_t *record)
 /* 00050946 */
 
 /* decodes @@En, the eight-channel Time RAIM message (the message table's entry 52, 0x51178), and
-   sets traim_message_arrived (0x5095e); written by hand for the 58503A 3704
+   sets traim_message_arrived (0x5095e); row added by hand for the 58503A 3704
    docs/firmware/oncore */
 
 uint8_t * oncore_traim_8_message(uint8_t *cursor,uint8_t *record)
@@ -52113,7 +52116,7 @@ uint8_t * oncore_traim_8_message(uint8_t *cursor,uint8_t *record)
 /* 0005098a */
 
 /* the second @@Ea entry's decoder (54): gps.field_592's bit 5 and the channel count, nothing
-   decoded; written by hand for the 58503A 3704
+   decoded; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint32_t oncore_eight_channels_seen(void)
@@ -52131,7 +52134,7 @@ uint32_t oncore_eight_channels_seen(void)
 /* 000509b2 */
 
 /* the text after its label of the @@Cj line of a field, null for none (gps.md, "Six or eight
-   channels"); written by hand for the 58503A 3704
+   channels"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 char * oncore_receiver_id_value(oncore_receiver_id_field field)
@@ -52155,7 +52158,7 @@ char * oncore_receiver_id_value(oncore_receiver_id_field field)
 
 /* 000509fe */
 
-/* gps.channel_count 8 while gps.field_592's bit 5 is set, else 6; written by hand for the 58503A
+/* gps.channel_count 8 while gps.field_592's bit 5 is set, else 6; row added by hand for the 58503A
    3704
    58503a-3704.md */
 
@@ -52175,8 +52178,8 @@ void gps_channel_count_update(void)
 /* 00050a16 */
 
 /* gps_channel_count_update, then from a received @@Cj gps.field_592's bit 6, an I in the options,
-   and bit 7, software 8.4; both cleared before one comes (gps.md, "Six or eight channels"); written
-   by hand for the 58503A 3704
+   and bit 7, software 8.4; both cleared before one comes (gps.md, "Six or eight channels"); row
+   added by hand for the 58503A 3704
    58503a-3704.md */
 
 void gps_receiver_abilities_update(void)
@@ -52215,7 +52218,7 @@ void gps_receiver_abilities_update(void)
 
 /* 00050ab8 */
 
-/* @@Ca's send filter (entry 42): while gps.field_592's bit 5 is clear; written by hand for the
+/* @@Ca's send filter (entry 42): while gps.field_592's bit 5 is clear; row added by hand for the
    58503A 3704
    58503a-3704.md */
 
@@ -52228,8 +52231,8 @@ uint8_t oncore_filter_six_channels(void)
 
 /* 00050ac8 */
 
-/* @@Fa's send filter (entry 53): while gps.field_592's bit 5 is set; written by hand for the 58503A
-   3704
+/* @@Fa's send filter (entry 53): while gps.field_592's bit 5 is set; row added by hand for the
+   58503A 3704
    58503a-3704.md */
 
 uint8_t oncore_filter_eight_channels(void)
@@ -52247,8 +52250,8 @@ uint8_t oncore_filter_eight_channels(void)
 
 /* 00050b6c */
 
-/* the second @@Ar entry's send filter (55): while gps.field_592's bit 7, software 8.4, is set;
-   written by hand for the 58503A 3704
+/* the second @@Ar entry's send filter (55): while gps.field_592's bit 7, software 8.4, is set; row
+   added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t oncore_filter_software_8_4(void)
@@ -52282,7 +52285,7 @@ uint32_t gps_message_supported(gps_request_code_word code,uint8_t *supported)
 /* 00050bb2 */
 
 /* the message table's entry for a message index, oncore_messages + 60 x index; gps_request_build,
-   gps_response_decode and gps_response_match find their message by it; written by hand for the
+   gps_response_decode and gps_response_match find their message by it; row added by hand for the
    58503A 3704
    docs/firmware/oncore */
 
@@ -52514,7 +52517,7 @@ override_jmp_00050e50_case_9:
 /* 00052732 */
 
 /* signals event 1 to the front panel's task, fpnl, its id at 0x1039cc, if it runs; pps_interrupt
-   calls it each 1PPS ("When"); written by hand for the 58503A 3704, so that pps_interrupt's C,
+   calls it each 1PPS ("When"); row added by hand for the 58503A 3704, so that pps_interrupt's C,
    which a call of psos_call keeps hand-written, can call it
    58503a-3704.md */
 
@@ -52533,8 +52536,8 @@ void front_panel_signal_pps(void)
 
 /* 0005285a */
 
-/* the Serial Port key's parity letter: N, E or O for duartb_settings.parity 0 to 2, else ?; written
-   by hand for the 58503A 3704
+/* the Serial Port key's parity letter: N, E or O for duartb_settings.parity 0 to 2, else ?; row
+   added by hand for the 58503A 3704
    58503a-3704.md */
 
 char front_panel_parity_letter(serial_parity parity)
@@ -52566,8 +52569,8 @@ char front_panel_parity_letter(serial_parity parity)
 
 /* 00052886 */
 
-/* the Serial Port key's rate: 1200, 2400, 9600 or 19200 for duartb_settings.baud 0 to 3; written by
-   hand for the 58503A 3704
+/* the Serial Port key's rate: 1200, 2400, 9600 or 19200 for duartb_settings.baud 0 to 3; row added
+   by hand for the 58503A 3704
    58503a-3704.md */
 
 int32_t front_panel_baud(serial_baud baud)
@@ -52599,7 +52602,7 @@ int32_t front_panel_baud(serial_baud baud)
 /* 000528be */
 
 /* the satellites satellites_in_use counts, GPS and pseudolite, with interrupts held off; 0 past
-   100: the Sat key's %d TRACKED and the warm-up's %01d SAT AQUIRD; written by hand for the 58503A
+   100: the Sat key's %d TRACKED and the warm-up's %01d SAT AQUIRD; row added by hand for the 58503A
    3704
    58503a-3704.md */
 
@@ -52628,7 +52631,7 @@ uint8_t front_panel_satellites(void)
 /* 00052b1c */
 
 /* VFD DSP TEST with every key lamp lit, then @; stepped across the display a second a step, then
-   blank ("When"); written by hand for the 58503A 3704
+   blank ("When"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void front_panel_display_test(void)
@@ -52671,7 +52674,7 @@ void front_panel_display_test(void)
 /* 00052c16 */
 
 /* DEMO MODE: each key shows a fixed line, the Time key's a clock counted from the 1PPS signal,
-   until Alt follows Shift; then EXITING... ("When"); written by hand for the 58503A 3704
+   until Alt follows Shift; then EXITING... ("When"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void front_panel_demo(void)
@@ -52823,7 +52826,7 @@ void front_panel_demo(void)
 
 /* the start-up show, HP scrolling in with the key lamps, the demonstration or display test its keys
    ask for, then the warm-up's messages by pll_powerup_suffix_index and the alarm's text until
-   pll_mode is locked, OUTPUT VALID for 3 s ("When"); written by hand for the 58503A 3704
+   pll_mode is locked, OUTPUT VALID for 3 s ("When"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void front_panel_startup(void)
@@ -53181,7 +53184,7 @@ LAB_000532ec:
 /* 00053372 */
 
 /* with refresh set, the line of the mode (1 to 9) and its key's lamp, through
-   front_panel_send_line; else a key poll (0x5395c); returns the key ("The keys"); written by hand
+   front_panel_send_line; else a key poll (0x5395c); returns the key ("The keys"); row added by hand
    for the 58503A 3704
    58503a-3704.md */
 
@@ -53337,7 +53340,7 @@ LAB_0005353a:
 
 /* the key handler: a key 1 to 8 the mode, Shift arming for 60 passes (front_panel_shift_passes),
    Alt while armed clearing the alarm, mode 9 while the alarm is on; 1 if the line is to be
-   rewritten ("The keys"); written by hand for the 58503A 3704
+   rewritten ("The keys"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t front_panel_key(front_panel_mode key,front_panel_mode *mode,front_panel_mode *previous,
@@ -53402,7 +53405,7 @@ uint8_t front_panel_key(front_panel_mode key,front_panel_mode *mode,front_panel_
 /* 00053736 */
 
 /* a command's start: latch bit 7 set and bit 6 cleared, 2 ticks, its byte exchanged through
-   qspi_read on device 0, 2 ticks; the byte that came back ("The device"); written by hand for the
+   qspi_read on device 0, 2 ticks; the byte that came back ("The device"); row added by hand for the
    58503A 3704
    58503a-3704.md */
 
@@ -53428,7 +53431,7 @@ front_panel_mode front_panel_command_begin(front_panel_command command)
 
 /* 00053796 */
 
-/* a command's end: latch bit 6 set, then 200 counts; written by hand for the 58503A 3704
+/* a command's end: latch bit 6 set, then 200 counts; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void front_panel_command_end(void)
@@ -53448,7 +53451,7 @@ void front_panel_command_end(void)
 /* 000537b2 */
 
 /* latch bit 7 cleared for 1 s, then set for 1 s; front_panel_check runs it between two self-tests;
-   written by hand for the 58503A 3704
+   row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void front_panel_reset(void)
@@ -53465,7 +53468,7 @@ void front_panel_reset(void)
 /* 000537ea */
 
 /* commands 0, 8, 0x10 and 0: passes if 0x55 comes back with 0x10 and 0xaa with the last 0, printing
-   both through debug_printf when verbose ("The self-test"); written by hand for the 58503A 3704
+   both through debug_printf when verbose ("The self-test"); row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t front_panel_selftest(char verbose)
@@ -53513,7 +53516,7 @@ uint8_t front_panel_selftest(char verbose)
 
 /* 000538d0 */
 
-/* command 2 and a lamp byte; the key that came back; written by hand for the 58503A 3704
+/* command 2 and a lamp byte; the key that came back; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 front_panel_mode front_panel_send_lamps(front_panel_lamp lamps)
@@ -53533,7 +53536,7 @@ front_panel_mode front_panel_send_lamps(front_panel_lamp lamps)
 /* 0005390a */
 
 /* command 4 and the text to its NUL, 2 ticks a byte, the lamps as they are; the key that came back;
-   written by hand for the 58503A 3704
+   row added by hand for the 58503A 3704
    58503a-3704.md */
 
 front_panel_mode front_panel_send_text(char *text)
@@ -53555,7 +53558,7 @@ front_panel_mode front_panel_send_text(char *text)
 
 /* 0005395c */
 
-/* command 0 alone: the key that came back; written by hand for the 58503A 3704
+/* command 0 alone: the key that came back; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 front_panel_mode front_panel_poll_key(void)
@@ -62194,7 +62197,7 @@ __asm__(".set call_atexit_functions_entry, call_atexit_functions");
 /* 0006335e */
 
 /* appends at most n characters of s2 to s1, then a NUL, and returns s1, ANSI C's; the front panel's
-   status line its one caller (0x52af2); written by hand for the 58503A 3704
+   status line its one caller (0x52af2); row added by hand for the 58503A 3704
    read */
 
 char * strncat(char *s1,char *s2,uint32_t n)
@@ -63301,7 +63304,7 @@ __asm__(
 /* installer::00100fbe */
 
 /* installer_duart_output_bits of its two bytes; the installer's root task resets bit 2 with it
-   (0x100d90); written by hand for the 58503A 3704
+   (0x100d90); row added by hand for the 58503A 3704
    read */
 
 void installer_output_bits_set(board_led reset,board_led set)
@@ -70569,7 +70572,7 @@ __asm__(
 
 /* installer::00106106 */
 
-/* the installer's status_peek_event; nothing calls it; written by hand for the 58503A 3704
+/* the installer's status_peek_event; nothing calls it; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void installer_status_peek_event(status_model *status,int32_t index,uint16_t *event)
@@ -70670,8 +70673,8 @@ int32_t installer_scpi_format_response(scpi_port *output,scpi_response_item *ite
 
 /* installer::0010738a */
 
-/* the installer's scpi_prompt_set, of installer_scpi_prompt_enabled; written by hand for the 58503A
-   3704
+/* the installer's scpi_prompt_set, of installer_scpi_prompt_enabled; row added by hand for the
+   58503A 3704
    58503a-3704.md */
 
 void installer_scpi_prompt_set(uint8_t enabled)
@@ -70684,7 +70687,7 @@ void installer_scpi_prompt_set(uint8_t enabled)
 
 /* installer::00107394 */
 
-/* the installer's scpi_prompt_get; nothing calls it; written by hand for the 58503A 3704
+/* the installer's scpi_prompt_get; nothing calls it; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 uint8_t installer_scpi_prompt_get(void)
@@ -70883,7 +70886,7 @@ void installer_status_sre_set(scpi_port *port,int32_t bits)
 /* installer::001075fa */
 
 /* the installer's status_update_rqs: installer_port_update_rqs of its Status Byte and Service
-   Request Enable for port 2; written by hand for the 58503A 3704
+   Request Enable for port 2; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void installer_status_update_rqs(void)
@@ -70916,7 +70919,7 @@ void installer_status_prompt_refresh(status_model *status,int32_t error)
 /* installer::0010768a */
 
 /* the installer's port_status_report, with no test of the port: installer_status_report(code), its
-   result returned; written by hand for the 58503A 3704, so that the C of its caller, which takes
+   result returned; row added by hand for the 58503A 3704, so that the C of its caller, which takes
    its result, compiles
    58503a-3704.md */
 
@@ -70933,7 +70936,7 @@ uint32_t installer_port_status_report(uint8_t port,int16_t code)
 /* installer::00107698 */
 
 /* WARNING: Switch with 1 destination removed at 0x001076b2 */
-/* the installer's port_report_errors, of installer_port_error_reports; written by hand for the
+/* the installer's port_report_errors, of installer_port_error_reports; row added by hand for the
    58503A 3704
    58503a-3704.md */
 
@@ -70962,7 +70965,7 @@ uint32_t installer_port_report_errors(char port,uint8_t status)
 /* installer::001076f4 */
 
 /* WARNING: Switch with 1 destination removed at 0x0010770a */
-/* the installer's port_prompt_set; written by hand for the 58503A 3704
+/* the installer's port_prompt_set; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void installer_port_prompt_set(char port,uint8_t enabled)
@@ -70979,7 +70982,7 @@ void installer_port_prompt_set(char port,uint8_t enabled)
 /* installer::0010771e */
 
 /* WARNING: Switch with 1 destination removed at 0x00107734 */
-/* the installer's port_session_init; written by hand for the 58503A 3704
+/* the installer's port_session_init; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 scpi_port * installer_port_session_init(char port)
@@ -71001,7 +71004,7 @@ scpi_port * installer_port_session_init(char port)
 /* installer::00107746 */
 
 /* WARNING: Switch with 1 destination removed at 0x0010775c */
-/* the installer's port_object; written by hand for the 58503A 3704
+/* the installer's port_object; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 scpi_port * installer_port_object(char port)
@@ -71022,7 +71025,7 @@ scpi_port * installer_port_object(char port)
 
 /* installer::0010776e */
 
-/* the installer's port_update_rqs, RQS alone; written by hand for the 58503A 3704
+/* the installer's port_update_rqs, RQS alone; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 void installer_port_update_rqs(uint8_t *status_byte,uint8_t enable,char port)
@@ -71042,7 +71045,7 @@ void installer_port_update_rqs(uint8_t *status_byte,uint8_t enable,char port)
 /* installer::001077a0 */
 
 /* the installer's return_zero: 0, the source installer_scpi_format_response picks its echo count
-   by; written by hand for the 58503A 3704
+   by; row added by hand for the 58503A 3704
    58503a-3704.md */
 
 int32_t installer_return_zero(scpi_port *input)
@@ -71075,8 +71078,8 @@ int32_t installer_return_zero(scpi_port *input)
 
 /* installer::0010791c */
 
-/* the installer's scpi_task_run, restarting where the primary enters the installer; written by hand
-   for the 58503A 3704
+/* the installer's scpi_task_run, restarting where the primary enters the installer; row added by
+   hand for the 58503A 3704
    58503a-3704.md */
 
 void installer_scpi_task_run

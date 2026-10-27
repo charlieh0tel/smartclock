@@ -1946,14 +1946,6 @@ IMAGE_KNOWN = {
             rf"effect \d+ {SESSION_SHARE_LINE}, image's trap #4 service 4 (?P=registers)data (?P=head)"
             r"(?:3[0-9]|20)+6b4220(?:3[0-9]|2d|20)+(?P=tail)",
         ),
-        # as the base's: the first page's checksum at 0x10205c in RAM and
-        # 0x400d82 in the EEPROM, the format at 0x400d8c (log_erase,
-        # 0x31426; the literal at 0x31c7c)
-        "log_erase": Known(
-            "log_erase checksums a pointer's bytes",
-            r"RAM differs from 10205c|EEPROM differs from 400d82"
-            r"|effect \d+ write of \w+ to (400d8[23def]), image's write of \w+ to \1",
-        ),
     },
 }
 # Another image's own given cases, in place of the base's of the same

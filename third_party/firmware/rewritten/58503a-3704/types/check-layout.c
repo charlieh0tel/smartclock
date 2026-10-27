@@ -585,6 +585,7 @@ CHECK_SIZE(pll_stage, 1);
 CHECK_SIZE(adc_channel, 1);
 CHECK_SIZE(oncore_channel_mode, 1);
 CHECK_SIZE(oncore_raim_status, 1);
+CHECK_SIZE(gps_reference_validity, 1);
 
 /* nv_settings, each field where its descriptor's value points (below),
  * and the two descriptors' sizes. */

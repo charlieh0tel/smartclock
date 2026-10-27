@@ -16,6 +16,8 @@ static const uint16_t PLL_AGING_SAMPLES = 2700;
 
 static const float PLL_AGING_SAMPLES_FLOAT = 2700.0f;
 
+static const double PLL_AGING_SAMPLES_DOUBLE = 2700.0;
+
 /* An entry's time over this is in days (32 entries of 2700 s a day). */
 static const float PLL_AGING_ENTRIES_PER_DAY = 32.0f;
 
@@ -257,7 +259,6 @@ void fit_quality(aging_curve_state* curve) {
   static const float SECONDS_PER_DAY = 86400.0f;
   static const float HALF_DEGREE = -0.5f;
   static const double AGING_EXPONENT = 1.5;
-  static const double SAMPLES_DOUBLE = 2700.0;
   static const double FREQUENCY_SCALE = 1.6e12;
   static const double LOG_RATE_SCALE = 0.00025;
   static const double LOG_UNIT = 1e-11;
@@ -308,9 +309,9 @@ void fit_quality(aging_curve_state* curve) {
         float_add(integer_to_float(steps), HALF_DEGREE), variation)));
     double rate = double_divide_reversed(
         LINE_UNIT, double_multiply(noise, LINE_RATE_SCALE));
-    double growth =
-        pow(double_divide_reversed(SAMPLES_DOUBLE, float_to_double(span)),
-            AGING_EXPONENT);
+    double growth = pow(
+        double_divide_reversed(PLL_AGING_SAMPLES_DOUBLE, float_to_double(span)),
+        AGING_EXPONENT);
 
     aging_term = double_to_float(double_divide_reversed(growth, rate));
     span_weight = LINE_SPAN_WEIGHT;
@@ -459,7 +460,6 @@ void efc_history_update(void) {
    * more than partial, as does an uptime of three hours. */
   static const uint16_t QUARTER_SAMPLES = 675;
   static const uint32_t PARTIAL_UPTIME = 10800;
-  static const double SAMPLES_DOUBLE = 2700.0;
   static const float MINUS_ONE = -1.0f;
   char message[100];
 
@@ -534,8 +534,8 @@ void efc_history_update(void) {
     pll.efc_history.averages[entry] =
         float_divide_reversed(unsigned_to_float(pll.efc_history.summed_count),
                               pll.efc_history.efc_sum);
-    float time = double_to_float(
-        double_divide_reversed(SAMPLES_DOUBLE, unsigned_to_double(uptime)));
+    float time = double_to_float(double_divide_reversed(
+        PLL_AGING_SAMPLES_DOUBLE, unsigned_to_double(uptime)));
 
     pll.efc_history.times[entry] = time;
     pll.efc_history.logs[entry] =

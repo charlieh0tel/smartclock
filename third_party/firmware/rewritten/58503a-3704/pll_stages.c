@@ -1292,13 +1292,10 @@ pll_stage_result holdover_recovery(bool same_stage) {
  * its coming and going reported as satellites sufficient (revisions.md,
  * "Reference state") (0x44f48). */
 void gps_reference_update(void) {
-  static const uint8_t REFERENCE_VALID = 1;
-  static const uint8_t REFERENCE_QUESTIONABLE = 2;
-
   gps_reference_questionable =
-      gps.references[0].valid == REFERENCE_QUESTIONABLE;
+      gps.references[0].valid == GPS_REFERENCE_QUESTIONABLE;
   bool good =
-      (gps.references[0].valid == REFERENCE_VALID && gps_pps_dead == 0) ||
+      (gps.references[0].valid == GPS_REFERENCE_VALID && gps_pps_dead == 0) ||
       (gps_reference_questionable && (pll.stage == PLL_STAGE_NORMAL_PLL ||
                                       pll.stage == PLL_STAGE_STARTUP_PLL));
 

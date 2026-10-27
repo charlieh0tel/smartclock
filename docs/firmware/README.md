@@ -1966,8 +1966,9 @@ and `z3801a-3543.md`, "The function check").  `check-image-diff`
 checks the 58503A's and the Z3801A's diffs against the Z3805A, their
 seeded names and the 58503A's document's figures;
 `check-comment-addresses` checks the addresses their C's comments
-cite; and `check-common` the shared C, `common/` (`rewrite.md`,
-"Shared C").  None of the targets builds the workspace;
+cite; and `check-common` the shared C, `common/`, and that the
+seeded images' `check-layout.c` assert their layouts at their own
+addresses, which its rule 2 compares (`rewrite.md`, "Shared C").  None of the targets builds the workspace;
 `check-chip-selects` reads every image's reset code (`restart.md`,
 "The chip selects").
 `check-loop-trace` runs both images' own `startup_pll` and

@@ -11,6 +11,10 @@
  * gps.channel_count, 6 or 8; the satellite lists' limit (0x2d184). */
 static const uint8_t GPS_CHANNELS = 8;
 
+/* A six-channel engine's channels, gps.channel_count before @@Ea has
+ * come. */
+static const uint8_t GPS_SIX_CHANNELS = 6;
+
 /* An angle in mas, a double, as its hemisphere, N or S for a latitude,
  * E or W, then degrees, minutes and seconds by format, which gives the
  * hemisphere and the three: format_dms_precise's (0x48364) and the

@@ -393,14 +393,14 @@ int16_t gps_request_build(gps_request_code_word message, gps_argument_mode mode,
  * slot. */
 uint8_t oncore_filter_channels(int16_t index, oncore_encoder* encoder,
                                int32_t* arguments) {
-  static const uint8_t SIX_CHANNELS = 6;
   const uint8_t channels = gps.channel_count;
   uint8_t rate;
 
   gps_requests_encode(encoder, arguments, 0, &rate);
   if ((index == GPS_REQUEST_POSITION_STATUS ||
        index == GPS_REQUEST_POSITION_EXTENSION || index == GPS_REQUEST_TRAIM) &&
-      (channels == SIX_CHANNELS || (channels == GPS_CHANNELS && rate == 0))) {
+      (channels == GPS_SIX_CHANNELS ||
+       (channels == GPS_CHANNELS && rate == 0))) {
     return 1;
   }
   return (index == GPS_REQUEST_POSITION_STATUS_8 ||

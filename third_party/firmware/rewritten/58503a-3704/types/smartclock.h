@@ -1626,6 +1626,16 @@ typedef struct oncore_receiver_id_line {
   uint8_t field_0b;               /* unread */
 } oncore_receiver_id_line;
 
+/* gps.status_received in the 58503A 3704: whether @@Ba has come, and
+ * lately, as the status monitor keeps it (command_monitor, 0x4bf70 and
+ * 0x4bf9a); channel_position_satellite takes a channel's satellite only
+ * while it is fresh (0x50190).  The Z3805A's is 0 or 1. */
+typedef enum __attribute__((packed)) gps_status_freshness {
+  GPS_STATUS_NONE = 0,  /* none since the monitor last failed */
+  GPS_STATUS_STALE = 1, /* none for three of its periods */
+  GPS_STATUS_FRESH = 2,
+} gps_status_freshness;
+
 /* One reference's validation, the GPS's or the external 1PPS's: in
  * the 58503A 3704, gps_receiver_status_update's (0x4b8a2) state for
  * each, gps.references[index]; 0x4b82a sets valid from override and
@@ -1708,7 +1718,7 @@ typedef struct gps_state {
   oncore_application_type application_type; /* @@AB */
   uint8_t position_fix_threshold;           /* @@AD, s */
   uint8_t differential_output_threshold;    /* @@AD, s */
-  uint8_t status_received;     /* @@Ba has come; the status monitor sets it */
+  gps_status_freshness status_received;     /* the status monitor sets it */
   uint8_t status_rate;         /* s between @@Ba, as last requested */
   oncore_status_fields status; /* @@Ba, @@Ea */
   uint8_t field_11b;

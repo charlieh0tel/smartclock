@@ -26,7 +26,7 @@ static uint16_t calendar_month_day(uint8_t month, uint8_t day) {
 /* A day count as a date, none before 1901-01-01 (0x10e98).  The year is
  * the count's quarter-days over 1461, which reaches the next year a day
  * early on a leap year's December 31; the 58503A takes that day's 0 as
- * the year before's December 31 (0x10ed4), where the Z3805A's makes it
+ * the year before's December 31 (0x10ee2), where the Z3805A's makes it
  * January 0. */
 uint32_t days_to_date(uint32_t days) {
   /* The Modified Julian Day of 1900-12-31; days_to_date counts its

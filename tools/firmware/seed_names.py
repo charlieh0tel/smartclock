@@ -307,7 +307,7 @@ MODULES_HEADER = """\
 """
 MODULES_HAND_HEADER = """\
 #
-# The %(model)s's own functions, which no %(base_model)s row re-keys: rows written
+# The %(model)s's own functions, which no %(base_model)s row re-keys: rows added
 # by hand, by module as above.
 """
 
@@ -344,7 +344,9 @@ class Port:
     rule for changed functions, labels, after the rule for labels from
     "its start", tables, the tables of pointers image_diff rejects,
     hand_rows, what the hand rows do, and not_code, after the rule for
-    starts image_diff rejects, the not_code starts."""
+    starts image_diff rejects, the not_code starts; hand_figures, the
+    document's counts of the hand rows, each a file's name and a
+    regular expression whose one group is its count."""
 
     folder: str
     base_folder: str
@@ -363,6 +365,7 @@ class Port:
     tables_text: str = ''
     hand_rows_text: str = ''
     not_code_text: str = ''
+    hand_figures: tuple = ()
 
     @property
     def image(self):
@@ -396,11 +399,11 @@ class Port:
 
     @property
     def hand(self):
-        """The mark a row written by hand carries in its note, in place
+        """The mark a row added by hand carries in its note, in place
         of origin: the seeding keeps it as it is, in place of the row the
         matches give at its address, or else among the hand rows after
         the carried ones, so that check-seed-names checks only the rest."""
-        return 'written by hand for the %s' % self.image
+        return 'row added by hand for the %s' % self.image
 
     def text(self, template):
         """A header, its fields this port's."""
@@ -419,7 +422,9 @@ PORT_58503A_3704 = Port(
     pinned=PINNED_58503A, dropped_functions=DROPPED_FUNCTIONS_58503A, placed_by_start=PLACED_BY_START_58503A,
     layout=LAYOUT_58503A, called_unlisted=CALLED_UNLISTED_58503A, dropped=DROPPED_58503A,
     corrections_text=CORRECTIONS_TEXT_58503A, labels_text=LABELS_TEXT_58503A, tables_text=TABLES_TEXT_58503A,
-    hand_rows_text=HAND_ROWS_TEXT_58503A)
+    hand_rows_text=HAND_ROWS_TEXT_58503A,
+    hand_figures=(('names.tsv', r'(\d+) rows are added by hand, each note'),
+                  ('modules.tsv', r'`modules.tsv` keeps (\d+) rows added by\s+hand')))
 # The Z3801A 3543's port from the Z3805A 3543B, its sibling
 # (docs/firmware/z3801a-3543.md, "The base").
 # copyright_text's bytes are also in the installer's records, at 0x14b2,
@@ -453,7 +458,8 @@ CORRECTIONS_TEXT_Z3801A = (
     "#   selftest_fpga_with_lamp's last instructions (0x189ea).\n")
 PORT_Z3801A_3543 = Port(folder='z3801a-3543', base_folder='z3805a-3543b', corrections=CORRECTIONS_Z3801A,
                         confirmed=frozenset(CORRECTIONS_Z3801A), dropped=DROPPED_Z3801A,
-                        corrections_text=CORRECTIONS_TEXT_Z3801A, labels_text=LABELS_TEXT_Z3801A)
+                        corrections_text=CORRECTIONS_TEXT_Z3801A, labels_text=LABELS_TEXT_Z3801A,
+                        hand_figures=(('names.tsv', r'(\d+) hand rows \("'),))
 # Each seeded image's port, by its folder's name.
 PORTS = {port.folder: port for port in (PORT_58503A_3704, PORT_Z3801A_3543)}
 
@@ -881,7 +887,7 @@ class Seeding:
         return ''.join(text), carried
 
     def hand_rows(self):
-        """The names file's rows written by hand, which carry HAND in
+        """The names file's rows added by hand, which carry HAND in
         their note, in the file's order."""
         path = os.path.join(self.folder, 'names.tsv')
         if not os.path.exists(path):
@@ -892,7 +898,7 @@ class Seeding:
             if line.startswith('#') or len(fields) < 5 or self.port.hand not in fields[4]:
                 continue
             if self.port.origin in fields[4]:
-                sys.exit('%s: a row is written by hand or seeded, not both: %s' % (path, line))
+                sys.exit('%s: a row is added by hand or seeded, not both: %s' % (path, line))
             rows.append(line)
         return rows
 
@@ -907,7 +913,7 @@ class Seeding:
             seeded = seen_names.get(fields[2])
             if (fields[1] in ('function', 'label') and seeded not in (None, fields[0])
                     and (seeded, fields[1]) not in by_place):
-                sys.exit('%s: written by hand at %s, seeded at %s' % (fields[2], fields[0], seeded))
+                sys.exit('%s: added by hand at %s, seeded at %s' % (fields[2], fields[0], seeded))
         placed, rows = set(), []
         for row in out_rows:
             key = place_key(row.split('\t'))
@@ -918,7 +924,7 @@ class Seeding:
         new = [item for item in new if show(item[0], item[1]) not in named]
         rest = [row for key, row in by_place.items() if key not in placed]
         if rest:
-            rows += ['#', '# Rows written by hand that no carried row is in place of'] + rest
+            rows += ['#', '# Rows added by hand that no carried row is in place of'] + rest
         return rows, new
 
     def installer_copy(self, row, seen_names):
@@ -969,14 +975,14 @@ class Seeding:
         hand = self.hand_module_rows()
         for row in hand:
             if row.split('\t')[0] in seeded_rows:
-                sys.exit('%s: a modules row written by hand at an address the seeding gives' % row.split('\t')[1])
+                sys.exit('%s: a modules row added by hand at an address the seeding gives' % row.split('\t')[1])
         if hand:
             rows.append(self.port.text(MODULES_HAND_HEADER))
             rows += [row + '\n' for row in hand]
         return ''.join(rows)
 
     def hand_module_rows(self):
-        """The modules file's rows written by hand, which carry HAND in
+        """The modules file's rows added by hand, which carry HAND in
         their reason: the image's own functions, which no base row
         re-keys, in the file's order."""
         path = os.path.join(self.folder, 'modules.tsv')
@@ -1016,8 +1022,33 @@ def main():
             stale = True
             sys.stdout.writelines(difflib.unified_diff(current.splitlines(True), text.splitlines(True),
                                                        path, path + ' (seeded)'))
+    if not hand_figures(seeding.port, outputs, arguments.write):
+        stale = True
     if stale:
         sys.exit('%s: not what the matches give; make seed-names rewrites them' % arguments.folder)
+
+
+def hand_figures(port, outputs, write):
+    """Checks the port's document's counts of the hand rows against the
+    files' text, or with write rewrites them; whether they agree."""
+    path = ROOT / port.document
+    text = path.read_text()
+    agree = True
+    for file_name, pattern in port.hand_figures:
+        rows = sum(1 for line in outputs[file_name].split('\n')
+                   if line and not line.startswith('#') and port.hand in line)
+        matches = list(re.finditer(pattern, text))
+        if len(matches) != 1:
+            sys.exit('%s: "%s" found %d times' % (path, pattern, len(matches)))
+        have = matches[0].group(1)
+        if have == str(rows):
+            continue
+        agree = write
+        print('%s: %s hand rows in %s, not %s' % (path, rows, file_name, have))
+        text = text[:matches[0].start(1)] + str(rows) + text[matches[0].end(1):]
+    if write and text != path.read_text():
+        path.write_text(text)
+    return agree
 
 
 if __name__ == '__main__':

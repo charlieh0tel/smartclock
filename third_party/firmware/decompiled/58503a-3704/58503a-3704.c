@@ -14333,7 +14333,7 @@ __asm__(
 
 /* enter_supervisor, then marks the clock record set (+0x2f) and checksums it, A6 the record, and
    the status register restored from the stack, which C cannot say; :DIAGnostic:TVALid:NOW's setter
-   calls it (0x2bc04); written by hand for the 58503A 3704
+   calls it (0x2bc04); row added by hand for the 58503A 3704
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
    called.
    read */

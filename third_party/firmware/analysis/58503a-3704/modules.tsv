@@ -20,7 +20,7 @@
 # The assembly routines, the pForth kernel and the installer's copies
 # have no row.  Rows go in the Z3805A's order: by module, layer by
 # layer, and within a module by subject.  A row whose reason ends
-# "written by hand for the 58503A 3704" is kept as it is, after
+# "row added by hand for the 58503A 3704" is kept as it is, after
 # the seeded rows, for a function the seeding gives no row; it may not
 # take an address the seeding gives.
 0x4cc	boot_duart_early_init	platform/boot	the boot code (reset at 0x550), its own program ahead of the primary
@@ -1259,196 +1259,196 @@
 0x1c148	diag_es_ascii	applications/console	pForth diagnostic word
 0x1c160	diag_fp_u	applications/console	pForth diagnostic word
 #
-# The 58503A's own functions, which no Z3805A row re-keys: rows written
+# The 58503A's own functions, which no Z3805A row re-keys: rows added
 # by hand, by module as above.
-0x6335e	strncat	platform/string	written by hand for the 58503A 3704
-0x1de46	duart_input_port_read	devices/duart	written by hand for the 58503A 3704
-0x1de4e	duart_output_bit_set	devices/duart	written by hand for the 58503A 3704
-0x40828	alarm_outputs_set	devices/fpga	PORTF0's PF5 and the FPGA's alarm bit; written by hand for the 58503A 3704
-0x136c0	latch_bits_set	devices/leds	the latch at 0x300000; written by hand for the 58503A 3704
-0x13702	latch_bits_write	devices/leds	the latch at 0x300000; written by hand for the 58503A 3704
-0x1373c	latch_lamps_write	devices/leds	the latch at 0x300000; written by hand for the 58503A 3704
-0x13778	latch_rewrite	devices/leds	the latch at 0x300000; written by hand for the 58503A 3704
-0x137a4	board_leds_change	devices/leds	the latch's lamps; written by hand for the 58503A 3704
-0x23b10	lamps_compose	devices/leds	the latch's lamps; written by hand for the 58503A 3704
-0x23b46	lamps_request	devices/leds	the latch's lamps; written by hand for the 58503A 3704
-0x23b50	lamps_write	devices/leds	the latch's lamps; written by hand for the 58503A 3704
-0x112b6	gps_seconds_to_date_time	services/calendar	written by hand for the 58503A 3704
-0x11690	date_at_quarter_edge	services/calendar	leap_event_create's test of a date; written by hand for the 58503A 3704
-0x1170a	date_starts_quarter	services/calendar	leap_event_create's test of a date; written by hand for the 58503A 3704
-0x31ac4	log_ext_reference_valid	services/log	written by hand for the 58503A 3704
-0x21b48	hmon_convert_temperature	services/monitors	written by hand for the 58503A 3704
-0x21b62	hmon_convert_5v	services/monitors	written by hand for the 58503A 3704
-0x21b7c	hmon_convert_oven_unused	services/monitors	unreferenced, among the monitors; written by hand for the 58503A 3704
-0x21bc4	hmon_convert_oven	services/monitors	written by hand for the 58503A 3704
-0x21c0c	hmon_convert_15v	services/monitors	written by hand for the 58503A 3704
-0x21c26	hmon_convert_minus_15v	services/monitors	written by hand for the 58503A 3704
-0x21c6e	hmon_convert_oven_current	services/monitors	written by hand for the 58503A 3704
-0x21c88	hmon_convert_antenna_current	services/monitors	written by hand for the 58503A 3704
-0x21ca2	hmon_channel_read	services/monitors	written by hand for the 58503A 3704
-0x21cfc	adc_monitors_reset	services/monitors	written by hand for the 58503A 3704
-0x21d26	hmon_reset	services/monitors	written by hand for the 58503A 3704
-0x21e3e	hmon_smoothed_add	services/monitors	written by hand for the 58503A 3704
-0x21f68	hmon_report_tolerance	services/monitors	written by hand for the 58503A 3704
-0x22104	hmon_channel_out_of_range	services/monitors	written by hand for the 58503A 3704
-0x22194	hmon_report_range	services/monitors	written by hand for the 58503A 3704
-0x221aa	hmon_report_oven_warm	services/monitors	written by hand for the 58503A 3704
-0x221c4	hmon_check_pll_stage	services/monitors	written by hand for the 58503A 3704
-0x221e0	hmon_channel_settled	services/monitors	written by hand for the 58503A 3704
-0x2220a	hmon_channel_step	services/monitors	written by hand for the 58503A 3704
-0x222a6	adc_average	services/monitors	written by hand for the 58503A 3704
-0x222f2	hmon_check_antenna_current	services/monitors	written by hand for the 58503A 3704
-0x23464	porte_read_steady	services/monitors	unreferenced, among the monitors; written by hand for the 58503A 3704
-0x234ae	portf0_read_steady	services/monitors	unreferenced, among the monitors; written by hand for the 58503A 3704
-0x234f8	portgp_read_steady	services/monitors	unreferenced, among the monitors; written by hand for the 58503A 3704
-0x32b62	nv_records_valid	services/nv	written by hand for the 58503A 3704
-0x30a26	lifetime_efc_save	services/records	written by hand for the 58503A 3704
-0x30c0a	calibration_block_save_reported	services/records	written by hand for the 58503A 3704
-0x30da4	parameter_record_save_reported	services/records	written by hand for the 58503A 3704
-0x2775a	status_peek_event	services/status	written by hand for the 58503A 3704
-0x295b0	alarm_text_collect	services/status	the status registers' alarm text; written by hand for the 58503A 3704
-0x29740	alarm_text	services/status	the status registers' alarm text; written by hand for the 58503A 3704
-0x2eff0	port_status_model	services/status	the port layer's status model; written by hand for the 58503A 3704
-0x2f1ba	status_condition_word	services/status	written by hand for the 58503A 3704
-0x2f1ee	status_events_clear	services/status	written by hand for the 58503A 3704
-0x1b150	diag_pr_adc_avg	applications/console	pForth diagnostic word; written by hand for the 58503A 3704
-0x1b6a6	diag_force_ext_1pps	applications/console	pForth diagnostic word; written by hand for the 58503A 3704
-0x48018	front_panel_task	applications/front_panel	written by hand for the 58503A 3704
-0x48102	front_panel_check	applications/front_panel	written by hand for the 58503A 3704
-0x4812e	front_panel_send_line	applications/front_panel	written by hand for the 58503A 3704
-0x52732	front_panel_signal_pps	applications/front_panel	written by hand for the 58503A 3704
-0x5274e	front_panel_format_dms	applications/front_panel	written by hand for the 58503A 3704
-0x5285a	front_panel_parity_letter	applications/front_panel	written by hand for the 58503A 3704
-0x52886	front_panel_baud	applications/front_panel	written by hand for the 58503A 3704
-0x528be	front_panel_satellites	applications/front_panel	written by hand for the 58503A 3704
-0x5290c	front_panel_status_text	applications/front_panel	written by hand for the 58503A 3704
-0x52b1c	front_panel_display_test	applications/front_panel	written by hand for the 58503A 3704
-0x52c16	front_panel_demo	applications/front_panel	written by hand for the 58503A 3704
-0x52dea	front_panel_startup	applications/front_panel	written by hand for the 58503A 3704
-0x53372	front_panel_update	applications/front_panel	written by hand for the 58503A 3704
-0x5362e	front_panel_key	applications/front_panel	written by hand for the 58503A 3704
-0x53736	front_panel_command_begin	applications/front_panel	written by hand for the 58503A 3704
-0x53796	front_panel_command_end	applications/front_panel	written by hand for the 58503A 3704
-0x537b2	front_panel_reset	applications/front_panel	written by hand for the 58503A 3704
-0x537ea	front_panel_selftest	applications/front_panel	written by hand for the 58503A 3704
-0x538d0	front_panel_send_lamps	applications/front_panel	written by hand for the 58503A 3704
-0x5390a	front_panel_send_text	applications/front_panel	written by hand for the 58503A 3704
-0x5395c	front_panel_poll_key	applications/front_panel	written by hand for the 58503A 3704
-0x4feec	oncore_cable_delay_encode	applications/gps/oncore	written by hand for the 58503A 3704
-0x4ff34	FUN_0004ff34	applications/gps/oncore	unreferenced, among the Oncore encoders; written by hand for the 58503A 3704
-0x5003e	oncore_cable_delay_decode	applications/gps/oncore	written by hand for the 58503A 3704
-0x506bc	oncore_position_status_message	applications/gps/oncore	written by hand for the 58503A 3704
-0x506e2	oncore_position_status_8_message	applications/gps/oncore	written by hand for the 58503A 3704
-0x5090a	oncore_extension_8_message	applications/gps/oncore	written by hand for the 58503A 3704
-0x50946	oncore_traim_8_message	applications/gps/oncore	written by hand for the 58503A 3704
-0x5098a	oncore_eight_channels_seen	applications/gps/oncore	written by hand for the 58503A 3704
-0x509b2	oncore_receiver_id_value	applications/gps/oncore	written by hand for the 58503A 3704
-0x509fe	gps_channel_count_update	applications/gps/oncore	written by hand for the 58503A 3704
-0x50a16	gps_receiver_abilities_update	applications/gps/oncore	written by hand for the 58503A 3704
-0x50ab8	oncore_filter_six_channels	applications/gps/oncore	written by hand for the 58503A 3704
-0x50ac8	oncore_filter_eight_channels	applications/gps/oncore	written by hand for the 58503A 3704
-0x50ad8	oncore_filter_channels	applications/gps/oncore	written by hand for the 58503A 3704
-0x50b48	oncore_filter_traim	applications/gps/oncore	written by hand for the 58503A 3704
-0x50b6c	oncore_filter_software_8_4	applications/gps/oncore	written by hand for the 58503A 3704
-0x50bb2	oncore_message_entry_at	applications/gps/oncore	written by hand for the 58503A 3704
-0x4b82a	gps_reference_reset	applications/gps/receiver	written by hand for the 58503A 3704
-0x4b858	gps_reference_hysteresis_set	applications/gps/receiver	written by hand for the 58503A 3704
-0x4b882	ext_reference_hysteresis_set	applications/gps/receiver	written by hand for the 58503A 3704
-0x4da70	gps_track_words_pack	applications/gps/receiver	the track-change log's words; written by hand for the 58503A 3704
-0x4db52	gps_channel_word_pack	applications/gps/receiver	the track-change log's words; written by hand for the 58503A 3704
-0x4dbe8	gps_channel_word_lowest	applications/gps/receiver	the track-change log's words; written by hand for the 58503A 3704
-0x4dc5c	gps_log_track_change	applications/gps/receiver	written by hand for the 58503A 3704
-0x4c548	request_ring_find	applications/gps/requests	written by hand for the 58503A 3704
-0x4c57e	gps_request_run_queued	applications/gps/requests	written by hand for the 58503A 3704
-0x4c98e	gps_request_admitted	applications/gps/requests	written by hand for the 58503A 3704
-0x45c1c	efc_mode_done	applications/pll/pll_scpi	descriptor hook; written by hand for the 58503A 3704
-0x45c46	efc_mode_expire	applications/pll/pll_scpi	pllp_task's end of :DIAG:ROSC:EFC:MODE 2; written by hand for the 58503A 3704
-0x45cd6	temporary_hold_clear	applications/pll/pll_scpi	descriptor hook; written by hand for the 58503A 3704
-0x45e94	power_on_reset	applications/pll/pll_scpi	:SYSTem:PON's action; written by hand for the 58503A 3704
-0x45eb4	pll_tfom_digit_store	applications/pll/pll_scpi	unreferenced; written by hand for the 58503A 3704
-0x43a7c	holdover_duration_count	applications/pll/stages	written by hand for the 58503A 3704
-0x44f48	gps_reference_update	applications/pll/stages	the loop's view of the GPS reference; written by hand for the 58503A 3704
-0x46388	pll_reference_check	applications/pll/stages	written by hand for the 58503A 3704
-0x293c2	scpi_task_run	applications/scpi/engine	written by hand for the 58503A 3704
-0x2a71a	scpi_set_ALARm_EXTRactor	applications/scpi/handlers/alarm	written by hand for the 58503A 3704
-0x2a73a	scpi_query_ALARm	applications/scpi/handlers/alarm	written by hand for the 58503A 3704
-0x306d2	scpi_set_ALARm_ACO	applications/scpi/handlers/alarm	written by hand for the 58503A 3704
-0x306f2	scpi_query_ALARm_ACO	applications/scpi/handlers/alarm	written by hand for the 58503A 3704
-0x2b2f0	scpi_query_DIAGnostic_ME	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2b302	scpi_set_DIAGnostic_GPSystem_ACURrent_ALARm	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2b332	scpi_query_DIAGnostic_GPSystem_ACURrent_ALARm	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2b34c	scpi_query_DIAGnostic_GPSystem_ACURrent	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2b362	scpi_set_DIAGnostic_TSET	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2b374	scpi_query_DIAGnostic_TSET	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2b5a8	scpi_set_DIAGnostic_ROSCillator_EFControl_MODE	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2b5f6	scpi_query_DIAGnostic_ROSCillator_EFControl_MODE	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2b620	scpi_set_DIAGnostic_ROSCillator_EFControl_DATA	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2b65e	scpi_query_DIAGnostic_ROSCillator_EFControl_DATA	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2ba2a	scpi_set_DIAGnostic_TMODe_STATe	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2ba48	scpi_query_DIAGnostic_TMODe_STATe	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2ba5a	scpi_set_DIAGnostic_TMODe_DATA	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2ba72	scpi_query_DIAGnostic_TMODe_DATA	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2ba84	scpi_set_DIAGnostic_TCODe_ERRor_AMASk	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2ba9a	scpi_query_DIAGnostic_TCODe_ERRor_AMASk	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2baac	scpi_set_DIAGnostic_TCODe_ERRor_OMASk	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bac2	scpi_query_DIAGnostic_TCODe_ERRor_OMASk	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bad4	scpi_set_DIAGnostic_TCODe_STATus_AMASk	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2baea	scpi_query_DIAGnostic_TCODe_STATus_AMASk	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bafc	scpi_set_DIAGnostic_TCODe_STATus_OMASk	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bb12	scpi_query_DIAGnostic_TCODe_STATus_OMASk	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bb24	scpi_query_DIAGnostic_INPut_DATA	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bb30	scpi_set_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bb6a	scpi_query_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bb96	scpi_set_DIAGnostic_REFerence_EXTernal_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bba8	scpi_query_DIAGnostic_REFerence_EXTernal_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bbba	scpi_set_DIAGnostic_GPSystem_TRACking_LOG	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bbea	scpi_query_DIAGnostic_GPSystem_TRACking_LOG	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2bc04	scpi_set_DIAGnostic_TVALid_NOW	applications/scpi/handlers/diagnostic	written by hand for the 58503A 3704
-0x2d90c	scpi_query_LED_ALARm_CRITical	applications/scpi/handlers/led	written by hand for the 58503A 3704
-0x2d91e	scpi_query_LED_ALARm_ACO	applications/scpi/handlers/led	written by hand for the 58503A 3704
-0x2bfe8	scpi_set_SOURce_GPSystem_REFerence_BIAS	applications/scpi/handlers/source_gpsystem	written by hand for the 58503A 3704
-0x2c0c6	scpi_query_SOURce_GPSystem_REFerence_BIAS	applications/scpi/handlers/source_gpsystem	written by hand for the 58503A 3704
-0x2c22c	scpi_set_SOURce_GPSystem_ADELay_FEET	applications/scpi/handlers/source_gpsystem	written by hand for the 58503A 3704
-0x2c25e	scpi_query_SOURce_GPSystem_ADELay_FEET	applications/scpi/handlers/source_gpsystem	written by hand for the 58503A 3704
-0x2cbce	scpi_query_SOURce_GPSystem_POSition_BINary	applications/scpi/handlers/source_gpsystem	written by hand for the 58503A 3704
-0x2de64	tcode_query_allowed	applications/scpi/handlers/source_ptime	:PTIMe:TCODe? and :RTCM?'s test; written by hand for the 58503A 3704
-0x2e04a	scpi_set_SOURce_PTIMe_TCODe_CONTinuous	applications/scpi/handlers/source_ptime	written by hand for the 58503A 3704
-0x2e07a	scpi_query_SOURce_PTIMe_TCODe_CONTinuous	applications/scpi/handlers/source_ptime	written by hand for the 58503A 3704
-0x2e30c	scpi_set_SOURce_PTIMe_UTC	applications/scpi/handlers/source_ptime	written by hand for the 58503A 3704
-0x2f82c	scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR	applications/scpi/handlers/source_roscillator	written by hand for the 58503A 3704
-0x2f88a	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR	applications/scpi/handlers/source_roscillator	written by hand for the 58503A 3704
-0x2f8d0	scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ACTion	applications/scpi/handlers/source_roscillator	written by hand for the 58503A 3704
-0x2f8f0	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ACTion	applications/scpi/handlers/source_roscillator	written by hand for the 58503A 3704
-0x2f902	scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ALAR1	applications/scpi/handlers/source_roscillator	written by hand for the 58503A 3704
-0x2f906	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ALAR1	applications/scpi/handlers/source_roscillator	written by hand for the 58503A 3704
-0x2f93c	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_EXCeeded	applications/scpi/handlers/source_roscillator	written by hand for the 58503A 3704
-0x29ec4	scpi_set_STATus_OPERation_HARDware_CONDition_TI	applications/scpi/handlers/status	written by hand for the 58503A 3704
-0x29ee2	scpi_set_STATus_OPERation_HARDware_CONDition_EEPRom	applications/scpi/handlers/status	written by hand for the 58503A 3704
-0x29f00	scpi_set_STATus_QUEStionable_CONDition_TRESet	applications/scpi/handlers/status	written by hand for the 58503A 3704
-0x2a6b6	scpi_set_STATus_OPERation_CRITical	applications/scpi/handlers/status	written by hand for the 58503A 3704
-0x2a6d6	scpi_query_STATus_OPERation_CRITical	applications/scpi/handlers/status	written by hand for the 58503A 3704
-0x2a6e8	scpi_set_STATus_OPERation_HARDware_CRITical	applications/scpi/handlers/status	written by hand for the 58503A 3704
-0x2a708	scpi_query_STATus_OPERation_HARDware_CRITical	applications/scpi/handlers/status	written by hand for the 58503A 3704
-0x2ff26	scpi_query_SYSTem_COMMunicate_ALARm	applications/scpi/handlers/system	written by hand for the 58503A 3704
-0x2ff60	scpi_set_SYSTem_COMMunicate_ALARm_FDUPlex	applications/scpi/handlers/system	written by hand for the 58503A 3704
-0x2ffe8	scpi_set_SYSTem_COMMunicate_ALARm_CONTrol_HPACe	applications/scpi/handlers/system	written by hand for the 58503A 3704
-0x30040	scpi_query_SYSTem_COMMunicate_ALARm_CONTrol_HPACe	applications/scpi/handlers/system	written by hand for the 58503A 3704
-0x30070	scpi_set_SYSTem_COMMunicate_ALARm_PRESet	applications/scpi/handlers/system	written by hand for the 58503A 3704
-0x300d8	scpi_query_SYSTem_COMMunicate_ALARm_PROMpt	applications/scpi/handlers/system	written by hand for the 58503A 3704
-0x302c0	scpi_set_SYSTem_COMMunicate_ALARm_RECeive_PACE	applications/scpi/handlers/system	written by hand for the 58503A 3704
-0x3061a	scpi_set_SYSTem_PON	applications/scpi/handlers/system	written by hand for the 58503A 3704
-0x28da2	scpi_prompt_set	applications/scpi/port	written by hand for the 58503A 3704
-0x28dac	scpi_prompt_get	applications/scpi/port	written by hand for the 58503A 3704
-0x29032	status_update_rqs	applications/scpi/port	IEEE 488.2's status byte; written by hand for the 58503A 3704
-0x290ce	port_status_report	applications/scpi/port	the port layer; written by hand for the 58503A 3704
-0x290f8	port_report_errors	applications/scpi/port	the port layer; written by hand for the 58503A 3704
-0x29154	port_prompt_get	applications/scpi/port	the port layer; written by hand for the 58503A 3704
-0x2917c	port_prompt_set	applications/scpi/port	the port layer; written by hand for the 58503A 3704
-0x291a6	port_session_init	applications/scpi/port	the port layer; written by hand for the 58503A 3704
-0x291ce	port_object	applications/scpi/port	the port layer; written by hand for the 58503A 3704
-0x291f6	port_update_rqs	applications/scpi/port	the port layer; written by hand for the 58503A 3704
-0x4a1fa	status_screen_sync	applications/screen	written by hand for the 58503A 3704
-0x4aa74	bit_12_set	applications/screen	the status screen's bit tests; written by hand for the 58503A 3704
-0x4aad0	bit_4_set	applications/screen	the status screen's bit tests; written by hand for the 58503A 3704
-0x189f6	qspi_adc_test_read	applications/selftest	written by hand for the 58503A 3704
-0x18efa	selftest_power_with_lamp	applications/selftest	written by hand for the 58503A 3704
+0x6335e	strncat	platform/string	row added by hand for the 58503A 3704
+0x1de46	duart_input_port_read	devices/duart	row added by hand for the 58503A 3704
+0x1de4e	duart_output_bit_set	devices/duart	row added by hand for the 58503A 3704
+0x40828	alarm_outputs_set	devices/fpga	PORTF0's PF5 and the FPGA's alarm bit; row added by hand for the 58503A 3704
+0x136c0	latch_bits_set	devices/leds	the latch at 0x300000; row added by hand for the 58503A 3704
+0x13702	latch_bits_write	devices/leds	the latch at 0x300000; row added by hand for the 58503A 3704
+0x1373c	latch_lamps_write	devices/leds	the latch at 0x300000; row added by hand for the 58503A 3704
+0x13778	latch_rewrite	devices/leds	the latch at 0x300000; row added by hand for the 58503A 3704
+0x137a4	board_leds_change	devices/leds	the latch's lamps; row added by hand for the 58503A 3704
+0x23b10	lamps_compose	devices/leds	the latch's lamps; row added by hand for the 58503A 3704
+0x23b46	lamps_request	devices/leds	the latch's lamps; row added by hand for the 58503A 3704
+0x23b50	lamps_write	devices/leds	the latch's lamps; row added by hand for the 58503A 3704
+0x112b6	gps_seconds_to_date_time	services/calendar	row added by hand for the 58503A 3704
+0x11690	date_at_quarter_edge	services/calendar	leap_event_create's test of a date; row added by hand for the 58503A 3704
+0x1170a	date_starts_quarter	services/calendar	leap_event_create's test of a date; row added by hand for the 58503A 3704
+0x31ac4	log_ext_reference_valid	services/log	row added by hand for the 58503A 3704
+0x21b48	hmon_convert_temperature	services/monitors	row added by hand for the 58503A 3704
+0x21b62	hmon_convert_5v	services/monitors	row added by hand for the 58503A 3704
+0x21b7c	hmon_convert_oven_unused	services/monitors	unreferenced, among the monitors; row added by hand for the 58503A 3704
+0x21bc4	hmon_convert_oven	services/monitors	row added by hand for the 58503A 3704
+0x21c0c	hmon_convert_15v	services/monitors	row added by hand for the 58503A 3704
+0x21c26	hmon_convert_minus_15v	services/monitors	row added by hand for the 58503A 3704
+0x21c6e	hmon_convert_oven_current	services/monitors	row added by hand for the 58503A 3704
+0x21c88	hmon_convert_antenna_current	services/monitors	row added by hand for the 58503A 3704
+0x21ca2	hmon_channel_read	services/monitors	row added by hand for the 58503A 3704
+0x21cfc	adc_monitors_reset	services/monitors	row added by hand for the 58503A 3704
+0x21d26	hmon_reset	services/monitors	row added by hand for the 58503A 3704
+0x21e3e	hmon_smoothed_add	services/monitors	row added by hand for the 58503A 3704
+0x21f68	hmon_report_tolerance	services/monitors	row added by hand for the 58503A 3704
+0x22104	hmon_channel_out_of_range	services/monitors	row added by hand for the 58503A 3704
+0x22194	hmon_report_range	services/monitors	row added by hand for the 58503A 3704
+0x221aa	hmon_report_oven_warm	services/monitors	row added by hand for the 58503A 3704
+0x221c4	hmon_check_pll_stage	services/monitors	row added by hand for the 58503A 3704
+0x221e0	hmon_channel_settled	services/monitors	row added by hand for the 58503A 3704
+0x2220a	hmon_channel_step	services/monitors	row added by hand for the 58503A 3704
+0x222a6	adc_average	services/monitors	row added by hand for the 58503A 3704
+0x222f2	hmon_check_antenna_current	services/monitors	row added by hand for the 58503A 3704
+0x23464	porte_read_steady	services/monitors	unreferenced, among the monitors; row added by hand for the 58503A 3704
+0x234ae	portf0_read_steady	services/monitors	unreferenced, among the monitors; row added by hand for the 58503A 3704
+0x234f8	portgp_read_steady	services/monitors	unreferenced, among the monitors; row added by hand for the 58503A 3704
+0x32b62	nv_records_valid	services/nv	row added by hand for the 58503A 3704
+0x30a26	lifetime_efc_save	services/records	row added by hand for the 58503A 3704
+0x30c0a	calibration_block_save_reported	services/records	row added by hand for the 58503A 3704
+0x30da4	parameter_record_save_reported	services/records	row added by hand for the 58503A 3704
+0x2775a	status_peek_event	services/status	row added by hand for the 58503A 3704
+0x295b0	alarm_text_collect	services/status	the status registers' alarm text; row added by hand for the 58503A 3704
+0x29740	alarm_text	services/status	the status registers' alarm text; row added by hand for the 58503A 3704
+0x2eff0	port_status_model	services/status	the port layer's status model; row added by hand for the 58503A 3704
+0x2f1ba	status_condition_word	services/status	row added by hand for the 58503A 3704
+0x2f1ee	status_events_clear	services/status	row added by hand for the 58503A 3704
+0x1b150	diag_pr_adc_avg	applications/console	pForth diagnostic word; row added by hand for the 58503A 3704
+0x1b6a6	diag_force_ext_1pps	applications/console	pForth diagnostic word; row added by hand for the 58503A 3704
+0x48018	front_panel_task	applications/front_panel	row added by hand for the 58503A 3704
+0x48102	front_panel_check	applications/front_panel	row added by hand for the 58503A 3704
+0x4812e	front_panel_send_line	applications/front_panel	row added by hand for the 58503A 3704
+0x52732	front_panel_signal_pps	applications/front_panel	row added by hand for the 58503A 3704
+0x5274e	front_panel_format_dms	applications/front_panel	row added by hand for the 58503A 3704
+0x5285a	front_panel_parity_letter	applications/front_panel	row added by hand for the 58503A 3704
+0x52886	front_panel_baud	applications/front_panel	row added by hand for the 58503A 3704
+0x528be	front_panel_satellites	applications/front_panel	row added by hand for the 58503A 3704
+0x5290c	front_panel_status_text	applications/front_panel	row added by hand for the 58503A 3704
+0x52b1c	front_panel_display_test	applications/front_panel	row added by hand for the 58503A 3704
+0x52c16	front_panel_demo	applications/front_panel	row added by hand for the 58503A 3704
+0x52dea	front_panel_startup	applications/front_panel	row added by hand for the 58503A 3704
+0x53372	front_panel_update	applications/front_panel	row added by hand for the 58503A 3704
+0x5362e	front_panel_key	applications/front_panel	row added by hand for the 58503A 3704
+0x53736	front_panel_command_begin	applications/front_panel	row added by hand for the 58503A 3704
+0x53796	front_panel_command_end	applications/front_panel	row added by hand for the 58503A 3704
+0x537b2	front_panel_reset	applications/front_panel	row added by hand for the 58503A 3704
+0x537ea	front_panel_selftest	applications/front_panel	row added by hand for the 58503A 3704
+0x538d0	front_panel_send_lamps	applications/front_panel	row added by hand for the 58503A 3704
+0x5390a	front_panel_send_text	applications/front_panel	row added by hand for the 58503A 3704
+0x5395c	front_panel_poll_key	applications/front_panel	row added by hand for the 58503A 3704
+0x4feec	oncore_cable_delay_encode	applications/gps/oncore	row added by hand for the 58503A 3704
+0x4ff34	FUN_0004ff34	applications/gps/oncore	unreferenced, among the Oncore encoders; row added by hand for the 58503A 3704
+0x5003e	oncore_cable_delay_decode	applications/gps/oncore	row added by hand for the 58503A 3704
+0x506bc	oncore_position_status_message	applications/gps/oncore	row added by hand for the 58503A 3704
+0x506e2	oncore_position_status_8_message	applications/gps/oncore	row added by hand for the 58503A 3704
+0x5090a	oncore_extension_8_message	applications/gps/oncore	row added by hand for the 58503A 3704
+0x50946	oncore_traim_8_message	applications/gps/oncore	row added by hand for the 58503A 3704
+0x5098a	oncore_eight_channels_seen	applications/gps/oncore	row added by hand for the 58503A 3704
+0x509b2	oncore_receiver_id_value	applications/gps/oncore	row added by hand for the 58503A 3704
+0x509fe	gps_channel_count_update	applications/gps/oncore	row added by hand for the 58503A 3704
+0x50a16	gps_receiver_abilities_update	applications/gps/oncore	row added by hand for the 58503A 3704
+0x50ab8	oncore_filter_six_channels	applications/gps/oncore	row added by hand for the 58503A 3704
+0x50ac8	oncore_filter_eight_channels	applications/gps/oncore	row added by hand for the 58503A 3704
+0x50ad8	oncore_filter_channels	applications/gps/oncore	row added by hand for the 58503A 3704
+0x50b48	oncore_filter_traim	applications/gps/oncore	row added by hand for the 58503A 3704
+0x50b6c	oncore_filter_software_8_4	applications/gps/oncore	row added by hand for the 58503A 3704
+0x50bb2	oncore_message_entry_at	applications/gps/oncore	row added by hand for the 58503A 3704
+0x4b82a	gps_reference_reset	applications/gps/receiver	row added by hand for the 58503A 3704
+0x4b858	gps_reference_hysteresis_set	applications/gps/receiver	row added by hand for the 58503A 3704
+0x4b882	ext_reference_hysteresis_set	applications/gps/receiver	row added by hand for the 58503A 3704
+0x4da70	gps_track_words_pack	applications/gps/receiver	the track-change log's words; row added by hand for the 58503A 3704
+0x4db52	gps_channel_word_pack	applications/gps/receiver	the track-change log's words; row added by hand for the 58503A 3704
+0x4dbe8	gps_channel_word_lowest	applications/gps/receiver	the track-change log's words; row added by hand for the 58503A 3704
+0x4dc5c	gps_log_track_change	applications/gps/receiver	row added by hand for the 58503A 3704
+0x4c548	request_ring_find	applications/gps/requests	row added by hand for the 58503A 3704
+0x4c57e	gps_request_run_queued	applications/gps/requests	row added by hand for the 58503A 3704
+0x4c98e	gps_request_admitted	applications/gps/requests	row added by hand for the 58503A 3704
+0x45c1c	efc_mode_done	applications/pll/pll_scpi	descriptor hook; row added by hand for the 58503A 3704
+0x45c46	efc_mode_expire	applications/pll/pll_scpi	pllp_task's end of :DIAG:ROSC:EFC:MODE 2; row added by hand for the 58503A 3704
+0x45cd6	temporary_hold_clear	applications/pll/pll_scpi	descriptor hook; row added by hand for the 58503A 3704
+0x45e94	power_on_reset	applications/pll/pll_scpi	:SYSTem:PON's action; row added by hand for the 58503A 3704
+0x45eb4	pll_tfom_digit_store	applications/pll/pll_scpi	unreferenced; row added by hand for the 58503A 3704
+0x43a7c	holdover_duration_count	applications/pll/stages	row added by hand for the 58503A 3704
+0x44f48	gps_reference_update	applications/pll/stages	the loop's view of the GPS reference; row added by hand for the 58503A 3704
+0x46388	pll_reference_check	applications/pll/stages	row added by hand for the 58503A 3704
+0x293c2	scpi_task_run	applications/scpi/engine	row added by hand for the 58503A 3704
+0x2a71a	scpi_set_ALARm_EXTRactor	applications/scpi/handlers/alarm	row added by hand for the 58503A 3704
+0x2a73a	scpi_query_ALARm	applications/scpi/handlers/alarm	row added by hand for the 58503A 3704
+0x306d2	scpi_set_ALARm_ACO	applications/scpi/handlers/alarm	row added by hand for the 58503A 3704
+0x306f2	scpi_query_ALARm_ACO	applications/scpi/handlers/alarm	row added by hand for the 58503A 3704
+0x2b2f0	scpi_query_DIAGnostic_ME	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2b302	scpi_set_DIAGnostic_GPSystem_ACURrent_ALARm	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2b332	scpi_query_DIAGnostic_GPSystem_ACURrent_ALARm	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2b34c	scpi_query_DIAGnostic_GPSystem_ACURrent	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2b362	scpi_set_DIAGnostic_TSET	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2b374	scpi_query_DIAGnostic_TSET	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2b5a8	scpi_set_DIAGnostic_ROSCillator_EFControl_MODE	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2b5f6	scpi_query_DIAGnostic_ROSCillator_EFControl_MODE	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2b620	scpi_set_DIAGnostic_ROSCillator_EFControl_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2b65e	scpi_query_DIAGnostic_ROSCillator_EFControl_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2ba2a	scpi_set_DIAGnostic_TMODe_STATe	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2ba48	scpi_query_DIAGnostic_TMODe_STATe	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2ba5a	scpi_set_DIAGnostic_TMODe_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2ba72	scpi_query_DIAGnostic_TMODe_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2ba84	scpi_set_DIAGnostic_TCODe_ERRor_AMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2ba9a	scpi_query_DIAGnostic_TCODe_ERRor_AMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2baac	scpi_set_DIAGnostic_TCODe_ERRor_OMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bac2	scpi_query_DIAGnostic_TCODe_ERRor_OMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bad4	scpi_set_DIAGnostic_TCODe_STATus_AMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2baea	scpi_query_DIAGnostic_TCODe_STATus_AMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bafc	scpi_set_DIAGnostic_TCODe_STATus_OMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bb12	scpi_query_DIAGnostic_TCODe_STATus_OMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bb24	scpi_query_DIAGnostic_INPut_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bb30	scpi_set_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bb6a	scpi_query_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bb96	scpi_set_DIAGnostic_REFerence_EXTernal_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bba8	scpi_query_DIAGnostic_REFerence_EXTernal_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bbba	scpi_set_DIAGnostic_GPSystem_TRACking_LOG	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bbea	scpi_query_DIAGnostic_GPSystem_TRACking_LOG	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2bc04	scpi_set_DIAGnostic_TVALid_NOW	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x2d90c	scpi_query_LED_ALARm_CRITical	applications/scpi/handlers/led	row added by hand for the 58503A 3704
+0x2d91e	scpi_query_LED_ALARm_ACO	applications/scpi/handlers/led	row added by hand for the 58503A 3704
+0x2bfe8	scpi_set_SOURce_GPSystem_REFerence_BIAS	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x2c0c6	scpi_query_SOURce_GPSystem_REFerence_BIAS	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x2c22c	scpi_set_SOURce_GPSystem_ADELay_FEET	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x2c25e	scpi_query_SOURce_GPSystem_ADELay_FEET	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x2cbce	scpi_query_SOURce_GPSystem_POSition_BINary	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x2de64	tcode_query_allowed	applications/scpi/handlers/source_ptime	:PTIMe:TCODe? and :RTCM?'s test; row added by hand for the 58503A 3704
+0x2e04a	scpi_set_SOURce_PTIMe_TCODe_CONTinuous	applications/scpi/handlers/source_ptime	row added by hand for the 58503A 3704
+0x2e07a	scpi_query_SOURce_PTIMe_TCODe_CONTinuous	applications/scpi/handlers/source_ptime	row added by hand for the 58503A 3704
+0x2e30c	scpi_set_SOURce_PTIMe_UTC	applications/scpi/handlers/source_ptime	row added by hand for the 58503A 3704
+0x2f82c	scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x2f88a	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x2f8d0	scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ACTion	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x2f8f0	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ACTion	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x2f902	scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ALAR1	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x2f906	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ALAR1	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x2f93c	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_EXCeeded	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x29ec4	scpi_set_STATus_OPERation_HARDware_CONDition_TI	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x29ee2	scpi_set_STATus_OPERation_HARDware_CONDition_EEPRom	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x29f00	scpi_set_STATus_QUEStionable_CONDition_TRESet	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x2a6b6	scpi_set_STATus_OPERation_CRITical	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x2a6d6	scpi_query_STATus_OPERation_CRITical	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x2a6e8	scpi_set_STATus_OPERation_HARDware_CRITical	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x2a708	scpi_query_STATus_OPERation_HARDware_CRITical	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x2ff26	scpi_query_SYSTem_COMMunicate_ALARm	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x2ff60	scpi_set_SYSTem_COMMunicate_ALARm_FDUPlex	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x2ffe8	scpi_set_SYSTem_COMMunicate_ALARm_CONTrol_HPACe	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x30040	scpi_query_SYSTem_COMMunicate_ALARm_CONTrol_HPACe	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x30070	scpi_set_SYSTem_COMMunicate_ALARm_PRESet	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x300d8	scpi_query_SYSTem_COMMunicate_ALARm_PROMpt	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x302c0	scpi_set_SYSTem_COMMunicate_ALARm_RECeive_PACE	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x3061a	scpi_set_SYSTem_PON	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x28da2	scpi_prompt_set	applications/scpi/port	row added by hand for the 58503A 3704
+0x28dac	scpi_prompt_get	applications/scpi/port	row added by hand for the 58503A 3704
+0x29032	status_update_rqs	applications/scpi/port	IEEE 488.2's status byte; row added by hand for the 58503A 3704
+0x290ce	port_status_report	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x290f8	port_report_errors	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x29154	port_prompt_get	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x2917c	port_prompt_set	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x291a6	port_session_init	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x291ce	port_object	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x291f6	port_update_rqs	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x4a1fa	status_screen_sync	applications/screen	row added by hand for the 58503A 3704
+0x4aa74	bit_12_set	applications/screen	the status screen's bit tests; row added by hand for the 58503A 3704
+0x4aad0	bit_4_set	applications/screen	the status screen's bit tests; row added by hand for the 58503A 3704
+0x189f6	qspi_adc_test_read	applications/selftest	row added by hand for the 58503A 3704
+0x18efa	selftest_power_with_lamp	applications/selftest	row added by hand for the 58503A 3704

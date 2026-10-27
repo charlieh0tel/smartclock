@@ -147,10 +147,11 @@ check-common:
 
 # Each seeded image's analysis/IMAGE/names.tsv and modules.tsv, seeded from its base's
 # by the same matches (tools/firmware/seed_names.py; the names file's
-# header gives the rules and exceptions).  seed-names rewrites them;
-# check-seed-names, which check-image-diff runs, fails if either is not
-# what the matches give.  The counts carried go to the image's work
-# folder's seed-names.txt.
+# header gives the rules and exceptions), and the counts of their rows
+# added by hand that the image's document gives.  seed-names rewrites
+# them; check-seed-names, which check-image-diff runs, fails if any is
+# not what the matches and the rows give.  The counts carried go to the
+# image's work folder's seed-names.txt.
 seed_names_run = mkdir -p $(call work,$(1)) && python3 -I $(ROOT)/tools/firmware/seed_names.py \
 	$(ANALYSIS_FOLDER)/$(DIFF_BASE_$(1)) $(ANALYSIS_FOLDER)/$(1) --counts $(call work,$(1))/seed-names.txt
 
@@ -234,7 +235,9 @@ report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1
 # Fail if the documents' figures from each reported image's function
 # check -- its functions agreeing, known, skipped and failed, those run
 # in user mode alone and in both modes, its console sessions agreeing
-# and the agreeing functions' cases, as docs/firmware/README.md,
+# and the agreeing functions' cases -- and from its export -- its
+# functions written by hand, left as the decompiler's reading, assembly
+# and thunks -- as docs/firmware/README.md,
 # docs/firmware/rewrite.md, docs/firmware/58503a-3704.md,
 # docs/firmware/z3801a-3543.md and README.md
 # quote them -- are not what the last make report-decompiled

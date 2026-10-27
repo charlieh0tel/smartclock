@@ -4,7 +4,12 @@ rewrites them in place: how many of the functions agree, are known, are
 skipped and fail, the primary's and the installer's; how many run in
 user mode alone and in both modes; how many of the pForth console
 sessions agree; and how many of the agreeing functions' cases are
-compared.  CHECKS lists, for each image, the sentences that quote them.
+compared.  With them, the figures of the export the report ran,
+third_party/firmware/decompiled/IMAGE/IMAGE.c, and its sidecar: how
+many functions there are, the primary's and the installer's; how many
+of each are written by hand and how many run as the decompiler's
+reading; and how many are assembly routines and thunks.  CHECKS lists,
+for each image, the sentences that quote them.
 
     python3 -I tools/firmware/report_figures.py --image IMAGE REPORT [--write]
 
@@ -16,11 +21,14 @@ may say.
 """
 
 import argparse
+import collections
+import json
 import pathlib
 import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+DECOMPILED = ROOT / 'third_party/firmware/decompiled'
 README = ROOT / 'docs/firmware/README.md'
 REWRITE = ROOT / 'docs/firmware/rewrite.md'
 SUMMARY = ROOT / 'README.md'
@@ -40,6 +48,18 @@ FIGURES = re.compile(
 SESSIONS = re.compile(r'^console sessions agreeing: (\d+) of (\d+)$', re.M)
 # its line of an agreeing function's cases, those run and all
 CASES = re.compile(r'^ok \S+: (\d+) of (\d+) cases run$', re.M)
+# the export's line before each function: its address, the installer's
+# prefixed
+FUNCTION_START = re.compile(r'^/\* ((installer::)?[0-9a-f]{8}) \*/$', re.M)
+# the export's line in place of a function written by hand
+HAND_WRITTEN = re.compile(r'^/\* \w+: rewritten in \S+ \*/$', re.M)
+# the line opening an assembly routine's reading, kept beside it
+ASSEMBLY = "#if 0 /* the decompiler's reading; the routine is the assembly after it */"
+# a thunk's line, naming its target
+THUNK = '/* a thunk to '
+# the forms of an export's function: written by hand, an assembly
+# routine, a thunk, or the decompiler's reading, compiled as it stands
+FORMS = ('hand', 'assembly', 'thunk', 'reading')
 # the numbers a sentence spells out
 WORDS = ('none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
          'eight', 'nine', 'ten', 'eleven', 'twelve')
@@ -70,7 +90,10 @@ def counts_row(profile):
 # from the report's, in the sentence's order.  A report's figures are
 # keyed primary_ and installer_ agree, skipped, known, failed, user and
 # both; sessions_agree and sessions_run; cases_run and cases_all, which
-# sum the agreeing functions' of both profiles.
+# sum the agreeing functions' of both profiles.  The export's are keyed
+# primary_ and installer_ functions and each of FORMS but assembly and
+# thunk, which are both regions'; functions, both regions', and
+# decompiled, those not thunks.
 CHECKS = {
     'z3805a-3543b': (
         (README, sentence("Of the functions run, {} of the primary's and {} of "
@@ -94,6 +117,22 @@ CHECKS = {
                            "or one C cannot express, and {} the harness cannot run"),
          lambda f: (word(f['primary_known'] + f['installer_known']),
                     word(f['primary_skipped'] + f['installer_skipped']))),
+        (REWRITE, sentence("Hand-written: {} of the primary's functions and {} of the installer's"),
+         lambda f: (f['primary_hand'], f['installer_hand'])),
+        (REWRITE, sentence("byte for byte: {} routines -- the pSOS kernel's"),
+         lambda f: (f['assembly'],)),
+        (REWRITE, sentence("Left as the decompiler's: {} thunks, each a"),
+         lambda f: (f['thunk'],)),
+        (REWRITE, sentence('| assembly (`check-decompiled`) | {} routines in'),
+         lambda f: (f['assembly'],)),
+        (SUMMARY, sentence('of the installer it unpacks into RAM, {} and {}, was'),
+         lambda f: (f['primary_hand'], f['installer_hand'])),
+        (SUMMARY, sentence('The {} routines that are not C'), lambda f: (f['assembly'],)),
+        (README, sentence('all {} routines, in'), lambda f: (f['assembly'],)),
+        (README, sentence("this gives {} functions, {} the primary's and {} the installer's, "
+                          "and every one but the {} thunks decompiles"),
+         lambda f: (f['functions'], f['primary_functions'], f['installer_functions'],
+                    f['thunk'])),
     ),
     '58503a-3704': (
         (DOCUMENT_58503A, sentence('| primary | {} | {} | {} | {} |'),
@@ -125,6 +164,18 @@ CHECKS = {
                     word(f['primary_skipped'] + f['primary_failed']),
                     f['installer_agree'], f['installer_skipped'], f['sessions_agree'],
                     f['sessions_run'])),
+        (DOCUMENT_58503A, sentence('It decompiles {} functions, none failing'),
+         lambda f: (f['decompiled'],)),
+        (DOCUMENT_58503A, sentence(
+            "In all, {} of the primary's C functions and {} of the installer's are written "
+            "by hand, and {} of either is the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    word(f['primary_reading'] + f['installer_reading']))),
+        (REWRITE, sentence(
+            "(its \"The hand-written C\"), {} of the primary's and {} of the installer's, {} "
+            "left as the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    word(f['primary_reading'] + f['installer_reading']))),
     ),
     'z3801a-3543': (
         (DOCUMENT_Z3801A, sentence('| primary | {} | {} | {} | {} |'),
@@ -141,6 +192,16 @@ CHECKS = {
          lambda f: (f['primary_agree'], f['primary_known'], f['primary_skipped'],
                     f['installer_agree'], f['installer_skipped'], f['sessions_agree'],
                     f['sessions_run'])),
+        (DOCUMENT_Z3801A, sentence(
+            "In all, {} of the primary's C functions and {} of the installer's are written "
+            "by hand, and {} of the primary's remain the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'], word(f['primary_reading']))),
+        (DOCUMENT_Z3801A, sentence('| `check-decompiled` | {} routines in'),
+         lambda f: (f['assembly'],)),
+        (REWRITE, sentence(
+            "has its C functions written by hand too, the primary's {} and the installer's {}, "
+            "{} left as the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'], word(f['primary_reading']))),
     ),
 }
 
@@ -171,13 +232,54 @@ def report_figures(path):
     return figures
 
 
+def export_functions(image):
+    """The image's export's functions by address: each one's region,
+    primary or installer, and its form, one of FORMS."""
+    text = (DECOMPILED / image / f'{image}.c').read_text()
+    starts = list(FUNCTION_START.finditer(text))
+    functions = {}
+    for start, end in zip(starts, starts[1:] + [None]):
+        piece = text[start.end():end.start() if end else len(text)]
+        if HAND_WRITTEN.search(piece):
+            form = 'hand'
+        elif ASSEMBLY in piece:
+            form = 'assembly'
+        elif THUNK in piece:
+            form = 'thunk'
+        else:
+            form = 'reading'
+        address = start.group(1)
+        functions[address] = ('installer' if start.group(2) else 'primary', form)
+    return functions
+
+
+def export_figures(image):
+    """The export's figures, keyed as CHECKS has them; exits if the
+    export and its sidecar list other functions."""
+    functions = export_functions(image)
+    sidecar = DECOMPILED / image / f'{image}.conventions.jsonl'
+    listed = {json.loads(line)['address'] for line in open(sidecar) if line.strip()}
+    if listed != set(functions):
+        sys.exit(f'{sidecar}: not the functions of its export')
+    count = collections.Counter(functions.values())
+    figures = {f'{region}_{form}': count[region, form]
+               for region in ('primary', 'installer') for form in FORMS}
+    for region in ('primary', 'installer'):
+        figures[f'{region}_functions'] = sum(count[region, form] for form in FORMS)
+    for form in ('assembly', 'thunk'):
+        figures[form] = figures[f'primary_{form}'] + figures[f'installer_{form}']
+    figures['functions'] = len(functions)
+    figures['decompiled'] = len(functions) - figures['thunk']
+    return figures
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--image', required=True, choices=sorted(CHECKS))
     parser.add_argument('report', type=pathlib.Path)
     parser.add_argument('--write', action='store_true')
     args = parser.parse_args()
-    figures = report_figures(args.report)
+    figures = report_figures(args.report) | export_figures(args.image)
     texts = {}
     drifted = False
     for document, pattern, want in CHECKS[args.image]:

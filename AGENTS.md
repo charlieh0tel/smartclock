@@ -69,6 +69,11 @@ here, where they go stale unnoticed.
   `PLAN.md` and everything in `docs/`.  A decision that is reversed, a
   phase that is finished, or a figure that is retracted is a
   documentation change as much as a code one.
+- Every figure a doc quotes from a tool's output (a count, size,
+  percentage or timing) is checked by a `make` target against a fresh
+  run, as `make check-report-figures` checks the function check's
+  (`tools/firmware/report_figures.py`), or is not quoted: the doc names
+  the command that gives it instead.
 
 
 ## Revision Control

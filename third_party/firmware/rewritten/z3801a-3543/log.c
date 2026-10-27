@@ -14,13 +14,19 @@ static void records_log_heading(char* heading, int32_t number, uint32_t date,
           date & RECORDS_FIELD_MASK, hour, minute, second);
 }
 
-/* An unused log entry's text and heading, either pointer 0 for none. */
-static void records_log_unused(char* text, char* heading, int32_t number) {
+/* An unused log entry's text, the pointer 0 for none. */
+static void records_log_unused_text(char* text) {
   if (text != 0) {
     const char* unused = "Unused";
     while ((*text++ = *unused++) != '\0') {
     }
   }
+}
+
+/* An unused reset-cause entry's text and heading, either pointer 0 for
+ * none. */
+static void records_log_unused(char* text, char* heading, int32_t number) {
+  records_log_unused_text(text);
   if (heading != 0) {
     sprintf(heading, "Log %03d:00000000.00:00:00", number);
   }
@@ -39,8 +45,9 @@ static const uint8_t RECORDS_LOG_ENTRIES_REPORTED = 180;
  * logs is the image's own text, at its own address, so that an entry
  * the image wrote reads back as it does and one the C writes is the
  * image's, byte for byte (docs/firmware/rewrite.md, "Booting the C").
- * log_read knows by that address the one format it gives a date and a
- * time, not a byte and a long: log_text_first_satellite_tracked_at. */
+ * log_read knows by that address the one format whose arguments are a
+ * date and a time, not a byte and a long:
+ * log_text_first_satellite_tracked_at. */
 
 /* The sum and its complement of an event log page's entries (0x30202). */
 uint16_t log_page_checksum(log_page* page) {
@@ -153,6 +160,69 @@ int32_t log_init(void) {
     status_happening(STATUS_LOG_ALMOST_FULL_SET);
   }
   return mutex_unlock(&log_mutex);
+}
+
+/* Event log entry number (from 1, clamped to the log): its text and a
+ * "Log NNN:HXXXXXXXX" heading, the entry's time as GPS seconds in hex,
+ * either pointer 0 for none; 0, or mutex_lock's error.  The first
+ * satellite's entry prints its time so too.  The Z3805A's heading and
+ * that entry give a date and a time, YYYYMMDD.HH:MM:SS (0x305ea). */
+int32_t log_read(int32_t number, char* text, char* heading) {
+  int32_t index = number - 1;
+  int32_t error = mutex_lock(&log_mutex);
+
+  if (error != 0) {
+    return error;
+  }
+  int32_t page = index / RECORDS_LOG_PAGE_ENTRIES;
+  int32_t entry = index % RECORDS_LOG_PAGE_ENTRIES;
+  if (page >= RECORDS_LOG_PAGES) {
+    page = RECORDS_LOG_PAGES - 1;
+    entry = RECORDS_LOG_PAGE_ENTRIES - 1;
+    index = RECORDS_LOG_PAGES * RECORDS_LOG_PAGE_ENTRIES - 1;
+  }
+  if (page < 0 || entry < 0) {
+    page = 0;
+    entry = 0;
+    index = 0;
+  }
+  if (page == log_write_page_number && log_write_page_open) {
+    log_flush();
+  }
+
+  uint32_t status = 0;
+  if (page != log_page_number) {
+    status = log_page_read(page, &log_page_buffer);
+    log_page_number = page;
+    if (status != 0) {
+      log_page_clear(&log_page_buffer);
+    }
+  }
+
+  log_entry* found = &log_page_buffer.entries[entry];
+  if (status != 0 || found->format == 0) {
+    records_log_unused_text(text);
+    if (heading != 0) {
+      sprintf(heading, "Log %03d:H00000000", index + 1);
+    }
+  } else {
+    if (text != 0) {
+      if (found->format == log_text_first_satellite_tracked_at) {
+        sprintf(text, log_text_first_satellite_tracked_at,
+                gps_seconds(found->argument_1, found->argument_2));
+      } else {
+        /* The image passes the first argument's low byte. */
+        sprintf(text, found->format, (int8_t)found->argument_1,
+                found->argument_2);
+      }
+    }
+    if (heading != 0) {
+      sprintf(heading, "Log %03d:H%08X", index + 1,
+              gps_seconds(found->date, found->time));
+    }
+  }
+  mutex_unlock(&log_mutex);
+  return 0;
 }
 
 /* Logs when the first satellite was tracked, a date and a time

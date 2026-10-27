@@ -23,6 +23,13 @@
 #   to 0.70 the Z3805A's name suffixed _z3801a marks the pairing as a
 #   lead, without its prototype or convention; below 0.50 there is no
 #   row, and the pairing is listed under "Leads" at the end.
+#   docs/firmware/z3801a-3543.md corrects three pairings, which the
+#   image settles, and carries them under their names: the self-test
+#   table names selftest_cpu_result, selftest_ram_result and
+#   selftest_eeprom_result 0x182ea, 0x182f4 and 0x182fe (0x183c0),
+#   where image_diff pairs the first two by their bytes with the next
+#   result's, selftest having moved 2 bytes lower, and the third with
+#   selftest_fpga_with_lamp's last instructions (0x189ea).
 # - A ROM table (a typed label in the image) matched identical or
 #   relocated is carried, but not one placed by its bytes alone and
 #   under 8 bytes long.  A RAM or I/O label is placed by the matched
@@ -1412,9 +1419,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x189a4	function	selftest_qspi_with_lamp	context	the QSPI tests, lighting OP7 on a failure; selftest_print_failure's check "QSPI" in its table at 0x186b0 (from the Z3805A 3543B, by image_diff: relocated)	uint32_t selftest_qspi_with_lamp(void)
 0x189f4	function	selftest_interpolator_with_lamp	context	the interpolator test, lighting OP7 on a failure; the check "INTERP" in selftest_print_failure's table (from the Z3805A 3543B, by image_diff: relocated)	uint32_t selftest_interpolator_with_lamp(void)
 0x18a1e	function	selftest_internal_reference_with_lamp	context	the internal 1PPS test, lighting OP7 on a failure; the check "INT_REF" in selftest_print_failure's table (from the Z3805A 3543B, by image_diff: relocated)	uint32_t selftest_internal_reference_with_lamp(void)
-0x182f4	function	selftest_cpu_result	selftest_print_failure's table 0x186b0, "PROC"	returns selftest.cpu, the reset code's CPU test (from the Z3805A 3543B, by image_diff: identical)	uint32_t selftest_cpu_result(void)
-0x182fe	function	selftest_ram_result	table 0x186b0, "RAM"	returns selftest.ram, the reset code's RAM test (from the Z3805A 3543B, by image_diff: relocated)	uint32_t selftest_ram_result(void)
-0x189ea	function	selftest_eeprom_result	table 0x186b0, "EEPROM"	returns selftest.eeprom (from the Z3805A 3543B, by image_diff: identical)	uint32_t selftest_eeprom_result(void)
+0x182ea	function	selftest_cpu_result	selftest_print_failure's table 0x186b0, "PROC"	returns selftest.cpu, the reset code's CPU test (from the Z3805A 3543B, by image_diff, paired by docs/firmware/z3801a-3543.md: docs/firmware/z3801a-3543.md: the self-test table's PROC entry (0x183c0))	uint32_t selftest_cpu_result(void)
+0x182f4	function	selftest_ram_result	table 0x186b0, "RAM"	returns selftest.ram, the reset code's RAM test (from the Z3805A 3543B, by image_diff, paired by docs/firmware/z3801a-3543.md: docs/firmware/z3801a-3543.md: the self-test table's RAM entry (0x183c8))	uint32_t selftest_ram_result(void)
+0x182fe	function	selftest_eeprom_result	table 0x186b0, "EEPROM"	returns selftest.eeprom (from the Z3805A 3543B, by image_diff, paired by docs/firmware/z3801a-3543.md: docs/firmware/z3801a-3543.md: the self-test table's EEPROM entry (0x183d0))	uint32_t selftest_eeprom_result(void)
 0x189ce	function	selftest_fpga_with_lamp	table 0x186b0, "FPGA"	counter_selftest, lighting OP7 on a failure; returns selftest.fpga (from the Z3805A 3543B, by image_diff: relocated)	uint32_t selftest_fpga_with_lamp(void)
 0x18a52	function	selftest_uart_with_lamp	table 0x186b0, "UART"	duart_test, lighting OP6 on a failure; returns selftest.uart (from the Z3805A 3543B, by image_diff: relocated)	uint32_t selftest_uart_with_lamp(void)
 0x18a78	function	selftest_gps_with_lamp	table 0x186b0, "GPS"	gps_selftest_run, lighting OP7 on a failure; returns selftest.gps (from the Z3805A 3543B, by image_diff: relocated)	uint32_t selftest_gps_with_lamp(void)
@@ -2068,7 +2075,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x41386	label	scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore	structures.md	:ROSC:HOLDover:RECovery:LIMit:IGNore's action, holdover_recovery_limit_ignore (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	scpi_action_param
 0x4138c	label	scpi_action_SOURce_GPSystem_POSition	structures.md	its setter's action while averaging, douglas_finish_request (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	scpi_action_param
 0x41392	label	scpi_action_SYSTem_PRESet	structures.md	its handler's action, nv_clear_and_reset (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	scpi_action_param
-0x41398	label	scpi_action_SER2_PRESet	structures.md	:SYST:COMM:SER1:PRESet's action for another port, sci_settings_preset, which copies sci_settings_defaults (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	scpi_action_param
+0x41398	label	scpi_action_SER1_PRESet	read	the action :SYST:COMM:SER1:PRESet requests (0x2f0fe), duartb_settings_preset (0x2fd5c at 0x4139a); the image has no SERial2 action, the Z3805A's scpi_action_SER2_PRESet, whose place by references this takes; written by hand for the Z3801A 3543	scpi_action_param
 0x4139e	label	scpi_action_STATus_PRESet	structures.md	:STATus:PRESet's action, index 0, and its ALARm form's, index 1; status_preset_done (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	scpi_action_param
 0x413a4	label	scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate	structures.md	:PTIMe:LEAPsecond:ACCumulated:CALCulate's action, leap_ack_request, indexes 0 and 1 (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	scpi_action_param
 0x10cb0	label	leap_event_gps_template	structures.md	leap_event_schedule_gps copies its 26 bytes to the event it queues: 23:59:55, class 1 (from the Z3805A 3543B, by image_diff: identical table, placed by references)	klok_entry
@@ -2180,7 +2187,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x1029e0	label	scpi_staged	context	the values a setter of several sends pllc the address of, by source (from the Z3805A 3543B, by image_diff: moved -0x2e by 8 references at its start)	scpi_staged_values[2]
 0x102d48	label	robin_points	context	:ROBin? and :ROBin:TSTamp?'s points, by source (from the Z3805A 3543B, by image_diff: moved -0x2e by 3 references at its start)	robin_point_record[2]
 0x103628	label	klok_now	context	the time, then the date, of the 1PPS klok_task last received, the now klok_run_due compares each entry with (from the Z3805A 3543B, by image_diff: moved -0x184 by 4 references at its start)	uint32_t[2]
-0x3212c	label	scpi_param_SYSTem_COMMunicate_SER2_RECeive_PARity_TYPE	read	the Z3805A's (0x33ade), found by its 30 bytes, the addresses in them masked, at the one place within 0x3000 of it they occur; the Z3801A's SERial1 and SERial2 share it; written by hand for the Z3801A 3543	scpi_setting_param
+0x3212c	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_BAUD	read	SERial1's baud setting, value duartb_settings.baud (0x32138), which :BAUD's setter requests (0x2f18a); first of the seven descriptors, 0x1e bytes apart, that stand 0x11fc below the Z3805A's from scpi_param_SYSTem_COMMunicate_SER1_RECeive_BAUD (0x33328) to its FDUPlex's; the image has no SERial2 descriptors; written by hand for the Z3801A 3543	scpi_setting_param
 0x321e0	label	scpi_param_SYSTem_COMMunicate_SER1_FDUPlex	context	SERial1's echo setting, which :FDUPlex's setter requests (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	scpi_setting_param
 0x32258	label	scpi_param_SAMPle_BOOLean	context	the setting scpi_value_SAMPle_BOOLean holds the value of (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	scpi_setting_param
 0x32276	label	scpi_param_SAMPle_BARR	context	the setting scpi_value_SAMPle_BARR holds the values of (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	scpi_setting_param
@@ -2429,6 +2436,8 @@ installer::0x1014bc	function	installer_trap_6	context	trap #6's handler in the b
 installer::0x1014c0	function	installer_trap_5	context	trap #5's handler in the boot vector table (0x94), the installer's primary_trap_5: a bra.w to installer_kernel_return_from_interrupt (from the Z3805A 3543B, by image_diff: identical)
 #
 # Rows written by hand that no carried row is in place of
+0x3214a	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_PACE	read	SERial1's pacing setting, value duartb_settings.xon_xoff (0x32156), which :PACE's setter requests (0x2f30e); the Z3805A's at 0x33346; written by hand for the Z3801A 3543	scpi_setting_param
+0x32186	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE	read	SERial1's parity setting, value duartb_settings.parity (0x32192), which :PARity:TYPE's setter requests; the Z3805A's at 0x33382; written by hand for the Z3801A 3543	scpi_setting_param
 0x1009b2	label	watchdog_clock	read	the Z3805A's watchdog_clock (0x1009b2), where its neighbors are; the Z3801A's code refers to 0x1009b2 once, the Z3805A's 0x1009b2 once; written by hand for the Z3801A 3543	uint8_t
 0x1009b3	label	watchdog_gps	read	the Z3805A's watchdog_gps (0x1009b3), where its neighbors are; the Z3801A's code refers to 0x1009b3 once, the Z3805A's 0x1009b3 once; written by hand for the Z3801A 3543	uint8_t
 0x1009b5	label	watchdog_monitor	read	the Z3805A's watchdog_monitor (0x1009b5), where its neighbors are; the Z3801A's code refers to 0x1009b5 once, the Z3805A's 0x1009b5 once; written by hand for the Z3801A 3543	uint8_t
@@ -2468,6 +2477,8 @@ installer::0x1014c0	function	installer_trap_5	context	trap #5's handler in the b
 0x101e64	label	scpi_value_SOURce_GPSystem_INITial_POSition_longitude	read	the Z3805A's scpi_value_SOURce_GPSystem_INITial_POSition_longitude (0x101e66), 2 bytes lower, as its neighbors moved; the Z3801A's code refers to 0x101e64 once, the Z3805A's 0x101e66 once; written by hand for the Z3801A 3543	int32_t
 0x101e68	label	scpi_value_SOURce_GPSystem_INITial_POSition_height	read	the Z3805A's scpi_value_SOURce_GPSystem_INITial_POSition_height (0x101e6a), 2 bytes lower, as its neighbors moved; the Z3801A's code refers to 0x101e68 once, the Z3805A's 0x101e6a once; written by hand for the Z3801A 3543	int32_t
 0x101e71	label	led_alarm_user	read	the Z3805A's led_alarm_user (0x101e73), 2 bytes lower, as its neighbors moved; the Z3801A's code refers to 0x101e71 once, the Z3805A's 0x101e73 once; written by hand for the Z3801A 3543	uint8_t
+0x32a70	label	scpi_param_LED_ALARm	read	a setting descriptor, value led_alarm (0x32a7c), at the place of the Z3805A's scpi_param_LED_ALARm (0x33ce4), between scpi_param_LED_ACTive and scpi_param_LED_ALARm_USER; scpi_set_LED_ALARm_USER (0x2c876) gives it, where the Z3805A's refuses the command; written by hand for the Z3801A 3543	scpi_setting_param
+0x32a8e	label	scpi_param_LED_ALARm_USER	read	a setting descriptor, value led_alarm_user (0x32a9a), at the place of the Z3805A's scpi_param_LED_ALARm_USER (0x33d02), before scpi_param_LED_ENABled; nothing refers to it, scpi_set_LED_ALARm_USER giving scpi_param_LED_ALARm; written by hand for the Z3801A 3543	scpi_setting_param
 0x101f52	label	duartb_settings	read	the Z3805A's duartb_settings (0x101f58), 6 bytes lower, as its neighbors moved; the Z3801A's code refers to 0x101f52 4 times, the Z3805A's 0x101f58 4 times; written by hand for the Z3801A 3543	duartb_settings_record
 0x101f5e	label	nv_numeric_bytes_loaded	read	the Z3805A's nv_numeric_bytes_loaded (0x101f64), 6 bytes lower, as its neighbors moved; the Z3801A's code refers to 0x101f5e once, the Z3805A's 0x101f64 once; written by hand for the Z3801A 3543	int16_t
 0x101f60	label	nv_bytes_loaded	read	the Z3805A's nv_bytes_loaded (0x101f66), 6 bytes lower, as its neighbors moved; the Z3801A's code refers to 0x101f60 once, the Z3805A's 0x101f66 once; written by hand for the Z3801A 3543	int16_t
@@ -2563,7 +2574,6 @@ installer::0x1014c0	function	installer_trap_5	context	trap #5's handler in the b
 # Ghidra's name, their note the extent in bytes and image_diff's
 # summary.  A wave that names one makes it a function row.
 0x1487a	entry		image_diff	4 bytes; 1 instructions, found pointer; after piece_14b6e
-0x182ea	entry		image_diff	10 bytes; 3 instructions, found pointer; after supplies_test
 0x2c85a	entry		image_diff	48 bytes; 13 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: pllc_request_a, return_zero
 0x2c88a	entry		image_diff	26 bytes; 8 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: return_byte
 #

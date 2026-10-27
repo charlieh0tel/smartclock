@@ -4,6 +4,28 @@
  * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
  * prototype. */
 
+/* :LED:ALARm:USER, "Provides a way to directly set Alarm" (097-z3801-01,
+ * p. 4-5): to pllc, through led_alarm's own descriptor, so that it sets
+ * the Alarm LED's flag itself, not led_alarm_user.  The Z3805A's refuses
+ * the command (0x2c85a). */
+int32_t scpi_set_LED_ALARm_USER(void* parameters, void* response,
+                                scpi_call* call) {
+  scpi_word_parameter* given = parameters;
+
+  pllc_request_a(&scpi_param_LED_ALARm, 0, (uint8_t)given->value,
+                 return_zero(call->input));
+  return 0;
+}
+
+/* :LED:ALARm:USER?: led_alarm, as :LED:ALARm? gives it (0x2c88a). */
+int32_t scpi_query_LED_ALARm_USER(void* parameters, void* response,
+                                  scpi_call* call) {
+  int16_t* value = response;
+
+  *value = return_byte(led_alarm);
+  return 0;
+}
+
 /* :LED:GPSLock?, "Queries Lock LED", the loop's (0x2c8ee). */
 int32_t scpi_query_LED_GPSLock(void* parameters, void* response,
                                scpi_call* call) {

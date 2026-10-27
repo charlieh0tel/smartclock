@@ -131,6 +131,10 @@ state.  Each is by the routine and the address that shows it.
   choice past their two (`0x2e3d0`, `0x2e450`, `0x2ee76`), and
   `:SYSTem:COMMunicate:SERial:RECeive:PARity:TYPE` past its four
   (`0x3049c`).
+- **The Z3801A's `:SYSTem:COMMunicate:SERial:RECeive:BITS` and
+  `:SBITs` setters**, for a port other than SERial1, return D0 as
+  their caller left it (Z3801A 3543 `0x2f288`, `0x2f4a6`), where the
+  Z3805A's return -113, Undefined header.
 - **`:DIAGnostic:QUERy:RESPonse?`** from a port other than the console
   copies the count of bytes at A3 from A4 to A2, and ends them with a
   NUL, all three registers as its caller left them (`0x2b92c` to

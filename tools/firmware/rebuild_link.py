@@ -269,10 +269,13 @@ def script(pieces: list[str], image_names: dict[str, int]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def link(c_path: str, cflags: list[str], work: str, elf_path: str, extra: str = "") -> list[Section]:
+def link(c_path: str, cflags: list[str], work: str, elf_path: str, extra: str = "",
+         c: str | None = None, ld_options: tuple[str, ...] = ()) -> list[Section]:
     """Links the C file's rebuilt image to elf_path, with extra C after
-    the file's own (the function check's probes); its sections."""
-    c = open(c_path).read()
+    the file's own (the function check's probes); its sections.  c, if
+    given, is linked in place of the file's text (link_check.py's, its
+    decompiled C left out), and ld_options go to ld."""
+    c = open(c_path).read() if c is None else c
     base = c_path.removesuffix(".c")
     addresses = {}
     for line in open(base + ".conventions.jsonl"):
@@ -311,7 +314,7 @@ def link(c_path: str, cflags: list[str], work: str, elf_path: str, extra: str = 
     # routines that share code each carry the shared bytes, so their
     # pieces overlap; main confirms every copy is the image's
     run(
-        TOOLS + "ld", "--no-check-sections", "--no-warn-rwx-segments",
+        TOOLS + "ld", "--no-check-sections", "--no-warn-rwx-segments", *ld_options,
         "-T", base + ".symbols.ld", "-T", linker_script,
         "-o", elf_path, renamed, compiled, libgcc,
     )

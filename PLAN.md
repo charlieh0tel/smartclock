@@ -364,13 +364,20 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   static bodies with the primary's through headers, which the real
   installer, alone in RAM, could not.  Splitting them is not planned
   unless a runnable image is the aim again.
-- **Completeness is checked by a link**, planned, not built: CI links
-  each image from `rewritten/` and the assembly pieces alone, the
-  decompiled C left out, requiring every ROM function in the export's
-  `symbols.ld`, unreferenced ones too, so an undefined symbol fails the
-  build.  The link uses its own layout and compares no bytes; it shows
-  that nothing is missing, and the function check that what is there
-  agrees.  The docs state completeness only from that step's output.
+- **Completeness is checked by a link**, built: `make check-link`
+  (`tools/firmware/link_check.py`, in CI) links each image from the
+  export's declarations, `rewritten/` and the assembly pieces alone,
+  the decompiled C left out, requiring every function of the export's
+  `.conventions.jsonl` (`symbols.ld` holds only addresses the assembly
+  names), unreferenced ones too, through `ld --require-defined`, so a
+  missing one fails the build, named.  The link compares no bytes; it
+  shows that nothing is missing, and the function check that what is
+  there agrees.  Its pieces lie at their addresses, `rebuild_link.py`'s
+  layout, since their short branches reach only there.  The docs state
+  completeness only from its summary line, whose figures
+  `check-report-figures` checks.  Was a count of the export's markers,
+  which once read an image as all hand-written with some 400 functions
+  still the decompiler's.
 - The function check fails (and CI with it) on any failed function.
   Was a measure that exited zero; changed so that a regression cannot
   pass unnoticed.  A known difference is one whose cause is found and

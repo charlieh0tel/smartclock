@@ -44,7 +44,7 @@ EXPORTED_IMAGES = $(foreach image,$(IMAGES),$(if $(wildcard $(DECOMPILED_FOLDER)
 # The targets run for each image: those that need only its names and
 # types, and those that need its export too.
 NAMED_TARGETS = check-types handlers scpi-tree
-EXPORTED_TARGETS = check-decompiled check-scpi-tree check-magic-numbers magic-numbers report-decompiled
+EXPORTED_TARGETS = check-decompiled check-link check-scpi-tree check-magic-numbers magic-numbers report-decompiled
 IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS)
 # The rest, run once.
 TARGETS = format-c check-format-c check-module-figures module-figures check-image-diff image-diff \
@@ -229,19 +229,24 @@ REPORT = report-decompiled.txt
 # The images whose function check the documents quote, each one's
 # sentences report_figures.py's CHECKS.
 REPORTED_IMAGES = z3805a-3543b 58503a-3704 z3801a-3543
+# The link check's summary, saved in the image's work folder beside the
+# report, whose figures report_figures.py checks with them.
+LINK_SUMMARY = link-check.txt
 report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1) \
-	$(call work,$(1))/$(REPORT)
+	--link $(call work,$(1))/$(LINK_SUMMARY) $(call work,$(1))/$(REPORT)
 
 # Fail if the documents' figures from each reported image's function
 # check -- its functions agreeing, known, skipped and failed, those run
 # in user mode alone and in both modes, its console sessions agreeing
 # and the agreeing functions' cases -- and from its export -- its
 # functions written by hand, left as the decompiler's reading, assembly
-# and thunks -- as docs/firmware/README.md,
+# and thunks -- and from its link check -- its functions required and
+# how each is defined -- as docs/firmware/README.md,
 # docs/firmware/rewrite.md, docs/firmware/58503a-3704.md,
 # docs/firmware/z3801a-3543.md and README.md
-# quote them -- are not what the last make report-decompiled
-# saved, or if any function failed; report-figures rewrites them.
+# quote them -- are not what the last make report-decompiled and make
+# check-link saved, or if any function failed; report-figures rewrites
+# them.
 check-report-figures:
 	status=0; $(foreach image,$(REPORTED_IMAGES),$(call report_figures,$(image)) || status=1;) \
 	exit $$status
@@ -286,7 +291,16 @@ check-decompiled: check-module-figures check-unicorn $(CPU32_LIBGCC)
 	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/rebuild_link.py $(DECOMPILED) $(IMAGE_BIN)
 	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/bridge_check.py $(DECOMPILED) $(IMAGE_BIN)
 
-report-decompiled: $(CPU32_LIBGCC)
+# Fail if the image does not link from the hand-written C and the
+# assembly alone, the decompiled C left out, every function of the
+# export required, referenced or not (tools/firmware/link_check.py).
+# Its summary line, the one statement of the image's completeness the
+# documents may quote, is saved in the image's work folder.
+check-link: $(CPU32_LIBGCC)
+	mkdir -p $(WORK)
+	$(LINK_ENV) python3 $(ROOT)/tools/firmware/link_check.py $(DECOMPILED) | tee $(WORK)/$(LINK_SUMMARY)
+
+report-decompiled: check-link $(CPU32_LIBGCC)
 	mkdir -p $(WORK)
 	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/function_check.py \
 		$(DECOMPILED) $(IMAGE_BIN) | tee $(WORK)/$(REPORT)

@@ -11,6 +11,12 @@ this says what each is and where.
   from Ghidra's decompilation.  The routines that are not C (the pSOS
   and pForth kernels, exception entries, soft-float register routines)
   are kept as the image's own assembly, reassembled byte-identical.
+- That none is missing is a link's result, not a count: `make
+  check-link` links the image from the hand-written C and the assembly
+  alone, the decompiled C left out, every function required (below,
+  "Other checks").  The Z3805A 3543B's link requires all 2041 of its
+  functions and finds each defined: 1555 by hand-written C, 474 by
+  assembly and 12 as another routine's name.
 - Each hand-written function is run in Unicorn beside the image's own
   copy, from the same state, and must leave the same results, RAM,
   registers and device and kernel calls, in the same order.  1312 of
@@ -29,8 +35,8 @@ this says what each is and where.
   byte for byte: 474 routines -- the pSOS kernel's, the pForth
   kernel's 183, the exception entries, the soft-float library's
   register routines.  Left as the decompiler's: 12 thunks, each a
-  branch Ghidra takes for one.  No C is left as the decompiler's; the
-  last, `installer_cpu_register_test`, an unreferenced `rts` the three
+  branch Ghidra takes for one.  No C is left as the decompiler's, as
+  the link check finds ("In short"); the last, `installer_cpu_register_test`, an unreferenced `rts` the three
   images share, is `common/`'s.
 - Not buildable or flashable.  The C is compiled as one translation
   unit with the export, and the installer's copies share static bodies
@@ -318,16 +324,27 @@ the image's (`installer_status_register_setup`); D1 or A0 out of
   which must run.
 - `module_figures.py`: `modules.md`'s figures.
 
+And `make check-link` (`link_check.py`): the image links from the
+export's declarations, the hand-written C and the assembly alone, the
+decompiled C left out, `#if 0` or not, with every function of the
+export's sidecar required (`ld --require-defined`; a thunk's `.set`
+target for the thunk), so that a function neither written by hand nor
+assembly fails the link, named, whether anything calls it or not.  Each
+piece lies at its address, as in `rebuild_link.py`'s link, since its
+short branches reach only there; no byte is compared.  Its summary line
+is the one source of a statement here that an image is complete.
+
 And `make check-scpi-tree` (`scpi_tree_check.py`): each record of the
 generated trees, as gcc lays it out, is the image's bytes, pointers
 compared by target.
 
 **Figures** (`make report-decompiled`, `make check-decompiled`, `make
-check-scpi-tree`):
+check-link`, `make check-scpi-tree`):
 
 | Check | Result |
 | ----- | ------ |
 | assembly (`check-decompiled`) | 474 routines in 494 pieces, all identical, alone and linked |
+| completeness (`check-link`) | every function defined, "In short" |
 | bindings | 73 of the primary's and 18 of the installer's agree, every `register` routine's |
 | SCPI trees (`check-scpi-tree`) | 2055 and 38 objects identical |
 | function check, primary | 1312 agree, 6 known, 0 skipped, 0 failed |
@@ -391,6 +408,7 @@ The checks need no Ghidra: the export is checked in.
 
     make -C third_party/firmware check-types IMAGE=z3805a-3543b
     make -C third_party/firmware check-decompiled IMAGE=z3805a-3543b    # about 15 s
+    make -C third_party/firmware check-link IMAGE=z3805a-3543b          # about 5 s
     make -C third_party/firmware report-decompiled IMAGE=z3805a-3543b   # about 2.5 min
     make -C third_party/firmware check-scpi-tree IMAGE=z3805a-3543b
     make -C third_party/firmware check-format-c
@@ -400,7 +418,7 @@ Each is also a top-level target (`make check-decompiled`).  Without
 for the 58503A 3704's too, its function check held to the same
 standard ([`58503a-3704.md`](58503a-3704.md), "The function check").  Results
 land in `target/firmware/z3805a-3543b/` (`decompiled.o`,
-`report-decompiled.txt`).
+`link-check.txt`, `report-decompiled.txt`).
 
 To export again, from the repository's root, with `GHIDRA` the Ghidra
 install and `PROJECT` a new, empty directory outside the repository
@@ -485,7 +503,10 @@ hand as this one's are (its "The hand-written C"), 1422 of the
 primary's and 248 of the installer's, none left as the decompiler's
 reading: of its function check, the primary's 1418
 agree, 4 are known and none skipped or failed, and the installer's 247
-agree, 1 skipped; its console sessions agree, 8 of 8.  The Z3801A
+agree, 1 skipped; its console sessions agree, 8 of 8.  The 58503A
+3704's link requires all 2151 of its functions and finds each defined:
+1670 by hand-written C, 468 by assembly and 13 as another routine's
+name.  The Z3801A
 3543's, [`z3801a-3543.md`](z3801a-3543.md), seeded from the Z3805A's and
 the third image to share `common/`, has its C functions written by
 hand too, the primary's 1300 and the installer's 237, none left as the
@@ -493,4 +514,6 @@ decompiler's reading, the rest the image's assembly, and is held to
 the same standard: of its function check, the primary's 1289 agree, 6
 are known and 5
 skipped, none failed, and the installer's 236 agree, 1 skipped; its
-console sessions agree, 8 of 8.
+console sessions agree, 8 of 8.  The Z3801A 3543's link requires all
+2017 of its functions and finds each defined: 1537 by hand-written C,
+468 by assembly and 12 as another routine's name.

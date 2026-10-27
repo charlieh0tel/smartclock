@@ -103,8 +103,9 @@ documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 
 Three images are rewritten whole as C: every C function of each, and of
 the installer it unpacks into RAM, was decompiled by Ghidra through the
-project's scripts and then written again by hand.  The routines that are
-not C, the pSOS and pForth kernels among them, are the image's
+project's scripts and then written again by hand, as each image's link
+from its hand-written C and assembly alone, every function required,
+shows (`make check-link`).  The routines that are not C, the pSOS and pForth kernels among them, are the image's
 instructions, reassembled byte for byte, and the generated SCPI trees
 are the ROM's bytes.  Each hand-written function runs beside the image's
 own copy from the same state, its results, memory, kernel calls and

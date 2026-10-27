@@ -129,15 +129,16 @@ check-pages:
 # third_party/firmware/Makefile runs, alone or from here by name, for
 # IMAGE=... or every image folder: the C's format, the layouts, the
 # decompiled C, the SCPI trees, the module, pForth and report figures,
-# the 58503A's diff against the Z3805A and the names seeded from it, the
-# addresses the 58503A's C cites from the Z3805A's, Unicorn's recorded
-# bugs, every image's chip-select tables, the hand-written C's magic
-# numbers, the loop's traces.  They need an m68k gcc and binutils, clang, clang-format and
-# uv; none is part of ci, and .github/workflows/firmware.yml runs both
-# images' checks.
+# the 58503A's and Z3801A's diffs against the Z3805A and the names
+# seeded from them, the addresses their C cites from the Z3805A's,
+# Unicorn's recorded bugs, every image's chip-select tables, the
+# hand-written C's magic numbers, the loop's traces, the images' shared
+# C, common/.  They need
+# an m68k gcc and binutils, clang, clang-format and uv; none is part of
+# ci, and .github/workflows/firmware.yml runs the images' checks.
 FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled report-decompiled \
 	scpi-tree check-scpi-tree handlers check-module-figures module-figures check-image-diff image-diff \
-	check-seed-names seed-names check-comment-addresses \
+	check-seed-names seed-names check-comment-addresses check-common \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects check-magic-numbers magic-numbers check-loop-trace loop-trace
 .PHONY: $(FIRMWARE_TARGETS)

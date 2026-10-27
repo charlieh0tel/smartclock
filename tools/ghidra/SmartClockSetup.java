@@ -14,7 +14,8 @@
 //       C declarations of the firmware's structures and the CPU's
 //       modules, parsed into the program in the order given, before
 //       the names, so that names can use them; their #defines are
-//       skipped, as Ghidra's C parser takes none.
+//       skipped, as Ghidra's C parser takes none, and an #include
+//       "PATH" is replaced by that header (common/'s shared types).
 //   names=third_party/firmware/IMAGE/names.tsv (more than one may be
 //       given, as IMAGE/scpi-tree.tsv and IMAGE/installer-scpi-tree.tsv,
 //       dump-scpi --names' rows for the two trees, after it)
@@ -80,6 +81,7 @@
 //
 //@category SmartClock
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -180,8 +182,15 @@ public class SmartClockSetup extends GhidraScript {
 	 */
 	private record Switch(Address jmp, Address table, int first, List<Address> targets) {}
 
-	private static final long PRIMARY_VECTORS = 0x10000;
 	private static final long BOOT_VECTORS = 0x0;
+	/**
+	 * The primary's vector table is the first table at a multiple of this
+	 * above the boot table that starts with the boot table's initial stack
+	 * pointer: 0x10000 in the Z3801A, Z3805A and 58503A, 0x20000 in the
+	 * Z3816A, Z3815A and 58503B, whose boot code and installer fill the
+	 * first 128 KiB (docs/firmware/restart.md, "Which share one").
+	 */
+	private static final long PRIMARY_VECTOR_ALIGNMENT = 0x10000;
 	private static final int VECTOR_COUNT = 256;
 	/** SmartClockInstaller.java's overlay, the installer in RAM. */
 	private static final String INSTALLER_OVERLAY = "installer";
@@ -214,6 +223,11 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String TYPES = "types";
 	/** A #define, with any lines it continues onto. */
 	private static final Pattern DEFINE = Pattern.compile("(?m)^#define\\b(?:[^\\n]*\\\\\\n)*[^\\n]*$");
+	/**
+	 * A header's #include of another by its path from the header's
+	 * folder: the image's smartclock.h including common/'s types.
+	 */
+	private static final Pattern INCLUDE = Pattern.compile("(?m)^#include \"([^\"]+)\"$");
 	private static final String COMMENT = "#";
 	private static final String NO_HANDLER = "-";
 	private static final String FUNCTION = "function";
@@ -407,8 +421,9 @@ public class SmartClockSetup extends GhidraScript {
 	@Override
 	protected void run() throws Exception {
 		mapMemory();
+		long primaryVectors = primaryVectors();
 		labelVectors(BOOT_VECTORS, "boot");
-		labelVectors(PRIMARY_VECTORS, "primary");
+		labelVectors(primaryVectors, "primary");
 		referBootVectorsToInstaller();
 		typeStrings();
 		analyzeChanges(currentProgram);
@@ -426,7 +441,7 @@ public class SmartClockSetup extends GhidraScript {
 		typePforthHeaders();
 		removeStaleNames();
 		commentVectors(BOOT_VECTORS, "boot");
-		commentVectors(PRIMARY_VECTORS, "primary");
+		commentVectors(primaryVectors, "primary");
 		nameConventions();
 	}
 
@@ -551,6 +566,22 @@ public class SmartClockSetup extends GhidraScript {
 	}
 
 	/**
+	 * A header's text with each #include "PATH" replaced by that header's,
+	 * in turn so expanded, as the preprocessor would, since Ghidra's C
+	 * parser takes no #include.
+	 */
+	private static String included(Path header) throws IOException {
+		Matcher include = INCLUDE.matcher(Files.readString(header));
+		StringBuilder text = new StringBuilder();
+		while (include.find()) {
+			include.appendReplacement(text,
+				Matcher.quoteReplacement(included(header.resolveSibling(include.group(1)))));
+		}
+		include.appendTail(text);
+		return text.toString();
+	}
+
+	/**
 	 * Applies the naming arguments, in the order names, scpi, pforth.  A
 	 * name replaces only one Ghidra made up; otherwise it is added as a
 	 * further label, so nothing named earlier or by hand is overwritten,
@@ -564,8 +595,8 @@ public class SmartClockSetup extends GhidraScript {
 				if (arg.startsWith(TYPES + "=")) {
 					// Ghidra's C parser takes no preprocessor lines but #pragma; a
 					// header's #defines are for gcc and the exported C
-					String header = DEFINE.matcher(
-						Files.readString(Path.of(arg.substring(TYPES.length() + 1)))).replaceAll("");
+					String header = DEFINE.matcher(included(Path.of(arg.substring(TYPES.length() + 1))))
+						.replaceAll("");
 					new CParser(currentProgram.getDataTypeManager(), true, null).parse(header);
 					new CParser(declared, true, null).parse(header);
 					bindByteTypes();
@@ -1786,6 +1817,24 @@ public class SmartClockSetup extends GhidraScript {
 		println("boot vectors referred to the installer: " + count);
 	}
 
+	/**
+	 * The primary's vector table: the first above the boot table, at a
+	 * multiple of PRIMARY_VECTOR_ALIGNMENT, whose initial stack pointer is
+	 * the boot table's.
+	 */
+	private long primaryVectors() throws Exception {
+		MemoryBlock rom = currentProgram.getMemory().getBlock(toAddr(0));
+		int stack = getInt(toAddr(BOOT_VECTORS));
+		for (long base = BOOT_VECTORS + PRIMARY_VECTOR_ALIGNMENT; rom.contains(toAddr(base));
+				base += PRIMARY_VECTOR_ALIGNMENT) {
+			if (getInt(toAddr(base)) == stack) {
+				println(String.format("primary vectors at 0x%x", base));
+				return base;
+			}
+		}
+		throw new IllegalStateException("no primary vector table");
+	}
+
 	/** Each vector's handler address, from the table at base. */
 	private long[] vectorTargets(long base) throws Exception {
 		long[] targets = new long[VECTOR_COUNT];
@@ -2703,13 +2752,41 @@ public class SmartClockSetup extends GhidraScript {
 				String former = symbol.getName(true);
 				function.setParentNamespace(currentProgram.getGlobalNamespace());
 				function.setName(null, SourceType.DEFAULT);
-				println("function at " + symbol.getAddress() + " was named " + former
-					+ "; given back its default name");
+				Symbol given = givenLabel(symbol.getAddress());
+				if (given != null) {
+					// the names gave it a label while the case label was its name
+					String name = given.getName();
+					given.delete();
+					function.setName(name, SourceType.IMPORTED);
+					println("function at " + symbol.getAddress() + " was named " + former
+						+ "; named " + name + ", which the names gave it");
+				}
+				else {
+					println("function at " + symbol.getAddress() + " was named " + former
+						+ "; given back its default name");
+				}
 			}
 			else {
 				symbol.delete();
 			}
 		}
 		return stale.size();
+	}
+
+	/**
+	 * The first label the names gave at address, IMPORTED, in the global
+	 * namespace: the name an SCPI handler or a Forth word got as a label
+	 * while analysis's case label was its function's name (the Z3815A
+	 * 4010's :LED:ALARm:ACO? handler, 0x41906, a target of its late reading
+	 * of the switch at 0x439f2).  Null if none.
+	 */
+	private Symbol givenLabel(Address address) {
+		for (Symbol label : currentProgram.getSymbolTable().getSymbols(address)) {
+			if (label.getSymbolType() == SymbolType.LABEL && label.getSource() == SourceType.IMPORTED
+					&& label.getParentNamespace().isGlobal()) {
+				return label;
+			}
+		}
+		return null;
 	}
 }

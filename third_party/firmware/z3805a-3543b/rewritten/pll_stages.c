@@ -24,17 +24,6 @@ static const float PLL_STAGES_BLOCK_LENGTH = 10.0f;
 /* The aging fit's time unit, an EFC history entry's 2700 seconds. */
 static const float PLL_STAGES_ENTRY_SECONDS = 2700.0f;
 
-/* A float with its sign flipped, as the image does with bchg #31
- * (0x44c42). */
-static float pll_stages_negate(float value) {
-  uint32_t bits;
-
-  memcpy(&bits, &value, sizeof bits);
-  bits ^= LIBC_SIGN;
-  memcpy(&value, &bits, sizeof value);
-  return value;
-}
-
 /* Readings before the clock is checked against GPS, as power-up and
  * holdover recovery count them, and between checks after a mismatch. */
 static const uint8_t PLL_STAGES_CLOCK_CHECK_DELAY = 25;
@@ -255,41 +244,6 @@ pll_stage_result coarse(void) {
     pll.hold_causes |= HOLD_CAUSE_TI_ERROR;
   }
   return result;
-}
-
-/* fine_sync_adjust's steps for a TI 300 ns or more off, which it meets
- * with one step and fine with another slew. */
-static const uint8_t PLL_STAGES_SYNC_TOO_FAR = 4;
-
-/* For a TI of 100 ns or more, asks for that many 100 ns steps against
- * it, the steps; one and 4 for 300 ns or more; 0 within 100 ns
- * (0x44e8e). */
-uint8_t fine_sync_adjust(float ti) {
-  static const float STEP = 1e-07f;
-  static const float MOST = 3e-07f;
-
-  if (float_compare(ti, STEP) < 0) {
-    if (float_compare(pll_stages_negate(STEP), ti) < 0) {
-      return 0;
-    }
-    if (float_compare(pll_stages_negate(MOST), ti) < 0) {
-      uint32_t steps =
-          float_to_unsigned(float_divide(ti, pll_stages_negate(STEP)));
-
-      sync_request(COUNTER_SYNC_NEGATIVE, (uint8_t)steps);
-      return steps;
-    }
-    sync_request(COUNTER_SYNC_NEGATIVE, 1);
-    return PLL_STAGES_SYNC_TOO_FAR;
-  }
-  if (float_compare(ti, MOST) < 0) {
-    uint32_t steps = float_to_unsigned(float_divide(ti, STEP));
-
-    sync_request(COUNTER_SYNC_POSITIVE, (uint8_t)steps);
-    return steps;
-  }
-  sync_request(COUNTER_SYNC_POSITIVE, 1);
-  return PLL_STAGES_SYNC_TOO_FAR;
 }
 
 /* Syncs the outputs to GPS when the TI passes the limit threshold or a
@@ -871,28 +825,6 @@ pll_stage_result pll_normal(bool same_stage) {
   return pll_stages_check_causes(PLL_STAGE_RESULT_RUNNING);
 }
 
-/* Clears holdover's TI statistics (0x43804). */
-void holdover_ti_reset(void) {
-  holdover_steering.ti_sum = 0.0f;
-  holdover_steering.ti_weighted_sum = 0.0f;
-  holdover_steering.ti_largest = 0.0f;
-  holdover_steering.ti_count = 0;
-}
-
-/* Adds a TI reading to holdover's statistics: its sum, its sum weighted
- * by index, the count and the largest magnitude (0x4381e). */
-void holdover_ti_add(float ti) {
-  float_add_in_place(&holdover_steering.ti_sum, ti);
-  float_add_in_place(
-      &holdover_steering.ti_weighted_sum,
-      float_multiply(integer_to_float(holdover_steering.ti_count), ti));
-  holdover_steering.ti_count++;
-  if (float_compare(float_absolute_on_stack(ti), holdover_steering.ti_largest) >
-      0) {
-    holdover_steering.ti_largest = float_absolute_on_stack(ti);
-  }
-}
-
 /* Whether the TI's least-squares slope over 10 readings or more, as an
  * EFC correction, leaves the EFC in its range; nothing calls it
  * (0x43888). */
@@ -915,9 +847,6 @@ uint8_t holdover_correction_valid(void) {
          float_compare(PLL_EFC_MOST, efc) >= 0 &&
          holdover_steering.ti_count >= FEWEST_READINGS;
 }
-
-/* The largest TI magnitude holdover has seen (0x43916). */
-float holdover_ti_max(void) { return holdover_steering.ti_largest; }
 
 /* 0 when, in a holdover younger than the measurement threshold and with
  * no frequency correction applied, the TI ti has reached the hold

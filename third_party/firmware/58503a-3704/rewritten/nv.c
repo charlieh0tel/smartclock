@@ -62,9 +62,3 @@ static uint32_t records_unpack(records_bit_stream* stream, uint8_t width) {
 static uint8_t records_nv_width(const int8_t* widths, int32_t index) {
   return (uint8_t)abs(widths[index]);
 }
-
-/* Erases both NV register slots; the clear_nv word's (0x32784). */
-void clear_nv(void) {
-  nv_slot_erase(0);
-  nv_slot_erase(1);
-}

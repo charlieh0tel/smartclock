@@ -3,5 +3,5 @@
 # with its reason (make check-magic-numbers).  Tab-separated: kind, file
 # under rewritten/, function, literal as written, target, reason.
 enum	os.c	object_name	0	task_table_entry.state	the NUL that ends object_name_text, which the image's copy stores past it into this byte (0x160de); not a table state
-duplicate	fpga.c	fpga_verify_first	10	LAST_BITS	each readback frame's own last bits, the first frame's and an odd frame's both 10 (0x22fc6, 0x23304), an even frame's 14
-duplicate	fpga.c	fpga_verify_first	5	WORDS	each readback frame's own words, the first frame's and an even frame's both 5 (0x22fc6, 0x2353a), an odd frame's 6
+duplicate	common/fpga.c	fpga_verify_first	10	LAST_BITS	each readback frame's own last bits, the first frame's and an odd frame's both 10 (0x22fc6, 0x23304), an even frame's 14
+duplicate	common/fpga.c	fpga_verify_first	5	WORDS	each readback frame's own words, the first frame's and an even frame's both 5 (0x22fc6, 0x2353a), an odd frame's 6

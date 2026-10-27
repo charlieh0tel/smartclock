@@ -21,14 +21,6 @@ void gps_init(void) {
   command_monitor_init();
 }
 
-/* Idles the task, resets the response framing and empties the request
- * ring (0x4bf3a). */
-void gps_link_reset(void) {
-  gps_task_state = GPS_PROCESS_TASK_IDLE;
-  gps_response_reset();
-  request_ring_clear();
-}
-
 /* Clears the link's counters, the last command and message and the
  * command log: the console's clr_gps_debug (0x4c918). */
 void clear_gps_debug(void) {

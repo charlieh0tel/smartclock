@@ -25,6 +25,7 @@ README = ROOT / 'docs/firmware/README.md'
 REWRITE = ROOT / 'docs/firmware/rewrite.md'
 SUMMARY = ROOT / 'README.md'
 DOCUMENT_58503A = ROOT / 'docs/firmware/58503a-3704.md'
+DOCUMENT_Z3801A = ROOT / 'docs/firmware/z3801a-3543.md'
 
 # function_check.py's line of a profile's counts, the installer's
 # labeled with its overlay
@@ -122,6 +123,22 @@ CHECKS = {
             "installer's {} agree, {} skipped; its console sessions agree, {} of {}"),
          lambda f: (f['primary_agree'], f['primary_known'],
                     word(f['primary_skipped'] + f['primary_failed']),
+                    f['installer_agree'], f['installer_skipped'], f['sessions_agree'],
+                    f['sessions_run'])),
+    ),
+    'z3801a-3543': (
+        (DOCUMENT_Z3801A, sentence('| primary | {} | {} | {} | {} |'),
+         lambda f: (f['primary_agree'], f['primary_known'], f['primary_skipped'],
+                    f['primary_failed'])),
+        (DOCUMENT_Z3801A, sentence('| installer | {} | {} | {} | {} |'),
+         lambda f: (f['installer_agree'], f['installer_known'],
+                    f['installer_skipped'], f['installer_failed'])),
+        (DOCUMENT_Z3801A, sentence('Console sessions {} of {}.'),
+         lambda f: (f['sessions_agree'], f['sessions_run'])),
+        (REWRITE, sentence(
+            "the primary's {} agree, {} are known and {} skipped, none failed, and the "
+            "installer's {} agree, {} skipped; its console sessions agree, {} of {}"),
+         lambda f: (f['primary_agree'], f['primary_known'], f['primary_skipped'],
                     f['installer_agree'], f['installer_skipped'], f['sessions_agree'],
                     f['sessions_run'])),
     ),

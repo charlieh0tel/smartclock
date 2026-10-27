@@ -107,6 +107,7 @@ request scripts in `oncore/`.
 - [Pulse, time-tag and output commands](outputs.md)
 - [58503A 3633 against 3704](revisions.md)
 - [58503A 3704 against Z3805A 3543B](58503a-3704.md)
+- [Z3801A 3543 against Z3805A 3543B](z3801a-3543.md)
 - [The floating-point library](softfloat.md)
 - [The C library](libc.md)
 - [The real-time kernel](psos.md)
@@ -385,7 +386,9 @@ part of what they change.  In order:
    defines=third_party/firmware/include/mc68681.h
    defines=third_party/firmware/include/psos-signals.h
    results=third_party/firmware/IMAGE/results.tsv
-   rewritten=third_party/firmware/IMAGE/rewritten`.
+   rewritten=third_party/firmware/common
+   rewritten=third_party/firmware/IMAGE/rewritten`, `common/` for an
+   image that shares it.
 
 Each path is from the repository's root, and IMAGE is the image's
 name, `z3805a-3543b`: its folder, `third_party/firmware/IMAGE/`, beside
@@ -399,11 +402,16 @@ and `results.tsv`, its export, from a bare import as above with the
 58503A's inputs (`58503a-3704.md`, "The export"), and its
 `rewritten/`, begun as the Z3805A's and written to the 58503A's code,
 with its SCPI trees' C, which `make scpi-tree IMAGE=58503a-3704` writes
-as it does the Z3805A's.  `make image-diff` regenerates the matches,
-the TSV `58503a-3704.md` describes, that document's figures and,
-through `make seed-names` (`tools/firmware/seed_names.py`), the
-58503A's seeded `names.tsv` and `modules.tsv`; `make check-image-diff`
-fails while any is stale.  A change to the Z3805A's `names.tsv`,
+as it does the Z3805A's; the C the images share lies in
+`third_party/firmware/common/` (`rewrite.md`, "Shared C").  `make
+image-diff` regenerates the matches, the TSV `58503a-3704.md`
+describes, that document's figures and, through `make seed-names`
+(`tools/firmware/seed_names.py`), the 58503A's seeded `names.tsv` and
+`modules.tsv`; `make check-image-diff` fails while any is stale.  The
+Z3801A 3543's folder, `third_party/firmware/z3801a-3543/`, is seeded
+the same way from the Z3805A's ([`z3801a-3543.md`](z3801a-3543.md)),
+its `rewritten/` the Z3805A's own C less the SCI's, beside `common/`,
+which it shares with the other two.  A change to the Z3805A's `names.tsv`,
 `modules.tsv` or export regenerates them with `make image-diff` in the
 same commit, and the 58503A's tree rows, which its names file shapes,
 with `make scpi-tree IMAGE=58503a-3704`; a seeding rule or exception
@@ -428,8 +436,11 @@ after the names change, so its diff shows what a change typed
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
 GPT, SIM and QSM, the I/O ones volatile; types both
-vector tables, the boot one at `0x0` and the primary's at `0x10000`,
-and makes a function at each handler; and types the string tables,
+vector tables, the boot one at `0x0` and the primary's, the first at
+a multiple of `0x10000` above it that starts with the boot table's
+stack pointer (`0x10000` in the Z3801A, Z3805A and 58503A, `0x20000`
+in the Z3816A, Z3815A and 58503B, whose boot code and installer fill
+the first 128 KiB), and makes a function at each handler; and types the string tables,
 removing the code analysis decoded in them (a 0x61, `a`, is a `bsr`, so
 code begun in a string "calls" on through the table), but not text inside
 a table the names file types as an array or structure (the installer's
@@ -1047,7 +1058,9 @@ decompiler wrote it, and reported.
 
 A function rewritten by hand lives in
 `third_party/firmware/IMAGE/rewritten/`, beside the decompiled C in
-`IMAGE/decompiled/`, a file to a subsystem (`clock.c`).  The exporter
+`IMAGE/decompiled/`, a file to a subsystem (`clock.c`), or, when
+several images run it, once in `third_party/firmware/common/`
+([`rewrite.md`, "Shared C"](rewrite.md#shared-c)).  The exporter
 finds the functions those files define (`rewritten=`), leaves the
 decompiler's reading of each out of the exported C, a line
 `/* NAME: rewritten in FILE */` in its place, and includes the files
@@ -1897,6 +1910,7 @@ directory outside the repository:
         defines=third_party/firmware/include/mc68681.h \
         defines=third_party/firmware/include/psos-signals.h \
         results=third_party/firmware/z3805a-3543b/results.tsv \
+        rewritten=third_party/firmware/common \
         rewritten=third_party/firmware/z3805a-3543b/rewritten
 
 [`rewrite.md`, "Reproducing"](rewrite.md#reproducing) gives the
@@ -1906,28 +1920,32 @@ it.
 
 ## The checks in CI
 
-`.github/workflows/firmware.yml` runs the firmware's checks for both
-images on every push and pull request, a job of its own beside the
-Rust CI so that each fails alone: `make check-format-c`, `check-types`,
-`check-module-figures`, `check-scpi-tree`, `check-pforth-words`,
-`check-image-diff`, `check-chip-selects`, `check-loop-trace`,
-`check-magic-numbers`, `check-comment-addresses`, `check-decompiled`, which runs
-`check-unicorn` first, and `report-decompiled`, which fails if any
-function fails
-and checks the figures this document, `rewrite.md`, `58503a-3704.md`
-and the top `README.md` give from each image's function
-check -- the user-mode and console counts, the agreeing, known, skipped
-and failed functions and the agreeing ones' cases -- against the report
-it writes, so that every function agreeing is checked in public.  `IMAGE=z3805a-3543b` is set
-for the job; `check-types`, `check-scpi-tree`, `check-magic-numbers`
-and `check-decompiled` run again with `IMAGE=58503a-3704`, and
-`report-decompiled` runs without `IMAGE`, for both images, the
-58503A's failing if any of its functions fails (`58503a-3704.md`, "The
-function check").  `check-image-diff` checks the 58503A's diff against
-the Z3805A, its seeded names and its document's figures, and
-`check-comment-addresses` the addresses its C's comments cite.  None
-of the targets builds the workspace; `check-chip-selects` reads every
-image's reset code (`restart.md`, "The chip selects").
+`.github/workflows/firmware.yml` runs the firmware's checks for the
+three images on every push and pull request, a job of its own beside
+the Rust CI so that each fails alone: `make check-format-c`,
+`check-types`, `check-module-figures`, `check-scpi-tree`,
+`check-pforth-words`, `check-image-diff`, `check-chip-selects`,
+`check-loop-trace`, `check-magic-numbers`, `check-comment-addresses`,
+`check-common`, `check-decompiled`, which runs `check-unicorn` first,
+and `report-decompiled`, which fails if any function fails and checks
+the figures this document, `rewrite.md`, `58503a-3704.md`,
+`z3801a-3543.md` and the top `README.md` give from each image's
+function check -- the user-mode and console counts, the agreeing,
+known, skipped and failed functions and the agreeing ones' cases --
+against the report it writes, so that every function agreeing is
+checked in public.  `IMAGE=z3805a-3543b` is set for the job;
+`check-types`, `check-scpi-tree`, `check-magic-numbers` and
+`check-decompiled` run again with `IMAGE=58503a-3704` and
+`IMAGE=z3801a-3543`, and `report-decompiled` runs without `IMAGE`, for
+the three, each failing if any of its functions fails (`58503a-3704.md`
+and `z3801a-3543.md`, "The function check").  `check-image-diff`
+checks the 58503A's and the Z3801A's diffs against the Z3805A, their
+seeded names and the 58503A's document's figures;
+`check-comment-addresses` checks the addresses their C's comments
+cite; and `check-common` the shared C, `common/` (`rewrite.md`,
+"Shared C").  None of the targets builds the workspace;
+`check-chip-selects` reads every image's reset code (`restart.md`,
+"The chip selects").
 `check-loop-trace` runs both images' own `startup_pll` and
 `pll_normal` in Unicorn on synthetic readings, the routines that reach
 outside the loop's arithmetic stood in for

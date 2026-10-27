@@ -26,9 +26,6 @@ void duart_test_rx_b(void) {
   duart_test_receive(&duart.b, SELFTEST_UART_CHANNEL_B_DATA);
 }
 
-/* The loopback test's transmit on channel B (0x1e736). */
-void duart_test_tx_b(void) { duart_test_transmit(&duart.b, IMR_TXRDYB); }
-
 /* At reset, before interrupts: sends "DUART" through channel B in local
  * loopback by polling and checks each character back (0x1ebe4). */
 void duartb_loopback_check(void) {
@@ -63,10 +60,6 @@ void duartb_loopback_check(void) {
   duart.b.mr = DUART_MR2_ONE_STOP_BIT;
 }
 
-/* A no-op echo, a bare rts: duart_init and duartb_reconfigure put it in
- * duartb.echo when the settings' echo is off (0x1d570). */
-void duartb_echo_none(char c) {}
-
 /* DUART channel B's mode registers from the serial settings: parity,
  * data bits and stop bits (0x1d594). */
 void duartb_mode_from_settings(void) {
@@ -92,35 +85,6 @@ void duartb_mode_from_settings(void) {
   duartb_applied.eight_bits = duartb_settings.eight_bits;
   duartb_applied.two_stop_bits = duartb_settings.two_stop_bits;
 }
-
-/* DUART channel B's baud rate from the serial settings, 19200 for a
- * code out of range (0x1d632). */
-void duartb_baud_from_settings(void) {
-  uint8_t clock;
-
-  switch (duartb_settings.baud) {
-    case SERIAL_BAUD_1200:
-      clock = DUART_CSR_1200;
-      break;
-    case SERIAL_BAUD_2400:
-      clock = DUART_CSR_2400;
-      break;
-    case SERIAL_BAUD_9600:
-      clock = DUART_CSR_9600;
-      break;
-    default:
-      clock = DUART_CSR_19200;
-      break;
-  }
-  clock |= clock << DUART_CSR_CLOCK_BITS;
-  duart_shadow.csrb = clock;
-  duart.b.sr_csr = clock;
-  duartb_applied.baud = duartb_settings.baud;
-}
-
-/* Waits for DUART channel B's transmitter and writes a character;
- * returns the status bit it waited on (0x1d680). */
-uint8_t duartb_putc_polled(uint8_t c) { return duart_b_putc_polled(c); }
 
 /* Writes a string to DUART channel B by interrupt, waiting until it is
  * out; returns how much went (0x1d6ba). */
@@ -215,8 +179,6 @@ static __attribute__((used, noipa)) void duartb_reconfigure_settings(void) {
   cpu_sr_write(sr);
 }
 
-CPU_IO_FUNCTION(duartb_reconfigure, duartb_reconfigure_settings);
-
 /* Writes a character to channel B under the write lock, if it can take
  * it (0x1ddf6). */
 void drtb_putc(char c) {
@@ -242,10 +204,6 @@ void drtb_send_async(char* block, uint8_t count) {
   }
 }
 
-/* The done hook of channel B's setting descriptors and its PRESet:
- * reconfigures device 0 (0x1df00). */
-void duartb_settings_done(void) { psos_io_control(IO_DEVICE_DUART_B, 0, 0); }
-
 /* With the serial port restricted, eight bits and a parity cannot both
  * be: a parity set clears eight bits (0x3086a). */
 void duartb_parity_restrict(void) {
@@ -262,19 +220,6 @@ void duartb_eight_bits_restrict(void) {
       duartb_settings.parity != SERIAL_PARITY_NONE) {
     duartb_settings.parity = SERIAL_PARITY_NONE;
   }
-}
-
-/* Writes a string to channel B by polling, in supervisor mode; returns
- * its length (0x1df12). */
-int32_t console_write_polled(char* s) {
-  int32_t count = 0;
-  uint16_t sr = cpu_enter_supervisor();
-
-  for (; *s != 0; s++, count++) {
-    duartb_putc_polled(*s);
-  }
-  cpu_sr_write(sr);
-  return count;
 }
 
 /* Whether channel B's write lock is held by another task (0x1df6e). */

@@ -1,22 +1,8 @@
-/* The SCPI :FORMat tree, :FORMat:DATA, the data format of the :ROBin
- * queries' responses (097-59551-02, "Reading Time Stamps"): its
- * handlers, written by hand in place of the decompiler's
- * (docs/firmware/README.md, "Hand-written C"; docs/firmware/modules.md,
- * `applications/scpi/handlers/format`).  The exported C includes this
- * file after its own, so the types and prototypes it declares are in
- * scope; each function here keeps its generated prototype. */
-
-/* :FORMat:DATA ASCii or INTeger (0x2ee68). */
-int32_t scpi_set_FORMat_DATA(void* parameters, void* response,
-                             scpi_call* call) {
-  const uint8_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
-  scpi_word_parameter* given = parameters;
-
-  pllc_request_a(&scpi_param_FORMat_DATA, 0,
-                 scpi_two_choice(given->value, caller_d2),
-                 return_zero(call->input));
-  return 0;
-}
+/* scpi_format_data.c's functions that are this image's own: the rest are
+ * common/scpi_format_data.c's, the same in every image
+ * (docs/firmware/rewrite.md, "Shared C").  Written by hand in place of the
+ * decompiler's (docs/firmware/README.md, "Hand-written C"); each keeps its
+ * generated prototype. */
 
 /* :FORMat:DATA?: ASCii, comma-separated shorts, or INTeger, a block
  * (0x2eeb8).  Another format leaves the response as it is. */

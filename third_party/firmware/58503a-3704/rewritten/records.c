@@ -1,10 +1,8 @@
-/* The EEPROM's parameter, identification, lifetime and calibration
- * records, written by hand in place of the decompiler's
- * (docs/firmware/README.md, "Hand-written C"; docs/firmware/modules.md,
- * `services/records`).  The exported C includes this file after its own,
- * so the types and prototypes it declares are in scope; each function
- * here keeps its generated prototype.  docs/firmware/structures.md
- * describes the records ("EEPROM records", "The lifetime record"). */
+/* records.c's functions that are this image's own: the rest are
+ * common/records.c's, the same in every image (docs/firmware/rewrite.md,
+ * "Shared C").  Written by hand in place of the decompiler's
+ * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
+ * prototype. */
 
 /* The serial ports' settings by default, 9600 baud, no parity, eight bits,
  * echo: the image's sci_settings_defaults and duartb_settings_defaults
@@ -21,12 +19,6 @@ static const duartb_settings_record records_duartb_defaults = {
     .eight_bits = 1,
     .echo = 1,
 };
-
-/* The sum and its complement of a record's bytes after its first two
- * (0x3071c). */
-uint16_t record_checksum(void* record, uint16_t length) {
-  return records_checksum(record, length);
-}
 
 /* Reads the lifetime record into lifetime, or its defaults; true when its
  * checksum holds (0x30934). */
@@ -58,23 +50,6 @@ uint8_t lifetime_record_read(void) {
     lifetime.efc = efc;
   }
   return 1;
-}
-
-/* Writes lifetime to the lifetime record when it differs; 1 when the
- * record holds it (0x309aa). */
-uint32_t lifetime_record_write(void) {
-  lifetime_record record;
-
-  memset(&record, RECORDS_ERASED, sizeof record);
-  record.count = lifetime.count;
-  record.date = lifetime.date;
-  record.efc = lifetime.efc;
-  record.checksum = record_checksum(&record, sizeof record);
-  if (memcmp(&record, &eeprom_lifetime_record, sizeof record) == 0) {
-    return 1;
-  }
-  return eeprom_write((char*)&eeprom_lifetime_record, (char*)&record,
-                      sizeof record);
 }
 
 /* Counts another lifetime and takes the EFC in normal PLL, then writes

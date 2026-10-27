@@ -1,0 +1,189 @@
+/* The event log and the reset-cause log, written by hand in place of the
+ * decompiler's (docs/firmware/README.md, "Hand-written C";
+ * docs/firmware/modules.md, `services/log`).  The exported C includes
+ * this file after its own, so the types and prototypes it declares are
+ * in scope; each function here keeps its generated prototype. */
+
+/* Clears the last exception and the crash message. */
+void exception_record_clear(void) {
+  reset_record_count();
+  last_exception.pending = 0;
+  crash_message[0] = 0;
+}
+
+/* Logs why the last reset happened, with the time: the exception, the
+ * fatal message, or, with neither and the watchdog's grace run out,
+ * the watchdog counts; then clears both. */
+void log_reset_cause(void) {
+  char text[MONITORS_CRASH_MESSAGE_SIZE];
+  uint32_t date;
+  time_of_day time;
+
+  reset_record_count();
+  get_date_time(&date, &time);
+  text[0] = 0;
+  if (last_exception.pending) {
+    if ((last_exception.vector & CPU_VECTOR_FORMAT_MASK) == 0) {
+      sprintf(text, "Exception: %s, vector %04X, PC = %08X, SR = %04X",
+              last_exception.name, last_exception.vector, last_exception.pc,
+              last_exception.sr);
+    } else {
+      sprintf(text,
+              "Exception: %s, vector %04X, PC = %08X, SR = %04X, addr = %08X",
+              last_exception.name, last_exception.vector, last_exception.pc,
+              last_exception.sr, last_exception.address);
+    }
+    reset_record_write(date, time, text);
+  }
+  if (crash_message[0] != 0) {
+    strncpy(text, crash_message, MONITORS_CRASH_MESSAGE_SIZE);
+    text[MONITORS_CRASH_MESSAGE_SIZE - 1] = 0;
+    reset_record_write(date, time, text);
+  }
+  if (watchdog_countdown == 0 && crash_message[0] == 0 &&
+      !last_exception.pending) {
+    sprintf(text, "Watchdog timeout: clk %1d gps %4d mon %4d pll %1d spl %1d",
+            watchdog_clock, watchdog_gps, watchdog_monitor, watchdog_pll,
+            watchdog_spool);
+    reset_record_write(date, time, text);
+  }
+  last_exception.pending = 0;
+  crash_message[0] = 0;
+}
+
+/* The reset-cause log's records. */
+static const int32_t RECORDS_RESET_RECORDS =
+    (int32_t)(sizeof eeprom_reset_records / sizeof eeprom_reset_records[0]);
+
+static const int32_t RECORDS_LOG_PAGE_ENTRIES =
+    (int32_t)(sizeof log_write_page.entries / sizeof log_write_page.entries[0]);
+
+/* Empties a page. */
+void log_page_clear(void* page) { memset(page, 0, sizeof(log_page)); }
+
+/* log_erase under log_mutex. */
+int32_t log_erase_locked(request_source source) {
+  int32_t error = mutex_lock(&log_mutex);
+
+  if (error != 0) {
+    return error;
+  }
+  int32_t status = log_erase(source);
+  mutex_unlock(&log_mutex);
+  return status;
+}
+
+/* log_erase under log_mutex when the log holds count entries. */
+int32_t log_erase_checked(int32_t count, request_source source) {
+  int32_t error = mutex_lock(&log_mutex);
+
+  if (error != 0) {
+    return error;
+  }
+  int32_t status =
+      count == log_entries ? log_erase(source) : RECORDS_LOG_COUNT_DIFFERS;
+  mutex_unlock(&log_mutex);
+  return status;
+}
+
+/* The event log's entries, and through full whether it is full. */
+int32_t log_entry_total(uint8_t* full) {
+  if (full != 0) {
+    *full = log_full;
+  }
+  return log_entries;
+}
+
+/* Appends an entry to the event log under its lock; returns the lock's
+ * error or log_append's status.  Variadic in name: an entry
+ * keeps two longs of arguments, which it takes whatever its format
+ * converts, a double's two halves among them. */
+int32_t log_write(char* format, ...) {
+  va_list arguments;
+
+  va_start(arguments, format);
+  const int32_t argument_1 = va_arg(arguments, int32_t);
+  const int32_t argument_2 = va_arg(arguments, int32_t);
+
+  va_end(arguments);
+
+  uint32_t status = mutex_lock(&log_mutex);
+
+  if (status == 0) {
+    status = log_append(format, argument_1, argument_2);
+    mutex_unlock(&log_mutex);
+  }
+  return status;
+}
+
+/* The first entry of a page with no format, or 0. */
+log_entry* log_page_free_entry(log_page* page) {
+  for (log_entry* entry = page->entries;
+       entry < page->entries + RECORDS_LOG_PAGE_ENTRIES; entry++) {
+    if (entry->format == 0) {
+      return entry;
+    }
+  }
+  return 0;
+}
+
+/* Writes the page being filled, and copies it to log_page_buffer when that
+ * holds the same page. */
+uint8_t log_flush(void) {
+  log_write_page_open = 0;
+  if (log_page_number == log_write_page_number) {
+    memcpy(&log_page_buffer, &log_write_page, sizeof log_page_buffer);
+  }
+  return log_page_write(log_write_page_number, &log_write_page);
+}
+
+/* A log line's text and heading buffers: an array size, so #define. */
+#define LOG_TEXT_SIZE 80
+
+/* Prints the event log or the reset-cause log: its status, then each
+ * entry under its heading. */
+void log_print(char reset_causes, write_function* write,
+               printf_function* print) {
+  char text[LOG_TEXT_SIZE];
+  char heading[LOG_TEXT_SIZE];
+  int16_t count = reset_causes ? log_count(0) : log_entry_total(0);
+
+  log_status(text, reset_causes);
+  print("%s\r\n", text);
+  write("\r\n");
+  for (int16_t number = 1; number <= count; number++) {
+    if (reset_causes) {
+      log_entry_text(number, text, heading);
+    } else {
+      log_read(number, text, heading);
+    }
+    print("%s:  %s\r\n", heading, text);
+  }
+  write("\r\n");
+}
+
+/* The sum and its complement of a reset-cause record's bytes from its
+ * time on. */
+uint16_t reset_record_checksum(reset_record* record) {
+  return records_sum_and_complement(records_byte_sum(
+      (const uint8_t*)&record->time,
+      sizeof *record - __builtin_offsetof(reset_record, time)));
+}
+
+/* The reset-cause log's entries, and through full whether it is full. */
+int32_t log_count(uint8_t* full) {
+  if (full != 0) {
+    *full = log_entry_count >= RECORDS_RESET_RECORDS;
+  }
+  return log_entry_count;
+}
+
+/* Counts the valid reset-cause records from the first into
+ * log_entry_count. */
+void reset_record_count(void) {
+  log_entry_count = 0;
+  for (uint8_t index = 0;
+       index < RECORDS_RESET_RECORDS && reset_record_valid(index); index++) {
+    log_entry_count++;
+  }
+}

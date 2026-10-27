@@ -1,36 +1,12 @@
-/* The SCPI console port object, its method table at 0x29dd4 and the
- * status byte, written by hand in place of the decompiler's
- * (docs/firmware/README.md, "Hand-written C"; docs/firmware/modules.md,
- * `applications/scpi/port`).  The exported C includes this file after
- * its own, so the types and prototypes it declares are in scope; each
- * function here keeps its generated prototype. */
-
-/* Opens the SCPI port, device 0 (0x1dee6). */
-void scpi_port_open(void) { psos_io_open(IO_DEVICE_DUART_B, 0); }
-
-/* Closes the SCPI port, device 0 (0x1def4). */
-void scpi_port_close(void) { psos_io_close(IO_DEVICE_DUART_B); }
-
-/* Makes the SCPI prompt, with the latest error when there is one
- * (0x29b0e). */
-void scpi_prompt(int32_t error) {
-  if (error != 0) {
-    sprintf(scpi_prompt_text, "E%+04d> ", error);
-    return;
-  }
-  char* from = "scpi > ";
-  char* to = scpi_prompt_text;
-
-  while ((*to++ = *from++) != 0) {
-  }
-}
+/* scpi_port.c's functions that are this image's own: the rest are
+ * common/scpi_port.c's, the same in every image (docs/firmware/rewrite.md,
+ * "Shared C").  Written by hand in place of the decompiler's
+ * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
+ * prototype. */
 
 /* The console port's object, which queries compare a request's source
  * with (0x29b82). */
 scpi_port* scpi_console_port(void) { return SCPI_CONSOLE_PORT; }
-
-/* Returns 0; the four methods at +0x20 to +0x2c (0x29b92). */
-int32_t scpi_console_return_zero(void) { return 0; }
 
 /* The console port's read: the next character of the line, reading a
  * line once the last is used, SCPI_PORT_END for its end or a read
@@ -81,48 +57,6 @@ int16_t console_port_read(void) {
   return character;
 }
 
-/* Has the next read give the last character again (0x29cc6). */
-void scpi_input_ended(void) { scpi_input_repeat = 1; }
-
-/* The port's read of up to length characters into a buffer, stopping
- * at an end, which the next read gives again; the characters read
- * (0x29b96). */
-int32_t scpi_console_read(scpi_port* port, uint8_t* buffer, int32_t length) {
-  int32_t count = 0;
-
-  while (count < length) {
-    int16_t character = console_port_read();
-
-    if (character >= SCPI_PORT_CHARACTERS) {
-      scpi_input_ended();
-      break;
-    }
-    buffer[count++] = character;
-  }
-  return count;
-}
-
-/* Writes a character to the console, keeping it in the echo buffer, or
- * CR LF for an end (0x29cd0). */
-void scpi_console_putc(scpi_port* port, int32_t character) {
-  if (character >= SCPI_PORT_CHARACTERS) {
-    console_write("\r\n");
-    return;
-  }
-  char text[2] = {character, 0};
-
-  console_write(text);
-  scpi_echo_text[scpi_echo_length++] = character;
-}
-
-/* scpi_console_write's loop: up to n characters of s, to its NUL
- * (0x29d40). */
-void scpi_console_write_loop(scpi_port* port, char* s, int32_t n) {
-  for (; n > 0 && *s != 0; n--, s++) {
-    scpi_console_putc(port, *s);
-  }
-}
-
 /* Sets bits of the status byte, a method of the port (0x29d50). */
 void status_byte_set_bits(scpi_port* port, int32_t bits) {
   status_byte |= bits;
@@ -141,12 +75,6 @@ void status_sre_set(scpi_port* port, int32_t enable) {
   status_update_rqs();
 }
 
-/* The service request enable, a method of the port (0x29d88). */
-uint8_t status_sre_get(void) { return service_request_enable; }
-
-/* The status byte, a method of the port (0x29d90). */
-uint8_t status_byte_get(void) { return status_byte; }
-
 /* Sets RQS in the status byte while another bit of it is enabled, and
  * status_request_service with it (0x29d98). */
 void status_update_rqs(void) {
@@ -159,12 +87,4 @@ void status_update_rqs(void) {
     status_byte &= ~STATUS_BYTE_REQUEST_SERVICE;
   }
   status_request_service = request;
-}
-
-/* Prompts again when the status model that changed is the main one
- * (0x29e3c). */
-void status_prompt_refresh(status_model* status, int32_t error) {
-  if (status == status_object) {
-    scpi_prompt(error);
-  }
 }

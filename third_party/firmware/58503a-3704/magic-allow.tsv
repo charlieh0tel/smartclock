@@ -4,5 +4,5 @@
 # under rewritten/, function, literal as written, target, reason.
 # The 58503A 3704's rows are the Z3805A 3543B's that its copy of the C
 # still finds, their addresses the Z3805A's.
-duplicate	fpga.c	fpga_verify_first	10	LAST_BITS	each readback frame's own last bits, the first frame's and an odd frame's both 10 (0x22fc6, 0x23304), an even frame's 14
-duplicate	fpga.c	fpga_verify_first	5	WORDS	each readback frame's own words, the first frame's and an even frame's both 5 (0x22fc6, 0x2353a), an odd frame's 6
+duplicate	common/fpga.c	fpga_verify_first	10	LAST_BITS	each readback frame's own last bits, the first frame's and an odd frame's both 10 (0x22fc6, 0x23304), an even frame's 14
+duplicate	common/fpga.c	fpga_verify_first	5	WORDS	each readback frame's own words, the first frame's and an even frame's both 5 (0x22fc6, 0x2353a), an odd frame's 6

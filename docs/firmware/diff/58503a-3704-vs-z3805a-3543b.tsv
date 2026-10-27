@@ -656,7 +656,7 @@ primary	function	relocated	masked	0x1d74a	drtb_getc	devices/duartb	154	0x1d59c	1
 primary	function	relocated	masked	0x1d7e4	drtb_gets	devices/duartb	290	0x1d636	290		
 primary	function	relocated	masked	0x1d906	drtb_unlock	unassigned/drtb	28	0x1d758	28		
 primary	function	relocated	masked	0x1d922	drtb_lock	unassigned/drtb	28	0x1d774	28		
-primary	function	changed	similar	0x1d93e	duart_init	unassigned/device	832	0x1d790	838	0.987	189 -> 188 instructions: 14 replaced, 2 inserted, 3 deleted; calls removed: %pc@(gp_port_select); first: movel #loopback_idle_text,%d6 -> movel #piece_1ed2c,%d6 | clrb %sp@-; jsr %pc@(gp_port_select) -> - | bcss L+338; bras L+356 -> bcss L+330; bras L+348
+primary	function	changed	similar	0x1d93e	duart_init	unassigned/device	832	0x1d790	838	0.987	189 -> 188 instructions: 13 replaced, 2 inserted, 3 deleted; calls removed: %pc@(gp_port_select); first: clrb %sp@-; jsr %pc@(gp_port_select) -> - | bcss L+338; bras L+356 -> bcss L+330; bras L+348 | bnes L+350; bras L+376 -> bnes L+342; bras L+368
 primary	function	relocated	masked	0x1dc7e	duartb_reconfigure	devices/duartb	282	0x1dad6	282		
 primary	function	relocated	masked	0x1dd98	drtb_write	unassigned/device	62	0x1dbf0	62		
 primary	function	relocated	masked	0x1ddd6	drtb_read	devices/duartb	32	0x1dc2e	32		
@@ -681,8 +681,8 @@ primary	function	changed	similar	0x1e126	duart_output_bits	devices/duart	100	0x1
 primary	function	relocated	masked	0x1e18a	drta_send_message	devices/duarta	152	0x1dfd8	152		
 primary	function	relocated	masked	0x1e222	duarta_rx_pending	devices/duarta	22	0x1e070	22		
 primary	function	relocated	masked	0x1e238	drta_get_byte	devices/duarta	136	0x1e086	136		
-primary	function	changed	similar	0x1e2c0	duart_loopback_test_a	devices/duarta	346	0x1e10e	358	0.981	77 -> 80 instructions: 6 replaced, 3 inserted, 0 deleted; calls added: psos_pause; first: bras L+208 -> bras L+220; pea 0x1 | cmpil #10000,%d2; bges L+222 -> cmpil #1000,%d2; bges L+234 | beqs L+246 -> beqs L+258
-primary	function	changed	similar	0x1e41a	duart_loopback_test_b	devices/duartb	346	0x1e274	358	0.981	77 -> 80 instructions: 6 replaced, 3 inserted, 0 deleted; calls added: psos_pause; first: bras L+208 -> bras L+220; pea 0x1 | cmpil #10000,%d2; bges L+222 -> cmpil #1000,%d2; bges L+234 | beqs L+246 -> beqs L+258
+primary	function	changed	similar	0x1e2c0	duart_loopback_test_a	devices/duarta	346	0x1e10e	358	0.981	77 -> 80 instructions: 4 replaced, 3 inserted, 0 deleted; calls added: psos_pause; first: bras L+208 -> bras L+220; pea 0x1 | cmpil #10000,%d2; bges L+222 -> cmpil #1000,%d2; bges L+234 | beqs L+246 -> beqs L+258
+primary	function	changed	similar	0x1e41a	duart_loopback_test_b	devices/duartb	346	0x1e274	358	0.981	77 -> 80 instructions: 4 replaced, 3 inserted, 0 deleted; calls added: psos_pause; first: bras L+208 -> bras L+220; pea 0x1 | cmpil #10000,%d2; bges L+222 -> cmpil #1000,%d2; bges L+234 | beqs L+246 -> beqs L+258
 primary	function	relocated	masked	0x1e574	duart_counter_test	devices/duart	220	0x1e3da	220		
 primary	function	relocated	masked	0x1e650	duart_test	devices/duart	110	0x1e4b6	110		
 primary	function	relocated	masked	0x1e6be	duart_test_rx_a	devices/duarta	36	0x1e524	36		
@@ -1945,14 +1945,12 @@ primary	label	identical	references	0x1c804	log_text_log_test_message	data	20	0x1
 primary	label	changed	references	0x1c8ac	diag_words	data	2048	0x1c7f0	2048	0.758	602 of 2048 bytes differ, 495 outside pointers, first at +80
 primary	piece	relocated	masked	0x1dfbc	piece_1dfbc	devices/duartb	42	0x1de1c	42		
 primary	label	identical	references	0x1ed2c	loopback_idle_text	data	1	0x1eba0	1		
-primary	piece	identical	exact	0x1ed2c	piece_1ed2c	devices/duart	10	0x1eba0	10		
 primary	label	identical	references	0x1ee6e	loopback_test_text	data	20	0x1ece2	20		
 primary	piece	identical	exact	0x1f248	piece_1f248	platform/debug	8	0x1f0bc	8		
 primary	piece	missing		0x1fffc	piece_1fffc	devices/sci	158				
 primary	piece	missing		0x20262	piece_20262	devices/sci	44				
 primary	piece	missing		0x2028e	piece_2028e	devices/sci	16				
 primary	piece	missing		0x2029e	piece_2029e	devices/sci	14				
-primary	piece	identical	exact	0x20336	piece_20336	devices/sci	10	0x1ec70	10		
 primary	label	identical	references	0x20ef8	spoo_name	data	5	0x1fcf6	5		
 primary	label	missing		0x20f18	fpga_bitstream	data	2048				
 primary	label	relocated	references	0x21e2c	fpga_configurations	data	10	0x20c2a	10		
@@ -1998,7 +1996,6 @@ primary	piece	relocated	masked	0x2f756	piece_2f756	services/status	32	0x2f434	32
 primary	label	relocated	references	0x2f79e	status_register_layouts	data	154	0x2f47c	154		
 primary	label	changed	references	0x2f838	status_conditions	data	474	0x2f516	474	0.979	49 of 474 bytes differ, 10 outside pointers, first at +329
 primary	label	identical	references	0x30816	error_message_none	data	1	0x30704	1		
-primary	piece	identical	exact	0x30816	piece_30816	applications/scpi/handlers/system	8	0x30704	8		
 primary	label	identical	references	0x308b6	sample_values_defaults	data	148	0x307a4	148		
 primary	piece	identical	exact	0x308b6	piece_308b6	applications/scpi/handlers/douglas	8	0x307a4	8		
 primary	label	relocated	references	0x3094c	retained_block_defaults	data	25	0x30840	25		

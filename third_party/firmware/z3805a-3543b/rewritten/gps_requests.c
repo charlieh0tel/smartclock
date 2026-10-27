@@ -8,24 +8,6 @@
  * declares are in scope; each function here keeps its generated
  * prototype. */
 
-/* The senders whose requests the task takes, ending in GPS_SENDER_NONE:
- * the image's table at 0x4cfc0. */
-static const gps_request_sender gps_requests_senders[] = {
-    GPS_SENDER_SEQUENCE, GPS_SENDER_SETTING, GPS_SENDER_COMMAND_MONITOR,
-    GPS_SENDER_STATUS_MONITOR, GPS_SENDER_NONE};
-
-/* 1 for a sender the task takes requests from (0x4bc58). */
-uint32_t request_kind_valid(gps_request_sender sender) {
-  const gps_request_sender* known = gps_requests_senders;
-
-  while (*known != GPS_SENDER_NONE) {
-    if (*known++ == sender) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
 /* A request code's class, by its range and, for a message, its argument
  * mode, 0 to send it and 1 to query it (0x4bdba). */
 gps_code_class gps_request_class(gps_request_code_word code,
@@ -122,20 +104,6 @@ bool request_ring_contains(gps_process_state state, gps_request_sender sender,
     }
   }
   return false;
-}
-
-/* 1 if the newest waiting request is a monitor's not yet sent, which a
- * new request may replace (0x4bc1c). */
-uint32_t request_ring_newest_replaceable(void) {
-  gps_request_entry newest;
-
-  if (request_ring_unput(&newest) == 0) {
-    return 0;
-  }
-  request_ring_put(&newest);
-  return (newest.sender == GPS_SENDER_COMMAND_MONITOR ||
-          newest.sender == GPS_SENDER_STATUS_MONITOR) &&
-         newest.sent == 0;
 }
 
 /* Queues a request the task has received: a link reset aborts the

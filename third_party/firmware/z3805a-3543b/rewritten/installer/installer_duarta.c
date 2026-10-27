@@ -22,10 +22,3 @@ void installer_duarta_receive(void) {
     duart.a.cr = CR_RESET_ERROR;
   }
 }
-
-/* Channel A's transmit interrupt: turns it off, the installer sending
- * channel A nothing (installer::0x103c7c). */
-void installer_duarta_transmit_interrupt(void) {
-  installer_duart_shadow.imr &= ~IMR_TXRDYA;
-  duart.isr_imr = installer_duart_shadow.imr;
-}

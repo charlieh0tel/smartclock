@@ -150,6 +150,69 @@ out the image's arguments from it.
   what nothing set.  A register the image reads as its caller left it
   is read by one `cpu.h` helper.
 
+## Shared C
+
+C that more than one image runs lives once, in
+`third_party/firmware/common/`; everything else stays in the image's
+own `rewritten/`.  A function moves there only by these rules, so that
+nothing is taken for common that is not:
+
+1. **Same code.**  `image_diff.py` classes it *identical* or
+   *relocated* in every image that will share it: the same
+   instructions, differing only in addresses the linker fills in.  A
+   *changed* function, however small the change, stays per image.
+2. **Same data.**  Every type it touches is the same in each image:
+   it comes from a header in `common/`, and each image's
+   `check-layout.c` asserts the same offsets for it.  A function that
+   touches a structure laid out differently in some image stays per
+   image, or is compiled once per image against that image's own
+   header; it is never compiled once for all.
+3. **Addresses stay the image's.**  Globals and callees resolve per
+   image at link time, through each image's symbol file; `common/`
+   holds no address.
+4. **Every image proves the move.**  After a move, each image that
+   shares the function reruns its function check and its console
+   sessions, and its figures must not change.  A function wrongly taken for common fails one of them.
+5. **Small steps.**  The libraries first (soft-float, the pSOS glue,
+   pForth, the SCPI engine), then module by module, each move a commit
+   of its own, so that a failure points at one move and reverts
+   cleanly.
+6. **A difference found later splits it.**  When a new image's copy of
+   a common function differs, that image gets its own copy in
+   `rewritten/`; `common/` is not edited to cover both with a
+   condition.
+
+How the build uses it.  `common/` is laid out as `rewritten/` is
+(`bindings/`, `installer/`), and an image that shares it gives the
+exporter two folders, `rewritten=third_party/firmware/common` before
+its own: the export includes `common/`'s headers, then its own, and
+`common/`'s files, then its own, so each image compiles the shared C
+in its own translation unit, against its own export's types,
+prototypes and globals (rules 2 and 3).  A shared type is defined once,
+in a header in `common/types/`, which each sharing image's
+`smartclock.h` includes and the exporter skips, since the export
+declares the program's types itself; Setup expands an `#include
+"PATH"` in a `types=` header, which Ghidra's parser takes none of.  An enum
+whose members differ between the images is split rather than shared
+whole: the run of members the images have in common, at the same
+values, is a `common/types/` header that each image's definition
+includes among its members (`status_scpi.h`, the SCPI standard's head
+of `status_condition_code`; `qspi_device.h`, the QSPI's devices from
+1), the rest the image's own, so that no value changes; to shared code such an enum is the same when its storage is
+and the members the code names are the shared run's; one whose members it
+names none of, a field's type in a shared record (`gps_request_code`
+in `scpi_numeric_param`), need only have the same storage.  A comment in `common/` cites no address: a
+function by its name, a place in it as `name+0xoff`; a device's
+register, the board's, is no image's address.  `make
+check-common` (`tools/firmware/common_check.py`) checks rules 1 to 3
+for every file there: the diff's class of each function it defines or
+binds, the same declaration in each sharing export of all its code
+names (types, enumerators, constants, macros, callees' and globals'
+types), each shared type in a `common/types/` header every sharing
+`smartclock.h` includes or in `include/`, with the same layout in each
+`check-layout.c`, each enumerator it names in one too, a split enum's
+storage the same, and no address.
+
 ## The verification
 
 Three tools in [`tools/firmware/`](../../tools/firmware/), Python under
@@ -367,6 +430,7 @@ after auto-analysis, the program saved at the end:
         defines=third_party/firmware/include/mc68681.h \
         defines=third_party/firmware/include/psos-signals.h \
         results=third_party/firmware/z3805a-3543b/results.tsv \
+        rewritten=third_party/firmware/common \
         rewritten=third_party/firmware/z3805a-3543b/rewritten
     git diff --stat third_party/firmware/z3805a-3543b/decompiled/
 
@@ -416,4 +480,9 @@ The 58503A 3704 port has its own document,
 [`58503a-3704.md`](58503a-3704.md), held to this one's method and
 checks (its "The function check"): of its function check, the primary's 1415
 agree, 5 are known and none skipped or failed, and the installer's 247
-agree, 1 skipped; its console sessions agree, 8 of 8.
+agree, 1 skipped; its console sessions agree, 8 of 8.  The Z3801A
+3543's, [`z3801a-3543.md`](z3801a-3543.md), seeded from the Z3805A's and
+the third image to share `common/`, is held to the same standard: of
+its function check, the primary's 1290 agree, 6 are known and 5
+skipped, none failed, and the installer's 236 agree, 1 skipped; its
+console sessions agree, 8 of 8.

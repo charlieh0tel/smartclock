@@ -26,25 +26,7 @@ typedef long long int64_t;
  * SmartClockSetup.java sizes them so in Ghidra, whose C parser makes
  * every enum 4 bytes. */
 
-/* Proposed enums: a rewrite that needs a record field's or a global's
- * coded values adds their enum here, packed and with its evidence, and
- * reports the fields and prototypes it should type.  The lead moves each
- * to its subject below, types them, and empties this section on
- * merging. */
-/* A task's debug flag's index in dmes (0x103808), in the order of the
- * console's dmes_ words and task_dmessage's table; the ninth no word
- * names, though system_init and dmes_all set it with the rest. */
-typedef enum __attribute__((packed)) task_debug_flag {
-  DMES_GPSM = 0,
-  DMES_HMON = 1,
-  DMES_KLOK = 2,
-  DMES_PLLP = 3,
-  DMES_ROOT = 4,
-  DMES_SCPI = 5,
-  DMES_SPOO = 6,
-  DMES_CURV = 7,
-  DMES_UNNAMED = 8,
-} task_debug_flag;
+#include "../common/types/task_debug_flag.h"
 
 /* preserved_region_fields.restore, a word: whether system_init restores
  * the region (0x12bb4).  pllp_task sets it each pass; nv_clear_and_reset
@@ -57,39 +39,9 @@ typedef enum __attribute__((packed)) preserved_region_restore {
 /* BEGIN PROPOSED ENUMS */
 /* END PROPOSED ENUMS */
 
-/* gps_receive_state: where gps_receive is in framing an Oncore message
- * into gps_response_buffer, its jump table at 0x4b892 (docs/firmware/
- * gps.md, "Framing").  A state above GPS_FRAMING_COMPLETE drops each
- * byte (0x4b884). */
-typedef enum __attribute__((packed)) gps_framing_state {
-  GPS_FRAMING_FIRST_AT = 0,  /* expects the first @ */
-  GPS_FRAMING_SECOND_AT = 1, /* expects the second @ */
-  GPS_FRAMING_ID_FIRST = 2,  /* an uppercase letter */
-  GPS_FRAMING_ID_SECOND = 3, /* a letter; the ID's length from the table */
-  GPS_FRAMING_BODY = 4,      /* the rest, the checksum last */
-  GPS_FRAMING_CR = 5,
-  GPS_FRAMING_LF = 6,
-  GPS_FRAMING_COMPLETE = 7, /* gps_receive reads no more */
-} gps_framing_state;
+#include "../common/types/gps_framing_state.h"
 
-/* What became of a GPS request, gps_count_response's kind: what it
- * counts in gps_counts (its jump table at 0x4ba0c), stores in
- * command_monitor_result or status_monitor_result for the monitors'
- * requests, and sends back to plla_exchange in gps_request_entry.result
- * for the others.  Every sender sends a request with 1;
- * gps_request_post sets its monitor's result to pending. */
-typedef enum __attribute__((packed)) gps_request_result {
-  GPS_RESULT_SUCCESS = 0,         /* successes */
-  GPS_RESULT_REJECT = 1,          /* rejects: the same wrong response twice */
-  GPS_RESULT_ABORT = 2,           /* aborts: emptied by a link reset */
-  GPS_RESULT_UNKNOWN_SENDER = 3,  /* unknown_sender: request_kind_valid's */
-  GPS_RESULT_UNKNOWN_COMMAND = 4, /* unknown_command: gps_request_class's 3 */
-  GPS_RESULT_BUSY = 5,            /* busy: not queued, or replaced */
-  GPS_RESULT_NO_COMMAND = 6, /* no_command: " // command not supported //" */
-  GPS_RESULT_NO_QUERY = 7,   /* no_query: " // query form not supported //" */
-  GPS_RESULT_TIMEOUT = 8,    /* timeouts: no response after three sends */
-  GPS_RESULT_PENDING = 9,    /* not yet answered; counted as none */
-} gps_request_result;
+#include "../common/types/gps_request_result.h"
 
 /* gps_request_class's sorting of a request code (gps_request_code). */
 typedef enum __attribute__((packed)) gps_code_class {
@@ -100,90 +52,9 @@ typedef enum __attribute__((packed)) gps_code_class {
   GPS_CLASS_INVALID = 3,
 } gps_code_class;
 
-/* A byte of the field programs oncore_decode_fields runs to unpack a
- * message into its record, oncore_status_field_codes (0x50fd2) to
- * oncore_receiver_id_field_codes (0x51004): docs/firmware/gps.md,
- * "Decoding".  1 to 0x7f copies that many bytes, and 0xc1 to 0xff
- * starts a group repeated 0x100 less that many times, 63 to 1; the
- * others, 0x86 to 0xc0, do nothing. */
-typedef enum __attribute__((packed)) oncore_field_code {
-  ONCORE_FIELD_SKIP_DESTINATION = 0x00, /* leaves a record byte */
-  ONCORE_FIELD_END = 0x80,
-  ONCORE_FIELD_GROUP_END = 0x81,   /* back to the group's start, or on */
-  ONCORE_FIELD_SKIP_SOURCE = 0x82, /* drops a message byte */
-  ONCORE_FIELD_SKIP_ZERO = 0x83,   /* drops a message byte, writes zero */
-  ONCORE_FIELD_ZERO = 0x84,        /* writes a zero byte */
-  ONCORE_FIELD_SIGN = 0x85,        /* the next message byte's sign extension */
-  ONCORE_FIELD_GROUP_FIRST = 0xc1, /* the longest group, 63 times */
-} oncore_field_code;
+#include "../common/types/oncore_field_code.h"
 
-/* The receiver status byte of @@Ba, oncore_status_fields.receiver_status,
- * a set of these bits (VPCommands.pdf, Position/Status/Data Message,
- * "s - Receiver Status Message"). */
-typedef enum __attribute__((packed)) oncore_receiver_status {
-  ONCORE_STATUS_BAD_ALMANAC = 0x01,
-  ONCORE_STATUS_INSUFFICIENT_SATELLITES = 0x02, /* fewer than 3 visible */
-  ONCORE_STATUS_DIFFERENTIAL = 0x04,
-  ONCORE_STATUS_ACQUIRING = 0x08, /* acquiring satellites or position hold */
-  ONCORE_STATUS_2D_FIX = 0x10,    /* altitude hold */
-  ONCORE_STATUS_3D_FIX = 0x20,
-  ONCORE_STATUS_POOR_GEOMETRY = 0x40, /* DOP above 20 */
-  ONCORE_STATUS_PROPAGATE = 0x80,     /* position propagate mode */
-} oncore_receiver_status;
-/* fine's states, pll.fine_state, as print_fine_state (0x1ba32) names
- * them: ": fine start" to ": fine fine slew" (0x1c5fe to 0x1c683). */
-typedef enum __attribute__((packed)) pll_fine_state {
-  PLL_FINE_START = 0,
-  PLL_FINE_SYNC_MEASURE = 1,
-  PLL_FINE_SYNC_1 = 2,
-  PLL_FINE_SYNC_2 = 3,
-  PLL_FINE_MEASURE_1 = 4,
-  PLL_FINE_MEASURE_DELAY = 5,
-  PLL_FINE_MEASURE_2 = 6,
-  PLL_FINE_SLEW = 7,
-  PLL_FINE_SLEW_MEASURE = 8,
-  PLL_FINE_FINE_SLEW = 9,
-} pll_fine_state;
-
-/* The console's GPS command, gps_command.code, named for the word that
- * posts it (diag_print_stat 0x1b504 to diag_gps_query 0x1b706);
- * gps_command_send (0x470aa) maps each to its GPS request.  Nothing in
- * the console posts GPS_CONSOLE_SELFTEST. */
-typedef enum __attribute__((packed)) gps_console_command {
-  GPS_CONSOLE_NONE = 0x00,
-  GPS_CONSOLE_PRINT_STATUS = 0x01,            /* print_stat */
-  GPS_CONSOLE_STATUS_RATE = 0x02,             /* stat_rate */
-  GPS_CONSOLE_TIME = 0x03,                    /* gps_time */
-  GPS_CONSOLE_DATE = 0x04,                    /* gps_date */
-  GPS_CONSOLE_HOLD_POSITION = 0x05,           /* gps_php */
-  GPS_CONSOLE_POSITION_HOLD = 0x06,           /* gps_ph */
-  GPS_CONSOLE_STATUS_INTERVAL = 0x07,         /* abr_stat: no request */
-  GPS_CONSOLE_MASK_ANGLE = 0x08,              /* eman */
-  GPS_CONSOLE_MASK_ANGLE_QUERY = 0x09,        /* q_eman */
-  GPS_CONSOLE_HOLD_POSITION_QUERY = 0x0a,     /* q_gps_php */
-  GPS_CONSOLE_CABLE_DELAY = 0x0b,             /* gps_cable_dly */
-  GPS_CONSOLE_CABLE_DELAY_QUERY = 0x0c,       /* q_gps_cable_dly */
-  GPS_CONSOLE_VISIBILITY_RATE = 0x0d,         /* vis_stat_rate */
-  GPS_CONSOLE_DOP_RATE = 0x0e,                /* xdop_stat_rate */
-  GPS_CONSOLE_PRINT_VISIBILITY = 0x0f,        /* print_vis */
-  GPS_CONSOLE_PRINT_BEST_COMBINATIONS = 0x10, /* print_bc */
-  GPS_CONSOLE_EXTENSION_RATE = 0x11,          /* ext_msg_rate */
-  GPS_CONSOLE_PRINT_EXTENSION = 0x12,         /* print_ext_msg */
-  GPS_CONSOLE_PRINT_ID = 0x13,                /* pr_gps_id */
-  GPS_CONSOLE_PRINT_PPS = 0x14,               /* pr_1pps */
-  GPS_CONSOLE_PRINT_TIME_RAIM = 0x15,         /* pr_time_raim */
-  GPS_CONSOLE_AVERAGE = 0x16,                 /* avg */
-  GPS_CONSOLE_CLEAR_AVERAGE = 0x17,           /* clr_avg */
-  GPS_CONSOLE_INIT = 0x18,                    /* init_gps */
-  GPS_CONSOLE_MASTER_RESET = 0x19,            /* master_reset */
-  GPS_CONSOLE_SELFTEST = 0x1a,
-  GPS_CONSOLE_QUERY_ALL = 0x1b,              /* gps_query_all */
-  GPS_CONSOLE_QUIET_STATUS = 0x1c,           /* quiet_status */
-  GPS_CONSOLE_PRINT_AVERAGE = 0x1d,          /* pr_avg */
-  GPS_CONSOLE_PRINT_INSTRUMENT_STATE = 0x1e, /* pr_gps_istate */
-  GPS_CONSOLE_CHANGE = 0x1f,                 /* gps_change: request, as set */
-  GPS_CONSOLE_QUERY = 0x20, /* gps_query: request, as a query */
-} gps_console_command;
+#include "../common/types/oncore_receiver_status.h"
 
 /* Which receiver gps_receiver_status_update updates: the Oncore's
  * status, or the alternate receiver's, which it ignores, returning at
@@ -202,49 +73,9 @@ typedef enum __attribute__((packed)) gps_reference_override {
   GPS_REFERENCE_OVERRIDE_INVALID = 0xff,
 } gps_reference_override;
 
-/* sync_request's kind, counter_configuration_fields.sync_kind: a step
- * against a positive TI, against a negative one, and a sync
- * (pll_stages.c's steps; sync_imm, diag_sync_imm 0x1b2ec, asks for a
- * sync). */
-typedef enum __attribute__((packed)) counter_sync_kind {
-  COUNTER_SYNC_POSITIVE = 1,
-  COUNTER_SYNC_NEGATIVE = 2,
-  COUNTER_SYNC_FULL = 3,
-} counter_sync_kind;
+#include "../common/types/counter_sync_kind.h"
 
-/* The fault the console's crash word raises, its argument, by its jump
- * table at 0x1c09a (diag_crash, 0x1c07c); any other does nothing. */
-typedef enum __attribute__((packed)) console_crash_kind {
-  CONSOLE_CRASH_BUS_ERROR = 0,     /* a long written to 0x700000, unmapped */
-  CONSOLE_CRASH_ADDRESS_ERROR = 1, /* a long written to an odd address */
-  CONSOLE_CRASH_ZERO_DIVIDE = 2,   /* divul by zero */
-  CONSOLE_CRASH_FLOAT_DIVIDE = 3,  /* a double divided by zero */
-  CONSOLE_CRASH_FATAL_ERROR = 4,   /* fatal_error */
-} console_crash_kind;
-/* A satellite's cell on the status screen, the code at +4 of a
- * satellite_status_list entry: satellite_elevation_azimuth sets 1 or 2
- * (0x49654), satellite_status the rest (0x49688), and
- * format_satellite_cell prints each (its table at 0x49ab4). */
-typedef enum __attribute__((packed)) satellite_cell_status {
-  SATELLITE_CELL_NONE = 0,         /* blank */
-  SATELLITE_CELL_POSITION = 1,     /* "%2d %3d", elevation and azimuth */
-  SATELLITE_CELL_NO_POSITION = 2,  /* "-- ---" */
-  SATELLITE_CELL_IGNORED = 3,      /* "Ignore" */
-  SATELLITE_CELL_UNHEALTHY = 4,    /* "Not OK" */
-  SATELLITE_CELL_ACQUIRING = 5,    /* "Acq   ": channel modes 1 to 4 */
-  SATELLITE_CELL_SYNCHRONIZED = 6, /* "Acq . ": modes 5 and 6 */
-  SATELLITE_CELL_EPHEMERIS = 7     /* "Acq ..": modes 7 and 8 */
-} satellite_cell_status;
-
-/* satellite_track_class's class of a @@Bb record, by its health
- * (oncore_health; 0x49612, its table at 0x49638): satellite_status
- * shows a removed one as "Ignore" and an unhealthy one as "Not OK". */
-typedef enum __attribute__((packed)) satellite_health_class {
-  SATELLITE_CLASS_UNKNOWN = 0, /* no record, or a health past 3 */
-  SATELLITE_CLASS_HEALTHY = 1,
-  SATELLITE_CLASS_UNHEALTHY = 2,
-  SATELLITE_CLASS_REMOVED = 3 /* healthy or not */
-} satellite_health_class;
+#include "../common/types/satellite_health_class.h"
 
 /* A mode line of the status screen, status_screen_mode_line.mode, which
  * status_screen picks by pll_screen_mode (0x4a9be, its table at
@@ -394,40 +225,13 @@ typedef enum __attribute__((packed)) adc_channel {
   ADC_ANTENNA_CURRENT = 7, /* "Antenna current"; :DIAG:GPS:ACURrent? */
 } adc_channel;
 
-/* Which satellite IDs: satellite_id_valid's ranges. */
-typedef enum __attribute__((packed)) satellite_kind {
-  SATELLITE_GPS = 0,        /* 1 to 32 */
-  SATELLITE_PSEUDOLITE = 1, /* 33 to 37 */
-  SATELLITE_ANY = 2         /* 1 to 37 */
-} satellite_kind;
+#include "../common/types/satellite_kind.h"
 
-/* Which list satellite_list_limits gives the limits of. */
-typedef enum __attribute__((packed)) satellite_list {
-  SATELLITE_LIST_TRACKING = 0, /* :SAT:TRAC?, six channels */
-  SATELLITE_LIST_TRACKING_PSEUDOLITES = 1,
-  SATELLITE_LIST_VISIBLE = 2, /* :SAT:VIS:PRED?, twelve */
-  SATELLITE_LIST_ALL = 3      /* the ignore and include lists */
-} satellite_list;
+#include "../common/types/satellite_list.h"
 
-/* A time-interval reading's error bits, which counter_read reports:
- * "Gate failure", "Result uncomputable", "Measurement aborted",
- * "Interpolator calibration failure". */
-typedef enum __attribute__((packed)) counter_error {
-  COUNTER_GATE_FAILURE = 0x01,
-  COUNTER_RESULT_UNCOMPUTABLE = 0x04,
-  COUNTER_MEASUREMENT_ABORTED = 0x08,
-  COUNTER_CALIBRATION_FAILURE = 0x10
-} counter_error;
+#include "../common/types/counter_error.h"
 
-/* A SCPI parameter descriptor's structure, its first byte, which the
- * pllc task's validate_or_doaction, get_setup_vars and finish_scpi_cmd
- * switch on; each accepts 3 and does nothing with it. */
-typedef enum __attribute__((packed)) scpi_param_type {
-  SCPI_PARAM_NUMERIC = 0, /* scpi_numeric_param */
-  SCPI_PARAM_SETTING = 1, /* scpi_setting_param */
-  SCPI_PARAM_ACTION = 2,  /* scpi_action_param */
-  SCPI_PARAM_DOUBLE = 3   /* a double's scpi_numeric_param (0x33724) */
-} scpi_param_type;
+#include "../common/types/scpi_param_type.h"
 
 /* The VP Oncore reference's codes (third_party/motorola/VPCommands.pdf). */
 
@@ -459,13 +263,7 @@ typedef enum __attribute__((packed)) oncore_xdop_type {
   ONCORE_XDOP_TDOP = 4
 } oncore_xdop_type;
 
-/* @@Bb: a satellite's health. */
-typedef enum __attribute__((packed)) oncore_health {
-  ONCORE_HEALTHY = 0,
-  ONCORE_HEALTHY_REMOVED = 1,
-  ONCORE_UNHEALTHY = 2,
-  ONCORE_UNHEALTHY_REMOVED = 3
-} oncore_health;
+#include "../common/types/oncore_health.h"
 
 /* @@Aw: the time the engine reports. */
 typedef enum __attribute__((packed)) oncore_time_mode {
@@ -521,47 +319,11 @@ typedef enum __attribute__((packed)) oncore_raim_status {
   ONCORE_RAIM_NEITHER = 2
 } oncore_raim_status;
 
-/* A numeric SCPI parameter's descriptor, in ROM; its small tables sit
- * just before it.  0x2c bytes. */
-/* A numeric descriptor's validate: the new value, its index, the
- * bounds and step for it, and the request's source; its result is the
- * value as validated. */
-typedef long scpi_validate_function(void* value, int index, void* minimum,
-                                    void* maximum, void* step, int source);
+#include "../common/types/scpi_validate_function.h"
 
-/* printf's shape, for the routines that take one to print with. */
-typedef int printf_function(char* format, ...);
+#include "../common/types/stdlib.h"
 
-/* console_write's shape, for the routines that take one to write a
- * string with: log_print and status_screen. */
-typedef unsigned long write_function(char* s);
-
-/* qsort's comparator. */
-typedef int qsort_compare_function(void* a, void* b);
-
-/* A function atexit registers and call_atexit_functions calls, the
- * last first (atexit_functions, 0x1038b4, 32 of them). */
-typedef void atexit_function(void);
-
-/* The holdover stage's steering, at 0x102042: each 10-second block's
- * mean time interval, and the accumulators holdover_ti_add keeps of the
- * readings for a least-squares slope, which holdover_correction_valid
- * turns into an EFC correction. */
-typedef struct holdover_steering_state {
-  float ti_mean; /* +0x00: the block's valid readings' sum over 10, scaled up at
-                    its end if some failed */
-  uint8_t readings; /* +0x04: the block's valid readings */
-  uint8_t seconds;  /* +0x05: the block's seconds, to 10 */
-  uint8_t field_06; /* +0x06: zeroed with the block; nothing reads it */
-  uint8_t field_07;
-  float aging_limit; /* +0x08: 2e-9, or 2e-9 a day as a rate a second once the
-                        EFC history is full; nothing reads it */
-  float ti_sum;      /* +0x0c */
-  float ti_weighted_sum; /* +0x10: each reading times its index */
-  float ti_largest; /* +0x14: the largest reading's magnitude, holdover_ti_max's
-                     */
-  int32_t ti_count; /* +0x18: at 10 or more the correction may be used */
-} holdover_steering_state;
+#include "../common/types/holdover_steering_state.h"
 
 /* startup_pll's and pll_normal's steering, at 0x10205e: a
  * proportional-integral loop on each 10-second block's mean time
@@ -584,37 +346,7 @@ typedef struct loop_steering_state {
   float filter_weight; /* +0x18: 29.75 over max_loop_time, pll.ti_filtered's */
 } loop_steering_state;
 
-/* A DUART channel's receive ring: its interrupt stores at write, its
- * reader takes at read, each index wrapping in a byte; empty when the
- * two are equal. */
-typedef struct serial_ring {
-  uint8_t write;
-  uint8_t read;
-  uint8_t data[256];
-} serial_ring;
-
-/* DUART channel A's driver, the GPS receiver's link, at 0x102fe0; only
- * the GPS task sends on it.  Its receive ring is at 0x102edd. */
-typedef struct duarta_driver {
-  uint8_t* transmit_next; /* +0x00: drta_send_message's next byte */
-  int16_t transmit_count; /* +0x04: its characters left; at 0 the GPS task is
-                             signaled 0x800 */
-  uint8_t overrun;        /* +0x06: the receiver overran ("DRTA receiver overrun
-                             ocurred") */
-  uint8_t loopback_test;  /* +0x07: set while duart_loopback_test_a runs */
-  uint8_t held; /* +0x08: set while that test has the port, so a send leaves the
-                   transmit interrupt off */
-  uint8_t least_free; /* +0x09: the receive ring's least free space seen */
-} duarta_driver;
-
-/* A serial port's baud code, in its settings record (SERial1's and
- * SERial2's :BAUD; sci_baud_set and duartb_reconfigure). */
-typedef enum __attribute__((packed)) serial_baud {
-  SERIAL_BAUD_1200 = 0,
-  SERIAL_BAUD_2400 = 1,
-  SERIAL_BAUD_9600 = 2,
-  SERIAL_BAUD_19200 = 3,
-} serial_baud;
+#include "../common/types/serial_ring.h"
 
 /* A serial port's parity code, in its settings record (:PARity). */
 typedef enum __attribute__((packed)) serial_parity {
@@ -699,66 +431,20 @@ typedef enum __attribute__((packed)) front_panel_lamp {
   FRONT_PANEL_LAMP_SHIFT = 0x80,
 } front_panel_lamp;
 
-/* A kernel I/O device, by kernel_dispatch_io's (0x14c36) major number in
- * the high byte; the QSPI's minor, a qspi_device, goes in the low. */
-typedef enum io_device {
-  IO_DEVICE_DUART_B = 0x000,
-  IO_DEVICE_QSPI = 0x100,
-  IO_DEVICE_CONSOLE_STRING = 0x200,
-  IO_DEVICE_SCI = 0x300,
-} io_device;
+#include "../common/types/io_device.h"
 
-/* The data format :FORMat:DATA sets, ASCii or INTeger (097-59551-02,
- * "Reading Time Stamps"), which only the :ROBin queries' responses use:
- * robin_store (0x29a68) gives ASCii as an array of the points' shorts
- * and INTeger as a block of their bytes, by its jump table at 0x29a96. */
-typedef enum __attribute__((packed)) data_format {
-  FORMAT_ASCII = 0,
-  FORMAT_INTEGER = 1,
-} data_format;
+#include "../common/types/data_format.h"
 
-/* The time code's format, :PTIMe:TCODe:FORMat, which tcode_request
- * takes: T1, the GPS seconds; T2 with a test prefix; T2. */
-typedef enum __attribute__((packed)) timecode_format {
-  TIMECODE_T1 = 0,
-  TIMECODE_T2_TEST = 1,
-  TIMECODE_T2 = 2,
-} timecode_format;
+#include "../common/types/timecode_format.h"
 
 /* tcode_send's routine, which timecode_schedule sends the time code
  * through (0x14128): drtb_send_async's shape, which tcode_request stores
  * (0x13d6a). */
 typedef void tcode_send_function(char* block, uint8_t count);
 
-/* A klok_entry's event class, which klok_find looks entries up by:
- * the leap second's (leap_event_delete, 0x46394) and the lifetime
- * record's hourly save. */
-typedef enum __attribute__((packed)) klok_event_class {
-  KLOK_EVENT_LEAP = 1,
-  KLOK_EVENT_LIFETIME = 2,
-} klok_event_class;
+#include "../common/types/klok_event_class.h"
 
-/* DUART channel B's serial settings, SERial1's, at 0x101f58: the
- * :SYSTem:COMMunicate:SERial1 setters store them, through setting
- * descriptors that save the EEPROM parameter record, and
- * duartb_reconfigure applies them.  parameter_record_read loads +2 to
- * +8 from the record's bytes 2 to 8, or copies the defaults at 0x30a34
- * over all 9 bytes when its checksum fails; save_parameter_record
- * writes them back. */
-typedef struct duartb_settings_record {
-  uint8_t field_00[2]; /* +0x00: only the defaults' copy writes them, 0; nothing
-                          reads them */
-  serial_baud baud;    /* +0x02 */
-  serial_parity parity; /* +0x03: not ONE */
-  uint8_t xon_xoff;     /* +0x04: :PACE XON when nonzero, else NONE */
-  uint8_t field_05;     /* +0x05: saved and restored; its setting descriptor,
-                           0x33364, no setter uses */
-  uint8_t eight_bits;   /* +0x06: else seven; with nv_settings.serial_restricted
-                           set, parity set with 8 bits clears it, and 8 bits set
-                           with parity clears parity */
-  uint8_t two_stop_bits; /* +0x07: else one */
-  uint8_t echo; /* +0x08: :FDUPlex ON, each character received echoed */
-} duartb_settings_record;
+#include "../common/types/duartb_settings_record.h"
 
 /* The SCI's serial settings, SERial2's, at 0x101f50: one byte for
  * parity and data bits together and no stop-bit setting, as 097-59551-02
@@ -776,58 +462,12 @@ typedef struct sci_settings_record {
   uint8_t echo;         /* +0x05: :FDUPlex ON, each character received echoed */
 } sci_settings_record;
 
-/* Channel B's serial settings as last applied to the DUART, at
- * 0x102ecc: copies of duartb_settings', which
- * duartb_baud_from_settings and duartb_mode_from_settings program. */
-typedef struct duartb_applied_settings {
-  uint8_t baud;
-  uint8_t parity;
-  uint8_t eight_bits; /* +0x02: else seven, and duartb_isr strips the top bit */
-  uint8_t two_stop_bits; /* +0x03: else one */
-} duartb_applied_settings;
-
-/* What the code last wrote to the 68681's write-only registers, at
- * 0x102ed0, so that it can change some bits of one and write it whole;
- * their bits are mc68681.h's. */
-typedef struct duart_shadow_registers {
-  uint8_t mr1a;
-  uint8_t mr2a;
-  uint8_t csra;
-  uint8_t acr;
-  uint8_t imr; /* +0x04: 0x10 channel B's transmitter, 0x20 its receiver */
-  uint8_t ctur;
-  uint8_t ctlr;
-  uint8_t mr1b;
-  uint8_t mr2b;
-  uint8_t csrb;
-  uint8_t opcr;
-  uint8_t output_reset; /* +0x0b: the output bits reset, the failed self-tests'
-                           lamps */
-  uint8_t field_0c;     /* +0x0c: duart_init zeroes it, and nothing sets it;
-                           duart_output_bit_set keeps the bits in output_reset
-                           while it is set, else in selftest.lamp_mask
-                           (0x1de56) */
-} duart_shadow_registers;
+#include "../common/types/duartb_applied_settings.h"
 
 /* A routine that writes a character to a port. */
 typedef void putc_function(char c);
 
-/* A char argument through a function pointer.  This compiler pushes a
- * char in a 2-byte slot, its value at the slot's start, 4 bytes above
- * the stack pointer at entry (docs/firmware/README.md, "The calling
- * convention"), where Ghidra's convention for a pointer's prototype, and
- * gcc, put a char at the end of a 4-byte slot; custom storage, which
- * places a function's own char there, a pointer's prototype cannot
- * carry.  A 4-byte structure's first byte is at the slot's start in
- * both; gcc pads a 2-byte one to the slot's end. */
-typedef struct char_slot {
-  uint8_t value;    /* +0x00: the char */
-  uint8_t field_01; /* unread: the rest of the original's 2-byte slot */
-  uint8_t next; /* +0x02: unread: the next 2-byte slot's char, a second argument
-                   the callee ignores; the self-test callers push it with move.b
-                   (0x177b6, 0x177dc, 0x18310, 0x18316) */
-  uint8_t field_03; /* unread: the rest of that slot */
-} char_slot;
+#include "../common/types/char_slot.h"
 
 /* A self-test, in the tables at 0x18458 and 0x17fe0: run is 1 to run the
  * test, as selftest_execute's second call and selftest_run_all_counted
@@ -836,9 +476,7 @@ typedef void selftest_test(char_slot run);
 /* An entry of the self-test tables. */
 typedef selftest_test* selftest_entry;
 
-/* The measurement dac_search_bisect and dac_search_step move a DAC by:
- * it sets the DAC to its argument and returns a reading. */
-typedef uint8_t dac_measure(char_slot dac);
+#include "../common/types/dac_measure.h"
 
 /* The 16-byte message a driver sends its exchange once, at start-up, so
  * that a task takes the exchange as a token before using the port: its
@@ -941,27 +579,7 @@ typedef struct sci_driver {
   uint8_t field_1b;
 } sci_driver;
 
-/* The QSPI's lock and its transfer, at 0x1032a6: qspi_acquire takes the
- * lock if it is free, else queues its task and waits for 0x400, which
- * qspi_release or the interrupt signals the next waiting task.  The
- * interrupt copies the QSPI's receive RAM, qsm.rr at 0xfffd00
- * (MC68331UM Table D-13), to the caller's buffer. */
-typedef struct qspi_state {
-  uint8_t field_00; /* +0x00: qspi_send and qspi_transfer set it; nothing reads
-                       it */
-  uint8_t write;    /* +0x01: the next waiting slot, wrapping at 16 */
-  uint8_t read;     /* +0x02: the next task to hand the lock to */
-  uint8_t field_03;
-  uint32_t waiting[16]; /* +0x04: the tasks queued for the lock */
-  uint8_t busy;         /* +0x44: the lock is held */
-  uint8_t field_45;
-  uint16_t*
-      receive_buffer; /* +0x46: where the interrupt copies the receive RAM */
-  uint16_t receive_count; /* +0x4a: how many words */
-  uint8_t copy_pending;   /* +0x4c: the interrupt is to copy them */
-  uint8_t running; /* +0x4d: qspi_start waits while it is set; the interrupt
-                      clears it */
-} qspi_state;
+#include "../common/types/qspi_state.h"
 
 /* A device on the QSPI, by the minor number of I/O device 1, which
  * qspi_queue_setup (0x1f396) takes and sets up a queue for, by its jump
@@ -979,39 +597,10 @@ typedef struct qspi_state {
  * qspi_fpga_byte_write (0x1f2fa, 0x1f312) send. */
 typedef enum __attribute__((packed)) qspi_device {
   QSPI_FRONT_PANEL = 0,
-  QSPI_ADC = 1,
-  QSPI_HDAC = 2,
-  QSPI_UNUSED_WORD = 4,
-  QSPI_UNUSED_TWO_WORDS = 5,
-  QSPI_FPGA_BLOCK = 6,
-  QSPI_EFC = 7,
-  QSPI_FPGA_TAIL = 9,
-  QSPI_FPGA_WORD = 0xa,
-  QSPI_FPGA_BYTE = 0xb,
-  QSPI_FPGA_READBACK = 0xc,
+#include "../common/types/qspi_device.h"
 } qspi_device;
 
-/* A QSPI transfer's two buffers, on its caller's stack, which
- * qspi_transfer takes, and qspi_read hands its device's read: the words
- * to send and where the words received go.  adc_read and the FPGA's
- * routines pass one. */
-typedef struct qspi_buffers {
-  uint16_t* transmit; /* +0x00 */
-  uint16_t* receive;  /* +0x04 */
-} qspi_buffers;
-
-/* The EEPROM lock's token, at 0x101d1c: the 16-byte message eeprom_init
- * sends the eepx exchange, which eeprom_lock receives into the same
- * cells and eeprom_unlock sends back.  The lock is recursive, as
- * mutex_acquire's is: the holder at +0x08, its nested holds at +0x0c. */
-typedef struct eeprom_lock_token {
-  uint32_t status;   /* +0x00: eeprom_init zeroes it; nothing reads it */
-  uint32_t exchange; /* +0x04: eepx's id; eeprom_unlock checks it against
-                        eepx_exchange ("eepx semaphore has been corrupted") */
-  uint32_t owner;    /* +0x08: the task holding the lock, 0 for none */
-  int32_t depth;     /* +0x0c: the holder's nested eeprom_lock calls, which
-                        eeprom_unlock counts down before it sends */
-} eeprom_lock_token;
+#include "../common/types/qspi_buffers.h"
 
 /* The EFC's gain and what efc_gain_set derives from it, at 0x102554:
  * pllp_task sets the gain, the fractional frequency one EFC count
@@ -1030,27 +619,9 @@ typedef struct efc_gain_values {
                         */
 } efc_gain_values;
 
-/* Whether the EFC is at or near the end of its range, at 0x101cf4:
- * efc_clamp and hmon_check_efc report each change as a status
- * happening, and efc_clamp_reset clears all three. */
-typedef struct efc_range_state {
-  uint8_t clamped;  /* +0x00: efc_clamp clamped it to 0 or 1048560, happening
-                       STATUS_EFC_AT_LIMIT_SET; cleared with _CLEARED */
-  uint8_t near_end; /* +0x01: "EFC near end of range", happening
-                       STATUS_EFC_NEAR_LIMIT_SET; cleared with _CLEARED */
-  uint8_t near_end_checks; /* +0x02: hmon_check_efc's consecutive checks outside
-                              52428 to 996132, held at 5 */
-} efc_range_state;
+#include "../common/types/efc_range_state.h"
 
-/* The GPS command the console's GPS words leave for pllp_task, at
- * 0x10256c: gps_command_send maps the code to an Oncore request, code
- * 0x20 sending request as it is, and sends it with the arguments. */
-typedef struct gps_command_mailbox {
-  gps_console_command code; /* +0x00: 0 when none is pending */
-  uint8_t field_01;
-  int32_t arguments[4]; /* +0x02 */
-  int32_t request;      /* +0x12: code 0x20's request */
-} gps_command_mailbox;
+#include "../common/types/gps_command_mailbox.h"
 
 /* One of the health monitor's eight ADC monitors, adc_monitors at
  * 0x101b72 to 0x101cf1, by hmon_check_supplies' step: temperature,
@@ -1243,17 +814,7 @@ typedef enum __attribute__((packed)) selftest_ram_failure {
   SELFTEST_RAM_ADDRESS_LINE = 0x02,
 } selftest_ram_failure;
 
-/* selftest_results.uart, the DUART test's failures, by selftest_uart's
- * texts (0x17cbe): duart_test's IVR and counter checks (duart.c, 0x1e650)
- * and each channel's loopback (duarta.c, duartb.c). */
-typedef enum __attribute__((packed)) selftest_uart_failure {
-  SELFTEST_UART_REGISTER = 0x01,
-  SELFTEST_UART_COUNTER = 0x02,
-  SELFTEST_UART_CHANNEL_A_DATA = 0x04,
-  SELFTEST_UART_CHANNEL_A_TIMEOUT = 0x08,
-  SELFTEST_UART_CHANNEL_B_DATA = 0x10,
-  SELFTEST_UART_CHANNEL_B_TIMEOUT = 0x20,
-} selftest_uart_failure;
+#include "../common/types/selftest_uart_failure.h"
 
 /* selftest_results.qspi, the QSPI devices that failed, as
  * qspi_tests_run sets them (0x189f2) and selftest_qspi reports them. */
@@ -1354,20 +915,7 @@ typedef struct selftest_results {
   uint8_t in_run; /* +0x47: set during selftest_run; nothing reads it */
 } selftest_results;
 
-/* Who sends a GPS request (gps_request_entry.sender), so that its result
- * comes back to it: gpsx_send for the loop's GPS sequences (pllp_task
- * takes the result as gps_ack_code), pll_scpi_send_to_loop for a
- * setting (pll_scpi_complete), and gps_request_post for the command
- * and status monitors, whose results gps_count_response keeps in
- * command_monitor_result and status_monitor_result.  request_kind_valid
- * takes 1 to 4, from its table at 0x4cfc0, which GPS_SENDER_NONE ends. */
-typedef enum __attribute__((packed)) gps_request_sender {
-  GPS_SENDER_NONE = 0,
-  GPS_SENDER_SEQUENCE = 1,
-  GPS_SENDER_SETTING = 2,
-  GPS_SENDER_COMMAND_MONITOR = 3,
-  GPS_SENDER_STATUS_MONITOR = 4,
-} gps_request_sender;
+#include "../common/types/gps_request_sender.h"
 
 /* A GPS request's code (gps_request_entry.code, a descriptor's
  * gps_request), which gps_request_class (0x4c7c4) sorts: in the 58503A
@@ -1498,37 +1046,7 @@ typedef enum __attribute__((packed)) gps_request_code {
   GPS_REQUEST_NONE = 0xff,            /* a descriptor's, for none */
 } gps_request_code;
 
-/* A GPS request: the message pll_scpi_send_to_loop, gpsx_send and
- * gps_request_post build in 26 bytes of their frames and send
- * gpsx_exchange, which gpsm_task receives into 26 bytes, keeps in its
- * ring, and gps_count_response sends back to plla_exchange with the
- * result, for pllp_task and gps_selftest_run.  The kernel copies +0x04
- * to +0x17 (kernel_copy_message). */
-typedef struct gps_request_entry {
-  uint32_t
-      field_00; /* +0x00: the senders clear it; the kernel does not copy it */
-  uint32_t
-      field_04; /* +0x04: the senders clear it; kernel_send_for_task refuses a
-                   nonzero one other than the exchange's id, error 4 */
-  gps_request_sender sender;  /* +0x08: one with the same sender waiting is
-                                 not queued again; the monitors' may be
-                                 replaced */
-  gps_request_result result;  /* +0x09: 1 as sent; gps_count_response's kind as
-                      it comes back, which pllp_task takes as gps_ack_code or
-                      pll_scpi_complete's success */
-  gps_request_code_word code; /* +0x0a: the request, gps_request_class's
-                                 index; 0x45 empties the ring before it is
-                                 queued */
-  gps_argument_mode argument_mode; /* +0x0c: gps_request_class's second
-                                      argument, copied to gps_request_step's */
-  uint8_t field_0d;
-  int32_t* arguments; /* +0x0e: four longs, which gpsm_task copies into
-                         gps_request_step's */
-  uint8_t sent; /* +0x12: gps_request_post's last argument, 1 for the status
-                   monitor's 0x4b; a newest waiting request with it set is not
-                   replaced */
-  uint8_t field_13[7];
-} gps_request_entry;
+#include "../common/types/gps_request_entry.h"
 
 /* gpsm_task's ring of waiting GPS requests: six entries in the 58503A
  * 3704, where the Z3805A 3543B has five (request_ring_put's bound,
@@ -1560,129 +1078,21 @@ typedef struct gps_running_command {
                                     gps_command_message */
 } gps_running_command;
 
-/* A time of day as a long holds it, hour << 16 | minute << 8 | second,
- * by its bytes, which the clock routines add and carry one at a time
- * (datetime_add, time_next_second). */
-typedef struct time_of_day {
-  uint8_t reserved; /* 0 */
-  uint8_t hour;
-  uint8_t minute;
-  uint8_t second;
-} time_of_day;
+#include "../common/types/time_of_day.h"
 
-/* A date as a long holds it, year << 16 | month << 8 | day, where a
- * routine keeps it in memory and reads or writes it by its parts:
- * leap_opportunity_date sets the month and day bytes (0x11648 to
- * 0x11672), diag_get_time and timecode_update print the year word and
- * the month and day bytes (0x1b474 to 0x1b484, 0x13e04 to 0x13e14),
- * and pulse_settings_done builds one from three longs (0x42b48 to
- * 0x42b58). */
-typedef struct calendar_date {
-  uint16_t year; /* +0x00: the full year, 1994 on */
-  uint8_t month; /* +0x02: 1 to 12 */
-  uint8_t day;   /* +0x03: 1 to 31 */
-} calendar_date;
+#include "../common/types/gps_command_log_entry.h"
 
-/* A GPS Receiver Command Log entry: what command_log_add takes of a
- * request gpsm_task has sent, and gps_print_command prints as
- * "%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s". */
-typedef struct gps_command_log_entry {
-  gps_request_code_word code;    /* +0x00: the request's +0xa (move.w 0x4c686),
-                                    printed under "ID" (movea.w 0x4c84a) */
-  gps_request_sender sender;     /* +0x02: the request's; printed PLL, SCPI1,
-                                    GPSc and GPSs, else "?" */
-  uint8_t field_03;              /* never written */
-  gps_request_code_word message; /* +0x04: the request's +0x1e (move.w
-                                    0x4c68c), its index in the message table
-                                    at 0x4fece, whose ID prints (ext.l
-                                    0x4c838) */
-  char argument_text[3];   /* +0x06: characters 4 and 5 of gps_message_to_text's
-                              text, the first byte after the ID in hex; NUL */
-  gps_argument_mode query; /* +0x09: the command's; printed q, else c */
-  uint8_t from_clock; /* +0x0a: 1 when the clock is set, the date and time its;
-                        0 for a clock not set since power-up (get_date_time's
-                        1), the date and time @@Ba's.  Printed blank, else
-                        e */
-  uint8_t field_0b;   /* never written */
-  uint32_t date; /* +0x0c: the clock's while from_clock, else @@Ba's, local */
-  time_of_day
-      time; /* +0x10: likewise; gps_print_command passes it to format_time */
-} gps_command_log_entry;
+#include "../common/types/packed_datetime.h"
 
-/* The GPS Receiver Command Log, a ring at 0x1017f6, and its copy at
- * 0x1019a2, which status_snapshot_update takes with the snapshot at
- * 0x10168e: 21 entries, the oldest at read, the next free at write;
- * empty when the two are equal, and full at 20, when command_log_add
- * drops the oldest.  gps_print_command takes the oldest. */
-typedef struct gps_command_log {
-  gps_command_log_entry entries[21];
-  gps_command_log_entry* read;  /* +0x1a4 */
-  gps_command_log_entry* write; /* +0x1a8 */
-} gps_command_log;
-
-/* A date and time as datetime_add and datetime_subtract take them: the
- * time's hours, minutes and seconds in its low three bytes, and the date
- * packed as date_to_days reads it, or, in their first argument, a count
- * of days to add or take away. */
-typedef struct packed_datetime {
-  time_of_day time;
-  uint32_t date;
-} packed_datetime;
-
-/* The lifetime record in RAM, at 0x101d00: what lifetime_record_read
- * loads from EEPROM 0x400060 and lifetime_record_write saves there,
- * the EEPROM's order being the date, the count, then the EFC. */
-typedef struct lifetime_state {
-  float efc; /* +0x00: the EFC lifetime_update saves in normal PLL, mid-scale
-                524288 by default; pll_init starts from it */
-  uint32_t date; /* +0x04: year << 16 | month << 8 | day, 1994-01-01 by default;
-                    clock_init takes the date from it */
-  int32_t count; /* +0x08: one more for each new date lifetime_update is given;
-                    :DIAGnostic:LIFetime:COUNt? returns it */
-} lifetime_state;
+#include "../common/types/lifetime_state.h"
 
 /* The EEPROM's records ("EEPROM records" in structures.md), each
  * checksummed by record_checksum in its first two bytes, as their
  * writers build them on their stacks: erased to 0xff, then filled. */
 
-/* The parameter record at 0x400000: save_parameter_record's copy of
- * the two ports' settings. */
-typedef struct parameter_record {
-  uint16_t checksum;            /* +0x00 */
-  uint8_t duartb_baud;          /* +0x02: duartb_settings' +2 to +8, in order */
-  uint8_t duartb_parity;        /* +0x03 */
-  uint8_t duartb_xon_xoff;      /* +0x04 */
-  uint8_t duartb_field_05;      /* +0x05 */
-  uint8_t duartb_eight_bits;    /* +0x06 */
-  uint8_t duartb_two_stop_bits; /* +0x07 */
-  uint8_t duartb_echo;          /* +0x08 */
-  uint8_t sci_baud;             /* +0x09: sci_settings' +2 to +5, in order */
-  uint8_t sci_parity;           /* +0x0a */
-  uint8_t sci_xon_xoff;         /* +0x0b */
-  uint8_t sci_echo;             /* +0x0c */
-  uint8_t unused[3];            /* +0x0d: left erased */
-} parameter_record;
+#include "../common/types/parameter_record.h"
 
-/* The identification record at 0x400010: identification_record_write's
- * model, serial and suffix, and "S". */
-typedef struct identification_record {
-  uint16_t checksum; /* +0x00 */
-  char model[18];    /* +0x02: idn_model */
-  char serial[18];   /* +0x14: idn_serial */
-  char suffix;       /* +0x26: idn_suffix */
-  char tag[3];       /* +0x27: "S" */
-  uint8_t unused[6]; /* +0x2a: left erased */
-} identification_record;
-
-/* The lifetime record at 0x400060, lifetime's date, count and EFC in
- * that order. */
-typedef struct lifetime_record {
-  uint16_t checksum;  /* +0x00 */
-  uint32_t date;      /* +0x02 */
-  int32_t count;      /* +0x06 */
-  float efc;          /* +0x0a */
-  uint8_t unused[18]; /* +0x0e: left erased */
-} lifetime_record;
+#include "../common/types/identification_record.h"
 
 /* The calibration block at 0x400080: save_calibration_block's TC and
  * time offset. */
@@ -1710,390 +1120,15 @@ typedef struct nv_record {
   uint32_t packed[36]; /* +0x10: the settings packed into longs, then 0xff */
 } nv_record;
 
-/* A reset-cause record, one of 32 from 0x4001c0, as reset_record_write
- * builds it; its checksum is reset_record_checksum's, over bytes 4 to
- * 0x5b. */
-typedef struct reset_record {
-  int16_t sequence;  /* +0x00: one past the slot's stored record's */
-  uint16_t checksum; /* +0x02 */
-  time_of_day time;  /* +0x04: get_date_time's time */
-  uint32_t date;     /* +0x08: its date */
-  char text[80];     /* +0x0c */
-} reset_record;
+#include "../common/types/reset_record.h"
 
-/* What sprintf and vsprintf hand doprnt to pass to sprintf_put, on
- * their own stacks: sprintf_put writes at cursor and advances it.
- * Nothing reads unused. */
-typedef struct sprintf_output {
-  uint32_t unused;
-  char* cursor;
-} sprintf_output;
+#include "../common/types/sprintf.h"
 
-/* What doprnt writes its output through, as fwrite is called: the
- * text, the size of an element, the count, and the output; sprintf's
- * is sprintf_put (0x608c4).  The count written comes back. */
-typedef int32_t sprintf_put_function(char* text, int32_t size, int32_t count,
-                                     sprintf_output* output);
+#include "../common/types/scpi_decimal.h"
 
-/* The record scpi_double_to_decimal fills at A0, on its caller's stack:
- * the double's sign, its significant digits in ASCII, and the exponent
- * of 0.d1d2... */
-typedef struct scpi_decimal {
-  int16_t sign;     /* +0x00 */
-  char digits[16];  /* +0x02 */
-  int16_t exponent; /* +0x12 */
-} scpi_decimal;
+#include "../common/types/scpi_error_message.h"
 
-/* A unit multiplier, one of scpi_multipliers at 0x27b2e, which
- * scpi_multiplier_exponent walks to the entry whose name is 0. */
-typedef struct scpi_multiplier {
-  uint16_t name;   /* +0x00: one or two letters, "M" milli, "MA" mega */
-  int8_t exponent; /* +0x02: the power of ten */
-  uint8_t unused;  /* +0x03: 0 */
-} scpi_multiplier;
-
-/* A unit a numeric parameter accepts: one entry of the table at +4 of
- * the parser's parameter descriptor, which scpi_parse_message_unit
- * passes scpi_parse_short and its kind, and scpi_match_suffix walks, 6
- * bytes a step, to the entry whose name is 0. */
-typedef struct scpi_unit {
-  char* name; /* +0x00: upper case and reversed, "ZHM" for MHZ;
-                 scpi_suffix_compare_tail matches it against the suffix's end */
-  int16_t
-      exponent; /* +0x04: the power of ten the unit scales by; -128 for one that
-                   takes a multiplier before it, scpi_multiplier_exponent's */
-} scpi_unit;
-
-/* An error code's message, one of scpi_error_messages at 0x28910, which
- * error_message_lookup walks to the entry whose code is -1. */
-typedef struct scpi_error_message {
-  int16_t code; /* +0x00 */
-  char* text;   /* +0x02 */
-} scpi_error_message;
-
-/* A numeric descriptor's is_integer: how a pllc request carries its
- * values, pllc_request.values (structures.md, "The pllc task's SCPI
- * requests"). */
-typedef enum __attribute__((packed)) pllc_value_kind {
-  PLLC_VALUE_FLOAT = 0,   /* a float, in values[1] */
-  PLLC_VALUE_INTEGER = 1, /* an integer, in values[0] */
-  PLLC_VALUE_LIST = 2,    /* index + 1 longs, at values[0] */
-  PLLC_VALUE_PAIR = 3     /* two, in values[0] and values[1] */
-} pllc_value_kind;
-
-typedef struct scpi_numeric_param {
-  scpi_param_type type; /* SCPI_PARAM_NUMERIC */
-  uint8_t last_index;   /* +0x01: values less one */
-  int8_t* nv_widths;    /* +0x02: bits in the NV register; negative, signed */
-  void* minimum;        /* +0x06: the least value accepted */
-  void* maximum;        /* +0x0a: the greatest */
-  scpi_validate_function*
-      validate;   /* +0x0e: validate_num's check; clamp_to_limits */
-  void* changed;  /* +0x12: called as each value is stored */
-  void* value;    /* +0x16: the current value, in RAM */
-  void* done;     /* +0x1a: called once they are stored */
-  uint16_t flags; /* +0x1e: 2 saved in the NV register, 4 at 0x400000 */
-  gps_request_code gps_request; /* +0x20: as scpi_setting_param's */
-  uint8_t field_21;
-  void* group_cell;           /* +0x22: a scpi_group_cells word, as
-                                 scpi_setting_param's; a double
-                                 parameter's (SCPI_PARAM_DOUBLE, 0x33724)
-                                 is instead its scpi_double_step
-                                 (0x33718), which scpi_numeric_get_double
-                                 alone reads */
-  pllc_value_kind is_integer; /* +0x26 */
-  uint8_t field_27;
-  void* steps; /* +0x28: 8 bytes a value, whose routine at +4 gives validate the
-                  step */
-} scpi_numeric_param;
-
-/* A value's step, one of scpi_numeric_param's steps, or on a setter's
- * stack for the clamp routines it calls: its routine, given the step,
- * the value and its index, gives the step; load_long gives the long at
- * +0. */
-/* A keyword scpi_node_find looks up: its length, then its text from +2
- * (0x27bb2, 0x27bc6).  The text's size is scpi_trg_defined's buffer's,
- * the 20-byte frame at 0x27f7e. */
-typedef struct scpi_keyword {
-  int16_t length; /* +0x00 */
-  char text[18];  /* +0x02 */
-} scpi_keyword;
-
-/* A decimal number scpi_scan_number parses into the lexer's token, and
- * the converters scpi_number_to_short to _double read: the parameters'
- * number docs/scpi/README.md describes.  0x26 bytes, the token's frame
- * in scpi_parse_message_unit (-0x28 to -0x2 of A6, 0x26ad8 and the
- * word at -0x2). */
-typedef struct scpi_number {
-  int16_t negative;  /* +0x00: 1 for a leading '-' (0x27002 to 0x2700c), which
-                        the signed converters test (0x26118) */
-  int8_t digits[16]; /* +0x02: the digits' values, 0 to 9 (0x27490), zero-filled
-                        to 16 (0x274f4); digits[0] 0 for a zero */
-  int16_t exponent;  /* +0x12: the written exponent, scpi_scan_exponent's,
-                        adjusted by the point's place (0x2758c to 0x275b0) */
-  int16_t suffix_length; /* +0x14: the units suffix's characters (0x27660), 0
-                            for none */
-  char suffix[12];       /* +0x16: the suffix in upper case (0x275f8); a 13th
-                            character, which the limit at 0x275dc allows, lands in
-                            scale, which scpi_apply_suffix then sets */
-  int16_t scale; /* +0x22: the suffix's power of ten, scpi_match_suffix's, 0 for
-                    no suffix (scpi_apply_suffix); the converters' scale */
-  int16_t unit;  /* +0x24: the matched unit's index plus one, 0 for no suffix;
-                    the parsers copy it after the value (0x25eda) */
-} scpi_number;
-
-/* A non-decimal number, #H, #Q or #B, token 0xd (0x27200). */
-typedef struct scpi_token_non_decimal {
-  uint16_t base;  /* +0x00: 16, 8 or 2 */
-  uint32_t value; /* +0x02 */
-} scpi_token_non_decimal;
-
-/* A quoted string, token 0xf (0x27278, 0x2727c): its text, NUL
- * terminated, taken from the arena scpi_scan_token is given. */
-typedef struct scpi_token_string {
-  uint16_t length; /* +0x00: without the NUL */
-  char* text;      /* +0x02 */
-} scpi_token_string;
-
-/* A definite or indefinite length block's header, #0 or #n and n
- * digits, token 0x12. */
-typedef struct scpi_token_block {
-  uint32_t length;     /* +0x00: the digits' value (0x270e4) */
-  uint16_t indefinite; /* +0x04: 1 for #0 (0x270e8), else 0 (0x2708c) */
-} scpi_token_block;
-
-/* The SCPI lexer's class of a port's value, 0 to 0x105, as
- * scpi_char_classes (0x277ec) gives it. */
-typedef enum __attribute__((packed)) scpi_char_class {
-  SCPI_CLASS_LETTER = 0,
-  SCPI_CLASS_DIGIT = 1,
-  SCPI_CLASS_UNDERSCORE = 2,
-  SCPI_CLASS_WHITE = 3, /* controls and space */
-  SCPI_CLASS_HASH = 4,
-  SCPI_CLASS_QUOTE = 5, /* " and ' */
-  SCPI_CLASS_OTHER = 6,
-  SCPI_CLASS_COLON = 7,
-  SCPI_CLASS_SEMICOLON = 8,
-  SCPI_CLASS_QUESTION = 9,
-  SCPI_CLASS_OPEN = 10,
-  SCPI_CLASS_CLOSE = 11,
-  SCPI_CLASS_STAR = 15,
-  SCPI_CLASS_PLUS = 16,
-  SCPI_CLASS_MINUS = 17,
-  SCPI_CLASS_POINT = 18,
-  SCPI_CLASS_SLASH = 19,
-  SCPI_CLASS_COMMA = 20,
-  SCPI_CLASS_NEWLINE = 25,
-  SCPI_CLASS_END = 26,        /* 0x100 and SCPI_PORT_END */
-  SCPI_CLASS_PORT_ERROR = 27, /* SCPI_PORT_CLOSED to SCPI_PORT_INTERRUPTED */
-  SCPI_CLASS_SKIPPED_END =
-      28, /* 0x102, which scpi_skip_to_terminator reads past */
-  SCPI_CLASS_DOLLAR = 30,
-  SCPI_CLASS_AT = 31,
-} scpi_char_class;
-
-/* The SCPI lexer's token: scpi_scan_token fills the member for the
- * kind of token it returns, and the parameter converters take the
- * number.  A keyword (0x13, 0x14 with '?', 0x15 with ':') is its length
- * and up to 16 upper-case characters (0x26f98, 0x26fcc); '$' and a
- * digit 1 to 9 (0x11) is the digit, at +0 (0x2734a). */
-typedef union scpi_token {
-  scpi_number number;
-  scpi_keyword keyword;
-  scpi_token_non_decimal non_decimal;
-  scpi_token_string string;
-  scpi_token_block block;
-  int16_t digit;
-} scpi_token;
-
-struct scpi_port;
-/* A port's character routines.  read gives the next character, or
- * above 0xff an end: the console's gives 0x101 for a NUL; 0x103 to 0x105,
- * which the lexer reports as errors -102, -12 and -13 (0x2735c). */
-typedef int32_t scpi_port_read_function(struct scpi_port* port);
-typedef void scpi_port_unread_function(struct scpi_port* port);
-typedef void scpi_port_put_function(struct scpi_port* port, int character);
-typedef void scpi_port_write_function(struct scpi_port* port, char* text,
-                                      int length);
-typedef void scpi_port_bits_function(struct scpi_port* port, int bits);
-typedef uint8_t scpi_port_byte_function(struct scpi_port* port);
-typedef void scpi_port_close_function(struct scpi_port* port);
-/* A port's signal: given one of scpi_interpret's codes (0x29636 to
- * 0x2963e), its error, which scpi_interpret reports at a message's end
- * (0x29502 to 0x29528); scpi_console_return_zero gives 0. */
-typedef int32_t scpi_port_signal_function(struct scpi_port* port,
-                                          uint32_t* code);
-
-/* A port's method table, the console's at 0x29dd4: what the SCPI parser
- * reads commands through, the formatters write responses through, and
- * the status system keeps the status byte through.  Untyped entries are
- * those whose arguments no caller shows. */
-typedef struct scpi_port_methods {
-  void* open; /* +0x00: scpi_session_init, which returns the port */
-  scpi_port_close_function*
-      close; /* +0x04: scpi_session_close, which reads no argument */
-  scpi_port_read_function*
-      read; /* +0x08: console_port_read, as the port's own */
-  scpi_port_unread_function*
-      unread; /* +0x0c: scpi_input_ended: the next read gives the last character
-                 again; the lexer calls it on the character after a token
-                 (0x26f78) */
-  void* read_text; /* +0x10: scpi_console_read, up to so many characters */
-  scpi_port_put_function* put; /* +0x14: scpi_console_putc; above 0xff, CR LF */
-  scpi_port_write_function*
-      write; /* +0x18: scpi_console_write, up to length characters */
-  scpi_port_write_function*
-      write_block; /* +0x1c: scpi_console_write; scpi_format_block's */
-  void* field_20;  /* +0x20: scpi_console_return_zero */
-  void* field_24;  /* +0x24: scpi_console_return_zero */
-  scpi_port_signal_function*
-      signal;     /* +0x28: scpi_console_return_zero; scpi_interpret passes it
-                     scpi_response_begin_code, scpi_message_end_code or
-                     scpi_input_end_code (0x29462, 0x29502, 0x2959c) */
-  void* field_2c; /* +0x2c: scpi_console_return_zero */
-  scpi_port_bits_function*
-      status_set_bits; /* +0x30: status_byte_set_bits; status_condition_set's */
-  scpi_port_bits_function* status_clear_bits; /* +0x34: status_byte_clear_bits;
-                                                 status_condition_clear's */
-  scpi_port_byte_function* status_byte_get;   /* +0x38: status_byte_get */
-  scpi_port_bits_function* sre_set;           /* +0x3c: status_sre_set */
-  scpi_port_byte_function* sre_get;           /* +0x40: status_sre_get */
-} scpi_port_methods;
-
-/* A port: the console's is at 0x29e18, which scpi_session_init returns.
- * The lexer reads through read, and through methods for the rest
- * (0x26ef6, 0x26f7a). */
-typedef struct scpi_port {
-  scpi_port_read_function* read; /* +0x00: console_port_read */
-  scpi_port_methods* methods;    /* +0x04: 0x29dd4 */
-} scpi_port;
-
-struct scpi_step;
-/* A step's routine: the step for value, the setting at index. */
-typedef int32_t scpi_step_function(struct scpi_step* step, void* value,
-                                   int32_t index);
-typedef struct scpi_step {
-  uint32_t value;               /* +0x00: the step's bits, a float or a long */
-  scpi_step_function* function; /* +0x04 */
-} scpi_step;
-
-struct scpi_double_step;
-/* A double step's routine: the step for value, the setting at index,
- * in D0:D1 (0x325c8, both stored at 0x325d2). */
-typedef double scpi_double_step_function(struct scpi_double_step* step,
-                                         double* value, int32_t index);
-/* A double parameter's step, as clamp_double_to_step_and_limits reads
- * it: its routine follows 8 bytes, where scpi_step's follows 4
- * (0x325c4). */
-typedef struct scpi_double_step {
-  double value; /* +0x00: the step, which load_double gives */
-  scpi_double_step_function* function; /* +0x08 */
-} scpi_double_step;
-
-/* The packed decimal record scpi_number_to_bcd fills and
- * scpi_bcd_to_double reads (docs/scpi/README.md, "Parameters and
- * responses"): two digits a byte, and the exponent of the 16 digits'
- * integer plus 16 and the scale (0x254fe). */
-typedef struct scpi_bcd {
-  int16_t negative;  /* +0x00 */
-  uint8_t digits[8]; /* +0x02 */
-  int16_t exponent;  /* +0x0a */
-} scpi_bcd;
-
-/* An arena, at the start of the buffer it hands out: its next free
- * byte and its last (arena_init, 0x29770). */
-typedef struct scpi_arena {
-  uint8_t* next; /* +0x00 */
-  uint8_t* last; /* +0x04 */
-} scpi_arena;
-
-/* A choice parameter's list, the node's for scpi_parse_choice and
- * scpi_format_choice: its keywords to a NULL, and the value each gives,
- * or NULL for its index (0x26460). */
-typedef struct scpi_choices {
-  char** keywords; /* +0x00 */
-  int16_t* values; /* +0x04 */
-} scpi_choices;
-
-struct scpi_call;
-/* A handler, the routine a node's setter or query entry holds: the
- * call's parameters, its response and the call (scpi_call_handler,
- * 0x29642), as SmartClockSetup.java types every handler. */
-typedef int32_t scpi_handler_function(void* parameters, void* response,
-                                      struct scpi_call* call);
-
-/* A response item's formatter: the port, the value at its place in the
- * response, the item's choice list and the call (scpi_format_response,
- * 0x29690); only scpi_format_choice reads the list. */
-typedef int32_t scpi_format_function(struct scpi_port* output, void* value,
-                                     scpi_choices* choices,
-                                     struct scpi_call* call);
-
-/* A parameter's descriptor, what scpi_parameter_match and
- * scpi_parse_message_unit read (0x26c3e to 0x26c80), 0x24 bytes apart in
- * every image (docs/scpi/README.md, "As C"). */
-typedef struct scpi_parameter_kinds {
-  int16_t size;          /* +0x00: the value's bytes, after its kind word */
-  int16_t optional;      /* +0x02: nonzero when it may be left out */
-  scpi_unit* units;      /* +0x04 */
-  scpi_choices* choices; /* +0x08 */
-  void* converters[6];   /* +0x0c: one for each parameter kind, scpi.h's
-                            SCPI_PARAMETER_DECIMAL to _EXPRESSION, by which the
-                            parser indexes it; NULL for one it does not take;
-                            each kind's routine takes its own arguments */
-} scpi_parameter_kinds;
-
-/* A parameter a node takes, one of the list scpi_parameter_match walks
- * (0x278f4). */
-typedef struct scpi_parameter {
-  struct scpi_parameter* next; /* +0x00 */
-  scpi_parameter_kinds* kinds; /* +0x04 */
-} scpi_parameter;
-
-/* A node's setter or query entry, 10 bytes (docs/scpi/README.md, "How
- * it is read"; scpi_call_handler, 0x29658). */
-typedef struct scpi_handler {
-  scpi_handler_function* function; /* +0x00 */
-  scpi_parameter*
-      parameters; /* +0x04: what it takes (scpi_header_resolve, 0x27d80) */
-  int16_t parameters_size; /* +0x08: the bytes they take in the call's buffer */
-} scpi_handler;
-
-/* One item of a query's response: how scpi_format_response writes the
- * value at its place in the response, 10 bytes (0x296dc). */
-typedef struct scpi_response_item {
-  scpi_format_function* format; /* +0x00: NULL after the last */
-  int16_t size;                 /* +0x04: the value's bytes */
-  scpi_choices* choices; /* +0x06: the node's list, for scpi_format_choice;
-                            NULL for every other formatter */
-} scpi_response_item;
-
-/* A node of the SCPI tree (docs/scpi/README.md, "How it is read"), 0x32
- * bytes: every node in every image is followed by 14 zero bytes before
- * the next record, whatever it is, and no routine reads them. */
-typedef struct scpi_node {
-  char* keywords; /* +0x00: the short form, a NUL, the rest of the long form */
-  struct scpi_child_list* children;   /* +0x04: NULL for a leaf */
-  scpi_handler handlers[2];           /* +0x08: the setter, then the query */
-  scpi_response_item* response_items; /* +0x1c: the query's (0x29488) */
-  int16_t
-      response_size; /* +0x20: the bytes the query's response takes (0x29666) */
-  int16_t path_word; /* +0x22: the word it adds to the path, -1 for none
-                        (0x27c50) */
-  uint8_t unused[14]; /* +0x24: zero */
-} scpi_node;
-
-/* A node's children, sorted by keyword for scpi_node_find's bisection
- * (docs/scpi/README.md, "How it is read"), the main tree's root list
- * among them.  The children follow the record, an array of their own
- * that a names-file row types. */
-typedef struct scpi_child_list {
-  uint16_t id;           /* +0x00 */
-  int16_t count;         /* +0x02 */
-  int16_t default_child; /* +0x04: the child a header may leave out, -1 for none
-                            (0x27c80) */
-  scpi_node* children[]; /* +0x06 */
-} scpi_child_list;
+#include "../common/types/scpi.h"
 
 /* The two command trees scpi_task gives scpi_task_run, a pair in ROM at
  * 0x61218 (0x294d8), and the installer's at installer::0x1089d4, which
@@ -2117,171 +1152,15 @@ typedef enum __attribute__((packed)) scpi_language_choice {
   SCPI_LANGUAGE_INSTALL = 1, /* the installer */
 } scpi_language_choice;
 
-/* A header's path, scpi_interpret's 20 bytes (0x2935e): the list the
- * next keyword is looked up in, and the words the nodes on the way and
- * their numeric suffixes add, the handler's first parameters. */
-typedef struct scpi_path {
-  scpi_child_list* list; /* +0x00 */
-  int16_t count;         /* +0x04 */
-  uint16_t words[7];     /* +0x06 */
-} scpi_path;
+#include "../common/types/scpi_call.h"
 
-struct status_model;
-/* scpi_call's responding: what a message's queries have responded so
- * far, which scpi_interpret clears at each message's start (0x29382):
- * nothing, so that the first response is preceded by the output port's
- * begin signal (0x29456 to 0x2946e); a response, so that the next is
- * preceded by a ';' (0x29474); an indefinite response, which
- * scpi_format_response reports as -90 (0x294a6 to 0x294ac), after which
- * every query is reported as -15 (0x2943e to 0x2944e). */
-typedef enum __attribute__((packed)) scpi_call_responding {
-  SCPI_CALL_NO_RESPONSE = 0,
-  SCPI_CALL_RESPONDING = 1,
-  SCPI_CALL_INDEFINITE = 2,
-} scpi_call_responding;
+#include "../common/types/scpi_staged_values.h"
 
-/* scpi_parse_message_unit's own results that are not status
- * conditions, beside the conditions it returns (scpi_engine.h). */
-typedef enum __attribute__((packed)) scpi_message_unit_result {
-  SCPI_STATUS_NO_PARAMETERS = -100, /* an empty message unit */
-  SCPI_STATUS_SKIPPED_END = -101,   /* SCPI_PORT_SKIPPED_END first */
-} scpi_message_unit_result;
+#include "../common/types/scpi_context.h"
 
-/* What an SCPI handler returns, beyond a status condition, for
- * scpi_interpret and its installer copy to act on (0x293e0 to 0x29410):
- * call the common list's _TRG node, the user-defined trigger, in its
- * place; set the header path back to the root; end the session, which
- * :SYSTem:LANGuage's "PFORTH" and "INSTALL" return (0x30680) and the
- * installer's "PRIMARY" (installer::0x107f92).  No handler of this image
- * returns the first two.  It should type the handlers' results beside
- * status_condition_code. */
-typedef enum __attribute__((packed)) scpi_handler_action {
-  SCPI_HANDLER_CALL_TRIGGER = -62,
-  SCPI_HANDLER_RESET_PATH = -61,
-  SCPI_HANDLER_SESSION_END = -60,
-} scpi_handler_action;
+#include "../common/types/scpi_array.h"
 
-/* The call record scpi_interpret builds for a handler, on its stack at
- * -0x78(a6) (docs/firmware/README.md, "Hand-written C"; 0x29322 to
- * 0x29344), which every handler is given. */
-typedef struct scpi_call {
-  scpi_node* node;   /* +0x00 */
-  uint16_t query;    /* +0x04: 0 the setter, 1 the query, the handler's index */
-  scpi_arena* arena; /* +0x06 */
-  uint8_t* parameters; /* +0x0a: each parameter's kind word, then its
-                          value */
-  uint8_t* response;   /* +0x0e: the query's, each item's value at its place */
-  struct scpi_port* input;     /* +0x12 */
-  struct scpi_port* output;    /* +0x16 */
-  struct status_model* status; /* +0x1a */
-  uint32_t result; /* +0x1e: scpi_interpret's result, -1 when its port fails
-                      (0x295c6), else unset (0x2962a) */
-  scpi_child_list* main_tree;      /* +0x22: scpi_interpret's (0x29334) */
-  scpi_child_list* common_list;    /* +0x26: scpi_interpret's (0x2933a) */
-  scpi_call_responding responding; /* +0x2a */
-  uint8_t field_2b[9];             /* +0x2b: unset */
-  uint16_t field_34; /* +0x34: cleared (0x29340), which scpi_interpret does not
-                        read */
-  uint32_t last_argument; /* +0x36: scpi_interpret's last (0x29344) */
-} scpi_call;
-
-/* The SCPI task's response areas, end to end from 0x10272a: a record
- * for each source return_zero gives, of which there are two, as
- * robin_blocks and robin_arrays hold.  A query writes its response into
- * its source's record and answers its address; a setter of several
- * values stages them in its source's scpi_staged_values and sends pllc
- * their address. */
-/* A query's text. */
-typedef char scpi_response_text[0x11a];
-/* A satellite list, or :ROBin:POINts?' counts. */
-typedef int16_t scpi_response_list[32];
-/* :ROBin:MEMory:OVERflow:COUNt?'s counts, an input's each. */
-typedef double robin_overflow_counts[3];
-/* A setter's values, the pllc_request's values[0], its index the last. */
-typedef int32_t scpi_staged_values[3];
-/* :ROBin? and :ROBin:TSTamp?'s points. */
-typedef int16_t robin_point_record[80];
-
-/* The parser's context, which scpi_context_init (0x26a80) fills for
- * scpi_interpret. */
-typedef struct scpi_context {
-  struct scpi_port* input; /* +0x00 */
-  uint16_t word;     /* +0x04: 0 from scpi_interpret; the block and expression
-                        converters' */
-  scpi_path* path;   /* +0x06 */
-  scpi_call* call;   /* +0x0a */
-  scpi_arena* arena; /* +0x0e */
-  scpi_child_list* main_tree;   /* +0x12: the main tree's root list */
-  scpi_child_list* common_list; /* +0x16: the common commands' list */
-  uint8_t field_1a[4];
-  uint32_t field_1e; /* +0x1e: what scpi_interpret's frame holds there, unset;
-                        the block converter's last */
-} scpi_context;
-
-/* A response's array, as scpi_format_double_array and _short_array take
- * it. */
-typedef struct scpi_array {
-  int32_t count; /* +0x00 */
-  void* values;  /* +0x04: doubles or shorts */
-} scpi_array;
-
-/* Doubles each with its resolution, as scpi_format_resolution_array
- * takes them. */
-typedef struct scpi_resolution_array {
-  int32_t count;        /* +0x00 */
-  double* values;       /* +0x04 */
-  int16_t* resolutions; /* +0x08 */
-} scpi_resolution_array;
-
-/* A definite-length block, as scpi_format_block takes it. */
-typedef struct scpi_block {
-  uint32_t length; /* +0x00 */
-  void* data;      /* +0x04: its bytes */
-} scpi_block;
-
-/* An array response's kind, scpi_array_record.kind, by the jump table
- * at 0x267dc. */
-typedef enum __attribute__((packed)) scpi_array_kind {
-  SCPI_ARRAY_BLOCK = 0,   /* a scpi_block */
-  SCPI_ARRAY_DOUBLES = 1, /* a scpi_array of doubles */
-  SCPI_ARRAY_SHORTS = 2   /* a scpi_array of shorts */
-} scpi_array_kind;
-
-/* An array response by its kind, as scpi_format_array takes it and
- * robin_store makes it. */
-typedef struct scpi_array_record {
-  scpi_array_kind kind; /* +0x00 */
-  uint8_t unused;
-  void* array; /* +0x02: a scpi_block or scpi_array */
-} scpi_array_record;
-
-/* A double scpi_format_double_precision writes, to so many digits or
- * to a resolution. */
-typedef struct scpi_precise_double {
-  double value; /* +0x00 */
-  char
-      to_digits; /* +0x08: nonzero for precision as digits, else a resolution */
-  uint8_t unused;
-  int16_t precision; /* +0x0a */
-} scpi_precise_double;
-
-/* A float scpi_format_float_resolution writes, and its resolution. */
-typedef struct scpi_float_resolution {
-  float value;        /* +0x00 */
-  int16_t resolution; /* +0x04 */
-} scpi_float_resolution;
-
-/* One status register of the SCPI status tree.  16 bytes. */
-typedef struct status_register {
-  uint16_t condition; /* +0x00 */
-  uint16_t
-      negative_transition; /* +0x02: falling conditions that become events */
-  uint16_t positive_transition;   /* +0x04: rising ones */
-  uint16_t enable;                /* +0x06: events reported to the parent */
-  uint16_t event;                 /* +0x08: latched, cleared as read */
-  struct status_register* parent; /* +0x0a: the register it reports into */
-  int16_t parent_bit;             /* +0x0e: at this bit */
-} status_register;
+#include "../common/types/status_register.h"
 
 /* One of port_error_reports' four entries, which scpi_session_init_58503a
  * fills (0x28dfc to 0x28e24) and port_report_errors reads: receive status
@@ -2308,23 +1187,9 @@ typedef enum __attribute__((packed)) installer_status_condition {
   INSTALLER_STATUS_INPUT_OVERRUN = 4,       /* -363 */
 } installer_status_condition;
 
-/* How a status condition changes its register (status_condition.kind),
- * by status_set_bit's jump table at 0x2825c. */
-typedef enum __attribute__((packed)) status_condition_kind {
-  STATUS_KIND_EVENT_SET = 0, /* sets the bit in the event word */
-  STATUS_KIND_SET = 1,       /* sets the bit in the condition word */
-  STATUS_KIND_CLEAR = 2,     /* clears it */
-  STATUS_KIND_ERROR = 3,     /* queues register_index as an error code */
-  STATUS_KIND_NOTHING = 4,
-} status_condition_kind;
+#include "../common/types/status_condition_kind.h"
 
-/* An entry of the status conditions table: which register and bit a
- * condition sets, and how.  6 bytes. */
-typedef struct status_condition {
-  int16_t kind; /* a status_condition_kind */
-  int16_t register_index;
-  int16_t bit;
-} status_condition;
+#include "../common/types/status_condition.h"
 
 /* A condition of the status system, the code status_happening,
  * status_report and the SCPI engine raise.  From 0, an index of the
@@ -2346,94 +1211,13 @@ typedef struct status_condition {
  * 0x18, 0x30 to 0x37, 0x42 to 0x45, 0x52 to 0x59, 0x5d to 0x5f, -29 and
  * -58 to -62 do nothing, as 0 does, and but for 0x35, which code raises,
  * have no name; nor have -25 and -26, -171, and -57, -224, which no code
- * shows the cause of. */
+ * shows the cause of.  The SCPI standard's, to 0x16, the same in every
+ * image, are common/types/status_scpi.h's, included as the head of the
+ * members. */
 typedef enum __attribute__((packed)) status_condition_code {
-  STATUS_SCPI_NO_MEMORY = -56, /* -310 System error: an allocation failed */
-  STATUS_SCPI_NUMERIC_DATA_ERROR = -55, /* -120 Numeric data error */
-  STATUS_SCPI_GET_NOT_ALLOWED =
-      -54, /* -105 GET not allowed: SCPI_PORT_SKIPPED_END after white space */
-  STATUS_SCPI_SUFFIX_TOO_LONG = -53, /* -134 Suffix too long */
-  STATUS_SCPI_TOO_MUCH_DATA = -52,   /* -223 Too much data */
-  STATUS_SCPI_DATA_TYPE_ERROR = -51, /* -104 Data type error */
-  STATUS_SCPI_EXPRESSION_NOT_ALLOWED =
-      -50,                              /* -178 Expression data not allowed */
-  STATUS_SCPI_BLOCK_NOT_ALLOWED = -49,  /* -168 Block data not allowed */
-  STATUS_SCPI_STRING_NOT_ALLOWED = -48, /* -158 String data not allowed */
-  STATUS_SCPI_CHARACTER_NOT_ALLOWED = -47, /* -148 Character data not allowed */
-  STATUS_SCPI_NUMERIC_NOT_ALLOWED = -46,   /* -128 Numeric data not allowed */
-  STATUS_SCPI_EXPONENT_TOO_LARGE = -45,    /* -123 Exponent too large */
-  STATUS_SCPI_MACRO_EXECUTION_ERROR = -44, /* -272 Macro execution error */
-  STATUS_SCPI_INVALID_SEPARATOR = -43,     /* -103 Invalid separator */
-  STATUS_SCPI_MACRO_RECURSION = -42,       /* -276 Macro recursion error */
-  STATUS_SCPI_INSIDE_MACRO = -41, /* -183 Invalid inside macro definition */
-  STATUS_SCPI_FORMAT_FAILED =
-      -40, /* -310 System error: a response it cannot format */
-  STATUS_SCPI_INVALID_CHARACTER = -39,      /* -101 Invalid character */
-  STATUS_SCPI_EXTRA_PARAMETER = -38,        /* -108 Parameter not allowed */
-  STATUS_SCPI_MISSING_PARAMETER = -37,      /* -109 Missing parameter */
-  STATUS_SCPI_MACRO_HEADER_NOT_FOUND = -36, /* -278 Macro header not found */
-  STATUS_SCPI_ILLEGAL_MACRO_LABEL = -35,    /* -273 Illegal macro label */
-  STATUS_SCPI_MACRO_REDEFINITION =
-      -34, /* -277 Macro redefinition not allowed */
-  STATUS_SCPI_HEADER_LEAF =
-      -33, /* -113 Undefined header: a keyword past a leaf */
-  STATUS_SCPI_UNDEFINED_HEADER = -32, /* -113 Undefined header */
-  STATUS_SCPI_INVALID_SUFFIX = -31,   /* -131 Invalid suffix */
-  STATUS_SCPI_PARAMETER_DOLLAR =
-      -30, /* -181 Invalid outside macro definition: a $ digit as a parameter */
-  STATUS_SCPI_NO_LIST =
-      -28, /* -310 System error: a choice without its keywords */
-  STATUS_SCPI_ILLEGAL_PARAMETER_VALUE = -27, /* -224 Illegal parameter value */
-  STATUS_SCPI_EXPRESSION_ERROR = -24,        /* -170 Expression error */
-  STATUS_SCPI_TOO_MANY_DIGITS = -23,         /* -124 Too many digits */
-  STATUS_SCPI_STRING_ERROR = -22,            /* -150 String data error */
-  STATUS_SCPI_INVALID_STRING = -21,          /* -151 Invalid string data */
-  STATUS_SCPI_INVALID_DIGIT = -20,     /* -121 Invalid character in number */
-  STATUS_SCPI_INVALID_RADIX = -19,     /* -101 Invalid character */
-  STATUS_SCPI_INVALID_BLOCK = -18,     /* -161 Invalid block data */
-  STATUS_SCPI_INVALID_NUMBER = -17,    /* -121 Invalid character in number */
-  STATUS_SCPI_MNEMONIC_TOO_LONG = -16, /* -112 Program mnemonic too long */
-  STATUS_SCPI_QUERY_AFTER_INDEFINITE =
-      -15, /* -440 Query UNTERMINATED after indefinite response */
-  STATUS_SCPI_QUERY_DEADLOCKED = -14,    /* -430 Query DEADLOCKED */
-  STATUS_SCPI_QUERY_INTERRUPTED = -13,   /* -410 Query INTERRUPTED */
-  STATUS_SCPI_QUERY_UNTERMINATED = -12,  /* -420 Query UNTERMINATED */
-  STATUS_SCPI_DATA_OUT_OF_RANGE = -11,   /* -222 Data out of range */
-  STATUS_SCPI_QUERY_ERROR = -10,         /* -400 Query error */
-  STATUS_SCPI_SUFFIX_NOT_ALLOWED = -9,   /* -138 Suffix not allowed */
-  STATUS_SCPI_EXECUTION_ERROR = -8,      /* -200 Execution error */
-  STATUS_SCPI_COMMAND_ERROR = -7,        /* -100 Command error */
-  STATUS_SCPI_SYNTAX_ERROR = -6,         /* -102 Syntax error */
-  STATUS_SCPI_OUT_OF_MEMORY = -5,        /* -321 Out of memory */
-  STATUS_ESR_QUERY_ERROR = -4,           /* Standard Event bit 2 */
-  STATUS_ESR_DEVICE_ERROR = -3,          /* Standard Event bit 3 */
-  STATUS_ESR_EXECUTION_ERROR = -2,       /* Standard Event bit 4 */
-  STATUS_ESR_COMMAND_ERROR = -1,         /* Standard Event bit 5 */
-  STATUS_NO_CONDITION = 0,               /* does nothing */
-  STATUS_PARAMETER_NOT_ALLOWED = 0x01,   /* -108 Parameter not allowed */
-  STATUS_MISSING_PARAMETER = 0x02,       /* -109 Missing parameter */
-  STATUS_UNDEFINED_HEADER = 0x03,        /* -113 Undefined header */
-  STATUS_INVALID_SUFFIX = 0x04,          /* -131 Invalid suffix */
-  STATUS_INVALID_STRING_DATA = 0x05,     /* -151 Invalid string data */
-  STATUS_EXECUTION_ERROR = 0x06,         /* -200 Execution error */
-  STATUS_PARAMETER_ERROR = 0x07,         /* -220 Parameter error */
-  STATUS_SETTINGS_CONFLICT = 0x08,       /* -221 Settings conflict */
-  STATUS_DATA_OUT_OF_RANGE = 0x09,       /* -222 Data out of range */
-  STATUS_TOO_MUCH_DATA = 0x0a,           /* -223 Too much data */
-  STATUS_ILLEGAL_PARAMETER_VALUE = 0x0b, /* -224 Illegal parameter value */
-  STATUS_DATA_CORRUPT_OR_STALE = 0x0c,   /* -230 Data corrupt or stale */
-  STATUS_HARDWARE_MISSING = 0x0d,        /* -241 Hardware missing */
-  STATUS_DEVICE_SPECIFIC_ERROR = 0x0e,   /* -300 Device-specific error */
-  STATUS_SYSTEM_ERROR = 0x0f,            /* -310 System error */
-  STATUS_MEMORY_ERROR = 0x10,            /* -311 Memory error */
-  STATUS_CONFIGURATION_LOST = 0x11,      /* -315 Configuration memory lost */
-  STATUS_SELFTEST_FAILED = 0x12,         /* -330 Self-test failed */
-  STATUS_COMMUNICATION_ERROR = 0x13,     /* -360 Communication error */
-  STATUS_PARITY_ERROR = 0x14,            /* -361 Parity error */
-  STATUS_FRAMING_ERROR = 0x15,           /* -362 Framing error */
-  STATUS_INPUT_OVERRUN = 0x16,           /* -363 Input buffer overrun */
-  STATUS_POWER_ON = 0x19,                /* *ESR? bit 7 */
-  STATUS_LOCKED_SET = 0x1a,              /* :OPERation bit 1, locked to GPS */
+#include "../common/types/status_scpi.h"
+  STATUS_POWER_ON = 0x19,   /* *ESR? bit 7 */
+  STATUS_LOCKED_SET = 0x1a, /* :OPERation bit 1, locked to GPS */
   STATUS_LOCKED_CLEARED = 0x1b,
   STATUS_POSITION_HOLD_SET =
       0x1c, /* :OPERation bit 3, position hold, not survey */
@@ -2529,46 +1313,11 @@ typedef struct hmon_channel_entry {
   uint8_t field_29;
 } hmon_channel_entry;
 
-/* The Status Byte's bits the firmware names (structures.md, "The SCPI
- * session"): RQS, which status_update_rqs keeps and the service request
- * enable cannot set. */
-typedef enum __attribute__((packed)) status_byte_bit {
-  STATUS_BYTE_REQUEST_SERVICE = 0x40,
-} status_byte_bit;
+#include "../common/types/status_byte_bit.h"
 
-/* An entry of the error queue: an error code and what status_set_bit is
- * given with it, status_report's message (error_queue_push, 0x285d4). */
-typedef struct status_error_entry {
-  int16_t code;   /* +0x00 */
-  uint32_t value; /* +0x02 */
-} status_error_entry;
+#include "../common/types/status_error_entry.h"
 
-/* The error queue, which error_queue_create allocates and
- * status_model.queue points at: a ring of entries, one more than it
- * holds, so that head equal to tail is empty (0x28588). */
-typedef struct status_error_queue {
-  int16_t head;                 /* +0x00: the newest entry */
-  int16_t tail;                 /* +0x02: the entry before the oldest */
-  struct status_model* status;  /* +0x04: the model it reports into */
-  int16_t size;                 /* +0x08: entries, the capacity plus one */
-  status_error_entry entries[]; /* +0x0a */
-} status_error_queue;
-
-/* One register's entry in status_register_layouts (0x2f79e), seven of them,
- * which status_init sets the registers up from (0x2f4ec to 0x2f4fe) and
- * the :STATus enable and transition setters check a value against
- * (scpi_check_range's bounds, +0x04 and +0x06).  22 bytes. */
-typedef struct status_register_layout {
-  uint8_t parent_index;  /* +0x00: the register it reports into */
-  uint8_t unused;        /* +0x01 */
-  uint16_t parent_bit;   /* +0x02: at this bit; 0 for the Status Byte */
-  uint16_t maximum;      /* +0x04: the greatest enable or filter */
-  uint16_t minimum;      /* +0x06 */
-  uint16_t defined_bits; /* +0x08: the bits the register has */
-  uint32_t* enable;      /* +0x0a: its nv_settings.status_enable */
-  uint32_t* positive;    /* +0x0e: its nv_settings filters, NULL for the */
-  uint32_t* negative;    /* +0x12: Status Byte and Standard Event */
-} status_register_layout;
+#include "../common/types/status_register_layout.h"
 
 /* One register's entry in the installer's status_register_layouts
  * (installer::0x107ad6), two of them: status_register_layout's first ten
@@ -2584,40 +1333,11 @@ typedef struct installer_status_register_layout {
   uint16_t defined_bits; /* +0x08 */
 } installer_status_register_layout;
 
-/* status_register_mask: which of a status register's masks
- * status_preset_register sets, by its jump table at 0x2f386; any other
- * value sets none (0x2f378).  status_enable_restore passes the enable
- * (0x434a0), status_ptr_restore and status_ntr_restore a filtered
- * register's transition filters, by its index less 2 (0x434e0,
- * 0x43522). */
-typedef enum __attribute__((packed)) status_register_mask {
-  STATUS_MASK_ENABLE = 0,
-  STATUS_MASK_POSITIVE_TRANSITION = 1,
-  STATUS_MASK_NEGATIVE_TRANSITION = 2,
-} status_register_mask;
+#include "../common/types/status_register_mask.h"
 
-/* status_preset_form: :STATus:PRESet's two forms, the action index
- * scpi_set_STATus_PRESet and scpi_set_STATus_PRESet_ALARm give
- * status_preset_done, by its jump table at 0x43560. */
-typedef enum __attribute__((packed)) status_preset_form {
-  /* The filtered registers' enables (0x43564). */
-  STATUS_PRESET_SCPI = 0,
-  /* Every enable, and :QUEStionable:USER off (0x43598). */
-  STATUS_PRESET_ALARM = 1,
-} status_preset_form;
+#include "../common/types/status_preset_form.h"
 
-/* The SCPI status system: status_create builds it, status_object points
- * at it. */
-typedef struct status_model {
-  int16_t register_count; /* +0x00: 7 */
-  scpi_port* output; /* +0x02: set for the top register; the port whose status
-                        byte it keeps (status_condition_set, 0x2802a) */
-  status_error_queue* queue;    /* +0x06: built with room for 30 */
-  status_condition* conditions; /* +0x0a */
-  int32_t
-      field_0e; /* +0x0e: status_create's last argument, 0; nothing reads it */
-  status_register* registers[7]; /* +0x12 */
-} status_model;
+#include "../common/types/status_model.h"
 
 /* The GPS engine's data, as its message decoders store it: each field
  * is a field of the message, in the message's order, as the VP Oncore
@@ -2637,12 +1357,7 @@ typedef struct oncore_gmt_offset_fields {
   int8_t minutes; /* the printer also takes a negative one as negative */
 } oncore_gmt_offset_fields;
 
-/* @@Ac, date. */
-typedef struct oncore_date_fields {
-  uint8_t month;
-  uint8_t day;
-  uint16_t year;
-} oncore_date_fields;
+#include "../common/types/oncore_date_fields.h"
 
 /* @@Ad, @@Ae and @@Af, the current position: angles in milliarcseconds,
  * heights in cm. */
@@ -2723,54 +1438,7 @@ typedef enum __attribute__((packed)) aging_fit_mode {
   AGING_FIT_HALVES = 4,   /* a line from a full history's halves */
 } aging_fit_mode;
 
-/* The curv task's aging fit, at 0x101fd8: the curve a + b y + c w
- * aging_fit fits to the EFC history's weighted entries, which
- * aging_fit_collect copies into pll.  aging_fit fits a second one on
- * its stack for the three-term fit, and keeps it when it fits better. */
-typedef struct aging_curve_state {
-  aging_fit_mode mode;    /* +0x00 */
-  uint8_t minimum_weight; /* +0x01: only entries of this weight or more are
-                             fitted, 1 or 2 */
-  uint32_t oldest_time;   /* +0x02: fit_span's, the fitted entries' least time,
-                             truncated */
-  uint32_t newest_time;   /* +0x06: their greatest */
-  int32_t oldest_index;   /* +0x0a: the entry with oldest_time */
-  int32_t newest_index;   /* +0x0e: the entry with newest_time */
-  float a; /* +0x12: fit_evaluate_latest moves it so the curve meets the newest
-              entry */
-  float b; /* +0x16: the slope in time */
-  float c; /* +0x1a: the coefficient of the log term, 0 for a line */
-  float c_step; /* +0x1e: fit_log_search's step in c, a tenth as large each pass
-                 */
-  float rms;    /* +0x22: the residuals' */
-  float predicted_uncertainty; /* +0x26: fit_quality's HQ, or 4.32e-4 in modes 0
-                                  and 1 */
-} aging_curve_state;
-
-/* What a fit routine gives linear_regression, on its own stack: the
- * arrays to regress and the weight an entry needs, and the line it
- * fits back. */
-typedef struct regression_record {
-  uint8_t minimum_weight; /* +0x00: only entries of this weight or more */
-  uint8_t field_01;
-  float* x;         /* +0x02: pll.efc_history.times */
-  float* y;         /* +0x06 */
-  uint8_t* weights; /* +0x0a: pll.efc_history.weights */
-  float slope;      /* +0x0e: 0 unless with_slope */
-  float intercept;  /* +0x12: the mean of y when no slope is fitted */
-  float rms;        /* +0x16: the residuals' */
-} regression_record;
-
-/* What fit_log_search gives fit_three_point, on its stack: three values
- * of the log coefficient and the rms each gave, through which
- * fit_three_point puts a parabola, and the parabola's vertex it writes
- * back. */
-typedef struct three_point_fit {
-  float* x;       /* +0x00: three values of aging_curve_state.c */
-  float* y;       /* +0x04: the rms at each */
-  float vertex_x; /* +0x08: the c fit_log_search keeps */
-  float vertex_y; /* +0x0c */
-} three_point_fit;
+#include "../common/types/aging_curve_state.h"
 
 /* @@Ba, the position/status/data message: one channel's status. */
 typedef struct oncore_channel_status {
@@ -2803,25 +1471,7 @@ typedef struct oncore_status_fields {
   oncore_receiver_status receiver_status;
 } oncore_status_fields;
 
-/* @@Bb: one visible satellite, padded by the decoder's table (0x50fd8)
- * from 7 bytes to 10. */
-typedef struct oncore_visible_satellite {
-  uint8_t satellite;
-  uint8_t pad_1;
-  int16_t doppler;   /* Hz */
-  uint8_t elevation; /* degrees */
-  uint8_t pad_5;
-  uint16_t azimuth; /* degrees */
-  oncore_health health;
-  uint8_t pad_9;
-} oncore_visible_satellite;
-
-/* @@Bb, the visibility message. */
-typedef struct oncore_visibility_fields {
-  uint8_t count;
-  uint8_t pad_1;
-  oncore_visible_satellite satellites[12];
-} oncore_visibility_fields;
+#include "../common/types/oncore_visible_satellite.h"
 
 /* @@Bc: one combination of satellites and its xDOP. */
 typedef struct oncore_xdop_combination {
@@ -3115,54 +1765,16 @@ typedef struct gps_state {
  * adds entry 6, which fpga_fields_to_registers (0x40c24) and
  * counter_configuration_init (0x40f84) bound by. */
 typedef enum __attribute__((packed)) fpga_bit_index {
-  FPGA_BIT_MODE = 0,   /* register 0, 0x03: an fpga_mode */
-  FPGA_BIT_PRESET = 1, /* register 0, 0x40: set around arming; counter_selftest
-                          reads a count of 0 under it */
-  FPGA_BIT_START = 2,  /* register 1, 0x01: pulsed by interpolator_measure */
-  FPGA_BIT_REFERENCE = 3, /* register 1, 0x02: an interpolator_reference */
-  FPGA_BIT_ADDRESS = 4, /* register 1, 0xf8: the address bits fpga_read uses */
-  FPGA_BIT_SYNC = 5,    /* register 3, 0x03: counter_set_sync */
-  FPGA_BIT_ALARM = 6,   /* register 3, 0x04, a flag: the alarm, which 0x40828
-                           sets with PORTF0 bit 5 (docs/firmware/58503a-3704.md,
-                           "The alarm outputs") */
+#include "../common/types/fpga_bit_index.h"
+  FPGA_BIT_SYNC = 5,  /* register 3, 0x03: counter_set_sync */
+  FPGA_BIT_ALARM = 6, /* register 3, 0x04, a flag: the alarm, which 0x40828
+                         sets with PORTF0 bit 5 (docs/firmware/58503a-3704.md,
+                         "The alarm outputs") */
 } fpga_bit_index;
 
-/* The FPGA's mode, fpga_bit_table entry 0, register 0's low two bits,
- * as fpga_set_field is given it: counter_arm's 0 (0x40c6a) and
- * interpolator_prepare's 3 (0x401c4) are its only values
- * (docs/firmware/counter.md, "What is never written"). */
-typedef enum __attribute__((packed)) fpga_mode {
-  FPGA_MODE_COUNT = 0,      /* the count, started by the GPS 1PPS */
-  FPGA_MODE_REFERENCES = 3, /* the interpolator's references */
-} fpga_mode;
+#include "../common/types/fpga_mode.h"
 
-/* A register the FPGA reads back through fpga_read and fpga_read_byte,
- * by the number fpga_read puts in fpga_bit_table entry 4's address
- * bits.  The count is 24 bits, three bytes, each two registers'
- * nibbles (counter_read_raw 0x40c06). */
-typedef enum __attribute__((packed)) fpga_register {
-  FPGA_REGISTER_STATUS = 0x00,       /* the counter's ready bits and the seconds
-                                        (counter_wait_ready, fpga_read_seconds) */
-  FPGA_REGISTER_INTERPOLATOR = 0x10, /* interpolator_read */
-  FPGA_REGISTER_COUNT_LOW = 0x12,
-  FPGA_REGISTER_COUNT_MIDDLE = 0x14,
-  FPGA_REGISTER_COUNT_HIGH = 0x16,
-} fpga_register;
-
-/* The reference interpolator_measure measures, fpga_bit_table entry 3. */
-typedef enum __attribute__((packed)) interpolator_reference {
-  INTERPOLATOR_REFERENCE_LOW = 0,
-  INTERPOLATOR_REFERENCE_HIGH = 1,
-} interpolator_reference;
-
-/* How interval_rearm (0x450c4), and interval_next_reading after its
- * reading, arm the next: calibrating the interpolator first, plainly,
- * or syncing the counter to the 1PPS first (0x4506e, 0x45082). */
-typedef enum __attribute__((packed)) interval_arm_mode {
-  INTERVAL_ARM_CALIBRATE = 0,
-  INTERVAL_ARM_PLAIN = 1,
-  INTERVAL_ARM_SYNC = 2,
-} interval_arm_mode;
+#include "../common/types/interval_arm_mode.h"
 
 /* An FPGA configuration, a bitstream fpga_program loads and
  * fpga_verify checks, by its index in fpga_configurations.  The table
@@ -3175,29 +1787,7 @@ typedef enum __attribute__((packed)) fpga_configuration_index {
                                   immediate (0x473d2) */
 } fpga_configuration_index;
 
-/* The chip of a configuration fpga_verify_chip reads back: the first
- * through port F bit 6, the second through bit 7, its bytes 0xf0d into
- * the configuration (0x2384a). */
-typedef enum __attribute__((packed)) fpga_chip {
-  FPGA_CHIP_FIRST = 1,
-  FPGA_CHIP_SECOND = 2,
-} fpga_chip;
-
-/* A configuration's bitstream in ROM, from start to end. */
-typedef struct fpga_configuration_entry {
-  uint8_t* start;
-  uint8_t* end;
-} fpga_configuration_entry;
-
-/* The FPGA's configurations, at 0x21e2c: the highest index the loader
- * and the checks take (cmp.b and bls at 0x22dbc, 0x23984 and 0x1891c),
- * 1, though only entry 0 is a configuration and entry 1 would be read
- * from the second bitstream's first bytes. */
-typedef struct fpga_configuration_table {
-  uint8_t last; /* +0x00 */
-  uint8_t field_01;
-  fpga_configuration_entry entries[1]; /* +0x02 */
-} fpga_configuration_table;
+#include "../common/types/fpga_chip.h"
 
 /* What a stage of the loop gives pllp_task each pass: go on in it, it is
  * done (pllp_task moves to the next stage), or it failed. */
@@ -3333,17 +1923,7 @@ typedef enum __attribute__((packed)) pll_leap_ack_state {
   PLL_LEAP_ACK_BACK_ACK = 7,
 } pll_leap_ack_state;
 
-/* The status screen's mode, pll_mode's result from the stage and
- * pll.manual (0x45b70), which the screen and the :ROSCillator:HOLDover
- * queries read (docs/screen-format-strings.md, "Mode suffixes"). */
-typedef enum __attribute__((packed)) pll_screen_mode {
-  PLL_MODE_NONE = 0,
-  PLL_MODE_HOLDOVER_MANUAL = 1,
-  PLL_MODE_HOLDOVER = 2,
-  PLL_MODE_RECOVERY = 3,
-  PLL_MODE_POWERUP = 4,
-  PLL_MODE_LOCKED = 5,
-} pll_screen_mode;
+#include "../common/types/pll_screen_mode.h"
 
 /* The power-up mode's suffix on the status screen, pll_powerup_suffix_index's
  * result by powerup's sub-state (docs/screen-format-strings.md, "Mode
@@ -3376,17 +1956,7 @@ typedef enum __attribute__((packed)) frequency_figure_of_merit {
   FFOM_UNLOCKED = 3,    /* PLL unlocked, not in holdover: do not use */
 } frequency_figure_of_merit;
 
-/* Which GPS sequence waits for the acknowledgment of the request it sent,
- * gps_ack_awaited, gpsx_send's last argument; pllp_task's reply handling
- * tells the console command's and the self-test's apart. */
-typedef enum __attribute__((packed)) gps_ack_awaited_kind {
-  GPS_ACK_NONE = 0,
-  GPS_ACK_INIT = 1,
-  GPS_ACK_LEAP_ACK = 2,
-  GPS_ACK_LEAP_CHECK = 3,
-  GPS_ACK_COMMAND = 4,
-  GPS_ACK_SELFTEST = 5,
-} gps_ack_awaited_kind;
+#include "../common/types/gps_ack_awaited_kind.h"
 
 /* The disciplining loop's state block: the stage the status screen
  * shows (docs/screen-format-strings.md, "Mode suffixes") and the PLL's
@@ -3488,80 +2058,11 @@ typedef struct pll_state {
   uint8_t field_3e7;
 } pll_state;
 
-/* The GPS link's counters, which the "GPS Process Monitor" page
- * (gps_print_process_monitor) prints.  Cleared as one, memset(&gps_counts,
- * 0, 0x36).  All words. */
-typedef struct gps_statistics {
-  uint16_t received; /* Msgs Rcvd */
-  uint16_t sent;     /* Msgs Sent */
-  uint16_t jammed;   /* Msgs Jam */
-  uint16_t sent_errors;
-  uint16_t received_errors;
-  uint16_t jam_errors;
-  uint16_t successes;  /* Success */
-  uint16_t field_0e;   /* no response code counts it and nothing prints it */
-  uint16_t rejects;    /* Reject */
-  uint16_t timeouts;   /* Timeout */
-  uint16_t busy;       /* Busy */
-  uint16_t aborts;     /* Abort */
-  uint16_t no_command; /* No Cmd */
-  uint16_t no_query;   /* No Qry */
-  uint16_t unknown_command;  /* ? Cmd */
-  uint16_t unknown_sender;   /* ? Sndr */
-  uint16_t commands_sent;    /* Cmds Sent */
-  uint16_t responses_read;   /* Resp Read */
-  uint16_t e_retries;        /* E Retry */
-  uint16_t t_retries;        /* T Retry */
-  uint16_t raim_detected;    /* Time RAIM page: (%d detected) */
-  uint16_t raim_alarms;      /* # Alarms */
-  uint16_t unknown_response; /* ? Resp */
-  uint16_t frame_errors;     /* Frame */
-  uint16_t checksum_errors;  /* Cksum */
-  uint16_t command_monitor_failures;
-  uint16_t status_monitor_failures;
-} gps_statistics;
+#include "../common/types/gps_statistics.h"
 
-/* The last exception, which the exception report prints: "Exception:
- * %s, vector %04X, PC = %08X, SR = %04X, addr = %08X". */
-typedef struct exception_record {
-  uint8_t pending;
-  char name[5];
-  uint16_t sr;
-  uint32_t pc;
-  uint16_t vector;
-  uint32_t address; /* printed when the vector's format is not 0 */
-} exception_record;
+#include "../common/types/exception_record.h"
 
-/* A mutex: an exchange holding one message, its token, which
- * mutex_acquire (0x1043a) takes with request_x unless the calling task
- * owns it already, and the owner and its nested holds.  mutex_clear
- * (0x104d2) clears all 0x18 bytes; mutex_init (0x10400) creates the
- * exchange and sends the token. */
-typedef struct mutex {
-  uint32_t field_00;
-  uint32_t exchange; /* +0x04: 0 until mutex_init; mutex_acquire fails 1 */
-  uint32_t owner;    /* +0x08: the holding task's id, 0 when free */
-  int32_t holds;     /* +0x0c: the owner's holds past its first, each 0x80 */
-  uint32_t field_10;
-  uint32_t field_14;
-} mutex;
-
-/* A routine the spool task runs for a caller, with its three arguments. */
-typedef void spoo_function(uint32_t a, uint32_t b, uint32_t c);
-
-/* A clock (klok task) entry, which print_clk_list prints: when it fires,
- * its period, the function it calls and its event class.  A date is
- * year << 16 | month << 8 | day, a time hour << 16 | minute << 8 |
- * second.  0x1a bytes; a pool of five. */
-typedef struct klok_entry {
-  struct klok_entry* next;
-  uint32_t time; /* at */
-  uint32_t date;
-  uint32_t period_time; /* period */
-  uint32_t period_date;
-  spoo_function* function; /* function address: spoo_run runs it */
-  int16_t event_class;     /* event class */
-} klok_entry;
+#include "../common/types/os.h"
 
 /* A fixed event log message, by the code log_event (0x3189a) takes
  * and its jump table's order (0x318bc, 28 cases); the names are the
@@ -3599,69 +2100,13 @@ typedef enum __attribute__((packed)) log_event_code {
   LOG_SYSTEM_PRESET = 0x1b,            /* "System preset" */
 } log_event_code;
 
-/* An event log entry: its time and date, packed as a klok_entry's, and
- * the format and two arguments it is printed with.  log_read formats
- * one as "Log %03d:%04d%02d%02d.%02d:%02d:%02d" and its text. */
-typedef struct log_entry {
-  uint32_t time;
-  uint32_t date;
-  char* format;
-  int32_t argument_1;
-  int32_t argument_2;
-} log_entry;
+#include "../common/types/log_entry.h"
 
-/* A page of the event log, three entries, as log_read loads it. */
-typedef struct log_page {
-  uint16_t write_count; /* +0x00: incremented by each log_page_write */
-  uint16_t
-      checksum; /* +0x02: log_page_checksum's byte sum and its complement */
-  log_entry entries[3];
-} log_page;
+#include "../common/types/fpga_bit.h"
 
-/* An entry of fpga_bit_table: the FPGA register a bit is in and its
- * mask, which fpga_set_bit sets or clears in fconf_regs. */
-typedef struct fpga_bit {
-  uint8_t reg;
-  uint8_t mask;
-  uint8_t is_flag; /* 1: fpga_fields_to_registers sets mask for a nonzero value;
-                      0: ORs the value in */
-  uint8_t field_3;
-} fpga_bit;
+#include "../common/types/interpolator_calibration.h"
 
-/* The time-interval counter's interpolator calibration, which
- * interpolator_calibrate steps: HDAC channels 2 and 3 trim the counter
- * until its readings at the two reference points fall in 1 to 25 and
- * 201 to 225, exactly 200 apart. */
-typedef struct interpolator_calibration {
-  uint8_t initialized; /* set with both DACs at 0x1f the first time */
-  uint8_t calibrated;
-  uint8_t hdac_2; /* HDAC channel 2's value */
-  uint8_t hdac_3; /* HDAC channel 3's value */
-  uint8_t result_valid;
-  uint8_t result_hdac_2; /* the values that gave a spread of 200 */
-  uint8_t result_hdac_3;
-  uint8_t reading_low;  /* interpolator_measure(0), wanted 1 to 25 */
-  uint8_t reading_high; /* interpolator_measure(1), wanted 201 to 225 */
-} interpolator_calibration;
-
-/* A SCPI setting's descriptor, in ROM, the switches and choices nv_save
- * saves: 0x1e bytes. */
-typedef struct scpi_setting_param {
-  scpi_param_type type; /* SCPI_PARAM_SETTING */
-  uint8_t last_index;   /* +0x01: values less one */
-  int8_t* nv_widths;    /* +0x02: each value's bits in the NV register */
-  int8_t maximum;       /* +0x06: toggle_change refuses a value above it */
-  uint8_t field_07;
-  void* changed;                /* +0x08: called as the value is stored */
-  uint8_t* value;               /* +0x0c: the current value, a byte each */
-  void* done;                   /* +0x10: called once it is */
-  uint16_t flags;               /* +0x14: as scpi_numeric_param's */
-  gps_request_code gps_request; /* +0x16: what pll_scpi_send_to_loop sends
-                                   gpsx_exchange, GPS_REQUEST_NONE none */
-  uint8_t field_17;
-  void* group_cell; /* +0x18: a scpi_group_cells word by command group; no
-                       code reads it */
-} scpi_setting_param;
+#include "../common/types/scpi_setting_param.h"
 
 /* The words the numeric and setting descriptors' group_cell points at,
  * one for each command group (scpi_group_cells, 0x101f90, 12 bytes, up
@@ -3677,74 +2122,11 @@ typedef struct scpi_group_cells_fields {
   uint16_t rest;     /* +0x0a: every other descriptor's, 0x33c8a to 0x34374 */
 } scpi_group_cells_fields;
 
-/* A SCPI action's descriptor, in ROM, 6 bytes, from 0x4132a to 0x4137d.
- * validate_or_doaction refuses an index above last_index, then
- * pll_scpi_do_action calls action with the index and the source; it
- * stores nothing and leaves finish_scpi_cmd uncalled. */
-typedef struct scpi_action_param {
-  scpi_param_type type; /* SCPI_PARAM_ACTION */
-  uint8_t last_index;   /* +0x01: indexes less one */
-  void* action;         /* +0x02: called with the index and the source */
-} scpi_action_param;
+#include "../common/types/scpi_action_param.h"
 
-/* request_source: who asked for a change or an EEPROM write, and so
- * whether a failure goes to the status system.  Handed down through
- * pllc_request.source and pll_scpi_source to the descriptors' validate,
- * changed, done and action routines, and to nv_save,
- * save_parameter_record, save_calibration_block, log_erase and
- * douglas_finish_nv_argument, ending in status_report_from.  Its jump
- * table at 0x2bf16 reports for 0 and 2 alone; any value above 4 is
- * silent too (0x2bf06).  Nothing in the image passes 1, 3 or 5: they
- * are named by what the code does with them.  Indexing
- * scpi_response_texts[2] and its siblings by source suggests 1 was a
- * second SCPI port, as the 59551A has (097-59551-02, *CLS, "Context
- * Dependencies": each I/O port has its own error queue); unproved. */
-typedef enum __attribute__((packed)) request_source {
-  /* A SCPI command: return_zero(call->input) (0x29ada), the only port.
-   * Reports; pllc signals task_scpi when done (0x43208) and sends what
-   * the GPS must hear (0x432f8); status_preset_register sets registers
-   * for it alone (0x2f35c); status_preset_done's restores (0x43584,
-   * 0x435b8, 0x43604, 0x4362a). */
-  REQUEST_SOURCE_SCPI = 0,
-  /* Not reported, not sent to the GPS; the second slot of the per-source
-   * response arrays. */
-  REQUEST_SOURCE_SILENT_1 = 1,
-  /* Startup: nv_restore's save of the defaults and its configuration
-   * lost (0x328be, 0x328c8).  Reports. */
-  REQUEST_SOURCE_STARTUP = 2,
-  /* Not reported: status_report_from's own case, returning 0
-   * (0x2bf2c). */
-  REQUEST_SOURCE_SILENT_3 = 3,
-  /* The firmware on its own: root_task's log erase after a failed
-   * EEPROM self-test (0x130be), the leap second's and the loop's NV
-   * saves (0x463e2, 0x4643a, 0x47972), douglas_finish_nv_argument's
-   * when a survey ends (0x46d74, 0x475b6).  Not reported. */
-  REQUEST_SOURCE_INTERNAL = 4,
-  /* Not reported, but pllc sends its requests to the GPS as for
-   * REQUEST_SOURCE_SCPI (0x432fe). */
-  REQUEST_SOURCE_SILENT_TO_GPS = 5,
-} request_source;
+#include "../common/types/request_source.h"
 
-/* A SCPI request to the pllc task: the 24-byte message pllc_request_a
- * to pllc_request_e build in their frames and send pllc_exchange, which
- * pll_scpi_receive receives into 24 bytes and get_setup_vars copies
- * into pll_scpi_param to pll_scpi_values.  The kernel copies +0x04 to
- * +0x17 (kernel_copy_message). */
-typedef struct pllc_request {
-  uint32_t field_00;     /* +0x00: not set; the kernel does not copy it */
-  uint32_t field_04;     /* +0x04: cleared; as gps_request_entry's */
-  void* param;           /* +0x08: the descriptor, a scpi_numeric_param,
-                            scpi_setting_param or scpi_action_param; pll_scpi_param */
-  uint8_t index;         /* +0x0c: pll_scpi_index */
-  request_source source; /* +0x0d: pll_scpi_source; for 0 the SCPI task is
-                         signaled when it is done */
-  uint8_t field_0e;      /* +0x0e: not set */
-  uint8_t setting;       /* +0x0f: a setting's new value, pll_scpi_setting;
-                            pllc_request_a's alone */
-  uint32_t values[2];    /* +0x10: by the numeric descriptor's is_integer: 0 the
-                            value in values[1], 1 in values[0], 3 both, 2 values[0]
-                            the address of index + 1 longs */
-} pllc_request;
+#include "../common/types/pllc_request.h"
 
 /* An Oncore argument encoder: puts a request's argument by its index
  * at out, and returns where the next byte goes (long_array_get_byte and
@@ -3839,15 +2221,7 @@ typedef struct oncore_message_entry {
   oncore_send_filter* filter; /* +0x38: zero for none */
 } oncore_message_entry;
 
-/* nv_settings.holdover_limit_state, :ROSCillator:HOLDover:LIMit:STATe's
- * reverse: its setter stores 1 for OFF, 0 for ON (0x2fc26), its query
- * answers 1 for 0 (0x2fc78), and nv_settings_defaults' is 0.  The loop
- * tests it against 0 (fine, startup_pll's and pll_normal's readings,
- * holdover) and the status screen against 1 (status_screen_tfom). */
-typedef enum __attribute__((packed)) holdover_limit_setting {
-  HOLDOVER_LIMIT_ON = 0,  /* the TI limit holds over */
-  HOLDOVER_LIMIT_OFF = 1, /* no limit; the screen prints " Off" */
-} holdover_limit_setting;
+#include "../common/types/holdover_limit_setting.h"
 
 /* The settings nv_save keeps in the NV register and nv_restore loads:
  * each field the value of the descriptor in nv_save's tables that points
@@ -3905,61 +2279,9 @@ typedef struct nv_settings_fields {
   uint8_t debug_output;          /* :DIAG:SYSTem:DOUTput */
 } nv_settings_fields;
 
-/* A time-interval reading, interval_reading, as counter_read leaves it.
- * 13 bytes. */
-typedef struct interval_reading_fields {
-  double value;  /* s; SCPI's NaN, 9.91e37, on an error */
-  uint8_t valid; /* the :DIAG query's flag */
-  counter_error errors;
-  uint16_t tag;  /* 0xfff6, which the :DIAG query returns with it */
-  uint8_t armed; /* clear, the routines report a measurement aborted */
-} interval_reading_fields;
+#include "../common/types/interval_reading_fields.h"
 
-/* A counter_configuration_fields work's state: asked for, or done. */
-typedef enum __attribute__((packed)) counter_work_state {
-  COUNTER_WORK_DONE = 1,
-  COUNTER_WORK_WANTED = 2,
-} counter_work_state;
-
-/* counter_configuration_fields.registers_mode: when counter_arm loads
- * fpga_registers; any other value never. */
-typedef enum __attribute__((packed)) counter_registers_mode {
-  COUNTER_REGISTERS_WHEN_WANTED = 1,
-} counter_registers_mode;
-
-/* counter_configuration_fields.calibrate_mode: when counter_read
- * calibrates the interpolator; any other value never. */
-typedef enum __attribute__((packed)) counter_calibrate_mode {
-  COUNTER_CALIBRATE_WHEN_WANTED = 1,
-  COUNTER_CALIBRATE_ALWAYS = 3,
-} counter_calibrate_mode;
-
-/* counter_configuration_fields.sync_mode: when counter_arm syncs the
- * counter, as sync_request (0x40a64) asks; any other value never. */
-typedef enum __attribute__((packed)) counter_sync_mode {
-  COUNTER_SYNC_WHEN_WANTED = 2,
-} counter_sync_mode;
-
-/* The time-interval counter's configuration, counter_configuration, which
- * counter_arm, counter_calibrate and counter_read are given.  A mode and
- * a state go in pairs: the mode says when the work is done, the state
- * asks for it or says it is done.
- * 0x20 bytes, interpolator_calibration_state after them. */
-typedef struct counter_configuration_fields {
-  uint8_t fpga_registers[4]; /* counter_arm copies them into fconf_regs */
-  double calibration;        /* s, which counter_read subtracts */
-  counter_registers_mode registers_mode; /* when fpga_registers load */
-  counter_work_state registers_state;
-  counter_calibrate_mode calibrate_mode; /* when the interpolator calibrates */
-  counter_work_state calibrate_state;
-  counter_sync_mode sync_mode;   /* when counter_arm syncs */
-  counter_work_state sync_state; /* sync_request sets both */
-  counter_sync_kind sync_kind;   /* sync_request's first; into fconf_regs[3] */
-  uint8_t pad_13;
-  int32_t sync_count;          /* sync_request's second; counted down */
-  int32_t interpolator_offset; /* reading_low, subtracted from the reading */
-  int32_t interpolator_scale;  /* the spread it is divided by */
-} counter_configuration_fields;
+#include "../common/types/counter_work_state.h"
 
 /* The battery-backed RAM a warm restart restores, preserved_region at
  * 0x100000: pllp_task copies gps, pll and the RAM blocks below into it
@@ -3980,102 +2302,13 @@ typedef struct preserved_region_fields {
   uint8_t field_b2d;           /* in the checksum; nothing else refers to it */
 } preserved_region_fields;
 
-/* The clock record at 0x1009b8, clock, which the clock_record_ routines
- * reach through A6 or A4: the uptime, two dates and times, each with its
- * month table, the minute's length and the GPS-UTC offset.
- * clock_record_checksum sums +0x02 to +0x32.  0x33 bytes. */
-typedef struct clock_record {
-  uint16_t checksum; /* +0x00: the sum's complement, then the sum */
-  uint32_t uptime;   /* +0x02: seconds since the clock started; addq.l #1 at
-                        0x13508, each second; cleared only by clock_init */
-  time_of_day time;  /* +0x06: get_date_time's time; clock_record_derive's
-                        utc_to_local of gps_time */
-  uint32_t date;     /* +0x0a: get_date_time's date */
-  uint8_t month_days[12]; /* +0x0e: date's days a month, January first;
-                             clock_set_leap_year sets February's */
-  time_of_day gps_time;   /* +0x1a: get_gps_time's */
-  uint32_t gps_date; /* +0x1e: get_gps_date's; year << 16 | month << 8 | day */
-  uint8_t gps_month_days[12]; /* +0x22: gps_date's */
-  uint8_t minute_length; /* +0x2e: seconds in this minute, 60; 59 or 61 from the
-                            leap stubs at 0x13666 and 0x1366c */
-  uint8_t set; /* +0x2f: the clock has been set since power-up, from GPS or by
-                  the console: set_timedate sets it (0x13870), clock_init
-                  clears it (0x13974); get_date_time returns 1 while clear */
-  int16_t gps_utc_offset; /* +0x30: GPS less UTC in seconds, days times 86400
-                             plus the difference of two times of day, negated in
-                             UTC mode; a 59- or 61-second minute or offset_step
-                             changes it */
-  uint8_t gps_utc_offset_valid; /* +0x32: set_gps_utc_offset sets it; clock_init
-                                   clears it */
-} clock_record;
+#include "../common/types/clock_record.h"
 
-/* The message pps_interrupt sends pps_exchange each 1PPS, at 0x100bac,
- * which pps_wait_time receives into the same cells.  pps_init clears
- * 0x18 bytes from it with mutex_clear. */
-typedef struct pps_exchange_message {
-  uint32_t field_00[2]; /* only cleared */
-  uint32_t gps_time;    /* +0x08: get_gps_time's at the pulse */
-  uint32_t gps_date;    /* +0x0c: get_gps_date's */
-  uint32_t field_10[2]; /* only cleared */
-} pps_exchange_message;
+#include "../common/types/pps_exchange_message.h"
 
-/* The GPS task's state, gps_task_state: the GPS Process Monitor's
- * "State: " strings. */
-typedef enum __attribute__((packed)) gps_process_state {
-  GPS_PROCESS_TASK_IDLE = 0,    /* takes the next request from gps_requests */
-  GPS_PROCESS_SEND_COMMAND = 1, /* runs the script's next step */
-  GPS_PROCESS_WAIT_FOR_RESPONSE =
-      2 /* waits for the step's response, retrying on a timeout */
-} gps_process_state;
+#include "../common/types/gps_process_state.h"
 
-/* satellite_sets_build's sets, which status_snapshot keeps: GPS
- * satellites as bits prn - 1 of a long, pseudolites as bits prn - 0x21
- * of a byte (satellite_add_to_set).  Tracked means on one of @@Ba's
- * channels; the three bands split those by the channel's tracking mode
- * (oncore_channel_mode), 1 to 4, 5 and 6, and 7 and 8 (0x494f6 to
- * 0x4951a), and are cut to the satellites not used (0x49590). */
-typedef struct satellite_sets {
-  uint32_t visible; /* +0x00: visible_satellites' set, from @@Bb */
-  uint32_t
-      used; /* +0x04: satellites_in_use's GPS set, those used for position */
-  uint32_t tracked;            /* +0x08 */
-  uint8_t pseudolites_used;    /* +0x0c: satellites_in_use's pseudolite set */
-  uint8_t pseudolites_tracked; /* +0x0d */
-  uint32_t unused;             /* +0x0e: (visible | tracked) & ~used */
-  uint32_t tracked_unused;     /* +0x12: tracked & ~used */
-  uint32_t acquiring;          /* +0x16: of tracked_unused, modes 1 to 4 */
-  uint32_t synchronized;       /* +0x1a: modes 5 and 6 */
-  uint32_t ephemeris;          /* +0x1e: modes 7 and 8 */
-  uint8_t pseudolites_tracked_unused; /* +0x22: pseudolites_tracked &
-                                         ~pseudolites_used */
-  uint8_t pseudolites_acquiring;      /* +0x23: likewise, by mode */
-  uint8_t pseudolites_synchronized;   /* +0x24 */
-  uint8_t pseudolites_ephemeris;      /* +0x25 */
-  uint8_t visible_count;              /* +0x26: visible_satellites' count */
-  uint8_t used_count;                 /* +0x27: satellites_in_use's GPS count */
-  uint8_t pseudolites_used_count;     /* +0x28: its pseudolite count */
-  uint8_t field_29;
-} satellite_sets;
-
-/* What satellite_find and the satellite lists are given:
- * gps.visibility_received (0x100d7a) and the @@Bb message after it, as
- * the image passes its address (0x4a800 to 0x4a83a) and its search
- * reads it (0x4f32c). */
-typedef struct gps_visibility_record {
-  uint8_t received; /* +0x00: gps.visibility_received */
-  uint8_t field_01;
-  oncore_visibility_fields visibility; /* +0x02: gps.visibility */
-} gps_visibility_record;
-
-/* A satellite's cell on the screen, at +4 of a satellite_status_list
- * entry: satellite_elevation_azimuth's and satellite_status' (0x49654,
- * 0x49688), the long status_screen gives format_satellite_cell
- * (0x4ae0e). */
-typedef struct satellite_cell {
-  satellite_cell_status status;
-  uint8_t elevation; /* degrees, for SATELLITE_CELL_POSITION */
-  uint16_t azimuth;  /* degrees */
-} satellite_cell;
+#include "../common/types/satellite_sets.h"
 
 /* A satellite_status_list entry, 8 bytes: status_snapshot keeps twelve
  * not tracked and six tracked
@@ -4172,394 +2405,10 @@ typedef struct status_snapshot_record {
   uint16_t hardware_condition; /* +0x168: status_hardware_condition's */
 } status_snapshot_record;
 
-/* An entry of status_screen_mode_lines: a mode line of the status
- * screen and the mode it stands for, which status_screen marks ">>"
- * when it is the snapshot's.  A null text ends the table. */
-typedef struct status_screen_mode_line {
-  status_screen_line
-      mode; /* +0x00: 3 Locked, 2 Recovery, 1 Holdover, 0 Power-up */
-  uint8_t field_01;
-  char* text; /* +0x02 */
-} status_screen_mode_line;
-/* One entry of the kernel's I/O table, a "jmp.l routine" instruction:
- * kernel_dispatch_io jumps into the table at (device * 6 + function) * 6
- * (docs/firmware/psos.md, "Calls"). */
-typedef struct io_jump {
-  uint16_t opcode; /* +0x00: 0x4ef9, jmp.l */
-  void* routine;   /* +0x02 */
-} io_jump;
+#include "../common/types/psos.h"
 
-/* A device's six I/O routines, functions 0 to 5 in the order of the
- * console's dev_init, dev_open, dev_close, dev_read, dev_write and
- * dev_ctrl.  io_table at 0x1025bc holds four, which psos_config_init
- * copies from ROM 0x5171a: DUART channel B, the QSPI, the console's
- * string device and the SCI.  The installer's, at 0x10ab60, holds one. */
-typedef struct io_device_jumps {
-  io_jump function[6]; /* +0x00 */
-} io_device_jumps;
+#include "../common/types/spoo_request.h"
 
-/* An io_jump's slot filled with "rts; nop; nop" instead of a jmp.l. */
-typedef struct io_stub {
-  uint16_t opcode;  /* +0x00: 0x4e75, rts */
-  uint16_t nops[2]; /* +0x02: 0x4e71, nop */
-} io_stub;
+#include "../common/types/early_status_events.h"
 
-/* A fifth device's slot after io_table_defaults, at 0x517aa, each
- * function an io_stub: psos_config_init copies only the four before it
- * (0x90 bytes, 0x5104e) and psos_config.last_device is 3, so nothing
- * reaches it. */
-typedef struct io_device_stubs {
-  io_stub function[6]; /* +0x00 */
-} io_device_stubs;
-
-/* The bits of a pForth word's flags, pforth_word_header.flags: what
- * forth_interpret does with the word it finds (0x18f2e to 0x18f4e),
- * forth_find's skip (0x18fda), and the clears at 0x19674 and 0x19dd2. */
-typedef enum __attribute__((packed)) pforth_word_flag {
-  PFORTH_WORD_COMPILE_ONLY = 0x01, /* interpreted, it is refused (0x18f2e) */
-  PFORTH_WORD_HIDDEN = 0x02,       /* forth_find skips it; cleared at 0x19674 */
-  PFORTH_WORD_IMMEDIATE = 0x04,    /* run even while compiling (0x18f3a);
-                                      immediate sets it (0x19e16) */
-  PFORTH_WORD_INLINE = 0x08, /* compiled by copying inline_size bytes of its
-                                code rather than a jsr (0x18f40); cleared at
-                                0x19dd2 */
-} pforth_word_flag;
-
-/* The pForth console's dictionary (docs/firmware/structures.md, "The
- * console's dictionary").  A word's header: the kernel's 154, 0x1a296
- * to 0x1ad20, are in ROM, linked from forth_header_user (0x1ad0e), the
- * latest, which pforth_dictionary_init stores in pforth_latest_word;
- * pforth_define_word builds a new one the same way in RAM.  The name
- * follows the 12 bytes, ended by a NUL and padded to even with 0xff. */
-typedef struct pforth_word_header {
-  struct pforth_word_header* link; /* +0x00: the word before; NULL ends it */
-  void* code;                      /* +0x04: the word's routine */
-  uint16_t inline_size; /* +0x08: the bytes of code forth_interpret copies to
-                           compile a PFORTH_WORD_INLINE word (0x18f4e) */
-  uint16_t flags; /* +0x0a: pforth_word_flag bits, all in the low byte; the
-                     kernel reads and writes the word */
-  char name[];    /* +0x0c */
-} pforth_word_header;
-
-/* A diagnostic word, one entry of diag_words (0x1c8ac), which
- * diag_words_define walks, 0x26 bytes a step, to the entry whose code is
- * NULL, passing each to pforth_define_word (0x1c198 to 0x1c1b0). */
-typedef struct diag_word_entry {
-  void* code;             /* +0x00: the word's routine */
-  char name[26];          /* +0x04: NUL-padded */
-  int32_t argument_count; /* +0x1e */
-  uint32_t result_count;  /* +0x22 */
-} diag_word_entry;
-
-/* The pSOS kernel's records and codes (docs/firmware/psos.md, "Inside
- * the kernel"). */
-/* A task record's status byte, +0x13, by task_status_name's text. */
-typedef enum __attribute__((packed)) psos_task_status {
-  PSOS_TASK_READY = 0x00,         /* " RDY": none of the rest */
-  PSOS_TASK_SUSPENDED = 0x04,     /* "susp" */
-  PSOS_TASK_PAUSED = 0x08,        /* "paus", as a nonzero delay is */
-  PSOS_TASK_VARIABLE_WAIT = 0x10, /* "vblk": in wait_v */
-  PSOS_TASK_EXCHANGE_WAIT = 0x20, /* "xblk": in request_x */
-  PSOS_TASK_MEMORY_WAIT = 0x40,   /* "mblk": on a region's queue, presumably */
-  PSOS_TASK_SPAWNING = 0x80,      /* "spwn": created, not started */
-} psos_task_status;
-
-/* The kernel's errors that a caller tells apart, the low byte of a
- * service's result (D7). */
-typedef enum __attribute__((packed)) psos_error {
-  PSOS_ERROR_NONE = 0,
-  PSOS_ERROR_NO_MESSAGE = 0x80, /* request_x not to wait, or from an
-                                   interrupt, and none there (0x15746) */
-  PSOS_ERROR_TIMEOUT = 0x81,    /* a wait's ticks run out
-                                   (kernel_process_ticks, 0x14d18) */
-} psos_error;
-
-/* A task record's mode byte, +0x11 (psos.md, service 32). */
-typedef enum __attribute__((packed)) psos_task_mode {
-  PSOS_MODE_TIME_SLICE = 0x40,    /* the report's "R" */
-  PSOS_MODE_NO_PREEMPTION = 0x80, /* the report's "*" */
-} psos_task_mode;
-
-/* task_table_entry.state, by which os_report_processes groups the
- * tasks; PSOS_TABLE_EMPTY marks an unused entry. */
-typedef enum __attribute__((packed)) psos_table_state {
-  PSOS_TABLE_READY = 0,
-  PSOS_TABLE_PAUSED = 1,
-  PSOS_TABLE_BLOCKED = 2,
-  PSOS_TABLE_EMPTY = 0xff,
-} psos_table_state;
-
-/* The kernel's services, trap #3's D7 (psos.md, "Services"); 8 and 21
- * are named by the pSOS-68K brochure's list there. */
-typedef enum __attribute__((packed)) psos_service {
-  PSOS_SERVICE_VERSION = 0, /* ver: the kernel's version in D7 */
-  PSOS_SERVICE_SPAWN = 1,   /* create a task */
-  PSOS_SERVICE_START = 2,
-  PSOS_SERVICE_IDENT = 3,
-  PSOS_SERVICE_DELETE = 4,
-  PSOS_SERVICE_SUSPEND = 5,
-  PSOS_SERVICE_RESUME = 6,
-  PSOS_SERVICE_PRIORITY = 7,
-  PSOS_SERVICE_ALLOCATE_SEGMENT = 8,
-  PSOS_SERVICE_FREE_SEGMENT = 9,
-  PSOS_SERVICE_ASSIGN_SEGMENT = 10,
-  PSOS_SERVICE_RECLAIM_SEGMENT = 16,
-  PSOS_SERVICE_BROADCAST_X = 18,
-  PSOS_SERVICE_JAM_X = 19,
-  PSOS_SERVICE_CREATE_X = 20,
-  PSOS_SERVICE_ATTACH_X = 21,
-  PSOS_SERVICE_DELETE_X = 22,
-  PSOS_SERVICE_SEND_X = 23,
-  PSOS_SERVICE_REQUEST_X = 24,
-  PSOS_SERVICE_SIGNAL_V = 25,
-  PSOS_SERVICE_WAIT_V = 26,
-  PSOS_SERVICE_GET_V = 27,
-  PSOS_SERVICE_PAUSE = 28,
-  PSOS_SERVICE_ANNOUNCE_TICK = 29,
-  PSOS_SERVICE_GET_TIME = 30,
-  PSOS_SERVICE_SET_TIME = 31,
-  PSOS_SERVICE_MODE = 32,
-  PSOS_SERVICE_CREATE_PARTITION = 35,
-  PSOS_SERVICE_DELETE_PARTITION = 36,
-  PSOS_SERVICE_GET_BLOCK = 37,
-  PSOS_SERVICE_RETURN_BLOCK = 38,
-} psos_service;
-
-/* The I/O functions, trap #4's D7 (psos.md, "Calls" and its I/O
- * functions' table: close's stub 0x173fe, control's 0x1747a). */
-typedef enum __attribute__((packed)) psos_io_function {
-  PSOS_IO_INIT = 0,
-  PSOS_IO_OPEN = 1,
-  PSOS_IO_CLOSE = 2,
-  PSOS_IO_READ = 3,
-  PSOS_IO_WRITE = 4,
-  PSOS_IO_CONTROL = 5,
-} psos_io_function;
-
-typedef struct psos_task psos_task;
-
-/* A segment of a region, on a task's list or a region's free list:
- * os_report_region_line prints its first five fields. */
-typedef struct psos_segment {
-  struct psos_segment* next; /* +0x00 */
-  uint32_t field_04;
-  uint32_t field_08;
-  uint32_t size;  /* +0x0c: bytes, from the segment's start */
-  uint16_t flags; /* +0x10: the region, 1 or 2, in bits 1 to 0 */
-} psos_segment;
-
-/* One of a task's resources, on its list at +0x1c. */
-typedef struct psos_resource {
-  struct psos_resource* next; /* +0x00 */
-  void* object;               /* +0x04: an exchange; object_name names it */
-} psos_resource;
-
-/* A task's record, 0xb2 bytes, which kernel_init (0x15cd8) carves from
- * the data area; its address is its id. */
-struct psos_task {
-  psos_task* next; /* +0x00: the next on the ready queue, or on the circular
-                    queue of an exchange or region it waits at */
-  uint32_t field_04;
-  psos_task* timer_next; /* +0x08: the next on the delay list */
-  uint32_t field_0c;
-  uint8_t priority;        /* +0x10 */
-  psos_task_mode mode;     /* +0x11: service 32's mode byte */
-  uint8_t delay;           /* +0x12: nonzero while paused */
-  psos_task_status status; /* +0x13: 0 when ready */
-  uint8_t group;           /* +0x14 */
-  uint8_t field_15;
-  uint16_t events_waited;   /* +0x16 */
-  uint16_t events_pending;  /* +0x18 */
-  uint16_t slice_ticks;     /* +0x1a: the report's TIX for a task not paused */
-  psos_resource* resources; /* +0x1c */
-  psos_segment* segments;   /* +0x20: the segments it holds */
-  char name[4];             /* +0x24 */
-  uint32_t id_check;        /* +0x28: the id with its low word complemented */
-  uint32_t field_2c;
-  psos_task* list_next; /* +0x30: the next on the kernel's task list or its
-                         free list */
-  uint16_t field_34;
-  uint32_t supervisor_pointer; /* +0x36: the saved SSP */
-  uint32_t user_pointer;       /* +0x3a: the saved USP */
-  uint8_t field_3e[0xc];
-  int32_t timer_ticks; /* +0x4a: its ticks past the delay list's one before */
-  uint32_t field_4e;
-  uint32_t region_request; /* +0x52: the bytes a region waiter asks */
-  uint32_t region_wait;    /* +0x56: bits 3 to 0, its region less 1 */
-  uint8_t field_5a[0x28];
-  void* exception_hook; /* +0x82: exception_hook_get's, per task */
-  uint32_t field_86;
-  uint32_t user_top;       /* +0x8a: the user stack's top */
-  uint32_t supervisor_top; /* +0x8e: the supervisor stack's top; the user
-                              stack starts 4 above it */
-  uint32_t stack_bottom;   /* +0x92: the supervisor stack's bottom */
-  uint8_t field_96[0x18];
-  uint32_t ticks; /* +0xae: ticks run since the last process report */
-};
-
-/* An exchange's record, 0x22 bytes; its address is its id. */
-typedef struct psos_exchange {
-  psos_task* waiting; /* +0x00: the circular queue of tasks waiting, which
-                       ends at the exchange itself */
-  uint8_t field_04[0xc];
-  uint8_t by_priority; /* +0x10: queues by priority, else first in first out */
-  uint8_t group_only;  /* +0x11: only its group may use it, else any */
-  uint8_t limited;     /* +0x12: queue_limit holds, else no limit */
-  uint8_t field_13;
-  char name[4];               /* +0x14 */
-  uint32_t id_check;          /* +0x18: the id with its words swapped */
-  struct psos_exchange* next; /* +0x1c: the next on the kernel's list */
-  uint8_t queue_limit;        /* +0x20 */
-  uint8_t queued;             /* +0x21: messages queued */
-} psos_exchange;
-
-/* A message buffer, 0x18 bytes, on the free list by its first long. */
-typedef struct psos_message {
-  struct psos_message* next; /* +0x00 */
-} psos_message;
-
-/* The kernel's data area, psos_config.data_area, which it keeps in A6;
- * the regions' arrays are region 1's and region 2's. */
-typedef struct psos_kernel {
-  psos_task* running;            /* +0x00 */
-  psos_task* ready;              /* +0x04: the ready queue, by priority */
-  psos_task* timers;             /* +0x08: the delay list, through timer_next */
-  psos_task* tasks;              /* +0x0c: every task, through list_next */
-  psos_task* free_tasks;         /* +0x10 */
-  psos_exchange* exchanges;      /* +0x14 */
-  psos_exchange* free_exchanges; /* +0x18 */
-  psos_message* free_messages;   /* +0x1c */
-  uint8_t field_20[0x10];
-  void* debug_hooks;            /* +0x30: psos_debug_output's table or 0 */
-  uint32_t region_minimum[2];   /* +0x34: os_report_regions' "min" */
-  uint32_t region_maximum[2];   /* +0x3c: "max" */
-  uint32_t region_pending[2];   /* +0x44: "pend" */
-  uint32_t region_end[2];       /* +0x4c */
-  psos_segment* region_free[2]; /* +0x54 */
-  uint8_t field_5c[8];
-  psos_task* region_waiting; /* +0x64: the circular queue of tasks waiting for a
-                              region, which ends at this field */
-} psos_kernel;
-
-/* The kernel's configuration table, psos_config at 0x10264c, which
- * psos_config_init copies from ROM 0x5122a; the installer's at 0x10ab84.
- * The kernel reaches it through the pointer at 0x51226, which the long
- * at 0x14ac2 holds, and keeps data_area in A6.  kernel_init carves the
- * data area into the supervisor stack and the records, and gives
- * region 1 the rest up to data_end. */
-typedef struct psos_configuration {
-  struct psos_kernel* data_area; /* +0x00: the kernel's state, A6; the
-                                    supervisor stack starts
-                      200 bytes in */
-  uint32_t data_end; /* +0x04: region 1's end; kernel_init fails unless its
-                        records fit below it; task_id_valid and
-                        exchange_id_valid take ids from data_area up to it */
-  uint32_t region_1_minimum; /* +0x08: at least 18; os_report_regions' "min" */
-  uint32_t region_2_start;   /* +0x0c: 0 */
-  uint32_t region_2_end; /* +0x10: 0; under 72 bytes, kernel_init leaves region
-                            2 empty */
-  uint32_t region_2_minimum; /* +0x14 */
-  uint16_t task_records;     /* +0x18: kernel_init makes one more 0xb2-byte task
-                                record than this */
-  uint16_t exchange_records; /* +0x1a: 0x22 bytes each */
-  uint16_t
-      message_buffers; /* +0x1c: 0x18 bytes each; os_report_exchange_summary's
-                          "Msg buffer(s)" total */
-  uint32_t field_1e; /* +0x1e: kernel_init copies it to the data area's +0x86 */
-  uint16_t last_device; /* +0x22: kernel_init runs function 0 of each device up
-                           to it; kernel_dispatch_io refuses a higher one */
-  io_device_jumps* io_table;      /* +0x24 */
-  uint32_t supervisor_stack_size; /* +0x28: ">> pSOS system supervisor stack:"
-                                     divides by it */
-  void* root_entry; /* +0x2c: where kernel_init starts ROOT, root_task */
-  uint16_t
-      root_stack_sizes[2]; /* +0x30: ROOT's two sizes, kernel_create's D3 */
-  uint16_t root_priority; /* +0x34: ROOT's priority, kernel_create's D2; IDLE is
-                             given 1 */
-  void* start_hook;  /* +0x36: kernel_start calls it with the started task's
-                        record in A0: stack_fill */
-  void* delete_hook; /* +0x3a: kernel_delete calls it while nonzero; 0 */
-  uint32_t field_3e; /* +0x3e: kernel_init copies it to the data area's +0xb4 */
-  void** debug_hooks; /* +0x42: a cell holding a hook table's address;
-                         psos_debug_output puts the table at the data area's
-                         +0x30, whose +4 kernel_dispatch_service and
-                         kernel_dispatch_io call */
-  void** task_hooks; /* +0x46: a cell holding a hook table, whose +4 kernel_init
-                        calls and +8 kernel_delete; 0 */
-  uint8_t field_4a[24];
-} psos_configuration;
-
-/* One of the 17 entries of task_table at 0x1026b6, which
- * task_table_build fills from the running task and the kernel's task
- * list, the running task first. */
-typedef struct task_table_entry {
-  psos_table_state state; /* +0x00: ready when the record's status is clear;
-                             paused when its delay is set or it has
-                             PSOS_TASK_PAUSED, as timer_ticks_until counts;
-                             blocked otherwise.  os_report_processes lists
-                             by it */
-  uint8_t field_01;
-  struct psos_task* task; /* +0x02: the task's record */
-} task_table_entry;
-
-/* A request on the spoo exchange, which spoo_run builds on its stack and
- * spoo_task receives at 0x103702: a function and its three arguments. */
-typedef struct spoo_request {
-  uint32_t field_00;       /* +0x00: spoo_run does not set it */
-  uint32_t field_04;       /* +0x04: spoo_run clears it */
-  spoo_function* function; /* +0x08 */
-  uint32_t arguments[3];   /* +0x0c */
-} spoo_request;
-
-/* A buffer of the status events reported before the status model is
- * ready: early_status_reports at 0x102ebc, status_report's, and
- * early_status_happenings at 0x102ec4, status_happening's.  They pass
- * it to status_event_hook, which does nothing, so nothing fills them;
- * happening_flush replays one as a ring of five. */
-typedef struct early_status_events {
-  int8_t count; /* +0x00: the events reported; above 5 the ring has wrapped */
-  uint8_t next; /* +0x01: where the next goes, the oldest once wrapped */
-  int8_t events[5]; /* +0x02 */
-  uint8_t field_07;
-} early_status_events;
-
-/* What happening_replay replays a buffer's codes
- * as, by its jump table at 0x2f6b2; happening_flush passes the first
- * for early_status_reports and the second for early_status_happenings
- * (0x2f6f2, 0x2f6fe). */
-typedef enum __attribute__((packed)) status_replay_mode {
-  STATUS_REPLAY_REPORTS = 0,    /* by status_report */
-  STATUS_REPLAY_HAPPENINGS = 1, /* by status_happening */
-} status_replay_mode;
-
-/* The installer's :DIAGnostic:TEST? choices, its parameter's value,
- * a short: the jump table at installer::0x1080b0, which
- * installer_scpi_query_DIAGnostic_TEST indexes by the choice less 4
- * from installer::0x1080b8 (installer::0x1080a6); any other choice is
- * an execution error.  docs/firmware/restart.md, "The installer". */
-typedef enum __attribute__((packed)) installer_test_choice {
-  INSTALLER_TEST_SUMMARY = 0,  /* bits 0 to 3: checksum, CPU, RAM, DUART */
-  INSTALLER_TEST_CHECKSUM = 1, /* boot_selftest.checksum's lane flags */
-  INSTALLER_TEST_CPU = 2,
-  INSTALLER_TEST_RAM = 3, /* and its failed data bits and address lines */
-  INSTALLER_TEST_UART = 4,
-} installer_test_choice;
-
-/* The boot code's self-test results, boot_selftest at 0x10ab20: a
- * checksum word, then the fields of selftest_results' first 14 bytes in
- * their order.  The installer's :DIAGnostic:TEST? reads them. */
-typedef struct boot_selftest_results {
-  int16_t
-      checksum; /* +0x00: boot_reset's byte-lane sums: 2 and 1 for the two lanes
-                   of 0x10000 to 0x3ffff, 8 and 4 for 0x40000 to 0x7ffff */
-  int16_t cpu;  /* +0x02: 1 if the CPU test fails */
-  uint16_t
-      ram; /* +0x04: bit 0 a pattern failed, bit 1 an address line aliases */
-  uint16_t ram_data_bits;     /* +0x06: the bits that failed a pattern */
-  uint32_t ram_address_lines; /* +0x08: the address lines that alias */
-  int16_t uart;      /* +0x0c: boot_duart_early_init's IVR and loopback checks;
-                        lights OP6 */
-  uint8_t lamp_mask; /* +0x0e: the DUART output bits boot_reset resets; nothing
-                        reads it */
-  uint8_t field_0f;
-} boot_selftest_results;
+#include "../common/types/installer_test_choice.h"

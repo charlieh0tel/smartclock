@@ -98,7 +98,7 @@ Z3815A and Z3816A -- read off bench units through the pForth debug
 console or gathered from others.  [`docs/firmware/`](docs/firmware/)
 documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 
-### The Z3805A 3543B and 58503A 3704 in C
+### The Z3805A 3543B, 58503A 3704 and Z3801A 3543 in C
 
 One image, the Z3805A's 3543B, is read whole as C.  Every C function
 of it and of the installer it unpacks into RAM, 1318 and 236, was
@@ -121,6 +121,13 @@ firmware's own reasons, and the installer's 247 agree, one the harness
 cannot run; its console sessions agree, 8 of 8.  What it has that the
 Z3805A does not, the front panel among it:
 [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md).
+
+The Z3801A's 3543, the Z3805A's sibling without its SCI driver, is read
+whole as C the same way, held to the same checks:
+[`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md).  The C
+the three images run alike lies once in `third_party/firmware/common/`,
+by the rules of [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md),
+"Shared C".
 
 The checks run in CI (`.github/workflows/firmware.yml`;
 [`docs/firmware/README.md`](docs/firmware/README.md), "The checks in
@@ -184,7 +191,7 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`docs/58503a-second-10mhz.md`](docs/58503a-second-10mhz.md) | enabling the 58503A's 10 MHz OUT B, J15 |
 | [`docs/oncore-leap-week.md`](docs/oncore-leap-week.md) | the 58503A's Time Reset at the end of GPS week 2441, and the 256-week leap-parameter bugs it resembles |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
-| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the Z3805A 3543B and 58503A 3704 in C |
+| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the Z3805A 3543B, 58503A 3704 and Z3801A 3543 in C |
 | [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md) | the Z3805A rewrite's method, checks and limits |
 | [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md) | the 58503A 3704 against the Z3805A 3543B, and its rewrite |
 | [`docs/loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |

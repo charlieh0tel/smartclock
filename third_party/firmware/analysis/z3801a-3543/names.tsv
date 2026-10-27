@@ -324,7 +324,7 @@
 0x1efc8	local	buffers	read	the transfer adc_read hands qspi_read: its command word and its reply	qspi_buffers @ -0x10
 0x1dc1a	function	console_write_polled	context	in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it (from the Z3805A 3543B, by image_diff: identical)	int console_write_polled(char *s)
 0x101fa1	label	fconf_regs	the firmware's own name, "old_addr, fconf_regs[1] = %x" printing 0x101faa; context: fpga_set_bit's copy of the FPGA registers	fpga_set_bit's copy of the FPGA's configuration registers (from the Z3805A 3543B, by image_diff: moved -0x8 by 12 references at its start)	uint8_t[4]
-0x41322	label	fpga_bit_table	context	fpga_set_bit's register and mask for each bit (from the Z3805A 3543B, by image_diff: relocated table, placed by references)	fpga_bit[6]
+0x41322	label	fpga_bit_table	read	fpga_set_bit's register and mask for each bit, ten entries: the Z3805A's six with four flags in register 2 before sync; fpga_set_bit, fpga_set_field, fpga_fields_to_registers and counter_set_sync load its address (0x409ae, 0x40a18, 0x40b08, 0x40a8a), fpga_read entry 4's (0x4077a), and fpga_fields_to_registers and counter_configuration_init bound it by 10 (0x40b96, 0x40eea); row added by hand for the Z3801A 3543	fpga_bit[10]
 #
 # structures and the functions they show, docs/firmware/structures.md
 0x102e8a	label	status_object	structures.md	status_init passes its address to status_create (from the Z3805A 3543B, by image_diff: moved -0x2e by 33 references at its start)	status_model *
@@ -2436,6 +2436,7 @@ installer::0x1014bc	function	installer_trap_6	context	trap #6's handler in the b
 installer::0x1014c0	function	installer_trap_5	context	trap #5's handler in the boot vector table (0x94), the installer's primary_trap_5: a bra.w to installer_kernel_return_from_interrupt (from the Z3805A 3543B, by image_diff: identical)
 #
 # Rows added by hand that no carried row is in place of
+0x4134a	label	fpga_bit_table_register_2_copy	read	16 bytes after fpga_bit_table's ten entries, before pll_action_nothing (0x4135a): entries 5 to 8 again, register 2's four flags; nothing refers to them, and no index reaches them; row added by hand for the Z3801A 3543	fpga_bit[4]
 0x3214a	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_PACE	read	SERial1's pacing setting, value duartb_settings.xon_xoff (0x32156), which :PACE's setter requests (0x2f30e); the Z3805A's at 0x33346; row added by hand for the Z3801A 3543	scpi_setting_param
 0x32186	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE	read	SERial1's parity setting, value duartb_settings.parity (0x32192), which :PARity:TYPE's setter requests; the Z3805A's at 0x33382; row added by hand for the Z3801A 3543	scpi_setting_param
 0x1009b2	label	watchdog_clock	read	the Z3805A's watchdog_clock (0x1009b2), where its neighbors are; the Z3801A's code refers to 0x1009b2 once, the Z3805A's 0x1009b2 once; row added by hand for the Z3801A 3543	uint8_t

@@ -1393,14 +1393,15 @@ typedef struct gps_state {
   uint8_t field_559;
 } gps_state;
 
-/* An entry of fpga_bit_table (0x41334, ten entries), which
+/* An entry of fpga_bit_table (0x41322, ten entries), which
  * fpga_set_bit and fpga_set_field take: a register of fconf_regs and its
  * mask.  The names are from how ti.c's routines use them; only the
  * address and sync are in structures.md.  The Z3801A adds four flags in
  * register 2 before sync, which fpga_fields_to_registers (0x40afe) and
  * counter_configuration_init (0x40ed8) bound by and which nothing else
  * names; the counter's set-up sets the third.  What they drive is not
- * established. */
+ * established.  The four repeat after the table, unreferenced
+ * (fpga_bit_table_register_2_copy, 0x4134a). */
 typedef enum __attribute__((packed)) fpga_bit_index {
 #include "../../common/types/fpga_bit_index.h"
   FPGA_BIT_REGISTER_2_BIT_0 = 5, /* register 2, 0x01, a flag */

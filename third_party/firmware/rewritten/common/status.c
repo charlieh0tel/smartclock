@@ -355,3 +355,7 @@ void happening_flush(char* bytes) {
   happening_replay((char*)buffer->events, mode, 0, last);
   happening_buffers_clear();
 }
+
+/* Where a code reported before the model is ready would be kept, an
+ * early_status_events buffer; does nothing. */
+void status_event_hook(uint32_t buffer, uint8_t code) {}

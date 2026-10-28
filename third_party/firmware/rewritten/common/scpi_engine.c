@@ -134,3 +134,6 @@ void scpi_task_start(void) {
   spoo_run((spoo_function*)scpi_task_create, SCPI_TASK_PRIORITY, 0, 0);
   task_console = 0;
 }
+
+/* The source a command's input port gives: always 0. */
+int32_t return_zero(scpi_port* input) { return 0; }

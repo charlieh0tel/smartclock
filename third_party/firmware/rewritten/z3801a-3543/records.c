@@ -11,38 +11,6 @@ static const duartb_settings_record records_duartb_defaults = {
     .parity = SERIAL_PARITY_ODD,
 };
 
-/* Reads the lifetime record into lifetime, or its defaults; true when its
- * checksum holds (0x2f934). */
-uint8_t lifetime_record_read(void) {
-  /* The lifetime record's default date: 1994-01-01 (year << 16 |
-   * month << 8 | day); its EFC is PLL_EFC_MID_SCALE. */
-  static const uint32_t LIFETIME_DEFAULT_DATE = 1994u << 16 | 1u << 8 | 1u;
-  /* An EFC in the record with these bits all set, as an erased
-   * record's 0xffffffff has, is taken as mid-scale. */
-  static const uint32_t LIFETIME_EFC_INVALID_BITS = 0xe8000000u;
-
-  if (record_checksum(&eeprom_lifetime_record, sizeof eeprom_lifetime_record) !=
-      eeprom_lifetime_record.checksum) {
-    lifetime.date = LIFETIME_DEFAULT_DATE;
-    lifetime.count = 0;
-    lifetime.efc = PLL_EFC_MID_SCALE;
-    return 0;
-  }
-  lifetime.date = eeprom_lifetime_record.date;
-  lifetime.count = eeprom_lifetime_record.count;
-
-  /* The image tests the float's bits. */
-  uint32_t efc_bits;
-  float efc = eeprom_lifetime_record.efc;
-  memcpy(&efc_bits, &efc, sizeof efc_bits);
-  if ((efc_bits & LIFETIME_EFC_INVALID_BITS) == LIFETIME_EFC_INVALID_BITS) {
-    lifetime.efc = PLL_EFC_MID_SCALE;
-  } else {
-    lifetime.efc = efc;
-  }
-  return 1;
-}
-
 /* Counts another lifetime and takes the EFC in normal PLL, then writes
  * the record. */
 static void records_lifetime_count(void) {

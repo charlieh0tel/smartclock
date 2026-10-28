@@ -48,12 +48,6 @@ static char* const LOG_TEXT_EXT_REFERENCE_VALID_AT =
 static char* const LOG_TEXT_GPS_REFERENCE_VALID_AT =
     (char*)0x31c49; /* "GPS reference valid at %04d%02d%02d.%02d:%02d:%02d" */
 
-/* The sum and its complement of an event log page's entries (0x3126a). */
-uint16_t log_page_checksum(log_page* page) {
-  return records_sum_and_complement(
-      records_byte_sum((const uint8_t*)page->entries, sizeof page->entries));
-}
-
 /* The event log's pages in the EEPROM, at 0x400d80, which the export
  * declares no object for. */
 static log_page* const LOG_EEPROM_PAGES = (log_page*)0x400d80;

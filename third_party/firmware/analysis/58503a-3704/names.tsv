@@ -2702,6 +2702,7 @@ installer::0x103a20	function	installer_duarta_drain_loop	read	installer_duarta_d
 0x52602	label	oncore_raim_8_field_codes	read	oncore_traim_8_message's field table for @@En (0x5094a); 0x80 ends it; row added by hand for the 58503A 3704	uint8_t[16]
 0x52612	label	oncore_corrections_field_codes	read	oncore_corrections_message's field table for @@Ce; 0x80 ends it; row added by hand for the 58503A 3704	uint8_t[12]
 0x101e4e	label	gps_reference_last_state	read	the GPS reference's state as gps_receiver_status_update_58503a last stored it, which it writes when it changes and nothing else reads (0x4bc82); row added by hand for the 58503A 3704	gps_sync_status
+0x1022a4	label	scpi_group_cells	structures.md	the words the descriptors' group_cell points at, one for each command group; nothing reads or writes them; in the 58503A at 0x1022a4 by its descriptors' 71 pointers to five words up to interval_reading, where the Z3805A's 79 point at six, no descriptor being SERial2's; row added by hand for the 58503A 3704	scpi_group_cells_fields
 #
 # New functions: the 58503A's functions no Z3805A function or piece
 # matched (image_diff's "new"), and those found "called, by Ghidra's

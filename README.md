@@ -216,7 +216,7 @@ and `097-z3801-01` (Z3801A) are the primary references, and
 
 ## License
 
-Copyright © 2026 Christopher Hoover.  GPL-3.0-or-later.  See
+Copyright © 2026 Christopher Hoover.  GPL-3.0-only.  See
 [`LICENSE`](LICENSE).
 
 The license does not cover `third_party/`; see

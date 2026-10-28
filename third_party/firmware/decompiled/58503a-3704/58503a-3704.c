@@ -3322,7 +3322,6 @@ struct scpi_group_cells_fields {
     uint16_t serial_1;
     uint16_t sample;
     uint16_t pulse;
-    uint16_t serial_2;
     uint16_t status;
     uint16_t rest;
 };
@@ -4081,7 +4080,7 @@ _Static_assert(sizeof(scpi_decimal) == 20, "scpi_decimal");
 _Static_assert(sizeof(scpi_double_step) == 12, "scpi_double_step");
 _Static_assert(sizeof(scpi_error_message) == 6, "scpi_error_message");
 _Static_assert(sizeof(scpi_float_resolution) == 6, "scpi_float_resolution");
-_Static_assert(sizeof(scpi_group_cells_fields) == 12, "scpi_group_cells_fields");
+_Static_assert(sizeof(scpi_group_cells_fields) == 10, "scpi_group_cells_fields");
 _Static_assert(sizeof(scpi_handler) == 10, "scpi_handler");
 _Static_assert(sizeof(scpi_handler_action) == 1, "scpi_handler_action");
 _Static_assert(sizeof(scpi_keyword) == 20, "scpi_keyword");
@@ -7304,6 +7303,7 @@ extern char idn_model[18]; /* 0010227c */
 extern char idn_serial[18]; /* 0010228e */
 extern char idn_suffix; /* 001022a0 */
 extern int16_t log_entry_count; /* 001022a2 */
+extern scpi_group_cells_fields scpi_group_cells; /* 001022a4 */
 extern interval_reading_fields interval_reading; /* 001022ae */
 extern uint8_t fconf_regs[4]; /* 001022bb */
 extern counter_configuration_fields counter_configuration; /* 001022c0 */
@@ -8707,6 +8707,7 @@ __asm__(".set scpi_echo_length, 0x00102f74");
 __asm__(".set scpi_echo_response, 0x00102f92");
 __asm__(".set scpi_echo_text, 0x00102d48");
 __asm__(".set scpi_error_messages, 0x00027ba6");
+__asm__(".set scpi_group_cells, 0x001022a4");
 __asm__(".set scpi_input_end, 0x00102f66");
 __asm__(".set scpi_input_end_code, 0x000288d4");
 __asm__(".set scpi_input_line, 0x00102e62");

@@ -586,10 +586,11 @@ CHECK_FIELD(scpi_setting_param, gps_request, 0x16);
 CHECK_FIELD(scpi_setting_param, group_cell, 0x18);
 CHECK_FIELD(scpi_setting_param, value, 0xc);
 /* the group cells, from the descriptors' pointers up to interval_reading */
-/* The 58503A's descriptors point at five words from 0x1022a4 up to
- * interval_reading, which its names file does not name, where the
- * Z3805A's point at six; scpi_group_cells_fields, which no code reads, is
- * the Z3805A's and not checked here. */
+CHECK_SIZE(scpi_group_cells_fields, 0x1022ae - 0x1022a4);
+CHECK_FIELD(scpi_group_cells_fields, sample, 0x1022a6 - 0x1022a4);
+CHECK_FIELD(scpi_group_cells_fields, pulse, 0x1022a8 - 0x1022a4);
+CHECK_FIELD(scpi_group_cells_fields, status, 0x1022aa - 0x1022a4);
+CHECK_FIELD(scpi_group_cells_fields, rest, 0x1022ac - 0x1022a4);
 /* 13 action descriptors, each referred to at its own address, from
  * 0x413ca to efc_history_update at 0x41418 */
 CHECK_SIZE(scpi_action_param, (0x41418 - 0x413ca) / 13);

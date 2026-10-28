@@ -2195,17 +2195,20 @@ typedef enum __attribute__((packed)) log_event_code {
 #include "../../common/types/scpi_setting_param.h"
 
 /* The words the numeric and setting descriptors' group_cell points at,
- * one for each command group (scpi_group_cells, 0x101f90, 12 bytes, up
+ * one for each command group (scpi_group_cells, 0x1022a4, 10 bytes, up
  * to interval_reading).  No code reads or writes them, only
- * primary_reset's clear, so each is a word by their spacing alone. */
+ * primary_reset's clear, so each is a word by their spacing alone.  The
+ * Z3805A's fourth, :SYSTem:COMMunicate:SERial2's, is not here: the
+ * 58503A has no SERial2 descriptor. */
 typedef struct scpi_group_cells_fields {
-  uint16_t serial_1; /* +0x00: :SYSTem:COMMunicate:SERial1's (0x33328 on) */
-  uint16_t sample;   /* +0x02: :SAMPle's, :GPS:INITial's, :SYSTem:PRINt's
-                        and scpi_param_DOUGlas_STATe_request's */
-  uint16_t pulse;    /* +0x04: :OUTPut:STATe's and :PULSe's (0x33968 on) */
-  uint16_t serial_2; /* +0x06: :SYSTem:COMMunicate:SERial2's (0x33aa2 on) */
-  uint16_t status;   /* +0x08: :STATus's (0x33b10 on) */
-  uint16_t rest;     /* +0x0a: every other descriptor's, 0x33c8a to 0x34374 */
+  uint16_t serial_1; /* +0x00: :SYSTem:COMMunicate:SERial1's and :FDUPlex's
+                        (0x33336 on) */
+  uint16_t sample;   /* +0x02: :GPS:INITial's, :SYSTem:PRINt's,
+                        scpi_param_DOUGlas_STATe_request's and
+                        :DIAGnostic:ROSCillator:EFControl's (0x3349e on) */
+  uint16_t pulse;    /* +0x04: :OUTPut:STATe's and :PULSe's (0x336a2 on) */
+  uint16_t status;   /* +0x06: :STATus's (0x337d8 on) */
+  uint16_t rest;     /* +0x08: every other descriptor's, 0x33946 to 0x340ec */
 } scpi_group_cells_fields;
 
 #include "../../common/types/scpi_action_param.h"

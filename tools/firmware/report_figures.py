@@ -225,6 +225,12 @@ CHECKS = {
                     word(f['primary_reading'] + f['installer_reading']))),
         (DOCUMENT_Z3801A, sentence('| `check-decompiled` | {} routines in'),
          lambda f: (f['assembly'],)),
+        (DOCUMENT_Z3801A, sentence(
+            "Of its {} thunks, the Z3805A's {} are the exporter's `.set` aliases"),
+         lambda f: (f['thunk'], f['link_named'])),
+        (DOCUMENT_Z3801A, sentence(
+            "so the link counts {} routines of assembly against the export's {}."),
+         lambda f: (f['link_assembly'], f['assembly'])),
         summary_row('Z3801A 3543'),
         link_sentence('Z3801A 3543'),
         (REWRITE, sentence(

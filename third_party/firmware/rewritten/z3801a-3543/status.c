@@ -152,10 +152,6 @@ void questionable_user_done(void) {
                        : STATUS_USER_REPORTED_CLEARED);
 }
 
-/* Where a code reported before the model is ready would be kept, an
- * early_status_events buffer; does nothing (0x2e440). */
-void status_event_hook(uint32_t buffer, uint8_t code) {}
-
 /* Puts a code into the status system once it is ready, with its
  * message: SCPI's for 0 and a negative code, status_report_messages'
  * from 1 to 0x16; 0 (0x2ad60). */

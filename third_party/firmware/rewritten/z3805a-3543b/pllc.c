@@ -254,6 +254,3 @@ void temporary_hold_set(int32_t index, int32_t source) {
   pll.hold_causes |= HOLD_CAUSE_TEMPORARY_MODE;
   pll_scpi_signal_delay = 1;
 }
-
-/* nv_settings.field_b8's done hook, which does nothing (0x45b6e). */
-void nv_param_field_b8_done(void) {}

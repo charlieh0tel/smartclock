@@ -231,3 +231,9 @@ int32_t load_long_unit_step(scpi_step* step, void* value, int32_t index) {
 int32_t load_long(scpi_step* step, void* value, int32_t index) {
   return step->value;
 }
+
+/* A double step record's own step, load_double's code again; some of
+ * the double step descriptors point at it. */
+double load_double_param(scpi_double_step* step, double* value, int32_t index) {
+  return step->value;
+}

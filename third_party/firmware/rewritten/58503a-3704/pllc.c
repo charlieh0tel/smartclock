@@ -319,9 +319,6 @@ void power_on_reset(void) {
  * "Not traced") (0x45eb4). */
 void pll_tfom_digit_store(uint32_t tfom) { pll.field_3e6 = tfom_code(tfom); }
 
-/* nv_settings.field_be's done hook, which does nothing (0x45d42). */
-void nv_param_field_b8_done(void) {}
-
 /* :DIAG:TOFFset's and :GPS:ADELay's action: the temporary-mode hold
  * cause, with the TI limit overridden, which the Z3805A's does not
  * set (0x45cbc). */

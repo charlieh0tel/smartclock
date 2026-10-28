@@ -217,3 +217,6 @@ void selftest_request(int32_t index, int32_t source) {
     selftest_requested = 1;
   }
 }
+
+/* nv_settings.field_b8's done hook, which does nothing. */
+void nv_param_field_b8_done(void) {}

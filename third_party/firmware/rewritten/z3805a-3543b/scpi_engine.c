@@ -4,9 +4,6 @@
  * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
  * prototype. */
 
-/* The source a command's input port gives: always 0 (0x29ada). */
-int32_t return_zero(scpi_port* input) { return 0; }
-
 /* Reports a query's failure, the condition code, for the source its
  * input gives, and clears its query word, so that scpi_interpret
  * formats no response (0x29ade). */

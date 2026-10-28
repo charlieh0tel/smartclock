@@ -587,7 +587,7 @@ CHECK_FIELD(scpi_setting_param, group_cell, 0x18);
 CHECK_FIELD(scpi_setting_param, value, 0xc);
 /* the group cells, from the descriptors' pointers up to interval_reading */
 CHECK_SIZE(scpi_group_cells_fields, 0x1022ae - 0x1022a4);
-CHECK_FIELD(scpi_group_cells_fields, sample, 0x1022a6 - 0x1022a4);
+CHECK_FIELD(scpi_group_cells_fields, gps_initial, 0x1022a6 - 0x1022a4);
 CHECK_FIELD(scpi_group_cells_fields, pulse, 0x1022a8 - 0x1022a4);
 CHECK_FIELD(scpi_group_cells_fields, status, 0x1022aa - 0x1022a4);
 CHECK_FIELD(scpi_group_cells_fields, rest, 0x1022ac - 0x1022a4);

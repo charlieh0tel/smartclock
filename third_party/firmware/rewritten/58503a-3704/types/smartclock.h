@@ -2199,16 +2199,18 @@ typedef enum __attribute__((packed)) log_event_code {
  * to interval_reading).  No code reads or writes them, only
  * primary_reset's clear, so each is a word by their spacing alone.  The
  * Z3805A's fourth, :SYSTem:COMMunicate:SERial2's, is not here: the
- * 58503A has no SERial2 descriptor. */
+ * 58503A has no SERial2 descriptor.  Nor has it :SAMPle's, so the
+ * second, the Z3805A's sample, is named for its first, :GPS:INITial. */
 typedef struct scpi_group_cells_fields {
-  uint16_t serial_1; /* +0x00: :SYSTem:COMMunicate:SERial1's and :FDUPlex's
-                        (0x33336 on) */
-  uint16_t sample;   /* +0x02: :GPS:INITial's, :SYSTem:PRINt's,
-                        scpi_param_DOUGlas_STATe_request's and
-                        :DIAGnostic:ROSCillator:EFControl's (0x3349e on) */
-  uint16_t pulse;    /* +0x04: :OUTPut:STATe's and :PULSe's (0x336a2 on) */
-  uint16_t status;   /* +0x06: :STATus's (0x337d8 on) */
-  uint16_t rest;     /* +0x08: every other descriptor's, 0x33946 to 0x340ec */
+  uint16_t serial_1;    /* +0x00: :SYSTem:COMMunicate:SERial1's and :FDUPlex's
+                           (0x33336 on) */
+  uint16_t gps_initial; /* +0x02: :GPS:INITial's, :SYSTem:PRINt's,
+                           scpi_param_DOUGlas_STATe_request's and
+                           :DIAGnostic:ROSCillator:EFControl's (0x3349e on) */
+  uint16_t pulse;       /* +0x04: :OUTPut:STATe's and :PULSe's (0x336a2 on) */
+  uint16_t status;      /* +0x06: :STATus's (0x337d8 on) */
+  uint16_t rest;        /* +0x08: every other descriptor's, 0x33946 to
+                           0x340ec */
 } scpi_group_cells_fields;
 
 #include "../../common/types/scpi_action_param.h"

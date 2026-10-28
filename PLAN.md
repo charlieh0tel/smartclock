@@ -481,7 +481,10 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
 - **Tracking log decoder:** a 58503A's `Track lost` and `Track resumed`
   event log entries carry packed channel words
   (`docs/firmware/gps.md`, "Channel mode and signal strength");
-  `smartclock-cli` could unpack them when it reads the log.
+  `smartclock-cli` could unpack them when it reads the log.  It needs
+  each image's PRN 32 alias (10 in the 58503A 3704, 12 in the later
+  images) and must report the alias's PRN as ambiguous, since both
+  PRNs now fly.
 - **Firmware C:** when a Unicorn release has #2420 (bug 1), bump the
   pin, drop the probe and set `BUG_1.expected` to fixed; likewise bug 2.
   Give the firmware routines their file's prefix, as the hand-written

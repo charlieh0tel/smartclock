@@ -3320,7 +3320,7 @@ typedef struct scpi_group_cells_fields scpi_group_cells_fields, *Pscpi_group_cel
 
 struct scpi_group_cells_fields {
     uint16_t serial_1;
-    uint16_t sample;
+    uint16_t gps_initial;
     uint16_t pulse;
     uint16_t status;
     uint16_t rest;

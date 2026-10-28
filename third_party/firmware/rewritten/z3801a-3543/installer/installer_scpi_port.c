@@ -92,24 +92,3 @@ int32_t installer_scpi_console_read(scpi_port* port, uint8_t* buffer,
   }
   return count;
 }
-
-/* Sets bits of the status byte, a method of the port
- * (installer::0x10760e). */
-void installer_status_byte_set_bits(scpi_port* port, int32_t bits) {
-  installer_status_byte |= bits;
-  installer_status_update_rqs();
-}
-
-/* Clears bits of the status byte, a method of the port
- * (installer::0x107620). */
-void installer_status_byte_clear_bits(scpi_port* port, int32_t bits) {
-  installer_status_byte &= ~bits;
-  installer_status_update_rqs();
-}
-
-/* Sets the service request enable, a method of the port
- * (installer::0x107634). */
-void installer_status_sre_set(scpi_port* port, int32_t enable) {
-  installer_service_request_enable = enable;
-  installer_status_update_rqs();
-}

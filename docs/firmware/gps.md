@@ -55,9 +55,38 @@ it is an `@`; a bad checksum counts and starts again.  So:
   ID.
 - Never send `@@Ao`, `@@Bh` or `@@Ci`.  Their table length is 0, so
   the body count starts at -6 in a 16-bit counter
-  (`gps_response_remaining`) and runs about 65530 bytes, past the
-  buffer and into `gps_response_cursor` behind it.  Read in the C and
-  the ROMs of all four images; not run.
+  (`gps_response_remaining`) and runs 65530 bytes, past the buffer
+  and into `gps_response_cursor` behind it.
+
+Each of the three, given to the 58503A 3704's framer amid the engine's
+once-a-second `@@Ea` and `@@En`, was run against the ROM's code and
+against the hand-written C, with the same outcome; the times are the
+ROM's.  Nothing more is framed.  The buffer's 294 bytes fill; the
+295th and 296th bytes from the message's first `@` land on the top
+half of `gps_response_cursor` (`0x101520`), which the framer steps in
+memory before each store (`0x4c234`), so the stores go on from
+`0x1522` plus the 296th byte times `0x10000`, the 295th lying above
+the 24-bit bus, wherever the traffic puts them:
+
+- `@@Ao`: the byte was `0x00`, so the stores went to the flash's
+  write select, CS6, from `0x1522` (restart.md, "The chip selects");
+  the Am29F010s ignore a write outside a command sequence (Am29F010B
+  data sheet, "Command Definitions"), and ascending stores never form
+  one.  The count ran out 435 s later and framing resumed.
+  Meanwhile the unit went to holdover 63 s after the message (`Holdover
+  started, not tracking GPS`) with its alarm, and locked again 543 s
+  after it.
+- `@@Bh` and `@@Ci`: the byte was `0x23`.  `0x231522` has no chip
+  select, so the bus monitor ended the store with a bus error in
+  `gpsm`, which no handler takes, and the watchdog restarted the unit
+  7 s later: `Re-boot`, and `Exception: gpsm, vector C008, PC =
+  0004C23A, SR = 0000, addr = 00231522` in the second log
+  (restart.md).
+
+The outcome is the line's, not the message's.  A 296th byte of `0x10`
+would send the stores through RAM from `0x101522`, the cursor's own
+low half, `gps_counts` and the framer's state first; that was not
+seen.
 
 A complete message is decoded at once, whatever the task is waiting
 for (`gps_response_decode`, `0x50d3e`): its decoders unpack it into
@@ -158,7 +187,7 @@ length and makes the task send `@@Ar` again.
 
 `@@Ao` (p. 46) is answered by `@@Ap` in every image, where the
 reference gives `@@Ao` itself, 25 bytes.  With `@@Ao`'s table length
-0, a 25-byte `@@Ao` would overrun the framer (above), so these engines
+0, a 25-byte `@@Ao` overruns the framer (above), so these engines
 presumably answer with `@@Ap`.  `@@Ap` has no decoder; only its ID,
 length and checksum matter.
 
@@ -888,8 +917,7 @@ stepped pointers and whole-record copies.
 
 - What `@@Ar` 65 does on a software 8.4 engine.
 - Whether these engines answer `@@Ao` with `@@Ap`, as the tables
-  imply, and whether a 25-byte `@@Ao` would overrun the framer: read,
-  not run.
+  imply.
 - Whether a six-channel engine stays silent on `@@Ea`, and whether an
   eight-channel one answers `@@Bk`.
 - Whether the bench 58503A's B4121 ever runs at a count of 8.

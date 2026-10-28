@@ -56,24 +56,6 @@ int16_t console_port_read(void) {
   return character;
 }
 
-/* Sets bits of the status byte, a method of the port (0x28fea). */
-void status_byte_set_bits(scpi_port* port, int32_t bits) {
-  status_byte |= bits;
-  status_update_rqs();
-}
-
-/* Clears bits of the status byte, a method of the port (0x28ffc). */
-void status_byte_clear_bits(scpi_port* port, int32_t bits) {
-  status_byte &= ~bits;
-  status_update_rqs();
-}
-
-/* Sets the service request enable, a method of the port (0x29010). */
-void status_sre_set(scpi_port* port, int32_t bits) {
-  service_request_enable = bits;
-  status_update_rqs();
-}
-
 /* The console's request for service and the alarm, from its status byte
  * and enable (0x29032). */
 void status_update_rqs(void) {

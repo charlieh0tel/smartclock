@@ -63,3 +63,21 @@ uint8_t installer_status_sre_get(void) {
 
 /* The status byte, a method of the port. */
 uint8_t installer_status_byte_get(void) { return installer_status_byte; }
+
+/* Sets bits of the status byte, a method of the port. */
+void installer_status_byte_set_bits(scpi_port* port, int32_t bits) {
+  installer_status_byte |= bits;
+  installer_status_update_rqs();
+}
+
+/* Clears bits of the status byte, a method of the port. */
+void installer_status_byte_clear_bits(scpi_port* port, int32_t bits) {
+  installer_status_byte &= ~bits;
+  installer_status_update_rqs();
+}
+
+/* Sets the service request enable, a method of the port. */
+void installer_status_sre_set(scpi_port* port, int32_t bits) {
+  installer_service_request_enable = bits;
+  installer_status_update_rqs();
+}

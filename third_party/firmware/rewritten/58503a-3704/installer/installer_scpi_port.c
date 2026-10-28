@@ -79,27 +79,6 @@ int16_t installer_console_port_read_58503a(void) {
   return character;
 }
 
-/* Sets bits of the status byte, a method of the port
- * (installer::0x1075b2). */
-void installer_status_byte_set_bits(scpi_port* port, int32_t bits) {
-  installer_status_byte |= bits;
-  installer_status_update_rqs();
-}
-
-/* Clears bits of the status byte, a method of the port
- * (installer::0x1075c4). */
-void installer_status_byte_clear_bits(scpi_port* port, int32_t bits) {
-  installer_status_byte &= ~bits;
-  installer_status_update_rqs();
-}
-
-/* Sets the service request enable, a method of the port
- * (installer::0x1075d8). */
-void installer_status_sre_set(scpi_port* port, int32_t bits) {
-  installer_service_request_enable = bits;
-  installer_status_update_rqs();
-}
-
 /* The console's request for service, from its status byte and enable
  * (installer::0x1075fa). */
 void installer_status_update_rqs(void) {

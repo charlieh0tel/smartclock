@@ -1060,7 +1060,8 @@ A function rewritten by hand lives in
 `third_party/firmware/rewritten/IMAGE/`, apart from the decompiled C in
 `decompiled/IMAGE/`, a file to a subsystem (`clock.c`), or, when
 several images run it, once in `third_party/firmware/rewritten/common/`
-([`rewrite.md`, "Shared C"](rewrite.md#shared-c)).  The exporter
+([`rewrite.md`, "Shared C"](rewrite.md#shared-c)): `common/` holds 1011
+functions and 232 static helpers (`make check-common`).  The exporter
 finds the functions those files define (`rewritten=`), leaves the
 decompiler's reading of each out of the exported C, a line
 `/* NAME: rewritten in FILE */` in its place, and includes the files
@@ -1968,7 +1969,8 @@ seeded names and the 58503A's document's figures;
 `check-comment-addresses` checks the addresses their C's comments
 cite; and `check-common` the shared C, `common/`, and that the
 seeded images' `check-layout.c` assert their layouts at their own
-addresses, which its rule 2 compares (`rewrite.md`, "Shared C").  None of the targets builds the workspace;
+addresses, which its rule 2 compares, and the figures of what
+`common/` holds that the documents quote (`rewrite.md`, "Shared C").  None of the targets builds the workspace;
 `check-chip-selects` reads every image's reset code (`restart.md`,
 "The chip selects").
 `check-loop-trace` runs both images' own `startup_pll` and

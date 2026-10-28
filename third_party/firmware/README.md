@@ -5,7 +5,8 @@ layout").  `images/` is what we were given: the vendors' ROM images
 (`IMAGE.bin`), the console log one was rebuilt from, the EEPROM dumps
 in `eeprom/` and the FPGA bitstreams in `fpga/`.  `decompiled/IMAGE/`
 is what Ghidra made from an image, exported by `tools/ghidra/`.
-`rewritten/` is what we wrote: `common/`, the C several images share,
+`rewritten/` is what we wrote: `common/`, the C several images share (1011
+functions and 232 static helpers, `make check-common`),
 and `IMAGE/`, an image's own C, its type header and layout check in
 `types/`.  `analysis/IMAGE/` is what we learned about each ROM: its
 names files, modules, SCPI handlers and trees' rows, result names and

@@ -57,24 +57,6 @@ int16_t console_port_read(void) {
   return character;
 }
 
-/* Sets bits of the status byte, a method of the port (0x29d50). */
-void status_byte_set_bits(scpi_port* port, int32_t bits) {
-  status_byte |= bits;
-  status_update_rqs();
-}
-
-/* Clears bits of the status byte, a method of the port (0x29d62). */
-void status_byte_clear_bits(scpi_port* port, int32_t bits) {
-  status_byte &= ~bits;
-  status_update_rqs();
-}
-
-/* Sets the service request enable, a method of the port (0x29d76). */
-void status_sre_set(scpi_port* port, int32_t enable) {
-  service_request_enable = enable;
-  status_update_rqs();
-}
-
 /* Sets RQS in the status byte while another bit of it is enabled, and
  * status_request_service with it (0x29d98). */
 void status_update_rqs(void) {

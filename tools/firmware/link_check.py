@@ -25,7 +25,10 @@ is missing.
 make check-link runs it for every image.  Needs m68k-linux-gnu gcc and
 binutils.  Prints one summary line, the image's functions required and
 how many the hand-written C and the assembly define; exits nonzero if
-the link fails or the export's declarations define a function.
+the link fails, the export's declarations define a function, or gcc's
+code reads a word or long of an object of the C's data that is at an
+odd address or aligned to a byte alone (rebuild_link.misaligned_data):
+the CPU32 faults on it, where Unicorn's 68020 does not.
 """
 
 import json
@@ -37,7 +40,7 @@ import sys
 import tempfile
 
 from decompiled_check import TOOLS
-from rebuild_link import CODE_BLOCK, compile_c, link, run
+from rebuild_link import CODE_BLOCK, compile_c, link, misaligned_static, run
 
 # The marker that heads each function in the export: its address, an
 # installer function's prefixed.  The first ends the declarations.
@@ -103,6 +106,11 @@ def check(c_path: str, cflags: list[str], work: str) -> tuple[int, int, int, int
     elsewhere = [name for name in own if name not in c_defined | assembly_defined]
     if elsewhere:
         raise SystemExit(f"defined by neither the C nor the assembly: {', '.join(elsewhere)}")
+    unaligned = misaligned_static(c_path, cflags, work, work + "/linked.elf")
+    for access in unaligned:
+        print(f"  misaligned: {access}")
+    if unaligned:
+        raise SystemExit(f"{len(unaligned)} word or long accesses to data a byte's alignment may put at an odd address")
     hand = sum(name in c_defined for name in own)
     return len(names), hand, len(own) - hand, len(names) - len(own)
 

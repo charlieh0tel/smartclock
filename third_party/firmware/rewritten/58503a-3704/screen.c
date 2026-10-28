@@ -355,13 +355,17 @@ void status_screen_mode_suffix(status_screen_line line,
 
 /* The mode lines, Locked, Recovery, Holdover and Power-up, the
  * snapshot's marked, and the null text that ends them
- * (status_screen_mode_lines, 0x4ddda). */
-static const status_screen_mode_line SCREEN_MODE_LINES[] = {
-    {STATUS_SCREEN_LINE_LOCKED, 0, "Locked "},
-    {STATUS_SCREEN_LINE_RECOVERY, 0, "Recovery"},
-    {STATUS_SCREEN_LINE_HOLDOVER, 0, "Holdover"},
-    {STATUS_SCREEN_LINE_POWERUP, 0, "Power-up"},
-    {STATUS_SCREEN_LINE_NONE, 0, NULL},
+ * (status_screen_mode_lines, 0x4ddda).
+ * Aligned to 2, as its type, which smartclock.h packs, is not: gcc
+ * reads the text pointers with long accesses, which the CPU32 faults
+ * on at an odd address. */
+static const status_screen_mode_line
+    __attribute__((aligned(2))) SCREEN_MODE_LINES[] = {
+        {STATUS_SCREEN_LINE_LOCKED, 0, "Locked "},
+        {STATUS_SCREEN_LINE_RECOVERY, 0, "Recovery"},
+        {STATUS_SCREEN_LINE_HOLDOVER, 0, "Holdover"},
+        {STATUS_SCREEN_LINE_POWERUP, 0, "Power-up"},
+        {STATUS_SCREEN_LINE_NONE, 0, NULL},
 };
 
 /* The mode line the snapshot's mode marks (0x4b042). */

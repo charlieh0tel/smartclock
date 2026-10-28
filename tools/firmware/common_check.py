@@ -35,9 +35,16 @@ includes it.
    a literal to a pointer or write an installer address; a device's
    register, the board's, is no image's address.
 
+And the figures the documents quote of what common/ holds (FIGURES):
+its functions an export names and its static helpers, its files, and
+each image's own functions an export names; with --write, rewrites them.
+
+    python3 -I tools/firmware/common_check.py [--write]
+
 Prints each failure; exits nonzero if any.  Needs clang.
 """
 
+import argparse
 import collections
 import functools
 import importlib.util
@@ -497,7 +504,89 @@ def same_data(images, failures):
                                 + ', '.join(f'rewritten/{image}/{TYPES}/check-layout.c' for image in images))
 
 
+# The sentences that quote common/'s figures, each in its document once,
+# {name} where a figure of figures() stands.
+FIGURES = [
+    (ROOT / 'docs/firmware/rewrite.md',
+     '`common/` holds {functions} functions the exports name and {helpers}\nstatic helpers, in {files} files; the rest is each image\'s own:\n{z3805a-3543b} functions the Z3805A 3543B\'s export names, {58503a-3704} the\n58503A 3704\'s and {z3801a-3543} the Z3801A 3543\'s'),
+    (ROOT / 'docs/firmware/README.md',
+     '`common/` holds {functions} functions\nand {helpers} static helpers'),
+    (ROOT / 'docs/firmware/58503a-3704.md',
+     'its own C defines {58503a-3704} functions its export names, beside\n`common/`\'s {functions}'),
+    (ROOT / 'docs/firmware/z3801a-3543.md',
+     'its own C defines {z3801a-3543} functions its export names, beside\n`common/`\'s {functions}'),
+    (FIRMWARE / 'README.md',
+     '`common/`, the C several images share ({functions} functions and\n{helpers} static helpers'),
+]
+FIGURE = re.compile(r'\{([\w-]+)\}')
+
+
+def defined_in(paths):
+    """The functions the files define: those an export names, and the
+    static ones."""
+    named, helpers = set(), set()
+    for path in paths:
+        text = COMMENT.sub(' ', path.read_text())
+        statics = set(STATIC.findall(text))
+        for name in set(defined(text)):
+            (helpers if name in statics else named).add(name)
+    return named, helpers
+
+
+def figures(images):
+    named, helpers = defined_in(common_files())
+    found = {'functions': len(named), 'helpers': len(helpers), 'files': len(common_files())}
+    for image in images:
+        own = [path for path in (REWRITTEN / image).rglob('*.[ch]')
+               if TYPES not in path.relative_to(REWRITTEN / image).parts]
+        found[image] = len(defined_in(own)[0])
+    return found
+
+
+def figure_pattern(parts):
+    """A FIGURES sentence as a pattern, its figures groups and any run of
+    white space in it any other, so that a reflowed line still matches."""
+    pattern = ''
+    for index, part in enumerate(parts):
+        if index % 2:
+            pattern += r'(\d+)'
+            continue
+        words = part.split()
+        literal = r'\s+'.join(map(re.escape, words))
+        pattern += (r'\s+' if part[:1].isspace() else '') + literal + (
+            r'\s+' if part[-1:].isspace() and words else '')
+    return pattern
+
+
+def check_figures(images, write, failures):
+    """Each FIGURES sentence against figures(), rewritten with write."""
+    found = figures(images)
+    for document, template in FIGURES:
+        parts = FIGURE.split(template)
+        names = parts[1::2]
+        text = document.read_text()
+        matches = list(re.finditer(figure_pattern(parts), text))
+        if len(matches) != 1:
+            failures.append(f'{document.relative_to(ROOT)}: {len(matches)} of the sentence {template!r}')
+            continue
+        match = matches[0]
+        wrong = [(name, int(value)) for name, value in zip(names, match.groups()) if int(value) != found[name]]
+        if not wrong:
+            continue
+        if write:
+            for index in reversed(range(len(names))):
+                start, end = match.span(index + 1)
+                text = text[:start] + str(found[names[index]]) + text[end:]
+            document.write_text(text)
+        else:
+            failures.append(f'{document.relative_to(ROOT)}: ' + ', '.join(
+                f'{name} is {value}, not {found[name]}' for name, value in wrong))
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
+    parser.add_argument('--write', action='store_true')
+    arguments = parser.parse_args()
     failures = []
     images = sharing_images()
     if BASE not in images and images:
@@ -507,6 +596,7 @@ def main():
         no_address(failures)
         if images:
             same_data(images, failures)
+    check_figures(images, arguments.write, failures)
     for failure in failures:
         print(failure)
     print(f'common/: {len(common_files())} files, shared by {", ".join(images) or "no image"}')

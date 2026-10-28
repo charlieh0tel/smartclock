@@ -79,3 +79,21 @@ void status_prompt_refresh(status_model* status, int32_t error) {
     scpi_prompt(error);
   }
 }
+
+/* Sets bits of the status byte, a method of the port. */
+void status_byte_set_bits(scpi_port* port, int32_t bits) {
+  status_byte |= bits;
+  status_update_rqs();
+}
+
+/* Clears bits of the status byte, a method of the port. */
+void status_byte_clear_bits(scpi_port* port, int32_t bits) {
+  status_byte &= ~bits;
+  status_update_rqs();
+}
+
+/* Sets the service request enable, a method of the port. */
+void status_sre_set(scpi_port* port, int32_t bits) {
+  service_request_enable = bits;
+  status_update_rqs();
+}

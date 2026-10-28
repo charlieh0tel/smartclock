@@ -250,6 +250,7 @@ CHECK_FIELD(parameter_record, sci_baud, 9);
 CHECK_SIZE(identification_record, 48);
 CHECK_FIELD(identification_record, suffix, 0x26);
 CHECK_SIZE(lifetime_record, 32);
+CHECK_FIELD(lifetime_record, checksum, 0);
 CHECK_FIELD(lifetime_record, date, 2);
 CHECK_FIELD(lifetime_record, count, 6);
 CHECK_FIELD(lifetime_record, efc, 0xa);

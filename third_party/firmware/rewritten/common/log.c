@@ -187,3 +187,9 @@ void reset_record_count(void) {
     log_entry_count++;
   }
 }
+
+/* The sum and its complement of an event log page's entries. */
+uint16_t log_page_checksum(log_page* page) {
+  return records_sum_and_complement(
+      records_byte_sum((const uint8_t*)page->entries, sizeof page->entries));
+}

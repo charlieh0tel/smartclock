@@ -235,10 +235,10 @@ Z3805A's offsets while its `check-layout.c` asserted the Z3805A's
 addresses.
 
 What is shared, counted by `make check-common` from the files:
-`common/` holds 1011 functions the exports name and 232
+`common/` holds 1018 functions the exports name and 232
 static helpers, in 210 files; the rest is each image's own:
-544 functions the Z3805A 3543B's export names, 659 the
-58503A 3704's and 526 the Z3801A 3543's.  Each image's
+537 functions the Z3805A 3543B's export names, 652 the
+58503A 3704's and 519 the Z3801A 3543's.  Each image's
 hand-written C is the two together, as its link check counts it.
 
 ## The verification

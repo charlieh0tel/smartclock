@@ -56,3 +56,6 @@ int32_t scpi_set_OUTPut_STATe(void* parameters, void* response,
                  return_zero(call->input));
   return 0;
 }
+
+/* Programs the output's state; this firmware does nothing. */
+void output_state_program(uint8_t state) {}

@@ -21,7 +21,7 @@ version = "1.8.3"
 edition = "2024"
 rust-version = "1.89"
 authors = ["Christopher Hoover <ch@murgatroid.com>"]
-license = "GPL-3.0-or-later"
+license = "GPL-3.0-only"
 repository = "https://github.com/charlieh0tel/smartclock"
 
 # Stripped in the packaged build: lintian objects to unstripped

@@ -793,7 +793,7 @@ for (const p of PAGES) {
       await open(page, twoUnits(), p.path);
       const colophon = page.locator("#colophon");
       await expect(colophon).toContainText("© 2026 Christopher Hoover");
-      await expect(colophon).toContainText("GPL-3.0-or-later");
+      await expect(colophon).toContainText("GPL-3.0-only");
       await expect(colophon.locator("a", { hasText: "github" }))
         .toHaveAttribute("href", "https://github.com/charlieh0tel/smartclock");
       await expect(colophon.locator("a", { hasText: "issues" }))

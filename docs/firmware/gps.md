@@ -274,12 +274,14 @@ as entry `0x32`, whose decoder sets bit 5, so the count becomes 8, and
 entry `0x36`'s own decoder never runs.  After 3 unanswered sends the
 script goes on, so a six-channel engine costs it about 3 × (timeout +
 1) seconds.  The script then runs whichever self-test the count
-passes and, with eight channels, turns `Ea` on.  Only a requested
-self-test runs script `0x55` (`gps_selftest_run`, `0x4687e`;
-`gps_diag_sequence`, `0x473c6`; the console's); nothing found runs it
-at power-on.  So
-after power-on the count reaches 8 only if an `@@Ea` arrives some
-other way.  That this script is how the firmware means to find an
+passes and, with eight channels, turns `Ea` on.  It runs at every
+power-up: `pllp_task` (`0x47716`), in the power-up stage, calls the
+power-up self-test `selftest_print_failure` (`0x18764`), whose `GPS`
+check, `selftest_gps_with_lamp` (`0x18ed6`), calls `gps_selftest_run`
+(`0x4687e`).  A requested self-test runs it too (`gps_diag_sequence`,
+`0x473c6`; the console's).  So an eight-channel engine is found at
+power-up, and a six-channel one costs the boot the three unanswered
+sends before the init script, and its `@@Bk`, can run.  That this script is how the firmware means to find an
 eight-channel engine is inference.
 
 **The second `@@Ar`**, argument 65 (`0x41`), follows `Ar`(1) in 3704's
@@ -648,8 +650,8 @@ What an engine in a Z380x or 58503A must do, from the above:
   software 8.4 brings the second `Ar`(65), which must be echoed; any
   other version avoids it.
 - **Six or eight channels**, in the 58503A:
-  - Six: answer `Ba`, `Bk`, `Bn`, `Ca`; ignore `Ea` (the self-test
-    waits about 15 s, 3633 18 s).
+  - Six: answer `Ba`, `Bk`, `Bn`, `Ca`; ignore `Ea` (the power-up
+    self-test waits about 15 s for it).
   - Eight: answer the second `Ea` (rate 0) with one 76-byte `@@Ea`, or
     send `@@Ea` unasked; from then on, `Ea`, `Ek`, `En` and `Fa`, but
     still `Ba` and `Bn` polls at rate 0 and `Bk` polls, 69 bytes.

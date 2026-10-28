@@ -285,7 +285,8 @@ check-types:
 
 # Fail if the decompiled C does not compile, its assembly is not the
 # image's own bytes, alone or linked, gcc's code accesses a word or
-# long at an odd frame or stack offset, or a binding disagrees with its
+# long at an odd frame or stack offset or of data a byte's alignment may
+# put at an odd address, or a binding disagrees with its
 # routine; and first if the figures or Unicorn's recorded bugs drift.
 check-decompiled: check-module-figures check-unicorn $(CPU32_LIBGCC)
 	mkdir -p $(WORK)
@@ -296,7 +297,9 @@ check-decompiled: check-module-figures check-unicorn $(CPU32_LIBGCC)
 
 # Fail if the image does not link from the hand-written C and the
 # assembly alone, the decompiled C left out, every function of the
-# export required, referenced or not (tools/firmware/link_check.py).
+# export required, referenced or not, or if gcc's code accesses a word
+# or long of data a byte's alignment may put at an odd address
+# (tools/firmware/link_check.py).
 # Its summary line, the one statement of the image's completeness the
 # documents may quote, is saved in the image's work folder.
 check-link: $(CPU32_LIBGCC)

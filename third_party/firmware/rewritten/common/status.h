@@ -188,8 +188,10 @@ static int32_t status_model_error_class(int16_t code) {
 static char* status_model_error_message(int32_t code) {
   /* The code that ends the table. */
   enum { END = -1 };
-  /* The image's table at scpi_error_messages, scpi_error_messages. */
-  static const scpi_error_message MESSAGES[] = {
+  /* The image's table at scpi_error_messages, scpi_error_messages;
+   * aligned to 2, as its packed type is not, for the long reads of its
+   * text pointers. */
+  static const scpi_error_message __attribute__((aligned(2))) MESSAGES[] = {
       {0, "No error"},
       {-100, "Command error"},
       {-101, "Invalid character"},

@@ -32,6 +32,12 @@ and the receiver's outputs were not measured.
   questionable summary, bit 3 (8), plus the master summary, bit 6 (64)
   (`097-59551-02` 5-44).  `:STATus:QUEStionable:EVENt?` then returned
   `+1`, Time Reset (5-40).
+- The alarm ended when the event register was read, not by the
+  receiver recovering: the daemon's audit table records
+  `:STATus:QUEStionable:EVENt?`, which clears the register (5-46), at
+  01:48:31 host time returning `+1`, and the `receiver_event` alarm set
+  at 00:00:12 host time cleared at 01:48:33; who sent the query is not
+  recorded.
 - Lock, mode `Locked`, operation bits 27, TI, EFC, TFOM, the
   satellites and the receiver's diagnostic log did not change.
 - The 2026-10-04, 10-11 and 10-18 week boundaries passed cleanly.

@@ -486,7 +486,7 @@ of `gps`, all in `gps_receiver.c`:
   `gps_track_words_pack` (`0x4da70`) at each update that leaves the
   reference valid, assessing or clearing.  10 bits a channel from the
   top of `[0]`, run on across the longs, 80 bits for eight channels:
-  - 5 bits of satellite, 32 packed as 10;
+  - 5 bits of satellite, 32 packed as 10 (below);
   - 3 bits of mode: 0 stays 0, 1 and 2 become 1, 3 to 8 become 2 to 7;
   - 2 bits of signal strength (below).
 - `gps.channel_word` (`gps + 0x5a2`), packed by
@@ -509,6 +509,34 @@ addresses finds only these routines and `0x4bbb2` to `0x4bc0a`, with
 the usual caveat for a stepped pointer.  So they reach no SCPI query,
 console word or screen but through the event log, where
 `:DIAGnostic:LOG:READ?` prints them in hex.
+
+**PRN 32 in 5 bits.**  Five bits hold 0 to 31, and 0 is an empty
+channel, so the packer stores PRN 32 as another PRN.  The later images
+carry the same tracking log and packer with a different alias:
+
+| Image | Packer's alias load | PRN 32 stored as |
+| --- | --- | --- |
+| 58503A 3704 | `0x4da9c` | 10 |
+| Z3815A 4010 | `0x59204` | 12 |
+| 58503B 1.01.04 | `0x53fba` | 12 |
+| Z3816A 4001 | `0x51c7c` | 12 |
+
+The 3704's is from its hand-written C; the Z3815A's from its decompiled
+packer.  The 58503B's and Z3816A's are from the ROMs alone: each has a
+`cmpi.b #32` then `moveq #12` inside code with the same strength cuts
+(30, 60, 120), the same mode squeeze and the same word breaks at
+channels 4 and 7.  The Z3805A and Z3801A have no tracking log (no
+`Track lost` text) and no alias.
+
+Why 10, then 12, is inference from the constellation's history: each
+alias is a PRN no satellite broadcast when the code was written.  The
+images say "Copyright Hewlett-Packard Co. 1993".  SVN 32 broadcast
+PRN 32 from its launch in November 1992 until 1993-01-28, when it was
+changed to 01, and no satellite broadcast PRN 10 until SVN 40 in July
+1996 ([R. Langley's constellation list, 1995-08-04](https://abnormal.com/~thogard/gps/toadd/gps-sat-stats)).
+The later images moved the alias to 12 once PRN 10 was in use.
+Today each alias collides: PRN 10 and 32 in the 3704, PRN 12 and 32 in
+the others, so a decoder cannot tell them apart.
 
 **Signal strength.**  VPCommands gives it as 0 to 255, "number
 proportional to SNR", with no scale (p. 72, and p. 126 for `@@Ea`); it

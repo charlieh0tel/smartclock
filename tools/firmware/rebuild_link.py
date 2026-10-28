@@ -31,9 +31,11 @@ piece is not the image's bytes, a tree's record is misplaced, gcc's
 code holds an instruction the CPU32 does not have
 (cpu32_libgcc.NOT_CPU32) or, as linked or compiled with no function
 inlined, a word or long access at an odd offset from the frame or
-stack pointer (misaligned).
+stack pointer (misaligned), or to an object of the C's data at an odd
+address or aligned to a byte alone (misaligned_data).
 """
 
+import bisect
 import json
 import os
 import re
@@ -106,6 +108,17 @@ SWITCH_JUMP = re.compile(r"\tjmp %pc@\(([0-9a-f]+) <[^>]*>,%d\d:w\)")
 # parity, changes with what is inlined into it, and a link that calls
 # the image's copy of a callee in place of gcc's inlines none of it.
 NO_INLINE = "-fno-inline"
+# The C compiled again with each object in a section of its own, whose
+# alignment is then the object's (misaligned_data).
+DATA_SECTIONS = "-fdata-sections"
+# readelf's line of a section: its name and, last, its alignment.
+OWN_SECTION = re.compile(r"^\s*\[\s*\d+\]\s+\.(?:rodata|data|bss)\.(\S+)\s.*\s(\d+)$")
+# An address register loaded with an address, and one written otherwise.
+ADDRESS_LOAD = re.compile(r"^(?:lea|moveal|movel)$")
+LOADED_ADDRESS = re.compile(r"^(?:#(\d+)|([0-9a-f]+)(?: <[^>]*>)?),%(a[0-7])$")
+WRITTEN_REGISTER = re.compile(r",%(a[0-7])$")
+INDIRECT = re.compile(r"%(a[0-7])@")
+ABSOLUTE_OPERAND = re.compile(r"(?<![#\w@(])([0-9a-f]{5,8})(?: <[^>]*>)?(?=,|$)")
 
 
 @dataclass
@@ -252,6 +265,81 @@ def misaligned_c(c_path: str, cflags: list[str], work: str, elf_path: str) -> li
         f"{access} ({NO_INLINE})" for access in misaligned(code_listing(no_inline))]
 
 
+def data_objects(elf_path: str) -> list[tuple[int, int, str]]:
+    """A linked ELF's data objects, local ones too: (address, size, name),
+    by address."""
+    found = []
+    for line in run(TOOLS + "readelf", "-sW", elf_path).splitlines():
+        # number, value, size, type, binding, visibility, section, name
+        fields = line.split()
+        if len(fields) == 8 and fields[3] == OBJECT:
+            found.append((int(fields[1], 16), int(fields[2], 0), fields[7]))
+    return sorted(found)
+
+
+def alignments(compiled: str) -> dict[str, int]:
+    """Each data object's alignment in an object compiled with
+    DATA_SECTIONS, by name."""
+    return {found.group(1): int(found.group(2))
+            for found in map(OWN_SECTION.match, run(TOOLS + "readelf", "-SW", compiled).splitlines()) if found}
+
+
+def misaligned_data(listing: str, placed: list[tuple[int, int, str]], aligned: dict[str, int]) -> list[str]:
+    """gcc's word and long accesses to an object of the C's data that is
+    at an odd address, or that only a byte's alignment keeps from one:
+    an object smartclock.h packs (#pragma pack(1)) may be put anywhere,
+    and the CPU32 takes an address error on a word or long at an odd
+    address (MC68331UM, 4.4.4) where Unicorn's 68020 does not.  An
+    access is seen absolute, or through an address register a lea or a
+    move of the object's address loaded in the same function and
+    nothing has written since but an increment."""
+    starts = [at for at, _, _ in placed]
+
+    def holding(address: int) -> tuple[int, int, str] | None:
+        at = bisect.bisect_right(starts, address) - 1
+        if at >= 0 and address < placed[at][0] + max(placed[at][1], 1):
+            return placed[at]
+        return None
+
+    def exposed(found: tuple[int, int, str]) -> bool:
+        return found[0] % ACCESS_ALIGNMENT != 0 or aligned.get(found[2], ACCESS_ALIGNMENT) < ACCESS_ALIGNMENT
+
+    flagged, function, registers = [], None, {}
+    for line in listing.splitlines():
+        heading = FUNCTION.match(line)
+        if heading:
+            function, registers = heading.group(1), {}
+            continue
+        instruction = INSTRUCTION.match(line)
+        if not function or not instruction:
+            continue
+        mnemonic, operands = instruction.group(2), instruction.group(3)
+        if mnemonic[-1:] in WORD_LONG and mnemonic not in NOT_ACCESSES:
+            targets = [registers.get(register) for register in INDIRECT.findall(operands)]
+            targets += [holding(int(value, 16)) for value in ABSOLUTE_OPERAND.findall(operands)]
+            for found in {found for found in targets if found is not None and exposed(found)}:
+                flagged.append(f"{function}: {instruction.group(1)}: {mnemonic} {operands}: {found[2]} at "
+                               f"{found[0]:#x}, aligned to {aligned.get(found[2], '?')}")
+        load = LOADED_ADDRESS.match(operands)
+        if ADDRESS_LOAD.match(mnemonic) and load:
+            address = int(load.group(1)) if load.group(1) else int(load.group(2), 16)
+            registers[load.group(3)] = holding(address)
+            continue
+        written = WRITTEN_REGISTER.search(operands)
+        if written and not (mnemonic.startswith(("addq", "subq", "adda", "suba")) or mnemonic.startswith("lea")
+                            and f"%{written.group(1)}@" in operands):
+            registers.pop(written.group(1), None)
+    return flagged
+
+
+def misaligned_static(c_path: str, cflags: list[str], work: str, elf_path: str) -> list[str]:
+    """misaligned_data's accesses in gcc's code as link() linked it in
+    work, against its objects' alignments compiled with DATA_SECTIONS."""
+    with_sections = work + "/c-data-sections.o"
+    compile_c(c_path, [*cflags, DATA_SECTIONS], work + "/c.c", with_sections)
+    return misaligned_data(code_listing(elf_path, REBUILT_SECTION), data_objects(elf_path), alignments(with_sections))
+
+
 def script(pieces: list[str], image_names: dict[str, int]) -> str:
     """The linker script: the image's copy of each function at its
     address, each piece at its address, the rest at REBUILT."""
@@ -388,6 +476,7 @@ def main() -> int:
         linked_objects = objects(elf)
         foreign = not_cpu32(elf, REBUILT_SECTION)
         unaligned = misaligned_c(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf)
+        unaligned += misaligned_static(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf)
     records, texts = tree_records(c_path)
     missing = sorted(records - linked_objects.keys())
     broken = tree_layout({name: linked_objects[name] for name in records & linked_objects.keys()}, texts)
@@ -413,7 +502,8 @@ def main() -> int:
     print(f"gcc's instructions the CPU32 does not have: {len(foreign)}")
     for access in unaligned:
         print(f"  misaligned: {access}")
-    print(f"gcc's word or long accesses at odd frame or stack offsets, which the CPU32 faults on: {len(unaligned)}")
+    print(f"gcc's word or long accesses at odd frame or stack offsets or to data a byte's alignment may put "
+          f"at an odd address, which the CPU32 faults on: {len(unaligned)}")
     return 1 if differing or missing or broken or foreign or unaligned else 0
 
 

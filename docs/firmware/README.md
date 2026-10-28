@@ -1326,8 +1326,9 @@ from wherever the table does.  So an object gcc would put at an odd
 address, where the image's is at an even one, is
 `__attribute__((aligned(2)))`: the 58503A's `hmon_channels`, the unit
 multipliers, the OS reports' local texts, `timecode_update`'s next
-time of day, `reset_record_write`'s record and `gpsm_task`'s two
-request entries.  A run on a model of the
+time of day, `reset_record_write`'s record, `gpsm_task`'s two
+request entries, `status_screen`'s mode lines and the error messages'
+table.  A run on a model of the
 CPU32 that takes an address error for a misaligned word or long, as
 the CPU32 does, found those before the last; `rebuild_link.py` finds
 an access at an odd offset from the frame or stack pointer in gcc's
@@ -1337,7 +1338,18 @@ is inlined into it, and fails on one; a switch's table of offsets,
 which objdump reads as code, is left out, and the code after it read
 again from the table's end.  `reset_record_write`'s record
 lay at an odd offset beside its `full` flag only where `log_count` was
-not inlined, as where a link calls the image's copy of it.
+not inlined, as where a link calls the image's copy of it.  A static
+table is placed by the link, not the frame: `rebuild_link.py` and
+`make check-link` (`link_check.py`) also fail on a word or long access
+in gcc's code, absolute or through an address register loaded with the
+object's address, to an object of the C's data that lies at an odd
+address or whose alignment, compiled again with each object in a
+section of its own (`-fdata-sections`), is a byte's, so that another
+link could put it at one.  `status_screen`'s mode lines lay at an odd
+address in the 58503A's link, and its `:SYSTem:STATus?` took an address
+error on a CPU32 where Unicorn's 68020 read on; the Z3805A's and the
+Z3801A's, and the error messages' table every image shares, lay at
+even ones by luck.
 
 What lies outside memory the harness models, the same for both calls,
 at its boundary rather than routine by routine.  `trap #7`, and

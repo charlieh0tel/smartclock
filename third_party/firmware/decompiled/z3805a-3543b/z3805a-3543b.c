@@ -7366,9 +7366,11 @@ extern char installer_doprnt_hex_prefix[3]; /* installer::0010aa38 */
 
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
+extern uint8_t DAT_0002f32a; /* 0002f32a */
 extern uint8_t DAT_0004cfc0; /* 0004cfc0 */
 extern uint8_t DAT_00700000; /* 00700000 */
 extern uint16_t LAB_0004aaaa; /* 0004aaaa */
+extern uint32_t *PTR_console_port_read_00029e18; /* 00029e18 */
 extern uint32_t *PTR_lamp_test_command_000186b0; /* 000186b0 */
 extern uint32_t *PTR_s_Self_Test_0004d076; /* 0004d076 */
 extern uint8_t UNK_0001af5e; /* 0001af5e */
@@ -7404,7 +7406,6 @@ extern uint8_t UNK_0010a9fb; /* 0010a9fb */
 extern uint8_t UNK_0010aa16; /* 0010aa16 */
 extern uint8_t UNK_0010aa27; /* 0010aa27 */
 extern uint8_t UNK_0010aa3b; /* 0010aa3b */
-extern uint16_t USHORT_0002f32a; /* 0002f32a */
 extern uint16_t USHORT_0002f76e; /* 0002f76e */
 extern uint16_t USHORT_0002f77c; /* 0002f77c */
 extern uint16_t USHORT_0002f78a; /* 0002f78a */
@@ -7512,9 +7513,11 @@ extern word switchD_0004fc88_index_zero; /* 0004fc90 */
 extern word switchD_0005ed40_index_zero; /* 0005ed48 */
 extern uint8_t uint8_t_0010142a; /* 0010142a */
 
+__asm__(".set DAT_0002f32a, 0x0002f32a");
 __asm__(".set DAT_0004cfc0, 0x0004cfc0");
 __asm__(".set DAT_00700000, 0x00700000");
 __asm__(".set LAB_0004aaaa, 0x0004aaaa");
+__asm__(".set PTR_console_port_read_00029e18, 0x00029e18");
 __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
 __asm__(".set UNK_0001af5e, 0x0001af5e");
@@ -7550,7 +7553,6 @@ __asm__(".set UNK_0010a9fb, 0x0010a9fb");
 __asm__(".set UNK_0010aa16, 0x0010aa16");
 __asm__(".set UNK_0010aa27, 0x0010aa27");
 __asm__(".set UNK_0010aa3b, 0x0010aa3b");
-__asm__(".set USHORT_0002f32a, 0x0002f32a");
 __asm__(".set USHORT_0002f76e, 0x0002f76e");
 __asm__(".set USHORT_0002f77c, 0x0002f77c");
 __asm__(".set USHORT_0002f78a, 0x0002f78a");
@@ -25373,12 +25375,10 @@ __asm__(
 	"	rts\n"
 	"	.byte 0x22\n"
 	"	.byte 0x72\n"
-	"	.byte 0x65 | bcs.b 0x0001960c\n"
-	"	.reloc ., R_68K_PC8, forth_until+0xc-1\n"
-	"	.byte 0\n"
-	"	.byte 0x65 | bcs.b 0x000195ff\n"
-	"	.reloc ., R_68K_PC8, __ghidra_195ff-1\n"
-	"	.byte 0\n"
+	"	.byte 0x65\n"
+	"	.byte 0x70\n"
+	"	.byte 0x65\n"
+	"	.byte 0x61\n"
 	"	.byte 0x74\n"
 	"	.byte 0x22\n"
 	"	.byte 0x0d\n"

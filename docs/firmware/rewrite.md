@@ -108,10 +108,15 @@ order over the image imported raw at 0 as `68000:BE:32:CPU32`
    is emitted as the image's instructions in a top-level `__asm__`, its
    decompiled C under `#if 0`.
 
-`SmartClockUntyped.java`, optional, surveys what is left untyped.  The
-project is `third_party/firmware/ghidra/smartclock.gar` (Git LFS); run
-over the bare image or over it, the scripts reproduce the checked-in
-export byte for byte (Reproducing, below).  The scripts run under `analyzeHeadless` (Reproducing, below)
+`SmartClockUntyped.java`, optional, surveys what is left untyped.
+`NoSwitch.java` and `SwitchPass.java` run before and after auto-analysis
+to make it deterministic: the stock Decompiler Switch Analysis applies
+its results in a thread-dependent order, so `NoSwitch.java` turns it off
+and `SwitchPass.java` runs it once the code is disassembled, one switch at
+a time in address order.  With them a bare import reproduces the
+checked-in export byte for byte for every image (Reproducing, below).  The
+project is `third_party/firmware/ghidra/smartclock.gar` (Git LFS).  The
+scripts run under `analyzeHeadless` (Reproducing, below)
 or [ghidra-mcp](https://github.com/bethington/ghidra-mcp)'s
 `run_ghidra_script` (7.0.0, at `cf8b12d`).
 
@@ -450,6 +455,8 @@ after auto-analysis, the program saved at the end:
       -import third_party/firmware/images/z3805a-3543b.bin \
       -loader BinaryLoader -loader-baseAddr 0 -processor 68000:BE:32:CPU32 \
       -scriptPath tools/ghidra \
+      -preScript NoSwitch.java \
+      -postScript SwitchPass.java \
       -postScript SmartClockSetup.java \
       -postScript SmartClockInstaller.java 0xbbc 0x10135c \
       -postScript SmartClockSetup.java \
@@ -487,9 +494,12 @@ Over the archive instead, unpack it as File, Restore Project would:
     rm "$PROJECT"/smartclock.rep/JAR_FORMAT
 
 and replace the `-import` and `-loader` lines with `-process
-z3805a-3543b.bin -noanalysis`.  That export is identical too, and so is
+z3805a-3543b.bin -noanalysis` (and, since it skips auto-analysis, the
+`-preScript NoSwitch.java` line).  That export is identical too once the
+archive has been saved from a deterministic bare import, and so is
 one run over the project a bare import left: each script is run again
-over its own output.  What an earlier run or analysis left in a
+over its own output.  The checked-in archive predates the determinism
+scripts; regenerate it from a bare import to match.  What an earlier run or analysis left in a
 project does not reach the export.  Setup removes the shared tails and
 the functions with no bytes or no code that analysis makes, and the
 labels and types an earlier run's names and headers gave that no row

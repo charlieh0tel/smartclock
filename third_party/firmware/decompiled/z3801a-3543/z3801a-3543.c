@@ -7211,6 +7211,7 @@ extern uint32_t installer_powers_of_ten_64[36]; /* installer::00109bee */
 
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
+extern uint8_t DAT_0002e230; /* 0002e230 */
 extern uint8_t DAT_0004cf7e; /* 0004cf7e */
 extern uint8_t DAT_0005128b; /* 0005128b */
 extern uint8_t DAT_00051290; /* 00051290 */
@@ -7259,7 +7260,6 @@ extern uint8_t UNK_0010aa16; /* 0010aa16 */
 extern uint8_t UNK_0010aa27; /* 0010aa27 */
 extern uint8_t UNK_0010aa38; /* 0010aa38 */
 extern uint8_t UNK_0010aa3b; /* 0010aa3b */
-extern uint16_t USHORT_0002e230; /* 0002e230 */
 extern uint16_t USHORT_0002e674; /* 0002e674 */
 extern uint16_t USHORT_0002e682; /* 0002e682 */
 extern uint16_t USHORT_0002e690; /* 0002e690 */
@@ -7364,6 +7364,7 @@ extern word switchD_0004f0a8_index_zero; /* 0004f0b0 */
 extern word switchD_0004fc46_index_zero; /* 0004fc4e */
 extern word switchD_0005ecda_index_zero; /* 0005ece2 */
 
+__asm__(".set DAT_0002e230, 0x0002e230");
 __asm__(".set DAT_0004cf7e, 0x0004cf7e");
 __asm__(".set DAT_0005128b, 0x0005128b");
 __asm__(".set DAT_00051290, 0x00051290");
@@ -7412,7 +7413,6 @@ __asm__(".set UNK_0010aa16, 0x0010aa16");
 __asm__(".set UNK_0010aa27, 0x0010aa27");
 __asm__(".set UNK_0010aa38, 0x0010aa38");
 __asm__(".set UNK_0010aa3b, 0x0010aa3b");
-__asm__(".set USHORT_0002e230, 0x0002e230");
 __asm__(".set USHORT_0002e674, 0x0002e674");
 __asm__(".set USHORT_0002e682, 0x0002e682");
 __asm__(".set USHORT_0002e690, 0x0002e690");

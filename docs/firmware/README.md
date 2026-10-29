@@ -1915,8 +1915,14 @@ it was imported from; `tools/ghidra/ArchiveProject.java` archives a
 project without the GUI, as File, Archive Current Project does, run as
 a pre-script of any headless run with the archive to write, the
 projects directory and the project's name.  Run over the bare image, imported raw at zero
-and analyzed, or over the archive, the scripts reproduce the
-checked-in export, sidecar and `.symbols.ld` byte for byte; from the
+and analyzed, the scripts reproduce the
+checked-in export, sidecar and `.symbols.ld` byte for byte, for every
+image.  `NoSwitch.java` turns Ghidra's Decompiler Switch Analysis off
+before auto-analysis and `SwitchPass.java` runs it once the code is
+disassembled, one switch at a time in address order; the stock analyzer
+applies its results across threads in a `HashSet`'s order, which varies
+from run to run, so without them a bare import does not reproduce the
+export byte for byte.  From the
 repository's root, with `GHIDRA` the install and `PROJECT` a new
 directory outside the repository:
 
@@ -1924,6 +1930,8 @@ directory outside the repository:
       -import third_party/firmware/images/z3805a-3543b.bin \
       -loader BinaryLoader -loader-baseAddr 0 -processor 68000:BE:32:CPU32 \
       -scriptPath tools/ghidra \
+      -preScript NoSwitch.java \
+      -postScript SwitchPass.java \
       -postScript SmartClockSetup.java \
       -postScript SmartClockInstaller.java 0xbbc 0x10135c \
       -postScript SmartClockSetup.java \

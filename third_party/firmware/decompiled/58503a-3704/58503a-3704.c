@@ -7630,11 +7630,11 @@ extern uint8_t DAT_00400082; /* 00400082 */
 extern uint8_t DAT_00400086; /* 00400086 */
 extern uint8_t DAT_0040008a; /* 0040008a */
 extern uint8_t DAT_00700000; /* 00700000 */
-extern uint8_t LAB_00018814; /* 00018814 */
 extern uint16_t LAB_00045554; /* 00045554 */
 extern uint16_t LAB_0004aaaa; /* 0004aaaa */
 extern uint32_t *PTR_console_port_read_00029090; /* 00029090 */
 extern uint32_t *PTR_diag_cal_0001c7f0; /* 0001c7f0 */
+extern uint32_t *PTR_lamp_test_command_00018814; /* 00018814 */
 extern uint32_t *PTR_s_Self_Test_0004de1c; /* 0004de1c */
 extern uint8_t UNK_0001b0c2; /* 0001b0c2 */
 extern uint8_t UNK_0001b0c8; /* 0001b0c8 */
@@ -7657,7 +7657,7 @@ extern uint8_t UNK_00105f26; /* 00105f26 */
 extern uint8_t UNK_00107660; /* 00107660 */
 extern uint8_t UNK_00107669; /* 00107669 */
 extern uint8_t UNK_00107671; /* 00107671 */
-extern uint8_t UNK_00107a92; /* 00107a92 */
+extern uint8_t UNK_00107a8e; /* 00107a8e */
 extern uint8_t UNK_00107aae; /* 00107aae */
 extern uint8_t UNK_0010818c; /* 0010818c */
 extern uint8_t UNK_00108228; /* 00108228 */
@@ -7795,7 +7795,6 @@ extern word switchD_00052fe8_index_zero; /* 00052ffa */
 extern word switchD_000531c0_index_zero; /* 000531d0 */
 extern word switchD_000533c2_index_zero; /* 000533d6 */
 extern word switchD_00062f44_index_zero; /* 00062f4c */
-extern uint16_t switchdataD_00033004; /* 00033004 */
 
 __asm__(".set DAT_0003085a, 0x0003085a");
 __asm__(".set DAT_00033001, 0x00033001");
@@ -7815,11 +7814,11 @@ __asm__(".set DAT_00400082, 0x00400082");
 __asm__(".set DAT_00400086, 0x00400086");
 __asm__(".set DAT_0040008a, 0x0040008a");
 __asm__(".set DAT_00700000, 0x00700000");
-__asm__(".set LAB_00018814, 0x00018814");
 __asm__(".set LAB_00045554, 0x00045554");
 __asm__(".set LAB_0004aaaa, 0x0004aaaa");
 __asm__(".set PTR_console_port_read_00029090, 0x00029090");
 __asm__(".set PTR_diag_cal_0001c7f0, 0x0001c7f0");
+__asm__(".set PTR_lamp_test_command_00018814, 0x00018814");
 __asm__(".set PTR_s_Self_Test_0004de1c, 0x0004de1c");
 __asm__(".set UNK_0001b0c2, 0x0001b0c2");
 __asm__(".set UNK_0001b0c8, 0x0001b0c8");
@@ -7842,7 +7841,7 @@ __asm__(".set UNK_00105f26, 0x00105f26");
 __asm__(".set UNK_00107660, 0x00107660");
 __asm__(".set UNK_00107669, 0x00107669");
 __asm__(".set UNK_00107671, 0x00107671");
-__asm__(".set UNK_00107a92, 0x00107a92");
+__asm__(".set UNK_00107a8e, 0x00107a8e");
 __asm__(".set UNK_00107aae, 0x00107aae");
 __asm__(".set UNK_0010818c, 0x0010818c");
 __asm__(".set UNK_00108228, 0x00108228");
@@ -8939,7 +8938,6 @@ __asm__(".set switchD_00052fe8_index_zero, 0x00052ffa");
 __asm__(".set switchD_000531c0_index_zero, 0x000531d0");
 __asm__(".set switchD_000533c2_index_zero, 0x000533d6");
 __asm__(".set switchD_00062f44_index_zero, 0x00062f4c");
-__asm__(".set switchdataD_00033004, 0x00033004");
 __asm__(".set task_console, 0x001039b8");
 __asm__(".set task_count, 0x00102a1e");
 __asm__(".set task_curv, 0x001039c8");
@@ -8997,8 +8995,6 @@ extern uint8_t DAT_0010fff6;
 __asm__(".set DAT_0010fff6, 0x0010fff6");
 extern uint8_t DAT_0010fffa;
 __asm__(".set DAT_0010fffa, 0x0010fffa");
-extern uint8_t DAT_0010fffe;
-__asm__(".set DAT_0010fffe, 0x0010fffe");
 extern uint8_t DAT_installer__001014e2;
 __asm__(".set DAT_installer__001014e2, 0x001014e2");
 extern uint8_t DAT_installer__00101538;
@@ -11379,7 +11375,6 @@ int32_t installer_vsprintf(char *s,char *format,void *arg);
 /* 00000550 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: This function may have set the stack pointer */
 /* WARNING: Removing unreachable block (ram,0x000008c0) */
 /* WARNING: Removing unreachable block (ram,0x000008c8) */
 /* Not a C function: an exception handler, entered by the processor through the boot table's vectors
@@ -15318,25 +15313,28 @@ __exception void primary_trap_12(void)
 
 {
   uint16_t uVar1;
-  uint16_t uVar2;
-  uint32_t uVar3;
+  uint8_t bVar2;
+  uint16_t uVar3;
   uint32_t uVar4;
-  int16_t sVar5;
-  uint8_t *puVar6;
-  preserved_region_fields *ppVar8;
-  preserved_region_fields *ppVar9;
-  float *pfVar10;
-  float *pfVar11;
-  uint32_t *puVar12;
-  uint16_t *puVar14;
-  uint16_t *puVar15;
-  uint8_t *puVar16;
-  uint16_t *puVar18;
+  uint32_t uVar5;
+  int16_t sVar6;
   uint8_t *puVar7;
+  preserved_region_fields *ppVar9;
+  preserved_region_fields *ppVar10;
+  float *pfVar11;
+  float *pfVar12;
   uint32_t *puVar13;
-  uint8_t *puVar17;
+  char *pcVar15;
+  uint16_t *puVar16;
+  uint16_t *puVar17;
+  uint8_t *puVar18;
+  uint16_t *puVar20;
+  uint8_t *puVar8;
+  uint32_t *puVar14;
+  uint8_t *puVar19;
   
   shutdown();
+  puVar17 = (uint16_t *)primary_vectors;
   reset();
   sim.sypcr = 0xcc;
   sim.cspar0 = 0x2bff;
@@ -15374,153 +15372,175 @@ __exception void primary_trap_12(void)
   sim.ddrf = 0xf7;
   duart.start_sopbc = 0xff;
   duart.stop_ropbc = 0;
-  puVar6 = &reset_cleared_ram;
+  puVar7 = &reset_cleared_ram;
   do {
-    puVar7 = puVar6 + 4;
-    puVar6[0] = 0;
-    puVar6[1] = 0;
-    puVar6[2] = 0;
-    puVar6[3] = 0;
-    puVar6 = puVar7;
-  } while (puVar7 < (uint8_t *)0x110000);
-  bcdAdjust(0xaa);
-  DAT_0010fffa = 0x55aa5555;
-  selftest.cpu = 1;
-  duart.stop_ropbc = 0x10;
-  selftest.lamp_mask = 0x10;
+    puVar8 = puVar7 + 4;
+    puVar7[0] = 0;
+    puVar7[1] = 0;
+    puVar7[2] = 0;
+    puVar7[3] = 0;
+    puVar7 = puVar8;
+  } while (puVar8 < (uint8_t *)0x110000);
+  selftest.lamp_mask = 0;
+  selftest.cpu = 0;
+  *(uint32_t *)((int32_t)puVar17 + -4) = 0xaaaaaaaa;
+  if (((uint16_t *)((int32_t)puVar17 + -4) != puVar17) && (*(int32_t *)((int32_t)puVar17 + -4) == -0x55555556)
+     ) {
+    *(uint32_t *)((int32_t)puVar17 + -4) = 0x55555555;
+    *(uint32_t *)((int32_t)puVar17 + -4) = *(uint32_t *)((int32_t)puVar17 + -4);
+    if ((*(int32_t *)((int32_t)puVar17 + -4) == 0x55555555) &&
+       (*(uint32_t *)((int32_t)puVar17 + -4) = 0xaaaaaaaa, *(int32_t *)((int32_t)puVar17 + -4) == -0x55555556)
+       ) {
+      *(uint32_t *)((int32_t)puVar17 + -4) = 0x55555555;
+      bVar2 = *(uint8_t *)((int32_t)puVar17 + -4);
+      *(uint8_t *)((int32_t)puVar17 + -4) = bVar2 | 8;
+      if (((bVar2 & 8) == 0) &&
+         (bVar2 = *(uint8_t *)((int32_t)puVar17 + -4), *(uint8_t *)((int32_t)puVar17 + -4) = bVar2 & 0xf7,
+         (bVar2 & 8) != 0)) {
+        *(uint32_t *)((int32_t)puVar17 + -4) = 0x55555555;
+        pcVar15 = (char *)((int32_t)puVar17 + -3);
+        *pcVar15 = *pcVar15 + *(char *)((int32_t)puVar17 + -4);
+        bcdAdjust(*pcVar15);
+      }
+    }
+  }
+  selftest.cpu = selftest.cpu | 1;
+  if (selftest.cpu != 0) {
+    duart.stop_ropbc = 0x10;
+    selftest.lamp_mask = selftest.lamp_mask | 0x10;
+  }
   selftest.ram = 0;
   selftest.ram_data_bits = 0;
   selftest.ram_address_lines = 0;
-  ppVar8 = &preserved_region;
-  puVar15 = (uint16_t *)&DAT_0010fffe;
+  ppVar9 = &preserved_region;
   while( true ) {
-    uVar3 = 0;
-    sVar5 = 0x17;
-    puVar16 = (uint8_t *)puVar15;
+    uVar4 = 0;
+    sVar6 = 0x17;
+    puVar18 = (uint8_t *)puVar17;
     do {
-      ppVar9 = ppVar8;
-      puVar17 = puVar16 + -2;
-      *(uint16_t *)(puVar16 + -2) = ppVar9->checksum;
-      sVar5 = sVar5 + -1;
-      ppVar8 = (preserved_region_fields *)&ppVar9->restore;
-      puVar16 = puVar16 + -2;
-    } while (sVar5 != -1);
-    *(uint32_t *)(ppVar9[-1].values + 0x18) = 0xaaaaaaaa;
-    ppVar9[-0xffffffff00000001].values[0x14] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0x15] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0x16] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0x17] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0x10] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0x11] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0x12] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0x13] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0xc] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0xd] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0xe] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0xf] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[8] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[9] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[10] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0xb] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[4] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[5] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[6] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[7] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[0] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[1] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[2] = 0xaa;
-    ppVar9[-0xffffffff00000001].values[3] = 0xaa;
-    ppVar9[-0xffffffff00000001].adc_monitors[7].valid = 0xaa;
-    ppVar9[-0xffffffff00000001].adc_monitors[7].sample_index = 0xaa;
-    ppVar9[-0xffffffff00000001].adc_monitors[7].out_of_tolerance = 0xaa;
-    ppVar9[-0xffffffff00000001].adc_monitors[7].out_of_range_count = 0xaa;
-    ppVar9[-1].adc_monitors[7].value = -3.0316488e-13;
-    ppVar9[-1].adc_monitors[7].samples[9] = -3.0316488e-13;
-    ppVar9[-1].adc_monitors[7].samples[8] = -3.0316488e-13;
-    pfVar10 = ppVar9[-1].adc_monitors[7].samples + 7;
-    *pfVar10 = -3.0316488e-13;
-    sVar5 = 0xb;
+      ppVar10 = ppVar9;
+      puVar19 = puVar18 + -2;
+      *(uint16_t *)(puVar18 + -2) = ppVar10->checksum;
+      sVar6 = sVar6 + -1;
+      ppVar9 = (preserved_region_fields *)&ppVar10->restore;
+      puVar18 = puVar18 + -2;
+    } while (sVar6 != -1);
+    *(uint32_t *)(ppVar10[-1].values + 0x18) = 0xaaaaaaaa;
+    ppVar10[-0xffffffff00000001].values[0x14] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0x15] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0x16] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0x17] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0x10] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0x11] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0x12] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0x13] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0xc] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0xd] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0xe] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0xf] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[8] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[9] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[10] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0xb] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[4] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[5] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[6] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[7] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[0] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[1] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[2] = 0xaa;
+    ppVar10[-0xffffffff00000001].values[3] = 0xaa;
+    ppVar10[-0xffffffff00000001].adc_monitors[7].valid = 0xaa;
+    ppVar10[-0xffffffff00000001].adc_monitors[7].sample_index = 0xaa;
+    ppVar10[-0xffffffff00000001].adc_monitors[7].out_of_tolerance = 0xaa;
+    ppVar10[-0xffffffff00000001].adc_monitors[7].out_of_range_count = 0xaa;
+    ppVar10[-1].adc_monitors[7].value = -3.0316488e-13;
+    ppVar10[-1].adc_monitors[7].samples[9] = -3.0316488e-13;
+    ppVar10[-1].adc_monitors[7].samples[8] = -3.0316488e-13;
+    pfVar11 = ppVar10[-1].adc_monitors[7].samples + 7;
+    *pfVar11 = -3.0316488e-13;
+    sVar6 = 0xb;
     do {
-      pfVar11 = pfVar10;
-      uVar3 = (uint32_t)*pfVar11 ^ 0xaaaaaaaa | uVar3;
-      sVar5 = sVar5 + -1;
-      pfVar10 = pfVar11 + 1;
-    } while (sVar5 != -1);
-    *pfVar11 = 1.4660155e+13;
-    pfVar11[-1] = 1.4660155e+13;
-    pfVar11[-2] = 1.4660155e+13;
-    pfVar11[-3] = 1.4660155e+13;
-    pfVar11[-4] = 1.4660155e+13;
-    pfVar11[-5] = 1.4660155e+13;
-    pfVar11[-6] = 1.4660155e+13;
-    ((adc_monitor *)(pfVar11 + -7))->samples[0] = 1.4660155e+13;
-    pfVar11[-8] = 1.4660155e+13;
-    pfVar11[-9] = 1.4660155e+13;
-    pfVar11[-10] = 1.4660155e+13;
-    pfVar11[-0xb] = 1.4660155e+13;
-    sVar5 = 0xb;
-    puVar12 = (uint32_t *)(pfVar11 + -0xb);
+      pfVar12 = pfVar11;
+      uVar4 = (uint32_t)*pfVar12 ^ 0xaaaaaaaa | uVar4;
+      sVar6 = sVar6 + -1;
+      pfVar11 = pfVar12 + 1;
+    } while (sVar6 != -1);
+    *pfVar12 = 1.4660155e+13;
+    pfVar12[-1] = 1.4660155e+13;
+    pfVar12[-2] = 1.4660155e+13;
+    pfVar12[-3] = 1.4660155e+13;
+    pfVar12[-4] = 1.4660155e+13;
+    pfVar12[-5] = 1.4660155e+13;
+    pfVar12[-6] = 1.4660155e+13;
+    ((adc_monitor *)(pfVar12 + -7))->samples[0] = 1.4660155e+13;
+    pfVar12[-8] = 1.4660155e+13;
+    pfVar12[-9] = 1.4660155e+13;
+    pfVar12[-10] = 1.4660155e+13;
+    pfVar12[-0xb] = 1.4660155e+13;
+    sVar6 = 0xb;
+    puVar13 = (uint32_t *)(pfVar12 + -0xb);
     do {
-      puVar13 = puVar12 + 1;
-      uVar3 = *puVar12 ^ 0x55555555 | uVar3;
-      sVar5 = sVar5 + -1;
-      puVar12 = puVar13;
-    } while (sVar5 != -1);
-    sVar5 = 0x17;
-    puVar15 = (uint16_t *)puVar17;
+      puVar14 = puVar13 + 1;
+      uVar4 = *puVar13 ^ 0x55555555 | uVar4;
+      sVar6 = sVar6 + -1;
+      puVar13 = puVar14;
+    } while (sVar6 != -1);
+    sVar6 = 0x17;
+    puVar17 = (uint16_t *)puVar19;
     do {
-      puVar18 = puVar15;
-      puVar12 = puVar13;
-      *(uint16_t *)((int32_t)puVar12 + -2) = *puVar18;
-      sVar5 = sVar5 + -1;
-      puVar13 = (uint32_t *)((int32_t)puVar12 + -2);
-      puVar15 = puVar18 + 1;
-    } while (sVar5 != -1);
-    if (uVar3 != 0) break;
-    ppVar8 = (preserved_region_fields *)((int32_t)puVar12 + 0x2e);
-    puVar15 = puVar18 + 1;
-    if (0x10ffffU < (int32_t)puVar12 + 0x5eU) {
-      if ((preserved_region_fields *)0x10ffff < ppVar8) {
-        uVar3 = 0;
-        uVar4 = 2;
-        puVar14 = &preserved_region.restore;
-        sVar5 = 0xe;
+      puVar20 = puVar17;
+      puVar13 = puVar14;
+      *(uint16_t *)((int32_t)puVar13 + -2) = *puVar20;
+      sVar6 = sVar6 + -1;
+      puVar14 = (uint32_t *)((int32_t)puVar13 + -2);
+      puVar17 = puVar20 + 1;
+    } while (sVar6 != -1);
+    if (uVar4 != 0) break;
+    ppVar9 = (preserved_region_fields *)((int32_t)puVar13 + 0x2e);
+    puVar17 = puVar20 + 1;
+    if (0x10ffffU < (int32_t)puVar13 + 0x5eU) {
+      if ((preserved_region_fields *)0x10ffff < ppVar9) {
+        uVar4 = 0;
+        uVar5 = 2;
+        puVar16 = &preserved_region.restore;
+        sVar6 = 0xe;
         do {
-          uVar2 = preserved_region.checksum;
-          uVar1 = *puVar14;
+          uVar3 = preserved_region.checksum;
+          uVar1 = *puVar16;
           preserved_region.checksum = 0xaaaa;
-          *puVar14 = 0x5555;
+          *puVar16 = 0x5555;
           if (preserved_region.checksum == 0x5555) {
             selftest.ram = selftest.ram | 2;
-            uVar3 = uVar4 | uVar3;
+            uVar4 = uVar5 | uVar4;
           }
-          preserved_region.checksum = uVar2;
-          *puVar14 = uVar1;
-          puVar14 = (uint16_t *)(uVar4 + (int32_t)puVar14);
-          uVar4 = uVar4 << 1;
-          sVar5 = sVar5 + -1;
-        } while (sVar5 != -1);
-        selftest.ram_address_lines = uVar3 >> 1 | selftest.ram_address_lines;
+          preserved_region.checksum = uVar3;
+          *puVar16 = uVar1;
+          puVar16 = (uint16_t *)(uVar5 + (int32_t)puVar16);
+          uVar5 = uVar5 << 1;
+          sVar6 = sVar6 + -1;
+        } while (sVar6 != -1);
+        selftest.ram_address_lines = uVar4 >> 1 | selftest.ram_address_lines;
         goto LAB_00014940;
       }
-      ppVar8 = (preserved_region_fields *)&DAT_0010ffd0;
-      puVar15 = puVar18 + 1;
+      ppVar9 = (preserved_region_fields *)&DAT_0010ffd0;
+      puVar17 = puVar20 + 1;
     }
   }
-  selftest.ram_data_bits = (uint16_t)(uVar3 >> 0x10) | (uint16_t)uVar3 | selftest.ram_data_bits;
+  selftest.ram_data_bits = (uint16_t)(uVar4 >> 0x10) | (uint16_t)uVar4 | selftest.ram_data_bits;
   selftest.ram = selftest.ram | 1;
 LAB_00014940:
   if (selftest.ram != 0) {
     duart.stop_ropbc = 0x20;
     selftest.lamp_mask = selftest.lamp_mask | 0x20;
   }
-  *(uint32_t *)(puVar18 + -1) = 0x1495e;
+  *(uint32_t *)(puVar20 + -1) = 0x1495e;
   duart_early_init();
   if (selftest.uart != 0) {
     duart.stop_ropbc = 0x40;
     selftest.lamp_mask = selftest.lamp_mask | 0x40;
   }
-  *(uint32_t *)(puVar18 + -1) = 0x1497c;
+  *(uint32_t *)(puVar20 + -1) = 0x1497c;
   primary_unpack_records();
   DAT_0010fffa = 0;
   DAT_0010fff6 = 0;
@@ -25677,28 +25697,7 @@ __asm__(
 	"	bsr.w forth_compile_code\n"
 	"	move.l %a4,-(%a6)\n"
 	"	move.l #0x19591,-(%a6)\n"
-	"	rts\n"
-	"	.byte 0x22\n"
-	"	.byte 0x6c\n"
-	"	.byte 0x6f | ble.b 0x0001964b\n"
-	"	.reloc ., R_68K_PC8, forth_if+0x1-1\n"
-	"	.byte 0\n"
-	"	.byte 0x70\n"
-	"	.byte 0x22\n"
-	"	.byte 0x20\n"
-	"	.byte 0x6f\n"
-	"	.byte 0x72\n"
-	"	.byte 0x20\n"
-	"	.byte 0x22\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x6c\n"
-	"	.byte 0x6f\n"
-	"	.byte 0x6f\n"
-	"	.byte 0x70\n"
-	"	.byte 0x22\n"
-	"	.byte 0x0d\n"
-	"	.byte 0x0a\n"
-	"	.byte 0x00\n"
+	"	.byte 0x4e,0x75,0x22,0x6c,0x6f,0x6f,0x70,0x22,0x20,0x6f,0x72,0x20,0x22,0x2b,0x6c,0x6f,0x6f,0x70,0x22,0x0d,0x0a,0x00\n"
 	"	.size forth_query_do, .-forth_query_do\n"
 	"	.popsection\n"
 );
@@ -25997,18 +25996,7 @@ __asm__(
 	"	bsr.w forth_compile_code\n"
 	"	move.l %a4,-(%a6)\n"
 	"	move.l #0x196ce,-(%a6)\n"
-	"	rts\n"
-	"	.byte 0x22\n"
-	"	.byte 0x72\n"
-	"	.byte 0x65\n"
-	"	.byte 0x70\n"
-	"	.byte 0x65\n"
-	"	.byte 0x61\n"
-	"	.byte 0x74\n"
-	"	.byte 0x22\n"
-	"	.byte 0x0d\n"
-	"	.byte 0x0a\n"
-	"	.byte 0x00\n"
+	"	.byte 0x4e,0x75,0x22,0x72,0x65,0x70,0x65,0x61,0x74,0x22,0x0d,0x0a,0x00\n"
 	"	.byte 0xff\n"
 	"	.size forth_while, .-forth_while\n"
 	"	.popsection\n"

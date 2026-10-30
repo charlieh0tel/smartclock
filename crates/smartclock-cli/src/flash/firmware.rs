@@ -132,6 +132,18 @@ pub(super) const PROFILES: &[Profile] = &[
     },
 ];
 
+/// Owner-built, non-HP images, recognized only under `flash
+/// --experimental`.  Same shape as `PROFILES`, kept deliberately
+/// separate so the normal allowlist is never widened: a match here still
+/// has to pass the size and boot-checksum checks, and the
+/// receiver-compatibility checks key on the running firmware, not on
+/// these revisions, so they are unaffected.
+///
+/// The public tree ships none.  An owner who hand-builds an image adds a
+/// `Profile` entry here, by SHA-256, alongside the privately built binary
+/// it names; the entry and the image stay out of this public repository.
+pub(super) const EXPERIMENTAL: &[Profile] = &[];
+
 /// A recognized, checksummed image held in memory before opening a port.
 #[derive(Debug)]
 pub(super) struct Firmware {
@@ -154,6 +166,28 @@ impl Firmware {
             .ok_or(ImageError::Unknown(hash))?;
         profile.layout.verify(&bytes)?;
         Ok(Self { bytes, profile })
+    }
+
+    /// As [`Firmware::validate`], but also recognizes the owner-built
+    /// images in [`EXPERIMENTAL`].  The returned flag is true when the
+    /// match came from that table, so the caller can warn before touching
+    /// hardware.  The size and boot-checksum checks are identical; only
+    /// the hash allowlist is widened, and only behind the caller's opt-in.
+    pub(super) fn validate_experimental(bytes: Vec<u8>) -> Result<(Self, bool), ImageError> {
+        match Self::validate(bytes.clone()) {
+            Ok(firmware) => Ok((firmware, false)),
+            Err(ImageError::Unknown(hash)) => {
+                let profile = EXPERIMENTAL
+                    .iter()
+                    .find(|profile| profile.sha256 == hash)
+                    .ok_or(ImageError::Unknown(hash))?;
+                // validate() already confirmed the 512 KiB size; the
+                // checksum still must pass for an experimental image too.
+                profile.layout.verify(&bytes)?;
+                Ok((Self { bytes, profile }, true))
+            }
+            Err(other) => Err(other),
+        }
     }
 
     /// The whole image, protected boot region included.

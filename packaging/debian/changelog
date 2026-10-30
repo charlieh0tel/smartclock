@@ -4,7 +4,7 @@ smartclockmon (1.8.3-1) unstable; urgency=low
     whose hash is not in the audited allowlist, such as one with a
     different FPGA bitstream.  It still runs the size and boot-checksum
     checks and every receiver-compatibility check, never a force that
-    skips them, and prints a loud notice before opening the port.  The
+    skips them, and prints a notice before opening the port.  The
     allowlist ships empty.
 
  -- Christopher Hoover <ch@murgatroid.com>  Fri, 30 Oct 2026 15:17:57 -0700

@@ -62,7 +62,7 @@ pub(crate) struct FlashArgs {
     #[arg(long)]
     no_readback: bool,
     /// Also accept an owner-built, non-HP image whose SHA-256 is in the
-    /// experimental table (`firmware::EXPERIMENTAL`), behind a loud warning.
+    /// experimental table (`firmware::EXPERIMENTAL`), behind a warning.
     /// The size and boot-checksum checks still apply, and the
     /// receiver-compatibility checks are unchanged: this is not a
     /// `--force` that skips any check.
@@ -321,18 +321,13 @@ fn program(link: &mut impl Link, firmware: &Firmware) -> Result<()> {
     Ok(())
 }
 
-/// A loud, unmissable notice printed before any device is opened when an
-/// experimental, owner-built image was accepted under `--experimental`.
+/// A notice printed before any device is opened when an experimental,
+/// owner-built image was accepted under `--experimental`.
 fn warn_experimental(firmware: &Firmware) {
-    eprintln!("!!! EXPERIMENTAL IMAGE: non-HP, hand-built; accepted only under --experimental.");
     eprintln!(
-        "!!! {} rev {} (SHA-256 {}) is NOT an audited HP dump.",
-        firmware.profile.model, firmware.profile.revision, firmware.profile.sha256
-    );
-    eprintln!("!!! The FPGA<->firmware interface is UNVERIFIED on hardware; flashing it may");
-    eprintln!("!!! brick or mis-time the unit.  Boot flash and EEPROM are preserved, but the");
-    eprintln!(
-        "!!! unit's learned OCXO calibration will reset.  See the notes kept with the image."
+        "warning: {} rev {} is an owner-built, non-HP image, accepted only under \
+         --experimental and unverified on hardware.",
+        firmware.profile.model, firmware.profile.revision
     );
 }
 

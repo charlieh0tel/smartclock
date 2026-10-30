@@ -224,6 +224,33 @@ fn validates_audited_images_and_rejects_corruption_and_chip_files() {
 }
 
 #[test]
+fn experimental_flag_never_bypasses_the_checksum_or_the_allowlist() {
+    let read = |name: &str| {
+        std::fs::read(format!(
+            "{}/../../third_party/firmware/images/{name}",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .unwrap()
+    };
+    // An audited image is accepted through the experimental path and is
+    // not flagged experimental: the public tree ships no experimental
+    // entries, so only the stock allowlist can match.
+    let (audited, flagged) = Firmware::validate_experimental(read("58503a-3704.bin")).unwrap();
+    assert!(!flagged);
+    assert_eq!(audited.profile.revision, "3704");
+
+    // A modified image in neither table stays rejected even under the
+    // flag, so the opt-in never skips the checksum or widens to anything
+    // beyond the experimental table.
+    let mut corrupted = read("58503a-3704.bin");
+    corrupted[PRIMARY_START] ^= 1;
+    assert!(matches!(
+        Firmware::validate_experimental(corrupted),
+        Err(ImageError::Unknown(_))
+    ));
+}
+
+#[test]
 fn chip_dumps_join_in_their_labeled_order_and_split_back_and_swaps_are_told() {
     let chips = split(DUMP).unwrap();
     assert!(chips.iter().all(|chip| chip.len() == DUMP.len() / 4));

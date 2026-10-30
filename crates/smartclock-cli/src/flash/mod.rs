@@ -61,6 +61,13 @@ pub(crate) struct FlashArgs {
     /// after writing.
     #[arg(long)]
     no_readback: bool,
+    /// Also accept an owner-built, non-HP image whose SHA-256 is in the
+    /// experimental table (`firmware::EXPERIMENTAL`), behind a loud warning.
+    /// The size and boot-checksum checks still apply, and the
+    /// receiver-compatibility checks are unchanged: this is not a
+    /// `--force` that skips any check.
+    #[arg(long)]
+    experimental: bool,
 }
 
 /// The state machine uses the same exchanges in tests and on the wire.
@@ -314,6 +321,21 @@ fn program(link: &mut impl Link, firmware: &Firmware) -> Result<()> {
     Ok(())
 }
 
+/// A loud, unmissable notice printed before any device is opened when an
+/// experimental, owner-built image was accepted under `--experimental`.
+fn warn_experimental(firmware: &Firmware) {
+    eprintln!("!!! EXPERIMENTAL IMAGE: non-HP, hand-built; accepted only under --experimental.");
+    eprintln!(
+        "!!! {} rev {} (SHA-256 {}) is NOT an audited HP dump.",
+        firmware.profile.model, firmware.profile.revision, firmware.profile.sha256
+    );
+    eprintln!("!!! The FPGA<->firmware interface is UNVERIFIED on hardware; flashing it may");
+    eprintln!("!!! brick or mis-time the unit.  Boot flash and EEPROM are preserved, but the");
+    eprintln!(
+        "!!! unit's learned OCXO calibration will reset.  See the notes kept with the image."
+    );
+}
+
 /// Check the image, and with a device the receiver; with `--write`,
 /// flash it.  A transcript, when asked for, is a new file: an existing
 /// one is never overwritten.
@@ -324,9 +346,19 @@ pub(crate) fn run(
     framing: Framing,
     capture: Option<&Path>,
 ) -> Result<()> {
-    let firmware = Firmware::validate(
-        std::fs::read(&args.image).with_context(|| format!("reading {}", args.image.display()))?,
-    )?;
+    let bytes =
+        std::fs::read(&args.image).with_context(|| format!("reading {}", args.image.display()))?;
+    // --experimental only widens the hash allowlist to the hand-built
+    // images in firmware::EXPERIMENTAL; every other check is untouched.
+    let firmware = if args.experimental {
+        let (firmware, experimental) = Firmware::validate_experimental(bytes)?;
+        if experimental {
+            warn_experimental(&firmware);
+        }
+        firmware
+    } else {
+        Firmware::validate(bytes)?
+    };
     println!(
         "Image: {} {}; SHA-256 {}; boot checksums valid",
         firmware.profile.model, firmware.profile.revision, firmware.profile.sha256

@@ -490,7 +490,7 @@ Pins: CSPAR0 `0x2bff` at `0x568`, CSPAR1 `0x03af` at `0x570`.
 | the same | CS3 | 118, PC0/FC0 | `0x1003`, `0x3030`; `0x5b8`, `0x5c0` | 16-bit | lower, write, 0 wait | RAM, writes to the lower byte |
 | `0x200000`--`0x2007ff`, 2 KiB | CS8 | 123, PC5/ADDR21 | `0x2000`, `0x3bf0`; `0x608`, `0x610` | 8-bit | lower, read and write, external | U3, the SCC68692 DUART, driven as a 68681; on an 8-bit port any BYTE but 00 enables the select (4.8.1.3) |
 | `0x300000`--`0x30ffff`, 64 KiB | CS5 | 120, PC2/FC2 | `0x3003`, `0x7b30`; `0x5d8`, `0x5e0` | 8-bit | both, read and write, 12 wait | shared: the latch, the switch byte, the FPGA and the EFC strobe (below) |
-| `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x618`, `0x620` | 8-bit | both, read and write, 3 wait | U4, the AT28C64B EEPROM, by elimination (`../z3805a-board.html`) |
+| `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x618`, `0x620` | 8-bit | both, read and write, 3 wait | U4, the AT28C64B EEPROM, by elimination (`../board-atlas.html`) |
 | `0x500000`--`0x5007ff`, 2 KiB | CS4 | 119, PC1/FC1 | `0x5000`, `0x7830`; `0x5c8`, `0x5d0` | 8-bit | both, read and write, 0 wait | none the firmware uses: no instruction addresses it; whether a part is wired to it is not traced (`../hardware-investigations.md`) |
 | CPU space, interrupt acknowledge at level 2 | CS10 | 125, ECLK/ADDR23 | `0xfff8`, `0x2bc4`; `0x628`, `0x630` | 16-bit | lower, read, external; CPU space, IPL 2 | the DUART's acknowledge: it answers with the vector its IVR holds, so its interrupt is level 2, vectored |
 

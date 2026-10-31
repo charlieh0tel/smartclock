@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-board-atlas board-atlas clean deb release release-notes install-service
 
 all: build
 
@@ -124,6 +124,16 @@ docs:
 # Needs Chrome; not part of ci.
 check-pages:
 	./tools/check-pages.sh
+
+# Fail if docs/board-atlas.html is not what tools/board_atlas.py renders
+# from docs/board-atlas.json, or if the data cites a file or section that
+# does not exist; board-atlas rewrites the page.  Needs only python3;
+# .github/workflows/firmware.yml runs the check.
+check-board-atlas:
+	python3 -I tools/board_atlas.py
+
+board-atlas:
+	python3 -I tools/board_atlas.py --write
 
 # The firmware's checks and generated files, which
 # third_party/firmware/Makefile runs, alone or from here by name, for

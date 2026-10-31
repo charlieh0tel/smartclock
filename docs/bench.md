@@ -215,8 +215,9 @@ labeled Z3805-80001 to -80004, Rev C, at U11 (2L), U12 (1L), U13 (2M)
 and U14 (1M).  The FPGA, U32, is a Xilinx XC3042-70 PC84C, and the
 CPU, U33, a Motorola MC68331CFC16.  The DUART, U3, is a Philips
 SCC68692C1A44 and the EEPROM, U4, an Atmel AT28C64B-20JC, soldered.
-Its parts, numbered on the close-up:
-[`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/z3805a-board.html).
+Its parts, ringed on the photos below with what the firmware does with
+each and the nets measured so far:
+[`board-atlas.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/board-atlas.html).
 Its jacks
 carry the same designators as the 58503A's: J4 (OUT A) and J5 (OUT B)
 go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to
@@ -255,6 +256,12 @@ DC-DC power module.
 
 ![J17 (10 MHz A) and J15 (10 MHz B), both cabled](images/Z3805-68001/z3805a-10mhz-outputs.jpg)
 
+![The main board out of the chassis, component side, on 2026-10-30](images/Z3805-68001/z3805a-main-board-component-side.jpg)
+
+![The same, solder side, mirrored left to right against the component side](images/Z3805-68001/z3805a-main-board-solder-side.jpg)
+
+![U33, the MC68331, and the decode logic beside it, on 2026-10-30](images/Z3805-68001/z3805a-mcu-logic.jpg)
+
 ![The GPS engine module, top](images/Z3805-68001/z3805a-gps-engine-top.jpg)
 
 ![The GPS engine module, bottom](images/Z3805-68001/z3805a-gps-engine-bottom.jpg)
@@ -276,7 +283,9 @@ DC-DC power module.
 ### Photos still wanted
 
 What the photos above leave open (`hardware-investigations.md`,
-items 13, 19, 20 and 21).  Power off throughout, as in
+items 13, 19, 20 and 21).  The 2026-10-30 photos of the board out of
+the chassis show both sides whole and read U44, a 74ABT574 beside J13;
+the close-ups below are still wanted.  Power off throughout, as in
 `hardware-investigations.md`, "Working on the open Z3805A board".
 For all of them: the full-resolution file, no crop, the camera's own
 EXIF rotation; a tripod or a rest, and focus set on the part, not the

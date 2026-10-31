@@ -1,0 +1,2282 @@
+{
+  "comparison": [
+    {
+      "id": "same",
+      "text": "the same part as the Z3805A's, or bare on both"
+    },
+    {
+      "id": "fitted",
+      "text": "a part fitted, not compared"
+    },
+    {
+      "id": "differs",
+      "text": "fitted differently"
+    },
+    {
+      "id": "open",
+      "text": "not seen"
+    }
+  ],
+  "confidence": [
+    {
+      "id": "read",
+      "text": "read from the firmware image's code, in the cited document"
+    },
+    {
+      "id": "board",
+      "text": "seen on the board: a photo or a meter"
+    },
+    {
+      "id": "inferred",
+      "text": "inferred from what is seen or read, not checked"
+    },
+    {
+      "id": "open",
+      "text": "not known"
+    }
+  ],
+  "design_note": [
+    "In the firmware's terms: [[docs/firmware/outputs.md|The FPGA bitstreams]] decodes the Z3805A design's pin 14 as a registered, fast-slew output, where the 58503A's and Z3801A's design leaves it unregistered, and pin 45 as an output that design leaves unused.  It says nothing of pin 83, or of what signal any pin carries.  That J4 and J5 both carry the 1 PPS rests on their cabling to the rear panel's two 1 PPS outputs ([[docs/bench.md|HP Z3805A, serial 3625A01487]]); that U32 makes the internal 1 PPS is inferred ([[docs/firmware/counter.md|Which 1 PPS edges]])."
+  ],
+  "groups": [
+    {
+      "id": "mcu",
+      "title": "MCU and bus"
+    },
+    {
+      "id": "memory",
+      "title": "Memory"
+    },
+    {
+      "id": "serial",
+      "title": "Serial"
+    },
+    {
+      "id": "fpga",
+      "title": "FPGA and 1 PPS outputs"
+    },
+    {
+      "id": "efc",
+      "title": "EFC chain"
+    },
+    {
+      "id": "analog",
+      "title": "Monitoring, ADC and DAC"
+    },
+    {
+      "id": "power",
+      "title": "Power"
+    },
+    {
+      "id": "rpack",
+      "title": "Resistor packs"
+    },
+    {
+      "id": "conn",
+      "title": "Connectors"
+    }
+  ],
+  "heading": "SmartClock main board, Z3805-68001",
+  "intro": [
+    "The first SmartClock family's main board: the Z3805A's, Z3805-68001, mapped part by part from the bench unit (serial 3625A01487, board serial 6E9008G, date code 3627, firmware 3543B; [[docs/bench.md|HP Z3805A, serial 3625A01487]]).  The Z3801A's Z3801-68001 and the 58503A's 58503-60001 Rev C share the layout; the last two columns of the parts table say what their photos show at each designator.",
+    "Each part's firmware column cites the document and section that ties it to an address, a chip select or a QSPI device.  The rings mark each part's place on the photos; a ring links to its row."
+  ],
+  "limits": [
+    "Both sides are now photographed, out of the chassis.  Most signal lines still change layer through vias within a few millimeters of a part's pins, so a net is followed with a meter, not by eye; only the 1 PPS output stage above has been.  Not followed: the DUART's interrupt to the processor, chip select 5 to the lamp latch, the QSPI's chip-select decode, and the switch port.",
+    "U51 and U57 are under the heatsink and cannot be read without taking it off."
+  ],
+  "nets": [
+    {
+      "net": "J4, OUT A",
+      "note": "U17's eight outputs reach J4 through R32's eight 100 ohm resistors.",
+      "path": "J4 center pin, through {{R32}}, to {{U17}}'s B side"
+    },
+    {
+      "net": "U17 A side",
+      "note": "",
+      "path": "{{U17}} pins 2 to 9, A1 to A8, all tied together, to {{U32}} pin 14"
+    },
+    {
+      "net": "J5, OUT B",
+      "note": "As J4.",
+      "path": "J5 center pin, through {{R33}}, to {{U18}}'s B side"
+    },
+    {
+      "net": "U18 A side",
+      "note": "",
+      "path": "{{U18}} pins 2 to 9 all tied together, to {{U32}} pin 83"
+    },
+    {
+      "net": "DIR",
+      "note": "Pulled high, so both transfer A to B, FPGA to jack, unless something else drives the line; nothing else on it is ruled out.",
+      "path": "{{U17}} pin 1 to {{R52}} pin 7; {{U18}} pin 1 to R52 pin 8; R52 pin 16, the common, to VCC"
+    },
+    {
+      "net": "/OE",
+      "note": "Low, so the outputs are enabled.  The net runs on toward the U33 area; it is on no pin of U32 or U33.  Nothing else on it is ruled out; {{R20}} is the candidate for the resistor.",
+      "path": "{{U17}} pin 19 and {{U18}} pin 19 joined, through one 1 kohm resistor to ground"
+    }
+  ],
+  "nets_intro": "Measured on the bench Z3805A on 2026-10-30, power off, with an ohmmeter, by the rules of [[docs/hardware-investigations.md|Working on the open Z3805A board]].  Pin numbers are the 74ABT245A's (DIR 1, A1 to A8 2 to 9, /OE 19; [[third_party/ti/sn74abt245b.pdf]]) and the XC3042's PLCC-84.",
+  "observations": [
+    "The 58503A (58503-60001 Rev C, `58503a-interior.jpg`) carries the same parts at the same designators where they can be read: SCC68692C1A44 at U3, AT28C64B at U4, LT1180ACSW at U2, ADC0838CCV at U35, TLC0820AC at U36, MC144110 at U37, XC3042 at U32, and 78M12s at U45 and U46.  On the Z3801A (Z3801-68001, `z3801a-main-board.jpg`) U4 is an Atmel part, its type under the wires, U2 an LT1180ACS, U36 a TLC0820AC, U33 an MC68331CFC16, U32 an XC3042-70 and U44 a Philips 74ABT574AD; U3 is under the add-on board.",
+    "They differ in what is fitted.  U31: an empty PLCC-84 socket on the 58503A, bare pads on the Z3801A and Z3805A.  U5, U6 and U7, beside the serial connector: bare on the Z3805A; on the 58503A U7 alone is fitted; on the Z3801A, whose port is RS-422 (097-z3801-01), an AT&T part sits at U5 or U6, the photo does not show which label is its.  J2 and J3: boxed headers on the 58503A, bare on the Z3805A; on the Z3801A J2 is bare and a hand-wired add-on board, an MC74ACT14N on it, sits over J3.  J13: on the Z3801A a bare five-position footprint beside U44, on the 58503A an AMP connector at that place; on the Z3805A the designator is printed beside U44.",
+    "The three boot two FPGA designs: the 58503A and the Z3801A share one byte for byte, and the Z3805A's differs from it at pins 14 and 45 among others ([[docs/firmware/outputs.md|The FPGA bitstreams]]).  The 58503A's J4 is fitted and carries no 1 PPS ([[docs/hardware-investigations.md|item 19]])."
+  ],
+  "open": [
+    "Whether U32 pins 14 and 83 carry the same signal, so that J4 and J5 give the same pulse; and where pins 45 and 78 go.",
+    "What else is on the /OE net of {{U17}} and {{U18}}, and whether {{R20}} is its 1 kohm resistor; what else is on DIR.",
+    "The part behind the switch byte at `0x302000`.  Beside {{S1}} is {{U21}}, a 74AC251, which puts one of its eight inputs on one output, not a byte on the bus; no document says what drives the byte, and S1 has not been buzzed to U21 ([[docs/firmware/restart.md|The switch byte at `0x302000`]]).",
+    "Which '138, if any, decodes chip select 5's window into the lamp latch, the switch byte, the FPGA and the EFC strobe, and what `0x306000`'s strobe reaches ([[docs/firmware/restart.md|The chip selects]], [[docs/hardware-investigations.md|item 20]]).",
+    "What decodes the QSPI's PCS0 to PCS3 into its devices ([[docs/firmware/structures.md|The QSPI's devices]]), and whether {{U48}} and {{U50}} take device 7's word to {{U56}}.",
+    "Which rail feeds {{U37}}'s VDD ([[docs/hardware-investigations.md|item 23]]); {{U40}}, a 78L12, sits beside it.",
+    "{{U51}} and {{U57}}, under the heatsink.",
+    "Which RAM is U8 or U9 and which U15 or U16, and which pair of U11 to U14 is the lower flash bank.",
+    "J12: a BDM header or not ([[docs/hardware-investigations.md|item 13]]).",
+    "The DUART's /INTR to U33's /IRQ2, and whether {{U29}} is between them ([[docs/hardware-investigations.md|item 21]])."
+  ],
+  "parts": [
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 66.3,
+          "y": 75.0
+        }
+      },
+      "firmware": "",
+      "group": "conn",
+      "id_confidence": "open",
+      "marking": "10 MHz In (silkscreen)",
+      "note": "Its designator was not read.",
+      "ref": "10 MHz In",
+      "role": "Not traced: by its legend, the oscillator's 10 MHz into the board.",
+      "role_confidence": "inferred",
+      "type": "Coaxial jack",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 71.6,
+          "y": 5.0
+        }
+      },
+      "firmware": "[[docs/hardware-investigations.md|item 3]]",
+      "group": "serial",
+      "id_confidence": "board",
+      "marking": "RS232, RS422 (silkscreen)",
+      "note": "",
+      "ref": "J1",
+      "role": "The serial port; J3 on the rear panel.",
+      "role_confidence": "board",
+      "type": "D-subminiature connector",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {},
+      "firmware": "[[docs/hardware-investigations.md|item 13]]",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "none; a fitted right-angle pin header, five positions seen in one row",
+      "note": "",
+      "ref": "J12",
+      "role": "Not identified.  At the board edge beside U33, partly behind a bracket.  MC68331UM 5.10.2.8 (Figure 5-11) recommends a 10-pin, 2 x 5 header for BDM; a continuity check to BKPT/DSCLK, IFETCH/DSI and IPIPE/DSO would settle whether it is one.",
+      "role_confidence": "open",
+      "type": "Pin header",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "an AMP connector",
+        "status": "differs"
+      },
+      "at": {},
+      "firmware": "[[docs/hardware-investigations.md|item 20]]",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "J13 (silkscreen)",
+      "note": "The designator was read on the 2026-10-30 top-side photo.",
+      "ref": "J13",
+      "role": "Not traced.  Beside U44.  Whether the front lamp board's ribbon plugs in here is open.",
+      "role_confidence": "open",
+      "type": "Header footprint",
+      "z3801a": {
+        "note": "a bare five-position footprint, beside U44",
+        "status": "differs"
+      }
+    },
+    {
+      "58503a": {
+        "note": "fitted, its stage incomplete",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 56.92,
+          "y": 64.36
+        }
+      },
+      "firmware": "[[docs/bench.md|HP Z3805A, serial 3625A01487]]; [[docs/58503a-second-10mhz.md|The two stages]].",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "10MHz B (silkscreen); SMB",
+      "note": "",
+      "ref": "J15",
+      "role": "10 MHz OUT B, cabled to the rear panel.",
+      "role_confidence": "board",
+      "type": "Coaxial jack",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "fitted, cabled",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 57.05,
+          "y": 70.38
+        }
+      },
+      "firmware": "[[docs/bench.md|HP Z3805A, serial 3625A01487]]; [[docs/58503a-second-10mhz.md|The two stages]].",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "10MHz A (silkscreen); SMB",
+      "note": "",
+      "ref": "J17",
+      "role": "10 MHz OUT A, cabled to the rear panel.",
+      "role_confidence": "board",
+      "type": "Coaxial jack",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "a boxed header",
+        "status": "differs"
+      },
+      "at": {
+        "top": {
+          "x": 68.5,
+          "y": 16.8
+        }
+      },
+      "firmware": "[[docs/hardware-investigations.md|item 4]]",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "unfitted",
+      "note": "",
+      "ref": "J2",
+      "role": "None fitted.  A candidate for DUART channel B.",
+      "role_confidence": "open",
+      "type": "Two-row header footprint, no part",
+      "z3801a": {
+        "note": "bare",
+        "status": "same"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 60.56,
+          "y": 86.95
+        }
+      },
+      "firmware": "",
+      "group": "efc",
+      "id_confidence": "board",
+      "marking": "EFC (silkscreen)",
+      "note": "",
+      "ref": "J22",
+      "role": "The EFC voltage out.",
+      "role_confidence": "board",
+      "type": "Coaxial jack",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "a boxed header",
+        "status": "differs"
+      },
+      "at": {
+        "top": {
+          "x": 39.5,
+          "y": 16.3
+        }
+      },
+      "firmware": "[[docs/hardware-investigations.md|item 4]]",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "unfitted",
+      "note": "",
+      "ref": "J3",
+      "role": "None fitted.  A candidate for DUART channel B.",
+      "role_confidence": "open",
+      "type": "Two-row header footprint, no part",
+      "z3801a": {
+        "note": "a hand-wired add-on board over it, an MC74ACT14N on it",
+        "status": "differs"
+      }
+    },
+    {
+      "58503a": {
+        "note": "carries no 1 PPS on the bench unit",
+        "status": "fitted"
+      },
+      "at": {
+        "top": {
+          "x": 80.68,
+          "y": 21.52
+        }
+      },
+      "firmware": "[[docs/firmware/outputs.md|The FPGA bitstreams]]; [[docs/hardware-investigations.md|item 19]]; the jacks: [[docs/bench.md|HP Z3805A, serial 3625A01487]].",
+      "group": "fpga",
+      "id_confidence": "board",
+      "marking": "OUT A (silkscreen); SMB",
+      "note": "",
+      "ref": "J4",
+      "role": "1 PPS output, cabled to the rear panel.  From U17 through R32 (measured).",
+      "role_confidence": "board",
+      "type": "Coaxial jack",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 76.75,
+          "y": 21.64
+        }
+      },
+      "firmware": "[[docs/bench.md|HP Z3805A, serial 3625A01487]].",
+      "group": "fpga",
+      "id_confidence": "board",
+      "marking": "OUT B (silkscreen); SMB",
+      "note": "",
+      "ref": "J5",
+      "role": "1 PPS output, cabled to the rear panel.  From U18 through R33 (measured).",
+      "role_confidence": "board",
+      "type": "Coaxial jack",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {},
+      "firmware": "[[docs/bench.md|HP Z3805A, serial 3625A01487]].",
+      "group": "fpga",
+      "id_confidence": "board",
+      "marking": "unfitted",
+      "note": "",
+      "ref": "J6, J7, J8",
+      "role": "None fitted.",
+      "role_confidence": "open",
+      "type": "Jack footprints, no part",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {},
+      "firmware": "",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "none; 2 x 5 socket",
+      "note": "",
+      "ref": "J9",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Socket",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "the same row",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 16.3,
+          "y": 9.7
+        }
+      },
+      "firmware": "[[docs/firmware/outputs.md|The rest of the bank]]; [[docs/hardware-investigations.md|item 17]].",
+      "group": "serial",
+      "id_confidence": "board",
+      "marking": "designators not read",
+      "note": "",
+      "ref": "LEDs",
+      "role": "The firmware reads as if the six are the DUART's OP2 to OP7: heartbeat, installer and self-test failures.",
+      "role_confidence": "inferred",
+      "type": "Six surface-mount LEDs in a row at the rear edge, beside the RAM",
+      "z3801a": {
+        "note": "the same row",
+        "status": "same"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 56.41,
+          "y": 55.2
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "open",
+      "marking": "4816P-002-103",
+      "note": "",
+      "ref": "R115",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-002-103, resistor network, bussed, 15 x 10 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 45.63,
+          "y": 78.09
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "open",
+      "marking": "4816P-001-102",
+      "note": "",
+      "ref": "R180",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-001-102, resistor network, isolated, 8 x 1 kohm",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 62.64,
+          "y": 19.49
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "open",
+      "marking": "4816P-002-102",
+      "note": "",
+      "ref": "R20",
+      "role": "Not traced.  The only bussed 1 kohm pack found, so the candidate for U17's and U18's /OE pull-down.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-002-102, resistor network, bussed, 15 x 1 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 85.67,
+          "y": 20.95
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "open",
+      "marking": "4816P-002-103",
+      "note": "",
+      "ref": "R21",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-002-103, resistor network, bussed, 15 x 10 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 62.68,
+          "y": 28.32
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "open",
+      "marking": "4816P-002-103",
+      "note": "",
+      "ref": "R29",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-002-103, resistor network, bussed, 15 x 10 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 85.77,
+          "y": 27.2
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "open",
+      "marking": "4816P-002-103",
+      "note": "",
+      "ref": "R30",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-002-103, resistor network, bussed, 15 x 10 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 35.11,
+          "y": 33.78
+        }
+      },
+      "firmware": "",
+      "group": "fpga",
+      "id_confidence": "inferred",
+      "marking": "SOMC1603 101G DALE 9503",
+      "note": "",
+      "ref": "R32",
+      "role": "In series between U17 and J4 (measured): a resistor for each of U17's eight paralleled outputs.",
+      "role_confidence": "board",
+      "type": "Vishay Dale SOMC1603-101G, resistor network, isolated, 8 x 100 ohm",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 40.14,
+          "y": 33.45
+        }
+      },
+      "firmware": "",
+      "group": "fpga",
+      "id_confidence": "inferred",
+      "marking": "SOMC1603 101G DALE 9503",
+      "note": "",
+      "ref": "R33",
+      "role": "In series between U18 and J5 (measured), as R32.",
+      "role_confidence": "board",
+      "type": "Vishay Dale SOMC1603-101G, resistor network, isolated, 8 x 100 ohm",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 47.29,
+          "y": 33.98
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "inferred",
+      "marking": "4816P-002-103",
+      "note": "Beside R32 and R33.",
+      "ref": "R34",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-002-103, resistor network, bussed, 15 x 10 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 74.16,
+          "y": 36.46
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "inferred",
+      "marking": "4816P-002-103",
+      "note": "",
+      "ref": "R51",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-002-103, resistor network, bussed, 15 x 10 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 79.34,
+          "y": 36.4
+        }
+      },
+      "firmware": "",
+      "group": "fpga",
+      "id_confidence": "board",
+      "marking": "4816P-002-103",
+      "note": "",
+      "ref": "R52",
+      "role": "Pull-ups: pin 7 to U17's DIR, pin 8 to U18's, pin 16 to VCC (measured), so both default A to B, toward the jacks.",
+      "role_confidence": "board",
+      "type": "Bourns 4816P-002-103, resistor network, bussed, 15 x 10 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 55.31,
+          "y": 38.83
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "open",
+      "marking": "4816P-002-103",
+      "note": "",
+      "ref": "R55",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-002-103, resistor network, bussed, 15 x 10 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "bottom": {
+          "x": 62.15,
+          "y": 49.26
+        }
+      },
+      "firmware": "",
+      "group": "rpack",
+      "id_confidence": "open",
+      "marking": "4816P-002-103",
+      "note": "",
+      "ref": "R92",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Bourns 4816P-002-103, resistor network, bussed, 15 x 10 kohm, pin 16 common",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "a CTS part marked ON",
+        "status": "fitted"
+      },
+      "at": {
+        "mcu": {
+          "x": 3.36,
+          "y": 99.21
+        },
+        "top": {
+          "x": 49.79,
+          "y": 52.83
+        }
+      },
+      "firmware": "[[docs/firmware/restart.md|The switch byte at `0x302000`]]; the test: [[docs/hardware-investigations.md|item 13]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "positions 1 to 8",
+      "note": "Not yet buzzed.  Which way each position is set is not read.",
+      "ref": "S1",
+      "role": "Configuration.  Whether it is the byte at `0x302000` is not established.",
+      "role_confidence": "inferred",
+      "type": "8-position DIP switch",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 21.85,
+          "y": 7.39
+        }
+      },
+      "firmware": "",
+      "group": "serial",
+      "id_confidence": "board",
+      "marking": "74ACT04",
+      "note": "Read on the 2026-10-30 top-side photo; not legible in earlier ones.",
+      "ref": "U1",
+      "role": "Not traced.  Beside the LEDs.",
+      "role_confidence": "open",
+      "type": "74ACT04, hex inverter, SO-14",
+      "z3801a": {
+        "note": "a Motorola ACT-family part, its number not legible",
+        "status": "fitted"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 59.55,
+          "y": 23.17
+        }
+      },
+      "firmware": "",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "Motorola ACT08 XAB615",
+      "note": "",
+      "ref": "U10",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "74ACT08, quad 2-input AND",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 54.08,
+          "y": 21.12
+        }
+      },
+      "firmware": "Programmed with the Am29F010's commands ([[third_party/amd/Am29F010B.pdf]]).  CSBOOT reads and CS6 writes `0x000000` to `0x03ffff`; CS1 reads and CS7 writes `0x040000` to `0x07ffff`: [[docs/firmware/restart.md|The chip selects]].",
+      "group": "memory",
+      "id_confidence": "board",
+      "marking": "label: Z3805-80001 U11/2L REV. C, W5",
+      "note": "Which pair is which bank was not read.",
+      "ref": "U11",
+      "role": "Firmware: one byte of a 16-bit word in one of two banks.",
+      "role_confidence": "read",
+      "type": "Flash, PLCC-32 in a socket; the chip's own marking is under the label",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 43.47,
+          "y": 21.62
+        }
+      },
+      "firmware": "Programmed with the Am29F010's commands ([[third_party/amd/Am29F010B.pdf]]).  CSBOOT reads and CS6 writes `0x000000` to `0x03ffff`; CS1 reads and CS7 writes `0x040000` to `0x07ffff`: [[docs/firmware/restart.md|The chip selects]].",
+      "group": "memory",
+      "id_confidence": "board",
+      "marking": "label: Z3805-80002 U12/1L REV C, W5",
+      "note": "Which pair is which bank was not read.",
+      "ref": "U12",
+      "role": "Firmware: one byte of a 16-bit word in one of two banks.",
+      "role_confidence": "read",
+      "type": "Flash, PLCC-32 in a socket; the chip's own marking is under the label",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 35.65,
+          "y": 21.27
+        }
+      },
+      "firmware": "Programmed with the Am29F010's commands ([[third_party/amd/Am29F010B.pdf]]).  CSBOOT reads and CS6 writes `0x000000` to `0x03ffff`; CS1 reads and CS7 writes `0x040000` to `0x07ffff`: [[docs/firmware/restart.md|The chip selects]].",
+      "group": "memory",
+      "id_confidence": "board",
+      "marking": "label: Z3805-80003 U13/2M REV C, W5",
+      "note": "Which pair is which bank was not read.",
+      "ref": "U13",
+      "role": "Firmware: one byte of a 16-bit word in one of two banks.",
+      "role_confidence": "read",
+      "type": "Flash, PLCC-32 in a socket; the chip's own marking is under the label",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 26.51,
+          "y": 21.42
+        }
+      },
+      "firmware": "Programmed with the Am29F010's commands ([[third_party/amd/Am29F010B.pdf]]).  CSBOOT reads and CS6 writes `0x000000` to `0x03ffff`; CS1 reads and CS7 writes `0x040000` to `0x07ffff`: [[docs/firmware/restart.md|The chip selects]].",
+      "group": "memory",
+      "id_confidence": "board",
+      "marking": "label: Z3805-80004 U14/1M REV C, W5",
+      "note": "Which pair is which bank was not read.",
+      "ref": "U14",
+      "role": "Firmware: one byte of a 16-bit word in one of two banks.",
+      "role_confidence": "read",
+      "type": "Flash, PLCC-32 in a socket; the chip's own marking is under the label",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 16.3,
+          "y": 20.32
+        }
+      },
+      "firmware": "CS0 reads both; CS2 writes the upper byte and CS3 the lower, 64 KiB at `0x100000` of the two parts' 256 KiB: [[docs/firmware/restart.md|The chip selects]].",
+      "group": "memory",
+      "id_confidence": "inferred",
+      "marking": "M5M51008BFP -70L 609107",
+      "note": "Both designators are printed beside the part; which names it is not settled.  Which RAM takes which byte was not traced.",
+      "ref": "U15 or U16",
+      "role": "RAM, one byte of each word.",
+      "role_confidence": "read",
+      "type": "Mitsubishi M5M51008B, 128 K x 8 static RAM, 70 ns",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "its marking under a cable",
+        "status": "fitted"
+      },
+      "at": {
+        "top": {
+          "x": 74.88,
+          "y": 28.98
+        }
+      },
+      "firmware": "[[docs/hardware-investigations.md|item 19]]",
+      "group": "fpga",
+      "id_confidence": "board",
+      "marking": "TI 66CK05K ABT245A",
+      "note": "DIR (pin 1) to R52 pin 7; /OE (pin 19) shared with U18 (see the measured nets).",
+      "ref": "U17",
+      "role": "J4's driver: A1 to A8 all on U32 pin 14, B side through R32 to J4 (measured).",
+      "role_confidence": "board",
+      "type": "TI 74ABT245A, octal bus transceiver, 3-state ([[third_party/ti/sn74abt245b.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "its marking under a cable",
+        "status": "fitted"
+      },
+      "at": {
+        "top": {
+          "x": 69.09,
+          "y": 28.7
+        }
+      },
+      "firmware": "[[docs/hardware-investigations.md|item 19]]",
+      "group": "fpga",
+      "id_confidence": "board",
+      "marking": "TI 66CK05K ABT245A",
+      "note": "DIR (pin 1) to R52 pin 8; /OE (pin 19) shared with U17.",
+      "ref": "U18",
+      "role": "J5's driver: A1 to A8 all on U32 pin 83, B side through R33 to J5 (measured).",
+      "role_confidence": "board",
+      "type": "TI 74ABT245A, octal bus transceiver, 3-state ([[third_party/ti/sn74abt245b.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 61.34,
+          "y": 28.62
+        }
+      },
+      "firmware": "A buffered data bus would put the lamp latch's D pins on one of these: [[docs/hardware-investigations.md|item 20]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "TI 66AL5CT ACT11245",
+      "note": "",
+      "ref": "U19",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "TI 74ACT11245, octal bus transceiver, flow-through pinout",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "LT1180ACSW",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 56.25,
+          "y": 8.92
+        }
+      },
+      "firmware": "Which port reaches J1: [[docs/hardware-investigations.md|item 3]].",
+      "group": "serial",
+      "id_confidence": "board",
+      "marking": "LT 9612 LT1180ACS",
+      "note": "",
+      "ref": "U2",
+      "role": "RS-232 levels for J1.",
+      "role_confidence": "inferred",
+      "type": "Linear Technology LT1180A, RS-232 driver/receiver, two of each",
+      "z3801a": {
+        "note": "LT1180ACS",
+        "status": "same"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 54.62,
+          "y": 28.5
+        }
+      },
+      "firmware": "A buffered data bus would put the lamp latch's D pins on one of these: [[docs/hardware-investigations.md|item 20]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "TI 66AL5CT ACT11245",
+      "note": "",
+      "ref": "U20",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "TI 74ACT11245, octal bus transceiver, flow-through pinout",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 77,
+          "y": 68
+        },
+        "top": {
+          "x": 41.57,
+          "y": 28.11
+        }
+      },
+      "firmware": "The switch byte at `0x302000`, in CS5's window, which no Z3805A code reads: [[docs/firmware/restart.md|The switch byte at `0x302000`]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "National P61AB 74AC251",
+      "note": "See the open items: the byte and the part.",
+      "ref": "U21",
+      "role": "Not traced.  Beside S1.",
+      "role_confidence": "open",
+      "type": "74AC251, 8-input multiplexer, 3-state outputs",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 77,
+          "y": 53
+        },
+        "top": {
+          "x": 36.27,
+          "y": 28.04
+        }
+      },
+      "firmware": "A '138 enabled by CS5 with ADDR13 to ADDR15 on its A inputs would give `0x300000` to `0x306000` as /Y0 to /Y3: [[docs/firmware/restart.md|The chip selects]]; the procedure: [[docs/hardware-investigations.md|item 20]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "National P58AB 74AC138",
+      "note": "",
+      "ref": "U22",
+      "role": "Address decode.  Which of the four, if any, splits chip select 5's window was not traced.",
+      "role_confidence": "inferred",
+      "type": "74AC138, 3-to-8 decoder ([[third_party/fairchild/74AC138.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 66.48,
+          "y": 86.25
+        },
+        "top": {
+          "x": 46.64,
+          "y": 31.55
+        }
+      },
+      "firmware": "A '138 enabled by CS5 with ADDR13 to ADDR15 on its A inputs would give `0x300000` to `0x306000` as /Y0 to /Y3: [[docs/firmware/restart.md|The chip selects]]; the procedure: [[docs/hardware-investigations.md|item 20]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "74ACT138",
+      "note": "",
+      "ref": "U23",
+      "role": "Address decode.  Which of the four, if any, splits chip select 5's window was not traced.",
+      "role_confidence": "inferred",
+      "type": "74ACT138, 3-to-8 decoder ([[third_party/fairchild/74AC138.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 65.17,
+          "y": 25.87
+        },
+        "top": {
+          "x": 27.38,
+          "y": 31.76
+        }
+      },
+      "firmware": "",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "TI 66CK05K ABT245A",
+      "note": "",
+      "ref": "U24",
+      "role": "Not traced.  The same lot code as U17 and U18.",
+      "role_confidence": "open",
+      "type": "TI 74ABT245A, octal bus transceiver, 3-state ([[third_party/ti/sn74abt245b.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 62,
+          "y": 68
+        },
+        "top": {
+          "x": 41.08,
+          "y": 32.75
+        }
+      },
+      "firmware": "A '138 enabled by CS5 with ADDR13 to ADDR15 on its A inputs would give `0x300000` to `0x306000` as /Y0 to /Y3: [[docs/firmware/restart.md|The chip selects]]; the procedure: [[docs/hardware-investigations.md|item 20]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "National P58AB 74AC138",
+      "note": "",
+      "ref": "U25",
+      "role": "Address decode.  Which of the four, if any, splits chip select 5's window was not traced.",
+      "role_confidence": "inferred",
+      "type": "74AC138, 3-to-8 decoder ([[third_party/fairchild/74AC138.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 62,
+          "y": 53
+        },
+        "top": {
+          "x": 35.9,
+          "y": 32.69
+        }
+      },
+      "firmware": "",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "National P59AF 74ACT00",
+      "note": "",
+      "ref": "U26",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "74ACT00, quad 2-input NAND",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 51.65,
+          "y": 86.26
+        },
+        "top": {
+          "x": 46.92,
+          "y": 36.72
+        }
+      },
+      "firmware": "A '138 enabled by CS5 with ADDR13 to ADDR15 on its A inputs would give `0x300000` to `0x306000` as /Y0 to /Y3: [[docs/firmware/restart.md|The chip selects]]; the procedure: [[docs/hardware-investigations.md|item 20]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "National P58AB 74AC138",
+      "note": "",
+      "ref": "U27",
+      "role": "Address decode.  Which of the four, if any, splits chip select 5's window was not traced.",
+      "role_confidence": "inferred",
+      "type": "74AC138, 3-to-8 decoder ([[third_party/fairchild/74AC138.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 49.94,
+          "y": 68.41
+        },
+        "top": {
+          "x": 41.11,
+          "y": 36.8
+        }
+      },
+      "firmware": "Its pins in the bench procedures: [[docs/hardware-investigations.md|Working on the open Z3805A board]]; as a reset source for the lamp latch: [[docs/hardware-investigations.md|item 20]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "7705AC, date code partly legible",
+      "note": "",
+      "ref": "U28",
+      "role": "Power-on reset.  /RESET is pin 5, RESET pin 6; which lines they drive was not traced.",
+      "role_confidence": "inferred",
+      "type": "TI TL7705A, supply-voltage supervisor and reset generator, SO-8 ([[third_party/ti/tl7705a.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 18.24,
+          "y": 37.62
+        }
+      },
+      "firmware": "[[docs/hardware-investigations.md|item 21]]",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "National DM74ALS 09M",
+      "note": "",
+      "ref": "U29",
+      "role": "Not traced.  Beside U33; the kind of part that would merge open-drain interrupt requests, but nothing ties it to /IRQ2.",
+      "role_confidence": "open",
+      "type": "DM74ALS09, quad 2-input AND, open-collector outputs, SO-14 ([[third_party/fairchild/DM74ALS09.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "SCC68692C1A44",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 43.41,
+          "y": 9.89
+        }
+      },
+      "firmware": "CS8, `0x200000`; CS10 its interrupt acknowledge at level 2: [[docs/firmware/restart.md|The chip selects]]; channel B: [[docs/hardware-investigations.md|item 4]]; its /INTR to U33: [[docs/hardware-investigations.md|item 21]].",
+      "group": "serial",
+      "id_confidence": "board",
+      "marking": "PHILIPS SCC68692C1A44 225A329 9601hA",
+      "note": "Read whole on `z3805a-main-board.jpg` and `z3805a-interior.jpg`.",
+      "ref": "U3",
+      "role": "The DUART, driven as an MC68681; the SCC68692's additions are not used.",
+      "role_confidence": "read",
+      "type": "Philips SCC68692, DUART, PLCC-44 ([[third_party/philips/SCC68692.pdf]])",
+      "z3801a": {
+        "note": "under the add-on board",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "an empty PLCC-84 socket",
+        "status": "differs"
+      },
+      "at": {},
+      "firmware": "Chip select 4 (`0x500000`) is set up and no instruction addresses it: [[docs/firmware/restart.md|The chip selects]].  The bare footprints are where a CS4 device would go, a place to look, not a finding: [[docs/firmware/58503a-3704.md|Not established]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "unfitted",
+      "note": "",
+      "ref": "U31",
+      "role": "None fitted.",
+      "role_confidence": "open",
+      "type": "PLCC-84 footprint, no part",
+      "z3801a": {
+        "note": "bare pads",
+        "status": "same"
+      }
+    },
+    {
+      "58503a": {
+        "note": "XC3042; another design",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 59,
+          "y": 40
+        }
+      },
+      "firmware": "CS5's `0x304000`, `fpga_port`: [[docs/firmware/counter.md|The register port]]; loaded over QSPI device 6 (`fpga_program`) and verified over 12: [[docs/firmware/structures.md|The QSPI's devices]]; the design, `z3805a.bit`, and its pins: [[docs/firmware/outputs.md|The FPGA bitstreams]].",
+      "group": "fpga",
+      "id_confidence": "board",
+      "marking": "XILINX XC3042 -70 PC84C A50558A BKI9612",
+      "note": "",
+      "ref": "U32",
+      "role": "The time-interval counter and its interpolator, and the 1 PPS: pin 14 drives U17's A side, pin 83 U18's (measured).",
+      "role_confidence": "read",
+      "type": "Xilinx XC3042-70, FPGA, PLCC-84 ([[third_party/xilinx/xc3000.pdf]])",
+      "z3801a": {
+        "note": "XC3042-70; the 58503A's design",
+        "status": "same"
+      }
+    },
+    {
+      "58503a": {
+        "note": "not photographed",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 28,
+          "y": 34
+        },
+        "top": {
+          "x": 31.4,
+          "y": 43.1
+        }
+      },
+      "firmware": "The SIM's chip-select map: [[docs/firmware/chip-selects.md|Z3805A 3543B]]; what each select reaches: [[docs/firmware/restart.md|The chip selects]].  Pins used by the bench procedures: [[docs/hardware-investigations.md|Working on the open Z3805A board]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "MC68331CFC16 0E93N DEQF9603",
+      "note": "",
+      "ref": "U33",
+      "role": "The processor.  Its chip selects are the board's address decode: every pin that could be FC0 to FC2 or ADDR19 to ADDR23 is a chip select, so the board's address bus is ADDR0 to ADDR18.",
+      "role_confidence": "read",
+      "type": "Motorola MC68331, CPU32 microcontroller, 132-pin QFP ([[third_party/motorola/MC68331UM.pdf]])",
+      "z3801a": {
+        "note": "MC68331CFC16 (`z3801a-main-board.jpg`)",
+        "status": "same"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {},
+      "firmware": "",
+      "group": "analog",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "",
+      "ref": "U34",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Small-outline part",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "ADC0838CCV",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 74.97,
+          "y": 47.92
+        }
+      },
+      "firmware": "QSPI device 1, `QSPI_ADC`, read by `adc_read`: [[docs/firmware/structures.md|The QSPI's devices]]; [[docs/hardware-investigations.md|item 5]].",
+      "group": "analog",
+      "id_confidence": "board",
+      "marking": "National S61AH ADC0838CCV",
+      "note": "",
+      "ref": "U35",
+      "role": "The health monitor's and the ovens' ADC.",
+      "role_confidence": "read",
+      "type": "National ADC0838, 8-bit A/D converter, 8-channel multiplexer, serial I/O",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "TLC0820AC",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 63.96,
+          "y": 47.13
+        }
+      },
+      "firmware": "[[docs/hardware-investigations.md|item 5]]",
+      "group": "analog",
+      "id_confidence": "board",
+      "marking": "TI TLC0820AC 61A95EW",
+      "note": "",
+      "ref": "U36",
+      "role": "Not traced: what reads it is not in the firmware's QSPI devices or chip selects.",
+      "role_confidence": "open",
+      "type": "TI TLC0820A, 8-bit A/D converter, parallel output",
+      "z3801a": {
+        "note": "TLC0820AC",
+        "status": "same"
+      }
+    },
+    {
+      "58503a": {
+        "note": "MC144110",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 58.19,
+          "y": 47.34
+        }
+      },
+      "firmware": "[[docs/firmware/structures.md|The QSPI's devices]]; [[docs/firmware/ovens.md|What `hdac` is not]]; its supply: [[docs/hardware-investigations.md|item 23]].",
+      "group": "analog",
+      "id_confidence": "board",
+      "marking": "Motorola MC144110DW XAA9533",
+      "note": "",
+      "ref": "U37",
+      "role": "The hex DAC: six channels of six bits that trim the counter, not an oven.  QSPI device 2 by that match; its select line was not traced.",
+      "role_confidence": "inferred",
+      "type": "Motorola MC144110, hex 6-bit D/A converter, serial input ([[third_party/motorola/MC144110.pdf]])",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 22.14,
+          "y": 76.83
+        },
+        "top": {
+          "x": 43.8,
+          "y": 45.36
+        }
+      },
+      "firmware": "A buffered data bus would put the lamp latch's D pins on one of these: [[docs/hardware-investigations.md|item 20]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "TI 66AL5CT ACT11245",
+      "note": "Read on `z3805a-main-board-2026-09-27.jpg`.",
+      "ref": "U38",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "TI 74ACT11245, octal bus transceiver, flow-through pinout",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 78.74,
+          "y": 48.94
+        }
+      },
+      "firmware": "",
+      "group": "analog",
+      "id_confidence": "board",
+      "marking": "385-2 XANV",
+      "note": "Under a cable in the in-chassis photos; read out of the chassis.",
+      "ref": "U39",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "LM385-2.5, 2.5 V micropower voltage reference",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "AT28C64B",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 32.05,
+          "y": 10.09
+        }
+      },
+      "firmware": "CS9, `0x400000`, 8 KiB: [[docs/firmware/restart.md|The chip selects]]; the part and its write cycle: [[docs/hardware-investigations.md|item 22]].",
+      "group": "memory",
+      "id_confidence": "board",
+      "marking": "ATMEL AT28C64B 20JC 9625",
+      "note": "Read whole on `z3805a-board-right.jpg`.",
+      "ref": "U4",
+      "role": "The records and the log: chip select 9, by elimination; the select line was not traced.",
+      "role_confidence": "inferred",
+      "type": "Atmel AT28C64B-20JC, 8 K x 8 parallel EEPROM, 200 ns, PLCC-32, soldered ([[third_party/microchip/AT28C64B.pdf]])",
+      "z3801a": {
+        "note": "an Atmel part, its type under the wires",
+        "status": "fitted"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 64.65,
+          "y": 50.44
+        }
+      },
+      "firmware": "",
+      "group": "power",
+      "id_confidence": "board",
+      "marking": "8L12A XADYC",
+      "note": "Read as BL12A or 8L12A on the in-chassis photos.",
+      "ref": "U40",
+      "role": "A local +12 V; what it feeds was not traced.  Beside U37 (see the open items).",
+      "role_confidence": "inferred",
+      "type": "78L12, +12 V 100 mA regulator, SO-8",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {},
+      "firmware": "",
+      "group": "analog",
+      "id_confidence": "board",
+      "marking": "unfitted",
+      "note": "",
+      "ref": "U41, U42",
+      "role": "None fitted.",
+      "role_confidence": "open",
+      "type": "Small-outline footprints, no part",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 65.57,
+          "y": 58.78
+        }
+      },
+      "firmware": "",
+      "group": "power",
+      "id_confidence": "board",
+      "marking": "79M12",
+      "note": "",
+      "ref": "U43",
+      "role": "Regulator.",
+      "role_confidence": "board",
+      "type": "79M12, -12 V 500 mA regulator",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 49.26,
+          "y": 58.59
+        }
+      },
+      "firmware": "CS5's `0x300000`, `lamp_latch`, written whole by `leds_update` and `lamp_test`: [[docs/firmware/restart.md|The chip selects]]; its bits: [[docs/firmware/outputs.md|The Z3805A's lamps]]; the procedure: [[docs/hardware-investigations.md|item 20]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "74ABT574",
+      "note": "Read on the 2026-10-30 top-side photo; out of focus in every earlier one.",
+      "ref": "U44",
+      "role": "The lamp latch at `0x300000`: the candidate.  Beside J13.",
+      "role_confidence": "inferred",
+      "type": "74ABT574, octal D flip-flop, 3-state outputs, SO-20 ([[third_party/philips/74ABT574A.pdf]])",
+      "z3801a": {
+        "note": "Philips 74ABT574AD, beside J13",
+        "status": "same"
+      }
+    },
+    {
+      "58503a": {
+        "note": "78M12, behind J15's stage",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 70.35,
+          "y": 64.35
+        }
+      },
+      "firmware": "[[docs/58503a-second-10mhz.md|The two stages]]",
+      "group": "power",
+      "id_confidence": "board",
+      "marking": "78M12",
+      "note": "",
+      "ref": "U45",
+      "role": "Regulator, behind J15's output stage.",
+      "role_confidence": "board",
+      "type": "78M12, +12 V 500 mA regulator",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "78M12, behind J17's stage",
+        "status": "same"
+      },
+      "at": {
+        "top": {
+          "x": 70.11,
+          "y": 70.02
+        }
+      },
+      "firmware": "[[docs/58503a-second-10mhz.md|The two stages]]",
+      "group": "power",
+      "id_confidence": "board",
+      "marking": "78M12",
+      "note": "",
+      "ref": "U46",
+      "role": "Regulator, behind J17's output stage.",
+      "role_confidence": "board",
+      "type": "78M12, +12 V 500 mA regulator",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 58.62,
+          "y": 75.29
+        }
+      },
+      "firmware": "",
+      "group": "power",
+      "id_confidence": "board",
+      "marking": "LM78L05",
+      "note": "",
+      "ref": "U47",
+      "role": "Regulator.",
+      "role_confidence": "board",
+      "type": "78L05, +5 V 100 mA regulator",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 54.8,
+          "y": 73.69
+        }
+      },
+      "firmware": "",
+      "group": "efc",
+      "id_confidence": "board",
+      "marking": "74HC164M",
+      "note": "",
+      "ref": "U48",
+      "role": "Not traced.  Beside U56: two would turn QSPI device 7's 16-bit word into the AD569's 16 parallel data bits, a reading of the layout only.",
+      "role_confidence": "open",
+      "type": "74HC164, 8-bit serial-in, parallel-out shift register",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 60.9,
+          "y": 78.54
+        }
+      },
+      "firmware": "",
+      "group": "efc",
+      "id_confidence": "board",
+      "marking": "LT 2105 546",
+      "note": "546 is the date code.",
+      "ref": "U49",
+      "role": "Not traced.  Beside U56.",
+      "role_confidence": "open",
+      "type": "Linear Technology LT1021DCS8-5, 5 V precision reference (S8 marking 2105)",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "U7 alone fitted",
+        "status": "differs"
+      },
+      "at": {},
+      "firmware": "[[docs/hardware-investigations.md|item 3]]",
+      "group": "serial",
+      "id_confidence": "board",
+      "marking": "unfitted",
+      "note": "",
+      "ref": "U5, U6, U7",
+      "role": "None fitted.  Beside U2 and J1.",
+      "role_confidence": "open",
+      "type": "Small-outline footprints, no part",
+      "z3801a": {
+        "note": "an AT&T part at U5 or U6; the port is RS-422",
+        "status": "differs"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 54.74,
+          "y": 76.53
+        }
+      },
+      "firmware": "",
+      "group": "efc",
+      "id_confidence": "board",
+      "marking": "74HC164M",
+      "note": "",
+      "ref": "U50",
+      "role": "Not traced.  Beside U56: two would turn QSPI device 7's 16-bit word into the AD569's 16 parallel data bits, a reading of the layout only.",
+      "role_confidence": "open",
+      "type": "74HC164, 8-bit serial-in, parallel-out shift register",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 79.89,
+          "y": 80.13
+        }
+      },
+      "firmware": "",
+      "group": "power",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "Under the heatsink; reading it needs the heatsink off.",
+      "ref": "U51",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "A power device under the heatsink: a regulator or pass transistor",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 72.76,
+          "y": 80.16
+        }
+      },
+      "firmware": "",
+      "group": "analog",
+      "id_confidence": "board",
+      "marking": "LT1013 607",
+      "note": "607 is the date code.",
+      "ref": "U52",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Linear Technology LT1013, dual precision op amp",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 68.38,
+          "y": 80.3
+        }
+      },
+      "firmware": "",
+      "group": "power",
+      "id_confidence": "board",
+      "marking": "8L12A XADYC",
+      "note": "",
+      "ref": "U53",
+      "role": "A local +12 V; what it feeds was not traced.",
+      "role_confidence": "inferred",
+      "type": "78L12, +12 V 100 mA regulator, SO-8",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 64.8,
+          "y": 80.29
+        }
+      },
+      "firmware": "",
+      "group": "power",
+      "id_confidence": "board",
+      "marking": "9L12A XADXC",
+      "note": "",
+      "ref": "U54",
+      "role": "A local -12 V; what it feeds was not traced.",
+      "role_confidence": "inferred",
+      "type": "79L12, -12 V 100 mA regulator, SO-8",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 60.74,
+          "y": 80.56
+        }
+      },
+      "firmware": "",
+      "group": "efc",
+      "id_confidence": "board",
+      "marking": "BB INA105U",
+      "note": "",
+      "ref": "U55",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Burr-Brown INA105, unity-gain difference amplifier",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 54.2,
+          "y": 80.52
+        }
+      },
+      "firmware": "QSPI device 7, `QSPI_EFC`, written by `efc_write`: [[docs/firmware/structures.md|The QSPI's devices]]; the 20-bit value it carries, dithered: [[docs/efc.md|The reported value is twenty bits]].  `efc_write` then writes 0 to `0x306000`, CS5's EFC strobe, whose device is not identified: [[docs/firmware/restart.md|The chip selects]].",
+      "group": "efc",
+      "id_confidence": "board",
+      "marking": "AD569JP 9615",
+      "note": "Beside J22, silkscreened EFC.",
+      "ref": "U56",
+      "role": "The EFC DAC.",
+      "role_confidence": "board",
+      "type": "Analog Devices AD569, 16-bit D/A converter, parallel input",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 80.45,
+          "y": 86.17
+        }
+      },
+      "firmware": "",
+      "group": "power",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "Under the heatsink; reading it needs the heatsink off.",
+      "ref": "U57",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "A power device under the heatsink: a regulator or pass transistor",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 60.64,
+          "y": 82.89
+        }
+      },
+      "firmware": "",
+      "group": "efc",
+      "id_confidence": "board",
+      "marking": "AD712JR",
+      "note": "",
+      "ref": "U59",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Analog Devices AD712, dual precision BiFET op amp",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 54.62,
+          "y": 83.94
+        }
+      },
+      "firmware": "",
+      "group": "efc",
+      "id_confidence": "board",
+      "marking": "AD712JR",
+      "note": "",
+      "ref": "U60",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Analog Devices AD712, dual precision BiFET op amp",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 54.37,
+          "y": 86.23
+        }
+      },
+      "firmware": "",
+      "group": "efc",
+      "id_confidence": "board",
+      "marking": "BB INA105U",
+      "note": "",
+      "ref": "U61",
+      "role": "Not traced.",
+      "role_confidence": "open",
+      "type": "Burr-Brown INA105, unity-gain difference amplifier",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 17.03,
+          "y": 13.48
+        }
+      },
+      "firmware": "CS0 reads both; CS2 writes the upper byte and CS3 the lower, 64 KiB at `0x100000` of the two parts' 256 KiB: [[docs/firmware/restart.md|The chip selects]].",
+      "group": "memory",
+      "id_confidence": "inferred",
+      "marking": "M5M51008BFP -70L 609107",
+      "note": "Both designators are printed beside the part; which names it is not settled.  Which RAM takes which byte was not traced.",
+      "ref": "U8 or U9",
+      "role": "RAM, one byte of each word.",
+      "role_confidence": "read",
+      "type": "Mitsubishi M5M51008B, 128 K x 8 static RAM, 70 ns",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 51.7,
+          "y": 9.0
+        }
+      },
+      "firmware": "3.6864 MHz is the 68681 family's standard clock, which the Oman installer's baud codes assume; the board's crystal was not checked: [[docs/firmware/restart.md|The switch byte at `0x302000`]].",
+      "group": "serial",
+      "id_confidence": "board",
+      "marking": "M3.68EL",
+      "note": "",
+      "ref": "Y1",
+      "role": "The DUART's clock, by its place beside U3.",
+      "role_confidence": "inferred",
+      "type": "Crystal, 3.68 MHz as marked",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "mcu": {
+          "x": 24.5,
+          "y": 5.0
+        }
+      },
+      "firmware": "The 16.777 MHz system clock: [[docs/firmware/structures.md|The QSPI's devices]].",
+      "group": "mcu",
+      "id_confidence": "board",
+      "marking": "32.768K",
+      "note": "Read on `z3805a-cpu-fpga-flash.jpg`.",
+      "ref": "Y2",
+      "role": "The reference for U33's clock synthesizer: 512 times it is the 16.777 MHz system clock.",
+      "role_confidence": "read",
+      "type": "32.768 kHz crystal",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    }
+  ],
+  "tags": [
+    "Photos 2026-10-30, board out of the chassis",
+    "GPS engine module removed",
+    "Nets measured cold, with an ohmmeter"
+  ],
+  "title": "SmartClock Board Atlas",
+  "views": [
+    {
+      "alt": "The Z3805A main board's component side out of the chassis, its text upside down: the serial connector J1 at the top right, the flash sockets across the upper middle, the MC68331 at the left, the XC3042 FPGA at the center, the analog and EFC section in the lower arm",
+      "caption": "Component side, out of the chassis, its legends upside down.",
+      "height": 4080,
+      "id": "top",
+      "image": "images/Z3805-68001/z3805a-main-board-component-side.jpg",
+      "short": "component side",
+      "title": "Component side",
+      "width": 3072
+    },
+    {
+      "alt": "The Z3805A main board's solder side, mirrored left to right against the component side: the resistor packs, the board's fabrication marking 847542826 at the top",
+      "caption": "Solder side, turned over about the board's long axis, so it is the component side's mirror image left to right: J4 and J5 are at the upper left here.",
+      "height": 4080,
+      "id": "bottom",
+      "image": "images/Z3805-68001/z3805a-main-board-solder-side.jpg",
+      "short": "solder side",
+      "title": "Solder side",
+      "width": 3072
+    },
+    {
+      "alt": "Close-up of the MC68331, U33, and the logic beside it: U24, U26, U22, U28, U25, U21, U38, U27 and U23, with the flash sockets at the right edge and S1 at the lower left corner",
+      "caption": "The MC68331 and the decode logic beside it, turned a quarter turn from the component-side view.",
+      "height": 3072,
+      "id": "mcu",
+      "image": "images/Z3805-68001/z3805a-mcu-logic.jpg",
+      "short": "close-up",
+      "title": "Processor and logic",
+      "width": 4080
+    }
+  ]
+}

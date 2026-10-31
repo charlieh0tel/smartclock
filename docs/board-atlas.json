@@ -76,10 +76,10 @@
       "title": "Connectors"
     }
   ],
-  "heading": "SmartClock main board, Z3805-68001",
+  "heading": "HP Z3805A main board, Z3805-68001",
   "intro": [
-    "The first SmartClock family's main board: the Z3805A's, Z3805-68001, mapped part by part from the bench unit (serial 3625A01487, board serial 6E9008G, date code 3627, firmware 3543B; [[docs/bench.md|HP Z3805A, serial 3625A01487]]).  The Z3801A's Z3801-68001 and the 58503A's 58503-60001 Rev C share the layout; the last two columns of the parts table say what their photos show at each designator.",
-    "Each part's firmware column cites the document and section that ties it to an address, a chip select or a QSPI device.  The rings mark each part's place on the photos; a ring links to its row."
+    "The HP Z3805A main board, Z3805-68001, mapped part by part from the bench unit (serial 3625A01487, board serial 6E9008G, date code 3627, firmware 3543B; [[docs/bench.md|HP Z3805A, serial 3625A01487]]).  It is the first-generation SmartClock board: the Z3801A (Z3801-68001) and the 58503A (58503-60001 Rev C) use the same layout, fitted a little differently for each model, and the last two columns of the parts table say what their photos show at each designator.",
+    "Each part's firmware column cites the document and section that ties it to an address, a chip select or a QSPI device.  The rings mark each part's place on the photos; select a ring to see its part, or a row to find it on the photos."
   ],
   "limits": [
     "Both sides are now photographed, out of the chassis.  Most signal lines still change layer through vias within a few millimeters of a part's pins, so a net is followed with a meter, not by eye; only the 1 PPS output stage above has been.  Not followed: the DUART's interrupt to the processor, chip select 5 to the lamp latch, the QSPI's chip-select decode, and the switch port.",
@@ -149,13 +149,13 @@
       },
       "firmware": "",
       "group": "conn",
-      "id_confidence": "open",
+      "id_confidence": "board",
       "marking": "10 MHz In (silkscreen)",
-      "note": "Its designator was not read.",
-      "ref": "10 MHz In",
-      "role": "Not traced: by its legend, the oscillator's 10 MHz into the board.",
-      "role_confidence": "inferred",
-      "type": "Coaxial jack",
+      "note": "",
+      "ref": "J18",
+      "role": "10 MHz input.",
+      "role_confidence": "board",
+      "type": "SMB jack",
       "z3801a": {
         "note": "",
         "status": "open"

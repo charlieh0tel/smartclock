@@ -4,8 +4,12 @@ it, or with --write rewrites the page.
 
     python3 -I tools/board_atlas.py [--write]
 
-The page is plain HTML and CSS, without JavaScript, so that it reads the
-same through https://htmlpreview.github.io/.  It states no counts.
+The page is whole without JavaScript: the three photos stacked with
+every part ringed, the parts table, the nets and the notes.  Its one
+inline script, which htmlpreview.github.io runs too, only adds to that:
+view tabs, zoom and pan, a card for the selected part, filters, a
+search and a #<part> deep link.  The script reads every part from its
+table row, so the data reaches the page once.  It states no counts.
 
 The data, one JSON object:
 
@@ -62,21 +66,21 @@ CSS = """\
    nets, the parts table grouped by subsystem and the notes.  Tables sit
    in their own scroll boxes so the page never widens. */
 :root {
-  --bg: #eef0ee; --panel: #ffffff; --ink: #1b2320; --muted: #5a6661; --line: #d3d9d6; --hi: #fff4c2;
+  --bg: #eef0ee; --panel: #ffffff; --ink: #1b2320; --muted: #5a6661; --line: #d3d9d6; --hi: #fff4c2; --well: #d5dbd8;
   --board: #1f7a6c; --read: #2f5fd0; --inferred: #a26a00; --open: #c8401f;
   --same: #1f7a6c; --fitted: #2f5fd0; --differs: #a26a00;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #121715; --panel: #1b2220; --ink: #e4ebe8; --muted: #9aa7a2; --line: #2e3834; --hi: #3a3418;
+    --bg: #121715; --panel: #1b2220; --ink: #e4ebe8; --muted: #9aa7a2; --line: #2e3834; --hi: #3a3418; --well: #0b0f0d;
     --board: #4cc3ae; --read: #7d9ff0; --inferred: #e6ac3a; --open: #ff7650;
     --same: #4cc3ae; --fitted: #7d9ff0; --differs: #e6ac3a;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #121715; --panel: #1b2220; --ink: #e4ebe8; --muted: #9aa7a2; --line: #2e3834; --hi: #3a3418;
+  --bg: #121715; --panel: #1b2220; --ink: #e4ebe8; --muted: #9aa7a2; --line: #2e3834; --hi: #3a3418; --well: #0b0f0d;
   --board: #4cc3ae; --read: #7d9ff0; --inferred: #e6ac3a; --open: #ff7650;
   --same: #4cc3ae; --fitted: #7d9ff0; --differs: #e6ac3a;
   color-scheme: dark;
@@ -132,6 +136,446 @@ td small, .note { color: var(--muted); font-size: 13px; }
 tr[id] { scroll-margin-top: 12px; }
 tr:target { background: var(--hi); }
 footer { color: var(--muted); font-size: 13px; }
+/* With the script: the toolbar, one photo at a time beside the selected
+   part's card, the card below the photo on a narrow window.  The photo
+   is a fixed window onto a stage, the image and its rings, that the
+   script zooms and pans; each ring scales back by the zoom about its
+   own center, the part's point, so it keeps its size and its place. */
+.js [hidden] { display: none !important; }
+.js .atlas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 16px 20px; align-items: start; }
+.js .tools { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
+.js .tools label { display: grid; gap: 2px; font-size: 12px; color: var(--muted); flex: 1 1 150px; min-width: 0; }
+.js .tools label.search { flex-basis: 220px; }
+.js .tools p { margin: 0; flex: 1 1 100%; font-size: 13px; color: var(--muted); }
+.js .tools p.none { color: var(--open); }
+.tabs, .zoom { display: flex; flex-wrap: wrap; gap: 4px; }
+.js button, .js select, .js input { font: inherit; font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 5px 10px; min-width: 0; }
+.js button { cursor: pointer; }
+.js .tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.js :is(button, select, input, a, .photo):focus-visible { outline: 2px solid var(--read); outline-offset: 2px; }
+.js .views { display: block; }
+.js .views figure > h2 { display: none; }
+.js .photo { overflow: clip; max-height: 78vh; background-color: var(--well); touch-action: pan-y; }
+.js .photo.zoomed { touch-action: none; cursor: grab; }
+.js .photo.dragging { cursor: grabbing; }
+.stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; background-size: 100% 100%; background-repeat: no-repeat; }
+.js .pin { transform: scale(calc(1 / var(--z, 1))); }
+.js .stage.glide, .js .stage.glide .pin { transition: transform .3s ease; }
+.js .pin.out { display: none; }
+.js .pin:focus-visible { outline: none; }
+.js .pin:focus-visible .ring { outline: 2px solid #fff; outline-offset: 2px; }
+.pin.sel { z-index: 2; }
+.pin.sel .ring { box-shadow: 0 0 0 2px #fff, 0 0 0 3px #000; }
+.pin.sel .lbl { background: #000; outline: 2px solid var(--c); }
+.pin.flash .ring { animation: flash .8s ease-out 3; }
+@keyframes flash {
+  from { box-shadow: 0 0 0 2px #fff, 0 0 0 3px #000, 0 0 0 3px var(--c); }
+  to { box-shadow: 0 0 0 2px #fff, 0 0 0 3px #000, 0 0 0 20px transparent; }
+}
+.js .parts tr[data-part] { cursor: pointer; }
+.js .parts tr.sel { background: var(--hi); }
+.js button.refbtn { font: inherit; padding: 0; border: 0; background: none; color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; }
+.js .detail { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: hidden auto; overflow-wrap: anywhere; }
+.detail h3 { font: 600 20px/1.2 "IBM Plex Mono", monospace; margin: 0 0 8px; }
+.detail dl { margin: 0 0 10px; }
+.detail dt { font: 600 11px/1.4 "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.detail dd { margin: 0 0 8px; font-size: 14px; }
+.detail .on { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.detail .on button[aria-pressed="true"] { border-color: var(--ink); }
+.detail .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+@media (max-width: 860px) {
+  .js .atlas { grid-template-columns: minmax(0, 1fr); }
+  .js .detail { position: static; max-height: none; overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pin.flash .ring { animation: none; }
+  .js .stage.glide, .js .stage.glide .pin { transition: none; }
+}
+"""
+
+# The page's behavior, all of it optional: without it the page is the
+# stacked photos and the table.  It reads each part from its table row
+# and each ring's point from its style, so it holds no data of its own.
+SCRIPT = """\
+(function () {
+  "use strict";
+  // Zoom on selecting a part, if less; a step of the buttons and keys;
+  // the most, past the photo's own pixels; a wheel notch's rate; an
+  // arrow key's pan, of the window; a drag's least movement, in pixels.
+  const FOCUS_ZOOM = 2.5, ZOOM_STEP = 1.5, OVERZOOM = 1.5, MIN_MAX_ZOOM = 4;
+  const WHEEL_RATE = 0.0015, LINE_PIXELS = 16, PAN_STEP = 0.1, DRAG_SLOP = 4;
+  const SLUG = /^[A-Za-z0-9-]+$/, ROW_PREFIX = "part-";
+  const atlas = document.querySelector(".atlas");
+  if (!atlas || !window.ResizeObserver) return;
+  document.documentElement.classList.add("js");
+  const tools = atlas.querySelector(".tools"), detail = atlas.querySelector(".detail");
+  const body = detail.querySelector(".detail-body"), hint = body.innerHTML;
+  const none = tools.querySelector(".none");
+  const byGroup = tools.querySelector("[name=group]"), byConfidence = tools.querySelector("[name=confidence]");
+  const search = tools.querySelector("[name=search]");
+  const headers = Array.from(document.querySelectorAll(".parts thead th"), (th) => th.textContent);
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  const behavior = () => (reduced.matches ? "auto" : "smooth");
+  const here = () => location.href.split("#")[0];
+  tools.hidden = false;
+  detail.hidden = false;
+
+  // Each part, by its slug: its row, the words a search looks in, and
+  // its rings, {view, pin, x, y}, x and y in percent, in view order.
+  const parts = new Map();
+  for (const row of document.querySelectorAll(".parts tr[data-part]")) {
+    const cell = row.cells[0], ref = cell.firstChild.textContent;
+    const words = [ref].concat(Array.from(row.querySelectorAll(".marking, .type, .role"), (td) => td.textContent));
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "refbtn";
+    button.textContent = ref;
+    cell.firstChild.replaceWith(button);
+    parts.set(row.dataset.part, { slug: row.dataset.part, row, ref, text: words.join(" ").toLowerCase(), pins: [] });
+  }
+  const bySlug = new Map(Array.from(parts.keys(), (slug) => [slug.toLowerCase(), slug]));
+
+  // Each photo's state: the window's size, the stage's size at zoom 1,
+  // the zoom and the stage's offset in the window, in pixels.
+  const views = new Map(), byPhoto = new Map();
+  for (const figure of atlas.querySelectorAll(".views figure")) {
+    const photo = figure.querySelector(".photo"), stage = document.createElement("div");
+    stage.className = "stage";
+    stage.style.backgroundImage = photo.style.backgroundImage;
+    photo.style.backgroundImage = "";
+    const view = { id: figure.dataset.view, figure, photo, stage, w: +photo.dataset.width, h: +photo.dataset.height,
+      vw: 0, vh: 0, sw: 0, sh: 0, z: 1, tx: 0, ty: 0, max: MIN_MAX_ZOOM };
+    for (const pin of photo.querySelectorAll(".pin")) {
+      const part = parts.get(pin.dataset.part);
+      if (part) part.pins.push({ view, pin, x: parseFloat(pin.style.left), y: parseFloat(pin.style.top) });
+      stage.append(pin);
+    }
+    photo.append(stage);
+    photo.tabIndex = 0;
+    photo.setAttribute("role", "group");
+    photo.setAttribute("aria-label", photo.getAttribute("aria-label") + ". " + tools.querySelector(".keys").textContent);
+    views.set(view.id, view);
+    byPhoto.set(photo, view);
+    wire(view);
+  }
+  const tabs = Array.from(tools.querySelectorAll(".tabs button"));
+  let active = views.values().next().value, current = null;
+
+  function clamp(view) {
+    const axis = (t, size, window) => (size <= window ? (window - size) / 2 : Math.min(0, Math.max(window - size, t)));
+    view.tx = axis(view.tx, view.sw * view.z, view.vw);
+    view.ty = axis(view.ty, view.sh * view.z, view.vh);
+  }
+  function apply(view, glide) {
+    clamp(view);
+    view.stage.classList.toggle("glide", !!glide && !reduced.matches);
+    view.stage.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.z})`;
+    view.stage.style.setProperty("--z", view.z);
+    view.photo.classList.toggle("zoomed", view.z > 1);
+  }
+  // Fits the stage to the window, keeping the point at its center.
+  function layout(view) {
+    const vw = view.photo.clientWidth, vh = view.photo.clientHeight;
+    if (!vw || !vh) return;
+    const cx = view.sw ? (view.vw / 2 - view.tx) / (view.sw * view.z) : 0.5;
+    const cy = view.sh ? (view.vh / 2 - view.ty) / (view.sh * view.z) : 0.5;
+    const fit = Math.min(vw / view.w, vh / view.h);
+    Object.assign(view, { vw, vh, sw: view.w * fit, sh: view.h * fit, max: Math.max(MIN_MAX_ZOOM, OVERZOOM / fit) });
+    view.z = Math.min(view.z, view.max);
+    view.stage.style.width = view.sw + "px";
+    view.stage.style.height = view.sh + "px";
+    view.tx = vw / 2 - cx * view.sw * view.z;
+    view.ty = vh / 2 - cy * view.sh * view.z;
+    apply(view);
+  }
+  // Zooms to z about (cx, cy), a point of the window.
+  function zoomAt(view, z, cx, cy, glide) {
+    const next = Math.min(view.max, Math.max(1, z));
+    const lx = (cx - view.tx) / view.z, ly = (cy - view.ty) / view.z;
+    Object.assign(view, { z: next, tx: cx - lx * next, ty: cy - ly * next });
+    apply(view, glide);
+  }
+  function zoomBy(view, factor) {
+    zoomAt(view, view.z * factor, view.vw / 2, view.vh / 2, true);
+  }
+  function centerOn(view, ring, zoom) {
+    view.z = Math.max(view.z, Math.min(zoom, view.max));
+    view.tx = view.vw / 2 - (view.sw * ring.x / 100) * view.z;
+    view.ty = view.vh / 2 - (view.sh * ring.y / 100) * view.z;
+    apply(view, true);
+  }
+  function show(id) {
+    active = views.get(id);
+    for (const view of views.values()) view.figure.hidden = view !== active;
+    for (const tab of tabs) {
+      const on = tab.dataset.view === id;
+      tab.setAttribute("aria-selected", on);
+      tab.tabIndex = on ? 0 : -1;
+    }
+    layout(active);
+  }
+
+  // Wheel and pinch zoom, drag pan, and the keys, on one photo.
+  function wire(view) {
+    const photo = view.photo, points = new Map();
+    let start = null, moved = false;
+    const at = (e) => {
+      const box = photo.getBoundingClientRect();
+      return { x: e.clientX - box.left, y: e.clientY - box.top };
+    };
+    const begin = () => {
+      const [a, b] = Array.from(points.values());
+      start = { a, b, z: view.z, tx: view.tx, ty: view.ty,
+        d: b ? Math.hypot(b.x - a.x, b.y - a.y) : 0, m: b ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : a };
+    };
+    photo.addEventListener("wheel", (e) => {
+      const delta = e.deltaY * (e.deltaMode === 1 ? LINE_PIXELS : 1);
+      if (delta > 0 && view.z <= 1) return;
+      e.preventDefault();
+      const p = at(e);
+      zoomAt(view, view.z * Math.exp(-delta * WHEEL_RATE), p.x, p.y);
+    }, { passive: false });
+    photo.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      if (points.size === 0) moved = false;
+      points.set(e.pointerId, at(e));
+      begin();
+    });
+    photo.addEventListener("pointermove", (e) => {
+      if (!points.has(e.pointerId)) return;
+      points.set(e.pointerId, at(e));
+      const [a, b] = Array.from(points.values());
+      if (b && start.b) {
+        const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        const z = Math.min(view.max, Math.max(1, start.z * Math.hypot(b.x - a.x, b.y - a.y) / start.d));
+        const lx = (start.m.x - start.tx) / start.z, ly = (start.m.y - start.ty) / start.z;
+        Object.assign(view, { z, tx: m.x - lx * z, ty: m.y - ly * z });
+        moved = true;
+      } else {
+        const dx = a.x - start.a.x, dy = a.y - start.a.y;
+        if (!moved && Math.hypot(dx, dy) < DRAG_SLOP) return;
+        if (!moved) photo.setPointerCapture(e.pointerId);
+        moved = true;
+        photo.classList.add("dragging");
+        Object.assign(view, { tx: start.tx + dx, ty: start.ty + dy });
+      }
+      apply(view);
+    });
+    const end = (e) => {
+      if (!points.delete(e.pointerId)) return;
+      photo.classList.remove("dragging");
+      if (points.size) begin();
+    };
+    photo.addEventListener("pointerup", end);
+    photo.addEventListener("pointercancel", end);
+    // A drag that ends on a ring is not a click on it.
+    photo.addEventListener("click", (e) => {
+      if (!moved) return;
+      moved = false;
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+    photo.addEventListener("keydown", (e) => {
+      const pan = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
+      if (pan && view.z > 1) {
+        view.tx += pan[0] * view.vw * PAN_STEP;
+        view.ty += pan[1] * view.vh * PAN_STEP;
+        apply(view, true);
+      } else if (e.key === "+" || e.key === "=") zoomBy(view, ZOOM_STEP);
+      else if (e.key === "-" || e.key === "_") zoomBy(view, 1 / ZOOM_STEP);
+      else if (e.key === "0") zoomAt(view, 1, 0, 0, true);
+      else return;
+      e.preventDefault();
+    });
+    // A ring reached by Tab is brought into the window.
+    photo.addEventListener("focusin", (e) => {
+      const part = e.target.closest(".pin") && parts.get(e.target.dataset.part);
+      const ring = part && part.pins.find((p) => p.pin === e.target);
+      if (!ring) return;
+      const x = view.tx + view.sw * ring.x / 100 * view.z, y = view.ty + view.sh * ring.y / 100 * view.z;
+      if (x < 0 || y < 0 || x > view.vw || y > view.vh) centerOn(view, ring, 1);
+    });
+  }
+
+  function matches(part) {
+    if (byGroup.value && part.row.dataset.group !== byGroup.value) return false;
+    if (byConfidence.value) {
+      const [kind, id] = byConfidence.value.split(":");
+      if (part.row.dataset[kind + "Confidence"] !== id) return false;
+    }
+    return search.value.toLowerCase().split(/\\s+/).every((word) => part.text.includes(word));
+  }
+  function filter() {
+    let any = false;
+    for (const part of parts.values()) {
+      const on = matches(part);
+      any = any || on;
+      part.row.hidden = !on;
+      for (const ring of part.pins) ring.pin.classList.toggle("out", !on);
+    }
+    for (const group of document.querySelectorAll(".parts tbody")) group.hidden = !group.querySelector("tr[data-part]:not([hidden])");
+    none.hidden = any;
+  }
+  function unfilter() {
+    byGroup.value = byConfidence.value = search.value = "";
+    filter();
+  }
+
+  function setHash(slug) {
+    try {
+      history.replaceState(history.state, "", here() + (slug ? "#" + slug : ""));
+    } catch (e) {
+      // A page whose address cannot be rewritten keeps its old hash.
+    }
+  }
+  function flash(pin) {
+    pin.classList.remove("flash");
+    void pin.offsetWidth;
+    pin.classList.add("flash");
+  }
+  function mark(on) {
+    if (!current) return;
+    current.row.classList.toggle("sel", on);
+    for (const ring of current.pins) ring.pin.classList.toggle("sel", on);
+  }
+  function button(text, onclick) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = text;
+    b.addEventListener("click", onclick);
+    return b;
+  }
+  // The card: the part's row, cell by cell under the table's headers,
+  // and a button for each photo it is ringed on.
+  function card(part, shown) {
+    const title = document.createElement("h3"), list = document.createElement("dl");
+    title.textContent = part.ref;
+    const on = document.createElement("p");
+    on.className = "on";
+    if (part.pins.length) {
+      on.append("On ");
+      for (const ring of part.pins) {
+        const tab = tabs.find((t) => t.dataset.view === ring.view.id);
+        const b = button(tab.textContent, () => reveal(part, ring));
+        b.setAttribute("aria-pressed", ring === shown);
+        on.append(b);
+      }
+    } else on.textContent = part.row.cells[0].querySelector("small").textContent;
+    Array.from(part.row.cells).slice(1).forEach((cell, i) => {
+      if (!cell.textContent.trim()) return;
+      const dt = document.createElement("dt"), dd = document.createElement("dd");
+      dt.textContent = headers[i + 1];
+      dd.append(...Array.from(cell.childNodes, (n) => n.cloneNode(true)));
+      list.append(dt, dd);
+    });
+    const actions = document.createElement("p");
+    actions.className = "actions";
+    actions.append(
+      button("Show in the table", () => {
+        part.row.scrollIntoView({ block: "center", behavior: behavior() });
+        part.row.querySelector(".refbtn").focus({ preventScroll: true });
+      }),
+      button("Close", clear));
+    body.replaceChildren(title, on, list, actions);
+  }
+  function reveal(part, ring) {
+    if (!ring) {
+      detail.scrollIntoView({ block: "nearest", behavior: behavior() });
+      return;
+    }
+    show(ring.view.id);
+    centerOn(ring.view, ring, FOCUS_ZOOM);
+    flash(ring.pin);
+    card(part, ring);
+    ring.view.photo.scrollIntoView({ block: "nearest", behavior: behavior() });
+  }
+  // Selects a part: from a ring, which stays where it is, or else from
+  // the table, a link or the address, which shows it on the first photo
+  // it is ringed on.
+  function select(slug, pin) {
+    const part = parts.get(slug);
+    if (!part) return;
+    if (!matches(part)) unfilter();
+    mark(false);
+    current = part;
+    mark(true);
+    setHash(slug);
+    const ring = pin ? part.pins.find((p) => p.pin === pin) : part.pins[0];
+    card(part, ring);
+    if (pin) {
+      flash(pin);
+      detail.scrollIntoView({ block: "nearest", behavior: behavior() });
+    } else reveal(part, ring);
+  }
+  function clear() {
+    const focused = detail.contains(document.activeElement);
+    mark(false);
+    if (focused && current && current.pins.length) current.pins[0].pin.focus({ preventScroll: true });
+    current = null;
+    body.innerHTML = hint;
+    setHash("");
+  }
+  function fromHash() {
+    let name = "";
+    try {
+      name = decodeURIComponent(location.hash.slice(1));
+    } catch (e) {
+      return;
+    }
+    if (!SLUG.test(name)) return;
+    const key = name.toLowerCase();
+    const slug = bySlug.get(key) || (key.startsWith(ROW_PREFIX) && bySlug.get(key.slice(ROW_PREFIX.length)));
+    if (slug && (!current || current.slug !== slug)) select(slug);
+  }
+
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("a");
+    if (link) {
+      if (link.classList.contains("pin")) {
+        e.preventDefault();
+        select(link.dataset.part, link);
+      } else if (link.hash.startsWith("#" + ROW_PREFIX) && link.href.split("#")[0] === here()) {
+        const slug = link.hash.slice(1 + ROW_PREFIX.length);
+        if (parts.has(slug)) {
+          e.preventDefault();
+          select(slug);
+        }
+      }
+      return;
+    }
+    const row = e.target.closest(".parts tr[data-part]");
+    if (!row || (!e.target.closest(".refbtn") && String(getSelection()))) return;
+    select(row.dataset.part);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && current && !e.target.closest("input, select")) clear();
+  });
+  tools.querySelector(".tabs").addEventListener("keydown", (e) => {
+    const step = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
+    if (!step) return;
+    const next = tabs[(tabs.indexOf(document.activeElement) + step + tabs.length) % tabs.length];
+    show(next.dataset.view);
+    next.focus();
+  });
+  for (const tab of tabs) tab.addEventListener("click", () => show(tab.dataset.view));
+  for (const b of tools.querySelectorAll("[data-zoom]")) {
+    b.addEventListener("click", () => {
+      const how = b.dataset.zoom;
+      if (how === "fit") zoomAt(active, 1, 0, 0, true);
+      else zoomBy(active, how === "in" ? ZOOM_STEP : 1 / ZOOM_STEP);
+    });
+  }
+  for (const control of [byGroup, byConfidence]) control.addEventListener("change", filter);
+  search.addEventListener("input", filter);
+  addEventListener("hashchange", fromHash);
+  const resized = new ResizeObserver((entries) => {
+    for (const entry of entries) layout(byPhoto.get(entry.target));
+  });
+  for (const view of views.values()) resized.observe(view.photo);
+  show(active.id);
+  filter();
+  fromHash();
+})();
 """
 
 
@@ -206,8 +650,13 @@ class Renderer:
         return "".join(out)
 
 
+def slug(ref):
+    """A part's name in the address, #<slug>: letters, digits and hyphens."""
+    return re.sub(r"[^A-Za-z0-9]+", "-", ref).strip("-")
+
+
 def anchor(ref):
-    return "part-" + re.sub(r"[^A-Za-z0-9]+", "-", ref).strip("-")
+    return "part-" + slug(ref)
 
 
 def mark(kind, text):
@@ -262,18 +711,42 @@ def render_view(view, parts, groups):
         title = CITE.sub(lambda m: m.group(1).rsplit("/", 1)[-1], title).replace("`", "")
         pins.append(
             f'<a class="pin c-{part["id_confidence"]}" style="left:{point["x"]}%;top:{point["y"]}%" '
-            f'href="#{anchor(part["ref"])}" title="{html.escape(title)}">'
+            f'href="#{anchor(part["ref"])}" data-part="{slug(part["ref"])}" title="{html.escape(title)}">'
             f'<span class="ring"></span><span class="lbl">{html.escape(part["ref"])}</span></a>')
     image = html.escape(view["image"])
     wide = ' class="wide"' if view["width"] > view["height"] else ""
     style = (f"aspect-ratio:{view['width']}/{view['height']};"
              f"background-image:url('{image}'),url('{RAW}{image}')")
-    return (f'<figure id="view-{view["id"]}"{wide}>\n'
+    return (f'<figure id="view-{view["id"]}" data-view="{view["id"]}"{wide}>\n'
             f'  <h2>{html.escape(view["title"])}</h2>\n'
-            f'  <div class="photo" role="img" aria-label="{html.escape(view["alt"])}" style="{style}">\n    '
+            f'  <div class="photo" role="img" aria-label="{html.escape(view["alt"])}" style="{style}" '
+            f'data-width="{view["width"]}" data-height="{view["height"]}">\n    '
             + "\n    ".join(pins)
             + f'\n  </div>\n  <figcaption>{html.escape(view["caption"])}  '
             f'<a href="{BLOB}docs/{image}">Full size</a>.</figcaption>\n</figure>')
+
+
+def render_tools(data):
+    """The script's toolbar, hidden until the script shows it."""
+    def options(entries, prefix=""):
+        return "".join(f'<option value="{prefix}{html.escape(e["id"])}">{html.escape(e.get("title", e["id"]))}</option>'
+                       for e in entries)
+    tabs = "".join(f'<button type="button" role="tab" data-view="{v["id"]}" aria-controls="view-{v["id"]}">'
+                   f'{html.escape(v["title"])}</button>' for v in data["views"])
+    confidence = (f'<optgroup label="Designator and marking">{options(data["confidence"], "id:")}</optgroup>'
+                  f'<optgroup label="Role">{options(data["confidence"], "role:")}</optgroup>')
+    return ('<div class="tools" hidden>\n'
+            f'  <div class="tabs" role="tablist" aria-label="Photos">{tabs}</div>\n'
+            '  <div class="zoom" role="group" aria-label="Zoom">'
+            '<button type="button" data-zoom="in" aria-label="Zoom in">+</button>'
+            '<button type="button" data-zoom="out" aria-label="Zoom out">&minus;</button>'
+            '<button type="button" data-zoom="fit">Fit</button></div>\n'
+            f'  <label>Subsystem <select name="group"><option value="">All</option>{options(data["groups"])}</select></label>\n'
+            f'  <label>Confidence <select name="confidence"><option value="">Any</option>{confidence}</select></label>\n'
+            '  <label class="search">Search <input type="search" name="search" placeholder="ref, marking, type or role"></label>\n'
+            '  <p class="keys">Wheel or pinch to zoom and drag to pan; on a focused photo, + and - zoom, 0 fits and the arrows pan.</p>\n'
+            '  <p class="none" hidden>No part matches.</p>\n'
+            '</div>')
 
 
 def render(data):
@@ -315,10 +788,17 @@ def render(data):
     emit("  " + legend(data["confidence"], "Confidence"))
     emit("</section>")
 
+    emit('<div class="atlas">')
+    emit(render_tools(data))
     emit('<section class="views">')
     for view in data["views"]:
         emit(render_view(view, parts, groups))
     emit("</section>")
+    emit('<aside class="card detail" aria-live="polite" hidden>')
+    emit("  <h2>Part</h2>")
+    emit('  <div class="detail-body"><p>Select a ring on the photo, or a row of the parts table, for its part.</p></div>')
+    emit("</aside>")
+    emit("</div>")
 
     emit('<section class="card">')
     emit("  <h2>Measured nets</h2>")
@@ -355,7 +835,9 @@ def render(data):
                 f"<td>{mark(part[m]['status'], part[m]['status'])}"
                 + (f"<br><small>{r(part[m]['note'])}</small>" if part[m]["note"] else "") + "</td>"
                 for m in COMPARED)
-            emit(f'      <tr id="{anchor(part["ref"])}"><td class="ref">{html.escape(part["ref"])}<small>{html.escape(on)}</small></td>'
+            emit(f'      <tr id="{anchor(part["ref"])}" data-part="{slug(part["ref"])}" data-group="{part["group"]}" '
+                 f'data-id-confidence="{part["id_confidence"]}" data-role-confidence="{part["role_confidence"]}">'
+                 f'<td class="ref">{html.escape(part["ref"])}<small>{html.escape(on)}</small></td>'
                  f'<td class="marking">{r(part["marking"])}</td><td class="type">{r(part["type"])}</td>'
                  f'<td class="role">{role}</td><td class="fw">{r(part["firmware"])}</td>'
                  f'<td>{mark(part["id_confidence"], "id " + part["id_confidence"])}<br>'
@@ -384,6 +866,9 @@ def render(data):
     emit(f'<footer>Generated by <a href="{BLOB}tools/board_atlas.py"><code>tools/board_atlas.py</code></a> from '
          f'<a href="{BLOB}docs/board-atlas.json"><code>docs/board-atlas.json</code></a>.</footer>')
     emit("</div>")
+    emit("<script>")
+    emit(SCRIPT.rstrip("\n"))
+    emit("</script>")
     emit("</body>")
     emit("</html>")
     return "\n".join(out) + "\n"

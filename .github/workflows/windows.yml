@@ -20,5 +20,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # The compiler is the one rust-toolchain.toml names, which rustup,
       # already on the runner, installs on the first cargo call.
+      # Cached, unlike builds.yml and release.yml: nothing built here is
+      # distributed, and the cold Windows compile is most of the run.
+      # The pin rust-ci.yml carries.
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace

@@ -1,0 +1,6 @@
+# actionlint's settings.
+self-hosted-runner:
+  # Hosted labels newer than actionlint's list: firmware.yml's preview
+  # image, for the gcc the C is developed with.
+  labels:
+    - ubuntu-26.04

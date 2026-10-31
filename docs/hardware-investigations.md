@@ -13,15 +13,16 @@ Stop the daemon before any direct-mode work; it holds the port.
 on 2026-10-23: the photo under `images/`, and the region as pixels
 x0,y0 to x1,y1 of the full-size photo after its EXIF rotation.  The
 Z3805A's parts are mapped in
-[`z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/z3805a-board.html).
-Only the component sides were photographed, and most signal lines
-leave a part's pins through vias within a few millimeters, so no line
-between two parts was followed end to end.
+[`board-atlas.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/board-atlas.html).
+Until 2026-10-30 only the component sides were photographed; the
+Z3805A's solder side is now photographed too, but most signal lines
+change layer through vias within a few millimeters of a part's pins,
+so a line between two parts is followed with a meter, not by eye.
 
 ## Working on the open Z3805A board
 
 The procedures under items 13, 20, 21 and 23 are written for the bench
-Z3805A (Z3805-68001, `z3805a-board.html`) with the power off, with an
+Z3805A (Z3805-68001, `board-atlas.html`) with the power off, with an
 ohmmeter.  The photos they call for are in `bench.md`, "Photos still
 wanted".  These rules hold for all of them.
 
@@ -90,7 +91,7 @@ The other parts' pinouts are from their data sheets in
 | U3, SCC68692 PLCC-44 | GND 22, /INTR 24, /CS 39, /IACK 41, VCC 44, /DTACK 10; no-connects 1, 12, 23 and 34 | `philips/SCC68692.pdf`, Figure 1 (page 3); the 40-pin DIP there, as in MC68681.pdf 6.1, is GND 20, /INTR 21, /CS 35, /IACK 37, VCC 40, /DTACK 9.  On the board, GND 22 reads 0 Ω to ground and VCC 44 to +5 V. |
 | U28, TL7705A SO-8 | /RESIN 2, GND 4, /RESET 5, RESET 6 (active high), VCC 8 | `ti/tl7705a.pdf`, section 5 (page 3) |
 | U44 (Z3801A), 74ABT574A SO-20 | /OE 1, D0 to D7 2 to 9, GND 10, CP 11, Q7 to Q0 12 to 19, VCC 20 | `philips/74ABT574A.pdf`, Table 2 |
-| U22, U23, U25, U27, 74AC138 | A0 to A2 1 to 3, /E1 4, /E2 5, E3 6, /Y7 7, GND 8, /Y6 to /Y0 9 to 15, VCC 16 | `fairchild/74AC138.pdf`, connection diagram (page 1; it names the outputs /O0 to /O7) |
+| U22, U25, U27, 74AC138; U23, 74ACT138 | A0 to A2 1 to 3, /E1 4, /E2 5, E3 6, /Y7 7, GND 8, /Y6 to /Y0 9 to 15, VCC 16 | `fairchild/74AC138.pdf`, connection diagram (page 1; it names the outputs /O0 to /O7) |
 | U29, DM74ALS09 | inputs 1, 2, 4, 5, 9, 10, 12, 13; open-collector outputs 3, 6, 8, 11; GND 7, VCC 14 | `fairchild/DM74ALS09.pdf`, connection diagram (page 1) |
 | U37, MC144110DW SOG-20 | Din 1, ENB 8, VSS 9, CLK 12, Dout 19, VDD 20; no-connects 10 and 11 | `motorola/MC144110.pdf`, Figure 2 (the DW package) |
 
@@ -101,8 +102,8 @@ chamfered corner nearest it, counterclockwise seen from above.
 others use (*Measured on the bench Z3805A, 3625A01487, date*), the
 meter, and a table of every pair read, including the ones that read
 open: a reading of "open" is a result.  Tick the item's TODO and
-update `z3805a-board.html`'s notes where a part's identification
-changes.
+update `board-atlas.json` and rerun `make board-atlas` where a part's
+identification or role changes.
 
 ## 1. The word that chooses G
 
@@ -568,7 +569,7 @@ Expected:
 
 Record the table of J12 pin to U33 pin, ground and +5 V, with
 resistances, under this item, and update J12's entry in
-`z3805a-board.html`.  If it is BDM, hypothesis 2's "board access"
+`board-atlas.json`.  If it is BDM, hypothesis 2's "board access"
 becomes known and its recovery remains untested; using it needs a
 BDM pod and the owner's say-so, powered, and is a separate step.
 
@@ -863,7 +864,8 @@ rear 1 PPS outputs.  The two boot different FPGA bitstreams, and
 no CPU code differs in a way that would drive J4
 (`firmware/outputs.md`, "The FPGA bitstreams").  On the component
 side, no part near J4 is fitted on the Z3805A and missing on the
-58503A.  There is no photo of the Z3805A's back side.  Decoded with
+58503A.  The Z3805A's back side was photographed on 2026-10-30
+(`board-atlas.html`); the 58503A's has not been.  Decoded with
 an XC3000 bitstream viewer, the Z3805A's bitstream makes FPGA pin 45
 an output that the 58503A's leaves unused, and pin 14 a registered
 output where the 58503A's is unregistered (`firmware/outputs.md`).
@@ -894,8 +896,20 @@ are under the cable lugs, and the lines from U17 and U18 toward them
 leave through vias at the transceivers' pins: not followable.  The
 58503A's U17 and U18 are fitted, their markings under a cable
 (`58503a-gps-engine.jpg`, 1550,3450 to 2000,4080), so no transceiver
-is missing on the component side.  The back sides remain
+is missing on the component side.  The 58503A's back side remains
 unphotographed.
+
+*Measured on the bench Z3805A, 3625A01487, 2026-10-30,* power off,
+with an ohmmeter.  J4 reaches U17's B side through R32, and J5 U18's
+through R33, each a Vishay Dale SOMC1603-101G, eight isolated 100 Ω
+resistors.  U17's A side, pins 2 to 9, is tied together to U32 pin 14,
+and U18's to U32 pin 83.  DIR, pin 1, goes to R52 pins 7 and 8, a
+bussed 10 kΩ pack whose common, pin 16, is on VCC, so both transfer A
+to B by default.  /OE, pin 19, is one net for both, through a single
+1 kΩ resistor to ground; it runs on toward U33 but is on no pin of U32
+or U33.  Nothing else on DIR or /OE is ruled out.  Whether pins 14 and
+83 carry the same signal is not settled.  The nets are tabled in
+`board-atlas.html`.
 
 *Changes:* whether the 58503A can have a second 1 PPS, and whether
 that takes parts or the Z3805A's FPGA bitstream.
@@ -940,9 +954,11 @@ an octal D flip-flop with 3-state outputs, its outputs enabled by
 feature list does claim a power-on reset, so it may come up cleared
 from a supply cycle, but no pin clears it afterward.  An 8-bit register the firmware writes whole, beside the
 front-panel header, is what the lamp latch looks like, so U44
-is the candidate.  On the Z3805A that corner is out of focus in every
+is the candidate.  On the Z3805A that corner is out of focus in every in-chassis
 photo (`z3805a-main-board-2026-09-27.jpg`, 2350,2250 to 3150,3072):
-neither U44's designator nor its marking was read there.  If U44 is
+neither U44's designator nor its marking was read there.  On the
+2026-10-30 photo of the board out of the chassis (`board-atlas.html`)
+U44 reads 74ABT574, beside J13, as on the Z3801A.  If U44 is
 the latch, the part itself keeps its outputs through a reset,
 unless its /OE is tied to the reset line.  Suggests; the bench still has to tie CS5's decode to U44's
 clock and follow its outputs.
@@ -1144,7 +1160,7 @@ which.
   power on, read its voltage and the CLK low time.
 
 *Photos:* U37 is at the upper middle of the CPU board
-(`z3805a-board.html`, its marker; `z3805a-cpu-fpga-flash.jpg`), its
+(`board-atlas.html`, its ring; `z3805a-cpu-fpga-flash.jpg`), its
 pin 20 trace not followable from the component side.
 
 *Procedure, unpowered ("Working on the open Z3805A board" above).*

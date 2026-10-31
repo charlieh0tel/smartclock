@@ -168,8 +168,10 @@ Factory serial settings are 9600 8N1; the Z3801A's port is fixed at
 19200 7O1.  When the configured settings get no answer, the daemon,
 monitor and CLI probe 19200 and 9600 at 8N1 and 7O1.
 
-The Z3805A's board is mapped part by part on its photograph
-([`docs/z3805a-board.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/z3805a-board.html)),
+The first-family main board, the Z3805A's, is mapped part by part on
+its photographs, with the firmware's address for each part and the
+nets measured so far
+([`docs/board-atlas.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/board-atlas.html)),
 with the identified parts' data sheets under `third_party/`.
 [`docs/bench.md`](docs/bench.md) describes the bench, and
 [`docs/hardware-investigations.md`](docs/hardware-investigations.md)
@@ -183,6 +185,9 @@ CI job.  `make test-web` runs the browser tests, after `make web-deps`
 once.  `make hooks`, once per clone, sets up the repository's git
 hooks.  `make check-pages` loads each HTML page in `docs/` in headless
 Chrome and fails if anything on it scrolls sideways at desktop width.
+`make check-board-atlas` fails if `docs/board-atlas.html` is not what
+`tools/board_atlas.py` renders from `docs/board-atlas.json`; `make
+board-atlas` rewrites it.
 
 ## Documentation
 
@@ -204,6 +209,7 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |
 | [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
 | [`docs/loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |
+| [`docs/board-atlas.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/board-atlas.html) | the first-family main board, part by part on its photographs: each part's role, its address or QSPI device, the nets measured, and the Z3801A's and 58503A's boards against it; generated from `docs/board-atlas.json` by `make board-atlas` |
 | [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, and as C data, the trees side by side against the manuals, and what bench receivers answered |
 | [`docs/screen-format-strings.md`](docs/screen-format-strings.md) | the status screen's templates, and what drives its mode line |
 | [`docs/hardware-investigations.md`](docs/hardware-investigations.md) | what only a bench can settle |

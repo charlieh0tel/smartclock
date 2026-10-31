@@ -120,7 +120,7 @@ In `amd/`.
 Fairchild
 ---------
 
-In `fairchild/`.  Logic on the Z3805A board (`docs/z3805a-board.html`),
+In `fairchild/`.  Logic on the Z3805A board (`docs/board-atlas.html`),
 whose pinouts the bench procedures in `docs/hardware-investigations.md`
 use.  The board's parts are marked National; these are the copies of
 Fairchild, which took over National's logic lines in 1997, as hosted

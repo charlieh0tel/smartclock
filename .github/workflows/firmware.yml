@@ -8,7 +8,8 @@ name: firmware
 # give, the SCPI trees, the module and pForth figures, the 58503A's and
 # Z3801A's diffs against the Z3805A and the names seeded from them, every image's
 # chip-select tables, the hand-written C's magic numbers, the addresses
-# the 58503A's and Z3801A's C's comments cite, and the shared C.
+# the 58503A's and Z3801A's C's comments cite, and the shared C; and the
+# board atlas, docs/board-atlas.html, against its data.
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs an m68k toolchain,
@@ -82,6 +83,8 @@ jobs:
       - run: make check-image-diff
         if: ${{ !cancelled() }}
       - run: make check-chip-selects
+        if: ${{ !cancelled() }}
+      - run: make check-board-atlas
         if: ${{ !cancelled() }}
       - run: make check-loop-trace
         if: ${{ !cancelled() }}

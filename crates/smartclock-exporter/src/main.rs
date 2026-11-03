@@ -110,8 +110,8 @@ fn main() -> Result<()> {
     let seen = Mutex::new(BTreeSet::new());
     let sensord_seen = AtomicBool::new(false);
     let sensor_socket = cli.sensord.clone();
-    smartclock_http::serve(&cli.listen, move |path| match path {
-        "/metrics" => {
+    smartclock_http::serve(&cli.listen, move |target| match Route::of(target) {
+        Route::Metrics => {
             let (scrapes, sensors) = thread::scope(|scope| {
                 let sensors = scope.spawn(|| scrape_sensors(&sensor_socket, &sensord_seen));
                 let scrapes = scrape_all(&daemons, &seen);
@@ -128,13 +128,38 @@ fn main() -> Result<()> {
                 metrics::render(&scrapes) + &metrics::render_sensors(&sensors),
             )
         }
-        "/" => Response::ok(
+        Route::Index => Response::ok(
             "text/plain; charset=utf-8",
             "smartclock-exporter\n\nMetrics are at /metrics.\n".to_owned(),
         ),
-        _ => Response::not_found(),
+        Route::NotFound => Response::not_found(),
     })?;
     Ok(())
+}
+
+/// What a request asks for, by its target's path alone.  A query string
+/// names nothing here, and Prometheus adds one to the target when a
+/// scrape config sets `params:`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Route {
+    /// `/metrics`, the scrape.
+    Metrics,
+    /// `/`, which says where the scrape is.
+    Index,
+    /// Any other path.
+    NotFound,
+}
+
+impl Route {
+    /// The route `target`, a path and any query string, asks for.
+    fn of(target: &str) -> Self {
+        let path = target.split_once('?').map_or(target, |(path, _)| path);
+        match path {
+            "/metrics" => Self::Metrics,
+            "/" => Self::Index,
+            _ => Self::NotFound,
+        }
+    }
 }
 
 /// How long one daemon may take to answer a scrape.
@@ -286,6 +311,7 @@ pub(crate) fn escape(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use super::Route;
     use super::SCRAPE_BUDGET;
     use super::scrape_all;
     use crate::metrics::render;
@@ -325,6 +351,15 @@ mod tests {
         fn drop(&mut self) {
             let _ = std::fs::remove_dir_all(&self.0);
         }
+    }
+
+    #[test]
+    fn a_query_string_is_routed_by_its_path() {
+        assert_eq!(Route::of("/metrics"), Route::Metrics);
+        assert_eq!(Route::of("/metrics?x=1"), Route::Metrics);
+        assert_eq!(Route::of("/?x=1"), Route::Index);
+        assert_eq!(Route::of("/metricsx"), Route::NotFound);
+        assert_eq!(Route::of("/other?/metrics"), Route::NotFound);
     }
 
     #[test]

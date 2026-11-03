@@ -369,7 +369,9 @@ finds in its selector, and shows the live strip from whichever daemon
 is attached to the one selected -- a receiver with history and no
 daemon shows the history and says so in the strip.
 `smartclock-exporter` scrapes every daemon into one `/metrics`, each
-sample labeled `daemon="<instance>"`, `serial` and `model`.
+sample labeled `daemon="<instance>"`, `serial` and `model`.  It
+routes on the path alone, so a scrape config's `params:`, which adds a
+query string, still reaches `/metrics`.
 
 Both can be given the daemons instead, with `--daemon` repeated or
 comma-separated, each `[NAME=]ENDPOINT`: a socket's path or

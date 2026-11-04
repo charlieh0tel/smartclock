@@ -407,7 +407,10 @@ change the firmware's behavior.
 The SCPI Time RAIM commands (`:DIAG:GPS:POS:HOLD:RAIM:STATe` and
 `THReshold`) ask `gps_message_supported` too: before `@@Cj` they fail
 with an execution error, or for a query data stale; without the
-option, with -241, hardware missing.
+option, with -241, hardware missing.  The 58503A's ask of their
+descriptors' request, `GPS_SCRIPT_TRAIM` (`0x62`), not `@@Bn`
+(`0x2a7aa`, `0x2a884`), which its `gps_message_supported` (`0x50b7c`)
+knows nothing of, so that they always fail as before `@@Cj`.
 
 ## The monitors
 

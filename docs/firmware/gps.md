@@ -349,7 +349,8 @@ code, read from the ROM), with no clamp.
 - The decoder, `oncore_cable_delay_decode` (`0x5003e`), keeps the
   engine's value in `gps.pps_cable_delay_given` and, less the offset,
   in `gps.pps_cable_delay`, which the status screen shows as
-  `CABLE DLY`.
+  `ANT DLY`.  The instrument state print, `gps_print_instrument_state`,
+  shows the engine's value as `CABLE DLY` (`0x492a4`).
 - `@@Az` is an echo: the engine must return `tttt` exactly.  Start-up
   sends it from `gps_init_sequence` (`0x46a00`), which on any failure
   logs `ant delay ack failure` and sends it again, without end.

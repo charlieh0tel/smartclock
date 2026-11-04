@@ -9,13 +9,16 @@ typedef struct scpi_diagnostic_indexed_numeric {
   scpi_diagnostic_numeric given; /* +0x02 */
 } scpi_diagnostic_indexed_numeric;
 
-/* STATUS_NO_CONDITION when the receiver takes @@Bn, Time RAIM; else
- * unknown before it has sent its ID, or -241 Hardware missing. */
+/* STATUS_NO_CONDITION when the receiver takes a descriptor's request;
+ * else unknown before it has sent its ID, or -241 Hardware missing.  The
+ * image asks of the descriptor's request, GPS_SCRIPT_TRAIM, which
+ * gps_message_supported knows nothing of, so that the handlers always
+ * find it unknown (0x2a7aa, 0x2a884). */
 static status_condition_code scpi_diagnostic_raim_missing(
-    status_condition_code unknown) {
+    gps_request_code request, status_condition_code unknown) {
   uint8_t supported;
 
-  if (gps_message_supported(GPS_REQUEST_TRAIM, &supported) == 0) {
+  if (gps_message_supported(request, &supported) == 0) {
     return unknown;
   }
   return supported == 0 ? STATUS_HARDWARE_MISSING : STATUS_NO_CONDITION;
@@ -27,8 +30,9 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(void* parameters,
                                                               void* response,
                                                               scpi_call* call) {
   const scpi_diagnostic_indexed_word* given = parameters;
-  status_condition_code missing =
-      scpi_diagnostic_raim_missing(STATUS_EXECUTION_ERROR);
+  status_condition_code missing = scpi_diagnostic_raim_missing(
+      scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe.gps_request,
+      STATUS_EXECUTION_ERROR);
 
   if (missing != STATUS_NO_CONDITION) {
     status_report_from(missing, return_zero(call->input));
@@ -44,8 +48,9 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(
     void* parameters, void* response, scpi_call* call) {
   const int16_t* index = parameters;
   int16_t* state = response;
-  status_condition_code missing =
-      scpi_diagnostic_raim_missing(STATUS_DATA_CORRUPT_OR_STALE);
+  status_condition_code missing = scpi_diagnostic_raim_missing(
+      scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe.gps_request,
+      STATUS_DATA_CORRUPT_OR_STALE);
 
   if (missing != STATUS_NO_CONDITION) {
     return scpi_query_failed(missing, call);
@@ -59,8 +64,9 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(
 int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(
     void* parameters, void* response, scpi_call* call) {
   const scpi_diagnostic_indexed_numeric* given = parameters;
-  status_condition_code missing =
-      scpi_diagnostic_raim_missing(STATUS_EXECUTION_ERROR);
+  status_condition_code missing = scpi_diagnostic_raim_missing(
+      scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold.gps_request,
+      STATUS_EXECUTION_ERROR);
 
   if (missing != STATUS_NO_CONDITION) {
     status_report_from(missing, return_zero(call->input));
@@ -78,8 +84,9 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(
     void* parameters, void* response, scpi_call* call) {
   const scpi_diagnostic_indexed_numeric* given = parameters;
   scpi_diagnostic_long* threshold = response;
-  status_condition_code missing =
-      scpi_diagnostic_raim_missing(STATUS_DATA_CORRUPT_OR_STALE);
+  status_condition_code missing = scpi_diagnostic_raim_missing(
+      scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold.gps_request,
+      STATUS_DATA_CORRUPT_OR_STALE);
 
   if (missing != STATUS_NO_CONDITION) {
     return scpi_query_failed(missing, call);

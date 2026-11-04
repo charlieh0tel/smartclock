@@ -585,7 +585,7 @@ void gps_print_instrument_state(void) {
   } else {
     operation = "?";
   }
-  printf("FIX ALG    %-17s%33sOPER   %s\r\n", name, "", operation);
+  printf("FIX ALG    %-50sOPER   %s\r\n", name, operation);
 
   console_write("\r\nHold Position _____________________________   ");
   console_write("Initial Position _______________\r\n");
@@ -703,7 +703,10 @@ void gps_print_instrument_state(void) {
   printf("UTC CORR   %-19s                LEAP SEC  %-12s\r\n", text, name);
   printf("1PPS OFFS  %9d ns   POS FIX THR %3d\r\n", gps.pps_offset,
          (uint32_t)gps.position_fix_threshold);
-  printf("CABLE DLY     %6d ns   DIF OUT THR %3d s\r\n", gps.pps_cable_delay,
+  /* the delay as the engine gives it, not less the long at 0x10201c
+   * (0x492a4) */
+  printf("CABLE DLY     %6d ns   DIF OUT THR %3d s\r\n",
+         gps.pps_cable_delay_given,
          (uint32_t)gps.differential_output_threshold);
 }
 

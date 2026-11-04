@@ -250,11 +250,18 @@ uint8_t* oncore_as_height_decode(uint8_t* cursor, uint8_t* record) {
   return byte_copy_optional(cursor, (uint8_t*)&gps.hold_height_type);
 }
 
-/* Decodes @@Bb, the visible satellites, and marks them received
- * (0x50716). */
+/* Decodes @@Bb, the visible satellites, and marks them received; a count
+ * past the list's entries is clamped to them (0x5073e), as the Z3805A's
+ * is not. */
 uint8_t* oncore_visibility_message(uint8_t* cursor, uint8_t* record) {
+  static const uint8_t ENTRIES =
+      sizeof gps.visibility.satellites / sizeof gps.visibility.satellites[0];
+
   cursor = oncore_decode_fields(cursor, record, oncore_visibility_field_codes);
   gps.visibility_received = 1;
+  if (gps.visibility.count > ENTRIES) {
+    gps.visibility.count = ENTRIES;
+  }
   return cursor;
 }
 

@@ -6,7 +6,9 @@ or that only works by what lies next to it.  The hand-written C
 where C can, with a comment where it happens, and says where it
 cannot; none of them is fixed, since the C is a reading of the image.
 The harness runs its cases of each, not every input or caller's
-state.  Each is by the routine and the address that shows it.
+state.  Each is by the routine and the address that shows it.  The
+other images' own faults, where they differ, follow under each image's
+name ("The 58503A 3704").
 
 ## Wrong results
 
@@ -277,3 +279,14 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
 The harness counts these where they show (`KNOWN` in
 `tools/firmware/function_check.py`), or keeps its cases inside a
 table (`IN_RANGE`).
+
+## The 58503A 3704
+
+- **The Time RAIM commands**
+  (`:DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe`, `:THReshold` and
+  their queries) ask of their descriptors' request, `GPS_SCRIPT_TRAIM`
+  (`0x62`), read at `0x2a7aa`, `0x2a810`, `0x2a884` and `0x2a8f6`, not
+  `@@Bn`, and `gps_message_supported` (`0x50b7c`) decides only `@@Bn`
+  and `@@En`, so that they always fail ("Time RAIM" in `gps.md`).  The
+  hand-written C (`rewritten/58503a-3704/scpi_diagnostic.c`) asks the
+  same.

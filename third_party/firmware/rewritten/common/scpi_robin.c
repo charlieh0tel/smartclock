@@ -91,9 +91,10 @@ static const scpi_robin_form SCPI_ROBIN_FORMS[] = {
 /* Steps a cursor past an optional XNON: or XNONE: data class, with or
  * without a ':' before it, or past a lone ':'. */
 void robin_strip_xnon(char** cursor) {
-  /* In the order the image tries them. */
+  /* In the order the image tries them; then a lone ':', which it tests
+   * as a character, not a prefix. */
   static const char* const PREFIXES[] = {
-      "XNON:", ":XNON:", "XNONE:", ":XNONE:", ":"};
+      "XNON:", ":XNON:", "XNONE:", ":XNONE:"};
   char* text = *cursor;
 
   for (uint8_t index = 0; index < sizeof PREFIXES / sizeof *PREFIXES; index++) {
@@ -104,6 +105,9 @@ void robin_strip_xnon(char** cursor) {
       *cursor = text + length;
       return;
     }
+  }
+  if (*text == ':') {
+    *cursor = text + 1;
   }
 }
 

@@ -4809,7 +4809,7 @@ extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_
 extern scpi_action_param scpi_action_SOURce_GPSystem_POSition; /* 000413f4 */
 extern scpi_action_param scpi_action_SYSTem_PON; /* 000413fa */
 extern scpi_action_param scpi_action_SYSTem_PRESet; /* 00041400 */
-extern scpi_action_param scpi_action_SER2_PRESet; /* 00041406 */
+extern scpi_action_param scpi_action_SER1_PRESet; /* 00041406 */
 extern scpi_action_param scpi_action_STATus_PRESet; /* 0004140c */
 extern scpi_action_param scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate; /* 00041412 */
 extern char * day_names[8]; /* 0004dd26 */
@@ -8688,7 +8688,7 @@ __asm__(".set sample_values, 0x001020e6");
 __asm__(".set sample_values_defaults, 0x000307a4");
 __asm__(".set satellite_status_blank_entry, 0x0004ed82");
 __asm__(".set scpi_action_DIAGnostic_PTIMe_TINTerval, 0x000413ca");
-__asm__(".set scpi_action_SER2_PRESet, 0x00041406");
+__asm__(".set scpi_action_SER1_PRESet, 0x00041406");
 __asm__(".set scpi_action_SOURce_GPSystem_POSition, 0x000413f4");
 __asm__(".set scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate, 0x00041412");
 __asm__(".set scpi_action_SOURce_PTIMe_SYNChronization_IMMediate, 0x000413e8");

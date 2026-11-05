@@ -203,7 +203,7 @@ int32_t scpi_set_SYSTem_COMMunicate_ALARm_PRESet(void* parameters,
   const int16_t* port = parameters;
 
   if (*port == SCPI_PORT_DUART_B) {
-    pllc_request_b(&scpi_action_SER2_PRESet, 0, return_zero(call->input));
+    pllc_request_b(&scpi_action_SER1_PRESet, 0, return_zero(call->input));
   } else {
     status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
   }

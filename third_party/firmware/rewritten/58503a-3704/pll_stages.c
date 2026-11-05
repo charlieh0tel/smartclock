@@ -125,7 +125,8 @@ static pll_stage_result pll_stages_fine_slew(float ti) {
 /* After the fit, the TI's change across the readings, per second, into
  * pll.fine_d.  Out of power-up, failed when the largest TI passes
  * holdover's limit, its threshold and its frequency tolerance over its
- * duration, unless the limit is off or the holdover long.  Then a
+ * duration, unless the limit is off, overridden (pll.ti_limit_override,
+ * 0x4596c) or the holdover long.  Then a
  * frequency within 2e-9 slews the phase; one within the frequency
  * tolerance, or any in a long holdover, moves the EFC by it and syncs
  * if the TI asks; another fails. */
@@ -144,7 +145,8 @@ static pll_stage_result pll_stages_fine_frequency(void) {
                   nv_settings.holdover_limit_threshold);
 
     if (float_compare(limit, fine_ti_max) < 0 && !long_holdover &&
-        nv_settings.holdover_limit_state == HOLDOVER_LIMIT_ON) {
+        nv_settings.holdover_limit_state == HOLDOVER_LIMIT_ON &&
+        pll.ti_limit_override == 0) {
       task_dmessage("fine - ti too far off\r\n");
       return PLL_STAGE_RESULT_FAILED;
     }

@@ -9,8 +9,8 @@ static scpi_port* const SCPI_CONSOLE_PORT = (scpi_port*)0x29090;
 /* The port layer's number for DUART channel B, the SCPI console: the one
  * port each of its switches has a case for (0x290ce to 0x29246), and the
  * path word of the :COMMunicate nodes for it, duartb_settings': ALARm,
- * BOOT, DRTB, PFORth, SERial and TOD; REMote and SCI give 1, the rest 0
- * (docs/firmware/58503a-3704.md, "SCPI on more than one port"). */
+ * BOOT, DRTB, PFORth, SERial, SERial1 and TOD; REMote and SCI give 1, the
+ * rest 0 (docs/firmware/58503a-3704.md, "SCPI on more than one port"). */
 static const int16_t SCPI_PORT_DUART_B = 2;
 
 /* The SCPI task's event duartb_transmit_interrupt signals at the end of

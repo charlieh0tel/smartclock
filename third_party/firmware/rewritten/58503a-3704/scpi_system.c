@@ -4,9 +4,11 @@
  * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
  * prototype. */
 
-/* The port a :COMMunicate:SERial node's path word names: SERial1,
- * DUART channel B, duartb_settings'; any other is SERial2, the SCI,
- * sci_settings'. */
+/* :COMMunicate?'s choice for SERial1, DUART channel B, duartb_settings'.
+ * This image has no SCI: a :COMMunicate node's path word is the port
+ * layer's number, and the handlers act for SCPI_PORT_DUART_B's alone,
+ * as :PRESet pushes its action only for path word 2, any other port
+ * getting an undefined header (0x30070). */
 enum {
   SCPI_SYSTEM_SERIAL1 = 0,
 };

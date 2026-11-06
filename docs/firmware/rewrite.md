@@ -147,6 +147,11 @@ out the image's arguments from it.
   C": typed constants, coded values as enums shared through
   `smartclock.h`, `static const` tables with their image address, US
   English, Google style by `clang-format` (`make check-format-c`).
+- A function is named for what it does, not for the image it came
+  from: a lead, a pairing the seeding finds changed below its carrying
+  threshold, takes its base's name, its note saying how it was paired
+  ([`PLAN.md`](../../PLAN.md), "A second image is ported by copying
+  the first's work").
 - Register-convention routines are called through bindings: a header in
   `rewritten/bindings/` defines a function under the routine's name and
   prototype that binds each argument with a local register variable and

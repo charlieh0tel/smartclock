@@ -2,9 +2,9 @@
 # Z3805A 3543B's (third_party/firmware/analysis/z3805a-3543b/modules.tsv): each
 # Z3805A row re-keyed to its function's 58503A address through
 # tools/firmware/image_diff.py's matches, as names.tsv is (identical,
-# relocated, or changed at a similarity of 0.70 or more under its own
-# name; from 0.50 a lead, named as names.tsv names it, with the suffix
-# _58503a where names.tsv has a row for it).  A Z3805A function missing
+# relocated, or changed at a similarity of 0.70 or more, and from
+# 0.50 a lead), under the name names.tsv gives its address, or the
+# Z3805A's where it gives none.  A Z3805A function missing
 # from the 58503A, or paired below 0.50, has no row, and the 58503A's
 # new functions have none yet.  docs/firmware/modules.md gives the
 # layers, what each module holds and the calls that cross layers the
@@ -384,8 +384,8 @@
 0x32784	clear_nv	services/nv
 0x45e66	nv_clear_and_reset	services/nv	clears NV, then trap #12
 0x3071c	record_checksum	services/records
-0x30d12	parameter_record_read_58503a	services/records
-0x30c6c	save_parameter_record_58503a	services/records
+0x30d12	parameter_record_read	services/records
+0x30c6c	save_parameter_record	services/records
 0x30dc4	duartb_settings_preset	services/records
 0x32e68	identification_record_read	services/records
 0x32f0c	identification_record_write	services/records
@@ -395,7 +395,7 @@
 0x30a36	lifetime_event_run	services/records
 0x30a6c	lifetime_update	services/records
 0x30ba8	calibration_block_read	services/records
-0x30b24	save_calibration_block_58503a	services/records
+0x30b24	save_calibration_block	services/records
 0x3156c	log_init	services/log
 0x3130a	log_page_read	services/log
 0x3126a	log_page_checksum	services/log
@@ -496,13 +496,13 @@
 0x13da8	timecode_update	services/timecode
 0x140d0	timecode_schedule	services/timecode	GPT output compare 3, for the time code
 0x23dc2	monitors_reset	services/monitors
-0x23d8e	pps_monitors_reset_58503a	services/monitors
+0x23d8e	pps_monitors_reset	services/monitors
 0x238b0	gps_pps_monitor_reset	services/monitors
 0x23a3c	internal_pps_monitor_reset	services/monitors
 0x23602	efc_clamp_reset	services/monitors	efc_clamp's flags; hmon_task clears them
 0x23b88	hmon_task	services/monitors
 0x21d34	monitor_average_add	services/monitors
-0x21dba	monitor_filter_add_58503a	services/monitors
+0x21dba	monitor_filter_add	services/monitors
 0x220ae	monitor_out_of_range	services/monitors
 0x23614	hmon_check_efc	services/monitors
 0x23592	efc_clamp	services/monitors	the EFC DAC's range, reported as events B and C as hmon_check_efc reports its ends; the loop's stages call it
@@ -534,7 +534,7 @@
 0x17c98	selftest_fpga	applications/selftest
 0x17cfe	selftest_lamps	applications/selftest
 0x17d18	selftest_uart	applications/selftest
-0x17dee	selftest_gps_58503a	applications/selftest
+0x17dee	selftest_gps	applications/selftest
 0x18046	selftest_power	applications/selftest
 0x18114	selftest_interpolator_calibration	applications/selftest
 0x18124	selftest_interpolator_sample	applications/selftest
@@ -557,7 +557,7 @@
 0x177aa	rom_lane_checksum	applications/selftest	called by nothing
 0x18910	qspi_hex_dac_test	applications/selftest
 0x188d2	shift_right_36	applications/selftest
-0x18a2c	qspi_adc_test_58503a	applications/selftest
+0x18a2c	qspi_adc_test	applications/selftest
 0x18ac8	qspi_efc_test	applications/selftest
 0x18b5c	qspi_tests_run	applications/selftest
 0x17854	selftest_summary	applications/selftest
@@ -940,7 +940,7 @@
 0x45e62	pllp_start_nothing_a	applications/pll/pllp
 0x45e64	pllp_start_nothing_b	applications/pll/pllp
 0x46488	clock_set_from_reference	applications/pll/pllp	the loop sets the clock from the FPGA's seconds count
-0x43f20	clock_check_against_gps_58503a	applications/pll/pllp	the loop sets the clock from gps.status
+0x43f20	clock_check_against_gps	applications/pll/pllp	the loop sets the clock from gps.status
 0x466c4	pll_stage_status	applications/pll/pllp
 0x45d44	pll_mode	applications/pll/pllp
 0x45d8c	pll_powerup_suffix_index	applications/pll/pllp
@@ -1046,7 +1046,7 @@
 0x4703a	gps_leap_ack	applications/pll/gps_control	pllp's steps that drive the GPS engine through gpsx_exchange; pllp_task calls them (0x46620-0x471fc, among the loop's)
 0x47274	gps_command_send	applications/pll/gps_control	pllp's steps that drive the GPS engine through gpsx_exchange; pllp_task calls them (0x46620-0x471fc, among the loop's)
 0x473c6	gps_diag_sequence	applications/pll/gps_control	pllp's steps that drive the GPS engine through gpsx_exchange; pllp_task calls them (0x46620-0x471fc, among the loop's)
-0x4c90c	gps_init_58503a	applications/gps/task
+0x4c90c	gps_init	applications/gps/task
 0x4c97e	gps_link_reset	applications/gps/task
 0x4c9c0	gpsm_task	applications/gps/task
 0x4d046	gps_console_request_58503a	applications/gps/task
@@ -1156,13 +1156,13 @@
 0x4a15e	format_duration_short	applications/screen
 0x4a3f0	format_time	applications/screen
 0x4a44a	format_date	applications/screen
-0x4a4c6	status_screen_time_58503a	applications/screen
+0x4a4c6	status_screen_time	applications/screen
 0x4a562	status_screen_position	applications/screen
 0x4a8a6	status_screen_tfom	applications/screen
 0x4aa5a	bit_is_set	applications/screen
 0x4aa84	bits_1_to_3_any	applications/screen
-0x4aae0	bits_4_5_any	applications/screen
-0x4ab0c	bits_6_7_any	applications/screen
+0x4aae0	bits_6_7_any	applications/screen
+0x4ab0c	bits_8_9_any	applications/screen
 0x4ab38	status_screen_mode_suffix	applications/screen
 0x4af48	status_screen	applications/screen
 0x4b6ec	status_screen_print	applications/screen
@@ -1181,7 +1181,7 @@
 0x1b80e	print_gps_init_state	applications/console
 0x1b9c0	print_leap_check_state	applications/console
 0x1ba56	print_fine_state	applications/console
-0x1b13a	diag_adc_read_58503a	applications/console	pForth diagnostic word
+0x1b13a	diag_adc_read	applications/console	pForth diagnostic word
 0x1b1b2	diag_pr_hold_cause	applications/console	pForth diagnostic word
 0x1b264	diag_efc_write	applications/console	pForth diagnostic word
 0x1b274	diag_hdac_write	applications/console	pForth diagnostic word

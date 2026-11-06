@@ -62,7 +62,7 @@ static void gps_task_read_response(void) {
 /* Clears gps, its two references' qualification, set to the NV
  * settings' hysteresis, and the command monitor; takes the tracking log
  * from the NV settings (0x4c90c). */
-void gps_init_58503a(void) {
+void gps_init(void) {
   memset(&gps, 0, sizeof gps);
   gps.field_51e[0] = 0; /* again, as the image does */
   gps.field_571 = 1;

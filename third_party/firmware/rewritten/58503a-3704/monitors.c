@@ -74,7 +74,7 @@ const hmon_channel_entry hmon_channels[MONITORS_CHANNELS] = {
      .bit = SELFTEST_POWER_M15V,
      .field_28 = 1},
     {.convert = hmon_convert_oven_current,
-     .add = monitor_filter_add_58503a,
+     .add = monitor_filter_add,
      .check = hmon_check_pll_stage,
      .report = hmon_report_oven_warm,
      .nominal = 250.0f,
@@ -233,7 +233,7 @@ void monitor_average_add(adc_channel channel) {
 
 /* The Primary oven current's add routine: filters the channel's reading
  * into its monitor, the first taken as it is (0x21dba). */
-void monitor_filter_add_58503a(adc_channel channel) {
+void monitor_filter_add(adc_channel channel) {
   adc_monitor* monitor = &adc_monitors[channel];
 
   if (!monitor->valid) {
@@ -245,7 +245,7 @@ void monitor_filter_add_58503a(adc_channel channel) {
 }
 
 /* An add routine no entry names and nothing calls (revisions.md): filters
- * the channel's reading in as monitor_filter_add_58503a does, the first
+ * the channel's reading in as monitor_filter_add does, the first
  * kept in samples[0], and every 75th reading keeps the change since in
  * samples[1] and the value in samples[0], and sets samples[2] to 1, but
  * in the first 600 seconds only when the change passes the entry's
@@ -630,7 +630,7 @@ uint8_t internal_pps_check(void) {
 
 /* Clears both 1PPS monitors, the outer oven's flag, the health
  * monitor's step, :DIAGnostic:TMODe and the lamps' state (0x23d8e). */
-void pps_monitors_reset_58503a(void) {
+void pps_monitors_reset(void) {
   gps_pps_monitor_reset();
   internal_pps_monitor_reset();
   outer_oven_enabled = 0;

@@ -468,6 +468,11 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   and every field shared C reaches through a global is asserted: the
   58503A's began as the Z3805A's addresses, copied, which let the
   shared `gps_receive` count errors at the Z3805A's offsets unseen.
+  A lead, a pairing changed below the carrying threshold, is seeded
+  under its base's name, its note saying it is a lead and at what
+  similarity.  It was seeded with the port's suffix,
+  `gps_init_58503a`, and that was dropped: the suffix recorded
+  lineage, not what the function does.
 - **Per-image tool tables**: what the function check gives an image
   other than the Z3805A 3543B is kept in tables keyed by image or held
   by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`,

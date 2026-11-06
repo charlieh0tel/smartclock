@@ -11,7 +11,7 @@ int32_t installer_return_zero(scpi_port* input) { return 0; }
 /* Clears the SCPI input, sets the receive errors
  * installer_port_report_errors reports, opens the port and prompts; the
  * console port (installer::0x1073d8). */
-scpi_port* installer_scpi_session_init_58503a(void) {
+scpi_port* installer_scpi_session_init(void) {
   *installer_scpi_echo_length() = 0;
   installer_port_error_reports[0].mask = SCPI_CONSOLE_BREAK_OR_FRAMING;
   installer_port_error_reports[1].mask = SCPI_CONSOLE_OVERRUN;

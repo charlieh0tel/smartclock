@@ -853,8 +853,8 @@ typedef enum __attribute__((packed)) selftest_qspi_failure {
  * garbled.  In the 58503A 3704 the result is a long and the firmware's
  * own two are bits 16 and 17, gps_selftest_run's (0x468d2 to 0x469ee):
  * the engine did not answer, "GPS: SW problem", or timed out, "GPS:
- * Engine timeout" (selftest_gps_58503a, 0x1801c, 0x18030).  An
- * eight-channel engine's @@Fa result, which selftest_gps_58503a reads
+ * Engine timeout" (selftest_gps, 0x1801c, 0x18030).  An
+ * eight-channel engine's @@Fa result, which selftest_gps reads
  * while gps.field_592 bit 5 is set (0x17e9e), has channels 1 to 8 in
  * bits 0 to 7 and the rest two bits higher, the RTC at 0x8000: the
  * names are @@Ca's. */
@@ -911,7 +911,7 @@ typedef struct selftest_results {
   uint32_t gps;         /* +0x14: the receiver's self-test, a long in the 58503A
                            3704: gps_selftest_run and gps_diag_sequence store 0x10000
                            or 0x20000 or the @@Ca result (0x468d2 to 0x469ee), which
-                           selftest_gps_58503a tests by bit (0x17e28) */
+                           selftest_gps tests by bit (0x17e28) */
   int16_t interpolator; /* +0x18: selftest_failure */
   uint8_t interpolator_calibrated; /* +0x1a: 1 once a calibration succeeded */
   uint8_t interpolator_tries; /* +0x1b: the calibrations it took, up to 20 */
@@ -1323,7 +1323,7 @@ typedef uint8_t hmon_channel_test(adc_channel channel);
 typedef struct hmon_channel_entry {
   hmon_convert_function* convert; /* +0x00: null for an unused channel */
   hmon_channel_function* add;     /* +0x04: monitor_average_add, or the oven
-                                     current's filter, monitor_filter_add_58503a */
+                                     current's filter, monitor_filter_add */
   hmon_channel_test* check;      /* +0x08: whether to report; null for always */
   int32_t field_0c;              /* compared at 0x221f8; 0 in every entry */
   hmon_channel_function* report; /* +0x10: the range check and its report,

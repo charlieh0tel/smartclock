@@ -702,8 +702,7 @@ pll_stage_result powerup(bool same_stage) {
       interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
       pll.powerup_countdown--;
       if (pll.powerup_countdown == 0 && leap_ack_pending() == 0) {
-        if ((char)clock_check_against_gps_58503a() == 0 &&
-            clock_gps_mismatch != 0) {
+        if ((char)clock_check_against_gps() == 0 && clock_gps_mismatch != 0) {
           pll.powerup_countdown = PLL_STAGES_CLOCK_RECHECK_DELAY;
         } else {
           pll.powerup_state = PLL_POWERUP_LEAP_SECONDS;
@@ -795,7 +794,7 @@ static void pll_stages_loop_reading(uint8_t valid, float ti,
       gps_reference_questionable == 0 &&
       (clock_gps_mismatch != 0 ||
        (get_gps_time() & SECOND_MASK) == CHECK_SECOND) &&
-      (char)clock_check_against_gps_58503a() == 0 && clock_gps_mismatch == 0) {
+      (char)clock_check_against_gps() == 0 && clock_gps_mismatch == 0) {
     pll.leap_ack_requested = 1;
   }
 }
@@ -1211,8 +1210,7 @@ pll_stage_result holdover_recovery(bool same_stage) {
       if (pll.recovery_countdown != 0 || leap_ack_pending() != 0) {
         break;
       }
-      if ((char)clock_check_against_gps_58503a() == 0 &&
-          clock_gps_mismatch != 0) {
+      if ((char)clock_check_against_gps() == 0 && clock_gps_mismatch != 0) {
         pll.recovery_countdown = PLL_STAGES_CLOCK_RECHECK_DELAY;
         break;
       }
@@ -1232,7 +1230,7 @@ pll_stage_result holdover_recovery(bool same_stage) {
       if (leap_ack_pending() != 0) {
         break;
       }
-      if ((char)clock_check_against_gps_58503a() != 0) {
+      if ((char)clock_check_against_gps() != 0) {
         result = PLL_STAGE_RESULT_DONE;
         break;
       }

@@ -66,7 +66,7 @@ every second.  A second mismatch in a row sets the clock from the
 Oncore's time and raises Time Reset.  When the guards allow, the
 reset comes at :15
 ([`firmware/58503a-3704.md`](firmware/58503a-3704.md#time-reset-and-the-oncores-time),
-from `clock_check_against_gps_58503a` and its callers in the decompiled
+from `clock_check_against_gps` and its callers in the decompiled
 C).  Both steps came there.
 
 Suppose each reset followed a sustained error in the time stamps the

@@ -272,7 +272,7 @@ static uint8_t* const PLLP_REBOOTED = (uint8_t*)0x102876;
  * clock from GPS, time set 'L' unless PLLP_REBOOTED and the clock
  * agreed.  A clock not yet set, get_gps_datetime's 1, counts as a
  * mismatch too (0x43f20). */
-uint32_t clock_check_against_gps_58503a(void) {
+uint32_t clock_check_against_gps(void) {
   uint32_t clock_date;
   time_of_day clock_time;
   bool not_set = get_gps_datetime(&clock_date, &clock_time);

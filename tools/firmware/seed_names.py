@@ -38,7 +38,8 @@ spec.loader.exec_module(image_diff)
 
 # a changed pairing at this similarity or more is carried under its name
 THRESHOLD = 0.7
-# from here to THRESHOLD it is a lead, named with the port's suffix; below, no row
+# from here to THRESHOLD it is a lead, under the base's name, its note saying
+# so; below, no row
 LEAD = 0.5
 # a ROM table placed by its bytes alone and shorter than this is not carried
 SMALLEST_BY_BYTES = 8
@@ -50,7 +51,7 @@ BODY_START = '# float library'
 # The 58503A 3704's port from the Z3805A 3543B (PORT_58503A_3704).
 DOCUMENT_58503A = 'docs/firmware/58503a-3704.md'
 # the pairings docs/firmware/58503a-3704.md corrects: base function's
-# (region, address) to the 58503A address and why; a lead, suffixed and
+# (region, address) to the 58503A address and why; a lead, noted
 # unconfirmed, unless CONFIRMED has it
 CORRECTIONS_58503A = {
     ('primary', 0x30c60): (0x30b24, "%s: 0x30b24 writes 0x400080, as the Z3805A's does" % DOCUMENT_58503A),
@@ -251,9 +252,9 @@ HEADER = """\
 # - A function matched changed at a similarity (image_diff's difflib
 #   ratio of the instructions, numbers masked) of %(threshold).2f or more is
 #   carried, noted "changed", for the next wave to review.  From %(lead).2f
-#   to %(threshold).2f the %(base_model)s's name suffixed %(suffix)s marks the pairing as a
-#   lead, without its prototype or convention; below %(lead).2f there is no
-#   row, and the pairing is listed under "Leads" at the end.
+#   to %(threshold).2f the pairing is a lead, under the %(base_model)s's name, its
+#   note saying so, without its prototype or convention; below %(lead).2f
+#   there is no row, and the pairing is listed under "Leads" at the end.
 %(corrections)s# - A ROM table (a typed label in the image) matched identical or
 #   relocated is carried, but not one placed by its bytes alone and
 #   under %(smallest)d bytes long.  A RAM or I/O label is placed by the matched
@@ -283,9 +284,9 @@ MODULES_HEADER = """\
 # %(base)s's (third_party/firmware/analysis/%(base_folder)s/modules.tsv): each
 # %(base_model)s row re-keyed to its function's %(model)s address through
 # tools/firmware/image_diff.py's matches, as names.tsv is (identical,
-# relocated, or changed at a similarity of %(threshold).2f or more under its own
-# name; from %(lead).2f a lead, named as names.tsv names it, with the suffix
-# %(suffix)s where names.tsv has a row for it).  A %(base_model)s function missing
+# relocated, or changed at a similarity of %(threshold).2f or more, and from
+# %(lead).2f a lead), under the name names.tsv gives its address, or the
+# %(base_model)s's where it gives none.  A %(base_model)s function missing
 # from the %(model)s, or paired below %(lead).2f, has no row, and the %(model)s's
 # new functions have none yet.  docs/firmware/modules.md gives the
 # layers, what each module holds and the calls that cross layers the
@@ -322,7 +323,7 @@ class Port:
     """An image seeded from a base image's names: its folder's and the
     base's names; the document that describes the port; the corrections
     to image_diff's pairings that document makes, base function's (region,
-    address) to the image's address and why, each a lead, suffixed and
+    address) to the image's address and why, each a lead, noted
     unconfirmed, unless confirmed has it, and corrected_from_changed the
     one whose function image_diff pairs elsewhere, as changed; pinned,
     base function's (region, address) to the address image_diff gives,
@@ -384,11 +385,6 @@ class Port:
         return IMAGE_NAMES[self.base_folder][0]
 
     @property
-    def suffix(self):
-        """A lead's name: the base's name with this suffix."""
-        return '_' + self.model.lower()
-
-    @property
     def origin(self):
         """How a carried row's note says where it came from."""
         return 'from the %s, by image_diff' % self.base
@@ -408,7 +404,7 @@ class Port:
     def text(self, template):
         """A header, its fields this port's."""
         return template % {
-            'threshold': THRESHOLD, 'lead': LEAD, 'suffix': self.suffix, 'smallest': SMALLEST_BY_BYTES,
+            'threshold': THRESHOLD, 'lead': LEAD, 'smallest': SMALLEST_BY_BYTES,
             'called': len(self.called_unlisted), 'hand': self.hand, 'image': self.image, 'model': self.model,
             'base': self.base, 'base_model': self.base_model, 'base_folder': self.base_folder,
             'document_name': os.path.basename(self.document), 'corrections': self.corrections_text,
@@ -740,7 +736,7 @@ class Seeding:
                     if (region, value) == self.port.corrected_from_changed:
                         text = '%s: changed at %.3f with 0x%x, which the doc says is wrong; %s' % (
                             self.port.origin, item.similarity, item.other, why)
-                    emit([show(region, other), kind, name + self.port.suffix, source, note_with(note, text + '; unconfirmed')],
+                    emit([show(region, other), kind, name, source, note_with(note, text + '; unconfirmed')],
                          ('function', region, 'lead'))
                     carried[region, value] = ('lead', other)
                     continue
@@ -780,7 +776,7 @@ class Seeding:
                     weak_leads.append((region, other, name, item.method, item.similarity))
                     counts['function', region, 'weak lead, unnamed'] += 1
                 else:
-                    emit([show(region, other), kind, name + self.port.suffix, source,
+                    emit([show(region, other), kind, name, source,
                           note_with(note, '%s: changed, %s at %.3f, below %.2f; a lead, its prototype and '
                                           'convention not carried' % (self.port.origin, item.method, item.similarity,
                                                                       THRESHOLD))],
@@ -948,8 +944,11 @@ class Seeding:
             found.group(1), start, copy - start, found.group(4) or '') + fields[4][found.end():]
         return '\t'.join(fields)
 
-    def modules(self, carried):
-        """The modules file's text: each base row re-keyed."""
+    def modules(self, carried, names):
+        """The modules file's text: each base row re-keyed, under the name
+        the names file's text, names, gives its function."""
+        named = {fields[0]: fields[2] for fields in (line.split('\t') for line in names.split('\n'))
+                 if not fields[0].startswith('#') and len(fields) > 2 and fields[1] == 'function'}
         rows = [self.port.text(MODULES_HEADER)]
         corrected_others = {(r, o) for (r, _), (o, _) in self.port.corrections.items()}
         lines = open(os.path.join(self.base_folder, 'modules.tsv')).read().split('\n')
@@ -961,7 +960,8 @@ class Seeding:
             item = self.code.get((region, value))
             seeded = carried.get((region, value))
             if seeded is not None:
-                other, name = seeded[1], f[1] + (self.port.suffix if seeded[0] == 'lead' else '')
+                other = seeded[1]
+                name = named.get(show(region, other), f[1])
             elif item is not None and item.other is not None and (
                     self.counted(item) or (item.status == 'changed' and item.similarity >= LEAD)):
                 # a lead named by Setup (an SCPI handler): its module still a hint
@@ -1001,7 +1001,7 @@ def main():
     arguments = parser.parse_args()
     seeding = Seeding(os.path.abspath(arguments.base_folder), os.path.abspath(arguments.folder))
     names, carried = seeding.names()
-    outputs = {'names.tsv': names, 'modules.tsv': seeding.modules(carried)}
+    outputs = {'names.tsv': names, 'modules.tsv': seeding.modules(carried, names)}
     if arguments.counts:
         with open(arguments.counts, 'w') as counts:
             for key, count in sorted(seeding.counts.items()):

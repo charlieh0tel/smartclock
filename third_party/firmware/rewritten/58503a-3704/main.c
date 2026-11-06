@@ -33,7 +33,7 @@ void system_init(void) {
   happening_buffers_clear();
   eeprom_lock_init();
   calibration_block_read();
-  parameter_record_read_58503a();
+  parameter_record_read();
   identification_record_read();
   hmon_tick_countdown = 0;
   memcpy(sample_values, &sample_values_defaults, SAMPLE_DEFAULTS_SIZE);
@@ -69,7 +69,7 @@ void system_init(void) {
 
     memcpy(retained_block, retained_block_defaults,
            sizeof retained_block_defaults);
-    gps_init_58503a();
+    gps_init();
     pll_init();
     monitors_reset();
     if (system_reset) {
@@ -88,7 +88,7 @@ void system_init(void) {
   } else {
     exception_record_clear();
   }
-  pps_monitors_reset_58503a();
+  pps_monitors_reset();
   timecode_init();
   selftest_init();
 }

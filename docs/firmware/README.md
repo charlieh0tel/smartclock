@@ -1968,7 +1968,7 @@ the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
 `check-pforth-words`, `check-image-diff`, `check-chip-selects`,
 `check-loop-trace`, `check-magic-numbers`, `check-comment-addresses`,
-`check-common`, `check-decompiled`, which runs `check-unicorn` first,
+`check-common`, `check-plain-names`, `check-decompiled`, which runs `check-unicorn` first,
 `check-link`, which fails if an image does not link from its
 hand-written C and assembly alone, every function required ("Hand-written
 C"), and `report-decompiled`, which fails if any function fails and checks
@@ -1990,7 +1990,9 @@ seeded names and the 58503A's document's figures;
 cite; and `check-common` the shared C, `common/`, and that the
 seeded images' `check-layout.c` assert their layouts at their own
 addresses, which its rule 2 compares, and the figures of what
-`common/` holds that the documents quote (`rewrite.md`, "Shared C").  None of the targets builds the workspace;
+`common/` holds that the documents quote (`rewrite.md`, "Shared C");
+`check-plain-names` that no function is named for an image
+(`rewrite.md`, "The rewrite").  None of the targets builds the workspace;
 `check-chip-selects` reads every image's reset code (`restart.md`,
 "The chip selects").  The job also runs `make check-board-atlas`, which
 needs only Python: `docs/board-atlas.html` against the data it is

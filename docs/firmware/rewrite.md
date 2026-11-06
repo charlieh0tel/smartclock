@@ -151,7 +151,17 @@ out the image's arguments from it.
   from: a lead, a pairing the seeding finds changed below its carrying
   threshold, takes its base's name, its note saying how it was paired
   ([`PLAN.md`](../../PLAN.md), "A second image is ported by copying
-  the first's work").
+  the first's work"), and how a function differs from another image's
+  of its name is its names file note's to say.  `make
+  check-plain-names` (`tools/firmware/plain_names.py`) fails where the
+  hand-written C or a names file's name column names a function with
+  an image's suffix, `_58503a`, `_z3805a`, `_z3801a`, `_z3815a`,
+  `_58503b` or `_z3816a`; text quoted, a file's name and an image's
+  identifier (`58503a-3704`) are not names.  Where a plain name would
+  clash in an image's link with a `common/` function of different
+  code, the image keeps its own copy under the name, as rule 6 of
+  "Shared C" has it, or, a static helper beside `common/`'s, a name of
+  what it does (`startup_gpt_init_both_pwm`), never an address.
 - Register-convention routines are called through bindings: a header in
   `rewritten/bindings/` defines a function under the routine's name and
   prototype that binds each argument with a local register variable and

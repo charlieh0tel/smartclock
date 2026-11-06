@@ -98,6 +98,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make check-common
         if: ${{ !cancelled() }}
+      - run: make check-plain-names
+        if: ${{ !cancelled() }}
       - run: make check-decompiled
         if: ${{ !cancelled() }}
       - run: make check-decompiled IMAGE=58503a-3704

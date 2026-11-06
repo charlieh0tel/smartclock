@@ -62,8 +62,8 @@ void gps_receive_expect(uint8_t c, uint8_t expected) {
 
 /* 1 once more time has passed since start than the message's timeout
  * (0x4c290). */
-uint32_t gps_response_timed_out_58503a(gps_request_code_word message,
-                                       uint32_t* start) {
+uint32_t gps_response_timed_out(gps_request_code_word message,
+                                uint32_t* start) {
   int32_t elapsed;
 
   return uptime_elapsed(start, &elapsed) &&
@@ -215,7 +215,7 @@ void oncore_position_message(void) {
     gps.average_count++;
     gps.surveying = 1;
   }
-  gps_receiver_status_update_58503a(GPS_RECEIVER_ONCORE, 0);
+  gps_receiver_status_update(GPS_RECEIVER_ONCORE, 0);
   if (gps_status_print_interval != 0 &&
       ++gps_status_print_count >= gps_status_print_interval) {
     gps_status_print_count = 0;
@@ -520,12 +520,12 @@ uint8_t* gps_response_decode(gps_request_code_word message, uint8_t* response) {
  * kind; for those that compare, whether its bytes after the ID are the
  * command's (0x50e16).  The 58503A's second @@Ar is answered as the
  * entry 55 it is, and its second @@Ea by the first. */
-gps_match_result gps_response_match_58503a(gps_request_code_word message,
-                                           uint8_t* sent, uint8_t length,
-                                           gps_argument_mode mode,
-                                           gps_request_code_word index,
-                                           uint8_t* response,
-                                           int16_t response_length) {
+gps_match_result gps_response_match(gps_request_code_word message,
+                                    uint8_t* sent, uint8_t length,
+                                    gps_argument_mode mode,
+                                    gps_request_code_word index,
+                                    uint8_t* response,
+                                    int16_t response_length) {
   /* @@Ab's offset: sign, hours, minutes. */
   static const uint8_t OFFSET_LENGTH = 3;
   static const uint8_t OFFSET_NEGATIVE = 0xff;

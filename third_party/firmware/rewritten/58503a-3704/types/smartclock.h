@@ -48,7 +48,7 @@ typedef enum __attribute__((packed)) gps_code_class {
   GPS_CLASS_MESSAGE = 0, /* 0 to 0x37 with argument mode 0 or 1: one message
                             (the 58503A 3704's, 0x4c7ce) */
   GPS_CLASS_SCRIPT = 1,  /* 0x52 to 0x65: a script */
-  GPS_CLASS_STEP = 2,    /* 0x38 to 0x51: gps_console_request_58503a's */
+  GPS_CLASS_STEP = 2,    /* 0x38 to 0x51: gps_console_request's */
   GPS_CLASS_INVALID = 3,
 } gps_code_class;
 
@@ -943,7 +943,7 @@ typedef struct selftest_results {
  * 3704 0 to 0x37 an Oncore message, the index of its entry in
  * oncore_messages (0x51178; the VP Oncore Command Reference names each,
  * third_party/motorola/VPCommands.pdf); 0x38 to 0x51 a step of the GPS
- * task's own, gps_console_request_58503a's (0x4d046, its jump table
+ * task's own, gps_console_request's (0x4d046, its jump table
  * 0x4d070); 0x52 to 0x65 a script, each named by the messages it sends
  * (docs/firmware/oncore/58503a-3704.txt).  The Z3805A 3543B's 0 to 0x30
  * are the same but for @@Bn to @@Cj, one higher; its steps from 0x31
@@ -952,7 +952,7 @@ typedef struct selftest_results {
  * higher to its hold position's, 12 after the one the 58503A adds
  * (docs/firmware/58503a-3704.md, "The enums").  The table's empty
  * slots, 0x1a, 0x22, 0x23, 0x25, 0x28, 0x2b and 0x2c, and the steps
- * gps_console_request_58503a does nothing for, 0x4b, 0x4c, 0x4f and
+ * gps_console_request does nothing for, 0x4b, 0x4c, 0x4f and
  * 0x51, have no name. */
 typedef enum __attribute__((packed)) gps_request_code {
   GPS_REQUEST_TIME_OF_DAY = 0x00,              /* @@Aa */
@@ -1183,7 +1183,7 @@ typedef enum __attribute__((packed)) scpi_language_choice {
 
 #include "../../common/types/status_register.h"
 
-/* One of port_error_reports' four entries, which scpi_session_init_58503a
+/* One of port_error_reports' four entries, which scpi_session_init
  * fills (0x28dfc to 0x28e24) and port_report_errors reads: receive status
  * bits and the condition reported for them, 0xc0 0x15, 0x10 0x16, 0x20
  * 0x14 and 0x01 0x13; the installer's likewise. */
@@ -2150,7 +2150,7 @@ typedef struct gps_statistics {
 
 #include "../../common/types/os.h"
 
-/* A fixed event log message, by the code log_event_58503a (0x3189a) takes
+/* A fixed event log message, by the code log_event (0x3189a) takes
  * and its jump table's order (0x318bc, 28 cases); the names are the
  * messages'.  enter_holdover (0x4396e) picks a holdover's by its cause.
  * The 58503A 3704 adds "EXT reference valid" as 0x15, moving the

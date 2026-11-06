@@ -247,7 +247,7 @@ char nv_save(request_source source) {
   }
   if (!saved) {
     if (kernel_running) {
-      log_event_58503a(LOG_EEPROM_SAVE_FAILED);
+      log_event(LOG_EEPROM_SAVE_FAILED);
     }
     status_report_from(STATUS_MEMORY_ERROR, source);
   }

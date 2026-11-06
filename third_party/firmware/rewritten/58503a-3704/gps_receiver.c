@@ -736,8 +736,8 @@ static void gps_receiver_track_log(gps_sync_status previous,
  * @@Ba is merely stale or there is no satellite; else it is invalid,
  * with the reason.  Only the Oncore's, receiver 0: the alternate's
  * status it takes and leaves (0x4b8a2). */
-void gps_receiver_status_update_58503a(gps_receiver_number receiver,
-                                       uint8_t alternate_status) {
+void gps_receiver_status_update(gps_receiver_number receiver,
+                                uint8_t alternate_status) {
   static const uint16_t VALIDATION_SECONDS = 35;
   gps_reference_record* reference = &gps.references[GPS_RECEIVER_ONCORE];
 

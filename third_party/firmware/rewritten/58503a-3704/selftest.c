@@ -690,6 +690,6 @@ void selftest_print_failure(char clear_eeprom) {
   selftest.test = SELFTEST_TEST_ALL;
   selftest.running = 0;
   if (selftest.passed == 0) {
-    log_event_58503a(LOG_SELFTEST_FAILED);
+    log_event(LOG_SELFTEST_FAILED);
   }
 }

@@ -863,7 +863,7 @@ void status_snapshot(status_snapshot_record* snapshot) {
   snapshot->kenneth_predicted_valid =
       kenneth_predicted_get(&snapshot->kenneth_predicted,
                             &snapshot->kenneth_predicted_resolution, &holdover);
-  snapshot->holdover_waiting_reason = holdover_waiting_reason_58503a();
+  snapshot->holdover_waiting_reason = holdover_waiting_reason();
   snapshot->holdover_duration = pll.holdover_duration;
   snapshot->holdover_limit_state = nv_settings.holdover_limit_state;
   snapshot->holdover_limit_threshold = nv_settings.holdover_limit_threshold;
@@ -880,9 +880,8 @@ void status_snapshot(status_snapshot_record* snapshot) {
     snapshot->date = date;
   }
   snapshot->pll_field_3d5 = pll.field_3e5;
-  gps_receiver_status_update_58503a(GPS_RECEIVER_ONCORE, 0);
-  gps_receiver_status_update_58503a(GPS_RECEIVER_ALTERNATE,
-                                    gps_status_alternate());
+  gps_receiver_status_update(GPS_RECEIVER_ONCORE, 0);
+  gps_receiver_status_update(GPS_RECEIVER_ALTERNATE, gps_status_alternate());
   snapshot->douglas_duration_infinite = nv_settings.douglas_duration_infinite;
   snapshot->hardware_condition = status_hardware_condition();
   set_interrupt_mask(sr);

@@ -10050,7 +10050,7 @@ void scpi_prompt_set(uint8_t enabled);
 uint8_t scpi_prompt_get(void);
 scpi_port * scpi_console_port(void);
 void scpi_prompt(int32_t param_1);
-scpi_port * scpi_session_init_58503a(void);
+scpi_port * scpi_session_init(void);
 void scpi_session_close(void);
 int32_t scpi_console_return_zero(void);
 int32_t scpi_console_read(scpi_port *port,uint8_t *buffer,int32_t length);
@@ -10520,7 +10520,7 @@ int32_t log_entry_total(uint8_t *full);
 int32_t log_init(void);
 int32_t log_read(int32_t number,char *text,char *heading);
 int32_t log_write(char *format,...);
-int32_t log_event_58503a(log_event_code code);
+int32_t log_event(log_event_code code);
 void log_first_satellite(uint32_t param_1,uint32_t param_2);
 void log_ext_reference_valid(uint32_t date,uint32_t time);
 void log_page_clear(void *param_1);
@@ -10701,7 +10701,7 @@ void nv_param_field_b8_done(void);
 pll_screen_mode pll_mode(void);
 pll_powerup_suffix pll_powerup_suffix_index(void);
 pll_recovery_suffix recovery_suffix_index(void);
-uint8_t holdover_waiting_reason_58503a(void);
+uint8_t holdover_waiting_reason(void);
 void pllp_start_nothing_a(void);
 void pllp_start_nothing_b(void);
 void nv_clear_and_reset(void);
@@ -10798,7 +10798,7 @@ void raim_monitor(void);
 void gps_reference_reset(char external);
 void gps_reference_hysteresis_set(int32_t hysteresis);
 void ext_reference_hysteresis_set(int32_t hysteresis);
-void gps_receiver_status_update_58503a(gps_receiver_number receiver,uint8_t alternate_status);
+void gps_receiver_status_update(gps_receiver_number receiver,uint8_t alternate_status);
 uint8_t gps_status_alternate(void);
 void command_monitor_init(void);
 void command_monitor(void);
@@ -10806,7 +10806,7 @@ void gps_response_reset(void);
 uint32_t gps_response_lookup(char first,char second,int16_t *length,gps_request_code_word *index);
 void gps_receive_expect(uint8_t c,uint8_t expected);
 gps_framing_state gps_receive(void);
-uint32_t gps_response_timed_out_58503a(gps_request_code_word message,uint32_t *start);
+uint32_t gps_response_timed_out(gps_request_code_word message,uint32_t *start);
 int32_t gps_count_response(gps_request_result kind,gps_request_entry *request);
 void request_ring_clear(void);
 bool request_ring_put(gps_request_entry *entry);
@@ -10831,7 +10831,7 @@ void gps_link_reset(void);
 uint8_t gps_request_admitted(gps_request_sender sender,gps_request_code_word code);
 void gpsm_task(void);
 void raim_request_arguments(void);
-void gps_console_request_58503a(gps_request_code_word code,int32_t *arguments,uint8_t sender);
+void gps_console_request(gps_request_code_word code,int32_t *arguments,uint8_t sender);
 void command_log_clear(void);
 int32_t command_log_add(gps_running_command *command,char *text);
 int32_t gps_print_command(gps_command_log *log,char *line);
@@ -10906,9 +10906,8 @@ int16_t gps_request_build(gps_request_code_word message,gps_argument_mode mode,i
 uint8_t * gps_response_decode(gps_request_code_word message,uint8_t *response);
 uint32_t bytes_equal_n(uint8_t *a,int16_t a_length,uint8_t *b,int16_t b_length);
 gps_match_result
-gps_response_match_58503a
-          (gps_request_code_word message,uint8_t *sent,uint8_t length,gps_argument_mode mode,
-          gps_request_code_word index,uint8_t *response,int16_t response_length);
+gps_response_match(gps_request_code_word message,uint8_t *sent,uint8_t length,gps_argument_mode mode
+                  ,gps_request_code_word index,uint8_t *response,int16_t response_length);
 int32_t gps_message_to_text(uint8_t *message,uint8_t length,char *text);
 void front_panel_signal_pps(void);
 void front_panel_format_dms(char *text,double mas,char latitude);
@@ -11266,7 +11265,7 @@ scpi_port * installer_scpi_session_init(void);
 void installer_scpi_session_close(void);
 int32_t installer_scpi_console_return_zero(void);
 int32_t installer_scpi_console_read(scpi_port *port,uint8_t *buffer,int32_t length);
-int16_t installer_console_port_read_58503a(void);
+int16_t installer_console_port_read(void);
 void installer_scpi_input_ended(void);
 void installer_scpi_console_putc(scpi_port *port,int32_t character);
 int32_t installer_scpi_console_write();
@@ -35189,7 +35188,7 @@ __asm__(
 /* scpi_prompt: rewritten in scpi_port.c */
 
 /* 00028df0 */
-/* scpi_session_init_58503a: rewritten in scpi_engine.c */
+/* scpi_session_init: rewritten in scpi_engine.c */
 
 /* 00028e64 */
 /* scpi_session_close: rewritten in scpi_engine.c */
@@ -36429,7 +36428,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* log_write: rewritten in log.c */
 
 /* 0003189a */
-/* log_event_58503a: rewritten in log.c */
+/* log_event: rewritten in log.c */
 
 /* 00031aac */
 /* log_first_satellite: rewritten in log.c */
@@ -36924,7 +36923,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* recovery_suffix_index: rewritten in pllp.c */
 
 /* 00045e1c */
-/* holdover_waiting_reason_58503a: rewritten in pllp.c */
+/* holdover_waiting_reason: rewritten in pllp.c */
 
 /* 00045e62 */
 /* pllp_start_nothing_a: rewritten in pllp.c */
@@ -37197,7 +37196,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* ext_reference_hysteresis_set: rewritten in gps_receiver.c */
 
 /* 0004b8a2 */
-/* gps_receiver_status_update_58503a: rewritten in gps_receiver.c */
+/* gps_receiver_status_update: rewritten in gps_receiver.c */
 
 /* 0004bc98 */
 /* gps_status_alternate: rewritten in gps_receiver.c */
@@ -37221,7 +37220,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* gps_receive: rewritten in gps_oncore.c */
 
 /* 0004c290 */
-/* gps_response_timed_out_58503a: rewritten in gps_oncore.c */
+/* gps_response_timed_out: rewritten in gps_oncore.c */
 
 /* 0004c2ca */
 /* gps_count_response: rewritten in gps_oncore.c */
@@ -37287,7 +37286,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* raim_request_arguments: rewritten in gps_task.c */
 
 /* 0004d046 */
-/* gps_console_request_58503a: rewritten in gps_task.c */
+/* gps_console_request: rewritten in gps_task.c */
 
 /* 0004d156 */
 /* command_log_clear: rewritten in gps_reports.c */
@@ -37503,7 +37502,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* bytes_equal_n: rewritten in arithmetic.c */
 
 /* 00050e16 */
-/* gps_response_match_58503a: rewritten in gps_oncore.c */
+/* gps_response_match: rewritten in gps_oncore.c */
 
 /* 00051068 */
 /* gps_message_to_text: rewritten in gps_oncore.c */
@@ -54346,7 +54345,7 @@ __asm__(
 /* installer_scpi_console_read: rewritten in installer_scpi_port.c */
 
 /* installer::00107490 */
-/* installer_console_port_read_58503a: rewritten in installer_scpi_port.c */
+/* installer_console_port_read: rewritten in installer_scpi_port.c */
 
 /* installer::00107548 */
 /* installer_scpi_input_ended: rewritten in installer_scpi_port.c */

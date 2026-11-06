@@ -5,4 +5,4 @@
  * keeps its generated prototype. */
 
 /* Sets the GPT up, as gpt_init does (installer::0x100c1e). */
-void installer_gpt_init(void) { startup_gpt_init_58503a(); }
+void installer_gpt_init(void) { startup_gpt_init_both_pwm(); }

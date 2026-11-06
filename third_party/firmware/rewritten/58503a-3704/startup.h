@@ -10,7 +10,7 @@
  * forced, port GP, the output compares off, input capture 4, captures 1
  * and 2 on rising edges, the prescaler and its interrupts, and the
  * flags cleared. */
-static void startup_gpt_init_58503a(void) {
+static void startup_gpt_init_both_pwm(void) {
   static const uint16_t GPTMCR_ARBITRATION = 0xc;
   /* IPL 6 in bits 10 to 8, IVBA 5, vectors 0x50 to 0x5f (D.2.3). */
   static const uint16_t ICR_LEVEL_6_VECTORS_0X50 = 0x650;

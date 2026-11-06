@@ -149,7 +149,7 @@ void gps_request_run_queued(gps_request_code_word code) {
       }
     }
   }
-  gps_console_request_58503a(taken.code, taken.arguments, taken.sender);
+  gps_console_request(taken.code, taken.arguments, taken.sender);
   gps_count_response(GPS_RESULT_SUCCESS, &taken);
 }
 

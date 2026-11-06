@@ -147,7 +147,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void* parameters,
 
   if (scpi_source_roscillator_mode() == PLL_MODE_HOLDOVER) {
     uint16_t sr = set_interrupt_mask(CPU_IPL_1);
-    uint8_t reason = holdover_waiting_reason_58503a();
+    uint8_t reason = holdover_waiting_reason();
 
     set_interrupt_mask(sr);
     switch (reason) {

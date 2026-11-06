@@ -28,7 +28,7 @@ klok_entry* clk_do(klok_entry* event) {
 
   if (entry == NULL) {
     task_dmessage("Clk_do: out of event buffers");
-    log_event_58503a(LOG_OUT_OF_EVENT_BUFFERS);
+    log_event(LOG_OUT_OF_EVENT_BUFFERS);
   } else {
     klok_free = entry->next;
     *entry = *event;

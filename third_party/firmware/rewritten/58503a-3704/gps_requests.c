@@ -249,7 +249,7 @@ gps_script_step** gps_script_lookup(gps_request_code_word code) {
     return gps_script_none;
   }
   if (code == GPS_SCRIPT_INIT_DEFAULTS) {
-    gps_init_58503a();
+    gps_init();
   }
   return gps_requests_scripts[index];
 }

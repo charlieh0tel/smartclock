@@ -6,7 +6,7 @@
 
 /* Reads DUART channel B's settings from the parameter record; else takes
  * their defaults and returns 0.  When the record is good it returns D3
- * as its caller left it, as parameter_record_read_58503a does
+ * as its caller left it, as parameter_record_read does
  * (installer::0x108280). */
 uint8_t installer_parameter_record_read(void) {
   uint8_t result = (uint8_t)CPU_CALLERS_REGISTER(uint32_t, "d3");

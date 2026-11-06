@@ -128,8 +128,7 @@ void installer_port_prompt_set(char port, uint8_t enabled) {
 /* Opens the port's session; its port object, or null for another port
  * (installer::0x10771e). */
 scpi_port* installer_port_session_init(char port) {
-  return port == SCPI_PORT_DUART_B ? installer_scpi_session_init_58503a()
-                                   : NULL;
+  return port == SCPI_PORT_DUART_B ? installer_scpi_session_init() : NULL;
 }
 
 /* The port's object, or null for another port (installer::0x107746). */

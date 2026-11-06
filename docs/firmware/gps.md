@@ -271,7 +271,7 @@ The 58503A decides at run time, from three bits of `gps.field_592`
   labels are matched from the table at `0x5262c`; a line without its
   label gives `strchr` and `atoi` a null pointer.
 - `gps` is cleared at start (`main`) and by the master reset script
-  `0x52` (`gps_script_lookup` calls `gps_init_58503a`).  The count is
+  `0x52` (`gps_script_lookup` calls `gps_init`).  The count is
   then 0, which refuses `Ba`, `Bn`, `Ea`, `Ek` and `En`, until step
   `0x4d` after `@@Cj` makes it 6.
 
@@ -339,7 +339,7 @@ code, read from the ROM), with no clamp.
 - The offset is `:GPS:REFerence:BIAS`, 0 to 999 ns: the descriptor at
   `0x33c8e` holds its value there, and its done hook,
   `calibration_block_save_reported` (`0x30c0a`), writes it to the
-  EEPROM calibration block (`save_calibration_block_58503a`,
+  EEPROM calibration block (`save_calibration_block`,
   `0x30b24`).  3633 has a pointer to the same address at `0x3395a`
   (read from the ROM).  The Z3805A has no such command
   (`58503a-3704.md`, "The SCPI trees").

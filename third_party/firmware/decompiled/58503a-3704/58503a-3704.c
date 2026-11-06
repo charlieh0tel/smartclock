@@ -9872,7 +9872,7 @@ float hmon_channel_read(adc_channel channel);
 void adc_monitors_reset(void);
 void hmon_reset(void);
 void monitor_average_add(adc_channel channel);
-void monitor_filter_add_58503a(adc_channel param_1);
+void monitor_filter_add(adc_channel param_1);
 void hmon_smoothed_add(adc_channel channel);
 void hmon_report_tolerance(adc_channel channel,uint8_t out);
 uint8_t monitor_out_of_range(adc_monitor *monitor,float minimum,float maximum,uint8_t limit);
@@ -9913,7 +9913,7 @@ void lamps_request(void);
 void lamps_write(uint8_t blink);
 void hmon_task(void);
 void counter_reset(void);
-void pps_monitors_reset_58503a(void);
+void pps_monitors_reset(void);
 void monitors_reset(void);
 int32_t scpi_double_multiply_short();
 int32_t scpi_number_to_double(scpi_number *number,double *value,int32_t scale);
@@ -10495,11 +10495,11 @@ uint32_t lifetime_record_write(void);
 void lifetime_efc_save(void);
 void lifetime_event_run(void);
 void lifetime_update(int32_t date);
-uint32_t save_calibration_block_58503a(void);
+uint32_t save_calibration_block(void);
 uint8_t calibration_block_read(void);
 uint8_t calibration_block_save_reported(int32_t index,int32_t source);
-bool save_parameter_record_58503a(void);
-uint8_t parameter_record_read_58503a(void);
+bool save_parameter_record(void);
+uint8_t parameter_record_read(void);
 uint8_t parameter_record_save_reported(request_source source);
 void duartb_settings_preset(int32_t index,int32_t source);
 void eeprom_lock_init(void);
@@ -10674,7 +10674,7 @@ uint32_t holdover_within_limit(float param_1);
 void enter_holdover(void);
 void holdover_duration_count(void);
 pll_stage_result holdover(bool same_stage);
-uint32_t clock_check_against_gps_58503a(void);
+uint32_t clock_check_against_gps(void);
 pll_stage_result holdover_recovery(bool same_stage);
 pll_stage_result startup_pll(bool same_stage);
 pll_stage_result pll_normal(bool same_stage);
@@ -10826,7 +10826,7 @@ bool gps_request_post(gps_request_sender sender,gps_request_code_word code,int32
                      uint8_t sent);
 gps_code_class gps_request_class(gps_request_code_word code,gps_argument_mode argument_mode);
 gps_script_step ** gps_script_lookup(gps_request_code_word code);
-void gps_init_58503a(void);
+void gps_init(void);
 void gps_link_reset(void);
 uint8_t gps_request_admitted(gps_request_sender sender,gps_request_code_word code);
 void gpsm_task(void);
@@ -11262,7 +11262,7 @@ void installer_scpi_prompt_set(uint8_t enabled);
 uint8_t installer_scpi_prompt_get(void);
 scpi_port * installer_scpi_console_port(void);
 void installer_scpi_prompt(int32_t param_1);
-scpi_port * installer_scpi_session_init_58503a(void);
+scpi_port * installer_scpi_session_init(void);
 void installer_scpi_session_close(void);
 int32_t installer_scpi_console_return_zero(void);
 int32_t installer_scpi_console_read(scpi_port *port,uint8_t *buffer,int32_t length);
@@ -32941,7 +32941,7 @@ __asm__(
 /* monitor_average_add: rewritten in monitors.c */
 
 /* 00021dba */
-/* monitor_filter_add_58503a: rewritten in monitors.c */
+/* monitor_filter_add: rewritten in monitors.c */
 
 /* 00021e3e */
 /* hmon_smoothed_add: rewritten in monitors.c */
@@ -33064,7 +33064,7 @@ __asm__(
 /* counter_reset: rewritten in ti.c */
 
 /* 00023d8e */
-/* pps_monitors_reset_58503a: rewritten in monitors.c */
+/* pps_monitors_reset: rewritten in monitors.c */
 
 /* 00023dc2 */
 /* monitors_reset: rewritten in monitors.c */
@@ -36354,7 +36354,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* lifetime_update: rewritten in records.c */
 
 /* 00030b24 */
-/* save_calibration_block_58503a: rewritten in records.c */
+/* save_calibration_block: rewritten in records.c */
 
 /* 00030ba8 */
 /* calibration_block_read: rewritten in records.c */
@@ -36363,10 +36363,10 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* calibration_block_save_reported: rewritten in records.c */
 
 /* 00030c6c */
-/* save_parameter_record_58503a: rewritten in records.c */
+/* save_parameter_record: rewritten in records.c */
 
 /* 00030d12 */
-/* parameter_record_read_58503a: rewritten in records.c */
+/* parameter_record_read: rewritten in records.c */
 
 /* 00030da4 */
 /* parameter_record_save_reported: rewritten in records.c */
@@ -36843,7 +36843,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* holdover: rewritten in pll_stages.c */
 
 /* 00043f20 */
-/* clock_check_against_gps_58503a: rewritten in pllp.c */
+/* clock_check_against_gps: rewritten in pllp.c */
 
 /* 00043fc0 */
 /* holdover_recovery: rewritten in pll_stages.c */
@@ -37272,7 +37272,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* gps_script_lookup: rewritten in gps_requests.c */
 
 /* 0004c90c */
-/* gps_init_58503a: rewritten in gps_task.c */
+/* gps_init: rewritten in gps_task.c */
 
 /* 0004c97e */
 /* gps_link_reset: rewritten in gps_task.c */
@@ -54334,7 +54334,7 @@ __asm__(
 /* installer_scpi_prompt: rewritten in installer_scpi_port.c */
 
 /* installer::001073d8 */
-/* installer_scpi_session_init_58503a: rewritten in installer_scpi_engine.c */
+/* installer_scpi_session_init: rewritten in installer_scpi_engine.c */
 
 /* installer::0010744c */
 /* installer_scpi_session_close: rewritten in installer_scpi_engine.c */

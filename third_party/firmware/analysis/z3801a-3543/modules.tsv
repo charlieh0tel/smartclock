@@ -2,9 +2,9 @@
 # Z3805A 3543B's (third_party/firmware/analysis/z3805a-3543b/modules.tsv): each
 # Z3805A row re-keyed to its function's Z3801A address through
 # tools/firmware/image_diff.py's matches, as names.tsv is (identical,
-# relocated, or changed at a similarity of 0.70 or more under its own
-# name; from 0.50 a lead, named as names.tsv names it, with the suffix
-# _z3801a where names.tsv has a row for it).  A Z3805A function missing
+# relocated, or changed at a similarity of 0.70 or more, and from
+# 0.50 a lead), under the name names.tsv gives its address, or the
+# Z3805A's where it gives none.  A Z3805A function missing
 # from the Z3801A, or paired below 0.50, has no row, and the Z3801A's
 # new functions have none yet.  docs/firmware/modules.md gives the
 # layers, what each module holds and the calls that cross layers the

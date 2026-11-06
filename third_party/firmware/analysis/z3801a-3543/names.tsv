@@ -20,9 +20,9 @@
 # - A function matched changed at a similarity (image_diff's difflib
 #   ratio of the instructions, numbers masked) of 0.70 or more is
 #   carried, noted "changed", for the next wave to review.  From 0.50
-#   to 0.70 the Z3805A's name suffixed _z3801a marks the pairing as a
-#   lead, without its prototype or convention; below 0.50 there is no
-#   row, and the pairing is listed under "Leads" at the end.
+#   to 0.70 the pairing is a lead, under the Z3805A's name, its
+#   note saying so, without its prototype or convention; below 0.50
+#   there is no row, and the pairing is listed under "Leads" at the end.
 #   docs/firmware/z3801a-3543.md corrects three pairings, which the
 #   image settles, and carries them under their names: the self-test
 #   table names selftest_cpu_result, selftest_ram_result and

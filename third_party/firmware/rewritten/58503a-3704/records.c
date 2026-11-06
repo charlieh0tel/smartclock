@@ -126,7 +126,7 @@ static const uint16_t RECORDS_NO_CABLE_DELAY = 0xffff;
 /* Writes the time offset, the TC and the 1PPS cable delay, cut to a word,
  * to the calibration block when the block differs from it; 1 when the
  * block holds them (0x30b24). */
-uint32_t save_calibration_block_58503a(void) {
+uint32_t save_calibration_block(void) {
   calibration_block block;
 
   memset(&block, RECORDS_ERASED, sizeof block);
@@ -144,7 +144,7 @@ uint32_t save_calibration_block_58503a(void) {
 /* Reads the time offset, the TC and the 1PPS cable delay from the
  * calibration block, or zeros; true when its checksum holds (0x30ba8).
  * The delay is read back as an unsigned word, so that a negative one
- * that save_calibration_block_58503a cut to a word comes back 65536 more
+ * that save_calibration_block cut to a word comes back 65536 more
  * (docs/firmware/58503a-3704.md, "The records"). */
 uint8_t calibration_block_read(void) {
   calibration_block* block = RECORDS_CALIBRATION_BLOCK;
@@ -165,11 +165,11 @@ uint8_t calibration_block_read(void) {
   return 1;
 }
 
-/* save_calibration_block_58503a as a descriptor's hook, a memory error
+/* save_calibration_block as a descriptor's hook, a memory error
  * for the source when it fails; the index is not read; nonzero once
  * saved (0x30c0a). */
 uint8_t calibration_block_save_reported(int32_t index, int32_t source) {
-  if (!save_calibration_block_58503a()) {
+  if (!save_calibration_block()) {
     status_report_from(STATUS_MEMORY_ERROR, (request_source)source);
     return 0;
   }
@@ -179,7 +179,7 @@ uint8_t calibration_block_save_reported(int32_t index, int32_t source) {
 /* Writes DUART channel B's settings to the parameter record, and its
  * baud, parity, pacing and echo again in the SCI's fields, the 58503A
  * having no SCI; true when written (0x30c6c). */
-bool save_parameter_record_58503a(void) {
+bool save_parameter_record(void) {
   parameter_record record;
 
   memset(&record, RECORDS_ERASED, sizeof record);
@@ -203,14 +203,14 @@ bool save_parameter_record_58503a(void) {
  * their defaults and saves them, and returns 0.  When the record is good
  * it returns D3 as its caller left it, which it never sets
  * (docs/firmware/58503a-3704.md, "The records") (0x30d12). */
-uint8_t parameter_record_read_58503a(void) {
+uint8_t parameter_record_read(void) {
   uint8_t result = (uint8_t)CPU_CALLERS_REGISTER(uint32_t, "d3");
 
   if (record_checksum(&eeprom_parameter_record,
                       sizeof eeprom_parameter_record) !=
       eeprom_parameter_record.checksum) {
     memcpy(&duartb_settings, &records_duartb_defaults, sizeof duartb_settings);
-    save_parameter_record_58503a();
+    save_parameter_record();
     return 0;
   }
   duartb_settings.baud = eeprom_parameter_record.duartb_baud;
@@ -223,10 +223,10 @@ uint8_t parameter_record_read_58503a(void) {
   return result;
 }
 
-/* save_parameter_record_58503a, a memory error for the source when it
+/* save_parameter_record, a memory error for the source when it
  * fails; nonzero once saved (0x30da4). */
 uint8_t parameter_record_save_reported(request_source source) {
-  if (!save_parameter_record_58503a()) {
+  if (!save_parameter_record()) {
     status_report_from(STATUS_MEMORY_ERROR, source);
     return 0;
   }

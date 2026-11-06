@@ -940,7 +940,7 @@ CHECK_SIZE(alarm_text_entry, (0x29b1c - 0x29ac2) / 9);
 CHECK_FIELD(alarm_text_entry, severity, 8);
 CHECK_FIELD(alarm_text_node, entries, 0x29b44 - 0x29b42);
 
-/* port_error_reports at 0x102e48, as scpi_session_init_58503a fills it:
+/* port_error_reports at 0x102e48, as scpi_session_init fills it:
  * the masks at +0, +4, +8 and +0xc, the conditions at +2 to +0xe
  * (0x28dfc to 0x28e24) */
 CHECK_SIZE(port_error_report, 4);

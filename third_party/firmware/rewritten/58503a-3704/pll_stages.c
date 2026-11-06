@@ -1026,7 +1026,7 @@ void enter_holdover(void) {
                holdover_recovery_auto == 0;
   pll.stage = PLL_STAGE_HOLDOVER;
   if (pll.holdover_duration == 0) {
-    log_event_58503a(pll_stages_holdover_event());
+    log_event(pll_stages_holdover_event());
   }
   if ((pll.hold_causes & ~HOLD_CAUSE_MANUAL) != HOLD_CAUSE_NONE) {
     interval_mean_flag = 0;

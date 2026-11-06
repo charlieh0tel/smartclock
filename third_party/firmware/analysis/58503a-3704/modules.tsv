@@ -405,7 +405,7 @@
 0x31b18	log_flush	services/log
 0x31294	log_page_write	services/log
 0x31852	log_write	services/log
-0x3189a	log_event_58503a	services/log
+0x3189a	log_event	services/log
 0x31aac	log_first_satellite	services/log
 0x31426	log_erase	services/log
 0x314d8	log_erase_locked	services/log
@@ -567,7 +567,7 @@
 0x13104	scpi_task_start	applications/scpi/engine	root_task starts the SCPI task through spoo_run
 0x294f8	scpi_task_create	applications/scpi/engine
 0x294cc	scpi_task	applications/scpi/engine
-0x28df0	scpi_session_init_58503a	applications/scpi/engine
+0x28df0	scpi_session_init	applications/scpi/engine
 0x28e64	scpi_session_close	applications/scpi/engine
 0x25cd4	scpi_context_init	applications/scpi/engine
 0x2856c	scpi_interpret	applications/scpi/engine
@@ -945,7 +945,7 @@
 0x45d44	pll_mode	applications/pll/pllp
 0x45d8c	pll_powerup_suffix_index	applications/pll/pllp
 0x45dec	recovery_suffix_index	applications/pll/pllp
-0x45e1c	holdover_waiting_reason_58503a	applications/pll/pllp
+0x45e1c	holdover_waiting_reason	applications/pll/pllp
 0x47242	leap_ack_pending	applications/pll/pllp	pll +0x2c or +0x2d
 0x42ac2	get_ffom	applications/pll/pllp	derived from pll.stage; timecode_update reads it
 0x42a46	kenneth_present_get	applications/pll/pllp	the holdover uncertainty, from pll.tfom
@@ -1049,7 +1049,7 @@
 0x4c90c	gps_init	applications/gps/task
 0x4c97e	gps_link_reset	applications/gps/task
 0x4c9c0	gpsm_task	applications/gps/task
-0x4d046	gps_console_request_58503a	applications/gps/task
+0x4d046	gps_console_request	applications/gps/task
 0x4cfbc	raim_request_arguments	applications/gps/task
 0x4d362	status_snapshot_update	applications/gps/task	the GPS task's, at each @@Ea; fills the screen's snapshots
 0x4d40a	clear_gps_debug	applications/gps/task
@@ -1072,9 +1072,9 @@
 0x4c090	gps_response_lookup	applications/gps/oncore
 0x4c0dc	gps_receive_expect	applications/gps/oncore
 0x4c124	gps_receive	applications/gps/oncore
-0x4c290	gps_response_timed_out_58503a	applications/gps/oncore
+0x4c290	gps_response_timed_out	applications/gps/oncore
 0x4c2ca	gps_count_response	applications/gps/oncore
-0x50e16	gps_response_match_58503a	applications/gps/oncore
+0x50e16	gps_response_match	applications/gps/oncore
 0x50d3e	gps_response_decode	applications/gps/oncore
 0x5099c	oncore_checksum	applications/gps/oncore
 0x51068	gps_message_to_text	applications/gps/oncore
@@ -1099,7 +1099,7 @@
 0x50924	oncore_traim_message	applications/gps/oncore
 0x50968	oncore_receiver_id_message	applications/gps/oncore
 0x48190	running_average_update	applications/gps/oncore	oncore_position_message's survey average
-0x4b8a2	gps_receiver_status_update_58503a	applications/gps/receiver
+0x4b8a2	gps_receiver_status_update	applications/gps/receiver
 0x4bc98	gps_status_alternate	applications/gps/receiver
 0x4bc9e	command_monitor_init	applications/gps/receiver
 0x4bce6	command_monitor	applications/gps/receiver

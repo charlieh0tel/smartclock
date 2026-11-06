@@ -103,7 +103,7 @@ void port_prompt_set(char port, uint8_t enabled) {
 /* Opens the port's session; its port object, or null for another port
  * (0x291a6). */
 scpi_port* port_session_init(char port) {
-  return port == SCPI_PORT_DUART_B ? scpi_session_init_58503a() : NULL;
+  return port == SCPI_PORT_DUART_B ? scpi_session_init() : NULL;
 }
 
 /* The port's object, or null for another port (0x291ce). */

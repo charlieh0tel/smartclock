@@ -322,8 +322,8 @@ void pll_stage_status(void) {
     case PLL_STAGE_NORMAL_PLL:
       if (pll.led_gps_lock == 0) {
         pll.led_gps_lock = 1;
-        log_event_58503a(pll.field_3e5 != 0 ? LOG_EXT_LOCK_STARTED
-                                            : LOG_GPS_LOCK_STARTED);
+        log_event(pll.field_3e5 != 0 ? LOG_EXT_LOCK_STARTED
+                                     : LOG_GPS_LOCK_STARTED);
         status_happening(STATUS_LOCKED_SET);
         pwma_force_level(0);
       }
@@ -380,7 +380,7 @@ pll_recovery_suffix recovery_suffix_index(void) {
 /* For :HOLDover:WAITing? and the front panel: in holdover, the hold
  * cause it waits on, hardware (for a TI error too), GPS or the TI
  * limit; else 0 (0x45e1c). */
-uint8_t holdover_waiting_reason_58503a(void) {
+uint8_t holdover_waiting_reason(void) {
   if (pll.stage != PLL_STAGE_HOLDOVER) {
     return HOLD_CAUSE_NONE;
   }
@@ -553,10 +553,10 @@ void pllp_task(void) {
     pll.stage = PLL_STAGE_POWERUP;
     system_preset = preserved_region.restore != PRESERVED_REGION_RESTORE;
     if (system_preset) {
-      log_event_58503a(LOG_SYSTEM_PRESET);
+      log_event(LOG_SYSTEM_PRESET);
     } else {
       status_happening(STATUS_POWER_ON);
-      log_event_58503a(LOG_POWER_ON);
+      log_event(LOG_POWER_ON);
     }
     if (nv_settings.douglas_state_powerup != 0) {
       nv_settings.douglas_state = 0;
@@ -566,7 +566,7 @@ void pllp_task(void) {
     if (pll.stage != PLL_STAGE_POWERUP) {
       pll.stage = PLL_STAGE_POWERUP_RECOVERY;
     }
-    log_event_58503a(LOG_REBOOT);
+    log_event(LOG_REBOOT);
     *PLLP_REBOOTED = 1;
   }
   ti_setpoint = 0.0f;

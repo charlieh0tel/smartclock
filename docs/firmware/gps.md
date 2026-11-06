@@ -145,7 +145,7 @@ addresses.
 
 After sending a message the task waits for its answer
 (`gps_task_wait`, 3704 `0x4cdda`, Z3805A `0x4c31a`).
-`gps_response_match_58503a` (3704 `0x50e16`, jump table `0x50e54`;
+`gps_response_match` (3704 `0x50e16`, jump table `0x50e54`;
 3633 `0x50c1a`, read from the ROM) and the Z380x's
 `gps_response_match` (Z3805A `0x4fb86`, Z3801A `0x4fb44`) judge each
 complete message by the sent message's kind (`oncore_match_kind`).
@@ -389,7 +389,7 @@ Z3805A `0x4b01e`, Z3801A `0x4afdc`) is the same in all four:
   `GPS_SYNC_RAIM_ERROR`, "Invalid: Time RAIM error", when the unit
   holds position or surveys; the loop then enters holdover, logged as
   the RAIM alarm (`pll_stages_gps_holdover_event`).  In the 58503A
-  (`gps_receiver_status_update_58503a`, `0x4b8a2`) it goes there
+  (`gps_receiver_status_update`, `0x4b8a2`) it goes there
   directly, not through questionable.
 
 What the firmware sends: `raim_request_arguments` (`0x4cfbc`), step
@@ -488,7 +488,7 @@ alone.  Its users:
 - Reference qualification: at least one channel at mode 8, in
   position-fix mode, or the GPS reference is not tracking
   (`gps_receiver_status_update`, Z3805A `0x4b168`;
-  `gps_receiver_status_update_58503a`, 3704 `0x4b8a2`).
+  `gps_receiver_status_update`, 3704 `0x4b8a2`).
 
 **The status screen.**  `satellite_sets_build` (3704 `0x498a2`) puts
 each tracked satellite in a band by its channel's mode,
@@ -513,7 +513,7 @@ shows its elevation and azimuth.
 on, the 58503A logs each track lost or resumed to the event log
 (`gps_log_track_change`, `0x4dc5c`) as `Track lost    [SY] %08X %08X`
 and the like, the bracket the reference state left, the two longs
-packed channel words, from `gps_receiver_status_update_58503a`
+packed channel words, from `gps_receiver_status_update`
 (`0x4bb5c` to `0x4bc16`).  The Z380x have no such log.  Three fields
 of `gps`, all in `gps_receiver.c`:
 

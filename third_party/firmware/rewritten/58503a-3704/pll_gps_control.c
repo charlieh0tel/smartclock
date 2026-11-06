@@ -537,7 +537,7 @@ void gps_init_sequence(void) {
       }
       if (gps_ack_code == PLL_GPS_CONTROL_ACK_OK) {
         *state = PLL_GPS_INIT_DONE;
-        log_event_58503a(LOG_POSITION_HOLD_STARTED);
+        log_event(LOG_POSITION_HOLD_STARTED);
         status_happening(STATUS_POSITION_HOLD_SET);
       } else {
         char message[80];

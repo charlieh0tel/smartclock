@@ -47,7 +47,7 @@ static void front_panel_holdover_text(char* text) {
     return;
   }
   /* The image tests the result's low byte (0x529a4). */
-  switch ((uint8_t)holdover_waiting_reason_58503a()) {
+  switch ((uint8_t)holdover_waiting_reason()) {
     case HOLD_CAUSE_MANUAL:
       strcat(text, "HLD USR");
       break;

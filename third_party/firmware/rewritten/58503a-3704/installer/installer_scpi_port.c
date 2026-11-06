@@ -27,7 +27,7 @@ int32_t installer_scpi_console_read(scpi_port* port, uint8_t* buffer,
   int32_t count = 0;
 
   while (count < length) {
-    int16_t character = installer_console_port_read_58503a();
+    int16_t character = installer_console_port_read();
 
     if (character >= SCPI_PORT_CHARACTERS) {
       installer_scpi_input_ended();
@@ -44,7 +44,7 @@ int32_t installer_scpi_console_read(scpi_port* port, uint8_t* buffer,
  * which installer_port_report_errors reports; the last again once
  * installer_scpi_input_ended has marked it (installer::0x107490).  The
  * image sets the result's low word alone, its callers reading no more. */
-int16_t installer_console_port_read_58503a(void) {
+int16_t installer_console_port_read(void) {
   if (installer_scpi_input_repeat != 0) {
     installer_scpi_input_repeat = 0;
     return installer_scpi_last_input;

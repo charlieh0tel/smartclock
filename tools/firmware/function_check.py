@@ -1490,7 +1490,12 @@ STATES = {
 }
 # Another image's own States in place of STATES' of the same name, each
 # preset's values that image's.
+# The 58503A 3704's log_event, which logs by a code, not the base's,
+# which writes its entry itself, starts from none of STRAGGLER_STATES'
+# log cursors.
+LOG_EVENT_BY_CODE_STATES = {"log_event": States()}
 IMAGE_STATES = {
+    "58503a-3704": LOG_EVENT_BY_CODE_STATES,
     "z3801a-3543": {
         name: States(presets=(Preset("log_cursor", LOG_CURSORS_Z3801A), Preset("log_mutex.exchange", LOCK_EXCHANGES)))
         for name in ("log_write", "log_event")
@@ -1997,6 +2002,12 @@ ADC_OVEN = 3
 ADC_OVEN_CURRENT = 6
 WARM_OVEN = {f"adc_monitors[{ADC_OVEN}].valid": 1, f"adc_monitors[{ADC_OVEN}].value": -3.0}
 OVEN_CHECK_CASES = [{PRESETS: {"pll.stage": stage}} for stage in PLL_CHECK_STAGES]
+# The functions of the base's given cases whose copy in another image
+# differs and is given none of them: the 58503A 3704's
+# installer_console_port_read, the primary's console_port_read on the
+# installer's state, which prompts while installer_scpi_prompt_enabled
+# is set.
+NOT_GIVEN = {"installer_console_port_read": []}
 IMAGE_GIVEN_CASES = {
     # the Z3801A 3543's eight zero bytes and return_zero for
     # scpi_format_resolution_array_record's records (ARRAY_RECORD_KINDS):
@@ -2027,6 +2038,7 @@ IMAGE_GIVEN_CASES = {
         "oncore_filter_traim": FILTER_CASES_58503A
         + [{**case, PRESETS: {**case[PRESETS], "gps.field_592": 0}} for case in FILTER_CASES_58503A],
         **{name: [{0: port} for port in SCPI_TASK_PORTS] for name in ("scpi_task_run", "installer_scpi_task_run")},
+        **NOT_GIVEN,
     },
 }
 # Another image's own requests for SET_UP_REQUESTS' functions, the

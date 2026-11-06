@@ -15,7 +15,7 @@ int32_t scpi_query_failed(status_condition_code code, scpi_call* call) {
 
 /* Clears the SCPI input, sets the receive errors port_report_errors
  * reports, opens the port and prompts; the console port (0x28df0). */
-scpi_port* scpi_session_init_58503a(void) {
+scpi_port* scpi_session_init(void) {
   scpi_echo_length = 0;
   port_error_reports[0].mask = SCPI_CONSOLE_BREAK_OR_FRAMING;
   port_error_reports[1].mask = SCPI_CONSOLE_OVERRUN;

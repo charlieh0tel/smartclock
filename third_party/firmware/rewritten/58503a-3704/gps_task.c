@@ -92,8 +92,8 @@ void clear_gps_debug(void) {
 /* Runs one of the task's own steps, GPS_STEP_STATUS_SNAPSHOT to
  * GPS_STEP_LINK_RESET, with its arguments; any other does nothing
  * (0x4d046). */
-void gps_console_request_58503a(gps_request_code_word code, int32_t* arguments,
-                                uint8_t sender) {
+void gps_console_request(gps_request_code_word code, int32_t* arguments,
+                         uint8_t sender) {
   switch (code) {
     case GPS_STEP_STATUS_SNAPSHOT:
       status_snapshot(&status_screen_snapshot);
@@ -200,9 +200,8 @@ static void gps_task_start(gps_running_command* command,
       }
       break;
     case GPS_CLASS_STEP:
-      gps_console_request_58503a(command->request.code,
-                                 command->request.arguments,
-                                 command->request.sender);
+      gps_console_request(command->request.code, command->request.arguments,
+                          command->request.sender);
       break;
     default:
       gps_last_command = command;
@@ -237,7 +236,7 @@ static void gps_task_send(gps_running_command* command, uint32_t* sent_time,
   gps_request_code_word code = step->code;
 
   if (gps_request_class(code, step->argument_mode) == GPS_CLASS_STEP) {
-    gps_console_request_58503a(code, step->arguments, command->request.sender);
+    gps_console_request(code, step->arguments, command->request.sender);
     command->script++;
     return;
   }
@@ -290,8 +289,7 @@ static void gps_task_wait(gps_running_command* command, bool complete,
                           uint8_t* rejected_length, uint8_t* rejected,
                           uint8_t rejected_size) {
   static const uint8_t SEND_TRIES = 3;
-  const uint8_t timed_out =
-      gps_response_timed_out_58503a(command->message, sent_time);
+  const uint8_t timed_out = gps_response_timed_out(command->message, sent_time);
 
   if (timed_out == 1) {
     if (*tries < SEND_TRIES) {
@@ -314,9 +312,9 @@ static void gps_task_wait(gps_running_command* command, bool complete,
   gps_response_decode(gps_response_index, gps_response_buffer);
   gps_counts.responses_read++;
   if (timed_out == 0) {
-    switch (gps_response_match_58503a(
-        command->message, command->sent, command->length, command->query,
-        gps_response_index, gps_response_buffer, gps_response_length)) {
+    switch (gps_response_match(command->message, command->sent, command->length,
+                               command->query, gps_response_index,
+                               gps_response_buffer, gps_response_length)) {
       case GPS_MATCH_ANSWERED:
         gps.command_monitor_error = 0;
         command->script++;
@@ -428,9 +426,8 @@ void gpsm_task(void) {
         break;
     }
     command_monitor();
-    gps_receiver_status_update_58503a(GPS_RECEIVER_ONCORE, 0);
-    gps_receiver_status_update_58503a(GPS_RECEIVER_ALTERNATE,
-                                      gps_status_alternate());
+    gps_receiver_status_update(GPS_RECEIVER_ONCORE, 0);
+    gps_receiver_status_update(GPS_RECEIVER_ALTERNATE, gps_status_alternate());
     if (status_screen_print_interval != 0) {
       int32_t elapsed;
 

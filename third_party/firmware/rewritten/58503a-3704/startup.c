@@ -17,4 +17,4 @@ void enter_installer(void) {
 }
 
 /* Sets the GPT up (0x12196). */
-void gpt_init(void) { startup_gpt_init_58503a(); }
+void gpt_init(void) { startup_gpt_init_both_pwm(); }

@@ -191,10 +191,10 @@ void finish_scpi_cmd(void) {
     parameter_record_save_reported(pll_scpi_source);
   }
   if (douglas_log_event == LOG_SURVEY_STARTED) {
-    log_event_58503a(LOG_SURVEY_STARTED);
+    log_event(LOG_SURVEY_STARTED);
     status_happening(STATUS_POSITION_HOLD_CLEARED);
   } else if (douglas_log_event == LOG_POSITION_HOLD_STARTED) {
-    log_event_58503a(LOG_POSITION_HOLD_STARTED);
+    log_event(LOG_POSITION_HOLD_STARTED);
     status_happening(STATUS_POSITION_HOLD_SET);
   }
 }

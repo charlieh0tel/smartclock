@@ -144,12 +144,12 @@ board-atlas:
 # seeded from them, the addresses their C cites from the Z3805A's,
 # Unicorn's recorded bugs, every image's chip-select tables, the
 # hand-written C's magic numbers, the loop's traces, the images' shared
-# C, rewritten/common/.  They need
+# C, rewritten/common/, and the functions' names, none an image's.  They need
 # an m68k gcc and binutils, clang, clang-format and uv; none is part of
 # ci, and .github/workflows/firmware.yml runs the images' checks.
 FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-link report-decompiled \
 	scpi-tree check-scpi-tree handlers check-module-figures module-figures check-image-diff image-diff \
-	check-seed-names seed-names check-comment-addresses check-common \
+	check-seed-names seed-names check-comment-addresses check-common check-plain-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects check-magic-numbers magic-numbers check-loop-trace loop-trace
 .PHONY: $(FIRMWARE_TARGETS)

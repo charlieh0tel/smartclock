@@ -472,7 +472,11 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   under its base's name, its note saying it is a lead and at what
   similarity.  It was seeded with the port's suffix,
   `gps_init_58503a`, and that was dropped: the suffix recorded
-  lineage, not what the function does.
+  lineage, not what the function does.  No function is named for an
+  image: the rows added by hand were renamed for what they do, a
+  difference from another image's function of the name going into the
+  note, and `make check-plain-names` fails on a suffixed name in the
+  hand-written C or a names file.
 - **Per-image tool tables**: what the function check gives an image
   other than the Z3805A 3543B is kept in tables keyed by image or held
   by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`,

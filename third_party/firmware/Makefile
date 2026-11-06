@@ -48,7 +48,7 @@ EXPORTED_TARGETS = check-decompiled check-link check-scpi-tree check-magic-numbe
 IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS)
 # The rest, run once.
 TARGETS = format-c check-format-c check-module-figures module-figures check-image-diff image-diff \
-	check-comment-addresses check-common \
+	check-comment-addresses check-common check-plain-names \
 	check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects check-loop-trace loop-trace
@@ -137,6 +137,12 @@ check-image-diff: check-seed-names
 check-comment-addresses:
 	$(foreach image,$(SEEDED_IMAGES),python3 -I $(ROOT)/tools/firmware/comment_addresses.py \
 		--image $(image) --base $(DIFF_BASE_$(image)) &&) true
+
+# Fail if the hand-written C or a names file names a function with an
+# image's suffix, as _58503a, rather than for what it does
+# (tools/firmware/plain_names.py).
+check-plain-names:
+	python3 -I $(ROOT)/tools/firmware/plain_names.py
 
 # Fail if C in rewritten/common/, which every image whose export includes it
 # compiles as its own, is not what docs/firmware/rewrite.md's "Shared C"

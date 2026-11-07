@@ -2929,6 +2929,10 @@ GPS_MESSAGES_58503A = 56
 LOAD_DOUBLE_58503A = 0x3220E
 LOAD_LONG_58503A = 0x32E3A
 LOAD_LONG_UNIT_STEP_58503A = 0x32E32
+# scpi_format_resolution_array_record's records, this image's eight
+# zero bytes, those before status_register_layouts (0x2f44c), and
+# scpi_input_source (0x29246).
+ARRAY_RECORD_CASES_58503A = array_record_cases(0x2F44C, 0x29246)
 FILTERED_MESSAGES = (0x1E, 0x27, 0x29, 0x32, 0x33, 0x34, 0x2A)
 CHANNEL_COUNTS = (6, 8)
 FILTER_ENCODER_58503A = 0x4FE5A
@@ -3727,6 +3731,7 @@ IMAGE_GIVEN_CASES = {
         ],
         "gps_request_build": gps_request_build_cases(GPS_MESSAGES_58503A),
         **validator_cases(LOAD_DOUBLE_58503A, LOAD_LONG_58503A, LOAD_LONG_UNIT_STEP_58503A),
+        "scpi_format_resolution_array_record": ARRAY_RECORD_CASES_58503A,
         "oncore_filter_channels": FILTER_CASES_58503A,
         "oncore_filter_traim": FILTER_CASES_58503A
         + [{**case, PRESETS: {**case[PRESETS], "gps.field_592": 0}} for case in FILTER_CASES_58503A],

@@ -174,6 +174,15 @@ name ("The 58503A 3704").
 - **The Z3815A 4010's `installer_printf_polled` (`installer::0x103dba`)**
   formats into an 80-byte frame, half `installer_printf`'s, which a
   longer text overruns.
+- **The Z3815A 4010's `nmea_encode_cable_delay` (`0x5c4b6`)**, the
+  encoder of `set,t` and the Oncore's `@@Az`, formats its argument plus
+  `gps.cable_delay_correction` (`0x100ffa`), negated, `"%+07d"`
+  (`0x5eab7`), into an 8-byte field at the top of its frame
+  (`0x5c4e8`): a sign and six digits and the NUL fill it, so that a
+  sum of seven digits or more, past `:GPS:ADELay`'s range,
+  overruns it into the frame pointer saved above it.  The C formats
+  into an 8-byte array the same way; the harness's delays are from
+  that range (`z3815a-4010.md`, "The skips").
 
 ## Reads of what nothing set
 

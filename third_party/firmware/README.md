@@ -5,8 +5,8 @@ layout").  `images/` is what we were given: the vendors' ROM images
 (`IMAGE.bin`), the console log one was rebuilt from, the EEPROM dumps
 in `eeprom/` and the FPGA bitstreams in `fpga/`.  `decompiled/IMAGE/`
 is what Ghidra made from an image, exported by `tools/ghidra/`.
-`rewritten/` is what we wrote: `common/`, the C several images share (1018
-functions and 232 static helpers, `make check-common`),
+`rewritten/` is what we wrote: `common/`, the C several images share (953
+functions and 228 static helpers, `make check-common`),
 and `IMAGE/`, an image's own C, its type header and layout check in
 `types/`.  `analysis/IMAGE/` is what we learned about each ROM: its
 names files, modules, SCPI handlers and trees' rows, result names and
@@ -26,5 +26,5 @@ derived from the vendor images.
 | Z3801A 3543 | `z3801a-3543.bin` | `z3801a-3543/` | `z3801a-3543/` | `z3801a-3543/` |
 | 58503A 3633 | `58503a-3633.bin` | | | |
 | 58503B 1.01.04 | `58503b-1.01.04.bin`, `58503b-L85376-console.log` | | | |
-| Z3815A 4010 | `z3815a-4010.bin` | | | |
+| Z3815A 4010 | `z3815a-4010.bin` | `z3815a-4010/` | `z3815a-4010/` | `z3815a-4010/` |
 | Z3816A 4001 | `z3816a-4001.bin` | | | |

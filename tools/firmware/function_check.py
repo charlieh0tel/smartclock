@@ -105,6 +105,7 @@ from harness import (
     POINTER_FILLS,
     POINTER_SIZE,
     RECEIVED,
+    SAMPLE_INTEGER_Z3801A,
     STACK_END,
     SUPERVISOR,
     SYSTEM_BYTE,
@@ -3597,6 +3598,15 @@ VALIDATOR_CASES_Z3815A = validator_cases(0x46970, 0x475A4, 0x4759C)
 ARRAY_RECORD_CASES_Z3815A = array_record_cases(0x435D6, 0x3C84E)
 NUMERIC_REQUEST_Z3815A = struct.pack(">IIBBBBII", 0, NUMERIC_DESCRIPTOR_Z3815A, 0, 0, 0, 0, 60, 0)
 ACTION_REQUEST_Z3815A = struct.pack(">IIBBBBII", 0, 0x49EE8, 0, 0, 0, 0, 0, 0)
+# The Z3801A 3543's validators' step routines, load_double (0x310ae),
+# load_long (0x31c32) and load_long_unit_step (0x31c2a); and its
+# numeric request, its pllc_exchange's (harness), :SAMPle:INTeger's at
+# this image's address, and *TST?'s action, scpi_action_self_test
+# (0x4137a), for SET_UP_REQUESTS' functions and pll_scpi_command, as the
+# 58503A's.
+VALIDATOR_CASES_Z3801A = validator_cases(0x310AE, 0x31C32, 0x31C2A)
+NUMERIC_REQUEST_Z3801A = struct.pack(">IIBBBBII", 0, SAMPLE_INTEGER_Z3801A, 0, 0, 0, 0, 7, 0)
+ACTION_REQUEST_Z3801A = struct.pack(">IIBBBBII", 0, 0x4137A, 0, 0, 0, 0, 0, 0)
 HOLD_HEIGHTS_Z3815A = (
     (-100001, -100001), (-100000, -99998), (-100000, -99997), (1800000, 1800002), (1800001, 1800001),
     (0, 3), (0, -2), (5, 7), (5, 2),
@@ -3706,6 +3716,7 @@ IMAGE_GIVEN_CASES = {
     # the status presets' tables (0x2e674) and 0x2899e
     "z3801a-3543": {
         "scpi_format_resolution_array_record": array_record_cases(0x2E674, 0x2899E),
+        **VALIDATOR_CASES_Z3801A,
     },
     "58503a-3704": {
         "hmon_check_pll_stage": OVEN_CHECK_CASES,
@@ -3741,6 +3752,7 @@ def image_set_up_requests(numeric: bytes, action: bytes) -> dict[str, tuple[byte
 IMAGE_SET_UP_REQUESTS = {
     "58503a-3704": image_set_up_requests(NUMERIC_REQUEST_58503A, ACTION_REQUEST_58503A),
     "z3815a-4010": image_set_up_requests(NUMERIC_REQUEST_Z3815A, ACTION_REQUEST_Z3815A),
+    "z3801a-3543": image_set_up_requests(NUMERIC_REQUEST_Z3801A, ACTION_REQUEST_Z3801A),
 }
 
 

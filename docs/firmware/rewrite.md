@@ -699,8 +699,8 @@ hand-written C, 478 by assembly and 13 as another routine's name.  The Z3801A
 the third image to share `common/`, has its C functions written by
 hand too, the primary's 1300 and the installer's 237, none left as the
 decompiler's reading, the rest the image's assembly, and is held to
-the same standard: of its function check, the primary's 1289 agree, 6
-are known and 5
+the same standard: of its function check, the primary's 1294 agree, 6
+are known and 0
 skipped, none failed, and the installer's 237 agree, 0 skipped; its
 console sessions agree, 8 of 8.  The Z3801A 3543's link requires all
 2017 of its functions and finds each defined: 1537 by hand-written C,

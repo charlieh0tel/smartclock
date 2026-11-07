@@ -1912,9 +1912,12 @@ INSTALLER_58503A_3704 = InstallerAddresses(
 # scpi_common_list (0x52690), as scpi_trees (0x5cfae) holds them;
 # aging_curve is at 0x101fd0 and status_screen_snapshot at 0x10142a;
 # pllc_exchange (0x103680) gives :SAMPle:INTeger's descriptor
-# (0x322e2); and drtb_gets echoes through duartb's +0x50, 0x10310e,
-# which duartb_echo_none (0x1d278) makes echo nothing.  Its installer
+# (0x322e2), as the Z3805A's, also the step parameter's descriptor;
+# and drtb_gets echoes through duartb's +0x50, 0x10310e, which
+# duartb_echo_none (0x1d278) makes echo nothing.  Its installer
 # is the Z3805A's, byte for byte, at the same addresses.
+PLLC_EXCHANGE_Z3801A = 0x103680
+SAMPLE_INTEGER_Z3801A = 0x322E2
 PRIMARY_Z3801A_3543 = Profile(
     overlay=None,
     ram=bytes(RAM_SIZE),
@@ -1928,7 +1931,7 @@ PRIMARY_Z3801A_3543 = Profile(
     initializers=(0x2E386,),
     received={
         0x103174: struct.pack(">5I", 0, 0x28E92, SPOOLED_PRIORITY, 0, 0),
-        0x103680: struct.pack(">IIBBBBII", 0, 0x322E2, 0, 0, 0, 0, 7, 0),
+        PLLC_EXCHANGE_Z3801A: struct.pack(">IIBBBBII", 0, SAMPLE_INTEGER_Z3801A, 0, 0, 0, 0, 7, 0),
     },
     string_devices=frozenset({0, 2}),
     caller_name=CALLER_NAME,
@@ -1938,7 +1941,7 @@ PRIMARY_Z3801A_3543 = Profile(
     objects=True,
     scpi=ScpiObjects(0x28CDC, 0x52FCE, 0x52690, tuple(KEYWORDS), SAMPLE_CALL),
     variables={"aging_curve_state *": 0x101FD0, "status_snapshot_record *": 0x10142A},
-    scpi_step=0x322E2,
+    scpi_step=SAMPLE_INTEGER_Z3801A,
     console_echo=(0x10310E, 0x1D278),
     qspi_widths=QSPI_WIDTHS,
     bounded={},

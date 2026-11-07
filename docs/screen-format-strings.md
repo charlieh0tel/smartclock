@@ -332,5 +332,5 @@ cause accessor does not test bit 8, so it is never shown.  The
 The Z3815A's stages run one higher from `n3 lock pll`, 6
 (`firmware/loop.md`, "The Z3815A's extra stage"): 5 to 7 mark
 `Locked `, and its outputs line (`0x561a0`) gives `Valid` at 7 and at
-6 when `FUN_00033f5e` returns nonzero, `Invalid` at 1, 8 and 10.  The
+6 when `standby_from_unlock` returns nonzero, `Invalid` at 1, 8 and 10.  The
 mode routines were compared only through their accessors and strings.

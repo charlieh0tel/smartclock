@@ -269,7 +269,7 @@ the byte's 255, a fraction up to about 1.2.
   has six fields, register 2 is always 0, and register 3's sync field
   only steps or syncs.  The log table names `EXT lock started` and two
   EXT holdovers (`log.c`), but no code logs them.  The 58503A 3704 does
-  write a seventh field; this image has none.
+  write a seventh field (`58503a-3704.md`); this image has none.
 - **The count needs both.**  `counter_wait_ready` gives up when either
   1 PPS is dead, and `interval_wait_reading` does not read the counter
   then.

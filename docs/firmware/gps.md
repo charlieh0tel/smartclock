@@ -233,6 +233,32 @@ The 58503A writes zero for the top byte of the 1PPS rate where the
 Z380x sign-extends it, and its `Bn` zero-fills channels 7 and 8, so
 one record serves both messages.
 
+**The extension messages.**  `@@Bk` and `@@Ek` (VPCommands pp. 95-98,
+134-137) carry 62 and 64 bytes between ID and checksum: the DOPs, the
+velocities, the ECEF position, a URA for each of six or eight channels,
+the ten A⁻¹ matrix elements, then the receiver clock bias (signed, 0.1
+m) and oscillator offset (unsigned, 0.1 m/s), the last four bytes.
+Their decoders fill one record, `gps.extension`
+(`oncore_extension_fields`), which `print_ext_msg` (console code 0x12)
+prints:
+
+| Image | `Bk` | `Ek` |
+| ----- | ---- | ---- |
+| Z3805A, `0x50fe4` | `3e 80` | -- |
+| 3704, `0x525e8`, `0x525ed` | `26 84 84 0e 80` | `40 80` |
+
+The Z3805A copies all 62 bytes, and the 3704's `Ek` all 64.  The
+3704's `Bk` copies 38 bytes, through the six URAs, writes two zeros
+for URAs 7 and 8, copies 14 more, matrix elements 1 to 7, to where
+`Ek` puts them, and ends: its last 10 bytes, matrix elements 8 to 10,
+the clock bias and the oscillator offset, are never stored.  Only `Ek`
+stores them.  Yet the 3704's `ext_msg_rate` (console code 0x11)
+requests `@@Bk` (`GPS_REQUEST_POSITION_EXTENSION`, `0x27`, which has
+no send filter, below), and its power-up script `0x53` polls both
+(`oncore/58503a-3704.txt`).  Read from the ROM, not run.  The reading
+that with a six-channel engine, which sends no `@@Ek`, those fields
+stay as `gps` was cleared is inference.
+
 ## Six or eight channels
 
 Which engines each image can take, by the two message pairs the VP
@@ -822,19 +848,24 @@ its last byte is the height type, 0 for GPS-ellipsoid height and 1 for
 MSL (`VPCommands.pdf`, Position-Hold Position).  An encoder sends the
 low byte of its argument long (`oncore/README.md`).
 
-| Image | Init script's `@@As` | Third poster's type | Sender |
-| ----- | -------------------- | ------------------- | ------ |
-| Z3801A 3543 | 37.3256° N, 121.9978° W, 55 m, type 1 (script `0x47`, record `0x50a20`) | 1 (`0x42f60`) | as given |
+| Image | `master_reset`'s `@@As` | Third poster's type | Sender |
+| ----- | ----------------------- | ------------------- | ------ |
+| Z3801A 3543 | 37.3255833° N, 121.9978333° W, 55 m, type 1 (script `0x47`, record `0x50a20`) | 1 (`0x42f60`) | as given |
 | Z3805A 3543B | the same (record `0x50a62`) | 1 (`0x42f34`) | as given |
 | 58503A 3633 | the same (script `0x52`, record `0x51d92`) | 1 (`0x42f88`) | as given |
 | 58503A 3704 | none | 1 (`0x42f90`) | as given |
 | Z3816A 4001 | none | 1 (`0x468a0`) | 0 unless bit 4 of `+0x608` in its state block is set (`0x56228`) |
 | 58503B 1.01.04 | none | 0 (`0x47e40`) | 0 unless bit 4 of `0x1017e8` is set (`0x585d6`) |
 
-The Z380x and 3633 init scripts also set the initial position with
-`@@Ad`, `@@Ae` and `@@Af` to the same place, `@@Af` with height type
-1.  So the Z380x and 58503A images send MSL heights, as their manuals give
-them, and the 58503B ellipsoid heights, as its manual gives them
+The position is `@@Ad` 134372100 mas, `@@Ae` −439192200 mas and
+`@@Af`/`@@As` 5500 cm, height type 1, MSL (`oncore/IMAGE.txt`).  The
+script that sends it, `GPS_SCRIPT_INIT_DEFAULTS` (Z380x `0x47`, 3633
+`0x52`), is run by the console word `master_reset` alone (console code
+0x19; `console.md`, "Resetting the GPS engine from the console"), not
+at power-up: the power-up scripts (Z380x `0x48`, 58503A `0x53`) set no
+position.  The 3704, Z3815A, Z3816A and 58503B images hold no such
+constant.  So the Z380x and 58503A images send MSL heights, as their
+manuals give them, and the 58503B ellipsoid heights, as its manual gives them
 (above).  Whether anything sets the Z3816A's bit was not checked.
 
 **On the bench, against a u-blox.**  On 2026-10-10 the 58503A, the
@@ -861,7 +892,8 @@ unsettled.  Every image selects
 datum 49, WGS-84, with `@@Ao` in its init scripts, so latitude and
 longitude agree by datum.
 
-**`@@Ci`.**  The Z3801A's and Z3805A's init scripts (`0x47`, `0x48`)
+**`@@Ci`.**  The Z3801A's and Z3805A's `master_reset` and power-up
+scripts (`0x47`, `0x48`)
 open with `@@Ci`, switch I/O format, with an argument long of 0
 (Z3801A record `0x50ae8`), so format 0.  `VPCommands.pdf` defines 1,
 NMEA, and 2, Loran emulation, and no other.  No other image's scripts

@@ -19,6 +19,48 @@ name ("The 58503A 3704").
   `get_gps_utc_offset` says it is valid, the test at `0x115a6` the
   other way round from `utc_to_gps`'s, so that it uses the offset only
   while it is not valid.
+- **The Z3815A 4010's `strtoul` (`0x6f0a6`)** takes an overflow for a
+  digit that leaves the value less than it was (`0x6f1c8`), so that one
+  that wraps past it, as 805306368 times 10 does, goes unseen; and after
+  a minus sign it gives ULONG_MAX with ERANGE for a value past LONG_MAX
+  (`0x6f216`), where C negates it.
+- **The Z3815A 4010's `aging_fit` (`0x4aa94`)** fits the log curve,
+  and a line through few entries, only for more than 100 well weighted
+  entries or entries (`0x4ab18`, `0x4ab90`, `0x4ac06`), of a history
+  that holds 32, so that it fits a line or the newest entry as a
+  constant and its HQ is never a log curve's.
+- **The Z3815A 4010's `fit_linear_halves` (`0x4ace8`)**, which nothing
+  calls, takes its halves of 16 entries but keeps the 58503A's slope
+  over 1024 and middle 32.5 entries before the newest (`0x4ad66`,
+  `0x4ad86`), a history of 64's, where halves of 16 need 256 and 16.5.
+- **The Z3815A 4010's `n3_lock_pll` (`0x519ce`)** clamps its TI
+  average above at 10 us, then compares -10 us with the average's
+  negation (`0x52470` to `0x52486`), the test the upper clamp made, so
+  that a negative average is never clamped.
+- **The Z3815A 4010's `fine_sync_adjust` (`0x4e48e`)** asks for a TI's
+  steps of 100 ns only within 90 ns (`0x4e4b6`, `0x4e512`), a bound
+  inside the 100 ns it has already passed, so that it always asks for
+  one step and gives 1, where the 58503A's asks for up to three and
+  gives 4 past 300 ns; and `fine`, which fine-slews for fewer than 1
+  step (`0x4f036`), never reaches `PLL_FINE_FINE_SLEW` itself.
+- **The Z3815A 4010's `standby_from_unlock` (`0x33f5e`)** counts its calls
+  as passes: in n3 lock pll's pll state (`pll.stage` 6,
+  `pll.n3_lock_state` 12), each call with `interval_mean` within 4 ns adds one to `standby_from_unlock_count` (`0x1021b6`, `0x33ff2`) and
+  the 700th sets `standby_from_unlock_ready` (`0x1021b3`), logging "STBY from UNLOCK"
+  under debugging (`0x33fdc`); past 5 ns it clears both, logging
+  "UNLOCK from STBY".  `efc_history_update` calls it once a second,
+  but so do `kenneth_predicted_get` (`0x4bc52`) on each
+  `:KENneth:PREDicted?` outside start-up PLL, the status screen in n3
+  lock pll and `output_control_step` and `output_status_update`, so that each query and screen
+  advances the count as a second's pass does and the 700 passes come
+  sooner.  The C calls it where the image does.
+- **The Z3815A 4010's `sci_scpi_session_init` (`0x3c37a`)** gives the
+  SCI session's fourth receive error, condition `0x13`, -360
+  Communication error, SCSR's IDLE bit (`0x3c396`), which the SCI's
+  receive errors never hold: its interrupt keeps OR, FE and PF
+  (`0x30010`) and a full ring sets OR (`0x3010c`).  So the SCI session
+  reports no communication error, where the SCPI port's reports the
+  DUART read's own bit 0.
 - **`kernel_init_checked` (`0x15caa`)** compares the kernel's word
   sum from `0x14acc` to `psos_call`, `0x028d24cc`, with
   `kernel_checksum` (`0x14ac8`), `0x028a9b53`, which no image's kernel
@@ -60,6 +102,8 @@ name ("The 58503A 3704").
   tries and report failure, -200, when the count reaches five
   (`installer::0x107f4c`, `installer::0x107ca6`), not when the fifth
   try fails, so that a fifth try that succeeds is reported as failed.
+  The Z3815A 4010's (`installer::0x108086`, `installer::0x107e3e`),
+  over another flash part, report the last try's status instead.
 
 - **pForth's `fill` (`0x191fa`)**, `( address count byte -- )`, pops
   the byte and the count, and for a count of 0 or less returns before
@@ -83,9 +127,10 @@ name ("The 58503A 3704").
   copies its string parameter into 512 bytes of its frame unbounded
   (`installer::0x107ccc`), so that a text of 512 characters or more
   runs into the 256 words it then converts the digits into, and one of
-  1024 or more over its saved frame pointer and return address.  The C
-  copies it the same way, into a 512-byte array; the harness's texts
-  are short.
+  1024 or more over its saved frame pointer and return address; the
+  Z3815A 4010's the same (`installer::0x107eca`, its copy at
+  `installer::0x107ede`).  The C copies it the same way, into a 512-byte
+  array; the harness's texts are short.
 - **`gps_debug_status` (`0x49210`)** cuts the last comma from its last
   channel's text by clearing the byte before the text's end
   (`0x49384`); with debug output off `debug_sprintf` leaves the text
@@ -94,8 +139,64 @@ name ("The 58503A 3704").
   `oncore_position_message` (`0x4f662`).  The C clears `part[-1]`,
   which gcc's frame puts elsewhere (`KNOWN`).
 
+- **The Z3815A 4010's `gps_periodic_send` (`0x57cd8`)** sends a
+  setting's query with the byte of the length `gps_request_build`
+  gives it (`0x57d52`), so that a query the builder refuses, -1, is
+  sent 255 bytes long from `gps_command_message`, which holds 89, and
+  runs into `gps_last_program_message`; `gpsm_task` sends only a
+  positive length (`0x581a2`).  Only rrs, `int,rrm` and the second zzz
+  can be refused, without time RAIM, and `gpsm_task` leaves a setting
+  to query only once it has sent it, so the fault needs time RAIM lost in
+  between.  The C sends the same (`GPS_PERIODIC_STATES_Z3815A`).
+
+- **The Z3815A 4010's `satellite_status_list` (`0x54c5c`)**, when more
+  satellites are not tracked than its list's entries, gathers the rest
+  in a frame list of 12 (`0x54ce4`), which more than 12 visible overrun,
+  as the 58503A 3704's does; `status_snapshot` asks for twice the
+  engine's eight channels.
+
+- **The Z3815A 4010's `gps_pps_check` (`0x368ca`)**, while the reference
+  is questionable, sets its gate back to 3 on every good short gate
+  (`0x36a04`), which its steps of 2 never take to 10, so that the long
+  gate's frequency test never runs then.
+- **The Z3815A 4010's `tcode_request` (`0x23d34`)** takes time code
+  formats 3 and 4, releasing the port and marking the request pending,
+  but `timecode_update` builds and sends nothing for them (`0x242ac`).
+
+- **The Z3815A 4010's `output_control_step` (`0x347e4`)** sets the
+  output's inactive cause to 5 as it leaves active for a time deviation
+  ("STBY from ACT, time deviation", `0x34a48`), which `:OUTPut:INACtive?`
+  reports as NONE, its jump table having no case for 5 (`0x3fe3c`).
+- **The Z3815A 4010's `:DIAGnostic:QUERy:RESPonse?` (`0x3ec8e`)**, for
+  an echo of 255 characters, puts its NUL a byte past the response
+  buffer: `sci_scpi_echo_response`'s first for the SCPI port's, and
+  `robin_keyword_code` for the SCI's.
+- **The Z3815A 4010's `installer_printf_polled` (`installer::0x103dba`)**
+  formats into an 80-byte frame, half `installer_printf`'s, which a
+  longer text overruns.
+
 ## Reads of what nothing set
 
+- **The Z3815A 4010's `gpsm_task` (`0x57e3c`)** matches a response by
+  the word at `0x10170e`, as its length, which nothing in the image
+  writes (`0x5832a`), and tests its count of tries, D3, before any
+  sentence sets it, as the task's entry left it.
+
+- **The Z3815A 4010's `parameter_record_read` (`0x4528e`)**, when
+  the record is good, returns D3 as its caller left it, which it never
+  sets (`0x45358`), as the 58503A 3704's does.
+  Its installer's `installer_parameter_record_read`
+  (`installer::0x108372`) does the same (`installer::0x1083e0`).
+
+- **`ptest_log_unavailable`** (Z3815A 4010, `0x4a37e`) passes
+  `log_write` one argument, the EFC average, but an event log entry
+  keeps two longs (`log_append`), so its second is the long past the
+  argument on the stack: its own return address into its caller,
+  `ptest_update` (`0x4a540`).  The C passes the one argument too, and so
+  logs gcc's return address there; the function check logs an armed
+  test's entry only from `ptest_log_unavailable` itself, where both
+  copies' callers are the harness's (`function_check.py`,
+  `PTEST_UPDATE_CASES_Z3815A`).
 - **`task_stack_info`** reads two locals it never sets ("no system
   stack found", `0x16c28` to `0x16c32`); the C reads them from the
   frame too, though gcc puts them in each other's slots; the function
@@ -114,8 +215,9 @@ name ("The 58503A 3704").
 - **`os_report_process`**, when it finds no stack segment (`0x1635e`),
   prints D5 as a task's stack share (`0x1643e`), which
   `os_report_processes` leaves holding the address of `"%s"`
-  (`0x16768`), and sums memory onto its caller's D6 (`0x1632e`).  The
-  hand-written caller need not leave the same there.
+  (`0x16768`), and sums memory onto its caller's D6 (`0x1632e`; the
+  Z3815A 4010's at `0x2699a`, which its `scpi_interpret`'s session
+  reaches).  The hand-written caller need not leave the same there.
 - **`interpolator_verify`** returns, on its measurement's failure
   paths, D2's low byte as its caller left it (`0x4054a`); an
   uninitialized calibration returns 0 (`0x40494`).
@@ -168,6 +270,23 @@ name ("The 58503A 3704").
 - **`happening_flush` (`0x2f6dc`)**, given a buffer that is neither
   early buffer, replays it in the mode of D2's low byte as its caller
   left it, setting a mode only for those two (`0x2f6f2`, `0x2f6fe`).
+- **The Z3815A 4010's `efc_calibration_measure` (`0x52a34`)** calls
+  `efc_calibration_done`, a descriptor's done hook, with no arguments
+  (`0x52d78`, `0x52e92`), so that the hook takes the D2 and D3 it saved
+  (`0x52a38`) as its index and source.
+- **The Z3815A 4010's `n3_lock_pll` (`0x519ce`)**, in measure1, compares
+  with 1 its frame's TI (`-0x86(a6)`, `0x51d1c`), which only wait2, a
+  slew and the pll state set, so that a pass that starts there reads
+  what the last call left in the slot.  The C reads its local through a
+  volatile pointer, from the frame.
+- **The Z3815A 4010's `n3_lock_slew` (`0x517e0`)**, slewed in, prints
+  as its stopping TI ("zero_ti") D4, which it sets only on its other
+  path (`0x518ac`): what its caller left there.  Nothing calls it.
+- **The Z3815A 4010's `es_send` (`0x24684`)** reads the free-running
+  count into D0's low word and compares the long (`0x246be`, `0x246ce`),
+  its high word what `es_build` left there: on each of its paths 0, above
+  the checksum's last byte or `sprintf`'s count, so that the C, which
+  takes the count alone, agrees.
 
 The C reads such a register as the image does, first thing in the
 function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.

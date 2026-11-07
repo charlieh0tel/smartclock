@@ -3820,7 +3820,7 @@ typedef struct scpi_group_cells_fields scpi_group_cells_fields, *Pscpi_group_cel
 
 struct scpi_group_cells_fields {
     uint16_t serial_1;
-    uint16_t sample;
+    uint16_t gps_initial;
     uint16_t pulse;
     uint16_t serial_2;
     uint16_t status;
@@ -8096,6 +8096,7 @@ extern char idn_model[18]; /* 00102658 */
 extern char idn_serial[18]; /* 0010266a */
 extern char idn_suffix; /* 0010267c */
 extern int16_t log_entry_count; /* 0010267e */
+extern scpi_group_cells_fields scpi_group_cells; /* 00102680 */
 extern interval_reading_fields interval_reading; /* 0010268c */
 extern uint8_t fconf_regs[8]; /* 00102699 */
 extern counter_configuration_fields counter_configuration; /* 001026a2 */
@@ -9597,6 +9598,7 @@ __asm__(".set scpi_echo_length, 0x001036b8");
 __asm__(".set scpi_echo_response, 0x001036d6");
 __asm__(".set scpi_echo_text, 0x00103260");
 __asm__(".set scpi_error_messages, 0x0003ae26");
+__asm__(".set scpi_group_cells, 0x00102680");
 __asm__(".set scpi_input_end, 0x0010347e");
 __asm__(".set scpi_input_end_code, 0x0003bb54");
 __asm__(".set scpi_input_line, 0x0010337a");

@@ -920,6 +920,13 @@ CHECK_FIELD(scpi_setting_param, maximum, 0x06);
 CHECK_FIELD(scpi_setting_param, gps_request, 0x16);
 CHECK_FIELD(scpi_setting_param, group_cell, 0x18);
 CHECK_FIELD(scpi_setting_param, value, 0xc);
+/* the group cells, from the descriptors' pointers up to interval_reading */
+CHECK_SIZE(scpi_group_cells_fields, 0x10268c - 0x102680);
+CHECK_FIELD(scpi_group_cells_fields, gps_initial, 0x102682 - 0x102680);
+CHECK_FIELD(scpi_group_cells_fields, pulse, 0x102684 - 0x102680);
+CHECK_FIELD(scpi_group_cells_fields, serial_2, 0x102686 - 0x102680);
+CHECK_FIELD(scpi_group_cells_fields, status, 0x102688 - 0x102680);
+CHECK_FIELD(scpi_group_cells_fields, rest, 0x10268a - 0x102680);
 /* 14 action descriptors, each referred to at its own address, from
  * 0x4132a to efc_history_update at 0x4137e */
 CHECK_SIZE(scpi_action_param, (0x4137e - 0x4132a) / 14);

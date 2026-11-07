@@ -2920,17 +2920,24 @@ typedef enum __attribute__((packed)) log_event_code {
 #include "../../common/types/scpi_setting_param.h"
 
 /* The words the numeric and setting descriptors' group_cell points at,
- * one for each command group (scpi_group_cells, 0x101f90, 12 bytes, up
- * to interval_reading).  No code reads or writes them, only
- * primary_reset's clear, so each is a word by their spacing alone. */
+ * one for each command group (scpi_group_cells, 0x102680, 12 bytes, up
+ * to interval_reading at 0x10268c), placed by the descriptors' 85
+ * group_cell pointers.  No code reads or writes them, only
+ * primary_reset's clear (0x14616), so each is a word by their spacing
+ * alone.  The groups are the Z3805A's, but none is :SAMPle's, so the
+ * second, the Z3805A's sample, is named for its first, :GPS:INITial. */
 typedef struct scpi_group_cells_fields {
-  uint16_t serial_1; /* +0x00: :SYSTem:COMMunicate:SERial1's (0x33328 on) */
-  uint16_t sample;   /* +0x02: :SAMPle's, :GPS:INITial's, :SYSTem:PRINt's
-                        and scpi_param_DOUGlas_STATe_request's */
-  uint16_t pulse;    /* +0x04: :OUTPut:STATe's and :PULSe's (0x33968 on) */
-  uint16_t serial_2; /* +0x06: :SYSTem:COMMunicate:SERial2's (0x33aa2 on) */
-  uint16_t status;   /* +0x08: :STATus's (0x33b10 on) */
-  uint16_t rest;     /* +0x0a: every other descriptor's, 0x33c8a to 0x34374 */
+  uint16_t serial_1;    /* +0x00: :SYSTem:COMMunicate:SERial1's and :FDUPlex's
+                           (0x47aa0 on) */
+  uint16_t gps_initial; /* +0x02: :GPS:INITial's, :SYSTem:PRINt's,
+                           scpi_param_DOUGlas_STATe_request's and
+                           :DIAGnostic:ROSCillator:EFControl's (0x47c08 on) */
+  uint16_t pulse;       /* +0x04: the output state's, in nv_save's second
+                           table (0x47e0c), and :PULSe's (0x47e28 on) */
+  uint16_t serial_2;    /* +0x06: :SYSTem:COMMunicate:SERial2's (0x47f44 on) */
+  uint16_t status;      /* +0x08: :STATus's (0x47fb6 on) */
+  uint16_t rest;        /* +0x0a: every other descriptor's, 0x48124 to
+                           0x48aea */
 } scpi_group_cells_fields;
 
 #include "../../common/types/scpi_action_param.h"

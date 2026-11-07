@@ -21,7 +21,7 @@ this says what each is and where.
   copy, from the same state, and must leave the same results, RAM,
   registers and device and kernel calls, in the same order.  1312 of
   the primary's functions agree, 6 differ for known reasons, none
-  fail; the installer's 236 agree.
+  fail; the installer's 237 agree.
 - It is a checked reading of the firmware, not a replacement for it:
   it does not build a flashable image, and it has never run on a board.
 - Reproduce with `make check-decompiled` and `make report-decompiled`;
@@ -103,7 +103,8 @@ order over the image imported raw at 0 as `68000:BE:32:CPU32`
    decompiler's tokens plus what the p-code carries and the text drops:
    signedness of pieces, unsigned constants, switch case labels from
    the real table, float/integer bit reinterpretations (`__ghidra_as`;
-   no FPU, so every such cast is bits), shifts and rotates defined for
+   no FPU, so every such cast, and a literal stored to a float, is bits),
+   shifts and rotates defined for
    every count, device register bits by name.  A routine that is not C
    is emitted as the image's instructions in a top-level `__asm__`, its
    decompiled C under `#if 0`.
@@ -150,18 +151,20 @@ out the image's arguments from it.
 - A function is named for what it does, not for the image it came
   from: a lead, a pairing the seeding finds changed below its carrying
   threshold, takes its base's name, its note saying how it was paired
-  ([`PLAN.md`](../../PLAN.md), "A second image is ported by copying
-  the first's work"), and how a function differs from another image's
-  of its name is its names file note's to say.  `make
-  check-plain-names` (`tools/firmware/plain_names.py`) fails where the
-  hand-written C or a names file's name column names a function with
-  an image's suffix, `_58503a`, `_z3805a`, `_z3801a`, `_z3815a`,
-  `_58503b` or `_z3816a`; text quoted, a file's name and an image's
-  identifier (`58503a-3704`) are not names.  Where a plain name would
-  clash in an image's link with a `common/` function of different
-  code, the image keeps its own copy under the name, as rule 6 of
-  "Shared C" has it, or, a static helper beside `common/`'s, a name of
-  what it does (`startup_gpt_init_both_pwm`), never an address.
+  ([`PLAN.md`](../../PLAN.md), "Seeding a port's names"), and how a
+  function differs from another image's of its name is its names
+  file note's to say.  `make check-plain-names`
+  (`tools/firmware/plain_names.py`) fails where the hand-written C or a
+  names file's name column names a function with an image's suffix,
+  `_58503a`, `_z3805a`, `_z3801a`, `_z3815a`, `_58503b` or `_z3816a`;
+  text quoted, a file's name and an image's identifier
+  (`58503a-3704`) are not names.  Where a plain name would clash in an
+  image's link with a `common/` function of different code, the image
+  keeps its own copy under the name, as rule 6 of "Shared C" has it,
+  or, a static helper beside `common/`'s, a name of what it does
+  (`startup_gpt_init_both_pwm`), never an address.  The function
+  check seeds a function's draws by its name, so that a rename draws
+  its cases afresh.
 - Register-convention routines are called through bindings: a header in
   `rewritten/bindings/` defines a function under the routine's name and
   prototype that binds each argument with a local register variable and
@@ -172,6 +175,15 @@ out the image's arguments from it.
   `os.h`'s `os_psos_call` and `os_psos_io_call`, one shape per service
   (`OS_SERVICES`): a register loaded only if the service reads it,
   clobbered only if its handler changes it ([`psos.md`](psos.md)).
+- A record's type is read from the code that reaches it, never from a
+  base's layout alone: `make record-access IMAGE=... RECORD='START SIZE
+  [--argument FUNCTION:OFFSET]... [--fit TYPE]'`
+  (`tools/firmware/record_access.py`) lists every access the image's
+  primary code makes into the record, through its address or a register
+  or argument holding one, with its size, function and instruction, and
+  with `--fit` each that does not land on a field of the type's of its
+  size; `check-layout.c` then asserts the fields at the addresses that
+  code gives.
 - Firmware faults are kept, commented where each happens
   ([`quirks.md`](quirks.md)): `days_to_date`'s December 31 of a leap
   year as January 0, `gps_to_utc`'s inverted validity test, reads of
@@ -218,7 +230,20 @@ exporter two folders, `rewritten=third_party/firmware/rewritten/common` before
 its own: the export includes `common/`'s headers, then its own, and
 `common/`'s files, then its own, so each image compiles the shared C
 in its own translation unit, against its own export's types,
-prototypes and globals (rules 2 and 3).  A shared type is defined once,
+prototypes and globals (rules 2 and 3).  One translation unit lets a
+file name what a file included before it defines; none does.  A file
+names only what the export declares, what the headers it includes
+define and its own definitions, so that what two files share, a constant, a
+type or a static helper, is a header's, whose first comment says who
+shares it: `common/ti.c`'s registers' loads, which each image's
+`ti.c` calls, are `common/ti.h`'s, and the Z3815A 4010's
+`MONITORS_REFERENCE_VALID`, which its `pll_stages.c` stores, is its
+`monitors.h`'s.  `make check-alone` (`tools/firmware/alone_check.py`)
+holds every image to it: it compiles each `.c` the export includes on
+its own, after the export's declarations and every hand-written
+header, a precompiled header compiled once, so that a file naming what
+only another file defines fails, which the one translation unit
+would let pass.  A shared type is defined once,
 in a header in `common/types/`, which each sharing image's
 `smartclock.h` includes and the exporter skips, since the export
 declares the program's types itself; Setup expands an `#include
@@ -228,7 +253,10 @@ whole: the run of members the images have in common, at the same
 values, is a `common/types/` header that each image's definition
 includes among its members (`status_scpi.h`, the SCPI standard's head
 of `status_condition_code`; `qspi_device.h`, the QSPI's devices from
-1), the rest the image's own, so that no value changes; to shared code such an enum is the same when its storage is
+1; `gps_request_sender.h`, the GPS requests' senders to 2;
+`satellite_cell_status.h`, the status screen's satellite cells to 4;
+`satellite_health_class.h`, `satellite_track_class`'s classes to 3;
+`timecode_format.h`, the time code's formats to T2), the rest the image's own, so that no value changes.  A record is not split: one that differs in any image, in a field, its length or its tail, is entirely each image's own, in each image's `smartclock.h`, and `common/types/` holds no shared head of a per-image record (decided 2026-11-06).  A shared function that names such a record leaves `common/` for each image's own file, the same C in each (`boot_selftest_results`, the boot code's self-test results, whose last word the Z3815A 4010 keeps as the output latch's shadow, where the others keep a byte and its pad, and `installer_scpi_query_DIAGnostic_TEST`, which names it; `counter_configuration_fields`, which the Z3815A 4010's eight FPGA registers took from `counter_work_state.h`, and `counter_init`; `fconf_regs`, eight there, took `fpga_read` and `fpga_address_sweep_debug` from `common/fpga.c`).  No shared head of a record is left: `gps_request_entry`, a GPS request, two bytes longer in the Z3815A 4010, is each image's own too, its shared head of fields to `sent` backed out the same day.  The split enums' heads above stay in `common/types/`, by decision, as shared code names their members; the more aggressive commonizing pass planned for later revisits them.  To shared code such an enum is the same when its storage is
 and the members the code names are the shared run's; one whose members it
 names none of, a field's type in a shared record (`gps_request_code`
 in `scpi_numeric_param`), need only have the same storage.  A comment in `common/` cites no address: a
@@ -244,21 +272,69 @@ types), each shared type in a `common/types/` header every sharing
 storage the same, each field it reaches through a global asserted in
 every `check-layout.c`, and no address.  The layouts compared are each
 image's own: `tools/firmware/layout_addresses.py`, which `check-common`
-runs first, fails where a seeded image's `check-layout.c` asserts a
-layout at the Z3805A's addresses, as it began, rather than at its own,
+runs first, fails where a seeded image sharing `common/` has a
+`check-layout.c` that asserts a layout at its base's addresses, as it
+began, rather than at its own,
 derived from the image's code (the address an instruction aligned with
 the Z3805A's names) and its export (a global's address), so that a
-field the image's code reaches elsewhere fails `check-types`.  Rule 1
+field the image's code reaches elsewhere fails `check-types`; and,
+for every image sharing `common/` and every record, the image's own
+types too, where a check's last address, its record's start, lies in
+RAM inside a global the export types as a record, that global must be
+of the check's type or hold one, so that a check left at its base's
+addresses, which lie in another of the image's globals, fails
+(the Z3815A 4010's `gps_statistics` passed so, asserted at the
+58503A's addresses, inside another of its globals); and a check's record
+may not lie in a label the names leave untyped, unless
+`layout_addresses.py`'s `UNTYPED_HOLDERS` names it with why (none now;
+the Z3815A's `pll` until it was typed), since a check there is as
+unseen (the Z3815A's status snapshots, until typed, held three of the
+base's records' checks).  Rule 1
 masks addresses and so cannot see an offset an absolute address holds:
 the 58503A's `gps_receive` counted frame and checksum errors at the
 Z3805A's offsets while its `check-layout.c` asserted the Z3805A's
-addresses.
+addresses; nor a constant in ROM's range, which it masks as one: the
+installer's `:DIAGnostic:ERASe?` reads the flash from `0x10000` in the
+three and from `0x20000` in the Z3815A 4010, the same instructions, so it
+went back to each image's own `installer_scpi_diagnostic.c`.  Nor can it see a call to another routine, a callee's address
+masked like any other: the Z3815A 4010's `console_write_polled` polls
+the SCI where the others' poll channel B, the same instructions, so it
+and four more like it went back to each image's own C
+([`z3815a-4010.md`](z3815a-4010.md), "The export and the checks"); the
+function check found them.  `check-common` now checks the callees too:
+for each function `common/` defines, the routines each sharing image's
+code refers to -- its calls and jumps, a fall through to the next
+function, an address it takes, the tail of another function it branches
+into, a thunk and what it goes to -- must be the routines its C names,
+as clang parses it: its calls, the routines of a table it refers to, the
+routines its bindings' and asm statements call, through every static
+function it reaches, and a routine whose C is the body of a static
+function it reaches (`status.h`'s, `scpi_engine.h`'s).  Each way: a
+routine the code calls and the C does not name fails, and one the C
+names and the code does not call.  At the commit before the five went
+back, it fails on all five, and on `installer_system_init`, whose
+`installer_parameter_record_read` the SCI wave's seeding then moved.
+Where the image and the C differ for a reason, `common_check.py`'s
+`CALLEE_EXCEPTIONS` names the function, the routine and the reason, by
+kind: the code repeats in place a routine the C calls (`labs`, `abs`'s
+code; the `pps` stubs' kernel calls); calls a routine for what the C
+does with an operator (`format_duration_short`'s `ldiv`); takes a
+routine's address as data (`random_dither`, `start_nothing`'s first
+byte); calls the soft-float routines by other entries than the C's
+bindings (`log`, `pow`, `sqrt`); or a finding not yet fixed, the
+Z3815A's ([`z3815a-4010.md`](z3815a-4010.md), "The export and the
+checks").  An exception that no longer matches in each of its images
+fails, so that none outlives its cause.  The check reads names: two
+images' routines of one name are the same to it, and a misplaced name
+shows only where the code calls an address no name or another name
+holds; nor does it see the routines a table in ROM holds, which the
+code reaches through the table's address.
 
 What is shared, counted by `make check-common` from the files:
-`common/` holds 1018 functions the exports name and 232
-static helpers, in 210 files; the rest is each image's own:
-537 functions the Z3805A 3543B's export names, 652 the
-58503A 3704's and 519 the Z3801A 3543's.  Each image's
+`common/` holds 953 functions the exports name and 228
+static helpers, in 220 files; the rest is each image's own:
+602 functions the Z3805A 3543B's export names, 717 the
+58503A 3704's and 584 the Z3801A 3543's.  Each image's
 hand-written C is the two together, as its link check counts it.
 
 ## The verification
@@ -286,6 +362,26 @@ arguments where the sidecar says the original reads them, gcc's in
 - effects, in order: every kernel call with the registers its service
   reads, messages by content, device reads and writes, QSPI transfers
   by the words queued, calls to routines the harness passes in;
+- the pointers to literals the function's own code passes the C
+  functions its sidecar lists it calling, by routine and argument
+  (`record_calls`, `harness.calls_differences`): each one one copy
+  passes the other must pass there too, the same address or, one in
+  ROM and one among gcc's constants, the same text; another place in
+  ROM, however alike its bytes, is not.  So an argument nothing the
+  call leaves shows, a log text an entry is not written with, is
+  compared.  They are compared however often each is passed, those
+  both pass in the order first passed (`harness.calls_order`), so that
+  two texts logged the other way round differ, and only where both
+  copies pass such a pointer: a copy may pass a text it built where
+  the other passes a literal.  gcc's copy is compiled for the check
+  with its inlining of small and called-once callees off
+  (`NOT_INLINED`), so that each call the C makes is a call there, as
+  each the image makes is, where a hook at the callee's entry sees it;
+  a helper the C defines static, which the image has no copy of, makes
+  its calls for the function that called it, found back through its
+  frames (`RebuiltCode.owner`).  A function declared inline, a
+  binding's asm statement or one that must run in its caller's frame,
+  stays in line;
 - callee-saved registers (D2-D7, A2-A6 and any `preserves`), the status
   register's system byte, and the condition codes where the convention
   returns in them.
@@ -300,17 +396,39 @@ The constructed state:
   service's results set to a sentinel at an unmapped address, each other
   register its code changes set to another, the rest kept; segments,
   task records and the messages a receiver expects modeled further.
+  ident finds every task, but in a creator's odd cases, a function whose
+  calls ask for a task by name and create one, found by its sidecar's
+  calls, not named, where it finds none, so that the create and start,
+  a task's name and entry, are compared (`creators_ident_fails`).
   Traps #1 and #7 run the image's own handlers.
 - Device models from the data sheets, ready at once, busy for one to
   five polls, with input waiting, and failing (`harness.DEVICE_CASES`):
-  the DUART, SCI, QSPI, a debounced input port, the EEPROM's write
+  the DUART, SCI, QSPI, a debounced input port, the Z3815A 4010's
+  switch word, a word a case, ports E and F, each pin a discrete
+  input's level a case or, an output or a bus pin, its latch
+  (`harness.PORTS`; MC68331UM, 4.9), the EEPROM's write
   cycle, and the installer's two pairs of AM29F010 flash parts, each a
-  command state machine with status polling (`harness.Flash`).
+  command state machine with status polling (`harness.Flash`), or the
+  Z3815A 4010's one 16-bit part, which its primary writes too
+  (`harness.WordFlash`).
 - Cases: eight generated per function (byte buffers, then pointer
   buffers, one fill making an unterminated list and one a terminated
-  one); given cases where generated ones miss what callers pass
-  (`GIVEN_CASES`); preset variables and hooked routines per case
-  (`STATES`); variadic argument lists (`VARIADIC_CASES`); SCPI sessions
+  one), and every case again, poisoned: the bytes of RAM, in zero
+  longs outside the kernel model's segments, that one copy alone read
+  in it, or either wrote and neither read, set to values that differ by
+  address (`POISONED`), so that a copy reading or writing another cell,
+  which zeroed RAM gives the same 0, differs, on whatever path the case
+  reaches; a case with no such byte is not run again.  A cell both read
+  is left, so that two copies alike keep the case's path; a wrong cell
+  read where the other copy reads its own alike shows only through its
+  value's effect; given cases where generated ones miss what callers pass
+  (`GIVEN_CASES`), the devices a case answers as among them
+  (`DEVICES`) and the EEPROM's records each reader reads, good and bad,
+  where every other case finds it erased (`RECORD_READERS`); preset
+  variables and hooked routines per case (`STATES`), each of which,
+  and each given case's preset, hook and record, must name what the
+  image's C has, or the function fails, but for those listed as meant
+  for another image's C (`MEANT_ELSEWHERE`); variadic argument lists (`VARIADIC_CASES`); SCPI sessions
   through the parser's loop, a query below every child list of the tree
   (`SCPI_SESSIONS`); pForth console sessions, each copy's own
   interpreter and dictionary on typed lines (`CONSOLE_SESSIONS`).
@@ -345,13 +463,24 @@ that a known difference hides no other:
 **Planted bugs.**  Each part of the harness catches a bug planted in
 the hand-written C that the generated cases alone miss, for example: a
 clobber left out of a binding (A1 of `float_add`, D7 of the mutexes,
-D6 of the clock record); a wrong `Scc`; `volatile` removed from a
+D6 of the clock record); a log text at another image's address, a
+task created under another's name or at another's entry, a flag
+cleared at another's address, each the 58503A's in the Z3815A's
+ported C, which agreed until the check compared them
+([`z3815a-4010.md`](z3815a-4010.md), the first link run); a wrong `Scc`; `volatile` removed from a
 polled wait; a debounce one read short; a wrong flash unlock address;
 two SCPI root children swapped; a pForth diagnostic word's arguments
 swapped; a wrong RAM write or console line after a known difference
 (`log_erase`, `os_process_report`); a copy stopping differently from
 the image's (`installer_status_register_setup`); D1 or A0 out of
-`qspi_transfer_raw`'s clobbers, seen only on a completed transfer.  (README.md, "Hand-written C"; PLAN.md.)
+`qspi_transfer_raw`'s clobbers, seen only on a completed transfer;
+and, each agreeing before the check's coverage pass
+([`z3815a-4010.md`](z3815a-4010.md), "The function check's gaps"), a
+log text passed through a static helper (the Z3815A's and Z3805A's
+`fine`), two alarm texts logged the other way round
+(`alarm_hardware_update`), a condition's bit, PORTE's and PORTF0's
+masks, the antenna's bounds and a parameter record's field read for
+another.  (README.md, "Hand-written C"; PLAN.md.)
 
 **Other checks**, in `make check-decompiled`:
 
@@ -373,6 +502,14 @@ assembly fails the link, named, whether anything calls it or not.  Each
 piece lies at its address, as in `rebuild_link.py`'s link, since its
 short branches reach only there; no byte is compared.  Its summary line
 is the one source of a statement here that an image is complete.
+For an image that does not link yet, `make report-link IMAGE=...`
+(`link_report.py`) lists what the link finds missing by module, the
+cheapest first: each function's size and its counterpart in the images
+its diffs are against, with the file of that one's hand-written C, a
+function identical or relocated there, carried, being a port of that C;
+and whether `common/` would fit it, identical or relocated in every
+image that shares `common/` (rule 1).  Its first line counts the
+classes, the functions still named `FUN_` and those `common/` would fit.
 
 And `make check-scpi-tree` (`scpi_tree_check.py`): each record of the
 generated trees, as gcc lays it out, is the image's bytes, pointers
@@ -388,18 +525,19 @@ check-link`, `make check-scpi-tree`):
 | bindings | 73 of the primary's and 18 of the installer's agree, every `register` routine's |
 | SCPI trees (`check-scpi-tree`) | 2055 and 38 objects identical |
 | function check, primary | 1312 agree, 6 known, 0 skipped, 0 failed |
-| function check, installer | 236 agree, 0 known, 1 skipped, 0 failed |
+| function check, installer | 237 agree, 0 known, 0 skipped, 0 failed |
 | pForth console sessions | 8 of 8 agree |
-| cases, in the agreeing functions | 17,848 of 18,447 compared, the rest skipped |
-| stack headroom | no case deeper than the image's by more than 192 bytes, or 16 above a floor; the console's data stack 56 bytes clear, the image's 58 |
+| cases, in the agreeing functions | 26,090 of 26,754 compared, the rest skipped; strict, 26,086 of 26,754 |
+| stack headroom | no case deeper than the image's by more than 256 bytes, or 16 above a floor; the console's data stack 56 bytes clear, the image's 58 |
 
 A case is skipped where both copies stop at something the harness does
 not model, and for the same reason: the same kind of fault (an
 unmapped read, write or fetch, at whatever address each copy's code
 reaches first), the same trap and call, or no return.  Stopping for
 different reasons fails.  A function is skipped when all its cases
-are: `installer_status_register_setup`,
-whose image copy writes unmapped memory on the harness's state.  The
+are; none is.  `installer_status_register_setup`, whose image copy
+wrote unmapped memory through the generated cases' status models, takes
+`status_register_setup`'s given cases, in every image.  The
 user-mode counts are in [`README.md`](README.md#hand-written-c),
 checked by `make check-report-figures`.
 
@@ -547,18 +685,23 @@ checks (its "The function check"), every C function of it written by
 hand as this one's are (its "The hand-written C"), 1422 of the
 primary's and 248 of the installer's, none left as the decompiler's
 reading: of its function check, the primary's 1418
-agree, 4 are known and none skipped or failed, and the installer's 247
-agree, 1 skipped; its console sessions agree, 8 of 8.  The 58503A
+agree, 4 are known and none skipped or failed, and the installer's 248
+agree, 0 skipped; its console sessions agree, 8 of 8.  The 58503A
 3704's link requires all 2151 of its functions and finds each defined:
 1670 by hand-written C, 468 by assembly and 13 as another routine's
-name.  The Z3801A
+name.  The Z3815A 4010's, [`z3815a-4010.md`](z3815a-4010.md), seeded
+from the 58503A's, is the fourth image to share `common/`, its own code
+read in its waves and link runs, until every C function of it was
+written by hand, held to the same standard.  The Z3815A 4010's link
+requires all 2403 of its functions and finds each defined: 1912 by
+hand-written C, 478 by assembly and 13 as another routine's name.  The Z3801A
 3543's, [`z3801a-3543.md`](z3801a-3543.md), seeded from the Z3805A's and
 the third image to share `common/`, has its C functions written by
 hand too, the primary's 1300 and the installer's 237, none left as the
 decompiler's reading, the rest the image's assembly, and is held to
 the same standard: of its function check, the primary's 1289 agree, 6
 are known and 5
-skipped, none failed, and the installer's 236 agree, 1 skipped; its
+skipped, none failed, and the installer's 237 agree, 0 skipped; its
 console sessions agree, 8 of 8.  The Z3801A 3543's link requires all
 2017 of its functions and finds each defined: 1537 by hand-written C,
 468 by assembly and 12 as another routine's name.

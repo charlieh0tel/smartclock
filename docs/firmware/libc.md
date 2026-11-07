@@ -11,6 +11,9 @@ the C routine of that name gives.
 
     uv run tools/firmware/libc_check.py third_party/firmware/images/z3805a-3543b.bin
 
+`SMARTCLOCK_CPU=mc683xx` runs it on mc683xx's MC68331 instead (`README.md`, "The CPU backend"), with the
+same results.
+
 `strlen`, `strcpy` and `strcmp` are not in the block; the compiler
 expands them in line.
 
@@ -125,7 +128,9 @@ either table: a bad code gets a wrong name rather than `?????`.
 Every routine named above passes the code of its own name, which
 confirms the names independently of running them.  Of the math
 library, only `fabs`, `frexp`, `log`, `modf`, `pow` and `sqrt` pass a
-code, so only they are linked.  The codes also name three error tails
+code, so only they are linked.  The Z3815A 4010 links `exp` too
+(`z3815a-4010.md`), whose code's routine is `0xce`, its index 14 with
+bit 6 set, which the low 6 bits' index leaves out.  The codes also name three error tails
 that analysis made functions of: `0x5dbde`, a double divide's operand
 error (0 / 0); `0x5dbee`, a double divide by zero; and `0x5e81c`, a
 double multiply's operand error (0 x infinity).

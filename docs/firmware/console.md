@@ -325,8 +325,13 @@ driver: its host port is DUART channel B, with the exchanges `drtR`
 and `drtW` (`0x460c`) and the interrupt messages `DUARTB isr signaling
 ...` (`0x4686`), while `drta_get_byte` is still the GPS link on
 channel A.  The Z3805A's own `:DIAGnostic:OS` listing names both
-`sciR`/`sciW` and `drtR`/`drtW` (`scpi/undocumented.md`), so its firmware,
-3543B, matches neither image exactly.
+`sciR`/`sciW` and `drtR`/`drtW` (`../scpi/undocumented.md`), and its
+image, 3543B, carries both drivers, but its host port is the Z3801A's,
+DUART channel B: `scpi_port_open` (`0x1dee6`) opens I/O device 0,
+whose entry in the I/O table (`0x5171a`) is `drtb_read` and
+`drtb_write`, and the SCI, device 3, carries only the ES message,
+`sci_write` (`0x20152`) dropping text under the flag `sci_init` sets
+(`0x10329c`, at `0x1ffc8`).
 
 ## The Z3801A image
 
@@ -443,9 +448,12 @@ been run on a unit.  A word's arguments go to C in the order typed.
 - `1 abr_stat` prints a `gs:` line on every `@@Ba`, once a second,
   with each channel's PRN, mode, signal strength and status
   (`FUN_000491ce`); `0 abr_stat` stops it.
-- `print_bc` prints the `@@Bk` record, including `RECEIVER OSC
-  OFFSET`, raw, in the VP reference's 0.1 m/s (`0x48480`).  The
-  start-up scripts ask for `Bk` once; `0 ext_msg_rate` asks again.
+- `print_ext_msg` (`0x1b23e`, code 0x12) prints the `@@Bk` record,
+  including `RECEIVER CLOCK BIAS` and `RECEIVER OSC OFFSET`, raw, in
+  the VP reference's 0.1 m and 0.1 m/s (`0x48480`).  The start-up
+  scripts ask for `Bk` once; `0 ext_msg_rate` (code 0x11) asks again.
+  `print_bc` (`0x1b234`, code 0x10) prints the xDOP best-combinations
+  page instead (`structures.md`, "Others").
 - The engine's `@@Ca` self-test result is kept at `0x100c36` (3543B:
   `0x100c38`), with the bits the VP reference gives: channels 1 to 6
   correlation, 1 kHz presence, ROM, RAM, EEPROM, DCXO SPI, RTC.  It is

@@ -99,9 +99,9 @@ Z3815A and Z3816A -- read off bench units through the pForth debug
 console or gathered from others.  [`docs/firmware/`](docs/firmware/)
 documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 
-### Three images in C
+### Four images in C
 
-Three images are rewritten whole as C: every C function of each, and of
+Four images are rewritten whole as C: every C function of each, and of
 the installer it unpacks into RAM, was decompiled by Ghidra through the
 project's scripts and then written again by hand, as each image's link
 from its hand-written C and assembly alone, every function required,
@@ -118,19 +118,22 @@ fixed.
 | Z3805A 3543B | 1318 and 237 | 474 | [`rewrite.md`](docs/firmware/rewrite.md) |
 | 58503A 3704 | 1422 and 248 | 468 | [`58503a-3704.md`](docs/firmware/58503a-3704.md) |
 | Z3801A 3543 | 1300 and 237 | 467 | [`z3801a-3543.md`](docs/firmware/z3801a-3543.md) |
+| Z3815A 4010 | 1663 and 249 | 478 | [`z3815a-4010.md`](docs/firmware/z3815a-4010.md) |
 
 The Z3805A's came first; its function check finds all agree but six
-whose difference is the firmware's own or one C cannot express, and one
+whose difference is the firmware's own or one C cannot express, and none
 the harness cannot run.  Its method, checks and limits are those of all
-three.  The 58503A's C began as the Z3805A's and was rewritten to its
+four.  The 58503A's C began as the Z3805A's and was rewritten to its
 own code: of the primary's functions 1418 agree and 4 differ for the
-firmware's own reasons, and the installer's 247 agree, one the harness
+firmware's own reasons, and the installer's 248 agree, none the harness
 cannot run; its console sessions agree, 8 of 8.  Its document says what
 it has that the Z3805A does not, the front panel among it.  The Z3801A's
 3543, the Z3805A's sibling without its SCI driver, is held to the same
-checks.
+checks, and so is the Z3815A 4010, seeded from the 58503A's, which
+speaks NMEA to its GPS engine, a GT-74, and switches its output with
+another card's; its document lists what its code does not establish.
 
-The C the three run alike lies once, in
+The C the four run alike lies once, in
 `third_party/firmware/rewritten/common/`, moved there only by the rules
 of [`rewrite.md`](docs/firmware/rewrite.md), "Shared C"; each image's
 own C is in `rewritten/IMAGE/`.  The firmware tree is split by kind --
@@ -203,10 +206,11 @@ board-atlas` rewrites it.
 | [`docs/58503a-second-10mhz.md`](docs/58503a-second-10mhz.md) | enabling the 58503A's 10 MHz OUT B, J15 |
 | [`docs/oncore-leap-week.md`](docs/oncore-leap-week.md) | the 58503A's Time Reset at the end of GPS week 2441, and the 256-week leap-parameter bugs it resembles |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
-| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the three images in C |
+| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the four images in C |
 | [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md) | the rewrite's method, checks and limits, shown on the Z3805A 3543B, and the rules for shared C |
 | [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md) | the 58503A 3704 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |
+| [`docs/firmware/z3815a-4010.md`](docs/firmware/z3815a-4010.md) | the Z3815A 4010 against the 58503A 3704 and the Z3805A 3543B, and its rewrite |
 | [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
 | [`docs/loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |
 | [`docs/board-atlas.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/board-atlas.html) | the first-family main board, part by part on its photographs: each part's role, its address or QSPI device, the nets measured, and the Z3801A's and 58503A's boards against it; a ring or a row opens the part's card, the photos zoom and pan, the parts filter by subsystem, confidence or text, and `#J4` links to a part; generated from `docs/board-atlas.json` by `make board-atlas` |

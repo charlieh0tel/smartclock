@@ -235,7 +235,10 @@ settings `+2` to `+8` at `+2`, the SCI's `+2` to `+5` at `+9`),
 model at `+2`, serial at `+0x14`, suffix at `+0x26`, "S" at `+0x27`),
 `lifetime_record_write` (`lifetime_record`, "The lifetime record"
 below) and `save_calibration_block` (`0x30c60`, `calibration_block`:
-the TC at `+2`, the time offset at `+6`).  `nv_save` builds an
+the TC at `+2`, the time offset at `+6`).  The Z3815A 4010's block
+holds its EFC calibration too, `:DIAG:ROSC:EFC:DADC`, `:ASLOPe` and
+`:BSLOPe` at `+0x0c`, `+0x10` and `+0x14` (`save_calibration_block`,
+`0x44f8a`; `efc_calibration_read`, `0x4506c`).  `nv_save` builds an
 `nv_record` ("The NV register") and `reset_record_write` (`0x33238`)
 a `reset_record` of `0x5c` bytes: a sequence number, the checksum,
 the time and date, and 80 bytes of text.  The reset records are a log of 32,
@@ -403,6 +406,28 @@ that a 68000 compiler would pad.  The header packs it, and
 `check-layout.c` checks every member's offset that a decoder or a
 print gives.
 
+The Z3815A 4010's `gps` (`0x100f2c`, `0x678` bytes, cleared by
+`gps_init`) has no Oncore messages to decode: its records are
+the 58503A 3704's, which the code carried from it reads, at its own
+offsets, and the GT-74's NMEA sentences follow the receiver ID, each a
+record its decoders' table (`0x5e32a`) fills field by field and whose
+commits copy into the 58503A's records (`gps_nmea.c`).  Against the
+58503A's: the engine's cable delay correction, a word at `+0x0ce`, puts
+`status_received` at `+0x0d4`; rrm's satellites, which nothing reads,
+are at `+0x19a`, the xDOP table at `+0x19f`; the time RAIM record, at
+`+0x30c`, has a long alarm limit of 10 ns and `raim_received` after it
+(`+0x358`); the sentences are at `+0x528` to `+0x5ed`, and from
+`field_5ee` on each field is `0xd0` bytes further in, `average_count`
+at `+0x5f0`, the references at `+0x614`, the monitors from `+0x640`
+([`z3815a-4010.md`](z3815a-4010.md); its `check-layout.c`).  Its
+dispatch, `nmea_sentence_decode`, reads `nmea_sentences` (`0x5e32a`):
+each sentence's name after `GP`, its length and commas, exact where
+positive, and its fields' list, `nmea_field_entry`s of a field's
+number, its length, its decoder and the place it stores, the list
+ending at number 0, the sentence's name, whose decoder is its commit.
+`gps_request_translations` (`0x5e6d4`) gives each Oncore request the
+task still sends its GT-74 one, by code and argument mode.
+
 ### The loop's state
 
 `pll` (`0x102162`, `pll_state`, `0x3d6` bytes) is the loop's state
@@ -471,6 +496,66 @@ Its other named fields, by the routines that use them:
 | `+0x352` | `drift` | `pll_rep`'s `current drift`, times `5.4e-8`, per day |
 | `+0x35a` to `+0x362` | `fit_a`, `fit_b`, `fit_c` | the curv task's aging fit, a + b·y + c·ln y (`loop.md`, "The aging fit"), which `aging_fit_collect` copies in and `holdover` and `startup_pll` predict the EFC from |
 
+The Z3815A 4010's `pll` (`0x10286e`, `0x3ee` bytes, cleared by
+`pll_init`, `0x50b4c`) is its own, each field where its code reaches it
+(`make record-access`) and named as the 58503A 3704's field of the
+instruction `image_diff.py` aligns with it
+([`z3815a-4010.md`](z3815a-4010.md); its `check-layout.c`).  Against the
+58503A's: three TIs (`ti0` to `ti2`) and the state of the n3 lock pll stage
+(`n3_lock_state`, `+0x1a`, the states `pr_pll` names "wait1" to
+"exit2") come before the hold causes, which are at `+0x1e`, so that the
+fields from there to `predicted_uncertainty` (`+0x4a`) are each 14
+bytes further in, `efc` at `+0x42` and `tfom` at `+0x46`; the measured
+time uncertainty, `pr_bad_act`'s "tunc:meas" (`+0x4e`), follows, and its
+"valid" flag is near the end (`+0x3ec`); the EFC history (`+0x5e`,
+`0x354` bytes) holds 32 entries, not 64, with the entry a new one
+replaces kept after each array but the logs' and each entry's fit a,
+b and c in three arrays more; the aging term and the loop's EFC step
+follow it (`+0x3b2`, `+0x3b6`); and the holdover start's uptime
+(`+0x3d4`) is where the 58503A's has a long nothing reads.  Which
+reference the loop takes, the GPS's 1PPS or the external, is at
+`+0x3ea`.  The normal loop's state is at `+0x1c` (`normal_state`).  The
+fields no code reaches are named by their offsets.  Its `loop_steering`
+(`0x102768`) is the 58503A's `loop_steering_state`, and the readings'
+flags after it, `interval_tick_wait` (`0x102784`), the replaced
+reading's (`0x102785`) and `interval_armed_without_pps`, sit before
+`fine`'s readings (`0x102788`) as the 58503A's do (`0x10238c`).
+
+The Z3815A 4010's OCXO is on a bit-serial link the code calls the
+puck's, whose record, `puck` (`0x102374`, `0x2c` bytes, `puck_link`), is
+its own, laid out by its code (`make record-access`; its
+`check-layout.c`): the ADC reading the EFC should give (`+0x00`, the EFC
+times `:DIAG:ROSC:EFC:DADC`), the correction drawn from the reading and
+the EFC written with it (`+0x04`, `+0x08`), a flag that the next
+correction starts again (`+0x0c`), the frames since the EFC was set
+(`+0x0e`), the "EFC ADC out of range" flag (`+0x12`), whether the link is
+alive and the uptime it lapses at (`+0x13`, `+0x14`), the frame as
+shifted in, seven bytes and its length (`+0x18`, `+0x1f`), the last good
+frame's first byte, its status byte and the two copies the `puck` word
+prints as "status1" and "status2" (`+0x20` to `+0x23`), and the shift's
+state, a frame begun, the byte's address and its bits (`+0x24`, `+0x26`,
+`+0x2a`).  What the status byte's bits but bit 0 ("puck warm") and the
+`0xa1` frames carry is not established
+([`z3815a-4010.md`](z3815a-4010.md), "Not established").
+
+The n3 lock pll stage keeps its own state apart from `pll`, `n3_lock`
+(`0x102d60`, `0x3e` bytes, `n3_lock_fields`): the pForth word
+`n3_phase`'s phase (`+0x00`), the card seating error and its count
+(`+0x04`, `+0x36`), the passes it steers and measures the phase offset
+in (`+0x06`, `+0x0a`, `+0x34`), the phase offset (`+0x0e`), its loop's
+integral, gains and TI average (`+0x12`, `+0x1a`, `+0x1e`, `+0x38`), the
+frequency offsets (`+0x22`, `+0x26`) and the slew's offset (`+0x2a`).
+After it, `efc_calibration` (`0x102d9e`, `0x36` bytes,
+`efc_calibration_fields`) is the OCXO calibration's measurement: its
+step, the EFC's point, ten frequency offsets from `+0x04` and the ADC's
+two readings at `+0x2c` and `+0x30`.
+
+The `:DIAGnostic:ROSCillator:PTESt` time uncertainty test's run is
+`ptest` (`0x1026fe`, 10 bytes, `ptest_run`): its state (`ptest_state`,
+off, armed, running, passed, failed, as `:PTESt:STATe?` names them),
+the EFC history entries in a row within its bound (`+0x01`) and the
+uptimes it started and ended at (`+0x02`, `+0x06`).
+
 ### Others
 
 The other exchanges, from their `create_x` calls, and the routines
@@ -529,6 +614,12 @@ is no `scanf`; input is parsed by the SCPI parser and two `atoi` calls.
 | `+0x28`, `+0x2a` | `raim_detected`, `raim_alarms` | the Time RAIM page's `# Alarms: %d (%d detected)` |
 | `+0x2e`, `+0x30` | `frame_errors`, `checksum_errors` | `Frame`, `Cksum` |
 | `+0x32`, `+0x34` | `command_monitor_failures`, `status_monitor_failures` | `Command Monitor ... %5d failures`, `Status Monitor ...` |
+
+The Z3815A 4010's (`0x10161c`, `0x3c` bytes, its page `0x58cb2`) is the
+same to `commands_sent`, then `responses_read` a long, the rest two
+later, and two more, printed `Addr` and `Data` (`+0x34`, `+0x36`),
+beside `Frame` and `Cksum`, which its NMEA framer counts; its monitors' failures
+are at `+0x38` and `+0x3a` ([`z3815a-4010.md`](z3815a-4010.md)).
 
 `gps_last_command` (`0x1017f2`) points at the command `gpsm_task`
 runs, `gps_running_command` on its stack: the request it took from the
@@ -599,7 +690,10 @@ a word) is the countdown `restart.md` gives: `watchdog_report`
 (`0x2437a`) sets it to 8 when every counter shows its task ran, else
 prints the line and counts it down, and writes SWSR only while it is
 above 0; `log_reset_cause` (`0x24440`) logs "Watchdog timeout: clk
-..." when it is 0 and there is no exception or crash message.
+..." when it is 0 and there is no exception or crash message.  The
+Z3815A 4010's line has a sixth counter, "bp" (`watchdog_bp`,
+`0x100c6d`), which a task of its own counts and which must be above 25
+(`watchdog_report`, `0x36664`).
 
 **The MC68000 frame adapters.**  Ten entries from `0x11a58` to
 `0x11b34`, `m68000_bus_error` to `m68000_line_f` (vectors 2 to 11),
@@ -648,6 +742,22 @@ passes page `0x4a`, and `log_append` then returns `0xfc`.
 on its page; `log_read` flushes first while it is set and it reads
 that page, and `log_flush` clears it.  `log_erase` (`0x31536`) resets
 them all.
+
+The Z3815A 4010's log is a ring of 222 entries, 74 pages of 3:
+`log_newest` (`0x10249c`), the index of the newest entry, moves on
+before `log_append` (`0x46260`) adds one, from 221 back to 0, and
+`log_oldest` (`0x102498`) moves on when it reaches it over a used
+entry; `log_read` (`0x45cfc`) numbers entries from `log_oldest`.
+`log_append` writes `log_lap` (`0x1024a0`) as each entry's first byte
+and flips it, 0 or 1, as it wraps from the last page to the first, and
+by it `log_init` (`0x45b72`) finds the ends after a restart: the
+lap page 0's first entry has (`log_first_lap`, `0x461f8`), then the
+first page with a free entry, or with one of the lap before, the oldest
+(`log_page_previous_lap_entry`, `0x461ce`); with none, the log is full
+and the next entry the first.  Full, `log_append` goes on over the
+oldest only while `nv_settings.log_wrap` is set (`0x46296`).
+`log_erase` (`0x45a16`) sets `log_oldest` to 0, `log_newest` to 222,
+so that the first entry is 0, and `log_lap` to 0.
 
 **The tasks' stacks.**  `task_stack_report` (`0x16c44`) prints each task
 in `task_table` (`0x1026b6`, `task_table_entry`, six bytes a task,
@@ -798,6 +908,15 @@ the survey's averaging tests.  Four descriptors no setter refers to
 (`nv_param_leap_minute_length`, `_leap_date`, `_leap_pending` and two
 `field_`s) keep the leap second's state and two values not traced.
 
+The Z3815A 4010's (`0x102570`, `0xcf` bytes) is its own: its tables
+(`0x474c4`, 24 descriptors; `0x47524`, 19) add
+`:OUTPut:ACTive:HOLDover:DURation:THReshold`'s value after the holdover
+status threshold, so that from `limit_threshold` on each field is four
+bytes further in than the 58503A's, and `:DIAGnostic:LOG:WRAP`'s setting
+where the 58503A's has a pad; the 58503A's `field_14` is
+`:DIAGnostic:REFerence:EXTernal:QUEStionable:HYSTeresis`'s
+([`z3815a-4010.md`](z3815a-4010.md); its `check-layout.c`).
+
 ## The time-interval counter's records
 
 `interval_reading` (`0x101f9c`, `interval_reading_fields`, 13 bytes)
@@ -823,6 +942,16 @@ when `registers_mode` is `COUNTER_REGISTERS_WHEN_WANTED` (1) and
 `calibrate_mode` is `COUNTER_CALIBRATE_ALWAYS` (3), or
 `COUNTER_CALIBRATE_WHEN_WANTED` (1) with `calibrate_state`
 `COUNTER_WORK_WANTED`; a third pair at `+0x10` counts `+0x14` down.
+The 58503A's and the Z3801A's are the same.  The Z3815A 4010's
+(`0x1026a2`, its own `smartclock.h`, `0x28` bytes) holds eight
+registers, which `counter_arm`, `counter_load_registers` and
+`interpolator_prepare` copy into its eight `fconf_regs` (`0x49808`), so
+the calibration is at `+8`, the three pairs at `+0x10` to `+0x15`, the
+sync's kind and count at `+0x16` and `+0x18`, the interpolator's offset
+and scale at `+0x1c` and `+0x20`; and a fourth pair after them,
+`alarm_mode` and `alarm_state` (`+0x24`), with which `counter_arm`
+sets `FPGA_BIT_ALARM` to `alarm` (`+0x26`, `0x4988c` to `0x498a6`),
+as `counter_alarm_request` (`0x494d8`) asks.
 
 ## The pllc task's SCPI requests
 
@@ -844,7 +973,7 @@ done `pll_scpi_receive`, `pll_scpi_complete` (`0x433b6`) and
 The source is a `request_source` (smartclock.h): who asked, and so
 whether a failure reaches the status system.  `status_report_from`
 (`0x2bf00`) reports for `REQUEST_SOURCE_SCPI` (0, every SCPI handler's
-`return_zero(call->input)`) and `REQUEST_SOURCE_STARTUP` (2,
+`scpi_input_source(call->input)`) and `REQUEST_SOURCE_STARTUP` (2,
 `nv_restore`), and drops it for `REQUEST_SOURCE_INTERNAL` (4, the
 firmware's own log erase and NV saves).  Nothing in the image passes 1,
 3 or 5; 5 alone is tested elsewhere (`0x432fe`, sent to the GPS as 0
@@ -1055,7 +1184,7 @@ The boot code uses cells in the same RAM.  Its self-test results are
 `boot_selftest` (`0x10ab20`, `boot_selftest_results`, 16 bytes): a
 checksum word, then the fields of `selftest`'s first 14 bytes in their
 order.  `boot_reset` (`0x550`), once a byte-lane sum fails (`restart.md`,
-"Boot check") and it stays out of the primary, ORs 2 and 1 into
+"The installer", "Boot check") and it stays out of the primary, ORs 2 and 1 into
 `checksum` for the two lanes of `0x10000` to `0x3ffff` and 8 and 4
 for `0x40000` to `0x7ffff`, sets `cpu` to `SELFTEST_FAILED` (1) if its register test
 fails (`0x76e`), and runs the RAM test into `ram`, `ram_data_bits`
@@ -1069,7 +1198,13 @@ path it writes the DUART's reset output port bits command with
 `BOARD_LED_INSTALLER` (8), then `BOARD_LED_CPU`, `BOARD_LED_RAM` or
 `BOARD_LED_DUART` (`0x10`, `0x20`, `0x40`) for a CPU, RAM or UART
 failure, OP4 to OP6 as the primary lights them, and
-ORs each into `lamp_mask`, which nothing reads.  The installer's
+ORs each into `lamp_mask`, which nothing reads.  The Z3815A 4010's
+(`0x10ac50`) keeps the output latch's shadow at `+0x0e`, a word, in
+place of `lamp_mask` and its pad: its boot code clears it and the
+latch (`0x5ae`, `0x5b4`) and, for a failure, ORs `0x80` into it and
+writes it to the latch (`0x5c2`, `0x764`, `0x89c`), and its installer's
+latch writers set and clear its bits (`installer::0x100fbe`,
+`installer::0x100fe4`), so that the record is each image's own.  The installer's
 `:DIAGnostic:TEST?` (`restart.md`: 1 checksum flags, 2 CPU, 3 RAM, 4
 DUART) returns `checksum`, `cpu`, `ram` with its two details and
 `uart`, and for 0 a bit for each that is nonzero, 1, 2, 4 and 8 (its
@@ -1257,7 +1392,7 @@ clear `+0x00` and `+0x04`.
 
 | Offset | Field | Filled by | Read by |
 | ------ | ----- | --------- | ------- |
-| `+0x08` | `sender` | `gps_request_sender`: `GPS_SENDER_SEQUENCE` (1) `gpsx_send`, the loop's GPS sequences; `GPS_SENDER_SETTING` (2) `pll_scpi_send_to_loop`, a setting; `GPS_SENDER_COMMAND_MONITOR` or `GPS_SENDER_STATUS_MONITOR` (3 or 4) `gps_request_post`, the command and status monitors | `request_kind_valid` (1 to 4, its table ended by `GPS_SENDER_NONE`), `gps_count_response`, `pllp_task` |
+| `+0x08` | `sender` | `gps_request_sender`: `GPS_SENDER_SEQUENCE` (1) `gpsx_send`, the loop's GPS sequences; `GPS_SENDER_SETTING` (2) `pll_scpi_send_to_loop`, a setting; `GPS_SENDER_COMMAND_MONITOR` or `GPS_SENDER_STATUS_MONITOR` (3 or 4; the Z3815A 4010's 4 or 5, its 3 `GPS_SENDER_SETTING_OTHER`, which `pll_scpi_send_to_loop`'s caller passes for a message whose byte +5 is neither 0 nor 5, and with which `gps_console_request` takes another status snapshot) `gps_request_post`, the command and status monitors; the first three are `common/types/gps_request_sender.h`'s, the rest each image's own | `request_kind_valid` (1 to 4, the Z3815A's 1 to 5, its table ended by `GPS_SENDER_NONE`), `gps_count_response`, `pllp_task` |
 | `+0x09` | `result` | `GPS_RESULT_REJECT` (1), as every sender sends it; `gps_count_response` its kind before sending it back to `plla` | `pllp_task`, as `gps_ack_code` for `GPS_SENDER_SEQUENCE` and `pll_scpi_complete`'s success for `GPS_SENDER_SETTING` |
 | `+0x0a` | `code` | the request, a `gps_request_code`: an Oncore message below `0x31`, a step to `0x46`, a script to `0x59` | `gps_request_class`, `gpsm_task` |
 | `+0x0c` | `argument_mode` | `gpsx_send`'s argument, `GPS_ARGUMENTS_SET` (0) from the others but a `gps_request_post` of code `GPS_POST_STEP` (4) | `gps_request_class`, `gps_request_step` |
@@ -1266,6 +1401,20 @@ clear `+0x00` and `+0x04`.
 
 Nothing in the GPS task writes `+0x12`, so whether `sent` names what it
 means is open.
+
+The Z3815A 4010's entry is 28 bytes, two more, and its ring six of
+them, `gps_requests` (`0x101712`), the oldest's address at `+0xa8` and
+the next free one's at `+0xac` (`request_ring_put`, `0x576c6`, steps by
+28).  Before it translates a request to the GT-74's
+(`gps_request_translate`), `gpsm_task` keeps its code and argument mode
+at `+0x14` and `+0x16` (`untranslated_code`,
+`untranslated_argument_mode`, `0x57fd2`), and `gps_count_response`
+puts them back before the entry goes back to its sender (`0x57646`), so
+that the sender sees the code it sent.  The record is each image's
+own, all its fields in each image's `smartclock.h`; the command
+`gpsm_task` runs, `gps_running_command`, holds the longer request, so
+that its fields from `script` on are each two bytes further in
+(`0x5806a` to `0x581be`).
 
 ## The GPS command log
 
@@ -1297,6 +1446,15 @@ commands were issued since last read)".  `gps_print_commands`
 when it takes the snapshot at `0x10168e`, and moves the copy's two
 addresses into the copy.  `gps_print_1pps` (`0x4c9e2`) prints it after
 the two snapshots, keeping its `+0x1a4` so it can be printed again.
+
+The Z3815A 4010's is its own, the "GT-74 Command Log" (`command_log`,
+`0x101da8`; its copy `0x101f7e`): 21 entries of `0x16` bytes, the
+oldest's address at `+0x1ce` and the next free one's at `+0x1d2`, each
+the request's sender (`+0`), its code as received and as translated
+(`+2`, `+4`), the sentence's code (`+6`), up to two characters of the
+sent text after the sentence's address (`+8`), the query flag (`+0xb`),
+`from_clock` (`+0xc`), the date (`+0xe`) and the time (`+0x12`)
+([`z3815a-4010.md`](z3815a-4010.md)).
 
 ## A date and time
 
@@ -1774,6 +1932,10 @@ RSR's EXT and POW bits (`0xc0`) are clear and `restore` is
 `PRESERVED_REGION_RESTORE`; `nv_clear_and_reset` (`0x45c92`) sets
 `restore` to `PRESERVED_REGION_DISCARD` (0) and re-sums before
 `trap #12`.  `crash_message` (`0x10094e`) follows it, outside the sum.
+The Z3815A 4010's is `0xc04` bytes, its `gps` at `+4`, its `pll` at
+`+0x67c`, the ADC monitors at `+0xa6a` and
+`retained_block`'s `0x19` bytes at `+0xbea` (`system_init`, `0x22e06`
+to `0x22e48`).
 
 The `0x19` bytes from `0x101e70` are a block the code copies whole,
 its length the difference of two addresses (`0x12bc4`, `0x47ab0`),
@@ -1939,6 +2101,22 @@ there in place of sending it to `plla`.  `command_monitor`
 new time since the last `@@Bn`, while `gps.raim.rate` is set; at 7 the
 status monitor requests the messages again.
 
+The Z3815A 4010's `gps_command_message` is at `0x101658`, 89 bytes, after
+`gps_counts`, which `gps_request_build` builds into.  Its
+`gps_periodic` (`0x1015a6`, `gps_periodic_state`, 8 bytes, to
+`status_screen_print_interval`) is its own: `gps_periodic_send`
+(`0x57cd8`), which tps's commit calls (`0x5d118`), sends one sentence a
+call, by its stage (`+0x00`, `gps_periodic_stage`): the query of the
+setting in `query_code` (`+0x02`), which `gpsm_task` stores when it
+sends a setting whose descriptor has a query (`0x58220`) and which
+the send clears to `GPS_REQUEST_NONE`, counting the query in `queries`
+(`+0x04`), up to four in a row; else `gps_periodic_gsv` (`0x594a6`,
+`$PFEC,GPint,GSV00`); and `gps_periodic_anc` (`0x594c0`,
+`$PFEC,GPint,anc00`) once `sends` (`+0x06`) reaches 59, which then
+counts again from 0.  Each sentence is a `gps_fixed_sentence`, its text
+and length.  `gps_init` sets it up: stage 0, no query
+(`0x57c2c` to `0x57c38`).
+
 ## The status snapshots
 
 `status_snapshot` (`0x4a636`) fills a `status_snapshot_record`, `0x12e`
@@ -1971,6 +2149,19 @@ a row sets `status_snapshots_frozen` (`0x10155a`), after which it takes
 no more, and `gps_print_1pps` (`0x4c9e2`) prints the last two and the
 log's copy instead of "(no GPS receiver errors were logged)".
 `gpsm_task` clears both.
+
+The Z3815A 4010's record is `0x176` bytes and its own: the 58503A's
+fields reordered, the TI reading at `+0x0c`, the satellite sets at
+`+0x36` and lists at `+0x60` and `+0xe0`, the references' at `+0x124`,
+the date and time at `+0x138` with the time zone after them, and six of
+this image's, the two bytes the screen's card heading reads first,
+`gps.field_592` and the byte after it at `+0x134`, the height's type at
+`+0x164`, and two alarm words and a flag after the hardware condition
+(`+0x170` to `+0x174`).  It keeps four: `status_screen_snapshots`
+(`0x1017c6`), the screen's two, which `status_screen_print` (`0x56b0c`)
+picks by its first argument, `status_snapshot_latest` (`0x101ab8`) and
+`status_snapshot_flagged` (`0x101c2e`)
+([`z3815a-4010.md`](z3815a-4010.md); its `check-layout.c`).
 `gpsx_send` (`0x46636`) copies its four arguments to `gpsx_arguments`
 (`0x1025ac`) and points its message at them.  It copies all four
 whatever the request, so `gps_init_sequence` (`0x46838`) keeps them as
@@ -2060,7 +2251,7 @@ nothing reads.
 ## The SCPI task's response areas
 
 From `0x10272a`, end to end, the SCPI task keeps a record for each
-source `return_zero` gives, two of each, as `robin_blocks` and
+source `scpi_input_source` gives, two of each, as `robin_blocks` and
 `robin_arrays` (`0x102a26`, `0x102a36`) hold two: `scpi_response_texts`,
 0x11a bytes of text a query writes and answers the address of;
 `scpi_response_lists` (`0x10295e`), 32 shorts, the satellite lists and
@@ -2110,6 +2301,21 @@ five, `next` its oldest once `count` passes 5, and
 to `pllc_request_d`.  `robin_parse` (`0x2eba8`) stores the matched
 keyword's code, `+0x10` of its entry, in `robin_keyword_code`
 (`0x102d74`), which nothing reads.
+
+The Z3815A 4010 keeps two sessions, each its own task's: the SCPI
+port's, DUART channel B, device 3, and the SCI's, device 0, the
+console (`docs/firmware/z3815a-4010.md`).  Each session's cells are one
+layout: its echo text (256 bytes), its four `port_error_report`
+entries, the prompt setting, the last input at `+0x12`, the repeat, the
+status byte and its enable at `+0x18`, the line at `+0x1a`, its next
+and end pointers and the prompt text; the SCPI port's from
+`scpi_echo_text` (`0x103260`, `port_error_reports` `0x103360`), the
+SCI's from `sci_scpi_echo_text` (`0x10348c`, `sci_scpi_error_reports`
+`0x10358c`), each named a cell at a time as the shared C names the
+first's.  The two echo counts follow, `scpi_echo_length` (`0x1036b8`)
+and `sci_scpi_echo_length`, which `scpi_format_response` indexes by the
+request source, 0 and 1 (`0x3bbc4`).  The SCI's error entries are its
+SCSR's FE, OR, PF and IDLE bits.
 
 ## The tasks' cells
 

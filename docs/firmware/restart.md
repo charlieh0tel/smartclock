@@ -50,7 +50,8 @@ its byte the same way beside its `0x4000c0` load (3633 `0x324f0`,
 settings, the next restart is cold too.  With the checksum good and the flag 0, a
 second branch loads the ROM defaults; on those four models that branch
 also requires RSR to be exactly SYS, which `RESET` gives.  Anything else is a cold start, which also
-pulses PE6.  The checksum is an 8-bit sum stored as sum and
+pulses PE6, the FPGA's PROGRAM line (`0x22e30`; `outputs.md`, "The FPGA
+bitstreams").  The checksum is an 8-bit sum stored as sum and
 complement, so a zeroed region fails it.  So `:SYSTem:PRESet`, which
 clears the flag, restarts into the defaults, and `:SYSTem:PON`, which
 zeroes the region, restarts cold.  No console word reaches `trap #12`.
@@ -283,7 +284,9 @@ unpacked into `0x100400` to `0x10ac50`.
   cover, but byte-swap the reset vector; pairs swapped fail the sums.
   Nor do the lane sums notice bytes shifted by an even count within a
   bank, which keeps each byte in its lane.  Z3816A: an Intel-style
-  part, one 16-bit wide.
+  part, one 16-bit wide.  Z3815A 4010: its code commands one part, 16
+  bits wide, with Intel's command set (below), the part not
+  identified.
 - *Boot check.*  The AMD-flash reset code (`0x550`) sums each byte
   lane of each pair against the bytes at `0x3fffc` and `0x7fffc`.  A
   pass boots the primary; a failure stays in the installer.
@@ -332,6 +335,26 @@ unpacked into `0x100400` to `0x10ac50`.
   lies there.  The harness runs both to their end on a model of the
   parts' commands and status, comparing the flash's contents after
   (README.md, "Hand-written C"; `harness.Flash`).
+- *Erase and download (Vatican installer, read).*  The Z3815A 4010's
+  writes a command in a word's low byte at the address it acts on:
+  `0x50` clears the status register, `0x40` and then the word programs
+  it, `0x20` and then `0xd0` erase the block, and `0xff` reads the
+  array again; from a program or erase on, a read gives the status, bit
+  7 set once done, bits 4 and 3 a program's errors, 5, 4 and 3 an
+  erase's.  Each sets the output latch's bit 14 first and clears it
+  after (`installer::0x100fbe`).  `:DIAGnostic:ERASe` (`0x1080f8`)
+  erases `0x20000`, `0x40000` and `0x60000` in turn
+  (`installer_flash_erase_block`, `0x108086`: up to 12900000 polls,
+  five tries while an error shows), answering -200 at the first block
+  that fails; `:DIAGnostic:ERASe?` (`0x108124`) reads from `0x20000`;
+  `:DIAGnostic:DOWNload` (`0x107eca`) is the Peru installer's over
+  `0x20000` to `0x7ffff`, its word programmer
+  (`installer_flash_program_word`, `0x107e3e`: up to 100 polls, five
+  tries) answering -200 when the last try's status shows an error.
+  The primary's `:DIAGnostic:TEST:FLASh?` erases and programs the block
+  at `0x4000` through its own copies of the two in RAM, which its reset
+  unpacks (`z3815a-4010.md`).  The harness models the part
+  (`harness.WordFlash`).
 
 On 2026-09-28 the bench Z3801A was taken into the installer and back,
 with queries only: `*IDN?` answered `Peru-A`, `:DIAGnostic:TEST? 1`
@@ -451,7 +474,9 @@ check-chip-selects` fails when the tables here, in `README.md` and
 there drift from the images).  The Z3801A 3543's map is the
 Z3805A's.  The 58503A writes no CSBAR4 or CSOR4, so CS4 keeps its
 reset state, its BYTE field disabled (MC68331UM 4.8.4), and 3633's
-boot code makes the CS4 pin a discrete output, PC1.  The Z3816A 4001
+boot code makes the CS4 pin a discrete output, PC1, which no image
+writes, so it drives PORTC's reset 1 (D.3.22): the pin is high
+throughout (`58503a-3704.md`, "Chip select 4").  The Z3816A 4001
 and Z3815A 4010 use another map (`README.md`'s table): there
 `0x300000` is chip select 1, `0x302000` chip select 7 and `0x304000`
 chip select 5, which none of the Z3801A, Z3805A and 58503A has, and
@@ -501,9 +526,16 @@ CS10 is set up as 4.8.3 asks for a 16-bit port: base all ones, a
 2 KiB block so that ADDR[19:16] are compared, read only, the lower
 byte, the one an acknowledge at an odd address is.  Its DSACK is
 external, so the device's acknowledge sets the cycle's width (Table
-4-12); `../hardware-investigations.md` item 21 expects the DUART's
-/DTACK on DSACK0, which would make it an 8-bit cycle on DATA15 to
-DATA8; not yet read on the board.  The flash and
+4-12).  Only DSACK1 can carry it: the Z3805A's boot code and primary
+both write PEPAR `0x32` (`0x650`, `0x145ba`), which assigns PE1 to DSACK1,
+PE4 to DS and PE5 to AS and leaves PE0 a port pin (MC68331UM Table
+D-4), so the DUART's /DTACK is expected on DSACK1, which makes the
+acknowledge a 16-bit cycle, its byte on DATA7 to DATA0
+(`../hardware-investigations.md` item 21); not yet read on the board.
+PEPAR differs by model: the Z3801A's, 58503A's and Z3816A's primaries
+write `0x32` too (`0x142c2`; 3704 `0x14614`; `0x2475e`), the
+Z3815A's `0x13`, DS, DSACK1 and DSACK0 (`0x24c26`), the 58503B's
+`0x10`, DS alone (`0x2468c`).  The flash and
 RAM selects split one window between reads and writes, or between
 the bytes of a word, so that each part's /OE and /WE can take a chip
 select directly; that wiring was not traced.  Which pair of U11 to

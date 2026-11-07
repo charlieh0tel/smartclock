@@ -1,5 +1,8 @@
 # The interval
 
+Addresses and routine names are the Z3816A 4001's unless another image
+is named.
+
 ## What the query returns
 
 Three nodes in the command tree are named `TINTerval`.  Their parents:
@@ -12,9 +15,9 @@ Three nodes in the command tree are named `TINTerval`.  Their parents:
 
 (Parents are resolved as in `README.md`, "Note on the disassembly".)  `:SOURce`
 is optional, so the first is `:SYNChronization:TINTerval?` and the
-second `:PTIMe:TINTerval?`; they share a handler.  A bench 58503A polled once a second for 187 s
-answered `:PTIM:TINT?` with its `:SYNC:TINT?` value every time, held
-for ten polls like it.  The handler copies the 32-bit value at
+second `:PTIMe:TINTerval?`; they share a handler.  Polled on a 58503A,
+`:PTIM:TINT?` answers with the `:SYNC:TINT?` value, held for ten polls
+like it (`../hardware-investigations.md`, item 8).  The handler copies the 32-bit value at
 `0x102c0c` into its reply, tagged with the halfword `0xfff6` (−10),
 when the flag at `0x102c10` is set.  The value is a single-precision
 float in seconds: `pll_normal` stores there the float sum of the
@@ -32,9 +35,8 @@ when the byte at `0x10266e` is set, and otherwise fails with code
 0xc.  So `:DIAGnostic:PTIMe:TINTerval?` is one reading, and
 `:SYNChronization:TINTerval?` and `:PTIMe:TINTerval?` the mean of
 ten.  A Z3805A answered the `DIAGnostic` form in the keyword sweep
-(`scpi/undocumented.md`, "`:DIAGnostic:PTIMe:TINTerval`").  The bench 58503A
-answered it once a second for an hour on 2026-09-25, and its
-ten-second value was the mean of those readings to 0.15 ns rms
+(`../scpi/undocumented.md`, "`:DIAGnostic:PTIMe:TINTerval`").  On a 58503A
+the ten-second value is the mean of those readings
 (`../hardware-investigations.md`, item 8).
 
 ## The ten-second average
@@ -44,8 +46,8 @@ valid, adds it to a running sum with a count at `0x102735`.  A
 counter at `0x102734` runs to ten; at ten, the sum is divided by the
 count, the flag is set and the mean is stored at `0x102c0c`.
 
-On a 58503A, 397 of 400 consecutive distinct values were each held for
-exactly ten one-second polls: this schedule seen from outside.
+Polled once a second, a 58503A holds each value for ten polls: this
+schedule seen from outside (`../hardware-investigations.md`, item 8).
 
 ## One reading
 
@@ -81,7 +83,11 @@ the count is assembled from three bytes, register selectors `0x16`,
 
 `counter.md` follows the counter in the Z3805A 3543B in detail: its
 registers, the order it is armed and read in, the calibration and the
-1 PPS edges.
+1 PPS edges.  By their roles, `FUN_0004467a` is its `counter_read`,
+`FUN_00044542` its `counter_read_raw`, `FUN_00044592` its
+`interpolator_read`, `FUN_000440a6` its `fpga_read` and `FUN_000444e2`
+its `fpga_read_byte`; the correspondence is by role, not checked
+instruction by instruction.
 
 ## In every image
 
@@ -93,7 +99,7 @@ the latest reading, a double converted to float, with the tag stored
 beside it; one routine counts readings to ten and stores the mean.
 Each image also holds the 1.0e-7 tick constant (`0x3e7ad7f29abcaf48`)
 and the FPGA port `0x304000` and calibration block `0x400080`
-addresses.  Read with Ghidra 12.1.3 on 2026-10-09; the mean and its
+addresses.  Read with Ghidra 12.1.3; the mean and its
 flag sit four bytes apart in each.
 
 | Image | `:SYNC:TINT?` handler | Mean, flag | Averaging | `:DIAG:PTIM:TINT?` handler | Reading, flag |

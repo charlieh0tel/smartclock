@@ -384,6 +384,30 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   is not the C's (`function_check.py`'s `KNOWN`), and counts only while
   every difference of the case matches its pattern, so it hides no
   other.
+- The function check compares what zeroed RAM and the effects alone
+  let pass: the text pointers a function's own calls pass, by what they
+  name; a creator's create and start, its name and entry, finding no
+  task in half its cases, creators found by their calls; and a cell
+  read or written in place of another, in each case run again with
+  the cells one copy alone read, or either wrote and neither read,
+  poisoned.  Was blind to all three: the Z3815A's first link run's C
+  passed with the 58503A's log texts, its flag cell and a task's name
+  and entry, found by hand.  Only pointers are compared, those both
+  copies pass in the order first passed; gcc's copy is compiled for
+  the check with its inlining of small and called-once callees off and
+  a static helper's calls are its caller's, since a hook missed what
+  gcc put in line (2026-11-05: a log text through a static helper,
+  two texts logged the other way round, agreed until then); and a
+  preset, hook or record naming what the image's C lacks fails the
+  function rather than leaving its cases unset; no cell both
+  copies read is poisoned, since a poisoned path reaches addresses
+  that differ between the copies (a frame's, a message's).  Poisoning
+  was of the first case alone, which reaches only the path zeroed RAM
+  takes: the Z3815A's `counter_read` and `counter_calibrate` read and
+  wrote the 58503A's cells of a configuration laid out otherwise, on a
+  path the first case never took, and agreed.  Every case is now
+  poisoned, but one in which the copies touched the same cells, at
+  the cost of a second run of each case that differs.
 - Unicorn has no CPU32; its 68020 stands in, since the image uses none
   of the instructions either has alone.  Because the 68020 runs what a
   CPU32 traps on, the link takes a libgcc built for the CPU32 with soft
@@ -404,7 +428,8 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   statements otherwise), and listed in `docs/firmware/quirks.md`.  A
   firmware fault the C can reproduce, it does.
 - Stack headroom is a difference, not a figure: a case differs where
-  gcc's copy goes more than 192 bytes deeper than the image's, or past
+  gcc's copy goes more than 256 bytes deeper than the image's (192
+  until the check's link stopped inlining callees), or past
   the floor where another use's memory lies.  A figure alone let
   `libc_doprnt`'s stack sit 4 bytes above a console data stack
   unremarked until gcc 13 crossed it.
@@ -462,28 +487,81 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   image's own C first (the Z3801A 3543, the third to share, sent back
   `counter_set_sync`, the `:LED:ALARm:USER` handlers, and the FPGA bit
   setters with each image's own table).  Each seeded image's
-  `check-layout.c`, which rule 2 compares, asserts its layouts at its
+  `check-layout.c`, which rule 2 compares once the image shares
+  `common/`, the Z3815A 4010's too, asserts its layouts at its
   own addresses, derived from its code and export
   (`tools/firmware/layout_addresses.py`, run by `make check-common`),
   and every field shared C reaches through a global is asserted: the
   58503A's began as the Z3805A's addresses, copied, which let the
   shared `gps_receive` count errors at the Z3805A's offsets unseen.
-  A lead, a pairing changed below the carrying threshold, is seeded
-  under its base's name, its note saying it is a lead and at what
-  similarity.  It was seeded with the port's suffix,
-  `gps_init_58503a`, and that was dropped: the suffix recorded
-  lineage, not what the function does.  No function is named for an
-  image: the rows added by hand were renamed for what they do, a
-  difference from another image's function of the name going into the
-  note, and `make check-plain-names` fails on a suffixed name in the
-  hand-written C or a names file.
+  A check's record must also lie where its address puts it, in a
+  global the export types as that record or as one holding it, so that
+  a check left at a base's addresses, there inside another global, no
+  longer passes for the image's own (the Z3815A's `gps_statistics`, the
+  clock record and others had); nor one inside a label the names leave
+  untyped, but for one named with why (`UNTYPED_HOLDERS`), as the base's
+  checks inside the Z3815A's status snapshots went unseen until they
+  were typed.
+  A record that differs in any image is entirely per image, with every
+  shared function that names it: `common/` holds no shared head of a
+  per-image record (decided 2026-11-06, backing out the splits of the
+  boot code's self-test results and the GPS request;
+  `docs/firmware/rewrite.md`, "Shared C").  The split enums' heads
+  (`status_scpi.h`, `qspi_device.h` and the rest) stay shared, by
+  decision, as shared code names their members.
+  A more aggressive commonizing pass, which revisits them, is planned
+  for later.
+  A function the diffs class identical or relocated in all four images
+  is not thereby shared: it moves only if gcc gives the same code for
+  it in each, which most such functions miss for a field offset, a
+  static helper or a callee of the image's own.  The owner declined
+  relaxing the rule to one C text over per-image types (2026-11-03),
+  so those stay per image.
+  Rule 1's masking hides a callee too, so `check-common` compares the
+  routines each image's code of a shared function calls with those its
+  C names, each exception a named entry with its reason: the Z3815A's
+  five that went back first (`docs/firmware/rewrite.md`, "Shared C").
+  The export is one translation unit, in which a file could name what
+  a file before it defines; the rule is that none does, and `make
+  check-alone` compiles each file alone after the export's
+  declarations and headers so that one that does fails (decided
+  2026-11-03, after loop run 3 found files naming others' statics).
+  An unfinished image (`UNFINISHED_IMAGES`) is one whose C is not yet
+  all hand-written, so that it has no link check; its function check
+  may fail none (the Z3815A 4010's since its rest wave, 2026-11-04,
+  but for the two the widened function check found, written in its
+  second link run),
+  and it joins `REPORTED_IMAGES` once its link check passes, where
+  before a report with none failed had forced the move.  The Z3815A
+  4010 joined it in its fifth link run (2026-11-05), leaving
+  `UNFINISHED_IMAGES` empty, the mechanism kept for the next image.
 - **Per-image tool tables**: what the function check gives an image
   other than the Z3805A 3543B is kept in tables keyed by image or held
   by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`,
-  `IMAGE_GIVEN_CASES`, `IMAGE_STATES`, ...), each
+  `IMAGE_GIVEN_CASES`, `IMAGE_STATES`, `IMAGE_COUNTED_LOOPS`, ...), each
   entry cited in that image's code, never a base entry widened, so a
   port's quirks show as that port's and the Z3805A's figures cannot
   move.  `make check-comment-addresses` makes a copied address show.
+- **Seeding a port's names**: until a port's own naming starts, its
+  names and modules files are `tools/firmware/seed_names.py`'s output,
+  and `make check-image-diff` fails when they fall behind the diff.
+  Once edited by hand, `check-seed-names` checks only rows still marked
+  seeded; a hand row drops the mark.  A RAM label the rules leave
+  unplaced is placed by a hand row citing the port's references, never
+  by a new exception in the rules.  A single reference from a relocated
+  function was tried as enough to place a label and dropped: relocated
+  code may load another cell of the same record (`gps_receive`,
+  `0x4c124`), so it placed labels wrong.  A port's C carries its own
+  image's constants (model, tag, revision).  A lead, a pairing changed
+  below the carrying threshold, is seeded under its base's name, its
+  note saying it is a lead and at what similarity.  It was seeded with
+  the port's suffix, `gps_init_58503a`, and that was dropped: the
+  suffix recorded lineage, not what the function does, and read as the
+  58503A's inside the Z3815A, which carried it.  No function is named
+  for an image: the rows added by hand were renamed for what they do,
+  a difference from another image's function of the name going into
+  the note, and `make check-plain-names` fails on a suffixed name in
+  the hand-written C or a names file.
 
 ## Next
 
@@ -506,6 +584,9 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   helpers have, through the names files.  The exporter should give an
   exception entry no bridge.  The primary's own writes to ROM's range
   are not modeled.
+- **The rest of the firmware work** is in progress and will follow:
+  the emulator that boots these images, booting the rebuilt C in it,
+  and the FPGA designs decoded as netlists.
 
 ## Open questions
 

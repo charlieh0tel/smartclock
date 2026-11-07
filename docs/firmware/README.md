@@ -81,7 +81,7 @@ engine is a Furuno GT-74 rather than an Oncore, and the 58503B's
 unit; their provenance is in `third_party/NOTICE`.  Both are
 checksummed as the Z3816A's is, a sum of words, not as the 58503A's two
 lanes: each carries the Z3816A's routine, instruction for instruction,
-at `0x45e` (`restart.md`, "Boot check").  `interval.md`, `loop.md`,
+at `0x45e` (`restart.md`, "The installer", "Boot check").  `interval.md`, `loop.md`,
 `ovens.md`, `console.md` and `gps.md` each end with an "In every image"
 section setting all seven images side by side, `restart.md`'s tables
 cover all seven, their command trees are in `scpi/`, their console
@@ -107,6 +107,7 @@ request scripts in `oncore/`.
 - [Pulse, time-tag and output commands](outputs.md)
 - [58503A 3633 against 3704](revisions.md)
 - [58503A 3704 against Z3805A 3543B](58503a-3704.md)
+- [Z3815A 4010 against 58503A 3704 and Z3805A 3543B](z3815a-4010.md)
 - [Z3801A 3543 against Z3805A 3543B](z3801a-3543.md)
 - [The floating-point library](softfloat.md)
 - [The C library](libc.md)
@@ -365,7 +366,9 @@ part of what they change.  In order:
    whose boot vector 43 is `0xa46`, which calls the unpacker at `0xaa8`
    (its records at `0xbc4`, 43025 bytes, the count it loads at
    `0xab0`) and jumps to `0x10136c` (`0xaa2`); its overlay is
-   `installer::0x100000` to `0x10ab75`.
+   `installer::0x100000` to `0x10ab75`; and `0x8000 0x1013a6` for the
+   Z3815A 4010, whose boot vector 43 is `0x492`, which unpacks the
+   records at `0x8000` and jumps to `0x1013a6` (`0x8ec`).
 3. `SmartClockSetup.java` again, now over the installer too, with
    `types=third_party/firmware/rewritten/IMAGE/types/smartclock.h`,
    `types=third_party/firmware/include/mc68331.h`,
@@ -402,23 +405,30 @@ and `results.tsv`, its export, from a bare import as above with the
 58503A's inputs (`58503a-3704.md`, "The export"), and its
 `rewritten/`, begun as the Z3805A's and written to the 58503A's code,
 with its SCPI trees' C, which `make scpi-tree IMAGE=58503a-3704` writes
-as it does the Z3805A's; the C the images share lies in
+as it does the Z3805A's; the C the two images share lies in
 `third_party/firmware/rewritten/common/` (`rewrite.md`, "Shared C").  `make
 image-diff` regenerates the matches, the TSV `58503a-3704.md`
 describes, that document's figures and, through `make seed-names`
 (`tools/firmware/seed_names.py`), the 58503A's seeded `names.tsv` and
 `modules.tsv`; `make check-image-diff` fails while any is stale.  The
-Z3801A 3543's folder, `third_party/firmware/analysis/z3801a-3543/`, is seeded
-the same way from the Z3805A's ([`z3801a-3543.md`](z3801a-3543.md)),
-its `rewritten/` the Z3805A's own C less the SCI's, beside `common/`,
-which it shares with the other two.  A change to the Z3805A's `names.tsv`,
+Z3815A 4010's folder,
+`third_party/firmware/analysis/z3815a-4010/`, is seeded the same way from the
+58503A's ([`z3815a-4010.md`](z3815a-4010.md)), its `rewritten/` the
+bindings, its trees' C and the C its waves have written, beside
+`common/`, the rest the decompiler's reading; the Z3801A 3543's,
+`third_party/firmware/analysis/z3801a-3543/`, from the Z3805A's
+([`z3801a-3543.md`](z3801a-3543.md)), its `rewritten/` the Z3805A's
+own C less the SCI's, beside `common/`, which it shares with the other
+two.  A change to the Z3805A's `names.tsv`,
 `modules.tsv` or export regenerates them with `make image-diff` in the
 same commit, and the 58503A's tree rows, which its names file shapes,
-with `make scpi-tree IMAGE=58503a-3704`; a seeding rule or exception
-is changed in `seed_names.py`, not in a row.  The make targets that
-check and generate it are `third_party/firmware/Makefile`'s, which
+with `make scpi-tree IMAGE=58503a-3704`; a seeding rule or exception is changed in
+`seed_names.py`, not in a row.  The make targets
+that check and generate it are `third_party/firmware/Makefile`'s, which
 runs alone, `make -C third_party/firmware TARGET IMAGE=z3805a-3543b`,
-for every image without `IMAGE=`, and to which the top Makefile hands each target by name, so that `make
+for every image without `IMAGE=` (but `report-decompiled`, which
+runs the Z3805A's and the 58503A's alone; the Z3815A's runs with
+`IMAGE=z3815a-4010`), and to which the top Makefile hands each target by name, so that `make
 check-decompiled` is the same.
 
 Optionally, after step 3 or any later one,
@@ -1060,8 +1070,8 @@ A function rewritten by hand lives in
 `third_party/firmware/rewritten/IMAGE/`, apart from the decompiled C in
 `decompiled/IMAGE/`, a file to a subsystem (`clock.c`), or, when
 several images run it, once in `third_party/firmware/rewritten/common/`
-([`rewrite.md`, "Shared C"](rewrite.md#shared-c)): `common/` holds 1018
-functions and 232 static helpers (`make check-common`).  The exporter
+([`rewrite.md`, "Shared C"](rewrite.md#shared-c)): `common/` holds 953
+functions and 228 static helpers (`make check-common`).  The exporter
 finds the functions those files define (`rewritten=`), leaves the
 decompiler's reading of each out of the exported C, a line
 `/* NAME: rewritten in FILE */` in its place, and includes the files
@@ -1269,11 +1279,14 @@ address of `"%s"` (`0x16768`), so their pattern takes a line alike but
 for that column, and its memory column, which D6 starts, is compared.  Both
 checks (`tools/firmware/harness.py`) take a pointer left in RAM, at an
 even address, as the same when the two point at the same place in the
-same text, in ROM or among gcc's constants: gcc keeps its
-own copy of a literal the image keeps in ROM.  An empty text is the
-same only when one pointer is in ROM and the other among gcc's
-constants: gcc keeps `""` as any literal's end, so nothing before it
-tells (`loopback_expect_next` and `sci.transmit_next` reset to `""`);
+same text, one in ROM and the other among gcc's constants or an
+overlay's code: gcc keeps its own copy of a literal the image keeps in
+ROM.  Two places in one region are never the same, however alike their
+bytes, so that a changed state byte inside a long that reads as a ROM
+address is seen (`pll.startup_state` 2 and 3 as `0x200` and `0x300`,
+whose vector entries end alike), and an empty text is the same only so
+too: gcc keeps `""` as any literal's end, so nothing before it tells
+(`loopback_expect_next` and `sci.transmit_next` reset to `""`);
 and a pointer to a C
 function's image copy and one to gcc's copy are the same (a driver's
 echo routine); and so are pointers into the same place of an image
@@ -1328,9 +1341,8 @@ address, where the image's is at an even one, is
 multipliers, the OS reports' local texts, `timecode_update`'s next
 time of day, `reset_record_write`'s record, `gpsm_task`'s two
 request entries, `status_screen`'s mode lines and the error messages'
-table.  A run on a model of the
-CPU32 that takes an address error for a misaligned word or long, as
-the CPU32 does, found those before the last; `rebuild_link.py` finds
+table.  mc683xx's strict CPU32 mode, which takes an address error for
+a misaligned word or long, found those before the last; `rebuild_link.py` finds
 an access at an odd offset from the frame or stack pointer in gcc's
 code, as linked and compiled again with no function inlined
 (`-fno-inline`), since where a frame's objects lie changes with what
@@ -1463,7 +1475,10 @@ that starts the device again (TB, SCDR, SPCR1), and SRA, SRB and SCSR
 with RxRDY or RDRF for the case's first reads, a framing error beside
 it in some cases; and the DUART's input port reads a case's sequence,
 one that bounces before it settles among them, which
-`duart_input_debounced` reads until ten reads agree.  The EEPROM's
+`duart_input_debounced` reads until ten reads agree; and the Z3815A
+4010's switch word at `0x302000`, which the others never read, a word
+a case, clear, all set, bits 4 and 5 alone and three mixes
+(`harness.SWITCH_WORD`).  The EEPROM's
 write cycle is modeled too, its part not identified: after a write,
 the case's busy reads of the cell give its complement and the next
 its value, or, in a failing case, every read the complement; its
@@ -1482,7 +1497,7 @@ kernel's return from interrupt, but from an interrupt the harness has
 the case take, below, and `#11` and `#12`, which restart --
 ends a call, as does a zero divide, which the common exception entry,
 with no task's handler set, records before it spins (`restart.md`,
-"Both end in the watchdog"), and a write to code.  On the board the
+"The watchdog", "Both end in the watchdog"), and a write to code.  On the board the
 boot chip select is read only (CSORBT `0x6870`), but chip select 6
 is write only over the same range, and in the Z3805A chip select 7
 over the upper bank's, which CS1 reads (`restart.md`, "The chip
@@ -1496,7 +1511,7 @@ and the flash is modeled (`harness.Flash`): its two pairs of
 AM29F010s, a pair's parts a word's two bytes, each a command state
 machine as AMD's Am29F010B data sheet gives it
 (`third_party/amd/Am29F010B.pdf`;
-`restart.md`, "Erase and download"): the unlock cycles, program,
+`restart.md`, "The installer", "Erase and download"): the unlock cycles, program,
 sector erase with more sectors in its window, chip erase and
 read/reset, and while a program or erase runs, its status, DQ7's
 data polling, DQ6 toggling, DQ3 for an erase, done after the case's
@@ -1507,7 +1522,17 @@ after a call as RAM is and its writes, and its reads from the call's
 first write on, effects; the primary's ROM stays read only.  A write
 the parts ignore, to a part reading its array that starts no command,
 a stray pointer's, ends the call there, as one to the primary's ROM
-does.  A case may take
+does.  The Z3815A 4010's flash is one part, 16 bits wide, modeled as
+its code commands it, Intel's command set, the part not identified
+(`harness.WordFlash`; `restart.md`, "Erase and download (Vatican
+installer, read)"): clear status, program, block erase and its
+confirmation, and read array, and while a program or erase runs, its
+status register, done after the case's busy reads, with an error bit
+in a failing case; only the blocks its code erases and reads back are
+modeled, and any other write ends the call.  Its primary writes it
+too, through the two routines its reset unpacks into RAM, which the
+profile's RAM starts with (`Profile.records`), so that its ROM is the
+flash's model and not read only.  A case may take
 an interrupt part way (`harness.Interrupt`), in both copies at the
 same point of each one's own instructions: after the k'th read or
 write of a variable by the routine itself, not by a handler, and every
@@ -1571,7 +1596,11 @@ and a call still running at its 1000th kernel call, a task's loop,
 ends there, before making it.  A loop that makes no kernel call ends
 where it counts to a count of the function's (`COUNTED_LOOPS`):
 `root_task`'s idle loop at `idle_loops`' 101st write, odd, so that a
-loop counting by more passes it.  Once the loop has read its counter, a
+loop counting by more passes it; and an image's own
+(`IMAGE_COUNTED_LOOPS`), which may make kernel calls: the Z3815A 4010's
+`pllp_task` at its ninth pass, the byte `watchdog_pll`'s eleventh
+write, its set-up counting two, so that a walk through its stages is
+compared where it has got to.  Once the loop has read its counter, a
 write of it by any instruction but the one that read it ends the call
 too, as a split increment: the image's is one instruction, `addq.l #1`
 to memory (`0x131dc`), which no interrupt divides, and a load, an add
@@ -1635,10 +1664,15 @@ is done in its place.  A kernel call's argument, or a message's long, that is
 a C function's gcc copy is recorded as its image copy, the same
 routine: a task's entry for `psos_start`, `scpi_task_create` in
 `scpi_task_start`'s message.  ident finds every name, but in the
-cases `IDENT_FAILS` gives a function that asks before it creates:
-there it finds none but the running task's, error 1 and no record
-(`kernel_ident`, `0x14eda` to `0x14eec`), so that `root_task` goes on
-past `spoo_task_create` to create and start every task.  And the stack is filled with `0xa5` at a call's start,
+cases `IDENT_FAILS` gives `root_task`, and in the odd cases of each
+creator, a function whose sidecar's calls ask for a task by name and
+create one (`creators_ident_fails`): there it finds none but the
+running task's, error 1 and no record (`kernel_ident`, `0x14eda` to
+`0x14eec`), so that `root_task` goes on past `spoo_task_create` to
+create and start every task, and a creator's create and start, the
+task's name and entry, are compared.  A creator is found, not named,
+since a twin an image adds (the Z3815A 4010's `sci_scpi_task_create`)
+would otherwise find its task in every case and never create it.  And the stack is filled with `0xa5` at a call's start,
 so that a local read before it is written reads the same in both.
 Each function runs eight cases: in the first six a pointer's buffer
 holds bytes, and in the last two longs that are pointers, so that a
@@ -1652,7 +1686,15 @@ those longs at the next one's place and the third at the NULL, so that
 such a list ends (`list_unlink`, `klok_insert_sorted`,
 `region_segment_containing`, `os_report_process`).  That memory, as
 the EEPROM, is filled for each call, compared after it as RAM is, and
-holds no code, so that a jump into either faults.  Some parameters are
+holds no code, so that a jump into either faults.  Then each case
+runs again, poisoned: the bytes of RAM, in zero longs outside the
+kernel model's segments and an overlay's code, that one copy alone
+read in it, or either wrote and neither read, hold values that differ
+by address (`POISONED`), so that a copy reaching another cell than the
+image's, which zeroed RAM gives the same 0, differs on any path a case
+reaches, a given or a state case's as much as the first's; no cell both copies
+read changes, so that two copies alike take the case's path, and a
+case in which the copies touched the same cells is not run again.  Some parameters are
 given the image's own object their callers pass: by its name, an SCPI
 formatter's `output` and the lexer's `input`, the console port's
 object (`0x29e18`), and a header `path`, a buffer set back to a list
@@ -1916,14 +1958,14 @@ project without the GUI, as File, Archive Current Project does, run as
 a pre-script of any headless run with the archive to write, the
 projects directory and the project's name.  Run over the bare image, imported raw at zero
 and analyzed, the scripts reproduce the
-checked-in export, sidecar and `.symbols.ld` byte for byte, for every
-image.  `NoSwitch.java` turns Ghidra's Decompiler Switch Analysis off
-before auto-analysis and `SwitchPass.java` runs it once the code is
-disassembled, one switch at a time in address order; the stock analyzer
-applies its results across threads in a `HashSet`'s order, which varies
-from run to run, so without them a bare import does not reproduce the
-export byte for byte.  From the
-repository's root, with `GHIDRA` the install and `PROJECT` a new
+checked-in export, sidecar and `.symbols.ld` byte for byte, for every one
+of the four images.  `NoSwitch.java` turns Ghidra's Decompiler Switch
+Analysis off before auto-analysis and `SwitchPass.java` runs it once the
+code is disassembled, one switch at a time in address order; the stock
+analyzer applies its results across threads in a `HashSet`'s order, which
+varies from run to run, and the Z3815A 4010, named only where seeded, let
+that reach its export (`z3815a-4010.md`, "The export and the checks").
+From the repository's root, with `GHIDRA` the install and `PROJECT` a new
 directory outside the repository:
 
     "$GHIDRA"/support/analyzeHeadless "$PROJECT" smartclock \
@@ -1960,20 +2002,84 @@ archive's form too.  An exception in a script does not roll
 back what it did, so save the program before each script that changes
 it.
 
+## The CPU backend
+
+The harness and its checks (`function_check.py`, `libc_check.py`,
+`app_check.py`) run on Unicorn's 68020 by default, or on mc683xx's
+bare CPU32, `mc683xx.Machine` (its `docs/python.md`, "Bare CPU"), with
+`SMARTCLOCK_CPU=mc683xx`.  `tools/firmware/backend.py` is the one seam:
+`new_cpu` gives Unicorn's `Uc` or a class that answers the part of
+Unicorn's API the harness uses on the `Machine`, so that both run from the
+same code; `unicorn_check.py` stays Unicorn's alone.  mc683xx's Python
+module is its PyPI release, `mc683xx==0.2.0`, pinned exactly in each
+harness script's inline metadata beside Unicorn and bumped only on
+purpose, which `uv run` installs; `CPU=mc683xx` has the function check
+run on it.  A module older than the harness needs, with no bare
+`Machine` or one whose hooks see a long as two word cycles, stops the
+run with a message saying so.  To try an unreleased mc683xx, build its
+wheel (its `docs/python.md`) and, for the run, change the pin by hand
+to `mc683xx @ file:///PATH/TO/WHEEL`:
+
+    make report-decompiled CPU=mc683xx
+    SMARTCLOCK_CPU=mc683xx uv run tools/firmware/libc_check.py \
+        third_party/firmware/images/z3805a-3543b.bin
+
+What differs, on mc683xx:
+
+- Unicorn's bugs are not worked around: the status register is read
+  and written as it is (no probe, `harness.PROBE`), and `move (SP)+,SR`,
+  `rtr` and `rte` are the CPU's own; traps #1 and #7 are taken by the
+  CPU through the profile's vector table (VBR), as the harness takes
+  them by hand on Unicorn; the harness notes an interrupt's `rte` at
+  its return.  The other exceptions reach the harness's interrupt hook
+  before anything is stacked, PC at the instruction, as Unicorn's
+  interrupt hook gets them.
+- The devices, the EEPROM and the installer's flash are Python
+  peripherals of the `Machine`, whose read hooks answer before the
+  read, as Unicorn's read hooks do.  The memory hooks run once the instruction has
+  ended, with the registers as it began, an overlay code write's bytes
+  taken from the call's start; a long is one access, at a device and
+  to a hook alike, as on Unicorn.  The writes of an exception's frame,
+  flagged as stacking, reach no hook.
+- A fault stops the run, as Unicorn's does, with Unicorn's error.
+- Unicorn's 68020 runs what the CPU32 refuses, and mc683xx runs as the
+  68020 does where it has a deviation for it (`set_deviations`), so
+  that the report is Unicorn's: words and longs at odd addresses, which the CPU32 takes as
+  an address error (CPU32RM 6.2.3), and the trace bits, which trace
+  (6.2.10).  `SMARTCLOCK_CPU_PARITY=0` runs as the CPU32 does instead,
+  and gives both images' figures too: only some cases are skipped,
+  stopping at the same address error in both copies
+  (`exception_name`, `diag_crash`, the installer's `exception_name`).
+  Such a report ends saying so, and `check-report-figures` checks it
+  against rewrite.md's strict figure of the cases compared, so that
+  the check passes whichever report was written last.
+
+With them both images' reports are Unicorn's, line for line.  The
+58503A 3704's differed in two functions until the link took the
+CPU32's libgcc ("Hand-written C"): `hmon_check_pll_stage`, then
+decompiled and since written by hand, and `hmon_task`, whose gcc
+copies call `__fixunssfsi`, whose 68881
+`fmove.s` in the toolchain's libgcc is a line F exception on the
+CPU32, which has no FPU, and mc683xx has no switch for it.  Each
+report takes about as long on mc683xx as on Unicorn.
+
 ## The checks in CI
 
 `.github/workflows/firmware.yml` runs the firmware's checks for the
-three images on every push and pull request, a job of its own beside
+four images on every push and pull request, a job of its own beside
 the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
 `check-pforth-words`, `check-image-diff`, `check-chip-selects`,
 `check-loop-trace`, `check-magic-numbers`, `check-comment-addresses`,
-`check-common`, `check-plain-names`, `check-decompiled`, which runs `check-unicorn` first,
+`check-common`, `check-plain-names`, `check-alone`, without `IMAGE`, which compiles each
+hand-written `.c` of every image's export alone after the export's
+declarations and headers (`rewrite.md`, "Shared C"), `check-decompiled`,
+which runs `check-unicorn` first,
 `check-link`, which fails if an image does not link from its
 hand-written C and assembly alone, every function required ("Hand-written
 C"), and `report-decompiled`, which fails if any function fails and checks
 the figures this document, `rewrite.md`, `58503a-3704.md`,
-`z3801a-3543.md` and the top `README.md` give from each image's
+`z3801a-3543.md`, `z3815a-4010.md` and the top `README.md` give from each image's
 function check -- the user-mode and console counts, the agreeing,
 known, skipped and failed functions and the agreeing ones' cases --
 and from its link check against the report it writes and the link
@@ -1981,25 +2087,33 @@ check's summary, so that every function agreeing is
 checked in public.  `IMAGE=z3805a-3543b` is set for the job;
 `check-types`, `check-scpi-tree`, `check-magic-numbers` and
 `check-decompiled` run again with `IMAGE=58503a-3704` and
-`IMAGE=z3801a-3543`, and `check-link` and `report-decompiled` run
-without `IMAGE`, for the three, each failing if any of its functions fails (`58503a-3704.md`
-and `z3801a-3543.md`, "The function check").  `check-image-diff`
+`IMAGE=z3801a-3543` and `IMAGE=z3815a-4010`, and `check-link` and
+`report-decompiled` run without `IMAGE`, for the four, each failing if
+any of its functions fails (`58503a-3704.md`, `z3801a-3543.md` and
+`z3815a-4010.md`, "The function check").  The Z3815A 4010 was an
+unfinished image (the firmware Makefile's `UNFINISHED_IMAGES`, now
+empty) until its fifth link run: its function check ran without a link
+check, its figures checked any failed functions among them
+(`report_figures.py --unfinished`), until its link check passed.  `check-image-diff`
 checks the 58503A's and the Z3801A's diffs against the Z3805A, their
-seeded names and the 58503A's document's figures;
+seeded names and the 58503A's document's figures, and reads the
+Z3815A 4010's image and `handlers.txt`;
 `check-comment-addresses` checks the addresses their C's comments
-cite; and `check-common` the shared C, `common/`, and that the
+cite; and `check-common` the shared C, `common/`, each function's
+callees in each image's code against its C's, and that the
 seeded images' `check-layout.c` assert their layouts at their own
 addresses, which its rule 2 compares, and the figures of what
 `common/` holds that the documents quote (`rewrite.md`, "Shared C");
 `check-plain-names` that no function is named for an image
-(`rewrite.md`, "The rewrite").  None of the targets builds the workspace;
+(`rewrite.md`, "The rewrite").
+None of the targets builds the workspace;
 `check-chip-selects` reads every image's reset code (`restart.md`,
 "The chip selects").  The job also runs `make check-board-atlas`, which
 needs only Python: `docs/board-atlas.html` against the data it is
 rendered from, and every file and section that data cites.
-`check-loop-trace` runs both images' own `startup_pll` and
-`pll_normal` in Unicorn on synthetic readings, the routines that reach
-outside the loop's arithmetic stood in for
+`check-loop-trace` runs both images' own
+`startup_pll` and `pll_normal` in Unicorn on synthetic readings, the
+routines that reach outside the loop's arithmetic stood in for
 (`tools/firmware/loop_trace.py`), and fails if the traces
 `crates/smartclock/tests/loop_firmware.rs` replays against `loop.md`'s
 update law are not what the images give.
@@ -2019,5 +2133,5 @@ reached the console's data stack (`libc.h`'s `libc_doprnt`).  The
 function check measures the C as a given gcc compiles it, so a gcc
 that changes its code can change the figures.  clang-format is
 `clang-format-21`, named through `CLANG_FORMAT`: 19, 20 and 21 format
-the C alike, and 18 formats three of the files otherwise.  The job
-takes about ten minutes, five of them `report-decompiled`'s.
+the C alike, and 18 formats three of the files otherwise.  Most of
+the job's time is `report-decompiled`'s.

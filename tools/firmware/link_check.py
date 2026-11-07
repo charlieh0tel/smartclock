@@ -70,11 +70,11 @@ def target(name: str, aliases: dict[str, str]) -> str:
     return name
 
 
-def check(c_path: str, cflags: list[str], work: str) -> tuple[int, int, int, int]:
-    """Links the image's hand-written C and assembly in work; the number
-    of functions required, and of them those the hand-written C defines,
-    those the assembly does and those a .set makes another routine's
-    name.  Exits naming each function missing."""
+def link_required(c_path: str, cflags: list[str], work: str) -> tuple[list[str], dict[str, str], list[str]]:
+    """Links the image's hand-written C and assembly in work, every
+    function of the export required; the export's functions by name, the
+    names a .set makes others' and their targets, and the functions the
+    link found missing, none if it linked.  Exits on any other failure."""
     c = open(c_path).read()
     base = c_path.removesuffix(".c")
     first = FUNCTION_MARKER.search(c)
@@ -97,10 +97,23 @@ def check(c_path: str, cflags: list[str], work: str) -> tuple[int, int, int, int
              ld_options=tuple(f"--require-defined={name}" for name in required))
     except subprocess.CalledProcessError as error:
         missing = MISSING.findall(error.stderr)
-        for name in missing:
-            made = sorted(alias for alias, routine in aliases.items() if target(alias, aliases) == name)
-            print(f"  missing: {name}" + (f", and its other names {', '.join(made)}" if made else ""))
-        raise SystemExit(error.stderr if not missing else f"{len(missing)} of {len(names)} functions missing")
+        if not missing:
+            raise SystemExit(error.stderr)
+        return names, aliases, missing
+    return names, aliases, []
+
+
+def check(c_path: str, cflags: list[str], work: str) -> tuple[int, int, int, int]:
+    """Links the image's hand-written C and assembly in work; the number
+    of functions required, and of them those the hand-written C defines,
+    those the assembly does and those a .set makes another routine's
+    name.  Exits naming each function missing."""
+    names, aliases, missing = link_required(c_path, cflags, work)
+    for name in missing:
+        made = sorted(alias for alias, routine in aliases.items() if target(alias, aliases) == name)
+        print(f"  missing: {name}" + (f", and its other names {', '.join(made)}" if made else ""))
+    if missing:
+        raise SystemExit(f"{len(missing)} of {len(names)} functions missing")
     c_defined, assembly_defined = code_symbols(work + "/c.o"), code_symbols(work + "/a-image.o")
     own = [name for name in names if name not in aliases]
     elsewhere = [name for name in own if name not in c_defined | assembly_defined]

@@ -80,9 +80,11 @@ CHILDREN_SUFFIX = "_children"
 ELF_HEADER = ">16sHHIIIIIHHHHHH"
 SECTION_HEADER = ">IIIIIIIIII"
 NOBITS = 8
-# readelf's type and binding of a global data object's symbol.
+# readelf's type and binding of a global data object's symbol, and the
+# type of a function's, of any binding.
 OBJECT = "OBJECT"
 GLOBAL = "GLOBAL"
+FUNCTION_TYPE = "FUNC"
 # objdump's m68k listing: a function's heading, an instruction's address,
 # mnemonic and operands, and a displacement from the frame or stack
 # pointer, in decimal (an indexed operand's, in hex, has an index of no
@@ -427,6 +429,17 @@ def objects(elf_path: str) -> dict[str, tuple[int, int]]:
         fields = line.split()
         if len(fields) == 8 and fields[3] == OBJECT and fields[4] == GLOBAL:
             found[fields[7]] = (int(fields[1], 16), int(fields[2], 0))
+    return found
+
+
+def code_symbols(elf_path: str) -> dict[str, int]:
+    """A linked ELF's functions, global and static, by name their
+    address: gcc's, the libgcc's and the assembly's."""
+    found = {}
+    for line in run(TOOLS + "readelf", "-sW", elf_path).splitlines():
+        fields = line.split()
+        if len(fields) == 8 and fields[3] == FUNCTION_TYPE:
+            found[fields[7]] = int(fields[1], 16)
     return found
 
 

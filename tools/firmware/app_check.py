@@ -1,11 +1,11 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.2.0", "unicorn==2.1.4"]
 # ///
 """Confirms application routines named from the decompiled firmware by
-running them, as libc_check.py does the C library's: each is called in a
-Unicorn 68k emulator on known inputs and its result compared with what
-its name says.
+running them, as libc_check.py does the C library's: each is called in
+the harness's 68k emulator, Unicorn's or mc683xx's (backend.py), on
+known inputs and its result compared with what its name says.
 
     uv run tools/firmware/app_check.py third_party/firmware/images/z3805a-3543b.bin
 

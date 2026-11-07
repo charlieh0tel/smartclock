@@ -4054,8 +4054,11 @@ public class SmartClockExportC extends GhidraScript {
 	 * value.  gcc finds them, -Wfloat-conversion and -Wconversion, and
 	 * gives each expression's range; a floating value bound for an integer
 	 * becomes __ghidra_bits(v), an integer bound for a floating type
-	 * __ghidra_as(type, v), and a literal is left to convert.  Returns
-	 * what it did, or why it could not.
+	 * __ghidra_as(type, v).  A literal bound for a floating type is wrapped
+	 * too, its bits that type, since no FPU makes a move of an immediate to
+	 * a float cell a copy of its bits; a literal bound for an integer one
+	 * is left, the decompiler's own float constant.  Returns what it did,
+	 * or why it could not.
 	 */
 	private String reinterpretConversions(File output) throws Exception {
 		JsonArray found = conversions(output);
@@ -4087,10 +4090,16 @@ public class SmartClockExportC extends GhidraScript {
 				first -= c.charAt(first - 1) == '>' ? 2 : 1;
 			}
 			int last = operandEnd(c, first);
-			if (last <= at || NUMBER.matcher(c.substring(first, last).strip()).matches()) {
+			String to = conversion.group(2);
+			// a literal bound for a floating type is its bits as that type
+			// (these images have no FPU, so 0x39e27e0f stored in a float is
+			// the bits of 4.32e-4, not 9.7e8); a literal bound for an
+			// integer one is left to convert, the decompiler's own float
+			// constant
+			if (last <= at || !FLOATING.contains(to)
+				&& NUMBER.matcher(c.substring(first, last).strip()).matches()) {
 				continue;
 			}
-			String to = conversion.group(2);
 			wraps.put(first, new Object[] { last,
 				FLOATING.contains(to) ? "__ghidra_as(" + to + ", " : "__ghidra_bits(" });
 		}

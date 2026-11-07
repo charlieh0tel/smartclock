@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.2.0", "unicorn==2.1.4"]
 # ///
 """Runs each decompiled C function, as gcc compiled it, against the
 image's own: in the rebuilt image (rebuild_link.py), the image's copy is
@@ -56,6 +56,7 @@ are counted apart.  Exits nonzero if any function fails, in either
 image.
 """
 
+import bisect
 import json
 import os
 import random
@@ -64,17 +65,23 @@ import shlex
 import struct
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from unicorn import UC_HOOK_CODE, UcError
+from unicorn import UC_HOOK_CODE, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UcError
 from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_D0, UC_M68K_REG_PC
 
+from backend import ON_MC683XX, PARITY
 from harness import (
+    ALLOCATIONS,
+    BYTE_MASK,
     CALL,
     CALL_INPUT,
     CASES,
     CONDITION_CODES,
     COUNT,
+    EEPROM,
+    ERASED,
+    DeviceCase,
     REGISTERS,
     STARTING,
     TRAP_VECTORS,
@@ -86,10 +93,12 @@ from harness import (
     FIRST_ARGUMENT,
     HANDLER_ENTRIES,
     HANDLER_ENTRY_SIZE,
+    HookedCall,
     KernelCall,
     MESSAGE_OFFSET,
     NULL_LONG,
     NUMERIC_DESCRIPTOR_58503A,
+    NUMERIC_DESCRIPTOR_Z3815A,
     OVERLAY_SEPARATOR,
     PLLC_EXCHANGE,
     POINTER_ALIGNMENT,
@@ -108,6 +117,7 @@ from harness import (
     Run,
     Types,
     arguments,
+    calls_differences,
     effects_differences,
     fresh_ram,
     gcc_slots,
@@ -117,6 +127,7 @@ from harness import (
     image_labels,
     image_name,
     image_profiles,
+    literal_region,
     overlay,
     pointer_at,
     preserved_registers,
@@ -134,11 +145,24 @@ from harness import (
     twins,
 )
 from event_log import EEPROM_BASE, LOG_ENTRIES, LOG_PAGE_CHECKSUM, entry_argument_offsets, page_offsets
-from libc_check import BUFFER_SPACING, RETURN
-from rebuild_link import IMAGE_PREFIX, REBUILT, Section, link, objects, symbols
+from libc_check import BUFFER_SPACING, RAM, RAM_SIZE, RETURN
+from rebuild_link import IMAGE_PREFIX, REBUILT, Section, code_symbols, link, objects, symbols
+from report_figures import STRICT
 
 # The widest argument or result the harness lays out.
 WIDEST = 8
+# gcc's inlining of a callee the C does not declare inline, off in the
+# check's link, on in every other: at -O1 gcc puts a static function
+# called once, and a callee smaller than its call, in its caller, where
+# a hook at the callee's entry (install_hooks, record_calls) never sees
+# the call.  So each such call is one in gcc's copy as in the image's,
+# which calls each of the C's functions it calls.  A function declared
+# inline, a binding's asm or always_inline's, stays in its caller: a
+# binding's asm statement is its clobbers' check (bridge_check.py), which
+# a call of its own would hide.  A helper the C defines static, which
+# the image has no copy of, makes its calls for its caller
+# (RebuiltCode.owner).
+NOT_INLINED = ("-fno-inline-functions-called-once", "-fno-inline-small-functions")
 # What both copies find on the stack where no declared argument lies,
 # between the original's and after the last: the first pointer fill's
 # text, whose every long at an even offset, 0x31303130, points into the
@@ -276,7 +300,27 @@ DOUBLE_STEPS = [0.5, 0.001, 1e-12, 100.0]
 LOAD_LONG = 0x32E2E
 LONG_STEPS = [1, 3, 1000, 0x10000]
 FLOAT_STEPS = [0.5, 0.001, 1e-12, 100.0]
-# status_register_setup's arguments as status_init passes them
+
+
+def validator_cases(load_double: int, load_long: int, load_long_unit_step: int | None = None) -> dict[str, list]:
+    """The validators' given cases, each step record's routine an image's
+    load_double or load_long; and clamp_to_limits', on load_long_unit_step,
+    for an image that gives it."""
+    cases = {
+        "clamp_double_to_step_and_limits": [{4: struct.pack(">dI", step, load_double)} for step in DOUBLE_STEPS],
+        "clamp_to_step_and_limits": [{4: struct.pack(">II", step, load_long)} for step in LONG_STEPS],
+        **{
+            name: [{4: struct.pack(">fI", step, load_long)} for step in FLOAT_STEPS]
+            for name in ("clamp_float_to_step_and_limits", "clamp_float_to_step_double")
+        },
+    }
+    if load_long_unit_step is not None:
+        cases["clamp_to_limits"] = [{4: struct.pack(">II", step, load_long_unit_step)} for step in LONG_STEPS]
+    return cases
+
+
+# status_register_setup's and its installer copy's arguments as
+# status_init passes them
 # (0x2f4b8 to 0x2f50a): a status model, its first argument, whose
 # seven register pointers point into the pointee memory, and the
 # console port's object (0x29e18, the profile's) for the Status Byte,
@@ -299,11 +343,19 @@ SETUP_CASES = [
 # scpi_format_resolution_array_record's records, by kind (0x26822): a
 # block, a resolution array and a kind of neither, each at eight zero
 # bytes in ROM (0x2f76e, an empty block and an empty array), with
-# return_zero (0x29ada) as the release routine at +6, which it calls
+# scpi_input_source (0x29ada) as the release routine at +6, which it calls
 # whatever the kind.
 EMPTY_IN_ROM = 0x2F76E
 RETURN_ZERO = 0x29ADA
 ARRAY_RECORD_KINDS = [0, 1, 2, -1]
+
+
+def array_record_cases(empty: int, release: int) -> list[dict]:
+    """scpi_format_resolution_array_record's given cases, each kind's
+    record at an image's eight zero bytes in ROM with its release routine."""
+    return [{1: struct.pack(">bBII", kind, 0, empty, release)} for kind in ARRAY_RECORD_KINDS]
+
+
 # scpi_real_to_text's arguments, a double, its significant digits, its
 # exponent's digits, the resolution and the point, as its callers pass
 # them (scpi_format_double 0x26870: 15, 3, -308 and 1; format_si
@@ -390,14 +442,20 @@ class Pointed:
 # handler's call record's input port, made for the machine, in place of
 # the console port's object.  Every case of a routine that restores the
 # status register from its buffer, given or generated, starts with that
-# word's trace bits clear (JUMP_FUNCTIONS).
+# word's trace bits clear (JUMP_FUNCTIONS); and the results its States'
+# hooks give and the variables they leave, by routine, in place of those
+# drawn for it.
 INTERRUPTS = "interrupts"
 STARTING_STATUS = "status"
 PRESETS = "presets"
 FLASH = "flash"
+DEVICES = "devices"
+RECORDS = "records"
 STACK_EDGE = "edge"
 CALLERS_REGISTERS = "registers"
 INPUT_PORT = "input port"
+HOOK_RESULTS = "hook results"
+HOOK_LEAVES = "hook leaves"
 # The QSPI's end of a queue (harness.QSPI_VECTOR), taken after the
 # first, second or third read of qspi.running in qspi_start's wait
 # (0x20866).
@@ -471,10 +529,10 @@ FLASH_START = 0x10000
 FLASH_END = 0x80000
 
 
-def erased_flash(image: bytes, last: bytes = b"") -> bytes:
-    """The image's flash with its writable range erased, its last bytes
-    last."""
-    erased = image[:FLASH_START] + b"\xff" * (FLASH_END - FLASH_START)
+def erased_flash(image: bytes, last: bytes = b"", start: int = FLASH_START) -> bytes:
+    """The image's flash with its writable range, from start, erased, its
+    last bytes last."""
+    erased = image[:start] + b"\xff" * (FLASH_END - start)
     return erased[: len(erased) - len(last)] + last
 
 
@@ -756,11 +814,11 @@ JUMP_VALUES = [0, 1, -1, 0x12345678]
 # The routines that restore a status register from their buffer, the
 # first argument, at JUMP_STATUS (libc_jump_buffer's sr), and the
 # offset: in every case of theirs, the generated ones' too, the word's
-# trace bits are cleared before the run, since setjmp, which fills the
-# buffer, runs untraced.  A generated case's buffer may set them (case
-# 0's 0xc0, case 1's 0xe5), which a CPU that traces as the CPU32 does
-# then takes: each instruction after the restore traces to the handler,
-# which prints its PC.
+# trace bits are cleared before the run, on both backends, since
+# setjmp, which fills the buffer, runs untraced.  A generated case's
+# buffer may set them (case 0's 0xc0, case 1's 0xe5), which mc683xx's
+# strict CPU32 then takes: each instruction after the restore traces to
+# the handler, which prints its PC.
 JUMP_FUNCTIONS = ("longjmp", "installer_longjmp")
 JUMP_STATUS = 0x40
 # atexit's table, its count at the most and one short, given a NULL and
@@ -808,7 +866,8 @@ LIBRARY_CASES = {
 }
 # The line readers' echoes as a routine of the image's reads its
 # character, at the start of a 2-byte slot, as drtb_putc, sci_putc and
-# installer_drtb_putc do (0x1ddfa, 0x201b4, installer::0x10386c), which
+# installer_drtb_putc do (0x1ddfa, 0x201b4, installer::0x10386c), and
+# the Z3815A 4010's installer_sci_putc, its installer's host port's, which
 # the image's reconfiguration stores there (0x1dd54): a routine at
 # harness.ROUTINES, whose calls are compared, its parameter's position
 # past the reader's two.  And the echo off, as the image's
@@ -826,6 +885,7 @@ IMAGE_ECHOES = {
     "drtb_gets": ("duartb.echo", "duartb_echo_none"),
     "sci_gets": ("sci.echo", "sci_echo_none"),
     "installer_drtb_gets": ("installer_duartb.echo", None),
+    "installer_sci_gets": ("installer_sci.echo", None),
 }
 
 
@@ -849,7 +909,85 @@ def gps_request_build_cases(messages: int) -> list[dict[int, int | bytes]]:
     return [{0: message, 1: 0, 2: GPS_ARGUMENTS, 3: bytes(GPS_MESSAGE_ROOM)} for message in range(messages)]
 
 
+# The codes the 58503A 3704's and the Z3815A 4010's log_event takes,
+# each a given case, from 0 to one past the last its
+# table has a text for (LOG_SYSTEM_PRESET, 0x1b in the 58503A 3704's and
+# the Z3815A 4010's), so that each code's text, which the call of
+# log_write it makes passes (record_calls), is compared: the generated
+# cases reach only a few.  log_event, the Z3805A's and the Z3801A's,
+# writes its entry itself, in RAM and the EEPROM, which compare it.
+LOG_EVENT_CODES = 0x1C
+LOG_EVENT_CASES = [{0: code} for code in range(LOG_EVENT_CODES + 1)]
+# counter_read's, counter_calibrate's and counter_arm's reading with no
+# error, as counter_arm leaves it, so that they reach the counter and the
+# interpolator (COUNTER_STATES): the generated cases' readings all have
+# one.  Each is given configurations of its own: counter_read the
+# generated one, each byte apart, so that a copy reading another cell of
+# it than the image's reads another value; counter_calibrate and
+# counter_arm ones whatever the record's layout, so that the work each
+# does shows in the cells it writes: of every byte
+# COUNTER_CALIBRATE_ALWAYS (3), calibrating, or COUNTER_SYNC_WHEN_WANTED
+# and COUNTER_WORK_WANTED (2), syncing, and of 1 and 2 by turns, which
+# every mode and state pair at an even offset, every image's, reads as
+# when wanted and wanted: COUNTER_REGISTERS_WHEN_WANTED,
+# COUNTER_CALIBRATE_WHEN_WANTED and the Z3815A 4010's
+# COUNTER_ALARM_WHEN_WANTED.
+COUNTER_READING = bytes(16)
+COUNTER_CONFIGURATION_SIZE = 0x40
+COUNTER_ALWAYS = bytes([3]) * COUNTER_CONFIGURATION_SIZE
+COUNTER_SYNC_WANTED = bytes([2]) * COUNTER_CONFIGURATION_SIZE
+COUNTER_PAIRS_WANTED = bytes([1, 2]) * (COUNTER_CONFIGURATION_SIZE // 2)
+COUNTER_CASES = 4
+COUNTER_GIVEN_CASES = {
+    "counter_read": [{0: COUNTER_READING}] * COUNTER_CASES,
+    **{
+        name: [{0: COUNTER_READING, 1: configuration} for configuration in configurations for _ in range(COUNTER_CASES)]
+        for name, configurations in (
+            ("counter_calibrate", (COUNTER_ALWAYS, COUNTER_PAIRS_WANTED)),
+            ("counter_arm", (COUNTER_SYNC_WANTED, COUNTER_PAIRS_WANTED)),
+        )
+    },
+}
+# The EEPROM's records' readers, the primary's and the installer's, by
+# the record each reads, each with the record good and with it bad,
+# where the erased EEPROM every other case starts with gives none
+# (eeprom_records): a good record's fields are read, each a byte its
+# address makes, so that a field read for another differs; the
+# calibration block by its address, which only some images' C names.
+CALIBRATION_BLOCK = "*((calibration_block *)0x400080)"
+RECORD_READERS = {
+    **{
+        name: "eeprom_parameter_record"
+        for name in ("parameter_record_read", "installer_parameter_record_read")
+    },
+    **{
+        name: "eeprom_identification_record"
+        for name in (
+            "identification_record_read", "identification_record_write", "installer_identification_record_read"
+        )
+    },
+    **{
+        name: CALIBRATION_BLOCK
+        for name in (
+            "calibration_block_read", "efc_calibration_read", "save_calibration_block"
+        )
+    },
+    "lifetime_record_read": "eeprom_lifetime_record",
+}
+RECORD_CASES = {name: [{RECORDS: {record: good}} for good in (True, False)] for name, record in RECORD_READERS.items()}
+# The functions of the base's given cases whose copy in another image
+# differs and is given none of them: the 58503A 3704's and the Z3815A
+# 4010's save_calibration_block, which compares the block with the time
+# offset and TC before it writes, and installer_console_port_read, the
+# primary's console_port_read on the installer's state, which prompts
+# while installer_scpi_prompt_enabled is set.
+NOT_GIVEN = {name: [] for name in ("save_calibration_block", "installer_console_port_read")}
+# And the Z3815A's interval_wait_reading, which waits on its own tick
+# (INTERRUPT_CASES' are the base's).
+NOT_GIVEN_Z3815A = {**NOT_GIVEN, "interval_wait_reading": []}
 GIVEN_CASES = {
+    **COUNTER_GIVEN_CASES,
+    **RECORD_CASES,
     **INTERRUPT_CASES,
     **STATUS_CASES,
     **HANDLER_CASES,
@@ -882,14 +1020,7 @@ GIVEN_CASES = {
     "gps_request_build": gps_request_build_cases(GPS_MESSAGES),
     "vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "installer_vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
-    "clamp_double_to_step_and_limits": [
-        {4: struct.pack(">dI", step, LOAD_DOUBLE)} for step in DOUBLE_STEPS
-    ],
-    "clamp_to_step_and_limits": [{4: struct.pack(">II", step, LOAD_LONG)} for step in LONG_STEPS],
-    **{
-        name: [{4: struct.pack(">fI", step, LOAD_LONG)} for step in FLOAT_STEPS]
-        for name in ("clamp_float_to_step_and_limits", "clamp_float_to_step_double")
-    },
+    **validator_cases(LOAD_DOUBLE, LOAD_LONG),
     "pforth_define_word": [{2: arguments, 3: results} for arguments, results in WORD_COUNTS],
     "bytes_equal_n": [dict(enumerate(arguments)) for arguments in SAME_LENGTH],
     "double_to_digits": [{1: count, 5: mode} for count, mode in DIGITS],
@@ -899,12 +1030,14 @@ GIVEN_CASES = {
         name: [{0: value} for value in EXPONENT_DOUBLES]
         for name in ("double_decimal_exponent", "double_decimal_exponent_rounded")
     },
-    "status_register_setup": [
-        {0: SETUP_MODEL, **{position + 1: value for position, value in enumerate(values)}} for values in SETUP_CASES
-    ],
-    "scpi_format_resolution_array_record": [
-        {1: struct.pack(">bBII", kind, 0, EMPTY_IN_ROM, RETURN_ZERO)} for kind in ARRAY_RECORD_KINDS
-    ],
+    **{
+        name: [
+            {0: SETUP_MODEL, **{position + 1: value for position, value in enumerate(values)}}
+            for values in SETUP_CASES
+        ]
+        for name in ("status_register_setup", "installer_status_register_setup")
+    },
+    "scpi_format_resolution_array_record": array_record_cases(EMPTY_IN_ROM, RETURN_ZERO),
     "scpi_real_to_text": [
         {
             **dict(enumerate(struct.unpack(">ii", struct.pack(">d", value)))),
@@ -1370,17 +1503,6 @@ class States:
     cases: int = 0
 
 
-@dataclass(frozen=True)
-class HookedCall:
-    """A call of a Hook's routine: its name and its arguments' values."""
-
-    routine: str
-    arguments: tuple[int, ...]
-
-    def __str__(self) -> str:
-        return " ".join([f"call of {self.routine}"] + [f"{a:x}" for a in self.arguments])
-
-
 # The pll stage functions' states (applications/pll, docs/firmware/pll.md):
 # small time intervals and frequency offsets, in seconds, as the
 # counter's readings and the fit's sums hold them, and the sums of the
@@ -1436,7 +1558,31 @@ STRAGGLER_STATES = {
     "float_raise": States(presets=(Preset("float_control", FLOAT_CONTROLS),)),
     "installer_float_raise": States(presets=(Preset("installer_float_control", FLOAT_CONTROLS),)),
 }
+# counter_read, counter_calibrate and counter_arm (ti.c) armed, as counter_init
+# leaves the reading (COUNTER_CASES), the counter ready or not and the
+# interpolator calibrated or not.
+COUNTER_STATES = States(
+    presets=(
+        Preset("interval_reading.armed", (1, 1, 0)),
+        Preset("interpolator_calibration_state.calibrated", (1, 0)),
+    ),
+    hooks=(
+        Hook("counter_wait_ready", results=(1, 1, 0)),
+        Hook("interpolator_calibrate", results=(1, 0)),
+        Hook("interpolator_verify", results=(1, 0)),
+    ),
+)
+# interpolator_prepare's configuration, counter_configuration, asking
+# for its registers or not (counter_arm's are COUNTER_GIVEN_CASES').
+INTERPOLATOR_PREPARE_STATES = States(
+    presets=(
+        Preset("counter_configuration.registers_mode", (1, 0)),
+        Preset("counter_configuration.registers_state", (2, 2, 1)),
+    ),
+)
 STATES = {
+    **{name: COUNTER_STATES for name in ("counter_read", "counter_calibrate", "counter_arm")},
+    "interpolator_prepare": INTERPOLATOR_PREPARE_STATES,
     "fine": States(
         presets=(
             Preset("pll.stage", (1, 2, 3, 4)),
@@ -1488,11 +1634,705 @@ STATES = {
     "root_task": States(presets=(Preset("nv_settings.pforth_at_startup", (0, 1)),)),
     **STRAGGLER_STATES,
 }
+# The Z3815A 4010's loop stages and readings (its pll_stages.c and
+# pll_reading.c): each stage's states and one past, its counts about
+# their bounds, the hold causes, the GPS reference good, questionable
+# and not, each 1PPS dead and not, a reading replaced or not, the TI
+# limit on and off, overridden or not, and DAT_0010218b, which outside
+# the n3 lock pll stage (6) replaces the readings, set and clear; and,
+# for enter_holdover, the reference external or not and each GPS
+# reference state, and the cells output_inactive_request_bit_11 tests; the uptime
+# about the start-up loop's 7200 s and the aging fit's first entry; and
+# startup_pll and powerup, each
+# state and one past.  fine keeps STATES' scenario with this image's
+# cells beside it.
+# counter_read answered as for the other images, and its readings out to
+# 20 us too, which fine's sync tests at 10 us; and log_event, as
+# LOG_EVENT.
+Z3815A_COUNTER_READ = Hook(
+    "counter_read",
+    leaves=(
+        Preset("interval_reading.value", READINGS + (5e-6, -2e-5)),
+        Preset("interval_reading.valid", (0, 1, 1, 1)),
+    ),
+)
+Z3815A_PLL_HOOKS = (Z3815A_COUNTER_READ, LOG_EVENT)
+Z3815A_COMMON = (
+    Preset("pll.stage", (3, 4, 5, 6, 7, 1)),
+    Preset("pll.hold_causes", (0, 0, 2, 4, 8, 0x10, 0x80, 0x81)),
+    Preset("gps_reference_good", (0, 1, 1)),
+    Preset("gps_reference_questionable", (0, 0, 1)),
+    Preset("gps_pps_dead", (0, 0, 1)),
+    Preset("internal_pps_dead", (0, 0, 1)),
+    Preset("interval_reading_replaced", (0, 1)),
+    Preset("interval_armed_without_pps", (0, 1)),
+    Preset("DAT_0010218b", (0, 0, 0, 1)),
+    Preset("pll_debug_enabled", (0, 1)),
+    Preset("debug_enabled", (0, 1)),
+    Preset("nv_settings.holdover_limit_threshold", (1e-6, 1e-9)),
+    Preset("nv_settings.holdover_limit_state", (0, 1)),
+    Preset("nv_settings.holdover_measurement_threshold", (0, 50, 1000000)),
+    Preset("pll.ti_limit_override", (0, 1)),
+    Preset("pll.frequency_tolerance", (1e-8, 0.0, 1e-9)),
+    Preset("pll.efc", (0.0, 12345.0, 524288.0)),
+    Preset("clock_gps_mismatch", (0, 1)),
+    Preset("switch_word_bit_0", (0, 1)),
+    Preset("switch_word_bit_11", (0, 1)),
+    Preset("switch_word_bit_7", (0, 1)),
+)
+Z3815A_LOOP_STATES = {
+    name: States(presets=Z3815A_COMMON + presets, hooks=Z3815A_PLL_HOOKS, cases=PLL_CASES)
+    for name, presets in {
+        "holdover": (
+            Preset("pll.holdover_state", (0, 1, 1, 2, 0x80)),
+            Preset("pll.holdover_duration", (0, 10, 100000)),
+            Preset("holdover_steering.seconds", (0, 8, 9)),
+            Preset("holdover_steering.readings", (0, 5, 9)),
+            Preset("holdover_steering.ti_largest", SMALL),
+            Preset("pll.manual", (0, 1)),
+            Preset("pll.frequency_adjusted", (0, 1)),
+            Preset("pll.aging_state", (0, 3)),
+            Preset("pll.efc_history.stop_ptr", (0, 31, 5)),
+            Preset("pll.efc_history.fit_a", (0.0, 500000.0)),
+            Preset("pll.efc_history.fit_b", (0.0, 3.0)),
+            Preset("pll.efc_history.fit_c", (0.0, -2.0)),
+            Preset("aging_curve.a", (0.0, 500000.0)),
+            Preset("aging_curve.b", (0.0, 3.0)),
+            Preset("aging_curve.c", (0.0, -2.0)),
+            Preset("clock.uptime", (0, 2700, 100000)),
+            Preset("pll.predicted_uncertainty", (1e-9, 0.0)),
+            Preset("gps.command_monitor_failed", (0, 1)),
+        ),
+        "holdover_recovery": (
+            Preset("pll.recovery_state", (0, 1, 2, 3, 4, 5, 6, 0x80)),
+            Preset("pll.recovery_countdown", (0, 1, 2)),
+            Preset("holdover_steering.seconds", (0, 5, 6)),
+            Preset("pll.fine_state", (0, 9, 6)),
+            Preset("pll.fine_index", (0, 1)),
+            Preset("pll.leap_ack_again", (0, 1)),
+            Preset("pll.leap_ack_requested", (0, 1)),
+            Preset("pll.leap_ack_done", (0, 1)),
+            Preset("pll.holdover_duration", (0, 250, 251, 100000)),
+            Preset("gps.command_monitor_failed", (0, 1)),
+        ),
+        "pll_normal": (
+            Preset("pll.normal_state", (0, 1, 1, 2, 0x80)),
+            Preset("loop_steering.seconds", (0, 8, 9)),
+            Preset("loop_steering.readings", (0, 3)),
+            Preset("loop_steering.measurement_failed", (0, 1)),
+            Preset("loop_steering.field_0f", (0, 1)),
+            Preset("loop_steering.ti_sum", SMALL),
+            Preset("loop_steering.integral", (0.0, 25.0)),
+            Preset("loop_steering.proportional_gain", (1e9, 3e8)),
+            Preset("loop_steering.integral_gain", (1e6, 2e5)),
+            Preset("loop_steering.filter_weight", (0.03, 0.2)),
+            Preset("pll.loop_time_constant", (150.0, 1000.0)),
+            Preset("pll.loop_efc_step", (0.0, 5e-3, -1.0)),
+            Preset("aging_curve.b", (0.0, 1e-3, -2e-3)),
+            Preset("aging_curve.c", (0.0, -1e-3)),
+            Preset("pll.ti_filtered", SMALL),
+            Preset("efc_gains.step_limit", (1e-3, 0.5)),
+            Preset("max_loop_time", (1000.0, 300.0)),
+            Preset("ti_setpoint", (0.0, 1e-8)),
+        ),
+        # startup_pll and powerup, by their names here
+        "startup_pll": (
+            Preset("pll.startup_state", (0, 1, 2, 3, 3, 4, 0x80)),
+            Preset("loop_steering.large_offset_blocks", (0, 14, 15)),
+            Preset("clock.uptime", (0, 7200, 7201, 100000)),
+            Preset("loop_steering.seconds", (0, 8, 9)),
+            Preset("loop_steering.readings", (0, 3)),
+            Preset("loop_steering.ti_sum", SMALL + (6e-7, -6e-7)),
+            Preset("pll.loop_time_constant", (150.0, 995.0, 1000.0)),
+            Preset("pll.aging_state", (0, 3)),
+            Preset("max_loop_time", (1000.0, 300.0)),
+            Preset("efc_gains.step_limit", (1e-3, 0.5)),
+        ),
+        "powerup": (
+            Preset("pll.powerup_state", (0, 1, 2, 3, 4, 5, 6, 7, 8, 0x80)),
+            Preset("pll.powerup_countdown", (0, 1, 2)),
+            Preset("pll.powerup_reference_lost", (0, 1)),
+            Preset("pll.gps_init_state", (0, 15, 16)),
+            Preset("pll.coarse_state", (3, 4)),
+            Preset("pll.fine_state", (0, 9)),
+            Preset("pll.fine_index", (0, 1)),
+            Preset("pll.leap_ack_requested", (0, 1)),
+            Preset("pll.leap_ack_done", (0, 1)),
+            Preset("pll.external_reference", (0, 1)),
+            Preset("gps.references[0].valid", (0, 1)),
+            Preset("first_satellite_logged", (0, 1)),
+            Preset("gps_reference_logged", (0, 1)),
+            # set, so that powerup sets no clock: clock_set and
+            # lifetime_update fail cases of their own
+            Preset("DAT_0010218b", (1,)),
+        ),
+        "coarse": (
+            Preset("pll.coarse_state", (0, 1, 2, 3, 4, 4, 5, 0x80)),
+            Preset("pll.fine_retries", (0, 9, 10)),
+            Preset("pll.fine_d", SMALL),
+        ),
+        "interval_wait_reading": (),
+        "interval_next_reading": (),
+        "gps_reference_update": (Preset("gps.references[0].valid", (0, 1, 2, 3)),),
+        "holdover_within_limit": (
+            Preset("pll.holdover_duration", (0, 50, 51, 100000)),
+            Preset("pll.frequency_adjusted", (0, 1)),
+        ),
+        "holdover_duration_count": (
+            Preset("pll.holdover_duration", (0, 99, 100, 101)),
+            Preset("nv_settings.holdover_status_threshold", (100, 0)),
+            Preset("holdover_duration_exceeded", (0, 1)),
+        ),
+        "enter_holdover": (
+            Preset("pll.holdover_duration", (0, 0, 7)),
+            Preset("pll.external_reference", (0, 1)),
+            Preset("gps.references[0].state", (0, 1, 2, 3, 4, 5, 0x80)),
+            Preset("holdover_recovery_auto", (0, 1)),
+        ),
+        "efc_mode_done": (Preset("diag_efc_mode", (0, 1, 2, 3)), Preset("pll.efc_control_passes", (0, 601))),
+        "efc_mode_expire": (Preset("diag_efc_mode", (0, 1, 2, 3)), Preset("pll.efc_control_passes", (0, 599, 600, 601))),
+    }.items()
+} | {
+    "fine": States(
+        presets=STATES["fine"].presets + Z3815A_COMMON[2:],
+        hooks=Z3815A_PLL_HOOKS,
+        cases=STATES["fine"].cases,
+    ),
+}
 # Another image's own States in place of STATES' of the same name, each
 # preset's values that image's.
-# The 58503A 3704's log_event, which logs by a code, not the base's,
-# which writes its entry itself, starts from none of STRAGGLER_STATES'
-# log cursors.
+# The Z3815A 4010's pllp_task: started afresh or after a reboot, in
+# power-up past waiting for GPS or not, with the switch word's bit 4
+# copy, a self-test, a restart, the normal loop's mean and an awaited
+# acknowledgment drawn, and each stage's routine answered with a result
+# drawn for the case, enter_holdover leaving the holdover stage, so that
+# the passes walk the stages and their exits, the settings server
+# answered, whose message the kernel's answers leave a pointer the
+# harness does not map, and power-up's self-tests, whose GPS self-test
+# the harness never answers, so that a power-up never reached the loop;
+# and the stage's readers in each stage and one
+# past, with the flags they test, standby_from_unlock's standby answered and
+# the log's event recorded; the clock's check
+# against GPS with its flags, the clock set's lifetime_update, which
+# faults in gcc's copy (the figures' failures), answered.
+PLLP_STAGE_HOOKS_Z3815A = (
+    *(Hook(name, results=(0, 1, 2)) for name in ("powerup", "pll_reference_check", "holdover_recovery", "startup_pll")),
+    Hook("holdover", results=(0, 1)),
+    Hook("pll_normal", results=(0, 0, 2)),
+    Hook("n3_lock_pll", results=(0, 0, 2)),
+    Hook("gps_diag_sequence", results=(0, 0, 1)),
+    Hook("enter_holdover", leaves=(Preset("pll.stage", (3,)),)),
+    Hook("pll_scpi_receive"),
+    Hook("selftest_print_failure"),
+)
+PLLP_TASK_STATES_Z3815A = States(
+    presets=(
+        Preset("pll.stage", (0, 1, 2, 7)),
+        Preset("pll.powerup_state", (0, 3, 4, 5)),
+        Preset("switch_word_bit_4_copy", (0, 0, 1)),
+        Preset("preserved_region.restore", (0, 1)),
+        Preset("selftest_requested", (0, 0, 0, 1)),
+        Preset("pll_restart_requested", (0, 0, 1)),
+        Preset("interval_mean_flag", (0, 1)),
+        Preset("interval_mean", (0.0, 1e-6, -1e-6, 1e-7)),
+        Preset("gps_ack_awaited", (0, 1, 5)),
+        Preset("gps_ack_ready", (0, 1)),
+        Preset("nv_settings.douglas_state_powerup", (0, 1)),
+    ),
+    hooks=PLLP_STAGE_HOOKS_Z3815A,
+    cases=200,
+)
+# pllp_task's walk through the stages, each case a path its routines'
+# results, fixed, make, from power-up or power-up recovery, every
+# transition pllp_step_stage makes taken in one: power-up done, failed
+# and on to n3 lock pll; power-up recovery done to holdover recovery or
+# n3 lock pll, and failed through enter_holdover to holdover; holdover
+# done; holdover recovery done and failed; start-up done and failed;
+# normal failed and back to start-up past 500 ns either way, its mean
+# flag left set by pll_normal, which sets it; n3 lock pll failed to
+# holdover recovery; and each steering or holding stage to n3 lock pll
+# by the switch word's bit 4 copy, each run to its PLLP_PASSES_Z3815A-th
+# pass (IMAGE_COUNTED_LOOPS).  A routine not named runs on
+# (PLL_STAGE_RESULT_RUNNING).  pllp_task clears the self-test's and the
+# restart's requests and the mean's flag as it starts, so that no
+# preset of them reaches its loop.
+PLLP_WALK_SET_UP_Z3815A = {
+    "pll.powerup_state": 3, "switch_word_bit_4_copy": 0, "preserved_region.restore": 0, "gps_ack_awaited": 0,
+    "gps_ack_ready": 0, "nv_settings.douglas_state_powerup": 0,
+}
+PLLP_WALK_ROUTINES_Z3815A = (
+    "powerup", "pll_reference_check", "holdover", "holdover_recovery", "startup_pll", "pll_normal", "n3_lock_pll",
+)
+PLLP_WALK_MEAN_Z3815A = 1e-6
+PLLP_WALKS_Z3815A = (
+    ({"pll.stage": 1}, {"powerup": 1, "startup_pll": 1}, {}),
+    ({"pll.stage": 1}, {"powerup": 1, "startup_pll": 1},
+     {"interval_mean_flag": 1, "interval_mean": PLLP_WALK_MEAN_Z3815A}),
+    ({"pll.stage": 1}, {"powerup": 1, "startup_pll": 1},
+     {"interval_mean_flag": 1, "interval_mean": -PLLP_WALK_MEAN_Z3815A}),
+    ({"pll.stage": 1}, {"powerup": 1, "startup_pll": 1, "pll_normal": 2, "holdover": 1}, {}),
+    ({"pll.stage": 1}, {"powerup": 2}, {}),
+    ({"pll.stage": 1, "pll.powerup_state": 4, "switch_word_bit_4_copy": 1}, {}, {}),
+    ({"pll.stage": 1}, {"powerup": 1, "startup_pll": 2, "holdover": 1, "holdover_recovery": 1}, {}),
+    ({"pll.stage": 2}, {"pll_reference_check": 1, "holdover_recovery": 1, "startup_pll": 1}, {}),
+    ({"pll.stage": 2}, {"pll_reference_check": 1, "holdover_recovery": 2, "holdover": 1}, {}),
+    ({"pll.stage": 2}, {"pll_reference_check": 2, "holdover": 1, "holdover_recovery": 1}, {}),
+    ({"pll.stage": 2, "switch_word_bit_4_copy": 1}, {"pll_reference_check": 1, "n3_lock_pll": 2}, {}),
+    ({"pll.stage": 2, "switch_word_bit_4_copy": 1}, {"pll_reference_check": 2}, {}),
+    ({"pll.stage": 1, "switch_word_bit_4_copy": 1}, {"powerup": 1}, {}),
+)
+PLLP_WALK_CASES_Z3815A = [
+    {PRESETS: {**PLLP_WALK_SET_UP_Z3815A, **presets},
+     HOOK_RESULTS: {**{name: 0 for name in PLLP_WALK_ROUTINES_Z3815A}, **results},
+     HOOK_LEAVES: {"pll_normal": normal}}
+    for presets, results, normal in PLLP_WALKS_Z3815A
+]
+PLLP_STAGE_STATES_Z3815A = States(
+    presets=(
+        Preset("pll.stage", tuple(range(12))),
+        Preset("pll.manual", (0, 1)),
+        Preset("pll.led_gps_lock", (0, 1)),
+        Preset("pll.led_holdover", (0, 1)),
+        Preset("pll.external_reference", (0, 1)),
+        Preset("pll.hold_causes", (0, 2, 4, 8, 0x10, 0x0A)),
+        Preset("pll.recovery_state", (0, 1, 2)),
+        Preset("pll.fine_state", (0, 6, 7, 9, 10)),
+        Preset("switch_word_bit_11", (0, 1)),
+    ),
+    hooks=(Hook("standby_from_unlock", results=(0, 1)), LOG_EVENT),
+    cases=96,
+)
+CLOCK_CHECK_STATES_Z3815A = States(
+    presets=(
+        Preset("DAT_0010218b", (0, 0, 1)),
+        Preset("DAT_00102c75", (0, 1)),
+        Preset("clock_gps_mismatch", (0, 1)),
+        Preset("gps.status.time.second", (0, 1, 2)),
+        Preset("pll.reference_time.second", (0, 1)),
+    ),
+    hooks=(Hook("lifetime_update"),),
+    cases=64,
+)
+# gps_periodic_send's (0x57cd8) record, which the generated cases leave
+# zeroed, a query of code 0, whose descriptor both copies call through
+# at an instruction (gps_request_descriptor): each stage and one past
+# them, no query (GPS_REQUEST_NONE) or the query of a setting, the mask
+# angle's, rrs's, which gps_time_raim_supported refuses without time
+# RAIM, clr's, which has none, and an Oncore code's, by its translation;
+# its queries and sends about their bounds; and time RAIM supported or
+# not (GPS_FIELD_592_TIME_RAIM).  tps's commits, which call it first,
+# take the same.
+GPS_PERIODIC_STATES_Z3815A = States(
+    presets=(
+        Preset("gps_periodic.stage", (0, 1, 2, 3, 0xFF)),
+        Preset("gps_periodic.query_code", (0xFF, 0xFF, 0x39, 0x40, 0x41, 0x4A, 0x34)),
+        Preset("gps_periodic.queries", (0, 1, 3, 4, 5)),
+        Preset("gps_periodic.sends", (0, 1, 58, 59, 60)),
+        Preset("gps.field_592", (0, 0x20)),
+    ),
+    cases=96,
+)
+# The Z3815A 4010's print_exception with debug output on, which prints
+# through sci_printf_polled to the console, and with the kernel running,
+# which names the task and pauses; the generated cases leave both off.
+PRINT_EXCEPTION_STATES_Z3815A = States(
+    presets=(Preset("debug_enabled", (0, 1, 1)), Preset("kernel_running", (0, 1))),
+    cases=12,
+)
+# The Z3815A 4010's ES message: es_build binary and as text, its time in
+# GPS seconds and as digits, through the time code's masks; es_send with
+# periods that pass at once, wrap or not.
+ES_BUILD_STATES_Z3815A = States(
+    presets=(
+        Preset("es_ascii", (0, 1)),
+        Preset("nv_settings.gps_utc", (0, 0, 1)),
+        Preset("tcode_status_and_mask", (0xFF, 0x0F)),
+        Preset("tcode_status_or_mask", (0, 0x80)),
+        Preset("tcode_error_and_mask", (0xFF, 0)),
+        Preset("tcode_error_or_mask", (0, 1)),
+        Preset("es_error", (0, 0x5A)),
+    ),
+    cases=32,
+)
+# The Z3815A 4010's output requests and readers: the controller's state
+# in and out of the two that take an :OUTPut:ACTive, the switch word's
+# decoded bits the inactive requests test, each set and clear, and the
+# output's status bits and inactive causes, each and one past.
+OUTPUT_REQUEST_STATES_Z3815A = States(
+    presets=(
+        Preset("output_control_state", (0, 2, 3, 4)),
+        Preset("switch_word_bit_0", (0, 1, 1)),
+        Preset("switch_word_bit_5", (0, 1, 1)),
+        Preset("switch_word_bit_7", (0, 0, 1)),
+        Preset("switch_word_bit_11", (0, 1, 1)),
+    ),
+    cases=24,
+)
+OUTPUT_STATE_STATES_Z3815A = States(
+    presets=(
+        Preset("output_status", (0, 1, 2, 4, 8, 0xC, 0x40, 0x43, 0x80)),
+        Preset("output_inactive_cause", tuple(range(8))),
+    ),
+    cases=24,
+)
+ES_SEND_STATES_Z3815A = States(presets=(Preset("es_period", (0x147AE, 0, 0x10000, 0x2FFFF)),), cases=16)
+# The Z3815A 4010's output controller (monitors.c, backp_task's): its
+# states, each and one past its jump table, and what each tests, the
+# extractor's bit, the two inputs, the requests and the decoded switch
+# word's bits, set and clear, the loop's stage before, in and past its
+# serving ones, a holdover past its threshold and not, and the routines
+# it asks, the hardware's update and the switchover and standby checks,
+# answered either way.
+OUTPUT_CONTROL_STATES_Z3815A = States(
+    presets=(
+        Preset("output_control_state", (*range(11), 0x80, 2, 3, 3, 3, 3, 4, 7, 7, 9, 9)),
+        Preset("porte_extractor_bit", (8, 8, 8, 0)),
+        Preset("output_warmup_forced", (0, 1)),
+        Preset("duart_input_0_state", (0, 1)),
+        Preset("duart_input_1_state", (0, 1, 1)),
+        Preset("output_diagnostic_on", (0, 0, 1)),
+        Preset("output_diagnostic_off", (0, 0, 1)),
+        Preset("output_active_disabled", (0, 0, 1)),
+        Preset("output_active_enabled", (0, 0, 1)),
+        Preset("output_inactive_requested", (0, 1)),
+        Preset("output_inactive_cause", (0, 2, 3)),
+        Preset("output_status", (0, 2)),
+        Preset("switch_word_bit_0", (0, 1)),
+        Preset("switch_word_bit_5", (0, 0x20)),
+        Preset("switch_word_bit_7", (0, 0, 0x80)),
+        Preset("switch_word_bit_8", (0, 1)),
+        Preset("switch_word_bit_11", (0, 8)),
+        Preset("pll.stage", (0, 2, 3, 3, 3, 5, 6, 7, 8, 0x80)),
+        Preset("pll.holdover_duration", (0, 600, 601, 5000)),
+        Preset("nv_settings.active_holdover_threshold", (600, 600, 3600)),
+        Preset("redundancy_change_uptime", (0, 1, 0x7FFFFFF0)),
+        Preset("clock.uptime", (0, 60, 61, 0x7FFFFFFF)),
+    ),
+    hooks=(
+        Hook("alarm_hardware_update", results=(0, 0, 0, 1)),
+        Hook("switchover_check", results=(0,)),
+        Hook("standby_from_unlock", results=(0, 1)),
+    ),
+    cases=320,
+)
+# Its status: the test mode, the controller's states, the pp test's
+# states and its blink, the switch word's bits and the requests, the
+# stage and the GPS reference, and the routines it asks answered.
+OUTPUT_STATUS_STATES_Z3815A = States(
+    presets=(
+        Preset("s3_test_mode", (0, 0, 0, 1)),
+        Preset("s3_output", (0x1234,)),
+        Preset("output_control_state", (*range(11), 0x80)),
+        Preset("switch_word_bit_0", (0, 1)),
+        Preset("switch_word_bit_1", (0, 2)),
+        Preset("power_ok", (0, 1)),
+        Preset("ptest_blink", (0, 1)),
+        Preset("ptest_blink_uptime", (0, 0x7FFFFFF0)),
+        Preset("output_inactive_requested", (0, 1)),
+        Preset("output_active_requested", (0, 1)),
+        Preset("output_active_request_uptime", (0, 0x7FFFFFF0)),
+        Preset("pll.stage", (0, 3, 4, 5, 6, 7, 8)),
+        Preset("gps.references[0].valid", (0, 1)),
+        Preset("ptest.state", (0, 0, 1, 3, 4)),
+        Preset("holdover_duration_exceeded", (0, 0, 1)),
+        Preset("clock.uptime", (0, 1000, 0x7FFFFFF1)),
+        Preset("unlock_timer_start", (0, 600)),
+        Preset("unlock_timer_stopped", (0, 1)),
+    ),
+    hooks=(Hook("standby_from_unlock", results=(0, 1)), Hook("status_hardware_condition", results=(0, 0x40))),
+    cases=64,
+)
+# Its alarms' updates: the loop running or not, the switch word's bit 3,
+# the alarms already set or not, the stage about the PP2S's bound, and
+# the routines they read answered: each condition bit, the puck alive
+# or not, the antenna and the seating.  The hardware condition is
+# status_hardware_condition's, which the image calls; the C's own
+# static status_ready_condition, its body, has no copy in the image to
+# hook (MEANT_ELSEWHERE).
+ALARM_UPDATE_STATES_Z3815A = States(
+    presets=(
+        Preset("pll.loop_running", (0, 1)),
+        Preset("switch_word_bit_3", (0, 8)),
+        Preset("alarm_hardware", (0, 0, 0x1FF, 0x80)),
+        Preset("pll.stage", (0, 2, 3, 7, 0x80)),
+        Preset("holdover_duration_exceeded", (0, 1)),
+        Preset("puck.alive", (0, 1)),
+        Preset("n3_lock.seating_error", (0, 0, 1)),
+    ),
+    hooks=(
+        Hook("status_hardware_condition", results=(0, 1, 2, 0x2000, 0x40, 0x80, 0x100, 0x200, 0x800, 0x1000)),
+        Hook("hmon_check_antenna_current", results=(0, 1)),
+    ),
+    cases=64,
+)
+# alarm_hardware_update with the loop running, the PAL's bit set and no
+# alarm yet, past powerup recovery, on the DUART's inputs that fail
+# none, each clock and the PP2S alone, and the PAL and the PP2S both,
+# so that the order it logs them in shows (harness.calls_order).
+ALARM_INPUTS_Z3815A = (0x3C, 0x38, 0x34, 0x1C, 0x2C, 0x00)
+ALARM_HARDWARE_CASES_Z3815A = [
+    {
+        DEVICES: DeviceCase(0, 0, False, (inputs,)),
+        PRESETS: {"pll.loop_running": 1, "switch_word_bit_3": 8, "alarm_hardware": 0, "pll.stage": 3},
+    }
+    for inputs in ALARM_INPUTS_Z3815A
+]
+# hmon_check_antenna_current with its alarm on and off, the average
+# below, at and between its bounds and past the upper, the switch word's
+# bit 13 and PORTF0's bit 1 as the cases' devices give them.  The
+# average's call is not compared: the image makes it first, gcc's code,
+# taking it to have no effect, only with the alarm on.
+ANTENNA_CURRENTS_Z3815A = (5.0, 10.0, 40.0, 70.0, 80.0)
+ANTENNA_STATES_Z3815A = States(
+    presets=(Preset("nv_settings.antenna_current_alarm", (0, 1, 1, 1)),),
+    hooks=(
+        Hook(
+            "adc_average",
+            results=tuple(struct.unpack(">I", struct.pack(">f", v))[0] for v in ANTENNA_CURRENTS_Z3815A),
+            recorded=False,
+        ),
+    ),
+    cases=60,
+)
+# The switchover check: the switch word's bit 5, the stage, the lock's
+# and the bit's ticks against the uptime, at, before and past their
+# bounds, the uncertainty, valid or not, past its bound or not, armed or
+# not, and the bits the inactive request it makes tests.
+SWITCHOVER_STATES_Z3815A = States(
+    presets=(
+        Preset("switch_word_bit_5", (0, 0x20)),
+        Preset("pll.stage", (3, 5, 7, 7)),
+        Preset("locked_ticks", (0, 13600, 13599, 100000)),
+        Preset("standby_unlock_ticks", (0, 99700, 99699, 100000)),
+        Preset("pll.measured_uncertainty_valid", (0, 1, 1)),
+        Preset("pll.measured_uncertainty", (0.0, 1e-4, 3e-5)),
+        Preset("switchover_armed", (0, 1)),
+        Preset("clock.uptime", (100000,)),
+        Preset("switch_word_bit_0", (0, 1)),
+        Preset("switch_word_bit_7", (0, 0x80)),
+    ),
+    cases=160,
+)
+# The standby check: the n3 lock state and stage in and out, the count
+# about its 700, the result kept, the interval's mean within, between
+# and past its bounds, either sign, and debugging on and off.
+STANDBY_STATES_Z3815A = States(
+    presets=(
+        Preset("pll.n3_lock_state", (12, 12, 0)),
+        Preset("pll.stage", (6, 6, 7)),
+        Preset("standby_from_unlock_count", (0, 699, 700, 701)),
+        Preset("standby_from_unlock_ready", (0, 1)),
+        Preset("interval_mean", (0.0, 3e-9, -3e-9, 4.5e-9, -4.5e-9, 6e-9, -1e-8)),
+        Preset("debug_enabled", (0, 1)),
+    ),
+    cases=48,
+)
+# The unlock timer: its start against the uptime about its 300 s,
+# logged and stopped or not.
+UNLOCK_TIMER_STATES_Z3815A = States(
+    presets=(
+        Preset("unlock_timer_start", (0, 1000)),
+        Preset("unlock_timer_logged", (0, 1)),
+        Preset("unlock_timer_stopped", (0, 1)),
+        Preset("clock.uptime", (0, 1299, 1300, 100000)),
+    ),
+    cases=24,
+)
+# The switch word's decode and the OCXO's warmth: the word and the
+# DUART's inputs as the case's devices give them (harness.SWITCH_WORD),
+# the clock valid or not, the oven current's sample about 0.9 and the
+# puck warm or not.
+SWITCH_DECODE_STATES_Z3815A = States(
+    presets=(Preset("clock.set", (0, 1)),),
+    cases=24,
+)
+OCXO_WARM_STATES_Z3815A = States(
+    presets=(
+        Preset("adc_monitors[6].samples[2]", (0.5, 0.9, 0.95)),
+    ),
+    hooks=(Hook("puck_warm", results=(0, 1)),),
+    cases=16,
+)
+# The Z3815A 4010's latch writers with :DIAGnostic:TMODe:STATe on and
+# off, which write diag_tmode_data in place of selftest.latch (0x236d2,
+# 0x2370c, 0x2374c, 0x23770), and the lamps' writer, which writes nothing
+# while it is on (0x36c1a).
+LATCH_STATES_Z3815A = States(presets=(Preset("diag_tmode_state", (0, 1)), Preset("diag_tmode_data", (0, 0x5AC3))), cases=8)
+# es_error_update with the :STATus:OPERation:HARDware condition's bit 6,
+# the EFC near its limit, set and clear (0x23f74).
+ES_ERROR_STATES_Z3815A = States(
+    hooks=(Hook("status_hardware_condition", results=(0, 0x40, 0xFFBF), recorded=False),), cases=8
+)
+# sci_status_happening with the SCI session's status model ready and
+# not, status_clear_bit's arguments recorded, for its given conditions'
+# bytes past 0x7f, which it sign-extends (0x43530).
+SCI_STATUS_HAPPENING_STATES_Z3815A = States(
+    presets=(Preset("sci_status_ready", (0, 1, 1)),), hooks=(Hook("status_clear_bit"),), cases=12
+)
+# The Z3815A 4010's receiver status update for each receiver and every
+# state its switch takes and one past each end, under the GPS's states
+# that qualify it, that pass a fault the hysteresis rides out and that
+# disqualify it for each reason, the tracking log on and off, and the
+# reference's hysteresis none, cleared and not, and its override each
+# way, at an uptime 1000 against a validation from 10 to 50 s before,
+# 35 s, the GPS's assessment, among them, where the clearing and the
+# hysteresis end; a satellite for position on channel 3; and the
+# hardware condition's 1PPS bit, hooked, clear or set.
+STATUS_GOOD_Z3815A = {
+    "gps.fix_mode": 1, "gps.status_received": 2, "gps.tps.field_00": 1, "gps.position_hold": 1,
+    "gps.field_641": 1, "gps.channel_count": 6, "gps.status.channels[2].satellite": 7,
+    "gps.status.channels[2].mode": 8,
+}
+STATUS_VARIATIONS_Z3815A = (
+    {},
+    STATUS_GOOD_Z3815A,
+    {**STATUS_GOOD_Z3815A, "gps.raim_assessment": 3},
+    {**STATUS_GOOD_Z3815A, "gps.status_received": 1},
+    {**STATUS_GOOD_Z3815A, "gps.tps.field_00": 0},
+    {**STATUS_GOOD_Z3815A, "gps.status_monitor_failed": 1},
+    {**STATUS_GOOD_Z3815A, "gps.field_641": 0},
+    {**STATUS_GOOD_Z3815A, "gps.position_hold": 0, "gps.surveying": 1},
+    {**STATUS_GOOD_Z3815A, "gps.position_hold": 0},
+    {**STATUS_GOOD_Z3815A, "gps.pps_check_disabled": 1},
+    {**STATUS_GOOD_Z3815A, "gps.status.channels[2].mode": 0},
+)
+STATUS_REFERENCES_Z3815A = (
+    {"hysteresis": 0, "hysteresis_margin": 0, "validation_start": 990, "field_0c": 0},
+    {"hysteresis": 60, "hysteresis_margin": 3, "validation_start": 950, "field_0c": 30},
+    {"hysteresis": 60, "hysteresis_margin": 3, "validation_start": 990, "field_0c": 9, "override": 1},
+    {"hysteresis": 20, "hysteresis_margin": 0, "validation_start": 960, "override": 0xFF},
+    {"hysteresis": 60, "hysteresis_margin": 3, "validation_start": 965, "field_0c": 32},
+    {"hysteresis": 38, "hysteresis_margin": 3, "validation_start": 965, "field_0c": 0},
+)
+STATUS_STATES_Z3815A = (*range(11), 0xFF)
+STATUS_UPDATE_CASES_Z3815A = [
+    {
+        0: receiver,
+        1: alternate,
+        PRESETS: {
+            "clock.uptime": 1000,
+            "gps.tracking_log": 1,
+            "gps.tracking_log_active": (state + index) % 2,
+            **variation,
+            f"gps.references[{receiver}].state": state,
+            **{f"gps.references[{receiver}].{field}": value for field, value in reference.items()},
+        },
+    }
+    for receiver, alternates, variations in ((0, (0,), STATUS_VARIATIONS_Z3815A), (1, (0, 1), ({},)))
+    for alternate in alternates
+    for index, variation in enumerate(variations)
+    for state in STATUS_STATES_Z3815A
+    for reference in STATUS_REFERENCES_Z3815A
+]
+# nmea_leap_second_due's dates and times, each a long as its slot holds
+# it, a date's month, day and year, a time's hour, minute and second:
+# a leap at a month's end and on a 1st, the time before it in its month,
+# the month before and the year before, within the two hours and past.
+def nmea_date(year: int, month: int, day: int) -> int:
+    return int.from_bytes(struct.pack(">BBH", month, day, year), "big")
+
+
+def nmea_time(hour: int, minute: int = 0, second: int = 0) -> int:
+    return int.from_bytes(struct.pack(">BBBB", 0, hour, minute, second), "big")
+
+
+LEAP_DUE_CASES_Z3815A = [
+    {0: nmea_date(*now), 1: nmea_time(hour), 2: nmea_date(*leap), 3: nmea_time(*leap_time)}
+    for now, hour, leap, leap_time in (
+        ((2026, 12, 31), 23, (2027, 1, 1), (0,)),
+        ((2027, 1, 1), 1, (2027, 1, 1), (0,)),
+        ((2027, 1, 1), 3, (2027, 1, 1), (0,)),
+        ((2026, 12, 10), 5, (2027, 1, 1), (0,)),
+        ((2026, 11, 30), 5, (2027, 1, 1), (0,)),
+        ((2026, 6, 10), 5, (2026, 6, 30), (23, 59, 59)),
+        ((2026, 5, 31), 5, (2026, 6, 30), (23, 59, 59)),
+        ((2026, 7, 1), 0, (2026, 6, 30), (23, 59, 59)),
+        ((2025, 6, 10), 5, (2026, 6, 30), (23, 59, 59)),
+        ((2026, 6, 15), 5, (2026, 7, 1), (0,)),
+        ((2026, 7, 15), 5, (2026, 7, 1), (0,)),
+    )
+]
+# nmea_position_message's survey: running or held, its count against
+# the duration or none, the fix 3D or not, the longitude and the average
+# on each side of the date line and about a quarter and a half turn, and
+# the height's type; the status update and the status print hooked.
+POSITION_MESSAGE_STATES_Z3815A = States(
+    presets=(
+        Preset("gps.position_hold", (0, 0, 0, 1)),
+        Preset("nv_settings.douglas_duration_infinite", (0, 1)),
+        Preset("nv_settings.douglas_duration", (0, 5, 100)),
+        Preset("gps.average_count", (0, 3, 10)),
+        Preset("gps.status.receiver_status", (0x20, 0x20, 0)),
+        Preset("gps.status.longitude", (0, 400000000, -400000000, 640000000, -640000000, 324000001, -324000001)),
+        Preset("gps.average_longitude", (0.0, 500000000.0, -500000000.0, 647000000.0, -647000000.0, -300000000.0)),
+        Preset("gps.field_592", (0, 0x40)),
+        Preset("gps_status_print_interval", (0, 2)),
+        Preset("gps_status_print_count", (0, 1, 2)),
+    ),
+    hooks=(Hook("gps_receiver_status_update"), Hook("gps_debug_status")),
+    cases=96,
+)
+# gps_print_instrument_state's leap second pending each way and past,
+# tps' sign of one, the time scale, a leap date or none, and ignored
+# satellites none, the first and the last, and all.
+INSTRUMENT_STATE_STATES_Z3815A = States(
+    presets=(
+        Preset("gps.leap_second_pending", (0, 1, 2, 3, 0xFF)),
+        Preset("gps.tps.leap_second", (1, -1, 0)),
+        Preset("gps.utc_time", (0, 1)),
+        Preset("gps.tps.leap_date.year", (0, 2026)),
+        Preset("gps.ignored_satellites", (0, 0x80000001, 0xFFFFFFFF, 0x10)),
+        Preset("gps.position_hold", (0, 1)),
+    ),
+    cases=48,
+)
+# The Z3815A 4010's event log ring (log.c): log_append at each entry of
+# log_write_page (0x10240c, +4), full or not, wrapping or not, on the
+# first, the next to last and the last page, the newest one before the
+# oldest, so that a used entry moves it, at its last and not, and the
+# count about its report and its most; log_init with log_lap
+# either way and the page read answered good, bad or failed, its
+# entries free or used and of either lap, so that it stops at a free
+# entry, the oldest, a bad page or a failure, or reads all 74.  Both
+# hook log_page_read, which reads the EEPROM, erased in every case.
+LOG_PAGE_ENTRY_FORMATS_Z3815A = tuple(
+    Preset(f"log_write_page.entries[{entry}].format", (1, 1, 1, 0)) for entry in range(3)
+)
+LOG_PAGE_ENTRY_LAPS_Z3815A = tuple(
+    Preset(f"log_write_page.entries[{entry}].time", (0, 0, 0x01000000)) for entry in range(3)
+)
+LOG_APPEND_STATES_Z3815A = States(
+    presets=(
+        Preset("log_cursor", (0x102410, 0x102424, 0x102438)),
+        Preset("log_full", (0, 1)),
+        Preset("nv_settings.log_wrap", (0, 1)),
+        Preset("log_write_page_number", (0, 72, 73)),
+        Preset("log_newest", (5, 220, 221)),
+        Preset("log_oldest", (6, 221, 0)),
+        Preset("log_entries", (0, 177, 222, 176, 221)),
+        Preset("log_lap", (0, 1)),
+    ),
+    hooks=(Hook("log_page_read", leaves=LOG_PAGE_ENTRY_FORMATS_Z3815A, results=(0,)),),
+    cases=64,
+)
+LOG_INIT_STATES_Z3815A = States(
+    presets=(Preset("log_full", (0, 1)),),
+    hooks=(
+        Hook("mutex_create", results=(0, 0, 0, 0, 0, 0, 0, 5), recorded=False),
+        Hook("mutex_lock", results=(0,)),
+        Hook("mutex_unlock", results=(0,)),
+        Hook("log_first_lap", results=(0, 1)),
+        Hook(
+            "log_page_read",
+            leaves=LOG_PAGE_ENTRY_FORMATS_Z3815A + LOG_PAGE_ENTRY_LAPS_Z3815A,
+            results=(0, 0, 0, 0, 0xFF, 3),
+        ),
+    ),
+    cases=96,
+)
+# The 58503A 3704's and the Z3815A 4010's log_event, which logs by a
+# code, not the base's, which writes its entry itself, starts from none
+# of STRAGGLER_STATES' log cursors.
 LOG_EVENT_BY_CODE_STATES = {"log_event": States()}
 IMAGE_STATES = {
     "58503a-3704": LOG_EVENT_BY_CODE_STATES,
@@ -1500,26 +2340,91 @@ IMAGE_STATES = {
         name: States(presets=(Preset("log_cursor", LOG_CURSORS_Z3801A), Preset("log_mutex.exchange", LOCK_EXCHANGES)))
         for name in ("log_write", "log_event")
     },
-}
-# The functions whose cases find no task by name (harness.IDENT_NOT_FOUND),
-# by the generated cases that do so, the others finding one: those that
-# ask for their task before they create it, which, finding it, end in
-# fatal_error; and root_task, in every case, which then goes on to
-# create and start every task.
-CREATORS_IDENT_FAILS = range(1, CASES, 2)
-IDENT_FAILS = {
-    "root_task": range(CASES),
-    **{
-        name: CREATORS_IDENT_FAILS
-        for name in (
-            "spoo_task_create",
-            "klok_task_create",
-            "scpi_task_create",
-            "installer_spoo_task_create",
-            "installer_scpi_task_create",
-        )
+    "z3815a-4010": {
+        **Z3815A_LOOP_STATES,
+        **LOG_EVENT_BY_CODE_STATES,
+        "pllp_task": PLLP_TASK_STATES_Z3815A,
+        "clock_check_against_gps": CLOCK_CHECK_STATES_Z3815A,
+        "print_exception": PRINT_EXCEPTION_STATES_Z3815A,
+        "es_build": ES_BUILD_STATES_Z3815A,
+        "es_send": ES_SEND_STATES_Z3815A,
+        "es_error_update": ES_ERROR_STATES_Z3815A,
+        "sci_status_happening": SCI_STATUS_HAPPENING_STATES_Z3815A,
+        **{
+            name: LATCH_STATES_Z3815A
+            for name in ("latch_bits_set", "latch_bits_write", "latch_lamps_write",
+                         "latch_rewrite", "lamps_write")
+        },
+        "log_append": LOG_APPEND_STATES_Z3815A,
+        "log_init": LOG_INIT_STATES_Z3815A,
+        "nmea_position_message": POSITION_MESSAGE_STATES_Z3815A,
+        "gps_receiver_status_update": States(hooks=(Hook("status_hardware_condition", results=(0, 0x100)),)),
+        "gps_print_instrument_state": INSTRUMENT_STATE_STATES_Z3815A,
+        "gps_leap_ack": States(
+            presets=(Preset("pll.leap_ack_requested", (0, 1)), Preset("pll.leap_ack_state", (0, 3, 7))), cases=12
+        ),
+        **{
+            name: OUTPUT_REQUEST_STATES_Z3815A
+            for name in ("output_active_request", "output_inactive_request", "output_inactive_request_bit_11")
+        },
+        **{
+            name: OUTPUT_STATE_STATES_Z3815A
+            for name in ("output_state_get", "scpi_query_OUTPut_STATe", "scpi_query_OUTPut_INACtive")
+        },
+        "output_control_step": OUTPUT_CONTROL_STATES_Z3815A,
+        "output_status_update": OUTPUT_STATUS_STATES_Z3815A,
+        **{name: ALARM_UPDATE_STATES_Z3815A for name in ("alarm_hardware_update", "alarm_operation_update")},
+        "hmon_check_antenna_current": ANTENNA_STATES_Z3815A,
+        "switchover_check": SWITCHOVER_STATES_Z3815A,
+        "standby_from_unlock": STANDBY_STATES_Z3815A,
+        "unlock_timer_check": UNLOCK_TIMER_STATES_Z3815A,
+        **{name: SWITCH_DECODE_STATES_Z3815A for name in ("switch_word_decode", "input_data_get")},
+        "ocxo_warm": OCXO_WARM_STATES_Z3815A,
+        **{
+            name: GPS_PERIODIC_STATES_Z3815A
+            for name in ("gps_periodic_send", "nmea_tps_fields_commit", "nmea_tps_commit")
+        },
+        **{
+            name: PLLP_STAGE_STATES_Z3815A
+            for name in (
+                "pll_mode",
+                "get_ffom",
+                "kenneth_present_get",
+                "kenneth_predicted_get",
+                "pll_stage_status",
+                "recovery_suffix_index",
+                "holdover_waiting_reason",
+            )
+        },
     },
 }
+# The functions whose cases find no task by name (harness.IDENT_NOT_FOUND),
+# by the generated cases that do so, the others finding one: a creator,
+# a function that asks the kernel for a task by name and creates one
+# (CREATOR_CALLS, an installer's binding's alike), whose odd cases do so,
+# so that its create and start, name, entry and all, are compared, and
+# which, finding the task, returns; and root_task, in every case, which
+# then goes on to create and start every task.  A creator is found by
+# its calls, not named, so that a twin of one an image adds, the Z3815A
+# 4010's sci_scpi_task_create, is not left finding its task in every
+# case, its create never run (creators_ident_fails).
+CREATORS_IDENT_FAILS = range(1, CASES, 2)
+CREATOR_CALLS = {"psos_ident", "psos_create"}
+INSTALLER_BINDING_PREFIX = "installer_"
+IDENT_FAILS = {"root_task": range(CASES)}
+
+
+def creators_ident_fails(conventions: dict) -> dict[str, range]:
+    """IDENT_FAILS with every creator's cases: each function whose calls
+    include CREATOR_CALLS, or the installer's bindings of them."""
+    creators = {
+        name: CREATORS_IDENT_FAILS
+        for name, convention in conventions.items()
+        if CREATOR_CALLS <= {call.removeprefix(INSTALLER_BINDING_PREFIX) for call in convention.get("calls", [])}
+    }
+    return {**creators, **IDENT_FAILS}
+
+
 # The functions whose loop never ends and makes no kernel call, by the
 # variable it counts in and the count a call ends at (harness.COUNTED):
 # root_task's idle loop (0x131dc), counting in idle_loops.  The count is
@@ -1527,6 +2432,16 @@ IDENT_FAILS = {
 # STEP_LIMIT, which the image's does not.
 IDLE_LOOPS = 101
 COUNTED_LOOPS = {"root_task": ("idle_loops", IDLE_LOOPS)}
+# An image's own, with COUNTED_LOOPS: the Z3815A 4010's pllp_task,
+# whose loop counts its passes in watchdog_pll after two counts of its
+# set-up, ended at its PLLP_PASSES_Z3815A-th pass, so that a case's walk
+# through the stages (PLLP_TASK_STATES_Z3815A) is compared where it has
+# got to, rather than run to STEP_LIMIT and skipped.
+PLLP_SET_UP_COUNTS_Z3815A = 2
+PLLP_PASSES_Z3815A = 9
+IMAGE_COUNTED_LOOPS = {
+    "z3815a-4010": {"pllp_task": ("watchdog_pll", PLLP_SET_UP_COUNTS_Z3815A + PLLP_PASSES_Z3815A)},
+}
 # The status register a function starts with that runs only in a task,
 # as a task does, in user mode, its interrupts unmasked, rather than
 # harness.SUPERVISOR.  Every task starts with the status register in its
@@ -1705,36 +2620,53 @@ def task_stacks(m: Machine, located: dict[str, tuple[int, int]], case: int) -> N
 # declaration makes probeable; and its root, the variable it names first,
 # which the image's C declares as the export does a global, by its .set.
 NULL_CAST = re.compile(r"\(\([^()]*\)0\)")
+# an object at an address, of a type the C defines, as the EEPROM's
+# calibration block, which some images' C declares no object for
+ADDRESS_CAST = re.compile(r"\*\(\((\w+) \*\)0x[0-9a-f]+\)$")
 ROOT = re.compile(r"[A-Za-z_]\w*")
 # a field a target names after its root, as gps.status_reported's
 MEMBER = re.compile(r"\.([A-Za-z_]\w*)")
 
 
 def probeable(c: str, target: str) -> bool:
-    """Whether the C has what a target names: a structure's field, or a
+    """Whether the C has what a target names: a structure's field, an
+    object of a type it defines at an address (ADDRESS_CAST), or a
     global the export sets and each field of it the target names, which
     another image's C may not have."""
     if NULL_CAST.match(target) is not None:
         return True
-    return f'__asm__(".set {ROOT.match(target).group(0)}, ' in c and all(
+    cast = ADDRESS_CAST.match(target)
+    if cast is not None:
+        kind = cast.group(1)
+        return f"typedef struct {kind} {kind}" in c or f"}} {kind};" in c
+    root = ROOT.match(target).group(0)
+    declared = re.search(rf"(?m)^extern (?:volatile )?(\w+) {root}\b", c)
+    # a field of a global the export leaves untyped, as the Z3815A's pll
+    if MEMBER.search(target) and declared is not None and f"\nstruct {declared.group(1)} {{" not in c:
+        return False
+    return f'__asm__(".set {root}, ' in c and all(
         re.search(rf"(?m)^\s+[A-Za-z_][\w \*]*\b{field}\s*(?:\[[^\]]*\]\s*)*;", c) for field in MEMBER.findall(target)
     )
 
 
 def targets(c: str) -> list[str]:
-    """Every Preset's target, a given case's, every image's, the task
-    stacks' fields and the regions, each once, in a fixed order, that the
-    C has (probeable)."""
+    """Every Preset's target, STATES' and each image's IMAGE_STATES', a
+    given case's and its hooks' leaves', every image's, the task stacks' fields, the regions and
+    the counted loops' counters, each once, in a fixed order, that the C
+    has (probeable)."""
     found = [*TASK_FIELDS.values(), SEGMENT_SIZE, SYSTEM_STACK_SIZE, ROOT_ENTRY]
     found += [variable for variable, _ in REGIONS.values()]
-    for states in STATES.values():
+    for loops in [COUNTED_LOOPS, *IMAGE_COUNTED_LOOPS.values()]:
+        found += [variable for variable, _ in loops.values() if variable not in found]
+    for states in [*STATES.values(), *(states for image in IMAGE_STATES.values() for states in image.values())]:
         for preset in states.presets + tuple(p for hook in states.hooks for p in hook.leaves):
             if preset.target not in found:
                 found.append(preset.target)
     for own in [*GIVEN_CASES.values(), *(own for image in IMAGE_GIVEN_CASES.values() for own in image.values())]:
         for values in own:
             watches = [i.watch for i in values.get(INTERRUPTS, ()) if isinstance(i.watch, str)]
-            for target in [*values.get(PRESETS, {}), *watches]:
+            leaves = [target for leaves in values.get(HOOK_LEAVES, {}).values() for target in leaves]
+            for target in [*values.get(PRESETS, {}), *watches, *leaves, *values.get(RECORDS, {})]:
                 if target not in found:
                     found.append(target)
     return [target for target in found if probeable(c, target)]
@@ -1930,8 +2862,40 @@ SESSION_SHARE_LINE = (
 D5_SHARE_Z3801A = (
     "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16470)"
 )
+# The Z3815A 4010's, in its own code: os_report_processes holds "%s"'s
+# address, 0x5ee62, in D5 as the Z3805A's does (0x26dd4), the routine
+# and os_report_process relocated from the Z3805A's; its sci_puts leaves
+# sci.transmit_next at the end of what it sent, where the Z3805A's sets
+# it to "" (0x2fe00), and sci_putc sends from its own frame (0x30888), so
+# that the pointer left is into each copy's stack, whose argument slots
+# differ, a char's 2 bytes against gcc's 4: the pointer's low byte; and
+# the installer's copies the same (installer::0x103230, 0x103c4e).
+D5_SHARE_Z3815A = (
+    "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x26dd4)"
+)
+TRANSMIT_FRAME_Z3815A = (
+    "sci_puts leaves sci.transmit_next pointing into sci_putc's frame, each copy's stack its own (0x2fe00)"
+)
+# A session's line of :DIAG:OS:PROC?, its memory and share columns
+# apart, as scpi_interpret's KNOWN gives it.
+SESSION_SHARE = (
+    rf"effect \d+ {SESSION_SHARE_LINE}, image's trap #4 service 4 (?P=registers)data (?P=head)"
+    r"(?:3[0-9]|20)+6b4220(?:3[0-9]|2d|20)+(?P=tail)"
+)
 IMAGE_KNOWN = {
     BASE_IMAGE: KNOWN,
+    "z3815a-4010": {
+        **{name: Known(D5_SHARE_Z3815A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
+        "scpi_interpret": Known(
+            D5_SHARE_Z3815A + ", and adds D6, which scpi_interpret leaves (0x2699a)", SESSION_SHARE
+        ),
+        "sci_putc": Known(TRANSMIT_FRAME_Z3815A, r"RAM differs from 103dff"),
+        "installer_sci_putc": Known(
+            "the installer's copy of sci_puts leaves its transmit_next pointing into installer_sci_putc's frame, "
+            "each copy's stack its own (installer::0x103230)",
+            r"RAM differs from 10b009",
+        ),
+    },
     "z3801a-3543": {
         **{name: Known(D5_SHARE_Z3801A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
         "gps_debug_status": Known(
@@ -1946,11 +2910,7 @@ IMAGE_KNOWN = {
     },
     "58503a-3704": {
         **{name: Known(D5_SHARE_58503A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
-        "scpi_interpret": Known(
-            D5_SHARE_58503A + ", and adds D6, which scpi_interpret leaves",
-            rf"effect \d+ {SESSION_SHARE_LINE}, image's trap #4 service 4 (?P=registers)data (?P=head)"
-            r"(?:3[0-9]|20)+6b4220(?:3[0-9]|2d|20)+(?P=tail)",
-        ),
+        "scpi_interpret": Known(D5_SHARE_58503A + ", and adds D6, which scpi_interpret leaves", SESSION_SHARE),
     },
 }
 # Another image's own given cases, in place of the base's of the same
@@ -2000,22 +2960,752 @@ ACTION_REQUEST_58503A = struct.pack(">IIBBBBII", 0, 0x413E2, 0, 0, 0, 0, 0, 0)
 PLL_CHECK_STAGES = (*range(2, 8), 0x80, 0xFF)
 ADC_OVEN = 3
 ADC_OVEN_CURRENT = 6
+# The antenna current's, its last (smartclock.h, adc_channel).
+ADC_ANTENNA_CURRENT = 7
 WARM_OVEN = {f"adc_monitors[{ADC_OVEN}].valid": 1, f"adc_monitors[{ADC_OVEN}].value": -3.0}
 OVEN_CHECK_CASES = [{PRESETS: {"pll.stage": stage}} for stage in PLL_CHECK_STAGES]
-# The functions of the base's given cases whose copy in another image
-# differs and is given none of them: the 58503A 3704's
-# installer_console_port_read, the primary's console_port_read on the
-# installer's state, which prompts while installer_scpi_prompt_enabled
-# is set.
-NOT_GIVEN = {"installer_console_port_read": []}
+
+
+def nmea_frame(sentence: str) -> bytes:
+    """A sentence as the Z3815A 4010's NMEA framer leaves it (nmea_frame,
+    its types/smartclock.h): a NUL for each comma, a null cursor, its
+    fields and each one's offset, the first 1, past the '$'."""
+    text = sentence.encode().replace(b",", b"\0")
+    starts = [1] + [i + 1 for i, c in enumerate(sentence) if c == ","]
+    return (text.ljust(0x52, b"\0") + struct.pack(">IBB", 0, len(starts), 2)
+            + bytes(starts).ljust(0x14, b"\0"))
+
+
+# The Z3815A 4010's gps_response_match, for each match kind a
+# sentence sent and responses that answer it, differ from it and are
+# another's, set and queried, the position held and not
+# (gps_sentence_match_kind): GLL by GGA, a latitude 12 and 18 mas off
+# and at the pole; rrs by rsd; set,H and set,M by ssd, a height 10 and
+# 20 cm off; srq, rrq and tst by theirs; clr; and ZDA, which awaits none.
+GLL_SENT = "$GPGLL,3723.4567,N,12201.2345,W\r\n"
+GGA = "$GPGGA,123456,%s,N,12201.2345,W,1,08"
+MATCH_EXCHANGES_Z3815A = (
+    (0x3B, GLL_SENT, (GGA % "3723.4567", GGA % "3723.4569", GGA % "3723.4570", "$GPGSA,A,3")),
+    (0x3B, "$GPGLL,9000.0000,N,12201.2345,W\r\n",
+     ("$GPGGA,123456,9000.0000,N,00000.0000,E,1,08", GGA % "3723.4567")),
+    (0x40, "$PFEC,GPrrs,1,2,3\r\n", ("$PFEC,GPrsd,1,2,3", "$PFEC,GPrsd,1,2,4", "$PFEC,GPssd,1")),
+    (0x3C, "$PFEC,GPset,H123.4\r\n", ("$PFEC,GPssd,M05,H123.4", "$PFEC,GPssd,M05,H123.5",
+                                      "$PFEC,GPssd,M05,H123.6", "$PFEC,GPssd,M05", "$PFEC,GPrsd,1")),
+    (0x39, "$PFEC,GPset,M10\r\n", ("$PFEC,GPssd,M10,H123.4", "$PFEC,GPssd,M05,H123.4")),
+    (0x4A, "$PFEC,GPsrq\r\n", ("$PFEC,GPssd,M10", "$PFEC,GPrsd,1")),
+    (0x4B, "$PFEC,GPrrq\r\n", ("$PFEC,GPrsd,1", "$PFEC,GPssd,1")),
+    (0x4C, "$PFEC,GPint,tst00\r\n", ("$PFEC,GPtst,1", "$PFEC,GPssd,1")),
+    (0x41, "$PFEC,GPclr\r\n", ("$PFEC,GPtst,1",)),
+    (0x3A, "$GPZDA,123456,01,02,2026\r\n", ("$PFEC,GPtst,1",)),
+)
+MATCH_CASES_Z3815A = [
+    {0: message, 1: sent.encode(), 2: len(sent), 3: mode, 4: message, 5: nmea_frame(response),
+     6: len(response), PRESETS: {"gps.position_hold": held}}
+    for message, sent, responses in MATCH_EXCHANGES_Z3815A
+    for response in responses
+    for mode in (0, 1)
+    for held in (0, 1)
+]
+# The Z3815A 4010's gps_strength_bits about its thresholds, 43, 47 and
+# 51; and command_monitor's status monitor watching, the status fresh or
+# not, rrm fresh or not, a time new or repeated, the repeats and the
+# statuses without rrm at their bounds' either side, and rrm due or not
+# (field_592's Time RAIM bit, rrm received before), and its command monitor in each state,
+# enabled, a command failed.
+STRENGTHS_Z3815A = (0, 42, 43, 46, 47, 50, 51, 255)
+STATUS_MONITOR_CASES_Z3815A = [
+    {PRESETS: {"gps.status_monitor_state": 1, "gps.status_monitor_enabled": 1, "gps.status_rate": 1,
+               "gps_status_fresh": fresh, "gps_raim_fresh": raim_fresh, "gps.status.time.hour": hour,
+               "gps.status_repeat_count": repeats, "status_without_traim_count": without,
+               "gps.field_592": raim_bit, "gps.raim_received": received, "gps.raim.raim_on": 1,
+               "gps.raim.rate": 1}}
+    for fresh in (0, 1)
+    for raim_fresh in (0, 1)
+    for hour in (0, 1)
+    for repeats in (45, 46)
+    for without in (19, 20)
+    for raim_bit in (0, 0x20)
+    for received in (0, 1)
+]
+COMMAND_MONITOR_CASES_Z3815A = [
+    {PRESETS: {"gps.command_monitor_state": state, "gps.command_monitor_enabled": 1,
+               "gps.command_monitor_error": 1}}
+    for state in range(4)
+]
+# The Z3815A 4010's gps_print_command on command_log (0x101da8)
+# holding one entry, set,M's, received as @@Ag's and translated or not,
+# set and queried, its time the clock's or not.
+COMMAND_LOG_Z3815A = 0x101DA8
+COMMAND_LOG_ENTRY_Z3815A = 0x16
+PRINT_COMMAND_CASES_Z3815A = [
+    {0: COMMAND_LOG_Z3815A, 1: bytes(62),
+     PRESETS: {"command_log.read": COMMAND_LOG_Z3815A,
+               "command_log.write": COMMAND_LOG_Z3815A + COMMAND_LOG_ENTRY_Z3815A,
+               "command_log.entries[0].sender": 2, "command_log.entries[0].untranslated_code": received,
+               "command_log.entries[0].code": 0x39, "command_log.entries[0].message": 0x39,
+               "command_log.entries[0].query": query, "command_log.entries[0].from_clock": from_clock}}
+    for received in (0x39, 0x06)
+    for query in (0, 1)
+    for from_clock in (0, 1)
+]
+# The Z3815A 4010's satellite_track_class on satellite 5's record, its
+# health at +8, each health and one past, in Time RAIM's set and not;
+# and gps_console_request on each of its steps, from the setting's
+# senders.
+TRACK_CLASS_CASES_Z3815A = [
+    {0: bytes([5, 0, 0, 0, 0, 0, 0, 0, health, 0]), 1: isolated}
+    for health in range(5)
+    for isolated in (0, 1 << 4)
+]
+CONSOLE_REQUEST_CASES_Z3815A = [
+    {0: code, 1: struct.pack(">IIII", 1, 0, 0, 0), 2: sender}
+    for code in range(0x4D, 0x6A)
+    for sender in (2, 3)
+]
+# The Z3815A 4010's port E link (puck_link, 0x102374): puck_efc_correct
+# about each of its tests, the error in range and not, efc_compensation
+# off, on and its 1, the correction's restart, the frames since the EFC
+# was set about its bounds, in n3 lock pll's pll state and not, and the
+# error logged or not; and puck_byte_done on a 0x55 frame, its cursor
+# short of the last byte and at it, its sum right and wrong.
+PUCK_Z3815A = 0x102374
+PUCK_FRAME_Z3815A = PUCK_Z3815A + 0x18
+PUCK_CORRECT_CASES_Z3815A = [
+    {PRESETS: {"puck.efc_adc_expected": 1000 + error, "efc_adc_reading": 1000, "efc_compensation": compensation,
+               "puck.correction_restart": restart, "puck.frames_since_efc": frames, "pll.stage": 6,
+               "pll.n3_lock_state": state, "puck.adc_error_logged": logged,
+               "scpi_value_DIAGnostic_ROSCillator_EFControl_DADC": 16.0, "efc_compensation_debug": 1}}
+    for error in (40, 1677721)
+    for compensation in (0, 1, 2)
+    for restart in (0, 1)
+    for frames in (0, 1, 2, 3)
+    for state in (12, 11)
+    for logged in (0, 1)
+]
+PUCK_FRAME_55_Z3815A = (0x55, 0x12, 0x34, 0x56, 0x01, 0x55 + 0x12 + 0x34 + 0x56 + 0x01 & 0xFF)
+PUCK_BYTE_CASES_Z3815A = [
+    {PRESETS: {**{f"puck.frame[{i}]": byte for i, byte in enumerate(PUCK_FRAME_55_Z3815A[:5])},
+               "puck.frame[5]": PUCK_FRAME_55_Z3815A[5] ^ wrong, "puck.frame_length": 6,
+               "puck.cursor": PUCK_FRAME_Z3815A + at, "puck.framing": 1}}
+    for at in (4, 5)
+    for wrong in (0, 1)
+]
+# The Z3815A 4010's n3_lock_pll in each of its states and one past,
+# running and starting, its debugging on and off, and in its pll state
+# about the loop's passes' end, averaging and not, the seating count at
+# its bound; and efc_calibration_measure in each of its steps and one
+# past, its point and settling about their bounds, and its check with a,
+# b and :DADC below, within and above their bounds.
+N3_LOCK_CASES_Z3815A = [
+    {0: running, PRESETS: {"pll.n3_lock_state": state, "switch_word_bit_4_copy": 1, "pll_debug_enabled": debug,
+                           "n3_lock.pll_passes": 60, "n3_lock.phase_passes": 1, "n3_lock.pass": 0}}
+    for state in range(16)
+    for running in (0, 1)
+    for debug in (0, 1)
+] + [
+    {0: 1, PRESETS: {"pll.n3_lock_state": 12, "switch_word_bit_4_copy": copy, "pll_debug_enabled": 1,
+                     "n3_lock.pll_passes": 60, "n3_lock.phase_passes": 1, "n3_lock.pass": at,
+                     "n3_lock.averaging": averaging, "n3_lock.seating_count": 299, "n3_lock.ti_average": 2e-09,
+                     "n3_lock.phase_offset": offset}}
+    for at in (59, 60, 61, 62)
+    for averaging in (0, 1)
+    for copy in (0, 1)
+    for offset in (0.0, 1e-08)
+]
+EFC_CALIBRATION_CASES_Z3815A = [
+    {0: 1, PRESETS: {"efc_calibration.step": step, "efc_calibration.point": point, "efc_calibration.settle": 11,
+                     "pll_debug_enabled": 1, "gps.references[0].valid": 1}}
+    for step in range(10)
+    for point in (0, 9, 10)
+] + [
+    {0: 1, PRESETS: {"efc_calibration.step": 8, "scpi_value_DIAGnostic_ROSCillator_EFControl_ASLOPe": a,
+                     "scpi_value_DIAGnostic_ROSCillator_EFControl_BSLOPe": b,
+                     "scpi_value_DIAGnostic_ROSCillator_EFControl_DADC": dadc}}
+    for a in (1e-16, 1e-12, 1e-10)
+    for b in (1e-31, 1e-24, 1e-21)
+    for dadc in (14.0, 16.0, 18.0)
+]
+# The Z3815A 4010's :DIAGnostic:ROSCillator:PTESt time uncertainty test
+# (ptest, 0x1026fe): ptest_check running about each of its bounds, its
+# passes about :COUNt, its hours about each :TTHR, predicted and
+# measured, valid and not, the uncertainty within the first :PTHR and
+# not, and in each state; ptest_update armed and running, its
+# uncertainty valid or not, within the second :PTHR or not;
+# ptest_mode_done and ptest_type_done in each state, the mode off and
+# on; ptest_duration_hours in each state about an hour's rounding;
+# ptest_log by type, valid and not, about its clamps and rounding, its
+# entries logged, but an armed test's, whose entry keeps the caller's
+# return address as its second long (quirks.md), each copy's own; ptest_efc_average
+# about its clamps; and measured_uncertainty_compute and
+# measured_uncertainty_update over a history whose span holds and does
+# not, its first entry weighted and not, debugging on and off.  The
+# uptime is 0, so that a running test's hours are its start's negation.
+PTEST_HOUR_Z3815A = 3600
+# The event log's cursor at log_write_page's first entry (0x10240c, +4)
+# and its lock's exchange an id, so that the test's log entries are
+# written and compared (LOG_CURSORS).
+PTEST_LOG_Z3815A = {"log_cursor": 0x102410, "log_mutex.exchange": LOCK_EXCHANGES[0]}
+PTEST_SETTINGS_Z3815A = {
+    "scpi_value_DIAGnostic_ROSCillator_PTESt_MODE": 1,
+    "scpi_value_DIAGnostic_ROSCillator_PTESt_COUNt": 3,
+    "scpi_value_DIAGnostic_ROSCillator_PTESt_TTHR[0]": 2,
+    "scpi_value_DIAGnostic_ROSCillator_PTESt_TTHR[1]": 5,
+    "scpi_value_DIAGnostic_ROSCillator_PTESt_PTHR[0]": 1e-06,
+    "scpi_value_DIAGnostic_ROSCillator_PTESt_PTHR[1]": 8e-07,
+}
+PTEST_CHECK_CASES_Z3815A = [
+    {PRESETS: {**PTEST_SETTINGS_Z3815A, "ptest.state": 2, "scpi_value_DIAGnostic_ROSCillator_PTESt_TYPE": kind,
+               "ptest.passes": passes, "ptest.start_uptime": -hours * PTEST_HOUR_Z3815A & 0xFFFFFFFF,
+               "pll.measured_uncertainty_valid": valid, "pll.predicted_uncertainty": uncertainty,
+               "pll.measured_uncertainty": -uncertainty}}
+    for kind in (0, 1)
+    for passes in (2, 3)
+    for hours in (1, 2, 4, 5)
+    for valid in (0, 1)
+    for uncertainty in (5e-07, 1e-06, 2e-06)
+] + [{PRESETS: {**PTEST_SETTINGS_Z3815A, "ptest.state": state}} for state in range(6)]
+PTEST_UPDATE_CASES_Z3815A = [
+    {PRESETS: {**PTEST_SETTINGS_Z3815A, **(PTEST_LOG_Z3815A if state != 1 else {}), "ptest.state": state,
+               "scpi_value_DIAGnostic_ROSCillator_PTESt_TYPE": kind, "ptest.passes": 1, "pll.measured_uncertainty_valid": valid, "pll.predicted_uncertainty": uncertainty,
+               "pll.measured_uncertainty": uncertainty}}
+    for state in range(4)
+    for kind in (0, 1)
+    for valid in (0, 1)
+    for uncertainty in (5e-07, -5e-07, 9e-07, 2e-06)
+]
+PTEST_MODE_CASES_Z3815A = [
+    {PRESETS: {**PTEST_SETTINGS_Z3815A, "scpi_value_DIAGnostic_ROSCillator_PTESt_MODE": mode, "ptest.state": state,
+               "ptest.passes": 3}}
+    for mode in (0, 1)
+    for state in range(6)
+]
+PTEST_DURATION_CASES_Z3815A = [
+    {PRESETS: {"ptest.state": state, "ptest.start_uptime": -elapsed & 0xFFFFFFFF, "ptest.end_uptime": 0}}
+    for state in range(6)
+    for elapsed in (0, 899, 900, 4499, 4500)
+]
+PTEST_LOG_CASES_Z3815A = [
+    {0: uncertainty, 1: valid, PRESETS: {**PTEST_LOG_Z3815A, "scpi_value_DIAGnostic_ROSCillator_PTESt_TYPE": kind}}
+    for kind in (0, 1)
+    for valid in (0, 1)
+    for uncertainty in (1e-07, -1e-07, 0.0, 2.0, -2.0, 2.4e-10, -2.6e-10)
+]
+PTEST_AVERAGE_CASES_Z3815A = [
+    {PRESETS: {"pll.efc_history.stop_ptr": stop, f"pll.efc_history.averages[{stop - 1 & 31}]": average}}
+    for stop in (0, 5)
+    for average in (-3.0, -0.4, 100.4, 2e09)
+]
+PTEST_NEWEST_Z3815A = 10
+PTEST_HISTORY_Z3815A = {
+    "aging_curve.newest_index": PTEST_NEWEST_Z3815A,
+    "pll.efc_history.replaced_time": 100.0 + PTEST_NEWEST_Z3815A - 32,
+    "scpi_value_DIAGnostic_ROSCillator_EFControl_ASLOPe": 1e-12,
+    "scpi_value_DIAGnostic_ROSCillator_EFControl_BSLOPe": 3e-24,
+    "aging_curve.a": 2.0, "aging_curve.b": 0.02, "aging_curve.c": 0.25,
+    **{f"pll.efc_history.times[{i}]": 100.0 + i for i in range(32)},
+    **{f"pll.efc_history.averages[{i}]": 1.0 + 0.03 * i for i in range(32)},
+    **{f"pll.efc_history.weights[{i}]": 1 for i in range(32)},
+    **{f"pll.efc_history.fit_a_history[{i}]": 1.0 for i in range(32)},
+    **{f"pll.efc_history.fit_b_history[{i}]": 0.01 for i in range(32)},
+    **{f"pll.efc_history.fit_c_history[{i}]": 0.5 for i in range(32)},
+}
+MEASURED_UNCERTAINTY_CASES_Z3815A = [
+    {0: entries, PRESETS: {**PTEST_HISTORY_Z3815A, "pll_debug_enabled": debug,
+                           f"pll.efc_history.times[{PTEST_NEWEST_Z3815A - entries & 31}]":
+                               100.0 + PTEST_NEWEST_Z3815A - entries + shift,
+                           f"pll.efc_history.weights[{PTEST_NEWEST_Z3815A - entries & 31}]": weight,
+                           "pll.efc_history.replaced_weight": weight,
+                           **({"pll.efc_history.replaced_time": 100.0 + PTEST_NEWEST_Z3815A - 32 - shift}
+                              if entries == 32 else {})}}
+    for entries in (8, 32)
+    for shift in (0.0, 0.4, 0.6, -0.6)
+    for weight in (0, 2)
+    for debug in (0, 1)
+]
+MEASURED_UPDATE_CASES_Z3815A = [
+    {PRESETS: {**PTEST_HISTORY_Z3815A, "pll.efc_history.replaced_weight": weight}} for weight in (0, 3)
+]
+# The Z3815A 4010's EFC history (pll.efc_history, 0x1028cc, 32 entries)
+# and aging fit.  efc_history_update in each aging state, settled and
+# not; collecting, in each stage that sums and one that does not, with
+# the switch word's bit 11 and standby_from_unlock's standby (its 1 in n3 lock
+# pll's pll state, the interval mean between 4 and 5 ns, while
+# standby_from_unlock_ready is set), nothing summed and some, an entry not yet due; and an entry due with each weight's bounds of summed samples and
+# uptime, its debugging on and off, and its ring wrapping and full.
+# aging_fit with no, 16 and 17 entries well weighted, the oldest before
+# half a day and after; fit_quality in each mode, its span wrapping or
+# not; fit_linear_halves, fit_constant and linear_regression over a
+# history whose weights leave none, two, three and all of its entries,
+# and linear_regression's x all one; fit_three_point on three points,
+# two x the same, in line, the outer y equal, and a curvature too small
+# for a float, the outer y equal and not; and kenneth_measured_get valid
+# and not.
+EFC_HISTORY_Z3815A = 0x1028CC
+EFC_HISTORY_AVERAGES_Z3815A = EFC_HISTORY_Z3815A + 0x0A
+EFC_HISTORY_WEIGHTS_Z3815A = EFC_HISTORY_Z3815A + 0x8E
+EFC_HISTORY_TIMES_Z3815A = EFC_HISTORY_Z3815A + 0xB0
+EFC_HISTORY_ENTRIES_Z3815A = 32
+
+
+def efc_history_z3815a(weights: list[int], first_time: float = 3.0, shift: int = 0) -> dict:
+    """Presets of the history's entries: the weights given, each time
+    first_time on from its entry shift places back, the averages about a
+    line in time, the log terms rising."""
+    presets = {}
+    for i, weight in enumerate(weights):
+        time = first_time + (i + shift) % EFC_HISTORY_ENTRIES_Z3815A
+        presets[f"pll.efc_history.weights[{i}]"] = weight
+        presets[f"pll.efc_history.times[{i}]"] = time
+        presets[f"pll.efc_history.averages[{i}]"] = 524288.0 + 0.25 * time + 0.5 * (i % 3)
+        presets[f"pll.efc_history.logs[{i}]"] = 0.05 * i
+    return presets
+
+
+def efc_weights_z3815a(well: int, partial: int) -> list[int]:
+    """well entries of weight 2 or 3 in turn, then partial of 1, the rest
+    empty."""
+    weights = [2 + i % 2 for i in range(well)] + [1] * partial
+    return weights + [0] * (EFC_HISTORY_ENTRIES_Z3815A - len(weights))
+
+
+EFC_CALIBRATED_Z3815A = {
+    "pll.efc": 524288.0,
+    "scpi_value_DIAGnostic_ROSCillator_EFControl_ASLOPe": 5e-13,
+    "scpi_value_DIAGnostic_ROSCillator_EFControl_BSLOPe": 3.3e-24,
+}
+EFC_HISTORY_COLLECTING_Z3815A = {
+    "pll.aging_state": 3, "pll.efc": 524288.5, "scpi_value_DIAGnostic_ROSCillator_TCOefficient": 1000.0,
+    "efc_history_base": 524000.25, "pll.efc_history.efc_sum": 1.5e6,
+}
+EFC_HISTORY_CASES_Z3815A = [
+    {PRESETS: {"pll.aging_state": state, "pll.efc_history.loop_settled": settled, "clock.uptime": 5000}}
+    for state in range(5)
+    for settled in (0, 1)
+] + [
+    {PRESETS: {**EFC_HISTORY_COLLECTING_Z3815A, "pll.stage": stage, "pll.startup_state": startup,
+               "switch_word_bit_11": bit_11, "pll.efc_history.summed_count": summed,
+               "pll.efc_history.next_entry_uptime": 0xFFFFFFFF, "clock.uptime": 5000,
+               "pll.n3_lock_state": 12, "interval_mean": 4.5e-09, "standby_from_unlock_ready": standby}}
+    for stage in (5, 6, 7)
+    for startup in (0, 1)
+    for bit_11 in (0, 1)
+    for summed in (0, 5)
+    for standby in (0, 1)
+] + [
+    {PRESETS: {**EFC_HISTORY_COLLECTING_Z3815A, **efc_history_z3815a(efc_weights_z3815a(20, 4)),
+               "pll.stage": stage, "pll.efc_history.summed_count": summed, "pll.efc_history.next_entry_uptime": 0,
+               "clock.uptime": uptime, "pll_debug_enabled": debug, "pll.efc_history.stop_ptr": stop,
+               "pll.efc_history.start_ptr": start, "pll.tfom": 1e-07}}
+    for stage in (6, 7)
+    for summed in (0, 1, 674, 675, 2699, 2700)
+    for uptime in (2700, 2701, 35099, 35100)
+    for debug in (0, 1)
+    for stop, start in ((31, 0), (5, 9))
+]
+AGING_FIT_CASES_Z3815A = [
+    {PRESETS: {**EFC_CALIBRATED_Z3815A, **efc_history_z3815a(efc_weights_z3815a(well, 4), first_time),
+               "pll_debug_enabled": debug}}
+    for well in (0, 3, 16, 17, 28)
+    for first_time in (10.0, 20.0)
+    for debug in (0, 1)
+]
+AGING_CURVE_FORMAT_Z3815A = ">BBIIiiffffff"
+FIT_QUALITY_CASES_Z3815A = [
+    {0: struct.pack(AGING_CURVE_FORMAT_Z3815A, mode, 2, 3, 34, oldest, newest, 524289.0, 0.25, 0.1, 0.0, 0.5, 0.0),
+     PRESETS: {**EFC_CALIBRATED_Z3815A, **efc_history_z3815a(efc_weights_z3815a(32, 0))}}
+    for mode in range(6)
+    for oldest, newest in ((0, 31), (20, 5), (7, 7))
+]
+FIT_HISTORY_CASES_Z3815A = [
+    {0: struct.pack(AGING_CURVE_FORMAT_Z3815A, 0, minimum, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+     PRESETS: efc_history_z3815a(efc_weights_z3815a(well, partial), shift=shift)}
+    for minimum in (1, 2)
+    for well, partial in ((0, 0), (0, 2), (2, 1), (3, 0), (32, 0))
+    for shift in (0, 9)
+]
+LINEAR_REGRESSION_CASES_Z3815A = [
+    {0: struct.pack(">BBIIIfff", minimum, 0, EFC_HISTORY_TIMES_Z3815A, EFC_HISTORY_AVERAGES_Z3815A,
+                    EFC_HISTORY_WEIGHTS_Z3815A, 0.0, 0.0, 0.0),
+     1: slope,
+     PRESETS: {**efc_history_z3815a(efc_weights_z3815a(well, partial)),
+               **({f"pll.efc_history.times[{i}]": 5.0 for i in range(EFC_HISTORY_ENTRIES_Z3815A)} if same else {})}}
+    for minimum in (1, 2)
+    for well, partial in ((0, 0), (2, 0), (2, 1), (3, 0), (32, 0))
+    for slope in (0, 1)
+    for same in (False, True)
+]
+THREE_POINT_CASES_Z3815A = [
+    {0: struct.pack(">IIff", EFC_HISTORY_TIMES_Z3815A, EFC_HISTORY_AVERAGES_Z3815A, 0.0, 0.0),
+     PRESETS: {**{f"pll.efc_history.times[{i}]": x for i, x in enumerate(xs)},
+               **{f"pll.efc_history.averages[{i}]": y for i, y in enumerate(ys)}}}
+    for xs, ys in (
+        ((1.0, 2.0, 3.0), (1.0, 0.0, 2.0)),
+        ((1.0, 2.0, 3.0), (1.0, 0.0, 1.0)),
+        ((1.0, 1.0, 3.0), (1.0, 0.0, 2.0)),
+        ((1.0, 3.0, 3.0), (1.0, 0.0, 2.0)),
+        ((3.0, 2.0, 3.0), (1.0, 0.0, 2.0)),
+        ((1.0, 2.0, 3.0), (1.0, 2.0, 3.0)),
+        ((1e12, 2e12, 4e12), (1e-30, 0.0, 0.0)),
+        ((1e12, 2e12, 4e12), (0.0, 1e-30, 0.0)),
+    )
+]
+KENNETH_MEASURED_CASES_Z3815A = [
+    {0: bytes(4), 1: bytes(1), PRESETS: {"pll.measured_uncertainty": 2.5e-07, "pll.measured_uncertainty_valid": valid}}
+    for valid in (0, 1, 2)
+]
+# The Z3815A 4010's n3_lock_slew about its bounds: TIs within 100 ns,
+# within the stopping TI and past it either way, the offset within a step,
+# past it and at its bound either way, steps and scales, and its debug
+# line; fine_sync_adjust and holdover_within_limit on TIs about 90 ns,
+# 100 ns and 300 ns either way; and interval_next_reading in
+# each arm mode, its States drawn for each.
+SLEW_TIS_Z3815A = (0.0, 5e-08, -5e-08, 2e-07, -2e-07, 7e-07, -7e-07, 1e-05, -1e-05)
+SLEW_CASES_Z3815A = [
+    {0: ti, 1: most, 2: step, 3: scale, PRESETS: {"n3_lock.slew_offset": offset, "pll_debug_enabled": debug}}
+    for ti in SLEW_TIS_Z3815A
+    for offset in (0.0, 0.5, -3.0, 12.0, -12.0, 2000.0)
+    for most, step, scale in ((10, 1.0, 1), (1000, 0.25, 10))
+    for debug in (0, 1)
+]
+# The Z3815A 4010's port layer on each of its two ports, the SCI's (1)
+# and DUART channel B's (2), and on others (0x3c670 to 0x3c80e), and
+# scpi_task_run on both and another; scpi_input_source on each session's
+# port object (0x3c310, 0x3c61a); status_report_from on each source and
+# past them (0x3fadc), each session's status ready; and
+# status_prompt_refresh on each session's status model and another; and
+# :PTIMe:TDATe:DEFault? on each of its nodes' path words, the clock set,
+# its GPS-UTC offset known, and keeping either timescale.
+SCPI_PORTS_Z3815A = (0, 1, 2, 3)
+SCPI_PORT_OBJECTS_Z3815A = (0x3C310, 0x3C61A)
+SCPI_MODELS_Z3815A = {"scpi_status_model": 0x104000, "sci_scpi_status_model": 0x104100}
+TDATE_CLOCK_Z3815A = {"clock.set": 1, "clock.gps_utc_offset": 13, "clock.gps_utc_offset_valid": 1}
+SCPI_PORT_CASES_Z3815A = {
+    **{name: [{0: port} for port in SCPI_PORTS_Z3815A]
+       for name in ("port_status_report", "port_report_errors", "port_prompt_get", "port_prompt_set",
+                    "port_session_init", "port_object")},
+    "port_update_rqs": [{2: port} for port in SCPI_PORTS_Z3815A],
+    "scpi_task_run": [{0: port} for port in (1, 2, 0)],
+    "scpi_input_source": [{0: port} for port in SCPI_PORT_OBJECTS_Z3815A],
+    "status_report_from": [
+        {0: code, 1: source, PRESETS: {"status_ready": 1, "sci_status_ready": 1}}
+        for source in range(6)
+        for code in (-100, 3)
+    ],
+    "scpi_query_SOURce_PTIMe_TDATe_DEFault": [
+        {0: struct.pack(">h", path), PRESETS: {**TDATE_CLOCK_Z3815A, "nv_settings.gps_utc": utc}}
+        for path in (-1, 1, 2)
+        for utc in (0, 1)
+    ],
+    "status_prompt_refresh": [
+        {0: model, 1: error, PRESETS: SCPI_MODELS_Z3815A}
+        for model in (*SCPI_MODELS_Z3815A.values(), 0x104200)
+        for error in (0, -113)
+    ],
+}
+# The Z3815A 4010's SCPI handlers that take either port or answer by the
+# session asking: the ALARm port's :FDUPlex, :RECeive:PACE and :PRESet on
+# each port and past them (0x44204, 0x4462a, 0x44350), and
+# :SYSTem:LANGuage?, :DIAGnostic:ADC?, :LOG:READ:ALL? and :TEST:FLASh? on
+# each session's port object; :DIAGnostic:ROSCillator:PTESt:STATe? on
+# each of the test's states and one past them (0x3f232), and
+# :DIAGnostic:GPSystem:ACURrent:STATe? with the antenna current's alarm
+# on, its average normal and past its most (0x3eb46); :KENneth:MEASured?
+# with an uncertainty and without, its resolution negative (0x43e54);
+# and :DIAGnostic:LOG:WRAP? and :ROSCillator:PTESt:MODE? on a byte past
+# 0x7f, which they sign-extend (0x3ea22, 0x3f06c).
+SCPI_EITHER_PORT_CASES_Z3815A = {
+    **{name: [{0: struct.pack(">hhH", port, 0, value)} for port in SCPI_PORTS_Z3815A for value in (0, 1)]
+       for name in ("scpi_set_SYSTem_COMMunicate_ALARm_FDUPlex", "scpi_set_SYSTem_COMMunicate_ALARm_RECeive_PACE",
+                    "scpi_set_SYSTem_COMMunicate_ALARm_PRESet")},
+    **{name: [{INPUT_PORT: lambda m, port=port: port} for port in SCPI_PORT_OBJECTS_Z3815A]
+       for name in ("scpi_query_SYSTem_LANGuage", "scpi_query_DIAGnostic_ADC", "scpi_query_DIAGnostic_LOG_READ_ALL",
+                    "scpi_query_DIAGnostic_TEST_FLASh")},
+    "scpi_query_DIAGnostic_ROSCillator_PTESt_STATe": [
+        {PRESETS: {"ptest.state": state, "ptest.passes": state + 1}} for state in range(6)
+    ],
+    "scpi_query_DIAGnostic_GPSystem_ACURrent_STATe": [
+        {PRESETS: {"nv_settings.antenna_current_alarm": 1, f"adc_monitors[{ADC_ANTENNA_CURRENT}].valid": 1,
+                   f"adc_monitors[{ADC_ANTENNA_CURRENT}].value": value}}
+        for value in (40.0, 100.0)
+    ],
+    "scpi_query_KENneth_MEASured": [
+        {PRESETS: {"pll.measured_uncertainty": 2.5e-07, "pll.measured_uncertainty_valid": valid}} for valid in (0, 1)
+    ],
+    "scpi_query_DIAGnostic_LOG_WRAP": [{PRESETS: {"nv_settings.log_wrap": value}} for value in (1, 0xFF)],
+    "scpi_query_DIAGnostic_ROSCillator_PTESt_MODE": [
+        {PRESETS: {"scpi_value_DIAGnostic_ROSCillator_PTESt_MODE": value}} for value in (1, 0xFF)
+    ],
+}
+# es_status for a date with a leap second pending on it and on the day
+# before, its minute 61 seconds and 59, and none pending, in holdover,
+# its recovery and normal pll (0x23fdc to 0x24016): a packed date,
+# 2008-12-31's.
+ES_LEAP_DATE_Z3815A = 0x07D80C1F
+ES_STATUS_CASES_Z3815A = [
+    {
+        0: ES_LEAP_DATE_Z3815A,
+        PRESETS: {"nv_settings.leap_pending": pending, "nv_settings.leap_date": date,
+                  "nv_settings.leap_minute_length": length, "pll.stage": stage},
+    }
+    for pending, date, length in ((1, ES_LEAP_DATE_Z3815A, 61), (1, ES_LEAP_DATE_Z3815A, 59),
+                                  (1, ES_LEAP_DATE_Z3815A - 1, 61), (0, ES_LEAP_DATE_Z3815A, 61))
+    for stage in (3, 4, 7)
+]
+# The pForth word pr_pll on each of the loop's stages and one past, and
+# each sub-state of powerup, holdover recovery, n3 lock pll and diag and
+# one past, by the jump tables at 0x2c1d8, 0x2c224, 0x2c328, 0x2c3d6 and
+# 0x2c526.
+PR_PLL_CASES_Z3815A = [
+    {PRESETS: {"pll.stage": stage, field: state}}
+    for stage, field, states in ((1, "pll.powerup_state", 9), (4, "pll.recovery_state", 7),
+                                 (6, "pll.n3_lock_state", 16), (8, "pll.gps_diag_state", 7))
+    for state in range(states)
+] + [{PRESETS: {"pll.stage": stage}} for stage in (0, 2, 3, 5, 7, 9, 10, 11, 0xFF)]
+# holdover_recovery's clock check passing, every cause gone, about its
+# 250 s of holdover: the counter not read (DAT_0010218b), so that the
+# reading is valid and the clock's check passes, the leap second's
+# acknowledgment idle and the GPS-UTC offset valid.
+RECOVERY_DONE_Z3815A = {
+    "pll.recovery_state": 5, "DAT_0010218b": 1, "pll.stage": 4, "pll.hold_causes": 0, "internal_pps_dead": 0,
+    "gps_pps_dead": 0, "pll.leap_ack_state": 0, "pll.leap_ack_requested": 0, "clock.gps_utc_offset_valid": 1,
+}
+# The Z3815A 4010's flash cases, its installer's over its writable range,
+# 0x20000 to 0x7ffff, one 16-bit part (harness.WordFlash), as FLASH's
+# are the others': installer_flash_program_word's addresses, the range's
+# ends, each block's, and past each end; installer_flash_erase_block's
+# blocks, each of the range's, the primary's test block and one below
+# the range, in no modeled block; :ERASe?'s flash erased from the range's
+# start, wholly, all but its last word and all but its first, the boot
+# code's 128 KB below it kept, which a range from 0x10000 reads; and
+# :DOWNload's records, as FLASH_RECORDS over this range: an S1, always
+# below it, an S2 and S3 at its start, an odd count, one across the
+# second block's start, one running past the range's end, one below it,
+# an S0, an S5 and an S9, a bad checksum and texts that are no record.
+FLASH_START_Z3815A = 0x20000
+FLASH_ADDRESSES_Z3815A = (0x20000, 0x3FFFE, 0x40000, 0x7FFFE, 0x1FFFE, 0x80000)
+FLASH_BLOCKS_Z3815A = (0x20000, 0x40000, 0x60000, 0x4000, 0x10000)
+FLASH_RECORDS_Z3815A = [
+    s_record(1, 0x1000, b"\x12\x34", 2),
+    s_record(2, 0x020000, bytes(range(8)), 3),
+    s_record(3, 0x00020000, b"\xa5\x5a\x00\xff", 4),
+    s_record(2, 0x020000, b"\x01\x02\x03", 3),
+    s_record(2, 0x03FFFC, bytes(range(8)), 3),
+    s_record(2, 0x07FFFC, bytes(range(8)), 3),
+    s_record(2, 0x01FFFE, b"\x11\x22", 3),
+    s_record(0, 0, b"HDR", 2),
+    s_record(5, 3, b"", 2),
+    s_record(9, 0x1000, b"", 2),
+    s_record(2, 0x020000, b"\x12\x34", 3, checksum=0),
+    *(kind + s_record(2, 0x020000, b"\x12\x34", 3)[2:] for kind in (b"S4", b"X2", b"s2")),
+]
+
+
+def erased_flash_z3815a(image: bytes, last: bytes = b"", first: bytes = b"") -> bytes:
+    """The Z3815A 4010's flash with its writable range erased, its first
+    bytes first and its last bytes last."""
+    erased = erased_flash(image, last, FLASH_START_Z3815A)
+    return erased[:FLASH_START_Z3815A] + first + erased[FLASH_START_Z3815A + len(first) :]
+
+
+FLASH_CASES_Z3815A = {
+    "installer_flash_program_word": [
+        {0: address, 1: word} for address in FLASH_ADDRESSES_Z3815A for word in FLASH_WORDS
+    ],
+    "installer_flash_erase_block": [{0: block} for block in FLASH_BLOCKS_Z3815A],
+    "installer_scpi_query_DIAGnostic_ERASe": [
+        {FLASH: erased_flash_z3815a},
+        {FLASH: lambda image: erased_flash_z3815a(image, last=b"\x00\x01")},
+        {FLASH: lambda image: erased_flash_z3815a(image, first=b"\x7f\xff")},
+    ],
+    "installer_scpi_set_DIAGnostic_DOWNload": [
+        {0: text_parameter(record), FLASH: erased_flash_z3815a} for record in FLASH_RECORDS_Z3815A
+    ],
+}
+SYNC_TIS_Z3815A = (0.0, 8.9e-08, -8.9e-08, 9.5e-08, -9.5e-08, 1e-07, -1e-07, 2.5e-07, -2.5e-07, 3e-07, -3e-07, 1e-06)
+# The Z3815A 4010's C library's own (stdlib.c, string.c, math.c):
+# strtol's, strtoul's and installer_strtol's, whose body strtol shares
+# (libc.h, libc_strtol), texts, white space and signs, C's prefixes in
+# either case and without a digit after, the longs' and unsigned longs'
+# limits and one past, a value that wraps an unsigned long past what it
+# was and one that does not, letters, nothing, a high-bit character,
+# each in the bases C's prefixes, the decimal, the hexadecimal, the most
+# and one past, with and without end; strstr's texts, found at the
+# start, after a false start and not, an empty one in each place; and
+# exp's arguments, zeros, below 2^-54, within ln 2 / 2 and past it of
+# either sign, about the overflow and the underflow, the results that
+# underflow its exponent field, the infinities and a NaN.
+STRTOL_TEXTS_Z3815A = [
+    b"  -123\0", b"+77\0", b"0x1fZ\0", b"0X1f\0", b"017\0", b"0\0", b"0xg\0", b"\t-0x80000000\0",
+    b"2147483647\0", b"2147483648\0", b"-2147483648\0", b"-2147483649\0", b"4294967295\0", b"4294967296\0",
+    b"99999999999\0", b"-4000000000\0", b"zZ9\0", b"\0", b"-\0", b"\x9512\0",
+]
+STRTOL_BASES_Z3815A = (0, 10, 16, 36, 37)
+STRTOL_CASES_Z3815A = [
+    {0: text, 1: end, 2: base} for text in STRTOL_TEXTS_Z3815A for base in STRTOL_BASES_Z3815A for end in (0, bytes(4))
+]
+STRSTR_CASES_Z3815A = [
+    {0: text, 1: pattern}
+    for text, pattern in (
+        (b"abcabd\0", b"abd\0"), (b"abd\0", b"abd\0"), (b"abc\0", b"\0"), (b"\0", b"a\0"),
+        (b"\0", b"\0"), (b"aab\0", b"ab\0"), (b"abc\0", b"abcd\0"), (b"abc\0", b"x\0"),
+    )
+]
+# gps_script_lookup's codes, each from one before GPS_SCRIPT_INIT_DEFAULTS
+# to one past GPS_SCRIPT_LONGITUDE_SET, and the word's ends; and
+# oncore_hold_heights_match's heights, sent and answered, four bytes high
+# first: about the least and the most the Oncore takes, within 2 cm and
+# past, either way.
+SCRIPT_CODES_Z3815A = (*range(0x6A, 0x82), 0, 0xFFFF)
+# gps_request_build's codes, each with a descriptor, set with
+# GPS_ARGUMENTS and queried: the GT-74's sentences, GPS_NMEA_MASK_ANGLE
+# to GPS_NMEA_SELFTEST, whose descriptors gps_sentence_descriptors holds
+# (0x5e3cc), and the Oncore requests gps_request_translations (0x5e6d4)
+# takes to one of them; a code past them, or one the table takes to
+# none, reads a descriptor beyond its end (gps_request_descriptor,
+# 0x5c0f6), as the generated codes do; each with time RAIM supported
+# and not (GPS_FIELD_592_TIME_RAIM), which rrs', int,rrm's and zzz's
+# rrq's test, gps_time_raim_supported (0x5c08e), refuses them without.
+# The cable delay's, set,t and the Oncore's @@Az, which
+# nmea_encode_cable_delay (0x5c4b6) formats "%+07d" into an 8-byte
+# field, are set with delays that fit it, from :GPS:ADELay's range, 0 to
+# 999999 either way: GPS_ARGUMENTS' first overruns it and the frame
+# pointer saved above it.
+GPS_SENTENCE_CODES_Z3815A = (*range(0x39, 0x4D), 0x06, 0x0C, 0x05, 0x12, 0x13, 0x19)
+GPS_CABLE_DELAY_CODES_Z3815A = (0x3F, 0x19)
+GPS_CABLE_DELAYS = (0, 1234, 999999, -999999)
+GPS_ARGUMENT_MODES = (0, 1)
+TIME_RAIM_Z3815A = 0x20
+GPS_REQUEST_BUILD_CASES_Z3815A = [
+    {0: code, 1: mode, 2: arguments, 3: bytes(GPS_MESSAGE_ROOM), PRESETS: {"gps.field_592": raim}}
+    for code in GPS_SENTENCE_CODES_Z3815A
+    for mode in GPS_ARGUMENT_MODES
+    for arguments in (
+        [struct.pack(">i", delay) + GPS_ARGUMENTS[4:] for delay in GPS_CABLE_DELAYS]
+        if code in GPS_CABLE_DELAY_CODES_Z3815A and mode == 0
+        else [GPS_ARGUMENTS]
+    )
+    for raim in (0, TIME_RAIM_Z3815A)
+]
+# The Z3815A 4010's validators' step routines, load_double (0x46970),
+# load_long (0x475a4) and load_long_unit_step (0x4759c);
+# scpi_format_resolution_array_record's eight zero bytes, those before
+# status_register_layouts (0x435d6), and scpi_input_source (0x3c84e);
+# and its numeric request, its pllc_exchange's (harness), and *TST?'s
+# action, scpi_action_self_test (0x49ee8), for SET_UP_REQUESTS'
+# functions and pll_scpi_command, as the 58503A's.
+VALIDATOR_CASES_Z3815A = validator_cases(0x46970, 0x475A4, 0x4759C)
+ARRAY_RECORD_CASES_Z3815A = array_record_cases(0x435D6, 0x3C84E)
+NUMERIC_REQUEST_Z3815A = struct.pack(">IIBBBBII", 0, NUMERIC_DESCRIPTOR_Z3815A, 0, 0, 0, 0, 60, 0)
+ACTION_REQUEST_Z3815A = struct.pack(">IIBBBBII", 0, 0x49EE8, 0, 0, 0, 0, 0, 0)
+HOLD_HEIGHTS_Z3815A = (
+    (-100001, -100001), (-100000, -99998), (-100000, -99997), (1800000, 1800002), (1800001, 1800001),
+    (0, 3), (0, -2), (5, 7), (5, 2),
+)
+# efc_for_frequency_change's slopes, B zero of either sign, and of each
+# sign against A's, so that Cardano's D is positive, with h on either side
+# of its root, or not, at EFCs of either sign, and frequency changes of
+# either sign and none.
+EFC_CHANGE_CASES_Z3815A = [
+    {
+        0: delta,
+        PRESETS: {
+            "scpi_value_DIAGnostic_ROSCillator_EFControl_ASLOPe": a,
+            "scpi_value_DIAGnostic_ROSCillator_EFControl_BSLOPe": b,
+            "pll.efc": efc,
+        },
+    }
+    for a in (1e-11, -1e-11, 2e-11)
+    for b in (0.0, -0.0, 1e-22, -1e-22, 1e-20, -1e-24)
+    for efc in (500000.0, 0.0, 100.0, -300000.0)
+    for delta in (1e-9, -1e-9, 5e-8, 0.0)
+]
+EXP_ARGUMENTS_Z3815A = (
+    0.0, -0.0, 1e-20, -1e-20, 0.25, -0.3, 0.5, 1.0, -1.0, 2.5, 10.0, -10.0, 100.0, 700.0, 709.7, 709.8,
+    -700.0, -708.5, -740.0, -744.0, -745.0, float("inf"), float("-inf"), float("nan"),
+)
 IMAGE_GIVEN_CASES = {
-    # the Z3801A 3543's eight zero bytes and return_zero for
+    "z3815a-4010": {
+        **{name: STRTOL_CASES_Z3815A for name in ("strtol", "strtoul", "installer_strtol")},
+        "alarm_hardware_update": ALARM_HARDWARE_CASES_Z3815A,
+        "strstr": STRSTR_CASES_Z3815A,
+        "exp": [{0: value} for value in EXP_ARGUMENTS_Z3815A],
+        "gps_script_lookup": [{0: code} for code in SCRIPT_CODES_Z3815A],
+        "gps_receiver_status_update": STATUS_UPDATE_CASES_Z3815A,
+        "nmea_leap_second_due": LEAP_DUE_CASES_Z3815A,
+        "efc_for_frequency_change": EFC_CHANGE_CASES_Z3815A,
+        "oncore_hold_heights_match": [
+            {0: struct.pack(">i", sent), 1: struct.pack(">i", answered)} for sent, answered in HOLD_HEIGHTS_Z3815A
+        ],
+        **FLASH_CASES_Z3815A,
+        "efc_history_update": EFC_HISTORY_CASES_Z3815A,
+        "pllp_task": PLLP_WALK_CASES_Z3815A,
+        "aging_fit": AGING_FIT_CASES_Z3815A,
+        "fit_quality": FIT_QUALITY_CASES_Z3815A,
+        "fit_linear_halves": FIT_HISTORY_CASES_Z3815A,
+        "fit_constant": FIT_HISTORY_CASES_Z3815A,
+        "fit_linear": FIT_HISTORY_CASES_Z3815A,
+        "linear_regression": LINEAR_REGRESSION_CASES_Z3815A,
+        "fit_three_point": THREE_POINT_CASES_Z3815A,
+        "kenneth_measured_get": KENNETH_MEASURED_CASES_Z3815A,
+        "n3_lock_slew": SLEW_CASES_Z3815A,
+        "fine_sync_adjust": [{0: ti} for ti in SYNC_TIS_Z3815A],
+        "holdover_within_limit": [{0: ti} for ti in SYNC_TIS_Z3815A] + [
+            {0: ti, PRESETS: {"pll.holdover_duration": 0, "nv_settings.holdover_limit_threshold": abs(ti),
+                              "nv_settings.holdover_measurement_threshold": 10, "pll.frequency_adjusted": 0}}
+            for ti in (1e-07, -1e-07, 2e-07)
+        ],
+        "holdover_recovery": [
+            {0: 1, PRESETS: {**RECOVERY_DONE_Z3815A, "pll.holdover_duration": duration}}
+            for duration in (249, 250, 251, 300, 351)
+        ],
+        "startup_pll": [
+            {0: 1, PRESETS: {"pll.startup_state": 2, "loop_steering.seconds": 9, "loop_steering.readings": 3,
+                             "clock.uptime": uptime}}
+            for uptime in range(7196, 7204)
+        ],
+        "enter_holdover": [
+            {PRESETS: {"pll.stage": 3, "pll.holdover_duration": 0, "pll.hold_causes": 2, "pll.external_reference": 1,
+                       "gps_pps_dead": dead}}
+            for dead in (0, 1)
+        ],
+        "interval_next_reading": [{0: mode} for mode in (0, 1, 2) for _ in range(8)],
+        "n3_lock_pll": N3_LOCK_CASES_Z3815A,
+        "ptest_check": PTEST_CHECK_CASES_Z3815A,
+        "ptest_update": PTEST_UPDATE_CASES_Z3815A,
+        "ptest_mode_done": PTEST_MODE_CASES_Z3815A,
+        "ptest_type_done": PTEST_MODE_CASES_Z3815A,
+        "ptest_duration_hours": PTEST_DURATION_CASES_Z3815A,
+        "ptest_log": PTEST_LOG_CASES_Z3815A,
+        "ptest_efc_average": PTEST_AVERAGE_CASES_Z3815A,
+        "measured_uncertainty_compute": MEASURED_UNCERTAINTY_CASES_Z3815A,
+        "measured_uncertainty_update": MEASURED_UPDATE_CASES_Z3815A,
+        "efc_calibration_measure": EFC_CALIBRATION_CASES_Z3815A,
+        "puck_efc_correct": PUCK_CORRECT_CASES_Z3815A,
+        "puck_byte_done": PUCK_BYTE_CASES_Z3815A,
+        "satellite_track_class": TRACK_CLASS_CASES_Z3815A,
+        "gps_console_request": CONSOLE_REQUEST_CASES_Z3815A,
+        "gps_print_command": PRINT_COMMAND_CASES_Z3815A,
+        "gps_response_match": MATCH_CASES_Z3815A,
+        "gps_strength_bits": [{0: strength} for strength in STRENGTHS_Z3815A],
+        "command_monitor": STATUS_MONITOR_CASES_Z3815A + COMMAND_MONITOR_CASES_Z3815A,
+        **SCPI_PORT_CASES_Z3815A,
+        **SCPI_EITHER_PORT_CASES_Z3815A,
+        "es_status": ES_STATUS_CASES_Z3815A,
+        "diag_pr_pll": PR_PLL_CASES_Z3815A,
+        # record_word_or_default on an erased word and others (0x450d8).
+        "record_word_or_default": [{0: word, 1: 0x1234} for word in (0xFFFF, 0, 0x7FFF, 0xFFFE)],
+        "sci_status_happening": [{0: condition} for condition in (0x19, 0x90, 0xFF)],
+        "log_event": LOG_EVENT_CASES,
+        "gps_request_build": GPS_REQUEST_BUILD_CASES_Z3815A,
+        **VALIDATOR_CASES_Z3815A,
+        "scpi_format_resolution_array_record": ARRAY_RECORD_CASES_Z3815A,
+        **NOT_GIVEN_Z3815A,
+    },
+    # the Z3801A 3543's eight zero bytes and scpi_input_source for
     # scpi_format_resolution_array_record's records (ARRAY_RECORD_KINDS):
     # the status presets' tables (0x2e674) and 0x2899e
     "z3801a-3543": {
-        "scpi_format_resolution_array_record": [
-            {1: struct.pack(">bBII", kind, 0, 0x2E674, 0x2899E)} for kind in ARRAY_RECORD_KINDS
-        ],
+        "scpi_format_resolution_array_record": array_record_cases(0x2E674, 0x2899E),
     },
     "58503a-3704": {
         "hmon_check_pll_stage": OVEN_CHECK_CASES,
@@ -2025,33 +3715,32 @@ IMAGE_GIVEN_CASES = {
             for oven in ({}, WARM_OVEN)
         ],
         "gps_request_build": gps_request_build_cases(GPS_MESSAGES_58503A),
-        "clamp_double_to_step_and_limits": [
-            {4: struct.pack(">dI", step, LOAD_DOUBLE_58503A)} for step in DOUBLE_STEPS
-        ],
-        "clamp_to_step_and_limits": [{4: struct.pack(">II", step, LOAD_LONG_58503A)} for step in LONG_STEPS],
-        "clamp_to_limits": [{4: struct.pack(">II", step, LOAD_LONG_UNIT_STEP_58503A)} for step in LONG_STEPS],
-        **{
-            name: [{4: struct.pack(">fI", step, LOAD_LONG_58503A)} for step in FLOAT_STEPS]
-            for name in ("clamp_float_to_step_and_limits", "clamp_float_to_step_double")
-        },
+        **validator_cases(LOAD_DOUBLE_58503A, LOAD_LONG_58503A, LOAD_LONG_UNIT_STEP_58503A),
         "oncore_filter_channels": FILTER_CASES_58503A,
         "oncore_filter_traim": FILTER_CASES_58503A
         + [{**case, PRESETS: {**case[PRESETS], "gps.field_592": 0}} for case in FILTER_CASES_58503A],
         **{name: [{0: port} for port in SCPI_TASK_PORTS] for name in ("scpi_task_run", "installer_scpi_task_run")},
+        "log_event": LOG_EVENT_CASES,
         **NOT_GIVEN,
     },
 }
 # Another image's own requests for SET_UP_REQUESTS' functions, the
 # 58503A 3704's (IMAGE_SET_UP_REQUESTS above).
-IMAGE_SET_UP_REQUESTS = {
-    "58503a-3704": {
+def image_set_up_requests(numeric: bytes, action: bytes) -> dict[str, tuple[bytes, ...]]:
+    """SET_UP_REQUESTS with an image's own numeric and action requests in
+    place of the base's, and pll_scpi_command's, each of the two."""
+    return {
         name: tuple(
-            {NUMERIC_REQUEST: NUMERIC_REQUEST_58503A, ACTION_REQUEST: ACTION_REQUEST_58503A}[request]
+            {NUMERIC_REQUEST: numeric, ACTION_REQUEST: action}[request]
             for request in (requests if isinstance(requests, tuple) else (requests,))
         )
         for name, requests in SET_UP_REQUESTS.items()
-    }
-    | {"pll_scpi_command": (NUMERIC_REQUEST_58503A, ACTION_REQUEST_58503A)},
+    } | {"pll_scpi_command": (numeric, action)}
+
+
+IMAGE_SET_UP_REQUESTS = {
+    "58503a-3704": image_set_up_requests(NUMERIC_REQUEST_58503A, ACTION_REQUEST_58503A),
+    "z3815a-4010": image_set_up_requests(NUMERIC_REQUEST_Z3815A, ACTION_REQUEST_Z3815A),
 }
 
 
@@ -2346,14 +4035,16 @@ def cases(
 # pForth console's printing did its data stack: 1 KB of return stack,
 # of which the image's mem_rep leaves 58 bytes (docs/firmware/README.md,
 # "Hand-written C").  gcc's frames and saves go deeper than the image's
-# in most cases, at most float_raise's 176 bytes, its soft-float frames;
-# the margin is the next 64 bytes up, so that a frame grown past what
-# gcc's code takes now differs.  Above a floor the image's own room is
+# in most cases, at most the 58503A 3704's float_raise's 204 bytes, its
+# soft-float frames, in the check's link, whose callees are not inlined
+# (NOT_INLINED), 28 more than the 176 of the link the image is built
+# from; the margin is the next 64 bytes up, so that a frame grown past
+# what gcc's code takes now differs.  Above a floor the image's own room is
 # what the stack was sized to, so gcc's may take only FLOOR_MARGIN more,
 # a few saved registers, and never pass the floor where the image's
 # does not: doprnt called, not in line, leaves 4 bytes of mem_rep's 58
 # under gcc 15 and reached the data stack under gcc 13.
-STACK_MARGIN = 192
+STACK_MARGIN = 256
 FLOOR_MARGIN = 16
 WORST_STACKS = 10
 
@@ -2446,7 +4137,12 @@ class Context:
     for a Hook's prototype, the functions that run in a task in user
     mode, only so and in both modes (task_context), each case's
     StackDepth so far, the image's SET_UP_REQUESTS (BASE_IMAGE), its
-    given cases (cases) and its States, STATES with its IMAGE_STATES."""
+    given cases (cases) and its States, STATES with its IMAGE_STATES,
+    its counted loops, the cases ident fails in, by function
+    (creators_ident_fails), each function's calls, by its sidecar, and
+    where the functions' image copies and gcc's start, each sorted,
+    where a copy's code ends, gcc's functions, the sidecar's and the
+    C's own helpers, whose calls are their callers' (record_calls)."""
 
     linked_symbols: dict[str, int]
     located: dict[str, tuple[int, int]]
@@ -2457,13 +4153,22 @@ class Context:
     set_up_requests: dict[str, bytes | tuple[bytes, ...]]
     given_cases: dict[str, list]
     states: dict[str, States]
+    counted_loops: dict[str, tuple[str, int]]
+    ident_fails: dict[str, range]
+    calls: dict[str, list[str]]
+    starts: tuple[list[int], list[int]]
+    rebuilt_code: "RebuiltCode"
 
 
-def install_hooks(m: Machine, types: Types, states: States, context: Context, drawn: list[Drawn]) -> list[int]:
+def install_hooks(
+    m: Machine, types: Types, name: str, states: States, context: Context, drawn: list[Drawn]
+) -> list[int]:
     """Hooks each of the States' routines, the image's copy and gcc's, to
-    answer as the current case drew (drawn's one entry); the hooks.  A
+    answer as the current case drew (drawn's one entry), and each other
+    C function the image's copy of a function calls (Context.calls), to
+    record its call's arguments and run on (record_calls); the hooks.  A
     routine the image's C does not have under its name runs unhooked."""
-    handles = []
+    handles = record_calls(m, types, name, states, context)
     for hook in states.hooks:
         if hook.routine not in context.by_name:
             continue
@@ -2486,15 +4191,190 @@ def install_hooks(m: Machine, types: Types, states: States, context: Context, dr
     return handles
 
 
+# What a function's States and given cases name that the image's C
+# lacks, and so would be left out unseen: a preset's or a hook's
+# leaves' target the C has no lvalue for (probeable), a routine hooked
+# or given results that the image's C has no function of or the States
+# do not hook, an interrupt's watch.  Each fails the function, so that a
+# name the C changed does not leave its cases at zeroed RAM's value, as
+# standby_from_unlock_ready's did in the Z3815A 4010's efc_history_update
+# and kenneth_predicted_get under the export's name, DAT_001021b3, and a
+# hook of a static helper, status_ready_condition, did in its alarms'
+# updates.  But for those meant for another image's C, in States shared
+# by the images (STATES, GIVEN_CASES): by image, each (function, name).
+MEANT_ELSEWHERE: dict[str, frozenset[tuple[str, str]]] = {
+    # the Z3805A's fine's readings and GPS status, which the 58503A's C
+    # names otherwise
+    "58503a-3704": frozenset(
+        {
+            ("enter_holdover", "gps.status_reported"),
+            *(("fine", f"fine_readings[{index}]") for index in range(3)),
+        }
+    ),
+}
+
+
+def unresolved(name: str, states: States, given: list, context: Context) -> list[tuple[str, str]]:
+    """What a function's States and given cases name that the image's C
+    lacks (MEANT_ELSEWHERE), as (what it is, its name)."""
+    missing = []
+    hooked = {hook.routine for hook in states.hooks}
+
+    def target(kind: str, lvalue: str) -> None:
+        if lvalue not in context.located:
+            missing.append((kind, lvalue))
+
+    for preset in states.presets:
+        target("preset", preset.target)
+    for hook in states.hooks:
+        if hook.routine not in context.by_name or IMAGE_PREFIX + hook.routine not in context.linked_symbols:
+            missing.append(("hook", hook.routine))
+        for preset in hook.leaves:
+            target("hook's leaves", preset.target)
+    for values in given:
+        for lvalue, value in values.get(PRESETS, {}).items():
+            target("preset", lvalue)
+            if isinstance(value, str) and IMAGE_PREFIX + value not in context.linked_symbols:
+                missing.append(("preset's function", value))
+        for routine, leaves in values.get(HOOK_LEAVES, {}).items():
+            if routine not in hooked:
+                missing.append(("unhooked routine's leaves", routine))
+            for lvalue in leaves:
+                target("hook's leaves", lvalue)
+        for routine in values.get(HOOK_RESULTS, {}):
+            if routine not in hooked:
+                missing.append(("unhooked routine's results", routine))
+        for interrupt in values.get(INTERRUPTS, ()):
+            if isinstance(interrupt.watch, str):
+                target("interrupt's watch", interrupt.watch)
+        for lvalue in values.get(RECORDS, {}):
+            target("EEPROM record", lvalue)
+    return sorted(set(missing))
+
+
+# Past the end of any copy's code: the last function's copy's end.
+REBUILT_END = 0x1_0000_0000
+# How a frame gcc's code links, -fno-omit-frame-pointer's: the caller's
+# frame pointer at A6, its return address above it.
+SAVED_FRAME = 0
+SAVED_RETURN = 4
+# The most frames of the C's own helpers a call is traced back through.
+HELPER_DEPTH = 16
+
+
+@dataclass(frozen=True)
+class RebuiltCode:
+    """gcc's functions in the link, from REBUILT: each one's start,
+    sorted, and its name; and the sidecar's functions, whose own code
+    their calls are, where any other, a helper the C defines static,
+    makes its calls for whatever sidecar function called it (owner)."""
+
+    starts: list[int]
+    names: list[str]
+    sidecar: frozenset[str]
+
+    def function_at(self, at: int) -> str | None:
+        """The name of gcc's function whose code holds an address."""
+        index = bisect.bisect_right(self.starts, at) - 1
+        return self.names[index] if index >= 0 and at >= REBUILT else None
+
+    def owner(self, m: Machine, returning: int) -> str | None:
+        """The sidecar function whose gcc copy makes a call that returns
+        to an address: the function holding it or, from a helper of the
+        C's own, the first sidecar function back through the helpers'
+        frames, each linked, -fno-omit-frame-pointer, at A6."""
+        frame = m.uc.reg_read(REGISTERS["A6"])
+        for _ in range(HELPER_DEPTH):
+            name = self.function_at(returning)
+            if name is None or name in self.sidecar:
+                return name
+            try:
+                returning = pointer_at(m, frame + SAVED_RETURN)
+                frame = pointer_at(m, frame + SAVED_FRAME)
+            except UcError:
+                return None
+        return None
+
+
+def rebuilt_code(code: dict[str, int], conventions: dict) -> RebuiltCode:
+    """gcc's functions in the link, of its code symbols."""
+    ordered = sorted((address, name) for name, address in code.items() if address >= REBUILT)
+    return RebuiltCode([a for a, _ in ordered], [n for _, n in ordered], frozenset(conventions))
+
+
+def function_starts(linked_symbols: dict[str, int], conventions: dict) -> tuple[list[int], list[int]]:
+    """Where the sidecar's functions' image copies start in the link,
+    sorted, and their gcc copies."""
+    return tuple(
+        sorted({linked_symbols[prefix + name] for name in conventions if prefix + name in linked_symbols})
+        for prefix in (IMAGE_PREFIX, "")
+    )
+
+
+# A parameter's kind that is a pointer, and what a recorded call keeps
+# for an argument of another kind, which lies where no literal does: an
+# integer, a mask or a length, may be a ROM address's value, and two
+# copies may pass it with bits the routine does not read.
+POINTER_KIND = "*"
+NOT_POINTER = -1
+
+
+def record_calls(m: Machine, types: Types, name: str, states: States, context: Context) -> list[int]:
+    """Hooks each C function the image's copy of a function calls, by
+    its sidecar, that the States do not answer, the image's copy and
+    gcc's, to record the arguments of each call the function's own code
+    makes (Run.calls), its return address within the image's copy, or
+    gcc's copy or a helper of the C's own it calls (RebuiltCode.owner),
+    or, for a jump to it in the function's place, the call's own, whose pointer
+    arguments to literals are compared (harness.calls_differences): an
+    argument that reaches nothing the call leaves behind, a text a log
+    entry is not written with, is compared so.  A callee's own calls
+    are not recorded: a callee's two copies may reach a routine by other
+    paths, the image's through a binding gcc's C calls through another."""
+    answered = {hook.routine for hook in states.hooks}
+    handles = []
+    copies = [
+        (start, starts[bisect.bisect_right(starts, start)] if start < starts[-1] else REBUILT_END)
+        for start, starts in zip(
+            (context.linked_symbols[IMAGE_PREFIX + name], context.linked_symbols[name]), context.starts
+        )
+    ]
+
+    def record(uc, address, size, hook_data):
+        routine, gcc = hook_data
+        start, end = copies[gcc]
+        sp = uc.reg_read(UC_M68K_REG_A7)
+        returning = int.from_bytes(uc.mem_read(sp, POINTER_SIZE), "big")
+        own = context.rebuilt_code.owner(m, returning) == name if gcc else start <= returning < end
+        if not own and returning != RETURN:
+            return
+        arguments = hook_arguments(m, types, routine, gcc)
+        m.calls.append(
+            HookedCall(
+                routine.name,
+                tuple(a if POINTER_KIND in kind else NOT_POINTER for a, kind in zip(arguments, routine.parameters)),
+            )
+        )
+
+    for callee in dict.fromkeys(context.calls.get(name, ())):
+        image = context.linked_symbols.get(IMAGE_PREFIX + callee)
+        rebuilt = context.linked_symbols.get(callee)
+        if callee in answered or callee not in context.by_name or image is None or rebuilt is None:
+            continue
+        for address, gcc in ((image, False), (rebuilt, True)):
+            handles.append(m.uc.hook_add(UC_HOOK_CODE, record, (context.by_name[callee], gcc), begin=address, end=address))
+    return handles
+
+
 def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int, context: Context):
     """Yields (description, outcome) for each case: outcome empty if gcc's
     copy agrees with the image's, else each thing that differs."""
     linked_symbols = context.linked_symbols
     states = context.states.get(function.name, States())
     drawn: list[Drawn] = []
-    handles = install_hooks(m, types, states, context, drawn)
-    counter = COUNTED_LOOPS.get(function.name)
-    m.counter = (linked_symbols[counter[0]], counter[1]) if counter and counter[0] in linked_symbols else None
+    handles = install_hooks(m, types, function.name, states, context, drawn)
+    counter = context.counted_loops.get(function.name)
+    m.counter = (*context.located[counter[0]], counter[1]) if counter and counter[0] in context.located else None
     try:
         yield from check_cases(m, types, function, image, rebuilt, context, states, drawn)
     finally:
@@ -2508,6 +4388,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         m.interrupts = []
         m.stack_edge = False
         m.starting_registers = {}
+        m.eeprom = ERASED
         if m.flash is not None:
             m.flash.start = m.flash.image
 
@@ -2522,14 +4403,18 @@ def both_runs(
     memory,
     listed: bytes = b"",
     session: tuple[tuple[bytes, ...], int, int] | None = None,
+    accesses: "Accesses | None" = None,
 ) -> tuple[Run, Run]:
     """The image's copy and gcc's, each run from memory on a case's
     arguments, a variable list's bytes after the declared ones, gcc's
     given the C's twins of the image's objects; UNDECLARED after them
     but at the stack's edge.  In a console session, given as its lines
     and its task's two copies, the image's and gcc's, each then runs its
-    own copy of the task (console_task_run)."""
+    own copy of the task (console_task_run).  Given accesses, each run's
+    RAM accesses are its copy's (record_accesses)."""
     after = b"" if m.stack_edge else UNDECLARED
+    if accesses is not None:
+        accesses.copy = 0
     reset(m, memory)
     m.console_input = None if session is None else list(session[0])
     original = Run(m, image, original_layout(function, values).removesuffix(UNDECLARED) + listed + after)
@@ -2537,6 +4422,8 @@ def both_runs(
         original = console_task_run(m, original, session[1])
     reset(m, memory)
     give_twins(m)
+    if accesses is not None:
+        accesses.copy = 1
     m.console_input = None if session is None else list(session[0])
     gcc_arguments = gcc_slots(twin_arguments(m, types, function.parameters, values))
     gcc = Run(m, rebuilt, gcc_arguments + listed + after)
@@ -2559,7 +4446,12 @@ def check_cases(
     """check's cases, with its hooks in place, each drawing its States
     into drawn."""
     linked_symbols = context.linked_symbols
-    for ordinal, (description, case, values_given) in enumerate(cases(m, function, context.linked_symbols, context.given_cases, states)):
+    planned = cases(m, function, linked_symbols, context.given_cases, states)
+    for ordinal, (description, case, values_given), poisoned in (
+        (ordinal, planned_case, poisoned)
+        for ordinal, planned_case in enumerate(planned)
+        for poisoned in (False, True)
+    ):
         in_task = function.name in context.in_task or function.name in context.both_modes and ordinal % 2 == 0
         m.starting_status = TASK_STATUS if in_task else SUPERVISOR
         values_given = dict(values_given)
@@ -2589,9 +4481,21 @@ def check_cases(
             if not isinstance(interrupt.watch, str) or interrupt.watch in context.located
         ]
         drawn[:] = [draw(states, context.located, function.name, description)]
-        m.ident_fails = case in IDENT_FAILS.get(function.name, ())
+        drawn[0].results.update(values_given.pop(HOOK_RESULTS, {}))
+        for routine, leaves in values_given.pop(HOOK_LEAVES, {}).items():
+            drawn[0].leaves[routine] = {
+                context.located[target][0]: preset_bytes(value, context.located[target][1])
+                for target, value in leaves.items()
+                if target in context.located
+            }
+        m.ident_fails = case in context.ident_fails.get(function.name, ())
         m.frame_fill = None
+        devices = values_given.pop(DEVICES, None)
+        records = values_given.pop(RECORDS, {})
         fresh_ram(m, case)
+        if devices is not None:
+            m.device_case = devices
+        m.eeprom = eeprom_records(context.located, records)
         establish(m, function, context, case)
         if line is not None:
             values_given = {**scpi_session(m, function, linked_symbols, line), **values_given}
@@ -2619,14 +4523,30 @@ def check_cases(
             give_input_port(m, function, values, input_port(m))
         if function.name in JUMP_FUNCTIONS:
             untraced_jump(m, struct.unpack(">I", values[0])[0])
+        if not poisoned:
+            # the RAM the case's runs read and wrote, each copy's
+            accesses = Accesses()
+        elif not poison(m, accesses):
+            continue
         memory = snapshot(m)
 
-        original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed, session)
+        recording = not poisoned
+        handles = record_accesses(m, accesses) if recording else []
+        original, gcc = both_runs(
+            m, types, function, image, rebuilt, values, memory, listed, session, accesses if recording else None
+        )
         privileged = f"trap {PRIVILEGE_VIOLATION}"
         if original.stopped == gcc.stopped == privileged and m.starting_status != SUPERVISOR:
             starting_status, m.starting_status = m.starting_status, SUPERVISOR
-            original, gcc = both_runs(m, types, function, image, rebuilt, values, memory, listed, session)
+            original, gcc = both_runs(
+                m, types, function, image, rebuilt, values, memory, listed, session, accesses if recording else None
+            )
             m.starting_status = starting_status
+        for handle in handles:
+            m.uc.hook_del(handle)
+        if handles:
+            m.uc.ctl_flush_tb()
+        description += POISONED if poisoned else ""
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
         if stopped:
@@ -2657,12 +4577,110 @@ def check_cases(
             differences.append(registers_differ)
         differences += ram_differences(m, original, gcc)
         differences += effects_differences(original, gcc, ("image", "gcc"))
+        differences += calls_differences(m, original, gcc)
         depths = stack_depths(function.name, description, original, gcc)
         context.depths += depths
         stack_differs = stack_difference(depths)
         if stack_differs:
             differences.append(stack_differs)
         yield description, tuple(differences)
+
+
+# The first case run again with bytes of RAM poisoned, set to
+# poison_byte's value where they are zero as the case starts: those
+# either copy wrote in its first run and neither read, and those one
+# copy read and the other did not.  A copy writing or reading another
+# cell than the other's, which zeroed RAM gives the same 0, then
+# differs: a flag cleared at another image's address leaves the right
+# cell's poison in place.  No byte a copy read in both is poisoned, so
+# that two copies alike take the same path as in the first case: a
+# poisoned value both read would lead them where the harness's
+# addresses, a frame's or a code address in a message, differ.  So a
+# wrong cell read goes unseen only where the other copy reads it too.
+# The case's description, with this.
+POISONED = ", poisoned"
+POISON_STEP = 0x9D
+
+
+@dataclass
+class Accesses:
+    """The bytes of RAM each copy's run of a case read and wrote, the
+    image's first, and which copy is running (both_runs)."""
+
+    reads: tuple[set[int], set[int]] = field(default_factory=lambda: (set(), set()))
+    writes: tuple[set[int], set[int]] = field(default_factory=lambda: (set(), set()))
+    copy: int = 0
+
+    def poisoned(self) -> set[int]:
+        """The bytes a poisoned case poisons, if zero (POISONED)."""
+        read = self.reads[0] | self.reads[1]
+        return (self.writes[0] | self.writes[1]) - read | self.reads[0] ^ self.reads[1]
+
+
+def poison_byte(at: int) -> int:
+    """The nonzero byte a poisoned case starts with at an address,
+    neighbors differing, so that a long read across two cells, or a cell
+    read for another near it, differs."""
+    return at * POISON_STEP & BYTE_MASK or POISON_STEP
+
+
+def record_accesses(m: Machine, accesses: Accesses) -> list[int]:
+    """Hooks RAM's reads and writes to add each byte they touch to the
+    running copy's accesses; the hooks."""
+
+    def touched(uc, access, address, size, value, kind):
+        (accesses.reads if kind == UC_HOOK_MEM_READ else accesses.writes)[accesses.copy].update(
+            range(address, address + size)
+        )
+
+    handles = [
+        m.uc.hook_add(kind, touched, kind, begin=RAM, end=RAM + RAM_SIZE - 1)
+        for kind in (UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE)
+    ]
+    m.uc.ctl_flush_tb()
+    return handles
+
+
+def poison(m: Machine, accesses: Accesses) -> bool:
+    """Sets each byte of RAM accesses poisons, in a long that is zero,
+    and not where literals lie nor among the kernel's segments
+    (ALLOCATIONS), which the harness lays out, to its poison_byte
+    (POISONED): a zero byte of a long that is not, a pointer's or a
+    count's high byte, is part of a value set up, which poisoned would
+    no longer be.  Whether any byte was."""
+    start = m.read(RAM, RAM_SIZE)
+    ram = bytearray(start)
+    for at in accesses.poisoned():
+        offset = at - RAM
+        cell = offset - offset % POINTER_SIZE
+        if not any(start[cell : cell + POINTER_SIZE]) and literal_region(m, at) is None and at < ALLOCATIONS:
+            ram[offset] = poison_byte(at)
+    m.uc.mem_write(RAM, bytes(ram))
+    return ram != start
+
+
+# A record's checksum, its first word, as records_checksum makes it:
+# the sum of the bytes after it, then its complement.
+RECORD_CHECKSUM = 2
+
+
+def eeprom_records(located: dict[str, tuple[int, int]], records: dict[str, bool]) -> bytes:
+    """The EEPROM a case starts with: erased, but each of its records,
+    by the lvalue the C names it by, holding bytes that differ by
+    address (poison_byte), so that a field read for another differs, and
+    a checksum that holds or, for a record given False, its complement
+    byte flipped, does not."""
+    eeprom = bytearray(ERASED)
+    for target, good in records.items():
+        if target not in located:
+            continue
+        address, size = located[target]
+        offset = address - EEPROM
+        body = bytes(poison_byte(at) for at in range(address + RECORD_CHECKSUM, address + size))
+        total = sum(body) & BYTE_MASK
+        checksum = total << 8 | ~total & BYTE_MASK
+        eeprom[offset : offset + size] = struct.pack(">H", checksum if good else checksum ^ BYTE_MASK) + body
+    return bytes(eeprom)
 
 
 def untraced_jump(m: Machine, buffer: int) -> None:
@@ -2695,9 +4713,10 @@ def main() -> int:
     c = open(c_path).read()
     with tempfile.TemporaryDirectory() as work:
         elf = work + "/rebuilt.elf"
-        linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf, probes(c))
+        linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]) + list(NOT_INLINED), work, elf, probes(c))
         linked_symbols = symbols(elf)
         linked_objects = objects(elf)
+        linked_code = code_symbols(elf)
     located = probed(c, linked, linked_symbols)
     image_bytes = open(image_path, "rb").read()
     types = Types(c)
@@ -2709,8 +4728,17 @@ def main() -> int:
     failed = 0
     base = image_name(image_path) == BASE_IMAGE
     known = IMAGE_KNOWN.get(image_name(image_path), {})
+    elsewhere = MEANT_ELSEWHERE.get(image_name(image_path), frozenset())
+    # an image's own States, given cases and known differences, each
+    # for a function of its sidecar
+    for table in (IMAGE_STATES, IMAGE_GIVEN_CASES, IMAGE_KNOWN):
+        for name in table.get(image_name(image_path), {}):
+            if name not in conventions and (not names or name in names):
+                print(f"FAIL {name}: the image's own cases name no function of its sidecar")
+                failed += 1
     given_cases = {**GIVEN_CASES, **IMAGE_GIVEN_CASES.get(image_name(image_path), {})}
     states = {**STATES, **IMAGE_STATES.get(image_name(image_path), {})}
+    counted_loops = {**COUNTED_LOOPS, **IMAGE_COUNTED_LOOPS.get(image_name(image_path), {})}
     set_up_requests = SET_UP_REQUESTS if base else IMAGE_SET_UP_REQUESTS.get(image_name(image_path), {})
     for profile in image_profiles(image_path, image_bytes):
         machine = rebuilt_machine(
@@ -2721,7 +4749,11 @@ def main() -> int:
         in_task, both_modes = task_context(c, conventions, {root_function(machine, located, conventions)})
         by_name = {function.name: function for function in runnable}
         context = Context(
-            linked_symbols, located, by_name, in_task, both_modes, [], set_up_requests, given_cases, states
+            linked_symbols, located, by_name, in_task, both_modes, [], set_up_requests, given_cases, states,
+            counted_loops, creators_ident_fails(conventions),
+            {name: convention.get("calls", []) for name, convention in conventions.items()},
+            function_starts(linked_symbols, conventions),
+            rebuilt_code(linked_code, conventions),
         )
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         modes = {"user mode alone": 0, "both modes": 0}
@@ -2733,12 +4765,23 @@ def main() -> int:
             if names and function.name not in names or image is None or rebuilt is None or rebuilt < REBUILT:
                 continue
             outcomes = list(check(machine, types, function, image, rebuilt, context))
-            counts[report(function.name, outcomes, known.get(function.name))] += 1
+            counted = report(function.name, outcomes, known.get(function.name))
+            missing = [
+                (kind, what)
+                for kind, what in unresolved(
+                    function.name, context.states.get(function.name, States()),
+                    context.given_cases.get(function.name, []), context,
+                )
+                if (function.name, what) not in elsewhere
+            ]
+            for kind, what in missing:
+                print(f"FAIL {function.name}: its {kind} {what} names nothing in the image's C")
+            counts["failed" if missing else counted] += 1
             modes["user mode alone"] += function.name in in_task
             modes["both modes"] += function.name in both_modes
             condition_codes_compared += function.condition_codes
             for description, outcome in outcomes:
-                if description.startswith(CONSOLE_SESSION):
+                if description.startswith(CONSOLE_SESSION) and not description.endswith(POISONED):
                     sessions["run"] += 1
                     sessions["agreeing"] += not outcome
         label = f"{profile.overlay} " if profile.overlay else ""
@@ -2752,11 +4795,16 @@ def main() -> int:
             + ", ".join(f"{what}: {count}" for what, count in modes.items())
             + f"; condition codes compared (returns=ccr): {condition_codes_compared}"
         )
-        # the pForth console's sessions, console_init's cases apart
+        # the pForth console's sessions, console_init's cases and the
+        # poisoned runs apart
         if sessions["run"]:
             print(f"{label}console sessions agreeing: {sessions['agreeing']} of {sessions['run']}")
         print_stacks(label, context.depths)
         failed += counts["failed"]
+    # a strict run's cases are not the documented ones
+    # (report_figures.py)
+    if ON_MC683XX and not PARITY:
+        print(STRICT)
     return 1 if failed else 0
 
 

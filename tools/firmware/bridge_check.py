@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.2.0", "unicorn==2.1.4"]
 # ///
 """Confirms the decompiled C's bindings by running them: each function
 the hand-written bindings/ headers define under the name and prototype
@@ -122,10 +122,10 @@ class Given:
 # first read of qspi.running (0x20866), whose handler clears it and,
 # having copied the received words, qspi.copy_pending, which
 # qspi_transfer_raw waits on (0x20aa6).  qspi.running by image: the
-# Z3805A 3543B's, the 58503A 3704's, which its qspi_start clears and
-# reads (0x1f624, 0x1f664), and the Z3801A 3543's, the Z3805A's 0x184
-# lower.
-QSPI_RUNNING = {"z3805a-3543b": 0x1032F3, "58503a-3704": 0x1034C3, "z3801a-3543": 0x10316F}
+# Z3805A 3543B's, and the 58503A 3704's and the Z3815A 4010's, which
+# each one's qspi_start clears and reads (0x1f624, 0x1f664; 0x30fb4,
+# 0x30ff4), and the Z3801A 3543's, the Z3805A's 0x184 lower.
+QSPI_RUNNING = {"z3805a-3543b": 0x1032F3, "58503a-3704": 0x1034C3, "z3815a-4010": 0x103E69, "z3801a-3543": 0x10316F}
 QSPI_WORDS = struct.pack(">3H", 0x123, 0x456, 0x789)
 QSPI_COUNT = 3
 QSPI_RAW_DEVICES = (2, 7, 12)

@@ -12,16 +12,28 @@ reading; and how many are assembly routines and thunks.  And the
 figures of the image's link check, link_check.py's summary line: how
 many functions it requires, and how many the hand-written C, the
 assembly and another routine's name define.  CHECKS lists, for each
-image, the sentences that quote them.
+image, the sentences that quote them.  A report of mc683xx run strictly
+as the CPU32 (SMARTCLOCK_CPU_PARITY=0), which says so (STRICT), skips a
+few cases more, and is checked against rewrite.md's strict figure of
+them, the Z3805A's alone (STRICT_CHECKS).
 
     python3 -I tools/firmware/report_figures.py --image IMAGE --link SUMMARY REPORT [--write]
+    python3 -I tools/firmware/report_figures.py --image IMAGE --unfinished REPORT [--write]
+
+An unfinished image, one whose C is not yet all hand-written, so that
+it does not link from it alone (the Makefile's UNFINISHED_IMAGES), has
+no link check yet: with --unfinished, its sentences, which quote no
+link figure, are checked against its report, any failed functions
+and all.  Its function check may fail none, as the Z3815A 4010's did
+from its rest wave; it is finished once its link check passes, as the
+Z3815A 4010's is since its fifth link run.
 
 make report-decompiled saves an image's report in
 target/firmware/IMAGE/report-decompiled.txt, and make check-link its
 summary in link-check.txt beside it.  Exits nonzero on drift, if the
 report or the summary lacks the figures, if the summary is not the
 export's, if a sentence is not in its document exactly once, or if any
-function failed, which no document's figures may say.
+function failed, which no finished image's figures may say.
 """
 
 import argparse
@@ -38,6 +50,7 @@ REWRITE = ROOT / 'docs/firmware/rewrite.md'
 SUMMARY = ROOT / 'README.md'
 DOCUMENT_58503A = ROOT / 'docs/firmware/58503a-3704.md'
 DOCUMENT_Z3801A = ROOT / 'docs/firmware/z3801a-3543.md'
+DOCUMENT_Z3815A = ROOT / 'docs/firmware/z3815a-4010.md'
 
 # function_check.py's line of a profile's counts, the installer's
 # labeled with its overlay
@@ -52,6 +65,10 @@ FIGURES = re.compile(
 SESSIONS = re.compile(r'^console sessions agreeing: (\d+) of (\d+)$', re.M)
 # its line of an agreeing function's cases, those run and all
 CASES = re.compile(r'^ok \S+: (\d+) of (\d+) cases run$', re.M)
+# function_check.py's line of a report of mc683xx run strictly as the
+# CPU32, whose address errors stop some cases that Unicorn's 68020 runs
+# (docs/firmware/README.md, "The CPU backend")
+STRICT = 'cases run strictly as the CPU32: SMARTCLOCK_CPU_PARITY=0'
 # link_check.py's summary line: the image, the functions required, and
 # those the hand-written C, the assembly and another's name define
 LINK = re.compile(
@@ -95,6 +112,13 @@ def counts_row(profile):
                     '{} skipped, {} failed |')
 
 
+# rewrite.md's row of the agreeing functions' cases, and the same row's
+# figure for a strict report, after the parity one
+CASES_ROW = sentence('| cases, in the agreeing functions | {} of {} compared')
+STRICT_CASES_ROW = re.compile(
+    r'\|\s+cases, in the agreeing functions\s+\|[^|\n]*; strict,\s+([\d,]+) of ([\d,]+)\b')
+
+
 def link_sentence(image):
     """rewrite.md's sentence of an image's link check."""
     return (REWRITE, sentence(f"The {image}'s link requires all {{}} of its functions and finds "
@@ -136,8 +160,7 @@ CHECKS = {
         (REWRITE, sentence("{} of the primary's functions agree, {} differ for known "
                            "reasons, none fail; the installer's {} agree"),
          lambda f: (f['primary_agree'], f['primary_known'], f['installer_agree'])),
-        (REWRITE, sentence('| cases, in the agreeing functions | {} of {} compared'),
-         lambda f: (f['cases_run'], f['cases_all'])),
+        (REWRITE, CASES_ROW, lambda f: (f['cases_run'], f['cases_all'])),
         (SUMMARY, sentence("all agree but {} whose difference is the firmware's own "
                            "or one C cannot express, and {} the harness cannot run"),
          lambda f: (word(f['primary_known'] + f['installer_known']),
@@ -239,12 +262,36 @@ CHECKS = {
          lambda f: (f['primary_hand'], f['installer_hand'],
                     word(f['primary_reading'] + f['installer_reading']))),
     ),
+    'z3815a-4010': (
+        (DOCUMENT_Z3815A, sentence('| primary | {} | {} | {} | {} |'),
+         lambda f: (f['primary_agree'], f['primary_known'], f['primary_skipped'],
+                    f['primary_failed'])),
+        (DOCUMENT_Z3815A, sentence('| installer | {} | {} | {} | {} |'),
+         lambda f: (f['installer_agree'], f['installer_known'],
+                    f['installer_skipped'], f['installer_failed'])),
+        (DOCUMENT_Z3815A, sentence('Console sessions: {} of {} agree.'),
+         lambda f: (f['sessions_agree'], f['sessions_run'])),
+        (DOCUMENT_Z3815A, sentence('| `check-decompiled` | {} routines in'),
+         lambda f: (f['assembly'],)),
+        (DOCUMENT_Z3815A, sentence(
+            "Every C function of the image is written by hand: the primary's {} and the "
+            "installer's {}, {} left as the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    word(f['primary_reading'] + f['installer_reading']))),
+        summary_row('Z3815A 4010'),
+        link_sentence('Z3815A 4010'),
+    ),
 }
 
 
-def report_figures(path):
+# For a strict report, the images that have a strict figure, and the
+# sentence each has in place of its parity one
+STRICT_CHECKS = {'z3805a-3543b': {CASES_ROW: STRICT_CASES_ROW}}
+
+
+def report_figures(path, unfinished):
     """The report's figures, keyed as CHECKS has them; exits if it lacks
-    any or a function failed."""
+    any, or if a function failed and the image is not unfinished."""
     report = path.read_text()
     figures = {}
     for label, *values in COUNTS.findall(report):
@@ -263,7 +310,7 @@ def report_figures(path):
         f'{sum(c[i] for c in cases):,}' for i in (0, 1))
     failed = [f'{p} {figures[p + "_failed"]}' for p in ('primary', 'installer')
               if figures[p + '_failed']]
-    if failed:
+    if failed and not unfinished:
         sys.exit(f'{path}: functions failed: ' + ', '.join(failed))
     return figures
 
@@ -332,15 +379,24 @@ def link_figures(path, image, export):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--image', required=True, choices=sorted(CHECKS))
-    parser.add_argument('--link', required=True, type=pathlib.Path)
+    finish = parser.add_mutually_exclusive_group(required=True)
+    finish.add_argument('--link', type=pathlib.Path)
+    finish.add_argument('--unfinished', action='store_true')
     parser.add_argument('report', type=pathlib.Path)
     parser.add_argument('--write', action='store_true')
     args = parser.parse_args()
     export = export_figures(args.image)
-    figures = report_figures(args.report) | export | link_figures(args.link, args.image, export)
+    figures = report_figures(args.report, args.unfinished) | export
+    if not args.unfinished:
+        figures |= link_figures(args.link, args.image, export)
+    strict = re.search(f'^{re.escape(STRICT)}$', args.report.read_text(), re.M) is not None
+    if strict and args.image not in STRICT_CHECKS:
+        sys.exit(f'{args.report}: a strict report, and {args.image} has no strict figures')
     texts = {}
     drifted = False
     for document, pattern, want in CHECKS[args.image]:
+        if strict:
+            pattern = STRICT_CHECKS[args.image].get(pattern, pattern)
         text = texts.setdefault(document, document.read_text())
         matches = list(pattern.finditer(text))
         if len(matches) != 1:

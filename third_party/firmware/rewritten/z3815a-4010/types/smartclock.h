@@ -2010,7 +2010,11 @@ typedef struct gps_request_translation {
 } gps_request_translation;
 
 /* A sentence descriptor's kind: the two gps_request_build builds
- * (0x5d97a, 0x5d982), and none, the zzz and tst entries'. */
+ * (0x5d97a, 0x5d982), and none, for which it builds an empty sentence.
+ * Every entry of gps_sentence_descriptors (0x5e3cc), codes 0x39 to
+ * 0x4c, zzz's and int,tst00's among them, is GPS_SENTENCE_BUILT: no
+ * valid code's descriptor has GPS_SENTENCE_NONE, only a code past the
+ * table, whose descriptor is whatever bytes follow it. */
 typedef enum __attribute__((packed)) gps_sentence_kind {
   GPS_SENTENCE_NONE = 0,
   GPS_SENTENCE_BUILT = 1,

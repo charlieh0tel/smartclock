@@ -5,7 +5,7 @@
  * from. */
 
 /* The SCPI task's response areas, end to end from scpi_response_texts: a record
- * for each source return_zero gives, of which there are two, as
+ * for each source scpi_input_source gives, of which there are two, as
  * robin_blocks and robin_arrays hold.  A query writes its response into
  * its source's record and answers its address; a setter of several
  * values stages them in its source's scpi_staged_values and sends pllc

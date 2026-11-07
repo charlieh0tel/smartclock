@@ -63,6 +63,13 @@ static const int32_t LIBC_PROGRAM_END_DIGITS_END = 0x2d;
 
 static const uint8_t LIBC_PROGRAM_END_DIGITS_STOP = 0xff;
 
+/* ln 2 in a high part, exact in a double's top bits, and the rest, as
+ * log and the Z3815A 4010's exp take it, each in its own table (math.c,
+ * that image's math.c). */
+static const double LIBC_LN2_HIGH = 0.693359375;
+
+static const double LIBC_LN2_LOW = -0.00021219444005469057;
+
 /* Fields of a double's high word, and of its 64 bits; an infinity's
  * high word is the exponent's mask, all ones. */
 static const uint32_t LIBC_SIGN = 0x80000000u;
@@ -76,6 +83,104 @@ static const int32_t LIBC_EXPONENT_SHIFT = 20;
 static const int32_t LIBC_EXPONENT_MAX = 0x7ff;
 
 static const int32_t LIBC_EXPONENT_BIAS = 0x3ff;
+
+/* The most base strtol and strtoul take. */
+static const int32_t LIBC_STRTOL_BASE_MOST = 36;
+
+/* The ctype bits of a digit in some base, a letter or a decimal digit. */
+static const uint8_t LIBC_STRTOL_ALPHANUMERIC =
+    LIBC_CTYPE_UPPER | LIBC_CTYPE_LOWER | LIBC_CTYPE_DIGIT;
+
+/* A character's digit, by the ctype table from its EOF entry: its value
+ * for 0 to 9, 10 for a or A on. */
+static int32_t libc_strtol_digit(const uint8_t* classes, int32_t c) {
+  static const int32_t LOWER_CASE = 0x20;
+  static const int32_t LETTER_TO_DIGIT = 'a' - 10;
+
+  return (classes[c] & LIBC_CTYPE_DIGIT) != 0
+             ? c - '0'
+             : (c | LOWER_CASE) - LETTER_TO_DIGIT;
+}
+
+/* strtol's and installer_strtol's body, on a ctype table and an errno:
+ * a long from a string in a base, 2 to 36, or 0 for C's prefixes, and
+ * through end where it stopped; 0 for a base out of range or no digit,
+ * and on an overflow the long's limit, with errno ERANGE.  White space
+ * and a sign are skipped only before a character that is not a digit or
+ * a letter.  It counts down in negatives, so that the least long has
+ * room.  The table is indexed from its EOF entry by a signed character:
+ * 0x80 to 0xfe read the 127 bytes before it, 0xff its EOF entry. */
+static int32_t libc_strtol(char* s, char** end, int32_t base,
+                           const uint8_t* ctype, int32_t* error) {
+  static const int32_t LONG_LEAST = (int32_t)LIBC_SIGN;
+  static const int32_t LONG_MOST = (int32_t)(LIBC_SIGN - 1);
+  const uint8_t* classes = ctype + 1;
+  bool negative = false;
+  bool overflow = false;
+
+  if (end != NULL) {
+    *end = s;
+  }
+  if (base < 0 || base > LIBC_STRTOL_BASE_MOST) {
+    return 0;
+  }
+  int32_t c = (int8_t)*s;
+
+  if ((classes[c] & LIBC_STRTOL_ALPHANUMERIC) == 0) {
+    while ((classes[c] & LIBC_CTYPE_SPACE) != 0) {
+      c = (int8_t)*++s;
+    }
+    if (c == '-') {
+      negative = true;
+      c = (int8_t)*++s;
+    } else if (c == '+') {
+      c = (int8_t)*++s;
+    }
+  }
+  if (base == 0) {
+    base = c != '0'                     ? LIBC_DECIMAL
+           : s[1] == 'x' || s[1] == 'X' ? LIBC_HEXADECIMAL
+                                        : LIBC_OCTAL;
+  }
+  if ((classes[c] & LIBC_STRTOL_ALPHANUMERIC) == 0 ||
+      libc_strtol_digit(classes, c) >= base) {
+    return 0;
+  }
+  if (base == LIBC_HEXADECIMAL && c == '0' &&
+      (classes[(int8_t)s[2]] & LIBC_CTYPE_HEX) != 0 &&
+      (s[1] == 'x' || s[1] == 'X')) {
+    s += 2;
+    c = (int8_t)*s;
+  }
+  int32_t value = -libc_strtol_digit(classes, c);
+
+  for (;;) {
+    c = (int8_t)*++s;
+    if ((classes[c] & LIBC_STRTOL_ALPHANUMERIC) == 0) {
+      break;
+    }
+    const int32_t digit = libc_strtol_digit(classes, c);
+
+    if (digit >= base) {
+      break;
+    }
+    const int32_t next = value * base - digit;
+
+    overflow |= value < next;
+    value = next;
+  }
+  if (end != NULL) {
+    *end = s;
+  }
+  if (value == LONG_LEAST && !negative) {
+    overflow = true;
+  }
+  if (overflow) {
+    *error = LIBC_ERANGE;
+    return negative ? LONG_LEAST : LONG_MOST;
+  }
+  return negative ? value : -value;
+}
 
 /* A subnormal's mantissa shifted left until its top bit is the
  * implicit one's, and the shift: double_normalize's work, and
@@ -550,6 +655,9 @@ __attribute__((always_inline)) static inline int32_t libc_sprintf_put(
 enum {
   LIBC_RAISE_SINGLE = 0x01,
   LIBC_RAISE_MATH = 0x80,
+  /* exp's, the Z3815A 4010's: its index, 14, and bit 6, which the name's
+   * index masks (exp+0x44). */
+  LIBC_RAISE_EXP = 0x4e,
   LIBC_RAISE_FABS = 16,
   LIBC_RAISE_FREXP = 22,
   LIBC_RAISE_LOG = 26,

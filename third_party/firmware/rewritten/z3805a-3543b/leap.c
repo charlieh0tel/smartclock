@@ -4,14 +4,6 @@
  * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
  * prototype. */
 
-static const uint8_t CLOCK_MARCH = 3;
-
-static const uint8_t CLOCK_JUNE = 6;
-
-static const uint8_t CLOCK_SEPTEMBER = 9;
-
-static const uint8_t CLOCK_DECEMBER = 12;
-
 /* The pending leap second's GPS seconds, at the end of its date's last
  * minute, for :PTIM:LEAP:GPST?; 0 with none pending (0x11284). */
 int32_t leap_gps_time(void) {

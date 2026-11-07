@@ -214,7 +214,7 @@
 0x1eff6	function	task_debug_message	context	prints "task: message" with the calling task's name, while debug_enabled	void task_debug_message(char *message)
 0x160a0	function	task_name	context	the 4-character name at offset 0x24 of a task's record	char * task_name(void *task)
 0x1f176	function	fatal_error	context	keeps the message and task name at crash_message, prints them and "RESET to recover.", then hangs	void fatal_error(char *message)
-0x29ada	function	return_zero	context	the source a command's input port gives, always 0; every SCPI handler that reports a status condition, starts a request or picks a text buffer passes it its call's input	int32_t return_zero(scpi_port *input)
+0x29ada	function	scpi_input_source	context	the source a command's input port gives, always 0; every SCPI handler that reports a status condition, starts a request or picks a text buffer passes it its call's input	int32_t scpi_input_source(scpi_port *input)
 0x3195a	function	log_write	context	appends to the diagnostic log under its lock; :DIAG:LOG:WRIT and log_send call it	int log_write(char *format, ...)
 0x1037dd	label	debug_enabled	context	gates every debug_ and task_debug_ output	uint8_t
 0x10094e	label	crash_message	context	fatal_error's message and task name, 80 characters	char[80]
@@ -2307,7 +2307,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 #
 # the SCPI task's response areas, the serial and :SAMPle descriptors and
 # the bytes the C reached by address
-0x10272a	label	scpi_response_texts	context	a query writes its text response into its source's, return_zero's, and answers its address	scpi_response_text[2]
+0x10272a	label	scpi_response_texts	context	a query writes its text response into its source's, scpi_input_source's, and answers its address	scpi_response_text[2]
 0x10295e	label	scpi_response_lists	context	the satellite lists and :ROBin:POINts?' counts, by source, each answered as a scpi_array	scpi_response_list[2]
 0x1029de	label	robin_overflows	context	:ROBin:MEMory:OVERflow:COUNt?'s counts, by source	robin_overflow_counts[2]
 0x102a0e	label	scpi_staged	context	the values a setter of several sends pllc the address of, by source	scpi_staged_values[2]

@@ -13,7 +13,7 @@ int32_t scpi_set_LED_ALARm_USER(void* parameters, void* response,
   scpi_word_parameter* given = parameters;
 
   pllc_request_a(&scpi_param_LED_ALARm, 0, (uint8_t)given->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 

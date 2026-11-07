@@ -11,53 +11,6 @@ void exception_record_clear(void) {
   crash_message[0] = 0;
 }
 
-/* Logs why the last reset happened, with the time: the exception, the
- * fatal message, or, with neither and the watchdog's grace run out,
- * the watchdog counts; then clears both. */
-void log_reset_cause(void) {
-  char text[MONITORS_CRASH_MESSAGE_SIZE];
-  uint32_t date;
-  time_of_day time;
-
-  reset_record_count();
-  get_date_time(&date, &time);
-  text[0] = 0;
-  if (last_exception.pending) {
-    if ((last_exception.vector & CPU_VECTOR_FORMAT_MASK) == 0) {
-      sprintf(text, "Exception: %s, vector %04X, PC = %08X, SR = %04X",
-              last_exception.name, last_exception.vector, last_exception.pc,
-              last_exception.sr);
-    } else {
-      sprintf(text,
-              "Exception: %s, vector %04X, PC = %08X, SR = %04X, addr = %08X",
-              last_exception.name, last_exception.vector, last_exception.pc,
-              last_exception.sr, last_exception.address);
-    }
-    reset_record_write(date, time, text);
-  }
-  if (crash_message[0] != 0) {
-    strncpy(text, crash_message, MONITORS_CRASH_MESSAGE_SIZE);
-    text[MONITORS_CRASH_MESSAGE_SIZE - 1] = 0;
-    reset_record_write(date, time, text);
-  }
-  if (watchdog_countdown == 0 && crash_message[0] == 0 &&
-      !last_exception.pending) {
-    sprintf(text, "Watchdog timeout: clk %1d gps %4d mon %4d pll %1d spl %1d",
-            watchdog_clock, watchdog_gps, watchdog_monitor, watchdog_pll,
-            watchdog_spool);
-    reset_record_write(date, time, text);
-  }
-  last_exception.pending = 0;
-  crash_message[0] = 0;
-}
-
-/* The reset-cause log's records. */
-static const int32_t RECORDS_RESET_RECORDS =
-    (int32_t)(sizeof eeprom_reset_records / sizeof eeprom_reset_records[0]);
-
-static const int32_t RECORDS_LOG_PAGE_ENTRIES =
-    (int32_t)(sizeof log_write_page.entries / sizeof log_write_page.entries[0]);
-
 /* Empties a page. */
 void log_page_clear(void* page) { memset(page, 0, sizeof(log_page)); }
 

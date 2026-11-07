@@ -540,3 +540,18 @@ void diag_pr_pll(void) {
   print_gps_init_state();
   print_leap_check_state();
 }
+
+/* The console's words ps, mem_rep and s_rep: the kernel's process, memory
+ * and stack reports (ps_word, mem_rep_word, s_rep_word).  The console passes
+ * SCPI's source, 0, as the image does (clr.b -(sp)). */
+void ps_word(void) { os_process_report(REQUEST_SOURCE_SCPI); }
+void mem_rep_word(void) { os_memory_report(REQUEST_SOURCE_SCPI); }
+void s_rep_word(void) { task_stack_report(REQUEST_SOURCE_SCPI); }
+/* The hook halt runs: lowers the console task below the SCPI task's
+ * creator, has it run, and deletes the console's task. */
+void console_halt_hook(void) {
+  psos_priority(OS_TASK_SELF, CONSOLE_HALT_PRIORITY, NULL);
+  spoo_run(scpi_task_create, CONSOLE_SCPI_CREATOR_PRIORITY, 0, 0);
+  task_console = 0;
+  psos_delete(OS_TASK_SELF);
+}

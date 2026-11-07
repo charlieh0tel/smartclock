@@ -388,43 +388,6 @@ uint8_t fpga_verify(fpga_configuration_index configuration,
 /* Writes an FPGA register. */
 void fpga_write(uint8_t reg, uint8_t value) { fpga_port[reg] = value; }
 
-/* The entries every image's fpga_bit_table starts with, the same in
- * each (common/types/fpga_bit_index.h): the register and mask of each
- * bit or field the shared code names.  The image's whole table is its
- * own rewritten/fpga.c's fpga_bits. */
-static const fpga_bit fpga_shared_bits[] = {
-    [FPGA_BIT_MODE] = {.reg = 0, .mask = 0x03, .is_flag = 0},
-    [FPGA_BIT_PRESET] = {.reg = 0, .mask = 0x40, .is_flag = 1},
-    [FPGA_BIT_START] = {.reg = 1, .mask = 0x01, .is_flag = 1},
-    [FPGA_BIT_REFERENCE] = {.reg = 1, .mask = 0x02, .is_flag = 1},
-    [FPGA_BIT_ADDRESS] = {.reg = 1, .mask = 0xf8, .is_flag = 0},
-};
-
-/* Sets a shared field's bits in its register's image in fconf_regs,
- * clearing the rest of the field, and writes the register. */
-static void fpga_field_store(fpga_bit_index field, uint8_t bits) {
-  const fpga_bit* entry = &fpga_shared_bits[field];
-
-  fconf_regs[entry->reg] = (fconf_regs[entry->reg] & ~entry->mask) | bits;
-  fpga_write(entry->reg, fconf_regs[entry->reg]);
-}
-
-/* The field of fpga_shared_bits that selects the register a read of the
- * FPGA returns, fconf_regs[1]'s top five bits (structures.md). */
-static const uint8_t FPGA_ADDRESS_SHIFT = 3;
-
-/* Reads an FPGA register: puts its number in the address field, reads
- * the FPGA, and puts the field back. */
-uint8_t fpga_read(uint8_t reg) {
-  const uint8_t saved = fconf_regs[fpga_shared_bits[FPGA_BIT_ADDRESS].reg];
-
-  fpga_field_store(FPGA_BIT_ADDRESS, reg << FPGA_ADDRESS_SHIFT);
-  /* a read at the FPGA's base returns the register addressed */
-  const uint8_t value = fpga_port[0];
-  fpga_field_store(FPGA_BIT_ADDRESS, saved);
-  return value;
-}
-
 /* A byte from two FPGA registers' low nibbles, the next register's the
  * high one. */
 uint8_t fpga_read_byte(fpga_register reg) {
@@ -456,24 +419,4 @@ char fpga_read_seconds(void) {
     second = fpga_read(FPGA_REGISTER_STATUS) >> SECONDS_SHIFT;
   }
   return first;
-}
-
-/* Steps the address field through its 32 values, reading the seconds
- * at each and printing the field's register; called by nothing. */
-void fpga_address_sweep_debug(void) {
-  static const uint8_t ADDRESSES = 32;
-  const uint8_t reg = fpga_shared_bits[FPGA_BIT_ADDRESS].reg;
-  char text[80];
-
-  for (uint8_t address = 0; address < ADDRESSES; address++) {
-    fpga_field_store(FPGA_BIT_ADDRESS, address << FPGA_ADDRESS_SHIFT);
-    debug_sprintf(text, "old_addr, fconf_regs[1] = %x %x \r\n", address,
-                  fconf_regs[reg]);
-    task_dmessage(text);
-    fpga_read_seconds();
-    debug_sprintf(text, "old_addr, fconf_regs[1] = %x %x \r\n", address,
-                  fconf_regs[reg]);
-    task_dmessage(text);
-    task_dmessage(" \r\n");
-  }
 }

@@ -1355,3 +1355,33 @@ uint8_t pll_reference_check(char again) {
   }
   return result;
 }
+
+/* For a TI of 100 ns or more, asks for that many 100 ns steps against
+ * it, the steps; one and 4 for 300 ns or more; 0 within 100 ns. */
+uint8_t fine_sync_adjust(float ti) {
+  static const float STEP = 1e-07f;
+  static const float MOST = 3e-07f;
+
+  if (float_compare(ti, STEP) < 0) {
+    if (float_compare(pll_stages_negate(STEP), ti) < 0) {
+      return 0;
+    }
+    if (float_compare(pll_stages_negate(MOST), ti) < 0) {
+      uint32_t steps =
+          float_to_unsigned(float_divide(ti, pll_stages_negate(STEP)));
+
+      sync_request(COUNTER_SYNC_NEGATIVE, (uint8_t)steps);
+      return steps;
+    }
+    sync_request(COUNTER_SYNC_NEGATIVE, 1);
+    return PLL_STAGES_SYNC_TOO_FAR;
+  }
+  if (float_compare(ti, MOST) < 0) {
+    uint32_t steps = float_to_unsigned(float_divide(ti, STEP));
+
+    sync_request(COUNTER_SYNC_POSITIVE, (uint8_t)steps);
+    return steps;
+  }
+  sync_request(COUNTER_SYNC_POSITIVE, 1);
+  return PLL_STAGES_SYNC_TOO_FAR;
+}

@@ -882,3 +882,12 @@ void gps_print_average(void) {
   }
   printf("  Sats with bit 7: %2d\r\n", (uint32_t)used);
 }
+
+/* Empties the command log. */
+void command_log_clear(void) {
+  command_log.write = command_log.entries;
+  command_log.read = command_log.entries;
+}
+
+/* Prints the command log. */
+void gps_print_commands(void) { gps_print_command_log(&command_log); }

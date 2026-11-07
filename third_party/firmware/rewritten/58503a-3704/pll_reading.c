@@ -49,3 +49,16 @@ uint8_t interval_next_reading(interval_arm_mode arm_mode, float* reading) {
   interval_rearm(arm_mode);
   return valid;
 }
+
+/* Arms the next reading, as its interval_arm_mode says. */
+void interval_rearm(interval_arm_mode arm_mode) {
+  interval_reading.armed = 1;
+  interval_reading.errors = 0;
+  if (arm_mode == INTERVAL_ARM_CALIBRATE) {
+    counter_calibrate(&interval_reading, &counter_configuration);
+  } else if (arm_mode == INTERVAL_ARM_SYNC) {
+    sync_request(COUNTER_SYNC_FULL, 1);
+  }
+  interval_armed_without_pps = pll_reading_pps_dead();
+  counter_arm(&interval_reading, &counter_configuration);
+}

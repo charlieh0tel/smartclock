@@ -4,78 +4,7 @@
  * hand in place of the decompiler's (docs/firmware/README.md,
  * "Hand-written C"); each keeps its generated prototype. */
 
-/* A descriptor of any type, as pll_scpi_param points at it: its first
- * byte says which. */
-typedef union pllc_param {
-  scpi_param_type type;
-  scpi_numeric_param numeric;
-  scpi_setting_param setting;
-  scpi_action_param action;
-} pllc_param;
-
-static const uint16_t PLLC_FLAG_SAVED_IN_NV = 2;
-
-static const uint16_t PLLC_FLAG_SAVED_IN_RECORD = 4;
-
 typedef void pllc_action(int32_t index, int32_t source);
-
-static pllc_param* pllc_current(void) { return pll_scpi_param; }
-
-/* The current descriptor's flags, a setting's at +0x14, any other's at
- * a numeric's +0x1e. */
-static uint16_t pllc_flags(void) {
-  pllc_param* param = pllc_current();
-
-  return param->type == SCPI_PARAM_SETTING ? param->setting.flags
-                                           : param->numeric.flags;
-}
-
-/* Copies a request into pll_scpi_param to pll_scpi_values, as its
- * descriptor's type and a numeric one's is_integer say. */
-void get_setup_vars(pllc_request* request) {
-  pll_scpi_source = request->source;
-  if (pll_scpi_source == REQUEST_SOURCE_SCPI) {
-    pll_scpi_waiting_task = task_scpi;
-  }
-  pll_scpi_index = request->index;
-  pll_scpi_param = request->param;
-  pllc_param* param = pllc_current();
-  switch (param->type) {
-    case SCPI_PARAM_NUMERIC:
-      switch ((int8_t)param->numeric.is_integer) {
-        case PLLC_VALUE_FLOAT:
-          pll_scpi_values[0] = request->values[1];
-          break;
-        case PLLC_VALUE_INTEGER:
-          pll_scpi_values[0] = request->values[0];
-          break;
-        case PLLC_VALUE_LIST: {
-          /* values[0] holds the list's address. */
-          uint32_t* list = (uint32_t*)request->values[0];
-          for (uint8_t i = 0; i <= (int8_t)pll_scpi_index; i++) {
-            pll_scpi_values[i] = list[i];
-          }
-          break;
-        }
-        case PLLC_VALUE_PAIR:
-          pll_scpi_values[0] = request->values[0];
-          pll_scpi_values[1] = request->values[1];
-          break;
-        default:
-          break;
-      }
-      break;
-    case SCPI_PARAM_SETTING:
-      pll_scpi_setting = request->setting;
-      break;
-    case SCPI_PARAM_ACTION:
-    case SCPI_PARAM_DOUBLE:
-      break;
-    default:
-      fatal_error("pll_scpi: get_setup_vars() -- unknown structure type");
-      break;
-  }
-}
 
 /* Runs an action's routine with the index and the source; the self-test's
  * alone leaves a reply pending. */

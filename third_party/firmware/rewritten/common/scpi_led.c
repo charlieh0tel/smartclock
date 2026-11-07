@@ -12,7 +12,7 @@ int32_t scpi_set_LED_ACTive(void* parameters, void* response, scpi_call* call) {
   scpi_word_parameter* given = parameters;
 
   pllc_request_a(&scpi_param_LED_ACTive, 0, given->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -48,7 +48,7 @@ int32_t scpi_set_LED_ENABled(void* parameters, void* response,
   scpi_word_parameter* given = parameters;
 
   pllc_request_a(&scpi_param_LED_ENABled, 0, given->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 

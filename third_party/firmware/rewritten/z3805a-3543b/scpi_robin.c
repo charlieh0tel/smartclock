@@ -11,7 +11,7 @@ int32_t scpi_query_ROBin(void* parameters, void* response, scpi_call* call) {
   uint32_t kind;
   uint32_t second;
   int32_t error = robin_parse(given->name, &kind, &second);
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
   int16_t* points = robin_points[source];
   uint16_t count;
 
@@ -45,7 +45,7 @@ int32_t scpi_query_ROBin_TSTamp(void* parameters, void* response,
   uint32_t kind;
   uint32_t second;
   int32_t error = robin_parse(given->name, &kind, &second);
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
   int16_t* points = robin_points[source];
   int16_t values[TIMESTAMP_VALUES];
 

@@ -4,15 +4,6 @@
  * this file after its own, so the types and prototypes it declares are
  * in scope; each function here keeps its generated prototype. */
 
-/* The EEPROM writes a page of 64 bytes at once (eeprom_write_page). */
-static const uint32_t EEPROM_PAGE_SIZE = 64u;
-
-/* Tries at a write, and polls of the last byte written for it to read
- * back, on each try. */
-static const int32_t EEPROM_TRIES = 5;
-
-static const int16_t EEPROM_POLLS = 5000;
-
 /* The status register's interrupt mask; eeprom_lock and eeprom_unlock
  * take the lock only at mask 0. */
 static const uint16_t RECORDS_SR_INTERRUPT_MASK = 0x0700;
@@ -115,13 +106,6 @@ void eeprom_unlock(void) {
       fatal_error(message);
     }
   }
-}
-
-/* Sets or clears eeprom_writing.  eeprom_lock reads it at a raised
- * interrupt mask, so the store must happen where the image makes it,
- * though the flag is cleared again before anything else here reads it. */
-static void records_set_writing(bool writing) {
-  *(volatile uint8_t*)&eeprom_writing = writing;
 }
 
 /* The EEPROM page an address is in. */

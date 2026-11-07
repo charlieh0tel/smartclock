@@ -51,7 +51,7 @@ static bool scpi_system_from_console(const scpi_call* call) {
 /* A setter's refusal of a port not SERial1: -113, Undefined header,
  * reported for the call's source. */
 static int32_t scpi_system_refuse_port(const scpi_call* call) {
-  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
   return 0;
 }
 
@@ -63,7 +63,7 @@ static int32_t scpi_system_refuse_port_query(scpi_call* call) {
 /* A SERial1 setting's request to pllc, the call's source. */
 static int32_t scpi_system_request(scpi_setting_param* setting, uint8_t value,
                                    const scpi_call* call) {
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_a(setting, 0, value, source);
   return 0;
@@ -126,7 +126,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_PRESet(void* parameters,
   if (*port != SCPI_SYSTEM_SERIAL1) {
     return scpi_system_refuse_port(call);
   }
-  pllc_request_b(&scpi_action_SER1_PRESet, 0, return_zero(call->input));
+  pllc_request_b(&scpi_action_SER1_PRESet, 0, scpi_input_source(call->input));
   return 0;
 }
 
@@ -318,7 +318,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void* parameters,
     case SCPI_SYSTEM_PARITY_ONE:
       if (given->port == SCPI_SYSTEM_SERIAL1) {
         status_report_from(STATUS_ILLEGAL_PARAMETER_VALUE,
-                           return_zero(call->input));
+                           scpi_input_source(call->input));
         return 0;
       }
       break;
@@ -428,7 +428,7 @@ int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response,
   if (scpi_parameters_same(given->text, "PRIMARY")) {
     return 0;
   }
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   status_report_from(STATUS_ILLEGAL_PARAMETER_VALUE, source);
   return 0;
@@ -451,7 +451,7 @@ int32_t scpi_query_SYSTem_LANGuage(void* parameters, void* response,
 int32_t scpi_query_SYSTem_PRINt(void* parameters, void* response,
                                 scpi_call* call) {
   uint16_t* answer = response;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_c(&scpi_param_SYSTem_PRINt, 0, 0, 0, source);
   *answer = 0;

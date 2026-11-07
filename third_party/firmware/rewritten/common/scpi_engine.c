@@ -116,9 +116,6 @@ void copy_longs_locked(uint32_t* source, uint32_t* destination, uint8_t count) {
 /* Returns its argument; the EFC queries pass pll.efc through it. */
 float float_identity(float x) { return x; }
 
-/* Closes the SCPI port; scpi_task calls it when scpi_interpret returns. */
-void scpi_session_close(void) { scpi_port_close(); }
-
 /* scpi_interpret's hook at each message's end and error, passed the
  * call and the condition reported (STATUS_NO_CONDITION at an end): 0, no
  * further error. */
@@ -134,6 +131,3 @@ void scpi_task_start(void) {
   spoo_run((spoo_function*)scpi_task_create, SCPI_TASK_PRIORITY, 0, 0);
   task_console = 0;
 }
-
-/* The source a command's input port gives: always 0. */
-int32_t return_zero(scpi_port* input) { return 0; }

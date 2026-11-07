@@ -553,24 +553,6 @@ void selftest_summary(void) {
                                          : STATUS_SELFTEST_FAILURE_SET);
 }
 
-/* Runs each self-test in selftest_list with run 0, the second slot's
- * char 1 (0x17806). */
-void selftest_run_all(void) {
-  for (selftest_entry* test = selftest_list; *test != NULL; test++) {
-    (*test)((char_slot){.value = 0, .next = 1});
-  }
-}
-
-/* Runs each self-test in selftest_list with run 1, counting
- * watchdog_pll before the first and after each (0x17826). */
-void selftest_run_all_counted(void) {
-  watchdog_pll++;
-  for (selftest_entry* test = selftest_list; *test != NULL; test++) {
-    (*test)((char_slot){.value = 1, .next = 1});
-    watchdog_pll++;
-  }
-}
-
 /* One transfer to the ADC, QSPI device 1, of the word 0xe000; its reply
  * (0x189f6). */
 uint16_t qspi_adc_test_read(void) {
@@ -692,4 +674,22 @@ void selftest_print_failure(char clear_eeprom) {
   if (selftest.passed == 0) {
     log_event(LOG_SELFTEST_FAILED);
   }
+}
+
+/* Writes 0x5555 and 0xaaaa to the EFC DAC and reads each back; true
+ * when both agree. */
+bool qspi_efc_test(void) {
+  static const uint16_t PATTERN_1 = 0x5555;
+  static const uint16_t PATTERN_2 = 0xaaaa;
+  uint16_t sent = PATTERN_1;
+  uint16_t received;
+  qspi_buffers buffers = {.transmit = &sent, .receive = &received};
+
+  qspi_send(QSPI_EFC, &sent, 1);
+  qspi_transfer(QSPI_EFC, &buffers, 1);
+  bool first = sent == received;
+  sent = PATTERN_2;
+  qspi_send(QSPI_EFC, &sent, 1);
+  qspi_transfer(QSPI_EFC, &buffers, 1);
+  return sent == received && first;
 }

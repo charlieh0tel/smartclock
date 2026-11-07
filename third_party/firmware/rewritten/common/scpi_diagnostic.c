@@ -8,56 +8,11 @@
  * its own, so the types and prototypes it declares are in scope; each
  * function here keeps its generated prototype. */
 
-/* A response's long, scpi_format_long's and _unsigned_long's 6 bytes. */
-typedef struct scpi_diagnostic_long {
-  int32_t value;   /* +0x00 */
-  uint16_t unused; /* +0x04 */
-} scpi_diagnostic_long;
-
-/* A response's float, scpi_format_float's 6 bytes. */
-typedef struct scpi_diagnostic_float {
-  float value;     /* +0x00 */
-  uint16_t unused; /* +0x04 */
-} scpi_diagnostic_float;
-
-/* A parameter of a word, a boolean's or a short's: its kind, the
- * value. */
-typedef struct scpi_diagnostic_word {
-  int16_t kind;  /* +0x00 */
-  int16_t value; /* +0x02 */
-} scpi_diagnostic_word;
-
 /* A string parameter: its kind, then as scpi_parse_string gives it. */
 typedef struct scpi_diagnostic_string {
   int16_t kind;                   /* +0x00 */
   scpi_engine_string_value value; /* +0x02 */
 } scpi_diagnostic_string;
-
-/* A numeric setting's parameter as scpi_numeric_set and _get take it:
- * its kind, then a float's bits, a long or a bound, MAXimum or
- * MINimum. */
-typedef struct scpi_diagnostic_numeric {
-  int16_t kind; /* +0x00 */
-  union {
-    uint32_t real_bits; /* +0x02 */
-    int32_t integer;    /* +0x02 */
-    int16_t bound;      /* +0x02 */
-  };
-} scpi_diagnostic_numeric;
-
-/* A parameter after one path word: the word, a numeric suffix's or a
- * subtree's, then the parameter. */
-typedef struct scpi_diagnostic_indexed_word {
-  int16_t index;              /* +0x00 */
-  scpi_diagnostic_word given; /* +0x02 */
-} scpi_diagnostic_indexed_word;
-
-/* The :LOG and :SLOG subtrees' path word: the event log, or the
- * reset-cause log at 0x4001c0. */
-enum {
-  SCPI_DIAGNOSTIC_EVENT_LOG = 0,
-  SCPI_DIAGNOSTIC_RESET_LOG = 1,
-};
 
 /* :DIAGnostic:GPSystem:POSition:DEGRees? LATitude|LONGitude, mas: the
  * angle as hemisphere, degrees, minutes and seconds. */
@@ -176,7 +131,7 @@ int32_t scpi_set_DIAGnostic_GPSystem_UTC(void* parameters, void* response,
   const scpi_diagnostic_word* given = parameters;
 
   pllc_request_a(&scpi_param_DIAGnostic_GPSystem_UTC, 0, given->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -184,7 +139,7 @@ int32_t scpi_set_DIAGnostic_GPSystem_UTC(void* parameters, void* response,
  * write fails. */
 static void scpi_diagnostic_identification_write(scpi_port* input) {
   if (identification_record_write() == 0) {
-    status_report_from(STATUS_MEMORY_ERROR, return_zero(input));
+    status_report_from(STATUS_MEMORY_ERROR, scpi_input_source(input));
   }
 }
 
@@ -207,7 +162,7 @@ int32_t scpi_set_DIAGnostic_IDENtification_HARDware(void* parameters,
   const scpi_diagnostic_string* given = parameters;
 
   if (scpi_engine_length(given->value.text) > SUFFIX_LONGEST) {
-    status_report_from(STATUS_TOO_MUCH_DATA, return_zero(call->input));
+    status_report_from(STATUS_TOO_MUCH_DATA, scpi_input_source(call->input));
     return 0;
   }
   idn_suffix = given->value.text[0];
@@ -223,7 +178,7 @@ int32_t scpi_set_DIAGnostic_IDENtification_MODel(void* parameters,
   const scpi_diagnostic_string* given = parameters;
 
   if (scpi_engine_length(given->value.text) >= (int32_t)sizeof idn_model) {
-    status_report_from(STATUS_TOO_MUCH_DATA, return_zero(call->input));
+    status_report_from(STATUS_TOO_MUCH_DATA, scpi_input_source(call->input));
     return 0;
   }
   scpi_diagnostic_copy(idn_model, given->value.text);
@@ -239,7 +194,7 @@ int32_t scpi_set_DIAGnostic_IDENtification_SERial(void* parameters,
   const scpi_diagnostic_string* given = parameters;
 
   if (scpi_engine_length(given->value.text) >= (int32_t)sizeof idn_serial) {
-    status_report_from(STATUS_TOO_MUCH_DATA, return_zero(call->input));
+    status_report_from(STATUS_TOO_MUCH_DATA, scpi_input_source(call->input));
     return 0;
   }
   scpi_diagnostic_copy(idn_serial, given->value.text);
@@ -265,9 +220,10 @@ int32_t scpi_set_DIAGnostic_LOG_CLEar(void* parameters, void* response,
   int16_t result;
 
   if (given->given.kind == SCPI_NONE) {
-    result = log_erase_locked(return_zero(call->input));
+    result = log_erase_locked(scpi_input_source(call->input));
   } else {
-    result = log_erase_checked(given->given.value, return_zero(call->input));
+    result =
+        log_erase_checked(given->given.value, scpi_input_source(call->input));
   }
   if (result == 0 || result == RECORDS_LOG_WRITE_FAILED) {
     return 0;
@@ -275,29 +231,7 @@ int32_t scpi_set_DIAGnostic_LOG_CLEar(void* parameters, void* response,
   status_report_from(result == RECORDS_LOG_COUNT_DIFFERS
                          ? STATUS_DATA_OUT_OF_RANGE
                          : STATUS_DEVICE_SPECIFIC_ERROR,
-                     return_zero(call->input));
-  return 0;
-}
-
-/* A log's entries, the event log's or the reset-cause log's. */
-static int16_t scpi_diagnostic_log_entries(int16_t log) {
-  if (log == SCPI_DIAGNOSTIC_EVENT_LOG) {
-    return log_entry_total(0);
-  }
-  return log_count(0);
-}
-
-/* :DIAGnostic:LOG:COUNt? and :SLOG's: the log's entries. */
-int32_t scpi_query_DIAGnostic_LOG_COUNt(void* parameters, void* response,
-                                        scpi_call* call) {
-  const int16_t* log = parameters;
-  scpi_short_item* count = response;
-  int16_t entries = scpi_diagnostic_log_entries(*log);
-
-  if (entries < 0) {
-    return scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR, call);
-  }
-  count->value = entries;
+                     scpi_input_source(call->input));
   return 0;
 }
 
@@ -314,7 +248,7 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void* parameters, void* response,
                                        scpi_call* call) {
   const scpi_diagnostic_indexed_word* given = parameters;
   char** entry = response;
-  char* line = scpi_response_texts[(uint8_t)return_zero(call->input)];
+  char* line = scpi_response_texts[(uint8_t)scpi_input_source(call->input)];
   char text[SCPI_DIAGNOSTIC_LOG_TEXT_SIZE];
   char heading[SCPI_DIAGNOSTIC_LOG_HEADING_SIZE];
 
@@ -352,7 +286,7 @@ int32_t scpi_query_DIAGnostic_OS_MEMory(void* parameters, void* response,
   scpi_token_string* text = response;
 
   text->length = 0;
-  os_memory_report(return_zero(call->input));
+  os_memory_report(scpi_input_source(call->input));
   return 0;
 }
 
@@ -362,7 +296,7 @@ int32_t scpi_query_DIAGnostic_OS_PROCess(void* parameters, void* response,
   scpi_token_string* text = response;
 
   text->length = 0;
-  os_process_report(return_zero(call->input));
+  os_process_report(scpi_input_source(call->input));
   return 0;
 }
 
@@ -372,7 +306,7 @@ int32_t scpi_query_DIAGnostic_OS_STACk(void* parameters, void* response,
   scpi_token_string* text = response;
 
   text->length = 0;
-  task_stack_report(return_zero(call->input));
+  task_stack_report(scpi_input_source(call->input));
   return 0;
 }
 
@@ -383,7 +317,7 @@ int32_t scpi_query_DIAGnostic_PTIMe_TINTerval(void* parameters, void* response,
   scpi_float_resolution* interval = response;
 
   pllc_request_b(&scpi_action_DIAGnostic_PTIMe_TINTerval, 0,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
 
   if (interval_reading.valid == 0) {
@@ -404,7 +338,7 @@ int32_t scpi_set_DIAGnostic_ROSCillator_TCOefficient(void* parameters,
 
   scpi_numeric_set(&scpi_param_DIAGnostic_ROSCillator_TCOefficient, 0,
                    given->kind, given->bound, given->real_bits, 0,
-                   return_zero(call->input));
+                   scpi_input_source(call->input));
   return 0;
 }
 
@@ -439,7 +373,7 @@ int32_t scpi_set_DIAGnostic_SER1_RESTricted(void* parameters, void* response,
   const scpi_diagnostic_indexed_word* given = parameters;
 
   pllc_request_a(&scpi_param_DIAGnostic_SER1_RESTricted, 0, given->given.value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -447,7 +381,7 @@ int32_t scpi_set_DIAGnostic_SER1_RESTricted(void* parameters, void* response,
 int32_t scpi_set_DIAGnostic_SLOG_CLEar(void* parameters, void* response,
                                        scpi_call* call) {
   if (log_clear() != 0) {
-    status_report_from(STATUS_MEMORY_ERROR, return_zero(call->input));
+    status_report_from(STATUS_MEMORY_ERROR, scpi_input_source(call->input));
   }
   return 0;
 }
@@ -460,9 +394,10 @@ int32_t scpi_set_DIAGnostic_STATus_ERRor(void* parameters, void* response,
 
   if (given->value < STATUS_PARAMETER_NOT_ALLOWED ||
       given->value > STATUS_INPUT_OVERRUN) {
-    status_report_from(STATUS_DATA_OUT_OF_RANGE, return_zero(call->input));
+    status_report_from(STATUS_DATA_OUT_OF_RANGE,
+                       scpi_input_source(call->input));
   } else {
-    status_report_from(given->value, return_zero(call->input));
+    status_report_from(given->value, scpi_input_source(call->input));
   }
   return 0;
 }
@@ -475,7 +410,7 @@ int32_t scpi_set_DIAGnostic_SYSTem_DOUTput(void* parameters, void* response,
 
   debug_enabled = given->value;
   pllc_request_a(&scpi_param_DIAGnostic_SYSTem_DOUTput, 0, given->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   psos_debug_enabled = debug_enabled;
   psos_debug_output(debug_enabled);
   return 0;
@@ -487,7 +422,7 @@ int32_t scpi_set_DIAGnostic_SYSTem_PSTartup(void* parameters, void* response,
   const scpi_diagnostic_word* given = parameters;
 
   pllc_request_a(&scpi_param_DIAGnostic_SYSTem_PSTartup, 0, given->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -496,19 +431,9 @@ int32_t scpi_set_DIAGnostic_TOFFset(void* parameters, void* response,
                                     scpi_call* call) {
   const scpi_diagnostic_numeric* given = parameters;
 
-  pllc_request_b(&scpi_action_temporary_hold, 0, return_zero(call->input));
+  pllc_request_b(&scpi_action_temporary_hold, 0,
+                 scpi_input_source(call->input));
   scpi_numeric_set(&scpi_param_DIAGnostic_TOFFset, 0, given->kind, given->bound,
-                   given->real_bits, 0, return_zero(call->input));
-  return 0;
-}
-
-/* :DIAGnostic:TOFFset?, or its bound. */
-int32_t scpi_query_DIAGnostic_TOFFset(void* parameters, void* response,
-                                      scpi_call* call) {
-  const scpi_diagnostic_numeric* given = parameters;
-  scpi_diagnostic_float* offset = response;
-
-  offset->value = scpi_numeric_get(&scpi_param_DIAGnostic_TOFFset, 0,
-                                   given->kind, given->bound);
+                   given->real_bits, 0, scpi_input_source(call->input));
   return 0;
 }

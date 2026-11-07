@@ -894,7 +894,7 @@ primary	function	identical	exact	0x288d8	status_register_get_ntr	services/status
 primary	function	relocated	masked	0x288ee	error_message_lookup	services/status	34	0x27b84	34		
 primary	function	relocated	masked	0x292d6	scpi_interpret	applications/scpi/engine	864	0x2856c	864		
 primary	function	relocated	masked	0x29642	scpi_call_handler	applications/scpi/engine	78	0x288d8	78		
-primary	function	changed	similar	0x29690	scpi_format_response	applications/scpi/format	112	0x28926	112	0.845	35 -> 36 instructions: 6 replaced, 1 inserted, 0 deleted; calls added: return_zero; calls removed: scpi_console_port; first: jsr scpi_console_port; cmpal %d0,%a3 -> movel %a3,%sp@-; jsr return_zero
+primary	function	changed	similar	0x29690	scpi_format_response	applications/scpi/format	112	0x28926	112	0.845	35 -> 36 instructions: 6 replaced, 1 inserted, 0 deleted; calls added: scpi_input_source; calls removed: scpi_console_port; first: jsr scpi_console_port; cmpal %d0,%a3 -> movel %a3,%sp@-; jsr scpi_input_source
 primary	function	identical	exact	0x29700	arena_alloc	applications/scpi/engine	44	0x28996	44		
 primary	function	identical	exact	0x2972c	arena_remaining	applications/scpi/engine	22	0x289c2	22		
 primary	function	identical	exact	0x29742	arena_take	applications/scpi/engine	28	0x289d8	28		
@@ -912,8 +912,8 @@ primary	function	identical	exact	0x29a1e	long_identity	applications/scpi/engine	
 primary	function	relocated	masked	0x29a24	copy_longs_locked	applications/scpi/engine	62	0x28cba	62		
 primary	function	identical	exact	0x29a62	float_identity	applications/scpi/engine	6	0x28cf8	6		
 primary	function	relocated	masked	0x29a68	robin_store	applications/scpi/handlers/robin	114	0x28cfe	114		
-primary	function	identical	exact	0x29ada	return_zero	applications/scpi/engine	4	0x28d98	4		
-primary	function	changed	references	0x29ade	scpi_query_failed	applications/scpi/engine	42	0x28d70	40	0.833	13 -> 11 instructions: 1 replaced, 0 inserted, 2 deleted; calls added: return_zero; calls removed: %pc@(return_zero); first: jsr %pc@(return_zero) -> jsr return_zero | moveq #0,%d0; rts -> -
+primary	function	identical	exact	0x29ada	scpi_input_source	applications/scpi/engine	4	0x28d98	4		
+primary	function	changed	references	0x29ade	scpi_query_failed	applications/scpi/engine	42	0x28d70	40	0.833	13 -> 11 instructions: 1 replaced, 0 inserted, 2 deleted; calls added: scpi_input_source; calls removed: %pc@(scpi_input_source); first: jsr %pc@(scpi_input_source) -> jsr scpi_input_source | moveq #0,%d0; rts -> -
 primary	function	identical	exact	0x29b08	rtcm_supported	applications/scpi/handlers/misc	6	0x28d9c	6		
 primary	function	relocated	masked	0x29b0e	scpi_prompt	applications/scpi/port	52	0x28dbc	52		
 primary	function	changed	similar	0x29b42	scpi_session_init	applications/scpi/engine	64	0x28df0	108	0.667	13 -> 20 instructions: 0 replaced, 9 inserted, 2 deleted; first: - -> moveal #other:0x102e48,%a0 | - -> moveb #-64,%a0@; moveb #16,%a0@(4) | movel #0x29e18,%d0; rts -> -
@@ -1011,7 +1011,7 @@ primary	function	relocated	masked	0x2b830	scpi_query_DIAGnostic_OS_MEMory	applic
 primary	function	relocated	masked	0x2b852	scpi_query_DIAGnostic_OS_PROCess	applications/scpi/handlers/diagnostic	34	0x2b3a8	34		
 primary	function	relocated	masked	0x2b874	scpi_query_DIAGnostic_OS_STACk	applications/scpi/handlers/diagnostic	34	0x2b3ca	34		
 primary	function	relocated	masked	0x2b896	scpi_query_DIAGnostic_PTIMe_TINTerval	applications/scpi/handlers/diagnostic	132	0x2b3ec	132		
-primary	function	changed	handler	0x2b91a	scpi_query_DIAGnostic_QUERy_RESPonse	applications/scpi/handlers/diagnostic	82	0x2b470	86	0.889	26 -> 28 instructions: 4 replaced, 3 inserted, 1 deleted; calls added: return_zero; calls removed: scpi_console_port; first: jsr scpi_console_port -> - | cmpl %a0@(18),%d0; bnes L+38 -> movel %a0@(18),%sp@-; jsr return_zero | bras L+54 -> bras L+58
+primary	function	changed	handler	0x2b91a	scpi_query_DIAGnostic_QUERy_RESPonse	applications/scpi/handlers/diagnostic	82	0x2b470	86	0.889	26 -> 28 instructions: 4 replaced, 3 inserted, 1 deleted; calls added: scpi_input_source; calls removed: scpi_console_port; first: jsr scpi_console_port -> - | cmpl %a0@(18),%d0; bnes L+38 -> movel %a0@(18),%sp@-; jsr scpi_input_source | bras L+54 -> bras L+58
 primary	function	changed	handler	0x2b96c	scpi_set_SYSTem_COMMunicate_SER1_PROMpt	applications/scpi/handlers/system	22	0x300be	26	0.500	7 -> 9 instructions: 1 replaced, 4 inserted, 2 deleted; calls added: other:0x2917c; first: tstw %a0@; bnes L+18 -> - | moveb %d0,scpi_prompt_enabled -> moveb %d0,%sp@-; movew %a0@,%d0
 primary	function	changed	handler	0x2b982	scpi_query_SYSTem_COMMunicate_SER1_PROMpt	applications/scpi/handlers/system	26	0x300d8	32	0.476	9 -> 12 instructions: 2 replaced, 5 inserted, 2 deleted; calls added: other:0x29154; first: tstw %a0@; bnes L+22 -> movew %a0@,%d0; moveb %d0,%sp@- | moveq #0,%d0; moveb scpi_prompt_enabled,%d0 -> -
 primary	function	relocated	masked	0x2b99c	scpi_set_DIAGnostic_SER1_RESTricted	applications/scpi/handlers/diagnostic	48	0x2b4c6	48		
@@ -1122,7 +1122,7 @@ primary	function	relocated	masked	0x2dd94	scpi_query_SOURce_PTIMe_LEAPsecond_DAT
 primary	function	relocated	masked	0x2ddfc	scpi_query_SOURce_PTIMe_LEAPsecond_DURation	applications/scpi/handlers/source_ptime	76	0x2dd8e	76		
 primary	function	relocated	masked	0x2de48	scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime	applications/scpi/handlers/source_ptime	112	0x2ddda	112		
 primary	function	relocated	masked	0x2deb8	scpi_query_SOURce_PTIMe_LEAPsecond_STATe	applications/scpi/handlers/source_ptime	26	0x2de4a	26		
-primary	function	changed	handler	0x2ded2	scpi_query_SOURce_PTIMe_TCODe	applications/scpi/handlers/source_ptime	116	0x2de84	140	0.747	33 -> 42 instructions: 7 replaced, 12 inserted, 3 deleted; calls added: %pc@(other:0x2de64), return_zero; calls removed: scpi_console_port; first: - -> movel %d3,%sp@- | jsr scpi_console_port -> - | cmpl %a0@(18),%d0; bnes L+108 -> movel %a0@(18),%sp@-; jsr return_zero
+primary	function	changed	handler	0x2ded2	scpi_query_SOURce_PTIMe_TCODe	applications/scpi/handlers/source_ptime	116	0x2de84	140	0.747	33 -> 42 instructions: 7 replaced, 12 inserted, 3 deleted; calls added: %pc@(other:0x2de64), scpi_input_source; calls removed: scpi_console_port; first: - -> movel %d3,%sp@- | jsr scpi_console_port -> - | cmpl %a0@(18),%d0; bnes L+108 -> movel %a0@(18),%sp@-; jsr scpi_input_source
 primary	function	changed	handler	0x2df46	scpi_query_RTCM	applications/scpi/handlers/misc	176	0x2df10	170	0.712	52 -> 52 instructions: 13 replaced, 9 inserted, 9 deleted; calls added: %a3@, %pc@(other:0x2de64); calls removed: scpi_console_port, scpi_query_failed; first: moveml %d3-%d4/%a2,%sp@- -> moveml %d2/%d4/%a2-%a3,%sp@- | jsr scpi_console_port; cmpl %a2@(18),%d0 -> moveal #scpi_query_failed,%a3 | moveb %d0,%d3 -> moveb %d0,%d2; moveb %d2,%sp@-
 primary	function	relocated	masked	0x2dff6	scpi_set_SOURce_PTIMe_TCODe_FORMat	applications/scpi/handlers/source_ptime	94	0x2dfba	94		
 primary	function	relocated	masked	0x2e054	scpi_query_SOURce_PTIMe_TCODe_FORMat	applications/scpi/handlers/source_ptime	28	0x2e018	28		
@@ -1227,7 +1227,7 @@ primary	function	relocated	masked	0x30048	scpi_query_RSST	applications/scpi/hand
 primary	function	relocated	masked	0x3005a	scpi_query_SOURce_PTIMe_FFOMerit	applications/scpi/handlers/source_ptime	88	0x2fe2a	88		
 primary	function	relocated	masked	0x300b2	scpi_query_SOURce_PTIMe_TINTerval	applications/scpi/handlers/source_ptime	86	0x2fe82	86		
 primary	function	relocated	masked	0x30108	scpi_set_SOURce_PTIMe_SYNChronization_IMMediate	applications/scpi/handlers/source_ptime	38	0x2fed8	38		
-primary	function	changed	handler	0x3012e	scpi_query_SYSTem_COMMunicate	applications/scpi/handlers/system	26	0x2fefe	40	0.571	8 -> 13 instructions: 2 replaced, 6 inserted, 1 deleted; calls added: return_zero; calls removed: scpi_console_port; first: jsr scpi_console_port -> - | cmpl %a0@(18),%d0; bnes L+22 -> movel %a0@(18),%sp@-; jsr return_zero | - -> bras L+36; moveal %sp@(8),%a0
+primary	function	changed	handler	0x3012e	scpi_query_SYSTem_COMMunicate	applications/scpi/handlers/system	26	0x2fefe	40	0.571	8 -> 13 instructions: 2 replaced, 6 inserted, 1 deleted; calls added: scpi_input_source; calls removed: scpi_console_port; first: jsr scpi_console_port -> - | cmpl %a0@(18),%d0; bnes L+22 -> movel %a0@(18),%sp@-; jsr scpi_input_source | - -> bras L+36; moveal %sp@(8),%a0
 primary	function	relocated	masked	0x30148	scpi_query_SYSTem_COMMunicate_SER1_ADDRess	applications/scpi/handlers/system	18	0x2ff4e	18		
 primary	function	changed	handler	0x3015a	scpi_set_SYSTem_COMMunicate_SER1_FDUPlex	applications/scpi/handlers/system	98	0x2ff60	88	0.444	30 -> 24 instructions: 7 replaced, 8 inserted, 14 deleted; calls added: status_report_from; first: linkw %fp,#0; movel %a2,%sp@- -> moveal %sp@(4),%a0; cmpiw #2,%a0@ | addql #4,%sp -> - | movew %a2@(4),%d0; moveb %d0,%sp@- -> moveal %sp@(10),%a0; movew %a0@(4),%d0
 primary	function	changed	handler	0x301bc	scpi_query_SYSTem_COMMunicate_SER1_FDUPlex	applications/scpi/handlers/system	34	0x2ffb8	48	0.615	11 -> 15 instructions: 2 replaced, 6 inserted, 2 deleted; calls added: scpi_query_failed; first: tstw %a0@; bnes L+16 -> cmpiw #2,%a0@; bnes L+26 | bras L+22; moveb 0x101f55,%d0 -> - | - -> bras L+44; movel %sp@(12),%sp@-
@@ -1751,24 +1751,24 @@ primary	function	new	prologue			applications/scpi/requests		0x293c2	266		77 inst
 primary	function	new	gap			applications/scpi/requests		0x294cc	44		9 instructions, found gap; after pllc_request_e; calls: other:0x293c2
 primary	function	new	called			applications/scpi/engine		0x295b0	214		71 instructions, found called; after scpi_task_create; calls: other:0x2775a, other:0x29686
 primary	function	new	prologue			applications/scpi/engine		0x29740	72		22 instructions, found prologue; after scpi_task_create; calls: other:0x295b0
-primary	function	new	pointer			applications/scpi/handlers/status		0x29ec4	30		8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: return_zero, status_report_from
-primary	function	new	pointer			applications/scpi/handlers/status		0x29ee2	30		8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: return_zero, status_report_from
-primary	function	new	pointer			applications/scpi/handlers/status		0x29f00	30		8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: return_zero, status_report_from
-primary	function	new	pointer			applications/scpi/handlers/status		0x2a6b6	32		9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: return_zero, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/status		0x29ec4	30		8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: scpi_input_source, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/status		0x29ee2	30		8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: scpi_input_source, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/status		0x29f00	30		8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: scpi_input_source, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/status		0x2a6b6	32		9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_input_source, status_report_from
 primary	function	new	pointer			applications/scpi/handlers/status		0x2a6d6	18		5 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_query_failed
-primary	function	new	pointer			applications/scpi/handlers/status		0x2a6e8	32		9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: return_zero, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/status		0x2a6e8	32		9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_input_source, status_report_from
 primary	function	new	pointer			applications/scpi/handlers/status		0x2a708	18		5 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_query_failed
-primary	function	new	pointer			applications/scpi/handlers/status		0x2a71a	32		9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: return_zero, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/status		0x2a71a	32		9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_input_source, status_report_from
 primary	function	new	pointer			applications/scpi/handlers/status		0x2a73a	46		13 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: other:0x29740; strings: 'No Alarm'
 primary	function	new	handler			applications/scpi/handlers/diagnostic		0x2b2de	18		5 instructions, found handler; after scpi_set_DIAGnostic_LOG_WRITe; calls: scpi_query_failed
-primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b302	44		11 instructions, found pointer; after scpi_query_DIAGnostic_ME; calls: pllc_request_a, return_zero
+primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b302	44		11 instructions, found pointer; after scpi_query_DIAGnostic_ME; calls: pllc_request_a, scpi_input_source
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b332	26		8 instructions, found pointer; after scpi_set_DIAGnostic_ME; calls: return_byte
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b34c	22		7 instructions, found pointer; after scpi_set_DIAGnostic_ME; calls: adc_average
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b362	18		5 instructions, found pointer; after scpi_set_DIAGnostic_ME; calls: scpi_query_failed
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b374	18		5 instructions, found pointer; after scpi_set_DIAGnostic_ME; calls: scpi_query_failed
-primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b5a8	78		24 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: pllc_request_a, return_zero
+primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b5a8	78		24 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: pllc_request_a, scpi_input_source
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b5f6	42		12 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute
-primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b620	62		19 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: return_zero, scpi_numeric_set
+primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b620	62		19 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: scpi_input_source, scpi_numeric_set
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2b65e	44		12 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: float_to_unsigned, scpi_numeric_get
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2ba2a	30		8 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2ba48	18		6 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
@@ -1783,14 +1783,14 @@ primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2baea	18
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bafc	22		6 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bb12	18		6 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bb24	12		5 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
-primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bb30	58		17 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: return_zero, scpi_numeric_set
+primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bb30	58		17 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: scpi_input_source, scpi_numeric_set
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bb6a	44		12 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: float_to_unsigned, scpi_numeric_get
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bb96	18		5 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: scpi_query_failed
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bba8	18		5 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: scpi_query_failed
-primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bbba	48		13 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: pllc_request_a, return_zero
+primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bbba	48		13 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: pllc_request_a, scpi_input_source
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bbea	26		8 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: return_byte
 primary	function	new	pointer			applications/scpi/handlers/diagnostic		0x2bc04	10		3 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: other:0x13b1a
-primary	function	new	prologue			applications/scpi/handlers/stubs		0x2bfe8	222		59 instructions, found prologue; after scpi_query_RSSU; calls: clamp_float_to_step_double, float_multiply, integer_to_float, pllc_request_c, return_zero
+primary	function	new	prologue			applications/scpi/handlers/stubs		0x2bfe8	222		59 instructions, found prologue; after scpi_query_RSSU; calls: clamp_float_to_step_double, float_multiply, integer_to_float, pllc_request_c, scpi_input_source
 primary	function	new	pointer			applications/scpi/handlers/stubs		0x2c0c6	50		13 instructions, found pointer; after scpi_query_RSSU; calls: float_multiply, scpi_numeric_get
 primary	function	new	pointer			applications/scpi/handlers/source_gpsystem		0x2c22c	50		14 instructions, found pointer; after scpi_query_SOURce_GPSystem_ADELay; calls: float_multiply_in_place, scpi_set_SOURce_GPSystem_ADELay
 primary	function	new	pointer			applications/scpi/handlers/source_gpsystem		0x2c25e	50		13 instructions, found pointer; after scpi_query_SOURce_GPSystem_ADELay; calls: float_divide, scpi_numeric_get
@@ -1798,23 +1798,23 @@ primary	function	new	pointer			applications/scpi/handlers/source_gpsystem		0x2cb
 primary	function	new	pointer			applications/scpi/handlers/led		0x2d90c	18		5 instructions, found pointer; after scpi_query_LED_ALARm; calls: scpi_query_failed
 primary	function	new	pointer			applications/scpi/handlers/led		0x2d91e	18		5 instructions, found pointer; after scpi_query_LED_ALARm; calls: scpi_query_failed
 primary	function	new	gap			applications/scpi/handlers/source_ptime		0x2de64	32		11 instructions, found gap; after scpi_query_SOURce_PTIMe_LEAPsecond_STATe
-primary	function	new	pointer			applications/scpi/handlers/stubs		0x2e30c	74		18 instructions, found pointer; after scpi_query_RTZO; calls: pllc_request_a, pllc_request_b, return_zero
+primary	function	new	pointer			applications/scpi/handlers/stubs		0x2e30c	74		18 instructions, found pointer; after scpi_query_RTZO; calls: pllc_request_a, pllc_request_b, scpi_input_source
 primary	function	new	called			applications/scpi/handlers/sense		0x2eff0	36		11 instructions, found called; after piece_2f2e2; strings: 'NuNV'
 primary	function	new	called			services/status		0x2f1b8	2		1 instructions, found called; after status_init
 primary	function	new	prologue			services/status		0x2f1ba	52		15 instructions, found prologue; after status_init; calls: status_read_condition; strings: 'N^Nu/9'
 primary	function	new	pointer			services/status		0x2f1ee	14		3 instructions, found pointer; after status_init; calls: status_clear_events
-primary	function	new	pointer			applications/scpi/handlers/source_roscillator		0x2f82c	94		27 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: return_zero, scpi_numeric_set, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/source_roscillator		0x2f82c	94		27 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: scpi_input_source, scpi_numeric_set, status_report_from
 primary	function	new	pointer			applications/scpi/handlers/source_roscillator		0x2f88a	70		20 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: float_to_integer, scpi_numeric_get, scpi_query_failed; strings: 'Nu o'
-primary	function	new	pointer			applications/scpi/handlers/source_roscillator		0x2f8d0	32		9 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: return_zero, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/source_roscillator		0x2f8d0	32		9 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: scpi_input_source, status_report_from
 primary	function	new	pointer			applications/scpi/handlers/source_roscillator		0x2f8f0	18		5 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: scpi_query_failed
 primary	function	new	pointer			applications/scpi/handlers/source_roscillator		0x2f902	4		2 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold
 primary	function	new	pointer			applications/scpi/handlers/source_roscillator		0x2f906	18		5 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: scpi_query_failed
 primary	function	new	pointer			applications/scpi/handlers/stubs		0x2f93c	46		15 instructions, found pointer; after scpi_query_RAT3; calls: scpi_query_failed
 primary	function	new	pointer			applications/scpi/handlers/system		0x2ff26	40		13 instructions, found pointer; after scpi_query_SYSTem_COMMunicate; calls: scpi_query_failed; strings: 'Nu//'
-primary	function	new	pointer			applications/scpi/handlers/system		0x2ffe8	88		25 instructions, found pointer; after scpi_query_SYSTem_COMMunicate_SER1_FDUPlex; calls: pllc_request_a, return_zero, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/system		0x2ffe8	88		25 instructions, found pointer; after scpi_query_SYSTem_COMMunicate_SER1_FDUPlex; calls: pllc_request_a, scpi_input_source, status_report_from
 primary	function	new	pointer			applications/scpi/handlers/system		0x30040	48		15 instructions, found pointer; after scpi_query_SYSTem_COMMunicate_SER1_FDUPlex; calls: scpi_query_failed; strings: 'Nu o'
-primary	function	new	pointer			applications/scpi/handlers/system		0x3061a	38		10 instructions, found pointer; after scpi_query_SYSTem_LANGuage; calls: pllc_request_b, return_zero
-primary	function	new	pointer			applications/scpi/handlers/system		0x306d2	32		9 instructions, found pointer; after scpi_query_SYSTem_PRINt_LENGth; calls: return_zero, status_report_from
+primary	function	new	pointer			applications/scpi/handlers/system		0x3061a	38		10 instructions, found pointer; after scpi_query_SYSTem_LANGuage; calls: pllc_request_b, scpi_input_source
+primary	function	new	pointer			applications/scpi/handlers/system		0x306d2	32		9 instructions, found pointer; after scpi_query_SYSTem_PRINt_LENGth; calls: scpi_input_source, status_report_from
 primary	function	new	pointer			applications/scpi/handlers/system		0x306f2	18		5 instructions, found pointer; after scpi_query_SYSTem_PRINt_LENGth; calls: scpi_query_failed
 primary	function	new	gap			services/records		0x30a26	16		3 instructions, found gap; after lifetime_record_write; calls: lifetime_record_write
 primary	function	new	prologue			services/records		0x30b24	132		32 instructions, found prologue; after lifetime_update; calls: eeprom_write, memcmp, memset, record_checksum

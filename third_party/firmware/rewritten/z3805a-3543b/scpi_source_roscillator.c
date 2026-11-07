@@ -38,7 +38,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation(void* parameters,
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(
     void* parameters, void* response, scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   scpi_numeric_set(
       &scpi_param_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold, 0,

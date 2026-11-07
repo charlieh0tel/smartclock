@@ -250,7 +250,6 @@
 0x1dc2e	drtb_read	devices/duartb
 0x1e65c	duartb_isr	devices/duartb
 0x1e876	duartb_transmit_interrupt	devices/duartb
-0x1f328	sci_echo_none	devices/sci
 0x1f672	qspi_acquire	devices/qspi
 0x1f396	qspi_queue_setup	devices/qspi
 0x1f61c	qspi_start	devices/qspi
@@ -582,7 +581,7 @@
 0x289f4	arena_current	applications/scpi/engine
 0x289fc	arena_set	applications/scpi/engine
 0x28d70	scpi_query_failed	applications/scpi/engine	reports -0x20 through status_report_from for 72 queries
-0x29246	return_zero	applications/scpi/engine	the source argument handlers pass status_report_from
+0x29246	scpi_input_source	applications/scpi/engine	the source argument handlers pass status_report_from
 0x28cae	return_byte	applications/scpi/engine	handler helper
 0x28cb4	long_identity	applications/scpi/engine	handler helper; called by nothing
 0x28cf8	float_identity	applications/scpi/engine	handler helper; the EFC queries

@@ -10,7 +10,8 @@
 int32_t installer_scpi_format_response(scpi_port* output,
                                        scpi_response_item* item,
                                        scpi_call* call) {
-  installer_scpi_echo_length()[(uint8_t)installer_return_zero(output)] = 0;
+  installer_scpi_echo_length()[(uint8_t)installer_scpi_input_source(output)] =
+      0;
   for (int16_t offset = 0;; item++) {
     int32_t error =
         item->format(output, call->response + offset, item->choices, call);

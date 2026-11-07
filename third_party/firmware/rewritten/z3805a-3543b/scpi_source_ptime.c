@@ -157,3 +157,18 @@ int32_t scpi_query_SOURce_PTIMe_FFOMerit(void* parameters, void* response,
   *merit = tfom_code(tfom.bits);
   return 0;
 }
+
+/* :PTIMe:TCODe:FORMat F1 or F2: T1 or T2, to pllc. */
+int32_t scpi_set_SOURce_PTIMe_TCODe_FORMat(void* parameters, void* response,
+                                           scpi_call* call) {
+  scpi_word_parameter* format = parameters;
+
+  if (format->value == SCPI_SOURCE_PTIME_F1) {
+    pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T1,
+                   scpi_input_source(call->input));
+  } else if (format->value == SCPI_SOURCE_PTIME_F2) {
+    pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T2,
+                   scpi_input_source(call->input));
+  }
+  return 0;
+}

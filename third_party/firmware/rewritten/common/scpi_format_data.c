@@ -14,6 +14,6 @@ int32_t scpi_set_FORMat_DATA(void* parameters, void* response,
 
   pllc_request_a(&scpi_param_FORMat_DATA, 0,
                  scpi_two_choice(given->value, caller_d2),
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }

@@ -276,3 +276,18 @@ void status_summary_update(void) {
   }
   led_alarm = status_summary != 0;
 }
+
+/* status_report for a source that reports, a SCPI command or startup;
+ * the others, and any past REQUEST_SOURCE_INTERNAL, do not (0x2bf00). */
+void status_report_from(int16_t code, request_source source) {
+  /* Whether each source reports, by the jump table at status_report_from+0x16.
+   */
+  static const bool SOURCE_REPORTS[REQUEST_SOURCE_INTERNAL + 1] = {
+      [REQUEST_SOURCE_SCPI] = true,
+      [REQUEST_SOURCE_STARTUP] = true,
+  };
+
+  if (source < sizeof SOURCE_REPORTS && SOURCE_REPORTS[source]) {
+    status_report(code);
+  }
+}

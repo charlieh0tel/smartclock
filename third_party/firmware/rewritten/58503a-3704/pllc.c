@@ -10,11 +10,6 @@
  * file after its own, so the types and prototypes it declares are in scope;
  * each function here keeps its generated prototype. */
 
-/* A descriptor's flags: the request goes to the GPS through
- * pll_scpi_send_to_loop, the value is saved in the NV register, and in
- * the EEPROM record at 0x400000. */
-static const uint16_t PLLC_FLAG_SEND_TO_GPS = 1;
-
 /* The hooks' and actions' shapes, which the descriptors keep as void
  * pointers.  A changed hook is passed its caller's D3 first. */
 typedef void pllc_changed_hook(uint32_t caller_d3, int32_t index,
@@ -326,4 +321,51 @@ void temporary_hold_set(int32_t index, int32_t source) {
   pll.hold_causes |= HOLD_CAUSE_TEMPORARY_MODE;
   pll.ti_limit_override = 1;
   pll_scpi_signal_delay = 1;
+}
+
+/* Copies a request into pll_scpi_param to pll_scpi_values, as its
+ * descriptor's type and a numeric one's is_integer say. */
+void get_setup_vars(pllc_request* request) {
+  pll_scpi_source = request->source;
+  if (pll_scpi_source == REQUEST_SOURCE_SCPI) {
+    pll_scpi_waiting_task = task_scpi;
+  }
+  pll_scpi_index = request->index;
+  pll_scpi_param = request->param;
+  pllc_param* param = pllc_current();
+  switch (param->type) {
+    case SCPI_PARAM_NUMERIC:
+      switch ((int8_t)param->numeric.is_integer) {
+        case PLLC_VALUE_FLOAT:
+          pll_scpi_values[0] = request->values[1];
+          break;
+        case PLLC_VALUE_INTEGER:
+          pll_scpi_values[0] = request->values[0];
+          break;
+        case PLLC_VALUE_LIST: {
+          /* values[0] holds the list's address. */
+          uint32_t* list = (uint32_t*)request->values[0];
+          for (uint8_t i = 0; i <= (int8_t)pll_scpi_index; i++) {
+            pll_scpi_values[i] = list[i];
+          }
+          break;
+        }
+        case PLLC_VALUE_PAIR:
+          pll_scpi_values[0] = request->values[0];
+          pll_scpi_values[1] = request->values[1];
+          break;
+        default:
+          break;
+      }
+      break;
+    case SCPI_PARAM_SETTING:
+      pll_scpi_setting = request->setting;
+      break;
+    case SCPI_PARAM_ACTION:
+    case SCPI_PARAM_DOUBLE:
+      break;
+    default:
+      fatal_error("pll_scpi: get_setup_vars() -- unknown structure type");
+      break;
+  }
 }

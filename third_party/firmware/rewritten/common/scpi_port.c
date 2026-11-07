@@ -47,19 +47,6 @@ int32_t scpi_console_read(scpi_port* port, uint8_t* buffer, int32_t length) {
   return count;
 }
 
-/* Writes a character to the console, keeping it in the echo buffer, or
- * CR LF for an end. */
-void scpi_console_putc(scpi_port* port, int32_t character) {
-  if (character >= SCPI_PORT_CHARACTERS) {
-    console_write("\r\n");
-    return;
-  }
-  char text[2] = {character, 0};
-
-  console_write(text);
-  scpi_echo_text[scpi_echo_length++] = character;
-}
-
 /* scpi_console_write's loop: up to n characters of s, to its NUL. */
 void scpi_console_write_loop(scpi_port* port, char* s, int32_t n) {
   for (; n > 0 && *s != 0; n--, s++) {
@@ -72,13 +59,6 @@ uint8_t status_sre_get(void) { return service_request_enable; }
 
 /* The status byte, a method of the port. */
 uint8_t status_byte_get(void) { return status_byte; }
-
-/* Prompts again when the status model that changed is the main one. */
-void status_prompt_refresh(status_model* status, int32_t error) {
-  if (status == status_object) {
-    scpi_prompt(error);
-  }
-}
 
 /* Sets bits of the status byte, a method of the port. */
 void status_byte_set_bits(scpi_port* port, int32_t bits) {

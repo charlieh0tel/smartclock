@@ -1,6 +1,9 @@
-/* What the calendar, the clock record, the leap second and the time code
- * share (calendar.c, clock.c, leap.c, timecode.c): a time's and a date's
- * fields, their packing and the units between them. The exported C
+/* What the calendar, the clock record, the klok task, the leap second,
+ * the time code and the status screen share (calendar.c, clock.c,
+ * klok.c, leap.c, timecode.c, screen.c): a time's and a date's fields,
+ * their packing and the units between them, the months, the calendar's
+ * days before a month and the GPS-UTC offset as a change, and the klok
+ * task's message size. The exported C
  * includes the hand-written headers after its own declarations and
  * before the hand-written .c files, so every one of them can use it.
  *
@@ -36,6 +39,8 @@ static const uint8_t CLOCK_HIGH_SHIFT = 2 * 8;
 
 /* A minute 59 or 61 seconds long, nv_settings.leap_minute_length. */
 static const uint8_t CLOCK_LEAP_MINUTE_SHORT = 60 - 1;
+
+static const uint8_t CLOCK_LEAP_MINUTE_LONG = 60 + 1;
 
 static uint32_t clock_pack(uint32_t high, uint32_t middle, uint32_t low) {
   return high << CLOCK_HIGH_SHIFT |
@@ -74,3 +79,49 @@ static time_of_day clock_time_of(uint32_t bits) {
       .second = clock_low(bits),
   };
 }
+
+/* The months the calendar's arithmetic and the leap second's dates
+ * name, 1 to 12. */
+static const uint8_t CLOCK_FEBRUARY = 2;
+
+static const uint8_t CLOCK_MARCH = 3;
+
+static const uint8_t CLOCK_APRIL = 4;
+
+static const uint8_t CLOCK_JUNE = 6;
+
+static const uint8_t CLOCK_JULY = 7;
+
+static const uint8_t CLOCK_SEPTEMBER = 9;
+
+static const uint8_t CLOCK_OCTOBER = 10;
+
+static const uint8_t CLOCK_DECEMBER = 12;
+
+static const uint8_t CLOCK_MONTHS_PER_YEAR = 12;
+
+static const uint16_t CLOCK_DAYS_PER_YEAR = 365;
+
+static const uint8_t CLOCK_YEARS_PER_LEAP = 4;
+
+static const uint16_t CLOCK_YEAR_1900 = 1900;
+
+/* The days in a year before a month, 1 to 12.  The image indexes its
+ * tables by the month unchecked: month 0 reads the word before the table,
+ * a month past 12 the words after it, so these stay the image's. */
+static uint16_t clock_days_before_month(uint8_t month, bool leap) {
+  const int16_t* table = leap ? days_before_month_leap : days_before_month;
+
+  return table[month - 1];
+}
+
+/* The GPS-UTC offset as a change to a date and time, and whether to add it
+ * (or take it away): its magnitude as hours, minutes and seconds. */
+static bool clock_offset_change(int16_t offset, packed_datetime* change) {
+  change->time = clock_time_of(seconds_to_hms(offset < 1 ? -offset : offset));
+  return offset >= 1;
+}
+
+/* The klok task's error messages' text, which klok_task_create and
+ * clk_do format: an array size, so #define. */
+#define KLOK_MESSAGE_SIZE 80

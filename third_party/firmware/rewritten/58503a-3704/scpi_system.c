@@ -105,7 +105,7 @@ int32_t scpi_query_SYSTem_COMMunicate(void* parameters, void* response,
   static const uint16_t SERIAL2 = 1;
   uint16_t* choice = response;
 
-  *choice = (int8_t)return_zero(call->input) == REQUEST_SOURCE_SCPI
+  *choice = (int8_t)scpi_input_source(call->input) == REQUEST_SOURCE_SCPI
                 ? SCPI_SYSTEM_SERIAL1
                 : SERIAL2;
   return 0;
@@ -136,9 +136,9 @@ int32_t scpi_query_SYSTem_COMMunicate_ALARm_ADDRess(void* parameters,
 static void scpi_system_duartb_set(int16_t port, scpi_setting_param* setting,
                                    uint8_t value, const scpi_call* call) {
   if (port == SCPI_PORT_DUART_B) {
-    pllc_request_a(setting, 0, value, return_zero(call->input));
+    pllc_request_a(setting, 0, value, scpi_input_source(call->input));
   } else {
-    status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+    status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
   }
 }
 
@@ -205,9 +205,9 @@ int32_t scpi_set_SYSTem_COMMunicate_ALARm_PRESet(void* parameters,
   const int16_t* port = parameters;
 
   if (*port == SCPI_PORT_DUART_B) {
-    pllc_request_b(&scpi_action_SER1_PRESet, 0, return_zero(call->input));
+    pllc_request_b(&scpi_action_SER1_PRESet, 0, scpi_input_source(call->input));
   } else {
-    status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+    status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
   }
   return 0;
 }
@@ -275,7 +275,7 @@ int32_t scpi_set_SYSTem_COMMunicate_ALARm_RECeive_BITS(void* parameters,
                            : given->number.value >= SCPI_SYSTEM_EIGHT_BITS;
 
   pllc_request_a(&scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS, 0,
-                 eight_bits, return_zero(call->input));
+                 eight_bits, scpi_input_source(call->input));
   return 0;
 }
 
@@ -398,7 +398,7 @@ int32_t scpi_set_SYSTem_COMMunicate_ALARm_RECeive_SBITs(void* parameters,
           : given->number.value >= SCPI_SYSTEM_TWO_STOP_BITS;
 
   pllc_request_a(&scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs, 0,
-                 two_stop_bits, return_zero(call->input));
+                 two_stop_bits, scpi_input_source(call->input));
   return 0;
 }
 
@@ -437,7 +437,7 @@ int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response,
   for (int8_t i = 0; given->text[i] != 0; i++) {
     given->text[i] = (char)toupper(given->text[i]);
   }
-  const request_source source = return_zero(call->input);
+  const request_source source = scpi_input_source(call->input);
 
   if ((int8_t)source != REQUEST_SOURCE_SCPI) {
     return 0;
@@ -465,7 +465,7 @@ int32_t scpi_query_SYSTem_LANGuage(void* parameters, void* response,
 
 /* :PON: :SYSTem:PON's action, by pllc (0x3061a). */
 int32_t scpi_set_SYSTem_PON(void* parameters, void* response, scpi_call* call) {
-  pllc_request_b(&scpi_action_SYSTem_PON, 0, return_zero(call->input));
+  pllc_request_b(&scpi_action_SYSTem_PON, 0, scpi_input_source(call->input));
   return 0;
 }
 
@@ -475,7 +475,8 @@ int32_t scpi_query_SYSTem_PRINt(void* parameters, void* response,
                                 scpi_call* call) {
   uint16_t* answer = response;
 
-  pllc_request_c(&scpi_param_SYSTem_PRINt, 0, 0, 0, return_zero(call->input));
+  pllc_request_c(&scpi_param_SYSTem_PRINt, 0, 0, 0,
+                 scpi_input_source(call->input));
   *answer = 0;
   /* printf returns an int32_t, a long, and printf_function an int */
   status_screen_print(0, console_write, (printf_function*)printf);

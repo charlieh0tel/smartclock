@@ -9,18 +9,6 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
-/* A register's query's parameters: its index, the path's word. */
-typedef struct scpi_status_query {
-  int16_t index; /* +0x00 */
-} scpi_status_query;
-
-/* :OPERation:HARDware's query's parameters: :OPERation's word, then its
- * own index. */
-typedef struct scpi_status_hardware_query {
-  int16_t operation; /* +0x00 */
-  int16_t index;     /* +0x02 */
-} scpi_status_hardware_query;
-
 /* :QUEStionable's :USER setters' parameters: the register's word, then
  * the choice, :CONDition's CLEar 0 or SET 1
  * (scpi_choices_set_STATus_QUEStionable_CONDition_USER_1), :EVENt's NTR 0 or
@@ -77,7 +65,7 @@ int32_t scpi_set_STATus_QUEStionable_CONDition_USER(void* parameters,
   const scpi_status_user* given = parameters;
 
   pllc_request_a(&scpi_param_STATus_QUEStionable_USER, 0, given->choice,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -92,9 +80,9 @@ int32_t scpi_set_STATus_QUEStionable_EVENt_USER(void* parameters,
   bool rising = given->choice == POSITIVE_TRANSITION;
 
   pllc_request_a(&scpi_param_STATus_QUEStionable_USER, 0, !rising,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   pllc_request_a(&scpi_param_STATus_QUEStionable_USER, 0, rising,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -103,7 +91,7 @@ int32_t scpi_set_STATus_QUEStionable_EVENt_USER(void* parameters,
 int32_t scpi_set_STATus_PRESet(void* parameters, void* response,
                                scpi_call* call) {
   pllc_request_b(&scpi_action_STATus_PRESet, STATUS_PRESET_SCPI,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -112,6 +100,6 @@ int32_t scpi_set_STATus_PRESet(void* parameters, void* response,
 int32_t scpi_set_STATus_PRESet_ALARm(void* parameters, void* response,
                                      scpi_call* call) {
   pllc_request_b(&scpi_action_STATus_PRESet, STATUS_PRESET_ALARM,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }

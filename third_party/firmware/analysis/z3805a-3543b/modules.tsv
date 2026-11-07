@@ -612,7 +612,7 @@
 0x2975e	arena_current	applications/scpi/engine
 0x29766	arena_set	applications/scpi/engine
 0x29ade	scpi_query_failed	applications/scpi/engine	reports -0x20 through status_report_from for 72 queries
-0x29ada	return_zero	applications/scpi/engine	the source argument handlers pass status_report_from
+0x29ada	scpi_input_source	applications/scpi/engine	the source argument handlers pass status_report_from
 0x29a18	return_byte	applications/scpi/engine	handler helper
 0x29a1e	long_identity	applications/scpi/engine	handler helper; called by nothing
 0x29a62	float_identity	applications/scpi/engine	handler helper; the EFC queries

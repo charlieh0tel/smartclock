@@ -15,29 +15,10 @@ void time_zone_done(void) {
   time_zone_change_pending = 0;
 }
 
-/* A date's or time of day's response items. */
-typedef struct scpi_source_ptime_fields {
-  scpi_short_item first;  /* +0x00: the year, or the hour */
-  scpi_short_item second; /* +0x04: the month, or the minute */
-  scpi_short_item third;  /* +0x08: the day, or the second */
-} scpi_source_ptime_fields;
-
-/* A packed date, year << 16 | month << 8 | day (calendar_date), as
- * response items. */
-static void scpi_source_ptime_date_items(uint32_t date,
-                                         scpi_source_ptime_fields* fields) {
-  static const uint32_t YEAR_SHIFT = 16;
-  static const uint32_t MONTH_SHIFT = 8;
-
-  fields->first.value = (uint16_t)(date >> YEAR_SHIFT);
-  fields->second.value = (date >> MONTH_SHIFT) & CPU_BYTE_MASK;
-  fields->third.value = date & CPU_BYTE_MASK;
-}
-
 /* :PTIMe:PPS:EDGE: a stub; -113, Undefined header. */
 int32_t scpi_set_SOURce_PTIMe_PPS_EDGE(void* parameters, void* response,
                                        scpi_call* call) {
-  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
   return 0;
 }
 
@@ -88,7 +69,7 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(void* parameters,
 int32_t scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate(
     void* parameters, void* response, scpi_call* call) {
   pllc_request_b(&scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate, 0,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -101,36 +82,13 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(void* parameters,
                                                    void* response,
                                                    scpi_call* call) {
   char** answer = response;
-  char* text = scpi_response_texts[(uint8_t)return_zero(call->input)];
+  char* text = scpi_response_texts[(uint8_t)scpi_input_source(call->input)];
   int32_t gps_time = leap_gps_time();
 
   sprintf(text, "#H%08X", gps_time);
   *answer = text;
   if (gps_time == 0) {
     return scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE, call);
-  }
-  return 0;
-}
-
-/* :PTIMe:TCODe:FORMat's keywords, by their indexes in its list
- * (scpi_choices_set_SOURce_PTIMe_TCODe_FORMat_1): F1 and F2, the manual's T1
- * and T2 (097-z3801-01, page 4-12). */
-enum {
-  SCPI_SOURCE_PTIME_F1 = 0,
-  SCPI_SOURCE_PTIME_F2 = 1,
-};
-
-/* :PTIMe:TCODe:FORMat F1 or F2: T1 or T2, to pllc. */
-int32_t scpi_set_SOURce_PTIMe_TCODe_FORMat(void* parameters, void* response,
-                                           scpi_call* call) {
-  scpi_word_parameter* format = parameters;
-
-  if (format->value == SCPI_SOURCE_PTIME_F1) {
-    pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T1,
-                   return_zero(call->input));
-  } else if (format->value == SCPI_SOURCE_PTIME_F2) {
-    pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T2,
-                   return_zero(call->input));
   }
   return 0;
 }
@@ -158,7 +116,7 @@ int32_t scpi_query_SOURce_PTIMe_TIME(void* parameters, void* response,
 int32_t scpi_query_SOURce_PTIMe_TIME_STRing(void* parameters, void* response,
                                             scpi_call* call) {
   char** answer = response;
-  char* text = scpi_response_texts[(uint8_t)return_zero(call->input)];
+  char* text = scpi_response_texts[(uint8_t)scpi_input_source(call->input)];
   time_of_day time;
 
   if ((uint8_t)get_date_time(0, &time) != 0) {
@@ -179,13 +137,13 @@ int32_t scpi_set_SOURce_PTIMe_TZONe(void* parameters, void* response,
   /* The values pllc takes: hours and minutes. */
   static const uint8_t LAST_VALUE = 1;
   scpi_short_parameter* zone = parameters;
-  int32_t* staged = scpi_staged[(uint8_t)return_zero(call->input)];
+  int32_t* staged = scpi_staged[(uint8_t)scpi_input_source(call->input)];
 
   staged[0] = zone[0].value;
   staged[1] = zone[1].kind == SCPI_NONE ? 0 : zone[1].value;
   time_zone_changed();
   pllc_request_d(&scpi_param_SOURce_PTIMe_TZONe, LAST_VALUE, (uint32_t)staged,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -218,6 +176,6 @@ int32_t scpi_set_SOURce_PTIMe_SYNChronization_IMMediate(void* parameters,
                                                         void* response,
                                                         scpi_call* call) {
   pllc_request_b(&scpi_action_SOURce_PTIMe_SYNChronization_IMMediate, 0,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }

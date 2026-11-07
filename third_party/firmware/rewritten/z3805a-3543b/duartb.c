@@ -350,3 +350,16 @@ void duartb_transmit_interrupt(void) {
   }
   duartb.in_transmit_interrupt = 0;
 }
+
+/* Writes a string to channel B by polling, in supervisor mode; returns
+ * its length (0x1df12). */
+int32_t console_write_polled(char* s) {
+  int32_t count = 0;
+  uint16_t sr = cpu_enter_supervisor();
+
+  for (; *s != 0; s++, count++) {
+    duartb_putc_polled(*s);
+  }
+  cpu_sr_write(sr);
+  return count;
+}

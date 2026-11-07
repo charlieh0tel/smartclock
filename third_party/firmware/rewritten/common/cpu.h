@@ -2,7 +2,8 @@
  * by hand for the decompiler's C (docs/firmware/README.md, "Hand-written
  * C"): the status register's interrupt levels and the helpers that move
  * to and from it, an exception frame's format and vector word, and the
- * software watchdog's service values.  The exported C includes this
+ * software watchdog's service values; and a byte's, a word's and a
+ * long's bits, and a 64-bit number as two longs.  The exported C includes this
  * file before the hand-written .c files, after its own declarations, so
  * every one of them can use it.  The registers are mc68331.h's. */
 
@@ -18,6 +19,12 @@ static const uint32_t CPU_WORD_MASK = 0xffff;
 static const int32_t CPU_LONG_BITS = 32;
 
 static const int32_t CPU_LONG_BYTES = 4;
+
+/* A 64-bit number as the 64-bit routines (arithmetic.c and each image's
+ * own) pass it, two longs, the high first. */
+static uint64_t arithmetic_int64(uint32_t high, uint32_t low) {
+  return (uint64_t)high << CPU_LONG_BITS | low;
+}
 
 /* A shift by a register takes its count modulo 64 (MC68000PRM, LSL). */
 static const uint32_t CPU_SHIFT_COUNT_MASK = 0x3f;
@@ -222,14 +229,19 @@ static const uint16_t CPU_SR_CCR_MASK = 0x00ff;
 /* The status register enter_supervisor gave, entered_sr, with the
  * condition codes at the call of the function it was entered for,
  * callers_ccr, which CPU_GIVING_CALLERS_CCR gives. */
-static uint16_t cpu_sr_at_call(uint16_t entered_sr, uint32_t callers_ccr) {
+__attribute__((always_inline)) static inline uint16_t cpu_sr_at_call(
+    uint16_t entered_sr, uint32_t callers_ccr) {
   return (entered_sr & ~CPU_SR_CCR_MASK) | (callers_ccr & CPU_SR_CCR_MASK);
 }
 
 /* Masks every interrupt, from sr, the status register as it was at the
  * call: enter_supervisor_mode's and its installer copy's body; returns
- * sr. */
-static uint16_t cpu_interrupts_mask_all(uint16_t sr) {
+ * sr.  In line, as the one before and the next: each runs between
+ * enter_supervisor and the move back to the caller's mode, on the
+ * supervisor stack, which a call of its own would push to and this one
+ * would return from on the caller's. */
+__attribute__((always_inline)) static inline uint16_t cpu_interrupts_mask_all(
+    uint16_t sr) {
   cpu_sr_write(sr | CPU_IPL_7);
   return sr;
 }
@@ -237,7 +249,8 @@ static uint16_t cpu_interrupts_mask_all(uint16_t sr) {
 /* Moves saved, the status register as it was, back with its interrupt
  * mask, bits 10 to 8, mask's: set_interrupt_mask's and its installer
  * copy's body; returns saved. */
-static uint16_t cpu_interrupt_mask_set(uint16_t saved, uint16_t mask) {
+__attribute__((always_inline)) static inline uint16_t cpu_interrupt_mask_set(
+    uint16_t saved, uint16_t mask) {
   cpu_sr_write((saved & ~CPU_IPL_7) | (mask & CPU_IPL_7));
   return saved;
 }

@@ -42,7 +42,7 @@
 #   gps_pps_monitor_reset and internal_pps_monitor_reset at 0x18574,
 #   0x238b0 and 0x23a3c, one store ahead of the Z3805A's (image_diff
 #   takes the stores after it); enter_installer at 0x130da, which
-#   deletes fpnl first (image_diff takes its trap #11); return_zero at
+#   deletes fpnl first (image_diff takes its trap #11); scpi_input_source at
 #   0x29246, the handlers' (image_diff takes an uncalled tail at
 #   0x28d98); scpi_console_port at 0x28db4 and the installer's at
 #   installer::0x10739c, the port layer's for port 2 (image_diff takes
@@ -313,7 +313,7 @@
 0x1ee6a	function	task_debug_message	context	prints "task: message" with the calling task's name, while debug_enabled (from the Z3805A 3543B, by image_diff: relocated)	void task_debug_message(char *message)
 0x160fa	function	task_name	context	the 4-character name at offset 0x24 of a task's record (from the Z3805A 3543B, by image_diff: relocated)	char * task_name(void *task)
 0x1efea	function	fatal_error	context	keeps the message and task name at crash_message, prints them and "RESET to recover.", then hangs (from the Z3805A 3543B, by image_diff: relocated)	void fatal_error(char *message)
-0x29246	function	return_zero	context	the source a command's input port gives, always 0; every SCPI handler that reports a status condition, starts a request or picks a text buffer passes it its call's input (from the Z3805A 3543B, by image_diff, paired by docs/firmware/58503a-3704.md: docs/firmware/58503a-3704.md: the SCPI handlers' 154 calls with their call's input)	int32_t return_zero(scpi_port *input)
+0x29246	function	scpi_input_source	context	the source a command's input port gives, always 0; every SCPI handler that reports a status condition, starts a request or picks a text buffer passes it its call's input (from the Z3805A 3543B, by image_diff, paired by docs/firmware/58503a-3704.md: docs/firmware/58503a-3704.md: the SCPI handlers' 154 calls with their call's input)	int32_t scpi_input_source(scpi_port *input)
 0x31852	function	log_write	context	appends to the diagnostic log under its lock; :DIAG:LOG:WRIT and log_send call it (from the Z3805A 3543B, by image_diff: relocated)	int log_write(char *format, ...)
 0x1039ad	label	debug_enabled	context	gates every debug_ and task_debug_ output (from the Z3805A 3543B, by image_diff: moved +0x1d0 by 15 references at its start)	uint8_t
 0x100b2e	label	crash_message	context	fatal_error's message and task name, 80 characters (from the Z3805A 3543B, by image_diff: moved +0x1e0 by 3 references at its start)	char[80]
@@ -2087,7 +2087,7 @@ installer::0x10aae2	local	output	structures.md	installer_sprintf's record for sp
 #
 # the SCPI task's response areas, the serial and :SAMPle descriptors and
 # the bytes the C reached by address
-0x102a2c	label	scpi_response_texts	context	a query writes its text response into its source's, return_zero's, and answers its address (from the Z3805A 3543B, by image_diff: moved +0x302 by 9 references at its start)	scpi_response_text[2]
+0x102a2c	label	scpi_response_texts	context	a query writes its text response into its source's, scpi_input_source's, and answers its address (from the Z3805A 3543B, by image_diff: moved +0x302 by 9 references at its start)	scpi_response_text[2]
 0x102c60	label	scpi_response_lists	context	the satellite lists and :ROBin:POINts?' counts, by source, each answered as a scpi_array (from the Z3805A 3543B, by image_diff: moved +0x302 by 5 references at its start)	scpi_response_list[2]
 0x102d10	label	scpi_staged	context	the values a setter of several sends pllc the address of, by source (from the Z3805A 3543B, by image_diff: moved +0x302 by 8 references at its start)	scpi_staged_values[2]
 0x103094	label	robin_points	context	:ROBin? and :ROBin:TSTamp?'s points, by source (from the Z3805A 3543B, by image_diff: moved +0x31e by 3 references at its start)	robin_point_record[2]
@@ -2578,7 +2578,7 @@ installer::0x10771e	function	installer_port_session_init	58503a-3704.md	the inst
 installer::0x107746	function	installer_port_object	58503a-3704.md	the installer's port_object; row added by hand for the 58503A 3704	scpi_port *installer_port_object(char port)
 0x291f6	function	port_update_rqs	58503a-3704.md	sets or clears RQS, bit 6, in the status byte by whether it shares a bit with the enable, RQS left out; for port 2 also stores that in status_request_service and led_alarm and drives the alarm outputs (alarm_outputs_set); status_update_rqs's ("The alarm outputs"); row added by hand for the 58503A 3704	void port_update_rqs(uint8_t *status_byte, uint8_t enable, char port)
 installer::0x10776e	function	installer_port_update_rqs	58503a-3704.md	the installer's port_update_rqs, RQS alone; row added by hand for the 58503A 3704	void installer_port_update_rqs(uint8_t *status_byte, uint8_t enable, char port)
-installer::0x1077a0	function	installer_return_zero	58503a-3704.md	the installer's return_zero: 0, the source installer_scpi_format_response picks its echo count by; row added by hand for the 58503A 3704	int32_t installer_return_zero(scpi_port *input)
+installer::0x1077a0	function	installer_scpi_input_source	58503a-3704.md	the installer's scpi_input_source: 0, the source installer_scpi_format_response picks its echo count by; row added by hand for the 58503A 3704	int32_t installer_scpi_input_source(scpi_port *input)
 0x293c2	function	scpi_task_run	58503a-3704.md	the SCPI task's body for a port: time sliced, a 2000-byte arena, the port's prompt on and its session, scpi_interpret over the trees given, then pForth or the installer by :SYSTem:LANGuage, as the Z3805A's scpi_task does; write and print are its error messages' routines; scpi_task gives it port 2; row added by hand for the 58503A 3704	void scpi_task_run(char port, status_model *status, scpi_child_list *main, scpi_child_list *common, scpi_task_write_function *write, scpi_task_print_function *print)
 installer::0x10791c	function	installer_scpi_task_run	58503a-3704.md	the installer's scpi_task_run, restarting where the primary enters the installer; row added by hand for the 58503A 3704	void installer_scpi_task_run(char port, status_model *status, scpi_child_list *main, scpi_child_list *common, scpi_task_write_function *write, scpi_task_print_function *print)
 0x1031da	label	scpi_status_model	read	the status model status_init gives the SCPI port, status_object (0x2f13c), which scpi_task passes scpi_task_run and port_status_model returns; row added by hand for the 58503A 3704	status_model *
@@ -2710,24 +2710,24 @@ installer::0x103a20	function	installer_duarta_drain_loop	read	installer_duarta_d
 # waves: entry rows, which Setup makes a function at, keeping
 # Ghidra's name, their note the extent in bytes and image_diff's
 # summary.  A wave that names one makes it a function row.
-0x29ec4	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: return_zero, status_report_from
-0x29ee2	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: return_zero, status_report_from
-0x29f00	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: return_zero, status_report_from
-0x2a6b6	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: return_zero, status_report_from
+0x29ec4	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: scpi_input_source, status_report_from
+0x29ee2	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: scpi_input_source, status_report_from
+0x29f00	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: scpi_input_source, status_report_from
+0x2a6b6	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_input_source, status_report_from
 0x2a6d6	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_query_failed
-0x2a6e8	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: return_zero, status_report_from
+0x2a6e8	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_input_source, status_report_from
 0x2a708	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_query_failed
-0x2a71a	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: return_zero, status_report_from
+0x2a71a	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: scpi_input_source, status_report_from
 0x2a73a	entry		image_diff	46 bytes; 13 instructions, found pointer; after scpi_set_STATus_PRESet_ALARm; calls: other:0x29740; strings: 'No Alarm'
 0x2b2de	entry		image_diff	18 bytes; 5 instructions, found handler; after scpi_set_DIAGnostic_LOG_WRITe; calls: scpi_query_failed
-0x2b302	entry		image_diff	44 bytes; 11 instructions, found pointer; after scpi_query_DIAGnostic_ME; calls: pllc_request_a, return_zero
+0x2b302	entry		image_diff	44 bytes; 11 instructions, found pointer; after scpi_query_DIAGnostic_ME; calls: pllc_request_a, scpi_input_source
 0x2b332	entry		image_diff	26 bytes; 8 instructions, found pointer; after scpi_set_DIAGnostic_ME; calls: return_byte
 0x2b34c	entry		image_diff	22 bytes; 7 instructions, found pointer; after scpi_set_DIAGnostic_ME; calls: adc_average
 0x2b362	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_set_DIAGnostic_ME; calls: scpi_query_failed
 0x2b374	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_set_DIAGnostic_ME; calls: scpi_query_failed
-0x2b5a8	entry		image_diff	78 bytes; 24 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: pllc_request_a, return_zero
+0x2b5a8	entry		image_diff	78 bytes; 24 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: pllc_request_a, scpi_input_source
 0x2b5f6	entry		image_diff	42 bytes; 12 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute
-0x2b620	entry		image_diff	62 bytes; 19 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: return_zero, scpi_numeric_set
+0x2b620	entry		image_diff	62 bytes; 19 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: scpi_input_source, scpi_numeric_set
 0x2b65e	entry		image_diff	44 bytes; 12 instructions, found pointer; after scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute; calls: float_to_unsigned, scpi_numeric_get
 0x2ba2a	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
 0x2ba48	entry		image_diff	18 bytes; 6 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
@@ -2742,33 +2742,33 @@ installer::0x103a20	function	installer_duarta_drain_loop	read	installer_duarta_d
 0x2bafc	entry		image_diff	22 bytes; 6 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
 0x2bb12	entry		image_diff	18 bytes; 6 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
 0x2bb24	entry		image_diff	12 bytes; 5 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset
-0x2bb30	entry		image_diff	58 bytes; 17 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: return_zero, scpi_numeric_set
+0x2bb30	entry		image_diff	58 bytes; 17 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: scpi_input_source, scpi_numeric_set
 0x2bb6a	entry		image_diff	44 bytes; 12 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: float_to_unsigned, scpi_numeric_get
 0x2bb96	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: scpi_query_failed
 0x2bba8	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: scpi_query_failed
-0x2bbba	entry		image_diff	48 bytes; 13 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: pllc_request_a, return_zero
+0x2bbba	entry		image_diff	48 bytes; 13 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: pllc_request_a, scpi_input_source
 0x2bbea	entry		image_diff	26 bytes; 8 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: return_byte
 0x2bc04	entry		image_diff	10 bytes; 3 instructions, found pointer; after scpi_query_DIAGnostic_TOFFset; calls: other:0x13b1a
-0x2bfe8	entry		image_diff	222 bytes; 59 instructions, found prologue; after scpi_query_RSSU; calls: clamp_float_to_step_double, float_multiply, integer_to_float, pllc_request_c, return_zero
+0x2bfe8	entry		image_diff	222 bytes; 59 instructions, found prologue; after scpi_query_RSSU; calls: clamp_float_to_step_double, float_multiply, integer_to_float, pllc_request_c, scpi_input_source
 0x2c0c6	entry		image_diff	50 bytes; 13 instructions, found pointer; after scpi_query_RSSU; calls: float_multiply, scpi_numeric_get
 0x2c22c	entry		image_diff	50 bytes; 14 instructions, found pointer; after scpi_query_SOURce_GPSystem_ADELay; calls: float_multiply_in_place, scpi_set_SOURce_GPSystem_ADELay
 0x2c25e	entry		image_diff	50 bytes; 13 instructions, found pointer; after scpi_query_SOURce_GPSystem_ADELay; calls: float_divide, scpi_numeric_get
 0x2cbce	entry		image_diff	4 bytes; 2 instructions, found pointer; after scpi_set_SOURce_GPSystem_POSition
 0x2d90c	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_query_LED_ALARm; calls: scpi_query_failed
 0x2d91e	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_query_LED_ALARm; calls: scpi_query_failed
-0x2e30c	entry		image_diff	74 bytes; 18 instructions, found pointer; after scpi_query_RTZO; calls: pllc_request_a, pllc_request_b, return_zero
-0x2f82c	entry		image_diff	94 bytes; 27 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: return_zero, scpi_numeric_set, status_report_from
+0x2e30c	entry		image_diff	74 bytes; 18 instructions, found pointer; after scpi_query_RTZO; calls: pllc_request_a, pllc_request_b, scpi_input_source
+0x2f82c	entry		image_diff	94 bytes; 27 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: scpi_input_source, scpi_numeric_set, status_report_from
 0x2f88a	entry		image_diff	70 bytes; 20 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: float_to_integer, scpi_numeric_get, scpi_query_failed; strings: 'Nu o'
-0x2f8d0	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: return_zero, status_report_from
+0x2f8d0	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: scpi_input_source, status_report_from
 0x2f8f0	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: scpi_query_failed
 0x2f902	entry		image_diff	4 bytes; 2 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold
 0x2f906	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; calls: scpi_query_failed
 0x2f93c	entry		image_diff	46 bytes; 15 instructions, found pointer; after scpi_query_RAT3; calls: scpi_query_failed
 0x2ff26	entry		image_diff	40 bytes; 13 instructions, found pointer; after scpi_query_SYSTem_COMMunicate; calls: scpi_query_failed; strings: 'Nu//'
-0x2ffe8	entry		image_diff	88 bytes; 25 instructions, found pointer; after scpi_query_SYSTem_COMMunicate_SER1_FDUPlex; calls: pllc_request_a, return_zero, status_report_from
+0x2ffe8	entry		image_diff	88 bytes; 25 instructions, found pointer; after scpi_query_SYSTem_COMMunicate_SER1_FDUPlex; calls: pllc_request_a, scpi_input_source, status_report_from
 0x30040	entry		image_diff	48 bytes; 15 instructions, found pointer; after scpi_query_SYSTem_COMMunicate_SER1_FDUPlex; calls: scpi_query_failed; strings: 'Nu o'
-0x3061a	entry		image_diff	38 bytes; 10 instructions, found pointer; after scpi_query_SYSTem_LANGuage; calls: pllc_request_b, return_zero
-0x306d2	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_query_SYSTem_PRINt_LENGth; calls: return_zero, status_report_from
+0x3061a	entry		image_diff	38 bytes; 10 instructions, found pointer; after scpi_query_SYSTem_LANGuage; calls: pllc_request_b, scpi_input_source
+0x306d2	entry		image_diff	32 bytes; 9 instructions, found pointer; after scpi_query_SYSTem_PRINt_LENGth; calls: scpi_input_source, status_report_from
 0x306f2	entry		image_diff	18 bytes; 5 instructions, found pointer; after scpi_query_SYSTem_PRINt_LENGth; calls: scpi_query_failed
 0x4ff34	entry		image_diff	90 bytes; 37 instructions, found prologue; after long_array_get_long_prefixed
 #

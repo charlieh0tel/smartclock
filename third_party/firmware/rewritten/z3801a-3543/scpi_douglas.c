@@ -34,7 +34,7 @@ static const float SCPI_DOUGLAS_INFINITE = 9.9e37f;
 int32_t scpi_set_DOUGlas_DURation(void* parameters, void* response,
                                   scpi_call* call) {
   scpi_float_parameter* duration = parameters;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   if ((duration->kind == SCPI_PARAMETER_CHARACTER &&
        duration->keyword == SCPI_DOUGLAS_INFINITY) ||
@@ -74,9 +74,10 @@ int32_t scpi_set_DOUGlas_STATe(void* parameters, void* response,
                                scpi_call* call) {
   if (nv_settings.douglas_state == 0) {
     pllc_request_c(&scpi_param_DOUGlas_STATe_request, 0, 0, 0,
-                   return_zero(call->input));
+                   scpi_input_source(call->input));
   } else {
-    pllc_request_a(&scpi_param_DOUGlas_STATe, 0, 0, return_zero(call->input));
+    pllc_request_a(&scpi_param_DOUGlas_STATe, 0, 0,
+                   scpi_input_source(call->input));
   }
   return 0;
 }

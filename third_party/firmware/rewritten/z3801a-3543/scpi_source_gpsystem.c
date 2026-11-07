@@ -19,7 +19,8 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
   scpi_numeric_param* param = &scpi_param_SOURce_GPSystem_ADELay;
   int32_t nanoseconds;
 
-  pllc_request_b(&scpi_action_temporary_hold, 0, return_zero(call->input));
+  pllc_request_b(&scpi_action_temporary_hold, 0,
+                 scpi_input_source(call->input));
   if (delay->kind == SCPI_PARAMETER_CHARACTER) {
     int32_t* limit = delay->keyword == SCPI_SOURCE_GPSYSTEM_MINIMUM
                          ? param->minimum
@@ -29,9 +30,9 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
   } else {
     nanoseconds = scpi_source_gpsystem_steps(&delay->value, param, 0,
                                              SCPI_SOURCE_GPSYSTEM_NANOSECOND,
-                                             return_zero(call->input));
+                                             scpi_input_source(call->input));
   }
-  pllc_request_c(param, 0, nanoseconds, 0, return_zero(call->input));
+  pllc_request_c(param, 0, nanoseconds, 0, scpi_input_source(call->input));
   return 0;
 }
 
@@ -67,7 +68,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void* parameters, void* response,
                                           scpi_call* call) {
   scpi_source_gpsystem_location_parameters* location = parameters;
   int16_t first = location->latitude.hemisphere.value;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
   int32_t* staged = scpi_staged[source];
 
   if (first == SCPI_SOURCE_GPSYSTEM_LAST ||
@@ -224,10 +225,10 @@ static void scpi_source_gpsystem_ignore_edit(scpi_short_parameter* satellites,
     }
   }
   if (invalid) {
-    status_report_from(STATUS_DATA_OUT_OF_RANGE, return_zero(input));
+    status_report_from(STATUS_DATA_OUT_OF_RANGE, scpi_input_source(input));
   } else {
     pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, 0,
-                   mask, 0, return_zero(input));
+                   mask, 0, scpi_input_source(input));
   }
 }
 
@@ -254,7 +255,7 @@ static uint8_t scpi_source_gpsystem_mask_list(uint32_t mask, int16_t* list) {
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(void* parameters,
                                                              void* response,
                                                              scpi_call* call) {
-  int16_t* list = scpi_response_lists[(uint8_t)return_zero(call->input)];
+  int16_t* list = scpi_response_lists[(uint8_t)scpi_input_source(call->input)];
 
   scpi_source_gpsystem_list_answer(
       list,
@@ -313,7 +314,7 @@ int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(void* parameters,
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude(void* parameters,
                                                               void* response,
                                                               scpi_call* call) {
-  int16_t* list = scpi_response_lists[(uint8_t)return_zero(call->input)];
+  int16_t* list = scpi_response_lists[(uint8_t)scpi_input_source(call->input)];
 
   scpi_source_gpsystem_list_answer(
       list,

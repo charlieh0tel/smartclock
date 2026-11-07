@@ -287,7 +287,7 @@ scpi_numeric_get_double	value
 return_byte	value
 long_identity	value
 float_identity	value
-return_zero	zero
+scpi_input_source	zero
 scpi_query_failed	error	always 0
 rtcm_supported	supported	0
 scpi_session_init	port	the console port's object

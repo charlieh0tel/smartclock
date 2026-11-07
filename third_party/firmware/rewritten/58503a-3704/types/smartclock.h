@@ -39,7 +39,20 @@ typedef enum __attribute__((packed)) preserved_region_restore {
 /* BEGIN PROPOSED ENUMS */
 /* END PROPOSED ENUMS */
 
-#include "../../common/types/gps_framing_state.h"
+/* gps_receive_state: where gps_receive is in framing an Oncore message
+ * into gps_response_buffer, its jump table at gps_receive+0x4c (docs/firmware/
+ * gps.md, "Framing").  A state above GPS_FRAMING_COMPLETE drops each
+ * byte (gps_receive+0x3e). */
+typedef enum __attribute__((packed)) gps_framing_state {
+  GPS_FRAMING_FIRST_AT = 0,  /* expects the first @ */
+  GPS_FRAMING_SECOND_AT = 1, /* expects the second @ */
+  GPS_FRAMING_ID_FIRST = 2,  /* an uppercase letter */
+  GPS_FRAMING_ID_SECOND = 3, /* a letter; the ID's length from the table */
+  GPS_FRAMING_BODY = 4,      /* the rest, the checksum last */
+  GPS_FRAMING_CR = 5,
+  GPS_FRAMING_LF = 6,
+  GPS_FRAMING_COMPLETE = 7, /* gps_receive reads no more */
+} gps_framing_state;
 
 #include "../../common/types/gps_request_result.h"
 
@@ -96,7 +109,25 @@ typedef enum __attribute__((packed)) efc_mode {
 
 #include "../../common/types/counter_sync_kind.h"
 
+/* A satellite's cell on the status screen, the code at +4 of a
+ * satellite_status_list entry: satellite_elevation_azimuth sets 1 or 2
+ *, satellite_status the rest, and
+ * format_satellite_cell prints each (its table at format_satellite_cell+0x46).
+ * */
+typedef enum __attribute__((packed)) satellite_cell_status {
+#include "../../common/types/satellite_cell_status.h"
+  SATELLITE_CELL_ACQUIRING = 5,    /* "Acq   ": channel modes 1 to 4 */
+  SATELLITE_CELL_SYNCHRONIZED = 6, /* "Acq . ": modes 5 and 6 */
+  SATELLITE_CELL_EPHEMERIS = 7     /* "Acq ..": modes 7 and 8 */
+} satellite_cell_status;
+
+/* satellite_track_class's class of a @@Bb record, by its health
+ * (oncore_health; satellite_track_class, its table at
+ * satellite_track_class+0x26): satellite_status shows a removed one as
+ * "Ignore" and an unhealthy one as "Not OK". */
+typedef enum __attribute__((packed)) satellite_health_class {
 #include "../../common/types/satellite_health_class.h"
+} satellite_health_class;
 
 /* A mode line of the status screen, status_screen_mode_line.mode, which
  * status_screen picks by pll_screen_mode (0x4a9be, its table at
@@ -456,7 +487,11 @@ typedef enum __attribute__((packed)) front_panel_lamp {
 
 #include "../../common/types/data_format.h"
 
+/* The time code's format, :PTIMe:TCODe:FORMat, which tcode_request
+ * takes: T1, the GPS seconds; T2 with a test prefix; T2. */
+typedef enum __attribute__((packed)) timecode_format {
 #include "../../common/types/timecode_format.h"
+} timecode_format;
 
 /* tcode_send's routine, which timecode_schedule sends the time code
  * through (0x14128): drtb_send_async's shape, which tcode_request stores
@@ -490,12 +525,7 @@ typedef void putc_function(char c);
 
 #include "../../common/types/char_slot.h"
 
-/* A self-test, in the tables at 0x18458 and 0x17fe0: run is 1 to run the
- * test, as selftest_execute's second call and selftest_run_all_counted
- * pass it, and 0 otherwise. */
-typedef void selftest_test(char_slot run);
-/* An entry of the self-test tables. */
-typedef selftest_test* selftest_entry;
+#include "../../common/types/selftest_test.h"
 
 #include "../../common/types/dac_measure.h"
 
@@ -936,7 +966,19 @@ typedef struct selftest_results {
   uint8_t in_run; /* +0x47: set during selftest_run; nothing reads it */
 } selftest_results;
 
+/* Who sends a GPS request (gps_request_entry.sender), so that its result
+ * comes back to it: gpsx_send for the loop's GPS sequences (pllp_task
+ * takes the result as gps_ack_code), pll_scpi_send_to_loop for a
+ * setting (pll_scpi_complete), and gps_request_post for the command
+ * and status monitors, whose results gps_count_response keeps in
+ * command_monitor_result and status_monitor_result.  request_kind_valid
+ * takes 1 to 4, from its table at day_names+0x40, which GPS_SENDER_NONE ends.
+ */
+typedef enum __attribute__((packed)) gps_request_sender {
 #include "../../common/types/gps_request_sender.h"
+  GPS_SENDER_COMMAND_MONITOR = 3,
+  GPS_SENDER_STATUS_MONITOR = 4,
+} gps_request_sender;
 
 /* A GPS request's code (gps_request_entry.code, a descriptor's
  * gps_request), which gps_request_class (0x4c7c4) sorts: in the 58503A
@@ -1038,9 +1080,12 @@ typedef enum __attribute__((packed)) gps_request_code {
   GPS_STEP_PARSE_OPTIONS = 0x4d,  /* the @@Cj parse (0x50a16) */
   GPS_STEP_STATUS_MONITOR = 0x4e, /* gps.status_monitor_enabled, its argument */
   GPS_STEP_LINK_RESET = 0x50,     /* gps_link_reset */
-  GPS_SCRIPT_INIT_DEFAULTS = 0x52, /* @@Cf, then every setting; gps_init too */
-  GPS_SCRIPT_INIT = 0x53,          /* every setting, without @@Cf */
-  GPS_SCRIPT_FIX_RESTART = 0x54,   /* idle and fix again, the PPS check off */
+  /* master_reset's alone: its lookup runs gps_init, then it
+   * sends @@Cf and the defaults */
+  GPS_SCRIPT_INIT_DEFAULTS = 0x52,
+  /* power-up's and init_gps's: every setting, without @@Cf or a position */
+  GPS_SCRIPT_INIT = 0x53,
+  GPS_SCRIPT_FIX_RESTART = 0x54,     /* idle and fix again, the PPS check off */
   GPS_SCRIPT_ENGINE_SELFTEST = 0x55, /* @@Ea off, @@Ca and @@Fa, idle */
   GPS_SCRIPT_OUTPUTS_ON = 0x56,      /* @@Ba, @@Ea and @@Bb each second */
   GPS_SCRIPT_OUTPUTS_OFF = 0x57,     /* @@Ba, @@Ea, @@Bb, @@Bc and @@Bk off */
@@ -1067,7 +1112,39 @@ typedef enum __attribute__((packed)) gps_request_code {
   GPS_REQUEST_NONE = 0xff,            /* a descriptor's, for none */
 } gps_request_code;
 
-#include "../../common/types/gps_request_entry.h"
+/* A GPS request: the message pll_scpi_send_to_loop, gpsx_send and
+ * gps_request_post build in 26 bytes of their frames and send
+ * gpsx_exchange, which gpsm_task receives into 26 bytes, keeps in its
+ * ring, and gps_count_response sends back to plla_exchange with the
+ * result, for pllp_task and gps_selftest_run.  The kernel copies +0x04
+ * to +0x17 (kernel_copy_message). */
+typedef struct gps_request_entry {
+  uint32_t
+      field_00; /* +0x00: the senders clear it; the kernel does not copy it */
+  uint32_t field_04; /* +0x04: the senders clear it; kernel_send_for_task
+                        refuses a nonzero one other than the exchange's id,
+                        error 4 (0x15614) */
+  gps_request_sender
+      sender; /* +0x08: one with the same sender waiting is not queued again
+                 (request_ring_contains, 0x4c4c6); the monitors' may be replaced
+                 (request_ring_newest_replaceable, 0x4c50c) */
+  gps_request_result result; /* +0x09: 1 as sent; gps_count_response's kind as
+                                it comes back, which pllp_task takes as
+                                gps_ack_code or pll_scpi_complete's success */
+  gps_request_code_word
+      code; /* +0x0a: the request, gps_request_class's index;
+               GPS_STEP_LINK_RESET, 0x50, empties the ring before it is queued
+               (gps_request_queue, 0x4c682) */
+  gps_argument_mode argument_mode; /* +0x0c: gps_request_class's second
+                                      argument, copied to gps_request_step's */
+  uint8_t field_0d;
+  int32_t* arguments; /* +0x0e: four longs, which gpsm_task copies into
+                         gps_request_step's */
+  uint8_t sent; /* +0x12: gps_request_post's last argument (0x4c722), 1 for the
+                   status monitor's GPS_SCRIPT_OUTPUTS_ON, 0x56 (0x4bf2a); a
+                   newest waiting request with it set is not replaced */
+  uint8_t field_13[7];
+} gps_request_entry;
 
 /* gpsm_task's ring of waiting GPS requests: six entries in the 58503A
  * 3704, where the Z3805A 3543B has five (request_ring_put's bound,
@@ -1101,7 +1178,44 @@ typedef struct gps_running_command {
 
 #include "../../common/types/time_of_day.h"
 
-#include "../../common/types/gps_command_log_entry.h"
+/* A GPS Receiver Command Log entry: what command_log_add takes of a
+ * request gpsm_task has sent, and gps_print_command prints as
+ * "%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s".  The comments cite the
+ * Z3805A 3543B's code, which the 58503A's copy came from. */
+typedef struct gps_command_log_entry {
+  gps_request_code_word code;    /* +0x00: the request's +0xa (move.w
+                                    command_log_add+0x18), printed under "ID"
+                                    (movea.w gps_print_command+0xf6) */
+  gps_request_sender sender;     /* +0x02: the request's; printed PLL, SCPI1,
+                                    GPSc and GPSs, else "?" */
+  uint8_t field_03;              /* never written */
+  gps_request_code_word message; /* +0x04: the request's +0x1e (move.w
+                                    command_log_add+0x1e), its index in the
+                                    message table at oncore_messages, whose ID
+                                    prints (ext.l gps_print_command+0xe4) */
+  char argument_text[3];         /* +0x06: characters 4 and 5 of
+                                    gps_message_to_text's text, the first byte
+                                    after the ID in hex; NUL */
+  gps_argument_mode query;       /* +0x09: the command's; printed q, else c */
+  uint8_t from_clock; /* +0x0a: 1 when the clock is set, the date and time its;
+                         0 for a clock not set since power-up (get_date_time's
+                         1), the date and time @@Ba's.  Printed blank, else e */
+  uint8_t field_0b;   /* never written */
+  uint32_t date; /* +0x0c: the clock's while from_clock, else @@Ba's, local */
+  time_of_day
+      time; /* +0x10: likewise; gps_print_command passes it to format_time */
+} gps_command_log_entry;
+
+/* The GPS Receiver Command Log, a ring at command_log, and its copy at
+ * command_log_snapshot, which status_snapshot_update takes with the snapshot at
+ * status_snapshot_flagged: 21 entries, the oldest at read, the next free at
+ * write; empty when the two are equal, and full at 20, when command_log_add
+ * drops the oldest.  gps_print_command takes the oldest. */
+typedef struct gps_command_log {
+  gps_command_log_entry entries[21];
+  gps_command_log_entry* read;  /* +0x1a4 */
+  gps_command_log_entry* write; /* +0x1a8 */
+} gps_command_log;
 
 #include "../../common/types/packed_datetime.h"
 
@@ -1413,15 +1527,15 @@ typedef struct oncore_extension_fields {
   int16_t velocity_north;     /* m/s */
   int16_t velocity_east;
   int16_t velocity_up;
-  uint16_t correction_age; /* s, of differential corrections */
+  uint16_t correction_age; /* 0.1 s, of differential corrections */
   int32_t ecef_x;          /* cm */
   int32_t ecef_y;
   int32_t ecef_z;
   uint8_t ura[8]; /* per channel: @@Ek's eight; @@Bk's decoder (0x525e8)
                      zeroes the last two */
   int16_t least_squares_inverse[10]; /* A-1, upper triangle by rows */
-  int16_t clock_bias;                /* m */
-  uint16_t oscillator_offset;        /* m/s */
+  int16_t clock_bias;                /* 0.1 m */
+  uint16_t oscillator_offset;        /* 0.1 m/s */
 } oncore_extension_fields;
 
 /* The EFC history: a ring of 64 averages of the EFC, one each 2700
@@ -2374,6 +2488,27 @@ typedef struct nv_settings_fields {
 
 #include "../../common/types/counter_work_state.h"
 
+/* The time-interval counter's configuration, counter_configuration, which
+ * counter_arm, counter_calibrate and counter_read are given.  A mode and
+ * a state go in pairs: the mode says when the work is done, the state
+ * asks for it or says it is done.
+ * 0x20 bytes, interpolator_calibration_state after them. */
+typedef struct counter_configuration_fields {
+  uint8_t fpga_registers[4]; /* counter_arm copies them into fconf_regs */
+  double calibration;        /* s, which counter_read subtracts */
+  counter_registers_mode registers_mode; /* when fpga_registers load */
+  counter_work_state registers_state;
+  counter_calibrate_mode calibrate_mode; /* when the interpolator calibrates */
+  counter_work_state calibrate_state;
+  counter_sync_mode sync_mode;   /* when counter_arm syncs */
+  counter_work_state sync_state; /* sync_request sets both */
+  counter_sync_kind sync_kind;   /* sync_request's first; into fconf_regs[3] */
+  uint8_t pad_13;
+  int32_t sync_count;          /* sync_request's second; counted down */
+  int32_t interpolator_offset; /* reading_low, subtracted from the reading */
+  int32_t interpolator_scale;  /* the spread it is divided by */
+} counter_configuration_fields;
+
 /* The battery-backed RAM a warm restart restores, preserved_region at
  * 0x100000: pllp_task copies gps, pll and the RAM blocks below into it
  * each pass and checksums it, and system_init copies them back when the
@@ -2503,3 +2638,22 @@ typedef struct status_snapshot_record {
 #include "../../common/types/early_status_events.h"
 
 #include "../../common/types/installer_test_choice.h"
+
+/* The boot code's self-test results, boot_selftest: a checksum word,
+ * then the fields of selftest_results' first 14 bytes in their order.
+ * The installer's :DIAGnostic:TEST? reads all but the last two. */
+typedef struct boot_selftest_results {
+  int16_t checksum; /* +0x00: boot_reset's byte-lane sums: 2 and 1 for the two
+                       lanes of primary_vectors to 0x3ffff, 8
+                       and 4 for interpolator_calibration_init to 0x7ffff */
+  int16_t cpu;      /* +0x02: 1 if the CPU test fails */
+  uint16_t
+      ram; /* +0x04: bit 0 a pattern failed, bit 1 an address line aliases */
+  uint16_t ram_data_bits;     /* +0x06: the bits that failed a pattern */
+  uint32_t ram_address_lines; /* +0x08: the address lines that alias */
+  int16_t uart;      /* +0x0c: boot_duart_early_init's IVR and loopback checks;
+                        lights OP6 */
+  uint8_t lamp_mask; /* +0x0e: the DUART output bits boot_reset resets; nothing
+                        reads it */
+  uint8_t field_0f;
+} boot_selftest_results;

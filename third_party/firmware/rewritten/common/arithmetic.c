@@ -153,25 +153,6 @@ uint8_t* bytes_to_long(uint8_t* bytes, uint32_t* value) {
   return bytes;
 }
 
-/* Whether two byte strings have the same nonzero length and bytes. */
-uint32_t bytes_equal_n(uint8_t* a, int16_t a_length, uint8_t* b,
-                       int16_t b_length) {
-  if (a_length != b_length || a_length == 0) {
-    return 0;
-  }
-  for (; *a == *b; a++, b++) {
-    if (--a_length == 0) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-/* The 64-bit routines pass a number as two longs, the high first. */
-static uint64_t arithmetic_int64(uint32_t high, uint32_t low) {
-  return (uint64_t)high << CPU_LONG_BITS | low;
-}
-
 /* The sum of two 64-bit numbers. */
 uint64_t int64_add(int32_t a_high, uint32_t a_low, int32_t b_high,
                    uint32_t b_low) {
@@ -251,31 +232,6 @@ double int64_to_double(int64_t value) {
     result.word.high ^= LIBC_SIGN;
   }
   return result.value;
-}
-
-/* A double as a signed 64-bit number: its
- * magnitude over 2^32 the high long, what remains the low, negated after;
- * nothing calls it. */
-int64_t double_to_int64(double x) {
-  union libc_double value = {.value = x};
-  /* double_compare(0, x) is negative when x < 0. */
-  const bool negative = double_compare(0.0, value.value) < 0;
-
-  if (negative) {
-    value.word.high ^= LIBC_SIGN;
-  }
-  const uint32_t result_high = double_to_unsigned(
-      double_divide_reversed_pointers(&two_to_32, &value.value));
-
-  double_subtract_in_place(
-      &value.value,
-      double_multiply_pointer(unsigned_to_double(result_high), &two_to_32));
-  const uint32_t result_low = double_to_unsigned(value.value);
-
-  if (negative) {
-    return int64_negate(result_high, result_low);
-  }
-  return arithmetic_int64(result_high, result_low);
 }
 
 /* A float's magnitude: its sign flipped when float_compare finds it

@@ -38,3 +38,47 @@ void boot_duart_early_init(void) {
 uint32_t boot_unpack_installer(void) {
   return boot_unpack(installer_records, sizeof installer_records, false);
 }
+
+/* Sends "DUART" through channel B in local loopback, each character
+ * read back against the text; a wrong one sets SELFTEST_UART_CHANNEL_B_DATA,
+ * none within the spins SELFTEST_UART_CHANNEL_B_TIMEOUT (0x400). */
+void boot_duartb_loopback_check(void) {
+  char* text = "DUART";
+
+  (void)duart.b.mr;
+  duart.b.mr = MR2_MODE_LOCAL_LOOPBACK | DUART_MR2_ONE_STOP_BIT;
+  boot_loopback_send_next = (uint8_t*)text;
+  boot_loopback_expect_next = text;
+  duart.b.cr = CR_TX_ENABLE | CR_RX_ENABLE;
+  duart.b.rb_tb = *boot_loopback_send_next++;
+  while (*boot_loopback_expect_next != 0 && boot_selftest.uart == 0) {
+    for (int32_t spins = DUART_LOOPBACK_CHECK_SPINS;
+         spins > 0 && (duart.b.sr_csr & SR_RXRDY) == 0; spins--) {
+    }
+    if ((duart.b.sr_csr & SR_RXRDY) != 0) {
+      char expected = *boot_loopback_expect_next++;
+
+      if (duart.b.rb_tb != (uint8_t)expected) {
+        boot_selftest.uart |= SELFTEST_UART_CHANNEL_B_DATA;
+      }
+      if (*boot_loopback_send_next != 0) {
+        duart.b.rb_tb = *boot_loopback_send_next++;
+      }
+    } else {
+      boot_selftest.uart |= SELFTEST_UART_CHANNEL_B_TIMEOUT;
+    }
+  }
+  duart.b.cr = CR_RESET_RECEIVER;
+  duart.b.cr = CR_RESET_TRANSMITTER;
+  (void)duart.b.mr;
+  duart.b.mr = DUART_MR2_ONE_STOP_BIT;
+}
+/* The primary's copy of boot_unpack_installer, with memcpy, pointed at
+ * 11 bytes at address 0, boot_vectors, whose first byte, the initial
+ * stack pointer's high one, is no S: it always returns
+ * BOOT_UNPACK_NO_START. */
+uint32_t primary_unpack_records(void) {
+  static const int32_t RECORDS_SIZE = 0xb;
+
+  return boot_unpack((const uint8_t*)&boot_vectors, RECORDS_SIZE, true);
+}

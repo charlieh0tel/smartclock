@@ -5,8 +5,6 @@
  * this file after its own, so the types and prototypes it declares are
  * in scope; each function here keeps its generated prototype. */
 
-static const uint8_t CLOCK_LEAP_MINUTE_LONG = 60 + 1;
-
 /* Queues the clock event for a 59- or 61-second minute in UTC: at 24:00:00
  * of the leap date moved by the GPS-UTC offset as it will be, which
  * offset_step_time keeps, less 5 seconds; NULL for any other minute. */

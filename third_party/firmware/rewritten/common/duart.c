@@ -23,7 +23,8 @@ static uint8_t duart_input_debounced(uint8_t bit) {
   return level != 0;
 }
 
-/* The input port's bit 0, debounced; nothing calls it. */
+/* The input port's bit 0, debounced; nothing calls it (the Z3815A
+ * 4010's copy, robin_strip_xnon, is polled). */
 uint8_t duart_input_0_debounced(void) {
   /* The input port's bit 0. */
   static const uint8_t IP0 = 0x01;

@@ -76,7 +76,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(void* parameters,
       given->port == SCPI_SYSTEM_SERIAL1
           ? &scpi_param_SYSTem_COMMunicate_SER1_FDUPlex
           : &scpi_param_SYSTem_COMMunicate_SER2_FDUPlex;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_a(setting, 0, (uint8_t)given->value, source);
   return 0;
@@ -104,7 +104,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_PRESet(void* parameters,
   scpi_action_param* action = *port == SCPI_SYSTEM_SERIAL1
                                   ? &scpi_action_SER1_PRESet
                                   : &scpi_action_SER2_PRESet;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_b(action, 0, source);
   return 0;
@@ -160,7 +160,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD(void* parameters,
       given->port == SCPI_SYSTEM_SERIAL1
           ? &scpi_param_SYSTem_COMMunicate_SER1_RECeive_BAUD
           : &scpi_param_SYSTem_COMMunicate_SER2_RECeive_BAUD;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_a(setting, 0, baud, source);
   return 0;
@@ -215,7 +215,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS(void* parameters,
   uint8_t eight_bits = given->number.kind == SCPI_VALUE_BOUND
                            ? given->number.bound != SCPI_BOUND_MINIMUM
                            : given->number.value >= SCPI_SYSTEM_EIGHT_BITS;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_a(&scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS, 0,
                  eight_bits, source);
@@ -265,7 +265,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(void* parameters,
       given->port == SCPI_SYSTEM_SERIAL1
           ? &scpi_param_SYSTem_COMMunicate_SER1_RECeive_PACE
           : &scpi_param_SYSTem_COMMunicate_SER2_RECeive_PACE;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_a(setting, 0, (uint8_t)given->value, source);
   return 0;
@@ -316,7 +316,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void* parameters,
     case SCPI_SYSTEM_PARITY_ONE:
       if (given->port == SCPI_SYSTEM_SERIAL1) {
         status_report_from(STATUS_ILLEGAL_PARAMETER_VALUE,
-                           return_zero(call->input));
+                           scpi_input_source(call->input));
         return 0;
       }
       parity = SERIAL_PARITY_ONE;
@@ -325,7 +325,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void* parameters,
   pllc_request_a(given->port == SCPI_SYSTEM_SERIAL1
                      ? &scpi_param_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE
                      : &scpi_param_SYSTem_COMMunicate_SER2_RECeive_PARity_TYPE,
-                 0, parity, return_zero(call->input));
+                 0, parity, scpi_input_source(call->input));
   return 0;
 }
 
@@ -371,7 +371,7 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs(void* parameters,
       given->number.kind == SCPI_VALUE_BOUND
           ? given->number.bound != SCPI_BOUND_MINIMUM
           : given->number.value >= SCPI_SYSTEM_TWO_STOP_BITS;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_a(&scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs, 0,
                  two_stop_bits, source);
@@ -427,7 +427,7 @@ int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response,
   if (scpi_parameters_same(given->text, "PRIMARY")) {
     return 0;
   }
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   status_report_from(STATUS_ILLEGAL_PARAMETER_VALUE, source);
   return 0;
@@ -450,7 +450,7 @@ int32_t scpi_query_SYSTem_LANGuage(void* parameters, void* response,
 int32_t scpi_query_SYSTem_PRINt(void* parameters, void* response,
                                 scpi_call* call) {
   uint16_t* answer = response;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_c(&scpi_param_SYSTem_PRINt, 0, 0, 0, source);
   *answer = 0;

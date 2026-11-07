@@ -6,11 +6,11 @@
 
 /* Writes a query's response items through their formatters, separated
  * by commas, first emptying the echo of the output's source, its count
- * scpi_echo_length's byte by the source: return_zero's 0, the console's,
+ * scpi_echo_length's byte by the source: scpi_input_source's 0, the console's,
  * where the Z3805A's compares the port with the console's (0x28926). */
 int32_t scpi_format_response(scpi_port* output, scpi_response_item* item,
                              scpi_call* call) {
-  (&scpi_echo_length)[(uint8_t)return_zero(output)] = 0;
+  (&scpi_echo_length)[(uint8_t)scpi_input_source(output)] = 0;
   for (int16_t offset = 0;; item++) {
     int32_t error =
         item->format(output, call->response + offset, item->choices, call);

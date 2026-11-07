@@ -278,10 +278,6 @@ char* error_message_lookup(int32_t code) {
   return status_model_error_message(code);
 }
 
-/* The registers status_create makes (structures.md, "The status
- * system"). */
-static const uint8_t STATUS_REGISTERS = 7;
-
 /* Sets a register up: its words cleared, its filters and its parent;
  * the Status Byte, with no parent, the port's. */
 void status_register_setup(int32_t model, int32_t index, uint32_t positive,
@@ -296,21 +292,6 @@ void status_enables_init(void) {
   for (uint8_t index = 0; index < STATUS_REGISTERS; index++) {
     status_register_set_enable(status_object, index,
                                *status_register_layouts[index].enable);
-  }
-}
-
-/* status_report for a source that reports, a SCPI command or startup;
- * the others, and any past REQUEST_SOURCE_INTERNAL, do not. */
-void status_report_from(int16_t code, request_source source) {
-  /* Whether each source reports, by the jump table at status_report_from+0x16.
-   */
-  static const bool SOURCE_REPORTS[REQUEST_SOURCE_INTERNAL + 1] = {
-      [REQUEST_SOURCE_SCPI] = true,
-      [REQUEST_SOURCE_STARTUP] = true,
-  };
-
-  if (source < sizeof SOURCE_REPORTS && SOURCE_REPORTS[source]) {
-    status_report(code);
   }
 }
 

@@ -13,7 +13,7 @@
 int32_t scpi_query_DOUGlas_PROGress(void* parameters, void* response,
                                     scpi_call* call) {
   char** text = response;
-  char* progress = scpi_response_texts[(uint8_t)return_zero(call->input)];
+  char* progress = scpi_response_texts[(uint8_t)scpi_input_source(call->input)];
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
   /* The image tests the result's low byte (scpi_query_DOUGlas_PROGress+0x44).
    */
@@ -33,6 +33,6 @@ int32_t scpi_set_DOUGlas_STATe_POWerup(void* parameters, void* response,
   scpi_word_parameter* state = parameters;
 
   pllc_request_a(&scpi_param_DOUGlas_STATe_POWerup, 0, (uint8_t)state->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }

@@ -898,3 +898,12 @@ void gps_print_process_monitor(void) {
          gps_reports_failed(gps.status_monitor_failed),
          (uint32_t)gps_counts.status_monitor_failures);
 }
+
+/* Empties the command log. */
+void command_log_clear(void) {
+  command_log.write = command_log.entries;
+  command_log.read = command_log.entries;
+}
+
+/* Prints the command log. */
+void gps_print_commands(void) { gps_print_command_log(&command_log); }

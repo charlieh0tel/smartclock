@@ -6,10 +6,6 @@
  * place of the decompiler's (docs/firmware/README.md, "Hand-written C");
  * each keeps its generated prototype. */
 
-/* The latch's lamps, which latch_lamps_write writes. */
-static const latch_bit LATCH_LAMPS =
-    LATCH_ALARM | LATCH_HOLDOVER | LATCH_GPS_LOCK;
-
 /* Writes selftest.latch to the latch, or diag_tmode_data while
  * :DIAGnostic:TMODe:STATe is on; true for the latter. */
 static bool latch_output(void) {

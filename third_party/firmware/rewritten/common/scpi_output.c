@@ -25,7 +25,7 @@ int32_t scpi_query_OUTPut_PIN1_DELay(void* parameters, void* response,
  * succeeds. */
 int32_t scpi_set_OUTPut_PIN1_DELay_ALIGnment(void* parameters, void* response,
                                              scpi_call* call) {
-  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
   return 0;
 }
 
@@ -45,16 +45,6 @@ int32_t scpi_set_OUTPut_PIN1_FREQuency(void* parameters, void* response,
 int32_t scpi_query_OUTPut_PIN1_FREQuency(void* parameters, void* response,
                                          scpi_call* call) {
   return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
-}
-
-/* :OUTPut:STATe: hands pllc the new state. */
-int32_t scpi_set_OUTPut_STATe(void* parameters, void* response,
-                              scpi_call* call) {
-  scpi_word_parameter* given = parameters;
-
-  pllc_request_a(&scpi_param_OUTPut_STATe, 0, given->value,
-                 return_zero(call->input));
-  return 0;
 }
 
 /* Programs the output's state; this firmware does nothing. */

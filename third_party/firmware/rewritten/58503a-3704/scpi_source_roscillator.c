@@ -69,12 +69,12 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR(
   const scpi_source_roscillator_threshold* given = parameters;
 
   if (given->threshold != SCPI_SOURCE_ROSCILLATOR_THRESHOLD_1) {
-    status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+    status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
     return 0;
   }
   scpi_numeric_set(&scpi_param_SOURce_ROSCillator_HOLDover_DURation_STATus_THR,
                    0, given->given.kind, given->given.bound, 0,
-                   given->given.value, return_zero(call->input));
+                   given->given.value, scpi_input_source(call->input));
   return 0;
 }
 
@@ -98,7 +98,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR(
  * undefined header (0x2f8d0, 0x2f8f0). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ACTion(
     void* parameters, void* response, scpi_call* call) {
-  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
   return 0;
 }
 

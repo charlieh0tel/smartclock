@@ -18,9 +18,6 @@ enum {
 
 static const uint32_t KLOK_POOL_SIZE = 5;
 
-/* An array size, so #define. */
-#define KLOK_MESSAGE_SIZE 80
-
 /* Links an entry into a list sorted by time and date, after every entry
  * not later than it. */
 void klok_insert_sorted(klok_entry** list, klok_entry* entry) {

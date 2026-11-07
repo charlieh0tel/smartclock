@@ -16,7 +16,7 @@
  * second SCPI port, as the 59551A has (097-59551-02, *CLS, "Context
  * Dependencies": each I/O port has its own error queue); unproved. */
 typedef enum __attribute__((packed)) request_source {
-  /* A SCPI command: return_zero(call->input), the only port.
+  /* A SCPI command: scpi_input_source(call->input), the only port.
    * Reports; pllc signals task_scpi when done (get_setup_vars+0x14) and sends
    * what the GPS must hear (pll_scpi_command+0x3c); status_preset_register sets
    * registers for it alone (status_preset_register+0xe); status_preset_done's

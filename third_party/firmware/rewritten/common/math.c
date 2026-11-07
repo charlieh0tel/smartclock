@@ -203,10 +203,9 @@ static double libc_reduce(union libc_double x, int32_t* exponent) {
 double log(double x) {
   /* sqrt(1/2), where log and pow choose how to reduce their argument. */
   static const double SQRT_HALF = 0.7071067811865476;
-  /* ln 2 in a high part and a low, and the rational approximation's
-   * coefficients: the image's log_ln2_high to log_b2. */
-  static const double LN2_HIGH = 0.693359375;
-  static const double LN2_LOW = -0.00021219444005469057;
+  /* The rational approximation's coefficients: the image's log_a0 to
+   * log_b2, after LIBC_LN2_HIGH and LIBC_LN2_LOW, its log_ln2_high and
+   * log_ln2_low. */
   static const double A0 = -64.12494342374558;
   static const double A1 = 16.383943563021536;
   static const double A2 = -0.7895611288749126;
@@ -273,8 +272,8 @@ double log(double x) {
 
   result = double_multiply(result, z);
   result = double_add(result, z);
-  result = double_add(result, double_multiply(LN2_LOW, scale));
-  return double_add(double_multiply(LN2_HIGH, scale), result);
+  result = double_add(result, double_multiply(LIBC_LN2_LOW, scale));
+  return double_add(double_multiply(LIBC_LN2_HIGH, scale), result);
 }
 
 /* The square root: of the argument reduced to [0.5, 1), a

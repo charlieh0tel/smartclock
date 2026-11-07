@@ -131,3 +131,25 @@ void port_update_rqs(uint8_t* status_byte, uint8_t enable, char port) {
     alarm_outputs_set(request);
   }
 }
+
+/* Writes a character to the console, keeping it in the echo buffer, or
+ * CR LF for an end (0x28f6a). */
+void scpi_console_putc(scpi_port* port, int32_t character) {
+  if (character >= SCPI_PORT_CHARACTERS) {
+    console_write("\r\n");
+    return;
+  }
+  char text[2] = {character, 0};
+
+  console_write(text);
+  scpi_echo_text[scpi_echo_length++] = character;
+}
+
+/* Prompts again when the status model that changed is the SCPI port's,
+ * scpi_status_model, where the Z3805A's compares status_object
+ * (0x290b8). */
+void status_prompt_refresh(status_model* status, int32_t error) {
+  if (status == scpi_status_model) {
+    scpi_prompt(error);
+  }
+}

@@ -6,7 +6,7 @@
 
 /* The source a command's input port gives: always 0
  * (installer::0x1077a0). */
-int32_t installer_return_zero(scpi_port* input) { return 0; }
+int32_t installer_scpi_input_source(scpi_port* input) { return 0; }
 
 /* Clears the SCPI input, sets the receive errors
  * installer_port_report_errors reports, opens the port and prompts; the

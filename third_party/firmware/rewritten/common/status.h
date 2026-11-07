@@ -1,5 +1,6 @@
 /* What the status system shares with the installer's copy of it
- * (status.c, installer_status.c): the error classes, and the bodies of
+ * (status.c, installer_status.c, and each image's own status.c): the
+ * error classes, the registers status_create makes, and the bodies of
  * the routines that read and change a status model's registers, which
  * both copies call.  The exported C includes the hand-written headers
  * after its own declarations and before the hand-written .c files, so
@@ -348,3 +349,7 @@ static uint32_t status_model_command_error(const status_condition* negatives,
          entry->register_index >= ERROR_COMMAND_LEAST &&
          entry->register_index <= STATUS_COMMAND_ERROR_GREATEST;
 }
+
+/* The registers status_create makes (structures.md, "The status
+ * system"). */
+static const uint8_t STATUS_REGISTERS = 7;

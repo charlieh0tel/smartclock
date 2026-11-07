@@ -4,13 +4,6 @@
  * hand in place of the decompiler's (docs/firmware/README.md,
  * "Hand-written C"); each keeps its generated prototype. */
 
-/* An element satellite_status_list sorts with satellite_compare: a
- * visible satellite's number and elevation. */
-typedef struct screen_satellite_elevation {
-  uint8_t satellite;
-  uint8_t elevation;
-} screen_satellite_elevation;
-
 /* scpi_real_to_text's text: a sign, then the digits; its second
  * character is the first digit, '0' only for zero. */
 static const char SCREEN_ZERO_DIGIT = '0';
@@ -25,25 +18,6 @@ int32_t satellite_in_set(satellite_kind kind, uint8_t id, uint32_t mask) {
     id -= GPS_LAST_SATELLITE;
   }
   return (mask & cpu_long_bit((uint8_t)(id - 1))) != 0;
-}
-
-/* A @@Bb record's class by its health, none for no record. */
-satellite_health_class satellite_track_class(
-    oncore_visible_satellite* satellite) {
-  if (satellite == NULL) {
-    return SATELLITE_CLASS_UNKNOWN;
-  }
-  switch (satellite->health) {
-    case ONCORE_HEALTHY:
-      return SATELLITE_CLASS_HEALTHY;
-    case ONCORE_UNHEALTHY:
-      return SATELLITE_CLASS_UNHEALTHY;
-    case ONCORE_HEALTHY_REMOVED:
-    case ONCORE_UNHEALTHY_REMOVED:
-      return SATELLITE_CLASS_REMOVED;
-    default:
-      return SATELLITE_CLASS_UNKNOWN;
-  }
 }
 
 /* A satellite's cell: its elevation and azimuth while the record holds
@@ -78,107 +52,6 @@ int32_t satellite_compare(void* first, void* second) {
     return 0;
   }
   return a->satellite > b->satellite ? BEFORE : AFTER;
-}
-
-/* The @@Bb record of a satellite, by bisection of the records, which
- * the receiver sends sorted by number; NULL if none. */
-oncore_visible_satellite* satellite_find(uint8_t id,
-                                         gps_visibility_record* record) {
-  oncore_visible_satellite* low = record->visibility.satellites;
-  oncore_visible_satellite* high = low + record->visibility.count;
-
-  while (low < high) {
-    oncore_visible_satellite* middle = low + (high - low) / 2;
-
-    if (id < middle->satellite) {
-      high = middle;
-    } else if (id > middle->satellite) {
-      low = middle + 1;
-    } else {
-      return middle;
-    }
-  }
-  return NULL;
-}
-
-/* A satellite's cell: none for an ID not a satellite's; for one not
- * tracked, ignored, unhealthy or acquiring, by its health and its
- * channel's band, if any; else its elevation and azimuth. */
-void satellite_status(uint8_t tracked, uint8_t id, satellite_sets* sets,
-                      gps_visibility_record* visibility, satellite_cell* cell) {
-  oncore_visible_satellite* satellite;
-
-  if (satellite_id_valid(SATELLITE_ANY, id) == 0) {
-    cell->status = SATELLITE_CELL_NONE;
-    return;
-  }
-  satellite = id <= GPS_LAST_SATELLITE ? satellite_find(id, visibility) : NULL;
-  if (tracked != 1) {
-    switch (satellite_track_class(satellite)) {
-      case SATELLITE_CLASS_REMOVED:
-        cell->status = SATELLITE_CELL_IGNORED;
-        return;
-      case SATELLITE_CLASS_UNHEALTHY:
-        cell->status = SATELLITE_CELL_UNHEALTHY;
-        return;
-      default:
-        break;
-    }
-    if (satellite_in_set(SATELLITE_GPS, id, sets->acquiring) != 0 ||
-        satellite_in_set(SATELLITE_PSEUDOLITE, id,
-                         sets->pseudolites_acquiring) != 0) {
-      cell->status = SATELLITE_CELL_ACQUIRING;
-      return;
-    }
-    if (satellite_in_set(SATELLITE_GPS, id, sets->synchronized) != 0 ||
-        satellite_in_set(SATELLITE_PSEUDOLITE, id,
-                         sets->pseudolites_synchronized) != 0) {
-      cell->status = SATELLITE_CELL_SYNCHRONIZED;
-      return;
-    }
-    if (satellite_in_set(SATELLITE_GPS, id, sets->ephemeris) != 0 ||
-        satellite_in_set(SATELLITE_PSEUDOLITE, id,
-                         sets->pseudolites_ephemeris) != 0) {
-      cell->status = SATELLITE_CELL_EPHEMERIS;
-      return;
-    }
-  }
-  satellite_elevation_azimuth(satellite, cell);
-}
-
-/* Whether two strings are the same, as format_dms compares in line. */
-static bool screen_equal(const char* a, const char* b) {
-  while (*a == *b) {
-    if (*a == '\0') {
-      return true;
-    }
-    a++;
-    b++;
-  }
-  return false;
-}
-
-/* An angle in mas as its hemisphere, N or S, E or W by longitude, then
- * "%4d:%02d:%06.3f" degrees, minutes and seconds; a blank hemisphere for
- * zero or what rounds to it. */
-void format_dms(int32_t mas, char longitude, char* text) {
-  uint16_t degrees;
-  uint8_t minutes;
-  double seconds;
-  char hemisphere;
-
-  if (mas > 0) {
-    hemisphere = longitude == 0 ? 'N' : 'E';
-  } else if (mas < 0) {
-    hemisphere = longitude == 0 ? 'S' : 'W';
-  } else {
-    hemisphere = ' ';
-  }
-  mas_to_dms(mas, &degrees, &minutes, &seconds);
-  sprintf(text, "%c%4d:%02d:%06.3f", hemisphere, degrees, minutes, seconds);
-  if (screen_equal(text + 1, "   0:00:00.000")) {
-    text[0] = ' ';
-  }
 }
 
 /* The SI prefixes from 10^-12 to 10^9, none for 10^0 (si_prefixes,
@@ -355,20 +228,4 @@ bool mark_flag(char flag, char* text) {
     *text = '*';
   }
   return flag != 0;
-}
-
-/* A signal level as "%3d", or blanks when negative. */
-void format_level(int16_t level, char* text) {
-  if (level < 0) {
-    libc_copy(text, "   ");
-    return;
-  }
-  sprintf(text, "%3d", level);
-}
-
-/* :SYSTem:PRINt:LENGth?'s answer, the screen's lines. */
-uint8_t status_screen_length(void) {
-  static const uint8_t LINES = 23;
-
-  return LINES;
 }

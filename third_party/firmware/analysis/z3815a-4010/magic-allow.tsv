@@ -1,0 +1,13 @@
+# The hand-written C's literals and constants that
+# tools/firmware/magic_check.py finds and that stay as they are, each
+# with its reason (make check-magic-numbers).  Tab-separated: kind, file
+# under rewritten/, function, literal as written, target, reason.
+# The Z3815A 4010's rows are common/'s that its shared C finds, the same
+# in every image that shares them.
+duplicate	common/fpga.c	fpga_verify_first	10	LAST_BITS	each readback frame's own last bits, the first frame's and an odd frame's both 10 (0x22fc6, 0x23304), an even frame's 14
+duplicate	common/fpga.c	fpga_verify_first	5	WORDS	each readback frame's own words, the first frame's and an even frame's both 5 (0x22fc6, 0x2353a), an odd frame's 6
+duplicate	common/startup.h	startup_gpt_init	0xc	GPTMCR_ARBITRATION	the Z3815A's gpt_init body (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x650	ICR_LEVEL_6_VECTORS_0X50	the Z3815A's gpt_init body (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x04	PACTL_INPUT_CAPTURE_4	the Z3815A's gpt_init body (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x05	TCTL2_CAPTURES_1_2_RISING	the Z3815A's gpt_init body (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	3	TMSK_PRESCALER	the Z3815A's gpt_init body (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)

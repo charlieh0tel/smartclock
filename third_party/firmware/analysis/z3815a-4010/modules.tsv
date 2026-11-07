@@ -1,0 +1,1450 @@
+# The Z3815A 4010 firmware's C functions by module, seeded from the
+# 58503A 3704's (third_party/firmware/analysis/58503a-3704/modules.tsv): each
+# 58503A row re-keyed to its function's Z3815A address through
+# tools/firmware/image_diff.py's matches, as names.tsv is (identical,
+# relocated, or changed at a similarity of 0.70 or more, and from
+# 0.50 a lead), under the name names.tsv gives its address, or the
+# 58503A's where it gives none.  A 58503A function missing
+# from the Z3815A, or paired below 0.50, has no row, and the Z3815A's
+# new functions have none yet.  docs/firmware/modules.md gives the
+# layers, what each module holds and the calls that cross layers the
+# wrong way; docs/firmware/z3815a-4010.md what differs.
+# tools/firmware/seed_names.py writes this file, as it does names.tsv.
+#
+# Tab-separated: the function's address, its name, its module path
+# (LAYER/MODULE or LAYER/MODULE/PART), and a reason when the name does not
+# make the module plain.  The layers, lowest first, are platform, devices,
+# services and applications; a lower layer does not call a higher one but
+# for the calls modules.md lists.
+#
+# The assembly routines, the pForth kernel and the installer's copies
+# have no row.  Rows go in the 58503A's order: by module, layer by
+# layer, and within a module by subject.  A row whose reason ends
+# "row added by hand for the Z3815A 4010" is kept as it is, after
+# the seeded rows, for a function the seeding gives no row; it may not
+# take an address the seeding gives.
+0x9f0	boot_memcpy	platform/boot	the boot code (reset at 0x550), its own program ahead of the primary
+0x5ec34	primary_unpack_records	platform/boot	the primary's copy of boot_unpack_installer
+0x22f0a	primary_start	platform/startup
+0x22184	qsm_init	platform/startup
+0x221ae	gpt_init	platform/startup
+0x22d0c	start_nothing	platform/startup
+0x22162	periodic_interrupt_enable	platform/startup
+0x230d2	enter_installer	platform/startup	trap #11; scpi_task calls it for :SYSTem:LANGuage
+0x22204	shutdown	platform/startup
+0x23584	set_interrupt_mask	platform/cpu
+0x23574	enter_supervisor_mode	platform/cpu
+0x5eb14	psos_config_init	platform/os	copies the kernel's configuration and I/O table from ROM
+0x27604	psos_version	platform/os
+0x27610	psos_create	platform/os
+0x2764a	psos_start	platform/os
+0x27666	psos_ident	platform/os
+0x27694	psos_my_pid	platform/os
+0x276a4	psos_delete	platform/os
+0x276bc	psos_suspend	platform/os
+0x276d4	psos_resume	platform/os
+0x276ec	psos_priority	platform/os
+0x27712	psos_pause	platform/os
+0x2772a	psos_mode	platform/os
+0x2775c	psos_service_8	platform/os
+0x27790	psos_free_segment	platform/os
+0x277a8	psos_assign_segment	platform/os
+0x277c4	psos_reclaim_segment	platform/os
+0x277e0	psos_create_partition	platform/os
+0x2780a	psos_delete_partition	platform/os
+0x27826	psos_get_block	platform/os
+0x2784e	psos_return_block	platform/os
+0x2786a	psos_create_x	platform/os
+0x2789a	psos_service_21	platform/os
+0x278d6	psos_delete_x	platform/os
+0x278ee	psos_send_x	platform/os
+0x2790a	psos_jam_x	platform/os
+0x27926	psos_broadcast_x	platform/os
+0x27960	psos_request_x	platform/os
+0x27984	psos_signal_v	platform/os
+0x279a0	psos_wait_v	platform/os
+0x279ce	psos_get_v	platform/os
+0x279f8	psos_announce_tick	platform/os
+0x27a0c	psos_get_time	platform/os
+0x27a42	psos_set_time	platform/os
+0x27a66	psos_io_init	platform/os
+0x27a7e	psos_io_open	platform/os
+0x27a9a	psos_io_close	platform/os
+0x27ab2	psos_io_read	platform/os
+0x27ae4	psos_io_write	platform/os
+0x27b16	psos_io_control	platform/os
+0x204e6	mutex_create	platform/os
+0x20502	mutex_lock	platform/os
+0x20518	mutex_unlock	platform/os
+0x2052e	mutex_owner	platform/os
+0x20c8e	list_push	platform/os
+0x20c36	list_unlink	platform/os
+0x235aa	task_set_priority	platform/os
+0x23634	busy_wait	platform/os
+0x23654	sleep_seconds	platform/os
+0x5eb86	memory_allocate	platform/os
+0x5ebae	memory_free	platform/os
+0x5ebbc	current_task_id	platform/os
+0x219e2	exception_hook_reset	platform/os
+0x219f0	exception_hook_enable_per_task	platform/os
+0x21a12	exception_hook_set	platform/os
+0x219fc	exception_hook_set_task	platform/os
+0x21a2e	exception_hook_clear_task	platform/os
+0x21a38	exception_hook_get	platform/os
+0x27582	task_count_tick	platform/os
+0x20538	idle_count	platform/os
+0x27066	exchange_id_valid	platform/os
+0x2708c	task_id_valid	platform/os
+0x274f6	psos_debug_output	platform/os	the kernel debug output switch
+0x26bac	task_table_build	platform/os
+0x2670c	task_name	platform/os
+0x2674a	object_name	platform/os
+0x26862	task_status_name	platform/os
+0x2691e	region_segment_containing	platform/os
+0x26d9c	ready_queue_position	platform/os
+0x26b5e	timer_ticks_until	platform/os
+0x266d8	os_report_cpu	platform/os
+0x26c76	os_report_process_summary	platform/os
+0x26dc6	os_report_processes	platform/os
+0x26940	os_report_process	platform/os
+0x26d1c	os_report_exchange_summary	platform/os
+0x26cca	os_report_exchanges	platform/os
+0x26784	os_report_exchange	platform/os
+0x26e94	os_report_regions	platform/os
+0x268ec	os_report_region_line	platform/os
+0x270b8	os_process_report	platform/os
+0x2714a	os_memory_report	platform/os
+0x23426	stack_measure	platform/os
+0x23500	stack_usage_report	platform/os
+0x27242	task_stack_info	platform/os
+0x272d0	task_stack_report	platform/os
+0x28ae6	debug_is_enabled	platform/debug	debug_enabled; the self-tests' test
+0x2f6c2	debug_write	platform/debug
+0x2f694	debug_sprintf	platform/debug
+0x2f714	debug_printf	platform/debug
+0x2f6de	debug_printf_polled	platform/debug
+0x2e61e	printf_polled	platform/debug
+0x350b8	debug_message	platform/debug
+0x2f744	task_debug_message	platform/debug
+0x2f7a4	task_dmessage	platform/debug
+0x21b64	exception_name	platform/debug	the exception report; printf_polled
+0x21a7c	print_exception	platform/debug	the exception report; printf_polled
+0x2f8c4	fatal_error	platform/debug
+0x2f64a	fatal_error_with_code	platform/debug
+0x6ec14	memcmp	platform/string
+0x6ec4a	memcpy	platform/string
+0x6ec68	memset	platform/string
+0x6ee2a	strcat	platform/string
+0x6ee42	strchr	platform/string
+0x6ee5c	strncmp	platform/string
+0x6ee92	strncpy	platform/string
+0x6f240	toupper	platform/string
+0x42434	string_upper	platform/string	generic text helpers; only the ROBin parser calls them
+0x42470	skip_spaces	platform/string	generic text helpers; only the ROBin parser calls them
+0x42488	string_trim_right	platform/string	generic text helpers; only the ROBin parser calls them
+0x6e9a0	abs	platform/stdlib
+0x6ec04	labs	platform/stdlib
+0x6eba4	div	platform/stdlib
+0x6ebd4	ldiv	platform/stdlib
+0x6e9fc	atoi	platform/stdlib
+0x6ee04	rand	platform/stdlib
+0x6edce	qsort	platform/stdlib
+0x6ecc6	qsort_range	platform/stdlib
+0x6ec88	qsort_swap	platform/stdlib
+0x6eca2	qsort_rotate	platform/stdlib
+0x6e9b0	atexit	platform/stdlib
+0x6e9f2	call_atexit_functions	platform/stdlib
+0x25014	program_exit	platform/stdlib
+0x25028	program_end_report	platform/stdlib
+0x5ec06	setjmp	platform/stdlib	<setjmp.h>; trap #1 for the status register
+0x5ebdc	longjmp	platform/stdlib	<setjmp.h>; trap #1 for the status register
+0x70980	vsprintf	platform/stdio
+0x70918	sprintf	platform/stdio
+0x70946	sprintf_put	platform/stdio
+0x6fb8e	doprnt	platform/stdio
+0x6f43c	double_to_digits	platform/stdio
+0x6f258	double_to_digits_multiply	platform/stdio
+0x6fb58	next_decimal_digit	platform/stdio
+0x30942	printf	platform/stdio
+0x308f6	console_write	platform/stdio	stdout/stdin: pSOS I/O device 0, whatever drives it
+0x30968	console_read	platform/stdio	stdout/stdin: pSOS I/O device 0, whatever drives it
+0x70cd4	fabs	platform/math
+0x70d34	frexp	platform/math
+0x7113e	modf	platform/math
+0x70dba	log	platform/math
+0x71cc6	sqrt	platform/math
+0x71308	pow	platform/math
+0x71212	double_is_integer	platform/math
+0x712a4	double_truncate_sixteenths	platform/math
+0x6e63e	float_raise	platform/math
+0x2479a	float_exception_report	platform/math
+0x22240	int_abs	platform/arithmetic
+0x22274	int_clamp	platform/arithmetic
+0x22360	round_shift_right	platform/arithmetic
+0x2242a	round_divide	platform/arithmetic
+0x222f4	isqrt16	platform/arithmetic
+0x23612	rotate_left	platform/arithmetic	called by nothing
+0x4593a	sign_extend_bits	platform/arithmetic	nv_load_slot calls it
+0x5b93a	count_bits	platform/arithmetic	bit count; the satellite sets use it
+0x5b650	bytes_to_long	platform/arithmetic	big-endian bytes; the Oncore decoders use it
+0x22294	crc16_with_sum	platform/arithmetic
+0x22c4c	random_dither	platform/arithmetic	rand shaped by dither_table; efc_write_dithered
+0x49c98	int64_add	platform/arithmetic
+0x49c24	int64_compare	platform/arithmetic
+0x49cbc	int64_negate	platform/arithmetic
+0x49cd0	int64_add_long	platform/arithmetic
+0x49cfa	int64_divide	platform/arithmetic
+0x49d1c	uint64_divide	platform/arithmetic
+0x49d3a	int64_to_double	platform/arithmetic
+0x49de2	double_to_int64	platform/arithmetic
+0x4b866	float_abs	platform/arithmetic
+0x235ee	float_absolute_on_stack	platform/arithmetic
+0x235fe	double_abs	platform/arithmetic
+0x22396	double_round_to_long	platform/arithmetic
+0x2273c	power_of_ten_double	platform/arithmetic
+0x22b2a	power_of_ten_float	platform/arithmetic
+0x226e4	double_decimal_exponent	platform/arithmetic
+0x22450	double_decimal_exponent_rounded	platform/arithmetic
+0x2268e	double_decimal_exponent_floor	platform/arithmetic
+0x22956	float_decimal_exponent_rounded	platform/arithmetic
+0x22a94	float_decimal_exponent_floor	platform/arithmetic
+0x466f0	float_table_index	platform/arithmetic	called by nothing
+0x2f3fc	duart_early_init	devices/duart
+0x2f30a	duart_stop	devices/duart
+0x2e798	duart_input_0_debounced	devices/duart
+0x2e7d4	duart_input_1_debounced	devices/duart
+0x2e810	duart_input_2_debounced	devices/duart
+0x2e84c	duart_output_bits	devices/duart
+0x2ed8a	duart_test	devices/duart
+0x2ecae	duart_counter_test	devices/duart
+0x2e9e2	duart_loopback_test_a	devices/duarta	self-test of channel A, run by duart_test with B's
+0x2ee32	duart_test_tx_a	devices/duarta	self-test of channel A, run by duart_test with B's
+0x2edea	duart_test_rx_a	devices/duarta	self-test of channel A, run by duart_test with B's
+0x2eb48	duart_loopback_test_b	devices/duartb	self-test of channel B, run by duart_test with A's
+0x2ee62	duart_test_tx_b	devices/duartb	self-test of channel B, run by duart_test with A's
+0x2ee0e	duart_test_rx_b	devices/duartb	self-test of channel B, run by duart_test with A's
+0x2f332	duartb_loopback_check	devices/duartb	self-test of channel B, run by duart_test with A's
+0x2e8ac	drta_send_message	devices/duarta
+0x2f0f6	duarta_tx_interrupt	devices/duarta
+0x2e95a	drta_get_byte	devices/duarta
+0x2e944	duarta_rx_pending	devices/duarta
+0x2ee92	duarta_isr	devices/duarta
+0x2dc4e	duartb_mode_from_settings	devices/duartb
+0x2dd00	duartb_baud_from_settings	devices/duartb
+0x2e352	duartb_reconfigure	devices/duartb
+0x309ac	duartb_settings_done	devices/duartb
+0x2dc4c	duartb_echo_none	devices/duartb
+0x2e4c2	drtb_putc	devices/duartb
+0x2dd88	drtb_puts	devices/duartb
+0x2e4fe	drtb_send_async	devices/duartb
+0x2dd4e	duartb_putc_polled	devices/duartb
+0x309be	console_write_polled	devices/duartb	polls channel B's transmitter directly (0x1d680); debug_write's path
+0x2e69a	drtb_try_lock_write	devices/duartb
+0x2e6b6	drtb_release_for_timecode	devices/duartb	closes device 0 so channel B can carry the time code; tcode_request calls it
+0x2de18	drtb_getc	devices/duartb
+0x2deb2	drtb_gets	devices/duartb
+0x2e4a2	drtb_read	devices/duartb
+0x2ef22	duartb_isr	devices/duartb
+0x2f13c	duartb_transmit_interrupt	devices/duartb
+0x31002	qspi_acquire	devices/qspi
+0x30ce2	qspi_queue_setup	devices/qspi
+0x30fac	qspi_start	devices/qspi
+0x31318	qspi_transfer	devices/qspi
+0x3129a	qspi_send	devices/qspi
+0x31100	qspi_isr	devices/qspi
+0x30c76	qspi_release	devices/qspi
+0x3125a	qspi_write	devices/qspi
+0x2fbc0	qspi_fpga_block_write	devices/qspi
+0x2fbdc	qspi_fpga_tail_write	devices/qspi
+0x2fbf4	qspi_fpga_word_write	devices/qspi
+0x2fc0c	qspi_fpga_byte_write	devices/qspi
+0x3127a	qspi_read	devices/qspi
+0x2f9c6	adc_read	devices/adc
+0x2fa76	hdac_set	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC
+0x2fa2a	hdac_write	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC
+0x2faf8	hdac_write_all	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC
+0x2fb6a	hdac_update	devices/dac	QSPI devices 2 (hex DAC) and 7 (EFC DAC), not the ADC
+0x363a4	efc_write_dithered	devices/dac	hmon_task writes it each tick
+0x350de	fpga_setup	devices/fpga
+0x35112	fpga_program	devices/fpga
+0x290b4	fpga_load_test	devices/fpga
+0x35cee	fpga_verify	devices/fpga
+0x35bb8	fpga_verify_chip	devices/fpga
+0x35334	fpga_verify_first	devices/fpga
+0x35672	fpga_verify_odd	devices/fpga
+0x358a8	fpga_verify_even	devices/fpga
+0x4928a	fpga_write	devices/fpga
+0x4929e	fpga_read	devices/fpga
+0x49706	fpga_read_byte	devices/fpga
+0x49308	fpga_bit_test	devices/fpga
+0x49504	fpga_set_bit	devices/fpga
+0x4956e	fpga_set_field	devices/fpga
+0x4965e	fpga_fields_to_registers	devices/fpga
+0x4932e	fpga_read_seconds	devices/fpga
+0x49392	fpga_address_sweep_debug	devices/fpga
+0x49a62	counter_configuration_init	devices/ti
+0x48b06	interpolator_calibration_init	devices/ti
+0x49b14	counter_init	devices/ti
+0x36e76	counter_reset	devices/ti	fpga_setup and counter_load_registers
+0x49a2c	counter_load_registers	devices/ti
+0x497ca	counter_arm	devices/ti
+0x495e4	counter_set_sync	devices/ti
+0x495c4	sync_request	devices/ti	counter_configuration sync fields; the loop and clk_synch call it
+0x4944e	counter_wait_ready	devices/ti
+0x49766	counter_read_raw	devices/ti
+0x4973a	counter_offset_apply	devices/ti
+0x497b6	interpolator_read	devices/ti
+0x498be	counter_read	devices/ti
+0x48cca	interpolator_prepare	devices/ti
+0x48b36	interpolator_measure	devices/ti
+0x48b84	interpolator_measure_low	devices/ti
+0x48b9c	interpolator_measure_high	devices/ti
+0x48bb6	dac_search_bisect	devices/ti
+0x48c34	dac_search_step	devices/ti
+0x48c94	hdac_nudge	devices/ti
+0x48d4e	interpolator_calibrate	devices/ti
+0x48f92	interpolator_verify	devices/ti
+0x4907c	interpolator_sample	devices/ti
+0x490f0	counter_calibrate	devices/ti
+0x49b36	counter_selftest	devices/ti	the counter's own tests; the self-test runs them
+0x491a4	interpolator_selftest_calibrate	devices/ti	the counter's own tests; the self-test runs them
+0x491fc	interpolator_selftest	devices/ti	the counter's own tests; the self-test runs them
+0x49216	interpolator_sample_test	devices/ti	the counter's own tests; the self-test runs them
+0x453e8	eeprom_lock_init	devices/eeprom	the chip and its lock, not a record
+0x453f0	eeprom_init	devices/eeprom	the chip and its lock, not a record
+0x4548e	eeprom_lock	devices/eeprom	the chip and its lock, not a record
+0x4553e	eeprom_unlock	devices/eeprom	the chip and its lock, not a record
+0x45608	eeprom_write_byte	devices/eeprom	the chip and its lock, not a record
+0x4567e	eeprom_write_page	devices/eeprom	the chip and its lock, not a record
+0x4572a	eeprom_write	devices/eeprom	the chip and its lock, not a record
+0x31424	spoo_task_create	services/spool
+0x315dc	spoo_task	services/spool
+0x314f4	spoo_run	services/spool
+0x31560	deferred_vprintf	services/spool
+0x3164c	deferred_flush	services/spool
+0x3a5be	status_create	services/status
+0x3a670	status_register_setup	services/status
+0x431b4	status_init	services/status
+0x43178	status_enables_init	services/status
+0x430f0	status_preset_register	services/status
+0x4c7c0	status_enable_restore	services/status	from nv_settings
+0x4c800	status_ptr_restore	services/status	from nv_settings
+0x4c842	status_ntr_restore	services/status	from nv_settings
+0x4c884	status_preset_done	services/status	:STATus:PRESet's descriptor hook
+0x43416	happening_buffer_clear	services/status
+0x43434	happening_buffers_clear	services/status
+0x3aa9e	error_queue_create	services/status
+0x3fa0e	status_report	services/status
+0x3fac2	status_report_from	services/status
+0x432da	status_happening	services/status
+0x43294	status_event_hook	services/status
+0x4344c	happening_replay	services/status
+0x43496	happening_flush	services/status
+0x4c7a4	questionable_user_done	services/status	:STATus:QUEStionable:USER's descriptor hook
+0x3a6de	status_set_bit	services/status
+0x3a85c	status_clear_bit	services/status
+0x3a7a2	status_apply_condition	services/status
+0x3a49e	status_event_set	services/status
+0x3a4bc	status_condition_set	services/status
+0x3a518	status_condition_clear	services/status
+0x3a578	status_propagate	services/status
+0x3a870	condition_is_command_error	services/status
+0x3a8a6	status_condition_bit_get	services/status
+0x3a900	status_register_set_enable	services/status
+0x3a948	status_register_get_enable	services/status
+0x3adb0	status_register_set_ptr	services/status
+0x3adc4	status_register_set_ntr	services/status
+0x3add8	status_register_get_ptr	services/status
+0x3adee	status_register_get_ntr	services/status
+0x3a98a	status_read_event	services/status
+0x3aa1c	status_read_condition	services/status
+0x3aa30	status_clear_events	services/status
+0x433e6	status_hardware_condition	services/status	register 6; status_summary_update and status_snapshot read it
+0x3aaea	error_queue_push	services/status	status_apply_condition's kind; the queue is the status model's
+0x3abb4	error_queue_pop	services/status
+0x3aa82	error_queue_read	services/status
+0x3aa60	error_queue_clear	services/status
+0x3ae04	error_message_lookup	services/status	status_report's table at 0x28910
+0x3ac28	error_queue_destroy	services/status
+0x3a634	status_destroy	services/status
+0x46ef8	nv_restore	services/nv
+0x47256	nv_slot_valid	services/nv
+0x47322	nv_load_slot	services/nv
+0x46fc4	nv_checksum	services/nv
+0x46ff2	nv_record_differs	services/nv
+0x4701e	nv_save	services/nv
+0x46eba	nv_slot_erase	services/nv
+0x46ee6	clear_nv	services/nv
+0x4f4fa	nv_clear_and_reset	services/nv	clears NV, then trap #12
+0x44b62	record_checksum	services/records
+0x4528e	parameter_record_read	services/records
+0x451e8	save_parameter_record	services/records
+0x45380	duartb_settings_preset	services/records
+0x475d2	identification_record_read	services/records
+0x47676	identification_record_write	services/records
+0x475b6	idn_model_default	services/records
+0x44d9a	lifetime_record_read	services/records
+0x44e10	lifetime_record_write	services/records
+0x44e9c	lifetime_event_run	services/records
+0x44ed2	lifetime_update	services/records
+0x450e6	calibration_block_read	services/records
+0x44f8a	save_calibration_block	services/records
+0x45b72	log_init	services/log
+0x458fa	log_page_read	services/log
+0x4585a	log_page_checksum	services/log
+0x46192	log_page_clear	services/log
+0x461a8	log_page_free_entry	services/log
+0x46260	log_append	services/log
+0x46214	log_flush	services/log
+0x45884	log_page_write	services/log
+0x45f08	log_write	services/log
+0x45f50	log_event	services/log
+0x46162	log_first_satellite	services/log
+0x45a16	log_erase	services/log
+0x45ade	log_erase_locked	services/log
+0x45b10	log_erase_checked	services/log
+0x45b58	log_entry_total	services/log
+0x45cfc	log_read	services/log
+0x3e680	log_status	services/log
+0x3e736	log_print	services/log
+0x3672a	exception_record_clear	services/log	clears the last exception and crash message; system_init
+0x3673e	log_reset_cause	services/log	writes a reset-cause record; system_init
+0x47770	reset_record_checksum	services/log	the reset-cause log at 0x4001c0
+0x4779e	reset_record_valid	services/log	the reset-cause log at 0x4001c0
+0x4788a	reset_record_count	services/log	the reset-cause log at 0x4001c0
+0x479ae	reset_record_write	services/log	the reset-cause log at 0x4001c0
+0x477d4	log_clear	services/log	the reset-cause log at 0x4001c0
+0x47864	log_count	services/log	the reset-cause log at 0x4001c0
+0x478b2	log_entry_text	services/log	the reset-cause log at 0x4001c0
+0x20ddc	is_leap_year	services/calendar
+0x21058	days_in_month	services/calendar
+0x20e0a	day_of_year	services/calendar
+0x2109c	date_normalize	services/calendar
+0x20e98	days_to_date	services/calendar
+0x20f6c	date_to_days	services/calendar
+0x20fe2	date_to_mjd	services/calendar
+0x21120	oncore_date_pack	services/calendar	a calendar date's packing, the Oncore's order; the clock's callers use it
+0x210fc	oncore_date_unpack	services/calendar	oncore_date_pack inverted; called by nothing
+0x21144	hms_to_seconds	services/calendar
+0x21178	time_to_seconds	services/calendar
+0x20e60	time_packed_to_seconds	services/calendar
+0x211ac	seconds_to_hms	services/calendar
+0x211f2	gps_seconds	services/calendar
+0x21414	datetime_add	services/calendar
+0x214a6	datetime_subtract	services/calendar
+0x21532	datetime_compare	services/calendar
+0x21578	utc_to_gps	services/calendar
+0x215fe	gps_to_utc	services/calendar
+0x2183a	utc_to_local	services/calendar
+0x218f0	local_to_utc	services/calendar
+0x421b8	time_zone_split	services/calendar	calendar arithmetic; :PTIMe:TZONe? calls it
+0x23c32	clock_init	services/clock
+0x20b00	clock_set	services/clock
+0x23a88	clock_record_refresh	services/clock
+0x237ee	clock_tick	services/clock
+0x23ccc	set_gps_utc_offset	services/clock
+0x239dc	get_clock_date	services/clock
+0x239e4	get_clock_time	services/clock
+0x239ec	get_gps_date	services/clock
+0x239f4	get_gps_time	services/clock
+0x23a46	get_gps_datetime	services/clock
+0x23a04	get_date_time	services/clock
+0x239fc	get_uptime	services/clock
+0x56b38	uptime_elapsed	services/clock	a get_uptime difference; the GPS task's timers use it
+0x23cc4	time_valid	services/clock
+0x23cf8	get_gps_utc_offset	services/clock
+0x4fcb0	leap_settings_clear	services/leap
+0x4fcf8	leap_event_create	services/leap
+0x4fcca	leap_event_delete	services/leap
+0x2075a	leap_event_schedule	services/leap
+0x205ee	leap_event_schedule_gps	services/leap
+0x20656	leap_event_schedule_utc	services/leap
+0x2396c	leap_minute_59_arm	services/leap
+0x23972	leap_minute_61_arm	services/leap
+0x239a8	offset_step_down_arm	services/leap
+0x239c2	offset_step_up_arm	services/leap
+0x21744	leap_opportunity_date	services/leap
+0x217ba	leap_second_near	services/leap
+0x2137e	time_next_second	services/leap
+0x21302	leap_gps_time	services/leap
+0x209ae	klok_task_create	services/klok
+0x20b1e	klok_task	services/klok
+0x2320e	klok_take_pending	services/klok
+0x20b62	klok_run_due	services/klok
+0x20540	clk_do	services/klok
+0x20c5a	klok_insert_sorted	services/klok
+0x20786	klok_cancel	services/klok
+0x208fe	klok_find	services/klok
+0x20946	klok_entry_state	services/klok
+0x207ee	klok_print_entries	services/klok
+0x22fc6	pps_init	services/pps	the 1PPS capture's interrupt: ticks the clock and the time code, wakes klok
+0x22f52	pps_interrupt	services/pps	the 1PPS capture's interrupt: ticks the clock and the time code, wakes klok
+0x2300e	pps_interrupt_stop	services/pps	the 1PPS capture's interrupt: ticks the clock and the time code, wakes klok
+0x23040	pps_wait_time	services/pps	the 1PPS capture's interrupt: ticks the clock and the time code, wakes klok
+0x24494	timecode_init	services/timecode
+0x23d20	tcode_request	services/timecode
+0x22ade	tfom_table_index	services/timecode
+0x23d9c	tfom_code	services/timecode
+0x23d0e	tcode_checksum	services/timecode
+0x24212	timecode_update	services/timecode
+0x2459a	timecode_schedule	services/timecode	GPT output compare 3, for the time code
+0x36f2e	monitors_reset	services/monitors
+0x36892	gps_pps_monitor_reset	services/monitors
+0x36ae6	internal_pps_monitor_reset	services/monitors
+0x36466	efc_clamp_reset	services/monitors	efc_clamp's flags; hmon_task clears them
+0x36c52	hmon_task	services/monitors
+0x3361a	monitor_average_add	services/monitors
+0x336a0	monitor_filter_add	services/monitors
+0x33994	monitor_out_of_range	services/monitors
+0x36478	hmon_check_efc	services/monitors
+0x363f6	efc_clamp	services/monitors	the EFC DAC's range, reported as events B and C as hmon_check_efc reports its ends; the loop's stages call it
+0x368ca	gps_pps_check	services/monitors
+0x36afa	internal_pps_check	services/monitors
+0x33c74	oven_warmed_up	services/monitors
+0x36664	watchdog_report	services/monitors
+0x22d0e	system_init	applications/main	the composition root: creates every task and initializes every layer
+0x2321c	root_task	applications/main	the composition root: creates every task and initializes every layer
+0x28bb6	selftest_init	applications/selftest
+0x28a76	selftest_begin	applications/selftest
+0x28a7e	selftest_end	applications/selftest
+0x28a9e	selftest_execute	applications/selftest
+0x29218	selftest_run	applications/selftest
+0x27e48	selftest_run_all	applications/selftest
+0x27e68	selftest_run_all_counted	applications/selftest
+0x28bd2	selftest_abort_wait	applications/selftest
+0x28b80	selftest_aborted	applications/selftest
+0x28a86	selftest_may_report	applications/selftest
+0x28b90	selftest_delay	applications/selftest
+0x27f2e	selftest_all	applications/selftest
+0x27f7c	selftest_interpolator	applications/selftest
+0x27fe2	selftest_internal_reference	applications/selftest
+0x28048	selftest_ram	applications/selftest
+0x28132	selftest_cpu	applications/selftest
+0x281b2	selftest_eeprom	applications/selftest
+0x28232	selftest_qspi	applications/selftest
+0x282da	selftest_fpga	applications/selftest
+0x28340	selftest_lamps	applications/selftest
+0x2835a	selftest_uart	applications/selftest
+0x28430	selftest_gps	applications/selftest
+0x28688	selftest_power	applications/selftest
+0x28756	selftest_interpolator_calibration	applications/selftest
+0x28766	selftest_interpolator_sample	applications/selftest
+0x28d86	selftest_cpu_result	applications/selftest
+0x28d90	selftest_ram_result	applications/selftest
+0x28d9a	selftest_eeprom_result	applications/selftest
+0x29414	selftest_nv_slot	applications/selftest
+0x2942e	selftest_qspi_run	applications/selftest
+0x2943c	selftest_qspi_with_lamp	applications/selftest
+0x29466	selftest_fpga_with_lamp	applications/selftest
+0x2948c	selftest_interpolator_with_lamp	applications/selftest
+0x294b6	selftest_internal_reference_with_lamp	applications/selftest
+0x294ea	selftest_uart_with_lamp	applications/selftest
+0x29510	selftest_gps_with_lamp	applications/selftest
+0x294e0	lamp_test_command	applications/selftest
+0x28c5c	internal_pps_test	applications/selftest	self-test 9's count
+0x28ca6	lamp_test	applications/selftest
+0x28d1a	supplies_test	applications/selftest
+0x293e8	ram_pattern_test_locked	applications/selftest
+0x27dec	rom_lane_checksum	applications/selftest	called by nothing
+0x28f42	qspi_hex_dac_test	applications/selftest
+0x28f04	shift_right_36	applications/selftest
+0x2905e	qspi_adc_test	applications/selftest
+0x290fa	qspi_efc_test	applications/selftest
+0x29196	qspi_tests_run	applications/selftest
+0x27e96	selftest_summary	applications/selftest
+0x28aee	selftest_report_fail	applications/selftest
+0x28b48	format_binary	applications/selftest
+0x28da4	selftest_print_failure	applications/selftest
+0x230d6	scpi_task_start	applications/scpi/engine	root_task starts the SCPI task through spoo_run
+0x3cbb6	scpi_task_create	applications/scpi/engine
+0x3cb10	scpi_task	applications/scpi/engine
+0x3c070	scpi_session_init	applications/scpi/engine
+0x3c0e4	scpi_session_close	applications/scpi/engine
+0x38f54	scpi_context_init	applications/scpi/engine
+0x3b7ec	scpi_interpret	applications/scpi/engine
+0x38f8a	scpi_parse_message_unit	applications/scpi/engine
+0x3bb58	scpi_call_handler	applications/scpi/engine
+0x3c636	scpi_message_done	applications/scpi/engine
+0x3c63a	scpi_input_closed	applications/scpi/engine
+0x3bc86	arena_init	applications/scpi/engine
+0x3bc16	arena_alloc	applications/scpi/engine
+0x3bc42	arena_remaining	applications/scpi/engine
+0x3bc58	arena_take	applications/scpi/engine
+0x3bc74	arena_current	applications/scpi/engine
+0x3bc7c	arena_set	applications/scpi/engine
+0x3bff0	scpi_query_failed	applications/scpi/engine	reports -0x20 through status_report_from for 72 queries
+0x3c84e	scpi_input_source	applications/scpi/engine	the source argument handlers pass status_report_from
+0x3bf2e	return_byte	applications/scpi/engine	handler helper
+0x3bf34	long_identity	applications/scpi/engine	handler helper; called by nothing
+0x3bf78	float_identity	applications/scpi/engine	handler helper; the EFC queries
+0x3bf3a	copy_longs_locked	applications/scpi/engine	the position handlers' copy
+0x30992	scpi_port_open	applications/scpi/port	psos_io_open of device 0
+0x309a0	scpi_port_close	applications/scpi/port	psos_io_close of device 0
+0x3c034	scpi_console_port	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c03c	scpi_prompt	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c0f0	scpi_console_read	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c128	console_port_read	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c1e0	scpi_input_ended	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c1ea	scpi_console_putc	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c25a	scpi_console_write_loop	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c0ec	scpi_console_return_zero	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c26a	status_byte_set_bits	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c27c	status_byte_clear_bits	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c290	status_sre_set	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c2a2	status_sre_get	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c2aa	status_byte_get	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x3c63e	status_prompt_refresh	applications/scpi/port	the console port object and its method table at 0x29dd4, with IEEE 488.2's status byte
+0x393b4	scpi_scan_token	applications/scpi/lexer
+0x3985c	scpi_skip_to_terminator	applications/scpi/lexer
+0x398a0	scpi_scan_number	applications/scpi/lexer
+0x39b42	scpi_scan_exponent	applications/scpi/lexer
+0x39ca6	scpi_char_upper	applications/scpi/lexer
+0x39eaa	scpi_suffix_compare_tail	applications/scpi/lexer
+0x39ee0	scpi_multiplier_exponent	applications/scpi/lexer
+0x39efe	scpi_match_suffix	applications/scpi/lexer
+0x39fb8	scpi_apply_suffix	applications/scpi/lexer
+0x3a036	scpi_keyword_compare	applications/scpi/tree
+0x3a07e	scpi_node_find	applications/scpi/tree
+0x3a0f6	scpi_node_find_with_defaults	applications/scpi/tree
+0x3a168	scpi_node_find_numbered	applications/scpi/tree
+0x3a254	scpi_header_resolve	applications/scpi/tree
+0x3a372	scpi_header_step	applications/scpi/tree
+0x3a3d2	scpi_path_reset	applications/scpi/tree
+0x3a3e4	scpi_common_header_resolve	applications/scpi/tree
+0x3a452	scpi_trg_defined	applications/scpi/tree
+0x3821e	scpi_parse_text	applications/scpi/parameters
+0x38244	scpi_parse_string	applications/scpi/parameters
+0x38260	scpi_parse_boolean	applications/scpi/parameters
+0x382b4	scpi_parse_boolean_number	applications/scpi/parameters
+0x38316	scpi_parse_choice	applications/scpi/parameters
+0x3837a	scpi_parse_short	applications/scpi/parameters
+0x383ba	scpi_parse_unsigned_short	applications/scpi/parameters
+0x383fa	scpi_parse_long	applications/scpi/parameters
+0x3843a	scpi_parse_unsigned_long	applications/scpi/parameters
+0x3847a	scpi_parse_float	applications/scpi/parameters
+0x38502	scpi_parse_double	applications/scpi/parameters
+0x39dc8	scpi_parameter_match	applications/scpi/parameters
+0x39e4e	scpi_parameters_finish	applications/scpi/parameters
+0x3bcb2	scpi_check_range	applications/scpi/parameters
+0x3bcda	scpi_long_resolve_bound	applications/scpi/parameters
+0x3bd42	scpi_numeric_set	applications/scpi/parameters
+0x3bdc8	scpi_numeric_set_double	applications/scpi/parameters
+0x3be12	scpi_numeric_get	applications/scpi/parameters
+0x3bea6	scpi_numeric_get_double	applications/scpi/parameters
+0x3798e	scpi_number_to_double	applications/scpi/convert
+0x37a0e	scpi_real_to_text	applications/scpi/convert
+0x3856e	scpi_number_to_short	applications/scpi/convert
+0x38614	scpi_number_to_unsigned_short	applications/scpi/convert
+0x386b8	scpi_number_to_long	applications/scpi/convert
+0x3875e	scpi_number_to_unsigned_long	applications/scpi/convert
+0x38800	scpi_number_to_boolean	applications/scpi/convert
+0x389b4	scpi_unsigned_to_digits	applications/scpi/convert
+0x38842	scpi_format_text	applications/scpi/format
+0x38872	scpi_format_string	applications/scpi/format
+0x388e0	scpi_format_boolean	applications/scpi/format
+0x3890c	scpi_format_counted_text	applications/scpi/format
+0x38934	scpi_format_choice	applications/scpi/format
+0x389f6	scpi_format_long	applications/scpi/format
+0x38a76	scpi_format_short	applications/scpi/format
+0x38a96	scpi_format_unsigned_long	applications/scpi/format
+0x38af0	scpi_format_unsigned_short	applications/scpi/format
+0x38b12	scpi_format_block	applications/scpi/format
+0x38ba4	scpi_format_double_array	applications/scpi/format
+0x38bf0	scpi_format_short_array	applications/scpi/format
+0x38c3c	scpi_format_resolution_array	applications/scpi/format
+0x38c94	scpi_format_array	applications/scpi/format
+0x38cea	scpi_format_resolution_array_record	applications/scpi/format
+0x38d44	scpi_format_double	applications/scpi/format
+0x38d98	scpi_format_float	applications/scpi/format
+0x38e00	scpi_format_double_precision	applications/scpi/format
+0x38e7a	scpi_format_double_resolution	applications/scpi/format
+0x38eda	scpi_format_float_resolution	applications/scpi/format
+0x3bba6	scpi_format_response	applications/scpi/format
+0x3c862	send_x_retry	applications/scpi/requests	the SCPI task's client side of pllc_exchange
+0x3c88a	request_and_wait	applications/scpi/requests	the SCPI task's client side of pllc_exchange
+0x3c8ce	pllc_request_a	applications/scpi/requests	the SCPI task's client side of pllc_exchange
+0x3c902	pllc_request_b	applications/scpi/requests	the SCPI task's client side of pllc_exchange
+0x3c930	pllc_request_c	applications/scpi/requests	the SCPI task's client side of pllc_exchange
+0x3c96c	pllc_request_d	applications/scpi/requests	the SCPI task's client side of pllc_exchange
+0x3c9a0	pllc_request_e	applications/scpi/requests	the SCPI task's client side of pllc_exchange
+0x3d210	scpi_set_common_CLS	applications/scpi/handlers/common
+0x3d266	scpi_set_common_ESE	applications/scpi/handlers/common
+0x3d2ec	scpi_query_common_ESE	applications/scpi/handlers/common
+0x3d332	scpi_query_common_ESR	applications/scpi/handlers/common
+0x3d34e	scpi_query_common_IDN	applications/scpi/handlers/common
+0x3d3da	scpi_set_common_OPC	applications/scpi/handlers/common
+0x3d3de	scpi_query_common_OPC	applications/scpi/handlers/common
+0x3d3ec	scpi_set_common_RST	applications/scpi/handlers/common
+0x3d3f0	scpi_set_common_SRE	applications/scpi/handlers/common
+0x3d472	scpi_query_common_SRE	applications/scpi/handlers/common
+0x3d4b6	scpi_query_common_STB	applications/scpi/handlers/common
+0x3d4d0	scpi_query_common_TST	applications/scpi/handlers/common
+0x3d500	scpi_set_common_WAI	applications/scpi/handlers/common
+0x3d524	scpi_query_STATus_OPERation_CONDition	applications/scpi/handlers/status
+0x3d65e	scpi_set_STATus_OPERation_ENABle	applications/scpi/handlers/status
+0x3d718	scpi_query_STATus_OPERation_ENABle	applications/scpi/handlers/status
+0x3d504	scpi_query_STATus_OPERation_EVENt	applications/scpi/handlers/status
+0x3d9b2	scpi_query_STATus_OPERation_HARDware_CONDition	applications/scpi/handlers/status
+0x3d9d4	scpi_set_STATus_OPERation_HARDware_ENABle	applications/scpi/handlers/status
+0x3da96	scpi_query_STATus_OPERation_HARDware_ENABle	applications/scpi/handlers/status
+0x3d990	scpi_query_STATus_OPERation_HARDware_EVENt	applications/scpi/handlers/status
+0x3dc0c	scpi_set_STATus_OPERation_HARDware_NTRansition	applications/scpi/handlers/status
+0x3dcd2	scpi_query_STATus_OPERation_HARDware_NTRansition	applications/scpi/handlers/status
+0x3daee	scpi_set_STATus_OPERation_HARDware_PTRansition	applications/scpi/handlers/status
+0x3dbb4	scpi_query_STATus_OPERation_HARDware_PTRansition	applications/scpi/handlers/status
+0x3d87e	scpi_set_STATus_OPERation_NTRansition	applications/scpi/handlers/status
+0x3d93c	scpi_query_STATus_OPERation_NTRansition	applications/scpi/handlers/status
+0x3d76c	scpi_set_STATus_OPERation_PTRansition	applications/scpi/handlers/status
+0x3d82a	scpi_query_STATus_OPERation_PTRansition	applications/scpi/handlers/status
+0x3dd2a	scpi_set_STATus_PRESet	applications/scpi/handlers/status
+0x3dd50	scpi_set_STATus_PRESet_ALARm	applications/scpi/handlers/status
+0x3d556	scpi_set_STATus_QUEStionable_CONDition_USER	applications/scpi/handlers/status
+0x3d5e0	scpi_set_STATus_QUEStionable_EVENt_USER	applications/scpi/handlers/status
+0x4418e	scpi_query_SYSTem_COMMunicate	applications/scpi/handlers/system
+0x441f2	scpi_query_SYSTem_COMMunicate_SER1_ADDRess	applications/scpi/handlers/system
+0x4427e	scpi_query_SYSTem_COMMunicate_SER1_FDUPlex	applications/scpi/handlers/system
+0x443c2	scpi_set_SYSTem_COMMunicate_SER1_PROMpt	applications/scpi/handlers/system
+0x443fc	scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD	applications/scpi/handlers/system
+0x444ae	scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD	applications/scpi/handlers/system
+0x4453a	scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS	applications/scpi/handlers/system
+0x44592	scpi_query_SYSTem_COMMunicate_SER1_RECeive_BITS	applications/scpi/handlers/system
+0x446a4	scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE	applications/scpi/handlers/system
+0x446ea	scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE	applications/scpi/handlers/system
+0x4478c	scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE	applications/scpi/handlers/system
+0x447f8	scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs	applications/scpi/handlers/system
+0x44850	scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs	applications/scpi/handlers/system
+0x44932	scpi_set_SYSTem_LANGuage	applications/scpi/handlers/system
+0x44a54	scpi_set_SYSTem_PRESet	applications/scpi/handlers/system
+0x44a7a	scpi_query_SYSTem_PRINt	applications/scpi/handlers/system
+0x44af8	scpi_query_SYSTem_PRINt_LENGth	applications/scpi/handlers/system
+0x400e0	scpi_set_SOURce_GPSystem_ADELay	applications/scpi/handlers/source_gpsystem
+0x401e2	scpi_query_SOURce_GPSystem_ADELay	applications/scpi/handlers/source_gpsystem
+0x4028a	scpi_set_SOURce_GPSystem_EMANgle	applications/scpi/handlers/source_gpsystem
+0x402c6	scpi_query_SOURce_GPSystem_EMANgle	applications/scpi/handlers/source_gpsystem
+0x402f2	scpi_set_SOURce_GPSystem_INITial_DATE	applications/scpi/handlers/source_gpsystem
+0x403f6	scpi_set_SOURce_GPSystem_INITial_POSition	applications/scpi/handlers/source_gpsystem
+0x40374	scpi_set_SOURce_GPSystem_INITial_TIME	applications/scpi/handlers/source_gpsystem
+0x40772	scpi_set_SOURce_GPSystem_POSition	applications/scpi/handlers/source_gpsystem
+0x40bba	scpi_query_SOURce_GPSystem_POSition	applications/scpi/handlers/source_gpsystem
+0x3e020	scpi_query_SOURce_GPSystem_POSition_ACTual	applications/scpi/handlers/source_gpsystem
+0x40cfa	scpi_query_SOURce_GPSystem_POSition_HOLD_LAST	applications/scpi/handlers/source_gpsystem
+0x40e0a	scpi_query_SOURce_GPSystem_POSition_HOLD_STATe	applications/scpi/handlers/source_gpsystem
+0x41088	scpi_query_SOURce_GPSystem_REFerence_VALid	applications/scpi/handlers/source_gpsystem
+0x411e2	scpi_query_SOURce_GPSystem_SATellite_TRACking	applications/scpi/handlers/source_gpsystem
+0x412f4	scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt	applications/scpi/handlers/source_gpsystem
+0x41370	scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore	applications/scpi/handlers/source_gpsystem
+0x41434	scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore	applications/scpi/handlers/source_gpsystem
+0x414be	scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL	applications/scpi/handlers/source_gpsystem
+0x414ea	scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt	applications/scpi/handlers/source_gpsystem
+0x41530	scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE	applications/scpi/handlers/source_gpsystem
+0x4155a	scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe	applications/scpi/handlers/source_gpsystem
+0x415ca	scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude	applications/scpi/handlers/source_gpsystem
+0x4168e	scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude	applications/scpi/handlers/source_gpsystem
+0x4171c	scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt	applications/scpi/handlers/source_gpsystem
+0x41766	scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted	applications/scpi/handlers/source_gpsystem
+0x4182c	scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt	applications/scpi/handlers/source_gpsystem
+0x410d0	satellite_in_mask	applications/scpi/handlers/source_gpsystem	the SAT:TRAC queries' mask helpers
+0x4113c	satellite_list_limits	applications/scpi/handlers/source_gpsystem	the SAT:TRAC queries' mask helpers
+0x410ea	satellite_mask_add	applications/scpi/handlers/source_gpsystem	the SAT:TRAC queries' mask helpers
+0x41112	satellite_mask_remove	applications/scpi/handlers/source_gpsystem	the SAT:TRAC queries' mask helpers
+0x410b8	satellite_number_valid	applications/scpi/handlers/source_gpsystem	the SAT:TRAC queries' mask helpers
+0x41196	satellites_in_mask	applications/scpi/handlers/source_gpsystem	the SAT:TRAC queries' mask helpers
+0x41cbc	scpi_query_SOURce_PTIMe_DATE	applications/scpi/handlers/source_ptime
+0x440ba	scpi_query_SOURce_PTIMe_FFOMerit	applications/scpi/handlers/source_ptime
+0x41d0a	scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated	applications/scpi/handlers/source_ptime
+0x41d5a	scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate	applications/scpi/handlers/source_ptime
+0x41d80	scpi_query_SOURce_PTIMe_LEAPsecond_DATE	applications/scpi/handlers/source_ptime
+0x41de8	scpi_query_SOURce_PTIMe_LEAPsecond_DURation	applications/scpi/handlers/source_ptime
+0x41e34	scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime	applications/scpi/handlers/source_ptime
+0x41ea4	scpi_query_SOURce_PTIMe_LEAPsecond_STATe	applications/scpi/handlers/source_ptime
+0x41ba0	scpi_set_SOURce_PTIMe_PPS_EDGE	applications/scpi/handlers/source_ptime
+0x41bc0	scpi_query_SOURce_PTIMe_PPS_EDGE	applications/scpi/handlers/source_ptime
+0x44168	scpi_set_SOURce_PTIMe_SYNChronization_IMMediate	applications/scpi/handlers/source_ptime
+0x420de	scpi_query_SOURce_PTIMe_TCODe_FORMat	applications/scpi/handlers/source_ptime
+0x42166	scpi_query_SOURce_PTIMe_TIME	applications/scpi/handlers/source_ptime
+0x42244	scpi_query_SOURce_PTIMe_TIME_STRing	applications/scpi/handlers/source_ptime
+0x44112	scpi_query_SOURce_PTIMe_TINTerval	applications/scpi/handlers/source_ptime
+0x422d2	scpi_set_SOURce_PTIMe_TZONe	applications/scpi/handlers/source_ptime
+0x4236c	scpi_query_SOURce_PTIMe_TZONe	applications/scpi/handlers/source_ptime
+0x419b0	scpi_set_SOURce_PULSe_CONTinuous_PERiod	applications/scpi/handlers/source_pulse
+0x419ea	scpi_query_SOURce_PULSe_CONTinuous_PERiod	applications/scpi/handlers/source_pulse
+0x41a16	scpi_set_SOURce_PULSe_CONTinuous_STATe	applications/scpi/handlers/source_pulse
+0x41a46	scpi_query_SOURce_PULSe_CONTinuous_STATe	applications/scpi/handlers/source_pulse
+0x41bd4	scpi_set_SOURce_PULSe_REFerence_EDGE	applications/scpi/handlers/source_pulse
+0x41bf4	scpi_query_SOURce_PULSe_REFerence_EDGE	applications/scpi/handlers/source_pulse
+0x41a58	scpi_set_SOURce_PULSe_STARt_DATE	applications/scpi/handlers/source_pulse
+0x41ada	scpi_query_SOURce_PULSe_STARt_DATE	applications/scpi/handlers/source_pulse
+0x41afc	scpi_set_SOURce_PULSe_STARt_TIME	applications/scpi/handlers/source_pulse
+0x41b7e	scpi_query_SOURce_PULSe_STARt_TIME	applications/scpi/handlers/source_pulse
+0x439a8	scpi_query_SOURce_ROSCillator_HOLDover_DURation	applications/scpi/handlers/source_roscillator
+0x43a18	scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	applications/scpi/handlers/source_roscillator
+0x43a52	scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	applications/scpi/handlers/source_roscillator
+0x43bbc	scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis	applications/scpi/handlers/source_roscillator
+0x43bc0	scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis	applications/scpi/handlers/source_roscillator
+0x43be4	scpi_set_SOURce_ROSCillator_HOLDover_INITiate	applications/scpi/handlers/source_roscillator
+0x43c48	scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe	applications/scpi/handlers/source_roscillator
+0x43c9a	scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe	applications/scpi/handlers/source_roscillator
+0x43cc4	scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold	applications/scpi/handlers/source_roscillator
+0x43cfe	scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold	applications/scpi/handlers/source_roscillator
+0x43d24	scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO	applications/scpi/handlers/source_roscillator
+0x43d54	scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO	applications/scpi/handlers/source_roscillator
+0x43d6e	scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate	applications/scpi/handlers/source_roscillator
+0x43da6	scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore	applications/scpi/handlers/source_roscillator
+0x43f3a	scpi_query_SOURce_ROSCillator_HOLDover_WAITing	applications/scpi/handlers/source_roscillator
+0x43fd8	scpi_set_SOURce_ROSCillator_LIMit_THReshold	applications/scpi/handlers/source_roscillator
+0x44012	scpi_query_SOURce_ROSCillator_LIMit_THReshold	applications/scpi/handlers/source_roscillator
+0x44038	scpi_query_SOURce_ROSCillator_STATe	applications/scpi/handlers/source_roscillator
+0x3ff2a	scpi_set_OUTPut_PIN1_DELay	applications/scpi/handlers/output
+0x3ff2e	scpi_query_OUTPut_PIN1_DELay	applications/scpi/handlers/output
+0x3ff52	scpi_set_OUTPut_PIN1_DELay_ALIGnment	applications/scpi/handlers/output
+0x3ff72	scpi_query_OUTPut_PIN1_DELay_ALIGnment	applications/scpi/handlers/output
+0x3ff96	scpi_set_OUTPut_PIN1_FREQuency	applications/scpi/handlers/output
+0x3ff9a	scpi_query_OUTPut_PIN1_FREQuency	applications/scpi/handlers/output
+0x41890	scpi_set_LED_ACTive	applications/scpi/handlers/led
+0x418c0	scpi_query_LED_ACTive	applications/scpi/handlers/led
+0x418da	scpi_query_LED_ALARm	applications/scpi/handlers/led
+0x41918	scpi_query_LED_ALARm_MINor	applications/scpi/handlers/led
+0x4192a	scpi_set_LED_ALARm_USER	applications/scpi/handlers/led
+0x4192e	scpi_query_LED_ALARm_USER	applications/scpi/handlers/led
+0x41932	scpi_set_LED_ENABled	applications/scpi/handlers/led
+0x41962	scpi_query_LED_ENABled	applications/scpi/handlers/led
+0x4197c	scpi_query_LED_GPSLock	applications/scpi/handlers/led
+0x41996	scpi_query_LED_HOLDover	applications/scpi/handlers/led
+0x42bdc	scpi_set_FORMat_DATA	applications/scpi/handlers/format
+0x42c2c	scpi_query_FORMat_DATA	applications/scpi/handlers/format
+0x43022	scpi_set_SENSe_TST1_EDGE	applications/scpi/handlers/sense
+0x43042	scpi_query_SENSe_TST1_EDGE	applications/scpi/handlers/sense
+0x3e1c6	scpi_query_DIAGnostic_GPSystem_POSition_DEGRees	applications/scpi/handlers/diagnostic
+0x3de52	scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe	applications/scpi/handlers/diagnostic
+0x3deca	scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe	applications/scpi/handlers/diagnostic
+0x3df26	scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	applications/scpi/handlers/diagnostic
+0x3dfaa	scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	applications/scpi/handlers/diagnostic
+0x3e13c	scpi_query_DIAGnostic_GPSystem_POSition_MSEConds	applications/scpi/handlers/diagnostic
+0x3e248	scpi_query_DIAGnostic_GPSystem_TIME	applications/scpi/handlers/diagnostic
+0x3e2d4	scpi_set_DIAGnostic_GPSystem_UTC	applications/scpi/handlers/diagnostic
+0x3e304	scpi_query_DIAGnostic_GPSystem_UTC	applications/scpi/handlers/diagnostic
+0x3e316	scpi_query_DIAGnostic_IDENtification_DEFault	applications/scpi/handlers/diagnostic
+0x3e330	scpi_query_DIAGnostic_IDENtification_GPSystem	applications/scpi/handlers/diagnostic
+0x3e3a8	scpi_set_DIAGnostic_IDENtification_HARDware	applications/scpi/handlers/diagnostic
+0x3e418	scpi_set_DIAGnostic_IDENtification_MODel	applications/scpi/handlers/diagnostic
+0x3e4b4	scpi_set_DIAGnostic_IDENtification_SERial	applications/scpi/handlers/diagnostic
+0x3e550	scpi_query_DIAGnostic_LIFetime_COUNt	applications/scpi/handlers/diagnostic
+0x3e55e	scpi_set_DIAGnostic_LOG_CLEar	applications/scpi/handlers/diagnostic
+0x3e616	scpi_query_DIAGnostic_LOG_COUNt	applications/scpi/handlers/diagnostic
+0x3e7f0	scpi_query_DIAGnostic_LOG_READ	applications/scpi/handlers/diagnostic
+0x3e920	scpi_query_DIAGnostic_LOG_READ_ALL	applications/scpi/handlers/diagnostic
+0x3e96e	scpi_set_DIAGnostic_LOG_WRITe	applications/scpi/handlers/diagnostic
+0x3eba4	scpi_query_DIAGnostic_OS_MEMory	applications/scpi/handlers/diagnostic
+0x3ebc6	scpi_query_DIAGnostic_OS_PROCess	applications/scpi/handlers/diagnostic
+0x3ebe8	scpi_query_DIAGnostic_OS_STACk	applications/scpi/handlers/diagnostic
+0x3ec0a	scpi_query_DIAGnostic_PTIMe_TINTerval	applications/scpi/handlers/diagnostic
+0x3ec8e	scpi_query_DIAGnostic_QUERy_RESPonse	applications/scpi/handlers/diagnostic
+0x3ed56	scpi_query_DIAGnostic_ROSCillator_CURRent	applications/scpi/handlers/diagnostic
+0x3edba	scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute	applications/scpi/handlers/diagnostic
+0x3ed6c	scpi_query_DIAGnostic_ROSCillator_EFControl_RELative	applications/scpi/handlers/diagnostic
+0x3eeb6	scpi_set_DIAGnostic_ROSCillator_TCOefficient	applications/scpi/handlers/diagnostic
+0x3eef0	scpi_query_DIAGnostic_ROSCillator_TCOefficient	applications/scpi/handlers/diagnostic
+0x3ed40	scpi_set_DIAGnostic_SER1_EGResponse	applications/scpi/handlers/diagnostic
+0x3ed44	scpi_query_DIAGnostic_SER1_EGResponse	applications/scpi/handlers/diagnostic
+0x3ecf6	scpi_set_DIAGnostic_SER1_RESTricted	applications/scpi/handlers/diagnostic
+0x3ed26	scpi_query_DIAGnostic_SER1_RESTricted	applications/scpi/handlers/diagnostic
+0x3e5e8	scpi_set_DIAGnostic_SLOG_CLEar	applications/scpi/handlers/diagnostic
+0x3f284	scpi_set_DIAGnostic_STATus_ERRor	applications/scpi/handlers/diagnostic
+0x3f2da	scpi_set_DIAGnostic_STATus_HAPPening	applications/scpi/handlers/diagnostic
+0x3f340	scpi_set_DIAGnostic_SYSTem_DOUTput	applications/scpi/handlers/diagnostic
+0x3f394	scpi_query_DIAGnostic_SYSTem_DOUTput	applications/scpi/handlers/diagnostic
+0x3f3a6	scpi_set_DIAGnostic_SYSTem_PSTartup	applications/scpi/handlers/diagnostic
+0x3f3d6	scpi_query_DIAGnostic_SYSTem_PSTartup	applications/scpi/handlers/diagnostic
+0x3f3e8	scpi_query_DIAGnostic_TEMPerature	applications/scpi/handlers/diagnostic
+0x3f3fa	scpi_query_DIAGnostic_TEST	applications/scpi/handlers/diagnostic
+0x3f60c	scpi_query_DIAGnostic_TEST_RESult	applications/scpi/handlers/diagnostic
+0x3f6be	scpi_set_DIAGnostic_TOFFset	applications/scpi/handlers/diagnostic
+0x3f716	scpi_query_DIAGnostic_TOFFset	applications/scpi/handlers/diagnostic
+0x40e36	scpi_set_DOUGlas_DURation	applications/scpi/handlers/douglas	the survey, :GPSystem:POSition:SURVey by another name
+0x40ecc	scpi_query_DOUGlas_DURation	applications/scpi/handlers/douglas	the survey, :GPSystem:POSition:SURVey by another name
+0x40f0c	scpi_query_DOUGlas_PROGress	applications/scpi/handlers/douglas	the survey, :GPSystem:POSition:SURVey by another name
+0x40f96	scpi_set_DOUGlas_STATe	applications/scpi/handlers/douglas	the survey, :GPSystem:POSition:SURVey by another name
+0x4100e	scpi_query_DOUGlas_STATe	applications/scpi/handlers/douglas	the survey, :GPSystem:POSition:SURVey by another name
+0x4103e	scpi_set_DOUGlas_STATe_POWerup	applications/scpi/handlers/douglas	the survey, :GPSystem:POSition:SURVey by another name
+0x4106e	scpi_query_DOUGlas_STATe_POWerup	applications/scpi/handlers/douglas	the survey, :GPSystem:POSition:SURVey by another name
+0x43dcc	scpi_query_KENneth_PREDicted	applications/scpi/handlers/kenneth	the holdover uncertainty
+0x43e76	scpi_set_KENneth_PREDicted_DURation	applications/scpi/handlers/kenneth	the holdover uncertainty
+0x43eb0	scpi_query_KENneth_PREDicted_DURation	applications/scpi/handlers/kenneth	the holdover uncertainty
+0x43edc	scpi_query_KENneth_PRESent	applications/scpi/handlers/kenneth	the holdover uncertainty
+0x42c5c	scpi_query_ROBin	applications/scpi/handlers/robin
+0x42d06	scpi_set_ROBin_CLEar	applications/scpi/handlers/robin
+0x42d6c	scpi_query_ROBin_MEMory_OVERflow_COUNt	applications/scpi/handlers/robin
+0x42e20	scpi_set_ROBin_MEMory_SAVE	applications/scpi/handlers/robin
+0x42e50	scpi_query_ROBin_MEMory_SAVE	applications/scpi/handlers/robin
+0x42e6a	scpi_query_ROBin_POINts	applications/scpi/handlers/robin
+0x42f12	scpi_query_ROBin_TSTamp	applications/scpi/handlers/robin
+0x42bda	robin_clear	applications/scpi/handlers/robin
+0x42562	robin_keyword_match	applications/scpi/handlers/robin
+0x425f6	robin_lookup	applications/scpi/handlers/robin
+0x42b52	robin_overflow_count	applications/scpi/handlers/robin
+0x4291c	robin_parse	applications/scpi/handlers/robin
+0x42662	robin_parse_arguments	applications/scpi/handlers/robin
+0x42aee	robin_point_count	applications/scpi/handlers/robin
+0x429b4	robin_point_list	applications/scpi/handlers/robin
+0x3bf7e	robin_store	applications/scpi/handlers/robin
+0x424a4	robin_strip_xnon	applications/scpi/handlers/robin
+0x42a6c	robin_timestamp_values	applications/scpi/handlers/robin
+0x3d242	scpi_query_CALA	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x3d254	scpi_query_CEQU	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x448c0	scpi_query_DANA	applications/scpi/handlers/misc	a four-letter entry that fails with scpi_query_failed
+0x43c36	scpi_query_FMHO	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x40ffc	scpi_query_IPSU	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x3ff40	scpi_query_R1PO	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x40278	scpi_query_RACD	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x3d544	scpi_query_RAST	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x43b6a	scpi_query_RAT1	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x43bd2	scpi_query_RAT2	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x43b7c	scpi_query_RAT3	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x3ff84	scpi_query_REAL	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x44920	scpi_query_REQU	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x3ffac	scpi_query_RFOU	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x40df8	scpi_query_RLOC	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x43d94	scpi_query_RMHO	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x40e24	scpi_query_RPHS	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x40f84	scpi_query_RSPR	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x440a8	scpi_query_RSST	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x3ffbe	scpi_query_RSSU	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x42232	scpi_query_RTAD	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x41fa8	scpi_query_RTCM	applications/scpi/handlers/misc	a four-letter entry that fails with scpi_query_failed
+0x4135e	scpi_query_RTSA	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x423cc	scpi_query_RTZO	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x44ae6	scpi_query_RVST	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x3d3c8	scpi_query_RWHO	applications/scpi/handlers/stubs	a four-letter entry that fails with scpi_query_failed
+0x3c01c	rtcm_supported	applications/scpi/handlers/misc	:RTCM?'s answer, 0
+0x50b4c	pll_init	applications/pll/pllp
+0x50c34	pll_restart	applications/pll/pllp
+0x50ca0	efc_gain_set	applications/pll/pllp
+0x50d06	pllp_task	applications/pll/pllp
+0x4f4f6	pllp_start_nothing_a	applications/pll/pllp
+0x4f4f8	pllp_start_nothing_b	applications/pll/pllp
+0x4fbc6	clock_set_from_reference	applications/pll/pllp	the loop sets the clock from the FPGA's seconds count
+0x4d2a6	clock_check_against_gps	applications/pll/pllp	the loop sets the clock from gps.status
+0x4fe02	pll_stage_status	applications/pll/pllp
+0x4f3d6	pll_mode	applications/pll/pllp
+0x4f420	pll_powerup_suffix_index	applications/pll/pllp
+0x4f480	recovery_suffix_index	applications/pll/pllp
+0x4f4b0	holdover_waiting_reason	applications/pll/pllp
+0x507b6	leap_ack_pending	applications/pll/pllp	pll +0x2c or +0x2d
+0x4bcba	get_ffom	applications/pll/pllp	derived from pll.stage; timecode_update reads it
+0x4bc28	kenneth_present_get	applications/pll/pllp	the holdover uncertainty, from pll.tfom
+0x4bc52	kenneth_predicted_get	applications/pll/pllp	the predicted holdover uncertainty, from pll
+0x4e5bc	interval_next_reading	applications/pll/reading	the loop's one-second TI reading over devices/ti
+0x4e742	interval_rearm	applications/pll/reading	the loop's one-second TI reading over devices/ti
+0x4e7ba	interval_wait_reading	applications/pll/reading	the loop's one-second TI reading over devices/ti
+0x4f76a	powerup	applications/pll/stages
+0x4e890	coarse	applications/pll/stages
+0x4ea54	fine	applications/pll/stages
+0x4e48e	fine_sync_adjust	applications/pll/stages
+0x4e55e	sync_perform	applications/pll/stages
+0x4d652	startup_pll	applications/pll/stages
+0x4ddea	pll_normal	applications/pll/stages
+0x4cc8c	enter_holdover	applications/pll/stages
+0x4ce18	holdover	applications/pll/stages
+0x4d350	holdover_recovery	applications/pll/stages
+0x4cb16	holdover_ti_reset	applications/pll/stages
+0x4cb30	holdover_ti_add	applications/pll/stages
+0x4cb9a	holdover_correction_valid	applications/pll/stages
+0x4cc28	holdover_ti_max	applications/pll/stages
+0x4cc30	holdover_within_limit	applications/pll/stages
+0x4a588	efc_history_update	applications/pll/aging	the curv task
+0x4a9c0	curv_signal	applications/pll/aging	the curv task
+0x4a9d4	aging_fit_collect	applications/pll/aging	the curv task
+0x4aa52	curv_task	applications/pll/aging	the curv task
+0x4aa94	aging_fit	applications/pll/aging	the curv task
+0x4ace8	fit_linear_halves	applications/pll/aging	the curv task
+0x4ae46	fit_linear	applications/pll/aging	the curv task
+0x4aec6	fit_constant	applications/pll/aging	the curv task
+0x4af24	fit_logarithmic	applications/pll/aging	the curv task
+0x4afc6	fit_span	applications/pll/aging	the curv task
+0x4b064	fit_log_initial	applications/pll/aging	the curv task
+0x4b15c	fit_log_search	applications/pll/aging	the curv task
+0x4b2c4	fit_log_residuals	applications/pll/aging	the curv task
+0x4b35a	fit_three_point	applications/pll/aging	the curv task
+0x4b5d0	linear_regression	applications/pll/aging	the curv task
+0x4b884	fit_quality	applications/pll/aging	the curv task
+0x4c6ba	pll_scpi_receive	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c638	pll_scpi_command	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4bf54	validate_num	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c046	validate_or_doaction	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4bf08	toggle_change	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c0bc	pll_scpi_needs_loop	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c108	pll_scpi_send_to_loop	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4bece	pll_scpi_do_action	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c566	get_setup_vars	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c38c	scpi_param_saved_in_nv	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c3b4	scpi_param_saved_in_record	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c3dc	finish_scpi_cmd	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c734	pll_scpi_complete	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4c77a	gps_diag_complete	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x466be	report_clamped	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46762	clamp_float	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x467ca	clamp_double	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46844	round_float_to_step	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46970	load_double	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4697a	clamp_to_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x469f2	mask_to_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46a00	clamp_to_step_and_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46a78	float_max_of	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46a9c	float_min_of	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46ac0	clamp_float_to_step_and_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46b10	clamp_float_to_step_double	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46c5c	clamp_double_to_step_and_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x46d98	clamp_double_to_limits	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4759c	load_long_unit_step	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x475a4	load_long	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x475ac	load_double_param	applications/scpi/validators	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x22c4a	scpi_param_hook_nothing	applications/pll/pll_scpi	bare rts, descriptor hook
+0x49ece	pll_action_nothing	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x4f3d4	nv_param_field_b8_done	applications/pll/pll_scpi	pllc's settings server, the firmware's own "pll_scpi:" (finish_scpi_cmd's message); descriptors' validators and hooks
+0x44b9e	duartb_parity_restrict	devices/duartb	:SYST:COMM:SER1:RECeive:PARity:TYPE's and :DIAG:SER1:RESTricted's changed hook; keeps channel B's settings, as duartb_settings_done does
+0x44bc0	duartb_eight_bits_restrict	devices/duartb	:SYST:COMM:SER1:RECeive:BITS's changed hook; keeps channel B's settings, as duartb_settings_done does
+0x44be2	douglas_duration_changed	applications/scpi/handlers/douglas	:DOUGlas:DURation's changed hook
+0x4be5c	output_state_program	applications/scpi/handlers/output	output_state_done's programming of the output
+0x4be5e	pulse_program	applications/scpi/handlers/source_pulse	pulse_settings_done's programming of the pulse
+0x4be60	pulse_settings_done	applications/scpi/handlers/source_pulse	:PULSe:CONTinuous and :PULSe:STARt settings' done hook
+0x4bec0	output_state_done	applications/scpi/handlers/output	:OUTPut:STATe's done hook
+0x4f228	time_zone_changed	applications/scpi/handlers/source_ptime	:PTIMe:TZONe's changed hook
+0x4f232	time_zone_done	applications/scpi/handlers/source_ptime	:PTIMe:TZONe's done hook
+0x4f240	time_offset_done	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
+0x4f34e	temporary_hold_set	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
+0x4fc5c	selftest_request	applications/pll/pll_scpi	descriptor hook, run by finish_scpi_cmd/validate_or_doaction
+0x4fc76	douglas_state_done	applications/scpi/handlers/douglas	:DOUGlas:STATe's done hook
+0x4fc9e	douglas_finish_request	applications/scpi/handlers/source_gpsystem	:GPS:POSition's action while averaging
+0x4f308	holdover_initiate	applications/scpi/handlers/source_roscillator	:ROSC:HOLDover:INITiate's action
+0x4f260	holdover_recovery_initiate	applications/scpi/handlers/source_roscillator	:ROSC:HOLDover:RECovery:INITiate's action
+0x4f372	holdover_recovery_limit_ignore	applications/scpi/handlers/source_roscillator	:ROSC:HOLDover:RECovery:LIMit:IGNore's action
+0x4f3a8	sync_immediate_request	applications/scpi/handlers/source_ptime	:PTIMe:SYNChronization:IMMediate's action
+0x507ce	leap_ack_request	applications/scpi/handlers/source_ptime	:PTIMe:LEAPsecond:ACCumulated:CALCulate's action
+0x4ff2c	gpsx_send	applications/pll/gps_control	the client side of gpsx_exchange; only pllp's sequences call it
+0x4ff16	gps_ack_received	applications/pll/gps_control	polled by gps_init_sequence's ack checks
+0x4ffc0	gps_selftest_run	applications/pll/gps_control	self-test 10 through selftest_gps_with_lamp
+0x50142	gps_init_sequence	applications/pll/gps_control	pllp's steps that drive the GPS engine through gpsx_exchange; pllp_task calls them (0x46620-0x471fc, among the loop's)
+0x506a6	gps_leap_sequence	applications/pll/gps_control	pllp's steps that drive the GPS engine through gpsx_exchange; pllp_task calls them (0x46620-0x471fc, among the loop's)
+0x507e8	gps_command_send	applications/pll/gps_control	pllp's steps that drive the GPS engine through gpsx_exchange; pllp_task calls them (0x46620-0x471fc, among the loop's)
+0x5093a	gps_diag_sequence	applications/pll/gps_control	pllp's steps that drive the GPS engine through gpsx_exchange; pllp_task calls them (0x46620-0x471fc, among the loop's)
+0x57c04	gps_init	applications/gps/task
+0x57c90	gps_link_reset	applications/gps/task
+0x57e3c	gpsm_task	applications/gps/task
+0x58690	gps_console_request	applications/gps/task
+0x5843a	raim_request_arguments	applications/gps/task
+0x58aac	status_snapshot_update	applications/gps/task	the GPS task's, at each @@Ea; fills the screen's snapshots
+0x58b5e	clear_gps_debug	applications/gps/task
+0x576b6	request_ring_clear	applications/gps/requests
+0x576c6	request_ring_put	applications/gps/requests
+0x5770e	request_ring_get	applications/gps/requests
+0x5775a	request_ring_unput	applications/gps/requests
+0x577a6	request_ring_empty	applications/gps/requests
+0x577bc	request_ring_full	applications/gps/requests
+0x577e2	request_ring_contains	applications/gps/requests
+0x57828	request_ring_newest_replaceable	applications/gps/requests
+0x5796a	request_kind_valid	applications/gps/requests
+0x57986	gps_request_queue	applications/gps/requests
+0x57a3e	gps_request_post	applications/gps/requests
+0x57ae0	gps_request_class	applications/gps/requests
+0x5d92e	gps_request_build	applications/gps/requests
+0x5c0b0	gps_message_supported	applications/gps/requests
+0x574fe	gps_response_reset	applications/gps/oncore
+0x575a0	gps_response_timed_out	applications/gps/oncore
+0x575da	gps_count_response	applications/gps/oncore
+0x5dc04	gps_response_match	applications/gps/oncore
+0x5bf8c	oncore_checksum	applications/gps/oncore
+0x5b506	long_array_get	applications/gps/oncore
+0x5b526	long_array_set	applications/gps/oncore
+0x5b53c	long_array_get_byte	applications/gps/oncore
+0x5b55a	long_array_get_word	applications/gps/oncore
+0x5b57c	long_array_get_long	applications/gps/oncore
+0x5b5b4	long_array_get_long_prefixed	applications/gps/oncore
+0x5b616	byte_copy_optional	applications/gps/oncore
+0x5b632	word_copy_advance	applications/gps/oncore
+0x5b6f8	word_copy_14_bits	applications/gps/oncore
+0x5b6a4	oncore_as_height_decode	applications/gps/oncore
+0x5b676	oncore_ai_decode	applications/gps/oncore
+0x533e0	running_average_update	applications/gps/oncore	oncore_position_message's survey average
+0x56cd4	gps_receiver_status_update	applications/gps/receiver
+0x54acc	gps_status_alternate	applications/gps/receiver
+0x570ee	command_monitor_init	applications/gps/receiver
+0x57136	command_monitor	applications/gps/receiver
+0x56b64	raim_monitor	applications/gps/receiver
+0x5b82c	satellite_id_valid	applications/gps/receiver
+0x5b86e	channel_position_satellite	applications/gps/receiver
+0x5b8ba	satellite_used_for_position	applications/gps/receiver
+0x5b8e8	channels_reset	applications/gps/receiver
+0x5b906	satellite_add_to_set	applications/gps/receiver
+0x5b958	visible_satellites	applications/gps/receiver
+0x5b9ee	satellites_in_use	applications/gps/receiver
+0x53430	mas_to_dms	applications/gps/receiver	position units; the SCPI position handlers and format_dms call it
+0x534ae	dms_to_mas	applications/gps/receiver	position units; the SCPI position setters call it
+0x5bb04	position_settable	applications/gps/receiver
+0x5bb1c	gps_position_get	applications/gps/receiver
+0x5bb6a	gps_time_local_get	applications/gps/receiver
+0x5bbba	survey_progress_percent	applications/gps/receiver
+0x5bc56	survey_progress_text	applications/gps/receiver
+0x587f8	command_log_clear	applications/gps/reports
+0x58808	command_log_add	applications/gps/reports
+0x5893a	gps_print_command	applications/gps/reports
+0x58b86	gps_print_command_log	applications/gps/reports
+0x58c1a	gps_print_commands	applications/gps/reports
+0x58c28	gps_print_1pps	applications/gps/reports
+0x58cb2	gps_print_process_monitor	applications/gps/reports
+0x53902	gps_print_best_combinations	applications/gps/reports
+0x539de	gps_print_extension	applications/gps/reports
+0x53bbc	gps_print_time_raim	applications/gps/reports
+0x53e1c	gps_print_pseudorange_corrections	applications/gps/reports
+0x53f8e	enabled_string	applications/gps/reports
+0x542e2	gps_print_average	applications/gps/reports
+0x543fe	gps_print_visibility	applications/gps/reports
+0x54498	gps_print_status	applications/gps/reports
+0x54654	gps_debug_status	applications/gps/reports
+0x54822	gps_print_id	applications/gps/reports
+0x537a0	format_angle	applications/gps/reports	only the GPS reports call it
+0x5384a	format_duration	applications/gps/reports	only gps_print_pseudorange_corrections calls it
+0x55d1e	status_snapshot	applications/screen
+0x548d6	satellite_sets_build	applications/screen
+0x54a52	satellite_in_set	applications/screen
+0x54a82	satellite_track_class	applications/screen
+0x54ad2	satellite_elevation_azimuth	applications/screen
+0x54b06	satellite_status	applications/screen
+0x54c28	satellite_compare	applications/screen	satellite_status_list's qsort comparator
+0x5ba8e	satellite_find	applications/screen	satellite_status's lookup
+0x54c5c	satellite_status_list	applications/screen
+0x54e84	format_satellite_number	applications/screen
+0x54eb8	mark_flag	applications/screen
+0x3c346	sci_scpi_prompt	applications/screen
+0x54f12	format_satellite_cell	applications/screen
+0x54fb4	status_screen_height	applications/screen
+0x55052	format_si	applications/screen
+0x551de	format_duration_short	applications/screen
+0x5546c	format_time	applications/screen
+0x554c6	format_date	applications/screen
+0x55542	status_screen_time	applications/screen
+0x55610	status_screen_position	applications/screen
+0x5595c	status_screen_tfom	applications/screen
+0x55b10	bit_is_set	applications/screen
+0x55b3c	bits_1_to_3_any	applications/screen
+0x55b98	bits_6_7_any	applications/screen
+0x55bc4	bits_8_9_any	applications/screen
+0x560a0	status_screen	applications/screen
+0x5bd22	status_screen_length	applications/screen
+0x53534	format_dms	applications/screen
+0x53694	format_dms_precise	applications/screen
+0x2317c	console_init	applications/console
+0x23116	console_halt_hook	applications/console
+0x2b5e4	console_set_halt_hook	applications/console
+0x2b5ee	console_set_device	applications/console
+0x2b528	pforth_define_word	applications/console
+0x2c868	diag_words_define	applications/console
+0x23152	ps_word	applications/console	console word ps
+0x23160	mem_rep_word	applications/console	console word mem_rep
+0x2316e	s_rep_word	applications/console	console word s_rep
+0x2beba	print_gps_init_state	applications/console
+0x2c06c	print_leap_check_state	applications/console
+0x2c102	print_fine_state	applications/console
+0x2b774	diag_adc_read	applications/console	pForth diagnostic word
+0x2b7ec	diag_pr_hold_cause	applications/console	pForth diagnostic word
+0x2b89e	diag_efc_write	applications/console	pForth diagnostic word
+0x2b8ae	diag_hdac_write	applications/console	pForth diagnostic word
+0x2b8c4	diag_hdac_all	applications/console	pForth diagnostic word
+0x2b8f4	diag_clk_synch	applications/console	pForth diagnostic word
+0x2b908	diag_sync_imm	applications/console	pForth diagnostic word
+0x2b91a	diag_loop_time	applications/console	pForth diagnostic word
+0x2b92c	diag_pll_rep	applications/console	pForth diagnostic word
+0x2b9fa	diag_efc_rep	applications/console	pForth diagnostic word
+0x2bac6	diag_get_time	applications/console	pForth diagnostic word
+0x2bb36	diag_set_time	applications/console	pForth diagnostic word
+0x2bb9a	diag_print_stat	applications/console	pForth diagnostic word
+0x2bba4	diag_print_vis	applications/console	pForth diagnostic word
+0x2bbae	diag_pr_avg	applications/console	pForth diagnostic word
+0x2bbb8	diag_pr_gps_istate	applications/console	pForth diagnostic word
+0x2bbc2	diag_print_bc	applications/console	pForth diagnostic word
+0x2bbcc	diag_print_ext_msg	applications/console	pForth diagnostic word
+0x2bbd6	diag_abr_stat	applications/console	pForth diagnostic word
+0x2bbe8	diag_avg	applications/console	pForth diagnostic word
+0x2bbfa	diag_master_reset	applications/console	pForth diagnostic word
+0x2bc04	diag_quiet_status	applications/console	pForth diagnostic word
+0x2bc0e	diag_gps_query_all	applications/console	pForth diagnostic word
+0x2bc18	diag_init_gps	applications/console	pForth diagnostic word
+0x2bc22	diag_clr_avg	applications/console	pForth diagnostic word
+0x2bc2c	diag_stat_rate	applications/console	pForth diagnostic word
+0x2bc3e	diag_vis_stat_rate	applications/console	pForth diagnostic word
+0x2bc60	diag_xdop_stat_rate	applications/console	pForth diagnostic word
+0x2bc72	diag_ext_msg_rate	applications/console	pForth diagnostic word
+0x2bc84	diag_gps_time	applications/console	pForth diagnostic word
+0x2bca4	diag_eman	applications/console	pForth diagnostic word
+0x2bcb6	diag_q_eman	applications/console	pForth diagnostic word
+0x2bcc0	diag_gps_date	applications/console	pForth diagnostic word
+0x2bce0	diag_gps_php	applications/console	pForth diagnostic word
+0x2bd06	diag_q_gps_php	applications/console	pForth diagnostic word
+0x2bd10	diag_gps_ph	applications/console	pForth diagnostic word
+0x2bd22	diag_force_1pps	applications/console	pForth diagnostic word
+0x2bd92	diag_gps_cable_dly	applications/console	pForth diagnostic word
+0x2bda4	diag_q_gps_cable_dly	applications/console	pForth diagnostic word
+0x2bdae	diag_gps_change	applications/console	pForth diagnostic word
+0x2bdda	diag_gps_query	applications/console	pForth diagnostic word
+0x2bdec	diag_pr_gps_id	applications/console	pForth diagnostic word
+0x2bdf6	diag_pr_1pps	applications/console	pForth diagnostic word
+0x2be00	diag_pr_time_raim	applications/console	pForth diagnostic word
+0x2be0a	diag_pr_gps_debug	applications/console	pForth diagnostic word
+0x2be12	diag_clr_gps_debug	applications/console	pForth diagnostic word
+0x2be1a	diag_pr_gps_cmds	applications/console	pForth diagnostic word
+0x2be22	diag_disable_gps_cmds	applications/console	pForth diagnostic word
+0x2be3a	diag_pstat	applications/console	pForth diagnostic word
+0x2be50	diag_efc_wr	applications/console	pForth diagnostic word
+0x2be66	diag_pr_efc	applications/console	pForth diagnostic word
+0x2be88	diag_lock	applications/console	pForth diagnostic word
+0x2be92	diag_pll_restart	applications/console	pForth diagnostic word
+0x2be9c	diag_pll_debug	applications/console	pForth diagnostic word
+0x2bea8	diag_phase_off	applications/console	pForth diagnostic word
+0x2c5f6	diag_log_send	applications/console	pForth diagnostic word
+0x2c60a	diag_print_clk_list	applications/console	pForth diagnostic word
+0x2c612	diag_dmessage	applications/console	pForth diagnostic word
+0x2c62c	diag_dmes_gpsm	applications/console	pForth diagnostic word
+0x2c636	diag_dmes_hmon	applications/console	pForth diagnostic word
+0x2c640	diag_dmes_klok	applications/console	pForth diagnostic word
+0x2c64a	diag_dmes_pllp	applications/console	pForth diagnostic word
+0x2c654	diag_dmes_root	applications/console	pForth diagnostic word
+0x2c65e	diag_dmes_scpi	applications/console	pForth diagnostic word
+0x2c668	diag_dmes_spoo	applications/console	pForth diagnostic word
+0x2c672	diag_dmes_curv	applications/console	pForth diagnostic word
+0x2c6d2	diag_dmes_all	applications/console	pForth diagnostic word
+0x2c6ee	diag_wr_eeprom	applications/console	pForth diagnostic word
+0x2c708	diag_clear_nv	applications/console	pForth diagnostic word
+0x2c710	diag_debug_psos	applications/console	pForth diagnostic word
+0x2c728	diag_doven	applications/console	pForth diagnostic word
+0x2c756	diag_crash	applications/console	pForth diagnostic word
+0x2c7e2	diag_leapsec	applications/console	pForth diagnostic word
+0x2c7fe	diag_es_ascii	applications/console	pForth diagnostic word
+0x2c816	diag_fp_u	applications/console	pForth diagnostic word
+0x2e71a	duart_input_port_read	devices/duart	row added by hand for the 58503A 3704
+0x2e722	duart_output_bit_set	devices/duart	row added by hand for the 58503A 3704
+0x236b4	latch_bits_set	devices/leds	the latch at 0x300000; row added by hand for the 58503A 3704
+0x23770	latch_rewrite	devices/leds	the latch at 0x300000; row added by hand for the 58503A 3704
+0x2379c	board_leds_change	devices/leds	the latch's lamps; row added by hand for the 58503A 3704
+0x36c10	lamps_request	devices/leds	the latch's lamps; row added by hand for the 58503A 3704
+0x36c1a	lamps_write	devices/leds	the latch's lamps; row added by hand for the 58503A 3704
+0x212aa	gps_seconds_to_date_time	services/calendar	row added by hand for the 58503A 3704
+0x21684	date_at_quarter_edge	services/calendar	leap_event_create's test of a date; row added by hand for the 58503A 3704
+0x216fe	date_starts_quarter	services/calendar	leap_event_create's test of a date; row added by hand for the 58503A 3704
+0x4617a	log_ext_reference_valid	services/log	row added by hand for the 58503A 3704
+0x334d8	hmon_convert_5v	services/monitors	row added by hand for the 58503A 3704
+0x334f2	hmon_convert_15v	services/monitors	row added by hand for the 58503A 3704
+0x3350c	hmon_convert_minus_15v	services/monitors	row added by hand for the 58503A 3704
+0x33554	hmon_convert_oven_current	services/monitors	row added by hand for the 58503A 3704
+0x3356e	hmon_convert_antenna_current	services/monitors	row added by hand for the 58503A 3704
+0x33588	hmon_channel_read	services/monitors	row added by hand for the 58503A 3704
+0x335e2	adc_monitors_reset	services/monitors	row added by hand for the 58503A 3704
+0x3360c	hmon_reset	services/monitors	row added by hand for the 58503A 3704
+0x33724	hmon_smoothed_add	services/monitors	row added by hand for the 58503A 3704
+0x3384e	hmon_report_tolerance	services/monitors	row added by hand for the 58503A 3704
+0x339ea	hmon_channel_out_of_range	services/monitors	row added by hand for the 58503A 3704
+0x33a7a	hmon_report_range	services/monitors	row added by hand for the 58503A 3704
+0x33a90	hmon_report_oven_warm	services/monitors	row added by hand for the 58503A 3704
+0x33aaa	hmon_check_pll_stage	services/monitors	row added by hand for the 58503A 3704
+0x33ac6	hmon_channel_settled	services/monitors	row added by hand for the 58503A 3704
+0x33af0	hmon_channel_step	services/monitors	row added by hand for the 58503A 3704
+0x33b8c	adc_average	services/monitors	row added by hand for the 58503A 3704
+0x33bd8	hmon_check_antenna_current	services/monitors	row added by hand for the 58503A 3704
+0x36274	porte_read_steady	services/monitors	unreferenced, among the monitors; row added by hand for the 58503A 3704
+0x362be	portf0_read_steady	services/monitors	unreferenced, among the monitors; row added by hand for the 58503A 3704
+0x36308	portgp_read_steady	services/monitors	unreferenced, among the monitors; row added by hand for the 58503A 3704
+0x472c4	nv_records_valid	services/nv	row added by hand for the 58503A 3704
+0x44e8c	lifetime_efc_save	services/records	row added by hand for the 58503A 3704
+0x4515e	calibration_block_save_reported	services/records	row added by hand for the 58503A 3704
+0x45360	parameter_record_save_reported	services/records	row added by hand for the 58503A 3704
+0x3a9da	status_peek_event	services/status	row added by hand for the 58503A 3704
+0x3cc72	alarm_text_collect	services/status	the status registers' alarm text; row added by hand for the 58503A 3704
+0x3ce02	alarm_text	services/status	the status registers' alarm text; row added by hand for the 58503A 3704
+0x430c2	port_status_model	services/status	the port layer's status model; row added by hand for the 58503A 3704
+0x43296	status_condition_word	services/status	row added by hand for the 58503A 3704
+0x432ca	status_events_clear	services/status	row added by hand for the 58503A 3704
+0x2b78a	diag_pr_adc_avg	applications/console	pForth diagnostic word; row added by hand for the 58503A 3704
+0x2bd5a	diag_force_ext_1pps	applications/console	pForth diagnostic word; row added by hand for the 58503A 3704
+0x5b5ce	oncore_cable_delay_encode	applications/gps/oncore	row added by hand for the 58503A 3704
+0x5b6c6	oncore_cable_delay_decode	applications/gps/oncore	row added by hand for the 58503A 3704
+0x5bf7a	oncore_eight_channels_seen	applications/gps/oncore	row added by hand for the 58503A 3704
+0x5bfa2	oncore_receiver_id_value	applications/gps/oncore	row added by hand for the 58503A 3704
+0x5c08e	gps_time_raim_supported	applications/gps/oncore	row added by hand for the 58503A 3704
+0x5c0a0	oncore_filter_eight_channels	applications/gps/oncore	row added by hand for the 58503A 3704
+0x5c9f2	nmea_decode_12_satellites	applications/gps/oncore	row added by hand for the 58503A 3704
+0x56c5c	gps_reference_reset	applications/gps/receiver	row added by hand for the 58503A 3704
+0x56c8a	gps_reference_hysteresis_set	applications/gps/receiver	row added by hand for the 58503A 3704
+0x56cb4	ext_reference_hysteresis_set	applications/gps/receiver	row added by hand for the 58503A 3704
+0x591da	gps_track_words_pack	applications/gps/receiver	the track-change log's words; row added by hand for the 58503A 3704
+0x592a0	gps_channel_word_pack	applications/gps/receiver	the track-change log's words; row added by hand for the 58503A 3704
+0x5931e	gps_channel_word_lowest	applications/gps/receiver	the track-change log's words; row added by hand for the 58503A 3704
+0x59392	gps_log_track_change	applications/gps/receiver	row added by hand for the 58503A 3704
+0x57864	request_ring_find	applications/gps/requests	row added by hand for the 58503A 3704
+0x5789a	gps_request_run_queued	applications/gps/requests	row added by hand for the 58503A 3704
+0x57ca0	gps_request_admitted	applications/gps/requests	row added by hand for the 58503A 3704
+0x4f2ae	efc_mode_done	applications/pll/pll_scpi	descriptor hook; row added by hand for the 58503A 3704
+0x4f2d8	efc_mode_expire	applications/pll/pll_scpi	pllp_task's end of :DIAG:ROSC:EFC:MODE 2; row added by hand for the 58503A 3704
+0x4f368	temporary_hold_clear	applications/pll/pll_scpi	descriptor hook; row added by hand for the 58503A 3704
+0x4f528	power_on_reset	applications/pll/pll_scpi	:SYSTem:PON's action; row added by hand for the 58503A 3704
+0x4f548	pll_tfom_digit_store	applications/pll/pll_scpi	unreferenced; row added by hand for the 58503A 3704
+0x4cde6	holdover_duration_count	applications/pll/stages	row added by hand for the 58503A 3704
+0x4e41c	gps_reference_update	applications/pll/stages	the loop's view of the GPS reference; row added by hand for the 58503A 3704
+0x4fac6	pll_reference_check	applications/pll/stages	row added by hand for the 58503A 3704
+0x3c9da	scpi_task_run	applications/scpi/engine	row added by hand for the 58503A 3704
+0x3dddc	scpi_set_ALARm_EXTRactor	applications/scpi/handlers/alarm	row added by hand for the 58503A 3704
+0x3ddfc	scpi_query_ALARm	applications/scpi/handlers/alarm	row added by hand for the 58503A 3704
+0x44b0e	scpi_set_ALARm_ACO	applications/scpi/handlers/alarm	row added by hand for the 58503A 3704
+0x44b2e	scpi_query_ALARm_ACO	applications/scpi/handlers/alarm	row added by hand for the 58503A 3704
+0x3ea40	scpi_query_DIAGnostic_ME	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3eae6	scpi_set_DIAGnostic_GPSystem_ACURrent_ALARm	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3eb16	scpi_query_DIAGnostic_GPSystem_ACURrent_ALARm	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3eb30	scpi_query_DIAGnostic_GPSystem_ACURrent	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3eb80	scpi_set_DIAGnostic_TSET	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3eb92	scpi_query_DIAGnostic_TSET	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3edd8	scpi_set_DIAGnostic_ROSCillator_EFControl_MODE	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3ee26	scpi_query_DIAGnostic_ROSCillator_EFControl_MODE	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3ee50	scpi_set_DIAGnostic_ROSCillator_EFControl_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3ee8a	scpi_query_DIAGnostic_ROSCillator_EFControl_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f740	scpi_set_DIAGnostic_TMODe_STATe	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f75e	scpi_query_DIAGnostic_TMODe_STATe	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f770	scpi_set_DIAGnostic_TMODe_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f786	scpi_query_DIAGnostic_TMODe_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f798	scpi_set_DIAGnostic_TCODe_ERRor_AMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f7ae	scpi_query_DIAGnostic_TCODe_ERRor_AMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f7c0	scpi_set_DIAGnostic_TCODe_ERRor_OMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f7d6	scpi_query_DIAGnostic_TCODe_ERRor_OMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f7e8	scpi_set_DIAGnostic_TCODe_STATus_AMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f7fe	scpi_query_DIAGnostic_TCODe_STATus_AMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f810	scpi_set_DIAGnostic_TCODe_STATus_OMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f826	scpi_query_DIAGnostic_TCODe_STATus_OMASk	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f838	scpi_query_DIAGnostic_INPut_DATA	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f852	scpi_set_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f88c	scpi_query_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f922	scpi_set_DIAGnostic_GPSystem_TRACking_LOG	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f952	scpi_query_DIAGnostic_GPSystem_TRACking_LOG	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x3f96c	scpi_set_DIAGnostic_TVALid_NOW	applications/scpi/handlers/diagnostic	row added by hand for the 58503A 3704
+0x418f4	scpi_query_LED_ALARm_CRITical	applications/scpi/handlers/led	row added by hand for the 58503A 3704
+0x41906	scpi_query_LED_ALARm_ACO	applications/scpi/handlers/led	row added by hand for the 58503A 3704
+0x3ffd0	scpi_set_SOURce_GPSystem_REFerence_BIAS	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x400ae	scpi_query_SOURce_GPSystem_REFerence_BIAS	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x40214	scpi_set_SOURce_GPSystem_ADELay_FEET	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x40246	scpi_query_SOURce_GPSystem_ADELay_FEET	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x40bb6	scpi_query_SOURce_GPSystem_POSition_BINary	applications/scpi/handlers/source_gpsystem	row added by hand for the 58503A 3704
+0x41ebe	tcode_query_allowed	applications/scpi/handlers/source_ptime	:PTIMe:TCODe? and :RTCM?'s test; row added by hand for the 58503A 3704
+0x4211c	scpi_set_SOURce_PTIMe_TCODe_CONTinuous	applications/scpi/handlers/source_ptime	row added by hand for the 58503A 3704
+0x4214c	scpi_query_SOURce_PTIMe_TCODe_CONTinuous	applications/scpi/handlers/source_ptime	row added by hand for the 58503A 3704
+0x423de	scpi_set_SOURce_PTIMe_UTC	applications/scpi/handlers/source_ptime	row added by hand for the 58503A 3704
+0x43a7e	scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x43adc	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x43b22	scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ACTion	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x43b42	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ACTion	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x43b54	scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ALAR1	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x43b58	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_ALAR1	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x43b8e	scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THR1_EXCeeded	applications/scpi/handlers/source_roscillator	row added by hand for the 58503A 3704
+0x3d586	scpi_set_STATus_OPERation_HARDware_CONDition_TI	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x3d5a4	scpi_set_STATus_OPERation_HARDware_CONDition_EEPRom	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x3d5c2	scpi_set_STATus_QUEStionable_CONDition_TRESet	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x3dd78	scpi_set_STATus_OPERation_CRITical	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x3dd98	scpi_query_STATus_OPERation_CRITical	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x3ddaa	scpi_set_STATus_OPERation_HARDware_CRITical	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x3ddca	scpi_query_STATus_OPERation_HARDware_CRITical	applications/scpi/handlers/status	row added by hand for the 58503A 3704
+0x441b6	scpi_query_SYSTem_COMMunicate_ALARm	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x44204	scpi_set_SYSTem_COMMunicate_ALARm_FDUPlex	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x442c8	scpi_set_SYSTem_COMMunicate_ALARm_CONTrol_HPACe	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x44320	scpi_query_SYSTem_COMMunicate_ALARm_CONTrol_HPACe	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x44350	scpi_set_SYSTem_COMMunicate_ALARm_PRESet	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x443dc	scpi_query_SYSTem_COMMunicate_ALARm_PROMpt	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x4462a	scpi_set_SYSTem_COMMunicate_ALARm_RECeive_PACE	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x44a2e	scpi_set_SYSTem_PON	applications/scpi/handlers/system	row added by hand for the 58503A 3704
+0x3c022	scpi_prompt_set	applications/scpi/port	row added by hand for the 58503A 3704
+0x3c02c	scpi_prompt_get	applications/scpi/port	row added by hand for the 58503A 3704
+0x3c2b2	status_update_rqs	applications/scpi/port	IEEE 488.2's status byte; row added by hand for the 58503A 3704
+0x3c670	port_status_report	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x3c6ac	port_report_errors	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x3c742	port_prompt_get	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x3c772	port_prompt_set	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x3c7ae	port_session_init	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x3c7de	port_object	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x3c80e	port_update_rqs	applications/scpi/port	the port layer; row added by hand for the 58503A 3704
+0x55b88	bit_4_set	applications/screen	the status screen's bit tests; row added by hand for the 58503A 3704
+0x55b2c	bit_12_set	applications/screen	the status screen's bit tests; row added by hand for the 58503A 3704
+0x29028	qspi_adc_test_read	applications/selftest	row added by hand for the 58503A 3704
+0x29534	selftest_power_with_lamp	applications/selftest	row added by hand for the 58503A 3704
+#
+# The Z3815A's own functions, which no 58503A row re-keys: rows added
+# by hand, by module as above.
+0x35f98	puck_alive	services/monitors	the OCXO's port E link; row added by hand for the Z3815A 4010
+0x35fa0	puck_report	services/monitors	the OCXO's port E link; row added by hand for the Z3815A 4010
+0x36054	puck_warm	services/monitors	the OCXO's port E link; row added by hand for the Z3815A 4010
+0x3607c	puck_efc_correct	services/monitors	the OCXO's port E link; row added by hand for the Z3815A 4010
+0x3622c	puck_frame_decode	services/monitors	the OCXO's port E link; row added by hand for the Z3815A 4010
+0x36350	efc_set	services/monitors	the OCXO's port E link; row added by hand for the Z3815A 4010
+0x36502	puck_byte_done	services/monitors	the OCXO's port E link; row added by hand for the Z3815A 4010
+0x3658e	puck_link_clock	services/monitors	the OCXO's port E link; row added by hand for the Z3815A 4010
+0x36e84	pps_monitors_reset	services/monitors	row added by hand for the Z3815A 4010
+0x36bba	input_debounce_update	services/monitors	row added by hand for the Z3815A 4010
+0x33c3a	ocxo_warm	services/monitors	row added by hand for the Z3815A 4010
+0x516de	pps_sync_pulse	services/pps	row added by hand for the Z3815A 4010
+0x51724	n3_lock_seating_error	applications/pll/stages	row added by hand for the Z3815A 4010
+0x51730	n3_lock_offset_nothing	applications/pll/stages	row added by hand for the Z3815A 4010
+0x517e0	n3_lock_slew	applications/pll/stages	row added by hand for the Z3815A 4010
+0x51732	n3_lock_efc_set	applications/pll/stages	row added by hand for the Z3815A 4010
+0x519ce	n3_lock_pll	applications/pll/stages	row added by hand for the Z3815A 4010
+0x52872	efc_gain_from_calibration	applications/pll/stages	row added by hand for the Z3815A 4010
+0x528a4	efc_calibration_fit	applications/pll/stages	row added by hand for the Z3815A 4010
+0x52a34	efc_calibration_measure	applications/pll/stages	row added by hand for the Z3815A 4010
+0x4b062	fit_evaluate_latest	applications/pll/aging	row added by hand for the Z3815A 4010
+0x4bc0e	kenneth_measured_get	applications/pll/aging	row added by hand for the Z3815A 4010
+0x56b0c	status_screen_print	applications/screen	row added by hand for the Z3815A 4010
+0x54ece	format_carrier_to_noise	applications/screen	row added by hand for the Z3815A 4010
+0x5527a	status_screen_sync	applications/screen	row added by hand for the Z3815A 4010
+0x5bfee	gps_channel_count_update	applications/gps/oncore	row added by hand for the Z3815A 4010
+0x5c00e	gps_receiver_abilities_update	applications/gps/oncore	row added by hand for the Z3815A 4010
+0x5c0f6	gps_request_descriptor	applications/gps/oncore	row added by hand for the Z3815A 4010
+0x49f24	measured_uncertainty_compute	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a17c	measured_uncertainty_update	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a1c8	ptest_check	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a266	ptest_type_done	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a274	ptest_mode_done	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a2a0	ptest_duration_hours	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a2e8	ptest_passes	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a2f0	ptest_state_get	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a2f8	ptest_reset	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a30e	ptest_efc_average	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a37e	ptest_log_unavailable	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a3aa	ptest_log	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x4a4fe	ptest_update	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x3ea52	adc_averages_print	applications/scpi/handlers/diagnostic	row added by hand for the Z3815A 4010
+0x2e564	duartb_printf	devices/duartb	row added by hand for the Z3815A 4010
+0x4f55c	gps_month_changed	applications/pll/pll_scpi	row added by hand for the Z3815A 4010
+0x3f4b0	flash_test_erase	applications/scpi/handlers/diagnostic	row added by hand for the Z3815A 4010
+0x3f4f8	flash_test_program	applications/scpi/handlers/diagnostic	row added by hand for the Z3815A 4010
+0x3f54e	flash_test	applications/scpi/handlers/diagnostic	row added by hand for the Z3815A 4010
+0x57cd8	gps_periodic_send	applications/gps/requests	row added by hand for the Z3815A 4010
+0x23dbe	es_start	services/timecode	row added by hand for the Z3815A 4010
+0x23dde	es_checksum	services/timecode	row added by hand for the Z3815A 4010
+0x23e16	es_time_seconds	services/timecode	row added by hand for the Z3815A 4010
+0x23e5c	es_time_digits	services/timecode	row added by hand for the Z3815A 4010
+0x23f3a	es_error_update	services/timecode	row added by hand for the Z3815A 4010
+0x23fb2	es_status	services/timecode	row added by hand for the Z3815A 4010
+0x24050	es_build	services/timecode	row added by hand for the Z3815A 4010
+0x24662	es_period_set	services/timecode	row added by hand for the Z3815A 4010
+0x2466c	es_end	services/timecode	row added by hand for the Z3815A 4010
+0x24684	es_send	services/timecode	row added by hand for the Z3815A 4010
+0x246fa	es_schedule	services/timecode	row added by hand for the Z3815A 4010
+0x34e1e	backp_task	services/monitors	the backp task; row added by hand for the Z3815A 4010
+0x230f6	sci_scpi_task_start	applications/scpi/engine	root_task starts the SCI session's task through spoo_run; row added by hand for the Z3815A 4010
+0x3cb3c	sci_scpi_task_create	applications/scpi/engine	row added by hand for the Z3815A 4010
+0x6eeec	strtol	platform/stdlib	the C library beside the strings; row added by hand for the Z3815A 4010
+0x6f0a6	strtoul	platform/stdlib	the C library beside the strings; row added by hand for the Z3815A 4010
+0x709ac	exp	platform/math	the C library beside vsprintf; row added by hand for the Z3815A 4010
+0x461ce	log_page_previous_lap_entry	services/log	row added by hand for the Z3815A 4010
+0x461f8	log_first_lap	services/log	row added by hand for the Z3815A 4010
+0x8f2	boot_unpack_installer	platform/boot	the boot code (reset at 0x550), its own program ahead of the primary; row added by hand for the Z3815A 4010
+0x5077c	gps_leap_ack	applications/pll/gps_control	pllp's steps that drive the GPS engine; row added by hand for the Z3815A 4010
+0x570e6	gps_alternate_status	applications/gps/receiver	row added by hand for the Z3815A 4010
+0x57b2a	gps_script_lookup	applications/gps/requests	row added by hand for the Z3815A 4010
+0x5b7d8	oncore_hold_heights_match	applications/gps/oncore	row added by hand for the Z3815A 4010
+0x5bec2	nmea_leap_second_due	applications/gps/oncore	the GT-74's tps commit's; row added by hand for the Z3815A 4010
+0x5bd26	nmea_position_message	applications/gps/oncore	the GT-74's tps commit's; row added by hand for the Z3815A 4010
+0x53fca	gps_print_instrument_state	applications/gps/reports	row added by hand for the Z3815A 4010
+0x52eb0	efc_for_frequency_change	applications/pll/stages	the EFC calibration's; row added by hand for the Z3815A 4010
+0x5172c	return_one	applications/pll/stages	among n3 lock pll's stubs; row added by hand for the Z3815A 4010

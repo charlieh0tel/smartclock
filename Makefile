@@ -144,14 +144,18 @@ board-atlas:
 # seeded from them, the addresses their C cites from the Z3805A's,
 # Unicorn's recorded bugs, every image's chip-select tables, the
 # hand-written C's magic numbers, the loop's traces, the images' shared
-# C, rewritten/common/, and the functions' names, none an image's.  They need
+# C, rewritten/common/, the functions' names, none an image's, and each
+# hand-written file compiled alone after its export's declarations; and,
+# for one IMAGE, record-access, the accesses its code makes into a
+# record, and report-link, what its link check finds missing.  They need
 # an m68k gcc and binutils, clang, clang-format and uv; none is part of
 # ci, and .github/workflows/firmware.yml runs the images' checks.
-FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-link report-decompiled \
+FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-alone check-link report-decompiled \
 	scpi-tree check-scpi-tree handlers check-module-figures module-figures check-image-diff image-diff \
 	check-seed-names seed-names check-comment-addresses check-common check-plain-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
-	check-chip-selects chip-selects check-magic-numbers magic-numbers check-loop-trace loop-trace
+	check-chip-selects chip-selects check-magic-numbers magic-numbers check-loop-trace loop-trace \
+	record-access report-link
 .PHONY: $(FIRMWARE_TARGETS)
 $(FIRMWARE_TARGETS):
 	$(MAKE) -C third_party/firmware $@

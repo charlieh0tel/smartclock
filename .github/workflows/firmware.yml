@@ -1,12 +1,13 @@
 name: firmware
 
-# The Z3805A 3543B, 58503A 3704 and Z3801A 3543 firmware's checks
-# (docs/firmware/README.md, "The checks in CI"): the C's format, the
-# layouts, the decompiled C's bytes and bindings, each image's link
-# from its hand-written C and assembly alone, every function required,
-# every decompiled function run against the image's own and the figures the documents
-# give, the SCPI trees, the module and pForth figures, the 58503A's and
-# Z3801A's diffs against the Z3805A and the names seeded from them, every image's
+# The Z3805A 3543B, 58503A 3704, Z3801A 3543 and Z3815A 4010 firmware's
+# checks (docs/firmware/README.md, "The checks in CI"): the C's format,
+# the layouts, the decompiled C's bytes and bindings, each hand-written
+# file compiled alone, each image's link from its hand-written C and
+# assembly alone, every function required, every decompiled function
+# run against the image's own and the figures the documents give, the
+# SCPI trees, the module and pForth figures, the 58503A's, Z3801A's and
+# Z3815A's diffs and the names seeded from them, every image's
 # chip-select tables, the hand-written C's magic numbers, the addresses
 # the 58503A's and Z3801A's C's comments cite, and the shared C; and the
 # board atlas, docs/board-atlas.html, against its data.
@@ -14,8 +15,8 @@ name: firmware
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs an m68k toolchain,
 # clang, clang-format and uv the others do not; and so that it fails
-# on its own.  No Rust: none of these targets builds the workspace.  About
-# ten minutes, most of it report-decompiled's two images.
+# on its own.  No Rust: none of these targets builds the workspace.  Most
+# of a run is report-decompiled's.
 #
 # On every push, not main's alone, so a firmware branch's own pushes
 # are checked too.
@@ -29,8 +30,9 @@ jobs:
     # with; 24.04's gcc 13 gives the same figures (docs/firmware/README.md,
     # "The checks in CI").  A preview image as of 2026-10.
     runs-on: ubuntu-26.04
-    # Three images' function checks take some 28 minutes.
-    timeout-minutes: 50
+    # The four images' function checks, each case run again poisoned,
+    # took past 50 minutes on 2026-11-05.
+    timeout-minutes: 90
     permissions:
       contents: read
     env:
@@ -48,7 +50,7 @@ jobs:
       - run: >-
           sudo apt-get update && sudo apt-get install -y --no-install-recommends
           gcc-m68k-linux-gnu binutils-m68k-linux-gnu "$CLANG_FORMAT" "$CLANG"
-      # The tools' script dependencies, Unicorn and Capstone, are each
+      # The tools' script dependencies, Unicorn, mc683xx and Capstone, are each
       # script's own inline metadata, pinned there, which `uv run`
       # resolves; uv itself is pinned here, and the cache is keyed on
       # the scripts.
@@ -100,13 +102,27 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make check-plain-names
         if: ${{ !cancelled() }}
+      # Without IMAGE, for every image with an export: each hand-written
+      # .c compiled alone after the export's declarations and headers.
+      - run: make check-alone IMAGE=
+        if: ${{ !cancelled() }}
       - run: make check-decompiled
         if: ${{ !cancelled() }}
       - run: make check-decompiled IMAGE=58503a-3704
         if: ${{ !cancelled() }}
       - run: make check-decompiled IMAGE=z3801a-3543
         if: ${{ !cancelled() }}
-      # Without IMAGE, for every image: fails if an image does not link
+      # The Z3815A 4010's export; its link and function checks run with
+      # the other reported images', below.
+      - run: make check-types IMAGE=z3815a-4010
+        if: ${{ !cancelled() }}
+      - run: make check-scpi-tree IMAGE=z3815a-4010
+        if: ${{ !cancelled() }}
+      - run: make check-magic-numbers IMAGE=z3815a-4010
+        if: ${{ !cancelled() }}
+      - run: make check-decompiled IMAGE=z3815a-4010
+        if: ${{ !cancelled() }}
+      # Without IMAGE, for every reported image: fails if one does not link
       # from its hand-written C and assembly alone, every function
       # required, and saves the summary the figures check reads.
       - run: make check-link IMAGE=

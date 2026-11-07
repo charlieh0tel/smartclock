@@ -44,10 +44,11 @@ def run(*command):
     return subprocess.run(command, capture_output=True, text=True).stdout
 
 
-def installer_records(image):
+def installer_records(image, start=None):
     """The boot code's records, each one's RAM destination and bytes,
-    wherever the image keeps them (image_diff.installer_records)."""
-    found = image_diff.installer_records(image)
+    wherever the image keeps them, or those at start
+    (image_diff.installer_records)."""
+    found = image_diff.installer_records(image, start)
     if found is None:
         sys.exit('no installer records in the image')
     return found[0]

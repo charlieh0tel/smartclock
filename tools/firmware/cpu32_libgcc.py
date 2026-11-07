@@ -8,7 +8,7 @@ The m68k-linux-gnu toolchain has one libgcc, a 68020's with a 68881,
 and no CPU32 multilib (gcc -print-multi-lib gives only the default):
 its float conversions use the FPU and its 64-bit division and count of
 leading zeros BFFFO, neither of which the CPU32 has
-(docs/cpu-core-brief.md, "The CPU").  So the members m68k-elf's
+(CPU32RM section 4, "Instruction Set").  So the members m68k-elf's
 gcc builds for its CPU32 multilib are built here: libgcc/Makefile.in's
 libgcc2.c routines and config/m68k/t-floatlib's, lb1sf68.S's assembly
 and fpgnulib.c, compiled as libgcc/Makefile.in compiles them, with
@@ -74,7 +74,7 @@ XFGNULIB = GENERATED + "/xfgnulib.c"
 LB1SF68 = "libgcc/config/m68k/lb1sf68.S"
 LIBGCC2 = "libgcc/libgcc2.c"
 # What the 68020 and 68040 have and the CPU32, the 68000's set and its
-# own additions, does not (docs/cpu-core-brief.md, "The CPU"): the bit
+# own additions, does not (CPU32RM section 4, "Instruction Set"): the bit
 # field, CAS, CAS2, PACK, UNPK, CALLM and RTM instructions, any
 # coprocessor's, the 68881's among them, the MMU's and MOVE16; their
 # mnemonics as objdump decodes a 68040's.

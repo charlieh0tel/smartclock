@@ -171,7 +171,7 @@ def figures(program):
     # phrase's two numbers checked apart
     for prefix, callees, callers in (
             (r'interval counter\'s: ', DEBUG_OUTPUT, devices),
-            (r'`return_zero` \(', ('return_zero',), None),
+            (r'`scpi_input_source` \(', ('scpi_input_source',), None),
             (r'`scpi_query_failed` \(', ('scpi_query_failed',), None)):
         sites = sum(program.call_sites(name, callers) for name in callees)
         calling = program.callers(callees)

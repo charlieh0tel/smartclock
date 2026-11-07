@@ -8,6 +8,13 @@ includes it.
    name (bindings/), is classed identical or relocated in each sharing
    image's diff against BASE (docs/firmware/diff/IMAGE-vs-BASE.tsv); a
    static helper, which no image names, is checked by its callers.
+   And the same callees, which rule 1's masking cannot see: the
+   routines each sharing image's code of a function common/ defines
+   refers to -- calls, jumps, a fall through, an address taken, a tail
+   of another function branched into, through a thunk -- are those its
+   C names, as clang parses it -- calls, a table's routines, bindings'
+   and asm statements' routines, through the static functions it
+   reaches -- each way, but where CALLEE_EXCEPTIONS says why not.
 2. Same data: everything common/'s code names that it does not define
    -- a function's or global's declared type, a type, an enumerator, a
    constant, a macro -- is declared the same in each sharing image's
@@ -41,11 +48,14 @@ each image's own functions an export names; with --write, rewrites them.
 
     python3 -I tools/firmware/common_check.py [--write]
 
-Prints each failure; exits nonzero if any.  Needs clang.
+Prints each failure; exits nonzero if any.  Needs clang and m68k-linux-gnu
+binutils.
 """
 
 import argparse
+import bisect
 import collections
+import dataclasses
 import functools
 import importlib.util
 import json
@@ -63,6 +73,8 @@ REWRITTEN = FIRMWARE / 'rewritten'
 COMMON = REWRITTEN / 'common'
 INCLUDE_FOLDER = FIRMWARE / 'include'
 DIFFS = ROOT / 'docs/firmware/diff'
+IMAGES = FIRMWARE / 'images'
+ANALYSIS = FIRMWARE / 'analysis'
 
 
 def load(name):
@@ -74,6 +86,7 @@ def load(name):
 
 magic_check = load('magic_check')
 comment_addresses = load('comment_addresses')
+image_diff = load('image_diff')
 
 # The folder of common/ holding the types the images' smartclock.h
 # include, and of each image's rewritten C holding its smartclock.h and
@@ -161,6 +174,300 @@ def same_code(images, failures):
                     failures.append(f'{path.relative_to(ROOT)}: {name} is {"/".join(sorted(found or {"unnamed"}))} '
                                     f'in {image}')
 
+# A string an asm statement calls by: one holding "jsr NAME", or the
+# routine's name alone, which a binding's macro joins to its "jsr ".
+ASM_CALL = re.compile(r'\b(?:jsr|bsr|jmp)\s+([A-Za-z_]\w*)')
+ASM_ROUTINE = re.compile(r'^[A-Za-z_]\w*$')
+# The instructions that return.
+RETURNS = {'rts', 'rte', 'rtr', 'rtd'}
+
+
+def asm_callees(export, node):
+    """The routines a function's asm statements call, in its text and the
+    macros it uses."""
+    found, texts, words = set(), [export.text_of(node) or ''], set()
+    while texts:
+        text = texts.pop()
+        for literal in STRING.findall(text):
+            body = literal[1:-1].strip()
+            found.update(ASM_CALL.findall(body))
+            if ASM_ROUTINE.match(body):
+                found.add(body)
+        for word in set(IDENTIFIER.findall(STRING.sub(' ', text))) - words:
+            words.add(word)
+            texts.extend(body for _, body in export.macros.get(word, ()))
+    return found
+
+
+def c_callees(export, function):
+    """The routines a common/ function's C names, and those it reaches
+    under another name.  Named: each function it refers to, in its body
+    or in the initializer of a variable it refers to (a table of
+    routines), with the routines its asm statements call, and, through
+    each static function it reaches, whose body gcc compiles into it (a
+    binding's, bindings/), those that one names.  Reached: the routines
+    whose C is a static function's body (Export.bodies) that it reaches
+    other than as its own body; that function's names are those
+    routines', not its."""
+    own = export.forwarded(function)
+    named, reached, seen, pending = set(), set(), set(), [function]
+    while pending:
+        node = pending.pop()
+        if id(node) in seen:
+            continue
+        seen.add(id(node))
+        named |= asm_callees(export, node)
+        stack = list(node.get('inner', ()))
+        while stack:
+            current = stack.pop()
+            stack.extend(current.get('inner', ()))
+            if current.get('kind') != 'DeclRefExpr':
+                continue
+            reference = current['referencedDecl']
+            if reference['kind'] == 'VarDecl' and reference.get('name') in export.initialized:
+                pending.append(export.initialized[reference['name']])
+            if reference['kind'] != 'FunctionDecl':
+                continue
+            name = reference['name']
+            if name not in export.static_functions:
+                named.add(name)
+            elif name in export.bodies and name != own:
+                reached |= export.bodies[name]
+            else:
+                pending.append(export.static_functions[name])
+    return named, reached
+
+
+class ImageCode:
+    """An image's functions as its sidecar names them, and the routines
+    each one's code refers to."""
+
+    def __init__(self, image):
+        conventions = DECOMPILED / image / f'{image}.conventions.jsonl'
+        items, self.starts = image_diff.load_base(str(conventions), str(ANALYSIS / image / 'names.tsv'), None)
+        self.functions = {(region, item.address): item.name for region, found in items.items() for item in found
+                          if item.kind == 'function'}
+        self.by_name = {name: place for place, name in self.functions.items()}
+        self.memories = image_diff.region_memories((IMAGES / f'{image}.bin').read_bytes())
+        self.ordered = {region: sorted(starts) for region, starts in self.starts.items()}
+
+    def stop(self, region, address):
+        """Where the function or label after an address starts."""
+        order = self.ordered[region]
+        following = order[bisect.bisect_right(order, address):]
+        return following[0] if following else address + image_diff.BODY_LIMIT
+
+    def thunk(self, region, address):
+        """The function a thunk, a function that is a branch, goes to."""
+        first = self.memories[region].instructions(address, address + image_diff.BODY_LIMIT)[:1]
+        if first and (first[0].mnemonic == 'jmp' or image_diff.BRANCH.match(first[0].mnemonic)) and first[
+                0].mnemonic not in image_diff.CALLS:
+            targets = [field.target for field in image_diff.fields(first[0])]
+            if len(targets) == 1 and (region, targets[0]) in self.functions:
+                return targets[0]
+        return None
+
+    def returns(self, region, address):
+        """Whether a function is a return alone, as sci_echo_none's rts,
+        which the code before it falls through to as its own."""
+        first = self.memories[region].instructions(address, address + image_diff.BODY_LIMIT)[:1]
+        return bool(first) and first[0].mnemonic in RETURNS
+
+    def callees(self, name):
+        """The functions a function's code refers to: those it calls, jumps
+        to, falls through to or takes the address of, and those of any
+        other function's code it branches into, a tail shared; each as a
+        chain, the function and, if it is a thunk, what it goes to, and so
+        on."""
+        region, start = self.by_name[name]
+        found, extents, pending = set(), set(), [start]
+        while pending:
+            at = pending.pop()
+            stop = self.stop(region, at)
+            if (at, stop) in extents:
+                continue
+            extents.add((at, stop))
+            instructions = image_diff.reachable(self.memories[region], at, stop)
+            for instruction in instructions:
+                jumps = image_diff.BRANCH.match(instruction.mnemonic) and instruction.mnemonic not in image_diff.CALLS
+                for field in image_diff.fields(instruction):
+                    if not field.relative and field.size < 4:
+                        continue  # an absolute short: a constant, as pea 0x400's signal
+                    if (region, field.target) in self.functions:
+                        found.add(field.target)
+                    elif jumps and field.relative and not at <= field.target < stop:
+                        pending.append(field.target)
+                if instruction.end == stop and instruction.mnemonic not in image_diff.TERMINALS and (
+                        region, stop) in self.functions and not self.returns(region, stop):
+                    found.add(stop)
+        chains = []
+        for address in sorted(found - {start}):
+            chain = []
+            while address is not None and self.functions[region, address] not in chain:
+                chain.append(self.functions[region, address])
+                address = self.thunk(region, address)
+            chains.append(tuple(chain))
+        return chains
+
+
+# The kinds of CALLEE_EXCEPTIONS: what the image's code and the C do
+# differently there, which same_callees then allows.
+#
+# REPEATS: the function's code repeats the routine's in place where its
+#   C calls it: its C may name the routine its code does not call, and
+#   its code call what the routine's calls.
+# DOES: the function's code calls the routine for what its C does itself,
+#   by an operator or a helper of its own.
+# ADDRESS: the function's code takes the routine's address as data.
+# SOFT_FLOAT: the function's code calls the soft-float routines, those
+#   bindings/softfloat.h binds, by other entries than its C's bindings do:
+#   any of them, either way.
+# FINDING: in the image, the function's code (any common/ function's,
+#   where none is named) calls the routine, which its C does not name,
+#   and, where another is given, not the other, which its C names: a
+#   finding not yet fixed (docs/firmware/z3815a-4010.md, "The export and
+#   the checks").
+REPEATS, DOES, ADDRESS, SOFT_FLOAT, FINDING = 'repeats', 'does', 'address', 'soft-float', 'finding'
+
+
+@dataclasses.dataclass(frozen=True)
+class CalleeException:
+    """A mismatch same_callees allows: its kind (above), the common/
+    function (None for any, FINDING's), the routine, the other routine
+    (FINDING's, or None), the images it holds in (None for every sharing
+    image), and why.  It must match in each of them, or it fails as
+    stale."""
+    kind: str
+    function: str | None
+    routine: str | None
+    reason: str
+    other: str | None = None
+    images: tuple | None = None
+
+
+SOFT_FLOAT_BINDINGS = COMMON / 'bindings/softfloat.h'
+Z3815A = ('z3815a-4010',)
+CALLEE_EXCEPTIONS = [
+    # The C calls a routine whose code the image repeats in place.
+    *(CalleeException(REPEATS, function, 'hms_to_seconds', 'the image repeats hms_to_seconds\' code, '
+                      'which the C calls, the copies being the same')
+      for function in ('time_to_seconds', 'time_packed_to_seconds', 'gps_seconds')),
+    CalleeException(REPEATS, 'labs', 'abs', 'labs repeats abs\'s code, which the C calls'),
+    CalleeException(REPEATS, 'ldiv', 'div', 'ldiv repeats div\'s code, which the C calls'),
+    CalleeException(REPEATS, 'scpi_query_SOURce_GPSystem_POSition_ACTual', 'labs',
+                    'the image takes each coordinate\'s absolute value in place, the C by labs'),
+    *(CalleeException(REPEATS, function, routine, f'{function} repeats {routine}\'s code, the status bit\'s '
+                      'switch, which the C calls')
+      for function, routine in (('status_apply_condition', 'status_set_bit'),
+                                ('installer_status_apply_condition', 'installer_status_set_bit'))),
+    *(CalleeException(REPEATS, function, routine, f'{function} traps to the kernel in line, as {routine} does, '
+                      'which the C calls through os.h\'s binding')
+      for function, routine in (('psos_version', 'psos_call'), ('installer_psos_version', 'installer_psos_call'))),
+    *(CalleeException(REPEATS, function, routine, f'{function} calls psos_call itself, as the stub {routine} '
+                      'does, which the C calls')
+      for function, routine in (('pps_init', 'psos_create_x'), ('pps_interrupt_stop', 'psos_delete_x'),
+                                ('pps_wait_time', 'psos_request_x'))),
+    *(CalleeException(REPEATS, function, 'memcpy', 'the image moves a value\'s bytes in place, which the C '
+                      'copies with memcpy, as C must to read a float\'s bits')
+      for function in ('float_decimal_exponent_floor', 'float_decimal_exponent_rounded', 'lifetime_record_read')),
+    # The image calls a routine for what the C does itself.
+    CalleeException(DOES, 'format_duration_short', 'ldiv', 'the image divides by ldiv, the C by / and %'),
+    CalleeException(DOES, 'scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO', 'return_byte',
+                    'the image sign-extends the byte by return_byte, the C by a cast'),
+    *(CalleeException(DOES, 'counter_offset_apply', routine, f'the image adds the 64-bit offset by {routine}, '
+                      'the C by its 64-bit operators')
+      for routine in ('int64_add', 'int64_negate')),
+    CalleeException(DOES, 'frexp', 'double_normalize', 'the C normalizes a denormal by libc_normalize, the image '
+                    'by double_normalize'),
+    # The image takes a routine's address as data.
+    CalleeException(ADDRESS, 'random_dither', 'start_nothing', 'a value of 0 reads the byte after dither_table, '
+                    'start_nothing\'s first, as the C\'s copy of the table ends'),
+    # The soft-float routines by other entries.
+    *(CalleeException(SOFT_FLOAT, function, None, 'the image passes the operands by pointer or in place, '
+                      'the C\'s bindings in register pairs')
+      for function in ('log', 'pow', 'sqrt')),
+    # The Z3815A 4010's findings: its copy of the function calls another
+    # routine than the others' (rule 6 splits it), or its names place the
+    # routine the C calls at the wrong address.
+]
+
+
+def soft_float_routines():
+    """The soft-float routines bindings/softfloat.h binds."""
+    return set(re.findall(r'"((?:double|float)_\w+)"', SOFT_FLOAT_BINDINGS.read_text()))
+
+
+def allow(exception, image, code, name, extra, missing):
+    """Takes what an exception allows out of a function's mismatches in an
+    image: extra, the chains its code calls and its C does not name, and
+    missing, what its C names and its code does not call.  Whether it
+    matched."""
+    def calls(routine):
+        return [chain for chain in extra if routine in chain]
+
+    if exception.kind == REPEATS and exception.routine in missing:
+        missing.discard(exception.routine)
+        repeated = {callee for chain in code.callees(exception.routine) for callee in chain}
+        extra[:] = [chain for chain in extra if not repeated.intersection(chain)]
+        return True
+    if exception.kind in (DOES, ADDRESS) and calls(exception.routine):
+        extra[:] = [chain for chain in extra if exception.routine not in chain]
+        return True
+    if exception.kind == SOFT_FLOAT:
+        routines = soft_float_routines()
+        before = len(extra) + len(missing)
+        extra[:] = [chain for chain in extra if not routines.intersection(chain)]
+        missing -= routines
+        return len(extra) + len(missing) < before
+    if exception.kind == FINDING and calls(exception.routine) and (
+            exception.other is None or exception.other in missing):
+        extra[:] = [chain for chain in extra if exception.routine not in chain]
+        missing.discard(exception.other)
+        return True
+    return False
+
+
+def same_callees(images, exports, failures):
+    """Rule 1's other half: rule 1 masks a callee's address as it does
+    any other, so that a function of the same instructions calling
+    another routine passes it.  For each function common/ defines, the
+    routines each image's code refers to are those its C names, but
+    CALLEE_EXCEPTIONS'."""
+    codes = {image: ImageCode(image) for image in images}
+    matched = set()
+    for export in exports:
+        code = codes[export.image]
+        exceptions = [exception for exception in CALLEE_EXCEPTIONS
+                      if exception.images is None or export.image in exception.images]
+        for path in common_files():
+            place = 'common:' + str(path.relative_to(COMMON))
+            for node in export.declared(place):
+                name = node.get('name')
+                if node.get('kind') != 'FunctionDecl' or name not in code.by_name or node.get(
+                        'storageClass') == 'static' or not any(
+                        child.get('kind') == 'CompoundStmt' for child in node.get('inner', ())):
+                    continue
+                named, reached = c_callees(export, node)
+                named = {callee for callee in named if callee in code.by_name} - {name}
+                chains = code.callees(name)
+                extra = [chain for chain in chains if not (named | reached).intersection(chain)]
+                missing = named - {callee for chain in chains for callee in chain}
+                for exception in exceptions:
+                    if exception.function in (None, name) and allow(exception, export.image, code, name, extra,
+                                                                     missing):
+                        matched.add((exception, export.image))
+                for chain in extra:
+                    failures.append(f'{path.relative_to(ROOT)}: {name} in {export.image} calls {chain[0]}, '
+                                    'which its C does not name')
+                for callee in sorted(missing):
+                    failures.append(f'{path.relative_to(ROOT)}: {name}\'s C names {callee}, which '
+                                    f'{export.image}\'s code does not call')
+    for exception in CALLEE_EXCEPTIONS:
+        for image in exception.images or images:
+            if (exception, image) not in matched:
+                failures.append(f'common_check.py: CALLEE_EXCEPTIONS\' {exception.kind} '
+                                f'{exception.function or "any"} {exception.routine or ""} matches nothing in {image}')
+
 
 def no_address(failures):
     """Rule 3."""
@@ -203,6 +510,16 @@ class Export:
         self.static_functions = {node['name']: node for node in self.top
                                  if node.get('kind') == 'FunctionDecl' and node.get('storageClass') == 'static'
                                  and any(child.get('kind') == 'CompoundStmt' for child in node.get('inner', ()))}
+        # common/'s variables with an initializer, by name, and the
+        # routines whose C is one static function's call: the body
+        # several copies share, as scpi_engine.h's and status.h's
+        self.initialized = {node['name']: node for node in self.top if node.get('kind') == 'VarDecl'
+                            and node.get('init') and self.place_of(node).startswith('common:')}
+        self.bodies = collections.defaultdict(set)
+        for node in self.top:
+            body = self.forwarded(node)
+            if body:
+                self.bodies[body].add(node['name'])
         self.macros = collections.defaultdict(list)
         for path in [*(path for path in self.rewritten.rglob('*.[ch]')
                        if TYPES not in path.relative_to(self.rewritten).parts),
@@ -211,6 +528,23 @@ class Export:
             for match in MACRO.finditer(COMMENT.sub(' ', path.read_text())):
                 body = ' '.join((match.group(2) + match.group(3)).split())
                 self.macros[match.group(1)].append((self.place(str(path)), body))
+
+    def forwarded(self, node):
+        """The static function a common/ function's whole body calls,
+        returning what it returns, or None."""
+        if node.get('kind') != 'FunctionDecl' or node.get('storageClass') == 'static' or not self.place_of(
+                node).startswith('common:'):
+            return None
+        bodies = [child for child in node.get('inner', ()) if child.get('kind') == 'CompoundStmt']
+        statements = bodies[0].get('inner', []) if bodies else []
+        if len(statements) != 1:
+            return None
+        call = magic_check.strip(statements[0], ('ReturnStmt', 'ImplicitCastExpr', 'ParenExpr', 'CStyleCastExpr'))
+        if call.get('kind') != 'CallExpr':
+            return None
+        callee = magic_check.strip(call['inner'][0], ('ImplicitCastExpr', 'ParenExpr'))
+        name = callee.get('referencedDecl', {}).get('name')
+        return name if callee.get('kind') == 'DeclRefExpr' and name in self.static_functions else None
 
     def index(self, node):
         stack = [node]
@@ -453,9 +787,8 @@ def flatten(signature):
             yield from flatten(item)
 
 
-def same_data(images, failures):
+def same_data(images, exports, failures):
     """Rule 2."""
-    exports = [Export(image) for image in images]
     layouts = [export.layout() for export in exports]
     types = sorted((COMMON / TYPES).glob('*.h'))
     # include/'s headers, the CPU's and the DUART's, every image's types= too
@@ -595,7 +928,9 @@ def main():
         same_code(images, failures)
         no_address(failures)
         if images:
-            same_data(images, failures)
+            exports = [Export(image) for image in images]
+            same_data(images, exports, failures)
+            same_callees(images, exports, failures)
     check_figures(images, arguments.write, failures)
     for failure in failures:
         print(failure)

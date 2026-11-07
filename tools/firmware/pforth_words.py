@@ -201,7 +201,8 @@ CONSOLE_DESCRIPTIONS = {
     'disable_gps_cmds': 'sets one flag',
     'gps_change': 'code p1 p2 p3 p4: sends entry code of the Oncore table',
     'abr_stat': '1 prints a gs: line on every @@Ba, 0 stops it',
-    'print_bc': 'prints the @@Bk record',
+    'print_ext_msg': 'prints the @@Bk extension record',
+    'print_bc': 'prints the xDOP best-combinations page',
     'ext_msg_rate': '0 asks the GPS engine for @@Bk again',
     'cal': 'prints curr= efc= and tempco =, storing nothing',
 }

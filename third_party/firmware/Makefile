@@ -4,10 +4,11 @@
 #     make -C third_party/firmware TARGET [IMAGE=z3805a-3543b]
 #
 # A target of an image's runs for IMAGE, or without it for every image
-# with an analysis/IMAGE/ folder (README.md, and PLAN.md, "Firmware
-# layout").  Needs an
-# m68k gcc and binutils, clang-format and uv; none is part of `make ci`,
-# and .github/workflows/firmware.yml runs the images' checks.
+# with an analysis/IMAGE/ folder (check-link and report-decompiled for
+# REPORTED_IMAGES alone, below; README.md, and PLAN.md, "Firmware
+# layout").  Needs an m68k gcc and binutils, clang-format and uv; none
+# is part of `make ci`, and .github/workflows/firmware.yml runs the
+# images' checks.
 
 # The repository's root, from which every path is written.
 ROOT ?= ../..
@@ -42,10 +43,15 @@ DOCUMENTED_IMAGE = z3805a-3543b
 EXPORTED_IMAGES = $(foreach image,$(IMAGES),$(if $(wildcard $(DECOMPILED_FOLDER)/$(image)/$(image).c),$(image)))
 
 # The targets run for each image: those that need only its names and
-# types, and those that need its export too.
+# types, and those that need its export too; and the link and function
+# checks, which without IMAGE run for REPORTED_IMAGES, the images whose
+# figures the documents quote (an image whose C is not yet all
+# hand-written has its function check alone: UNFINISHED_IMAGES, below).
 NAMED_TARGETS = check-types handlers scpi-tree
-EXPORTED_TARGETS = check-decompiled check-link check-scpi-tree check-magic-numbers magic-numbers report-decompiled
-IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS)
+EXPORTED_TARGETS = check-decompiled check-alone check-scpi-tree check-magic-numbers magic-numbers
+IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS) check-link report-decompiled
+# The queries run for one image, which IMAGE names.
+QUERY_TARGETS = record-access report-link
 # The rest, run once.
 TARGETS = format-c check-format-c check-module-figures module-figures check-image-diff image-diff \
 	check-comment-addresses check-common check-plain-names \
@@ -56,13 +62,21 @@ TARGETS = format-c check-format-c check-module-figures module-figures check-imag
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
 
-.PHONY: help $(IMAGE_TARGETS) $(TARGETS)
+# The CPU the harness runs the image on (tools/firmware/backend.py,
+# docs/firmware/README.md, "The CPU backend"): unicorn, Unicorn's 68020,
+# or mc683xx, the bare CPU32 of mc683xx's Python module, which uv takes
+# from PyPI as the harness's scripts pin it in their inline metadata.
+CPU ?= unicorn
+HARNESS_RUN = SMARTCLOCK_CPU=$(CPU) uv run -q
+
+.PHONY: help $(IMAGE_TARGETS) $(QUERY_TARGETS) $(TARGETS)
 
 # Without a target, the targets; none is run by default, since format-c
 # rewrites files and the checks take minutes.
 help:
 	@echo "make -C third_party/firmware TARGET [IMAGE=...], images: $(IMAGES)"
 	@echo "each image's: $(IMAGE_TARGETS)"
+	@echo "one image's, IMAGE given: $(QUERY_TARGETS)"
 	@echo "once: $(TARGETS)"
 
 # The project's own C, in .clang-format's style: include/'s headers and
@@ -91,18 +105,19 @@ module-figures:
 # functions and labels in another image: each TSV of IMAGE_DIFFS,
 # IMAGE:BASE, is docs/firmware/diff/IMAGE-vs-BASE.tsv, from the base's
 # names, modules, sidecar and handlers and the other's handlers.  The
-# seeded images, SEEDED_IMAGES, each from its base, DIFF_BASE_<IMAGE>, have their
-# names seeded from the same matches (seed-names); the Z3801A's is the
-# comparison docs/firmware/z3801a-3543.md reads.  image-diff rewrites
-# the TSVs, docs/firmware/58503a-3704.md's figures and, through
-# seed-names, each seeded image's names;
+# seeded images, SEEDED_IMAGES, each from DIFF_BASE_IMAGE, have their
+# names seeded from the same matches (seed-names); the Z3815A's diff
+# against the Z3805A is the comparison docs/firmware/z3815a-4010.md
+# reads.  The Z3801A's is docs/firmware/z3801a-3543.md's.  image-diff rewrites the TSVs, docs/firmware/58503a-3704.md's
+# figures and, through seed-names, each seeded image's names;
 # check-image-diff fails if any is not what the images give.  Each
 # TSV's counts by status and module go to the image's work folder, as
 # image-diff-vs-BASE.err.
-SEEDED_IMAGES = 58503a-3704 z3801a-3543
+SEEDED_IMAGES = 58503a-3704 z3815a-4010 z3801a-3543
 DIFF_BASE_58503a-3704 = z3805a-3543b
+DIFF_BASE_z3815a-4010 = 58503a-3704
 DIFF_BASE_z3801a-3543 = z3805a-3543b
-IMAGE_DIFFS = $(foreach image,$(SEEDED_IMAGES),$(image):$(DIFF_BASE_$(image)))
+IMAGE_DIFFS = $(foreach image,$(SEEDED_IMAGES),$(image):$(DIFF_BASE_$(image))) z3815a-4010:z3805a-3543b
 diff_image = $(word 1,$(subst :, ,$(1)))
 diff_base = $(word 2,$(subst :, ,$(1)))
 image_diff_tsv = $(ROOT)/docs/firmware/diff/$(call diff_image,$(1))-vs-$(call diff_base,$(1)).tsv
@@ -146,9 +161,10 @@ check-plain-names:
 
 # Fail if C in rewritten/common/, which every image whose export includes it
 # compiles as its own, is not what docs/firmware/rewrite.md's "Shared C"
-# lets be shared: the same code and data in each, and no address
-# (tools/firmware/common_check.py); or if a seeded image's check-layout.c,
-# which rule 2 compares, asserts a layout at its base's addresses rather
+# lets be shared: the same code, calling the routines its C names, and
+# the same data in each, and no address (tools/firmware/common_check.py);
+# or if the check-layout.c of a seeded
+# image sharing common/, which rule 2 compares, asserts a layout at its base's addresses rather
 # than its own (tools/firmware/layout_addresses.py).
 check-common:
 	python3 -I $(ROOT)/tools/firmware/layout_addresses.py
@@ -231,37 +247,49 @@ $(CPU32_LIBGCC): $(ROOT)/tools/firmware/cpu32_libgcc.py $(GCC_VENDORED)
 	M68K_CC="$(M68K_CC)" python3 -I $< $@
 
 # How many of the decompiled C functions, as gcc compiles them, agree
-# with the image's own in the emulator; fails if any function fails.
+# with the image's own in the emulator; fails if any function fails, but
+# for an unfinished image (UNFINISHED_IMAGES).
 # The report is saved in the image's work folder, and report-decompiled
 # checks the figures the documents quote from it right after writing it.
 REPORT = report-decompiled.txt
 # The images whose function check the documents quote, each one's
 # sentences report_figures.py's CHECKS.
-REPORTED_IMAGES = z3805a-3543b 58503a-3704 z3801a-3543
+REPORTED_IMAGES = z3805a-3543b 58503a-3704 z3801a-3543 z3815a-4010
+# And those whose C is not yet all hand-written, whose document quotes
+# its function check, any failures and all: report-decompiled fails for
+# one only where the check does not run to its figures (an exit status
+# other than 1, the failed functions'), and its figures are checked
+# without a link check, which it does not pass yet
+# (report_figures.py --unfinished).  None is now: the Z3815A 4010 left it
+# once its link check passed.
+UNFINISHED_IMAGES =
+FIGURED_IMAGES = $(REPORTED_IMAGES) $(UNFINISHED_IMAGES)
+unfinished = $(filter $(1),$(UNFINISHED_IMAGES))
 # The link check's summary, saved in the image's work folder beside the
 # report, whose figures report_figures.py checks with them.
 LINK_SUMMARY = link-check.txt
 report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1) \
-	--link $(call work,$(1))/$(LINK_SUMMARY) $(call work,$(1))/$(REPORT)
+	$(if $(call unfinished,$(1)),--unfinished,--link $(call work,$(1))/$(LINK_SUMMARY)) $(call work,$(1))/$(REPORT)
 
-# Fail if the documents' figures from each reported image's function
-# check -- its functions agreeing, known, skipped and failed, those run
-# in user mode alone and in both modes, its console sessions agreeing
+# Fail if the documents' figures from each reported or unfinished
+# image's function check -- its functions agreeing, known, skipped and
+# failed, those run in user mode alone and in both modes, its console
+# sessions agreeing
 # and the agreeing functions' cases -- and from its export -- its
 # functions written by hand, left as the decompiler's reading, assembly
 # and thunks -- and from its link check -- its functions required and
 # how each is defined -- as docs/firmware/README.md,
 # docs/firmware/rewrite.md, docs/firmware/58503a-3704.md,
-# docs/firmware/z3801a-3543.md and README.md
-# quote them -- are not what the last make report-decompiled and make
-# check-link saved, or if any function failed; report-figures rewrites
-# them.
+# docs/firmware/z3801a-3543.md, docs/firmware/z3815a-4010.md and
+# README.md quote them -- are not what the last make report-decompiled
+# and make check-link saved, or if any function of a reported image
+# failed; report-figures rewrites them.
 check-report-figures:
-	status=0; $(foreach image,$(REPORTED_IMAGES),$(call report_figures,$(image)) || status=1;) \
+	status=0; $(foreach image,$(FIGURED_IMAGES),$(call report_figures,$(image)) || status=1;) \
 	exit $$status
 
 report-figures:
-	$(foreach image,$(REPORTED_IMAGES),$(call report_figures,$(image)) --write &&) true
+	$(foreach image,$(FIGURED_IMAGES),$(call report_figures,$(image)) --write &&) true
 
 ifeq ($(IMAGE),)
 
@@ -270,6 +298,12 @@ $(NAMED_TARGETS):
 
 $(EXPORTED_TARGETS):
 	@for image in $(EXPORTED_IMAGES); do $(MAKE) --no-print-directory $@ IMAGE=$$image || exit 1; done
+
+check-link report-decompiled:
+	@for image in $(REPORTED_IMAGES); do $(MAKE) --no-print-directory $@ IMAGE=$$image || exit 1; done
+
+$(QUERY_TARGETS):
+	$(error $@ needs IMAGE)
 
 else
 
@@ -289,6 +323,14 @@ WORK = $(call work,$(IMAGE))
 check-types:
 	$(M68K_CC) -mcpu=cpu32 -fsyntax-only $(REWRITTEN)/types/check-layout.c
 
+# The accesses the image's primary code makes into a record in RAM, the
+# evidence its type is read from, and with --fit a type laid against
+# them (tools/firmware/record_access.py): RECORD='START SIZE
+# [--argument FUNCTION:OFFSET]... [--fit TYPE]'.  Needs m68k binutils
+# and clang.
+record-access:
+	python3 -I $(ROOT)/tools/firmware/record_access.py $(IMAGE) $(RECORD)
+
 # Fail if the decompiled C does not compile, its assembly is not the
 # image's own bytes, alone or linked, gcc's code accesses a word or
 # long at an odd frame or stack offset or of data a byte's alignment may
@@ -301,6 +343,13 @@ check-decompiled: check-module-figures check-unicorn $(CPU32_LIBGCC)
 	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/rebuild_link.py $(DECOMPILED) $(IMAGE_BIN)
 	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/bridge_check.py $(DECOMPILED) $(IMAGE_BIN)
 
+# Fail if a hand-written .c file does not compile alone after the
+# export's declarations and the hand-written headers: if it names what
+# only another file defines, which the export's one translation unit
+# would let it (tools/firmware/alone_check.py).
+check-alone:
+	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" python3 $(ROOT)/tools/firmware/alone_check.py $(DECOMPILED)
+
 # Fail if the image does not link from the hand-written C and the
 # assembly alone, the decompiled C left out, every function of the
 # export required, referenced or not, or if gcc's code accesses a word
@@ -312,11 +361,18 @@ check-link: $(CPU32_LIBGCC)
 	mkdir -p $(WORK)
 	$(LINK_ENV) python3 $(ROOT)/tools/firmware/link_check.py $(DECOMPILED) | tee $(WORK)/$(LINK_SUMMARY)
 
-report-decompiled: check-link $(CPU32_LIBGCC)
+# The functions the link check finds missing, by module, cheapest
+# first: each one's size and its counterpart in the images the image is
+# diffed against, with the file of that one's hand-written C, and
+# whether common/ would fit it (tools/firmware/link_report.py).
+report-link: $(CPU32_LIBGCC)
+	$(LINK_ENV) python3 $(ROOT)/tools/firmware/link_report.py $(DECOMPILED)
+
+report-decompiled: $(if $(filter $(IMAGE),$(REPORTED_IMAGES)),check-link) $(CPU32_LIBGCC)
 	mkdir -p $(WORK)
-	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/function_check.py \
-		$(DECOMPILED) $(IMAGE_BIN) | tee $(WORK)/$(REPORT)
-	$(if $(filter $(IMAGE),$(REPORTED_IMAGES)),$(call report_figures,$(IMAGE)))
+	{ $(LINK_ENV) $(HARNESS_RUN) $(ROOT)/tools/firmware/function_check.py \
+		$(DECOMPILED) $(IMAGE_BIN) $(if $(call unfinished,$(IMAGE)),|| [ $$? -eq 1 ]); } | tee $(WORK)/$(REPORT)
+	$(if $(filter $(IMAGE),$(FIGURED_IMAGES)),$(call report_figures,$(IMAGE)))
 
 # The image's SCPI tree as C data and as names-file rows, from the image
 # (docs/scpi/README.md, "As C"); cargo test fails while they are stale.

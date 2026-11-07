@@ -51,9 +51,10 @@ int32_t scpi_set_DOUGlas_STATe(void* parameters, void* response,
                                scpi_call* call) {
   if (nv_settings.douglas_state == 0) {
     pllc_request_c(&scpi_param_DOUGlas_STATe_request, 0, 0, 0,
-                   return_zero(call->input));
+                   scpi_input_source(call->input));
   } else {
-    pllc_request_a(&scpi_param_DOUGlas_STATe, 0, 0, return_zero(call->input));
+    pllc_request_a(&scpi_param_DOUGlas_STATe, 0, 0,
+                   scpi_input_source(call->input));
   }
   return 0;
 }
@@ -89,13 +90,14 @@ int32_t scpi_set_DOUGlas_DURation(void* parameters, void* response,
       (duration->kind == SCPI_PARAMETER_DECIMAL &&
        float_compare(duration->value, SCPI_DOUGLAS_INFINITE) == 0)) {
     pllc_request_a(&scpi_param_DOUGlas_DURation_INFinity, 0, 1,
-                   return_zero(call->input));
+                   scpi_input_source(call->input));
     return 0;
   }
   /* The image converts the value whatever the kind (0x2ce9c). */
   int32_t seconds = float_to_integer(duration->value);
 
   scpi_numeric_set(&scpi_param_DOUGlas_DURation, 0, duration->kind,
-                   duration->keyword, 0, seconds, return_zero(call->input));
+                   duration->keyword, 0, seconds,
+                   scpi_input_source(call->input));
   return 0;
 }

@@ -70,3 +70,24 @@ void status_update_rqs(void) {
   }
   status_request_service = request;
 }
+
+/* Writes a character to the console, keeping it in the echo buffer, or
+ * CR LF for an end (0x28b94). */
+void scpi_console_putc(scpi_port* port, int32_t character) {
+  if (character >= SCPI_PORT_CHARACTERS) {
+    console_write("\r\n");
+    return;
+  }
+  char text[2] = {character, 0};
+
+  console_write(text);
+  scpi_echo_text[scpi_echo_length++] = character;
+}
+
+/* Prompts again when the status model that changed is the main one
+ * (0x28d00). */
+void status_prompt_refresh(status_model* status, int32_t error) {
+  if (status == status_object) {
+    scpi_prompt(error);
+  }
+}

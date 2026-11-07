@@ -1,5 +1,6 @@
 """Checks that each seeded image's check-layout.c asserts its layouts at
-its own addresses, not at its base's, from which it was copied.
+its own addresses, not at its base's, from which it was copied: each
+that shares common/.
 
     python3 -I tools/firmware/layout_addresses.py [--image IMAGE] [--write]
 
@@ -24,7 +25,17 @@ word, under the same type and field, must be what the derivation gives;
 one of the image's own, under the same type and field, must be too
 where its globals are the base's line's, and is otherwise only resolved:
 each address in a global of the image's export.  --write rewrites the
-copies to what the derivation gives.  A layout that the derivation
+copies to what the derivation gives.  And each check's record must be
+where its last address is, which a check of the image's own and a copy
+alike take as the record's start: an address in RAM inside a global the
+export types as a record must be in one of the check's type, or in a
+record holding one, so that a check left at its base's addresses, which
+there lie in another of the image's globals, does not pass for the
+image's (the Z3815A 4010's gps_statistics was asserted so); nor in a
+label names.tsv leaves untyped, which the export declares a byte,
+unless UNTYPED_HOLDERS names it, with why, as the checks inside a record
+left untyped were unseen (the Z3815A's status snapshots, until typed,
+held the base's ADC monitor, request step and log page checks).  A layout that the derivation
 shows to differ then fails make check-types, against the header that
 declares it.  Prints each failure; exits nonzero if any.  Needs
 m68k-linux-gnu binutils.
@@ -53,8 +64,12 @@ def load(name):
 seed_names = load('seed_names')
 image_diff = seed_names.image_diff
 
-# The images check-layout.c is derived for, each from its base's.
-BASES = {port.folder: port.base_folder for port in seed_names.PORTS.values()}
+# The images check-layout.c is derived for, each from its base's: the
+# seeded images that share common/, whose layouts rule 2 compares.  A
+# seeded image not yet on common/ (the Z3815A 4010, at its first wave)
+# keeps its base's copy until it moves on.
+SHARING = set(load('common_check').sharing_images())
+BASES = {port.folder: port.base_folder for port in seed_names.PORTS.values() if port.folder in SHARING}
 # A size or offset check, as common_check.py's CHECK finds it, but for
 # any type, an array's or a field's too, with the span of its expression.
 CHECK = re.compile(r'CHECK_(SIZE|FIELD)\(\s*([^,;]+?)\s*,\s*(?:(\w+(?:\.\w+|\[\d+\])*)\s*,\s*)?([^;,]*?)\);', re.S)
@@ -63,6 +78,33 @@ HEX = re.compile(r'0x[0-9a-fA-F]+')
 # A global the export declares at its address; an installer:: one is in
 # the installer's overlay, which no check-layout.c address is.
 EXTERN = re.compile(r'(?m)^extern [^;]*?\b(\w+)(?:\[[^\]]*\])*; /\* ([0-9a-f]{8}) \*/$')
+# The same, with its type.
+TYPED_EXTERN = re.compile(r'(?m)^extern (?:volatile )?(?:struct |union |enum )?(\w+) (?:volatile )?(\**)\s*(\w+)'
+                          r'(?:\[[^\]]*\])*; /\* ([0-9a-f]{8}) \*/$')
+# A record the export declares, and each member's type, a pointer's
+# marked, which holds no record in place.
+RECORD = re.compile(r'(?ms)^(?:struct|union) (\w+) \{\n(.*?)^\};')
+MEMBER = re.compile(r'(?m)^\s+(?:volatile )?(?:struct |union |enum )?(\w+) (?:volatile )?(\**)\s*\w+(?:\[[^\]]*\])*;')
+# A typedef of another name, which the records' members and the globals
+# may use for it.
+ALIAS = re.compile(r'(?m)^typedef (?:struct |union |enum )?(\w+) (\w+)[,;]')
+
+
+# The globals an image leaves untyped on purpose, in which a check's
+# record may lie, each with why: by image, the global's name.
+UNTYPED_HOLDERS = {}
+
+
+def untyped_labels(image):
+    """The labels an image's names.tsv gives no type, which the export
+    declares a byte."""
+    names = set()
+    for line in (ANALYSIS / image / 'names.tsv').read_text().splitlines():
+        fields = line.split('\t')
+        if not line.startswith('#') and len(fields) > 2 and fields[1] == 'label' \
+                and (len(fields) < 6 or not fields[5].strip()):
+            names.add(fields[2])
+    return names
 
 
 def layout_file(image):
@@ -101,13 +143,60 @@ def checks(image):
 
 class Globals:
     """The globals an image's export declares: by name, and by address
-    sorted, for the one holding an address."""
+    sorted, for the one holding an address; each one's type, and the
+    records the export declares, each its members' types held in place."""
 
     def __init__(self, image):
+        self.image = image
         text = (FIRMWARE / 'decompiled' / image / (image + '.c')).read_text()
         self.by_name = {name: int(address, 16) for name, address in EXTERN.findall(text)}
         self.order = sorted((address, name) for name, address in self.by_name.items())
         self.starts = [address for address, _ in self.order]
+        self.types = {name: kind for kind, pointer, name, _ in TYPED_EXTERN.findall(text) if not pointer}
+        self.aliases = {alias: name for name, alias in ALIAS.findall(text) if alias != name}
+        self.records = {name: {self.canonical(kind) for kind, pointer in MEMBER.findall(body) if not pointer}
+                        for name, body in RECORD.findall(text)}
+        self.untyped = untyped_labels(image)
+
+    def canonical(self, name):
+        """A type's name past its typedefs."""
+        for _ in range(len(self.aliases) + 1):
+            if name not in self.aliases:
+                break
+            name = self.aliases[name]
+        return name
+
+    def holds(self, outer, inner):
+        """Whether a record of type outer is or holds one of type inner."""
+        outer, inner = self.canonical(outer), self.canonical(inner)
+        seen, pending = set(), [outer]
+        while pending:
+            kind = pending.pop()
+            if kind == inner:
+                return True
+            if kind not in seen:
+                seen.add(kind)
+                pending += self.records.get(kind, ())
+        return False
+
+    def misplaced(self, check):
+        """The global and its type where a check's last address lies, if
+        it is a record's in RAM that is not and holds no record of the
+        check's type, or a label left untyped that UNTYPED_HOLDERS does
+        not name; else None."""
+        kind = re.sub(r'\[\d*\]$', '', check.type)
+        if not check.addresses or not re.fullmatch(r'\w+', kind) or self.canonical(kind) not in self.records:
+            return None
+        address = check.addresses[-1]
+        if address < image_diff.RAM:
+            return None
+        name, _ = self.holding(address)
+        if name in self.untyped:
+            return None if name in UNTYPED_HOLDERS.get(self.image, {}) else (name, 'global left untyped')
+        held = self.canonical(self.types.get(name, ''))
+        if held not in self.records or self.holds(held, kind):
+            return None
+        return name, held
 
     def holding(self, address):
         """The global at or before an address, and the offset into it."""
@@ -204,6 +293,11 @@ def check_image(image, write, failures):
     for check in image_checks:
         if not check.addresses:
             continue
+        misplaced = derivation.globals.misplaced(check)
+        if misplaced:
+            failures.append('%s: %s: 0x%x is in %s, a %s, which holds no %s'
+                            % (layout_file(image).relative_to(ROOT), check.show(), check.addresses[-1],
+                               misplaced[0], misplaced[1], check.type))
         candidates = by_key.get(check.key, [])
         copy = next((c for c in candidates if c.expression == check.expression), None)
         if copy is None:

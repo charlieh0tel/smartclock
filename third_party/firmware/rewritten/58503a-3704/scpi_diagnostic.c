@@ -35,11 +35,12 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(void* parameters,
       STATUS_EXECUTION_ERROR);
 
   if (missing != STATUS_NO_CONDITION) {
-    status_report_from(missing, return_zero(call->input));
+    status_report_from(missing, scpi_input_source(call->input));
     return 0;
   }
   pllc_request_a(&scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe,
-                 given->index, given->given.value, return_zero(call->input));
+                 given->index, given->given.value,
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -69,12 +70,12 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(
       STATUS_EXECUTION_ERROR);
 
   if (missing != STATUS_NO_CONDITION) {
-    status_report_from(missing, return_zero(call->input));
+    status_report_from(missing, scpi_input_source(call->input));
     return 0;
   }
   scpi_numeric_set(&scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold,
                    given->index, given->given.kind, given->given.bound, 0,
-                   given->given.integer, return_zero(call->input));
+                   given->given.integer, scpi_input_source(call->input));
   return 0;
 }
 
@@ -134,11 +135,12 @@ int32_t scpi_set_DIAGnostic_LOG_WRITe(void* parameters, void* response,
     return 0;
   }
   if (result == RECORDS_LOG_FULL) {
-    status_report_from(STATUS_EXECUTION_ERROR, return_zero(call->input));
+    status_report_from(STATUS_EXECUTION_ERROR, scpi_input_source(call->input));
   } else if (result == RECORDS_LOG_WRITE_FAILED) {
-    status_report_from(STATUS_MEMORY_ERROR, return_zero(call->input));
+    status_report_from(STATUS_MEMORY_ERROR, scpi_input_source(call->input));
   } else {
-    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, return_zero(call->input));
+    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR,
+                       scpi_input_source(call->input));
   }
   return 0;
 }
@@ -241,7 +243,7 @@ int32_t scpi_query_DIAGnostic_TEST(void* parameters, void* response,
   if (given->choice < SCPI_DIAGNOSTIC_TESTS) {
     test = SCPI_DIAGNOSTIC_TEST_OF_CHOICE[given->choice];
   }
-  pllc_request_b(&scpi_action_self_test, test, return_zero(call->input));
+  pllc_request_b(&scpi_action_self_test, test, scpi_input_source(call->input));
   results[0].value = selftest.result;
   results[1].value = selftest.details[0];
   results[2].value = selftest.details[1];
@@ -285,7 +287,7 @@ int32_t scpi_set_DIAGnostic_GPSystem_ACURrent_ALARm(void* parameters,
   const scpi_diagnostic_word* given = parameters;
 
   pllc_request_a(&scpi_param_DIAGnostic_GPSystem_ACURrent_ALARm, 0,
-                 given->value, return_zero(call->input));
+                 given->value, scpi_input_source(call->input));
   return 0;
 }
 
@@ -307,7 +309,7 @@ int32_t scpi_set_DIAGnostic_GPSystem_TRACking_LOG(void* parameters,
   const scpi_diagnostic_word* given = parameters;
 
   pllc_request_a(&scpi_param_DIAGnostic_GPSystem_TRACking_LOG, 0, given->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -377,7 +379,7 @@ int32_t scpi_query_DIAGnostic_ME(void* parameters, void* response,
 /* :DIAGnostic:QUERy:RESPonse?: from source 0, the console's, the
  * responses it has echoed since the last command, scpi_echo_text,
  * copied into scpi_echo_response and NUL-terminated (0x2b470).  From
- * another source, which return_zero never gives, the count, the text
+ * another source, which scpi_input_source never gives, the count, the text
  * and the copy would be A3's, A4's and A2's as the caller left them
  * (docs/firmware/quirks.md). */
 int32_t scpi_query_DIAGnostic_QUERy_RESPonse(void* parameters, void* response,
@@ -388,7 +390,7 @@ int32_t scpi_query_DIAGnostic_QUERy_RESPonse(void* parameters, void* response,
   char** text = response;
   uint8_t index;
 
-  if ((int8_t)return_zero(call->input) == REQUEST_SOURCE_SCPI) {
+  if ((int8_t)scpi_input_source(call->input) == REQUEST_SOURCE_SCPI) {
     length = &scpi_echo_length;
     echo = scpi_echo_text;
     copy = scpi_echo_response;
@@ -422,7 +424,8 @@ int32_t scpi_set_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis(
 
   scpi_numeric_set(
       &scpi_param_DIAGnostic_REFerence_GPSystem_QUEStionable_HYSTeresis, 0,
-      given->kind, given->bound, 0, given->integer, return_zero(call->input));
+      given->kind, given->bound, 0, given->integer,
+      scpi_input_source(call->input));
   return 0;
 }
 
@@ -458,7 +461,7 @@ int32_t scpi_set_DIAGnostic_ROSCillator_EFControl_DATA(void* parameters,
 
   scpi_numeric_set(&scpi_param_DIAGnostic_ROSCillator_EFControl_DATA, 0,
                    given->kind, given->value, 0, (uint16_t)given->value,
-                   return_zero(call->input));
+                   scpi_input_source(call->input));
   return 0;
 }
 
@@ -500,7 +503,7 @@ int32_t scpi_set_DIAGnostic_ROSCillator_EFControl_MODE(void* parameters,
     mode = EFC_MODE_NORMAL;
   }
   pllc_request_a(&scpi_param_DIAGnostic_ROSCillator_EFControl_MODE, 0, mode,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -529,7 +532,8 @@ int32_t scpi_set_DIAGnostic_STATus_HAPPening(void* parameters, void* response,
 
   if (given->value < 0 ||
       given->value > STATUS_USER_REPORTED_CLEARED - STATUS_INPUT_OVERRUN) {
-    status_report_from(STATUS_DATA_OUT_OF_RANGE, return_zero(call->input));
+    status_report_from(STATUS_DATA_OUT_OF_RANGE,
+                       scpi_input_source(call->input));
   } else {
     status_happening(STATUS_INPUT_OVERRUN + given->value);
   }
@@ -669,5 +673,29 @@ int32_t scpi_query_DIAGnostic_TSET(void* parameters, void* response,
 int32_t scpi_set_DIAGnostic_TVALid_NOW(void* parameters, void* response,
                                        scpi_call* call) {
   clock_mark_set();
+  return 0;
+}
+
+/* :DIAGnostic:LOG:COUNt? and :SLOG's: the log's entries. */
+int32_t scpi_query_DIAGnostic_LOG_COUNt(void* parameters, void* response,
+                                        scpi_call* call) {
+  const int16_t* log = parameters;
+  scpi_short_item* count = response;
+  int16_t entries = scpi_diagnostic_log_entries(*log);
+
+  if (entries < 0) {
+    return scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR, call);
+  }
+  count->value = entries;
+  return 0;
+}
+/* :DIAGnostic:TOFFset?, or its bound. */
+int32_t scpi_query_DIAGnostic_TOFFset(void* parameters, void* response,
+                                      scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+  scpi_diagnostic_float* offset = response;
+
+  offset->value = scpi_numeric_get(&scpi_param_DIAGnostic_TOFFset, 0,
+                                   given->kind, given->bound);
   return 0;
 }

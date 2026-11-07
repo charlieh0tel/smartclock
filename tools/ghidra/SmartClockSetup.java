@@ -52,7 +52,7 @@
 // Sources: MC68331 User's Manual (third_party/motorola/MC68331UM.pdf)
 // Tables D-2 (GPT), D-3 (SIM), D-13 (QSM) and 5-2 (vectors); the chip
 // select map in smartclockmon docs/firmware/restart.md, "The switch byte
-// at 0x302000".  68681 register names are the part's standard ones.
+// at `0x302000`".  68681 register names are the part's standard ones.
 //
 // The switch idiom:
 //

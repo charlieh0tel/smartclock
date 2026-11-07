@@ -6,12 +6,6 @@
  * this file after its own, so the types and prototypes it declares are
  * in scope; each function here keeps its generated prototype. */
 
-/* The registers the common commands read and enable
- * (status_register_index STATUS_BYTE and STANDARD_EVENT). */
-static const int16_t SCPI_COMMON_STATUS_BYTE = 0;
-
-static const int16_t SCPI_COMMON_STANDARD_EVENT = 1;
-
 /* *CLS: clears every event word and empties the error queue. */
 int32_t scpi_set_common_CLS(void* parameters, void* response, scpi_call* call) {
   int32_t code;

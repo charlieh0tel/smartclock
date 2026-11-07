@@ -74,21 +74,15 @@ int16_t installer_console_port_read(void) {
   return character;
 }
 
-/* The port's read of up to length characters into a buffer, stopping
- * at an end, which the next read gives again; the characters read
- * (installer::0x10747e). */
-int32_t installer_scpi_console_read(scpi_port* port, uint8_t* buffer,
-                                    int32_t length) {
-  int32_t count = 0;
-
-  while (count < length) {
-    int16_t character = installer_console_port_read();
-
-    if (character >= SCPI_PORT_CHARACTERS) {
-      installer_scpi_input_ended();
-      break;
-    }
-    buffer[count++] = character;
+/* Makes the SCPI prompt, with the latest error when there is one. */
+void installer_scpi_prompt(int32_t error) {
+  if (error != 0) {
+    installer_sprintf(installer_scpi_prompt_text, "E%+04d> ", error);
+    return;
   }
-  return count;
+  char* from = "scpi > ";
+  char* to = installer_scpi_prompt_text;
+
+  while ((*to++ = *from++) != 0) {
+  }
 }

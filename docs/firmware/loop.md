@@ -30,7 +30,7 @@ The pSOS tasks are created at `0x231f0` to `0x232d4`: `gpsm` (entry
 `0x103d4e`) and `curv` (`0x450d4`, task id at `0x103d5e`); the SCPI
 task, `sci` (entry `0x39706`, task id at `0x103d5a`), is created by
 `FUN_00039732`.  The Z3805A's `:DIAGnostic:OS:PROCess?` lists the same
-names (see `scpi/undocumented.md`).  The loop below runs in `pllp`; the fit
+names (see `../scpi/undocumented.md`).  The loop below runs in `pllp`; the fit
 in "The aging fit" runs in `curv`.
 
 ## Fine acquisition
@@ -576,7 +576,8 @@ calibration and the type selection set it to 0, it changes only when
 
 **The Z3815A's extra stage.**  The Z3815A's state printer names one
 stage more than the others, between `startup pll` and `normal pll`:
-`n3 lock pll`, with sub-states `sync1`, `wait1`, `wait2`, `measure1`
+`n3 lock pll`, stage 6 by its jump table (`0x2c1d8`), so that normal
+pll, diag, idle and fatal error are 7 to 10, with sub-states `sync1`, `wait1`, `wait2`, `measure1`
 to `measure3`, `calc_freq`, `sync2`, `slew`, `leapsec`, `check_time`,
 `pll`, `exit1` and `exit2` (names from `0x2cd9b` on); its log names the
 stage `Went into PLL lock to other card`.  Around it the image runs a

@@ -4,20 +4,6 @@
  * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
  * prototype. */
 
-static const uint8_t CLOCK_MARCH = 3;
-
-static const uint8_t CLOCK_APRIL = 4;
-
-static const uint8_t CLOCK_JUNE = 6;
-
-static const uint8_t CLOCK_JULY = 7;
-
-static const uint8_t CLOCK_SEPTEMBER = 9;
-
-static const uint8_t CLOCK_OCTOBER = 10;
-
-static const uint8_t CLOCK_DECEMBER = 12;
-
 /* A date's month and day, its low word, month << 8 | day. */
 static uint16_t calendar_month_day(uint8_t month, uint8_t day) {
   return month << CLOCK_FIELD_BITS | day;

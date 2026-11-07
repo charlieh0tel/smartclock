@@ -4,19 +4,6 @@
  * decompiler's (docs/firmware/README.md, "Hand-written C"); each keeps
  * its generated prototype. */
 
-/* Makes the SCPI prompt, with the latest error when there is one. */
-void installer_scpi_prompt(int32_t error) {
-  if (error != 0) {
-    installer_sprintf(installer_scpi_prompt_text, "E%+04d> ", error);
-    return;
-  }
-  char* from = "scpi > ";
-  char* to = installer_scpi_prompt_text;
-
-  while ((*to++ = *from++) != 0) {
-  }
-}
-
 /* The installer's console port's object. */
 scpi_port* installer_scpi_console_port(void) { return &installer_console_port; }
 
@@ -80,4 +67,22 @@ void installer_status_byte_clear_bits(scpi_port* port, int32_t bits) {
 void installer_status_sre_set(scpi_port* port, int32_t bits) {
   installer_service_request_enable = bits;
   installer_status_update_rqs();
+}
+
+/* The port's read of up to length characters into a buffer, stopping
+ * at an end, which the next read gives again; the characters read. */
+int32_t installer_scpi_console_read(scpi_port* port, uint8_t* buffer,
+                                    int32_t length) {
+  int32_t count = 0;
+
+  while (count < length) {
+    int16_t character = installer_console_port_read();
+
+    if (character >= SCPI_PORT_CHARACTERS) {
+      installer_scpi_input_ended();
+      break;
+    }
+    buffer[count++] = character;
+  }
+  return count;
 }

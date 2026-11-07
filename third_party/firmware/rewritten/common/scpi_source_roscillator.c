@@ -14,20 +14,11 @@
  * holdover recovery, 4 power-up, 5 locked, in startup or normal PLL
  * (pll_mode, its jump table at pll_mode+0x1a). */
 
-/* pll_mode's result, read with interrupts masked. */
-static pll_screen_mode scpi_source_roscillator_mode(void) {
-  uint16_t sr = set_interrupt_mask(CPU_IPL_1);
-  pll_screen_mode mode = pll_mode();
-
-  set_interrupt_mask(sr);
-  return mode;
-}
-
 /* :HOLDover:DURation:MEASurement:THReshold. */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(
     void* parameters, void* response, scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   scpi_numeric_set(
       &scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold, 0,
@@ -68,7 +59,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void* parameters,
                                                       void* response,
                                                       scpi_call* call) {
   if (scpi_source_roscillator_mode() != PLL_MODE_HOLDOVER_MANUAL) {
-    request_source source = return_zero(call->input);
+    request_source source = scpi_input_source(call->input);
 
     pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_INITiate, 0,
                    source);
@@ -84,7 +75,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe(void* parameters,
   scpi_word_parameter* given = parameters;
   holdover_limit_setting setting =
       given->value == 0 ? HOLDOVER_LIMIT_OFF : HOLDOVER_LIMIT_ON;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_a(&scpi_param_SOURce_ROSCillator_HOLDover_LIMit_STATe, 0,
                  setting, source);
@@ -96,7 +87,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold(void* parameters,
                                                              void* response,
                                                              scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   scpi_numeric_set(&scpi_param_SOURce_ROSCillator_HOLDover_LIMit_THReshold, 0,
                    given->kind, given->bound, (uint32_t)given->value, 0,
@@ -121,7 +112,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void* parameters,
                                                            void* response,
                                                            scpi_call* call) {
   scpi_word_parameter* given = parameters;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_a(&scpi_param_SOURce_ROSCillator_HOLDover_RECovery_AUTO, 0,
                  (uint8_t)given->value, source);
@@ -142,7 +133,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void* parameters,
  * (097-z3801-01, table 4-2). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate(
     void* parameters, void* response, scpi_call* call) {
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate, 0,
                  source);
@@ -153,7 +144,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate(
  * limit (097-z3801-01, table 4-2). */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore(
     void* parameters, void* response, scpi_call* call) {
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore,
                  0, source);
@@ -166,7 +157,7 @@ int32_t scpi_set_SOURce_ROSCillator_LIMit_THReshold(void* parameters,
                                                     void* response,
                                                     scpi_call* call) {
   scpi_engine_long_parameter* given = parameters;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   scpi_numeric_set(&scpi_param_SOURce_ROSCillator_LIMit_THReshold, 0,
                    given->kind, given->bound, (uint32_t)given->value, 0,

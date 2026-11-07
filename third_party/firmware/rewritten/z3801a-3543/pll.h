@@ -1,6 +1,11 @@
-/* The PLL's static helpers that read pll_state, laid out differently
- * in each image, so this image's own; common/pll.h has the PLL's
- * shared constants. */
+/* The EFC history's size, 32 in the Z3815A 4010, and the PLL's static
+ * helpers that read pll_state, laid out differently in each image, so
+ * this image's own; common/pll.h has the PLL's shared constants. */
+
+/* The EFC history's entries, a ring of 64 indexed modulo its size. */
+#define PLL_AGING_ENTRIES 64
+
+static const uint32_t PLL_AGING_INDEX_MASK = PLL_AGING_ENTRIES - 1;
 
 /* The EFC less its temperature correction, the TC times the oscillator
  * current (0x4143c, 0x44326). */

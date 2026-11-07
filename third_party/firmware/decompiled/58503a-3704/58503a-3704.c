@@ -10075,7 +10075,7 @@ void port_prompt_set(char port,uint8_t enabled);
 scpi_port * port_session_init(char port);
 scpi_port * port_object(char port);
 void port_update_rqs(uint8_t *status_byte,uint8_t enable,char port);
-int32_t return_zero(scpi_port *input);
+int32_t scpi_input_source(scpi_port *input);
 void send_x_retry(uint32_t exchange,void *message,uint32_t ticks);
 void request_and_wait(uint32_t param_1,void *param_2);
 void pllc_request_a(void *param,uint8_t index,uint8_t setting,request_source source);
@@ -11285,7 +11285,7 @@ void installer_port_prompt_set(char port,uint8_t enabled);
 scpi_port * installer_port_session_init(char port);
 scpi_port * installer_port_object(char port);
 void installer_port_update_rqs(uint8_t *status_byte,uint8_t enable,char port);
-int32_t installer_return_zero(scpi_port *input);
+int32_t installer_scpi_input_source(scpi_port *input);
 void installer_send_x_retry(uint32_t exchange,void *message,uint32_t ticks);
 void installer_request_and_wait(uint32_t exchange,void *message);
 void installer_pllc_request_a(void *param,uint8_t index,uint8_t setting,request_source source);
@@ -35264,7 +35264,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* port_update_rqs: rewritten in scpi_port.c */
 
 /* 00029246 */
-/* return_zero: rewritten in scpi_engine.c */
+/* scpi_input_source: rewritten in scpi_engine.c */
 
 /* 0002924a */
 /* send_x_retry: rewritten in scpi_requests.c */
@@ -54406,7 +54406,7 @@ __asm__(".set installer_scpi_console_write, installer_scpi_console_write_loop");
 /* installer_port_update_rqs: rewritten in installer_scpi_port.c */
 
 /* installer::001077a0 */
-/* installer_return_zero: rewritten in installer_scpi_engine.c */
+/* installer_scpi_input_source: rewritten in installer_scpi_engine.c */
 
 /* installer::001077a4 */
 /* installer_send_x_retry: rewritten in installer_scpi_requests.c */
@@ -55333,6 +55333,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/clock.h"
 
+#include "../../rewritten/common/console.h"
+
 #include "../../rewritten/common/cpu.h"
 
 #include "../../rewritten/common/duart.h"
@@ -55340,6 +55342,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/fpga.h"
 
 #include "../../rewritten/common/gps.h"
+
+#include "../../rewritten/common/installer/installer_scpi_diagnostic.h"
 
 #include "../../rewritten/common/libc.h"
 
@@ -55353,9 +55357,15 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/records.h"
 
+#include "../../rewritten/common/restart.h"
+
 #include "../../rewritten/common/scpi.h"
 
+#include "../../rewritten/common/scpi_common.h"
+
 #include "../../rewritten/common/scpi_convert.h"
+
+#include "../../rewritten/common/scpi_diagnostic.h"
 
 #include "../../rewritten/common/scpi_engine.h"
 
@@ -55365,15 +55375,33 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/scpi_parameters.h"
 
+#include "../../rewritten/common/scpi_robin.h"
+
+#include "../../rewritten/common/scpi_source_gpsystem.h"
+
+#include "../../rewritten/common/scpi_source_ptime.h"
+
+#include "../../rewritten/common/scpi_source_pulse.h"
+
+#include "../../rewritten/common/scpi_source_roscillator.h"
+
+#include "../../rewritten/common/scpi_status.h"
+
 #include "../../rewritten/common/scpi_tree.h"
+
+#include "../../rewritten/common/screen.h"
 
 #include "../../rewritten/common/startup.h"
 
 #include "../../rewritten/common/status.h"
 
+#include "../../rewritten/common/ti.h"
+
 #include "../../rewritten/58503a-3704/duart.h"
 
 #include "../../rewritten/58503a-3704/gps.h"
+
+#include "../../rewritten/58503a-3704/leds.h"
 
 #include "../../rewritten/58503a-3704/pll.h"
 
@@ -55415,8 +55443,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/gps_reports.c"
 
-#include "../../rewritten/common/gps_requests.c"
-
 #include "../../rewritten/common/gps_task.c"
 
 #include "../../rewritten/common/installer/installer_arithmetic.c"
@@ -55440,8 +55466,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/installer/installer_scpi_common.c"
 
 #include "../../rewritten/common/installer/installer_scpi_convert.c"
-
-#include "../../rewritten/common/installer/installer_scpi_diagnostic.c"
 
 #include "../../rewritten/common/installer/installer_scpi_engine.c"
 
@@ -55579,6 +55603,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/58503a-3704/adc.c"
 
+#include "../../rewritten/58503a-3704/arithmetic.c"
+
 #include "../../rewritten/58503a-3704/boot.c"
 
 #include "../../rewritten/58503a-3704/calendar.c"
@@ -55590,6 +55616,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/58503a-3704/cpu.c"
 
 #include "../../rewritten/58503a-3704/dac.c"
+
+#include "../../rewritten/58503a-3704/debug.c"
 
 #include "../../rewritten/58503a-3704/duart.c"
 
@@ -55615,13 +55643,19 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/58503a-3704/installer/installer_cpu.c"
 
+#include "../../rewritten/58503a-3704/installer/installer_debug.c"
+
 #include "../../rewritten/58503a-3704/installer/installer_duart.c"
+
+#include "../../rewritten/58503a-3704/installer/installer_duarta.c"
 
 #include "../../rewritten/58503a-3704/installer/installer_duartb.c"
 
 #include "../../rewritten/58503a-3704/installer/installer_records.c"
 
 #include "../../rewritten/58503a-3704/installer/installer_scpi_common.c"
+
+#include "../../rewritten/58503a-3704/installer/installer_scpi_diagnostic.c"
 
 #include "../../rewritten/58503a-3704/installer/installer_scpi_engine.c"
 
@@ -55726,3 +55760,5 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/58503a-3704/ti.c"
 
 #include "../../rewritten/58503a-3704/timecode.c"
+
+#include "../../rewritten/58503a-3704/timers.c"

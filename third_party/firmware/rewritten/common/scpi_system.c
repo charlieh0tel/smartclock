@@ -14,7 +14,7 @@
 /* :PRESet: requests the factory settings (097-z3801-01, table 4-2). */
 int32_t scpi_set_SYSTem_PRESet(void* parameters, void* response,
                                scpi_call* call) {
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
 
   pllc_request_b(&scpi_action_SYSTem_PRESet, 0, source);
   return 0;

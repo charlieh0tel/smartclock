@@ -126,7 +126,7 @@ uint8_t tcode_query_allowed(request_source source) {
  * Settings conflict (0x2de84; 097-59551-02, 5-93). */
 int32_t scpi_query_SOURce_PTIMe_TCODe(void* parameters, void* response,
                                       scpi_call* call) {
-  if (tcode_query_allowed(return_zero(call->input)) == 0 ||
+  if (tcode_query_allowed(scpi_input_source(call->input)) == 0 ||
       !scpi_tcode_send(nv_settings.tcode_format, response, call)) {
     return scpi_query_failed(STATUS_SETTINGS_CONFLICT, call);
   }
@@ -140,7 +140,7 @@ int32_t scpi_set_SOURce_PTIMe_TCODe_CONTinuous(void* parameters, void* response,
   const scpi_word_parameter* given = parameters;
 
   pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_CONTinuous, 0, given->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -161,8 +161,8 @@ int32_t scpi_set_SOURce_PTIMe_UTC(void* parameters, void* response,
   const scpi_word_parameter* given = parameters;
 
   pllc_request_a(&scpi_param_DIAGnostic_GPSystem_UTC, 0, given->value,
-                 return_zero(call->input));
-  pllc_request_b(&scpi_action_SYSTem_PON, 0, return_zero(call->input));
+                 scpi_input_source(call->input));
+  pllc_request_b(&scpi_action_SYSTem_PON, 0, scpi_input_source(call->input));
   return 0;
 }
 
@@ -182,4 +182,19 @@ void leap_ack_request(int32_t index, int32_t source) {
   if (pll.stage >= PLL_STAGE_HOLDOVER && pll.stage <= PLL_STAGE_NORMAL_PLL) {
     pll.leap_ack_requested = 1;
   }
+}
+
+/* :PTIMe:TCODe:FORMat F1 or F2: T1 or T2, to pllc. */
+int32_t scpi_set_SOURce_PTIMe_TCODe_FORMat(void* parameters, void* response,
+                                           scpi_call* call) {
+  scpi_word_parameter* format = parameters;
+
+  if (format->value == SCPI_SOURCE_PTIME_F1) {
+    pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T1,
+                   scpi_input_source(call->input));
+  } else if (format->value == SCPI_SOURCE_PTIME_F2) {
+    pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T2,
+                   scpi_input_source(call->input));
+  }
+  return 0;
 }

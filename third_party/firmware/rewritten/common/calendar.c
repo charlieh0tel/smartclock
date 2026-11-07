@@ -6,18 +6,8 @@
  * declares are in scope; each function here keeps its generated
  * prototype. */
 
-static const uint8_t CLOCK_MONTHS_PER_YEAR = 12;
-
-static const uint8_t CLOCK_FEBRUARY = 2;
-
-static const uint16_t CLOCK_DAYS_PER_YEAR = 365;
-
-static const uint8_t CLOCK_YEARS_PER_LEAP = 4;
-
 /* The Modified Julian Day of 1899-12-31. */
 static const uint16_t CLOCK_MJD_1899_12_31 = 15019;
-
-static const uint16_t CLOCK_YEAR_1900 = 1900;
 
 static const uint16_t CLOCK_YEAR_1904 = 1904;
 
@@ -36,15 +26,6 @@ int32_t time_to_seconds(uint32_t time) { return hms_to_seconds(time); }
 
 /* The same, a third copy, which nothing calls. */
 int32_t time_packed_to_seconds(uint32_t time) { return hms_to_seconds(time); }
-
-/* The days in a year before a month, 1 to 12.  The image indexes its
- * tables by the month unchecked: month 0 reads the word before the table,
- * a month past 12 the words after it, so these stay the image's. */
-static uint16_t clock_days_before_month(uint8_t month, bool leap) {
-  const int16_t* table = leap ? days_before_month_leap : days_before_month;
-
-  return table[month - 1];
-}
 
 /* The days from an epoch's year's start to a date, the date's own day
  * counted: the date_to_days arithmetic, its epoch year and first leap year
@@ -231,13 +212,6 @@ int32_t datetime_compare(uint32_t* first, uint32_t* second) {
     return days;
   }
   return time_to_seconds(first[0]) - time_to_seconds(second[0]);
-}
-
-/* The GPS-UTC offset as a change to a date and time, and whether to add it
- * (or take it away): its magnitude as hours, minutes and seconds. */
-static bool clock_offset_change(int16_t offset, packed_datetime* change) {
-  change->time = clock_time_of(seconds_to_hms(offset < 1 ? -offset : offset));
-  return offset >= 1;
 }
 
 /* Adds the GPS-UTC offset to a UTC date and time; nothing calls it. */

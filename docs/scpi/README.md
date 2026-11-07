@@ -346,6 +346,9 @@ The converters, `scpi_real_to_text` and the engine are run on known values by
 
     uv run tools/firmware/app_check.py third_party/firmware/images/z3805a-3543b.bin
 
+on Unicorn, or on mc683xx's MC68331 with `SMARTCLOCK_CPU=mc683xx`
+(`docs/firmware/README.md`, "The CPU backend"), with the same results.
+
 ## Between images
 
 Counted by path, ignoring handlers.

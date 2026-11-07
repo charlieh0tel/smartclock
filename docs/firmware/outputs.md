@@ -45,8 +45,13 @@ says nothing about a unit's hardware.
   (`0x1b2c4`).
 - The latch at `0x300000` (in chip select 5's window with the FPGA,
   `restart.md`, "The chip selects"; shadow `0x100e0e`): a 3-bit
-  field the self-test and health code set (`0x186ac`, `0x23b7e`), and
-  bits 6 and 7 the front-panel code sets (`0x53750`).
+  field the self-test and health code set (`0x186ac`, `0x23b7e`), the
+  GPS Lock, Holdover and Alarm lamps, and bits 6 and 7 the front-panel
+  code sets (`0x53750`) (`58503a-3704.md`, "The front panel").
+- The alarm, besides its lamp: PF5, low while it is on, and bit 2 of
+  the FPGA's register 3 (`0x40828`; `58503a-3704.md`, "The alarm
+  outputs").  One of them is the rear-panel Alarm output; which is not
+  traced.
 - Bits 4 to 2 of PORTGP, which 3633's DUART initialization writes
   (`0x1d5cc`, with 0) and no 3704 code does (`revisions.md`).  What
   those pins drive was not traced.
@@ -59,8 +64,8 @@ hardware.  The Z3815A alone names a PP2S, as a signal its health
 monitor watches (bit 0x104 of the table at `0x5964a`; `PP2S Fail`
 from `0x3429e`), not one it makes.
 
-Not traced: what drives the alarm output, and the time-code worker's
-output path (`0x13d28`).
+Not traced: which of PF5 and the FPGA's bit is the alarm output, and
+the time-code worker's output path (`0x13d28`).
 
 ## The Z3805A's lamps
 
@@ -128,9 +133,18 @@ with condition `0x2e` (`:STATus:OPERation:HOLDover` bit 3, "Exceeding
 User-Threshold"), and cleared on regaining lock.  With it,
 `pwma_force_level` forces the PWMA pin low, and releases it on lock,
 as `loop.md` records for 3704; what the pin drives was not traced.
+`:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` returns
+the flag.
 
-The Z3805A also has a rear-panel TTL alarm output (its owner,
-2026-10-20).  097-58503-12 (2-11) says the 58503B's, a TTL open
+The hardware register's bits are set and cleared by conditions `0x34`
+to `0x4b` of `status_conditions`, a pair for each bit (bits 10 and 11
+by one event each), in the order 097-59551-02 (5-38) gives the
+58503A's.  The health monitor's messages confirm three: `6`/`7` with
+"15V is out of tolerance" and "now within tolerance" on bit 1, `8`/`9`
+with "-15V" on bit 2, and `>` with "Secondary oven voltage is out of
+tolerance" on bit 5, which the 58503A's list leaves out.
+
+A Z3805A has a rear-panel TTL alarm output.  097-58503-12 (2-11) says the 58503B's, a TTL open
 collector, "goes on and off with the Alarm indicator"; if the
 Z3805A's does too, it hangs off latch bit 2 in hardware, since no
 code drives a pin from `status_summary` but the latch.  The other
@@ -142,25 +156,32 @@ the connector is needs the board or a unit.
 
 ### The heartbeat
 
-One LED of the bank on the board is a heartbeat (the owner,
-2026-10-20).  Every image drives it the same way: `hmon_task` counts
+One LED of the bank on a Z3805A's board is a heartbeat.  Every image times it the same way: `hmon_task` counts
 its passes, one every ten 1024 Hz ticks (`restart.md`), and every
-`0x70`, about 1.09 s, flips a DUART output bit through the
-output-port routine (`duart_output_bits`, `0x1e126`, in the Z3805A),
-so the LED changes state about every 1.1 s.  The bit differs by
-generation:
+`0x70`, about 1.09 s, flips one output bit, so the LED changes state
+about every 1.1 s.  All but the 58503B flip a DUART output bit through
+the output-port routine (`duart_output_bits`, `0x1e126`, in the
+Z3805A).  The 58503B has no DUART: its CS8, at `0x200000`, is an 8-bit select
+synchronous on ECLK (`chip-selects.md`, "58503B 1.01.04"), a 6800-bus
+part's timing, and its serial interrupt's message at `0x2d64c` is
+"ACIA isr signaling SIG_SIQ" (**inferred**: an ACIA).  It flips bit 3 of the latch at
+`0x300000` instead: `0x3353e` passes mask 8 to `0x2379e`, which keeps
+bits 3 and 4 of it (`0x18`) and calls `0x236fc`, which clears the
+mask's bits in the latch's copy at `0x10119e`, sets the given ones and
+writes the copy to `0x300000` (or, while the byte at `0x10255c` is
+set, the byte at `0x10255d`).  The bit differs by generation:
 
 | Images | Bit | Toggle |
 | ------ | --- | ------ |
 | 58503A 3633, 3704; Z3801A 3543; Z3805A 3543B | OP2 (mask 4) | `0x239c6`, `0x23c22`, `0x2372e`, `0x2486a` |
-| 58503B 1.01.04 | OP3 (mask 8) | `0x3353e` |
+| 58503B 1.01.04 | latch `0x300000` bit 3 (mask 8) | `0x3353e` |
 | Z3815A 4010, Z3816A 4001 | OP6 (mask `0x40`) | `0x36cfc`, `0x33e5e` |
 
 A stopped or steady heartbeat points at `hmon` having stopped, or at the LED's own circuit.
 
 ### The rest of the bank
 
-The bank is six LEDs (the owner, 2026-10-20), and the DUART's output
+The bank on a Z3805A's board is six LEDs, and the DUART's output
 port has six general-purpose bits, OP2 to OP7: `duart_init` clears
 the OPCR, so none carries a counter or a status, and
 `duart_output_bits` masks with `0xfc`.  The power-on code uses them
@@ -194,20 +215,8 @@ The 58503A (3633, 3704) and Z3801A write the same values at matching
 places.  The 58503B, Z3815A and Z3816A do not: the last two write
 OP7 at three places of their own (`0x24e24`, `0x2495c` and on), and
 their bank was not traced.  The polarity is the inference above, not
-an observation: a unit or the board's LED circuit settles it.  The
-owner recalls the heartbeat as the bank's most inboard LED
-(2026-10-20); if the bank runs in bit order, OP7 is the outboard
-end, but that is not established.
-`:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` returns
-the flag.
-
-The hardware register's bits are set and cleared by conditions `0x34`
-to `0x4b` of `status_conditions`, a pair for each bit (bits 10 and 11
-by one event each), in the order 097-59551-02 (5-38) gives the
-58503A's.  The health monitor's messages confirm three: `6`/`7` with
-"15V is out of tolerance" and "now within tolerance" on bit 1, `8`/`9`
-with "-15V" on bit 2, and `>` with "Secondary oven voltage is out of
-tolerance" on bit 5, which the 58503A's list leaves out.
+an observation: a unit or the board's LED circuit settles it, as
+it does the bank's order.
 
 ## The FPGA bitstreams
 

@@ -13,9 +13,9 @@ static void scpi_common_enable_set(int16_t index,
                                    const scpi_word_parameter* mask,
                                    scpi_port* input) {
   if (scpi_check_range(0, mask->value, SCPI_COMMON_MASK_MAXIMUM,
-                       return_zero(input)) != 0) {
+                       scpi_input_source(input)) != 0) {
     pllc_request_c(&scpi_param_STATus_ENABle, index, mask->value, 0,
-                   return_zero(input));
+                   scpi_input_source(input));
     status_register_set_enable(status_object, index,
                                nv_settings.status_enable[index]);
   }
@@ -27,7 +27,7 @@ static void scpi_common_enable_query(int16_t index, int16_t* enable,
                                      scpi_port* input) {
   status_register_get_enable(status_object, index, (uint16_t*)enable);
   if (nv_settings.status_enable[index] != *enable) {
-    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, return_zero(input));
+    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, scpi_input_source(input));
   }
 }
 
@@ -50,7 +50,7 @@ int32_t scpi_query_common_ESE(void* parameters, void* response,
 int32_t scpi_query_common_IDN(void* parameters, void* response,
                               scpi_call* call) {
   scpi_token_string* identification = response;
-  char* text = scpi_response_texts[(uint8_t)return_zero(call->input)];
+  char* text = scpi_response_texts[(uint8_t)scpi_input_source(call->input)];
 
   sprintf(text, "HEWLETT-PACKARD,%s,%s,%s-%c", idn_model, idn_serial,
           RECORDS_FIRMWARE_REVISION, idn_suffix);
@@ -79,7 +79,8 @@ int32_t scpi_query_common_TST(void* parameters, void* response,
   static const uint8_t ALL_TESTS = 0;
   uint32_t* result = response;
 
-  pllc_request_b(&scpi_action_self_test, ALL_TESTS, return_zero(call->input));
+  pllc_request_b(&scpi_action_self_test, ALL_TESTS,
+                 scpi_input_source(call->input));
   *result = selftest.result;
   return 0;
 }

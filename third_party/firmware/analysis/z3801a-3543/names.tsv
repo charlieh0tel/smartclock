@@ -270,7 +270,7 @@
 0x1ecfe	function	task_debug_message	context	prints "task: message" with the calling task's name, while debug_enabled (from the Z3805A 3543B, by image_diff: relocated)	void task_debug_message(char *message)
 0x15da8	function	task_name	context	the 4-character name at offset 0x24 of a task's record (from the Z3805A 3543B, by image_diff: relocated)	char * task_name(void *task)
 0x1ee7e	function	fatal_error	context	keeps the message and task name at crash_message, prints them and "RESET to recover.", then hangs (from the Z3805A 3543B, by image_diff: relocated)	void fatal_error(char *message)
-0x2899e	function	return_zero	context	the source a command's input port gives, always 0; every SCPI handler that reports a status condition, starts a request or picks a text buffer passes it its call's input (from the Z3805A 3543B, by image_diff: identical)	int32_t return_zero(scpi_port *input)
+0x2899e	function	scpi_input_source	context	the source a command's input port gives, always 0; every SCPI handler that reports a status condition, starts a request or picks a text buffer passes it its call's input (from the Z3805A 3543B, by image_diff: identical)	int32_t scpi_input_source(scpi_port *input)
 0x30792	function	log_write	context	appends to the diagnostic log under its lock; :DIAG:LOG:WRIT and log_send call it (from the Z3805A 3543B, by image_diff: relocated)	int log_write(char *format, ...)
 0x103659	label	debug_enabled	context	gates every debug_ and task_debug_ output (from the Z3805A 3543B, by image_diff: moved -0x184 by 15 references at its start)	uint8_t
 0x10094e	label	crash_message	context	fatal_error's message and task name, 80 characters (from the Z3805A 3543B, by image_diff: same address by 3 references at its start)	char[80]
@@ -2182,7 +2182,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 #
 # the SCPI task's response areas, the serial and :SAMPle descriptors and
 # the bytes the C reached by address
-0x1026fc	label	scpi_response_texts	context	a query writes its text response into its source's, return_zero's, and answers its address (from the Z3805A 3543B, by image_diff: moved -0x2e by 9 references at its start)	scpi_response_text[2]
+0x1026fc	label	scpi_response_texts	context	a query writes its text response into its source's, scpi_input_source's, and answers its address (from the Z3805A 3543B, by image_diff: moved -0x2e by 9 references at its start)	scpi_response_text[2]
 0x102930	label	scpi_response_lists	context	the satellite lists and :ROBin:POINts?' counts, by source, each answered as a scpi_array (from the Z3805A 3543B, by image_diff: moved -0x2e by 5 references at its start)	scpi_response_list[2]
 0x1029e0	label	scpi_staged	context	the values a setter of several sends pllc the address of, by source (from the Z3805A 3543B, by image_diff: moved -0x2e by 8 references at its start)	scpi_staged_values[2]
 0x102d48	label	robin_points	context	:ROBin? and :ROBin:TSTamp?'s points, by source (from the Z3805A 3543B, by image_diff: moved -0x2e by 3 references at its start)	robin_point_record[2]
@@ -2578,7 +2578,7 @@ installer::0x1014c0	function	installer_trap_5	context	trap #5's handler in the b
 # Ghidra's name, their note the extent in bytes and image_diff's
 # summary.  A wave that names one makes it a function row.
 0x1487a	entry		image_diff	4 bytes; 1 instructions, found pointer; after piece_14b6e
-0x2c85a	entry		image_diff	48 bytes; 13 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: pllc_request_a, return_zero
+0x2c85a	entry		image_diff	48 bytes; 13 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: pllc_request_a, scpi_input_source
 0x2c88a	entry		image_diff	26 bytes; 8 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: return_byte
 #
 # Leads: functions image_diff pairs with a Z3805A function as changed

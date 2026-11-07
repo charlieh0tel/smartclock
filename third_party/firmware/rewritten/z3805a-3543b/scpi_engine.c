@@ -8,7 +8,7 @@
  * input gives, and clears its query word, so that scpi_interpret
  * formats no response (0x29ade). */
 int32_t scpi_query_failed(status_condition_code code, scpi_call* call) {
-  status_report_from(code, return_zero(call->input));
+  status_report_from(code, scpi_input_source(call->input));
   call->query = 0;
   return 0;
 }
@@ -86,3 +86,11 @@ uint32_t scpi_task_create(uint32_t priority) {
   }
   return psos_start(task_scpi, scpi_task) & OS_ERROR_BITS;
 }
+
+/* Closes the SCPI port; scpi_task calls it when scpi_interpret returns
+ * (0x29b8a). */
+void scpi_session_close(void) { scpi_port_close(); }
+
+/* The source a command's input port gives: always 0, the one port
+ * (0x29ada). */
+int32_t scpi_input_source(scpi_port* input) { return 0; }

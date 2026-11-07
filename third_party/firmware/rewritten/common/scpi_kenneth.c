@@ -45,7 +45,7 @@ int32_t scpi_set_KENneth_PREDicted_DURation(void* parameters, void* response,
 
   scpi_numeric_set(&scpi_param_KENneth_PREDicted_DURation, 0, duration->kind,
                    duration->keyword, 0, duration->value,
-                   return_zero(call->input));
+                   scpi_input_source(call->input));
   return 0;
 }
 

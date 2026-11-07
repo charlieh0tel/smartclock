@@ -52,7 +52,7 @@ static bool scpi_status_in_range(int16_t index, int16_t value,
   const status_register_layout* layout = &status_register_layouts[index];
 
   return scpi_check_range(layout->minimum, value, layout->maximum,
-                          return_zero(input)) != 0;
+                          scpi_input_source(input)) != 0;
 }
 
 /* Reports a device-specific error where a register's word read back
@@ -60,7 +60,7 @@ static bool scpi_status_in_range(int16_t index, int16_t value,
 static void scpi_status_verify(uint16_t word, uint32_t saved,
                                scpi_port* input) {
   if (word != saved) {
-    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, return_zero(input));
+    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, scpi_input_source(input));
   }
 }
 
@@ -72,7 +72,7 @@ static void scpi_status_enable_set(int16_t index,
 
   if (scpi_status_in_range(index, value, input)) {
     pllc_request_c(&scpi_param_STATus_ENABle, index, value, 0,
-                   return_zero(input));
+                   scpi_input_source(input));
     status_register_set_enable(status_object, index,
                                nv_settings.status_enable[index]);
   }
@@ -94,7 +94,7 @@ static void scpi_status_positive_set(int16_t index,
 
   if (scpi_status_in_range(index, value, input)) {
     pllc_request_c(&scpi_param_STATus_PTRansition, filter, value, 0,
-                   return_zero(input));
+                   scpi_input_source(input));
     status_register_set_ptr(status_object, index,
                             nv_settings.status_positive_transition[filter]);
   }
@@ -121,7 +121,7 @@ static void scpi_status_negative_set(int16_t index,
 
   if (scpi_status_in_range(index, value, input)) {
     pllc_request_c(&scpi_param_STATus_NTRansition, filter, value, 0,
-                   return_zero(input));
+                   scpi_input_source(input));
     status_register_set_ntr(status_object, index,
                             nv_settings.status_negative_transition[filter]);
   }

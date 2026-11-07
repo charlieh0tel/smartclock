@@ -9882,7 +9882,7 @@ void copy_longs_locked(uint32_t *source,uint32_t *destination,uint8_t count);
 float float_identity(float x);
 void robin_store(scpi_array_record *response,int16_t *points,int32_t count,data_format format,
                 request_source source);
-int32_t return_zero(scpi_port *input);
+int32_t scpi_input_source(scpi_port *input);
 int32_t scpi_query_failed(status_condition_code code,scpi_call *call);
 uint8_t rtcm_supported(void);
 void scpi_prompt(int32_t param_1);
@@ -35500,7 +35500,7 @@ __asm__(
 /* robin_store: rewritten in scpi_robin.c */
 
 /* 00029ada */
-/* return_zero: rewritten in scpi_engine.c */
+/* scpi_input_source: rewritten in scpi_engine.c */
 
 /* 00029ade */
 /* scpi_query_failed: rewritten in scpi_engine.c */
@@ -55237,6 +55237,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/clock.h"
 
+#include "../../rewritten/common/console.h"
+
 #include "../../rewritten/common/cpu.h"
 
 #include "../../rewritten/common/duart.h"
@@ -55244,6 +55246,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/fpga.h"
 
 #include "../../rewritten/common/gps.h"
+
+#include "../../rewritten/common/installer/installer_scpi_diagnostic.h"
 
 #include "../../rewritten/common/libc.h"
 
@@ -55257,9 +55261,15 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/records.h"
 
+#include "../../rewritten/common/restart.h"
+
 #include "../../rewritten/common/scpi.h"
 
+#include "../../rewritten/common/scpi_common.h"
+
 #include "../../rewritten/common/scpi_convert.h"
+
+#include "../../rewritten/common/scpi_diagnostic.h"
 
 #include "../../rewritten/common/scpi_engine.h"
 
@@ -55269,11 +55279,27 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/scpi_parameters.h"
 
+#include "../../rewritten/common/scpi_robin.h"
+
+#include "../../rewritten/common/scpi_source_gpsystem.h"
+
+#include "../../rewritten/common/scpi_source_ptime.h"
+
+#include "../../rewritten/common/scpi_source_pulse.h"
+
+#include "../../rewritten/common/scpi_source_roscillator.h"
+
+#include "../../rewritten/common/scpi_status.h"
+
 #include "../../rewritten/common/scpi_tree.h"
+
+#include "../../rewritten/common/screen.h"
 
 #include "../../rewritten/common/startup.h"
 
 #include "../../rewritten/common/status.h"
+
+#include "../../rewritten/common/ti.h"
 
 #include "../../rewritten/z3805a-3543b/duart.h"
 
@@ -55317,8 +55343,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/gps_reports.c"
 
-#include "../../rewritten/common/gps_requests.c"
-
 #include "../../rewritten/common/gps_task.c"
 
 #include "../../rewritten/common/installer/installer_arithmetic.c"
@@ -55342,8 +55366,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/installer/installer_scpi_common.c"
 
 #include "../../rewritten/common/installer/installer_scpi_convert.c"
-
-#include "../../rewritten/common/installer/installer_scpi_diagnostic.c"
 
 #include "../../rewritten/common/installer/installer_scpi_engine.c"
 
@@ -55481,6 +55503,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/z3805a-3543b/adc.c"
 
+#include "../../rewritten/z3805a-3543b/arithmetic.c"
+
 #include "../../rewritten/z3805a-3543b/boot.c"
 
 #include "../../rewritten/z3805a-3543b/calendar.c"
@@ -55492,6 +55516,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/z3805a-3543b/cpu.c"
 
 #include "../../rewritten/z3805a-3543b/dac.c"
+
+#include "../../rewritten/z3805a-3543b/debug.c"
 
 #include "../../rewritten/z3805a-3543b/duart.c"
 
@@ -55515,6 +55541,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/z3805a-3543b/installer/installer_cpu.c"
 
+#include "../../rewritten/z3805a-3543b/installer/installer_debug.c"
+
 #include "../../rewritten/z3805a-3543b/installer/installer_duart.c"
 
 #include "../../rewritten/z3805a-3543b/installer/installer_duarta.c"
@@ -55524,6 +55552,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/z3805a-3543b/installer/installer_records.c"
 
 #include "../../rewritten/z3805a-3543b/installer/installer_scpi_common.c"
+
+#include "../../rewritten/z3805a-3543b/installer/installer_scpi_diagnostic.c"
 
 #include "../../rewritten/z3805a-3543b/installer/installer_scpi_engine.c"
 

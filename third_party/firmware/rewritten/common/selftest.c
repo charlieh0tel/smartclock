@@ -97,24 +97,6 @@ uint8_t qspi_hex_dac_test(void) {
   return passed;
 }
 
-/* Writes 0x5555 and 0xaaaa to the EFC DAC and reads each back; true
- * when both agree. */
-bool qspi_efc_test(void) {
-  static const uint16_t PATTERN_1 = 0x5555;
-  static const uint16_t PATTERN_2 = 0xaaaa;
-  uint16_t sent = PATTERN_1;
-  uint16_t received;
-  qspi_buffers buffers = {.transmit = &sent, .receive = &received};
-
-  qspi_send(QSPI_EFC, &sent, 1);
-  qspi_transfer(QSPI_EFC, &buffers, 1);
-  bool first = sent == received;
-  sent = PATTERN_2;
-  qspi_send(QSPI_EFC, &sent, 1);
-  qspi_transfer(QSPI_EFC, &buffers, 1);
-  return sent == received && first;
-}
-
 /* Prints "NAME FAIL" when failed is nonzero and the self-test was not
  * aborted, without the line's end when continued. */
 void selftest_report_fail(int32_t failed, char* name, char continued) {
@@ -177,4 +159,22 @@ uint32_t rom_lane_checksum(uint8_t* rom, uint32_t count) {
   return (uint32_t)(even & HIGH_BYTE) << (2 * CPU_BYTE_BITS) |
          (uint32_t)(odd & HIGH_BYTE) << CPU_BYTE_BITS |
          (uint32_t)(even & LOW_BYTE) << CPU_BYTE_BITS | (odd & LOW_BYTE);
+}
+
+/* Runs each self-test in selftest_list with run 0, the second slot's
+ * char 1. */
+void selftest_run_all(void) {
+  for (selftest_entry* test = selftest_list; *test != NULL; test++) {
+    (*test)((char_slot){.value = 0, .next = 1});
+  }
+}
+
+/* Runs each self-test in selftest_list with run 1, counting
+ * watchdog_pll before the first and after each. */
+void selftest_run_all_counted(void) {
+  watchdog_pll++;
+  for (selftest_entry* test = selftest_list; *test != NULL; test++) {
+    (*test)((char_slot){.value = 1, .next = 1});
+    watchdog_pll++;
+  }
 }

@@ -358,6 +358,27 @@ def body(memory, start, stop):
     return Body(start, instructions, False)
 
 
+def reachable(memory, start, stop):
+    """The instructions control reaches from start before stop: each
+    path followed through its branches and a jmp's table of cases, to
+    an unconditional transfer, so that a table's words are not decoded
+    as code as body's single pass decodes them."""
+    found, pending = {}, [start]
+    while pending:
+        at = pending.pop()
+        for instruction in memory.instructions(at, stop):
+            if instruction.address in found or instruction.mnemonic == '.short' or instruction.end > stop:
+                break
+            found[instruction.address] = instruction
+            if BRANCH.match(instruction.mnemonic) and instruction.mnemonic not in CALLS:
+                pending.extend(field.target for field in fields(instruction)
+                               if field.relative and start <= field.target < stop)
+            if instruction.mnemonic == 'jmp':
+                pending.extend(jump_table(memory, instruction, stop))
+            if instruction.mnemonic in TERMINALS:
+                break
+    return [found[address] for address in sorted(found)]
+
 def external_fields(found):
     """Each instruction's fields that name an address outside the body."""
     return [[f for f in fields(i) if not (found.start <= f.target < found.end)
@@ -571,13 +592,15 @@ class Discovery:
         return self.bodies[start]
 
 
-def installer_records(image):
+def installer_records(image, start=None):
     """The boot code's installer records: an S, then for each record C,
-    a count, a destination in RAM and the bytes.  Each record's
-    destination and bytes, and the extent of them all in the image;
-    None if the image has none."""
-    start = image.find(b'SC', LOWEST_ADDRESS)
-    if start < 0:
+    a count, a destination in RAM and the bytes; or, given their start,
+    the records there, as the Z3815A 4010's primary keeps its own
+    (primary_unpack_records).  Each record's destination and bytes, and
+    the extent of them all in the image; None if the image has none."""
+    if start is None:
+        start = image.find(b'SC', LOWEST_ADDRESS)
+    if start < 0 or image[start:start + 1] != b'S':
         return None
     records, at = [], start + 1
     while image[at:at + 1] == b'C':
@@ -595,6 +618,17 @@ def installer_image(records):
     for destination, data in records:
         ram[destination - RAM:destination - RAM + len(data)] = data
     return bytes(ram)
+
+
+def region_memories(image):
+    """An image's code by region, as a names-file address gives it
+    (parse_address): the primary, its installer records data, and the
+    installer as the boot code unpacks it, if the image has one."""
+    records = installer_records(image)
+    memories = {'primary': Memory(image, 0, records and records[1])}
+    if records:
+        memories['installer'] = Memory(installer_image(records[0]), RAM)
+    return memories
 
 
 def parse_address(text):
@@ -1175,15 +1209,14 @@ def main():
     ranges = [(LOWEST_ADDRESS, max(len(base_image), len(other_image))), (RAM, RAM + RAM_SIZE)]
     ADDRESS_RANGES[:] = ranges
     items, starts = load_base(arguments.functions, arguments.names, arguments.modules)
-    ours, theirs = installer_records(base_image), installer_records(other_image)
-    regions = [('primary', Memory(base_image, 0, ours and ours[1]),
-                Memory(other_image, 0, theirs and theirs[1]), handler_pairs(arguments.handlers))]
+    ours, theirs = region_memories(base_image), region_memories(other_image)
+    regions = [('primary', ours['primary'], theirs['primary'], handler_pairs(arguments.handlers))]
     if arguments.installer:
-        if ours and theirs:
-            regions.append(('installer', Memory(installer_image(ours[0]), RAM),
-                            Memory(installer_image(theirs[0]), RAM), ([], {})))
+        if 'installer' in ours and 'installer' in theirs:
+            regions.append(('installer', ours['installer'], theirs['installer'], ([], {})))
         else:
-            print('no installer records in %s' % (arguments.base if not ours else arguments.other), file=sys.stderr)
+            print('no installer records in %s' % (arguments.base if 'installer' not in ours else arguments.other),
+                  file=sys.stderr)
     out = sys.stdout
     out.write('# image_diff.py %s against %s\n' % (os.path.basename(arguments.base), os.path.basename(arguments.other)))
     out.write('\t'.join(['region', 'kind', 'status', 'method', 'base_address', 'name', 'module', 'base_size',

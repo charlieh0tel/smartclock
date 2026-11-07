@@ -29,15 +29,6 @@ static const int16_t SCPI_ROBIN_FIRST_POINTS = 4;
 /* What the parser answers for a name it does not take. */
 static const int32_t SCPI_ROBIN_INVALID = STATUS_SCPI_INVALID_STRING;
 
-/* A :ROBin handler's parameters: a data set's name, and :TSTamp?'s
- * entry. */
-typedef struct scpi_robin_parameters {
-  int16_t name_kind;  /* +0x00: SCPI_NONE when the name is left out */
-  char* name;         /* +0x02 */
-  int16_t entry_kind; /* +0x06 */
-  int16_t entry;      /* +0x08: 1 to 256 */
-} scpi_robin_parameters;
-
 /* A keyword of a data set's name, as robin_lookup and
  * robin_keyword_match read it.  24 bytes. */
 typedef struct scpi_robin_keyword {
@@ -326,7 +317,7 @@ int32_t scpi_set_ROBin_CLEar(void* parameters, void* response,
     robin_clear(kind);
   } else {
     status_report_from(STATUS_ILLEGAL_PARAMETER_VALUE,
-                       return_zero(call->input));
+                       scpi_input_source(call->input));
   }
   return 0;
 }
@@ -337,7 +328,7 @@ int32_t scpi_query_ROBin_MEMory_OVERflow_COUNt(void* parameters, void* response,
                                                scpi_call* call) {
   scpi_robin_parameters* given = parameters;
   scpi_array* array = response;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
   double* counts = robin_overflows[source];
   uint32_t kind;
   uint32_t second;
@@ -363,7 +354,7 @@ int32_t scpi_set_ROBin_MEMory_SAVE(void* parameters, void* response,
   scpi_word_parameter* given = parameters;
 
   pllc_request_a(&scpi_param_ROBin_MEMory_SAVE, 0, given->value,
-                 return_zero(call->input));
+                 scpi_input_source(call->input));
   return 0;
 }
 
@@ -372,7 +363,7 @@ int32_t scpi_query_ROBin_POINts(void* parameters, void* response,
                                 scpi_call* call) {
   scpi_robin_parameters* given = parameters;
   scpi_array* array = response;
-  request_source source = return_zero(call->input);
+  request_source source = scpi_input_source(call->input);
   int16_t* counts = scpi_response_lists[source];
   uint32_t kind;
   uint32_t second;

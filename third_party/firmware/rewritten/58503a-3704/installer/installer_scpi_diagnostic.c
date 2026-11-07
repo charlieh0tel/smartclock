@@ -1,69 +1,11 @@
-/* The installer's handlers of its SCPI :DIAGnostic tree, :DOWNload,
- * :ERASe and :TEST? (`applications/scpi/handlers/diagnostic`;
- * scpi_diagnostic.c has the primary's), and the flash word programmer
- * :DOWNload calls.  Written by hand in place of the decompiler's
- * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
- * prototype.
- *
- * The flash is two pairs of AM29F010s, word-interleaved, one at 0x0 and
- * one at interpolator_calibration_init (docs/firmware/restart.md, "The
- * installer"): a word written at a pair's byte address twice a part's address
- * reaches both parts of the pair at once, so that each command word holds the
- * command in both bytes.  The installer writes from boot_memcpy+0xf462 to
- * 0x7ffff and never below, where it and the boot code live. */
-
-/* The writable range, its end not in it. */
-static const uint32_t INSTALLER_SCPI_DIAGNOSTIC_FLASH_START = 0x10000;
-
-static const uint32_t INSTALLER_SCPI_DIAGNOSTIC_FLASH_END = 0x80000;
-
-/* The second pair's base; the first's is 0. */
-static const uint32_t INSTALLER_SCPI_DIAGNOSTIC_PAIR_2 = 0x40000;
-
-/* A pair's two unlock addresses, the parts' 0x5555 and 0x2aaa. */
-static const uint32_t INSTALLER_SCPI_DIAGNOSTIC_UNLOCK_FIRST = 0x5555 * 2;
-
-static const uint32_t INSTALLER_SCPI_DIAGNOSTIC_UNLOCK_SECOND = 0x2aaa * 2;
-
-/* The command words, each a part's command in both bytes: the unlock
- * cycles' data, then the commands the third cycle gives. */
-static const uint16_t INSTALLER_SCPI_DIAGNOSTIC_UNLOCK_FIRST_DATA = 0xaaaa;
-
-static const uint16_t INSTALLER_SCPI_DIAGNOSTIC_UNLOCK_SECOND_DATA = 0x5555;
-
-static const uint16_t INSTALLER_SCPI_DIAGNOSTIC_ERASE_SETUP = 0x8080;
-
-static const uint16_t INSTALLER_SCPI_DIAGNOSTIC_SECTOR_ERASE = 0x3030;
-
-static const uint16_t INSTALLER_SCPI_DIAGNOSTIC_PROGRAM = 0xa0a0;
-
-static const uint16_t INSTALLER_SCPI_DIAGNOSTIC_READ_RESET = 0xf0f0;
-
-/* The tries each operation makes before it reports failure. */
-static const int16_t INSTALLER_SCPI_DIAGNOSTIC_TRIES = 5;
-
-/* A word of the flash at an address. */
-static volatile uint16_t* installer_scpi_diagnostic_word(uint32_t address) {
-  return (volatile uint16_t*)address;
-}
-
-/* The two unlock cycles to a pair. */
-static void installer_scpi_diagnostic_unlock(uint32_t pair) {
-  *installer_scpi_diagnostic_word(pair +
-                                  INSTALLER_SCPI_DIAGNOSTIC_UNLOCK_FIRST) =
-      INSTALLER_SCPI_DIAGNOSTIC_UNLOCK_FIRST_DATA;
-  *installer_scpi_diagnostic_word(pair +
-                                  INSTALLER_SCPI_DIAGNOSTIC_UNLOCK_SECOND) =
-      INSTALLER_SCPI_DIAGNOSTIC_UNLOCK_SECOND_DATA;
-}
-
-/* A command to a pair: the unlock cycles, then the command at the first
- * unlock address. */
-static void installer_scpi_diagnostic_command(uint32_t pair, uint16_t command) {
-  installer_scpi_diagnostic_unlock(pair);
-  *installer_scpi_diagnostic_word(
-      pair + INSTALLER_SCPI_DIAGNOSTIC_UNLOCK_FIRST) = command;
-}
+/* installer_flash_program_word, installer_scpi_set_DIAGnostic_DOWNload,
+ * installer_scpi_set_DIAGnostic_ERASe, installer_scpi_query_DIAGnostic_ERASe:
+ * this image's own, split from
+ * common/installer/installer_scpi_diagnostic.c where it differs between the
+ * images (rewrite.md, "Shared C", rule 6); and
+ * installer_scpi_query_DIAGnostic_TEST, the same C in each image, which
+ * names boot_selftest_results, a record each image's own, since the
+ * Z3815A 4010 lays it out otherwise (rewrite.md, "Shared C"). */
 
 /* Programs a flash word, the word's low half, from boot_memcpy+0xf462 to
  * 0x7ffff, polling its data each try up to 100 times for the word or both
@@ -106,17 +48,6 @@ int32_t installer_flash_program_word(uint16_t* address, uint32_t word) {
   }
   return 0;
 }
-
-/* :DOWNload's record text's room in the image's frame, then its bytes':
- * 256 words, each a pair of hex digits' value; arrays' sizes, so
- * #define. */
-#define INSTALLER_SCPI_DIAGNOSTIC_TEXT_SIZE 0x200
-
-#define INSTALLER_SCPI_DIAGNOSTIC_BYTES_SIZE 0x100
-
-/* A byte's two hex digits and a NUL, as strtol reads them. */
-#define INSTALLER_SCPI_DIAGNOSTIC_PAIR_SIZE 3
-
 /* :DOWNload "<S-record>": programs an S1, S2 or S3 record's data, a
  * word at a time, from its address, as does an S9, S8 or S7, with a
  * 16-, 24- or 32-bit address as theirs, for whatever data its count
@@ -223,7 +154,6 @@ int32_t installer_scpi_set_DIAGnostic_DOWNload(void* parameters, void* response,
   }
   return 0;
 }
-
 /* :ERASe: erases the writable range, the first pair's sectors 2 to 7
  * and all eight of the second's, 32 KB each across a pair, with
  * interrupts masked while it commands them; then polls, up to a million
@@ -279,10 +209,9 @@ int32_t installer_scpi_set_DIAGnostic_ERASe(void* parameters, void* response,
   }
   return 0;
 }
-
-/* :ERASe?: 1 when every word of the writable range reads 0xffff, else 0
- *.  The image first clears its parameters'
- * argument slot, which nothing reads. */
+/* :ERASe?: 1 when every word of the writable range reads 0xffff, else 0.
+ * The image first clears its parameters' argument slot, which nothing
+ * reads. */
 int32_t installer_scpi_query_DIAGnostic_ERASe(void* parameters, void* response,
                                               scpi_call* call) {
   static const uint16_t ERASED = 0xffff;

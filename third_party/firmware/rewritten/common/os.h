@@ -1,5 +1,7 @@
 /* What the kernel's binding shares with the installer's copy of it
- * (os.c, installer_os.c).  The exported C includes the hand-written
+ * (os.c, installer_os.c), and the reports with each image's own (os.c):
+ * the kernel's data area, the regions, the reports' rule and the
+ * stacks' use.  The exported C includes the hand-written
  * headers after its own declarations and before the hand-written .c
  * files, so every one of them can use it. */
 
@@ -287,4 +289,41 @@ static void os_busy_wait(uint32_t count) {
     }
     remaining--;
   } while (remaining != 0);
+}
+
+/* A whole, as the reports' percentages take it. */
+static const uint32_t OS_PERCENT = 100;
+
+/* The kernel's data area. */
+static psos_kernel* os_kernel_data(void) { return psos_config.data_area; }
+
+/* The two regions os_report_regions prints. */
+#define OS_REGIONS 2
+
+/* The rule that opens and closes the reports. */
+static char* const os_report_rule =
+    "=================================================================\r\n";
+
+/* A percentage as the stack report computes it: of a stack's size, the
+ * bytes from a word to its top. */
+static uint16_t os_stack_percent(uint32_t top, uint32_t at, uint32_t size) {
+  return (top - at) * OS_PERCENT / size;
+}
+
+/* A task stack's use for the stack report, of a size that is not 0: up
+ * from its bottom, top - size, while below its saved pointer, the first
+ * word after one that is not the 0xabcd fill, as a percentage of its
+ * size from there to the top; 0 if it finds none (task_stack_report+0x9c to
+ * task_stack_report+0xd0). The word at the bottom is never tested. */
+static uint16_t os_stack_use(uint32_t top, uint32_t size, uint32_t pointer) {
+  static const uint16_t UNUSED = 0xabcd;
+  const uint16_t* word = (const uint16_t*)(top - size);
+
+  while ((uint32_t)word < pointer) {
+    word++;
+    if (*word != UNUSED) {
+      return os_stack_percent(top, (uint32_t)word, size);
+    }
+  }
+  return 0;
 }

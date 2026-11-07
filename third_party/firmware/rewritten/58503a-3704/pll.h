@@ -1,7 +1,13 @@
-/* The PLL's static helpers that read pll_state, laid out differently
- * in each image, so this image's own, and the flags the 58503A's loop
+/* The EFC history's size, 32 in the Z3815A 4010, and the PLL's static
+ * helpers that read pll_state, laid out differently in each image, so
+ * this image's own, and the flags the 58503A's loop
  * shares that the export declares no object for; common/pll.h has the
  * PLL's shared constants. */
+
+/* The EFC history's entries, a ring of 64 indexed modulo its size. */
+#define PLL_AGING_ENTRIES 64
+
+static const uint32_t PLL_AGING_INDEX_MASK = PLL_AGING_ENTRIES - 1;
 
 /* Set while a reading is replaced by a wait for a dead 1PPS, cleared
  * when one is read (interval_wait_reading, interval_next_reading); while

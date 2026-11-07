@@ -9,7 +9,7 @@
  * and succeeds. */
 int32_t scpi_set_SENSe_TST1_EDGE(void* parameters, void* response,
                                  scpi_call* call) {
-  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
   return 0;
 }
 

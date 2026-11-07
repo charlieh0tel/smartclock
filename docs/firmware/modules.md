@@ -146,7 +146,7 @@ Where the approved layering named a module and the code says otherwise
 | ------ | --------: | --------------------------- |
 | `main` | 2 | `system_init`, `root_task`; the task ids and exchanges |
 | `selftest` | 52 | the self-test table at `0x18458` and its checks: `selftest_run`, `selftest_all`, `selftest_print_failure`, the `*_with_lamp` checks, `lamp_test`, `supplies_test`; `selftest` |
-| `scpi/engine` | 23 | the SCPI task and interpreter: `scpi_task_start`, `scpi_task`, `scpi_interpret`, `scpi_parse_message_unit`, `scpi_call_handler`, the arena, and the handlers' helpers `return_zero` (168 call sites in 118 callers) and `scpi_query_failed` (72 call sites in 68 callers) |
+| `scpi/engine` | 23 | the SCPI task and interpreter: `scpi_task_start`, `scpi_task`, `scpi_interpret`, `scpi_parse_message_unit`, `scpi_call_handler`, the arena, and the handlers' helpers `scpi_input_source` (168 call sites in 118 callers) and `scpi_query_failed` (72 call sites in 68 callers) |
 | `scpi/port` | 17 | the console port object, method table `0x29dd4`: `scpi_console_port`, `console_port_read`, `scpi_prompt`, the status byte and SRE methods, `status_prompt_refresh`; `status_byte` |
 | `scpi/lexer` | 9 | `scpi_scan_token`, numbers, units and suffixes (`scpi_apply_suffix`) |
 | `scpi/tree` | 9 | keyword lookup and header paths: `scpi_node_find`, `scpi_header_resolve` |
@@ -250,7 +250,11 @@ first function written by hand starts its file (`boot.c`, `cpu.c`,
 `leds.c`, `pps.c`, `timers.c`).  What a group of
 them shares, from the file they were split from, is in a header named
 for it (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
-`scpi.h`), keeping that file's prefix.  A file several images share is in
+`scpi.h`), keeping that file's prefix; so is what a file several images
+share has in common with an image's own file of its name (`ti.h`,
+`screen.h`, `scpi_diagnostic.h`), where the headers' sorted order allows
+(`boot.c`'s unpacker in `restart.h`, after `cpu.h`, whose constants it
+reads; `arithmetic.c`'s 64-bit pair in `cpu.h` itself).  A file several images share is in
 `third_party/firmware/rewritten/common/` under the same name and folder
 ([`rewrite.md`, "Shared C"](rewrite.md#shared-c)); a header split
 between the two keeps its name in both, the image's holding what is

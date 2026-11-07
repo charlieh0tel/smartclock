@@ -1,7 +1,7 @@
 /* What the health monitor shares with the debug output, the log and the
- * self-tests (debug.c, log.c, selftest.c): the size of crash_message,
- * which fatal_error fills, the supplies' tolerances and the 1PPS
- * counts.
+ * self-tests (debug.c, log.c, selftest.c, and each image's own
+ * monitors.c): the size of crash_message, which fatal_error fills, the
+ * supplies' tolerances, the 1PPS counts and the watchdog's grace.
  * The exported C includes the hand-written headers after its own
  * declarations and before the hand-written .c files, so every one of
  * them can use it. */
@@ -30,3 +30,7 @@ static const float MONITORS_MINUS_15V_MOST = -14.0f;
 static const int8_t MONITORS_PPS_LEAST = 1;
 
 static const int8_t MONITORS_PPS_MOST = 3;
+
+/* The reports, after a full one, for which the health monitor services
+ * the watchdog. */
+static const int16_t MONITORS_WATCHDOG_GRACE = 8;

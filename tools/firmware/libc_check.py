@@ -1,10 +1,11 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.2.0", "unicorn==2.1.4"]
 # ///
 """Confirms the C library routines named in docs/firmware/libc.md by running
-them: each is called in a Unicorn 68k emulator on known inputs and its
-result compared with what the C routine of that name gives.
+them: each is called in the harness's 68k emulator, Unicorn's or
+mc683xx's (backend.py), on known inputs and its result compared with
+what the C routine of that name gives.
 
     uv run tools/firmware/libc_check.py third_party/firmware/images/z3805a-3543b.bin
 
@@ -16,15 +17,15 @@ import math
 import struct
 import sys
 
-from unicorn import UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, Uc
 from unicorn.m68k_const import (
-    UC_CPU_M68K_M68020,
     UC_M68K_REG_A0,
     UC_M68K_REG_A1,
     UC_M68K_REG_A7,
     UC_M68K_REG_D0,
     UC_M68K_REG_D1,
 )
+
+from backend import new_cpu
 
 ROM = 0x000000
 ROM_SIZE = 0x80000
@@ -108,8 +109,7 @@ class Machine:
     """The image in an emulator, with calls into it."""
 
     def __init__(self, image: bytes):
-        self.uc = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
-        self.uc.ctl_set_cpu_model(UC_CPU_M68K_M68020)
+        self.uc = new_cpu()
         self.uc.mem_map(ROM, ROM_SIZE)
         self.uc.mem_write(ROM, image)
         self.uc.mem_map(RAM, RAM_SIZE)

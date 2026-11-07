@@ -17,7 +17,8 @@ int32_t scpi_set_SOURce_PULSe_CONTinuous_PERiod(void* parameters,
   scpi_long_parameter* period = parameters;
 
   scpi_numeric_set(&scpi_param_SOURce_PULSe_CONTinuous_PERiod, 0, period->kind,
-                   period->keyword, 0, period->value, return_zero(call->input));
+                   period->keyword, 0, period->value,
+                   scpi_input_source(call->input));
   return 0;
 }
 
@@ -40,14 +41,9 @@ int32_t scpi_set_SOURce_PULSe_CONTinuous_STATe(void* parameters, void* response,
   scpi_word_parameter* state = parameters;
 
   pllc_request_a(&scpi_param_SOURce_PULSe_CONTinuous_STATe, 0,
-                 (uint8_t)state->value, return_zero(call->input));
+                 (uint8_t)state->value, scpi_input_source(call->input));
   return 0;
 }
-
-/* A date's or time of day's three fields, as a setter's short parameters
- * or a query's short response items: each a short and its unit word,
- * after a parameter's kind word (scpi_parse_short, scpi_format_short). */
-#define SCPI_SOURCE_PULSE_FIELDS 3
 
 /* The start's date or time, its three fields, to pllc through its
  * source's staged longs. */
@@ -66,7 +62,7 @@ static void scpi_source_pulse_start_set(scpi_numeric_param* param,
 int32_t scpi_set_SOURce_PULSe_STARt_DATE(void* parameters, void* response,
                                          scpi_call* call) {
   scpi_source_pulse_start_set(&scpi_param_SOURce_PULSe_STARt_DATE, parameters,
-                              return_zero(call->input));
+                              scpi_input_source(call->input));
   return 0;
 }
 
@@ -74,14 +70,14 @@ int32_t scpi_set_SOURce_PULSe_STARt_DATE(void* parameters, void* response,
 int32_t scpi_set_SOURce_PULSe_STARt_TIME(void* parameters, void* response,
                                          scpi_call* call) {
   scpi_source_pulse_start_set(&scpi_param_SOURce_PULSe_STARt_TIME, parameters,
-                              return_zero(call->input));
+                              scpi_input_source(call->input));
   return 0;
 }
 
 /* :PULSe:REFerence:EDGE: a stub; -113, Undefined header. */
 int32_t scpi_set_SOURce_PULSe_REFerence_EDGE(void* parameters, void* response,
                                              scpi_call* call) {
-  status_report_from(STATUS_UNDEFINED_HEADER, return_zero(call->input));
+  status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
   return 0;
 }
 

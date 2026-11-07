@@ -45,16 +45,3 @@ CPU_IO_FUNCTION(duartb_reconfigure, duartb_reconfigure_settings);
 /* The done hook of channel B's setting descriptors and its PRESet:
  * reconfigures device 0. */
 void duartb_settings_done(void) { psos_io_control(IO_DEVICE_DUART_B, 0, 0); }
-
-/* Writes a string to channel B by polling, in supervisor mode; returns
- * its length. */
-int32_t console_write_polled(char* s) {
-  int32_t count = 0;
-  uint16_t sr = cpu_enter_supervisor();
-
-  for (; *s != 0; s++, count++) {
-    duartb_putc_polled(*s);
-  }
-  cpu_sr_write(sr);
-  return count;
-}

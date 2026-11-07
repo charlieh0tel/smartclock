@@ -89,6 +89,7 @@ Each image's folder holds three files, IMAGE being its folder's name:
   z3805a-3543b/      Z3805A 3543B.
   58503a-3704/       58503A 3704.
   z3801a-3543/       Z3801A 3543.
+  z3815a-4010/       Z3815A 4010.
 
 Hand-written C, in `firmware/rewritten/IMAGE/`: an image's functions
 written by hand in place of the decompiled ones, each checked against
@@ -98,6 +99,7 @@ file to a module (`docs/firmware/modules.md`).
   z3805a-3543b/      Z3805A 3543B.
   58503a-3704/       58503A 3704.
   z3801a-3543/       Z3801A 3543.
+  z3815a-4010/       Z3815A 4010.
   common/            what several images share
                      (`docs/firmware/rewrite.md`, "Shared C").
 

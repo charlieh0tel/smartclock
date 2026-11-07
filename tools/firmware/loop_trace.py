@@ -113,7 +113,6 @@ STUBS = {
     'status_happening': RETURN_0,
     'leap_ack_pending': RETURN_1,
     'clock_check_against_gps': RETURN_1,
-    'clock_check_against_gps': RETURN_1,
 }
 
 # The routines that run as the image has them: the two stages, what

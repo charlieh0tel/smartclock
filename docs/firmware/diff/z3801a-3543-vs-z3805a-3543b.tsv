@@ -912,7 +912,7 @@ primary	function	identical	exact	0x29a1e	long_identity	applications/scpi/engine	
 primary	function	identical	exact	0x29a24	copy_longs_locked	applications/scpi/engine	62	0x288e8	62		
 primary	function	identical	exact	0x29a62	float_identity	applications/scpi/engine	6	0x28926	6		
 primary	function	relocated	masked	0x29a68	robin_store	applications/scpi/handlers/robin	114	0x2892c	114		
-primary	function	identical	exact	0x29ada	return_zero	applications/scpi/engine	4	0x2899e	4		
+primary	function	identical	exact	0x29ada	scpi_input_source	applications/scpi/engine	4	0x2899e	4		
 primary	function	relocated	masked	0x29ade	scpi_query_failed	applications/scpi/engine	42	0x289a2	42		
 primary	function	identical	exact	0x29b08	rtcm_supported	applications/scpi/handlers/misc	6	0x289cc	6		
 primary	function	relocated	masked	0x29b0e	scpi_prompt	applications/scpi/port	52	0x289d2	52		
@@ -1702,7 +1702,7 @@ primary	function	relocated	masked	0x60f5e	pow	platform/math	2182	0x60ef8	2182
 primary	function	relocated	masked	0x6191c	sqrt	platform/math	632	0x618b6	632		
 primary	function	new	pointer			unassigned/psos		0x1487a	4		1 instructions, found pointer; after piece_14b6e
 primary	function	new	pointer			applications/selftest		0x182ea	10		3 instructions, found pointer; after supplies_test
-primary	function	new	handler			applications/scpi/handlers/led		0x2c85a	48		13 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: pllc_request_a, return_zero
+primary	function	new	handler			applications/scpi/handlers/led		0x2c85a	48		13 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: pllc_request_a, scpi_input_source
 primary	function	new	handler			applications/scpi/handlers/led		0x2c88a	26		8 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: return_byte
 primary	piece	identical	exact	0x54a	piece_54a	platform/boot	2	0x54a	2		
 primary	label	identical	bytes	0x766	boot_cpu_test_pattern	data	4	0x766	4		

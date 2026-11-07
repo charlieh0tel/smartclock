@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.2.0", "unicorn==2.1.4"]
 # ///
 """Checks which of the Unicorn m68k bugs the harness works around
 (docs/firmware/README.md) the

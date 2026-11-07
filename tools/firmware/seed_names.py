@@ -1,8 +1,8 @@
 """Seeds an image's names.tsv and modules.tsv from a base image's,
 through the matches tools/firmware/image_diff.py finds between the two
 images, by the rules the names file's header gives; or checks that they
-are what the matches give: the 58503A 3704's and the Z3801A 3543's from the Z3805A 3543B's
-(PORTS).
+are what the matches give: the 58503A 3704's from the Z3805A 3543B's,
+the Z3815A 4010's from the 58503A 3704's (PORTS).
 
     python3 -I tools/firmware/seed_names.py BASE_FOLDER FOLDER [--write] [--counts PATH]
 
@@ -216,7 +216,7 @@ DROPPED_58503A = {'installer_duarta_ring': 0x10af1a}
 
 # the header's paragraphs on the 58503A's exceptions, which Port's
 # fields name
-CORRECTIONS_TEXT_58503A = "#   docs/firmware/58503a-3704.md corrects one pairing: 0x30b24 is\n#   save_calibration_block's counterpart, 0x30c6c save_parameter_record's.\n#   It corrects four more, which the image settles, and carries them\n#   under their names: the Oncore decoders oncore_visibility_message,\n#   oncore_traim_message and oncore_receiver_id_message, which image_diff\n#   pairs by their shape, are 0x50716, 0x50924 and 0x50968, the message\n#   table's @@Bb, @@Bn and @@Cj decoders (0x51178); and\n#   selftest_gps_with_lamp, which image_diff pairs by its bytes with the\n#   power test's, 0x18efa, is 0x18ed6, the self-test table's GPS entry\n#   (0x18814), which tests a long.  The table also names\n#   selftest_cpu_result, selftest_ram_result, selftest_eeprom_result and\n#   selftest_power, 0x18746, 0x18750, 0x1875a and 0x18046, where\n#   image_diff pairs the first with the EEPROM's and finds the others\n#   missing; supplies_test is 0x186da, which both call.  Routines\n#   image_diff pairs at another's last instructions or finds missing\n#   are carried where the 58503A's callers name them: selftest_init,\n#   gps_pps_monitor_reset and internal_pps_monitor_reset at 0x18574,\n#   0x238b0 and 0x23a3c, one store ahead of the Z3805A's (image_diff\n#   takes the stores after it); enter_installer at 0x130da, which\n#   deletes fpnl first (image_diff takes its trap #11); return_zero at\n#   0x29246, the handlers' (image_diff takes an uncalled tail at\n#   0x28d98); scpi_console_port at 0x28db4 and the installer's at\n#   installer::0x10739c, the port layer's for port 2 (image_diff takes\n#   the tails of the session starts); monitors_reset at 0x23dc2,\n#   timecode_schedule at 0x140d0, scpi_task at 0x294cc and the\n#   installer's at installer::0x1079ec, temporary_hold_set at 0x45cbc\n#   and gps_script_lookup at 0x4c80e, each by its caller or table.\n#   sci_echo_none, an rts image_diff finds at qspi_fpga_byte_write's end\n#   (0x1f328), has no row: the 58503A has no SCI.\n"
+CORRECTIONS_TEXT_58503A = "#   docs/firmware/58503a-3704.md corrects one pairing: 0x30b24 is\n#   save_calibration_block's counterpart, 0x30c6c save_parameter_record's.\n#   It corrects four more, which the image settles, and carries them\n#   under their names: the Oncore decoders oncore_visibility_message,\n#   oncore_traim_message and oncore_receiver_id_message, which image_diff\n#   pairs by their shape, are 0x50716, 0x50924 and 0x50968, the message\n#   table's @@Bb, @@Bn and @@Cj decoders (0x51178); and\n#   selftest_gps_with_lamp, which image_diff pairs by its bytes with the\n#   power test's, 0x18efa, is 0x18ed6, the self-test table's GPS entry\n#   (0x18814), which tests a long.  The table also names\n#   selftest_cpu_result, selftest_ram_result, selftest_eeprom_result and\n#   selftest_power, 0x18746, 0x18750, 0x1875a and 0x18046, where\n#   image_diff pairs the first with the EEPROM's and finds the others\n#   missing; supplies_test is 0x186da, which both call.  Routines\n#   image_diff pairs at another's last instructions or finds missing\n#   are carried where the 58503A's callers name them: selftest_init,\n#   gps_pps_monitor_reset and internal_pps_monitor_reset at 0x18574,\n#   0x238b0 and 0x23a3c, one store ahead of the Z3805A's (image_diff\n#   takes the stores after it); enter_installer at 0x130da, which\n#   deletes fpnl first (image_diff takes its trap #11); scpi_input_source at\n#   0x29246, the handlers' (image_diff takes an uncalled tail at\n#   0x28d98); scpi_console_port at 0x28db4 and the installer's at\n#   installer::0x10739c, the port layer's for port 2 (image_diff takes\n#   the tails of the session starts); monitors_reset at 0x23dc2,\n#   timecode_schedule at 0x140d0, scpi_task at 0x294cc and the\n#   installer's at installer::0x1079ec, temporary_hold_set at 0x45cbc\n#   and gps_script_lookup at 0x4c80e, each by its caller or table.\n#   sci_echo_none, an rts image_diff finds at qspi_fpga_byte_write's end\n#   (0x1f328), has no row: the 58503A has no SCI.\n"
 LABELS_TEXT_58503A = ", but for nv_settings, which grew, and duartb and\n#   installer_duartb, whose fields are rearranged within the same span:\n#   they are placed by their start's references, their notes giving\n#   the evidence.\n#   installer_duarta_ring is dropped too, though placed by two\n#   references, both from one changed piece: at 0x10af1a it would\n#   overlap installer_duartb and run past installer_task_spoo.  The\n#   58503A's installer keeps no channel A ring (installer::0x103a16).\n#   The functions whose few bytes match at more than one address are\n#   pinned where the 58503A's callers name them: status_event_hook, a\n#   bare rts, at 0x2f1b8, which status_report and status_happening call,\n#   where image_diff takes 0x2f1fc; duartb_echo_none at 0x1d3d0, which\n#   duart_init and duartb_reconfigure store as duartb.echo, for\n#   0x1d4d0; nv_param_field_b8_done at 0x45d42, its descriptor's done\n#   hook, for 0x45cde; output_state_program and pulse_program at\n#   0x47fa6 and 0x47fa8, which output_state_done and\n#   pulse_settings_done call, for 0x42bfa and 0x42c46; and\n#   scpi_message_done and scpi_input_closed, which image_diff swaps, at\n#   0x290ac and 0x290b0, by scpi_interpret's calls, and the installer's\n#   at installer::0x107674 and 0x107678, for 0x107678 and 0x107742.\n"
 TABLES_TEXT_58503A = " (the health monitor's channel table, 0x2238a,\n#   among them)"
 HAND_ROWS_TEXT_58503A = "  The types\n#   wave's hand rows place the RAM\n#   labels the rules leave unplaced where the 58503A's code shows them,\n#   type tables the 58503A sizes otherwise, and give changed functions\n#   the locals whose frames the 58503A's code bears out, each note\n#   saying where."
@@ -315,7 +315,7 @@ MODULES_HAND_HEADER = """\
 # Each image by its folder's name: its model and revision, as a
 # document names it.
 IMAGE_NAMES = {'z3805a-3543b': ('Z3805A', '3543B'), '58503a-3704': ('58503A', '3704'),
-               'z3801a-3543': ('Z3801A', '3543')}
+               'z3815a-4010': ('Z3815A', '4010'), 'z3801a-3543': ('Z3801A', '3543')}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -421,6 +421,160 @@ PORT_58503A_3704 = Port(
     hand_rows_text=HAND_ROWS_TEXT_58503A,
     hand_figures=(('names.tsv', r'(\d+) rows are added by hand, each note'),
                   ('modules.tsv', r'`modules.tsv` keeps (\d+) rows added by\s+hand')))
+# The Z3815A 4010's port from the 58503A 3704, the closer of the two
+# named images (docs/firmware/z3815a-4010.md, "The base"): the functions
+# whose few bytes match at more than one address, pinned where the
+# Z3815A's callers name them, as the 58503A's port pins them.
+PINNED_Z3815A = {
+    ('primary', 0x47fa6): (
+        0x5140c, 0x4be5c,
+        "its 2 bytes, an rts, match more than one; pinned to 0x4be5c, which output_state_done calls (0x4bec6), "
+        "as the 58503A's calls 0x47fa6"),
+    ('primary', 0x47fa8): (
+        0x516d8, 0x4be5e,
+        "its 2 bytes, an rts, match more than one; pinned to 0x4be5e, which pulse_settings_done calls, as the "
+        "58503A's calls 0x47fa8"),
+    ('primary', 0x290ac): (
+        0x3c3f6, 0x3c636,
+        "its 4 bytes match more than one; pinned to 0x3c636, which scpi_interpret calls three times (0x3b9da, "
+        "0x3ba0e, 0x3bb04), as the 58503A's calls 0x290ac"),
+    ('primary', 0x290b0): (
+        0x3c636, 0x3c63a,
+        "its 4 bytes match more than one; pinned to 0x3c63a, which scpi_interpret calls once, at 0x3bac8, where "
+        "the 58503A's calls 0x290b0"),
+    ('installer', 0x107674): (
+        0x108156, 0x1074de,
+        "its 4 bytes match more than one; pinned to installer::0x1074de, which installer_scpi_interpret calls "
+        "three times, as scpi_interpret calls scpi_message_done"),
+    ('installer', 0x107678): (
+        0x1081ec, 0x1074e2,
+        "its 4 bytes match more than one; pinned to installer::0x1074e2, which installer_scpi_interpret calls "
+        "once, at installer::0x1072f4, as scpi_interpret calls scpi_input_closed"),
+}
+LABELS_TEXT_Z3815A = '''.
+#   The functions whose few bytes match at more than one address are
+#   pinned where the Z3815A's callers name them: output_state_program
+#   and pulse_program, bare rts, at 0x4be5c and 0x4be5e, which
+#   output_state_done and pulse_settings_done call, where image_diff
+#   takes 0x5140c and 0x516d8; and scpi_message_done and
+#   scpi_input_closed at 0x3c636 and 0x3c63a, by scpi_interpret's
+#   calls, and the installer's at installer::0x1074de and 0x1074e2, for
+#   0x3c3f6 and 0x3c636, 0x108156 and 0x1081ec.
+'''
+# the two words before psos_config_defaults (0x5ed0a) that the NV
+# descriptors point to (0x47abe on, 0x48286 on), after
+# primary_unpack_records' rts, which image_diff finds new by those
+# pointers: data, whose first long is no address
+NOT_CODE_Z3815A = frozenset({('primary', 0x5ed02), ('primary', 0x5ed04)})
+NOT_CODE_TEXT_Z3815A = '''  Nor are the
+#   words at 0x5ed02 and 0x5ed04, before psos_config_defaults, which the
+#   NV descriptors point to, though image_diff finds them new.'''
+# the pairings docs/firmware/z3815a-4010.md corrects, each confirmed by
+# a relocated caller's call where the 58503A's calls the base function
+CORRECTIONS_Z3815A = {
+    ('primary', 0x31b64): (0x46260, "%s: log_write's call (0x45f32), where the 58503A's log_write calls "
+                                    "log_append (0x3187c)" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x290ce): (0x3c670, "%s: port_report_errors' two calls (0x3c6f6, 0x3c72e); its switch has a case "
+                                    "for port 1, 0x3fa72, and for port 2, status_report" % 'docs/firmware/z3815a-4010.md'),
+    ('installer', 0x108280): (0x108372, "%s: installer_system_init's call (installer::0x100c84), where the "
+                                        "58503A's calls installer_parameter_record_read (installer::0x100888); "
+                                        "its defaults, before it at installer::0x10836a, are what image_diff "
+                                        "pairs" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x23dc2): (0x36f2e, "%s: system_init's two calls (0x22e90, 0x22ebe), where the 58503A's "
+                                    "system_init calls monitors_reset (0x12e9c, 0x12eca); image_diff pairs "
+                                    "0x36e7c, counter_reset's call of counter_load_registers" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x47716): (0x50d06, "%s: its stage steps, \"PLL powerup\" to \"Went into fatal error\" (0x515b6 "
+                                    "to 0x51688), each calling the stage's routine as the 58503A's does"
+                           % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x46072): (0x4f76a, "%s: pllp_task's stage 1, \"PLL powerup\" (0x50f6a), as the 58503A's calls "
+                                    "powerup" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x4429e): (0x4d652, "%s: pllp_task's stage 5, \"Went into PLL startup\" (0x510a4); its "
+                                    "\"startup_pll - Error with measurement\"" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x4495a): (0x4ddea, "%s: pllp_task's stage 7, \"Went into PLL normal\" (0x5113e); its "
+                                    "\"pll_normal - Error with measurement\"" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x2917c): (0x3c772, "%s: scpi_task_run's call with its port and 1 (0x3ca32), as the 58503A's "
+                                    "calls port_prompt_set" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x291a6): (0x3c7ae, "%s: scpi_task_run's call with its port (0x3ca3c), whose cases call the "
+                                    "sessions' inits (0x3c7ca, 0x3c7d2), as the 58503A's calls port_session_init"
+                           % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x29154): (0x3c742, "%s: :SYSTem:COMMunicate:ALARm:PROMpt?'s call (0x443e4), whose cases call "
+                                    "the prompts' getters (0x3c75e, 0x3c766)" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x290f8): (0x3c6ac, "%s: console_port_read's call on a read error (0x3c1c2), as the 58503A's "
+                                    "calls port_report_errors" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x29246): (0x3c84e, "%s: the SCPI handlers' calls with their call's input, 0 for the SCPI "
+                                    "port's object (0x3c034) and 1 for another" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x2bcfa): (0x3fac2, "%s: scpi_query_failed's call (0x3c008); its start loads the code into D1 "
+                                    "before the switch the 58503A's starts with" % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x290b4): (0x3c63e, "%s: error_queue_push's and error_queue_pop's calls (0x3aba0, 0x3ac1a), "
+                                    "its first test scpi_status_model's, calling scpi_prompt, as the 58503A's"
+                           % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x13104): (0x230d6, "%s: root_task's call (0x233cc), which has spoo_run start "
+                                    "0x3cbb6, the creator of \"scpi\" at scpi_task, as the 58503A's starts "
+                                    "scpi_task_create; image_diff pairs 0x230f6, the same bytes, the SCI session's"
+                           % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x294f8): (0x3cbb6, "%s: scpi_task_start's routine (0x230de), which creates \"scpi\" (0x3cc6c) "
+                                    "and starts it at scpi_task, as the 58503A's; image_diff pairs 0x3cb3c, the "
+                                    "same bytes, which creates \"sci\" at sci_scpi_task"
+                           % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x1eb22): (0x2f3fc, "%s: primary_reset's call (0x24f6a), as the 58503A's primary_reset calls "
+                                    "duart_early_init; image_diff pairs it with the boot code's copy, "
+                                    "boot_duart_early_init, the same bytes, which this image's boot code has not"
+                           % 'docs/firmware/z3815a-4010.md'),
+    ('primary', 0x130da): (0x230d2, "%s: scpi_task_run's call for :SYSTem:LANGuage \"INSTALL\" (0x3cacc), "
+                                    "trap #11 alone, as the Z3805A's" % 'docs/firmware/z3815a-4010.md'),
+}
+# installer_duartb_baud_from_settings' bytes are the end of
+# installer::0x103a88, which runs into them with no return before;
+# status_screen_print's the end of 0x56b0c, which picks one of two
+# snapshots by its first argument and branches into them;
+# installer_duarta_drain's, its one branch, a branch inside
+# installer_console_write_polled to its loop's test, this image's
+# installer reading nothing from DUART channel A
+DROPPED_FUNCTIONS_Z3815A = {('installer', 0x1030b6): 0x103b02, ('primary', 0x4b6ec): 0x56b1c,
+                            ('installer', 0x103a14): 0x103d9c}
+CORRECTIONS_TEXT_Z3815A = '''#   docs/firmware/z3815a-4010.md corrects sixteen pairings and carries
+#   them under their names.  Four by a relocated caller's call where
+#   the 58503A's calls the function: log_append is 0x46260, which
+#   log_write calls (image_diff pairs it by its callees, at 0.482),
+#   port_status_report 0x3c670, which port_report_errors calls (image_diff
+#   pairs 0x3c742, at 0.571), installer_parameter_record_read
+#   installer::0x108372, which installer_system_init calls (image_diff
+#   pairs its defaults before it, installer::0x10836a, at 0.925), and
+#   monitors_reset 0x36f2e, which system_init calls (image_diff pairs
+#   0x36e7c, counter_reset's tail, by its bytes).  Four
+#   by pllp_task's stage steps, whose debug text names each stage:
+#   pllp_task is 0x50d06 (image_diff finds it missing), powerup 0x4f76a,
+#   which stage 1 calls (missing), startup_pll 0x4d652, which stage 5
+#   calls and which prints "startup_pll - Error with measurement", and
+#   pll_normal 0x4ddea, which stage 7 calls and which prints "pll_normal
+#   - Error with measurement" (image_diff pairs startup_pll with it, at
+#   0.686, and finds pll_normal missing).  Eight by the SCPI port
+#   layer's calls, its switches having a case for each of the two
+#   sessions: port_prompt_set 0x3c772 and port_session_init 0x3c7ae,
+#   which scpi_task_run calls (image_diff pairs port_prompt_get with
+#   0x3c7ae), port_prompt_get 0x3c742, which :ALARm:PROMpt? calls,
+#   port_report_errors 0x3c6ac, which console_port_read calls,
+#   scpi_input_source 0x3c84e, which the handlers call (image_diff pairs
+#   0x3c7da, a moveq inside 0x3c7ae), status_report_from 0x3fac2, which
+#   scpi_query_failed calls (0x3fac6, past its first load),
+#   status_prompt_refresh 0x3c63e, which error_queue_push calls (0x3c656,
+#   its second test), and enter_installer 0x230d2, which scpi_task_run
+#   calls for INSTALL (a lead at 0.000).
+#   installer_duartb_baud_from_settings, whose bytes image_diff finds at
+#   installer::0x103b02, has no row: they are the end of
+#   installer::0x103a88, which runs into them; nor has
+#   status_screen_print, whose bytes it finds at 0x56b1c, the end of
+#   0x56b0c, which a hand row names so; nor installer_duarta_drain,
+#   whose one branch it finds at installer::0x103d9c, inside
+#   installer_console_write_polled, before its loop: this image's
+#   installer reads nothing from DUART channel A.
+'''
+PORT_Z3815A_4010 = Port(folder='z3815a-4010', base_folder='58503a-3704', pinned=PINNED_Z3815A,
+                        corrections=CORRECTIONS_Z3815A, confirmed=frozenset(CORRECTIONS_Z3815A),
+                        dropped_functions=DROPPED_FUNCTIONS_Z3815A, corrections_text=CORRECTIONS_TEXT_Z3815A,
+                        labels_text=LABELS_TEXT_Z3815A, not_code=NOT_CODE_Z3815A,
+                        not_code_text=NOT_CODE_TEXT_Z3815A,
+                        hand_figures=(('names.tsv', r'Hand rows \((\d+), "'),))
 # The Z3801A 3543's port from the Z3805A 3543B, its sibling
 # (docs/firmware/z3801a-3543.md, "The base").
 # copyright_text's bytes are also in the installer's records, at 0x14b2,
@@ -457,7 +611,7 @@ PORT_Z3801A_3543 = Port(folder='z3801a-3543', base_folder='z3805a-3543b', correc
                         corrections_text=CORRECTIONS_TEXT_Z3801A, labels_text=LABELS_TEXT_Z3801A,
                         hand_figures=(('names.tsv', r'(\d+) hand rows \("'),))
 # Each seeded image's port, by its folder's name.
-PORTS = {port.folder: port for port in (PORT_58503A_3704, PORT_Z3801A_3543)}
+PORTS = {port.folder: port for port in (PORT_58503A_3704, PORT_Z3815A_4010, PORT_Z3801A_3543)}
 
 
 class Offsets(collections.Counter):
@@ -524,11 +678,11 @@ class Seeding:
                                              os.path.join(base_folder, 'names.tsv'),
                                              os.path.join(base_folder, 'modules.tsv'))
         ours, theirs = image_diff.installer_records(base_image), image_diff.installer_records(other_image)
-        regions = [('primary', image_diff.Memory(base_image, 0, ours[1]), image_diff.Memory(other_image, 0, theirs[1]),
+        base_memories, other_memories = image_diff.region_memories(base_image), image_diff.region_memories(other_image)
+        regions = [('primary', base_memories['primary'], other_memories['primary'],
                     image_diff.handler_pairs([os.path.join(base_folder, 'handlers.txt'),
                                               os.path.join(folder, 'handlers.txt')])),
-                   ('installer', image_diff.Memory(image_diff.installer_image(ours[0]), image_diff.RAM),
-                    image_diff.Memory(image_diff.installer_image(theirs[0]), image_diff.RAM), ([], {}))]
+                   ('installer', base_memories['installer'], other_memories['installer'], ([], {}))]
         self.matchers, self.results = {}, {}
         for region, base, other, pairs in regions:
             matcher = image_diff.Matcher(base, other, items[region], starts[region], pairs)
@@ -957,6 +1111,8 @@ class Seeding:
                 continue
             f = line.split('\t')
             region, value = image_diff.parse_address(f[0])
+            if (region, value) in self.port.dropped_functions:
+                continue
             item = self.code.get((region, value))
             seeded = carried.get((region, value))
             if seeded is not None:

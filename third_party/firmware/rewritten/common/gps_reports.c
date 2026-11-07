@@ -4,8 +4,6 @@
  * hand in place of the decompiler's (docs/firmware/README.md,
  * "Hand-written C"); each keeps its generated prototype. */
 
-static const float GPS_REPORTS_THOUSANDTHS = 1000.0f;
-
 /* An angle in milliarcseconds as "%c%4d:%02d:%06.3f": its hemisphere,
  * N or S for a latitude, E or W for a longitude, and its degrees,
  * minutes and seconds, each of the first two taken as a byte. */
@@ -43,15 +41,6 @@ void format_duration(double time, char* text) {
   sprintf(text, "%02d:%02d:%04.1f [%s]", hours, minutes,
           float_to_double(integer_to_float(seconds)), day_name);
 }
-
-/* Empties the command log. */
-void command_log_clear(void) {
-  command_log.write = command_log.entries;
-  command_log.read = command_log.entries;
-}
-
-/* Prints the command log. */
-void gps_print_commands(void) { gps_print_command_log(&command_log); }
 
 /* Copies "Enabled" for 1, "Disabled" for 0, else "?". */
 void enabled_string(uint8_t enabled, char* text) {

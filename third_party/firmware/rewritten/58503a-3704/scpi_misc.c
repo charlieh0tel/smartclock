@@ -14,7 +14,7 @@ int32_t scpi_query_RTCM(void* parameters, void* response, scpi_call* call) {
   /* The bit of rtcm_supported's result that says RTCM is. */
   static const uint8_t RTCM_SUPPORTED = 0x02;
 
-  if (tcode_query_allowed(return_zero(call->input)) == 0) {
+  if (tcode_query_allowed(scpi_input_source(call->input)) == 0) {
     return scpi_query_failed(STATUS_SETTINGS_CONFLICT, call);
   }
   if ((rtcm_supported() & RTCM_SUPPORTED) == 0) {

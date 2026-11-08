@@ -208,10 +208,13 @@ the rear panel's designator for it (`z3801a-rear-panel.jpg`, "Port 1
 J3").  Beside J1 sit U2, a Linear Technology LT1180ACS RS-232 driver
 and receiver, two of each (`z3805a-interior.jpg`, 450,900 to
 1000,1250), and the footprints U5, U6 and U7, bare on the Z3805A.  The
-58503A fits U7 alone (`58503a-interior.jpg`, 1120,3650 to 1300,3830,
-an SO-8, marking not legible); the Z3801A, whose port the manual makes
-RS-422, fits an AT&T part at U5 or U6 (`z3801a-main-board.jpg`,
-1500,2550 to 2150,3072), which suggests the RS-422 driver goes there.
+58503A fits U7 alone (`58503a-interior.jpg`, 1120,3650 to 1300,3830),
+an SO-8 National DS8921M, an RS-422 line driver and receiver pair
+(marking 6ZAG DS892 1M); beside the RS-232/RS-422 jumper block XW1, it
+is inferred, not traced, to be the port's RS-422 side.  The Z3801A,
+whose port the manual makes RS-422, fits an AT&T part at U5 or U6
+(`z3801a-main-board.jpg`, 1500,2550 to 2150,3072), which suggests its
+RS-422 driver goes there.
 The lines from U33's PQS6 and PQS7 leave through vias; not followed.
 Still needs the bench.
 

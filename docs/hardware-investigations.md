@@ -865,17 +865,20 @@ no CPU code differs in a way that would drive J4
 (`firmware/outputs.md`, "The FPGA bitstreams").  On the component
 side, no part near J4 is fitted on the Z3805A and missing on the
 58503A.  The Z3805A's back side was photographed on 2026-10-30
-(`board-atlas.html`); the 58503A's has not been.  Decoded with
+(`board-atlas.html`); the 58503A's has not been, but every resistor
+pack on its back side is seen fitted, R32 between U17 and J4 among
+them, so a missing pack does not explain J4.  Decoded with
 an XC3000 bitstream viewer, the Z3805A's bitstream makes FPGA pin 45
 an output that the 58503A's leaves unused, and pin 14 a registered
 output where the 58503A's is unregistered (`firmware/outputs.md`).
 
 - [ ] TODO: follow J4's center pin back to its buffer (U17 or U18) and
   scope the buffer's input and output.  A pulse at the input and none
-  at J4 means a part between them is missing.  No pulse at the input
-  points to the FPGA bitstream.
+  at J4 points to the buffer's DIR or /OE, or to the path through R32,
+  which is fitted.  No pulse at the input points to the FPGA bitstream.
 - [ ] TODO: photograph the back of both boards under J4 and J5 and
-  compare the fitted parts (`bench.md`, "Photos still wanted").
+  compare the fitted parts other than the resistor packs, which are
+  fitted on both (`bench.md`, "Photos still wanted").
 - [ ] TODO: with power off, check continuity on the 58503A from U32
   pin 45 to the input of J4's buffer.  Scope U32 pin 14 on the 58503A,
   and pins 14 and 45 on the Z3805A, for 1 PPS.
@@ -897,7 +900,7 @@ leave through vias at the transceivers' pins: not followable.  The
 58503A's U17 and U18 are fitted, their markings under a cable
 (`58503a-gps-engine.jpg`, 1550,3450 to 2000,4080), so no transceiver
 is missing on the component side.  The 58503A's back side remains
-unphotographed.
+unphotographed; its resistor packs are all seen fitted.
 
 *Measured on the bench Z3805A, 3625A01487, 2026-10-30,* power off,
 with an ohmmeter.  J4 reaches U17's B side through R32, and J5 U18's

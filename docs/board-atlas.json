@@ -77,7 +77,7 @@
     },
     {
       "id": "unplaced",
-      "title": "Not yet placed"
+      "title": "Subsystem not known"
     }
   ],
   "heading": "HP Z3805A main board, Z3805-68001",
@@ -135,7 +135,7 @@
     "What decodes the QSPI's PCS0 to PCS3 into its devices ([[docs/firmware/structures.md|The QSPI's devices]]), and whether {{U48}} and {{U50}} take device 7's word to {{U56}}.",
     "Which rail feeds {{U37}}'s VDD ([[docs/hardware-investigations.md|item 23]]); {{U40}}, a 78L12, sits beside it.",
     "{{U51}} and {{U57}}, under the heatsink.",
-    "Which RAM is U8 or U9 and which U15 or U16, and which pair of U11 to U14 is the lower flash bank.",
+    "Which byte {{U9}} and {{U16}} each take, and which pair of U11 to U14 is the lower flash bank.",
     "J12: a BDM header or not ([[docs/hardware-investigations.md|item 13]]).",
     "The DUART's /INTR to U33's /IRQ2, and whether {{U29}} is between them ([[docs/hardware-investigations.md|item 21]])."
   ],
@@ -148,7 +148,7 @@
       "at": {
         "top": {
           "x": 66.3,
-          "y": 75.0
+          "y": 75.16
         }
       },
       "firmware": "",
@@ -172,8 +172,8 @@
       },
       "at": {
         "top": {
-          "x": 71.6,
-          "y": 5.0
+          "x": 71.2,
+          "y": 6.8
         }
       },
       "firmware": "[[docs/hardware-investigations.md|item 3]]",
@@ -195,7 +195,12 @@
         "note": "",
         "status": "open"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 11.73,
+          "y": 42.22
+        }
+      },
       "firmware": "[[docs/hardware-investigations.md|item 13]]",
       "group": "conn",
       "id_confidence": "board",
@@ -215,7 +220,12 @@
         "note": "an AMP connector",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 55.4,
+          "y": 58.41
+        }
+      },
       "firmware": "[[docs/hardware-investigations.md|item 20]]",
       "group": "conn",
       "id_confidence": "board",
@@ -235,7 +245,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 75.59,
+          "y": 63.32
+        }
+      },
       "firmware": "",
       "group": "conn",
       "id_confidence": "board",
@@ -307,8 +322,8 @@
       },
       "at": {
         "top": {
-          "x": 68.5,
-          "y": 16.8
+          "x": 68.2,
+          "y": 16.83
         }
       },
       "firmware": "[[docs/hardware-investigations.md|item 4]]",
@@ -330,7 +345,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 66.74,
+          "y": 83.26
+        }
+      },
       "firmware": "",
       "group": "conn",
       "id_confidence": "board",
@@ -377,8 +397,8 @@
       },
       "at": {
         "top": {
-          "x": 39.5,
-          "y": 16.3
+          "x": 40.04,
+          "y": 16.55
         }
       },
       "firmware": "[[docs/hardware-investigations.md|item 4]]",
@@ -450,16 +470,21 @@
         "note": "",
         "status": "open"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 71.86,
+          "y": 21.95
+        }
+      },
       "firmware": "[[docs/bench.md|HP Z3805A, serial 3625A01487]].",
       "group": "fpga",
       "id_confidence": "board",
       "marking": "unfitted",
       "note": "",
-      "ref": "J6, J7, J8",
+      "ref": "J6",
       "role": "None fitted.",
       "role_confidence": "open",
-      "type": "Jack footprints, no part",
+      "type": "Jack footprint, no part",
       "z3801a": {
         "note": "",
         "status": "open"
@@ -470,7 +495,62 @@
         "note": "",
         "status": "open"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 67.84,
+          "y": 22.01
+        }
+      },
+      "firmware": "[[docs/bench.md|HP Z3805A, serial 3625A01487]].",
+      "group": "fpga",
+      "id_confidence": "board",
+      "marking": "unfitted",
+      "note": "",
+      "ref": "J7",
+      "role": "None fitted.",
+      "role_confidence": "open",
+      "type": "Jack footprint, no part",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 63.74,
+          "y": 21.95
+        }
+      },
+      "firmware": "[[docs/bench.md|HP Z3805A, serial 3625A01487]].",
+      "group": "fpga",
+      "id_confidence": "board",
+      "marking": "unfitted",
+      "note": "",
+      "ref": "J8",
+      "role": "None fitted.",
+      "role_confidence": "open",
+      "type": "Jack footprint, no part",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 18.09,
+          "y": 29.83
+        }
+      },
       "firmware": "",
       "group": "conn",
       "id_confidence": "board",
@@ -480,6 +560,131 @@
       "role": "Not identified.",
       "role_confidence": "open",
       "type": "Socket",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 74.64,
+          "y": 33.3
+        }
+      },
+      "firmware": "",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "J10",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 59.64,
+          "y": 33.19
+        }
+      },
+      "firmware": "",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "J11",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 81,
+          "y": 66.57
+        }
+      },
+      "firmware": "",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "J16",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 48.82,
+          "y": 76.09
+        }
+      },
+      "firmware": "",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "J19",
+      "role": "The front panel's, by the board map; not traced.",
+      "role_confidence": "open",
+      "type": "Connector",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 69.67,
+          "y": 88.08
+        }
+      },
+      "firmware": "",
+      "group": "conn",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "J21",
+      "role": "To and from the OCXO, by the board map; not traced.",
+      "role_confidence": "open",
+      "type": "Connector",
       "z3801a": {
         "note": "",
         "status": "open"
@@ -1027,10 +1232,10 @@
       },
       "firmware": "CS0 reads both; CS2 writes the upper byte and CS3 the lower, 64 KiB at `0x100000` of the two parts' 256 KiB: [[docs/firmware/restart.md|The chip selects]].",
       "group": "memory",
-      "id_confidence": "inferred",
+      "id_confidence": "board",
       "marking": "M5M51008BFP -70L 609107",
-      "note": "Both designators are printed beside the part; which names it is not settled.  Which RAM takes which byte was not traced.",
-      "ref": "U15 or U16",
+      "note": "U15 is printed beside it too; the board map places U16 here.  Which RAM takes which byte was not traced.",
+      "ref": "U16",
       "role": "RAM, one byte of each word.",
       "role_confidence": "read",
       "type": "Mitsubishi M5M51008B, 128 K x 8 static RAM, 70 ns",
@@ -1451,7 +1656,12 @@
         "note": "an empty PLCC-84 socket",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 75.23,
+          "y": 40.18
+        }
+      },
       "firmware": "Chip select 4 (`0x500000`) is set up and no instruction addresses it: [[docs/firmware/restart.md|The chip selects]].  The bare footprints are where a CS4 device would go, a place to look, not a finding: [[docs/firmware/58503a-3704.md|Not established]].",
       "group": "mcu",
       "id_confidence": "board",
@@ -1525,7 +1735,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 78.52,
+          "y": 47.07
+        }
+      },
       "firmware": "",
       "group": "analog",
       "id_confidence": "board",
@@ -1724,12 +1939,17 @@
         "note": "",
         "status": "open"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 75.45,
+          "y": 54.83
+        }
+      },
       "firmware": "",
       "group": "analog",
       "id_confidence": "board",
       "marking": "unfitted",
-      "note": "",
+      "note": "One place on the board map, which asks whether the two are one co-layout.",
       "ref": "U41, U42",
       "role": "None fitted.",
       "role_confidence": "open",
@@ -1916,22 +2136,52 @@
     },
     {
       "58503a": {
-        "note": "U7 alone fitted",
-        "status": "differs"
+        "note": "",
+        "status": "same"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 56.06,
+          "y": 12.7
+        }
+      },
       "firmware": "[[docs/hardware-investigations.md|item 3]]",
       "group": "serial",
       "id_confidence": "board",
       "marking": "unfitted",
-      "note": "",
-      "ref": "U5, U6, U7",
+      "note": "One place on the board map, which asks whether the two are one co-layout.",
+      "ref": "U5, U6",
       "role": "None fitted.  Beside U2 and J1.",
       "role_confidence": "open",
       "type": "Small-outline footprints, no part",
       "z3801a": {
         "note": "an AT&T part at U5 or U6; the port is RS-422",
         "status": "differs"
+      }
+    },
+    {
+      "58503a": {
+        "note": "fitted",
+        "status": "differs"
+      },
+      "at": {
+        "top": {
+          "x": 51.89,
+          "y": 13.25
+        }
+      },
+      "firmware": "[[docs/hardware-investigations.md|item 3]]",
+      "group": "serial",
+      "id_confidence": "board",
+      "marking": "unfitted",
+      "note": "",
+      "ref": "U7",
+      "role": "None fitted.  Beside U2.",
+      "role_confidence": "open",
+      "type": "Small-outline footprint, no part",
+      "z3801a": {
+        "note": "",
+        "status": "open"
       }
     },
     {
@@ -2141,6 +2391,56 @@
       },
       "at": {
         "top": {
+          "x": 42.31,
+          "y": 49.16
+        }
+      },
+      "firmware": "",
+      "group": "power",
+      "id_confidence": "board",
+      "marking": "VCC",
+      "note": "",
+      "ref": "TP1",
+      "role": "Not traced; by its marking, VCC.",
+      "role_confidence": "open",
+      "type": "Test point",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 24.46,
+          "y": 49.05
+        }
+      },
+      "firmware": "",
+      "group": "power",
+      "id_confidence": "board",
+      "marking": "GND",
+      "note": "",
+      "ref": "TP2",
+      "role": "Not traced; by its marking, ground.",
+      "role_confidence": "open",
+      "type": "Test point",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
           "x": 60.64,
           "y": 82.89
         }
@@ -2222,10 +2522,10 @@
       },
       "firmware": "CS0 reads both; CS2 writes the upper byte and CS3 the lower, 64 KiB at `0x100000` of the two parts' 256 KiB: [[docs/firmware/restart.md|The chip selects]].",
       "group": "memory",
-      "id_confidence": "inferred",
+      "id_confidence": "board",
       "marking": "M5M51008BFP -70L 609107",
-      "note": "Both designators are printed beside the part; which names it is not settled.  Which RAM takes which byte was not traced.",
-      "ref": "U8 or U9",
+      "note": "U8 is printed beside it too; the board map places U9 here.  Which RAM takes which byte was not traced.",
+      "ref": "U9",
       "role": "RAM, one byte of each word.",
       "role_confidence": "read",
       "type": "Mitsubishi M5M51008B, 128 K x 8 static RAM, 70 ns",
@@ -2241,8 +2541,108 @@
       },
       "at": {
         "top": {
-          "x": 51.7,
-          "y": 9.0
+          "x": 43.47,
+          "y": 21.62
+        }
+      },
+      "firmware": "",
+      "group": "memory",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "The board map places it on {{U12}}, whose label reads U12/1L.",
+      "ref": "1L",
+      "role": "A flash position, by the board map.",
+      "role_confidence": "open",
+      "type": "Flash position name",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 26.51,
+          "y": 21.42
+        }
+      },
+      "firmware": "",
+      "group": "memory",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "The board map places it on {{U14}}, whose label reads U14/1M.",
+      "ref": "1M",
+      "role": "A flash position, by the board map.",
+      "role_confidence": "open",
+      "type": "Flash position name",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 54.08,
+          "y": 21.12
+        }
+      },
+      "firmware": "",
+      "group": "memory",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "The board map places it on {{U11}}, whose label reads U11/2L.",
+      "ref": "2L",
+      "role": "A flash position, by the board map.",
+      "role_confidence": "open",
+      "type": "Flash position name",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 35.65,
+          "y": 21.27
+        }
+      },
+      "firmware": "",
+      "group": "memory",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "The board map places it on {{U13}}, whose label reads U13/2M.",
+      "ref": "2M",
+      "role": "A flash position, by the board map.",
+      "role_confidence": "open",
+      "type": "Flash position name",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 51.67,
+          "y": 8.73
         }
       },
       "firmware": "3.6864 MHz is the 68681 family's standard clock, which the Oman installer's baud codes assume; the board's crystal was not checked: [[docs/firmware/restart.md|The switch byte at `0x302000`]].",
@@ -2254,6 +2654,31 @@
       "role": "The DUART's clock, by its place beside U3.",
       "role_confidence": "inferred",
       "type": "Crystal, 3.68 MHz as marked",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 76.54,
+          "y": 12.04
+        }
+      },
+      "firmware": "",
+      "group": "serial",
+      "id_confidence": "board",
+      "marking": "RS232, RS422",
+      "note": "",
+      "ref": "XW1",
+      "role": "Not traced; by its marking, selects RS-232 or RS-422.",
+      "role_confidence": "open",
+      "type": "Jumper block",
       "z3801a": {
         "note": "",
         "status": "open"
@@ -2289,7 +2714,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 80.05,
+          "y": 14.29
+        }
+      },
       "firmware": "",
       "group": "unplaced",
       "id_confidence": "board",
@@ -2309,7 +2739,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 76.4,
+          "y": 14.35
+        }
+      },
       "firmware": "",
       "group": "unplaced",
       "id_confidence": "board",
@@ -2329,7 +2764,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 72.96,
+          "y": 14.35
+        }
+      },
       "firmware": "",
       "group": "unplaced",
       "id_confidence": "board",
@@ -2349,7 +2789,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 69.3,
+          "y": 14.13
+        }
+      },
       "firmware": "",
       "group": "unplaced",
       "id_confidence": "board",
@@ -2369,7 +2814,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 80.13,
+          "y": 33.63
+        }
+      },
       "firmware": "",
       "group": "unplaced",
       "id_confidence": "board",
@@ -2389,7 +2839,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 65.5,
+          "y": 33.19
+        }
+      },
       "firmware": "",
       "group": "unplaced",
       "id_confidence": "board",
@@ -2409,7 +2864,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 75.59,
+          "y": 58.47
+        }
+      },
       "firmware": "",
       "group": "unplaced",
       "id_confidence": "board",
@@ -2429,7 +2889,12 @@
         "note": "fitted",
         "status": "differs"
       },
-      "at": {},
+      "at": {
+        "top": {
+          "x": 71.64,
+          "y": 59.68
+        }
+      },
       "firmware": "",
       "group": "unplaced",
       "id_confidence": "board",
@@ -2439,6 +2904,456 @@
       "role": "None fitted.",
       "role_confidence": "open",
       "type": "Footprint, no part",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 70.62,
+          "y": 19.53
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "CR11",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 67.25,
+          "y": 19.42
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "CR12",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 63.23,
+          "y": 19.47
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "CR13",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 80.13,
+          "y": 25.04
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "CR14",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 75.45,
+          "y": 24.87
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "CR15",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 65.94,
+          "y": 54.89
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "The board map's designator is a guess.",
+      "ref": "Q5",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 64.18,
+          "y": 54.67
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "The board map's designator is a guess.",
+      "ref": "Q6",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 64.33,
+          "y": 64.03
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "The board map's designator is a guess.",
+      "ref": "Q8",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 61.11,
+          "y": 64.14
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "The board map's designator is a guess.",
+      "ref": "Q9",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 73.47,
+          "y": 71.52
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "The board map's designator is a guess.",
+      "ref": "Q10",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 70.76,
+          "y": 72.24
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "The board map's designator is a guess.",
+      "ref": "Q11",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 64.33,
+          "y": 70.09
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "The board map's designator is a guess.",
+      "ref": "Q12",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 61.4,
+          "y": 55.33
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "TP3",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Test point",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 68.71,
+          "y": 60.62
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "TP5",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Test point",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 51.38,
+          "y": 76.81
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "TP6",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Test point",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 12.53,
+          "y": 36.99
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "open",
+      "marking": "not read",
+      "note": "The board map's designator is a guess.",
+      "ref": "U30",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 55.33,
+          "y": 51.58
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "VR3",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "top": {
+          "x": 55.25,
+          "y": 54.39
+        }
+      },
+      "firmware": "",
+      "group": "unplaced",
+      "id_confidence": "board",
+      "marking": "not read",
+      "note": "",
+      "ref": "VR4",
+      "role": "Not identified.",
+      "role_confidence": "open",
+      "type": "Not identified",
       "z3801a": {
         "note": "",
         "status": "open"

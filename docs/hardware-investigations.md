@@ -515,13 +515,12 @@ which way any position is set; on the 58503A it is a CTS part marked
 ON at position 1's end (`58503a-interior.jpg`, 1170,1770 to
 1350,2100), all eight actuators alike.  Its lines leave through vias.
 A fitted right-angle pin header, J12, sits at the board edge beside
-U33 (`z3805a-cpu-fpga-flash.jpg`, 3500,750 to 3850,1150), five
-positions seen in one row and partly behind a bracket: the place the
-MC68331 manual recommends for its 10-pin BDM header (MC68331UM
-5.10.2.8, Figure 5-11), but whether it carries BKPT/DSCLK,
-IFETCH/DSI and IPIPE/DSO needs a continuity check.  J9, a 2 x 5
-socket near U24 (3250,1550 to 3500,1850), is the other unexplained
-connector.
+U33 (`z3805a-cpu-fpga-flash.jpg`, 3500,750 to 3850,1150), 2 x 5 at
+0.100 in pitch and partly behind a bracket: the shape of the 10-pin
+header the MC68331 manual recommends for BDM (MC68331UM 5.10.2.8, Figure
+5-11), but whether it carries BKPT/DSCLK, IFETCH/DSI and IPIPE/DSO
+needs a continuity check.  J9, a 2 x 5 receptacle near U24
+(3250,1550 to 3500,1850), is the Oncore GPS receiver's connector.
 
 - [ ] TODO: J12 continuity, below.
 

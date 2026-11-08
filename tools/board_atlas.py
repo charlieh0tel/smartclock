@@ -22,9 +22,9 @@ The data, one JSON object:
                        height (pixels), alt, caption}
     groups             the parts table's sections, {id, title}, in order
     parts              each part: ref, group, marking, type, role,
-                       firmware, note; id_confidence (the designator and
-                       marking) and role_confidence, each a confidence
-                       id; z3801a and 58503a, each {status, note};
+                       firmware, note; id_confidence (the designator),
+                       marking_confidence and role_confidence, each a
+                       confidence id; z3801a and 58503a, each {status, note};
                        at, {view id: {x, y}}, the ring's center in
                        percent of the photo's width and height
     nets_intro, nets   the measured nets, {net, path, note}
@@ -60,6 +60,11 @@ REF = re.compile(r"\{\{([^}]+)\}\}")
 ITEM = re.compile(r"item (\d+)$")
 COMPARED = ("z3801a", "58503a")
 COMPARED_TITLES = {"z3801a": "Z3801A", "58503a": "58503A"}
+# A part's confidences, (kind, the filter's title): each is the part's
+# <kind>_confidence field, its row's data-<kind>-confidence attribute
+# and the filter's <kind>: options, in the table's order.
+CONFIDENCE_FILTERS = (("id", "Designator"), ("marking", "Marking"), ("role", "Role"))
+CONFIDENCES = tuple(f"{kind}_confidence" for kind, _ in CONFIDENCE_FILTERS)
 
 CSS = """\
 /* Layout: the photos, each with its ringed parts, then the measured
@@ -680,7 +685,7 @@ def check(data):
         seen.add(ref)
         if part["group"] not in groups:
             die(f"{ref}: group {part['group']}")
-        for key in ("id_confidence", "role_confidence"):
+        for key in CONFIDENCES:
             if part[key] not in confidence:
                 die(f"{ref}: {key} {part[key]}")
         for model in COMPARED:
@@ -733,8 +738,8 @@ def render_tools(data):
                        for e in entries)
     tabs = "".join(f'<button type="button" role="tab" data-view="{v["id"]}" aria-controls="view-{v["id"]}">'
                    f'{html.escape(v["title"])}</button>' for v in data["views"])
-    confidence = (f'<optgroup label="Designator and marking">{options(data["confidence"], "id:")}</optgroup>'
-                  f'<optgroup label="Role">{options(data["confidence"], "role:")}</optgroup>')
+    confidence = "".join(f'<optgroup label="{title}">{options(data["confidence"], kind + ":")}</optgroup>'
+                         for kind, title in CONFIDENCE_FILTERS)
     return ('<div class="tools" hidden>\n'
             f'  <div class="tabs" role="tablist" aria-label="Photos">{tabs}</div>\n'
             '  <div class="zoom" role="group" aria-label="Zoom">'
@@ -784,7 +789,7 @@ def render(data):
 
     emit('<section class="card">')
     emit("  <h2>The marks</h2>")
-    emit("  <p>A ring's color is how its part is identified, its designator and marking; the table gives that and the role's apart.</p>")
+    emit("  <p>A ring's color is how its part's designator is identified; the table gives that, the marking's and the role's apart.</p>")
     emit("  " + legend(data["confidence"], "Confidence"))
     emit("</section>")
 
@@ -816,7 +821,7 @@ def render(data):
 
     emit('<section class="card">')
     emit("  <h2>Parts</h2>")
-    emit("  <p>Confidence is the designator and marking's, then the role's.  The last two columns compare the Z3801A's and the 58503A's boards at the same designator:</p>")
+    emit("  <p>Confidence is the designator's, the marking's, then the role's.  The last two columns compare the Z3801A's and the 58503A's boards at the same designator:</p>")
     emit("  " + legend(data["comparison"], "Comparison"))
     emit('  <div class="scroll"><table class="parts">')
     emit("    <thead><tr><th>Ref</th><th>Marking</th><th>Type</th><th>Role</th><th>Firmware</th>"
@@ -835,13 +840,14 @@ def render(data):
                 f"<td>{mark(part[m]['status'], part[m]['status'])}"
                 + (f"<br><small>{r(part[m]['note'])}</small>" if part[m]["note"] else "") + "</td>"
                 for m in COMPARED)
-            emit(f'      <tr id="{anchor(part["ref"])}" data-part="{slug(part["ref"])}" data-group="{part["group"]}" '
-                 f'data-id-confidence="{part["id_confidence"]}" data-role-confidence="{part["role_confidence"]}">'
+            confidences = [(kind, part[f"{kind}_confidence"]) for kind, _ in CONFIDENCE_FILTERS]
+            emit(f'      <tr id="{anchor(part["ref"])}" data-part="{slug(part["ref"])}" data-group="{part["group"]}"'
+                 + "".join(f' data-{kind}-confidence="{value}"' for kind, value in confidences) + ">"
                  f'<td class="ref">{html.escape(part["ref"])}<small>{html.escape(on)}</small></td>'
                  f'<td class="marking">{r(part["marking"])}</td><td class="type">{r(part["type"])}</td>'
                  f'<td class="role">{role}</td><td class="fw">{r(part["firmware"])}</td>'
-                 f'<td>{mark(part["id_confidence"], "id " + part["id_confidence"])}<br>'
-                 f'{mark(part["role_confidence"], "role " + part["role_confidence"])}</td>{compared}</tr>')
+                 + "<td>" + "<br>".join(mark(value, f"{kind} {value}") for kind, value in confidences)
+                 + f"</td>{compared}</tr>")
         emit("    </tbody>")
     emit("  </table></div>")
     emit("</section>")

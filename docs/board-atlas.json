@@ -76,7 +76,7 @@
       "title": "Connectors"
     },
     {
-      "id": "unplaced",
+      "id": "unknown",
       "title": "Subsystem not known"
     }
   ],
@@ -2621,7 +2621,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "unfitted",
       "note": "",
@@ -2646,7 +2646,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "unfitted",
       "note": "",
@@ -2671,7 +2671,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "unfitted",
       "note": "",
@@ -2696,7 +2696,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "unfitted",
       "note": "",
@@ -2721,7 +2721,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "unfitted",
       "note": "",
@@ -2746,7 +2746,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "unfitted",
       "note": "",
@@ -2771,7 +2771,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "unfitted",
       "note": "",
@@ -2796,7 +2796,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "unfitted",
       "note": "",
@@ -2821,7 +2821,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",
@@ -2846,7 +2846,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",
@@ -2871,7 +2871,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",
@@ -2896,7 +2896,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",
@@ -2921,7 +2921,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",
@@ -2946,7 +2946,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "open",
       "marking": "not read",
       "note": "The board map's designator is a guess.",
@@ -2971,7 +2971,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "open",
       "marking": "not read",
       "note": "The board map's designator is a guess.",
@@ -2996,7 +2996,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "open",
       "marking": "not read",
       "note": "The board map's designator is a guess.",
@@ -3021,7 +3021,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "open",
       "marking": "not read",
       "note": "The board map's designator is a guess.",
@@ -3046,7 +3046,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "open",
       "marking": "not read",
       "note": "The board map's designator is a guess.",
@@ -3071,7 +3071,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "open",
       "marking": "not read",
       "note": "The board map's designator is a guess.",
@@ -3096,7 +3096,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "open",
       "marking": "not read",
       "note": "The board map's designator is a guess.",
@@ -3121,7 +3121,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",
@@ -3146,7 +3146,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",
@@ -3171,7 +3171,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",
@@ -3196,7 +3196,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "open",
       "marking": "not read",
       "note": "The board map's designator is a guess.",
@@ -3221,7 +3221,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",
@@ -3246,7 +3246,7 @@
         }
       },
       "firmware": "",
-      "group": "unplaced",
+      "group": "unknown",
       "id_confidence": "board",
       "marking": "not read",
       "note": "",

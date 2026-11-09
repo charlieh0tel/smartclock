@@ -1,4 +1,4 @@
-//! `docs/loop.html` explains the disciplining loop; `docs/firmware/loop.md`
+//! `docs/pages/loop.html` explains the disciplining loop; `docs/firmware/loop.md`
 //! is the evidence for it.  Each value the page's tables state must be
 //! one the evidence states, so the two cannot drift apart unnoticed.
 
@@ -66,7 +66,7 @@ fn seconds(text: &str) -> Vec<String> {
 
 #[test]
 fn the_loop_page_states_only_values_its_evidence_states() {
-    let page = fs::read_to_string(format!("{}/docs/loop.html", root())).expect("the page");
+    let page = fs::read_to_string(format!("{}/docs/pages/loop.html", root())).expect("the page");
     let evidence =
         fs::read_to_string(format!("{}/docs/firmware/loop.md", root())).expect("the evidence");
     let by_model = &page[page.find("<h3>By model</h3>").expect("the by-model table")..];

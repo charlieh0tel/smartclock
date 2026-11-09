@@ -339,18 +339,19 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   it differently costs more than one definition; `make ci` is stricter
   and is what you run.  The browser and firmware checks need Node,
   Chromium, an m68k gcc and uv, so they are jobs of their own.
-- Generated HTML pages (the board atlas, the SCPI trees by model) are
-  built from their sources by `make pages` and published on GitHub
-  Pages by `.github/workflows/pages.yml`, not committed.  A committed
-  copy needed a drift check and a regeneration commit for every change
-  to its data, and could be viewed only through htmlpreview.github.io;
+- HTML pages are published on GitHub Pages by
+  `.github/workflows/pages.yml`, which `make pages` builds.  Generated
+  ones (the board atlas, the SCPI trees by model) are built from their
+  sources and not committed; hand-written ones (`loop.html` and the
+  bench records) are copied from their sources in `docs/pages/`.  A
+  generated page's committed copy needed a drift check and a
+  regeneration commit for every change to its data, and could be viewed only through htmlpreview.github.io;
   a Pages URL is the repository's own and permanent.  The build runs
   on pull requests too, so a source that breaks a page fails before it
   lands.  Each page that was once committed leaves a forwarding page
-  at its old path.  Hand-written pages (`docs/loop.html` and the bench
-  records) are sources, so they stay committed and linked through
-  htmlpreview.  Generated Markdown stays committed: GitHub renders it
-  in place.
+  at its old path.  The hand-written ones moved too, so that every
+  page has one kind of URL and none needs htmlpreview's workarounds.
+  Generated Markdown stays committed: GitHub renders it in place.
 
 ### Flashing is a direct-port command of the CLI
 

@@ -1,4 +1,4 @@
-//! The dynamics `docs/loop.html` states for the disciplining loop --
+//! The dynamics `docs/pages/loop.html` states for the disciplining loop --
 //! its closed-loop poles, the slow pole's time constant, the overshoot
 //! -- recomputed from the update law in `docs/firmware/loop.md`, so a
 //! figure on the page cannot drift from the arithmetic behind it.
@@ -156,7 +156,7 @@ fn step(tau: f64) -> Vec<f64> {
 
 fn page() -> String {
     fs::read_to_string(format!(
-        "{}/../../docs/loop.html",
+        "{}/../../docs/pages/loop.html",
         env!("CARGO_MANIFEST_DIR")
     ))
     .expect("the page")

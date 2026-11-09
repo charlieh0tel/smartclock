@@ -118,16 +118,19 @@ docs:
 	$(CARGO) run -q -p smartclock-cli -- dump-oncore --models $(ONCORE_IMAGES) \
 		> docs/firmware/oncore/models.md
 
-# The generated pages, into PAGES_DIR, each failing on an error in its
+# The published pages, into PAGES_DIR, each failing on an error in its
 # source; .github/workflows/pages.yml publishes them on GitHub Pages, at
-# https://charlieh0tel.github.io/smartclock/<page>.html.  They are not
-# committed; one that once was left, at its old path in docs/, a page
-# forwarding to its new one.  Each page is built by the target of its
-# own name, writing $(PAGES_DIR)/<page>.html with a <title> and a
-# description meta tag; a page joins by such a target, named in PAGES.
-# The index, index.html, lists them in that order.
+# https://charlieh0tel.github.io/smartclock/<page>.html.  The generated
+# ones are not committed; the hand-written ones' sources are in
+# docs/pages/, HAND_PAGES, copied with the files they name.  A page
+# that once was at a path in docs/ left there a page forwarding to its
+# new one.  Each page is built by the target of its own name, writing
+# $(PAGES_DIR)/<page>.html with a <title> and a description meta tag;
+# a page joins by such a target, named in PAGES.  The index,
+# index.html, lists them in that order.
 PAGES_DIR ?= target/pages
-PAGES := board-atlas scpi-models
+HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
+PAGES := board-atlas scpi-models $(HAND_PAGES)
 .PHONY: $(PAGES)
 pages: $(PAGES)
 	python3 -I tools/pages_index.py $(PAGES_DIR) $(PAGES:%=%.html)
@@ -146,10 +149,14 @@ scpi-models:
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models --html third_party/firmware/images/*.bin \
 		> $(PAGES_DIR)/scpi-models.html
 
-# Fail if an HTML page, the generated ones or one in docs/, scrolls
-# sideways at desktop width.  Needs Chrome; not part of ci.
+$(HAND_PAGES):
+	mkdir -p $(PAGES_DIR)
+	python3 -I tools/pages_copy.py docs/pages/$@.html $(PAGES_DIR)
+
+# Fail if a published page scrolls sideways at desktop width.  Needs
+# Chrome; not part of ci.
 check-pages: pages
-	./tools/check-pages.sh $(PAGES_DIR) docs
+	./tools/check-pages.sh $(PAGES_DIR)
 
 # The firmware's checks and generated files, which
 # third_party/firmware/Makefile runs, alone or from here by name, for

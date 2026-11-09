@@ -1,9 +1,9 @@
 #!/bin/sh
 # Load each HTML page under the directories given (make check-pages
-# gives the generated pages' and docs/) in headless Chrome at desktop
-# widths and fail if the page is wider than the window or any box on it
-# scrolls sideways.  A page forwarding to another, which docs/ keeps at
-# a generated page's old path, is skipped.  Headless screenshots hide scrollbars, so this measures
+# gives the published pages') in headless Chrome at desktop widths and
+# fail if the page is wider than the window or any box on it scrolls
+# sideways.  A page forwarding to another, which docs/ keeps at a
+# published page's old path, is skipped.  Headless screenshots hide scrollbars, so this measures
 # instead of looking.  Needs google-chrome or chromium; not run in CI.
 set -eu
 

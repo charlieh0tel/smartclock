@@ -74,7 +74,7 @@ regulators on the output bracket, the -15 V one an LM7915.
 ![The 58503A's original power supply, Power-One MAP55-4003, out of the receiver: the outputs at the left, AC input at the right](images/58503A-60001_RevC/58503a-power-supply.jpg)
 
 Its parts, numbered on the photo:
-[`map55-4003.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/map55-4003.html).
+[`map55-4003.html`](https://charlieh0tel.github.io/smartclock/map55-4003.html).
 
 ## HP Z3801A, serial 3542A01548
 
@@ -410,7 +410,7 @@ Later results (`hardware-investigations.md`, item 11):
 - 2026-10-03, 24 hours on one splitter beside the 58503A and a u-blox
   NEO-M8T, with that gain ahead of it alone: 2.9 satellites on average, none held below 39 dB-Hz where
   the 58503A held 88% at 36 to 39
-  ([bench-sky-2026-10-03.html](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/bench-sky-2026-10-03.html)).
+  ([bench-sky-2026-10-03.html](https://charlieh0tel.github.io/smartclock/bench-sky-2026-10-03.html)).
 - The 24 hours to 21:00 UTC on 2026-10-05, with the 20 dB LNA still in
   place: lock 88.3% of the time, on about 2.7 satellites on average
   while locked.

@@ -22,4 +22,4 @@ smartclock-http = { path = "../smartclock-http" }
 smartclock-log = { path = "../smartclock-log" }
 
 [dev-dependencies]
-rusqlite = { version = "0.40.2", features = ["bundled"] }
+rusqlite = { version = "0.41.1", features = ["bundled"] }

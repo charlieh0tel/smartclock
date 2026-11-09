@@ -1,96 +1,26 @@
 # smartclock
 
-HP / Agilent / Symmetricom SmartClock GPS time and frequency receivers
--- the 58503A/B, 59551A and Z3801A, Z3805A, Z3815A and Z3816A: tools to
-monitor them, their firmware read and rewritten as C, and their boards
-mapped.  It began as a monitor and became a study of how the receivers
-work.
+**smartclock**: the HP / Agilent / Symmetricom SmartClock GPS time and
+frequency receivers (58503A/B, 59551A, Z3801A, Z3805A, Z3815A, Z3816A),
+taken apart and documented.
 
-- **Monitoring** (`smartclockmon`): a Rust library, a logging daemon,
-  a terminal monitor, a browser view and a Prometheus exporter, for
-  receivers on a serial port.  In daily use, logging continuously.
-- **The firmware**: seven ROM images read and documented -- the SCPI
-  command trees, the 1 PPS measurement, the disciplining loop, the GPS
-  engine interface, the pForth console, the FPGA bitstreams -- and
-  three, the Z3805A's 3543B, the 58503A's 3704 and the Z3801A's 3543,
-  rewritten whole as C by hand and checked against the image function
-  by function.
-- **The hardware**: the boards' parts mapped from photographs, the
-  parts' data sheets, and what only a bench can settle, with the
-  procedures to settle it.
+**Docs site:** the board atlas, the loop analysis and the SCPI trees, at
+<https://charlieh0tel.github.io/smartclock/>.
 
-![The live page: a day of the 1 PPS interval, EFC and satellites of a locked 58503A](docs/images/web-live.png)
-
-| Stability, a week | Correlation, EFC against ambient temperature |
-| - | - |
-| ![The stability page: a week's MDEV, ADEV and TDEV with one-sigma bands](docs/images/web-stability.png) | ![The correlation page: EFC against ambient temperature, and r as one is moved against the other](docs/images/web-correlation.png) |
-| **Status** | **Terminal monitor** |
-| ![The status page: the receiver's screen beside a sky plot](docs/images/web-status.png) | ![The terminal monitor's dashboard](docs/images/tui-dashboard.png) |
-
-**Three receivers compared over a week**
-
-![The compare page: three receivers' stability over a week, side by side](docs/images/web-compare-stability.png)
-
-The whole pages: [compare](docs/images/web-compare.png),
-[correlation](docs/images/web-correlation-page.png).  The history pages
-are shown from the bench's logs, the status page and the terminal
-monitor against the simulator; `make screenshots` takes them again.
-
-## Monitoring
-
-| Program | |
-| - | - |
-| `smartclockd` | holds the serial port, logs to SQLite, serves clients over a Unix socket and, if asked, TCP |
-| `smartclockmon` | terminal monitor: dashboard, history graphs, journal, status screen and stability |
-| `smartclock-web` | browser view: live state, zoomable history, the status screen, stability, receivers compared, measures correlated, and a kiosk screen for an unattended display |
-| `smartclock-exporter` | Prometheus metrics for every receiver, from the daemons' readings |
-| `smartclock-sensord` | logs room temperature, humidity and pressure from hwmon, IIO and TEMPer USB sticks ([design](docs/sensors.md)) |
-| `smartclock-cli` | queries, `diagnose`, notes and facts, transcripts, sweeps for undocumented commands, ROM and EEPROM reads, chip dumps joined and split, firmware loading ([notes](docs/firmware/restart.md#the-flasher)), and readers of a firmware image's SCPI tree, console words and Oncore messages |
-| `smartclock-sim` | a simulated receiver, in process for tests and over TCP for the real daemon |
-
-The library crates are `smartclock` (transports, SCPI framing, the
-command table, parsers, the status screen scraper, the polling task,
-the Allan deviation), `smartclock-log` (the log's schema and readers)
-and `smartclock-http` (the server the exporter and web view share).
-[`PLAN.md`](PLAN.md) holds the design, open questions and known
-defects.
-
-### Running it
-
-Releases carry two Debian packages for amd64 and arm64, also in the
-APT repository, and an unsupported Windows zip.  `smartclock-utils` is
-`smartclock-cli` and `smartclock-sim`, with no service; `smartclockmon`
-is the daemon, the monitors, the exporter and the sensor service, and
-requires `smartclock-utils` of its own version.  Build with `make`, or
-`make deb` for both packages.  `smartclockmon` runs one daemon per
-serial port, named by the port:
-`systemctl enable --now smartclockd@ttyUSB0`.
-[`docs/running.md`](docs/running.md) covers installing, settings,
-remote clients and Windows.
-
-Run by hand, the daemon holds the port and everything else is its
-client:
-
-    smartclockd --device /dev/serial/by-id/usb-... \
-                --log-dir . \
-                --socket /tmp/smartclockd.sock
-
-    smartclockmon --daemon /tmp/smartclockd.sock
-    smartclock-web --daemon /tmp/smartclockd.sock --log-dir .        # http://127.0.0.1:9980/
-    smartclock-exporter --daemon /tmp/smartclockd.sock               # http://127.0.0.1:9979/metrics
-
-Installed, the web view and exporter need no options: they find every
-daemon under `/run/smartclockd` and every log under
-`/var/lib/smartclockd`.  A client on another host names a daemon
-started with `--listen HOST:PORT` as `--daemon tcp://HOST:PORT`.
-[`docs/views.md`](docs/views.md) says what each view shows and why.
-
-Without a receiver, use the simulator; every tool takes
-`tcp://host:port` for a device path:
-
-    smartclock-sim 127.0.0.1:5025            # --model z3801a for a Z3801A, which does not echo
-    smartclockd     --device tcp://127.0.0.1:5025 ...
-    smartclock-cli  --device tcp://127.0.0.1:5025 diagnose
+- **[Firmware](#the-firmware):** seven ROM images read and documented:
+  the SCPI trees, the 1 PPS measurement, the disciplining loop, the GPS
+  engine interface, the pForth console.  Four are rewritten whole as C
+  and checked against the image function by function.
+- **[The disciplining loop](https://charlieh0tel.github.io/smartclock/loop.html):**
+  its update law, constants, aging feed-forward and start-up, analyzed
+  as a control system.
+- **[Hardware](#the-hardware):** the main board mapped part by part from
+  photographs, with the nets measured and the differences between
+  models ([the board atlas](https://charlieh0tel.github.io/smartclock/board-atlas.html)).
+  <!-- The FPGA bullet goes here when the FPGA write-up launches. -->
+- **[Monitoring](#monitoring):** a Rust library, a logging daemon, a
+  terminal monitor, a browser view and a Prometheus exporter, in daily
+  use against real receivers.
 
 ## The firmware
 
@@ -180,6 +110,79 @@ with the identified parts' data sheets under `third_party/`.
 [`docs/hardware-investigations.md`](docs/hardware-investigations.md)
 what only it can settle.  The HP 53131A-family counters are built on
 the same platform ([`docs/hp5313x.md`](docs/hp5313x.md)).
+
+## Monitoring
+
+![The live page: a day of the 1 PPS interval, EFC and satellites of a locked 58503A](docs/images/web-live.png)
+
+| Stability, a week | Correlation, EFC against ambient temperature |
+| - | - |
+| ![The stability page: a week's MDEV, ADEV and TDEV with one-sigma bands](docs/images/web-stability.png) | ![The correlation page: EFC against ambient temperature, and r as one is moved against the other](docs/images/web-correlation.png) |
+| **Status** | **Terminal monitor** |
+| ![The status page: the receiver's screen beside a sky plot](docs/images/web-status.png) | ![The terminal monitor's dashboard](docs/images/tui-dashboard.png) |
+
+**Three receivers compared over a week**
+
+![The compare page: three receivers' stability over a week, side by side](docs/images/web-compare-stability.png)
+
+The whole pages: [compare](docs/images/web-compare.png),
+[correlation](docs/images/web-correlation-page.png).  The history pages
+are shown from the bench's logs, the status page and the terminal
+monitor against the simulator; `make screenshots` takes them again.
+
+| Program | |
+| - | - |
+| `smartclockd` | holds the serial port, logs to SQLite, serves clients over a Unix socket and, if asked, TCP |
+| `smartclockmon` | terminal monitor: dashboard, history graphs, journal, status screen and stability |
+| `smartclock-web` | browser view: live state, zoomable history, the status screen, stability, receivers compared, measures correlated, and a kiosk screen for an unattended display |
+| `smartclock-exporter` | Prometheus metrics for every receiver, from the daemons' readings |
+| `smartclock-sensord` | logs room temperature, humidity and pressure from hwmon, IIO and TEMPer USB sticks ([design](docs/sensors.md)) |
+| `smartclock-cli` | queries, `diagnose`, notes and facts, transcripts, sweeps for undocumented commands, ROM and EEPROM reads, chip dumps joined and split, firmware loading ([notes](docs/firmware/restart.md#the-flasher)), and readers of a firmware image's SCPI tree, console words and Oncore messages |
+| `smartclock-sim` | a simulated receiver, in process for tests and over TCP for the real daemon |
+
+The library crates are `smartclock` (transports, SCPI framing, the
+command table, parsers, the status screen scraper, the polling task,
+the Allan deviation), `smartclock-log` (the log's schema and readers)
+and `smartclock-http` (the server the exporter and web view share).
+[`PLAN.md`](PLAN.md) holds the design, open questions and known
+defects.
+
+### Running it
+
+Releases carry two Debian packages for amd64 and arm64, also in the
+APT repository, and an unsupported Windows zip.  `smartclock-utils` is
+`smartclock-cli` and `smartclock-sim`, with no service; `smartclockmon`
+is the daemon, the monitors, the exporter and the sensor service, and
+requires `smartclock-utils` of its own version.  Build with `make`, or
+`make deb` for both packages.  `smartclockmon` runs one daemon per
+serial port, named by the port:
+`systemctl enable --now smartclockd@ttyUSB0`.
+[`docs/running.md`](docs/running.md) covers installing, settings,
+remote clients and Windows.
+
+Run by hand, the daemon holds the port and everything else is its
+client:
+
+    smartclockd --device /dev/serial/by-id/usb-... \
+                --log-dir . \
+                --socket /tmp/smartclockd.sock
+
+    smartclockmon --daemon /tmp/smartclockd.sock
+    smartclock-web --daemon /tmp/smartclockd.sock --log-dir .        # http://127.0.0.1:9980/
+    smartclock-exporter --daemon /tmp/smartclockd.sock               # http://127.0.0.1:9979/metrics
+
+Installed, the web view and exporter need no options: they find every
+daemon under `/run/smartclockd` and every log under
+`/var/lib/smartclockd`.  A client on another host names a daemon
+started with `--listen HOST:PORT` as `--daemon tcp://HOST:PORT`.
+[`docs/views.md`](docs/views.md) says what each view shows and why.
+
+Without a receiver, use the simulator; every tool takes
+`tcp://host:port` for a device path:
+
+    smartclock-sim 127.0.0.1:5025            # --model z3801a for a Z3801A, which does not echo
+    smartclockd     --device tcp://127.0.0.1:5025 ...
+    smartclock-cli  --device tcp://127.0.0.1:5025 diagnose
 
 ## Development
 

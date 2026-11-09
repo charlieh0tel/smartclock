@@ -1,0 +1,11 @@
+{
+  "title": "Z3815A phase-frequency detector, 2 ms free run, P7 GCLK's twin (from the VCD)",
+  "window": [0, 2000000000],
+  "unit": "ms",
+  "signals": [
+    {"path": "z3815a_tb.fpga.GE_Y", "label": "GE.Y  P7 / 6250", "kind": "sig"},
+    {"path": "z3815a_tb.p38", "label": "P38  LE.X", "kind": "bit"},
+    {"path": "z3815a_tb.fpga.GJ_Y", "label": "GJ.Y  GCLK / 6144", "kind": "sig"},
+    {"path": "z3815a_tb.p40", "label": "P40  LD.Y", "kind": "bit"}
+  ]
+}

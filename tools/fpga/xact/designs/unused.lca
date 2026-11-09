@@ -1,0 +1,22 @@
+;: unused.lca (3042PC84-70), hand-written: blocks configured with no nets
+Version 2
+Design 3042PC84 9 0
+Speed -70
+Editblk FF
+Base FG
+Config X:F Y: F:A:B:C:D G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = ((A*~B)+(C@D))
+Endblk
+Editblk HD
+Base FG
+Config X: Y:QY F: G:A:B DX: DY:G ENCLK: RSTDIR: CLK:K:NOT
+Equate G = A+B
+Endblk
+Editblk P11
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P50
+Base IO
+Config IN: OUT:O:FAST TRI:
+Endblk

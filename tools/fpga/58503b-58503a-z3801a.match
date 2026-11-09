@@ -1,0 +1,15 @@
+# The 58503B's blocks that are the 58503A's rather than the Z3805A's
+# (58503b-trace.md, "The 1 PPS divider" and "The sync field"), checked
+# by `make -f tools/fpga/Makefile check-blocks` (blockmatch.py).
+#
+# DH, the GPS 1 PPS's rising-edge detector, its flip-flops where the
+# 58503A has them; HJ, the pulse's end.
+pair DH
+pair HJ
+# HK, the 1 PPS's set-and-hold, is the 58503A's EI, with HH.Y for the
+# terminal and FH.X, P83's register, for P83's own pad.
+pair HK EI
+rename HK.X EI.Y
+rename HH.X HH.Y
+rename HH.Y HH.X
+rename FH.X PAD14.I

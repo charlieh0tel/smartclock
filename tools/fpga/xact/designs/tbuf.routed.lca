@@ -1,0 +1,71 @@
+; LCA Design=TBUF Part=3042PC84 -- Blocks=13 Nets=10.
+; Program=APR Version=5.2.0-base Date=Sun Oct 25 15:20:48 2026.
+; Speed File Version 3000.1 Revision 3042.2
+Design 3042PC84
+Speed -70
+Programorder On
+Addnet BUS1 TBUF.FB.1.O TBUF.FE.1.O PU.FA.1.O FH.E
+Netdelay BUS1 FH.E 7.3
+NProgram FH.20.1.2 FH.20.1.12 col.H.local.3:FH.E row.F.long.1:PU.FA.1.O row.F.long.1:TBUF.FB.1.O row.F.long.1:TBUF.FE.1.O col.H.local.3:row.F.long.1
+Addnet BUS2 TBUF.FD.2.O PU.FM.2.O FH.A
+Netdelay BUS2 FH.A 3.7
+NProgram row.F.long.2:FH.A row.F.long.2:PU.FM.2.O row.F.long.2:TBUF.FD.2.O
+Addnet D0 P23.I FC.D
+Netdelay D0 FC.D 4.8
+NProgram GC.20.1.8 GC.20.1.16 GB.20.1.8 GB.20.1.17 row.G.local.4:FC.D row.G.local.3:PAD84.I
+Addnet D1 P24.I FC.A
+Netdelay D1 FC.A 6.5
+NProgram GC.20.1.0 GC.20.1.14 HC.20.1.0 HC.20.1.19 HB.20.1.5 HB.20.1.18 col.C.local.1:FC.A row.H.local.2:PAD83.I
+Addnet OUT FH.X P65.O
+Netdelay OUT P65.O 6.2
+NProgram GJ.20.1.8 GJ.20.1.15 GL.20.1.8 GL.20.1.15 GK.20.1.9 GK.20.1.16 row.G.local.5:FH.X row.G.local.4:PAD36.O
+Addnet T0 P25.I TBUF.FB.1.T
+Netdelay T0 TBUF.FB.1.T 6.5
+NProgram FB.20.1.0 FB.20.1.13 GB.20.1.1 GB.20.1.12 HB.20.1.2 HB.20.1.17 row.H.local.3:PAD82.I col.B.local.1:TBUF.FB.1.T
+Addnet T1 P26.I TBUF.FE.1.T TBUF.FD.2.T
+Netdelay T1 TBUF.FE.1.T 17.1 TBUF.FD.2.T 11.0
+NProgram HA.20.1.4 HA.20.1.10 EE.20.1.0 EE.20.1.13 FE.20.1.1 FE.20.1.12 EE.20.1.0 EE.20.1.14 GA.20.1.9 GA.20.1.10 GE.20.1.2 GE.20.1.16 GD.20.1.4 GD.20.1.15 GD.20.1.8 GD.20.1.15 GB.20.1.9 GB.20.1.15 GC.20.1.9 GC.20.1.15 col.A.local.5:PAD81.I col.E.local.1:TBUF.FE.1.T col.D.local.5:TBUF.FD.2.T col.E.local.3:row.G.local.0 col.A.local.7:row.G.local.5
+Addnet X0 FC.X TBUF.FB.1.I
+Netdelay X0 TBUF.FB.1.I 5.7
+NProgram FB.20.1.3 FB.20.1.7 FC.20.1.6 FC.20.1.17 FD.20.1.14 FD.20.1.18 col.D.local.1:FC.X col.B.local.4:TBUF.FB.1.I col.B.local.8:row.F.local.3
+Addnet X1 FC.Y TBUF.FE.1.I
+Netdelay X1 TBUF.FE.1.I 2.4
+NProgram FE.20.1.3 FE.20.1.7 FE.20.1.7 FE.20.1.16 row.F.local.4:FC.Y col.E.local.4:TBUF.FE.1.I
+Addnet X2 P27.I TBUF.FD.2.I
+Netdelay X2 TBUF.FD.2.I 8.0
+NProgram GD.20.1.1 GD.20.1.12 HD.20.1.2 HD.20.1.12 ID.20.1.2 ID.20.1.16 IC.20.1.8 IC.20.1.15 IB.20.1.9 IB.20.1.15 row.I.local.5:PAD80.I col.D.local.2:TBUF.FD.2.I col.D.local.3:row.I.local.0
+Editblk FC
+Base FG
+Config F:D G:A X:F Y:G DX: DY: RSTDIR: CLK: ENCLK:
+Equate F = D
+Equate G = ~A
+Endblk
+Editblk FH
+Base FG
+Config F:E:A G: X:F Y: DX: DY: RSTDIR: CLK: ENCLK:
+Equate F = E*A
+Endblk
+Editblk P23
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P24
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P25
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P26
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P27
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P65
+Base IO
+Config IN: OUT:O TRI:
+Endblk

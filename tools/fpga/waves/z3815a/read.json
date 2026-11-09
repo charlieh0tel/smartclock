@@ -1,0 +1,37 @@
+{
+  "title": "Z3815A read port \u2014 one register read (from the VCD)",
+  "window": [
+    16350000,
+    19150000
+  ],
+  "unit": "us",
+  "signals": [
+    {
+      "path": "z3815a_tb.count_clock",
+      "label": "P7 clock",
+      "kind": "clock"
+    },
+    {
+      "path": "z3815a_tb.chip_select_n",
+      "label": "/CS (P61)",
+      "kind": "bit"
+    },
+    {
+      "path": "z3815a_tb.read_write",
+      "label": "R/W (P75)",
+      "kind": "bit"
+    },
+    {
+      "path": "z3815a_tb.address",
+      "label": "ADDR0-2",
+      "kind": "bus",
+      "base": "hex"
+    },
+    {
+      "path": "z3815a_tb.data",
+      "label": "DATA0-7",
+      "kind": "bus",
+      "base": "hex"
+    }
+  ]
+}

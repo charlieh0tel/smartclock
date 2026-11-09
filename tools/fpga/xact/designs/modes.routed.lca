@@ -1,0 +1,110 @@
+; LCA Design=MODES Part=3042PC84 -- Blocks=16 Nets=11.
+; Program=APR Version=5.2.0-base Date=Sun Oct 25 15:26:51 2026.
+; Speed File Version 3000.1 Revision 3042.2
+Design 3042PC84
+Speed -70
+Programorder On
+Addnet I0 P77.I DC.D DD.D DE.D DG.D
+Netdelay I0 DC.D 12.1 DD.D 12.1 DE.D 12.1 DG.D 12.1
+NProgram BK.20.1.4 BK.20.1.10 CK.20.1.4 CK.20.1.10 DK.20.1.4 DK.20.1.11 row.E.long.1:DC.D row.E.long.1:DD.D row.E.long.1:DE.D row.E.long.1:DG.D col.K.local.5:PAD20.I col.K.local.4:row.E.long.1
+Addnet I1 P78.I DC.B DD.B DE.B DF.A
+Netdelay I1 DC.B 18.3 DD.B 17.8 DE.B 13.9 DF.A 13.5
+NProgram BJ.20.1.0 BJ.20.1.13 CJ.20.1.1 CJ.20.1.12 DJ.20.1.2 DJ.20.1.17 DD.20.1.5 DD.20.1.19 DE.20.1.5 DE.20.1.19 DF.20.1.5 DF.20.1.19 DG.20.1.5 DG.20.1.19 DH.20.1.6 DH.20.1.19 DI.20.1.7 DI.20.1.18 row.D.local.1:DC.B row.D.local.1:DD.B row.D.local.1:DF.A row.D.local.1:DE.B col.J.local.1:PAD19.I col.E.local.8:row.D.local.1 col.I.local.8:row.D.local.3
+Addnet I2 P79.I DC.C DD.C DE.E DF.D
+Netdelay I2 DC.C 18.3 DD.C 15.0 DE.E 12.2 DF.D 15.1
+NProgram AH.20.1.8 AH.20.1.15 ED.20.1.7 ED.20.1.17 AI.20.1.7 AI.20.1.16 EE.20.1.7 EE.20.1.17 AF.20.1.8 AF.20.1.17 AG.20.1.9 AG.20.1.16 EF.20.1.8 EF.20.1.17 col.E.long.2:DE.E row.E.local.3:DC.C row.E.local.3:DD.C row.E.local.4:DF.D row.A.local.3:PAD18.I col.E.long.2:row.A.local.3 col.E.long.2:row.E.local.3 col.D.local.8:row.E.local.3
+Addnet I3 P80.I DC.A DD.A DE.A DG.A
+Netdelay I3 DC.A 11.9 DD.A 11.9 DE.A 11.9 DG.A 11.9
+NProgram CI.20.1.2 CI.20.1.12 BI.20.1.3 BI.20.1.12 DI.20.1.2 DI.20.1.13 row.D.long.2:DC.A row.D.long.2:DD.A row.D.long.2:DE.A row.D.long.2:DG.A col.I.local.4:PAD17.I col.I.local.2:row.D.long.2
+Addnet I4 P81.I DC.E DD.E DF.E DG.B
+Netdelay I4 DC.E 14.7 DD.E 14.3 DF.E 9.2 DG.B 6.7
+NProgram AH.20.1.5 AH.20.1.18 ED.20.1.5 ED.20.1.19 EE.20.1.5 EE.20.1.19 EF.20.1.5 EF.20.1.19 EG.20.1.6 EG.20.1.19 col.G.long.1:DG.B row.E.local.1:DC.E row.E.local.1:DD.E row.E.local.1:DF.E row.A.local.1:PAD16.I col.G.long.1:row.A.local.2 col.G.long.1:row.E.local.2 col.F.local.8:row.E.local.1
+Addnet O0 DC.Y P82.O
+Netdelay O0 P82.O 10.9
+NProgram BH.20.1.4 BH.20.1.10 CF.20.1.9 CF.20.1.10 DF.20.1.4 DF.20.1.15 CH.20.1.4 CH.20.1.15 CG.20.1.9 CG.20.1.15 DE.20.1.9 DE.20.1.16 row.D.local.4:DC.Y col.H.local.5:PAD15.O col.F.local.8:row.C.local.5
+Addnet O1 DD.Y P83.O
+Netdelay O1 P83.O 9.9
+NProgram BH.20.1.2 BH.20.1.12 CH.20.1.2 CH.20.1.12 DH.20.1.2 DH.20.1.16 DG.20.1.8 DG.20.1.15 DF.20.1.9 DF.20.1.16 row.D.local.4:DD.Y col.H.local.3:PAD14.O col.H.local.3:row.D.local.0
+Addnet O2 DE.X P84.O
+Netdelay O2 P84.O 7.8
+NProgram BG.20.1.4 BG.20.1.10 CG.20.1.4 CG.20.1.10 DG.20.1.4 DG.20.1.10 EG.20.1.4 EG.20.1.15 row.E.local.5:DE.X col.G.local.5:PAD13.O
+Addnet O3 DE.Y P2.O
+Netdelay O3 P2.O 7.2
+NProgram BG.20.1.2 BG.20.1.12 CG.20.1.2 CG.20.1.12 DG.20.1.2 DG.20.1.16 row.D.local.4:DE.Y col.G.local.3:PAD12.O col.G.local.3:row.C.local.0
+Addnet O4 DF.Y P3.O
+Netdelay O4 P3.O 5.9
+NProgram DG.20.1.13 DG.20.1.18 col.G.local.2:DF.Y col.F.long.1:PAD11.O col.F.long.1:row.D.local.2
+Addnet O5 DG.X P4.O
+Netdelay O5 P4.O 6.3
+NProgram DG.20.1.6 DG.20.1.17 DH.20.1.14 DH.20.1.18 col.H.local.1:DG.X col.F.long.2:PAD10.O col.F.long.2:row.D.local.3
+Editblk DC
+Base F
+Config F:D:B:C:A:E Y:F X:F DY: DX: RSTDIR: CLK: ENCLK:
+Equate F = D*B+C*A*~E
+Endblk
+Editblk DD
+Base FGM
+Config F:D:B G:C:A Y:M X: DY: DX: RSTDIR: CLK: ENCLK:
+Equate F = D*~B
+Equate G = C@A
+Endblk
+Editblk DE
+Base FG
+Config F:D:B G:E:A X:F Y:G DX: DY: RSTDIR: CLK: ENCLK:
+Equate F = D+B
+Equate G = ~E*A
+Endblk
+Editblk DF
+Base F
+Config F:E:A:D Y:F X: DY: DX: RSTDIR: CLK: ENCLK:
+Equate F = ~(~D*~A*E)
+Endblk
+Editblk DG
+Base F
+Config F:D:A:B Y: X:F DY: DX: RSTDIR: CLK: ENCLK:
+Equate F = D*A+~B
+Endblk
+Editblk P2
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P3
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P4
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P77
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P78
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P79
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P80
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P81
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P82
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P83
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P84
+Base IO
+Config IN: OUT:O TRI:
+Endblk

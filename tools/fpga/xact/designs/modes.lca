@@ -1,0 +1,86 @@
+;: modes.lca (3042PC84-70), hand-written: logic-block function modes
+Version 2
+Design 3042PC84 9 0
+Speed -70
+Editblk DC
+Base F
+Config X:F Y:F F:A:B:C:D:E DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A*B+C*D*~E
+Endblk
+Editblk DD
+Base FGM
+Config X:M Y: F:A:B G:C:D DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A*~B
+Equate G = C@D
+Endblk
+Editblk DE
+Base FG
+Config X:F Y:G F:A:B G:C:D DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A+B
+Equate G = ~C*D
+Endblk
+Editblk DF
+Base F
+Config X:F Y: F:E:B:C DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = ~(~C*~B*E)
+Endblk
+Editblk DG
+Base F
+Config X: Y:F F:A:D:E DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A*D+~E
+Endblk
+Editblk P77
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P78
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P79
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P80
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P81
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P82
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P83
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P84
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P2
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P3
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P4
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Addnet I0 P77.I DC.A DD.A DE.A DG.A
+Addnet I1 P78.I DC.B DD.B DE.B DF.B
+Addnet I2 P79.I DC.C DD.C DE.C DF.C
+Addnet I3 P80.I DC.D DD.D DE.D DG.D
+Addnet I4 P81.I DC.E DD.E DF.E DG.E
+Addnet O0 DC.X P82.O
+Addnet O1 DD.X P83.O
+Addnet O2 DE.X P84.O
+Addnet O3 DE.Y P2.O
+Addnet O4 DF.X P3.O
+Addnet O5 DG.Y P4.O

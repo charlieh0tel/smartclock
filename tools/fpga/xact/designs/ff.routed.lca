@@ -1,0 +1,106 @@
+; LCA Design=FF Part=3042PC84 -- Blocks=17 Nets=12.
+; Program=APR Version=5.2.0-base Date=Sun Oct 25 15:20:40 2026.
+; Speed File Version 3000.1 Revision 3042.2
+Design 3042PC84
+Speed -70
+Programorder On
+Addnet CLK GCLK.O BB.K BC.K BD.K BE.K
+Netdelay CLK BB.K 3.0 BC.K 3.0 BD.K 3.0 BE.K 3.0
+NProgram col.B.long.0:BB.K col.C.long.0:BC.K col.D.long.0:BD.K col.E.long.0:BE.K col.B.long.0:GCLK.O col.C.long.0:GCLK.O col.D.long.0:GCLK.O col.E.long.0:GCLK.O
+Addnet CLKPAD TCLKIN.I GCLK.I
+Netdelay CLKPAD GCLK.I 0.0
+NProgram GCLK.I:TCLKIN.I
+Addnet DI P6.I BD.DI BD.RD
+Netdelay DI BD.DI 4.5 BD.RD 5.6
+NProgram BE.20.1.4 BE.20.1.11 BE.20.1.4 BE.20.1.15 CE.20.1.3 CE.20.1.17 row.B.local.5:BD.DI row.C.local.3:BD.RD col.E.local.5:PAD8.I
+Addnet D0 P2.I BB.A
+Netdelay D0 BB.A 11.0
+NProgram AC.20.1.5 AC.20.1.13 BC.20.1.1 BC.20.1.19 AE.20.1.6 AE.20.1.18 AD.20.1.6 AD.20.1.19 AF.20.1.7 AF.20.1.18 row.B.local.1:BB.A row.A.local.3:PAD12.I col.C.local.8:row.A.local.1
+Addnet D1 P3.I BC.C
+Netdelay D1 BC.C 7.4
+NProgram BF.20.1.3 BF.20.1.10 CF.20.1.4 CF.20.1.15 CD.20.1.9 CD.20.1.15 CE.20.1.9 CE.20.1.15 row.C.local.5:BC.C col.F.local.4:PAD11.I
+Addnet D2 P4.I BC.A
+Netdelay D2 BC.A 5.9
+NProgram AD.20.1.5 AD.20.1.14 BD.20.1.0 BD.20.1.19 AE.20.1.5 AE.20.1.19 row.B.local.1:BC.A row.A.local.1:PAD10.I
+Addnet EN P5.I BC.EC
+Netdelay EN BC.EC 6.6
+NProgram BE.20.1.3 BE.20.1.17 BD.20.1.7 BD.20.1.18 row.B.local.2:BC.EC col.E.local.4:PAD9.I col.D.local.8:row.B.local.3
+Addnet Q0 BB.Y P7.O
+Netdelay Q0 P7.O 4.6
+NProgram BD.20.1.3 BD.20.1.12 BD.20.1.12 BD.20.1.16 row.B.local.4:BB.Y col.D.local.4:PAD7.O
+Addnet Q1 BC.X P8.O
+Netdelay Q1 P8.O 3.5
+NProgram BD.20.1.2 BD.20.1.11 col.D.local.4:BC.X col.D.local.3:PAD6.O
+Addnet Q2 BD.Y P9.O
+Netdelay Q2 P9.O 6.1
+NProgram BC.20.1.4 BC.20.1.9 BD.20.1.8 BD.20.1.15 BE.20.1.8 BE.20.1.16 row.B.local.4:BD.Y col.C.local.5:PAD5.O
+Addnet Q3 BE.Y P10.O
+Netdelay Q3 P10.O 5.6
+NProgram BF.20.1.0 BF.20.1.13 row.A.long.1:PAD2.O col.F.local.2:BE.Y col.F.local.1:row.A.long.1
+Addnet Q4 BE.X P11.O
+Netdelay Q4 P11.O 12.4
+NProgram BF.20.1.4 BF.20.1.11 AC.20.1.9 AC.20.1.15 AD.20.1.9 AD.20.1.15 AB.20.1.9 AB.20.1.16 AE.20.1.9 AE.20.1.15 AF.20.1.10 AF.20.1.15 col.F.local.4:BE.X row.A.local.4:PAD1.O col.B.local.8:row.A.local.5 col.E.local.8:row.A.local.5
+Editblk BB
+Base FG
+Config G:A F: Y:QY X: DY:G DX: RSTDIR: CLK:K ENCLK:
+Equate G = A
+Endblk
+Editblk BC
+Base FG
+Config G: F:C:A Y: X:QX DY: DX:F RSTDIR: CLK:K:NOT ENCLK:EC
+Equate F = C*A
+Endblk
+Editblk BD
+Base FG
+Config G: F: Y:QY X: DY:DI DX: RSTDIR:RD CLK:K ENCLK:
+Endblk
+Editblk BE
+Base FG
+Config G:QY F:QY:QX Y:QY X:QX DY:G DX:F RSTDIR: CLK:K ENCLK:
+Equate G = ~QY
+Equate F = QY@QX
+Endblk
+Editblk P2
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P3
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P4
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P5
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P6
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P7
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P8
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P9
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P10
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P11
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P13
+Base IO
+Config IN:I OUT: TRI:
+Endblk

@@ -1,0 +1,117 @@
+;: route.lca (3042PC84-70), hand-written: direct connects and Longlines
+Version 2
+Design 3042PC84 9 0
+Speed -70
+Editblk GF
+Base FG
+Config X:F Y:G F:A:B G:A:C DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A*B
+Equate G = A+C
+Endblk
+Editblk GG
+Base FG
+Config X:F Y: F:A:B G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A@B
+Endblk
+Editblk HF
+Base FG
+Config X:F Y: F:A:D G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = ~A*D
+Endblk
+Editblk FF
+Base FG
+Config X:F Y: F:A:C G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A+~C
+Endblk
+Editblk BJ
+Base FG
+Config X:F Y: F:A G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A
+Endblk
+Editblk DJ
+Base FG
+Config X:F Y: F:A G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = ~A
+Endblk
+Editblk HJ
+Base FG
+Config X:F Y: F:A G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A
+Endblk
+Editblk KJ
+Base FG
+Config X:F Y: F:A G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = ~A
+Endblk
+Editblk JB
+Base FG
+Config X:F Y: F:A G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A
+Endblk
+Editblk EE
+Base FG
+Config X:F Y: F:A:B G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A*~B
+Endblk
+Editblk P29
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P30
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P58
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P59
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P60
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P61
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P62
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P63
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P66
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P67
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P68
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P69
+Base IO
+Config IN:PULLUP OUT: TRI:
+Endblk
+Addnet A0 P29.I GF.A HF.A FF.A
+Addnet A1 P30.I GF.B GF.C
+Addnet COL P58.I BJ.A DJ.A HJ.A KJ.A JB.A EE.B
+Addnet XG GF.X GG.A
+Addnet YG GF.Y GG.B HF.D FF.C
+Addnet O0 GG.X P59.O
+Addnet O1 HF.X P60.O
+Addnet O2 FF.X P61.O
+Addnet O3 BJ.X P62.O
+Addnet O4 DJ.X P63.O
+Addnet O5 HJ.X P66.O
+Addnet O6 KJ.X P67.O
+Addnet O7 JB.X EE.A
+Addnet O8 EE.X P68.O

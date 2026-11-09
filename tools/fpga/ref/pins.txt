@@ -1,0 +1,1 @@
+PG132: 96 pads checked; PC84: 74 bonded pads, 35 named pins checked

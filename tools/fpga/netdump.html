@@ -1,0 +1,60 @@
+<!doctype html>
+<!--
+  netdump.js in a browser, for a machine without node: loads the
+  viewer's decoder from ?viewer= (a directory URL), decodes ?bit= (a
+  file URL) against ?package= (PLCC84 by default), and writes the JSON
+  into the page.  netdump.sh drives it in headless Chrome, which must be
+  allowed to read files (--allow-file-access-from-files).
+-->
+<html><head><meta charset="utf-8"><title>netdump</title>
+<script>
+// The viewer's page controls use jQuery; decoding reaches only calls
+// whose results it ignores, so every call is a chainable no-op.
+(function () {
+  const stub = new Proxy(function () {}, {
+    get: (target, key) => (key === 'length' ? 0 : () => stub),
+    apply: () => stub,
+  });
+  window.$ = () => stub;
+  window.LOG = [];
+  const log = console.log;
+  console.log = (...parts) => { LOG.push(parts.join(' ')); log(...parts); };
+})();
+</script>
+<script src="netdump.js"></script>
+</head><body><pre id="out"></pre>
+<script>
+// The viewer's files, in the order its index.html loads them, less the
+// ones that only draw or emulate (as in viewer.js).
+const SOURCES = ['chipfamily.js', 'chippackage.js', 'draw.js', 'parse.js', 'pip.js',
+  'path.js', 'switch.js', 'tribuf.js', 'pullup.js', 'clock.js', 'iob.js', 'clb.js',
+  'karnaugh.js', 'bitstreamDisplay.js'];
+const params = new URLSearchParams(location.search);
+const out = document.getElementById('out');
+
+function finish(result) {
+  out.textContent = JSON.stringify(result, null, 1);
+}
+
+function load(index) {
+  if (index === SOURCES.length) {
+    try {
+      const request = new XMLHttpRequest();
+      request.open('GET', params.get('bit'), false);
+      request.overrideMimeType('text/plain; charset=x-user-defined');
+      request.send();
+      const bytes = Uint8Array.from(request.responseText, (c) => c.charCodeAt(0) & 0xff);
+      finish(xc3000Netlist(bytes.buffer, params.get('package') || 'PLCC84', LOG));
+    } catch (e) {
+      finish({ error: String(e), stack: e.stack, messages: LOG });
+    }
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = params.get('viewer').replace(/\/?$/, '/') + SOURCES[index];
+  script.onload = () => load(index + 1);
+  script.onerror = () => finish({ error: 'cannot load ' + script.src });
+  document.head.appendChild(script);
+}
+load(0);
+</script></body></html>

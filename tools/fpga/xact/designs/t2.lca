@@ -1,0 +1,40 @@
+;: t2.lca (3042PC84-70), hand-written
+Version 2
+Design 3042PC84 9 0
+Speed -70
+Editblk AA
+Base FG
+Config X:F Y: F:A:B:C:D G: DX: DY: ENCLK: RSTDIR: CLK: 
+Equate F = ((A*~B)+(C@D))
+Endblk
+Editblk P11
+Base IO
+Config IN:I OUT: TRI: 
+Endblk
+Editblk P10
+Base IO
+Config IN:I OUT: TRI: 
+Endblk
+Editblk P9
+Base IO
+Config IN:I OUT: TRI: 
+Endblk
+Editblk P8
+Base IO
+Config IN:I OUT: TRI: 
+Endblk
+Editblk P7
+Base IO
+Config IN: OUT:O TRI: 
+Endblk
+Nameblk AA FUNC
+Nameblk P11 IN_A
+Nameblk P10 IN_B
+Nameblk P9 IN_C
+Nameblk P8 IN_D
+Nameblk P7 OUT_F
+Addnet NA P11.I AA.A
+Addnet NB P10.I AA.B
+Addnet NC P9.I AA.C
+Addnet ND P8.I AA.D
+Addnet NF AA.X P7.O

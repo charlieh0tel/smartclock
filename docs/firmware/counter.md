@@ -1,11 +1,13 @@
-# The time-interval counter
+# The Z3805A time-interval counter
 
 How the Z3805A 3543B (`z3805a-3543b.bin`) drives the FPGA's
 time-interval counter: the registers it writes and reads, the order it
 writes them in each second, how it waits for a reading and turns it
-into seconds, and what the loop does with the result.  `interval.md`
-covers the same routines in the Z3816A image at a coarser grain; this
-file goes as far as a model of the counter needs.
+into seconds, and what the loop does with the result: the firmware's
+view of the FPGA.  The design's own view, from its decoded bitstream,
+is `z3805a-trace.md`.
+`interval.md` covers the same routines in the Z3816A image at a
+coarser grain.
 
 Addresses are in the Z3805A image.  Function names are those of
 `third_party/firmware/analysis/z3805a-3543b/names.tsv`, the code is the
@@ -50,7 +52,7 @@ The registers read (`smartclock.h`, `fpga_register`):
 
 | Address | What | Read by |
 | ------- | ---- | ------- |
-| `0x00` | status: bit 0 interpolated, bit 1 counted, bits 4 to 7 seconds modulo 16 | `counter_wait_ready`, `fpga_read_seconds` |
+| `0x00` | status: bit 1, the firmware's "counted", set at the count's start (the start bit); bit 0, its "interpolated", set at the stop (the stop bit); bits 4 to 7 seconds modulo 16 | `counter_wait_ready`, `fpga_read_seconds` |
 | `0x10`, `0x11` | the interpolator's byte, low nibble, high nibble, complemented | `interpolator_read` |
 | `0x12`, `0x13` | the count's low byte, low nibble, high nibble | `counter_read_raw` |
 | `0x14`, `0x15` | the count's middle byte | `counter_read_raw` |
@@ -141,9 +143,9 @@ interpolator measurement left, low or high.  `counter_arm` does
 nothing at all while the reading carries an error: a failed
 calibration (below) leaves the counter unarmed for that second.
 
-**Inferred:** the preset clears both ready bits.  `counter_read` runs
-right after the arm with nothing else between, and waits for the
-counted bit; if the bit survived the arm, every reading would be the
+**Inferred** (settled: `z3805a-trace.md`, "The count"): the preset
+clears both ready bits.  `counter_read` runs right after the arm with
+nothing else between, and waits for the start bit; if the bit survived the arm, every reading would be the
 last one again.  `counter_selftest` (`0x40f98`) sets the preset and
 reads the count as exactly `0x555555`, so the preset also holds the
 count there (read); it leaves the preset on, which the next arm turns
@@ -151,8 +153,8 @@ off.
 
 ## The ready bits and the wait
 
-`counter_read` waits for status bit 1 (counted), then bit 0
-(interpolated), each with `counter_wait_ready` (`0x4091a`):
+`counter_read` waits for status bit 1 (the start bit), then bit 0
+(the stop bit), each with `counter_wait_ready` (`0x4091a`):
 
 - It reads the status register once, then loops while neither 1 PPS
   is dead, the reading is armed and polls remain: if the bit is set it
@@ -177,12 +179,15 @@ The status register's high nibble is a count of seconds modulo 16:
 `fpga_read_seconds` (`0x407fa`) reads it until two reads agree.
 `pllp_task` stores it in `pll.reference_seconds` each pass, and after
 a warm restart `clock_set_from_reference` (`0x46290`) takes the
-seconds elapsed from it, 0 to 59, to set the clock.  **Inferred:** it
+seconds elapsed from it, 0 to 59, to set the clock.  **Inferred**
+(settled for the count: `z3805a-trace.md`, "The 1 PPS divider"): it
 counts the internal 1 PPS, and the FPGA keeps counting across a warm
 restart (the firmware reloads it at power-up, and again only when
 `pll_check_reference` finds its first reading invalid and calls
-`counter_reset`, `0x46222`, before the clock is set from it); which
-1 PPS it counts is not in the code.
+`counter_reset` (`0x24976`; the call at `0x46222`) before the clock is
+set from it); which
+1 PPS it counts is not in the code; the netlist counts the internal
+1 PPS.
 
 ## The reading
 
@@ -277,7 +282,8 @@ the byte's 255, a fraction up to about 1.2.
   oscillator.  Its monitor checks only while `pll.fpga_loaded` is set
   and no FPGA load is running (`monitors_pps_checkable`).
 
-**Inferred: what starts and stops the count.**  Four observations:
+**What starts and stops the count** (**inferred**; settled:
+`z3805a-trace.md`, "Start, stop and status bits").  Four observations:
 
 1. With the interval at zero the count, less its preset, is
    0.4000003 s / 100 ns = 4,000,003 ticks, so the count runs about
@@ -290,13 +296,19 @@ the byte's 255, a fraction up to about 1.2.
 3. With a 1 PPS dead the loop waits until 0.3994 s after the last
    `pps_interrupt`, normally the internal 1 PPS, in place of a reading:
    the pace a reading keeps when it completes about 0.4 s after the
-   internal 1 PPS.  The same `0x199` is in all seven images.
+   internal 1 PPS.  The same `0x199` is in all seven images (seven
+   firmware images, which load five FPGA designs between them:
+   `outputs.md`, "The FPGA bitstreams").
 4. The other images' calibrations (the immediate before the
    `move.l #200` of each `counter_configuration_init`): 0.4000003 s in
    the Z3801A 3543, the Z3805A 3543B and both 58503A images; 0.400000204 s
    in the 58503B; 0.3932162 s in the Z3815A and Z3816A, which is
    `0x3c0000 + 2` ticks.  Each is a round count, decimal or binary, plus
-   about two or three ticks.
+   about two or three ticks.  The Z3815A's netlist bears this out: its
+   divider runs to `0x960000` (9,830,400, one second of a 9.8304 MHz
+   oscillator) and the count's tap is `0x3c0000`, 0.4 of it, as the
+   Z3805A's is 0.4 of 10,000,000 (`z3815a-trace.md`, "The 1 PPS
+   divider").
 
 The reading these fit best: **the GPS 1 PPS starts the count and the
 FPGA's divider stops it 4,000,000 ticks after its own internal 1 PPS**,
@@ -308,9 +320,8 @@ and the interpolator measures from the GPS edge to the clock edge the
 count starts on.  The other order, a divider tap 0.6 s into the second
 starting the count and the GPS 1 PPS stopping it, gives the same
 arithmetic, but its reading would be ready right after the 1 PPS, not
-at 0.4 s, and the Z3816A's tap would be at 6,067,840, not a round
-count.  Neither is excluded by the code.  The bitstream
-(`outputs.md`, "The FPGA bitstreams") would settle it.
+at 0.4 s.  Neither is excluded by the code.  The bitstream, decoded and
+simulated, gives the first.
 
 What the firmware needs from a model of the counter is the same
 either way (below).
@@ -326,7 +337,8 @@ and scale, not `+4`.  `:DIAGnostic:TOFFset` is a separate term, and the
 EEPROM block at `0x400080` holds the time offset and TC
 (`calibration_block_read`, `0x30c1e`), not this.
 
-How it follows from the rest (inferred):
+How it follows from the rest (**inferred**; settled:
+`z3805a-trace.md`, "The 1 PPS divider"):
 
 - The preset `0x555555` (5,592,405) cancels exactly in
   `counter_offset_apply`, so it is not part of the calibration.  A
@@ -341,7 +353,8 @@ How it follows from the rest (inferred):
 - That leaves 4,000,000 ticks, the span from one 1 PPS to the divider's
   stop, and 3 ticks of fixed delay: the synchronizer or start logic
   between the GPS edge and the first counted clock edge, or the stop's
-  pipeline.  Which, the code cannot say.
+  pipeline.  Which, the code cannot say; the netlist says the stop's
+  pipeline, less the start's delay.
 
 ## The sign, and the loop
 
@@ -399,7 +412,7 @@ keeps the kind: nothing clears it.  The kinds (`counter_sync_kind`):
 `clk_synch` (`diag_clk_synch`, `0x1b2d8`) passes its two arguments
 straight to `sync_request`.
 
-**Inferred:**
+**Inferred** (settled: `z3805a-trace.md`, "The sync field"):
 
 - The FPGA acts on the field's change from 0, not on its level: the
   field stays at the kind after the last step, and if each count
@@ -409,10 +422,50 @@ straight to `sync_request`.
   picks kind 1 to cancel a positive TI, a late internal 1 PPS.
 - Kind 3 restarts the divider on the GPS 1 PPS, putting the internal
   1 PPS, and with it the outputs, on GPS: `sync_perform`'s comment in
-  the rewrite, "Syncs the outputs to GPS", and the loop's measuring
+  the hand-written C (`third_party/firmware/rewritten/`), "Syncs the
+  outputs to GPS", and the loop's measuring
   again from the start after it.
-- A step or sync applies before the next count, which begins after the
-  preset comes off.
+- Kinds 1 and 2 move the next internal 1 PPS edge and every tap after
+  it.  A count stopped by a tap before that edge is unchanged; one
+  stopped by a later tap is a tick lower or higher, including one
+  already running when the step takes effect at the next internal
+  1 PPS, its GPS edge after the present second's tap.  **Simulated**
+  for a GPS edge before the tap (`check-readings-z3805a.sync1`,
+  `.sync2`: the first count unchanged and the next a tick lower or
+  higher); **inferred** for one after it, from the equations: the step
+  moves the divider, and with it the tap that stops the running count.
+  The emulator's differential fixture, coming soon, runs that case
+too: its `sync_1` and
+  `sync_2` cases, the GPS edge at 0.75 s, read the count under way a
+  tick below and above the `early` case's.  Kind 3 restarts the divider on the next GPS 1 PPS,
+  which also starts the count under way, so it shows in that count
+  already (**simulated**: `check-readings-z3805a.sync3`).
+
+The 58503A/Z3801A's design does the same; the Z3815A's and Z3816A's do
+not: there kinds 1 and 2 step the P7 divider of the phase detector and
+leave the 1 PPS alone, and kind 3 makes the GPS 1 PPS itself the
+internal 1 PPS (**simulated**: `z3815a-trace.md`, `z3816a-trace.md`,
+"The sync field").
+
+## What the netlist shows
+
+The Z3805A's bitstream, decoded and simulated, is traced in
+`z3805a-trace.md`, and the five designs are compared in
+`fpga-comparison.md`.  In short: the GPS 1 PPS's rising
+edge starts the count, which counts from the third clock edge after
+it (the second with the reference bit Low), and a tap of the divider,
+4,000,000 clocks after the internal 1 PPS, stops it: the stop passes
+four flip-flops on the clock, so the last edge counted is the fourth
+after the tap's, 4,000,004 clocks after the internal 1 PPS, and the
+count holds from the fifth.  With both ends counted and less the two
+edges the start does not count, the count and its fraction come to
+4,000,003 + TI / 100 ns (4,000,000 + 4 + 1 - 2), the firmware's
+calibration (`z3805a-trace.md`, "Start, stop and status bits").  The
+count is a 24-bit ripple counter the preset holds at `0x555555`;
+status bit 1 is the start bit, bit 0 the stop bit, bits 2 and 3 two of the interpolator's inputs, and bits
+4 to 7 count the internal 1 PPS; register 3's kinds 1 and 2 step the
+internal 1 PPS 100 ns earlier and later, and kind 3 restarts the
+divider on the next GPS 1 PPS.
 
 ## What a model needs
 
@@ -420,11 +473,18 @@ Whatever the edges, the firmware sees only this:
 
 - **Arm** (`counter_arm`): register 0 written `0x40`, then `0x00` with
   mode 0; possibly a register 3 pair before the preset comes off.
-- **Ready:** set bit 1 (counted) and bit 0 (interpolated) once the
-  count is done, within 5 s of the arm, both 1 PPS alive.  To keep the
+- **Ready:** set bit 1 (the start bit) and bit 0 (the stop bit) once
+  the count is done, within 5 s of the arm, both 1 PPS alive.  To keep the
   firmware's pace, about 0.4 s after the internal 1 PPS (inferred).
+  The netlist sets bit 1 at the GPS edge (AH.X, clocked by P82) and
+  bit 0 on the tap's edge, 4,000,000 clocks after the internal 1 PPS
+  (CI.X, clocked by the tap, through the combinational CJ.X); the
+  count's last tick is on the fourth clock edge after the tap, and it
+  holds from the fifth (read; the simulated readings agree with the
+  sum).
 - **Count:** registers `0x12` to `0x17` as six nibbles of
-  `0x555555 + floor((0.4000003 s + TI) / 100 ns)`.
+  `0x555555 + floor((0.4000003 s + TI) / 100 ns)`, with the reference
+  bit High; with it Low the count is a tick more (`z3805a-trace.md`).
 - **Interpolator:** registers `0x10`, `0x11` as the complement of
   `low + 200 × fraction`, fraction the remainder of a tick, with
   `low` the low reference's reading under its present trim.
@@ -433,17 +493,6 @@ Whatever the edges, the firmware sees only this:
   EFC, 6.25e−13 of frequency a count, rising with it (inferred).
 - **Sync:** register 3 going 0 then 1 moves the internal 1 PPS 100 ns
   earlier, 0 then 2 100 ns later, 0 then 3 onto the next GPS 1 PPS
-  (inferred).
+  (inferred; the netlist does the same, simulated).
 - **Preset:** clears both ready bits and holds the count at
   `0x555555` (`counter_selftest` reads it there).
-
-## What is not established
-
-- Which edge starts the count and which stops it, and whether the
-  0.4 s is a divider tap; the bitstream at `0x20f18` would settle it.
-- What the three ticks in 0.4000003 s are.
-- Whether the seconds nibble counts the internal or the GPS 1 PPS.
-- What sync kinds 1 to 3 do in the FPGA: the direction of a step, and
-  what a full sync aligns to.
-- What modes 1 and 2 and status bits 2 and 3 are; the firmware uses
-  none of them.

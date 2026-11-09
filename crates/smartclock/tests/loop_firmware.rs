@@ -8,7 +8,10 @@
 //! whose output is `fixtures/loop/IMAGE.tsv`; `make -C
 //! third_party/firmware check-loop-trace` fails when it is stale).
 //! The page's by-model rows, poles and step response are then
-//! recomputed from that law, which the firmware has been shown to run.
+//! recomputed from that law, which the firmware has been shown to run;
+//! its FFOM table is read from every image's `get_ffom`, and its
+//! start-up times are summed from the ROMs' waits, the traced ramp and
+//! the law's settling.
 
 use std::collections::HashMap;
 use std::fs;
@@ -196,7 +199,7 @@ fn page_rows(page: &str, heading: &str) -> Vec<Vec<String>> {
 
 /// An image and its functions' addresses.
 struct Firmware {
-    image: &'static str,
+    image: String,
     rom: Vec<u8>,
     /// Each function's start and name, by address (names.tsv's primary
     /// rows).
@@ -204,9 +207,20 @@ struct Firmware {
 }
 
 impl Firmware {
-    fn load(image: &'static str) -> Self {
+    /// The image alone, for one with no names.tsv: no function is
+    /// known by name.
+    fn bare(image: &str) -> Self {
         let path = format!("{ROOT}/third_party/firmware/images/{image}.bin");
         let rom = fs::read(&path).unwrap_or_else(|error| panic!("{path}: {error}"));
+        Self {
+            image: image.to_owned(),
+            rom,
+            functions: Vec::new(),
+        }
+    }
+
+    fn load(image: &str) -> Self {
+        let bare = Self::bare(image);
         let mut functions: Vec<(usize, String)> =
             read(&format!("third_party/firmware/analysis/{image}/names.tsv"))
                 .lines()
@@ -222,11 +236,7 @@ impl Firmware {
                 })
                 .collect();
         functions.sort();
-        Self {
-            image,
-            rom,
-            functions,
-        }
+        Self { functions, ..bare }
     }
 
     /// The bytes of the function named `name`, to the next function.
@@ -1354,4 +1364,511 @@ fn the_hand_over_to_pll_normal_moves_u_by_about_k_f() {
             receiver.image
         );
     }
+}
+
+/// The stages any image numbers, 0 to the Z3815A's `fatal error`, 10.
+const STAGES: usize = 11;
+
+/// What every image's `get_ffom` gives a stage its switch has no case
+/// for.
+const FFOM_UNLOCKED: u8 = 3;
+
+/// The seconds of the quarter hour the page rounds its longer times
+/// to.
+const QUARTER_HOUR: f64 = 900.0;
+
+/// The number words the page spells counts with, by value.
+const NUMBER_WORDS: [&str; 16] = [
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+];
+
+/// The value of the first number word in `text`.
+fn number_word(text: &str) -> u32 {
+    text.split(|letter: char| !letter.is_ascii_alphabetic())
+        .find_map(|word| NUMBER_WORDS.iter().position(|number| *number == word))
+        .and_then(|value| u32::try_from(value).ok())
+        .unwrap_or_else(|| panic!("no number word in {text:?}"))
+}
+
+/// The addresses written `<code>0x...</code>` in `text`, in order.
+fn html_addresses(text: &str) -> Vec<usize> {
+    text.split("<code>0x")
+        .skip(1)
+        .map(|rest| {
+            let digits = rest.split('<').next().unwrap_or_default();
+            usize::from_str_radix(digits, 16)
+                .unwrap_or_else(|_| panic!("{digits:?} is not an address"))
+        })
+        .collect()
+}
+
+/// The stages a cell of the page's stage table names, `5 <code>...`
+/// or `0, 2, 7 to 9: ...`; none for `none`.
+fn stage_list(cell: &str) -> Vec<usize> {
+    let numbers = cell.split(['<', ':']).next().unwrap_or_default();
+    let mut stages = Vec::new();
+    for part in numbers.split(',').map(str::trim) {
+        let bound = |text: &str| text.trim().parse::<usize>().ok();
+        match part.split_once(" to ") {
+            Some((low, high)) => {
+                stages.extend(bound(low).expect("a stage")..=bound(high).expect("a stage"));
+            }
+            None => stages.extend(bound(part)),
+        }
+    }
+    stages
+}
+
+/// `seconds` in hours to the quarter, as the page writes them: `2¾`.
+fn quarter_hours(seconds: f64) -> String {
+    const FRACTIONS: [&str; 4] = ["", "¼", "½", "¾"];
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "a few hours"
+    )]
+    let quarters = (seconds / QUARTER_HOUR).round() as usize;
+    format!("{}{}", quarters / 4, FRACTIONS[quarters % 4])
+}
+
+/// `seconds` in whole minutes, to the nearest `step`.
+fn minutes(seconds: f64, step: f64) -> f64 {
+    (seconds / 60.0 / step).round() * step
+}
+
+/// An image's `get_ffom`: the stage byte it reads and the FFOM it gives
+/// each stage.  The routine is the same switch in every image
+/// (M68000PRM): `movea.l 4(sp),a0`; `move.b stage,d0`; `extb.l d0`;
+/// `subq.l #3,d0` and `subq.l #n,d0`, leaving the stage less the
+/// last case, 3 + n; `bhi.w` to the default; `move.w (table,pc,d0.w*2)`
+/// with the table's end as its base; `jmp (base,pc,d0.w)`; then cases
+/// of `clr.b (a0)`, an FFOM of 0, or `move.b #ffom,(a0)`.
+struct FfomSwitch {
+    stage_byte: usize,
+    ffom: [u8; STAGES],
+}
+
+impl FfomSwitch {
+    fn read(firmware: &Firmware, at: usize) -> Self {
+        const MOVEA_ARGUMENT: [u16; 2] = [0x206f, 0x0004];
+        const MOVE_BYTE_ABSOLUTE: u16 = 0x1039;
+        const EXTEND_BYTE_TO_LONG: u16 = 0x49c0;
+        const SUBQ_THREE: u16 = 0x5780;
+        const SUBQ_LONG_D0_MASK: u16 = 0xf1ff;
+        const SUBQ_LONG_D0: u16 = 0x5180;
+        const BHI_WORD: u16 = 0x6200;
+        const MOVE_WORD_PC_INDEXED: u16 = 0x303b;
+        const JMP_PC_INDEXED: u16 = 0x4efb;
+        const CLEAR_BYTE: u16 = 0x4210;
+        const MOVE_BYTE_IMMEDIATE: u16 = 0x10bc;
+        const MOVEQ_ONE: u16 = 0x7001;
+        const FIRST_CASE: usize = 3;
+        let image = &firmware.image;
+        let word = |offset: usize| firmware.word(at + offset);
+        let signed =
+            |address: usize| i16::from_be_bytes([firmware.rom[address], firmware.rom[address + 1]]);
+        let brief = |address: usize| i8::from_be_bytes([firmware.rom[address + 1]]);
+        let relative =
+            |base: usize, offset: isize| base.checked_add_signed(offset).expect("in the image");
+        assert_eq!(
+            [word(0), word(2)],
+            MOVEA_ARGUMENT,
+            "{image}: {at:#x} is no get_ffom"
+        );
+        assert_eq!(word(4), MOVE_BYTE_ABSOLUTE, "{image}: {at:#x}");
+        assert_eq!(word(10), EXTEND_BYTE_TO_LONG, "{image}: {at:#x}");
+        assert_eq!(word(12), SUBQ_THREE, "{image}: {at:#x}");
+        assert_eq!(
+            word(14) & SUBQ_LONG_D0_MASK,
+            SUBQ_LONG_D0,
+            "{image}: {at:#x}"
+        );
+        assert_eq!(word(16), BHI_WORD, "{image}: {at:#x}");
+        assert_eq!(word(20), MOVE_WORD_PC_INDEXED, "{image}: {at:#x}");
+        assert_eq!(word(26), JMP_PC_INDEXED, "{image}: {at:#x}");
+        let quick = usize::from((word(14) >> 9) & 7);
+        let last = FIRST_CASE + if quick == 0 { 8 } else { quick };
+        let ffom = |target: usize| match firmware.word(target) {
+            CLEAR_BYTE => 0,
+            MOVE_BYTE_IMMEDIATE => u8::try_from(firmware.word(target + 2)).expect("a byte"),
+            other => panic!("{image}: case at {target:#x} begins {other:#06x}"),
+        };
+        let default = relative(at + 18, isize::from(signed(at + 18)));
+        assert_eq!(
+            firmware.word(default + 4),
+            MOVEQ_ONE,
+            "{image}: get_ffom returns 1"
+        );
+        let table = relative(at + 22, isize::from(brief(at + 22)));
+        let base = relative(at + 28, isize::from(brief(at + 28)));
+        let mut by_stage = [ffom(default); STAGES];
+        for (stage, value) in by_stage
+            .iter_mut()
+            .enumerate()
+            .take(last + 1)
+            .skip(FIRST_CASE)
+        {
+            let entry = table - 2 * (last - stage);
+            *value = ffom(relative(base, isize::from(signed(entry))));
+        }
+        Self {
+            stage_byte: usize::try_from(firmware.long(at + 6)).expect("an address"),
+            ffom: by_stage,
+        }
+    }
+}
+
+/// What `startup_pll` waits for after the fifteen, following a
+/// power-up, read where the evidence says it tests it.
+#[derive(Debug, PartialEq)]
+enum StartupWait {
+    /// The aging fit's history holding this many samples: `cmpi.b
+    /// #n,stop_ptr(An)`, `bne.w`, `tst.b start_ptr(An)`, the ring's start
+    /// the byte before its stop.
+    Samples(u32),
+    /// The uptime past this many seconds: `cmpi.l #n,d0`.
+    Uptime(u32),
+}
+
+impl StartupWait {
+    fn read(firmware: &Firmware, at: usize) -> Self {
+        const COMPARE_BYTE_DISPLACED: u16 = 0x0c2b;
+        const BNE_WORD: u16 = 0x6600;
+        const TEST_BYTE_DISPLACED: u16 = 0x4a2b;
+        const COMPARE_LONG_D0: u16 = 0x0c80;
+        match firmware.word(at) {
+            COMPARE_BYTE_DISPLACED => {
+                let stop = firmware.word(at + 4);
+                assert_eq!(
+                    firmware.word(at + 6),
+                    BNE_WORD,
+                    "{} {at:#x}",
+                    firmware.image
+                );
+                assert_eq!(
+                    [firmware.word(at + 10), firmware.word(at + 12) + 1],
+                    [TEST_BYTE_DISPLACED, stop],
+                    "{}: {at:#x} tests no start_ptr",
+                    firmware.image
+                );
+                Self::Samples(u32::from(firmware.word(at + 2)))
+            }
+            COMPARE_LONG_D0 => Self::Uptime(firmware.long(at + 2)),
+            other => panic!("{}: {at:#x} begins {other:#06x}", firmware.image),
+        }
+    }
+
+    /// The wait as the page's by-image table states it.
+    fn from_page(cell: &str) -> Self {
+        if cell.contains("samples of the aging fit") {
+            Self::Samples(number_word(cell))
+        } else {
+            #[expect(
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss,
+                reason = "a few thousand seconds"
+            )]
+            let seconds = leading_number(cell) as u32;
+            assert!(cell.contains("s of uptime"), "{cell:?}");
+            Self::Uptime(seconds)
+        }
+    }
+}
+
+/// The image a row of the page's by-image table names: `Z3805A 3543B`
+/// is `z3805a-3543b`.
+fn image_of(row: &str) -> String {
+    row.to_lowercase().replace(' ', "-")
+}
+
+#[test]
+fn the_page_s_ffom_table_is_each_image_s_get_ffom() {
+    const Z3815A: &str = "z3815a-4010";
+    let page = read("docs/pages/loop.html");
+    let evidence = read("docs/firmware/loop.md");
+    let screen = read("docs/screen-format-strings.md");
+    let stages = page_rows(&page, "<table class=\"stages\">");
+    let images = page_rows(&page, "<table class=\"images\">");
+    let screens = markdown_table(&screen, "| Image | Stage | Accessors");
+    let documented = markdown_table(&evidence, "| Image | `get_ffom`");
+    assert_eq!(
+        images.len(),
+        documented.len(),
+        "loop.md's FFOM table and the page's"
+    );
+    for row in &images {
+        let image = image_of(&row[0]);
+        let firmware = Firmware::bare(&image);
+        let at = html_addresses(&row[1])[0];
+        let switch = FfomSwitch::read(&firmware, at);
+        assert_eq!(
+            html_addresses(&row[2]),
+            [switch.stage_byte],
+            "{image}: the stage byte get_ffom reads"
+        );
+        let shown = screens
+            .iter()
+            .find(|line| line["Image"] == row[0])
+            .unwrap_or_else(|| panic!("screen-format-strings.md has no {}", row[0]));
+        assert_eq!(
+            addresses(&shown["Stage"]),
+            [switch.stage_byte],
+            "{image}: the screen's stage"
+        );
+
+        let column = usize::from(image == Z3815A);
+        let mut seen = [false; STAGES];
+        for line in &stages {
+            let ffom = leading_number(&line[4]);
+            for stage in stage_list(&line[column]) {
+                assert_eq!(
+                    f64::from(switch.ffom[stage]),
+                    ffom,
+                    "{image}: get_ffom gives stage {stage} FFOM {}, the page {ffom}",
+                    switch.ffom[stage]
+                );
+                seen[stage] = true;
+            }
+        }
+        let last = if image == Z3815A {
+            STAGES - 1
+        } else {
+            STAGES - 2
+        };
+        assert!(
+            seen[..=last].iter().all(|seen| *seen),
+            "{image}: the page names every stage"
+        );
+
+        let line = documented
+            .iter()
+            .find(|line| line["Image"] == row[0])
+            .unwrap_or_else(|| panic!("loop.md's FFOM table has no {}", row[0]));
+        assert_eq!(
+            addresses(&line["`get_ffom`"]),
+            [at],
+            "{image}: loop.md's get_ffom"
+        );
+        assert_eq!(
+            addresses(&line["Stage byte"]),
+            [switch.stage_byte],
+            "{image}"
+        );
+        let mut named = [FFOM_UNLOCKED; STAGES];
+        for ffom in 0..FFOM_UNLOCKED {
+            for stage in stage_list(&line[&format!("FFOM {ffom}")]) {
+                named[stage] = ffom;
+            }
+        }
+        assert_eq!(named, switch.ffom, "{image}: loop.md's FFOM table");
+
+        let wait = html_addresses(&row[3])[0];
+        assert_eq!(
+            StartupWait::read(&firmware, wait),
+            StartupWait::from_page(&row[3]),
+            "{image}: startup_pll's wait at {wait:#x}"
+        );
+        assert!(
+            evidence.contains(&format!("`{wait:#x}`")),
+            "{image}: loop.md cites no {wait:#x}"
+        );
+    }
+}
+
+/// The seconds `startup_pll`'s ramp takes from `start` to the law's τ
+/// or `tau`: a step each update to within a step of τ, then one update
+/// to τ.
+fn ramp_from(law: Law, start: f32, tau: f32) -> f64 {
+    let steps = ((tau - law.ramp_step - start) / law.ramp_step).ceil() + 1.0;
+    f64::from(steps * law.block)
+}
+
+/// The immediate of the `cmpi.w #n,d0` or `addi.l #n,d0` at `at`
+/// (M68000PRM, CMPI and ADDI).
+fn sampler_window(firmware: &Firmware, at: usize) -> f64 {
+    const COMPARE_WORD_D0: u16 = 0x0c40;
+    const ADD_LONG_D0: u16 = 0x0680;
+    match firmware.word(at) {
+        COMPARE_WORD_D0 => f64::from(firmware.word(at + 2)),
+        ADD_LONG_D0 => f64::from(firmware.long(at + 2)),
+        other => panic!("{}: {at:#x} begins {other:#06x}", firmware.image),
+    }
+}
+
+#[test]
+fn the_page_s_start_up_times_are_the_firmware_s() {
+    let evidence = read("docs/firmware/loop.md");
+    let prose = flat(&evidence);
+    let page = read("docs/pages/loop.html");
+    let section = &page[page
+        .find("<h2>What the receiver shows</h2>")
+        .expect("the section")..];
+    let section = flat(section.split("</section>").next().expect("its end"));
+    let images = page_rows(&page, "<table class=\"images\">");
+    let wait = |image: &str| {
+        let row = images
+            .iter()
+            .find(|row| image_of(&row[0]) == image)
+            .unwrap_or_else(|| panic!("the page's by-image table has no {image}"));
+        StartupWait::read(&Firmware::bare(image), html_addresses(&row[3])[0])
+    };
+    let timeline = page_rows(&page, "<table class=\"timeline\">");
+    let [settling, samples, ramp, total] = &timeline[..] else {
+        panic!("the start-up table's rows")
+    };
+    let windows = prose
+        .split_once("the sampler's count of ")
+        .expect("the sampler's window")
+        .1;
+    let windows = addresses(&windows[..windows.find(')').expect("its end")]);
+
+    let mut settled = Vec::new();
+    let mut ramped = Vec::new();
+    for (index, receiver) in RECEIVERS.iter().enumerate() {
+        let column = 2 + index;
+        let law = Law::from_evidence(&evidence, receiver);
+        let trace = Trace::load(receiver.image);
+        let firmware = Firmware::load(receiver.image);
+        let start = trace.constant("startup", "first_time_constant");
+        let header = &page[page.find("<table class=\"timeline\">").expect("the table")..];
+        let header = &header[..header.find("</thead>").expect("its head")];
+        let headings: Vec<&str> = header.split("<th>").skip(1).collect();
+        assert!(
+            headings[column].starts_with(receiver.evidence_row),
+            "{}",
+            receiver.image
+        );
+
+        // The fifteenth mean within the bound ends the count; the next
+        // update ends the state.
+        let startup: Vec<&Row> = trace
+            .rows
+            .iter()
+            .filter(|row| row.scenario == "startup" && row.stage == "startup_pll")
+            .collect();
+        let counted = startup
+            .iter()
+            .find(|row| row.large_offset_blocks == law.settled_blocks)
+            .expect("the fifteen");
+        let ended = startup
+            .iter()
+            .find(|row| row.startup_state != STARTUP_SETTLING)
+            .expect("the state's end");
+        assert_eq!(ended.uptime - counted.uptime, 10, "{}", receiver.image);
+        let settling_seconds = f64::from(
+            f32::from(u8::try_from(law.settled_blocks + 1).expect("a count")) * law.block,
+        );
+        assert_eq!(
+            number_word(&settling[0]),
+            u32::try_from(law.settled_blocks).expect("a count")
+        );
+        assert!(settling[0].contains(&format!("±{:.0} ns", law.settled * 1e9)));
+        assert_eq!(leading_number(&settling[1]), f64::from(start));
+        assert_eq!(
+            leading_number(&settling[column]),
+            settling_seconds,
+            "{}",
+            receiver.image
+        );
+
+        let StartupWait::Samples(entries) = wait(receiver.image) else {
+            panic!("{} waits for samples", receiver.image)
+        };
+        let window = sampler_window(&firmware, windows[index]);
+        assert_eq!(number_word(&samples[0]), entries);
+        assert!(
+            samples[0].contains(&format!("{window} s each")),
+            "{}",
+            receiver.image
+        );
+        let history = f64::from(entries) * window;
+        assert_eq!(
+            leading_number(&samples[column]),
+            history,
+            "{}",
+            receiver.image
+        );
+
+        let ramp_seconds = f64::from(ramp_seconds(&trace));
+        assert_eq!(
+            ramp_from(law, start, law.tau),
+            ramp_seconds,
+            "{}",
+            receiver.image
+        );
+        assert!(ramp[0].contains(&format!("+{} s per update", law.ramp_step)));
+        assert!(ramp[1].starts_with(&format!("{start} s to τ")));
+        assert_eq!(
+            leading_number(&ramp[column]),
+            ramp_seconds,
+            "{}",
+            receiver.image
+        );
+
+        let hours = quarter_hours(settling_seconds + history + ramp_seconds);
+        assert_eq!(total[column], format!("≈ {hours} h"), "{}", receiver.image);
+        settled.push(settling_seconds);
+        ramped.push(ramp_seconds);
+    }
+
+    // After a short holdover, the constant already τ, the state after
+    // the fifteen is the ramp's last update.
+    let short = (settled[0] + f64::from(Law::from_evidence(&evidence, &RECEIVERS[0]).block)) / 60.0;
+    assert!(
+        section.contains(&format!("FFOM 1 for about {} minutes.", short.round())),
+        "the page's short recovery, {short} minutes"
+    );
+    let long = [0, 1].map(|index| minutes(settled[index] + ramped[index], 10.0));
+    assert!(
+        section.contains(&format!(
+            "FFOM 1 for about {} minutes in the Z3805A, {} in the 58503A",
+            long[0], long[1]
+        )),
+        "the page's long recovery, {long:?} minutes"
+    );
+
+    // The other images, by their own τ from loop.md and wait from the
+    // ROM, the sampler's window and the law's settling and ramp the
+    // Z3805A's.
+    let law = Law::from_evidence(&evidence, &RECEIVERS[0]);
+    let start = Trace::load(RECEIVERS[0].image).constant("startup", "first_time_constant");
+    let window = sampler_window(&Firmware::load(RECEIVERS[0].image), windows[0]);
+    let tau = |name: &str, after: Option<&str>| {
+        let row = markdown_table(&evidence, "| Image | τ, as the ROM block sets it")
+            .into_iter()
+            .find(|row| row["Image"] == name)
+            .unwrap_or_else(|| panic!("loop.md has no row for {name}"));
+        let cell = &row["τ, as the ROM block sets it"];
+        #[expect(clippy::cast_possible_truncation, reason = "a time constant")]
+        let tau =
+            after.map_or_else(|| leading_number(cell), |after| number_after(cell, after)) as f32;
+        tau
+    };
+    let to_normal = |image: &str, tau: f32| {
+        let ramp = ramp_from(law, start, tau);
+        match wait(image) {
+            StartupWait::Samples(entries) => settled[0] + f64::from(entries) * window + ramp,
+            StartupWait::Uptime(seconds) => f64::from(seconds) + ramp,
+        }
+    };
+    let z3816a = tau("Z3816A 4001", None);
+    let text = format!(
+        "about {} hours into <code>startup_pll</code> in the Z3816A, whose τ is {z3816a} s, and about {} in the Z3801A",
+        quarter_hours(to_normal("z3816a-4001", z3816a)),
+        quarter_hours(to_normal("z3801a-3543", tau("Z3801A 3543", None))),
+    );
+    assert!(section.contains(&text), "the page does not say {text:?}");
+    let (z3815a, z3815a_long) = (tau("Z3815A 4010", None), tau("Z3815A 4010", Some("; ")));
+    let StartupWait::Uptime(uptime) = wait("z3815a-4010") else {
+        panic!("the Z3815A waits for its uptime")
+    };
+    assert!(section.contains(&format!("wait instead until {uptime} s after power-on")));
+    let text = format!(
+        "about {} hours after power-on in the Z3815A at τ = {z3815a} s, {} at {z3815a_long} s, and about {} in the 58503B at its defaults",
+        quarter_hours(to_normal("z3815a-4010", z3815a)),
+        quarter_hours(to_normal("z3815a-4010", z3815a_long)),
+        quarter_hours(to_normal("58503b-1.01.04", tau("58503B 1.01.04", None))),
+    );
+    assert!(section.contains(&text), "the page does not say {text:?}");
 }

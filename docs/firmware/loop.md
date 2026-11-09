@@ -123,7 +123,8 @@ Its first state counts ten-second means whose magnitude is below
 150 ns -- the double 1.5 × 10⁻⁷, loaded as two halves at `0x47e60` and
 `0x47e66` -- and clears the count at the first that is not; once the
 count reaches fifteen (`0x47e46`, `moveq #15` and `ble`) the next
-update ends the state.  Then, at `0x47ede` to `0x47fce`, it
+update ends the state.  Then, after a power-up, it waits (below);
+then, at `0x47ede` to `0x47fce`, it
 lengthens its constant by 5 s (`0x47efe`) each update until it is
 within 5 s of τ, sets it to τ, and hands over to `pll_normal`.  The
 Z3801A's `FUN_000442ca` does the same.
@@ -142,14 +143,21 @@ update moves u by about K·f -- the proportional term counted again,
 once in B.
 
 The Z3805A's `startup_pll` (`0x4429e`) and the 58503A 3704's
-(`0x4429e`) have a state between those two.  On entry each clears f,
-I and the count and sets B (see "The loop").  After the fifteen, if
+(`0x4429e`) have a state between those two, and so do the Z3816A's,
+the Z3801A's and 3633's.  On entry the Z3805A's and 3704's clear f,
+I and the count and set B (see "The loop").  After the fifteen, if
 the aging fit's sampler is already collecting, the constant starts to
 lengthen; otherwise -- after a power-up -- the state sets the flag
 that starts the sampler and waits until the EFC history holds its
-first three samples (`stop_ptr` 3, `start_ptr` 0), three windows of
-2700 s, before it lengthens.  So after a power-up the loop runs at
-150 s for about 2¼ hours before the ramp.
+first three samples (`stop_ptr` 3, `start_ptr` 0: Z3816A `0x47eba`,
+Z3801A `0x4459e`, Z3805A `0x44572`, 3633 `0x4458e`, 3704 `0x445c8`),
+three windows of 2700 s (the sampler's count of 2700, Z3805A
+`0x4146e`; its deadline 2700 s on, 3704 `0x41474`), before it
+lengthens.  So after a power-up the loop runs at 150 s for about
+2¼ hours before the ramp.  The Z3815A and 58503B have the state but
+wait in it, after the fifteen, until the uptime passes 7200 s
+(Z3815A `0x4d9e2`, 58503B `0x494ec`): two hours from power-on; after
+a later holdover the state ends at its next update.
 
 Holdover recovery hands back to `startup_pll`, not `pll_normal`.  It
 leaves the start-up constant as it was -- τ, if the loop had got there,
@@ -164,6 +172,47 @@ from the aging fit below, at `0x475b8` to `0x476b4`: u =
 FUN_00033798(a + b·y + c·ln y + c·s), with y = q / 2700 and the ln term
 omitted when y ≤ 1.  The Z3805A's `holdover` (`0x43a90`) and 3704's
 (`0x43ab8`) do it every ten seconds.
+
+## The FFOM
+
+`get_ffom` gives the FFOM, the frequency figure of merit, from the
+stage byte alone: a switch on it, 2 for holdover and holdover
+recovery, 1 for `startup pll`, 0 for `normal pll` and 3 for every
+other stage, and a return of 1.  The loop's error, the TFOM and the
+aging fit do not enter it.  Read from each image's switch table:
+
+| Image | `get_ffom` | Stage byte | FFOM 2 | FFOM 1 | FFOM 0 |
+| ----- | ---------- | ---------- | ------ | ------ | ------ |
+| Z3816A 4001 | `0x46368` | `0x10282c` | 3, 4 | 5 | 6 |
+| Z3815A 4010 | `0x4bcba` | `0x10286e` | 3, 4 | 5 | 7 |
+| Z3801A 3543 | `0x42a44` | `0x10215a` | 3, 4 | 5 | 6 |
+| Z3805A 3543B | `0x42a18` | `0x102162` | 3, 4 | 5 | 6 |
+| 58503A 3633 | `0x42ac2` | `0x10246e` | 3, 4 | 5 | 6 |
+| 58503A 3704 | `0x42ac2` | `0x102476` | 3, 4 | 5 | 6 |
+| 58503B 1.01.04 | `0x478b2` | `0x102bb2` | 3, 4 | 5 | 6 |
+
+So in the Z3815A `n3 lock pll`, its stage 6 ("The Z3815A's extra
+stage"), gives 3, as power-up does.  097-59551-02 (5-23) defines 0 as
+"PLL stabilized", 1 "PLL stabilizing", 2 "PLL unlocked (holdover)"
+and 3 "PLL unlocked (not in holdover)"; the firmware's 2 also covers
+holdover recovery.  The Z3805A's callers are the time code's f
+(`timecode_update`, at `0x13cb2`), the FFOM query's handler
+(`scpi_query_SOURce_PTIMe_FFOMerit`, `0x3005a`), the status screen's
+snapshot (`status_snapshot`, `0x4a6a4`) and a console diagnostic
+(`diag_clk_synch`, `0x1b35a`); 3704 adds the front panel's Status
+line (`front_panel_status_text`, `0x52a68`), whose
+`STABILIZING` and `10MHZ STABLE` are FFOM 1 and 0
+(`58503a-3704.md`, "The front panel").  The status screen's
+`stabilizing frequency` suffix follows the stage the same way
+(`../screen-format-strings.md`, "Mode suffixes").
+
+So FFOM 0 comes when `startup_pll` hands over, and how long that
+takes is the start-up of "Starting up": after a power-up, the fifteen
+means, the three samples or the two hours of uptime, and the ramp to
+τ; after a holdover, the fifteen means and, when the constant was set
+back to 150 s, the ramp.
+[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html),
+"What the receiver shows", gives the times.
 
 ## The aging fit
 

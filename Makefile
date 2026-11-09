@@ -125,9 +125,10 @@ docs:
 # docs/pages/, HAND_PAGES, copied with the files they name.  A page
 # that once was at a path in docs/ left there a page forwarding to its
 # new one.  Each page is built by the target of its own name, writing
-# $(PAGES_DIR)/<page>.html with a <title> and a description meta tag;
+# $(PAGES_DIR)/<page>.html with a <title>, a description meta tag and
+# a smartclock-group meta tag naming its group in tools/pages_index.py;
 # a page joins by such a target, named in PAGES.  The index,
-# index.html, lists them in that order.
+# index.html, lists them by group, in that order within one.
 PAGES_DIR ?= target/pages
 HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
 PAGES := board-atlas scpi-models $(HAND_PAGES)

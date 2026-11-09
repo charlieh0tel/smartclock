@@ -1,6 +1,8 @@
 """Writes the published pages' index, DIR/index.html, listing each PAGE
-given (a file in DIR) by its <title> and its description meta tag, in
-the order given; fails if a page lacks either.
+given (a file in DIR) by its <title> and its description meta tag under
+its smartclock-group meta tag's group, in GROUPS' order and within one
+in the order given; fails if a page lacks any of them or names a group
+GROUPS lacks.
 
     python3 -I tools/pages_index.py DIR PAGE...
 """
@@ -13,6 +15,14 @@ from pathlib import Path
 
 INDEX = "index.html"
 REPOSITORY = "https://github.com/charlieh0tel/smartclock"
+# The groups a page names in its smartclock-group meta tag, by key, in
+# the index's order, each with its heading.
+GROUPS = {
+    "hardware": "Hardware",
+    "firmware": "Firmware and the loop",
+    "scpi": "SCPI",
+    "fpga": "FPGAs",
+}
 
 PAGE = """\
 <!doctype html>
@@ -35,6 +45,7 @@ main{max-width:44rem;margin:0 auto;padding:2rem 1rem}
 h1{font-size:1.6rem;font-weight:600;margin:0 0 .5rem}
 p{color:var(--muted);margin:0 0 1.5rem}
 a{color:var(--accent)}
+h2{font-size:1.1rem;font-weight:600;margin:2rem 0 .25rem}
 ul{list-style:none;padding:0;margin:0}
 li{padding:.9rem 0;border-top:1px solid var(--rule)}
 li a{font-weight:600}
@@ -45,9 +56,7 @@ li span{display:block;color:var(--muted)}
 <main>
 <h1>SmartClock pages</h1>
 <p>The pages built from the sources in <a href="__REPOSITORY__">smartclock</a> by its <code>make pages</code>.</p>
-<ul>
 __PAGES__
-</ul>
 </main>
 </body>
 </html>
@@ -55,12 +64,14 @@ __PAGES__
 
 
 class Head(HTMLParser):
-    """A page's <title> text and its description meta tag's content."""
+    """A page's <title> text and its description and smartclock-group
+    meta tags' content."""
 
     def __init__(self):
         super().__init__()
         self.title = None
         self.description = None
+        self.group = None
         self.in_title = False
 
     def handle_starttag(self, tag, attrs):
@@ -70,6 +81,8 @@ class Head(HTMLParser):
             self.title = ""
         elif tag == "meta" and attrs.get("name") == "description":
             self.description = attrs.get("content")
+        elif tag == "meta" and attrs.get("name") == "smartclock-group":
+            self.group = attrs.get("content")
 
     def handle_endtag(self, tag):
         if tag == "title":
@@ -80,13 +93,19 @@ class Head(HTMLParser):
             self.title += data
 
 
-def entry(directory, name):
-    head = Head()
-    head.feed((directory / name).read_text(encoding="utf-8"))
-    if not head.title or not head.description:
-        sys.exit(f"pages_index: {name} lacks a <title> or a description meta tag")
-    return (f'<li><a href="{html.escape(name)}">{html.escape(head.title.strip())}</a>'
-            f"<span>{html.escape(head.description)}</span></li>")
+def head(directory, name):
+    page = Head()
+    page.feed((directory / name).read_text(encoding="utf-8"))
+    if not page.title or not page.description or not page.group:
+        sys.exit(f"pages_index: {name} lacks a <title>, a description or a smartclock-group meta tag")
+    if page.group not in GROUPS:
+        sys.exit(f"pages_index: {name} names group {page.group!r}, not one of {', '.join(GROUPS)}")
+    return page
+
+
+def entry(name, page):
+    return (f'<li><a href="{html.escape(name)}">{html.escape(page.title.strip())}</a>'
+            f"<span>{html.escape(page.description)}</span></li>")
 
 
 def main():
@@ -94,8 +113,13 @@ def main():
     parser.add_argument("directory", type=Path, help="the pages' directory")
     parser.add_argument("pages", nargs="+", help="the pages, by file name")
     args = parser.parse_args()
-    entries = "\n".join(entry(args.directory, name) for name in args.pages)
-    page = PAGE.replace("__REPOSITORY__", REPOSITORY).replace("__PAGES__", entries)
+    heads = {name: head(args.directory, name) for name in args.pages}
+    sections = []
+    for group, heading in GROUPS.items():
+        entries = [entry(name, page) for name, page in heads.items() if page.group == group]
+        if entries:
+            sections.append(f"<h2>{html.escape(heading)}</h2>\n<ul>\n" + "\n".join(entries) + "\n</ul>")
+    page = PAGE.replace("__REPOSITORY__", REPOSITORY).replace("__PAGES__", "\n".join(sections))
     (args.directory / INDEX).write_text(page, encoding="utf-8")
 
 

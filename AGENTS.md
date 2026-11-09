@@ -158,7 +158,10 @@ here, where they go stale unnoticed.
   `https://charlieh0tel.github.io/smartclock/loop.html`.  A generated
   page is not committed; a hand-written one's source goes in
   `docs/pages/`.  A new page gets a target of its own name, listed in
-  the `Makefile`'s `PAGES`.
+  the `Makefile`'s `PAGES`, and carries in its head a `<title>`, a
+  description meta tag and a `smartclock-group` meta tag naming its
+  group, a key of `GROUPS` in `tools/pages_index.py`; the index is
+  built from them, and `make pages` fails on a page lacking one.
 
 ## Working style
 

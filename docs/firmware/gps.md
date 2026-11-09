@@ -653,7 +653,7 @@ firmware's cut points, SS 30, 60 and 120, are about 32.5, 38.6 and
 **The measurement**, the 2026-10-03 run on the bench, not a tool's
 output.  The 58503A and a u-blox NEO-M8T shared one antenna through a
 splitter for 24 h
-([`bench-sky-2026-10-03.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/bench-sky-2026-10-03.html)),
+([`bench-sky-2026-10-03.html`](https://charlieh0tel.github.io/smartclock/bench-sky-2026-10-03.html)),
 with C/N0 in dB-Hz as the NEO-M8T reports it.  A quantile match, not a
 paired fit: the u-blox's per-satellite data was lost, so its per-band
 counts and the 58503A's tracked shares give the C/N0 distribution of

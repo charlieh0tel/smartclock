@@ -1,9 +1,9 @@
 name: pages
 
-# The generated pages, `make pages`, built from their sources and, on
-# main, published on GitHub Pages at
-# https://charlieh0tel.github.io/smartclock/<page>.html.  They are not
-# committed; docs/ keeps a page forwarding to each one's old path.
+# The pages, `make pages`, built from their sources (the hand-written
+# ones' in docs/pages/) and, on main, published on GitHub Pages at
+# https://charlieh0tel.github.io/smartclock/<page>.html.  docs/ keeps a
+# page forwarding to each one's old path.
 #
 # On pull requests too, building without publishing, so that a change
 # breaking a page fails before it lands.  Pages must be enabled in the

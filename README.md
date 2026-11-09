@@ -186,14 +186,15 @@ the same platform ([`docs/hp5313x.md`](docs/hp5313x.md)).
 `make ci` runs CI's Rust checks; the firmware's checks are their own
 CI job.  `make test-web` runs the browser tests, after `make web-deps`
 once.  `make hooks`, once per clone, sets up the repository's git
-hooks.  `make pages` builds the generated pages and their index into
-`target/pages/` from their sources and fails on an error in one; they
-are not committed, and `.github/workflows/pages.yml` publishes them on
-GitHub Pages from main, at <https://charlieh0tel.github.io/smartclock/>.  `make board-atlas` builds the board atlas alone,
-from `docs/board-atlas.json`, and fails if the data cites a file or
-section that does not exist.  `make check-pages` loads each generated
-page and each HTML page in `docs/` in headless Chrome and fails if
-anything on it scrolls sideways at desktop width.
+hooks.  `make pages` builds the HTML pages and their index into
+`target/pages/` and fails on an error in one: the generated ones from
+their sources, which are not committed, and the hand-written ones from
+`docs/pages/`.  `.github/workflows/pages.yml` publishes them on GitHub
+Pages from main, at <https://charlieh0tel.github.io/smartclock/>.
+`make board-atlas` builds the board atlas alone, from
+`docs/board-atlas.json`, and fails if the data cites a file or section
+that does not exist.  `make check-pages` loads each page in headless
+Chrome and fails if anything on it scrolls sideways at desktop width.
 
 ## Documentation
 
@@ -215,7 +216,7 @@ anything on it scrolls sideways at desktop width.
 | [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3815a-4010.md`](docs/firmware/z3815a-4010.md) | the Z3815A 4010 against the 58503A 3704 and the Z3805A 3543B, and its rewrite |
 | [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
-| [`docs/loop.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |
+| [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |
 | [`board-atlas.html`](https://charlieh0tel.github.io/smartclock/board-atlas.html) | the first-family main board, part by part on its photographs: each part's role, its address or QSPI device, the nets measured, and the Z3801A's and 58503A's boards against it; a ring or a row opens the part's card, the photos zoom and pan, the parts filter by subsystem, confidence or text, and `#J4` links to a part; built from `docs/board-atlas.json` by `make board-atlas` |
 | [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, and as C data, the trees side by side against the manuals, and what bench receivers answered |
 | [`docs/screen-format-strings.md`](docs/screen-format-strings.md) | the status screen's templates, and what drives its mode line |

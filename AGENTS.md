@@ -152,16 +152,13 @@ here, where they go stale unnoticed.
 
 ## GitHub
 
-- Link a committed HTML file in the repo from Markdown through
-  `https://htmlpreview.github.io/?` followed by its GitHub URL, so it
-  renders:
-  `https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/loop.html`.
-- Exception: a generated page is not committed.  `make pages` builds
-  it and `.github/workflows/pages.yml` publishes it on GitHub Pages;
-  link it by its Pages URL:
-  `https://charlieh0tel.github.io/smartclock/board-atlas.html`.  A
-  new generated page gets a target of its own name, listed in the
-  `Makefile`'s `PAGES`, never a committed copy.
+- HTML pages are published on GitHub Pages: `make pages` builds them
+  and `.github/workflows/pages.yml` publishes them.  Link one from
+  Markdown by its Pages URL, never through htmlpreview.github.io:
+  `https://charlieh0tel.github.io/smartclock/loop.html`.  A generated
+  page is not committed; a hand-written one's source goes in
+  `docs/pages/`.  A new page gets a target of its own name, listed in
+  the `Makefile`'s `PAGES`.
 
 ## Working style
 

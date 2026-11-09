@@ -1,4 +1,4 @@
-//! `docs/firmware/loop.md` and `docs/loop.html` checked against the
+//! `docs/firmware/loop.md` and `docs/pages/loop.html` checked against the
 //! firmware itself, for the Z3805A 3543B and the 58503A 3704: each
 //! constant the evidence cites read from the image at the address it
 //! gives, or found as an immediate operand in the routine it names, by
@@ -1196,7 +1196,7 @@ fn ramp_seconds(trace: &Trace) -> u32 {
 #[test]
 fn the_page_s_by_model_rows_are_the_firmware_s() {
     let evidence = read("docs/firmware/loop.md");
-    let page = read("docs/loop.html");
+    let page = read("docs/pages/loop.html");
     let rows = page_rows(&page);
     for receiver in &RECEIVERS {
         let law = Law::from_evidence(&evidence, receiver);
@@ -1247,7 +1247,7 @@ fn the_page_s_by_model_rows_are_the_firmware_s() {
 fn the_page_s_step_response_is_the_firmware_s() {
     const UPDATES: usize = 3000;
     let evidence = read("docs/firmware/loop.md");
-    let page = flat(&read("docs/loop.html"));
+    let page = flat(&read("docs/pages/loop.html"));
     let overshoot = number_after(&page, "overshoots by about ");
     let removed = number_after(&page, "the loop removes ");
     assert!(page.contains(&format!("removes {removed} % of it in about τ")));
@@ -1282,7 +1282,7 @@ fn the_page_states_the_firmware_s_poles() {
     /// at either receiver's τ, as a fraction of their magnitude.
     const TOLERANCE: f64 = 0.02;
     let evidence = read("docs/firmware/loop.md");
-    let page = flat(&read("docs/loop.html"));
+    let page = flat(&read("docs/pages/loop.html"));
     let sentence = page
         .split_once("For the 10 s update itself its roots are a real pole at ")
         .expect("the update's poles")

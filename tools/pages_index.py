@@ -1,5 +1,6 @@
 """Writes the published pages' landing page, DIR/index.html: what the
-project is, the hero picture, the FEATURED page if one is given, then
+project is, the hero picture, the FEATURED page if one is given under
+the heading FEATURED_HEADING, then
 each other PAGE given (a file in DIR) by its <title> and its
 description meta tag under its smartclock-group meta tag's group, in
 GROUPS' order and within one in the order given, and the repository's
@@ -10,7 +11,7 @@ The hero is a drawing of the HP 58503A's front panel, showing UTC, or
 HERO, an image under docs/ copied to the same path beside the index,
 described by HERO_ALT.
 
-    python3 -I tools/pages_index.py [--featured PAGE]
+    python3 -I tools/pages_index.py [--featured PAGE --featured-heading TEXT]
         [--hero PATH --hero-alt TEXT] DIR PAGE...
 """
 
@@ -465,8 +466,8 @@ def section(key, heading, about, entries, classes="group"):
             f"<ul>\n" + "\n".join(entries) + "\n</ul>\n</section>")
 
 
-def featured(name, page):
-    return section("featured", "New", motif(GROUPS[page.group]), [entry(name, page)], "group featured")
+def featured(name, page, heading):
+    return section("featured", heading, motif(GROUPS[page.group]), [entry(name, page)], "group featured")
 
 
 def grouped(heads, skip):
@@ -499,6 +500,7 @@ def hero(directory, path, alt):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--featured", help="the page to feature, by file name; one of the pages")
+    parser.add_argument("--featured-heading", default="Featured", help="the featured page's heading")
     parser.add_argument("--hero", help="the hero image, by its path under docs/")
     parser.add_argument("--hero-alt", help="the hero image's description")
     parser.add_argument("directory", type=Path, help="the pages' directory")
@@ -509,7 +511,7 @@ def main():
         sys.exit(f"pages_index: the featured page {args.featured} is not one of the pages")
     sections = grouped(heads, args.featured)
     if args.featured:
-        sections.insert(0, featured(args.featured, heads[args.featured]))
+        sections.insert(0, featured(args.featured, heads[args.featured], args.featured_heading))
     page = (PAGE.replace("__HERO__", hero(args.directory, args.hero, args.hero_alt))
             .replace("__SECTIONS__", "\n".join(sections))
             .replace("__DOCUMENTS__", documents())

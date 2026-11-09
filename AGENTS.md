@@ -163,7 +163,7 @@ here, where they go stale unnoticed.
   group, a key of `GROUPS` in `tools/pages_index.py`; the landing
   page is built from them, and `make pages` fails on a page lacking
   one.  Feature a page on the landing page by naming it in the
-  `Makefile`'s `FEATURED_PAGE`.
+  `Makefile`'s `FEATURED_PAGE`, under `FEATURED_HEADING`.
 
 ## Working style
 

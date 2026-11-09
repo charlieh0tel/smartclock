@@ -171,9 +171,12 @@ fn evidence_row(evidence: &str, receiver: &Receiver) -> HashMap<String, String> 
         .unwrap_or_else(|| panic!("loop.md has no row for {}", receiver.evidence_row))
 }
 
-/// The text of each `<td>` of loop.html's by-model table, by row.
-fn page_rows(page: &str) -> Vec<Vec<String>> {
-    let table = &page[page.find("<h3>By model</h3>").expect("the by-model table")..];
+/// The text of each `<td>` of the first table after `heading` in
+/// loop.html, by row.
+fn page_rows(page: &str, heading: &str) -> Vec<Vec<String>> {
+    let table = &page[page
+        .find(heading)
+        .unwrap_or_else(|| panic!("loop.html has no {heading}"))..];
     let table = &table[..table.find("</table>").expect("its end")];
     table
         .split("<tr>")
@@ -1197,7 +1200,7 @@ fn ramp_seconds(trace: &Trace) -> u32 {
 fn the_page_s_by_model_rows_are_the_firmware_s() {
     let evidence = read("docs/firmware/loop.md");
     let page = read("docs/pages/loop.html");
-    let rows = page_rows(&page);
+    let rows = page_rows(&page, "<h3>By model</h3>");
     for receiver in &RECEIVERS {
         let law = Law::from_evidence(&evidence, receiver);
         let trace = Trace::load(receiver.image);

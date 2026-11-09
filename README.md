@@ -216,7 +216,7 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3815a-4010.md`](docs/firmware/z3815a-4010.md) | the Z3815A 4010 against the 58503A 3704 and the Z3805A 3543B, and its rewrite |
 | [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
-| [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles |
+| [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles, and the FFOM its start-up gives |
 | [`board-atlas.html`](https://charlieh0tel.github.io/smartclock/board-atlas.html) | the first-family main board, part by part on its photographs: each part's role, its address or QSPI device, the nets measured, and the Z3801A's and 58503A's boards against it; a ring or a row opens the part's card, the photos zoom and pan, the parts filter by subsystem, confidence or text, and `#J4` links to a part; built from `docs/board-atlas.json` by `make board-atlas` |
 | [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, and as C data, the trees side by side against the manuals, and what bench receivers answered |
 | [`docs/screen-format-strings.md`](docs/screen-format-strings.md) | the status screen's templates, and what drives its mode line |

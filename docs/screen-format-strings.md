@@ -97,7 +97,9 @@ while the outputs are other than `[ Outputs Valid ]`, which in every
 image but the Z3815A only stage 6 gives (stages 2 to 5 and 8 give
 `Valid/Reduced Accuracy`, 1, 7 and 9 `Invalid`).  A 58503A with `10MHZ STABLE` on its
 panel had `>> Locked to GPS` with no suffix at the same moment, and
-the suffix was seen with FFOM 1 and gone with FFOM 0.
+the suffix was seen with FFOM 1 and gone with FFOM 0.  `get_ffom` gives
+the same split by the same stage byte: 1 in stage 5, 0 in stage 6
+(`firmware/loop.md`, "The FFOM").
 
 The ladder, from the power-up sub-state (`firmware/loop.md`, value 1)
 and, in `fine`, the fine sub-state:

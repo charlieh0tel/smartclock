@@ -160,8 +160,10 @@ here, where they go stale unnoticed.
   `docs/pages/`.  A new page gets a target of its own name, listed in
   the `Makefile`'s `PAGES`, and carries in its head a `<title>`, a
   description meta tag and a `smartclock-group` meta tag naming its
-  group, a key of `GROUPS` in `tools/pages_index.py`; the index is
-  built from them, and `make pages` fails on a page lacking one.
+  group, a key of `GROUPS` in `tools/pages_index.py`; the landing
+  page is built from them, and `make pages` fails on a page lacking
+  one.  Feature a page on the landing page by naming it in the
+  `Makefile`'s `FEATURED_PAGE`.
 
 ## Working style
 

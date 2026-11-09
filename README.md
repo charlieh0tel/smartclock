@@ -186,7 +186,7 @@ the same platform ([`docs/hp5313x.md`](docs/hp5313x.md)).
 `make ci` runs CI's Rust checks; the firmware's checks are their own
 CI job.  `make test-web` runs the browser tests, after `make web-deps`
 once.  `make hooks`, once per clone, sets up the repository's git
-hooks.  `make pages` builds the HTML pages and their index into
+hooks.  `make pages` builds the HTML pages and their landing page into
 `target/pages/` and fails on an error in one: the generated ones from
 their sources, which are not committed, and the hand-written ones from
 `docs/pages/`.  `.github/workflows/pages.yml` publishes them on GitHub

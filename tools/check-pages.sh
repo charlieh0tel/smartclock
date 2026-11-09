@@ -1,7 +1,9 @@
 #!/bin/sh
-# Load each HTML page under docs/ in headless Chrome at desktop widths and
-# fail if the page is wider than the window or any box on it scrolls
-# sideways.  Headless screenshots hide scrollbars, so this measures
+# Load each HTML page under the directories given (make check-pages
+# gives the generated pages' and docs/) in headless Chrome at desktop
+# widths and fail if the page is wider than the window or any box on it
+# scrolls sideways.  A page forwarding to another, which docs/ keeps at
+# a generated page's old path, is skipped.  Headless screenshots hide scrollbars, so this measures
 # instead of looking.  Needs google-chrome or chromium; not run in CI.
 set -eu
 
@@ -25,7 +27,10 @@ if((o==="auto"||o==="scroll")&&e.scrollWidth>e.clientWidth+1)bad.push((e.id||e.c
 const p=document.createElement("pre");p.id="check-pages";p.textContent=bad.length?bad.join("; "):"ok";document.body.appendChild(p);},300));</script>'
 
 status=0
-for page in $(find docs -name "*.html" | sort); do
+for page in $(find "$@" -name "*.html" | sort); do
+    if grep -q 'http-equiv="refresh"' "$page"; then
+        continue
+    fi
     copy="$scratch/$(basename "$page")"
     # By position, not sub(): the probe holds "&", which sub() expands.
     PROBE="$probe" awk '{ i = index($0, "</body>"); if (i) $0 = substr($0, 1, i - 1) ENVIRON["PROBE"] substr($0, i); print }' "$page" > "$copy"

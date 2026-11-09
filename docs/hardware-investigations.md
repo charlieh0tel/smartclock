@@ -13,7 +13,7 @@ Stop the daemon before any direct-mode work; it holds the port.
 on 2026-10-23: the photo under `images/`, and the region as pixels
 x0,y0 to x1,y1 of the full-size photo after its EXIF rotation.  The
 Z3805A's parts are mapped in
-[`board-atlas.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/board-atlas.html).
+[`board-atlas.html`](https://charlieh0tel.github.io/smartclock/board-atlas.html).
 Until 2026-10-30 only the component sides were photographed; the
 Z3805A's solder side is now photographed too, but most signal lines
 change layer through vias within a few millimeters of a part's pins,

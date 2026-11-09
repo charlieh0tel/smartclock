@@ -127,14 +127,23 @@ docs:
 # new one.  Each page is built by the target of its own name, writing
 # $(PAGES_DIR)/<page>.html with a <title>, a description meta tag and
 # a smartclock-group meta tag naming its group in tools/pages_index.py;
-# a page joins by such a target, named in PAGES.  The index,
-# index.html, lists them by group, in that order within one.
+# a page joins by such a target, named in PAGES.  The landing page,
+# index.html, lists them by group, in that order within one, after
+# FEATURED_PAGE, one of PAGES or empty for none, set apart above them.
+# Its hero is a drawing of the 58503A's front panel, or HERO_IMAGE, a
+# path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages
 HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
 PAGES := board-atlas scpi-models $(HAND_PAGES)
+FEATURED_PAGE :=
+HERO_IMAGE :=
+HERO_ALT :=
 .PHONY: $(PAGES)
 pages: $(PAGES)
-	python3 -I tools/pages_index.py $(PAGES_DIR) $(PAGES:%=%.html)
+	python3 -I tools/pages_index.py \
+		$(if $(FEATURED_PAGE),--featured $(FEATURED_PAGE).html) \
+		$(if $(HERO_IMAGE),--hero $(HERO_IMAGE) --hero-alt "$(HERO_ALT)") \
+		$(PAGES_DIR) $(PAGES:%=%.html)
 
 # The board atlas, from docs/board-atlas.json, its photos copied beside
 # it; fails if the data cites a file or section that does not exist or
@@ -154,7 +163,8 @@ $(HAND_PAGES):
 	mkdir -p $(PAGES_DIR)
 	python3 -I tools/pages_copy.py docs/pages/$@.html $(PAGES_DIR)
 
-# Fail if a published page scrolls sideways at desktop width.  Needs
+# Fail if a published page scrolls sideways at desktop width, or the
+# landing page at a phone's.  Needs
 # Chrome; not part of ci.
 check-pages: pages
 	./tools/check-pages.sh $(PAGES_DIR)

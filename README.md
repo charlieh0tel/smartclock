@@ -6,6 +6,9 @@ monitor them, their firmware read and rewritten as C, and their boards
 mapped.  It began as a monitor and became a study of how the receivers
 work.
 
+**Docs site:** the board atlas, the loop analysis and the SCPI trees, at
+<https://charlieh0tel.github.io/smartclock/>.
+
 - **Monitoring** (`smartclockmon`): a Rust library, a logging daemon,
   a terminal monitor, a browser view and a Prometheus exporter, for
   receivers on a serial port.  In daily use, logging continuously.

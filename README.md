@@ -4,7 +4,8 @@
 frequency receivers (58503A/B, 59551A, Z3801A, Z3805A, Z3815A, Z3816A),
 taken apart and documented.
 
-**Docs site:** the board atlas, the loop analysis and the SCPI trees, at
+**Docs site:** the FPGA explainer, the board atlas, the loop analysis
+and the SCPI trees, at
 <https://charlieh0tel.github.io/smartclock/>.
 
 - **[Firmware](#the-firmware):** seven ROM images read and documented:
@@ -17,7 +18,10 @@ taken apart and documented.
 - **[Hardware](#the-hardware):** the main board mapped part by part from
   photographs, with the nets measured and the differences between
   models ([the board atlas](https://charlieh0tel.github.io/smartclock/board-atlas.html)).
-  <!-- The FPGA bullet goes here when the FPGA write-up launches. -->
+- **[FPGAs](docs/firmware/fpga-comparison.md):** the five FPGA
+  designs in the seven images, decoded from their bitstreams, simulated,
+  traced and compared
+  ([illustrated](https://charlieh0tel.github.io/smartclock/fpga.html)).
 - **[Monitoring](#monitoring):** a Rust library, a logging daemon, a
   terminal monitor, a browser view and a Prometheus exporter, in daily
   use against real receivers.
@@ -192,7 +196,9 @@ once.  `make hooks`, once per clone, sets up the repository's git
 hooks.  `make pages` builds the HTML pages and their landing page into
 `target/pages/` and fails on an error in one: the generated ones from
 their sources, which are not committed, and the hand-written ones from
-`docs/pages/`.  `.github/workflows/pages.yml` publishes them on GitHub
+`docs/pages/`.  The FPGA explainer's needs node, Icarus Verilog and
+network access to github.com, for the XC3000 viewer's clone
+(`docs/firmware/fpga-comparison.md`, "Reproduce").  `.github/workflows/pages.yml` publishes them on GitHub
 Pages from main, at <https://charlieh0tel.github.io/smartclock/>.
 `make board-atlas` builds the board atlas alone, from
 `docs/board-atlas.json`, and fails if the data cites a file or section

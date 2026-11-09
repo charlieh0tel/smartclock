@@ -14,11 +14,12 @@ found by reading the code.
 A path here means the parser knows it, not that a receiver answers it.
 Nothing here was sent to a receiver.
 
-[`models.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/scpi/models.html)
+[`scpi-models.html`](https://charlieh0tel.github.io/smartclock/scpi-models.html)
 is the same table as a page that filters it -- by text, by whether a
 manual lists a path, whether the images differ, whether it has a
-handler, and by image; `dump-scpi --models --html` writes it, and the
-same test checks it.
+handler, and by image; `dump-scpi --models --html` writes it, and
+`make scpi-models` builds it for GitHub Pages.  It is not committed;
+`models.html` here forwards to it.
 
 [`models.md`](models.md) sets the trees side by side, path by path,
 with the manuals that list each path and whether a receiver has

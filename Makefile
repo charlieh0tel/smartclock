@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-board-atlas board-atlas clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs pages board-atlas scpi-models check-pages clean deb release release-notes install-service
 
 all: build
 
@@ -105,8 +105,6 @@ docs:
 	done
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models third_party/firmware/images/*.bin \
 		> docs/scpi/models.md
-	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models --html third_party/firmware/images/*.bin \
-		> docs/scpi/models.html
 	for image in third_party/firmware/images/*.bin; do \
 		$(CARGO) run -q -p smartclock-cli -- dump-pforth $$image \
 			> docs/firmware/pforth/$$(basename $$image .bin).txt || exit 1; \
@@ -120,20 +118,32 @@ docs:
 	$(CARGO) run -q -p smartclock-cli -- dump-oncore --models $(ONCORE_IMAGES) \
 		> docs/firmware/oncore/models.md
 
-# Fail if an HTML page in docs/ scrolls sideways at desktop width.
-# Needs Chrome; not part of ci.
-check-pages:
-	./tools/check-pages.sh
+# The generated pages, into PAGES_DIR, each failing on an error in its
+# source; .github/workflows/pages.yml publishes them on GitHub Pages, at
+# https://charlieh0tel.github.io/smartclock/<page>.html.  They are not
+# committed; one that once was left, at its old path in docs/, a page
+# forwarding to its new one.  A page joins by a target of its own,
+# added to pages' prerequisites.
+PAGES_DIR ?= target/pages
+pages: board-atlas scpi-models
 
-# Fail if docs/board-atlas.html is not what tools/board_atlas.py renders
-# from docs/board-atlas.json, or if the data cites a file or section that
-# does not exist; board-atlas rewrites the page.  Needs only python3;
-# .github/workflows/firmware.yml runs the check.
-check-board-atlas:
-	python3 -I tools/board_atlas.py
-
+# The board atlas, from docs/board-atlas.json; fails if the data cites
+# a file or section that does not exist or names a part it lacks.
+# Needs only python3; .github/workflows/firmware.yml runs it too.
 board-atlas:
-	python3 -I tools/board_atlas.py --write
+	mkdir -p $(PAGES_DIR)
+	python3 -I tools/board_atlas.py $(PAGES_DIR)/board-atlas.html
+
+# The SCPI trees side by side, as a page that filters them.
+scpi-models:
+	mkdir -p $(PAGES_DIR)
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models --html third_party/firmware/images/*.bin \
+		> $(PAGES_DIR)/scpi-models.html
+
+# Fail if an HTML page, the generated ones or one in docs/, scrolls
+# sideways at desktop width.  Needs Chrome; not part of ci.
+check-pages: pages
+	./tools/check-pages.sh $(PAGES_DIR) docs
 
 # The firmware's checks and generated files, which
 # third_party/firmware/Makefile runs, alone or from here by name, for

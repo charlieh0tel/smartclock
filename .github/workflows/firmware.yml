@@ -10,7 +10,7 @@ name: firmware
 # Z3815A's diffs and the names seeded from them, every image's
 # chip-select tables, the hand-written C's magic numbers, the addresses
 # the 58503A's and Z3801A's C's comments cite, and the shared C; and the
-# board atlas, docs/board-atlas.html, against its data.
+# board atlas built from its data, every citation in it checked.
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs an m68k toolchain,
@@ -86,7 +86,7 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make check-chip-selects
         if: ${{ !cancelled() }}
-      - run: make check-board-atlas
+      - run: make board-atlas
         if: ${{ !cancelled() }}
       - run: make check-loop-trace
         if: ${{ !cancelled() }}

@@ -579,7 +579,7 @@ pub(crate) struct DumpScpiArgs {
     #[arg(long)]
     models: bool,
     /// With `--models`, print a page that filters the table instead
-    /// of Markdown (docs/scpi/models.html).
+    /// of Markdown (`make scpi-models`).
     #[arg(long, requires = "models")]
     html: bool,
     /// Follow each path with its query handler's and its setter's
@@ -792,13 +792,6 @@ mod tests {
             super::models::markdown(&trees).lines().collect::<Vec<_>>(),
             held.lines().collect::<Vec<_>>(),
             "docs/scpi/models.md is stale; run make docs"
-        );
-        let page = std::fs::read_to_string(format!("{root}/docs/scpi/models.html"))
-            .expect("the page is in the repository");
-        assert_eq!(
-            super::models::html(&trees).lines().collect::<Vec<_>>(),
-            page.lines().collect::<Vec<_>>(),
-            "docs/scpi/models.html is stale; run make docs"
         );
     }
 

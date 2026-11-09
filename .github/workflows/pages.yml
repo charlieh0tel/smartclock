@@ -1,0 +1,53 @@
+name: pages
+
+# The generated pages, `make pages`, built from their sources and, on
+# main, published on GitHub Pages at
+# https://charlieh0tel.github.io/smartclock/<page>.html.  They are not
+# committed; docs/ keeps a page forwarding to each one's old path.
+#
+# On pull requests too, building without publishing, so that a change
+# breaking a page fails before it lands.  Pages must be enabled in the
+# repository's settings with GitHub Actions as its source.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      # The pin audit.yml carries; moved by hand to match it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # serialport, under the library smartclock-cli links, needs
+      # libudev.  The compiler is the one rust-toolchain.toml names,
+      # which rustup installs on the first cargo call.
+      - run: sudo apt-get update && sudo apt-get install -y libudev-dev
+      - run: make pages PAGES_DIR=_site
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    # One deployment at a time, the newest last; one in progress is not
+    # cancelled, so a published site is never half replaced.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

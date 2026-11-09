@@ -2108,9 +2108,9 @@ addresses, which its rule 2 compares, and the figures of what
 (`rewrite.md`, "The rewrite").
 None of the targets builds the workspace;
 `check-chip-selects` reads every image's reset code (`restart.md`,
-"The chip selects").  The job also runs `make check-board-atlas`, which
-needs only Python: `docs/board-atlas.html` against the data it is
-rendered from, and every file and section that data cites.
+"The chip selects").  The job also runs `make board-atlas`, which
+needs only Python: the board atlas built from its data, and every file
+and section that data cites checked.
 `check-loop-trace` runs both images' own
 `startup_pll` and `pll_normal` in Unicorn on synthetic readings, the
 routines that reach outside the loop's arithmetic stood in for

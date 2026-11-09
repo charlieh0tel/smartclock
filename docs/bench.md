@@ -217,7 +217,7 @@ CPU, U33, a Motorola MC68331CFC16.  The DUART, U3, is a Philips
 SCC68692C1A44 and the EEPROM, U4, an Atmel AT28C64B-20JC, soldered.
 Its parts, ringed on the photos below with what the firmware does with
 each and the nets measured so far:
-[`board-atlas.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclock/blob/main/docs/board-atlas.html).
+[`board-atlas.html`](https://charlieh0tel.github.io/smartclock/board-atlas.html).
 Its jacks
 carry the same designators as the 58503A's: J4 (OUT A) and J5 (OUT B)
 go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to

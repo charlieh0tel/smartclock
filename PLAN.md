@@ -588,6 +588,52 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   the note, and `make check-plain-names` fails on a suffixed name in
   the hand-written C or a names file.
 
+### The FPGA designs as netlists
+
+`tools/fpga/` decodes the XC3042 bitstreams through the XC3000 viewer
+(<https://github.com/Arisotura/xc3000>), in node or headless Chrome, and
+writes structural Verilog over our own models of the data sheet
+(`docs/firmware/outputs.md`, "Netlists").  The viewer has no license,
+so it is never copied into the project; the tools load it from the
+clone `tools/fpga/Makefile` makes at the pinned commit
+(`tools/fpga/decoder.mk`); `netdump.js` corrects the viewer's faults.  The netlist
+stays generated, in `target/`, since it needs the viewer to make.
+
+The decoder is held to XACT itself, not to what the firmware expects:
+XACT 6.0.1 runs headless in DOSBox-X (`tools/fpga/xact/`), and each
+test design's decode must match the routed LCA XACT built it from.
+Our test designs, their LCAs and bitstreams are committed, so CI checks
+the decoder with no XACT (`make check-fpga-decoder`); XACT and its
+XAPP designs are not.  The SmartClock bitstreams look built with
+MakeBits's tie-down (inferred, `docs/firmware/outputs.md`), which a
+bit-identical rebuild must reproduce.
+
+Every figure the FPGA docs quote from a simulation is checked:
+`make -f tools/fpga/Makefile check` covers the fast path (sizes, read
+ports, Icarus and Yosys diagnostics, pads, the 58503A/Z3801A's blocks
+against the Z3805A's, the 58503B's paired blocks as functions) and runs
+in firmware CI, and
+`check-readings` the long runs, against
+`tools/fpga/ref/<image>.<run>.readings`, with `tools/fpga/probe.v`
+measuring the internal nets the docs quote, model hazards under 5 ns
+removed.  The long runs take minutes a simulated second, so `check-readings` is outside
+`check` and CI; it is run by hand when a testbench, the models, the
+netlist generator or the decoder pin change.
+
+`check-decoder-upstream` decodes every design again at the viewer's
+upstream pull request #3 and requires the same netlists; it needs the
+network, so it too is run by hand, when `netdump.js` or the pin
+changes.
+
+The illustrated explainer is generated, not hand-written, and not
+committed, like the board atlas: `tools/fpga/explainer.py` takes every
+figure from those checked references and inlines `vcd_wave.py`'s
+waveforms.  The top Makefile's `fpga` writes it into `$(PAGES_DIR)`
+for GitHub Pages, https://charlieh0tel.github.io/smartclock/fpga.html,
+and `check-explainer`, part of `check`, fails if it cannot be
+rendered.  A committed copy would only repeat what its sources and
+the build already check.
+
 ## Next
 
 - **Compacting old logs**, perhaps into Parquet.  The logs grow without
@@ -610,8 +656,15 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   exception entry no bridge.  The primary's own writes to ROM's range
   are not modeled.
 - **The rest of the firmware work** is in progress and will follow:
-  the emulator that boots these images, booting the rebuilt C in it,
-  and the FPGA designs decoded as netlists.
+  the emulator that boots these images and booting the rebuilt C in
+  it.  The FPGA designs decoded as netlists are here
+  (`docs/firmware/fpga-comparison.md`).
+- **FPGA netlists:** where DL.Y goes; what each trace lists as open
+  (`docs/firmware/z3805a-trace.md` and its siblings, "Confidence"),
+  among them the other four designs' write maps and pins; all of it on
+  a board.  The Z3816A 4001's `counter_set_sync` is read later, with
+  the Z3816A rewrite; until then the P7-reach finding names only the
+  images whose sync writes are read.
 
 ## Open questions
 

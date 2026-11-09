@@ -1,0 +1,40 @@
+0.000000003 s: P14 rises
+0.000000003 s: P28 rises
+probe BH.X high 99.0 ns from 0.000000530 s
+0.000606786 s: P38 rises
+0.000615129 s: P40 rises
+0.001213036 s: P38 rises, 606250.0 ns after the last
+0.001229529 s: P40 rises, 614400.0 ns after the last
+0.001819286 s: P38 rises, 606250.0 ns after the last
+0.001843929 s: P40 rises, 614400.0 ns after the last
+0.002425537 s: P38 rises, 606250.0 ns after the last
+0.002458329 s: P40 rises, 614400.0 ns after the last
+0.003031787 s: P38 rises, 606250.0 ns after the last
+0.003072729 s: P40 rises, 614400.0 ns after the last
+0.003638037 s: P38 rises, 606250.0 ns after the last
+0.003687129 s: P40 rises, 614400.0 ns after the last
+0.004244286 s: P38 rises, 606250.0 ns after the last
+0.004301529 s: P40 rises, 614400.0 ns after the last
+0.004850536 s: P38 rises, 606250.0 ns after the last
+0.004915929 s: P40 rises, 614400.0 ns after the last
+freerun 5000000 ns: P38 8 rises, P40 8 rises
+rises: P83 0, P14 1, P28 1
+probe P83: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe ~P28: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe P28: 1 rises, 0 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000003 s
+probe ~P14: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe P14: 1 rises, 0 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000003 s
+probe LD.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s; 8 pulses under 5.0 ns removed, the first at 0.000615128 s
+probe LE.X: 8 rises, 9 falls; period 606250.0 to 606250.0 ns; high 8343.5 to 65393.5 ns; after reference -1.0 to -1.0 ns; last rise 0.004850536 s
+probe JI.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe CI.X: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe KI.X: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe BB.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe BA.Y: 2 rises, 2 falls; period 400.0 to 400.0 ns; high 200.0 to 200.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000001129 s
+probe CA.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe CC.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe EE.Y: 643 rises, 644 falls; period 7760.0 to 8730.0 ns; high 3880.0 to 3880.0 ns; after reference -1.0 to -1.0 ns; last rise 0.004994096 s
+probe FE.Y: 5155 rises, 5155 falls; period 970.0 to 970.0 ns; high 390.0 to 485.0 ns; after reference -1.0 to -1.0 ns; last rise 0.005000401 s
+probe KE.Y: 10309 rises, 10310 falls; period 485.0 to 485.0 ns; high 96.0 to 96.0 ns; after reference -1.0 to -1.0 ns; last rise 0.005000305 s; 10309 pulses under 5.0 ns removed, the first at 0.000000827 s
+probe BH.X: 1 rises, 2 falls; period -1.0 to -1.0 ns; high 99.0 to 99.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000530 s
+probe AB.Y: 50000 rises, 50001 falls; period 100.0 to 100.0 ns; high 50.0 to 50.0 ns; after reference -1.0 to -1.0 ns; last rise 0.005000427 s

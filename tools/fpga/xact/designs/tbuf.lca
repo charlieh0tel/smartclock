@@ -1,0 +1,49 @@
+;: tbuf.lca (3042PC84-70), hand-written: 3-state buffers and Longline pull-ups
+Version 2
+Design 3042PC84 9 0
+Speed -70
+Editblk FC
+Base FG
+Config X:F Y:G F:A G:B DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A
+Equate G = ~B
+Endblk
+Editblk FH
+Base FG
+Config X:F Y: F:A:B G: DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A*B
+Endblk
+Editblk P23
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P24
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P25
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P26
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P27
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P65
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Addnet D0 P23.I FC.A
+Addnet D1 P24.I FC.B
+Addnet T0 P25.I TBUF.FB.1.T
+Addnet T1 P26.I TBUF.FE.1.T TBUF.FD.2.T
+Addnet X0 FC.X TBUF.FB.1.I
+Addnet X1 FC.Y TBUF.FE.1.I
+Addnet X2 P27.I TBUF.FD.2.I
+Addnet BUS1 TBUF.FB.1.O TBUF.FE.1.O PU.FA.1.O FH.A
+Addnet BUS2 TBUF.FD.2.O PU.FM.2.O FH.B
+Addnet OUT FH.X P65.O

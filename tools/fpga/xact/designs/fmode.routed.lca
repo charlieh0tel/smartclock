@@ -1,0 +1,41 @@
+;: fmode.lca (3042PC84-70), hand-written and hand-routed: a mode-F block
+;: whose functions read E as their fourth input.  The routes are APR's for
+;: t2.lca; APR itself would rewrite the block as mode FG.
+Version 2
+Design 3042PC84 9 0
+Speed -70
+Editblk AA
+Base F
+Config X: Y:F F:A:B:C:E DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = (A*B)+(C*~E)
+Endblk
+Editblk P11
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P10
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P9
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P8
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P7
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Addnet NA P11.I AA.A
+NProgram NA PAD1.I:AA.A
+Addnet NB P10.I AA.B
+NProgram NB row.A.local.1:AA.B row.A.local.1:PAD2.I
+Addnet NC P9.I AA.E
+NProgram NC BC.20.1.0 BC.20.1.19 BB.20.1.5 BB.20.1.19 row.B.local.1:AA.E col.C.local.1:PAD5.I
+Addnet ND P8.I AA.C
+NProgram ND BD.20.1.4 BD.20.1.15 BB.20.1.8 BB.20.1.17 BC.20.1.9 BC.20.1.16 row.B.local.3:AA.C col.D.local.5:PAD6.I
+Addnet NF AA.Y P7.O
+NProgram NF AD.20.1.8 AD.20.1.15 AC.20.1.9 AC.20.1.16 row.A.local.4:AA.Y row.A.local.4:PAD7.O

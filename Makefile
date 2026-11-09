@@ -165,6 +165,42 @@ $(HAND_PAGES):
 	mkdir -p $(PAGES_DIR)
 	python3 -I tools/pages_copy.py docs/pages/$@.html $(PAGES_DIR)
 
+# The FPGA decoder's checks against XACT (tools/fpga/xact/README.md).
+# check-fpga-decoder decodes each test design's committed bitstream with
+# netdump.js and checks it against XACT's routed LCA
+# (tools/fpga/xact/designs); it needs node, git and the XC3000 viewer
+# netdump.js reads, cloned at the commit the tools were checked against
+# into target/ (never vendored: it has no license).  fpga-designs
+# rebuilds the designs with XACT under DOSBox-X, after
+# tools/fpga/xact/fetch.sh, or in Docker with XACT_DOCKER=1;
+# check-fpga-xapp checks XACT's XAPP003 designs the same way, locally.
+include tools/fpga/decoder.mk
+XC3000_VIEWER = target/fpga/xc3000
+.PHONY: check-fpga-decoder fpga-designs check-fpga-xapp
+$(XC3000_VIEWER).commit-$(DECODER_COMMIT):
+	$(call decoder_checkout,$(XC3000_VIEWER),$(DECODER_COMMIT))
+
+check-fpga-decoder: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
+	$(call decoder_verify,$(XC3000_VIEWER),$(DECODER_COMMIT))
+	python3 -I tools/fpga/xact/roundtrip.py $(XC3000_VIEWER)/html
+
+fpga-designs:
+	tools/fpga/xact/build.sh
+
+# The FPGA explainer, $(PAGES_DIR)/fpga.html, for GitHub Pages
+# (https://charlieh0tel.github.io/smartclock/fpga.html), not committed:
+# rendered from the decodes, the references and the waveform figures,
+# which it makes first (tools/fpga/Makefile, explainer).  Needs git,
+# node and Icarus Verilog, not Yosys or pdftotext.
+.PHONY: fpga
+fpga:
+	mkdir -p $(PAGES_DIR)
+	$(MAKE) -f tools/fpga/Makefile explainer EXPLAINER_PAGE=$(abspath $(PAGES_DIR))/fpga.html
+
+check-fpga-xapp: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
+	$(call decoder_verify,$(XC3000_VIEWER),$(DECODER_COMMIT))
+	tools/fpga/xact/xapp.sh $(XC3000_VIEWER)/html
+
 # Fail if a published page scrolls sideways at desktop width, or the
 # landing page at a phone's.  Needs
 # Chrome; not part of ci.

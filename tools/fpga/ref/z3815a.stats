@@ -1,0 +1,22 @@
+part XC3042
+package PLCC84
+clb_total 144
+clb_used 142
+clb_array 12x12
+iob_used 56
+nets 256
+clocks 2
+tribufs 0
+pullups 0
+unrouted 0
+unloaded 7
+truncated 0
+clb_mode_F 44
+clb_mode_FG 98
+flipflops 176
+iob_bonded 56
+clock_loads ACLK.O 17
+clock_loads GCLK.O 47
+clock_loads PAD13.I 2
+clock_loads PAD68.I 1
+clock_loads PAD7.I 10

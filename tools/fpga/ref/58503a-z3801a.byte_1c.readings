@@ -1,0 +1,40 @@
+probe AH.Y high 99.0 ns from 0.000001054 s
+0.000044 s: with the preset the count reads 555555
+0.000050 s: status 00
+register 00000000 reads 00
+register 00000001 reads 0c
+register 00000002 reads 04
+register 00000003 reads 04
+register 00000004 reads 04
+register 00000005 reads 04
+register 00000006 reads 04
+register 00000007 reads 04
+register 00000008 reads 00
+register 00000009 reads 00
+register 0000000a reads 00
+register 0000000b reads 00
+register 0000000c reads 00
+register 0000000d reads 00
+register 0000000e reads 00
+register 0000000f reads 00
+register 00000010 reads 03
+register 00000011 reads 0e
+register 00000012 reads 05
+register 00000013 reads 05
+register 00000014 reads 05
+register 00000015 reads 05
+register 00000016 reads 05
+register 00000017 reads 05
+register 00000018 reads 00
+register 00000019 reads 00
+register 0000001a reads 00
+register 0000001b reads 00
+register 0000001c reads 00
+register 0000001d reads 00
+register 0000001e reads 00
+register 0000001f reads 00
+rises: P83 0, P78 0
+probe HH.X: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe CI.X: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe HG.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe AH.Y: 1 rises, 2 falls; period -1.0 to -1.0 ns; high 99.0 to 99.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000001054 s

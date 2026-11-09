@@ -1,0 +1,56 @@
+# The 58503B's 1 PPS divider and sync blocks, each the Z3805A's
+# (58503b-trace.md, "The 1 PPS divider" and "The sync field"), checked
+# by `make -f tools/fpga/Makefile check-blocks` (blockmatch.py).
+#
+# The divider: GI, the prescaler and its terminal, KH to KK, the three
+# decades and the terminal count HH.
+pair GI
+pair IG
+pair JH
+pair IH
+pair JI
+pair II
+pair HI
+pair FJ
+pair KH
+pair KI
+pair KJ
+pair KK
+pair JJ
+pair IJ
+pair JK
+pair KF
+pair KG
+pair JG
+pair GE
+pair GF
+pair HF
+pair GG
+pair HG
+pair HH
+# The prescaler's terminal a clock later, the Z3805A's HJ.
+pair LJ HJ
+# The sync field's register, its copy a clock behind, the restart, the
+# pending sync, the step lines and the prescaler's carry.
+pair DI
+pair DJ
+pair EJ
+pair EK
+pair GJ
+pair GK
+# What those read from outside them: DH, the GPS 1 PPS's rising-edge
+# detector, with its two flip-flops exchanged (the 58503A's, which
+# 58503b-58503a-z3801a.match pairs as it is); EL, the register-3 write
+# decode; FL, FK and HL, the write strobe from the select and R/W.  The
+# rest these read are pads, the same pins in both, and GCLK.
+pair DH
+pair EL
+pair FL
+pair FK
+pair HL
+# HH's two outputs are exchanged: the terminal on JG.X is HH.Y here and
+# HH.X in the Z3805A.
+rename HH.X HH.Y
+rename HH.Y HH.X
+rename DH.QX DH.QY
+rename DH.QY DH.QX

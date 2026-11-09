@@ -1,0 +1,12 @@
+{
+  "title": "Z3805A read port — the address into R1, the read, R1 restored (from the VCD)",
+  "window": [21250000, 27000000],
+  "unit": "us",
+  "signals": [
+    {"path": "z3805a_tb.clock",         "label": "GCLK (P7)",   "kind": "clock"},
+    {"path": "z3805a_tb.chip_select_n", "label": "/CS (P61)",   "kind": "bit"},
+    {"path": "z3805a_tb.read_write",    "label": "R/W (P75)",   "kind": "bit"},
+    {"path": "z3805a_tb.address",       "label": "ADDR0-2",     "kind": "bus", "base": "hex"},
+    {"path": "z3805a_tb.data",          "label": "DATA0-7",     "kind": "bus", "base": "hex"}
+  ]
+}

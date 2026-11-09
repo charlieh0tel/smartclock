@@ -1,0 +1,11 @@
+{
+  "title": "Z3815A P7 divider: the /5 prescaler and the counter's first bits (from the VCD)",
+  "window": [2000000, 12000000],
+  "unit": "us",
+  "signals": [
+    {"path": "z3815a_tb.fpga.P7", "label": "P7", "kind": "clock"},
+    {"path": "z3815a_tb.fpga.KE_Y", "label": "KE.Y  enable, P7 / 5", "kind": "sig"},
+    {"path": "z3815a_tb.fpga.FE_Y", "label": "FE.Y  P7 / 10", "kind": "sig"},
+    {"path": "z3815a_tb.fpga.EE_Y", "label": "EE.Y  bit 3", "kind": "sig"}
+  ]
+}

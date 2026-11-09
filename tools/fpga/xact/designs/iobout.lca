@@ -1,0 +1,80 @@
+;: iobout.lca (3042PC84-70), hand-written: I/O block outputs
+Version 2
+Design 3042PC84 9 0
+Speed -70
+Editblk LC
+Base FG
+Config X:F Y:G F:A G:B DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = A
+Equate G = B
+Endblk
+Editblk AK
+Base FG
+Config X:F Y:G F:A G:B DX: DY: ENCLK: RSTDIR: CLK:
+Equate F = ~A
+Equate G = B
+Endblk
+Editblk P13
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P57
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P16
+Base IO
+Config IN: OUT:OQ TRI:
+Endblk
+Editblk P17
+Base IO
+Config IN: OUT:OQ:FAST TRI:
+Endblk
+Editblk P35
+Base IO
+Config IN: OUT:OQ:OKNOT TRI:
+Endblk
+Editblk P33
+Base IO
+Config IN: OUT:O:NOT TRI:
+Endblk
+Editblk P34
+Base IO
+Config IN: OUT:O:FAST TRI:
+Endblk
+Editblk P39
+Base IO
+Config IN: OUT:O TRI:T
+Endblk
+Editblk P40
+Base IO
+Config IN: OUT:O TRI:T:NOT
+Endblk
+Editblk P75
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P76
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P77
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P78
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Addnet GPAD TCLKIN.I GCLK.I
+Addnet APAD BCLKIN.I ACLK.I
+Addnet GK GCLK.O P16.OK P17.OK
+Addnet AK ACLK.O P35.OK
+Addnet I0 P75.I LC.A AK.A
+Addnet I1 P76.I LC.B AK.B
+Addnet I2 P77.I P39.T P40.T
+Addnet I3 P78.I P16.O P17.O
+Addnet O0 LC.X P35.O P33.O
+Addnet O1 LC.Y P34.O
+Addnet O2 AK.X P39.O
+Addnet O3 AK.Y P40.O

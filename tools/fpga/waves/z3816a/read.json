@@ -1,0 +1,42 @@
+{
+  "title": "Z3816A read port \u2014 one register read (from the VCD)",
+  "window": [
+    17100000,
+    19900000
+  ],
+  "unit": "us",
+  "signals": [
+    {
+      "path": "z3816a_tb.clock53",
+      "label": "P53 ACLK",
+      "kind": "clock"
+    },
+    {
+      "path": "z3816a_tb.clock7",
+      "label": "P7 clock",
+      "kind": "clock"
+    },
+    {
+      "path": "z3816a_tb.chip_select_n",
+      "label": "/CS (P61)",
+      "kind": "bit"
+    },
+    {
+      "path": "z3816a_tb.read_write",
+      "label": "R/W (P75)",
+      "kind": "bit"
+    },
+    {
+      "path": "z3816a_tb.address",
+      "label": "ADDR0-2",
+      "kind": "bus",
+      "base": "hex"
+    },
+    {
+      "path": "z3816a_tb.data",
+      "label": "DATA0-7",
+      "kind": "bus",
+      "base": "hex"
+    }
+  ]
+}

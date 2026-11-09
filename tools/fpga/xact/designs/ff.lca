@@ -1,0 +1,80 @@
+;: ff.lca (3042PC84-70), hand-written: logic-block flip-flops
+Version 2
+Design 3042PC84 9 0
+Speed -70
+Editblk BB
+Base FG
+Config X:QX Y: F:A G: DX:F DY: ENCLK: RSTDIR: CLK:K
+Equate F = A
+Endblk
+Editblk BC
+Base FG
+Config X: Y:QY F: G:A:B DX: DY:G ENCLK:EC RSTDIR: CLK:K:NOT
+Equate G = A*B
+Endblk
+Editblk BD
+Base FG
+Config X:QX Y: F: G: DX:DI DY: ENCLK: RSTDIR:RD CLK:K
+Endblk
+Editblk BE
+Base FG
+Config X:QX Y:QY F:QX G:QX:QY DX:F DY:G ENCLK: RSTDIR: CLK:K
+Equate F = ~QX
+Equate G = QX@QY
+Endblk
+Editblk P13
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P2
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P3
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P4
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P5
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P6
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P7
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P8
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P9
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P10
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Editblk P11
+Base IO
+Config IN: OUT:O TRI:
+Endblk
+Addnet CLKPAD TCLKIN.I GCLK.I
+Addnet CLK GCLK.O BB.K BC.K BD.K BE.K
+Addnet D0 P2.I BB.A
+Addnet D1 P3.I BC.A
+Addnet D2 P4.I BC.B
+Addnet EN P5.I BC.EC
+Addnet DI P6.I BD.DI BD.RD
+Addnet Q0 BB.X P7.O
+Addnet Q1 BC.Y P8.O
+Addnet Q2 BD.X P9.O
+Addnet Q3 BE.X P10.O
+Addnet Q4 BE.Y P11.O

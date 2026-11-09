@@ -1,0 +1,3 @@
+# XACT wrote these; keep its bytes, CR LF and all.
+*.routed.lca -text
+*.bit binary

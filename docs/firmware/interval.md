@@ -61,9 +61,14 @@ schedule seen from outside (`../hardware-investigations.md`, item 8).
 3. `FUN_00044592` reads the interpolator; an offset is subtracted and
    the result divided by a scale, both from a calibration block, and
    added to the count.
-4. The sum is multiplied by `0x3e7ad7f29abcaf48`, which is 1.0e-7: the
-   coarse count is of 100 ns ticks, a 10 MHz clock.
-5. A calibration double is subtracted.
+4. The sum is multiplied by `0x3e7ad7f29abcaf48`, which is 1.0e-7:
+   the firmware's conversion scale, 100 ns a tick, a 10 MHz clock's.
+   The Z3816A's FPGA divides 9,830,400 to its 1 PPS, which implies a
+   9.8304 MHz clock and a tick 1.7% longer (`z3816a-trace.md`); which
+   the board runs, and how the scale fits it, is open
+   (`fpga-comparison.md`, "The five designs").
+5. A calibration double is subtracted, 0.3932162 s in the Z3816A
+   (`counter.md`, "Which 1 PPS edges").
 6. The long at `0x1023d0` is converted and added.
 
 `0x1023d0` is a stored constant, not a live value: `FUN_0004045c`
@@ -87,7 +92,8 @@ registers, the order it is armed and read in, the calibration and the
 `FUN_00044542` its `counter_read_raw`, `FUN_00044592` its
 `interpolator_read`, `FUN_000440a6` its `fpga_read` and `FUN_000444e2`
 its `fpga_read_byte`; the correspondence is by role, not checked
-instruction by instruction.
+instruction by instruction.  The design the Z3816A loads is
+`z3816a-trace.md`.
 
 ## In every image
 

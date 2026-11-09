@@ -1,0 +1,35 @@
+probe AH.Y high 99.0 ns from 0.000001054 s
+0.000044 s: with the preset the count reads 555555
+0.000050 s: status 04
+probe AH.Y high 100.0 ns from 0.000066853 s
+0.000074 s: reference 0 measured: status 07
+probe AH.Y high 200.0 ns from 0.000082553 s
+0.000090 s: reference 1 measured: status 07
+0.000100 s: armed
+probe AH.Y high 114.0 ns from 0.250000039 s
+0.255055 s: status 06 after 27 polls (bit 1 counted)
+0.402147 s: status 07, seconds 0
+0.402193 s: count 6c38c1, less the preset 1500012 ticks; interpolator a5 (complemented 5a)
+probe AH.Y high 99.0 ns from 0.402193454 s
+0.402203 s: armed
+1.000000952 s: P78 rises
+1.000000952 s: P83 rises
+1.000026952 s: P83 falls, 26000.0 ns high
+probe AH.Y high 114.0 ns from 1.250000039 s
+1.255309 s: status 16 after 88 polls (bit 1 counted)
+1.402401 s: status 17, seconds 1
+1.402447 s: count 6c38c1, less the preset 1500012 ticks; interpolator a5 (complemented 5a)
+probe AH.Y high 99.0 ns from 1.402447454 s
+1.402457 s: armed
+2.000000952 s: P78 rises, 1000000000.0 ns after the last
+2.000000952 s: P83 rises, 1000000000.0 ns after the last
+2.000026952 s: P83 falls, 26000.0 ns high
+probe AH.Y high 114.0 ns from 2.250000039 s
+2.255563 s: status 26 after 88 polls (bit 1 counted)
+2.402655 s: status 27, seconds 2
+2.402701 s: count 6c38c1, less the preset 1500012 ticks; interpolator a5 (complemented 5a)
+rises: P83 2, P78 2
+probe HH.X: 2 rises, 3 falls; period 1000000000.0 to 1000000000.0 ns; high 99.0 to 99.0 ns; after reference -1.0 to -1.0 ns; last rise 2.000000854 s; 2 pulses under 5.0 ns removed, the first at 0.900000953 s
+probe CI.X: 3 rises, 3 falls; period 1000000000.0 to 1000000000.0 ns; high 2192499.0 to 2446499.0 ns; after reference 400000002.0 to 400000002.0 ns; last rise 2.400000954 s
+probe HG.Y: 3 rises, 3 falls; period 1000000000.0 to 1000000000.0 ns; high 400000000.0 to 400000000.0 ns; after reference 400000000.0 to 400000000.0 ns; last rise 2.400000952 s
+probe AH.Y: 8 rises, 9 falls; period 15700.0 to 847806585.0 ns; high 99.0 to 200.0 ns; after reference -1.0 to -1.0 ns; last rise 2.250000039 s

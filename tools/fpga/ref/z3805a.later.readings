@@ -1,0 +1,21 @@
+probe AH.Y high 99.0 ns from 0.000001054 s
+0.000044 s: with the preset the count reads 555555
+0.000050 s: status 04
+0.000060 s: armed
+probe AH.Y high 164.0 ns from 0.250000089 s
+0.255016 s: status 06 after 27 polls (bit 1 counted)
+0.402108 s: status 07, seconds 0
+0.402153 s: count 6c38c0, less the preset 1500011 ticks; interpolator a5 (complemented 5a)
+rises: P83 0, P78 0, P45 0, P14 0
+probe CI.X: 1 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.400000954 s
+probe HH.X: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe HG.Y: 1 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.400000952 s
+probe HF.Y: 2 rises, 3 falls; period 200000000.0 to 200000000.0 ns; high 100000000.0 to 100000000.0 ns; after reference -1.0 to -1.0 ns; last rise 0.300000952 s
+probe GF.Y: 4 rises, 5 falls; period 100000000.0 to 100000000.0 ns; high 20000000.0 to 20000000.0 ns; after reference -1.0 to -1.0 ns; last rise 0.380000952 s
+probe KG.Y: 40 rises, 41 falls; period 10000000.0 to 10000000.0 ns; high 2000000.0 to 2000000.0 ns; after reference -1.0 to -1.0 ns; last rise 0.398000952 s
+probe JK.Y: 402 rises, 403 falls; period 1000000.0 to 1000000.0 ns; high 100.0 to 100.0 ns; after reference -1.0 to -1.0 ns; last rise 0.402000852 s
+probe JI.X: 25737 rises, 25738 falls; period 15600.0 to 15700.0 ns; high 100.0 to 100.0 ns; after reference -1.0 to -1.0 ns; last rise 0.402141354 s; 12868 pulses under 5.0 ns removed, the first at 0.000029352 s
+probe IG.X: 257377 rises, 257378 falls; period 1200.0 to 1600.0 ns; high 401.0 to 800.0 ns; after reference -1.0 to -1.0 ns; last rise 0.402151952 s
+probe GI.Y: 1003773 rises, 1003773 falls; period 400.0 to 500.0 ns; high 200.0 to 200.0 ns; after reference -1.0 to -1.0 ns; last rise 0.402153352 s
+probe GI.X: 2007546 rises, 2007546 falls; period 200.0 to 300.0 ns; high 100.0 to 100.0 ns; after reference -1.0 to -1.0 ns; last rise 0.402153452 s
+probe AH.Y: 2 rises, 3 falls; period 249999035.0 to 249999035.0 ns; high 99.0 to 164.0 ns; after reference -1.0 to -1.0 ns; last rise 0.250000089 s

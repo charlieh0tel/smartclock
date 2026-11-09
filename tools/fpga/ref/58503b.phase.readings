@@ -1,0 +1,28 @@
+1.000001052 s: P14 rises
+1.000001052 s: P78 rises
+1.000001052 s: P83 rises
+probe ~P14 high 1000001051.0 ns from 0.000000001 s
+1.000027052 s: P83 falls, 26000.0 ns high
+probe P14 high 26000.0 ns from 1.000001052 s
+probe GH.Y high 101.0 ns from 1.500001452 s
+1.500005 s: register 2 bit 0 pulsed
+2.000001052 s: P14 rises, 1000000000.0 ns after the last
+2.000001052 s: P78 rises, 1000000000.0 ns after the last
+2.000001052 s: P83 rises, 1000000000.0 ns after the last
+probe ~P14 high 999974000.0 ns from 1.000027052 s
+2.000027052 s: P83 falls, 26000.0 ns high
+probe P14 high 26000.0 ns from 2.000001052 s
+3.000001052 s: P78 rises, 1000000000.0 ns after the last
+3.000001052 s: P83 rises, 1000000000.0 ns after the last
+3.000027052 s: P83 falls, 26000.0 ns high
+rises: P83 3, P78 3, P19 538462, P14 2
+probe P19: 538462 rises, 538462 falls; period 6500.0 to 6500.0 ns; high 3200.0 to 3200.0 ns; after reference -1.0 to -1.0 ns; last rise 3.500000653 s
+probe ~P14: 3 rises, 2 falls; period 1000000000.0 to 1000027051.0 ns; high 999974000.0 to 1000001051.0 ns; after reference -1.0 to -1.0 ns; last rise 2.000027052 s
+probe P14: 2 rises, 3 falls; period 1000000000.0 to 1000000000.0 ns; high 26000.0 to 26000.0 ns; after reference -1.0 to -1.0 ns; last rise 2.000001052 s
+probe HK.X: 3 rises, 4 falls; period 1000000000.0 to 1000000000.0 ns; high 25998.0 to 25998.0 ns; after reference -1.0 to -1.0 ns; last rise 3.000000855 s; 3 pulses under 5.0 ns removed, the first at 0.900000954 s
+probe CI.X: 1 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.400000954 s
+probe EH.Y: 4 rises, 4 falls; period 1000000000.0 to 1000000000.0 ns; high 400000000.0 to 400000000.0 ns; after reference 399999901.0 to 399999901.0 ns; last rise 3.400000953 s
+probe GB.Y: 538462 rises, 538462 falls; period 6500.0 to 6500.0 ns; high 3200.0 to 3200.0 ns; after reference -1.0 to -1.0 ns; last rise 3.500000652 s
+probe AH.Y: 1 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000001054 s
+probe GH.Y: 1 rises, 2 falls; period -1.0 to -1.0 ns; high 101.0 to 101.0 ns; after reference -1.0 to -1.0 ns; last rise 1.500001452 s
+probe ~P83: 4 rises, 3 falls; period 1000000000.0 to 1000027051.0 ns; high 999974000.0 to 1000001051.0 ns; after reference -1.0 to -1.0 ns; last rise 3.000027052 s

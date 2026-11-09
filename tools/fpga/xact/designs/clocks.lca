@@ -1,0 +1,100 @@
+;: clocks.lca (3042PC84-70), hand-written: I/O block clocks on every die edge
+Version 2
+Design 3042PC84 9 0
+Speed -70
+Editblk EF
+Base FG
+Config X:QX Y: F:A:B:C:D G: DX:F DY: ENCLK: RSTDIR: CLK:K
+Equate F = A*B*C*D
+Endblk
+Editblk GG
+Base FG
+Config X:QX Y: F:A:B:C:D G: DX:F DY: ENCLK: RSTDIR: CLK:K
+Equate F = A*B*C*D
+Endblk
+Editblk P13
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P57
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Editblk P20
+Base IO
+Config IN: OUT:OQ TRI:
+Endblk
+Editblk P21
+Base IO
+Config IN: OUT:OQ TRI:
+Endblk
+Editblk P5
+Base IO
+Config IN: OUT:OQ TRI:
+Endblk
+Editblk P6
+Base IO
+Config IN: OUT:OQ TRI:
+Endblk
+Editblk P60
+Base IO
+Config IN: OUT:OQ TRI:
+Endblk
+Editblk P61
+Base IO
+Config IN: OUT:OQ TRI:
+Endblk
+Editblk P40
+Base IO
+Config IN: OUT:OQ TRI:
+Endblk
+Editblk P41
+Base IO
+Config IN: OUT:OQ TRI:
+Endblk
+Editblk P18
+Base IO
+Config IN:IQ:FF OUT: TRI:
+Endblk
+Editblk P19
+Base IO
+Config IN:IQ:FF OUT: TRI:
+Endblk
+Editblk P7
+Base IO
+Config IN:IQ:FF OUT: TRI:
+Endblk
+Editblk P8
+Base IO
+Config IN:IQ:FF OUT: TRI:
+Endblk
+Editblk P62
+Base IO
+Config IN:IQ:FF OUT: TRI:
+Endblk
+Editblk P63
+Base IO
+Config IN:IQ:FF OUT: TRI:
+Endblk
+Editblk P44
+Base IO
+Config IN:IQ:FF OUT: TRI:
+Endblk
+Editblk P45
+Base IO
+Config IN:IQ:FF OUT: TRI:
+Endblk
+Addnet GPAD TCLKIN.I GCLK.I
+Addnet APAD BCLKIN.I ACLK.I
+Addnet GK GCLK.O EF.K P21.OK P5.OK P60.OK P40.OK P18.IK P8.IK P62.IK P44.IK
+Addnet AK ACLK.O GG.K P20.OK P6.OK P61.OK P41.OK P19.IK P7.IK P63.IK P45.IK
+Addnet Q0 P18.Q EF.A
+Addnet Q1 P19.Q EF.B
+Addnet Q2 P7.Q EF.C
+Addnet Q3 P8.Q EF.D
+Addnet Q4 P62.Q GG.A
+Addnet Q5 P63.Q GG.B
+Addnet Q6 P44.Q GG.C
+Addnet Q7 P45.Q GG.D
+Addnet O0 EF.X P20.O P21.O P5.O P6.O
+Addnet O1 GG.X P60.O P61.O P40.O P41.O

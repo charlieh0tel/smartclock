@@ -1,0 +1,52 @@
+; LCA Design=T2 Part=3042PC84 -- Blocks=6 Nets=5.
+; Program=APR Version=5.2.0-base Date=Sun Oct 25 15:20:47 2026.
+; Speed File Version 3000.1 Revision 3042.2
+Design 3042PC84
+Speed -70
+Programorder On
+Addnet NA P11.I AA.A
+Netdelay NA AA.A 1.0
+NProgram PAD1.I:AA.A
+Addnet NB P10.I AA.B
+Netdelay NB AA.B 2.5
+NProgram row.A.local.1:AA.B row.A.local.1:PAD2.I
+Addnet NC P9.I AA.E
+Netdelay NC AA.E 4.7
+NProgram BC.20.1.0 BC.20.1.19 BB.20.1.5 BB.20.1.19 row.B.local.1:AA.E col.C.local.1:PAD5.I
+Addnet ND P8.I AA.C
+Netdelay ND AA.C 5.9
+NProgram BD.20.1.4 BD.20.1.15 BB.20.1.8 BB.20.1.17 BC.20.1.9 BC.20.1.16 row.B.local.3:AA.C col.D.local.5:PAD6.I
+Addnet NF AA.Y P7.O
+Netdelay NF P7.O 4.6
+NProgram AD.20.1.8 AD.20.1.15 AC.20.1.9 AC.20.1.16 row.A.local.4:AA.Y row.A.local.4:PAD7.O
+Nameblk AA FUNC
+Editblk AA
+Base FG
+Config G:A:B:E:C F: Y:G X: DY: DX: RSTDIR: CLK: ENCLK:
+Equate G = ((A*~B)+(E@C))
+Endblk
+Nameblk P11 IN_A
+Editblk P11
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Nameblk P10 IN_B
+Editblk P10
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Nameblk P9 IN_C
+Editblk P9
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Nameblk P8 IN_D
+Editblk P8
+Base IO
+Config IN:I OUT: TRI:
+Endblk
+Nameblk P7 OUT_F
+Editblk P7
+Base IO
+Config IN: OUT:O TRI:
+Endblk

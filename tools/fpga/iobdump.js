@@ -7,14 +7,13 @@
 // (OUT/OUTQ output, unregistered or registered, with NOT and FAST;
 // TRI tristate control; I and IQ inputs; PULLUP; "-" for none).
 //
-//     node tools/fpga/iobdump.js ~/src/xc3000/html third_party/firmware/images/fpga/z3805a.bit
+//     node tools/fpga/iobdump.js target/fpga/xc3000/html third_party/firmware/images/fpga/z3805a.bit
 //
 // Not run in CI: it needs a clone of the viewer.  docs/firmware/outputs.md
 // says what it showed.
 
-const fs = require('fs');
-const path = require('path');
 const vm = require('vm');
+const { loadViewer, readBitstream } = require('./viewer.js');
 
 const [viewer, file] = process.argv.slice(2);
 if (!viewer || !file) {
@@ -22,31 +21,8 @@ if (!viewer || !file) {
   process.exit(2);
 }
 
-// The viewer's files, in the order its index.html loads them, less the
-// ones that only draw or emulate.
-const SOURCES = ['chipfamily.js', 'chippackage.js', 'draw.js', 'parse.js', 'pip.js',
-  'path.js', 'switch.js', 'tribuf.js', 'pullup.js', 'clock.js', 'iob.js', 'clb.js',
-  'karnaugh.js', 'bitstreamDisplay.js'];
-
-const context = {
-  // The viewer logs as it parses; keep that off the report.
-  console: { log: console.error, warn: console.error, error: console.error },
-  Math, Uint8Array, Error, Object, Array, String, Number, JSON, parseInt,
-  alert: (message) => { throw new Error(`viewer: ${message}`); },
-  // jQuery is only used for page controls, none of which decoding reaches.
-  $: () => ({ on() {}, html() { return this; }, val() {}, each() {}, ready() {} }),
-  document: {},
-};
-// Browser code reads globals through `self` and `window`.
-context.self = context;
-context.window = context;
-vm.createContext(context);
-for (const source of SOURCES) {
-  vm.runInContext(fs.readFileSync(path.join(viewer, source), 'utf8'), context, { filename: source });
-}
-
-const bytes = fs.readFileSync(file);
-context.bitstreamBytes = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length);
+const context = loadViewer(viewer);
+context.bitstreamBytes = readBitstream(file);
 vm.runInContext(`
   parseBitstream('bin', bitstreamBytes);
   if (!bitstreams.length) throw new Error('no bitstream found');

@@ -359,7 +359,9 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   landing page being edited by hand.  Its hero is the 58503A's front
   panel drawn as SVG to scale from photographs, not a photograph: a
   drawing is a few kilobytes, follows the page's fonts, shows UTC live,
-  and carries no bench clutter or stickers.
+  and carries no bench clutter or stickers.  Its intro names the
+  FPGAs' decoding only once the FPGA write-up's page has joined; that
+  page's launch adds it back (`PAGE` in `tools/pages_index.py`).
 
 ### Flashing is a direct-port command of the CLI
 

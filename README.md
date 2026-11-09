@@ -186,10 +186,10 @@ the same platform ([`docs/hp5313x.md`](docs/hp5313x.md)).
 `make ci` runs CI's Rust checks; the firmware's checks are their own
 CI job.  `make test-web` runs the browser tests, after `make web-deps`
 once.  `make hooks`, once per clone, sets up the repository's git
-hooks.  `make pages` builds the generated pages into `target/pages/`
-from their sources and fails on an error in one; they are not
-committed, and `.github/workflows/pages.yml` publishes them on GitHub
-Pages from main.  `make board-atlas` builds the board atlas alone,
+hooks.  `make pages` builds the generated pages and their index into
+`target/pages/` from their sources and fails on an error in one; they
+are not committed, and `.github/workflows/pages.yml` publishes them on
+GitHub Pages from main, at <https://charlieh0tel.github.io/smartclock/>.  `make board-atlas` builds the board atlas alone,
 from `docs/board-atlas.json`, and fails if the data cites a file or
 section that does not exist.  `make check-pages` loads each generated
 page and each HTML page in `docs/` in headless Chrome and fails if

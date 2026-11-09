@@ -35,6 +35,7 @@
       "text": "not known"
     }
   ],
+  "description": "The HP Z3805A main board, part by part on its photographs: each part's role, its firmware address, the nets measured, and the Z3801A's and 58503A's boards against it.",
   "design_note": [
     "In the firmware's terms: [[docs/firmware/outputs.md|The FPGA bitstreams]] decodes the Z3805A design's pin 14 as a registered, fast-slew output, where the 58503A's and Z3801A's design leaves it unregistered, and pin 45 as an output that design leaves unused.  It says nothing of pin 83, or of what signal any pin carries.  That J4 and J5 both carry the 1 PPS rests on their cabling to the rear panel's two 1 PPS outputs ([[docs/bench.md|HP Z3805A, serial 3625A01487]]); that U32 makes the internal 1 PPS is inferred ([[docs/firmware/counter.md|Which 1 PPS edges]])."
   ],

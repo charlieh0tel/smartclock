@@ -1,6 +1,7 @@
 """Renders the board atlas, the first-family SmartClock main board's
 page, from docs/board-atlas.json to OUT, after checking the data's
-citations and references.  `make board-atlas` writes it among the
+citations and references, and copies its photos beside it, at their
+paths relative to docs/.  `make board-atlas` writes it among the
 generated pages, which .github/workflows/pages.yml publishes on GitHub
 Pages; the page is not committed.
 
@@ -15,6 +16,8 @@ table row, so the data reaches the page once.  It states no counts.
 The data, one JSON object:
 
     title, heading     the page's <title> and <h1>
+    description        the page's one-line description, which the
+                       pages' index lists
     intro, tags        the header's paragraphs and tags
     confidence         the confidence marks, {id, text}, in legend order
     comparison         the Z3801A and 58503A columns' marks, likewise
@@ -35,10 +38,10 @@ The data, one JSON object:
     open               the open items
 
 Prose takes three marks: `code`; [[path]] or [[path|section]], a
-citation of a file in the repository, linked on GitHub without a
-fragment (htmlpreview points a fragment at the page itself), whose path
+citation of a file in the repository, linked on GitHub, whose path
 must exist and whose section must be a heading of that Markdown file,
-or "item N" for hardware-investigations.md's numbered items; and
+or "item N" for hardware-investigations.md's numbered items, linked
+by the fragment GitHub gives the heading; and
 {{ref}}, a link to a part's row.
 """
 
@@ -46,17 +49,29 @@ import argparse
 import html
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "docs" / "board-atlas.json"
 BLOB = "https://github.com/charlieh0tel/smartclock/blob/main/"
-RAW = "https://raw.githubusercontent.com/charlieh0tel/smartclock/main/docs/"
 CITE = re.compile(r"\[\[([^|\]]+)(?:\|([^\]]+))?\]\]")
 CODE = re.compile(r"`([^`]+)`")
 REF = re.compile(r"\{\{([^}]+)\}\}")
 ITEM = re.compile(r"item (\d+)$")
+# A Markdown heading: its level's hashes and its text.
+HEADING = re.compile(r"(#+) (.*)")
+# A numbered item's heading text, and the level its headings take.
+NUMBERED = re.compile(r"(\d+)\. ")
+ITEM_LEVEL = 2
+# What GitHub drops from a heading's rendered text to make its fragment:
+# all but letters, marks, digits, connector punctuation, spaces and
+# hyphens.  Its inline marks go first: code spans' backticks, links'
+# brackets and targets, and emphasis.
+FRAGMENT_DROPPED = re.compile(r"[^\w\- ]")
+INLINE_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+INLINE_MARKS = re.compile(r"[`*]")
 COMPARED = ("z3801a", "58503a")
 COMPARED_TITLES = {"z3801a": "Z3801A", "58503a": "58503A"}
 # A part's confidences, (kind, the filter's title): each is the part's
@@ -587,17 +602,31 @@ def die(message):
     sys.exit(f"board_atlas: {message}")
 
 
+def fragment(text):
+    """The fragment GitHub gives a heading, before it numbers repeats."""
+    text = INLINE_MARKS.sub("", INLINE_LINK.sub(r"\1", text))
+    return FRAGMENT_DROPPED.sub("", text.lower()).replace(" ", "-")
+
+
 def headings(path):
-    """The heading texts of a Markdown file, and its numbered items."""
-    found = set()
+    """Each heading text of a Markdown file, and "item N" for its
+    numbered items, against the heading's fragment; the first of a
+    repeated text, as GitHub numbers the later ones -1, -2 and on."""
+    found = {}
+    used = {}
     for line in path.read_text(encoding="utf-8").splitlines():
-        match = re.match(r"#+ (.*)", line)
-        if match:
-            text = match.group(1).strip()
-            found.add(text)
-            item = re.match(r"(\d+)\. ", text)
-            if item:
-                found.add(f"item {item.group(1)}")
+        match = HEADING.match(line)
+        if not match:
+            continue
+        text = match.group(2).strip()
+        base = fragment(text)
+        repeat = used.get(base, 0)
+        used[base] = repeat + 1
+        name = f"{base}-{repeat}" if repeat else base
+        found.setdefault(text, name)
+        item = NUMBERED.match(text)
+        if item and len(match.group(1)) == ITEM_LEVEL:
+            found.setdefault(f"item {item.group(1)}", name)
     return found
 
 
@@ -617,13 +646,14 @@ class Renderer:
         if not target.is_file():
             die(f"cites {path}, which does not exist")
         shown = re.sub(r"^(docs|third_party)/", "", path)
-        link = f'<a href="{BLOB}{html.escape(path)}"><code>{html.escape(shown)}</code></a>'
         if not section:
-            return link
+            return f'<a href="{BLOB}{html.escape(path)}"><code>{html.escape(shown)}</code></a>'
         if path not in self.headings:
             self.headings[path] = headings(target)
         if section not in self.headings[path]:
             die(f"cites {path}, {section!r}, which is not one of its headings")
+        address = f"{BLOB}{path}#{self.headings[path][section]}"
+        link = f'<a href="{html.escape(address)}"><code>{html.escape(shown)}</code></a>'
         if ITEM.match(section):
             return f"{link}, {self.code(section)}"
         return f"{link}, “{self.code(section)}”"
@@ -720,14 +750,14 @@ def render_view(view, parts, groups):
     image = html.escape(view["image"])
     wide = ' class="wide"' if view["width"] > view["height"] else ""
     style = (f"aspect-ratio:{view['width']}/{view['height']};"
-             f"background-image:url('{image}'),url('{RAW}{image}')")
+             f"background-image:url('{image}')")
     return (f'<figure id="view-{view["id"]}" data-view="{view["id"]}"{wide}>\n'
             f'  <h2>{html.escape(view["title"])}</h2>\n'
             f'  <div class="photo" role="img" aria-label="{html.escape(view["alt"])}" style="{style}" '
             f'data-width="{view["width"]}" data-height="{view["height"]}">\n    '
             + "\n    ".join(pins)
             + f'\n  </div>\n  <figcaption>{html.escape(view["caption"])}  '
-            f'<a href="{BLOB}docs/{image}">Full size</a>.</figcaption>\n</figure>')
+            f'<a href="{image}">Full size</a>.</figcaption>\n</figure>')
 
 
 def render_tools(data):
@@ -768,6 +798,7 @@ def render(data):
     emit('<meta charset="utf-8">')
     emit('<meta name="viewport" content="width=device-width, initial-scale=1">')
     emit(f"<title>{html.escape(data['title'])}</title>")
+    emit(f'<meta name="description" content="{html.escape(data["description"])}">')
     emit("<!-- Generated by tools/board_atlas.py from docs/board-atlas.json by make board-atlas. -->")
     emit('<link rel="preconnect" href="https://fonts.googleapis.com">')
     emit('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">')
@@ -886,7 +917,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("out", type=Path, help="the page to write")
     args = parser.parse_args()
-    args.out.write_text(render(json.loads(DATA.read_text(encoding="utf-8"))), encoding="utf-8")
+    data = json.loads(DATA.read_text(encoding="utf-8"))
+    args.out.write_text(render(data), encoding="utf-8")
+    for view in data["views"]:
+        copy = args.out.parent / view["image"]
+        copy.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / "docs" / view["image"], copy)
 
 
 if __name__ == "__main__":

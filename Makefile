@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs pages board-atlas scpi-models check-pages clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs pages check-pages clean deb release release-notes install-service
 
 all: build
 
@@ -122,13 +122,19 @@ docs:
 # source; .github/workflows/pages.yml publishes them on GitHub Pages, at
 # https://charlieh0tel.github.io/smartclock/<page>.html.  They are not
 # committed; one that once was left, at its old path in docs/, a page
-# forwarding to its new one.  A page joins by a target of its own,
-# added to pages' prerequisites.
+# forwarding to its new one.  Each page is built by the target of its
+# own name, writing $(PAGES_DIR)/<page>.html with a <title> and a
+# description meta tag; a page joins by such a target, named in PAGES.
+# The index, index.html, lists them in that order.
 PAGES_DIR ?= target/pages
-pages: board-atlas scpi-models
+PAGES := board-atlas scpi-models
+.PHONY: $(PAGES)
+pages: $(PAGES)
+	python3 -I tools/pages_index.py $(PAGES_DIR) $(PAGES:%=%.html)
 
-# The board atlas, from docs/board-atlas.json; fails if the data cites
-# a file or section that does not exist or names a part it lacks.
+# The board atlas, from docs/board-atlas.json, its photos copied beside
+# it; fails if the data cites a file or section that does not exist or
+# names a part it lacks.
 # Needs only python3; .github/workflows/firmware.yml runs it too.
 board-atlas:
 	mkdir -p $(PAGES_DIR)

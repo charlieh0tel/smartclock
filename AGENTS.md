@@ -160,8 +160,8 @@ here, where they go stale unnoticed.
   it and `.github/workflows/pages.yml` publishes it on GitHub Pages;
   link it by its Pages URL:
   `https://charlieh0tel.github.io/smartclock/board-atlas.html`.  A
-  new generated page gets a target of its own among `pages`'
-  prerequisites in the `Makefile`, never a committed copy.
+  new generated page gets a target of its own name, listed in the
+  `Makefile`'s `PAGES`, never a committed copy.
 
 ## Working style
 

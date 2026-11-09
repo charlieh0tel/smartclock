@@ -1,11 +1,13 @@
 # Plan
 
-A Rust library for talking to HP / Symmetricom SmartClock GPS receivers
-over serial, a logging daemon that runs as a system service, a TUI, and
-browser and Prometheus views.  A GUI is not planned.  This file records
-the decisions that are not obvious, each with its reason, and the open
-work with no other home.  `README.md` says what the project is,
-`docs/running.md` how it is deployed.
+HP / Symmetricom SmartClock GPS receivers taken apart -- their firmware,
+disciplining loop and boards -- and the tools that monitor them: a Rust
+library for talking to them over serial, a logging daemon that runs as
+a system service, a TUI, and browser and Prometheus views.  A GUI is
+not planned.  This file records the decisions that are not obvious,
+each with its reason, and the open work with no other home.
+`README.md` says what the project is, `docs/running.md` how it is
+deployed.
 
 ## Goals and constraints
 

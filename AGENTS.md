@@ -153,17 +153,19 @@ here, where they go stale unnoticed.
 ## GitHub
 
 - HTML pages are published on GitHub Pages: `make pages` builds them
-  and `.github/workflows/pages.yml` publishes them.  Link one from
-  Markdown by its Pages URL, never through htmlpreview.github.io:
-  `https://charlieh0tel.github.io/smartclock/loop.html`.  A generated
+  and `.github/workflows/pages.yml` publishes them.  Link a page the
+  site publishes by its URL there:
+  `https://charlieh0tel.github.io/smartclock/fpga.html`.  Use
+  `https://htmlpreview.github.io/?` followed by the GitHub URL only for
+  HTML in the repository the site does not publish.  A generated
   page is not committed; a hand-written one's source goes in
   `docs/pages/`.  A new page gets a target of its own name, listed in
   the `Makefile`'s `PAGES`, and carries in its head a `<title>`, a
   description meta tag and a `smartclock-group` meta tag naming its
   group, a key of `GROUPS` in `tools/pages_index.py`; the landing
   page is built from them, and `make pages` fails on a page lacking
-  one.  Feature a page on the landing page by naming it in the
-  `Makefile`'s `FEATURED_PAGE`, under `FEATURED_HEADING`.
+  one.  Set a page apart on the landing page by naming it in the
+  `Makefile`'s `NEW_PAGE`, for one just launched, or `FEATURED_PAGE`.
 
 ## Working style
 

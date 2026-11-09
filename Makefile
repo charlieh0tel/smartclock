@@ -129,21 +129,22 @@ docs:
 # a smartclock-group meta tag naming its group in tools/pages_index.py;
 # a page joins by such a target, named in PAGES.  The landing page,
 # index.html, lists them by group, in that order within one, after
-# FEATURED_PAGE, one of PAGES or empty for none, set apart above them
-# under FEATURED_HEADING ("New" for a page just launched).
+# NEW_PAGE, a page just launched, under "New", and FEATURED_PAGE under
+# "Featured", each one of PAGES or empty for none, each set apart above
+# them in a box of its own.
 # Its hero is a drawing of the 58503A's front panel, or HERO_IMAGE, a
 # path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages
 HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
-PAGES := board-atlas scpi-models $(HAND_PAGES)
+PAGES := fpga board-atlas scpi-models $(HAND_PAGES)
+NEW_PAGE := fpga
 FEATURED_PAGE := loop
-FEATURED_HEADING := Featured
 HERO_IMAGE :=
 HERO_ALT :=
 .PHONY: $(PAGES)
 pages: $(PAGES)
 	python3 -I tools/pages_index.py \
-		$(if $(FEATURED_PAGE),--featured $(FEATURED_PAGE).html --featured-heading "$(FEATURED_HEADING)") \
+		$(if $(NEW_PAGE),--new $(NEW_PAGE).html) $(if $(FEATURED_PAGE),--featured $(FEATURED_PAGE).html) \
 		$(if $(HERO_IMAGE),--hero $(HERO_IMAGE) --hero-alt "$(HERO_ALT)") \
 		$(PAGES_DIR) $(PAGES:%=%.html)
 

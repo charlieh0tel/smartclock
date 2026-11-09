@@ -130,7 +130,7 @@ GLYPHS = {
 COLON = ((26, 13), (26, 30))
 # A lamp's radius, and a key's width, height and corner radius.
 LAMP_RADIUS = 4
-KEY_SIZE = (50, 33, 2.5)
+KEY_SIZE = (52, 34, 2.5)
 # The STATUS and MODE groups: each one's label, its outline's left,
 # top, right and bottom.
 PANEL_GROUPS = (("STATUS", (48, 170, 634, 214)), ("MODE", (48, 224, 634, 333)))
@@ -221,10 +221,12 @@ def panel():
 {"".join(panel_group(label, box) for label, box in PANEL_GROUPS)}
 {status}
 {keys}
-<text class="clear-alarm" x="452" y="256">Clear</text><text class="clear-alarm" x="452" y="268">Alarm</text>
+<text class="clear-alarm" x="454" y="256">Clear</text><text class="clear-alarm" x="454" y="268">Alarm</text>
 </svg>"""
 
 
+# The intro leaves the FPGAs out until the FPGA write-up's page joins;
+# that page's launch puts "their FPGAs decoded" back in its list.
 PAGE = """\
 <!doctype html>
 <html lang="en">
@@ -363,7 +365,7 @@ footer.wrap{color:var(--muted);font-size:.875rem;padding-top:2.5rem;padding-bott
 __HERO__
 </figure>
 <div class="intro">
-<p>Tools for the HP, Agilent and Symmetricom SmartClock GPS time and frequency receivers: the 58503A/B, 59551A and Z3801A, Z3805A, Z3815A and Z3816A.  A logging daemon, a terminal monitor and a browser view watch them; their firmware is read and rewritten as C, their FPGAs decoded, and their boards mapped from photographs.</p>
+<p>Tools for the HP, Agilent and Symmetricom SmartClock GPS time and frequency receivers: the 58503A/B, 59551A and Z3801A, Z3805A, Z3815A and Z3816A.  A logging daemon, a terminal monitor and a browser view watch them; their firmware is read and rewritten as C, and their boards mapped from photographs.</p>
 <p>These pages are the parts best read in a browser.  The rest of the documentation is Markdown in the <a href="__REPOSITORY__">repository</a>.</p>
 </div>
 </section>

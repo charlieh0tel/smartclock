@@ -145,7 +145,7 @@ docs:
 # path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages
 HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
-PAGES := fpga board-atlas scpi-models $(HAND_PAGES)
+PAGES := fpga board-atlas block-diagram scpi-models $(HAND_PAGES)
 NEW_PAGE := fpga
 FEATURED_PAGE := loop
 UNLISTED_PAGES := bench-sky-2026-10-03
@@ -166,6 +166,14 @@ pages: $(PAGES)
 board-atlas:
 	mkdir -p $(PAGES_DIR)
 	python3 -I tools/board_atlas.py $(PAGES_DIR)/board-atlas.html
+
+# The board's block diagram, from docs/block-diagram.json; fails, as
+# the atlas does, on a bad citation, a part the atlas lacks or a line
+# that does not meet its blocks.  Needs only python3;
+# .github/workflows/firmware.yml runs it too.
+block-diagram:
+	mkdir -p $(PAGES_DIR)
+	python3 -I tools/block_diagram.py $(PAGES_DIR)/block-diagram.html
 
 # The SCPI trees side by side, as a page that filters them.
 scpi-models:

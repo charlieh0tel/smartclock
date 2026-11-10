@@ -343,8 +343,8 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   Chromium, an m68k gcc and uv, so they are jobs of their own.
 - HTML pages are published on GitHub Pages by
   `.github/workflows/pages.yml`, which `make pages` builds.  Generated
-  ones (the board atlas, the SCPI trees by model) are built from their
-  sources and not committed; hand-written ones (`loop.html` and the
+  ones (the board atlas, the block diagram, the SCPI trees by model)
+  are built from their sources and not committed; hand-written ones (`loop.html` and the
   bench records) are copied from their sources in `docs/pages/`.  A
   generated page's committed copy needed a drift check and a
   regeneration commit for every change to its data, and could be viewed only through htmlpreview.github.io;

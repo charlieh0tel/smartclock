@@ -1,0 +1,1395 @@
+{
+  "blocks": [
+    {
+      "h": 64,
+      "id": "gps",
+      "mark": "read",
+      "parts": [
+        "J9"
+      ],
+      "source": "The firmware speaks the Oncore's protocol on DUART channel A ([[docs/firmware/gps.md|The serial link]]); J9 is the engine's connector on the board (the board atlas's J9).",
+      "sub": [
+        "Motorola VP Oncore, on J9"
+      ],
+      "title": "GPS engine",
+      "w": 230,
+      "x": 40,
+      "y": 30
+    },
+    {
+      "h": 64,
+      "id": "ocxo",
+      "mark": "board",
+      "parts": [],
+      "source": "The development 58503A's oscillator, read off the unit ([[docs/ocxo.md]]); its EFC pin measured against the firmware's count ([[docs/efc.md|The pin follows the count]]).  The Z3805A's oscillator is not identified here; J21, which the board map gives as the oscillator's connector, is not traced (the board atlas's J21).",
+      "sub": [
+        "HP 10811-60159 in the 58503A"
+      ],
+      "title": "OCXO",
+      "w": 230,
+      "x": 40,
+      "y": 150
+    },
+    {
+      "h": 72,
+      "id": "out10",
+      "mark": "board",
+      "parts": [
+        "U46",
+        "U45",
+        "J17",
+        "J15"
+      ],
+      "source": "Each 10 MHz jack has its own stage, behind J17 Q12, Q13 and the 78M12 U46, behind J15 Q8, Q9 and U45, fed from the oscillator's jack through a resistor and capacitor network: seen on the 58503A, whose J15 stage lacks three resistors ([[docs/58503a-second-10mhz.md|The two stages]]).  The Z3805A cables both jacks to its rear panel ([[docs/bench.md|HP Z3805A, serial 3625A01487]]).",
+      "sub": [
+        "U46: J17, OUT A",
+        "U45: J15, OUT B"
+      ],
+      "title": "10 MHz output stages",
+      "w": 230,
+      "x": 40,
+      "y": 262
+    },
+    {
+      "functions": [
+        {
+          "mark": "read",
+          "text": "24-bit time-interval count"
+        },
+        {
+          "mark": "simulated",
+          "text": "GPS 1 PPS starts it, a tap stops it"
+        },
+        {
+          "mark": "read",
+          "text": "1 PPS divider: the internal 1 PPS"
+        },
+        {
+          "mark": "read",
+          "text": "register port the processor reads"
+        },
+        {
+          "mark": "read",
+          "text": "the interpolator's byte read back"
+        }
+      ],
+      "functions_top": 420,
+      "h": 640,
+      "id": "fpga",
+      "mark": "read",
+      "parts": [
+        "U32"
+      ],
+      "source": "The design is decoded from the bitstream the firmware loads ([[docs/firmware/fpga-comparison.md|Provenance]]).  P7 drives the global clock, GCLK ([[docs/firmware/z3805a-trace.md|Clocks]]); the count is 24 bits ([[docs/firmware/z3805a-trace.md|The count]]); the GPS 1 PPS's rising edge on P82 starts it and a tap of the 1 PPS divider stops it ([[docs/firmware/z3805a-trace.md|Start, stop and status bits]]); the divider makes the internal 1 PPS ([[docs/firmware/z3805a-trace.md|The 1 PPS divider]]); the port's pins and registers are [[docs/firmware/z3805a-trace.md|Register port]] and [[docs/firmware/counter.md|The register port]].  The 58503A/Z3801A design's count, port and interpolator interface read out as the Z3805A's ([[docs/firmware/58503a-z3801a-trace.md|At a glance]]).  Nothing in the design has been checked on a board, and every pin's role is read from the logic ([[docs/firmware/fpga-comparison.md|Provenance]]).",
+      "sub": [
+        "Xilinx XC3042-70, PLCC-84"
+      ],
+      "title": "U32 XC3042 FPGA",
+      "w": 260,
+      "x": 440,
+      "y": 30
+    },
+    {
+      "h": 56,
+      "id": "u17",
+      "mark": "board",
+      "parts": [
+        "U17"
+      ],
+      "source": "J4's driver: its A1 to A8 tied together to U32 pin 14, its B side through R32 to J4, measured on the bench Z3805A ([[docs/hardware-investigations.md|item 19]]).",
+      "sub": [
+        "8 paralleled buffers"
+      ],
+      "title": "U17 74ABT245A",
+      "w": 160,
+      "x": 820,
+      "y": 40
+    },
+    {
+      "h": 56,
+      "id": "r32",
+      "mark": "board",
+      "parts": [
+        "R32"
+      ],
+      "source": "A Vishay Dale SOMC1603-101G, eight isolated 100 ohm resistors, one in series with each of U17's outputs, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "sub": [
+        "8 x 100 ohm"
+      ],
+      "title": "R32",
+      "w": 90,
+      "x": 1000,
+      "y": 40
+    },
+    {
+      "h": 56,
+      "id": "j4",
+      "mark": "board",
+      "parts": [
+        "J4"
+      ],
+      "source": "A 1 PPS output, cabled to the Z3805A's rear panel ([[docs/bench.md|HP Z3805A, serial 3625A01487]]).  The 58503A's J4 is fitted and carries no 1 PPS ([[docs/hardware-investigations.md|item 19]]).",
+      "sub": [
+        "OUT A"
+      ],
+      "title": "J4",
+      "w": 70,
+      "x": 1110,
+      "y": 40
+    },
+    {
+      "h": 48,
+      "id": "r52",
+      "mark": "board",
+      "parts": [
+        "R52"
+      ],
+      "source": "A bussed 10 kohm pack: pin 7 to U17's DIR, pin 8 to U18's, its common on VCC, so both transfer from the FPGA toward the jacks unless something else drives the line, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "sub": [
+        "10 kohm up"
+      ],
+      "title": "R52",
+      "w": 85,
+      "x": 820,
+      "y": 124
+    },
+    {
+      "h": 48,
+      "id": "oe",
+      "mark": "board",
+      "parts": [
+        "R20"
+      ],
+      "source": "U17's and U18's /OE, one net, through a single 1 kohm resistor to ground, so both are enabled; the net runs on toward U33 but is on no pin of U32 or U33, measured ([[docs/hardware-investigations.md|item 19]]).  That the resistor is R20, the only bussed 1 kohm pack found, is inferred (the board atlas's R20).",
+      "sub": [
+        "1 kohm down"
+      ],
+      "title": "/OE",
+      "w": 85,
+      "x": 915,
+      "y": 124
+    },
+    {
+      "h": 56,
+      "id": "u18",
+      "mark": "board",
+      "parts": [
+        "U18"
+      ],
+      "source": "J5's driver: its A side tied together to U32 pin 83, its B side through R33 to J5, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "sub": [
+        "8 paralleled buffers"
+      ],
+      "title": "U18 74ABT245A",
+      "w": 160,
+      "x": 820,
+      "y": 200
+    },
+    {
+      "h": 56,
+      "id": "r33",
+      "mark": "board",
+      "parts": [
+        "R33"
+      ],
+      "source": "As R32, between U18 and J5, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "sub": [
+        "8 x 100 ohm"
+      ],
+      "title": "R33",
+      "w": 90,
+      "x": 1000,
+      "y": 200
+    },
+    {
+      "h": 56,
+      "id": "j5",
+      "mark": "board",
+      "parts": [
+        "J5"
+      ],
+      "source": "A 1 PPS output, cabled to the Z3805A's rear panel ([[docs/bench.md|HP Z3805A, serial 3625A01487]]).",
+      "sub": [
+        "OUT B"
+      ],
+      "title": "J5",
+      "w": 70,
+      "x": 1110,
+      "y": 200
+    },
+    {
+      "h": 72,
+      "id": "untraced",
+      "mark": "open",
+      "parts": [],
+      "source": "Outputs the designs drive whose destinations on the board are open ([[docs/firmware/fpga-comparison.md|Outputs]]; [[docs/firmware/fpga-comparison.md|Open, across the designs]]).",
+      "sub": [
+        "P16: the GPS 1 PPS, passed through",
+        "P45 (Z3805A only), P78: the internal 1 PPS"
+      ],
+      "title": "Not traced on a board",
+      "w": 360,
+      "x": 820,
+      "y": 296
+    },
+    {
+      "h": 56,
+      "id": "q2",
+      "mark": "open",
+      "parts": [
+        "Q2"
+      ],
+      "source": "No document on main places Q2 or gives it a role; the board atlas does not list it.  A current source charging the interpolator's capacitor is a hypothesis from photos of the analog corner.",
+      "speculative": true,
+      "sub": [
+        "current source"
+      ],
+      "title": "Q2",
+      "w": 150,
+      "x": 56,
+      "y": 404
+    },
+    {
+      "h": 72,
+      "id": "switch",
+      "mark": "open",
+      "parts": [
+        "CR18",
+        "CR19"
+      ],
+      "source": "No document on main places CR18 or CR19; the board atlas does not list them.  Dual diodes steering the current into the capacitor for as long as P81's pulse lasts is a hypothesis.",
+      "speculative": true,
+      "sub": [
+        "diode switch",
+        "BAV99 by marking"
+      ],
+      "title": "CR18, CR19",
+      "w": 170,
+      "x": 230,
+      "y": 404
+    },
+    {
+      "h": 56,
+      "id": "u40",
+      "mark": "open",
+      "parts": [
+        "U40"
+      ],
+      "source": "A 78L12 beside U37, a local +12 V; what it feeds is not traced (the board atlas's U40; [[docs/hardware-investigations.md|item 23]] asks which rail feeds U37).  That it powers the interpolator is a hypothesis.",
+      "speculative": true,
+      "sub": [
+        "a local +12 V"
+      ],
+      "title": "U40 78L12",
+      "w": 150,
+      "x": 56,
+      "y": 492
+    },
+    {
+      "h": 56,
+      "id": "ramp",
+      "mark": "open",
+      "parts": [],
+      "source": "No part is identified.  A capacitor charged for the pulse's length, its voltage the fraction, is a hypothesis.",
+      "speculative": true,
+      "sub": [
+        "the ramp"
+      ],
+      "title": "Capacitor",
+      "w": 170,
+      "x": 230,
+      "y": 492
+    },
+    {
+      "h": 56,
+      "id": "u36",
+      "mark": "open",
+      "parts": [
+        "U36"
+      ],
+      "source": "A TI TLC0820AC, an 8-bit A/D converter with a parallel output, on all three boards ([[docs/hardware-investigations.md|item 5]]); nothing in the firmware's QSPI devices or chip selects reads it (the board atlas's U36).  That it digitizes the interpolator and drives P3 to P6 and P8 to P11 is a hypothesis.",
+      "speculative": true,
+      "sub": [
+        "8-bit parallel ADC"
+      ],
+      "title": "U36 TLC0820AC",
+      "w": 170,
+      "x": 230,
+      "y": 564
+    },
+    {
+      "h": 56,
+      "id": "u37",
+      "mark": "inferred",
+      "parts": [
+        "U37"
+      ],
+      "source": "The hex DAC whose channels 2 and 3 the firmware steps to trim the interpolator's low and high references ([[docs/firmware/counter.md|The interpolator's calibration]]); that the MC144110 at U37 is that DAC is by its six 6-bit channels ([[docs/firmware/ovens.md|What `hdac` is not]]).  Where its outputs go, U36's references or the current, is a hypothesis.",
+      "speculative": true,
+      "sub": [
+        "hex 6-bit DAC"
+      ],
+      "title": "U37 MC144110",
+      "w": 170,
+      "x": 230,
+      "y": 636
+    },
+    {
+      "h": 130,
+      "id": "cpu",
+      "mark": "read",
+      "parts": [
+        "U33",
+        "Y2"
+      ],
+      "source": "The processor and its chip-select map ([[docs/firmware/chip-selects.md|Z3805A 3543B]]; [[docs/firmware/restart.md|The chip selects]]); its QSPI's devices ([[docs/firmware/structures.md|The QSPI's devices]]); the clock (the board atlas's Y2).",
+      "sub": [
+        "CPU32 microcontroller",
+        "address decode: its chip selects",
+        "16.777 MHz from Y2's 32.768 kHz"
+      ],
+      "title": "U33 MC68331",
+      "w": 260,
+      "x": 440,
+      "y": 740
+    },
+    {
+      "h": 56,
+      "id": "duart",
+      "mark": "read",
+      "parts": [
+        "U3"
+      ],
+      "source": "Chip select 8 at `0x200000`, its interrupt acknowledged by CS10 at level 2 ([[docs/firmware/restart.md|The chip selects]]); channel A is the GPS engine's ([[docs/firmware/gps.md|The serial link]]).",
+      "sub": [
+        "driven as an MC68681"
+      ],
+      "title": "U3 SCC68692 DUART",
+      "w": 230,
+      "x": 40,
+      "y": 740
+    },
+    {
+      "h": 52,
+      "id": "u2",
+      "mark": "inferred",
+      "parts": [
+        "U2"
+      ],
+      "source": "Beside J1, so inferred to give J1 its RS-232 levels ([[docs/hardware-investigations.md|item 3]]).",
+      "sub": [
+        "RS-232 levels"
+      ],
+      "title": "U2 LT1180A",
+      "w": 230,
+      "x": 40,
+      "y": 830
+    },
+    {
+      "h": 40,
+      "id": "j1",
+      "mark": "board",
+      "parts": [
+        "J1"
+      ],
+      "source": "The serial connector, silkscreened RS232 and RS422; J3 on the rear panel ([[docs/hardware-investigations.md|item 3]]).",
+      "title": "J1 serial port",
+      "w": 230,
+      "x": 40,
+      "y": 900
+    },
+    {
+      "h": 48,
+      "id": "flash",
+      "mark": "read",
+      "parts": [
+        "U11",
+        "U12",
+        "U13",
+        "U14"
+      ],
+      "source": "Two banks of two, each a word's two bytes, programmed with the Am29F010's commands ([[docs/firmware/restart.md|The chip selects]]).",
+      "sub": [
+        "CSBOOT, CS1 read; CS6, CS7 write"
+      ],
+      "title": "U11 to U14 flash",
+      "w": 360,
+      "x": 820,
+      "y": 736
+    },
+    {
+      "h": 48,
+      "id": "ram",
+      "mark": "read",
+      "parts": [
+        "U9",
+        "U16"
+      ],
+      "source": "Two M5M51008B, one byte of each word ([[docs/firmware/restart.md|The chip selects]]).",
+      "sub": [
+        "CS0 read; CS2, CS3 write"
+      ],
+      "title": "U9, U16 RAM",
+      "w": 360,
+      "x": 820,
+      "y": 788
+    },
+    {
+      "h": 48,
+      "id": "eeprom",
+      "mark": "inferred",
+      "parts": [
+        "U4"
+      ],
+      "source": "An AT28C64B, the records and the log, on chip select 9 by elimination; its select line is not traced ([[docs/firmware/restart.md|The chip selects]]; [[docs/hardware-investigations.md|item 22]]).",
+      "sub": [
+        "CS9, by elimination"
+      ],
+      "title": "U4 EEPROM",
+      "w": 360,
+      "x": 820,
+      "y": 840
+    },
+    {
+      "h": 56,
+      "id": "u56",
+      "mark": "board",
+      "parts": [
+        "U56"
+      ],
+      "source": "The EFC DAC, beside J22, silkscreened EFC (the board atlas's U56); the firmware dithers twenty bits onto its sixteen ([[docs/efc.md|The reported value is twenty bits]]).",
+      "sub": [
+        "16-bit EFC DAC"
+      ],
+      "title": "U56 AD569",
+      "w": 120,
+      "x": 440,
+      "y": 920
+    },
+    {
+      "h": 56,
+      "id": "u35",
+      "mark": "read",
+      "parts": [
+        "U35"
+      ],
+      "source": "The health monitor's and the ovens' ADC, QSPI device 1 ([[docs/firmware/structures.md|The QSPI's devices]]; [[docs/hardware-investigations.md|item 5]]).",
+      "sub": [
+        "health monitor"
+      ],
+      "title": "U35 ADC0838",
+      "w": 120,
+      "x": 580,
+      "y": 920
+    }
+  ],
+  "caption": "Blocks are outlined, and lines drawn, in their mark's color; inferred lines are dashed and open ones dotted.  Pin numbers are written inside the block a line meets.  The diagram scales to the window; every block and signal is also listed, as text, below it.",
+  "description": "The first-family SmartClock main board as blocks and signals: the oscillator, the FPGA's count and 1 PPS outputs, the interpolator, the processor and what it drives, each marked by how it is known.",
+  "edges": [
+    {
+      "at": [
+        355,
+        54,
+        "middle"
+      ],
+      "from": "gps",
+      "id": "gps-pps",
+      "label": "GPS 1 PPS",
+      "mark": "inferred",
+      "pins": [
+        [
+          "P82",
+          448,
+          66,
+          "start"
+        ]
+      ],
+      "points": [
+        [
+          270,
+          62
+        ],
+        [
+          440,
+          62
+        ]
+      ],
+      "source": "P82 is the GPS 1 PPS, whose rising edge starts the count, read from the design's logic ([[docs/firmware/z3805a-trace.md|Clocks]]); that the engine's 1 PPS reaches it through J9 is not traced on a board ([[docs/firmware/fpga-comparison.md|Open, across the designs]]).",
+      "to": "fpga"
+    },
+    {
+      "at": [
+        44,
+        728,
+        "start"
+      ],
+      "both": true,
+      "from": "duart",
+      "id": "gps-serial",
+      "label": "channel A, Oncore messages",
+      "mark": "read",
+      "points": [
+        [
+          40,
+          768
+        ],
+        [
+          28,
+          768
+        ],
+        [
+          28,
+          62
+        ],
+        [
+          40,
+          62
+        ]
+      ],
+      "source": "The Oncore is on the DUART's channel A ([[docs/firmware/gps.md|The serial link]]); the path from U3 to J9 is not traced.",
+      "to": "gps"
+    },
+    {
+      "at": [
+        355,
+        174,
+        "middle"
+      ],
+      "from": "ocxo",
+      "id": "ocxo-p7",
+      "label": "10 MHz",
+      "mark": "inferred",
+      "pins": [
+        [
+          "P7 GCLK",
+          448,
+          186,
+          "start"
+        ]
+      ],
+      "points": [
+        [
+          270,
+          182
+        ],
+        [
+          440,
+          182
+        ]
+      ],
+      "source": "P7 drives the global clock, GCLK, read ([[docs/firmware/z3805a-trace.md|Clocks]]); 10 MHz is what the 1 PPS divider implies, not a measurement, and the oscillator's path to P7 is not traced ([[docs/firmware/fpga-comparison.md|Open, across the designs]]).",
+      "to": "fpga"
+    },
+    {
+      "at": [
+        163,
+        242,
+        "start"
+      ],
+      "from": "ocxo",
+      "id": "ocxo-out",
+      "label": "10 MHz",
+      "mark": "board",
+      "points": [
+        [
+          155,
+          214
+        ],
+        [
+          155,
+          262
+        ]
+      ],
+      "source": "From the oscillator's jack through a resistor and capacitor network to both stages, seen on the 58503A ([[docs/58503a-second-10mhz.md|The two stages]]).",
+      "to": "out10"
+    },
+    {
+      "at": [
+        355,
+        952,
+        "middle"
+      ],
+      "from": "u56",
+      "id": "efc",
+      "label": "EFC",
+      "mark": "inferred",
+      "points": [
+        [
+          440,
+          958
+        ],
+        [
+          16,
+          958
+        ],
+        [
+          16,
+          198
+        ],
+        [
+          40,
+          198
+        ]
+      ],
+      "source": "The voltage at the oscillator's EFC pin follows the firmware's EFC count, measured on the 58503A ([[docs/efc.md|The pin follows the count]]); the parts between U56 and the pin, and J21, are not traced.",
+      "to": "ocxo"
+    },
+    {
+      "at": [
+        760,
+        60,
+        "middle"
+      ],
+      "from": "fpga",
+      "id": "p14",
+      "label": "1 PPS",
+      "mark": "board",
+      "pins": [
+        [
+          "P14",
+          692,
+          72,
+          "end"
+        ]
+      ],
+      "points": [
+        [
+          700,
+          68
+        ],
+        [
+          820,
+          68
+        ]
+      ],
+      "source": "U32 pin 14 to U17's A side, measured on the Z3805A ([[docs/hardware-investigations.md|item 19]]).  The Z3805A's design drives P14 with the internal 1 PPS, registered ([[docs/firmware/z3805a-trace.md|Clocks]]); the 58503A/Z3801A design passes P17 through on it instead ([[docs/firmware/58503a-z3801a-trace.md|Other outputs]]), and the 58503A's J4 carries no 1 PPS ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "u17"
+    },
+    {
+      "from": "u17",
+      "id": "u17-r32",
+      "mark": "board",
+      "points": [
+        [
+          980,
+          68
+        ],
+        [
+          1000,
+          68
+        ]
+      ],
+      "source": "U17's B side to R32, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "r32"
+    },
+    {
+      "from": "r32",
+      "id": "r32-j4",
+      "mark": "board",
+      "points": [
+        [
+          1090,
+          68
+        ],
+        [
+          1110,
+          68
+        ]
+      ],
+      "source": "R32 to J4's center pin, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "j4"
+    },
+    {
+      "at": [
+        866,
+        114,
+        "start"
+      ],
+      "from": "r52",
+      "id": "dir-u17",
+      "label": "DIR",
+      "mark": "board",
+      "points": [
+        [
+          860,
+          124
+        ],
+        [
+          860,
+          96
+        ]
+      ],
+      "source": "R52 pin 7 to U17 pin 1, DIR, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "u17"
+    },
+    {
+      "from": "r52",
+      "id": "dir-u18",
+      "mark": "board",
+      "points": [
+        [
+          860,
+          172
+        ],
+        [
+          860,
+          200
+        ]
+      ],
+      "source": "R52 pin 8 to U18 pin 1, DIR, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "u18"
+    },
+    {
+      "at": [
+        956,
+        114,
+        "start"
+      ],
+      "from": "oe",
+      "id": "oe-u17",
+      "label": "/OE",
+      "mark": "board",
+      "points": [
+        [
+          950,
+          124
+        ],
+        [
+          950,
+          96
+        ]
+      ],
+      "source": "U17 pin 19, /OE, on the shared net, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "u17"
+    },
+    {
+      "from": "oe",
+      "id": "oe-u18",
+      "mark": "board",
+      "points": [
+        [
+          950,
+          172
+        ],
+        [
+          950,
+          200
+        ]
+      ],
+      "source": "U18 pin 19, /OE, on the shared net, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "u18"
+    },
+    {
+      "at": [
+        760,
+        220,
+        "middle"
+      ],
+      "from": "fpga",
+      "id": "p83",
+      "label": "1 PPS",
+      "mark": "board",
+      "pins": [
+        [
+          "P83",
+          692,
+          232,
+          "end"
+        ]
+      ],
+      "points": [
+        [
+          700,
+          228
+        ],
+        [
+          820,
+          228
+        ]
+      ],
+      "source": "U32 pin 83 to U18's A side, measured on the Z3805A ([[docs/hardware-investigations.md|item 19]]).  P83 carries the internal 1 PPS, registered, in both designs, the Z3805A's holding the pulse's width through P83's own pad ([[docs/firmware/z3805a-trace.md|The 1 PPS divider]]; [[docs/firmware/58503a-z3801a-trace.md|Other outputs]]).",
+      "to": "u18"
+    },
+    {
+      "from": "u18",
+      "id": "u18-r33",
+      "mark": "board",
+      "points": [
+        [
+          980,
+          228
+        ],
+        [
+          1000,
+          228
+        ]
+      ],
+      "source": "U18's B side to R33, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "r33"
+    },
+    {
+      "from": "r33",
+      "id": "r33-j5",
+      "mark": "board",
+      "points": [
+        [
+          1090,
+          228
+        ],
+        [
+          1110,
+          228
+        ]
+      ],
+      "source": "R33 to J5's center pin, measured ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "j5"
+    },
+    {
+      "from": "fpga",
+      "id": "p16",
+      "mark": "open",
+      "pins": [
+        [
+          "P16",
+          692,
+          322,
+          "end"
+        ]
+      ],
+      "points": [
+        [
+          700,
+          318
+        ],
+        [
+          820,
+          318
+        ]
+      ],
+      "source": "P16 passes P82, the GPS 1 PPS, through in all five designs, read ([[docs/firmware/fpga-comparison.md|Outputs]]); where it goes on the board is open.",
+      "to": "untraced"
+    },
+    {
+      "from": "fpga",
+      "id": "p45-p78",
+      "mark": "open",
+      "pins": [
+        [
+          "P45, P78",
+          692,
+          350,
+          "end"
+        ]
+      ],
+      "points": [
+        [
+          700,
+          346
+        ],
+        [
+          820,
+          346
+        ]
+      ],
+      "source": "P78 carries the internal 1 PPS in both designs, and P45 too in the Z3805A's, read ([[docs/firmware/fpga-comparison.md|Outputs]]); where they go on the board is open ([[docs/hardware-investigations.md|item 19]]).",
+      "to": "untraced"
+    },
+    {
+      "at": [
+        432,
+        332,
+        "end"
+      ],
+      "from": "fpga",
+      "id": "p81",
+      "label": "start pulse",
+      "mark": "inferred",
+      "pins": [
+        [
+          "P81",
+          448,
+          344,
+          "start"
+        ]
+      ],
+      "points": [
+        [
+          440,
+          340
+        ],
+        [
+          315,
+          340
+        ],
+        [
+          315,
+          404
+        ]
+      ],
+      "source": "P81 is the start's pulse inverted, Low on the pin, from the GPS 1 PPS's edge to the clock edge that follows: the pulse the interpolator measures, read from the logic ([[docs/firmware/z3805a-trace.md|Other outputs]]; [[docs/firmware/z3805a-trace.md|Start, stop and status bits]]).  That it reaches the interpolator is inferred; that it drives CR18 and CR19 is a hypothesis.",
+      "speculative": true,
+      "to": "switch"
+    },
+    {
+      "from": "q2",
+      "id": "q2-switch",
+      "mark": "open",
+      "points": [
+        [
+          206,
+          432
+        ],
+        [
+          230,
+          432
+        ]
+      ],
+      "source": "A hypothesis: Q2's current into the diode switch.  No document on main.",
+      "speculative": true,
+      "to": "switch"
+    },
+    {
+      "from": "switch",
+      "id": "switch-ramp",
+      "mark": "open",
+      "points": [
+        [
+          315,
+          476
+        ],
+        [
+          315,
+          492
+        ]
+      ],
+      "source": "A hypothesis: the switch steers the current into the capacitor for the pulse's length.  No document on main.",
+      "speculative": true,
+      "to": "ramp"
+    },
+    {
+      "from": "ramp",
+      "id": "ramp-u36",
+      "mark": "open",
+      "points": [
+        [
+          315,
+          548
+        ],
+        [
+          315,
+          564
+        ]
+      ],
+      "source": "A hypothesis: U36 digitizes the capacitor's voltage.  No document on main.",
+      "speculative": true,
+      "to": "u36"
+    },
+    {
+      "from": "u37",
+      "id": "u37-u36",
+      "mark": "open",
+      "points": [
+        [
+          315,
+          636
+        ],
+        [
+          315,
+          620
+        ]
+      ],
+      "source": "The hex DAC's channels 2 and 3 trim the interpolator's two references, read from the firmware ([[docs/firmware/counter.md|The interpolator's calibration]]); that they reach U36's reference pins, rather than the current, is a hypothesis.",
+      "speculative": true,
+      "to": "u36"
+    },
+    {
+      "from": "u36",
+      "id": "byte",
+      "mark": "inferred",
+      "pins": [
+        [
+          "P3-P6, P8-P11",
+          448,
+          584,
+          "start"
+        ]
+      ],
+      "points": [
+        [
+          400,
+          580
+        ],
+        [
+          440,
+          580
+        ]
+      ],
+      "source": "P3 to P6 and P8 to P11 are inputs with pull-ups whose byte the port reads back at `0x10` and `0x11` complemented, and P5 and P6 again as status bits 2 and 3, read ([[docs/firmware/z3805a-trace.md|Register port]]; [[docs/firmware/z3805a-trace.md|Start, stop and status bits]]).  That the interpolator drives them is inferred; that U36 does is a hypothesis.",
+      "speculative": true,
+      "to": "fpga"
+    },
+    {
+      "from": "fpga",
+      "id": "control",
+      "mark": "open",
+      "pins": [
+        [
+          "P76, P77",
+          448,
+          608,
+          "start"
+        ]
+      ],
+      "points": [
+        [
+          440,
+          604
+        ],
+        [
+          400,
+          604
+        ]
+      ],
+      "source": "P76 and P77 are outputs, BL.Y and BL.X inverted, read ([[docs/firmware/z3805a-trace.md|Other outputs]]); what the board takes from them is not traced.  That they control U36 is a hypothesis.",
+      "speculative": true,
+      "to": "u36"
+    },
+    {
+      "at": [
+        590,
+        700,
+        "middle"
+      ],
+      "both": true,
+      "from": "cpu",
+      "id": "port",
+      "label": "register port\nCS5 0x304000",
+      "mark": "read",
+      "pins": [
+        [
+          "D0-D3 P71 P70 P67 P65",
+          570,
+          620,
+          "middle"
+        ],
+        [
+          "D4-D7 P62 P60 P59 P58",
+          570,
+          634,
+          "middle"
+        ],
+        [
+          "/CS P61, R/W P75",
+          570,
+          648,
+          "middle"
+        ],
+        [
+          "A0-A2 P69 P68 P66",
+          570,
+          662,
+          "middle"
+        ]
+      ],
+      "points": [
+        [
+          520,
+          740
+        ],
+        [
+          520,
+          670
+        ]
+      ],
+      "source": "The firmware writes four registers at `0x304000`, in chip select 5's window, and reads the status at `0x00`, the interpolator's byte at `0x10` and `0x11` and the count's nibbles at `0x12` to `0x17` ([[docs/firmware/counter.md|The register port]]); the design's port pins are read from the logic that decodes it ([[docs/firmware/z3805a-trace.md|Register port]]).  Which decoder, if any, splits chip select 5's window between the FPGA, the lamp latch, the switch byte and the EFC strobe is open ([[docs/hardware-investigations.md|item 20]]).",
+      "to": "fpga"
+    },
+    {
+      "at": [
+        666,
+        700,
+        "start"
+      ],
+      "from": "cpu",
+      "id": "config",
+      "label": "QSPI device 6\nconfiguration",
+      "mark": "read",
+      "points": [
+        [
+          660,
+          740
+        ],
+        [
+          660,
+          670
+        ]
+      ],
+      "source": "`fpga_program` loads the bitstream over QSPI device 6 and the firmware verifies it over device 12 ([[docs/firmware/structures.md|The QSPI's devices]]); what decodes the QSPI's selects into its devices is not documented.",
+      "to": "fpga"
+    },
+    {
+      "at": [
+        414,
+        724,
+        "end"
+      ],
+      "from": "cpu",
+      "id": "hdac",
+      "label": "QSPI device 2",
+      "mark": "inferred",
+      "points": [
+        [
+          440,
+          752
+        ],
+        [
+          420,
+          752
+        ],
+        [
+          420,
+          664
+        ],
+        [
+          400,
+          664
+        ]
+      ],
+      "source": "The hex DAC is QSPI device 2 ([[docs/firmware/structures.md|The QSPI's devices]]); that U37 is on it is by the match, its select line not traced ([[docs/firmware/ovens.md|What `hdac` is not]]).",
+      "to": "u37"
+    },
+    {
+      "at": [
+        355,
+        790,
+        "middle"
+      ],
+      "both": true,
+      "from": "cpu",
+      "id": "duart-cpu",
+      "label": "CS8 0x200000",
+      "mark": "read",
+      "points": [
+        [
+          440,
+          772
+        ],
+        [
+          270,
+          772
+        ]
+      ],
+      "source": "Chip select 8, `0x200000`; its interrupt at level 2 ([[docs/firmware/restart.md|The chip selects]]).  The interrupt line's path to U33 is open ([[docs/hardware-investigations.md|item 21]]).",
+      "to": "duart"
+    },
+    {
+      "at": [
+        163,
+        808,
+        "start"
+      ],
+      "from": "duart",
+      "id": "host",
+      "label": "host port: channel B\nor the CPU's SCI",
+      "mark": "open",
+      "points": [
+        [
+          155,
+          796
+        ],
+        [
+          155,
+          830
+        ]
+      ],
+      "source": "Which serial port reaches J1, the DUART's channel B or the processor's own SCI, is not traced ([[docs/hardware-investigations.md|item 3]]).",
+      "to": "u2"
+    },
+    {
+      "at": [
+        163,
+        893,
+        "start"
+      ],
+      "from": "u2",
+      "id": "u2-j1",
+      "label": "RS-232",
+      "mark": "inferred",
+      "points": [
+        [
+          155,
+          882
+        ],
+        [
+          155,
+          900
+        ]
+      ],
+      "source": "U2 sits beside J1 ([[docs/hardware-investigations.md|item 3]]); the 58503A's U7, an RS-422 driver beside the jumper block XW1, is inferred to be the port's RS-422 side (the board atlas's observations).",
+      "to": "j1"
+    },
+    {
+      "both": true,
+      "from": "cpu",
+      "id": "flash-bus",
+      "mark": "read",
+      "points": [
+        [
+          700,
+          758
+        ],
+        [
+          820,
+          758
+        ]
+      ],
+      "source": "CSBOOT and CS1 read the two banks, CS6 and CS7 write them ([[docs/firmware/restart.md|The chip selects]]).",
+      "to": "flash"
+    },
+    {
+      "both": true,
+      "from": "cpu",
+      "id": "ram-bus",
+      "mark": "read",
+      "points": [
+        [
+          700,
+          810
+        ],
+        [
+          820,
+          810
+        ]
+      ],
+      "source": "CS0 reads both, CS2 writes the upper byte and CS3 the lower ([[docs/firmware/restart.md|The chip selects]]).",
+      "to": "ram"
+    },
+    {
+      "both": true,
+      "from": "cpu",
+      "id": "eeprom-bus",
+      "mark": "inferred",
+      "points": [
+        [
+          700,
+          860
+        ],
+        [
+          820,
+          860
+        ]
+      ],
+      "source": "Chip select 9, `0x400000`, 8 KiB, the EEPROM's by elimination ([[docs/firmware/restart.md|The chip selects]]).",
+      "to": "eeprom"
+    },
+    {
+      "at": [
+        494,
+        900,
+        "end"
+      ],
+      "from": "cpu",
+      "id": "efc-dac",
+      "label": "QSPI device 7",
+      "mark": "board",
+      "points": [
+        [
+          500,
+          870
+        ],
+        [
+          500,
+          920
+        ]
+      ],
+      "source": "`efc_write` sends the EFC over QSPI device 7, an AD569 ([[docs/firmware/structures.md|The QSPI's devices]]); U56 is the board's AD569, beside the EFC jack (the board atlas's U56).  What takes the device's word to the DAC's parallel inputs is open (the board atlas's U48 and U50).",
+      "to": "u56"
+    },
+    {
+      "at": [
+        646,
+        900,
+        "start"
+      ],
+      "from": "u35",
+      "id": "adc",
+      "label": "QSPI device 1",
+      "mark": "read",
+      "points": [
+        [
+          640,
+          920
+        ],
+        [
+          640,
+          870
+        ]
+      ],
+      "source": "`adc_read` reads QSPI device 1, an ADC0838 ([[docs/firmware/structures.md|The QSPI's devices]]); U35 is marked ADC0838CCV ([[docs/hardware-investigations.md|item 5]]).  What its eight inputs measure is in [[docs/firmware/ovens.md|The health monitor]].",
+      "to": "cpu"
+    }
+  ],
+  "groups": [
+    {
+      "h": 354,
+      "id": "interpolator",
+      "mark": "read",
+      "source": "The FPGA counts whole clock ticks; the fraction of a tick comes from outside it, as a byte on P3 to P6 and P8 to P11 that the port reads back at `0x10` and `0x11` complemented ([[docs/firmware/z3805a-trace.md|Register port]]), and the firmware calibrates it against two references the hex DAC trims ([[docs/firmware/counter.md|The interpolator's calibration]]).  The Z3815A's and Z3816A's designs do not read it ([[docs/firmware/fpga-comparison.md|The five designs]]).  The parts inside are speculative, each marked.",
+      "sub": "10 MHz designs; not traced",
+      "title": "Interpolator",
+      "w": 370,
+      "x": 40,
+      "y": 346
+    }
+  ],
+  "heading": "The 10 MHz SmartClock main board, as blocks",
+  "intro": [
+    "The main board of the Z3805A (Z3805-68001), drawn as its blocks and the signals between them.  The Z3801A and the 58503A use the same layout, fitted differently ([[docs/hardware-investigations.md|item 19]]), and load one FPGA design between them where the Z3805A loads another ([[docs/firmware/58503a-z3801a-trace.md|At a glance]]); where they differ, a block or a signal says so.  Pins are the XC3042's PLCC-84 package pins.",
+    "Every block and every signal carries a mark saying how it is known, and its entry under the diagram cites the documents that say so.  Select a block or a line for its entry; a part's designator there opens its row in the board atlas."
+  ],
+  "left_out": [
+    "The FPGA outputs P2 (tied Low), P72, P79 and P84, and the input P17: what the board does with them is not traced ([[docs/firmware/fpga-comparison.md|Outputs]]).",
+    "The lamp latch U44, the switch byte at `0x302000` and the EFC strobe at `0x306000`, the rest of chip select 5's window: each part's role there is inferred or open ([[docs/firmware/restart.md|The chip selects]]; [[docs/firmware/restart.md|The switch byte at `0x302000`]]).",
+    "The analog parts round the EFC and the monitor, U52, U55, U59, U60 and U61, the references U39 and U49, and the shift registers U48 and U50: none is traced (the board atlas).",
+    "J18, 10 MHz In, and J22, the EFC jack: their paths are not traced (the board atlas).",
+    "The power supplies and regulators other than U40, U45 and U46, the LEDs, S1 and the front panel's connector: none bears on the signals drawn here (the board atlas)."
+  ],
+  "marks": [
+    {
+      "id": "read",
+      "text": "read from the firmware's code or from the FPGA design's decoded netlist"
+    },
+    {
+      "id": "board",
+      "text": "seen on a board: a photo or a meter"
+    },
+    {
+      "id": "simulated",
+      "text": "printed by a simulation of the decoded netlist"
+    },
+    {
+      "id": "inferred",
+      "text": "reasoned from what is read, seen or simulated, not checked"
+    },
+    {
+      "id": "open",
+      "text": "not known"
+    }
+  ],
+  "notes": [
+    "The 58503A and the Z3801A load one FPGA design byte for byte; the Z3805A's differs at the 1 PPS output's width logic and at P14 and P45 ([[docs/firmware/58503a-z3801a-trace.md|At a glance]]).  So the Z3805A drives its J4 from P14 with the 1 PPS, and the 58503A's design puts P17 on P14 ([[docs/firmware/fpga-comparison.md|Outputs]]); whether the 58503A can have a second 1 PPS is [[docs/hardware-investigations.md|item 19]].",
+    "Everything marked board was measured or photographed on the bench Z3805A, except the oscillator, the EFC pin and the 10 MHz stages, seen on the 58503A.  The FPGA's pins are read from the decoded design; no pin of it has been probed ([[docs/firmware/fpga-comparison.md|Provenance]]).",
+    "The interpolator's parts are the open question of the 10 MHz designs: [[docs/firmware/counter.md|The interpolator's calibration]] gives what the firmware asks of it, and [[docs/firmware/z3805a-trace.md|Confidence]] what the design leaves open, such as how it reads a start pulse shorter than its low reference."
+  ],
+  "size": [
+    1200,
+    990
+  ],
+  "speculative": "A dashed block is a part, or a line a connection, that no document yet ties to its role: a working hypothesis, its name followed by (?).  The interpolator is drawn so: the FPGA's design shows that one exists outside it, but what it is made of is not traced.  A line into it is marked by how far its FPGA end is known.",
+  "title": "Board Block Diagram",
+  "unlisted": [
+    "Q2",
+    "CR18",
+    "CR19"
+  ]
+}

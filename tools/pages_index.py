@@ -72,7 +72,7 @@ MOTIF_BOX = (72, 48)
 GROUPS = {
     "hardware": Group(
         "Hardware",
-        "The boards and their power supplies part by part on their photographs, and what the bench measured.",
+        "The boards and their power supplies part by part on their photographs, and the main board drawn as blocks and signals.",
         # A board: mounting holes, a chip with its pins, a can oscillator.
         '<rect x="3" y="5" width="66" height="38" rx="2"/>'
         '<circle cx="8" cy="10" r="1.6"/><circle cx="64" cy="38" r="1.6"/>'

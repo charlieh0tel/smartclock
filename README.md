@@ -4,8 +4,8 @@
 frequency receivers (58503A/B, 59551A, Z3801A, Z3805A, Z3815A, Z3816A),
 taken apart and documented.
 
-**Docs site:** the FPGA explainer, the board atlas, the loop analysis
-and the SCPI trees, at
+**Docs site:** the FPGA explainer, the board atlas and block diagram,
+the loop analysis and the SCPI trees, at
 <https://charlieh0tel.github.io/smartclock/>.
 
 **Where to start:**
@@ -22,7 +22,9 @@ and the SCPI trees, at
   as a control system.
 - **[Hardware](#the-hardware):** the main board mapped part by part from
   photographs, with the nets measured and the differences between
-  models ([the board atlas](https://charlieh0tel.github.io/smartclock/board-atlas.html)).
+  models ([the board atlas](https://charlieh0tel.github.io/smartclock/board-atlas.html)),
+  and drawn as blocks
+  ([the block diagram](https://charlieh0tel.github.io/smartclock/block-diagram.html)).
 - **[FPGAs](docs/firmware/fpga-comparison.md):** the five FPGA
   designs in the seven images, decoded from their bitstreams, simulated,
   traced and compared
@@ -114,7 +116,9 @@ The first-family main board, the Z3805A's, is mapped part by part on
 its photographs, with the firmware's address for each part and the
 nets measured so far
 ([the board atlas](https://charlieh0tel.github.io/smartclock/board-atlas.html)),
-with the identified parts' data sheets under `third_party/`.
+with the identified parts' data sheets under `third_party/`, and drawn
+as blocks and signals, each marked by how it is known
+([the block diagram](https://charlieh0tel.github.io/smartclock/block-diagram.html)).
 [`docs/bench.md`](docs/bench.md) describes the bench, and
 [`docs/hardware-investigations.md`](docs/hardware-investigations.md)
 what only it can settle.  The HP 53131A-family counters are built on
@@ -206,7 +210,9 @@ network access to github.com, for the XC3000 viewer's clone
 Pages from main, at <https://charlieh0tel.github.io/smartclock/>.
 `make board-atlas` builds the board atlas alone, from
 `docs/board-atlas.json`, and fails if the data cites a file or section
-that does not exist.  `make check-pages` loads each page in headless
+that does not exist; `make block-diagram` the block diagram, from
+`docs/block-diagram.json`, likewise, and fails too on a part the atlas
+lacks or a line that does not meet its blocks.  `make check-pages` loads each page in headless
 Chrome and fails if anything on it scrolls sideways at desktop width.
 
 ## Documentation
@@ -235,6 +241,7 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html) | the five FPGA designs illustrated: the count, the two families, the telecom pair's phase detector and what of P7 reaches the firmware, with waveforms from the simulations; built by `make fpga` and checked by `check-explainer` |
 | [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles, and the FFOM its start-up gives |
 | [`board-atlas.html`](https://charlieh0tel.github.io/smartclock/board-atlas.html) | the first-family main board, part by part on its photographs: each part's role, its address or QSPI device, the nets measured, and the Z3801A's and 58503A's boards against it; a ring or a row opens the part's card, the photos zoom and pan, the parts filter by subsystem, confidence or text, and `#J4` links to a part; built from `docs/board-atlas.json` by `make board-atlas` |
+| [`block-diagram.html`](https://charlieh0tel.github.io/smartclock/block-diagram.html) | the same board as blocks and signals: the oscillator, the FPGA's count, port and 1 PPS outputs with their pins, the interpolator drawn as a hypothesis, the processor and what it drives, each marked read, board, simulated, inferred or open and cited; built from `docs/block-diagram.json` by `make block-diagram` |
 | [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, and as C data, the trees side by side against the manuals, and what bench receivers answered |
 | [`docs/screen-format-strings.md`](docs/screen-format-strings.md) | the status screen's templates, and what drives its mode line |
 | [`docs/hardware-investigations.md`](docs/hardware-investigations.md) | what only a bench can settle |

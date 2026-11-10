@@ -1934,7 +1934,10 @@ typedef enum __attribute__((packed)) fpga_bit_index {
   FPGA_BIT_SYNC = 5,  /* register 3, 0x03: counter_set_sync */
   FPGA_BIT_ALARM = 6, /* register 3, 0x04, a flag: the alarm, which 0x40828
                          sets with PORTF0 bit 5 (docs/firmware/58503a-3704.md,
-                         "The alarm outputs") */
+                         "The alarm outputs"); DATA2, P67, has no input path
+                         in the FPGA, so it reaches no logic there
+                         (docs/firmware/58503a-z3801a-trace.md, "Register
+                         port") */
 } fpga_bit_index;
 
 #include "../../common/types/fpga_mode.h"

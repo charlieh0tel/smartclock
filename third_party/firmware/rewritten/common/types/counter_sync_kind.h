@@ -7,7 +7,14 @@
 /* sync_request's kind, counter_configuration_fields.sync_kind: a step
  * against a positive TI, against a negative one, and a sync
  * (pll_stages.c's steps; sync_imm, diag_sync_imm diag_sync_imm, asks for a
- * sync). */
+ * sync).  In the 10 MHz FPGA designs the first moves the next internal
+ * 1 PPS one clock, 100 ns, earlier, the second one later, and the third
+ * restarts the 1 PPS divider on the next GPS 1 PPS; each acts once, a
+ * field left at its kind doing nothing more (docs/firmware/z3805a-trace.md,
+ * 58503a-z3801a-trace.md and 58503b-trace.md, "The sync field").  The
+ * Z3815A's steps its P7 divider instead, and its third makes the next
+ * start-source edge the internal 1 PPS (z3815a-trace.md, "The sync
+ * field"). */
 typedef enum __attribute__((packed)) counter_sync_kind {
   COUNTER_SYNC_POSITIVE = 1,
   COUNTER_SYNC_NEGATIVE = 2,

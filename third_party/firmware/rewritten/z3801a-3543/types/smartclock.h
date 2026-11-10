@@ -1513,8 +1513,11 @@ typedef struct gps_state {
  * address and sync are in structures.md.  The Z3801A adds four flags in
  * register 2 before sync, which fpga_fields_to_registers (0x40afe) and
  * counter_configuration_init (0x40ed8) bound by and which nothing else
- * names; the counter's set-up sets the third.  What they drive is not
- * established.  The four repeat after the table, unreferenced
+ * names; the counter's set-up sets the third.  The FPGA decodes no
+ * register 2, so they reach no logic there
+ * (docs/firmware/58503a-z3801a-trace.md, "Register port"); whether the
+ * board takes them from the bus otherwise is not established.  The four
+ * repeat after the table, unreferenced
  * (fpga_bit_table_register_2_copy, 0x4134a). */
 typedef enum __attribute__((packed)) fpga_bit_index {
 #include "../../common/types/fpga_bit_index.h"

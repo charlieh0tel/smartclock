@@ -8,7 +8,8 @@ the repository's README and the hub document of each of the project's
 tracks.  Fails
 if a page lacks any of the three tags or names a group GROUPS lacks,
 or if NEW, FEATURED or an UNLISTED page is not one of the PAGEs, or
-NEW and FEATURED are the same page or either is unlisted.  An unlisted
+NEW and FEATURED are the same page or either is unlisted, or a WIP
+page is not one of the PAGEs.  An unlisted
 page is published at its URL but nowhere on the landing page.
 
 Each PAGE also gets a breadcrumb back to the landing page:
@@ -23,12 +24,18 @@ The site's icon, docs/pages/favicon.svg, is copied beside the index,
 and each PAGE and the index get a link to it in their <head>, unless
 one already declares an icon.
 
+Each page named WIP is marked as a work in progress: a "Work in
+progress" ribbon across the top right corner of the page, a banner
+under its breadcrumb in a window too narrow for the corner, and a WIP
+tag on its entry on the landing page.  A mark from an earlier run is
+replaced, not doubled.
+
 The hero is a drawing of the HP 58503A's front panel, showing UTC, or
 HERO, an image under docs/ copied to the same path beside the index,
 described by HERO_ALT.
 
     python3 -I tools/pages_index.py [--new PAGE] [--featured PAGE]
-        [--unlisted PAGE]... [--hero PATH --hero-alt TEXT] DIR PAGE...
+        [--unlisted PAGE]... [--wip PAGE]... [--hero PATH --hero-alt TEXT] DIR PAGE...
 """
 
 import argparse
@@ -124,6 +131,40 @@ BREADCRUMB_SEPARATOR = '<span aria-hidden="true" style="opacity:.6">&rsaquo;</sp
 COLUMNS = ("main", "div", "header", "article", "section")
 # A breadcrumb an earlier run inserted, with the line break before it.
 EARLIER_BREADCRUMB = re.compile(rf'\n<nav class="{BREADCRUMB_CLASS}"[^>]*>.*?</nav>', re.DOTALL)
+
+# A work in progress's mark: the ribbon's class, marking it as this
+# script's on a page, its text, and its colors and the landing page's
+# WIP tag's, an amber band with dark ink, which reads on a light page
+# and a dark one alike, whatever a page's own theme.
+WIP_CLASS = "smartclock-wip"
+WIP_TEXT = "Work in progress"
+WIP_BACKGROUND = "#e8a33d"
+WIP_INK = "#1d2023"
+# The ribbon's corner, a square it is clipped to, its side in pixels;
+# and the window width under which it is a banner under the
+# breadcrumb instead, the landing page's wide breakpoint, so that it
+# never sits over a title running to the window's edge.
+WIP_CORNER = 150
+WIP_BANNER_BELOW = "60rem"
+# The ribbon's style sheet, in the page's <head>, since a corner and a
+# banner by window width need a media query an inline style cannot
+# carry.  The band runs at 45 degrees across the corner, pointer events
+# passing through it to what it covers.
+WIP_STYLE = f"""<style id="{WIP_CLASS}">
+.{WIP_CLASS}{{position:absolute;top:0;right:0;z-index:1;width:{WIP_CORNER}px;height:{WIP_CORNER}px;overflow:hidden;pointer-events:none}}
+.{WIP_CLASS} span{{position:absolute;top:{WIP_CORNER // 5}px;left:-{WIP_CORNER // 6}px;width:{WIP_CORNER * 3 // 2}px;padding:.3rem 0;
+  transform:rotate(45deg);text-align:center;background:{WIP_BACKGROUND};color:{WIP_INK};
+  font:600 .8rem/1.2 system-ui,sans-serif;letter-spacing:.04em;box-shadow:0 1px 3px rgba(0,0,0,.3)}}
+@media (max-width:{WIP_BANNER_BELOW}){{
+  .{WIP_CLASS}{{position:static;width:auto;height:auto;overflow:visible;margin:.4rem 0 0}}
+  .{WIP_CLASS} span{{position:static;display:inline-block;width:auto;padding:.15rem .5rem;transform:none;
+    border-radius:3px;box-shadow:none}}
+}}
+</style>"""
+WIP_RIBBON = f'<div class="{WIP_CLASS}" role="note"><span>{WIP_TEXT}</span></div>'
+# A ribbon and its style sheet an earlier run inserted, each with the
+# line break before it.
+EARLIER_WIP = re.compile(rf'\n(<div class="{WIP_CLASS}"[^>]*>.*?</div>|<style id="{WIP_CLASS}">.*?</style>)', re.DOTALL)
 
 # The site's icon, its source and the link to it each page's <head> gets.
 ICON = DOCS / "pages" / "favicon.svg"
@@ -372,6 +413,8 @@ header.top .site{font-weight:600;color:var(--ink);text-decoration:none}
 .group .title{display:block;font-weight:600;color:var(--blue);font-size:1.075rem}
 .group li a:hover .title{text-decoration:underline;text-underline-offset:3px}
 .group .line{display:block;color:var(--muted);max-width:40rem}
+.group .wip{display:inline-block;margin-left:.5rem;padding:0 .35rem;border-radius:3px;vertical-align:.15em;
+  background:__WIP_BACKGROUND__;color:__WIP_INK__;font-size:.7rem;font-weight:600;letter-spacing:.06em}
 
 .featured{border-width:2.5px;border-color:var(--ink);grid-template-columns:auto 1fr;align-items:center}
 .featured .about svg{width:144px;height:96px;margin:0}
@@ -524,15 +567,21 @@ def with_breadcrumb(name, text, page, crumb):
     return text[:at] + "\n" + crumb + text[at:]
 
 
-def with_icon(name, text):
-    """TEXT, page NAME's, with ICON_LINK on a line of its own at the top
-    of its <head>, unless it already declares an icon."""
-    if DECLARED_ICON.search(text):
-        return text
+def at_head_start(name, text, element):
+    """TEXT, page NAME's, with ELEMENT on a line of its own at the top of
+    its <head>."""
     head_start = HEAD_START.search(text)
     if not head_start:
         sys.exit(f"pages_index: {name} has no <head>")
-    return text[:head_start.end()] + "\n" + ICON_LINK + text[head_start.end():]
+    return text[:head_start.end()] + "\n" + element + text[head_start.end():]
+
+
+def with_icon(name, text):
+    """TEXT, page NAME's, with ICON_LINK at the top of its <head>, unless
+    it already declares an icon."""
+    if DECLARED_ICON.search(text):
+        return text
+    return at_head_start(name, text, ICON_LINK)
 
 
 def motif(group):
@@ -540,8 +589,11 @@ def motif(group):
     return f'<svg viewBox="0 0 {width} {height}" aria-hidden="true">{group.motif}</svg>'
 
 
-def entry(name, page):
-    return (f'<li><a href="{html.escape(name)}"><span class="title">{html.escape(page.title.strip())}</span>'
+def entry(name, page, wip):
+    """PAGE's entry on the landing page, with a WIP tag if NAME is in
+    WIP."""
+    tag = '<span class="wip">WIP</span>' if name in wip else ""
+    return (f'<li><a href="{html.escape(name)}"><span class="title">{html.escape(page.title.strip())}{tag}</span>'
             f'<span class="line">{html.escape(page.description)}</span></a></li>')
 
 
@@ -552,14 +604,14 @@ def section(key, heading, about, entries, classes="group"):
             f"<ul>\n" + "\n".join(entries) + "\n</ul>\n</section>")
 
 
-def set_apart(key, heading, name, page):
-    return section(key, heading, motif(GROUPS[page.group]), [entry(name, page)], "group featured")
+def set_apart(key, heading, name, page, wip):
+    return section(key, heading, motif(GROUPS[page.group]), [entry(name, page, wip)], "group featured")
 
 
-def grouped(heads, skip):
+def grouped(heads, skip, wip):
     sections = []
     for key, group in GROUPS.items():
-        entries = [entry(name, page) for name, page in heads.items() if page.group == key and name not in skip]
+        entries = [entry(name, page, wip) for name, page in heads.items() if page.group == key and name not in skip]
         if entries:
             about = f"{motif(group)}<p>{html.escape(group.blurb)}</p>"
             sections.append(section(key, group.heading, about, entries))
@@ -589,12 +641,14 @@ def main():
     parser.add_argument("--featured", help="the page to feature, by file name; one of the pages")
     parser.add_argument("--unlisted", action="append", default=[],
                         help="a page published but not listed, by file name; one of the pages")
+    parser.add_argument("--wip", action="append", default=[],
+                        help="a page marked as a work in progress, by file name; one of the pages")
     parser.add_argument("--hero", help="the hero image, by its path under docs/")
     parser.add_argument("--hero-alt", help="the hero image's description")
     parser.add_argument("directory", type=Path, help="the pages' directory")
     parser.add_argument("pages", nargs="+", help="the pages, by file name")
     args = parser.parse_args()
-    texts = {name: EARLIER_BREADCRUMB.sub("", (args.directory / name).read_text(encoding="utf-8"))
+    texts = {name: EARLIER_WIP.sub("", EARLIER_BREADCRUMB.sub("", (args.directory / name).read_text(encoding="utf-8")))
              for name in args.pages}
     heads = {name: head(name, text) for name, text in texts.items()}
     chosen = [(key, heading, getattr(args, key)) for key, heading in SET_APART]
@@ -604,25 +658,35 @@ def main():
     for name in args.unlisted:
         if name not in heads:
             sys.exit(f"pages_index: the unlisted page {name} is not one of the pages")
+    for name in args.wip:
+        if name not in heads:
+            sys.exit(f"pages_index: the work in progress {name} is not one of the pages")
+    wip = set(args.wip)
     names = [name for _, _, name in chosen if name]
     if len(names) != len(set(names)):
         sys.exit("pages_index: the new and the featured page are the same page")
     if set(names) & set(args.unlisted):
         sys.exit("pages_index: the new or the featured page is unlisted")
-    sections = [set_apart(key, heading, name, heads[name]) for key, heading, name in chosen if name]
+    sections = [set_apart(key, heading, name, heads[name], wip) for key, heading, name in chosen if name]
     skip = set(names) | set(args.unlisted)
-    sections += grouped(heads, skip)
+    sections += grouped(heads, skip, wip)
     listed = {page.group for name, page in heads.items() if name not in skip}
     for name, page in heads.items():
         crumb = breadcrumb(page, page.group in listed)
+        if name in wip:
+            crumb += "\n" + WIP_RIBBON
         text = with_breadcrumb(name, texts[name], page, crumb)
+        if name in wip:
+            text = at_head_start(name, text, WIP_STYLE)
         (args.directory / name).write_text(with_icon(name, text), encoding="utf-8")
     shutil.copyfile(ICON, args.directory / ICON.name)
     page = (PAGE.replace("__HERO__", hero(args.directory, args.hero, args.hero_alt))
             .replace("__SECTIONS__", "\n".join(sections))
             .replace("__DOCUMENTS__", documents())
             .replace("__GLYPHS__", json.dumps(GLYPHS))
-            .replace("__REPOSITORY__", REPOSITORY))
+            .replace("__REPOSITORY__", REPOSITORY)
+            .replace("__WIP_BACKGROUND__", WIP_BACKGROUND)
+            .replace("__WIP_INK__", WIP_INK))
     (args.directory / INDEX).write_text(with_icon(INDEX, page), encoding="utf-8")
 
 

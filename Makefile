@@ -134,7 +134,10 @@ docs:
 # them in a box of its own, and last the README and each track's hub
 # document, DOCUMENTS in tools/pages_index.py.  A page in UNLISTED_PAGES,
 # one of PAGES, is published at its URL but left off the landing page;
-# it cannot be NEW_PAGE or FEATURED_PAGE.  It also puts a breadcrumb
+# it cannot be NEW_PAGE or FEATURED_PAGE.  A page in WIP_PAGES, one of
+# PAGES, gets a "Work in progress" ribbon across its top right corner, a
+# banner under its breadcrumb in a narrow window, and a WIP tag on its
+# landing page entry.  It also puts a breadcrumb
 # back to index.html at the top of each page's content, the first
 # element in its <body>, which must be a main, div, header, article or
 # section; the sources in docs/pages/ are left without one.  It copies
@@ -149,6 +152,7 @@ PAGES := fpga board-atlas block-diagram scpi-models $(HAND_PAGES)
 NEW_PAGE := fpga
 FEATURED_PAGE := loop
 UNLISTED_PAGES := bench-sky-2026-10-03
+WIP_PAGES := block-diagram
 HERO_IMAGE :=
 HERO_ALT :=
 .PHONY: $(PAGES)
@@ -156,6 +160,7 @@ pages: $(PAGES)
 	python3 -I tools/pages_index.py \
 		$(if $(NEW_PAGE),--new $(NEW_PAGE).html) $(if $(FEATURED_PAGE),--featured $(FEATURED_PAGE).html) \
 		$(UNLISTED_PAGES:%=--unlisted %.html) \
+		$(WIP_PAGES:%=--wip %.html) \
 		$(if $(HERO_IMAGE),--hero $(HERO_IMAGE) --hero-alt "$(HERO_ALT)") \
 		$(PAGES_DIR) $(PAGES:%=%.html)
 

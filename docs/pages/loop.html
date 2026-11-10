@@ -217,20 +217,7 @@ th code{text-transform:none;letter-spacing:0}
       <tr><td>0, 2, 7 to 9: invalid, power-up recovery, diag, idle, fatal error</td><td>0, 2, 8 to 10</td><td>no mode marked</td><td></td><td>3</td></tr>
     </tbody>
   </table></div>
-  <p class="note">The manual's FFOM 2 is holdover (097-59551-02, 5-23); the firmware gives it in holdover recovery too. The front panel shows <code>STABILIZING</code> and <code>10MHZ STABLE</code> by the FFOM once the position is held, and the survey's progress before. Read from each image's <code>get_ffom</code>, the switch on the stage byte:</p>
-  <div class="wide"><table class="images">
-    <colgroup><col style="width:24%"><col style="width:18%"><col style="width:18%"><col style="width:40%"></colgroup>
-    <thead><tr><th>Firmware</th><th><code>get_ffom</code></th><th>Stage byte</th><th>After a power-up, <code>startup_pll</code> waits for</th></tr></thead>
-    <tbody>
-      <tr><td>Z3816A 4001</td><td><code>0x46368</code></td><td><code>0x10282c</code></td><td>three samples of the aging fit, <code>0x47eba</code></td></tr>
-      <tr><td>Z3815A 4010</td><td><code>0x4bcba</code></td><td><code>0x10286e</code></td><td>7200 s of uptime, <code>0x4d9e2</code></td></tr>
-      <tr><td>Z3801A 3543</td><td><code>0x42a44</code></td><td><code>0x10215a</code></td><td>three samples of the aging fit, <code>0x4459e</code></td></tr>
-      <tr><td>Z3805A 3543B</td><td><code>0x42a18</code></td><td><code>0x102162</code></td><td>three samples of the aging fit, <code>0x44572</code></td></tr>
-      <tr><td>58503A 3633</td><td><code>0x42ac2</code></td><td><code>0x10246e</code></td><td>three samples of the aging fit, <code>0x4458e</code></td></tr>
-      <tr><td>58503A 3704</td><td><code>0x42ac2</code></td><td><code>0x102476</code></td><td>three samples of the aging fit, <code>0x445c8</code></td></tr>
-      <tr><td>58503B 1.01.04</td><td><code>0x478b2</code></td><td><code>0x102bb2</code></td><td>7200 s of uptime, <code>0x494ec</code></td></tr>
-    </tbody>
-  </table></div>
+  <p class="note">The manual's FFOM 2 is holdover (097-59551-02, 5-23); the firmware gives it in holdover recovery too. The front panel shows <code>STABILIZING</code> and <code>10MHZ STABLE</code> by the FFOM once the position is held, and the survey's progress before. The table is read from each image's <code>get_ffom</code>, a switch on the stage byte; their addresses, and where each image's <code>startup_pll</code> tests what it waits for after a power-up, are in <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#the-ffom">The FFOM</a>.</p>
 
   <h3>After a power-up</h3>
   <p>Through power-up, the FFOM is 3. <code>startup_pll</code> then holds it at 1 until it hands over to <code>pll_normal</code>, and in the Z3805A and 58503A that takes three steps:</p>

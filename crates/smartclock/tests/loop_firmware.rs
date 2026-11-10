@@ -1369,6 +1369,10 @@ const STAGES: usize = 11;
 /// for.
 const FFOM_UNLOCKED: u8 = 3;
 
+/// The column of loop.md's FFOM table giving what `startup_pll` waits
+/// for after a power-up, and where it tests it.
+const WAIT_COLUMN: &str = "After a power-up, `startup_pll` waits for";
+
 /// The seconds of the quarter hour the page rounds its longer times
 /// to.
 const QUARTER_HOUR: f64 = 900.0;
@@ -1385,18 +1389,6 @@ fn number_word(text: &str) -> u32 {
         .find_map(|word| NUMBER_WORDS.iter().position(|number| *number == word))
         .and_then(|value| u32::try_from(value).ok())
         .unwrap_or_else(|| panic!("no number word in {text:?}"))
-}
-
-/// The addresses written `<code>0x...</code>` in `text`, in order.
-fn html_addresses(text: &str) -> Vec<usize> {
-    text.split("<code>0x")
-        .skip(1)
-        .map(|rest| {
-            let digits = rest.split('<').next().unwrap_or_default();
-            usize::from_str_radix(digits, 16)
-                .unwrap_or_else(|_| panic!("{digits:?} is not an address"))
-        })
-        .collect()
 }
 
 /// The stages a cell of the page's stage table names, `5 <code>...`
@@ -1555,8 +1547,8 @@ impl StartupWait {
         }
     }
 
-    /// The wait as the page's by-image table states it.
-    fn from_page(cell: &str) -> Self {
+    /// The wait as loop.md's FFOM table states it.
+    fn from_evidence(cell: &str) -> Self {
         if cell.contains("samples of the aging fit") {
             Self::Samples(number_word(cell))
         } else {
@@ -1572,8 +1564,8 @@ impl StartupWait {
     }
 }
 
-/// The image a row of the page's by-image table names: `Z3805A 3543B`
-/// is `z3805a-3543b`.
+/// The image a row of loop.md's FFOM table names: `Z3805A 3543B` is
+/// `z3805a-3543b`.
 fn image_of(row: &str) -> String {
     row.to_lowercase().replace(' ', "-")
 }
@@ -1585,28 +1577,22 @@ fn the_page_s_ffom_table_is_each_image_s_get_ffom() {
     let evidence = read("docs/firmware/loop.md");
     let screen = read("docs/screen-format-strings.md");
     let stages = page_rows(&page, "<table class=\"stages\">");
-    let images = page_rows(&page, "<table class=\"images\">");
     let screens = markdown_table(&screen, "| Image | Stage | Accessors");
     let documented = markdown_table(&evidence, "| Image | `get_ffom`");
-    assert_eq!(
-        images.len(),
-        documented.len(),
-        "loop.md's FFOM table and the page's"
-    );
-    for row in &images {
-        let image = image_of(&row[0]);
+    for line in &documented {
+        let image = image_of(&line["Image"]);
         let firmware = Firmware::bare(&image);
-        let at = html_addresses(&row[1])[0];
+        let at = addresses(&line["`get_ffom`"])[0];
         let switch = FfomSwitch::read(&firmware, at);
         assert_eq!(
-            html_addresses(&row[2]),
+            addresses(&line["Stage byte"]),
             [switch.stage_byte],
             "{image}: the stage byte get_ffom reads"
         );
         let shown = screens
             .iter()
-            .find(|line| line["Image"] == row[0])
-            .unwrap_or_else(|| panic!("screen-format-strings.md has no {}", row[0]));
+            .find(|shown| shown["Image"] == line["Image"])
+            .unwrap_or_else(|| panic!("screen-format-strings.md has no {}", line["Image"]));
         assert_eq!(
             addresses(&shown["Stage"]),
             [switch.stage_byte],
@@ -1615,9 +1601,9 @@ fn the_page_s_ffom_table_is_each_image_s_get_ffom() {
 
         let column = usize::from(image == Z3815A);
         let mut seen = [false; STAGES];
-        for line in &stages {
-            let ffom = leading_number(&line[4]);
-            for stage in stage_list(&line[column]) {
+        for stage_row in &stages {
+            let ffom = leading_number(&stage_row[4]);
+            for stage in stage_list(&stage_row[column]) {
                 assert_eq!(
                     f64::from(switch.ffom[stage]),
                     ffom,
@@ -1637,20 +1623,6 @@ fn the_page_s_ffom_table_is_each_image_s_get_ffom() {
             "{image}: the page names every stage"
         );
 
-        let line = documented
-            .iter()
-            .find(|line| line["Image"] == row[0])
-            .unwrap_or_else(|| panic!("loop.md's FFOM table has no {}", row[0]));
-        assert_eq!(
-            addresses(&line["`get_ffom`"]),
-            [at],
-            "{image}: loop.md's get_ffom"
-        );
-        assert_eq!(
-            addresses(&line["Stage byte"]),
-            [switch.stage_byte],
-            "{image}"
-        );
         let mut named = [FFOM_UNLOCKED; STAGES];
         for ffom in 0..FFOM_UNLOCKED {
             for stage in stage_list(&line[&format!("FFOM {ffom}")]) {
@@ -1659,15 +1631,12 @@ fn the_page_s_ffom_table_is_each_image_s_get_ffom() {
         }
         assert_eq!(named, switch.ffom, "{image}: loop.md's FFOM table");
 
-        let wait = html_addresses(&row[3])[0];
+        let cell = &line[WAIT_COLUMN];
+        let wait = addresses(cell)[0];
         assert_eq!(
             StartupWait::read(&firmware, wait),
-            StartupWait::from_page(&row[3]),
+            StartupWait::from_evidence(cell),
             "{image}: startup_pll's wait at {wait:#x}"
-        );
-        assert!(
-            evidence.contains(&format!("`{wait:#x}`")),
-            "{image}: loop.md cites no {wait:#x}"
         );
     }
 }
@@ -1701,13 +1670,13 @@ fn the_page_s_start_up_times_are_the_firmware_s() {
         .find("<h2>What the receiver shows</h2>")
         .expect("the section")..];
     let section = flat(section.split("</section>").next().expect("its end"));
-    let images = page_rows(&page, "<table class=\"images\">");
+    let images = markdown_table(&evidence, "| Image | `get_ffom`");
     let wait = |image: &str| {
         let row = images
             .iter()
-            .find(|row| image_of(&row[0]) == image)
-            .unwrap_or_else(|| panic!("the page's by-image table has no {image}"));
-        StartupWait::read(&Firmware::bare(image), html_addresses(&row[3])[0])
+            .find(|row| image_of(&row["Image"]) == image)
+            .unwrap_or_else(|| panic!("loop.md's FFOM table has no {image}"));
+        StartupWait::read(&Firmware::bare(image), addresses(&row[WAIT_COLUMN])[0])
     };
     let timeline = page_rows(&page, "<table class=\"timeline\">");
     let [settling, samples, ramp, total] = &timeline[..] else {

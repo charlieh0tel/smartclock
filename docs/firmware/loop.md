@@ -149,21 +149,20 @@ I and the count and set B (see "The loop").  After the fifteen, if
 the aging fit's sampler is already collecting, the constant starts to
 lengthen; otherwise -- after a power-up -- the state sets the flag
 that starts the sampler and waits until the EFC history holds its
-first three samples (`stop_ptr` 3, `start_ptr` 0: Z3816A `0x47eba`,
-Z3801A `0x4459e`, Z3805A `0x44572`, 3633 `0x4458e`, 3704 `0x445c8`),
-three windows of 2700 s (the sampler's count of 2700, Z3805A
-`0x4146e`; its deadline 2700 s on, 3704 `0x41474`), before it
-lengthens.  So after a power-up the loop runs at 150 s for about
-2¼ hours before the ramp.  The Z3815A and 58503B have the state but
-wait in it, after the fifteen, until the uptime passes 7200 s
-(Z3815A `0x4d9e2`, 58503B `0x494ec`): two hours from power-on; after
-a later holdover the state ends at its next update.
+first three samples (`stop_ptr` 3, `start_ptr` 0; each image's test
+is in "The FFOM"'s table), three windows of 2700 s (the sampler's
+count of 2700, Z3805A `0x4146e`; its deadline 2700 s on, 3704
+`0x41474`), before it lengthens.  The Z3815A and 58503B have the
+state but wait in it, after the fifteen, until the uptime passes
+7200 s, at the test the same table gives; after a later holdover the
+state ends at its next update.
 
 Holdover recovery hands back to `startup_pll`, not `pll_normal`.  It
 leaves the start-up constant as it was -- τ, if the loop had got there,
 so the hand-over follows the fifteen -- when the holdover lasted no
 longer than the table in "In every image" gives for the image, its
-last column, and the interval is within 500 ns; otherwise it sets it back to 150 s
+last column, and the interval is within 500 ns; otherwise it sets it
+back to 150 s
 (`holdover_recovery`, Z3805A `0x43f9a`, 3704 `0x43fc0`).  `pll_init`
 sets it to 150 s too (Z3805A `0x473d2`, 3704 `0x475ac`).
 
@@ -179,17 +178,19 @@ omitted when y ≤ 1.  The Z3805A's `holdover` (`0x43a90`) and 3704's
 stage byte alone: a switch on it, 2 for holdover and holdover
 recovery, 1 for `startup pll`, 0 for `normal pll` and 3 for every
 other stage, and a return of 1.  The loop's error, the TFOM and the
-aging fit do not enter it.  Read from each image's switch table:
+aging fit do not enter it.  Read from each image's switch table, with
+what `startup_pll` waits for after a power-up ("Starting up"), at the
+test it makes:
 
-| Image | `get_ffom` | Stage byte | FFOM 2 | FFOM 1 | FFOM 0 |
-| ----- | ---------- | ---------- | ------ | ------ | ------ |
-| Z3816A 4001 | `0x46368` | `0x10282c` | 3, 4 | 5 | 6 |
-| Z3815A 4010 | `0x4bcba` | `0x10286e` | 3, 4 | 5 | 7 |
-| Z3801A 3543 | `0x42a44` | `0x10215a` | 3, 4 | 5 | 6 |
-| Z3805A 3543B | `0x42a18` | `0x102162` | 3, 4 | 5 | 6 |
-| 58503A 3633 | `0x42ac2` | `0x10246e` | 3, 4 | 5 | 6 |
-| 58503A 3704 | `0x42ac2` | `0x102476` | 3, 4 | 5 | 6 |
-| 58503B 1.01.04 | `0x478b2` | `0x102bb2` | 3, 4 | 5 | 6 |
+| Image | `get_ffom` | Stage byte | FFOM 2 | FFOM 1 | FFOM 0 | After a power-up, `startup_pll` waits for |
+| ----- | ---------- | ---------- | ------ | ------ | ------ | ----------------------------------------- |
+| Z3816A 4001 | `0x46368` | `0x10282c` | 3, 4 | 5 | 6 | three samples of the aging fit, `0x47eba` |
+| Z3815A 4010 | `0x4bcba` | `0x10286e` | 3, 4 | 5 | 7 | 7200 s of uptime, `0x4d9e2` |
+| Z3801A 3543 | `0x42a44` | `0x10215a` | 3, 4 | 5 | 6 | three samples of the aging fit, `0x4459e` |
+| Z3805A 3543B | `0x42a18` | `0x102162` | 3, 4 | 5 | 6 | three samples of the aging fit, `0x44572` |
+| 58503A 3633 | `0x42ac2` | `0x10246e` | 3, 4 | 5 | 6 | three samples of the aging fit, `0x4458e` |
+| 58503A 3704 | `0x42ac2` | `0x102476` | 3, 4 | 5 | 6 | three samples of the aging fit, `0x445c8` |
+| 58503B 1.01.04 | `0x478b2` | `0x102bb2` | 3, 4 | 5 | 6 | 7200 s of uptime, `0x494ec` |
 
 So in the Z3815A `n3 lock pll`, its stage 6 ("The Z3815A's extra
 stage"), gives 3, as power-up does.  097-59551-02 (5-23) defines 0 as

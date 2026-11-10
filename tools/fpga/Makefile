@@ -133,11 +133,11 @@ $(OUT)/%.svg: $(HERE)/waves/%.json $(HERE)/vcd_wave.py $$(call figure_vcd,$$(fir
 EXPLAINER_PAGE ?= $(OUT)/fpga.html
 EXPLAINER_FIGS = $(addprefix $(OUT)/,$(shell python3 -I $(HERE)/explainer.py --figures-used))
 
-check-explainer: $$(EXPLAINER_FIGS) $(HERE)/explainer.py
+check-explainer: $$(EXPLAINER_FIGS) $(HERE)/explainer.py $(HERE)/page.py
 	@python3 -I $(HERE)/explainer.py --figures $(OUT) --output $(OUT)/fpga.html \
 	  && echo "check explainer: the page renders"
 
-explainer: $$(EXPLAINER_FIGS) $(HERE)/explainer.py
+explainer: $$(EXPLAINER_FIGS) $(HERE)/explainer.py $(HERE)/page.py
 	python3 -I $(HERE)/explainer.py --figures $(OUT) --output $(EXPLAINER_PAGE)
 
 # A fresh decode must still compile and run, and the netlist must not drift

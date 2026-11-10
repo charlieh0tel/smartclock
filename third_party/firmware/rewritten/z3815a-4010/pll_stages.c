@@ -2191,10 +2191,12 @@ pll_stage_result startup_pll(bool same_stage) {
     switch (pll.startup_state) {
       case PLL_STARTUP_SETTLING:
         if (loop_steering.large_offset_blocks < SETTLED_BLOCKS) {
-          if (double_compare(magnitude, SETTLED_TI) <= 0) {
-            loop_steering.large_offset_blocks = 0;
-          } else {
+          const bool settled = double_compare(magnitude, SETTLED_TI) > 0;
+
+          if (settled) {
             loop_steering.large_offset_blocks++;
+          } else {
+            loop_steering.large_offset_blocks = 0;
           }
         } else {
           if (pll.aging_state != PLL_AGING_COLLECTING) {

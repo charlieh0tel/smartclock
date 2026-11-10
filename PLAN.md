@@ -694,7 +694,10 @@ blocks, and the time-interval counter gate by gate.  Where a block
 sits is layout, one table a family, since positions are not facts; what
 it says, its counters' moduli, its equations and the nets drawn between
 blocks come from the netlist and the checked references, and a wire
-the netlist lacks fails the build.  What an element is and what its trace says
+the netlist lacks fails the build.  The drawings are kept legible by a
+check, not by eye: wires run in channels of their own, and the build
+fails on a wire through a block, two wires along one line, or text on
+text, on a box, on another wire or out of its box (`tools/fpga/sheet.py`).  What an element is and what its trace says
 of it are tables (`tools/fpga/detail_designs.py`), each element with
 its trace's confidence word and section; which pins, clocks and
 other elements it connects to is read from the decoded netlist, so a

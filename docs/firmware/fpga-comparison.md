@@ -323,8 +323,9 @@ the Z3805A's and the 58503A's, as functions (`check-blocks`,
 `tools/fpga/*.match`), that the explainer page renders from the
 references and figures (`check-explainer`), and that the detail page
 renders from the decodes, every pin in use with a role, every
-output an element's and every section cited a heading of its
-document, with its own test that each such error is
+output an element's, every section cited a heading of its
+document and neither drawing colliding with itself, with its own test
+that each such error is
 refused (`check-detail`); firmware CI runs it
 (`.github/workflows/firmware.yml`).  It does not cover anything that
 waits on the divider: the 1 PPS periods, the readings, the taps, the

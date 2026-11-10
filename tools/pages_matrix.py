@@ -166,7 +166,7 @@ def page(*, title, description, group, generated, heading, intro, placeholder, c
         *controls,
         '<span id="count" class="muted"></span>',
         "</div>",
-        '<div class="scroll"><table id="matrix"><thead></thead><tbody></tbody></table></div>',
+        '<div class="scroll" data-scroll="x"><table id="matrix"><thead></thead><tbody></tbody></table></div>',
         "</main>",
         "<script>",
         f"const DATA = {payload};",

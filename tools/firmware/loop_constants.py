@@ -262,7 +262,7 @@ def page_table(data):
             continue
         rows.append([['%s %s' % (entry['model'], entry['firmware'])], entry['model'], cells])
     lines = [
-        '<div class="wide"><table class="models">',
+        '<div class="wide" data-scroll="x"><table class="models">',
         '  <colgroup><col style="width:15%"><col style="width:13%"><col style="width:22%">'
         '<col style="width:10%"><col style="width:12%"><col style="width:13%"><col style="width:15%"></colgroup>',
         '  <thead><tr><th>Firmware</th><th class="sym">τ</th><th class="sym">G</th><th class="sym">a</th>'

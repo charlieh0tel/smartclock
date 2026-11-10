@@ -251,8 +251,9 @@ check-fpga-xapp: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
 	$(call decoder_verify,$(XC3000_VIEWER),$(DECODER_COMMIT))
 	tools/fpga/xact/xapp.sh $(XC3000_VIEWER)/html
 
-# Fail if a published page scrolls sideways at desktop width, or the
-# landing page at a phone's.  Needs
+# Fail if a published page, every one under PAGES_DIR, listed or not,
+# scrolls sideways at desktop width, or at a phone's outside a box its
+# generator marks data-scroll="x" to scroll on its own.  Needs
 # Chrome; not part of ci.
 check-pages: pages
 	./tools/check-pages.sh $(PAGES_DIR)

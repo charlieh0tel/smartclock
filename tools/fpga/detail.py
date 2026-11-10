@@ -154,7 +154,7 @@ def element_text(image, element, netlist, spec, titles):
 
 def zoomable(svg):
     """A drawing in its sheet, with the button that opens it full screen."""
-    return f'<figure class="sheet">\n{svg}\n{zoom.OPENER}\n</figure>'
+    return f'<figure class="sheet" data-scroll="x">\n{svg}\n{zoom.OPENER}\n</figure>'
 
 
 def section(design, netlist_dir):

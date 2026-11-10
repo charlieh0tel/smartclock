@@ -196,7 +196,7 @@ once.  `make hooks`, once per clone, sets up the repository's git
 hooks.  `make pages` builds the HTML pages and their landing page into
 `target/pages/` and fails on an error in one: the generated ones from
 their sources, which are not committed, and the hand-written ones from
-`docs/pages/`.  The FPGA explainer's needs node, Icarus Verilog and
+`docs/pages/`, each with a breadcrumb back to the landing page.  The FPGA explainer's needs node, Icarus Verilog and
 network access to github.com, for the XC3000 viewer's clone
 (`docs/firmware/fpga-comparison.md`, "Reproduce").  `.github/workflows/pages.yml` publishes them on GitHub
 Pages from main, at <https://charlieh0tel.github.io/smartclock/>.

@@ -164,7 +164,9 @@ here, where they go stale unnoticed.
   description meta tag and a `smartclock-group` meta tag naming its
   group, a key of `GROUPS` in `tools/pages_index.py`; the landing
   page is built from them, and `make pages` fails on a page lacking
-  one.  Set a page apart on the landing page by naming it in the
+  one.  Its `<body>` starts with its content column (a `main`, `div`,
+  `header`, `article` or `section`), where `make pages` puts the
+  breadcrumb back to the landing page.  Set a page apart on the landing page by naming it in the
   `Makefile`'s `NEW_PAGE`, for one just launched, or `FEATURED_PAGE`.
 
 ## Working style

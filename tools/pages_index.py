@@ -8,6 +8,14 @@ main documents.  Fails if a page lacks any of the three tags or names a
 group GROUPS lacks, or if NEW or FEATURED is not one of the PAGEs or
 they are the same page.
 
+Each PAGE also gets a breadcrumb back to the landing page:
+"SmartClock", its group's heading, linked to the group's box there when
+it has one, and its own title.  It goes at the top of the first element
+in the page's <body>, its content's column, so that it lines up with
+the content whatever the page's layout.  A breadcrumb from an earlier
+run is replaced, not doubled.  Fails if a page's <body> does not start
+with one of COLUMNS.
+
 The hero is a drawing of the HP 58503A's front panel, showing UTC, or
 HERO, an image under docs/ copied to the same path beside the index,
 described by HERO_ALT.
@@ -19,6 +27,7 @@ described by HERO_ALT.
 import argparse
 import html
 import json
+import re
 import shutil
 import sys
 from dataclasses import dataclass
@@ -93,6 +102,21 @@ GROUPS = {
         '<path d="M18 12h12M42 36h12M36 18v12M24 12v24h6"/>',
     ),
 }
+
+# The breadcrumb's class, marking it as this script's on a page, and the
+# inline styles of it, its links and its separators: inline, since a
+# page's own style sheet knows nothing of it; colors inherited, so it
+# follows the page's theme.
+BREADCRUMB_CLASS = "smartclock-breadcrumb"
+BREADCRUMB_STYLE = ("display:block;margin:0;padding:0;font:inherit;font-size:.875rem;"
+                    "line-height:1.4;color:inherit;overflow-wrap:anywhere")
+BREADCRUMB_LINK_STYLE = "color:inherit"
+BREADCRUMB_SEPARATOR = '<span aria-hidden="true" style="opacity:.6">&rsaquo;</span>'
+# The elements a page's content column, the first element in its
+# <body>, may be.
+COLUMNS = ("main", "div", "header", "article", "section")
+# A breadcrumb an earlier run inserted, with the line break before it.
+EARLIER_BREADCRUMB = re.compile(rf'\n<nav class="{BREADCRUMB_CLASS}"[^>]*>.*?</nav>', re.DOTALL)
 
 # The repository's documents the landing page points to, each by its
 # link, its name and what it holds.
@@ -413,19 +437,30 @@ __DOCUMENTS__
 
 
 class Head(HTMLParser):
-    """A page's <title> text and its description and smartclock-group
-    meta tags' content."""
+    """A page's <title> text, its description and smartclock-group meta
+    tags' content, and the first element in its <body>: its tag and
+    where its start tag ends, as a line number from 1 and an offset in
+    that line."""
 
     def __init__(self):
         super().__init__()
         self.title = None
         self.description = None
         self.group = None
+        self.in_body = False
+        self.column = None
+        self.column_end = None
         self.in_title = False
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        if tag == "title":
+        if self.in_body and self.column is None:
+            line, offset = self.getpos()
+            self.column = tag
+            self.column_end = (line, offset + len(self.get_starttag_text()))
+        if tag == "body":
+            self.in_body = True
+        elif tag == "title":
             self.in_title = True
             self.title = ""
         elif tag == "meta" and attrs.get("name") == "description":
@@ -442,14 +477,36 @@ class Head(HTMLParser):
             self.title += data
 
 
-def head(directory, name):
+def head(name, text):
     page = Head()
-    page.feed((directory / name).read_text(encoding="utf-8"))
+    page.feed(text)
     if not page.title or not page.description or not page.group:
         sys.exit(f"pages_index: {name} lacks a <title>, a description or a smartclock-group meta tag")
     if page.group not in GROUPS:
         sys.exit(f"pages_index: {name} names group {page.group!r}, not one of {', '.join(GROUPS)}")
     return page
+
+
+def breadcrumb(page, group_listed):
+    """PAGE's breadcrumb, its group's heading linked to the group's box
+    on the landing page if GROUP_LISTED."""
+    group = html.escape(GROUPS[page.group].heading)
+    if group_listed:
+        group = f'<a href="./#group-{page.group}" style="{BREADCRUMB_LINK_STYLE}">{group}</a>'
+    crumbs = (f'<a href="./" style="{BREADCRUMB_LINK_STYLE}">SmartClock</a>', group,
+              f'<span aria-current="page">{html.escape(page.title.strip())}</span>')
+    return (f'<nav class="{BREADCRUMB_CLASS}" aria-label="Breadcrumb" style="{BREADCRUMB_STYLE}">'
+            + f" {BREADCRUMB_SEPARATOR} ".join(crumbs) + "</nav>")
+
+
+def with_breadcrumb(name, text, page, crumb):
+    """TEXT, PAGE's text without any earlier breadcrumb, with CRUMB
+    inserted on a line of its own at the top of its content's column."""
+    if page.column not in COLUMNS:
+        sys.exit(f"pages_index: {name}'s <body> does not start with one of {', '.join(COLUMNS)}")
+    line, offset = page.column_end
+    at = sum(len(earlier) + 1 for earlier in text.split("\n")[:line - 1]) + offset
+    return text[:at] + "\n" + crumb + text[at:]
 
 
 def motif(group):
@@ -509,7 +566,9 @@ def main():
     parser.add_argument("directory", type=Path, help="the pages' directory")
     parser.add_argument("pages", nargs="+", help="the pages, by file name")
     args = parser.parse_args()
-    heads = {name: head(args.directory, name) for name in args.pages}
+    texts = {name: EARLIER_BREADCRUMB.sub("", (args.directory / name).read_text(encoding="utf-8"))
+             for name in args.pages}
+    heads = {name: head(name, text) for name, text in texts.items()}
     chosen = [(key, heading, getattr(args, key)) for key, heading in SET_APART]
     for key, _, name in chosen:
         if name and name not in heads:
@@ -519,6 +578,10 @@ def main():
         sys.exit("pages_index: the new and the featured page are the same page")
     sections = [set_apart(key, heading, name, heads[name]) for key, heading, name in chosen if name]
     sections += grouped(heads, set(names))
+    listed = {page.group for name, page in heads.items() if name not in names}
+    for name, page in heads.items():
+        crumb = breadcrumb(page, page.group in listed)
+        (args.directory / name).write_text(with_breadcrumb(name, texts[name], page, crumb), encoding="utf-8")
     page = (PAGE.replace("__HERO__", hero(args.directory, args.hero, args.hero_alt))
             .replace("__SECTIONS__", "\n".join(sections))
             .replace("__DOCUMENTS__", documents())

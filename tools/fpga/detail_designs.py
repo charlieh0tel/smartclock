@@ -20,7 +20,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from page import GCLK_NS, divide, edge_periods, find, find_all, ns, num, probe, stats  # noqa: E402
+from page import DESIGNS, GCLK_NS, divide, edge_periods, find, find_all, ns, num, probe, stats  # noqa: E402
 
 # The lanes every design is drawn in, top to bottom: key and heading.
 LANES = (
@@ -129,6 +129,25 @@ def period(run, net):
     return span(p["period_min"], p["period_max"])
 
 
+def clocks(run, net, clock=GCLK_NS):
+    """A net's period in clocks: "4", or "4 or 5" where it alternates."""
+    p = probe(run, net)
+    low, high = p["period_min"] // clock, p["period_max"] // clock
+    return num(low) if low == high else f"{num(low)} or {num(high)}"
+
+
+def exact(slow, fast):
+    """How many of one period make another, which must be a whole number."""
+    if slow % fast:
+        sys.exit(f"detail_designs: {slow} ns is not a whole number of {fast} ns")
+    return num(int(slow // fast))
+
+
+def probed(run, net):
+    """A net's shortest probed period, ns."""
+    return probe(run, net)["period_min"]
+
+
 def first_count(run):
     return num(int(find(run, r"less the preset (\d+) ticks")[0]))
 
@@ -181,7 +200,21 @@ FIGURES = {
     "ke_y": lambda d: period(f"{d.image}.freerun", "KE.Y"),
     "fe_y": lambda d: period(f"{d.image}.freerun", "FE.Y"),
     "ee_y": lambda d: period(f"{d.image}.freerun", "EE.Y"),
-    "alternate_low": lambda d: num(ns(find(f"{d.image}.freerun_4s", r"^probe ~P14 high ([\d.]+) ns from")[0])),
+    "gi_clocks": lambda d: clocks(f"{d.image}.fast", "GI.Y"),
+    "ji_clocks": lambda d: clocks(f"{d.image}.fast", "JI.X"),
+    "jk_clocks": lambda d: clocks(f"{d.image}.three", "JK.Y"),
+    "decade1": lambda d: exact(probed(f"{d.image}.three", "KG.Y"), probed(f"{d.image}.three", "JK.Y")),
+    "decade2": lambda d: exact(probed(f"{d.image}.three", "GF.Y"), probed(f"{d.image}.three", "KG.Y")),
+    "decade3": lambda d: exact(divide(d.image)[0], probed(f"{d.image}.three", "GF.Y")),
+    "aclk_prescale": lambda d: exact(edges_one(f"{d.image}.freerun", "P40"),
+                                     probed(f"{d.image}.freerun", "AB.Y") / 2),
+    "ke_clocks": lambda d: clocks(f"{d.image}.freerun", "KE.Y"),
+    "p7_counter": lambda d: exact(edges_one(f"{d.image}.freerun", "P38"), probed(f"{d.image}.freerun", "KE.Y")),
+    "p35_five": lambda d: exact(probed(f"{d.image}.p35", "KA.Y"), probed(f"{d.image}.p35", "P34")),
+    "p35_count": lambda d: exact(probed(f"{d.image}.p35", "P21"), probed(f"{d.image}.p35", "P34")),
+    "gc_clocks": lambda d: num(probed(f"{d.image}.p35", "GC.X") // GCLK_NS),
+    "p19_clocks": lambda d: clocks(f"{d.image}.fast", "P19"),
+    "alternate_low":lambda d: num(ns(find(f"{d.image}.freerun_4s", r"^probe ~P14 high ([\d.]+) ns from")[0])),
     "alternate_at": lambda d: " and ".join(
         f"{t} s" for t in find_all(f"{d.image}.freerun_4s", r"^probe ~P14 high [\d.]+ ns from ([\d.]+) s$")),
 }
@@ -203,9 +236,15 @@ class Facts(dict):
         self.design = design
 
     def __missing__(self, key):
-        if key not in FIGURES:
+        """A figure by name; "name@image" is another design's, for a block
+        its trace and check-blocks or tilediff call that design's."""
+        name, _, image = key.partition("@")
+        if name not in FIGURES:
             raise KeyError(key)
-        value = FIGURES[key](self.design)
+        design = next((d for d in DESIGNS if d.image == image), None) if image else self.design
+        if design is None:
+            raise KeyError(key)
+        value = FIGURES[name](design)
         self[key] = value
         return value
 

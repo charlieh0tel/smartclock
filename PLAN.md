@@ -687,9 +687,14 @@ rendered.  A committed copy would only repeat what its sources and
 the build already check.
 
 The detailed diagrams, FPGA detail, are generated the same
-way, by one generator for all five designs (`tools/fpga/detail.py`),
-never drawn by hand per design, so the five share one grammar and
-their differences show.  What an element is and what its trace says
+way, by one generator for all five designs (`tools/fpga/detail.py`,
+`detail_draw.py`), never drawn by hand per design, so the five share
+one grammar and their differences show: the whole chip by function
+blocks, and the time-interval counter gate by gate.  Where a block
+sits is layout, one table a family, since positions are not facts; what
+it says, its counters' moduli, its equations and the nets drawn between
+blocks come from the netlist and the checked references, and a wire
+the netlist lacks fails the build.  What an element is and what its trace says
 of it are tables (`tools/fpga/detail_designs.py`), each element with
 its trace's confidence word and section; which pins, clocks and
 other elements it connects to is read from the decoded netlist, so a

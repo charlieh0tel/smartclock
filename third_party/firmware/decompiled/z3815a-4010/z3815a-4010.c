@@ -420,6 +420,13 @@ typedef enum __attribute__((packed)) counter_sync_kind {
     COUNTER_SYNC_FULL=3
 } counter_sync_kind;
 
+typedef enum __attribute__((packed)) fpga_start_source {
+    FPGA_START_SOURCE_GPS_PPS=0,
+    FPGA_START_SOURCE_P84=4,
+    FPGA_START_SOURCE_P78=8,
+    FPGA_START_SOURCE_P78_P24_HIGH=12
+} fpga_start_source;
+
 struct counter_configuration_fields {
     uint8_t fpga_registers[8];
     double calibration;
@@ -436,7 +443,7 @@ struct counter_configuration_fields {
     int32_t interpolator_scale;
     enum counter_alarm_mode alarm_mode;
     enum counter_work_state alarm_state;
-    uint8_t alarm;
+    enum fpga_start_source alarm;
     uint8_t pad_27;
 };
 
@@ -4438,6 +4445,7 @@ _Static_assert(sizeof(fpga_configuration_index) == 1, "fpga_configuration_index"
 _Static_assert(sizeof(fpga_configuration_table) == 10, "fpga_configuration_table");
 _Static_assert(sizeof(fpga_mode) == 1, "fpga_mode");
 _Static_assert(sizeof(fpga_register) == 1, "fpga_register");
+_Static_assert(sizeof(fpga_start_source) == 1, "fpga_start_source");
 _Static_assert(sizeof(frequency_figure_of_merit) == 1, "frequency_figure_of_merit");
 _Static_assert(sizeof(front_panel_command) == 1, "front_panel_command");
 _Static_assert(sizeof(front_panel_lamp) == 1, "front_panel_lamp");
@@ -11742,8 +11750,8 @@ bool fpga_bit_test(uint8_t bits,char reg);
 char fpga_read_seconds(void);
 void fpga_address_sweep_debug(void);
 uint8_t counter_wait_ready(uint8_t mask);
-void counter_alarm_request(uint8_t alarm);
-void counter_set_alarm(uint8_t alarm);
+void counter_alarm_request(fpga_start_source alarm);
+void counter_set_alarm(fpga_start_source alarm);
 void fpga_set_bit(fpga_bit_index bit,uint8_t on);
 void fpga_set_field(fpga_bit_index field,uint8_t value);
 void sync_request(counter_sync_kind kind,int32_t count);

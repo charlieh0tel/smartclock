@@ -2363,14 +2363,16 @@ typedef struct gps_state {
  * fpga_set_field take only the first seven; the eighth, register 3's low
  * two bits, is what counter_set_sync writes directly, and
  * fpga_fields_to_registers (0x4965e) and counter_configuration_init
- * (0x49a62) run over all eight.  The non-shared bits' semantics are not
+ * (0x49a62) run over all eight.  FPGA_BIT_ALARM, named for the 58503A's
+ * entry 6, its alarm flag, is the count's start source, an
+ * fpga_start_source; what the other two drive on the board is not
  * established (docs/firmware/z3815a-4010.md, "Not established"). */
 typedef enum __attribute__((packed)) fpga_bit_index {
 #include "../../common/types/fpga_bit_index.h"
   FPGA_BIT_SYNC = 5,  /* register 2, 0x01, a flag: the 1PPS sync bit 0x516de
                          pulses (docs/firmware/z3815a-4010.md) */
-  FPGA_BIT_ALARM = 6, /* register 2, 0x0c, a field: set while arming through
-                         0x494f2 */
+  FPGA_BIT_ALARM = 6, /* register 2, 0x0c, a field: an fpga_start_source,
+                         set while arming through 0x494f2 */
   FPGA_BIT_COUNTER_SYNC = 7, /* register 3, 0x03, a field: counter_set_sync's
                                 sync kind, which it writes directly */
 } fpga_bit_index;
@@ -3116,6 +3118,22 @@ typedef enum __attribute__((packed)) counter_alarm_mode {
   COUNTER_ALARM_WHEN_WANTED = 1,
 } counter_alarm_mode;
 
+/* FPGA_BIT_ALARM's values, in place in register 2's bits 2 and 3, EG.X
+ * and EG.Y: the source the FPGA's BG starts the count on, read from the
+ * netlist (docs/firmware/z3815a-trace.md, "Register port" and "Start,
+ * stop and status bits").  Bit 2, EG.X, also gives P24 its level and
+ * P25 the other while P27 is Low ("Every output pin"); the P24 levels
+ * the names give assume P27 Low, which is not established.  The firmware
+ * writes 0 at init and then 0x08, 0x0c and 0x00 through
+ * counter_alarm_request, never 0x04 ("What the firmware takes from P35
+ * and P84"). */
+typedef enum __attribute__((packed)) fpga_start_source {
+  FPGA_START_SOURCE_GPS_PPS = 0x00,      /* P82, the GPS 1 PPS */
+  FPGA_START_SOURCE_P84 = 0x04,          /* P84; never written */
+  FPGA_START_SOURCE_P78 = 0x08,          /* P78, P24 Low */
+  FPGA_START_SOURCE_P78_P24_HIGH = 0x0c, /* P78, P24 High */
+} fpga_start_source;
+
 /* The time-interval counter's configuration, counter_configuration at
  * 0x1026a2, which counter_arm, counter_calibrate and counter_read are
  * given.  A mode and a state go in pairs: the mode says when the work is
@@ -3140,7 +3158,7 @@ typedef struct counter_configuration_fields {
   int32_t interpolator_scale;     /* the spread it is divided by */
   counter_alarm_mode alarm_mode;  /* when the alarm is set */
   counter_work_state alarm_state; /* 0x494d8 sets both */
-  uint8_t alarm;                  /* 0x494d8's; FPGA_BIT_ALARM's value */
+  fpga_start_source alarm;        /* 0x494d8's; FPGA_BIT_ALARM's value */
   uint8_t pad_27;
 } counter_configuration_fields;
 

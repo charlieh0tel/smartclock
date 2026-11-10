@@ -951,7 +951,9 @@ sync's kind and count at `+0x16` and `+0x18`, the interpolator's offset
 and scale at `+0x1c` and `+0x20`; and a fourth pair after them,
 `alarm_mode` and `alarm_state` (`+0x24`), with which `counter_arm`
 sets `FPGA_BIT_ALARM` to `alarm` (`+0x26`, `0x4988c` to `0x498a6`),
-as `counter_alarm_request` (`0x494d8`) asks.
+as `counter_alarm_request` (`0x494d8`) asks: an `fpga_start_source`,
+the count's start source, register 2's bits 2 and 3
+(`z3815a-trace.md`, "Register port").
 
 ## The pllc task's SCPI requests
 

@@ -80,7 +80,7 @@ th:last-child,td:last-child{padding-right:0}
 thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);vertical-align:bottom;border-bottom-color:var(--muted)}
 th .sym,th.sym{text-transform:none;letter-spacing:0;font-size:.9375rem}
 th code{text-transform:none;letter-spacing:0}
-.models{min-width:46rem}
+.models{min-width:52rem}
 .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:var(--gap) 2.5rem;align-items:start}
 
 @media (max-width:720px){
@@ -146,14 +146,16 @@ th code{text-transform:none;letter-spacing:0}
   <h3>By model</h3>
   <!-- loop_constants.py page -->
   <div class="wide"><table class="models">
-    <colgroup><col style="width:19%"><col style="width:17%"><col style="width:25%"><col style="width:12%"><col style="width:13%"><col style="width:14%"></colgroup>
-    <thead><tr><th>Firmware</th><th class="sym">τ</th><th class="sym">G</th><th class="sym">a</th><th>Slowest pole, <span class="sym">≈ 2.7τ</span></th><th>Startup ramp</th></tr></thead>
+    <colgroup><col style="width:15%"><col style="width:13%"><col style="width:22%"><col style="width:10%"><col style="width:12%"><col style="width:13%"><col style="width:15%"></colgroup>
+    <thead><tr><th>Firmware</th><th class="sym">τ</th><th class="sym">G</th><th class="sym">a</th><th>Slowest pole, <span class="sym">≈ 2.7τ</span></th><th>Startup ramp</th><th>Holdover that restarts the ramp</th></tr></thead>
     <tbody>
-      <tr><td>Z3816A 4001</td><td>500 s</td><td>−1.25 × 10⁻¹² or −2.125 × 10⁻¹², by bit 8 of the word at <code>0x302000</code></td><td>0.0595</td><td>1360 s</td><td>≈ 700 s</td></tr>
-      <tr><td>Z3815A 4010</td><td>500 or 1000 s, by bit 12 of the word at <code>0x302000</code></td><td>+1.2 × 10⁻¹² or −2.125 × 10⁻¹², by that bit</td><td>0.0595 or 0.02975</td><td>1360 or 2710 s</td><td>≈ 700 or 1700 s</td></tr>
-      <tr><td>Z3801A 3543, Z3805A 3543B</td><td>1000 s</td><td>+6.25 × 10⁻¹³</td><td>0.02975</td><td>2710 s</td><td>≈ 1700 s</td></tr>
-      <tr><td>58503A 3633, 3704</td><td>700 s</td><td>+6.25 × 10⁻¹³</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s</td></tr>
-      <tr><td>58503B 1.01.04</td><td>700 s, settable: <code>LTIMe:MAX</code>*</td><td>−1.25 × 10⁻¹² or +6.25 × 10⁻¹³, by <code>TYPE</code>*</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s, from <code>LTIMe:INIT</code>*</td></tr>
+      <tr><td>Z3816A 4001</td><td>500 s</td><td>−1.25 × 10⁻¹² or −2.125 × 10⁻¹², by bit 8 of the word at <code>0x302000</code></td><td>0.0595</td><td>1360 s</td><td>≈ 700 s</td><td>not traced</td></tr>
+      <tr><td>Z3815A 4010</td><td>500 or 1000 s, by bit 12 of the word at <code>0x302000</code></td><td>+1.2 × 10⁻¹² or −2.125 × 10⁻¹², by that bit</td><td>0.0595 or 0.02975</td><td>1360 or 2710 s</td><td>≈ 700 or 1700 s</td><td>not traced</td></tr>
+      <tr><td>Z3801A 3543</td><td>1000 s</td><td>+6.25 × 10⁻¹³</td><td>0.02975</td><td>2710 s</td><td>≈ 1700 s</td><td>not traced</td></tr>
+      <tr><td>Z3805A 3543B</td><td>1000 s</td><td>+6.25 × 10⁻¹³</td><td>0.02975</td><td>2710 s</td><td>≈ 1700 s</td><td>over 500 s</td></tr>
+      <tr><td>58503A 3633</td><td>700 s</td><td>+6.25 × 10⁻¹³</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s</td><td>not traced</td></tr>
+      <tr><td>58503A 3704</td><td>700 s</td><td>+6.25 × 10⁻¹³</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s</td><td>over 350 s</td></tr>
+      <tr><td>58503B 1.01.04</td><td>700 s, settable: <code>LTIMe:MAX</code>*</td><td>−1.25 × 10⁻¹² or +6.25 × 10⁻¹³, by <code>TYPE</code>*</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s, from <code>LTIMe:INIT</code>*</td><td>not traced</td></tr>
     </tbody>
   </table></div>
   <!-- end loop_constants.py -->
@@ -197,7 +199,7 @@ th code{text-transform:none;letter-spacing:0}
   <h2>Starting up</h2>
   <p>Before <code>pll_normal</code>, <code>startup_pll</code> runs the same update law with its own time constant and recomputes K, k and a from it every update. On entry it clears f and I and sets B. In the Z3805A and 58503A, each lengthening of the constant from τ<sub>old</sub> to τ<sub>new</sub> also adds (f/G)·(1/τ<sub>old</sub> − 1/τ<sub>new</sub>) to I, so the change in K leaves K·f + I where it was.</p>
   <p><code>startup_pll</code> first waits for fifteen consecutive ten-second means within ±150 ns. In every image but the Z3815A and 58503B, after a power-up, it then waits, still at 150 s, for the aging fit's first three samples, about 2¼ hours; those two wait instead until two hours after power-on. It then lengthens its constant by 5 s per update until within 5 s of τ, sets it to τ, and hands over. <code>pll_normal</code> clears I and sets B to the EFC in force less c₀·s, but keeps f, so its first update moves u by about K·f: the proportional term counted again, once in B. The Z3801A ramps the same way; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
-  <p>In the Z3805A and 58503A, holdover recovery returns to <code>startup_pll</code>. The constant starts again from 150 s after a holdover of more than 500 s (350 s in the 58503A 3704) or with the interval past 500 ns. Otherwise it keeps its value: τ, once the loop got there, so the hand-over follows the fifteen means.</p>
+  <p>In the Z3805A and 58503A, holdover recovery returns to <code>startup_pll</code>. The constant starts again from 150 s after a holdover longer than the "By model" table gives (<a href="#symbols-and-constants">above</a>) or with the interval past 500 ns. Otherwise it keeps its value: τ, once the loop got there, so the hand-over follows the fifteen means.</p>
   <p class="note">Source: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md"><code>docs/firmware/loop.md</code></a>, which holds the addresses and routine identities behind each number. This page explains; that one is the evidence.</p>
 </section>
 

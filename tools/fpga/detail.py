@@ -8,9 +8,11 @@ be rendered.
     python3 -I tools/fpga/detail.py --netlists target/fpga --output PAGE
     python3 -I tools/fpga/detail.py --netlists target/fpga --self-test
 
-One generator draws all five, in one grammar: each design's logic in
-the same lanes, by function, each element a box with its input pins
-to its left and its output pins to its right.  What an element is,
+One generator draws all five, each twice (detail_draw.py): the whole
+chip, its pins on the frame's edges and its function blocks in the
+signal's flow, one layout a family; and the time-interval counter gate
+by gate, one box a logic block with its netlist equations.  Under them
+every element is listed in full, by lane.  What an element is,
 which blocks it is and what the trace says of it are the tables in
 detail_designs.py, each element citing its trace's section and the
 trace's confidence word.  Everything else is read from the decoded
@@ -21,10 +23,11 @@ the nets its blocks' outputs depend on.  An element's block that the
 netlist lacks or leaves unused, an output two elements name, a pin in
 use with no role, a role for a pin not in use, an output or an input
 pin no element takes, a section cited that its document lacks and a
-figure no reference gives are errors, not omissions; the logic blocks
-no element names are listed under each design.  --self-test provokes
-each of those errors once, on the Z3805A's table, and fails unless
-each is refused.  The figures come from tools/fpga/ref through
+figure no reference gives are errors, not omissions, and so are a
+chip-drawing wire that carries no net and an element in no block; the
+logic blocks no element names are listed under each design.
+--self-test provokes each of those errors once, on the Z3805A's table
+and layout, and fails unless each is refused.  The figures come from tools/fpga/ref through
 page.py, as the explainer's do.
 """
 
@@ -36,41 +39,47 @@ import textwrap
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from page import DESIGNS, MARKS, STYLE, TRACES, die, document, link, mark, markers, stats  # noqa: E402
+from page import DESIGNS, STYLE, TRACES, die, document, link, mark, stats  # noqa: E402
 from detail_designs import LANES, SPECS  # noqa: E402
 from detail_bind import bind, output_notes, pin_number, source_label  # noqa: E402
+from detail_designs import Facts  # noqa: E402
+from detail_draw import LAYOUTS, chip, gates  # noqa: E402
 
-
-# The diagram's geometry, in SVG units: its width; the pin columns' and
-# the element boxes' left edges and widths; line heights; the padding
-# inside a box; the gap between rows and between lanes; and how many
-# characters of each font fit a box's line and a pin box's.
-WIDTH = 960
-LEFT_X, PIN_W = 8, 184
-BOX_X, BOX_W = 222, 516
-RIGHT_X = WIDTH - 8 - PIN_W
-TITLE_LINE, LINE = 19, 16
-PAD = 10
-ROW_GAP, LANE_GAP, LANE_HEAD = 24, 22, 34
-BOX_CHARS, MONO_CHARS, PIN_CHARS = 74, 72, 25
 
 EXTRA_STYLE = """
+main{max-width:1440px}
 .lanes{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;font-size:.9375rem;padding:0;list-style:none}
-.detail{border:1px solid var(--rule);background:var(--sheet);padding:8px}
-.detail svg{display:block;width:100%;height:auto}
-.dg-box.open{stroke:var(--open);stroke-dasharray:5 4}
-.dg-lane{fill:var(--bg);stroke:var(--rule)}
-.dg-pin{fill:var(--panel);stroke:var(--signal);stroke-width:1.2}
-.dg-b{font:600 13px "IBM Plex Sans",system-ui,sans-serif;fill:var(--fg)}
-.dg-m{font:11.5px "IBM Plex Mono",ui-monospace,monospace;fill:var(--fg)}
-.dg-n{font:11.5px "IBM Plex Mono",ui-monospace,monospace;fill:var(--muted)}
-.dg-p{font:600 12px "IBM Plex Mono",ui-monospace,monospace;fill:var(--signal)}
-.dg-c{font:600 12px "IBM Plex Sans",system-ui,sans-serif}
-.dg-c.read{fill:var(--read)}
-.dg-c.sim{fill:var(--sim)}
-.dg-c.inferred{fill:var(--inferred)}
-.dg-c.open{fill:var(--open)}
-.dg-w{fill:none;stroke:var(--signal);stroke-width:1.2;marker-end:url(#dg-arrow)}
+.sheet{overflow-x:auto;border:1px solid var(--rule);background:var(--sheet);border-radius:4px}
+.sheet svg{display:block;min-width:940px;width:100%;height:auto}
+.key{display:flex;flex-wrap:wrap;gap:.5rem 1.25rem;font-size:.875rem;padding:.75rem;background:var(--sheet);
+  border:1px solid var(--rule);border-radius:4px;max-width:var(--measure)}
+.key span{display:inline-flex;align-items:center;gap:.4rem}
+.sw{display:inline-block;width:28px;border-top:2px solid var(--fg)}
+.sw.sig{border-color:var(--signal);border-top-width:3px}
+.mk{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;
+  font:700 11px/1 "IBM Plex Mono",ui-monospace,monospace;border:1.5px solid currentColor}
+.mk.sim{color:var(--sim)}.mk.inferred{color:var(--inferred)}.mk.open{color:var(--open)}
+.ch text{font:12px "IBM Plex Sans Condensed","IBM Plex Sans",system-ui,sans-serif;fill:var(--fg)}
+.ch .ch-ttl{font-weight:700;font-size:14px}
+.ch .ch-ttl.sig,.ch .ch-net.sig{fill:var(--signal)}
+.ch .ch-clb{font:10.5px "IBM Plex Mono",ui-monospace,monospace;fill:var(--muted)}
+.ch .ch-lab{fill:var(--muted)}
+.ch .ch-eq,.ch .ch-p,.ch .ch-pt,.ch .ch-mod{font:11px "IBM Plex Mono",ui-monospace,monospace}
+.ch .ch-ctrt{font-weight:600}
+.ch .ch-net{font:10.5px "IBM Plex Mono",ui-monospace,monospace;fill:var(--muted)}
+.ch-frame{fill:none;stroke:var(--rule);stroke-width:2}
+.ch-blk{fill:var(--panel);stroke:var(--fg);stroke-width:1.2}
+.ch-blk.ti{stroke:var(--signal);stroke-width:2}
+.ch-ctr{fill:var(--sheet);stroke:var(--muted);stroke-width:1}
+.ch-pin,.ch-pill{fill:var(--sheet);stroke:var(--fg);stroke-width:1}
+.ch-w{fill:none;stroke:var(--fg);stroke-width:1.3}
+.ch-w.sig{stroke:var(--signal);stroke-width:2.2}
+.ch-ah{fill:var(--fg)}.ch-ah.sig{fill:var(--signal)}
+.ch-mk circle{fill:var(--sheet);stroke-width:1.5}
+.ch-mk text{font:700 10px "IBM Plex Mono",ui-monospace,monospace}
+.ch-mk.sim circle{stroke:var(--sim)}.ch-mk.sim text{fill:var(--sim)}
+.ch-mk.inferred circle{stroke:var(--inferred)}.ch-mk.inferred text{fill:var(--inferred)}
+.ch-mk.open circle{stroke:var(--open)}.ch-mk.open text{fill:var(--open)}
 .elements{display:grid;gap:1.25rem}
 .element{border-left:3px solid var(--rule);padding-left:.75rem;max-width:var(--measure)}
 .element>*{margin:0}
@@ -80,7 +89,7 @@ EXTRA_STYLE = """
 .element dt{color:var(--muted)}
 .element dd{margin:0;min-width:0;overflow-wrap:anywhere}
 @media (max-width:520px){.element dl{display:block}.element dd+dt{margin-top:.25rem}}
-.undrawn{font-size:.875rem;color:var(--muted)}
+.undrawn{font-size:.875rem;color:var(--muted);max-width:var(--measure)}
 """
 
 
@@ -92,120 +101,6 @@ def esc(text):
 
 def wrap(text, width):
     return textwrap.wrap(text, width) or [""]
-
-
-def pin_groups(spec, pins, notes):
-    """Pins drawn together: [(group, [(pin, role, notes)])], in pin order."""
-    groups = {}
-    for pin in sorted(pins, key=pin_number):
-        role = spec.pins[pin]
-        groups.setdefault(role.group, []).append((pin, role.role, notes.get(pin, [])))
-    return list(groups.items())
-
-
-def pin_lines(groups):
-    """A pin column's boxes as lines: [(group, [(class, text)])]."""
-    boxes = []
-    for group, pins in groups:
-        lines = []
-        for pin, role, notes in pins:
-            first = True
-            for text in wrap(f"{pin} {role}", PIN_CHARS):
-                lines.append(("dg-p" if first else "dg-m", text))
-                first = False
-            for text in wrap(", ".join(notes), PIN_CHARS) if notes else []:
-                lines.append(("dg-n", text))
-        boxes.append((group, lines))
-    return boxes
-
-
-def column_height(boxes):
-    return sum(LINE * (len(lines) + 1) + PAD for _, lines in boxes) + 8 * max(len(boxes) - 1, 0)
-
-
-def draw_column(out, boxes, x, top, height, side):
-    """A pin column's boxes centered on a row, each wired to the element's box."""
-    y = top + (height - column_height(boxes)) / 2
-    for group, lines in boxes:
-        h = LINE * (len(lines) + 1) + PAD
-        out.append(f'<rect class="dg-pin" x="{x}" y="{y:.1f}" width="{PIN_W}" height="{h}" rx="3"/>')
-        out.append(f'<text class="dg-n" x="{x + 8}" y="{y + LINE:.1f}">{esc(group)}</text>')
-        for i, (klass, text) in enumerate(lines):
-            out.append(f'<text class="{klass}" x="{x + 8}" y="{y + LINE * (i + 2):.1f}">{esc(text)}</text>')
-        mid = y + h / 2
-        if side == "in":
-            out.append(f'<polyline class="dg-w" points="{x + PIN_W},{mid:.1f} {BOX_X - 2},{mid:.1f}"/>')
-        else:
-            out.append(f'<polyline class="dg-w" points="{BOX_X + BOX_W},{mid:.1f} {x - 2},{mid:.1f}"/>')
-        y += h + 8
-
-
-def box_lines(element, titles):
-    """An element's box as lines: [(class, text)], its title first."""
-    spec = element.spec
-    lines = []
-    for text in wrap(", ".join(spec.members), MONO_CHARS):
-        lines.append(("dg-m", text))
-    for line in element.lines:
-        lines += [("dg-t", text) for text in wrap(line, BOX_CHARS)]
-    for label, items in (("clock", element.clocks), ("reset", element.resets)):
-        if items:
-            lines += [("dg-n", text) for text in wrap(f"{label}: {', '.join(items)}", MONO_CHARS)]
-    for key, nets in element.reads.items():
-        lines += [("dg-n", text) for text in wrap(f"from {titles[key]}: {', '.join(nets)}", MONO_CHARS)]
-    return lines
-
-
-def diagram(design, netlist, elements, spec):
-    """One design's diagram: its lanes, top to bottom, each element a row."""
-    titles = {e.spec.key: e.spec.title for e in elements}
-    out = []
-    y = 0
-    for lane, heading in LANES:
-        members = [e for e in elements if e.spec.lane == lane]
-        lane_top = y
-        body = []
-        y += LANE_HEAD
-        if not members:
-            body.append(f'<text class="dg-n" x="{BOX_X}" y="{y + LINE:.1f}">None in this design.</text>')
-            y += LINE + PAD
-        previous = None
-        for element in members:
-            notes = {pin: output_notes(netlist, iob) for pin, iob in element.outputs}
-            left = pin_lines(pin_groups(spec, element.inputs, {}))
-            right = pin_lines(pin_groups(spec, [pin for pin, _ in element.outputs], {
-                pin: [f"= {source_label(netlist, iob)}"] + notes[pin] for pin, iob in element.outputs}))
-            lines = box_lines(element, titles)
-            box_h = TITLE_LINE + LINE * len(lines) + 2 * PAD
-            height = max(box_h, column_height(left), column_height(right))
-            top = y
-            box_y = top + (height - box_h) / 2
-            if previous is not None and previous.spec.key in element.reads:
-                body.append(f'<polyline class="dg-a" points="{BOX_X + BOX_W / 2},{previous_bottom:.1f} '
-                            f'{BOX_X + BOX_W / 2},{box_y - 2:.1f}"/>')
-            klass = {"inferred": "dg-box inferred", "open": "dg-box open"}.get(element.spec.confidence, "dg-box")
-            body.append(f'<rect class="{klass}" x="{BOX_X}" y="{box_y:.1f}" width="{BOX_W}" height="{box_h}" rx="4"/>')
-            body.append(f'<text class="dg-b" x="{BOX_X + PAD}" y="{box_y + PAD + 13:.1f}">'
-                        f'{esc(element.spec.title)}</text>')
-            word = element.spec.confidence
-            body.append(f'<text class="dg-c {MARKS[word]}" x="{BOX_X + BOX_W - PAD}" '
-                        f'y="{box_y + PAD + 13:.1f}" text-anchor="end">{word}</text>')
-            for i, (k, text) in enumerate(lines):
-                body.append(f'<text class="{k}" x="{BOX_X + PAD}" '
-                            f'y="{box_y + PAD + TITLE_LINE + LINE * i + 12:.1f}">{esc(text)}</text>')
-            draw_column(body, left, LEFT_X, top, height, "in")
-            draw_column(body, right, RIGHT_X, top, height, "out")
-            previous, previous_bottom = element, box_y + box_h
-            y = top + height + ROW_GAP
-        y += LANE_GAP / 2
-        out.append(f'<rect class="dg-lane" x="0" y="{lane_top:.1f}" width="{WIDTH}" '
-                   f'height="{y - lane_top - LANE_GAP / 2:.1f}" rx="6"/>')
-        out.append(f'<text class="dg-h" x="12" y="{lane_top + 22:.1f}">{esc(heading.upper())}</text>')
-        out += body
-        y += LANE_GAP / 2
-    label = f"The {design.name} FPGA design's logic, by function"
-    return (f'<svg viewBox="0 0 {WIDTH} {y:.0f}" role="img" xmlns="http://www.w3.org/2000/svg" '
-            f'aria-label="{esc(label)}">\n{markers()}\n' + "\n".join(out) + "\n</svg>")
 
 
 # --- the text beside the drawing -------------------------------------------
@@ -249,7 +144,7 @@ def section(design, netlist_dir):
         members = [e for e in elements if e.spec.lane == lane]
         inner = "\n".join(element_text(design.image, e, netlist, spec, titles) for e in members) or \
             "<p class=\"note\">None in this design.</p>"
-        lanes.append(f"<h3>{esc(heading)}</h3>\n<div class=\"elements\">\n{inner}\n</div>")
+        lanes.append(f"<h4>{esc(heading)}</h4>\n<div class=\"elements\">\n{inner}\n</div>")
     drawn = len(set(netlist.clbs) - set(undrawn))
     equations = "; ".join(
         f"{tile}: " + ", ".join(f"{fg} = {eq}" for fg, eq in netlist.clbs[tile]["equations"].items() if eq)
@@ -263,10 +158,16 @@ def section(design, netlist_dir):
 <p>Loaded by {esc(design.images)}.  {table['clb_used']} logic blocks, {table['iob_used']} I/O blocks and
 {table['nets']} nets (<code>tools/fpga/ref/{design.image}.stats</code>); {drawn} of the logic blocks are
 drawn.  The trace: {link(TRACES[design.image], Path(TRACES[design.image]).name)}.</p>
-<figure class="detail">
-{diagram(design, netlist, elements, spec)}
+<h3>The whole chip</h3>
+<figure class="sheet">
+{chip(design, netlist, elements, spec, Facts(design))}
+</figure>
+<h3>The time-interval counter, gate by gate</h3>
+<figure class="sheet">
+{gates(design, netlist, elements)}
 </figure>
 {left_out}
+<h3>Every element</h3>
 {chr(10).join(lanes)}
 </section>"""
 
@@ -278,37 +179,47 @@ def render(netlist_dir):
     header = f"""<header>
 <p class="eyebrow">SmartClock firmware &middot; FPGA</p>
 <h1>FPGA detail</h1>
-<p class="lede">The logic of each of the five SmartClock FPGA designs, one diagram a design, all
-drawn by one generator in one grammar so that the differences stand out.  The short version is
-<a href="fpga.html">Inside the SmartClock FPGAs</a>; the traces are the long one.</p>
+<p class="lede">Each of the five SmartClock FPGA designs drawn twice from its decoded netlist: the
+whole chip by function blocks, then the time-interval counter gate by gate, with every element
+listed in full below.  All five come from one generator, in one layout a family, so that the
+differences stand out.  The short version is <a href="fpga.html">Inside the SmartClock FPGAs</a>;
+the traces are the long one.</p>
 <p class="note">Nothing here has been checked on a board; every pin's role is read from the
 logic.  Each element carries its trace's confidence word: {mark('read')}, from the decoded
 netlist's equations and connections; {mark('simulated')}, printed by a testbench under Icarus
-Verilog; {mark('inferred')}, reasoning from those; {mark('open')}, not established.  Inferred
-and open elements have dashed outlines.</p>
+Verilog; {mark('inferred')}, reasoning from those; {mark('open')}, not established.</p>
 <nav><ol>{nav}</ol></nav>
 </header>"""
     grammar = f"""<section id="reading">
-<h2>How to read the diagrams</h2>
-<p>Every design is drawn in the same lanes, top to bottom, and a lane the design lacks says so:</p>
-<ol class="lanes">{lanes}</ol>
+<h2>How to read the drawings</h2>
+<div class="key" role="list" aria-label="Key">
+<span role="listitem"><span class="sw"></span>nets, read from the netlist</span>
+<span role="listitem"><span class="sw sig"></span>the time-interval path</span>
+<span role="listitem"><span class="mk sim">S</span>a simulated element in the block</span>
+<span role="listitem"><span class="mk inferred">I</span>an inferred one</span>
+<span role="listitem"><span class="mk open">?</span>an open one</span>
+</div>
 <ul>
-<li>A box is an element: the logic blocks a trace names together for one job, by tile
-(AB is row A, column B; <code>EI.Y</code> one output of it).  Its title is the role, its
-first line the blocks, then what the trace says of it, its clocks and resets, and the
-elements it reads from, with the nets.</li>
-<li>To a box's left are the pins it reads, to its right the pins it drives, each with its
-number and role; an output pin also gives its source net, whether its I/O block registers it
-(<code>reg</code>, and on which clock), inverts it, or 3-states it (<code>3-state</code>, and
-the net that controls it).  A pin that feeds several elements is drawn at each.</li>
-<li>An arrow between two boxes in a lane is one reading the other; every other connection is
-named in the box's <q>from</q> lines.</li>
-<li>Pins, clocks, resets and connections are read from the netlist by the generator; the
-titles and text are the traces', each cited below its diagram.  Figures come from the
-checked references in <code>tools/fpga/ref</code>.</li>
+<li><strong>The whole chip.</strong>  The package pins sit on the frame's edges, the clocks'
+on top, the other inputs left and the outputs right, each with its number and role; an output
+names its source net and whether its I/O block registers it (<code>reg</code>, on which clock),
+inverts it or 3-states it.  Inside, the blocks run in the signal's flow: the bus and the
+registers it writes, the read multiplexer, the start, count and stop, the dividers and the 1 PPS,
+the sync logic and, in the telecom pair, the P7 divider and the phase detector.  Each block lists
+its logic blocks by tile (AB is row A, column B; <code>EI.Y</code> one output of it), its
+elements, and an equation or two from the netlist; a divider is drawn as its counters, each with
+its modulus from the checked simulations.  A wire is a net between neighboring blocks, named; a
+pill at a block (a net flag) is a net it reads from a block or a pin further away.</li>
+<li><strong>The time-interval counter, gate by gate.</strong>  One box a logic block on the
+path: its clock <code>K</code> (rising or falling, the arrow) and reset <code>RD</code>, each
+output's equation and what each flip-flop loads, with the pins named by the nets they read.
+<code>&middot;</code> is AND, <code>+</code> OR, <code>&not;</code> NOT.  An arrow joins two
+boxes in a row when the second reads the first.</li>
+<li>Wide drawings scroll sideways inside their frames on a narrow screen; the list under each
+design repeats every element in full.</li>
 </ul>
-<p>On a narrow screen the diagrams shrink to fit; the list under each repeats every element in
-full.</p>
+<p>The lanes the element lists use, and the elements the generator checks:</p>
+<ol class="lanes">{lanes}</ol>
 </section>"""
     body = "\n\n".join([header, grammar] + sections) + """
 
@@ -346,8 +257,32 @@ def change(elements, key, **fields):
     elements[i] = dataclasses.replace(elements[i], **fields)
 
 
+# The chip drawing's cases: each a change to the reference design's
+# layout that chip() must refuse, and the words its refusal must contain.
+LAYOUT_TEST = (
+    ("a wire that carries no net",
+     lambda layout: dataclasses.replace(layout, wires=layout.wires + (("seconds", "bus"),)), "carries no net"),
+    ("an element in no block",
+     lambda layout: dataclasses.replace(layout, blocks=tuple(
+         dataclasses.replace(b, elements=tuple(k for k in b.elements if k != "tie")) for b in layout.blocks)),
+     "in no block"),
+)
+
+
+def refused(name, words, attempt):
+    """Fails unless attempt() is refused with words in its message."""
+    try:
+        attempt()
+    except SystemExit as refusal:
+        if words not in str(refusal):
+            die(f"self-test: {name}: refused for another reason: {refusal}")
+        return
+    die(f"self-test: {name}: not refused")
+
+
 def self_test(netlist_dir):
-    """That bind() refuses each of SELF_TEST's changes to the Z3805A's table."""
+    """That bind() refuses each of SELF_TEST's changes to the Z3805A's
+    table, and chip() each of LAYOUT_TEST's to its layout."""
     design = DESIGNS[0]
     original = SPECS[design.image]
     try:
@@ -355,16 +290,18 @@ def self_test(netlist_dir):
             elements, pins = list(original.elements), dict(original.pins)
             provoke(elements, pins)
             SPECS[design.image] = dataclasses.replace(original, elements=tuple(elements), pins=pins)
-            try:
-                bind(design, netlist_dir)
-            except SystemExit as refusal:
-                if words not in str(refusal):
-                    die(f"self-test: {name}: refused for another reason: {refusal}")
-                continue
-            die(f"self-test: {name}: not refused")
+            refused(name, words, lambda: bind(design, netlist_dir))
     finally:
         SPECS[design.image] = original
-    print(f"detail self-test: {len(SELF_TEST)} kinds of error each refused")
+    netlist, elements, _ = bind(design, netlist_dir)
+    layout = LAYOUTS[design.image]
+    try:
+        for name, provoke, words in LAYOUT_TEST:
+            LAYOUTS[design.image] = (provoke(layout[0]),) + layout[1:]
+            refused(name, words, lambda: chip(design, netlist, elements, original, Facts(design)))
+    finally:
+        LAYOUTS[design.image] = layout
+    print(f"detail self-test: {len(SELF_TEST) + len(LAYOUT_TEST)} kinds of error each refused")
 
 
 def main():

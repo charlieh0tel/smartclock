@@ -416,6 +416,16 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   never covers a title or makes the page scroll sideways.  It is chosen
   in the `Makefile`, as `UNLISTED_PAGES` is.  The block diagram is a
   work in progress.
+- A page that sets a table side by side across the firmware images, a
+  row per path or word and a column per image, filtered as the reader
+  types, is a matrix page: its generator prints the table's data as
+  JSON, kept out of the site, and a Python renderer builds the page
+  from it with `tools/pages_matrix.py`'s shell, style and filtering
+  script.  The SCPI trees by model are one, their data from
+  `smartclock-cli dump-scpi --models --json`.  The CLI once wrote the
+  page itself from a template of its own, which a second such page,
+  its data from a Python tool, could not share; one shell keeps the
+  pages alike and fixes each once.
 
 ### Flashing is a direct-port command of the CLI
 

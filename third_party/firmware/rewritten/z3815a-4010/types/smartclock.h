@@ -2365,12 +2365,18 @@ typedef struct gps_state {
  * fpga_fields_to_registers (0x4965e) and counter_configuration_init
  * (0x49a62) run over all eight.  FPGA_BIT_ALARM, named for the 58503A's
  * entry 6, its alarm flag, is the count's start source, an
- * fpga_start_source; what the other two drive on the board is not
- * established (docs/firmware/z3815a-4010.md, "Not established"). */
+ * fpga_start_source; FPGA_BIT_SYNC sets the alternate-second outputs'
+ * phase and FPGA_BIT_COUNTER_SYNC is the sync field
+ * (docs/firmware/z3815a-trace.md).  What the board does with the pins
+ * they drive is not established (docs/firmware/z3815a-4010.md, "Not
+ * established"). */
 typedef enum __attribute__((packed)) fpga_bit_index {
 #include "../../common/types/fpga_bit_index.h"
   FPGA_BIT_SYNC = 5,  /* register 2, 0x01, a flag: the 1PPS sync bit 0x516de
-                         pulses (docs/firmware/z3815a-4010.md) */
+                         pulses (docs/firmware/z3815a-4010.md), whose rise
+                         resets the FPGA's FD and so sets which seconds P14
+                         and P28 pulse on (docs/firmware/z3815a-trace.md,
+                         "Register port", "The 1 PPS divider") */
   FPGA_BIT_ALARM = 6, /* register 2, 0x0c, a field: an fpga_start_source,
                          set while arming through 0x494f2 */
   FPGA_BIT_COUNTER_SYNC = 7, /* register 3, 0x03, a field: counter_set_sync's

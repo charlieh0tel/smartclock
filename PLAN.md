@@ -697,7 +697,10 @@ blocks come from the netlist and the checked references, and a wire
 the netlist lacks fails the build.  The drawings are kept legible by a
 check, not by eye: wires run in channels of their own, and the build
 fails on a wire through a block, two wires along one line, or text on
-text, on a box, on another wire or out of its box (`tools/fpga/sheet.py`).  What an element is and what its trace says
+text, on a box, on another wire or out of its box (`tools/fpga/sheet.py`).
+A click opens a drawing full screen at its own scale, to pan and zoom,
+through the block diagram's zoom, shared as `tools/zoom.py`; without
+JavaScript the page is unchanged.  What an element is and what its trace says
 of it are tables (`tools/fpga/detail_designs.py`), each element with
 its trace's confidence word and section; which pins, clocks and
 other elements it connects to is read from the decoded netlist, so a

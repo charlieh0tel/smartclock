@@ -37,12 +37,8 @@ The data, one JSON object:
     limits             paragraphs: what the photos cannot show
     open               the open items
 
-Prose takes three marks: `code`; [[path]] or [[path|section]], a
-citation of a file in the repository, linked on GitHub, whose path
-must exist and whose section must be a heading of that Markdown file,
-or "item N" for hardware-investigations.md's numbered items, linked
-by the fragment GitHub gives the heading; and
-{{ref}}, a link to a part's row.
+Prose takes tools/pages_render.py's marks, its {{ref}} a link to a
+part's row.
 """
 
 import argparse
@@ -53,25 +49,10 @@ import shutil
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pages_render import BLOB, ROOT, Prose, head, plain  # noqa: E402
+
 DATA = ROOT / "docs" / "board-atlas.json"
-BLOB = "https://github.com/charlieh0tel/smartclock/blob/main/"
-CITE = re.compile(r"\[\[([^|\]]+)(?:\|([^\]]+))?\]\]")
-CODE = re.compile(r"`([^`]+)`")
-REF = re.compile(r"\{\{([^}]+)\}\}")
-ITEM = re.compile(r"item (\d+)$")
-# A Markdown heading: its level's hashes and its text.
-HEADING = re.compile(r"(#+) (.*)")
-# A numbered item's heading text, and the level its headings take.
-NUMBERED = re.compile(r"(\d+)\. ")
-ITEM_LEVEL = 2
-# What GitHub drops from a heading's rendered text to make its fragment:
-# all but letters, marks, digits, connector punctuation, spaces and
-# hyphens.  Its inline marks go first: code spans' backticks, links'
-# brackets and targets, and emphasis.
-FRAGMENT_DROPPED = re.compile(r"[^\w\- ]")
-INLINE_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
-INLINE_MARKS = re.compile(r"[`*]")
 COMPARED = ("z3801a", "58503a")
 COMPARED_TITLES = {"z3801a": "Z3801A", "58503a": "58503A"}
 # A part's confidences, (kind, the filter's title): each is the part's
@@ -602,88 +583,6 @@ def die(message):
     sys.exit(f"board_atlas: {message}")
 
 
-def fragment(text):
-    """The fragment GitHub gives a heading, before it numbers repeats."""
-    text = INLINE_MARKS.sub("", INLINE_LINK.sub(r"\1", text))
-    return FRAGMENT_DROPPED.sub("", text.lower()).replace(" ", "-")
-
-
-def headings(path):
-    """Each heading text of a Markdown file, and "item N" for its
-    numbered items, against the heading's fragment; the first of a
-    repeated text, as GitHub numbers the later ones -1, -2 and on."""
-    found = {}
-    used = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        match = HEADING.match(line)
-        if not match:
-            continue
-        text = match.group(2).strip()
-        base = fragment(text)
-        repeat = used.get(base, 0)
-        used[base] = repeat + 1
-        name = f"{base}-{repeat}" if repeat else base
-        found.setdefault(text, name)
-        item = NUMBERED.match(text)
-        if item and len(match.group(1)) == ITEM_LEVEL:
-            found.setdefault(f"item {item.group(1)}", name)
-    return found
-
-
-class Renderer:
-    """Renders the data's prose marks, checking each citation and part
-    reference as it goes."""
-
-    def __init__(self, refs):
-        self.refs = refs
-        self.headings = {}
-
-    def code(self, text):
-        return CODE.sub(lambda m: f"<code>{m.group(1)}</code>", html.escape(text, quote=False))
-
-    def cite(self, path, section):
-        target = ROOT / path
-        if not target.is_file():
-            die(f"cites {path}, which does not exist")
-        shown = re.sub(r"^(docs|third_party)/", "", path)
-        if not section:
-            return f'<a href="{BLOB}{html.escape(path)}"><code>{html.escape(shown)}</code></a>'
-        if path not in self.headings:
-            self.headings[path] = headings(target)
-        if section not in self.headings[path]:
-            die(f"cites {path}, {section!r}, which is not one of its headings")
-        address = f"{BLOB}{path}#{self.headings[path][section]}"
-        link = f'<a href="{html.escape(address)}"><code>{html.escape(shown)}</code></a>'
-        if ITEM.match(section):
-            return f"{link}, {self.code(section)}"
-        return f"{link}, “{self.code(section)}”"
-
-    def ref(self, ref):
-        if ref not in self.refs:
-            die(f"refers to {ref}, which is not a part")
-        return f'<a href="#{anchor(ref)}">{html.escape(ref)}</a>'
-
-    def __call__(self, text):
-        out = []
-        last = 0
-        for match in CITE.finditer(text):
-            out.append(self.plain(text[last:match.start()]))
-            out.append(self.cite(match.group(1), match.group(2)))
-            last = match.end()
-        out.append(self.plain(text[last:]))
-        return "".join(out)
-
-    def plain(self, text):
-        out = []
-        last = 0
-        for match in REF.finditer(text):
-            out.append(self.code(text[last:match.start()]))
-            out.append(self.ref(match.group(1)))
-            last = match.end()
-        out.append(self.code(text[last:]))
-        return "".join(out)
-
-
 def slug(ref):
     """A part's name in the address, #<slug>: letters, digits and hyphens."""
     return re.sub(r"[^A-Za-z0-9]+", "-", ref).strip("-")
@@ -742,7 +641,7 @@ def render_view(view, parts, groups):
         if point is None:
             continue
         title = f"{part['ref']}: {part['type']}; {groups[part['group']]}"
-        title = CITE.sub(lambda m: m.group(1).rsplit("/", 1)[-1], title).replace("`", "")
+        title = plain(title)
         pins.append(
             f'<a class="pin c-{part["id_confidence"]}" style="left:{point["x"]}%;top:{point["y"]}%" '
             f'href="#{anchor(part["ref"])}" data-part="{slug(part["ref"])}" title="{html.escape(title)}">'
@@ -785,28 +684,15 @@ def render_tools(data):
 
 def render(data):
     refs = check(data)
-    r = Renderer(refs)
+    r = Prose(refs, anchor, die)
     groups = {g["id"]: g["title"] for g in data["groups"]}
     views = {v["id"]: v["short"] for v in data["views"]}
     parts = data["parts"]
     out = []
     emit = out.append
 
-    emit("<!doctype html>")
-    emit('<html lang="en">')
-    emit("<head>")
-    emit('<meta charset="utf-8">')
-    emit('<meta name="viewport" content="width=device-width, initial-scale=1">')
-    emit(f"<title>{html.escape(data['title'])}</title>")
-    emit(f'<meta name="description" content="{html.escape(data["description"])}">')
-    emit('<meta name="smartclock-group" content="hardware">')
-    emit("<!-- Generated by tools/board_atlas.py from docs/board-atlas.json by make board-atlas. -->")
-    emit('<link rel="preconnect" href="https://fonts.googleapis.com">')
-    emit('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">')
-    emit("<style>")
-    emit(CSS.rstrip("\n"))
-    emit("</style>")
-    emit("</head>")
+    out += head(data["title"], data["description"], "hardware",
+                "tools/board_atlas.py from docs/board-atlas.json by make board-atlas", CSS)
     emit("<body>")
     emit('<div class="wrap">')
 

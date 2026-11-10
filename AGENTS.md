@@ -170,7 +170,9 @@ here, where they go stale unnoticed.
   the site's icon, `docs/pages/favicon.svg`.  Set a page apart on the landing page by naming it in the
   `Makefile`'s `NEW_PAGE`, for one just launched, or `FEATURED_PAGE`.
   Name a page in `UNLISTED_PAGES` to publish it at its URL, with its
-  breadcrumb, but leave it off the landing page.
+  breadcrumb, but leave it off the landing page, and in `WIP_PAGES` to
+  mark it as a work in progress: a ribbon on the page and a WIP tag on
+  its landing page entry.
 
 ## Working style
 

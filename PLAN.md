@@ -403,6 +403,19 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   pages the landing page shows is decided in one place; the page keeps
   its group, which its breadcrumb names.  The three-receiver sky
   comparison is unlisted.
+- A page can be marked as a work in progress: named in the
+  `Makefile`'s `WIP_PAGES`, it gets a "Work in progress" ribbon across
+  its top right corner and a WIP tag on its landing page entry, so a
+  page can be published while it is still being checked without
+  reading as finished.  `tools/pages_index.py` inserts the ribbon in
+  the same pass as the breadcrumb, for the same reason, and a rerun
+  replaces it rather than doubling it.  It is an amber band with dark
+  ink, which reads on every page's light and dark themes without
+  knowing their tokens.  In a window narrower than the landing page's
+  wide breakpoint it is a banner under the breadcrumb instead, so it
+  never covers a title or makes the page scroll sideways.  It is chosen
+  in the `Makefile`, as `UNLISTED_PAGES` is.  The block diagram is a
+  work in progress.
 
 ### Flashing is a direct-port command of the CLI
 

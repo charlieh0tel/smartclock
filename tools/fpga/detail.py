@@ -80,6 +80,11 @@ main{max-width:1440px}
 .ch-mk.sim circle{stroke:var(--sim)}.ch-mk.sim text{fill:var(--sim)}
 .ch-mk.inferred circle{stroke:var(--inferred)}.ch-mk.inferred text{fill:var(--inferred)}
 .ch-mk.open circle{stroke:var(--open)}.ch-mk.open text{fill:var(--open)}
+.ch-badge{fill:var(--sheet);stroke-width:1.5}
+.ch-badge.sim{stroke:var(--sim)}.ch-badge.inferred{stroke:var(--inferred)}.ch-badge.open{stroke:var(--open)}
+.ch text.ch-mk{font:700 10px "IBM Plex Mono",ui-monospace,monospace}
+.ch text.ch-mk.sim{fill:var(--sim)}.ch text.ch-mk.inferred{fill:var(--inferred)}.ch text.ch-mk.open{fill:var(--open)}
+.ch-dot{fill:var(--fg)}
 .elements{display:grid;gap:1.25rem}
 .element{border-left:3px solid var(--rule);padding-left:.75rem;max-width:var(--measure)}
 .element>*{margin:0}

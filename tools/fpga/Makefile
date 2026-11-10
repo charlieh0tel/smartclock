@@ -152,7 +152,7 @@ explainer: $$(EXPLAINER_FIGS) $(HERE)/explainer.py $(HERE)/page.py
 # refusals happens.
 DETAIL_PAGE ?= $(OUT)/fpga-detail.html
 DETAIL_DEPS = $(addprefix $(OUT)/,$(addsuffix .json,$(IMAGES))) \
-  $(addprefix $(HERE)/,detail.py detail_bind.py detail_designs.py detail_draw.py page.py sheet.py)
+  $(addprefix $(HERE)/,detail.py detail_bind.py detail_designs.py detail_draw.py page.py sheet.py) tools/zoom.py
 
 check-detail: $(DETAIL_DEPS)
 	@python3 -I $(HERE)/detail.py --netlists $(OUT) --self-test

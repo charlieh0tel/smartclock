@@ -36,7 +36,9 @@ re-expressed and need the viewer to make, stay generated in `target/`
 ## Reading order
 
 1. This file, or first the illustrated short version,
-   [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html).
+   [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html),
+   and each design's logic diagram,
+   [`fpga-detail.html`](https://charlieh0tel.github.io/smartclock/fpga-detail.html).
 2. `z3805a-trace.md`, the reference design, with `counter.md` for the
    firmware's side.
 3. The others, each as its differences from the reference:
@@ -302,6 +304,7 @@ repository root:
     make -f tools/fpga/Makefile check     # the same, failing on drift from tools/fpga/ref
     make -f tools/fpga/Makefile figures   # the waveform figures
     make fpga                             # the explainer page, target/pages/fpga.html
+    make fpga-detail                      # the detailed diagrams, target/pages/fpga-detail.html
     make check-fpga-decoder               # the decoder against XACT's test designs
     make -f tools/fpga/Makefile check-decoder-upstream  # the five decodes at upstream PR #3
     make -j16 -f tools/fpga/Makefile check-readings      # the long runs
@@ -317,8 +320,12 @@ diagnostics (`.structure`), the viewer's pad tables (`pins.txt`) and
 the 58503A/Z3801A's logic and I/O blocks against the Z3805A's
 (`58503a-z3801a.tilediff`), the 58503B's blocks the trace pairs with
 the Z3805A's and the 58503A's, as functions (`check-blocks`,
-`tools/fpga/*.match`), and that the explainer page renders from the
-references and figures (`check-explainer`); firmware CI runs it
+`tools/fpga/*.match`), that the explainer page renders from the
+references and figures (`check-explainer`), and that the detail page
+renders from the decodes, every pin in use with a role, every
+output an element's and every section cited a heading of its
+document, with its own test that each such error is
+refused (`check-detail`); firmware CI runs it
 (`.github/workflows/firmware.yml`).  It does not cover anything that
 waits on the divider: the 1 PPS periods, the readings, the taps, the
 sync steps, P19, P38 and P40.  `check-readings` runs them all, each trace naming its runs as

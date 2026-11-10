@@ -2128,8 +2128,8 @@ decodes the FPGA test designs' bitstreams, which XACT built from LCAs
 written for the purpose, and checks each decode against XACT's routed
 LCA (`outputs.md`, "Netlists"), and `make -f tools/fpga/Makefile
 check` checks each FPGA design's decode, netlist, structure and fast
-simulation against `tools/fpga/ref`, and that the explainer page
-renders (`fpga-comparison.md`, "Reproduce"); both need node and clone
+simulation against `tools/fpga/ref`, and that the explainer and detail
+pages render (`fpga-comparison.md`, "Reproduce"); both need node and clone
 the XC3000 viewer at its pinned commit, and the long runs,
 `check-readings`, are not CI's.
 

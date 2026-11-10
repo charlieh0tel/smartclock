@@ -686,6 +686,20 @@ and `check-explainer`, part of `check`, fails if it cannot be
 rendered.  A committed copy would only repeat what its sources and
 the build already check.
 
+The detailed diagrams, FPGA detail, are generated the same
+way, by one generator for all five designs (`tools/fpga/detail.py`),
+never drawn by hand per design, so the five share one grammar and
+their differences show.  What an element is and what its trace says
+of it are tables (`tools/fpga/detail_designs.py`), each element with
+its trace's confidence word and section; which pins, clocks and
+other elements it connects to is read from the decoded netlist, so a
+table cannot draw a wire the netlist lacks, and a pin in use without
+a role or an output no element drives fails the build.  The top
+Makefile's `fpga-detail` writes it, https://charlieh0tel.github.io/smartclock/fpga-detail.html,
+and `check-detail`, part of `check`, fails if it cannot be rendered.
+It shares the explainer's references, styles and page shell through
+`tools/fpga/page.py`.
+
 ## Next
 
 - **Compacting old logs**, perhaps into Parquet.  The logs grow without

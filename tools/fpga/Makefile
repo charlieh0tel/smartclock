@@ -5,6 +5,7 @@
 #     make -f tools/fpga/Makefile z3805a       # decode -> Verilog -> sim -> VCD
 #     make -f tools/fpga/Makefile figures      # render every waves/*/*.json
 #     make -f tools/fpga/Makefile explainer    # the explainer page from them
+#     make -f tools/fpga/Makefile detail       # the detailed diagrams page from the decodes
 #     make -f tools/fpga/Makefile check        # rebuild all images, fail on drift
 #     make -j16 -f tools/fpga/Makefile check-readings      # the long runs
 #     make -f tools/fpga/Makefile check-decoder-upstream  # the decodes at upstream PR #3
@@ -70,7 +71,7 @@ DECODE_TOOLS := $(HERE)/netdump.js $(HERE)/netdump.sh $(HERE)/netdump.html $(HER
 MODELS       := $(HERE)/xc3000.v $(HERE)/probe.v
 
 .PHONY: all figures check check-viewer check-pins check-tiles check-readings \
-  check-blocks check-explainer check-decoder-upstream explainer clean FORCE \
+  check-blocks check-explainer check-detail check-decoder-upstream explainer detail clean FORCE \
   $(IMAGES)
 .PRECIOUS: $(OUT)/%.json $(UPSTREAM)/%.json $(OUT)/%.v $(OUT)/%_tb $(OUT)/%.vcd $(OUT)/%.readout $(OUT)/%.structure \
   $(OUT)/readings/%.readings $(OUT)/runs/%.vcd \
@@ -140,6 +141,27 @@ check-explainer: $$(EXPLAINER_FIGS) $(HERE)/explainer.py $(HERE)/page.py
 explainer: $$(EXPLAINER_FIGS) $(HERE)/explainer.py $(HERE)/page.py
 	python3 -I $(HERE)/explainer.py --figures $(OUT) --output $(EXPLAINER_PAGE)
 
+# The detailed diagrams page (detail.py), written to DETAIL_PAGE: one
+# diagram a design, each drawn from the design's decode and the element
+# tables in detail_designs.py, its figures from the checked references.
+# It is not committed; the top Makefile's `fpga-detail` writes it for
+# GitHub Pages.  check-detail renders it under $(OUT) and fails if it
+# cannot be: an element naming a block the decode does not use, a pin
+# in use with no role, an output no element drives, or a figure whose
+# reference no longer matches; and first its own test, that each of those
+# refusals happens.
+DETAIL_PAGE ?= $(OUT)/fpga-detail.html
+DETAIL_DEPS = $(addprefix $(OUT)/,$(addsuffix .json,$(IMAGES))) \
+  $(addprefix $(HERE)/,detail.py detail_designs.py page.py)
+
+check-detail: $(DETAIL_DEPS)
+	@python3 -I $(HERE)/detail.py --netlists $(OUT) --self-test
+	@python3 -I $(HERE)/detail.py --netlists $(OUT) --output $(OUT)/fpga-detail.html \
+	  && echo "check detail: the page renders"
+
+detail: $(DETAIL_DEPS)
+	python3 -I $(HERE)/detail.py --netlists $(OUT) --output $(DETAIL_PAGE)
+
 # A fresh decode must still compile and run, and the netlist must not drift
 # from what is committed as a reference (tools/fpga/ref/<image>.stats).
 # The read port the firmware sees, every address with the preset on: what
@@ -165,7 +187,7 @@ $(OUT)/%.structure: $(OUT)/%.v $(MODELS) $(HERE)/%_tb.v
 	   | sed -n 's/^Warning: //p; s/^ *wire \(\S*\).*/  through \1/p'; } > $@
 	@rm -f $@.iverilog $@.yosys
 
-check: check-viewer $(addprefix check-,$(IMAGES)) check-pins check-tiles check-blocks check-explainer
+check: check-viewer $(addprefix check-,$(IMAGES)) check-pins check-tiles check-blocks check-explainer check-detail
 
 # The viewer's clone at the pin with no local change, on every check
 # (decoder.mk), not only when its stamp is made.

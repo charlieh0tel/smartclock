@@ -13,7 +13,8 @@ name: firmware
 # board atlas and the block diagram built from their data, every
 # citation in them checked; the
 # FPGA decoder against XACT's test designs; and the FPGA netlists' fast
-# path against their references, and the explainer page built.
+# path against their references, and the explainer and detail pages
+# built.
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs an m68k toolchain,
@@ -106,7 +107,7 @@ jobs:
       - run: node --version && make check-fpga-decoder
         if: ${{ !cancelled() }}
       # Each FPGA image's decode, netlist, structure and fast simulation
-      # against tools/fpga/ref, and the explainer page built
+      # against tools/fpga/ref, and the explainer and detail pages built
       # (docs/firmware/fpga-comparison.md, "Reproduce"); the long runs,
       # check-readings, are not CI's.
       - run: make -f tools/fpga/Makefile check

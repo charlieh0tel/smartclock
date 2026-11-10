@@ -98,8 +98,10 @@ def element(key, lane, title, members, confidence, sources, *lines):
 
 def derive(base, doc, keep, changes=(), drop=(), add=()):
     """A design traced as base's differences: base's elements in order, those
-    in keep cited to doc too and their lines replaced by keep's, those in
-    changes replaced, those in drop dropped, add's appended to their lanes."""
+    in keep cited to doc too and their lines replaced by keep's (section,
+    line and, where doc labels the claim otherwise than base's trace, its
+    confidence word), those in changes replaced, those in drop dropped,
+    add's appended to their lanes."""
     out = []
     for e in base:
         if e.key in drop:
@@ -107,9 +109,9 @@ def derive(base, doc, keep, changes=(), drop=(), add=()):
         if e.key in changes:
             out.append(changes[e.key])
         elif e.key in keep:
-            section, line = keep[e.key]
+            section, line, *word = keep[e.key]
             sources = tuple(dict.fromkeys(((DOCS[doc], section),) + e.sources))
-            out.append(replace(e, sources=sources, lines=(line,)))
+            out.append(replace(e, sources=sources, lines=(line,), confidence=word[0] if word else e.confidence))
         else:
             sys.exit(f"detail_designs: {doc}: {e.key} neither kept, changed nor dropped")
     for new in add:
@@ -164,6 +166,12 @@ def edges(run, pin):
     return " or ".join(num(v) for v in edge_periods(run, pin))
 
 
+# The terms of the count's net offset beyond the tap, read from the
+# netlist (z3805a-trace.md, "Start, stop and status bits"): the stop's
+# four flip-flops on GCLK after the tap, one for counting both ends, and
+# the two clock edges after the GPS edge the start does not count.
+STOP_PIPELINE, BOTH_ENDS, UNCOUNTED_START = 4, 1, 2
+
 # Each figure a line can name: a function of the design, reading its
 # checked reference.
 FIGURES = {
@@ -200,6 +208,10 @@ FIGURES = {
     "ke_y": lambda d: period(f"{d.image}.freerun", "KE.Y"),
     "fe_y": lambda d: period(f"{d.image}.freerun", "FE.Y"),
     "ee_y": lambda d: period(f"{d.image}.freerun", "EE.Y"),
+    "low_count": lambda d: first_count(f"{d.image}.low"),
+    "nogps_status": lambda d: find(f"{d.image}.nogps", r"^[\d.]+ s: status ([0-9a-f]{2}), seconds")[0],
+    "offset": lambda d: num(probe(f"{d.image}.three", d.tap)["after_min"] // GCLK_NS + STOP_PIPELINE
+                            + BOTH_ENDS - UNCOUNTED_START),
     "gi_clocks": lambda d: clocks(f"{d.image}.fast", "GI.Y"),
     "ji_clocks": lambda d: clocks(f"{d.image}.fast", "JI.X"),
     "jk_clocks": lambda d: clocks(f"{d.image}.three", "JK.Y"),
@@ -288,9 +300,9 @@ Z3805A = (
     element("gclk", "clocks", "Global clock, GCLK", "GCLK", "read", ((Z, "Clocks"),),
             "P7 drives the one global clock buffer through general routing, not the dedicated TCLKIN pad (P13).",
             "GCLK clocks {loads[GCLK.O]} logic blocks; ACLK, the alternate buffer, is unused."),
-    element("strobe", "port", "Select and write strobe", "HL FK FL", "read",
+    element("strobe", "port", "Select and write strobe", "HL FK FL", "simulated",
             ((Z, "Register port"), ("58503b", "The 1 PPS divider")),
-            "P61 and P75 feed HL, whose X is the bus's 3-state control.",
+            "P61 and P75 feed HL, whose X is the bus's 3-state control (read).",
             "A write is taken on GCLK: the select and R/W Low are sampled twice, and the first clock they are "
             "seen makes a one-clock strobe, which the address decodes."),
     element("decode", "port", "Write decode", "DL EL", "read", ((Z, "Register port"), ("58503a", "Register port")),
@@ -299,43 +311,51 @@ Z3805A = (
     element("register0", "port", "Register 0: mode and preset", "FH", "read", ((Z, "Register port"), (Z, "The count")),
             "Bits 0 and 1 together, as one flip-flop: whether the mode is 3, so modes 1 and 2 are mode 0.",
             "Bit 6, the preset, FH.Y, which resets every stage of the count."),
-    element("register1", "port", "Register 1: start, reference, read address", "CG FG FI GL", "read",
+    element("register1", "port", "Register 1: start, reference, read address", "CG FG FI GL", "simulated",
             ((Z, "Register port"), ("58503b", "Register port"), ("58503b", "The count")),
             "Bit 0, the start, and bit 1, the reference (CG); bits 3 to 7, the read address (FI, FG, GL).",
             "Bit 2 is not kept."),
-    element("phases", "read", "Bus phases", "AL", "read", ((Z, "Register port"), (Z, "The count")),
-            "A toggle on GCLK: AL.X and AL.Y clock the bus's output flip-flops and select each count stage's "
-            "read half."),
+    element("phases", "read", "Bus phases", "AL", "read",
+            ((Z, "Register port"), (Z, "The count"), ("58503b", "Register port")),
+            "A two-bit Johnson stage on GCLK (QX <- QY, QY <- ~QX, read from the netlist), a cycle of four GCLKs: "
+            "AL.X and AL.Y clock the bus's output flip-flops and select each count stage's read half."),
     element("address", "read", "Read address decode", "EB EC", "read", ((Z, "The count"), ("58503b", "Register port")),
             "The read address's bits 0 and 1 decoded, EC.Y 0, EC.X 1, EB.Y 2, EB.X 3: each count stage's read "
             "term enables at one."),
-    element("interpolator", "read", "Interpolator read terms", "AB AC AD AE", "read",
+    element("interpolator", "read", "Interpolator read terms", "AB AC AD AE", "simulated",
             ((Z, "Register port"), ("58503b", "Register port")),
             "The interpolator's pins, complemented, at A1 A0 of 0 and 1, and the count's bits 0 to 3 "
             "at 2: the interpolator reads back at 0x10 and 0x11, low nibble first."),
-    element("select", "read", "Nibble select", "CE DE DF EF", "read", ((Z, "Register port"), ("58503b", "Register port")),
+    element("select", "read", "Nibble select", "CE DE DF EF", "simulated",
+            ((Z, "Register port"), ("58503b", "Register port")),
             "With the address's bit 2 clear CE selects, with it set DE and EF, ORs of count read terms; the "
             "address's bit 3 zeroes DF and EG."),
-    element("mux01", "read", "Read multiplexer, bits 0 and 1", "CK", "read", ((Z, "Register port"),),
+    element("mux01", "read", "Read multiplexer, bits 0 and 1", "CK", "simulated", ((Z, "Register port"),),
             "The status's stop and start bits, unless the read address's bit 4 is set, when they are the "
             "addressed nibble's."),
-    element("mux23", "read", "Read multiplexer, bits 2 and 3", "EG", "read",
+    element("mux23", "read", "Read multiplexer, bits 2 and 3", "EG", "simulated",
             ((Z, "Register port"), (Z, "Start, stop and status bits")),
             "EG never sees the address's bit 4, so 0x00 to 0x07 read bits 2 and 3 of 0x10 to 0x17: status bits 2 "
             "and 3 are two interpolator inputs, P5 and P6, complemented.",
             "Under the preset the status reads 0x{status} (simulated, the fast run)."),
-    element("seconds", "read", "Seconds counter, bits 4 to 7", "IK IL", "read",
-            ((Z, "Register port"), ("comparison", "Roles and tiles")),
+    element("seconds", "read", "Seconds counter, bits 4 to 7", "IK IL", "simulated",
+            ((Z, "Register port"), (Z, "The 1 PPS divider"), ("comparison", "Roles and tiles")),
             "A count of the internal 1 PPS, enabled by the terminal, read in bits 4 to 7 at every address."),
     element("start", "count", "Start capture", "AH", "read", ((Z, "Start, stop and status bits"), (Z, "Clocks")),
             "The GPS 1 PPS's rising edge on P82 clocks AH, whose Y, the start's pulse, rises at once: the interval "
             "the interpolator measures, Low on P81."),
     element("gate", "count", "Start gate", "BI AI", "read", ((Z, "Start, stop and status bits"),),
             "With register 1's reference bit High BI takes AH.Y on the first GCLK edge after the GPS edge, AI.QY "
-            "sets on the second and the count first toggles on the third; with it Low, one edge sooner."),
+            "sets on the second and the count first toggles on the third; with it Low, one edge sooner.",
+            "With the reference bit Low a reading is one tick more, {low_count} for {count} (simulated, the low "
+            "run), the start's pulse a clock shorter; how the interpolator reads a pulse under its 100 ns low "
+            "reference is open (it probably clips, inferred).",
+            "With no GPS 1 PPS neither status bit sets: after 512 polls the status reads 0x{nogps_status}, and the "
+            "firmware's wait ends in \u201cGate failure\u201d (simulated, the nogps run)."),
     element("mode3", "count", "CH and BH", "CH BH", "open", ((Z, "Clocks"), (Z, "Start, stop and status bits")),
             "CH feeds AI's set term beside register 1's start bit (G = CG_X + ~CH_X·QY + ~CH_X·BI_Y), and CH.Y "
-            "clocks BH; the trace gives them no role of their own."),
+            "clocks BH; BH.X is ORed into the stop bit (CJ.X = BH.X + CI.X) and BH.Y into AH's outputs (read from "
+            "the netlist); the trace gives them no role of their own."),
     element("p79", "count", "P79's constant", "BJ", "read", ((Z, "Other outputs"),),
             "BJ.X is a constant 0 (F = 0), driven on P79 while AI.X is Low and 3-state otherwise."),
     element("p76", "count", "BL, onto P76 and P77", "BL", "open", ((Z, "Other outputs"),),
@@ -358,6 +378,8 @@ Z3805A = (
     element("stoppipe", "count", "Stop pipeline", "CJ DG", "read", ((Z, "Start, stop and status bits"),),
             "CI.X passes four flip-flops on GCLK, CJ.QX, CJ.QY, DG.QX and DG.QY, and DG.Y holds the tick: the last "
             "edge counted is the fourth after the tap's.",
+            "So count + fraction = {offset} + (t_internal - t_GPS) / 100 ns, the firmware's calibration: the tap, "
+            "4 more to the last counted edge, 1 for both ends, less the 2 the start does not count (read).",
             "With the GPS 1 PPS at 0.25 s each reading is {count} ticks over the preset (simulated, the three run)."),
     element("prescaler", "divider", "Prescaler", "GI HJ FJ HI IG JH IH JI II", "simulated",
             ((Z, "The 1 PPS divider"), ("58503b", "The 1 PPS divider")),
@@ -372,7 +394,7 @@ Z3805A = (
             "(simulated, the three run).",
             "HG.Y, the top decade's states 4 to 7, is the tap: it rises {tap} ns after P83 (simulated)."),
     element("terminal", "divider", "Terminal count", "HH", "simulated", ((Z, "The 1 PPS divider"),),
-            "HH.X, the terminal, every {p83_period} ns: a divide by {divide} (simulated, the three run)."),
+            "HH.X, the terminal, and P83 every {p83_period} ns: a divide by {divide} (simulated, the three run)."),
     element("driver", "divider", "1 PPS output driver", "EI", "read", ((Z, "The 1 PPS divider"), (Z, "Clocks")),
             "EI.Y = HH.X + P83·~KH.Y: the terminal sets the pins, P83's registered output read back holds them, "
             "and KH.Y's rise releases them.",
@@ -412,25 +434,27 @@ Z3805A_PINS = {
 A = "58503a"
 
 
-def same(section, what="The Z3805A's"):
-    """A kept element's section in the derived trace and its one line."""
-    return (section, f"{what}.")
+def same(section, what="The Z3805A's", *word):
+    """A kept element's section in the derived trace, its one line and,
+    where the trace labels it otherwise, its confidence word."""
+    return (section, f"{what}.", *word)
 
 
 A58503 = derive(Z3805A, A, keep={
     "gclk": ("Clocks", "P7 drives GCLK as in the Z3805A; GCLK clocks {loads[GCLK.O]} logic blocks, the Z3805A's and HK."),
-    "strobe": same("Register port"),
+    "strobe": same("Register port", "The Z3805A's", "read"),
     "decode": ("Register port", "The Z3805A's: registers 0, 1 and 3, all with ADDR2 Low (EL.G, DL, EL.F); a write to "
                "register 2 or 4 to 7 reaches no logic."),
     "register0": same("Register port"),
-    "register1": same("Register port"),
+    "register1": same("Register port", "The Z3805A's", "read"),
     "address": same("Register port"),
-    "interpolator": ("Register port", "The Z3805A's, AB, AC and AE reading AL.Y where the Z3805A's read AL.X: their "
-                     "functions with the inputs permuted."),
-    "select": same("Register port"),
-    "mux01": same("Register port"),
-    "mux23": ("Register port", "The Z3805A's; under the preset the status reads 0x{status} (simulated, the fast run)."),
-    "seconds": ("The 1 PPS divider", "The Z3805A's, IK and IL, enabled by HH.X, the terminal."),
+    "interpolator": ("Register port", "The Z3805A's, AB, AC, AD and AE reading AL.Y where the Z3805A's read AL.X "
+                     "(tilediff); AB's, AC's and AE's functions are the Z3805A's with the inputs permuted.", "read"),
+    "select": same("Register port", "The Z3805A's", "read"),
+    "mux01": same("Register port", "The Z3805A's", "read"),
+    "mux23": ("Register port", "The Z3805A's; under the preset the status reads 0x{status} (simulated, the fast run).",
+              "read"),
+    "seconds": ("The 1 PPS divider", "The Z3805A's, IK and IL, enabled by HH.X, the terminal.", "read"),
     "start": same("Start, stop and status bits"),
     "gate": same("Start, stop and status bits"),
     "mode3": same("Clocks", "As the Z3805A's; CH.Y clocks BH"),
@@ -438,13 +462,14 @@ A58503 = derive(Z3805A, A, keep={
     "p76": same("Other outputs", "~BL.Y, ~BL.X, as the Z3805A's; their role is not traced"),
     "tick": same("The count"),
     "head": ("The count", "The Z3805A's, BB reading AL.Y on its B input where the Z3805A's reads AL.X on C."),
-    "stages": ("The count", "The Z3805A's, CD and ED reading AL.Y where the Z3805A's read AL.X; under the preset the "
-               "count reads 0x{preset} (simulated, the fast run)."),
+    "stages": ("The count", "The Z3805A's, all eleven stages (BC, BD, BE, CB, CC, CD, DB, DC, DD, ED, EE) reading "
+               "AL.Y where the Z3805A's read AL.X (tilediff), CD and ED on E where the Z3805A's read it on D; under "
+               "the preset the count reads 0x{preset} (simulated, the fast run)."),
     "tapbuffer": same("Clocks", "As the Z3805A's; the tap, GH.X, clocks CI"),
     "stop": same("Start, stop and status bits"),
     "stoppipe": ("The 1 PPS divider", "The Z3805A's; each reading is {count} ticks over the preset, the Z3805A's "
                  "(simulated, the three run)."),
-    "binary": same("The 1 PPS divider", "The divider is the Z3805A's"),
+    "binary": same("The 1 PPS divider", "The divider is the Z3805A's", "read"),
     "decades": ("The 1 PPS divider", "The Z3805A's; the tap, HG.Y, rises {tap} ns after P83 (simulated, the three "
                 "run)."),
     "terminal": ("The 1 PPS divider", "HH, unchanged: HH.X every {p83_period} ns, a divide by {divide} (simulated, "
@@ -456,7 +481,7 @@ A58503 = derive(Z3805A, A, keep={
     "tie": same("Other outputs", "~BA.X, BA F = 1: tied Low, as the Z3805A's"),
 }, changes={
     "phases": element("phases", "read", "Bus phases", "AL", "read", ((A, "The count"), (A, "Register port")),
-                      "The Z3805A's two-flip-flop toggle with its X and Y exchanged: this AL.Y is the Z3805A's AL.X, "
+                      "The Z3805A's two-bit Johnson stage with its X and Y exchanged: this AL.Y is the Z3805A's AL.X, "
                       "and every load of either moved to the other."),
     "prescaler": element("prescaler", "divider", "Prescaler", "GI HK FJ HI IG JH IH JI II", "read",
                          ((A, "The 1 PPS divider"),),
@@ -470,14 +495,16 @@ A58503 = derive(Z3805A, A, keep={
     "restart": element("restart", "sync", "GPS edge and restart, kind 3", "DH EJ", "simulated", ((A, "The sync field"),),
                        "DH is the Z3805A's rising-edge detector with its two flip-flops exchanged; EJ reads the same "
                        "nets as the Z3805A's.",
-                       "Kind 3: the next internal 1 PPS at {sync3_p83} s (simulated, the sync3 run)."),
+                       "Kind 3 restarts the divider on the next GPS 1 PPS: the next internal 1 PPS comes at "
+                       "{sync3_p83} s (simulated, the sync3 run)."),
     "passthrough": element("passthrough", "other", "Pins passed through", "P14 P16 P84", "read",
                            ((A, "Other outputs"), (A, "The 1 PPS divider")),
                            "P14 passes P17 through, unregistered, where the Z3805A's carries the 1 PPS; P16 is P82, "
                            "P84 P17 inverted. P45 is not driven."),
 })
 
-A58503_PINS = {**TEN_MHZ, "P14": Pin("passed through", "P17, passed through")}
+A58503_PINS = {**TEN_MHZ, "P14": Pin("passed through", "P17, passed through"),
+               "P17": Pin("P17", "an input, onto P84 inverted and onto P14")}
 
 
 # --- the 58503B, the Z3805A's differences ------------------------------------
@@ -488,31 +515,33 @@ B58503 = derive(Z3805A, B, keep={
     "gclk": ("Clocks", "GCLK from P7 through general routing, as in the Z3805A; it clocks {loads[GCLK.O]} logic "
              "blocks, and no ACLK or divider comes ahead of it."),
     "strobe": ("Register port", "HL.X, F = ~PAD24_I + PAD39_I, is the bus's 3-state control: it drives while P75 is "
-               "High and P61 Low.  FK and FL, the write strobe, are the Z3805A's (checked by check-blocks)."),
+               "High and P61 Low.  FK and FL, the write strobe, are the Z3805A's (checked by check-blocks).", "read"),
     "register1": ("Register port", "CG latches DATA0 and DATA1 on DL.X, register 1's bits 0 and 1; FI.X, FI.Y, FG.X, "
-                  "FG.Y and GL.Y hold bits 3 to 7, the read address, A0 to A4."),
-    "address": ("Register port", "EB and EC decode A0 and A1: EC.Y is 0, EC.X 1, EB.Y 2 and EB.X 3."),
+                  "FG.Y and GL.Y hold bits 3 to 7, the read address, A0 to A4.", "read"),
+    "address": ("Register port", "EB and EC decode A0 and A1: EC.Y is 0, EC.X 1, EB.Y 2 and EB.X 3.", "read"),
     "interpolator": ("Register port", "AB and AC, with AD and AE before them, take the interpolator's pads, "
-                     "complemented, at A1 A0 0 and 1, and BC.X and BB.X, the count's bits 0 to 3, at 2."),
+                     "complemented, at A1 A0 0 and 1, and BC.X and BB.X, the count's bits 0 to 3, at 2.", "read"),
     "select": ("Register port", "A3 zeroes DF and EG; with A2 clear CE selects, with it set DE and EF, ORs of count "
-               "readouts that each enable at one A1 A0."),
-    "mux01": ("Register port", "CK: with A4 clear the stop bit CJ.X and the start bit AH.Y, with A4 set DF.X."),
+               "readouts that each enable at one A1 A0.", "read"),
+    "mux01": ("Register port", "CK: with A4 clear the stop bit CJ.X and the start bit AH.Y, with A4 set DF.X.", "read"),
     "mux23": ("Register port", "EG.X, which does not take A4, so 0x00 to 0x07 read bits 2 and 3 of 0x10 to 0x17; "
-              "under the preset the status reads 0x{status} (simulated, the fast run)."),
+              "under the preset the status reads 0x{status} (simulated, the fast run).", "read"),
     "seconds": ("Register port", "IK and IL, a four-bit binary counter on GCLK enabled by HH.Y, the terminal, with no "
-                "reset but the global one: bits 4 to 7 at every address."),
-    "mode3": ("Clocks", "CH.Y clocks BH; the trace gives them no role of their own."),
+                "reset but the global one: bits 4 to 7 at every address.", "read"),
+    "mode3": ("At a glance", "CH.Y clocks BH; the trace gives them no role of their own."),
     "p79": ("Other outputs", "BJ.X, three-state, as the Z3805A's."),
     "p76": ("Other outputs", "BL.Y and BL.X, inverted, as the Z3805A's; their role is open."),
     "head": ("The count", "BB.QY, a single flip-flop toggling on CF.X's rise (K = CF_X, G = ~QY)."),
     "stages": ("The count", "BC, BD, CC, ED, EE, DD, DB, CB, DC, CD and BE, each QX <- QY, QY <- ~QX, on the falling "
                "edge of the previous stage's Y; all reset on EI.X, the preset.  Under the preset the count reads "
                "0x{preset} (simulated, the fast run)."),
-    "binary": ("The 1 PPS divider", "KH to KK with JJ and IJ, JK: the Z3805A's block by block (check-blocks)."),
-    "decades": ("The 1 PPS divider", "KF and KG, JG, GE and GF, HF, GG and HG: the Z3805A's block by block; the tap "
-                "is HG.Y, the top decade's states 4 to 7."),
-    "terminal": ("The 1 PPS divider", "HH, its outputs exchanged: HH.Y, the terminal, every {p83_period} ns, a "
-                 "divide by {divide} (simulated, the three run); HH.X, the same product on JG.Y, to GJ."),
+    "binary": ("The 1 PPS divider", "KH to KK with JJ and IJ, JK: the Z3805A's block by block (check-blocks).",
+               "read"),
+    "decades": ("The 1 PPS divider", "KF and KG, JG, GE and GF, HF, GG and HG: the Z3805A's block by block; HG.Y, the "
+                "top decade's states 4 to 7, is the tap, through EH (the stop's tap buffer).", "read"),
+    "terminal": ("The 1 PPS divider", "HH, its outputs exchanged: HH.Y the terminal, HH.X the same product on JG.Y, "
+                 "to GJ.  P83 and P78 rise every {p83_period} ns (simulated, the three run), so the terminal comes "
+                 "every {divide} clocks (inferred from them).", "read"),
     "field": ("The sync field", "EL.F, the register-3 write decode, loads DI with DATA0 and DATA1; DJ follows a clock "
               "behind: the Z3805A's."),
     "pending": ("The sync field", "EK sets on the field's change from 0 and clears on the terminal HH.Y or the "
@@ -523,7 +552,7 @@ B58503 = derive(Z3805A, B, keep={
 }, changes={
     "decode": element("decode", "port", "Write decode", "DL EL DK", "read", ((B, "Register port"), (B, "The count")),
                       "Addresses 0, 1, 2, 3 and 6: EL.Y register 0, DL.X register 1, DK.Y address 2, EL.F register 3, "
-                      "and DL.Y address 6, ADDR2 High, which the Z3805A lacks."),
+                      "and DL.Y address 6, ADDR2 High; the Z3805A decodes neither address 2 nor address 6."),
     "register0": element("register0", "port", "Register 0: preset and mode", "EI", "read", ((B, "The count"),),
                          "EI.X loads bit 6, the preset, on EL.Y; EI.Y loads from the mode bits and is High unless "
                          "the mode is 3, AH's data."),
@@ -541,7 +570,8 @@ B58503 = derive(Z3805A, B, keep={
                     "preset EI.X clears it on the next clock."),
     "tapbuffer": element("tapbuffer", "count", "Tap buffer", "EH", "read", ((B, "Start, stop and status bits"),),
                          "The tap is HG.Y, as in the Z3805A, through EH, a buffer (F = HG_Y): EH.Y rises {tap} ns "
-                         "after P83 (simulated, the three run)."),
+                         "after this design's own P83, a register later than the Z3805A's (simulated, the three "
+                         "run)."),
     "stop": element("stop", "count", "Stop capture", "CI", "read", ((B, "Start, stop and status bits"),),
                     "CI (F = AH_Y, K = EH_Y, RD = EI_X) latches the start bit when the tap rises."),
     "stoppipe": element("stoppipe", "count", "Stop bit and pipeline", "CJ DG", "read",
@@ -586,6 +616,8 @@ B58503 = derive(Z3805A, B, keep={
 
 B58503_PINS = {
     **TEN_MHZ,
+    "P72": Pin("start", "AH.Y, the start bit; board use open"),
+    "P81": Pin("start", "~AH.X, combinational; board use open"),
     "P14": Pin("1 PPS", "alternate seconds, read back"),
     "P19": Pin("P19", "GB.Y, a GCLK divider's tap"),
     "P83": Pin("1 PPS", "the internal 1 PPS, its polarity FF.Y's"),
@@ -672,10 +704,12 @@ Z3815A = (
             "CG and freezes the count.",
             "The readings fall a second at a time at the testbench's 10 MHz GCLK: {counts} ticks over the preset "
             "(simulated, the three run)."),
-    element("prescaler", "divider", "ACLK prescaler", "EK EL GK GL HK HL IK JK JL KJ KK KL LL FK FL", "simulated",
+    element("prescaler", "divider", "ACLK prescaler", "EK EL GK GL HK HL IK IL JK JL KJ KK KL LL FK FL", "simulated",
             ((F, "The 1 PPS divider"),),
-            "A counter on ACLK, reset by FK.Y, whose terminal is FL.Y: a cycle of {prescale} GCLK clocks, P40, "
-            "which it sets, rising every {p40} ns (simulated, the freerun run)."),
+            "A counter on ACLK, reset by FK.Y, whose terminal FL.Y GJ samples: a cycle of {prescale} GCLK clocks; "
+            "GJ.Y sets P40, which rises every {p40} ns (simulated, the freerun run).",
+            "IL, a five-input decode of GL.Y, GK.Y, HK.X, IK.X and IK.Y into JL, is read from the netlist; the "
+            "trace's list of the prescaler does not name it."),
     element("gj", "divider", "Prescaled tick", "GJ", "read", ((F, "The 1 PPS divider"),),
             "GJ samples FL.Y on GCLK and makes GJ.Y one GCLK pulse each prescaler cycle; it also sets P40."),
     element("chain", "divider", "GCLK chain", "LF KF KG LI LJ KI KH LH", "read", ((F, "The 1 PPS divider"),),
@@ -720,7 +754,7 @@ Z3815A = (
             "High once a cycle: every {ke_y} ns with P7 at 100 ns (simulated, the freerun run)."),
     element("p7counter", "telecom", "P7 counter", "FE EE IE HE CE DE FF GF HF", "simulated",
             ((F, "The P7 divider: P7 / 6250"),),
-            "FE, EE, IE, HE, CE and DE, a synchronous binary counter, enabled by KE.Y and the carries FF, GF and HF; "
+            "FE, EE, IE, HE, CE and DE, a synchronous binary counter, enabled by KE.Y and the carries FF.Y and HF.Y; "
             "not reset by the preset.  FE.Y every {fe_y} ns, EE.Y every {ee_y} ns (simulated, the freerun run)."),
     element("p7terminal", "telecom", "P7 terminal and rearm", "GE", "read", ((F, "The P7 divider: P7 / 6250"),),
             "GE decodes the counter's terminal into GE.QY, which clears it through LE.Y: P7 / {p7_divide} in all, "
@@ -728,11 +762,13 @@ Z3815A = (
     element("p38", "telecom", "Phase detector, P7 side", "LE", "read", ((F, "The phase detector: P38 and P40"),),
             "LE.F = GE_Y + QX: the P7 divider's terminal sets LE.X, out on P38; LE.Y resets the counter.",
             "P38 rises every {p38} ns with P7 at 100 ns (simulated, the freerun run)."),
-    element("p40", "telecom", "Phase detector, GCLK side", "LD", "read", ((F, "The phase detector: P38 and P40"),),
+    element("p40", "telecom", "Phase detector, GCLK side", "LD", "read", ((F, "The phase detector: P38 and P40"), (F, "What of P7 reaches the firmware")),
             "LD.G = GJ_Y + QY: the prescaled tick sets LD.QY, out on P40; LD.X = GE_X + QY·LE_X resets both, so the "
             "side that sets first stays High for the phase difference.",
             "At the frequencies the ratios imply both pins rise every {pll} ns (simulated, the pll run); that it "
-            "locks a 19.6608 MHz oscillator to 10 MHz is inferred."),
+            "locks a 19.6608 MHz oscillator to 10 MHz is inferred.",
+            "Nothing driven by P7 reaches the firmware: the paths are read and the sync runs simulate them at one "
+            "P7 phase (inferred, \u201cWhat of P7 reaches the firmware\u201d)."),
     element("tie", "other", "Constant 1", "AH", "read", ((F, "Every output pin"),),
             "AH, F = 1, through an inverting I/O block: P2 is tied Low."),
     element("passthrough", "other", "Pins passed through", "P16 P36 P47 P48 P56", "read", ((F, "Every output pin"),),
@@ -817,8 +853,6 @@ Z3816A = derive(Z3815A, S, keep={
     "decode": ("Register port", "DJ.Y register 0, EJ.Y register 1, EJ.X register 2 and DJ.X register 3, each with "
                "ADDR2 Low."),
     "register0": ("Register port", "EI.Y the preset, bit 6; EI.X ~(DATA0·DATA1), Low in mode 3."),
-    "register1": ("Register port", "DH bits 0 and 1, into the start logic; FG, EH and DK the read address, bits 3 to "
-                  "7."),
     "phases": ("Register port", "A two-bit Johnson counter on GCLK: P71 and P67 register on AL.Y, P70 and P65 on "
                "AL.X."),
     "interpolator": ("The count", "AA, AC, AD and AE, unclocked, merge the interpolator's pins with the head's terms, "
@@ -829,9 +863,11 @@ Z3816A = derive(Z3815A, S, keep={
               "GH_Y: the status reads 0x{status} (simulated, the fast run)."),
     "gate": ("Start, stop and status bits", "AI (K = GCLK, RD = EI_Y) is the start-armed flag; AI.X gates the tick "
              "CG."),
-    "pipeline": ("Start, stop and status bits", "AF, AG, BI, BJ, BK: the arm gate's pipeline, all reset by EI.Y."),
+    "pipeline": ("Start, stop and status bits", "AF, AG, BI, BJ, BK: the arm gate's pipeline, all reset by EI.Y; "
+                 "what each does is not traced.", "read"),
     "p79": ("Every output pin", "AJ.X (F = 0), 3-stated by AI.Y; board use not traced."),
-    "p76": ("Every output pin", "The start pipeline's AK, inverted onto P76 and P77; board use not traced."),
+    "p76": ("Every output pin", "The start pipeline's AK, reset by EI.Y, inverted onto P76 and P77; board use not "
+            "traced.", "read"),
     "tick": ("The count", "CG.Y is cleared while EI.Y is High, toggles while AI.X is High and DI.Y Low, and holds "
              "once DI.Y goes High: the Z3805A's CF.Y."),
     "head": ("The count", "BA.QY, one flip-flop, G = ~QY, clocked by CG.Y."),
@@ -843,7 +879,8 @@ Z3816A = derive(Z3815A, S, keep={
                  "stop pipeline."),
     "prescaler": ("The 1 PPS divider", "EK, EL, GK, GL, HK and IK on ACLK, reset by FK.Y, with HL, JK and KJ among "
                   "their enables and KK, KL, LL and JL the stages KJ reads; FL.Y its terminal.  P40 rises every {p40} "
-                  "ns (simulated, the freerun run)."),
+                  "ns (simulated, the freerun run).  IL, a five-input decode into JL read from the netlist, is not "
+                  "in the trace's list."),
     "gj": ("The 1 PPS divider", "GJ (DI = FL_Y, G = QX·~QY) makes GJ.Y a one-GCLK tick each prescaler cycle."),
     "chain": ("The 1 PPS divider", "LF and KF count GJ's ticks; KG their carry into LI and LJ; KI.Y enables KI, KH "
               "and LH.  The tap, KI.X, rises {tap} ns after P83 (simulated, the three run)."),
@@ -873,9 +910,16 @@ Z3816A = derive(Z3815A, S, keep={
     "p38": ("P38 and P40: a phase-frequency detector", "LE.QX, P38 (F = GE_Y + QX, RD = LD_X), set by the P7 "
             "divider's terminal; P38 every {p38} ns (simulated, the freerun run)."),
     "p40": ("P38 and P40: a phase-frequency detector", "LD.QY, P40 (G = GJ_Y + QY), set by GJ.Y; LD.X = KD_X + "
-            "LD.QY·LE.X resets both.  At the implied frequencies both rise every {pll} ns (simulated, the pll run)."),
+            "LD.QY·LE.X resets both.  At the implied frequencies both rise every {pll} ns (simulated, the pll run); "
+            "that it locks a 19.6608 MHz oscillator to 10 MHz is inferred, the board's 5 MHz MTI Series 260 OCXO "
+            "presumably doubled to that 10 MHz (inferred, not traced; \u201cClocks\u201d), and nothing driven by P7 "
+            "reaches the firmware (inferred, \u201cWhat of P7 reaches the firmware\u201d)."),
     "tie": ("Every output pin", "AH, F = 1, no inputs, inverted: P2 is tied Low."),
 }, changes={
+    "register1": element("register1", "port", "Register 1: start bits and read address", "DH FG EH DK", "read",
+                         ((S, "Register port"),),
+                         "DH bits 0 and 1, into the start logic, AI, AF and BI; FG, EH and DK the read address, bits 3 "
+                         "to 7."),
     "register2": element("register2", "port", "Register 2: phase", "EF BF", "read", ((S, "Register port"),
                                                                                    (S, "The 1 PPS divider")),
                          "EF bit 0; EF.X (EF.QY·~BF_X, BF.X EF.QY a GCLK late) is a pulse on its rising edge, which "

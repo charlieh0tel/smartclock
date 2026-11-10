@@ -164,7 +164,7 @@ STYLE = """
 }
 *,*::before,*::after{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.55;margin:0;padding:2rem 16px 4rem}
-main{max-width:920px;margin:0 auto;display:grid;gap:3.25rem}
+main{max-width:1240px;margin:0 auto;display:grid;gap:3.25rem}
 main>*{min-width:0}
 header>*,section>*,figure{margin:0}
 header>*+*,section>*+*{margin-top:1rem}
@@ -199,6 +199,7 @@ th:first-child,td:first-child{padding-left:0}
 th:last-child,td:last-child{padding-right:0}
 thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);vertical-align:bottom;border-bottom-color:var(--muted)}
 tbody th{font-weight:600}
+tbody th,td.short{white-space:nowrap}
 .dg-box{fill:var(--panel);stroke:var(--fg);stroke-width:1.4}
 .dg-box.inferred{stroke:var(--inferred);stroke-dasharray:5 4}
 .dg-t{font:13px "IBM Plex Sans",system-ui,sans-serif;fill:var(--fg)}

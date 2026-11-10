@@ -5,10 +5,10 @@ in `third_party/firmware/images/`.  Run `make docs` to regenerate; a test
 fails if this file and the images disagree.  `README.md` here says
 how the tables are read; `../console.md` is the console itself.
 
-| Table | 58503A<br>3633 | 58503A<br>3704 | 58503B<br>1.01.04 | Z3801A<br>3543 | Z3805A<br>3543B | Z3815A<br>4010 | Z3816A<br>4001 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| kernel words | 154 | 154 | 154 | 154 | 154 | 154 | 154 |
-| diagnostic words | 86 | 79 | 78 | 85 | 85 | 89 | 80 |
+| Table | 58503A<br>3633 | 58503A<br>3704 | 58503B<br>1.01.04 | Z3801A<br>3543 | Z3805A<br>3543B | Z3815A<br>4010 | Z3816A<br>4001 | Z3817A<br>3752 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| kernel words | 154 | 154 | 154 | 154 | 154 | 154 | 154 | 154 |
+| diagnostic words | 86 | 79 | 78 | 85 | 85 | 89 | 80 | 78 |
 
 ## The kernel words
 
@@ -18,38 +18,42 @@ In every image, 154:
 
 ## The diagnostic words
 
-In every image, 74:
+In every image, 71:
 
-`abr_stat` `adc_read` `avg` `clear_nv` `clk_synch` `clr_avg` `clr_gps_debug` `crash` `debug_psos` `disable_gps_cmds` `dmes_all` `dmes_curv` `dmes_gpsm` `dmes_hmon` `dmes_klok` `dmes_pllp` `dmes_root` `dmes_scpi` `dmes_spoo` `dmessage` `doven` `efc_rep` `efc_wr` `efc_write` `eman` `es_ascii` `ext_msg_rate` `fp_u` `get_time` `gps_cable_dly` `gps_change` `gps_date` `gps_ph` `gps_php` `gps_query` `gps_query_all` `gps_time` `hdac_all` `hdac_write` `init_gps` `leapsec` `lock` `log_send` `loop_time` `master_reset` `pll_debug` `pll_rep` `pll_restart` `pr_adc_avg` `pr_avg` `pr_efc` `pr_gps_cmds` `pr_gps_debug` `pr_gps_id` `pr_gps_istate` `pr_hold_cause` `pr_pll` `pr_time_raim` `print_bc` `print_clk_list` `print_ext_msg` `print_stat` `print_vis` `pstat` `q_eman` `q_gps_cable_dly` `q_gps_php` `quiet_status` `set_time` `stat_rate` `sync_imm` `vis_stat_rate` `wr_eeprom` `xdop_stat_rate`
+`abr_stat` `adc_read` `avg` `clear_nv` `clk_synch` `clr_avg` `clr_gps_debug` `crash` `debug_psos` `disable_gps_cmds` `dmes_all` `dmes_curv` `dmes_gpsm` `dmes_hmon` `dmes_klok` `dmes_pllp` `dmes_root` `dmes_scpi` `dmes_spoo` `dmessage` `efc_rep` `efc_wr` `efc_write` `eman` `es_ascii` `ext_msg_rate` `fp_u` `get_time` `gps_cable_dly` `gps_change` `gps_date` `gps_ph` `gps_php` `gps_query` `gps_query_all` `gps_time` `init_gps` `leapsec` `lock` `log_send` `loop_time` `master_reset` `pll_debug` `pll_rep` `pll_restart` `pr_adc_avg` `pr_avg` `pr_efc` `pr_gps_cmds` `pr_gps_debug` `pr_gps_id` `pr_gps_istate` `pr_hold_cause` `pr_pll` `pr_time_raim` `print_bc` `print_clk_list` `print_ext_msg` `print_stat` `print_vis` `pstat` `q_eman` `q_gps_cable_dly` `q_gps_php` `quiet_status` `set_time` `stat_rate` `sync_imm` `vis_stat_rate` `wr_eeprom` `xdop_stat_rate`
 
-In some images, 26:
+In some images, 30:
 
-| Word | 58503A<br>3633 | 58503A<br>3704 | 58503B<br>1.01.04 | Z3801A<br>3543 | Z3805A<br>3543B | Z3815A<br>4010 | Z3816A<br>4001 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `adc_5v` | ✓ |  |  | ✓ | ✓ |  |  |
-| `adc_ant_curr` | ✓ |  |  | ✓ | ✓ |  |  |
-| `adc_doven` | ✓ |  |  | ✓ | ✓ |  |  |
-| `adc_m15v` | ✓ |  |  | ✓ | ✓ |  |  |
-| `adc_oven` | ✓ |  |  | ✓ | ✓ |  |  |
-| `adc_p15v` | ✓ |  |  | ✓ | ✓ |  |  |
-| `adc_temp` | ✓ |  |  | ✓ | ✓ |  |  |
-| `cal` | ✓ | ✓ |  | ✓ | ✓ |  | ✓ |
-| `clr_satview` |  |  | ✓ |  |  |  | ✓ |
-| `efc_comp` |  |  |  |  |  | ✓ |  |
-| `efc_comp_debug` |  |  |  |  |  | ✓ |  |
-| `force_1pps` |  |  |  | ✓ | ✓ |  |  |
-| `force_ext_1pps` | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |
-| `force_gps_1pps` | ✓ | ✓ | ✓ |  |  | ✓ | ✓ |
-| `n3_duart_res` |  |  |  |  |  | ✓ |  |
-| `n3_phase` |  |  |  |  |  | ✓ |  |
-| `phase_off` | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ |
-| `pr_1pps` | ✓ | ✓ |  | ✓ | ✓ | ✓ |  |
-| `pr_bad_act` |  |  |  |  |  | ✓ |  |
-| `pr_satview` |  |  | ✓ |  |  |  | ✓ |
-| `puck` |  |  |  |  |  | ✓ |  |
-| `s3_gps_avail` |  |  |  |  |  | ✓ |  |
-| `s3_hw_fail` |  |  |  |  |  | ✓ |  |
-| `s3_out_reg` |  |  |  |  |  | ✓ |  |
-| `s3_testmode` |  |  |  |  |  | ✓ |  |
-| `set_mux` |  |  |  |  |  | ✓ |  |
+| Word | 58503A<br>3633 | 58503A<br>3704 | 58503B<br>1.01.04 | Z3801A<br>3543 | Z3805A<br>3543B | Z3815A<br>4010 | Z3816A<br>4001 | Z3817A<br>3752 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `adc_5v` | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `adc_ant_curr` | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `adc_doven` | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `adc_m15v` | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `adc_oven` | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `adc_p15v` | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `adc_temp` | ✓ |  |  | ✓ | ✓ |  |  |  |
+| `cal` | ✓ | ✓ |  | ✓ | ✓ |  | ✓ |  |
+| `clr_satview` |  |  | ✓ |  |  |  | ✓ |  |
+| `doven` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+| `duart_debug` |  |  |  |  |  |  |  | ✓ |
+| `efc_comp` |  |  |  |  |  | ✓ |  | ✓ |
+| `efc_comp_debug` |  |  |  |  |  | ✓ |  | ✓ |
+| `force_1pps` |  |  |  | ✓ | ✓ |  |  |  |
+| `force_ext_1pps` | ✓ | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `force_gps_1pps` | ✓ | ✓ | ✓ |  |  | ✓ | ✓ | ✓ |
+| `hdac_all` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+| `hdac_write` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+| `n3_duart_res` |  |  |  |  |  | ✓ |  |  |
+| `n3_phase` |  |  |  |  |  | ✓ |  |  |
+| `phase_off` | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ |  |
+| `pr_1pps` | ✓ | ✓ |  | ✓ | ✓ | ✓ |  | ✓ |
+| `pr_bad_act` |  |  |  |  |  | ✓ |  |  |
+| `pr_satview` |  |  | ✓ |  |  |  | ✓ |  |
+| `puck` |  |  |  |  |  | ✓ |  | ✓ |
+| `s3_gps_avail` |  |  |  |  |  | ✓ |  |  |
+| `s3_hw_fail` |  |  |  |  |  | ✓ |  |  |
+| `s3_out_reg` |  |  |  |  |  | ✓ |  |  |
+| `s3_testmode` |  |  |  |  |  | ✓ |  |  |
+| `set_mux` |  |  |  |  |  | ✓ |  |  |
 

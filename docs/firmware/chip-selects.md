@@ -48,6 +48,9 @@ Pin numbers are the 132-pin QFP's (Figure 3-2).
 | Z3815A 4010 | primary | `0x24b3e` to `0x24c06` | Writes CSPAR0 `0x2fff`, CSPAR1 `0x02af`, CSBARBT `0x0006`, CSBAR1 `0x3000`, CSOR1 `0x7030`, CSBAR4 `0xfff8`, CSOR4 `0x2bc4`, CSBAR5 `0x3040`, CSOR5 `0x7930`, CSBAR6 `0x0006`, CSBAR7 `0x3020`, CSOR7 `0x6870`, CSBAR10 `0x5000`, CSOR10 `0x7bf0` |
 | Z3816A 4001 | boot | `0x418` to `0x4d0` | Writes CSPAR0 `0x2fff`, CSPAR1 `0x03ab`, CSBARBT `0x0006`, CSBAR1 `0x3000`, CSOR1 `0x7030`, CSBAR4 `0xfff8`, CSOR4 `0x7805`, CSBAR5 `0x3040`, CSOR5 `0x7930`, CSBAR6 `0x0006`, CSBAR7 `0x3060`, CSOR8 `0xb830` and writes no CSBAR10, CSOR10 |
 | Z3816A 4001 | primary | `0x24676` to `0x2473e` | Writes CSPAR0 `0x2fff`, CSPAR1 `0x02af`, CSBARBT `0x0006`, CSBAR1 `0x3000`, CSOR1 `0x7030`, CSBAR4 `0xfff8`, CSOR4 `0x2bc4`, CSBAR5 `0x3040`, CSOR5 `0x7930`, CSBAR6 `0x0006`, CSBAR7 `0x3020`, CSOR7 `0x6870`, CSBAR10 `0x5000`, CSOR10 `0x7bf0` |
+| Z3817A 3752 | boot@0x418 | `0x418` to `0x450` | Writes CSBARBT `0x0007`, CSBAR0 `0x1007`, CSBAR2 `0x1007`, CSBAR3 `0x1007` and writes no CSPAR0, CSPAR1, CSBAR1, CSOR1, CSBAR4, CSOR4, CSBAR5, CSOR5, CSBAR6, CSOR6, CSBAR7, CSOR7, CSBAR8, CSOR8, CSBAR9, CSOR9, CSBAR10, CSOR10 |
+| Z3817A 3752 | boot@0x4a6 | `0x4a6` to `0x55e` | Writes CSPAR0 `0x2fff`, CSPAR1 `0x03ab`, CSBARBT `0x0006`, CSBAR1 `0x3000`, CSOR1 `0x7030`, CSBAR4 `0xfff8`, CSOR4 `0x7805`, CSBAR5 `0x3040`, CSOR5 `0x7930`, CSBAR6 `0x0006`, CSBAR7 `0x3060`, CSOR8 `0xb830` and writes no CSBAR10, CSOR10 |
+| Z3817A 3752 | primary | `0x244e0` to `0x24598` | Writes CSPAR0 `0x2fef`, CSPAR1 `0x00ab`, CSBARBT `0x0006`, CSBAR1 `0x3000`, CSOR1 `0x7030`, CSBAR4 `0xfff8`, CSOR4 `0x2bc4`, CSBAR5 `0x3040`, CSOR5 `0x7930`, CSBAR6 `0x0006`, CSBAR7 `0x3060` and writes no CSBAR10, CSOR10 |
 
 ## 58503A 3633
 
@@ -388,3 +391,68 @@ Pins: CSPAR0 `0x2fff` at `0x24676`, CSPAR1 `0x02af` at `0x2467e`.
 | `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x24726`, `0x2472e` | 8-bit | both, read and write, 3 wait |
 | `0x500000`--`0x5007ff`, 2 KiB | CS10 | 125, ECLK/ADDR23 | `0x5000`, `0x7bf0`; `0x24736`, `0x2473e` | 8-bit | both, read and write, external |
 | CPU space, interrupt acknowledge at level 2 | CS4 | 119, PC1/FC1 | `0xfff8`, `0x2bc4`; `0x246d6`, `0x246de` | 16-bit | lower, read, external; CPU space, IPL 2 |
+
+## Z3817A 3752
+
+### The boot code's first run, `0x418` to `0x450`
+
+Pins: CSPAR0 not written, CSPAR1 not written.
+
+| Window | Select | Pin | CSBAR, CSOR; written at | Port | BYTE, R/W, DSACK |
+| ------ | ------ | --- | ----------------------- | ---- | ---------------- |
+| `0x000000`--`0x0fffff`, 1024 KiB | CSBOOT | 112 | `0x0007`, `0x6870`; `0x418`, `0x420` | from the DATA lines at reset (4.8.4) | both, read, 1 wait |
+| `0x100000`--`0x1fffff`, 1024 KiB | CS0 | 113, BR | `0x1007`, `0x6830`; `0x428`, `0x430` | from the DATA lines at reset (4.8.4) | both, read, 0 wait |
+| the same | CS2 | 115, BGACK | `0x1007`, `0x5030`; `0x438`, `0x440` | from the DATA lines at reset (4.8.4) | upper, write, 0 wait |
+| the same | CS3 | 118, PC0/FC0 | `0x1007`, `0x3030`; `0x448`, `0x450` | from the DATA lines at reset (4.8.4) | lower, write, 0 wait |
+| none: BYTE disabled | CS1 | 114, BG | `0x0000`, `0x0000`; kept, kept (reset) | from the DATA lines at reset (4.8.4) | disabled |
+| the same | CS4 | 119, PC1/FC1 | `0x0000`, `0x0000`; kept, kept (reset) | from the DATA lines at reset (4.8.4) | disabled |
+| the same | CS5 | 120, PC2/FC2 | `0x0000`, `0x0000`; kept, kept (reset) | from the DATA lines at reset (4.8.4) | disabled |
+| the same | CS6 | 121, PC3/ADDR19 | `0x0000`, `0x0000`; kept, kept (reset) | from the DATA lines at reset (4.8.4) | disabled |
+| the same | CS7 | 122, PC4/ADDR20 | `0x0000`, `0x0000`; kept, kept (reset) | from the DATA lines at reset (4.8.4) | disabled |
+| the same | CS8 | 123, PC5/ADDR21 | `0x0000`, `0x0000`; kept, kept (reset) | from the DATA lines at reset (4.8.4) | disabled |
+| the same | CS9 | 124, PC6/ADDR22 | `0x0000`, `0x0000`; kept, kept (reset) | from the DATA lines at reset (4.8.4) | disabled |
+| the same | CS10 | 125, ECLK/ADDR23 | `0x0000`, `0x0000`; kept, kept (reset) | from the DATA lines at reset (4.8.4) | disabled |
+
+The boot code's second run (`0x4a6` to `0x55e`) writes CSPAR0 `0x2fff`, CSPAR1 `0x03ab`, CSBARBT `0x0006`, CSBAR0 `0x1003`, CSBAR1 `0x3000`, CSOR1 `0x7030`, CSBAR2 `0x1003`, CSBAR3 `0x1003`, CSBAR4 `0xfff8`, CSOR4 `0x7805`, CSBAR5 `0x3040`, CSOR5 `0x7930`, CSBAR6 `0x0006`, CSOR6 `0x7070`, CSBAR7 `0x3060`, CSOR7 `0x7070`, CSBAR8 `0x2000`, CSOR8 `0xb830`, CSBAR9 `0x4001`, CSOR9 `0x78f0`.
+
+The primary (`0x244e0` to `0x24598`) writes CSPAR0 `0x2fef`, CSPAR1 `0x00ab`, CSBARBT `0x0006`, CSBAR0 `0x1003`, CSBAR1 `0x3000`, CSOR1 `0x7030`, CSBAR2 `0x1003`, CSBAR3 `0x1003`, CSBAR4 `0xfff8`, CSOR4 `0x2bc4`, CSBAR5 `0x3040`, CSOR5 `0x7930`, CSBAR6 `0x0006`, CSOR6 `0x7070`, CSBAR7 `0x3060`, CSOR7 `0x7070`, CSBAR8 `0x2000`, CSOR8 `0x3bf0`, CSBAR9 `0x4001`, CSOR9 `0x78f0`.
+
+### The boot code's second run, `0x4a6` to `0x55e`
+
+Pins: CSPAR0 `0x2fff` at `0x4a6`, CSPAR1 `0x03ab` at `0x4ae`.
+
+| Window | Select | Pin | CSBAR, CSOR; written at | Port | BYTE, R/W, DSACK |
+| ------ | ------ | --- | ----------------------- | ---- | ---------------- |
+| `0x000000`--`0x07ffff`, 512 KiB | CSBOOT | 112 | `0x0006`, `0x6870`; `0x4b6`, `0x4be` | 16-bit | both, read, 1 wait |
+| the same | CS6 | 121, PC3/ADDR19 | `0x0006`, `0x7070`; `0x526`, `0x52e` | 16-bit | both, write, 1 wait |
+| `0x100000`--`0x10ffff`, 64 KiB | CS0 | 113, BR | `0x1003`, `0x6830`; `0x4c6`, `0x4ce` | 16-bit | both, read, 0 wait |
+| the same | CS2 | 115, BGACK | `0x1003`, `0x5030`; `0x4e6`, `0x4ee` | 16-bit | upper, write, 0 wait |
+| the same | CS3 | 118, PC0/FC0 | `0x1003`, `0x3030`; `0x4f6`, `0x4fe` | 16-bit | lower, write, 0 wait |
+| `0x200000`--`0x2007ff`, 2 KiB | CS8 | 123, PC5/ADDR21 | `0x2000`, `0xb830`; `0x546`, `0x54e` | 8-bit | lower, read and write, synchronous |
+| `0x300000`--`0x3007ff`, 2 KiB | CS1 | 114, BG | `0x3000`, `0x7030`; `0x4d6`, `0x4de` | 16-bit | both, write, 0 wait |
+| `0x304000`--`0x3047ff`, 2 KiB | CS5 | 120, PC2/FC2 | `0x3040`, `0x7930`; `0x516`, `0x51e` | 8-bit | both, read and write, 4 wait |
+| `0x306000`--`0x3067ff`, 2 KiB | CS7 | 122, PC4/ADDR20 | `0x3060`, `0x7070`; `0x536`, `0x53e` | 8-bit | both, write, 1 wait |
+| `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x556`, `0x55e` | 8-bit | both, read and write, 3 wait |
+| CPU space, interrupt acknowledge at level 2 | CS4 | 119, PC1/FC1 | `0xfff8`, `0x7805`; `0x506`, `0x50e` | 16-bit | both, read and write, 0 wait; CPU space, IPL 2, autovector |
+| none: BYTE disabled | CS10 | 125, ECLK/ADDR23 | `0x0000`, `0x0000`; kept, kept (as the boot code's first run left them) | 16-bit | disabled |
+
+The primary (`0x244e0` to `0x24598`) writes CSPAR0 `0x2fef`, CSPAR1 `0x00ab`, CSOR4 `0x2bc4`, CSOR8 `0x3bf0`.
+
+### The primary, `0x244e0` to `0x24598`
+
+Pins: CSPAR0 `0x2fef` at `0x244e0`, CSPAR1 `0x00ab` at `0x244e8`.
+
+| Window | Select | Pin | CSBAR, CSOR; written at | Port | BYTE, R/W, DSACK |
+| ------ | ------ | --- | ----------------------- | ---- | ---------------- |
+| `0x000000`--`0x07ffff`, 512 KiB | CSBOOT | 112 | `0x0006`, `0x6870`; `0x244f0`, `0x244f8` | 16-bit | both, read, 1 wait |
+| the same | CS6 | 121, PC3/ADDR19 | `0x0006`, `0x7070`; `0x24560`, `0x24568` | 16-bit | both, write, 1 wait |
+| `0x100000`--`0x10ffff`, 64 KiB | CS0 | 113, BR | `0x1003`, `0x6830`; `0x24500`, `0x24508` | 16-bit | both, read, 0 wait |
+| the same | CS2 | 115, BGACK | `0x1003`, `0x5030`; `0x24520`, `0x24528` | 16-bit | upper, write, 0 wait |
+| the same | CS3 | 118, PC0/FC0 | `0x1003`, `0x3030`; `0x24530`, `0x24538` | 16-bit | lower, write, 0 wait |
+| `0x200000`--`0x2007ff`, 2 KiB | CS8 | 123, PC5/ADDR21 | `0x2000`, `0x3bf0`; `0x24580`, `0x24588` | 8-bit | lower, read and write, external |
+| `0x300000`--`0x3007ff`, 2 KiB | CS1 | 114, BG | `0x3000`, `0x7030`; `0x24510`, `0x24518` | 8-bit | both, write, 0 wait |
+| `0x304000`--`0x3047ff`, 2 KiB | CS5 | 120, PC2/FC2 | `0x3040`, `0x7930`; `0x24550`, `0x24558` | 8-bit | both, read and write, 4 wait |
+| `0x306000`--`0x3067ff`, 2 KiB | CS7 | 122, PC4/ADDR20 | `0x3060`, `0x7070`; `0x24570`, `0x24578` | 8-bit | both, write, 1 wait |
+| `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x24590`, `0x24598` | 8-bit | both, read and write, 3 wait |
+| CPU space, interrupt acknowledge at level 2 | CS4 | 119, PC1/FC1 | `0xfff8`, `0x2bc4`; `0x24540`, `0x24548` | 16-bit | lower, read, external; CPU space, IPL 2 |
+| none: BYTE disabled | CS10 | 125, ECLK/ADDR23 | `0x0000`, `0x0000`; kept, kept (as the boot code's first run left them) | discrete output ECLK | disabled |

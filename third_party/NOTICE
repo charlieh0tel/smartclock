@@ -207,6 +207,13 @@ which claims about the command set are checked.  CPU32 code, big-endian, loaded 
                              back through its console (`docs/firmware/`).
   z3816a-4001.bin            Z3816A firmware, revision 4001.  Copyright
                              Hewlett-Packard 2000.
+  z3817a-3752.bin            Z3817A firmware, revision 3752.  Copyright
+                             Hewlett-Packard 1993-1997.  Read on
+                             2026-11-09 through the pForth console of
+                             the bench Z3817A, serial 3832A03064, which
+                             answers *IDN? with 3752-A (`docs/firmware/`,
+                             "Reading memory through it").  512 KB from
+                             address 0; SHA-256 244596a3...dd05f072.
   58503a-3633.bin            58503A firmware, revision 3633.  Copyright
                              Hewlett-Packard 1993.  Assembled from the
                              four AM29F010 dumps published by willhb at
@@ -288,6 +295,7 @@ EEPROM contents, read the same way, 8 KB from `0x400000` (chip select
   58503a-3710A01056-eeprom.bin  the bench 58503A, 3704-C.
   z3801a-3542A01548-eeprom.bin  the bench Z3801A, 3543-A.
   z3805a-3625A01487-eeprom.bin  the bench Z3805A, 3543B-A.
+  z3817a-3832A03064-eeprom.bin  the bench Z3817A, 3752-A.
 
 FPGA bitstreams, in `firmware/images/fpga/`: the 3860 bytes each image loads
 into its Xilinx XC3042, copied unchanged from the image at the offset

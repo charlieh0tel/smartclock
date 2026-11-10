@@ -12,63 +12,63 @@ where the table holds it and none of these, blank where it does not
 hold it.  Code can also request a message by its index, which this
 does not see; `../gps.md` names the requests found.
 
-| Image | 58503A<br>3633 | 58503A<br>3704 | 58503B<br>1.01.04 | Z3801A<br>3543 | Z3805A<br>3543B | Z3816A<br>4001 |
-| --- | --- | --- | --- | --- | --- | --- |
-| Table entries | 56 | 56 | 64 | 49 | 49 | 64 |
-| Entry size | 60 | 60 | 60 | 56 | 56 | 60 |
-| Scripts | 20 | 20 | 20 | 19 | 19 | 20 |
-| Polling lists | 1 | 1 | 2 | 0 | 0 | 2 |
+| Image | 58503A<br>3633 | 58503A<br>3704 | 58503B<br>1.01.04 | Z3801A<br>3543 | Z3805A<br>3543B | Z3816A<br>4001 | Z3817A<br>3752 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Table entries | 56 | 56 | 64 | 49 | 49 | 64 | 57 |
+| Entry size | 60 | 60 | 60 | 56 | 56 | 60 | 60 |
+| Scripts | 20 | 20 | 20 | 19 | 19 | 20 | 20 |
+| Polling lists | 1 | 1 | 2 | 0 | 0 | 2 | 1 |
 
-| Message | 58503A<br>3633 | 58503A<br>3704 | 58503B<br>1.01.04 | Z3801A<br>3543 | Z3805A<br>3543B | Z3816A<br>4001 |
-| --- | --- | --- | --- | --- | --- | --- |
-| `@@Aa` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ab` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ac` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ad` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ae` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Af` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ag` | qd | qd | qd | qd | qd | qd |
-| `@@Ah` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ai` | sd | sd | sd | sd | sd | sd |
-| `@@Aj` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ak` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Al` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Am` | qd | qd | qd | qd | qd | qd |
-| `@@An` | sd | sd | sd | sd | sd | sd |
-| `@@Ao` | sq | sq | sq | sq | sq | sq |
-| `@@Ap` | - | - | d | - | - | d |
-| `@@Aq` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ar` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@As` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@At` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Au` | d | d | d |  |  | d |
-| `@@Av` | sd | sd | sd | sd | sd | sd |
-| `@@Aw` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ax` | sd | sd | sd | sd | sd | sd |
-| `@@Ay` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Az` | qd | qd | qd | qd | qd | qd |
-| `@@AB` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@AC` | sd | sd | sd | sd | sd | sd |
-| `@@AD` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ba` | sd | sd | sd | sd | sd | sd |
-| `@@Bb` | sd | sd | sd | sd | sd | sd |
-| `@@Bc` | sd | sd | sd | sd | sd | sd |
-| `@@Bd` | d | d | d | d | d | d |
-| `@@Bh` | - | - | - | - | - | - |
-| `@@Bj` | qd | qd | qd | qd | qd | qd |
-| `@@Bk` | sd | sd | sd | sd | sd | sd |
-| `@@Bn` | sd | sd | sd | sd | sd | sd |
-| `@@Bo` |  |  | sd |  |  | sd |
-| `@@Ca` | sd | sd | sd | sd | sd | sd |
-| `@@Ce` | d | d | d | d | d | d |
-| `@@Cf` | s | s | s | s | s | s |
-| `@@Cg` | sqd | sqd | sqd | sqd | sqd | sqd |
-| `@@Ci` | - | - | - | s | s | - |
-| `@@Cj` | sd | sd | qd | sd | sd | qd |
-| `@@Ea` | sd | sd | sd |  |  | sd |
-| `@@Ek` | sd | sd | sd |  |  | sd |
-| `@@En` | sd | sd | sd |  |  | sd |
-| `@@Fa` | sd | sd | sd |  |  | sd |
-| `@@Gj` |  |  | qd |  |  | qd |
-| `@@Sz` |  |  | d |  |  | d |
-| `@@Ta` |  |  | qd |  |  | qd |
+| Message | 58503A<br>3633 | 58503A<br>3704 | 58503B<br>1.01.04 | Z3801A<br>3543 | Z3805A<br>3543B | Z3816A<br>4001 | Z3817A<br>3752 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `@@Aa` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ab` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ac` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ad` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ae` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Af` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ag` | qd | qd | qd | qd | qd | qd | qd |
+| `@@Ah` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ai` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Aj` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ak` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Al` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Am` | qd | qd | qd | qd | qd | qd | qd |
+| `@@An` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Ao` | sq | sq | sq | sq | sq | sq | sq |
+| `@@Ap` | - | - | d | - | - | d | - |
+| `@@Aq` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ar` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@As` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@At` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Au` | d | d | d |  |  | d | d |
+| `@@Av` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Aw` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ax` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Ay` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Az` | qd | qd | qd | qd | qd | qd | qd |
+| `@@AB` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@AC` | sd | sd | sd | sd | sd | sd | sd |
+| `@@AD` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ba` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Bb` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Bc` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Bd` | d | d | d | d | d | d | d |
+| `@@Bh` | - | - | - | - | - | - | - |
+| `@@Bj` | qd | qd | qd | qd | qd | qd | qd |
+| `@@Bk` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Bn` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Bo` |  |  | sd |  |  | sd |  |
+| `@@Ca` | sd | sd | sd | sd | sd | sd | sd |
+| `@@Ce` | d | d | d | d | d | d | d |
+| `@@Cf` | s | s | s | s | s | s | s |
+| `@@Cg` | sqd | sqd | sqd | sqd | sqd | sqd | sqd |
+| `@@Ci` | - | - | - | s | s | - | - |
+| `@@Cj` | sd | sd | qd | sd | sd | qd | sd |
+| `@@Ea` | sd | sd | sd |  |  | sd | sd |
+| `@@Ek` | sd | sd | sd |  |  | sd | sd |
+| `@@En` | sd | sd | sd |  |  | sd | sd |
+| `@@Fa` | sd | sd | sd |  |  | sd | sd |
+| `@@Gj` |  |  | qd |  |  | qd |  |
+| `@@Sz` |  |  | d |  |  | d | d |
+| `@@Ta` |  |  | qd |  |  | qd |  |

@@ -347,7 +347,7 @@ mod tests {
 
     /// Each image in `third_party/firmware/images/`, by the name its list has
     /// in `docs/firmware/pforth/`.
-    const IMAGES: [&str; 7] = [
+    const IMAGES: [&str; 8] = [
         "58503a-3633",
         "58503a-3704",
         "58503b-1.01.04",
@@ -355,6 +355,7 @@ mod tests {
         "z3805a-3543b",
         "z3815a-4010",
         "z3816a-4001",
+        "z3817a-3752",
     ];
 
     fn root() -> String {

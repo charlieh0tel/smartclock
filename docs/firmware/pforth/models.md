@@ -5,6 +5,10 @@ in `third_party/firmware/images/`.  Run `make docs` to regenerate; a test
 fails if this file and the images disagree.  `README.md` here says
 how the tables are read; `../console.md` is the console itself.
 
+[`pforth-models.html`](https://charlieh0tel.github.io/smartclock/pforth-models.html)
+sets every image's words side by side, with their flags and stack
+effects, as a page that filters them.
+
 | Table | 58503A<br>3633 | 58503A<br>3704 | 58503B<br>1.01.04 | Z3801A<br>3543 | Z3805A<br>3543B | Z3815A<br>4010 | Z3816A<br>4001 | Z3817A<br>3752 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | kernel words | 154 | 154 | 154 | 154 | 154 | 154 | 154 | 154 |

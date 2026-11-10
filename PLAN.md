@@ -343,7 +343,8 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   Chromium, an m68k gcc and uv, so they are jobs of their own.
 - HTML pages are published on GitHub Pages by
   `.github/workflows/pages.yml`, which `make pages` builds.  Generated
-  ones (the board atlas, the block diagram, the SCPI trees by model)
+  ones (the board atlas, the block diagram, the SCPI trees and the
+  pForth words by model)
   are built from their sources and not committed; hand-written ones (`loop.html` and the
   bench records) are copied from their sources in `docs/pages/`.  A
   generated page's committed copy needed a drift check and a
@@ -422,7 +423,15 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   JSON, kept out of the site, and a Python renderer builds the page
   from it with `tools/pages_matrix.py`'s shell, style and filtering
   script.  The SCPI trees by model are one, their data from
-  `smartclock-cli dump-scpi --models --json`.  The CLI once wrote the
+  `smartclock-cli dump-scpi --models --json`; the pForth words by
+  model another, from `tools/firmware/pforth_words.py --json`, the
+  reading that writes each image's `IMAGE-words.md`, not the CLI's
+  `dump-pforth`, which reads names and code addresses only and no
+  flags or stack effects.  It needs uv in the Pages build for the
+  script's Capstone.  The pForth page is in the firmware group, the
+  SCPI page in the SCPI group, as their Markdown is.  A table scrolls
+  inside its own box and, in a narrow window, holds its first column,
+  so the page never scrolls sideways.  The CLI once wrote the
   page itself from a template of its own, which a second such page,
   its data from a Python tool, could not share; one shell keeps the
   pages alike and fixes each once.

@@ -32,6 +32,15 @@ Ghidra; `make pforth-words` rewrites them and `make
 check-pforth-words` fails when one and its image disagree.  It needs
 python3's `capstone` module.
 
+[`pforth-models.html`](https://charlieh0tel.github.io/smartclock/pforth-models.html)
+sets the word tables side by side as a page that filters them: a row
+per word, a column per image holding its code address there, the
+flags and stack effect once where the images agree.  It filters by
+text, by table and by image, and to the words that differ, by
+presence, flags or stack effect, or those every image shares.  `make
+pforth-models` builds it for GitHub Pages, `tools/pforth_models.py`
+rendering what `pforth_words.py --json` prints.  It is not committed.
+
 It finds the kernel's dictionary by its shape, not by a name: the one
 header whose code pushes the header's own address (`move.l
 #HEADER,-(a6)`, `rts`) is `user`'s, the latest, and the links run from

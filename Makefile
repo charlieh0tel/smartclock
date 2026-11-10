@@ -150,7 +150,7 @@ docs:
 PAGES_DIR ?= target/pages
 PAGES_DATA ?= target/pages-data
 HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
-PAGES := fpga fpga-detail board-atlas block-diagram scpi-models $(HAND_PAGES)
+PAGES := fpga fpga-detail board-atlas block-diagram scpi-models pforth-models $(HAND_PAGES)
 NEW_PAGE := fpga
 FEATURED_PAGE := loop
 UNLISTED_PAGES := bench-sky-2026-10-03
@@ -190,6 +190,15 @@ scpi-models:
 	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models --json third_party/firmware/images/*.bin \
 		> $(PAGES_DATA)/scpi-models.json
 	python3 -I tools/scpi_models.py $(PAGES_DATA)/scpi-models.json $(PAGES_DIR)/scpi-models.html
+
+# The images' pForth words side by side, as a page that filters them,
+# the same way: their data from tools/firmware/pforth_words.py, which
+# writes docs/firmware/pforth/*-words.md.  Needs uv, which installs the
+# script's Capstone.
+pforth-models:
+	mkdir -p $(PAGES_DIR) $(PAGES_DATA)
+	uv run -q tools/firmware/pforth_words.py --json > $(PAGES_DATA)/pforth-models.json
+	python3 -I tools/pforth_models.py $(PAGES_DATA)/pforth-models.json $(PAGES_DIR)/pforth-models.html
 
 $(HAND_PAGES):
 	mkdir -p $(PAGES_DIR)

@@ -53,5 +53,6 @@ receiver.
 | Tool | What it is |
 | ---- | ---------- |
 | `tools/board_atlas.py` | builds the [board atlas](https://charlieh0tel.github.io/smartclock/board-atlas.html) from `board-atlas.json` (`make board-atlas`; [Development](../README.md#development)) |
+| `tools/scpi_models.py`, `tools/pforth_models.py` | build the matrix pages, the images' [SCPI trees](https://charlieh0tel.github.io/smartclock/scpi-models.html) and [pForth words](https://charlieh0tel.github.io/smartclock/pforth-models.html) side by side, from what `dump-scpi --models --json` and `tools/firmware/pforth_words.py --json` print, with `tools/pages_matrix.py`'s shared shell (`make scpi-models`, `make pforth-models`) |
 | `tools/pages_index.py`, `tools/pages_copy.py` | build the published pages' landing page and copy the hand-written pages (`make pages`; [Development](../README.md#development)) |
 | `tools/check-pages.sh` | fails if a published page scrolls sideways (`make check-pages`; [Development](../README.md#development)) |

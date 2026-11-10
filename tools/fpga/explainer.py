@@ -140,12 +140,12 @@ def designs_table(f):
             "<tr>"
             f'<th scope="row"><a href="fpga-detail.html#{d["image"]}">{html.escape(d["name"])}</a></th>'
             f"<td>{html.escape(d['images'])}</td>"
-            f"<td>{d['blocks']}, {d['iobs']}, {d['nets']}</td>"
-            f"<td>{d['clocks']}</td>"
-            f"<td>{num(d['divide'])}</td>"
-            f"<td><code>0x{d['preset']}</code>, <code>0x{d['status']}</code></td>"
-            f"<td>{num(d['tap'])} ns</td>"
-            f"<td>{trace(d['image'])}</td>"
+            f'<td>{d["blocks"]}, {d["iobs"]}, {d["nets"]}</td>'
+            f'<td class="short">{d["clocks"]}</td>'
+            f'<td class="short">{num(d["divide"])}</td>'
+            f'<td><code>0x{d["preset"]}</code>, <code>0x{d["status"]}</code></td>'
+            f'<td class="short">{num(d["tap"])} ns</td>'
+            f'<td class="short">{trace(d["image"])}</td>'
             "</tr>")
     return ('<div class="wide"><table class="designs">\n<thead><tr>'
             "<th>Design</th><th>Firmware images</th><th>Logic blocks, I/O blocks, nets</th>"

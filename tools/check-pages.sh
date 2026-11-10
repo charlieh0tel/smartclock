@@ -20,13 +20,7 @@ fi
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
-# Reports, after load, the page's overflow and each element allowed to
-# scroll sideways whose content is wider than it.
-probe='<script>addEventListener("load",()=>setTimeout(()=>{const bad=[];
-if(document.documentElement.scrollWidth>innerWidth+1)bad.push("page "+document.documentElement.scrollWidth+">"+innerWidth);
-for(const e of document.querySelectorAll("*")){const o=getComputedStyle(e).overflowX;
-if((o==="auto"||o==="scroll")&&e.scrollWidth>e.clientWidth+1)bad.push((e.id||e.className||e.tagName)+" "+e.scrollWidth+">"+e.clientWidth);}
-const p=document.createElement("pre");p.id="check-pages";p.textContent=bad.length?bad.join("; "):"ok";document.body.appendChild(p);},300));</script>'
+probe="<script>$(cat "$(dirname "$0")/check-pages-probe.js")</script>"
 
 # Headless Chrome's window is never narrower than 500 pixels, so a
 # phone's width is a frame of that width the page is loaded in, its

@@ -9,7 +9,8 @@ cannot be rendered.
     python3 -I tools/fpga/explainer.py --figures-used
 
 The page states the figures the Markdown traces state, and takes each
-from the file that is checked against a fresh run: a design's size from
+from the file that is checked against a fresh run, through page.py,
+which the FPGA pages share: a design's size from
 tools/fpga/ref/<image>.stats (`make -f tools/fpga/Makefile check`), a
 simulated figure from tools/fpga/ref/<image>.<run>.readings
 (`check-readings`), the decoder's pin from tools/fpga/decoder.mk.  A
@@ -24,131 +25,38 @@ Pages site's landing page lists it by (tools/pages_index.py on main).
 
 import argparse
 import html
-import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent
-HERE = ROOT / "tools" / "fpga"
-REF = HERE / "ref"
-BLOB = "https://github.com/charlieh0tel/smartclock/blob/main/"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from page import (DESIGNS, STYLE, arrow, box, decoder_commit, die, divide, document,  # noqa: E402
+                  edge_periods, find, find_all, link, mark, markers, ns, num, probe, stats, trace)
 
 # The waveform figures the page inlines, by their path under --figures,
 # each a spec tools/fpga/waves/<path>.json.
 FIGURES = ("z3805a/read", "z3815a/p7-divider", "z3815a.freerun/phase-detector")
-
-# The testbenches' GCLK period, ns: a divide is a printed period over it.
-GCLK_NS = 100
 
 # The telecom pair's P7 divide and its 1 PPS chain's GCLK prescale
 # (z3815a-trace.md, "The P7 divider: P7 / 6250", "The 1 PPS divider").
 P7_DIVIDE = 6250
 PRESCALE = 6144
 
-# One row of the designs table: the image directory name, its heading,
-# the firmware images that load it, and the net whose rise is the
-# count's stop tap (each trace's "Start, stop and status bits").
-DESIGNS = (
-    ("z3805a", "Z3805A", "Z3805A 3543B", "HG.Y"),
-    ("58503a-z3801a", "58503A / Z3801A", "58503A 3633, 3704; Z3801A 3543", "HG.Y"),
-    ("58503b", "58503B", "58503B 1.01.04", "EH.Y"),
-    ("z3815a", "Z3815A", "Z3815A 4010", "KI.X"),
-    ("z3816a", "Z3816A", "Z3816A 4001", "KI.X"),
-)
-
-TRACES = {
-    "z3805a": "docs/firmware/z3805a-trace.md",
-    "58503a-z3801a": "docs/firmware/58503a-z3801a-trace.md",
-    "58503b": "docs/firmware/58503b-trace.md",
-    "z3815a": "docs/firmware/z3815a-trace.md",
-    "z3816a": "docs/firmware/z3816a-trace.md",
-}
-
-
-def die(message):
-    sys.exit(f"explainer: {message}")
-
-
-def readings(run):
-    path = REF / f"{run}.readings"
-    if not path.exists():
-        die(f"no {path.relative_to(ROOT)}")
-    return path.read_text(encoding="utf-8")
-
-
-def find(run, pattern):
-    """The first match of pattern in a run's readings, its groups."""
-    match = re.search(pattern, readings(run), re.M)
-    if not match:
-        die(f"{run}.readings has no line matching {pattern!r}")
-    return match.groups()
-
-
-def find_all(run, pattern):
-    found = re.findall(pattern, readings(run), re.M)
-    if not found:
-        die(f"{run}.readings has no line matching {pattern!r}")
-    return found
-
-
-def stats(image):
-    path = REF / f"{image}.stats"
-    table = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        key, _, value = line.partition(" ")
-        table.setdefault(key, value)
-    return table
-
-
-def decoder_commit():
-    match = re.search(r"^DECODER_COMMIT \?= ([0-9a-f]{40})$",
-                      (HERE / "decoder.mk").read_text(encoding="utf-8"), re.M)
-    if not match:
-        die("tools/fpga/decoder.mk names no DECODER_COMMIT")
-    return match.group(1)
-
-
-def ns(text):
-    """A printed duration in ns, as an int where it is whole."""
-    value = float(text)
-    return int(value) if value.is_integer() else value
-
-
-def num(value):
-    return f"{value:,}"
-
-
-def probe(run, net):
-    """A probe line's figures: rises, period, high and after-reference ranges."""
-    pattern = (rf"^probe {re.escape(net)}: (\d+) rises, \d+ falls; period ([-\d.]+) to ([-\d.]+) ns; "
-               rf"high ([-\d.]+) to ([-\d.]+) ns; after reference ([-\d.]+) to ([-\d.]+) ns")
-    rises, *ranges = find(run, pattern)
-    keys = ("period_min", "period_max", "high_min", "high_max", "after_min", "after_max")
-    return dict(rises=int(rises), **{k: ns(v) for k, v in zip(keys, ranges)})
-
-
-def edge_periods(run, pin):
-    """Every distinct interval a pin's +edges lines print, sorted."""
-    found = find_all(run, rf"^[\d.]+ s: {re.escape(pin)} rises, ([\d.]+) ns after the last")
-    return sorted({ns(v) for v in found})
-
 
 def facts():
     """Every figure the page states, read from its checked file."""
     out = {"commit": decoder_commit(), "designs": []}
-    for image, name, images, tap in DESIGNS:
+    for design in DESIGNS:
+        image = design.image
         table = stats(image)
-        p83 = edge_periods(f"{image}.three", "P83")
-        if len(p83) != 1:
-            die(f"{image}.three: P83 periods {p83}, not one")
+        p83, ratio = divide(image)
         out["designs"].append(dict(
-            image=image, name=name, images=images, tap_net=tap,
+            image=image, name=design.name, images=design.images, tap_net=design.tap,
             blocks=int(table["clb_used"]), iobs=int(table["iob_used"]), nets=int(table["nets"]),
             clocks=int(table["clocks"]),
             preset=find(f"{image}.fast", r"the count reads ([0-9a-f]{6})$")[0],
             status=find(f"{image}.fast", r"^[\d.]+ s: status ([0-9a-f]{2})$")[0],
-            p83=p83[0], divide=p83[0] // GCLK_NS,
-            tap=probe(f"{image}.three", tap)["after_min"]))
+            p83=p83, divide=ratio,
+            tap=probe(f"{image}.three", design.tap)["after_min"]))
     out["z3805a_count"] = int(find("z3805a.three", r"less the preset (\d+) ticks")[0])
     out["z3815a_counts"] = [int(v) for v in find_all("z3815a.three", r"less the preset (\d+) ticks")]
     out["sync1"] = int(find("z3805a.sync1", r"^1\.\d+ s: count \w+, less the preset (\d+) ticks")[0])
@@ -175,95 +83,6 @@ def facts():
 
 # --- rendering ------------------------------------------------------------
 
-STYLE = """
-:root{
-  --bg:#f6f5f1; --sheet:#fbfbf8; --fg:#1d2420; --muted:#5b655f; --rule:#c9cec4;
-  --panel:#ffffff; --accent:#1f6f8b; --sim:#2453a8; --signal:#0b6f78;
-  --inferred:#a35f00; --open:#b3261e; --read:#3d6b2f;
-  --measure:44rem;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --bg:#15181c; --sheet:#1a1e22; --fg:#e8e6e0; --muted:#a3a9b0; --rule:#3a4148;
-    --panel:#1c2025; --accent:#5fb3d0; --sim:#8fb0ff; --signal:#5cc8d0;
-    --inferred:#e0a05a; --open:#f08a80; --read:#9cc98a;
-  }
-}
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#15181c; --sheet:#1a1e22; --fg:#e8e6e0; --muted:#a3a9b0; --rule:#3a4148;
-  --panel:#1c2025; --accent:#5fb3d0; --sim:#8fb0ff; --signal:#5cc8d0;
-  --inferred:#e0a05a; --open:#f08a80; --read:#9cc98a;
-}
-*,*::before,*::after{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.55;margin:0;padding:2rem 16px 4rem}
-main{max-width:920px;margin:0 auto;display:grid;gap:3.25rem}
-main>*{min-width:0}
-header>*,section>*,figure{margin:0}
-header>*+*,section>*+*{margin-top:1rem}
-section>h3{margin-top:2.25rem}
-h1{font-size:2rem;font-weight:600;line-height:1.15;text-wrap:balance}
-h2{font-size:1.375rem;font-weight:600;line-height:1.25;text-wrap:balance}
-h3{font-size:1rem;font-weight:600}
-p,ul,ol,.lede,.note{max-width:var(--measure)}
-ul,ol{padding-left:1.25rem}
-li+li{margin-top:.375rem}
-.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-header>.eyebrow+h1{margin-top:.5rem}
-.lede{color:var(--muted);font-size:1.0625rem}
-.note{font-size:.875rem;color:var(--muted)}
-code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.92em;overflow-wrap:anywhere}
-pre{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.875rem;background:var(--panel);border-left:3px solid var(--accent);padding:.75rem 1rem;overflow-x:auto;max-width:100%}
-a{color:var(--accent)}
-nav ol{columns:2 16rem;column-gap:2rem;font-size:.9375rem}
-.mark{font-weight:600}
-.mark.read{color:var(--read)}
-.mark.sim{color:var(--sim)}
-.mark.inferred{color:var(--inferred)}
-.mark.open{color:var(--open)}
-.fig{border:1px solid var(--rule);background:var(--sheet);padding:12px;overflow-x:auto}
-.fig svg{display:block;min-width:760px;width:100%;height:auto}
-.fig figcaption{font-size:.875rem;color:var(--muted);margin-top:.75rem;max-width:var(--measure)}
-.wide{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:.9375rem;font-variant-numeric:tabular-nums}
-.designs{min-width:44rem}
-th,td{text-align:left;vertical-align:top;padding:.5rem .75rem;border-bottom:1px solid var(--rule)}
-th:first-child,td:first-child{padding-left:0}
-th:last-child,td:last-child{padding-right:0}
-thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);vertical-align:bottom;border-bottom-color:var(--muted)}
-tbody th{font-weight:600}
-.dg-box{fill:var(--panel);stroke:var(--fg);stroke-width:1.4}
-.dg-box.inferred{stroke:var(--inferred);stroke-dasharray:5 4}
-.dg-t{font:13px "IBM Plex Sans",system-ui,sans-serif;fill:var(--fg)}
-.dg-s{font:11.5px "IBM Plex Mono",ui-monospace,monospace;fill:var(--muted)}
-.dg-h{font:600 13px "IBM Plex Sans",system-ui,sans-serif;fill:var(--muted);letter-spacing:.06em}
-.dg-a{fill:none;stroke:var(--fg);stroke-width:1.4;marker-end:url(#dg-arrow)}
-.dg-a.inferred{stroke:var(--inferred);stroke-dasharray:5 4;marker-end:url(#dg-arrow-inferred)}
-.dg-head{fill:var(--fg)}
-.dg-head.inferred{fill:var(--inferred)}
-footer{font-size:.875rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:1rem}
-@media (max-width:720px){
-  body{padding-top:1.5rem}
-  h1{font-size:1.75rem}
-}
-"""
-
-MARKS = {"read": "read", "simulated": "sim", "inferred": "inferred", "open": "open"}
-
-
-def mark(word):
-    return f'<span class="mark {MARKS[word]}">{word}</span>'
-
-
-def link(path, text=None):
-    return f'<a href="{BLOB}{path}"><code>{html.escape(text or path)}</code></a>'
-
-
-def trace(image):
-    return link(TRACES[image], Path(TRACES[image]).name)
-
-
 def figure(figures, name, caption):
     path = figures / f"{name}.svg"
     if not path.exists():
@@ -272,34 +91,12 @@ def figure(figures, name, caption):
     return f'<figure class="fig">\n{svg}\n<figcaption>{caption}</figcaption>\n</figure>'
 
 
-def box(x, y, w, h, title, sub="", inferred=False):
-    klass = "dg-box inferred" if inferred else "dg-box"
-    out = [f'<rect class="{klass}" x="{x}" y="{y}" width="{w}" height="{h}" rx="4"/>',
-           f'<text class="dg-t" x="{x + w / 2}" y="{y + (h / 2 - 3 if sub else h / 2 + 5)}" '
-           f'text-anchor="middle">{html.escape(title)}</text>']
-    if sub:
-        out.append(f'<text class="dg-s" x="{x + w / 2}" y="{y + h / 2 + 14}" '
-                   f'text-anchor="middle">{html.escape(sub)}</text>')
-    return out
-
-
-def arrow(points, inferred=False):
-    klass = "dg-a inferred" if inferred else "dg-a"
-    d = " ".join(f"{x},{y}" for x, y in points)
-    return f'<polyline class="{klass}" points="{d}"/>'
-
-
 def diagram(f):
     """The two families' clock and count paths, drawn from the traces."""
     ten = f["designs"][0]
     out = ['<svg viewBox="0 0 900 430" role="img" xmlns="http://www.w3.org/2000/svg" '
            'aria-label="The count and the 1 PPS divider in the two families">',
-           '<defs>',
-           '<marker id="dg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
-           'orient="auto-start-reverse"><path class="dg-head" d="M0,0 L10,5 L0,10 z"/></marker>',
-           '<marker id="dg-arrow-inferred" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
-           'markerHeight="7" orient="auto-start-reverse"><path class="dg-head inferred" d="M0,0 L10,5 L0,10 z"/></marker>',
-           '</defs>',
+           markers(),
            '<text class="dg-h" x="0" y="18">Z3805A, 58503A/Z3801A, 58503B</text>']
     out += box(0, 36, 120, 48, "P7", "10 MHz in")
     out += box(170, 36, 190, 48, "1 PPS divider", f"/ {num(ten['divide'])}")
@@ -574,28 +371,13 @@ your machine.  <code>make fpga</code> builds this page from the references and t
 figures (<code>tools/fpga/explainer.py</code>).</p>
 </section>""")
 
-    body = "\n\n".join(sections)
-    return f"""<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Inside the SmartClock FPGAs</title>
-<meta name="description" content="The five SmartClock XC3042 FPGA designs, decoded, simulated and compared.">
-<meta name="smartclock-group" content="fpga">
-<style>{STYLE}</style>
-</head>
-<body>
-<!-- Generated by tools/fpga/explainer.py; make fpga builds it. -->
-<main>
-{body}
+    body = "\n\n".join(sections) + """
 
 <footer>Generated by <code>tools/fpga/explainer.py</code> from the checked references in
-<code>tools/fpga/ref</code> and the waveforms <code>tools/fpga/vcd_wave.py</code> draws.</footer>
-</main>
-</body>
-</html>
-"""
+<code>tools/fpga/ref</code> and the waveforms <code>tools/fpga/vcd_wave.py</code> draws.</footer>"""
+    return document("Inside the SmartClock FPGAs",
+                    "The five SmartClock XC3042 FPGA designs, decoded, simulated and compared.",
+                    STYLE, "explainer.py", "fpga", body)
 
 
 def main():

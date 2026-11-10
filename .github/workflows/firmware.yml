@@ -10,7 +10,8 @@ name: firmware
 # Z3815A's diffs and the names seeded from them, every image's
 # chip-select tables, the hand-written C's magic numbers, the addresses
 # the 58503A's and Z3801A's C's comments cite, and the shared C; the
-# board atlas built from its data, every citation in it checked; the
+# board atlas and the block diagram built from their data, every
+# citation in them checked; the
 # FPGA decoder against XACT's test designs; and the FPGA netlists' fast
 # path against their references, and the explainer page built.
 #
@@ -91,6 +92,8 @@ jobs:
       - run: make check-chip-selects
         if: ${{ !cancelled() }}
       - run: make board-atlas
+        if: ${{ !cancelled() }}
+      - run: make block-diagram
         if: ${{ !cancelled() }}
       - run: make check-loop-trace
         if: ${{ !cancelled() }}

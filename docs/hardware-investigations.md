@@ -103,7 +103,8 @@ others use (*Measured on the bench Z3805A, 3625A01487, date*), the
 meter, and a table of every pair read, including the ones that read
 open: a reading of "open" is a result.  Tick the item's TODO and
 update `board-atlas.json` and rerun `make board-atlas` where a part's
-identification or role changes.
+identification or role changes, and `block-diagram.json` (`make
+block-diagram`) where a block's or a signal's mark does.
 
 ## 1. The word that chooses G
 

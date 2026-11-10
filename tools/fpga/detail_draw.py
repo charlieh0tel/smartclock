@@ -22,6 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from page import die  # noqa: E402
+from sheet import Sheet  # noqa: E402
 from detail_bind import FLIP_FLOPS, pin_number, output_notes, source_label  # noqa: E402
 
 
@@ -595,16 +596,22 @@ def pin_boxes(out, top, left, right, netlist, spec, block_of, loads):
 
 # --- the time-interval counter, gate by gate ---------------------------------------
 
+def badge_on(sheet, x, y, letter, klass, parent):
+    """A confidence badge centered on x, y, in parent."""
+    circle = sheet.box(x - 7.5, y - 7.5, 15, 15, f"ch-badge {klass}", parent, circle=True)
+    sheet.text(x, y + 3.5, letter, f"ch-mk {klass}", circle, anchor="middle")
+
+
 def gates(design, netlist, elements):
     """One box a CLB on the time-interval path, with its netlist equations."""
     by_key = {e.spec.key: e for e in elements}
-    out = []
+    sheet = Sheet()
     y = 16
     for heading, keys in GATE_ROWS:
         tiles = [(m.partition(".")[0], by_key[k]) for k in keys if k in by_key for m in by_key[k].spec.members]
         if not tiles:
             continue
-        out.append(f'<text class="ch-clb" x="16" y="{y + 12}">{esc(heading.upper())}</text>')
+        sheet.text(16, y + 12, heading.upper(), "ch-clb")
         y += 24
         x = 16
         row_h = 0
@@ -634,28 +641,24 @@ def gates(design, netlist, elements):
             x += w + GATE_GAP
             row_h = max(row_h, h)
         for tile, e, bx, by, w, h, lines, compact, prev in boxes:
-            out.append(f'<rect class="ch-blk ti" x="{bx:.0f}" y="{by}" width="{w:.0f}" height="{h}" rx="3"/>')
-            out.append(f'<text class="ch-ttl" x="{bx + PAD:.0f}" y="{by + TITLE}">{tile}</text>')
+            box = sheet.box(bx, by, w, h, "ch-blk ti")
+            sheet.text(bx + PAD, by + TITLE, tile, "ch-ttl", box)
             for letter, klass in marks({e.spec.confidence}):
-                out.append(badge(bx + w - 14, by + 14, letter, klass))
+                badge_on(sheet, bx + w - 14, by + 14, letter, klass, box)
             if not compact:
-                out.append(f'<text class="ch-lab" x="{bx + PAD + 30:.0f}" y="{by + TITLE}">'
-                           f'{esc(e.spec.title)}</text>')
+                sheet.text(bx + PAD + 30, by + TITLE, e.spec.title, "ch-lab", box)
             ty = by + TITLE + PAD
             for t in lines:
                 ty += LINE
-                out.append(f'<text class="ch-eq" x="{bx + PAD:.0f}" y="{ty - 3}">{esc(t)}</text>')
+                sheet.text(bx + PAD, ty - 3, t, "ch-eq", box)
             if prev is not None:
                 ptile, px, py, pw, ph = prev
                 nets = [n for n in (netlist.name(netlist.clbs[ptile]["pins"][o]) for o in netlist.used_outputs(ptile))
                         if n in {netlist.name(v) for v in netlist.clbs[tile]["pins"].values()}]
                 if nets:
                     ay = by + min(h, ph) / 2
-                    out.append(f'<line class="ch-w sig" x1="{px + pw:.0f}" y1="{ay:.1f}" x2="{bx - 2:.0f}" '
-                               f'y2="{ay:.1f}" marker-end="url(#ch-as)"/>')
-                    out.append(f'<text class="ch-net sig" x="{px + pw + 4:.0f}" y="{ay - 5:.1f}">'
-                               f'{esc(nets[0])}</text>')
+                    wire = sheet.wire([(px + pw, ay), (bx - 2, ay)], "ch-w sig", "ch-as")
+                    sheet.text(px + pw + 4, ay - 5, nets[0], "ch-net sig", wire=wire)
         y += row_h + 40
-    return (f'<svg class="ch" viewBox="0 0 {GATE_W} {y:.0f}" role="img" xmlns="http://www.w3.org/2000/svg" '
-            f'aria-label="The {esc(design.name)} time-interval counter, one box a logic block, with its '
-            f'equations from the netlist">\n{chip_markers()}\n' + "\n".join(out) + "\n</svg>")
+    return sheet.svg(GATE_W, y, f"The {design.name} time-interval counter, one box a logic block, with its "
+                     f"equations from the netlist", chip_markers())

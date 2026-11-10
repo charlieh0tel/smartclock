@@ -131,7 +131,8 @@ docs:
 # index.html, lists them by group, in that order within one, after
 # NEW_PAGE, a page just launched, under "New", and FEATURED_PAGE under
 # "Featured", each one of PAGES or empty for none, each set apart above
-# them in a box of its own.  It also puts a breadcrumb back to
+# them in a box of its own, and last the README and each track's hub
+# document, DOCUMENTS in tools/pages_index.py.  It also puts a breadcrumb back to
 # index.html at the top of each page's content, the first element in its
 # <body>, which must be a main, div, header, article or section; the
 # sources in docs/pages/ are left without one.  It copies the site's

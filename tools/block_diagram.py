@@ -8,10 +8,13 @@ committed.
 
     python3 -I tools/block_diagram.py OUT
 
-The page is one file with no script: the diagram, inline SVG drawn in
-the page's colors, then every block and every signal with its mark and
-its sources, which the diagram's blocks and lines link to.  It states
-no counts.
+The page is one file, whole without JavaScript: the diagram, inline SVG
+drawn in the page's colors, then every block and every signal with its
+mark and its sources, which the diagram's blocks and lines link to.
+Its one inline script only adds to that, on a narrow window: a tap on
+the diagram opens a copy of it full screen, to pan and zoom, closed by
+its button or Escape; a tap on a block or line there closes it and goes
+to the entry.  It states no counts.
 
 The data, one JSON object:
 
@@ -143,6 +146,149 @@ svg a:focus-visible { outline: none; }
 .entries .source { display: block; font-size: 14px; color: var(--muted); }
 .lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 24px; align-items: start; }
 footer { color: var(--muted); font-size: 13px; }
+/* With the script, on a narrow window: the diagram opens full screen,
+   a fixed window onto a stage, the diagram's copy, that the script pans
+   and zooms. */
+button { font: inherit; font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 4px; padding: 5px 12px; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--read); outline-offset: 2px; }
+.zoom-open { display: none; margin-top: 8px; }
+@media (max-width: 700px) {
+  .js .zoom-open { display: inline-block; }
+  .js .diagram svg { cursor: zoom-in; }
+}
+.zoom { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; background: var(--bg); }
+.zoom[hidden] { display: none; }
+.zoom-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 16px;
+  background: var(--panel); border-bottom: 1px solid var(--line); }
+.zoom-bar span { flex: 1 1 8em; font-size: 13px; color: var(--muted); }
+.zoom-view { position: relative; flex: 1; overflow: hidden; touch-action: none; cursor: grab; }
+.zoom-view.dragging { cursor: grabbing; }
+.zoom-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.zoom-stage svg { display: block; width: 100%; height: auto; }
+body.zoomed { overflow: hidden; }
+"""
+
+# The zoom's script: it copies the diagram into the full-screen view,
+# pans it with one pointer, zooms it with two, the wheel or the buttons,
+# and lets a tap, a pointer that barely moved, through to a link.
+SCRIPT = """\
+(() => {
+  "use strict";
+  // The widths the zoom opens on, as the style's media query; the
+  // largest and smallest zoom, over the diagram fitted to the window's
+  // width; how far a pointer may move and still tap; a button's step.
+  const NARROW = matchMedia("(max-width: 700px)");
+  const MAX_ZOOM = 8, MIN_ZOOM = 0.5, TAP = 8, STEP = 1.5;
+  document.documentElement.classList.add("js");
+  const figure = document.querySelector(".diagram"), source = figure.querySelector("svg");
+  const zoom = document.querySelector(".zoom"), view = zoom.querySelector(".zoom-view");
+  const stage = zoom.querySelector(".zoom-stage"), opener = figure.querySelector(".zoom-open");
+  const copy = source.cloneNode(true);
+  stage.appendChild(copy);
+  let x = 0, y = 0, z = 1, returnTo = null, moved = 0;
+  const pointers = new Map();
+  let last = null;
+
+  function apply() {
+    stage.style.transform = `translate(${x}px, ${y}px) scale(${z})`;
+  }
+  function home() {
+    // The diagram at the window's width, then zoomed to twice that.
+    stage.style.width = view.clientWidth + "px";
+    z = 2;
+    x = 0;
+    y = 0;
+    apply();
+  }
+  function zoomAt(factor, cx, cy) {
+    const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z * factor));
+    x = cx - (cx - x) * next / z;
+    y = cy - (cy - y) * next / z;
+    z = next;
+    apply();
+  }
+  function open(event) {
+    if (!NARROW.matches) return;
+    if (event) event.preventDefault();
+    returnTo = document.activeElement;
+    zoom.hidden = false;
+    document.body.classList.add("zoomed");
+    home();
+    zoom.querySelector("[data-zoom=close]").focus();
+  }
+  function close() {
+    zoom.hidden = true;
+    document.body.classList.remove("zoomed");
+    pointers.clear();
+    if (returnTo && returnTo.focus) returnTo.focus();
+  }
+  source.addEventListener("click", open);
+  opener.addEventListener("click", open);
+  zoom.querySelector(".zoom-bar").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    const cx = view.clientWidth / 2, cy = view.clientHeight / 2;
+    if (button.dataset.zoom === "close") close();
+    else if (button.dataset.zoom === "in") zoomAt(STEP, cx, cy);
+    else if (button.dataset.zoom === "out") zoomAt(1 / STEP, cx, cy);
+    else if (button.dataset.zoom === "fit") home();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !zoom.hidden) close();
+  });
+  view.addEventListener("pointerdown", (event) => {
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pointers.size === 1) moved = 0;
+    last = null;
+    view.classList.add("dragging");
+  });
+  view.addEventListener("pointermove", (event) => {
+    const p = pointers.get(event.pointerId);
+    if (!p) return;
+    const dx = event.clientX - p.x, dy = event.clientY - p.y;
+    p.x = event.clientX;
+    p.y = event.clientY;
+    moved += Math.abs(dx) + Math.abs(dy);
+    if (moved > TAP && !view.hasPointerCapture(event.pointerId)) view.setPointerCapture(event.pointerId);
+    if (pointers.size === 1) {
+      x += dx;
+      y += dy;
+      apply();
+    } else if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const rect = view.getBoundingClientRect();
+      const spread = Math.hypot(a.x - b.x, a.y - b.y);
+      const cx = (a.x + b.x) / 2 - rect.left, cy = (a.y + b.y) / 2 - rect.top;
+      if (last) zoomAt(spread / last, cx, cy);
+      last = spread;
+    }
+  });
+  function release(event) {
+    pointers.delete(event.pointerId);
+    last = null;
+    if (!pointers.size) view.classList.remove("dragging");
+  }
+  view.addEventListener("pointerup", release);
+  view.addEventListener("pointercancel", release);
+  view.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const rect = view.getBoundingClientRect();
+    zoomAt(event.deltaY < 0 ? 1.1 : 1 / 1.1, event.clientX - rect.left, event.clientY - rect.top);
+  }, { passive: false });
+  copy.addEventListener("click", (event) => {
+    // A drag is not a tap; a tap on a block or line closes the view and
+    // follows its link to the entry.
+    if (moved > TAP) {
+      event.preventDefault();
+      return;
+    }
+    if (event.target.closest("a")) close();
+  });
+  addEventListener("resize", () => {
+    if (!zoom.hidden && !NARROW.matches) close();
+  });
+})();
 """
 
 
@@ -364,6 +510,7 @@ def render(data):
     emit('<figure class="card diagram">')
     emit(diagram(data))
     emit(f"<figcaption>{r(data['caption'])}</figcaption>")
+    emit('<button class="zoom-open" type="button">Open full screen</button>')
     emit("</figure>")
 
     emit('<div class="lists">')
@@ -406,6 +553,17 @@ def render(data):
     emit(f'<footer>Generated by <a href="{BLOB}tools/block_diagram.py"><code>tools/block_diagram.py</code></a> from '
          f'<a href="{BLOB}docs/block-diagram.json"><code>docs/block-diagram.json</code></a>.</footer>')
     emit("</div>")
+    emit(f'<div class="zoom" role="dialog" aria-modal="true" aria-label="{html.escape(data["heading"])}" hidden>')
+    emit('  <div class="zoom-bar"><span>Drag to pan, pinch to zoom.</span>'
+         '<button type="button" data-zoom="out" aria-label="Zoom out">−</button>'
+         '<button type="button" data-zoom="in" aria-label="Zoom in">+</button>'
+         '<button type="button" data-zoom="fit">Reset</button>'
+         '<button type="button" data-zoom="close">Close</button></div>')
+    emit('  <div class="zoom-view"><div class="zoom-stage"></div></div>')
+    emit("</div>")
+    emit("<script>")
+    emit(SCRIPT.rstrip("\n"))
+    emit("</script>")
     emit("</body>")
     emit("</html>")
     return "\n".join(out) + "\n"

@@ -88,7 +88,7 @@ def figure(figures, name, caption):
     if not path.exists():
         die(f"no {path}; make -f tools/fpga/Makefile figures renders it")
     svg = path.read_text(encoding="utf-8").strip()
-    return f'<figure class="fig">\n{svg}\n<figcaption>{caption}</figcaption>\n</figure>'
+    return f'<figure class="fig" data-scroll="x">\n{svg}\n<figcaption>{caption}</figcaption>\n</figure>'
 
 
 def diagram(f):
@@ -124,7 +124,7 @@ def diagram(f):
             arrow([(415, 330), (415, 368)]), arrow([(490, 394), (528, 394)], inferred=True),
             arrow([(615, 368), (615, 340), (60, 340), (60, 330)], inferred=True)]
     out.append("</svg>")
-    return '<figure class="fig">\n' + "\n".join(out) + (
+    return '<figure class="fig" data-scroll="x">\n' + "\n".join(out) + (
         "\n<figcaption>The count and the 1 PPS divider in the two families "
         f"({mark('read')} from the netlists).  The second row's frequencies are what the ratios imply, "
         f"{mark('inferred')}.  Dashed: the loop the telecom pair's phase "
@@ -147,7 +147,7 @@ def designs_table(f):
             f'<td class="short">{num(d["tap"])} ns</td>'
             f'<td class="short">{trace(d["image"])}</td>'
             "</tr>")
-    return ('<div class="wide"><table class="designs">\n<thead><tr>'
+    return ('<div class="wide" data-scroll="x"><table class="designs">\n<thead><tr>'
             "<th>Design</th><th>Firmware images</th><th>Logic blocks, I/O blocks, nets</th>"
             "<th>Clock buffers</th><th>Divide to the 1 PPS</th><th>Preset, status</th>"
             "<th>Tap after P83</th><th>Trace</th>"
@@ -363,7 +363,7 @@ bitstreams is {link('docs/firmware/outputs.md', 'outputs.md')}.</p>
 <p>You need git and network access to GitHub for the viewer's clone, node or headless
 Chrome, Python 3, Icarus Verilog 12, Yosys 0.52 and <code>pdftotext</code> (poppler-utils).
 From the repository root:</p>
-<pre>make -f tools/fpga/Makefile all        # decode, build and run every design's fast path
+<pre data-scroll="x">make -f tools/fpga/Makefile all        # decode, build and run every design's fast path
 make -f tools/fpga/Makefile check      # the same, failing on drift from tools/fpga/ref
 make -f tools/fpga/Makefile figures    # the waveform figures
 make -j16 -f tools/fpga/Makefile check-readings   # the long runs behind every simulated figure</pre>

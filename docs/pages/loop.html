@@ -110,21 +110,21 @@ th code{text-transform:none;letter-spacing:0}
 
 <section id="the-loop">
   <h2>The loop</h2>
-  <figure class="fig">
+  <figure class="fig" data-scroll="x">
     <svg id="loop" viewBox="0 24 1020 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Block diagram of the disciplining loop"></svg>
     <div class="legend"><span>signal path, one update every 10 s</span><span class="ffl">aging feed-forward, one sample every 2700 s</span></div>
     <figcaption>x = t<sub>OCXO</sub> − t<sub>GPS</sub>: the interval from the GPS 1 PPS to the oscillator's, positive when the oscillator's comes later. That physical sign is inferred (<a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/counter.md#the-sign-and-the-loop">counter.md</a>); it makes the loop's positive gains negative feedback. The <code>pllp</code> task runs the update in single-precision floating point, the health monitor's <code>hmon</code> task writes u to the DAC, and the <code>curv</code> task runs the aging fit.</figcaption>
   </figure>
 
   <p>Once a second the firmware reads one interval from the FPGA counter. Every tenth second it takes x̄, the mean of those ten seconds' readings within the holdover limit (the number <code>:SYNChronization:TINTerval?</code> reports), and runs one update:</p>
-  <div class="eq eqgrid"><span>e  = x̄ − x₀</span><span>x₀ is a setpoint, normally 0</span><span>f ← (1 − a)·f + a·e</span><span>a = 29.75 / τ</span><span>d  = clamp(b + c / y, −M, +M)</span><span>y = t / 2700 s, from the aging fit</span><span>I ← I + 10·k·f + 10·d / 2700</span><span>k = 1 / (4·G·τ²)</span><span>u  = clamp(K·f + B + I + c₀·s, 0, 1048560)</span><span>K = 1 / (G·τ)</span></div>
+  <div class="eq eqgrid" data-scroll="x"><span>e  = x̄ − x₀</span><span>x₀ is a setpoint, normally 0</span><span>f ← (1 − a)·f + a·e</span><span>a = 29.75 / τ</span><span>d  = clamp(b + c / y, −M, +M)</span><span>y = t / 2700 s, from the aging fit</span><span>I ← I + 10·k·f + 10·d / 2700</span><span>k = 1 / (4·G·τ²)</span><span>u  = clamp(K·f + B + I + c₀·s, 0, 1048560)</span><span>K = 1 / (G·τ)</span></div>
   <p>u is the EFC in 20 bits. The update only stores it. On each of its ticks the health monitor's task rounds u, adds a small random dither and writes the top 16 bits to the DAC (<code>efc_write_dithered</code>).</p>
   <p>B is the EFC in force when the loop closed, less c₀·s, so closing the loop does not move the oscillator. s is the health monitor's exponential average of the oscillator's oven current: 0.1 of each fresh reading, 0.9 of the last. c₀ is the value <code>:DIAGnostic:ROSCillator:TCOefficient</code> reads and writes: a calibration constant in the EEPROM block, in EFC units per unit of the current channel. Every update applies it; only its own setter adjusts it. The c₀·s term tracks the oven, not the phase; in the Z3816A the console word <code>xcal</code> measures it by fitting EFC against current.</p>
 </section>
 
 <section id="symbols-and-constants">
   <h2>Symbols and constants</h2>
-  <div class="wide"><table class="defs">
+  <div class="wide" data-scroll="x"><table class="defs">
     <colgroup><col style="width:12%"><col style="width:50%"><col style="width:38%"></colgroup>
     <thead><tr><th>Symbol</th><th>Meaning</th><th>Value</th></tr></thead>
     <tbody>
@@ -145,7 +145,7 @@ th code{text-transform:none;letter-spacing:0}
 
   <h3>By model</h3>
   <!-- loop_constants.py page -->
-  <div class="wide"><table class="models">
+  <div class="wide" data-scroll="x"><table class="models">
     <colgroup><col style="width:15%"><col style="width:13%"><col style="width:22%"><col style="width:10%"><col style="width:12%"><col style="width:13%"><col style="width:15%"></colgroup>
     <thead><tr><th>Firmware</th><th class="sym">τ</th><th class="sym">G</th><th class="sym">a</th><th>Slowest pole, <span class="sym">≈ 2.7τ</span></th><th>Startup ramp</th><th>Holdover that restarts the ramp</th></tr></thead>
     <tbody>
@@ -167,7 +167,7 @@ th code{text-transform:none;letter-spacing:0}
   <div class="cols">
     <div>
       <p>Take the oscillator as an integrator: an EFC change of Δu shifts its fractional frequency by G·Δu, and frequency integrates into phase. Leave the prefilter out. With proportional gain K = 1/(Gτ) and integral gain k per second, the closed loop is second order:</p>
-      <div class="eq">s² + (G·K)·s + G·k
+      <div class="eq" data-scroll="x">s² + (G·K)·s + G·k
   = s² + s/τ + 1/(4τ²)
   = (s + 1/(2τ))²</div>
       <p>The gains are chosen to give a double real pole at −1/(2τ), damping ratio exactly 1. The prefilter moves it.</p>
@@ -179,7 +179,7 @@ th code{text-transform:none;letter-spacing:0}
       <p>G cancels out of the closed-loop dynamics: it only scales the gains, so the poles land in the same place whatever the oscillator's sensitivity. If the real gain differs from the assumed G, the loop gain is off by that ratio and the poles move.</p>
     </div>
   </div>
-  <figure class="fig splane">
+  <figure class="fig splane" data-scroll="x">
     <svg id="splane" viewBox="0 0 520 290" role="img" aria-label="Closed-loop poles of the disciplining loop in the s-plane, scaled by tau"></svg>
     <figcaption><span style="color:var(--accent)">×</span> closed-loop poles of the 10 s update at τ = 500 s (within 2 % at 700 and 1000 s) · <span style="color:var(--ff)">◇</span> the double pole without the prefilter · □ open-loop poles · ○ open-loop zero. Both axes in units of 1/τ.</figcaption>
   </figure>
@@ -188,7 +188,7 @@ th code{text-transform:none;letter-spacing:0}
 <section id="the-aging-feed-forward">
   <h2>The aging feed-forward</h2>
   <p>The dashed path makes the receiver's holdover good. While the loop is closed, <code>pllp</code> averages the current-compensated EFC, u − c₀·s, over each 2700 s (45 min) window. It pushes that mean e, its time y, and w, the window's mean of ln y, into a ring of 64 samples: 48 hours. The <code>curv</code> task regresses those window means:</p>
-  <div class="eq eqgrid"><span>e = a + b·y + c·w</span><span>y = t / 2700 s, t the seconds since cold start</span><span>w = mean of ln y over the window</span><span>the window from y − 1 to y</span></div>
+  <div class="eq eqgrid" data-scroll="x"><span>e = a + b·y + c·w</span><span>y = t / 2700 s, t the seconds since cold start</span><span>w = mean of ln y over the window</span><span>the window from y − 1 to y</span></div>
   <p>by least squares: a straight line, plus a one-dimensional search on c once there are enough samples. The curve is then taken as a + b·y + c·ln y. Its slope now, b + c/y, is d: the EFC change per 2700 s the fit predicts. Each update advances the integrator by 10·d/2700, the predicted change over ten seconds, before the loop sees any phase error from it. In holdover the same curve sets the EFC every ten seconds, and nothing corrects it.</p>
   <p>The Z3815A and 58503B compute the same slope once per fit, not every ten seconds. Each update moves a running value toward it with time constant τ, so a new fit's change of slope reaches the oscillator over about τ, not at once.</p>
   <p>The Z3815A and 58503B also run an EFC calibration. It measures the frequency offset at ten EFC settings and takes the slope of a straight line through them as G. They carry a second coefficient, B, that nothing in the firmware computes: the calibration sets it to zero, and the loop never applies it. B, zero unless set over SCPI, enters only the measured holdover uncertainty that <code>:SYNChronization:HOLDover:TUNCertainty:MEASured?</code> reports, which takes the gain as A + B·e² at EFC e.</p>
@@ -206,7 +206,7 @@ th code{text-transform:none;letter-spacing:0}
 <section id="what-the-receiver-shows">
   <h2>What the receiver shows</h2>
   <p>The FFOM, the frequency figure of merit that <code>:SYNChronization:FFOMerit?</code> returns and the status screen and time code carry, is not a measure of the loop's error. <code>get_ffom</code> switches on the loop's stage and reads nothing else, so it says only which stage the loop is in:</p>
-  <div class="wide"><table class="stages">
+  <div class="wide" data-scroll="x"><table class="stages">
     <colgroup><col style="width:26%"><col style="width:10%"><col style="width:30%"><col style="width:24%"><col style="width:10%"></colgroup>
     <thead><tr><th>Stage</th><th>Z3815A</th><th>Status screen</th><th>58503A front panel</th><th>FFOM</th></tr></thead>
     <tbody>
@@ -223,7 +223,7 @@ th code{text-transform:none;letter-spacing:0}
 
   <h3>After a power-up</h3>
   <p>Through power-up, the FFOM is 3. <code>startup_pll</code> then holds it at 1 until it hands over to <code>pll_normal</code>, and in the Z3805A and 58503A that takes three steps:</p>
-  <div class="wide"><table class="timeline">
+  <div class="wide" data-scroll="x"><table class="timeline">
     <colgroup><col style="width:46%"><col style="width:18%"><col style="width:18%"><col style="width:18%"></colgroup>
     <thead><tr><th>Step</th><th>Time constant</th><th>Z3805A 3543B</th><th>58503A 3704</th></tr></thead>
     <tbody>

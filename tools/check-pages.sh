@@ -2,7 +2,9 @@
 # Load each HTML page under the directories given (make check-pages
 # gives the published pages') in headless Chrome at desktop widths and
 # fail if the page is wider than the window or any box on it scrolls
-# sideways; the landing page, index.html, at a phone's width too.  A
+# sideways; at a phone's width too, where a box marked data-scroll="x"
+# may scroll and anything wider than the window must be inside one
+# (tools/check-pages-probe.js).  A
 # page forwarding to another, which docs/ keeps at a published page's
 # old path, is skipped.  Headless screenshots hide scrollbars, so this
 # measures instead of looking.  Needs google-chrome or chromium; not run in CI.
@@ -38,11 +40,7 @@ for page in $(find "$@" -name "*.html" | sort); do
     copy="$scratch/$(basename "$page")"
     # By position, not sub(): the probe holds "&", which sub() expands.
     PROBE="$probe" awk '{ i = index($0, "</body>"); if (i) $0 = substr($0, 1, i - 1) ENVIRON["PROBE"] substr($0, i); print }' "$page" > "$copy"
-    widths=$WIDTHS
-    if [ "$(basename "$page")" = index.html ]; then
-        widths="$WIDTHS $PHONE_WIDTH"
-    fi
-    for width in $widths; do
+    for width in $WIDTHS $PHONE_WIDTH; do
         load=$copy
         if [ "$width" = "$PHONE_WIDTH" ]; then
             load="$scratch/phone-$(basename "$page")"

@@ -95,7 +95,7 @@ footer { font-size: 12.5px; color: var(--muted); }
 
   <section aria-labelledby="setup">
     <h2 id="setup">The receivers</h2>
-    <div class="scroll">
+    <div class="scroll" data-scroll="x">
       <table>
         <thead><tr><th>Receiver</th><th>Serial</th><th>Firmware</th><th>GPS engine</th><th class="n">Channels</th><th>Feed</th></tr></thead>
         <tbody>
@@ -137,12 +137,12 @@ footer { font-size: 12.5px; color: var(--muted); }
         <span><span class="swatch s-58503"></span>HP 58503A</span>
         <span><span class="swatch s-z3805"></span>HP Z3805A</span>
       </div>
-      <div class="scroll" style="padding:12px 8px 4px">
+      <div class="scroll" data-scroll="x" style="padding:12px 8px 4px">
         <svg id="chart" viewBox="0 0 640 300" role="img" aria-label="Share of u-blox satellites tracked by each SmartClock, by u-blox C/N band" style="width:100%;min-width:520px;height:auto;display:block"></svg>
       </div>
       <figcaption>Share of the u-blox's satellites also tracked, by the u-blox's C/N in dB-Hz. Each band's sample count is in the table below.</figcaption>
     </figure>
-    <div class="scroll">
+    <div class="scroll" data-scroll="x">
       <table>
         <thead><tr><th>u-blox C/N, dB-Hz</th><th class="n">Satellite-minutes</th><th class="n">58503A</th><th class="n">Z3805A</th></tr></thead>
         <tbody id="cn-rows"></tbody>
@@ -152,7 +152,7 @@ footer { font-size: 12.5px; color: var(--muted); }
 
   <section aria-labelledby="elev">
     <h2 id="elev">By elevation</h2>
-    <div class="scroll">
+    <div class="scroll" data-scroll="x">
       <table>
         <thead><tr><th>Elevation</th><th class="n">Satellite-minutes</th><th class="n">58503A</th><th class="n">Z3805A</th></tr></thead>
         <tbody id="el-rows"></tbody>

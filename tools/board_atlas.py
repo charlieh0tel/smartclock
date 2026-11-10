@@ -724,7 +724,7 @@ def render(data):
     emit('<section class="card">')
     emit("  <h2>Measured nets</h2>")
     emit(f"  <p>{r(data['nets_intro'])}</p>")
-    emit('  <div class="scroll"><table>')
+    emit('  <div class="scroll" data-scroll="x"><table>')
     emit("    <thead><tr><th>Net</th><th>Path</th><th>Note</th></tr></thead>")
     emit("    <tbody>")
     for net in data["nets"]:
@@ -739,7 +739,7 @@ def render(data):
     emit("  <h2>Parts</h2>")
     emit("  <p>Confidence is the designator's, the marking's, then the role's.  The last two columns compare the Z3801A's and the 58503A's boards at the same designator:</p>")
     emit("  " + legend(data["comparison"], "Comparison"))
-    emit('  <div class="scroll"><table class="parts">')
+    emit('  <div class="scroll" data-scroll="x"><table class="parts">')
     emit("    <thead><tr><th>Ref</th><th>Marking</th><th>Type</th><th>Role</th><th>Firmware</th>"
          "<th>Confidence</th>" + "".join(f"<th>{COMPARED_TITLES[m]}</th>" for m in COMPARED) + "</tr></thead>")
     columns = 6 + len(COMPARED)

@@ -8,6 +8,11 @@ taken apart and documented.
 and the SCPI trees, at
 <https://charlieh0tel.github.io/smartclock/>.
 
+**Where to start:**
+[Firmware notes](docs/firmware/README.md)
+· [Tooling](docs/tooling.md)
+· [Monitoring](docs/monitoring.md)
+
 - **[Firmware](#the-firmware):** seven ROM images read and documented:
   the SCPI trees, the 1 PPS measurement, the disciplining loop, the GPS
   engine interface, the pForth console.  Four are rewritten whole as C
@@ -115,6 +120,14 @@ with the identified parts' data sheets under `third_party/`.
 what only it can settle.  The HP 53131A-family counters are built on
 the same platform ([`docs/hp5313x.md`](docs/hp5313x.md)).
 
+## Tooling
+
+The firmware, FPGAs and board are read with the project's own tools:
+`smartclock-cli`'s console reads, flasher and image readers, the Ghidra
+scripts and the rewrite's checks, the FPGA decoder and simulations, and
+the board atlas's and pages' builders.
+[`docs/tooling.md`](docs/tooling.md) lists each and links its document.
+
 ## Monitoring
 
 ![The live page: a day of the 1 PPS interval, EFC and satellites of a locked 58503A](docs/images/web-live.png)
@@ -134,20 +147,10 @@ The whole pages: [compare](docs/images/web-compare.png),
 are shown from the bench's logs, the status page and the terminal
 monitor against the simulator; `make screenshots` takes them again.
 
-| Program | |
-| - | - |
-| `smartclockd` | holds the serial port, logs to SQLite, serves clients over a Unix socket and, if asked, TCP |
-| `smartclockmon` | terminal monitor: dashboard, history graphs, journal, status screen and stability |
-| `smartclock-web` | browser view: live state, zoomable history, the status screen, stability, receivers compared, measures correlated, and a kiosk screen for an unattended display |
-| `smartclock-exporter` | Prometheus metrics for every receiver, from the daemons' readings |
-| `smartclock-sensord` | logs room temperature, humidity and pressure from hwmon, IIO and TEMPer USB sticks ([design](docs/sensors.md)) |
-| `smartclock-cli` | queries, `diagnose`, notes and facts, transcripts, sweeps for undocumented commands, ROM and EEPROM reads, chip dumps joined and split, firmware loading ([notes](docs/firmware/restart.md#the-flasher)), and readers of a firmware image's SCPI tree, console words and Oncore messages |
-| `smartclock-sim` | a simulated receiver, in process for tests and over TCP for the real daemon |
-
-The library crates are `smartclock` (transports, SCPI framing, the
-command table, parsers, the status screen scraper, the polling task,
-the Allan deviation), `smartclock-log` (the log's schema and readers)
-and `smartclock-http` (the server the exporter and web view share).
+The daemon holds the serial port and logs; the terminal monitor, the
+browser view, the Prometheus exporter, the sensor service and the
+CLI's queries are its clients.  [`docs/monitoring.md`](docs/monitoring.md)
+lists each program and library crate and links its document;
 [`PLAN.md`](PLAN.md) holds the design, open questions and known
 defects.
 
@@ -210,6 +213,8 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 
 | File | Contents |
 | ---- | -------- |
+| [`docs/tooling.md`](docs/tooling.md) | the reverse-engineering and analysis tools, each linked to its document |
+| [`docs/monitoring.md`](docs/monitoring.md) | the daemon, its clients and the library crates, each linked to its document |
 | [`docs/running.md`](docs/running.md) | installing, configuring, remote clients, Windows, and what the daemon does to the receiver |
 | [`docs/views.md`](docs/views.md) | what the monitor, browser pages and exporter show, and why |
 | [`docs/stability.md`](docs/stability.md) | how the stability curves are computed, checked and measured |

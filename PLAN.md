@@ -27,9 +27,9 @@ deployed.
 
 ## Architecture
 
-The crates are listed in `README.md`.  `smartclock-log` holds the log's
-schema and every query that reads it, so the daemon, monitor and web
-view cannot drift apart.  The library, bottom up:
+The crates are listed in `docs/monitoring.md`.  `smartclock-log`
+holds the log's schema and every query that reads it, so the daemon,
+monitor and web view cannot drift apart.  The library, bottom up:
 
 1. `transport` -- `Transport`: serial, TCP, replay, tee.
 2. `session` -- framing: prompts, echo, timeouts, error queue drain;
@@ -365,6 +365,17 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   and carries no bench clutter or stickers.  Its intro names the
   FPGAs' decoding since the FPGA write-up's page joined, set apart as
   new beside the featured loop page.
+- The landing page's last box, "In the repository", points to the
+  README and then to each of the project's tracks by its hub
+  document (`DOCUMENTS` in `tools/pages_index.py`): the firmware
+  notes, `docs/tooling.md` and `docs/monitoring.md`.  Reverse
+  engineering, its tools and the monitoring programs share one
+  repository, and a reader arriving from the pages needs to see
+  which is which before the README's detail.  A hub lists one line
+  per program or tool and links its document, rather than repeating
+  it; a new track is one more hub and one more entry, with nothing
+  reordered.  `PLAN.md` is not in the box: it is a record of
+  decisions, not a way in, and the README links it.
 - Every other page gets a breadcrumb back to the landing page
   (SmartClock, its group, its title), put in by `tools/pages_index.py`
   as it writes the landing page, from the same head tags, rather than

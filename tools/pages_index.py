@@ -4,9 +4,10 @@ page under "Featured", each in a box of its own if given, then
 each other PAGE given (a file in DIR) by its <title> and its
 description meta tag under its smartclock-group meta tag's group, in
 GROUPS' order and within one in the order given, and the repository's
-main documents.  Fails if a page lacks any of the three tags or names a
-group GROUPS lacks, or if NEW or FEATURED is not one of the PAGEs or
-they are the same page.
+README and the hub document of each of the project's tracks.  Fails
+if a page lacks any of the three tags or names a group GROUPS lacks,
+or if NEW or FEATURED is not one of the PAGEs or they are the same
+page.
 
 Each PAGE also gets a breadcrumb back to the landing page:
 "SmartClock", its group's heading, linked to the group's box there when
@@ -130,12 +131,13 @@ HEAD_START = re.compile(r"<head\b[^>]*>", re.IGNORECASE)
 DECLARED_ICON = re.compile(r"""<link\b[^>]*\brel=["']?[^"'>]*\bicon\b""", re.IGNORECASE)
 
 # The repository's documents the landing page points to, each by its
-# link, its name and what it holds.
+# link, its name and what it holds: the README, then each of the
+# project's tracks by its hub document.
 DOCUMENTS = (
     (f"{REPOSITORY}#readme", "README", "What the project is, its programs, and how to run them."),
     (f"{TREE}/docs/firmware", "Firmware notes", "The firmware images read: the loop, the 1 PPS, GPS, pForth, the rewrite."),
-    (f"{BLOB}/docs/running.md", "Running it", "Installing the packages, the daemon's settings, remote clients."),
-    (f"{BLOB}/PLAN.md", "Plan", "The design, the decisions behind it, open questions and known defects."),
+    (f"{BLOB}/docs/tooling.md", "Tooling", "The tools that read the firmware, FPGAs and board, and check what is written."),
+    (f"{BLOB}/docs/monitoring.md", "Monitoring", "The daemon, the monitor, the browser view and the exporter, and running them."),
 )
 
 # The hero's drawing: the HP 58503A's front panel, in hundredths of an

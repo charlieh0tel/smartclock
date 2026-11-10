@@ -166,7 +166,8 @@ here, where they go stale unnoticed.
   page is built from them, and `make pages` fails on a page lacking
   one.  Its `<body>` starts with its content column (a `main`, `div`,
   `header`, `article` or `section`), where `make pages` puts the
-  breadcrumb back to the landing page.  Set a page apart on the landing page by naming it in the
+  breadcrumb back to the landing page and, in its `<head>`, a link to
+  the site's icon, `docs/pages/favicon.svg`.  Set a page apart on the landing page by naming it in the
   `Makefile`'s `NEW_PAGE`, for one just launched, or `FEATURED_PAGE`.
 
 ## Working style

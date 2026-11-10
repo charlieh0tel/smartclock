@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<!-- The 58503A's GPS Lock lamp, lit, on the front panel's dark gray: the
+     colors of the landing page's hero drawing (tools/pages_index.py,
+     .panel .key.dark and .panel .lamp.lit). -->
+<rect width="32" height="32" rx="6" fill="#3a3b3c"/>
+<circle cx="16" cy="16" r="13" fill="#e8ff5a" opacity=".3"/>
+<circle cx="16" cy="16" r="10" fill="#e4f53a"/>
+</svg>

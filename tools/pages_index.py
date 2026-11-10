@@ -16,6 +16,10 @@ the content whatever the page's layout.  A breadcrumb from an earlier
 run is replaced, not doubled.  Fails if a page's <body> does not start
 with one of COLUMNS.
 
+The site's icon, docs/pages/favicon.svg, is copied beside the index,
+and each PAGE and the index get a link to it in their <head>, unless
+one already declares an icon.
+
 The hero is a drawing of the HP 58503A's front panel, showing UTC, or
 HERO, an image under docs/ copied to the same path beside the index,
 described by HERO_ALT.
@@ -117,6 +121,13 @@ BREADCRUMB_SEPARATOR = '<span aria-hidden="true" style="opacity:.6">&rsaquo;</sp
 COLUMNS = ("main", "div", "header", "article", "section")
 # A breadcrumb an earlier run inserted, with the line break before it.
 EARLIER_BREADCRUMB = re.compile(rf'\n<nav class="{BREADCRUMB_CLASS}"[^>]*>.*?</nav>', re.DOTALL)
+
+# The site's icon, its source and the link to it each page's <head> gets.
+ICON = DOCS / "pages" / "favicon.svg"
+ICON_LINK = f'<link rel="icon" href="{ICON.name}" type="image/svg+xml">'
+# A page's <head> start tag, and a link already declaring an icon.
+HEAD_START = re.compile(r"<head\b[^>]*>", re.IGNORECASE)
+DECLARED_ICON = re.compile(r"""<link\b[^>]*\brel=["']?[^"'>]*\bicon\b""", re.IGNORECASE)
 
 # The repository's documents the landing page points to, each by its
 # link, its name and what it holds.
@@ -509,6 +520,17 @@ def with_breadcrumb(name, text, page, crumb):
     return text[:at] + "\n" + crumb + text[at:]
 
 
+def with_icon(name, text):
+    """TEXT, page NAME's, with ICON_LINK on a line of its own at the top
+    of its <head>, unless it already declares an icon."""
+    if DECLARED_ICON.search(text):
+        return text
+    head_start = HEAD_START.search(text)
+    if not head_start:
+        sys.exit(f"pages_index: {name} has no <head>")
+    return text[:head_start.end()] + "\n" + ICON_LINK + text[head_start.end():]
+
+
 def motif(group):
     width, height = MOTIF_BOX
     return f'<svg viewBox="0 0 {width} {height}" aria-hidden="true">{group.motif}</svg>'
@@ -581,13 +603,15 @@ def main():
     listed = {page.group for name, page in heads.items() if name not in names}
     for name, page in heads.items():
         crumb = breadcrumb(page, page.group in listed)
-        (args.directory / name).write_text(with_breadcrumb(name, texts[name], page, crumb), encoding="utf-8")
+        text = with_breadcrumb(name, texts[name], page, crumb)
+        (args.directory / name).write_text(with_icon(name, text), encoding="utf-8")
+    shutil.copyfile(ICON, args.directory / ICON.name)
     page = (PAGE.replace("__HERO__", hero(args.directory, args.hero, args.hero_alt))
             .replace("__SECTIONS__", "\n".join(sections))
             .replace("__DOCUMENTS__", documents())
             .replace("__GLYPHS__", json.dumps(GLYPHS))
             .replace("__REPOSITORY__", REPOSITORY))
-    (args.directory / INDEX).write_text(page, encoding="utf-8")
+    (args.directory / INDEX).write_text(with_icon(INDEX, page), encoding="utf-8")
 
 
 if __name__ == "__main__":

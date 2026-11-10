@@ -134,7 +134,9 @@ docs:
 # them in a box of its own.  It also puts a breadcrumb back to
 # index.html at the top of each page's content, the first element in its
 # <body>, which must be a main, div, header, article or section; the
-# sources in docs/pages/ are left without one.
+# sources in docs/pages/ are left without one.  It copies the site's
+# icon, docs/pages/favicon.svg, beside index.html and links it from each
+# page's <head> and the index's, unless a page declares an icon of its own.
 # Its hero is a drawing of the 58503A's front panel, or HERO_IMAGE, a
 # path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages

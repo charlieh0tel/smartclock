@@ -375,6 +375,14 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   and padding; the build fails on a page not built that way.  Its
   styles are inline and inherit the page's colors and font, so it
   follows each page's theme without knowing it.  A rerun replaces it.
+- The site's icon, `docs/pages/favicon.svg`, is the 58503A's GPS Lock
+  lamp lit on the front panel's dark gray, in the hero drawing's
+  colors: a big lamp and nothing else, so it reads at 16 px.  It is
+  SVG, one small file every current browser takes, with no
+  `favicon.ico` beside it.  `tools/pages_index.py` copies it into the
+  site and links it from every page's `<head>` in the same pass as the
+  breadcrumb, for the same reason; a page that declares an icon of its
+  own keeps it, and a rerun adds no second link.
 
 ### Flashing is a direct-port command of the CLI
 

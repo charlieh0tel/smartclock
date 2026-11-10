@@ -17,7 +17,9 @@ The data, one JSON object:
     images   one entry an image, in the tables' order: image (its
              third_party/firmware/images/IMAGE.bin), model, firmware,
              and its quantities, tau (τ, seconds), startup (startup_pll's
-             first constant, seconds) and gain (G)
+             first constant, seconds), gain (G) and recovery (the
+             longest holdover after which holdover recovery keeps
+             startup's constant, seconds; null where not traced)
 
 A quantity is {values, by}: values, the choices the image has, each
 {value, rom, traced}; by, what chooses among them or sets it,
@@ -60,6 +62,10 @@ IMAGES = ROOT / 'third_party/firmware/images'
 EVIDENCE = ROOT / 'docs/firmware/loop.md'
 PAGE = ROOT / 'docs/pages/loop.html'
 SCRIPT = 'tools/firmware/loop_constants.py'
+# an image's quantities, in loop.md's columns' order
+QUANTITIES = ('tau', 'startup', 'gain', 'recovery')
+# loop.md's cell for a quantity not traced
+UNTRACED = 'not traced'
 
 MARKER = re.compile(r'^([ \t]*)<!-- loop_constants\.py (evidence|page) -->\n.*?^[ \t]*<!-- end loop_constants\.py -->$',
                     re.M | re.S)
@@ -109,8 +115,8 @@ def check_rom(data):
     faults = []
     for entry in data['images']:
         rom = (IMAGES / (entry['image'] + '.bin')).read_bytes()
-        for name in ('tau', 'startup', 'gain'):
-            for choice in entry[name]['values']:
+        for name in QUANTITIES:
+            for choice in (entry[name] or {'values': []})['values']:
                 for place in choice.get('rom', []):
                     at = int(place['at'], 16)
                     where = '%s %s %s at %s' % (entry['image'], name, number(choice['value']), place['at'])
@@ -190,12 +196,14 @@ def cited(addresses):
 
 def evidence_value(name, choice):
     if choice.get('traced', True) is False:
-        return '%.1f present, not traced' % choice['value']
+        return '%.1f present, %s' % (choice['value'], UNTRACED)
     text = power(choice['value']) if name == 'gain' else number(choice['value']) + ' s'
     return text + cited([place['at'] for place in choice.get('rom', [])])
 
 
 def evidence_cell(name, quantity):
+    if quantity is None:
+        return UNTRACED
     text = ' or '.join(evidence_value(name, choice) for choice in quantity['values'])
     by = quantity.get('by')
     if by:
@@ -209,12 +217,12 @@ def page_by(quantity):
 
 
 def evidence_table(data):
-    lines = ['| Image | τ, as the ROM block sets it | Startup\'s constant | G |',
-             '| ----- | --------------------------- | ------------------ | - |']
+    lines = ['| Image | τ, as the ROM block sets it | Startup\'s constant | G | Longest holdover keeping startup\'s constant |',
+             '| ----- | --------------------------- | ------------------ | - | ------------------------------------------- |']
     for entry in data['images']:
-        lines.append('| %s %s | %s | %s | %s |' % (
-            entry['model'], entry['firmware'], evidence_cell('tau', entry['tau']),
-            evidence_cell('startup', entry['startup']), evidence_cell('gain', entry['gain'])))
+        cells = ['%s %s' % (entry['model'], entry['firmware'])]
+        cells += [evidence_cell(name, entry[name]) for name in QUANTITIES]
+        lines.append('| %s |' % ' | '.join(cells))
     return lines
 
 

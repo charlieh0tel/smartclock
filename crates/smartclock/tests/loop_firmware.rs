@@ -59,6 +59,10 @@ const RECEIVERS: [Receiver; 2] = [
 /// "τ and G": "τ is at offset 0x14 of a 25-byte block").
 const TAU_OFFSET: usize = 0x14;
 
+/// The column of loop.md's "In every image" table giving the longest
+/// holdover after which holdover recovery keeps startup's constant.
+const RECOVERY_COLUMN: &str = "Longest holdover keeping startup's constant";
+
 /// smartclock.h's `pll_startup_state` values the replay steps through.
 const STARTUP_SETTLING: u8 = 1;
 const STARTUP_WAITING_FOR_HISTORY: u8 = 2;
@@ -451,18 +455,10 @@ fn the_evidence_s_update_constants_are_in_each_receiver_s_code() {
 
 #[test]
 fn the_evidence_s_holdover_recovery_thresholds_are_the_roms() {
-    let prose = flat(&read("docs/firmware/loop.md"));
-    let sentence = prose
-        .split_once("when the holdover lasted at most ")
-        .expect("the recovery's threshold")
-        .1;
-    let sentence = &sentence[..sentence.find(')').expect("its end")];
-    let (z3805a, a3704) = sentence.split_once("; ").expect("two receivers' values");
-    for (receiver, text, marker) in [
-        (&RECEIVERS[0], z3805a, "(Z3805A, "),
-        (&RECEIVERS[1], a3704, " s in 3704, "),
-    ] {
-        assert!(text.contains(marker), "{text:?} names no {marker:?}");
+    let evidence = read("docs/firmware/loop.md");
+    for receiver in &RECEIVERS {
+        let row = evidence_row(&evidence, receiver);
+        let text = &row[RECOVERY_COLUMN];
         let firmware = Firmware::load(receiver.image);
         let at = addresses(text)[0];
         assert!(firmware.is_immediate(at), "{}: {at:#x}", receiver.image);

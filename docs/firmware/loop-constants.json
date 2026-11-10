@@ -26,7 +26,8 @@
           {"value": -2.125e-12, "rom": [{"at": "0x4b162", "kind": "immediate"}]}
         ],
         "by": {"text": "by bit 8 of the word at `0x302000`", "cite": ["0x4b14c"]}
-      }
+      },
+      "recovery": null
     },
     {
       "image": "z3815a-4010",
@@ -50,7 +51,8 @@
           {"value": -2.125e-12, "rom": [{"at": "0x45052", "kind": "immediate"}]}
         ],
         "by": {"text": "by that bit", "cite": ["0x4503c"]}
-      }
+      },
+      "recovery": null
     },
     {
       "image": "z3801a-3543",
@@ -70,7 +72,8 @@
         "values": [
           {"value": 6.25e-13, "rom": [{"at": "0x475be", "kind": "immediate"}]}
         ]
-      }
+      },
+      "recovery": null
     },
     {
       "image": "z3805a-3543b",
@@ -90,7 +93,8 @@
         "values": [
           {"value": 6.25e-13, "rom": [{"at": "0x475f4", "kind": "immediate"}]}
         ]
-      }
+      },
+      "recovery": {"values": [{"value": 500, "rom": [{"at": "0x441ba", "kind": "immediate"}]}]}
     },
     {
       "image": "58503a-3633",
@@ -110,7 +114,8 @@
         "values": [
           {"value": 6.25e-13, "rom": [{"at": "0x476bc", "kind": "immediate"}]}
         ]
-      }
+      },
+      "recovery": null
     },
     {
       "image": "58503a-3704",
@@ -130,7 +135,8 @@
         "values": [
           {"value": 6.25e-13, "rom": [{"at": "0x477dc", "kind": "immediate"}]}
         ]
-      }
+      },
+      "recovery": {"values": [{"value": 350, "rom": [{"at": "0x441b0", "kind": "immediate"}]}]}
     },
     {
       "image": "58503b-1.01.04",
@@ -154,7 +160,8 @@
           {"value": 6.25e-13, "rom": [{"at": "0x40e08", "kind": "float"}]}
         ],
         "by": {"text": "by oscillator type, `:DIAGnostic:ROSCillator:TYPE`", "page": "by `TYPE`*"}
-      }
+      },
+      "recovery": null
     }
   ]
 }

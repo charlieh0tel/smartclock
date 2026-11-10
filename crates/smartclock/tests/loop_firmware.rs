@@ -1859,7 +1859,7 @@ fn the_page_s_start_up_times_are_the_firmware_s() {
         quarter_hours(to_normal("z3801a-3543", tau("Z3801A 3543", None))),
     );
     assert!(section.contains(&text), "the page does not say {text:?}");
-    let (z3815a, z3815a_long) = (tau("Z3815A 4010", None), tau("Z3815A 4010", Some("; ")));
+    let (z3815a, z3815a_long) = (tau("Z3815A 4010", None), tau("Z3815A 4010", Some(" or ")));
     let StartupWait::Uptime(uptime) = wait("z3815a-4010") else {
         panic!("the Z3815A waits for its uptime")
     };

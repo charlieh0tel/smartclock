@@ -144,17 +144,19 @@ th code{text-transform:none;letter-spacing:0}
   <p class="note">The clamp figures come from M = 6.25 × 10⁻¹⁰ / |G| and the gains below. Evidence for each value: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#the-loop">The loop</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#τ-and-g">τ and G</a>, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#s-the-oscillator-current">s, the oscillator current</a>.</p>
 
   <h3>By model</h3>
+  <!-- loop_constants.py page -->
   <div class="wide"><table class="models">
     <colgroup><col style="width:19%"><col style="width:17%"><col style="width:25%"><col style="width:12%"><col style="width:13%"><col style="width:14%"></colgroup>
     <thead><tr><th>Firmware</th><th class="sym">τ</th><th class="sym">G</th><th class="sym">a</th><th>Slowest pole, <span class="sym">≈ 2.7τ</span></th><th>Startup ramp</th></tr></thead>
     <tbody>
       <tr><td>Z3816A 4001</td><td>500 s</td><td>−1.25 × 10⁻¹² or −2.125 × 10⁻¹², by bit 8 of the word at <code>0x302000</code></td><td>0.0595</td><td>1360 s</td><td>≈ 700 s</td></tr>
-      <tr><td>Z3815A 4010</td><td>500 or 1000 s, by bit 12 of that word</td><td>+1.2 × 10⁻¹² or −2.125 × 10⁻¹², by that bit</td><td>0.0595 or 0.02975</td><td>1360 or 2710 s</td><td>≈ 700 or 1700 s</td></tr>
+      <tr><td>Z3815A 4010</td><td>500 or 1000 s, by bit 12 of the word at <code>0x302000</code></td><td>+1.2 × 10⁻¹² or −2.125 × 10⁻¹², by that bit</td><td>0.0595 or 0.02975</td><td>1360 or 2710 s</td><td>≈ 700 or 1700 s</td></tr>
       <tr><td>Z3801A 3543, Z3805A 3543B</td><td>1000 s</td><td>+6.25 × 10⁻¹³</td><td>0.02975</td><td>2710 s</td><td>≈ 1700 s</td></tr>
       <tr><td>58503A 3633, 3704</td><td>700 s</td><td>+6.25 × 10⁻¹³</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s</td></tr>
       <tr><td>58503B 1.01.04</td><td>700 s, settable: <code>LTIMe:MAX</code>*</td><td>−1.25 × 10⁻¹² or +6.25 × 10⁻¹³, by <code>TYPE</code>*</td><td>0.0425</td><td>1900 s</td><td>≈ 1100 s, from <code>LTIMe:INIT</code>*</td></tr>
     </tbody>
   </table></div>
+  <!-- end loop_constants.py -->
   <p class="note">* Undocumented, under <code>:DIAGnostic:ROSCillator</code>; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, Z3801A, Z3805A, 58503A 3704 and 58503B; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in (below). What the bits of the word at <code>0x302000</code> read is untraced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
 </section>
 

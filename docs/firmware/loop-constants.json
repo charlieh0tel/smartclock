@@ -1,0 +1,160 @@
+{
+  "law": {
+    "prefilter": 29.75,
+    "integral_scale": 4,
+    "update_seconds": 10,
+    "ramp_step": 5
+  },
+  "images": [
+    {
+      "image": "z3816a-4001",
+      "model": "Z3816A",
+      "firmware": "4001",
+      "tau": {
+        "values": [
+          {"value": 500, "rom": [{"at": "0x40174", "kind": "block", "offset": "0x14"}]}
+        ]
+      },
+      "startup": {
+        "values": [
+          {"value": 150, "rom": [{"at": "0x47af8", "kind": "immediate"}, {"at": "0x4af5a", "kind": "immediate"}]}
+        ]
+      },
+      "gain": {
+        "values": [
+          {"value": -1.25e-12, "rom": [{"at": "0x4b15a", "kind": "immediate"}]},
+          {"value": -2.125e-12, "rom": [{"at": "0x4b162", "kind": "immediate"}]}
+        ],
+        "by": {"text": "by bit 8 of the word at `0x302000`", "cite": ["0x4b14c"]}
+      }
+    },
+    {
+      "image": "z3815a-4010",
+      "model": "Z3815A",
+      "firmware": "4010",
+      "tau": {
+        "values": [
+          {"value": 500, "rom": [{"at": "0x44c9e", "kind": "block", "offset": "0x14"}, {"at": "0x50c0c", "kind": "immediate"}]},
+          {"value": 1000, "rom": [{"at": "0x50c00", "kind": "immediate"}]}
+        ],
+        "by": {"text": "by bit 12 of the word at `0x302000`", "cite": ["0x50be8"]}
+      },
+      "startup": {
+        "values": [
+          {"value": 150, "traced": false}
+        ]
+      },
+      "gain": {
+        "values": [
+          {"value": 1.2e-12, "rom": [{"at": "0x45046", "kind": "immediate"}]},
+          {"value": -2.125e-12, "rom": [{"at": "0x45052", "kind": "immediate"}]}
+        ],
+        "by": {"text": "by that bit", "cite": ["0x4503c"]}
+      }
+    },
+    {
+      "image": "z3801a-3543",
+      "model": "Z3801A",
+      "firmware": "3543",
+      "tau": {
+        "values": [
+          {"value": 1000, "rom": [{"at": "0x2f846", "kind": "block", "offset": "0x14"}]}
+        ]
+      },
+      "startup": {
+        "values": [
+          {"value": 150}
+        ]
+      },
+      "gain": {
+        "values": [
+          {"value": 6.25e-13, "rom": [{"at": "0x475be", "kind": "immediate"}]}
+        ]
+      }
+    },
+    {
+      "image": "z3805a-3543b",
+      "model": "Z3805A",
+      "firmware": "3543B",
+      "tau": {
+        "values": [
+          {"value": 1000, "rom": [{"at": "0x3094c", "kind": "block", "offset": "0x14"}]}
+        ]
+      },
+      "startup": {
+        "values": [
+          {"value": 150, "rom": [{"at": "0x47404", "kind": "immediate"}, {"at": "0x441f4", "kind": "immediate"}]}
+        ]
+      },
+      "gain": {
+        "values": [
+          {"value": 6.25e-13, "rom": [{"at": "0x475f4", "kind": "immediate"}]}
+        ]
+      }
+    },
+    {
+      "image": "58503a-3633",
+      "model": "58503A",
+      "firmware": "3633",
+      "tau": {
+        "values": [
+          {"value": 700, "rom": [{"at": "0x305ae", "kind": "block", "offset": "0x14"}]}
+        ]
+      },
+      "startup": {
+        "values": [
+          {"value": 150, "traced": false}
+        ]
+      },
+      "gain": {
+        "values": [
+          {"value": 6.25e-13, "rom": [{"at": "0x476bc", "kind": "immediate"}]}
+        ]
+      }
+    },
+    {
+      "image": "58503a-3704",
+      "model": "58503A",
+      "firmware": "3704",
+      "tau": {
+        "values": [
+          {"value": 700, "rom": [{"at": "0x30840", "kind": "block", "offset": "0x14"}]}
+        ]
+      },
+      "startup": {
+        "values": [
+          {"value": 150, "rom": [{"at": "0x475e2", "kind": "immediate"}, {"at": "0x441ea", "kind": "immediate"}]}
+        ]
+      },
+      "gain": {
+        "values": [
+          {"value": 6.25e-13, "rom": [{"at": "0x477dc", "kind": "immediate"}]}
+        ]
+      }
+    },
+    {
+      "image": "58503b-1.01.04",
+      "model": "58503B",
+      "firmware": "1.01.04",
+      "tau": {
+        "values": [
+          {"value": 700, "rom": [{"at": "0x407b4", "kind": "block", "offset": "0x18"}]}
+        ],
+        "by": {"text": "settable: `:DIAGnostic:ROSCillator:LTIMe:MAX`", "page": "settable: `LTIMe:MAX`*"}
+      },
+      "startup": {
+        "values": [
+          {"value": 150, "rom": [{"at": "0x407b4", "kind": "block", "offset": "0x14"}]}
+        ],
+        "by": {"text": "settable: `:DIAGnostic:ROSCillator:LTIMe:INIT`", "page": "from `LTIMe:INIT`*"}
+      },
+      "gain": {
+        "values": [
+          {"value": -1.25e-12, "rom": [{"at": "0x40dfc", "kind": "float"}]},
+          {"value": 6.25e-13, "rom": [{"at": "0x40e08", "kind": "float"}]}
+        ],
+        "by": {"text": "by oscillator type, `:DIAGnostic:ROSCillator:TYPE`", "page": "by `TYPE`*"}
+      }
+    }
+  ]
+}

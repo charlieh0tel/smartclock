@@ -1,16 +1,16 @@
 """Writes the published pages' landing page, DIR/index.html: what the
 project is, the hero picture, the NEW page under "New" and the FEATURED
 page under "Featured", each in a box of its own if given, then each
-other PAGE given (a file in DIR) but those named UNLISTED by its
-<title> and its description meta tag under its smartclock-group meta
-tag's group, in GROUPS' order and within one in the order given, and
-the repository's README and the hub document of each of the project's
-tracks.  Fails
-if a page lacks any of the three tags or names a group GROUPS lacks,
-or if NEW, FEATURED or an UNLISTED page is not one of the PAGEs, or
-NEW and FEATURED are the same page or either is unlisted, or a WIP
-page is not one of the PAGEs.  An unlisted
-page is published at its URL but nowhere on the landing page.
+PAGE given (a file in DIR) but those named UNLISTED, NEW and FEATURED
+included, by its <title> and its description meta tag under its
+smartclock-group meta tag's group, in GROUPS' order and within one in
+the order given, and the repository's README and the hub document of
+each of the project's tracks.  Fails if a page lacks any
+of the three tags or names a group GROUPS lacks, or if NEW, FEATURED or
+an UNLISTED page is not one of the PAGEs, or NEW and FEATURED are the
+same page or either is unlisted, or a WIP page is not one of the PAGEs.
+An unlisted page is published at its URL but nowhere on the landing
+page.
 
 Each PAGE also gets a breadcrumb back to the landing page:
 "SmartClock", its group's heading, linked to the group's box there when
@@ -90,21 +90,12 @@ GROUPS = {
     ),
     "firmware": Group(
         "Firmware and the loop",
-        "How the firmware measures the 1 PPS and steers the oscillator to GPS, and the words its pForth console knows.",
+        "How the firmware measures the 1 PPS and steers the oscillator to GPS, and each image's pForth words and SCPI commands side by side.",
         # A loop: the measurement and the filter, the filter's output fed back.
         '<rect x="4" y="8" width="22" height="14" rx="1"/>'
         '<rect x="44" y="8" width="24" height="14" rx="1"/>'
         '<path d="M26 15h14M37 12l3 3-3 3"/>'
         '<path d="M56 22v16H15v-12M12 29l3-3 3 3"/>',
-    ),
-    "scpi": Group(
-        "SCPI",
-        "The command trees each firmware image's parser knows, against the manuals.",
-        # A command tree: a root, its subsystems, their commands.
-        '<circle cx="8" cy="24" r="3"/>'
-        '<path d="M11 24h8M19 10v28M19 10h10M19 24h10M19 38h10"/>'
-        '<circle cx="32" cy="10" r="3"/><circle cx="32" cy="24" r="3"/><circle cx="32" cy="38" r="3"/>'
-        '<path d="M35 10h8M43 4v12M43 4h14M43 16h14M35 38h22"/>',
     ),
     "fpga": Group(
         "FPGAs",
@@ -608,10 +599,10 @@ def set_apart(key, heading, name, page, wip):
     return section(key, heading, motif(GROUPS[page.group]), [entry(name, page, wip)], "group featured")
 
 
-def grouped(heads, skip, wip):
+def grouped(heads, unlisted, wip):
     sections = []
     for key, group in GROUPS.items():
-        entries = [entry(name, page, wip) for name, page in heads.items() if page.group == key and name not in skip]
+        entries = [entry(name, page, wip) for name, page in heads.items() if page.group == key and name not in unlisted]
         if entries:
             about = f"{motif(group)}<p>{html.escape(group.blurb)}</p>"
             sections.append(section(key, group.heading, about, entries))
@@ -668,9 +659,9 @@ def main():
     if set(names) & set(args.unlisted):
         sys.exit("pages_index: the new or the featured page is unlisted")
     sections = [set_apart(key, heading, name, heads[name], wip) for key, heading, name in chosen if name]
-    skip = set(names) | set(args.unlisted)
-    sections += grouped(heads, skip, wip)
-    listed = {page.group for name, page in heads.items() if name not in skip}
+    unlisted = set(args.unlisted)
+    sections += grouped(heads, unlisted, wip)
+    listed = {page.group for name, page in heads.items() if name not in unlisted}
     for name, page in heads.items():
         crumb = breadcrumb(page, page.group in listed)
         if name in wip:

@@ -132,8 +132,9 @@ docs:
 # index.html, lists them by group, in that order within one, after
 # NEW_PAGE, a page just launched, under "New", and FEATURED_PAGE under
 # "Featured", each one of PAGES or empty for none, each set apart above
-# them in a box of its own, and last the README and each track's hub
-# document, DOCUMENTS in tools/pages_index.py.  A page in UNLISTED_PAGES,
+# them in a box of its own and listed in its group too, and last the
+# README and each track's hub document, DOCUMENTS in
+# tools/pages_index.py.  A page in UNLISTED_PAGES,
 # one of PAGES, is published at its URL but left off the landing page;
 # it cannot be NEW_PAGE or FEATURED_PAGE.  A page in WIP_PAGES, one of
 # PAGES, gets a "Work in progress" ribbon across its top right corner, a
@@ -150,7 +151,7 @@ docs:
 PAGES_DIR ?= target/pages
 PAGES_DATA ?= target/pages-data
 HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
-PAGES := fpga fpga-detail board-atlas block-diagram scpi-models pforth-models $(HAND_PAGES)
+PAGES := fpga fpga-detail board-atlas block-diagram $(HAND_PAGES) pforth-models scpi-models
 NEW_PAGE := fpga
 FEATURED_PAGE := loop
 UNLISTED_PAGES := bench-sky-2026-10-03

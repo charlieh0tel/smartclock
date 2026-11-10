@@ -115,7 +115,7 @@ def render(data):
         title="SCPI Trees by Model",
         description="Every command path each SmartClock firmware image's SCPI parser knows, side by side "
                     "against the manuals, as a table that filters.",
-        group="scpi",
+        group="firmware",
         generated=GENERATED,
         heading="SCPI trees by model",
         intro=intro(data),

@@ -817,6 +817,13 @@ It shares the explainer's references, styles and page shell through
    NAME`, loopback always allowed, a non-loopback bind refused without
    one.  Deferred.
 
+6. **What the Z3815A's "19.8 MHz Fail" alarm watches.**  The 4010
+   image names a hardware alarm "19.8 MHz Fail" beside "10 MHz Fail"
+   and "19.6608 MHz Fail" (`strings -t x`, `0x34e7a` to `0x34e99`;
+   `alarm_hardware_update`, `0x341b8`), and no 19.8 MHz clock appears
+   in the FPGA design.  What it watches is not traced, so the FPGA
+   docs leave it out until it is.
+
 ## Known defects
 
 Known and unfixed, each because the fix is not yet worth its cost.  The

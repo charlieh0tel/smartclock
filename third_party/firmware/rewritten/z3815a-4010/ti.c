@@ -386,16 +386,18 @@ uint32_t interpolator_prepare(void) {
   return 1;
 }
 
-/* Asks counter_arm to set FPGA_BIT_ALARM to a value, the alarm's request
+/* Asks counter_arm to set FPGA_BIT_ALARM to a start source, the alarm's request
  * as sync_request is the sync's (0x494d8). */
-void counter_alarm_request(uint8_t alarm) {
+void counter_alarm_request(fpga_start_source alarm) {
   counter_configuration.alarm = alarm;
   counter_configuration.alarm_mode = COUNTER_ALARM_WHEN_WANTED;
   counter_configuration.alarm_state = COUNTER_WORK_WANTED;
 }
 
-/* Sets FPGA_BIT_ALARM's field to a value, counter_arm's (0x494f2). */
-void counter_set_alarm(uint8_t alarm) { fpga_set_field(FPGA_BIT_ALARM, alarm); }
+/* Sets FPGA_BIT_ALARM's field to a start source, counter_arm's (0x494f2). */
+void counter_set_alarm(fpga_start_source alarm) {
+  fpga_set_field(FPGA_BIT_ALARM, alarm);
+}
 
 /* Asks counter_arm to sync the counter count times by a kind, the
  * loop's steps and the console's clk_synch and sync_imm (0x495c4). */
@@ -453,7 +455,8 @@ int32_t counter_load_registers(void) {
  * (0x49a62). */
 void counter_configuration_init(counter_configuration_fields* configuration) {
   /* The fields by fpga_bit_table entry: the count, preset and the high
-   * reference flagged, the rest 0, the alarm's and the sync's among them.
+   * reference flagged, the rest 0, the alarm's (FPGA_START_SOURCE_GPS_PPS)
+   * and the sync's among them.
    * Even, since gcc fills it by words and longs, misaligned at an odd
    * address. */
   uint8_t __attribute__((aligned(2))) fields[] = {

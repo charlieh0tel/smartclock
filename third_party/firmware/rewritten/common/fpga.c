@@ -389,7 +389,11 @@ uint8_t fpga_verify(fpga_configuration_index configuration,
 void fpga_write(uint8_t reg, uint8_t value) { fpga_port[reg] = value; }
 
 /* A byte from two FPGA registers' low nibbles, the next register's the
- * high one. */
+ * high one.  The mask and the shift drop their upper nibbles, which in
+ * the Z3815A are the seconds count at the even address and the P84
+ * counter's count at the odd one (docs/firmware/z3815a-trace.md,
+ * "Register port" and "The P84 counter"): the firmware never reads the
+ * P84 counter. */
 uint8_t fpga_read_byte(fpga_register reg) {
   static const uint8_t NIBBLE = 0xf;
   static const uint8_t NIBBLE_BITS = 4;

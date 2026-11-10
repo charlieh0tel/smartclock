@@ -487,13 +487,19 @@ static const float PLL_STAGES_N3_PHASE_OLD = 0.8f;
 
 static const float PLL_STAGES_N3_PHASE_UNIT = -1e-12f;
 
-/* The value counter_alarm_request asks FPGA_BIT_ALARM for as the loop steers,
- * measures the phase offset and stops; its meaning is not established. */
-static const uint8_t PLL_STAGES_N3_COUNTER_STEER = 0xc;
+/* The start source counter_alarm_request asks FPGA_BIT_ALARM for as the
+ * loop steers, measures the phase offset and stops: P78 for the first
+ * two, with P24 High and Low, and the GPS 1 PPS again
+ * (docs/firmware/z3815a-trace.md, "Start, stop and status bits" and
+ * "Every output pin"). */
+static const fpga_start_source PLL_STAGES_N3_COUNTER_STEER =
+    FPGA_START_SOURCE_P78_P24_HIGH;
 
-static const uint8_t PLL_STAGES_N3_COUNTER_MEASURE = 8;
+static const fpga_start_source PLL_STAGES_N3_COUNTER_MEASURE =
+    FPGA_START_SOURCE_P78;
 
-static const uint8_t PLL_STAGES_N3_COUNTER_STOP = 0;
+static const fpga_start_source PLL_STAGES_N3_COUNTER_STOP =
+    FPGA_START_SOURCE_GPS_PPS;
 
 /* The GPS time's low byte at which the leap second's acknowledgment is
  * asked for without a clock mismatch. */

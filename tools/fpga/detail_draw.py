@@ -29,7 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from page import die  # noqa: E402
 from sheet import Sheet, metrics, text_width  # noqa: E402
-from detail_bind import FLIP_FLOPS, pin_number, output_notes, source_label  # noqa: E402
+from detail_bind import FLIP_FLOPS, OUTPUTS, pin_number, output_notes, source_label  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -87,7 +87,7 @@ TEN_MHZ = Layout(
            ("start", "readmux"), ("stop", "count"), ("stop", "readmux"), ("count", "readmux"),
            ("divider", "stop"), ("divider", "output"), ("divider", "seconds"), ("sync", "divider")),
     chains={
-        "prescaler": "GI.Y every {gi_clocks} clocks, JI.X every {ji_clocks}",
+        "prescaler": "GI.Y every {gi_clocks} clocks, JI.X every {ji_clocks} clocks",
         "binary": "JK.Y every {jk_clocks} clocks",
         "decades": "÷{decade1} ÷{decade2} ÷{decade3}; the tap at {tap} ns",
         "terminal": "÷{divide}",
@@ -127,7 +127,7 @@ TELECOM = Layout(
         "gj": "GJ.Y: one GCLK tick a cycle",
         "chain": "÷{chain}; the tap KI.X at {tap} ns",
         "terminal": "JI.Y: ÷{divide}",
-        "p7prescaler": "÷{ke_clocks}",
+        "p7prescaler": "nominal ÷{ke_clocks}",
         "p7counter": "÷{p7_counter}",
         "p7terminal": "P7 ÷{p7_divide}",
     },
@@ -144,17 +144,17 @@ LAYOUTS = {
     "58503a-z3801a": (TEN_MHZ, {"start": ("{eq:AH.Y}",), "stop": ("{eq:CJ.X}",), "output": ("{eq:EI.Y}",),
                                 "sync": ("{eq:EJ.X}",)},
                       {"prescaler": "the Z3805A's: GI.Y every {gi_clocks@z3805a} clocks, JI.X every "
-                                    "{ji_clocks@z3805a}",
+                                    "{ji_clocks@z3805a} clocks",
                        "binary": "the Z3805A's: JK.Y every {jk_clocks@z3805a} clocks",
                        "decades": "the Z3805A's: ÷{decade1@z3805a} ÷{decade2@z3805a} ÷{decade3@z3805a}; "
                                   "the tap at {tap} ns"}),
     "58503b": (TEN_MHZ, {"start": ("{eq:AH.Y}",), "stop": ("{eq:CJ.X}",), "output": ("{eq:HK.X}", "{eq:FH.Y}"),
                          "sync": ("{eq:EJ.X}",), "fixed": ("P19 every {p19_clocks} clocks",)},
                {"prescaler": "the Z3805A's (check-blocks): GI.Y every {gi_clocks@z3805a} clocks, JI.X every "
-                             "{ji_clocks@z3805a}",
+                             "{ji_clocks@z3805a} clocks",
                 "binary": "the Z3805A's: JK.Y every {jk_clocks@z3805a} clocks",
                 "decades": "the Z3805A's: ÷{decade1@z3805a} ÷{decade2@z3805a} ÷{decade3@z3805a}; "
-                           "the tap at {tap} ns"}),
+                           "HG.Y, through EH, the tap"}),
     "z3815a": (TELECOM, {}, {}),
     "z3816a": (TELECOM, {}, {}, (("seconds", "readmux"),)),
 }
@@ -180,6 +180,10 @@ CHIP_W = RIGHT_PIN_X + PIN_W + LEFT_PIN_X
 # a channel's first track is from its edge.
 PORT_SPACING, ROW_SPACING, TRACK_SPACING, TRACK_MARGIN = 14, 12, 14, 22
 COUNTER_GAP, PILL_GAP, PILL_PAD = 12, 6, 8
+# How far a wire's label keeps from other wires, so that it reads as its own.
+LABEL_CLEAR = 7
+# The room a badge takes at the end of a line.
+BADGE_ROOM = 22
 
 # The gate-level sheet: its width, the gaps between boxes and between
 # rows, and a box's narrowest and widest.
@@ -197,6 +201,12 @@ GATE_ROWS = (
     ("Read path", ("address", "select", "mux01", "mux23")),
 )
 COMPACT = ("head", "stages")
+# Elements a design's rows draw beyond GATE_ROWS', by row heading: the
+# 58503A/Z3801A's read path differs from the Z3805A's at AL.
+GATE_EXTRA = {"58503a-z3801a": {"Read path": ("phases",)}}
+# The gate-level sheet's band for a row's heading, and the height of the
+# channel under a line before its tracks.
+GATE_HEADING, GATE_CHANNEL = 30, 28
 
 MARK_LETTERS = {"simulated": ("S", "sim"), "inferred": ("I", "inferred"), "open": ("?", "open")}
 
@@ -248,9 +258,9 @@ def clb_lines(netlist, tile):
             text = selection(netlist, clb, sel)
             lines.append(f"{' = '.join(outs)} = {text}")
             flops += [q for q in FLIP_FLOPS if re.search(rf"\b{q}\b", text)]
-    for q in FLIP_FLOPS:
-        if q in flops:
-            lines.append(f"{q} ← {selection(netlist, clb, clb['data'][FLIP_FLOPS[q]])}")
+    for q, out in FLIP_FLOPS.items():
+        if q in flops or clb["flipFlops"][out]:
+            lines.append(f"{q} ← {selection(netlist, clb, clb['data'][out])}")
     return lines
 
 
@@ -353,8 +363,13 @@ def content(block, members, netlist, facts, elements, labels, extra):
             label = fill(labels[e.spec.key], netlist, facts, elements) if e.spec.key in labels else ""
             p.chain.append((e.spec.title, fit(" ".join(e.spec.members), "ch-clb", INNER - 2 * PAD),
                             fit(label, "ch-mod", INNER - 2 * PAD) if label else []))
-    else:
+    elif len({e.spec.confidence for e in members}) == 1:
         p.lines += [("ch-lab", t) for t in fit(" · ".join(e.spec.title for e in members), "ch-lab", INNER)]
+    else:
+        for e in members:
+            badge = marks({e.spec.confidence})
+            titles = fit(e.spec.title, "ch-lab", INNER - (BADGE_ROOM if badge else 0))
+            p.lines += [("ch-lab", t) for t in titles[:-1]] + [("ch-lab", titles[-1], badge[0] if badge else None)]
     for template in block.lines + extra.get(block.key, ()):
         p.lines += [("ch-eq", t) for t in fit(fill(template, netlist, facts, elements), "ch-eq", INNER)]
     return p
@@ -451,14 +466,17 @@ def draw_block(sheet, p):
     """A block: its title and badges, lines, counters and net flags."""
     ti = p.block.ti
     p.box = box = sheet.box(p.x, p.y, COL_W, p.h, "ch-blk ti" if ti else "ch-blk")
-    badges = marks({e.spec.confidence for e in p.members})
+    words = {e.spec.confidence for e in p.members}
+    badges = marks(words) if len(words) == 1 else []
     sheet.text(p.x + PAD, p.y + TITLE, p.block.title, "ch-ttl sig" if ti else "ch-ttl", box)
     for i, (letter, klass) in enumerate(reversed(badges)):
         badge_on(sheet, p.x + COL_W - PAD - 7.5 - 20 * i, p.y + TITLE - 5, letter, klass, box)
     y = p.y + TITLE + PAD
-    for cls, text in p.lines:
+    for cls, text, *badge in p.lines:
         y += LINE
         sheet.text(p.x + PAD, y - 4, text, cls, box)
+        if badge and badge[0]:
+            badge_on(sheet, p.x + PAD + text_width(cls, text) + BADGE_ROOM / 2, y - 8, *badge[0], box)
     previous = None
     for title, clbs, label_lines in p.chain:
         y += COUNTER_GAP
@@ -570,7 +588,7 @@ def label(sheet, wire, text, ti):
     cls = "ch-net sig" if ti else "ch-net"
     width = text_width(cls, text)
     size = metrics(cls)[0]
-    for s in [s for s in sheet.segments if s.wire == wire]:
+    for s in reversed([s for s in sheet.segments if s.wire == wire]):
         x0, y0, x1, y1 = s.bounds()
         if y0 == y1:
             spots = [(x, y0 - 4) for x in range(int(x0) + 6, int(x1 - width) - 2, 6)]
@@ -580,7 +598,8 @@ def label(sheet, wire, text, ti):
             spots += [(x0 - 5 - width, y) for y in range(int(y0 + size) + 4, int(y1) - 4, 6)]
         for x, y in spots:
             bounds = (x, y - 0.8 * size, x + width, y + 0.22 * size)
-            if sheet.clear((bounds[0] - 2, bounds[1] - 2, bounds[2] + 2, bounds[3] + 2), wire):
+            if sheet.clear((bounds[0] - LABEL_CLEAR, bounds[1] - LABEL_CLEAR, bounds[2] + LABEL_CLEAR,
+                            bounds[3] + LABEL_CLEAR), wire):
                 sheet.text(x, y, text, cls, wire=wire)
                 return
 
@@ -592,8 +611,9 @@ def pin_lines(pins, spec, netlist, outputs):
         lines += [("ch-p", t) for t in fit(f"{pin} {spec.pins[pin].role}", "ch-p", PIN_W - 2 * PAD)]
         if pin in outputs:
             iob = outputs[pin]
-            note = "← " + ", ".join([source_label(netlist, iob)] + output_notes(netlist, iob))
-            lines += [("ch-eq", t) for t in fit(note, "ch-eq", PIN_W - 2 * PAD)]
+            note = ", ".join([source_label(netlist, iob)] + output_notes(netlist, iob))
+            if note not in spec.pins[pin].role:
+                lines += [("ch-eq", t) for t in fit("← " + note, "ch-eq", PIN_W - 2 * PAD)]
     return lines
 
 
@@ -699,14 +719,40 @@ def side_pins(sheet, left, right, netlist, spec, block_of):
 
 # --- the time-interval counter, gate by gate ---------------------------------------
 
+class Gate:
+    """A logic block's box on the gate-level sheet."""
+
+    def __init__(self, tile, element, lines, w, line):
+        self.tile = tile
+        self.element = element
+        self.lines = lines          # its equation lines
+        self.flags = []             # its net flags, each (net, source tile)
+        self.w = w
+        self.line = line            # the sheet line it is on
+        self.x = self.y = self.h = 0
+        self.ports = {"top": [], "bottom": []}
+
+    @property
+    def compact(self):
+        return self.element.spec.key in COMPACT
+
+
+def compact_lines(netlist, tile, e, bit):
+    """A count stage's box: its bits, clock, reset and flip-flop loads; the
+    next count bit."""
+    clb = netlist.clbs[tile]
+    width = 1 if e.spec.key == "head" else 2
+    lines = [f"bit {bit}" if width == 1 else f"bits {bit}–{bit + 1}"]
+    lines += [line for part in clb_lines(netlist, tile) for line in part.split(", ")
+              if line.startswith(("K =", "RD =")) or "←" in line]
+    return lines, bit + width
+
+
 def gate_box(netlist, tile, e, bit):
     """A gate-level box's lines and width; the next count bit."""
     if e.spec.key in COMPACT:
-        clb = netlist.clbs[tile]
-        width = 1 if e.spec.key == "head" else 2
-        lines = [f"bit {bit}" if width == 1 else f"bits {bit}–{bit + 1}",
-                 f"K = {netlist.label(clb['pins']['K'])}{'↓' if clb['clockInvert'] else '↑'}"]
-        return lines, STAGE_W, bit + width
+        lines, bit = compact_lines(netlist, tile, e, bit)
+        return lines, max(STAGE_W, 2 * PAD + max(text_width("ch-eq", t) for t in lines)), bit
     lines = [t for line in clb_lines(netlist, tile) for t in fit(line, "ch-eq", BOX_MAX - 2 * PAD)]
     badge = 24 if marks({e.spec.confidence}) else 0
     title = text_width("ch-ttl", tile) + 12 + text_width("ch-lab", e.spec.title) + badge
@@ -714,49 +760,142 @@ def gate_box(netlist, tile, e, bit):
     return lines, max(BOX_MIN, w), bit
 
 
-def gates(design, netlist, elements):
-    """One box a CLB on the time-interval path, with its netlist equations."""
-    by_key = {e.spec.key: e for e in elements}
-    sheet = Sheet()
-    arrows = []
-    y = PAD
+def gate_rows(design, by_key):
+    """The rows drawn for a design: heading and its (tile, element)s."""
+    rows = []
     for heading, keys in GATE_ROWS:
+        keys = GATE_EXTRA.get(design.image, {}).get(heading, ()) + keys
         tiles = [(m.partition(".")[0], by_key[k]) for k in keys if k in by_key for m in by_key[k].spec.members]
-        if not tiles:
-            continue
-        sheet.text(PAD, y + 12, heading.upper(), "ch-clb")
-        y += 28
-        x, row_h, previous, bit = PAD, 0, None, 1
+        if tiles:
+            rows.append((heading, tiles))
+    return rows
+
+
+def free_x(gate, side, avoid):
+    """A spot on a box's side for a wire, clear of its other wires there
+    and of the text spans in avoid."""
+    for f in (0.5, 0.35, 0.65, 0.2, 0.8, 0.1, 0.9):
+        x = gate.x + gate.w * f
+        if all(abs(x - used) >= 12 for used in gate.ports[side]) and \
+                not any(x0 - 6 <= x <= x1 + 6 for x0, x1 in avoid):
+            gate.ports[side].append(x)
+            return x
+    die(f"gates: no room for another wire on {gate.tile}'s {side}")
+
+
+def gates(design, netlist, elements):
+    """One box a CLB on the time-interval path, with its netlist equations,
+    joined by the nets between them: an arrow to the next box in a line, a
+    route through the channel between neighboring lines, a net flag
+    otherwise."""
+    by_key = {e.spec.key: e for e in elements}
+    gates_, lines, headings = [], [], {}
+    for heading, tiles in gate_rows(design, by_key):
+        x, bit = PAD, 1
+        lines.append([])
+        headings[len(lines) - 1] = heading
         for tile, e in tiles:
-            lines, w, bit = gate_box(netlist, tile, e, bit)
-            compact = e.spec.key in COMPACT
-            h = TITLE + PAD + LINE * len(lines) + PAD
-            if x + w > GATE_W - PAD:
-                x, y, row_h, previous = PAD, y + row_h + GATE_ROW_GAP, 0, None
-            box = sheet.box(x, y, w, h, "ch-blk ti")
-            sheet.text(x + PAD, y + TITLE, tile, "ch-ttl", box)
-            for letter, klass in marks({e.spec.confidence}):
-                badge_on(sheet, x + w - PAD - 7.5, y + TITLE - 5, letter, klass, box)
-            if not compact:
-                sheet.text(x + PAD + text_width("ch-ttl", tile) + 12, y + TITLE, e.spec.title, "ch-lab", box)
-            ty = y + TITLE + PAD
-            for t in lines:
-                ty += LINE
-                sheet.text(x + PAD, ty - 4, t, "ch-eq", box)
-            if previous is not None:
-                ptile, px, py, pw, ph = previous
-                inputs = {netlist.name(v) for v in netlist.clbs[tile]["pins"].values()}
-                nets = [n for n in (netlist.name(netlist.clbs[ptile]["pins"][o]) for o in netlist.used_outputs(ptile))
-                        if n in inputs]
-                if nets:
-                    ay = y + TITLE + PAD + (min(h, ph) - TITLE - PAD) / 2
-                    arrows.append((sheet.wire([(px + pw, ay), (x - 2, ay)], "ch-w sig", "ch-as"), nets))
-            previous = (tile, x, y, w, h)
+            text, w, bit = gate_box(netlist, tile, e, bit)
+            if x + w > GATE_W - PAD and lines[-1]:
+                lines.append([])
+                x = PAD
+            gate = Gate(tile, e, text, w, len(lines) - 1)
+            gate.x = x
+            lines[-1].append(gate)
+            gates_.append(gate)
             x += w + GATE_GAP
-            row_h = max(row_h, h)
-        y += row_h + GATE_ROW_GAP
-    for wire, nets in arrows:
-        label(sheet, wire, nets[0], True)
+    by_tile = {g.tile: g for g in gates_}
+    driver = {netlist.name(netlist.clbs[g.tile]["pins"][o]): g for g in gates_ for o in netlist.used_outputs(g.tile)}
+
+    # Each box's inputs from the others: an arrow, a route or a flag.
+    arrows, routes = [], []
+    for g in gates_:
+        row = lines[g.line]
+        left = row[row.index(g) - 1] if row.index(g) else None
+        seen = set()
+        for pin, net in netlist.clbs[g.tile]["pins"].items():
+            name = netlist.name(net)
+            source = driver.get(name)
+            if pin in OUTPUTS or source is None or source is g or (name, source.tile) in seen:
+                continue
+            seen.add((name, source.tile))
+            if source is left:
+                if not any(s is source and t is g for s, t, _ in arrows):
+                    arrows.append((source, g, name))
+            elif abs(source.line - g.line) <= 1:
+                routes.append((source, g, name))
+            else:
+                g.flags.append((name, source.tile))
+    for g in gates_:
+        g.w = max([g.w] + [2 * PAD + 2 * PILL_PAD + text_width("ch-pt", f"{n} ← {t}") for n, t in g.flags])
+        g.h = TITLE + PAD + LINE * len(g.lines) + PAD + sum(LINE + 8 + PILL_GAP for _ in g.flags)
+
+    # A channel under each line, a track for each route through it.
+    channel_of = [min(s.line, t.line) if s.line != t.line else s.line for s, t, _ in routes]
+    tracks = {}
+    for c in channel_of:
+        tracks[c] = tracks.get(c, 0) + 1
+    sheet = Sheet()
+    heading_spans = {}
+    y = PAD
+    line_top, channel_top = {}, {}
+    for i, row in enumerate(lines):
+        if i in headings:
+            text = sheet.text(PAD, y + 14, headings[i].upper(), "ch-clb")
+            heading_spans[i] = text.bounds()
+            y += GATE_HEADING
+        line_top[i] = y
+        for g in row:
+            g.y = y
+        y += max(g.h for g in row)
+        channel_top[i] = y
+        y += GATE_CHANNEL + TRACK_SPACING * tracks.get(i, 0)
+    for g in gates_:
+        box = sheet.box(g.x, g.y, g.w, g.h, "ch-blk ti")
+        sheet.text(g.x + PAD, g.y + TITLE, g.tile, "ch-ttl", box)
+        for letter, klass in marks({g.element.spec.confidence}):
+            badge_on(sheet, g.x + g.w - PAD - 7.5, g.y + TITLE - 5, letter, klass, box)
+        if not g.compact:
+            sheet.text(g.x + PAD + text_width("ch-ttl", g.tile) + 12, g.y + TITLE, g.element.spec.title, "ch-lab", box)
+        ty = g.y + TITLE + PAD
+        for t in g.lines:
+            ty += LINE
+            sheet.text(g.x + PAD, ty - 4, t, "ch-eq", box)
+        for name, tile in g.flags:
+            ty += PILL_GAP
+            text = f"{name} ← {tile}"
+            pill = sheet.box(g.x + PAD, ty, 2 * PILL_PAD + text_width("ch-pt", text), LINE + 8, "ch-pill", box,
+                             rx=10)
+            sheet.text(g.x + PAD + PILL_PAD, ty + LINE, text, "ch-pt", pill)
+            ty += LINE + 8
+    labels = []
+    for source, g, name in arrows:
+        ay = g.y + TITLE + PAD + (min(g.h, source.h) - TITLE - PAD) / 2
+        labels.append((sheet.wire([(source.x + source.w, ay), (g.x - 2, ay)], "ch-w sig", "ch-as"), name))
+    used = {}
+    for (source, g, name), channel in zip(routes, channel_of):
+        k = used.get(channel, 0)
+        used[channel] = k + 1
+        track = channel_top[channel] + GATE_CHANNEL / 2 + TRACK_SPACING * k
+        # A heading between a channel and the line under it is a span the
+        # wires that cross it must miss.
+        below = channel + 1
+        avoid = [(heading_spans[below][0], heading_spans[below][2])] if below in heading_spans else []
+        if source.line <= channel:
+            x1 = free_x(source, "bottom", [])
+            start = (x1, source.y + source.h)
+        else:
+            x1 = free_x(source, "top", avoid)
+            start = (x1, source.y)
+        if g.line <= channel:
+            x2 = free_x(g, "bottom", [])
+            end = (x2, g.y + g.h + 2)
+        else:
+            x2 = free_x(g, "top", avoid)
+            end = (x2, g.y - 2)
+        labels.append((sheet.wire([start, (x1, track), (x2, track), end], "ch-w sig", "ch-as"), name))
+    for wire, name in labels:
+        label(sheet, wire, name, True)
     problems = sheet.problems()
     if problems:
         die(f"{design.image}: the gate-level drawing collides: " + "; ".join(problems[:6]))

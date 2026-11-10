@@ -4,8 +4,8 @@
 frequency receivers (58503A/B, 59551A, Z3801A, Z3805A, Z3815A, Z3816A),
 taken apart and documented.
 
-**Docs site:** the FPGA explainer, the board atlas and block diagram,
-the loop analysis and the SCPI trees, at
+**Docs site:** the FPGA explainer and detailed diagrams, the board atlas
+and block diagram, the loop analysis and the SCPI trees, at
 <https://charlieh0tel.github.io/smartclock/>.
 
 **Where to start:**
@@ -28,7 +28,8 @@ the loop analysis and the SCPI trees, at
 - **[FPGAs](docs/firmware/fpga-comparison.md):** the five FPGA
   designs in the seven images, decoded from their bitstreams, simulated,
   traced and compared
-  ([illustrated](https://charlieh0tel.github.io/smartclock/fpga.html)).
+  ([illustrated](https://charlieh0tel.github.io/smartclock/fpga.html),
+  [in detail](https://charlieh0tel.github.io/smartclock/fpga-detail.html)).
 - **[Monitoring](#monitoring):** a Rust library, a logging daemon, a
   terminal monitor, a browser view and a Prometheus exporter, in daily
   use against real receivers.
@@ -204,7 +205,7 @@ hooks.  `make pages` builds the HTML pages and their landing page into
 `target/pages/` and fails on an error in one: the generated ones from
 their sources, which are not committed, and the hand-written ones from
 `docs/pages/`, each with a breadcrumb back to the landing page and
-the site's icon.  The FPGA explainer's needs node, Icarus Verilog and
+the site's icon.  The FPGA explainer's and detail page's need node, Icarus Verilog and
 network access to github.com, for the XC3000 viewer's clone
 (`docs/firmware/fpga-comparison.md`, "Reproduce").  `.github/workflows/pages.yml` publishes them on GitHub
 Pages from main, at <https://charlieh0tel.github.io/smartclock/>.
@@ -239,6 +240,7 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
 | [`docs/firmware/fpga-comparison.md`](docs/firmware/fpga-comparison.md) | the five FPGA designs the seven images load, decoded from their bitstreams, simulated and compared; each design's trace beside it |
 | [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html) | the five FPGA designs illustrated: the count, the two families, the telecom pair's phase detector and what of P7 reaches the firmware, with waveforms from the simulations; built by `make fpga` and checked by `check-explainer` |
+| [`fpga-detail.html`](https://charlieh0tel.github.io/smartclock/fpga-detail.html) | one detailed logic diagram for each FPGA design, all five drawn by one generator in the same lanes: pins with numbers and roles, clocks, the count, the 1 PPS divider, the register port, the sync logic and the telecom pair's P7 divider and phase detector, each element with its trace's confidence word and section; pins, clocks and connections read from the decoded netlists; built by `make fpga-detail` and checked by `check-detail` |
 | [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles, and the FFOM its start-up gives |
 | [`board-atlas.html`](https://charlieh0tel.github.io/smartclock/board-atlas.html) | the first-family main board, part by part on its photographs: each part's role, its address or QSPI device, the nets measured, and the Z3801A's and 58503A's boards against it; a ring or a row opens the part's card, the photos zoom and pan, the parts filter by subsystem, confidence or text, and `#J4` links to a part; built from `docs/board-atlas.json` by `make board-atlas` |
 | [`block-diagram.html`](https://charlieh0tel.github.io/smartclock/block-diagram.html) | the same board as blocks and signals: the oscillator, the FPGA's count, port and 1 PPS outputs with their pins, the interpolator drawn as a hypothesis, the processor and what it drives, each marked read, board, simulated, inferred or open and cited; on a narrow screen a tap opens the diagram full screen to pan and zoom; built from `docs/block-diagram.json` by `make block-diagram` |

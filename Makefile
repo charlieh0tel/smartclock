@@ -148,7 +148,7 @@ docs:
 # path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages
 HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
-PAGES := fpga board-atlas block-diagram scpi-models $(HAND_PAGES)
+PAGES := fpga fpga-detail board-atlas block-diagram scpi-models $(HAND_PAGES)
 NEW_PAGE := fpga
 FEATURED_PAGE := loop
 UNLISTED_PAGES := bench-sky-2026-10-03
@@ -221,6 +221,16 @@ fpga-designs:
 fpga:
 	mkdir -p $(PAGES_DIR)
 	$(MAKE) -f tools/fpga/Makefile explainer EXPLAINER_PAGE=$(abspath $(PAGES_DIR))/fpga.html
+
+# The FPGA designs' detailed diagrams, $(PAGES_DIR)/fpga-detail.html,
+# for GitHub Pages (https://charlieh0tel.github.io/smartclock/fpga-detail.html),
+# not committed: drawn from the decodes, which it makes first
+# (tools/fpga/Makefile, detail).  Needs node and network access to
+# github.com, as fpga does.
+.PHONY: fpga-detail
+fpga-detail:
+	mkdir -p $(PAGES_DIR)
+	$(MAKE) -f tools/fpga/Makefile detail DETAIL_PAGE=$(abspath $(PAGES_DIR))/fpga-detail.html
 
 check-fpga-xapp: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
 	$(call decoder_verify,$(XC3000_VIEWER),$(DECODER_COMMIT))

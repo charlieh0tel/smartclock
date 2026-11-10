@@ -138,7 +138,7 @@ def designs_table(f):
     for d in f["designs"]:
         rows.append(
             "<tr>"
-            f'<th scope="row">{html.escape(d["name"])}</th>'
+            f'<th scope="row"><a href="fpga-detail.html#{d["image"]}">{html.escape(d["name"])}</a></th>'
             f"<td>{html.escape(d['images'])}</td>"
             f"<td>{d['blocks']}, {d['iobs']}, {d['nets']}</td>"
             f"<td>{d['clocks']}</td>"
@@ -207,7 +207,8 @@ clock, and steers the oscillator to hold the interval steady
 The divide, the preset and status reads and the tap are {mark('simulated')}: the divide is
 P83's printed period over the testbench's 100 ns GCLK, and the tap is the stop net's
 rise after P83 (each design's <code>check-readings-&lt;image&gt;.three</code> and
-<code>.fast</code> runs).</p>
+<code>.fast</code> runs).  Each design's name links to its detailed logic diagram on
+<a href="fpga-detail.html">FPGA detail</a>.</p>
 {designs_table(f)}
 <p>The front door, {link('docs/firmware/fpga-comparison.md', 'fpga-comparison.md')},
 has every pin, role and difference side by side.  Only the 58503A's and Z3801A's

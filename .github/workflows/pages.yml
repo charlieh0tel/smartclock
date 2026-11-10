@@ -27,7 +27,8 @@ jobs:
       # which rustup installs on the first cargo call.  The FPGA
       # explainer decodes the bitstreams in node (web.yml's pin), with
       # the viewer cloned at its pinned commit, and runs the fast
-      # simulations its waveforms come from in Icarus Verilog.
+      # simulations its waveforms come from in Icarus Verilog; the
+      # detail page draws from the same decodes.
       - run: sudo apt-get update && sudo apt-get install -y libudev-dev iverilog
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:

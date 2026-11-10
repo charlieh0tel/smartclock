@@ -224,8 +224,9 @@ loop-trace:
 	uv run -q $(ROOT)/tools/firmware/loop_trace.py
 
 # Fail if docs/firmware/loop-constants.json, the loop's τ, startup
-# constant and G by model, disagrees with the images where it cites
-# them, or if the tables made from it between markers in
+# constant, G and holdover-recovery threshold by model, disagrees with
+# the images where it cites them, or if the tables made from it between
+# markers in
 # docs/firmware/loop.md and docs/pages/loop.html are not what it gives;
 # loop-constants rewrites the tables.
 check-loop-constants:

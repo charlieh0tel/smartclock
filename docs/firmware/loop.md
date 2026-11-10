@@ -161,9 +161,9 @@ a later holdover the state ends at its next update.
 
 Holdover recovery hands back to `startup_pll`, not `pll_normal`.  It
 leaves the start-up constant as it was -- τ, if the loop had got there,
-so the hand-over follows the fifteen -- when the holdover lasted at
-most 500 s (Z3805A, `0x441ba`; 350 s in 3704, `0x441b0`) and the
-interval is within 500 ns; otherwise it sets it back to 150 s
+so the hand-over follows the fifteen -- when the holdover lasted no
+longer than the table in "In every image" gives for the image, its
+last column, and the interval is within 500 ns; otherwise it sets it back to 150 s
 (`holdover_recovery`, Z3805A `0x43f9a`, 3704 `0x43fc0`).  `pll_init`
 sets it to 150 s too (Z3805A `0x473d2`, 3704 `0x475ac`).
 
@@ -537,15 +537,15 @@ check-loop-constants` reads every one ("How this is checked"); those
 after "by" are the code that chooses.
 
 <!-- loop_constants.py evidence -->
-| Image | τ, as the ROM block sets it | Startup's constant | G |
-| ----- | --------------------------- | ------------------ | - |
-| Z3816A 4001 | 500 s (`0x40174`) | 150 s (`0x47af8`, `0x4af5a`) | −1.25 × 10⁻¹² (`0x4b15a`) or −2.125 × 10⁻¹² (`0x4b162`), by bit 8 of the word at `0x302000` (`0x4b14c`) |
-| Z3815A 4010 | 500 s (`0x44c9e`, `0x50c0c`) or 1000 s (`0x50c00`), by bit 12 of the word at `0x302000` (`0x50be8`) | 150.0 present, not traced | +1.2 × 10⁻¹² (`0x45046`) or −2.125 × 10⁻¹² (`0x45052`), by that bit (`0x4503c`) |
-| Z3801A 3543 | 1000 s (`0x2f846`) | 150 s | +6.25 × 10⁻¹³ (`0x475be`) |
-| Z3805A 3543B | 1000 s (`0x3094c`) | 150 s (`0x47404`, `0x441f4`) | +6.25 × 10⁻¹³ (`0x475f4`) |
-| 58503A 3633 | 700 s (`0x305ae`) | 150.0 present, not traced | +6.25 × 10⁻¹³ (`0x476bc`) |
-| 58503A 3704 | 700 s (`0x30840`) | 150 s (`0x475e2`, `0x441ea`) | +6.25 × 10⁻¹³ (`0x477dc`) |
-| 58503B 1.01.04 | 700 s (`0x407b4`), settable: `:DIAGnostic:ROSCillator:LTIMe:MAX` | 150 s (`0x407b4`), settable: `:DIAGnostic:ROSCillator:LTIMe:INIT` | −1.25 × 10⁻¹² (`0x40dfc`) or +6.25 × 10⁻¹³ (`0x40e08`), by oscillator type, `:DIAGnostic:ROSCillator:TYPE` |
+| Image | τ, as the ROM block sets it | Startup's constant | G | Longest holdover keeping startup's constant |
+| ----- | --------------------------- | ------------------ | - | ------------------------------------------- |
+| Z3816A 4001 | 500 s (`0x40174`) | 150 s (`0x47af8`, `0x4af5a`) | −1.25 × 10⁻¹² (`0x4b15a`) or −2.125 × 10⁻¹² (`0x4b162`), by bit 8 of the word at `0x302000` (`0x4b14c`) | not traced |
+| Z3815A 4010 | 500 s (`0x44c9e`, `0x50c0c`) or 1000 s (`0x50c00`), by bit 12 of the word at `0x302000` (`0x50be8`) | 150.0 present, not traced | +1.2 × 10⁻¹² (`0x45046`) or −2.125 × 10⁻¹² (`0x45052`), by that bit (`0x4503c`) | not traced |
+| Z3801A 3543 | 1000 s (`0x2f846`) | 150 s | +6.25 × 10⁻¹³ (`0x475be`) | not traced |
+| Z3805A 3543B | 1000 s (`0x3094c`) | 150 s (`0x47404`, `0x441f4`) | +6.25 × 10⁻¹³ (`0x475f4`) | 500 s (`0x441ba`) |
+| 58503A 3633 | 700 s (`0x305ae`) | 150.0 present, not traced | +6.25 × 10⁻¹³ (`0x476bc`) | not traced |
+| 58503A 3704 | 700 s (`0x30840`) | 150 s (`0x475e2`, `0x441ea`) | +6.25 × 10⁻¹³ (`0x477dc`) | 350 s (`0x441b0`) |
+| 58503B 1.01.04 | 700 s (`0x407b4`), settable: `:DIAGnostic:ROSCillator:LTIMe:MAX` | 150 s (`0x407b4`), settable: `:DIAGnostic:ROSCillator:LTIMe:INIT` | −1.25 × 10⁻¹² (`0x40dfc`) or +6.25 × 10⁻¹³ (`0x40e08`), by oscillator type, `:DIAGnostic:ROSCillator:TYPE` | not traced |
 <!-- end loop_constants.py -->
 
 **The update, compared.**  Each image's `pll_normal` and fit
@@ -732,12 +732,12 @@ compare it with the Z3805A 3543B's and 58503A 3704's images
 
 The other models' rows are read by hand and not checked this way,
 but for their constants: `make check-loop-constants`
-(`tools/firmware/loop_constants.py`) reads each τ, startup constant
-and G that `loop-constants.json` cites, in every image, from the
-image, and fails if one differs or if the "In every image" table here
-or `docs/pages/loop.html`'s "By model" table is not what that file gives.  The
-page's a, slowest pole and startup ramp it computes from each τ, as
-the tests above do.
+(`tools/firmware/loop_constants.py`) reads each τ, startup constant,
+G and holdover-recovery threshold that `loop-constants.json` cites,
+in every image, from the image, and fails if one differs or if the
+"In every image" table here or `docs/pages/loop.html`'s "By model"
+table is not what that file gives.  The page's a, slowest pole and
+startup ramp it computes from each τ, as the tests above do.
 
 ## The soft-float arithmetic and its constants
 

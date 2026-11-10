@@ -2124,9 +2124,10 @@ routines that reach outside the loop's arithmetic stood in for
 (`tools/firmware/loop_trace.py`), and fails if the traces
 `crates/smartclock/tests/loop_firmware.rs` replays against `loop.md`'s
 update law are not what the images give.  `check-loop-constants`
-reads each τ, startup constant and G that `loop-constants.json` cites
-from its image, and fails if they disagree, or if the tables made from
-that file in `loop.md` and `docs/pages/loop.html` are not what it gives
+reads each τ, startup constant, G and holdover-recovery threshold
+that `loop-constants.json` cites from its image, and fails if they
+disagree, or if the tables made from that file in `loop.md` and
+`docs/pages/loop.html` are not what it gives
 (`tools/firmware/loop_constants.py`).  `make check-fpga-decoder`
 decodes the FPGA test designs' bitstreams, which XACT built from LCAs
 written for the purpose, and checks each decode against XACT's routed

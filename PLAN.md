@@ -372,7 +372,12 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   description, `smartclock-group`) and the `Makefile`'s `PAGES` order
   and its `NEW_PAGE` and `FEATURED_PAGE`, each in a box of its own, so a page joins it, or is set
   apart as new or featured, without the
-  landing page being edited by hand.  Its hero is the 58503A's front
+  landing page being edited by hand.  A page set apart is listed in its
+  group too, so a group shows all its pages whichever is set apart:
+  listed above only, the featured loop page once left its group with only the pForth page in
+  it.  The firmware group, "Firmware and the loop", holds the loop
+  page and the images' pForth words and SCPI trees: SCPI is the
+  firmware's, and had a group of its own only for its one page.  Its hero is the 58503A's front
   panel drawn as SVG to scale from photographs, not a photograph: a
   drawing is a few kilobytes, follows the page's fonts, shows UTC live,
   and carries no bench clutter or stickers.  Its intro names the
@@ -440,8 +445,7 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   reading that writes each image's `IMAGE-words.md`, not the CLI's
   `dump-pforth`, which reads names and code addresses only and no
   flags or stack effects.  It needs uv in the Pages build for the
-  script's Capstone.  The pForth page is in the firmware group, the
-  SCPI page in the SCPI group, as their Markdown is.  A table scrolls
+  script's Capstone.  Both pages are in the firmware group.  A table scrolls
   inside its own box and, in a narrow window, holds its first column,
   so the page never scrolls sideways.  The CLI once wrote the
   page itself from a template of its own, which a second such page,

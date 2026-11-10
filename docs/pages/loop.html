@@ -108,7 +108,7 @@ th code{text-transform:none;letter-spacing:0}
   <p class="lede">How the receiver steers its 10811 oscillator to GPS, read from the firmware images: a proportional–integral loop on the ten-second mean of the phase error, with the oscillator's aging curve fed forward into the integrator. Every constant below comes from the code.</p>
 </header>
 
-<section>
+<section id="the-loop">
   <h2>The loop</h2>
   <figure class="fig">
     <svg id="loop" viewBox="0 24 1020 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Block diagram of the disciplining loop"></svg>
@@ -118,11 +118,11 @@ th code{text-transform:none;letter-spacing:0}
 
   <p>Once a second the firmware reads one interval from the FPGA counter. Every tenth second it takes x̄, the mean of those ten seconds' readings within the holdover limit (the number <code>:SYNChronization:TINTerval?</code> reports), and runs one update:</p>
   <div class="eq eqgrid"><span>e  = x̄ − x₀</span><span>x₀ is a setpoint, normally 0</span><span>f ← (1 − a)·f + a·e</span><span>a = 29.75 / τ</span><span>d  = clamp(b + c / y, −M, +M)</span><span>y = t / 2700 s, from the aging fit</span><span>I ← I + 10·k·f + 10·d / 2700</span><span>k = 1 / (4·G·τ²)</span><span>u  = clamp(K·f + B + I + c₀·s, 0, 1048560)</span><span>K = 1 / (G·τ)</span></div>
-  <p>u is the EFC in 20 bits. The update only stores it. On each of its ticks the health monitor's task rounds u, adds a small random dither and writes the top 16 bits to the DAC (<code>efc_write_dithered</code>: Z3805A <code>0x2421c</code>, 58503A <code>0x23540</code>).</p>
+  <p>u is the EFC in 20 bits. The update only stores it. On each of its ticks the health monitor's task rounds u, adds a small random dither and writes the top 16 bits to the DAC (<code>efc_write_dithered</code>).</p>
   <p>B is the EFC in force when the loop closed, less c₀·s, so closing the loop does not move the oscillator. s is the health monitor's exponential average of the oscillator's oven current: 0.1 of each fresh reading, 0.9 of the last. c₀ is the value <code>:DIAGnostic:ROSCillator:TCOefficient</code> reads and writes: a calibration constant in the EEPROM block, in EFC units per unit of the current channel. Every update applies it; only its own setter adjusts it. The c₀·s term tracks the oven, not the phase; in the Z3816A the console word <code>xcal</code> measures it by fitting EFC against current.</p>
 </section>
 
-<section>
+<section id="symbols-and-constants">
   <h2>Symbols and constants</h2>
   <div class="wide"><table class="defs">
     <colgroup><col style="width:12%"><col style="width:50%"><col style="width:38%"></colgroup>
@@ -137,7 +137,7 @@ th code{text-transform:none;letter-spacing:0}
       <tr><td>M</td><td>clamp on the drift term, 6.25 × 10⁻¹⁰ / |G|</td><td>±500 or ±294 EFC units per 2700 s on the Z3816A; ±1000 where G is +6.25 × 10⁻¹³</td></tr>
       <tr><td>x₀</td><td>phase setpoint</td><td>0 unless the console word <code>phase_off</code> sets it</td></tr>
       <tr><td>c₀</td><td>coefficient on the oscillator current; <code>:DIAGnostic:ROSCillator:TCOefficient</code>, limits ±200, in EEPROM</td><td>a calibration value per unit; −33.65 on the bench 58503A, which applies it at every update</td></tr>
-      <tr><td>s</td><td>oscillator current as the health monitor holds it: an exponential average, not the fresh reading <code>:DIAGnostic:ROSCillator:CURRent?</code> returns</td><td>Z3816A, Z3805A, 58503A 3704: 250 until the first reading; Z3801A, Z3805A: channel 3; 58503A 3704: channel 6, <code>Primary oven current</code></td></tr>
+      <tr><td>s</td><td>oscillator current as the health monitor holds it: an exponential average, not the fresh reading <code>:DIAGnostic:ROSCillator:CURRent?</code> returns</td><td>250 until the first reading; which channel, by image: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#s-the-oscillator-current">s, the oscillator current</a></td></tr>
       <tr><td>startup τ</td><td>the constant <code>startup_pll</code> ramps from, +5 s per update, until within 5 s of τ</td><td>150 s</td></tr>
     </tbody>
   </table></div>
@@ -160,7 +160,7 @@ th code{text-transform:none;letter-spacing:0}
   <p class="note">* Undocumented, under <code>:DIAGnostic:ROSCillator</code>; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The startup ramp's 150 s is traced in the Z3816A, Z3801A, Z3805A, 58503A 3704 and 58503B; the other images hold the value. The Z3801A, Z3805A and 58503A run the Z3816A's update; the Z3815A and 58503B ease the aging term in (below). What the bits of the word at <code>0x302000</code> read is untraced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
 </section>
 
-<section>
+<section id="what-kind-of-loop-that-is">
   <h2>What kind of loop that is</h2>
   <div class="cols">
     <div>
@@ -183,7 +183,7 @@ th code{text-transform:none;letter-spacing:0}
   </figure>
 </section>
 
-<section>
+<section id="the-aging-feed-forward">
   <h2>The aging feed-forward</h2>
   <p>The dashed path makes the receiver's holdover good. While the loop is closed, <code>pllp</code> averages the current-compensated EFC, u − c₀·s, over each 2700 s (45 min) window. It pushes that mean e, its time y, and w, the window's mean of ln y, into a ring of 64 samples: 48 hours. The <code>curv</code> task regresses those window means:</p>
   <div class="eq eqgrid"><span>e = a + b·y + c·w</span><span>y = t / 2700 s, t the seconds since cold start</span><span>w = mean of ln y over the window</span><span>the window from y − 1 to y</span></div>
@@ -193,15 +193,15 @@ th code{text-transform:none;letter-spacing:0}
   <p>Each sample carries a grade for how much of the window was averaged: 3 for all 2700 seconds, 2 for at least 675, else 1. Every sample in the first three hours after a cold start gets 1. The grade only selects: a fit takes the samples at or above a minimum grade, 2 when there are enough of them, else 1, and weights them equally. With fewer than three samples the fit is a constant, their mean. A slope needs three, so d is zero for the first hours after a power-up.</p>
 </section>
 
-<section>
+<section id="starting-up">
   <h2>Starting up</h2>
   <p>Before <code>pll_normal</code>, <code>startup_pll</code> runs the same update law with its own time constant and recomputes K, k and a from it every update. On entry it clears f and I and sets B. In the Z3805A and 58503A, each lengthening of the constant from τ<sub>old</sub> to τ<sub>new</sub> also adds (f/G)·(1/τ<sub>old</sub> − 1/τ<sub>new</sub>) to I, so the change in K leaves K·f + I where it was.</p>
-  <p><code>startup_pll</code> first waits for fifteen consecutive ten-second means within ±150 ns. In every image but the Z3815A and 58503B, after a power-up, it then waits, still at 150 s, for the aging fit's first three samples, about 2¼ hours; those two wait instead until two hours after power-on. It then lengthens its constant by 5 s per update until within 5 s of τ, sets it to τ, and hands over. <code>pll_normal</code> clears I and sets B to the EFC in force less c₀·s, but keeps f, so its first update moves u by about K·f. The Z3801A ramps the same way; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
+  <p><code>startup_pll</code> first waits for fifteen consecutive ten-second means within ±150 ns. In every image but the Z3815A and 58503B, after a power-up, it then waits, still at 150 s, for the aging fit's first three samples, about 2¼ hours; those two wait instead until two hours after power-on. It then lengthens its constant by 5 s per update until within 5 s of τ, sets it to τ, and hands over. <code>pll_normal</code> clears I and sets B to the EFC in force less c₀·s, but keeps f, so its first update moves u by about K·f: the proportional term counted again, once in B. The Z3801A ramps the same way; the 58503B starts from <code>:LTIMe:INIT</code> instead of a fixed 150 s.</p>
   <p>In the Z3805A and 58503A, holdover recovery returns to <code>startup_pll</code>. The constant starts again from 150 s after a holdover of more than 500 s (350 s in the 58503A 3704) or with the interval past 500 ns. Otherwise it keeps its value: τ, once the loop got there, so the hand-over follows the fifteen means.</p>
   <p class="note">Source: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md"><code>docs/firmware/loop.md</code></a>, which holds the addresses and routine identities behind each number. This page explains; that one is the evidence.</p>
 </section>
 
-<section>
+<section id="what-the-receiver-shows">
   <h2>What the receiver shows</h2>
   <p>The FFOM, the frequency figure of merit that <code>:SYNChronization:FFOMerit?</code> returns and the status screen and time code carry, is not a measure of the loop's error. <code>get_ffom</code> switches on the loop's stage and reads nothing else, so it says only which stage the loop is in:</p>
   <div class="wide"><table class="stages">
@@ -241,9 +241,9 @@ th code{text-transform:none;letter-spacing:0}
   <p class="note">Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#the-ffom">The FFOM</a> and <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#starting-up">Starting up</a> in <code>loop.md</code>; the status screen's modes, <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/screen-format-strings.md#mode-suffixes">Mode suffixes</a>.</p>
 </section>
 
-<section>
+<section id="how-it-is-checked">
   <h2>How it is checked</h2>
-  <p>Until October 2026 the tests compared this page with a copy of its own model, and a review found four errors in it: the sign of the error, the poles, start-up's integrator rescaling and the aging fit's description. The tests now compare it with the Z3805A's and 58503A's firmware. They read each constant from the ROM, run each ROM's own loop routines in a CPU emulator, and require the update law above to reproduce the firmware's state at every step. The other models' rows are read by hand. Details: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#how-this-is-checked">How this is checked</a>.</p>
+  <p>The tests read the constants above from the Z3805A's and 58503A's ROMs, run each ROM's own loop routines in a CPU emulator, and require the update law above to reproduce the firmware's state at every step; the poles, step response and start-up times on this page are recomputed from that law. What is checked, against which images, and what is read by hand: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#how-this-is-checked">How this is checked</a>.</p>
 </section>
 </main>
 

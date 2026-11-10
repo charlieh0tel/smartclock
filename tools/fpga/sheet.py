@@ -48,7 +48,7 @@ def text_width(cls, text):
     return metrics(cls)[1] * len(text)
 
 
-@dataclass
+@dataclass(eq=False)
 class Box:
     """A rectangle: a block, a pin, a pill, a counter, a badge."""
 
@@ -78,7 +78,7 @@ class Box:
                 and x1 <= self.x + self.w + EPSILON and y1 <= self.y + self.h + EPSILON)
 
 
-@dataclass
+@dataclass(eq=False)
 class Text:
     """One line of text, its baseline at y."""
 
@@ -99,7 +99,7 @@ class Text:
         return x0, self.y - 0.8 * size, x0 + width, self.y + 0.22 * size
 
 
-@dataclass
+@dataclass(eq=False)
 class Segment:
     """A straight piece of a wire."""
 
@@ -122,9 +122,11 @@ def overlap(a, b, margin=EPSILON):
 
 
 def inside(segment, box):
-    """Whether a segment runs through a box's inside, not just its edge."""
+    """Whether a segment runs through a box's inside, not just along or
+    up to its edge."""
     x0, y0, x1, y1 = segment.bounds()
-    return overlap((x0 - 0.01, y0 - 0.01, x1 + 0.01, y1 + 0.01), (box.x, box.y, box.x + box.w, box.y + box.h))
+    left, top, right, bottom = box.x + EPSILON, box.y + EPSILON, box.x + box.w - EPSILON, box.y + box.h - EPSILON
+    return x0 < right and x1 > left and y0 < bottom and y1 > top
 
 
 class Sheet:

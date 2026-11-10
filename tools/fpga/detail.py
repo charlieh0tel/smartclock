@@ -24,10 +24,13 @@ netlist lacks or leaves unused, an output two elements name, a pin in
 use with no role, a role for a pin not in use, an output or an input
 pin no element takes, a section cited that its document lacks and a
 figure no reference gives are errors, not omissions, and so are a
-chip-drawing wire that carries no net and an element in no block; the
-logic blocks no element names are listed under each design.
---self-test provokes each of those errors once, on the Z3805A's table
-and layout, and fails unless each is refused.  The figures come from tools/fpga/ref through
+chip-drawing wire that carries no net, an element in no block, and any
+collision in either drawing (sheet.py: a wire through a box, two wires
+along one line, text on text, on a box or on a wire not its own, text
+out of its box); the logic blocks no element names are listed under
+each design.  --self-test provokes each of those errors once, on the
+Z3805A's table and layout and on sheets made for it, and fails unless
+each is refused.  The figures come from tools/fpga/ref through
 page.py, as the explainer's do.
 """
 
@@ -44,6 +47,7 @@ from detail_designs import LANES, SPECS  # noqa: E402
 from detail_bind import bind, output_notes, pin_number, source_label  # noqa: E402
 from detail_designs import Facts  # noqa: E402
 from detail_draw import LAYOUTS, chip, gates  # noqa: E402
+from sheet import Sheet  # noqa: E402
 
 
 EXTRA_STYLE = """
@@ -274,6 +278,31 @@ LAYOUT_TEST = (
 )
 
 
+def collisions(build):
+    """The problems a sheet build() draws."""
+    sheet = Sheet()
+    build(sheet)
+    return " ".join(sheet.problems())
+
+
+# The collision check's cases: each a sheet with one fault, and the
+# words its problem must contain.
+GEOMETRY_TEST = (
+    ("a wire through a box", lambda s: (s.box(0, 0, 100, 50, "ch-blk"), s.wire([(-10, 25), (200, 25)])),
+     "runs through"),
+    ("two wires along one line", lambda s: (s.wire([(0, 80), (100, 80)]), s.wire([(50, 80), (150, 80)])),
+     "share the line"),
+    ("text on text", lambda s: (s.text(0, 20, "AH.X", "ch-net"), s.text(10, 22, "BH.Y", "ch-net")),
+     "overlaps text"),
+    ("text on a box it is not in", lambda s: (s.box(0, 0, 100, 50, "ch-blk"), s.text(90, 20, "AH.X", "ch-net")),
+     "overlaps the ch-blk box"),
+    ("text on another wire", lambda s: (s.wire([(0, 18), (100, 18)]), s.text(20, 20, "AH.X", "ch-net")),
+     "lies on wire"),
+    ("text out of its box", lambda s: s.text(10, 20, "a line far too long for its box", "ch-eq",
+                                             s.box(0, 0, 60, 40, "ch-blk")), "runs out of"),
+)
+
+
 def refused(name, words, attempt):
     """Fails unless attempt() is refused with words in its message."""
     try:
@@ -306,7 +335,11 @@ def self_test(netlist_dir):
             refused(name, words, lambda: chip(design, netlist, elements, original, Facts(design)))
     finally:
         LAYOUTS[design.image] = layout
-    print(f"detail self-test: {len(SELF_TEST) + len(LAYOUT_TEST)} kinds of error each refused")
+    for name, build, words in GEOMETRY_TEST:
+        if words not in collisions(build):
+            die(f"self-test: {name}: not found by the collision check")
+    count = len(SELF_TEST) + len(LAYOUT_TEST) + len(GEOMETRY_TEST)
+    print(f"detail self-test: {count} kinds of error each refused")
 
 
 def main():

@@ -365,6 +365,16 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   and carries no bench clutter or stickers.  Its intro names the
   FPGAs' decoding since the FPGA write-up's page joined, set apart as
   new beside the featured loop page.
+- Every other page gets a breadcrumb back to the landing page
+  (SmartClock, its group, its title), put in by `tools/pages_index.py`
+  as it writes the landing page, from the same head tags, rather than
+  by each page's generator or source: one place to change it, and the
+  hand-written sources in `docs/pages/` stay as written.  It goes at
+  the top of the first element in the page's `<body>`, its content's
+  column, so it lines up with the content whatever the page's width
+  and padding; the build fails on a page not built that way.  Its
+  styles are inline and inherit the page's colors and font, so it
+  follows each page's theme without knowing it.  A rerun replaces it.
 
 ### Flashing is a direct-port command of the CLI
 

@@ -132,12 +132,15 @@ docs:
 # NEW_PAGE, a page just launched, under "New", and FEATURED_PAGE under
 # "Featured", each one of PAGES or empty for none, each set apart above
 # them in a box of its own, and last the README and each track's hub
-# document, DOCUMENTS in tools/pages_index.py.  It also puts a breadcrumb back to
-# index.html at the top of each page's content, the first element in its
-# <body>, which must be a main, div, header, article or section; the
-# sources in docs/pages/ are left without one.  It copies the site's
-# icon, docs/pages/favicon.svg, beside index.html and links it from each
-# page's <head> and the index's, unless a page declares an icon of its own.
+# document, DOCUMENTS in tools/pages_index.py.  A page in UNLISTED_PAGES,
+# one of PAGES, is published at its URL but left off the landing page;
+# it cannot be NEW_PAGE or FEATURED_PAGE.  It also puts a breadcrumb
+# back to index.html at the top of each page's content, the first
+# element in its <body>, which must be a main, div, header, article or
+# section; the sources in docs/pages/ are left without one.  It copies
+# the site's icon, docs/pages/favicon.svg, beside index.html and links
+# it from each page's <head> and the index's, unless a page declares an
+# icon of its own.
 # Its hero is a drawing of the 58503A's front panel, or HERO_IMAGE, a
 # path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages
@@ -145,12 +148,14 @@ HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
 PAGES := fpga board-atlas scpi-models $(HAND_PAGES)
 NEW_PAGE := fpga
 FEATURED_PAGE := loop
+UNLISTED_PAGES := bench-sky-2026-10-03
 HERO_IMAGE :=
 HERO_ALT :=
 .PHONY: $(PAGES)
 pages: $(PAGES)
 	python3 -I tools/pages_index.py \
 		$(if $(NEW_PAGE),--new $(NEW_PAGE).html) $(if $(FEATURED_PAGE),--featured $(FEATURED_PAGE).html) \
+		$(UNLISTED_PAGES:%=--unlisted %.html) \
 		$(if $(HERO_IMAGE),--hero $(HERO_IMAGE) --hero-alt "$(HERO_ALT)") \
 		$(PAGES_DIR) $(PAGES:%=%.html)
 

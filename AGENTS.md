@@ -169,6 +169,8 @@ here, where they go stale unnoticed.
   breadcrumb back to the landing page and, in its `<head>`, a link to
   the site's icon, `docs/pages/favicon.svg`.  Set a page apart on the landing page by naming it in the
   `Makefile`'s `NEW_PAGE`, for one just launched, or `FEATURED_PAGE`.
+  Name a page in `UNLISTED_PAGES` to publish it at its URL, with its
+  breadcrumb, but leave it off the landing page.
 
 ## Working style
 

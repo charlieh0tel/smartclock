@@ -1,13 +1,15 @@
 """Writes the published pages' landing page, DIR/index.html: what the
 project is, the hero picture, the NEW page under "New" and the FEATURED
-page under "Featured", each in a box of its own if given, then
-each other PAGE given (a file in DIR) by its <title> and its
-description meta tag under its smartclock-group meta tag's group, in
-GROUPS' order and within one in the order given, and the repository's
-README and the hub document of each of the project's tracks.  Fails
+page under "Featured", each in a box of its own if given, then each
+other PAGE given (a file in DIR) but those named UNLISTED by its
+<title> and its description meta tag under its smartclock-group meta
+tag's group, in GROUPS' order and within one in the order given, and
+the repository's README and the hub document of each of the project's
+tracks.  Fails
 if a page lacks any of the three tags or names a group GROUPS lacks,
-or if NEW or FEATURED is not one of the PAGEs or they are the same
-page.
+or if NEW, FEATURED or an UNLISTED page is not one of the PAGEs, or
+NEW and FEATURED are the same page or either is unlisted.  An unlisted
+page is published at its URL but nowhere on the landing page.
 
 Each PAGE also gets a breadcrumb back to the landing page:
 "SmartClock", its group's heading, linked to the group's box there when
@@ -26,7 +28,7 @@ HERO, an image under docs/ copied to the same path beside the index,
 described by HERO_ALT.
 
     python3 -I tools/pages_index.py [--new PAGE] [--featured PAGE]
-        [--hero PATH --hero-alt TEXT] DIR PAGE...
+        [--unlisted PAGE]... [--hero PATH --hero-alt TEXT] DIR PAGE...
 """
 
 import argparse
@@ -585,6 +587,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--new", help="the page just launched, by file name; one of the pages")
     parser.add_argument("--featured", help="the page to feature, by file name; one of the pages")
+    parser.add_argument("--unlisted", action="append", default=[],
+                        help="a page published but not listed, by file name; one of the pages")
     parser.add_argument("--hero", help="the hero image, by its path under docs/")
     parser.add_argument("--hero-alt", help="the hero image's description")
     parser.add_argument("directory", type=Path, help="the pages' directory")
@@ -597,12 +601,18 @@ def main():
     for key, _, name in chosen:
         if name and name not in heads:
             sys.exit(f"pages_index: the {key} page {name} is not one of the pages")
+    for name in args.unlisted:
+        if name not in heads:
+            sys.exit(f"pages_index: the unlisted page {name} is not one of the pages")
     names = [name for _, _, name in chosen if name]
     if len(names) != len(set(names)):
         sys.exit("pages_index: the new and the featured page are the same page")
+    if set(names) & set(args.unlisted):
+        sys.exit("pages_index: the new or the featured page is unlisted")
     sections = [set_apart(key, heading, name, heads[name]) for key, heading, name in chosen if name]
-    sections += grouped(heads, set(names))
-    listed = {page.group for name, page in heads.items() if name not in names}
+    skip = set(names) | set(args.unlisted)
+    sections += grouped(heads, skip)
+    listed = {page.group for name, page in heads.items() if name not in skip}
     for name, page in heads.items():
         crumb = breadcrumb(page, page.group in listed)
         text = with_breadcrumb(name, texts[name], page, crumb)

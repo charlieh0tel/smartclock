@@ -394,6 +394,15 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   site and links it from every page's `<head>` in the same pass as the
   breadcrumb, for the same reason; a page that declares an icon of its
   own keeps it, and a rerun adds no second link.
+- A page can be published but unlisted: named in the `Makefile`'s
+  `UNLISTED_PAGES`, it is built and served at its URL, with its
+  breadcrumb, and left off the landing page, so a page of only the
+  bench's interest stays reachable by its links without a slot on the
+  landing page.  It is chosen in the `Makefile`, as `NEW_PAGE` and
+  `FEATURED_PAGE` are, rather than by a tag in the page, so that which
+  pages the landing page shows is decided in one place; the page keeps
+  its group, which its breadcrumb names.  The three-receiver sky
+  comparison is unlisted.
 
 ### Flashing is a direct-port command of the CLI
 

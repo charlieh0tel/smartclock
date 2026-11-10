@@ -264,7 +264,8 @@ check-pages: pages
 # the 58503A's and Z3801A's diffs against the Z3805A and the names
 # seeded from them, the addresses their C cites from the Z3805A's,
 # Unicorn's recorded bugs, every image's chip-select tables, the
-# hand-written C's magic numbers, the loop's traces, the images' shared
+# hand-written C's magic numbers, the loop's traces and its constants
+# by model (docs/firmware/loop-constants.json), the images' shared
 # C, rewritten/common/, the functions' names, none an image's, and each
 # hand-written file compiled alone after its export's declarations; and,
 # for one IMAGE, record-access, the accesses its code makes into a
@@ -276,7 +277,7 @@ FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-al
 	check-seed-names seed-names check-comment-addresses check-common check-plain-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects check-magic-numbers magic-numbers check-loop-trace loop-trace \
-	record-access report-link
+	check-loop-constants loop-constants record-access report-link
 .PHONY: $(FIRMWARE_TARGETS)
 $(FIRMWARE_TARGETS):
 	$(MAKE) -C third_party/firmware $@

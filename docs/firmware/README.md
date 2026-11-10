@@ -2076,7 +2076,7 @@ four images on every push and pull request, a job of its own beside
 the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
 `check-pforth-words`, `check-image-diff`, `check-chip-selects`,
-`check-loop-trace`, `check-magic-numbers`, `check-comment-addresses`,
+`check-loop-trace`, `check-loop-constants`, `check-magic-numbers`, `check-comment-addresses`,
 `check-common`, `check-plain-names`, `check-alone`, without `IMAGE`, which compiles each
 hand-written `.c` of every image's export alone after the export's
 declarations and headers (`rewrite.md`, "Shared C"), `check-decompiled`,
@@ -2123,7 +2123,11 @@ cites checked.
 routines that reach outside the loop's arithmetic stood in for
 (`tools/firmware/loop_trace.py`), and fails if the traces
 `crates/smartclock/tests/loop_firmware.rs` replays against `loop.md`'s
-update law are not what the images give.  `make check-fpga-decoder`
+update law are not what the images give.  `check-loop-constants`
+reads each τ, startup constant and G that `loop-constants.json` cites
+from its image, and fails if they disagree, or if the tables made from
+that file in `loop.md` and `docs/pages/loop.html` are not what it gives
+(`tools/firmware/loop_constants.py`).  `make check-fpga-decoder`
 decodes the FPGA test designs' bitstreams, which XACT built from LCAs
 written for the purpose, and checks each decode against XACT's routed
 LCA (`outputs.md`, "Netlists"), and `make -f tools/fpga/Makefile

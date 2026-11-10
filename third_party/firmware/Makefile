@@ -57,7 +57,7 @@ TARGETS = format-c check-format-c check-module-figures module-figures check-imag
 	check-comment-addresses check-common check-plain-names \
 	check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
-	check-chip-selects chip-selects check-loop-trace loop-trace
+	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
@@ -222,6 +222,17 @@ check-loop-trace:
 
 loop-trace:
 	uv run -q $(ROOT)/tools/firmware/loop_trace.py
+
+# Fail if docs/firmware/loop-constants.json, the loop's τ, startup
+# constant and G by model, disagrees with the images where it cites
+# them, or if the tables made from it between markers in
+# docs/firmware/loop.md and docs/pages/loop.html are not what it gives;
+# loop-constants rewrites the tables.
+check-loop-constants:
+	python3 -I $(ROOT)/tools/firmware/loop_constants.py
+
+loop-constants:
+	python3 -I $(ROOT)/tools/firmware/loop_constants.py --write
 
 # The decompiled C's flags.  -fno-defer-pop has gcc pop a call's
 # arguments after the call, so that from a task in user mode an argument

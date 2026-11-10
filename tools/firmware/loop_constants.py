@@ -36,7 +36,8 @@ The page's a, slowest pole and startup ramp are computed from law and
 each τ: the pole from the ten-second update closed around the
 oscillator, as crates/smartclock/tests/loop_firmware.rs's poles() takes
 it, rounded to 10 s; the ramp as startup_pll steps it, rounded to
-100 s.  That test checks both against the firmware's own traces.
+100 s.  That test checks both against the firmware's own traces.  Its
+last column is recovery, the holdover past which the ramp starts again.
 
 Each table sits between the markers
 
@@ -236,12 +237,21 @@ def page_cells(law, entry):
         ' or '.join(rounded(slowest_pole_seconds(law, tau), POLE_ROUNDING) for tau in taus) + ' s',
         '≈ ' + ' or '.join(rounded(ramp_seconds(law, start, tau), RAMP_ROUNDING) for tau in taus) + ' s'
         + page_by(entry['startup']),
+        recovery_cell(entry['recovery']),
     ]
+
+
+def recovery_cell(quantity):
+    """The page's cell for the holdover past which recovery starts the
+    ramp again."""
+    if quantity is None:
+        return UNTRACED
+    return 'over ' + ' or '.join(number(choice['value']) for choice in quantity['values']) + ' s'
 
 
 def page_table(data):
     """The page's rows, an image's merged into the one before it when
-    their cells are the same: 58503A 3633, 3704."""
+    their cells are the same."""
     rows = []
     for entry in data['images']:
         cells = page_cells(data['law'], entry)
@@ -253,10 +263,11 @@ def page_table(data):
         rows.append([['%s %s' % (entry['model'], entry['firmware'])], entry['model'], cells])
     lines = [
         '<div class="wide"><table class="models">',
-        '  <colgroup><col style="width:19%"><col style="width:17%"><col style="width:25%">'
-        '<col style="width:12%"><col style="width:13%"><col style="width:14%"></colgroup>',
+        '  <colgroup><col style="width:15%"><col style="width:13%"><col style="width:22%">'
+        '<col style="width:10%"><col style="width:12%"><col style="width:13%"><col style="width:15%"></colgroup>',
         '  <thead><tr><th>Firmware</th><th class="sym">τ</th><th class="sym">G</th><th class="sym">a</th>'
-        '<th>Slowest pole, <span class="sym">≈ 2.7τ</span></th><th>Startup ramp</th></tr></thead>',
+        '<th>Slowest pole, <span class="sym">≈ 2.7τ</span></th><th>Startup ramp</th>'
+        '<th>Holdover that restarts the ramp</th></tr></thead>',
         '  <tbody>',
     ]
     for names, _, cells in rows:

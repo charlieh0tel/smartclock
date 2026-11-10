@@ -355,7 +355,13 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   at its old path.  The hand-written ones moved too, so that every
   page has one kind of URL and none needs htmlpreview's workarounds.
   Generated Markdown stays committed: GitHub renders it in place.
-- The loop's constants by model are one file, `docs/firmware/loop-constants.json`, from which
+- `loop.html` and `docs/firmware/loop.md` are split by job: the page
+  explains the loop (the law, the symbols, its poles and damping, the
+  aging feed-forward, start-up as a story), `loop.md` holds the
+  reference (the addresses in every image, how the images differ, the
+  soft-float constants, how it is checked) and points to the page's
+  sections rather than restating them.  The loop's constants by model
+  are one file, `docs/firmware/loop-constants.json`, from which
   `tools/firmware/loop_constants.py` writes a table into each,
   between markers, the rest of both written by hand.  The page's
   table is committed with a drift check, unlike a generated page,

@@ -1331,10 +1331,10 @@ fn the_hand_over_to_pll_normal_moves_u_by_about_k_f() {
     /// it: the rest is that update's own, a ten-second step of a loop
     /// that has settled.
     const NEAR: f32 = 0.1;
-    let evidence = flat(&read("docs/firmware/loop.md"));
+    let page = flat(&read("docs/pages/loop.html"));
     assert!(
-        evidence.contains("leaves f, so its first update moves u by about K·f"),
-        "loop.md no longer says the hand-over moves u by about K·f"
+        page.contains("keeps f, so its first update moves u by about K·f"),
+        "loop.html no longer says the hand-over moves u by about K·f"
     );
     for receiver in &RECEIVERS {
         let trace = Trace::load(receiver.image);

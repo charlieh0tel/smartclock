@@ -48,9 +48,10 @@ frequency offset.  Its messages:
 
 ## The loop
 
-[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html)
-draws what follows as a block diagram, with the constants and the
-closed-loop poles.
+[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html#the-loop),
+"The loop", explains the update below: its block diagram, its law in
+the page's symbols and what each term does.  This section is the
+evidence: where each value lives and the code that runs it.
 
 `FUN_0004824a` is `pll_normal`: its failure message is `pll_normal -
 Error with measurement` (`0x487f8`) and its report is
@@ -96,18 +97,14 @@ alone; between entries the oscillator's drift accumulates in I.
 
 q is the seconds counter `FUN_00023818` returns, which `FUN_00023624`
 advances once a second; it lies in the region a warm restart preserves
-(see "τ and G").  p and r are two coefficients of a fit to the EFC's
-own history ("The aging fit"): with y = q / 2700, d = b + c / y is the
-slope of the fitted curve a + b·y + c·ln y now, in EFC units per
-2700 s.  The integrator's second term is then 10·d / 2700: the EFC
-change the fit predicts over the ten seconds between updates.
+(see "τ and G").  p and r are the c and b of a fit to the EFC's own
+history ("The aging fit", "Back to the loop"), so d is that fit's
+slope now; what it does to the integrator is
+[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html#the-aging-feed-forward),
+"The aging feed-forward".
 
-The factor 10 matches the ten seconds between updates.  What kind of
-loop this is -- proportional-integral on the prefiltered error, with
-gains that alone would give a double pole at −1/(2τ), and closed-loop
-poles at −0.37/τ and (−1.34 ± 0.55j)/τ at τ = 500 s once the prefilter
-and the ten-reading mean are counted -- is worked out in
-[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html),
+What kind of loop this is, its poles and damping, is worked out in
+[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html#what-kind-of-loop-that-is),
 "What kind of loop that is"; this file is the evidence for its
 numbers.
 
@@ -136,11 +133,10 @@ integrator,
 
     I ← I + (f / G)·(1/τ_old − 1/τ_new)        τ_old taken as τ_new − 5
 
-which offsets the change in K·f, so the step does not move u.  The
-hand-over is not so smooth: `pll_normal`'s entry (see "The loop") clears
-I and sets B to the EFC in force less c·s but leaves f, so its first
-update moves u by about K·f -- the proportional term counted again,
-once in B.
+`pll_normal`'s entry (see "The loop") clears I and sets B to the EFC
+in force less c·s but leaves f.  What each does to u is
+[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html#starting-up),
+"Starting up".
 
 The Z3805A's `startup_pll` (`0x4429e`) and the 58503A 3704's
 (`0x4429e`) have a state between those two, and so do the Z3816A's,
@@ -207,13 +203,10 @@ line (`front_panel_status_text`, `0x52a68`), whose
 `stabilizing frequency` suffix follows the stage the same way
 (`../screen-format-strings.md`, "Mode suffixes").
 
-So FFOM 0 comes when `startup_pll` hands over, and how long that
-takes is the start-up of "Starting up": after a power-up, the fifteen
-means, the three samples or the two hours of uptime, and the ramp to
-τ; after a holdover, the fifteen means and, when the constant was set
-back to 150 s, the ramp.
-[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html),
-"What the receiver shows", gives the times.
+How long the receiver takes to reach FFOM 0, after a power-up and
+after a holdover, is
+[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html#what-the-receiver-shows),
+"What the receiver shows".
 
 ## The aging fit
 
@@ -247,8 +240,9 @@ t·ln t − t: the mean of ln t over the 2700 s the sample averages.  The
 fit below regresses e on y and w, so a + b·y + c·w is the window mean
 of a′ + b·t + c·ln t with a′ = a + b/2, the linear term's mean being
 b·(y − ½): b and c carry over to the instantaneous curve, the intercept
-is off by half a window's change.  The weight only selects samples: a
-fit takes those at or above a minimum weight and weights each equally.
+is off by half a window's change.  How the weight is used is
+[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html#the-aging-feed-forward),
+"The aging feed-forward", and the fit's modes below.
 
 **The fit.**  `FUN_00045116` runs on each event.  Its record is at
 `0x1026a2`: mode byte at +0, a at +0x12, b at +0x16, c at +0x1a, rms at
@@ -323,9 +317,8 @@ start of each sampling pass `FUN_0004508e` asks for that event
 `0x102866`.  All four sit in the loop block a warm restart preserves,
 so after such a restart the loop starts with the last fit.  After a
 power-up b and c are zero until a slope fit, which needs three
-samples -- mode 1 or above; mode 0 sets a alone, from as few as one --
-so d is zero for the loop's first hours.  The
-`holdover` stage, `FUN_000473de` (its return of 1 moves the stage byte
+samples -- mode 1 or above; mode 0 sets a alone, from as few as one.
+The `holdover` stage, `FUN_000473de` (its return of 1 moves the stage byte
 to 4 at `0x4b36a`), seeds a with u − c·s when a is zero (`0x47440` to
 `0x47460`).
 
@@ -458,14 +451,14 @@ initialization routine `FUN_00022c7c` fills that block one of two ways:
   (`FUN_00041180(0x1b)`, `0x4b196`).
 
 So a value set with `loop_time` survives a reset that leaves RAM
-intact, and the loop uses 500 s after a power-up.  The startup ramp
-(above) runs its own constant from 150 s to τ − 5 in 5 s steps per
-ten-second update, reaching 500 s about 700 s after it begins.
+intact, and the loop uses the ROM's 500 s after a power-up.  How long
+the startup ramp (above) takes to reach τ in each model is
+[`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html#symbols-and-constants)'s
+"By model" table.
 
 The Z3801A's image does the same with its block at `0x101e6e`, filled
 from ROM `0x2f846` (`0x12ce0`), whose float at offset 0x14 is
-`44 7a 00 00`: 1000.0.  Its ramp from 150 s to 1000 s takes about
-1700 s.
+`44 7a 00 00`: 1000.0.
 
 The rest of the 25-byte block, from its ROM defaults
 `00 00 00 01 00 00 01 00 | 00 00 00 00 | 00 00 00 00 | 00 00 00 00 |
@@ -574,8 +567,8 @@ routine compares equal across images and a different one does not.
   x = c·2700/q + b (`0x10327a`).  Each update then moves a running
   value toward it, v ← ((τ − 10)·v + 10·x)/τ (`0x10327e`, at
   `0x49c38`), clamps v to ±M, and adds it to the integrator where the
-  Z3816A adds d.  So a new fit's change of slope reaches the
-  oscillator over about τ, not at once.  Their fit dispatchers differ
+  Z3816A adds d ([`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html#the-aging-feed-forward),
+  "The aging feed-forward", says what that changes).  Their fit dispatchers differ
   from the Z3816A's too, and from each other.
 
 The τ block has the 25-byte layout above in every image but the
@@ -729,7 +722,13 @@ compare it with the Z3805A 3543B's and 58503A 3704's images
   fails it.
 - The poles, damping and step response in `loop.html` are recomputed
   from the traced law, taking a change of EFC as acting from the next
-  second; the DAC's latency is not modeled.
+  second; the DAC's latency is not modeled.  The page's statement
+  that `pll_normal`'s first update after the hand-over moves u by
+  about K·f is checked against the traces.
+- The page's start-up times, in "What the receiver shows", are summed
+  from the ROMs' waits ("The FFOM"'s table), the traced ramp and the
+  law's settling, and its FFOM by stage is read from every image's
+  `get_ffom`.
 
 The other models' rows are read by hand and not checked this way,
 but for their constants: `make check-loop-constants`

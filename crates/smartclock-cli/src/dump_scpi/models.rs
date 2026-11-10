@@ -229,7 +229,9 @@ pub(super) fn markdown(images: &[(String, Vec<Entry>)]) -> String {
          `third_party/firmware/images/`, the manual path lists beside this file and\n\
          `crates/smartclock/commands.toml`.  Run `make docs` to regenerate; a\n\
          test fails if this file and they disagree.  `README.md` here says\n\
-         how the trees are read.\n\n",
+         how the trees are read.\n\n\
+         [`scpi-models.html`](https://charlieh0tel.github.io/smartclock/scpi-models.html)\n\
+         is the same table as a page that filters it.\n\n",
     );
     summary(&mut out, images);
     aliases(&mut out, images);

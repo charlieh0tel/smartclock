@@ -17,7 +17,9 @@ Nothing here was sent to a receiver.
 [`scpi-models.html`](https://charlieh0tel.github.io/smartclock/scpi-models.html)
 is the same table as a page that filters it -- by text, by whether a
 manual lists a path, whether the images differ, whether it has a
-handler, and by image; `make scpi-models` builds it for GitHub Pages,
+handler, by subsystem (top-level keyword) and by image.  A path in no
+manual is tagged undocumented, the tag linking to its section of
+`undocumented.md` where it has one.  `make scpi-models` builds it for GitHub Pages,
 `tools/scpi_models.py` rendering what `dump-scpi --models --json`
 prints.  It is not committed;
 `models.html` here forwards to it.

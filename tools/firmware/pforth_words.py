@@ -6,7 +6,12 @@
 image's pForth words, for every image in third_party/firmware/images/*.bin, and
 checks them, or with --write rewrites them.
 
-    uv run -q tools/firmware/pforth_words.py [--write | --sanity]
+    uv run -q tools/firmware/pforth_words.py [--write | --sanity | --json]
+
+--json prints every image's words, the tables' columns, as JSON:
+{"images": [{"name", "words": [{"table", "name", "header", "code",
+"flags", "inline", "stack", "description"}]}]}, the data of the pForth
+words by model page (tools/pforth_models.py, `make pforth-models`).
 
 --sanity prints each image's counts and compares the effects read for
 dup, drop, swap, over, rot, +, -, @, !, . and emit with the standard's.
@@ -74,6 +79,7 @@ lengths and operands.
 
 import argparse
 import dataclasses
+import json
 import pathlib
 import struct
 import sys
@@ -92,6 +98,9 @@ OUTPUT = ROOT / 'docs/firmware/pforth'
 # its routines
 NAMES = 'names.tsv'
 SCRIPT = 'tools/firmware/pforth_words.py'
+# the page setting every image's words side by side, from --json
+MODELS_PAGE = 'pforth-models.html'
+MODELS_PAGE_URL = f'https://charlieh0tel.github.io/smartclock/{MODELS_PAGE}'
 
 # pforth_word_header: link, code, inline_size, flags, then the name
 HEADER = struct.Struct('>IIHH')
@@ -1109,8 +1118,12 @@ def code_span(text):
     return cell(f'`{text}`')
 
 
+def flag_list(flags):
+    return [name for bit, name in FLAG_NAMES if flags & bit]
+
+
 def flag_names(flags):
-    return ', '.join(name for bit, name in FLAG_NAMES if flags & bit)
+    return ', '.join(flag_list(flags))
 
 
 def stack(word):
@@ -1140,6 +1153,7 @@ def render(path, words, notes):
         f'`third_party/firmware/images/{path.name}`; do not edit.  `make pforth-words`',
         'rewrites it and `make check-pforth-words` fails when it and the image',
         'disagree.  `README.md` here says how the tables are read.',
+        f'[`{MODELS_PAGE}`]({MODELS_PAGE_URL}) sets every image\'s words side by side.',
         '',
         f'{len(kernel)} kernel words, {read} of them with a stack effect read',
         f'from their code, and {len(diagnostic)} diagnostic words, whose effects',
@@ -1172,6 +1186,24 @@ def render(path, words, notes):
     return '\n'.join(lines) + '\n'
 
 
+def image_data(path, words, notes):
+    """One image's words as --json gives them: what its table holds, in
+    the same order and text."""
+    return {
+        'name': model(path),
+        'words': [{
+            'table': word.table,
+            'name': word.name,
+            'header': None if word.header is None else f'{word.header:#x}',
+            'code': f'{word.code:#x}',
+            'flags': [] if word.flags is None else flag_list(word.flags),
+            'inline': word.inline_size or None,
+            'stack': stack(word),
+            'description': description(word, notes),
+        } for word in words],
+    }
+
+
 def output_path(path):
     return OUTPUT / f'{path.stem}-words.md'
 
@@ -1200,13 +1232,19 @@ def main():
     parser.add_argument('--write', action='store_true', help='rewrite the tables')
     parser.add_argument('--sanity', action='store_true',
                         help='compare well-known words\' effects with the standard\'s')
+    parser.add_argument('--json', action='store_true',
+                        help='print every image\'s words as JSON, for tools/pforth_models.py')
     arguments = parser.parse_args()
     drift = []
+    images = []
     for path in sorted(IMAGES.glob('*.bin')):
         try:
             words = image_words(path)
         except Refused as error:
             sys.exit(f'{path.name}: refused: {error}')
+        if arguments.json:
+            images.append(image_data(path, words, names_notes(path)))
+            continue
         if arguments.sanity:
             report(path, words)
             continue
@@ -1216,6 +1254,9 @@ def main():
             output.write_text(text)
         elif not output.exists() or output.read_text() != text:
             drift.append(output.relative_to(ROOT))
+    if arguments.json:
+        print(json.dumps({'images': images}, indent=1))
+        return 0
     for path in drift:
         print(f'{path}: differs from the image; make pforth-words rewrites it')
     return 1 if drift else 0

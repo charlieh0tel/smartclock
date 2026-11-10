@@ -207,7 +207,8 @@ their sources, which are not committed, and the hand-written ones from
 `docs/pages/`, each with a breadcrumb back to the landing page and
 the site's icon.  The FPGA explainer's and detail page's need node, Icarus Verilog and
 network access to github.com, for the XC3000 viewer's clone
-(`docs/firmware/fpga-comparison.md`, "Reproduce").  `.github/workflows/pages.yml` publishes them on GitHub
+(`docs/firmware/fpga-comparison.md`, "Reproduce"); the pForth words
+page's needs uv, for `tools/firmware/pforth_words.py`'s Capstone.  `.github/workflows/pages.yml` publishes them on GitHub
 Pages from main, at <https://charlieh0tel.github.io/smartclock/>.
 `make board-atlas` builds the board atlas alone, from
 `docs/board-atlas.json`, and fails if the data cites a file or section
@@ -244,7 +245,9 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles, and the FFOM its start-up gives |
 | [`board-atlas.html`](https://charlieh0tel.github.io/smartclock/board-atlas.html) | the first-family main board, part by part on its photographs: each part's role, its address or QSPI device, the nets measured, and the Z3801A's and 58503A's boards against it; a ring or a row opens the part's card, the photos zoom and pan, the parts filter by subsystem, confidence or text, and `#J4` links to a part; built from `docs/board-atlas.json` by `make board-atlas` |
 | [`block-diagram.html`](https://charlieh0tel.github.io/smartclock/block-diagram.html) | the same board as blocks and signals: the oscillator, the FPGA's count, port and 1 PPS outputs with their pins, the interpolator drawn as a hypothesis, the processor and what it drives, each marked read, board, simulated, inferred or open and cited; on a narrow screen a tap opens the diagram full screen to pan and zoom; built from `docs/block-diagram.json` by `make block-diagram` |
+| [`pforth-models.html`](https://charlieh0tel.github.io/smartclock/pforth-models.html) | every image's pForth words side by side, each with its code address, flags and stack effect, filtered by text, by table and image, to the words that differ or those every image shares; built by `make pforth-models` |
 | [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, and as C data, the trees side by side against the manuals, and what bench receivers answered |
+| [`scpi-models.html`](https://charlieh0tel.github.io/smartclock/scpi-models.html) | every image's SCPI paths side by side against the manuals, filtered by text, subsystem and image, by whether a manual lists a path, the images differ or it has a handler; a path in no manual tagged undocumented, linked to its write-up where it has one; built by `make scpi-models` |
 | [`docs/screen-format-strings.md`](docs/screen-format-strings.md) | the status screen's templates, and what drives its mode line |
 | [`docs/hardware-investigations.md`](docs/hardware-investigations.md) | what only a bench can settle |
 | [`docs/hp5313x.md`](docs/hp5313x.md) | the HP 53131A-family counters, the same platform as the receivers, and what they could tell us |

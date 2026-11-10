@@ -3,8 +3,11 @@ for each firmware image, that a text box and the page's own controls
 filter as the reader types, its style and its script.
 
 The page is the table's data as JSON and a script that builds the
-table from it: tools/scpi_models.py's (scpi-models.html).  The table
-scrolls inside its own box, its header row held in place.
+table from it: tools/scpi_models.py's (scpi-models.html) and
+tools/pforth_models.py's (pforth-models.html).  The table scrolls
+inside its own box, its header row held in place and, in a narrow
+window, its first column; the page itself never scrolls sideways, at a
+phone's width either.
 
 A generator imports it from its own directory, which `python3 -I` leaves
 off the path:
@@ -20,20 +23,20 @@ from pages_render import head
 CSS = """\
 :root{
   --bg:#f6f5f1; --ink:#1d2126; --muted:#5d646c; --rule:#d9d6ce;
-  --panel:#ffffff; --accent:#1f6f8b; --band:#efede7;
+  --panel:#ffffff; --accent:#1f6f8b; --band:#efede7; --mark:#9a5b00;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
     --bg:#15181c; --ink:#e8e6e0; --muted:#a3a9b0; --rule:#343a41;
-    --panel:#1c2025; --accent:#5fb3d0; --band:#22272d;
+    --panel:#1c2025; --accent:#5fb3d0; --band:#22272d; --mark:#e6ac3a;
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#15181c; --ink:#e8e6e0; --muted:#a3a9b0; --rule:#343a41;
-  --panel:#1c2025; --accent:#5fb3d0; --band:#22272d;
+  --panel:#1c2025; --accent:#5fb3d0; --band:#22272d; --mark:#e6ac3a;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.45;margin:0;padding-block:28px 48px;padding-inline:20px}
@@ -56,6 +59,20 @@ td.lead{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.84rem;over
 td.lead .also{display:block;color:var(--muted);font-size:.78rem}
 td.cell{font-family:"IBM Plex Mono",ui-monospace,monospace;text-align:center;white-space:nowrap}
 tr.section th{background:var(--band);color:var(--ink);font-size:.85rem;font-weight:600;position:static}
+/* A mark on a row, quiet; one linking to more, in the mark's color. */
+.tag{display:inline-block;padding:0 5px;border:1px solid var(--rule);border-radius:3px;color:var(--muted);font:600 .7rem/1.5 "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.03em;white-space:nowrap;vertical-align:.1em}
+a.tag{border-color:var(--mark);color:var(--mark);text-decoration:none}
+a.tag:hover{text-decoration:underline}
+/* A narrow window: the table keeps a width its cells can be read at and
+   scrolls inside its box, its first column held at the left. */
+@media (max-width:60rem){
+  body{padding-inline:16px}
+  table{min-width:56rem}
+  td.lead,thead th:first-child{position:sticky;left:0;background:var(--panel);z-index:1;box-shadow:inset -1px 0 var(--rule),inset 0 -1px var(--rule)}
+  thead th:first-child{z-index:3}
+  td.lead{min-width:10rem;max-width:12rem}
+  #count{margin-left:0}
+}
 """
 
 # The script every matrix page runs: matrix(spec) builds the table from

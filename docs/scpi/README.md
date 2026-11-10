@@ -17,8 +17,9 @@ Nothing here was sent to a receiver.
 [`scpi-models.html`](https://charlieh0tel.github.io/smartclock/scpi-models.html)
 is the same table as a page that filters it -- by text, by whether a
 manual lists a path, whether the images differ, whether it has a
-handler, and by image; `dump-scpi --models --html` writes it, and
-`make scpi-models` builds it for GitHub Pages.  It is not committed;
+handler, and by image; `make scpi-models` builds it for GitHub Pages,
+`tools/scpi_models.py` rendering what `dump-scpi --models --json`
+prints.  It is not committed;
 `models.html` here forwards to it.
 
 [`models.md`](models.md) sets the trees side by side, path by path,

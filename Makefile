@@ -127,7 +127,8 @@ docs:
 # new one.  Each page is built by the target of its own name, writing
 # $(PAGES_DIR)/<page>.html with a <title>, a description meta tag and
 # a smartclock-group meta tag naming its group in tools/pages_index.py;
-# a page joins by such a target, named in PAGES.  The landing page,
+# a page joins by such a target, named in PAGES.  One rendered from data
+# a tool prints keeps that data in PAGES_DATA, which is not published.  The landing page,
 # index.html, lists them by group, in that order within one, after
 # NEW_PAGE, a page just launched, under "New", and FEATURED_PAGE under
 # "Featured", each one of PAGES or empty for none, each set apart above
@@ -147,6 +148,7 @@ docs:
 # Its hero is a drawing of the 58503A's front panel, or HERO_IMAGE, a
 # path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages
+PAGES_DATA ?= target/pages-data
 HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
 PAGES := fpga fpga-detail board-atlas block-diagram scpi-models $(HAND_PAGES)
 NEW_PAGE := fpga
@@ -180,11 +182,14 @@ block-diagram:
 	mkdir -p $(PAGES_DIR)
 	python3 -I tools/block_diagram.py $(PAGES_DIR)/block-diagram.html
 
-# The SCPI trees side by side, as a page that filters them.
+# The SCPI trees side by side, as a page that filters them: their data
+# from the images, kept in PAGES_DATA, not published, and the page
+# rendered from it (tools/pages_matrix.py, which the matrix pages share).
 scpi-models:
-	mkdir -p $(PAGES_DIR)
-	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models --html third_party/firmware/images/*.bin \
-		> $(PAGES_DIR)/scpi-models.html
+	mkdir -p $(PAGES_DIR) $(PAGES_DATA)
+	$(CARGO) run -q -p smartclock-cli -- dump-scpi --models --json third_party/firmware/images/*.bin \
+		> $(PAGES_DATA)/scpi-models.json
+	python3 -I tools/scpi_models.py $(PAGES_DATA)/scpi-models.json $(PAGES_DIR)/scpi-models.html
 
 $(HAND_PAGES):
 	mkdir -p $(PAGES_DIR)

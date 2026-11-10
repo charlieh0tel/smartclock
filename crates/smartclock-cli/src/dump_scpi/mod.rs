@@ -578,10 +578,11 @@ pub(crate) struct DumpScpiArgs {
     /// command table, as Markdown (docs/scpi/models.md).
     #[arg(long)]
     models: bool,
-    /// With `--models`, print a page that filters the table instead
-    /// of Markdown (`make scpi-models`).
+    /// With `--models`, print the path table's rows as JSON instead
+    /// of Markdown, the data of `tools/scpi_models.py`'s page (`make
+    /// scpi-models`).
     #[arg(long, requires = "models")]
-    html: bool,
+    json: bool,
     /// Follow each path with its query handler's and its setter's
     /// addresses, `-` for one it lacks, to name them in a
     /// disassembler (tools/ghidra/).
@@ -610,7 +611,7 @@ pub(crate) struct DumpScpiArgs {
 
 /// Print one image's paths, one a line, with `handlers` each followed
 /// by its handlers' addresses; with `models`, the trees of all of them
-/// side by side, as Markdown or with `html` as a page; with `c` or
+/// side by side, as Markdown or with `json` as the page's data; with `c` or
 /// `names`, the tree's records as C or as names-file rows.
 pub(crate) fn run(args: &DumpScpiArgs) -> Result<()> {
     ensure!(
@@ -619,8 +620,8 @@ pub(crate) fn run(args: &DumpScpiArgs) -> Result<()> {
     );
     if args.models {
         let trees = image::load_all(&args.images, entries)?;
-        if args.html {
-            print!("{}", models::html(&trees));
+        if args.json {
+            println!("{}", models::json(&trees));
         } else {
             print!("{}", models::markdown(&trees));
         }

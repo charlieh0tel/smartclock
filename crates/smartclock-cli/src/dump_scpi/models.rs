@@ -532,16 +532,10 @@ fn table(out: &mut String, images: &[(String, Vec<Entry>)]) {
     }
 }
 
-/// The page `html` fills: everything but the data, which replaces
-/// `DATA_MARK`.
-const PAGE: &str = include_str!("models.html");
-
-/// Where in `PAGE` the data goes.
-const DATA_MARK: &str = "__DATA__";
-
-/// The trees of `images` side by side as a page that filters them: the
-/// path table's rows as JSON in `PAGE`.
-pub(super) fn html(images: &[(String, Vec<Entry>)]) -> String {
+/// The trees of `images` side by side as the data of the page that
+/// filters them (`tools/scpi_models.py`): the images, the manuals, and
+/// the path table's rows by section, as JSON.
+pub(super) fn json(images: &[(String, Vec<Entry>)]) -> String {
     let data = serde_json::json!({
         "images": images.iter().map(|(name, _)| title(name)).collect::<Vec<_>>(),
         "manuals": MANUALS.iter().map(|manual| serde_json::json!({
@@ -560,7 +554,7 @@ pub(super) fn html(images: &[(String, Vec<Entry>)]) -> String {
             })).collect::<Vec<_>>(),
         })).collect::<Vec<_>>(),
     });
-    PAGE.replacen(DATA_MARK, &data.to_string(), 1)
+    data.to_string()
 }
 
 /// One row of the path table: the paths that reach the same node in

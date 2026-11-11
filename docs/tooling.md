@@ -37,6 +37,7 @@ receiver.
 | `tools/ghidra/` | the Ghidra scripts that set up an image and export its C ([`firmware/README.md`](firmware/README.md#decompiling-with-ghidra)) |
 | `third_party/firmware/` | the images, Ghidra's exports, the rewritten C and the analysis, with the `Makefile` that checks them ([`README.md`](../third_party/firmware/README.md)) |
 | `tools/firmware/` | the firmware checks: function check, link check, layouts, SCPI trees, names, figures, loop traces ([`firmware/rewrite.md`](firmware/rewrite.md#the-verification); in CI, [`firmware/README.md`](firmware/README.md#the-checks-in-ci)) |
+| `tools/ci/report-decompiled-needed` | whether `make report-decompiled IMAGE=` needs to run, in CI and a local run of it: whether anything it reads changed ([`firmware/README.md`](firmware/README.md#the-checks-in-ci)) |
 | the CPU backend | what the function check runs each image's code on ([`firmware/README.md`](firmware/README.md#the-cpu-backend)) |
 | `make -C third_party/firmware help` | lists the firmware's check and generate targets ([`firmware/rewrite.md`](firmware/rewrite.md#reproducing)) |
 

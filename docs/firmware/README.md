@@ -2157,3 +2157,25 @@ that changes its code can change the figures.  clang-format is
 `clang-format-21`, named through `CLANG_FORMAT`: 19, 20 and 21 format
 the C alike, and 18 formats three of the files otherwise.  Most of
 the job's time is `report-decompiled`'s.
+
+So `report-decompiled` runs only where anything it reads changed, but
+on a push to `main`, which runs every check.
+`tools/ci/report-decompiled-needed BASE` decides, and holds the one
+list of what it reads: `third_party/firmware/`, the vendored gcc
+source of its libgcc (`third_party/gcc/`), `tools/firmware/`, whose
+scripts pin their Python dependencies, this folder and the top
+`README.md`, whose figures it checks, both Makefiles, `firmware.yml`,
+which pins the toolchain and uv, and the script itself.  It prints
+`run=true` or `run=false`, to `$GITHUB_OUTPUT` too, and why; with
+nothing changed against `BASE`, the step is skipped, the job passes,
+and a notice says so.  The workflow passes a pull request's base or a
+branch push's previous commit; a push to `main`, a force-push and a
+branch's first push pass none, and run it.  The skip trusts the
+previous commit, not its result: a branch whose last run failed passes
+a next push that changes none of the inputs, and its pull request,
+checked against `main`, runs it.  A local run of CI, which replays the
+workflow's steps, guards the step with the same script and the
+branch's merge base:
+
+    tools/ci/report-decompiled-needed "$(git merge-base origin/main HEAD)" | grep -qx run=false \
+        || make -j"$(nproc)" report-decompiled IMAGE=

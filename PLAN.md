@@ -341,6 +341,18 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   it differently costs more than one definition; `make ci` is stricter
   and is what you run.  The browser and firmware checks need Node,
   Chromium, an m68k gcc and uv, so they are jobs of their own.
+- The firmware job runs on every push and pull request, so a firmware
+  branch is checked, but its longest step, `report-decompiled`, only
+  where anything it reads changed against the pull request's base or
+  the branch's previous push (`tools/ci/report-decompiled-needed`,
+  the one list of its inputs); a push to `main` always runs it.  The
+  job still runs and passes, so a required check is never left
+  pending.  Cost: a branch push trusts its previous commit, not that
+  commit's result, so a failure stays hidden on the branch until its
+  pull request, checked against `main`; and a change outside the list
+  that the step does read goes unchecked until `main`.  The four
+  images' function checks run at once (`make -j`), each one's output
+  kept whole in a log of its own.
 - HTML pages are published on GitHub Pages by
   `.github/workflows/pages.yml`, which `make pages` builds.  Generated
   ones (the board atlas, the block diagram, the SCPI trees and the

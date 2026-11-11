@@ -380,6 +380,42 @@ impl<T: Read + Write> Console<T> {
         self.drain()
     }
 
+    /// The console on `port`: an empty line, and when no console prompt
+    /// answers it, [`ENTER`] and the prompt after it.
+    fn reach(port: T, progress: &mut impl FnMut(Progress)) -> Result<Self> {
+        let mut console = Self { port };
+        if console.send_within("", PROBE_TIMEOUT).is_err() {
+            progress(Progress::Entering);
+            console.send(ENTER)?;
+        }
+        Ok(console)
+    }
+
+    /// Send `request` until its reply is `wanted` hex words, at most
+    /// [`ATTEMPTS`] times, and return why the last attempt failed if
+    /// none succeeded.  Only for requests that change nothing, which
+    /// can be repeated.
+    fn words_retrying(&mut self, request: &str, wanted: usize) -> Result<Vec<u32>> {
+        let mut last = ConsoleError::Range("no attempts made");
+        for _ in 0..ATTEMPTS {
+            match self.send(request).and_then(|reply| words(&reply, request)) {
+                Ok(words) if words.len() == wanted => return Ok(words),
+                Ok(words) => {
+                    last = ConsoleError::WordCount {
+                        request: request.to_owned(),
+                        got: words.len(),
+                        wanted,
+                    };
+                }
+                Err(e) => last = e,
+            }
+            // A failed attempt can leave a late reply and its prompt on
+            // the way, to be read as the next attempt's words.
+            self.resync()?;
+        }
+        Err(last)
+    }
+
     /// The long word at `address`, read in `hex`.
     fn long(&mut self, address: u32) -> Result<u32> {
         let request = format!("{address:X} @ u.");
@@ -476,11 +512,7 @@ pub fn read_memory<T: Read + Write>(
 ) -> Result<Summary> {
     let Region { from, length } = region;
     let end = from + length;
-    let mut console = Console { port };
-    if console.send_within("", PROBE_TIMEOUT).is_err() {
-        progress(Progress::Entering);
-        console.send(ENTER)?;
-    }
+    let mut console = Console::reach(port, &mut progress)?;
     console.send(READ_WORD)?;
     console.send("hex")?;
     let started = Instant::now();
@@ -493,39 +525,13 @@ pub fn read_memory<T: Read + Write>(
         let size = CHUNK.min(end - address);
         let wanted = (size / 4) as usize;
         let request = format!("{address:X} {size:X} rd");
-        let mut last = None;
-        let mut got = None;
-        for _ in 0..ATTEMPTS {
-            match console
-                .send(&request)
-                .and_then(|reply| words(&reply, &request))
-            {
-                Ok(words) if words.len() == wanted => {
-                    got = Some(words);
-                    break;
-                }
-                Ok(words) => {
-                    last = Some(ConsoleError::WordCount {
-                        request: request.clone(),
-                        got: words.len(),
-                        wanted,
-                    });
-                }
-                Err(e) => last = Some(e),
-            }
-            // A failed attempt can leave a late reply and its prompt on
-            // the way, to be read as the next attempt's words.
-            if let Err(e) = console.resync() {
-                last = Some(e);
-                break;
-            }
-        }
-        let Some(words) = got else {
-            return Err(ConsoleError::GaveUp {
-                address,
-                last: Box::new(last.unwrap_or(ConsoleError::Range("no attempts made"))),
-            });
-        };
+        let words =
+            console
+                .words_retrying(&request, wanted)
+                .map_err(|last| ConsoleError::GaveUp {
+                    address,
+                    last: Box::new(last),
+                })?;
         let bytes: Vec<u8> = words.iter().flat_map(|w| w.to_be_bytes()).collect();
         out.write_all(&bytes)?;
         let offset = (address - from) as usize;
@@ -663,7 +669,7 @@ pub fn back_to_scpi<T: Transport>(port: T, config: Config) -> Result<String> {
 /// succeeded, since a read that fails part way leaves the port at the
 /// console too.  Returns the summary and the primary's `*IDN?` answer.
 pub fn read_and_return<T: Transport>(
-    mut port: T,
+    port: T,
     region: Region,
     out: &mut impl Write,
     compare: Option<&[u8]>,
@@ -671,9 +677,22 @@ pub fn read_and_return<T: Transport>(
     stop: &AtomicBool,
     config: Config,
 ) -> Result<(Summary, String)> {
-    let read = read_memory(&mut port, region, out, compare, progress, stop);
-    match (read, back_to_scpi(port, config)) {
-        (Ok(summary), Ok(identity)) => Ok((summary, identity)),
+    and_return(port, config, |port| {
+        read_memory(port, region, out, compare, progress, stop)
+    })
+}
+
+/// Run `work` on the port, which leaves it at the console, then
+/// [`back_to_scpi`] whether or not the work succeeded.  Returns what
+/// the work returned and the primary's `*IDN?` answer.
+pub fn and_return<T: Transport, R>(
+    mut port: T,
+    config: Config,
+    work: impl FnOnce(&mut T) -> Result<R>,
+) -> Result<(R, String)> {
+    let done = work(&mut port);
+    match (done, back_to_scpi(port, config)) {
+        (Ok(done), Ok(identity)) => Ok((done, identity)),
         (Ok(_), Err(back)) => Err(back),
         (Err(read), Ok(identity)) => Err(ConsoleError::ReadFailed {
             read: Box::new(read),

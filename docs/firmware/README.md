@@ -107,10 +107,10 @@ request scripts in `oncore/`.
 - [Pulse, time-tag and output commands](outputs.md), and the FPGA
   bitstreams and their decode pipeline
 - [The FPGA designs](fpga-comparison.md), decoded and simulated: the
-  front door, comparing the five, then one file each:
+  front door, comparing the six, then one file each:
   [Z3805A](z3805a-trace.md), [58503A/Z3801A](58503a-z3801a-trace.md),
   [58503B](58503b-trace.md), [Z3815A](z3815a-trace.md),
-  [Z3816A](z3816a-trace.md)
+  [Z3816A](z3816a-trace.md), [Z3817A](z3817a-trace.md)
 - [58503A 3633 against 3704](revisions.md)
 - [58503A 3704 against Z3805A 3543B](58503a-3704.md)
 - [Z3815A 4010 against 58503A 3704 and Z3805A 3543B](z3815a-4010.md)

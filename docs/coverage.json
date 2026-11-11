@@ -138,7 +138,6 @@
         "gps": {"text": "Oncore (external)"},
         "loop": "wip",
         "rewrite": "wip",
-        "fpga-decoded": "wip",
         "daemon": {
           "evidence": [{"dialect": "{model}", "is": "{dialect}"},
                        {"toml": "crates/smartclock/commands.toml", "key": "complete", "value": "{model}"}]

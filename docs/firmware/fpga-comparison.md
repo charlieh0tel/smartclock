@@ -1,14 +1,14 @@
 # The SmartClock FPGA designs
 
 The front door to the FPGA write-up: what was done, how far it can be
-trusted, the five designs side by side, and how to reproduce it.  Each
+trusted, the designs side by side, and how to reproduce it.  Each
 design has its own trace with the same sections; `counter.md` is how the
 firmware drives the counter, and `outputs.md`, "The FPGA bitstreams",
 is how the firmware loads the designs and how they are decoded.
 
 ## Provenance
 
-The seven firmware images carry five XC3042 bitstreams between them
+The eight firmware images carry six XC3042 bitstreams between them
 (`outputs.md`, "The FPGA bitstreams"); the designs they were built from
 are lost.  Each bitstream is decoded with a third-party viewer, the
 XC3000 viewer by Arisotura (<https://github.com/Arisotura/xc3000>),
@@ -22,7 +22,7 @@ every pin's role is read from the logic, not traced on one.
 The pipeline pins the viewer to commit `8563397`, the commit `make
 check-fpga-decoder` validates against XACT (`tools/fpga/decoder.mk`).
 At upstream pull request #3 (`02c1a56`), `netdump.js` decodes the
-five designs to the same netlists as at the pin, and XACT's test
+six designs to the same netlists as at the pin, and XACT's test
 designs agree with XACT's LCAs at both commits
 (`make -f tools/fpga/Makefile check-decoder-upstream`, which clones
 the viewer again at that commit, compares every decode and runs
@@ -43,11 +43,12 @@ re-expressed and need the viewer to make, stay generated in `target/`
    firmware's side.
 3. The others, each as its differences from the reference:
    `58503a-z3801a-trace.md`, `58503b-trace.md`, `z3815a-trace.md`,
-   `z3816a-trace.md`.
+   `z3816a-trace.md`, `z3817a-trace.md`.
 
 ## The five designs
 
-The sizes and clock loads are `tools/fpga/ref/<image>.stats`, the
+The Z3817A's design, a sixth, is set out apart ("The Z3817A, a sixth
+design", below).  The sizes and clock loads are `tools/fpga/ref/<image>.stats`, the
 reads `tools/fpga/ref/<image>.readout` (the preset is its six nibbles
 `05` at `0x12` to `0x17`, the status its register `0x00`), both checked
 by `make -f tools/fpga/Makefile check`; the taps and the 1 PPS pins are
@@ -270,6 +271,34 @@ probed).  The Z3816A's board differs from the others', and its 5 MHz
 OCXO, an MTI Series 260, is presumably doubled on it to that 10 MHz
 (**inferred**, not traced).
 
+## The Z3817A, a sixth design
+
+The Z3817A 3752's bitstream (`z3817a-trace.md`) is neither a copy nor
+a variant of the five above: it differs from each in most of its bytes
+(`outputs.md`, "The FPGA bitstreams") and places its blocks in other
+tiles, so the tables above, tile by tile, leave it out.  By function it
+is the 585xx and Z3805A family's (**read**, and **simulated** with
+`tools/fpga/z3817a_tb.v`): the same register port, pin for pin; GCLK
+from P7 and a divide by 10,000,000 to the 1 PPS, on P78 alone; the
+Z3805A's prescaler periods and its tap 4,000,000 clocks after the
+internal 1 PPS; the start on a 1 PPS's rise and the stop through
+four flip-flops.  It differs in:
+
+- no interpolator: no input byte, no start pulse out, no mode or
+  reference bit, so the count opens on the first clock edge after the
+  1 PPS, as the Z3805A's does with its reference bit Low;
+- a 32-bit count, fifteen two-bit Johnson stages, preset to
+  `0x55555555` and read at `0x12` to `0x19`;
+- a fifth register, 4, whose bit 0 starts the count from P84 instead
+  of P82, and a counter of P84's rises read at the odd addresses' high
+  nibble, as in the Z3815A.
+
+Its divider, start, stop and sync blocks are the Z3805A's in other
+encodings; a `blockmatch.py` match file pairing them is not yet
+written.  The design's count resolves 100 ns at the 10 MHz the divide
+implies, which does not by itself give the bench unit's 10 ns
+`:SYNC:TINT?` steps (`z3817a-trace.md`, "The 10 ns steps").
+
 ## Decoder faults
 
 The viewer's faults that `netdump.js` corrects; the detail is in
@@ -306,7 +335,7 @@ repository root:
     make fpga                             # the explainer page, target/pages/fpga.html
     make fpga-detail                      # the detailed diagrams, target/pages/fpga-detail.html
     make check-fpga-decoder               # the decoder against XACT's test designs
-    make -f tools/fpga/Makefile check-decoder-upstream  # the five decodes at upstream PR #3
+    make -f tools/fpga/Makefile check-decoder-upstream  # the six decodes at upstream PR #3
     make -j16 -f tools/fpga/Makefile check-readings      # the long runs
     cargo test -p smartclock-cli --test fpga_bitstreams   # the bitstreams' offsets, hashes, differences
 
@@ -369,8 +398,8 @@ nets it quotes that had them.
 
 ## Glossary
 
-- **Image, design.**  An image is one of the seven firmware builds
-  (`third_party/firmware/images/`); a design is one of the five FPGA
+- **Image, design.**  An image is one of the eight firmware builds
+  (`third_party/firmware/images/`); a design is one of the six FPGA
   bitstreams they load.  The 58503A 3633 and 3704 and the Z3801A 3543
   share one.
 - **Logic block, tile.**  The XC3042's 12 by 12 array of configurable

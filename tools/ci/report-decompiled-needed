@@ -3,14 +3,15 @@
 # needs to run: whether any file it reads differs between BASE and the
 # working tree, committed or not, untracked files included.
 #
-#     tools/ci/report-decompiled-needed [BASE]
+#     tools/ci/report-decompiled-needed [BASE | --merge-base REF]
 #
+# BASE is a commit; with --merge-base, it is HEAD's merge base with REF.
 # Prints run=true or run=false, appended to $GITHUB_OUTPUT too when that
-# is set, and why to stderr.  With no BASE, an all-zero one (the push
-# that made a branch) or one neither here nor fetchable from origin, it
-# runs.  .github/workflows/firmware.yml passes a pull request's base or
-# a push's previous commit, and none for a push to main or a force-push;
-# a local run passes the merge base with origin/main
+# is set, and why to stderr.  With no BASE, or one neither here nor
+# fetchable from origin, or no merge base found, it runs.
+# .github/workflows/firmware.yml passes a pull request's base, and for
+# a branch's push --merge-base origin/main, and nothing for a push to
+# main; a local run passes --merge-base origin/main
 # (docs/firmware/README.md, "The checks in CI").
 set -euo pipefail
 
@@ -51,11 +52,15 @@ decide() {
 
 cd "$(git rev-parse --show-toplevel)"
 base=${1:-}
-if [ -z "$base" ]; then
-  decide true "no base to compare against (a push to main, a force-push or a run by hand)"
+if [ "$base" = --merge-base ]; then
+  ref=${2:?--merge-base needs a REF}
+  if ! base=$(git merge-base "$ref" HEAD 2>/dev/null); then
+    decide true "no merge base with $ref (a shallow clone, or $ref unknown)"
+  fi
+  echo "merge base with $ref: $base" >&2
 fi
-if [[ $base =~ ^0+$ ]]; then
-  decide true "no previous commit (the push that made the branch)"
+if [ -z "$base" ]; then
+  decide true "no base to compare against (a push to main, or a run by hand)"
 fi
 if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
   if ! git fetch -q --no-tags --depth=1 origin "$base" 2>/dev/null \

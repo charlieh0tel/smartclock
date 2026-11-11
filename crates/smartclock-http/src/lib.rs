@@ -11,10 +11,11 @@
 //! gets added to one server and forgotten in the other.  The daemon's
 //! own socket server learned all three of them the hard way.
 
-use std::io::BufRead as _;
+use std::io::BufRead;
 use std::io::BufReader;
 use std::io::Read as _;
 use std::io::Write as _;
+use std::net::Shutdown;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::ops::ControlFlow;
@@ -54,6 +55,19 @@ const WRITE_TIMEOUT: Duration = Duration::from_secs(30);
 /// clients are told the server is busy instead of the machine being
 /// taken down.
 const MAX_INFLIGHT: usize = 32;
+
+/// The longest request body accepted, by its `Content-Length`: past
+/// it the request is refused 413.  No caller takes a body, so one
+/// within it is read and dropped, and the limit is there so that a
+/// client sending a large one is told so rather than left writing.
+const BODY_LIMIT: u64 = 64 * 1024;
+
+/// How long the accept loop waits after a failed accept before it
+/// accepts again.  An error that persists -- out of file descriptors,
+/// say -- comes straight back, and without the pause the loop spun on
+/// it; long enough that it costs nothing, short enough that a page
+/// polling the server hardly notices.
+const ACCEPT_RETRY: Duration = Duration::from_millis(100);
 
 /// The media type of the server's own answers.
 const TEXT: &str = "text/plain; charset=utf-8";
@@ -209,26 +223,37 @@ where
             dispatch(stream, &answer, &inflight);
             ControlFlow::Continue(())
         },
+        ACCEPT_RETRY,
     );
     Ok(())
 }
 
 /// Each connection `accept` gives handed to `handle`, until `handle`
-/// says to stop.
+/// says to stop.  A failed accept is waited out for `retry` and then
+/// accepting goes on; a run of failures is reported once.
 fn keep_accepting<T>(
     mut accept: impl FnMut() -> std::io::Result<T>,
     mut handle: impl FnMut(T) -> ControlFlow<()>,
+    retry: Duration,
 ) {
+    let mut failing = false;
     loop {
         match accept() {
             Ok(accepted) => {
+                failing = false;
                 if handle(accepted).is_break() {
                     return;
                 }
             }
             // One client failing to connect is not a reason to stop
             // serving the others.
-            Err(e) => eprintln!("rejected a connection: {e}"),
+            Err(e) => {
+                if !failing {
+                    eprintln!("rejected a connection: {e}");
+                    failing = true;
+                }
+                thread::sleep(retry);
+            }
         }
     }
 }
@@ -299,10 +324,99 @@ where
         return;
     }
 
-    // "GET /metrics HTTP/1.1".  Only the path is of interest; neither
-    // server reads a body or needs a header.
-    let path = line.split_whitespace().nth(1).unwrap_or("/");
+    // "GET /metrics HTTP/1.1".  Only the path is of interest, and of
+    // the headers only the length of the body, which neither server
+    // reads.  A line with no version has no headers to read.
+    let mut words = line.split_whitespace();
+    let path = words.nth(1).unwrap_or("/");
+    if words.next().is_some() {
+        match declared_body(&mut reader) {
+            Err(_) => return,
+            Ok(Err(refusal)) => {
+                refuse(stream, &mut reader, &refusal);
+                return;
+            }
+            Ok(Ok(length)) => {
+                // Read rather than left: closing on unread bytes resets
+                // the connection, which can lose the answer.
+                if std::io::copy(&mut (&mut reader).take(length), &mut std::io::sink()).is_err() {
+                    return;
+                }
+            }
+        }
+    }
     let _ = write_response(stream, &answer(path));
+}
+
+/// The length of the body the headers declare, read up to the blank
+/// line that ends them; or the refusal of a header line past
+/// `MAX_REQUEST`, of a length that is not one, of a body past
+/// `BODY_LIMIT`, or of a body sent with a `Transfer-Encoding`, which is
+/// refused 411 rather than decoded: no caller takes a body, and one
+/// whose length is not declared cannot be held to the limit.
+fn declared_body(reader: &mut impl BufRead) -> std::io::Result<Result<u64, Response>> {
+    let mut length = 0;
+    // Bytes, not a String: a header is not obliged to be UTF-8.
+    let mut line = Vec::new();
+    loop {
+        line.clear();
+        let read = reader
+            .by_ref()
+            .take(MAX_REQUEST + 1)
+            .read_until(b'\n', &mut line)?;
+        if read as u64 > MAX_REQUEST {
+            return Ok(Err(Response::text(
+                "431 Request Header Fields Too Large",
+                "a header line is too long\n",
+            )));
+        }
+        // The blank line, or the client's end of the connection.
+        let header = line.trim_ascii();
+        if header.is_empty() {
+            break;
+        }
+        let Some(colon) = header.iter().position(|&byte| byte == b':') else {
+            continue;
+        };
+        let (name, value) = (&header[..colon], &header[colon + 1..]);
+        if name.eq_ignore_ascii_case(b"transfer-encoding") {
+            return Ok(Err(Response::text(
+                "411 Length Required",
+                "a body must be sent with a Content-Length\n",
+            )));
+        }
+        if name.eq_ignore_ascii_case(b"content-length") {
+            let value = std::str::from_utf8(value).ok();
+            match value.and_then(|value| value.trim().parse().ok()) {
+                Some(declared) => length = declared,
+                None => {
+                    return Ok(Err(Response::text(
+                        "400 Bad Request",
+                        "the Content-Length is not a length\n",
+                    )));
+                }
+            }
+        }
+    }
+    if length > BODY_LIMIT {
+        return Ok(Err(Response::text(
+            "413 Content Too Large",
+            &format!("the body is past {BODY_LIMIT} bytes\n"),
+        )));
+    }
+    Ok(Ok(length))
+}
+
+/// Write `refusal` and close, reading what the client still sends until
+/// it stops or the request's deadline passes: closing on unread bytes
+/// resets the connection, and the client may never see why it was
+/// refused.
+fn refuse(stream: &TcpStream, reader: &mut impl BufRead, refusal: &Response) {
+    if write_response(stream, refusal).is_err() {
+        return;
+    }
+    let _ = stream.shutdown(Shutdown::Write);
+    let _ = std::io::copy(reader, &mut std::io::sink());
 }
 
 /// A stream that stops reading at a fixed moment, however the bytes
@@ -390,11 +504,16 @@ mod tests {
         assert_eq!(pairs(query).count(), 3);
     }
 
+    use super::BODY_LIMIT;
     use super::Response;
     use super::handle_within;
+    use super::keep_accepting;
+    use std::collections::VecDeque;
+    use std::io::Read as _;
     use std::io::Write as _;
     use std::net::TcpListener;
     use std::net::TcpStream;
+    use std::ops::ControlFlow;
     use std::time::Duration;
     use std::time::Instant;
 
@@ -424,5 +543,112 @@ mod tests {
         drop(server);
         let _ = client.join();
         assert!(took < Duration::from_secs(2), "held for {took:?}");
+    }
+
+    /// `request` sent whole, and the answer read to the end, from a
+    /// server that answers each path with itself.
+    fn exchange(request: Vec<u8>) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+        let address = listener.local_addr().expect("an address");
+        let client = std::thread::spawn(move || {
+            let mut stream = TcpStream::connect(address).expect("connect");
+            stream.write_all(&request).expect("the request");
+            let mut answer = String::new();
+            stream.read_to_string(&mut answer).expect("an answer");
+            answer
+        });
+        let (server, _) = listener.accept().expect("accept");
+        handle_within(
+            &server,
+            &|path: &str| Response::ok("text/plain", path.to_owned()),
+            Duration::from_secs(5),
+        );
+        drop(server);
+        client.join().expect("the client")
+    }
+
+    /// A request whose head declares a body of `length` bytes, followed
+    /// by that body.
+    fn post(length: u64) -> Vec<u8> {
+        let mut request = format!(
+            "POST /metrics HTTP/1.1\r\nHost: localhost\r\ncontent-length: {length}\r\n\r\n"
+        )
+        .into_bytes();
+        request.resize(
+            request.len() + usize::try_from(length).expect("a length"),
+            b'x',
+        );
+        request
+    }
+
+    /// A body past the limit is refused as too large, and the client
+    /// is told so although it sent the body the server did not read.
+    #[test]
+    fn a_body_past_the_limit_is_refused_413() {
+        let answer = exchange(post(BODY_LIMIT + 1));
+        assert!(answer.starts_with("HTTP/1.1 413 "), "{answer}");
+    }
+
+    /// A body within the limit is read past, and the path answered.
+    #[test]
+    fn a_body_within_the_limit_is_answered() {
+        let answer = exchange(post(BODY_LIMIT));
+        assert!(answer.starts_with("HTTP/1.1 200 "), "{answer}");
+        assert!(answer.ends_with("\r\n\r\n/metrics"), "{answer}");
+    }
+
+    #[test]
+    fn a_length_that_is_not_a_number_is_a_bad_request() {
+        let answer = exchange(b"GET / HTTP/1.1\r\nContent-Length: lots\r\n\r\n".to_vec());
+        assert!(answer.starts_with("HTTP/1.1 400 "), "{answer}");
+    }
+
+    /// A chunked body is refused, its length being required, and the
+    /// client is told so although it sent the body the server did not
+    /// read.
+    #[test]
+    fn a_chunked_body_is_refused_411() {
+        let chunk = "x".repeat(4096);
+        let mut request =
+            b"POST /metrics HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n"
+                .to_vec();
+        for _ in 0..32 {
+            request.extend_from_slice(format!("{:x}\r\n{chunk}\r\n", chunk.len()).as_bytes());
+        }
+        request.extend_from_slice(b"0\r\n\r\n");
+        let answer = exchange(request);
+        assert!(answer.starts_with("HTTP/1.1 411 "), "{answer}");
+    }
+
+    /// A failed accept, out of file descriptors say, does not stop the
+    /// server: it waits and accepts again, and what it accepts next is
+    /// handled.
+    #[test]
+    fn a_failed_accept_is_waited_out_and_accepting_goes_on() {
+        let retry = Duration::from_millis(20);
+        // what each accept gives, in turn
+        let mut accepts: VecDeque<std::io::Result<u32>> = VecDeque::from([
+            Ok(1),
+            Err(std::io::Error::other("no file descriptor")),
+            Err(std::io::Error::other("no file descriptor")),
+            Ok(2),
+            Ok(3),
+        ]);
+        let mut handled = Vec::new();
+        let started = Instant::now();
+        keep_accepting(
+            || accepts.pop_front().expect("an accept left"),
+            |accepted| {
+                handled.push(accepted);
+                if accepted == 3 {
+                    ControlFlow::Break(())
+                } else {
+                    ControlFlow::Continue(())
+                }
+            },
+            retry,
+        );
+        assert_eq!(handled, [1, 2, 3]);
+        assert!(started.elapsed() >= 2 * retry, "no pause after a failure");
     }
 }

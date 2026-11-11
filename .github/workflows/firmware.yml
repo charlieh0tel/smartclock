@@ -24,7 +24,9 @@ name: firmware
 # as many at once as the runner has CPUs (make -j"$(nproc)").
 #
 # On every push, not main's alone, so a firmware branch's own pushes
-# are checked too.
+# are checked too.  report-decompiled, though, runs only where anything
+# it reads changed, and always on a push to main
+# (tools/ci/report-decompiled-needed).
 on:
   push:
   pull_request:
@@ -153,8 +155,20 @@ jobs:
       # that the images run at once, each one's output printed whole.
       - run: make -j"$(nproc)" check-link IMAGE=
         if: ${{ !cancelled() }}
+      # Whether report-decompiled needs to run: whether anything it reads
+      # changed (tools/ci/report-decompiled-needed) against a pull
+      # request's base or a branch push's previous commit.  A push to
+      # main always runs it, and so does a force-push, which has no
+      # previous commit to trust, or a branch's first push.
+      - id: report-decompiled
+        if: ${{ !cancelled() }}
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || (github.ref != 'refs/heads/main' && !github.event.forced && github.event.before) || '' }}
+        run: tools/ci/report-decompiled-needed "$BASE"
       # Without IMAGE, for every image: fails on a failed function, and
       # checks the documents' figures from each image's function check
-      # against its report.  The images at once, as check-link's.
+      # against its report.  The images at once, as check-link's.  Run
+      # unless the step before found nothing it reads changed; skipped,
+      # the job still passes.
       - run: make -j"$(nproc)" report-decompiled IMAGE=
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.report-decompiled.outputs.run != 'false' }}

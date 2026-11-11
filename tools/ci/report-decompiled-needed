@@ -1,0 +1,73 @@
+#!/bin/bash
+# Whether make report-decompiled IMAGE=, most of the firmware CI's time,
+# needs to run: whether any file it reads differs between BASE and the
+# working tree, committed or not, untracked files included.
+#
+#     tools/ci/report-decompiled-needed [BASE]
+#
+# Prints run=true or run=false, appended to $GITHUB_OUTPUT too when that
+# is set, and why to stderr.  With no BASE, an all-zero one (the push
+# that made a branch) or one neither here nor fetchable from origin, it
+# runs.  .github/workflows/firmware.yml passes a pull request's base or
+# a push's previous commit, and none for a push to main or a force-push;
+# a local run passes the merge base with origin/main
+# (docs/firmware/README.md, "The checks in CI").
+set -euo pipefail
+
+# What report-decompiled reads: the firmware's images, exports, C and
+# analysis, with the Makefile that runs it; the vendored gcc source of
+# the libgcc the images link; the checks and the harness, whose inline
+# metadata pins their Python dependencies; the documents whose figures
+# report_figures.py checks, docs/firmware/ and the top README.md; the top
+# Makefile, which hands the target over; the workflow, which pins the
+# toolchain and uv; and this script.
+INPUTS=(
+  third_party/firmware/
+  third_party/gcc/
+  tools/firmware/
+  tools/ci/report-decompiled-needed
+  docs/firmware/
+  README.md
+  Makefile
+  .github/workflows/firmware.yml
+)
+
+# Prints the decision, $1 true or false, and why, $2, and exits.
+decide() {
+  if [ "$1" = true ]; then
+    echo "report-decompiled runs: $2" >&2
+  else
+    echo "report-decompiled skipped: $2" >&2
+    if [ "${GITHUB_ACTIONS:-}" = true ]; then
+      echo "::notice title=report-decompiled skipped::$2"
+    fi
+  fi
+  echo "run=$1"
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    echo "run=$1" >> "$GITHUB_OUTPUT"
+  fi
+  exit 0
+}
+
+cd "$(git rev-parse --show-toplevel)"
+base=${1:-}
+if [ -z "$base" ]; then
+  decide true "no base to compare against (a push to main, a force-push or a run by hand)"
+fi
+if [[ $base =~ ^0+$ ]]; then
+  decide true "no previous commit (the push that made the branch)"
+fi
+if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+  if ! git fetch -q --no-tags --depth=1 origin "$base" 2>/dev/null \
+      || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+    decide true "base $base neither here nor fetchable from origin"
+  fi
+fi
+changed=$({ git diff --name-only "$base" -- "${INPUTS[@]}"
+  git ls-files --others --exclude-standard -- "${INPUTS[@]}"; } | sort -u)
+if [ -n "$changed" ]; then
+  echo "changed since $base:" >&2
+  while read -r path; do echo "  $path"; done <<< "$changed" >&2
+  decide true "its inputs changed since $base"
+fi
+decide false "none of its inputs changed since $base: ${INPUTS[*]}"

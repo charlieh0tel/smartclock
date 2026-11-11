@@ -214,6 +214,7 @@ check-tiles: $(OUT)/z3805a.json $(OUT)/58503a-z3801a.json
 # own test first: each of its listed changes to a block is reported.
 MATCH_58503b-z3805a        := 58503b z3805a
 MATCH_58503b-58503a-z3801a := 58503b 58503a-z3801a
+MATCH_z3817a-z3805a        := z3817a z3805a
 MATCHES := $(patsubst MATCH_%,%,$(filter MATCH_%,$(.VARIABLES)))
 match_designs = $(addprefix $(OUT)/,$(addsuffix .json,$(MATCH_$(1))))
 

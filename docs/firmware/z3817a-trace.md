@@ -152,7 +152,11 @@ IF, sync kind 3's restart.
 
 The stop is the Z3805A's: BJ, clocked by the tap through EH, takes
 BI.X, so only a tap after a start stops the count; CI.QX, CI.QY, DI.QX
-and DI.QY carry it on GCLK, and DI.Y holds BH.
+and DI.QY carry it on GCLK, and DI.Y holds BH.  BJ, DI and BH are the
+Z3805A's CI, DG and CF block for block (`check-blocks`,
+`tools/fpga/z3817a-z3805a.match`); CI is its CJ but for the input it
+ORs in, AH.Y here, constant Low, and the start, BI and AI, is not its
+AH, BI and AI, which have the reference bit and the start's pulse.
 
 (**simulated**) The start bit sets on the 1 PPS's rise, and AI.Y on
 the first GCLK edge after it, 15 ns after an edge 37 ns into a 100 ns
@@ -201,6 +205,19 @@ HD.Y its terminal; then three decades, GF and GG (HF.Y), FE and FF
 (GH.X), FG and FH, and GE.X, the terminal count, the internal 1 PPS.
 GH.Y, the top decade's late states, is the tap.
 
+**Block by block.**  `make -f tools/fpga/Makefile check-blocks` checks
+each of these blocks as the same function of the same nets as its
+Z3805A counterpart, in `tools/fpga/z3817a-z3805a.match`: JA, JB, IC,
+KC, JC, ID, JD, KD and LD are the Z3805A's GI, HI, IG, JH, IH, JI, II,
+HJ and FJ; FA, GA, FC, GC, FB and HD its KH, KI, KJ, KK, JJ and JK;
+GF, GG, HF, FE, FF, FG, FH and GH its KF, KG, JG, GE, GF, HF, GG and HG.
+Many of them hold their two flip-flops, or drive their two outputs,
+the other way round, which the match file renames.  Four are not the
+Z3805A's, and the file says how: GB, whose X ORs in HE.X, the kind 1
+step; HC, the prescaler's step, the Z3805A's GK in another encoding;
+and GD and GE, the Z3805A's HH split in two, GE ORing in IF.Y, kind 3's
+restart ("The sync field").
+
 (**simulated**, `z3817a.three`) JB.X's period is 400 or 500 ns; LD.X's
 15,600 to 15,700 ns, the Z3805A's 156 or 157 clocks, 625 in 4; HD.Y's
 1,000,000 ns, 10,000 clocks; HF.Y's 10,000,000 ns; GE.X's
@@ -217,16 +234,36 @@ on a later GCLK edge (`fpga-comparison.md`, "Reproduce").
 
 ## The sync field
 
-(**read**) Register 3's two bits are IG.QY and IG.QX.  With both set,
-kind 3, and JF.Y High, IF.QX takes CD.X, the selected 1 PPS's GCLK
-edge, and resets the decades and the six-bit counter, as the Z3805A's
-EJ.X restarts its divider.  JE, JF and IE read the field and GE.X, and
-HC, which reads the field's IG.X and IG.Y through HE and GB, feeds the
-prescaler's terminal: by their inputs the pending sync and the
-one-clock step, the Z3805A's EK, GJ and GK in other form (**inferred**).  No
-run here writes the field: its steps are **open** (next wave).  The
-3752 firmware's sync writer is `0x4557a`, called from the arm with the
-kind at its configuration's offset `0x10` (**read**); which kinds it
+(**read**) Register 3's two bits are IG.QY and IG.QX.  IG, the field's
+register, JE, its copy a clock behind, IF, the restart, HE, the step
+lines, and CD, the 1 PPS's rising edge on GCLK, are the Z3805A's DI,
+DJ, EJ, GJ and DH block for block, CD sampling AG.X, the selected
+1 PPS, where the Z3805A's DH samples P82 (`check-blocks`,
+`tools/fpga/z3817a-z3805a.match`).  So with both bits set, kind 3,
+and JF.Y, the pending sync, High, IF.Y takes CD.X, and IF.QX resets
+the decades and the six-bit counter, as the Z3805A's EJ.X restarts its
+divider; and HE.X and HE.Y, the step lines of kinds 1 and 2, come with
+the pending sync in the second's last millisecond, as GJ's do.
+
+Three parts are not the Z3805A's:
+
+- **The step.**  HE.X reaches the prescaler through GB.X, which ORs
+  it with the Z3805A's IJ.Y, and HE.Y directly, into HC, which steps
+  ID's terminal: the Z3805A's GK, which reads both step lines and IJ.Y,
+  in another encoding.
+- **The pending sync.**  JF.QY sets on the field's change from 0, as
+  EK does, but clears on IE.X, `IF_Y + GE_X·(~IG_Y + ~IG_X)`: kind 3's
+  restart, or the internal 1 PPS for kinds 1 and 2 only.  The Z3805A's
+  EK clears on the internal 1 PPS whatever the kind, so here a kind 3
+  stays pending across internal 1 PPS edges until a 1 PPS restarts the
+  divider.
+- **The restart's 1 PPS.**  GE.X, the internal 1 PPS, is
+  `IF_Y + FG_Y·FG_X·FH_X·HF_Y`: kind 3's restart is itself an internal
+  1 PPS, on the 1 PPS's GCLK edge, as in the Z3816A, where the
+  Z3805A's restart gives none until a second later.
+
+The 3752 firmware's sync writer is `0x4557a`, called from the arm with
+the kind at its configuration's offset `0x10` (**read**); which kinds it
 writes is not traced.
 
 ## Other outputs
@@ -282,10 +319,10 @@ start to P84; the P84 counter; P19 and P72.
 
 **Read:** the register decode, the 32-bit count, the absence of the
 interpolator, the read multiplexer, the divider's stages, the firmware's
-register writes, reads and conversion.
+register writes, reads and conversion; the divider, stop and sync
+blocks that are the Z3805A's, and how the rest differ (`check-blocks`).
 
-**Inferred:** the 4,000,004 offset and TI's range; the sync blocks'
-roles; 10 MHz on P7; the 10 ns steps from
+**Inferred:** the 4,000,004 offset and TI's range; 10 MHz on P7; the 10 ns steps from
 firmware averaging; P82 and P84 as the time references' 1 PPS.
 
 **Open:**

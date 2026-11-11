@@ -293,9 +293,13 @@ four flip-flops.  It differs in:
   of P82, and a counter of P84's rises read at the odd addresses' high
   nibble, as in the Z3815A.
 
-Its divider, start, stop and sync blocks are the Z3805A's in other
-encodings; a `blockmatch.py` match file pairing them is not yet
-written.  The design's count resolves 100 ns at the 10 MHz the divide
+Its divider, stop and sync blocks are the Z3805A's block for block,
+re-placed and many with their flip-flops or outputs exchanged, but for
+the prescaler's step, the pending sync and the terminal count, which
+here makes kind 3's restart itself an internal 1 PPS; the start is
+not the Z3805A's, having no reference bit (**read**, checked by
+`check`: `tools/fpga/z3817a-z3805a.match`, which says where each pair
+holds and where it does not).  The design's count resolves 100 ns at the 10 MHz the divide
 implies, which does not by itself give the bench unit's 10 ns
 `:SYNC:TINT?` steps (`z3817a-trace.md`, "The 10 ns steps").
 
@@ -348,11 +352,11 @@ read port with the preset on (`.readout`), its Icarus and Yosys
 diagnostics (`.structure`), the viewer's pad tables (`pins.txt`) and
 the 58503A/Z3801A's logic and I/O blocks against the Z3805A's
 (`58503a-z3801a.tilediff`), the 58503B's blocks the trace pairs with
-the Z3805A's and the 58503A's, as functions (`check-blocks`,
-`tools/fpga/*.match`), that the explainer page renders from the
-references and figures (`check-explainer`), and that the detail page
-renders from the decodes, every pin in use with a role, every
-output an element's, every section cited a heading of its
+the Z3805A's and the 58503A's, and the Z3817A's with the Z3805A's, as
+functions (`check-blocks`, `tools/fpga/*.match`), that the explainer
+page renders from the references and figures (`check-explainer`), and
+that the detail page renders from the decodes, every pin in use with a
+role, every output an element's, every section cited a heading of its
 document and neither drawing colliding with itself, with its own test
 that each such error is
 refused (`check-detail`); firmware CI runs it

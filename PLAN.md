@@ -389,7 +389,7 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   landing page being edited by hand.  A page set apart is listed in its
   group too, so a group shows all its pages whichever is set apart:
   listed above only, the featured loop page once left its group with only the pForth page in
-  it.  The firmware group, "Firmware and the loop", holds the loop
+  it.  The firmware group, "Firmware", holds the loop
   page and the images' pForth words and SCPI trees: SCPI is the
   firmware's, and had a group of its own only for its one page.  Its hero is the 58503A's front
   panel drawn as SVG to scale from photographs, not a photograph: a

@@ -89,7 +89,7 @@ GROUPS = {
         '<path d="M42 36h8M54 36h8"/>',
     ),
     "firmware": Group(
-        "Firmware and the loop",
+        "Firmware",
         "How the firmware measures the 1 PPS and steers the oscillator to GPS, and each image's pForth words and SCPI commands side by side.",
         # A loop: the measurement and the filter, the filter's output fed back.
         '<rect x="4" y="8" width="22" height="14" rx="1"/>'

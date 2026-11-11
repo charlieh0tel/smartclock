@@ -296,9 +296,9 @@ the byte's 255, a fraction up to about 1.2.
 3. With a 1 PPS dead the loop waits until 0.3994 s after the last
    `pps_interrupt`, normally the internal 1 PPS, in place of a reading:
    the pace a reading keeps when it completes about 0.4 s after the
-   internal 1 PPS.  The same `0x199` is in all seven images (seven
-   firmware images, which load five FPGA designs between them:
-   `outputs.md`, "The FPGA bitstreams").
+   internal 1 PPS.  The same `0x199` is in the seven images read for
+   it, all but the Z3817A 3752 (the eight firmware images load six FPGA
+   designs between them: `outputs.md`, "The FPGA bitstreams").
 4. The other images' calibrations (the immediate before the
    `move.l #200` of each `counter_configuration_init`): 0.4000003 s in
    the Z3801A 3543, the Z3805A 3543B and both 58503A images; 0.400000204 s
@@ -450,7 +450,7 @@ internal 1 PPS (**simulated**: `z3815a-trace.md`, `z3816a-trace.md`,
 ## What the netlist shows
 
 The Z3805A's bitstream, decoded and simulated, is traced in
-`z3805a-trace.md`, and the five designs are compared in
+`z3805a-trace.md`, and the six designs are compared in
 `fpga-comparison.md`.  In short: the GPS 1 PPS's rising
 edge starts the count, which counts from the third clock edge after
 it (the second with the reference bit Low), and a tap of the divider,

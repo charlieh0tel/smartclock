@@ -66,7 +66,7 @@ schedule seen from outside (`../hardware-investigations.md`, item 8).
    The Z3816A's FPGA divides 9,830,400 to its 1 PPS, which implies a
    9.8304 MHz clock and a tick 1.7% longer (`z3816a-trace.md`); which
    the board runs, and how the scale fits it, is open
-   (`fpga-comparison.md`, "The five designs").
+   (`fpga-comparison.md`, "The six designs").
 5. A calibration double is subtracted, 0.3932162 s in the Z3816A
    (`counter.md`, "Which 1 PPS edges").
 6. The long at `0x1023d0` is converted and added.

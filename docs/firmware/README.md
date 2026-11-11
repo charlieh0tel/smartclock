@@ -432,9 +432,9 @@ with `make scpi-tree IMAGE=58503a-3704`; a seeding rule or exception is changed 
 `seed_names.py`, not in a row.  The make targets
 that check and generate it are `third_party/firmware/Makefile`'s, which
 runs alone, `make -C third_party/firmware TARGET IMAGE=z3805a-3543b`,
-for every image without `IMAGE=` (but `report-decompiled`, which
-runs the Z3805A's and the 58503A's alone; the Z3815A's runs with
-`IMAGE=z3815a-4010`), and to which the top Makefile hands each target by name, so that `make
+for every image without `IMAGE=` (but `check-link` and
+`report-decompiled`, which run for the four reported images, at once
+under `make -j`; `rewrite.md`, "Reproducing"), and to which the top Makefile hands each target by name, so that `make
 check-decompiled` is the same.
 
 Optionally, after step 3 or any later one,

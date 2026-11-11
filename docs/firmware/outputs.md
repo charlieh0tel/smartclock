@@ -250,7 +250,7 @@ points to it, but `fpga_verify_chip` reads it from 5 bytes in,
 under (`structures.md`, "ROM tables").  That it is the same in every
 image fits a mask, which belongs to the part rather than the design.
 
-Copies of the five designs are in `third_party/firmware/images/fpga/`.
+Copies of the six designs are in `third_party/firmware/images/fpga/`.
 `tools/fpga/iobdump.js` prints a bitstream's I/O blocks, and
 `tools/fpga/netdump.js` the whole design as JSON, using the decoder of
 the XC3000 viewer ("Netlists", below).
@@ -264,13 +264,26 @@ the XC3000 viewer ("Netlists", below).
 | 58503B 1.01.04 | `0x2f5a8` | `f095d6b5` | `0x304c6`, `d64b97e1` |
 | Z3815A 4010 | `0x316a6` | `3402456a` | `0x325c4`, `d64b97e1` |
 | Z3816A 4001 | `0x2ffb8` | `0bb50333` | `0x30ed6`, `d64b97e1` |
+| Z3817A 3752 | `0x2ffe4` | `4dc3aa57` | `0x30f02`, `d64b97e1` |
 
-The second block is the same in all seven.  The first comes in five
+The second block is the same in all eight.  The first comes in six
 designs:
 - The 58503A and the Z3801A share one, byte for byte.
 - The Z3805A's differs from it in 1868 of 3860 bytes, the 58503B's in
   2347, the Z3816A's in 3315 and the Z3815A's in 3392.
 - The Z3815A's and the Z3816A's differ from each other in 1686.
+- The Z3817A's differs from the 58503A's in 3310 bytes and from the
+  58503B's, the nearest, in 3292.
+
+The Z3817A's loader, `0x326c0`, is the Z3805A's `fpga_program`
+instruction for instruction, at its own addresses: its table is at
+`0x30ef8`, the count 1 then one entry, `0x2ffe4` to `0x30ef8`, and it
+prints the same messages.  It differs in three places: it sets PORTF
+bit 6 alone where the Z3805A sets bits 7 and 6 (`0x326f6`), its
+transfers hand the QSPI routines a first argument of `0xc` and `0x10`
+where the Z3805A's hand 6 and 9 (`0x327d0`, `0x327f4`, `0x3280e`,
+`0x32830`; what the argument selects was not traced), and the flag it
+holds while it loads is at `0x102038`.
 
 `cargo test -p smartclock-cli --test fpga_bitstreams` checks the
 offsets, the hashes (their first four bytes) and the byte differences

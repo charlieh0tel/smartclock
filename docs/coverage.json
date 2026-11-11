@@ -138,7 +138,6 @@
         "gps": {"text": "Oncore (external)"},
         "loop": "wip",
         "rewrite": "wip",
-        "fpga-design": {"status": "named", "text": "{design_name} (WIP)"},
         "fpga-decoded": "wip",
         "daemon": {
           "evidence": [{"dialect": "{model}", "is": "{dialect}"},

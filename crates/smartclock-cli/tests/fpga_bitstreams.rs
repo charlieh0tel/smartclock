@@ -16,7 +16,7 @@ const LENGTH: usize = 3860;
 const HEADER: [u8; 4] = [0xff, 0x20, 0x07, 0x86];
 
 /// Each image, where its bitstream starts, and the file that copies it.
-const BITSTREAMS: [(&str, usize, &str); 7] = [
+const BITSTREAMS: [(&str, usize, &str); 8] = [
     ("58503a-3633.bin", 0x1ff84, "58503a-z3801a.bit"),
     ("58503a-3704.bin", 0x1fd16, "58503a-z3801a.bit"),
     ("z3801a-3543.bin", 0x1fddc, "58503a-z3801a.bit"),
@@ -24,34 +24,38 @@ const BITSTREAMS: [(&str, usize, &str); 7] = [
     ("58503b-1.01.04.bin", 0x2f5a8, "58503b.bit"),
     ("z3815a-4010.bin", 0x316a6, "z3815a.bit"),
     ("z3816a-4001.bin", 0x2ffb8, "z3816a.bit"),
+    ("z3817a-3752.bin", 0x2ffe4, "z3817a.bit"),
 ];
 
 /// The block after each image's bitstream, the readback mask, where it
 /// starts in each image, as `BITSTREAMS` orders them.
-const SECOND_BLOCKS: [usize; 7] = [
-    0x20ea2, 0x20c34, 0x20cfa, 0x21e36, 0x304c6, 0x325c4, 0x30ed6,
+const SECOND_BLOCKS: [usize; 8] = [
+    0x20ea2, 0x20c34, 0x20cfa, 0x21e36, 0x304c6, 0x325c4, 0x30ed6, 0x30f02,
 ];
 
 /// Each bitstream file's SHA-256, its first four bytes in hex, as the
 /// docs quote it.
-const HASHES: [(&str, &str); 5] = [
+const HASHES: [(&str, &str); 6] = [
     ("58503a-z3801a.bit", "b9fcb082"),
     ("z3805a.bit", "aa4750d3"),
     ("58503b.bit", "f095d6b5"),
     ("z3815a.bit", "3402456a"),
     ("z3816a.bit", "0bb50333"),
+    ("z3817a.bit", "4dc3aa57"),
 ];
 
 /// The second block's SHA-256 prefix, the same in every image.
 const SECOND_BLOCK_HASH: &str = "d64b97e1";
 
 /// Bytes in which two bitstream files differ.
-const DIFFERENCES: [(&str, &str, usize); 5] = [
+const DIFFERENCES: [(&str, &str, usize); 7] = [
     ("58503a-z3801a.bit", "z3805a.bit", 1868),
     ("58503a-z3801a.bit", "58503b.bit", 2347),
     ("58503a-z3801a.bit", "z3816a.bit", 3315),
     ("58503a-z3801a.bit", "z3815a.bit", 3392),
     ("z3815a.bit", "z3816a.bit", 1686),
+    ("58503a-z3801a.bit", "z3817a.bit", 3310),
+    ("58503b.bit", "z3817a.bit", 3292),
 ];
 
 /// The first four bytes of `data`'s SHA-256, in hex.

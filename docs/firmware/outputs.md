@@ -53,7 +53,8 @@ says nothing about a unit's hardware.
   outputs").  The bitstream does not latch that bit: register 3 keeps
   only the sync field, bits 0 and 1, and the bus's bit 2 reaches no
   logic (`58503a-z3801a-trace.md`, "Register port").  What drives the
-  rear-panel Alarm output is not traced.
+  rear-panel Alarm output is not traced
+  (`../hardware-investigations.md`, item 25).
 - Bits 4 to 2 of PORTGP, which 3633's DUART initialization writes
   (`0x1d5cc`, with 0) and no 3704 code does (`revisions.md`).  What
   those pins drive was not traced.

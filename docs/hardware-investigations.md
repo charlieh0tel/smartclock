@@ -24,7 +24,9 @@ so a line between two parts is followed with a meter, not by eye.
 The procedures under items 13, 20, 21 and 23 are written for the bench
 Z3805A (Z3805-68001, `board-atlas.html`) with the power off, with an
 ohmmeter.  The photos they call for are in `bench.md`, "Photos still
-wanted".  These rules hold for all of them.
+wanted".  These rules hold for all of them, and for items 24 to 26 on
+the bench 58503A (58503-60001 Rev C), with that board's parts as item
+24 places them.
 
 *Before measuring.*
 
@@ -79,7 +81,11 @@ counterclockwise seen from above: 1 down to 17 leftward along the top,
 | 89 | PE0/DSACK0 | item 21 |
 | 91, 92, 93, 94, 97, 98, 99, 100 | DATA15, 14, 13, 12, 11, 10, 9, 8 | item 20; an 8-bit port is on DATA15 to DATA8 (MC68331UM 4.4.2) |
 | 35, 36, 37 | ADDR13, ADDR14, ADDR15 | item 20 |
-| 120 | PC2/FC2/CS5 | item 20 |
+| 43, 44, 45 | PQS0/MISO, PQS1/MOSI, PQS2/SCK | item 24 |
+| 46, 47, 48, 49 | PQS3/PCS0/SS, PQS4/PCS1, PQS5/PCS2, PQS6/PCS3 | item 24 |
+| 73 | PF5/IRQ5 | item 25 |
+| 119 | PC1/FC1/CS4 | item 26 |
+| 120 | PC2/FC2/CS5 | items 20, 24 |
 | 123 | PC5/ADDR21/CS8 | item 21 |
 | 125 | ADDR23/CS10 | item 21 |
 
@@ -1205,3 +1211,262 @@ Expected:
 
 *Changes:* whether `quirks.md` records the hex DAC's clock as too
 fast for its part.
+
+## 24. The 58503A's front panel
+
+*Open item:* `firmware/58503a-3704.md`, "The front panel".  3704
+drives Option 001's display and keys as QSPI device 0: 8-bit
+transfers in SPI mode 3 at 4.19 MHz with PCS3 to PCS0 all low, each
+command framed by the latch at `0x300000`, bit 6 low from its first
+byte to its last and bit 7 high.  It takes a key, 1 to 8 for Time,
+Long, Lat, Alt, Sat, Status, Serial Port and Shift, from the byte that
+comes back with each command, and key n's lamp is bit n − 1 of the
+lamp byte.  At power-up `root_task` creates the panel's task only if
+the panel answers `0x55` and `0xaa` to a self-test, and between two
+tries holds bit 7 low for 1 s.  The board's side is not traced: the
+connector, which lines reach it, what bits 6 and 7 are, and the parts
+on the panel.  The bench 58503A has Option 001 (`bench.md`).
+
+- [ ] TODO: unpowered, the panel's connector against the QSPI's pins
+  and the latch's bits 6 and 7.
+- [ ] TODO: powered, the panel's bus on a scope and the key lamps
+  against the firmware's map.
+
+*Photos:* the main board has two connectors that may take the panel's
+cable: an AMP connector
+with one window beside the 10 MHz B jack, J15 (`58503a-interior.jpg`,
+930,1540 to 1130,1780), and, beside the oscillator near the photo's
+top edge, a 2 × 8 boxed header with locking ears, empty in the photo
+(1240,700 to 1400,1230), the kind 097-58503-08 has the ribbon "snap
+into" (3-5).  Neither's designator reads.  U33, the MC68331CFC16, is
+at 1690,2190 to 2080,2440, its lower edge beside the GPS engine's
+board; U32, the XC3042, at 725,2310 to 1140,2725.  The latch is not
+identified on this board.
+
+*Before measuring:* "Working on the open Z3805A board", with the
+58503A's parts above; ground at U33's VSS pins or the shell of J5 or
+J6 (300,3380 to 560,3480).  Ask before unplugging the panel's cable
+or the GPS engine, and before opening the panel.
+
+*Procedure, unpowered.*
+
+1. *The connector.*  Follow the cable from the panel to the main
+   board.  Record the connector's designator, its pin count, its pin 1
+   and the cable's stripe, and photograph it with the cable in.
+2. With the cable unplugged, read every connector pin to ground and
+   to +5 V (U33 pin 63), both ways round.
+3. Read every connector pin to U33 pins 43 (MISO), 44 (MOSI), 45
+   (SCK), 46 to 49 (PCS0 to PCS3) and 68 (RESET).  Record a path
+   through a resistor or a buffer as such, with the part.
+4. *The latch.*  Find the part chip select 5 strobes for `0x300000`
+   as item 20 does (its step 3; U33 pin 120) and record it.  If it is
+   a '574, read Q6 and Q7 (pins 13 and 12) to every connector pin; if
+   another register, take Q6 and Q7 from its data sheet first.
+5. If MISO reaches the connector through a buffer, read the buffer's
+   enable to Q6, to the PCS lines and to the 74AC138s' outputs (the
+   pin table above).  The ADC, the DACs and the FPGA share MISO
+   (`firmware/structures.md`, "The QSPI's devices"), so something must
+   keep the panel off it outside its commands.
+6. *The panel*, if the owner agrees to open it: the part numbers of
+   its controller, of the display and its driver, and how the keys
+   are wired.
+
+Expected:
+
+| Hypothesis | Reads |
+| ---------- | ----- |
+| The QSPI's three lines, selected by bit 6 | SCK, MOSI and MISO on connector pins, direct or through a buffer; Q6 on a pin; no PCS line |
+| Selected by a decoded PCS code 0 as well | a PCS line, or a '138 output, on a pin or on the MISO buffer's enable |
+| Bit 7 the panel's reset | Q7 on a pin |
+| Bit 7 not the panel's | Q7 on no pin: the 1 s pulse then resets something else |
+
+*Procedure, powered* (the owner's agreement for each power cycle and
+key press; the daemon may run, since nothing here uses the serial
+port).
+
+7. *The lamp sweep.*  Power up and watch the key lamps while `HP`
+   scrolls in (about 2 s, 100 ticks a frame): the firmware sends lamp
+   bytes `0x00`, `0x88`, `0xcc`, `0xee`, `0xff` and back.  On its map
+   `0x88` lights Alt and Shift, `0xcc` adds Lat and Serial Port, `0xee`
+   adds Long and Status, `0xff` adds Time and Sat.  Record what lights
+   at each step.
+8. *The keys*, after `OUTPUT VALID`: press Time, Long, Lat, Alt, Sat,
+   Status and Serial Port in turn and record the lamp lit and the line
+   shown.  The firmware's lines: `GPS`, `UTC` or `LOCAL` and the time;
+   `E` or `W` and the longitude; `N` or `S` and the latitude; the
+   altitude in meters; `n TRACKED`; the status line; the serial
+   settings.  Shift alone shows `SHIFT` with its own lamp and times
+   out.  Do not press Shift then Alt unless the owner agrees: that
+   clears the event registers, as `*CLS` does.
+9. *The bus*, with a scope grounded at J5's or J6's shell, on the
+   connector's SCK, MOSI and MISO and on Q6 and Q7, triggered on Q6
+   falling.  Expect, where step 3 found them: Q6 low for each command
+   and Q7 high; 8 clocks a byte at 4.19 MHz, SCK idling high; a line
+   about once a second (command `0x01`, a lamp byte, then the text, a
+   byte every 2 ms) and a poll about every 50 ms (command `0x00`, one
+   byte).  On MISO during polls: `0x00` with no key, n while key n is
+   held.  Hold a key across several polls and note whether its code
+   first comes back with the poll during the press or with the next.
+10. *The probe* (optional; a power cycle with the panel's cable
+    unplugged): Q7 should go low for 1 s, high for 1 s, and a second
+    self-test follow; the receiver then runs with no panel task and
+    its SCPI port as usual.  Plug the cable back in with the power
+    off.
+11. *The test entry* (optional): power up and press Sat alone while
+    `HP` scrolls.  The firmware ORs the keys of those frames, so Sat
+    alone (5) should give `VFD DSP TEST` as Sat then Time does
+    (097-58503-08, 2-5); Shift then Alt leaves the demonstration that
+    follows.
+
+Expected:
+
+| Hypothesis | Reads |
+| ---------- | ----- |
+| The firmware's map is the panel's | step 7's lamps as given; each key in step 8 lights its own lamp, Time to Shift as bits 0 to 7 |
+| A reply answers the command it comes with | step 9: a held key's code on the first poll during the press |
+| A reply answers the command before | step 9: one poll late; the self-test's `0x55` is then the panel's answer to `0x08`, and `0xaa` to `0x10` |
+| Bit 7 resets the panel | step 10's pulse on the connector's pin, the display blank through it |
+
+*Changes:* `firmware/58503a-3704.md`'s "The front panel" loses its
+"by that use" and "not settled" clauses; `firmware/structures.md`'s
+QSPI device 0 for the 58503A gets its select.
+
+## 25. The 58503A's alarm outputs
+
+*Open item:* `firmware/58503a-3704.md`, "The alarm outputs".  One
+alarm, `*STB` AND `*SRE` (097-59551-02, 5-42), drives three things in
+3704: PF5 low while it is on (U33 pin 73; `0x40828`), bit 2 of the
+FPGA's register 3 (`0x304003`) set while it is on, which reaches no
+FPGA logic (`firmware/58503a-z3801a-trace.md`, "Register port"), and
+the Alarm lamp, latch bit 2.  097-59551-02 gives the 58503A a
+rear-panel Alarm (TTL) output that goes on and off with the lamp
+(1-4).  Whether PF5 is that output or the FPGA drives it by other
+logic, and what PF5 drives if it is not, is not traced.  The Z3805A
+sets PF5 high at reset and never writes it again.
+
+- [ ] TODO: unpowered, the rear Alarm jack back to U33 pin 73 or to
+  the FPGA.
+- [ ] TODO: powered, PF5 and the jack with the alarm off and on.
+
+*Photos:* of the five SMB jacks at the board's edge, J4 (silkscreen
+OUT A), J7 and J8 have no cable and J5 and J6 one each
+(`58503a-interior.jpg`, 150,3330 to 830,3480).  The rear panel has a
+1 PPS and an Alarm BNC besides 10 MHz OUT (097-59551-02, 1-4), so J5
+and J6 are the candidates.  U17 and U18, the transceivers by J4 and
+J5 on the Z3805A (item 19), are under a cable on the 58503A.
+
+*Procedure, unpowered* (item 24's "Before measuring").
+
+1. Follow J5's and J6's cables to the rear panel and record which
+   reaches 1 PPS and which Alarm.
+2. Read the Alarm jack's center pin on the board to U33 pin 73.
+3. If it reads open, find the part that drives it: read the center
+   pin to each pin of U17, U18 and any transceiver beside J5 and J6
+   (on an ABT245, A1 to A8 are pins 2 to 9 and B8 to B1 11 to 18;
+   item 19); then that part's input to U33 pin 73 and to U32's pins
+   (the XC3042's PC84 pin table in `third_party/xilinx/xc3000.pdf`).
+4. Read U33 pin 73 to +5 V and to ground (a pull-up, a series
+   resistor), and to every pin of the panel's connector (item 24) and
+   of the serial connector, J1.
+
+*Procedure, powered* (the owner's agreement for any command).
+
+5. Read `:LED:ALARm?`.  With the alarm off (0), read DC volts at U33
+   pin 73 and at the rear Alarm BNC.
+6. Get an alarm: wait for one the receiver raises, or, with the
+   owner's agreement, unplug the antenna until holdover, or send
+   `:STATus:QUEStionable:EVENt:USER PTR` (097-59551-02, 5-51), which
+   raises one only if the Questionable enables pass it (read
+   `*SRE?` first, 5-42 and 5-43).  With `:LED:ALARm?` 1, read both
+   again; clear with `*CLS` (5-40) and read once more.
+7. If the jack is not PF5's, scope the U32 pin that drives it through
+   the same change.
+
+Expected:
+
+| Hypothesis | Reads |
+| ---------- | ----- |
+| PF5 is the rear output | step 2 or 3 joins pin 73 to the jack; step 6: pin 73 about 5 V off and 0 V on, the jack following, perhaps inverted by a driver |
+| The FPGA drives the rear output | the jack traced to a U32 pin, by logic other than register 3 bit 2; pin 73 elsewhere: the panel's connector, J1, or nothing |
+| PF5 drives nothing | pin 73 open to every connector and part pin read, a pull-up at most |
+
+*Changes:* `firmware/58503a-3704.md`'s "The alarm outputs" names each
+output; `firmware/outputs.md`'s "What the 58503A drives" gains the
+alarm output; the FPGA's register 3 bit 2 gets a name in
+`smartclock.h`.
+
+## 26. Where chip select 4 goes
+
+*Open item:* `firmware/58503a-3704.md`, "Chip select 4".  On every
+58503A image U33 pin 119 is high from the boot code's first SIM
+writes on: a discrete output at PORTC's reset 1 under 3633's boot
+code, otherwise a chip select that cannot assert (MC68331UM 4.8.4).
+The Z3805A makes it 2 KiB at `0x500000` (`firmware/restart.md`, "The
+chip selects") and nothing addresses that.  Whether either board wires
+pin 119 to anything is not traced.
+
+- [ ] TODO: unpowered, pin 119 against U31 and the decoders, on
+  either board.
+- [ ] TODO: powered, pin 119 on a scope through a power-up.
+
+*Photos:* U31 is an empty PLCC-84 socket on the 58503A
+(`58503a-interior.jpg`, 125,2270 to 640,2775), beside U32, the
+XC3042, also a PC84 part (725,2310 to 1140,2725); bare pads on the
+Z3801A and Z3805A (`board-atlas.html`).  The 53132A, on the same
+platform, fits a second XC3042A that the 53131A leaves out
+(`hp5313x.md`): a reason to look at U31, not a finding.
+
+*Procedure, unpowered* (item 24's "Before measuring", or "Working on
+the open Z3805A board").
+
+1. Read U33 pin 119 to ground and to +5 V, both ways round: a pull-up
+   says the line leaves the processor for something.
+2. Read pin 119 to each of U31's 84 contacts.  On the 58503A probe
+   the socket's contacts from above with a fine tip, one at a time,
+   counting from its pin 1 ("PLCC pins" above); on the Z3805A, its
+   pads.
+3. Read pin 119 to the four 74AC138s' enables (pins 4 to 6), to J2's
+   and J3's pins, and to the panel's connector (item 24).
+4. If step 2 finds it, read four of U31's other contacts to U32's
+   same-numbered pins, among them the XC3042's CCLK, DIN and DONE
+   (`third_party/xilinx/xc3000.pdf`): a second FPGA's place would
+   share the configuration lines.
+
+*Procedure, powered* (the owner's agreement for the power cycle).
+
+5. Scope pin 119 through a power-up, triggered on a falling edge, for
+   10 s, then for a minute running.  Expect at most an edge in the
+   first microseconds after reset, while CSPAR0 holds its reset value,
+   then a steady high.
+
+Expected:
+
+| Hypothesis | Reads |
+| ---------- | ----- |
+| Unused | pin 119 open to everything in steps 2 and 3; perhaps a pull-up |
+| U31's select | pin 119 on a U31 contact; step 4 then says what U31 was for |
+| Another part's | pin 119 on a decoder, J2, J3 or the panel's connector: record it |
+| Driven when the firmware says not | step 5 shows assertions after the first microseconds: stop and record them |
+
+*Changes:* `firmware/restart.md`'s CS4 row gets its part or "not
+connected"; `firmware/58503a-3704.md`'s "Chip select 4" closes.
+
+## 27. The EFC DAC's chain
+
+*Open item:* `efc.md`.  Tom Van Baak traced the Z3801A's: the AD569
+(U56) fed by two 74HC164s (one U50) from the QSPI, latched on its
+/LBE (pin 23) at about 100 Hz
+(<http://www.leapsecond.com/pages/z3801a-efc/>).  Three things are
+inferred from the firmware, not traced: that the `clr.b` of `0x306000`
+after each word is the /LBE pulse; that the second '164's QH goes to
+MISO, which the self-test's readback needs; and how CS, HBE and LDAC
+are tied.  On the Z3805A and 58503A the parts are not yet found.
+
+- [ ] TODO: unpowered, find the AD569 and the '164s on the Z3805A and
+  the 58503A, and record their designators.
+- [ ] TODO: unpowered, ring the AD569's /LBE to the CS5 decoder's
+  output 3 (item 20's decoder), and the second '164's QH (pin 13) to
+  U33's MISO; read CS, HBE and LDAC to their ties.
+
+*Changes:* `efc.md` drops *inferred* where the bench settles it, and
+`firmware/restart.md`'s `0x306000` row gets its device.

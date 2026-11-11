@@ -20,6 +20,20 @@ the converter is a 16-bit AD569 updated at 102.4 Hz, its low-order bits
 dithered to interpolate the remaining four and smoothed by a
 second-order filter.  It is not a 20-bit DAC.
 
+His scope traces, on the same page, show the wiring on the Z3801A: the
+AD569 is U56, fed by two 74HC164 serial-in parallel-out shift
+registers, one U50, clocked in bursts of sixteen 1 us clocks (the
+QSPI's, select 7) every 10 ms, the word then latched by a pulse on the
+AD569's /LBE, pin 23, at about 100 Hz.  The firmware's `clr.b` of
+`0x306000` after each word (`firmware/restart.md`, "The chip selects")
+is taken to be that pulse; *inferred*, as are the AD569's other
+strobes (CS, HBE, LDAC), which the traces do not show.  The self-test
+sends a word and expects it back on the next transfer
+(`rewritten/z3801a-3543/selftest.c`, `qspi_efc_test`), which the chain
+gives if the second '164's QH, its last stage, goes to MISO:
+*inferred*, not traced.  On the Z3805A and 58503A the parts and their
+designators are not yet found (`hardware-investigations.md`, item 27).
+
 ## The oscillator
 
 An HP 10811-60159, whose electronic frequency control spans

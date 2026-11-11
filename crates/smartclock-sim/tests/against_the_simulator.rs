@@ -189,7 +189,7 @@ fn a_question_with_a_known_answer_is_not_asked() {
     // locked is answered with -230, and a refusal is not free: the
     // session reads the error queue to explain it, so a question whose
     // answer is already known cost two round trips of the tier that is
-    // against its wire budget, on every medium poll, for ever.
+    // against its wire budget, on every medium poll, forever.
     //
     // Checked by the error queue rather than by timing: a refusal
     // leaves an entry behind, so a queue still empty after a medium

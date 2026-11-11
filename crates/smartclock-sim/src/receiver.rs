@@ -176,7 +176,7 @@ pub struct Receiver {
     /// difference is the whole character of an event register: it holds
     /// a transition until somebody takes it, and taking it is what
     /// clears it.  A simulator that answered these from the current
-    /// condition would return the same value for ever and hide every
+    /// condition would return the same value forever and hide every
     /// bug in code that assumes reading empties them.
     events: Events,
     /// Refuse every command the receiver would otherwise answer.
@@ -505,7 +505,7 @@ impl Receiver {
         }
         // Derived from how full the log actually is, so clearing it
         // changes the bit.  Answering from a constant would let the
-        // daemon's clear-when-full logic loop for ever against a
+        // daemon's clear-when-full logic loop forever against a
         // receiver that never stopped saying it was full.
         if self.log_entries >= LOG_ALMOST_FULL_AT {
             bits |= LOG_ALMOST_FULL;
@@ -782,7 +782,7 @@ mod tests {
     /// The distinguishing property of an event register, and the one a
     /// simulator answering from the current condition would hide: the
     /// daemon would look correct while re-recording the same transition
-    /// on every pass for ever.
+    /// on every pass forever.
     #[test]
     fn a_keyword_is_taken_short_long_or_between_as_the_receiver_takes_it() {
         let mut z3801 = Receiver::z3801a();

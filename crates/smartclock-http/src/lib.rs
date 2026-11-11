@@ -17,6 +17,7 @@ use std::io::Read as _;
 use std::io::Write as _;
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::ops::ControlFlow;
 use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
@@ -53,6 +54,9 @@ const WRITE_TIMEOUT: Duration = Duration::from_secs(30);
 /// clients are told the server is busy instead of the machine being
 /// taken down.
 const MAX_INFLIGHT: usize = 32;
+
+/// The media type of the server's own answers.
+const TEXT: &str = "text/plain; charset=utf-8";
 
 /// Why the server could not start.
 #[derive(Debug, thiserror::Error)]
@@ -93,10 +97,15 @@ impl Response {
 
     /// Nothing is served at that path.
     pub fn not_found() -> Self {
+        Self::text("404 Not Found", "not found\n")
+    }
+
+    /// A plain-text reply, as the server's own refusals are.
+    fn text(status: &'static str, body: &str) -> Self {
         Self {
-            status: "404 Not Found",
-            kind: "text/plain; charset=utf-8",
-            body: "not found\n".to_owned(),
+            status,
+            kind: TEXT,
+            body: body.to_owned(),
         }
     }
 }
@@ -194,43 +203,63 @@ where
     let answer = Arc::new(answer);
     let inflight = Arc::new(AtomicUsize::new(0));
 
-    for stream in listener.incoming() {
-        let stream = match stream {
-            Ok(stream) => stream,
+    keep_accepting(
+        || listener.accept().map(|(stream, _)| stream),
+        |stream| {
+            dispatch(stream, &answer, &inflight);
+            ControlFlow::Continue(())
+        },
+    );
+    Ok(())
+}
+
+/// Each connection `accept` gives handed to `handle`, until `handle`
+/// says to stop.
+fn keep_accepting<T>(
+    mut accept: impl FnMut() -> std::io::Result<T>,
+    mut handle: impl FnMut(T) -> ControlFlow<()>,
+) {
+    loop {
+        match accept() {
+            Ok(accepted) => {
+                if handle(accepted).is_break() {
+                    return;
+                }
+            }
             // One client failing to connect is not a reason to stop
             // serving the others.
-            Err(e) => {
-                eprintln!("rejected a connection: {e}");
-                continue;
-            }
-        };
-        if inflight.load(Ordering::Relaxed) >= MAX_INFLIGHT {
-            // Answered rather than dropped: a bare reset reads as the
-            // server having died.
-            let _ = write_response(
-                &stream,
-                &Response {
-                    status: "503 Service Unavailable",
-                    kind: "text/plain; charset=utf-8",
-                    body: "busy\n".to_owned(),
-                },
-            );
-            continue;
-        }
-        inflight.fetch_add(1, Ordering::Relaxed);
-        let slot = Slot(Arc::clone(&inflight));
-        let answer = Arc::clone(&answer);
-        let spawned = thread::Builder::new()
-            .name("smartclock-http".to_owned())
-            .spawn(move || {
-                let _slot = slot;
-                handle(&stream, answer.as_ref());
-            });
-        if let Err(e) = spawned {
-            eprintln!("could not serve a request: {e}");
+            Err(e) => eprintln!("rejected a connection: {e}"),
         }
     }
-    Ok(())
+}
+
+/// `stream` answered on a thread of its own, or refused busy if
+/// `MAX_INFLIGHT` are already being answered.
+fn dispatch<F>(stream: TcpStream, answer: &Arc<F>, inflight: &Arc<AtomicUsize>)
+where
+    F: Fn(&str) -> Response + Send + Sync + 'static,
+{
+    if inflight.load(Ordering::Relaxed) >= MAX_INFLIGHT {
+        // Answered rather than dropped: a bare reset reads as the
+        // server having died.
+        let _ = write_response(
+            &stream,
+            &Response::text("503 Service Unavailable", "busy\n"),
+        );
+        return;
+    }
+    inflight.fetch_add(1, Ordering::Relaxed);
+    let slot = Slot(Arc::clone(inflight));
+    let answer = Arc::clone(answer);
+    let spawned = thread::Builder::new()
+        .name("smartclock-http".to_owned())
+        .spawn(move || {
+            let _slot = slot;
+            handle(&stream, answer.as_ref());
+        });
+    if let Err(e) = spawned {
+        eprintln!("could not serve a request: {e}");
+    }
 }
 
 /// Read one request and write one answer.
@@ -262,11 +291,10 @@ where
     if read as u64 > MAX_REQUEST {
         let _ = write_response(
             stream,
-            &Response {
-                status: "431 Request Header Fields Too Large",
-                kind: "text/plain; charset=utf-8",
-                body: "request line too long\n".to_owned(),
-            },
+            &Response::text(
+                "431 Request Header Fields Too Large",
+                "request line too long\n",
+            ),
         );
         return;
     }

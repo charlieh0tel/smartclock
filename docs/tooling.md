@@ -13,6 +13,7 @@ stop it before using one of these directly.
 | Tool | What it is |
 | ---- | ---------- |
 | `smartclock-cli read-memory`, `read-flash`, `read-eeprom` | reads memory, the whole flash or the EEPROM through the pForth debug console ([`firmware/console.md`](firmware/console.md#reading-memory-through-it)) |
+| `smartclock-cli read-registers` | reads, through the same console, the DUART's and the SIM's registers whose reads change nothing; a dry run unless given `--read` ([`hardware-investigations.md`](hardware-investigations.md#register-reads-through-the-console)) |
 | `smartclock-cli flash` | checks a firmware image against the receiver and, with `--write`, programs it through the installer ([`firmware/restart.md`](firmware/restart.md#the-flasher)) |
 | `smartclock-cli probe`, `commands` | which of the command table's queries a receiver answers, and the table as Markdown ([`commands.md`](commands.md)) |
 | `smartclock-cli sweep` | tries each command in a file, for finding those no manual documents ([`scpi/undocumented.md`](scpi/undocumented.md)) |

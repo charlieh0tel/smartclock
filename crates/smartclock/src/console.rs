@@ -60,6 +60,9 @@ const ENTER: &str = ":SYSTem:LANGuage \"PFORTH\"";
 /// longer than the gaps inside one reply, short next to a retry.
 const QUIET: Duration = Duration::from_millis(300);
 
+/// The CPU32's address space: 24 address lines (MC68331UM 4.1).
+const ADDRESS_SPACE: u32 = 1 << 24;
+
 /// How many times a request is tried before the read gives up.
 const ATTEMPTS: usize = 4;
 
@@ -418,7 +421,7 @@ impl<T: Read + Write> Console<T> {
 
     /// The long word at `address`, read in `hex`.
     fn long(&mut self, address: u32) -> Result<u32> {
-        let request = format!("{address:X} @ u.");
+        let request = Fetch::new(address, Width::Long)?.request();
         match words(&self.send(&request)?, &request)?.as_slice() {
             [word] => Ok(*word),
             other => Err(ConsoleError::WordCount {
@@ -470,6 +473,113 @@ impl Region {
         }
         Ok(Self { from, length })
     }
+}
+
+/// The size of one console fetch: one bus cycle of that size, a
+/// device register's own width.  The console's `c@`, `w@` and `@` are
+/// `move.b`, `move.w` and `move.l` from the address
+/// (`docs/firmware/pforth/README.md`; Z3805A 3543B `0x191c2`,
+/// `0x191b0`, `0x191a4`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Width {
+    /// A byte, `c@`.
+    Byte,
+    /// A 16-bit word, `w@`.
+    Word,
+    /// A 32-bit long word, `@`.
+    Long,
+}
+
+impl Width {
+    /// The console word that reads this many bytes.
+    #[must_use]
+    pub const fn word(self) -> &'static str {
+        match self {
+            Self::Byte => "c@",
+            Self::Word => "w@",
+            Self::Long => "@",
+        }
+    }
+
+    /// Bytes read.
+    #[must_use]
+    pub const fn bytes(self) -> u32 {
+        match self {
+            Self::Byte => 1,
+            Self::Word => 2,
+            Self::Long => 4,
+        }
+    }
+}
+
+/// One fetch through the console: the address and its width.  Made
+/// only through [`Fetch::new`], so a word or long word is never asked
+/// for at an odd address, which the CPU32 answers with an address
+/// error the console does not catch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Fetch {
+    /// Where.
+    address: u32,
+    /// How wide.
+    width: Width,
+}
+
+impl Fetch {
+    /// A fetch of `width` at `address`, if it is aligned for its width
+    /// and inside the 24-bit address space.
+    pub fn new(address: u32, width: Width) -> Result<Self> {
+        if width != Width::Byte && !address.is_multiple_of(2) {
+            return Err(ConsoleError::Range(
+                "a word or long word is read at an even address",
+            ));
+        }
+        if address
+            .checked_add(width.bytes())
+            .is_none_or(|end| end > ADDRESS_SPACE)
+        {
+            return Err(ConsoleError::Range(
+                "the fetch runs past the end of the 24-bit address space",
+            ));
+        }
+        Ok(Self { address, width })
+    }
+
+    /// The request, in `hex`: the address, the fetch word, `u.`.
+    fn request(self) -> String {
+        format!("{:X} {} u.", self.address, self.width.word())
+    }
+}
+
+/// Read each of `fetches` once through the console, in `hex`,
+/// entering it with `:SYSTem:LANGuage "PFORTH"` if the port is not
+/// already there, and return the values in order.  Nothing is defined
+/// or written: each request is the address, its fetch word and `u.`.
+/// A request is sent again only after one that failed, so `fetches`
+/// must be reads without side effects.  The port is left at the
+/// console.
+pub fn fetch_each<T: Read + Write>(
+    port: T,
+    fetches: &[Fetch],
+    mut progress: impl FnMut(Progress),
+) -> Result<Vec<u32>> {
+    let mut console = Console::reach(port, &mut progress)?;
+    console.send("hex")?;
+    let values = fetches
+        .iter()
+        .map(|fetch| {
+            let request = fetch.request();
+            console
+                .words_retrying(&request, 1)
+                .map(|words| words[0])
+                .map_err(|last| ConsoleError::GaveUp {
+                    address: fetch.address,
+                    last: Box::new(last),
+                })
+        })
+        .collect::<Result<Vec<u32>>>();
+    let values = values?;
+    console.send("decimal")?;
+    Ok(values)
 }
 
 /// What a read reports as it goes.
@@ -593,15 +703,19 @@ fn enter_installer<T: Read + Write>(port: T) -> Result<&'static Exit> {
 /// answer once `:SYSTem:LANGuage?` says `"PRIMARY"`.  The port comes
 /// back either way, for the fallback.
 fn by_halt<T: Transport>(mut port: T, config: &Config) -> (Result<String>, T) {
-    let halted = Console { port: &mut port }
-        .send_within("", PROBE_TIMEOUT)
-        .and_then(|_| {
-            port.write_all(format!("{HALT}\r").as_bytes())?;
-            port.flush()?;
-            Ok(())
-        });
+    let probe = Console { port: &mut port }.send_within("", PROBE_TIMEOUT);
+    if let Err(e) = probe {
+        // No console prompt: the port may be at SCPI already, as after
+        // a restart.  Only the checks are sent.
+        let mut session = Session::new(port, config.clone());
+        let primary = primary(&mut session).map_err(|_| e);
+        return (primary, session.into_transport());
+    }
+    let halted = port
+        .write_all(format!("{HALT}\r").as_bytes())
+        .and_then(|()| port.flush());
     if let Err(e) = halted {
-        return (Err(e), port);
+        return (Err(e.into()), port);
     }
     std::thread::sleep(LANGUAGE_SETTLE);
     let mut session = Session::new(port, config.clone());
@@ -651,14 +765,34 @@ fn by_installer<T: Transport>(mut port: T, config: Config) -> Result<String> {
     })
 }
 
+/// How a port leaves the console for the primary's SCPI parser.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WayBack {
+    /// The console's `halt` alone.  If it does not bring back the
+    /// primary, the port stays where it is, for `halt` by hand or a
+    /// power cycle; nothing is executed.
+    Halt,
+    /// `halt`, and failing that the primary's exit into the installer,
+    /// through `execute`, and `:SYSTem:LANGuage "PRIMARY"`.
+    HaltOrInstaller,
+}
+
 /// Return a port at the console to the primary's SCPI parser, with
 /// `halt` and, failing that, through the installer.  Each step is
 /// checked, and the primary's `*IDN?` answer is returned.
 pub fn back_to_scpi<T: Transport>(port: T, config: Config) -> Result<String> {
+    leave(port, config, WayBack::HaltOrInstaller)
+}
+
+/// Return a port at the console to the primary's SCPI parser `way`.
+fn leave<T: Transport>(port: T, config: Config, way: WayBack) -> Result<String> {
     let (halted, port) = by_halt(port, &config);
     let Err(halt) = halted else {
         return halted;
     };
+    if way == WayBack::Halt {
+        return Err(halt);
+    }
     by_installer(port, config).map_err(|installer| ConsoleError::NoWayOut {
         halt: Box::new(halt),
         installer: Box::new(installer),
@@ -677,21 +811,22 @@ pub fn read_and_return<T: Transport>(
     stop: &AtomicBool,
     config: Config,
 ) -> Result<(Summary, String)> {
-    and_return(port, config, |port| {
+    and_return(port, config, WayBack::HaltOrInstaller, |port| {
         read_memory(port, region, out, compare, progress, stop)
     })
 }
 
-/// Run `work` on the port, which leaves it at the console, then
-/// [`back_to_scpi`] whether or not the work succeeded.  Returns what
-/// the work returned and the primary's `*IDN?` answer.
+/// Run `work` on the port, which leaves it at the console, then return
+/// to SCPI `way` whether or not the work succeeded.  Returns what the
+/// work returned and the primary's `*IDN?` answer.
 pub fn and_return<T: Transport, R>(
     mut port: T,
     config: Config,
+    way: WayBack,
     work: impl FnOnce(&mut T) -> Result<R>,
 ) -> Result<(R, String)> {
     let done = work(&mut port);
-    match (done, back_to_scpi(port, config)) {
+    match (done, leave(port, config, way)) {
         (Ok(done), Ok(identity)) => Ok((done, identity)),
         (Ok(_), Err(back)) => Err(back),
         (Err(read), Ok(identity)) => Err(ConsoleError::ReadFailed {
@@ -715,11 +850,16 @@ mod tests {
 
     use super::ConsoleError;
     use super::EXITS;
+    use super::Fetch;
     use super::Region;
+    use super::WayBack;
+    use super::Width;
+    use super::and_return;
     use super::at_prompt;
     use super::back_to_scpi;
     use super::enter_installer;
     use super::exit_for;
+    use super::fetch_each;
     use super::line_settings_within;
     use super::read_memory;
     use super::words;
@@ -792,9 +932,12 @@ mod tests {
                     self.sent.push(line);
                     continue;
                 }
+                // Every fetch word reads `memory` at its address.
                 let word = line
-                    .strip_suffix(" @ u.")
-                    .and_then(|address| u32::from_str_radix(address, 16).ok())
+                    .strip_suffix(" u.")
+                    .and_then(|fetch| fetch.split_once(' '))
+                    .filter(|(_, word)| ["c@", "w@", "@"].contains(word))
+                    .and_then(|(address, _)| u32::from_str_radix(address, 16).ok())
                     .map(|address| self.memory.get(&address).copied().unwrap_or(0));
                 if let Some(word) = word {
                     self.reply
@@ -971,6 +1114,24 @@ mod tests {
     }
 
     #[test]
+    fn halt_alone_never_takes_the_installer_exit() {
+        let mut console = Fake::new(&[(0x28ffc, 0x12f2c), (0x12f2c, 0x4e4b_4e75)]);
+        // This console ignores `halt`, so the check after it fails.
+        assert!(and_return(&mut console, quick(), WayBack::Halt, |_| Ok(())).is_err());
+        assert!(console.sent.iter().any(|line| line == "halt"));
+        assert!(!console.sent.iter().any(|line| line.ends_with("execute")));
+    }
+
+    #[test]
+    fn a_port_already_back_at_scpi_is_checked_and_not_halted() {
+        let mut console = Fake::new(&[]);
+        console.at_scpi = true;
+        let identity = back_to_scpi(&mut console, quick()).expect("at SCPI");
+        assert!(identity.ends_with("3543B-A"), "{identity}");
+        assert!(!console.sent.iter().any(|line| line == "halt"));
+    }
+
+    #[test]
     fn the_installer_exit_is_the_fallback_and_both_failures_are_reported() {
         let mut console = Fake::new(&[]);
         let error = back_to_scpi(&mut console, quick()).expect_err("no way out");
@@ -1019,6 +1180,30 @@ mod tests {
             .collect();
         assert_eq!(after_first.get(1), Some(&""), "{after_first:?}");
         assert_eq!(after_first.get(2), Some(&"0 8 rd"), "{after_first:?}");
+    }
+
+    #[test]
+    fn each_fetch_is_one_read_with_its_own_width_and_nothing_else() {
+        let mut console = Fake::new(&[(0x20_0019, 0x43), (0xff_fa44, 0x2bff)]);
+        let fetches = [
+            Fetch::new(0x20_0019, Width::Byte).expect("a byte anywhere"),
+            Fetch::new(0xff_fa44, Width::Word).expect("even"),
+        ];
+        let values = fetch_each(&mut console, &fetches, |_| {}).expect("values");
+        assert_eq!(values, vec![0x43, 0x2bff]);
+        assert_eq!(
+            console.sent,
+            ["", "hex", "200019 c@ u.", "FFFA44 w@ u.", "decimal"]
+        );
+    }
+
+    #[test]
+    fn a_wide_fetch_is_refused_at_an_odd_address_or_past_the_end() {
+        assert!(Fetch::new(0xff_fa45, Width::Word).is_err());
+        assert!(Fetch::new(0x10_0001, Width::Long).is_err());
+        assert!(Fetch::new(0xff_fffe, Width::Long).is_err());
+        assert!(Fetch::new(0xff_fffe, Width::Word).is_ok());
+        assert!(Fetch::new(u32::MAX, Width::Byte).is_err());
     }
 
     #[test]

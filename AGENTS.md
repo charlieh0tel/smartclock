@@ -38,11 +38,13 @@ here, where they go stale unnoticed.
   installation, after its image and receiver compatibility checks.
   Stop the target port's daemon first.  This exception does not apply
   to monitoring or generic query tools.
-- Exception: `smartclock-cli read-memory` leaves the pForth console
-  with `halt`, and failing that enters the installer through the
-  primary's own exit only to send `:SYSTem:LANGuage "PRIMARY"` and
-  return to SCPI.  It never sends
-  `:DIAGnostic:ERASe` or `:DIAGnostic:DOWNload`.
+- Exception: `smartclock-cli read-memory` and
+  `smartclock-cli read-registers` leave the pForth console with
+  `halt`.  Failing that, `read-memory` enters the installer through
+  the primary's own exit only to send `:SYSTem:LANGuage "PRIMARY"`
+  and return to SCPI; `read-registers` only reads and never takes
+  that exit.  Neither sends `:DIAGnostic:ERASe` or
+  `:DIAGnostic:DOWNload`.
 - The daemon holds the port open.  Stop it before using a direct-mode
   tool, and say so.
 

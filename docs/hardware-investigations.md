@@ -112,6 +112,129 @@ update `board-atlas.json` and rerun `make board-atlas` where a part's
 identification or role changes, and `block-diagram.json` (`make
 block-diagram`) where a block's or a signal's mark does.
 
+## Register reads through the console
+
+`smartclock-cli read-registers` reads, through the pForth console, the
+registers that bear on items 21 and 26 and whose reads change
+nothing.  It enters and leaves the console as `read-memory` does
+(`firmware/console.md`, "Reading memory through it"): an empty line,
+`:SYSTem:LANGuage "PFORTH"` if no console prompt answers, `hex`, one
+`<address> c@ u.` or `w@ u.` per register, `decimal`, then `halt`,
+checked with `:SYSTem:LANGuage?`.  Nothing is
+stored, defined or executed: it does not take `read-memory`'s fallback
+through the installer, which uses `execute`, so if `halt` does not
+bring back the primary the port stays at the console, for `halt` by
+hand or a power cycle.  It never sends `:DIAGnostic:ERASe` or
+`:DIAGnostic:DOWNload`, and through `--daemon` it refuses to run.  It
+is a dry run unless given `--read` and `--serial`, as `flash` needs
+`--write` and `--serial`:
+
+    smartclock-cli read-registers --model z3805a      # prints the plan; opens nothing
+    sudo systemctl stop smartclockd@<port>
+    smartclock-cli --device <port> --capture regs.jsonl \
+        read-registers --model z3805a --read --serial <serial>
+    sudo systemctl start smartclockd@<port>
+
+`--model 58503a` for the 58503A.  Before any register it reads, a
+byte at a time, the EEPROM's model at `0x400012` and serial at
+`0x400024` and the revision string in the flash (`3543B` at
+`0x12eee`, `3704` at `0x1309c`), and stops on a mismatch.  Its output
+is a Markdown table, one row per register: the value the reset code
+leaves, the value read and its fields named.  The dry run lists what
+it reads.
+
+*What it reads, and what each answer means.*
+
+| Item | Register | Address | The image | What the read says |
+| ---- | -------- | ------- | --------- | ------------------ |
+| 21 | DUART IVR | `0x200019` | `0x43` (`boot_duart_early_init` `0x500`, `duart_init` `0x1da1a`; 3704 `0x1d86c`) | the vector the DUART puts on the bus at an acknowledge: `0x43`, vector 67, settles the vector half of item 21; `0x0f` is its reset value, the 68681's uninitialized vector (MC68681 4.2.19) |
+| 21 | DUART ISR | `0x20000b` | varies | what is pending; with the IMR, whether /INTR is low at the read |
+| 21 | IMR, `duart_shadow` + 4 | `0x102ed4`; 3704 `0x1031f8` | varies | the IMR is write-only (MC68681 Table 4-1), so the code's copy (`firmware/structures.md`, "The DUART's shadows") |
+| 21 | PORTE0 | `0xfffa11` | varies | PE0, DSACK0's pin, a discrete input under PEPAR `0x32` and DDRE `0x40`, so a read returns the pin (MC68331UM 4.9.3): 1 is a pull-up or a tie to a line idling high, 0 a tie low; the rest read their latch |
+| 21 | DDRE | `0xfffa15` | `0x40` | PE6 alone an output (the FPGA's PROGRAM) |
+| 21 | PORTF0 | `0xfffa19` | varies | PF3, the FPGA's DONE, the one input, reads its pin; every other bit, PF2 as IRQ2 and the 58503A's PF5 included, reads its latch (4.9.3), so not /IRQ2's level |
+| 21 | DDRF | `0xfffa1d` | `0xf7` | PF3 alone an input (the FPGA's DONE) |
+| 26 | PORTC | `0xfffa41` | `0x7f`, its reset value; no image writes it | PC1's latch, which drives pin 119 only where CSPAR0 makes CS4 a discrete output, as 3633's boot code does; 3704 and 3543B make it a select.  The MC68331 has no DDRC: port C is output only (D.3.22) |
+
+The tool prints `ISR AND IMR` after the table: what is both pending
+and enabled, so whether /INTR is low at the reads.  Zero is the idle
+state.  It is one look, which the handler clears within microseconds,
+and no register shows /IRQ2's pin, so it is not item 21's answer.
+
+*The SIM's supervisor-only registers.*  CSPAR0 and CSPAR1, CSBARBT to
+CSBAR10, CSORBT to CSOR10, PICR (with PIV, its low byte), PITR, PEPAR,
+PFPAR, SIMCR and SYPCR are "S" registers, supervisor access only, in
+MC68331UM Table D-3.  The console runs in user mode (`firmware/restart.md`,
+"The watchdog", the logged `SR = 0010`).  The ports above are "S/U",
+opened to user mode by SIMCR's SUPV 0: every image writes SIMCR
+`0x014a` (Z3805A `0x145a2`, 3704 `0x145fc`).  So the console cannot
+read the chip-select values items 21 and 26 ask about, and
+what they are is the reset code's (`firmware/chip-selects.md`): CS4 a
+select in both images (CSPAR0 `0x2bff`, field 10, 8-bit), enabled only
+in the Z3805A's (CSOR4 `0x7830`, internal DSACK, 0 wait; the 58503A
+leaves CSBAR4 and CSOR4 at reset, BYTE disabled); CS8 and CS10
+external DSACK (CSOR8 `0x3bf0`, CSOR10 `0x2bc4`, DSACK field 1111) and
+every other select internal; PICR `0x0542`, the PIT at level 5 with
+vector `0x42`.  MC68331UM does not say what a user-mode read of an "S"
+register returns.  On 2026-10-10 a bench Z3801A read the SIM's
+registers through the console as zeros (`firmware/restart.md`, "The
+watchdog").  `--supervisor-registers` reads them after everything
+else, so the first tells whether this unit does the same, at the risk
+of a bus error, a restart and a `Re-boot` in the log; values of zero
+answer only that, not item 21 or 26.  Ask first, and use it
+once.
+
+*DSACK1.*  Not readable, and not needed: chip select 8 asks for an
+external acknowledge (CSOR8's DSACK 1111), and PEPAR `0x32` makes PE1
+DSACK1 and leaves PE0 a port pin, so a DUART cycle can end only by
+DSACK1; without one, the bus monitor (SYPCR `0xcc`, BME set) ends it
+with a bus error and the unit restarts.  A DUART that works under that
+firmware has its /DTACK on DSACK1, directly or through logic; which,
+is item 21's step 5.
+
+*Never read, and refused if asked for* (the tool checks every address
+before it sends anything; the dry run lists them):
+
+- DUART MR1/MR2 (`0x200001`, `0x200011`): a read moves the mode
+  register pointer (MC68681 4.2.1), so the code's next MR1 write lands
+  in MR2.
+- DUART `0x200005` and `0x200015`: "do not access", factory test;
+  "Reading this location will result in undesired effects ... Register
+  contents may also be changed" (MC68681 Table 4-1).
+- RHRA and RHRB (`0x200007`, `0x200017`): a read takes a character
+  from the receive FIFO, channel B's being the console's own input.
+- IPCR (`0x200009`): a read clears its change bits and ISR[7]
+  (SCC68692, IPCR).
+- CUR and CLR (`0x20000d`, `0x20000f`): valid only with the counter
+  stopped (MC68681 3.5, 4.2.17).
+- Start and stop counter (`0x20001d`, `0x20001f`): address-triggered
+  commands; a read restarts or stops the counter, the second clearing
+  ISR[3] (MC68681 3.5).
+- Even addresses in chip select 8's window: it is the lower byte lane
+  only.
+- Chip select 5's window, `0x300000` to `0x30ffff`: the lamp latch,
+  S1, the FPGA's registers and the EFC strobe at `0x306000`.  Whether
+  a read strobes the latch or the AD569's /LBE depends on the decode
+  items 20 and 27 trace; an FPGA register read may latch its counter.
+- Chip select 4's window, `0x500000` to `0x5007ff`: no known part on
+  the Z3805A; on the 58503A no select answers, so a bus error and a
+  restart.
+- SWSR and the SIM's factory test registers; and any address no select
+  maps, which ends in a bus error.
+
+*What reads cannot settle* in items 20 to 27, so the tool leaves out:
+item 20's latch and item 27's chain are write-only or strobed by a
+read (above); item 22 is done; item 23 is a rail; item 24's QSPI setup
+is the image's and the panel's presence already known; item 25's PF5
+is an output, whose PORTF0 bit reads the latch (4.9.3), not the pin,
+so the table shows what the code drives, not where it goes; item 26's
+wiring is continuity.
+
+*Expected on the bench*, from the image's values and the reset
+values: `ISR AND IMR` `00`, IVR `43`, DDRE `40`, DDRF `f7`, PORTC `7f`
+and PF3 1 (the FPGA configured) on both units; anything else is worth
+recording, PE0's level among it.
+
 ## 1. The word that chooses G
 
 *Open item:* what drives bit 8 of the read-only port at `0x302000`
@@ -1084,8 +1207,23 @@ recount from pin 1.
    one reads 0 Ω, read that gate's two inputs to U3 pin 24 and record
    where the other input goes (U32, U3's OP pins, a connector).
 5. Read U3 pin 41 (/IACK) to U33 pin 125 (CS10), U3 pin 39 (/CS) to
-   U33 pin 123 (CS8), and U3 pin 10 (/DTACK) to U33 pin 89 (DSACK0),
-   the firmware's external acknowledge for both selects.
+   U33 pin 123 (CS8), and U3 pin 10 (/DTACK) to U33's PE1/DSACK1 pin
+   (its number from MC68331UM Figure 3-2) and to pin 89 (PE0/DSACK0),
+   the firmware's external acknowledge for both selects.  The primary's
+   PEPAR assigns DSACK1 only and leaves PE0 a port pin
+   (`firmware/restart.md`, "The chip selects"), so DSACK1 is the one
+   expected.
+
+*Register reads* ("Register reads through the console" above;
+`read-registers`, on the running unit).  They settle the vector, not
+the level: the IVR should read back the image's `0x43`, vector 67.
+The level is CS10's IPL 2 and PF2's IRQ2 assignment (PFPAR `0x04`),
+both "S" registers the user-mode console cannot read, and the image's
+in any case; a register cannot show which pin a wire reaches, so steps
+1 and 5 stay.  CS8's and CS10's DSACK fields are 1111, external; every
+other select's is internal.  DSACK1 follows from PEPAR `0x32` and a
+working DUART; PE0's level, in the table, says only whether that pin
+is pulled up.  PF2 reads its latch, not /IRQ2 (MC68331UM 4.9.3).
 
 Expected:
 
@@ -1447,6 +1585,19 @@ Expected:
 | U31's select | pin 119 on a U31 contact; step 4 then says what U31 was for |
 | Another part's | pin 119 on a decoder, J2, J3 or the panel's connector: record it |
 | Driven when the firmware says not | step 5 shows assertions after the first microseconds: stop and record them |
+
+*Register reads* ("Register reads through the console" above).  CSPAR0,
+CSBAR4 and CSOR4 are "S" registers, which the user-mode console cannot
+read; the reset code's values are the answer: CSPAR0 `0x2bff` in both
+images, CS4's field 10, a select on an 8-bit port, not a discrete
+output, so PORTC's PC1 does not reach pin 119; CSBAR4 `0x5000` and
+CSOR4 `0x7830` on the Z3805A (2 KiB at `0x500000`, read and write,
+internal DSACK, 0 wait), reset values with BYTE disabled on the 58503A.
+PORTC is readable and should read `7f`, its reset value; it matters
+only on 3633, where CS4's field is 00.  A read inside CS4's window is
+refused: on the 58503A no select answers it, a bus error and a
+restart; on the Z3805A it would read an unknown part, or a floating
+bus that says nothing.  The pin's wiring stays a continuity job.
 
 *Changes:* `firmware/restart.md`'s CS4 row gets its part or "not
 connected"; `firmware/58503a-3704.md`'s "Chip select 4" closes.

@@ -54,6 +54,10 @@ jobs:
     steps:
       # The pin audit.yml carries; moved by hand to match it.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # The history, and origin/main, for a branch push's merge base
+        # with main (tools/ci/report-decompiled-needed).
+        with:
+          fetch-depth: 0
       - run: >-
           sudo apt-get update && sudo apt-get install -y --no-install-recommends
           gcc-m68k-linux-gnu binutils-m68k-linux-gnu "$CLANG_FORMAT" "$CLANG"
@@ -157,14 +161,18 @@ jobs:
         if: ${{ !cancelled() }}
       # Whether report-decompiled needs to run: whether anything it reads
       # changed (tools/ci/report-decompiled-needed) against a pull
-      # request's base or a branch push's previous commit.  A push to
-      # main always runs it, and so does a force-push, which has no
-      # previous commit to trust, or a branch's first push.
+      # request's base or, for a branch's push, its merge base with
+      # main, which every push to main checks in full; a push to main
+      # always runs it.
       - id: report-decompiled
         if: ${{ !cancelled() }}
         env:
-          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || (github.ref != 'refs/heads/main' && !github.event.forced && github.event.before) || '' }}
-        run: tools/ci/report-decompiled-needed "$BASE"
+          PULL_BASE: ${{ github.event.pull_request.base.sha }}
+          MAIN_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: >-
+          if [ -n "$PULL_BASE" ]; then tools/ci/report-decompiled-needed "$PULL_BASE";
+          elif [ "$MAIN_PUSH" = true ]; then tools/ci/report-decompiled-needed;
+          else tools/ci/report-decompiled-needed --merge-base origin/main; fi
       # Without IMAGE, for every image: fails on a failed function, and
       # checks the documents' figures from each image's function check
       # against its report.  The images at once, as check-link's.  Run

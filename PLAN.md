@@ -344,13 +344,15 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
 - The firmware job runs on every push and pull request, so a firmware
   branch is checked, but its longest step, `report-decompiled`, only
   where anything it reads changed against the pull request's base or
-  the branch's previous push (`tools/ci/report-decompiled-needed`,
+  the branch's merge base with `main` (`tools/ci/report-decompiled-needed`,
   the one list of its inputs); a push to `main` always runs it.  The
   job still runs and passes, so a required check is never left
-  pending.  Cost: a branch push trusts its previous commit, not that
-  commit's result, so a failure stays hidden on the branch until its
-  pull request, checked against `main`; and a change outside the list
-  that the step does read goes unchecked until `main`.  The four
+  pending.  The merge base, not the branch's previous push: `main` is
+  checked in full on every push, so a skip never trusts a commit whose
+  own run may have failed.  Cost: a firmware branch runs the step on
+  every push, even one changing only other files, and the checkout
+  fetches the whole history; and a change outside the list that the
+  step does read goes unchecked until `main`.  The four
   images' function checks run at once (`make -j`), each one's output
   kept whole in a log of its own.
 - HTML pages are published on GitHub Pages by

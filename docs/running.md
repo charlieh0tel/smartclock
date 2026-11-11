@@ -267,7 +267,8 @@ checks ([the flasher](firmware/restart.md#the-flasher)).
 `read-memory`, with `read-flash` and `read-eeprom`, enters the debug console with `:SYSTem:LANGuage "PFORTH"` and returns
 with the console's `halt`, or failing that through the installer with
 `:SYSTem:LANGuage "PRIMARY"` (`firmware/console.md`, "Reading memory through
-it").
+it").  `read-registers` enters the same way and returns with `halt`
+alone.
 
 ## Where things live
 
@@ -342,8 +343,8 @@ queue, on every start:
 
 `smartclockmon` and `smartclock-cli` take `--framing 7O1` for direct
 mode and probe the same way.  `smartclock-cli read-memory` (and
-`read-flash`, `read-eeprom`), whose port may already be at the debug
-console, probes by sending an empty line and taking either prompt,
+`read-flash`, `read-eeprom`, `read-registers`), whose port may already
+be at the debug console, probes by sending an empty line and taking either prompt,
 SCPI's or the console's.
 
 Anything that differs between the ports -- the framing, and whether

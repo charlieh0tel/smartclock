@@ -225,7 +225,9 @@ line and taking a fresh prompt, writes the bytes to a file and, given
 failing on any difference.  Then, unless given `--stay-in-console`, it
 returns the port to SCPI, after a failed read as well.  It sends
 `halt` and checks that `:SYSTem:LANGuage?` answers `"PRIMARY"`
-("Leaving it").  If not, it falls back to the installer: it checks
+("Leaving it"); a port where an empty line brings no console prompt,
+as after a restart, gets only that check, without `halt`.  If not, it
+falls back to the installer: it checks
 that the cell and `trap #11` of exactly one known image are where that
 image has them, sends `<cell> execute`, checks that the installer
 answers `:SYSTem:LANGuage?` with `"INSTALL"`, sends `:SYSTem:LANGuage
@@ -244,7 +246,12 @@ procedure:
            --out eeprom.bin
 
    `read-flash` and `read-eeprom` are `read-memory` with those two
-   ranges fixed.
+   ranges fixed.  `read-registers` enters the same way, leaves with
+   `halt` alone, never the installer's `execute`, and reads named
+   device registers with `c@` and `w@`, one bus cycle of
+   the register's width each, refusing any whose read changes the
+   device (`../hardware-investigations.md`, "Register reads through
+   the console").
 
 3. Start the daemon again.  With `--stay-in-console`, first leave the
    console with `halt` by hand; if neither way out worked, power cycle

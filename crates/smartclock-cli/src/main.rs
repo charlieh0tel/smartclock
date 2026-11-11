@@ -52,6 +52,7 @@ use crate::dump_scpi::DumpScpiArgs;
 use crate::flash::FlashArgs;
 use crate::flash::chips::JoinArgs;
 use crate::flash::chips::SplitArgs;
+use crate::registers::ReadRegistersArgs;
 
 #[derive(Parser)]
 // The crate's description is the smartclock-utils package's summary,
@@ -193,6 +194,14 @@ enum Command {
         #[arg(long)]
         models: bool,
     },
+    /// Read the DUART's and the SIM's registers that a console read
+    /// leaves unchanged, for hardware-investigations items 21 and 26
+    /// (docs/hardware-investigations.md, "Register reads through the
+    /// console").  A dry run unless given `--read` and `--serial`; then
+    /// it enters the console as `read-memory` does, checks the unit's
+    /// EEPROM and flash, reads with `c@` and `w@` only, and returns to
+    /// SCPI with `halt` alone.
+    ReadRegisters(ReadRegistersArgs),
     /// Read the whole flash, 512 KiB from address 0, as `read-memory`
     /// does.
     ReadFlash {
@@ -320,6 +329,7 @@ mod dump_pforth;
 mod dump_scpi;
 mod flash;
 mod image;
+mod registers;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -347,6 +357,12 @@ fn main() -> Result<()> {
     }
     if let Command::DumpOncore { images, models } = &cli.command {
         return dump_oncore::run(images, *models);
+    }
+    // A dry run opens nothing.
+    if let Command::ReadRegisters(args) = &cli.command
+        && !args.reads()
+    {
+        return registers::dry_run(args);
     }
 
     if let Some(daemon) = cli.daemon.clone() {
@@ -398,7 +414,9 @@ fn main() -> Result<()> {
     };
     // The console has its own prompt, where `*IDN?` means nothing, so a
     // console read finds its line settings by either prompt instead.
-    let settings = if console_read(&cli.command).is_some() {
+    let at_console =
+        console_read(&cli.command).is_some() || matches!(cli.command, Command::ReadRegisters(_));
+    let settings = if at_console {
         let found = console::line_settings(&settings, transport::open)
             .with_context(|| format!("no receiver answered on {}", settings.path))?;
         if (found.baud, found.framing) != (settings.baud, settings.framing) {
@@ -432,7 +450,10 @@ fn main() -> Result<()> {
         None => port,
     };
 
-    // The console has its own prompt, so this skips the SCPI session.
+    // The console has its own prompt, so these skip the SCPI session.
+    if let Command::ReadRegisters(args) = &cli.command {
+        return registers::run(port, args, config);
+    }
     if let Some((from, length, to)) = console_read(&cli.command) {
         let region = Region::new(from, length)?;
         let ReadTo {
@@ -573,6 +594,7 @@ fn run<T: Transport>(mut session: Session<T>, command: &Command, checked: &[Stri
         Command::ReadMemory { .. }
         | Command::ReadFlash { .. }
         | Command::ReadEeprom { .. }
+        | Command::ReadRegisters(_)
         | Command::Flash(_)
         | Command::JoinChips(_)
         | Command::SplitChips(_)
@@ -610,6 +632,7 @@ fn typed(command: &Command) -> Result<Vec<String>> {
         | Command::ReadMemory { .. }
         | Command::ReadFlash { .. }
         | Command::ReadEeprom { .. }
+        | Command::ReadRegisters(_)
         | Command::Flash(_)
         | Command::JoinChips(_)
         | Command::SplitChips(_)
@@ -1029,7 +1052,10 @@ fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
             "flash talks to the installer on the port, not to the daemon; \
              stop smartclockd for that port and use --device"
         ),
-        Command::ReadMemory { .. } | Command::ReadFlash { .. } | Command::ReadEeprom { .. } => {
+        Command::ReadMemory { .. }
+        | Command::ReadFlash { .. }
+        | Command::ReadEeprom { .. }
+        | Command::ReadRegisters(_) => {
             anyhow::bail!(
                 "reading memory talks to the pForth console, not to the daemon; \
                  stop smartclockd for that port and use --device"

@@ -1,0 +1,137 @@
+# The Z3817A's 1 PPS divider, stop and sync blocks, each the Z3805A's
+# (z3817a-trace.md, "The 1 PPS divider", "Start, stop and status bits"
+# and "The sync field"), checked by `make -f tools/fpga/Makefile
+# check-blocks` (blockmatch.py).  The blocks sit in other tiles, and
+# many of them use their two flip-flops the other way round, so most
+# pairs name two tiles and rename the outputs.
+#
+# The prescaler: JA, the Z3805A's GI, its flip-flops exchanged; JB, its
+# terminal, GI's HI.
+pair JA GI
+rename JA.QX GI.QY
+rename JA.QY GI.QX
+rename JA.X GI.Y
+rename JA.Y GI.X
+pair JB HI
+rename JB.X HI.Y
+# The 6-bit counter of 156 or 157 clocks: IC, KC, JC and ID, the
+# Z3805A's IG, JH, IH and JI, IC's and ID's flip-flops exchanged; JD,
+# the Z3805A's II.  ID's terminal reads HC.X, the prescaler's step, where
+# JI's reads GK.Y; HC is not GK (below).
+pair IC IG
+rename IC.QX IG.QY
+rename IC.QY IG.QX
+rename IC.X IG.Y
+rename IC.Y IG.X
+pair KC JH
+pair JC IH
+pair ID JI
+rename ID.QX JI.QY
+rename ID.Y JI.X
+pair JD II
+rename JD.Y II.X
+rename HC.X GK.Y
+# The counter's terminal a clock later and the restart's OR: KD, the
+# Z3805A's HJ, and LD, its FJ.
+pair KD HJ
+rename KD.QX HJ.QY
+rename KD.X HJ.Y
+pair LD FJ
+# The divide by 64: FA, GA, FC and GC, the Z3805A's KH, KI, KJ and KK,
+# FC's and GC's flip-flops exchanged; FB, KK's carry, its JJ; HD, the
+# 10,000-clock enable, its JK.  HD reads GB.Y, which is the Z3805A's
+# IJ.X; GB is not IJ (below).
+pair FA KH
+pair GA KI
+pair FC KJ
+rename FC.QX KJ.QY
+rename FC.X KJ.Y
+pair GC KK
+rename GC.QX KK.QY
+rename GC.X KK.Y
+pair FB JJ
+pair HD JK
+rename GB.Y IJ.X
+# The three decades.  GF and GG, the Z3805A's KF and KG, GG's flip-flops
+# exchanged, and HF their carry, its JG, its outputs exchanged; FE and
+# FF, its GE and GF, FF's flip-flops exchanged; FG, its HF, FG's
+# flip-flop and outputs exchanged; FH and GH, its GG and HG.  GH.Y is the
+# tap.
+pair GF KF
+pair GG KG
+rename GG.QX KG.QY
+rename GG.QY KG.QX
+rename GG.X KG.Y
+pair HF JG
+rename HF.X JG.Y
+rename HF.Y JG.X
+pair FE GE
+pair FF GF
+rename FF.QX GF.QY
+rename FF.QY GF.QX
+rename FF.X GF.Y
+pair FG HF
+rename FG.QX HF.QY
+rename FG.X HF.Y
+rename FG.Y HF.X
+pair FH GG
+pair GH HG
+# The terminal count is split here: GD.X is the Z3805A's HH.Y, and GE.X
+# is HH.X ORed with IF.Y, kind 3's restart (below).
+rename GD.X HH.Y
+# The sync field's register, IG, the Z3805A's DI; its copy a clock
+# behind, JE, its DJ, JE's flip-flop and outputs exchanged; the restart,
+# IF, its EJ; the step lines, HE, its GJ.
+pair IG DI
+pair JE DJ
+rename JE.QX DJ.QY
+rename JE.X DJ.Y
+rename JE.Y DJ.X
+pair IF EJ
+pair HE GJ
+# What those read from outside them.  CD, the 1 PPS's rising-edge
+# detector, the Z3805A's DH, its flip-flops exchanged as the 58503B's
+# are: it samples AG.X, the selected 1 PPS, where the Z3805A samples P82
+# (PAD15), the same pin with register 4's bit 0 clear.  JF.Y, the
+# pending sync, is the Z3805A's EK.X; JF is not EK (below).  IG reads
+# EL.X, the register-3 write decode, by its name in both: EL is not
+# paired (below).
+pair CD DH
+rename CD.QX DH.QY
+rename CD.QY DH.QX
+rename AG.X PAD15.I
+rename JF.Y EK.X
+# The stop: BJ, clocked by the tap through EH, the Z3805A's CI, clocked
+# through GH; DI, the last of its pipeline, the Z3805A's DG.  BJ takes
+# BI.X, the start bit, where the Z3805A's CI takes AH.X; LH.X, the
+# preset, is the Z3805A's FH.Y.  CI, the pipeline's first stage, is not
+# CJ (below).
+pair BJ CI
+rename EH.Y GH.X
+rename BI.X AH.X
+rename LH.X FH.Y
+pair DI DG
+rename CI.Y CJ.Y
+# The count's bit 0: BH, the Z3805A's CF, gated by the start, AI.Y,
+# read by its name in both (AI is not paired, below), and by the stop,
+# DI.Y.
+pair BH CF
+#
+# Not the Z3805A's, and so not paired:
+# - GB: its GB.Y is IJ.X, but GB.X is the Z3805A's IJ.Y ORed with HE.X,
+#   the kind 1 step, folded in ahead of the prescaler's step logic.
+# - HC: the prescaler's step, the Z3805A's GK in another encoding,
+#   reading GB.X and HE.Y where GK reads IJ.Y and both step lines.
+# - GD and GE: the Z3805A's HH, split in two, GE ORing in IF.Y, so that
+#   kind 3's restart makes the internal 1 PPS on the GPS edge, as the
+#   Z3816A's does, where the Z3805A's comes a second later.
+# - JF and IE: the pending sync, the Z3805A's EK, which the internal
+#   1 PPS clears whatever the kind; here IE clears it on the internal
+#   1 PPS only for kinds 1 and 2, and on kind 3's restart.
+# - EL: its X is the Z3805A's, of the same pads and the write strobe,
+#   its Y register 4's write decode, where the Z3805A's EL.Y is register
+#   0's (FL.X here); and the strobe is GK.Y, in one block, where the
+#   Z3805A's is FL.Y, from FK.
+# - The start, BI and AI, and CI: the Z3805A's have the reference bit
+#   and the start's pulse, AH; here AH is constant Low, and CI ORs AH.Y
+#   where the Z3805A's CJ ORs BH.X.

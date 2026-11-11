@@ -592,9 +592,16 @@ The checks need no Ghidra: the export is checked in.
     make -C third_party/firmware check-format-c
 
 Each is also a top-level target (`make check-decompiled`).  Without
-`IMAGE` each runs for every image it can: `report-decompiled`
-for the 58503A 3704's too, its function check held to the same
-standard ([`58503a-3704.md`](58503a-3704.md), "The function check").  Results
+`IMAGE` each runs for every image it can: `check-link` and
+`report-decompiled` for the four reported images, each one's function
+check held to the same standard ([`58503a-3704.md`](58503a-3704.md),
+"The function check").  Those two run each image as a target of its
+own, `report-decompiled/IMAGE`, so that `make -j4 report-decompiled`
+runs the four at once; each image's output goes to its
+`report-decompiled.log` (or `check-link.log`), printed in the images'
+order once all have run, and the target fails if any image did.  The
+logs are in each image's work folder, beside its results, which for
+the Z3805A
 land in `target/firmware/z3805a-3543b/` (`decompiled.o`,
 `link-check.txt`, `report-decompiled.txt`).
 

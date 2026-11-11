@@ -311,8 +311,37 @@ $(NAMED_TARGETS):
 $(EXPORTED_TARGETS):
 	@for image in $(EXPORTED_IMAGES); do $(MAKE) --no-print-directory $@ IMAGE=$$image || exit 1; done
 
-check-link report-decompiled:
-	@for image in $(REPORTED_IMAGES); do $(MAKE) --no-print-directory $@ IMAGE=$$image || exit 1; done
+# The link and function checks of the reported images, each image's a
+# target of its own, check-link/IMAGE, so that make -j runs the images
+# at once.  Each one's output goes to a log in its work folder, and its
+# exit status beside it, so that it never fails the others' and they all
+# run; the target prints the logs in the images' order and fails if any
+# image did.  The libgcc they link is built first, once.
+REPORTED_TARGETS = check-link report-decompiled
+reported_log = $(call work,$(2))/$(1).log
+reported_status = $(call work,$(2))/$(1).status
+
+$(REPORTED_TARGETS): %: $(foreach image,$(REPORTED_IMAGES),%/$(image))
+	@status=0; for image in $(REPORTED_IMAGES); do \
+		cat $(call reported_log,$@,$$image); \
+		[ "$$(cat $(call reported_status,$@,$$image))" = 0 ] || { echo "$@ IMAGE=$$image failed"; status=1; }; \
+	done; exit $$status
+
+# One rule a target: a pattern rule naming two would be one recipe
+# making both.
+define reported_run
+@mkdir -p $(call work,$*)
+@echo "$(@D) IMAGE=$*: started"
+@$(MAKE) --no-print-directory $(@D) IMAGE=$* > $(call reported_log,$(@D),$*) 2>&1; \
+	echo $$? > $(call reported_status,$(@D),$*); \
+	echo "$(@D) IMAGE=$*: exit status $$(cat $(call reported_status,$(@D),$*))"
+endef
+
+check-link/%: $(CPU32_LIBGCC)
+	$(reported_run)
+
+report-decompiled/%: $(CPU32_LIBGCC)
+	$(reported_run)
 
 $(QUERY_TARGETS):
 	$(error $@ needs IMAGE)

@@ -242,7 +242,7 @@ impl Journal {
             // rather than from nothing: at sixteen entries a minute a
             // full log takes a quarter of an hour, so a daemon
             // restarted more often than that re-read the newest
-            // entries for ever and never reached the oldest.
+            // entries forever and never reached the oldest.
             self.generation = match log.log_generation(receiver) {
                 Ok(generation) => generation,
                 Err(e) => {

@@ -705,7 +705,7 @@ impl Log {
     /// Lets a restarted daemon resume a backfill instead of walking the
     /// whole log again: at sixteen entries a minute a full log takes a
     /// quarter of an hour, so a daemon restarted more often than that
-    /// re-read the newest entries for ever and never reached the
+    /// re-read the newest entries forever and never reached the
     /// oldest.
     ///
     /// The span is the extremes, not proof that everything between them
@@ -1095,7 +1095,7 @@ mod tests {
         // The copy walks the log whenever the entry count is in doubt,
         // so it re-reads entries it already holds as a matter of
         // course. Without this the same entry accumulates a row per
-        // pass, for ever.
+        // pass, forever.
         let scratch = Scratch::new("entries");
         let path = scratch.path();
         let mut log = Log::open(path).expect("open the database");

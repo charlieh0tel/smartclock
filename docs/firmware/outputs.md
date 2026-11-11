@@ -333,7 +333,7 @@ question: `../hardware-investigations.md`, item 19.
 
 The designs are traced one file each: `z3805a-trace.md` (the Z3805A,
 the reference), `58503a-z3801a-trace.md`, `58503b-trace.md`,
-`z3815a-trace.md` and `z3816a-trace.md`.
+`z3815a-trace.md`, `z3816a-trace.md` and `z3817a-trace.md`.
 
 ### Netlists
 

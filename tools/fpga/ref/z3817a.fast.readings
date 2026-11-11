@@ -1,0 +1,48 @@
+0.000058 s: with the preset the count reads 55555555
+0.000064 s: status 00
+register 00000000 reads 00
+register 00000001 reads 00
+register 00000002 reads 00
+register 00000003 reads 00
+register 00000004 reads 00
+register 00000005 reads 00
+register 00000006 reads 00
+register 00000007 reads 00
+register 00000008 reads 00
+register 00000009 reads 00
+register 0000000a reads 00
+register 0000000b reads 00
+register 0000000c reads 00
+register 0000000d reads 00
+register 0000000e reads 00
+register 0000000f reads 00
+register 00000010 reads 0f
+register 00000011 reads 0f
+register 00000012 reads 05
+register 00000013 reads 05
+register 00000014 reads 05
+register 00000015 reads 05
+register 00000016 reads 05
+register 00000017 reads 05
+register 00000018 reads 05
+register 00000019 reads 05
+register 0000001a reads 00
+register 0000001b reads 00
+register 0000001c reads 00
+register 0000001d reads 00
+register 0000001e reads 00
+register 0000001f reads 00
+rises: P78 0
+probe P72: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe P19: 38 rises, 38 falls; period 6500.0 to 6500.0 ns; high 3200.0 to 3200.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000244653 s
+probe CI.X: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe GH.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe GE.X: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe HF.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe HD.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe LD.X: 15 rises, 16 falls; period 15600.0 to 15700.0 ns; high 100.0 to 100.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000235253 s
+probe ID.Y: 15 rises, 16 falls; period 15600.0 to 15700.0 ns; high 100.0 to 100.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000235154 s; 8 pulses under 5.0 ns removed, the first at 0.000029352 s
+probe JB.X: 616 rises, 616 falls; period 400.0 to 500.0 ns; high 100.0 to 100.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000247653 s
+probe AI.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe AH.Y: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s
+probe AG.X: 0 rises, 1 falls; period -1.0 to -1.0 ns; high -1.0 to -1.0 ns; after reference -1.0 to -1.0 ns; last rise 0.000000000 s

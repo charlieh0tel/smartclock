@@ -24,6 +24,7 @@ where one is known, what it does:
 [Z3805A 3543B](z3805a-3543b-words.md),
 [Z3815A 4010](z3815a-4010-words.md),
 [Z3816A 4001](z3816a-4001-words.md),
+[Z3817A 3752](z3817a-3752-words.md),
 [58503A 3633](58503a-3633-words.md),
 [58503A 3704](58503a-3704-words.md),
 [58503B 1.01.04](58503b-1.01.04-words.md).

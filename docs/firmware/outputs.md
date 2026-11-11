@@ -68,7 +68,7 @@ monitor watches (bit 0x104 of the table at `0x5964a`; `PP2S Fail`
 from `0x3429e`).  Its FPGA, like the 58503B's and the Z3816A's,
 pulses P14 (and, in the telecom pair, P28) on alternate seconds, even
 with every register left at its reset 0, no write needed
-(`fpga-comparison.md`, "The five designs"); whether that is the PP2S
+(`fpga-comparison.md`, "The six designs"); whether that is the PP2S
 the monitor watches is not traced.
 
 Not traced: what drives the rear-panel Alarm output, and the
@@ -429,7 +429,7 @@ designs each touches, are tabled in `fpga-comparison.md`, "Decoder
 faults"; the detail is in `tools/fpga/xact/README.md`, "The viewer's
 faults".
 
-All five bitstreams were built with MakeBits's tie-down (**inferred**;
+All six bitstreams were built with MakeBits's tie-down (**inferred**;
 `makebits -t`, DSREF2 7-16: "all unused interconnect is tied to a
 known level"): every logic block the design does not use is
 configured as F = 0 and G = 0, the tie-down's sources, and many of each design's programmed
@@ -487,7 +487,7 @@ output after configuration (AH.X), on the line that carried DIN.
 Verilog 12 (`-Wall`) and runs Yosys 0.52's `check` after `proc;
 flatten`, and diffs what they report with
 `tools/fpga/ref/<image>.structure`: no warning, and no undriven net or
-conflicting driver, in any of the five.  The Z3815A's and Z3816A's list
+conflicting driver, in any of the six.  The Z3815A's and Z3816A's list
 a combinational loop through LD.QY and one through LE.QX, which are the
 design's: LD.X resets LD and LE and reads LE's QX and LD's own QY, a
 flip-flop pair that clears itself.

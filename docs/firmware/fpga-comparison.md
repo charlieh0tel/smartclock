@@ -45,33 +45,34 @@ re-expressed and need the viewer to make, stay generated in `target/`
    `58503a-z3801a-trace.md`, `58503b-trace.md`, `z3815a-trace.md`,
    `z3816a-trace.md`, `z3817a-trace.md`.
 
-## The five designs
+## The six designs
 
-The Z3817A's design, a sixth, is set out apart ("The Z3817A, a sixth
-design", below).  The sizes and clock loads are `tools/fpga/ref/<image>.stats`, the
-reads `tools/fpga/ref/<image>.readout` (the preset is its six nibbles
-`05` at `0x12` to `0x17`, the status its register `0x00`), both checked
+The Z3817A's design, the sixth, is set out in prose too ("The Z3817A,
+a sixth design", below).  The sizes and clock loads are `tools/fpga/ref/<image>.stats`, the
+reads `tools/fpga/ref/<image>.readout` (the preset is its nibbles
+`05` at `0x12` to `0x17`, to `0x19` in the Z3817A, the status its register `0x00`), both checked
 by `make -f tools/fpga/Makefile check`; the taps and the 1 PPS pins are
 the `check-readings-<image>.three` runs' (`tools/fpga/ref/<image>.three.readings`);
 the byte differences are against the 58503A/Z3801A's bitstream
-(`outputs.md`, "The FPGA bitstreams").
+(`outputs.md`, "The FPGA bitstreams", checked by `cargo test -p
+smartclock-cli --test fpga_bitstreams`).
 
-| | Z3805A | 58503A/Z3801A | 58503B | Z3815A | Z3816A |
-| --- | --- | --- | --- | --- | --- |
-| Images | Z3805A 3543B | 58503A 3633, 3704; Z3801A 3543 | 58503B 1.01.04 | Z3815A 4010 | Z3816A 4001 |
-| Logic blocks, I/O blocks, nets | 86, 36, 165 | 87, 35, 166 | 101, 36, 187 | 142, 56, 256 | 116, 41, 207 |
-| Bytes differing from the 58503A/Z3801A's | 1868 | 0 | 2347 | 3392 | 3315 |
-| Global clocks, and the logic blocks each clocks | GCLK from P7, 44 | GCLK from P7, 45 | GCLK from P7, 55 | ACLK from P53, 17; GCLK, ACLK halved, 47 | ACLK from P53, 17; GCLK, ACLK halved, 42 |
-| Pins that clock logic blocks | P82, 1 | P82, 1 | P82, 1 | P7, 10; P84, 2; P35, 1 | P7, 11; P82, 2 |
-| Divide to the 1 PPS | 10,000,000 | 10,000,000 | 10,000,000 | 9,830,400: an ACLK prescaler to GCLK / 6144, then / 1600 | as the Z3815A |
-| Oscillator the divide implies (**inferred**) | 10 MHz | 10 MHz | 10 MHz | 9.8304 MHz GCLK | 9.8304 MHz GCLK |
-| Count's tap after P83, in clocks; the firmware's calibration | 4,000,000; 0.4000003 s | 4,000,000; 0.4000003 s | 3,999,999, P83 a register later; 0.400000204 s | 3,932,159; 0.3932162 s | 3,932,159; 0.3932162 s |
-| Preset read | `0x555555` | `0x555555` | `0x555555` | `0x555555` | `0x555555` |
-| Status at `0x00`, under the preset | `0x04` | `0x04` | `0x04` | `0x08` | `0x08` |
-| Registers written, and kept | 4 written, 3 kept | 5 written, the Z3805A's 3 kept | the Z3805A's 3; register 2, P14's phase; and FF at address 6 | 8 written, 4 kept | 4 kept, registers 0 to 3; how many written, not read |
-| 1 PPS pins | P83, P78, P45, P14 | P83, P78 | P83, P78 | P83; P20 a pulse before it | P83; P20 a pulse before it |
-| Pins pulsing on alternate seconds | | | P14 | P14, P28 | P14, P28 |
-| Other outputs | "Outputs", below | | | | |
+| | Z3805A | 58503A/Z3801A | 58503B | Z3815A | Z3816A | Z3817A |
+| --- | --- | --- | --- | --- | --- | --- |
+| Images | Z3805A 3543B | 58503A 3633, 3704; Z3801A 3543 | 58503B 1.01.04 | Z3815A 4010 | Z3816A 4001 | Z3817A 3752 |
+| Logic blocks, I/O blocks, nets | 86, 36, 165 | 87, 35, 166 | 101, 36, 187 | 142, 56, 256 | 116, 41, 207 | 100, 20, 175 |
+| Bytes differing from the 58503A/Z3801A's | 1868 | 0 | 2347 | 3392 | 3315 | 3310 |
+| Global clocks, and the logic blocks each clocks | GCLK from P7, 44 | GCLK from P7, 45 | GCLK from P7, 55 | ACLK from P53, 17; GCLK, ACLK halved, 47 | ACLK from P53, 17; GCLK, ACLK halved, 42 | GCLK from P7, 45 |
+| Pins that clock logic blocks | P82, 1 | P82, 1 | P82, 1 | P7, 10; P84, 2; P35, 1 | P7, 11; P82, 2 | P84, 2 |
+| Divide to the 1 PPS | 10,000,000 | 10,000,000 | 10,000,000 | 9,830,400: an ACLK prescaler to GCLK / 6144, then / 1600 | as the Z3815A | 10,000,000 |
+| Oscillator the divide implies (**inferred**) | 10 MHz | 10 MHz | 10 MHz | 9.8304 MHz GCLK | 9.8304 MHz GCLK | 10 MHz |
+| Count's tap after the internal 1 PPS (P83, P78 in the Z3817A), in clocks; the firmware's calibration | 4,000,000; 0.4000003 s | 4,000,000; 0.4000003 s | 3,999,999, P83 a register later; 0.400000204 s | 3,932,159; 0.3932162 s | 3,932,159; 0.3932162 s | 4,000,000; 0.4000003 s |
+| Preset read | `0x555555` | `0x555555` | `0x555555` | `0x555555` | `0x555555` | `0x55555555` |
+| Status at `0x00`, under the preset | `0x04` | `0x04` | `0x04` | `0x08` | `0x08` | `0x00` |
+| Registers written, and kept | 4 written, 3 kept | 5 written, the Z3805A's 3 kept | the Z3805A's 3; register 2, P14's phase; and FF at address 6 | 8 written, 4 kept | 4 kept, registers 0 to 3; how many written, not read | 5 written, 4 kept: 0, 1, 3 and 4 |
+| 1 PPS pins | P83, P78, P45, P14 | P83, P78 | P83, P78 | P83; P20 a pulse before it | P83; P20 a pulse before it | P78 |
+| Pins pulsing on alternate seconds | | | P14 | P14, P28 | P14, P28 | |
+| Other outputs | "Outputs", below | | | | | |
 
 The Z3815A and the Z3816A differ from each other in 1686 bytes.  Besides
 the global buffers and the pins in the table, the clocks are block
@@ -88,7 +89,9 @@ inputs, complemented: the testbenches' byte, `0x5a`, sets bit 2.  In
 the Z3815A and Z3816A neither reads the interpolator: bit 3 is a
 constant 1 (FJ.X at a status address) and bit 2 is GH.Y, a flag the
 internal 1 PPS terminal JI.Y sets and the 1 PPS chain's next prescaler
-tick GJ.Y clears (**read**).
+tick GJ.Y clears (**read**).  The Z3817A has no interpolator either:
+bits 2 and 3 are FI.X and GJ.X, flags of its 1 PPS chain
+(`z3817a-trace.md`, "Start, stop and status bits").
 
 Every image's firmware converts the count at 1.0e-7 s a tick
 (`interval.md`, "One reading"), a 10 MHz clock's.  The Z3815A's and
@@ -120,68 +123,72 @@ Every enabled output I/O block (**read**, from each netlist's I/O
 blocks).  `~` is an I/O block that inverts, "registered" one that
 passes the output through its flip-flop on GCLK, a blank a pin that is
 not an output.  P2 is a constant-1 block through an inverting I/O
-block in all five, so it is tied Low.
+block in all but the Z3817A, so it is tied Low; the Z3817A drives
+four pins besides the bus, and P2 is not one.
 
-| Pin | Z3805A | 58503A/Z3801A | 58503B | Z3815A | Z3816A |
-| --- | --- | --- | --- | --- | --- |
-| P2 | ~BA.X, tied Low | ~BA.X, tied Low | ~CA.X, tied Low | ~AH.Y, tied Low | ~AH.Y, tied Low |
-| P14 | EI.Y, registered: 1 PPS | P17 passed through | HD.Y, registered: alternate seconds | IB.Y: alternate seconds | IB.Y: alternate seconds |
-| P16 | P82, the GPS 1 PPS, passed through | the same | the same | the same | the same |
-| P19 | | | GB.Y, GCLK / 65 | ~FA.X (the P35 counter) | |
-| P20 | | | | FB.Y, registered on ACLK: before each 1 PPS | the same |
-| P21, P26 | | | | FA.X; HA.X (the P35 counter: LB.Y / 81,920 and / 512) | |
-| P24, P25 | | | | ~HB.Y, HB.Y: P23 while P27 is High, else ~EG.X | |
-| P28 | | | | IB.Y, as P14 | the same |
-| P29, P30, P34 | | | | KB.Y, ~KB.Y: GCLK / 12 XNOR LB.Y / 5; LB.Y, P35 / 2 | |
-| P36 | | | | ~P35 | |
-| P38, P40 | | | | LE.X, LD.Y: the phase-frequency detector | the same |
-| P45 | EI.Y, registered: 1 PPS | | | | |
-| P47, P48 | | | | ~P53, P53 | the same |
-| P52 | | | | | P53 |
-| P51, P57 | | | | LK.Y, ~LK.Y: the ACLK prescaler's state XOR P50 | LK.Y, ~LK.Y: the ACLK prescaler's state |
-| P56 | | | | ~P50 | |
-| P58 to P71 | the bus's eight bits, 3-state | the same | the same | the same | the same |
-| P72 | AH.X | AH.X | AH.Y | | |
-| P76, P77 | ~BL.Y, ~BL.X | the same | the same | ~AK.Y, ~AK.X | the same |
-| P78 | EI.Y, registered: 1 PPS | the same | FH.X, registered: 1 PPS | | |
-| P79 | BJ.X, a 0, while AI.X is Low, else 3-state | the same | the same | AJ.X, a 0, while AI.Y is Low, else 3-state | the same |
-| P81 | ~AH.Y, the start's pulse | the same | ~AH.X | ~BH.X | ~BH.X |
-| P83 | EI.Y, registered: 1 PPS | the same | FH.Y, registered: 1 PPS, its polarity FF.Y's | FC.X, registered: 1 PPS | the same |
-| P84 | ~P17 | ~P17 | ~P17 | | |
+| Pin | Z3805A | 58503A/Z3801A | 58503B | Z3815A | Z3816A | Z3817A |
+| --- | --- | --- | --- | --- | --- | --- |
+| P2 | ~BA.X, tied Low | ~BA.X, tied Low | ~CA.X, tied Low | ~AH.Y, tied Low | ~AH.Y, tied Low | |
+| P14 | EI.Y, registered: 1 PPS | P17 passed through | HD.Y, registered: alternate seconds | IB.Y: alternate seconds | IB.Y: alternate seconds | |
+| P16 | P82, the GPS 1 PPS, passed through | the same | the same | the same | the same | the same |
+| P19 | | | GB.Y, GCLK / 65 | ~FA.X (the P35 counter) | | EE.Y, GCLK / 65 |
+| P20 | | | | FB.Y, registered on ACLK: before each 1 PPS | the same | |
+| P21, P26 | | | | FA.X; HA.X (the P35 counter: LB.Y / 81,920 and / 512) | | |
+| P24, P25 | | | | ~HB.Y, HB.Y: P23 while P27 is High, else ~EG.X | | |
+| P28 | | | | IB.Y, as P14 | the same | |
+| P29, P30, P34 | | | | KB.Y, ~KB.Y: GCLK / 12 XNOR LB.Y / 5; LB.Y, P35 / 2 | | |
+| P36 | | | | ~P35 | | |
+| P38, P40 | | | | LE.X, LD.Y: the phase-frequency detector | the same | |
+| P45 | EI.Y, registered: 1 PPS | | | | | |
+| P47, P48 | | | | ~P53, P53 | the same | |
+| P52 | | | | | P53 | |
+| P51, P57 | | | | LK.Y, ~LK.Y: the ACLK prescaler's state XOR P50 | LK.Y, ~LK.Y: the ACLK prescaler's state | |
+| P56 | | | | ~P50 | | |
+| P58 to P71 | the bus's eight bits, 3-state | the same | the same | the same | the same | the same |
+| P72 | AH.X | AH.X | AH.Y | | | GJ.Y, a pulse every 10,000 clocks |
+| P76, P77 | ~BL.Y, ~BL.X | the same | the same | ~AK.Y, ~AK.X | the same | |
+| P78 | EI.Y, registered: 1 PPS | the same | FH.X, registered: 1 PPS | | | FI.Y, registered: 1 PPS |
+| P79 | BJ.X, a 0, while AI.X is Low, else 3-state | the same | the same | AJ.X, a 0, while AI.Y is Low, else 3-state | the same | |
+| P81 | ~AH.Y, the start's pulse | the same | ~AH.X | ~BH.X | ~BH.X | |
+| P83 | EI.Y, registered: 1 PPS | the same | FH.Y, registered: 1 PPS, its polarity FF.Y's | FC.X, registered: 1 PPS | the same | |
+| P84 | ~P17 | ~P17 | ~P17 | | | |
 
 In the Z3815A P78 and P84 are inputs: BG takes the count's start from
-P82, P84 or P78 as register 2's field EG selects.  What the board takes
+P82, P84 or P78 as register 2's field EG selects.  In the Z3817A P84
+is an input, AG taking the start from P82 or P84 as register 4's bit 0
+selects, and P78 is the one 1 PPS output.  What the board takes
 from any of these pins is open.
 
 ## Roles and tiles
 
 A tile name is a position, not a function, and the same name has
 different roles in different designs: the Z3805A's EI.Y drives the
-1 PPS pins, the Z3815A's and Z3816A's EI.Y is the preset.  This is
+1 PPS pins, the Z3815A's and Z3816A's EI.Y is the preset, and the
+Z3817A's CI is the stop's pipeline, not its capture.  This is
 what does what (**read**; a blank is a role the design does not
 have):
 
-| Role | Z3805A | 58503A/Z3801A | 58503B | Z3815A | Z3816A |
-| --- | --- | --- | --- | --- | --- |
-| Preset net (resets the count) | FH.Y | FH.Y | EI.X | EI.Y | EI.Y |
-| Start capture (the GPS 1 PPS) | AH, clocked by P82 | AH, clocked by P82 | AH, clocked by P82 | BH, clocked by BG.X: P82, P84 or P78 | BH, clocked by P82 |
-| The GPS edge on GCLK, into the sync | DH, of P82 | DH, its flip-flops exchanged | DH, of P82, its flip-flops exchanged as the 58503A's | DG, of CH.X (CH clocked as BH) | the same |
-| Stop capture | CI | CI | CI | CI | CI |
-| Tap that stops the count | HG.Y | HG.Y | HG.Y, through EH | KI.X | KI.X |
-| Count: bit 0, bit 1, bits 2 to 23 | CF.QY; BB.QY; eleven two-bit stages | the same | CF.QX; BB.QY; eleven two-bit stages | CG.QY; BA.QY; eleven two-bit stages | the same |
-| 1 PPS chain's prescaler | GI, then IG, JH, IH and JI | the same | the same | the ACLK counter (EL, GL and others) to FL, then GJ on GCLK | the same |
-| 1 PPS terminal | HH.X | HH.X | HH.Y | JI.Y | JI.Y |
-| 1 PPS output driver, into the pins' I/O blocks | EI.Y, combinational | EI.Y, combinational, with HJ.X; HK the Z3805A's HJ.Y flip-flop moved | the latch HK, then FH; HD for P14 | FC; IB for P14 and P28 | FC; IB for P14 and P28 |
-| Read multiplexer, bits 0 and 1 | CK | CK | CK | CK | CK |
-| Read multiplexer, bits 2 and 3 | EG | EG | EG | FJ | FJ |
-| Seconds counter | IK, IL, enabled by HH.X | the same | IK, IL, enabled by HH.Y | HH, II, enabled by JI.Y | II, IJ, enabled by JI.Y |
-| Sync field register | DI | DI | DI | GG | GG |
-| Sync step | GJ, GK | the Z3805A's blocks | the Z3805A's blocks | kinds 1 and 2 through HG, IG, IH (with IF and JF sampling KE.X), JD, JG onto JE; kind 3 through JH | the same |
-| P7 divider: prescaler, counter, terminal, rearm | | | | JE, KE; FE, EE, IE, HE, CE, DE; GE; GE.DI = JH.X | the same; KD, on P7, F = JH.X |
-| Phase-frequency detector | | | | LE (P38), LD (P40) | the same |
+| Role | Z3805A | 58503A/Z3801A | 58503B | Z3815A | Z3816A | Z3817A |
+| --- | --- | --- | --- | --- | --- | --- |
+| Preset net (resets the count) | FH.Y | FH.Y | EI.X | EI.Y | EI.Y | LH.X |
+| Start capture (the GPS 1 PPS) | AH, clocked by P82 | AH, clocked by P82 | AH, clocked by P82 | BH, clocked by BG.X: P82, P84 or P78 | BH, clocked by P82 | BI, clocked by AG.X: P82 or P84 |
+| The GPS edge on GCLK, into the sync | DH, of P82 | DH, its flip-flops exchanged | DH, of P82, its flip-flops exchanged as the 58503A's | DG, of CH.X (CH clocked as BH) | the same | CD, of AG.X, its flip-flops exchanged as the 58503A's |
+| Stop capture | CI | CI | CI | CI | CI | BJ |
+| Tap that stops the count | HG.Y | HG.Y | HG.Y, through EH | KI.X | KI.X | GH.Y, through EH |
+| Count: bit 0, bit 1, bits 2 up (to 23; to 31 in the Z3817A) | CF.QY; BB.QY; eleven two-bit stages | the same | CF.QX; BB.QY; eleven two-bit stages | CG.QY; BA.QY; eleven two-bit stages | the same | BH.QY; BD.QY; fifteen two-bit stages |
+| 1 PPS chain's prescaler | GI, then IG, JH, IH and JI | the same | the same | the ACLK counter (EL, GL and others) to FL, then GJ on GCLK | the same | JA, then IC, KC, JC and ID |
+| 1 PPS terminal | HH.X | HH.X | HH.Y | JI.Y | JI.Y | GE.X, with kind 3's restart |
+| 1 PPS output driver, into the pins' I/O blocks | EI.Y, combinational | EI.Y, combinational, with HJ.X; HK the Z3805A's HJ.Y flip-flop moved | the latch HK, then FH; HD for P14 | FC; IB for P14 and P28 | FC; IB for P14 and P28 | FI.Y, combinational |
+| Read multiplexer, bits 0 and 1 | CK | CK | CK | CK | CK | BK |
+| Read multiplexer, bits 2 and 3 | EG | EG | EG | FJ | FJ | FK |
+| Seconds counter | IK, IL, enabled by HH.X | the same | IK, IL, enabled by HH.Y | HH, II, enabled by JI.Y | II, IJ, enabled by JI.Y | JH, JI, enabled by GE.X |
+| Sync field register | DI | DI | DI | GG | GG | IG |
+| Sync step | GJ, GK | the Z3805A's blocks | the Z3805A's blocks | kinds 1 and 2 through HG, IG, IH (with IF and JF sampling KE.X), JD, JG onto JE; kind 3 through JH | the same | HE, through GB and HC |
+| P7 divider: prescaler, counter, terminal, rearm | | | | JE, KE; FE, EE, IE, HE, CE, DE; GE; GE.DI = JH.X | the same; KD, on P7, F = JH.X | |
+| Phase-frequency detector | | | | LE (P38), LD (P40) | the same | |
 
 The bus's output registers are I/O blocks, clocked on AL's two phases,
-not CK, FJ or EG, which are combinational.
+not CK, FJ, EG, BK or FK, which are combinational.
 
 ## The family
 
@@ -274,9 +281,10 @@ OCXO, an MTI Series 260, is presumably doubled on it to that 10 MHz
 ## The Z3817A, a sixth design
 
 The Z3817A 3752's bitstream (`z3817a-trace.md`) is neither a copy nor
-a variant of the five above: it differs from each in most of its bytes
+a variant of the other five: it differs from each in most of its bytes
 (`outputs.md`, "The FPGA bitstreams") and places its blocks in other
-tiles, so the tables above, tile by tile, leave it out.  By function it
+tiles, so `tilediff.py`, tile by tile, has nothing to say about it, and
+the tables above set it beside them by role alone.  By function it
 is the 585xx and Z3805A family's (**read**, and **simulated** with
 `tools/fpga/z3817a_tb.v`): the same register port, pin for pin; GCLK
 from P7 and a divide by 10,000,000 to the 1 PPS, on P78 alone; the
@@ -314,9 +322,9 @@ locally (`tools/fpga/xact/README.md`).
 
 | Fault | Symptom | SmartClock designs affected | Correction in `netdump.js` | Checked by |
 | --- | --- | --- | --- | --- |
-| Input routing cleared before a later block shows it is used | a flip-flop with no clock (CI.K) | all five (CI), and HJ in the 58503B | keep every input's configured routing, EC and RD | not stated |
+| Input routing cleared before a later block shows it is used | a flip-flop with no clock (CI.K) | the five designs before the Z3817A's (CI), and HJ in the 58503B; the Z3817A not established | keep every input's configured routing, EC and RD | not stated |
 | Two drivers on a horizontal Longline | loads read both X and Y of one block | none (XC3042 has no input select) | enable the local line's PIP only with the input select at 1 | `check-fpga-xapp` |
-| Fourth input of modes F and FGM taken as D | a block reads the wrong net, and the Z3805A's preset read wrong | all five, a few blocks each; the Z3805A's EF | read the configuration bit that selects D or E | `check-fpga-decoder`; `check`'s read port |
+| Fourth input of modes F and FGM taken as D | a block reads the wrong net, and the Z3805A's preset read wrong | the five designs before the Z3817A's, a few blocks each; the Z3805A's EF; the Z3817A not established | read the configuration bit that selects D or E | `check-fpga-decoder`; `check`'s read port |
 | Trace stopped 300 steps deep | a large net loses its far loads | not established | a record of switch-matrix pins passed, no limit | `check-fpga-decoder` |
 | Left-edge I/O block's output clock read from the wrong bit | wrong output clock line | not established | read bit 1 of the tile's first row | `check-fpga-decoder` |
 | col.A.local.13's PIPs numbered the other way | P20's output register with no clock | Z3815A, Z3816A | swap the line's two PIPs | `check-fpga-decoder` |
@@ -427,8 +435,8 @@ nets it quotes that had them.
   straight from a clock buffer, which is not a fault (`outputs.md`,
   "Netlists").
 - **GCLK, ACLK, TCLKIN, BCLKIN.**  The global and alternate clock
-  buffers, and their dedicated input pads.  In the 585xx and Z3805A
-  designs P7 drives GCLK through general routing, not TCLKIN; in the
+  buffers, and their dedicated input pads.  In the 585xx, Z3805A and
+  Z3817A designs P7 drives GCLK through general routing, not TCLKIN; in the
   Z3815A and Z3816A P53 drives ACLK, and AB.Y, ACLK halved, GCLK.
 - **The P7 divider.**  The Z3815A's and Z3816A's P7-clocked blocks, CE
   to LE (and KD in the Z3816A): a nominal /5 prescaler and a binary
@@ -436,8 +444,9 @@ nets it quotes that had them.
   detector ("The family").  It is not the count.
 - **The count, the preset, the tap.**  The 24 bits the port reads: a
   GCLK-gated toggle, a one-flip-flop stage and eleven two-bit ripple
-  Johnson stages ("Roles and tiles"); the register 0 bit that resets
-  it, reading `0x555555`; the divider net whose edge stops it.
+  Johnson stages ("Roles and tiles"), 32 bits and fifteen stages in
+  the Z3817A; the register 0 bit that resets it, reading `0x555555`
+  (`0x55555555`); the divider net whose edge stops it.
 - **Start bit, stop bit.**  Status bit 1, set when the GPS 1 PPS starts
   the count, which the firmware calls "counted"; status bit 0, set when
   the tap stops it, which the firmware calls "interpolated".
@@ -495,3 +504,6 @@ nets it quotes that had them.
   Z3805A's are read.
 - How many registers the Z3816A's firmware writes; the design keeps
   registers 0 to 3 (`z3816a-trace.md`, "Register port").
+- In the Z3817A, which time reference's 1 PPS reaches P82 and P84, and
+  where the 3752 firmware's 10 ns `:SYNC:TINT?` steps come from, the
+  count resolving 100 ns (`z3817a-trace.md`, "Confidence").

@@ -106,8 +106,8 @@ keeps every input's configured routing and each block's configured EC
 and RD for the decode, which is safe because a trace still connects
 only the pins enabled when it runs: CI then registers AH.X (also P72)
 on the rising edge of GH.X, reset by FH.Y like the count (`../../../docs/firmware/z3805a-trace.md`).  The
-same block, CI, is affected in all five designs, and HJ too in the
-58503B's.
+same block, CI, is affected in the five designs before the Z3817A's,
+and HJ too in the 58503B's; the Z3817A's is not established.
 
 The viewer also connects two drivers to a horizontal Longline where an
 XC3000A design has one.  Beside each 3-state buffer, a vertical local
@@ -121,7 +121,7 @@ on `FC.X` and `FC.Y`; its LCA has `FC.Y`).
 `netdump.js` enables the local line's PIP only with the input select
 at 1, after which those designs decode to their LCAs exactly.  An
 XC3042 has no input select (every XC3042 bitstream reads 1 there, and
-the viewer tells the families apart by it), so the five SmartClock
+the viewer tells the families apart by it), so the six SmartClock
 designs, all XC3042, decode the same as before.
 
 More faults came out of checking the viewer against XACT's own bits,
@@ -169,7 +169,7 @@ and `netdump.js` corrects each:
   designs with registered and latched inputs (`iobin`, `clocks`)
   agree with XACT at the pin and at the pull request
   (`make check-fpga-decoder`; at the pull request,
-  `make -f tools/fpga/Makefile check-decoder-upstream`); the five
+  `make -f tools/fpga/Makefile check-decoder-upstream`); the six
   SmartClock designs register no input, so they do not exercise it.
 
 ## Not covered

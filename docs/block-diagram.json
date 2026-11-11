@@ -866,7 +866,7 @@
           318
         ]
       ],
-      "source": "P16 passes P82, the GPS 1 PPS, through in all five designs, read ([[docs/firmware/fpga-comparison.md|Outputs]]); where it goes on the board is open.",
+      "source": "P16 passes P82, the GPS 1 PPS, through in all six designs, read ([[docs/firmware/fpga-comparison.md|Outputs]]); where it goes on the board is open.",
       "to": "untraced"
     },
     {
@@ -1334,7 +1334,7 @@
       "h": 354,
       "id": "interpolator",
       "mark": "read",
-      "source": "The FPGA counts whole clock ticks; the fraction of a tick comes from outside it, as a byte on P3 to P6 and P8 to P11 that the port reads back at `0x10` and `0x11` complemented ([[docs/firmware/z3805a-trace.md|Register port]]), and the firmware calibrates it against two references the hex DAC trims ([[docs/firmware/counter.md|The interpolator's calibration]]).  The Z3815A's and Z3816A's designs do not read it ([[docs/firmware/fpga-comparison.md|The five designs]]).  The parts inside are speculative, each marked.",
+      "source": "The FPGA counts whole clock ticks; the fraction of a tick comes from outside it, as a byte on P3 to P6 and P8 to P11 that the port reads back at `0x10` and `0x11` complemented ([[docs/firmware/z3805a-trace.md|Register port]]), and the firmware calibrates it against two references the hex DAC trims ([[docs/firmware/counter.md|The interpolator's calibration]]).  The Z3815A's, Z3816A's and Z3817A's designs do not read it ([[docs/firmware/fpga-comparison.md|The six designs]]).  The parts inside are speculative, each marked.",
       "sub": "10 MHz designs; not traced",
       "title": "Interpolator",
       "w": 370,

@@ -145,7 +145,9 @@ docs:
 # section; the sources in docs/pages/ are left without one.  It copies
 # the site's icon, docs/pages/favicon.svg, beside index.html and links
 # it from each page's <head> and the index's, unless a page declares an
-# icon of its own.
+# icon of its own.  A box a page means to scroll sideways on its own
+# carries data-scroll="x", which check-pages allows at a phone's width
+# only.
 # Its hero is a drawing of the 58503A's front panel, or HERO_IMAGE, a
 # path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages

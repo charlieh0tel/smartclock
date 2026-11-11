@@ -5,7 +5,8 @@ frequency receivers (58503A/B, 59551A, Z3801A, Z3805A, Z3815A, Z3816A),
 taken apart and documented.
 
 **Docs site:** the FPGA explainer and detailed diagrams, the board atlas
-and block diagram, the loop analysis and the SCPI trees, at
+and block diagram, the loop analysis, the pForth words and the SCPI
+trees, at
 <https://charlieh0tel.github.io/smartclock/>.
 
 **Where to start:**
@@ -13,20 +14,21 @@ and block diagram, the loop analysis and the SCPI trees, at
 · [Tooling](docs/tooling.md)
 · [Monitoring](docs/monitoring.md)
 
-- **[Firmware](#the-firmware):** seven ROM images read and documented:
+- **[Firmware](#the-firmware):** eight ROM images read and documented:
   the SCPI trees, the 1 PPS measurement, the disciplining loop, the GPS
   engine interface, the pForth console.  Four are rewritten whole as C
-  and checked against the image function by function.
-- **[The disciplining loop](https://charlieh0tel.github.io/smartclock/loop.html):**
-  its update law, constants, aging feed-forward and start-up, analyzed
-  as a control system.
+  and checked against the image function by function.  The loop's
+  update law, constants, aging feed-forward and start-up are analyzed
+  as a control system ([the loop](https://charlieh0tel.github.io/smartclock/loop.html)), and the images'
+  pForth words ([by model](https://charlieh0tel.github.io/smartclock/pforth-models.html)) and SCPI trees
+  ([by model](https://charlieh0tel.github.io/smartclock/scpi-models.html)) are set side by side.
 - **[Hardware](#the-hardware):** the main board mapped part by part from
   photographs, with the nets measured and the differences between
   models ([the board atlas](https://charlieh0tel.github.io/smartclock/board-atlas.html)),
   and drawn as blocks
   ([the block diagram](https://charlieh0tel.github.io/smartclock/block-diagram.html)).
 - **[FPGAs](docs/firmware/fpga-comparison.md):** the five FPGA
-  designs in the seven images, decoded from their bitstreams, simulated,
+  designs in seven of the images, decoded from their bitstreams, simulated,
   traced and compared
   ([illustrated](https://charlieh0tel.github.io/smartclock/fpga.html),
   [in detail](https://charlieh0tel.github.io/smartclock/fpga-detail.html)).
@@ -36,8 +38,8 @@ and block diagram, the loop analysis and the SCPI trees, at
 
 ## The firmware
 
-Seven ROM images -- two of the 58503A, and the 58503B, Z3801A, Z3805A,
-Z3815A and Z3816A -- read off bench units through the pForth debug
+Eight ROM images -- two of the 58503A, and the 58503B, Z3801A, Z3805A,
+Z3815A, Z3816A and Z3817A -- read off bench units through the pForth debug
 console or gathered from others.  [`docs/firmware/`](docs/firmware/)
 documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 
@@ -239,7 +241,7 @@ Chrome and fails if anything on it scrolls sideways at desktop width.
 | [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3815a-4010.md`](docs/firmware/z3815a-4010.md) | the Z3815A 4010 against the 58503A 3704 and the Z3805A 3543B, and its rewrite |
 | [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
-| [`docs/firmware/fpga-comparison.md`](docs/firmware/fpga-comparison.md) | the five FPGA designs the seven images load, decoded from their bitstreams, simulated and compared; each design's trace beside it |
+| [`docs/firmware/fpga-comparison.md`](docs/firmware/fpga-comparison.md) | the five FPGA designs seven of the images load, decoded from their bitstreams, simulated and compared; each design's trace beside it |
 | [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html) | the five FPGA designs illustrated: the count, the two families, the telecom pair's phase detector and what of P7 reaches the firmware, with waveforms from the simulations; built by `make fpga` and checked by `check-explainer` |
 | [`fpga-detail.html`](https://charlieh0tel.github.io/smartclock/fpga-detail.html) | each FPGA design drawn twice by one generator: the whole chip, its pins on the frame and its function blocks in the signal's flow, the counters with their moduli and the nets between them named; and the time-interval counter gate by gate, each logic block with its equations; every element listed below with its trace's confidence word and section; a click opens a drawing full screen at its own scale to pan and zoom; pins, equations and connections read from the decoded netlists; built by `make fpga-detail` and checked by `check-detail` |
 | [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles, and the FFOM its start-up gives |

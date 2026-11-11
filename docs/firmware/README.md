@@ -2094,8 +2094,9 @@ checked in public.  `IMAGE=z3805a-3543b` is set for the job;
 `check-types`, `check-scpi-tree`, `check-magic-numbers` and
 `check-decompiled` run again with `IMAGE=58503a-3704` and
 `IMAGE=z3801a-3543` and `IMAGE=z3815a-4010`, and `check-link` and
-`report-decompiled` run without `IMAGE`, for the four, each failing if
-any of its functions fails (`58503a-3704.md`, `z3801a-3543.md` and
+`report-decompiled` run without `IMAGE`, for the four, as many images
+at once as the runner has CPUs (`make -j"$(nproc)"`; `rewrite.md`,
+"Reproducing"), each failing if any of its functions fails (`58503a-3704.md`, `z3801a-3543.md` and
 `z3815a-4010.md`, "The function check").  The Z3815A 4010 was an
 unfinished image (the firmware Makefile's `UNFINISHED_IMAGES`, now
 empty) until its fifth link run: its function check ran without a link

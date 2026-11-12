@@ -11,11 +11,13 @@ use std::sync::atomic::Ordering;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
+use smartclock::command::CommandId;
 use smartclock::command::Dialect;
 use smartclock::device::Device;
 use smartclock::error::Error;
 use smartclock::session::Config;
 use smartclock::session::Session;
+use smartclock::snapshot::FieldFailure;
 use smartclock::snapshot::Freshness;
 use smartclock::snapshot::Snapshot;
 use smartclock::snapshot::Tier;
@@ -219,6 +221,57 @@ fn a_question_with_a_known_answer_is_not_asked() {
         snapshot.holdover_present.is_some(),
         "in holdover the value exists and should be read"
     );
+}
+
+#[test]
+fn a_query_refused_on_its_own_costs_only_its_own_field() {
+    // A Z3817A answers -113 to the oven current, a keyword its tree
+    // lists with a stub behind it.  Before, that failed the oscillator
+    // step, the medium tier never completed, and the EFC DAC, the
+    // condition registers and the holdover detail after it were never
+    // read, though the receiver answers every one.
+    for receiver in [Receiver::default(), Receiver::z3801a()] {
+        let dialect = receiver.dialect;
+        let oven_current = dialect
+            .spec(CommandId::OvenCurrent)
+            .expect("the oven current has a spelling")
+            .scpi;
+        let mut receiver = receiver;
+        receiver.undefined.push(oven_current.to_owned());
+        let mut device = device(receiver);
+        let mut snapshot = Snapshot::new(jiff::Timestamp::now());
+        for _ in 0..2 {
+            for tier in Tier::ALL {
+                device
+                    .poll(tier, &mut snapshot, jiff::Timestamp::now())
+                    .unwrap_or_else(|e| panic!("{dialect:?} {tier:?} must finish: {e}"));
+            }
+        }
+        assert_eq!(snapshot.oven_current, None, "{dialect:?}");
+        assert!(snapshot.efc_dac.is_some(), "{dialect:?}");
+        assert!(snapshot.operation.is_some(), "{dialect:?}");
+        assert!(snapshot.holdover_duration.is_some(), "{dialect:?}");
+        assert!(snapshot.polled.medium.at.is_some(), "{dialect:?}");
+        assert!(snapshot.polled.medium.error.is_none(), "{dialect:?}");
+        // Named once, though the tier has run twice: each pass starts
+        // its list afresh.
+        assert_eq!(
+            snapshot.polled.medium.failed,
+            vec![FieldFailure {
+                scpi: oven_current.to_owned(),
+                code: Some(-113),
+                error: "receiver error -113: Undefined header".to_owned(),
+            }],
+            "{dialect:?}"
+        );
+        assert!(snapshot.polled.fast.failed.is_empty(), "{dialect:?}");
+        // A field absent for a refusal is not a stale reading.
+        assert_eq!(snapshot.freshness, Freshness::Live, "{dialect:?}");
+        assert_eq!(
+            snapshot.polled.any_error().as_deref(),
+            Some(format!("{oven_current}: receiver error -113: Undefined header").as_str()),
+        );
+    }
 }
 
 #[test]
@@ -859,11 +912,13 @@ fn a_receiver_that_only_refuses_is_not_a_dead_link() {
     for _ in 0..20 {
         match updates.recv_timeout(Duration::from_secs(2)) {
             Ok(snapshot) => {
-                assert_eq!(snapshot.freshness, Freshness::Stale);
+                // Each refusal concerns its own query, so the tier reads
+                // past it and names what was refused.
                 assert!(
-                    snapshot.polled.fast.error.is_some(),
-                    "the tier that failed should say so"
+                    !snapshot.polled.fast.failed.is_empty(),
+                    "the refused queries should be named"
                 );
+                assert!(snapshot.polled.any_error().is_some());
                 seen += 1;
             }
             Err(_) => break,

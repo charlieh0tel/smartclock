@@ -250,6 +250,20 @@ tier: a clock read once a minute is wrong for the other fifty-nine
 seconds.  A part-done tier yields to any tier come due, and a refresh
 moves deadlines, not step cursors, so no tier starves.
 
+### One refused query costs one field
+
+A step reads each field on its own.  What the tree lacks (`Unsupported`)
+and what the receiver declines on state (-221, -230) are absent.  Any
+other refusal, -113 for a keyword whose handler is a stub or one whose
+code a full queue lost, is absent too, and the query is named in the
+tier's `failed` list, which `last_error` falls back to; the step goes
+on.  A refusal used to fail the step: a Z3805A's missing TFOM froze
+the fast tier, and a Z3817A's stubbed oven current kept the medium tier
+from ever completing.  A refused field does not make the snapshot
+stale, since nothing in it is old.  An unreadable reply, a link failure
+or a swap still fails the step, which publishes nothing it read: the
+first is a defect to see, the others make what follows untrustworthy.
+
 ### The status screen scraper is mandatory
 
 `:GPS:SATellite:TRACking?` returns PRNs only; per-satellite elevation,

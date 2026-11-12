@@ -1,3 +1,37 @@
+smartclockmon (1.9.0-1) unstable; urgency=low
+
+  * smartclockd reads a Z3817A.  It asks it only what the command table
+    lists for it, leaving out the keywords its 3752 firmware answers
+    with a -113 stub, and asks it, and no other model, which time
+    reference input it has selected and what is arriving there.  The
+    monitor shows that under the date, and the simulator can be a
+    Z3817A.
+  * The receivers' logs move to schema 13: five reference columns, and
+    a query column for receiver_error.  The daemon upgrades a log the
+    first time it opens it; a daemon older than this one refuses a log
+    this one has opened, so copy each log first if you may need to go
+    back (docs/running.md, "Upgrading").
+  * A poll query a receiver refuses outright, rather than declining on
+    state, now costs only its own field, on any receiver: the rest of
+    the poll is still read, where before every field after it went
+    unread and that poll tier never completed.  Each code a receiver
+    gives each query is written to receiver_error once, and said in
+    the journal.
+  * `smartclock-cli read-registers` reads, through the pForth console,
+    the DUART and SIM registers whose reads change nothing.  It is a
+    dry run unless given --read and --serial, checks the unit's model,
+    serial and firmware first, and leaves the console with halt alone.
+  * The web view and the exporter refuse a request body past 64 KiB
+    with 413, one sent with a Transfer-Encoding with 411, and a header
+    line past 8 KiB with 431, and wait 100 ms after a failed accept
+    rather than retrying at once and filling the journal.
+  * The exporter serves /metrics with a query string, as Prometheus
+    sends one when a scrape config sets params:.
+  * The bundled SQLite moves to the one rusqlite 0.41.1 carries, for
+    RUSTSEC-2026-0459.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Wed, 11 Nov 2026 22:29:11 -0800
+
 smartclockmon (1.8.3-1) unstable; urgency=low
 
   * `smartclock-cli flash --experimental` accepts an owner-built image

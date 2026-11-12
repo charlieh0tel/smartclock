@@ -6,7 +6,7 @@ Z3817A), taken apart and documented.
 
 **Docs site:** the FPGA explainer and detailed diagrams, the board atlas
 and block diagram, the loop analysis, the pForth words and the SCPI
-trees, at
+trees, and how far each image is covered, at
 <https://charlieh0tel.github.io/smartclock/>.
 
 **Where to start:**
@@ -254,6 +254,7 @@ inside its own frame.
 | [`pforth-models.html`](https://charlieh0tel.github.io/smartclock/pforth-models.html) | every image's pForth words side by side, each with its code address, flags and stack effect, filtered by text, by table and image, to the words that differ or those every image shares; built by `make pforth-models` |
 | [`docs/scpi/`](docs/scpi/) | SCPI from the firmware: the keyword table, every image's command tree as `smartclock-cli dump-scpi` prints it, and as C data, the trees side by side against the manuals, and what bench receivers answered |
 | [`scpi-models.html`](https://charlieh0tel.github.io/smartclock/scpi-models.html) | every image's SCPI paths side by side against the manuals, filtered by text, subsystem and image, by whether a manual lists a path, the images differ or it has a handler; a path in no manual tagged undocumented, linked to its write-up where it has one; built by `make scpi-models` |
+| [`coverage.html`](https://charlieh0tel.github.io/smartclock/coverage.html) | how far each firmware image is covered, a row per image: its SCPI tree, pForth words, GPS engine, chip selects, loop constants, rewritten C, FPGA design and daemon support, each Yes linked to its document; built from `docs/coverage.json` by `make coverage`, which fails if a Yes has nothing behind it or a cell that is not a Yes has |
 | [`docs/screen-format-strings.md`](docs/screen-format-strings.md) | the status screen's templates, and what drives its mode line |
 | [`docs/hardware-investigations.md`](docs/hardware-investigations.md) | what only a bench can settle |
 | [`docs/hp5313x.md`](docs/hp5313x.md) | the HP 53131A-family counters, the same platform as the receivers, and what they could tell us |

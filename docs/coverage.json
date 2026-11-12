@@ -1,0 +1,165 @@
+{
+  "title": "Coverage by Model",
+  "heading": "Coverage by model",
+  "description": "How far the project has read each SmartClock receiver's firmware, a row per image: its SCPI tree, pForth words, GPS engine, chip selects, loop constants, rewritten C, FPGA design and daemon support.",
+  "intro": [
+    "What the project has done for each firmware image, a row per image and a column per kind of work, and a row for the 59551A, of which no image is available. A Yes links to the work; a cell that is not a Yes is checked to have nothing behind it in the repository, so the table cannot claim more than is there, or less."
+  ],
+  "no_image": "No firmware image available",
+  "statuses": {
+    "yes": {"text": "Yes", "class": "yes", "evidence": "present"},
+    "wip": {"text": "WIP", "class": "partial", "evidence": "absent"},
+    "named": {"text": "", "class": "partial", "evidence": "absent"},
+    "not-yet": {"text": "Not yet", "class": "no", "evidence": "absent"},
+    "not-planned": {"text": "Not planned", "class": "no", "evidence": "absent"}
+  },
+  "legend": [
+    ["yes", "done and in the repository; the cell links to it"],
+    ["wip", "under way, not yet published"],
+    ["not-yet", "not started"],
+    ["not-planned", "will not be done"]
+  ],
+  "columns": [
+    {
+      "key": "scpi",
+      "needs_image": true,
+      "heading": "SCPI tree",
+      "about": "the command tree `smartclock-cli dump-scpi` reads out of the image ([[docs/scpi/README.md]]), and set side by side on the [SCPI trees by model](scpi-models.html)",
+      "evidence": [{"file": "docs/scpi/{image}.txt"}],
+      "link": {"path": "docs/scpi/{image}.txt"}
+    },
+    {
+      "key": "pforth",
+      "needs_image": true,
+      "heading": "pForth words",
+      "about": "the console's words, each with its code address, flags and stack effect ([[docs/firmware/pforth/README.md]]), and side by side on the [pForth words by model](pforth-models.html)",
+      "evidence": [{"file": "docs/firmware/pforth/{image}-words.md"}],
+      "link": {"path": "docs/firmware/pforth/{image}-words.md"}
+    },
+    {
+      "key": "gps",
+      "needs_image": true,
+      "heading": "GPS engine",
+      "about": "what the image talks to for GPS: an Oncore, in its binary `@@` messages, the cell linked to the image's Oncore message table, request scripts and polling lists as `smartclock-cli dump-oncore` reads them ([[docs/firmware/oncore/README.md]]); or, in the Z3815A, a Furuno GT-74, in NMEA framing with Furuno's own `$PFEC` sentences ([[docs/firmware/gps.md|In every image]])",
+      "text": "Oncore",
+      "evidence": [{"file": "docs/firmware/oncore/{image}.txt"}],
+      "link": {"path": "docs/firmware/oncore/{image}.txt"}
+    },
+    {
+      "key": "chip-selects",
+      "needs_image": true,
+      "heading": "Chip selects",
+      "about": "the address map the boot code and the primary write to the processor's chip selects ([[docs/firmware/chip-selects.md]])",
+      "evidence": [{"file": "docs/firmware/chip-selects.md", "section": "{name}"}],
+      "link": {"path": "docs/firmware/chip-selects.md", "section": "{name}"}
+    },
+    {
+      "key": "loop",
+      "needs_image": true,
+      "heading": "Loop constants",
+      "about": "the disciplining loop's constants read out of the image, kept in `docs/firmware/loop-constants.json` and tabled in [[docs/firmware/loop.md|In every image]] and on [the loop](loop.html)",
+      "evidence": [{"json": "docs/firmware/loop-constants.json", "list": "images", "field": "image", "value": "{image}"}],
+      "link": {"path": "docs/firmware/loop.md", "section": "In every image"}
+    },
+    {
+      "key": "rewrite",
+      "needs_image": true,
+      "heading": "Rewritten C",
+      "about": "every C function of the image written again by hand and checked against the image's own, function by function, in CI ([[README.md|The firmware]])",
+      "evidence": [{"make": "third_party/firmware/Makefile", "variable": "REPORTED_IMAGES", "word": "{image}"}],
+      "link": {"path": "{rewrite}"}
+    },
+    {
+      "key": "fpga-design",
+      "needs_image": true,
+      "heading": "FPGA design",
+      "about": "which of the FPGA designs the image loads, its bitstream copied out of the image ([[docs/firmware/fpga-comparison.md]]), linked to its [detailed diagrams](fpga-detail.html)",
+      "text": "{design_name}",
+      "evidence": [{"file": "third_party/firmware/images/fpga/{design}.bit"}],
+      "link": {"page": "fpga-detail.html"}
+    },
+    {
+      "key": "fpga-decoded",
+      "needs_image": true,
+      "heading": "FPGA decoded",
+      "about": "the design decoded from its bitstream, simulated and traced, its trace linked; the designs are illustrated on [the FPGA explainer](fpga.html)",
+      "evidence": [{"file": "docs/firmware/{design}-trace.md"}],
+      "link": {"path": "docs/firmware/{design}-trace.md"}
+    },
+    {
+      "key": "daemon",
+      "heading": "Daemon support",
+      "about": "the dialect the daemon and its clients speak to the model, chosen from its `*IDN?` ([[crates/smartclock/src/device.rs]]), and for the Z3817A that its command lists are audited against a receiver (`complete` in [[crates/smartclock/commands.toml]]); [[README.md|The hardware]] says which models have been tested on a bench",
+      "text": "{dialect} dialect",
+      "evidence": [{"dialect": "{model}", "is": "{dialect}"}],
+      "link": {"path": "README.md", "section": "The hardware"}
+    }
+  ],
+  "images": [
+    {
+      "image": "58503a-3633", "name": "58503A 3633", "model": "58503A",
+      "design": "58503a-z3801a", "design_name": "58503A/Z3801A", "dialect": "58503",
+      "cells": {"rewrite": "not-planned"}
+    },
+    {
+      "image": "58503a-3704", "name": "58503A 3704", "model": "58503A",
+      "design": "58503a-z3801a", "design_name": "58503A/Z3801A", "dialect": "58503",
+      "rewrite": "docs/firmware/58503a-3704.md"
+    },
+    {
+      "image": "58503b-1.01.04", "name": "58503B 1.01.04", "model": "58503B",
+      "design": "58503b", "design_name": "58503B", "dialect": "58503",
+      "cells": {"rewrite": "not-yet"}
+    },
+    {
+      "image": "z3801a-3543", "name": "Z3801A 3543", "model": "Z3801A",
+      "design": "58503a-z3801a", "design_name": "58503A/Z3801A", "dialect": "Z3801",
+      "rewrite": "docs/firmware/z3801a-3543.md"
+    },
+    {
+      "image": "z3805a-3543b", "name": "Z3805A 3543B", "model": "Z3805A",
+      "design": "z3805a", "design_name": "Z3805A", "dialect": "Z3801",
+      "rewrite": "docs/firmware/rewrite.md"
+    },
+    {
+      "image": "z3815a-4010", "name": "Z3815A 4010", "model": "Z3815A",
+      "design": "z3815a", "design_name": "Z3815A", "dialect": "Z3801",
+      "rewrite": "docs/firmware/z3815a-4010.md",
+      "cells": {
+        "gps": {
+          "text": "Furuno GT-74 (native $PFEC)",
+          "evidence": [{"file": "docs/firmware/gps.md", "contains": "MODEL # FURUNO GT-74"},
+                       {"file": "docs/firmware/gps.md", "section": "In every image"}],
+          "link": {"path": "docs/firmware/gps.md", "section": "In every image"}
+        }
+      }
+    },
+    {
+      "image": "z3816a-4001", "name": "Z3816A 4001", "model": "Z3816A",
+      "design": "z3816a", "design_name": "Z3816A", "dialect": "Z3801",
+      "cells": {"rewrite": "not-yet"}
+    },
+    {
+      "image": "z3817a-3752", "name": "Z3817A 3752", "model": "Z3817A",
+      "design": "z3817a", "design_name": "Z3817A", "dialect": "Z3801",
+      "cells": {
+        "gps": {"text": "Oncore (external)"},
+        "loop": "wip",
+        "rewrite": "wip",
+        "fpga-design": {"status": "named", "text": "{design_name} (WIP)"},
+        "fpga-decoded": "wip",
+        "daemon": {
+          "evidence": [{"dialect": "{model}", "is": "{dialect}"},
+                       {"toml": "crates/smartclock/commands.toml", "key": "complete", "value": "{model}"}]
+        }
+      }
+    },
+    {
+      "name": "59551A", "model": "59551A", "dialect": "58503", "no_image": true
+    }
+  ],
+  "footnotes": [],
+  "notes": [
+    "The 58503A and the Z3801A load the same FPGA design ([[docs/firmware/outputs.md|The FPGA bitstreams]])."
+  ]
+}

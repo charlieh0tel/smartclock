@@ -90,7 +90,7 @@ GROUPS = {
     ),
     "firmware": Group(
         "Firmware",
-        "How the firmware measures the 1 PPS and steers the oscillator to GPS, and each image's pForth words and SCPI commands side by side.",
+        "How the firmware measures the 1 PPS and steers the oscillator to GPS, and each image's pForth words and SCPI commands side by side, and how far each image is covered.",
         # A loop: the measurement and the filter, the filter's output fed back.
         '<rect x="4" y="8" width="22" height="14" rx="1"/>'
         '<rect x="44" y="8" width="24" height="14" rx="1"/>'

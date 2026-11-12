@@ -398,8 +398,8 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   kept whole in a log of its own.
 - HTML pages are published on GitHub Pages by
   `.github/workflows/pages.yml`, which `make pages` builds.  Generated
-  ones (the board atlas, the block diagram, the SCPI trees and the
-  pForth words by model)
+  ones (the board atlas, the block diagram, the SCPI trees, the
+  pForth words and the coverage by model)
   are built from their sources and not committed; hand-written ones (`loop.html` and the
   bench records) are copied from their sources in `docs/pages/`.  A
   generated page's committed copy needed a drift check and a
@@ -431,7 +431,8 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   group too, so a group shows all its pages whichever is set apart:
   listed above only, the featured loop page once left its group with only the pForth page in
   it.  The firmware group, "Firmware", holds the loop
-  page and the images' pForth words and SCPI trees: SCPI is the
+  page, the images' pForth words and SCPI trees and the coverage by
+  model: SCPI is the
   firmware's, and had a group of its own only for its one page.  Its hero is the 58503A's front
   panel drawn as SVG to scale from photographs, not a photograph: a
   drawing is a few kilobytes, follows the page's fonts, shows UTC live,
@@ -506,6 +507,19 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   page itself from a template of its own, which a second such page,
   its data from a Python tool, could not share; one shell keeps the
   pages alike and fixes each once.
+- The coverage by model is a table of how far each
+  firmware image is covered, a row per image and a column per kind of
+  work, from `docs/coverage.json` by `tools/coverage.py`, in the
+  firmware group.  A hand-kept table of what is done goes stale
+  silently, so each column names the evidence a Yes rests on (a
+  generated document, a heading, a Makefile list entry such as
+  `REPORTED_IMAGES`, a data file's entry, `dialect_for()`'s rule, the
+  command table's `complete` list), and
+  the build fails on a Yes without it and on a cell that is not a Yes
+  with it.  Work that exists only off main shows as WIP and names
+  nothing of it; a model with no image, the 59551A, has a row whose
+  image columns say so.  It quotes no counts.  It takes the matrix
+  pages' style, but is a static table: a row per image needs no filter.
 
 ### Flashing is a direct-port command of the CLI
 

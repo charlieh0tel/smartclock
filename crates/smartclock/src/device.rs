@@ -16,6 +16,7 @@ use crate::rollover::ReceiverDate;
 use crate::screen;
 use crate::screen::Screen;
 use crate::session::Session;
+use crate::snapshot::FieldFailure;
 use crate::snapshot::Snapshot;
 use crate::snapshot::Tier;
 use crate::transport::Transport;
@@ -44,6 +45,9 @@ pub struct Device<T: Transport> {
     session: Session<T>,
     dialect: Dialect,
     identity: Identity,
+    /// The queries refused on their own in the step being polled, for
+    /// [`Device::poll_step`] to file against its tier.
+    failed: Vec<FieldFailure>,
 }
 
 impl<T: Transport> Device<T> {
@@ -59,6 +63,7 @@ impl<T: Transport> Device<T> {
             session,
             dialect,
             identity,
+            failed: Vec::new(),
         })
     }
 
@@ -453,8 +458,10 @@ impl<T: Transport> Device<T> {
     ///
     /// A field the receiver declines on state is set to `None` rather
     /// than left at its previous value, because a stale reading is
-    /// worse than an absent one.  A transport failure aborts the tier
-    /// and propagates.
+    /// worse than an absent one.  So is one it refuses outright, which
+    /// is named in the tier's `failed` list and costs no other field
+    /// ([`Device::field`]).  A transport failure or an unreadable reply
+    /// aborts the tier and propagates.
     ///
     /// Only this tier's success is recorded.  The others keep the time
     /// of their own last success, so a caller can tell how old each
@@ -490,6 +497,9 @@ impl<T: Transport> Device<T> {
         let Some(step_kind) = steps.get(step) else {
             return Ok(());
         };
+        // Left over only from a step that failed outright, whose
+        // snapshot the caller discards with them.
+        self.failed.clear();
         match step_kind {
             Step::Fast => self.poll_fast(into)?,
             Step::Satellites => self.poll_satellites(into)?,
@@ -500,6 +510,12 @@ impl<T: Transport> Device<T> {
             Step::Position => self.poll_position(into, now)?,
             Step::Counters => self.poll_counters(into)?,
         }
+        if step == 0 {
+            into.polled.begin_pass(tier);
+        }
+        for failure in self.failed.drain(..) {
+            into.polled.field_failed(tier, failure);
+        }
         into.at = now;
         if step + 1 == steps.len() {
             into.polled.succeeded(tier, now);
@@ -508,15 +524,53 @@ impl<T: Transport> Device<T> {
         Ok(())
     }
 
+    /// Read one field of a step, keeping a failure that concerns its
+    /// query alone from costing the rest of the step.
+    ///
+    /// What this model or dialect does not ask, and what the receiver
+    /// declines on state, is absent and no failure (see
+    /// [`absent_if_unsupported`]).  Any other refusal -- -113 for a
+    /// keyword the firmware lists but does not implement, or one whose
+    /// code a full error queue lost -- is absent too, and recorded for
+    /// [`Device::poll_step`] to file against the tier.
+    ///
+    /// Everything else still fails the step.  A reply that does not
+    /// parse means the reader and the receiver disagree about a format,
+    /// which is a defect to see rather than a field to drop, and a link
+    /// failure or a swap makes everything after it untrustworthy.
+    fn field<V>(
+        &mut self,
+        id: CommandId,
+        read: impl FnOnce(&mut Self) -> Result<V>,
+    ) -> Result<Option<V>> {
+        let error = match absent_if_unsupported(read(self)) {
+            Ok(value) => return Ok(value),
+            Err(e @ (Error::Device { .. } | Error::ErrorLost { .. })) => e,
+            Err(e) => return Err(e),
+        };
+        let code = match error {
+            Error::Device { code, .. } => Some(code),
+            _ => None,
+        };
+        self.failed.push(FieldFailure {
+            scpi: self.dialect.spec(id).map_or("", |s| s.scpi).to_owned(),
+            code,
+            error: error.to_string(),
+        });
+        Ok(None)
+    }
+
     fn poll_fast(&mut self, into: &mut Snapshot) -> Result<()> {
-        into.mode = absent_if_unsupported(self.mode())?;
-        into.tfom = absent_if_unsupported(self.tfom())?;
-        into.ffom = absent_if_unsupported(self.ffom())?;
-        into.time_interval = absent_if_unsupported(self.time_interval())?.flatten();
-        into.efc = absent_if_unsupported(self.efc())?;
-        into.hardware = absent_if_unsupported(self.hardware_condition())?;
-        into.holdover_waiting = absent_if_unsupported(self.holdover_waiting())?;
-        into.time = absent_if_unsupported(self.time())?;
+        into.mode = self.field(CommandId::SyncState, Self::mode)?;
+        into.tfom = self.field(CommandId::Tfom, Self::tfom)?;
+        into.ffom = self.field(CommandId::Ffom, Self::ffom)?;
+        into.time_interval = self
+            .field(CommandId::Tinterval, Self::time_interval)?
+            .flatten();
+        into.efc = self.field(CommandId::Efc, Self::efc)?;
+        into.hardware = self.field(CommandId::HardwareCondition, Self::hardware_condition)?;
+        into.holdover_waiting = self.field(CommandId::HoldoverWaiting, Self::holdover_waiting)?;
+        into.time = self.field(CommandId::Time, Self::time)?;
         Ok(())
     }
 
@@ -527,8 +581,12 @@ impl<T: Transport> Device<T> {
     /// tier -- it is read every `--sky` seconds (300 by default) and
     /// on request -- without the counts going stale with it.
     fn poll_satellites(&mut self, into: &mut Snapshot) -> Result<()> {
-        into.tracking = absent_if_unsupported(self.tracking_count())?.map(satellite_count);
-        into.visible = absent_if_unsupported(self.visible_count())?.map(satellite_count);
+        into.tracking = self
+            .field(CommandId::SatTrackingCount, Self::tracking_count)?
+            .map(satellite_count);
+        into.visible = self
+            .field(CommandId::SatVisibleCount, Self::visible_count)?
+            .map(satellite_count);
         Ok(())
     }
 
@@ -536,9 +594,13 @@ impl<T: Transport> Device<T> {
         // Temperature and oven current sit here rather than on the fast
         // tier: they move slowly, and the fast tier is already close to
         // its budget.
-        into.temperature = absent_if_unsupported(self.temperature())?.flatten();
-        into.oven_current = absent_if_unsupported(self.oven_current())?.flatten();
-        into.efc_dac = absent_if_unsupported(self.efc_dac())?.flatten();
+        into.temperature = self
+            .field(CommandId::Temperature, Self::temperature)?
+            .flatten();
+        into.oven_current = self
+            .field(CommandId::OvenCurrent, Self::oven_current)?
+            .flatten();
+        into.efc_dac = self.field(CommandId::EfcAbsolute, Self::efc_dac)?.flatten();
         Ok(())
     }
 
@@ -551,18 +613,20 @@ impl<T: Transport> Device<T> {
     /// is the receiver's steady state, which is what the history is
     /// for.
     fn poll_registers(&mut self, into: &mut Snapshot) -> Result<()> {
-        into.alarm = absent_if_unsupported(self.alarm_condition())?;
-        into.operation = absent_if_unsupported(self.operation_condition())?;
-        into.holdover_state = absent_if_unsupported(self.holdover_condition())?;
+        into.alarm = self.field(CommandId::Stb, Self::alarm_condition)?;
+        into.operation = self.field(CommandId::OperCondition, Self::operation_condition)?;
+        into.holdover_state = self.field(CommandId::HoldoverCondition, Self::holdover_condition)?;
         Ok(())
     }
 
     fn poll_holdover(&mut self, into: &mut Snapshot) -> Result<()> {
         // Absent when refused, like every other field, rather than
         // abandoning the rest of the step.
-        let holdover = absent_if_unsupported(self.holdover_duration())?;
+        let holdover = self.field(CommandId::HoldoverDuration, Self::holdover_duration)?;
         into.holdover_duration = holdover;
-        into.holdover_predicted = absent_if_unsupported(self.holdover_predicted())?.flatten();
+        into.holdover_predicted = self
+            .field(CommandId::HoldoverUncPred, Self::holdover_predicted)?
+            .flatten();
         // Only asked for while it exists.  Present holdover error is
         // refused with -230 whenever the receiver is locked, and a
         // refusal is not free: the session reads the error queue to
@@ -573,7 +637,8 @@ impl<T: Transport> Device<T> {
         // each time, which made that register a record of our own
         // manners rather than of the receiver's.
         into.holdover_present = if holdover.is_some_and(|h| h.active) {
-            self.holdover_present()?
+            self.field(CommandId::HoldoverUncNow, Self::holdover_present)?
+                .flatten()
         } else {
             None
         };
@@ -611,21 +676,25 @@ impl<T: Transport> Device<T> {
     /// of the tier: the counters below would report themselves missing
     /// when they were merely unreached.
     fn poll_position(&mut self, into: &mut Snapshot, now: Timestamp) -> Result<()> {
-        into.position = absent_if_unsupported(self.position())?.flatten();
+        into.position = self
+            .field(CommandId::PositionAvg, Self::position)?
+            .flatten();
         let today = now.to_zoned(jiff::tz::TimeZone::UTC).date();
-        into.date = absent_if_unsupported(self.date(today))?;
+        into.date = self.field(CommandId::Date, |device| device.date(today))?;
         Ok(())
     }
 
     fn poll_counters(&mut self, into: &mut Snapshot) -> Result<()> {
-        into.log_count = absent_if_unsupported(self.log_count())?;
-        into.oven_tempco = absent_if_unsupported(self.oven_tempco())?.flatten();
+        into.log_count = self.field(CommandId::LogCount, Self::log_count)?;
+        into.oven_tempco = self
+            .field(CommandId::OvenTempco, Self::oven_tempco)?
+            .flatten();
         // All three of its bits are set during startup and then stay,
         // so asking on every medium poll spent a round trip to be told
         // what it said last time.  The medium tier is the one against
         // its budget; this belongs with the other things that barely
         // move.
-        into.powerup = absent_if_unsupported(self.powerup_condition())?;
+        into.powerup = self.field(CommandId::PowerupCondition, Self::powerup_condition)?;
         Ok(())
     }
 }

@@ -53,6 +53,11 @@ pub const MAX_ERRORS: usize = 30;
 const QUEUE_OVERFLOW_CODE: i32 = -350;
 const QUEUE_OVERFLOW_MESSAGE: &str = "Queue overflow";
 
+/// SCPI's "Undefined header", for a keyword the receiver has no
+/// handler for.
+const UNDEFINED_HEADER_CODE: i32 = -113;
+const UNDEFINED_HEADER: &str = "Undefined header";
+
 /// Today, less one GPS epoch, as firmware predating the 2019 wrap
 /// reports it.
 ///
@@ -194,6 +199,10 @@ pub struct Receiver {
     /// Commands refused with -230, as the receiver refuses a value it
     /// does not have.  Matched ignoring case.
     pub refused: Vec<String>,
+    /// Commands answered -113, as firmware answers a keyword its tree
+    /// lists but whose handler is a stub: the Z3817A's oven current.
+    /// Matched ignoring case.
+    pub undefined: Vec<String>,
     /// Whether the receiver has ever had a fix.
     ///
     /// Until it has, everything derived from GPS -- the date, the time,
@@ -255,6 +264,7 @@ impl Default for Receiver {
             refuse_everything: false,
             garbled: Vec::new(),
             refused: Vec::new(),
+            undefined: Vec::new(),
             no_fix: false,
             base: Base {
                 efc_raw: 713_587,
@@ -349,6 +359,9 @@ impl Receiver {
         if self.refused.iter().any(|r| same_header(command, r)) {
             return self.reject(-230, "Data corrupt or stale");
         }
+        if self.undefined.iter().any(|u| same_header(command, u)) {
+            return self.reject(UNDEFINED_HEADER_CODE, UNDEFINED_HEADER);
+        }
         if let Some(answer) = self.common(command) {
             return answer;
         }
@@ -371,9 +384,11 @@ impl Receiver {
         }
         let (_, argument) = split(command);
         match lookup(self.dialect, command) {
-            Some(_) if self.refuse_everything => self.reject(-113, "Undefined header"),
+            Some(_) if self.refuse_everything => {
+                self.reject(UNDEFINED_HEADER_CODE, UNDEFINED_HEADER)
+            }
             Some(spec) => self.answer(spec.id, argument),
-            None => self.reject(-113, "Undefined header"),
+            None => self.reject(UNDEFINED_HEADER_CODE, UNDEFINED_HEADER),
         }
     }
 

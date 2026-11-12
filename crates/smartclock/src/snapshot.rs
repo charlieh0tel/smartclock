@@ -182,6 +182,29 @@ pub struct TierState {
     pub at: Option<Timestamp>,
     /// What went wrong the last time it ran, if it did.
     pub error: Option<String>,
+    /// The queries the receiver refused on their own in this tier's
+    /// latest pass, so far as it has run.  Each field one fills is
+    /// absent; the rest of the pass was read.  Empty from a daemon that
+    /// predates it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub failed: Vec<FieldFailure>,
+}
+
+/// One query the receiver refused while the rest of its step was read.
+///
+/// A refusal that is not about state -- -113 for a keyword the firmware
+/// lists but does not implement -- concerns that query alone.  Failing
+/// the step for it voided every field after it in the step, and the
+/// tier never completed: a Z3817A refusing the oven current lost its EFC
+/// DAC, its condition registers and its holdover detail with it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FieldFailure {
+    /// The SCPI that was sent.
+    pub scpi: String,
+    /// The receiver's error code, when its queue gave one.
+    pub code: Option<i32>,
+    /// What went wrong, as the error says it.
+    pub error: String,
 }
 
 /// How each tier is faring, kept per tier rather than per snapshot.
@@ -235,6 +258,16 @@ impl Polled {
         self.get_mut(tier).error = Some(why.to_owned());
     }
 
+    /// Start a new pass of `tier`, forgetting the refusals of the last.
+    pub fn begin_pass(&mut self, tier: Tier) {
+        self.get_mut(tier).failed.clear();
+    }
+
+    /// Record a query `tier` read past, refused on its own.
+    pub fn field_failed(&mut self, tier: Tier, failure: FieldFailure) {
+        self.get_mut(tier).failed.push(failure);
+    }
+
     /// Whether what `tier` last read is too old to call current, by
     /// the rule history is filtered with ([`Cadence::current_window`]).
     ///
@@ -251,16 +284,22 @@ impl Polled {
         Some((now - at).total(jiff::Unit::Second).unwrap_or(0.0))
     }
 
-    /// The error of the first tier that has one, fastest first.
+    /// The error of the first tier that has one, fastest first, and
+    /// failing that the first refused query, with what it sent.
     ///
     /// Not the most recent: tiers are not comparable that way without
     /// stamping each error with its own time, and what a reader wants
     /// from a one-line summary is that something is wrong and roughly
-    /// where, which the fastest failing tier answers.
-    pub fn any_error(&self) -> Option<&str> {
-        Tier::ALL
-            .into_iter()
-            .find_map(|tier| self.get(tier).error.as_deref())
+    /// where, which the fastest failing tier answers.  A whole tier
+    /// failing outranks one query refused.
+    pub fn any_error(&self) -> Option<String> {
+        let tiers = || Tier::ALL.into_iter().map(|tier| self.get(tier));
+        tiers().find_map(|state| state.error.clone()).or_else(|| {
+            tiers()
+                .flat_map(|state| state.failed.first())
+                .next()
+                .map(|f| format!("{}: {}", f.scpi, f.error))
+        })
     }
 }
 

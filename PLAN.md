@@ -517,8 +517,10 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   command table's `complete` list), and
   the build fails on a Yes without it and on a cell that is not a Yes
   with it.  Work that exists only off main shows as WIP and names
-  nothing of it; a model with no image, the 59551A, has a row whose
-  image columns say so.  It quotes no counts.  It takes the matrix
+  nothing of it; a model with no image, the 59551A, has a row that
+  says so across every column, Daemon support included: its daemon
+  support has never been tried, and the build fails if an image of it
+  turns up.  It quotes no counts.  It takes the matrix
   pages' style, but is a static table: a row per image needs no filter.
 
 ### Flashing is a direct-port command of the CLI

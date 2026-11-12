@@ -355,7 +355,11 @@ header.top .site{font-weight:600;color:var(--ink);text-decoration:none}
 
 /* The 58503A's front panel: the instrument's own colors in either
    theme, a little dimmer in the dark one. */
-.panel{display:block;width:100%;height:auto;filter:drop-shadow(0 .4rem .9rem rgba(0,0,0,.18))}
+/* A segment the display lights, and the faint ghost of one it does
+   not: the lit color at about a sixth over the window, as a real
+   VFD shows its unlit segments. */
+.panel{--vfd-on:#2fd8c8;--vfd-off:#0e2a28;
+  display:block;width:100%;height:auto;filter:drop-shadow(0 .4rem .9rem rgba(0,0,0,.18))}
 .panel text{font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-stretch:100%}
 .panel .bezel{fill:#e6e3db}
 .panel .face{fill:#d9d6cd}
@@ -364,8 +368,8 @@ header.top .site{font-weight:600;color:var(--ink);text-decoration:none}
 .panel .model{fill:#f4f4f2;font-weight:800;font-size:17px;font-stretch:125%}
 .panel .name{fill:#f4f4f2;font-weight:700;font-size:11px;font-stretch:115%}
 .panel .vfd path{stroke-width:3;stroke-linecap:round}
-.panel .vfd .on{stroke:#2fd8c8;fill:#2fd8c8}
-.panel .vfd .off{stroke:#2fd8c8;fill:#2fd8c8;opacity:.045}
+.panel .vfd .on{stroke:var(--vfd-on);fill:var(--vfd-on)}
+.panel .vfd .off{stroke:var(--vfd-off);fill:var(--vfd-off)}
 .panel .vfd circle{stroke:none}
 .panel .outline{fill:none;stroke:#c9c6bd;stroke-width:1.2}
 .panel .band{stroke:#bdbab2;stroke-width:6}

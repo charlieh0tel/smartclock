@@ -24,6 +24,7 @@ use crate::types::HoldoverWaitReason;
 use crate::types::OperationCondition;
 use crate::types::Position;
 use crate::types::PowerupCondition;
+use crate::types::ReferenceStatus;
 use crate::types::Seconds;
 use crate::types::SmartClockMode;
 use crate::types::Tfom;
@@ -41,8 +42,8 @@ pub enum Tier {
     /// Short scalar queries: mode, figures of merit, interval, EFC and
     /// the hardware register.
     Fast,
-    /// The status screen, the satellite counts, the oscillator
-    /// readings, the condition registers and the holdover detail.
+    /// The satellite counts, the oscillator readings, the condition
+    /// registers, the holdover detail and a Z3817A's reference inputs.
     Medium,
     /// Position, date and counters, which barely move.
     Slow,
@@ -162,6 +163,8 @@ pub struct Snapshot {
     pub holdover_predicted: Option<Seconds>,
     /// Error accumulated so far in holdover.
     pub holdover_present: Option<Seconds>,
+    /// A Z3817A's time reference inputs.  Absent on other models.
+    pub reference: Option<ReferenceStatus>,
     /// The scraped status screen, the only source of per-satellite
     /// elevation, azimuth and signal strength.
     pub screen: Option<Screen>,
@@ -333,6 +336,7 @@ impl Snapshot {
             holdover_duration: None,
             holdover_predicted: None,
             holdover_present: None,
+            reference: None,
             screen: None,
             position: None,
             date: None,

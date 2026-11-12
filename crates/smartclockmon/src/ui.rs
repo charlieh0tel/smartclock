@@ -31,6 +31,8 @@ use smartclock::screen::Screen;
 use smartclock::snapshot::Freshness;
 use smartclock::snapshot::Tier;
 use smartclock::types::EfcPercent;
+use smartclock::types::ReferencePulse;
+use smartclock::types::ReferenceStatus;
 use smartclock::types::Seconds;
 use smartclock::types::SmartClockMode;
 use smartclock::wire::Reading;
@@ -1127,6 +1129,39 @@ fn satellites(frame: &mut Frame, area: Rect, app: &App) {
     frame.render_widget(table, area);
 }
 
+/// A Z3817A's reference input and what is arriving on it, on two lines
+/// so a narrow pane keeps both.  Yellow when the pulse or the VALID
+/// record is missing; the GPS record may be absent by design.
+fn reference_lines(reference: ReferenceStatus) -> [Line<'static>; 2] {
+    let pulse = match reference.pulse {
+        ReferencePulse::PerSecond => "1 PPS",
+        ReferencePulse::PerTwoSeconds => "PP2S",
+    };
+    let input = plain(
+        "reference",
+        format!("TIMEREF{}, {pulse}", reference.input.number()),
+    );
+    let said = |present: bool, what: &str| {
+        if present {
+            what.to_owned()
+        } else {
+            format!("no {what}")
+        }
+    };
+    let arriving = [
+        said(reference.pulse_alive, "pulse"),
+        said(reference.valid_record, "VALID"),
+        said(reference.gps_record, "GPS"),
+    ]
+    .join(", ");
+    let style = if reference.pulse_alive && reference.valid_record {
+        Style::new()
+    } else {
+        Style::new().fg(Color::Yellow)
+    };
+    [input, field("arriving", arriving, style)]
+}
+
 fn time_and_place(frame: &mut Frame, area: Rect, app: &App) {
     let Some(s) = app.snapshot.as_ref() else {
         frame.render_widget(
@@ -1169,6 +1204,12 @@ fn time_and_place(frame: &mut Frame, area: Rect, app: &App) {
             None => lines.push(plain("date", date.raw().to_string())),
         },
         None => lines.push(absent("date")),
+    }
+
+    // A Z3817A's time comes in on a reference input, so what is
+    // arriving there belongs beside the time.  No other model has one.
+    if let Some(reference) = s.reference {
+        lines.extend(reference_lines(reference));
     }
 
     if let Some(screen) = app.screen() {
@@ -1313,6 +1354,7 @@ fn health_faults(screen: &Screen) -> Option<Vec<String>> {
 mod tests {
     use super::draw;
     use super::mode_line;
+    use super::reference_lines;
     use crate::app::App;
     use crate::app::View;
     use crate::source::Attachment;
@@ -1325,7 +1367,10 @@ mod tests {
     use smartclock::snapshot::Freshness;
     use smartclock::snapshot::Snapshot;
     use smartclock::task::Cadence;
+    use smartclock::types::ReferencePulse;
+    use smartclock::types::ReferenceStatus;
     use smartclock::types::SmartClockMode;
+    use smartclock::types::TimeReference;
     use smartclock::wire::Reading;
 
     fn snapshot(mode: Option<SmartClockMode>, screen_text: Option<&str>) -> Reading {
@@ -1359,6 +1404,40 @@ mod tests {
         out.push_str("HEALTH MONITOR ...................... [ OK ]\n");
         out.push_str("Self Test: OK   GPS Rcv: OK\n");
         out
+    }
+
+    #[test]
+    fn a_z3817as_reference_says_what_is_missing() {
+        let text = |line: &ratatui::text::Line<'_>| {
+            line.spans
+                .iter()
+                .map(|s| s.content.as_ref())
+                .collect::<String>()
+        };
+        let [input, arriving] = reference_lines(ReferenceStatus {
+            input: TimeReference::Two,
+            pulse: ReferencePulse::PerSecond,
+            valid_record: true,
+            gps_record: false,
+            pulse_alive: true,
+        });
+        assert_eq!(
+            text(&input).split_whitespace().collect::<Vec<_>>(),
+            ["reference", "TIMEREF2,", "1", "PPS"]
+        );
+        assert!(text(&arriving).ends_with("pulse, VALID, no GPS"));
+        // The GPS record may be absent by design; a missing pulse is
+        // not, and is colored.
+        assert_eq!(arriving.spans[1].style, ratatui::style::Style::new());
+        let [_, lost] = reference_lines(ReferenceStatus {
+            input: TimeReference::One,
+            pulse: ReferencePulse::PerTwoSeconds,
+            valid_record: true,
+            gps_record: true,
+            pulse_alive: false,
+        });
+        assert!(text(&lost).ends_with("no pulse, VALID, GPS"));
+        assert_ne!(lost.spans[1].style, ratatui::style::Style::new());
     }
 
     #[test]

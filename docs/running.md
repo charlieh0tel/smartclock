@@ -129,8 +129,12 @@ It asks a Z3817A only what the command table lists for it, leaving out
 the oven-current and temperature keywords whose 3752 handlers are stubs
 answering -113.  Its `:DIAGnostic:ROSCillator:TCOefficient?` answers 0,
 since it has no oven-current channel for the constant to scale; it is
-read and logged anyway.  Every other model is asked everything its
-command tree has ([`commands.md`](commands.md), "Lists that bind").
+read and logged anyway.  It also asks a Z3817A, and no other model,
+`:DIAGnostic:REFerence:STATus?` with the condition registers, for the
+reference input it has selected and what is arriving there
+([`views.md`](views.md), "A Z3817A's reference").  Every other model is
+asked everything its command tree has, less that
+([`commands.md`](commands.md), "Lists that bind").
 
 It drains the receiver's error queue into the journal.  Reading an
 entry removes it, but the queue holds thirty and discards the newest

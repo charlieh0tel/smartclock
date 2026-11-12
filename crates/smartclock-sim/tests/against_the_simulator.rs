@@ -26,7 +26,10 @@ use smartclock::task::Cadence;
 use smartclock::task::DeviceTask;
 use smartclock::task::Handle;
 use smartclock::task::Shared;
+use smartclock::types::ReferencePulse;
+use smartclock::types::ReferenceStatus;
 use smartclock::types::SmartClockMode;
+use smartclock::types::TimeReference;
 use smartclock_sim::receiver::MAX_ERRORS;
 use smartclock_sim::receiver::Receiver;
 use smartclock_sim::transport::SimTransport;
@@ -306,6 +309,36 @@ fn a_z3817a_is_not_asked_what_its_lists_leave_out() {
     assert!(snapshot.holdover_duration.is_some());
     assert!(snapshot.oven_tempco.is_some());
     assert_eq!(snapshot.freshness, Freshness::Live);
+    assert_eq!(
+        snapshot.reference,
+        Some(ReferenceStatus {
+            input: TimeReference::Two,
+            pulse: ReferencePulse::PerSecond,
+            valid_record: true,
+            gps_record: true,
+            pulse_alive: true,
+        })
+    );
+}
+
+#[test]
+fn only_a_z3817a_is_asked_its_reference_status() {
+    // The keyword is the Z3817A's alone in the z3801 tree.  Asked of a
+    // Z3801A it would draw -113 on every medium pass; the entry names
+    // only a model whose lists bind, so no other model is asked it.
+    for receiver in [Receiver::z3801a(), Receiver::default()] {
+        let mut device = device(receiver);
+        let mut snapshot = Snapshot::new(jiff::Timestamp::now());
+        device
+            .poll(Tier::Medium, &mut snapshot, jiff::Timestamp::now())
+            .expect("the medium tier");
+        assert_eq!(snapshot.reference, None);
+        assert!(
+            snapshot.polled.medium.failed.is_empty(),
+            "{:?}",
+            snapshot.polled.medium.failed
+        );
+    }
 }
 
 #[test]

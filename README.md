@@ -99,7 +99,7 @@ in SCPI.
 | 58503A | yes | Primary development target; its 3704 firmware in C |
 | Z3801A | yes | Different response formats; its 3543 firmware in C |
 | Z3805A | yes | Answers as the Z3801A; its 3543B firmware in C |
-| Z3817A | yes | Answers as the Z3801A, less the stubs its 3752 firmware answers -113 |
+| Z3817A | yes | Answers as the Z3801A, less the stubs its 3752 firmware answers -113; its time reference inputs logged |
 | 58503B | no; may work | Firmware studied |
 | 59551A | no; may work | No commands for its pulse output or time tags |
 | Z3816A | no; may work | Firmware studied |
@@ -195,7 +195,7 @@ started with `--listen HOST:PORT` as `--daemon tcp://HOST:PORT`.
 Without a receiver, use the simulator; every tool takes
 `tcp://host:port` for a device path:
 
-    smartclock-sim 127.0.0.1:5025            # --model z3801a for a Z3801A, which does not echo
+    smartclock-sim 127.0.0.1:5025            # --model z3801a for a Z3801A, which does not echo; z3817a for a Z3817A
     smartclockd     --device tcp://127.0.0.1:5025 ...
     smartclock-cli  --device tcp://127.0.0.1:5025 diagnose
 

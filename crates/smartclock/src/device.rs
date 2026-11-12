@@ -33,6 +33,7 @@ use crate::types::HoldoverWaitReason;
 use crate::types::OperationCondition;
 use crate::types::Position;
 use crate::types::PowerupCondition;
+use crate::types::ReferenceStatus;
 use crate::types::Seconds;
 use crate::types::SmartClockMode;
 use crate::types::Tfom;
@@ -293,6 +294,13 @@ impl<T: Transport> Device<T> {
             .transpose()
     }
 
+    /// A Z3817A's time reference: which input, which pulse, and what
+    /// is arriving on it.
+    pub fn reference_status(&mut self) -> Result<ReferenceStatus> {
+        let line = self.ask(CommandId::ReferenceStatus)?;
+        parse::reference_status(&line)
+    }
+
     /// How many satellites are being used.
     pub fn tracking_count(&mut self) -> Result<i64> {
         let line = self.ask(CommandId::SatTrackingCount)?;
@@ -447,7 +455,7 @@ enum Step {
     Satellites,
     /// Oven temperature and current, and the EFC DAC.
     Oscillator,
-    /// The subgroup condition registers.
+    /// The subgroup condition registers, and a Z3817A's reference.
     Registers,
     /// Holdover duration, prediction and present error.
     Holdover,
@@ -650,6 +658,10 @@ impl<T: Transport> Device<T> {
         into.alarm = self.field(CommandId::Stb, Self::alarm_condition)?;
         into.operation = self.field(CommandId::OperCondition, Self::operation_condition)?;
         into.holdover_state = self.field(CommandId::HoldoverCondition, Self::holdover_condition)?;
+        // What a Z3817A's reference inputs are being fed.  Here rather
+        // than a step of its own, which would cost every other model a
+        // scheduler turn and a logged row each pass to send nothing.
+        into.reference = self.field(CommandId::ReferenceStatus, Self::reference_status)?;
         Ok(())
     }
 

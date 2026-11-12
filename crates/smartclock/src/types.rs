@@ -653,6 +653,67 @@ impl HoldoverDuration {
     }
 }
 
+/// Which of a Z3817A's two time reference inputs it has selected.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TimeReference {
+    /// TIMEREF1.
+    One,
+    /// TIMEREF2.
+    Two,
+}
+
+impl TimeReference {
+    /// The input's number, as its connector is labeled and the
+    /// receiver reports it.
+    pub fn number(self) -> u8 {
+        match self {
+            Self::One => 1,
+            Self::Two => 2,
+        }
+    }
+}
+
+/// The pulse a Z3817A expects on its reference input.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ReferencePulse {
+    /// One pulse per second.
+    PerSecond,
+    /// One pulse per two seconds, PP2S.
+    PerTwoSeconds,
+}
+
+impl ReferencePulse {
+    /// Seconds between pulses.
+    pub fn period_seconds(self) -> u8 {
+        match self {
+            Self::PerSecond => 1,
+            Self::PerTwoSeconds => 2,
+        }
+    }
+}
+
+/// A Z3817A's time reference, from `:DIAGnostic:REFerence:STATus?`.
+///
+/// The Z3817A can take its time from a pulse and records fed to one of
+/// two inputs; this says which, and what is arriving.  The reply,
+/// `+r,+m,e,g,p`, is in no manual: its fields were read from the 3752
+/// firmware's handler and confirmed on a bench unit, which answered
+/// `+2,+1,1,0,1` fed a VALID record and 1 PPS alone, and `+2,+1,1,1,1`
+/// fed the GPS records too.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReferenceStatus {
+    /// The input selected.
+    pub input: TimeReference,
+    /// The pulse expected on it.
+    pub pulse: ReferencePulse,
+    /// Whether the external VALID record is valid.
+    pub valid_record: bool,
+    /// Whether the GPS record is valid.
+    pub gps_record: bool,
+    /// Whether the reference pulse is arriving.
+    pub pulse_alive: bool,
+}
+
 /// A time of day as the receiver reports it.
 ///
 /// `second` may be 60: the receiver represents a positive leap second

@@ -5,6 +5,9 @@ use jiff::civil::date;
 use smartclock::parse;
 use smartclock::types::Datum;
 use smartclock::types::LeapPending;
+use smartclock::types::ReferencePulse;
+use smartclock::types::ReferenceStatus;
+use smartclock::types::TimeReference;
 
 #[test]
 fn integers_keep_their_leading_plus() {
@@ -78,6 +81,34 @@ fn holdover_duration_carries_a_flag() {
     assert!(!idle.active);
     let predicted = parse::holdover_duration("+4.320E-004,0").expect("pair");
     assert!((predicted.elapsed.as_micros() - 432.0).abs() < 1e-6);
+}
+
+#[test]
+fn a_z3817a_reports_its_time_reference() {
+    // Answered by a bench Z3817A, 3752-A: TIMEREF2 selected, 1 PPS, and
+    // fed a VALID record alone, then the GPS records as well.
+    let alone = parse::reference_status("+2,+1,1,0,1").expect("status");
+    assert_eq!(
+        alone,
+        ReferenceStatus {
+            input: TimeReference::Two,
+            pulse: ReferencePulse::PerSecond,
+            valid_record: true,
+            gps_record: false,
+            pulse_alive: true,
+        }
+    );
+    assert_eq!(alone.input.number(), 2);
+    assert_eq!(alone.pulse.period_seconds(), 1);
+    let fed = parse::reference_status("+2,+1,1,1,1").expect("status");
+    assert!(fed.gps_record);
+    let pp2s = parse::reference_status("+1,+2,0,0,0").expect("status");
+    assert_eq!(pp2s.input, TimeReference::One);
+    assert_eq!(pp2s.pulse, ReferencePulse::PerTwoSeconds);
+    assert!(!pp2s.pulse_alive);
+    for bad in ["+3,+1,1,0,1", "+2,+3,1,0,1", "+2,+1,1,0", "+2,+1,1,0,2", ""] {
+        assert!(parse::reference_status(bad).is_err(), "{bad:?}");
+    }
 }
 
 #[test]

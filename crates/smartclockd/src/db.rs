@@ -110,6 +110,13 @@ impl Log {
             // not know which unit produced them, and guessing would put
             // one receiver's history under another's name.
             ("receiver_id", "INTEGER REFERENCES receiver(id)"),
+            // Schema 13, a Z3817A's reference inputs.  NULL in older
+            // rows, as on every other model: nothing was asked.
+            ("reference_input", "INTEGER"),
+            ("reference_period_s", "INTEGER"),
+            ("reference_valid_record", "INTEGER"),
+            ("reference_gps_record", "INTEGER"),
+            ("reference_pulse_alive", "INTEGER"),
         ] {
             if !self.has_column("snapshot", column)? {
                 self.conn
@@ -288,10 +295,12 @@ impl Log {
                 holdover_active, holdover_elapsed_s,
                 holdover_predicted_s, holdover_present_s, tracking, not_tracking,
                 date_raw, time_utc, rollover_epochs, log_count, last_error,
-                fast_at, medium_at, slow_at, receiver_id
+                fast_at, medium_at, slow_at, receiver_id,
+                reference_input, reference_period_s, reference_valid_record,
+                reference_gps_record, reference_pulse_alive
              ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15,
                        ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29,
-                       ?30, ?31, ?32)",
+                       ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37)",
             params![
                 Stored(snapshot.at),
                 match snapshot.freshness {
@@ -335,6 +344,11 @@ impl Log {
                 snapshot.polled.medium.at.map(Stored),
                 snapshot.polled.slow.at.map(Stored),
                 self.current,
+                snapshot.reference.map(|r| r.input.number()),
+                snapshot.reference.map(|r| r.pulse.period_seconds()),
+                snapshot.reference.map(|r| r.valid_record),
+                snapshot.reference.map(|r| r.gps_record),
+                snapshot.reference.map(|r| r.pulse_alive),
             ],
         )?;
         let id = tx.last_insert_rowid();
@@ -809,6 +823,9 @@ mod tests {
     use rusqlite::Connection;
     use smartclock::snapshot::Freshness;
     use smartclock::snapshot::Snapshot;
+    use smartclock::types::ReferencePulse;
+    use smartclock::types::ReferenceStatus;
+    use smartclock::types::TimeReference;
     use smartclock_log::schema::VERSION;
     use smartclock_log::timestamp::Stored;
 
@@ -937,6 +954,8 @@ mod tests {
             "operation_bits",
             "holdover_bits",
             "powerup_bits",
+            "reference_input",
+            "reference_pulse_alive",
         ] {
             assert!(
                 log.has_column("snapshot", column)
@@ -945,6 +964,81 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn a_schema_12_log_gains_the_reference_columns_and_keeps_its_rows() {
+        // A log of the schema before them, rows and all: made current,
+        // then taken back to 12 by dropping what 13 added.
+        let scratch = Scratch::new("reference");
+        let path = scratch.path();
+        let mut log = Log::open(path).expect("open");
+        log.note_receiver("HEWLETT-PACKARD,Z3801A,A,3543-A")
+            .expect("note the receiver");
+        let at = |s: &str| s.parse::<jiff::Timestamp>().expect("a timestamp");
+        let mut old = Snapshot::new(at("2026-11-01T00:00:00Z"));
+        old.freshness = Freshness::Live;
+        log.record(&old).expect("record a schema 12 row");
+        for column in REFERENCE_COLUMNS {
+            log.conn
+                .execute_batch(&format!("ALTER TABLE snapshot DROP COLUMN {column}"))
+                .expect("drop a schema 13 column");
+        }
+        log.conn
+            .execute_batch("UPDATE meta SET value = '12' WHERE key = 'schema'")
+            .expect("stamp it 12");
+        drop(log);
+
+        let mut log = Log::open(path).expect("migrate it");
+        let version: String = log
+            .conn
+            .query_row("SELECT value FROM meta WHERE key = 'schema'", [], |row| {
+                row.get(0)
+            })
+            .expect("the stamp");
+        assert_eq!(version, VERSION.to_string());
+        let mut fed = Snapshot::new(at("2026-11-11T00:00:00Z"));
+        fed.freshness = Freshness::Live;
+        fed.reference = Some(ReferenceStatus {
+            input: TimeReference::Two,
+            pulse: ReferencePulse::PerSecond,
+            valid_record: true,
+            gps_record: false,
+            pulse_alive: true,
+        });
+        log.record(&fed).expect("record a row with a reference");
+        let rows: Vec<Vec<Option<i64>>> = log
+            .conn
+            .prepare(&format!(
+                "SELECT {} FROM snapshot ORDER BY id",
+                REFERENCE_COLUMNS.join(", ")
+            ))
+            .expect("prepare")
+            .query_map([], |row| {
+                (0..REFERENCE_COLUMNS.len())
+                    .map(|i| row.get(i))
+                    .collect::<rusqlite::Result<Vec<_>>>()
+            })
+            .expect("query")
+            .collect::<std::result::Result<_, _>>()
+            .expect("collect");
+        assert_eq!(
+            rows,
+            vec![
+                // Nothing was asked when this was written.
+                vec![None; REFERENCE_COLUMNS.len()],
+                vec![Some(2), Some(1), Some(1), Some(0), Some(1)],
+            ]
+        );
+    }
+
+    /// The columns schema 13 added, in the order they are compared.
+    const REFERENCE_COLUMNS: [&str; 5] = [
+        "reference_input",
+        "reference_period_s",
+        "reference_valid_record",
+        "reference_gps_record",
+        "reference_pulse_alive",
+    ];
 
     #[test]
     fn a_log_is_indexed_by_receiver_and_time_whatever_its_age() {

@@ -9,10 +9,9 @@
 # Prints run=true or run=false, appended to $GITHUB_OUTPUT too when that
 # is set, and why to stderr.  With no BASE, or one neither here nor
 # fetchable from origin, or no merge base found, it runs.
-# .github/workflows/firmware.yml passes a pull request's base, and for
-# a branch's push --merge-base origin/main, and nothing for a push to
-# main; a local run passes --merge-base origin/main
-# (docs/firmware/README.md, "The checks in CI").
+# .github/workflows/firmware.yml passes a pull request's base, and runs
+# no guard on a push to main or a run by hand; a local run passes
+# --merge-base origin/main (docs/firmware/README.md, "The checks in CI").
 set -euo pipefail
 
 # What report-decompiled reads: the firmware's images, exports, C and
@@ -60,7 +59,7 @@ if [ "$base" = --merge-base ]; then
   echo "merge base with $ref: $base" >&2
 fi
 if [ -z "$base" ]; then
-  decide true "no base to compare against (a push to main, or a run by hand)"
+  decide true "no base to compare against"
 fi
 if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
   if ! git fetch -q --no-tags --depth=1 origin "$base" 2>/dev/null \

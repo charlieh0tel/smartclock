@@ -23,13 +23,19 @@ name: firmware
 # of a run is report-decompiled's, the four images' function checks,
 # as many at once as the runner has CPUs (make -j"$(nproc)").
 #
-# On every push, not main's alone, so a firmware branch's own pushes
-# are checked too.  report-decompiled, though, runs only where anything
-# it reads changed, and always on a push to main
-# (tools/ci/report-decompiled-needed).
+# On pull requests and pushes to main, not on a branch's own pushes,
+# which its pull request's run checks: both ran each change twice at
+# once.  A branch without a pull request runs it by hand
+# (workflow_dispatch).  On a pull request, report-decompiled runs only
+# where anything it reads changed against its base
+# (tools/ci/report-decompiled-needed); on a push to main and when run by
+# hand it always runs, main's full run the backstop for an input
+# missing from the script's list.
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   checks:
@@ -54,8 +60,8 @@ jobs:
     steps:
       # The pin audit.yml carries; moved by hand to match it.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        # The history, and origin/main, for a branch push's merge base
-        # with main (tools/ci/report-decompiled-needed).
+        # The history, for the pull request's base report-decompiled's
+        # guard compares against (tools/ci/report-decompiled-needed).
         with:
           fetch-depth: 0
       - run: >-
@@ -161,22 +167,17 @@ jobs:
         if: ${{ !cancelled() }}
       # Whether report-decompiled needs to run: whether anything it reads
       # changed (tools/ci/report-decompiled-needed) against a pull
-      # request's base or, for a branch's push, its merge base with
-      # main, which every push to main checks in full; a push to main
-      # always runs it.
+      # request's base.  Not run on a push to main or by hand, which run
+      # report-decompiled in full.
       - id: report-decompiled
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         env:
           PULL_BASE: ${{ github.event.pull_request.base.sha }}
-          MAIN_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: >-
-          if [ -n "$PULL_BASE" ]; then tools/ci/report-decompiled-needed "$PULL_BASE";
-          elif [ "$MAIN_PUSH" = true ]; then tools/ci/report-decompiled-needed;
-          else tools/ci/report-decompiled-needed --merge-base origin/main; fi
+        run: tools/ci/report-decompiled-needed "$PULL_BASE"
       # Without IMAGE, for every image: fails on a failed function, and
       # checks the documents' figures from each image's function check
       # against its report.  The images at once, as check-link's.  Run
-      # unless the step before found nothing it reads changed; skipped,
-      # the job still passes.
+      # unless the step before found nothing it reads changed, so also
+      # when that step did not run; skipped, the job still passes.
       - run: make -j"$(nproc)" report-decompiled IMAGE=
         if: ${{ !cancelled() && steps.report-decompiled.outputs.run != 'false' }}

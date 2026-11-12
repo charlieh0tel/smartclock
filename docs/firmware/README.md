@@ -2072,7 +2072,8 @@ report takes about as long on mc683xx as on Unicorn.
 ## The checks in CI
 
 `.github/workflows/firmware.yml` runs the firmware's checks for the
-four images on every push and pull request, a job of its own beside
+four images on every pull request and push to `main`, and when run by
+hand (`workflow_dispatch`), a job of its own beside
 the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
 `check-pforth-words`, `check-image-diff`, `check-chip-selects`,
@@ -2158,8 +2159,14 @@ that changes its code can change the figures.  clang-format is
 the C alike, and 18 formats three of the files otherwise.  Most of
 the job's time is `report-decompiled`'s.
 
-So `report-decompiled` runs only where anything it reads changed, but
-on a push to `main`, which runs every check.
+Not on a branch's own pushes: a branch with a pull request ran the job
+twice for each push, once for the push and once for the pull request,
+at once.  A branch without a pull request is checked only when run by
+hand, from the Actions tab or `gh workflow run firmware.yml --ref
+BRANCH`, or once a pull request is opened.
+
+So `report-decompiled` runs on a pull request only where anything it
+reads changed, but always on a push to `main` and when run by hand.
 `tools/ci/report-decompiled-needed BASE` decides, and holds the one
 list of what it reads: `third_party/firmware/`, the vendored gcc
 source of its libgcc (`third_party/gcc/`), `tools/firmware/`, whose
@@ -2168,13 +2175,13 @@ scripts pin their Python dependencies, this folder and the top
 which pins the toolchain and uv, and the script itself.  It prints
 `run=true` or `run=false`, to `$GITHUB_OUTPUT` too, and why; with
 nothing changed against `BASE`, the step is skipped, the job passes,
-and a notice says so.  The workflow passes a pull request's base, and
-for a branch's push `--merge-base origin/main`, the branch's merge base
-with `main`, which every push to `main` checks in full, so that a
-branch whose function check failed fails on every push until its
-inputs match `main`'s again; the checkout fetches the history for it.
-A push to `main` passes nothing, and runs it; so does a branch push
-whose merge base is not found.  A local run of CI, which replays the
+and a notice says so.  The workflow passes a pull request's base,
+whose history the checkout fetches; a base not found runs it.  A push
+to `main` and a run by hand skip the script and run `report-decompiled`
+in full: `main`'s full run is the backstop for an input missing from
+the list, and for what changed outside the repository since the pull
+request's run, the runner image, the archive's toolchain and the Python
+dependencies.  A local run of CI, which replays the
 workflow's steps, guards the step with the same script:
 
     tools/ci/report-decompiled-needed --merge-base origin/main | grep -qx run=false \

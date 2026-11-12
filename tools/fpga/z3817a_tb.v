@@ -94,6 +94,17 @@ module z3817a_tb;
     probe #(.NAME("CI.X"), .EACH(0)) probe_ci_x (.signal(fpga.CI_X), .reference(pps_p78), .report(probe_report));
     probe #(.NAME("P19"), .EACH(0)) probe_p19 (.signal(p19), .reference(1'b0), .report(probe_report));
     probe #(.NAME("P72"), .EACH(0)) probe_p72 (.signal(p72), .reference(1'b0), .report(probe_report));
+    // The sync field's nets: JF.Y, the pending sync; HE.Y and HE.X, the
+    // step lines of kinds 1 and 2; IF.Y, kind 3's restart.  Reported only
+    // by a run that writes the field (+sync), not by probe_report: the
+    // fast, three and select runs' references were made without these
+    // lines, and gating them keeps those references, and the figures the
+    // docs read from them, unchanged.
+    reg sync_report = 1'b0;
+    probe #(.NAME("JF.Y"), .EACH(0)) probe_jf_y (.signal(fpga.JF_Y), .reference(1'b0), .report(sync_report));
+    probe #(.NAME("HE.X"), .EACH(0)) probe_he_x (.signal(fpga.HE_X), .reference(1'b0), .report(sync_report));
+    probe #(.NAME("HE.Y"), .EACH(0)) probe_he_y (.signal(fpga.HE_Y), .reference(1'b0), .report(sync_report));
+    probe #(.NAME("IF.Y"), .EACH(0)) probe_if_y (.signal(fpga.IF_Y), .reference(gps_pps), .report(sync_report));
 
     always #(CLOCK_PERIOD / 2) clock = ~clock;
 
@@ -272,6 +283,7 @@ module z3817a_tb;
         end
         $display("rises: P78 %0d", rises);
         probe_report = 1'b1;
+        sync_report = sync_kind != 0;
         #1 $finish;
     end
 endmodule

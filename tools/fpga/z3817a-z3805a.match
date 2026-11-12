@@ -119,7 +119,7 @@ pair BH CF
 #
 # Not the Z3805A's, and so not paired:
 # - GB: its GB.Y is IJ.X, but GB.X is the Z3805A's IJ.Y ORed with HE.X,
-#   the kind 1 step, folded in ahead of the prescaler's step logic.
+#   the kind 2 step, folded in ahead of the prescaler's step logic.
 # - HC: the prescaler's step, the Z3805A's GK in another encoding,
 #   reading GB.X and HE.Y where GK reads IJ.Y and both step lines.
 # - GD and GE: the Z3805A's HH, split in two, GE ORing in IF.Y, so that

@@ -1,4 +1,4 @@
-"""Renders the illustrated explainer of the five SmartClock FPGA designs,
+"""Renders the illustrated explainer of the six SmartClock FPGA designs,
 fpga.html, into --output.  It is not committed: the top Makefile's `fpga`
 target writes it for GitHub Pages
 (https://charlieh0tel.github.io/smartclock/fpga.html), and
@@ -58,11 +58,17 @@ def facts():
             period=period, divide=ratio,
             tap=probe(f"{image}.three", design.tap)["after_min"]))
     out["z3805a_count"] = int(find("z3805a.three", r"less the preset (\d+) ticks")[0])
+    out["z3805a_low"] = int(find("z3805a.low", r"less the preset (\d+) ticks")[0])
+    out["z3817a_count"] = int(find("z3817a.three", r"less the preset (\d+) ticks")[0])
     out["z3815a_counts"] = [int(v) for v in find_all("z3815a.three", r"less the preset (\d+) ticks")]
     out["sync1"] = int(find("z3805a.sync1", r"^1\.\d+ s: count \w+, less the preset (\d+) ticks")[0])
     out["sync2"] = int(find("z3805a.sync2", r"^1\.\d+ s: count \w+, less the preset (\d+) ticks")[0])
     out["sync3_p83"] = find("z3805a.sync3", r"^([\d.]+) s: P83 rises$")[0]
     out["telecom_sync3"] = probe("z3815a.sync3", "P83/GPS")["after_min"]
+    out["z3817a_sync1"] = int(find("z3817a.sync1", r"^1\.\d+ s: count \w+, less the preset (\d+) ticks")[0])
+    out["z3817a_sync2"] = int(find("z3817a.sync2", r"^1\.\d+ s: count \w+, less the preset (\d+) ticks")[0])
+    out["z3817a_sync3_p78"] = find("z3817a.sync3", r"^([\d.]+) s: P78 rises$")[0]
+    out["z3817a_sync3"] = int(find("z3817a.sync3", r"less the preset (\d+) ticks")[0])
     out["p38"] = edge_periods("z3815a.freerun", "P38")
     out["p40"] = edge_periods("z3815a.freerun", "P40")
     lead = probe("z3815a.freerun", "LD.Y")
@@ -129,7 +135,8 @@ def diagram(f):
         f"({mark('read')} from the netlists).  The second row's frequencies are what the ratios imply, "
         f"{mark('inferred')}.  Dashed: the loop the telecom pair's phase "
         f"detector implies, {mark('inferred')}; no board has been probed.  The arrow from "
-        "the detector's side back to P53 is that loop, not a path inside the FPGA."
+        "the detector's side back to P53 is that loop, not a path inside the FPGA.  The Z3817A's "
+        "is the first row's, with P78 for P83 and a 32-bit count."
         "</figcaption>\n</figure>")
 
 
@@ -150,13 +157,13 @@ def designs_table(f):
     return ('<div class="wide" data-scroll="x"><table class="designs">\n<thead><tr>'
             "<th>Design</th><th>Firmware images</th><th>Logic blocks, I/O blocks, nets</th>"
             "<th>Clock buffers</th><th>Divide to the 1 PPS</th><th>Preset, status</th>"
-            "<th>Tap after P83</th><th>Trace</th>"
+            "<th>Tap after the internal 1 PPS</th><th>Trace</th>"
             "</tr></thead>\n<tbody>\n" + "\n".join(rows) + "\n</tbody></table></div>")
 
 
 def render(figures):
     f = facts()
-    z3805a, z3815a = f["designs"][0], f["designs"][3]
+    z3805a, z3815a, z3817a = f["designs"][0], f["designs"][3], f["designs"][5]
     counts = f["z3815a_counts"]
     fall = counts[0] - counts[1]
     alternate = f["alternate"]
@@ -169,7 +176,7 @@ def render(figures):
 <p class="eyebrow">SmartClock firmware &middot; FPGA</p>
 <h1>Inside the SmartClock FPGAs</h1>
 <p class="lede">The HP and Symmetricom SmartClock GPS receivers load a Xilinx XC3042
-FPGA from their firmware.  The seven firmware images carry five bitstreams.  Each is
+FPGA from their firmware.  The eight firmware images carry six bitstreams.  Each is
 decoded here into a netlist, run under Icarus Verilog, and traced through its logic.  This
 page is the short version, drawn from the same checked figures as the traces.</p>
 <p class="note">Nothing here has been checked on a board.  Every pin's role is read
@@ -179,7 +186,7 @@ Verilog and checked by <code>make check-readings</code>; {mark('inferred')}, rea
 from those; {mark('open')}, not established.</p>
 <nav><ol>
 <li><a href="#job">What the FPGA does</a></li>
-<li><a href="#designs">Five designs</a></li>
+<li><a href="#designs">Six designs</a></li>
 <li><a href="#count">The count</a></li>
 <li><a href="#families">Two families</a></li>
 <li><a href="#telecom">The telecom pair's second clock</a></li>
@@ -197,17 +204,18 @@ an internal 1 PPS, which leaves on P83.  The GPS engine's 1 PPS, on P82, starts 
 count, and a tap of the divider stops it.  The firmware reads the count through an
 eight-bit register port, with an external interpolator's byte for the fraction of a
 clock, and steers the oscillator to hold the interval steady
-({link('docs/firmware/counter.md', 'counter.md')}).</p>
+({link('docs/firmware/counter.md', 'counter.md')}).  The Z3817A's differs: its internal 1 PPS
+leaves on P78, its count is 32 bits, and it has no interpolator.</p>
 {diagram(f)}
 </section>""")
 
     sections.append(f"""<section id="designs">
-<h2>Five designs</h2>
+<h2>Six designs</h2>
 <p>The sizes are each decode's ({mark('read')}, <code>tools/fpga/ref/&lt;image&gt;.stats</code>).
 The divide, the preset and status reads and the tap are {mark('simulated')}: the divide is
-P83's printed period over the testbench's 100 ns GCLK, and the tap is the stop net's
-rise after P83 (each design's <code>check-readings-&lt;image&gt;.three</code> and
-<code>.fast</code> runs).  Each design's name links to its detailed logic diagram on
+the internal 1 PPS's printed period, on P83, or P78 in the Z3817A, over the testbench's
+100 ns GCLK, and the tap is the stop net's rise after it (each design's
+<code>check-readings-&lt;image&gt;.three</code> and <code>.fast</code> runs).  Each design's name links to its detailed logic diagram on
 <a href="fpga-detail.html">FPGA detail</a>.</p>
 {designs_table(f)}
 <p>The front door, {link('docs/firmware/fpga-comparison.md', 'fpga-comparison.md')},
@@ -217,12 +225,13 @@ bitstream is shared byte for byte.</p>
 
     sections.append(f"""<section id="count">
 <h2>The count</h2>
-<p>All five count the same way ({mark('read')}).  Bit 0 is a GCLK toggle gated by the
+<p>All six count the same way ({mark('read')}).  Bit 0 is a GCLK toggle gated by the
 start and stop, and bit 1 is a single flip-flop.  Bits 2 to 23 are eleven two-bit
 Johnson stages, each clocked by the one before on its falling edge.  That makes a ripple
 counter with no carry net.  The preset resets every stage, and the read port then gives
-<code>0x{z3805a['preset']}</code> in all five designs ({mark('simulated')}).  The read is linear:
-<code>0x555555</code> plus the ticks counted, modulo 2<sup>24</sup>.</p>
+<code>0x{z3805a['preset']}</code> in five of the designs ({mark('simulated')}).  The read is linear:
+<code>0x555555</code> plus the ticks counted, modulo 2<sup>24</sup>.  The Z3817A's count has
+fifteen stages, 32 bits, and reads <code>0x{z3817a['preset']}</code> under the preset.</p>
 <p>The firmware reads the 24 bits as six nibbles at addresses <code>0x12</code> to
 <code>0x17</code>, the interpolator's byte complemented at <code>0x10</code> and
 <code>0x11</code>, and the status at <code>0x00</code>: the stop bit in bit 0, the start bit in
@@ -240,6 +249,18 @@ divide it by {num(z3805a['divide'])} ({mark('simulated')}).  The stop tap comes
 {num(z3805a['tap'])} ns after P83, four tenths of the second, in the Z3805A and the
 58503A/Z3801A, and {num(f['designs'][2]['tap'])} ns after it in the 58503B, whose P83 comes a
 register later.</p>
+<p>The Z3817A is a sixth design of this family.  Its bitstream differs from each of the
+others in most of its bytes and puts its blocks in other tiles, but most of its divider,
+stop and sync blocks are the Z3805A's, block for block, as functions ({mark('read')}, checked
+by <code>check-blocks</code>), and it divides by {num(z3817a['divide'])} with its tap
+{num(z3817a['tap'])} ns after its internal 1 PPS on P78 ({mark('simulated')}).  It has no
+interpolator: no input byte, no start pulse out and no reference bit, so its count opens
+on the first clock edge after the 1 PPS and resolves one clock, 100 ns at the 10 MHz its
+divide implies ({mark('inferred')}).  In its three-second run each reading is
+{num(f['z3817a_count'])} ticks over the preset, and the Z3805A's with its reference bit Low
+{num(f['z3805a_low'])} ({mark('simulated')},
+<code>check-readings-z3817a.three</code>, <code>check-readings-z3805a.low</code>).  A fifth
+register starts the count from P84 instead of P82.</p>
 <p>The Z3815A and the Z3816A are a different design family.  They take P53 into the
 alternate clock buffer, ACLK, and halve it into GCLK.  An ACLK prescaler gives one GCLK
 tick in 6144 ({mark('read')}), and a GCLK chain divides that by 1600, which is
@@ -316,14 +337,21 @@ and the rest).</p>
 divider's prescaler and leave the 1 PPS alone.  Kind 3 makes the GPS 1 PPS itself the
 internal 1 PPS: P83 rises {f['telecom_sync3']} ns after it ({mark('simulated')},
 <code>check-readings-z3815a.sync3</code>).</p>
+<p>The Z3817A takes something from each.  Its kinds 1 and 2 are the Z3805A's: the count
+after them reads {num(f['z3817a_sync1'])} and {num(f['z3817a_sync2'])} ticks, against its
+{num(f['z3817a_count'])}.  Its kind 3 restarts the divider as the Z3805A's does, but the
+restart is itself an internal 1 PPS, as in the telecom pair: P78 rises at
+{f['z3817a_sync3_p78']} s, just after the GPS 1 PPS at 0.25 s, and the count reads
+{num(f['z3817a_sync3'])} ({mark('simulated')}, <code>check-readings-z3817a.sync1</code> to
+<code>.sync3</code>).</p>
 </section>""")
 
     times = " and ".join(f"{t} s" for _, t in alternate)
     sections.append(f"""<section id="outputs">
 <h2>Other outputs</h2>
 <ul>
-<li>P16 passes the GPS 1 PPS straight through in all five, and P2 is tied Low in all five
-({mark('read')}).</li>
+<li>P16 passes the GPS 1 PPS straight through in all six, and P2 is tied Low in all but the
+Z3817A, which does not drive it ({mark('read')}).</li>
 <li>The 58503B, the Z3815A and the Z3816A each have pins that pulse on alternate seconds,
 set by a toggle of the internal 1 PPS whose phase register 2's bit 0 sets
 ({mark('read')}).  In a four-second free run the Z3815A's P14 goes Low for
@@ -347,7 +375,7 @@ third-party viewer, Arisotura's XC3000 viewer
 (<a href="https://github.com/Arisotura/xc3000">github.com/Arisotura/xc3000</a>), pinned to
 commit <code>{f['commit'][:7]}</code>.  The viewer's faults that Xilinx XACT's own designs
 exposed are corrected in <code>tools/fpga/netdump.js</code>, and the decode is checked against
-the routed test designs XACT made.  At the viewer's upstream pull request #3 the five designs
+the routed test designs XACT made.  At the viewer's upstream pull request #3 the six designs
 decode to the same netlists as at the pin, and the test designs agree with XACT there too.</p>
 <p>The decode becomes structural Verilog over models of the XC3000's logic and I/O blocks,
 written from the data sheet.  The models give every block the same 1 ns delay: they model
@@ -377,7 +405,7 @@ figures (<code>tools/fpga/explainer.py</code>).</p>
 <footer>Generated by <code>tools/fpga/explainer.py</code> from the checked references in
 <code>tools/fpga/ref</code> and the waveforms <code>tools/fpga/vcd_wave.py</code> draws.</footer>"""
     return document("Inside the SmartClock FPGAs",
-                    "The five SmartClock XC3042 FPGA designs, decoded, simulated and compared.",
+                    "The six SmartClock XC3042 FPGA designs, decoded, simulated and compared.",
                     STYLE, "explainer.py", "fpga", body)
 
 

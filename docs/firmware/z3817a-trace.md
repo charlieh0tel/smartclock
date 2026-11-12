@@ -110,6 +110,15 @@ A read drives all eight bits (**read**):
   flags of the 1 PPS chain (below); with it set, CG.X, the count's
   other read multiplexer.
 
+(**read**) The blocks that drive the bus: BK.Y puts bit 0 on P71,
+`EJ.X ? DH.Y : CI.X`, and BK.X bit 1 on P70, `EJ.X ? DH.Y : BI.X`,
+EJ.X the address's bit 4; FK.Y bit 2 on P67, `EJ.X ? CG.X : FI.X`, and
+FK.X bit 3 on P65, `EJ.X ? CG.X : GJ.X`; IH, II, IJ and IK bits 4 to 7
+on P62, P60, P59 and P58, each `FJ.Y ?` a P84 counter bit `:` a
+seconds bit, FJ.Y the address's bit 0.  DH and CG select, on DJ, the
+address's bits 2 and 3, among BF, BG, CC, CE, CF, CJ, CK and DC,
+combinational terms over the stages' read outputs and DD and DF.
+
 ## The count
 
 (**read**) A 32-bit count:
@@ -314,6 +323,10 @@ writes is not traced.
 
 (**read**, periods **simulated** in `z3817a.three`)
 
+- P78, the internal 1 PPS, is FI.Y registered on GCLK in its I/O
+  block: `FI.Y = FD.Y + GE.X`, where FD, on GCLK, sets on GE.X, the
+  terminal count, and holds until FA.Y, FC.X and GA.X, states of the
+  six-bit counter, are High together.
 - P16 is P82 passed through, unregistered, with fast slew, as in the
   Z3805A.
 - P19 is EE.Y, a counter's bit, GCLK / 65: 6500 ns, High 3200 ns.  The

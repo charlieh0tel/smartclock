@@ -27,8 +27,8 @@ trees, and how far each image is covered, at
   models ([the board atlas](https://charlieh0tel.github.io/smartclock/board-atlas.html)),
   and drawn as blocks
   ([the block diagram](https://charlieh0tel.github.io/smartclock/block-diagram.html)).
-- **[FPGAs](docs/firmware/fpga-comparison.md):** the five FPGA
-  designs in seven of the images, decoded from their bitstreams, simulated,
+- **[FPGAs](docs/firmware/fpga-comparison.md):** the six FPGA
+  designs in eight of the images, decoded from their bitstreams, simulated,
   traced and compared
   ([illustrated](https://charlieh0tel.github.io/smartclock/fpga.html),
   [in detail](https://charlieh0tel.github.io/smartclock/fpga-detail.html)).
@@ -245,8 +245,8 @@ inside its own frame.
 | [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3815a-4010.md`](docs/firmware/z3815a-4010.md) | the Z3815A 4010 against the 58503A 3704 and the Z3805A 3543B, and its rewrite |
 | [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
-| [`docs/firmware/fpga-comparison.md`](docs/firmware/fpga-comparison.md) | the five FPGA designs seven of the images load, decoded from their bitstreams, simulated and compared; each design's trace beside it |
-| [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html) | the five FPGA designs illustrated: the count, the two families, the telecom pair's phase detector and what of P7 reaches the firmware, with waveforms from the simulations; built by `make fpga` and checked by `check-explainer` |
+| [`docs/firmware/fpga-comparison.md`](docs/firmware/fpga-comparison.md) | the six FPGA designs eight of the images load, decoded from their bitstreams, simulated and compared; each design's trace beside it |
+| [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html) | the six FPGA designs illustrated: the count, the two families, the telecom pair's phase detector and what of P7 reaches the firmware, with waveforms from the simulations; built by `make fpga` and checked by `check-explainer` |
 | [`fpga-detail.html`](https://charlieh0tel.github.io/smartclock/fpga-detail.html) | each FPGA design drawn twice by one generator: the whole chip, its pins on the frame and its function blocks in the signal's flow, the counters with their moduli and the nets between them named; and the time-interval counter gate by gate, each logic block with its equations; every element listed below with its trace's confidence word and section; a click opens a drawing full screen at its own scale to pan and zoom; pins, equations and connections read from the decoded netlists; built by `make fpga-detail` and checked by `check-detail` |
 | [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles, and the FFOM its start-up gives |
 | [`board-atlas.html`](https://charlieh0tel.github.io/smartclock/board-atlas.html) | the first-family main board, part by part on its photographs: each part's role, its address or QSPI device, the nets measured, and the Z3801A's and 58503A's boards against it; a ring or a row opens the part's card, the photos zoom and pan, the parts filter by subsystem, confidence or text, and `#J4` links to a part; built from `docs/board-atlas.json` by `make board-atlas` |

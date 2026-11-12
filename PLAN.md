@@ -171,7 +171,12 @@ not seen.
 The error queue (`:SYSTem:ERRor?` removes what it returns; a full queue
 discards the newest, 5-31) and the diagnostic log (222 entries, then it
 stops recording) are lost unread, so the daemon journals both, under
-the receiver that wrote them.  The journal runs on the thread that owns
+the receiver that wrote them.  A poll's refusal never reaches the
+queue's drain, since the session reads its entry to explain it, so the
+log thread writes each code a receiver gives each query to
+`receiver_error` once, with the query: once, because a stub refused
+every pass would otherwise bury the queue's own entries, and a
+restart does not repeat it.  The journal runs on the thread that owns
 the database, since a channel between reading an entry and writing it
 is a gap a shutdown can lose it in, and starts afresh on each
 attachment.  `--adopt-log` erases the receiver's log once copied, so it

@@ -263,7 +263,7 @@ fn a_query_refused_on_its_own_costs_only_its_own_field() {
             vec![FieldFailure {
                 scpi: oven_current.to_owned(),
                 code: Some(-113),
-                error: "receiver error -113: Undefined header".to_owned(),
+                message: "Undefined header".to_owned(),
             }],
             "{dialect:?}"
         );

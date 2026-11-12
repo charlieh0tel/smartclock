@@ -23,6 +23,7 @@ use crate::journal::Journal;
 use crate::journal::LOST_TO_OVERFLOW;
 use crate::server::Policy;
 
+use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -51,6 +52,7 @@ use smartclock::device::Device;
 use smartclock::session::Config;
 use smartclock::snapshot::Freshness;
 use smartclock::snapshot::Snapshot;
+use smartclock::snapshot::Tier;
 use smartclock::task;
 use smartclock::task::Cadence;
 use smartclock::task::DeviceTask;
@@ -849,6 +851,10 @@ struct Recorder {
     /// whether it has changed since it was last recorded, which
     /// outlives this process.
     alarm_seeded: bool,
+    /// The refused poll queries already in the log, by receiver row,
+    /// query and code, so the database is asked about each once per run
+    /// rather than with every snapshot that names it.
+    refusals: HashSet<(Option<i64>, String, i32)>,
 }
 
 impl Recorder {
@@ -867,6 +873,7 @@ impl Recorder {
             last_at: None,
             failed_open: None,
             alarm_seeded: false,
+            refusals: HashSet::new(),
         };
         if let Some(log) = log {
             recorder.adopt(log);
@@ -887,6 +894,7 @@ impl Recorder {
             last_at: None,
             failed_open: None,
             alarm_seeded: false,
+            refusals: HashSet::new(),
         };
         recorder.adopt(log);
         recorder
@@ -1101,6 +1109,35 @@ impl Recorder {
             Ok(_) => self.last_at = Some(snapshot.at),
             Err(e) => eprintln!("smartclockd: could not record a snapshot: {e}"),
         }
+        record_refusals(log, &mut self.refusals, snapshot);
+    }
+}
+
+/// Record each query the receiver refused with a code, the first time
+/// it does (`db::Log::record_refusal`), and say so in the journal.
+fn record_refusals(
+    log: &mut db::Log,
+    seen: &mut HashSet<(Option<i64>, String, i32)>,
+    snapshot: &Snapshot,
+) {
+    let receiver = log.current_receiver();
+    let refused = Tier::ALL
+        .into_iter()
+        .flat_map(|tier| &snapshot.polled.get(tier).failed)
+        .filter_map(|f| f.code.map(|code| (f, code)));
+    for (failure, code) in refused {
+        if !seen.insert((receiver, failure.scpi.clone(), code)) {
+            continue;
+        }
+        match log.record_refusal(&failure.scpi, code, &failure.message) {
+            Ok(true) => eprintln!("smartclockd: the receiver refused {failure}"),
+            Ok(false) => {}
+            Err(e) => {
+                // Asked again with the next snapshot that names it.
+                seen.remove(&(receiver, failure.scpi.clone(), code));
+                eprintln!("smartclockd: could not record a refusal: {e}");
+            }
+        }
     }
 }
 
@@ -1184,14 +1221,17 @@ mod tests {
     use smartclock::device::Device;
     use smartclock::session::Config;
     use smartclock::session::Session;
+    use smartclock::snapshot::FieldFailure;
     use smartclock::snapshot::Freshness;
     use smartclock::snapshot::Snapshot;
+    use smartclock::snapshot::Tier;
     use smartclock::task;
     use smartclock::task::Cadence;
     use smartclock::types::AlarmCondition;
     use smartclock_log::timestamp::Stored;
     use smartclock_sim::receiver::Receiver;
     use smartclock_sim::transport::SimTransport;
+    use std::collections::HashSet;
     use std::sync::mpsc::channel;
     use std::time::Duration;
 
@@ -1225,6 +1265,7 @@ mod tests {
             last_at: None,
             failed_open: None,
             alarm_seeded: false,
+            refusals: HashSet::new(),
         };
         let snapshot = |identity: &str| {
             let mut snapshot = Snapshot::new(jiff::Timestamp::now());
@@ -1321,6 +1362,42 @@ mod tests {
             .last_alarm(b)
             .expect("read the alarm");
         assert_eq!(last, Some(0));
+    }
+
+    #[test]
+    fn a_refused_poll_reaches_the_error_table_once() {
+        // The session reads the queue to explain a refusal, so the
+        // journal's drain never sees it; without this a stub refused on
+        // every pass showed only in last_error.
+        let scratch = Scratch::new("refused");
+        let mut recorder = Recorder::fixed(db::Log::open(scratch.path()).expect("open"));
+        let start: jiff::Timestamp = "2026-11-11T00:00:00Z".parse().expect("a time");
+        for second in 0..3 {
+            let mut snapshot = Snapshot::new(start + jiff::SignedDuration::from_secs(second));
+            snapshot.freshness = Freshness::Live;
+            snapshot.receiver = Some("HEWLETT-PACKARD,Z3815A,A,4010-A".to_owned());
+            snapshot.polled.field_failed(
+                Tier::Medium,
+                FieldFailure {
+                    scpi: ":DIAGnostic:ROSCillator:CURRent?".to_owned(),
+                    code: Some(-113),
+                    message: "Undefined header".to_owned(),
+                },
+            );
+            // No code, so nothing the error table could hold.
+            snapshot.polled.field_failed(
+                Tier::Medium,
+                FieldFailure {
+                    scpi: ":LED:ALARm?".to_owned(),
+                    code: None,
+                    message: "the queue overflowed".to_owned(),
+                },
+            );
+            recorder.write(&snapshot);
+        }
+        let log = recorder.log.as_ref().expect("a log");
+        assert_eq!(log.count().expect("snapshots"), 3);
+        assert_eq!(log.journal_counts().expect("errors").0, 1);
     }
 
     #[test]

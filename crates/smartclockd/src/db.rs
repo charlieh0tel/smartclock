@@ -123,6 +123,10 @@ impl Log {
                     .execute_batch(&format!("ALTER TABLE snapshot ADD COLUMN {column} {kind}"))?;
             }
         }
+        if !self.has_column("receiver_error", "scpi")? {
+            self.conn
+                .execute_batch("ALTER TABLE receiver_error ADD COLUMN scpi TEXT")?;
+        }
         if !self.has_column("receiver", "gps_engine")? {
             self.conn
                 .execute_batch("ALTER TABLE receiver ADD COLUMN gps_engine TEXT")?;
@@ -607,6 +611,35 @@ impl Log {
         Ok(())
     }
 
+    /// Record a poll query the receiver refused, unless this receiver
+    /// has refused that query with that code before, and say whether
+    /// it was written.
+    ///
+    /// The session takes the refusal's entry off the queue to explain
+    /// it, so the drain never sees it, and a stub refused on every
+    /// pass would otherwise show only as the snapshot's `last_error`,
+    /// overwritten by the next.  Once per query and code, not per
+    /// pass: what is worth keeping is that it refuses, and a row a
+    /// pass would bury the queue's own entries.
+    pub(crate) fn record_refusal(&mut self, scpi: &str, code: i32, message: &str) -> Result<bool> {
+        let written = self.conn.execute(
+            "INSERT INTO receiver_error (at, code, message, receiver_id, scpi)
+             SELECT ?1, ?2, ?3, ?4, ?5
+             WHERE NOT EXISTS (
+                 SELECT 1 FROM receiver_error
+                 WHERE receiver_id IS ?4 AND scpi = ?5 AND code = ?2
+             )",
+            params![
+                Stored(jiff::Timestamp::now()),
+                code,
+                message,
+                self.current,
+                scpi
+            ],
+        )?;
+        Ok(written > 0)
+    }
+
     /// The alarm as last recorded for one receiver, if ever.
     ///
     /// Read at startup so a restart does not write a row saying the
@@ -966,7 +999,7 @@ mod tests {
     }
 
     #[test]
-    fn a_schema_12_log_gains_the_reference_columns_and_keeps_its_rows() {
+    fn a_schema_12_log_gains_the_schema_13_columns_and_keeps_its_rows() {
         // A log of the schema before them, rows and all: made current,
         // then taken back to 12 by dropping what 13 added.
         let scratch = Scratch::new("reference");
@@ -984,6 +1017,9 @@ mod tests {
                 .expect("drop a schema 13 column");
         }
         log.conn
+            .execute_batch("ALTER TABLE receiver_error DROP COLUMN scpi")
+            .expect("drop the refusals' query");
+        log.conn
             .execute_batch("UPDATE meta SET value = '12' WHERE key = 'schema'")
             .expect("stamp it 12");
         drop(log);
@@ -996,6 +1032,10 @@ mod tests {
             })
             .expect("the stamp");
         assert_eq!(version, VERSION.to_string());
+        assert!(
+            log.has_column("receiver_error", "scpi")
+                .expect("read the columns")
+        );
         let mut fed = Snapshot::new(at("2026-11-11T00:00:00Z"));
         fed.freshness = Freshness::Live;
         fed.reference = Some(ReferenceStatus {
@@ -1300,6 +1340,71 @@ mod tests {
             )
             .expect("read the firmware");
         assert_eq!(firmware, "3714-C");
+    }
+
+    #[test]
+    fn a_refused_query_is_recorded_once_per_code_and_receiver() {
+        let scratch = Scratch::new("refusals");
+        let path = scratch.path();
+        let mut log = Log::open(path).expect("open");
+        log.note_receiver("HEWLETT-PACKARD,Z3815A,A,4010-A")
+            .expect("note the receiver");
+        let current = ":DIAGnostic:ROSCillator:CURRent?";
+        assert!(
+            log.record_refusal(current, -113, "Undefined header")
+                .expect("first")
+        );
+        assert!(
+            !log.record_refusal(current, -113, "Undefined header")
+                .expect("again")
+        );
+        // Another code from the same query is news, and so is the same
+        // code from another query.
+        assert!(
+            log.record_refusal(current, -100, "Command error")
+                .expect("code")
+        );
+        assert!(
+            log.record_refusal(":LED:ALARm?", -113, "Undefined header")
+                .expect("query")
+        );
+        // An entry drained from the queue is not one of these, and does
+        // not stand in for one.
+        log.record_error(-113, "Undefined header").expect("drained");
+        drop(log);
+        // Nor does a restart forget what was recorded.
+        let mut log = Log::open(path).expect("reopen");
+        log.note_receiver("HEWLETT-PACKARD,Z3815A,A,4010-A")
+            .expect("note the receiver again");
+        assert!(
+            !log.record_refusal(current, -113, "Undefined header")
+                .expect("restarted")
+        );
+        // Another unit refusing it is its own record.
+        log.note_receiver("HEWLETT-PACKARD,Z3815A,B,4010-A")
+            .expect("note another receiver");
+        assert!(
+            log.record_refusal(current, -113, "Undefined header")
+                .expect("other unit")
+        );
+        let rows: Vec<(Option<String>, i64)> = log
+            .conn
+            .prepare("SELECT scpi, code FROM receiver_error ORDER BY id")
+            .expect("prepare")
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+            .expect("query")
+            .collect::<std::result::Result<_, _>>()
+            .expect("collect");
+        assert_eq!(
+            rows,
+            vec![
+                (Some(current.to_owned()), -113),
+                (Some(current.to_owned()), -100),
+                (Some(":LED:ALARm?".to_owned()), -113),
+                (None, -113),
+                (Some(current.to_owned()), -113),
+            ]
+        );
     }
 
     #[test]

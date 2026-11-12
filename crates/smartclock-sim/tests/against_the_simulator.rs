@@ -275,6 +275,40 @@ fn a_query_refused_on_its_own_costs_only_its_own_field() {
 }
 
 #[test]
+fn a_z3817a_is_not_asked_what_its_lists_leave_out() {
+    // Its lists are binding, and leave out the oven current its
+    // firmware answers -113.  Asked anyway, it would cost two round
+    // trips and a queued error on every medium pass.
+    let mut device = device(Receiver::z3817a());
+    let mut snapshot = Snapshot::new(jiff::Timestamp::now());
+    for tier in Tier::ALL {
+        device
+            .poll(tier, &mut snapshot, jiff::Timestamp::now())
+            .unwrap_or_else(|e| panic!("polling {tier:?}: {e}"));
+    }
+    for tier in Tier::ALL {
+        assert!(
+            snapshot.polled.get(tier).failed.is_empty(),
+            "{tier:?} asked something refused: {:?}",
+            snapshot.polled.get(tier).failed
+        );
+    }
+    // Asked directly, it is absent without reaching the receiver.
+    assert_eq!(device.oven_current().expect("not an error"), None);
+    let queue = device
+        .session()
+        .query(":SYSTem:ERRor?")
+        .expect("read the error queue");
+    assert_eq!(queue.lines, vec!["+0,\"No error\"".to_owned()]);
+    assert_eq!(snapshot.oven_current, None);
+    assert!(snapshot.efc_dac.is_some());
+    assert!(snapshot.operation.is_some());
+    assert!(snapshot.holdover_duration.is_some());
+    assert!(snapshot.oven_tempco.is_some());
+    assert_eq!(snapshot.freshness, Freshness::Live);
+}
+
+#[test]
 fn the_powerup_register_is_read_on_the_slow_tier() {
     // Its three bits are set during startup and then stay, so it does
     // not belong on the tier that is short of wire time.

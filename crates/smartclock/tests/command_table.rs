@@ -2,6 +2,7 @@
 
 use std::collections::HashSet;
 
+use smartclock::command::COMPLETE_MODELS;
 use smartclock::command::Class;
 use smartclock::command::CommandId;
 use smartclock::command::Dialect;
@@ -226,6 +227,21 @@ fn the_commands_that_can_strand_the_link_are_marked_dangerous() {
         ":SYSTem:LANGuage",
     ] {
         assert!(dangerous.contains(expected), "{expected} is not dangerous");
+    }
+}
+
+#[test]
+fn every_model_whose_lists_bind_is_named_somewhere() {
+    // A model in COMPLETE_MODELS named by no entry would be asked
+    // nothing at all; a typo there must not starve a receiver.
+    for model in COMPLETE_MODELS {
+        assert!(
+            DIALECTS
+                .iter()
+                .flat_map(|d| d.specs())
+                .any(|s| s.models.contains(&model)),
+            "{model} binds but no entry names it"
+        );
     }
 }
 

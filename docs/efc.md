@@ -184,6 +184,10 @@ fitting EFC against current.  The agreement in size was a coincidence
 of units; the sign is that of the oven current's coupling to the EFC,
 not of temperature's.
 
+A Z3817A answers 0.  It has no oven-current channel to scale --
+`:DIAGnostic:ROSCillator:CURRent?` is a stub answering -113 there --
+so the term contributes nothing; the daemon logs the 0 all the same.
+
 ### The regression
 
 If this 58503A applied that term as the Z3816A image does, the DAC

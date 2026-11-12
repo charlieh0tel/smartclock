@@ -62,11 +62,13 @@ struct Dialect {
 #[derive(Deserialize)]
 struct Table {
     schema: u32,
+    /// Models whose `models` lists are binding.
+    complete: Vec<String>,
     command: Vec<Command>,
 }
 
 /// The schema version this build script understands.
-const SCHEMA: u32 = 4;
+const SCHEMA: u32 = 5;
 
 fn variant(id: &str) -> String {
     id.split('_')
@@ -226,7 +228,8 @@ fn main() {
         "    /// Name of the parser that reads the reply.\n    pub response: &'static str,\n",
     );
     out.push_str(
-        "    /// Receivers exposing this command.\n    pub models: &'static [&'static str],\n",
+        "    /// Receivers exposing this command; binding for a model in\n\
+         \x20   /// [`COMPLETE_MODELS`].\n    pub models: &'static [&'static str],\n",
     );
     out.push_str("    /// Manual and page the entry came from.\n    pub cite: &'static str,\n");
     out.push_str("    /// How far the entry has been confirmed.\n    pub evidence: Evidence,\n");
@@ -307,6 +310,22 @@ fn main() {
         }
         out.push_str("];\n\n");
     }
+
+    let complete = table
+        .complete
+        .iter()
+        .map(|m| format!("{m:?}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    out.push_str(
+        "/// Models whose lists name every command asked of them, so a\n\
+         /// command that leaves one out is not asked of it.\n",
+    );
+    let _ = writeln!(
+        out,
+        "pub const COMPLETE_MODELS: [&str; {}] = [{complete}];\n",
+        table.complete.len()
+    );
 
     out.push_str("impl Dialect {\n");
     out.push_str("    /// The name this tree goes by in the command table.\n");

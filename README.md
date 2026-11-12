@@ -1,8 +1,8 @@
 # smartclock
 
 **smartclock**: the HP / Agilent / Symmetricom SmartClock GPS time and
-frequency receivers (58503A/B, 59551A, Z3801A, Z3805A, Z3815A, Z3816A),
-taken apart and documented.
+frequency receivers (58503A/B, 59551A, Z3801A, Z3805A, Z3815A, Z3816A,
+Z3817A), taken apart and documented.
 
 **Docs site:** the FPGA explainer and detailed diagrams, the board atlas
 and block diagram, the loop analysis, the pForth words and the SCPI
@@ -99,6 +99,7 @@ in SCPI.
 | 58503A | yes | Primary development target; its 3704 firmware in C |
 | Z3801A | yes | Different response formats; its 3543 firmware in C |
 | Z3805A | yes | Answers as the Z3801A; its 3543B firmware in C |
+| Z3817A | yes | Answers as the Z3801A, less the stubs its 3752 firmware answers -113 |
 | 58503B | no; may work | Firmware studied |
 | 59551A | no; may work | No commands for its pulse output or time tags |
 | Z3816A | no; may work | Firmware studied |

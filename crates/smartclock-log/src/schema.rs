@@ -3,6 +3,7 @@
 use rusqlite::Connection;
 use smartclock::command::CommandId;
 use smartclock::device::dialect_for;
+use smartclock::device::spec_for;
 use smartclock::snapshot::Tier;
 
 /// Bumped when the tables change shape, or what a column holds.
@@ -319,14 +320,14 @@ pub const PLOTTABLE: [(&str, Tier, CommandId); 11] = [
     ),
 ];
 
-/// The columns a unit of `model` measures: those its command tree has
-/// a command for.  A column it cannot read is only ever empty, so a
-/// view leaves it out rather than draw a chart of nothing.
+/// The columns a unit of `model` measures: those it is asked the
+/// command for ([`spec_for`]).  A column it cannot read is only ever
+/// empty, so a view leaves it out rather than draw a chart of nothing.
 pub fn measured(model: &str) -> Vec<&'static str> {
     let dialect = dialect_for(model);
     PLOTTABLE
         .iter()
-        .filter(|(_, _, command)| dialect.spec(*command).is_some())
+        .filter(|(_, _, command)| spec_for(dialect, model, *command).is_some())
         .map(|(column, _, _)| *column)
         .collect()
 }
@@ -346,6 +347,12 @@ mod tests {
         assert!(!z3805.contains(&"temperature_c"), "{z3805:?}");
         assert!(z3805.contains(&"time_interval_s"), "{z3805:?}");
         assert!(measured("58503A").contains(&"temperature_c"));
+        // Its tree has an oven-current keyword, but the handler is a
+        // stub, and its binding lists leave it out.
+        let z3817 = measured("Z3817A");
+        assert!(!z3817.contains(&"oven_current"), "{z3817:?}");
+        assert!(z3817.contains(&"efc_dac"), "{z3817:?}");
+        assert!(measured("Z3805A").contains(&"oven_current"));
     }
 
     #[test]

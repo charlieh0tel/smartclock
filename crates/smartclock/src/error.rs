@@ -106,6 +106,20 @@ pub enum Error {
         operation: CommandId,
     },
 
+    /// The dialect has a spelling, but the command table's list for it
+    /// leaves out this model, whose lists are binding
+    /// ([`COMPLETE_MODELS`]).  Like `Unsupported`, nothing reached the
+    /// receiver.
+    ///
+    /// [`COMPLETE_MODELS`]: crate::command::COMPLETE_MODELS
+    #[error("the command table does not list {operation:?} for the {model}")]
+    NotListed {
+        /// The model as `*IDN?` gave it.
+        model: String,
+        /// The operation it is not asked.
+        operation: CommandId,
+    },
+
     /// A daemon refused a request, or answered with something this
     /// client could not use.  Carries the daemon's own words.
     #[error("the daemon said: {0}")]

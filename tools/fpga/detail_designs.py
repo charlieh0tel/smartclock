@@ -175,13 +175,13 @@ STOP_PIPELINE, BOTH_ENDS, UNCOUNTED_START = 4, 1, 2
 # Each figure a line can name: a function of the design, reading its
 # checked reference.
 FIGURES = {
-    "divide": lambda d: num(divide(d.image)[1]),
-    "p83_period": lambda d: num(divide(d.image)[0]),
+    "divide": lambda d: num(divide(d)[1]),
+    "pps_period": lambda d: num(divide(d)[0]),
     "tap": lambda d: num(probe(f"{d.image}.three", d.tap)["after_min"]),
-    "preset": lambda d: find(f"{d.image}.fast", r"the count reads ([0-9a-f]{6})$")[0],
+    "preset": lambda d: find(f"{d.image}.fast", r"the count reads ([0-9a-f]+)$")[0],
     "status": lambda d: find(f"{d.image}.fast", r"^[\d.]+ s: status ([0-9a-f]{2})$")[0],
     "loads": lambda d: {net: num(n) for net, n in stats(d.image)["clock_loads"].items()},
-    "p83_high": lambda d: num(ns(find(f"{d.image}.three", r"P83 falls, ([\d.]+) ns high")[0])),
+    "pps_high": lambda d: num(ns(find(f"{d.image}.three", rf"{d.pps} falls, ([\d.]+) ns high")[0])),
     "p83_high_probe": lambda d: num(probe(f"{d.image}.three", "P83")["high_min"]),
     "p20_lead": lambda d: num(probe(f"{d.image}.three", "P83")["after_min"]),
     "count": lambda d: first_count(f"{d.image}.three"),
@@ -194,13 +194,13 @@ FIGURES = {
     "gf_y": lambda d: period(f"{d.image}.three", "GF.Y"),
     "sync1": lambda d: sync_count(f"{d.image}.sync1"),
     "sync2": lambda d: sync_count(f"{d.image}.sync2"),
-    "sync3_p83": lambda d: find(f"{d.image}.sync3", r"^([\d.]+) s: P83 rises$")[0],
+    "sync3_pps": lambda d: find(f"{d.image}.sync3", rf"^([\d.]+) s: {d.pps} rises$")[0],
     "sync3_after": lambda d: num(probe(f"{d.image}.sync3", "P83/GPS")["after_min"]),
     "p19_period": lambda d: period(f"{d.image}.fast", "P19"),
     "p19_divide": lambda d: num(probe(f"{d.image}.fast", "P19")["period_min"] // GCLK_NS),
     "aclk_halved": lambda d: period(f"{d.image}.freerun", "AB.Y"),
     "prescale": lambda d: num(edges_one(f"{d.image}.freerun", "P40") // GCLK_NS),
-    "chain": lambda d: num(divide(d.image)[1] * GCLK_NS // edges_one(f"{d.image}.freerun", "P40")),
+    "chain": lambda d: num(divide(d)[1] * GCLK_NS // edges_one(f"{d.image}.freerun", "P40")),
     "p7_divide": lambda d: num(edges_one(f"{d.image}.freerun", "P38") // GCLK_NS),
     "p38": lambda d: edges(f"{d.image}.freerun", "P38"),
     "p40": lambda d: edges(f"{d.image}.freerun", "P40"),
@@ -217,7 +217,7 @@ FIGURES = {
     "jk_clocks": lambda d: clocks(f"{d.image}.three", "JK.Y"),
     "decade1": lambda d: exact(probed(f"{d.image}.three", "KG.Y"), probed(f"{d.image}.three", "JK.Y")),
     "decade2": lambda d: exact(probed(f"{d.image}.three", "GF.Y"), probed(f"{d.image}.three", "KG.Y")),
-    "decade3": lambda d: exact(divide(d.image)[0], probed(f"{d.image}.three", "GF.Y")),
+    "decade3": lambda d: exact(divide(d)[0], probed(f"{d.image}.three", "GF.Y")),
     "aclk_prescale": lambda d: exact(edges_one(f"{d.image}.freerun", "P40"),
                                      probed(f"{d.image}.freerun", "AB.Y") / 2),
     "ke_clocks": lambda d: clocks(f"{d.image}.freerun", "KE.Y"),
@@ -394,11 +394,11 @@ Z3805A = (
             "(simulated, the three run).",
             "HG.Y, the top decade's states 4 to 7, is the tap: it rises {tap} ns after P83 (simulated)."),
     element("terminal", "divider", "Terminal count", "HH", "simulated", ((Z, "The 1 PPS divider"),),
-            "HH.X, the terminal, and P83 every {p83_period} ns: a divide by {divide} (simulated, the three run)."),
+            "HH.X, the terminal, and P83 every {pps_period} ns: a divide by {divide} (simulated, the three run)."),
     element("driver", "divider", "1 PPS output driver", "EI", "read", ((Z, "The 1 PPS divider"), (Z, "Clocks")),
             "EI.Y = HH.X + P83·~KH.Y: the terminal sets the pins, P83's registered output read back holds them, "
             "and KH.Y's rise releases them.",
-            "P83 stays High {p83_high} ns (simulated, the three run)."),
+            "P83 stays High {pps_high} ns (simulated, the three run)."),
     element("field", "sync", "Sync field, register 3", "DI DJ", "read", ((Z, "The sync field"), (Z, "Register port")),
             "DI keeps register 3's bits 0 and 1; DJ, a clock behind DI, marks the field's change from 0."),
     element("pending", "sync", "Sync pending", "EK", "read", ((Z, "The sync field"),),
@@ -413,7 +413,7 @@ Z3805A = (
             ((Z, "The sync field"), ("58503a", "The sync field")),
             "DH, a rising-edge detector of the GPS 1 PPS on GCLK, feeds EJ, whose EJ.X restarts the divider on "
             "the next GPS edge with kind 3 pending.",
-            "The next internal 1 PPS then comes at {sync3_p83} s, a second and a clock after the first GCLK edge "
+            "The next internal 1 PPS then comes at {sync3_pps} s, a second and a clock after the first GCLK edge "
             "after the GPS edge (simulated, the sync3 run)."),
     element("tie", "other", "Constant 1", "BA", "read", ((Z, "Other outputs"),),
             "BA's F is the constant 1, through an inverting I/O block: P2 is tied Low."),
@@ -472,7 +472,7 @@ A58503 = derive(Z3805A, A, keep={
     "binary": same("The 1 PPS divider", "The divider is the Z3805A's", "read"),
     "decades": ("The 1 PPS divider", "The Z3805A's; the tap, HG.Y, rises {tap} ns after P83 (simulated, the three "
                 "run)."),
-    "terminal": ("The 1 PPS divider", "HH, unchanged: HH.X every {p83_period} ns, a divide by {divide} (simulated, "
+    "terminal": ("The 1 PPS divider", "HH, unchanged: HH.X every {pps_period} ns, a divide by {divide} (simulated, "
                  "the three run)."),
     "field": same("The sync field"),
     "pending": same("The sync field"),
@@ -491,12 +491,12 @@ A58503 = derive(Z3805A, A, keep={
                       "EI.Y holds the pulse through P83's own input while either of two nets is Low: EI.F = HH_X + "
                       "~HJ_X·PAD14_I + PAD14_I·~KH_X; HJ is new, a registered four-input AND of divider nets whose one "
                       "load is EI.",
-                      "P83 and P78 only; they stay High {p83_high} ns (simulated, the three run)."),
+                      "P83 and P78 only; they stay High {pps_high} ns (simulated, the three run)."),
     "restart": element("restart", "sync", "GPS edge and restart, kind 3", "DH EJ", "simulated", ((A, "The sync field"),),
                        "DH is the Z3805A's rising-edge detector with its two flip-flops exchanged; EJ reads the same "
                        "nets as the Z3805A's.",
                        "Kind 3 restarts the divider on the next GPS 1 PPS: the next internal 1 PPS comes at "
-                       "{sync3_p83} s (simulated, the sync3 run)."),
+                       "{sync3_pps} s (simulated, the sync3 run)."),
     "passthrough": element("passthrough", "other", "Pins passed through", "P14 P16 P84", "read",
                            ((A, "Other outputs"), (A, "The 1 PPS divider")),
                            "P14 passes P17 through, unregistered, where the Z3805A's carries the 1 PPS; P16 is P82, "
@@ -540,7 +540,7 @@ B58503 = derive(Z3805A, B, keep={
     "decades": ("The 1 PPS divider", "KF and KG, JG, GE and GF, HF, GG and HG: the Z3805A's block by block; HG.Y, the "
                 "top decade's states 4 to 7, is the tap, through EH (the stop's tap buffer).", "read"),
     "terminal": ("The 1 PPS divider", "HH, its outputs exchanged: HH.Y the terminal, HH.X the same product on JG.Y, "
-                 "to GJ.  P83 and P78 rise every {p83_period} ns (simulated, the three run), so the terminal comes "
+                 "to GJ.  P83 and P78 rise every {pps_period} ns (simulated, the three run), so the terminal comes "
                  "every {divide} clocks (inferred from them).", "read"),
     "field": ("The sync field", "EL.F, the register-3 write decode, loads DI with DATA0 and DATA1; DJ follows a clock "
               "behind: the Z3805A's."),
@@ -589,7 +589,7 @@ B58503 = derive(Z3805A, B, keep={
     "restart": element("restart", "sync", "GPS edge and restart, kind 3", "DH EJ", "simulated", ((B, "The sync field"),),
                        "DH, the GPS 1 PPS's rising-edge detector, the 58503A's; EJ.X (DH_X·EK_X·DI_X·DI_Y), kind 3's "
                        "restart on the GPS edge, resets the divider's stages.",
-                       "The next internal 1 PPS at {sync3_p83} s (simulated, the sync3 run)."),
+                       "The next internal 1 PPS at {sync3_pps} s (simulated, the sync3 run)."),
     "tie": element("tie", "other", "Constant 1", "CA", "read", ((B, "Other outputs"),),
                    "CA.X, inverted onto P2, where the Z3805A uses BA.X: tied Low."),
 }, add=(
@@ -603,7 +603,7 @@ B58503 = derive(Z3805A, B, keep={
     element("outputs", "divider", "P83 and P78", "FH", "read", ((B, "The 1 PPS divider"),),
             "FH.QX registers HK.X on GCLK and drives P78; P83 is FH.QX XOR FF.Y, the polarity select.  Either pin "
             "is two registers after HK.X, where the Z3805A's P83 is one.",
-            "P83 and P78 rise every {p83_period} ns and P83 stays High {p83_high} ns (simulated, the three run)."),
+            "P83 and P78 rise every {pps_period} ns and P83 stays High {pps_high} ns (simulated, the three run)."),
     element("alternate", "divider", "P14: alternate seconds", "HD FD HE.X", "read", ((B, "The 1 PPS divider"),),
             "HD.QX registers HK.X; FD toggles on each rise of HD.QX, a divide by 2 of the second; HE.X is HD.QX a "
             "clock later.  P14 rises a clock after HD.QX only when FD.Y is Low and holds itself High through its "
@@ -716,7 +716,7 @@ Z3815A = (
             "GJ.Y enables LF and KF; KG, their carry, enables LI and LJ; KI, KH and LH follow.  KI.X, a stage bit, "
             "is the tap: it rises {tap} ns after P83 (simulated, the three run)."),
     element("terminal", "divider", "Terminal count", "JI", "simulated", ((F, "The 1 PPS divider"),),
-            "JI.Y, combinational, every {chain} GJ.Y pulses: P83 every {p83_period} ns, a divide by {divide} "
+            "JI.Y, combinational, every {chain} GJ.Y pulses: P83 every {pps_period} ns, a divide by {divide} "
             "(simulated, the three run).  It enables the seconds and sets GH."),
     element("hold", "divider", "1 PPS hold", "GH", "read", ((F, "The 1 PPS divider"),),
             "GH (F = JI_Y + ~GK_Y·FC_X) passes JI.Y, held through FC.X until the prescaler's GK.Y."),
@@ -884,7 +884,7 @@ Z3816A = derive(Z3815A, S, keep={
     "gj": ("The 1 PPS divider", "GJ (DI = FL_Y, G = QX·~QY) makes GJ.Y a one-GCLK tick each prescaler cycle."),
     "chain": ("The 1 PPS divider", "LF and KF count GJ's ticks; KG their carry into LI and LJ; KI.Y enables KI, KH "
               "and LH.  The tap, KI.X, rises {tap} ns after P83 (simulated, the three run)."),
-    "terminal": ("The 1 PPS divider", "JI_Y = JH_Y + LH_X·KG_X·LH_Y·KH_Y: P83 every {p83_period} ns, a divide by "
+    "terminal": ("The 1 PPS divider", "JI_Y = JH_Y + LH_X·KG_X·LH_Y·KH_Y: P83 every {pps_period} ns, a divide by "
                  "{divide} (simulated, the three run)."),
     "hold": ("The 1 PPS divider", "GH.X = JI_Y + ~GK_Y·FC_X passes JI.Y to FC and holds FC.X until GK.Y."),
     "register": ("The 1 PPS divider", "FC (K = GCLK, DI = GH_X) registers it, and P83's output register takes FC.X "

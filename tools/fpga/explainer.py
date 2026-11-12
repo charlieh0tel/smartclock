@@ -48,14 +48,14 @@ def facts():
     for design in DESIGNS:
         image = design.image
         table = stats(image)
-        p83, ratio = divide(image)
+        period, ratio = divide(design)
         out["designs"].append(dict(
             image=image, name=design.name, images=design.images, tap_net=design.tap,
             blocks=int(table["clb_used"]), iobs=int(table["iob_used"]), nets=int(table["nets"]),
             clocks=int(table["clocks"]),
-            preset=find(f"{image}.fast", r"the count reads ([0-9a-f]{6})$")[0],
+            preset=find(f"{image}.fast", r"the count reads ([0-9a-f]+)$")[0],
             status=find(f"{image}.fast", r"^[\d.]+ s: status ([0-9a-f]{2})$")[0],
-            p83=p83, divide=ratio,
+            period=period, divide=ratio,
             tap=probe(f"{image}.three", design.tap)["after_min"]))
     out["z3805a_count"] = int(find("z3805a.three", r"less the preset (\d+) ticks")[0])
     out["z3815a_counts"] = [int(v) for v in find_all("z3815a.three", r"less the preset (\d+) ticks")]
@@ -249,7 +249,7 @@ GCLK, so P53 would run at 19.6608 MHz, the CDMA clock, 16 x 1.2288 Mcps
 that divide, and the firmware's calibration of 0.3932162 s is that tap plus two ticks on its
 own 100 ns scale.</p>
 <p>The testbenches run GCLK at 10 MHz, so the telecom pair's internal 1 PPS comes every
-{num(z3815a['p83'])} ns, and the Z3815A's three readings fall
+{num(z3815a['period'])} ns, and the Z3815A's three readings fall
 {num(fall)} ticks a second: {', '.join(num(c) for c in counts)} ({mark('simulated')},
 <code>check-readings-z3815a.three</code>).  At 9.8304 MHz the second would be true and the
 count would hold ({mark('inferred')}).</p>

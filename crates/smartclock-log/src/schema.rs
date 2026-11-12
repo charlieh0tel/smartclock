@@ -191,7 +191,13 @@ pub const TABLES: &str = r#"
         at      INTEGER    NOT NULL,
         code    INTEGER NOT NULL,
         message TEXT    NOT NULL,
-        receiver_id INTEGER REFERENCES receiver(id)
+        receiver_id INTEGER REFERENCES receiver(id),
+        -- The poll query a refusal answered: the session reads the
+        -- queue to explain a refused query, so that entry never
+        -- reaches the drain.  Recorded once per query and code for a
+        -- receiver.  NULL for an entry drained from the queue, and
+        -- in rows before schema 13.
+        scpi    TEXT
     ) STRICT;
     CREATE INDEX IF NOT EXISTS receiver_error_at ON receiver_error(at);
 

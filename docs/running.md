@@ -140,6 +140,14 @@ It drains the receiver's error queue into the journal.  Reading an
 entry removes it, but the queue holds thirty and discards the newest
 on overflow, so an unread queue loses errors anyway.
 
+A poll query the receiver refuses outright, rather than declining on
+state, leaves its field empty and the rest of the poll read.  The
+session reads the refusal's entry to explain it, so the drain never
+sees it; instead each code a receiver gives each query is written to
+the log's `receiver_error` table once, with the query in its `scpi`
+column, and said in the journal.  The monitor and the browser's
+journals list the row without the query.
+
 When it found the receiver only by probing other line settings, it
 first empties the error queue, where the probe's garbled bytes sit as
 errors, and logs to the journal how many entries it read.

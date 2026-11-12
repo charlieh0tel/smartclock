@@ -590,14 +590,14 @@ impl<T: Transport> Device<T> {
             Err(e @ (Error::Device { .. } | Error::ErrorLost { .. })) => e,
             Err(e) => return Err(e),
         };
-        let code = match error {
-            Error::Device { code, .. } => Some(code),
-            _ => None,
+        let (code, message) = match error {
+            Error::Device { code, message } => (Some(code), message),
+            other => (None, other.to_string()),
         };
         self.failed.push(FieldFailure {
             scpi: self.dialect.spec(id).map_or("", |s| s.scpi).to_owned(),
             code,
-            error: error.to_string(),
+            message,
         });
         Ok(None)
     }

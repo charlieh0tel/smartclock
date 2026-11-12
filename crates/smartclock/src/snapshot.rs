@@ -6,6 +6,8 @@
 //! value can be missing either because it has not been polled yet or
 //! because the receiver declined to give it.
 
+use std::fmt;
+
 use jiff::Timestamp;
 use serde::Deserialize;
 use serde::Serialize;
@@ -206,8 +208,18 @@ pub struct FieldFailure {
     pub scpi: String,
     /// The receiver's error code, when its queue gave one.
     pub code: Option<i32>,
-    /// What went wrong, as the error says it.
-    pub error: String,
+    /// The receiver's own description with a code, as its error queue
+    /// quoted it; without one, what went wrong.
+    pub message: String,
+}
+
+impl fmt::Display for FieldFailure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.code {
+            Some(code) => write!(f, "{}: receiver error {code}: {}", self.scpi, self.message),
+            None => write!(f, "{}: {}", self.scpi, self.message),
+        }
+    }
 }
 
 /// How each tier is faring, kept per tier rather than per snapshot.
@@ -301,7 +313,7 @@ impl Polled {
             tiers()
                 .flat_map(|state| state.failed.first())
                 .next()
-                .map(|f| format!("{}: {}", f.scpi, f.error))
+                .map(ToString::to_string)
         })
     }
 }

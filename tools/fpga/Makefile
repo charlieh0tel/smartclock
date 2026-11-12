@@ -364,6 +364,10 @@ READ_z3817a.three       := +seconds=3
 # Register 4's bit 0 set, a second 1 PPS on P84 at 0.6 s: P84 starts the
 # count, and the P84 counter at 0x01's high nibble.
 READ_z3817a.select      := +seconds=2 +select=1 +p84=600000037
+# Register 3's sync field, 0 then the kind on the first arm.
+READ_z3817a.sync1       := +seconds=2 +sync=1
+READ_z3817a.sync2       := +seconds=2 +sync=2
+READ_z3817a.sync3       := +seconds=2 +sync=3
 READINGS := $(patsubst READ_%,%,$(filter READ_%,$(.VARIABLES)))
 # The runs on a stimulus file, tools/fpga/<run>.stim, instead of a
 # testbench's flags.

@@ -299,7 +299,10 @@ four flip-flops.  It differs in:
   `0x55555555` and read at `0x12` to `0x19`;
 - a fifth register, 4, whose bit 0 starts the count from P84 instead
   of P82, and a counter of P84's rises read at the odd addresses' high
-  nibble, as in the Z3815A.
+  nibble, as in the Z3815A;
+- a sync of kind 3 whose restart is itself the internal 1 PPS, as in
+  the Z3816A, and which the internal 1 PPS does not clear while it is
+  pending (`check-readings-z3817a.sync3`; the latter **read**).
 
 Its divider, stop and sync blocks are the Z3805A's block for block,
 re-placed and many with their flip-flops or outputs exchanged, but for
@@ -397,7 +400,9 @@ a pin with its complement, which are the pads' one-delay skews
 terminals; the Z3805A's GJ.X and GJ.Y, once, in `z3805a.sync_3_late`,
 and the 58503A's and 58503B's, once, in their `sync1` (GJ.Y) and
 `sync2` (GJ.X) runs; the 58503B's HK.X, once a second; the Z3815A's and Z3816A's
-JI.Y, once a second, and KE.Y, once each prescaler cycle; the
+JI.Y, once a second, and KE.Y, once each prescaler cycle; the Z3817A's
+GE.X, once a second, ID.Y, between its terminals, and its HE.Y and
+HE.X, once each, in its `sync1` and `sync2` runs; the
 Z3815A's JG.Y, once, in `z3815a.sync1`, and its JG.Y and JD.X, once
 each, in `z3815a.sync3`; and BB.Y, a read-multiplexer term, the
 Z3815A's under the register sweep and in its `three` and sync runs,
@@ -464,7 +469,11 @@ nets it quotes that had them.
   earlier and later and leave the 1 PPS alone, and kind 3 makes the
   GPS 1 PPS itself the internal 1 PPS, a few clocks after it, where
   the Z3805A's restarts the divider to give the 1 PPS a second later
-  (`z3815a-trace.md`, `z3816a-trace.md`, "The sync field").
+  (`z3815a-trace.md`, `z3816a-trace.md`, "The sync field").  The
+  Z3817A's kinds 1 and 2 are the Z3805A's, and its kind 3 restarts the
+  divider as the Z3805A's does but makes the restart itself the
+  internal 1 PPS, a clock after the first clock edge after the 1 PPS
+  (**simulated**, `z3817a-trace.md`, "The sync field").
 - **Mode 0, mode 3.**  Register 0's mode: the count, and the
   interpolator's references.
 - **Read, simulated, inferred, open.**  In the firmware docs, **read**

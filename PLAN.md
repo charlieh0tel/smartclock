@@ -377,18 +377,23 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   it differently costs more than one definition; `make ci` is stricter
   and is what you run.  The browser and firmware checks need Node,
   Chromium, an m68k gcc and uv, so they are jobs of their own.
-- The firmware job runs on every push and pull request, so a firmware
-  branch is checked, but its longest step, `report-decompiled`, only
-  where anything it reads changed against the pull request's base or
-  the branch's merge base with `main` (`tools/ci/report-decompiled-needed`,
-  the one list of its inputs); a push to `main` always runs it.  The
-  job still runs and passes, so a required check is never left
-  pending.  The merge base, not the branch's previous push: `main` is
-  checked in full on every push, so a skip never trusts a commit whose
-  own run may have failed.  Cost: a firmware branch runs the step on
-  every push, even one changing only other files, and the checkout
-  fetches the whole history; and a change outside the list that the
-  step does read goes unchecked until `main`.  The four
+- The firmware job runs on pull requests and pushes to `main`, not on
+  a branch's own pushes, which ran it a second time, at once, beside
+  the pull request's; a branch without a pull request runs it by hand
+  (`workflow_dispatch`).  On a pull request its longest step,
+  `report-decompiled`, runs only where anything it reads changed
+  against the base (`tools/ci/report-decompiled-needed`, the one list
+  of its inputs).  A push to `main` and a run by hand always run it:
+  `main` stays checked in full as the backstop, so a skip never trusts
+  a commit whose own run may have failed, and a change outside the
+  list that the step does read, or drift outside the repository (the
+  runner image, the toolchain, the Python dependencies), is caught at
+  the next merge.  Guarding `main` too, against the commit before the
+  push, was weighed and declined.  The job still runs and passes, so a
+  required check is never left pending.  Cost: `main`'s run mostly
+  re-proves what the rebase-merged pull request tested; the checkout
+  fetches the whole history; and a branch is not checked until it has
+  a pull request or is run by hand.  The four
   images' function checks run at once (`make -j`), each one's output
   kept whole in a log of its own.
 - HTML pages are published on GitHub Pages by

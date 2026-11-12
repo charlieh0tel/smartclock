@@ -6,10 +6,13 @@
 
 use std::fmt::Write as _;
 
+use crate::command::COMPLETE_MODELS;
 use crate::command::Class;
 use crate::command::CommandId;
 use crate::command::Dialect;
 use crate::command::Evidence;
+use crate::device::dialect_for;
+use crate::device::spec_for;
 
 /// Every dialect, in the order the columns appear.
 const DIALECTS: [(Dialect, &str); 2] = [
@@ -35,6 +38,7 @@ pub fn markdown() -> String {
          to regenerate; a test fails if this file and the table disagree.\n\n",
     );
     summary(&mut out);
+    binding(&mut out);
     undocumented(&mut out);
     table(&mut out);
     out
@@ -78,6 +82,40 @@ fn summary(out: &mut String) {
         let _ = writeln!(out, "| {class:?} | {count} | {gate} |");
     }
     out.push('\n');
+}
+
+/// The models whose lists bind, and what each is asked.
+fn binding(out: &mut String) {
+    out.push_str("## Lists that bind\n\n");
+    out.push_str(
+        "An entry's models are binding only for the models here, whose\n\
+         lists have been audited against a receiver.  One of these is polled\n\
+         only for the queries that name it; a typed read of any other\n\
+         returns `NotListed` without anything reaching the receiver.  Any\n\
+         other model is asked every query its tree has, except one naming\n\
+         none but these.\n\n",
+    );
+    for model in COMPLETE_MODELS {
+        let dialect = dialect_for(model);
+        let queries: Vec<_> = dialect
+            .specs()
+            .iter()
+            .filter(|s| s.class == Class::Query)
+            .collect();
+        let asked: Vec<String> = queries
+            .iter()
+            .filter(|s| spec_for(dialect, model, s.id).is_some())
+            .map(|s| name(s.id))
+            .collect();
+        let _ = writeln!(
+            out,
+            "The {model} is asked {} of the `{}` tree's {} queries: {}.\n",
+            asked.len(),
+            dialect.name(),
+            queries.len(),
+            asked.join(", ")
+        );
+    }
 }
 
 /// Commands that appear in no manual, found by sweeping a receiver.

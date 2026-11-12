@@ -125,6 +125,13 @@ It reads and, with one opt-in exception, changes nothing, apart from
 the garbled bytes a probe at the wrong line settings sends.  Note
 these:
 
+It asks a Z3817A only what the command table lists for it, leaving out
+the oven-current and temperature keywords whose 3752 handlers are stubs
+answering -113.  Its `:DIAGnostic:ROSCillator:TCOefficient?` answers 0,
+since it has no oven-current channel for the constant to scale; it is
+read and logged anyway.  Every other model is asked everything its
+command tree has ([`commands.md`](commands.md), "Lists that bind").
+
 It drains the receiver's error queue into the journal.  Reading an
 entry removes it, but the queue holds thirty and discards the newest
 on overflow, so an unread queue loses errors anyway.

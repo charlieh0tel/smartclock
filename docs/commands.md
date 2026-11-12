@@ -21,6 +21,17 @@ it was transcribed from a manual and nothing more.
 | Control | 31 | `--allow-control` |
 | Dangerous | 8 | `--allow-dangerous` |
 
+## Lists that bind
+
+An entry's models are binding only for the models here, whose
+lists have been audited against a receiver.  One of these is polled
+only for the queries that name it; a typed read of any other
+returns `NotListed` without anything reaching the receiver.  Any
+other model is asked every query its tree has, except one naming
+none but these.
+
+The Z3817A is asked 25 of the `z3801` tree's 62 queries: idn, stb, position avg, sat tracking count, sync state, efc, led gpslock, ffom, tfom, tinterval, holdover unc pred, holdover unc now, holdover duration, holdover waiting, status screen, log count, log read, oper condition, hardware condition, holdover condition, powerup condition, date, time, efc absolute, oven tempco.
+
 ## Undocumented
 
 23 commands appear in none of the manuals here.  They were found

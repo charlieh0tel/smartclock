@@ -311,6 +311,24 @@ impl Receiver {
         .settle()
     }
 
+    /// A Z3817A: the Z3801A's tree under its own identity, with the
+    /// oven-current stub its 3752 firmware answers -113.
+    pub fn z3817a() -> Self {
+        Self::default().as_z3817a()
+    }
+
+    /// This receiver, faulty or not, as a Z3817A.
+    pub fn as_z3817a(self) -> Self {
+        let mut receiver = Self {
+            identity: "HEWLETT-PACKARD,Z3817A,0000A00000,3752-A".to_owned(),
+            ..self.as_z3801a()
+        };
+        receiver
+            .undefined
+            .push(":DIAGnostic:ROSCillator:CURRent?".to_owned());
+        receiver
+    }
+
     /// A receiver that has never had a fix, as one is for its first
     /// minutes from cold and for as long as it cannot see the sky.
     ///

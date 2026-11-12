@@ -4,8 +4,10 @@
 //! dialect table, so a caller names what it wants rather than how a
 //! particular firmware spells it.
 
+use crate::command::COMPLETE_MODELS;
 use crate::command::CommandId;
 use crate::command::Dialect;
+use crate::command::Spec;
 use crate::control::Control;
 use crate::error::Error;
 use crate::error::Result;
@@ -97,15 +99,27 @@ impl<T: Transport> Device<T> {
         Control::new(&mut self.session, self.dialect)
     }
 
-    /// Send one logical operation and return its single reply line.
-    fn ask(&mut self, id: CommandId) -> Result<String> {
+    /// How this receiver is asked `id`, if it is asked it at all.
+    fn spec(&self, id: CommandId) -> Result<&'static Spec> {
         // Naming the operation, not "the requested command": a typed
         // error carrying a constant string is worse than no error.
         let spec = self.dialect.spec(id).ok_or(Error::Unsupported {
             dialect: self.dialect.name(),
             operation: id,
         })?;
-        let scpi = spec.scpi;
+        if asked(spec, &self.identity.model) {
+            Ok(spec)
+        } else {
+            Err(Error::NotListed {
+                model: self.identity.model.clone(),
+                operation: id,
+            })
+        }
+    }
+
+    /// Send one logical operation and return its single reply line.
+    fn ask(&mut self, id: CommandId) -> Result<String> {
+        let scpi = self.spec(id)?.scpi;
         let reply = self.session.query(scpi)?;
         Ok(reply.one_line("a single line")?.to_owned())
     }
@@ -324,14 +338,8 @@ impl<T: Transport> Device<T> {
     /// signal strength, and it is the most expensive query the receiver
     /// offers: roughly 1.8 KB, about a second of wire time at 19200.
     pub fn screen(&mut self) -> Result<Screen> {
-        let spec = self
-            .dialect
-            .spec(CommandId::StatusScreen)
-            .ok_or(Error::Unsupported {
-                dialect: self.dialect.name(),
-                operation: CommandId::StatusScreen,
-            })?;
-        let reply = self.session.query(spec.scpi)?;
+        let scpi = self.spec(CommandId::StatusScreen)?.scpi;
+        let reply = self.session.query(scpi)?;
         Ok(screen::parse(&reply.lines.join("\n")))
     }
 }
@@ -349,10 +357,14 @@ impl<T: Transport> Device<T> {
 /// field after it: the snapshot went unstamped and empty, a hundred and
 /// twenty-eight rows carrying one frozen timestamp and no readings,
 /// while every other value on the tier was there for the asking.
+///
+/// A command the table does not list for a model whose lists are
+/// binding is the second case too, said by the table rather than the
+/// tree.
 fn absent_if_unsupported<T>(result: Result<T>) -> Result<Option<T>> {
     match result {
         Ok(value) => Ok(Some(value)),
-        Err(Error::Unsupported { .. }) => Ok(None),
+        Err(Error::Unsupported { .. } | Error::NotListed { .. }) => Ok(None),
         Err(Error::Device { code, .. }) if is_state_refusal(code) => Ok(None),
         Err(e) => Err(e),
     }
@@ -376,6 +388,28 @@ pub fn dialect_for(model: &str) -> Dialect {
     } else {
         Dialect::Hp58503
     }
+}
+
+/// How `dialect` spells `id` for a `model`, if that model is asked it
+/// at all ([`asked`]).
+pub fn spec_for(dialect: Dialect, model: &str, id: CommandId) -> Option<&'static Spec> {
+    dialect.spec(id).filter(|spec| asked(spec, model))
+}
+
+/// Whether a receiver of `model` is asked the command `spec` spells.
+///
+/// The table's `models` lists bind only the models in
+/// [`COMPLETE_MODELS`], whose lists have been audited to name every
+/// command they answer: one of those is asked only what names it.  Any
+/// other model is asked everything its tree has, as it was before the
+/// lists bound anyone, so a receiver nobody has audited is not starved
+/// of what it answers -- except an entry naming only audited models,
+/// which is theirs alone and would draw -113 from the rest.  Compared
+/// without case.
+fn asked(spec: &Spec, model: &str) -> bool {
+    let complete = |m: &str| COMPLETE_MODELS.iter().any(|c| c.eq_ignore_ascii_case(m));
+    spec.models.iter().any(|m| m.eq_ignore_ascii_case(model))
+        || (!complete(model) && !spec.models.iter().all(|m| complete(m)))
 }
 
 /// A satellite count as an unsigned number.
@@ -707,10 +741,47 @@ mod tests {
     use crate::command::CommandId;
     use crate::snapshot::Tier;
 
+    use super::asked;
     use super::datum_for;
     use super::dialect_for;
+    use super::spec_for;
+    use crate::command::COMPLETE_MODELS;
     use crate::command::Dialect;
     use crate::types::Datum;
+
+    #[test]
+    fn an_audited_model_is_asked_only_what_its_lists_name() {
+        assert!(COMPLETE_MODELS.contains(&"Z3817A"));
+        let z3817a = |id| spec_for(Dialect::Z3801, "Z3817A", id).is_some();
+        // Its stub answers -113, and costs a round trip and a queued
+        // error on every medium pass.
+        assert!(!z3817a(CommandId::OvenCurrent));
+        assert!(z3817a(CommandId::Efc));
+        assert!(z3817a(CommandId::EfcAbsolute));
+        // Compared without case, as dialect_for compares.
+        assert!(spec_for(Dialect::Z3801, "z3817a", CommandId::Efc).is_some());
+        assert!(spec_for(Dialect::Z3801, "z3817a", CommandId::OvenCurrent).is_none());
+    }
+
+    #[test]
+    fn a_model_nobody_has_audited_is_asked_what_it_was_asked_before() {
+        // Every z3801 query names the Z3801A or the Z3805A, or both,
+        // and neither is in COMPLETE_MODELS, so each is asked of
+        // both, and of a Z3815A the table names nowhere -- the lists
+        // were documentation until now, and binding them for a model
+        // whose lists were never audited would silently starve it.
+        for model in ["Z3801A", "Z3805A", "Z3815A", "Z3816A"] {
+            for spec in Dialect::Z3801.specs() {
+                let theirs_alone = spec.models.iter().all(|m| COMPLETE_MODELS.contains(m));
+                assert_eq!(asked(spec, model), !theirs_alone, "{model} {:?}", spec.id);
+            }
+        }
+        for model in ["58503A", "58503B", "59551A", "58540A"] {
+            for spec in Dialect::Hp58503.specs() {
+                assert!(asked(spec, model), "{model} {:?}", spec.id);
+            }
+        }
+    }
 
     #[test]
     fn every_step_belongs_to_exactly_one_tier() {

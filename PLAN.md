@@ -135,8 +135,25 @@ test pins the entries that ask: as a default it let
 
 Two dialects, not four (`097-59551-02` shows the 58503A tree is
 essentially the 58503B's): 58503A/B and 59551A, and Z3801A/Z3816A; the
-Z3805A answers the z3801 one.  An operation a model lacks returns
-`Unsupported` without reaching the device.
+Z3805A and Z3817A answer the z3801 one.  An operation a dialect lacks
+returns `Unsupported` without reaching the device.
+
+An entry's `models` list binds only the models in the table's
+`complete` list, whose lists have been audited against a receiver: one
+of those is polled only for what names it, and a typed read of
+anything else returns `NotListed` unsent.  The Z3817A is the first:
+its 3752 tree lists keywords whose handlers are stubs answering -113
+(`:DIAGnostic:ROSCillator:CURRent?` among them), so a tree alone does
+not say what it answers.  Every other model is asked everything its
+tree has, as before the lists bound anyone.  The lists were written as
+provenance -- the manual's models, the unit a discovery was swept on
+-- and binding them everywhere would have dropped the Z3805A's FFOM,
+EFC and registers, which it answers but no list names; a model joins
+`complete` once its lists are audited.  An entry naming none but
+`complete` models is theirs alone, so a command only they have draws
+no -113 from the rest.  Only the polls and the `Device` reads
+are gated: the journal, the typed control handle and a client's own
+command go by dialect, as the operator's choice.
 
 ### Condition registers, never event registers
 

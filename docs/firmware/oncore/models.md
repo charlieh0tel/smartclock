@@ -6,6 +6,10 @@ to regenerate; a test fails if this file and the images disagree.
 `README.md` here says how the tables are read; `../gps.md` is the
 link itself.
 
+Which engines each image accepts -- a VP, a UT Plus, or both --
+is read from the code, not from these tables: `../gps.md`, "Which
+engines each image accepts".
+
 A cell is `s` where a script or polling list sets the message, `q`
 where one queries it, `d` where the table has a decoder for it, `-`
 where the table holds it and none of these, blank where it does not

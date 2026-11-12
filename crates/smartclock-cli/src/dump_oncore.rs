@@ -523,6 +523,9 @@ fn markdown(images: &[(String, Oncore)]) -> String {
          to regenerate; a test fails if this file and the images disagree.\n\
          `README.md` here says how the tables are read; `../gps.md` is the\n\
          link itself.\n\n\
+         Which engines each image accepts -- a VP, a UT Plus, or both --\n\
+         is read from the code, not from these tables: `../gps.md`, \"Which\n\
+         engines each image accepts\".\n\n\
          A cell is `s` where a script or polling list sets the message, `q`\n\
          where one queries it, `d` where the table has a decoder for it, `-`\n\
          where the table holds it and none of these, blank where it does not\n\

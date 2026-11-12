@@ -3,7 +3,7 @@
 `smartclock-cli dump-oncore` reads, out of an image for an Oncore
 engine, the GPS task's message table, its request scripts and its
 polling lists.  `<image>.txt` holds one image's, `models.md` the
-messages of all six side by side; `make docs` regenerates them and a
+messages of all seven side by side; `make docs` regenerates them and a
 test fails if they and the images disagree.  The Z3815A's engine is a
 Furuno on NMEA sentences (`../gps.md`, "In every image"); its image has
 no such table and is refused.  The addresses below are the 58503B

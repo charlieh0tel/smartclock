@@ -9,8 +9,8 @@ their place must do.  The source is the hand-written C of each image,
 are the 58503A 3704's unless an image is named.  3633 has no C: its
 facts here were read from its ROM and are marked so.  Message
 layouts are `third_party/motorola/VPCommands.pdf`, cited by page.  The
-Z3816A, the 58503B and the Z3815A come in where named, and in "In
-every image".
+Z3816A, the 58503B, the Z3815A and the Z3817A come in where named, in
+"Which engines each image accepts" and in "In every image".
 
 ## The serial link
 
@@ -675,6 +675,126 @@ rise monotonically with C/N0.
 - The NEO-M8T's own C/N0 calibration and integer rounding add ±1 to
   2 dB to any comparison against it.
 
+## Which engines each image accepts
+
+Which GPS engine each image can run with, read from the images.
+"Inferred" marks what follows from the code but has not been run with
+that engine; "Not known" below lists what is open.  The flag bits are
+of `0x1017e8` in the 58503B and `0x1014c4` in the Z3816A, and the
+second byte's of the byte after (`0x1017e9`, `0x1014c5`); scripts,
+filters and table entries are in `oncore/IMAGE.txt`.
+
+| Image | Family | Accepts | Tells them apart by | Version gates | Channels | Time RAIM from | A feeder must answer |
+| ----- | ------ | ------- | ------------------- | ------------- | -------- | -------------- | -------------------- |
+| Z3801A 3543 | Oncore | VP, six-channel | nothing: no model check | none | 6: `Ba`, `Bn` | `I` in `OPTIONS LIST` | init script `0x48`, `Cg` and `Ak` among it, and the queries and polls ("Emulating the engine") |
+| Z3805A 3543B | Oncore | VP, six-channel | nothing: no model check; of `@@Cj` reads only the `OPTIONS LIST` `I` (`gps_parse_options`, `0x4f8b6`) | none | 6: `Ba`, `Bn` | `I` in `OPTIONS LIST` | as the Z3801A |
+| 58503A 3633 | Oncore | VP, six- or eight-channel | nothing: no model check | software 8.4: the second `Ar`(65) | 6, or 8 once an `@@Ea` is seen | `I` in `OPTIONS LIST` | init script `0x53`, `Cg` unfiltered; `Ar`(65) at 8.4 |
+| 58503A 3704 | Oncore | VP, six- or eight-channel | nothing: of `@@Cj` reads `OPTIONS LIST` and the version (`gps_receiver_abilities_update`, `0x50a16`) | software 8.4: the second `Ar`(65) | 6, or 8 once an `@@Ea` is seen | `I` in `OPTIONS LIST` | as the 3633 |
+| 58503B 1.01.04 | Oncore | VP or UT Plus | the 12th character of the `MODEL #` line: `B` a VP, `R` a UT Plus (`0x58098`) | VP: 8.4, second `Ar`(65); 10.0, bit 0.  UT Plus: 3.0, `Am` and `Gj` | VP: 6 or 8; UT Plus: 8 | VP: `I` in `OPTIONS LIST`; UT Plus: always | VP: as the 58503A; UT Plus: "The UT Plus" |
+| Z3816A 4001 | Oncore | VP or UT Plus | as the 58503B (`0x55cea`) | as the 58503B | as the 58503B | as the 58503B | as the 58503B |
+| Z3815A 4010 | Furuno | GT-74, its own protocol: NMEA framing with Furuno's `$PFEC` sentences | no Oncore code; its identification template reads `MODEL # FURUNO GT-74` (`0x5eae5`) | -- | -- | its engine's sentences ("In every image") | its sentences ("In every image") |
+| Z3817A 3752 | Oncore | an engine sending eight-channel `@@Ea` | nothing that works: `0x56e74` compares `gps+0x49d` with `R`, which can never match (below) | none | 8: `Ea` | not read | nothing: it sends nothing; it needs only an unsolicited `@@Ea` stream |
+
+**The Z380x and 58503A take a VP alone.**  They have no model check:
+of `@@Cj` the Z380x read only the `I` of `OPTIONS LIST`
+(`gps_parse_options`, Z3805A `0x4f8b6`), and the 58503A that and the
+version, which brings the second `Ar`(65) at exactly 8.4
+(`gps_receiver_abilities_update`, 3704 `0x50a16`; "Six or eight
+channels").  Their init scripts send `@@Cg`(0) before `@@Cj` and then
+`@@Ak`; neither is in the UT Plus's commands
+(`third_party/motorola/ut-engg-notes.pdf` p. 11), and `@@Cg` is a VP's
+alone (VPCommands p. 118).  In the 58503A `Cg` and the rest of the VP
+set-up have no send filter.  So a UT Plus in their place would fail
+start-up at `@@Cg`, the first message it does not answer, three
+unanswered sends failing a request ("Emulating the engine"):
+inferred.  The Z380x need `@@Ba` and `@@Bn` too, which the UT Plus
+lacks (ut-engg-notes.pdf p. 11).
+
+**The 58503B and the Z3816A take either.**  Their `@@Cj` decoder
+(58503B `0x58098`, Z3816A `0x55cea`) reads the version as
+`SOFTWARE VER #` × 10 + `SOFTWARE REV #`, and then the model line,
+which it requires to be at least 12 characters and to start
+`MODEL #    ` (`strncmp`, Z3816A `0x55d68`).  Its 12th character, the
+model number's first, chooses the path:
+
+| Character | Path, Z3816A / 58503B | Sets |
+| --------- | --------------------- | ---- |
+| `B`, a VP (the bench engines' `B4121P1115` and `B1121P1114`, "The engines on the bench") | `0x54c24` / `0x56f80` | bit 1, a VP; bit 6; the UTC offset known; bit 0 at 10.0 or later; bit 5 with an `I` in `OPTIONS LIST`; the second byte's bit 7 at 8.4 |
+| `R`, a UT Plus (`R5122U115x`, ut-engg-notes.pdf p. 3) | `0x54bea` / `0x56f46` | bit 2, a UT Plus; bit 7, eight channels; bits 0 and 5, Time RAIM, whatever the options; the UTC offset not known until `@@Bo`; bit 6 and the second byte's bit 6 at 3.0 or later |
+| anything else | `0x54c54` / `0x56fb0` | clears bits 1 and 2, and so neither path's messages go |
+
+Nothing else of the identity is checked: not the part number's
+prefix (`R5122`, `B4121`), its `U11xx` suffix, the software date or
+the hardware line.
+
+**The Z3817A takes an `@@Ea` stream.**  It is an eight-channel VP
+image: its table has `@@Ea`, `@@Ek`, `@@En` and `@@Fa`, and of the UT
+Plus's own messages only `@@Sz` (entry `0x36`), no `@@Bo` or `@@Gj`.
+The compare at `0x56e74` of `gps+0x49d` with `R` chooses which bits
+of `gps+0x5aa` to set, but the `@@Cj` field table at
+`0x58aae` puts the start of the model line, its label included, at
+`gps+0x49d`, so the byte there is `M` and never matches: a wrong
+offset, inferred.  The image never sends to its engine:
+`gps_request_admitted` (`0x52abc`) admits a request from senders 1 to
+3 only when its code is one of the nine steps in its list at
+`0x53e84`, and none of those sends a message.  So it needs only an
+unsolicited `@@Ea` stream, which on the bench on 2026-11-11, fed at
+5 V TTL, was enough.
+
+### The UT Plus
+
+What the 58503B and the Z3816A do with a UT Plus, after `@@Cj` has
+chosen its path.  Addresses are the Z3816A's, with the 58503B's after
+a slash where given.
+
+**Scripts.**  The same as a VP's: the power-up scripts `0x5b` and
+`0x5c` serve both engines, and the send filters choose the messages.
+Filter `0x55f0e` / `0x582bc` passes a VP alone and drops `Ah`, `Ai`,
+`Aj`, `Ak`, `Al`, `An`, `Ar`, `Au`, `Av`, `Ax`, `AB`, `AC`, `AD`,
+`Bc`, `Bd`, `Bh`, `Bk`, `Ce`, `Cg`, `Ci` and `Ta`.  So a UT Plus never
+sees `@@Cg` or idle mode, which only a VP has (VPCommands p. 118).
+
+**What it is sent.**  `Aa`, `Ab`, `Ac`, `Ad`, `Ae`, `Af`, `Ag`, `Ao`,
+`Aq`, `As`, `At`, `Aw`, `Ay`, `Az`, `Bb`, `Bj`, `Cf`, `Cj`, which have
+no filter; `Ea` and `En` at eight channels (filters `0x55f68` and
+`0x5605a`); `Fa`, never `Ca`, the self-test script `0x5d` sending
+entry `0x3d`, whose filter `0x55efe` passes a UT Plus alone; and
+`@@Bo`, entry `0x2a`, sent with 1 in scripts `0x5b`, `0x5c` and `0x5f`
+and polled from the list at `0x57c46` / `0x59ff4`, under filter
+`0x55f1e`, which passes any engine not a VP.  At software 3.0 or later
+also `@@Am` (filter `0x5607e` / `0x5842c`, bit 6) and `@@Gj` (filter
+`0x560a2` / `0x58450`, the second byte's bit 6), both queried in script `0x61`.
+Every one of these is among the UT Plus's commands
+(ut-engg-notes.pdf p. 11, which lists 29).
+
+**What it sends.**  Its replies, by the same matching as a VP's
+("Answer matching"), and three messages the table holds for a UT Plus
+alone:
+
+| Message | Entry | Decoder | Kept |
+| ------- | ----- | ------- | ---- |
+| `@@Bo`, UTC offset | `0x2a` | `0x54e98` / `0x571f4` | the offset at `0x10147f` / `0x1017a3`, and whether it is nonzero, the UTC offset known |
+| `@@Gj` | `0x37` | `0x55e5c` / `0x5820a` | a record at `0x101480` / `0x1017a4` |
+| `@@Sz` | `0x38` | `0x55e76` / `0x58224` | a byte no reader of which was found |
+
+**`@@Bo`.**  TRM0003, Motorola's Oncore User's Guide revision 3.2 (not
+in `third_party/`), defines it for the UT alone, ch. 6 pp. 6.80-6.81:
+`@@BomC` asks for the offset once (m 0) or on each update (1), and
+`@@BouC` gives the integer seconds between UTC and GPS time.  Until
+one comes the UTC offset is not known on the UT Plus path, which the
+VP path sets known itself.  UTC time mode appears to need it known
+(Z3816A function `0x4f93e`, its read at `0x4f9f8`; 58503B `0x57b38`):
+inferred.  So a UT Plus must answer `@@Bo`, with a nonzero offset.
+
+**`@@Gj`.**  ut-engg-notes.pdf p. 11 names it Leap Second Pending
+Status Message; its layout is in neither TRM0003 revision 3.2 nor
+VPCommands.  A UT Plus of 3.0 or later must answer it and `@@Am`.  The
+Z3816A's console page at `0x4c5d8` prints, for a UT Plus of 3.0 or
+later, the `@@Bo` byte as `UTC OFFS`, the record's bytes 0 and 1 as
+`Tls/Tlsf` (`0x4cd10` to `0x4cd44`), and its byte 6 and long 8 as
+seconds and nanoseconds (`0x4cca0` to `0x4ccd0`): from those names,
+the leap second's count before and after, and when; inferred.
+
 ## Emulating the engine
 
 What an engine in a Z380x or 58503A must do, from the above:
@@ -866,7 +986,12 @@ at power-up: the power-up scripts (Z380x `0x48`, 58503A `0x53`) set no
 position.  The 3704, Z3815A, Z3816A and 58503B images hold no such
 constant.  So the Z380x and 58503A images send MSL heights, as their
 manuals give them, and the 58503B ellipsoid heights, as its manual gives them
-(above).  Whether anything sets the Z3816A's bit was not checked.
+(above).  The Z3816A's VP path sets its bit (`bset` at `0x54c2a`),
+where the 58503B's VP path clears it (`0x56f86`); both clear it on the
+UT Plus path (Z3816A `0x54bfe`, 58503B `0x56f5a`; "Which engines each
+image accepts").  So with a VP the Z3816A sends MSL heights (sender
+`0x56228`) and reports them, its other readers of the bit being at
+`0x4ce14`, `0x4d1ca`, `0x553aa` and `0x556be`.  Read from the ROM.
 
 **On the bench, against a u-blox.**  On 2026-10-10 the 58503A, the
 Z3805A and the Z3801A held one position, surveyed by the 58503A and
@@ -956,5 +1081,9 @@ stepped pointers and whole-record copies.
   imply.
 - Whether a six-channel engine stays silent on `@@Ea`, and whether an
   eight-channel one answers `@@Bk`.
+- The layout of `@@Gj`, which a UT Plus of software 3.0 or later
+  must answer in the 58503B and the Z3816A ("The UT Plus").
+- Whether a UT Plus's `@@Ea` would pass the Z3817A, which needs no
+  more than that stream.
 - Whether the bench 58503A's B4121 ever runs at a count of 8.
   `gps.channel_count`, `0x1013e0`, read with `read-memory`, would say.

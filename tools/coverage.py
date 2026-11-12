@@ -17,7 +17,7 @@ The data, one JSON object:
                        pages' index lists
     intro              the paragraphs under the heading
     no_image           what a row for a model with no image reads
-                       across the columns that need one
+                       across every column
     statuses           each status a cell can take, by key: text (its
                        label, or "" for the column's text), class
                        (its look: yes, partial, no or plain) and
@@ -25,9 +25,7 @@ The data, one JSON object:
                        present, absent or either (any)
     legend             [status, meaning] pairs, in order
     columns            each column: key, heading, about (what it
-                       records, prose), needs_image (true for one
-                       read from an image, which must be the first
-                       columns), text (a Yes cell's label in
+                       records, prose), text (a Yes cell's label in
                        place of its status's, a template), evidence
                        (the checks a Yes rests on, templates) and link
                        (where a Yes cell links, a template)
@@ -39,8 +37,8 @@ The data, one JSON object:
                        note, text, evidence, link}, the last three in
                        place of the column's, Yes where it names none; or, for a model of
                        which no image is in IMAGES, no_image true, no
-                       image, design or rewrite, and its columns that
-                       need an image one cell reading no_image
+                       image, design, rewrite or cells, and one cell
+                       across every column reading no_image
     footnotes          {id, text}, each a cell's note, numbered in order
     notes              paragraphs under the table
 
@@ -250,9 +248,6 @@ def check(data, pages):
     for status, _ in data["legend"]:
         if status not in statuses:
             die(f"legend: unknown status {status}")
-    needs = [c.get("needs_image", False) for c in data["columns"]]
-    if needs != sorted(needs, reverse=True):
-        die("the columns that need an image are not the first ones")
     for row in data["images"]:
         for key in row.get("cells", {}):
             if key not in keys:
@@ -261,9 +256,8 @@ def check(data, pages):
             found = sorted(p.name for p in IMAGES.glob(f"{row['model'].lower()}*.bin"))
             if found:
                 die(f"{row['name']}: no_image, but {IMAGES.relative_to(ROOT)} holds {found}")
-            for key in row.get("cells", {}):
-                if next(c for c in data["columns"] if c["key"] == key).get("needs_image"):
-                    die(f"{row['name']}: no_image, but a status for {key}")
+            if row.get("cells"):
+                die(f"{row['name']}: no_image, but cells")
         for column in columns_of(data, row):
             spec = cell_of(row, column)
             status, note = spec["status"], spec["note"]
@@ -293,10 +287,10 @@ def check(data, pages):
 
 def columns_of(data, row):
     """The columns a row has cells of its own in: all, or for a model
-    with no image those that need none."""
-    if not row.get("no_image"):
-        return data["columns"]
-    return [c for c in data["columns"] if not c.get("needs_image")]
+    with no image none."""
+    if row.get("no_image"):
+        return []
+    return data["columns"]
 
 
 def describe(check, row):

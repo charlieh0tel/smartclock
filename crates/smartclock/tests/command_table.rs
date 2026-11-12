@@ -110,12 +110,14 @@ fn non_queries_expect_no_response() {
 #[test]
 fn the_z3801_tree_is_a_subset_of_the_primary_one() {
     // Every Z3801A entry exists as a logical operation on the 58503A, so
-    // the id set stays one vocabulary rather than two.  The one
-    // exception is a keyword only the Z3816A image has, `:SYSTem:PON`,
+    // the id set stays one vocabulary rather than two.  One exception
+    // is a keyword only the Z3816A image has, `:SYSTem:PON`,
     // carried so the table can refuse it by name; no 58503A is known to
-    // accept it and nothing here invents an entry to say so.
+    // accept it and nothing here invents an entry to say so.  The
+    // other is the Z3817A's reference status: the 58503B's tree has
+    // the keyword too, but nothing has confirmed its reply there.
     for spec in Dialect::Z3801.specs() {
-        if spec.id == CommandId::SystemPon {
+        if matches!(spec.id, CommandId::SystemPon | CommandId::ReferenceStatus) {
             continue;
         }
         assert!(

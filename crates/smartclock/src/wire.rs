@@ -30,6 +30,7 @@ use crate::types::HoldoverWaitReason;
 use crate::types::OperationCondition;
 use crate::types::Position;
 use crate::types::PowerupCondition;
+use crate::types::ReferenceStatus;
 use crate::types::SmartClockMode;
 use crate::types::Tfom;
 use crate::types::TimeOfDay;
@@ -135,6 +136,10 @@ pub struct Reading {
     pub holdover_predicted_s: Option<f64>,
     /// Error accumulated so far in holdover, in seconds.
     pub holdover_present_s: Option<f64>,
+    /// A Z3817A's time reference inputs; absent from other models and
+    /// from a daemon that predates it.
+    #[serde(default)]
+    pub reference: Option<ReferenceStatus>,
 
     /// Antenna position.
     pub position: Option<Position>,
@@ -209,6 +214,7 @@ impl From<&Snapshot> for Reading {
             holdover_seconds: s.holdover_duration.map(|h| h.elapsed.as_secs()),
             holdover_predicted_s: s.holdover_predicted.map(|v| v.as_secs()),
             holdover_present_s: s.holdover_present.map(|v| v.as_secs()),
+            reference: s.reference,
             position: s.position,
             date: s.date,
             date_corrected: s.date.map(|d| d.corrected()),

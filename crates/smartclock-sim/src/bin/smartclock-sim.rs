@@ -62,6 +62,9 @@ enum Model {
     /// An HP Z3801A.
     #[value(name = "z3801a")]
     Z3801a,
+    /// An HP Z3817A.
+    #[value(name = "z3817a")]
+    Z3817a,
 }
 
 fn main() -> std::io::Result<()> {
@@ -96,6 +99,7 @@ fn main() -> std::io::Result<()> {
         let mut receiver = match cli.model {
             Model::Hp58503a => receiver,
             Model::Z3801a => receiver.as_z3801a(),
+            Model::Z3817a => receiver.as_z3817a(),
         };
         for (code, message) in &cli.queue_error {
             receiver.queue_error(*code, message);

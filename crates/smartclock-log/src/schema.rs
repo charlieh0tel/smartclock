@@ -13,7 +13,7 @@ use smartclock::snapshot::Tier;
 /// [`INTEGER_TIMES`], newer ones included: a viewer upgraded before
 /// the daemon restarts, or pointed at an archived log, shows what is
 /// there.
-pub const VERSION: i64 = 12;
+pub const VERSION: i64 = 13;
 
 /// The first schema whose timestamps are integer nanoseconds.  The
 /// daemon converts an older log on open; the readers read none older,
@@ -67,6 +67,17 @@ pub const TABLES: &str = r#"
         rollover_epochs      INTEGER,
         log_count            INTEGER,
         last_error           TEXT,
+        -- A Z3817A's time reference, from
+        -- :DIAGnostic:REFerence:STATus?: the input selected (1 or
+        -- 2, TIMEREF1 or TIMEREF2), the seconds between its pulses
+        -- (1 for 1 PPS, 2 for PP2S), and whether the VALID record,
+        -- the GPS record and the pulse are arriving (0 or 1).  NULL
+        -- on other models and in rows before schema 13.
+        reference_input      INTEGER,
+        reference_period_s   INTEGER,
+        reference_valid_record INTEGER,
+        reference_gps_record INTEGER,
+        reference_pulse_alive INTEGER,
         -- When each group of fields was last read.  Without
         -- these a fast row restates the ten- and sixty-second
         -- values under a fresh timestamp, and a later query

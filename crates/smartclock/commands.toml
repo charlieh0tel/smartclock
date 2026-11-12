@@ -2391,3 +2391,17 @@ doc = "A flag.  Undocumented, new in 3704; see docs/scpi/undocumented.md."
   models = ["58503A"]
   cite = "discovered on a 58503A"
   evidence = "hardware"
+
+[[command]]
+id = "reference_status"
+class = "query"
+doc = """A Z3817A's time reference: the input selected (1 or 2, TIMEREF1 or \
+TIMEREF2), its pulse (1 for 1 PPS, 2 for PP2S), and whether the VALID \
+record, the GPS record and the pulse are arriving, as `+r,+m,e,g,p`."""
+
+  [command.dialect.z3801]
+  scpi = ":DIAGnostic:REFerence:STATus?"
+  response = "reference_status"
+  models = ["Z3817A"]
+  cite = "firmware image z3817a-3752.bin, command tree; answered by a Z3817A, 3752-A, 2026-11-11"
+  evidence = "hardware"

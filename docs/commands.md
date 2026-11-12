@@ -8,7 +8,7 @@ to regenerate; a test fails if this file and the table disagree.
 | Tree | Commands | Hardware | Firmware | Manual |
 | ---- | -------- | -------- | -------- | ------ |
 | 58503A/B, 59551A | 141 | 103 | 1 | 37 |
-| Z3801A, Z3816A | 82 | 62 | 19 | 1 |
+| Z3801A, Z3816A | 83 | 63 | 19 | 1 |
 
 **H** means the receiver answered it.  **F** means every keyword
 appears in the firmware's own keyword table, so the spelling is
@@ -30,7 +30,7 @@ returns `NotListed` without anything reaching the receiver.  Any
 other model is asked every query its tree has, except one naming
 none but these.
 
-The Z3817A is asked 25 of the `z3801` tree's 62 queries: idn, stb, position avg, sat tracking count, sync state, efc, led gpslock, ffom, tfom, tinterval, holdover unc pred, holdover unc now, holdover duration, holdover waiting, status screen, log count, log read, oper condition, hardware condition, holdover condition, powerup condition, date, time, efc absolute, oven tempco.
+The Z3817A is asked 26 of the `z3801` tree's 63 queries: idn, stb, position avg, sat tracking count, sync state, efc, led gpslock, ffom, tfom, tinterval, holdover unc pred, holdover unc now, holdover duration, holdover waiting, status screen, log count, log read, oper condition, hardware condition, holdover condition, powerup condition, date, time, efc absolute, oven tempco, reference status.
 
 ## Undocumented
 
@@ -215,3 +215,4 @@ anything reaching the receiver.
 | tmode state | Query | `:DIAGnostic:TMODe:STATe?` H (58503A) |  |
 | ptime utc | Query | `:PTIMe:UTC?` H (58503A) |  |
 | system pon | Dangerous |  | `:SYSTem:PON` F (Z3816A) |
+| reference status | Query |  | `:DIAGnostic:REFerence:STATus?` H (Z3817A) |

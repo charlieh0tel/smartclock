@@ -203,6 +203,10 @@ pub struct Receiver {
     /// lists but whose handler is a stub: the Z3817A's oven current.
     /// Matched ignoring case.
     pub undefined: Vec<String>,
+    /// What `:DIAGnostic:REFerence:STATus?` answers, a Z3817A's time
+    /// reference as `+r,+m,e,g,p`.  `None` answers -113, as a receiver
+    /// without the keyword does.
+    pub reference: Option<String>,
     /// Whether the receiver has ever had a fix.
     ///
     /// Until it has, everything derived from GPS -- the date, the time,
@@ -265,6 +269,7 @@ impl Default for Receiver {
             garbled: Vec::new(),
             refused: Vec::new(),
             undefined: Vec::new(),
+            reference: None,
             no_fix: false,
             base: Base {
                 efc_raw: 713_587,
@@ -312,7 +317,8 @@ impl Receiver {
     }
 
     /// A Z3817A: the Z3801A's tree under its own identity, with the
-    /// oven-current stub its 3752 firmware answers -113.
+    /// oven-current stub its 3752 firmware answers -113, fed a VALID
+    /// record, the GPS records and 1 PPS on TIMEREF2.
     pub fn z3817a() -> Self {
         Self::default().as_z3817a()
     }
@@ -321,6 +327,7 @@ impl Receiver {
     pub fn as_z3817a(self) -> Self {
         let mut receiver = Self {
             identity: "HEWLETT-PACKARD,Z3817A,0000A00000,3752-A".to_owned(),
+            reference: Some("+2,+1,1,1,1".to_owned()),
             ..self.as_z3801a()
         };
         receiver
@@ -760,6 +767,10 @@ impl Receiver {
                 Answer::line(u8::from(self.alarm_bits() & ALARM_ENABLE != 0).to_string())
             }
             CommandId::LifetimeCount => Answer::line("+36302"),
+            CommandId::ReferenceStatus => match self.reference.clone() {
+                Some(status) => Answer::line(status),
+                None => self.reject(UNDEFINED_HEADER_CODE, UNDEFINED_HEADER),
+            },
 
             // Control commands are accepted and change what they say
             // they change, so a test can see the effect.

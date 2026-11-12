@@ -31,6 +31,16 @@ would stay lit on a healthy instrument.  The receiver's own date stays
 visible beside it, because the correction is arithmetic done here
 against the host clock.
 
+## A Z3817A's reference
+
+A Z3817A's dashboard adds two lines under the date: the reference
+input it has selected and the pulse it expects there (`TIMEREF2, 1
+PPS`), and whether the pulse, the VALID record and the GPS record are
+arriving, in yellow when the pulse or the VALID record is not.  They
+come from `:DIAGnostic:REFerence:STATus?` on the medium tier, which
+no other model is asked, and are logged in the `reference_*` columns.
+The browser views and the exporter do not show them yet.
+
 ## The status screen
 
 The status view, in the monitor and at `/status` in the browser,

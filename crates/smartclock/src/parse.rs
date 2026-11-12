@@ -18,9 +18,12 @@ use crate::types::HoldoverDuration;
 use crate::types::LeapPending;
 use crate::types::Position;
 use crate::types::Prn;
+use crate::types::ReferencePulse;
+use crate::types::ReferenceStatus;
 use crate::types::Seconds;
 use crate::types::Tfom;
 use crate::types::TimeOfDay;
+use crate::types::TimeReference;
 use crate::types::UtcOffset;
 
 fn bad(reply: &str, expected: &'static str) -> Error {
@@ -109,6 +112,32 @@ pub fn holdover_duration(reply: &str) -> Result<HoldoverDuration> {
         .split_once(',')
         .ok_or_else(|| bad(reply, "a duration and a flag"))?;
     Ok(HoldoverDuration::new(seconds(value)?, bool01(flag)?))
+}
+
+/// `+r,+m,e,g,p`: a Z3817A's time reference status ([`ReferenceStatus`]).
+pub fn reference_status(reply: &str) -> Result<ReferenceStatus> {
+    const EXPECTED: &str = "a reference status: input, pulse and three flags";
+    let fields: Vec<&str> = reply.trim().split(',').collect();
+    let [input, pulse, valid_record, gps_record, pulse_alive] = fields.as_slice() else {
+        return Err(bad(reply, EXPECTED));
+    };
+    let input = match int(input)? {
+        1 => TimeReference::One,
+        2 => TimeReference::Two,
+        _ => return Err(bad(reply, EXPECTED)),
+    };
+    let pulse = match int(pulse)? {
+        1 => ReferencePulse::PerSecond,
+        2 => ReferencePulse::PerTwoSeconds,
+        _ => return Err(bad(reply, EXPECTED)),
+    };
+    Ok(ReferenceStatus {
+        input,
+        pulse,
+        valid_record: bool01(valid_record)?,
+        gps_record: bool01(gps_record)?,
+        pulse_alive: bool01(pulse_alive)?,
+    })
 }
 
 /// A `±d.dEe` reply that is a time quantity.

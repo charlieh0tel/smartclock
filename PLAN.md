@@ -796,6 +796,12 @@ It shares the explainer's references, styles and page shell through
 - **Compacting old logs**, perhaps into Parquet.  The logs grow without
   bound.
 - **Bench work:** the open items in `docs/hardware-investigations.md`.
+- **A Z3817A's reference beyond the monitor:** the daemon logs
+  `:DIAGnostic:REFerence:STATus?` and the monitor shows it, but the
+  browser's status strip and the exporter, which names each metric it
+  exports, do not.  Its lists leave out the predicted visible count,
+  which the bench unit declined on every pass, until the reason is
+  known; asked again, it would give the browser's not-tracking series.
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.

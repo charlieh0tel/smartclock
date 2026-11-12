@@ -28,7 +28,7 @@ GCLK_NS = 100
 class Design:
     """One FPGA design: one bitstream, and the firmware images that load it."""
 
-    def __init__(self, image, name, images, tap):
+    def __init__(self, image, name, images, tap, pps):
         # Its image directory name, tools/fpga/<image>_tb.v's.
         self.image = image
         # Its heading.
@@ -38,14 +38,17 @@ class Design:
         # The net whose rise is the count's stop tap (each trace's
         # "Start, stop and status bits").
         self.tap = tap
+        # The pin that carries the internal 1 PPS, whose period gives
+        # the divide.
+        self.pps = pps
 
 
 DESIGNS = (
-    Design("z3805a", "Z3805A", "Z3805A 3543B", "HG.Y"),
-    Design("58503a-z3801a", "58503A / Z3801A", "58503A 3633, 3704; Z3801A 3543", "HG.Y"),
-    Design("58503b", "58503B", "58503B 1.01.04", "EH.Y"),
-    Design("z3815a", "Z3815A", "Z3815A 4010", "KI.X"),
-    Design("z3816a", "Z3816A", "Z3816A 4001", "KI.X"),
+    Design("z3805a", "Z3805A", "Z3805A 3543B", "HG.Y", "P83"),
+    Design("58503a-z3801a", "58503A / Z3801A", "58503A 3633, 3704; Z3801A 3543", "HG.Y", "P83"),
+    Design("58503b", "58503B", "58503B 1.01.04", "EH.Y", "P83"),
+    Design("z3815a", "Z3815A", "Z3815A 4010", "KI.X", "P83"),
+    Design("z3816a", "Z3816A", "Z3816A 4001", "KI.X", "P83"),
 )
 
 # Each design's trace, the document its figures and roles come from.
@@ -131,12 +134,13 @@ def edge_periods(run, pin):
     return sorted({ns(v) for v in found})
 
 
-def divide(image):
-    """The 1 PPS divide: P83's one period in the three run over GCLK_NS."""
-    p83 = edge_periods(f"{image}.three", "P83")
-    if len(p83) != 1:
-        die(f"{image}.three: P83 periods {p83}, not one")
-    return p83[0], p83[0] // GCLK_NS
+def divide(design):
+    """The 1 PPS divide: the internal 1 PPS pin's one period in the
+    three run, and that period over GCLK_NS."""
+    periods = edge_periods(f"{design.image}.three", design.pps)
+    if len(periods) != 1:
+        die(f"{design.image}.three: {design.pps} periods {periods}, not one")
+    return periods[0], periods[0] // GCLK_NS
 
 
 # --- rendering ------------------------------------------------------------

@@ -153,7 +153,7 @@ docs:
 PAGES_DIR ?= target/pages
 PAGES_DATA ?= target/pages-data
 HAND_PAGES := loop map55-4003 bench-sky-2026-10-03
-PAGES := fpga fpga-detail board-atlas block-diagram $(HAND_PAGES) pforth-models scpi-models
+PAGES := fpga fpga-detail board-atlas block-diagram $(HAND_PAGES) pforth-models scpi-models coverage
 NEW_PAGE := fpga
 FEATURED_PAGE := loop
 UNLISTED_PAGES := bench-sky-2026-10-03
@@ -184,6 +184,14 @@ board-atlas:
 block-diagram:
 	mkdir -p $(PAGES_DIR)
 	python3 -I tools/block_diagram.py $(PAGES_DIR)/block-diagram.html
+
+# The coverage by model, from docs/coverage.json, a row per firmware
+# image; fails if a Yes cell's file, section or list entry is missing,
+# or a cell that is not a Yes has one, or the data links a page not in
+# PAGES.  Needs only python3; .github/workflows/firmware.yml runs it too.
+coverage:
+	mkdir -p $(PAGES_DIR)
+	python3 -I tools/coverage.py $(PAGES_DIR)/coverage.html $(PAGES:%=%.html)
 
 # The SCPI trees side by side, as a page that filters them: their data
 # from the images, kept in PAGES_DATA, not published, and the page

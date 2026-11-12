@@ -103,6 +103,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make block-diagram
         if: ${{ !cancelled() }}
+      - run: make coverage
+        if: ${{ !cancelled() }}
       - run: make check-loop-trace
         if: ${{ !cancelled() }}
       - run: make check-loop-constants

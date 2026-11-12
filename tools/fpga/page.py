@@ -49,6 +49,7 @@ DESIGNS = (
     Design("58503b", "58503B", "58503B 1.01.04", "EH.Y", "P83"),
     Design("z3815a", "Z3815A", "Z3815A 4010", "KI.X", "P83"),
     Design("z3816a", "Z3816A", "Z3816A 4001", "KI.X", "P83"),
+    Design("z3817a", "Z3817A", "Z3817A 3752", "GH.Y", "P78"),
 )
 
 # Each design's trace, the document its figures and roles come from.
@@ -58,6 +59,7 @@ TRACES = {
     "58503b": "docs/firmware/58503b-trace.md",
     "z3815a": "docs/firmware/z3815a-trace.md",
     "z3816a": "docs/firmware/z3816a-trace.md",
+    "z3817a": "docs/firmware/z3817a-trace.md",
 }
 
 

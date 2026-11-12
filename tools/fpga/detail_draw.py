@@ -68,20 +68,21 @@ class Layout:
 
 TEN_MHZ = Layout(
     blocks=(
-        Block("bus", 0, "Bus interface", ("strobe", "decode"), lines=("{eq:HL.X}", "{eq:FL.Y}")),
-        Block("startside", 0, "Start-side logic", ("mode3", "p79", "p76")),
+        Block("bus", 0, "Bus interface", ("strobe", "decode")),
+        Block("startside", 0, "Start-side logic", ("mode3", "p79", "p76", "constant")),
         Block("fixed", 0, "Fixed and passed through", ("tie", "passthrough", "p19")),
         Block("registers", 1, "Write registers", ("register0", "register1", "register2", "address6")),
-        Block("start", 1, "Start and gate", ("start", "gate"), ti=True),
+        Block("start", 1, "Start and gate", ("source", "start", "gate"), ti=True),
         Block("sync", 1, "Sync and step", ("field", "pending", "step", "restart")),
-        Block("readmux", 2, "Read multiplexer", ("phases", "address", "interpolator", "select", "mux01", "mux23")),
+        Block("readmux", 2, "Read multiplexer", ("phases", "address", "interpolator", "select", "mux01", "mux23",
+                                                 "bits47")),
         Block("count", 2, "Interval count", ("tick", "head", "stages"), ti=True,
               lines=("{bits} bits: bit 0, bit 1 and {n:stages} two-bit Johnson stages",
                      "preset reads 0x{preset}")),
         Block("divider", 2, "1 PPS divider", ("prescaler", "binary", "decades", "terminal"), chain=True),
-        Block("seconds", 3, "Seconds", ("seconds",)),
+        Block("seconds", 3, "Seconds", ("seconds", "p84counter")),
         Block("stop", 3, "Stop", ("tapbuffer", "stop", "stoppipe"), ti=True),
-        Block("output", 3, "1 PPS output", ("driver", "outputs", "alternate")),
+        Block("output", 3, "1 PPS output", ("driver", "outputs", "alternate", "flags")),
     ),
     wires=(("bus", "registers"), ("bus", "sync"), ("registers", "readmux"), ("start", "count"),
            ("start", "readmux"), ("stop", "count"), ("stop", "readmux"), ("count", "readmux"),
@@ -137,24 +138,32 @@ TELECOM = Layout(
 # and the layout's wires it lacks: a design whose blocks the trace calls
 # the Z3805A's names the Z3805A's figures ("name@z3805a"), one whose
 # nets differ its own equations, and the Z3816A's seconds drive the bus
-# pins themselves.
+# pins themselves.  The bus block's equations are each design's, since
+# the Z3817A's strobe is GL, not HL.
 LAYOUTS = {
-    "z3805a": (TEN_MHZ, {"start": ("{eq:AH.Y}",), "stop": ("{eq:CJ.X}",), "output": ("{eq:EI.Y}",),
-                         "sync": ("{eq:EJ.X}",)}, {}),
-    "58503a-z3801a": (TEN_MHZ, {"start": ("{eq:AH.Y}",), "stop": ("{eq:CJ.X}",), "output": ("{eq:EI.Y}",),
-                                "sync": ("{eq:EJ.X}",)},
+    "z3805a": (TEN_MHZ, {"bus": ("{eq:HL.X}", "{eq:FL.Y}"), "start": ("{eq:AH.Y}",), "stop": ("{eq:CJ.X}",),
+                         "output": ("{eq:EI.Y}",), "sync": ("{eq:EJ.X}",)}, {}),
+    "58503a-z3801a": (TEN_MHZ, {"bus": ("{eq:HL.X}", "{eq:FL.Y}"), "start": ("{eq:AH.Y}",), "stop": ("{eq:CJ.X}",),
+                                "output": ("{eq:EI.Y}",), "sync": ("{eq:EJ.X}",)},
                       {"prescaler": "the Z3805A's: GI.Y every {gi_clocks@z3805a} clocks, JI.X every "
                                     "{ji_clocks@z3805a} clocks",
                        "binary": "the Z3805A's: JK.Y every {jk_clocks@z3805a} clocks",
                        "decades": "the Z3805A's: ÷{decade1@z3805a} ÷{decade2@z3805a} ÷{decade3@z3805a}; "
                                   "the tap at {tap} ns"}),
-    "58503b": (TEN_MHZ, {"start": ("{eq:AH.Y}",), "stop": ("{eq:CJ.X}",), "output": ("{eq:HK.X}", "{eq:FH.Y}"),
-                         "sync": ("{eq:EJ.X}",), "fixed": ("P19 every {p19_clocks} clocks",)},
+    "58503b": (TEN_MHZ, {"bus": ("{eq:HL.X}", "{eq:FL.Y}"), "start": ("{eq:AH.Y}",), "stop": ("{eq:CJ.X}",),
+                         "output": ("{eq:HK.X}", "{eq:FH.Y}"), "sync": ("{eq:EJ.X}",),
+                         "fixed": ("P19 every {p19_clocks} clocks",)},
                {"prescaler": "the Z3805A's (check-blocks): GI.Y every {gi_clocks@z3805a} clocks, JI.X every "
                              "{ji_clocks@z3805a} clocks",
                 "binary": "the Z3805A's: JK.Y every {jk_clocks@z3805a} clocks",
                 "decades": "the Z3805A's: ÷{decade1@z3805a} ÷{decade2@z3805a} ÷{decade3@z3805a}; "
                            "HG.Y, through EH, the tap"}),
+    "z3817a": (TEN_MHZ, {"bus": ("{eq:GL.X}", "{eq:FL.Y}"), "start": ("{eq:AG.X}",), "stop": ("{eq:CI.X}",),
+                         "output": ("{eq:FI.Y}",), "sync": ("{eq:IF.Y}",),
+                         "fixed": ("P19 every {p19_clocks} clocks",)},
+               {"prescaler": "JB.X every {jb_clocks} clocks, LD.X every {ld_clocks} clocks",
+                "binary": "HD.Y every {hd_clocks} clocks",
+                "decades": "HF.Y every {hf_clocks} clocks; the tap at {tap} ns"}),
     "z3815a": (TELECOM, {}, {}),
     "z3816a": (TELECOM, {}, {}, (("seconds", "readmux"),)),
 }

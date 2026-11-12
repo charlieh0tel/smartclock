@@ -793,8 +793,8 @@ rendered.  A committed copy would only repeat what its sources and
 the build already check.
 
 The detailed diagrams, FPGA detail, are generated the same
-way, by one generator for all five designs (`tools/fpga/detail.py`,
-`detail_draw.py`), never drawn by hand per design, so the five share
+way, by one generator for all six designs (`tools/fpga/detail.py`,
+`detail_draw.py`), never drawn by hand per design, so the six share
 one grammar and their differences show: the whole chip by function
 blocks, and the time-interval counter gate by gate.  Where a block
 sits is layout, one table a family, since positions are not facts; what

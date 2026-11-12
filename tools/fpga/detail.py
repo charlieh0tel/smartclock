@@ -1,4 +1,4 @@
-"""Renders the detailed logic diagrams of the five SmartClock FPGA designs,
+"""Renders the detailed logic diagrams of the six SmartClock FPGA designs,
 fpga-detail.html, into --output.  It is not committed: the top
 Makefile's `fpga-detail` target writes it for GitHub Pages
 (https://charlieh0tel.github.io/smartclock/fpga-detail.html), and
@@ -8,7 +8,7 @@ be rendered.
     python3 -I tools/fpga/detail.py --netlists target/fpga --output PAGE
     python3 -I tools/fpga/detail.py --netlists target/fpga --self-test
 
-One generator draws all five, each twice (detail_draw.py): the whole
+One generator draws all six, each twice (detail_draw.py): the whole
 chip, its pins on the frame's edges and its function blocks in the
 signal's flow, one layout a family; and the time-interval counter gate
 by gate, one box a logic block with its netlist equations.  Under them
@@ -198,9 +198,9 @@ def render(netlist_dir):
     header = f"""<header>
 <p class="eyebrow">SmartClock firmware &middot; FPGA</p>
 <h1>FPGA detail</h1>
-<p class="lede">Each of the five SmartClock FPGA designs drawn twice from its decoded netlist: the
+<p class="lede">Each of the six SmartClock FPGA designs drawn twice from its decoded netlist: the
 whole chip by function blocks, then the time-interval counter gate by gate, with every element
-listed in full below.  All five come from one generator, in one layout a family, so that the
+listed in full below.  All six come from one generator, in one layout a family, so that the
 differences stand out.  The short version is <a href="fpga.html">Inside the SmartClock FPGAs</a>;
 the traces are the long one.</p>
 <p class="note">Nothing here has been checked on a board; every pin's role is read from the

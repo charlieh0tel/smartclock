@@ -1,4 +1,4 @@
-"""The five designs' elements and pin roles for detail.py, as the traces
+"""The six designs' elements and pin roles for detail.py, as the traces
 give them.
 
 Each element is the blocks a trace names together for one job, with the
@@ -41,6 +41,7 @@ DOCS = {
     "58503b": "docs/firmware/58503b-trace.md",
     "z3815a": "docs/firmware/z3815a-trace.md",
     "z3816a": "docs/firmware/z3816a-trace.md",
+    "z3817a": "docs/firmware/z3817a-trace.md",
     "comparison": "docs/firmware/fpga-comparison.md",
 }
 
@@ -226,6 +227,19 @@ FIGURES = {
     "p35_count": lambda d: exact(probed(f"{d.image}.p35", "P21"), probed(f"{d.image}.p35", "P34")),
     "gc_clocks": lambda d: num(probed(f"{d.image}.p35", "GC.X") // GCLK_NS),
     "p19_clocks": lambda d: clocks(f"{d.image}.fast", "P19"),
+    "jb_x": lambda d: period(f"{d.image}.three", "JB.X"),
+    "ld_x": lambda d: period(f"{d.image}.three", "LD.X"),
+    "hd_y": lambda d: period(f"{d.image}.three", "HD.Y"),
+    "hf_y": lambda d: period(f"{d.image}.three", "HF.Y"),
+    "jb_clocks": lambda d: clocks(f"{d.image}.three", "JB.X"),
+    "ld_clocks": lambda d: clocks(f"{d.image}.three", "LD.X"),
+    "hd_clocks": lambda d: clocks(f"{d.image}.three", "HD.Y"),
+    "hf_clocks": lambda d: clocks(f"{d.image}.three", "HF.Y"),
+    "p72_period": lambda d: period(f"{d.image}.three", "P72"),
+    "p72_high": lambda d: num(probe(f"{d.image}.three", "P72")["high_min"]),
+    "gate_after": lambda d: num(probe(f"{d.image}.three", "AI.Y")["after_min"]),
+    "restart_after": lambda d: num(probe(f"{d.image}.sync3", "IF.Y")["after_min"]),
+    "select_count": lambda d: first_count(f"{d.image}.select"),
     "alternate_low":lambda d: num(ns(find(f"{d.image}.freerun_4s", r"^probe ~P14 high ([\d.]+) ns from")[0])),
     "alternate_at": lambda d: " and ".join(
         f"{t} s" for t in find_all(f"{d.image}.freerun_4s", r"^probe ~P14 high [\d.]+ ns from ([\d.]+) s$")),
@@ -954,10 +968,164 @@ Z3816A_PINS = {
     "P52": Pin("passed through", "P53"),
 }
 
+# --- the Z3817A, a sixth design of the first family ------------------------------
+
+# Its blocks sit in other tiles than the Z3805A's, so no element is kept
+# as derive() keeps one: each is the trace's own, citing the Z3805A's
+# trace too where it calls the blocks the Z3805A's.
+E = "z3817a"
+Z3817A = (
+    element("gclk", "clocks", "Global clock, GCLK", "GCLK", "read", ((E, "Clocks"),),
+            "P7 drives the one global clock buffer through general routing, as in the Z3805A; ACLK is unused.",
+            "GCLK clocks {loads[GCLK.O]} logic blocks; P84 clocks HG and HH, the P84 counter."),
+    element("strobe", "port", "Select and write strobe", "GL GK", "read", ((E, "Register port"),),
+            "GL.X, over P61 and P75, is the bus's 3-state control; GL.Y, the select and R/W both Low, is sampled "
+            "into GK, whose GK.Y is a one-clock write strobe."),
+    element("decode", "port", "Write decode", "FL EL", "read", ((E, "Register port"),),
+            "FL.X register 0, FL.Y register 1, EL.X register 3, all with ADDR2 Low, and EL.Y register 4, ADDR2 High.",
+            "Register 2 decodes to nothing."),
+    element("register0", "port", "Register 0: preset", "LH", "read", ((E, "Register port"),),
+            "Bit 6 alone, LH, the preset, which resets every stage of the count, the start and the stop; there is "
+            "no mode field."),
+    element("register1", "port", "Register 1: read address", "FJ DJ EJ", "read", ((E, "Register port"),),
+            "Bits 3 to 7, the read address, in FJ (bits 3 and 4), DJ (5 and 6) and EJ (7).",
+            "Bits 0 to 2 are not kept: no start or reference bit."),
+    element("phases", "read", "Bus phases", "AL", "read", ((E, "Register port"), (E, "The count")),
+            "A two-bit Johnson stage on GCLK: P71, P70, P67 and P65 register on AL.X or AL.Y, and AL.Y picks one of "
+            "each count stage's two bits."),
+    element("address", "read", "Read address decode", "DD DF", "read", ((E, "The count"),),
+            "DD and DF decode FJ, register 1's bits 3 and 4, the address's bits 0 and 1, picking a group of "
+            "stages."),
+    element("select", "read", "Count read multiplexers", "DH CG BF BG CC CE CF CJ CK DC", "read",
+            ((E, "Register port"),),
+            "DH.Y and CG.X, the count's read multiplexers, select on DJ, the address's bits 2 and 3, among BF, BG, "
+            "CC, CE, CF, CJ, CK and DC, terms over the stages' read outputs and DD and DF."),
+    element("mux01", "read", "Read multiplexer, bits 0 and 1", "BK", "read", ((E, "Register port"),),
+            "BK.Y = EJ.X ? DH.Y : CI.X onto P71 and BK.X = EJ.X ? DH.Y : BI.X onto P70: the stop and start bits, as "
+            "in the Z3805A, unless the address's bit 4 is set."),
+    element("mux23", "read", "Read multiplexer, bits 2 and 3", "FK", "simulated",
+            ((E, "Register port"), (E, "Start, stop and status bits")),
+            "FK.Y = EJ.X ? CG.X : FI.X onto P67 and FK.X = EJ.X ? CG.X : GJ.X onto P65: status bits 2 and 3 are "
+            "flags of the 1 PPS chain, not the interpolator's (read).",
+            "Under the preset the status reads 0x{status} (simulated, the fast run)."),
+    element("bits47", "read", "Bits 4 to 7: seconds or P84", "IH II IJ IK", "read", ((E, "Register port"),),
+            "IH, II, IJ and IK onto P62, P60, P59 and P58, each FJ.Y ? a P84 counter bit : a seconds bit, FJ.Y the "
+            "address's bit 0: the Z3815A's arrangement."),
+    element("seconds", "read", "Seconds counter", "JH JI", "read", ((E, "Register port"),),
+            "JH and JI, enabled by GE.X, the internal 1 PPS."),
+    element("source", "count", "Start select, register 4", "AG", "simulated", ((E, "Register port"),
+                                                                                  (E, "Start, stop and status bits")),
+            "AG.QY holds register 4's bit 0, and AG.X = AG.QY ? P84 : P82 is the selected 1 PPS, which clocks the "
+            "start (read).",
+            "With the bit set and a 1 PPS on P84, P84 starts the count: the reading is {select_count} ticks over the "
+            "preset (simulated, the select run).  The firmware's two writers of the bit pass 0 (read)."),
+    element("start", "count", "Start capture", "BI CH", "read", ((E, "Start, stop and status bits"),),
+            "AG.X clocks BI, whose QY, the start bit, sets on its rising edge (its DI is CH.X, a constant 1); BH.X, "
+            "the preset through BH, resets it."),
+    element("gate", "count", "Start gate", "AI", "simulated", ((E, "Start, stop and status bits"),),
+            "AI.QY takes the start on the next GCLK edge and holds it, and the count runs from then (read).",
+            "AI.Y rises {gate_after} ns after the 1 PPS (simulated, the three run): with no reference bit the "
+            "count opens on the first clock edge after it, as the Z3805A's does with the bit Low (inferred)."),
+    element("constant", "count", "AH: no start pulse", "AH", "read", ((E, "Start, stop and status bits"),),
+            "AH, the Z3805A's start pulse, is here two flip-flops whose data is 0: its outputs are a constant Low, "
+            "so CI's F is BJ.X alone and no pin carries a start pulse."),
+    element("tick", "count", "Count bit 0: the gated tick", "BH", "read", ((E, "The count"),),
+            "A toggle on GCLK while AI.Y, the start, is High and DI.Y, the stop, Low; LH, the preset, resets it."),
+    element("head", "count", "Count bit 1", "BD", "read", ((E, "The count"),),
+            "One flip-flop, G = ~QY, clocked by BH.Y."),
+    element("stages", "count", "Count bits 2 to 31", "BE AF AE AC BC DB CB BB AB BA AA AD AJ AK BL", "read",
+            ((E, "The count"), (Z, "The count")),
+            "Fifteen two-bit ripple Johnson stages, the Z3805A's kind, each clocked by the one before; the preset "
+            "resets all.",
+            "Under the preset every nibble reads 5, the count 0x{preset} (simulated, the fast run)."),
+    element("tapbuffer", "count", "Tap buffer", "EH", "read", ((E, "Clocks"),),
+            "EH.Y, a buffer of the divider's tap GH.Y, clocks the stop capture."),
+    element("stop", "count", "Stop capture", "BJ", "simulated", ((E, "Start, stop and status bits"),),
+            "BJ, the Z3805A's CI, clocked by the tap through EH, takes BI.X, so only a tap after a start stops the "
+            "count (read).",
+            "The tap rises {tap} ns after P78 and the stop bit, CI.X, {stop_after} ns after P78 (simulated, the "
+            "three run)."),
+    element("stoppipe", "count", "Stop pipeline", "CI DI", "simulated", ((E, "Start, stop and status bits"),),
+            "CI.QX, CI.QY, DI.QX and DI.QY carry the stop on GCLK, and DI.Y holds BH: the Z3805A's CJ and DG, CI "
+            "ORing in AH.Y, constant Low (read).",
+            "With the P82 1 PPS at 0.25 s each reading is {count} ticks over the preset, the Z3805A's figure with "
+            "its reference bit Low (simulated, the three run)."),
+    element("prescaler", "divider", "Prescaler", "JA JB IC KC JC ID JD KD LD", "simulated",
+            ((E, "The 1 PPS divider"),),
+            "JA, a two-bit counter, and JB.X, its terminal, a prescaler of 4 or 5 clocks; IC, KC, JC and ID, a "
+            "counter enabled by JB.X whose terminal ID.Y, through KD and LD, restarts JA and the counter: the "
+            "Z3805A's GI, HI, IG, JH, IH, JI, II, HJ and FJ (check-blocks).",
+            "JB.X every {jb_x} ns, LD.X every {ld_x} ns (simulated, the three run)."),
+    element("binary", "divider", "Six-bit counter", "FA GA FC GC FB GB HD", "simulated", ((E, "The 1 PPS divider"),),
+            "FA, GA, FC and GC, a six-bit counter enabled by LD.X, and HD.Y its terminal: the Z3805A's KH to KK, "
+            "JJ and JK (check-blocks); GB's X ORs in HE.X, the kind 2 step.",
+            "HD.Y every {hd_y} ns (simulated, the three run)."),
+    element("decades", "divider", "Decades and the tap", "GF GG HF FE FF FG FH GH", "simulated",
+            ((E, "The 1 PPS divider"),),
+            "Three decades, GF and GG (HF.Y), FE and FF (GH.X), FG and FH: the Z3805A's KF, KG, JG, GE, GF, HF, GG "
+            "and HG (check-blocks).",
+            "HF.Y every {hf_y} ns; GH.Y, the top decade's late states, is the tap: it rises {tap} ns after P78 "
+            "(simulated, the three run)."),
+    element("terminal", "divider", "Terminal count", "GD GE", "simulated", ((E, "The 1 PPS divider"),
+                                                                            (E, "The sync field")),
+            "GD and GE, the Z3805A's HH split in two; GE.X, the internal 1 PPS, ORs in IF.Y, kind 3's restart "
+            "(read).",
+            "P78 every {pps_period} ns: a divide by {divide} (simulated, the three run)."),
+    element("driver", "divider", "1 PPS output driver", "FI.Y FD", "simulated", ((E, "Other outputs"),
+                                                                                  (E, "The 1 PPS divider")),
+            "FI.Y = FD.Y + GE.X, registered on GCLK onto P78; FD sets on GE.X and holds until FA.Y, FC.X and GA.X "
+            "are High together (read).",
+            "P78 stays High {pps_high} ns (simulated, the three run)."),
+    element("flags", "divider", "Chain flags and P72", "FI.X GJ", "simulated",
+            ((E, "Register port"), (E, "Other outputs")),
+            "FI.X and GJ.X, flags of the 1 PPS chain, are status bits 2 and 3, which the firmware does not test "
+            "(read).",
+            "GJ.Y, set on HD.Y and cleared on the next prescaler tick, is P72: every {p72_period} ns, High "
+            "{p72_high} ns (simulated, the three run)."),
+    element("field", "sync", "Sync field, register 3", "IG JE", "read", ((E, "The sync field"), (E, "Register port")),
+            "IG keeps register 3's bits 0 and 1; JE, a clock behind, marks the field's change from 0: the Z3805A's "
+            "DI and DJ (check-blocks)."),
+    element("pending", "sync", "Sync pending", "JF IE", "simulated", ((E, "The sync field"),),
+            "JF.QY sets on the field's change from 0 and clears on IE.X = IF.Y + GE.X·(~IG.Y + ~IG.X): kind 3's "
+            "restart, or the internal 1 PPS for kinds 1 and 2 only, so a kind 3 stays pending across internal "
+            "1 PPS edges (read).",
+            "A kind 3 whose 1 PPS comes after an internal 1 PPS is not simulated (open)."),
+    element("step", "sync", "Steps, kinds 1 and 2", "HE HC", "simulated", ((E, "The sync field"),),
+            "HE.Y and HE.X, the step lines of kinds 1 and 2, come with the pending sync in the second's last "
+            "millisecond; HC, the Z3805A's GK in another encoding, steps ID's terminal (read).",
+            "The reading after is {sync1} (kind 1) and {sync2} (kind 2) ticks over the preset, against {count} "
+            "(simulated, the sync1 and sync2 runs)."),
+    element("restart", "sync", "1 PPS edge and restart, kind 3", "CD IF", "simulated", ((E, "The sync field"),),
+            "CD, the selected 1 PPS's rising edge on GCLK, feeds IF, whose IF.QX resets the decades and the six-bit "
+            "counter: the Z3805A's DH and EJ, CD sampling AG.X where the Z3805A's DH samples P82 (read).",
+            "IF.Y rises {restart_after} ns after the 1 PPS, and the restart is itself the internal 1 PPS: P78 rises "
+            "at {sync3_pps} s (simulated, the sync3 run)."),
+    element("p84counter", "other", "P84 counter", "HG HH", "read", ((E, "Register port"),),
+            "HG and HH, clocked by P84 with nothing to reset them, count P84's rises in four bits, read at the odd "
+            "addresses in bits 4 to 7; what the firmware does with it is open."),
+    element("passthrough", "other", "Pins passed through", "P16", "read", ((E, "Other outputs"),),
+            "P16 is P82 passed through, unregistered, as in the Z3805A."),
+    element("p19", "other", "P19: a counter's bit", "EE", "simulated", ((E, "Other outputs"),),
+            "P19 is EE.Y, a counter's bit.",
+            "P19 rises every {p19_period} ns, GCLK / {p19_divide} (simulated, the fast run)."),
+)
+
+Z3817A_PINS = {
+    **BUS, **PORT,
+    "P7": Pin("clock", "the oscillator, into GCLK"),
+    "P16": Pin("passed through", "P82, passed through"),
+    "P82": Pin("1 PPS in", "a 1 PPS, the start's with register 4's bit 0 clear"),
+    "P84": Pin("1 PPS in", "a 1 PPS, the start's with the bit set; the P84 counter's clock"),
+    "P78": Pin("1 PPS", "the internal 1 PPS"),
+    "P72": Pin("P72", "GJ.Y, a pulse every 10,000 clocks"),
+    "P19": Pin("P19", "EE.Y, a counter's bit"),
+}
+
 SPECS = {
     "z3805a": DesignSpec(Z3805A, Z3805A_PINS),
     "58503a-z3801a": DesignSpec(A58503, A58503_PINS),
     "58503b": DesignSpec(B58503, B58503_PINS),
     "z3815a": DesignSpec(Z3815A, Z3815A_PINS),
     "z3816a": DesignSpec(Z3816A, Z3816A_PINS),
+    "z3817a": DesignSpec(Z3817A, Z3817A_PINS),
 }

@@ -116,6 +116,28 @@
       "rewrite": "docs/firmware/rewrite.md"
     },
     {
+      "image": "z3805a-1.01.03", "name": "Z3805A 1.01.03", "model": "Z3805A", "dialect": "Z3801",
+      "cells": {
+        "scpi": "wip",
+        "pforth": "wip",
+        "gps": {
+          "status": "named",
+          "text": "Furuno GT-74/77/80 (native $PFEC)",
+          "evidence": [{"file": "docs/firmware/oncore/{image}.txt"},
+                       {"file": "docs/firmware/gps.md", "contains": "| {name} |"}]
+        },
+        "chip-selects": "wip",
+        "loop": "not-yet",
+        "rewrite": "wip",
+        "fpga-design": {"status": "wip", "evidence": [{"file": "third_party/firmware/images/{image}.bin"}]},
+        "fpga-decoded": {"status": "wip", "evidence": [{"file": "third_party/firmware/images/{image}.bin"}]},
+        "daemon": {
+          "status": "not-yet", "note": "daemon-untested",
+          "evidence": [{"file": "README.md", "contains": "{name}"}]
+        }
+      }
+    },
+    {
       "image": "z3815a-4010", "name": "Z3815A 4010", "model": "Z3815A",
       "design": "z3815a", "design_name": "Z3815A", "dialect": "Z3801",
       "rewrite": "docs/firmware/z3815a-4010.md",
@@ -150,7 +172,9 @@
       "name": "59551A", "model": "59551A", "dialect": "58503", "no_image": true
     }
   ],
-  "footnotes": [],
+  "footnotes": [
+    {"id": "daemon-untested", "text": "The daemon chooses the Z3801A's dialect for any Z3805A, but has not been tried with this firmware."}
+  ],
   "notes": [
     "The 58503A and the Z3801A load the same FPGA design ([[docs/firmware/outputs.md|The FPGA bitstreams]])."
   ]

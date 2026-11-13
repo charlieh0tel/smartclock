@@ -830,6 +830,39 @@ and `check-detail`, part of `check`, fails if it cannot be rendered.
 It shares the explainer's references, styles and page shell through
 `tools/fpga/page.py`.
 
+### The GPS engines' wire formats are one crate
+
+`smartclock-gps` holds the wire formats of the GPS engines inside the
+receivers, a module each, starting with Motorola's Oncore binary `@@`
+messages (`docs/firmware/gps.md`).  The monitoring tools reach a
+receiver by SCPI and never see that link, so nothing else in the
+workspace speaks it; the crate is for a tool that talks to an engine
+or stands in for one.
+
+- **Scoped to what the receivers use.**  A message is in its table
+  only if some image's firmware sends or decodes it; it is not a
+  general Oncore library.  Each row cites the manual page that gives
+  its layout, and a test holds the lengths to the images' own tables,
+  `docs/firmware/oncore/*.txt`.
+- **`no_std`, and no allocation**, so one copy of it runs on a
+  microcontroller, in a browser and on a host.  An encoder writes into
+  the caller's buffer; a deframer owns a buffer of fixed size and lends
+  each frame out of it, its size a constant derived from the longest
+  message in the table.
+- **Framing first:** IDs, lengths, checksums, encoders and streaming
+  deframers.  What a message's bytes mean is later work, in modules
+  beside this one.
+- **One crate, a module a format**, not a crate a format: another
+  engine's format is another module on the same pattern.
+- **A deframer follows the firmware's own framer** wherever the manual
+  leaves the choice open, such as where to pick a stream up after a
+  bad frame, since what the firmware would refuse is not worth
+  accepting.  The module's documentation says which rule comes from
+  where, and where it departs.
+- **`thiserror`, without its default features, is the one
+  dependency**: it needs neither `std` nor an allocator, and the
+  other library crates write their errors with it.
+
 ## Next
 
 - **Compacting old logs**, perhaps into Parquet.  The logs grow without

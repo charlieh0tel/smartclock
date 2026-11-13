@@ -15,8 +15,9 @@ Z3816A, the 58503B, the Z3815A and the Z3817A come in where named, in
 `crates/smartclock-gps` holds this link's framing as code, for a tool
 that talks to an engine or stands in for one: the Oncore IDs and
 lengths of "Framing" and "The message table" with an encoder and a
-deframer.  Its table holds only what an image sends or decodes, and
-its tests check it against the images' own.
+deframer, and the same for the Z3815A's NMEA sentences ("In every
+image").  Its tables hold only what an image sends or decodes, and its
+tests check them against the images' own.
 
 ## The serial link
 

@@ -6,21 +6,31 @@ name: web
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs Node and a browser the
-# others do not.  Narrowed to the files that can change what it tests.
+# others do not.  Narrowed to the files that can change what it tests:
+# smartclock-web, the workspace crates it links, the workspace manifest
+# and lock file, the compiler pin, and the Makefile whose target it runs.
 on:
   push:
     branches: [main]
     paths:
       - "crates/smartclock-web/**"
       - "crates/smartclock/**"
+      - "crates/smartclock-http/**"
+      - "crates/smartclock-log/**"
+      - "Cargo.toml"
       - "Cargo.lock"
+      - "rust-toolchain.toml"
       - "Makefile"
       - ".github/workflows/web.yml"
   pull_request:
     paths:
       - "crates/smartclock-web/**"
       - "crates/smartclock/**"
+      - "crates/smartclock-http/**"
+      - "crates/smartclock-log/**"
+      - "Cargo.toml"
       - "Cargo.lock"
+      - "rust-toolchain.toml"
       - "Makefile"
       - ".github/workflows/web.yml"
 

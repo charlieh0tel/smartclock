@@ -45,22 +45,6 @@ uint32_t get_gps_time(void) { return clock_time_bits(clock.gps_time); }
 /* Seconds since the clock started. */
 uint32_t get_uptime(void) { return clock.uptime; }
 
-/* Whether the uptime has reached a start, and through elapsed the
- * seconds since it; a start in the future, which a restarted clock
- * leaves, is moved to now.  The GPS task's timers use it. */
-bool uptime_elapsed(uint32_t* start, int32_t* elapsed) {
-  uint32_t uptime = get_uptime();
-  uint32_t started = *start;
-
-  if (started <= uptime) {
-    *elapsed = uptime - started;
-  } else {
-    *start = uptime;
-    *elapsed = 0;
-  }
-  return started <= uptime;
-}
-
 /* A time and its date read as one: the time, a single long read, read
  * again after the date until it has not changed, so that the 1PPS
  * interrupt's tick cannot come between them (get_date_time+0xe to

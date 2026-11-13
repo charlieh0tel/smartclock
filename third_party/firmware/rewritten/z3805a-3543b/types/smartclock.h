@@ -542,7 +542,16 @@ typedef struct sci_driver {
  * FPGA, which only the unreferenced 0x1f698 and 0x1f6b0 send. */
 typedef enum __attribute__((packed)) qspi_device {
   QSPI_UNUSED_36_BIT = 0,
-#include "../../common/types/qspi_device.h"
+  QSPI_ADC = 1,
+  QSPI_HDAC = 2,
+  QSPI_UNUSED_WORD = 4,
+  QSPI_UNUSED_TWO_WORDS = 5,
+  QSPI_FPGA_BLOCK = 6,
+  QSPI_EFC = 7,
+  QSPI_FPGA_TAIL = 9,
+  QSPI_FPGA_WORD = 0xa,
+  QSPI_FPGA_BYTE = 0xb,
+  QSPI_FPGA_READBACK = 0xc,
 } qspi_device;
 
 #include "../../common/types/qspi_buffers.h"
@@ -1572,8 +1581,13 @@ typedef struct gps_state {
  * names are from how ti.c's routines use them; only the address and
  * sync are in structures.md. */
 typedef enum __attribute__((packed)) fpga_bit_index {
-#include "../../common/types/fpga_bit_index.h"
-  FPGA_BIT_SYNC = 5, /* register 3, 0x03: counter_set_sync */
+  FPGA_BIT_MODE = 0,   /* register 0, 0x03: an fpga_mode */
+  FPGA_BIT_PRESET = 1, /* register 0, 0x40: set around arming; counter_selftest
+                          reads a count of 0 under it */
+  FPGA_BIT_START = 2,  /* register 1, 0x01: pulsed by interpolator_measure */
+  FPGA_BIT_REFERENCE = 3, /* register 1, 0x02: an interpolator_reference */
+  FPGA_BIT_ADDRESS = 4, /* register 1, 0xf8: the address bits fpga_read uses */
+  FPGA_BIT_SYNC = 5,    /* register 3, 0x03: counter_set_sync */
 } fpga_bit_index;
 
 #include "../../common/types/fpga_mode.h"

@@ -208,3 +208,17 @@ void holdover_recovery_limit_ignore(int32_t index, int32_t source) {
     status_report_from(STATUS_SETTINGS_CONFLICT, source);
   }
 }
+
+/* :HOLDover:HYSTeresis: not in this firmware. */
+int32_t scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis(void* parameters,
+                                                        void* response,
+                                                        scpi_call* call) {
+  return STATUS_SCPI_UNDEFINED_HEADER;
+}
+
+/* :HOLDover:HYSTeresis?: not in this firmware. */
+int32_t scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis(void* parameters,
+                                                          void* response,
+                                                          scpi_call* call) {
+  return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
+}

@@ -406,3 +406,40 @@ int32_t scpi_query_DIAGnostic_TOFFset(void* parameters, void* response,
                                    given->kind, given->bound);
   return 0;
 }
+
+/* :DIAGnostic:ROSCillator:TCOefficient, by pllc. */
+int32_t scpi_set_DIAGnostic_ROSCillator_TCOefficient(void* parameters,
+                                                     void* response,
+                                                     scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+
+  scpi_numeric_set(&scpi_param_DIAGnostic_ROSCillator_TCOefficient, 0,
+                   given->kind, given->bound, given->real_bits, 0,
+                   scpi_input_source(call->input));
+  return 0;
+}
+
+/* :DIAGnostic:ROSCillator:TCOefficient?, or its bound. */
+int32_t scpi_query_DIAGnostic_ROSCillator_TCOefficient(void* parameters,
+                                                       void* response,
+                                                       scpi_call* call) {
+  const scpi_diagnostic_numeric* given = parameters;
+  scpi_diagnostic_float* coefficient = response;
+
+  coefficient->value =
+      scpi_numeric_get(&scpi_param_DIAGnostic_ROSCillator_TCOefficient, 0,
+                       given->kind, given->bound);
+  return 0;
+}
+
+/* :DIAGnostic:SER1:EGResponse: undefined, -113. */
+int32_t scpi_set_DIAGnostic_SER1_EGResponse(void* parameters, void* response,
+                                            scpi_call* call) {
+  return STATUS_SCPI_UNDEFINED_HEADER;
+}
+
+/* :DIAGnostic:SER1:EGResponse?: undefined, -113. */
+int32_t scpi_query_DIAGnostic_SER1_EGResponse(void* parameters, void* response,
+                                              scpi_call* call) {
+  return scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER, call);
+}

@@ -69,3 +69,19 @@ void clock_record_refresh(void) {
   clock_record_checksum(&clock);
   cpu_sr_write(sr);
 }
+
+/* Whether the uptime has reached a start, and through elapsed the
+ * seconds since it; a start in the future, which a restarted clock
+ * leaves, is moved to now.  The GPS task's timers use it. */
+bool uptime_elapsed(uint32_t* start, int32_t* elapsed) {
+  uint32_t uptime = get_uptime();
+  uint32_t started = *start;
+
+  if (started <= uptime) {
+    *elapsed = uptime - started;
+  } else {
+    *start = uptime;
+    *elapsed = 0;
+  }
+  return started <= uptime;
+}

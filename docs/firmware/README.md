@@ -1076,8 +1076,8 @@ A function rewritten by hand lives in
 `third_party/firmware/rewritten/IMAGE/`, apart from the decompiled C in
 `decompiled/IMAGE/`, a file to a subsystem (`clock.c`), or, when
 several images run it, once in `third_party/firmware/rewritten/common/`
-([`rewrite.md`, "Shared C"](rewrite.md#shared-c)): `common/` holds 953
-functions and 228 static helpers (`make check-common`).  The exporter
+([`rewrite.md`, "Shared C"](rewrite.md#shared-c)): `common/` holds 871
+functions and 214 static helpers (`make check-common`).  The exporter
 finds the functions those files define (`rewritten=`), leaves the
 decompiler's reading of each out of the exported C, a line
 `/* NAME: rewritten in FILE */` in its place, and includes the files

@@ -1,7 +1,5 @@
-/* pll_stages.c's functions that are this image's own: the rest are
- * common/pll_stages.c's, the same in every image (docs/firmware/rewrite.md,
- * "Shared C").  This image's n3 lock pll stage and its slew, the OCXO
- * calibration's measurement, which steps the EFC over its range and
+/* The disciplining loop's stages.  This image's n3 lock pll stage and its slew,
+ * the OCXO calibration's measurement, which steps the EFC over its range and
  * measures the frequency at each point, and the gain it gives the loop;
  * and the 58503A 3704's stages as this image changes them: coarse and
  * fine, the normal loop, holdover and its recovery, and the GPS
@@ -2453,3 +2451,28 @@ uint8_t holdover_correction_valid(void) {
          float_compare(PLL_EFC_MOST, efc) >= 0 &&
          holdover_steering.ti_count >= FEWEST_READINGS;
 }
+
+/* Clears holdover's TI statistics. */
+void holdover_ti_reset(void) {
+  holdover_steering.ti_sum = 0.0f;
+  holdover_steering.ti_weighted_sum = 0.0f;
+  holdover_steering.ti_largest = 0.0f;
+  holdover_steering.ti_count = 0;
+}
+
+/* Adds a TI reading to holdover's statistics: its sum, its sum weighted
+ * by index, the count and the largest magnitude. */
+void holdover_ti_add(float ti) {
+  float_add_in_place(&holdover_steering.ti_sum, ti);
+  float_add_in_place(
+      &holdover_steering.ti_weighted_sum,
+      float_multiply(integer_to_float(holdover_steering.ti_count), ti));
+  holdover_steering.ti_count++;
+  if (float_compare(float_absolute_on_stack(ti), holdover_steering.ti_largest) >
+      0) {
+    holdover_steering.ti_largest = float_absolute_on_stack(ti);
+  }
+}
+
+/* The largest TI magnitude holdover has seen. */
+float holdover_ti_max(void) { return holdover_steering.ti_largest; }

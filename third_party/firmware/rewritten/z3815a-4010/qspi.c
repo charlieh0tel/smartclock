@@ -163,3 +163,59 @@ uint8_t qspi_queue_setup(qspi_device device, uint16_t* transmit, uint16_t count,
       return 1;
   }
 }
+
+/* Writes count words to the FPGA's block through qspi_write; nothing
+ * calls it. */
+void qspi_fpga_block_write(uint16_t* words, uint16_t count) {
+  qspi_write(QSPI_FPGA_BLOCK, words, count);
+}
+
+/* Writes two words, its argument's, to the FPGA's tail through
+ * qspi_write, the argument's own slot the buffer; nothing calls it. */
+void qspi_fpga_tail_write(uint32_t words) {
+  qspi_write(QSPI_FPGA_TAIL, &words, FPGA_TAIL_WORDS);
+}
+
+/* Writes a word to the FPGA through qspi_write, the argument's own slot
+ * the buffer; nothing calls it. */
+void qspi_fpga_word_write(uint16_t word) {
+  qspi_write(QSPI_FPGA_WORD, &word, 1);
+}
+
+/* Makes one transfer to the FPGA's byte device through qspi_write, the
+ * argument's own slot the buffer; nothing calls it. */
+void qspi_fpga_byte_write(uint16_t value) {
+  qspi_write(QSPI_FPGA_BYTE, &value, 1);
+}
+
+/* Transfers to and from a QSPI device by polling, in supervisor mode
+ * with interrupts masked, copying the receive RAM into the buffers'
+ * receive, a word for the FPGA's readback and count words for any
+ * other; finishes a transfer still pending first. */
+void qspi_transfer(qspi_device device, qspi_buffers* buffers, uint16_t count) {
+  volatile uint16_t* from = qsm.rr;
+  uint16_t* to = buffers->receive;
+  uint16_t sr = cpu_enter_supervisor();
+  uint16_t spcr1;
+
+  cpu_interrupts_raise(CPU_IPL_7);
+  qspi.field_00 = 1;
+  while ((qsm.spcr1 & SPCR1_SPE) != 0) {
+  }
+  if ((qsm.spsr & SPSR_SPIF) != 0) {
+    qspi_isr();
+  }
+  if (qspi_queue_setup(device, buffers->transmit, count, 1, &spcr1) == 0) {
+    uint16_t* end = to + (device == QSPI_FPGA_READBACK ? 1 : count);
+
+    qsm.spcr1 = spcr1;
+    while ((qsm.spsr & SPSR_SPIF) == 0) {
+    }
+    while (to < end) {
+      *to++ = *from++;
+    }
+    (void)qsm.spsr;
+    qsm.spsr = 0;
+  }
+  cpu_sr_write(sr);
+}

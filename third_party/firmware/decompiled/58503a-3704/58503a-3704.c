@@ -55423,8 +55423,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/cpu.c"
 
-#include "../../rewritten/common/dac.c"
-
 #include "../../rewritten/common/debug.c"
 
 #include "../../rewritten/common/duart.c"
@@ -55515,8 +55513,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/pll_reading.c"
 
-#include "../../rewritten/common/pll_stages.c"
-
 #include "../../rewritten/common/pllc.c"
 
 #include "../../rewritten/common/pllp.c"
@@ -55574,8 +55570,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/scpi_system.c"
 
 #include "../../rewritten/common/scpi_tree.c"
-
-#include "../../rewritten/common/scpi_unsupported.c"
 
 #include "../../rewritten/common/scpi_validators.c"
 
@@ -55742,6 +55736,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/58503a-3704/scpi_system.c"
 
 #include "../../rewritten/58503a-3704/scpi_tree_data.c"
+
+#include "../../rewritten/58503a-3704/scpi_unsupported.c"
 
 #include "../../rewritten/58503a-3704/scpi_validators.c"
 

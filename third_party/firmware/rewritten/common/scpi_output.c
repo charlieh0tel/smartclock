@@ -5,47 +5,9 @@
  * exported C includes this file after its own, so the types and
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype.  No manual lists :OUTPut for the Z3801A
- * (097-z3801-01, table 4-2); this firmware refuses its pins' settings
- * and keeps :STATe, which it does nothing with. */
-
-/* :OUTPut:PIN1:DELay, refused. */
-int32_t scpi_set_OUTPut_PIN1_DELay(void* parameters, void* response,
-                                   scpi_call* call) {
-  return STATUS_SCPI_UNDEFINED_HEADER;
-}
-
-/* :OUTPut:PIN1:DELay?, which fails as the four-letter stubs do, the
- * call passed for the response (scpi_unsupported.c). */
-int32_t scpi_query_OUTPut_PIN1_DELay(void* parameters, void* response,
-                                     scpi_call* call) {
-  return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
-}
-
-/* :OUTPut:PIN1:DELay:ALIGnment, which reports an undefined header and
- * succeeds. */
-int32_t scpi_set_OUTPut_PIN1_DELay_ALIGnment(void* parameters, void* response,
-                                             scpi_call* call) {
-  status_report_from(STATUS_UNDEFINED_HEADER, scpi_input_source(call->input));
-  return 0;
-}
-
-/* :OUTPut:PIN1:DELay:ALIGnment?, failing as :DELay? does. */
-int32_t scpi_query_OUTPut_PIN1_DELay_ALIGnment(void* parameters, void* response,
-                                               scpi_call* call) {
-  return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
-}
-
-/* :OUTPut:PIN1:FREQuency, refused. */
-int32_t scpi_set_OUTPut_PIN1_FREQuency(void* parameters, void* response,
-                                       scpi_call* call) {
-  return STATUS_SCPI_UNDEFINED_HEADER;
-}
-
-/* :OUTPut:PIN1:FREQuency?, failing as :DELay? does. */
-int32_t scpi_query_OUTPut_PIN1_FREQuency(void* parameters, void* response,
-                                         scpi_call* call) {
-  return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
-}
+ * (097-z3801-01, table 4-2); this firmware keeps :STATe, which it does
+ * nothing with, and each image's own scpi_output.c holds the pins'
+ * handlers, which refuse their settings. */
 
 /* Programs the output's state; this firmware does nothing. */
 void output_state_program(uint8_t state) {}

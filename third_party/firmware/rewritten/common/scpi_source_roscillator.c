@@ -40,20 +40,6 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(
   return 0;
 }
 
-/* :HOLDover:HYSTeresis: not in this firmware. */
-int32_t scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis(void* parameters,
-                                                        void* response,
-                                                        scpi_call* call) {
-  return STATUS_SCPI_UNDEFINED_HEADER;
-}
-
-/* :HOLDover:HYSTeresis?: not in this firmware. */
-int32_t scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis(void* parameters,
-                                                          void* response,
-                                                          scpi_call* call) {
-  return scpi_query_failed(STATUS_UNDEFINED_HEADER, call);
-}
-
 /* :HOLDover:INITiate: requests a manual holdover, unless in one. */
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void* parameters,
                                                       void* response,

@@ -230,6 +230,14 @@ static uint32_t os_stack_sizes(uint32_t supervisor, uint32_t user) {
   return supervisor << CPU_WORD_BITS | (user & CPU_WORD_MASK);
 }
 
+/* Rounds bytes to the nearest kilobyte, as the reports print them, the
+ * task report's, os.c's, and the region report's, each image's os.c's. */
+static int32_t os_kilobytes(int32_t bytes) {
+  static const int32_t KILOBYTE = 0x400;
+
+  return (bytes + KILOBYTE / 2) / KILOBYTE;
+}
+
 /* The kernel's ticks a second, and the longest pause sleep_seconds
  * takes, 2^21 seconds. */
 static const float OS_TICKS_PER_SECOND = 1024;

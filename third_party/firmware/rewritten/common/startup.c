@@ -1,26 +1,11 @@
 /* The start-up's path, written by hand in place of the decompiler's
- * (docs/firmware/README.md, "Hand-written C"): primary_start, its no-op
- * hook, the periodic interrupt's enable and the shutdown; startup.h
+ * (docs/firmware/README.md, "Hand-written C"): the QSM's setup,
+ * primary_start's no-op hook, the periodic interrupt's enable and the
+ * shutdown; primary_start is each image's own startup.c's; startup.h
  * holds the bodies the installer's copies share.  The
  * exported C includes this file after its own, so the types and
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
-
-/* The reset's path: the exception hook cleared, the watchdog serviced, the
- * QSM and GPT set up, system_init, and the kernel started with trap #6. */
-void primary_start(uint32_t a, uint32_t b, uint32_t c) {
-  exception_hook_reset();
-  sim.swsr = CPU_SWSR_FIRST;
-  sim.swsr = CPU_SWSR_SECOND;
-  qsm_init();
-  gpt_init();
-  start_nothing();
-  system_init();
-  psos_config_init();
-  sim.swsr = CPU_SWSR_FIRST;
-  sim.swsr = CPU_SWSR_SECOND;
-  primary_trap_6();
-}
 
 /* Sets the QSM up. */
 void qsm_init(void) { startup_qsm_init(); }

@@ -97,7 +97,10 @@ instruction by instruction.  The design the Z3816A loads is
 
 ## In every image
 
-The same code is in all seven images, at other addresses: the
+The same code is in the seven images before the Z3817A's, at other
+addresses (the Z3817A's has no interpolator, and its `counter_read`
+takes the count alone: `z3817a-3752.md`, "How it differs from the
+Z3815A"; its handlers are not compared here): the
 `SYNChronization` and `PTIMe` forms share a query handler that returns
 the float mean of ten one-second readings, tagged `0xfff6`, while its
 flag is set; the `DIAGnostic` form has its own handler, which returns

@@ -910,10 +910,9 @@ def gps_request_build_cases(messages: int) -> list[dict[int, int | bytes]]:
     return [{0: message, 1: 0, 2: GPS_ARGUMENTS, 3: bytes(GPS_MESSAGE_ROOM)} for message in range(messages)]
 
 
-# The codes the 58503A 3704's and the Z3815A 4010's log_event takes,
-# each a given case, from 0 to one past the last its
-# table has a text for (LOG_SYSTEM_PRESET, 0x1b in the 58503A 3704's and
-# the Z3815A 4010's), so that each code's text, which the call of
+# The codes the 58503A 3704's, the Z3815A 4010's and the Z3817A 3752's
+# log_event takes, each a given case, from 0 to one past the last its
+# table has a text for (LOG_SYSTEM_PRESET, 0x1b in each), so that each code's text, which the call of
 # log_write it makes passes (record_calls), is compared: the generated
 # cases reach only a few.  log_event, the Z3805A's and the Z3801A's,
 # writes its entry itself, in RAM and the EEPROM, which compare it.
@@ -1463,6 +1462,12 @@ IN_RANGE = {
     "installer_scpi_header_resolve": {6: 2},
     "installer_scpi_common_header_resolve": {5: 2},
 }
+# Another image's own counts for IN_RANGE's arguments: the Z3817A 3752's
+# fpga_bit_table has five entries (0x45d7a), past which its fpga_set_bit
+# and fpga_set_field read the code after it.
+IMAGE_IN_RANGE = {
+    "z3817a-3752": {name: {0: 5} for name in ("fpga_set_bit", "fpga_set_field")},
+}
 
 
 @dataclass(frozen=True)
@@ -1544,6 +1549,8 @@ FLOAT_CONTROLS = (0, 0, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x0080, 0x3E80)
 LOG_CURSORS = (0x101D52, 0x101D66, 0x101D7A)
 # The Z3801A 3543's, at its log_write_page's entries (0x101d4c, +4).
 LOG_CURSORS_Z3801A = (0x101D50, 0x101D64, 0x101D78)
+# The Z3817A 3752's, at its log_write_page's entries (0x10226a, +4).
+LOG_CURSORS_Z3817A = (0x10226E, 0x102282, 0x102296)
 LOCK_EXCHANGES = (0x6B000010, 0x6B000010, 0)
 SCI_FLOWS = (0, 0x20, 0x80, 0xA0)
 STRAGGLER_STATES = {
@@ -2331,8 +2338,8 @@ LOG_INIT_STATES_Z3815A = States(
     ),
     cases=96,
 )
-# The 58503A 3704's and the Z3815A 4010's log_event, which logs by a
-# code, not the base's, which writes its entry itself, starts from none
+# The 58503A 3704's, the Z3815A 4010's and the Z3817A 3752's log_event,
+# which logs by a code, not the base's, which writes its entry itself, starts from none
 # of STRAGGLER_STATES' log cursors.
 LOG_EVENT_BY_CODE_STATES = {"log_event": States()}
 IMAGE_STATES = {
@@ -2397,6 +2404,43 @@ IMAGE_STATES = {
                 "holdover_waiting_reason",
             )
         },
+    },
+    # The Z3817A 3752's counter, which has no interpolator
+    # (docs/firmware/z3817a-3752.md, "How it differs from the Z3815A"):
+    # COUNTER_STATES less the interpolator's preset and hooks; and
+    # enter_holdover's STATES with the GPS reference's state, which it
+    # switches on for its log code (0x48a8a), as the Z3815A's does,
+    # where the Z3805A's reads gps.status_reported; log_write from its own
+    # log cursors, and log_event, the 58503A's by a code, from none.
+    "z3817a-3752": {
+        **{
+            name: States(
+                presets=(Preset("interval_reading.armed", (1, 1, 0)),),
+                hooks=(Hook("counter_wait_ready", results=(1, 1, 0)),),
+            )
+            for name in ("counter_read", "counter_arm")
+        },
+        "enter_holdover": States(
+            presets=tuple(
+                Preset("gps.references[0].state", preset.values) if preset.target == "gps.status_reported" else preset
+                for preset in STATES["enter_holdover"].presets
+            ),
+            hooks=STATES["enter_holdover"].hooks,
+            cases=STATES["enter_holdover"].cases,
+        ),
+        "log_write": States(
+            presets=(Preset("log_cursor", LOG_CURSORS_Z3817A), Preset("log_mutex.exchange", LOCK_EXCHANGES))
+        ),
+        # the external record, which gps_reference_update tests first
+        # (0x4a14e), each validity of it as of the GPS record's
+        "gps_reference_update": States(
+            presets=(
+                Preset("gps.references[0].valid", (0, 1, 2, 3)),
+                Preset("gps.references[1].valid", (0, 1, 2)),
+                Preset("pll.stage", (5, 6, 3)),
+            )
+        ),
+        **LOG_EVENT_BY_CODE_STATES,
     },
 }
 # The functions whose cases find no task by name (harness.IDENT_NOT_FOUND),
@@ -2645,9 +2689,20 @@ def probeable(c: str, target: str) -> bool:
     # a field of a global the export leaves untyped, as the Z3815A's pll
     if MEMBER.search(target) and declared is not None and f"\nstruct {declared.group(1)} {{" not in c:
         return False
-    return f'__asm__(".set {root}, ' in c and all(
-        re.search(rf"(?m)^\s+[A-Za-z_][\w \*]*\b{field}\s*(?:\[[^\]]*\]\s*)*;", c) for field in MEMBER.findall(target)
-    )
+    if f'__asm__(".set {root}, ' not in c:
+        return False
+    # each field in its structure, where the C defines that structure, as
+    # an image whose record lacks a field another's has may define it in
+    # another structure; elsewhere in any
+    kind = declared.group(1) if declared is not None else None
+    for field in MEMBER.findall(target):
+        body = re.search(rf"(?ms)^(?:struct|union) {kind} \{{\n(.*?)^\}};", c) if kind else None
+        line = rf"(?m)^\s+(?:(?:struct|union) )?(\w+)[\w \*]*?\b{field}\s*(?:\[[^\]]*\]\s*)*;"
+        found = re.search(line, body.group(1) if body else c)
+        if found is None:
+            return False
+        kind = found.group(1) if body else None
+    return True
 
 
 def targets(c: str) -> list[str]:
@@ -2877,6 +2932,23 @@ D5_SHARE_Z3815A = (
 TRANSMIT_FRAME_Z3815A = (
     "sci_puts leaves sci.transmit_next pointing into sci_putc's frame, each copy's stack its own (0x2fe00)"
 )
+# The Z3817A 3752's, in its own code: its process report is the 58503A's
+# byte for byte, os_report_processes holding "%s"'s address, 0x58f26, in
+# D5 (0x26760), which os_report_process prints for a task the kernel
+# finds no segment of (0x26354); its sci_puts leaves sci.transmit_next as
+# the Z3815A's does (0x2e804), its sci_putc sending from its own frame
+# (0x2f27e); its installer is the Z3815A's.
+D5_SHARE_Z3817A = (
+    "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x26760)"
+)
+TRANSMIT_FRAME_Z3817A = (
+    "sci_puts leaves sci.transmit_next pointing into sci_putc's frame, each copy's stack its own (0x2e804)"
+)
+INSTALLER_TRANSMIT_FRAME = Known(
+    "the installer's copy of sci_puts leaves its transmit_next pointing into installer_sci_putc's frame, "
+    "each copy's stack its own (installer::0x103230)",
+    r"RAM differs from 10b009",
+)
 # A session's line of :DIAG:OS:PROC?, its memory and share columns
 # apart, as scpi_interpret's KNOWN gives it.
 SESSION_SHARE = (
@@ -2891,11 +2963,12 @@ IMAGE_KNOWN = {
             D5_SHARE_Z3815A + ", and adds D6, which scpi_interpret leaves (0x2699a)", SESSION_SHARE
         ),
         "sci_putc": Known(TRANSMIT_FRAME_Z3815A, r"RAM differs from 103dff"),
-        "installer_sci_putc": Known(
-            "the installer's copy of sci_puts leaves its transmit_next pointing into installer_sci_putc's frame, "
-            "each copy's stack its own (installer::0x103230)",
-            r"RAM differs from 10b009",
-        ),
+        "installer_sci_putc": INSTALLER_TRANSMIT_FRAME,
+    },
+    "z3817a-3752": {
+        **{name: Known(D5_SHARE_Z3817A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
+        "sci_putc": Known(TRANSMIT_FRAME_Z3817A, r"RAM differs from 10394b"),
+        "installer_sci_putc": INSTALLER_TRANSMIT_FRAME,
     },
     "z3801a-3543": {
         **{name: Known(D5_SHARE_Z3801A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
@@ -2926,6 +2999,7 @@ IMAGE_KNOWN = {
 # scpi_task_run and installer_scpi_task_run on port 2, the one their
 # port layers serve, and on another.
 GPS_MESSAGES_58503A = 56
+GPS_MESSAGES_Z3817A = 57
 LOAD_DOUBLE_58503A = 0x3220E
 LOAD_LONG_58503A = 0x32E3A
 LOAD_LONG_UNIT_STEP_58503A = 0x32E32
@@ -3739,6 +3813,19 @@ IMAGE_GIVEN_CASES = {
         "log_event": LOG_EVENT_CASES,
         **NOT_GIVEN,
     },
+    # gps_request_build on each of its 57 messages (oncore_messages,
+    # 0x575d8), and log_event on each of its codes, as the 58503A's;
+    # console_port_read on the SCI, whose device read, sci_read, gives
+    # no error (its D7, 0x2f278), so that READ_ERRORS have nowhere to
+    # go: the line read, its next past its end, so that the port reads
+    # the console; and its installer's copy none of the base's, as the
+    # Z3815A's, whose installer it is byte for byte
+    "z3817a-3752": {
+        "console_port_read": [{PRESETS: {"scpi_input_next": 2, "scpi_input_end": 1}}],
+        "installer_console_port_read": NOT_GIVEN["installer_console_port_read"],
+        "gps_request_build": gps_request_build_cases(GPS_MESSAGES_Z3817A),
+        "log_event": LOG_EVENT_CASES,
+    },
 }
 # Another image's own requests for SET_UP_REQUESTS' functions, the
 # 58503A 3704's (IMAGE_SET_UP_REQUESTS above).
@@ -4175,6 +4262,7 @@ class Context:
     calls: dict[str, list[str]]
     starts: tuple[list[int], list[int]]
     rebuilt_code: "RebuiltCode"
+    in_range: dict[str, dict[int, int]] = field(default_factory=lambda: IN_RANGE)
 
 
 def install_hooks(
@@ -4531,7 +4619,7 @@ def check_cases(
             m.uc.mem_write(address, preset_bytes(value, size))
         target = None if step is None else tree_steps(m)[step]
         values = arguments(m, types, function.parameters, case, function.names, function.name, target)
-        for position, count in IN_RANGE.get(function.name, {}).items():
+        for position, count in context.in_range.get(function.name, {}).items():
             values[position] = given(m, types, function.parameters[position], case % count)
         for position, value in values_given.items():
             values[position] = given(m, types, function.parameters[position], value)
@@ -4771,6 +4859,7 @@ def main() -> int:
             {name: convention.get("calls", []) for name, convention in conventions.items()},
             function_starts(linked_symbols, conventions),
             rebuilt_code(linked_code, conventions),
+            {**IN_RANGE, **IMAGE_IN_RANGE.get(image_name(image_path), {})},
         )
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         modes = {"user mode alone": 0, "both modes": 0}

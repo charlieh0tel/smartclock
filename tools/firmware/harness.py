@@ -411,52 +411,56 @@ IO_FUNCTIONS = {
 # (6.3.5.1, Table 6-3; D.4.10, D.4.16), as qspi_queue_setup sets each
 # up; so many transfers a device (QSPI_WIDTHS, the Z3805A's; an image's
 # profile gives its own, Profile.qspi_widths), for the FPGA's block
-# D2's count of 16-bit ones, up to the queue's 16 entries, and for its
-# readback one of D2's count of bits, 8 to 16; none for a device it
-# does not know.  A write is recorded by its transfers, each its width's
-# bits in the fewest bytes that hold them, so that the bits a transfer
-# does not send are not compared.  Device 4's queue ends at entry 1,
-# which it does not load (docs/firmware/quirks.md), so only its first
-# transfer is the buffer's.
+# (QSPI_BLOCK) D2's count of 16-bit ones, up to the queue's 16 entries,
+# and for its readback (QSPI_READBACK) one of D2's count of bits, 8 to
+# 16; none for a device it does not know.  A write is recorded by its
+# transfers, each its width's bits in the fewest bytes that hold them,
+# so that the bits a transfer does not send are not compared.  Device
+# 4's queue ends at entry 1, which it does not load
+# (docs/firmware/quirks.md), so only its first transfer is the buffer's.
 DEVICE_SHIFT = 8
 DEVICE_MASK = 0xFF
 QSPI_MINOR_MASK = 0xFF
 QSPI_WIDEST = 16
 QSPI_NARROWEST = 8
+# The two minor devices whose transfers D2's count sets.
+QSPI_BLOCK = "block"
+QSPI_READBACK = "readback"
 QSPI_WIDTHS = {
     0: (12,) * 3,  # QSPI_UNUSED_36_BIT
     1: (16,),  # QSPI_ADC
     2: (12,) * 3,  # QSPI_HDAC
     4: (16,),  # QSPI_UNUSED_WORD
     5: (16,) * 2,  # QSPI_UNUSED_TWO_WORDS
+    6: QSPI_BLOCK,  # QSPI_FPGA_BLOCK
     7: (16,),  # QSPI_EFC
     9: (16,) * 2,  # QSPI_FPGA_TAIL
     0xA: (16,),  # QSPI_FPGA_WORD
     0xB: (8,),  # QSPI_FPGA_BYTE
+    0xC: QSPI_READBACK,  # QSPI_FPGA_READBACK
 }
 # The 58503A 3704's: the Z3805A's but for minor device 0, the front
 # panel's, one 8-bit transfer (qspi_queue_setup, 0x1f3fc: one entry,
 # BITSE, SPCR0 0xa302's 8 BITS), where the Z3805A's sends three of 12.
 QSPI_WIDTHS_58503A_3704 = {**QSPI_WIDTHS, 0: (8,)}
-QSPI_FPGA_BLOCK = 6
-QSPI_FPGA_READBACK = 0xC
 QSPI_QUEUE_ENTRIES = 16
 QSPI_ENTRY = struct.Struct(">H")
 BITS_PER_BYTE = 8
 
 
-def qspi_widths(widths: dict[int, tuple[int, ...]], minor: int, count: int) -> tuple[int, ...]:
+def qspi_widths(widths: dict[int, tuple[int, ...] | str], minor: int, count: int) -> tuple[int, ...]:
     """The width in bits of each transfer a QSPI write to a minor device
     of a count makes, in order, by an image's widths (QSPI_WIDTHS)."""
     count &= WIDTHS[".w"]
-    if minor == QSPI_FPGA_BLOCK:
+    widths_of_minor = widths.get(minor, ())
+    if widths_of_minor == QSPI_BLOCK:
         return (QSPI_WIDEST,) * min(count, QSPI_QUEUE_ENTRIES)
-    if minor == QSPI_FPGA_READBACK:
+    if widths_of_minor == QSPI_READBACK:
         return (min(max(count, QSPI_NARROWEST), QSPI_WIDEST),)
-    return widths.get(minor, ())
+    return widths_of_minor
 
 
-def qspi_write_data(uc: Uc, widths: dict[int, tuple[int, ...]], minor: int, count: int, buffer: int) -> bytes:
+def qspi_write_data(uc: Uc, widths: dict[int, tuple[int, ...] | str], minor: int, count: int, buffer: int) -> bytes:
     """A QSPI write's transfers from its buffer, each the low bits of its
     word its width sends, in the fewest bytes that hold them, by an
     image's widths (QSPI_WIDTHS)."""
@@ -1667,7 +1671,7 @@ class Profile:
     variables: dict[str, int]
     scpi_step: int | None
     console_echo: tuple[int, int] | None
-    qspi_widths: dict[int, tuple[int, ...]]
+    qspi_widths: dict[int, tuple[int, ...] | str]
     bounded: dict[str, int]
     flash: type | None = None
     records: int | None = None
@@ -2040,6 +2044,77 @@ INSTALLER_Z3815A_4010 = InstallerAddresses(
     scpi=ScpiObjects(0x107D9A, 0x108784, 0x108756, INSTALLER_KEYWORDS, INSTALLER_SAMPLE_CALL),
     flash=WordFlash,
 )
+# The Z3817A 3752's primary profile (docs/firmware/z3817a-3752.md, "The
+# function check"), each address read from that image's own code, as the
+# Z3815A's: psos_config_init (0x58bd8) copies the configuration from
+# 0x58dce to 0x102ba4 and an I/O table of three devices from 0x59286 to
+# 0x102b38, the SCI, the QSPI and the string device, with no DUART
+# channel B device; kernel_init and kernel_create_x are the Z3805A's
+# bytes (0x25cd0, 0x25376); root_task (0x231e6) passes "gpsx" from
+# 0x2339b and calls status_init (0x3fed0), which builds status_object
+# (0x103430); scpi_task_start (0x230c6) has scpi_task_create
+# (0x39d72) start the SCPI session on the SCI, which spoo_exchange
+# (0x1039ba) is sent; vsprintf is at 0x68a96; scpi_console_port (0x3963e)
+# returns 0x3991a; the trees' root lists are scpi_list_main (0x5abac) and
+# scpi_list_common (0x5a106); aging_curve is at 0x102512 and the first of
+# the screen's snapshots at 0x1016e2 (status_screen_print, 0x5173a);
+# input_debounce_update's reader is duart_input_0_debounced (0x2d096),
+# the Z3815A's bytes; adc_averages_print's printer is printf (0x2f338);
+# and the SCI's echo cell is 0x103962, which its set-up makes 0x2e6fe, an
+# rts, to echo nothing (0x2f0a2).  pllc_exchange (0x103ece) gives the
+# request of NUMERIC_DESCRIPTOR_Z3817A, the fifth of nv_numeric_params
+# (0x43bea), as the Z3815A's.  Its QSPI's minor devices are its own,
+# QSPI_WIDTHS_Z3817A_3752.  Its reset unpacks the primary's own records
+# at 0x6a074 (primary_unpack_records, 0x58cf8).
+# Its installer is the Z3815A's byte for byte (z3817a-3752.md, "The
+# base"), whose profile it takes.
+# The Z3817A 3752's QSPI minor devices, each as qspi_queue_setup
+# (0x2f6d8, its jump table on the minor less 5 at 0x2f726) sets it up:
+# a command byte with BITSE sends SPCR0's BITS, 0 for 16, one without
+# 8 (MC68331UM 6.3.5.1, D.4.10).  5, one entry, 0x45 (0x2f8b2); 0xa, the
+# ADC's (adc_read, 0x2e614), 0x8e and 0x4a, SPCR0 0x8018 (0x2f744); 0xc,
+# the block, 0xcc to D2's count, up to 16 (0x2f7a2); 0xf, 0xcf and 0x4f
+# (0x2f76a); 0x10, 0xcc and 0x4c; 0x11, 0x4c; 0x12, 0x4c with SPCR0
+# 0xa202's 8 BITS; 0x13, the readback, 0x4c with D2's count of BITS, 8
+# to 16.  No other minor is set up.
+QSPI_WIDTHS_Z3817A_3752 = {
+    5: (16,),
+    0xA: (8, 16),
+    0xC: QSPI_BLOCK,
+    0xF: (16,) * 2,
+    0x10: (16,) * 2,
+    0x11: (16,),
+    0x12: (8,),
+    0x13: QSPI_READBACK,
+}
+PLLC_EXCHANGE_Z3817A = 0x103ECE
+NUMERIC_DESCRIPTOR_Z3817A = 0x44E5A
+PRIMARY_Z3817A_3752 = replace(
+    PRIMARY_Z3815A_4010,
+    kernel_tables=((0x58DCE, 0x102BA4, 0x62), (0x59286, 0x102B38, 0x6C)),
+    psos_config=0x102BA4,
+    kernel_init=((0x25CD0, 0x25E32), (0x25E54, 0x25E62)),
+    kernel_create=(0x25376, 0x253D6),
+    initializers=(0x3FED0,),
+    received={
+        0x1039BA: struct.pack(">5I", 0, 0x39D72, SPOOLED_PRIORITY, 0, 0),
+        PLLC_EXCHANGE_Z3817A: struct.pack(">IIBBBBII", 0, NUMERIC_DESCRIPTOR_Z3817A, 0, 0, 0, 0, 60, 0),
+    },
+    caller_name=0x2339B,
+    vsprintf=0x68A96,
+    status_object=0x103430,
+    scpi=ScpiObjects(0x3991A, 0x5ABAC, 0x5A106, tuple(KEYWORDS), SAMPLE_CALL),
+    variables={
+        "aging_curve_state *": 0x102512,
+        "status_snapshot_record *": 0x1016E2,
+        "input_debounce_reader *": 0x2D096,
+        "adc_average_printer *": 0x2F338,
+    },
+    scpi_step=NUMERIC_DESCRIPTOR_Z3817A,
+    console_echo=(0x103962, 0x2E6FE),
+    qspi_widths=QSPI_WIDTHS_Z3817A_3752,
+    records=0x6A074,
+)
 # Each image's profiles, its primary's and its installer's addresses, by
 # the image's name, its .bin's and its folder's.
 IMAGE_PROFILES = {
@@ -2047,6 +2122,7 @@ IMAGE_PROFILES = {
     "58503a-3704": (PRIMARY_58503A_3704, INSTALLER_58503A_3704),
     "z3801a-3543": (PRIMARY_Z3801A_3543, INSTALLER_ADDRESSES),
     "z3815a-4010": (PRIMARY_Z3815A_4010, INSTALLER_Z3815A_4010),
+    "z3817a-3752": (PRIMARY_Z3817A_3752, INSTALLER_Z3815A_4010),
 }
 
 

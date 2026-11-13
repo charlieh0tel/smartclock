@@ -1,0 +1,13 @@
+# The hand-written C's literals and constants that
+# tools/firmware/magic_check.py finds and that stay as they are, each
+# with its reason (make check-magic-numbers).  Tab-separated: kind, file
+# under rewritten/, function, literal as written, target, reason.
+# The Z3817A 3752's rows are common/'s that its headers' C finds, as the
+# Z3815A 4010's.
+duplicate	common/startup.h	startup_gpt_init	0xc	GPTMCR_ARBITRATION	the Z3817A's gpt_init body, the Z3815A's (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x650	ICR_LEVEL_6_VECTORS_0X50	the Z3817A's gpt_init body, the Z3815A's (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x04	PACTL_INPUT_CAPTURE_4	the Z3817A's gpt_init body, the Z3815A's (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x05	TCTL2_CAPTURES_1_2_RISING	the Z3817A's gpt_init body, the Z3815A's (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	3	TMSK_PRESCALER	the Z3817A's gpt_init body, the Z3815A's (startup.h's startup_gpt_init_both_pwm_gp_inputs), which forces PWMB too and leaves port GP clear: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/fpga.c	fpga_read_byte	0xf	NIBBLE	a nibble's mask, which fpga_read_p84_count, this image's own, takes too for the P84 counter's count in register 1's high nibble (0x4539e), common/'s fpga_read_byte its low
+duplicate	common/fpga.c	fpga_read_seconds	20	RETRIES	the pairs of reads past the first that fpga_read_p84_count, this image's own, makes too, as fpga_read_seconds does register 0's (0x4539e)

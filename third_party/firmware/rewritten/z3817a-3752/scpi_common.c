@@ -1,0 +1,96 @@
+/* From the Z3815A 4010's rewritten/scpi_common.c, the Z3817A 3752's own beside
+ * common/'s: of its functions, those the Z3817A's code carries identical or
+ * relocated, and *OPC? and *OPC, which image_diff finds changed and new
+ * (docs/firmware/z3817a-3752.md, "The function check").  Its comments'
+ * addresses are the Z3817A's, but where they name another image. Each keeps its
+ * generated prototype. */
+
+/* The greatest *ESE or *SRE mask. */
+static const int32_t SCPI_COMMON_MASK_MAXIMUM = 0xff;
+
+/* Sets a register's enable, through pllc, from a mask within 0 to
+ * 0xff, else reports -222. */
+static void scpi_common_enable_set(int16_t index,
+                                   const scpi_word_parameter* mask,
+                                   scpi_port* input) {
+  if (scpi_check_range(0, mask->value, SCPI_COMMON_MASK_MAXIMUM,
+                       scpi_input_source(input)) != 0) {
+    pllc_request_c(&scpi_param_STATus_ENABle, index, mask->value, 0,
+                   scpi_input_source(input));
+    status_register_set_enable(status_object, index,
+                               nv_settings.status_enable[index]);
+  }
+}
+
+/* A register's enable, reporting a device-specific error where it
+ * differs from nv_settings'. */
+static void scpi_common_enable_query(int16_t index, int16_t* enable,
+                                     scpi_port* input) {
+  status_register_get_enable(status_object, index, (uint16_t*)enable);
+  if (nv_settings.status_enable[index] != *enable) {
+    status_report_from(STATUS_DEVICE_SPECIFIC_ERROR, scpi_input_source(input));
+  }
+}
+
+/* *ESE: the Standard Event register's enable (0x3a3f8). */
+int32_t scpi_set_common_ESE(void* parameters, void* response, scpi_call* call) {
+  scpi_common_enable_set(SCPI_COMMON_STANDARD_EVENT, parameters, call->input);
+  return 0;
+}
+
+/* *ESE? (0x3a47e). */
+int32_t scpi_query_common_ESE(void* parameters, void* response,
+                              scpi_call* call) {
+  scpi_common_enable_query(SCPI_COMMON_STANDARD_EVENT, response, call->input);
+  return 0;
+}
+
+/* *IDN?: the maker, model, serial number and firmware revision with the
+ * hardware suffix, in the source's text buffer, as counted text
+ * (0x3a4e0). */
+int32_t scpi_query_common_IDN(void* parameters, void* response,
+                              scpi_call* call) {
+  scpi_token_string* identification = response;
+  char* text = scpi_response_texts[(uint8_t)scpi_input_source(call->input)];
+
+  sprintf(text, "HEWLETT-PACKARD,%s,%s,%s-%c", idn_model, idn_serial,
+          RECORDS_FIRMWARE_REVISION, idn_suffix);
+  identification->text = text;
+  identification->length = scpi_engine_length(text);
+  return 0;
+}
+
+/* *SRE: the service request enable (0x3a570). */
+int32_t scpi_set_common_SRE(void* parameters, void* response, scpi_call* call) {
+  scpi_common_enable_set(SCPI_COMMON_STATUS_BYTE, parameters, call->input);
+  return 0;
+}
+
+/* *SRE? (0x3a5f2). */
+int32_t scpi_query_common_SRE(void* parameters, void* response,
+                              scpi_call* call) {
+  scpi_common_enable_query(SCPI_COMMON_STATUS_BYTE, response, call->input);
+  return 0;
+}
+
+/* *TST?: runs the self-tests, test 0, through pllc; their result, 0
+ * for passed (0x3a650). */
+int32_t scpi_query_common_TST(void* parameters, void* response,
+                              scpi_call* call) {
+  static const uint8_t ALL_TESTS = 0;
+  uint32_t* result = response;
+
+  pllc_request_b(&scpi_action_self_test, ALL_TESTS,
+                 scpi_input_source(call->input));
+  *result = selftest.result;
+  return 0;
+}
+
+/* *OPC?: "1" (0x3a55e). */
+int32_t scpi_query_common_OPC(void* parameters, void* response,
+                              scpi_call* call) {
+  const char** text = response;
+
+  *text = "1";
+  return 0;
+}

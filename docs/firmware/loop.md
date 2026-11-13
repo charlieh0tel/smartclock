@@ -570,10 +570,17 @@ routine compares equal across images and a different one does not.
   Z3816A adds d ([`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html#the-aging-feed-forward),
   "The aging feed-forward", says what that changes).  Their fit dispatchers differ
   from the Z3816A's too, and from each other.
+- The Z3817A 3752's `pll_normal` (`0x49b1e`) is the Z3815A's but that
+  it subtracts no setpoint (its console has no `phase_off`), its
+  current is the constant 0, and the integral's step is multiplied by
+  the block's length in readings where the Z3815A's multiplies by 10
+  (`z3817a-3752.md`, "The update law").
 
 The τ block has the 25-byte layout above in every image but the
 58503B, whose block (ROM `0x407b4`, copied to `0x1028b8` at
 `0x22d6e`) has 29 bytes: the startup constant at +0x14 and τ at +0x18.
+The Z3817A 3752's is laid out so too (ROM `0x41450`, copied to
+`0x1023b4`; `z3817a-3752.md`, "The loop's constants").
 Two SCPI parameters, undocumented, write them: `:DIAGnostic:
 ROSCillator:LTIMe:INIT` (`0x1028cc`, 10 to 1000 s) and `:LTIMe:MAX`
 (`0x1028d0`, 10 to 10000 s); each setter keeps the start at or below

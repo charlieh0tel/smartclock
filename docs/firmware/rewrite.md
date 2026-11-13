@@ -339,10 +339,10 @@ holds; nor does it see the routines a table in ROM holds, which the
 code reaches through the table's address.
 
 What is shared, counted by `make check-common` from the files:
-`common/` holds 871 functions the exports name and 214
+`common/` holds 870 functions the exports name and 214
 static helpers, in 215 files; the rest is each image's own:
-684 functions the Z3805A 3543B's export names, 799 the
-58503A 3704's and 666 the Z3801A 3543's.  Each image's
+685 functions the Z3805A 3543B's export names, 800 the
+58503A 3704's and 667 the Z3801A 3543's.  Each image's
 hand-written C is the two together, as its link check counts it.
 
 ## The verification

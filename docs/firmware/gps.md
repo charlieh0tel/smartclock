@@ -777,8 +777,9 @@ alone:
 | `@@Gj` | `0x37` | `0x55e5c` / `0x5820a` | a record at `0x101480` / `0x1017a4` |
 | `@@Sz` | `0x38` | `0x55e76` / `0x58224` | a byte no reader of which was found |
 
-**`@@Bo`.**  TRM0003, Motorola's Oncore User's Guide revision 3.2 (not
-in `third_party/`), defines it for the UT alone, ch. 6 pp. 6.80-6.81:
+**`@@Bo`.**  TRM0003, Motorola's Oncore User's Guide revision 3.2
+(`third_party/motorola/oncore-ut-users-guide/ch6.pdf`), defines it for
+the UT alone, ch. 6 pp. 6.80-6.81:
 `@@BomC` asks for the offset once (m 0) or on each update (1), and
 `@@BouC` gives the integer seconds between UTC and GPS time.  Until
 one comes the UTC offset is not known on the UT Plus path, which the
@@ -788,7 +789,12 @@ inferred.  So a UT Plus must answer `@@Bo`, with a nonzero offset.
 
 **`@@Gj`.**  ut-engg-notes.pdf p. 11 names it Leap Second Pending
 Status Message; its layout is in neither TRM0003 revision 3.2 nor
-VPCommands.  A UT Plus of 3.0 or later must answer it and `@@Am`.  The
+VPCommands, but in the M12+ User's Guide revision 6.X
+(`third_party/motorola/m12plus-users-guide.pdf` pp. 152-153): the
+present and future leap second values, the future one's date, the
+current UTC offset in integer seconds and nanoseconds, and the time of
+day it applies, 21 bytes in all.  A UT Plus of 3.0 or later must answer
+it and `@@Am`.  The
 Z3816A's console page at `0x4c5d8` prints, for a UT Plus of 3.0 or
 later, the `@@Bo` byte as `UTC OFFS`, the record's bytes 0 and 1 as
 `Tls/Tlsf` (`0x4cd10` to `0x4cd44`), and its byte 6 and long 8 as
@@ -1035,7 +1041,15 @@ sentences: it takes `GGA`, `GSA`, `GSV`, `RMC` and Furuno's own `anc`,
 commands -- `set`, `srq`, `rrs`, `rrq`, `clr`, `ZDA`, `GLL`, and
 `int,` with a sentence name to set its interval (`0x5e64c` to
 `0x5e6ca`).  It keeps a `GT-74 Command Log` and a `GT-74 Messages`
-screen.  Read on 2026-10-10.
+screen.  Read on 2026-10-10.  The GT-74's own protocol specification
+was not found; the GT-8031's
+(`third_party/furuno/Furuno_GT8031_Protocol_Specification_Rev1.pdf`)
+documents every one of those `$PFEC` sentences, cited by printed
+page: `clr` p. 10, `set` p. 11, `srq` p. 12, `int` p. 13, `rrs` and
+`rrq` p. 15, `anc` p. 27, `tst` p. 31, `ssd` p. 32, `tps` p. 36,
+`rrm` and `rsd` p. 40.  The GT-74's internal week rollover was
+2013/08/11 (`third_party/furuno/
+GNSS_Receiver_WeekNumberRollover_SE18-100-034-00_en.pdf` p. 5).
 
 **Time RAIM.**  The 58503B carries the Z3816A's `@@En` program, byte
 for byte, at `0x5a1e7`.  The Z3815A, with no `@@` messages, fills a

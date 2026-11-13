@@ -500,6 +500,14 @@ as the SCPI manuals.
                              based drop-in replacements for the VP, UT+
                              and GT+ Oncore, which do not suffer the
                              1024 week rollover these instruments do.
+  ssr-m8t-drop-in-replacements-tn502-c.pdf
+                             Synergy Systems, LLC tech note #502-C,
+                             updated 6 April 2026.  The SSR-M8T++, a
+                             u-blox LEA-M8T based drop-in replacement
+                             for the six- and eight-channel VP, the
+                             UT+ and the GT+ Oncore: its
+                             specifications and the Motorola binary
+                             messages it answers.
 
 Z3801A owner's description
 --------------------------

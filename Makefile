@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs pages check-pages clean deb release release-notes install-service
+.PHONY: all build windows no-std-targets check-no-std hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs pages check-pages clean deb release release-notes install-service
 
 all: build
 
@@ -30,13 +30,29 @@ WINDOWS_TARGET := x86_64-pc-windows-gnu
 windows:
 	$(CARGO) build --workspace --all-targets --target $(WINDOWS_TARGET)
 
+# smartclock-gps for a microcontroller and for a browser, neither of
+# which the host build proves: it has std to fall back on.  The thumb
+# targets have no std at all, so a dependency that wants one fails
+# there, and the first, a Cortex-M0, has the least besides: no atomic
+# compare-and-swap.
+# NO_STD_TARGETS is the whole list: CI reads it from here, through
+# no-std-targets, which adds the targets to the toolchain, once.
+NO_STD_TARGETS := thumbv6m-none-eabi thumbv7em-none-eabihf wasm32-unknown-unknown
+no-std-targets:
+	rustup target add $(NO_STD_TARGETS)
+
+check-no-std:
+	set -e; for target in $(NO_STD_TARGETS); do \
+		$(CARGO) build --locked -p smartclock-gps --target $$target; \
+	done
+
 # What CI runs.  Keep this the whole of it.
 # Use the repository's git hooks, once per clone: commit-msg refuses a
 # message crediting an AI assistant (AGENTS.md).
 hooks:
 	git config core.hooksPath .githooks
 
-ci: fmt-check clippy test
+ci: fmt-check clippy test check-no-std
 
 fmt:
 	$(CARGO) fmt --all

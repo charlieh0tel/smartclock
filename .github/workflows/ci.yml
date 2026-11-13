@@ -27,6 +27,25 @@ jobs:
       audit: false
       check-args: "--workspace --all-targets --all-features"
 
+  no-std:
+    # smartclock-gps is no_std and does not allocate, so that one copy
+    # of it runs on a microcontroller, in a browser and on a host.  The
+    # jobs above build it for a host, which proves neither of the other
+    # two; this builds it for targets of each.  `make check-no-std`.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # The pin audit.yml carries; moved by hand to match it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The compiler rust-toolchain.toml names, installed here rather
+      # than on the first cargo call because the targets are added to
+      # it: `rustup target add` of the Makefile's NO_STD_TARGETS, so the
+      # list is in one place.
+      - run: rustup toolchain install
+      - run: make no-std-targets
+      - run: make check-no-std
+
   attribution:
     # No commit credits an AI assistant (AGENTS.md).  The check the
     # commit-msg hook makes, over the whole history, for a commit made

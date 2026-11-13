@@ -21,13 +21,16 @@ typedef enum __attribute__((packed)) request_source {
    * what the GPS must hear (pll_scpi_command+0x3c); status_preset_register sets
    * registers for it alone (status_preset_register+0xe); status_preset_done's
    * restores (status_preset_done+0x3e, status_preset_done+0x72,
-   * status_preset_done+0xbe, status_preset_done+0xe4). */
+   * status_preset_done+0xbe, status_preset_done+0xe4), in the Z3805A's
+   * and the Z3801A's alone. */
   REQUEST_SOURCE_SCPI = 0,
   /* Not reported, not sent to the GPS; the second slot of the per-source
    * response arrays. */
   REQUEST_SOURCE_SILENT_1 = 1,
   /* Startup: nv_restore's save of the defaults and its configuration
-   * lost (nv_restore+0x92, nv_restore+0x9c).  Reports. */
+   * lost (nv_restore+0x92, nv_restore+0x9c).  Reports.  The 58503A's,
+   * the Z3815A's and the Z3817A's status_preset_done restores for it
+   * too, whatever its own source (each one's status.c). */
   REQUEST_SOURCE_STARTUP = 2,
   /* Not reported: status_report_from's own case, returning 0
    * (status_report_from+0x2c). */

@@ -1107,7 +1107,9 @@ The source is a `request_source` (smartclock.h): who asked, and so
 whether a failure reaches the status system.  `status_report_from`
 (`0x2bf00`) reports for `REQUEST_SOURCE_SCPI` (0, every SCPI handler's
 `scpi_input_source(call->input)`) and `REQUEST_SOURCE_STARTUP` (2,
-`nv_restore`), and drops it for `REQUEST_SOURCE_INTERNAL` (4, the
+`nv_restore`; in the 58503A 3704, the Z3815A 4010 and the Z3817A 3752
+`status_preset_done`'s restores too, which here pass 0, `0x43584`),
+and drops it for `REQUEST_SOURCE_INTERNAL` (4, the
 firmware's own log erase and NV saves).  Nothing in the image passes 1,
 3 or 5; 5 alone is tested elsewhere (`0x432fe`, sent to the GPS as 0
 is), so those are named by what the code does with them.

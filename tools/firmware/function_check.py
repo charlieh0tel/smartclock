@@ -1640,6 +1640,15 @@ STATES = {
     ),
     # root_task's choice of the SCPI task or the pForth console (0x131ca)
     "root_task": States(presets=(Preset("nv_settings.pforth_at_startup", (0, 1)),)),
+    # status_preset_done's restores (0x43482, 0x434c2, 0x43504), whose
+    # calls are recorded, not run, so that what is compared is the source
+    # each is passed: the Z3805A's code passes 0 and the 58503A's 2, which
+    # the restores take alike there, the two sources having one model and
+    # both reporting, so that run, C passing the one agreed with an image
+    # passing the other
+    "status_preset_done": States(
+        hooks=tuple(Hook(name) for name in ("status_enable_restore", "status_ptr_restore", "status_ntr_restore"))
+    ),
     **STRAGGLER_STATES,
 }
 # The Z3815A 4010's loop stages and readings (its pll_stages.c and

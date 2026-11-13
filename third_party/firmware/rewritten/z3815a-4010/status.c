@@ -433,7 +433,9 @@ uint32_t status_preset_register(status_register_mask mask,
  * registers' filters, set and saved for the source (0x4c884).  The
  * 58503A 3704's with this image's tables, whose Hardware register takes
  * all of bits 0 to 14 enabled and all but 10 and 11 filtered, where the
- * 58503A's leaves bit 5 out of both and 10 and 11 out of its filter. */
+ * 58503A's leaves bit 5 out of both and 10 and 11 out of its filter.
+ * Each restore is for REQUEST_SOURCE_STARTUP, as the 58503A's (0x4c8c2,
+ * 0x4c8f8, 0x4c948, 0x4c970). */
 void status_preset_done(int32_t form, int32_t source) {
   /* The enables each form gives, by register (0x435d6, 0x435e4). */
   static const uint16_t SCPI_ENABLES[] = {0, 0, 0, 0, 7, 0xf, 0x7fff};
@@ -447,13 +449,13 @@ void status_preset_done(int32_t form, int32_t source) {
       for (uint8_t index = STATUS_FIRST_FILTERED; index < STATUS_REGISTERS;
            index++) {
         nv_settings.status_enable[index] = SCPI_ENABLES[index];
-        status_enable_restore(index, REQUEST_SOURCE_SCPI);
+        status_enable_restore(index, REQUEST_SOURCE_STARTUP);
       }
       break;
     case STATUS_PRESET_ALARM:
       for (uint8_t index = 0; index < STATUS_REGISTERS; index++) {
         nv_settings.status_enable[index] = ALARM_ENABLES[index];
-        status_enable_restore(index, REQUEST_SOURCE_SCPI);
+        status_enable_restore(index, REQUEST_SOURCE_STARTUP);
       }
       nv_settings.questionable_user = 0;
       questionable_user_done();
@@ -462,9 +464,9 @@ void status_preset_done(int32_t form, int32_t source) {
   for (uint8_t filter = 0; filter < STATUS_REGISTERS - STATUS_FIRST_FILTERED;
        filter++) {
     nv_settings.status_positive_transition[filter] = POSITIVE_FILTERS[filter];
-    status_ptr_restore(filter, REQUEST_SOURCE_SCPI);
+    status_ptr_restore(filter, REQUEST_SOURCE_STARTUP);
     nv_settings.status_negative_transition[filter] = NEGATIVE_FILTERS[filter];
-    status_ntr_restore(filter, REQUEST_SOURCE_SCPI);
+    status_ntr_restore(filter, REQUEST_SOURCE_STARTUP);
   }
   nv_save(source);
 }

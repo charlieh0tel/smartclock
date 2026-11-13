@@ -94,7 +94,11 @@ uint32_t status_init(void) {
 /* :STATus:PRESet's hook: the enables its form gives and the filtered
  * registers' filters, set and saved for the source (0x43566).  The
  * Hardware register's bit 5, "not used", is left out of its enables and
- * filter, where the Z3805A's has it. */
+ * filter, where the Z3805A's has it; and each restore is for
+ * REQUEST_SOURCE_STARTUP, whatever the source (0x435a4, 0x435da, 0x4362a,
+ * 0x43652), where the Z3805A's is for REQUEST_SOURCE_SCPI.  Here the two
+ * take one model (port_status_model) and both report
+ * (status_report_from). */
 void status_preset_done(int32_t form, int32_t source) {
   /* The enables each form gives, by register (0x2f44c, 0x2f45a). */
   static const uint16_t SCPI_ENABLES[] = {0, 0, 0, 0, 7, 0xf, 0x1fdf};
@@ -108,13 +112,13 @@ void status_preset_done(int32_t form, int32_t source) {
       for (uint8_t index = STATUS_FIRST_FILTERED; index < STATUS_REGISTERS;
            index++) {
         nv_settings.status_enable[index] = SCPI_ENABLES[index];
-        status_enable_restore(index, REQUEST_SOURCE_SCPI);
+        status_enable_restore(index, REQUEST_SOURCE_STARTUP);
       }
       break;
     case STATUS_PRESET_ALARM:
       for (uint8_t index = 0; index < STATUS_REGISTERS; index++) {
         nv_settings.status_enable[index] = ALARM_ENABLES[index];
-        status_enable_restore(index, REQUEST_SOURCE_SCPI);
+        status_enable_restore(index, REQUEST_SOURCE_STARTUP);
       }
       nv_settings.questionable_user = 0;
       questionable_user_done();
@@ -123,9 +127,9 @@ void status_preset_done(int32_t form, int32_t source) {
   for (uint8_t filter = 0; filter < STATUS_REGISTERS - STATUS_FIRST_FILTERED;
        filter++) {
     nv_settings.status_positive_transition[filter] = POSITIVE_FILTERS[filter];
-    status_ptr_restore(filter, REQUEST_SOURCE_SCPI);
+    status_ptr_restore(filter, REQUEST_SOURCE_STARTUP);
     nv_settings.status_negative_transition[filter] = NEGATIVE_FILTERS[filter];
-    status_ntr_restore(filter, REQUEST_SOURCE_SCPI);
+    status_ntr_restore(filter, REQUEST_SOURCE_STARTUP);
   }
   nv_save(source);
 }

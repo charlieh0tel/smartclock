@@ -2,12 +2,15 @@
 //! talk to one or stand in for one.
 //!
 //! A `SmartClock` receiver holds a GPS engine on an internal serial link.
-//! Most hold a Motorola Oncore, on its binary `@@` messages ([`oncore`]).
-//! `docs/firmware/gps.md` describes the link from the firmware's side.
+//! Most hold a Motorola Oncore, on its binary `@@` messages ([`oncore`]);
+//! the Z3815A holds a Furuno, on NMEA sentences with Furuno's `$PFEC`
+//! ones among them ([`nmea`]).  `docs/firmware/gps.md` describes both
+//! links from the firmware's side.
 //!
 //! This crate covers only what the receivers' firmware sends and decodes,
 //! and so far only the framing: IDs, lengths, checksums, an encoder and a
-//! streaming deframer.  It is not a general library for the engine.
+//! streaming deframer for each format.  It is not a general library for
+//! either engine.
 //!
 //! It is `no_std` and does not allocate: an encoder writes into the
 //! caller's buffer, and a deframer owns a buffer of fixed size and lends
@@ -20,6 +23,7 @@ extern crate std;
 
 use thiserror::Error;
 
+pub mod nmea;
 pub mod oncore;
 
 /// Which way a message travels on the engine's serial link.

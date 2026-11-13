@@ -833,32 +833,35 @@ It shares the explainer's references, styles and page shell through
 ### The GPS engines' wire formats are one crate
 
 `smartclock-gps` holds the wire formats of the GPS engines inside the
-receivers, a module each, starting with Motorola's Oncore binary `@@`
-messages (`docs/firmware/gps.md`).  The monitoring tools reach a
-receiver by SCPI and never see that link, so nothing else in the
-workspace speaks it; the crate is for a tool that talks to an engine
-or stands in for one.
+receivers: Motorola's Oncore binary `@@` messages and the Z3815A's
+NMEA with Furuno's `$PFEC` sentences, a module each
+(`docs/firmware/gps.md`).  The monitoring tools reach a receiver by
+SCPI and never see that link, so nothing else in the workspace speaks
+either format; the crate is for a tool that talks to an engine or
+stands in for one.
 
-- **Scoped to what the receivers use.**  A message is in its table
-  only if some image's firmware sends or decodes it; it is not a
-  general Oncore library.  Each row cites the manual page that gives
-  its layout, and a test holds the lengths to the images' own tables,
-  `docs/firmware/oncore/*.txt`.
+- **Scoped to what the receivers use.**  A message or sentence is in
+  its tables only if some image's firmware sends or decodes it; it is
+  not a general Oncore or Furuno library.  Each row cites the manual
+  page that gives its layout, and tests hold the tables to the images'
+  own: the Oncore lengths to `docs/firmware/oncore/*.txt`, the NMEA
+  sentences to the two tables in the Z3815A's image.
 - **`no_std`, and no allocation**, so one copy of it runs on a
   microcontroller, in a browser and on a host.  An encoder writes into
   the caller's buffer; a deframer owns a buffer of fixed size and lends
-  each frame out of it, its size a constant derived from the longest
-  message in the table.
+  each frame out of it, an Oncore one's size a constant derived from
+  the longest message in the table.
 - **Framing first:** IDs, lengths, checksums, encoders and streaming
   deframers.  What a message's bytes mean is later work, in modules
-  beside this one.
-- **One crate, a module a format**, not a crate a format: another
-  engine's format is another module on the same pattern.
+  beside these two.
+- **One crate, a module a format**, not a crate a format: the formats
+  share a pattern and little else, and another engine's is another
+  module.
 - **A deframer follows the firmware's own framer** wherever the manual
-  leaves the choice open, such as where to pick a stream up after a
-  bad frame, since what the firmware would refuse is not worth
-  accepting.  The module's documentation says which rule comes from
-  where, and where it departs.
+  leaves the choice open -- where to pick a stream up after a bad
+  frame, what a sentence may hold -- since what the firmware would
+  refuse is not worth accepting.  Each module's documentation says
+  which rule comes from where, and where it departs.
 - **`thiserror`, without its default features, is the one
   dependency**: it needs neither `std` nor an allocator, and the
   other library crates write their errors with it.

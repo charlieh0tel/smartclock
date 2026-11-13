@@ -40,6 +40,8 @@ image_diff = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(image_diff)
 
 NAMES_FILES = ('names.tsv', 'scpi-tree.tsv', 'installer-scpi-tree.tsv')
+# a names file's column of a label's C type
+TYPE_COLUMN = 5
 # The folder of an image's rewritten C holding its smartclock.h and
 # check-layout.c, not hand-written firmware (SmartClockExportC.java,
 # TYPES_FOLDER).
@@ -77,18 +79,22 @@ def split(text):
 
 class Image:
     """An image's functions, labels and bytes, and its C's comments:
-    each name's region, start and kind, the starts by region, and the
-    bytes by region (the installer's as its records unpack it)."""
+    each name's region, start and kind, the starts by region, a label's
+    type where its names file gives one, the file under rewritten/ of
+    each function written by hand, and the bytes by region (the
+    installer's as its records unpack it)."""
 
     def __init__(self, name):
         self.name = name
         self.folder = ANALYSIS / name
-        self.named, self.functions, self.labels = {}, {}, {}
+        self.named, self.functions, self.labels, self.label_types, self.rewritten = {}, {}, {}, {}, {}
         for line in open(DECOMPILED / name / (name + '.conventions.jsonl')):
             row = json.loads(line)
             region, address = split(row['address'])
             self.functions[region, address] = row['name']
             self.named.setdefault(row['name'], (region, address, 'function'))
+            if 'rewritten' in row:
+                self.rewritten.setdefault(row['name'], row['rewritten'])
         for file_name in NAMES_FILES:
             path = self.folder / file_name
             if not path.exists():
@@ -99,6 +105,8 @@ class Image:
                     continue
                 region, address = split(fields[0])
                 self.labels[region, address] = fields[2]
+                if len(fields) > TYPE_COLUMN and fields[TYPE_COLUMN]:
+                    self.label_types[region, address] = fields[TYPE_COLUMN]
                 self.named.setdefault(fields[2], (region, address, 'label'))
         regions = {region for region, _ in self.functions} | {region for region, _ in self.labels}
         self.function_starts = {r: sorted(a for rr, a in self.functions if rr == r) for r in regions}

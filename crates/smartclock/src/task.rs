@@ -12,6 +12,8 @@
 //! answer.  Since [`Session`] is moved into this thread at
 //! construction, a second writer is a compile error rather than a
 //! corrupted session.
+//!
+//! [`Session`]: crate::session::Session
 
 use std::sync::Arc;
 use std::sync::Mutex;

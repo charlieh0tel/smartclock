@@ -1,4 +1,5 @@
-# CI calls the shared rust-ci.yml; "make ci" runs the same checks locally.
+# CI calls the shared rust-ci.yml, and runs "make doc" as a job beside
+# it; "make ci" runs the same checks locally.
 #
 # Every target says --workspace.  This is a virtual workspace, so that
 # is already the default; saying it keeps the targets honest if a
@@ -52,7 +53,7 @@ check-no-std:
 hooks:
 	git config core.hooksPath .githooks
 
-ci: fmt-check clippy test check-no-std
+ci: fmt-check clippy test check-no-std doc
 
 fmt:
 	$(CARGO) fmt --all
@@ -108,8 +109,10 @@ test-web:
 screenshots:
 	node tools/screenshots.mjs --sim $(SHOTS_FROM) $(if $(SHOTS_TUI),--tui '$(SHOTS_TUI)')
 
+# The API documentation, with a rustdoc warning -- a link to nothing,
+# or from public documentation to a private item -- an error.
 doc:
-	$(CARGO) doc --workspace --no-deps --all-features
+	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --workspace --no-deps --all-features
 
 # Regenerate the documentation that is derived from the command table.
 # A test fails if docs/commands.md and the table disagree.

@@ -46,6 +46,24 @@ jobs:
       - run: make no-std-targets
       - run: make check-no-std
 
+  doc:
+    # The API documentation builds without a rustdoc warning: `make doc`
+    # makes one an error.  A job here because the shared workflow has
+    # none for it.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      # The pin audit.yml carries; moved by hand to match it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # serialport needs libudev.  The compiler is the one
+      # rust-toolchain.toml names, which rustup installs on the first
+      # cargo call.
+      - run: sudo apt-get update && sudo apt-get install -y libudev-dev
+      # The pin rust-ci.yml carries.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: make doc
+
   attribution:
     # No commit credits an AI assistant (AGENTS.md).  The check the
     # commit-msg hook makes, over the whole history, for a commit made

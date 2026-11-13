@@ -375,8 +375,11 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   `/usr/share/doc`.
 - CI calls the fleet's shared `rust-ci.yml`, since one repository doing
   it differently costs more than one definition; `make ci` is stricter
-  and is what you run.  The browser and firmware checks need Node,
-  Chromium, an m68k gcc and uv, so they are jobs of their own.
+  and is what you run.  The shared workflow does not build the API
+  documentation, so `ci.yml` runs `make doc` as a job beside it, with a
+  rustdoc warning an error; `make ci` runs it too.  The browser and
+  firmware checks need Node, Chromium, an m68k gcc and uv, so they are
+  jobs of their own.
 - The firmware job runs on pull requests and pushes to `main`, not on
   a branch's own pushes, which ran it a second time, at once, beside
   the pull request's; a branch without a pull request runs it by hand

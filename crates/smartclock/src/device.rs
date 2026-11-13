@@ -399,7 +399,7 @@ pub fn dialect_for(model: &str) -> Dialect {
 }
 
 /// How `dialect` spells `id` for a `model`, if that model is asked it
-/// at all ([`asked`]).
+/// at all (`asked`).
 pub fn spec_for(dialect: Dialect, model: &str, id: CommandId) -> Option<&'static Spec> {
     dialect.spec(id).filter(|spec| asked(spec, model))
 }
@@ -502,7 +502,7 @@ impl<T: Transport> Device<T> {
     /// than left at its previous value, because a stale reading is
     /// worse than an absent one.  So is one it refuses outright, which
     /// is named in the tier's `failed` list and costs no other field
-    /// ([`Device::field`]).  A transport failure or an unreadable reply
+    /// (`Device::field`).  A transport failure or an unreadable reply
     /// aborts the tier and propagates.
     ///
     /// Only this tier's success is recorded.  The others keep the time

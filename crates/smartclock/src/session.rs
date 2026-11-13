@@ -240,7 +240,7 @@ impl<T: Transport> Session<T> {
     /// "The error prompt"): it carries the newest queued error, and a
     /// command that succeeds while one is queued answers under it.  So
     /// a queue the last prompt showed holding errors is read off first,
-    /// into [`Session::strays`], and only then is the command sent --
+    /// into `Session::strays`, and only then is the command sent --
     /// except a command that reads or clears the queue itself.
     /// After it, a query that answered succeeded, since a failing one
     /// answers with the prompt alone (097-59551-02, A-6), and whatever

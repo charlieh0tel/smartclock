@@ -816,7 +816,7 @@ impl Log {
     /// The receiver's notes from `from` up to and including `to`, unix
     /// seconds, oldest first: the ones a chart of that range marks,
     /// however many newer ones the journal shows instead.  At most
-    /// [`MAX_JOURNAL`]; empty on a log older than notes.
+    /// `MAX_JOURNAL`; empty on a log older than notes.
     pub fn notes(&self, receiver: i64, from: i64, to: i64) -> Result<Vec<Note>> {
         let sql = format!(
             "SELECT at, text FROM note

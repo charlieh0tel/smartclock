@@ -22,6 +22,8 @@
 //! `:SYSTem:LANGuage "PRIMARY"` restarts the primary (docs/firmware/restart.md,
 //! "Forced installer entry with an unusable primary").  Nothing is
 //! erased or programmed on either way.
+//!
+//! [`back_to_scpi`]: crate::console::back_to_scpi
 
 use std::fmt;
 use std::io::Read;
@@ -588,7 +590,7 @@ pub enum Progress {
     /// The port was not at the console, so `:SYSTem:LANGuage "PFORTH"`
     /// is being sent.
     Entering,
-    /// Another [`PROGRESS_INTERVAL`] bytes were read.
+    /// Another `PROGRESS_INTERVAL` bytes were read.
     Read {
         /// Bytes read so far.
         done: u32,

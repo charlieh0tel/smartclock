@@ -671,7 +671,7 @@ impl Curve {
     /// held 227 such pairs and 3 triples.  Read as one reading, each
     /// left a hole, and the modified deviation, which needs `3 m`
     /// readings in a row, ended where the holes came closer together
-    /// than that.  See [`repeated_updates`].
+    /// than that.  See `repeated_updates`.
     pub fn from_logged<S: PartialEq>(rows: impl IntoIterator<Item = Logged<S>>) -> Self {
         let mut samples: Vec<Sample> = Vec::new();
         let mut kept: Vec<Logged<S>> = Vec::new();

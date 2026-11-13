@@ -4,6 +4,8 @@
 //! issue one by accident: the borrow is explicit and the type name says
 //! what it is.  Whether a caller may build one at all is decided above
 //! this layer -- in the daemon, by a flag given at startup.
+//!
+//! [`Device::control`]: crate::device::Device::control
 
 use crate::command::CommandId;
 use crate::command::Dialect;

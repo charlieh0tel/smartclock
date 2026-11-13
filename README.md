@@ -201,10 +201,14 @@ Without a receiver, use the simulator; every tool takes
 
 ## Development
 
-`make ci` runs CI's Rust checks; the firmware's checks are their own
-CI job.  `make test-web` runs the browser tests, after `make web-deps`
-once.  `make hooks`, once per clone, sets up the repository's git
-hooks.  `make pages` builds the HTML pages and their landing page into
+`make ci` runs CI's Rust checks: formatting, clippy, the tests, the
+`no_std` builds of `smartclock-gps` (`make check-no-std`, after
+`make no-std-targets` once) and the API documentation (`make doc`), in
+which a rustdoc warning is an error.
+The firmware's checks are their own CI job.  `make test-web` runs the
+browser tests, after `make web-deps` once.  `make hooks`, once per
+clone, sets up the repository's git hooks.  `make pages` builds the
+HTML pages and their landing page into
 `target/pages/` and fails on an error in one: the generated ones from
 their sources, which are not committed, and the hand-written ones from
 `docs/pages/`, each with a breadcrumb back to the landing page and

@@ -23,9 +23,9 @@ static const fpga_bit fpga_bits[] = {
     [FPGA_BIT_START] = {.reg = 1, .mask = 0x01, .is_flag = 1},
     [FPGA_BIT_REFERENCE] = {.reg = 1, .mask = 0x02, .is_flag = 1},
     [FPGA_BIT_ADDRESS] = {.reg = 1, .mask = 0xf8, .is_flag = 0},
-    [FPGA_BIT_SYNC] = {.reg = 2, .mask = 0x01, .is_flag = 1},
-    [FPGA_BIT_ALARM] = {.reg = 2, .mask = 0x0c, .is_flag = 0},
-    [FPGA_BIT_COUNTER_SYNC] = {.reg = 3, .mask = 0x03, .is_flag = 0},
+    [FPGA_BIT_SECONDS_PHASE] = {.reg = 2, .mask = 0x01, .is_flag = 1},
+    [FPGA_BIT_START_SOURCE] = {.reg = 2, .mask = 0x0c, .is_flag = 0},
+    [FPGA_BIT_SYNC] = {.reg = 3, .mask = 0x03, .is_flag = 0},
 };
 
 /* The FPGA's configuration registers this image's counter keeps images

@@ -382,10 +382,11 @@ typedef enum __attribute__((packed)) oncore_raim_status {
 typedef struct loop_steering_state {
   float integral; /* +0x00: the integral term, in EFC counts */
   float ti_sum;   /* +0x04: the block's valid readings, then their mean */
-  int32_t large_offset_blocks; /* +0x08: startup_pll's consecutive blocks whose
-                                  mean passed 150 ns, to 15 */
-  uint8_t seconds;             /* +0x0c: the block's seconds, to 10 */
-  uint8_t readings;            /* +0x0d: the block's valid readings */
+  int32_t settled_blocks; /* +0x08: startup_pll's consecutive blocks whose
+                             |mean| is below 150 ns, to 15; one at or above
+                             it clears it */
+  uint8_t seconds;        /* +0x0c: the block's seconds, to 10 */
+  uint8_t readings;       /* +0x0d: the block's valid readings */
   uint8_t
       measurement_failed; /* +0x0e: a reading failed; a block with none valid
                              then holds for a TI error, not the limit */
@@ -2363,24 +2364,26 @@ typedef struct gps_state {
  * fpga_set_field take only the first seven; the eighth, register 3's low
  * two bits, is what counter_set_sync writes directly, and
  * fpga_fields_to_registers (0x4965e) and counter_configuration_init
- * (0x49a62) run over all eight.  FPGA_BIT_ALARM, named for the 58503A's
- * entry 6, its alarm flag, is the count's start source, an
- * fpga_start_source; FPGA_BIT_SYNC sets the alternate-second outputs'
- * phase and FPGA_BIT_COUNTER_SYNC is the sync field
- * (docs/firmware/z3815a-trace.md).  What the board does with the pins
- * they drive is not established (docs/firmware/z3815a-4010.md, "Not
+ * (0x49a62) run over all eight.  FPGA_BIT_START_SOURCE, entry 6, the
+ * 58503A's alarm flag, is here the count's start source, an
+ * fpga_start_source; FPGA_BIT_SECONDS_PHASE sets the alternate-second
+ * outputs' phase and FPGA_BIT_SYNC is the sync field, as in the other
+ * images (docs/firmware/z3815a-trace.md).  What the board does with the
+ * pins they drive is not established (docs/firmware/z3815a-4010.md, "Not
  * established"). */
 typedef enum __attribute__((packed)) fpga_bit_index {
 #include "../../common/types/fpga_bit_index.h"
-  FPGA_BIT_SYNC = 5,  /* register 2, 0x01, a flag: the 1PPS sync bit 0x516de
-                         pulses (docs/firmware/z3815a-4010.md), whose rise
-                         resets the FPGA's FD and so sets which seconds P14
-                         and P28 pulse on (docs/firmware/z3815a-trace.md,
-                         "Register port", "The 1 PPS divider") */
-  FPGA_BIT_ALARM = 6, /* register 2, 0x0c, a field: an fpga_start_source,
-                         set while arming through 0x494f2 */
-  FPGA_BIT_COUNTER_SYNC = 7, /* register 3, 0x03, a field: counter_set_sync's
-                                sync kind, which it writes directly */
+  /* register 2, 0x01, a flag: the bit 0x516de pulses
+   * (docs/firmware/z3815a-4010.md), whose rise resets the FPGA's FD and so
+   * sets which seconds P14 and P28 pulse on (docs/firmware/z3815a-trace.md,
+   * "Register port", "The 1 PPS divider") */
+  FPGA_BIT_SECONDS_PHASE = 5,
+  /* register 2, 0x0c, a field: an fpga_start_source, set while arming
+   * through 0x494f2 */
+  FPGA_BIT_START_SOURCE = 6,
+  /* register 3, 0x03, a field: counter_set_sync's sync kind, which it
+   * writes directly */
+  FPGA_BIT_SYNC = 7,
 } fpga_bit_index;
 
 #include "../../common/types/fpga_mode.h"
@@ -3117,21 +3120,21 @@ typedef struct nv_settings_fields {
 
 #include "../../common/types/counter_work_state.h"
 
-/* counter_configuration_fields.alarm_mode: when counter_arm sets
- * FPGA_BIT_ALARM to the configuration's alarm (0x4988c); any other value
- * never. */
-typedef enum __attribute__((packed)) counter_alarm_mode {
-  COUNTER_ALARM_WHEN_WANTED = 1,
-} counter_alarm_mode;
+/* counter_configuration_fields.start_source_mode: when counter_arm sets
+ * FPGA_BIT_START_SOURCE to the configuration's start source (0x4988c);
+ * any other value never. */
+typedef enum __attribute__((packed)) counter_start_source_mode {
+  COUNTER_START_SOURCE_WHEN_WANTED = 1,
+} counter_start_source_mode;
 
-/* FPGA_BIT_ALARM's values, in place in register 2's bits 2 and 3, EG.X
- * and EG.Y: the source the FPGA's BG starts the count on, read from the
+/* FPGA_BIT_START_SOURCE's values, in place in register 2's bits 2 and 3,
+ * EG.X and EG.Y: the source the FPGA's BG starts the count on, read from the
  * netlist (docs/firmware/z3815a-trace.md, "Register port" and "Start,
  * stop and status bits").  Bit 2, EG.X, also gives P24 its level and
  * P25 the other while P27 is Low ("Every output pin"); the P24 levels
  * the names give assume P27 Low, which is not established.  The firmware
  * writes 0 at init and then 0x08, 0x0c and 0x00 through
- * counter_alarm_request, never 0x04 ("What the firmware takes from P35
+ * counter_start_source_request, never 0x04 ("What the firmware takes from P35
  * and P84"). */
 typedef enum __attribute__((packed)) fpga_start_source {
   FPGA_START_SOURCE_GPS_PPS = 0x00,      /* P82, the GPS 1 PPS */
@@ -3159,12 +3162,14 @@ typedef struct counter_configuration_fields {
   counter_work_state sync_state; /* sync_request sets both */
   counter_sync_kind sync_kind;   /* sync_request's first; into fconf_regs[3] */
   uint8_t pad_17;
-  int32_t sync_count;             /* sync_request's second; counted down */
-  int32_t interpolator_offset;    /* reading_low, subtracted from the reading */
-  int32_t interpolator_scale;     /* the spread it is divided by */
-  counter_alarm_mode alarm_mode;  /* when the alarm is set */
-  counter_work_state alarm_state; /* 0x494d8 sets both */
-  fpga_start_source alarm;        /* 0x494d8's; FPGA_BIT_ALARM's value */
+  int32_t sync_count;          /* sync_request's second; counted down */
+  int32_t interpolator_offset; /* reading_low, subtracted from the reading */
+  int32_t interpolator_scale;  /* the spread it is divided by */
+  counter_start_source_mode start_source_mode; /* when the start source is
+                                                  set */
+  counter_work_state start_source_state;       /* 0x494d8 sets both */
+  fpga_start_source start_source; /* 0x494d8's; FPGA_BIT_START_SOURCE's
+                                     value */
   uint8_t pad_27;
 } counter_configuration_fields;
 

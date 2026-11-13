@@ -390,10 +390,6 @@ typedef enum __attribute__((packed)) console_crash_kind {
     CONSOLE_CRASH_FATAL_ERROR=4
 } console_crash_kind;
 
-typedef enum __attribute__((packed)) counter_alarm_mode {
-    COUNTER_ALARM_WHEN_WANTED=1
-} counter_alarm_mode;
-
 typedef enum __attribute__((packed)) counter_calibrate_mode {
     COUNTER_CALIBRATE_WHEN_WANTED=1,
     COUNTER_CALIBRATE_ALWAYS=3
@@ -420,6 +416,10 @@ typedef enum __attribute__((packed)) counter_sync_kind {
     COUNTER_SYNC_FULL=3
 } counter_sync_kind;
 
+typedef enum __attribute__((packed)) counter_start_source_mode {
+    COUNTER_START_SOURCE_WHEN_WANTED=1
+} counter_start_source_mode;
+
 typedef enum __attribute__((packed)) fpga_start_source {
     FPGA_START_SOURCE_GPS_PPS=0,
     FPGA_START_SOURCE_P84=4,
@@ -441,9 +441,9 @@ struct counter_configuration_fields {
     int32_t sync_count;
     int32_t interpolator_offset;
     int32_t interpolator_scale;
-    enum counter_alarm_mode alarm_mode;
-    enum counter_work_state alarm_state;
-    enum fpga_start_source alarm;
+    enum counter_start_source_mode start_source_mode;
+    enum counter_work_state start_source_state;
+    enum fpga_start_source start_source;
     uint8_t pad_27;
 };
 
@@ -778,9 +778,9 @@ typedef enum __attribute__((packed)) fpga_bit_index {
     FPGA_BIT_START=2,
     FPGA_BIT_REFERENCE=3,
     FPGA_BIT_ADDRESS=4,
-    FPGA_BIT_SYNC=5,
-    FPGA_BIT_ALARM=6,
-    FPGA_BIT_COUNTER_SYNC=7
+    FPGA_BIT_SECONDS_PHASE=5,
+    FPGA_BIT_START_SOURCE=6,
+    FPGA_BIT_SYNC=7
 } fpga_bit_index;
 
 typedef enum __attribute__((packed)) fpga_chip {
@@ -2315,7 +2315,7 @@ typedef struct loop_steering_state loop_steering_state, *Ploop_steering_state;
 struct loop_steering_state {
     float integral;
     float ti_sum;
-    int32_t large_offset_blocks;
+    int32_t settled_blocks;
     uint8_t seconds;
     uint8_t readings;
     uint8_t measurement_failed;
@@ -4407,11 +4407,11 @@ _Static_assert(sizeof(calibration_block) == 64, "calibration_block");
 _Static_assert(sizeof(char_slot) == 4, "char_slot");
 _Static_assert(sizeof(clock_record) == 51, "clock_record");
 _Static_assert(sizeof(console_crash_kind) == 1, "console_crash_kind");
-_Static_assert(sizeof(counter_alarm_mode) == 1, "counter_alarm_mode");
 _Static_assert(sizeof(counter_calibrate_mode) == 1, "counter_calibrate_mode");
 _Static_assert(sizeof(counter_configuration_fields) == 40, "counter_configuration_fields");
 _Static_assert(sizeof(counter_error) == 1, "counter_error");
 _Static_assert(sizeof(counter_registers_mode) == 1, "counter_registers_mode");
+_Static_assert(sizeof(counter_start_source_mode) == 1, "counter_start_source_mode");
 _Static_assert(sizeof(counter_sync_kind) == 1, "counter_sync_kind");
 _Static_assert(sizeof(counter_sync_mode) == 1, "counter_sync_mode");
 _Static_assert(sizeof(counter_work_state) == 1, "counter_work_state");
@@ -5402,7 +5402,7 @@ extern scpi_numeric_param scpi_param_DIAGnostic_REFerence_EXTernal_QUEStionable_
 extern scpi_setting_param scpi_param_DIAGnostic_GPSystem_TRACking_LOG; /* 00048ace */
 extern scpi_setting_param scpi_param_DIAGnostic_LOG_WRAP; /* 00048aea */
 extern double two_to_32; /* 00049e9e */
-extern fpga_bit fpga_bit_table[7]; /* 00049eae */
+extern fpga_bit fpga_bit_table[8]; /* 00049eae */
 extern scpi_action_param scpi_action_DIAGnostic_PTIMe_TINTerval; /* 00049ed0 */
 extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate; /* 00049ed6 */
 extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_INITiate; /* 00049edc */
@@ -11750,8 +11750,8 @@ bool fpga_bit_test(uint8_t bits,char reg);
 char fpga_read_seconds(void);
 void fpga_address_sweep_debug(void);
 uint8_t counter_wait_ready(uint8_t mask);
-void counter_alarm_request(fpga_start_source alarm);
-void counter_set_alarm(fpga_start_source alarm);
+void counter_start_source_request(fpga_start_source start_source);
+void counter_set_start_source(fpga_start_source start_source);
 void fpga_set_bit(fpga_bit_index bit,uint8_t on);
 void fpga_set_field(fpga_bit_index field,uint8_t value);
 void sync_request(counter_sync_kind kind,int32_t count);
@@ -39626,10 +39626,10 @@ __asm__(".set sci_scpi_write, sci_scpi_write_loop");
 /* counter_wait_ready: rewritten in ti.c */
 
 /* 000494d8 */
-/* counter_alarm_request: rewritten in ti.c */
+/* counter_start_source_request: rewritten in ti.c */
 
 /* 000494f2 */
-/* counter_set_alarm: rewritten in ti.c */
+/* counter_set_start_source: rewritten in ti.c */
 
 /* 00049504 */
 /* fpga_set_bit: rewritten in fpga.c */

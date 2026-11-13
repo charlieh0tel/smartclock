@@ -949,9 +949,9 @@ registers, which `counter_arm`, `counter_load_registers` and
 the calibration is at `+8`, the three pairs at `+0x10` to `+0x15`, the
 sync's kind and count at `+0x16` and `+0x18`, the interpolator's offset
 and scale at `+0x1c` and `+0x20`; and a fourth pair after them,
-`alarm_mode` and `alarm_state` (`+0x24`), with which `counter_arm`
-sets `FPGA_BIT_ALARM` to `alarm` (`+0x26`, `0x4988c` to `0x498a6`),
-as `counter_alarm_request` (`0x494d8`) asks: an `fpga_start_source`,
+`start_source_mode` and `start_source_state` (`+0x24`), with which
+`counter_arm` sets `FPGA_BIT_START_SOURCE` to `start_source` (`+0x26`, `0x4988c` to `0x498a6`),
+as `counter_start_source_request` (`0x494d8`) asks: an `fpga_start_source`,
 the count's start source, register 2's bits 2 and 3
 (`z3815a-trace.md`, "Register port").
 

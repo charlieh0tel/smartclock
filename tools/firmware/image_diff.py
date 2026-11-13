@@ -33,6 +33,15 @@ matched too, as a "piece".  A function is matched, in this order:
   ratio at least SIMILAR);
 - callees: one that calls the counterparts of the functions it calls.
 
+With --callee-ties, a masked match then moves to another of its byte
+matches whose calls name more of the counterparts of the function's own
+calls, as the matches so far give them: a masked match does not compare
+call targets, so that of routines alike but for what they call, the
+first claimed may take another's counterpart (the Z3817A 3752's ps_word
+and s_rep_word).  It is a port's choice (tools/firmware/seed_names.py's
+Port.callee_ties): it moves other images' matches that their hand rows
+settle otherwise.
+
 A byte or shape match of a small function, and any match outside the
 neighbors' counterparts, needs more evidence (SMALL, UNIQUE_SIZE,
 FAR_SIZE, SIMILAR_FAR); an SCPI handler of the other image goes only
@@ -687,8 +696,9 @@ class Matcher:
     correspondence the matched instructions give (votes, base address
     to other address counts)."""
 
-    def __init__(self, base, other, items, starts, handlers):
+    def __init__(self, base, other, items, starts, handlers, callee_ties=False):
         self.base, self.other = base, other
+        self.callee_ties = callee_ties
         self.items = sorted(items, key=lambda i: (i.address, i.kind))
         self.starts = sorted(starts)
         self.handler_pairs, self.handler_owners = handlers
@@ -741,6 +751,8 @@ class Matcher:
             self.match_handlers()
             self.match_similar()
         self.match_by_callees()
+        if self.callee_ties:
+            self.rematch_by_callees()
         self.match_hits(within_gap=False)
         for function in self.functions:
             if function.other is not None:
@@ -851,6 +863,31 @@ class Matcher:
             if function.other is None and free and (within_gap or method == 'exact' or function.size >= FAR_SIZE):
                 expected = function.address if function.address in free else self.expected(function.address)
                 self.claim(function, min(free, key=lambda a: abs(a - expected)), method)
+
+    def rematch_by_callees(self):
+        """With callee_ties, moves each masked match to the byte match
+        whose calls name more of the counterparts of the function's own
+        calls, once the matches so far give them: a masked match does
+        not compare call targets, so that of routines alike but for what
+        they call, the first claimed may take another's counterpart."""
+        counterpart = {f.address: f.other for f in self.functions if f.other is not None}
+        for function in self.functions:
+            if function.method != 'masked':
+                continue
+            mapped = [counterpart.get(t) for t in call_targets(self.base_bodies[function.address])]
+            if not any(mapped):
+                continue
+
+            def agreement(start):
+                theirs = call_targets(Body(start, self.other.instructions(start, start + function.size), True))
+                return sum(1 for ours, other in zip(mapped, theirs) if ours is not None and ours == other)
+
+            hits = [a for a in self.hits[function.address][1] if a == function.other or self.free(function, a)]
+            best = max(hits, key=agreement)
+            if agreement(best) > agreement(function.other):
+                del self.claimed[function.other]
+                self.claim(function, best, 'masked')
+                counterpart[function.address] = best
 
     def unclaimed(self):
         if self.unclaimed_cache is None:
@@ -1203,6 +1240,7 @@ def main():
     parser.add_argument('--handlers', nargs=2)
     parser.add_argument('--installer', action='store_true')
     parser.add_argument('--diff', nargs='*', default=[])
+    parser.add_argument('--callee-ties', action='store_true')
     arguments = parser.parse_args()
     base_image = open(arguments.base, 'rb').read()
     other_image = open(arguments.other, 'rb').read()
@@ -1223,7 +1261,7 @@ def main():
                          'other_address', 'other_size', 'similarity', 'summary']) + '\n')
     counts = collections.Counter()
     for region, base, other, pairs in regions:
-        matcher = Matcher(base, other, items[region], starts[region], pairs)
+        matcher = Matcher(base, other, items[region], starts[region], pairs, arguments.callee_ties)
         results = matcher.run()
         for item in sorted(results, key=lambda i: (i.kind != 'function', i.status == 'new',
                                                     i.address if i.address >= 0 else i.other)):

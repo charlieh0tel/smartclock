@@ -141,7 +141,7 @@ FIELDS = {
     'loop_steering_state': (
         'integral',
         'ti_sum',
-        'large_offset_blocks',
+        'settled_blocks',
         'seconds',
         'readings',
         'proportional_gain',
@@ -450,7 +450,7 @@ OUTPUTS = (
     ('seconds', 'loop_steering_state', 'B'),
     ('loop_time_constant', 'pll_state', 'f'),
     ('startup_state', 'pll_state', 'B'),
-    ('large_offset_blocks', 'loop_steering_state', 'i'),
+    ('settled_blocks', 'loop_steering_state', 'i'),
     ('proportional_gain', 'loop_steering_state', 'f'),
     ('integral_gain', 'loop_steering_state', 'f'),
     ('filter_weight', 'loop_steering_state', 'f'),

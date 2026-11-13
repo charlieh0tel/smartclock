@@ -5,20 +5,20 @@
  * prototype. */
 
 /* The 1PPS's sync: on an odd GPS second, while the loop runs, the FPGA's
- * sync bit pulsed, which pps_interrupt calls each 1PPS where the 58503A
- * 3704's signals its front panel (0x516de). */
+ * seconds phase bit pulsed, which pps_interrupt calls each 1PPS where the
+ * 58503A 3704's signals its front panel (0x516de). */
 void pps_sync_pulse(void) {
   uint32_t time = get_clock_time();
 
   if ((gps_seconds(get_clock_date(), time) & 1) != 0 && pll.loop_running != 0) {
-    fpga_set_bit(FPGA_BIT_SYNC, 1);
-    fpga_set_bit(FPGA_BIT_SYNC, 0);
+    fpga_set_bit(FPGA_BIT_SECONDS_PHASE, 1);
+    fpga_set_bit(FPGA_BIT_SECONDS_PHASE, 0);
   }
 }
 
-/* Each 1PPS: ticks the clock and the time code, pulses the FPGA's sync
- * bit on an odd GPS second (pps_sync_pulse), keeps the GPS time and date
- * at the pulse in the exchange's message and broadcasts it to the tasks
+/* Each 1PPS: ticks the clock and the time code, pulses the FPGA's seconds
+ * phase bit on an odd GPS second (pps_sync_pulse), keeps the GPS time and
+ * date at the pulse in the exchange's message and broadcasts it to the tasks
  * waiting there (0x22f52).  The 58503A's signals its front panel's task
  * where this calls pps_sync_pulse.  Hand-written since its
  * call of psos_call is one C can make only through psos_broadcast_x.

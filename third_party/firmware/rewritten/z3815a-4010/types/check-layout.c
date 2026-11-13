@@ -983,9 +983,9 @@ CHECK_FIELD(counter_configuration_fields, sync_kind, 22);
 CHECK_FIELD(counter_configuration_fields, sync_count, 24);
 CHECK_FIELD(counter_configuration_fields, interpolator_offset, 28);
 CHECK_FIELD(counter_configuration_fields, interpolator_scale, 32);
-CHECK_FIELD(counter_configuration_fields, alarm_mode, 36);
-CHECK_FIELD(counter_configuration_fields, alarm_state, 37);
-CHECK_FIELD(counter_configuration_fields, alarm, 38);
+CHECK_FIELD(counter_configuration_fields, start_source_mode, 36);
+CHECK_FIELD(counter_configuration_fields, start_source_state, 37);
+CHECK_FIELD(counter_configuration_fields, start_source, 38);
 
 /* The status snapshots, 0x176 bytes each: status_screen_print's two
  * (0x56b0c) and status_snapshot_update's latest and flagged (0x58aee,

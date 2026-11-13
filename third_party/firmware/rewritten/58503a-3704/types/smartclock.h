@@ -383,10 +383,11 @@ typedef enum __attribute__((packed)) oncore_raim_status {
 typedef struct loop_steering_state {
   float integral; /* +0x00: the integral term, in EFC counts */
   float ti_sum;   /* +0x04: the block's valid readings, then their mean */
-  int32_t large_offset_blocks; /* +0x08: startup_pll's consecutive blocks whose
-                                  mean passed 150 ns, to 15 */
-  uint8_t seconds;             /* +0x0c: the block's seconds, to 10 */
-  uint8_t readings;            /* +0x0d: the block's valid readings */
+  int32_t settled_blocks; /* +0x08: startup_pll's consecutive blocks whose
+                             |mean| is below 150 ns, to 15; one at or above
+                             it clears it */
+  uint8_t seconds;        /* +0x0c: the block's seconds, to 10 */
+  uint8_t readings;       /* +0x0d: the block's valid readings */
   uint8_t
       measurement_failed; /* +0x0e: a reading failed; a block with none valid
                              then holds for a TI error, not the limit */

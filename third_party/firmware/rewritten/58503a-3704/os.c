@@ -166,3 +166,73 @@ void task_stack_report(request_source source) {
   printf("%s", "\r\n");
   printf("%s", os_report_rule);
 }
+
+/* Prints the region report: each region's bounds and limits, the memory
+ * the tasks hold and that is free, and the tasks waiting for memory.  A
+ * segment's region indexes the sums unchecked, as in the image. */
+void os_report_regions(printf_function* print) {
+  /* A waiter's region is its record's bits 3 to 0, less 1. */
+  static const uint32_t REGION_WAIT_MASK = 0xf;
+  static const uint16_t SEGMENT_REGION_MASK = 3;
+  psos_kernel* kernel = os_kernel_data();
+  int32_t held_count[OS_REGIONS] = {0, 0};
+  int32_t free_bytes[OS_REGIONS];
+  int32_t held_bytes[OS_REGIONS] = {0, 0};
+  void* start[OS_REGIONS] = {psos_config.data_area,
+                             (void*)psos_config.region_2_start};
+
+  print(
+      "%s",
+      "Region strt       end  min     max    pend   USED  cnt  AVAIL cnt\r\n");
+  for (int32_t entry = 0; entry < task_count; entry++) {
+    for (psos_segment* segment = ((psos_task*)task_table[entry].task)->segments;
+         segment != NULL; segment = segment->next) {
+      int32_t region = (segment->flags & SEGMENT_REGION_MASK) - 1;
+
+      held_bytes[region] += segment->size;
+      held_count[region]++;
+    }
+  }
+  for (int32_t region = 0; region < OS_REGIONS; region++) {
+    int32_t free_count = 0;
+    uint32_t end = 0;
+    uint32_t minimum = 0;
+    uint32_t maximum = 0;
+    uint32_t pending = 0;
+
+    free_bytes[region] = 0;
+    for (psos_segment* segment = kernel->region_free[region]; segment != NULL;
+         segment = segment->next) {
+      free_bytes[region] += segment->size;
+      free_count++;
+    }
+    if (start[region] != NULL) {
+      end = kernel->region_end[region];
+      minimum = kernel->region_minimum[region];
+      maximum = kernel->region_maximum[region];
+      pending = kernel->region_pending[region];
+    }
+    print("%1d 0x%08x 0x%08x %4d %8d %8d %4dkB %4d %4dkB %3d\r\n", region + 1,
+          start[region], end, minimum, maximum, pending,
+          os_kilobytes(held_bytes[region]), held_count[region],
+          os_kilobytes(free_bytes[region]), free_count);
+  }
+  /* The queue ends at its head's field. */
+  psos_task* end = (psos_task*)&kernel->region_waiting;
+  psos_task* task = kernel->region_waiting;
+
+  if (task != end) {
+    print("   >> BLOCKED: ");
+    while (task != end) {
+      int8_t region = (task->region_wait & REGION_WAIT_MASK) + 1;
+
+      print("%s %d(%d)", task_name(task), task->region_request, region);
+      task = task->next;
+      if (task != end) {
+        print(",");
+      }
+    }
+    print("%s", "\r\n");
+  }
+  print("%s", "\r\n");
+}

@@ -649,7 +649,16 @@ typedef struct sci_driver {
  * qspi_fpga_byte_write (0x1f2fa, 0x1f312) send. */
 typedef enum __attribute__((packed)) qspi_device {
   QSPI_FRONT_PANEL = 0,
-#include "../../common/types/qspi_device.h"
+  QSPI_ADC = 1,
+  QSPI_HDAC = 2,
+  QSPI_UNUSED_WORD = 4,
+  QSPI_UNUSED_TWO_WORDS = 5,
+  QSPI_FPGA_BLOCK = 6,
+  QSPI_EFC = 7,
+  QSPI_FPGA_TAIL = 9,
+  QSPI_FPGA_WORD = 0xa,
+  QSPI_FPGA_BYTE = 0xb,
+  QSPI_FPGA_READBACK = 0xc,
 } qspi_device;
 
 #include "../../common/types/qspi_buffers.h"
@@ -1931,14 +1940,19 @@ typedef struct gps_state {
  * adds entry 6, which fpga_fields_to_registers (0x40c24) and
  * counter_configuration_init (0x40f84) bound by. */
 typedef enum __attribute__((packed)) fpga_bit_index {
-#include "../../common/types/fpga_bit_index.h"
-  FPGA_BIT_SYNC = 5,  /* register 3, 0x03: counter_set_sync */
-  FPGA_BIT_ALARM = 6, /* register 3, 0x04, a flag: the alarm, which 0x40828
-                         sets with PORTF0 bit 5 (docs/firmware/58503a-3704.md,
-                         "The alarm outputs"); DATA2, P67, has no input path
-                         in the FPGA, so it reaches no logic there
-                         (docs/firmware/58503a-z3801a-trace.md, "Register
-                         port") */
+  FPGA_BIT_MODE = 0,   /* register 0, 0x03: an fpga_mode */
+  FPGA_BIT_PRESET = 1, /* register 0, 0x40: set around arming; counter_selftest
+                          reads a count of 0 under it */
+  FPGA_BIT_START = 2,  /* register 1, 0x01: pulsed by interpolator_measure */
+  FPGA_BIT_REFERENCE = 3, /* register 1, 0x02: an interpolator_reference */
+  FPGA_BIT_ADDRESS = 4, /* register 1, 0xf8: the address bits fpga_read uses */
+  FPGA_BIT_SYNC = 5,    /* register 3, 0x03: counter_set_sync */
+  FPGA_BIT_ALARM = 6,   /* register 3, 0x04, a flag: the alarm, which 0x40828
+                           sets with PORTF0 bit 5 (docs/firmware/58503a-3704.md,
+                           "The alarm outputs"); DATA2, P67, has no input path
+                           in the FPGA, so it reaches no logic there
+                           (docs/firmware/58503a-z3801a-trace.md, "Register
+                           port") */
 } fpga_bit_index;
 
 #include "../../common/types/fpga_mode.h"

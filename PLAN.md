@@ -672,7 +672,15 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   all of it, so a function of it that differs there goes back to every
   image's own C first (the Z3801A 3543, the third to share, sent back
   `counter_set_sync`, the `:LED:ALARm:USER` handlers, and the FPGA bit
-  setters with each image's own table).  Each seeded image's
+  setters with each image's own table; the Z3817A 3752, the fifth,
+  sent back, before it joined, each function it lacks, the hex DAC,
+  the interpolator and its self-tests, the :OUTPut:PIN1 handlers and
+  the root's unsupported entries among them, and each its code
+  changes, the FPGA's loader and readback check, the QSPI's FPGA
+  writes, holdover's TI statistics and the self-tests' run over
+  their list, one entry shorter, among them, one copy in each
+  of the four images' own C, since `common/` is all or nothing).
+  Each seeded image's
   `check-layout.c`, which rule 2 compares once the image shares
   `common/`, the Z3815A 4010's too, asserts its layouts at its
   own addresses, derived from its code and export
@@ -693,8 +701,11 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   per-image record (decided 2026-11-06, backing out the splits of the
   boot code's self-test results and the GPS request;
   `docs/firmware/rewrite.md`, "Shared C").  The split enums' heads
-  (`status_scpi.h`, `qspi_device.h` and the rest) stay shared, by
-  decision, as shared code names their members.
+  (`status_scpi.h` and the rest) stay shared, by decision, as shared
+  code names their members; `qspi_device.h` and `fpga_bit_index.h`
+  went back to each image's `smartclock.h` when the Z3817A 3752's
+  split left no shared code naming their members, the Z3817A's own
+  enums sharing none of them.
   A more aggressive commonizing pass, which revisits them, is planned
   for later.
   A function the diffs class identical or relocated in all four images

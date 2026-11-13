@@ -650,3 +650,94 @@ bool qspi_efc_test(void) {
   qspi_transfer(QSPI_EFC, &buffers, 1);
   return sent == received && first;
 }
+
+/* qspi_hex_dac_test's words, the hex DAC's 36 bits, and its patterns. */
+#define SELFTEST_HEX_DAC_WORDS 3
+
+#define SELFTEST_HEX_DAC_PATTERNS 2
+
+/* Shifts three 12-bit words, the first most significant, right one bit
+ * as a 36-bit number; returns the bit carried from the first word into
+ * the second. */
+uint16_t shift_right_36(uint16_t* words) {
+  static const uint16_t WORD_MASK = 0xfff;
+  static const uint16_t WORD_TOP_BIT = 0x800;
+
+  words[2] &= WORD_MASK;
+  words[1] &= WORD_MASK;
+  words[0] &= WORD_MASK;
+  words[2] >>= 1;
+  if (words[1] & 1) {
+    words[2] |= WORD_TOP_BIT;
+  }
+  words[1] >>= 1;
+  uint16_t carry = words[0] & 1;
+  if (carry) {
+    words[1] |= WORD_TOP_BIT;
+  }
+  words[0] >>= 1;
+  return carry;
+}
+
+/* Sends a pattern to the hex DAC's three words, then sends it again
+ * while reading back the first, which returns a bit late; 1 when both
+ * patterns read back; restores the DACs. */
+uint8_t qspi_hex_dac_test(void) {
+  static const uint16_t PATTERN[SELFTEST_HEX_DAC_PATTERNS]
+                               [SELFTEST_HEX_DAC_WORDS] = {
+                                   {0x555, 0x123, 0x456},
+                                   {0x2aa, 0xfed, 0xcba},
+                               };
+  uint16_t sent[SELFTEST_HEX_DAC_WORDS];
+  uint16_t received[SELFTEST_HEX_DAC_WORDS];
+  qspi_buffers buffers = {.transmit = sent, .receive = received};
+  uint8_t passed = 1;
+
+  for (uint32_t pattern = 0; pattern < SELFTEST_HEX_DAC_PATTERNS; pattern++) {
+    for (uint32_t word = 0; word < SELFTEST_HEX_DAC_WORDS; word++) {
+      sent[word] = PATTERN[pattern][word];
+    }
+    qspi_send(QSPI_HDAC, sent, SELFTEST_HEX_DAC_WORDS);
+    qspi_transfer(QSPI_HDAC, &buffers, SELFTEST_HEX_DAC_WORDS);
+    shift_right_36(received);
+    for (uint32_t word = 0; word < SELFTEST_HEX_DAC_WORDS; word++) {
+      if (sent[word] != received[word]) {
+        passed = 0;
+      }
+    }
+  }
+  hdac_update();
+  return passed;
+}
+
+/* Entry 12, IMRC: on the second pass runs interpolator_selftest. */
+void selftest_interpolator_calibration(char_slot run) {
+  if (run.value == 1) {
+    interpolator_selftest();
+  }
+}
+
+/* Entry 13, QMRC: on the second pass runs interpolator_sample_test. */
+void selftest_interpolator_sample(char_slot run) {
+  if (run.value == 1) {
+    interpolator_sample_test();
+  }
+}
+
+/* Runs each self-test in selftest_list with run 0, the second slot's
+ * char 1. */
+void selftest_run_all(void) {
+  for (selftest_entry* test = selftest_list; *test != NULL; test++) {
+    (*test)((char_slot){.value = 0, .next = 1});
+  }
+}
+
+/* Runs each self-test in selftest_list with run 1, counting
+ * watchdog_pll before the first and after each. */
+void selftest_run_all_counted(void) {
+  watchdog_pll++;
+  for (selftest_entry* test = selftest_list; *test != NULL; test++) {
+    (*test)((char_slot){.value = 1, .next = 1});
+    watchdog_pll++;
+  }
+}

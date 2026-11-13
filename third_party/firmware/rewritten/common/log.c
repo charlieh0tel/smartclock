@@ -69,27 +69,6 @@ int32_t log_write(char* format, ...) {
   return status;
 }
 
-/* The first entry of a page with no format, or 0. */
-log_entry* log_page_free_entry(log_page* page) {
-  for (log_entry* entry = page->entries;
-       entry < page->entries + RECORDS_LOG_PAGE_ENTRIES; entry++) {
-    if (entry->format == 0) {
-      return entry;
-    }
-  }
-  return 0;
-}
-
-/* Writes the page being filled, and copies it to log_page_buffer when that
- * holds the same page. */
-uint8_t log_flush(void) {
-  log_write_page_open = 0;
-  if (log_page_number == log_write_page_number) {
-    memcpy(&log_page_buffer, &log_write_page, sizeof log_page_buffer);
-  }
-  return log_page_write(log_write_page_number, &log_write_page);
-}
-
 /* A log line's text and heading buffers: an array size, so #define. */
 #define LOG_TEXT_SIZE 80
 

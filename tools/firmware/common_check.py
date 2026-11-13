@@ -128,11 +128,14 @@ BOARD_TYPES = {match.group(1) for path in INCLUDE_FOLDER.glob('*.h')
 
 
 def sharing_images():
-    """The images whose export includes a common/ file, by name."""
+    """The images whose export includes a common/ .c file, by name: not
+    one that takes common/'s headers alone (SmartClockExportC.java's
+    headers=), whose own C shares none of common/'s."""
     images = []
     for export in sorted(DECOMPILED.glob('*/*.c')):
         text = export.read_text()
-        if any((export.parent / path).resolve().is_relative_to(COMMON) for path in INCLUDE.findall(text)):
+        if any(path.endswith('.c') and (export.parent / path).resolve().is_relative_to(COMMON)
+               for path in INCLUDE.findall(text)):
             images.append(export.parent.name)
     return images
 
@@ -374,9 +377,6 @@ CALLEE_EXCEPTIONS = [
     CalleeException(DOES, 'format_duration_short', 'ldiv', 'the image divides by ldiv, the C by / and %'),
     CalleeException(DOES, 'scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO', 'return_byte',
                     'the image sign-extends the byte by return_byte, the C by a cast'),
-    *(CalleeException(DOES, 'counter_offset_apply', routine, f'the image adds the 64-bit offset by {routine}, '
-                      'the C by its 64-bit operators')
-      for routine in ('int64_add', 'int64_negate')),
     CalleeException(DOES, 'frexp', 'double_normalize', 'the C normalizes a denormal by libc_normalize, the image '
                     'by double_normalize'),
     # The image takes a routine's address as data.

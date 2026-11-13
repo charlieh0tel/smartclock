@@ -532,3 +532,25 @@ void console_halt_hook(void) {
   task_console = 0;
   psos_delete(OS_TASK_SELF);
 }
+
+void diag_hdac_write(uint32_t value, uint32_t channel) {
+  hdac_write(value, channel);
+}
+
+void diag_hdac_all(uint32_t value_1, uint32_t value_2, uint32_t value_3,
+                   uint32_t value_4, uint32_t value_5, uint32_t value_6) {
+  hdac_write_all(value_1, value_2, value_3, value_4, value_5, value_6);
+}
+
+/* The word doven: the outer oven on or off. */
+void diag_doven(int32_t on) {
+  if (on == 0) {
+    gpt.portgp &= ~PLL_STAGES_OUTER_OVEN_ENABLE;
+  } else {
+    gpt.portgp |= PLL_STAGES_OUTER_OVEN_ENABLE;
+  }
+}
+
+void diag_phase_off(int32_t setpoint) {
+  ti_setpoint = integer_to_float(setpoint);
+}

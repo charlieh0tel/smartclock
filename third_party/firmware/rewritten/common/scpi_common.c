@@ -29,15 +29,6 @@ int32_t scpi_set_common_OPC(void* parameters, void* response, scpi_call* call) {
   return 0;
 }
 
-/* *OPC?: "1". */
-int32_t scpi_query_common_OPC(void* parameters, void* response,
-                              scpi_call* call) {
-  const char** text = response;
-
-  *text = "1";
-  return 0;
-}
-
 /* *RST: nothing. */
 int32_t scpi_set_common_RST(void* parameters, void* response, scpi_call* call) {
   return 0;

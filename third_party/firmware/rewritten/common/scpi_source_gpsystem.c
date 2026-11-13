@@ -86,38 +86,6 @@ int32_t scpi_set_SOURce_GPSystem_INITial_TIME(void* parameters, void* response,
   return 0;
 }
 
-/* :GPS:INITial:POSition <location>: its latitude, longitude and height
- * to pllc, each by its own descriptor, unless the receiver holds its
- * position or surveys, -221, Settings conflict. */
-int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void* parameters,
-                                                  void* response,
-                                                  scpi_call* call) {
-  scpi_numeric_param* height_param =
-      &scpi_param_SOURce_GPSystem_INITial_POSition_height;
-  uint16_t sr = set_interrupt_mask(CPU_IPL_1);
-  /* The image tests the result's low byte
-   * (scpi_set_SOURce_GPSystem_INITial_POSition+0x3e). */
-  bool settable = (uint8_t)position_settable() != 0;
-
-  set_interrupt_mask(sr);
-  if (!settable) {
-    status_report_from(STATUS_SETTINGS_CONFLICT,
-                       scpi_input_source(call->input));
-    return 0;
-  }
-  int32_t position[SCPI_SOURCE_GPSYSTEM_POSITION_LONGS];
-
-  scpi_source_gpsystem_location(parameters, height_param, 0,
-                                scpi_input_source(call->input), position);
-  pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_latitude, 0,
-                 position[0], 0, scpi_input_source(call->input));
-  pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_longitude, 0,
-                 position[1], 0, scpi_input_source(call->input));
-  pllc_request_c(height_param, 0, position[2], 0,
-                 scpi_input_source(call->input));
-  return 0;
-}
-
 /* :GPS:POSition:ACTual?: the position the receiver reports; -230, Data
  * corrupt or stale, before it has.  It gives mas_to_dms each
  * angle as it is, not its magnitude. */

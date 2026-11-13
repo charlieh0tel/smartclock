@@ -84,3 +84,12 @@ int32_t scpi_query_common_TST(void* parameters, void* response,
   *result = selftest.result;
   return 0;
 }
+
+/* *OPC?: "1". */
+int32_t scpi_query_common_OPC(void* parameters, void* response,
+                              scpi_call* call) {
+  const char** text = response;
+
+  *text = "1";
+  return 0;
+}

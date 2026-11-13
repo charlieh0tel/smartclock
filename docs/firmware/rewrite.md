@@ -222,7 +222,16 @@ nothing is taken for common that is not:
 6. **A difference found later splits it.**  When a new image's copy of
    a common function differs, that image gets its own copy in
    `rewritten/`; `common/` is not edited to cover both with a
-   condition.
+   condition.  Since an image that shares `common/` takes all of it,
+   a function the new image lacks or changes leaves `common/` for a
+   copy in each sharing image's own C before the new image joins: the
+   Z3817A 3752 sent back the hex DAC, the interpolator and its
+   self-tests, the :OUTPut:PIN1 handlers and the root's unsupported
+   entries, which it lacks, and the FPGA's loader and readback check,
+   the QSPI's FPGA writes, holdover's TI statistics, the self-tests'
+   run over their list, one entry shorter, and the rest its code
+   changes or its data lays otherwise (PLAN.md, "a second image is ported by copying the
+   first's work").
 
 How the build uses it.  `common/` is laid out as `rewritten/` is
 (`bindings/`, `installer/`), and an image that shares it gives the
@@ -252,11 +261,10 @@ whose members differ between the images is split rather than shared
 whole: the run of members the images have in common, at the same
 values, is a `common/types/` header that each image's definition
 includes among its members (`status_scpi.h`, the SCPI standard's head
-of `status_condition_code`; `qspi_device.h`, the QSPI's devices from
-1; `gps_request_sender.h`, the GPS requests' senders to 2;
+of `status_condition_code`; `gps_request_sender.h`, the GPS requests' senders to 2;
 `satellite_cell_status.h`, the status screen's satellite cells to 4;
 `satellite_health_class.h`, `satellite_track_class`'s classes to 3;
-`timecode_format.h`, the time code's formats to T2), the rest the image's own, so that no value changes.  A record is not split: one that differs in any image, in a field, its length or its tail, is entirely each image's own, in each image's `smartclock.h`, and `common/types/` holds no shared head of a per-image record (decided 2026-11-06).  A shared function that names such a record leaves `common/` for each image's own file, the same C in each (`boot_selftest_results`, the boot code's self-test results, whose last word the Z3815A 4010 keeps as the output latch's shadow, where the others keep a byte and its pad, and `installer_scpi_query_DIAGnostic_TEST`, which names it; `counter_configuration_fields`, which the Z3815A 4010's eight FPGA registers took from `counter_work_state.h`, and `counter_init`; `fconf_regs`, eight there, took `fpga_read` and `fpga_address_sweep_debug` from `common/fpga.c`).  No shared head of a record is left: `gps_request_entry`, a GPS request, two bytes longer in the Z3815A 4010, is each image's own too, its shared head of fields to `sent` backed out the same day.  The split enums' heads above stay in `common/types/`, by decision, as shared code names their members; the more aggressive commonizing pass planned for later revisits them.  To shared code such an enum is the same when its storage is
+`timecode_format.h`, the time code's formats to T2), the rest the image's own, so that no value changes.  A record is not split: one that differs in any image, in a field, its length or its tail, is entirely each image's own, in each image's `smartclock.h`, and `common/types/` holds no shared head of a per-image record (decided 2026-11-06).  A shared function that names such a record leaves `common/` for each image's own file, the same C in each (`boot_selftest_results`, the boot code's self-test results, whose last word the Z3815A 4010 keeps as the output latch's shadow, where the others keep a byte and its pad, and `installer_scpi_query_DIAGnostic_TEST`, which names it; `counter_configuration_fields`, which the Z3815A 4010's eight FPGA registers took from `counter_work_state.h`, and `counter_init`; `fconf_regs`, eight there, took `fpga_read` and `fpga_address_sweep_debug` from `common/fpga.c`).  No shared head of a record is left: `gps_request_entry`, a GPS request, two bytes longer in the Z3815A 4010, is each image's own too, its shared head of fields to `sent` backed out the same day.  The split enums' heads above stay in `common/types/`, by decision, as shared code names their members; two went back to each image's `smartclock.h` when the Z3817A 3752's split left no shared code naming their members, its own enums sharing none of them: `qspi_device`'s devices from 1 and `fpga_bit_index`'s FPGA bits; the more aggressive commonizing pass planned for later revisits them.  To shared code such an enum is the same when its storage is
 and the members the code names are the shared run's; one whose members it
 names none of, a field's type in a shared record (`gps_request_code`
 in `scpi_numeric_param`), need only have the same storage.  A comment in `common/` cites no address: a
@@ -331,10 +339,10 @@ holds; nor does it see the routines a table in ROM holds, which the
 code reaches through the table's address.
 
 What is shared, counted by `make check-common` from the files:
-`common/` holds 953 functions the exports name and 228
-static helpers, in 220 files; the rest is each image's own:
-602 functions the Z3805A 3543B's export names, 717 the
-58503A 3704's and 584 the Z3801A 3543's.  Each image's
+`common/` holds 871 functions the exports name and 214
+static helpers, in 215 files; the rest is each image's own:
+684 functions the Z3805A 3543B's export names, 799 the
+58503A 3704's and 666 the Z3801A 3543's.  Each image's
 hand-written C is the two together, as its link check counts it.
 
 ## The verification

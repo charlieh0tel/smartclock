@@ -705,7 +705,16 @@ typedef struct installer_sci_driver {
  * qspi_fpga_byte_write (0x1f2fa, 0x1f312) send. */
 typedef enum __attribute__((packed)) qspi_device {
   QSPI_FRONT_PANEL = 0,
-#include "../../common/types/qspi_device.h"
+  QSPI_ADC = 1,
+  QSPI_HDAC = 2,
+  QSPI_UNUSED_WORD = 4,
+  QSPI_UNUSED_TWO_WORDS = 5,
+  QSPI_FPGA_BLOCK = 6,
+  QSPI_EFC = 7,
+  QSPI_FPGA_TAIL = 9,
+  QSPI_FPGA_WORD = 0xa,
+  QSPI_FPGA_BYTE = 0xb,
+  QSPI_FPGA_READBACK = 0xc,
 } qspi_device;
 
 #include "../../common/types/qspi_buffers.h"
@@ -2358,7 +2367,7 @@ typedef struct gps_state {
 
 /* An entry of fpga_bit_table (0x49eae, eight entries), which fpga_set_bit
  * and fpga_set_field take: a register of fconf_regs and its mask.  The
- * shared prefix's names are common/types/fpga_bit_index.h's; the three
+ * shared prefix's names are the other images'; the three
  * below are the Z3815A's own, read from the table, in registers 2 and 3
  * where the 58503A's alarm flag is register 3's.  fpga_set_bit and
  * fpga_set_field take only the first seven; the eighth, register 3's low
@@ -2372,7 +2381,12 @@ typedef struct gps_state {
  * pins they drive is not established (docs/firmware/z3815a-4010.md, "Not
  * established"). */
 typedef enum __attribute__((packed)) fpga_bit_index {
-#include "../../common/types/fpga_bit_index.h"
+  FPGA_BIT_MODE = 0,   /* register 0, 0x03: an fpga_mode */
+  FPGA_BIT_PRESET = 1, /* register 0, 0x40: set around arming; counter_selftest
+                          reads a count of 0 under it */
+  FPGA_BIT_START = 2,  /* register 1, 0x01: pulsed by interpolator_measure */
+  FPGA_BIT_REFERENCE = 3, /* register 1, 0x02: an interpolator_reference */
+  FPGA_BIT_ADDRESS = 4, /* register 1, 0xf8: the address bits fpga_read uses */
   /* register 2, 0x01, a flag: the bit 0x516de pulses
    * (docs/firmware/z3815a-4010.md), whose rise resets the FPGA's FD and so
    * sets which seconds P14 and P28 pulse on (docs/firmware/z3815a-trace.md,

@@ -1,6 +1,6 @@
 [package]
 name = "smartclock-gps"
-description = "The wire formats a SmartClock's GPS engine speaks: Oncore binary and NMEA framing"
+description = "The wire formats a SmartClock's GPS engine speaks: Oncore binary and NMEA framing, and a record of what an engine knows"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

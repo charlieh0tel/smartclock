@@ -858,8 +858,21 @@ stands in for one.
   builds the crate for targets of each kind, the `Makefile`'s
   `NO_STD_TARGETS`, the least of them a Cortex-M0.
 - **Framing first:** IDs, lengths, checksums, encoders and streaming
-  deframers.  What a message's bytes mean is later work, in modules
-  beside these two.
+  deframers.  What turns an engine's knowledge into a message's bytes
+  is later work, in modules beside these.
+- **One record of a second, whatever the engine** (`record`): the
+  time, the leap second, the fix, the sky, the almanac and the antenna,
+  naming no message.  A field is in it only if a message some image
+  decodes carries it, and it is held in the integer unit that message
+  sends (`units`), so nothing needs floating point.  It holds twelve
+  satellites, the slots of `@@Bb` and what three `GSV` sentences carry;
+  more in view are dropped lowest first.  Its size is bounded by a
+  constant a compile-time assertion checks on every target, and it is
+  built in a `static` and filled in place, never passed by value.
+- **Time is a count of GPS seconds** (`time`) with no rollover and no
+  leap seconds; a week number, a time of week, a UTC date and 23:59:60
+  are derived from it where a message is written, with the offset and
+  the leap second the record carries.  All of it is `const`.
 - **One crate, a module a format**, not a crate a format: the formats
   share a pattern and little else, and another engine's is another
   module.

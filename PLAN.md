@@ -873,6 +873,53 @@ stands in for one.
   leap seconds; a week number, a time of week, a UTC date and 23:59:60
   are derived from it where a message is written, with the offset and
   the leap second the record carries.  All of it is `const`.
+- **A source gives each second's record, and the tool's clock drives
+  it** (`source`).  A tool that stands in for an engine asks its source
+  for the record of the tick it has reached; no source keeps a clock,
+  and none carries a pulse: the 1 PPS is the tool's own.  A fixed sky
+  and a scenario, a table of changes to one that can insert a leap
+  second, are worked out from the tick alone, so any second can be
+  asked for in any order.  A replay reads a recording through an
+  assembler the caller supplies, there being no recording format among
+  what the receivers use.  Wrappers relabel a source's time, announce a
+  leap second or silence it for a while, and nest by value.
+- **A record takes a leap second once.**  Its UTC offset is the one in
+  effect, with a past leap second's step already in it, so a leap
+  second announced over another would step it twice.  Where both are
+  in tables a `const` function reads -- a scenario's rows, and the sky
+  under them -- the scenario is refused when it is built, with a typed
+  error, so a `static` of one fails the build.  A wrapper cannot know
+  what the source it wraps will say, a recording's least of all, and a
+  wrapper that could fail to build could not be the fixed nest a tool
+  switches on by configuration; so there the source's own leap second
+  is kept, the wrapper's is withheld, and the wrapper counts the
+  records for the tool to report.  A scenario's leap second is worked
+  out after its other rows, so their order does not matter and the
+  offset is always the one for the record's time.  A scenario's time
+  step, an engine's clock gone wrong, leaves the leap second where it
+  is; the wrapper that relabels time, a sky moved whole to another
+  date, takes it along.
+- **A source that follows real time is refused where real time is not
+  kept.**  Each source says how it takes ticks -- any, ascending only,
+  or not at all, giving whatever it heard last -- and `admit` refuses
+  the pairs that cannot work, before the first tick and in words fixed
+  by test: a live source under a driver that runs fast, one resuming
+  saved state, or one with no network or serial port, as in a browser;
+  and a forward-only stream asked to resume.
+- **The live source stamps each record with the tick it arrived in**,
+  which whoever delivers it passes in, so the two things a driver must
+  watch such a source for are measured in the crate and not in each
+  driver: how long ago the newest record arrived, and how far its time
+  moved against the ticks since the one before, which is other than
+  zero when the source's time jumped or records were lost.  It has no
+  lock and no atomics, a Cortex-M0 having no compare-and-swap to build
+  one from: where delivery can interrupt the driver, the caller puts
+  each call in a critical section.
+- **Sources do not allocate either.**  Each is built by `const`
+  functions and borrows its tables, so a nest of them is one `static`
+  with its tables in flash, and each fills the caller's record rather
+  than return one.  Only the live source holds records of its own, two,
+  so that a record half filled is never read.
 - **One crate, a module a format**, not a crate a format: the formats
   share a pattern and little else, and another engine's is another
   module.

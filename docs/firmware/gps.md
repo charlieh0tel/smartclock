@@ -20,7 +20,8 @@ image").  Its tables hold only what an image sends or decodes, and its
 tests check them against the images' own.  Beside the framing it has a
 record of what an engine knows in one second -- time, leap second, fix,
 satellites, almanac, antenna -- holding only what the messages below
-carry, in their units.
+carry, in their units, and sources that give one each second: a fixed
+sky, a scripted one, a recording.
 
 ## The serial link
 

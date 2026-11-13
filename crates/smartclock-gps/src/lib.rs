@@ -14,14 +14,17 @@
 //!   deframer for each format;
 //! - what an engine knows in one second, whichever engine it is: a
 //!   [`record`], in the integer [`units`] the messages carry, with GPS
-//!   [`time`], UTC and the calendar.
+//!   [`time`], UTC and the calendar;
+//! - where each second's record comes from: a [`source`], whether a
+//!   made-up sky, a recording or a receiver on the bench.
 //!
 //! What turns a record into an engine's messages is not here yet.
 //!
 //! It is `no_std` and does not allocate: an encoder writes into the
 //! caller's buffer, a deframer owns a buffer of fixed size and lends
 //! each frame out of it, and a record is of fixed size, built in a
-//! `static` and filled in place.
+//! `static` and filled in place by a source that is itself built in
+//! one.
 
 #![no_std]
 
@@ -33,6 +36,7 @@ use thiserror::Error;
 pub mod nmea;
 pub mod oncore;
 pub mod record;
+pub mod source;
 pub mod time;
 pub mod units;
 

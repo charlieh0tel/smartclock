@@ -2078,7 +2078,8 @@ the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
 `check-pforth-words`, `check-image-diff`, `check-chip-selects`,
 `check-loop-trace`, `check-loop-constants`, `check-magic-numbers`, `check-comment-addresses`,
-`check-common`, `check-plain-names`, `check-alone`, without `IMAGE`, which compiles each
+`check-common`, `check-plain-names`, `check-rom-pointers` and
+`check-alone`, both without `IMAGE`, the second compiling each
 hand-written `.c` of every image's export alone after the export's
 declarations and headers (`rewrite.md`, "Shared C"), `check-decompiled`,
 which runs `check-unicorn` first,
@@ -2113,7 +2114,12 @@ seeded images' `check-layout.c` assert their layouts at their own
 addresses, which its rule 2 compares, and the figures of what
 `common/` holds that the documents quote (`rewrite.md`, "Shared C");
 `check-plain-names` that no function is named for an image
-(`rewrite.md`, "The rewrite").
+(`rewrite.md`, "The rewrite"); and `check-rom-pointers`, for every
+image with an export, that each ROM pointer of its hand-written C, a
+literal cast to a pointer or an operand where its copy of a function
+differs from a base's, points at what the image holds there, not at
+what the C was copied from, its exceptions each a row of the image's
+`rom-pointer-allow.tsv` (`rewrite.md`, "The verification").
 None of the targets builds the workspace;
 `check-chip-selects` reads every image's reset code (`restart.md`,
 "The chip selects").  The job also runs `make board-atlas`, `make

@@ -1,0 +1,9 @@
+# The ROM pointers of the hand-written C that
+# tools/firmware/rom_pointers.py finds and that stay as they are, each
+# with its reason (make check-rom-pointers).  Tab-separated: kind, where
+# (the file under rewritten/IMAGE/, or the function), base ('-' for a
+# literal), at (the literal as written, or the instruction's address),
+# found and reason.
+literal	scpi.h	-	0x3c310	other	the console port's object, a scpi_port the image keeps unlabeled among its port routines, its method table's address and then its prompts, "E%+04d> " and "scpi > ": scpi_console_port returns it (0x3c034, movel #0x3c310,%d0)
+literal	scpi.h	-	0x3c61a	other	the SCI session's port object, a scpi_port the image keeps unlabeled among its port routines, its method table's address and then its prompts, "E%+04d> " and "scpi > ": sci_scpi_port returns it (0x3c33e, movel #0x3c61a,%d0)
+operand	diag_words_define	z3805a-3543b	0x2c86a	label -> other	the image's table of diagnostic words, at 0x2cef0, unlabeled here as in the 58503A 3704, against whose copy the pointer agrees; the C defines the words from its own table, console_words (console.c), not through the Z3805A's diag_words

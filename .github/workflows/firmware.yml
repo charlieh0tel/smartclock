@@ -8,8 +8,9 @@ name: firmware
 # run against the image's own and the figures the documents give, the
 # SCPI trees, the module and pForth figures, the 58503A's, Z3801A's and
 # Z3815A's diffs and the names seeded from them, every image's
-# chip-select tables, the hand-written C's magic numbers, the addresses
-# the 58503A's and Z3801A's C's comments cite, and the shared C; the
+# chip-select tables, the hand-written C's magic numbers and ROM
+# pointers, the addresses the 58503A's and Z3801A's C's comments cite,
+# and the shared C; the
 # board atlas and the block diagram built from their data, every
 # citation in them checked; the
 # FPGA decoder against XACT's test designs; and the FPGA netlists' fast
@@ -136,6 +137,10 @@ jobs:
       - run: make check-magic-numbers IMAGE=z3801a-3543
         if: ${{ !cancelled() }}
       - run: make check-comment-addresses
+        if: ${{ !cancelled() }}
+      # Without IMAGE, for every image with an export: each one's ROM
+      # pointers, the tool's self-test first.
+      - run: make check-rom-pointers IMAGE=
         if: ${{ !cancelled() }}
       - run: make check-common
         if: ${{ !cancelled() }}

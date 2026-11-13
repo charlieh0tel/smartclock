@@ -515,6 +515,29 @@ And `make check-scpi-tree` (`scpi_tree_check.py`): each record of the
 generated trees, as gcc lays it out, is the image's bytes, pointers
 compared by target.
 
+And `make check-rom-pointers` (`rom_pointers.py`): the ROM pointers of
+the hand-written C, which C ported from another image's can carry from
+that image, its address or its text, where the function check compares
+a pointer by its target or masked and sees nothing amiss.  Each is
+checked by what the image holds where it points: a function, code, a
+label, a string's start, inside a string or a label, or other, a label's
+extent its type's size as m68k gcc lays it out.  A literal cast to a
+pointer into the ROM must point at a string's or a label's start, and
+at the text a comment after it gives (`log.c`'s formats).  Where the
+image's diff against a base pairs a function both write by hand
+identical or relocated, each absolute ROM operand the two copies differ
+in must point at the same kind of object, text at the same text, both
+at its start or both inside it, or at the same bytes; one that does not
+passes only where the image's C gives the image's object: its text as
+a literal, a constant of that text or address (`records.h`'s
+`RECORDS_TAG`), or the name of the label holding it, which the image's
+link places.  A finding that stays, with its reason, is a row of the
+image's `rom-pointer-allow.tsv`, kept without line numbers, as
+`magic-allow.tsv`'s; a row no finding matches fails too.  The tool's
+`--self-test`, which the target runs first, checks the classifier and
+those rules on synthetic input, and `--all` prints every pointer it
+checks.
+
 **Figures** (`make report-decompiled`, `make check-decompiled`, `make
 check-link`, `make check-scpi-tree`):
 

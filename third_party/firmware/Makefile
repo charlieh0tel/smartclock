@@ -48,7 +48,7 @@ EXPORTED_IMAGES = $(foreach image,$(IMAGES),$(if $(wildcard $(DECOMPILED_FOLDER)
 # figures the documents quote (an image whose C is not yet all
 # hand-written has its function check alone: UNFINISHED_IMAGES, below).
 NAMED_TARGETS = check-types handlers scpi-tree
-EXPORTED_TARGETS = check-decompiled check-alone check-scpi-tree check-magic-numbers magic-numbers
+EXPORTED_TARGETS = check-decompiled check-alone check-scpi-tree check-magic-numbers magic-numbers check-rom-pointers
 IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS) check-link report-decompiled
 # The queries run for one image, which IMAGE names.
 QUERY_TARGETS = record-access report-link
@@ -457,6 +457,22 @@ check-magic-numbers:
 
 magic-numbers:
 	$(MAGIC_NUMBERS)
+
+# The ROM pointers in the image's hand-written C, which the function
+# check compares with their addresses masked
+# (tools/firmware/rom_pointers.py): a literal cast to a pointer into the
+# ROM must point at a string's or a label's start, and at the text a
+# comment after it gives; and where its diff against a base pairs a
+# function both write by hand identical or relocated, each absolute ROM
+# operand the two images' copies differ in must point at the same kind of
+# object, text at the same text, unless the image's C gives the image's
+# object (its text, a constant of it, or the label's name).
+# check-rom-pointers runs the tool's self-test, then fails on a finding
+# that the image's analysis/IMAGE/rom-pointer-allow.tsv does not justify,
+# or on a row there no finding matches.
+check-rom-pointers:
+	python3 -I $(ROOT)/tools/firmware/rom_pointers.py --self-test
+	python3 -I $(ROOT)/tools/firmware/rom_pointers.py --image $(IMAGE) --check
 
 # Each SCPI path of the image with its query handler's and setter's
 # addresses, for SmartClockSetup.java's scpi= (docs/firmware/README.md,

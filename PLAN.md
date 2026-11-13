@@ -725,6 +725,19 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   entry cited in that image's code, never a base entry widened, so a
   port's quirks show as that port's and the Z3805A's figures cannot
   move.  `make check-comment-addresses` makes a copied address show.
+- **A copied ROM pointer is checked by what it points at**: the function
+  check compares a ROM pointer by its target or masked, so C ported
+  from another image's can keep that image's address or text and still
+  agree.  `make check-rom-pointers` (`tools/firmware/rom_pointers.py`,
+  in CI for every image with an export) holds each pointer literal of
+  the hand-written C to a string's or a label's start, and each operand
+  where an image's copy of a function both write by hand differs from
+  its base's to the same kind of object and the same text, unless the
+  image's C gives its own object by text, constant or label.  It began
+  as a report-only audit of ported C, which caught such addresses; a
+  check keeps them from coming back.  Its exceptions are rows of
+  `analysis/IMAGE/rom-pointer-allow.tsv` with their reasons, as the
+  magic numbers' are.
 - **Seeding a port's names**: until a port's own naming starts, its
   names and modules files are `tools/firmware/seed_names.py`'s output,
   and `make check-image-diff` fails when they fall behind the diff.

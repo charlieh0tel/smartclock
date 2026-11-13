@@ -12,6 +12,12 @@ layouts are `third_party/motorola/VPCommands.pdf`, cited by page.  The
 Z3816A, the 58503B, the Z3815A and the Z3817A come in where named, in
 "Which engines each image accepts" and in "In every image".
 
+`crates/smartclock-gps` holds this link's framing as code, for a tool
+that talks to an engine or stands in for one: the Oncore IDs and
+lengths of "Framing" and "The message table" with an encoder and a
+deframer.  Its table holds only what an image sends or decodes, and
+its tests check it against the images' own.
+
 ## The serial link
 
 The Oncore is on channel A of a 68681 DUART at `0x200000`, whose

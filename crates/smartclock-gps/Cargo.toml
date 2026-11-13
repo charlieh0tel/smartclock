@@ -1,0 +1,15 @@
+[package]
+name = "smartclock-gps"
+description = "The wire formats a SmartClock's GPS engine speaks: Oncore binary and NMEA framing"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+thiserror = { version = "2.0.21", default-features = false }

@@ -2,8 +2,9 @@ Third-party material
 ====================
 
 The material listed under the headings below -- AMD, Fairchild,
-Hewlett-Packard, the firmware images, Microchip, Motorola, the Z3801A
-owner's description, NIST, Philips, Texas Instruments and Xilinx -- is
+Furuno, Hewlett-Packard, the firmware images, Microchip, Motorola, the
+Z3801A owner's description, NIST, Philips, Texas Instruments and
+Xilinx -- is
 not part of this project, and the project's license does not apply to
 any of it.  Each document is the property of its copyright
 holder.  They are included for reference because they are the
@@ -15,8 +16,9 @@ No license to any of this material is granted or implied by its
 presence here.
 
 That material is the manuals, papers and data sheets in `hp/`,
-`motorola/`, `amd/`, `fairchild/`, `microchip/`, `philips/`, `ti/`,
-`nist/`, `xilinx/` and `community/`, and `firmware/images/`: the images
+`motorola/`, `furuno/`, `amd/`, `fairchild/`, `microchip/`,
+`philips/`, `ti/`, `nist/`, `xilinx/` and `community/`, and
+`firmware/images/`: the images
 (`IMAGE.bin`), the console log one was rebuilt from, the EEPROM contents
 in `firmware/images/eeprom/` and the FPGA bitstreams in
 `firmware/images/fpga/`.  The
@@ -140,6 +142,56 @@ by Fairchild (fairchildsemi.com) and archived by the Internet Archive
                              revised February 2000; www.fairchildsemi.com/
                              ds/DM/DM74ALS09.pdf as archived on
                              2013-06-04.  U29.
+
+Furuno
+------
+
+In `furuno/`.
+
+The Z3815A's GPS engine is a Furuno GT-74, on NMEA framing with
+Furuno's proprietary `$PFEC` sentences (`docs/firmware/gps.md`, "In
+every image").  The GT-74's own protocol specification could not be
+found; these are of the GT-8031, a later Furuno timing receiver that
+has been fitted to a Z3815A in its place (time-nuts, "Z3815A receiver
+transplant", January 2014, febo.com/pipermail/time-nuts/2014-January/
+082385.html), and its specification documents every `$PFEC` sentence
+the Z3815A's image sends or takes.  Pages are cited as printed, three
+less than the PDF page in the protocol specification.
+
+  Furuno_GT8031_Protocol_Specification_Rev1.pdf
+                             "I/O Protocol Specifications for GPS
+                             receiver, Model: GT-8031", Furuno Electric
+                             Co., Ltd., System Products Division,
+                             April 10, 2003, program number
+                             4850266000, as ko4bb.com serves it
+                             (manuals, 02_GPS_Timing/Furuno/); the same
+                             file is at docs.ampnuts.ru.  The NMEA
+                             sentences in and out and the `$PFEC,GP`
+                             ones: `clr` (p. 10), `set` (p. 11), `srq`
+                             (p. 12), `int` (p. 13), `rrs` and `rrq`
+                             (p. 15), `anc` (p. 27), `tst` (p. 31),
+                             `ssd` (p. 32), `tps` (p. 36), and `rrm`
+                             and `rsd` (p. 40), with the TRAIM
+                             specification (p. 47).
+  Furuno_GT8031_Hardware_Specification_2005.04.28.pdf
+                             "Hardware Specifications for GPS receiver,
+                             Model: GT-8031", Furuno Electric Co., Ltd.,
+                             System Products Division, April 28, 2005,
+                             as ko4bb.com serves it (manuals,
+                             02_GPS_Timing/Furuno/).  Pin assignments,
+                             levels, and the timing of the 1PPS against
+                             the serial data.
+  GNSS_Receiver_WeekNumberRollover_SE18-100-034-00_en.pdf
+                             "GPS/GNSS Receiver GPS Week Number
+                             Rollover", Furuno technical information,
+                             document number SE18-100-034-00, version
+                             0, 2018.05.31, as docs.ampnuts.ru serves
+                             it (my_docs/Keysight/Z3805A/GT-8031/).
+                             Each Furuno receiver's internal rollover
+                             date (p. 5): the GT-74's 2013/08/11, the
+                             GT-77's 2018/09/16, the GT-80's and
+                             GT-8031's 2022/01/02; and which can be
+                             moved with a ZDA (p. 6).
 
 GCC
 ---
@@ -419,10 +471,29 @@ as the SCPI manuals.
                              Specifications, power, antenna, RTC, 1 PPS
                              signal definition and serial interface for
                              the VP Oncore.
+  oncore-ut-users-guide/     "Oncore User's Guide", Motorola TRM0003,
+                             revision 3.2, June 1998, the whole
+                             manual, one PDF a part: toc.pdf,
+                             quikstrt.pdf, ch1.pdf to ch7.pdf and
+                             appndx.pdf, as TAPR serves them in
+                             web.tapr.org/tech_docs/GPS/motorola/
+                             oncoreut_manual.zip.  The UT and GT
+                             Oncore's reference: chapter 6 gives each
+                             binary message, the UT Plus's @@Bo
+                             (pp. 6.80-6.81) among them.
   ut-engg-notes.pdf          "Oncore Engineering Note: UT Plus
                              Oncore", Motorola, revision 1.0, March
                              2000.  Mechanical, electrical and 1 PPS
                              detail for the UT+.
+  m12plus-users-guide.pdf    "M12+ User's Guide", Motorola GPS
+                             Products, revision 6.X, 9 February 2005,
+                             prepared by Synergy Systems, LLC, as
+                             ncedc.org serves it in ftp/outgoing/doug/
+                             m12+userguide.pdf.  The M12+'s binary
+                             messages; the source for @@Gj, leap
+                             second pending (pp. 152-153, 21 bytes),
+                             which the UT Plus 3.x answers and TRM0003
+                             revision 3.2 predates.
   SSR-VP-UT-and-GT-Drop-In-ReplacementsTN484-D-031925.pdf
                              Synergy Systems, LLC tech note #484-D,
                              revised January 2025.  Present-day u-blox

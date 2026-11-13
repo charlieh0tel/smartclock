@@ -128,7 +128,10 @@ klok_entry* leap_event_schedule(uint32_t date, int32_t minute_length) {
 }
 
 /* Clears the pending leap second from the NV settings: a 60-second
- * minute on 1994-01-01 (0x463b2). */
+ * minute on 1994-01-01 (0x463b2).  clock_record_advance, the image's
+ * assembly, calls it too as it applies the leap second, at the end of
+ * the 59- or 61-second minute (0x13532) or at the GPS-UTC offset's step
+ * (0x135de), and pllp_task then saves the settings. */
 void leap_settings_clear(void) {
   static const uint16_t NO_LEAP_YEAR = 1994;
 

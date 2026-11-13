@@ -1998,8 +1998,36 @@ and set `leap_minute_pending` (`0x100bc8`); at that minute's end
 `offset_step_pending` (`0x100bc9`); when `clock.time` reaches
 `offset_step_time` (`0x100bca`), which `leap_event_schedule_utc`
 (`0x10656`) sets to 24:00:00 of the leap date moved by the offset as it
-will be, `clock_record_advance` clears the flag and adds the step to
-`gps_utc_offset`.  `clock_init` clears the four.
+will be, `clock_record_advance` clears the flag, sets
+`clock_change_applied`, calls `leap_settings_clear` (`0x135de`, as at
+`0x13532` at the minute's end) and adds the step to `gps_utc_offset`.
+`clock_init` clears the four.
+
+So the clock itself takes a pending leap second out of the NV settings
+as it applies it: `leap_settings_clear` clears `nv_settings.leap_pending`
+(`0x101ece`), and `pllp_task` (`0x47528`), finding
+`clock_change_applied`, saves the settings (`nv_save`).
+`:PTIMe:LEAPsecond:STATe?` (`0x2deb8`; 097-59551-02, p. 5-63) gives
+that byte, so it reads 0 at once.  The status screen's "leap second
+pending" (097-z3801-01, p. 3-21) is not from it: `status_snapshot`
+copies `gps.leap_second_pending` (`0x100fa4`) at `0x4a7c2`, the byte of
+the last `@@Bj` answer, which stays until another comes or `gps_init`
+clears `gps`.  `gps_leap_sequence` (`0x46d98`), once it has asked,
+asks again only when `leap_recheck_requested` is set or its word
+`leap_check_timer`, which it counts up each pass of `pllp_task`'s
+loop, wraps; the command monitor's query and the console's
+`gps_query_all` ask `@@Bj` too.  So
+the screen can go on announcing a leap second the query no longer
+reports.  The Z3801A 3543 does the same (`leap_settings_clear`
+`0x463b2`, from the same two calls; `nv_settings.leap_pending`
+`0x101ecc`; the query `0x2cdbe`; `gps.leap_second_pending` `0x100fa2`,
+copied at `0x4a780`).  The 58503A 3704 and the Z3815A 4010 do not:
+their `clock_record_advance` clears the settings the same way
+(`0x13840` and `0x138ec`; `0x23838` and `0x238e4`), but their
+`status_snapshot` takes the screen's value from
+`nv_settings.leap_minute_length` (`0x4adf4`; `0x55f02`), which
+`leap_settings_clear` sets back to 60, so the screen and the query
+change together.
 
 `pps_message` (`0x100bac`, `pps_exchange_message`, `0x18` bytes) is what
 `pps_interrupt` (`0x12db6`) sends `pps_exchange` each 1PPS, the GPS

@@ -232,6 +232,12 @@ void status_snapshot(status_snapshot_record* snapshot) {
   snapshot->gps_field_532[0] = gps.field_532[0];
   snapshot->gps_field_532[1] = gps.field_532[1];
   snapshot->status_code_reset = gps.status_code_reset;
+  /* @@Bj's answer as the Oncore last gave it, not
+   * nv_settings.leap_pending, which :PTIMe:LEAPsecond:STATe? gives
+   * (097-59551-02, page 5-63) and the clock clears as it applies the
+   * leap second (leap_settings_clear): the screen's "leap second
+   * pending" outlives the query's 1 until an @@Bj says none is
+   * (0x4a7c2). */
   snapshot->leap_second_pending = gps.leap_second_pending;
   snapshot->receiver_status = gps.status.receiver_status;
   snapshot->utc_time = gps.utc_time;

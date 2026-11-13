@@ -297,7 +297,13 @@ may not lie in a label the names leave untyped, unless
 `layout_addresses.py`'s `UNTYPED_HOLDERS` names it with why (none now;
 the Z3815A's `pll` until it was typed), since a check there is as
 unseen (the Z3815A's status snapshots, until typed, held three of the
-base's records' checks).  Rule 1
+base's records' checks).  An aligned instruction counts toward
+an address only where it names one inside the global the image's
+export declares under the base's global's name: one naming another
+object, the image's routine working on something else or the alignment
+having paired two instructions that are not each other's, says nothing
+of this one (the Z3817A's SCI routines, aligned with the Z3815A's for
+DUART channel B; `z3817a-3752.md`, "Types").  Rule 1
 masks addresses and so cannot see an offset an absolute address holds:
 the 58503A's `gps_receive` counted frame and checksum errors at the
 Z3805A's offsets while its `check-layout.c` asserted the Z3805A's

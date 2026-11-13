@@ -437,10 +437,6 @@ typedef enum __attribute__((packed)) counter_error {
     COUNTER_CALIBRATION_FAILURE=16
 } counter_error;
 
-typedef enum __attribute__((packed)) counter_start_source_mode {
-    COUNTER_START_SOURCE_WHEN_WANTED=1
-} counter_start_source_mode;
-
 typedef uint8_t (dac_measure)(struct char_slot);
 
 typedef enum __attribute__((packed)) data_format {
@@ -665,27 +661,6 @@ struct efc_ring {
     float fit_c;
 };
 
-typedef enum __attribute__((packed)) es_error_bit {
-    ES_ERROR_SWITCH_WORD_BIT_10=1,
-    ES_ERROR_ALARM=2,
-    ES_ERROR_ANTENNA_CURRENT=8,
-    ES_ERROR_EFC_NEAR_LIMIT=16,
-    ES_ERROR_HOLDOVER_DURATION_EXCEEDED=32,
-    ES_ERROR_BLOCKED=64,
-    ES_ERROR_CLOCK_DEVIATION=128
-} es_error_bit;
-
-typedef enum __attribute__((packed)) es_status_bit {
-    ES_STATUS_TIME_INVALID=1,
-    ES_STATUS_LEAP_LONGER=2,
-    ES_STATUS_LEAP_SHORTER=4,
-    ES_STATUS_STANDBY=8,
-    ES_STATUS_HOLDOVER=16,
-    ES_STATUS_ACTIVE=32,
-    ES_STATUS_GPS_TIME=64,
-    ES_STATUS_DRTB_SENDING=128
-} es_status_bit;
-
 typedef struct exception_record exception_record, *Pexception_record;
 
 struct exception_record {
@@ -779,52 +754,12 @@ typedef enum __attribute__((packed)) fpga_register {
     FPGA_REGISTER_COUNT_HIGH=22
 } fpga_register;
 
-typedef enum __attribute__((packed)) fpga_start_source {
-    FPGA_START_SOURCE_GPS_PPS=0,
-    FPGA_START_SOURCE_P84=4,
-    FPGA_START_SOURCE_P78=8,
-    FPGA_START_SOURCE_P78_P24_HIGH=12
-} fpga_start_source;
-
 typedef enum __attribute__((packed)) frequency_figure_of_merit {
     FFOM_STABILIZED=0,
     FFOM_STABILIZING=1,
     FFOM_HOLDOVER=2,
     FFOM_UNLOCKED=3
 } frequency_figure_of_merit;
-
-typedef enum __attribute__((packed)) front_panel_command {
-    FRONT_PANEL_POLL=0,
-    FRONT_PANEL_LINE=1,
-    FRONT_PANEL_LAMPS=2,
-    FRONT_PANEL_TEXT=4,
-    FRONT_PANEL_SELFTEST_FIRST=8,
-    FRONT_PANEL_SELFTEST_SECOND=16
-} front_panel_command;
-
-typedef enum __attribute__((packed)) front_panel_lamp {
-    FRONT_PANEL_LAMP_TIME=1,
-    FRONT_PANEL_LAMP_LONG=2,
-    FRONT_PANEL_LAMP_LAT=4,
-    FRONT_PANEL_LAMP_ALT=8,
-    FRONT_PANEL_LAMP_SAT=16,
-    FRONT_PANEL_LAMP_STATUS=32,
-    FRONT_PANEL_LAMP_SERIAL_PORT=64,
-    FRONT_PANEL_LAMP_SHIFT=128
-} front_panel_lamp;
-
-typedef enum __attribute__((packed)) front_panel_mode {
-    FRONT_PANEL_NO_KEY=0,
-    FRONT_PANEL_TIME=1,
-    FRONT_PANEL_LONG=2,
-    FRONT_PANEL_LAT=3,
-    FRONT_PANEL_ALT=4,
-    FRONT_PANEL_SAT=5,
-    FRONT_PANEL_STATUS=6,
-    FRONT_PANEL_SERIAL_PORT=7,
-    FRONT_PANEL_SHIFT=8,
-    FRONT_PANEL_ALARM=9
-} front_panel_mode;
 
 typedef enum __attribute__((packed)) gps_ack_awaited_kind {
     GPS_ACK_NONE=0,
@@ -962,14 +897,6 @@ typedef enum __attribute__((packed)) gps_field_592_bit {
     GPS_FIELD_592_EIGHT_CHANNELS=128
 } gps_field_592_bit;
 
-typedef struct gps_fixed_sentence gps_fixed_sentence, *Pgps_fixed_sentence;
-
-struct gps_fixed_sentence {
-    char *text;
-    uint8_t length;
-    uint8_t pad_5;
-};
-
 typedef enum __attribute__((packed)) gps_framing_state {
     GPS_FRAMING_FIRST_AT=0,
     GPS_FRAMING_SECOND_AT=1,
@@ -987,23 +914,6 @@ typedef enum __attribute__((packed)) gps_match_result {
     GPS_MATCH_DIFFERS=2,
     GPS_MATCH_ANSWERED=3
 } gps_match_result;
-
-typedef enum __attribute__((packed)) gps_periodic_stage {
-    GPS_PERIODIC_GSV=0,
-    GPS_PERIODIC_ANC=1,
-    GPS_PERIODIC_QUERY=2
-} gps_periodic_stage;
-
-typedef struct gps_periodic_state gps_periodic_state, *Pgps_periodic_state;
-
-struct gps_periodic_state {
-    enum gps_periodic_stage stage;
-    uint8_t field_01;
-    enum gps_request_code_word query_code;
-    uint8_t queries;
-    uint8_t field_05;
-    uint16_t sends;
-};
 
 typedef enum __attribute__((packed)) gps_process_state {
     GPS_PROCESS_TASK_IDLE=0,
@@ -1195,17 +1105,6 @@ struct gps_request_ring {
     struct gps_request_entry *write;
 };
 
-typedef struct gps_request_translation gps_request_translation, *Pgps_request_translation;
-
-struct gps_request_translation {
-    enum gps_request_code_word code;
-    enum gps_argument_mode argument_mode;
-    uint8_t field_03;
-    enum gps_request_code_word to_code;
-    enum gps_argument_mode to_argument_mode;
-    uint8_t field_07;
-};
-
 typedef struct gps_running_command gps_running_command, *Pgps_running_command;
 
 typedef struct gps_script_step gps_script_step, *Pgps_script_step;
@@ -1224,14 +1123,6 @@ struct gps_running_command {
     enum gps_argument_mode query;
     uint8_t length;
     uint8_t sent[80];
-};
-
-typedef struct gps_script_query_step gps_script_query_step, *Pgps_script_query_step;
-
-struct gps_script_query_step {
-    enum gps_request_code_word code;
-    enum gps_argument_mode argument_mode;
-    uint8_t field_03;
 };
 
 typedef struct gps_script_step_1_argument gps_script_step_1_argument, *Pgps_script_step_1_argument;
@@ -1259,40 +1150,6 @@ struct gps_script_step_3_arguments {
     enum gps_argument_mode argument_mode;
     uint8_t field_03;
     int32_t arguments[3];
-};
-
-typedef struct gps_sentence_descriptor gps_sentence_descriptor, *Pgps_sentence_descriptor;
-
-typedef enum __attribute__((packed)) gps_sentence_kind {
-    GPS_SENTENCE_NONE=0,
-    GPS_SENTENCE_BUILT=1,
-    GPS_SENTENCE_BUILT_TOO=3
-} gps_sentence_kind;
-
-typedef char * (gps_sentence_encoder)(int32_t *, uint8_t, char *);
-
-typedef enum __attribute__((packed)) gps_sentence_match_kind {
-    GPS_SENTENCE_MATCH_NONE=0,
-    GPS_SENTENCE_MATCH_TIMEOUT=1,
-    GPS_SENTENCE_MATCH_GLL=2,
-    GPS_SENTENCE_MATCH_RRS=3,
-    GPS_SENTENCE_MATCH_RRQ=4,
-    GPS_SENTENCE_MATCH_SET=5,
-    GPS_SENTENCE_MATCH_SRQ=6,
-    GPS_SENTENCE_MATCH_TST=7
-} gps_sentence_match_kind;
-
-typedef uint8_t (gps_sentence_test)(enum gps_request_code_word, gps_sentence_encoder *, int32_t *);
-
-struct gps_sentence_descriptor {
-    char *address;
-    enum gps_sentence_kind kind;
-    uint8_t field_05;
-    gps_sentence_encoder *encoders[4];
-    char *query;
-    uint8_t timeout;
-    enum gps_sentence_match_kind match_kind;
-    gps_sentence_test *test;
 };
 
 typedef struct gps_state gps_state, *Pgps_state;
@@ -1998,16 +1855,6 @@ struct identification_record {
     uint8_t unused[6];
 };
 
-typedef struct input_debounce input_debounce, *Pinput_debounce;
-
-struct input_debounce {
-    uint8_t value;
-    uint8_t field_1;
-    int16_t count;
-};
-
-typedef uint8_t (input_debounce_reader)(void);
-
 typedef struct installer_sci_driver installer_sci_driver, *Pinstaller_sci_driver;
 
 typedef void (putc_function)(char);
@@ -2253,187 +2100,6 @@ struct mutex {
     uint32_t field_14;
 };
 
-typedef struct n3_lock_fields n3_lock_fields, *Pn3_lock_fields;
-
-struct n3_lock_fields {
-    int32_t phase;
-    uint8_t seating_error;
-    uint8_t field_05;
-    int32_t pll_passes;
-    int32_t phase_passes;
-    float phase_offset;
-    float frequency_sum;
-    uint8_t averaging;
-    uint8_t field_17;
-    uint16_t efc_limit_count;
-    float gain_ti;
-    float gain_tau;
-    float frequency_offset_1;
-    float frequency_offset_2;
-    float slew_offset;
-    uint32_t passes;
-    uint8_t reading_valid;
-    uint8_t field_33;
-    uint16_t pass;
-    uint16_t seating_count;
-    float ti_average;
-    uint16_t field_3c;
-};
-
-typedef struct nmea_anc_fields nmea_anc_fields, *Pnmea_anc_fields;
-
-struct nmea_anc_fields {
-    struct oncore_date_fields date;
-    struct time_of_day time;
-    uint32_t satellites;
-};
-
-typedef enum __attribute__((packed)) nmea_field_status {
-    NMEA_FIELD_GOOD=0,
-    NMEA_FIELD_EMPTY=1,
-    NMEA_FIELD_BAD=2
-} nmea_field_status;
-
-typedef nmea_field_status (nmea_field_decoder)(char *, void *);
-
-typedef struct nmea_field_entry nmea_field_entry, *Pnmea_field_entry;
-
-struct nmea_field_entry {
-    int8_t index;
-    int8_t length;
-    nmea_field_decoder *decode;
-    void *place;
-};
-
-typedef struct nmea_frame nmea_frame, *Pnmea_frame;
-
-struct nmea_frame {
-    char text[82];
-    uint8_t *cursor;
-    uint8_t fields;
-    uint8_t checksum_digits;
-    uint8_t field_starts[20];
-};
-
-typedef struct nmea_gga_fields nmea_gga_fields, *Pnmea_gga_fields;
-
-struct nmea_gga_fields {
-    char latitude_hemisphere;
-    uint8_t field_01;
-    int32_t latitude;
-    char longitude_hemisphere;
-    uint8_t field_07;
-    int32_t longitude;
-    int32_t height;
-    int32_t height_offset;
-    uint8_t satellites;
-    uint8_t angle_decoded;
-};
-
-typedef struct nmea_gsa_fields nmea_gsa_fields, *Pnmea_gsa_fields;
-
-struct nmea_gsa_fields {
-    uint8_t fix;
-    uint8_t field_01;
-    uint32_t satellites;
-    uint16_t pdop;
-    uint16_t hdop;
-};
-
-typedef struct nmea_gsv_fields nmea_gsv_fields, *Pnmea_gsv_fields;
-
-typedef struct nmea_gsv_satellite nmea_gsv_satellite, *Pnmea_gsv_satellite;
-
-struct nmea_gsv_satellite {
-    uint8_t satellite;
-    uint8_t elevation;
-    uint16_t azimuth;
-    uint8_t snr;
-    uint8_t field_05;
-};
-
-struct nmea_gsv_fields {
-    uint8_t count;
-    uint8_t sentence;
-    struct nmea_gsv_satellite satellites[8];
-    struct nmea_gsv_satellite incoming[4];
-};
-
-typedef struct nmea_rrm_fields nmea_rrm_fields, *Pnmea_rrm_fields;
-
-struct nmea_rrm_fields {
-    enum oncore_raim_solution solution_status;
-    enum oncore_raim_status raim_status;
-    uint32_t satellites;
-    int8_t sawtooth;
-    uint8_t field_07;
-};
-
-typedef struct nmea_rsd_fields nmea_rsd_fields, *Pnmea_rsd_fields;
-
-struct nmea_rsd_fields {
-    uint8_t raim_on;
-    enum oncore_pps_mode pps_mode;
-    uint16_t alarm_limit;
-};
-
-typedef struct nmea_sentence_entry nmea_sentence_entry, *Pnmea_sentence_entry;
-
-struct nmea_sentence_entry {
-    char *name;
-    int8_t length;
-    int8_t fields;
-    struct nmea_field_entry *fields_decoded;
-};
-
-typedef struct nmea_ssd_fields nmea_ssd_fields, *Pnmea_ssd_fields;
-
-struct nmea_ssd_fields {
-    uint8_t mask_angle;
-    uint8_t field_z;
-    uint32_t ignored_satellites;
-    int32_t height;
-    int32_t cable_delay;
-};
-
-typedef enum __attribute__((packed)) nmea_time_mode {
-    NMEA_TIME_MODE_1=1,
-    NMEA_TIME_MODE_UTC=2,
-    NMEA_TIME_MODE_GPS=3
-} nmea_time_mode;
-
-typedef struct nmea_tps_fields nmea_tps_fields, *Pnmea_tps_fields;
-
-struct nmea_tps_fields {
-    uint8_t field_00;
-    enum nmea_time_mode time_mode;
-    struct oncore_date_fields date;
-    struct time_of_day time;
-    uint16_t week;
-    int32_t seconds;
-    uint8_t utc_offset;
-    int8_t leap_second;
-    struct oncore_date_fields leap_date;
-    struct time_of_day leap_time;
-    struct oncore_date_fields date_9;
-    struct time_of_day time_9;
-    uint8_t position_hold;
-    uint8_t field_23;
-    struct oncore_date_fields gps_date;
-    struct time_of_day gps_time;
-};
-
-typedef struct nmea_tst_fields nmea_tst_fields, *Pnmea_tst_fields;
-
-struct nmea_tst_fields {
-    uint8_t result;
-    uint8_t field_01;
-    uint8_t self_test_bits;
-    uint8_t field_03;
-    uint32_t software_part_number;
-    uint16_t software_version;
-};
-
 typedef struct nv_record nv_record, *Pnv_record;
 
 struct nv_record {
@@ -2591,38 +2257,6 @@ struct oncore_receiver_id_line {
     uint8_t field_0b;
 };
 
-typedef enum __attribute__((packed)) output_control {
-    OUTPUT_CONTROL_WARMUP=0,
-    OUTPUT_CONTROL_WARMUP_1=1,
-    OUTPUT_CONTROL_STANDBY=2,
-    OUTPUT_CONTROL_ACTIVE=3,
-    OUTPUT_CONTROL_UNLOCKED=4,
-    OUTPUT_CONTROL_HARDWARE_FAULT=5,
-    OUTPUT_CONTROL_BLOCKED=6,
-    OUTPUT_CONTROL_BLOCK_HOLD=7,
-    OUTPUT_CONTROL_EXTRACTED=8,
-    OUTPUT_CONTROL_BLOCK_RELEASE=9
-} output_control;
-
-typedef enum __attribute__((packed)) output_inactive_choice {
-    OUTPUT_INACTIVE_CHOICE_EXTERNAL=0,
-    OUTPUT_INACTIVE_CHOICE_EXTRACTOR=1,
-    OUTPUT_INACTIVE_CHOICE_HARD=2,
-    OUTPUT_INACTIVE_CHOICE_HOLD=3,
-    OUTPUT_INACTIVE_CHOICE_MANUAL=4,
-    OUTPUT_INACTIVE_CHOICE_NONE=5
-} output_inactive_choice;
-
-typedef enum __attribute__((packed)) output_inactive_value {
-    OUTPUT_INACTIVE_NONE=0,
-    OUTPUT_INACTIVE_HARD=1,
-    OUTPUT_INACTIVE_HOLD=2,
-    OUTPUT_INACTIVE_MANUAL=3,
-    OUTPUT_INACTIVE_EXTERNAL=4,
-    OUTPUT_INACTIVE_TIME_DEVIATION=5,
-    OUTPUT_INACTIVE_EXTRACTOR=6
-} output_inactive_value;
-
 typedef enum __attribute__((packed)) output_state {
     OUTPUT_ACTIVE=0,
     OUTPUT_STANDBY=1,
@@ -2630,14 +2264,6 @@ typedef enum __attribute__((packed)) output_state {
     OUTPUT_BLOCKED=3,
     OUTPUT_ALARM=4
 } output_state;
-
-typedef enum __attribute__((packed)) output_state_choice {
-    OUTPUT_STATE_CHOICE_ACTIVE=0,
-    OUTPUT_STATE_CHOICE_ALARM=1,
-    OUTPUT_STATE_CHOICE_BLOCK=2,
-    OUTPUT_STATE_CHOICE_STANDBY=3,
-    OUTPUT_STATE_CHOICE_UNLOCK=4
-} output_state_choice;
 
 typedef struct packed_datetime packed_datetime, *Ppacked_datetime;
 
@@ -2777,24 +2403,6 @@ typedef enum __attribute__((packed)) pll_leap_check_state {
     PLL_LEAP_CHECK_PENDING_ACK=2,
     PLL_LEAP_CHECK_WAIT=3
 } pll_leap_check_state;
-
-typedef enum __attribute__((packed)) pll_n3_lock_state {
-    PLL_N3_LOCK_WAIT1=0,
-    PLL_N3_LOCK_WAIT2=1,
-    PLL_N3_LOCK_SYNC1=2,
-    PLL_N3_LOCK_SYNC2=3,
-    PLL_N3_LOCK_LEAPSEC=4,
-    PLL_N3_LOCK_CHECK_TIME=5,
-    PLL_N3_LOCK_MEASURE1=6,
-    PLL_N3_LOCK_MEASURE2=7,
-    PLL_N3_LOCK_MEASURE3=8,
-    PLL_N3_LOCK_CALC_FREQ=9,
-    PLL_N3_LOCK_SLEW=10,
-    PLL_N3_LOCK_STATE_11=11,
-    PLL_N3_LOCK_PLL=12,
-    PLL_N3_LOCK_EXIT1=13,
-    PLL_N3_LOCK_EXIT2=14
-} pll_n3_lock_state;
 
 typedef enum __attribute__((packed)) pll_normal_state {
     PLL_NORMAL_RUNNING=1
@@ -3810,17 +3418,6 @@ struct scpi_float_resolution {
     int16_t resolution;
 };
 
-typedef struct scpi_group_cells_fields scpi_group_cells_fields, *Pscpi_group_cells_fields;
-
-struct scpi_group_cells_fields {
-    uint16_t serial_1;
-    uint16_t gps_initial;
-    uint16_t pulse;
-    uint16_t serial_2;
-    uint16_t status;
-    uint16_t rest;
-};
-
 typedef enum __attribute__((packed)) scpi_handler_action {
     SCPI_HANDLER_CALL_TRIGGER=-62,
     SCPI_HANDLER_RESET_PATH=-61,
@@ -4005,12 +3602,6 @@ typedef enum __attribute__((packed)) selftest_gps_failure {
     SELFTEST_GPS_NO_ANSWER=65536,
     SELFTEST_GPS_TIMED_OUT=131072
 } selftest_gps_failure;
-
-typedef enum __attribute__((packed)) selftest_power_failure {
-    SELFTEST_POWER_5V=1,
-    SELFTEST_POWER_P15V=2,
-    SELFTEST_POWER_M15V=4
-} selftest_power_failure;
 
 typedef enum __attribute__((packed)) selftest_qspi_failure {
     SELFTEST_QSPI_ADC=2,
@@ -4218,14 +3809,6 @@ typedef enum __attribute__((packed)) status_replay_mode {
     STATUS_REPLAY_HAPPENINGS=1
 } status_replay_mode;
 
-typedef struct status_screen_card_line status_screen_card_line, *Pstatus_screen_card_line;
-
-struct status_screen_card_line {
-    uint8_t code;
-    uint8_t field_01;
-    char *text;
-};
-
 typedef enum __attribute__((packed)) status_screen_line {
     STATUS_SCREEN_LINE_POWERUP=0,
     STATUS_SCREEN_LINE_HOLDOVER=1,
@@ -4314,25 +3897,6 @@ struct status_snapshot_record {
     uint16_t hardware_condition;
 };
 
-typedef enum __attribute__((packed)) switch_word_bit {
-    SWITCH_WORD_BIT_0=1,
-    SWITCH_WORD_BIT_1=2,
-    SWITCH_WORD_BIT_2=4,
-    SWITCH_WORD_BIT_3=8,
-    SWITCH_WORD_BIT_4=16,
-    SWITCH_WORD_BIT_5=32,
-    SWITCH_WORD_BIT_6=64,
-    SWITCH_WORD_BIT_7=128,
-    SWITCH_WORD_BIT_8=256,
-    SWITCH_WORD_BIT_9=512,
-    SWITCH_WORD_BIT_10=1024,
-    SWITCH_WORD_BIT_11=2048,
-    SWITCH_WORD_BIT_12=4096,
-    SWITCH_WORD_BIT_13=8192,
-    SWITCH_WORD_BIT_14=16384,
-    SWITCH_WORD_BIT_15=32768
-} switch_word_bit;
-
 typedef enum __attribute__((packed)) task_debug_flag {
     DMES_GPSM=0,
     DMES_HMON=1,
@@ -4389,7 +3953,6 @@ _Static_assert(sizeof(counter_calibrate_mode) == 1, "counter_calibrate_mode");
 _Static_assert(sizeof(counter_configuration_fields) == 22, "counter_configuration_fields");
 _Static_assert(sizeof(counter_error) == 1, "counter_error");
 _Static_assert(sizeof(counter_registers_mode) == 1, "counter_registers_mode");
-_Static_assert(sizeof(counter_start_source_mode) == 1, "counter_start_source_mode");
 _Static_assert(sizeof(counter_sync_kind) == 1, "counter_sync_kind");
 _Static_assert(sizeof(counter_sync_mode) == 1, "counter_sync_mode");
 _Static_assert(sizeof(counter_work_state) == 1, "counter_work_state");
@@ -4410,8 +3973,6 @@ _Static_assert(sizeof(efc_gain_values) == 20, "efc_gain_values");
 _Static_assert(sizeof(efc_mode) == 1, "efc_mode");
 _Static_assert(sizeof(efc_range_state) == 3, "efc_range_state");
 _Static_assert(sizeof(efc_ring) == 846, "efc_ring");
-_Static_assert(sizeof(es_error_bit) == 1, "es_error_bit");
-_Static_assert(sizeof(es_status_bit) == 1, "es_status_bit");
 _Static_assert(sizeof(exception_record) == 18, "exception_record");
 _Static_assert(sizeof(exchange_token) == 16, "exchange_token");
 _Static_assert(sizeof(forth_user_area) == 40, "forth_user_area");
@@ -4423,11 +3984,7 @@ _Static_assert(sizeof(fpga_configuration_index) == 1, "fpga_configuration_index"
 _Static_assert(sizeof(fpga_configuration_table) == 10, "fpga_configuration_table");
 _Static_assert(sizeof(fpga_mode) == 1, "fpga_mode");
 _Static_assert(sizeof(fpga_register) == 1, "fpga_register");
-_Static_assert(sizeof(fpga_start_source) == 1, "fpga_start_source");
 _Static_assert(sizeof(frequency_figure_of_merit) == 1, "frequency_figure_of_merit");
-_Static_assert(sizeof(front_panel_command) == 1, "front_panel_command");
-_Static_assert(sizeof(front_panel_lamp) == 1, "front_panel_lamp");
-_Static_assert(sizeof(front_panel_mode) == 1, "front_panel_mode");
 _Static_assert(sizeof(gps_ack_awaited_kind) == 1, "gps_ack_awaited_kind");
 _Static_assert(sizeof(gps_argument_mode) == 1, "gps_argument_mode");
 _Static_assert(sizeof(gps_code_class) == 1, "gps_code_class");
@@ -4439,11 +3996,8 @@ _Static_assert(sizeof(gps_console_command) == 1, "gps_console_command");
 _Static_assert(sizeof(gps_echo) == 1, "gps_echo");
 _Static_assert(sizeof(gps_echo_entry) == 4, "gps_echo_entry");
 _Static_assert(sizeof(gps_field_592_bit) == 1, "gps_field_592_bit");
-_Static_assert(sizeof(gps_fixed_sentence) == 6, "gps_fixed_sentence");
 _Static_assert(sizeof(gps_framing_state) == 1, "gps_framing_state");
 _Static_assert(sizeof(gps_match_result) == 1, "gps_match_result");
-_Static_assert(sizeof(gps_periodic_stage) == 1, "gps_periodic_stage");
-_Static_assert(sizeof(gps_periodic_state) == 8, "gps_periodic_state");
 _Static_assert(sizeof(gps_process_state) == 1, "gps_process_state");
 _Static_assert(sizeof(gps_raim_assessment) == 1, "gps_raim_assessment");
 _Static_assert(sizeof(gps_receiver_number) == 1, "gps_receiver_number");
@@ -4456,16 +4010,11 @@ _Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
 _Static_assert(sizeof(gps_request_result) == 1, "gps_request_result");
 _Static_assert(sizeof(gps_request_ring) == 164, "gps_request_ring");
 _Static_assert(sizeof(gps_request_sender) == 1, "gps_request_sender");
-_Static_assert(sizeof(gps_request_translation) == 8, "gps_request_translation");
 _Static_assert(sizeof(gps_running_command) == 114, "gps_running_command");
-_Static_assert(sizeof(gps_script_query_step) == 4, "gps_script_query_step");
 _Static_assert(sizeof(gps_script_step) == 20, "gps_script_step");
 _Static_assert(sizeof(gps_script_step_1_argument) == 8, "gps_script_step_1_argument");
 _Static_assert(sizeof(gps_script_step_2_arguments) == 12, "gps_script_step_2_arguments");
 _Static_assert(sizeof(gps_script_step_3_arguments) == 16, "gps_script_step_3_arguments");
-_Static_assert(sizeof(gps_sentence_descriptor) == 32, "gps_sentence_descriptor");
-_Static_assert(sizeof(gps_sentence_kind) == 1, "gps_sentence_kind");
-_Static_assert(sizeof(gps_sentence_match_kind) == 1, "gps_sentence_match_kind");
 _Static_assert(sizeof(gps_state) == 1472, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 64, "gps_statistics");
 _Static_assert(sizeof(gps_status_freshness) == 1, "gps_status_freshness");
@@ -4477,7 +4026,6 @@ _Static_assert(sizeof(hmon_channel_entry) == 42, "hmon_channel_entry");
 _Static_assert(sizeof(holdover_limit_setting) == 1, "holdover_limit_setting");
 _Static_assert(sizeof(holdover_steering_state) == 28, "holdover_steering_state");
 _Static_assert(sizeof(identification_record) == 48, "identification_record");
-_Static_assert(sizeof(input_debounce) == 4, "input_debounce");
 _Static_assert(sizeof(installer_sci_driver) == 32, "installer_sci_driver");
 _Static_assert(sizeof(installer_status_condition) == 1, "installer_status_condition");
 _Static_assert(sizeof(installer_status_register_layout) == 10, "installer_status_register_layout");
@@ -4501,22 +4049,6 @@ _Static_assert(sizeof(log_event_code) == 1, "log_event_code");
 _Static_assert(sizeof(log_page) == 64, "log_page");
 _Static_assert(sizeof(loop_steering_state) == 28, "loop_steering_state");
 _Static_assert(sizeof(mutex) == 24, "mutex");
-_Static_assert(sizeof(n3_lock_fields) == 62, "n3_lock_fields");
-_Static_assert(sizeof(nmea_anc_fields) == 12, "nmea_anc_fields");
-_Static_assert(sizeof(nmea_field_entry) == 10, "nmea_field_entry");
-_Static_assert(sizeof(nmea_field_status) == 1, "nmea_field_status");
-_Static_assert(sizeof(nmea_frame) == 108, "nmea_frame");
-_Static_assert(sizeof(nmea_gga_fields) == 22, "nmea_gga_fields");
-_Static_assert(sizeof(nmea_gsa_fields) == 10, "nmea_gsa_fields");
-_Static_assert(sizeof(nmea_gsv_fields) == 74, "nmea_gsv_fields");
-_Static_assert(sizeof(nmea_gsv_satellite) == 6, "nmea_gsv_satellite");
-_Static_assert(sizeof(nmea_rrm_fields) == 8, "nmea_rrm_fields");
-_Static_assert(sizeof(nmea_rsd_fields) == 4, "nmea_rsd_fields");
-_Static_assert(sizeof(nmea_sentence_entry) == 10, "nmea_sentence_entry");
-_Static_assert(sizeof(nmea_ssd_fields) == 14, "nmea_ssd_fields");
-_Static_assert(sizeof(nmea_time_mode) == 1, "nmea_time_mode");
-_Static_assert(sizeof(nmea_tps_fields) == 44, "nmea_tps_fields");
-_Static_assert(sizeof(nmea_tst_fields) == 10, "nmea_tst_fields");
 _Static_assert(sizeof(nv_record) == 160, "nv_record");
 _Static_assert(sizeof(nv_settings_fields) == 203, "nv_settings_fields");
 _Static_assert(sizeof(oncore_almanac) == 8, "oncore_almanac");
@@ -4561,11 +4093,7 @@ _Static_assert(sizeof(oncore_visible_satellite) == 10, "oncore_visible_satellite
 _Static_assert(sizeof(oncore_xdop_combination) == 8, "oncore_xdop_combination");
 _Static_assert(sizeof(oncore_xdop_table_fields) == 75, "oncore_xdop_table_fields");
 _Static_assert(sizeof(oncore_xdop_type) == 1, "oncore_xdop_type");
-_Static_assert(sizeof(output_control) == 1, "output_control");
-_Static_assert(sizeof(output_inactive_choice) == 1, "output_inactive_choice");
-_Static_assert(sizeof(output_inactive_value) == 1, "output_inactive_value");
 _Static_assert(sizeof(output_state) == 1, "output_state");
-_Static_assert(sizeof(output_state_choice) == 1, "output_state_choice");
 _Static_assert(sizeof(packed_datetime) == 8, "packed_datetime");
 _Static_assert(sizeof(parameter_record) == 16, "parameter_record");
 _Static_assert(sizeof(pforth_word_flag) == 1, "pforth_word_flag");
@@ -4579,7 +4107,6 @@ _Static_assert(sizeof(pll_hold_cause) == 2, "pll_hold_cause");
 _Static_assert(sizeof(pll_holdover_state) == 1, "pll_holdover_state");
 _Static_assert(sizeof(pll_leap_ack_state) == 1, "pll_leap_ack_state");
 _Static_assert(sizeof(pll_leap_check_state) == 1, "pll_leap_check_state");
-_Static_assert(sizeof(pll_n3_lock_state) == 1, "pll_n3_lock_state");
 _Static_assert(sizeof(pll_normal_state) == 1, "pll_normal_state");
 _Static_assert(sizeof(pll_powerup_state) == 1, "pll_powerup_state");
 _Static_assert(sizeof(pll_powerup_suffix) == 1, "pll_powerup_suffix");
@@ -4649,7 +4176,6 @@ _Static_assert(sizeof(scpi_decimal) == 20, "scpi_decimal");
 _Static_assert(sizeof(scpi_double_step) == 12, "scpi_double_step");
 _Static_assert(sizeof(scpi_error_message) == 6, "scpi_error_message");
 _Static_assert(sizeof(scpi_float_resolution) == 6, "scpi_float_resolution");
-_Static_assert(sizeof(scpi_group_cells_fields) == 12, "scpi_group_cells_fields");
 _Static_assert(sizeof(scpi_handler) == 10, "scpi_handler");
 _Static_assert(sizeof(scpi_handler_action) == 1, "scpi_handler_action");
 _Static_assert(sizeof(scpi_keyword) == 20, "scpi_keyword");
@@ -4678,7 +4204,6 @@ _Static_assert(sizeof(scpi_tree_pair) == 8, "scpi_tree_pair");
 _Static_assert(sizeof(scpi_unit) == 6, "scpi_unit");
 _Static_assert(sizeof(selftest_failure) == 1, "selftest_failure");
 _Static_assert(sizeof(selftest_gps_failure) == 4, "selftest_gps_failure");
-_Static_assert(sizeof(selftest_power_failure) == 1, "selftest_power_failure");
 _Static_assert(sizeof(selftest_qspi_failure) == 1, "selftest_qspi_failure");
 _Static_assert(sizeof(selftest_ram_failure) == 1, "selftest_ram_failure");
 _Static_assert(sizeof(selftest_results) == 64, "selftest_results");
@@ -4704,11 +4229,9 @@ _Static_assert(sizeof(status_register) == 16, "status_register");
 _Static_assert(sizeof(status_register_layout) == 22, "status_register_layout");
 _Static_assert(sizeof(status_register_mask) == 1, "status_register_mask");
 _Static_assert(sizeof(status_replay_mode) == 1, "status_replay_mode");
-_Static_assert(sizeof(status_screen_card_line) == 6, "status_screen_card_line");
 _Static_assert(sizeof(status_screen_line) == 1, "status_screen_line");
 _Static_assert(sizeof(status_screen_mode_line) == 6, "status_screen_mode_line");
 _Static_assert(sizeof(status_snapshot_record) == 368, "status_snapshot_record");
-_Static_assert(sizeof(switch_word_bit) == 2, "switch_word_bit");
 _Static_assert(sizeof(task_debug_flag) == 1, "task_debug_flag");
 _Static_assert(sizeof(task_table_entry) == 6, "task_table_entry");
 _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");

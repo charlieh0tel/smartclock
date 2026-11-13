@@ -695,7 +695,12 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   clock record and others had); nor one inside a label the names leave
   untyped, but for one named with why (`UNTYPED_HOLDERS`), as the base's
   checks inside the Z3815A's status snapshots went unseen until they
-  were typed.
+  were typed.  An aligned instruction is evidence of an address only where it
+  names one inside the image's global of the base's global's name: the
+  Z3817A's SCI routines, aligned with the Z3815A's for DUART channel B,
+  spoke against three checks of records they do not touch.  A rule in
+  the derivation, not a table of excused checks, which was tried and
+  dropped (2026-11-13).
   A record that differs in any image is entirely per image, with every
   shared function that names it: `common/` holds no shared head of a
   per-image record (decided 2026-11-06, backing out the splits of the

@@ -32,13 +32,6 @@ CHECK_FIELD(scpi_numeric_param, steps, 0x28);
 CHECK_FIELD(scpi_numeric_param, gps_request, 0x20);
 CHECK_FIELD(scpi_numeric_param, group_cell, 0x22);
 
-CHECK_SIZE(holdover_steering_state, 0x1c);
-CHECK_FIELD(holdover_steering_state, aging_limit, 0x102580 - 0x102578);
-CHECK_FIELD(holdover_steering_state, ti_sum, 0x102584 - 0x102578);
-CHECK_FIELD(holdover_steering_state, ti_count, 0x102590 - 0x102578);
-CHECK_FIELD(holdover_steering_state, ti_largest, 0x10258c - 0x102578);
-CHECK_FIELD(holdover_steering_state, ti_weighted_sum, 0x102588 - 0x102578);
-
 CHECK_SIZE(loop_steering_state, 0x1025ac - 0x102590);
 CHECK_FIELD(loop_steering_state, seconds, 0x10259c - 0x102590);
 CHECK_FIELD(loop_steering_state, proportional_gain, 0x1025a0 - 0x102590);
@@ -52,19 +45,17 @@ CHECK_FIELD(serial_ring, read, 0x1035e8 - 0x1035e7);
 CHECK_FIELD(serial_ring, write, 0x1035e7 - 0x1035e7);
 
 /* duarta at 0x1036ea, up to duartb_receive_errors at 0x1036f4 (cleared at
- * 0x2df90): its size a number, as layout_addresses.py's references map the
- * Z3815A 4010's duartb_receive_errors to sci.receive_errors (0x103956). */
-CHECK_SIZE(duarta_driver, 10);
+ * 0x2df90). */
+CHECK_SIZE(duarta_driver, 0x1036f4 - 0x1036ea);
 CHECK_FIELD(duarta_driver, overrun, 0x1036f0 - 0x1036ea);
 CHECK_FIELD(duarta_driver, least_free, 0x1036f3 - 0x1036ea);
 CHECK_FIELD(duarta_driver, held, 0x1036f2 - 0x1036ea);
 CHECK_FIELD(duarta_driver, transmit_count, 0x1036ee - 0x1036ea);
 CHECK_FIELD(duarta_driver, transmit_next, 0x1036ea - 0x1036ea);
 
-/* In the Z3815A 4010, the SCI's settings at 0x102640, as sci_reconfigure
- * reads them (0x30730 on), where this image's are at 0x10249e; and the
- * installer's at 0x10acb0, in both, as
- * installer_parameter_record_read loads them (installer::0x108398 on). */
+/* The SCI's settings, sci_settings at 0x10249e, as sci_reconfigure
+ * (0x2f0b8) reads them; and the installer's at 0x10acb0, as
+ * installer_parameter_record_read (installer::0x108372) loads them. */
 CHECK_SIZE(sci_settings_record, 0x1024a4 - 0x10249e);
 CHECK_FIELD(sci_settings_record, baud, 0x1024a0 - 0x10249e);
 CHECK_FIELD(sci_settings_record, parity, 0x1024a1 - 0x10249e);
@@ -76,10 +67,9 @@ CHECK_FIELD(sci_settings_record, echo, 0x10acb5 - 0x10acb0);
  * them, the restricted-serial check (0x41358 to 0x4138c), tests parity
  * at 0x1024a9 and eight_bits at 0x1024ac; parameter_record_read, the
  * SER1 setting descriptors and duartb_settings_preset address
- * sci_settings instead, so that layout_addresses.py's references map the
- * Z3815A 4010's duartb_settings there, and the offset is a number.  The
- * installer's applied settings at 0x10aecc; the primary has none. */
-CHECK_FIELD(duartb_settings_record, eight_bits, 6);
+ * sci_settings instead.  The installer's applied settings at 0x10aecc;
+ * the primary has none. */
+CHECK_FIELD(duartb_settings_record, eight_bits, 0x1024ac - 0x1024a6);
 CHECK_SIZE(duartb_applied_settings, 0x10aed0 - 0x10aecc);
 CHECK_FIELD(duartb_applied_settings, baud, 0x10aecc - 0x10aecc);
 CHECK_SIZE(duart_shadow_registers, 0x1035e7 - 0x1035da);
@@ -88,12 +78,9 @@ CHECK_FIELD(duart_shadow_registers, mr1b, 0x1035e1 - 0x1035da);
 CHECK_FIELD(duart_shadow_registers, output_reset, 0x1035e5 - 0x1035da);
 
 CHECK_SIZE(exchange_token, 16);
-/* In the Z3815A 4010, the SCI's exchanges at 0x103cc2, as sci_init and
- * sci_lock address them (0x3047a, 0x303de), where this image's are at
- * 0x10380e; its ring at 0x103cfa, as sci_getc does, and
- * its driver at 0x103dfc, each field where the driver's code addresses
- * it (sci_puts, sci_getc, sci_reconfigure, sci_send_async,
- * sci_transmitting_set, sci_transmit_end_schedule, sci_gets). */
+/* The SCI's exchanges, sci_exchanges at 0x10380e, as sci_init (0x2ee64)
+ * and sci_lock (0x2edbc) address them, and its ring, sci_ring at
+ * 0x103846, as sci_getc (0x2e816) does. */
 CHECK_SIZE(sci_exchange_state, 0x103846 - 0x10380e);
 CHECK_FIELD(sci_exchange_state, read_token, 0x103812 - 0x10380e);
 CHECK_FIELD(sci_exchange_state, write_exchange, 0x10382a - 0x10380e);
@@ -222,8 +209,8 @@ CHECK_FIELD(boot_selftest_results, checksum, 0x10ac50 - 0x10ac50);
 CHECK_SIZE(io_device_jumps[3], 0x102ba4 - 0x102b38);
 CHECK_SIZE(io_jump, 6);
 
-/* In the Z3815A 4010, task_table: the task at 0x102ed2 + 6n, its state
- * at 0x102ed0 + 6n, 17 entries up to task_count. */
+/* task_table: the task at 0x102c12 + 6n, its state at 0x102c10 + 6n, 17
+ * entries up to task_count (0x102c76). */
 CHECK_FIELD(task_table_entry, task, 0x102c12 - 0x102c10);
 CHECK_SIZE(task_table_entry[17], 0x102c76 - 0x102c10);
 CHECK_FIELD(task_table_entry, state, 0x102c10 - 0x102c10);
@@ -249,8 +236,8 @@ CHECK_FIELD(gps_command_mailbox, arguments, 0x102ab4 - 0x102ab2);
 CHECK_FIELD(gps_command_mailbox, request, 0x102ac4 - 0x102ab2);
 CHECK_FIELD(gps_command_mailbox, code, 0x102ab2 - 0x102ab2);
 
-/* In the Z3815A 4010, adc_monitors at 0x1021e4, eight, efc_range_state
- * after them, and its hmon_channels from 0x33c9c */
+/* adc_monitors at 0x10204e, eight, efc_range (0x1021ce) after them, and
+ * hmon_channels from 0x32498 */
 CHECK_SIZE(adc_monitor, 0x10207e - 0x10204e);
 CHECK_SIZE(adc_monitor[8], 0x1021ce - 0x10204e);
 CHECK_FIELD(adc_monitor, value, 0x102076 - 0x10204e);
@@ -271,7 +258,7 @@ CHECK_FIELD(hmon_channel_entry, name, 0x324b8 - 0x32498);
 CHECK_FIELD(hmon_channel_entry, events, 0x324bc - 0x32498);
 CHECK_FIELD(hmon_channel_entry, bit, 0x324be - 0x32498);
 CHECK_FIELD(hmon_channel_entry, field_28, 0x324c0 - 0x32498);
-/* In the Z3815A 4010, gps_request_step at 0x10215e */
+/* gps_request_step at 0x10201c */
 CHECK_SIZE(gps_request_code_word, 0x10201e - 0x10201c);
 CHECK_SIZE(gps_script_step, 0x102030 - 0x10201c);
 CHECK_FIELD(gps_script_step, argument_mode, 0x10201e - 0x10201c);
@@ -379,9 +366,8 @@ CHECK_FIELD(efc_calibration_fields, frequency_offset, 0x102b06 - 0x102b02);
 CHECK_FIELD(efc_calibration_fields, adc_high, 0x102b32 - 0x102b02);
 CHECK_FIELD(efc_calibration_fields, settle, 0x102b36 - 0x102b02);
 /* adc_low at 0x102b2e, efc_calibration_measure's d2 beside a2 at
- * 0x102b02 (0x4da48, 0x4da5a): a number, as layout_addresses.py aligns
- * that move with the Z3815A 4010's of another register, naming 0x2e3f2. */
-CHECK_FIELD(efc_calibration_fields, adc_low, 0x2c);
+ * 0x102b02 (0x4da48, 0x4da5a). */
+CHECK_FIELD(efc_calibration_fields, adc_low, 0x102b2e - 0x102b02);
 
 CHECK_SIZE(ptest_run, 0x102546 - 0x10253c);
 CHECK_FIELD(ptest_run, passes, 0x10253d - 0x10253c);
@@ -448,8 +434,8 @@ CHECK_FIELD(status_model, conditions, 0x0a);
 CHECK_FIELD(status_model, field_0e, 0x0e);
 CHECK_FIELD(status_model, registers, 0x12);
 
-/* In the Z3815A 4010, the Oncore records its gps holds: tps's date
- * (0x58506) and the hold position the tps commit fills (0x5d1c6). */
+/* The Oncore records gps (0x100e66) holds: the date at 0x10141e and the
+ * hold position at 0x100f0e. */
 CHECK_FIELD(oncore_date_fields, day, 0x10141f - 0x10141e);
 CHECK_FIELD(oncore_date_fields, year, 0x101420 - 0x10141e);
 CHECK_FIELD(oncore_hold_position_fields, longitude, 0x100f12 - 0x100f0e);
@@ -474,10 +460,6 @@ CHECK_FIELD(aging_curve_state, c, 0x10252c - 0x102512);
 CHECK_FIELD(aging_curve_state, rms, 0x102534 - 0x102512);
 CHECK_FIELD(aging_curve_state, predicted_uncertainty, 0x102538 - 0x102512);
 
-/* In the Z3815A 4010, the GPS task's state at 0x100f2c, memset(&gps, 0,
- * 0x678) by gps_init (0x57c14): each field where its code reaches it,
- * through gps's address or a base register loaded with it; the
- * sentences' fields where their decoders' table (0x5e32a) points. */
 /* gps_state: system_init copies 0x170 longs from preserved_region to it
  * (0x22df6); its records where the message table points their decoders
  * (docs/firmware/oncore/z3817a-3752.txt) and its fields where the
@@ -540,26 +522,8 @@ CHECK_FIELD(gps_state, tracking_log, 0x101412 - 0x100e66);
 CHECK_FIELD(gps_state, track_words, 0x101414 - 0x100e66);
 CHECK_FIELD(gps_state, channel_word, 0x101420 - 0x100e66);
 CHECK_FIELD(gps_state, channel_word_lowest, 0x101424 - 0x100e66);
-/* In the Z3815A 4010, the tps commit's hold position, 0x5d1c6 */
-/* in the Z3815A 4010, the commits' status: the date and time (0x5cc5e),
- * the position (0x5cec6), the DOP and its type and the channels
- * (0x5cf20) */
-/* in the Z3815A 4010, gps_print_best_combinations' type, count and mode
- * (0x53906 on) */
-/* in the Z3815A 4010, the time RAIM record from gps_print_time_raim's
- * base (0x53be4) */
-/* in the Z3815A 4010, gps_print_extension's first and last fields
- * (0x539e2 on) */
-/* in the Z3815A 4010, the tst commit's lines (0x5d298) */
-/* in the Z3815A 4010, each sentence's fields, where its table entry
- * points */
-/* in the Z3815A 4010, gps_init clears +0x5ee (0x57c22) */
 
-/* In the Z3815A 4010, the sentences' records, from their fields above */
-CHECK_SIZE(nmea_gga_fields, 0x53e - 0x528);
-CHECK_SIZE(nmea_gsa_fields, 0x548 - 0x53e);
-CHECK_SIZE(nmea_gsv_satellite, 0x580 - 0x57a);
-CHECK_SIZE(nmea_tps_fields, 0x5e2 - 0x5b6);
+/* The messages' records, from their fields above */
 CHECK_SIZE(oncore_status_fields, 0x47);
 
 CHECK_SIZE(oncore_visibility_fields, 0x7a);
@@ -570,9 +534,7 @@ CHECK_SIZE(oncore_almanac_status_fields, 16);
 
 CHECK_SIZE(oncore_corrections_fields, 64);
 
-/* In the Z3815A 4010, the two reference records, 0x56c5c's (0x101540,
- * 0x101556), where this image's are at 0x1013b0 and 0x1013c6 */
-
+/* The two reference records, at 0x1013b0 and 0x1013c6 */
 CHECK_SIZE(gps_reference_record, 0x1013c6 - 0x1013b0);
 CHECK_FIELD(gps_reference_record, override, 2);
 CHECK_FIELD(gps_reference_record, pps_dead, 3);
@@ -580,8 +542,8 @@ CHECK_FIELD(gps_reference_record, elapsed, 4);
 CHECK_FIELD(gps_reference_record, validation_start, 8);
 CHECK_FIELD(gps_reference_record, field_0c, 0x0c);
 CHECK_FIELD(gps_reference_record, validation_time, 0x10);
-/* in the 58503A 3704, 0x4b858 stores the GPS's at 0x1013a6 and 0x1013a8;
- * in the Z3815A 4010, the offsets checked */
+/* the first record's hysteresis and its margin, at 0x1013c2 and
+ * 0x1013c4 */
 CHECK_FIELD(gps_reference_record, hysteresis, 0x1013c2 - 0x1013b0);
 CHECK_FIELD(gps_reference_record, hysteresis_margin, 0x1013c4 - 0x1013b0);
 
@@ -726,8 +688,8 @@ CHECK_FIELD(exception_record, pending, 0x100ba0 - 0x100ba0);
 CHECK_SIZE(klok_entry, (0x1032c0 - 0x10323e) / 5);
 CHECK_FIELD(klok_entry, function, 5 * 4);
 CHECK_FIELD(klok_entry, event_class, 6 * 4);
-/* In the Z3815A 4010, log_read's page, log_page_buffer at 0x102452:
- * entry n's fields at 0x102456, 0x10245a, 0x10245e, ... + n * 0x14. */
+/* log_read's page, log_page_buffer at 0x1022b0: entry n's fields at
+ * 0x1022b4, 0x1022b8, 0x1022bc, ... + n * 0x14. */
 CHECK_SIZE(log_page, 0x1022f0 - 0x1022b0);
 CHECK_SIZE(log_entry, 0x14);
 CHECK_FIELD(log_page, entries, 0x1022b4 - 0x1022b0);
@@ -832,9 +794,9 @@ CHECK_FIELD(oncore_message_entry, match_kind, 0x575f6 - 0x575d8);
 CHECK_FIELD(oncore_message_entry, decoders, 0x575f8 - 0x575d8);
 CHECK_FIELD(oncore_message_entry, decoders[0].record, 0x575fc - 0x575d8);
 
-/* The time-interval counter's two records: the reading at the Z3815A
- * 4010's 0x10268c, its flag at 0x102694 and armed flag at 0x102698; the
- * configuration at the Z3817A 3752's 0x1024fc, ending where aging_curve
+/* The time-interval counter's two records: the reading at 0x1024ea, its
+ * flag at 0x1024f2 and armed flag at 0x1024f6; the configuration at
+ * 0x1024fc, ending where aging_curve
  * begins (0x102512), each field where counter_configuration_init
  * (0x459bc to 0x459d2), counter_arm (0x45786 to 0x457fa) and
  * counter_read (0x45896) reach it. */
@@ -922,19 +884,13 @@ CHECK_FIELD(status_snapshot_record, height_type, 0x164);
 CHECK_FIELD(status_snapshot_record, average_count, 0x166);
 CHECK_FIELD(status_snapshot_record, douglas_duration, 0x16a);
 CHECK_FIELD(status_snapshot_record, hardware_condition, 0x16e);
-/* In the Z3815A 4010, status_screen_card_lines, six entries of 6 bytes
- * from 0x59716 */
-CHECK_SIZE(status_screen_card_line[6], 0x53f83 - 0x53f5f);
-CHECK_FIELD(status_screen_card_line, text, 0x53f67 - 0x53f65);
 CHECK_SIZE(satellite_list_entry, 8);
 CHECK_SIZE(satellite_sets, 0x60 - 0x36);
 
-/* In the Z3815A 4010, the preserved region at 0x100000, the 0xc04 bytes
- * record_checksum sums (system_init, 0x22dd0): gps's copy at 0x100004,
- * pll's at 0x10067c, adc_monitors' at 0x100a6a and retained_block's 0x19
- * bytes at 0x100bea (0x22e06 to 0x22e48). */
-/* preserved_region_fields: system_init's checksum length and copies
- * (0x22da8, 0x22df2 to 0x22e2a). */
+/* The preserved region at 0x100000, preserved_region_fields:
+ * system_init's checksum length and copies (0x22da8, 0x22df2 to
+ * 0x22e2a), gps's at 0x100004, pll's at 0x1005c4 and adc_monitors' at
+ * 0x1009b2. */
 CHECK_SIZE(preserved_region_fields, 0xb50);
 CHECK_FIELD(preserved_region_fields, gps, 0x100004 - 0x100000);
 CHECK_FIELD(preserved_region_fields, pll, 0x1005c4 - 0x100000);
@@ -945,9 +901,7 @@ CHECK_FIELD(preserved_region_fields, values, 0x100b32 - 0x100000);
  * from 0x101e78: the ADC monitors, which monitor_average_add indexes by
  * 0x30 (0x21d40) */
 
-/* In the Z3815A 4010, the clock record at 0x100c6e: the routines'
- * offsets, at the address the derivation from the 58503A's code gives
- * (layout_addresses.py), where this image's clock is at 0x100bba. */
+/* The clock record, clock at 0x100bba: the routines' offsets. */
 CHECK_SIZE(clock_record, 0x100bed - 0x100bba);
 CHECK_FIELD(clock_record, uptime, 0x100bbc - 0x100bba);
 CHECK_FIELD(clock_record, time, 0x100bc0 - 0x100bba);
@@ -961,8 +915,7 @@ CHECK_FIELD(clock_record, set, 0x100be9 - 0x100bba);
 CHECK_FIELD(clock_record, gps_utc_offset, 0x100bea - 0x100bba);
 CHECK_FIELD(clock_record, gps_utc_offset_valid, 0x100bec - 0x100bba);
 
-/* In the Z3815A 4010, pps_message at 0x100e64, pps_exchange after the
- * cells pps_init clears */
+/* pps_message at 0x100db0, up to pps_exchange at 0x100dc8 */
 CHECK_SIZE(pps_exchange_message, 0x100dc8 - 0x100db0);
 CHECK_FIELD(pps_exchange_message, gps_time, 0x100db8 - 0x100db0);
 CHECK_FIELD(pps_exchange_message, gps_date, 0x100dbc - 0x100db0);
@@ -979,8 +932,8 @@ CHECK_SIZE(gps_process_state, 1);
 CHECK_SIZE(status_screen_mode_line[5], 0x53f2a - 0x53f0c);
 CHECK_FIELD(status_screen_mode_line, text, 0x02);
 
-/* in the Z3815A 4010, the event log's write page at 0x10240c, its
- * number after it */
+/* the event log's write page, log_write_page at 0x10226a, its number
+ * after it (0x1022aa) */
 CHECK_SIZE(log_page, 0x1022aa - 0x10226a);
 
 /* the MC68331's modules: Tables D-2, D-3 and D-13 */
@@ -1155,7 +1108,7 @@ CHECK_SIZE(alarm_text_cursor, 6);
 CHECK_FIELD(alarm_text_cursor, severity, -2 - -6);
 /* in the 58503A 3704, the tree's root at 0x29b42, its entries' table at
  * 0x29ac2 to the names at 0x29b1c, nine 10-byte entries, the last empty;
- * the check, the Z3815A 4010's root at 0x3d204 */
+ * the check, this image's root, alarm_text_root at 0x3a3ba */
 
 CHECK_FIELD(alarm_text_node, entries, 0x3a3bc - 0x3a3ba);
 

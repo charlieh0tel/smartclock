@@ -442,55 +442,6 @@ typedef enum __attribute__((packed)) latch_bit {
   LATCH_FRONT_PANEL_RESET = 0x80,
 } latch_bit;
 
-/* In the 58503A 3704, a front panel command, its first byte, which
- * front_panel_command_begin exchanges (docs/firmware/58503a-3704.md, "The
- * front panel", the commands' table): a key poll; a line, a lamp byte
- * then text; a lamp byte; text with the lamps as they are; and the two
- * front_panel_selftest sends between polls, after which the panel answers
- * 0x55, then 0xaa.  This image has no front panel, and nothing here uses
- * the type. */
-typedef enum __attribute__((packed)) front_panel_command {
-  FRONT_PANEL_POLL = 0x00,
-  FRONT_PANEL_LINE = 0x01,
-  FRONT_PANEL_LAMPS = 0x02,
-  FRONT_PANEL_TEXT = 0x04,
-  FRONT_PANEL_SELFTEST_FIRST = 0x08,
-  FRONT_PANEL_SELFTEST_SECOND = 0x10,
-} front_panel_command;
-
-/* In the 58503A 3704, a front panel key, the byte a command brings
- * back, in the order of front_panel_update's lines and the panel's keys
- * (097-58503-08, 1-2): each key's mode, 1 to 8, and mode 9, the alarm's
- * text, which front_panel_key keeps while the alarm is on.  Nothing here
- * uses the type. */
-typedef enum __attribute__((packed)) front_panel_mode {
-  FRONT_PANEL_NO_KEY = 0,
-  FRONT_PANEL_TIME = 1,
-  FRONT_PANEL_LONG = 2,
-  FRONT_PANEL_LAT = 3,
-  FRONT_PANEL_ALT = 4,
-  FRONT_PANEL_SAT = 5,
-  FRONT_PANEL_STATUS = 6,
-  FRONT_PANEL_SERIAL_PORT = 7,
-  FRONT_PANEL_SHIFT = 8,
-  FRONT_PANEL_ALARM = 9,
-} front_panel_mode;
-
-/* In the 58503A 3704, a front panel key's lamp, bit n - 1 of the lamp
- * byte for key n, which front_panel_update sends with each mode's line;
- * the alarm's text lights the Status key's (docs/firmware/58503a-3704.md,
- * "The keys").  Nothing here uses the type. */
-typedef enum __attribute__((packed)) front_panel_lamp {
-  FRONT_PANEL_LAMP_TIME = 0x01,
-  FRONT_PANEL_LAMP_LONG = 0x02,
-  FRONT_PANEL_LAMP_LAT = 0x04,
-  FRONT_PANEL_LAMP_ALT = 0x08,
-  FRONT_PANEL_LAMP_SAT = 0x10,
-  FRONT_PANEL_LAMP_STATUS = 0x20,
-  FRONT_PANEL_LAMP_SERIAL_PORT = 0x40,
-  FRONT_PANEL_LAMP_SHIFT = 0x80,
-} front_panel_lamp;
-
 #include "../../common/types/io_device.h"
 
 #include "../../common/types/data_format.h"
@@ -813,20 +764,6 @@ typedef struct gps_script_step {
                            request's, a script's, and raim_request_arguments' */
 } gps_script_step;
 
-/* The ROM's script steps, 0x5840c to 0x5868c, are packed end to end,
- * each only as long as the arguments gpsm_task reads from it: none for
- * a query (gps_request_build reads the message's query form), one for
- * GPS_ARGUMENTS_FROM_REQUEST's index, a step of the task's own or a
- * message with no encoder, and otherwise one for each of the message's
- * encoders, which gps_request_build runs on arguments[0] on.  So
- * gps_script_step's four would overlap the next step; these are its
- * shorter forms (docs/firmware/structures.md, "ROM tables"). */
-typedef struct gps_script_query_step {
-  gps_request_code_word code;      /* +0x00 */
-  gps_argument_mode argument_mode; /* +0x02: GPS_ARGUMENTS_QUERY */
-  uint8_t field_03;
-} gps_script_query_step;
-
 typedef struct gps_script_step_1_argument {
   gps_request_code_word code;      /* +0x00 */
   gps_argument_mode argument_mode; /* +0x02 */
@@ -957,15 +894,6 @@ typedef enum __attribute__((packed)) selftest_gps_failure {
   SELFTEST_GPS_NO_ANSWER = 0x10000,
   SELFTEST_GPS_TIMED_OUT = 0x20000,
 } selftest_gps_failure;
-
-/* selftest_results.power, the supplies out of range, as supplies_test
- * sets them, each hmon_channels entry's bit (0x28616): here also 0x20 and
- * 0x40, 12B and -12B, which have no name. */
-typedef enum __attribute__((packed)) selftest_power_failure {
-  SELFTEST_POWER_5V = 0x01,
-  SELFTEST_POWER_P15V = 0x02,
-  SELFTEST_POWER_M15V = 0x04,
-} selftest_power_failure;
 
 /* The self-tests' results, selftest at 0x100e26, 0x40 bytes, up to the
  * GPS record (0x100e66): each test's word nonzero if it failed, and what
@@ -1287,22 +1215,6 @@ typedef struct gps_command_log {
 #include "../../common/types/parameter_record.h"
 
 #include "../../common/types/identification_record.h"
-
-/* In the Z3815A 4010, input_debounce_update's record for a DUART input
- * it debounces, one for each of input port bits 0 and 1: the value read
- * last, and how many reads after it agreed, from 0, the value taken once
- * it is past 5.  This image has no input_debounce_update, and nothing
- * here uses the type. */
-typedef struct input_debounce {
-  uint8_t value;
-  uint8_t field_1; /* nothing refers to it */
-  int16_t count;   /* +2 */
-} input_debounce;
-
-/* The reader the Z3815A 4010's input_debounce_update debounces: the
- * input's value, read once (duart_input_0_debounced,
- * duart_input_1_debounced, which nothing here calls). */
-typedef uint8_t input_debounce_reader(void);
 
 /* What adc_averages_print prints through: :DIAGnostic:ADC? passes
  * printf whatever the source (0x3bb18), where the Z3815A 4010's passes
@@ -1962,158 +1874,6 @@ typedef enum __attribute__((packed)) gps_field_592_bit {
   GPS_FIELD_592_EIGHT_CHANNELS = 0x80,
 } gps_field_592_bit;
 
-/* In the Z3815A 4010, a sentence field decoder's result (its
- * nmea_decimal_parse and the decoders a sentence's table names).  This
- * image frames Oncore binary, and nothing here uses the type. */
-typedef enum __attribute__((packed)) nmea_field_status {
-  NMEA_FIELD_GOOD = 0,
-  NMEA_FIELD_EMPTY = 1, /* no value, or not the field's letter */
-  NMEA_FIELD_BAD = 2,   /* not all digits */
-} nmea_field_status;
-
-/* In the Z3815A 4010, a sentence field's decoder: the field's text and
- * the place its entry gives, its record's for the commit; the field's
- * status, which the dispatch ignores (its nmea_sentence_decode). Nothing in
- * this image uses the type. */
-typedef nmea_field_status nmea_field_decoder(char* field, void* place);
-
-/* In the Z3815A 4010, a sentence's field as nmea_sentence_decode takes
- * it, each list ending at an index of 0, the sentence's name, whose
- * decoder, if any, commits the sentence. Nothing in this image uses the type.
- */
-typedef struct nmea_field_entry {
-  int8_t index;  /* +0x00: the field's number, the name 0 */
-  int8_t length; /* +0x01: its characters where positive, else any */
-  nmea_field_decoder* decode; /* +0x02: none for NULL */
-  void* place;                /* +0x06 */
-} nmea_field_entry;
-
-/* In the Z3815A 4010, a sentence nmea_sentence_decode takes, of its
- * nmea_sentences, the table ending at a NULL name. Nothing in this image uses
- * the type. */
-typedef struct nmea_sentence_entry {
-  char* name;    /* +0x00: after "GP" */
-  int8_t length; /* +0x04: its characters to the LF where positive, else
-                    any */
-  int8_t fields; /* +0x05: its commas where positive; where negative,
-                    any for all but GSV */
-  const nmea_field_entry* fields_decoded; /* +0x06: none for NULL */
-} nmea_sentence_entry;
-
-/* In the Z3815A 4010, an Oncore request's GT-74 one, of its
- * gps_request_translations, which its gps_request_translate and
- * gps_request_descriptor look up by code, the table ending at code
- * GPS_REQUEST_NONE, whose to_code is too. Nothing in this image uses the type.
- */
-typedef struct gps_request_translation {
-  gps_request_code_word code;      /* +0x00: below GPS_NMEA_MASK_ANGLE */
-  gps_argument_mode argument_mode; /* +0x02 */
-  uint8_t field_03;
-  gps_request_code_word to_code;      /* +0x04 */
-  gps_argument_mode to_argument_mode; /* +0x06 */
-  uint8_t field_07;
-} gps_request_translation;
-
-/* In the Z3815A 4010, a sentence descriptor's kind: the two its
- * gps_request_build builds, and none, for which it builds an empty
- * sentence.  Every entry of its gps_sentence_descriptors, codes 0x39 to
- * 0x4c, zzz's and int,tst00's among them, is GPS_SENTENCE_BUILT: no
- * valid code's descriptor has GPS_SENTENCE_NONE, only a code past the
- * table, whose descriptor is whatever bytes follow it. Nothing in this image
- * uses the type. */
-typedef enum __attribute__((packed)) gps_sentence_kind {
-  GPS_SENTENCE_NONE = 0,
-  GPS_SENTENCE_BUILT = 1,
-  GPS_SENTENCE_BUILT_TOO = 3 /* no entry has it */
-} gps_sentence_kind;
-
-/* In the Z3815A 4010, a sentence's argument encoder, a
- * gps_sentence_descriptor's: the request's argument longs, the argument's
- * index and where its field goes; returns past it (its gps_nmea.c's
- * encoders). Nothing in this image uses the type. */
-typedef char* gps_sentence_encoder(int32_t* arguments, uint8_t index,
-                                   char* text);
-
-/* In the Z3815A 4010, whether a sentence may be sent, a
- * gps_sentence_descriptor's test: its gps_request_build passes the code,
- * the first encoder and the arguments, which gps_time_raim_supported, the
- * only one, reads none of. Nothing in this image uses the type. */
-typedef uint8_t gps_sentence_test(gps_request_code_word code,
-                                  gps_sentence_encoder* encoder,
-                                  int32_t* arguments);
-
-/* In the Z3815A 4010, how its gps_response_match takes a response to a
- * sentence sent, a gps_sentence_descriptor's match kind; named by the
- * sentences whose descriptors have it.  A sentence of a
- * kind that compares is answered at once when only queried
- * (GPS_ARGUMENTS_QUERY). Nothing in this image uses the type. */
-typedef enum __attribute__((packed)) gps_sentence_match_kind {
-  GPS_SENTENCE_MATCH_NONE = 0,    /* ZDA and int: gpsm_task awaits none */
-  GPS_SENTENCE_MATCH_TIMEOUT = 1, /* clr: no response answers it, and its
-                                     timeout ends the step */
-  GPS_SENTENCE_MATCH_GLL = 2,     /* GLL: GGA, its latitude and longitude
-                                     within 12 mas of the sent while the
-                                     position is held */
-  GPS_SENTENCE_MATCH_RRS = 3,     /* rrs: rsd, its three fields the sent */
-  GPS_SENTENCE_MATCH_RRQ = 4,     /* rrq, rrs' query: rsd */
-  GPS_SENTENCE_MATCH_SET = 5,     /* set: ssd, the field of the set's letter
-                                     the sent, or a height within 10 of it
-                                     while the position is held */
-  GPS_SENTENCE_MATCH_SRQ = 6,     /* srq, set's query: ssd */
-  GPS_SENTENCE_MATCH_TST = 7,     /* int,tst00: tst */
-} gps_sentence_match_kind;
-
-/* In the Z3815A 4010, a GT-74 sentence's descriptor, one of its
- * gps_sentence_descriptors, by its code less GPS_NMEA_MASK_ANGLE: 0x20
- * bytes, which its gps_request_descriptor indexes by 0x20 times the code,
- * an Oncore request's translated first. Nothing in this image uses the type. */
-typedef struct gps_sentence_descriptor {
-  char* address;          /* +0x00: after "$", "PFEC," for a lowercase one, and
-                             "GP" */
-  gps_sentence_kind kind; /* +0x04 */
-  uint8_t field_05;
-  gps_sentence_encoder* encoders[4]; /* +0x06: each argument's, to the first
-                                        NULL */
-  char* query;     /* +0x16: what a query sends after "GP"; NULL none */
-  uint8_t timeout; /* +0x1a: gps_response_timed_out's */
-  gps_sentence_match_kind match_kind; /* +0x1b: 0 none awaited */
-  gps_sentence_test* test; /* +0x1c: whether it may be sent; NULL always */
-} gps_sentence_descriptor;
-
-/* In the Z3815A 4010, a sentence sent as it stands, its text and length
- * as drta_send_message takes them: its gps_periodic_send's two, which it
- * copies to its frame. Nothing in this image uses the type. */
-typedef struct gps_fixed_sentence {
-  char* text;     /* +0x00 */
-  uint8_t length; /* +0x04: the text's, without a NUL */
-  uint8_t pad_5;
-} gps_fixed_sentence;
-
-/* In the Z3815A 4010, gps_periodic's stage: what its gps_periodic_send
- * sent last, by the case each value takes; any other value sends nothing.
- * Nothing in this image uses the type. */
-typedef enum __attribute__((packed)) gps_periodic_stage {
-  GPS_PERIODIC_GSV = 0,   /* int,GSV00 or a query, counting to int,anc00 */
-  GPS_PERIODIC_ANC = 1,   /* int,anc00 */
-  GPS_PERIODIC_QUERY = 2, /* a setting's query */
-} gps_periodic_stage;
-
-/* In the Z3815A 4010, what its gps_periodic_send, which tps's commit
- * calls, keeps between calls, each sending one sentence: the query of the
- * setting gpsm_task sent last, which it leaves in query_code when the
- * setting's descriptor has a query, else int,GSV00, and int,anc00 after
- * 59 sends.  Its gps_init sets it up; 8 bytes, to
- * status_screen_print_interval. Nothing in this image uses the type. */
-typedef struct gps_periodic_state {
-  gps_periodic_stage stage;         /* +0x00 */
-  uint8_t field_01;                 /* nothing reaches it */
-  gps_request_code_word query_code; /* +0x02: the setting to query, or
-                                       GPS_REQUEST_NONE */
-  uint8_t queries;  /* +0x04: the setting's queries sent, from 1; at most 4 */
-  uint8_t field_05; /* nothing reaches it */
-  uint16_t sends;   /* +0x06: the sends since int,anc00, to 59 */
-} gps_periodic_state;
-
 /* The Z3815A 4010's GT-74 sentences, each as its decoders' table fills
  * it in its gps, field by field: each field's decoder writes the place
  * its entry names, and the commit at the table's end, where one is,
@@ -2121,108 +1881,6 @@ typedef struct gps_periodic_state {
  * the commits make of them; the field's number in the sentence, counting
  * its name as 0, after each.  This image frames Oncore binary, and
  * nothing here uses these types. */
-
-/* GGA, position. */
-typedef struct nmea_gga_fields {
-  char latitude_hemisphere; /* 3: 'S' negates it */
-  uint8_t field_01;
-  int32_t latitude;          /* 2: mas */
-  char longitude_hemisphere; /* 5: 'W' negates it */
-  uint8_t field_07;
-  int32_t longitude;     /* 4: mas */
-  int32_t height;        /* 9: cm, the commits' height above mean sea level */
-  int32_t height_offset; /* 11: cm, added to make the height above the
-                            ellipsoid; nmea_encode_height subtracts it */
-  uint8_t satellites;    /* 7 */
-  uint8_t angle_decoded; /* set by each angle's decoder, cleared by the tps
-                            commit */
-} nmea_gga_fields;
-
-/* GSA, the fix and its DOPs. */
-typedef struct nmea_gsa_fields {
-  uint8_t fix; /* 2: 2 and 3 a 2D and a 3D fix */
-  uint8_t field_01;
-  uint32_t satellites; /* 3 to 14: a satellite set */
-  uint16_t pdop;       /* 15: hundredths */
-  uint16_t hdop;       /* 16: hundredths */
-} nmea_gsa_fields;
-
-/* GSV: a satellite in view, four to a sentence. */
-typedef struct nmea_gsv_satellite {
-  uint8_t satellite; /* 0 for none */
-  uint8_t elevation; /* degrees */
-  uint16_t azimuth;  /* degrees */
-  uint8_t snr;
-  uint8_t field_05;
-} nmea_gsv_satellite;
-
-/* GSV, the satellites in view: each sentence's four in incoming,
- * gathered into satellites by its last decoder, the first sentence
- * restarting them. */
-typedef struct nmea_gsv_fields {
-  uint8_t count;    /* those gathered */
-  uint8_t sentence; /* 2: the sentence's number, from 1 */
-  nmea_gsv_satellite satellites[8];
-  nmea_gsv_satellite incoming[4]; /* 4 to 19 */
-} nmea_gsv_fields;
-
-/* anc. */
-typedef struct nmea_anc_fields {
-  oncore_date_fields date; /* 2, with time: ddmmyyhhmmss */
-  time_of_day time;
-  uint32_t satellites; /* 3: one bit a satellite from a '1' */
-} nmea_anc_fields;
-
-/* ssd, the settings, each field after its letter. */
-typedef struct nmea_ssd_fields {
-  uint8_t mask_angle;          /* 7: M, gps.mask_angle's */
-  uint8_t field_z;             /* 13: Z, a digit */
-  uint32_t ignored_satellites; /* 10: U, hexadecimal */
-  int32_t height;              /* 6: H, cm */
-  int32_t cable_delay;         /* 14: t, plus gps.cable_delay_correction */
-} nmea_ssd_fields;
-
-/* tst, the self-test and the software. */
-typedef struct nmea_tst_fields {
-  uint8_t result;         /* 2: a digit, 0 for a result in self_test_bits */
-  uint8_t field_01;       /* 4: a hexadecimal digit */
-  uint8_t self_test_bits; /* 5: a hexadecimal digit, bits 0 and 1 */
-  uint8_t field_03;
-  uint32_t software_part_number; /* 3: its first seven digits */
-  uint16_t software_version;     /* 3: the rest */
-} nmea_tst_fields;
-
-/* In the Z3815A 4010, tps' time mode, nmea_tps_fields.time_mode and its
- * status snapshot's copy: 2 UTC, 3 GPS time from its week and seconds,
- * which tps' commit takes; its status screen marks a time not from the
- * clock "[?]" for 1 and "(?)" for any other, and takes 3 for UTC.  What 1
- * is is not established.  This image's snapshot has no copy, and nothing
- * here uses the type. */
-typedef enum __attribute__((packed)) nmea_time_mode {
-  NMEA_TIME_MODE_1 = 1,
-  NMEA_TIME_MODE_UTC = 2,
-  NMEA_TIME_MODE_GPS = 3,
-} nmea_time_mode;
-
-/* tps, the time, whose commit commits the others. */
-typedef struct nmea_tps_fields {
-  uint8_t field_00;         /* 4: a digit */
-  nmea_time_mode time_mode; /* 3 */
-  oncore_date_fields date;  /* 2, with time */
-  time_of_day time;
-  uint16_t week;                /* 10 */
-  int32_t seconds;              /* 11: of the week */
-  uint8_t utc_offset;           /* 8: GPS less UTC, s, gps_leap_ack's */
-  int8_t leap_second;           /* 7: -1, 0 or 1 */
-  oncore_date_fields leap_date; /* 6, with leap_time */
-  time_of_day leap_time;
-  oncore_date_fields date_9; /* 9, with time_9 */
-  time_of_day time_9;
-  uint8_t position_hold; /* 5: 1 off, 2 on */
-  uint8_t field_23;
-  oncore_date_fields gps_date; /* from week and seconds */
-  time_of_day gps_time;
-} nmea_tps_fields;
 
 /* gps.status_received: whether the receiver's status, @@Ba or @@Ea, has
  * come, and lately, as the status monitor keeps it (command_monitor,
@@ -2233,22 +1891,6 @@ typedef enum __attribute__((packed)) gps_status_freshness {
   GPS_STATUS_STALE = 1, /* none for three of its periods */
   GPS_STATUS_FRESH = 2,
 } gps_status_freshness;
-
-/* rrm, the time RAIM's result. */
-typedef struct nmea_rrm_fields {
-  oncore_raim_solution solution_status; /* 2 */
-  oncore_raim_status raim_status;       /* 3 */
-  uint32_t satellites;                  /* 4 to 7: a satellite set */
-  int8_t sawtooth;                      /* 9: ns */
-  uint8_t field_07;
-} nmea_rrm_fields;
-
-/* rsd, the time RAIM's settings. */
-typedef struct nmea_rsd_fields {
-  uint8_t raim_on;          /* 2 */
-  oncore_pps_mode pps_mode; /* 4 */
-  uint16_t alarm_limit;     /* 3: 10 ns */
-} nmea_rsd_fields;
 
 /* A setting message the GPS task notes hearing, gps.echoes' bit and
  * gps.echo_ages' index, by gps_echo_entries (0x58b9a): gps_echo_seen
@@ -2504,67 +2146,6 @@ typedef enum __attribute__((packed)) pll_startup_state {
 typedef enum __attribute__((packed)) pll_normal_state {
   PLL_NORMAL_RUNNING = 1,
 } pll_normal_state;
-
-/* In the Z3815A 4010, the n3 lock pll stage's states, its
- * pll.n3_lock_state, as its diag_pr_pll names them; it names no 11, which
- * the stage passes through from PLL_N3_LOCK_SLEW to PLL_N3_LOCK_PLL.
- * This image has no n3 lock pll stage, and nothing here uses the type. */
-typedef enum __attribute__((packed)) pll_n3_lock_state {
-  PLL_N3_LOCK_WAIT1 = 0,
-  PLL_N3_LOCK_WAIT2 = 1,
-  PLL_N3_LOCK_SYNC1 = 2,
-  PLL_N3_LOCK_SYNC2 = 3,
-  PLL_N3_LOCK_LEAPSEC = 4,
-  PLL_N3_LOCK_CHECK_TIME = 5,
-  PLL_N3_LOCK_MEASURE1 = 6,
-  PLL_N3_LOCK_MEASURE2 = 7,
-  PLL_N3_LOCK_MEASURE3 = 8,
-  PLL_N3_LOCK_CALC_FREQ = 9,
-  PLL_N3_LOCK_SLEW = 10,
-  PLL_N3_LOCK_STATE_11 = 11,
-  PLL_N3_LOCK_PLL = 12,
-  PLL_N3_LOCK_EXIT1 = 13,
-  PLL_N3_LOCK_EXIT2 = 14,
-} pll_n3_lock_state;
-
-/* In the Z3815A 4010, the n3 lock pll stage's own state, apart from
- * pll (its n3_lock), each field named by what the stage does with it or
- * by its debug text.  Nothing in this image uses the type. */
-typedef struct n3_lock_fields {
-  int32_t phase;            /* +0x00: the pForth word n3_phase's, in ps; the
-                               phase offset's measure takes it off */
-  uint8_t seating_error;    /* +0x04: "There is a card seating error" logged,
-                               n3_lock_seating_error's result */
-  uint8_t field_05;         /* nothing refers to it */
-  int32_t pll_passes;       /* +0x06: the passes the loop steers, 60 */
-  int32_t phase_passes;     /* +0x0a: the passes after them that measure the
-                               phase offset, 1 */
-  float phase_offset;       /* +0x0e: "s3_phase_offset", filtered */
-  float frequency_sum;      /* +0x12: the loop's integral of the TI average */
-  uint8_t averaging;        /* +0x16: the first of two TI readings is in
-                               ti_average */
-  uint8_t field_17;         /* +0x17: cleared, never read */
-  uint16_t efc_limit_count; /* +0x18: n3_lock_efc_set's passes at an EFC
-                               limit, to 20 */
-  float gain_ti;            /* +0x1a: efc_gains.reciprocal_ti / 2.5 */
-  float gain_tau;           /* +0x1e: efc_gains.reciprocal_tau over 2.5 twice
-                               and 4 */
-  float frequency_offset_1; /* +0x22: "freq_off"'s second, ti0 - ti1 over 2 */
-  float frequency_offset_2; /* +0x26: its third, ti1 - ti2 over 2 */
-  float slew_offset;      /* +0x2a: n3_lock_slew's "curr offset", which nothing
-                             calls */
-  uint32_t passes;        /* +0x2e: counted by 2 a call; past 10 pll.field_3e9
-                             is cleared */
-  uint8_t reading_valid;  /* +0x32: the last reading valid */
-  uint8_t field_33;       /* nothing refers to it */
-  uint16_t pass;          /* +0x34: the pass within pll_passes and
-                             phase_passes */
-  uint16_t seating_count; /* +0x36: TI averages between 1 and 3 ns in a
-                             row, to 300 */
-  float ti_average;       /* +0x38: two TI readings less the phase offset,
-                             averaged */
-  uint16_t field_3c;      /* +0x3c: cleared, never read */
-} n3_lock_fields;
 
 /* The OCXO calibration's steps, efc_calibration.step, as
  * efc_calibration_measure's switch takes them (0x4daaa); any other starts
@@ -2973,21 +2554,6 @@ typedef struct gps_statistics {
   uint16_t status_monitor_failures;  /* its status monitor's (0x5202c) */
 } gps_statistics;
 
-/* In the Z3815A 4010, the NMEA framer's record, its gps_response_buffer:
- * the sentence its gps_receive frames from its '$', one character at a
- * time through its state table, each state's transitions a predicate of
- * the character and the record and an action on them.  Its length is to
- * gps_counts, the last field's bound.  This image frames Oncore binary
- * into gps_response_buffer (0x101428), and nothing here uses the type. */
-typedef struct nmea_frame {
-  char text[0x52];            /* +0x00: the sentence, a NUL for each comma */
-  uint8_t* cursor;            /* +0x52: gps_response_cursor, the next place */
-  uint8_t fields;             /* +0x56: the fields ended so far */
-  uint8_t checksum_digits;    /* +0x57: those framed after '*', to 2 */
-  uint8_t field_starts[0x14]; /* +0x58: each field's offset in text,
-                                 the first 1, past the '$' */
-} nmea_frame;
-
 #include "../../common/types/exception_record.h"
 
 #include "../../common/types/os.h"
@@ -3035,28 +2601,6 @@ typedef enum __attribute__((packed)) log_event_code {
 #include "../../common/types/interpolator_calibration.h"
 
 #include "../../common/types/scpi_setting_param.h"
-
-/* The words the numeric and setting descriptors' group_cell points at,
- * one for each command group (0x1024de, 12 bytes, up to interval_reading
- * at 0x1024ea), placed by the descriptors' 81 group_cell pointers, each
- * word's descriptors a run of their own.  No code refers to them, so each
- * is a word by their spacing alone.  Named as the Z3815A 4010's, whose
- * groups are the Z3805A's but that none is :SAMPle's, so that the second,
- * the Z3805A's sample, is named for its first, :GPS:INITial; here the
- * fourth is SER1's. */
-typedef struct scpi_group_cells_fields {
-  uint16_t serial_1;    /* +0x00: three descriptors' with no name here
-                           (0x441ca on) */
-  uint16_t gps_initial; /* +0x02: :GPS:INITial's, :SYSTem:PRINt's and
-                           others' (0x44278 on) */
-  uint16_t pulse;       /* +0x04: the output state's, in nv_save's second
-                           table, and :PULSe's (0x44480 on) */
-  uint16_t serial_2;    /* +0x06: :SYSTem:COMMunicate:SER1's and :FDUPlex's
-                           (0x445b8 on) */
-  uint16_t status;      /* +0x08: :STATus's (0x4462a on) */
-  uint16_t rest;        /* +0x0a: every other descriptor's, 0x44798 to
-                           0x451c4 */
-} scpi_group_cells_fields;
 
 #include "../../common/types/scpi_action_param.h"
 
@@ -3242,32 +2786,6 @@ typedef struct nv_settings_fields {
 
 #include "../../common/types/counter_work_state.h"
 
-/* In the Z3815A 4010, counter_configuration_fields.start_source_mode:
- * when its counter_arm sets FPGA_BIT_START_SOURCE to the configuration's
- * start source; any other value never.  This image's configuration and
- * FPGA have none, and nothing here uses the type. */
-typedef enum __attribute__((packed)) counter_start_source_mode {
-  COUNTER_START_SOURCE_WHEN_WANTED = 1,
-} counter_start_source_mode;
-
-/* In the Z3815A 4010, FPGA_BIT_START_SOURCE's values, in place in
- * register 2's bits 2 and 3,
- * EG.X and EG.Y: the source the FPGA's BG starts the count on, read from the
- * netlist (docs/firmware/z3815a-trace.md, "Register port" and "Start,
- * stop and status bits").  Bit 2, EG.X, also gives P24 its level and
- * P25 the other while P27 is Low ("Every output pin"); the P24 levels
- * the names give assume P27 Low, which is not established.  The firmware
- * writes 0 at init and then 0x08, 0x0c and 0x00 through
- * counter_start_source_request, never 0x04 ("What the firmware takes from P35
- * and P84").  This image's FPGA has no start source field, and nothing
- * here uses the type. */
-typedef enum __attribute__((packed)) fpga_start_source {
-  FPGA_START_SOURCE_GPS_PPS = 0x00,      /* P82, the GPS 1 PPS */
-  FPGA_START_SOURCE_P84 = 0x04,          /* P84; never written */
-  FPGA_START_SOURCE_P78 = 0x08,          /* P78, P24 Low */
-  FPGA_START_SOURCE_P78_P24_HIGH = 0x0c, /* P78, P24 High */
-} fpga_start_source;
-
 /* The time-interval counter's configuration, counter_configuration at
  * 0x1024fc, which counter_arm and counter_read are given.  A mode and a
  * state go in pairs: the mode says when the work is done, the state asks
@@ -3326,67 +2844,6 @@ typedef struct satellite_list_entry {
   satellite_cell cell; /* +0x04 */
 } satellite_list_entry;
 
-/* In the Z3815A 4010, a card line of the status screen's heading, one
- * of its status_screen_card_lines: five, and a terminator whose text is
- * "-------------", which its status_screen picks by the snapshot's
- * redundancy_code. Nothing in this image uses the type. */
-typedef struct status_screen_card_line {
-  uint8_t code; /* +0x00: 1 "[ Standby ]", 2 "[ Unlocked ]", 0 "[ Active ]",
-                   3 "[ Blocked ]", 4 "[ ALARM ]" */
-  uint8_t field_01;
-  char* text; /* +0x02 */
-} status_screen_card_line;
-
-/* In the Z3815A 4010, the switch word's bits, the word at 0x302000
- * (switch_word, CS7), each named by its position: what most select is
- * not established (docs/firmware/z3815a-4010.md, "Not established").
- * Bit 12 picks the OCXO's warmth, the puck's or the oven monitor's, the
- * loop's longest time constant and the OCXO calibration's default a
- * (docs/firmware/restart.md, "The switch byte at 0x302000"); bit 13
- * makes a low antenna current a fault.  This image has no switch word,
- * CS7 a write window at 0x306000, and takes bit 12's choices from its
- * EEPROM's oscillator byte (docs/firmware/z3817a-3752.md, "Layout and
- * chip selects"); nothing here uses the type. */
-typedef enum __attribute__((packed)) switch_word_bit {
-  SWITCH_WORD_BIT_0 = 0x0001,
-  SWITCH_WORD_BIT_1 = 0x0002,
-  SWITCH_WORD_BIT_2 = 0x0004,
-  SWITCH_WORD_BIT_3 = 0x0008,
-  SWITCH_WORD_BIT_4 = 0x0010,
-  SWITCH_WORD_BIT_5 = 0x0020,
-  SWITCH_WORD_BIT_6 = 0x0040,
-  SWITCH_WORD_BIT_7 = 0x0080,
-  SWITCH_WORD_BIT_8 = 0x0100,
-  SWITCH_WORD_BIT_9 = 0x0200,
-  SWITCH_WORD_BIT_10 = 0x0400,
-  SWITCH_WORD_BIT_11 = 0x0800,
-  SWITCH_WORD_BIT_12 = 0x1000,
-  SWITCH_WORD_BIT_13 = 0x2000,
-  SWITCH_WORD_BIT_14 = 0x4000,
-  SWITCH_WORD_BIT_15 = 0x8000,
-} switch_word_bit;
-
-/* In the Z3815A 4010, the output's controller's state, its
- * output_control_state, which its output_control_step steps by its jump
- * table, each named by the debug texts it logs going to it and by
- * output_status' bits output_status_update gives it.  This image has no
- * output controller, and nothing here uses the type.  The texts name the
- * unlocked state standby going there from active ("STBY from ACT"), and
- * unlocked coming out of it ("ACT from UNLOCK", "STBY from UNLOCK"). */
-typedef enum __attribute__((packed)) output_control {
-  OUTPUT_CONTROL_WARMUP = 0,   /* "WARMUP from ACT, clock off" */
-  OUTPUT_CONTROL_WARMUP_1 = 1, /* warm-up's handler; nothing sets it */
-  OUTPUT_CONTROL_STANDBY = 2,
-  OUTPUT_CONTROL_ACTIVE = 3,
-  OUTPUT_CONTROL_UNLOCKED = 4,
-  OUTPUT_CONTROL_HARDWARE_FAULT = 5, /* alarm_hardware_update's fault */
-  OUTPUT_CONTROL_BLOCKED = 6,        /* "BLK from ACT, user", "other card" */
-  OUTPUT_CONTROL_BLOCK_HOLD = 7,     /* input 1 back or the output disabled */
-  OUTPUT_CONTROL_EXTRACTED = 8,      /* "BLK from ACT, extractor" */
-  OUTPUT_CONTROL_BLOCK_RELEASE = 9,  /* to warm-up on input 1, an enable or
-                                        60 s */
-} output_control;
-
 /* In the Z3815A 4010, the output's state, its output_state_get's, from
  * output_status' bits in this order: bit 6, then bit 0, then bit 1, then
  * bit 3 without bit 2, else unlocked.  Its :OUTPut:STATe? reports each by
@@ -3402,85 +2859,6 @@ typedef enum __attribute__((packed)) output_state {
   OUTPUT_BLOCKED = 3,  /* bit 3, bit 2 clear */
   OUTPUT_ALARM = 4,    /* bit 6, ahead of the others */
 } output_state;
-
-/* In the Z3815A 4010, :OUTPut:STATe?'s response, the index of its
- * keyword in the choices of its response item
- * (scpi_choice_keywords_response_OUTPut_STATe_1). Nothing in this image uses
- * the type. */
-typedef enum __attribute__((packed)) output_state_choice {
-  OUTPUT_STATE_CHOICE_ACTIVE = 0,
-  OUTPUT_STATE_CHOICE_ALARM = 1,
-  OUTPUT_STATE_CHOICE_BLOCK = 2,
-  OUTPUT_STATE_CHOICE_STANDBY = 3,
-  OUTPUT_STATE_CHOICE_UNLOCK = 4,
-} output_state_choice;
-
-/* In the Z3815A 4010, the ES message's status byte, its es_status's bits
- * for a date, named by what sets each: the time not valid or no GPS-UTC offset;
- * a leap second pending on the date, its minute longer than 60 seconds or not;
- * the output's state standby or active (output_state_get); the loop in holdover
- * or its recovery; the time GPS's, nv_settings.gps_utc clear; and drtb_puts
- * sending on channel B (drtb_sending).  What each means to the receiving unit
- * is not established.  This image has no ES message, and nothing here uses the
- * type. */
-typedef enum __attribute__((packed)) es_status_bit {
-  ES_STATUS_TIME_INVALID = 0x01,
-  ES_STATUS_LEAP_LONGER = 0x02,
-  ES_STATUS_LEAP_SHORTER = 0x04,
-  ES_STATUS_STANDBY = 0x08,
-  ES_STATUS_HOLDOVER = 0x10,
-  ES_STATUS_ACTIVE = 0x20,
-  ES_STATUS_GPS_TIME = 0x40,
-  ES_STATUS_DRTB_SENDING = 0x80,
-} es_status_bit;
-
-/* In the Z3815A 4010, the ES message's error byte, es_error, its
- * es_error_update's bits, named by what sets each: the switch word's bit 10
- * (switch_word_bit_10); the output's state alarm or blocked
- * (output_state_get); hmon_check_antenna_current's fault; the
- * :STATus:OPERation:HARDware condition's bit 6, the EFC near its limit;
- * holdover_duration_exceeded; and clock_deviation_alarm.  What each means
- * to the receiving unit is not established. Nothing in this image uses the
- * type. */
-typedef enum __attribute__((packed)) es_error_bit {
-  ES_ERROR_SWITCH_WORD_BIT_10 = 0x01,
-  ES_ERROR_ALARM = 0x02,
-  ES_ERROR_ANTENNA_CURRENT = 0x08,
-  ES_ERROR_EFC_NEAR_LIMIT = 0x10,
-  ES_ERROR_HOLDOVER_DURATION_EXCEEDED = 0x20,
-  ES_ERROR_BLOCKED = 0x40,
-  ES_ERROR_CLOCK_DEVIATION = 0x80,
-} es_error_bit;
-
-/* In the Z3815A 4010, why the output is inactive, its
- * output_inactive_cause, a word, which its output_control_step sets as it
- * leaves active, each value named by the keyword :OUTPut:INACtive?
- * reports for it, or, 5, by the debug text "STBY from ACT, time
- * deviation": the query reports 0, 5 and any other as NONE
- * (docs/firmware/quirks.md), and its output_control_reset clears it.
- * Nothing in this image uses the type. */
-typedef enum output_inactive_value {
-  OUTPUT_INACTIVE_NONE = 0,
-  OUTPUT_INACTIVE_HARD = 1,
-  OUTPUT_INACTIVE_HOLD = 2,
-  OUTPUT_INACTIVE_MANUAL = 3,
-  OUTPUT_INACTIVE_EXTERNAL = 4,
-  OUTPUT_INACTIVE_TIME_DEVIATION = 5,
-  OUTPUT_INACTIVE_EXTRACTOR = 6,
-} output_inactive_value;
-
-/* In the Z3815A 4010, :OUTPut:INACtive?'s response, the index of its
- * keyword in the choices of its response item
- * (scpi_choice_keywords_response_OUTPut_INACtive_1). Nothing in this image uses
- * the type. */
-typedef enum __attribute__((packed)) output_inactive_choice {
-  OUTPUT_INACTIVE_CHOICE_EXTERNAL = 0,
-  OUTPUT_INACTIVE_CHOICE_EXTRACTOR = 1,
-  OUTPUT_INACTIVE_CHOICE_HARD = 2,
-  OUTPUT_INACTIVE_CHOICE_HOLD = 3,
-  OUTPUT_INACTIVE_CHOICE_MANUAL = 4,
-  OUTPUT_INACTIVE_CHOICE_NONE = 5,
-} output_inactive_choice;
 
 /* A status snapshot, status_snapshot's record (0x50c3c), which the
  * status screen prints: 0x170 bytes, status_snapshot_latest (0x1019c8)

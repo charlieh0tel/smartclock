@@ -917,6 +917,137 @@ where the 58503A's has a pad; the 58503A's `field_14` is
 `:DIAGnostic:REFerence:EXTernal:QUEStionable:HYSTeresis`'s
 ([`z3815a-4010.md`](z3815a-4010.md); its `check-layout.c`).
 
+### The Z3817A 3752's record
+
+**Read** from the image's code and bytes, but where marked.  Two
+records of `0xa0` bytes, `nv_records` at EEPROM `0x4000c0` and
+`0x400160` (the stride `nv_slot_valid` computes, `0x43976` to
+`0x43980`), the 58503A's shape with the Z3817A's tag and revision:
+
+| Offset | Field | Value | Shown by |
+| ------ | ----- | ----- | -------- |
+| `+0x00` | `tag` | "M1" (`0x43e7d`, after the model's NUL) | `nv_save` (`0x43734`) writes it; `nv_slot_valid` (`0x4396c`) and `nv_records_valid` (`0x439da`) compare 2 bytes |
+| `+0x02` | `checksum` | the byte sum `s` of bytes 8 to `0x9f`, as `s << 8 \| ~s` | `nv_checksum` (`0x436da`) |
+| `+0x04` | `sequence` | one past that of the record in the slot written | `nv_save` |
+| `+0x08` | `revision` | 8 bytes from `0x23080`: "3752", NULs | `nv_save` copies, `nv_slot_valid` compares, 8 bytes |
+| `+0x10` | `packed` | 36 longs: the settings, then `0xff` | `nv_save`, `nv_load_slot` (`0x43a38`) |
+
+*Packing.*  `nv_save` walks its first table, `nv_numeric_params`
+(`0x43bda`, 23 numeric descriptors, the loop's bound `0x17`), then its
+second, `nv_setting_params` (`0x43c36`, 19 setting descriptors, `0x13`),
+and puts each value in turn in the bits its descriptor's `nv_widths`
+give, the magnitude of the width, from a long's top bit down; a value
+that would not fit in what is left of a long starts the next, the
+long's unused low bits 0; a 32-bit value is copied whole.  The longs
+after the last are `0xff` ("Warning: Entire nv register is being used"
+if none are left).  `nv_load_slot` reverses it, sign-extending a value
+whose width is negative.  Every width is fixed, so each value has a
+fixed place, given below as the long's offset in the record and the
+value's top bit; the last values fall in the long at `+0x64`, so
+`+0x68` to `+0x9f` are always `0xff`.
+
+*Selection.*  A record is good when its tag is "M1", its checksum holds
+and its revision is the image's 8 bytes (`nv_slot_valid`), so a record
+another revision wrote is not loaded.  `nv_restore` (`0x4360e`) loads
+slot 0; failing that, slot 1, and then erases slot 0
+(`nv_slot_erase`, `0x435d0`, writes `0xff` to the tag's first byte).
+Failing both, it sets `nv_settings_defaulted`, sets the word at
+`0x100e36`, which `selftest_eeprom` reads (`0x27ad2`), only when
+neither slot has the tag and a good checksum whatever its revision
+(`nv_records_valid`), copies `nv_settings_defaults` (`0x4146e`, `0xcb`
+bytes) over `nv_settings` (`0x1023d2`), picks slot 0 when slot 0's
+sequence is `0xffffffff` or no greater than slot 1's while slot 1's is
+not `0xffffffff`, else slot 1, erases the other, saves into the one
+picked and reports status 0x11.  `nv_save` writes all `0xa0` bytes to
+slot `nv_slot` (`0x1024b1`) only when `nv_record_differs` (`0x43708`)
+finds the tag, the checksum or a byte from `+0x08` on changed; the
+sequence is not compared.  `clear_nv` (`0x435fc`) erases both slots.
+
+*The settings.*  `nv_settings`, `0xcb` bytes, ends with
+`debug_output` at `0x10249c` (`nv_restore`'s copy, its length
+`0x10249d` less `0x1023d2`, `0x4366e`; the call `0x43688`).  Each
+field is the value of the descriptor that points at it (its `+0x16`, a
+setting's `+0x0c`); Table gives the descriptor's table and index (1.n
+`nv_numeric_params`' entry n, 2.n `nv_setting_params`'), Bits
+its `nv_widths`, negative for a signed value; Record the long's offset
+in the record and the value's top bit in it, 31 the long's top; Default the bytes at `nv_settings_defaults`.
+The field names are the 58503A 3704's and the Z3815A 4010's.
+
+| Offset | Field | Type | Setting (descriptor) | Table | Bits | Record | Default | Units |
+| ------ | ----- | ---- | -------------------- | ----- | ---- | ------ | ------- | ----- |
+| `+0x00` | `field_00` | `uint8_t[2]` | none; only `nv_restore`'s copy | | | | 0, 0 | |
+| `+0x02` | `elevation_mask` | `int32_t` | `:GPS:EMANgle` (`0x44c60`) | 1.1 | 7 | `+0x10`.19 | 10 | degrees |
+| `+0x06` | `antenna_delay` | `int32_t` | `:GPS:ADELay` (`0x44c9e`) | 1.2 | 20 | `+0x14`.31 | 0 | ns: the query multiplies by 1e-9 (`0x3d0a0`) |
+| `+0x0a` | `douglas_duration` | `int32_t` | `:DOUGlas:DURation` (`0x44be4`) | 1.3 | 20 | `+0x18`.31 | 7200 | s (inferred) |
+| `+0x0e` | `douglas_duration_infinite` | `uint8_t` | `:DOUGlas:DURation INFinity` (`0x44fa0`) | 2.9 | 1 | `+0x64`.21 | 0 | |
+| `+0x0f` | `tracking_log` | `uint8_t` | `:DIAG:GPS:TRACking:LOG` (`0x45174`) | 2.17 | 1 | `+0x64`.12 | 0 | |
+| `+0x10` | `questionable_hysteresis` | `int32_t` | `:DIAG:REF:GPS:QUES:HYSTeresis` (`0x4510a`) | 1.21 | 10 | `+0x60`.14 | 60 | open |
+| `+0x14` | `external_questionable_hysteresis` | `int32_t` | none: only the table refers to its descriptor (`0x45148`); `gps_init` passes it to `ext_reference_hysteresis_set` (`0x52a54`) | 1.22 | 4 | `+0x60`.4 | 0 | open |
+| `+0x18` | `holdover_status_threshold` | `int32_t` | `:ROSC:HOLD:DUR:STAT:THR` (`0x44c22`) | 1.10 | 22 | `+0x38`.31 | 86400 | s (inferred) |
+| `+0x1c` | `limit_threshold` | `float` | `:ROSC:LIMit:THReshold` (`0x448e0`) | 1.8 | 32 | `+0x30`.31 | 1.0e-5 | open |
+| `+0x20` | `holdover_limit_threshold` | `float` | `:ROSC:HOLD:LIMit:THReshold` (`0x4491c`; its setter `0x407c4`) | 1.9 | 32 | `+0x34`.31 | 1.0e-6 | open |
+| `+0x24` | `holdover_limit_state` | `holdover_limit_setting` | `:ROSC:HOLD:LIMit:STATe` (`0x44898`) | 2.6 | 1 | `+0x64`.24 | 0, `HOLDOVER_LIMIT_ON` | |
+| `+0x25` | `douglas_state` | `uint8_t` | `:DOUGlas:STATe` (`0x44844`) | 2.2 | 1 | `+0x64`.30 | 0 | |
+| `+0x26` | `position[3]` | `int32_t[3]` | `:GPS:POSition` (`0x44eba`) | 1.6 | 32, 32, -24 | `+0x20`.31, `+0x24`.31, `+0x28`.31 | 0, 0, 0 | mas, mas, cm |
+| `+0x32` | `ignored_satellites` | `uint32_t` | `:GPS:SAT:TRAC:IGNore` (`0x44d52`) | 1.7 | 32 | `+0x2c`.31 | 0 | |
+| `+0x36` | `time_zone[2]` | `int32_t[2]` | `:PTIMe:TZONe` (`0x44da0`) | 1.0 | -5, -7 | `+0x10`.31, `+0x10`.26 | 0, 0 | hours, minutes |
+| `+0x3e` | `prediction_duration` | `int32_t` | `:KENneth:PREDicted:DURation` (`0x44dde`) | 1.11 | 20 | `+0x3c`.31 | 86400 | s (inferred) |
+| `+0x42` | `leap_date` | `uint32_t` | none: only the table refers to its descriptor (`0x44e1c`) | 1.5 | 28 | `+0x1c`.31 | `0x07ca0101`, 1994-01-01, as `leap_settings_clear` (`0x4b8ee`) leaves it | year `<< 16 \|` month `<< 8 \|` day |
+| `+0x46` | `leap_minute_length` | `int32_t` | none (`0x44e5a`) | 1.4 | 6 | `+0x18`.11 | 60 | s |
+| `+0x4a` | `leap_pending` | `uint8_t` | none (`0x4487c`) | 2.4 | 1 | `+0x64`.28 | 0 | |
+| `+0x4b` | `raim_state[2]` | `uint8_t[2]` | `:DIAG:GPS:POS:HOLD:RAIM:STATe` (`0x45012`) | 2.15 | 1, 1 | `+0x64`.15, `+0x64`.14 | 1, 0 | |
+| `+0x4d` | `pad_4d` | `uint8_t` | none | | | | 0 | |
+| `+0x4e` | `raim_threshold[2]` | `int32_t[2]` | `:DIAG:GPS:POS:HOLD:RAIM:THR` (`0x45050`) | 1.19 | 16, 16 | `+0x5c`.31, `+0x5c`.15 | 10, 20 | |
+| `+0x56` | `holdover_measurement_threshold` | `int32_t` | `:ROSC:HOLD:DUR:MEAS:THR` (`0x4508e`) | 1.20 | 17 | `+0x60`.31 | 25200 | s (inferred) |
+| `+0x5a` | `status_enable[7]` | `uint32_t[7]` | `*ESE`, `*SRE`, `:STATus ... ENABle` (`0x446a6`) | 1.12 | 8, 8, 7, 2, 3, 4, 15 | `+0x3c`.11, `+0x40`.31, `+0x40`.23, `+0x40`.16, `+0x40`.14, `+0x40`.11, `+0x44`.31 | 136, 0, 36, 3, 7, 8, 32735 | masks |
+| `+0x76` | `status_positive_transition[5]` | `uint32_t[5]` | `:STATus ... PTRansition` (`0x44728`) | 1.13 | 7, 2, 3, 4, 15 | `+0x44`.16, `+0x44`.9, `+0x44`.7, `+0x44`.4, `+0x48`.31 | 127, 2, 7, 15, 29663 | masks |
+| `+0x8a` | `status_negative_transition[5]` | `uint32_t[5]` | `:STATus ... NTRansition` (`0x44754`) | 1.14 | 7, 2, 3, 4, 15 | `+0x48`.16, `+0x48`.9, `+0x48`.7, `+0x48`.4, `+0x4c`.31 | 0, 0, 0, 0, 0 | masks |
+| `+0x9e` | `log_wrap` | `uint8_t` | `:DIAG:LOG:WRAP` (`0x45190`) | 2.18 | 1 | `+0x64`.11 | 1 | |
+| `+0x9f` | `questionable_user` | `uint8_t` | `:STAT:QUES:...:USER` (`0x44612`) | 2.8 | 1 | `+0x64`.22 | 0 | |
+| `+0xa0` | `serial_restricted` | `uint8_t` | `:DIAG:SER1:RESTricted` (`0x44fbc`) | 2.14 | 1 | `+0x64`.16 | 1 | |
+| `+0xa1` | `pulse_state` | `uint8_t` | `:PULSe:CONTinuous:STATe` (`0x44484`) | 2.12 | 1 | `+0x64`.18 | 0 | |
+| `+0xa2` | `pulse_period` | `int32_t` | `:PULSe:CONTinuous:PERiod` (`0x444b2`) | 1.15 | 26 | `+0x50`.31 | 1 | |
+| `+0xa6` | `pulse_start_time[3]` | `int32_t[3]` | `:PULSe:STARt:TIME` (`0x44512`) | 1.16 | 5, 6, 6 | `+0x50`.5, `+0x54`.31, `+0x54`.25 | 0, 0, 0 | hour, minute, second |
+| `+0xb2` | `pulse_start_date[3]` | `int32_t[3]` | `:PULSe:STARt:DATE` (`0x44572`) | 1.17 | 12, 4, 5 | `+0x54`.19, `+0x54`.7, `+0x58`.31 | 1994, 1, 1 | year, month, day |
+| `+0xbe` | `field_be` | `int32_t` | none: only the table refers to its descriptor (`0x450cc`, 0 to 50000) | 1.18 | 16 | `+0x58`.26 | 0 | |
+| `+0xc2` | `output_state` | `uint8_t` | `:OUTPut:STATe` (`0x44468`) | 2.11 | 1 | `+0x64`.19 | 0 | |
+| `+0xc3` | `format_data` | `data_format` | `:FORMat:DATA` (`0x44f66`) | 2.13 | 1 | `+0x64`.17 | 0 | |
+| `+0xc4` | `memory_save` | `uint8_t` | `:ROBin:MEMory:SAVE` (`0x44f84`) | 2.10 | 1 | `+0x64`.20 | 0 | |
+| `+0xc5` | `antenna_current_alarm` | `uint8_t` | `:DIAG:GPS:ACURrent:ALARm` (`0x44ff4`) | 2.16 | 1 | `+0x64`.13 | 1 | |
+| `+0xc6` | `douglas_state_powerup` | `uint8_t` | `:DOUGlas:STATe:POWerup` (`0x448b4`) | 2.7 | 1 | `+0x64`.23 | 1 | |
+| `+0xc7` | `tcode_format` | `timecode_format` | `:PTIMe:TCODe:FORMat` (`0x44f48`; its setter `0x3edc6`; at most 5) | 2.5 | 3 | `+0x64`.27 | 2, `TIMECODE_T2` | |
+| `+0xc8` | `gps_utc` | `uint8_t` | `:DIAG:GPS:UTC` (`0x44860`) | 2.3 | 1 | `+0x64`.29 | 1 | |
+| `+0xc9` | `pforth_at_startup` | `uint8_t` | `:DIAG:SYSTem:PSTartup` (`0x44780`) | 2.0 | 1 | `+0x60`.0 | 0 | |
+| `+0xca` | `debug_output` | `uint8_t` | `:DIAG:SYSTem:DOUTput` (`0x4479c`) | 2.1 | 1 | `+0x64`.31 | 0 | |
+
+The units marked inferred are the commands' ranges read as seconds
+(`:DOUGlas:DURation` 600 to 864000), not traced through a handler.
+`position`'s and `time_zone`'s are the Z3805A's (above).
+
+*Against the others.*  The Z3805A 3543B's record is `0x80` bytes,
+"S" and "3543B", 28 longs, its checksum over bytes 8 to `0x7f`, from
+21 and 18 descriptors over `0xc5` bytes of settings (above).  The
+58503A 3704's ("CQ", "3704") and the Z3815A 4010's ("S3", "U-4010.0",
+[`z3815a-4010.md`](z3815a-4010.md)) are `0xa0` bytes, as the Z3817A's,
+from 23 and 18 descriptors over `0xcb` bytes and 24 and 19 over `0xcf`
+(their `check-layout.c`).  The Z3817A's settings are the 58503A's with
+`log_wrap` at `+0x9e`, where the 58503A's `questionable_user` is, its
+`questionable_user`, `serial_restricted` and `pulse_state` a byte
+further in, over the 58503A's `pad_a1`; equally they are the Z3815A's
+without `active_holdover_threshold` (the Z3815A's `+0x1c`), so that from
+`limit_threshold` on each field is four bytes nearer than the Z3815A's.
+As in the 58503A, nothing sets `external_questionable_hysteresis`
+(the 58503A's `field_14`), which the Z3815A's
+`:DIAGnostic:REFerence:EXTernal:QUEStionable:HYSTeresis` sets.  The
+four tags differ, so none of the four loads another's record.
+
+*The bench unit's.*  The EEPROM image
+(`images/eeprom/z3817a-3832A03064-eeprom.bin`) holds a good record in
+slot 0: "M1", checksum `0x8a75`, which holds, sequence `0xf5000000`,
+revision "3752"; its packed longs are the defaults' packed, bit for bit,
+so every setting above has its default value there.  Slot 1 is all
+`0xff`, erased.
+
 ## The time-interval counter's records
 
 `interval_reading` (`0x101f9c`, `interval_reading_fields`, 13 bytes)

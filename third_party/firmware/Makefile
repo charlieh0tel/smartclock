@@ -108,16 +108,27 @@ module-figures:
 # seeded images, SEEDED_IMAGES, each from DIFF_BASE_IMAGE, have their
 # names seeded from the same matches (seed-names); the Z3815A's diff
 # against the Z3805A is the comparison docs/firmware/z3815a-4010.md
-# reads.  The Z3801A's is docs/firmware/z3801a-3543.md's.  image-diff rewrites the TSVs, docs/firmware/58503a-3704.md's
+# reads.  The Z3801A's is docs/firmware/z3801a-3543.md's.  The Z3817A's
+# against the 58503A, the base it was not seeded from, is the comparison
+# docs/firmware/z3817a-3752.md reads; its diff against the Z3805A, the
+# base common/ came from, is the one check-common reads, the
+# Z3817A's export including common/.  image-diff rewrites the TSVs,
+# docs/firmware/58503a-3704.md's, docs/firmware/z3815a-4010.md's and
+# docs/firmware/z3817a-3752.md's
 # figures and, through seed-names, each seeded image's names;
 # check-image-diff fails if any is not what the images give.  Each
 # TSV's counts by status and module go to the image's work folder, as
 # image-diff-vs-BASE.err.
-SEEDED_IMAGES = 58503a-3704 z3815a-4010 z3801a-3543
+SEEDED_IMAGES = 58503a-3704 z3815a-4010 z3801a-3543 z3817a-3752
 DIFF_BASE_58503a-3704 = z3805a-3543b
 DIFF_BASE_z3815a-4010 = 58503a-3704
 DIFF_BASE_z3801a-3543 = z3805a-3543b
-IMAGE_DIFFS = $(foreach image,$(SEEDED_IMAGES),$(image):$(DIFF_BASE_$(image))) z3815a-4010:z3805a-3543b
+DIFF_BASE_z3817a-3752 = z3815a-4010
+IMAGE_DIFFS = $(foreach image,$(SEEDED_IMAGES),$(image):$(DIFF_BASE_$(image))) z3815a-4010:z3805a-3543b \
+	z3817a-3752:58503a-3704 z3817a-3752:z3805a-3543b
+# The diffs run with image_diff's --callee-ties, as their ports seed
+# (tools/firmware/seed_names.py's Port.callee_ties).
+CALLEE_TIES_DIFFS = z3817a-3752:z3815a-4010
 diff_image = $(word 1,$(subst :, ,$(1)))
 diff_base = $(word 2,$(subst :, ,$(1)))
 image_diff_tsv = $(ROOT)/docs/firmware/diff/$(call diff_image,$(1))-vs-$(call diff_base,$(1)).tsv
@@ -126,7 +137,8 @@ image_diff_run = mkdir -p $(call work,$(call diff_image,$(1))) && python3 -I $(R
 	--functions $(DECOMPILED_FOLDER)/$(call diff_base,$(1))/$(call diff_base,$(1)).conventions.jsonl \
 	--names $(ANALYSIS_FOLDER)/$(call diff_base,$(1))/names.tsv --modules $(ANALYSIS_FOLDER)/$(call diff_base,$(1))/modules.tsv \
 	--handlers $(ANALYSIS_FOLDER)/$(call diff_base,$(1))/handlers.txt $(ANALYSIS_FOLDER)/$(call diff_image,$(1))/handlers.txt \
-	--installer $(IMAGES_FOLDER)/$(call diff_base,$(1)).bin $(IMAGES_FOLDER)/$(call diff_image,$(1)).bin \
+	--installer $(if $(filter $(1),$(CALLEE_TIES_DIFFS)),--callee-ties) \
+	$(IMAGES_FOLDER)/$(call diff_base,$(1)).bin $(IMAGES_FOLDER)/$(call diff_image,$(1)).bin \
 	> $(call image_diff_work,$(1)).tsv 2> $(call image_diff_work,$(1)).err
 # The diff whose figures docs/firmware/58503a-3704.md gives
 # (tools/firmware/diff_figures.py).
@@ -134,23 +146,31 @@ FIGURES_DIFF = 58503a-3704:z3805a-3543b
 DIFF_FIGURES = python3 -I $(ROOT)/tools/firmware/diff_figures.py $(call image_diff_tsv,$(FIGURES_DIFF)) \
 	--functions $(DECOMPILED_FOLDER)/$(call diff_base,$(FIGURES_DIFF))/$(call diff_base,$(FIGURES_DIFF)).conventions.jsonl
 
+# The candidate bases' tables the image documents give
+# (tools/firmware/base_figures.py): docs/firmware/z3815a-4010.md's and
+# docs/firmware/z3817a-3752.md's.
+BASE_FIGURES = python3 -I $(ROOT)/tools/firmware/base_figures.py
+
 image-diff: seed-names
 	$(foreach diff,$(IMAGE_DIFFS),$(call image_diff_run,$(diff)) && \
 		cp $(call image_diff_work,$(diff)).tsv $(call image_diff_tsv,$(diff)) &&) true
 	$(DIFF_FIGURES) --write
+	$(BASE_FIGURES) --write
 
 check-image-diff: check-seed-names
 	$(foreach diff,$(IMAGE_DIFFS),$(call image_diff_run,$(diff)) && \
 		diff -u $(call image_diff_tsv,$(diff)) $(call image_diff_work,$(diff)).tsv &&) true
 	$(DIFF_FIGURES)
+	$(BASE_FIGURES)
 
 # Fail if an address a seeded image's hand-written C cites in a comment
 # is one its base's C, which it was copied from, cites too and is not
 # the image's own: not in the function the comment is in or comes
 # before, nor in a function or label the comment names, nor holding the
 # same bytes or label in both images (tools/firmware/comment_addresses.py).
+# A seeded image with no export yet has no hand-written C to check.
 check-comment-addresses:
-	$(foreach image,$(SEEDED_IMAGES),python3 -I $(ROOT)/tools/firmware/comment_addresses.py \
+	$(foreach image,$(filter $(EXPORTED_IMAGES),$(SEEDED_IMAGES)),python3 -I $(ROOT)/tools/firmware/comment_addresses.py \
 		--image $(image) --base $(DIFF_BASE_$(image)) &&) true
 
 # Fail if the hand-written C or a names file names a function with an
@@ -266,14 +286,15 @@ $(CPU32_LIBGCC): $(ROOT)/tools/firmware/cpu32_libgcc.py $(GCC_VENDORED)
 REPORT = report-decompiled.txt
 # The images whose function check the documents quote, each one's
 # sentences report_figures.py's CHECKS.
-REPORTED_IMAGES = z3805a-3543b 58503a-3704 z3801a-3543 z3815a-4010
+REPORTED_IMAGES = z3805a-3543b 58503a-3704 z3801a-3543 z3815a-4010 z3817a-3752
 # And those whose C is not yet all hand-written, whose document quotes
 # its function check, any failures and all: report-decompiled fails for
 # one only where the check does not run to its figures (an exit status
 # other than 1, the failed functions'), and its figures are checked
 # without a link check, which it does not pass yet
-# (report_figures.py --unfinished).  None is now: the Z3815A 4010 left it
-# once its link check passed.
+# (report_figures.py --unfinished).  The Z3815A 4010 left it once its
+# link check passed, and the Z3817A 3752, one from its first export,
+# once it joined common/ and its link check passed; none is now.
 UNFINISHED_IMAGES =
 FIGURED_IMAGES = $(REPORTED_IMAGES) $(UNFINISHED_IMAGES)
 unfinished = $(filter $(1),$(UNFINISHED_IMAGES))
@@ -292,8 +313,9 @@ report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1
 # and thunks -- and from its link check -- its functions required and
 # how each is defined -- as docs/firmware/README.md,
 # docs/firmware/rewrite.md, docs/firmware/58503a-3704.md,
-# docs/firmware/z3801a-3543.md, docs/firmware/z3815a-4010.md and
-# README.md quote them -- are not what the last make report-decompiled
+# docs/firmware/z3801a-3543.md, docs/firmware/z3815a-4010.md,
+# docs/firmware/z3817a-3752.md and README.md quote them -- are not what
+# the last make report-decompiled
 # and make check-link saved, or if any function of a reported image
 # failed; report-figures rewrites them.
 check-report-figures:

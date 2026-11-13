@@ -4297,15 +4297,27 @@ public class SmartClockExportC extends GhidraScript {
 	private Map<String, File> rewritten;
 
 	/**
-	 * The rewritten= folder's .h files, what its .c files share, which the
-	 * C includes before them; not BINDINGS', which it includes after its
-	 * prototypes.
+	 * The argument naming a folder whose headers alone the C includes,
+	 * headers=DIR, given before the rewritten= folders: for an image
+	 * whose hand-written C uses a folder's headers and bindings but does
+	 * not yet share that folder's C, as common/ before the image joins
+	 * it (docs/firmware/README.md, "Decompiling with Ghidra").
+	 */
+	private static final String HEADERS_ONLY = "headers=";
+
+	/**
+	 * The headers= and rewritten= folders' .h files, what the .c files
+	 * share, which the C includes before them; not BINDINGS', which it
+	 * includes after its prototypes.
 	 */
 	private List<File> rewrittenHeaders() {
 		List<File> headers = new ArrayList<>();
 		for (String arg : getScriptArgs()) {
 			if (arg.startsWith(REWRITTEN)) {
 				headers.addAll(rewrittenFiles(arg, ".h"));
+			}
+			else if (arg.startsWith(HEADERS_ONLY)) {
+				headers.addAll(rewrittenFiles(REWRITTEN + arg.substring(HEADERS_ONLY.length()), ".h"));
 			}
 		}
 		headers.removeAll(bindingHeaders());
@@ -4324,15 +4336,17 @@ public class SmartClockExportC extends GhidraScript {
 	 */
 	private static final Pattern BINDING_DEFINITION = Pattern.compile("static inline\\s[^;{}()]*?\\b(\\w+)\\s*\\(");
 
-	/** BINDINGS' headers, sorted by path. */
+	/**
+	 * BINDINGS' headers, each rewritten= and headers= folder's, sorted by
+	 * path, in their arguments' order.
+	 */
 	private List<File> bindingHeaders() {
 		List<File> headers = new ArrayList<>();
 		for (String arg : getScriptArgs()) {
-			if (arg.startsWith(REWRITTEN)) {
-				File folder = new File(arg.substring(REWRITTEN.length()), BINDINGS);
-				if (folder.isDirectory()) {
-					headers.addAll(rewrittenFiles(REWRITTEN + folder.getPath(), ".h"));
-				}
+			String prefix = arg.startsWith(REWRITTEN) ? REWRITTEN : arg.startsWith(HEADERS_ONLY) ? HEADERS_ONLY : null;
+			File folder = prefix == null ? null : new File(arg.substring(prefix.length()), BINDINGS);
+			if (folder != null && folder.isDirectory()) {
+				headers.addAll(rewrittenFiles(REWRITTEN + folder.getPath(), ".h"));
 			}
 		}
 		return headers;

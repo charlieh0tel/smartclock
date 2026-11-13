@@ -708,7 +708,27 @@ CORRECTIONS_TEXT_Z3817A = '''#   docs/firmware/z3817a-3752.md corrects four pair
 #   measured_uncertainty_compute 0x45dea, which
 #   measured_uncertainty_update calls (image_diff starts it at 0x45de4,
 #   in the request descriptor before it).
+#   Five functions whose bytes image_diff finds have no row, each the
+#   end of another function, which nothing calls or takes: mux_set, a
+#   bare rts, at 0x4d4ae, the return of 0x4d46e, timeref_select_apply,
+#   this image having no set_mux word to call it; sci_scpi_session_close
+#   at 0x3987e, status_byte_set_bits' call of status_update_rqs and its
+#   return; nmea_encode_nothing at 0x55fba, long_array_get_byte's last
+#   two instructions; return_one at 0x52af4, gps_request_admitted's
+#   return of 1, which its tests branch to (0x52acc, 0x52ade, 0x52ae8);
+#   and nmea_frame_any at 0x56698, gps_position_get's return of 1, which
+#   it branches to (0x5668e).
 '''
+# the functions whose bytes are another function's end, which nothing
+# calls: mux_set's, a bare rts, timeref_select_apply's return, the
+# image having no set_mux word, the Z3815A's diag_set_mux, to call it;
+# sci_scpi_session_close's, status_byte_set_bits' tail, its call of
+# status_update_rqs; nmea_encode_nothing's, long_array_get_byte's;
+# return_one's, gps_request_admitted's return of 1; nmea_frame_any's,
+# gps_position_get's
+DROPPED_FUNCTIONS_Z3817A = {('primary', 0x516da): 0x4d4ae, ('primary', 0x3c3ee): 0x3987e,
+                            ('primary', 0x5c568): 0x55fba, ('primary', 0x5172c): 0x52af4,
+                            ('primary', 0x5d482): 0x56698}
 LABELS_TEXT_Z3817A = '''.
 #   The functions whose few bytes match at more than one address are
 #   pinned where the Z3817A's callers name them: output_state_program
@@ -718,7 +738,7 @@ LABELS_TEXT_Z3817A = '''.
 #   three calls, for 0x39a7c.
 '''
 PORT_Z3817A_3752 = Port(folder='z3817a-3752', base_folder='z3815a-4010', second_base_folder='58503a-3704',
-                        pinned=PINNED_Z3817A,
+                        pinned=PINNED_Z3817A, dropped_functions=DROPPED_FUNCTIONS_Z3817A,
                         corrections=CORRECTIONS_Z3817A, confirmed=frozenset(CORRECTIONS_Z3817A),
                         corrections_text=CORRECTIONS_TEXT_Z3817A, labels_text=LABELS_TEXT_Z3817A,
                         callee_ties=True)

@@ -31,8 +31,10 @@ typedef struct duart_shadow_registers {
   uint8_t opcr;
   uint8_t output_reset; /* +0x0b: the output bits reset, the failed self-tests'
                            lamps */
-  uint8_t field_0c;     /* +0x0c: duart_init zeroes it, and nothing sets it;
-                           the Z3805A's duart_output_bit_set keeps the bits in
-                           output_reset while it is set, else in
+  uint8_t field_0c;     /* +0x0c: the DUART's set-up zeroes it, and in the
+                           Z3817A 3752 its duart_channels_init then sets it to
+                           1, where nothing in the others sets it; while it is
+                           set, the duart_output_bit_set that tests it keeps
+                           the bits in output_reset, else in
                            selftest.lamp_mask */
 } duart_shadow_registers;

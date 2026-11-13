@@ -16,7 +16,7 @@ trees, and how far each image is covered, at
 
 - **[Firmware](#the-firmware):** eight ROM images read and documented:
   the SCPI trees, the 1 PPS measurement, the disciplining loop, the GPS
-  engine interface, the pForth console.  Four are rewritten whole as C
+  engine interface, the pForth console.  Five are rewritten whole as C
   and checked against the image function by function.  The loop's
   update law, constants, aging feed-forward and start-up are analyzed
   as a control system ([the loop](https://charlieh0tel.github.io/smartclock/loop.html)), and the images'
@@ -43,9 +43,9 @@ Z3815A, Z3816A and Z3817A -- read off bench units through the pForth debug
 console or gathered from others.  [`docs/firmware/`](docs/firmware/)
 documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 
-### Four images in C
+### Five images in C
 
-Four images are rewritten whole as C: every C function of each, and of
+Five images are rewritten whole as C: every C function of each, and of
 the installer it unpacks into RAM, was decompiled by Ghidra through the
 project's scripts and then written again by hand, as each image's link
 from its hand-written C and assembly alone, every function required,
@@ -63,11 +63,12 @@ fixed.
 | 58503A 3704 | 1422 and 248 | 468 | [`58503a-3704.md`](docs/firmware/58503a-3704.md) |
 | Z3801A 3543 | 1300 and 237 | 467 | [`z3801a-3543.md`](docs/firmware/z3801a-3543.md) |
 | Z3815A 4010 | 1663 and 249 | 478 | [`z3815a-4010.md`](docs/firmware/z3815a-4010.md) |
+| Z3817A 3752 | 1421 and 249 | 473 | [`z3817a-3752.md`](docs/firmware/z3817a-3752.md) |
 
 The Z3805A's came first; its function check finds all agree but six
 whose difference is the firmware's own or one C cannot express, and none
 the harness cannot run.  Its method, checks and limits are those of all
-four.  The 58503A's C began as the Z3805A's and was rewritten to its
+five.  The 58503A's C began as the Z3805A's and was rewritten to its
 own code: of the primary's functions 1418 agree and 4 differ for the
 firmware's own reasons, and the installer's 248 agree, none the harness
 cannot run; its console sessions agree, 8 of 8.  Its document says what
@@ -76,8 +77,12 @@ it has that the Z3805A does not, the front panel among it.  The Z3801A's
 checks, and so is the Z3815A 4010, seeded from the 58503A's, which
 speaks NMEA to its GPS engine, a GT-74, and switches its output with
 another card's; its document lists what its code does not establish.
+The Z3817A 3752, seeded from the Z3815A's and the 58503A's, a timing
+module with no GPS engine of its own that disciplines its oscillator to
+one of two references, each a pulse and an Oncore stream, is held to
+them too.
 
-The C the four run alike lies once, in
+The C the five run alike lies once, in
 `third_party/firmware/rewritten/common/`, moved there only by the rules
 of [`rewrite.md`](docs/firmware/rewrite.md), "Shared C"; each image's
 own C is in `rewritten/IMAGE/`.  The firmware tree is split by kind --
@@ -243,7 +248,7 @@ inside its own frame.
 | [`docs/58503a-second-10mhz.md`](docs/58503a-second-10mhz.md) | enabling the 58503A's 10 MHz OUT B, J15 |
 | [`docs/oncore-leap-week.md`](docs/oncore-leap-week.md) | the 58503A's Time Reset at the end of GPS week 2441, and the 256-week leap-parameter bugs it resembles |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
-| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the four images in C |
+| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the five images in C |
 | [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md) | the rewrite's method, checks and limits, shown on the Z3805A 3543B, and the rules for shared C |
 | [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md) | the 58503A 3704 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |

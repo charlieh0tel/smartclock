@@ -51,6 +51,7 @@ SUMMARY = ROOT / 'README.md'
 DOCUMENT_58503A = ROOT / 'docs/firmware/58503a-3704.md'
 DOCUMENT_Z3801A = ROOT / 'docs/firmware/z3801a-3543.md'
 DOCUMENT_Z3815A = ROOT / 'docs/firmware/z3815a-4010.md'
+DOCUMENT_Z3817A = ROOT / 'docs/firmware/z3817a-3752.md'
 
 # function_check.py's line of a profile's counts, the installer's
 # labeled with its overlay
@@ -280,6 +281,23 @@ CHECKS = {
                     word(f['primary_reading'] + f['installer_reading']))),
         summary_row('Z3815A 4010'),
         link_sentence('Z3815A 4010'),
+    ),
+    'z3817a-3752': (
+        (DOCUMENT_Z3817A, sentence('| primary | {} | {} | {} | {} |'),
+         lambda f: (f['primary_agree'], f['primary_known'], f['primary_skipped'],
+                    f['primary_failed'])),
+        (DOCUMENT_Z3817A, sentence('| installer | {} | {} | {} | {} |'),
+         lambda f: (f['installer_agree'], f['installer_known'],
+                    f['installer_skipped'], f['installer_failed'])),
+        (DOCUMENT_Z3817A, sentence('Console sessions: {} of {} agree.'),
+         lambda f: (f['sessions_agree'], f['sessions_run'])),
+        (DOCUMENT_Z3817A, sentence(
+            "Every C function of the image is written by hand: the primary's {} and the "
+            "installer's {}, {} left as the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    word(f['primary_reading'] + f['installer_reading']))),
+        summary_row('Z3817A 3752'),
+        link_sentence('Z3817A 3752'),
     ),
 }
 

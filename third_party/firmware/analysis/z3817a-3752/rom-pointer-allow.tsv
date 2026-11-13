@@ -1,0 +1,10 @@
+# The ROM pointers of the hand-written C that
+# tools/firmware/rom_pointers.py finds and that stay as they are, each
+# with its reason (make check-rom-pointers).  Tab-separated: kind, where
+# (the file under rewritten/IMAGE/, or the function), base ('-' for a
+# literal), at (the literal as written, or the instruction's address),
+# found and reason.
+literal	log.c	-	0x7fffc	other	not an object but a bound, the ROM's last long: log_page_free_entry (0x42994) takes an entry whose format lies past it, an erased entry's among them, as free, no text in the image lying there
+operand	scpi_console_port	58503a-3704	0x3963e	other -> label	the session's port object, which this image's names label console_port (0x3991a) and the 58503A 3704's leave unlabeled (its own allowlist's 0x29090); the C returns the label's address
+operand	sci_scpi_port	z3805a-3543b	0x396e6	other -> label	this image's sci_scpi_port returns console_port (0x3991a), its one session's object, where the routine the diff pairs it with, the Z3805A 3543B's scpi_console_port, returns that image's console port object, unlabeled there; the C returns the label's address
+operand	fpga_read	z3815a-4010	0x451ec	in label -> in label	the address field's entry of fpga_bit_table, entry 1 of this image's own five (types/smartclock.h, fpga_bit_index) where it is entry 4 of the Z3815A 4010's eight; the C indexes its table by its own FPGA_BIT_ADDRESS

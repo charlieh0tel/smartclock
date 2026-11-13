@@ -158,10 +158,10 @@
     {
       "image": "z3817a-3752", "name": "Z3817A 3752", "model": "Z3817A",
       "design": "z3817a", "design_name": "Z3817A", "dialect": "Z3801",
+      "rewrite": "docs/firmware/z3817a-3752.md",
       "cells": {
         "gps": {"text": "Oncore (external)"},
         "loop": "wip",
-        "rewrite": "wip",
         "daemon": {
           "evidence": [{"dialect": "{model}", "is": "{dialect}"},
                        {"toml": "crates/smartclock/commands.toml", "key": "complete", "value": "{model}"}]

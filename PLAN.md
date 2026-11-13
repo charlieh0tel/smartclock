@@ -708,7 +708,7 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   enums sharing none of them.
   A more aggressive commonizing pass, which revisits them, is planned
   for later.
-  A function the diffs class identical or relocated in all four images
+  A function the diffs class identical or relocated in every image
   is not thereby shared: it moves only if gcc gives the same code for
   it in each, which most such functions miss for a field offset, a
   static helper or a callee of the image's own.  The owner declined
@@ -731,7 +731,30 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   and it joins `REPORTED_IMAGES` once its link check passes, where
   before a report with none failed had forced the move.  The Z3815A
   4010 joined it in its fifth link run (2026-11-05), leaving
-  `UNFINISHED_IMAGES` empty, the mechanism kept for the next image.
+  `UNFINISHED_IMAGES` empty, the mechanism kept for the next image;
+  the Z3817A 3752 was one from its first export (2026-11-11).  Until
+  it shared `common/` its export took common/'s headers and bindings
+  alone (`SmartClockExportC.java`'s `headers=`) and the C it needed to
+  compile, and the C its function check found the decompiler's wrong
+  for, was copied into its own folder, as the Z3815A's first export
+  copied its base's; such an image does not count as sharing
+  `common/` for `make check-common`.  Its waves wrote the rest of its
+  functions, each from the closest base's copy or the decompiler,
+  read beside the image's instructions, its own types, headers and
+  names where the bases' did not fit, never bent to the Z3815A's,
+  until `make report-link IMAGE=z3817a-3752` listed only what
+  `common/` defines and fits.  The join (2026-11-13), a wave of its
+  own, split out of `common/`, into the four reported images' own C,
+  every function the Z3817A's diff against the Z3805A, the base
+  `check-common` compares by, finds not identical or relocated, and
+  those whose data differs there (holdover's TI statistic, the
+  self-test list, the counter's preset, the region report's
+  heading, the DUART's overrun message); dropped the image's copies of what `common/` defines; and
+  named in its names file what `common/`'s C names, where the seeding
+  had left it unnamed or named for the Z3815A's twins
+  (`docs/firmware/z3817a-3752.md`, "Joining `common/`").  Its link
+  check then passed, and it joined `REPORTED_IMAGES` the same day,
+  leaving `UNFINISHED_IMAGES` empty again.
 - **Per-image tool tables**: what the function check gives an image
   other than the Z3805A 3543B is kept in tables keyed by image or held
   by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`,
@@ -772,6 +795,14 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   a difference from another image's function of the name going into
   the note, and `make check-plain-names` fails on a suffixed name in
   the hand-written C or a names file.
+  A port whose base lacks code another image has takes a second base
+  (`Port.second_base_folder`): the functions the base's matches find
+  new are seeded from the second base's matches where those carry
+  them, with its ROM tables at addresses and names free, each row
+  noted as the second base's (the Z3817A's Oncore code from the
+  58503A, 2026-11-11); the Z3815A had named its SCI routines from the
+  Z3805A by hand rows instead.  A primary function matched inside the
+  installer's records, the installer's copy's bytes, has no row.
 
 ### The FPGA designs as netlists
 

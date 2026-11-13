@@ -624,11 +624,11 @@ The checks need no Ghidra: the export is checked in.
 
 Each is also a top-level target (`make check-decompiled`).  Without
 `IMAGE` each runs for every image it can: `check-link` and
-`report-decompiled` for the four reported images, each one's function
+`report-decompiled` for the five reported images, each one's function
 check held to the same standard ([`58503a-3704.md`](58503a-3704.md),
 "The function check").  Those two run each image as a target of its
-own, `report-decompiled/IMAGE`, so that `make -j4 report-decompiled`
-runs the four at once; each image's output goes to its
+own, `report-decompiled/IMAGE`, so that `make -j5 report-decompiled`
+runs the five at once; each image's output goes to its
 `report-decompiled.log` (or `check-link.log`), printed in the images'
 order once all have run, and the target fails if any image did.  The
 logs are in each image's work folder, beside its results, which for
@@ -742,4 +742,10 @@ are known and 0
 skipped, none failed, and the installer's 237 agree, 0 skipped; its
 console sessions agree, 8 of 8.  The Z3801A 3543's link requires all
 2017 of its functions and finds each defined: 1537 by hand-written C,
-468 by assembly and 12 as another routine's name.
+468 by assembly and 12 as another routine's name.  The Z3817A
+3752's, [`z3817a-3752.md`](z3817a-3752.md), seeded from the Z3815A's
+and, for its Oncore code, the 58503A's, is the fifth image to share
+`common/`, every C function of it written by hand and held to the same
+standard.  The Z3817A 3752's link requires all 2155 of its functions and
+finds each defined: 1670 by hand-written C, 473 by assembly and 12 as another
+routine's name.

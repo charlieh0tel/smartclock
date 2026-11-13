@@ -1,13 +1,14 @@
 name: firmware
 
-# The Z3805A 3543B, 58503A 3704, Z3801A 3543 and Z3815A 4010 firmware's
+# The Z3805A 3543B, 58503A 3704, Z3801A 3543, Z3815A 4010 and Z3817A
+# 3752 firmware's
 # checks (docs/firmware/README.md, "The checks in CI"): the C's format,
 # the layouts, the decompiled C's bytes and bindings, each hand-written
 # file compiled alone, each image's link from its hand-written C and
 # assembly alone, every function required, every decompiled function
 # run against the image's own and the figures the documents give, the
-# SCPI trees, the module and pForth figures, the 58503A's, Z3801A's and
-# Z3815A's diffs and the names seeded from them, every image's
+# SCPI trees, the module and pForth figures, the 58503A's, Z3801A's,
+# Z3815A's and Z3817A's diffs and the names seeded from them, every image's
 # chip-select tables, the hand-written C's magic numbers and ROM
 # pointers, the addresses the 58503A's and Z3801A's C's comments cite,
 # and the shared C; the
@@ -21,7 +22,7 @@ name: firmware
 # repository in the fleet calls, and this needs an m68k toolchain,
 # clang, clang-format and uv the others do not; and so that it fails
 # on its own.  No Rust: none of these targets builds the workspace.  Most
-# of a run is report-decompiled's, the four images' function checks,
+# of a run is report-decompiled's, the five images' function checks,
 # as many at once as the runner has CPUs (make -j"$(nproc)").
 #
 # On pull requests and pushes to main, not on a branch's own pushes,
@@ -44,8 +45,8 @@ jobs:
     # with; 24.04's gcc 13 gives the same figures (docs/firmware/README.md,
     # "The checks in CI").  A preview image as of 2026-10.
     runs-on: ubuntu-26.04
-    # The four images' function checks, each case run again poisoned,
-    # took past 50 minutes on 2026-11-05.
+    # Four images' function checks, each case run again poisoned, took
+    # past 50 minutes on 2026-11-05; the Z3817A 3752's is a fifth.
     timeout-minutes: 90
     permissions:
       contents: read
@@ -165,6 +166,15 @@ jobs:
       - run: make check-magic-numbers IMAGE=z3815a-4010
         if: ${{ !cancelled() }}
       - run: make check-decompiled IMAGE=z3815a-4010
+        if: ${{ !cancelled() }}
+      # The Z3817A 3752's export, likewise.
+      - run: make check-types IMAGE=z3817a-3752
+        if: ${{ !cancelled() }}
+      - run: make check-scpi-tree IMAGE=z3817a-3752
+        if: ${{ !cancelled() }}
+      - run: make check-magic-numbers IMAGE=z3817a-3752
+        if: ${{ !cancelled() }}
+      - run: make check-decompiled IMAGE=z3817a-3752
         if: ${{ !cancelled() }}
       # Without IMAGE, for every reported image: fails if one does not link
       # from its hand-written C and assembly alone, every function

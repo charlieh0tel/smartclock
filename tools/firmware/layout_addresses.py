@@ -15,7 +15,14 @@ the image itself (docs/firmware/rewrite.md, "Shared C", rule 2):
   relocated, or changed at seed_names.THRESHOLD or more), is the
   address the image's instruction names, the most of them agreeing;
   so that a field the image's code reaches elsewhere in its record
-  shows as an offset of its own;
+  shows as an offset of its own; but an aligned instruction that names
+  another object is not one about this address, and does not count:
+  where the image's export declares the base's global of that address,
+  an instruction naming an address outside that global (the image's
+  routine works on another object, as the Z3817A 3752's work on its
+  SCI's driver and settings where the Z3815A 4010's work on DUART
+  channel B's, or the alignment paired two instructions that are not
+  each other's, one naming a routine);
 - any other address is the same offset into the global holding it, the
   base's export's, at the image's export's address for that global's
   name.
@@ -240,16 +247,24 @@ class Derivation:
         self.placed = {label.address: label.other for (region, _), label in seeding.labels.items()
                        if region == 'primary' and label.other is not None and label.other not in taken}
 
+    def another_object(self, name, other):
+        """Whether an aligned instruction naming the image's address
+        other, for a base address in the base's global name, names
+        another object: the image declares that global, and other is
+        not in it."""
+        return name in self.globals.by_name and self.globals.holding(other)[0] != name
+
     def address(self, address):
         """The image's address for a base address, and how, or None and
         why not."""
-        counted = self.votes.get(address)
+        name, offset = self.base_globals.holding(address)
+        counted = collections.Counter({other: count for other, count in self.votes.get(address, {}).items()
+                                       if not self.another_object(name, other)})
         if counted:
             ranked = counted.most_common(2)
             if len(ranked) > 1 and ranked[0][1] == ranked[1][1]:
                 return None, 'its references disagree: %s' % ', '.join('0x%x' % a for a, _ in ranked)
             return ranked[0][0], 'referenced'
-        name, offset = self.base_globals.holding(address)
         if name in self.globals.by_name:
             return self.globals.by_name[name] + offset, 'in ' + name
         start = address - offset if name is not None else None

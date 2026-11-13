@@ -17,7 +17,10 @@ that talks to an engine or stands in for one: the Oncore IDs and
 lengths of "Framing" and "The message table" with an encoder and a
 deframer, and the same for the Z3815A's NMEA sentences ("In every
 image").  Its tables hold only what an image sends or decodes, and its
-tests check them against the images' own.
+tests check them against the images' own.  Beside the framing it has a
+record of what an engine knows in one second -- time, leap second, fix,
+satellites, almanac, antenna -- holding only what the messages below
+carry, in their units.
 
 ## The serial link
 

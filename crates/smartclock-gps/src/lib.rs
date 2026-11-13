@@ -7,14 +7,21 @@
 //! ones among them ([`nmea`]).  `docs/firmware/gps.md` describes both
 //! links from the firmware's side.
 //!
-//! This crate covers only what the receivers' firmware sends and decodes,
-//! and so far only the framing: IDs, lengths, checksums, an encoder and a
-//! streaming deframer for each format.  It is not a general library for
-//! either engine.
+//! This crate covers only what the receivers' firmware sends and decodes.
+//! It is not a general library for either engine.  So far it has:
+//!
+//! - the framing: IDs, lengths, checksums, an encoder and a streaming
+//!   deframer for each format;
+//! - what an engine knows in one second, whichever engine it is: a
+//!   [`record`], in the integer [`units`] the messages carry, with GPS
+//!   [`time`], UTC and the calendar.
+//!
+//! What turns a record into an engine's messages is not here yet.
 //!
 //! It is `no_std` and does not allocate: an encoder writes into the
-//! caller's buffer, and a deframer owns a buffer of fixed size and lends
-//! each frame out of it.
+//! caller's buffer, a deframer owns a buffer of fixed size and lends
+//! each frame out of it, and a record is of fixed size, built in a
+//! `static` and filled in place.
 
 #![no_std]
 
@@ -25,6 +32,9 @@ use thiserror::Error;
 
 pub mod nmea;
 pub mod oncore;
+pub mod record;
+pub mod time;
+pub mod units;
 
 /// Which way a message travels on the engine's serial link.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

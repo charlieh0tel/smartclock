@@ -718,7 +718,7 @@ pll_stage_result startup_pll(bool same_stage) {
     loop_steering.readings = 0;
     loop_steering.seconds = 0;
     loop_steering.measurement_failed = 0;
-    loop_steering.large_offset_blocks = 0;
+    loop_steering.settled_blocks = 0;
     interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
     pll.startup_state = PLL_STARTUP_SETTLING;
     return pll_stages_check_causes(result);
@@ -736,16 +736,16 @@ pll_stage_result startup_pll(bool same_stage) {
   }
   switch (pll.startup_state) {
     case PLL_STARTUP_SETTLING:
-      if (loop_steering.large_offset_blocks < SETTLED_BLOCKS) {
+      if (loop_steering.settled_blocks < SETTLED_BLOCKS) {
         const bool settled =
             double_compare(
                 float_to_double(float_absolute_on_stack(loop_steering.ti_sum)),
                 SETTLED_TI) > 0;
 
         if (settled) {
-          loop_steering.large_offset_blocks++;
+          loop_steering.settled_blocks++;
         } else {
-          loop_steering.large_offset_blocks = 0;
+          loop_steering.settled_blocks = 0;
         }
       } else if (pll.aging_state == PLL_AGING_COLLECTING) {
         pll.startup_state = PLL_STARTUP_LENGTHENING;

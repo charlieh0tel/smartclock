@@ -20,9 +20,9 @@
 # The assembly routines, the pForth kernel and the installer's copies
 # have no row.  Rows go in the Z3805A's order: by module, layer by
 # layer, and within a module by subject.  A row whose reason ends
-# "row added by hand for the Z3801A 3543" is kept as it is, after
-# the seeded rows, for a function the seeding gives no row; it may not
-# take an address the seeding gives.
+# "row added by hand for the Z3801A 3543" is kept as it is: in
+# place of the seeded row of its address, which it corrects, or after
+# the seeded rows, for a function the seeding gives no row.
 0x4cc	boot_duart_early_init	platform/boot	the boot code (reset at 0x550), its own program ahead of the primary
 0x400	boot_duartb_loopback_check	platform/boot	the boot code (reset at 0x550), its own program ahead of the primary
 0xaa0	boot_unpack_installer	platform/boot	the boot code (reset at 0x550), its own program ahead of the primary

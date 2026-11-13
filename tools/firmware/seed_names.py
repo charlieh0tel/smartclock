@@ -265,7 +265,9 @@ HEADER = """\
 #   references agree, or one in an identical function, and more agree
 #   than on any other address.  Labels placed at one address are all
 #   dropped, and so is one whose references inside it outvote those at
-#   its start%(labels)s# - Missing functions, and tables or labels not placed so, have no row;
+#   its start%(labels)s# - Missing functions, functions matched inside the installer's
+#   records (the installer's copy, whose bytes they are, unpacked), and
+#   tables or labels not placed so, have no row;
 #   the functions image_diff finds new are listed, unnamed, at the end,
 #   with the %(called)d a bare import's analysis finds called that image_diff
 #   neither matches nor finds.  image_diff rejects a start that is text,
@@ -277,7 +279,22 @@ HEADER = """\
 #   the carried rows; the rest are the seeding's, which make
 #   check-image-diff checks.  A hand row may take a name the matches give
 #   another place only where a hand row takes that place too.%(hand_rows)s
+%(second)s#
+"""
+SECOND_HEADER = """\
+# - A function the matches find new, which the %(base_model)s has no
+#   counterpart of, is carried from the second base, the %(second_base)s's
+#   (third_party/firmware/analysis/%(second_folder)s/names.tsv), by the same rules and
+#   image_diff's matches between the %(second_model)s and this image,
+#   where it is identical, relocated or changed at %(threshold).2f or more
+#   there and its name is free; so are its local rows, and a ROM table
+#   the second base carries at an address and under a name no other row
+#   takes.  Its note ends "%(second_origin)s".
+"""
+SECOND_ROWS_HEADER = """\
 #
+# Rows from the second base, the %(second_base)s's, for the functions and tables
+# the %(base_model)s has no counterpart of
 """
 MODULES_HEADER = """\
 # The %(image)s firmware's C functions by module, seeded from the
@@ -302,9 +319,14 @@ MODULES_HEADER = """\
 # The assembly routines, the pForth kernel and the installer's copies
 # have no row.  Rows go in the %(base_model)s's order: by module, layer by
 # layer, and within a module by subject.  A row whose reason ends
-# "%(hand)s" is kept as it is, after
-# the seeded rows, for a function the seeding gives no row; it may not
-# take an address the seeding gives.
+# "%(hand)s" is kept as it is: in
+# place of the seeded row of its address, which it corrects, or after
+# the seeded rows, for a function the seeding gives no row.
+"""
+MODULES_SECOND_HEADER = """\
+#
+# The second base's, the %(second_base)s's rows, re-keyed as names.tsv's rows
+# from it are, for the functions the %(base_model)s has no counterpart of.
 """
 MODULES_HAND_HEADER = """\
 #
@@ -315,7 +337,8 @@ MODULES_HAND_HEADER = """\
 # Each image by its folder's name: its model and revision, as a
 # document names it.
 IMAGE_NAMES = {'z3805a-3543b': ('Z3805A', '3543B'), '58503a-3704': ('58503A', '3704'),
-               'z3815a-4010': ('Z3815A', '4010'), 'z3801a-3543': ('Z3801A', '3543')}
+               'z3815a-4010': ('Z3815A', '4010'), 'z3801a-3543': ('Z3801A', '3543'),
+               'z3817a-3752': ('Z3817A', '3752')}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -367,6 +390,15 @@ class Port:
     hand_rows_text: str = ''
     not_code_text: str = ''
     hand_figures: tuple = ()
+    # the second base's folder, which names what the base has no
+    # counterpart of (SECOND_HEADER), or none; and whether this port is
+    # itself a second base's, whose rows say so
+    second_base_folder: str = ''
+    second: bool = False
+    # whether image_diff moves a masked match to the byte match whose
+    # calls agree with it (image_diff.py's --callee-ties): the Makefile's
+    # CALLEE_TIES_DIFFS passes it for the same diffs
+    callee_ties: bool = False
 
     @property
     def image(self):
@@ -387,7 +419,12 @@ class Port:
     @property
     def origin(self):
         """How a carried row's note says where it came from."""
-        return 'from the %s, by image_diff' % self.base
+        return 'from the %s, by image_diff%s' % (self.base, ' as the second base' if self.second else '')
+
+    @property
+    def second_port(self):
+        """The port from the second base, its rows the second base's."""
+        return Port(folder=self.folder, base_folder=self.second_base_folder, second=True)
 
     @property
     def document(self):
@@ -403,13 +440,20 @@ class Port:
 
     def text(self, template):
         """A header, its fields this port's."""
-        return template % {
+        second = self.second_port if self.second_base_folder else None
+        fields = {
+            'second': '', 'second_base': second.base if second else '',
+            'second_model': second.base_model if second else '',
+            'second_folder': self.second_base_folder, 'second_origin': second.origin if second else '',
             'threshold': THRESHOLD, 'lead': LEAD, 'smallest': SMALLEST_BY_BYTES,
             'called': len(self.called_unlisted), 'hand': self.hand, 'image': self.image, 'model': self.model,
             'base': self.base, 'base_model': self.base_model, 'base_folder': self.base_folder,
             'document_name': os.path.basename(self.document), 'corrections': self.corrections_text,
             'labels': self.labels_text, 'tables': self.tables_text, 'hand_rows': self.hand_rows_text,
             'not_code': self.not_code_text}
+        if second:
+            fields['second'] = SECOND_HEADER % fields
+        return template % fields
 
 
 PORT_58503A_3704 = Port(
@@ -610,8 +654,76 @@ PORT_Z3801A_3543 = Port(folder='z3801a-3543', base_folder='z3805a-3543b', correc
                         confirmed=frozenset(CORRECTIONS_Z3801A), dropped=DROPPED_Z3801A,
                         corrections_text=CORRECTIONS_TEXT_Z3801A, labels_text=LABELS_TEXT_Z3801A,
                         hand_figures=(('names.tsv', r'(\d+) hand rows \("'),))
+# The Z3817A 3752's port from the Z3815A 4010 (docs/firmware/z3817a-3752.md,
+# "The base").
+# functions whose few bytes match at more than one address, pinned where
+# the Z3817A's callers name them: base function's (region, address) to
+# the address image_diff gives, which is asserted, the address pinned and
+# why
+PINNED_Z3817A = {
+    ('primary', 0x4be5c): (
+        0x47ca4, 0x47ca2,
+        "its 2 bytes, an rts, match more than one; pinned to 0x47ca2, which output_state_done calls (0x47d0c), "
+        "as the Z3815A's calls 0x4be5c"),
+    ('primary', 0x4be5e): (
+        0x47ca2, 0x47ca4,
+        "its 2 bytes, an rts, match more than one; pinned to 0x47ca4, which pulse_settings_done calls (0x47cfa), "
+        "as the Z3815A's calls 0x4be5e"),
+    ('primary', 0x3c636): (
+        0x39a7c, 0x39936,
+        "its 4 bytes match more than one; pinned to 0x39936, which scpi_interpret calls three times (0x38fe4, "
+        "0x39018, 0x3910e), as the Z3815A's calls 0x3c636"),
+}
+# the pairing docs/firmware/z3817a-3752.md corrects, confirmed by a
+# relocated caller's call where the Z3815A's calls the base function
+CORRECTIONS_Z3817A = {
+    ('primary', 0x3c63a): (0x3993a, "%s: scpi_interpret's call at 0x390d2, where the Z3815A's calls "
+                                    "scpi_input_closed (0x3bac8); image_diff pairs 0x39ac0, which returns 1"
+                           % 'docs/firmware/z3817a-3752.md'),
+    ('primary', 0x30942): (0x2f338, "%s: deferred_flush's call (0x2ffa4), where the Z3815A's calls printf "
+                                    "(0x31666); it formats into 160 bytes and writes them through console_write "
+                                    "(0x2f2ec), as the Z3815A's printf does through its own (0x308f6); image_diff "
+                                    "pairs it with duartb_printf, the same code but for its write's offset"
+                           % 'docs/firmware/z3817a-3752.md'),
+    ('primary', 0x2fda8): (0x2e7a2, "%s: sci_write's and sci_putc's calls (0x2f23c, 0x2f2a0), where the "
+                                    "Z3815A's call sci_puts (0x30846, 0x308aa); it returns 0 at once for no "
+                                    "length, as the installer's copy does, and image_diff pairs the code after "
+                                    "that test, 0x2e7ac, which nothing calls"
+                           % 'docs/firmware/z3817a-3752.md'),
+    ('primary', 0x49f24): (0x45dea, "%s: measured_uncertainty_update's call (0x4602e), where the Z3815A's "
+                                    "calls measured_uncertainty_compute (0x4a194); image_diff starts it 6 bytes "
+                                    "early, at 0x45de4, the pllc_request_b descriptor that "
+                                    ":DIAGnostic:REFerence:CPORt's handler pushes (0x3cae6)"
+                           % 'docs/firmware/z3817a-3752.md'),
+}
+CORRECTIONS_TEXT_Z3817A = '''#   docs/firmware/z3817a-3752.md corrects four pairings and carries them
+#   under their names, each by a relocated caller's call where the
+#   Z3815A's calls the function: scpi_input_closed is 0x3993a, which
+#   scpi_interpret calls once, at 0x390d2 (image_diff pairs 0x39ac0,
+#   which returns 1, at 1.000); printf 0x2f338, which deferred_flush
+#   calls (image_diff finds it missing and pairs 0x2f338 with
+#   duartb_printf, whose code differs only in its write's offset);
+#   sci_puts 0x2e7a2, which sci_write and sci_putc call (image_diff
+#   pairs 0x2e7ac, the code after its test for no length); and
+#   measured_uncertainty_compute 0x45dea, which
+#   measured_uncertainty_update calls (image_diff starts it at 0x45de4,
+#   in the request descriptor before it).
+'''
+LABELS_TEXT_Z3817A = '''.
+#   The functions whose few bytes match at more than one address are
+#   pinned where the Z3817A's callers name them: output_state_program
+#   and pulse_program, bare rts, at 0x47ca2 and 0x47ca4, which
+#   output_state_done and pulse_settings_done call, where image_diff
+#   swaps them; and scpi_message_done at 0x39936, by scpi_interpret's
+#   three calls, for 0x39a7c.
+'''
+PORT_Z3817A_3752 = Port(folder='z3817a-3752', base_folder='z3815a-4010', second_base_folder='58503a-3704',
+                        pinned=PINNED_Z3817A,
+                        corrections=CORRECTIONS_Z3817A, confirmed=frozenset(CORRECTIONS_Z3817A),
+                        corrections_text=CORRECTIONS_TEXT_Z3817A, labels_text=LABELS_TEXT_Z3817A,
+                        callee_ties=True)
 # Each seeded image's port, by its folder's name.
-PORTS = {port.folder: port for port in (PORT_58503A_3704, PORT_Z3815A_4010, PORT_Z3801A_3543)}
+PORTS = {port.folder: port for port in (PORT_58503A_3704, PORT_Z3815A_4010, PORT_Z3801A_3543, PORT_Z3817A_3752)}
 
 
 class Offsets(collections.Counter):
@@ -663,10 +775,11 @@ class Seeding:
     the base's typed labels likewise; label_target, each carried label's
     address in the image, note text and count key."""
 
-    def __init__(self, base_folder, folder):
+    def __init__(self, base_folder, folder, port=None):
         self.base_folder, self.folder = base_folder, folder
         base_name = os.path.basename(base_folder)
-        self.port = PORTS.get(os.path.basename(folder))
+        self.port = port or PORTS.get(os.path.basename(folder))
+        self.second_chosen = set()
         if self.port is None or self.port.base_folder != base_name:
             sys.exit('%s: no port from %s in seed_names.PORTS' % (folder, base_name))
         base_image = (FIRMWARE / 'images' / (base_name + '.bin')).read_bytes()
@@ -685,7 +798,7 @@ class Seeding:
                    ('installer', base_memories['installer'], other_memories['installer'], ([], {}))]
         self.matchers, self.results = {}, {}
         for region, base, other, pairs in regions:
-            matcher = image_diff.Matcher(base, other, items[region], starts[region], pairs)
+            matcher = image_diff.Matcher(base, other, items[region], starts[region], pairs, self.port.callee_ties)
             self.results[region] = matcher.run()
             self.matchers[region] = matcher
         # where each image's installer overlay ends: plain RAM from there
@@ -860,6 +973,7 @@ class Seeding:
             counts[counter_key] += 1
 
         corrected_others = {(r, o) for (r, _), (o, _) in self.port.corrections.items()}
+        _, records_extent = image_diff.installer_records(self.other_image)
         last_row = True
         for line in self.lines[self.body_start:]:
             if not line.strip():
@@ -902,6 +1016,9 @@ class Seeding:
                         sys.exit('%s: matched at 0x%x, not 0x%x; revisit the port\'s dropped_functions'
                                  % (name, other, self.port.dropped_functions[region, value]))
                     dropped['function matched at another routine\'s end'] += 1
+                    continue
+                if region == 'primary' and records_extent[0] <= other <= records_extent[1]:
+                    dropped["function matched in the installer's records"] += 1
                     continue
                 pin = self.port.pinned.get((region, value))
                 if pin is not None:
@@ -1014,7 +1131,11 @@ class Seeding:
         paragraph = ' '.join(l[2:] for l in cleaned[:first_end])
         cleaned = ['# ' + l for l in textwrap.wrap(paragraph, 70, break_on_hyphens=False)] + cleaned[first_end:]
 
+        second_rows = self.second_rows(seen_addresses, seen_names, new) if self.port.second_base_folder else []
+        new = [item for item in new if show(item[0], item[1]) not in self.second_chosen]
         out_rows, new = self.with_hand_rows(out_rows, new, seen_names)
+        if second_rows:
+            out_rows += [self.port.text(SECOND_ROWS_HEADER).rstrip('\n')] + second_rows
         text = [self.port.text(HEADER), '\n'.join(cleaned) + '\n',
                 INSTALLER_RECORDS % self.port.model + '\n' + '\t'.join(installer_row) + '\n#\n',
                 '\n'.join(out_rows) + '\n',
@@ -1024,7 +1145,8 @@ class Seeding:
                 '# analysis" that image_diff does not find, unnamed, for the rewrite\n'
                 '# waves: entry rows, which Setup makes a function at, keeping\n'
                 '# Ghidra\'s name, their note the extent in bytes and image_diff\'s\n'
-                '# summary.  A wave that names one makes it a function row.\n']
+                '# summary.  A wave that names one makes it a function row, or a\n'
+                '# label row where it is data.\n']
         text += ['%s\t%s\t\t%s\t%d bytes; %s\n' % (show(region, address), ENTRY, ENTRY_SOURCE, size, summary)
                  for region, address, size, summary in new]
         text.append('#\n# Leads: functions image_diff pairs with a %s function as changed\n'
@@ -1035,6 +1157,36 @@ class Seeding:
                  for region, address, name, method, similarity in sorted(weak_leads)]
         self.counts, self.dropped = counts, dropped
         return ''.join(text), carried
+
+    def second_rows(self, seen_addresses, seen_names, new):
+        """The second base's rows (SECOND_HEADER): its seeding's function
+        rows at the functions the base's matches find new, unless a lead
+        or under a name taken, their local rows, and its ROM tables at an
+        address and under a name no row takes; each name and address
+        taken added to seen_names and seen_addresses."""
+        self.second_seeding = Seeding(str(FIRMWARE / 'analysis' / self.port.second_base_folder), self.folder,
+                                      self.port.second_port)
+        self.second_text, self.second_carried = self.second_seeding.names()
+        origin = self.port.second_port.origin
+        new_addresses = {show(region, address) for region, address, _, _ in new}
+        seeded = [line.split('\t') for line in self.second_text.split('\n')
+                  if not line.startswith('#') and len(line.split('\t')) > 4 and origin in line.split('\t')[4]]
+        rows = []
+        for fields in seeded:
+            if fields[1] == 'function':
+                if fields[0] not in new_addresses or 'a lead' in fields[4]:
+                    continue
+                self.second_chosen.add(fields[0])
+            elif fields[1] != 'label' or 'table, placed by' not in fields[4]:
+                continue
+            if fields[0] in seen_addresses or fields[2] in seen_names:
+                self.second_chosen.discard(fields[0])
+                self.notes.append('second base: %s at %s taken' % (fields[2], fields[0]))
+                continue
+            seen_addresses[fields[0]], seen_names[fields[2]] = fields, fields[0]
+            rows.append(fields)
+        rows += [fields for fields in seeded if fields[1] == 'local' and fields[0] in self.second_chosen]
+        return ['\t'.join(fields) for fields in rows]
 
     def hand_rows(self):
         """The names file's rows added by hand, which carry HAND in
@@ -1055,10 +1207,16 @@ class Seeding:
     def with_hand_rows(self, out_rows, new, seen_names):
         """The carried rows and the new functions with the hand rows in
         them: each in place of the carried row of its address and kind,
-        or of the new function at its address, which it names; the rest
-        after the carried rows, under a comment of their own."""
+        or of the new function at its address, which a function row
+        names and a label row says is data; the rest
+        after the carried rows, under a comment of their own.  A hand row
+        whose name the matches seed elsewhere fails, but in a second
+        base's seeding, whose rows are taken only under names no row of
+        the first base's takes (second_rows), so that its own pairing of
+        a name, at another routine's end, say, is no conflict: the first
+        base's seeding checks the hand rows against the names it takes."""
         by_place = {place_key(row.split('\t')): row for row in self.hand_rows()}
-        for row in self.hand_rows():
+        for row in [] if self.port.second else self.hand_rows():
             fields = row.split('\t')
             seeded = seen_names.get(fields[2])
             if (fields[1] in ('function', 'label') and seeded not in (None, fields[0])
@@ -1070,7 +1228,9 @@ class Seeding:
             if key in by_place:
                 placed.add(key)
             rows.append(by_place.get(key, row))
-        named = {key[0] for key in by_place if key[1] == 'function'}
+        # a function row names the new function at its address; a label
+        # row there says image_diff took data for one
+        named = {key[0] for key in by_place if key[1] in ('function', 'label')}
         new = [item for item in new if show(item[0], item[1]) not in named]
         rest = [row for key, row in by_place.items() if key not in placed]
         if rest:
@@ -1127,20 +1287,26 @@ class Seeding:
             if (region, other) in corrected_others and seeded is None:
                 continue
             rows.append('\t'.join([show(region, other), name] + f[2:]) + '\n')
-        seeded_rows = {row.split('\t')[0] for row in rows[1:]}
-        hand = self.hand_module_rows()
-        for row in hand:
-            if row.split('\t')[0] in seeded_rows:
-                sys.exit('%s: a modules row added by hand at an address the seeding gives' % row.split('\t')[1])
+        if self.second_chosen:
+            second = self.second_seeding.modules(self.second_carried, self.second_text)
+            chosen = [row + '\n' for row in second.split('\n')
+                      if not row.startswith('#') and row.split('\t')[0] in self.second_chosen]
+            if chosen:
+                rows.append(self.port.text(MODULES_SECOND_HEADER))
+                rows += chosen
+        # a hand row at a seeded row's address corrects it in place
+        by_address = {row.split('\t')[0]: row + '\n' for row in self.hand_module_rows()}
+        rows = rows[:1] + [by_address.pop(row.split('\t')[0], row) for row in rows[1:]]
+        hand = list(by_address.values())
         if hand:
             rows.append(self.port.text(MODULES_HAND_HEADER))
-            rows += [row + '\n' for row in hand]
+            rows += hand
         return ''.join(rows)
 
     def hand_module_rows(self):
         """The modules file's rows added by hand, which carry HAND in
-        their reason: the image's own functions, which no base row
-        re-keys, in the file's order."""
+        their reason: corrections of seeded rows and the image's own
+        functions, which no base row re-keys, in the file's order."""
         path = os.path.join(self.folder, 'modules.tsv')
         if not os.path.exists(path):
             return []

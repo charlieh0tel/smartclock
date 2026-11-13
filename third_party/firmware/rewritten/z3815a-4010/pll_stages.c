@@ -487,8 +487,8 @@ static const float PLL_STAGES_N3_PHASE_OLD = 0.8f;
 
 static const float PLL_STAGES_N3_PHASE_UNIT = -1e-12f;
 
-/* The start source counter_alarm_request asks FPGA_BIT_ALARM for as the
- * loop steers, measures the phase offset and stops: P78 for the first
+/* The start source counter_start_source_request asks FPGA_BIT_START_SOURCE for
+ * as the loop steers, measures the phase offset and stops: P78 for the first
  * two, with P24 High and Low, and the GPS 1 PPS again
  * (docs/firmware/z3815a-trace.md, "Start, stop and status bits" and
  * "Every output pin"). */
@@ -578,7 +578,7 @@ static bool pll_stages_n3_measure(float* ti, char* format, char* line) {
 static void pll_stages_n3_steer(float* ti, float current, char* line) {
   if (interval_next_reading(INTERVAL_ARM_PLAIN, ti) == 0 ||
       switch_word_bit_4_copy == 0) {
-    counter_alarm_request(PLL_STAGES_N3_COUNTER_MEASURE);
+    counter_start_source_request(PLL_STAGES_N3_COUNTER_MEASURE);
     pll_stages_n3_failed();
     return;
   }
@@ -674,11 +674,11 @@ static void pll_stages_n3_steer(float* ti, float current, char* line) {
  * starts the loop's passes again (0x52234 to 0x522ec). */
 static void pll_stages_n3_phase(float* ti, char* line) {
   if ((int32_t)n3_lock.pass >= n3_lock.phase_passes + n3_lock.pll_passes) {
-    counter_alarm_request(PLL_STAGES_N3_COUNTER_MEASURE);
+    counter_start_source_request(PLL_STAGES_N3_COUNTER_MEASURE);
     n3_lock.pass = 0;
   }
   if (interval_next_reading(INTERVAL_ARM_CALIBRATE, ti) == 0) {
-    counter_alarm_request(PLL_STAGES_N3_COUNTER_MEASURE);
+    counter_start_source_request(PLL_STAGES_N3_COUNTER_MEASURE);
     pll_stages_n3_failed();
   } else {
     n3_lock.reading_valid = 1;
@@ -756,7 +756,7 @@ uint8_t n3_lock_pll(uint8_t running) {
         uint32_t time = get_clock_time();
 
         if ((gps_seconds(get_clock_date(), time) & 1) != 0) {
-          counter_alarm_request(PLL_STAGES_N3_COUNTER_MEASURE);
+          counter_start_source_request(PLL_STAGES_N3_COUNTER_MEASURE);
           pll.n3_lock_state = PLL_N3_LOCK_WAIT2;
         }
       }
@@ -899,9 +899,9 @@ uint8_t n3_lock_pll(uint8_t running) {
       }
       break;
     case PLL_N3_LOCK_STATE_11:
-      counter_alarm_request(PLL_STAGES_N3_COUNTER_STEER);
+      counter_start_source_request(PLL_STAGES_N3_COUNTER_STEER);
       if (interval_next_reading(INTERVAL_ARM_CALIBRATE, &ti) == 0) {
-        counter_alarm_request(PLL_STAGES_N3_COUNTER_MEASURE);
+        counter_start_source_request(PLL_STAGES_N3_COUNTER_MEASURE);
         pll_stages_n3_failed();
       } else {
         /* Its result is not taken. */
@@ -916,7 +916,7 @@ uint8_t n3_lock_pll(uint8_t running) {
         pll.field_3e9 = 0;
       }
       if ((int32_t)n3_lock.pass == n3_lock.pll_passes) {
-        counter_alarm_request(PLL_STAGES_N3_COUNTER_STEER);
+        counter_start_source_request(PLL_STAGES_N3_COUNTER_STEER);
       }
       if ((int32_t)n3_lock.pass < n3_lock.pll_passes + 1) {
         pll_stages_n3_steer(&ti, current, line);
@@ -930,7 +930,7 @@ uint8_t n3_lock_pll(uint8_t running) {
       n3_lock.slew_offset = 0.0f;
       n3_lock_offset_nothing(0);
       interval_wait_reading();
-      counter_alarm_request(PLL_STAGES_N3_COUNTER_STOP);
+      counter_start_source_request(PLL_STAGES_N3_COUNTER_STOP);
       interval_rearm(INTERVAL_ARM_CALIBRATE);
       pll.n3_lock_state = PLL_N3_LOCK_EXIT2;
       pll_stages_n3_debug("exit1\r\n");
@@ -2176,7 +2176,7 @@ pll_stage_result startup_pll(bool same_stage) {
     pll.frequency_adjusted = 0;
     pll_stages_startup_restart(current);
     pll_stages_loop_start();
-    loop_steering.large_offset_blocks = 0;
+    loop_steering.settled_blocks = 0;
     interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
     pll.startup_state = PLL_STARTUP_SETTLING;
     return pll_stages_check_causes(result);
@@ -2196,13 +2196,13 @@ pll_stage_result startup_pll(bool same_stage) {
 
     switch (pll.startup_state) {
       case PLL_STARTUP_SETTLING:
-        if (loop_steering.large_offset_blocks < SETTLED_BLOCKS) {
+        if (loop_steering.settled_blocks < SETTLED_BLOCKS) {
           const bool settled = double_compare(magnitude, SETTLED_TI) > 0;
 
           if (settled) {
-            loop_steering.large_offset_blocks++;
+            loop_steering.settled_blocks++;
           } else {
-            loop_steering.large_offset_blocks = 0;
+            loop_steering.settled_blocks = 0;
           }
         } else {
           if (pll.aging_state != PLL_AGING_COLLECTING) {

@@ -45,7 +45,9 @@
 #   0x14b2 they are inside the installer's records, which hold the same
 #   text; a hand row places it at 0x12ef3, after revision_text, where
 #   the Z3805A's follows its own.
-# - Missing functions, and tables or labels not placed so, have no row;
+# - Missing functions, functions matched inside the installer's
+#   records (the installer's copy, whose bytes they are, unpacked), and
+#   tables or labels not placed so, have no row;
 #   the functions image_diff finds new are listed, unnamed, at the end,
 #   with the 0 a bare import's analysis finds called that image_diff
 #   neither matches nor finds.  image_diff rejects a start that is text,
@@ -2576,7 +2578,8 @@ installer::0x1014c0	function	installer_trap_5	context	trap #5's handler in the b
 # analysis" that image_diff does not find, unnamed, for the rewrite
 # waves: entry rows, which Setup makes a function at, keeping
 # Ghidra's name, their note the extent in bytes and image_diff's
-# summary.  A wave that names one makes it a function row.
+# summary.  A wave that names one makes it a function row, or a
+# label row where it is data.
 0x1487a	entry		image_diff	4 bytes; 1 instructions, found pointer; after piece_14b6e
 0x2c85a	entry		image_diff	48 bytes; 13 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: pllc_request_a, scpi_input_source
 0x2c88a	entry		image_diff	26 bytes; 8 instructions, found handler; after scpi_query_LED_ALARm_MINor; calls: return_byte

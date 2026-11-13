@@ -20,9 +20,9 @@
 # The assembly routines, the pForth kernel and the installer's copies
 # have no row.  Rows go in the 58503A's order: by module, layer by
 # layer, and within a module by subject.  A row whose reason ends
-# "row added by hand for the Z3815A 4010" is kept as it is, after
-# the seeded rows, for a function the seeding gives no row; it may not
-# take an address the seeding gives.
+# "row added by hand for the Z3815A 4010" is kept as it is: in
+# place of the seeded row of its address, which it corrects, or after
+# the seeded rows, for a function the seeding gives no row.
 0x9f0	boot_memcpy	platform/boot	the boot code (reset at 0x550), its own program ahead of the primary
 0x5ec34	primary_unpack_records	platform/boot	the primary's copy of boot_unpack_installer
 0x22f0a	primary_start	platform/startup

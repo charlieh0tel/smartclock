@@ -610,10 +610,10 @@ Nothing (**read**, from the image's code at the addresses given,
   (`0x49392`), which nothing calls, steps the address field but reads
   through `fpga_read_seconds`, register 0.
 - **P84 as a start source.**  Register 2's bits 2 and 3 are the
-  firmware's `FPGA_BIT_ALARM` (mask `0x0c`), `fpga_set_field`'s
+  firmware's `FPGA_BIT_START_SOURCE` (mask `0x0c`), `fpga_set_field`'s
   (`0x4956e`) field 6.  The one call with field 6 is
-  `counter_set_alarm`'s (`0x494fa`), from `counter_arm` (`0x498a0`), of
-  the value `counter_alarm_request` (`0x494d8`) stored, and its eight
+  `counter_set_start_source`'s (`0x494fa`), from `counter_arm` (`0x498a0`), of
+  the value `counter_start_source_request` (`0x494d8`) stored, and its eight
   callers (`0x51b5a` to `0x52696`) pass `0x08`, `0x0c` and `0x00`.  The
   image's other writes of register 2 copy all eight register images
   (`counter_load_registers`, `0x49a2c`, and the loops at `0x48ce4` and

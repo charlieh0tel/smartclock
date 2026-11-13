@@ -677,7 +677,7 @@ message in all but the Z3815A and 58503B.
 | B | `pll.efc_base` | |
 
 `startup_pll` uses the same block, and counts in
-`large_offset_blocks` the consecutive updates whose mean is within
+`settled_blocks` the consecutive updates whose mean is within
 150 ns, to 15; one outside clears it.
 
 The mean is of that ten seconds' readings within the holdover limit

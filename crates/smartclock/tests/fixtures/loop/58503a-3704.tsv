@@ -1,4 +1,4 @@
-scenario	stage	same_stage	valid	reading	uptime	current	reference_good	questionable	fit_b	fit_c	collecting	history_ready	result	hold_causes	ti_filtered	integral	efc_base	efc	ti_sum	readings	seconds	loop_time_constant	startup_state	large_offset_blocks	proportional_gain	integral_gain	filter_weight
+scenario	stage	same_stage	valid	reading	uptime	current	reference_good	questionable	fit_b	fit_c	collecting	history_ready	result	hold_causes	ti_filtered	integral	efc_base	efc	ti_sum	readings	seconds	loop_time_constant	startup_state	settled_blocks	proportional_gain	integral_gain	filter_weight
 # 58503a-3704: startup_pll and pll_normal run in Unicorn by tools/firmware/loop_trace.py;
 # do not edit.  Floats are IEEE single bits in hex.
 # normal gain 2b2febff

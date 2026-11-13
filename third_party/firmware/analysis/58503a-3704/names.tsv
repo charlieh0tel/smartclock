@@ -82,7 +82,9 @@
 #   scpi_message_done and scpi_input_closed, which image_diff swaps, at
 #   0x290ac and 0x290b0, by scpi_interpret's calls, and the installer's
 #   at installer::0x107674 and 0x107678, for 0x107678 and 0x107742.
-# - Missing functions, and tables or labels not placed so, have no row;
+# - Missing functions, functions matched inside the installer's
+#   records (the installer's copy, whose bytes they are, unpacked), and
+#   tables or labels not placed so, have no row;
 #   the functions image_diff finds new are listed, unnamed, at the end,
 #   with the 8 a bare import's analysis finds called that image_diff
 #   neither matches nor finds.  image_diff rejects a start that is text,
@@ -1559,7 +1561,7 @@ installer::0x1029a0	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4387c	function	holdover_correction_valid	context	1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called by nothing (from the Z3805A 3543B, by image_diff: relocated)
 0x45b96	function	time_zone_changed	context	marks the time zone changed, for :PTIMe:TZONe (from the Z3805A 3543B, by image_diff: relocated)
 0x45e66	function	nv_clear_and_reset	context	clears the NV settings, invalidates the battery-backed RAM's checksum and resets with trap #12 (from the Z3805A 3543B, by image_diff: changed, fuzzy at 1.000)
-0x4687e	function	gps_selftest_run	context	asks the GPS engine for its self-test, up to 20 tries, failing the self-test's GPS bit 0x4000 if it never answers (from the Z3805A 3543B, by image_diff: changed, similar at 0.911)
+0x4687e	function	gps_selftest_run	read	the GPS self-test: posts step 0x50 and then, while selftest.gps (0x100e16) is 0, script 0x55, each through gpsx_send retried every 0x400 ticks up to 20 times, and polls plla_exchange for each answer up to 130 and 30 times (0x468de, 0x4698e); an answer of 0 takes the engine's self-test word (0x1011a4), 8, the GPS task's timeout, gives 0x20000, and no answer or another 0x10000 (0x46916 to 0x4693e), where the Z3805A 3543B's sets the word 0x4000 or 0x8000; row added by hand for the 58503A 3704
 0x47242	function	leap_ack_pending	context	1 while a leap second acknowledgment is pending, pll +0x2c or +0x2d (from the Z3805A 3543B, by image_diff: relocated)
 0x48190	function	running_average_update	context	folds a value into a running average of so many (from the Z3805A 3543B, by image_diff: relocated)
 0x4825e	function	dms_to_mas	context	degrees, minutes and seconds as milliarcseconds (from the Z3805A 3543B, by image_diff: relocated)	void dms_to_mas(long *mas, ushort degrees, byte minutes, double seconds)
@@ -2628,7 +2630,7 @@ installer::0x10791c	function	installer_scpi_task_run	58503a-3704.md	the installe
 0x4b882	function	ext_reference_hysteresis_set	read	the external 1PPS reference's hysteresis, its margin always left 0; row added by hand for the 58503A 3704	void ext_reference_hysteresis_set(int32_t hysteresis)
 0x4c548	function	request_ring_find	read	the oldest request in the GPS request ring with the code, null for none; gps_request_run_queued's; row added by hand for the 58503A 3704	gps_request_entry *request_ring_find(gps_request_code_word code)
 0x4c57e	function	gps_request_run_queued	58503a-3704.md	takes the queued request with the code out of the ring, the rest kept in their order, runs it at once through gps_console_request and counts it done; gpsm_task's request path; row added by hand for the 58503A 3704	void gps_request_run_queued(gps_request_code_word code)
-0x4c98e	function	gps_request_admitted	58503a-3704.md	0 for a request from sender 1 or 2 whose code is in the 0xff-ended list at 0x4dd66, which is empty, so always 1; gpsm_task counts a request it refuses done; row added by hand for the 58503A 3704	uint8_t gps_request_admitted(gps_request_sender sender, gps_request_code_word code)
+0x4c98e	function	gps_request_admitted	58503a-3704.md	1, admitted, for every request: its first test compares the list's start, 0x4dd66, with itself (cmpa a0,a0) and so always branches to the 1; the test it passes over would refuse, 0, a request from sender 1 or 2 whose code is not in the 0xff-ended list there, which is compiled empty; gpsm_task answers a refused request done and counts it; row added by hand for the 58503A 3704	uint8_t gps_request_admitted(gps_request_sender sender, gps_request_code_word code)
 0x4da70	function	gps_track_words_pack	58503a-3704.md	packs each channel's satellite, mode and signal level into gps.track_words' three longs; gps_receiver_status_update's, ahead of the track-change log; row added by hand for the 58503A 3704	void gps_track_words_pack(void)
 0x4db52	function	gps_channel_word_pack	58503a-3704.md	packs each channel's 2-bit state and signal level from the @@Ba channel bytes into gps.channel_word, and sets gps.channel_word_lowest to 0xffff; gps_receiver_status_update's; row added by hand for the 58503A 3704	void gps_channel_word_pack(void)
 0x4dbe8	function	gps_channel_word_lowest	58503a-3704.md	keeps in gps.channel_word_lowest each channel's lowest 2-bit state since gps_channel_word_pack; row added by hand for the 58503A 3704	void gps_channel_word_lowest(void)
@@ -2709,7 +2711,8 @@ installer::0x103a20	function	installer_duarta_drain_loop	read	installer_duarta_d
 # analysis" that image_diff does not find, unnamed, for the rewrite
 # waves: entry rows, which Setup makes a function at, keeping
 # Ghidra's name, their note the extent in bytes and image_diff's
-# summary.  A wave that names one makes it a function row.
+# summary.  A wave that names one makes it a function row, or a
+# label row where it is data.
 0x29ec4	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: scpi_input_source, status_report_from
 0x29ee2	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: scpi_input_source, status_report_from
 0x29f00	entry		image_diff	30 bytes; 8 instructions, found pointer; after scpi_set_STATus_QUEStionable_CONDition_USER; calls: scpi_input_source, status_report_from

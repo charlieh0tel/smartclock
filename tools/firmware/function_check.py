@@ -932,7 +932,7 @@ LOG_EVENT_CASES = [{0: code} for code in range(LOG_EVENT_CODES + 1)]
 # every mode and state pair at an even offset, every image's, reads as
 # when wanted and wanted: COUNTER_REGISTERS_WHEN_WANTED,
 # COUNTER_CALIBRATE_WHEN_WANTED and the Z3815A 4010's
-# COUNTER_ALARM_WHEN_WANTED.
+# COUNTER_START_SOURCE_WHEN_WANTED.
 COUNTER_READING = bytes(16)
 COUNTER_CONFIGURATION_SIZE = 0x40
 COUNTER_ALWAYS = bytes([3]) * COUNTER_CONFIGURATION_SIZE
@@ -1739,7 +1739,7 @@ Z3815A_LOOP_STATES = {
         # startup_pll and powerup, by their names here
         "startup_pll": (
             Preset("pll.startup_state", (0, 1, 2, 3, 3, 4, 0x80)),
-            Preset("loop_steering.large_offset_blocks", (0, 14, 15)),
+            Preset("loop_steering.settled_blocks", (0, 14, 15)),
             Preset("clock.uptime", (0, 7200, 7201, 100000)),
             Preset("loop_steering.seconds", (0, 8, 9)),
             Preset("loop_steering.readings", (0, 3)),

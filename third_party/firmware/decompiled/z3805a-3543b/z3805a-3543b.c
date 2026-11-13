@@ -1778,7 +1778,7 @@ typedef struct loop_steering_state loop_steering_state, *Ploop_steering_state;
 struct loop_steering_state {
     float integral;
     float ti_sum;
-    int32_t large_offset_blocks;
+    int32_t settled_blocks;
     uint8_t seconds;
     uint8_t readings;
     uint8_t measurement_failed;

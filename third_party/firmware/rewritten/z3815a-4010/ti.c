@@ -9,7 +9,7 @@
  * counter_load_registers, interpolator_prepare,
  * counter_configuration_init), which run over eight registers here, not
  * the 58503A's four, over this image's counter_configuration_fields, and
- * the alarm's request, which counter_arm carries out as it does the
+ * the start source's request, which counter_arm carries out as it does the
  * sync's. */
 
 /* Writes a configuration's registers, as many as fconf_regs holds, to
@@ -386,17 +386,18 @@ uint32_t interpolator_prepare(void) {
   return 1;
 }
 
-/* Asks counter_arm to set FPGA_BIT_ALARM to a start source, the alarm's request
- * as sync_request is the sync's (0x494d8). */
-void counter_alarm_request(fpga_start_source alarm) {
-  counter_configuration.alarm = alarm;
-  counter_configuration.alarm_mode = COUNTER_ALARM_WHEN_WANTED;
-  counter_configuration.alarm_state = COUNTER_WORK_WANTED;
+/* Asks counter_arm to set FPGA_BIT_START_SOURCE to a start source, the
+ * start source's request as sync_request is the sync's (0x494d8). */
+void counter_start_source_request(fpga_start_source start_source) {
+  counter_configuration.start_source = start_source;
+  counter_configuration.start_source_mode = COUNTER_START_SOURCE_WHEN_WANTED;
+  counter_configuration.start_source_state = COUNTER_WORK_WANTED;
 }
 
-/* Sets FPGA_BIT_ALARM's field to a start source, counter_arm's (0x494f2). */
-void counter_set_alarm(fpga_start_source alarm) {
-  fpga_set_field(FPGA_BIT_ALARM, alarm);
+/* Sets FPGA_BIT_START_SOURCE's field to a start source, counter_arm's
+ * (0x494f2). */
+void counter_set_start_source(fpga_start_source start_source) {
+  fpga_set_field(FPGA_BIT_START_SOURCE, start_source);
 }
 
 /* Asks counter_arm to sync the counter count times by a kind, the
@@ -409,9 +410,9 @@ void sync_request(counter_sync_kind kind, int32_t count) {
 }
 
 /* Reloads the FPGA's registers if the configuration asks, presets the
- * counter, syncs it if asked, sets the alarm if asked, and releases it to
- * count: the 58503A's with the alarm's pair after the sync's (0x4988c to
- * 0x498a6) (0x497ca). */
+ * counter, syncs it if asked, sets the start source if asked, and releases it
+ * to count: the 58503A's with the start source's pair after the sync's (0x4988c
+ * to 0x498a6) (0x497ca). */
 void counter_arm(interval_reading_fields* reading,
                  counter_configuration_fields* configuration) {
   if (!interval_reading.armed) {
@@ -434,10 +435,10 @@ void counter_arm(interval_reading_fields* reading,
       configuration->sync_state = COUNTER_WORK_DONE;
     }
   }
-  if (configuration->alarm_mode == COUNTER_ALARM_WHEN_WANTED &&
-      configuration->alarm_state == COUNTER_WORK_WANTED) {
-    counter_set_alarm(configuration->alarm);
-    configuration->alarm_state = COUNTER_WORK_DONE;
+  if (configuration->start_source_mode == COUNTER_START_SOURCE_WHEN_WANTED &&
+      configuration->start_source_state == COUNTER_WORK_WANTED) {
+    counter_set_start_source(configuration->start_source);
+    configuration->start_source_state = COUNTER_WORK_DONE;
   }
   fpga_set_bit(FPGA_BIT_PRESET, 0);
 }
@@ -451,11 +452,11 @@ int32_t counter_load_registers(void) {
 
 /* The counter's configuration's defaults, its registers into fconf_regs
  * too, and the reading marked invalid: the 58503A's with its own
- * calibration, all eight registers' fields and the alarm's pair done
+ * calibration, all eight registers' fields and the start source's pair done
  * (0x49a62). */
 void counter_configuration_init(counter_configuration_fields* configuration) {
   /* The fields by fpga_bit_table entry: the count, preset and the high
-   * reference flagged, the rest 0, the alarm's (FPGA_START_SOURCE_GPS_PPS)
+   * reference flagged, the rest 0, the start source (FPGA_START_SOURCE_GPS_PPS)
    * and the sync's among them.
    * Even, since gcc fills it by words and longs, misaligned at an odd
    * address. */
@@ -463,7 +464,7 @@ void counter_configuration_init(counter_configuration_fields* configuration) {
       [FPGA_BIT_MODE] = FPGA_MODE_COUNT,
       [FPGA_BIT_PRESET] = TI_PRESET_ON,
       [FPGA_BIT_REFERENCE] = INTERPOLATOR_REFERENCE_HIGH,
-      [FPGA_BIT_COUNTER_SYNC] = 0};
+      [FPGA_BIT_SYNC] = 0};
 
   fpga_fields_to_registers(fields, configuration->fpga_registers);
   fpga_fields_to_registers(fields, fconf_regs);
@@ -473,8 +474,8 @@ void counter_configuration_init(counter_configuration_fields* configuration) {
   configuration->calibrate_state = COUNTER_WORK_WANTED;
   configuration->registers_mode = COUNTER_REGISTERS_WHEN_WANTED;
   configuration->registers_state = COUNTER_WORK_WANTED;
-  configuration->alarm_mode = COUNTER_ALARM_WHEN_WANTED;
-  configuration->alarm_state = COUNTER_WORK_DONE;
+  configuration->start_source_mode = COUNTER_START_SOURCE_WHEN_WANTED;
+  configuration->start_source_state = COUNTER_WORK_DONE;
   interval_reading.value = TI_NOT_A_NUMBER;
   interval_reading.valid = 0;
 }

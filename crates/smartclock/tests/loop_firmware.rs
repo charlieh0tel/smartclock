@@ -496,7 +496,7 @@ struct Row {
     efc: f32,
     loop_time_constant: f32,
     startup_state: u8,
-    large_offset_blocks: i32,
+    settled_blocks: i32,
     proportional_gain: f32,
     integral_gain: f32,
     filter_weight: f32,
@@ -555,8 +555,7 @@ impl Trace {
                 efc: float("efc"),
                 loop_time_constant: float("loop_time_constant"),
                 startup_state: u8::try_from(integer("startup_state")).expect("a state"),
-                large_offset_blocks: i32::try_from(integer("large_offset_blocks"))
-                    .expect("a count"),
+                settled_blocks: i32::try_from(integer("settled_blocks")).expect("a count"),
                 proportional_gain: float("proportional_gain"),
                 integral_gain: float("integral_gain"),
                 filter_weight: float("filter_weight"),
@@ -939,7 +938,7 @@ fn replay(receiver: &'static Receiver, variant: Variant) -> Result<usize, String
                 }
             }
             if row.stage == "startup_pll"
-                && (state.state != row.startup_state || state.blocks != row.large_offset_blocks)
+                && (state.state != row.startup_state || state.blocks != row.settled_blocks)
             {
                 return Err(format!(
                     "{} {scenario} row {index}: startup state {} after {} blocks replayed, firmware {} after {}",
@@ -947,7 +946,7 @@ fn replay(receiver: &'static Receiver, variant: Variant) -> Result<usize, String
                     state.state,
                     state.blocks,
                     row.startup_state,
-                    row.large_offset_blocks
+                    row.settled_blocks
                 ));
             }
             if row.stage == "startup_pll"
@@ -1714,7 +1713,7 @@ fn the_page_s_start_up_times_are_the_firmware_s() {
             .collect();
         let counted = startup
             .iter()
-            .find(|row| row.large_offset_blocks == law.settled_blocks)
+            .find(|row| row.settled_blocks == law.settled_blocks)
             .expect("the fifteen");
         let ended = startup
             .iter()

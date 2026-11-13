@@ -797,11 +797,14 @@ inferred.  So a UT Plus must answer `@@Bo`, with a nonzero offset.
 **`@@Gj`.**  ut-engg-notes.pdf p. 11 names it Leap Second Pending
 Status Message; its layout is in neither TRM0003 revision 3.2 nor
 VPCommands, but in the M12+ User's Guide revision 6.X
-(`third_party/motorola/m12plus-users-guide.pdf` pp. 152-153): the
-present and future leap second values, the future one's date, the
-current UTC offset in integer seconds and nanoseconds, and the time of
-day it applies, 21 bytes in all.  A UT Plus of 3.0 or later must answer
-it and `@@Am`.  The
+(`third_party/motorola/m12plus-users-guide.pdf` pp. 152-153, by
+printed page).  It is polled only: `@@GjC`, 7 bytes, asks, and the
+answer is `@@GjpfyymdIffffhmsC`, 21 bytes, which is the length the
+images' tables give it: the present and future leap second values, a
+byte each; the year, in two bytes, month and day the future one
+applies; the current UTC offset, a byte of integer seconds and four
+of nanoseconds; and the hour, minute and second it applies.  A UT Plus
+of 3.0 or later must answer it and `@@Am`.  The
 Z3816A's console page at `0x4c5d8` prints, for a UT Plus of 3.0 or
 later, the `@@Bo` byte as `UTC OFFS`, the record's bytes 0 and 1 as
 `Tls/Tlsf` (`0x4cd10` to `0x4cd44`), and its byte 6 and long 8 as
@@ -1044,17 +1047,22 @@ Oncore in its binary `@@` messages; the 58503B names the engine
 `Oncore`, as the Z3816A does.  The Z3815A's engine is a Furuno GT-74
 (its identification template reads `MODEL # FURUNO GT-74`), on NMEA
 sentences: it takes `GGA`, `GSA`, `GSV`, `RMC` and Furuno's own `anc`,
-`ssd`, `tst`, `tps`, `rrm` and `rsd` (`0x5e398`), and sends `$PFEC,GP`
-commands -- `set`, `srq`, `rrs`, `rrq`, `clr`, `ZDA`, `GLL`, and
-`int,` with a sentence name to set its interval (`0x5e64c` to
-`0x5e6ca`).  It keeps a `GT-74 Command Log` and a `GT-74 Messages`
-screen.  Read on 2026-10-10.  The GT-74's own protocol specification
-was not found; the GT-8031's
+`ssd`, `tst`, `tps`, `rrm` and `rsd` (`0x5e398`), and sends Furuno's
+`$PFEC,GP` commands -- `set`, `srq`, `rrs`, `rrq`, `clr`, and `int,`
+with a sentence name to set its interval -- and two sentences without
+`PFEC`, `$GPZDA` and `$GPGLL` (the names at `0x5e64c` to `0x5e6ca`;
+`gps_request_build`,
+`third_party/firmware/rewritten/z3815a-4010/gps_nmea.c`, puts `PFEC,`
+before a lower-case name alone).  It keeps a `GT-74 Command Log` and a
+`GT-74 Messages` screen.  Read on 2026-10-10.  The GT-74's own protocol
+specification was not found; the GT-8031's
 (`third_party/furuno/Furuno_GT8031_Protocol_Specification_Rev1.pdf`)
 documents every one of those `$PFEC` sentences, cited by printed
 page: `clr` p. 10, `set` p. 11, `srq` p. 12, `int` p. 13, `rrs` and
 `rrq` p. 15, `anc` p. 27, `tst` p. 31, `ssd` p. 32, `tps` p. 36,
-`rrm` and `rsd` p. 40.  The GT-74's internal week rollover was
+`rrm` and `rsd` p. 40.  It gives the other two as input sentences of
+any talker, `$XXGLL` to set the initial position (p. 6) and `$XXZDA`
+the date and time (p. 8).  The GT-74's internal week rollover was
 2013/08/11 (`third_party/furuno/
 GNSS_Receiver_WeekNumberRollover_SE18-100-034-00_en.pdf` p. 5).
 
@@ -1102,8 +1110,9 @@ stepped pointers and whole-record copies.
   imply.
 - Whether a six-channel engine stays silent on `@@Ea`, and whether an
   eight-channel one answers `@@Bk`.
-- The layout of `@@Gj`, which a UT Plus of software 3.0 or later
-  must answer in the 58503B and the Z3816A ("The UT Plus").
+- Whether a UT Plus's `@@Gj` is the M12+'s field for field: no UT Plus
+  manual here gives its layout, and only the length is checked ("The
+  UT Plus").
 - Whether a UT Plus's `@@Ea` would pass the Z3817A, which needs no
   more than that stream.
 - Whether the bench 58503A's B4121 ever runs at a count of 8.

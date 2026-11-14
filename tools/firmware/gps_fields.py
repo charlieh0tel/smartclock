@@ -231,20 +231,7 @@ class Row:
 
     def cells(self) -> list[str]:
         stride = NONE if self.count == 1 else str(self.stride)
-        return [
-            self.message,
-            self.direction,
-            self.field,
-            str(self.offset),
-            str(self.length),
-            str(self.count),
-            stride,
-            self.manual,
-            self.page,
-            self.images,
-            self.engine,
-            self.notes,
-        ]
+        return [stride if name == 'stride' else str(getattr(self, name)) for name in COLUMNS]
 
 
 def requests(image: str) -> Requests:
@@ -343,10 +330,9 @@ class Machine:
             at = self.uc.reg_read(UC_M68K_REG_PC)
         return self.uc.reg_read(UC_M68K_REG_D0)
 
-    def decode(self, entry: Entry, fill: int) -> set[int]:
-        """The offsets of a message of entry's, every data byte fill,
-        that its decoders read."""
-        data = bytes([fill]) * (entry.length - HEADER - TRAILER)
+    def decode(self, entry: Entry, data: bytes) -> set[int]:
+        """The offsets of a message of entry's with this data that its
+        decoders read."""
         self.uc.mem_write(MESSAGE, b'@@' + entry.id.encode() + data + b'\x00\r\n')
         self.reads = set()
         cursor = MESSAGE + HEADER
@@ -354,6 +340,11 @@ class Machine:
             cursor = self.call(decoder, cursor, record)
         reads, self.reads = self.reads, None
         return reads
+
+
+def filled(entry: Entry, fill: int) -> bytes:
+    """The data of a message of entry's, every byte fill."""
+    return bytes([fill]) * (entry.length - HEADER - TRAILER)
 
 
 def machines(image: str, table: Requests) -> dict[int, Machine]:
@@ -374,16 +365,17 @@ def machines(image: str, table: Requests) -> dict[int, Machine]:
         if eight:
             for entry in table.entries:
                 if entry.id == STATUS_EIGHT and entry.decoders:
-                    machine.decode(entry, 0)
+                    machine.decode(entry, filled(entry, 0))
         found[count] = machine
     return found
 
 
-def read_sets(image: str, table: Requests) -> dict[str, set[int]]:
-    """The offsets an image's decoders read of each message that has
-    any."""
-    by_count = machines(image, table)
-    found: dict[str, set[int]] = {}
+def decoded(table: Requests, by_count: dict[int, Machine]) -> list[tuple[Entry, list[Machine]]]:
+    """Each entry of an image's table that has a decoder and a message
+    to decode, with the machines to decode it on: a six-channel
+    message's the one of six channels, an eight-channel one's the one of
+    eight, any other's each."""
+    found = []
     for entry in table.entries:
         if not entry.decoders or entry.length < HEADER + TRAILER:
             continue
@@ -393,10 +385,19 @@ def read_sets(image: str, table: Requests) -> dict[str, set[int]]:
             counts = [8]
         else:
             counts = list(by_count)
+        found.append((entry, [by_count[count] for count in counts]))
+    return found
+
+
+def read_sets(table: Requests, by_count: dict[int, Machine]) -> dict[str, set[int]]:
+    """The offsets an image's decoders read of each message that has
+    any."""
+    found: dict[str, set[int]] = {}
+    for entry, on in decoded(table, by_count):
         reads = found.setdefault(entry.id, set())
-        for count in counts:
+        for machine in on:
             for fill in FILLS:
-                reads |= by_count[count].decode(entry, fill)
+                reads |= machine.decode(entry, filled(entry, fill))
     return found
 
 
@@ -409,24 +410,10 @@ def rows_of(text: str) -> list[Row]:
         cells = line.split('\t')
         if len(cells) != len(COLUMNS):
             sys.exit(f'{TABLE.relative_to(ROOT)}:{number}: {len(cells)} cells')
-        message, direction, name, offset, length, count, stride, manual, page, images, engine, notes = cells
-        rows.append(
-            Row(
-                number,
-                message,
-                direction,
-                name,
-                int(offset),
-                int(length),
-                int(count),
-                int(length) if stride == NONE else int(stride),
-                manual,
-                page,
-                images,
-                engine,
-                notes,
-            )
-        )
+        cell = dict(zip(COLUMNS, cells))
+        numbers = {name: int(cell[name]) for name in ('offset', 'length', 'count')}
+        stride = numbers['length'] if cell['stride'] == NONE else int(cell['stride'])
+        rows.append(Row(**{**cell, **numbers, 'stride': stride, 'line': number}))
     return rows
 
 
@@ -573,6 +560,15 @@ def gaps(rows: list[Row]) -> str:
     return '\n'.join(lines) + '\n'
 
 
+def between_markers(document: str, made: str) -> str | None:
+    """The document with made between its markers, or nothing if it
+    lacks them."""
+    if BEGIN not in document or END not in document:
+        return None
+    head, _, rest = document.partition(BEGIN)
+    return f'{head}{BEGIN}\n{made}{END}{rest.partition(END)[2]}'
+
+
 def summary(rows: list[Row], tables: dict[str, Requests], reads: dict[str, dict[str, set[int]]]) -> str:
     """The table's size, each image's reads and sends, and the gaps."""
     lines = ['rows by message (command, response):']
@@ -603,16 +599,14 @@ def main() -> None:
     was = TABLE.read_text()
     rows = rows_of(was)
     problems = check_rows(rows, tables)
-    reads = {image: read_sets(image, tables[image]) for image in IMAGES}
+    reads = {image: read_sets(tables[image], machines(image, tables[image])) for image in IMAGES}
     problems += images_of(rows, tables, reads)
     print(summary(rows, tables, reads))
     document = DOCUMENT.read_text()
-    if BEGIN not in document or END not in document:
+    made = between_markers(document, gaps(rows))
+    if made is None:
         problems.append(f'{DOCUMENT.relative_to(ROOT)}: no {BEGIN} ... {END}')
         made = document
-    else:
-        head, _, rest = document.partition(BEGIN)
-        made = f'{head}{BEGIN}\n{gaps(rows)}{END}{rest.partition(END)[2]}'
     table = text_of(rows)
     if arguments.check:
         if table != was:

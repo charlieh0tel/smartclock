@@ -994,6 +994,7 @@ mod tests {
     use super::MessageLengths;
     use super::OVERHEAD;
     use super::SZ_POWER_ON_FAILURE;
+    use super::TRAILER;
     use super::answer_id;
     use super::checksum;
     use super::command_length;
@@ -1024,6 +1025,45 @@ mod tests {
     /// The length the images' tables give `@@Sz`, where both manuals
     /// give 8.
     const SZ_TABLE_LENGTH: usize = 7;
+
+    /// The table of the messages' fields, from the crate's directory:
+    /// tab-separated, a header line, then a row for each field with its
+    /// message, direction, name, offset, length, count and stride, in
+    /// that order, before columns the crate does not check
+    /// (`tools/firmware/gps_fields.py`).
+    const FIELDS: &str = "../../docs/firmware/gps-fields.tsv";
+
+    /// A field row's direction column.
+    fn direction_name(direction: Direction) -> &'static str {
+        match direction {
+            Direction::ToEngine => "command",
+            Direction::FromEngine => "response",
+        }
+    }
+
+    /// The bytes of each message's fields in each direction, as
+    /// (start, end) by (ID, direction name), from [`FIELDS`].
+    fn field_spans() -> BTreeMap<(String, String), Vec<(usize, usize)>> {
+        let text = fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join(FIELDS))
+            .expect("the field table");
+        let mut spans: BTreeMap<(String, String), Vec<(usize, usize)>> = BTreeMap::new();
+        for line in text.lines().skip(1) {
+            let cells: Vec<&str> = line.split('\t').collect();
+            let [id, direction, _, offset, length, count, stride, ..] = cells.as_slice() else {
+                panic!("a short row: {line}");
+            };
+            let number = |cell: &str| -> usize { cell.parse().expect("a number") };
+            let (offset, length, count) = (number(offset), number(length), number(count));
+            let stride = if count == 1 { length } else { number(stride) };
+            let fields = spans
+                .entry(((*id).to_string(), (*direction).to_string()))
+                .or_default();
+            fields.extend(
+                (0..count).map(|index| (offset + index * stride, offset + index * stride + length)),
+            );
+        }
+        spans
+    }
 
     /// A frame of `data`.
     fn framed(id: MessageId, data: &[u8]) -> Vec<u8> {
@@ -1749,5 +1789,32 @@ mod tests {
             };
             assert_eq!(framed, [expected], "{}", row.id);
         }
+    }
+
+    /// The field table's rows tile each message's data in each
+    /// direction, every byte from the header to the trailer once, a
+    /// message with no data having no row, and it has rows for no
+    /// message or direction the table of lengths lacks.
+    #[test]
+    fn the_field_table_tiles_every_message() {
+        let mut spans = field_spans();
+        for row in MESSAGES {
+            let name: String = String::from_utf8_lossy(&row.id.bytes()).into();
+            for direction in DIRECTIONS {
+                let key = (name.clone(), direction_name(direction).to_string());
+                let mut fields = spans.remove(&key).unwrap_or_default();
+                fields.sort_unstable();
+                let Some(length) = row.length(direction) else {
+                    assert!(fields.is_empty(), "{} {}", row.id, key.1);
+                    continue;
+                };
+                let end = fields.iter().fold(HEADER, |at, &(start, end)| {
+                    assert_eq!(start, at, "{} {}", row.id, key.1);
+                    end
+                });
+                assert_eq!(end + TRAILER, length, "{} {}", row.id, key.1);
+            }
+        }
+        assert!(spans.is_empty(), "{:?}", spans.keys());
     }
 }

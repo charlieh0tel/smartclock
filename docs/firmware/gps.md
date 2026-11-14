@@ -1060,6 +1060,118 @@ open with `@@Ci`, switch I/O format, with an argument long of 0
 NMEA, and 2, Loran emulation, and no other.  No other image's scripts
 send `@@Ci`.
 
+## The fields
+
+`gps-fields.tsv` has a row for every field of every message the engine
+model of `crates/smartclock-gps` speaks, command and response: its
+offset from the frame's first `@`, its length, and for a field
+repeated by channel or satellite the count and the stride; the manual
+and page that give it; the images that read it, or for a command
+field set it; and where the model gets it.  The rows cover a message's
+data alone.  The `@@` and ID before it and the checksum, CR and LF
+after it are every message's and have no row, and a message with no
+data has none.
+
+`tools/firmware/gps_fields.py` holds the table to the images
+(`make check-gps-fields`; `make gps-fields` rewrites the images column
+and the tables below).  Its docstring is the specification; in short:
+
+- **Read by is measured.**  Each decoder of an image's message table
+  runs in the image's own ROM on a message of the table's length, and
+  the bytes of the message it reads are noted.  A read is a read
+  whatever becomes of the byte: this is what a decoder copies out, not
+  what the receiver then uses, and a field only a console word shows
+  counts.  The 58503A 3704 and the Z3817A decode `@@Ai` and the URA of
+  the extension messages by their channel count, so each message is
+  decoded with the count the image's own code sets, six or eight
+  ("Six or eight channels").
+- **Set by is the request scripts and lists** of `oncore/`: a command
+  sent in mode 0 or 2 ("Requests").  A query sends no field.
+- **A message's rows tile its data**, every byte once, and end where
+  the images' tables frame the message.  The crate's tests hold the
+  same rows to its own table of lengths.
+- **The Z3815A has no row.**  It speaks NMEA with Furuno's sentences,
+  which the model does not.
+
+What the decoders skip: `@@Am`'s first byte; each line's CR LF in
+`@@Cj`, of which they read the text alone; and in `@@Bk`, on the 58503A
+3704 and the Z3817A, everything after the seventh matrix element ("The
+extension messages").  No public image decodes `@@Ap`, `@@Bo`, `@@Gj`
+or `@@Ta`, and the Z3817A's `@@Sz` decoder reads nothing.
+
+The gaps are the work list: a response field some image reads that the
+model sends as zero, a constant of its own or the manual's value for
+unknown, and a command field some image sets that the model does not
+honor.  Neither table says the receiver needs the field.
+
+<!-- gps_fields.py gaps -->
+| Message | Field | Bytes | Read by | The engine sends |
+|---|---|---|---|---|
+| `@@Ba` | channel status flags | 43-63, 6 x 1 | all four | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
+| `@@Ba` | receiver status | 64 | all four | zero: position propagate bit |
+| `@@Bb` | health | 11-88, 12 x 1 | all four | zero: removed by @@Am bit |
+| `@@Bk` | magnetic variation | 14-15 | all four | zero |
+| `@@Bk` | velocity north | 16-17 | all four | zero |
+| `@@Bk` | velocity east | 18-19 | all four | zero |
+| `@@Bk` | velocity up | 20-21 | all four | zero |
+| `@@Bk` | age of differential data | 22-23 | all four | zero |
+| `@@Bk` | ECEF X | 24-27 | all four | zero: while holding position |
+| `@@Bk` | ECEF Y | 28-31 | all four | zero: while holding position |
+| `@@Bk` | ECEF Z | 32-35 | all four | zero: while holding position |
+| `@@Bk` | channel URA | 36-41, 6 x 1 | all four | zero |
+| `@@Bk` | least squares matrix elements 1 to 7 | 42-55, 7 x 2 | all four | zero |
+| `@@Bk` | least squares matrix elements 8 to 10 | 56-61, 3 x 2 | z3805a-3543b, z3801a-3543 | zero |
+| `@@Bk` | clock bias | 62-63 | z3805a-3543b, z3801a-3543 | zero |
+| `@@Bk` | oscillator offset | 64-65 | z3805a-3543b, z3801a-3543 | zero |
+| `@@Bn` | pulse rate | 9-11 | all four | constant: one pulse a second |
+| `@@Ca` | self-test result | 4-5 | all four | constant: every test passes |
+| `@@Ea` | channel status flags | 43-71, 8 x 1 | 58503a-3704, z3817a-3752 | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
+| `@@Ea` | receiver status | 72 | 58503a-3704, z3817a-3752 | zero: position propagate bit |
+| `@@Ek` | magnetic variation | 14-15 | 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | velocity north | 16-17 | 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | velocity east | 18-19 | 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | velocity up | 20-21 | 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | age of differential data | 22-23 | 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | ECEF X | 24-27 | 58503a-3704, z3817a-3752 | zero: while holding position |
+| `@@Ek` | ECEF Y | 28-31 | 58503a-3704, z3817a-3752 | zero: while holding position |
+| `@@Ek` | ECEF Z | 32-35 | 58503a-3704, z3817a-3752 | zero: while holding position |
+| `@@Ek` | channel URA | 36-43, 8 x 1 | 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | least squares matrix elements | 44-63, 10 x 2 | 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | clock bias | 64-65 | 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | oscillator offset | 66-67 | 58503a-3704, z3817a-3752 | zero |
+| `@@En` | pulse rate | 9-11 | 58503a-3704, z3817a-3752 | constant: one pulse a second |
+| `@@Fa` | self-test result | 4-5 | 58503a-3704, z3817a-3752 | constant: every test passes |
+
+| Command | Field | Set by | The engine has it |
+|---|---|---|---|
+| `@@Aa` | hours | all four | ignored |
+| `@@Aa` | minutes | all four | ignored |
+| `@@Aa` | seconds | all four | ignored |
+| `@@AB` | application type | all four | stored |
+| `@@Ac` | month | all four | ignored |
+| `@@Ac` | day | all four | ignored |
+| `@@Ac` | year | all four | ignored |
+| `@@AC` | HDOP threshold | all four | stored |
+| `@@Ad` | latitude | all four | echoed |
+| `@@AD` | fix threshold | all four | stored |
+| `@@AD` | output threshold | all four | stored |
+| `@@Ae` | longitude | all four | echoed |
+| `@@Af` | height | all four | echoed |
+| `@@Af` | height type | all four | echoed |
+| `@@Ah` | select option | all four | stored: 1, manual select |
+| `@@Ai` | channel | all four | stored |
+| `@@Ai` | satellite | all four | stored |
+| `@@Ak` | xDOP hysteresis | all four | stored |
+| `@@An` | almanac update | all four | stored |
+| `@@Aq` | ionospheric correction | all four | stored |
+| `@@Ar` | fix algorithm | all four | stored |
+| `@@Av` | altitude hold | all four | stored |
+| `@@Ax` | epoch offset | all four | stored |
+| `@@Ay` | pulse offset | all four | stored |
+| `@@Bc` | mode | all four | ignored |
+| `@@Ci` | format | z3805a-3543b, z3801a-3543 | ignored |
+<!-- end gps_fields.py -->
+
 ## In every image
 
 The Z3801A, Z3805A, both 58503As, the Z3816A and the 58503B talk to an

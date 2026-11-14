@@ -152,6 +152,21 @@ here, where they go stale unnoticed.
 - When adding dependencies, use `cargo add` to ensure we install the
   latest version of dependencies.
 
+## GPS engine messages
+
+- The message set is what the SmartClock images send and decode.
+- Each message the engine of `crates/smartclock-gps` speaks is
+  implemented fully, every field per the manual.
+- Each filler of a `Record` supplies at least the fields the images
+  read, from real data.  A field a filler cannot fill goes out as the
+  manual's unknown value, else zero.
+- Exceptions are the owner's to grant.
+- `docs/firmware/gps-fields.tsv` is the check: every field, the manual
+  page, which images read or set it, measured from the images, and
+  where the engine gets it.  `make check-gps-fields` holds it to the
+  images and lists the gaps (`docs/firmware/gps.md`, "The fields").
+  A change to a message's fields changes its rows in the same commit.
+
 ## GitHub
 
 - HTML pages are published on GitHub Pages: `make pages` builds them

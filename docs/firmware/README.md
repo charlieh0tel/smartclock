@@ -2107,7 +2107,7 @@ hand (`workflow_dispatch`), a job of its own beside
 the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
 `check-pforth-words`, `check-image-diff`, `check-status-register`, `check-chip-selects`,
-`check-loop-trace`, `check-loop-constants`, `check-magic-numbers`, `check-comment-addresses`,
+`check-loop-trace`, `check-loop-constants`, `check-gps-fields`, `check-magic-numbers`, `check-comment-addresses`,
 `check-common`, `check-plain-names`, `check-rom-pointers` and
 `check-alone`, both without `IMAGE`, the second compiling each
 hand-written `.c` of every image's export alone after the export's
@@ -2169,7 +2169,14 @@ reads each τ, startup constant, G and holdover-recovery threshold
 that `loop-constants.json` cites from its image, and fails if they
 disagree, or if the tables made from that file in `loop.md` and
 `docs/pages/loop.html` are not what it gives
-(`tools/firmware/loop_constants.py`).  `make check-fpga-decoder`
+(`tools/firmware/loop_constants.py`).  `check-gps-fields` runs each
+Oncore image's own message decoders in Unicorn, notes the bytes of
+each message they read, and fails if `gps-fields.tsv`, the fields of
+every message the GPS engine model speaks, names other images as a
+field's readers or a command's senders, if its rows do not tile a
+message, or if the list of gaps in `gps.md` is not what it gives
+(`tools/firmware/gps_fields.py`; `gps.md`, "The fields").
+`make check-fpga-decoder`
 decodes the FPGA test designs' bitstreams, which XACT built from LCAs
 written for the purpose, and checks each decode against XACT's routed
 LCA (`outputs.md`, "Netlists"), and `make -f tools/fpga/Makefile

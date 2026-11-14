@@ -904,6 +904,12 @@ stands in for one.
   having `std` to fall back on, so `make check-no-std`, which CI runs,
   builds the crate for targets of each kind, the `Makefile`'s
   `NO_STD_TARGETS`, the least of them a Cortex-M0.
+- **A small build does not pay for the table to ask one thing.**  The
+  Oncore table is every message with its lengths, and a build that
+  looks a row up carries all of it in flash.  Whether an ID is a
+  six-channel or an eight-channel message is a `const` function of the
+  ID alone (`MessageId::channels`), which names the per-channel IDs;
+  the table's rows take their form from it, so the two cannot differ.
 - **Framing first:** IDs, lengths, checksums, encoders and streaming
   deframers.  What turns an engine's knowledge into a message's bytes
   is later work, in modules beside these.

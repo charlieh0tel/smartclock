@@ -105,6 +105,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make check-image-diff
         if: ${{ !cancelled() }}
+      - run: make check-status-register
+        if: ${{ !cancelled() }}
       - run: make check-chip-selects
         if: ${{ !cancelled() }}
       - run: make board-atlas

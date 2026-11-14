@@ -31,6 +31,10 @@ says, by the case.  Both copies must leave the status register's
 system byte the same, its condition codes too for a function whose
 convention returns in them (returns=ccr), and the registers the
 function's convention keeps for its caller (harness.preserved_registers).
+Apart from the runs, each function written by hand must do to the
+status register what the image's does, as its instructions and the C's
+calls of cpu.h's helpers read (status_register.py), whether or not the
+harness can run it.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
         third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c \\
@@ -119,6 +123,7 @@ from harness import (
     Types,
     arguments,
     calls_differences,
+    covers,
     effects_differences,
     fresh_ram,
     gcc_slots,
@@ -147,8 +152,10 @@ from harness import (
 )
 from event_log import EEPROM_BASE, LOG_ENTRIES, LOG_PAGE_CHECKSUM, entry_argument_offsets, page_offsets
 from libc_check import BUFFER_SPACING, RAM, RAM_SIZE, RETURN
-from rebuild_link import IMAGE_PREFIX, REBUILT, Section, code_symbols, link, objects, symbols
+from image_diff import region_memories
+from rebuild_link import IMAGE_PREFIX, REBUILT, Section, code_symbols, link, objects, preprocessed, symbols
 from report_figures import STRICT
+from status_register import PRIMARY, Source, compared
 
 # The widest argument or result the harness lays out.
 WIDEST = 8
@@ -4847,6 +4854,27 @@ def check_function(
     return ("failed" if missing else counted), outcomes
 
 
+# What a function is counted as, for its runs and for its status register.
+VERDICTS = ("agreeing", "skipped", "known", "failed")
+# What a known line says differs, for a function whose status register does.
+STATUS_REGISTER = "status register"
+
+
+def check_status_register(name: str, differences: list[str], known: Known | None) -> str:
+    """Reports a function whose C does not do to the status register
+    what the image does (status_register.differences): which of
+    agreeing, known or failed it counts as.  A known difference excuses
+    it by the rule that excuses a case's (harness.covers)."""
+    if not differences:
+        return "agreeing"
+    if covers(known, differences):
+        print(f"known {name}: {STATUS_REGISTER}, {known.cause}")
+        return "known"
+    for difference in differences:
+        print(f"FAIL {name}: {difference}")
+    return "failed"
+
+
 def main() -> int:
     if len(sys.argv) < 3 or "DECOMPILED_CFLAGS" not in os.environ:
         print(__doc__.strip(), file=sys.stderr)
@@ -4861,6 +4889,8 @@ def main() -> int:
         linked_code = code_symbols(elf)
     located = probed(c, linked, linked_symbols)
     image_bytes = open(image_path, "rb").read()
+    memories = region_memories(image_bytes)
+    source = Source(preprocessed(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"])))
     types = Types(c)
     conventions = {}
     for line in open(c_path.removesuffix(".c") + ".conventions.jsonl"):
@@ -4898,7 +4928,8 @@ def main() -> int:
             rebuilt_code(linked_code, conventions),
             {**IN_RANGE, **IMAGE_IN_RANGE.get(image_name(image_path), {})},
         )
-        counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
+        counts = dict.fromkeys(VERDICTS, 0)
+        registers = dict.fromkeys(VERDICTS, 0)
         modes = {"user mode alone": 0, "both modes": 0}
         condition_codes_compared = 0
         sessions = {"agreeing": 0, "run": 0}
@@ -4918,6 +4949,10 @@ def main() -> int:
                 if description.startswith(CONSOLE_SESSION) and not description.endswith(POISONED):
                     sessions["run"] += 1
                     sessions["agreeing"] += not outcome
+        region = profile.overlay or PRIMARY
+        for name, differences in compared(memories[region], region, conventions, source):
+            if not names or name in names:
+                registers[check_status_register(name, differences, known.get(name))] += 1
         label = f"{profile.overlay} " if profile.overlay else ""
         print(
             f"{label}functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, "
@@ -4929,12 +4964,18 @@ def main() -> int:
             + ", ".join(f"{what}: {count}" for what, count in modes.items())
             + f"; condition codes compared (returns=ccr): {condition_codes_compared}"
         )
+        # those written by hand that touch the status register, run or
+        # not (report_figures.py)
+        print(
+            f"{label}functions touching the status register: {sum(registers.values())}, "
+            f"agreeing: {registers['agreeing']}, known: {registers['known']}, failed: {registers['failed']}"
+        )
         # the pForth console's sessions, console_init's cases and the
         # poisoned runs apart
         if sessions["run"]:
             print(f"{label}console sessions agreeing: {sessions['agreeing']} of {sessions['run']}")
         print_stacks(label, context.depths)
-        failed += counts["failed"]
+        failed += counts["failed"] + registers["failed"]
     # a strict run's cases are not the documented ones
     # (report_figures.py)
     if ON_MC683XX and not PARITY:

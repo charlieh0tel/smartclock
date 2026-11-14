@@ -3,8 +3,9 @@ its saved report, the output of make report-decompiled, or with --write
 rewrites them in place: how many of the functions agree, are known, are
 skipped and fail, the primary's and the installer's; how many run in
 user mode alone and in both modes; how many of the pForth console
-sessions agree; and how many of the agreeing functions' cases are
-compared.  With them, the figures of the export the report ran,
+sessions agree; how many of the agreeing functions' cases are
+compared; and how many functions touch the status register, and how
+many of them agree, are known and fail.  With them, the figures of the export the report ran,
 third_party/firmware/decompiled/IMAGE/IMAGE.c, and its sidecar: how
 many functions there are, the primary's and the installer's; how many
 of each are written by hand and how many run as the decompiler's
@@ -62,6 +63,11 @@ COUNTS = re.compile(
 FIGURES = re.compile(
     r'^(installer )?functions run in user mode alone: (\d+), '
     r'both modes: (\d+)', re.M)
+# its line of a profile's functions touching the status register, and
+# of them those agreeing, known and failed
+STATUS = re.compile(
+    r'^(installer )?functions touching the status register: (\d+), '
+    r'agreeing: (\d+), known: (\d+), failed: (\d+)$', re.M)
 # its line of the primary's console sessions, those agreeing and those run
 SESSIONS = re.compile(r'^console sessions agreeing: (\d+) of (\d+)$', re.M)
 # its line of an agreeing function's cases, those run and all
@@ -87,6 +93,13 @@ THUNK = '/* a thunk to '
 # the forms of an export's function: written by hand, an assembly
 # routine, a thunk, or the decompiler's reading, compiled as it stands
 FORMS = ('hand', 'assembly', 'thunk', 'reading')
+# the profiles a report has figures for
+PROFILES = ('primary', 'installer')
+# a profile's figures from COUNTS, FIGURES and STATUS, in each line's
+# order
+COUNTS_KEYS = ('agree', 'skipped', 'known', 'failed')
+MODES_KEYS = ('user', 'both')
+STATUS_KEYS = ('touch', 'agree', 'known', 'failed')
 # the numbers a sentence spells out
 WORDS = ('none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
          'eight', 'nine', 'ten', 'eleven', 'twelve')
@@ -111,6 +124,29 @@ def counts_row(profile):
     """rewrite.md's table row of a profile's counts."""
     return sentence(f'| function check, {profile} | {{}} agree, {{}} known, '
                     '{} skipped, {} failed |')
+
+
+def status_row(profile):
+    """rewrite.md's table row of a profile's functions touching the
+    status register."""
+    return sentence(f'| status register, {profile} | {{}} functions touch it: {{}} agree, '
+                    '{} known, {} failed |')
+
+
+def status_figures(profile):
+    """A profile's figures of the status register, in status_row's
+    order."""
+    return lambda f: tuple(f[f'{profile}_status_{key}'] for key in STATUS_KEYS)
+
+
+def status_sentence(document):
+    """An image's document's sentence of its functions touching the
+    status register and those of them agreeing, each profile's."""
+    return (document, sentence(
+        "The status register: {} of the primary's functions touch it and {} agree, {} of the "
+        "installer's and {} agree"),
+            lambda f: (f['primary_status_touch'], f['primary_status_agree'],
+                       f['installer_status_touch'], f['installer_status_agree']))
 
 
 # rewrite.md's row of the agreeing functions' cases, and the same row's
@@ -138,8 +174,9 @@ def summary_row(image):
 # Each image's sentences: the document, the sentence, and its figures
 # from the report's, in the sentence's order.  A report's figures are
 # keyed primary_ and installer_ agree, skipped, known, failed, user and
-# both; sessions_agree and sessions_run; cases_run and cases_all, which
-# sum the agreeing functions' of both profiles.  The export's are keyed
+# both, and status_ touch, agree, known and failed; sessions_agree and
+# sessions_run; cases_run and cases_all, which sum the agreeing
+# functions' of both profiles.  The export's are keyed
 # primary_ and installer_ functions and each of FORMS but assembly and
 # thunk, which are both regions'; functions, both regions', and
 # decompiled, those not thunks.  The link check's are keyed link_
@@ -162,6 +199,8 @@ CHECKS = {
                            "reasons, none fail; the installer's {} agree"),
          lambda f: (f['primary_agree'], f['primary_known'], f['installer_agree'])),
         (REWRITE, CASES_ROW, lambda f: (f['cases_run'], f['cases_all'])),
+        (REWRITE, status_row('primary'), status_figures('primary')),
+        (REWRITE, status_row('installer'), status_figures('installer')),
         (SUMMARY, sentence("all agree but {} whose difference is the firmware's own "
                            "or one C cannot express, and {} the harness cannot run"),
          lambda f: (word(f['primary_known'] + f['installer_known']),
@@ -196,6 +235,7 @@ CHECKS = {
          lambda f: (f['sessions_agree'], f['sessions_run'], f['primary_user'],
                     f['installer_user'], f['primary_both'], f['installer_both'],
                     f['cases_run'], f['cases_all'])),
+        status_sentence(DOCUMENT_58503A),
         (DOCUMENT_58503A, sentence("*Known.* The {} are `IMAGE_KNOWN`'s"),
          lambda f: (word(f['primary_known'] + f['installer_known']),)),
         (SUMMARY, sentence(
@@ -236,6 +276,7 @@ CHECKS = {
                     f['installer_skipped'], f['installer_failed'])),
         (DOCUMENT_Z3801A, sentence('Console sessions {} of {}.'),
          lambda f: (f['sessions_agree'], f['sessions_run'])),
+        status_sentence(DOCUMENT_Z3801A),
         (REWRITE, sentence(
             "the primary's {} agree, {} are known and {} skipped, none failed, and the "
             "installer's {} agree, {} skipped; its console sessions agree, {} of {}"),
@@ -272,6 +313,7 @@ CHECKS = {
                     f['installer_skipped'], f['installer_failed'])),
         (DOCUMENT_Z3815A, sentence('Console sessions: {} of {} agree.'),
          lambda f: (f['sessions_agree'], f['sessions_run'])),
+        status_sentence(DOCUMENT_Z3815A),
         (DOCUMENT_Z3815A, sentence('| `check-decompiled` | {} routines in'),
          lambda f: (f['assembly'],)),
         (DOCUMENT_Z3815A, sentence(
@@ -291,6 +333,7 @@ CHECKS = {
                     f['installer_skipped'], f['installer_failed'])),
         (DOCUMENT_Z3817A, sentence('Console sessions: {} of {} agree.'),
          lambda f: (f['sessions_agree'], f['sessions_run'])),
+        status_sentence(DOCUMENT_Z3817A),
         (DOCUMENT_Z3817A, sentence(
             "Every C function of the image is written by hand: the primary's {} and the "
             "installer's {}, {} left as the decompiler's reading"),
@@ -312,22 +355,23 @@ def report_figures(path, unfinished):
     any, or if a function failed and the image is not unfinished."""
     report = path.read_text()
     figures = {}
-    for label, *values in COUNTS.findall(report):
-        profile = 'installer' if label else 'primary'
-        for key, value in zip(('agree', 'skipped', 'known', 'failed'), values):
-            figures[f'{profile}_{key}'] = int(value)
-    for label, user, both in FIGURES.findall(report):
-        profile = 'installer' if label else 'primary'
-        figures[f'{profile}_user'], figures[f'{profile}_both'] = int(user), int(both)
+    lines = ((COUNTS, '', COUNTS_KEYS), (FIGURES, '', MODES_KEYS), (STATUS, 'status_', STATUS_KEYS))
+    for line, prefix, keys in lines:
+        for label, *values in line.findall(report):
+            profile = 'installer' if label else 'primary'
+            for key, value in zip(keys, values):
+                figures[f'{profile}_{prefix}{key}'] = int(value)
     sessions = SESSIONS.search(report)
-    if len(figures) != 12 or sessions is None:
+    wanted = len(PROFILES) * sum(len(keys) for _, _, keys in lines)
+    if len(figures) != wanted or sessions is None:
         sys.exit(f'{path}: no figures for both profiles; run make report-decompiled')
     figures['sessions_agree'], figures['sessions_run'] = map(int, sessions.groups())
     cases = [tuple(map(int, c)) for c in CASES.findall(report)]
     figures['cases_run'], figures['cases_all'] = (
         f'{sum(c[i] for c in cases):,}' for i in (0, 1))
-    failed = [f'{p} {figures[p + "_failed"]}' for p in ('primary', 'installer')
-              if figures[p + '_failed']]
+    failed = [f'{p} {figures[p + "_failed"]}' for p in PROFILES if figures[p + '_failed']]
+    failed += [f"{p}'s status register {figures[p + '_status_failed']}" for p in PROFILES
+               if figures[p + '_status_failed']]
     if failed and not unfinished:
         sys.exit(f'{path}: functions failed: ' + ', '.join(failed))
     return figures

@@ -157,6 +157,12 @@ def compile_c(c_path: str, cflags: list[str], source: str, compiled: str) -> Non
     run(TOOLS + "gcc", *cflags, "-I", os.path.dirname(os.path.abspath(c_path)), "-c", "-o", compiled, source)
 
 
+def preprocessed(c_path: str, cflags: list[str]) -> str:
+    """The C file as its preprocessor leaves it, the hand-written C it
+    includes in place, with no line markers."""
+    return run(TOOLS + "gcc", *cflags, "-I", os.path.dirname(os.path.abspath(c_path)), "-E", "-P", c_path)
+
+
 def disassembly(path: str, section: str | None = None) -> str:
     """objdump's listing of an object's code, or of an ELF's section."""
     selected = ("-j", section) if section else ()

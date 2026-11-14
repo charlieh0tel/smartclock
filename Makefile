@@ -31,8 +31,9 @@ WINDOWS_TARGET := x86_64-pc-windows-gnu
 windows:
 	$(CARGO) build --workspace --all-targets --target $(WINDOWS_TARGET)
 
-# smartclock-gps for a microcontroller and for a browser, neither of
-# which the host build proves: it has std to fall back on.  The thumb
+# smartclock-gps and smartclock-gps-ublox for a microcontroller and for
+# a browser, neither of which the host build proves: it has std to fall
+# back on.  The thumb
 # targets have no std at all, so a dependency that wants one fails
 # there, and the first, a Cortex-M0, has the least besides: no atomic
 # compare-and-swap.
@@ -44,7 +45,7 @@ no-std-targets:
 
 check-no-std:
 	set -e; for target in $(NO_STD_TARGETS); do \
-		$(CARGO) build --locked -p smartclock-gps --target $$target; \
+		$(CARGO) build --locked -p smartclock-gps -p smartclock-gps-ublox --target $$target; \
 	done
 
 # The Oncore model against its recorded exchanges, byte for byte:

@@ -23,6 +23,10 @@
 //!
 //! Nothing turns a record into the Furuno's sentences yet.
 //!
+//! A format no `SmartClock` speaks is not here but in a crate beside
+//! this one, on these types: `smartclock-gps-ublox` makes records of a
+//! u-blox receiver's UBX output.
+//!
 //! It is `no_std` and does not allocate: an encoder writes into the
 //! caller's buffer, a deframer owns a buffer of fixed size and lends
 //! each frame out of it, and a record is of fixed size, built in a
@@ -37,7 +41,7 @@ extern crate std;
 use thiserror::Error;
 
 pub mod engine;
-mod framing;
+pub mod framing;
 pub mod nmea;
 pub mod oncore;
 pub mod record;

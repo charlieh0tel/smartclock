@@ -36,7 +36,8 @@ pub(crate) const SECONDS_PER_MINUTE: i64 = 60;
 const MINUTES_PER_HOUR: i64 = 60;
 const HOURS_PER_DAY: i64 = 24;
 const SECONDS_PER_HOUR: i64 = SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
-const SECONDS_PER_DAY: i64 = SECONDS_PER_HOUR * HOURS_PER_DAY;
+/// The seconds in a day of GPS time, or of UTC with no leap second.
+pub const SECONDS_PER_DAY: i64 = SECONDS_PER_HOUR * HOURS_PER_DAY;
 const DAYS_PER_WEEK: u32 = 7;
 const MONTHS_PER_YEAR: u8 = 12;
 const MILLISECONDS_PER_SECOND: u32 = 1000;
@@ -211,6 +212,38 @@ impl GpsWeek {
         match self.0.checked_sub(1) {
             Some(week) => Some(Self(week)),
             None => None,
+        }
+    }
+
+    /// The week nearest this one that a week number cut short names:
+    /// `truncated` is a week modulo `modulus`, [`BROADCAST_WEEKS`] or
+    /// [`ALMANAC_WEEKS`], and of the weeks it could be, the one closest
+    /// to this is given, the later of two equally close.  A number
+    /// already in full comes back as it is while it is within half a
+    /// `modulus` of this week.  `None` for a `modulus` of 0, and for a
+    /// week before the first or past the last a `u16` numbers.
+    #[must_use]
+    pub const fn nearest(self, truncated: u16, modulus: u16) -> Option<Self> {
+        if modulus == 0 {
+            return None;
+        }
+        let modulus = modulus as i32;
+        let ahead = (truncated as i32 - self.0 as i32).rem_euclid(modulus);
+        let ahead = if ahead > modulus / 2 {
+            ahead - modulus
+        } else {
+            ahead
+        };
+        let week = self.0 as i32 + ahead;
+        if week < 0 || week > u16::MAX as i32 {
+            None
+        } else {
+            #[expect(
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss,
+                reason = "checked just before"
+            )]
+            Some(Self(week as u16))
         }
     }
 
@@ -766,6 +799,42 @@ mod tests {
         assert_eq!(DateTime::new(2000, 1, 1, 0, 0, LEAP_SECOND), None);
         assert_eq!(DateTime::new(2000, 1, 1, 23, 59, LEAP_SECOND + 1), None);
         assert!(DateTime::new(2000, 1, 1, 23, 59, LEAP_SECOND).is_some());
+    }
+
+    /// The same note's week 921 is 1945 to a receiver that knows it is
+    /// 2017, and 921 to one that thinks it 1999.
+    #[test]
+    fn a_truncated_week_is_the_nearest_it_could_be() {
+        let now = GpsWeek::new(1945);
+        assert_eq!(now.nearest(921, BROADCAST_WEEKS), Some(now));
+        assert_eq!(now.nearest(1945, BROADCAST_WEEKS), Some(now));
+        assert_eq!(
+            GpsWeek::new(930).nearest(921, BROADCAST_WEEKS),
+            Some(GpsWeek::new(921))
+        );
+        // Across a rollover, either way.
+        assert_eq!(
+            GpsWeek::new(2047).nearest(1, BROADCAST_WEEKS),
+            Some(GpsWeek::new(2049))
+        );
+        assert_eq!(
+            GpsWeek::new(2049).nearest(1023, BROADCAST_WEEKS),
+            Some(GpsWeek::new(2047))
+        );
+        // An almanac's eight bits: 1929 is 137 of them.
+        assert_eq!(GpsWeek::new(1929).almanac(), 137);
+        assert_eq!(
+            GpsWeek::new(1930).nearest(137, ALMANAC_WEEKS),
+            Some(GpsWeek::new(1929))
+        );
+        // Half a modulus off is the later week.
+        assert_eq!(
+            GpsWeek::new(1000).nearest(104, ALMANAC_WEEKS),
+            Some(GpsWeek::new(1128))
+        );
+        assert_eq!(GpsWeek::new(3).nearest(1020, BROADCAST_WEEKS), None);
+        assert_eq!(GpsWeek::new(u16::MAX).nearest(0, BROADCAST_WEEKS), None);
+        assert_eq!(now.nearest(921, 0), None);
     }
 
     /// Furuno's rollover note, p. 2: 1945 weeks, 1024 + 921, lie between

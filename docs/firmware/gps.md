@@ -21,7 +21,10 @@ tests check them against the images' own.  Beside the framing it has a
 record of what an engine knows in one second -- time, leap second, fix,
 satellites, almanac, antenna -- holding only what the messages below
 carry, in their units, and sources that give one each second: a fixed
-sky, a scripted one, a recording.  Its `engine` module is a model that
+sky, a scripted one, a recording.  A crate beside it,
+`crates/smartclock-gps-ublox`, makes those records of a u-blox
+receiver's UBX output, which is no receiver's link and is not
+described here.  Its `engine` module is a model that
 stands in for an Oncore, a VP of six or eight channels or a UT Plus:
 it answers the commands of "The message table" and sends the
 continuous messages from each second's record, to the rules listed

@@ -892,9 +892,10 @@ stands in for one.
 
 - **Scoped to what the receivers use.**  A message or sentence is in
   its tables only if some image's firmware sends or decodes it; it is
-  not a general Oncore or Furuno library.  Each row cites the manual
-  page that gives its layout, and tests hold the tables to the images'
-  own: the Oncore lengths to `docs/firmware/oncore/*.txt`, the NMEA
+  not a general Oncore or Furuno library.  A format no receiver
+  speaks has a crate of its own (`smartclock-gps-ublox`, below).  Each
+  row cites the manual page that gives its layout, and tests hold the
+  tables to the images' own: the Oncore lengths to `docs/firmware/oncore/*.txt`, the NMEA
   sentences to the two tables in the Z3815A's image.
 - **`no_std`, and no allocation**, so one copy of it runs on a
   microcontroller, in a browser and on a host.  An encoder writes into
@@ -1026,9 +1027,55 @@ stands in for one.
   and a scenario, a table of changes to one that can insert a leap
   second, are worked out from the tick alone, so any second can be
   asked for in any order.  A replay reads a recording through an
-  assembler the caller supplies, there being no recording format among
-  what the receivers use.  Wrappers relabel a source's time, announce a
+  assembler, there being no recording format among what the receivers
+  use: the caller's own, or `smartclock-gps-ublox`'s for a u-blox
+  receiver's output (below).  Wrappers relabel a source's time, announce a
   leap second or silence it for a while, and nest by value.
+- **A u-blox receiver is a source, in a crate of its own**
+  (`smartclock-gps-ublox`).  The `SmartClock`s never speak UBX: no
+  image sends or decodes it, so it is not in `smartclock-gps`, which
+  stays the receivers' formats and the types they share.  It is there
+  because a bench's real sky comes from such a receiver, live or
+  recorded, and it makes that receiver's messages into
+  `smartclock-gps` records under the record's rules on time.  A crate
+  rather than a feature, so the line between what the receivers use
+  and what feeds them is the crate's edge, and no build of the core
+  carries it.  It is `no_std` without allocation too, and
+  `make check-no-std` builds it for the same targets.  It uses the
+  core's chunk feeding (`framing`, public for it) and its time
+  arithmetic.  Its layouts are those of u-blox's protocol
+  specification UBX-13003221 R28, cited by section and page, of which
+  `third_party/` has no copy.  It is integer only, as the core is: it
+  reads the receiver's navigation solution and decodes no satellite's
+  own data, so it fills no almanac.
+  - *A length is not followed on its own word.*  A UBX frame says its
+    own length, up to 65535 bytes, and the checksum that would vouch
+    for it comes after them.  A message the crate decodes must have
+    its documented length and any other must fit the buffer, or the
+    frame is dropped at its header and the next start looked for from
+    there.
+  - *An epoch is the messages of one `iTOW`*, ended by `NAV-EOE` or,
+    failing that, by a navigation message of another `iTOW`; nothing
+    of one is put with another's.  The assembler builds the epoch in
+    its own state and writes the caller's record only when it ends, so
+    a record is never seen half made.
+  - *Time only from a fix:* `NAV-TIMEGPS`'s week and time of week are
+    taken only in an epoch whose `NAV-PVT` says the fix is good, the
+    receiver otherwise giving a plausible time from its own clock.  A
+    receiver that resolves the broadcast week 1024 off can be given a
+    week to resolve near.
+  - *The leap second is placed by its date, checked by its countdown*
+    (`NAV-TIMELS`), with the week read modulo 256 so that a week given
+    in full or cut short lands the same, at a week's end as on any
+    other day.  Once announced it is remembered, and the record's
+    offset steps in the leap second itself whichever second the
+    receiver steps its own count in, which the specification does not
+    say.  A receiver without `NAV-TIMELS` gives the offset alone, from
+    `NAV-TIMEGPS`.
+  - *The time pulse's quantization error is decoded and not used.*
+    The specification gives `TIM-TP`'s `qErr` no sign convention and
+    does not say what multiple of sigma `tAcc` is, so a record's timing
+    block is left empty until one is measured or sourced.
 - **A record takes a leap second once.**  Its UTC offset is the one in
   effect, with a past leap second's step already in it, so a leap
   second announced over another would step it twice.  Where both are

@@ -4,8 +4,9 @@
 //! assembler, which builds each second's record out of them; the first
 //! record in the recording is tick 0's, the next tick 1's.  What format
 //! the bytes are in is the assembler's affair: this crate has none of
-//! its own yet, since no recording format is among what a `SmartClock`
-//! sends or decodes.
+//! its own, since no recording format is among what a `SmartClock`
+//! sends or decodes.  `smartclock-gps-ublox` has one for a u-blox
+//! receiver's UBX output.
 //!
 //! Over a slice, or any reader that can be copied, a replay is
 //! [`Driven`](Clocking::Driven): asked for an earlier tick it starts

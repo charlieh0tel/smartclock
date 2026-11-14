@@ -1756,6 +1756,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "smartclock-gps-ublox"
+version = "1.9.1"
+dependencies = [
+ "smartclock-gps",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "smartclock-http"
 version = "1.9.1"
 dependencies = [

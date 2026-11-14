@@ -431,6 +431,17 @@ impl LeapEvent {
             before.saturating_add(self.step())
         }
     }
+
+    /// GPS less UTC before the leap, `offset` being what it is at
+    /// `now`: what [`Self::offset`] undoes.
+    #[must_use]
+    pub const fn offset_before(self, now: GpsSeconds, offset: Seconds<i8>) -> Seconds<i8> {
+        if self.pending(now) {
+            offset
+        } else {
+            offset.saturating_add(Seconds(-self.step().0))
+        }
+    }
 }
 
 /// A date and time of day.  Any field values can be held; [`Self::new`]

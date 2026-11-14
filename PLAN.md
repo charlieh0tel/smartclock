@@ -977,8 +977,15 @@ stands in for one.
   out after its other rows, so their order does not matter and the
   offset is always the one for the record's time.  A scenario's time
   step, an engine's clock gone wrong, leaves the leap second where it
-  is; the wrapper that relabels time, a sky moved whole to another
-  date, takes it along.
+  is.  The wrapper that relabels time, a sky moved whole to another
+  date, drops the source's leap second, the event and its step, and
+  freezes the offset at the one in effect at the fake start: UTC has
+  a leap second only where a day ends, and a real one moved by an
+  arbitrary whole number of seconds lands in the middle of a day of
+  the UTC the new time reads.  A leap second under a fake time is one
+  scheduled in that time, by the announcing wrapper around the
+  relabeling one; one inside it is the source's, and is dropped and
+  counted for the tool to report.
 - **A source that follows real time is refused where real time is not
   kept.**  Each source says how it takes ticks -- any, ascending only,
   or not at all, giving whatever it heard last -- and `admit` refuses

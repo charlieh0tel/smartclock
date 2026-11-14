@@ -89,8 +89,8 @@ pub enum Change {
     /// clock is wrong, and the UTC offset is the one for the stepped
     /// time: an engine stepped back across a leap second has it still
     /// to come.  [`FakeTime`](crate::source::wrap::FakeTime) is the
-    /// other thing, a sky moved whole to another date, and moves the
-    /// leap second with it.
+    /// other thing, a sky moved whole to another date, where the leap
+    /// second would fall in the middle of a day: it drops it.
     TimeStep(Seconds<i64>),
     /// The fix is of this kind.
     Fix(Fix),

@@ -33,25 +33,79 @@ pub enum Relabel {
 }
 
 /// Gives a source's records another time: a recording replayed as if
-/// now, or a sky run at a date of interest.  A leap second the source
-/// announces moves with the time, where the source gave one, so the
-/// record's UTC offset is still the one for its time.  That is what
-/// sets this apart from a scenario's
-/// [`TimeStep`](crate::source::scenario::Change::TimeStep), an engine's
-/// clock gone wrong under a leap second that stays where it is.
+/// now, or a sky run at a date of interest.  The new time differs from
+/// the source's by whole seconds; the fraction of a second is the
+/// source's.
+///
+/// The source's leap second does not come along.  UTC has a leap
+/// second only where a day ends, and a real one moved by whatever the
+/// two times happen to differ by lands in the middle of a day of the
+/// UTC the new time reads: 23:59:60 some afternoon.  So under a fake
+/// time the leap second a record carries is dropped, the event and the
+/// change it schedules both, and GPS less UTC is frozen at what it was
+/// at the fake start, tick 0: a record whose leap second has passed
+/// since then has that step taken back out of its offset.  The source's
+/// time at tick 0 is taken to be a record's time less its tick.  A
+/// scenario's [`TimeStep`](crate::source::scenario::Change::TimeStep)
+/// is the other thing, an engine's clock gone wrong under a leap second
+/// that stays where it is.
+///
+/// A leap second under a fake time is one scheduled in that time, by a
+/// [`LeapSchedule`] around this wrapper; [`LeapEvent::at_day_end`]
+/// makes one where a day of it ends.  A schedule or a scenario's leap
+/// row inside this wrapper is the source's, and dropped with the rest.
+/// What the source will say cannot be known when the wrapper is built,
+/// so nothing is refused then, and nothing is dropped unseen:
+/// [`Self::dropped`] counts the records.
+///
+/// [`Relabel::Keep`] changes nothing, the leap second included.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FakeTime<S> {
     /// The source.
     inner: S,
     /// What to make of its time.
     relabel: Relabel,
+    /// Records a leap second of the source's was dropped from.
+    dropped: u32,
 }
 
 impl<S> FakeTime<S> {
     /// `inner`, its time changed as `relabel` says.
     #[must_use]
     pub const fn new(inner: S, relabel: Relabel) -> Self {
-        Self { inner, relabel }
+        Self {
+            inner,
+            relabel,
+            dropped: 0,
+        }
+    }
+
+    /// How many records came with a leap second of the source's, and
+    /// were passed on without it.  Each time a record is asked for
+    /// counts.
+    #[must_use]
+    pub const fn dropped(&self) -> u32 {
+        self.dropped
+    }
+
+    /// Takes the source's leap second out of the record of `tick`, and
+    /// its step out of the offset if it has passed since tick 0.  This
+    /// is done before the time is changed: the event is in the source's
+    /// time.
+    fn freeze(&mut self, tick: Tick, record: &mut Record) {
+        let Some(event) = record.leap.take() else {
+            return;
+        };
+        self.dropped = self.dropped.saturating_add(1);
+        let (Some(time), Some(offset)) = (record.time, record.utc_offset) else {
+            return;
+        };
+        if let Ok(ticks) = i64::try_from(tick.0)
+            && let Some(start) = time.seconds.checked_sub(Seconds(ticks))
+            && event.pending(start)
+        {
+            record.utc_offset = Some(event.offset_before(time.seconds, offset));
+        }
     }
 
     /// The source, to read what it has of its own, as a
@@ -78,53 +132,42 @@ impl<S: Source> Source for FakeTime<S> {
             return Presence::Silent;
         }
         match self.relabel {
-            Relabel::Keep => Presence::Fresh,
+            Relabel::Keep => {}
             Relabel::Shift(shift) => {
-                let Some(time) = &mut record.time else {
-                    return Presence::Fresh;
-                };
-                let Some(seconds) = time.seconds.checked_add(shift) else {
-                    return Presence::Silent;
-                };
-                time.seconds = seconds;
-                move_leap(record, shift)
+                self.freeze(tick, record);
+                if let Some(time) = &mut record.time {
+                    let Some(seconds) = time.seconds.checked_add(shift) else {
+                        return Presence::Silent;
+                    };
+                    time.seconds = seconds;
+                }
             }
             Relabel::Start(start) => {
+                self.freeze(tick, record);
                 let Some(seconds) = at_tick(start, tick) else {
                     return Presence::Silent;
                 };
-                let Some(time) = &mut record.time else {
-                    record.time = Some(GpsTime {
-                        seconds,
-                        subsecond: Nanoseconds(0),
-                    });
-                    return Presence::Fresh;
-                };
-                let Some(shift) = seconds.checked_since(time.seconds) else {
-                    return Presence::Silent;
-                };
-                time.seconds = seconds;
-                move_leap(record, shift)
+                match &mut record.time {
+                    Some(time) => time.seconds = seconds,
+                    None => {
+                        record.time = Some(GpsTime {
+                            seconds,
+                            subsecond: Nanoseconds(0),
+                        });
+                    }
+                }
             }
         }
+        Presence::Fresh
     }
-}
-
-/// Moves the leap second a record announces by `shift`.
-/// [`Silent`](Presence::Silent) if that is out of range.
-fn move_leap(record: &mut Record, shift: Seconds<i64>) -> Presence {
-    if let Some(leap) = &mut record.leap {
-        let Some(at) = leap.at.checked_add(shift) else {
-            return Presence::Silent;
-        };
-        leap.at = at;
-    }
-    Presence::Fresh
 }
 
 /// Announces a leap second in the records of a source that announces
 /// none.  The source's UTC offset is taken to be the one before the
 /// leap; from the leap's second on, the record's is the one it leaves.
+/// The event is in the time of the records this wrapper is given: around
+/// a [`FakeTime`], the fake time, and that is the one way to have a leap
+/// second under it.
 ///
 /// A record that carries a leap second of its own is passed on as the
 /// source gave it, and this one is withheld from it.  The record's
@@ -319,6 +362,11 @@ mod tests {
         from: Tick(20),
         change: Change::Fix(Fix::None),
     }];
+    /// A source that announces the leap second itself.
+    static LEAP_ROW: [Step; 1] = [Step {
+        from: Tick(0),
+        change: Change::Leap(LEAP),
+    }];
     static GAPS: [Gap; 2] = [
         Gap {
             from: Tick(3),
@@ -434,7 +482,7 @@ mod tests {
         }];
         let mut chain = Dropouts::new(
             LeapSchedule::new(
-                FakeTime::new(scenario(RUN, &OWN), Relabel::Shift(Seconds(0))),
+                FakeTime::new(scenario(RUN, &OWN), Relabel::Keep),
                 Some(LATER),
             ),
             &[],
@@ -509,17 +557,13 @@ mod tests {
     }
 
     /// The two ways to move a sky's time, over the same leap second.
-    /// A relabeled sky takes its leap second with it and is the same
-    /// sky at another date; a stepped engine clock leaves the leap
-    /// second behind, and has it to come again.
+    /// A relabeled sky loses its leap second, event and step, and reads
+    /// a plain second; a stepped engine clock keeps the leap second
+    /// where it was, and has it to come again.
     #[test]
-    fn fake_time_moves_a_leap_second_and_a_time_step_does_not() {
+    fn fake_time_drops_a_leap_second_and_a_time_step_keeps_it() {
         const BACK: i64 = 5;
         const AT: Tick = Tick(LEAP_TICK);
-        static LEAP_ROW: [Step; 1] = [Step {
-            from: Tick(0),
-            change: Change::Leap(LEAP),
-        }];
         static STEPPED: [Step; 2] = [
             LEAP_ROW[0],
             Step {
@@ -533,9 +577,13 @@ mod tests {
         let mut relabeled = FakeTime::new(scenario(RUN, &LEAP_ROW), Relabel::Shift(Seconds(-BACK)));
         assert_eq!(relabeled.record(AT, &mut record), Presence::Fresh);
         assert_eq!(record.time.unwrap().seconds, moved_time);
-        assert_eq!(record.leap.unwrap().at, moved_time);
-        assert_eq!(record.utc_offset, Some(Seconds(BEFORE.0 + 1)));
-        assert_eq!(read(&record).second, LEAP_SECOND);
+        assert_eq!(record.leap, None);
+        assert_eq!(record.utc_offset, Some(BEFORE));
+        assert_eq!(
+            read(&record),
+            DateTime::new(2016, 12, 31, 23, 59, 55).unwrap()
+        );
+        assert_eq!(relabeled.dropped(), 1);
 
         let mut stepped = scenario(RUN, &STEPPED);
         assert_eq!(stepped.record(AT, &mut record), Presence::Fresh);
@@ -566,34 +614,165 @@ mod tests {
         }
     }
 
-    /// A source's own leap second moves with its time, under either
-    /// kind of change.
+    /// GPS less UTC under a fake time is the one at the fake start,
+    /// through the source's leap second and after it, under either kind
+    /// of change, and no second reads 23:59:60.
     #[test]
-    fn fake_time_moves_the_leap_second_too() {
-        const AHEAD: Seconds<i64> = Seconds(100);
+    fn fake_time_freezes_the_leap_count() {
+        /// Noon on a day with no leap second.
+        const FAKE: GpsSeconds = GpsSeconds::from_utc(
+            DateTime::new(2020, 3, 4, 12, 0, 0).unwrap().to_unix(),
+            BEFORE,
+        )
+        .unwrap();
+        const LAST: u64 = LEAP_TICK + 5;
+        let shift = FAKE.checked_since(RUN).unwrap();
+        let mut started = FakeTime::new(scenario(RUN, &LEAP_ROW), Relabel::Start(FAKE));
+        let mut shifted = FakeTime::new(scenario(RUN, &LEAP_ROW), Relabel::Shift(shift));
+        let mut record = Record::EMPTY;
+        for tick in 0..=LAST {
+            for source in [&mut started, &mut shifted] {
+                assert_eq!(source.record(Tick(tick), &mut record), Presence::Fresh);
+                assert_eq!(record.utc_offset, Some(BEFORE));
+                assert_eq!(record.leap, None);
+                assert_eq!(
+                    read(&record),
+                    DateTime::new(2020, 3, 4, 12, 0, u8::try_from(tick).unwrap()).unwrap()
+                );
+            }
+        }
+        assert_eq!(started.dropped(), u32::try_from(LAST).unwrap() + 1);
+
+        // Any second can be asked for in any order.
+        assert_eq!(shifted.record(Tick(0), &mut record), Presence::Fresh);
+        assert_eq!(record.utc_offset, Some(BEFORE));
+
+        // A leap second that had passed before the fake start is in
+        // the count at the start, and stays in it.
+        let after = Seconds(BEFORE.0 + 1);
+        let mut late = FakeTime::new(scenario(LEAP.at, &LEAP_ROW), Relabel::Start(FAKE));
+        assert_eq!(late.record(Tick(3), &mut record), Presence::Fresh);
+        assert_eq!(record.utc_offset, Some(after));
+        assert_eq!(record.leap, None);
+    }
+
+    /// The source's leap second is dropped whole: the event, and with
+    /// it the change it schedules, whether or not the record has a time
+    /// or an offset to freeze, and each record is counted.  A source
+    /// that announces none is not counted.
+    #[test]
+    fn fake_time_drops_the_sources_leap_second() {
         static ANNOUNCED: Record = {
             let mut record = Record::EMPTY;
-            record.leap = Some(LeapEvent {
-                at: RECORDED.checked_add(AHEAD).unwrap(),
-                change: LeapChange::Insert,
-            });
+            record.leap = Some(LEAP);
             record
         };
-        let base = Fixed::new(RECORDED, &ANNOUNCED);
         let mut record = Record::EMPTY;
 
-        let mut started = FakeTime::new(base, Relabel::Start(RUN));
-        assert_eq!(started.record(Tick(7), &mut record), Presence::Fresh);
-        assert_eq!(record.time.unwrap().seconds, RUN + Seconds(7));
-        assert_eq!(record.leap.unwrap().at, RUN + AHEAD);
+        let mut bare = FakeTime::new(Fixed::new(RUN, &ANNOUNCED), Relabel::Start(RECORDED));
+        assert_eq!(bare.record(Tick(LEAP_TICK), &mut record), Presence::Fresh);
+        assert_eq!(record.leap, None);
+        assert_eq!(record.utc_offset, None);
+        assert_eq!(bare.dropped(), 1);
 
-        let mut shifted = FakeTime::new(base, Relabel::Shift(Seconds(-50)));
-        assert_eq!(shifted.record(Tick(7), &mut record), Presence::Fresh);
-        assert_eq!(record.time.unwrap().seconds, RECORDED - Seconds(43));
-        assert_eq!(record.leap.unwrap().at, RECORDED + Seconds(50));
+        let mut kept = FakeTime::new(Fixed::new(RUN, &ANNOUNCED), Relabel::Keep);
+        assert_eq!(kept.record(Tick(LEAP_TICK), &mut record), Presence::Fresh);
+        assert_eq!(record.leap, Some(LEAP));
+        assert_eq!(kept.dropped(), 0);
 
-        let mut too_far = FakeTime::new(base, Relabel::Shift(Seconds(i64::MAX)));
-        assert_eq!(too_far.record(Tick(7), &mut record), Presence::Silent);
+        let mut plain = FakeTime::new(scenario(RUN, &STEPS), Relabel::Start(RECORDED));
+        assert_eq!(plain.record(Tick(LEAP_TICK), &mut record), Presence::Fresh);
+        assert_eq!(plain.dropped(), 0);
+    }
+
+    /// A leap second under a fake time is the one scheduled in it, by
+    /// the wrapper around: honored where it says, over a source whose
+    /// own leap second, at another second, is dropped and so does not
+    /// have this one withheld.
+    #[test]
+    fn a_leap_second_scheduled_in_fake_time_is_honored() {
+        /// Ticks from the fake start to the scheduled leap second.
+        const SCHEDULED: u64 = 10;
+        const FAKE_LEAP: LeapEvent = LeapEvent::at_day_end(
+            DateTime::new(2015, 7, 1, 0, 0, 0).unwrap().to_unix(),
+            BEFORE,
+            LeapChange::Insert,
+        )
+        .unwrap();
+        const FAKE: GpsSeconds = FAKE_LEAP
+            .at
+            .checked_sub(Seconds(SCHEDULED.cast_signed()))
+            .unwrap();
+        let after = Seconds(BEFORE.0 + 1);
+        let mut source = LeapSchedule::new(
+            FakeTime::new(scenario(RUN, &LEAP_ROW), Relabel::Start(FAKE)),
+            Some(FAKE_LEAP),
+        );
+        let mut record = Record::EMPTY;
+
+        assert_eq!(
+            source.record(Tick(SCHEDULED - 1), &mut record),
+            Presence::Fresh
+        );
+        assert_eq!(record.leap, Some(FAKE_LEAP));
+        assert_eq!(record.utc_offset, Some(BEFORE));
+        assert_eq!(
+            read(&record),
+            DateTime::new(2015, 6, 30, 23, 59, 59).unwrap()
+        );
+
+        assert_eq!(source.record(Tick(SCHEDULED), &mut record), Presence::Fresh);
+        assert_eq!(record.utc_offset, Some(after));
+        assert_eq!(
+            read(&record),
+            DateTime::new(2015, 6, 30, 23, 59, LEAP_SECOND).unwrap()
+        );
+
+        // Through the source's own leap second, nothing more happens.
+        for (tick, second) in [(LEAP_TICK - 1, 18), (LEAP_TICK, 19), (LEAP_TICK + 1, 20)] {
+            assert_eq!(source.record(Tick(tick), &mut record), Presence::Fresh);
+            assert_eq!(record.leap, Some(FAKE_LEAP));
+            assert_eq!(record.utc_offset, Some(after));
+            assert_eq!(
+                read(&record),
+                DateTime::new(2015, 7, 1, 0, 0, second).unwrap()
+            );
+        }
+        assert_eq!(source.withheld(), 0);
+        assert_eq!(source.inner().dropped(), 5);
+    }
+
+    /// A time can be moved back past the start of GPS time, by whole
+    /// seconds; one moved out of the count is silence.
+    #[test]
+    fn fake_time_moves_a_time_before_gps_time() {
+        const BEHIND: Seconds<i64> = Seconds(43);
+        let tick = Tick(7);
+        let back = GpsSeconds::EPOCH
+            .checked_since(RECORDED + Seconds(50))
+            .unwrap();
+        assert!(back < Seconds(0));
+        let mut record = Record::EMPTY;
+
+        let mut shifted = FakeTime::new(scenario(RECORDED, &LEAP_ROW), Relabel::Shift(back));
+        assert_eq!(shifted.record(tick, &mut record), Presence::Fresh);
+        let time = record.time.unwrap().seconds;
+        assert_eq!(time, GpsSeconds::EPOCH - BEHIND);
+        assert_eq!(time.week(), None);
+        assert_eq!(record.leap, None);
+        assert_eq!(record.utc_offset, Some(BEFORE));
+        assert_eq!(read(&record), DateTime::new(1980, 1, 5, 23, 59, 0).unwrap());
+
+        let start = GpsSeconds::EPOCH - BEHIND - Seconds(7);
+        let mut started = FakeTime::new(scenario(RECORDED, &LEAP_ROW), Relabel::Start(start));
+        assert_eq!(started.record(tick, &mut record), Presence::Fresh);
+        assert_eq!(record.time.unwrap().seconds, time);
+
+        let last = GpsSeconds::from_epoch(Seconds(i64::MAX));
+        for too_far in [Relabel::Shift(Seconds(i64::MAX)), Relabel::Start(last)] {
+            let mut source = FakeTime::new(scenario(RECORDED, &STEPS), too_far);
+            assert_eq!(source.record(tick, &mut record), Presence::Silent);
+        }
     }
 
     /// A wrapper is as live as what it wraps, and gives a timeless

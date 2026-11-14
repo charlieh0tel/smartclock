@@ -96,6 +96,7 @@ use crate::oncore::FA_SELF_TEST;
 use crate::oncore::GJ_LEAP_SECOND_PENDING;
 use crate::oncore::MAX_RESPONSE;
 use crate::oncore::MessageId;
+use crate::oncore::OVERHEAD;
 use crate::oncore::SZ_POWER_ON_FAILURE;
 use crate::oncore::encode;
 use crate::record::Antenna;
@@ -327,6 +328,33 @@ struct TraimResult {
     isolated: PrnSet,
 }
 
+/// The most data a position status carries: an eight-channel one's
+/// message length less its framing (VP p. 126).
+const STATUS_MOST: usize = 76 - OVERHEAD;
+
+/// A position status's data, kept to answer a poll while idle.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct KeptStatus {
+    /// The first `length` are the data.
+    bytes: [u8; STATUS_MOST],
+    /// How many there are.
+    length: usize,
+}
+
+impl KeptStatus {
+    fn of(data: &Data) -> Self {
+        let data = data.as_slice();
+        let length = data.len().min(STATUS_MOST);
+        let mut bytes = [0; STATUS_MOST];
+        bytes[..length].copy_from_slice(&data[..length]);
+        Self { bytes, length }
+    }
+
+    fn as_slice(&self) -> &[u8] {
+        &self.bytes[..self.length]
+    }
+}
+
 /// The satellites Time RAIM needs to detect a bad one and to isolate
 /// it, for alarm limits from `from` up.
 #[derive(Debug)]
@@ -553,6 +581,9 @@ pub struct Engine {
     offset: Option<u8>,
     /// The data of the last `@@Bb` sent.
     visibility: Option<[u8; VISIBILITY]>,
+    /// Each family's last position status sent while fixing, which
+    /// `@@Cf` does not forget.
+    last_status: [Option<KeptStatus>; FAMILIES.len()],
     /// The self-tests' answers waiting, oldest
     /// first.
     deferred: [Option<Deferred>; DEFERRED],
@@ -590,6 +621,7 @@ impl Engine {
             heard: None,
             offset: None,
             visibility: None,
+            last_status: [None; FAMILIES.len()],
             deferred: [None; DEFERRED],
         }
     }
@@ -1188,8 +1220,26 @@ impl Engine {
     }
 
     /// `@@Ba` and `@@Ea`.
-    fn position_status<O: Output + ?Sized>(&self, record: &Record, family: &Family, out: &mut O) {
-        send(out, family.status, &self.status(record, family));
+    /// Idle, it is the last one sent while fixing, once more (VP pp. 70
+    /// and 124), or with none yet, the current one, which tracks
+    /// nothing.
+    fn position_status<O: Output + ?Sized>(
+        &mut self,
+        record: &Record,
+        family: &Family,
+        out: &mut O,
+    ) {
+        if !self.state.fixing
+            && let Some(kept) = &self.last_status[family.index]
+        {
+            send(out, family.status, Data::new().bytes(kept.as_slice()));
+            return;
+        }
+        let data = self.status(record, family);
+        if self.state.fixing {
+            self.last_status[family.index] = Some(KeptStatus::of(&data));
+        }
+        send(out, family.status, &data);
     }
 
     /// The data of `@@Ba` and `@@Ea` (VP pp. 70 to 73 and 124 to 126;

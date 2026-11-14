@@ -791,6 +791,39 @@ fn the_receiver_status_says_what_the_record_and_settings_make_of_the_fix() {
     assert_eq!(status(&VP_EIGHT, &forgetful), (20, 0, 0x20 | 0x02 | 0x01));
 }
 
+/// VP pp. 70 and 124: idle, a position status is the last one sent
+/// while fixing, once when polled; before any, the current one, which
+/// tracks nothing.
+#[test]
+fn an_idle_engine_answers_with_its_last_position_status() {
+    let mut record = full();
+    let poll = |engine: &mut Engine, record: &Record| {
+        only(
+            &ask(engine, record, EA_POSITION_STATUS, &[0]),
+            EA_POSITION_STATUS,
+        )
+        .to_vec()
+    };
+    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let before = poll(&mut engine, &record);
+    assert_eq!(before[4..7], [12, 0, 0]);
+    assert_eq!(before[34..36], [0, 0]);
+    assert_eq!(before[36..68], [0; 32]);
+
+    ask(&mut engine, &record, CG_FIX_MODE, &FIX);
+    let fixing = poll(&mut engine, &record);
+    assert_eq!(fixing[34..36], [5, 5]);
+    ask(&mut engine, &record, CG_FIX_MODE, &[0]);
+    record.time = Some(GpsTime {
+        seconds: noon() + Seconds(5),
+        subsecond: Nanoseconds(0),
+    });
+    engine.second(&record, NOW, &mut Sent::default());
+    assert_eq!(poll(&mut engine, &record), fixing);
+    ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
+    assert_eq!(poll(&mut engine, &record), fixing);
+}
+
 /// VP pp. 29 and 30: highest in the sky tracks the highest satellites,
 /// where automatic selection takes the record's first.
 #[test]

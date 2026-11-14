@@ -18,7 +18,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows no-std-targets check-no-std hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs pages check-pages clean deb release release-notes install-service
+.PHONY: all build windows no-std-targets check-no-std check-engine-vectors engine-vectors hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs pages check-pages clean deb release release-notes install-service
 
 all: build
 
@@ -46,6 +46,16 @@ check-no-std:
 	set -e; for target in $(NO_STD_TARGETS); do \
 		$(CARGO) build --locked -p smartclock-gps --target $$target; \
 	done
+
+# The Oncore model against its recorded exchanges, byte for byte:
+# crates/smartclock-gps/tests/vectors/engine.  "make test" runs this
+# too.  engine-vectors rewrites each file's answers from the model;
+# review the diff.
+check-engine-vectors:
+	$(CARGO) test --locked -p smartclock-gps --test engine_vectors
+
+engine-vectors:
+	ENGINE_VECTORS=write $(CARGO) test --locked -p smartclock-gps --test engine_vectors
 
 # What CI runs.  Keep this the whole of it.
 # Use the repository's git hooks, once per clone: commit-msg refuses a

@@ -209,7 +209,9 @@ Without a receiver, use the simulator; every tool takes
 `make ci` runs CI's Rust checks: formatting, clippy, the tests, the
 `no_std` builds of `smartclock-gps` (`make check-no-std`, after
 `make no-std-targets` once) and the API documentation (`make doc`), in
-which a rustdoc warning is an error.
+which a rustdoc warning is an error.  The tests include
+`make check-engine-vectors`, the Oncore model's recorded exchanges;
+`make engine-vectors` rewrites their answers from the model.
 The firmware's checks are their own CI job.  `make test-web` runs the
 browser tests, after `make web-deps` once.  `make hooks`, once per
 clone, sets up the repository's git hooks.  `make pages` builds the

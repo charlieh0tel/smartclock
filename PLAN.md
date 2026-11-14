@@ -912,6 +912,23 @@ stands in for one.
   six-channel or an eight-channel message is a `const` function of the
   ID alone (`MessageId::channels`), which names the per-channel IDs;
   the table's rows take their form from it, so the two cannot differ.
+- **An Oncore deframer's lengths are a type parameter, a function
+  unless named.**  A frame's ID is all it says of its length, so a
+  deframer is given the lengths, and which messages an engine has may
+  be known only at run time.  A function pointer captures nothing, so
+  lengths that depend on that needed a function for each case.  They
+  are now a trait (`MessageLengths`) every function and closure
+  implements and a caller's own type can, and the deframer's second
+  parameter, which defaults to the function pointer: `Deframer<N>` and
+  `Deframer::new` are what they were.  A trait object was not used:
+  it would be a borrow in the deframer's type and an indirect call
+  where a caller's type costs neither.  A constructor that takes any
+  lengths is const too, so a deframer of a caller's type is still a
+  `static`'s field, built before the engine is known and given its
+  lengths after (`set_lengths`); a capturing closure's type cannot be
+  written out, so it serves only a deframer that is not a `static`.
+  The cost is a copy of the deframer's code for each lengths type a
+  build uses.
 - **Framing first:** IDs, lengths, checksums, encoders and streaming
   deframers.  What turns an engine's knowledge into a message's bytes
   is later work, in modules beside these.

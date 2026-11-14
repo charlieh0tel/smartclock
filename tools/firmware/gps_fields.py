@@ -29,7 +29,11 @@ A message's rows cover its data alone, by offset from the frame's
 first @: the four bytes of @@ and ID before it and the checksum, CR and
 LF after it are every message's and have no row.  A field repeated,
 one a channel or a satellite, is one row with a count and the stride
-from each to the next.
+from each to the next.  A byte the manual lays out by bit, of which
+the images use some bits and not others, has a row for each bit or run
+of bits, all at the byte's offset, with the bits column naming them,
+7 the most significant: 5, or 6-4.  Between them such rows give each
+bit of the byte once; any other row's bits are "-".
 
 Reads are measured, not read off the C.  Each decoder of an image's
 message table (docs/firmware/oncore/IMAGE.txt) is called as
@@ -58,8 +62,8 @@ agree and IMAGE=CLASS for each if not:
     stored     nothing is found to read where it is stored
 
 Where a field is stored is measured: its bytes are flipped by each of
-FLIPS and the decoders run, and the bytes of RAM that change are its
-stores.  That takes in what a decoder derives from the field, so a
+FLIPS, of a row of bits those bits alone, and the decoders run, and
+the bytes of RAM that change are its stores.  That takes in what a decoder derives from the field, so a
 store may hold other fields' bits too.
 
 Who reads a store is a scan of the primary's instructions
@@ -84,9 +88,11 @@ nothing, and a function cited that an image lacks.  It does not check
 the reading itself.
 
 What this can miss.  A store reached only through a pointer kept in
-RAM, or computed, has no reader, and its field comes out stored.  A
-function is classed whole for a field, whichever bits of a store it
-tests.  A function reaching a field need not read it: a row says
+RAM, or computed, has no reader, and its field comes out stored.  The
+scan sees which functions read a store, not which of its bits: the
+rows of a byte split by bit have the same readers, and which reader
+tests which bit is the hand table's to say, as it is for a store that
+takes bits from several fields.  A function reaching a field need not read it: a row says
 where it does not.  A use two calls from the reader is the reading's
 to follow, and only the functions cited are checked to exist.  The
 run covers the decoders alone, no other task.
@@ -223,6 +229,7 @@ COLUMNS = (
     'length',
     'count',
     'stride',
+    'bits',
     'manual',
     'page',
     'images',
@@ -232,6 +239,7 @@ COLUMNS = (
     'notes',
 )
 NONE = '-'
+BYTE_BITS = 8
 DIRECTIONS = ('command', 'response')
 MANUALS = ('VP', 'UT', 'M12+')
 SOURCES = (
@@ -259,6 +267,8 @@ USE_COLUMNS = ('function', 'images', 'message', 'field', 'use', 'evidence')
 ANY = '*'
 # A function the hand table's evidence cites.
 CITED = re.compile(r'(\w+)\(\)')
+# A bits cell: one bit, or the highest and lowest of a run.
+BITS = re.compile(r'[0-7](-[0-7])?')
 # How the trace has a function reading a field, a later one taken
 # where it has two: the decoders, run, read it there; the scan sees a
 # walk that reaches it; the scan sees the read.
@@ -303,6 +313,7 @@ class Row:
     length: int
     count: int
     stride: int
+    bits: str
     manual: str
     page: str
     images: str
@@ -317,6 +328,14 @@ class Row:
             range(self.offset + index * self.stride, self.offset + index * self.stride + self.length)
             for index in range(self.count)
         ]
+
+    def mask(self) -> int:
+        """The bits of its bytes that are the row's: all of them, or
+        those its bits column names, the highest first."""
+        if self.bits == NONE:
+            return (1 << BYTE_BITS) - 1
+        high, _, low = self.bits.partition('-')
+        return sum(1 << bit for bit in range(int(low or high), int(high) + 1))
 
     def terms(self) -> list[tuple[str, str]]:
         """The engine column's terms, each with its note."""
@@ -551,7 +570,7 @@ def stores(
                 machine.watched = None
                 base = machine.ram()
                 for row in fields:
-                    for flip in FLIPS:
+                    for flip in sorted({flip & row.mask() for flip in FLIPS} - {0}):
                         flipped = bytearray(data)
                         for span in row.instances():
                             for byte in span:
@@ -986,12 +1005,24 @@ def check_rows(rows: list[Row], tables: dict[str, Requests]) -> list[str]:
             lengths.setdefault(entry.id, set()).add(entry.length)
     for (message, direction), group in groups.items():
         at = HEADER
+        split: dict[tuple[int, int, int, int], list[Row]] = {}
         for row in sorted(group, key=lambda row: row.offset):
+            where = f'{TABLE.relative_to(ROOT)}:{row.line}'
             if row.count > 1 and row.stride < row.length:
-                problems.append(f'{TABLE.relative_to(ROOT)}:{row.line}: stride {row.stride} under length')
-        covered = sorted(
-            (span.start, span.stop, row.line) for row in group for span in row.instances()
-        )
+                problems.append(f'{where}: stride {row.stride} under length')
+            if row.bits != NONE:
+                if not BITS.fullmatch(row.bits) or not row.mask() or row.length != 1:
+                    sys.exit(f'{where}: bits {row.bits}')
+                split.setdefault((row.offset, row.length, row.count, row.stride), []).append(row)
+        for bytes_split in split.values():
+            masks = [row.mask() for row in bytes_split]
+            if sum(masks) != (1 << BYTE_BITS) - 1 or any(a & b for a in masks for b in masks if a is not b):
+                problems.append(
+                    f'{TABLE.relative_to(ROOT)}:{bytes_split[0].line}: @@{message} {direction} byte '
+                    f'{bytes_split[0].offset}: its rows do not give each bit once'
+                )
+        whole = [row for row in group if row.bits == NONE] + [bytes_split[0] for bytes_split in split.values()]
+        covered = sorted((span.start, span.stop, row.line) for row in whole for span in row.instances())
         for start, stop, line in covered:
             if start != at:
                 problems.append(f'{TABLE.relative_to(ROOT)}:{line}: @@{message} {direction} byte {at} then {start}')
@@ -1215,7 +1246,8 @@ def short(images: list[str]) -> str:
 def bytes_of(row: Row) -> str:
     last = row.offset + (row.count - 1) * row.stride + row.length - 1
     each = f', {row.count} x {row.length}' if row.count > 1 else ''
-    return f'{row.offset}-{last}{each}' if last != row.offset else str(row.offset)
+    bits = '' if row.bits == NONE else f', bit{"s" if "-" in row.bits else ""} {row.bits}'
+    return (f'{row.offset}-{last}{each}' if last != row.offset else str(row.offset)) + bits
 
 
 def where_used(row: Row, found: dict[str, Found]) -> str:

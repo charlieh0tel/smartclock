@@ -12,6 +12,7 @@ gps_time_local_get	*	*	*	reported	scpi_query_DIAGnostic_GPSystem_TIME() answers 
 gps_position_get	*	*	*	reported	scpi_query_SOURce_GPSystem_POSition_ACTual() answers with gps_position_get()'s position, the held one in position hold
 status_snapshot	*	*	*	reported	status_snapshot() copies the field, or what satellite_sets_build() and satellite_status_list() make of it, to the snapshot status_screen() draws for status_screen_print()
 status_snapshot	*	Ba,Ea	channel status flags	none	status_snapshot() hands the channels to satellite_sets_build() and satellite_status_list(), which read each one's satellite, mode and signal strength and not its flags
+status_snapshot	*	Ba,Ea	receiver status position propagate; receiver status poor geometry; receiver status 2D fix; receiver status acquiring or position hold; receiver status differential; receiver status insufficient visible satellites; receiver status bad almanac	none	status_snapshot() copies the receiver status whole to the snapshot, of which status_screen_position() alone reads it, for its 3D fix bit, to say why a survey is suspended
 status_snapshot	*	Bb	Doppler	none	status_snapshot() hands the visibility to satellite_status_list(), which reads each satellite's number, elevation, azimuth and health and not its Doppler
 gps_debug_status	*	*	*	console	oncore_position_message() calls gps_debug_status(), which prints, only while a console word has set its interval
 gps_print_average	*	*	*	console	gps_print_average() prints, on a request of gps_console_request()
@@ -26,7 +27,8 @@ gps_print_visibility	*	*	*	console	gps_print_visibility() prints, on a request o
 oncore_corrections_message	*	*	*	console	oncore_corrections_message() keeps a mean and deviation of each satellite's range correction, which gps_print_pseudorange_corrections() alone reads
 oncore_visibility_message	*	*	*	none	oncore_visibility_message() bounds the count it has just stored
 oncore_position_message	*	At	position hold	control	oncore_position_message() averages the position for the survey only out of position hold
-oncore_position_message	*	Ba,Ea	latitude; longitude; ellipsoid height; mean sea level height; receiver status	control	oncore_position_message() averages the position by running_average_update() for the survey, while the receiver status has its 3D fix bit
+oncore_position_message	*	Ba,Ea	latitude; longitude; ellipsoid height; mean sea level height; receiver status 3D fix	control	oncore_position_message() averages the position by running_average_update() for the survey, while the receiver status has its 3D fix bit
+oncore_position_message	*	Ba,Ea	receiver status position propagate; receiver status poor geometry; receiver status 2D fix; receiver status acquiring or position hold; receiver status differential; receiver status insufficient visible satellites; receiver status bad almanac	none	oncore_position_message() tests the receiver status for its 3D fix bit alone
 oncore_position_message	z3805a-3543b,z3801a-3543	Cg	mode	control	oncore_position_message() takes the status only in position fix mode, and resets the channels otherwise
 oncore_position_message	z3817a-3752	Ba,Ea	hours; minutes; seconds; channel satellite; channel tracking mode	control	oncore_position_message() counts the messages that repeat the last one's time while a channel tracks a satellite for position, the count command_monitor() fails the receiver's health by
 oncore_position_message	z3817a-3752	Ba,Ea	channel signal strength; channel status flags	none	oncore_position_message() reads each channel's satellite and mode alone

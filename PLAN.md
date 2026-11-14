@@ -944,7 +944,15 @@ stands in for one.
 - **Time is a count of GPS seconds** (`time`) with no rollover and no
   leap seconds; a week number, a time of week, a UTC date and 23:59:60
   are derived from it where a message is written, with the offset and
-  the leap second the record carries.  All of it is `const`.
+  the leap second the record carries.  All of it is `const`.  The count
+  is signed: a clock set behind UTC reads a date before the start of
+  GPS time in the hours after it, where an engine with no time starts,
+  and the difference of two times is as often negative as not.  Its
+  number, the UTC count's, a week's and a time of week's are private:
+  a time is made from a date, a week and time of week or a typed count
+  of seconds, and two times differ by a length of time, so a GPS second
+  is not taken for a UTC one nor a time for a length.  The operators
+  stop at the count's ends, where the `checked_` functions say `None`.
 - **A source gives each second's record, and the tool's clock drives
   it** (`source`).  A tool that stands in for an engine asks its source
   for the record of the tick it has reached; no source keeps a clock,

@@ -168,7 +168,17 @@ impl<S: Source + ?Sized> Source for &mut S {
     }
 }
 
-/// How far `to` is after `from`, `None` if an `i64` cannot say.
+/// The time of `tick` where tick 0 is `start`, `None` past the end of
+/// the count of GPS seconds.
+const fn at_tick(start: GpsSeconds, tick: Tick) -> Option<GpsSeconds> {
+    if tick.0 > i64::MAX as u64 {
+        return None;
+    }
+    start.checked_add(Seconds(tick.0.cast_signed()))
+}
+
+/// How far tick `to` is after tick `from`, `None` if an `i64` cannot
+/// say.
 const fn difference(to: u64, from: u64) -> Option<i64> {
     let distance = to.abs_diff(from);
     if distance > i64::MAX as u64 {
@@ -315,13 +325,13 @@ const fn slip(
     time: GpsSeconds,
     arrival: Tick,
 ) -> Option<Seconds<i64>> {
-    let Some(moved) = difference(time.0, before.0) else {
+    let Some(moved) = time.checked_since(before) else {
         return None;
     };
     let Some(ticked) = difference(arrival.0, before_arrival.0) else {
         return None;
     };
-    match moved.checked_sub(ticked) {
+    match moved.0.checked_sub(ticked) {
         Some(slip) => Some(Seconds(slip)),
         None => None,
     }
@@ -461,9 +471,9 @@ mod tests {
     }
 
     /// Delivers a record of GPS second `seconds` in tick `arrival`.
-    fn deliver(latest: &mut Latest, seconds: u64, arrival: u64) {
+    fn deliver(latest: &mut Latest, seconds: i64, arrival: u64) {
         latest.slot().time = Some(GpsTime {
-            seconds: GpsSeconds(seconds),
+            seconds: GpsSeconds::from_epoch(Seconds(seconds)),
             subsecond: Nanoseconds(0),
         });
         latest.commit(Tick(arrival));
@@ -503,8 +513,8 @@ mod tests {
     /// stands still and a lost record all show.
     #[test]
     fn latest_measures_a_jump_in_its_sources_time() {
-        const START: u64 = 1_000_000;
-        const WEEK: u64 = SECONDS_PER_WEEK as u64;
+        const START: i64 = 1_000_000;
+        const WEEK: i64 = SECONDS_PER_WEEK as i64;
         let mut latest = Latest::new();
         assert_eq!(latest.slip(), None);
         deliver(&mut latest, START, 0);
@@ -517,10 +527,10 @@ mod tests {
         assert_eq!(latest.slip(), Some(Seconds(0)));
         // A week ahead in one tick.
         deliver(&mut latest, START + 5 + WEEK, 5);
-        assert_eq!(latest.slip(), Some(Seconds(WEEK.cast_signed())));
+        assert_eq!(latest.slip(), Some(Seconds(WEEK)));
         // And back.
         deliver(&mut latest, START + 6, 6);
-        assert_eq!(latest.slip(), Some(Seconds(-WEEK.cast_signed())));
+        assert_eq!(latest.slip(), Some(Seconds(-WEEK)));
         // The same second twice.
         deliver(&mut latest, START + 6, 7);
         assert_eq!(latest.slip(), Some(Seconds(-1)));
@@ -537,8 +547,8 @@ mod tests {
         assert_eq!(latest.slip(), Some(Seconds(0)));
 
         // Further than an i64 says.
-        deliver(&mut latest, u64::MAX, 12);
-        deliver(&mut latest, 0, 13);
+        deliver(&mut latest, i64::MAX, 12);
+        deliver(&mut latest, -1, 13);
         assert_eq!(latest.slip(), None);
     }
 }

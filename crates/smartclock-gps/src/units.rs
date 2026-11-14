@@ -6,11 +6,89 @@
 //! are those of the VP Oncore's command reference,
 //! `third_party/motorola/VPCommands.pdf`, as printed.
 
+use crate::time::SECONDS_PER_MINUTE;
 use core::num::NonZeroU8;
+use core::ops::Add;
+use core::ops::Neg;
+use core::ops::Sub;
 
 /// A count of seconds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Seconds<T>(pub T);
+
+impl Seconds<i8> {
+    /// The sum, as GPS less UTC and a leap second's step make the next
+    /// offset; it stops at the ends of an `i8`.
+    #[must_use]
+    pub const fn saturating_add(self, other: Self) -> Self {
+        Self(self.0.saturating_add(other.0))
+    }
+}
+
+/// [`Seconds::<i8>::saturating_add`].
+impl Add for Seconds<i8> {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        self.saturating_add(other)
+    }
+}
+
+impl From<Seconds<i8>> for Seconds<i64> {
+    fn from(seconds: Seconds<i8>) -> Self {
+        Self(i64::from(seconds.0))
+    }
+}
+
+impl From<Seconds<i32>> for Seconds<i64> {
+    fn from(seconds: Seconds<i32>) -> Self {
+        Self(i64::from(seconds.0))
+    }
+}
+
+/// Stops at the ends of an `i64`.
+impl Add for Seconds<i64> {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self(self.0.saturating_add(other.0))
+    }
+}
+
+/// Stops at the ends of an `i64`.
+impl Sub for Seconds<i64> {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self(self.0.saturating_sub(other.0))
+    }
+}
+
+/// Stops at the ends of an `i64`.
+impl Neg for Seconds<i64> {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Self(self.0.saturating_neg())
+    }
+}
+
+/// A count of minutes: how far a local clock is from UTC (`@@Ab`,
+/// p. 9).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Minutes<T>(pub T);
+
+impl Minutes<i16> {
+    /// The same length in seconds.
+    #[must_use]
+    pub const fn seconds(self) -> Seconds<i64> {
+        Seconds(self.0 as i64 * SECONDS_PER_MINUTE)
+    }
+}
+
+/// A count of tenths of a second: a time of week (`@@Ce`, p. 115).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Deciseconds(pub u32);
 
 /// A count of milliseconds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -143,9 +221,36 @@ impl PrnSet {
 
 #[cfg(test)]
 mod tests {
+    use super::Minutes;
     use super::PRNS;
     use super::Prn;
     use super::PrnSet;
+    use super::Seconds;
+
+    /// Lengths of time add, widen and turn about, and stop at their
+    /// type's ends.
+    #[test]
+    fn lengths_of_time_add() {
+        assert_eq!(Seconds(17_i8) + Seconds(1), Seconds(18));
+        assert_eq!(Seconds(17_i8) + Seconds(-1), Seconds(16));
+        assert_eq!(Seconds(i8::MAX) + Seconds(1), Seconds(i8::MAX));
+        assert_eq!(Seconds::<i64>::from(Seconds(-18_i8)), Seconds(-18));
+        assert_eq!(Seconds::<i64>::from(Seconds(-70_000_i32)), Seconds(-70_000));
+        assert_eq!(Seconds(5_i64) + Seconds(-7), Seconds(-2));
+        assert_eq!(Seconds(5_i64) - Seconds(7), Seconds(-2));
+        assert_eq!(-Seconds(5_i64), Seconds(-5));
+        assert_eq!(Seconds(i64::MAX) + Seconds(1), Seconds(i64::MAX));
+        assert_eq!(Seconds(i64::MIN) - Seconds(1), Seconds(i64::MIN));
+        assert_eq!(-Seconds(i64::MIN), Seconds(i64::MAX));
+    }
+
+    /// `@@Ab`'s range, p. 9: 23 hours and 59 minutes either way.
+    #[test]
+    fn minutes_are_sixty_seconds() {
+        assert_eq!(Minutes(1_i16).seconds(), Seconds(60));
+        assert_eq!(Minutes(-(23 * 60 + 59_i16)).seconds(), Seconds(-86_340));
+        assert_eq!(Minutes(i16::MIN).seconds(), Seconds(-1_966_080));
+    }
 
     #[test]
     fn a_prn_is_one_to_thirty_two() {

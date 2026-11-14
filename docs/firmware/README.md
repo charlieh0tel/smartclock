@@ -2171,9 +2171,12 @@ disagree, or if the tables made from that file in `loop.md` and
 `docs/pages/loop.html` are not what it gives
 (`tools/firmware/loop_constants.py`).  `check-gps-fields` runs each
 Oncore image's own message decoders in Unicorn, notes the bytes of
-each message they read, and fails if `gps-fields.tsv`, the fields of
-every message the GPS engine model speaks, names other images as a
-field's readers or a command's senders, if its rows do not tile a
+each message they read and where they store them, scans the image for
+the functions that read them there, and fails if `gps-fields.tsv`, the
+fields of every message the GPS engine model speaks, names other
+images as a field's readers or a command's senders or gives a field
+another use, if `gps-field-uses.tsv` does not say what each such
+function does with the field, if its rows do not tile a
 message, or if the list of gaps in `gps.md` is not what it gives
 (`tools/firmware/gps_fields.py`; `gps.md`, "The fields").
 `make check-fpga-decoder`

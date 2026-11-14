@@ -309,7 +309,7 @@ check-pages: pages
 # register against its tests, every image's chip-select tables, the
 # hand-written C's magic numbers and ROM pointers, the loop's traces and
 # its constants by model (docs/firmware/loop-constants.json), the GPS
-# engine's message fields against what the images read and send
+# engine's message fields against what the images read, use and send
 # (docs/firmware/gps-fields.tsv), the
 # images' shared C, rewritten/common/, the functions' names, none an
 # image's, and each hand-written file compiled alone after its export's

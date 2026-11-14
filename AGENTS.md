@@ -162,10 +162,16 @@ here, where they go stale unnoticed.
   manual's unknown value, else zero.
 - Exceptions are the owner's to grant.
 - `docs/firmware/gps-fields.tsv` is the check: every field, the manual
-  page, which images read or set it, measured from the images, and
-  where the engine gets it.  `make check-gps-fields` holds it to the
-  images and lists the gaps (`docs/firmware/gps.md`, "The fields").
-  A change to a message's fields changes its rows in the same commit.
+  page, which images read or set it, measured from the images, what
+  they use it for, and where the engine gets it.
+  `make check-gps-fields` holds it to the images and lists the gaps,
+  the fields an image uses for control or reports
+  (`docs/firmware/gps.md`, "The fields").  A change to a message's
+  fields changes its rows in the same commit.
+- `docs/firmware/gps-field-uses.tsv` is by hand: what each function
+  that reads a field does with it, with the reading of the rewritten C
+  that says so.  The check fails on a reader it lacks; the reading is
+  yours to get right.
 
 ## GitHub
 

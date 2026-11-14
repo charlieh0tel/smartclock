@@ -525,9 +525,10 @@ impl XdopTable {
     }
 }
 
-/// The satellites one set of pseudorange corrections covers (`@@Ce`,
-/// VP p. 115: six).
-pub const CORRECTIONS: usize = 6;
+/// The satellites one set of pseudorange corrections covers: one for
+/// each channel of the widest receiver, eight.  A `@@Ce` carries six,
+/// and an eight-channel receiver with more sends a second (VP p. 89).
+pub const CORRECTIONS: usize = 8;
 
 /// One satellite's pseudorange correction (`@@Ce`, VP p. 115).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -553,7 +554,10 @@ pub struct Corrections {
     /// is, however old: whoever fills the record clears a set that is
     /// stale.
     pub time: Deciseconds,
-    /// The corrections, a slot left `None` sent as unused.
+    /// The corrections, one slot a channel, a slot left `None` sent as
+    /// unused.  An engine sends the first six in one `@@Ce`.  Only one
+    /// with eight channels sends the last two, in a second `@@Ce`, and
+    /// only when either is filled.
     pub satellites: [Option<Correction>; CORRECTIONS],
 }
 

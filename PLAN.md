@@ -958,7 +958,13 @@ stands in for one.
   block, and the model only formats them.  Absent, each gives the
   bytes the model sent before it existed, so a caller without them
   changes nothing.  The model sends a correction set at its own time
-  however old; whoever fills the record clears a stale one.  A table
+  however old; whoever fills the record clears a stale one.  A set has
+  a slot for each of eight channels and a `@@Ce` carries six, so an
+  eight-channel VP whose record fills the seventh or eighth sends a
+  second `@@Ce` straight after the first, as the manual has it for
+  more than six, the fields it does not need zeros; with neither
+  filled, or no set, it sends the one, and a six-channel VP always
+  does.  A table
   of another kind than `@@Aj` asks for is sent as none, and a Time
   RAIM result counts only while the algorithm is on, isolation only in
   position hold.  The cost is a larger record, its bound

@@ -948,7 +948,18 @@ stands in for one.
   position in Earth-centered coordinates and magnetic variation need
   floating point or tables a Cortex-M0 should not carry, so a record
   has a block of derived values a caller with the means fills in, and
-  the model sends zeros for what is absent.
+  the model sends zeros for what is absent.  Estimation stays there
+  too: the `@@Bc` table of DOPs by combination, the pseudorange
+  corrections `@@Ce` puts out and a Time RAIM result arrive in that
+  block, and the model only formats them.  Absent, each gives the
+  bytes the model sent before it existed, so a caller without them
+  changes nothing.  The model sends a correction set at its own time
+  however old; whoever fills the record clears a stale one.  A table
+  of another kind than `@@Aj` asks for is sent as none, and a Time
+  RAIM result counts only while the algorithm is on, isolation only in
+  position hold.  The cost is a larger record, its bound
+  `RECORD_BYTES_MAX` raised for them, paid by every caller, against a
+  second argument to every call or a borrowed block with a lifetime.
 - **The model's command framer is its own**, not the deframer run the
   other way: an engine resynchronizes a byte at a time, so a whole
   command straight after the start of a broken one is taken, where the

@@ -18,7 +18,8 @@
 //! place through a reference, not passed by value.  [`Record`] and the
 //! parts of it that may gain a field are `#[non_exhaustive]`: start from
 //! [`Record::EMPTY`], [`Satellite::new`], [`Timing::ZERO`],
-//! [`Almanac::new`] or [`Derived::EMPTY`] and set fields.
+//! [`Almanac::new`], [`Derived::EMPTY`], [`XdopTable::new`],
+//! [`Corrections::new`] or [`Raim::new`] and set fields.
 
 use crate::time::GpsSeconds;
 use crate::time::GpsWeek;
@@ -26,9 +27,11 @@ use crate::time::LeapEvent;
 use crate::units::Centimeters;
 use crate::units::CentimetersPerSecond;
 use crate::units::DecibelHertz;
+use crate::units::Deciseconds;
 use crate::units::Degrees;
 use crate::units::Hertz;
 use crate::units::MilliArcSeconds;
+use crate::units::MillimetersPerSecond;
 use crate::units::Nanoseconds;
 use crate::units::Prn;
 use crate::units::PrnSet;
@@ -41,7 +44,7 @@ use crate::units::Tenths;
 pub const SATELLITES: usize = 12;
 
 /// A bound on a record's size in bytes, on every target.
-pub const RECORD_BYTES_MAX: usize = 512;
+pub const RECORD_BYTES_MAX: usize = 640;
 
 const _: () = assert!(size_of::<Record>() <= RECORD_BYTES_MAX);
 
@@ -403,19 +406,243 @@ pub struct Ecef {
     pub z: Centimeters,
 }
 
+/// A kind of dilution of precision, as `@@Aj` chooses one and `@@Bc`
+/// reports it (VP pp. 34 and 77).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DopKind {
+    /// GDOP.
+    Geometric,
+    /// PDOP.
+    Position,
+    /// HDOP.
+    Horizontal,
+    /// VDOP.
+    Vertical,
+    /// TDOP.
+    Time,
+}
+
+/// The satellites one combination of an xDOP table names at most (VP
+/// p. 77: six ID fields).
+pub const XDOP_SATELLITES: usize = 6;
+
+/// The combinations an xDOP table holds at most (VP p. 77: 0 to 9).
+pub const XDOP_COMBINATIONS: usize = 9;
+
+/// One combination of satellites and the DOP they give (VP p. 77).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct XdopCombination {
+    /// The DOP (VP p. 77: 1.0 to 99.9).
+    pub dop: Tenths,
+    /// The satellites, the first ones filled.
+    pub satellites: [Option<Prn>; XDOP_SATELLITES],
+}
+
+impl XdopCombination {
+    /// No satellites, no DOP.
+    pub const EMPTY: Self = Self {
+        dop: Tenths(0),
+        satellites: [None; XDOP_SATELLITES],
+    };
+
+    /// How many satellites it names.
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        let mut count = 0;
+        let mut index = 0;
+        while index < XDOP_SATELLITES {
+            if self.satellites[index].is_some() {
+                count += 1;
+            }
+            index += 1;
+        }
+        count
+    }
+
+    /// Whether it names none.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+/// The DOPs of combinations of the satellites in view, all of one kind
+/// (`@@Bc`, VP pp. 76 and 77), best first as whoever fills it ranks
+/// them.  [`XDOP_COMBINATIONS`] at most.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct XdopTable {
+    /// The kind of DOP every combination gives.
+    kind: DopKind,
+    /// The first `count` are the combinations.
+    combinations: [XdopCombination; XDOP_COMBINATIONS],
+    /// How many are filled.
+    count: u8,
+}
+
+impl XdopTable {
+    /// A table of `kind`, with no combinations.
+    #[must_use]
+    pub const fn new(kind: DopKind) -> Self {
+        Self {
+            kind,
+            combinations: [XdopCombination::EMPTY; XDOP_COMBINATIONS],
+            count: 0,
+        }
+    }
+
+    /// The kind of DOP its combinations give.
+    #[must_use]
+    pub const fn kind(&self) -> DopKind {
+        self.kind
+    }
+
+    /// Adds one after the rest.  Returns whether there was room.
+    pub const fn push(&mut self, combination: XdopCombination) -> bool {
+        let index = self.count as usize;
+        if index >= XDOP_COMBINATIONS {
+            return false;
+        }
+        self.combinations[index] = combination;
+        self.count += 1;
+        true
+    }
+
+    /// The combinations in order.
+    pub fn iter(&self) -> impl Iterator<Item = &XdopCombination> + Clone {
+        self.combinations[..usize::from(self.count)].iter()
+    }
+
+    /// How many there are.
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.count as usize
+    }
+
+    /// Whether there is none.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.count == 0
+    }
+}
+
+/// The satellites one set of pseudorange corrections covers (`@@Ce`,
+/// VP p. 115: six).
+pub const CORRECTIONS: usize = 6;
+
+/// One satellite's pseudorange correction (`@@Ce`, VP p. 115).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Correction {
+    /// The satellite.
+    pub prn: Prn,
+    /// The correction to its pseudorange (VP p. 115: -10,485.76 to
+    /// +10,485.76 m; more is sent as the nearest end).
+    pub range: Centimeters,
+    /// The correction's rate (VP p. 115: -4.096 to +4.096 m/s; more
+    /// is sent as the nearest end).
+    pub rate: MillimetersPerSecond,
+    /// The issue of data of the ephemeris it was worked out from.
+    pub ephemeris_issue: u8,
+}
+
+/// A set of pseudorange corrections a receiver in position hold works
+/// out for others (`@@Bh`, VP p. 89; `@@Ce`, VP pp. 114 and 115).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct Corrections {
+    /// The GPS time of week they are for.  An engine sends this as it
+    /// is, however old: whoever fills the record clears a set that is
+    /// stale.
+    pub time: Deciseconds,
+    /// The corrections, a slot left `None` sent as unused.
+    pub satellites: [Option<Correction>; CORRECTIONS],
+}
+
+impl Corrections {
+    /// A set for `time` with no corrections in it.
+    #[must_use]
+    pub const fn new(time: Deciseconds) -> Self {
+        Self {
+            time,
+            satellites: [None; CORRECTIONS],
+        }
+    }
+}
+
+/// What Time RAIM made of the time solution (`@@Bn`, VP p. 105).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RaimSolution {
+    /// Within the alarm limit.
+    Ok,
+    /// The alarm limit is exceeded.
+    Alarm,
+    /// Not known: the limit is too low or too few satellites are
+    /// tracked.
+    Unknown,
+}
+
+/// What Time RAIM can do (`@@Bn`, VP p. 106).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RaimAbility {
+    /// Detect a bad satellite and isolate it.
+    Isolation,
+    /// Detect one only.
+    Detection,
+    /// Neither.
+    Neither,
+}
+
+/// A Time RAIM result (`@@Bn`, VP pp. 105 and 106; `@@En`, UT
+/// pp. 6.93 and 6.95).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct Raim {
+    /// The solution's status.
+    pub solution: RaimSolution,
+    /// What the algorithm can do.
+    pub ability: RaimAbility,
+    /// The satellites it isolated and removed from the time solution
+    /// (UT p. 6.93), which a UT Plus no longer marks as used for it
+    /// (UT p. 6.20).
+    pub isolated: PrnSet,
+}
+
+impl Raim {
+    /// A result isolating no satellite.
+    #[must_use]
+    pub const fn new(solution: RaimSolution, ability: RaimAbility) -> Self {
+        Self {
+            solution,
+            ability,
+            isolated: PrnSet::EMPTY,
+        }
+    }
+}
+
 /// What follows from the rest of a record by arithmetic this crate does
 /// not do, having no floating point: whoever fills the record works it
-/// out, or leaves it empty.
+/// out, or leaves it empty.  An engine sends in place of what is left
+/// empty what it would with none of it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Derived {
     /// [`Record::position`] in Earth-centered coordinates.
     pub ecef: Option<Ecef>,
+    /// The DOPs of combinations of the satellites in view.
+    pub xdops: Option<XdopTable>,
+    /// The pseudorange corrections this receiver puts out.
+    pub corrections: Option<Corrections>,
+    /// Time RAIM's result.
+    pub raim: Option<Raim>,
 }
 
 impl Derived {
     /// Nothing worked out.
-    pub const EMPTY: Self = Self { ecef: None };
+    pub const EMPTY: Self = Self {
+        ecef: None,
+        xdops: None,
+        corrections: None,
+        raim: None,
+    };
 }
 
 /// One second of what a GPS engine knows.

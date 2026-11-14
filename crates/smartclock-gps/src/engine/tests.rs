@@ -17,11 +17,16 @@ use crate::engine::identity::VP_SIX;
 use crate::oncore::AA_TIME_OF_DAY;
 use crate::oncore::AB_GMT_CORRECTION;
 use crate::oncore::AC_DATE;
+use crate::oncore::AJ_XDOP_TYPE;
+use crate::oncore::AT_POSITION_HOLD;
 use crate::oncore::BA_POSITION_STATUS;
+use crate::oncore::BC_XDOP_TABLE;
+use crate::oncore::BH_CORRECTION_OUTPUT;
 use crate::oncore::BJ_LEAP_SECOND_PENDING;
 use crate::oncore::BN_TIME_RAIM;
 use crate::oncore::BO_UTC_OFFSET;
 use crate::oncore::CA_SELF_TEST;
+use crate::oncore::CE_PSEUDORANGE_CORRECTION;
 use crate::oncore::CG_FIX_MODE;
 use crate::oncore::Deframer;
 use crate::oncore::EA_POSITION_STATUS;
@@ -39,16 +44,24 @@ use crate::oncore::TRAILER;
 use crate::oncore::encode;
 use crate::oncore::response_length;
 use crate::record::Antenna;
+use crate::record::Correction;
+use crate::record::Corrections;
+use crate::record::DopKind;
 use crate::record::Dops;
 use crate::record::Ecef;
 use crate::record::Fix;
 use crate::record::GpsTime;
 use crate::record::Position;
+use crate::record::Raim;
+use crate::record::RaimAbility;
+use crate::record::RaimSolution;
 use crate::record::Record;
 use crate::record::Satellite;
 use crate::record::Timing;
 use crate::record::Tracking;
 use crate::record::Velocity;
+use crate::record::XdopCombination;
+use crate::record::XdopTable;
 use crate::time::DateTime;
 use crate::time::GpsSeconds;
 use crate::time::LeapChange;
@@ -56,11 +69,14 @@ use crate::time::LeapEvent;
 use crate::units::Centimeters;
 use crate::units::CentimetersPerSecond;
 use crate::units::DecibelHertz;
+use crate::units::Deciseconds;
 use crate::units::Degrees;
 use crate::units::MilliArcSeconds;
+use crate::units::MillimetersPerSecond;
 use crate::units::Milliseconds;
 use crate::units::Nanoseconds;
 use crate::units::Prn;
+use crate::units::PrnSet;
 use crate::units::Seconds;
 use crate::units::TenthDegrees;
 use crate::units::Tenths;
@@ -588,4 +604,105 @@ fn a_command_straight_after_a_broken_one_is_taken() {
     let mut sent = Sent::default();
     engine.receive(&bytes, &full(), NOW, &mut sent);
     assert_eq!(only(&sent.0, CG_FIX_MODE), [1]);
+}
+
+/// VP pp. 76 and 77: the record's table when it is of the kind `@@Aj`
+/// asks for (VP p. 34), else none.
+#[test]
+fn an_xdop_table_is_sent_when_it_is_of_the_kind_asked() {
+    let mut record = full();
+    let mut table = XdopTable::new(DopKind::Position);
+    for (dop, ids) in [(15, [3, 4, 31, 26]), (21, [3, 4, 31, 16])] {
+        let mut combination = XdopCombination::EMPTY;
+        for (slot, id) in combination.satellites.iter_mut().zip(ids) {
+            *slot = Some(prn(id));
+        }
+        combination.dop = Tenths(dop);
+        assert!(table.push(combination));
+    }
+    record.derived.xdops = Some(table);
+
+    let mut engine = fixing(&VP_EIGHT);
+    let frames = ask(&mut engine, &record, BC_XDOP_TABLE, &[0]);
+    let data = only(&frames, BC_XDOP_TABLE);
+    assert_eq!(data.len(), 75);
+    // PDOP, two combinations, Best-4.
+    assert_eq!(data[..3], [1, 2, 4]);
+    assert_eq!(data[3..11], [0, 15, 3, 4, 31, 26, 0, 0]);
+    assert_eq!(data[11..19], [0, 21, 3, 4, 31, 16, 0, 0]);
+    assert_eq!(data[19..], [0; 56]);
+
+    ask(&mut engine, &record, AJ_XDOP_TYPE, &[0]);
+    let frames = ask(&mut engine, &record, BC_XDOP_TABLE, &[0]);
+    let data = only(&frames, BC_XDOP_TABLE);
+    assert_eq!(data[..3], [0, 0, 6]);
+    assert_eq!(data[3..], [0; 72]);
+}
+
+/// VP pp. 89, 114 and 115: the record's corrections at their own time,
+/// each within the range the message carries.
+#[test]
+fn pseudorange_corrections_are_sent_as_the_record_has_them() {
+    let mut record = full();
+    let mut set = Corrections::new(Deciseconds(123_456));
+    set.satellites[0] = Some(Correction {
+        prn: prn(3),
+        range: Centimeters(-150),
+        rate: MillimetersPerSecond(25),
+        ephemeris_issue: 7,
+    });
+    set.satellites[2] = Some(Correction {
+        prn: prn(4),
+        range: Centimeters(2_000_000),
+        rate: MillimetersPerSecond(-5000),
+        ephemeris_issue: 9,
+    });
+    record.derived.corrections = Some(set);
+    let mut engine = fixing(&VP_EIGHT);
+    let frames = ask(&mut engine, &record, BH_CORRECTION_OUTPUT, &[0]);
+    let data = only(&frames, CE_PSEUDORANGE_CORRECTION);
+    assert_eq!(data.len(), 45);
+    assert_eq!(data[..3], [0x01, 0xe2, 0x40]);
+    assert_eq!(data[3..10], [3, 0xff, 0xff, 0x6a, 0, 25, 7]);
+    assert_eq!(data[10..17], [0; 7]);
+    // Out of range either way, sent as the nearest end.
+    assert_eq!(data[17..24], [4, 0x10, 0, 0, 0xf0, 0x00, 9]);
+    assert_eq!(data[24..], [0; 21]);
+}
+
+/// VP pp. 105 and 106; UT pp. 6.20, 6.93 and 6.95: the record's result
+/// while Time RAIM is on, isolation only in position hold.
+#[test]
+fn a_time_raim_result_is_sent_while_time_raim_is_on() {
+    let mut record = full();
+    let mut raim = Raim::new(RaimSolution::Alarm, RaimAbility::Isolation);
+    raim.isolated = PrnSet::EMPTY.with(prn(4));
+    record.derived.raim = Some(raim);
+    let traim = |engine: &mut Engine, setup: &[u8]| {
+        let frames = ask(engine, &record, EN_TIME_RAIM, setup);
+        only(&frames, EN_TIME_RAIM)[15..19].to_vec()
+    };
+    let channels = |engine: &mut Engine| {
+        let frames = ask(engine, &record, EA_POSITION_STATUS, &[0]);
+        let data = only(&frames, EA_POSITION_STATUS);
+        (data[39], data[43])
+    };
+
+    let mut engine = Engine::new(&UT_PLUS_2_2, Options::DEFAULT);
+    // Off: unknown, and nothing isolated.
+    assert_eq!(traim(&mut engine, &[0xff; 15]), [1, 0, 2, 1]);
+    assert_eq!(channels(&mut engine), (0x82, 0x82));
+    // On, not holding: detection only, nothing isolated.
+    assert_eq!(traim(&mut engine, &TRAIM_EACH_SECOND), [1, 0, 1, 1]);
+    assert_eq!(channels(&mut engine), (0x82, 0x82));
+    // On and holding: satellite 4 is no longer used for time.
+    ask(&mut engine, &record, AT_POSITION_HOLD, &[1]);
+    assert_eq!(traim(&mut engine, &[0xff; 15]), [1, 0, 1, 0]);
+    assert_eq!(channels(&mut engine), (0x82, 0x80));
+
+    // A pulse only when the solution is confirmed: not in an alarm.
+    let mut engine = fixing(&VP_EIGHT);
+    let mut confirmed = TRAIM_EACH_SECOND;
+    confirmed[4] = 3;
+    assert_eq!(traim(&mut engine, &confirmed), [0, 0, 1, 1]);
 }

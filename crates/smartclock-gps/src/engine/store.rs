@@ -4,6 +4,10 @@
 //! reference, `third_party/motorola/VPCommands.pdf`, as printed.
 
 use crate::engine::identity::Model;
+use crate::engine::settings::Application;
+use crate::engine::settings::Height;
+use crate::engine::settings::HeightKind;
+use crate::engine::settings::Location;
 use crate::oncore::AB_APPLICATION_TYPE;
 use crate::oncore::AB_GMT_CORRECTION;
 use crate::oncore::AC_HDOP_THRESHOLD;
@@ -28,7 +32,10 @@ use crate::oncore::AY_PULSE_OFFSET;
 use crate::oncore::AZ_CABLE_DELAY;
 use crate::oncore::MessageId;
 use crate::oncore::TA_DCXO;
+use crate::units::Centimeters;
+use crate::units::MilliArcSeconds;
 use crate::units::Minutes;
+use crate::units::Nanoseconds;
 use crate::units::Seconds;
 
 /// The byte that asks for a value in place of setting it (as `@@Ag`'s,
@@ -36,7 +43,24 @@ use crate::units::Seconds;
 pub(super) const QUERY: u8 = 0xff;
 
 /// The height type that says mean sea level (`@@Af`, p. 25).
-pub(super) const HEIGHT_MEAN_SEA_LEVEL: u8 = 1;
+const HEIGHT_MEAN_SEA_LEVEL: u8 = 1;
+
+/// The height a command gives as four bytes and a height type (`@@Af`,
+/// p. 26), `None` if `data` is not those.  A type that is not mean sea
+/// level is the ellipsoid.
+pub(super) fn height_of(data: &[u8]) -> Option<Height> {
+    let &[a, b, c, d, kind] = data else {
+        return None;
+    };
+    Some(Height {
+        height: Centimeters(i32::from_be_bytes([a, b, c, d])),
+        kind: if kind == HEIGHT_MEAN_SEA_LEVEL {
+            HeightKind::MeanSeaLevel
+        } else {
+            HeightKind::Ellipsoid
+        },
+    })
+}
 
 /// The satellite select mode that tracks the highest in the sky
 /// (`@@Ah`, p. 30).
@@ -174,7 +198,12 @@ const SETTINGS: [Setting; 23] = [
         Takes::Long(999_999_999),
     ),
     setting(AZ_CABLE_DELAY, &[QUERY; 4], &[0; 4], Takes::Anything),
-    setting(AB_APPLICATION_TYPE, &[QUERY], &[2], Takes::Bytes(4)),
+    setting(
+        AB_APPLICATION_TYPE,
+        &[QUERY],
+        &[APPLICATION_LAND],
+        Takes::Bytes(APPLICATION_STATIC),
+    ),
     setting(
         AC_HDOP_THRESHOLD,
         &[QUERY; 2],
@@ -197,6 +226,14 @@ const TIME_MODE_GPS: u8 = 0;
 const TIME_MODE_UTC: u8 = 1;
 /// `@@At`'s mode that holds the position (p. 56).
 const POSITION_HOLD_ON: u8 = 1;
+/// `@@Av`'s mode that holds the altitude (p. 61).
+const ALTITUDE_HOLD_ON: u8 = 1;
+/// `@@AB`'s application types (p. 12).
+const APPLICATION_AIR: u8 = 0;
+const APPLICATION_HANDHELD: u8 = 1;
+const APPLICATION_LAND: u8 = 2;
+const APPLICATION_MARINE: u8 = 3;
+const APPLICATION_STATIC: u8 = 4;
 
 const MINUTES_PER_HOUR: i16 = 60;
 
@@ -353,23 +390,73 @@ impl Store {
         self.byte(AO_DATUM_SELECT)
     }
 
+    /// The position to hold, as `@@As` gave it.
+    pub(super) fn hold_position(&self) -> Location {
+        let Some(&[a, b, c, d, e, f, g, h, ref height @ ..]) = self.get(AS_HOLD_POSITION) else {
+            return Location::default();
+        };
+        Location {
+            latitude: MilliArcSeconds(i32::from_be_bytes([a, b, c, d])),
+            longitude: MilliArcSeconds(i32::from_be_bytes([e, f, g, h])),
+            height: height_of(height).unwrap_or_default(),
+        }
+    }
+
     /// The position to hold (`@@As`), `separation` being the ellipsoid's
     /// height above mean sea level there.
     pub(super) fn held_position(&self, separation: i32) -> Place {
-        let Some(&[a, b, c, d, e, f, g, h, i, j, k, l, kind]) = self.get(AS_HOLD_POSITION) else {
-            return Place::default();
-        };
-        let height = i32::from_be_bytes([i, j, k, l]);
-        let (ellipsoid, mean_sea_level) = if kind == HEIGHT_MEAN_SEA_LEVEL {
-            (height.wrapping_add(separation), height)
-        } else {
-            (height, height.wrapping_sub(separation))
+        let held = self.hold_position();
+        let height = held.height.height.0;
+        let (ellipsoid, mean_sea_level) = match held.height.kind {
+            HeightKind::MeanSeaLevel => (height.wrapping_add(separation), height),
+            HeightKind::Ellipsoid => (height, height.wrapping_sub(separation)),
         };
         Place {
-            latitude: i32::from_be_bytes([a, b, c, d]),
-            longitude: i32::from_be_bytes([e, f, g, h]),
+            latitude: held.latitude.0,
+            longitude: held.longitude.0,
             ellipsoid,
             mean_sea_level,
+        }
+    }
+
+    /// Whether the altitude is held by hand (`@@Av`).
+    pub(super) fn altitude_hold(&self) -> bool {
+        self.byte(AV_ALTITUDE_HOLD) == ALTITUDE_HOLD_ON
+    }
+
+    /// The height to hold the altitude at (`@@Au`).
+    pub(super) fn altitude_hold_height(&self) -> Height {
+        self.get(AU_ALTITUDE_HOLD_HEIGHT)
+            .and_then(height_of)
+            .unwrap_or_default()
+    }
+
+    fn nanoseconds(&self, id: MessageId) -> Nanoseconds<u32> {
+        match self.get(id) {
+            Some(&[a, b, c, d]) => Nanoseconds(u32::from_be_bytes([a, b, c, d])),
+            _ => Nanoseconds(0),
+        }
+    }
+
+    /// How much earlier the 1 PPS is put out (`@@Az`).
+    pub(super) fn cable_delay(&self) -> Nanoseconds<u32> {
+        self.nanoseconds(AZ_CABLE_DELAY)
+    }
+
+    /// How far after the second the 1 PPS is put out (`@@Ay`).
+    pub(super) fn pulse_offset(&self) -> Nanoseconds<u32> {
+        self.nanoseconds(AY_PULSE_OFFSET)
+    }
+
+    /// What the engine is used for (`@@AB`).  The store takes no type
+    /// but these five.
+    pub(super) fn application(&self) -> Application {
+        match self.byte(AB_APPLICATION_TYPE) {
+            APPLICATION_AIR => Application::Air,
+            APPLICATION_HANDHELD => Application::Handheld,
+            APPLICATION_MARINE => Application::Marine,
+            APPLICATION_STATIC => Application::Static,
+            _ => Application::Land,
         }
     }
 }

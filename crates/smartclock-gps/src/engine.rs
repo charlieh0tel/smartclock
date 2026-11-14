@@ -43,25 +43,39 @@
 //! VP pp. 58 to 61).  It tracks and fixes as though both were
 //! automatic.
 //!
+//! What commands have set the engine to, a holder that has something
+//! else to set the same way reads as types: [`Engine::settings`] gives
+//! the [`Settings`], and [`Engine::receive`] returns the [`Events`] its
+//! commands made, a reset to defaults and which settings changed.
+//!
 //! The pages cited are, as printed: VP, the VP Oncore's command
 //! reference, `third_party/motorola/VPCommands.pdf`; UT, TRM0003
 //! chapter 6, `third_party/motorola/oncore-ut-users-guide/ch6.pdf`;
 //! M12+, `third_party/motorola/m12plus-users-guide.pdf`.
 
 mod data;
+pub mod event;
 mod framer;
 pub mod identity;
+pub mod settings;
 mod store;
 
 use crate::engine::data::Data;
+use crate::engine::event::Events;
 use crate::engine::framer::Framer;
 use crate::engine::identity::Identity;
 use crate::engine::identity::LINE_END;
 use crate::engine::identity::Model;
-use crate::engine::store::HEIGHT_MEAN_SEA_LEVEL;
+use crate::engine::settings::Height;
+use crate::engine::settings::HeightKind;
+use crate::engine::settings::Location;
+use crate::engine::settings::PulseMode;
+use crate::engine::settings::Settings;
+use crate::engine::settings::TimeBase;
 use crate::engine::store::Place;
 use crate::engine::store::QUERY;
 use crate::engine::store::Store;
+use crate::engine::store::height_of;
 use crate::engine::store::is_setting;
 use crate::oncore::AA_TIME_OF_DAY;
 use crate::oncore::AB_GMT_CORRECTION;
@@ -125,6 +139,9 @@ use crate::time::DateTime;
 use crate::time::GpsSeconds;
 use crate::time::LeapChange;
 use crate::time::LeapEvent;
+use crate::units::Centimeters;
+use crate::units::Degrees;
+use crate::units::MilliArcSeconds;
 use crate::units::Milliseconds;
 use crate::units::Prn;
 use crate::units::PrnSet;
@@ -527,6 +544,9 @@ struct State {
     rates: [Rates; FAMILIES.len()],
     /// Time RAIM's setup.
     traim: TraimSetup,
+    /// The latitude, longitude and height last given by `@@Ad`, `@@Ae`
+    /// and `@@Af`, which nothing sent is made from.
+    initial: Location,
     /// The rate of `@@Ce`.
     corrections: Rate,
     /// Whether `@@Bo` is sent each time the offset changes.
@@ -548,6 +568,14 @@ impl State {
                 traim: Rate(0),
             }; FAMILIES.len()],
             traim: TraimSetup::DEFAULT,
+            initial: Location {
+                latitude: MilliArcSeconds(0),
+                longitude: MilliArcSeconds(0),
+                height: Height {
+                    height: Centimeters(0),
+                    kind: HeightKind::Ellipsoid,
+                },
+            },
             corrections: Rate(0),
             offset_updates: false,
             visibility_updates: false,
@@ -646,6 +674,34 @@ impl Engine {
         self.state.fixing
     }
 
+    /// What commands have set it to.
+    #[must_use]
+    pub fn settings(&self) -> Settings {
+        let store = &self.state.store;
+        Settings {
+            mask_angle: Degrees(store.mask_angle()),
+            position_hold: store.holding(),
+            held_position: store.hold_position(),
+            altitude_hold: store.altitude_hold(),
+            altitude_hold_height: store.altitude_hold_height(),
+            time_base: if store.gps_time() {
+                TimeBase::Gps
+            } else {
+                TimeBase::Utc
+            },
+            cable_delay: store.cable_delay(),
+            pulse_offset: store.pulse_offset(),
+            pulse_mode: match self.state.traim.pps_mode {
+                PPS_OFF => PulseMode::Off,
+                PPS_TRACKING => PulseMode::Tracking,
+                PPS_CONFIRMED => PulseMode::Confirmed,
+                _ => PulseMode::Always,
+            },
+            application: store.application(),
+            initial_position: self.state.initial,
+        }
+    }
+
     /// When the next answer that is waiting is due, by the caller's
     /// clock.  `None` when none waits.
     #[must_use]
@@ -722,27 +778,34 @@ impl Engine {
 
     /// Takes bytes from the receiver, at `now` by the caller's clock,
     /// and answers each whole command among them.  `record` is the
-    /// current second's.
+    /// current second's.  Returns what those commands did that the
+    /// caller may have to act on, which it is free to drop.
     pub fn receive<O: Output + ?Sized>(
         &mut self,
         bytes: &[u8],
         record: &Record,
         now: Milliseconds<u64>,
         out: &mut O,
-    ) {
+    ) -> Events {
         self.poll(now, out);
         if self.count == 0
             && let Some(time) = record.time
         {
             self.clock = time.seconds;
         }
-        for byte in bytes {
-            if let Some(command) = self.framer.push(*byte)
-                && self.takes(command.id)
-            {
-                self.answer(command.id, command.data(), record, now, out);
-            }
-        }
+        bytes
+            .iter()
+            .fold(Events::NONE, |events, byte| match self.framer.push(*byte) {
+                Some(command) if self.takes(command.id) => {
+                    let before = self.settings();
+                    self.answer(command.id, command.data(), record, now, out);
+                    events.and(Events::of(
+                        command.id == CF_SET_TO_DEFAULTS,
+                        before.changed(&self.settings()),
+                    ))
+                }
+                _ => events,
+            })
     }
 
     /// Whether this Oncore takes a command at all: none if it is deaf,
@@ -830,10 +893,22 @@ impl Engine {
                 };
                 send(out, id, Data::new().signed_long(value));
             } else {
+                if let &[a, b, c, d] = data {
+                    let given = MilliArcSeconds(i32::from_be_bytes([a, b, c, d]));
+                    if id == AD_LATITUDE {
+                        self.state.initial.latitude = given;
+                    } else {
+                        self.state.initial.longitude = given;
+                    }
+                }
                 send(out, id, Data::new().bytes(data));
             }
         } else if id == AF_HEIGHT {
-            self.height(data, record, out);
+            let given = height_of(data).filter(|_| data.iter().any(|byte| *byte != POSITION_QUERY));
+            if let Some(height) = given {
+                self.state.initial.height = height;
+            }
+            self.height(given, record, out);
         } else if id == AI_MANUAL_SATELLITE {
             self.assign(data, out);
         } else if id == AO_DATUM_SELECT {
@@ -1017,18 +1092,18 @@ impl Engine {
 
     /// `@@Af` (VP p. 25): a height given, or the current one asked, is
     /// answered as both kinds of height.
-    fn height<O: Output + ?Sized>(&self, data: &[u8], record: &Record, out: &mut O) {
+    fn height<O: Output + ?Sized>(&self, given: Option<Height>, record: &Record, out: &mut O) {
         let separation = Self::separation(record);
-        let given = match data {
-            &[a, b, c, d, kind] if data.iter().any(|byte| *byte != POSITION_QUERY) => {
-                let height = i32::from_be_bytes([a, b, c, d]);
-                if kind == HEIGHT_MEAN_SEA_LEVEL {
-                    height
-                } else {
-                    height.wrapping_sub(separation)
-                }
-            }
-            _ => self.place(record).mean_sea_level,
+        let given = match given {
+            Some(Height {
+                height,
+                kind: HeightKind::MeanSeaLevel,
+            }) => height.0,
+            Some(Height {
+                height,
+                kind: HeightKind::Ellipsoid,
+            }) => height.0.wrapping_sub(separation),
+            None => self.place(record).mean_sea_level,
         };
         send(
             out,

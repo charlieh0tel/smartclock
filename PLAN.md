@@ -994,6 +994,27 @@ stands in for one.
   (`@@Av` 1 at `@@Au`'s height) would change answers the exchanges
   hold, so the model takes and echoes them but tracks and fixes as
   though selection and altitude hold were automatic.
+- **The model says what it was set to, and does nothing more for
+  it.**  A tool that stands in for an engine in front of a real GPS
+  module has to set that module as the receiver set the model, and
+  should not decode the Oncore commands a second time to do it.  So
+  `Engine::settings` gives the settings such a tool needs as types:
+  the mask angle, position hold and its position, altitude hold and
+  its height, the time base, the 1 PPS's cable delay, offset and
+  mode, the application type, and the latitude, longitude and height
+  `@@Ad`, `@@Ae` and `@@Af` last gave.  Those last three the model
+  only echoed; it now keeps them, and still reports no position by
+  them.  `Engine::receive` returns what its commands did: a reset,
+  which is `@@Cf` (VP pp. 116 and 117), and the settings that
+  changed, a command that gives a setting the value it has changing
+  none.  They are returned, not called back, so the model holds no
+  closure and needs no allocator; a caller that wants neither drops
+  them, and every byte the model sends is as it was.  The events of
+  one call are one reset and one set of settings, not a list in
+  order, which a caller that takes the reset first and then reads
+  each setting named gets right whatever the order was.  The cost is
+  the settings read before and after each command, and a caller of
+  `receive` that needed it to return nothing no longer builds.
 - **A VP's identity text is made up; a UT Plus's is a published one**,
   a `@@Cj` answer posted whole in a public bug report and matched in
   form by another on the time-nuts list, both cited where the text is.

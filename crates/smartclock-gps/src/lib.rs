@@ -37,6 +37,7 @@ extern crate std;
 use thiserror::Error;
 
 pub mod engine;
+mod framing;
 pub mod nmea;
 pub mod oncore;
 pub mod record;

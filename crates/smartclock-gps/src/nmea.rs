@@ -42,6 +42,8 @@ use thiserror::Error;
 
 use crate::Direction;
 use crate::NoRoom;
+use crate::framing::Step;
+use crate::framing::feed;
 
 /// A sentence's first byte.
 const START: u8 = b'$';
@@ -309,11 +311,6 @@ enum State {
     LineFeed,
 }
 
-/// What one byte did to a [`Deframer`]: nothing yet, ended a sentence of
-/// some length, or an error.  [`Sentence`] borrows the buffer, so the
-/// step is taken first and the sentence made from it after.
-type Step = Option<Result<usize, SentenceError>>;
-
 /// Finds sentences in a stream of bytes, however it is cut into chunks
 /// ("What is a sentence" in the module's documentation).
 pub struct Deframer {
@@ -377,14 +374,11 @@ impl Deframer {
     /// assert_eq!(sentences, 2);
     /// ```
     pub fn feed(&mut self, chunk: &[u8]) -> (usize, Option<Result<Sentence<'_>, SentenceError>>) {
-        let ended = chunk
-            .iter()
-            .enumerate()
-            .find_map(|(index, &byte)| self.step(byte).map(|step| (index + 1, step)));
-        match ended {
-            Some((taken, step)) => (taken, Some(step.map(|length| self.sentence(length)))),
-            None => (chunk.len(), None),
-        }
+        let (taken, ended) = feed(chunk, |byte| self.step(byte));
+        (
+            taken,
+            ended.map(|step| step.map(|length| self.sentence(length))),
+        )
     }
 
     /// Forgets any sentence in progress.
@@ -403,7 +397,7 @@ impl Deframer {
         self.filled += 1;
     }
 
-    fn step(&mut self, byte: u8) -> Step {
+    fn step(&mut self, byte: u8) -> Step<SentenceError> {
         let state = self.state;
         if byte == START {
             self.filled = 0;

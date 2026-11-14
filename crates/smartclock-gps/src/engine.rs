@@ -51,18 +51,18 @@
 mod data;
 mod framer;
 pub mod identity;
-mod settings;
+mod store;
 
 use crate::engine::data::Data;
 use crate::engine::framer::Framer;
 use crate::engine::identity::Identity;
 use crate::engine::identity::LINE_END;
 use crate::engine::identity::Model;
-use crate::engine::settings::HEIGHT_MEAN_SEA_LEVEL;
-use crate::engine::settings::Place;
-use crate::engine::settings::QUERY;
-use crate::engine::settings::Settings;
-use crate::engine::settings::is_setting;
+use crate::engine::store::HEIGHT_MEAN_SEA_LEVEL;
+use crate::engine::store::Place;
+use crate::engine::store::QUERY;
+use crate::engine::store::Store;
+use crate::engine::store::is_setting;
 use crate::oncore::AA_TIME_OF_DAY;
 use crate::oncore::AB_GMT_CORRECTION;
 use crate::oncore::AC_DATE;
@@ -519,8 +519,8 @@ impl TraimSetup {
 struct State {
     /// Whether it is fixing, not idle.
     fixing: bool,
-    /// The settings.
-    settings: Settings,
+    /// The values its settings have.
+    store: Store,
     /// The satellite assigned to each channel by hand, zero for none.
     assignments: [u8; EIGHT_CHANNELS],
     /// Each family's rates.
@@ -540,7 +540,7 @@ impl State {
     const fn starting(model: Model) -> Self {
         Self {
             fixing: matches!(model, Model::UtPlus),
-            settings: Settings::DEFAULT,
+            store: Store::DEFAULT,
             assignments: [0; EIGHT_CHANNELS],
             rates: [Rates {
                 status: Rate(0),
@@ -738,15 +738,16 @@ impl Engine {
         }
         for byte in bytes {
             if let Some(command) = self.framer.push(*byte)
-                && !self.options.deaf
+                && self.takes(command.id)
             {
                 self.answer(command.id, command.data(), record, now, out);
             }
         }
     }
 
-    /// Whether this Oncore answers a command at all.
-    fn answers(&self, id: MessageId) -> bool {
+    /// Whether this Oncore takes a command at all: none if it is deaf,
+    /// else those its model has.
+    fn takes(&self, id: MessageId) -> bool {
         const UT_PLUS: [MessageId; 23] = [
             AB_GMT_CORRECTION,
             AW_TIME_MODE,
@@ -772,6 +773,9 @@ impl Engine {
             EN_TIME_RAIM,
             AM_IGNORE_LIST,
         ];
+        if self.options.deaf {
+            return false;
+        }
         if id == GJ_LEAP_SECOND_PENDING {
             return self.identity.leap_details();
         }
@@ -783,6 +787,7 @@ impl Engine {
         }
     }
 
+    /// Answers a command it [takes](Self::takes).
     fn answer<O: Output + ?Sized>(
         &mut self,
         id: MessageId,
@@ -791,9 +796,6 @@ impl Engine {
         now: Milliseconds<u64>,
         out: &mut O,
     ) {
-        if !self.answers(id) {
-            return;
-        }
         if let Some((family, member)) = family_of(id) {
             self.answer_family(family, member, data, record, now, out);
             return;
@@ -808,10 +810,10 @@ impl Engine {
         } else if id == AC_DATE {
             send(out, id, Data::new().bytes(&self.date(record, self.clock)));
         } else if id == AB_GMT_CORRECTION {
-            self.state.settings.set_or_query(id, data, model);
+            self.state.store.set_or_query(id, data, model);
             // A correction behind UTC by minutes alone is answered as
             // its minutes negated, with no sign.
-            match self.state.settings.get(id) {
+            match self.state.store.get(id) {
                 Some(&[sign, 0, minutes]) if sign != 0 => {
                     send(out, id, Data::new().bytes(&[0, 0, minutes.wrapping_neg()]));
                 }
@@ -835,12 +837,12 @@ impl Engine {
         } else if id == AI_MANUAL_SATELLITE {
             self.assign(data, out);
         } else if id == AO_DATUM_SELECT {
-            self.state.settings.set_or_query(id, data, model);
+            self.state.store.set_or_query(id, data, model);
             send(
                 out,
                 AP_USER_DATUM,
                 Data::new()
-                    .byte(self.state.settings.datum())
+                    .byte(self.state.store.datum())
                     .triple(WGS_84_AXIS)
                     .word(0)
                     .word(WGS_84_INVERSE_FLATTENING)
@@ -882,8 +884,8 @@ impl Engine {
         } else if id == CJ_RECEIVER_ID {
             self.receiver_id(out);
         } else if is_setting(id) {
-            self.state.settings.set_or_query(id, data, model);
-            if let Some(held) = self.state.settings.get(id) {
+            self.state.store.set_or_query(id, data, model);
+            if let Some(held) = self.state.store.get(id) {
                 send(out, id, Data::new().bytes(held));
             }
         }
@@ -1000,8 +1002,8 @@ impl Engine {
     /// The position reported: the one held, when holding, else the
     /// record's.
     fn place(&self, record: &Record) -> Place {
-        if self.state.settings.holding() {
-            return self.state.settings.held_position(Self::separation(record));
+        if self.state.store.holding() {
+            return self.state.store.held_position(Self::separation(record));
         }
         record
             .position
@@ -1084,8 +1086,8 @@ impl Engine {
     /// The date and time `time` is reported as: UTC or GPS time as
     /// `@@Aw` says, on the clock `@@Ab` sets.
     fn label(&self, record: &Record, time: GpsSeconds) -> DateTime {
-        let ahead = self.state.settings.gmt_offset();
-        let label = if self.state.settings.gps_time() {
+        let ahead = self.state.store.gmt_offset();
+        let label = if self.state.store.gps_time() {
             DateTime::local(time, Seconds(0), None, ahead)
         } else {
             DateTime::local(time, self.utc_offset(record, time), record.leap, ahead)
@@ -1121,11 +1123,11 @@ impl Engine {
         record: &'a Record,
         family: &Family,
     ) -> impl Iterator<Item = &'a Satellite> + use<'a> {
-        let mask = i16::from(self.state.settings.mask_angle());
-        let ignored = self.state.settings.ignore_list();
+        let mask = i16::from(self.state.store.mask_angle());
+        let ignored = self.state.store.ignore_list();
         let listening = self.state.fixing && !Self::antenna_off(record);
         let channels = self.channels.min(family.channels);
-        let highest = self.state.settings.highest_in_sky();
+        let highest = self.state.store.highest_in_sky();
         let eligible = move |satellite: &Satellite| {
             listening
                 && satellite.signal.is_some()
@@ -1180,8 +1182,8 @@ impl Engine {
         };
         let position = record.dops.map_or(0, |dops| dops.position.0);
         let horizontal = record.dops.map_or(0, |dops| dops.horizontal.0);
-        let three_d = position <= self.state.settings.xdop_threshold();
-        match (self.state.settings.holding(), tracked, record.fix) {
+        let three_d = position <= self.state.store.xdop_threshold();
+        match (self.state.store.holding(), tracked, record.fix) {
             (true, _, _) | (false, _, Fix::None) => NONE,
             (false, SATELLITES_3D.., Fix::ThreeD | Fix::TimeOnly) if three_d => Solution {
                 dop: position,
@@ -1351,7 +1353,7 @@ impl Engine {
     /// satellites a combination holds, Best-4 or N-in-View, is the most
     /// any of them names; six with none.
     fn xdop_table<O: Output + ?Sized>(&self, record: &Record, out: &mut O) {
-        let asked = self.state.settings.dop_type();
+        let asked = self.state.store.dop_type();
         let table = record
             .derived
             .xdops
@@ -1470,7 +1472,7 @@ impl Engine {
         };
         data.zeros(EXTENSION_BEFORE_POSITION);
         match record.derived.ecef {
-            Some(ecef) if !self.state.settings.holding() => data
+            Some(ecef) if !self.state.store.holding() => data
                 .signed_long(ecef.x.0)
                 .signed_long(ecef.y.0)
                 .signed_long(ecef.z.0),
@@ -1487,9 +1489,7 @@ impl Engine {
     fn traim_ability(&self, tracked: usize) -> u8 {
         let limit = self.state.traim.alarm_limit;
         match TRAIM_NEEDS.iter().find(|need| limit >= need.from) {
-            Some(need) if tracked >= need.isolate && self.state.settings.holding() => {
-                TRAIM_ISOLATION
-            }
+            Some(need) if tracked >= need.isolate && self.state.store.holding() => TRAIM_ISOLATION,
             Some(need) if tracked >= need.detect => TRAIM_DETECTION,
             _ => TRAIM_NEITHER,
         }
@@ -1500,7 +1500,7 @@ impl Engine {
     /// the solution is unknown (VP p. 105) and nothing is isolated; out
     /// of position hold, it can only detect (UT p. 6.93).
     fn traim_result(&self, record: &Record, tracked: usize) -> TraimResult {
-        let holding = self.state.settings.holding();
+        let holding = self.state.store.holding();
         let on = self.state.traim.algorithm == TRAIM_ON;
         match record.derived.raim.filter(|_| on) {
             Some(raim) => TraimResult {
@@ -1567,7 +1567,7 @@ impl Engine {
             }
         }
         data.byte(u8::from(pulse))
-            .byte(u8::from(self.state.settings.gps_time()))
+            .byte(u8::from(self.state.store.gps_time()))
             .byte(solution)
             .byte(ability)
             .word(timing.map_or(0, |timing| timing.sigma.0))
@@ -1611,7 +1611,7 @@ impl Engine {
             }
             None => (now, now, None),
         };
-        let current = if self.state.settings.gps_time() {
+        let current = if self.state.store.gps_time() {
             0
         } else {
             self.wire_offset(record)

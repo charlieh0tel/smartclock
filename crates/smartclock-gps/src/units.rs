@@ -12,6 +12,10 @@ use core::num::NonZeroU8;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Seconds<T>(pub T);
 
+/// A count of milliseconds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Milliseconds<T>(pub T);
+
 /// A count of nanoseconds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Nanoseconds<T>(pub T);

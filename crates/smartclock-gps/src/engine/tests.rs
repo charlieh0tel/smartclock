@@ -17,9 +17,11 @@ use crate::engine::identity::VP_SIX;
 use crate::oncore::AA_TIME_OF_DAY;
 use crate::oncore::AB_GMT_CORRECTION;
 use crate::oncore::AC_DATE;
+use crate::oncore::AH_SATELLITE_SELECT;
 use crate::oncore::AJ_XDOP_TYPE;
 use crate::oncore::AT_POSITION_HOLD;
 use crate::oncore::BA_POSITION_STATUS;
+use crate::oncore::BB_VISIBLE_SATELLITES;
 use crate::oncore::BC_XDOP_TABLE;
 use crate::oncore::BH_CORRECTION_OUTPUT;
 use crate::oncore::BJ_LEAP_SECOND_PENDING;
@@ -27,6 +29,7 @@ use crate::oncore::BN_TIME_RAIM;
 use crate::oncore::BO_UTC_OFFSET;
 use crate::oncore::CA_SELF_TEST;
 use crate::oncore::CE_PSEUDORANGE_CORRECTION;
+use crate::oncore::CF_SET_TO_DEFAULTS;
 use crate::oncore::CG_FIX_MODE;
 use crate::oncore::Deframer;
 use crate::oncore::EA_POSITION_STATUS;
@@ -43,6 +46,7 @@ use crate::oncore::OVERHEAD;
 use crate::oncore::TRAILER;
 use crate::oncore::encode;
 use crate::oncore::response_length;
+use crate::record::Almanac;
 use crate::record::Antenna;
 use crate::record::Correction;
 use crate::record::Corrections;
@@ -165,6 +169,12 @@ fn full() -> Record {
             Satellite::new(prn(id), Degrees(elevation), Degrees(100)).tracked(DecibelHertz(signal));
         record.satellites.push(satellite);
     }
+    let held = record
+        .satellites
+        .iter()
+        .fold(PrnSet::EMPTY, |held, satellite| held.with(satellite.prn));
+    let week = noon().week().expect("a week of GPS time");
+    record.almanac = Some(Almanac::new(week, 0, held));
     record.antenna = Antenna::Connected;
     record
 }
@@ -417,7 +427,8 @@ fn a_record_with_gaps_is_sent_as_zeros() {
     // The power-up clock, and nothing else but the status.
     assert_eq!(data[..7], [1, 6, 0x07, 0xbc, 12, 0, 0]);
     assert_eq!(data[7..68], [0; 61]);
-    assert_eq!(data[68], 0x08 | 0x02);
+    // Acquiring, too few visible, no almanac (VP p. 73).
+    assert_eq!(data[68], 0x08 | 0x02 | 0x01);
 
     let mut record = full();
     let frames = ask(&mut engine, &record, EK_EXTENSION, &[0]);
@@ -705,4 +716,98 @@ fn a_time_raim_result_is_sent_while_time_raim_is_on() {
     let mut confirmed = TRAIM_EACH_SECOND;
     confirmed[4] = 3;
     assert_eq!(traim(&mut engine, &confirmed), [0, 0, 1, 1]);
+}
+
+/// VP pp. 74 and 75: mode 1 sends `@@Bb` when its data changes, until
+/// `@@Cf` puts the engine back to polled.
+#[test]
+fn visible_satellites_are_sent_when_they_change() {
+    let mut engine = fixing(&VP_EIGHT);
+    let mut record = full();
+    let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[1]);
+    assert_eq!(only(&frames, BB_VISIBLE_SATELLITES).len(), 85);
+    let mut sent = Sent::default();
+    engine.second(&record, NOW, &mut sent);
+    assert!(sent.0.is_empty());
+
+    record
+        .satellites
+        .get_mut(prn(3))
+        .expect("in view")
+        .elevation = Degrees(79);
+    engine.second(&record, NOW, &mut sent);
+    assert_eq!(only(&sent.0, BB_VISIBLE_SATELLITES)[4], 79);
+    let mut sent = Sent::default();
+    engine.second(&record, NOW, &mut sent);
+    assert!(sent.0.is_empty());
+
+    ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
+    ask(&mut engine, &record, CG_FIX_MODE, &FIX);
+    record
+        .satellites
+        .get_mut(prn(3))
+        .expect("in view")
+        .elevation = Degrees(80);
+    engine.second(&record, NOW, &mut sent);
+    assert!(sent.0.is_empty());
+}
+
+/// VP pp. 39, 60, 70 and 73; UT pp. 6.18 and 6.20.
+#[test]
+fn the_receiver_status_says_what_the_record_and_settings_make_of_the_fix() {
+    let status = |identity: &'static Identity, change: &dyn Fn(&mut Record)| {
+        let mut engine = Engine::new(identity, Options::DEFAULT);
+        ask(&mut engine, &Record::EMPTY, CG_FIX_MODE, &FIX);
+        let mut record = full();
+        change(&mut record);
+        let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+        let data = only(&frames, EA_POSITION_STATUS);
+        (u16::from_be_bytes([data[31], data[32]]), data[34], data[68])
+    };
+    let dops = |position, horizontal| {
+        move |record: &mut Record| {
+            let dops = record.dops.as_mut().expect("DOPs");
+            dops.position = Tenths(position);
+            dops.horizontal = Tenths(horizontal);
+        }
+    };
+    // A PDOP above @@Al's 6.0 holds the altitude.
+    assert_eq!(status(&VP_EIGHT, &dops(60, 12)), (60, 5, 0x20));
+    assert_eq!(status(&VP_EIGHT, &dops(61, 12)), (12, 5, 0x10));
+    // Poor geometry is a DOP above 20 on a VP, above 12 on a UT Plus.
+    assert_eq!(status(&VP_EIGHT, &dops(300, 201)), (201, 5, 0x10 | 0x40));
+    assert_eq!(status(&VP_EIGHT, &dops(300, 130)), (130, 5, 0x10));
+    assert_eq!(status(&UT_PLUS_2_2, &dops(300, 130)), (130, 5, 0x10 | 0x40));
+    // Differential, while there is a fix.
+    let differential = |record: &mut Record| record.differential = true;
+    assert_eq!(status(&VP_EIGHT, &differential), (20, 5, 0x20 | 0x04));
+    let unfixed = |record: &mut Record| {
+        record.differential = true;
+        record.fix = Fix::None;
+    };
+    assert_eq!(status(&VP_EIGHT, &unfixed), (0, 5, 0x08));
+    // With no almanac, none visible.
+    let forgetful = |record: &mut Record| record.almanac = None;
+    assert_eq!(status(&VP_EIGHT, &forgetful), (20, 0, 0x20 | 0x02 | 0x01));
+}
+
+/// VP pp. 29 and 30: highest in the sky tracks the highest satellites,
+/// where automatic selection takes the record's first.
+#[test]
+fn highest_in_the_sky_tracks_the_highest() {
+    let mut record = full();
+    for (id, elevation) in [(7, 85), (8, 15), (9, 60)] {
+        record.satellites.push(
+            Satellite::new(prn(id), Degrees(elevation), Degrees(0)).tracked(DecibelHertz(40)),
+        );
+    }
+    let channels = |engine: &mut Engine| {
+        let frames = ask(engine, &record, BA_POSITION_STATUS, &[0]);
+        let data = only(&frames, BA_POSITION_STATUS);
+        data[36..60].iter().step_by(4).copied().collect::<Vec<_>>()
+    };
+    let mut engine = fixing(&VP_SIX);
+    assert_eq!(channels(&mut engine), [3, 4, 31, 26, 16, 7]);
+    ask(&mut engine, &record, AH_SATELLITE_SELECT, &[2]);
+    assert_eq!(channels(&mut engine), [3, 4, 31, 26, 7, 9]);
 }

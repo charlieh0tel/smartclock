@@ -666,6 +666,9 @@ pub struct Record {
     pub leap: Option<LeapEvent>,
     /// The kind of fix.
     pub fix: Fix,
+    /// Whether the fix is corrected by a differential reference (VP
+    /// p. 73, receiver status bit 2; UT p. 6.20).
+    pub differential: bool,
     /// The position.  `None` when there is none to give.
     pub position: Option<Position>,
     /// The velocity.  `None` when it is not computed.
@@ -691,6 +694,7 @@ impl Record {
         utc_offset: None,
         leap: None,
         fix: Fix::None,
+        differential: false,
         position: None,
         velocity: None,
         dops: None,

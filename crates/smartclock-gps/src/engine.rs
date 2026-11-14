@@ -183,12 +183,19 @@ const STATUS_CHANNEL: usize = 4;
 const CHANNEL_USED: u8 = 0x80;
 const CHANNEL_USED_FOR_TIME: u8 = 0x02;
 /// The receiver status bits (VP p. 73).
+const STATUS_POOR_GEOMETRY: u8 = 0x40;
 const STATUS_3D_FIX: u8 = 0x20;
 const STATUS_2D_FIX: u8 = 0x10;
 const STATUS_ACQUIRING_OR_HOLD: u8 = 0x08;
+const STATUS_DIFFERENTIAL: u8 = 0x04;
 const STATUS_FEW_VISIBLE: u8 = 0x02;
+const STATUS_BAD_ALMANAC: u8 = 0x01;
 /// Fewer visible than this is too few.
 const FEW_VISIBLE: usize = 3;
+/// A DOP above this, in tenths, is poor geometry: a VP's (VP p. 73)
+/// and a UT Plus's (UT p. 6.20).
+const POOR_GEOMETRY_VP: u16 = 200;
+const POOR_GEOMETRY_UT_PLUS: u16 = 120;
 /// The DOP types (VP p. 72), and the antenna sense bits a UT Plus puts
 /// in the same byte (UT p. 6.20).
 const DOP_TYPE_PDOP: u8 = 0;
@@ -214,6 +221,10 @@ const SIGNAL: [u8; 61] = [
 /// field's bits.
 const VISIBLE_SLOT: usize = 7;
 const VISIBLE_UNHEALTHY: u8 = 2;
+/// `@@Bb`'s data: the count, then the slots.
+const VISIBILITY: usize = 1 + SATELLITES * VISIBLE_SLOT;
+/// `@@Bb`'s mode that asks for it each time it changes (VP p. 75).
+const VISIBILITY_EACH_CHANGE: u8 = 1;
 /// `@@Bc`: the bytes of one combination, a DOP and its satellites (VP
 /// p. 77).
 const XDOP_ENTRY: usize = size_of::<u16>() + XDOP_SATELLITES;
@@ -484,6 +495,8 @@ struct State {
     corrections: Rate,
     /// Whether `@@Bo` is sent each time the offset changes.
     offset_updates: bool,
+    /// Whether `@@Bb` is sent each time it changes.
+    visibility_updates: bool,
 }
 
 impl State {
@@ -501,6 +514,7 @@ impl State {
             traim: TraimSetup::DEFAULT,
             corrections: Rate(0),
             offset_updates: false,
+            visibility_updates: false,
         }
     }
 }
@@ -537,6 +551,8 @@ pub struct Engine {
     heard: Option<GpsSeconds>,
     /// GPS less UTC as `@@Bo` gave it in the second before.
     offset: Option<u8>,
+    /// The data of the last `@@Bb` sent.
+    visibility: Option<[u8; VISIBILITY]>,
     /// The self-tests' answers waiting, oldest
     /// first.
     deferred: [Option<Deferred>; DEFERRED],
@@ -573,6 +589,7 @@ impl Engine {
             clock: POWER_UP,
             heard: None,
             offset: None,
+            visibility: None,
             deferred: [None; DEFERRED],
         }
     }
@@ -653,6 +670,9 @@ impl Engine {
             }
             if self.state.corrections.due(self.count) {
                 self.corrections(record, out);
+            }
+            if self.state.visibility_updates {
+                self.visibility_changed(record, out);
             }
         }
         if self.state.offset_updates && stepped {
@@ -788,7 +808,8 @@ impl Engine {
                     .zeros(6),
             );
         } else if id == BB_VISIBLE_SATELLITES {
-            send(out, id, &Self::visibility(record));
+            self.state.visibility_updates = data == [VISIBILITY_EACH_CHANGE];
+            self.send_visibility(record, out);
         } else if id == BC_XDOP_TABLE {
             self.xdop_table(record, out);
         } else if id == BD_ALMANAC_STATUS {
@@ -1052,7 +1073,9 @@ impl Engine {
 
     /// The satellites on a family's channels: those of the record with
     /// a signal, above the mask angle and not ignored, in its order, as
-    /// many as there are channels.
+    /// many as there are channels.  Set to track the highest in the
+    /// sky (VP p. 29), those are the highest of them, still in the
+    /// record's order; else the record's order is its preference.
     fn tracked<'a>(
         &self,
         record: &'a Record,
@@ -1061,16 +1084,36 @@ impl Engine {
         let mask = i16::from(self.state.settings.mask_angle());
         let ignored = self.state.settings.ignore_list();
         let listening = self.state.fixing && !Self::antenna_off(record);
+        let channels = self.channels.min(family.channels);
+        let highest = self.state.settings.highest_in_sky();
+        let eligible = move |satellite: &Satellite| {
+            listening
+                && satellite.signal.is_some()
+                && i16::from(satellite.elevation.0) > mask
+                && !is_ignored(ignored, satellite.prn)
+        };
+        // Those above a satellite, a tie going to the one first.
+        let above = move |index: usize, satellite: &Satellite| {
+            record
+                .satellites
+                .iter()
+                .enumerate()
+                .filter(|&(other_index, other)| {
+                    eligible(other)
+                        && (other.elevation.0 > satellite.elevation.0
+                            || (other.elevation.0 == satellite.elevation.0 && other_index < index))
+                })
+                .count()
+        };
         record
             .satellites
             .iter()
-            .filter(move |satellite| {
-                listening
-                    && satellite.signal.is_some()
-                    && i16::from(satellite.elevation.0) > mask
-                    && !is_ignored(ignored, satellite.prn)
+            .enumerate()
+            .filter(move |&(index, satellite)| {
+                eligible(satellite) && (!highest || above(index, satellite) < channels)
             })
-            .take(self.channels.min(family.channels))
+            .map(|(_, satellite)| satellite)
+            .take(channels)
     }
 
     /// A family's channels, each with the satellite on it if it has
@@ -1087,23 +1130,26 @@ impl Engine {
     }
 
     /// The fix `tracked` satellites give, no better than the record's
-    /// (VP pp. 72 and 73).
+    /// (VP pp. 72 and 73).  A PDOP above `@@Al`'s threshold holds the
+    /// altitude, as three satellites do (VP pp. 39 and 60).
     fn solution(&self, record: &Record, tracked: usize) -> Solution {
         const NONE: Solution = Solution {
             dop: 0,
             dop_type: DOP_TYPE_PDOP,
             status: STATUS_ACQUIRING_OR_HOLD,
         };
-        let dops = record.dops;
+        let position = record.dops.map_or(0, |dops| dops.position.0);
+        let horizontal = record.dops.map_or(0, |dops| dops.horizontal.0);
+        let three_d = position <= self.state.settings.xdop_threshold();
         match (self.state.settings.holding(), tracked, record.fix) {
             (true, _, _) | (false, _, Fix::None) => NONE,
-            (false, SATELLITES_3D.., Fix::ThreeD | Fix::TimeOnly) => Solution {
-                dop: dops.map_or(0, |dops| dops.position.0),
+            (false, SATELLITES_3D.., Fix::ThreeD | Fix::TimeOnly) if three_d => Solution {
+                dop: position,
                 dop_type: DOP_TYPE_PDOP,
                 status: STATUS_3D_FIX,
             },
             (false, SATELLITES_2D.., _) => Solution {
-                dop: dops.map_or(0, |dops| dops.horizontal.0),
+                dop: horizontal,
                 dop_type: DOP_TYPE_HDOP,
                 status: STATUS_2D_FIX,
             },
@@ -1112,13 +1158,33 @@ impl Engine {
     }
 
     /// The satellites in view as a position status counts them: none
-    /// while idle.
+    /// while idle, nor with no almanac to tell (VP p. 70; UT p. 6.18).
     fn visible(&self, record: &Record) -> usize {
-        if self.state.fixing {
+        if self.state.fixing && record.almanac.is_some() {
             record.satellites.len()
         } else {
             0
         }
+    }
+
+    /// The receiver status byte of a position status (VP p. 73; UT
+    /// p. 6.20).
+    fn receiver_status(&self, record: &Record, solution: Solution, visible: usize) -> u8 {
+        let poor_geometry = match self.identity.model() {
+            Model::VpSix | Model::VpEight => POOR_GEOMETRY_VP,
+            Model::UtPlus => POOR_GEOMETRY_UT_PLUS,
+        };
+        let fix = matches!(solution.status, STATUS_3D_FIX | STATUS_2D_FIX);
+        [
+            (true, solution.status),
+            (solution.dop > poor_geometry, STATUS_POOR_GEOMETRY),
+            (fix && record.differential, STATUS_DIFFERENTIAL),
+            (visible < FEW_VISIBLE, STATUS_FEW_VISIBLE),
+            (record.almanac.is_none(), STATUS_BAD_ALMANAC),
+        ]
+        .into_iter()
+        .filter(|(set, _)| *set)
+        .fold(0, |status, (_, bit)| status | bit)
     }
 
     /// `@@Ba` and `@@Ea`.
@@ -1140,11 +1206,6 @@ impl Engine {
         let solution = self.solution(record, tracked);
         let isolated = self.traim_result(record, tracked).isolated;
         let visible = self.visible(record);
-        let few = if visible < FEW_VISIBLE {
-            STATUS_FEW_VISIBLE
-        } else {
-            0
-        };
         let subsecond = match record.time {
             Some(time) if time.seconds == self.clock => time.subsecond.0,
             _ => 0,
@@ -1185,8 +1246,27 @@ impl Engine {
                 }
             }
         }
-        data.byte(solution.status | few);
+        data.byte(self.receiver_status(record, solution, visible));
         data
+    }
+
+    /// `@@Bb`, kept to tell a change by.
+    fn send_visibility<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
+        let data = Self::visibility(record);
+        let mut kept = [0; VISIBILITY];
+        kept.copy_from_slice(data.as_slice());
+        self.visibility = Some(kept);
+        send(out, BB_VISIBLE_SATELLITES, &data);
+    }
+
+    /// `@@Bb` if it differs from the last sent (VP pp. 74 and 75).
+    fn visibility_changed<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
+        let changed = self
+            .visibility
+            .is_none_or(|kept| kept[..] != *Self::visibility(record).as_slice());
+        if changed {
+            self.send_visibility(record, out);
+        }
     }
 
     /// The data of `@@Bb` (VP p. 75).

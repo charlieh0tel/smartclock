@@ -38,6 +38,10 @@ pub(super) const QUERY: u8 = 0xff;
 /// The height type that says mean sea level (`@@Af`, p. 25).
 pub(super) const HEIGHT_MEAN_SEA_LEVEL: u8 = 1;
 
+/// The satellite select mode that tracks the highest in the sky
+/// (`@@Ah`, p. 30).
+const SELECT_HIGHEST_IN_SKY: u8 = 2;
+
 /// The first byte an ignore list's command must carry (`@@Am`, p. 41).
 const IGNORE_LIST_CONSTANT: u8 = 0;
 /// The heights an altitude hold takes, in centimeters (`@@Au`, p. 58).
@@ -327,6 +331,21 @@ impl Settings {
     /// The kind of DOP asked for (`@@Aj`).
     pub(super) fn dop_type(&self) -> u8 {
         self.byte(AJ_XDOP_TYPE)
+    }
+
+    /// Whether satellites are chosen highest in the sky first (`@@Ah`,
+    /// p. 30).
+    pub(super) fn highest_in_sky(&self) -> bool {
+        self.byte(AH_SATELLITE_SELECT) == SELECT_HIGHEST_IN_SKY
+    }
+
+    /// The DOP above which a 3D fix gives way to altitude hold, in
+    /// tenths (`@@Al`, p. 39).
+    pub(super) fn xdop_threshold(&self) -> u16 {
+        match self.get(AL_XDOP_THRESHOLD) {
+            Some(&[high, low]) => u16::from_be_bytes([high, low]),
+            _ => u16::MAX,
+        }
     }
 
     /// The datum (`@@Ao`).

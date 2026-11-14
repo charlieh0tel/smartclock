@@ -974,6 +974,15 @@ stands in for one.
   up, and their position is the one the firmware's own script sets
   (`docs/firmware/gps.md`, "Requests") or one a command of theirs
   sets.
+- **Settings change what the model sends only as far as the recorded
+  exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2), the
+  automatic switch to altitude hold above `@@Al`'s PDOP, `@@Bb` sent on
+  change, and the receiver status bits for poor geometry, a
+  differential fix, too few visible and no almanac are the manual's.
+  Manual selection (`@@Ah` 1 with `@@Ai`) and manual altitude hold
+  (`@@Av` 1 at `@@Au`'s height) would change answers the exchanges
+  hold, so the model takes and echoes them but tracks and fixes as
+  though selection and altitude hold were automatic.
 - **A VP's identity text is made up; a UT Plus's is a published one**,
   a `@@Cj` answer posted whole in a public bug report and matched in
   form by another on the time-nuts list, both cited where the text is.

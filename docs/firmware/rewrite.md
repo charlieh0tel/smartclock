@@ -474,6 +474,78 @@ that a known difference hides no other:
   (`0x499de`), in gcc's frame over whatever gcc put there.  A firmware
   fault, in each copy's own frame.
 
+**The status register** (`status_register.py`, in the function check;
+its own tests, `make check-status-register`).  A run compares the
+system byte a call leaves, not what the function did to the register on
+the way: one that masks interrupts, works and restores leaves what one
+that does neither leaves.  And Ghidra's decompiler renders none of it
+-- not `ori #imm,sr`, `andi #imm,sr`, a move to or from SR, nor the
+restore after `enter_supervisor` -- so C taken from the export loses
+its masking without a sign, as `qspi_transfer`'s, `qspi_release`'s,
+`qspi_acquire`'s and the leap second's two arming routines' did, each
+found by hand.  So the check reads it, without running anything, for
+every function written by hand:
+
+- from the image, each instruction control reaches from the function's
+  entry that reads SR, writes it, ors, ands or exclusive-ors a literal
+  into it, moves USP, stops or returns from an exception, and each
+  call of a function, in address order.  Branches, fixed jumps and a
+  jump's table of cases are followed, into the middle of another
+  function too, since a tail two functions share is each one's own (the
+  leap second's arming pair); a jump to a function's start leaves.  A
+  call of `enter_supervisor` is an event of its own.
+- from the C, as gcc preprocesses the image's translation unit, each
+  call of `cpu.h`'s helpers, the C's only way to the register, and each
+  call of a function the image has, in source order, a call's arguments
+  first.  A function the image has no copy of (a static helper,
+  `cpu_interrupts_mask_all`) stands for its body wherever it is
+  called, and so does a routine top-level assembly defines, by what it
+  calls (`CPU_GIVING_CALLERS_CCR`).  `cpu_interrupts_raise(mask)` is an
+  `ori` of its mask, `cpu_interrupts_at(level)` that and the `andi`
+  that lowers to the level, each with a save before it only where its
+  result is used; `cpu_sr_write` of a constant is a write of that
+  literal.  Assembly in the C that names SR, USP, `stop` or `rte`
+  outside the helpers agrees with nothing.
+
+Each side's calls before its first event of the register and after its
+last are dropped; the two lists must then be equal: the same events,
+of the same kind (save, or, and, exclusive or, write, write of a
+literal, enter supervisor, stop, rte, move usp), with the same literal,
+and the same functions called between them, in the same order.  A
+function whose instructions touch the register and whose C does not,
+or the other way round, fails; so does one that masks to another level,
+raises where the image sets a level, or restores before a call the
+image makes masked.  A difference is known by the rule that excuses a
+case's (`KNOWN`); none is.
+
+What it does not see:
+
+- Order is address order against source order, not a path's.  The two
+  agree where the C is laid out as the image is, which C touching the
+  register must then be: `qspi_acquire`'s arm that takes a free lock is
+  the image's last (`qspi_acquire+0x74`), and is written last.  Which
+  events a path takes, a restore missing from one arm of two, a loop's
+  bounds or a condition are the run's to compare, not this reading's.
+- Between events only calls are placed.  A store moved out of a masked
+  stretch, with no call to either side of it, reads the same.
+- A call through a pointer or a register is no event, and code reached
+  only through a register, other than a recognized jump table, is not
+  read.
+- A literal the image loads into a register and then moves to SR reads
+  as a plain write, and C must write a variable there to agree.  C
+  that ors SR itself (`cpu_sr_write(cpu_sr_read() | mask)`) reads as a
+  save and a write, and fails against an `ori`.
+- The condition codes' instructions (`%ccr`) are not events.
+- The arguments of calls are not compared here: the mask
+  `set_interrupt_mask` is passed shows only in the system byte a run
+  leaves.
+- Only functions written by hand are read.  An assembly routine,
+  `enter_supervisor` or the kernel's, is the image's bytes
+  (`check-decompiled`), and the C's binding to one is one instruction
+  or a call.
+- The C is read as text, not parsed: a member or a local named as one
+  of the image's functions and called would read as a call of it.
+
 **Planted bugs.**  Each part of the harness catches a bug planted in
 the hand-written C that the generated cases alone miss, for example: a
 clobber left out of a binding (A1 of `float_add`, D7 of the mutexes,
@@ -494,7 +566,11 @@ log text passed through a static helper (the Z3815A's and Z3805A's
 `fine`), two alarm texts logged the other way round
 (`alarm_hardware_update`), a condition's bit, PORTE's and PORTF0's
 masks, the antenna's bounds and a parameter record's field read for
-another.  (README.md, "Hand-written C"; PLAN.md.)
+another; and, in `qspi_release`, its masking left out, its restore
+left out, level 6 for 4, the mask raised where the image sets a level,
+and the restore moved before the hand-on, of which a run catches the
+second alone and the status register's reading every one.  (README.md,
+"Hand-written C"; PLAN.md.)
 
 **Other checks**, in `make check-decompiled`:
 
@@ -563,6 +639,8 @@ check-link`, `make check-scpi-tree`):
 | SCPI trees (`check-scpi-tree`) | 2055 and 38 objects identical |
 | function check, primary | 1312 agree, 6 known, 0 skipped, 0 failed |
 | function check, installer | 237 agree, 0 known, 0 skipped, 0 failed |
+| status register, primary | 20 functions touch it: 20 agree, 0 known, 0 failed |
+| status register, installer | 5 functions touch it: 5 agree, 0 known, 0 failed |
 | pForth console sessions | 8 of 8 agree |
 | cases, in the agreeing functions | 26,090 of 26,754 compared, the rest skipped; strict, 26,086 of 26,754 |
 | stack headroom | no case deeper than the image's by more than 256 bytes, or 16 above a floor; the console's data stack 56 bytes clear, the image's 58 |
@@ -592,6 +670,10 @@ the check is against the model, not the board.
 - **Concurrency.**  Tasks never interleave; the only preemption is an
   interrupt a case injects at a chosen point.  A race between tasks, or
   a kernel call overwriting what another task holds, is not seen.
+- **The status register.**  What a function does to it on the way is
+  read, not run, and by address against source order ("The status
+  register", above): a path's own order, and what but a call lies
+  inside a masked stretch, are not compared.
 - **Timing.**  No time is modeled: a poll's count and order are
   compared, its duration is not.  Unicorn has no CPU32; the 68020
   stands in, the image using none of the instructions where they differ
@@ -627,6 +709,7 @@ The checks need no Ghidra: the export is checked in.
     make -C third_party/firmware report-decompiled IMAGE=z3805a-3543b   # about 2.5 min
     make -C third_party/firmware check-scpi-tree IMAGE=z3805a-3543b
     make -C third_party/firmware check-format-c
+    make -C third_party/firmware check-status-register
 
 Each is also a top-level target (`make check-decompiled`).  Without
 `IMAGE` each runs for every image it can: `check-link` and

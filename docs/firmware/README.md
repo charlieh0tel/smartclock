@@ -1634,7 +1634,10 @@ from the klok task at each 1PPS.  The C increments with `cpu.h`'s
 `cpu_long_increment`, the same instruction.  Two calls that end the same way are
 compared as if they had returned, but for their result, and both
 leave the status register's system byte, its supervisor bit and
-interrupt mask, the same.  Two that return leave its condition codes
+interrupt mask, the same.  What each did to the register on the way,
+its masking and its restore, a run does not show; the check reads that
+from the image's instructions and the C's source
+([`rewrite.md`](rewrite.md), "The status register").  Two that return leave its condition codes
 the same too where the function's sidecar row returns in them
 (`returns=ccr`), and nowhere else: no function the harness runs has
 one now, the routines that do being register routines, not C
@@ -2095,7 +2098,7 @@ five images on every pull request and push to `main`, and when run by
 hand (`workflow_dispatch`), a job of its own beside
 the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
-`check-pforth-words`, `check-image-diff`, `check-chip-selects`,
+`check-pforth-words`, `check-image-diff`, `check-status-register`, `check-chip-selects`,
 `check-loop-trace`, `check-loop-constants`, `check-magic-numbers`, `check-comment-addresses`,
 `check-common`, `check-plain-names`, `check-rom-pointers` and
 `check-alone`, both without `IMAGE`, the second compiling each
@@ -2108,7 +2111,8 @@ C"), and `report-decompiled`, which fails if any function fails and checks
 the figures this document, `rewrite.md`, `58503a-3704.md`,
 `z3801a-3543.md`, `z3815a-4010.md`, `z3817a-3752.md` and the top `README.md` give from each image's
 function check -- the user-mode and console counts, the agreeing,
-known, skipped and failed functions and the agreeing ones' cases --
+known, skipped and failed functions, the agreeing ones' cases and the
+functions touching the status register --
 and from its link check against the report it writes and the link
 check's summary, so that every function agreeing is
 checked in public.  `IMAGE=z3805a-3543b` is set for the job;

@@ -57,7 +57,8 @@ TARGETS = format-c check-format-c check-module-figures module-figures check-imag
 	check-comment-addresses check-common check-plain-names \
 	check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
-	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants
+	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants \
+	check-status-register
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
@@ -222,6 +223,12 @@ pforth-words:
 check-unicorn:
 	uv run -q $(ROOT)/tools/firmware/unicorn_check.py
 
+# Fail if the function check's reading of what a function does to the
+# status register, the image's instructions' and the hand-written C's
+# (status_register.py), fails its own tests.
+check-status-register:
+	python3 $(ROOT)/tools/firmware/test_status_register.py
+
 # Fail if docs/firmware/chip-selects.md, or a map docs/firmware/restart.md
 # or docs/firmware/README.md gives between its markers, is not what the
 # images' reset code writes to the SIM's chip-select registers;
@@ -307,8 +314,8 @@ report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1
 # Fail if the documents' figures from each reported or unfinished
 # image's function check -- its functions agreeing, known, skipped and
 # failed, those run in user mode alone and in both modes, its console
-# sessions agreeing
-# and the agreeing functions' cases -- and from its export -- its
+# sessions agreeing, the agreeing functions' cases
+# and its functions touching the status register -- and from its export -- its
 # functions written by hand, left as the decompiler's reading, assembly
 # and thunks -- and from its link check -- its functions required and
 # how each is defined -- as docs/firmware/README.md,

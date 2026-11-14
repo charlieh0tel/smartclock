@@ -83,6 +83,7 @@ from backend import ON_MC683XX
 from decompiled_check import installer_records
 from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine
 from rebuild_link import IMAGE_PREFIX, LOADED, REBUILT, REBUILT_DATA, Section
+from status_register import Cpu, Trace
 
 # Every register a routine might take, by the sidecar's name.
 REGISTERS = {
@@ -386,6 +387,8 @@ KERNEL_SERVICES = {
 # call (drtb_read's drtb_gets, 0x1dde2; os.h, the I/O functions'
 # shapes).
 IO_TRAP = TRAP_VECTORS + 4
+# The trap the services take, trap #3.
+SERVICE_TRAP = TRAP_VECTORS + 3
 WRITE = 4
 IO_SCRATCH = ("D0", "D1", "A0", "A1")
 IO_FUNCTIONS = {
@@ -514,7 +517,7 @@ USER_AREA_SIZE = 0x28
 USER_STACK_BASE = 8
 # The traps the harness answers for the kernel, by vector.  Each takes
 # its service or function in D7's low byte and returns its error there.
-KERNEL_TRAPS = {TRAP_VECTORS + 3: KERNEL_SERVICES, IO_TRAP: IO_FUNCTIONS}
+KERNEL_TRAPS = {SERVICE_TRAP: KERNEL_SERVICES, IO_TRAP: IO_FUNCTIONS}
 SERVICE_REGISTER = "D7"
 SERVICE_MASK = 0xFF
 # What a modeled service returns: no error, and in each result register
@@ -579,6 +582,11 @@ TASK_RECORD_SIZE = 0xB2
 # reached, none (kernel_ident, 0x14eda to 0x14eec).
 IDENT_NOT_FOUND = 1
 NO_TASK = 0
+# What a service a case has fail returns (RebuiltMachine.failing_services):
+# an error, nonzero, which each caller of the service tests for as a
+# whole (docs/firmware/psos.md, "Services"); ident returns
+# IDENT_NOT_FOUND's search as well.
+SERVICE_FAILED = 1
 # The kernel's configuration, psos_config, and its I/O table, which
 # psos_config_init (0x51038) copies from ROM at start-up, as (from, to,
 # bytes) (docs/firmware/structures.md, "The kernel's configuration"),
@@ -735,6 +743,11 @@ STATUS_REGISTERS = [
     Status(0xFFFC1F, 1, 0, 0x80, (0xFFFC1A,)),
 ]
 STATUS_AT = {status.address: status for status in STATUS_REGISTERS}
+
+
+def is_device(address: int) -> bool:
+    """Whether an address is a device's (DEVICES)."""
+    return any(start <= address < start + size for start, size in DEVICES)
 # The DUART's input port, IP (MC68681, "Input port"), which
 # duart_input_debounced reads until ten reads agree: each read gives the
 # case's next input (DeviceCase.inputs), the last repeated.
@@ -2262,6 +2275,12 @@ class RebuiltMachine(Machine):
         # one; and the counter whose write of its count ends a call, as
         # (address, count), COUNTED
         self.ident_fails = False
+        # the services, by number, that fail every call (SERVICE_FAILED),
+        # where a case has them fail
+        self.failing_services: frozenset[int] = frozenset()
+        # what a case sets device registers to, by address, which each
+        # call starts with in place of zero (reset)
+        self.device_presets: dict[int, bytes] = {}
         # the status register a call starts with: SUPERVISOR, or a
         # task's in user mode, whose exceptions take SUPERVISOR_STACK
         self.starting_status = SUPERVISOR
@@ -2290,6 +2309,16 @@ class RebuiltMachine(Machine):
         # and what its initializers make, as its kernel_init and they
         # leave them
         self.initialized_ram = profile.ram
+        # what gives each call's path (status_register.Trace) from its
+        # start, if the function's is traced, else None (trace); the
+        # running call's path and whether an instruction, by its address,
+        # is the call's own, not an interrupt's, if it has one; the hook
+        # that reads each instruction for it (traced), while tracing;
+        # and the CPU as a path reads it
+        self.tracing: Callable[[int], Trace] | None = None
+        self.path: tuple[Trace, Callable[[Uc, int], bool]] | None = None
+        self.tracing_hook = None
+        self.reader = CpuReader(self.uc)
         # the routines at ROUTINES, by the address each records at
         self.stubs: dict[int, Stub] = {}
         # the child lists of the profile's main SCPI tree, as the image
@@ -2555,6 +2584,27 @@ def rebuilt_machine(
     fresh_ram(m)
     m.tree = tree_lists(m, profile.scpi.main_tree)
     return m
+
+
+def trace(m: RebuiltMachine, tracing: Callable[[int], Trace] | None) -> None:
+    """Traces each call's path, from tracing (RebuiltMachine.tracing),
+    or with None no longer: one hook reads every instruction while it is
+    set, added once, not for each call, since a hook added flushes the
+    blocks Unicorn has translated."""
+    m.tracing = tracing
+    if tracing is not None and m.tracing_hook is None:
+        m.tracing_hook = m.uc.hook_add(UC_HOOK_CODE, traced, m)
+    elif tracing is None and m.tracing_hook is not None:
+        m.uc.hook_del(m.tracing_hook)
+        m.tracing_hook = None
+    m.uc.ctl_flush_tb()
+
+
+def traced(uc: Uc, address: int, size: int, m: RebuiltMachine) -> None:
+    """The tracing hook: the instruction about to run, to the running
+    call's path, if it has one and the instruction is its own."""
+    if m.path is not None and m.path[1](uc, address):
+        m.path[0].instruction(address, m.reader)
 
 
 def protect_code(m: RebuiltMachine) -> None:
@@ -3041,6 +3091,8 @@ def reset(m: RebuiltMachine, memory: dict[int, bytes]) -> None:
     m.uc.mem_write(STACK, CLEAN_STACK)
     for start, size in DEVICES:
         m.uc.mem_write(start, bytes(size))
+    for start, contents in m.device_presets.items():
+        m.uc.mem_write(start, contents)
     m.devices.reset(m.device_case)
     m.string_cursor = 0
     if m.flash is not None:
@@ -3334,11 +3386,12 @@ def answer_kernel(m: RebuiltMachine, vector: int, sr: int) -> KernelCall | Conso
         if segment is None:
             return too_large
         uc.reg_write(REGISTERS[pointer], segment)
-    error = NO_ERROR
+    failing = vector == SERVICE_TRAP and number in m.failing_services
+    error = SERVICE_FAILED if failing else NO_ERROR
     if service.identifies:
         name, pointer = service.identifies
         task = uc.reg_read(REGISTERS[name])
-        if m.ident_fails and task != RUNNING_TASK:
+        if m.ident_fails and task != RUNNING_TASK or failing:
             error = IDENT_NOT_FOUND
             record = NO_TASK
         else:
@@ -3368,13 +3421,33 @@ def answer_kernel(m: RebuiltMachine, vector: int, sr: int) -> KernelCall | Conso
     return call
 
 
+class CpuReader(Cpu):
+    """The CPU as a path reads it (status_register.Cpu), its system
+    byte as system_status reads it, safe in a hook."""
+
+    REGISTERS = {**REGISTERS, "A7": UC_M68K_REG_A7}
+
+    def __init__(self, uc: Uc):
+        self.uc = uc
+
+    def word(self, at: int) -> int:
+        return int.from_bytes(self.uc.mem_read(at, STATUS_SIZE), "big")
+
+    def register(self, name: str) -> int:
+        return self.uc.reg_read(self.REGISTERS[name])
+
+    def system_byte(self) -> int:
+        return system_status(self.uc)
+
+
 class Run:
     """One call: its stack arguments laid above the return address, at
     the stack's edge, or, for a task's entry, at SP alone, its registers
     and status register after, the memory_compared, the COMPARED memory
     and the flash after, its effects, the ENDING vector, HALTED,
     STILL_RUNNING, COUNTED, SPLIT or a console session's INPUT_ENDED or
-    TASK_DELETED it ended at instead of returning, and the fault or trap
+    TASK_DELETED it ended at instead of returning, its path, if the
+    machine traces its function's (tracing), and the fault or trap
     that stopped it, if one did, with the addresses (stopped) and its
     kind alone (stop_reason), which the two copies' calls compare: the
     fault's kind, the trap and its call, or no return.  Each copy's code
@@ -3520,10 +3593,23 @@ class Run:
         # address with the frame popped (returned)
         returns: dict[int, int] = {}
 
+        def returning(uc, address):
+            # whether the instruction at an address is where the
+            # innermost interrupt taken returns to, its frame popped
+            return (
+                bool(frames)
+                and returns.get(address) == frames[-1]
+                and uc.reg_read(UC_M68K_REG_A7) == frames[-1] + struct.calcsize(FRAME_FORMAT)
+            )
+
         def returned(uc, address, size, _):
-            if frames and returns.get(address) == frames[-1]:
-                if uc.reg_read(UC_M68K_REG_A7) == frames[-1] + struct.calcsize(FRAME_FORMAT):
-                    frames.pop()
+            if returning(uc, address):
+                frames.pop()
+
+        # the call's path, read at the function's level, outside the
+        # interrupts taken (RebuiltMachine.traced)
+        self.trace = None if m.tracing is None else m.tracing(start)
+        m.path = None if self.trace is None else (self.trace, lambda uc, address: not frames or returning(uc, address))
 
         # the instructions begun, and the one that last read the counter
         # (SPLIT)
@@ -3640,6 +3726,9 @@ class Run:
                 m.uc.hook_del(hook)
             if interrupts:
                 m.uc.ctl_flush_tb()
+            m.path = None
+        if self.trace is not None:
+            self.trace.settled(m.reader)
         if m.stray_write:
             ended.append(BUS_ERROR)
             self.stopped = self.stop_reason = None

@@ -57,19 +57,16 @@ void qspi_start(qspi_device device, uint16_t* transmit, uint16_t count,
 void qspi_acquire(void) {
   uint16_t sr = cpu_interrupts_at(CPU_IPL_4);
 
-  if (qspi.busy) {
-    qspi.waiting[qspi.write] = psos_my_pid();
-    qspi.write = (qspi.write + 1) & QSPI_WAITING_MASK;
-    cpu_sr_write(sr);
-    if ((uint8_t)psos_wait_v(SIG_QSPI, 0, 0, 0) != 0) {
-      fatal_error("wait_v SIG_QSPI");
-    }
-  } else {
-    /* the image's last arm (qspi_acquire+0x74), and so the C's: the
-     * function check reads the status register's writes and the calls
-     * between them in each one's order */
+  if (!qspi.busy) {
     qspi.busy = 1;
     cpu_sr_write(sr);
+    return;
+  }
+  qspi.waiting[qspi.write] = psos_my_pid();
+  qspi.write = (qspi.write + 1) & QSPI_WAITING_MASK;
+  cpu_sr_write(sr);
+  if ((uint8_t)psos_wait_v(SIG_QSPI, 0, 0, 0) != 0) {
+    fatal_error("wait_v SIG_QSPI");
   }
 }
 

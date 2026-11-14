@@ -4,8 +4,10 @@ rewrites them in place: how many of the functions agree, are known, are
 skipped and fail, the primary's and the installer's; how many run in
 user mode alone and in both modes; how many of the pForth console
 sessions agree; how many of the agreeing functions' cases are
-compared; and how many functions touch the status register, and how
-many of them agree, are known and fail.  With them, the figures of the export the report ran,
+compared; how many functions touch the status register, and how
+many of them agree, are known and fail; and how many have their status
+register's paths traced, and how many of them reach every event and
+arm, agree, are known, fail and are not run.  With them, the figures of the export the report ran,
 third_party/firmware/decompiled/IMAGE/IMAGE.c, and its sidecar: how
 many functions there are, the primary's and the installer's; how many
 of each are written by hand and how many run as the decompiler's
@@ -68,6 +70,13 @@ FIGURES = re.compile(
 STATUS = re.compile(
     r'^(installer )?functions touching the status register: (\d+), '
     r'agreeing: (\d+), known: (\d+), failed: (\d+)$', re.M)
+# its line of a profile's functions whose status register's paths are
+# traced, and of them those reaching every event and arm, agreeing,
+# known, failed and not run
+PATHS = re.compile(
+    r"^(installer )?functions whose status register's paths are traced: (\d+), "
+    r'every event and arm reached: (\d+), agreeing: (\d+), known: (\d+), '
+    r'failed: (\d+), not run: (\d+)$', re.M)
 # its line of the primary's console sessions, those agreeing and those run
 SESSIONS = re.compile(r'^console sessions agreeing: (\d+) of (\d+)$', re.M)
 # its line of an agreeing function's cases, those run and all
@@ -95,11 +104,12 @@ THUNK = '/* a thunk to '
 FORMS = ('hand', 'assembly', 'thunk', 'reading')
 # the profiles a report has figures for
 PROFILES = ('primary', 'installer')
-# a profile's figures from COUNTS, FIGURES and STATUS, in each line's
-# order
+# a profile's figures from COUNTS, FIGURES, STATUS and PATHS, in each
+# line's order
 COUNTS_KEYS = ('agree', 'skipped', 'known', 'failed')
 MODES_KEYS = ('user', 'both')
 STATUS_KEYS = ('touch', 'agree', 'known', 'failed')
+PATHS_KEYS = ('traced', 'reached', 'agree', 'known', 'failed', 'unrun')
 # the numbers a sentence spells out
 WORDS = ('none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
          'eight', 'nine', 'ten', 'eleven', 'twelve')
@@ -139,14 +149,32 @@ def status_figures(profile):
     return lambda f: tuple(f[f'{profile}_status_{key}'] for key in STATUS_KEYS)
 
 
+def paths_row(profile):
+    """rewrite.md's table row of a profile's functions whose status
+    register's paths are traced."""
+    return sentence(f"| status register's paths, {profile} | {{}} functions traced: {{}} reach "
+                    'every event and arm; {} agree, {} known, {} failed, {} not run |')
+
+
+def paths_figures(profile):
+    """A profile's figures of its paths, in paths_row's order."""
+    return lambda f: tuple(f[f'{profile}_paths_{key}'] for key in PATHS_KEYS)
+
+
 def status_sentence(document):
     """An image's document's sentence of its functions touching the
-    status register and those of them agreeing, each profile's."""
+    status register and those of them agreeing, each profile's, and of
+    those whose paths are traced, those reaching every event and arm
+    and those agreeing, each profile's."""
     return (document, sentence(
         "The status register: {} of the primary's functions touch it and {} agree, {} of the "
-        "installer's and {} agree"),
+        "installer's and {} agree; the paths of {} and {} are traced, of which {} and {} reach "
+        "every event and arm and {} and {} agree"),
             lambda f: (f['primary_status_touch'], f['primary_status_agree'],
-                       f['installer_status_touch'], f['installer_status_agree']))
+                       f['installer_status_touch'], f['installer_status_agree'],
+                       f['primary_paths_traced'], f['installer_paths_traced'],
+                       f['primary_paths_reached'], f['installer_paths_reached'],
+                       f['primary_paths_agree'], f['installer_paths_agree']))
 
 
 # rewrite.md's row of the agreeing functions' cases, and the same row's
@@ -174,7 +202,8 @@ def summary_row(image):
 # Each image's sentences: the document, the sentence, and its figures
 # from the report's, in the sentence's order.  A report's figures are
 # keyed primary_ and installer_ agree, skipped, known, failed, user and
-# both, and status_ touch, agree, known and failed; sessions_agree and
+# both, status_ touch, agree, known and failed, and paths_ traced,
+# reached, agree, known, failed and unrun; sessions_agree and
 # sessions_run; cases_run and cases_all, which sum the agreeing
 # functions' of both profiles.  The export's are keyed
 # primary_ and installer_ functions and each of FORMS but assembly and
@@ -201,6 +230,8 @@ CHECKS = {
         (REWRITE, CASES_ROW, lambda f: (f['cases_run'], f['cases_all'])),
         (REWRITE, status_row('primary'), status_figures('primary')),
         (REWRITE, status_row('installer'), status_figures('installer')),
+        (REWRITE, paths_row('primary'), paths_figures('primary')),
+        (REWRITE, paths_row('installer'), paths_figures('installer')),
         (SUMMARY, sentence("all agree but {} whose difference is the firmware's own "
                            "or one C cannot express, and {} the harness cannot run"),
          lambda f: (word(f['primary_known'] + f['installer_known']),
@@ -355,7 +386,8 @@ def report_figures(path, unfinished):
     any, or if a function failed and the image is not unfinished."""
     report = path.read_text()
     figures = {}
-    lines = ((COUNTS, '', COUNTS_KEYS), (FIGURES, '', MODES_KEYS), (STATUS, 'status_', STATUS_KEYS))
+    lines = ((COUNTS, '', COUNTS_KEYS), (FIGURES, '', MODES_KEYS), (STATUS, 'status_', STATUS_KEYS),
+             (PATHS, 'paths_', PATHS_KEYS))
     for line, prefix, keys in lines:
         for label, *values in line.findall(report):
             profile = 'installer' if label else 'primary'
@@ -372,6 +404,8 @@ def report_figures(path, unfinished):
     failed = [f'{p} {figures[p + "_failed"]}' for p in PROFILES if figures[p + '_failed']]
     failed += [f"{p}'s status register {figures[p + '_status_failed']}" for p in PROFILES
                if figures[p + '_status_failed']]
+    failed += [f"{p}'s status register's paths {figures[p + '_paths_failed']}" for p in PROFILES
+               if figures[p + '_paths_failed']]
     if failed and not unfinished:
         sys.exit(f'{path}: functions failed: ' + ', '.join(failed))
     return figures

@@ -34,7 +34,10 @@ function's convention keeps for its caller (harness.preserved_registers).
 Apart from the runs, each function written by hand must do to the
 status register what the image's does, as its instructions and the C's
 calls of cpu.h's helpers read (status_register.py), whether or not the
-harness can run it.
+harness can run it; and each case of one that touches it or calls
+set_interrupt_mask traces both copies' paths through it, which must
+agree, reporting what of the image's walk no case reaches
+(status_register.Trace, PATH_CASES, FAILING_SERVICES).
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
         third_party/firmware/decompiled/z3805a-3543b/z3805a-3543b.c \\
@@ -69,6 +72,7 @@ import shlex
 import struct
 import sys
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from unicorn import UC_HOOK_CODE, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UcError
@@ -83,10 +87,13 @@ from harness import (
     CASES,
     CONDITION_CODES,
     COUNT,
+    DEVICE_CASES,
+    is_device,
     EEPROM,
     ERASED,
     DeviceCase,
     REGISTERS,
+    RUNNING_TASK,
     STARTING,
     TRAP_VECTORS,
     QSPI_LEVEL,
@@ -140,9 +147,11 @@ from harness import (
     protect_code,
     ram_differences,
     rebuilt_machine,
+    trace,
     report,
     registers_difference,
     reset,
+    skipped,
     snapshot,
     stopped_outcome,
     stub,
@@ -155,7 +164,20 @@ from libc_check import BUFFER_SPACING, RAM, RAM_SIZE, RETURN
 from image_diff import region_memories
 from rebuild_link import IMAGE_PREFIX, REBUILT, Section, code_symbols, link, objects, preprocessed, symbols
 from report_figures import STRICT
-from status_register import PRIMARY, Source, reading_differences, readings, touches
+from status_register import (
+    MASK_ARGUMENT,
+    PRIMARY,
+    Coverage,
+    Reading,
+    Source,
+    Trace,
+    coverage,
+    path_differences,
+    reading_differences,
+    readings,
+    touches,
+    traced,
+)
 
 # The widest argument or result the harness lays out.
 WIDEST = 8
@@ -448,7 +470,8 @@ class Pointed:
 # one made for the machine, where its routine reads them as its caller
 # left them (harness.RebuiltMachine.starting_registers); and an SCPI
 # handler's call record's input port, made for the machine, in place of
-# the console port's object.  Every case of a routine that restores the
+# the console port's object; the kernel's services, by number, that
+# fail each call (harness.RebuiltMachine.failing_services).  Every case of a routine that restores the
 # status register from its buffer, given or generated, starts with that
 # word's trace bits clear (JUMP_FUNCTIONS); and the results its States'
 # hooks give and the variables they leave, by routine, in place of those
@@ -464,6 +487,11 @@ CALLERS_REGISTERS = "registers"
 INPUT_PORT = "input port"
 HOOK_RESULTS = "hook results"
 HOOK_LEAVES = "hook leaves"
+FAILING_SERVICES = "failing services"
+# The services a case may have fail, by number (docs/firmware/psos.md,
+# "Services"): ident and signal_v.
+IDENT_SERVICE = 3
+SIGNAL_SERVICE = 25
 # The QSPI's end of a queue (harness.QSPI_VECTOR), taken after the
 # first, second or third read of qspi.running in qspi_start's wait
 # (0x20866).
@@ -992,7 +1020,80 @@ NOT_GIVEN = {name: [] for name in ("save_calibration_block", "installer_console_
 # And the Z3815A's interval_wait_reading, which waits on its own tick
 # (INTERRUPT_CASES' are the base's).
 NOT_GIVEN_Z3815A = {**NOT_GIVEN, "interval_wait_reading": []}
+# The cases that reach what a function's status register's paths reach
+# no other way (status_register.coverage, "arms not reached"): the QSPI
+# lock taken, and a task waiting for it as it is released, signaled or
+# not; the self-test aborted; the kernel running as a fatal error stops,
+# debug output on and off, its own task found or not; the watchdog serviced; the snapshot's clock set; a message to
+# the GPS engine, or through DUART channel B, sent from its own task; an
+# EEPROM page written under a lock it cannot take, interrupts masked
+# during a write, and to an EEPROM every write of which fails, through
+# its five tries; the first satellite logged already as power-up goes
+# on; the DUART's output bits set with its outputs held, field_0c; the
+# SCI's character written with its transmit interrupt on (SCCR1's TIE,
+# MC68331UM D.4.4); the front panel's status line in holdover, in its
+# recovery and else, the position held or not, navigation mode or not;
+# and DUART channel B reconfigured, its drain waited out (busy past
+# DUART_DRAIN_PAUSES' pauses) and XON/XOFF turned on and off with XOFF
+# sent or not (duart.h).  Each image's C names them alike.
+EEPROM_PAGE_BYTES = bytes.fromhex("12345678")
+EEPROM_FAILING = next(case for case in DEVICE_CASES if case.fails)
+SCCR1_TIE = 0x80
+PLL_STAGE_HOLDOVER = 3
+PLL_STAGE_HOLDOVER_RECOVERY = 4
+PLL_STAGE_POWERUP = 1
+PLL_POWERUP_START = 0
+DUART_FLOW_XOFF_SENT = 0x20
+DUART_DRAIN_PAUSES = 100
+DUART_DRAINING = DeviceCase(DUART_DRAIN_PAUSES + 1, 0, False, (0,))
+PATH_CASES = {
+    "qspi_acquire": [{PRESETS: {"qspi.busy": 1}}],
+    "qspi_release": [{PRESETS: {"qspi.write": 1}, FAILING_SERVICES: failing} for failing in ((), (SIGNAL_SERVICE,))],
+    "ram_pattern_test_locked": [{PRESETS: {"selftest.abort": 1}}],
+    "fatal_error": [
+        {PRESETS: {"kernel_running": 1, "debug_enabled": enabled}, FAILING_SERVICES: failing}
+        for enabled, failing in ((0, ()), (1, ()), (1, (IDENT_SERVICE,)))
+    ],
+    "watchdog_report": [{PRESETS: {"watchdog_countdown": 2}}],
+    "status_snapshot": [{PRESETS: {"clock.set": 1}}],
+    **{
+        name: [{PRESETS: {task: lambda m, types: m.tasks[RUNNING_TASK]}}]
+        for name, task in (
+            ("drta_send_message", "task_gpsm"),
+            ("drtb_send_message", "duartb_task"),
+        )
+    },
+    "powerup": [{0: 1, PRESETS: {"first_satellite_logged": 1, "pll.powerup_state": PLL_POWERUP_START}}],
+    "duart_output_bit_set": [{1: set_, PRESETS: {"duart_shadow.field_0c": 1}} for set_ in (0, 1)],
+    **{name: [{PRESETS: {"qsm.sccr1": SCCR1_TIE}}] for name in ("sci_putc_polled", "installer_sci_putc_polled")},
+    "front_panel_status_text": [
+        {PRESETS: {"pll.stage": stage, "gps.position_hold": held, "nv_settings.douglas_duration_infinite": infinite}}
+        for stage in (PLL_STAGE_HOLDOVER, PLL_STAGE_HOLDOVER_RECOVERY, PLL_STAGE_POWERUP)
+        for held in (0, 1)
+        for infinite in (0, 1)
+    ],
+    "duartb_reconfigure": [
+        {DEVICES: DUART_DRAINING},
+        *(
+            {PRESETS: {"duartb_settings.xon_xoff": wanted, "duartb.xon_xoff": was, "duartb.flow": flow}}
+            for wanted in (0, 1)
+            for was in (0, 1)
+            for flow in (0, DUART_FLOW_XOFF_SENT)
+        ),
+    ],
+    "eeprom_write_page": [
+        {
+            0: EEPROM,
+            1: EEPROM_PAGE_BYTES,
+            2: len(EEPROM_PAGE_BYTES),
+            PRESETS: {"kernel_running": 1, "eeprom_writing": 1},
+            STARTING_STATUS: SUPERVISOR,
+        },
+        {0: EEPROM, 1: EEPROM_PAGE_BYTES, 2: len(EEPROM_PAGE_BYTES), DEVICES: EEPROM_FAILING},
+    ],
+}
 GIVEN_CASES = {
+    **PATH_CASES,
     **COUNTER_GIVEN_CASES,
     **RECORD_CASES,
     **INTERRUPT_CASES,
@@ -2814,12 +2915,15 @@ def draw(states: States, located: dict[str, tuple[int, int]], name: str, descrip
     )
 
 
-def hook_arguments(m: Machine, types: Types, routine: "Function", gcc: bool) -> tuple[int, ...]:
-    """A hooked routine's arguments at its entry, where its copy reads
-    them: the image's at the original's offsets, gcc's in its slots, a
-    narrower value in a slot's last bytes (gcc_slots); each as the
-    image's copy would pass it (RebuiltMachine.as_image)."""
-    sp = m.uc.reg_read(UC_M68K_REG_A7)
+def hook_arguments(
+    m: Machine, types: Types, routine: "Function", gcc: bool, sp: int | None = None
+) -> tuple[int, ...]:
+    """A hooked routine's arguments at its entry, SP there sp, or as the
+    CPU has it, where its copy reads them: the image's at the original's
+    offsets, gcc's in its slots, a narrower value in a slot's last bytes
+    (gcc_slots); each as the image's copy would pass it
+    (RebuiltMachine.as_image)."""
+    sp = m.uc.reg_read(UC_M68K_REG_A7) if sp is None else sp
     found, slot = [], FIRST_ARGUMENT
     for offset, kind in zip(routine.offsets, routine.parameters):
         size = types.size(kind)
@@ -2976,6 +3080,9 @@ SESSION_SHARE = (
     rf"effect \d+ {SESSION_SHARE_LINE}, image's trap #4 service 4 (?P=registers)data (?P=head)"
     r"(?:3[0-9]|20)+6b4220(?:3[0-9]|2d|20)+(?P=tail)"
 )
+# Each image's known differences between its functions' paths
+# (status_register.Trace), by function, each excused as a case's are.
+IMAGE_KNOWN_PATHS: dict[str, dict[str, Known]] = {}
 IMAGE_KNOWN = {
     BASE_IMAGE: KNOWN,
     "z3815a-4010": {
@@ -4267,7 +4374,10 @@ class Context:
     (creators_ident_fails), each function's calls, by its sidecar, and
     where the functions' image copies and gcc's start, each sorted,
     where a copy's code ends, gcc's functions, the sidecar's and the
-    C's own helpers, whose calls are their callers' (record_calls)."""
+    C's own helpers, whose calls are their callers' (record_calls); the
+    functions whose paths are traced, read both ways, by name
+    (status_register.traced), the sidecar's functions by each copy's
+    start, and each traced function's Paths so far."""
 
     linked_symbols: dict[str, int]
     located: dict[str, tuple[int, int]]
@@ -4284,6 +4394,9 @@ class Context:
     starts: tuple[list[int], list[int]]
     rebuilt_code: "RebuiltCode"
     in_range: dict[str, dict[int, int]] = field(default_factory=lambda: IN_RANGE)
+    traced: dict[str, Reading] = field(default_factory=dict)
+    named: dict[int, str] = field(default_factory=dict)
+    paths: dict[str, "Paths"] = field(default_factory=dict)
 
 
 def install_hooks(
@@ -4492,12 +4605,50 @@ def record_calls(m: Machine, types: Types, name: str, states: States, context: C
     return handles
 
 
+@dataclass
+class Paths:
+    """A traced function's paths over its cases (status_register.Trace):
+    each case compared, its description and its paths' differences; and
+    the addresses its image copy's runs reached at its own level, and
+    each two run one after the other, by the image's addresses."""
+
+    cases: list[tuple[str, list[str]]] = field(default_factory=list)
+    seen: set[int] = field(default_factory=set)
+    edges: set[tuple[int, int]] = field(default_factory=set)
+
+
+def tracing(m: Machine, types: Types, context: Context) -> Callable[[int], Trace]:
+    """What gives a run's path from its start (RebuiltMachine.tracing),
+    the mask a MASK_ARGUMENT routine is given its first argument, as its
+    copy reads it from SP at its entry (hook_arguments)."""
+    image_copies = {context.linked_symbols.get(IMAGE_PREFIX + name) for name in MASK_ARGUMENT}
+
+    def mask(name: str, entry: int, sp: int) -> int | None:
+        routine = context.by_name.get(name)
+        return None if routine is None else hook_arguments(m, types, routine, entry not in image_copies, sp)[0]
+
+    decoded = {}
+    return lambda start: Trace(start, context.named, mask, decoded)
+
+
+def record_path(paths: Paths, description: str, original: Run, gcc: Run, offset: int) -> None:
+    """Adds a case's two paths to a function's Paths, its image copy's
+    addresses less offset, where the copy run lies past the image's."""
+    paths.cases.append((description, path_differences(original.trace, gcc.trace)))
+    paths.seen |= {at - offset for at in original.trace.seen}
+    paths.edges |= {(a - offset, b - offset) for a, b in original.trace.edges}
+
+
 def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int, context: Context):
     """Yields (description, outcome) for each case: outcome empty if gcc's
-    copy agrees with the image's, else each thing that differs."""
+    copy agrees with the image's, else each thing that differs.  A
+    traced function's paths go to its Paths."""
     linked_symbols = context.linked_symbols
     states = context.states.get(function.name, States())
     drawn: list[Drawn] = []
+    if function.name in context.traced:
+        trace(m, tracing(m, types, context))
+        context.paths[function.name] = Paths()
     handles = install_hooks(m, types, function.name, states, context, drawn)
     counter = context.counted_loops.get(function.name)
     m.counter = (*context.located[counter[0]], counter[1]) if counter and counter[0] in context.located else None
@@ -4507,8 +4658,12 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         for handle in handles:
             m.uc.hook_del(handle)
         m.uc.ctl_flush_tb()
+        if m.tracing is not None:
+            trace(m, None)
         m.counter = None
         m.ident_fails = False
+        m.failing_services = frozenset()
+        m.device_presets = {}
         m.starting_status = SUPERVISOR
         m.frame_fill = None
         m.interrupts = []
@@ -4599,6 +4754,8 @@ def check_cases(
         m.stack_edge = values_given.pop(STACK_EDGE, False)
         registers = values_given.pop(CALLERS_REGISTERS, {})
         input_port = values_given.pop(INPUT_PORT, None)
+        m.failing_services = frozenset(values_given.pop(FAILING_SERVICES, ()))
+        m.device_presets = {}
         # an interrupt, a preset or a region whose target the image's C
         # does not have (probeable) is left out
         m.interrupts = [
@@ -4638,6 +4795,8 @@ def check_cases(
             elif isinstance(value, str):
                 value = context.linked_symbols[IMAGE_PREFIX + value]
             m.uc.mem_write(address, preset_bytes(value, size))
+            if is_device(address):
+                m.device_presets[address] = preset_bytes(value, size)
         target = None if step is None else tree_steps(m)[step]
         values = arguments(m, types, function.parameters, case, function.names, function.name, target)
         for position, count in context.in_range.get(function.name, {}).items():
@@ -4675,6 +4834,12 @@ def check_cases(
         description += POISONED if poisoned else ""
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
+        # a case both copies stop alike compares its paths up to there
+        if original.trace is not None and (not stopped or skipped((stopped,))):
+            record_path(
+                context.paths[function.name], description, original, gcc,
+                image - context.traced[function.name].address,
+            )
         if stopped:
             yield description, (stopped,)
             continue
@@ -4875,6 +5040,36 @@ def check_status_register(name: str, differences: list[str], known: Known | None
     return "failed"
 
 
+# What a traced function's paths are counted as: agreeing, known or
+# failed, or not run, for one never run or whose cases all skipped.
+NOT_RUN = "not run"
+PATH_VERDICTS = ("agreeing", "known", "failed", NOT_RUN)
+
+
+def check_paths(name: str, paths: "Paths | None", reading: Reading, known: Known | None) -> tuple[str, Coverage]:
+    """Reports a traced function's paths: which of PATH_VERDICTS it
+    counts as, a failing case's every path difference excused by known
+    as a case's are (harness.covers), and how much of its walk its image
+    copy's runs reached, printing what they did not."""
+    if paths is None or not paths.cases:
+        print(f"{NOT_RUN} {name}: no case of its runs compares its paths")
+        return NOT_RUN, coverage(reading.steps, set(), set())
+    reached = coverage(reading.steps, paths.seen, paths.edges)
+    if not reached.complete():
+        events = ", ".join(f"{at:#x}" for at in reached.events) or "none"
+        arms = ", ".join(f"{arm.branch:#x} to {arm.target:#x}" for arm in reached.arms) or "none"
+        print(f"arms not reached {name}: of its events {events}; of its {reached.all_arms} arms {arms}")
+    failures = [(description, found) for description, found in paths.cases if found]
+    if not failures:
+        return "agreeing", reached
+    if covers(known, [difference for _, found in failures for difference in found]):
+        print(f"known {name}: {STATUS_REGISTER}'s path, {len(failures)} of {len(paths.cases)} cases, {known.cause}")
+        return "known", reached
+    for description, found in failures:
+        print(f"FAIL {name} {description}: {'; '.join(found)}")
+    return "failed", reached
+
+
 def main() -> int:
     if len(sys.argv) < 3 or "DECOMPILED_CFLAGS" not in os.environ:
         print(__doc__.strip(), file=sys.stderr)
@@ -4900,6 +5095,7 @@ def main() -> int:
     failed = 0
     base = image_name(image_path) == BASE_IMAGE
     known = IMAGE_KNOWN.get(image_name(image_path), {})
+    known_paths = IMAGE_KNOWN_PATHS.get(image_name(image_path), {})
     elsewhere = MEANT_ELSEWHERE.get(image_name(image_path), frozenset())
     # an image's own States, given cases and known differences, each
     # for a function of its sidecar
@@ -4917,6 +5113,16 @@ def main() -> int:
             image_bytes, linked, linked_symbols, profile, twins(linked_objects, labels, profile)
         )
         protect_code(machine)
+        region = profile.overlay or PRIMARY
+        # the functions written by hand, those NAMEs give, read both
+        # ways, and of them those that touch the status register
+        # (status_register.py)
+        read = [
+            reading
+            for reading in readings(memories[region], region, conventions, source)
+            if not names or reading.name in names
+        ]
+        touching = [reading for reading in read if touches(reading)]
         runnable, unrunnable = functions(c, types, conventions, profile.overlay)
         in_task, both_modes = task_context(c, conventions, {root_function(machine, located, conventions)})
         by_name = {function.name: function for function in runnable}
@@ -4927,15 +5133,14 @@ def main() -> int:
             function_starts(linked_symbols, conventions),
             rebuilt_code(linked_code, conventions),
             {**IN_RANGE, **IMAGE_IN_RANGE.get(image_name(image_path), {})},
+            {reading.name: reading for reading in read if traced(reading)},
+            {
+                linked_symbols[prefix + name]: name
+                for name in conventions
+                for prefix in (IMAGE_PREFIX, "")
+                if prefix + name in linked_symbols
+            },
         )
-        region = profile.overlay or PRIMARY
-        # the functions written by hand that touch the status register,
-        # those NAMEs give, read both ways (status_register.py)
-        touching = [
-            reading
-            for reading in readings(memories[region], region, conventions, source)
-            if touches(reading) and (not names or reading.name in names)
-        ]
         counts = dict.fromkeys(VERDICTS, 0)
         registers = dict.fromkeys(VERDICTS, 0)
         modes = {"user mode alone": 0, "both modes": 0}
@@ -4957,8 +5162,20 @@ def main() -> int:
                 if description.startswith(CONSOLE_SESSION) and not description.endswith(POISONED):
                     sessions["run"] += 1
                     sessions["agreeing"] += not outcome
+        # each traced function's paths, and those whose image copy's runs
+        # reached every event and arm and agreed, whose readings then
+        # need not be in the same order (status_register.differences)
+        paths = dict.fromkeys(PATH_VERDICTS, 0)
+        reached_all, covered = 0, set()
+        for name, reading in context.traced.items():
+            verdict, reached = check_paths(name, context.paths.get(name), reading, known_paths.get(name))
+            paths[verdict] += 1
+            reached_all += reached.complete() and verdict != NOT_RUN
+            if reached.complete() and verdict == "agreeing":
+                covered.add(name)
         for reading in touching:
-            registers[check_status_register(reading.name, reading_differences(reading), known.get(reading.name))] += 1
+            found = reading_differences(reading, ordered=reading.name not in covered)
+            registers[check_status_register(reading.name, found, known.get(reading.name))] += 1
         label = f"{profile.overlay} " if profile.overlay else ""
         print(
             f"{label}functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, "
@@ -4976,12 +5193,18 @@ def main() -> int:
             f"{label}functions touching the status register: {sum(registers.values())}, "
             f"agreeing: {registers['agreeing']}, known: {registers['known']}, failed: {registers['failed']}"
         )
+        # those whose runs are traced (report_figures.py)
+        print(
+            f"{label}functions whose status register's paths are traced: {len(context.traced)}, "
+            f"every event and arm reached: {reached_all}, agreeing: {paths['agreeing']}, "
+            f"known: {paths['known']}, failed: {paths['failed']}, not run: {paths[NOT_RUN]}"
+        )
         # the pForth console's sessions, console_init's cases and the
         # poisoned runs apart
         if sessions["run"]:
             print(f"{label}console sessions agreeing: {sessions['agreeing']} of {sessions['run']}")
         print_stacks(label, context.depths)
-        failed += counts["failed"] + registers["failed"]
+        failed += counts["failed"] + registers["failed"] + paths["failed"]
     # a strict run's cases are not the documented ones
     # (report_figures.py)
     if ON_MC683XX and not PARITY:

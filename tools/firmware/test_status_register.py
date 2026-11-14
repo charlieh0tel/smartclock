@@ -13,6 +13,18 @@ import unittest
 from image_diff import Memory
 from status_register import (
     CALLED,
+    Arm,
+    Coverage,
+    Cpu,
+    Reading,
+    Trace,
+    arms,
+    call_length,
+    coverage,
+    opcode_event,
+    path_differences,
+    reading_differences,
+    walk,
     ENTER,
     LOWER,
     OPAQUE,
@@ -317,6 +329,203 @@ class Compared(unittest.TestCase):
                 "the C's save, or 0x700, write, differing from 0x1018"
             ],
         )
+
+
+class Unordered(unittest.TestCase):
+    def test_same_events_in_another_order(self):
+        image = [(BASE, Event(SAVE)), (BASE + 2, Event(WRITE))]
+        self.assertTrue(differences(image, [Event(WRITE), Event(SAVE)]))
+        self.assertEqual(differences(image, [Event(WRITE), Event(SAVE)], ordered=False), [])
+
+    def test_reading_where_paths_cover_the_order(self):
+        # the image's restore after its call, the C's before it, an arm
+        # laid out elsewhere: the register's own events alone compare
+        image = [(BASE, Event(SAVE)), (BASE + 2, Event(RAISE, 0x700))]
+        image += [(BASE + 6, called("a")), (BASE + 12, Event(WRITE))]
+        reading = Reading("routine", BASE, {}, image, [Event(SAVE), Event(RAISE, 0x700), Event(WRITE), called("a")])
+        self.assertTrue(reading_differences(reading))
+        self.assertEqual(reading_differences(reading, ordered=False), [])
+
+    def test_another_count(self):
+        image = [(BASE, Event(WRITE)), (BASE + 2, Event(WRITE))]
+        self.assertTrue(differences(image, [Event(WRITE)], ordered=False))
+
+
+class Walk(unittest.TestCase):
+    def test_successors(self):
+        steps = walk(memory(BRANCH_IF_EQUAL_OVER_4, RAISE_7, RESTORE_D0, RETURN), BASE, {BASE: "routine"})
+        self.assertEqual(steps[BASE].successors, (BASE + 6, BASE + 2))
+        self.assertEqual(steps[BASE + 2].successors, (BASE + 6,))
+        self.assertEqual(steps[BASE + 8].successors, ())
+
+    def test_jump_that_leaves_is_a_successor(self):
+        code = memory(RAISE_7, JUMP_TO, address(BASE + 10), RESTORE_D0, RETURN)
+        steps = walk(code, BASE, {BASE: "routine", BASE + 10: "other"})
+        self.assertEqual(steps[BASE + 4].successors, (BASE + 10,))
+        self.assertNotIn(BASE + 10, steps)
+
+
+class Running(Cpu):
+    """A CPU a test runs by hand: memory at BASE, its registers and its
+    system byte as each instruction starts."""
+
+    def __init__(self, code: Memory):
+        self.code = code
+        self.registers = {"A7": STACK}
+        self.system = SYSTEM
+
+    def word(self, at: int) -> int:
+        return int.from_bytes(self.code.bytes(at, at + 2), "big")
+
+    def register(self, name: str) -> int:
+        return self.registers.get(name, 0)
+
+    def system_byte(self) -> int:
+        return self.system
+
+
+# A test's stack pointer and the system byte its runs start with.
+STACK = 0x8000
+SYSTEM = 0x2700
+
+
+def run(trace: Trace, cpu: Running, *steps: tuple[int, int] | int) -> Trace:
+    """Runs the instructions at each address in turn, an (address,
+    system byte) pair one the instruction before left so; SP four lower
+    past a call."""
+    for step in steps:
+        address, system = step if isinstance(step, tuple) else (step, cpu.system)
+        cpu.system = system
+        trace.instruction(address, cpu)
+    return trace
+
+
+class Paths(unittest.TestCase):
+    def test_opcodes_read_as_objdump_does(self):
+        others = ("4e722000", "4e73", "4e60", "0a7c2000")  # stop, rte, move %a0,%usp, eori
+        for instruction in (SAVE_D0, RAISE_7, LOWER_TO_3, RESTORE_D0, WRITE_2700, *others):
+            code = memory(instruction, RETURN)
+            (decoded,) = code.instructions(BASE, BASE + len(instruction) // 2)
+            self.assertEqual(
+                opcode_event(BASE, Running(code)), instruction_event(decoded.mnemonic, decoded.operands), instruction
+            )
+
+    def test_call_lengths(self):
+        for instruction, length in ((CALL, 6), ("4e90", 2), ("4ea8", 4), ("6100", 4), ("6104", 2), ("61ff", 6)):
+            self.assertEqual(call_length(int(instruction, 16)), length, instruction)
+        self.assertIsNone(call_length(int(RETURN, 16)))
+
+    def test_writes_by_what_they_leave(self):
+        # save; raise to 7, which leaves 0x2700; lower to 3; restore
+        code = memory(SAVE_D0, RAISE_7, LOWER_TO_3, RESTORE_D0, RETURN)
+        steps = (BASE, BASE + 2, (BASE + 6, 0x2700), (BASE + 10, 0x2300), (BASE + 12, 0x2000))
+        trace = run(Trace(BASE, {}), Running(code), *steps)
+        self.assertEqual(
+            trace.events,
+            [(BASE + 2, Event(WRITE, 0x2700)), (BASE + 6, Event(WRITE, 0x2300)), (BASE + 10, Event(WRITE, 0x2000))],
+        )
+
+    def test_named_call_is_stepped_over(self):
+        # jsr other; restore; rts; other: restore, rts
+        code = memory(CALL, address(BASE + 10), RESTORE_D0, RETURN, RESTORE_D0, RETURN)
+        steps = (BASE, BASE + 10, BASE + 12, BASE + 6, (BASE + 8, 0x2000))
+        trace = run(Trace(BASE, {BASE: "routine", BASE + 10: "other"}), Running(code), *steps)
+        self.assertEqual(trace.events, [(BASE, called("other")), (BASE + 6, Event(WRITE, 0x2000))])
+        self.assertNotIn(BASE + 10, trace.seen)
+
+    def test_other_call_is_read_in_place(self):
+        code = memory(CALL, address(BASE + 10), RETURN, NOTHING, NOTHING, RESTORE_D0, RETURN)
+        trace = run(Trace(BASE, {BASE: "routine"}), Running(code), BASE, BASE + 10, BASE + 12, (BASE + 14, 0x2000))
+        self.assertEqual(trace.returns, [BASE + 6])
+        run(trace, Running(code), BASE + 6)
+        self.assertEqual(trace.events, [(BASE + 12, Event(WRITE, 0x2000))])
+        self.assertEqual(trace.returns, [])
+
+    def test_mask_argument(self):
+        code = memory(CALL, address(BASE + 8), RETURN, RETURN)
+        cpu = Running(code)
+        given = {STACK - 4: 0x2400}  # the argument, by SP at the entry
+        trace = Trace(BASE, {BASE + 8: "set_interrupt_mask"}, lambda name, entry, sp: given.get(sp))
+        run(trace, cpu, BASE, BASE + 8, BASE + 6)
+        self.assertEqual(trace.events, [(BASE, Event(CALLED, 0x400, "set_interrupt_mask"))])
+
+    def test_jump_to_a_function_is_its_rest(self):
+        code = memory(JUMP_TO, address(BASE + 6), RESTORE_D0, RETURN)
+        trace = run(Trace(BASE, {BASE: "routine", BASE + 6: "other"}), Running(code), BASE, BASE + 6, BASE + 8)
+        self.assertEqual(trace.events, [(BASE, called("other"))])
+
+    def test_order_only_a_path_sees(self):
+        # each copy restores and calls other, but the C's restore comes
+        # before the call the image makes masked
+        image = Trace(BASE, {})
+        image.events = [(BASE, Event(WRITE, 0x2400)), (BASE + 4, called("other")), (BASE + 10, Event(WRITE, 0x2700))]
+        gcc = Trace(BASE, {})
+        gcc.events = [(BASE, Event(WRITE, 0x2400)), (BASE + 4, Event(WRITE, 0x2700)), (BASE + 6, called("other"))]
+        self.assertEqual(
+            path_differences(image, gcc),
+            [
+                "status register's path: the image's write of system byte 0x2400, call of other, "
+                "write of system byte 0x2700; the C's write of system byte 0x2400, write of system byte 0x2700, "
+                "differing from 0x1004"
+            ],
+        )
+        self.assertEqual(path_differences(image, image), [])
+
+    def test_order_the_reading_cannot_see(self):
+        # raise; bra to the call; restore; rts; call other; bra back to
+        # the restore; other.  By address the restore comes before the
+        # call, as the C's source has it, but the image runs the call
+        # first, masked
+        code = memory(RAISE_7, "6004", RESTORE_D0, RETURN, CALL, address(BASE + 18), "60f4", NOTHING, RETURN)
+        functions = {BASE: "routine", BASE + 18: "other"}
+        body = "void routine(uint16_t sr) { cpu_interrupts_raise(CPU_IPL_7); cpu_sr_write(sr); other(); }"
+        source = Source(HELPERS + body)
+        read = bracketed(image_events(code, BASE, functions), lambda item: item[1])
+        self.assertEqual(differences(read, bracketed(source.events("routine", frozenset(functions.values())))), [])
+        image = run(
+            Trace(BASE, functions), Running(code), BASE, (BASE + 4, 0x2700), BASE + 10, BASE + 18, BASE + 20,
+            BASE + 16, BASE + 6, (BASE + 8, 0x2000),
+        )
+        gcc = Trace(BASE, {})
+        gcc.events = [(BASE, Event(WRITE, 0x2700)), (BASE + 4, Event(WRITE, 0x2000)), (BASE + 6, called("other"))]
+        self.assertEqual(
+            [event for _, event in image.events], [Event(WRITE, 0x2700), called("other"), Event(WRITE, 0x2000)]
+        )
+        self.assertTrue(path_differences(image, gcc))
+
+    def test_calls_outside_and_masking_calls(self):
+        image, gcc = Trace(BASE, {}), Trace(BASE, {})
+        image.events = [(BASE, called("first")), (BASE + 6, Event(CALLED, 0x700, "set_interrupt_mask"))]
+        gcc.events = [(BASE + 6, Event(CALLED, 0x600, "set_interrupt_mask"))]
+        self.assertTrue(path_differences(image, gcc))
+        gcc.events = [(BASE + 6, Event(CALLED, 0x700, "set_interrupt_mask"))]
+        self.assertEqual(path_differences(image, gcc), [])
+
+
+class Arms(unittest.TestCase):
+    def test_branch_over_an_event(self):
+        steps = walk(memory(BRANCH_IF_EQUAL_OVER_4, RAISE_7, RESTORE_D0, RETURN), BASE, {BASE: "routine"})
+        self.assertEqual(arms(steps), [Arm(BASE, BASE + 6), Arm(BASE, BASE + 2)])
+
+    def test_branch_leading_to_the_same_events(self):
+        steps = walk(memory(BRANCH_IF_EQUAL_OVER_4, NOTHING, NOTHING, RESTORE_D0, RETURN), BASE, {BASE: "routine"})
+        self.assertEqual(arms(steps), [])
+
+    def test_calls_within_the_masking(self):
+        # raise; beq over the call; call other; restore; rts; other
+        code = memory(RAISE_7, "6706", CALL, address(BASE + 16), RESTORE_D0, RETURN, NOTHING, RETURN)
+        steps = walk(code, BASE, {BASE: "routine", BASE + 16: "other"})
+        self.assertEqual(arms(steps), [Arm(BASE + 4, BASE + 12), Arm(BASE + 4, BASE + 6)])
+        # from the branch on, no event before it
+        self.assertEqual(arms(walk(code, BASE + 4, {BASE + 4: "routine", BASE + 16: "other"})), [])
+
+    def test_coverage(self):
+        steps = walk(memory(BRANCH_IF_EQUAL_OVER_4, RAISE_7, RESTORE_D0, RETURN), BASE, {BASE: "routine"})
+        found = coverage(steps, {BASE, BASE + 6, BASE + 8}, {(BASE, BASE + 6)})
+        self.assertEqual(found, Coverage([BASE + 2], [Arm(BASE, BASE + 2)], 2))
+        self.assertFalse(found.complete())
+        everything = {(BASE, BASE + 6), (BASE, BASE + 2)}
+        self.assertTrue(coverage(steps, set(steps), everything).complete())
 
 
 if __name__ == "__main__":

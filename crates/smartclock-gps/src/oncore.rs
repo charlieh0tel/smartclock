@@ -605,7 +605,7 @@ pub enum FrameError {
         id: MessageId,
         /// Its length.
         length: usize,
-        /// The buffer's, the deframer's `N`.
+        /// The buffer's, the deframer's `N`: both count the whole frame.
         capacity: usize,
     },
     /// A frame whose checksum is not the XOR of its ID and data.
@@ -661,10 +661,30 @@ pub type Lengths = fn(MessageId) -> Option<usize>;
 /// Finds frames in a stream of bytes, however it is cut into chunks
 /// ("Resynchronizing" in the module's documentation).
 ///
-/// `N` is the buffer's size, which holds one whole frame: [`MAX_COMMAND`]
-/// or [`MAX_RESPONSE`] for this module's two [`Lengths`].  The type has
-/// no parameter but `N` and [`Deframer::new`] is const, so one can be a
-/// `static`'s field.
+/// `N` is the buffer's size in bytes, and the buffer holds a whole frame,
+/// not its data alone: [`HEADER`], the data and [`TRAILER`], `@@` through
+/// LF.  So `N` is the length of the longest message to be framed, as
+/// [`MESSAGES`] and the manuals give lengths: [`MAX_COMMAND`] or
+/// [`MAX_RESPONSE`] for this module's two [`Lengths`].  The longest of
+/// all is `@@Cj`'s response, 287 bytes of data:
+///
+/// ```
+/// use smartclock_gps::oncore::CJ_RECEIVER_ID;
+/// use smartclock_gps::oncore::HEADER;
+/// use smartclock_gps::oncore::MAX_RESPONSE;
+/// use smartclock_gps::oncore::TRAILER;
+/// use smartclock_gps::oncore::response_length;
+///
+/// assert_eq!(HEADER + 287 + TRAILER, 4 + 287 + 3);
+/// assert_eq!(MAX_RESPONSE, 294);
+/// assert_eq!(response_length(CJ_RECEIVER_ID), Some(MAX_RESPONSE));
+/// ```
+///
+/// A message longer than `N` is not framed: it is
+/// [`FrameError::Overflow`].
+///
+/// The type has no parameter but `N` and [`Deframer::new`] is const, so
+/// one can be a `static`'s field.
 pub struct Deframer<const N: usize> {
     /// A message's whole length, by its ID.
     length: Lengths,

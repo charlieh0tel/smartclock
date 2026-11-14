@@ -1,279 +1,279 @@
-message	direction	field	offset	length	count	stride	manual	page	images	engine	notes
-Aa	command	hours	4	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	ignored	all three 0xff asks
-Aa	command	minutes	5	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	ignored	-
-Aa	command	seconds	6	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	ignored	-
-Aa	response	hours	4	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Aa	response	minutes	5	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Aa	response	seconds	6	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Ab	command	sign	4	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	all three 0xff asks
-Ab	command	hours	5	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Ab	command	minutes	6	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Ab	response	sign	4	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Ab	-
-Ab	response	hours	5	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Ab	-
-Ab	response	minutes	6	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Ab;computed	negated with no sign when behind UTC by minutes alone
-AB	command	application type	4	1	1	-	VP	12	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	0xff asks
-AB	response	application type	4	1	1	-	VP	12	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.AB	-
-Ac	command	month	4	1	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	ignored	all four 0xff asks
-Ac	command	day	5	1	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	ignored	-
-Ac	command	year	6	2	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	ignored	-
-Ac	response	month	4	1	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Ac	response	day	5	1	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Ac	response	year	6	2	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-AC	command	HDOP threshold	4	2	1	-	VP	16	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-AC	response	HDOP threshold	4	2	1	-	VP	16	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.AC	-
-Ad	command	latitude	4	4	1	-	VP	18	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	echoed	all four 0x99 asks
-Ad	response	latitude	4	4	1	-	VP	18	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.position.latitude;setting.As;echo	-
-AD	command	fix threshold	4	1	1	-	VP	20	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-AD	command	output threshold	5	1	1	-	VP	20	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-AD	response	fix threshold	4	1	1	-	VP	20	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.AD	-
-AD	response	output threshold	5	1	1	-	VP	20	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.AD	-
-Ae	command	longitude	4	4	1	-	VP	22	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	echoed	all four 0x99 asks
-Ae	response	longitude	4	4	1	-	VP	22	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.position.longitude;setting.As;echo	-
-Af	command	height	4	4	1	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	echoed	all five 0x99 asks
-Af	command	height type	8	1	1	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	echoed	-
-Af	response	ellipsoid height	4	4	1	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.position.ellipsoid;setting.As;echo;computed	-
-Af	response	mean sea level height	8	4	1	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.position.mean_sea_level;setting.As;echo;computed	-
-Ag	command	mask angle	4	1	1	-	VP	28	-	honored	-
-Ag	response	mask angle	4	1	1	-	VP	28	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Ag	-
-Ah	command	select option	4	1	1	-	VP	30	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored;stored:1, manual select	-
-Ah	response	select option	4	1	1	-	VP	30	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Ah	-
-Ai	command	channel	4	1	1	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-Ai	command	satellite	5	1	1	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	0xff asks
-Ai	response	channel	4	1	1	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	echo	-
-Ai	response	satellite	5	1	1	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	state	-
-Aj	command	xDOP type	4	1	1	-	VP	34	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Aj	response	xDOP type	4	1	1	-	VP	34	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Aj	-
-Ak	command	xDOP hysteresis	4	2	1	-	VP	38	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-Ak	response	xDOP hysteresis	4	2	1	-	VP	38	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Ak	-
-Al	command	xDOP threshold	4	2	1	-	VP	40	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Al	response	xDOP threshold	4	2	1	-	VP	40	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Al	-
-Am	command	constant	4	1	1	-	VP	42	-	honored	0xff, with the list zero, asks
-Am	command	ignore list	5	4	1	-	VP	42	-	honored	-
-Am	response	constant	4	1	1	-	VP	42	-	setting.Am	-
-Am	response	ignore list	5	4	1	-	VP	42	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Am	-
-An	command	almanac update	4	1	1	-	VP	44	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-An	response	almanac update	4	1	1	-	VP	44	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.An	-
-Ao	command	datum	4	1	1	-	VP	46	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	answered by @@Ap
-Ap	response	datum	4	1	1	-	VP	49	-	setting.Ao	-
-Ap	response	semi-major axis integer	5	3	1	-	VP	49	-	constant:WGS-84, whatever the datum	-
-Ap	response	semi-major axis fraction	8	2	1	-	VP	49	-	constant:WGS-84, whatever the datum	-
-Ap	response	inverse flattening integer	10	2	1	-	VP	49	-	constant:WGS-84, whatever the datum	-
-Ap	response	inverse flattening fraction	12	4	1	-	VP	49	-	constant:WGS-84, whatever the datum	-
-Ap	response	delta X	16	2	1	-	VP	49	-	zero	-
-Ap	response	delta Y	18	2	1	-	VP	49	-	zero	-
-Ap	response	delta Z	20	2	1	-	VP	49	-	zero	-
-Aq	command	ionospheric correction	4	1	1	-	VP	51	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-Aq	response	ionospheric correction	4	1	1	-	VP	51	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Aq	-
-Ar	command	fix algorithm	4	1	1	-	VP	53	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-Ar	response	fix algorithm	4	1	1	-	VP	53	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Ar	-
-As	command	latitude	4	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	all thirteen out of range asks
-As	command	longitude	8	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-As	command	height	12	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-As	command	height type	16	1	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-As	response	latitude	4	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.As	-
-As	response	longitude	8	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.As	-
-As	response	height	12	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.As	-
-As	response	height type	16	1	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.As	-
-At	command	position hold	4	1	1	-	VP	57	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-At	response	position hold	4	1	1	-	VP	57	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.At	-
-Au	command	height	4	4	1	-	VP	59	-	stored	all five 0xff asks
-Au	command	height type	8	1	1	-	VP	59	-	stored	-
-Au	response	height	4	4	1	-	VP	59	58503a-3704,z3817a-3752	setting.Au	-
-Au	response	height type	8	1	1	-	VP	59	58503a-3704,z3817a-3752	setting.Au	-
-Av	command	altitude hold	4	1	1	-	VP	61	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-Av	response	altitude hold	4	1	1	-	VP	61	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Av	-
-Aw	command	time mode	4	1	1	-	VP	63	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Aw	response	time mode	4	1	1	-	VP	63	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Aw	-
-Ax	command	epoch offset	4	2	1	-	VP	65	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-Ax	response	epoch offset	4	2	1	-	VP	65	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Ax	-
-Ay	command	pulse offset	4	4	1	-	VP	67	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	stored	-
-Ay	response	pulse offset	4	4	1	-	VP	67	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Ay	-
-Az	command	cable delay	4	4	1	-	VP	69	-	stored	-
-Az	response	cable delay	4	4	1	-	VP	69	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Az	-
-Ba	command	rate	4	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Ba	response	month	4	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Ba	response	day	5	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Ba	response	year	6	2	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Ba	response	hours	8	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Ba	response	minutes	9	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Ba	response	seconds	10	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Ba	response	fractional seconds	11	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.time.subsecond	-
-Ba	response	latitude	15	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.position.latitude;setting.As	-
-Ba	response	longitude	19	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.position.longitude;setting.As	-
-Ba	response	ellipsoid height	23	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.position.ellipsoid;setting.As	-
-Ba	response	mean sea level height	27	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.position.mean_sea_level;setting.As	-
-Ba	response	speed	31	2	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.velocity.speed	-
-Ba	response	heading	33	2	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.velocity.heading	-
-Ba	response	DOP	35	2	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.dops;computed	-
-Ba	response	DOP type	37	1	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	computed	-
-Ba	response	visible satellites	38	1	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites;computed	-
-Ba	response	tracked satellites	39	1	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.tracking;computed	-
-Ba	response	channel satellite	40	1	6	4	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.prn	-
-Ba	response	channel tracking mode	41	1	6	4	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.tracking	the record has no state for modes 2, AGC set, and 5, message sync detect, so neither is sent
-Ba	response	channel signal strength	42	1	6	4	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.signal	-
-Ba	response	channel status flags	43	1	6	4	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.used;zero:momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits	-
-Ba	response	receiver status	64	1	1	-	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.fix;record.dops;record.differential;record.almanac;computed;zero:position propagate bit	-
-Bb	command	mode	4	1	1	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Bb	response	visible satellites	4	1	1	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites;computed	-
-Bb	response	satellite	5	1	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.prn	-
-Bb	response	Doppler	6	2	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.doppler	-
-Bb	response	elevation	8	1	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.elevation	-
-Bb	response	azimuth	9	2	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.azimuth	-
-Bb	response	health	11	1	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.health;zero:removed by @@Am bit	-
-Bc	command	mode	4	1	1	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	ignored	answered once
-Bc	response	xDOP type	4	1	1	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Aj	-
-Bc	response	combinations	5	1	1	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.xdops	-
-Bc	response	satellites taken	6	1	1	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.xdops	-
-Bc	response	combination xDOP	7	2	9	8	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.xdops.dop	-
-Bc	response	combination satellites	9	6	9	8	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.xdops.satellites	-
-Bd	command	mode	4	1	1	-	VP	79	-	ignored	answered once
-Bd	response	RAM almanac valid	4	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac;computed	-
-Bd	response	RAM almanac week	5	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac.week	-
-Bd	response	RAM time of almanac	6	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac.time_of_almanac	-
-Bd	response	RAM satellites available	7	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac.held;computed	-
-Bd	response	RAM satellites in almanac	8	4	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac.held	-
-Bd	response	EEPROM almanac valid	12	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac;computed	the RAM almanac's, given again
-Bd	response	EEPROM almanac week	13	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac.week	-
-Bd	response	EEPROM time of almanac	14	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac.time_of_almanac	-
-Bd	response	EEPROM satellites available	15	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac.held;computed	-
-Bd	response	EEPROM satellites in almanac	16	4	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.almanac.held	-
-Bh	command	rate	4	1	1	-	VP	90	-	honored	answered by @@Ce
-Bj	command	mode	4	1	1	-	VP	94	-	ignored	answered once
-Bj	response	leap second status	4	1	1	-	VP	94	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.leap;computed	-
-Bk	command	rate	4	1	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Bk	response	GDOP	4	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.dops.geometric	-
-Bk	response	PDOP	6	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.dops.position	-
-Bk	response	HDOP	8	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.dops.horizontal	-
-Bk	response	VDOP	10	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.dops.vertical	-
-Bk	response	TDOP	12	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.dops.time	-
-Bk	response	magnetic variation	14	2	1	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	zero	-
-Bk	response	velocity north	16	2	1	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	zero	-
-Bk	response	velocity east	18	2	1	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	zero	-
-Bk	response	velocity up	20	2	1	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	zero	-
-Bk	response	age of differential data	22	2	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	zero	-
-Bk	response	ECEF X	24	4	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.ecef.x;zero:while holding position	-
-Bk	response	ECEF Y	28	4	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.ecef.y;zero:while holding position	-
-Bk	response	ECEF Z	32	4	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.ecef.z;zero:while holding position	-
-Bk	response	channel URA	36	1	6	1	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	zero	the manual's unknown value is 63
-Bk	response	least squares matrix elements 1 to 7	42	2	7	2	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	zero	-
-Bk	response	least squares matrix elements 8 to 10	56	2	3	2	VP	98	z3805a-3543b,z3801a-3543	zero	-
-Bk	response	clock bias	62	2	1	-	VP	98	z3805a-3543b,z3801a-3543	zero	-
-Bk	response	oscillator offset	64	2	1	-	VP	98	z3805a-3543b,z3801a-3543	zero	-
-Bn	command	rate	4	1	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	all fifteen 0xff asks
-Bn	command	algorithm	5	1	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Bn	command	alarm limit	6	2	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Bn	command	pulse mode	8	1	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	-
-Bn	command	not used	9	10	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored:not used, nothing to do	-
-Bn	response	rate	4	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	state	-
-Bn	response	algorithm	5	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	state	-
-Bn	response	alarm limit	6	2	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	state	-
-Bn	response	pulse mode	8	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	state	-
-Bn	response	pulse rate	9	3	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	constant:one pulse a second	-
-Bn	response	next pulse month	12	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Bn	response	next pulse day	13	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Bn	response	next pulse year	14	2	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Bn	response	next pulse hours	16	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Bn	response	next pulse minutes	17	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Bn	response	next pulse seconds	18	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	clock	-
-Bn	response	pulse status	19	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	computed	-
-Bn	response	pulse sync	20	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	setting.Aw	-
-Bn	response	solution status	21	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.raim.solution;computed	-
-Bn	response	RAIM status	22	1	1	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.raim.ability;computed	-
-Bn	response	sigma	23	2	1	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.timing.sigma	-
-Bn	response	sawtooth	25	1	1	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.timing.sawtooth	-
-Bn	response	channel satellite	26	1	6	5	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.prn	-
-Bn	response	channel time fraction	27	4	6	5	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.satellites.time_error	-
-Bo	command	mode	4	1	1	-	UT	6.81	-	honored	-
-Bo	response	UTC offset	4	1	1	-	UT	6.81	-	record.utc_offset	-
-Ca	response	self-test result	4	2	1	-	VP	108	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	constant:every test passes	-
-Ce	response	time	4	3	1	-	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.corrections.time;clock	the layout is also the command's, VP p. 115
-Ce	response	satellite	7	1	6	7	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.corrections.satellites.prn	-
-Ce	response	range correction	8	3	6	7	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.corrections.satellites.range	-
-Ce	response	rate correction	11	2	6	7	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.corrections.satellites.rate	-
-Ce	response	issue of data	13	1	6	7	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	record.derived.corrections.satellites.ephemeris_issue	-
-Cg	command	mode	4	1	1	-	VP	119	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	honored	the manual gives the length as 7; the frame is 8
-Cg	response	mode	4	1	1	-	VP	119	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	state	-
-Ci	command	format	4	1	1	-	VP	121	z3805a-3543b,z3801a-3543	ignored	no answer
-Cj	response	first line end	4	2	1	-	VP	123	-	fixed	-
-Cj	response	copyright line	6	33	1	-	VP	123	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	identity	-
-Cj	response	line end	39	2	9	28	VP	123	-	fixed	-
-Cj	response	line	41	26	9	28	VP	123	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	identity	software part, version, revision and date, model, hardware part, serial, manufacture date, options
-Ea	command	rate	4	1	1	-	VP	125	58503a-3704,z3817a-3752	honored	-
-Ea	response	month	4	1	1	-	VP	125	58503a-3704,z3817a-3752	clock	-
-Ea	response	day	5	1	1	-	VP	125	58503a-3704,z3817a-3752	clock	-
-Ea	response	year	6	2	1	-	VP	125	58503a-3704,z3817a-3752	clock	-
-Ea	response	hours	8	1	1	-	VP	125	58503a-3704,z3817a-3752	clock	-
-Ea	response	minutes	9	1	1	-	VP	125	58503a-3704,z3817a-3752	clock	-
-Ea	response	seconds	10	1	1	-	VP	125	58503a-3704,z3817a-3752	clock	-
-Ea	response	fractional seconds	11	4	1	-	VP	125	58503a-3704,z3817a-3752	record.time.subsecond	-
-Ea	response	latitude	15	4	1	-	VP	125	58503a-3704,z3817a-3752	record.position.latitude;setting.As	-
-Ea	response	longitude	19	4	1	-	VP	125	58503a-3704,z3817a-3752	record.position.longitude;setting.As	-
-Ea	response	ellipsoid height	23	4	1	-	VP	125	58503a-3704,z3817a-3752	record.position.ellipsoid;setting.As	-
-Ea	response	mean sea level height	27	4	1	-	VP,UT	125,6.19	58503a-3704,z3817a-3752	record.position.mean_sea_level;setting.As;fixed:not used on a UT Plus	-
-Ea	response	speed	31	2	1	-	VP	126	58503a-3704,z3817a-3752	record.velocity.speed	-
-Ea	response	heading	33	2	1	-	VP	126	58503a-3704,z3817a-3752	record.velocity.heading	-
-Ea	response	DOP	35	2	1	-	VP	126	58503a-3704,z3817a-3752	record.dops;computed	-
-Ea	response	DOP type	37	1	1	-	VP,UT	126,6.20	58503a-3704,z3817a-3752	computed;record.antenna	a UT Plus adds its antenna sense bits
-Ea	response	visible satellites	38	1	1	-	VP	126	58503a-3704,z3817a-3752	record.satellites;computed	-
-Ea	response	tracked satellites	39	1	1	-	VP	126	58503a-3704,z3817a-3752	record.satellites.tracking;computed	-
-Ea	response	channel satellite	40	1	8	4	VP	126	58503a-3704,z3817a-3752	record.satellites.prn	-
-Ea	response	channel tracking mode	41	1	8	4	VP	126	58503a-3704,z3817a-3752	record.satellites.tracking	the record has no state for modes 2, AGC set, and 5, message sync detect, so neither is sent
-Ea	response	channel signal strength	42	1	8	4	VP	126	58503a-3704,z3817a-3752	record.satellites.signal	-
-Ea	response	channel status flags	43	1	8	4	VP,UT	126,6.20	58503a-3704,z3817a-3752	record.satellites.used;computed;zero:momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits	a UT Plus adds the used for time bit
-Ea	response	receiver status	72	1	1	-	VP	126	58503a-3704,z3817a-3752	record.fix;record.dops;record.differential;record.almanac;computed;zero:position propagate bit	-
-Ek	command	rate	4	1	1	-	VP	135	58503a-3704,z3817a-3752	honored	-
-Ek	response	GDOP	4	2	1	-	VP	135	58503a-3704,z3817a-3752	record.dops.geometric	-
-Ek	response	PDOP	6	2	1	-	VP	135	58503a-3704,z3817a-3752	record.dops.position	-
-Ek	response	HDOP	8	2	1	-	VP	135	58503a-3704,z3817a-3752	record.dops.horizontal	-
-Ek	response	VDOP	10	2	1	-	VP	135	58503a-3704,z3817a-3752	record.dops.vertical	-
-Ek	response	TDOP	12	2	1	-	VP	135	58503a-3704,z3817a-3752	record.dops.time	-
-Ek	response	magnetic variation	14	2	1	-	VP	136	58503a-3704,z3817a-3752	zero	-
-Ek	response	velocity north	16	2	1	-	VP	136	58503a-3704,z3817a-3752	zero	-
-Ek	response	velocity east	18	2	1	-	VP	136	58503a-3704,z3817a-3752	zero	-
-Ek	response	velocity up	20	2	1	-	VP	136	58503a-3704,z3817a-3752	zero	-
-Ek	response	age of differential data	22	2	1	-	VP	137	58503a-3704,z3817a-3752	zero	-
-Ek	response	ECEF X	24	4	1	-	VP	137	58503a-3704,z3817a-3752	record.derived.ecef.x;zero:while holding position	-
-Ek	response	ECEF Y	28	4	1	-	VP	137	58503a-3704,z3817a-3752	record.derived.ecef.y;zero:while holding position	-
-Ek	response	ECEF Z	32	4	1	-	VP	137	58503a-3704,z3817a-3752	record.derived.ecef.z;zero:while holding position	-
-Ek	response	channel URA	36	1	8	1	VP	137	58503a-3704,z3817a-3752	zero	the manual's unknown value is 63
-Ek	response	least squares matrix elements	44	2	10	2	VP	137	58503a-3704,z3817a-3752	zero	-
-Ek	response	clock bias	64	2	1	-	VP	137	58503a-3704,z3817a-3752	zero	-
-Ek	response	oscillator offset	66	2	1	-	VP	137	58503a-3704,z3817a-3752	zero	-
-En	command	rate	4	1	1	-	VP	140	58503a-3704,z3817a-3752	honored	all fifteen 0xff asks
-En	command	algorithm	5	1	1	-	VP	140	58503a-3704,z3817a-3752	honored	-
-En	command	alarm limit	6	2	1	-	VP	140	58503a-3704,z3817a-3752	honored	-
-En	command	pulse mode	8	1	1	-	VP	140	58503a-3704,z3817a-3752	honored	-
-En	command	not used	9	10	1	-	VP	140	58503a-3704,z3817a-3752	honored:not used, nothing to do	-
-En	response	rate	4	1	1	-	VP	141	58503a-3704,z3817a-3752	state	-
-En	response	algorithm	5	1	1	-	VP	141	58503a-3704,z3817a-3752	state	-
-En	response	alarm limit	6	2	1	-	VP	141	58503a-3704,z3817a-3752	state	-
-En	response	pulse mode	8	1	1	-	VP	141	58503a-3704,z3817a-3752	state	-
-En	response	pulse rate	9	3	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	constant:one pulse a second;fixed:not used on a UT Plus	-
-En	response	next pulse month	12	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	clock;fixed:not used on a UT Plus	-
-En	response	next pulse day	13	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	clock;fixed:not used on a UT Plus	-
-En	response	next pulse year	14	2	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	clock;fixed:not used on a UT Plus	-
-En	response	next pulse hours	16	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	clock;fixed:not used on a UT Plus	-
-En	response	next pulse minutes	17	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	clock;fixed:not used on a UT Plus	-
-En	response	next pulse seconds	18	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	clock;fixed:not used on a UT Plus	-
-En	response	pulse status	19	1	1	-	VP	141	58503a-3704,z3817a-3752	computed	-
-En	response	pulse sync	20	1	1	-	VP	141	58503a-3704,z3817a-3752	setting.Aw	-
-En	response	solution status	21	1	1	-	VP	141	58503a-3704,z3817a-3752	record.derived.raim.solution;computed	-
-En	response	RAIM status	22	1	1	-	VP	142	58503a-3704,z3817a-3752	record.derived.raim.ability;computed	-
-En	response	sigma	23	2	1	-	VP	142	58503a-3704,z3817a-3752	record.timing.sigma	-
-En	response	sawtooth	25	1	1	-	VP	142	58503a-3704,z3817a-3752	record.timing.sawtooth	-
-En	response	channel satellite	26	1	8	5	VP	142	58503a-3704,z3817a-3752	record.satellites.prn	-
-En	response	channel time fraction	27	4	8	5	VP	142	58503a-3704,z3817a-3752	record.satellites.time_error	-
-Fa	response	self-test result	4	2	1	-	VP,UT	144,6.43	58503a-3704,z3817a-3752	constant:every test passes;record.antenna	a UT Plus tells its antenna's feed
-Gj	response	present leap seconds	4	1	1	-	M12+	153	-	record.utc_offset	-
-Gj	response	future leap seconds	5	1	1	-	M12+	153	-	record.leap;record.utc_offset	-
-Gj	response	leap year	6	2	1	-	M12+	153	-	record.leap	-
-Gj	response	leap month	8	1	1	-	M12+	153	-	record.leap	-
-Gj	response	leap day	9	1	1	-	M12+	153	-	record.leap	-
-Gj	response	UTC offset integer	10	1	1	-	M12+	153	-	record.utc_offset	-
-Gj	response	UTC offset fraction	11	4	1	-	M12+	153	-	zero	-
-Gj	response	leap hour	15	1	1	-	M12+	153	-	record.leap	-
-Gj	response	leap minute	16	1	1	-	M12+	153	-	record.leap	-
-Gj	response	leap second	17	1	1	-	M12+	153	-	record.leap	-
-Sz	response	constant	4	1	1	-	UT	6.39	-	fixed	the images frame it one byte short, with no data
-Ta	command	values	4	5	1	-	-	-	-	stored	in no manual here
-Ta	response	values	4	5	1	-	-	-	-	setting.Ta	in no manual here
+message	direction	field	offset	length	count	stride	manual	page	images	compared	use	engine	notes
+Aa	command	hours	4	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	ignored	all three 0xff asks
+Aa	command	minutes	5	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	ignored	-
+Aa	command	seconds	6	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	ignored	-
+Aa	response	hours	4	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	clock	-
+Aa	response	minutes	5	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	clock	-
+Aa	response	seconds	6	1	1	-	VP	6	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	clock	-
+Ab	command	sign	4	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	all three 0xff asks
+Ab	command	hours	5	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Ab	command	minutes	6	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Ab	response	sign	4	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ab	-
+Ab	response	hours	5	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ab	-
+Ab	response	minutes	6	1	1	-	VP	10	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ab;computed	negated with no sign when behind UTC by minutes alone
+AB	command	application type	4	1	1	-	VP	12	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	0xff asks
+AB	response	application type	4	1	1	-	VP	12	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.AB	-
+Ac	command	month	4	1	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	ignored	all four 0xff asks
+Ac	command	day	5	1	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	ignored	-
+Ac	command	year	6	2	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	ignored	-
+Ac	response	month	4	1	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	clock	-
+Ac	response	day	5	1	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	clock	-
+Ac	response	year	6	2	1	-	VP	14	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	clock	-
+AC	command	HDOP threshold	4	2	1	-	VP	16	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+AC	response	HDOP threshold	4	2	1	-	VP	16	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	setting.AC	-
+Ad	command	latitude	4	4	1	-	VP	18	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	echoed	all four 0x99 asks
+Ad	response	latitude	4	4	1	-	VP	18	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	record.position.latitude;setting.As;echo	-
+AD	command	fix threshold	4	1	1	-	VP	20	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+AD	command	output threshold	5	1	1	-	VP	20	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+AD	response	fix threshold	4	1	1	-	VP	20	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.AD	-
+AD	response	output threshold	5	1	1	-	VP	20	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.AD	-
+Ae	command	longitude	4	4	1	-	VP	22	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	echoed	all four 0x99 asks
+Ae	response	longitude	4	4	1	-	VP	22	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	record.position.longitude;setting.As;echo	-
+Af	command	height	4	4	1	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	echoed	all five 0x99 asks
+Af	command	height type	8	1	1	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	echoed	-
+Af	response	ellipsoid height	4	4	1	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	record.position.ellipsoid;setting.As;echo;computed	-
+Af	response	mean sea level height	8	4	1	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	record.position.mean_sea_level;setting.As;echo;computed	-
+Ag	command	mask angle	4	1	1	-	VP	28	-	-	-	honored	-
+Ag	response	mask angle	4	1	1	-	VP	28	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	reported	setting.Ag	-
+Ah	command	select option	4	1	1	-	VP	30	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored;stored:1, manual select	-
+Ah	response	select option	4	1	1	-	VP	30	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ah	-
+Ai	command	channel	4	1	1	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+Ai	command	satellite	5	1	1	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	0xff asks
+Ai	response	channel	4	1	1	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	echo	-
+Ai	response	satellite	5	1	1	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	state	-
+Aj	command	xDOP type	4	1	1	-	VP	34	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Aj	response	xDOP type	4	1	1	-	VP	34	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Aj	-
+Ak	command	xDOP hysteresis	4	2	1	-	VP	38	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+Ak	response	xDOP hysteresis	4	2	1	-	VP	38	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ak	-
+Al	command	xDOP threshold	4	2	1	-	VP	40	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Al	response	xDOP threshold	4	2	1	-	VP	40	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Al	-
+Am	command	constant	4	1	1	-	VP	42	-	-	-	honored	0xff, with the list zero, asks
+Am	command	ignore list	5	4	1	-	VP	42	-	-	-	honored	-
+Am	response	constant	4	1	1	-	VP	42	-	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	setting.Am	-
+Am	response	ignore list	5	4	1	-	VP	42	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Am	-
+An	command	almanac update	4	1	1	-	VP	44	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+An	response	almanac update	4	1	1	-	VP	44	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	setting.An	-
+Ao	command	datum	4	1	1	-	VP	46	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	answered by @@Ap
+Ap	response	datum	4	1	1	-	VP	49	-	-	-	setting.Ao	-
+Ap	response	semi-major axis integer	5	3	1	-	VP	49	-	-	-	constant:WGS-84, whatever the datum	-
+Ap	response	semi-major axis fraction	8	2	1	-	VP	49	-	-	-	constant:WGS-84, whatever the datum	-
+Ap	response	inverse flattening integer	10	2	1	-	VP	49	-	-	-	constant:WGS-84, whatever the datum	-
+Ap	response	inverse flattening fraction	12	4	1	-	VP	49	-	-	-	constant:WGS-84, whatever the datum	-
+Ap	response	delta X	16	2	1	-	VP	49	-	-	-	zero	-
+Ap	response	delta Y	18	2	1	-	VP	49	-	-	-	zero	-
+Ap	response	delta Z	20	2	1	-	VP	49	-	-	-	zero	-
+Aq	command	ionospheric correction	4	1	1	-	VP	51	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+Aq	response	ionospheric correction	4	1	1	-	VP	51	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Aq	-
+Ar	command	fix algorithm	4	1	1	-	VP	53	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+Ar	response	fix algorithm	4	1	1	-	VP	53	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ar	-
+As	command	latitude	4	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	all thirteen out of range asks
+As	command	longitude	8	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+As	command	height	12	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+As	command	height type	16	1	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+As	response	latitude	4	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=reported,z3801a-3543=reported,58503a-3704=reported,z3817a-3752=console	setting.As	-
+As	response	longitude	8	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=reported,z3801a-3543=reported,58503a-3704=reported,z3817a-3752=console	setting.As	-
+As	response	height	12	4	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=reported,z3801a-3543=reported,58503a-3704=reported,z3817a-3752=console	setting.As	-
+As	response	height type	16	1	1	-	VP	55	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.As	-
+At	command	position hold	4	1	1	-	VP	57	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+At	response	position hold	4	1	1	-	VP	57	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	control	setting.At	-
+Au	command	height	4	4	1	-	VP	59	-	-	-	stored	all five 0xff asks
+Au	command	height type	8	1	1	-	VP	59	-	-	-	stored	-
+Au	response	height	4	4	1	-	VP	59	58503a-3704,z3817a-3752	58503a-3704,z3817a-3752	stored	setting.Au	-
+Au	response	height type	8	1	1	-	VP	59	58503a-3704,z3817a-3752	58503a-3704	stored	setting.Au	-
+Av	command	altitude hold	4	1	1	-	VP	61	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+Av	response	altitude hold	4	1	1	-	VP	61	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	setting.Av	-
+Aw	command	time mode	4	1	1	-	VP	63	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Aw	response	time mode	4	1	1	-	VP	63	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	control	setting.Aw	-
+Ax	command	epoch offset	4	2	1	-	VP	65	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+Ax	response	epoch offset	4	2	1	-	VP	65	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	setting.Ax	-
+Ay	command	pulse offset	4	4	1	-	VP	67	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	stored	-
+Ay	response	pulse offset	4	4	1	-	VP	67	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ay	-
+Az	command	cable delay	4	4	1	-	VP	69	-	-	-	stored	-
+Az	response	cable delay	4	4	1	-	VP	69	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=reported,z3801a-3543=reported,58503a-3704=reported,z3817a-3752=control	setting.Az	-
+Ba	command	rate	4	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Ba	response	month	4	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	clock	-
+Ba	response	day	5	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	clock	-
+Ba	response	year	6	2	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	clock	-
+Ba	response	hours	8	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	clock	-
+Ba	response	minutes	9	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	clock	-
+Ba	response	seconds	10	1	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	clock	-
+Ba	response	fractional seconds	11	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.time.subsecond	-
+Ba	response	latitude	15	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.position.latitude;setting.As	-
+Ba	response	longitude	19	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.position.longitude;setting.As	-
+Ba	response	ellipsoid height	23	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=control,z3801a-3543=control,58503a-3704=stored,z3817a-3752=control	record.position.ellipsoid;setting.As	-
+Ba	response	mean sea level height	27	4	1	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.position.mean_sea_level;setting.As	-
+Ba	response	speed	31	2	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.velocity.speed	-
+Ba	response	heading	33	2	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.velocity.heading	-
+Ba	response	DOP	35	2	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops;computed	-
+Ba	response	DOP type	37	1	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	computed	-
+Ba	response	visible satellites	38	1	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites;computed	-
+Ba	response	tracked satellites	39	1	1	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.tracking;computed	-
+Ba	response	channel satellite	40	1	6	4	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.satellites.prn	-
+Ba	response	channel tracking mode	41	1	6	4	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.satellites.tracking	the record has no state for modes 2, AGC set, and 5, message sync detect, so neither is sent
+Ba	response	channel signal strength	42	1	6	4	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.signal	-
+Ba	response	channel status flags	43	1	6	4	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.used;zero:momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits	-
+Ba	response	receiver status	64	1	1	-	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.fix;record.dops;record.differential;record.almanac;computed;zero:position propagate bit	-
+Bb	command	mode	4	1	1	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Bb	response	visible satellites	4	1	1	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites;computed	-
+Bb	response	satellite	5	1	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.prn	-
+Bb	response	Doppler	6	2	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.doppler	-
+Bb	response	elevation	8	1	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.elevation	-
+Bb	response	azimuth	9	2	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.azimuth	-
+Bb	response	health	11	1	12	7	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.health;zero:removed by @@Am bit	-
+Bc	command	mode	4	1	1	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	ignored	answered once
+Bc	response	xDOP type	4	1	1	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	setting.Aj	-
+Bc	response	combinations	5	1	1	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.xdops	-
+Bc	response	satellites taken	6	1	1	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.xdops	-
+Bc	response	combination xDOP	7	2	9	8	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.xdops.dop	-
+Bc	response	combination satellites	9	6	9	8	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.xdops.satellites	-
+Bd	command	mode	4	1	1	-	VP	79	-	-	-	ignored	answered once
+Bd	response	RAM almanac valid	4	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac;computed	-
+Bd	response	RAM almanac week	5	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.week	-
+Bd	response	RAM time of almanac	6	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.time_of_almanac	-
+Bd	response	RAM satellites available	7	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.held;computed	-
+Bd	response	RAM satellites in almanac	8	4	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.held	-
+Bd	response	EEPROM almanac valid	12	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac;computed	the RAM almanac's, given again
+Bd	response	EEPROM almanac week	13	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.week	-
+Bd	response	EEPROM time of almanac	14	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.time_of_almanac	-
+Bd	response	EEPROM satellites available	15	1	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.held;computed	-
+Bd	response	EEPROM satellites in almanac	16	4	1	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.held	-
+Bh	command	rate	4	1	1	-	VP	90	-	-	-	honored	answered by @@Ce
+Bj	command	mode	4	1	1	-	VP	94	-	-	-	ignored	answered once
+Bj	response	leap second status	4	1	1	-	VP	94	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.leap;computed	-
+Bk	command	rate	4	1	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Bk	response	GDOP	4	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.geometric	-
+Bk	response	PDOP	6	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.position	-
+Bk	response	HDOP	8	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.horizontal	-
+Bk	response	VDOP	10	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.vertical	-
+Bk	response	TDOP	12	2	1	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.time	-
+Bk	response	magnetic variation	14	2	1	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-
+Bk	response	velocity north	16	2	1	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-
+Bk	response	velocity east	18	2	1	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-
+Bk	response	velocity up	20	2	1	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-
+Bk	response	age of differential data	22	2	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-
+Bk	response	ECEF X	24	4	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.ecef.x;zero:while holding position	-
+Bk	response	ECEF Y	28	4	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.ecef.y;zero:while holding position	-
+Bk	response	ECEF Z	32	4	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.ecef.z;zero:while holding position	-
+Bk	response	channel URA	36	1	6	1	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	the manual's unknown value is 63
+Bk	response	least squares matrix elements 1 to 7	42	2	7	2	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-
+Bk	response	least squares matrix elements 8 to 10	56	2	3	2	VP	98	z3805a-3543b,z3801a-3543	-	console	zero	-
+Bk	response	clock bias	62	2	1	-	VP	98	z3805a-3543b,z3801a-3543	-	console	zero	-
+Bk	response	oscillator offset	64	2	1	-	VP	98	z3805a-3543b,z3801a-3543	-	console	zero	-
+Bn	command	rate	4	1	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	all fifteen 0xff asks
+Bn	command	algorithm	5	1	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Bn	command	alarm limit	6	2	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Bn	command	pulse mode	8	1	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-
+Bn	command	not used	9	10	1	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored:not used, nothing to do	-
+Bn	response	rate	4	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	state	-
+Bn	response	algorithm	5	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	state	-
+Bn	response	alarm limit	6	2	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	state	-
+Bn	response	pulse mode	8	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=console,z3817a-3752=control	state	-
+Bn	response	pulse rate	9	3	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	constant:one pulse a second	-
+Bn	response	next pulse month	12	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-
+Bn	response	next pulse day	13	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-
+Bn	response	next pulse year	14	2	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-
+Bn	response	next pulse hours	16	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-
+Bn	response	next pulse minutes	17	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-
+Bn	response	next pulse seconds	18	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-
+Bn	response	pulse status	19	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	computed	-
+Bn	response	pulse sync	20	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	setting.Aw	-
+Bn	response	solution status	21	1	1	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.derived.raim.solution;computed	-
+Bn	response	RAIM status	22	1	1	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;computed	-
+Bn	response	sigma	23	2	1	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.timing.sigma	-
+Bn	response	sawtooth	25	1	1	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.timing.sawtooth	-
+Bn	response	channel satellite	26	1	6	5	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.prn	-
+Bn	response	channel time fraction	27	4	6	5	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.time_error	-
+Bo	command	mode	4	1	1	-	UT	6.81	-	-	-	honored	-
+Bo	response	UTC offset	4	1	1	-	UT	6.81	-	-	-	record.utc_offset	-
+Ca	response	self-test result	4	2	1	-	VP	108	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	constant:every test passes	-
+Ce	response	time	4	3	1	-	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.corrections.time;clock	the layout is also the command's, VP p. 115
+Ce	response	satellite	7	1	6	7	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.corrections.satellites.prn	-
+Ce	response	range correction	8	3	6	7	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.corrections.satellites.range	-
+Ce	response	rate correction	11	2	6	7	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.corrections.satellites.rate	-
+Ce	response	issue of data	13	1	6	7	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.corrections.satellites.ephemeris_issue	-
+Cg	command	mode	4	1	1	-	VP	119	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	the manual gives the length as 7; the frame is 8
+Cg	response	mode	4	1	1	-	VP	119	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	control	state	-
+Ci	command	format	4	1	1	-	VP	121	z3805a-3543b,z3801a-3543	-	-	ignored	no answer
+Cj	response	first line end	4	2	1	-	VP	123	-	-	-	fixed	-
+Cj	response	copyright line	6	33	1	-	VP	123	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	identity	-
+Cj	response	line end	39	2	9	28	VP	123	-	-	-	fixed	-
+Cj	response	line	41	26	9	28	VP	123	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	identity	software part, version, revision and date, model, hardware part, serial, manufacture date, options
+Ea	command	rate	4	1	1	-	VP	125	58503a-3704,z3817a-3752	-	-	honored	-
+Ea	response	month	4	1	1	-	VP	125	58503a-3704,z3817a-3752	-	control	clock	-
+Ea	response	day	5	1	1	-	VP	125	58503a-3704,z3817a-3752	-	control	clock	-
+Ea	response	year	6	2	1	-	VP	125	58503a-3704,z3817a-3752	-	control	clock	-
+Ea	response	hours	8	1	1	-	VP	125	58503a-3704,z3817a-3752	-	control	clock	-
+Ea	response	minutes	9	1	1	-	VP	125	58503a-3704,z3817a-3752	-	control	clock	-
+Ea	response	seconds	10	1	1	-	VP	125	58503a-3704,z3817a-3752	-	control	clock	-
+Ea	response	fractional seconds	11	4	1	-	VP	125	58503a-3704,z3817a-3752	-	console	record.time.subsecond	-
+Ea	response	latitude	15	4	1	-	VP	125	58503a-3704,z3817a-3752	-	control	record.position.latitude;setting.As	-
+Ea	response	longitude	19	4	1	-	VP	125	58503a-3704,z3817a-3752	-	control	record.position.longitude;setting.As	-
+Ea	response	ellipsoid height	23	4	1	-	VP	125	58503a-3704,z3817a-3752	-	58503a-3704=stored,z3817a-3752=control	record.position.ellipsoid;setting.As	-
+Ea	response	mean sea level height	27	4	1	-	VP,UT	125,6.19	58503a-3704,z3817a-3752	-	control	record.position.mean_sea_level;setting.As;fixed:not used on a UT Plus	-
+Ea	response	speed	31	2	1	-	VP	126	58503a-3704,z3817a-3752	-	stored	record.velocity.speed	-
+Ea	response	heading	33	2	1	-	VP	126	58503a-3704,z3817a-3752	-	stored	record.velocity.heading	-
+Ea	response	DOP	35	2	1	-	VP	126	58503a-3704,z3817a-3752	-	console	record.dops;computed	-
+Ea	response	DOP type	37	1	1	-	VP,UT	126,6.20	58503a-3704,z3817a-3752	-	stored	computed;record.antenna	a UT Plus adds its antenna sense bits
+Ea	response	visible satellites	38	1	1	-	VP	126	58503a-3704,z3817a-3752	-	console	record.satellites;computed	-
+Ea	response	tracked satellites	39	1	1	-	VP	126	58503a-3704,z3817a-3752	-	console	record.satellites.tracking;computed	-
+Ea	response	channel satellite	40	1	8	4	VP	126	58503a-3704,z3817a-3752	-	control	record.satellites.prn	-
+Ea	response	channel tracking mode	41	1	8	4	VP	126	58503a-3704,z3817a-3752	-	control	record.satellites.tracking	the record has no state for modes 2, AGC set, and 5, message sync detect, so neither is sent
+Ea	response	channel signal strength	42	1	8	4	VP	126	58503a-3704,z3817a-3752	-	reported	record.satellites.signal	-
+Ea	response	channel status flags	43	1	8	4	VP,UT	126,6.20	58503a-3704,z3817a-3752	-	console	record.satellites.used;computed;zero:momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits	a UT Plus adds the used for time bit
+Ea	response	receiver status	72	1	1	-	VP	126	58503a-3704,z3817a-3752	-	control	record.fix;record.dops;record.differential;record.almanac;computed;zero:position propagate bit	-
+Ek	command	rate	4	1	1	-	VP	135	58503a-3704,z3817a-3752	-	-	honored	-
+Ek	response	GDOP	4	2	1	-	VP	135	58503a-3704,z3817a-3752	-	console	record.dops.geometric	-
+Ek	response	PDOP	6	2	1	-	VP	135	58503a-3704,z3817a-3752	-	console	record.dops.position	-
+Ek	response	HDOP	8	2	1	-	VP	135	58503a-3704,z3817a-3752	-	console	record.dops.horizontal	-
+Ek	response	VDOP	10	2	1	-	VP	135	58503a-3704,z3817a-3752	-	console	record.dops.vertical	-
+Ek	response	TDOP	12	2	1	-	VP	135	58503a-3704,z3817a-3752	-	console	record.dops.time	-
+Ek	response	magnetic variation	14	2	1	-	VP	136	58503a-3704,z3817a-3752	-	console	zero	-
+Ek	response	velocity north	16	2	1	-	VP	136	58503a-3704,z3817a-3752	-	console	zero	-
+Ek	response	velocity east	18	2	1	-	VP	136	58503a-3704,z3817a-3752	-	console	zero	-
+Ek	response	velocity up	20	2	1	-	VP	136	58503a-3704,z3817a-3752	-	console	zero	-
+Ek	response	age of differential data	22	2	1	-	VP	137	58503a-3704,z3817a-3752	-	console	zero	-
+Ek	response	ECEF X	24	4	1	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.ecef.x;zero:while holding position	-
+Ek	response	ECEF Y	28	4	1	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.ecef.y;zero:while holding position	-
+Ek	response	ECEF Z	32	4	1	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.ecef.z;zero:while holding position	-
+Ek	response	channel URA	36	1	8	1	VP	137	58503a-3704,z3817a-3752	-	console	zero	the manual's unknown value is 63
+Ek	response	least squares matrix elements	44	2	10	2	VP	137	58503a-3704,z3817a-3752	-	console	zero	-
+Ek	response	clock bias	64	2	1	-	VP	137	58503a-3704,z3817a-3752	-	console	zero	-
+Ek	response	oscillator offset	66	2	1	-	VP	137	58503a-3704,z3817a-3752	-	console	zero	-
+En	command	rate	4	1	1	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	all fifteen 0xff asks
+En	command	algorithm	5	1	1	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	-
+En	command	alarm limit	6	2	1	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	-
+En	command	pulse mode	8	1	1	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	-
+En	command	not used	9	10	1	-	VP	140	58503a-3704,z3817a-3752	-	-	honored:not used, nothing to do	-
+En	response	rate	4	1	1	-	VP	141	58503a-3704,z3817a-3752	-	control	state	-
+En	response	algorithm	5	1	1	-	VP	141	58503a-3704,z3817a-3752	-	control	state	-
+En	response	alarm limit	6	2	1	-	VP	141	58503a-3704,z3817a-3752	-	console	state	-
+En	response	pulse mode	8	1	1	-	VP	141	58503a-3704,z3817a-3752	-	58503a-3704=console,z3817a-3752=control	state	-
+En	response	pulse rate	9	3	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	constant:one pulse a second;fixed:not used on a UT Plus	-
+En	response	next pulse month	12	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-
+En	response	next pulse day	13	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-
+En	response	next pulse year	14	2	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-
+En	response	next pulse hours	16	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-
+En	response	next pulse minutes	17	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-
+En	response	next pulse seconds	18	1	1	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-
+En	response	pulse status	19	1	1	-	VP	141	58503a-3704,z3817a-3752	-	console	computed	-
+En	response	pulse sync	20	1	1	-	VP	141	58503a-3704,z3817a-3752	-	console	setting.Aw	-
+En	response	solution status	21	1	1	-	VP	141	58503a-3704,z3817a-3752	-	control	record.derived.raim.solution;computed	-
+En	response	RAIM status	22	1	1	-	VP	142	58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;computed	-
+En	response	sigma	23	2	1	-	VP	142	58503a-3704,z3817a-3752	-	console	record.timing.sigma	-
+En	response	sawtooth	25	1	1	-	VP	142	58503a-3704,z3817a-3752	-	console	record.timing.sawtooth	-
+En	response	channel satellite	26	1	8	5	VP	142	58503a-3704,z3817a-3752	-	console	record.satellites.prn	-
+En	response	channel time fraction	27	4	8	5	VP	142	58503a-3704,z3817a-3752	-	console	record.satellites.time_error	-
+Fa	response	self-test result	4	2	1	-	VP,UT	144,6.43	58503a-3704,z3817a-3752	-	control	constant:every test passes;record.antenna	a UT Plus tells its antenna's feed
+Gj	response	present leap seconds	4	1	1	-	M12+	153	-	-	-	record.utc_offset	-
+Gj	response	future leap seconds	5	1	1	-	M12+	153	-	-	-	record.leap;record.utc_offset	-
+Gj	response	leap year	6	2	1	-	M12+	153	-	-	-	record.leap	-
+Gj	response	leap month	8	1	1	-	M12+	153	-	-	-	record.leap	-
+Gj	response	leap day	9	1	1	-	M12+	153	-	-	-	record.leap	-
+Gj	response	UTC offset integer	10	1	1	-	M12+	153	-	-	-	record.utc_offset	-
+Gj	response	UTC offset fraction	11	4	1	-	M12+	153	-	-	-	zero	-
+Gj	response	leap hour	15	1	1	-	M12+	153	-	-	-	record.leap	-
+Gj	response	leap minute	16	1	1	-	M12+	153	-	-	-	record.leap	-
+Gj	response	leap second	17	1	1	-	M12+	153	-	-	-	record.leap	-
+Sz	response	constant	4	1	1	-	UT	6.39	-	-	-	fixed	the images frame it one byte short, with no data
+Ta	command	values	4	5	1	-	-	-	-	-	-	stored	in no manual here
+Ta	response	values	4	5	1	-	-	-	-	-	-	setting.Ta	in no manual here

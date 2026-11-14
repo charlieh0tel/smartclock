@@ -1,0 +1,68 @@
+function	images	message	field	use	evidence
+pllp_task	*	*	*	none	pllp_task() copies the whole of gps to preserved_region, which system_init() copies back after a restart: the record saved, no field used
+clock_check_against_gps	*	*	*	control	clock_check_against_gps() compares the clock with the date and time and has clock_set() set it on a second mismatch
+powerup	*	*	*	control	powerup() sets the clock from the date and time by clock_set()
+command_log_add	*	*	*	console	command_log_add() stamps a command log entry with the time; gps_print_command_log() alone prints the log
+command_monitor	*	Ba,Ea	hours; minutes; seconds	control	command_monitor(), in its status monitor, counts the messages that repeat the last one's time and at too many fails the receiver's health, which it gives status_happening()
+command_monitor	*	Bn,En	rate	control	command_monitor(), in its status monitor, expects a Time RAIM message with each status message while the rate is not zero, and without them fails the receiver's health, which it gives status_happening()
+command_monitor	*	Cg	mode	control	command_monitor() watches for status messages only in position fix mode
+command_monitor	z3817a-3752	Bn,En	algorithm	control	command_monitor(), in its status monitor, expects Time RAIM messages only with the algorithm on
+gps_response_decode	*	*	*	console	gps_response_decode() gives the time to status_snapshot_update(), which chooses by it which of two snapshots to keep; gps_print_1pps() alone prints them
+gps_time_local_get	*	*	*	reported	scpi_query_DIAGnostic_GPSystem_TIME() answers with gps_time_local_get()'s date and time
+gps_position_get	*	*	*	reported	scpi_query_SOURce_GPSystem_POSition_ACTual() answers with gps_position_get()'s position, the held one in position hold
+status_snapshot	*	*	*	reported	status_snapshot() copies the field, or what satellite_sets_build() and satellite_status_list() make of it, to the snapshot status_screen() draws for status_screen_print()
+status_snapshot	*	Ba,Ea	channel status flags	none	status_snapshot() hands the channels to satellite_sets_build() and satellite_status_list(), which read each one's satellite, mode and signal strength and not its flags
+status_snapshot	*	Bb	Doppler	none	status_snapshot() hands the visibility to satellite_status_list(), which reads each satellite's number, elevation, azimuth and health and not its Doppler
+gps_debug_status	*	*	*	console	oncore_position_message() calls gps_debug_status(), which prints, only while a console word has set its interval
+gps_print_average	*	*	*	console	gps_print_average() prints, on a request of gps_console_request()
+gps_print_best_combinations	*	*	*	console	gps_print_best_combinations() prints, on a request of gps_console_request()
+gps_print_extension	*	*	*	console	gps_print_extension() prints, on a request of gps_console_request()
+gps_print_id	*	*	*	console	gps_print_id() prints, on a request of gps_console_request()
+gps_print_instrument_state	*	*	*	console	gps_print_instrument_state() prints, on a request of gps_console_request()
+gps_print_process_monitor	*	*	*	console	gps_print_process_monitor() prints, for diag_pr_gps_debug()
+gps_print_pseudorange_corrections	*	*	*	console	gps_print_pseudorange_corrections() prints; nothing calls it
+gps_print_time_raim	*	*	*	console	gps_print_time_raim() prints, on a request of gps_console_request()
+gps_print_visibility	*	*	*	console	gps_print_visibility() prints, on a request of gps_console_request()
+oncore_corrections_message	*	*	*	console	oncore_corrections_message() keeps a mean and deviation of each satellite's range correction, which gps_print_pseudorange_corrections() alone reads
+oncore_visibility_message	*	*	*	none	oncore_visibility_message() bounds the count it has just stored
+oncore_position_message	*	At	position hold	control	oncore_position_message() averages the position for the survey only out of position hold
+oncore_position_message	*	Ba,Ea	latitude; longitude; ellipsoid height; mean sea level height; receiver status	control	oncore_position_message() averages the position by running_average_update() for the survey, while the receiver status has its 3D fix bit
+oncore_position_message	z3805a-3543b,z3801a-3543	Cg	mode	control	oncore_position_message() takes the status only in position fix mode, and resets the channels otherwise
+oncore_position_message	z3817a-3752	Ba,Ea	hours; minutes; seconds; channel satellite; channel tracking mode	control	oncore_position_message() counts the messages that repeat the last one's time while a channel tracks a satellite for position, the count command_monitor() fails the receiver's health by
+oncore_position_message	z3817a-3752	Ba,Ea	channel signal strength; channel status flags	none	oncore_position_message() reads each channel's satellite and mode alone
+channel_position_satellite	*	*	*	none	channel_position_satellite() reads a channel's satellite and mode alone
+channel_position_satellite	*	Ba,Ea	channel satellite; channel tracking mode	control	channel_position_satellite() gives gps_receiver_status_update() the satellites tracked for position, by which it qualifies the reference
+gps_receiver_status_update	*	*	*	control	gps_receiver_status_update() sets the receiver's status code, and so the reference's validity, by the position hold and the fix mode
+raim_monitor	*	*	*	control	raim_monitor() sets the Time RAIM assessment gps_receiver_status_update() reads from the algorithm, the solution status and the RAIM status
+raim_request_arguments	*	*	*	control	raim_request_arguments() chooses the Time RAIM algorithm and alarm limit it has the engine set by the position hold
+gps_parse_options	*	*	*	control	gps_parse_options() sets gps.raim_option, by which the Time RAIM setup is sent or not, from the options line
+gps_receiver_abilities_update	*	Cj	line	control	gps_receiver_abilities_update() sets the engine's abilities, the channel count and Time RAIM among them, from the receiver ID's lines
+oncore_receiver_id_value	*	*	*	control	oncore_receiver_id_value() finds a receiver ID line by its label for gps_receiver_abilities_update(), which sets the engine's abilities from it
+gps_selftest_run	*	*	*	control	gps_selftest_run() takes the result into selftest.gps, on which selftest_gps_with_lamp() lights the self-test LED and fails the self-test
+gps_diag_sequence	*	*	*	control	gps_diag_sequence() takes the result into selftest.gps, as gps_selftest_run() does
+leap_event_create	*	*	*	control	leap_event_create() schedules the leap second from the leap second status
+gps_leap_ack	*	*	*	control	gps_leap_ack() switches the engine between GPS and UTC time by the time mode and has set_gps_utc_offset() set the GPS-UTC offset from the date and time in the other mode
+visible_satellites	*	*	*	none	visible_satellites() reads the count and each satellite's number alone
+visible_satellites	*	Bb	visible satellites; satellite	reported	scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted() and scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt() answer with visible_satellites()'s list
+position_settable	*	*	*	reported	scpi_set_SOURce_GPSystem_INITial_POSition() refuses the position in position hold, by position_settable()
+survey_progress_text	*	*	*	reported	scpi_query_DOUGlas_PROGress() answers with survey_progress_text()'s survey progress
+survey_progress_percent	*	*	*	none	survey_progress_percent() has no caller
+front_panel_status_text	*	*	*	reported	front_panel_status_text() gives front_panel_update() the Status key's line
+front_panel_update	*	*	*	reported	front_panel_update() draws the display
+gps_cable_delay_heard	*	*	*	control	unit_and_reference_check() takes a change of gps_cable_delay_heard()'s delay into pll.hold_causes
+gps_track_words_pack	*	*	*	none	gps_track_words_pack() reads each channel's satellite, mode and signal strength alone
+gps_track_words_pack	*	Ba,Ea	channel satellite; channel tracking mode; channel signal strength	reported	gps_track_words_pack() packs the channels for gps_log_track_change(), whose log_write() entry scpi_query_DIAGnostic_LOG_READ() answers with
+gps_channel_word_pack	*	*	*	none	gps_channel_word_pack() reads each channel's mode and signal strength alone
+gps_channel_word_pack	*	Ba,Ea	channel tracking mode; channel signal strength	reported	gps_channel_word_pack() packs the channels for gps_log_track_change(), whose log_write() entry scpi_query_DIAGnostic_LOG_READ() answers with
+gps_channel_word_lowest	*	*	*	none	gps_channel_word_lowest() reads each channel's mode alone
+gps_channel_word_lowest	*	Ba,Ea	channel tracking mode	reported	gps_channel_word_lowest() packs the channels for gps_log_track_change(), whose log_write() entry scpi_query_DIAGnostic_LOG_READ() answers with
+oncore_traim_message	*	Bn,En	alarm limit	none	oncore_traim_message() rescales the alarm limit it has just stored
+oncore_traim_8_message	*	Bn,En	alarm limit	none	oncore_traim_8_message() rescales the alarm limit it has just stored
+*	z3817a-3752	Bn,En	pulse mode	none	the pulse mode's stores include gps.field_592, a bit of which the decoder sets by it; gps_pps_check() and gps_pps_pass_update() alone test that bit, every other reader of the byte another
+gps_pps_check	z3817a-3752	Bn,En	pulse mode	control	gps_pps_check() fails the GPS 1PPS only while the pulse is not continuous
+gps_pps_pass_update	z3817a-3752	Bn,En	pulse mode	control	gps_pps_pass_update() passes the GPS 1PPS only while the pulse is not continuous
+gps_print_time_raim	z3817a-3752	Bn,En	pulse mode	console	gps_print_time_raim() prints the pulse mode
+gps_request_build	*	*	*	none	gps_request_build() names oncore_messages for a message's kind, ID and encoders; gps_response_decode() alone walks its decoders, which store the field
+gps_response_lookup	*	*	*	none	gps_response_lookup() names oncore_messages for a message's ID and length; gps_response_decode() alone walks its decoders, which store the field
+gps_response_match	*	*	*	none	gps_response_match() names oncore_messages for a message's match kind, and compares the response with the request sent; gps_response_decode() alone walks its decoders, which store the field
+oncore_message_entry_at	*	*	*	none	oncore_message_entry_at() returns an entry of oncore_messages; of its callers gps_response_decode() alone walks the entry's decoders, which store the field

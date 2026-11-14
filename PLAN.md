@@ -988,10 +988,18 @@ stands in for one.
 - **The model's fields are held to what the images read.**
   `docs/firmware/gps-fields.tsv` has a row for every field of every
   message the model speaks, with the manual page, the images that read
-  it or set it and where the model gets it.  The readers are measured,
-  each image's own decoders run in Unicorn on a message with the reads
-  of its bytes noted, not read off the C, and the setters come from the
-  request scripts; `make check-gps-fields` fails when the table and
+  it or set it, what they use it for and where the model gets it.  The
+  readers are measured, each image's own decoders run in Unicorn on a
+  message with the reads of its bytes noted, not read off the C, and
+  the setters come from the request scripts.  The use, decided
+  2026-11-14, is what the work list goes by: a field counts as a gap
+  only where an image uses it for control or reports it, not where it
+  is only copied out, kept or shown by a console word.  Where a field
+  is stored and which functions read it there are measured and
+  scanned; what each function does with it is read off the rewritten
+  C by hand, in `docs/firmware/gps-field-uses.tsv`, which the check
+  holds complete but cannot hold right.
+  `make check-gps-fields` fails when the table and
   the images part, and the crate's tests hold its rows to the table of
   lengths.  The rule it serves: every message the model speaks is
   implemented fully, per the manual, and whatever fills a `Record`

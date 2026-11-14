@@ -1067,24 +1067,65 @@ model of `crates/smartclock-gps` speaks, command and response: its
 offset from the frame's first `@`, its length, and for a field
 repeated by channel or satellite the count and the stride; the manual
 and page that give it; the images that read it, or for a command
-field set it; and where the model gets it.  The rows cover a message's
+field set it; the images that compare it with the command sent; what
+the images that read it use it for; and where the model gets it.  The
+rows cover a message's
 data alone.  The `@@` and ID before it and the checksum, CR and LF
 after it are every message's and have no row, and a message with no
 data has none.
 
 `tools/firmware/gps_fields.py` holds the table to the images
-(`make check-gps-fields`; `make gps-fields` rewrites the images column
-and the tables below).  Its docstring is the specification; in short:
+(`make check-gps-fields`; `make gps-fields` rewrites the images,
+compared and use columns and the tables below).  Its docstring is the
+specification; in short:
 
 - **Read by is measured.**  Each decoder of an image's message table
   runs in the image's own ROM on a message of the table's length, and
   the bytes of the message it reads are noted.  A read is a read
   whatever becomes of the byte: this is what a decoder copies out, not
-  what the receiver then uses, and a field only a console word shows
-  counts.  The 58503A 3704 and the Z3817A decode `@@Ai` and the URA of
+  what the receiver then uses, which is the use.  The 58503A 3704 and
+  the Z3817A decode `@@Ai` and the URA of
   the extension messages by their channel count, so each message is
   decoded with the count the image's own code sets, six or eight
   ("Six or eight channels").
+- **Use is what becomes of a field read**, the strongest of what its
+  readers do with it:
+  - *control*: it reaches the loop, a holdover or lock decision, the
+    time or 1PPS handling, an alarm or a status register;
+  - *reported*: it reaches a SCPI reply, the status screen of
+    `:SYSTem:PRINt?`, the diagnostic log or the 58503A's front panel;
+  - *console*: only a console word's report shows it;
+  - *stored*: nothing is found to read where it is stored.
+- **Where a field is stored is measured**: its bytes are flipped, the
+  decoders run, and the bytes of RAM that change are its stores.
+- **Who reads a store is a scan of the image's instructions**, from
+  each decoder's record and every absolute address among the stores.
+  Where an address leaves the scan's sight, indexed, stepped, passed
+  on or held in a ROM table, the function is taken to reach every
+  field stored from there to the end of the record.  The decoders' run
+  checks the scan: a function that reads a store while they run, and
+  that the scan has not, is a reader too.
+- **What a reader does with a field is by hand**:
+  `gps-field-uses.tsv` gives each function a class, or none where it
+  does nothing with the field, for all the fields it reads or for
+  those a row names, and the reading of the rewritten C behind it,
+  with the functions it rests on.  The tool fails on a reader no row
+  covers, a row that covers nothing and a function cited that an image
+  lacks.  It cannot check the reading.
+- **What the use can miss.**  A store read only through a pointer kept
+  in RAM has no reader, and its field comes out stored.  A function is
+  classed whole for a field, whichever of its bits it tests: the
+  receiver status is control for its 3D fix bit, by which the survey
+  averages, though nothing but a console word reads the position
+  propagate bit the model leaves zero.  The same holds for a store
+  that takes bits from several fields, as the Z3817A's `gps.field_592`
+  does.  A use more than one call from the reader is the reading's to
+  follow.  The run covers the decoders alone, no other task.
+- **Compared is measured**: an image's `gps_response_match` runs on
+  each response with a command of the same bytes, and the bytes of the
+  response it reads are noted.  It compares the data and the trailer
+  of the responses the table marks and nothing of `@@Aa`, `@@Ac` or
+  a `@@B` or `@@E` message.
 - **Set by is the request scripts and lists** of `oncore/`: a command
   sent in mode 0 or 2 ("Requests").  A query sends no field.
 - **A message's rows tile its data**, every byte once, and end where
@@ -1099,48 +1140,58 @@ What the decoders skip: `@@Am`'s first byte; each line's CR LF in
 extension messages").  No public image decodes `@@Ap`, `@@Bo`, `@@Gj`
 or `@@Ta`, and the Z3817A's `@@Sz` decoder reads nothing.
 
-The gaps are the work list: a response field some image reads that the
-model sends as zero, a constant of its own or the manual's value for
-unknown, and a command field some image sets that the model does not
-honor.  Neither table says the receiver needs the field.
+The gaps are the work list: a response field some image uses, as
+control or reported, or compares, that the model sends as zero, a
+constant of its own or the manual's value for unknown, and a command
+field some image sets that the model does not honor.  The first table
+is those response fields, with the functions whose use puts them
+there.  The second and third are such fields that the images only
+show on the console and only store, kept in sight and off the work
+list.  The last is the command fields.
 
 <!-- gps_fields.py gaps -->
-| Message | Field | Bytes | Read by | The engine sends |
+| Message | Field | Bytes | Use | By | The engine sends |
+|---|---|---|---|---|---|
+| `@@Ba` | receiver status | 64 | control: all four | `oncore_position_message` | zero: position propagate bit |
+| `@@Bb` | health | 11-88, 12 x 1 | reported: all four | `status_snapshot` | zero: removed by @@Am bit |
+| `@@Ca` | self-test result | 4-5 | control: all four | `gps_diag_sequence`, `gps_selftest_run` | constant: every test passes |
+| `@@Ea` | receiver status | 72 | control: 58503a-3704, z3817a-3752 | `oncore_position_message` | zero: position propagate bit |
+| `@@Fa` | self-test result | 4-5 | control: 58503a-3704, z3817a-3752 | `gps_diag_sequence`, `gps_selftest_run` | constant: every test passes |
+
+| Message | Field | Bytes | Console only | The engine sends |
 |---|---|---|---|---|
-| `@@Ba` | channel status flags | 43-63, 6 x 1 | all four | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
-| `@@Ba` | receiver status | 64 | all four | zero: position propagate bit |
-| `@@Bb` | health | 11-88, 12 x 1 | all four | zero: removed by @@Am bit |
-| `@@Bk` | magnetic variation | 14-15 | all four | zero |
-| `@@Bk` | velocity north | 16-17 | all four | zero |
-| `@@Bk` | velocity east | 18-19 | all four | zero |
-| `@@Bk` | velocity up | 20-21 | all four | zero |
-| `@@Bk` | age of differential data | 22-23 | all four | zero |
-| `@@Bk` | ECEF X | 24-27 | all four | zero: while holding position |
-| `@@Bk` | ECEF Y | 28-31 | all four | zero: while holding position |
-| `@@Bk` | ECEF Z | 32-35 | all four | zero: while holding position |
-| `@@Bk` | channel URA | 36-41, 6 x 1 | all four | zero |
-| `@@Bk` | least squares matrix elements 1 to 7 | 42-55, 7 x 2 | all four | zero |
-| `@@Bk` | least squares matrix elements 8 to 10 | 56-61, 3 x 2 | z3805a-3543b, z3801a-3543 | zero |
-| `@@Bk` | clock bias | 62-63 | z3805a-3543b, z3801a-3543 | zero |
-| `@@Bk` | oscillator offset | 64-65 | z3805a-3543b, z3801a-3543 | zero |
-| `@@Bn` | pulse rate | 9-11 | all four | constant: one pulse a second |
-| `@@Ca` | self-test result | 4-5 | all four | constant: every test passes |
-| `@@Ea` | channel status flags | 43-71, 8 x 1 | 58503a-3704, z3817a-3752 | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
-| `@@Ea` | receiver status | 72 | 58503a-3704, z3817a-3752 | zero: position propagate bit |
-| `@@Ek` | magnetic variation | 14-15 | 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | velocity north | 16-17 | 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | velocity east | 18-19 | 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | velocity up | 20-21 | 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | age of differential data | 22-23 | 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | ECEF X | 24-27 | 58503a-3704, z3817a-3752 | zero: while holding position |
-| `@@Ek` | ECEF Y | 28-31 | 58503a-3704, z3817a-3752 | zero: while holding position |
-| `@@Ek` | ECEF Z | 32-35 | 58503a-3704, z3817a-3752 | zero: while holding position |
-| `@@Ek` | channel URA | 36-43, 8 x 1 | 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | least squares matrix elements | 44-63, 10 x 2 | 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | clock bias | 64-65 | 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | oscillator offset | 66-67 | 58503a-3704, z3817a-3752 | zero |
-| `@@En` | pulse rate | 9-11 | 58503a-3704, z3817a-3752 | constant: one pulse a second |
-| `@@Fa` | self-test result | 4-5 | 58503a-3704, z3817a-3752 | constant: every test passes |
+| `@@Ba` | channel status flags | 43-63, 6 x 1 | console: all four | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
+| `@@Bk` | magnetic variation | 14-15 | console: all four | zero |
+| `@@Bk` | velocity north | 16-17 | console: all four | zero |
+| `@@Bk` | velocity east | 18-19 | console: all four | zero |
+| `@@Bk` | velocity up | 20-21 | console: all four | zero |
+| `@@Bk` | age of differential data | 22-23 | console: all four | zero |
+| `@@Bk` | ECEF X | 24-27 | console: all four | zero: while holding position |
+| `@@Bk` | ECEF Y | 28-31 | console: all four | zero: while holding position |
+| `@@Bk` | ECEF Z | 32-35 | console: all four | zero: while holding position |
+| `@@Bk` | channel URA | 36-41, 6 x 1 | console: all four | zero |
+| `@@Bk` | least squares matrix elements 1 to 7 | 42-55, 7 x 2 | console: all four | zero |
+| `@@Bk` | least squares matrix elements 8 to 10 | 56-61, 3 x 2 | console: z3805a-3543b, z3801a-3543 | zero |
+| `@@Bk` | clock bias | 62-63 | console: z3805a-3543b, z3801a-3543 | zero |
+| `@@Bk` | oscillator offset | 64-65 | console: z3805a-3543b, z3801a-3543 | zero |
+| `@@Bn` | pulse rate | 9-11 | console: z3805a-3543b, z3801a-3543; stored: 58503a-3704, z3817a-3752 | constant: one pulse a second |
+| `@@Ea` | channel status flags | 43-71, 8 x 1 | console: 58503a-3704, z3817a-3752 | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
+| `@@Ek` | magnetic variation | 14-15 | console: 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | velocity north | 16-17 | console: 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | velocity east | 18-19 | console: 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | velocity up | 20-21 | console: 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | age of differential data | 22-23 | console: 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | ECEF X | 24-27 | console: 58503a-3704, z3817a-3752 | zero: while holding position |
+| `@@Ek` | ECEF Y | 28-31 | console: 58503a-3704, z3817a-3752 | zero: while holding position |
+| `@@Ek` | ECEF Z | 32-35 | console: 58503a-3704, z3817a-3752 | zero: while holding position |
+| `@@Ek` | channel URA | 36-43, 8 x 1 | console: 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | least squares matrix elements | 44-63, 10 x 2 | console: 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | clock bias | 64-65 | console: 58503a-3704, z3817a-3752 | zero |
+| `@@Ek` | oscillator offset | 66-67 | console: 58503a-3704, z3817a-3752 | zero |
+
+| Message | Field | Bytes | Stored only | The engine sends |
+|---|---|---|---|---|
+| `@@En` | pulse rate | 9-11 | stored: 58503a-3704, z3817a-3752 | constant: one pulse a second |
 
 | Command | Field | Set by | The engine has it |
 |---|---|---|---|

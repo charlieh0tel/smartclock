@@ -374,8 +374,10 @@ void efc_calibration_defaults(void) {
 
 /* :DIAGnostic:ROSCillator:TYPE's done hook: the EFC calibration taken
  * afresh from the defaults for the new kind and saved, -311, Memory
- * error, for the source if the block could not be (0x419f4). */
-void oscillator_kind_done(int32_t source) {
+ * error, for the source if the block could not be (0x419f4).  The
+ * source is the second argument, as every descriptor's hook's, and the
+ * index is not read (0x41a06). */
+void oscillator_kind_done(int32_t index, int32_t source) {
   efc_calibration_given = 0;
   efc_calibration_defaults();
   if (save_calibration_block() == 0) {

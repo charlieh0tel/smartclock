@@ -10563,7 +10563,7 @@ void oscillator_kind_read(bool use_default);
 bool calibration_block_read(void);
 uint8_t calibration_block_save_reported(int32_t index,int32_t source);
 uint8_t efc_calibration_done(int32_t index,int32_t source);
-void oscillator_kind_done(int32_t source);
+void oscillator_kind_done(int32_t index,int32_t source);
 bool save_parameter_record(void);
 uint8_t parameter_record_read(void);
 uint8_t parameter_record_save_reported(request_source source);

@@ -1403,7 +1403,12 @@ read (`qemu/target/m68k/unicorn.c`) marks QEMU's lazy condition codes
 as computed before it computes them, so that it returns the operands
 of the last compare read as flags and, from a trap's hook or after a
 run stops, leaves the CPU to go on with them; and a write of PC from
-a code hook loses them too.  The harness reads the system byte from a
+a code hook loses them too.  A code hook on an instruction that sets
+the status register shows the registers as that instruction leaves
+them, A7 past `move.w (%sp)+,%sr`'s pop (`0x13692`, mc683xx showing
+it before), so a status register's path reads what such an
+instruction left before the next one, and never SP at a return
+([`rewrite.md`](rewrite.md), "The status register").  The harness reads the system byte from a
 copy of the CPU's state and the condition codes with a probe of its
 own, `move.w %ccr` to memory (`harness.PROBE`): a trap's hook sends
 the CPU through it before it takes the exception or answers the
@@ -1635,9 +1640,12 @@ from the klok task at each 1PPS.  The C increments with `cpu.h`'s
 compared as if they had returned, but for their result, and both
 leave the status register's system byte, its supervisor bit and
 interrupt mask, the same.  What each did to the register on the way,
-its masking and its restore, a run does not show; the check reads that
-from the image's instructions and the C's source
-([`rewrite.md`](rewrite.md), "The status register").  Two that return leave its condition codes
+its masking and its restore, the system byte after does not show; the
+check reads that from the image's instructions and the C's source, and
+for a function that touches the register or calls
+`set_interrupt_mask` traces it on each case's two runs, the path each
+takes, and compares them ([`rewrite.md`](rewrite.md), "The status
+register").  Two that return leave its condition codes
 the same too where the function's sidecar row returns in them
 (`returns=ccr`), and nowhere else: no function the harness runs has
 one now, the routines that do being register routines, not C

@@ -315,7 +315,8 @@ report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1
 # image's function check -- its functions agreeing, known, skipped and
 # failed, those run in user mode alone and in both modes, its console
 # sessions agreeing, the agreeing functions' cases
-# and its functions touching the status register -- and from its export -- its
+# its functions touching the status register and those whose status
+# register's paths are traced -- and from its export -- its
 # functions written by hand, left as the decompiler's reading, assembly
 # and thunks -- and from its link check -- its functions required and
 # how each is defined -- as docs/firmware/README.md,

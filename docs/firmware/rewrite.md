@@ -518,14 +518,92 @@ raises where the image sets a level, or restores before a call the
 image makes masked.  A difference is known by the rule that excuses a
 case's (`KNOWN`); none is.
 
-What it does not see:
+**Paths.**  The reading orders the image's events by address and the
+C's by source, which agree only where the C is laid out as the image
+is, and says nothing of which events a path takes, a loop's bounds or
+a condition.  So the runs trace them too (`status_register.Trace`).
+For each function written by hand whose image copy or C touches the
+register, or calls `set_interrupt_mask` or `enter_supervisor_mode`
+(either profile's copy), a hook reads every instruction both copies
+run on each case, at the function's own level: a static helper of the
+C's, an assembly wrapper or a local subroutine of the image's is read
+in place, a call of one of the sidecar's functions is an event of its
+own and its body is the callee's, and the instructions run inside an
+interrupt the case takes are left out.  An event is what an
+instruction does, not how: each instruction that sets the register
+(`ori`, `andi`, `eori`, a move, an `rte`) is a write of the system
+byte it leaves, read before the next instruction, so that the C's
+read, or and write is the image's `ori`; a read of the register is
+nothing; a call of `set_interrupt_mask` carries the interrupt mask it
+is given, as the callee's copy reads its argument.  Each copy's events
+before its first that touches the register, or calls one of those two,
+and after its last are dropped, and the two must then be equal, case
+by case: a mask given another level, a restore left out on one arm, a
+condition turned round, a masked stretch the C takes once where the
+image takes it in each pass of a loop, a call moved out of it, each
+fails the function.  A case both copies stop alike, skipped, compares
+its paths up to there.  A difference is known by `IMAGE_KNOWN_PATHS`;
+none is.  The first run found one in every image: `status_snapshot`
+copied `interval_mean_flag` and the byte after it with `memcpy`, a call
+within its masked stretch the image does not make (a word's move,
+`0x4a698` in the Z3805A), which no run compared, the run's calls being
+those of the image's callees.  The cost is a Python call for each
+instruction run in the traced functions' cases, and none in the rest.
 
-- Order is address order against source order, not a path's.  The two
-  agree where the C is laid out as the image is, which C touching the
-  register must then be: `qspi_acquire`'s arm that takes a free lock is
-  the image's last (`qspi_acquire+0x74`), and is written last.  Which
-  events a path takes, a restore missing from one arm of two, a loop's
-  bounds or a condition are the run's to compare, not this reading's.
+A path compares only the cases run, so the report says how far they
+reach on the image's side: each event of the image's walk that touches
+the register, and each arm of a branch whose arms lead on to different
+such events, or, between two of them, to different calls.  A function
+some event or arm of which no case reaches is listed (`arms not
+reached`), with them, and not counted as reaching every one.  Given
+cases reach the rest where a variable, a device or a service failing
+can (`PATH_CASES`; a case may have the kernel's services fail by
+number, `FAILING_SERVICES`, which the harness's kernel otherwise never
+does).  What none reaches is `installer_scpi_set_DIAGnostic_ERASe`'s
+second try, which follows an erase that shows neither DQ7 nor DQ5 for a
+million polls, past `STEP_LIMIT`'s instructions.  Where
+every one is reached and every case agrees, the reading compares the
+register's own events alone, the same ones as many times each in any
+order: the paths compare the order and the calls between them, so that
+C touching the register need not be laid out as the image is
+(`qspi_acquire` takes a free lock in its first arm, the image in its
+last, `qspi_acquire+0x74`).  Elsewhere the reading compares the order
+as before.
+
+What a path does not see:
+
+- Paths no case drives.  Every event and arm reached is not every
+  path: the combinations of a function's branches, a loop's passes,
+  are as many as the cases make them.  An arm of the C's that the
+  image has no counterpart of is not measured, though the reading
+  counts its events.
+- Interrupts.  What runs inside one is left out; a handler's own
+  masking is its own function's to trace.
+- Code reached only through a register is run and read, but the walk
+  that measures the reach does not know it, and its events and arms
+  are not counted.
+- Assembly.  A routine the C binds to is the image's bytes in both
+  copies, and a call of it one event; a function whose copies are both
+  assembly is not traced.
+- A callee the harness answers in its place (`STATES`) may leave no
+  event in either copy.  A function called again from within its own
+  callee, before that call returns, is not read rightly: a return is
+  known by its address alone, since Unicorn shows the registers at a
+  hook on an instruction that sets the register as that instruction
+  leaves them, and so never reads SP there.
+- A write is compared by the system byte, not the condition codes,
+  each copy's own; of the calls' arguments, only `set_interrupt_mask`'s
+  mask.
+- The C's order of unsequenced evaluation is gcc's: a save, write or
+  call in arguments gcc evaluates in another order than the image's
+  compiler did differs, as it should, but the cure is to sequence the
+  C, not to reorder it.
+
+What the reading does not see, where no path covers it:
+
+- Order is address order against source order, not a path's, for a
+  function whose paths do not reach every event and arm, or differ:
+  such C must be laid out as the image is.
 - Between events only calls are placed.  A store moved out of a masked
   stretch, with no call to either side of it, reads the same.
 - A call through a pointer or a register is no event, and code reached
@@ -537,8 +615,7 @@ What it does not see:
   save and a write, and fails against an `ori`.
 - The condition codes' instructions (`%ccr`) are not events.
 - The arguments of calls are not compared here: the mask
-  `set_interrupt_mask` is passed shows only in the system byte a run
-  leaves.
+  `set_interrupt_mask` is passed is a path's.
 - Only functions written by hand are read.  An assembly routine,
   `enter_supervisor` or the kernel's, is the image's bytes
   (`check-decompiled`), and the C's binding to one is one instruction
@@ -569,7 +646,10 @@ masks, the antenna's bounds and a parameter record's field read for
 another; and, in `qspi_release`, its masking left out, its restore
 left out, level 6 for 4, the mask raised where the image sets a level,
 and the restore moved before the hand-on, of which a run catches the
-second alone and the status register's reading every one.  (README.md,
+second alone and the status register's reading and its paths every
+one; and two its paths alone catch: `ram_pattern_test_locked` giving
+`set_interrupt_mask` level 6 for 7, and `eeprom_write_page` masking
+once around its five tries where the image masks in each.  (README.md,
 "Hand-written C"; PLAN.md.)
 
 **Other checks**, in `make check-decompiled`:
@@ -641,8 +721,10 @@ check-link`, `make check-scpi-tree`):
 | function check, installer | 237 agree, 0 known, 0 skipped, 0 failed |
 | status register, primary | 20 functions touch it: 20 agree, 0 known, 0 failed |
 | status register, installer | 5 functions touch it: 5 agree, 0 known, 0 failed |
+| status register's paths, primary | 59 functions traced: 59 reach every event and arm; 59 agree, 0 known, 0 failed, 0 not run |
+| status register's paths, installer | 9 functions traced: 8 reach every event and arm; 9 agree, 0 known, 0 failed, 0 not run |
 | pForth console sessions | 8 of 8 agree |
-| cases, in the agreeing functions | 26,090 of 26,754 compared, the rest skipped; strict, 26,086 of 26,754 |
+| cases, in the agreeing functions | 26,131 of 26,795 compared, the rest skipped; strict, 26,127 of 26,795 |
 | stack headroom | no case deeper than the image's by more than 256 bytes, or 16 above a floor; the console's data stack 56 bytes clear, the image's 58 |
 
 A case is skipped where both copies stop at something the harness does
@@ -671,9 +753,10 @@ the check is against the model, not the board.
   interrupt a case injects at a chosen point.  A race between tasks, or
   a kernel call overwriting what another task holds, is not seen.
 - **The status register.**  What a function does to it on the way is
-  read, not run, and by address against source order ("The status
-  register", above): a path's own order, and what but a call lies
-  inside a masked stretch, are not compared.
+  read, and traced on the paths the cases run ("The status register",
+  above): a path no case drives, and what but a call lies inside a
+  masked stretch, are not compared, and the reading's order is address
+  against source where the paths do not reach every event and arm.
 - **Timing.**  No time is modeled: a poll's count and order are
   compared, its duration is not.  Unicorn has no CPU32; the 68020
   stands in, the image using none of the instructions where they differ

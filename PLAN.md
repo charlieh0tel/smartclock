@@ -990,6 +990,14 @@ stands in for one.
   automatic switch to altitude hold above `@@Al`'s PDOP, `@@Bb` sent on
   change, and the receiver status bits for poor geometry, a
   differential fix, too few visible and no almanac are the manual's.
+  So is the number visible in a position status, which is not
+  `@@Bb`'s: the record's satellites above ten degrees on a VP (VP
+  p. 70) and above the horizon on a UT Plus (UT p. 6.18), whatever
+  `@@Ag`'s mask, and none without an almanac; too few visible is fewer
+  than three of that number.  `@@Bb` lists all the record's
+  satellites, in the order of their IDs: the manual gives no order,
+  and the images bisect the one they keep on the ID (`satellite_find`,
+  `screen.c`).
   Manual selection (`@@Ah` 1 with `@@Ai`) and manual altitude hold
   (`@@Av` 1 at `@@Au`'s height) would change answers the exchanges
   hold, so the model takes and echoes them but tracks and fixes as

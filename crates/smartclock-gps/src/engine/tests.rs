@@ -832,6 +832,114 @@ fn visible_satellites_are_sent_when_they_change() {
     assert!(sent.0.is_empty());
 }
 
+/// The satellite IDs `@@Bb`'s data lists, after checking its count
+/// against them and that the slots past them are zeros.
+fn listed(data: &[u8]) -> Vec<u8> {
+    const SLOT: usize = 7;
+    let count = usize::from(data[0]);
+    let (slots, rest) = data[1..].split_at(count * SLOT);
+    assert!(rest.iter().all(|byte| *byte == 0), "{rest:02x?}");
+    slots.chunks(SLOT).map(|slot| slot[0]).collect()
+}
+
+/// The receivers bisect the `@@Bb` they keep on the satellite ID
+/// (`satellite_find`), so it lists the record's satellites in that
+/// order, whatever the record's, and all of them: one below the mask
+/// angle too.
+#[test]
+fn visible_satellites_are_listed_in_the_order_of_their_ids() {
+    let mut engine = fixing(&VP_EIGHT);
+    let mut record = full();
+    record
+        .satellites
+        .push(Satellite::new(prn(1), Degrees(2), Degrees(359)));
+    let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[0]);
+    let data = only(&frames, BB_VISIBLE_SATELLITES);
+    assert_eq!(listed(data), [1, 3, 4, 16, 26, 31]);
+    // Each keeps its own fields: the first's elevation and azimuth,
+    // and the last's elevation, satellite 31's.
+    assert_eq!(data[1..8], [1, 0, 0, 2, 0x01, 0x67, 0]);
+    assert_eq!(data[1 + 5 * 7 + 3], 41);
+
+    // One the record gives twice is listed once, as it first has it.
+    record
+        .satellites
+        .push(Satellite::new(prn(4), Degrees(7), Degrees(0)));
+    let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[0]);
+    let data = only(&frames, BB_VISIBLE_SATELLITES);
+    assert_eq!(listed(data), [1, 3, 4, 16, 26, 31]);
+    assert_eq!(data[1 + 2 * 7 + 3], 51);
+
+    // More than there are slots for: the highest are kept, then put in
+    // order.
+    let mut record = Record::EMPTY;
+    for (id, elevation) in (1..=13).rev().zip(20..) {
+        record
+            .satellites
+            .push(Satellite::new(prn(id), Degrees(elevation), Degrees(0)));
+    }
+    let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[0]);
+    let data = only(&frames, BB_VISIBLE_SATELLITES);
+    assert_eq!(listed(data), (1..=12).collect::<Vec<_>>());
+}
+
+/// The same satellites in another order are no change to `@@Bb`.
+#[test]
+fn a_record_put_in_another_order_is_no_change_to_the_visible_satellites() {
+    let mut engine = fixing(&VP_EIGHT);
+    let mut record = full();
+    let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[1]);
+    let first = only(&frames, BB_VISIBLE_SATELLITES).to_vec();
+
+    let all = record.satellites;
+    record.satellites = crate::record::Satellites::EMPTY;
+    for satellite in all.iter().collect::<Vec<_>>().into_iter().rev() {
+        record.satellites.push(*satellite);
+    }
+    assert_ne!(record.satellites, all);
+    let mut sent = Sent::default();
+    engine.second(&record, NOW, &mut sent);
+    assert!(sent.0.is_empty());
+    let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[0]);
+    assert_eq!(only(&frames, BB_VISIBLE_SATELLITES), first);
+}
+
+/// VP pp. 27, 70 and 73: a VP counts as visible the satellites above
+/// ten degrees, whatever `@@Ag`'s mask.  UT pp. 6.18 and 6.22: a UT
+/// Plus, those above the horizon.  Either counts none with no almanac,
+/// and `@@Bb` lists them all.
+#[test]
+fn the_visible_count_is_of_the_satellites_above_the_manuals_elevation() {
+    let counted = |identity: &'static Identity, elevations: &[i8], almanac: bool| {
+        let mut engine = Engine::new(identity, Options::DEFAULT);
+        ask(&mut engine, &Record::EMPTY, CG_FIX_MODE, &FIX);
+        ask(&mut engine, &Record::EMPTY, AG_MASK_ANGLE, &[45]);
+        let mut record = full();
+        record.satellites = crate::record::Satellites::EMPTY;
+        for (id, elevation) in (1..).zip(elevations) {
+            record
+                .satellites
+                .push(Satellite::new(prn(id), Degrees(*elevation), Degrees(0)));
+        }
+        if !almanac {
+            record.almanac = None;
+        }
+        let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+        let data = only(&frames, EA_POSITION_STATUS);
+        let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[0]);
+        let listed = only(&frames, BB_VISIBLE_SATELLITES)[0];
+        (data[34], data[68] & 0x02, listed)
+    };
+    // At ten degrees is not above it.
+    assert_eq!(counted(&VP_EIGHT, &[9, 10, 11, 12, 90], true), (3, 0, 5));
+    assert_eq!(counted(&VP_EIGHT, &[0, 10, 11, 12], true), (2, 0x02, 4));
+    assert_eq!(counted(&VP_EIGHT, &[11, 12, 90], false), (0, 0x02, 3));
+    // On the horizon is not above it.
+    assert_eq!(counted(&UT_PLUS_2_2, &[-1, 0, 1, 9, 10], true), (3, 0, 5));
+    assert_eq!(counted(&UT_PLUS_2_2, &[0, 1, 9], true), (2, 0x02, 3));
+    assert_eq!(counted(&UT_PLUS_2_2, &[1, 9, 10], false), (0, 0x02, 3));
+}
+
 /// VP pp. 39, 60, 70 and 73; UT pp. 6.18 and 6.20.
 #[test]
 fn the_receiver_status_says_what_the_record_and_settings_make_of_the_fix() {

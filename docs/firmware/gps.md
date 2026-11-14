@@ -871,6 +871,11 @@ What an engine in a Z380x or 58503A must do, from the above:
   time advancing, and at least one channel with a satellite in mode 8,
   available for position (p. 72), for the reference to qualify
   ("Channel mode and signal strength").
+- **List `@@Bb`'s satellites in the order of their IDs**, lowest
+  first.  The manual gives no order (pp. 74-75), but the firmware
+  finds a satellite in the `@@Bb` it keeps by bisecting on the ID
+  (`satellite_find`, `rewritten/z3805a-3543b/screen.c`, and the same
+  routine in every image), so one out of order may not be found.
 - **Time RAIM.**  Send `Bn` or `En` at the rate asked, with the on byte
   and the solution and Time RAIM statuses as wanted; the rest is shown
   and not used.

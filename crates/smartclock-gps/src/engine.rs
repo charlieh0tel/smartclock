@@ -143,6 +143,7 @@ use crate::units::Centimeters;
 use crate::units::Degrees;
 use crate::units::MilliArcSeconds;
 use crate::units::Milliseconds;
+use crate::units::PRNS;
 use crate::units::Prn;
 use crate::units::PrnSet;
 use crate::units::Seconds;
@@ -217,6 +218,14 @@ const STATUS_FEW_VISIBLE: u8 = 0x02;
 const STATUS_BAD_ALMANAC: u8 = 0x01;
 /// Fewer visible than this is too few.
 const FEW_VISIBLE: usize = 3;
+/// The elevation, in degrees, a satellite is above to count as visible
+/// in a position status, whatever `@@Ag`'s mask: a VP's "default mask
+/// angle of ten degrees" (VP pp. 70 and 124) and a UT Plus's "mask
+/// angle of zero degrees, representing the horizon" (UT p. 6.18).
+/// Above, as a mask angle is taken: "greater than the satellite mask
+/// angle" (VP p. 27; UT p. 6.22).
+const VISIBLE_ABOVE_VP: i8 = 10;
+const VISIBLE_ABOVE_UT_PLUS: i8 = 0;
 /// A DOP above this, in tenths, is poor geometry: a VP's (VP p. 73)
 /// and a UT Plus's (UT p. 6.20).
 const POOR_GEOMETRY_VP: u16 = 200;
@@ -1274,14 +1283,23 @@ impl Engine {
         }
     }
 
-    /// The satellites in view as a position status counts them: none
-    /// while idle, nor with no almanac to tell (VP p. 70; UT p. 6.18).
+    /// The satellites in view as a position status counts them: the
+    /// record's above the elevation the manual computes the number at,
+    /// not `@@Ag`'s; none while idle, nor with no almanac to tell (VP
+    /// p. 70; UT p. 6.18).  `@@Bb` lists them all, counted or not.
     fn visible(&self, record: &Record) -> usize {
-        if self.state.fixing && record.almanac.is_some() {
-            record.satellites.len()
-        } else {
-            0
+        if !self.state.fixing || record.almanac.is_none() {
+            return 0;
         }
+        let above = match self.identity.model() {
+            Model::VpSix | Model::VpEight => VISIBLE_ABOVE_VP,
+            Model::UtPlus => VISIBLE_ABOVE_UT_PLUS,
+        };
+        record
+            .satellites
+            .iter()
+            .filter(|satellite| satellite.elevation.0 > above)
+            .count()
     }
 
     /// The receiver status byte of a position status (VP p. 73; UT
@@ -1404,11 +1422,26 @@ impl Engine {
         }
     }
 
-    /// The data of `@@Bb` (VP p. 75).
+    /// The data of `@@Bb` (VP p. 75): the record's satellites, in the
+    /// order of their IDs whatever the record's, one given twice listed
+    /// once.  The manual gives no order; the receivers' firmware needs
+    /// this one, finding a satellite in the `@@Bb` it keeps by
+    /// bisecting on the ID (`satellite_find`, `screen.c` of each image
+    /// under `third_party/firmware/rewritten/`).
     fn visibility(record: &Record) -> Data {
+        let by_id = (1..=PRNS)
+            .filter_map(Prn::new)
+            .filter_map(|prn| record.satellites.get(prn));
+        let count = record
+            .satellites
+            .iter()
+            .fold(PrnSet::EMPTY, |listed, satellite| {
+                listed.with(satellite.prn)
+            })
+            .len() as usize;
         let mut data = Data::new();
-        data.byte(count_byte(record.satellites.len()));
-        for satellite in record.satellites.iter() {
+        data.byte(count_byte(count));
+        for satellite in by_id {
             let health = match satellite.health {
                 Health::Unhealthy => VISIBLE_UNHEALTHY,
                 Health::Unknown | Health::Healthy => 0,
@@ -1419,7 +1452,7 @@ impl Engine {
                 .word(satellite.azimuth.0)
                 .byte(health);
         }
-        data.zeros((SATELLITES - record.satellites.len()) * VISIBLE_SLOT);
+        data.zeros((SATELLITES - count) * VISIBLE_SLOT);
         data
     }
 

@@ -168,6 +168,8 @@ const WGS_84_AXIS: u32 = 6_378_137;
 const WGS_84_INVERSE_FLATTENING: u16 = 298;
 const WGS_84_INVERSE_FLATTENING_FRACTION: u32 = 257_223_563;
 
+/// The bytes of one channel in `@@Ba` and `@@Ea` (VP p. 72).
+const STATUS_CHANNEL: usize = 4;
 /// A channel's status flag bits (VP p. 73; UT p. 6.20).
 const CHANNEL_USED: u8 = 0x80;
 const CHANNEL_USED_FOR_TIME: u8 = 0x02;
@@ -277,6 +279,17 @@ const NO_LABEL: DateTime = DateTime {
     minute: 0,
     second: 0,
 };
+
+/// What a position status says of the fix (VP pp. 72 and 73).
+#[derive(Debug, Clone, Copy)]
+struct Solution {
+    /// The DOP, in tenths; zero when there is none to give.
+    dop: u16,
+    /// Which DOP that is.
+    dop_type: u8,
+    /// The receiver status bit for the kind of fix.
+    status: u8,
+}
 
 /// The satellites Time RAIM needs to detect a bad one and to isolate
 /// it, for alarm limits from `from` up.
@@ -750,17 +763,9 @@ impl Engine {
                     .zeros(6),
             );
         } else if id == BB_VISIBLE_SATELLITES {
-            Self::visibility(record, out);
+            send(out, id, &Self::visibility(record));
         } else if id == BC_XDOP_TABLE {
-            send(
-                out,
-                id,
-                Data::new()
-                    .byte(self.state.settings.dop_type())
-                    .byte(0)
-                    .byte(XDOP_IN_VIEW)
-                    .zeros(XDOP_TABLE),
-            );
+            self.xdop_table(out);
         } else if id == BD_ALMANAC_STATUS {
             Self::almanac_status(record, out);
         } else if id == BH_CORRECTION_OUTPUT {
@@ -1043,9 +1048,62 @@ impl Engine {
             .take(self.channels.min(family.channels))
     }
 
-    /// `@@Ba` and `@@Ea` (VP pp. 70 to 73 and 124 to 126; UT pp. 6.18
-    /// to 6.20).
+    /// A family's channels, each with the satellite on it if it has
+    /// one.
+    fn channels<'a>(
+        &self,
+        record: &'a Record,
+        family: &Family,
+    ) -> impl Iterator<Item = Option<&'a Satellite>> + use<'a> {
+        self.tracked(record, family)
+            .map(Some)
+            .chain(core::iter::repeat(None))
+            .take(family.channels)
+    }
+
+    /// The fix `tracked` satellites give, no better than the record's
+    /// (VP pp. 72 and 73).
+    fn solution(&self, record: &Record, tracked: usize) -> Solution {
+        const NONE: Solution = Solution {
+            dop: 0,
+            dop_type: DOP_TYPE_PDOP,
+            status: STATUS_ACQUIRING_OR_HOLD,
+        };
+        let dops = record.dops;
+        match (self.state.settings.holding(), tracked, record.fix) {
+            (true, _, _) | (false, _, Fix::None) => NONE,
+            (false, SATELLITES_3D.., Fix::ThreeD | Fix::TimeOnly) => Solution {
+                dop: dops.map_or(0, |dops| dops.position.0),
+                dop_type: DOP_TYPE_PDOP,
+                status: STATUS_3D_FIX,
+            },
+            (false, SATELLITES_2D.., _) => Solution {
+                dop: dops.map_or(0, |dops| dops.horizontal.0),
+                dop_type: DOP_TYPE_HDOP,
+                status: STATUS_2D_FIX,
+            },
+            (false, _, _) => NONE,
+        }
+    }
+
+    /// The satellites in view as a position status counts them: none
+    /// while idle.
+    fn visible(&self, record: &Record) -> usize {
+        if self.state.fixing {
+            record.satellites.len()
+        } else {
+            0
+        }
+    }
+
+    /// `@@Ba` and `@@Ea`.
     fn position_status<O: Output + ?Sized>(&self, record: &Record, family: &Family, out: &mut O) {
+        send(out, family.status, &self.status(record, family));
+    }
+
+    /// The data of `@@Ba` and `@@Ea` (VP pp. 70 to 73 and 124 to 126;
+    /// UT pp. 6.18 to 6.20).
+    fn status(&self, record: &Record, family: &Family) -> Data {
         let ut_plus = self.identity.model() == Model::UtPlus;
         let place = self.place(record);
         let tracked = self.tracked(record, family).count();
@@ -1054,26 +1112,8 @@ impl Engine {
             (true, Antenna::Shorted) => DOP_TYPE_ANTENNA_OVERCURRENT,
             _ => 0,
         };
-        let dops = record.dops;
-        let (dop, dop_type, fix) = match (self.state.settings.holding(), tracked, record.fix) {
-            (true, _, _) | (false, _, Fix::None) => (0, DOP_TYPE_PDOP, STATUS_ACQUIRING_OR_HOLD),
-            (false, SATELLITES_3D.., Fix::ThreeD | Fix::TimeOnly) => (
-                dops.map_or(0, |dops| dops.position.0),
-                DOP_TYPE_PDOP,
-                STATUS_3D_FIX,
-            ),
-            (false, SATELLITES_2D.., _) => (
-                dops.map_or(0, |dops| dops.horizontal.0),
-                DOP_TYPE_HDOP,
-                STATUS_2D_FIX,
-            ),
-            (false, _, _) => (0, DOP_TYPE_PDOP, STATUS_ACQUIRING_OR_HOLD),
-        };
-        let visible = if self.state.fixing {
-            record.satellites.len()
-        } else {
-            0
-        };
+        let solution = self.solution(record, tracked);
+        let visible = self.visible(record);
         let few = if visible < FEW_VISIBLE {
             STATUS_FEW_VISIBLE
         } else {
@@ -1093,16 +1133,11 @@ impl Engine {
             .signed_long(if ut_plus { 0 } else { place.mean_sea_level })
             .word(record.velocity.map_or(0, |velocity| velocity.speed.0))
             .word(record.velocity.map_or(0, |velocity| velocity.heading.0))
-            .word(dop)
-            .byte(dop_type | antenna_sense)
+            .word(solution.dop)
+            .byte(solution.dop_type | antenna_sense)
             .byte(count_byte(visible))
             .byte(count_byte(tracked));
-        let satellites = self.tracked(record, family);
-        let channels = satellites
-            .map(Some)
-            .chain(core::iter::repeat(None))
-            .take(family.channels);
-        for channel in channels {
+        for channel in self.channels(record, family) {
             match channel {
                 Some(satellite) => {
                     let strength = satellite.signal.map_or(0, |signal| signal.0);
@@ -1117,15 +1152,16 @@ impl Engine {
                         .byte(used);
                 }
                 None => {
-                    data.zeros(4);
+                    data.zeros(STATUS_CHANNEL);
                 }
             }
         }
-        send(out, family.status, data.byte(fix | few));
+        data.byte(solution.status | few);
+        data
     }
 
-    /// `@@Bb` (VP p. 75).
-    fn visibility<O: Output + ?Sized>(record: &Record, out: &mut O) {
+    /// The data of `@@Bb` (VP p. 75).
+    fn visibility(record: &Record) -> Data {
         let mut data = Data::new();
         data.byte(count_byte(record.satellites.len()));
         for satellite in record.satellites.iter() {
@@ -1140,7 +1176,21 @@ impl Engine {
                 .byte(health);
         }
         data.zeros((SATELLITES - record.satellites.len()) * VISIBLE_SLOT);
-        send(out, BB_VISIBLE_SATELLITES, &data);
+        data
+    }
+
+    /// `@@Bc` (VP p. 77): the kind of DOP `@@Aj` asks for, and no
+    /// combinations.
+    fn xdop_table<O: Output + ?Sized>(&self, out: &mut O) {
+        send(
+            out,
+            BC_XDOP_TABLE,
+            Data::new()
+                .byte(self.state.settings.dop_type())
+                .byte(0)
+                .byte(XDOP_IN_VIEW)
+                .zeros(XDOP_TABLE),
+        );
     }
 
     /// `@@Bd` (VP p. 79): the almanac's status, given twice, as the one
@@ -1255,12 +1305,7 @@ impl Engine {
             .byte(ability)
             .word(timing.map_or(0, |timing| timing.sigma.0))
             .signed_byte(record.timing.map_or(0, |timing| timing.sawtooth.0));
-        let satellites = self.tracked(record, family);
-        let channels = satellites
-            .map(Some)
-            .chain(core::iter::repeat(None))
-            .take(family.channels);
-        for channel in channels {
+        for channel in self.channels(record, family) {
             // A satellite's time is sent as the fraction of a second
             // its solution falls at: its error, counted on from the
             // second or back from the next.

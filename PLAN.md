@@ -900,7 +900,9 @@ stands in for one.
   microcontroller, in a browser and on a host.  An encoder writes into
   the caller's buffer; a deframer owns a buffer of fixed size and lends
   each frame out of it, an Oncore one's size a constant derived from
-  the longest message in the table.  A host build proves neither,
+  the longest message in the table: the whole frame, header through
+  trailer, as the table and the manuals count a length, not the data
+  alone.  A host build proves neither,
   having `std` to fall back on, so `make check-no-std`, which CI runs,
   builds the crate for targets of each kind, the `Makefile`'s
   `NO_STD_TARGETS`, the least of them a Cortex-M0.

@@ -1,0 +1,11 @@
+# format: oncore engine vectors 1
+# scenario: power-up: nothing sent it
+# engine: vp-eight
+# start: 2026-10-22T12:00:00Z
+# leap-seconds: 18
+# latitude-mas: 134372100
+# longitude-mas: -439192200
+# height-msl-cm: 5500
+# antenna: on
+# answers: yes
+# status-rate: 0

@@ -1,0 +1,24 @@
+# format: oncore engine vectors 1
+# scenario: self-test: the self-tests with no antenna, and with one
+# engine: vp-eight-without-time-raim
+# start: 2026-10-22T12:00:00Z
+# leap-seconds: 18
+# latitude-mas: 134372100
+# longitude-mas: -439192200
+# height-msl-cm: 5500
+# antenna: off
+# answers: yes
+# status-rate: 0
+1 to 4040436701250d0a
+1 from 4040436701250d0a
+1 to 40404361220d0a
+1 to 40404661270d0a
+3 from 404043610000220d0a
+3 from 404046610000270d0a
+4 antenna on
+5 to 4040436701250d0a
+5 from 4040436701250d0a
+5 to 40404361220d0a
+5 to 40404661270d0a
+7 from 404043610000220d0a
+7 from 404046610000270d0a

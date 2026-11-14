@@ -953,6 +953,16 @@ stands in for one.
   other way: an engine resynchronizes a byte at a time, so a whole
   command straight after the start of a broken one is taken, where the
   receiver's firmware, which the deframer follows, would lose it.
+- **The model is held to recorded exchanges**:
+  `crates/smartclock-gps/tests/vectors/engine/` holds scripted
+  sessions, the bytes sent to an engine and the bytes it must send
+  back, second by second, which `make check-engine-vectors` and the
+  crate's tests replay against the model byte for byte.
+  `make engine-vectors` rewrites the answers from the model, for
+  review as a diff, when a change to them is meant.  Their sky is made
+  up, and their position is the one the firmware's own script sets
+  (`docs/firmware/gps.md`, "Requests") or one a command of theirs
+  sets.
 - **A VP's identity text is made up; a UT Plus's is a published one**,
   a `@@Cj` answer posted whole in a public bug report and matched in
   form by another on the time-nuts list, both cited where the text is.

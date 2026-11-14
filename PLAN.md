@@ -943,7 +943,11 @@ stands in for one.
   calls for the rates of its continuous messages, so a record whose
   time jumps neither doubles a message nor skips one.  The one answer
   that comes late, a self-test's, it holds until the caller's time,
-  passed in with every call, reaches a deadline it reports.
+  passed in with every call, reaches a deadline it reports.  Idle, a
+  poll of its position status answers the last one it sent while
+  fixing, as the manual has it, and before it has fixed, the current
+  one, tracking nothing; the recorded exchanges never poll an idle
+  engine that has fixed, so none of their answers moved.
 - **The model computes nothing physical.**  Dilutions of precision, a
   position in Earth-centered coordinates and magnetic variation need
   floating point or tables a Cortex-M0 should not carry, so a record

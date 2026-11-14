@@ -2,6 +2,7 @@
 //! vectors do not reach: a record with gaps, a shorted antenna, a leap
 //! second removed, `@@Gj`, and the options.
 
+use std::slice;
 use std::vec;
 use std::vec::Vec;
 
@@ -679,6 +680,62 @@ fn pseudorange_corrections_are_sent_as_the_record_has_them() {
     // Out of range either way, sent as the nearest end.
     assert_eq!(data[17..24], [4, 0x10, 0, 0, 0xf0, 0x00, 9]);
     assert_eq!(data[24..], [0; 21]);
+}
+
+/// VP pp. 89 and 90: a message carries six corrections, and an
+/// eight-channel engine with more sends a second straight after, the
+/// fields it does not need zeros.  A six-channel one sends its six.
+#[test]
+fn an_eight_channel_engine_sends_corrections_past_the_sixth_in_a_second_message() {
+    let correction = |id: u8| {
+        Some(Correction {
+            prn: prn(id),
+            range: Centimeters(i32::from(id)),
+            rate: MillimetersPerSecond(i16::from(id)),
+            ephemeris_issue: id,
+        })
+    };
+    let field = |id: u8| [id, 0, 0, id, 0, id, id];
+    let time = [0x01, 0xe2, 0x40];
+    let mut set = Corrections::new(Deciseconds(123_456));
+    set.satellites[5] = correction(6);
+    let mut record = full();
+    record.derived.corrections = Some(set);
+    let sent = |identity: &'static Identity, record: &Record| {
+        let mut engine = fixing(identity);
+        ask(&mut engine, record, BH_CORRECTION_OUTPUT, &[0])
+            .iter()
+            .map(|frame| {
+                assert_eq!(frame[2..HEADER], CE_PSEUDORANGE_CORRECTION.bytes());
+                frame[HEADER..frame.len() - TRAILER].to_vec()
+            })
+            .collect::<Vec<_>>()
+    };
+    let first = [&time[..], &[0; 35], &field(6)].concat();
+
+    // Nothing past the sixth: one message, from either.
+    assert_eq!(sent(&VP_EIGHT, &record), slice::from_ref(&first));
+    assert_eq!(sent(&VP_SIX, &record), slice::from_ref(&first));
+
+    // The eighth alone: a second message, the seventh's field unused.
+    set.satellites[7] = correction(8);
+    record.derived.corrections = Some(set);
+    let second = [&time[..], &[0; 7], &field(8), &[0; 28]].concat();
+    assert_eq!(second.len(), first.len());
+    assert_eq!(sent(&VP_EIGHT, &record), [first.clone(), second]);
+    assert_eq!(sent(&VP_SIX, &record), slice::from_ref(&first));
+
+    // Both.
+    set.satellites[6] = correction(7);
+    record.derived.corrections = Some(set);
+    let second = [&time[..], &field(7), &field(8), &[0; 28]].concat();
+    assert_eq!(sent(&VP_EIGHT, &record), [first.clone(), second]);
+
+    // No set at all: one message of no corrections.
+    record.derived.corrections = None;
+    let frames = sent(&VP_EIGHT, &record);
+    assert_eq!(frames.len(), 1);
+    assert_eq!(frames[0][3..], [0; 42]);
 }
 
 /// VP pp. 105 and 106; UT pp. 6.20, 6.93 and 6.95: the record's result

@@ -37,6 +37,12 @@
 //! [`Ecef`](crate::record::Ecef) position, or while it holds a position
 //! of the host's, zeros for `@@Bk`'s.
 //!
+//! Two settings the engine takes and echoes but does not act on:
+//! manual satellite selection (`@@Ah` 1 with `@@Ai`'s assignments, VP
+//! pp. 29 to 32) and manual altitude hold (`@@Av` 1 at `@@Au`'s height,
+//! VP pp. 58 to 61).  It tracks and fixes as though both were
+//! automatic.
+//!
 //! The pages cited are, as printed: VP, the VP Oncore's command
 //! reference, `third_party/motorola/VPCommands.pdf`; UT, TRM0003
 //! chapter 6, `third_party/motorola/oncore-ut-users-guide/ch6.pdf`;
@@ -100,6 +106,7 @@ use crate::oncore::OVERHEAD;
 use crate::oncore::SZ_POWER_ON_FAILURE;
 use crate::oncore::encode;
 use crate::record::Antenna;
+use crate::record::Correction;
 use crate::record::Corrections;
 use crate::record::DopKind;
 use crate::record::Fix;
@@ -233,9 +240,10 @@ const XDOP_ENTRY: usize = size_of::<u16>() + XDOP_SATELLITES;
 /// (VP p. 79).
 const ALMANAC_VALID: u8 = 1;
 const ALMANAC_STATUS: usize = 8;
-/// `@@Ce` (VP p. 115): the bytes of one satellite's correction, the
-/// greatest time of week, and the greatest correction and rate either
-/// way.
+/// `@@Ce` (VP pp. 90 and 115): the corrections one message carries,
+/// the bytes of one satellite's, the greatest time of week, and the
+/// greatest correction and rate either way.
+const CORRECTIONS_EACH: usize = 6;
 const CORRECTION_ENTRY: usize = 7;
 const TIME_OF_WEEK_MOST: u32 = 6_047_999;
 const CORRECTION_RANGE_MOST: i32 = 1_048_576;
@@ -1391,16 +1399,39 @@ impl Engine {
         );
     }
 
-    /// `@@Ce` (VP pp. 114 and 115): the record's corrections and their
-    /// time, or with none, the engine's time and no corrections.
+    /// `@@Ce` (VP pp. 89, 90, 114 and 115): the record's corrections
+    /// and their time, or with none, the engine's time and no
+    /// corrections.  A message carries six: an engine with more
+    /// channels whose record has a correction past the sixth sends a
+    /// second straight after, for the same time, with the rest in its
+    /// first fields and zeros in the others (VP p. 89).  One with six
+    /// channels sends the first six and no more.
     fn corrections<O: Output + ?Sized>(&self, record: &Record, out: &mut O) {
         let set = record
             .derived
             .corrections
             .unwrap_or_else(|| Corrections::new(self.clock.time_of_week().deciseconds()));
+        let (first, rest) = set.satellites.split_at(CORRECTIONS_EACH);
+        Self::correction_message(&set, first, out);
+        let rest = &rest[..self
+            .channels
+            .saturating_sub(CORRECTIONS_EACH)
+            .min(rest.len())];
+        if rest.iter().any(Option::is_some) {
+            Self::correction_message(&set, rest, out);
+        }
+    }
+
+    /// One `@@Ce` (VP pp. 90 and 115): the set's time and `slots`, at
+    /// most six, then zeros for the fields they leave.
+    fn correction_message<O: Output + ?Sized>(
+        set: &Corrections,
+        slots: &[Option<Correction>],
+        out: &mut O,
+    ) {
         let mut data = Data::new();
         data.triple(set.time.0.min(TIME_OF_WEEK_MOST));
-        for slot in set.satellites {
+        for slot in slots {
             match slot {
                 Some(correction) => {
                     let range = correction
@@ -1421,6 +1452,7 @@ impl Engine {
                 }
             }
         }
+        data.zeros(CORRECTION_ENTRY * CORRECTIONS_EACH.saturating_sub(slots.len()));
         send(out, CE_PSEUDORANGE_CORRECTION, &data);
     }
 

@@ -91,6 +91,24 @@ impl MessageId {
         self.0
     }
 
+    /// Which form of a per-channel message this ID is, and
+    /// [`Channels::Common`] for any other ID, one outside [`MESSAGES`]
+    /// included.
+    ///
+    /// The per-channel IDs are named here and each row of [`MESSAGES`]
+    /// takes its form from this, so asking does not read the table: a
+    /// build that asks only this does not carry the table.
+    #[must_use]
+    pub const fn channels(self) -> Channels {
+        match self {
+            BA_POSITION_STATUS | BC_XDOP_TABLE | BK_EXTENSION | BN_TIME_RAIM | CA_SELF_TEST => {
+                Channels::Six
+            }
+            EA_POSITION_STATUS | EK_EXTENSION | EN_TIME_RAIM | FA_SELF_TEST => Channels::Eight,
+            _ => Channels::Common,
+        }
+    }
+
     /// Equality, for the table's lookups at compile time.
     const fn is(self, other: Self) -> bool {
         self.0[0] == other.0[0] && self.0[1] == other.0[1]
@@ -217,7 +235,8 @@ pub const SZ_POWER_ON_FAILURE: MessageId = MessageId::new(*b"Sz");
 /// (`docs/firmware/oncore/58503b-1.01.04.txt`; `docs/scpi/undocumented.md`).
 pub const TA_DCXO: MessageId = MessageId::new(*b"Ta");
 
-/// Which form of a per-channel message a row is.  The engine reports
+/// Which form of a per-channel message an ID is
+/// ([`MessageId::channels`]).  The engine reports
 /// each channel in turn, so such a message has one ID and length for six
 /// channels and another for eight.  No image's table holds a
 /// twelve-channel message.
@@ -249,22 +268,17 @@ pub struct Message {
     /// The length of the message the engine sends under this ID, `None`
     /// if it sends none.
     pub response: Option<usize>,
-    /// Its per-channel form, if it has one.
+    /// Its per-channel form, if it has one: [`MessageId::channels`].
     pub channels: Channels,
 }
 
 impl Message {
-    const fn new(
-        id: MessageId,
-        command: Option<usize>,
-        response: Option<usize>,
-        channels: Channels,
-    ) -> Self {
+    const fn new(id: MessageId, command: Option<usize>, response: Option<usize>) -> Self {
         Self {
             id,
             command,
             response,
-            channels,
+            channels: id.channels(),
         }
     }
 
@@ -300,128 +314,118 @@ impl Message {
 /// Oncore.  A test checks the response lengths against those tables.
 pub const MESSAGES: &[Message] = &[
     // VP p. 6.  Every image.
-    Message::new(AA_TIME_OF_DAY, Some(10), Some(10), Channels::Common),
+    Message::new(AA_TIME_OF_DAY, Some(10), Some(10)),
     // VP p. 10.  Every image.
-    Message::new(AB_GMT_CORRECTION, Some(10), Some(10), Channels::Common),
+    Message::new(AB_GMT_CORRECTION, Some(10), Some(10)),
     // VP p. 12.  Every image.
-    Message::new(AB_APPLICATION_TYPE, Some(8), Some(8), Channels::Common),
+    Message::new(AB_APPLICATION_TYPE, Some(8), Some(8)),
     // VP p. 14.  Every image.
-    Message::new(AC_DATE, Some(11), Some(11), Channels::Common),
+    Message::new(AC_DATE, Some(11), Some(11)),
     // VP p. 16.  Every image.
-    Message::new(AC_HDOP_THRESHOLD, Some(9), Some(9), Channels::Common),
+    Message::new(AC_HDOP_THRESHOLD, Some(9), Some(9)),
     // VP p. 18.  Every image.
-    Message::new(AD_LATITUDE, Some(11), Some(11), Channels::Common),
+    Message::new(AD_LATITUDE, Some(11), Some(11)),
     // VP p. 20.  Every image.
-    Message::new(AD_CORRECTION_THRESHOLDS, Some(9), Some(9), Channels::Common),
+    Message::new(AD_CORRECTION_THRESHOLDS, Some(9), Some(9)),
     // VP p. 22.  Every image.
-    Message::new(AE_LONGITUDE, Some(11), Some(11), Channels::Common),
+    Message::new(AE_LONGITUDE, Some(11), Some(11)),
     // VP p. 26: the command sets one height, the response gives two.
     // Every image.
-    Message::new(AF_HEIGHT, Some(12), Some(15), Channels::Common),
+    Message::new(AF_HEIGHT, Some(12), Some(15)),
     // VP p. 28.  Every image.
-    Message::new(AG_MASK_ANGLE, Some(8), Some(8), Channels::Common),
+    Message::new(AG_MASK_ANGLE, Some(8), Some(8)),
     // VP p. 30.  Every image.
-    Message::new(AH_SATELLITE_SELECT, Some(8), Some(8), Channels::Common),
+    Message::new(AH_SATELLITE_SELECT, Some(8), Some(8)),
     // VP p. 32.  Every image.
-    Message::new(AI_MANUAL_SATELLITE, Some(9), Some(9), Channels::Common),
+    Message::new(AI_MANUAL_SATELLITE, Some(9), Some(9)),
     // VP p. 34.  Every image.
-    Message::new(AJ_XDOP_TYPE, Some(8), Some(8), Channels::Common),
+    Message::new(AJ_XDOP_TYPE, Some(8), Some(8)),
     // VP p. 38.  Every image.
-    Message::new(AK_XDOP_HYSTERESIS, Some(9), Some(9), Channels::Common),
+    Message::new(AK_XDOP_HYSTERESIS, Some(9), Some(9)),
     // VP p. 40.  Every image.
-    Message::new(AL_XDOP_THRESHOLD, Some(9), Some(9), Channels::Common),
+    Message::new(AL_XDOP_THRESHOLD, Some(9), Some(9)),
     // VP p. 42.  Every image.
-    Message::new(AM_IGNORE_LIST, Some(12), Some(12), Channels::Common),
+    Message::new(AM_IGNORE_LIST, Some(12), Some(12)),
     // VP p. 44.  Every image.
-    Message::new(AN_ALMANAC_UPDATE, Some(8), Some(8), Channels::Common),
+    Message::new(AN_ALMANAC_UPDATE, Some(8), Some(8)),
     // VP p. 46 and M12+ p. 83 print the response as `@@Ao`, UT p. 6.33
     // as `@@Ap`, 25 bytes either way.  Every image, and each takes only
     // `@@Ap`: its table gives `@@Ao` no length (`docs/firmware/gps.md`,
     // "Answer matching").
-    Message::new(AO_DATUM_SELECT, Some(8), None, Channels::Common),
+    Message::new(AO_DATUM_SELECT, Some(8), None),
     // VP pp. 48-49.  Every image, decoded only: none sends the command.
-    Message::new(AP_USER_DATUM, None, Some(25), Channels::Common),
+    Message::new(AP_USER_DATUM, None, Some(25)),
     // VP p. 51.  Every image.
-    Message::new(
-        AQ_ATMOSPHERIC_CORRECTION,
-        Some(8),
-        Some(8),
-        Channels::Common,
-    ),
+    Message::new(AQ_ATMOSPHERIC_CORRECTION, Some(8), Some(8)),
     // VP p. 53.  Every image.
-    Message::new(AR_FIX_ALGORITHM, Some(8), Some(8), Channels::Common),
+    Message::new(AR_FIX_ALGORITHM, Some(8), Some(8)),
     // VP p. 55.  Every image.
-    Message::new(AS_HOLD_POSITION, Some(20), Some(20), Channels::Common),
+    Message::new(AS_HOLD_POSITION, Some(20), Some(20)),
     // VP p. 57.  Every image.
-    Message::new(AT_POSITION_HOLD, Some(8), Some(8), Channels::Common),
+    Message::new(AT_POSITION_HOLD, Some(8), Some(8)),
     // VP p. 59.  Every image but the Z3801A's and Z3805A's.
-    Message::new(
-        AU_ALTITUDE_HOLD_HEIGHT,
-        Some(12),
-        Some(12),
-        Channels::Common,
-    ),
+    Message::new(AU_ALTITUDE_HOLD_HEIGHT, Some(12), Some(12)),
     // VP p. 61.  Every image.
-    Message::new(AV_ALTITUDE_HOLD, Some(8), Some(8), Channels::Common),
+    Message::new(AV_ALTITUDE_HOLD, Some(8), Some(8)),
     // VP p. 63.  Every image.
-    Message::new(AW_TIME_MODE, Some(8), Some(8), Channels::Common),
+    Message::new(AW_TIME_MODE, Some(8), Some(8)),
     // VP p. 65.  Every image.
-    Message::new(AX_EPOCH_OFFSET, Some(9), Some(9), Channels::Common),
+    Message::new(AX_EPOCH_OFFSET, Some(9), Some(9)),
     // VP p. 67.  Every image.
-    Message::new(AY_PULSE_OFFSET, Some(11), Some(11), Channels::Common),
+    Message::new(AY_PULSE_OFFSET, Some(11), Some(11)),
     // VP p. 69.  Every image.
-    Message::new(AZ_CABLE_DELAY, Some(11), Some(11), Channels::Common),
+    Message::new(AZ_CABLE_DELAY, Some(11), Some(11)),
     // VP pp. 71-73.  Every image.
-    Message::new(BA_POSITION_STATUS, Some(8), Some(68), Channels::Six),
+    Message::new(BA_POSITION_STATUS, Some(8), Some(68)),
     // VP p. 75.  Every image.
-    Message::new(BB_VISIBLE_SATELLITES, Some(8), Some(92), Channels::Common),
+    Message::new(BB_VISIBLE_SATELLITES, Some(8), Some(92)),
     // VP p. 77.  Every image.
-    Message::new(BC_XDOP_TABLE, Some(8), Some(82), Channels::Six),
+    Message::new(BC_XDOP_TABLE, Some(8), Some(82)),
     // VP p. 79.  Every image.
-    Message::new(BD_ALMANAC_STATUS, Some(8), Some(23), Channels::Common),
+    Message::new(BD_ALMANAC_STATUS, Some(8), Some(23)),
     // VP p. 90: answered by `@@Ce`, not by its own ID.  Every image, with
     // no length in its table.
-    Message::new(BH_CORRECTION_OUTPUT, Some(8), None, Channels::Common),
+    Message::new(BH_CORRECTION_OUTPUT, Some(8), None),
     // VP p. 94.  Every image.
-    Message::new(BJ_LEAP_SECOND_PENDING, Some(8), Some(8), Channels::Common),
+    Message::new(BJ_LEAP_SECOND_PENDING, Some(8), Some(8)),
     // VP pp. 96-98.  Every image.
-    Message::new(BK_EXTENSION, Some(8), Some(69), Channels::Six),
+    Message::new(BK_EXTENSION, Some(8), Some(69)),
     // VP pp. 104-106.  Every image.
-    Message::new(BN_TIME_RAIM, Some(22), Some(59), Channels::Six),
+    Message::new(BN_TIME_RAIM, Some(22), Some(59)),
     // UT p. 6.81.  The 58503B's and Z3816A's.
-    Message::new(BO_UTC_OFFSET, Some(8), Some(8), Channels::Common),
+    Message::new(BO_UTC_OFFSET, Some(8), Some(8)),
     // VP p. 108.  Every image.
-    Message::new(CA_SELF_TEST, Some(7), Some(9), Channels::Six),
+    Message::new(CA_SELF_TEST, Some(7), Some(9)),
     // VP p. 115, and p. 90 for it as `@@Bh`'s answer.  Every image,
     // decoded only: none sends the command.
-    Message::new(CE_PSEUDORANGE_CORRECTION, None, Some(52), Channels::Common),
+    Message::new(CE_PSEUDORANGE_CORRECTION, None, Some(52)),
     // VP p. 117.  Every image.
-    Message::new(CF_SET_TO_DEFAULTS, Some(7), Some(7), Channels::Common),
+    Message::new(CF_SET_TO_DEFAULTS, Some(7), Some(7)),
     // VP p. 119, which says 7 bytes under a format, `@@CgmC<CR><LF>`, of
     // 8.  Every image, with 8 in its table.
-    Message::new(CG_FIX_MODE, Some(8), Some(8), Channels::Common),
+    Message::new(CG_FIX_MODE, Some(8), Some(8)),
     // VP p. 121: no response.  Every image.
-    Message::new(CI_IO_FORMAT, Some(8), None, Channels::Common),
+    Message::new(CI_IO_FORMAT, Some(8), None),
     // VP p. 123.  Every image.
-    Message::new(CJ_RECEIVER_ID, Some(7), Some(294), Channels::Common),
+    Message::new(CJ_RECEIVER_ID, Some(7), Some(294)),
     // VP pp. 125-126.  Every image but the Z3801A's and Z3805A's.
-    Message::new(EA_POSITION_STATUS, Some(8), Some(76), Channels::Eight),
+    Message::new(EA_POSITION_STATUS, Some(8), Some(76)),
     // VP pp. 135-137.  Every image but the Z3801A's and Z3805A's.
-    Message::new(EK_EXTENSION, Some(8), Some(71), Channels::Eight),
+    Message::new(EK_EXTENSION, Some(8), Some(71)),
     // VP pp. 140-142.  Every image but the Z3801A's and Z3805A's.
-    Message::new(EN_TIME_RAIM, Some(22), Some(69), Channels::Eight),
+    Message::new(EN_TIME_RAIM, Some(22), Some(69)),
     // VP p. 144.  Every image but the Z3801A's and Z3805A's.
-    Message::new(FA_SELF_TEST, Some(7), Some(9), Channels::Eight),
+    Message::new(FA_SELF_TEST, Some(7), Some(9)),
     // M12+ p. 153.  The 58503B's and Z3816A's.
-    Message::new(GJ_LEAP_SECOND_PENDING, Some(7), Some(21), Channels::Common),
+    Message::new(GJ_LEAP_SECOND_PENDING, Some(7), Some(21)),
     // UT p. 6.39 and M12+ p. 177: 8 bytes, sent unasked.  The 58503B's,
     // Z3816A's and Z3817A's, whose tables give it 7.
-    Message::new(SZ_POWER_ON_FAILURE, None, Some(8), Channels::Common),
+    Message::new(SZ_POWER_ON_FAILURE, None, Some(8)),
     // In no manual here.  The 58503B's and Z3816A's: the response's
     // length is their tables', and the command's is the entry's query
     // form in the image, five bytes of data
     // (`docs/firmware/oncore/README.md`, "The message table", `+0x16`).
-    Message::new(TA_DCXO, Some(12), Some(12), Channels::Common),
+    Message::new(TA_DCXO, Some(12), Some(12)),
 ];
 
 /// The row of [`MESSAGES`] for an ID.
@@ -871,16 +875,23 @@ mod tests {
     use super::AW_TIME_MODE;
     use super::AY_PULSE_OFFSET;
     use super::AZ_CABLE_DELAY;
+    use super::BA_POSITION_STATUS;
+    use super::BC_XDOP_TABLE;
     use super::BH_CORRECTION_OUTPUT;
     use super::BJ_LEAP_SECOND_PENDING;
+    use super::BK_EXTENSION;
     use super::BN_TIME_RAIM;
+    use super::CA_SELF_TEST;
     use super::CE_PSEUDORANGE_CORRECTION;
     use super::CF_SET_TO_DEFAULTS;
     use super::CI_IO_FORMAT;
     use super::CJ_RECEIVER_ID;
     use super::Channels;
     use super::Deframer;
+    use super::EA_POSITION_STATUS;
+    use super::EK_EXTENSION;
     use super::EN_TIME_RAIM;
+    use super::FA_SELF_TEST;
     use super::FrameError;
     use super::GJ_LEAP_SECOND_PENDING;
     use super::HEADER;
@@ -1459,6 +1470,43 @@ mod tests {
             .filter(|r| r.channels == Channels::Six)
             .count();
         assert_eq!(sixes, eights.len() + 1);
+    }
+
+    /// An ID's form is its row's, for every row, without the table: the
+    /// per-channel IDs are the nine whose manual titles say six or eight
+    /// channels, and every other pair of bytes is common, in the table or
+    /// not.
+    #[test]
+    fn an_ids_channels_are_its_rows() {
+        let of_form = |form: Channels| -> Vec<MessageId> {
+            MESSAGES
+                .iter()
+                .filter(|row| row.channels == form)
+                .map(|row| row.id)
+                .collect()
+        };
+        assert_eq!(
+            of_form(Channels::Six),
+            [
+                BA_POSITION_STATUS,
+                BC_XDOP_TABLE,
+                BK_EXTENSION,
+                BN_TIME_RAIM,
+                CA_SELF_TEST
+            ]
+        );
+        assert_eq!(
+            of_form(Channels::Eight),
+            [EA_POSITION_STATUS, EK_EXTENSION, EN_TIME_RAIM, FA_SELF_TEST]
+        );
+        for first in u8::MIN..=u8::MAX {
+            for second in u8::MIN..=u8::MAX {
+                let id = MessageId::new([first, second]);
+                let row = message(id).map_or(Channels::Common, |row| row.channels);
+                assert_eq!(id.channels(), row, "{id}");
+            }
+        }
+        const { assert!(matches!(EA_POSITION_STATUS.channels(), Channels::Eight)) };
     }
 
     /// A command's answer is a message the engine sends.

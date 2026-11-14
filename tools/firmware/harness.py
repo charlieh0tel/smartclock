@@ -3937,6 +3937,12 @@ def skipped(outcome: tuple[str, ...]) -> bool:
     return len(outcome) == 1 and outcome[0].startswith(SKIPPED)
 
 
+def covers(known: "Known | None", differences) -> bool:
+    """Whether a known difference accounts for every one of the
+    differences found, its pattern matching each whole."""
+    return known is not None and all(re.fullmatch(known.outcome, difference) for difference in differences)
+
+
 def report(name: str, outcomes: list[tuple[str, tuple[str, ...]]], known: "Known | None" = None) -> str:
     """ok, skip, known or FAIL for a routine's cases, each case's outcome
     its differences, none if it agrees, printing why; which of agreeing,
@@ -3946,7 +3952,7 @@ def report(name: str, outcomes: list[tuple[str, tuple[str, ...]]], known: "Known
     does."""
     failures = [(d, o) for d, o in outcomes if o and not skipped(o)]
     skips = [o[0] for _, o in outcomes if o and skipped(o)]
-    if failures and known is not None and all(re.fullmatch(known.outcome, d) for _, o in failures for d in o):
+    if failures and covers(known, [d for _, o in failures for d in o]):
         print(f"known {name}: {len(failures)} of {len(outcomes)} cases, {known.cause}")
         return "known"
     if failures:

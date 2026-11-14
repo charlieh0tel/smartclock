@@ -4824,6 +4824,29 @@ def names_files(c_path: str) -> list[str]:
     return [path for path in paths if os.path.exists(path)]
 
 
+def check_function(
+    m: Machine, types: Types, function: Function, image: int, rebuilt: int, context: Context,
+    known: Known | None, elsewhere: frozenset[tuple[str, str]],
+) -> tuple[str, list[tuple[str, tuple[str, ...]]]]:
+    """Checks one function and reports it: which of agreeing, skipped,
+    known or failed it counts as, and its cases' outcomes.  One whose
+    own cases name something the image's C lacks fails, unless
+    elsewhere, the image's MEANT_ELSEWHERE, lists the name."""
+    outcomes = list(check(m, types, function, image, rebuilt, context))
+    counted = report(function.name, outcomes, known)
+    missing = [
+        (kind, what)
+        for kind, what in unresolved(
+            function.name, context.states.get(function.name, States()),
+            context.given_cases.get(function.name, []), context,
+        )
+        if (function.name, what) not in elsewhere
+    ]
+    for kind, what in missing:
+        print(f"FAIL {function.name}: its {kind} {what} names nothing in the image's C")
+    return ("failed" if missing else counted), outcomes
+
+
 def main() -> int:
     if len(sys.argv) < 3 or "DECOMPILED_CFLAGS" not in os.environ:
         print(__doc__.strip(), file=sys.stderr)
@@ -4884,19 +4907,10 @@ def main() -> int:
             rebuilt = linked_symbols.get(function.name)
             if names and function.name not in names or image is None or rebuilt is None or rebuilt < REBUILT:
                 continue
-            outcomes = list(check(machine, types, function, image, rebuilt, context))
-            counted = report(function.name, outcomes, known.get(function.name))
-            missing = [
-                (kind, what)
-                for kind, what in unresolved(
-                    function.name, context.states.get(function.name, States()),
-                    context.given_cases.get(function.name, []), context,
-                )
-                if (function.name, what) not in elsewhere
-            ]
-            for kind, what in missing:
-                print(f"FAIL {function.name}: its {kind} {what} names nothing in the image's C")
-            counts["failed" if missing else counted] += 1
+            counted, outcomes = check_function(
+                machine, types, function, image, rebuilt, context, known.get(function.name), elsewhere
+            )
+            counts[counted] += 1
             modes["user mode alone"] += function.name in in_task
             modes["both modes"] += function.name in both_modes
             condition_codes_compared += function.condition_codes

@@ -28,7 +28,12 @@ described here.  Its `engine` module is a model that
 stands in for an Oncore, a VP of six or eight channels or a UT Plus:
 it answers the commands of "The message table" and sends the
 continuous messages from each second's record, to the rules listed
-below for what an engine in a receiver must do.
+below for what an engine in a receiver must do.  What the commands set
+it to -- mask angle, position and altitude hold, time base, the 1 PPS's
+cable delay, offset and mode, application type, initial position -- it
+gives as types (`Engine::settings`), and `Engine::receive` returns
+whether a command reset it (`@@Cf`) and which settings changed, for a
+tool that has something else to set the same way.
 
 ## The serial link
 

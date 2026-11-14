@@ -1,6 +1,7 @@
 //! Each message against its layout in the manuals, and what the test
 //! vectors do not reach: a record with gaps, a shorted antenna, a leap
-//! second removed, `@@Gj`, and the options.
+//! second removed, `@@Gj`, the options, and the settings and events a
+//! holder reads.
 
 use std::slice;
 use std::vec;
@@ -9,18 +10,40 @@ use std::vec::Vec;
 use crate::engine::Engine;
 use crate::engine::Options;
 use crate::engine::Output;
+use crate::engine::event::Event;
+use crate::engine::event::Events;
 use crate::engine::identity::Identity;
 use crate::engine::identity::UT_PLUS_2_2;
 use crate::engine::identity::UT_PLUS_3_1;
 use crate::engine::identity::VP_EIGHT;
 use crate::engine::identity::VP_EIGHT_WITHOUT_TIME_RAIM;
 use crate::engine::identity::VP_SIX;
+use crate::engine::settings::Application;
+use crate::engine::settings::Height;
+use crate::engine::settings::HeightKind;
+use crate::engine::settings::Location;
+use crate::engine::settings::PulseMode;
+use crate::engine::settings::Setting;
+use crate::engine::settings::SettingSet;
+use crate::engine::settings::Settings;
+use crate::engine::settings::TimeBase;
 use crate::oncore::AA_TIME_OF_DAY;
+use crate::oncore::AB_APPLICATION_TYPE;
 use crate::oncore::AB_GMT_CORRECTION;
 use crate::oncore::AC_DATE;
+use crate::oncore::AD_LATITUDE;
+use crate::oncore::AE_LONGITUDE;
+use crate::oncore::AF_HEIGHT;
+use crate::oncore::AG_MASK_ANGLE;
 use crate::oncore::AH_SATELLITE_SELECT;
 use crate::oncore::AJ_XDOP_TYPE;
+use crate::oncore::AS_HOLD_POSITION;
 use crate::oncore::AT_POSITION_HOLD;
+use crate::oncore::AU_ALTITUDE_HOLD_HEIGHT;
+use crate::oncore::AV_ALTITUDE_HOLD;
+use crate::oncore::AW_TIME_MODE;
+use crate::oncore::AY_PULSE_OFFSET;
+use crate::oncore::AZ_CABLE_DELAY;
 use crate::oncore::BA_POSITION_STATUS;
 use crate::oncore::BB_VISIBLE_SATELLITES;
 use crate::oncore::BC_XDOP_TABLE;
@@ -900,4 +923,418 @@ fn highest_in_the_sky_tracks_the_highest() {
     assert_eq!(channels(&mut engine), [3, 4, 31, 26, 16, 7]);
     ask(&mut engine, &record, AH_SATELLITE_SELECT, &[2]);
     assert_eq!(channels(&mut engine), [3, 4, 31, 26, 7, 9]);
+}
+
+/// The events one command made.
+fn tell(engine: &mut Engine, id: MessageId, data: &[u8]) -> Vec<Event> {
+    engine
+        .receive(&command(id, data), &full(), NOW, &mut Sent::default())
+        .collect()
+}
+
+fn changed(settings: &[Setting]) -> Event {
+    Event::SettingsChanged(
+        settings
+            .iter()
+            .fold(SettingSet::EMPTY, |set, setting| set.with(*setting)),
+    )
+}
+
+/// A position made up, which is nowhere a receiver was.
+const MADE_UP: Location = Location {
+    latitude: MilliArcSeconds(1_000_000),
+    longitude: MilliArcSeconds(-2_000_000),
+    height: Height {
+        height: Centimeters(12_345),
+        kind: HeightKind::MeanSeaLevel,
+    },
+};
+
+/// A height as `@@Af`, `@@As` and `@@Au` carry one (VP pp. 26, 55 and
+/// 59).
+fn height_data(height: Height) -> Vec<u8> {
+    let kind = match height.kind {
+        HeightKind::Ellipsoid => 0,
+        HeightKind::MeanSeaLevel => 1,
+    };
+    [&height.height.0.to_be_bytes()[..], &[kind]].concat()
+}
+
+/// What an Oncore is set to at power-up: each command's default (VP
+/// pp. 11, 17, 21, 25, 27, 54, 56, 58, 60, 62, 66, 68 and 102).
+fn defaults() -> Settings {
+    Settings {
+        mask_angle: Degrees(10),
+        position_hold: false,
+        held_position: Location::default(),
+        altitude_hold: false,
+        altitude_hold_height: Height::default(),
+        time_base: TimeBase::Utc,
+        cable_delay: Nanoseconds(0),
+        pulse_offset: Nanoseconds(0),
+        pulse_mode: PulseMode::Always,
+        application: Application::Land,
+        initial_position: Location::default(),
+    }
+}
+
+#[test]
+fn settings_start_at_the_manuals_defaults() {
+    for identity in PRESETS {
+        let mut engine = Engine::new(identity, Options::DEFAULT);
+        assert_eq!(engine.settings(), defaults());
+        // Set to its defaults when at them, it is reset and nothing
+        // changes.
+        assert_eq!(tell(&mut engine, CF_SET_TO_DEFAULTS, &[]), [Event::Reset]);
+        assert_eq!(engine.settings(), defaults());
+    }
+}
+
+/// Each setting is read back as its command gave it and is the one
+/// setting the command changes; given again, or asked for, nothing
+/// changes.
+#[test]
+fn each_setting_reads_back_after_its_command() {
+    /// A command, the data that asks for its value, the setting it
+    /// sets and the settings after it.
+    type Case = (MessageId, Vec<u8>, Vec<u8>, Setting, Settings);
+    const POSITION_ASKED: u8 = 0x99;
+    let hold_position = [
+        &MADE_UP.latitude.0.to_be_bytes()[..],
+        &MADE_UP.longitude.0.to_be_bytes()[..],
+        &height_data(MADE_UP.height),
+    ]
+    .concat();
+    let hold_position_asked = [&[0x7f, 0xff, 0xff, 0xff].repeat(3)[..], &[0xff]].concat();
+    let ellipsoid = Height {
+        height: Centimeters(-4321),
+        kind: HeightKind::Ellipsoid,
+    };
+    let traim = |pps_mode: u8| [&[0, 1, 0, 10, pps_mode][..], &[0; 10]].concat();
+    let cases: [Case; 16] = [
+        (AG_MASK_ANGLE, vec![25], vec![0xff], Setting::MaskAngle, {
+            let mut after = defaults();
+            after.mask_angle = Degrees(25);
+            after
+        }),
+        (
+            AT_POSITION_HOLD,
+            vec![1],
+            vec![0xff],
+            Setting::PositionHold,
+            {
+                let mut after = defaults();
+                after.position_hold = true;
+                after
+            },
+        ),
+        (
+            AS_HOLD_POSITION,
+            hold_position,
+            hold_position_asked,
+            Setting::HeldPosition,
+            {
+                let mut after = defaults();
+                after.held_position = MADE_UP;
+                after
+            },
+        ),
+        (
+            AV_ALTITUDE_HOLD,
+            vec![1],
+            vec![0xff],
+            Setting::AltitudeHold,
+            {
+                let mut after = defaults();
+                after.altitude_hold = true;
+                after
+            },
+        ),
+        (
+            AU_ALTITUDE_HOLD_HEIGHT,
+            height_data(MADE_UP.height),
+            vec![0xff; 5],
+            Setting::AltitudeHoldHeight,
+            {
+                let mut after = defaults();
+                after.altitude_hold_height = MADE_UP.height;
+                after
+            },
+        ),
+        (AW_TIME_MODE, vec![0], vec![0xff], Setting::TimeBase, {
+            let mut after = defaults();
+            after.time_base = TimeBase::Gps;
+            after
+        }),
+        (
+            AZ_CABLE_DELAY,
+            250_u32.to_be_bytes().to_vec(),
+            vec![0xff; 4],
+            Setting::CableDelay,
+            {
+                let mut after = defaults();
+                after.cable_delay = Nanoseconds(250);
+                after
+            },
+        ),
+        (
+            AY_PULSE_OFFSET,
+            999_999_999_u32.to_be_bytes().to_vec(),
+            vec![0xff; 4],
+            Setting::PulseOffset,
+            {
+                let mut after = defaults();
+                after.pulse_offset = Nanoseconds(999_999_999);
+                after
+            },
+        ),
+        (
+            BN_TIME_RAIM,
+            traim(0),
+            vec![0xff; 15],
+            Setting::PulseMode,
+            {
+                let mut after = defaults();
+                after.pulse_mode = PulseMode::Off;
+                after
+            },
+        ),
+        (
+            BN_TIME_RAIM,
+            traim(2),
+            vec![0xff; 15],
+            Setting::PulseMode,
+            {
+                let mut after = defaults();
+                after.pulse_mode = PulseMode::Tracking;
+                after
+            },
+        ),
+        (
+            EN_TIME_RAIM,
+            traim(3),
+            vec![0xff; 15],
+            Setting::PulseMode,
+            {
+                let mut after = defaults();
+                after.pulse_mode = PulseMode::Confirmed;
+                after
+            },
+        ),
+        (
+            AB_APPLICATION_TYPE,
+            vec![4],
+            vec![0xff],
+            Setting::Application,
+            {
+                let mut after = defaults();
+                after.application = Application::Static;
+                after
+            },
+        ),
+        (
+            AD_LATITUDE,
+            MADE_UP.latitude.0.to_be_bytes().to_vec(),
+            vec![POSITION_ASKED; 4],
+            Setting::InitialPosition,
+            {
+                let mut after = defaults();
+                after.initial_position.latitude = MADE_UP.latitude;
+                after
+            },
+        ),
+        (
+            AE_LONGITUDE,
+            MADE_UP.longitude.0.to_be_bytes().to_vec(),
+            vec![POSITION_ASKED; 4],
+            Setting::InitialPosition,
+            {
+                let mut after = defaults();
+                after.initial_position.longitude = MADE_UP.longitude;
+                after
+            },
+        ),
+        (
+            AF_HEIGHT,
+            height_data(MADE_UP.height),
+            vec![POSITION_ASKED; 5],
+            Setting::InitialPosition,
+            {
+                let mut after = defaults();
+                after.initial_position.height = MADE_UP.height;
+                after
+            },
+        ),
+        (
+            AF_HEIGHT,
+            height_data(ellipsoid),
+            vec![POSITION_ASKED; 5],
+            Setting::InitialPosition,
+            {
+                let mut after = defaults();
+                after.initial_position.height = ellipsoid;
+                after
+            },
+        ),
+    ];
+    for (id, data, asked, setting, after) in cases {
+        let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+        assert_eq!(tell(&mut engine, id, &asked), [], "{id:?} asked");
+        assert_eq!(engine.settings(), defaults(), "{id:?} asked");
+        assert_eq!(
+            tell(&mut engine, id, &data),
+            [changed(&[setting])],
+            "{id:?}"
+        );
+        assert_eq!(engine.settings(), after, "{id:?}");
+        assert_eq!(tell(&mut engine, id, &data), [], "{id:?} again");
+        assert_eq!(tell(&mut engine, id, &asked), [], "{id:?} asked after");
+        assert_eq!(engine.settings(), after, "{id:?} asked after");
+    }
+}
+
+/// The other application types (VP p. 12), each read back.
+#[test]
+fn every_application_type_reads_back() {
+    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    for (kind, application) in [
+        (0, Application::Air),
+        (1, Application::Handheld),
+        (3, Application::Marine),
+        (4, Application::Static),
+        (2, Application::Land),
+    ] {
+        assert_eq!(
+            tell(&mut engine, AB_APPLICATION_TYPE, &[kind]),
+            [changed(&[Setting::Application])]
+        );
+        assert_eq!(engine.settings().application, application);
+    }
+}
+
+/// A value a command does not take changes nothing (VP pp. 28, 67 and
+/// 104), nor does a command the engine does not take: a UT Plus has no
+/// `@@AB`, and a deaf engine hears none.
+#[test]
+fn a_command_not_taken_changes_no_setting() {
+    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    assert_eq!(tell(&mut engine, AG_MASK_ANGLE, &[90]), []);
+    assert_eq!(
+        tell(
+            &mut engine,
+            AY_PULSE_OFFSET,
+            &1_000_000_000_u32.to_be_bytes()
+        ),
+        []
+    );
+    assert_eq!(
+        tell(
+            &mut engine,
+            EN_TIME_RAIM,
+            &[0, 1, 0, 10, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ),
+        []
+    );
+    assert_eq!(engine.settings(), defaults());
+
+    let mut engine = Engine::new(&UT_PLUS_3_1, Options::DEFAULT);
+    assert_eq!(tell(&mut engine, AB_APPLICATION_TYPE, &[4]), []);
+    assert_eq!(engine.settings(), defaults());
+
+    let mut options = Options::DEFAULT;
+    options.deaf = true;
+    let mut engine = Engine::new(&VP_EIGHT, options);
+    assert_eq!(tell(&mut engine, AG_MASK_ANGLE, &[25]), []);
+    assert_eq!(tell(&mut engine, CF_SET_TO_DEFAULTS, &[]), []);
+    assert_eq!(engine.settings(), defaults());
+}
+
+/// VP pp. 116 and 117: `@@Cf` puts every setting back, and is a reset
+/// that names the settings it changed.
+#[test]
+fn set_to_defaults_is_a_reset_that_names_what_it_put_back() {
+    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    tell(&mut engine, AG_MASK_ANGLE, &[25]);
+    tell(&mut engine, AW_TIME_MODE, &[0]);
+    tell(
+        &mut engine,
+        BN_TIME_RAIM,
+        &[0, 1, 0, 10, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    );
+    tell(&mut engine, AD_LATITUDE, &MADE_UP.latitude.0.to_be_bytes());
+    assert_eq!(
+        tell(&mut engine, CF_SET_TO_DEFAULTS, &[]),
+        [
+            Event::Reset,
+            changed(&[
+                Setting::MaskAngle,
+                Setting::TimeBase,
+                Setting::PulseMode,
+                Setting::InitialPosition,
+            ]),
+        ]
+    );
+    assert_eq!(engine.settings(), defaults());
+}
+
+/// The commands of one call are told of together, a reset first
+/// wherever it came: the settings named are those to read afterward.
+#[test]
+fn one_calls_commands_are_told_of_together() {
+    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let bytes = [
+        command(AG_MASK_ANGLE, &[25]),
+        command(CF_SET_TO_DEFAULTS, &[]),
+        command(AW_TIME_MODE, &[0]),
+    ]
+    .concat();
+    let mut sent = Sent::default();
+    let events = engine.receive(&bytes, &full(), NOW, &mut sent);
+    assert!(!events.is_empty());
+    assert_eq!(
+        events.collect::<Vec<_>>(),
+        [
+            Event::Reset,
+            changed(&[Setting::MaskAngle, Setting::TimeBase]),
+        ]
+    );
+    assert_eq!(sent.0.len(), 3);
+    let mut after = defaults();
+    after.time_base = TimeBase::Gps;
+    assert_eq!(engine.settings(), after);
+
+    // Half a command changes nothing until the rest comes.
+    let frame = command(AG_MASK_ANGLE, &[30]);
+    let (head, tail) = frame.split_at(3);
+    let mut sent = Sent::default();
+    assert_eq!(engine.receive(head, &full(), NOW, &mut sent), Events::NONE);
+    assert_eq!(
+        engine
+            .receive(tail, &full(), NOW, &mut sent)
+            .collect::<Vec<_>>(),
+        [changed(&[Setting::MaskAngle])]
+    );
+}
+
+/// What is held is what the engine reports while it holds a position:
+/// the settings and the messages agree (VP pp. 17, 21 and 55).
+#[test]
+fn the_held_position_read_is_the_one_reported() {
+    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let record = full();
+    let data = [
+        &MADE_UP.latitude.0.to_be_bytes()[..],
+        &MADE_UP.longitude.0.to_be_bytes()[..],
+        &height_data(MADE_UP.height),
+    ]
+    .concat();
+    ask(&mut engine, &record, AS_HOLD_POSITION, &data);
+    ask(&mut engine, &record, AT_POSITION_HOLD, &[1]);
+    let held = engine.settings().held_position;
+    let frames = ask(&mut engine, &record, AD_LATITUDE, &[0x99; 4]);
+    assert_eq!(only(&frames, AD_LATITUDE), held.latitude.0.to_be_bytes());
+    let frames = ask(&mut engine, &record, AE_LONGITUDE, &[0x99; 4]);
+    assert_eq!(only(&frames, AE_LONGITUDE), held.longitude.0.to_be_bytes());
+    // Asking where it is does not move where it was told to start.
+    assert_eq!(engine.settings().initial_position, Location::default());
 }

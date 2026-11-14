@@ -19,7 +19,8 @@
 //!   made-up sky, a recording or a receiver on the bench;
 //! - what turns a record into an Oncore's messages: an [`engine`], a
 //!   model that stands in for a VP or a UT Plus, taking the receiver's
-//!   commands and a record each second.
+//!   commands and a record each second, and saying what those commands
+//!   set it to.
 //!
 //! Nothing turns a record into the Furuno's sentences yet.
 //!

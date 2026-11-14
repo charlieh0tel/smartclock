@@ -60,6 +60,8 @@ use thiserror::Error;
 
 use crate::Direction;
 use crate::NoRoom;
+use crate::framing::Step;
+use crate::framing::feed;
 
 /// A frame's first two bytes.
 const START: [u8; 2] = *b"@@";
@@ -647,11 +649,6 @@ enum State {
     LineFeed { length: usize },
 }
 
-/// What one byte did to a [`Deframer`]: nothing yet, ended a frame of
-/// some length, or an error.  [`Frame`] borrows the buffer, so the step
-/// is taken first and the frame made from it after.
-type Step = Option<Result<usize, FrameError>>;
-
 /// Where a [`Deframer`] gets a message's whole length, its ID being all
 /// a frame says of it.
 ///
@@ -820,14 +817,11 @@ impl<const N: usize, L: MessageLengths> Deframer<N, L> {
     /// assert_eq!(frames, 2);
     /// ```
     pub fn feed(&mut self, chunk: &[u8]) -> (usize, Option<Result<Frame<'_>, FrameError>>) {
-        let ended = chunk
-            .iter()
-            .enumerate()
-            .find_map(|(index, &byte)| self.step(byte).map(|step| (index + 1, step)));
-        match ended {
-            Some((taken, step)) => (taken, Some(step.map(|length| self.frame(length)))),
-            None => (chunk.len(), None),
-        }
+        let (taken, ended) = feed(chunk, |byte| self.step(byte));
+        (
+            taken,
+            ended.map(|step| step.map(|length| self.frame(length))),
+        )
     }
 
     /// Forgets any frame in progress.
@@ -861,7 +855,7 @@ impl<const N: usize, L: MessageLengths> Deframer<N, L> {
     }
 
     /// Starts a frame's body, its ID known.
-    fn begin(&mut self, id: MessageId) -> Step {
+    fn begin(&mut self, id: MessageId) -> Step<FrameError> {
         self.state = State::Idle;
         match self.length.length(id) {
             Some(length) if length > N => Some(Err(FrameError::Overflow {
@@ -880,7 +874,7 @@ impl<const N: usize, L: MessageLengths> Deframer<N, L> {
         }
     }
 
-    fn step(&mut self, byte: u8) -> Step {
+    fn step(&mut self, byte: u8) -> Step<FrameError> {
         match self.state {
             State::Idle => {
                 self.restart(byte);

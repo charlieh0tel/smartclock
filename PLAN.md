@@ -931,7 +931,33 @@ stands in for one.
   build uses.
 - **Framing first:** IDs, lengths, checksums, encoders and streaming
   deframers.  What turns an engine's knowledge into a message's bytes
-  is later work, in modules beside these.
+  is a module beside these: `engine`, for the Oncores.  The Furuno's
+  is later work.
+- **A model stands in for an Oncore** (`engine`): a six-channel VP, an
+  eight-channel VP or a UT Plus, chosen when it is made by an identity,
+  a `static` holding the model and the `@@Cj` text, so one build serves
+  them all and a tool picks by configuration.  It takes the receiver's
+  bytes and a record each second and hands whole frames to the caller's
+  output.  It has no clock, no link and no source: the caller calls it
+  at each 1 PPS with the record its source gave, and it counts those
+  calls for the rates of its continuous messages, so a record whose
+  time jumps neither doubles a message nor skips one.  The one answer
+  that comes late, a self-test's, it holds until the caller's time,
+  passed in with every call, reaches a deadline it reports.
+- **The model computes nothing physical.**  Dilutions of precision, a
+  position in Earth-centered coordinates and magnetic variation need
+  floating point or tables a Cortex-M0 should not carry, so a record
+  has a block of derived values a caller with the means fills in, and
+  the model sends zeros for what is absent.
+- **The model's command framer is its own**, not the deframer run the
+  other way: an engine resynchronizes a byte at a time, so a whole
+  command straight after the start of a broken one is taken, where the
+  receiver's firmware, which the deframer follows, would lose it.
+- **A VP's identity text is made up; a UT Plus's is a published one**,
+  a `@@Cj` answer posted whole in a public bug report and matched in
+  form by another on the time-nuts list, both cited where the text is.
+  A second UT Plus identity, of a firmware late enough to be sent
+  `@@Gj`, is made up.
 - **One record of a second, whatever the engine** (`record`): the
   time, the leap second, the fix, the sky, the almanac and the antenna,
   naming no message.  A field is in it only if a message some image

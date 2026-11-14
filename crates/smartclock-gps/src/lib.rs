@@ -16,9 +16,12 @@
 //!   [`record`], in the integer [`units`] the messages carry, with GPS
 //!   [`time`], UTC and the calendar;
 //! - where each second's record comes from: a [`source`], whether a
-//!   made-up sky, a recording or a receiver on the bench.
+//!   made-up sky, a recording or a receiver on the bench;
+//! - what turns a record into an Oncore's messages: an [`engine`], a
+//!   model that stands in for a VP or a UT Plus, taking the receiver's
+//!   commands and a record each second.
 //!
-//! What turns a record into an engine's messages is not here yet.
+//! Nothing turns a record into the Furuno's sentences yet.
 //!
 //! It is `no_std` and does not allocate: an encoder writes into the
 //! caller's buffer, a deframer owns a buffer of fixed size and lends
@@ -33,6 +36,7 @@ extern crate std;
 
 use thiserror::Error;
 
+pub mod engine;
 pub mod nmea;
 pub mod oncore;
 pub mod record;

@@ -999,6 +999,11 @@ stands in for one.
   scanned; what each function does with it is read off the rewritten
   C by hand, in `docs/firmware/gps-field-uses.tsv`, which the check
   holds complete but cannot hold right.
+  A field is a row and a row is whole bytes, but for the receiver
+  status of `@@Ba` and `@@Ea`, split by bit the same day: the
+  images use its 3D fix bit and only print the rest, and one row put
+  the bit the model leaves zero on the work list.  No other byte is
+  split.
   `make check-gps-fields` fails when the table and
   the images part, and the crate's tests hold its rows to the table of
   lengths.  The rule it serves: every message the model speaks is

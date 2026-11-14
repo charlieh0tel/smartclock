@@ -1028,10 +1028,34 @@ mod tests {
 
     /// The table of the messages' fields, from the crate's directory:
     /// tab-separated, a header line, then a row for each field with its
-    /// message, direction, name, offset, length, count and stride, in
-    /// that order, before columns the crate does not check
+    /// message, direction, name, offset, length, count, stride and
+    /// bits, in that order, before columns the crate does not check
     /// (`tools/firmware/gps_fields.py`).
     const FIELDS: &str = "../../docs/firmware/gps-fields.tsv";
+
+    /// A message and direction of the field table: the ID and the
+    /// direction's name.
+    type FieldKey = (String, String);
+
+    /// The masks of the rows at each span, (start, end), of a message.
+    type SpanMasks = BTreeMap<(usize, usize), Vec<u8>>;
+
+    /// The bits cell of a row that is all of its bytes.
+    const ALL_BITS: &str = "-";
+
+    /// The bits of its bytes a row is, as a mask, from its bits cell:
+    /// [`ALL_BITS`], one bit's number, or a run's highest and lowest.
+    fn bits_mask(cell: &str) -> u8 {
+        if cell == ALL_BITS {
+            return u8::MAX;
+        }
+        let bit = |cell: &str| -> u32 { cell.parse().expect("a bit") };
+        let (high, low) = cell
+            .split_once('-')
+            .map_or((bit(cell), bit(cell)), |(high, low)| (bit(high), bit(low)));
+        assert!(low <= high && high < u8::BITS, "bits {cell}");
+        (low..=high).fold(0, |mask, bit| mask | 1 << bit)
+    }
 
     /// A field row's direction column.
     fn direction_name(direction: Direction) -> &'static str {
@@ -1042,27 +1066,46 @@ mod tests {
     }
 
     /// The bytes of each message's fields in each direction, as
-    /// (start, end) by (ID, direction name), from [`FIELDS`].
-    fn field_spans() -> BTreeMap<(String, String), Vec<(usize, usize)>> {
+    /// (start, end) by (ID, direction name), from [`FIELDS`].  Rows
+    /// may share bytes only as bits of them, and must then give each
+    /// bit once between them: they come back as the one span.
+    fn field_spans() -> BTreeMap<FieldKey, Vec<(usize, usize)>> {
         let text = fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join(FIELDS))
             .expect("the field table");
-        let mut spans: BTreeMap<(String, String), Vec<(usize, usize)>> = BTreeMap::new();
+        let mut masks: BTreeMap<FieldKey, SpanMasks> = BTreeMap::new();
         for line in text.lines().skip(1) {
             let cells: Vec<&str> = line.split('\t').collect();
-            let [id, direction, _, offset, length, count, stride, ..] = cells.as_slice() else {
+            let [id, direction, _, offset, length, count, stride, bits, ..] = cells.as_slice()
+            else {
                 panic!("a short row: {line}");
             };
             let number = |cell: &str| -> usize { cell.parse().expect("a number") };
             let (offset, length, count) = (number(offset), number(length), number(count));
             let stride = if count == 1 { length } else { number(stride) };
-            let fields = spans
+            let fields = masks
                 .entry(((*id).to_string(), (*direction).to_string()))
                 .or_default();
-            fields.extend(
-                (0..count).map(|index| (offset + index * stride, offset + index * stride + length)),
-            );
+            for index in 0..count {
+                let start = offset + index * stride;
+                fields
+                    .entry((start, start + length))
+                    .or_default()
+                    .push(bits_mask(bits));
+            }
         }
-        spans
+        masks
+            .into_iter()
+            .map(|(key, fields)| {
+                for (span, masks) in &fields {
+                    let given = masks.iter().fold(0, |given: u8, mask| {
+                        assert_eq!(given & mask, 0, "{key:?} {span:?}: a bit twice");
+                        given | mask
+                    });
+                    assert_eq!(given, u8::MAX, "{key:?} {span:?}: a bit missing");
+                }
+                (key, fields.into_keys().collect())
+            })
+            .collect()
     }
 
     /// A frame of `data`.

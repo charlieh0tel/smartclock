@@ -1065,7 +1065,8 @@ send `@@Ci`.
 `gps-fields.tsv` has a row for every field of every message the engine
 model of `crates/smartclock-gps` speaks, command and response: its
 offset from the frame's first `@`, its length, and for a field
-repeated by channel or satellite the count and the stride; the manual
+repeated by channel or satellite the count and the stride; for a
+field that is part of a byte, its bits; the manual
 and page that give it; the images that read it, or for a command
 field set it; the images that compare it with the command sent; what
 the images that read it use it for; and where the model gets it.  The
@@ -1073,6 +1074,14 @@ rows cover a message's
 data alone.  The `@@` and ID before it and the checksum, CR and LF
 after it are every message's and have no row, and a message with no
 data has none.
+
+One byte is split by bit: the receiver status of `@@Ba` and `@@Ea`,
+which the manual lays out as eight flags (VP pp. 73 and 126) and of
+which the images use one.  Each flag has a row at the byte's offset,
+its bits column naming the bit, 7 the most significant; a run of bits
+would be written highest to lowest, `6-4`.  Every other row is whole
+bytes, its bits `-`, the channel status flags among them: those the
+images use whole or not at all.
 
 `tools/firmware/gps_fields.py` holds the table to the images
 (`make check-gps-fields`; `make gps-fields` rewrites the images,
@@ -1096,8 +1105,9 @@ specification; in short:
     `:SYSTem:PRINt?`, the diagnostic log or the 58503A's front panel;
   - *console*: only a console word's report shows it;
   - *stored*: nothing is found to read where it is stored.
-- **Where a field is stored is measured**: its bytes are flipped, the
-  decoders run, and the bytes of RAM that change are its stores.
+- **Where a field is stored is measured**: its bytes are flipped, of a
+  row of bits those bits alone, the decoders run, and the bytes of RAM
+  that change are its stores.
 - **Who reads a store is a scan of the image's instructions**, from
   each decoder's record and every absolute address among the stores.
   Where an address leaves the scan's sight, indexed, stepped, passed
@@ -1113,13 +1123,16 @@ specification; in short:
   covers, a row that covers nothing and a function cited that an image
   lacks.  It cannot check the reading.
 - **What the use can miss.**  A store read only through a pointer kept
-  in RAM has no reader, and its field comes out stored.  A function is
-  classed whole for a field, whichever of its bits it tests: the
-  receiver status is control for its 3D fix bit, by which the survey
-  averages, though nothing but a console word reads the position
-  propagate bit the model leaves zero.  The same holds for a store
-  that takes bits from several fields, as the Z3817A's `gps.field_592`
-  does.  A use more than one call from the reader is the reading's to
+  in RAM has no reader, and its field comes out stored.  The scan
+  finds the functions that read a store, not the bits of it they
+  test, so a function is classed whole for a field unless the hand
+  table says otherwise.  It does for the receiver status, whose rows
+  all have the one store and the same readers: the survey averages by
+  the 3D fix bit, the status screen tests that bit of its copy, and
+  the other seven, the position propagate bit the model leaves zero
+  among them, only the console's reports print.  It does too for a
+  store that takes bits from several fields, as the Z3817A's
+  `gps.field_592` does.  A use more than one call from the reader is the reading's to
   follow.  The run covers the decoders alone, no other task.
 - **Compared is measured**: an image's `gps_response_match` runs on
   each response with a command of the same bytes, and the bytes of the
@@ -1129,8 +1142,11 @@ specification; in short:
 - **Set by is the request scripts and lists** of `oncore/`: a command
   sent in mode 0 or 2 ("Requests").  A query sends no field.
 - **A message's rows tile its data**, every byte once, and end where
-  the images' tables frame the message.  The crate's tests hold the
-  same rows to its own table of lengths.
+  the images' tables frame the message.  Rows share a byte only as
+  bits of it: they must have the same offset, length, count and
+  stride and between them give each of the eight bits once, and then
+  stand as one field in the tiling.  The crate's tests hold the same
+  rows, bits and all, to its own table of lengths.
 - **The Z3815A has no row.**  It speaks NMEA with Furuno's sentences,
   which the model does not.
 
@@ -1152,15 +1168,14 @@ list.  The last is the command fields.
 <!-- gps_fields.py gaps -->
 | Message | Field | Bytes | Use | By | The engine sends |
 |---|---|---|---|---|---|
-| `@@Ba` | receiver status | 64 | control: all four | `oncore_position_message` | zero: position propagate bit |
 | `@@Bb` | health | 11-88, 12 x 1 | reported: all four | `status_snapshot` | zero: removed by @@Am bit |
 | `@@Ca` | self-test result | 4-5 | control: all four | `gps_diag_sequence`, `gps_selftest_run` | constant: every test passes |
-| `@@Ea` | receiver status | 72 | control: 58503a-3704, z3817a-3752 | `oncore_position_message` | zero: position propagate bit |
 | `@@Fa` | self-test result | 4-5 | control: 58503a-3704, z3817a-3752 | `gps_diag_sequence`, `gps_selftest_run` | constant: every test passes |
 
 | Message | Field | Bytes | Console only | The engine sends |
 |---|---|---|---|---|
 | `@@Ba` | channel status flags | 43-63, 6 x 1 | console: all four | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
+| `@@Ba` | receiver status position propagate | 64, bit 7 | console: all four | zero |
 | `@@Bk` | magnetic variation | 14-15 | console: all four | zero |
 | `@@Bk` | velocity north | 16-17 | console: all four | zero |
 | `@@Bk` | velocity east | 18-19 | console: all four | zero |
@@ -1176,6 +1191,7 @@ list.  The last is the command fields.
 | `@@Bk` | oscillator offset | 64-65 | console: z3805a-3543b, z3801a-3543 | zero |
 | `@@Bn` | pulse rate | 9-11 | console: z3805a-3543b, z3801a-3543; stored: 58503a-3704, z3817a-3752 | constant: one pulse a second |
 | `@@Ea` | channel status flags | 43-71, 8 x 1 | console: 58503a-3704, z3817a-3752 | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
+| `@@Ea` | receiver status position propagate | 72, bit 7 | console: 58503a-3704, z3817a-3752 | zero |
 | `@@Ek` | magnetic variation | 14-15 | console: 58503a-3704, z3817a-3752 | zero |
 | `@@Ek` | velocity north | 16-17 | console: 58503a-3704, z3817a-3752 | zero |
 | `@@Ek` | velocity east | 18-19 | console: 58503a-3704, z3817a-3752 | zero |

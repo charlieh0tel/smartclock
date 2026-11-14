@@ -83,10 +83,9 @@ the 24-bit bus, wherever the traffic puts them:
   write select, CS6, from `0x1522` (restart.md, "The chip selects");
   the Am29F010s ignore a write outside a command sequence (Am29F010B
   data sheet, "Command Definitions"), and ascending stores never form
-  one.  The count ran out 435 s later and framing resumed.
-  Meanwhile the unit went to holdover 63 s after the message (`Holdover
-  started, not tracking GPS`) with its alarm, and locked again 543 s
-  after it.
+  one.  The count ran out and framing resumed.  Meanwhile the unit
+  went to holdover (`Holdover started, not tracking GPS`) with its
+  alarm, and locked again once messages were framed.
 - `@@Bh` and `@@Ci`: the byte was `0x23`.  `0x231522` has no chip
   select, so the bus monitor ended the store with a bus error in
   `gpsm`, which no handler takes, and the watchdog restarted the unit

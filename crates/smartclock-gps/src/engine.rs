@@ -99,18 +99,27 @@ use crate::oncore::MessageId;
 use crate::oncore::SZ_POWER_ON_FAILURE;
 use crate::oncore::encode;
 use crate::record::Antenna;
+use crate::record::Corrections;
+use crate::record::DopKind;
 use crate::record::Fix;
 use crate::record::Health;
+use crate::record::RaimAbility;
+use crate::record::RaimSolution;
 use crate::record::Record;
 use crate::record::SATELLITES;
 use crate::record::Satellite;
 use crate::record::Tracking;
+use crate::record::XDOP_COMBINATIONS;
+use crate::record::XDOP_SATELLITES;
+use crate::record::XdopCombination;
+use crate::record::XdopTable;
 use crate::time::DateTime;
 use crate::time::GpsSeconds;
 use crate::time::LeapChange;
 use crate::time::LeapEvent;
 use crate::units::Milliseconds;
 use crate::units::Prn;
+use crate::units::PrnSet;
 use crate::units::Seconds;
 
 /// Where an engine's frames go: the serial link to the receiver.
@@ -205,17 +214,20 @@ const SIGNAL: [u8; 61] = [
 /// field's bits.
 const VISIBLE_SLOT: usize = 7;
 const VISIBLE_UNHEALTHY: u8 = 2;
-/// `@@Bc`: the satellites its table is for, and the bytes of its nine
-/// combinations (VP p. 77).
-const XDOP_IN_VIEW: u8 = 6;
-const XDOP_TABLE: usize = 9 * 8;
+/// `@@Bc`: the bytes of one combination, a DOP and its satellites (VP
+/// p. 77).
+const XDOP_ENTRY: usize = size_of::<u16>() + XDOP_SATELLITES;
 /// `@@Bd`'s almanac-valid flag, and the bytes of one almanac's status
 /// (VP p. 79).
 const ALMANAC_VALID: u8 = 1;
 const ALMANAC_STATUS: usize = 8;
-/// `@@Ce`: the bytes that follow the time, six channels of seven (VP
-/// p. 115).
-const CORRECTIONS: usize = 6 * 7;
+/// `@@Ce` (VP p. 115): the bytes of one satellite's correction, the
+/// greatest time of week, and the greatest correction and rate either
+/// way.
+const CORRECTION_ENTRY: usize = 7;
+const TIME_OF_WEEK_MOST: u32 = 6_047_999;
+const CORRECTION_RANGE_MOST: i32 = 1_048_576;
+const CORRECTION_RATE_MOST: i16 = 4096;
 /// `@@Bk`: the bytes between the DOPs and the position, and those after
 /// the channels (VP pp. 96 to 98).
 const EXTENSION_BEFORE_POSITION: usize = 10;
@@ -241,8 +253,10 @@ const PPS_RATE: u32 = 1;
 /// The bytes a UT Plus leaves zero where a VP gives the rate and the
 /// next pulse's time (UT p. 6.95).
 const NEXT_PULSE: usize = 3 + 4 + 3;
-/// Time RAIM's solution statuses and what it can do (VP p. 106).
+/// Time RAIM's solution statuses (VP p. 105) and what it can do (VP
+/// p. 106).
 const TRAIM_SOLUTION_OK: u8 = 0;
+const TRAIM_SOLUTION_ALARM: u8 = 1;
 const TRAIM_SOLUTION_UNKNOWN: u8 = 2;
 const TRAIM_ISOLATION: u8 = 0;
 const TRAIM_DETECTION: u8 = 1;
@@ -289,6 +303,17 @@ struct Solution {
     dop_type: u8,
     /// The receiver status bit for the kind of fix.
     status: u8,
+}
+
+/// What Time RAIM reports (VP pp. 105 and 106).
+#[derive(Debug, Clone, Copy)]
+struct TraimResult {
+    /// The solution's status.
+    solution: u8,
+    /// What it can do.
+    ability: u8,
+    /// The satellites it took out of the time solution.
+    isolated: PrnSet,
 }
 
 /// The satellites Time RAIM needs to detect a bad one and to isolate
@@ -627,7 +652,7 @@ impl Engine {
                 }
             }
             if self.state.corrections.due(self.count) {
-                self.corrections(out);
+                self.corrections(record, out);
             }
         }
         if self.state.offset_updates && stepped {
@@ -765,12 +790,12 @@ impl Engine {
         } else if id == BB_VISIBLE_SATELLITES {
             send(out, id, &Self::visibility(record));
         } else if id == BC_XDOP_TABLE {
-            self.xdop_table(out);
+            self.xdop_table(record, out);
         } else if id == BD_ALMANAC_STATUS {
             Self::almanac_status(record, out);
         } else if id == BH_CORRECTION_OUTPUT {
             self.state.corrections = Rate::of(data);
-            self.corrections(out);
+            self.corrections(record, out);
         } else if id == BJ_LEAP_SECOND_PENDING {
             send(out, id, Data::new().byte(self.leap_pending(record)));
         } else if id == BO_UTC_OFFSET {
@@ -1113,6 +1138,7 @@ impl Engine {
             _ => 0,
         };
         let solution = self.solution(record, tracked);
+        let isolated = self.traim_result(record, tracked).isolated;
         let visible = self.visible(record);
         let few = if visible < FEW_VISIBLE {
             STATUS_FEW_VISIBLE
@@ -1141,10 +1167,13 @@ impl Engine {
             match channel {
                 Some(satellite) => {
                     let strength = satellite.signal.map_or(0, |signal| signal.0);
-                    let used = match (satellite.used, ut_plus) {
-                        (false, _) => 0,
-                        (true, false) => CHANNEL_USED,
-                        (true, true) => CHANNEL_USED | CHANNEL_USED_FOR_TIME,
+                    // A UT Plus uses for time what it uses for position,
+                    // less what Time RAIM removed (UT pp. 6.20, 6.93).
+                    let for_time = !isolated.contains(satellite.prn);
+                    let used = match (satellite.used, ut_plus, for_time) {
+                        (false, _, _) => 0,
+                        (true, false, _) | (true, true, false) => CHANNEL_USED,
+                        (true, true, true) => CHANNEL_USED | CHANNEL_USED_FOR_TIME,
                     };
                     data.byte(satellite.prn.get())
                         .byte(tracking_mode(satellite.tracking))
@@ -1179,18 +1208,35 @@ impl Engine {
         data
     }
 
-    /// `@@Bc` (VP p. 77): the kind of DOP `@@Aj` asks for, and no
-    /// combinations.
-    fn xdop_table<O: Output + ?Sized>(&self, out: &mut O) {
-        send(
-            out,
-            BC_XDOP_TABLE,
-            Data::new()
-                .byte(self.state.settings.dop_type())
-                .byte(0)
-                .byte(XDOP_IN_VIEW)
-                .zeros(XDOP_TABLE),
-        );
+    /// `@@Bc` (VP pp. 76 and 77): the kind of DOP `@@Aj` asks for, and
+    /// the record's combinations if they are of that kind.  The
+    /// satellites a combination holds, Best-4 or N-in-View, is the most
+    /// any of them names; six with none.
+    fn xdop_table<O: Output + ?Sized>(&self, record: &Record, out: &mut O) {
+        let asked = self.state.settings.dop_type();
+        let table = record
+            .derived
+            .xdops
+            .filter(|table| dop_kind_code(table.kind()) == asked);
+        let combinations = table.iter().flat_map(XdopTable::iter);
+        let count = combinations.clone().count();
+        let taken = combinations
+            .clone()
+            .map(XdopCombination::len)
+            .max()
+            .unwrap_or(XDOP_SATELLITES);
+        let mut data = Data::new();
+        data.byte(asked)
+            .byte(count_byte(count))
+            .byte(count_byte(taken));
+        for combination in combinations {
+            data.word(combination.dop.0);
+            for satellite in combination.satellites {
+                data.byte(satellite.map_or(0, Prn::get));
+            }
+        }
+        data.zeros((XDOP_COMBINATIONS - count) * XDOP_ENTRY);
+        send(out, BC_XDOP_TABLE, &data);
     }
 
     /// `@@Bd` (VP p. 79): the almanac's status, given twice, as the one
@@ -1215,15 +1261,37 @@ impl Engine {
         );
     }
 
-    /// `@@Ce` (VP p. 115): the time of the corrections, and none.
-    fn corrections<O: Output + ?Sized>(&self, out: &mut O) {
-        send(
-            out,
-            CE_PSEUDORANGE_CORRECTION,
-            Data::new()
-                .triple(self.clock.time_of_week().deciseconds().0)
-                .zeros(CORRECTIONS),
-        );
+    /// `@@Ce` (VP pp. 114 and 115): the record's corrections and their
+    /// time, or with none, the engine's time and no corrections.
+    fn corrections<O: Output + ?Sized>(&self, record: &Record, out: &mut O) {
+        let set = record
+            .derived
+            .corrections
+            .unwrap_or_else(|| Corrections::new(self.clock.time_of_week().deciseconds()));
+        let mut data = Data::new();
+        data.triple(set.time.0.min(TIME_OF_WEEK_MOST));
+        for slot in set.satellites {
+            match slot {
+                Some(correction) => {
+                    let range = correction
+                        .range
+                        .0
+                        .clamp(-CORRECTION_RANGE_MOST, CORRECTION_RANGE_MOST);
+                    let rate = correction
+                        .rate
+                        .0
+                        .clamp(-CORRECTION_RATE_MOST, CORRECTION_RATE_MOST);
+                    data.byte(correction.prn.get())
+                        .triple(range.cast_unsigned())
+                        .signed_word(rate)
+                        .byte(correction.ephemeris_issue);
+                }
+                None => {
+                    data.zeros(CORRECTION_ENTRY);
+                }
+            }
+        }
+        send(out, CE_PSEUDORANGE_CORRECTION, &data);
     }
 
     /// `@@Bk` and `@@Ek` (VP pp. 95 to 98 and 134 to 137).
@@ -1265,17 +1333,54 @@ impl Engine {
         }
     }
 
+    /// What Time RAIM reports with `tracked` satellites: the record's
+    /// result while the algorithm is on, else the engine's own.  Off,
+    /// the solution is unknown (VP p. 105) and nothing is isolated; out
+    /// of position hold, it can only detect (UT p. 6.93).
+    fn traim_result(&self, record: &Record, tracked: usize) -> TraimResult {
+        let holding = self.state.settings.holding();
+        let on = self.state.traim.algorithm == TRAIM_ON;
+        match record.derived.raim.filter(|_| on) {
+            Some(raim) => TraimResult {
+                solution: match raim.solution {
+                    RaimSolution::Ok => TRAIM_SOLUTION_OK,
+                    RaimSolution::Alarm => TRAIM_SOLUTION_ALARM,
+                    RaimSolution::Unknown => TRAIM_SOLUTION_UNKNOWN,
+                },
+                ability: match raim.ability {
+                    RaimAbility::Isolation if holding => TRAIM_ISOLATION,
+                    RaimAbility::Isolation | RaimAbility::Detection => TRAIM_DETECTION,
+                    RaimAbility::Neither => TRAIM_NEITHER,
+                },
+                isolated: if holding {
+                    raim.isolated
+                } else {
+                    PrnSet::EMPTY
+                },
+            },
+            None => {
+                let ability = self.traim_ability(tracked);
+                TraimResult {
+                    solution: if on && ability != TRAIM_NEITHER {
+                        TRAIM_SOLUTION_OK
+                    } else {
+                        TRAIM_SOLUTION_UNKNOWN
+                    },
+                    ability,
+                    isolated: PrnSet::EMPTY,
+                }
+            }
+        }
+    }
+
     /// `@@Bn` and `@@En` (VP pp. 102 to 106 and 138 to 142; UT
     /// pp. 6.92 to 6.95).
     fn traim_status<O: Output + ?Sized>(&self, record: &Record, family: &Family, out: &mut O) {
         let setup = self.state.traim;
         let tracked = self.tracked(record, family).count();
-        let ability = self.traim_ability(tracked);
-        let solution = if setup.algorithm == TRAIM_ON && ability != TRAIM_NEITHER {
-            TRAIM_SOLUTION_OK
-        } else {
-            TRAIM_SOLUTION_UNKNOWN
-        };
+        let TraimResult {
+            solution, ability, ..
+        } = self.traim_result(record, tracked);
         let pulse = match setup.pps_mode {
             PPS_OFF => false,
             PPS_TRACKING => tracked != 0,
@@ -1401,6 +1506,17 @@ fn is_ignored(list: u32, prn: Prn) -> bool {
 /// A VP's signal strength for a C/N0.
 fn signal(carrier_to_noise: u8) -> u8 {
     SIGNAL[usize::from(carrier_to_noise).min(SIGNAL.len() - 1)]
+}
+
+/// A kind of DOP as `@@Aj` and `@@Bc` number it (VP pp. 34 and 77).
+const fn dop_kind_code(kind: DopKind) -> u8 {
+    match kind {
+        DopKind::Geometric => 0,
+        DopKind::Position => 1,
+        DopKind::Horizontal => 2,
+        DopKind::Vertical => 3,
+        DopKind::Time => 4,
+    }
 }
 
 /// A channel's tracking mode (VP p. 72).

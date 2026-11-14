@@ -119,6 +119,11 @@ pub struct Centimeters(pub i32);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct CentimetersPerSecond(pub u16);
 
+/// A signed speed in millimeters a second: a pseudorange's rate of
+/// correction (`@@Ce`, p. 115).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct MillimetersPerSecond(pub i16);
+
 /// A frequency in hertz: a satellite's Doppler (p. 75).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Hertz(pub i16);

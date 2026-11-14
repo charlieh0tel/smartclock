@@ -728,8 +728,7 @@ void status_snapshot(status_snapshot_record* snapshot) {
   snapshot->interval_tag = interval_reading.tag;
   snapshot->interval_mean = interval_mean;
   /* The flag and the byte after it, as a word (0x55d82). */
-  memcpy(&snapshot->interval_mean_flag, &interval_mean_flag,
-         sizeof snapshot->interval_mean_flag);
+  snapshot->interval_mean_flag = *(const uint16_t*)&interval_mean_flag;
   snapshot->tfom = pll.tfom;
   snapshot->ffom_valid = get_ffom(&snapshot->ffom);
   snapshot->kenneth_present_valid = kenneth_present_get(

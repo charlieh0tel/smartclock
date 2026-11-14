@@ -14,7 +14,7 @@ use crate::source::Presence;
 use crate::source::Source;
 use crate::source::Tick;
 use crate::source::announce;
-use crate::source::difference;
+use crate::source::at_tick;
 use crate::time::GpsSeconds;
 use crate::time::LeapEvent;
 use crate::units::Nanoseconds;
@@ -90,10 +90,9 @@ impl<S: Source> Source for FakeTime<S> {
                 move_leap(record, shift)
             }
             Relabel::Start(start) => {
-                let Some(seconds) = start.0.checked_add(tick.0) else {
+                let Some(seconds) = at_tick(start, tick) else {
                     return Presence::Silent;
                 };
-                let seconds = GpsSeconds(seconds);
                 let Some(time) = &mut record.time else {
                     record.time = Some(GpsTime {
                         seconds,
@@ -101,11 +100,11 @@ impl<S: Source> Source for FakeTime<S> {
                     });
                     return Presence::Fresh;
                 };
-                let Some(shift) = difference(seconds.0, time.seconds.0) else {
+                let Some(shift) = seconds.checked_since(time.seconds) else {
                     return Presence::Silent;
                 };
                 time.seconds = seconds;
-                move_leap(record, Seconds(shift))
+                move_leap(record, shift)
             }
         }
     }
@@ -293,23 +292,22 @@ mod tests {
     use std::sync::Mutex;
 
     /// The time the sky was made for.
-    const RECORDED: GpsSeconds = GpsSeconds::from_week(GpsWeek(1500), TimeOfWeek(1000));
+    const RECORDED: GpsSeconds =
+        GpsSeconds::from_week(GpsWeek::new(1500), TimeOfWeek::new(1000).unwrap());
     /// GPS less UTC before the leap.
     const BEFORE: Seconds<i8> = Seconds(17);
     /// The time it is run at: 30 seconds before the leap.
     const LEAP_TICK: u64 = 30;
-    const LEAP: LeapEvent = LeapEvent {
-        at: GpsSeconds(
-            GpsSeconds::from_utc(
-                DateTime::new(2016, 12, 31, 23, 59, 59).unwrap().to_unix(),
-                BEFORE,
-            )
-            .unwrap()
-            .0 + 1,
-        ),
-        change: LeapChange::Insert,
-    };
-    const RUN: GpsSeconds = GpsSeconds(LEAP.at.0 - LEAP_TICK);
+    const LEAP: LeapEvent = LeapEvent::at_day_end(
+        DateTime::new(2017, 1, 1, 0, 0, 0).unwrap().to_unix(),
+        BEFORE,
+        LeapChange::Insert,
+    )
+    .unwrap();
+    const RUN: GpsSeconds = LEAP
+        .at
+        .checked_sub(Seconds(LEAP_TICK.cast_signed()))
+        .unwrap();
 
     static SKY: Record = {
         let mut record = Record::EMPTY;
@@ -424,7 +422,10 @@ mod tests {
         /// The wrapper's, a week after the source's: were it applied
         /// it would show.
         const LATER: LeapEvent = LeapEvent {
-            at: GpsSeconds(LEAP.at.0 + SECONDS_PER_WEEK as u64),
+            at: LEAP
+                .at
+                .checked_add(Seconds(SECONDS_PER_WEEK as i64))
+                .unwrap(),
             change: LeapChange::Remove,
         };
         static OWN: [Step; 1] = [Step {
@@ -569,11 +570,11 @@ mod tests {
     /// kind of change.
     #[test]
     fn fake_time_moves_the_leap_second_too() {
-        const AHEAD: u64 = 100;
+        const AHEAD: Seconds<i64> = Seconds(100);
         static ANNOUNCED: Record = {
             let mut record = Record::EMPTY;
             record.leap = Some(LeapEvent {
-                at: GpsSeconds(RECORDED.0 + AHEAD),
+                at: RECORDED.checked_add(AHEAD).unwrap(),
                 change: LeapChange::Insert,
             });
             record
@@ -583,15 +584,15 @@ mod tests {
 
         let mut started = FakeTime::new(base, Relabel::Start(RUN));
         assert_eq!(started.record(Tick(7), &mut record), Presence::Fresh);
-        assert_eq!(record.time.unwrap().seconds, GpsSeconds(RUN.0 + 7));
-        assert_eq!(record.leap.unwrap().at, GpsSeconds(RUN.0 + AHEAD));
+        assert_eq!(record.time.unwrap().seconds, RUN + Seconds(7));
+        assert_eq!(record.leap.unwrap().at, RUN + AHEAD);
 
         let mut shifted = FakeTime::new(base, Relabel::Shift(Seconds(-50)));
         assert_eq!(shifted.record(Tick(7), &mut record), Presence::Fresh);
-        assert_eq!(record.time.unwrap().seconds, GpsSeconds(RECORDED.0 - 43));
-        assert_eq!(record.leap.unwrap().at, GpsSeconds(RECORDED.0 + 50));
+        assert_eq!(record.time.unwrap().seconds, RECORDED - Seconds(43));
+        assert_eq!(record.leap.unwrap().at, RECORDED + Seconds(50));
 
-        let mut too_far = FakeTime::new(base, Relabel::Shift(Seconds(i64::MIN)));
+        let mut too_far = FakeTime::new(base, Relabel::Shift(Seconds(i64::MAX)));
         assert_eq!(too_far.record(Tick(7), &mut record), Presence::Silent);
     }
 
@@ -611,7 +612,7 @@ mod tests {
         let mut timed = FakeTime::new(Latest::new(), Relabel::Start(RUN));
         timed.inner_mut().commit(Tick(8));
         assert_eq!(timed.record(Tick(9), &mut record), Presence::Fresh);
-        assert_eq!(record.time.unwrap().seconds, GpsSeconds(RUN.0 + 9));
+        assert_eq!(record.time.unwrap().seconds, RUN + Seconds(9));
         assert_eq!(timed.inner().age(Tick(9)), Some(Seconds(1)));
     }
 }

@@ -17,6 +17,7 @@ use crate::source::Presence;
 use crate::source::Source;
 use crate::source::Tick;
 use crate::source::announce;
+use crate::source::at_tick;
 use crate::time::GpsSeconds;
 use crate::time::LeapEvent;
 use crate::units::DecibelHertz;
@@ -46,12 +47,12 @@ impl<'a> Fixed<'a> {
     /// Fills in the record of `tick`: [`Silent`](Presence::Silent) only
     /// past the end of the count of GPS seconds.
     const fn fill(&self, tick: Tick, record: &mut Record) -> Presence {
-        let Some(seconds) = self.start.0.checked_add(tick.0) else {
+        let Some(seconds) = at_tick(self.start, tick) else {
             return Presence::Silent;
         };
         *record = *self.sky;
         record.time = Some(GpsTime {
-            seconds: GpsSeconds(seconds),
+            seconds,
             subsecond: Nanoseconds(0),
         });
         Presence::Fresh
@@ -292,20 +293,18 @@ mod tests {
     /// GPS less UTC through 1998.
     const BEFORE: Seconds<i8> = Seconds(12);
     /// The second inserted at the end of 1998.
-    const LEAP: LeapEvent = LeapEvent {
-        at: GpsSeconds(
-            GpsSeconds::from_utc(
-                DateTime::new(1998, 12, 31, 23, 59, 59).unwrap().to_unix(),
-                BEFORE,
-            )
-            .unwrap()
-            .0 + 1,
-        ),
-        change: LeapChange::Insert,
-    };
+    const LEAP: LeapEvent = LeapEvent::at_day_end(
+        DateTime::new(1999, 1, 1, 0, 0, 0).unwrap().to_unix(),
+        BEFORE,
+        LeapChange::Insert,
+    )
+    .unwrap();
     /// Tick 60 is the leap second.
     const LEAP_TICK: u64 = 60;
-    const START: GpsSeconds = GpsSeconds(LEAP.at.0 - LEAP_TICK);
+    const START: GpsSeconds = LEAP
+        .at
+        .checked_sub(Seconds(LEAP_TICK.cast_signed()))
+        .unwrap();
     /// The tick the leap second is first announced in.
     const ANNOUNCED: u64 = 10;
 
@@ -385,7 +384,7 @@ mod tests {
         let first = at(&mut fixed, 0);
         let later = at(&mut fixed, 1000);
         assert_eq!(first.time.unwrap().seconds, START);
-        assert_eq!(later.time.unwrap().seconds, GpsSeconds(START.0 + 1000));
+        assert_eq!(later.time.unwrap().seconds, START + Seconds(1000));
         let mut expected = SKY;
         expected.time = later.time;
         assert_eq!(later, expected);
@@ -446,7 +445,7 @@ mod tests {
         assert_eq!(gone.fix, Fix::TwoD);
 
         let stepped = at(&mut scenario, 90);
-        assert_eq!(stepped.time.unwrap().seconds, GpsSeconds(START.0 + 85));
+        assert_eq!(stepped.time.unwrap().seconds, START + Seconds(85));
     }
 
     /// Any second, in any order, any number of times: the same record.
@@ -462,16 +461,26 @@ mod tests {
         }
     }
 
+    /// A step back to before the start of GPS time is a time like any
+    /// other; one past the count's end is silence.
     #[test]
     fn a_step_out_of_the_count_is_silence() {
-        static BACK: [Step; 1] = [Step {
-            from: Tick(1),
-            change: Change::TimeStep(Seconds(-10)),
-        }];
-        let mut scenario = Scenario::new(Fixed::new(GpsSeconds(0), &SKY), &BACK).unwrap();
+        static BACK: [Step; 2] = [
+            Step {
+                from: Tick(1),
+                change: Change::TimeStep(Seconds(-10)),
+            },
+            Step {
+                from: Tick(5),
+                change: Change::TimeStep(Seconds(i64::MIN)),
+            },
+        ];
+        let mut scenario = Scenario::new(Fixed::new(GpsSeconds::EPOCH, &SKY), &BACK).unwrap();
         let mut record = Record::EMPTY;
         assert_eq!(scenario.record(Tick(0), &mut record), Presence::Fresh);
-        assert_eq!(scenario.record(Tick(1), &mut record), Presence::Silent);
+        assert_eq!(scenario.record(Tick(1), &mut record), Presence::Fresh);
+        assert_eq!(record.time.unwrap().seconds, GpsSeconds::EPOCH - Seconds(9));
+        assert_eq!(scenario.record(Tick(5), &mut record), Presence::Silent);
         assert_eq!(scenario.record(Tick(10), &mut record), Presence::Fresh);
     }
 

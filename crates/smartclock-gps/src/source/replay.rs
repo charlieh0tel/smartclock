@@ -171,7 +171,9 @@ mod tests {
                 return false;
             };
             record.time = Some(GpsTime {
-                seconds: GpsSeconds(u64::from(u16::from_be_bytes([high, byte]))),
+                seconds: GpsSeconds::from_epoch(Seconds(i64::from(u16::from_be_bytes([
+                    high, byte,
+                ])))),
                 subsecond: Nanoseconds(0),
             });
             true
@@ -189,10 +191,10 @@ mod tests {
     static REPLAY: Mutex<Replay<&[u8], Pairs>> =
         Mutex::new(Replay::new(RECORDING.as_slice(), Pairs::NEW));
 
-    fn seconds(source: &mut impl Source, tick: u64) -> Option<u64> {
+    fn seconds(source: &mut impl Source, tick: u64) -> Option<i64> {
         let mut record = Record::EMPTY;
         match source.record(Tick(tick), &mut record) {
-            Presence::Fresh => Some(record.time.unwrap().seconds.0),
+            Presence::Fresh => Some(record.time.unwrap().seconds.since_epoch().0),
             Presence::Silent => None,
         }
     }

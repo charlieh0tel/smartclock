@@ -46,6 +46,18 @@ pub const LEAP_SECOND: u8 = 60;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UnixSeconds(pub i64);
 
+impl UnixSeconds {
+    /// This second moved by `shift`, `None` past either end of the
+    /// count.
+    #[must_use]
+    pub const fn checked_add(self, shift: Seconds<i64>) -> Option<Self> {
+        match self.0.checked_add(shift.0) {
+            Some(seconds) => Some(Self(seconds)),
+            None => None,
+        }
+    }
+}
+
 /// The start of GPS time.
 pub const GPS_EPOCH: UnixSeconds = DateTime {
     year: 1980,
@@ -366,10 +378,31 @@ impl DateTime {
         offset: Seconds<i8>,
         leap: Option<LeapEvent>,
     ) -> Option<Self> {
+        Self::local(time, offset, leap, Seconds(0))
+    }
+
+    /// The date and time of a GPS second on a clock `ahead` of UTC, as
+    /// an engine labels a second for a host that has set a GMT offset
+    /// (`@@Ab`, `third_party/motorola/VPCommands.pdf` p. 9).  `offset`
+    /// and `leap` are as for [`Self::of`]; the second an insertion adds
+    /// reads 60 in whatever minute of the hour the clock puts it.  With
+    /// an `offset` of zero and no `leap`, the label is of GPS time
+    /// itself.  The label may fall before the start of GPS time.
+    /// `None` outside the years a `u16` holds.
+    #[must_use]
+    pub const fn local(
+        time: GpsSeconds,
+        offset: Seconds<i8>,
+        leap: Option<LeapEvent>,
+        ahead: Seconds<i32>,
+    ) -> Option<Self> {
         let Some(utc) = time.to_utc(offset) else {
             return None;
         };
-        let Some(read) = Self::from_unix(utc) else {
+        let Some(local) = utc.checked_add(Seconds(ahead.0 as i64)) else {
+            return None;
+        };
+        let Some(read) = Self::from_unix(local) else {
             return None;
         };
         // With the new offset the inserted second has the UTC count of
@@ -591,6 +624,49 @@ mod tests {
         assert_eq!(
             DateTime::of(leap.at, Seconds(13), None),
             Some(date(1998, 12, 31, 23, 59, 59))
+        );
+    }
+
+    /// A clock set ahead of or behind UTC labels the same seconds, the
+    /// inserted one still 60 though no longer at 23:59, and may read a
+    /// date before the start of GPS time.
+    #[test]
+    fn a_local_label() {
+        let before = Seconds(12);
+        let last = GpsSeconds::from_utc(date(1998, 12, 31, 23, 59, 59).to_unix(), before).unwrap();
+        let leap = LeapEvent {
+            at: GpsSeconds(last.0 + 1),
+            change: LeapChange::Insert,
+        };
+        let behind = Seconds(-8 * 3600);
+        let read = |time: GpsSeconds| {
+            DateTime::local(time, leap.offset(time, before), Some(leap), behind).unwrap()
+        };
+        assert_eq!(read(last), date(1998, 12, 31, 15, 59, 59));
+        assert_eq!(
+            read(leap.at),
+            DateTime {
+                second: LEAP_SECOND,
+                ..date(1998, 12, 31, 15, 59, 0)
+            }
+        );
+        assert_eq!(
+            read(GpsSeconds(leap.at.0 + 1)),
+            date(1998, 12, 31, 16, 0, 0)
+        );
+
+        assert_eq!(
+            DateTime::local(GpsSeconds(0), Seconds(0), None, behind),
+            Some(date(1980, 1, 5, 16, 0, 0))
+        );
+        assert_eq!(
+            DateTime::local(GpsSeconds(0), Seconds(0), None, Seconds(0)),
+            DateTime::of(GpsSeconds(0), Seconds(0), None)
+        );
+        assert_eq!(UnixSeconds(i64::MAX).checked_add(Seconds(1)), None);
+        assert_eq!(
+            UnixSeconds(5).checked_add(Seconds(-6)),
+            Some(UnixSeconds(-1))
         );
     }
 

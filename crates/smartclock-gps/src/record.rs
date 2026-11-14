@@ -17,8 +17,8 @@
 //! so it is meant to live in a `static` or a struct and be filled in
 //! place through a reference, not passed by value.  [`Record`] and the
 //! parts of it that may gain a field are `#[non_exhaustive]`: start from
-//! [`Record::EMPTY`], [`Satellite::new`], [`Timing::ZERO`] or
-//! [`Almanac::new`] and set fields.
+//! [`Record::EMPTY`], [`Satellite::new`], [`Timing::ZERO`],
+//! [`Almanac::new`] or [`Derived::EMPTY`] and set fields.
 
 use crate::time::GpsSeconds;
 use crate::time::GpsWeek;
@@ -391,6 +391,33 @@ pub enum Antenna {
     Shorted,
 }
 
+/// A place in Earth-centered, Earth-fixed coordinates (`@@Bk`, VP
+/// p. 96).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Ecef {
+    /// Along the axis through the equator at the prime meridian.
+    pub x: Centimeters,
+    /// Along the axis through the equator at 90 degrees east.
+    pub y: Centimeters,
+    /// Along the axis through the north pole.
+    pub z: Centimeters,
+}
+
+/// What follows from the rest of a record by arithmetic this crate does
+/// not do, having no floating point: whoever fills the record works it
+/// out, or leaves it empty.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct Derived {
+    /// [`Record::position`] in Earth-centered coordinates.
+    pub ecef: Option<Ecef>,
+}
+
+impl Derived {
+    /// Nothing worked out.
+    pub const EMPTY: Self = Self { ecef: None };
+}
+
 /// One second of what a GPS engine knows.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
@@ -426,6 +453,8 @@ pub struct Record {
     pub almanac: Option<Almanac>,
     /// The antenna's feed.
     pub antenna: Antenna,
+    /// What whoever filled the record worked out from the rest.
+    pub derived: Derived,
 }
 
 impl Record {
@@ -442,6 +471,7 @@ impl Record {
         satellites: Satellites::EMPTY,
         almanac: None,
         antenna: Antenna::Unknown,
+        derived: Derived::EMPTY,
     };
 }
 

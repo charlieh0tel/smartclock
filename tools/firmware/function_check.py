@@ -2422,6 +2422,11 @@ IMAGE_STATES = {
     # where the Z3805A's reads gps.status_reported; log_write from its own
     # log cursors, and log_event, the 58503A's by a code, from none.
     "z3817a-3752": {
+        # oscillator_kind_done's report of a failed save (0x41a0e),
+        # recorded, not run, so that what is compared is the source it
+        # passes, its second argument's low byte (0x41a06): most sources
+        # report nothing, and C reading the first agreed
+        "oscillator_kind_done": States(hooks=(Hook("status_report_from"),)),
         **{
             name: States(
                 presets=(Preset("interval_reading.armed", (1, 1, 0)),),

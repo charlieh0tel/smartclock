@@ -155,7 +155,7 @@ from libc_check import BUFFER_SPACING, RAM, RAM_SIZE, RETURN
 from image_diff import region_memories
 from rebuild_link import IMAGE_PREFIX, REBUILT, Section, code_symbols, link, objects, preprocessed, symbols
 from report_figures import STRICT
-from status_register import PRIMARY, Source, compared
+from status_register import PRIMARY, Source, reading_differences, readings, touches
 
 # The widest argument or result the harness lays out.
 WIDEST = 8
@@ -4928,6 +4928,14 @@ def main() -> int:
             rebuilt_code(linked_code, conventions),
             {**IN_RANGE, **IMAGE_IN_RANGE.get(image_name(image_path), {})},
         )
+        region = profile.overlay or PRIMARY
+        # the functions written by hand that touch the status register,
+        # those NAMEs give, read both ways (status_register.py)
+        touching = [
+            reading
+            for reading in readings(memories[region], region, conventions, source)
+            if touches(reading) and (not names or reading.name in names)
+        ]
         counts = dict.fromkeys(VERDICTS, 0)
         registers = dict.fromkeys(VERDICTS, 0)
         modes = {"user mode alone": 0, "both modes": 0}
@@ -4949,10 +4957,8 @@ def main() -> int:
                 if description.startswith(CONSOLE_SESSION) and not description.endswith(POISONED):
                     sessions["run"] += 1
                     sessions["agreeing"] += not outcome
-        region = profile.overlay or PRIMARY
-        for name, differences in compared(memories[region], region, conventions, source):
-            if not names or name in names:
-                registers[check_status_register(name, differences, known.get(name))] += 1
+        for reading in touching:
+            registers[check_status_register(reading.name, reading_differences(reading), known.get(reading.name))] += 1
         label = f"{profile.overlay} " if profile.overlay else ""
         print(
             f"{label}functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, "

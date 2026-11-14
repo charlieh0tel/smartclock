@@ -117,16 +117,27 @@ def instruction_event(mnemonic: str, operands: str) -> Event | None:
     return None
 
 
-def image_events(memory, start: int, functions: dict[int, str]) -> list[tuple[int, Event]]:
-    """A function's Events in the image, each with its instruction's
-    address, by address: those of every instruction control reaches from
-    start, through its branches and a jmp's table of cases, and its
-    calls of functions.  functions is every function's name in the
-    memory by its start; a branch or a fixed jmp to one leaves this
-    function, the Events there that function's, and one into the middle
-    of another function is followed, since code two functions share is
-    each one's own."""
-    found, events, pending, starts = set(), {}, [start], sorted(functions)
+@dataclass(frozen=True)
+class Step:
+    """One instruction control reaches from a function's entry: its
+    Event, None if it has none, and where control goes on from it, by
+    address: the next instruction, unless it ends a path, and a
+    branch's, a fixed jmp's or a table's targets, a jump that leaves the
+    function among them."""
+
+    event: Event | None
+    successors: tuple[int, ...]
+
+
+def walk(memory, start: int, functions: dict[int, str]) -> dict[int, Step]:
+    """A function's Steps by address: those of every instruction control
+    reaches from start, through its branches and a jmp's table of cases,
+    not into the functions it calls.  functions is every function's name
+    in the memory by its start; a branch or a fixed jmp to one leaves
+    this function, the instructions there that function's, and one into
+    the middle of another function is followed, since code two functions
+    share is each one's own."""
+    found, steps, pending, starts = set(), {}, [start], sorted(functions)
     while pending:
         at = pending.pop()
         after = bisect.bisect_right(starts, at)
@@ -137,25 +148,36 @@ def image_events(memory, start: int, functions: dict[int, str]) -> list[tuple[in
             found.add(instruction.address)
             event = instruction_event(instruction.mnemonic, instruction.operands)
             targets = [field.target for field in fields(instruction)]
+            jumps = []
             if instruction.mnemonic in CALLS:
                 for name in (functions[target] for target in targets if target in functions):
                     event = Event(ENTER) if name in ENTER_ROUTINES else Event(CALLED, name=name)
             elif BRANCH.match(instruction.mnemonic) or (
                 instruction.mnemonic == "jmp" and FIXED_JUMP.match(instruction.operands)
             ):
-                jumps = [int(target, 16) for target in PC_RELATIVE.findall(instruction.operands)] or targets
-                pending.extend(
-                    target
-                    for target in jumps
-                    if target == start or (memory.contains(target) and target not in functions)
-                )
+                named = [int(target, 16) for target in PC_RELATIVE.findall(instruction.operands)] or targets
+                jumps = [target for target in named if target == start or memory.contains(target)]
+                pending.extend(target for target in jumps if target == start or target not in functions)
             elif instruction.mnemonic == "jmp":
-                pending.extend(jump_table(memory, instruction, stop))
-            if event is not None:
-                events[instruction.address] = event
-            if instruction.mnemonic in TERMINALS:
+                jumps = jump_table(memory, instruction, stop)
+                pending.extend(jumps)
+            ends = instruction.mnemonic in TERMINALS
+            steps[instruction.address] = Step(event, tuple(dict.fromkeys(jumps + ([] if ends else [instruction.end]))))
+            if ends:
                 break
-    return sorted(events.items())
+    return steps
+
+
+def step_events(steps: dict[int, Step]) -> list[tuple[int, Event]]:
+    """The Events of a walk's Steps, each with its instruction's
+    address, by address."""
+    return sorted((address, step.event) for address, step in steps.items() if step.event)
+
+
+def image_events(memory, start: int, functions: dict[int, str]) -> list[tuple[int, Event]]:
+    """A function's Events in the image, its calls of functions among
+    them (walk, step_events)."""
+    return step_events(walk(memory, start, functions))
 
 
 # The helpers that read and write the register themselves, each one
@@ -363,25 +385,62 @@ def differences(image: list[tuple[int, Event]], source: list[Event]) -> list[str
     return [f"status register: the image's {listed(events)}; the C's {listed(source)}{where}"]
 
 
-def compared(memory, region: str, conventions: dict[str, dict], source: Source) -> list[tuple[str, list[str]]]:
-    """Each function of a region written by hand that touches the status
-    register, in the image or in its C, and its differences, by
-    address.  conventions is the sidecar's rows by name; region is the
-    one its addresses name (image_diff.parse_address), whose code memory
-    holds."""
-    located = {
+@dataclass(frozen=True)
+class Reading:
+    """A function written by hand, read both ways: its name, its Steps
+    in the image (walk), and its Events in the image, each with its
+    address, and in its C."""
+
+    name: str
+    steps: dict[int, Step]
+    image: list[tuple[int, Event]]
+    written: list[Event]
+
+
+def located(region: str, conventions: dict[str, dict]) -> dict[int, str]:
+    """The sidecar's functions of a region by their starts there."""
+    return {
         address: name
         for name, convention in conventions.items()
         for found, address in [parse_address(convention["address"])]
         if found == region
     }
+
+
+def readings(memory, region: str, conventions: dict[str, dict], source: Source) -> list[Reading]:
+    """Each function of a region written by hand, read both ways, by
+    address.  conventions is the sidecar's rows by name; region is the
+    one its addresses name (image_diff.parse_address), whose code memory
+    holds."""
+    functions = located(region, conventions)
     in_image = frozenset(conventions)
     found = []
-    for address, name in sorted(located.items()):
+    for address, name in sorted(functions.items()):
         if HAND_WRITTEN not in conventions[name]:
             continue
-        image = bracketed(image_events(memory, address, located), lambda item: item[1])
-        written = bracketed(source.events(name, in_image))
-        if image or written:
-            found.append((name, differences(image, written)))
+        steps = walk(memory, address, functions)
+        found.append(Reading(name, steps, step_events(steps), source.events(name, in_image)))
     return found
+
+
+def touches(reading: Reading) -> bool:
+    """Whether a function touches the status register, in the image or
+    in its C."""
+    return bool(bracketed(reading.image, lambda item: item[1]) or bracketed(reading.written))
+
+
+def reading_differences(reading: Reading) -> list[str]:
+    """What differs between a function's Events in the image and in its
+    C, each side's calls outside its events dropped (differences)."""
+    return differences(bracketed(reading.image, lambda item: item[1]), bracketed(reading.written))
+
+
+def compared(memory, region: str, conventions: dict[str, dict], source: Source) -> list[tuple[str, list[str]]]:
+    """Each function of a region written by hand that touches the status
+    register, in the image or in its C, and its differences, by
+    address (readings)."""
+    return [
+        (reading.name, reading_differences(reading))
+        for reading in readings(memory, region, conventions, source)
+        if touches(reading)
+    ]

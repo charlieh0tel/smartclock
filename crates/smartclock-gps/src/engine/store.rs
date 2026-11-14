@@ -239,12 +239,12 @@ pub(super) struct Place {
 /// Every setting's value, each as its command carries it, one after
 /// another in the table's order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) struct Settings {
+pub(super) struct Store {
     /// The values.
     bytes: [u8; SETTINGS_BYTES],
 }
 
-impl Settings {
+impl Store {
     /// The values at power-up.
     pub(super) const DEFAULT: Self = {
         let mut bytes = [0; SETTINGS_BYTES];
@@ -376,5 +376,5 @@ impl Settings {
 
 /// Whether `id` is a command that sets a value.
 pub(super) fn is_setting(id: MessageId) -> bool {
-    Settings::index(id).is_some()
+    Store::index(id).is_some()
 }

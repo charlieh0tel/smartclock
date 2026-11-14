@@ -652,10 +652,31 @@ enum State {
 /// is taken first and the frame made from it after.
 type Step = Option<Result<usize, FrameError>>;
 
-/// A [`Deframer`]'s lengths: a message's whole length by its ID, `None`
-/// for an ID it does not frame.  [`command_length`] reads what a receiver
-/// sends and [`response_length`] what an engine sends; a caller may give
-/// its own, a function or a closure that captures nothing.
+/// Where a [`Deframer`] gets a message's whole length, its ID being all
+/// a frame says of it.
+///
+/// Every function or closure from an ID to a length is one, so
+/// [`command_length`] and [`response_length`] are.  A caller whose
+/// lengths depend on something known only at run time, such as which
+/// engine is attached, gives a closure that captures it or, where the
+/// deframer's type must be written out, as a `static`'s must, a type of
+/// its own that implements this ([`Deframer::with_lengths`]).
+pub trait MessageLengths {
+    /// The whole length, `@@` through LF, of the message with this ID;
+    /// `None` for an ID not to be framed.
+    fn length(&self, id: MessageId) -> Option<usize>;
+}
+
+impl<F: Fn(MessageId) -> Option<usize>> MessageLengths for F {
+    fn length(&self, id: MessageId) -> Option<usize> {
+        self(id)
+    }
+}
+
+/// The [`MessageLengths`] of a [`Deframer`] that names none: a function,
+/// or a closure that captures nothing.  [`command_length`] reads what a
+/// receiver sends and [`response_length`] what an engine sends; a caller
+/// may give its own.
 pub type Lengths = fn(MessageId) -> Option<usize>;
 
 /// Finds frames in a stream of bytes, however it is cut into chunks
@@ -683,11 +704,12 @@ pub type Lengths = fn(MessageId) -> Option<usize>;
 /// A message longer than `N` is not framed: it is
 /// [`FrameError::Overflow`].
 ///
-/// The type has no parameter but `N` and [`Deframer::new`] is const, so
-/// one can be a `static`'s field.
-pub struct Deframer<const N: usize> {
+/// `L` is where the lengths come from, [`Lengths`] unless named, so
+/// `Deframer<N>` is a whole type.  Both constructors are const, so a
+/// deframer can be a `static`'s field wherever `L` can be written out.
+pub struct Deframer<const N: usize, L = Lengths> {
     /// A message's whole length, by its ID.
-    length: Lengths,
+    length: L,
     state: State,
     /// The frame so far, from its `@@`.
     buffer: [u8; N],
@@ -695,7 +717,7 @@ pub struct Deframer<const N: usize> {
     filled: usize,
 }
 
-impl<const N: usize> fmt::Debug for Deframer<N> {
+impl<const N: usize, L> fmt::Debug for Deframer<N, L> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Deframer")
             .field("state", &self.state)
@@ -705,15 +727,68 @@ impl<const N: usize> fmt::Debug for Deframer<N> {
 }
 
 impl<const N: usize> Deframer<N> {
-    /// A deframer outside any frame.
+    /// A deframer outside any frame, its lengths a function.
     #[must_use]
     pub const fn new(length: Lengths) -> Self {
+        Self::with_lengths(length)
+    }
+}
+
+impl<const N: usize, L: MessageLengths> Deframer<N, L> {
+    /// A deframer outside any frame, its lengths any [`MessageLengths`].
+    /// Here they are a type holding what is learned at run time, in a
+    /// deframer built before it is learned:
+    ///
+    /// ```
+    /// use smartclock_gps::oncore::Channels;
+    /// use smartclock_gps::oncore::Deframer;
+    /// use smartclock_gps::oncore::EA_POSITION_STATUS;
+    /// use smartclock_gps::oncore::FrameError;
+    /// use smartclock_gps::oncore::MAX_RESPONSE;
+    /// use smartclock_gps::oncore::MessageId;
+    /// use smartclock_gps::oncore::MessageLengths;
+    /// use smartclock_gps::oncore::response_length;
+    ///
+    /// /// What a caller chooses to frame: an engine's messages, less the
+    /// /// eight-channel ones until it is told to take them.
+    /// struct Chosen {
+    ///     eight: bool,
+    /// }
+    ///
+    /// impl MessageLengths for Chosen {
+    ///     fn length(&self, id: MessageId) -> Option<usize> {
+    ///         match id.channels() {
+    ///             Channels::Eight if !self.eight => None,
+    ///             _ => response_length(id),
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// let mut deframer =
+    ///     Deframer::<MAX_RESPONSE, Chosen>::with_lengths(Chosen { eight: false });
+    /// let (_, event) = deframer.feed(b"@@Ea");
+    /// assert_eq!(
+    ///     event.map(|event| event.map(|frame| frame.id())),
+    ///     Some(Err(FrameError::UnknownId(EA_POSITION_STATUS)))
+    /// );
+    /// deframer.set_lengths(Chosen { eight: true });
+    /// assert_eq!(deframer.feed(b"@@Ea"), (4, None));
+    /// ```
+    #[must_use]
+    pub const fn with_lengths(length: L) -> Self {
         Self {
             length,
             state: State::Idle,
             buffer: [0; N],
             filled: 0,
         }
+    }
+
+    /// Replaces the lengths, from the next frame on: a frame in progress
+    /// keeps the length it began with.  Unlike putting a new deframer in
+    /// this one's place, it builds and copies no buffer.
+    pub fn set_lengths(&mut self, length: L) {
+        self.length = length;
     }
 
     /// Takes one byte, and returns a frame or an error if the byte ended
@@ -788,7 +863,7 @@ impl<const N: usize> Deframer<N> {
     /// Starts a frame's body, its ID known.
     fn begin(&mut self, id: MessageId) -> Step {
         self.state = State::Idle;
-        match (self.length)(id) {
+        match self.length.length(id) {
             Some(length) if length > N => Some(Err(FrameError::Overflow {
                 id,
                 length,
@@ -874,6 +949,7 @@ mod tests {
     use std::collections::BTreeMap;
     use std::collections::BTreeSet;
     use std::fs;
+    use std::hint::black_box;
     use std::path::Path;
     use std::string::String;
     use std::string::ToString;
@@ -912,6 +988,7 @@ mod tests {
     use super::EK_EXTENSION;
     use super::EN_TIME_RAIM;
     use super::FA_SELF_TEST;
+    use super::Frame;
     use super::FrameError;
     use super::GJ_LEAP_SECOND_PENDING;
     use super::HEADER;
@@ -920,6 +997,7 @@ mod tests {
     use super::MAX_RESPONSE;
     use super::MESSAGES;
     use super::MessageId;
+    use super::MessageLengths;
     use super::OVERHEAD;
     use super::SZ_POWER_ON_FAILURE;
     use super::answer_id;
@@ -1464,6 +1542,78 @@ mod tests {
         assert_eq!(
             event.map(|event| event.map(|frame| frame.id())),
             Some(Ok(CF_SET_TO_DEFAULTS))
+        );
+    }
+
+    /// Lengths that depend on something set at run time, as a type that
+    /// can be written out: an engine's messages, the eight-channel ones
+    /// only if `eight`.
+    struct Chosen {
+        eight: bool,
+    }
+
+    impl MessageLengths for Chosen {
+        fn length(&self, id: MessageId) -> Option<usize> {
+            match id.channels() {
+                Channels::Eight if !self.eight => None,
+                _ => response_length(id),
+            }
+        }
+    }
+
+    /// A deframer with lengths of the caller's own type as a `static`,
+    /// built by a const constructor before what they depend on is known.
+    static CHOSEN: Mutex<Deframer<MAX_RESPONSE, Chosen>> =
+        Mutex::new(Deframer::with_lengths(Chosen { eight: false }));
+
+    /// Lengths set at run time take effect at the next frame, and the
+    /// frame in progress keeps its own.
+    #[test]
+    fn lengths_can_be_set_at_run_time() {
+        let bytes = framed(EA_POSITION_STATUS, &awkward(69));
+        let (head, tail) = bytes.split_at(HEADER + 1);
+        let id = |event: Option<Result<Frame<'_>, FrameError>>| {
+            event.map(|event| event.map(|frame| frame.id()))
+        };
+        let mut deframer = CHOSEN.lock().expect("the lock");
+        let (taken, event) = deframer.feed(&bytes);
+        assert_eq!(taken, HEADER);
+        assert_eq!(
+            id(event),
+            Some(Err(FrameError::UnknownId(EA_POSITION_STATUS)))
+        );
+        deframer.reset();
+
+        deframer.set_lengths(Chosen { eight: true });
+        assert_eq!(deframer.feed(head), (head.len(), None));
+        deframer.set_lengths(Chosen { eight: false });
+        let (taken, event) = deframer.feed(tail);
+        assert_eq!(taken, tail.len());
+        assert_eq!(id(event), Some(Ok(EA_POSITION_STATUS)));
+        let (_, event) = deframer.feed(&bytes);
+        assert_eq!(
+            id(event),
+            Some(Err(FrameError::UnknownId(EA_POSITION_STATUS)))
+        );
+    }
+
+    /// A closure that captures a value known only at run time is lengths
+    /// too, for a deframer that is not a `static`.
+    #[test]
+    fn a_closure_can_capture_its_lengths() {
+        let longest = black_box(MAX_COMMAND);
+        let short = |id| response_length(id).filter(|&length| length <= longest);
+        let mut deframer = Deframer::<MAX_RESPONSE, _>::with_lengths(short);
+        let stream = [
+            framed(CJ_RECEIVER_ID, &[0; 287]),
+            framed(CF_SET_TO_DEFAULTS, &[]),
+        ]
+        .concat();
+        let (taken, event) = deframer.feed(&stream);
+        assert_eq!(taken, HEADER);
+        assert_eq!(
+            event.map(|event| event.map(|frame| frame.id())),
+            Some(Err(FrameError::UnknownId(CJ_RECEIVER_ID)))
         );
     }
 

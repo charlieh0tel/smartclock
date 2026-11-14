@@ -58,7 +58,7 @@ TARGETS = format-c check-format-c check-module-figures module-figures check-imag
 	check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants \
-	check-status-register
+	check-status-register check-gps-fields gps-fields
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
@@ -261,6 +261,19 @@ check-loop-constants:
 
 loop-constants:
 	python3 -I $(ROOT)/tools/firmware/loop_constants.py --write
+
+# Fail if docs/firmware/gps-fields.tsv, the fields of every message the
+# GPS engine model speaks, does not tile each message, or if its images
+# column or the gaps made from it between markers in
+# docs/firmware/gps.md are not what the images give: the bytes their
+# own decoders read of each message, run in Unicorn, and the commands
+# their request scripts send; gps-fields rewrites the column and the
+# gaps.
+check-gps-fields:
+	uv run -q $(ROOT)/tools/firmware/gps_fields.py --check
+
+gps-fields:
+	uv run -q $(ROOT)/tools/firmware/gps_fields.py
 
 # The decompiled C's flags.  -fno-defer-pop has gcc pop a call's
 # arguments after the call, so that from a task in user mode an argument

@@ -985,6 +985,22 @@ stands in for one.
   up, and their position is the one the firmware's own script sets
   (`docs/firmware/gps.md`, "Requests") or one a command of theirs
   sets.
+- **The model's fields are held to what the images read.**
+  `docs/firmware/gps-fields.tsv` has a row for every field of every
+  message the model speaks, with the manual page, the images that read
+  it or set it and where the model gets it.  The readers are measured,
+  each image's own decoders run in Unicorn on a message with the reads
+  of its bytes noted, not read off the C, and the setters come from the
+  request scripts; `make check-gps-fields` fails when the table and
+  the images part, and the crate's tests hold its rows to the table of
+  lengths.  The rule it serves: every message the model speaks is
+  implemented fully, per the manual, and whatever fills a `Record`
+  supplies at least the fields the images read, from real data, a field
+  it cannot fill going out as the manual's unknown value, else zero;
+  exceptions are the owner's.  The model does not meet it yet: the
+  gaps, a field an image reads that the model sends as a constant and
+  a command an image sets that it does not honor, are listed by the
+  check and in `docs/firmware/gps.md`, "The fields", and are open work.
 - **Settings change what the model sends only as far as the recorded
   exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2), the
   automatic switch to altitude hold above `@@Al`'s PDOP, `@@Bb` sent on

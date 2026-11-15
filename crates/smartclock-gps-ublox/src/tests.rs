@@ -45,7 +45,6 @@ use smartclock_gps::record::Record;
 use smartclock_gps::record::SelfTest;
 use smartclock_gps::record::Tracking;
 use smartclock_gps::record::Velocity;
-use smartclock_gps::record::field::IMAGE_SETS;
 use smartclock_gps::record::field::UNFILLED;
 use smartclock_gps::record::field::changed;
 use smartclock_gps::source::Presence;
@@ -1180,21 +1179,28 @@ fn whole_epoch() -> Vec<u8> {
     ])
 }
 
-/// The exceptions table, from the crate's directory.
+/// The exceptions tables, the fields' and the settings', from the
+/// crate's directory.
 const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
+const SETTING_EXCEPTIONS: &str = "../../docs/firmware/gps-setting-exceptions.tsv";
 
 /// The assembler writes what [`FILLER`] declares and nothing else, and
-/// all the images use.  It acts on none
-/// of the engine's settings: nothing here configures the receiver from
-/// them.
+/// all the images use.  It acts on none of the engine's settings,
+/// nothing here configuring the receiver from them, and is excused
+/// each the images set, once.
 #[test]
 fn the_filler_fills_what_it_declares() {
-    let exceptions =
-        std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(EXCEPTIONS))
-            .expect("the exceptions table");
-    let shortfall = FILLER.shortfall(&exceptions);
+    let table = |path: &str| {
+        std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(path))
+            .expect("an exceptions table")
+    };
+    let shortfall = FILLER.shortfall(&table(EXCEPTIONS));
     assert!(shortfall.is_empty(), "shortfall: {shortfall:?}");
-    assert_eq!(FILLER.unacted(), IMAGE_SETS);
+    let exceptions = table(SETTING_EXCEPTIONS);
+    let unacted = FILLER.unacted(&exceptions);
+    assert!(unacted.is_empty(), "unacted: {unacted:?}");
+    let needless = FILLER.needless(&exceptions);
+    assert!(needless.is_empty(), "needless: {needless:?}");
 
     let records = records(&mut Bench::new(), &whole_epoch());
     let [record] = records[..] else {

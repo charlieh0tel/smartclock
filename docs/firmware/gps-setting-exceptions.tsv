@@ -1,0 +1,36 @@
+# Settings a receiver's image sets that a filler of records is excused from acting on (docs/firmware/gps.md, "The fields").  A filler's test holds that the settings it acts on and its rows here are together the settings the images set, each once.  A row is the project owner's to grant.
+filler	setting	reason
+engine vectors	altitude_hold	its fix is 3D under a sky of eight, never the 2D one an altitude is held for
+engine vectors	time_base	a record carries GPS time and its offset from UTC whatever the base, and a scene has no pulse to put on either
+engine vectors	pulse_offset	a scene has no pulse, and a record carries none
+engine vectors	pulse_mode	a scene has no pulse, and a record carries none
+engine vectors	application	a scene stays where its head puts it and searches for nothing
+engine vectors	initial_position	a scene has its position from the first second and searches for nothing
+engine vectors	satellite_select	a scene tracks its whole sky and chooses among no satellites
+engine vectors	manual_satellites	a scene tracks its whole sky and chooses among no satellites
+engine vectors	xdop_hysteresis	a scene has one set of satellites and never changes to another
+engine vectors	almanac_update	a scene has one almanac and receives no other
+engine vectors	atmospheric_correction	a scene measures no ranges to correct
+engine vectors	fix_algorithm	a scene is given its position and computes no fix
+engine vectors	epoch_offset	a scene makes a record on the second and measures at no epoch
+engine vectors	hdop_threshold	its fix is 3D under a sky of eight, never a 2D one to give up
+engine vectors	correction_thresholds	a scene has no differential corrections
+engine vectors	output_format	the vectors are of the binary format alone
+u-blox	position_hold	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	held_position	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	altitude_hold	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	time_base	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	pulse_offset	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	pulse_mode	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	application	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	initial_position	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	satellite_select	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	manual_satellites	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	xdop_hysteresis	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	almanac_update	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	atmospheric_correction	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	fix_algorithm	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	epoch_offset	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	hdop_threshold	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	correction_thresholds	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	output_format	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none

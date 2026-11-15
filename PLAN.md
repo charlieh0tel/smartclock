@@ -1027,9 +1027,12 @@ stands in for one.
   `Engine::settings()` with a change event; or a gap.  No command an
   image sets is a gap, and the check lists any that becomes one
   (`docs/firmware/gps.md`, "The fields").  A filler declares the
-  settings it acts on beside the fields it fills, against
-  `IMAGE_SETS`, the settings the images set; the scene and the u-blox
-  crate act on none, which is open work for whatever holds them.
+  settings it acts on beside the fields it fills, and its test holds
+  that those and its rows of
+  `docs/firmware/gps-setting-exceptions.tsv`, the owner's to grant,
+  are together `IMAGE_SETS`, the settings the images set, each once.
+  The scene acts on position hold and the position to hold; the
+  u-blox crate, which sends its receiver nothing, on none.
 - **Settings change what the model sends only as far as the recorded
   exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2), the
   automatic switch to altitude hold above `@@Al`'s PDOP, `@@Bb` sent on

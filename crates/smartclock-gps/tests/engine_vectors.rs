@@ -26,7 +26,11 @@ use smartclock_gps::engine::identity::UT_PLUS_2_2;
 use smartclock_gps::engine::identity::VP_EIGHT;
 use smartclock_gps::engine::identity::VP_EIGHT_WITHOUT_TIME_RAIM;
 use smartclock_gps::engine::identity::VP_SIX;
+use smartclock_gps::engine::settings::HeightKind;
+use smartclock_gps::engine::settings::Location;
+use smartclock_gps::engine::settings::Setting;
 use smartclock_gps::engine::settings::SettingSet;
+use smartclock_gps::engine::settings::Settings;
 use smartclock_gps::record::Almanac;
 use smartclock_gps::record::Antenna;
 use smartclock_gps::record::Dops;
@@ -43,7 +47,6 @@ use smartclock_gps::record::SelfTest;
 use smartclock_gps::record::Timing;
 use smartclock_gps::record::field::FieldSet;
 use smartclock_gps::record::field::Filler;
-use smartclock_gps::record::field::IMAGE_SETS;
 use smartclock_gps::record::field::RecordField;
 use smartclock_gps::record::field::UNFILLED;
 use smartclock_gps::record::field::changed;
@@ -116,7 +119,8 @@ const RAIM: Raim = Raim::new(RaimSolution::Ok, RaimAbility::Isolation);
 /// And with it off, when no satellite is heard (VP pp. 105 and 106).
 const RAIM_WITHOUT_ANTENNA: Raim = Raim::new(RaimSolution::Unknown, RaimAbility::Neither);
 
-/// What a [`Scene`] fills of a record, and that it acts on no setting.
+/// What a [`Scene`] fills of a record, and the settings it acts on:
+/// in position hold its receiver is where it was told it is.
 const SCENE: Filler = Filler {
     name: "engine vectors",
     fills: FieldSet::of(&[
@@ -150,10 +154,12 @@ const SCENE: Filler = Filler {
         RecordField::RaimSolution,
         RecordField::RaimAbility,
     ]),
-    acts: SettingSet::EMPTY,
+    acts: SettingSet::of(&[Setting::PositionHold, Setting::HeldPosition]),
 };
-/// The exceptions table, from the crate's directory.
+/// The exceptions tables, the fields' and the settings', from the
+/// crate's directory.
 const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
+const SETTING_EXCEPTIONS: &str = "../../docs/firmware/gps-setting-exceptions.tsv";
 /// The vector whose scene is held to [`SCENE`]: one with a leap second
 /// announced.
 const DECLARED_BY: &str = "vp-eight-leap.txt";
@@ -272,6 +278,22 @@ fn ecef(position: Position) -> Ecef {
     }
 }
 
+/// The position a command gave, as a record has one: both its
+/// heights, by the ellipsoid's above mean sea level.
+fn position(location: Location) -> Position {
+    let height = location.height.height.0;
+    let (ellipsoid, mean_sea_level) = match location.height.kind {
+        HeightKind::Ellipsoid => (height, height - SEPARATION),
+        HeightKind::MeanSeaLevel => (height + SEPARATION, height),
+    };
+    Position {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        ellipsoid: Centimeters(ellipsoid),
+        mean_sea_level: Centimeters(mean_sea_level),
+    }
+}
+
 /// What does not change through a vector.
 struct Scene {
     /// The GPS second before the first.
@@ -330,8 +352,11 @@ impl Scene {
         }
     }
 
-    /// The record of the vector's `second`th second.
-    fn record(&self, second: u64, antenna: bool) -> Record {
+    /// The record of the vector's `second`th second, of an engine set
+    /// to `settings`.  In position hold the receiver takes the position
+    /// it was given for its own and solves for time alone (VP pp. 56
+    /// and 73).
+    fn record(&self, second: u64, antenna: bool, settings: &Settings) -> Record {
         let seconds = self.start + Seconds(second.cast_signed());
         let offset = self.leap.map_or(Seconds(self.offset), |leap| {
             leap.offset(seconds, Seconds(self.offset))
@@ -342,6 +367,12 @@ impl Scene {
             subsecond: Nanoseconds(0),
         });
         record.utc_offset = Some(offset);
+        if settings.position_hold {
+            let held = position(settings.held_position);
+            record.fix = Fix::TimeOnly;
+            record.position = Some(held);
+            record.derived.ecef = Some(ecef(held));
+        }
         (record.antenna, record.derived.raim) = if antenna {
             (Antenna::Connected, Some(RAIM))
         } else {
@@ -404,7 +435,7 @@ fn run(text: &str) -> String {
     };
     for second in 1..=last {
         lines.second = second;
-        let record = scene.record(second, antenna);
+        let record = scene.record(second, antenna, &engine.settings());
         engine.second(
             &record,
             Milliseconds(second * MILLISECONDS_PER_SECOND),
@@ -419,7 +450,7 @@ fn run(text: &str) -> String {
                         writeln!(lines.text, "{second} {kind} {}", hex(bytes))
                             .expect("a string takes it");
                     }
-                    let record = scene.record(second, antenna);
+                    let record = scene.record(second, antenna, &engine.settings());
                     for (_, bytes) in run {
                         engine.receive(bytes, &record, now, &mut lines);
                     }
@@ -445,17 +476,9 @@ fn vectors() -> Vec<PathBuf> {
     paths
 }
 
-/// A scene fills what it declares and nothing else, and all the
-/// images use.  It acts on no setting: a scene is written, not
-/// steered.
-#[test]
-fn a_scene_fills_what_it_declares() {
+/// The head of the vector a scene is held to.
+fn declared_head() -> Head {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let exceptions = fs::read_to_string(root.join(EXCEPTIONS)).expect("the exceptions table");
-    let shortfall = SCENE.shortfall(&exceptions);
-    assert!(shortfall.is_empty(), "shortfall: {shortfall:?}");
-    assert_eq!(SCENE.unacted(), IMAGE_SETS);
-
     let text =
         fs::read_to_string(root.join("tests/vectors/engine").join(DECLARED_BY)).expect("a vector");
     let mut head = Head {
@@ -466,11 +489,85 @@ fn a_scene_fills_what_it_declares() {
         let (key, value) = field.split_once(": ").expect("a key and a value");
         head.fields.insert(key.to_owned(), value.to_owned());
     }
-    let record = Scene::new(&head).record(1, true);
+    head
+}
+
+/// A scene fills what it declares and nothing else, and all the
+/// images use.  Of the settings the images set, it acts on those it
+/// declares and is excused the rest, each once.
+#[test]
+fn a_scene_fills_what_it_declares() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let exceptions = fs::read_to_string(root.join(EXCEPTIONS)).expect("the exceptions table");
+    let shortfall = SCENE.shortfall(&exceptions);
+    assert!(shortfall.is_empty(), "shortfall: {shortfall:?}");
+    let exceptions =
+        fs::read_to_string(root.join(SETTING_EXCEPTIONS)).expect("the setting exceptions table");
+    let unacted = SCENE.unacted(&exceptions);
+    assert!(unacted.is_empty(), "unacted: {unacted:?}");
+    let needless = SCENE.needless(&exceptions);
+    assert!(needless.is_empty(), "needless: {needless:?}");
+
+    let head = declared_head();
+    let engine = Engine::new(head.identity(), head.options());
+    let record = Scene::new(&head).record(1, true, &engine.settings());
     let undeclared = SCENE.undeclared(&UNFILLED, &record);
     assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
     let unshown = SCENE.unshown(changed(&UNFILLED, &record));
     assert!(unshown.is_empty(), "unshown: {unshown:?}");
+}
+
+/// `@@As` (VP p. 55): 10 degrees north, 20 east, 100 m above mean sea
+/// level; and `@@At` (VP p. 57), position hold on.
+const HOLD_AT: [u8; 20] = [
+    0x40, 0x40, 0x41, 0x73, 0x02, 0x25, 0x51, 0x00, 0x04, 0x4a, 0xa2, 0x00, 0x00, 0x00, 0x27, 0x10,
+    0x01, 0x9e, 0x0d, 0x0a,
+];
+const HOLD: [u8; 8] = [0x40, 0x40, 0x41, 0x74, 0x01, 0x34, 0x0d, 0x0a];
+/// Where that is.
+const HELD: Position = Position {
+    latitude: MilliArcSeconds(36_000_000),
+    longitude: MilliArcSeconds(72_000_000),
+    ellipsoid: Centimeters(10_000 + SEPARATION),
+    mean_sea_level: Centimeters(10_000),
+};
+
+/// A scene acts on the two settings it declares: with the position
+/// held, its record is at the position to hold and its fix of time
+/// alone; a position to hold changes nothing until it is held.
+#[test]
+fn a_scene_holds_the_position_it_is_told_to() {
+    let head = declared_head();
+    let scene = Scene::new(&head);
+    let mut engine = Engine::new(head.identity(), head.options());
+    let mut lines = Lines {
+        text: String::new(),
+        second: 1,
+    };
+    let now = Milliseconds(MILLISECONDS_PER_SECOND);
+    let free = scene.record(1, true, &engine.settings());
+    assert_eq!(free.fix, Fix::ThreeD);
+    assert_ne!(free.position, Some(HELD));
+
+    engine.receive(&HOLD_AT, &free, now, &mut lines);
+    assert_eq!(scene.record(1, true, &engine.settings()), free);
+
+    engine.receive(&HOLD, &free, now, &mut lines);
+    let held = scene.record(1, true, &engine.settings());
+    assert_eq!(held.fix, Fix::TimeOnly);
+    assert_eq!(held.position, Some(HELD));
+    assert_eq!(held.derived.ecef, Some(ecef(HELD)));
+    assert_eq!(
+        changed(&free, &held),
+        FieldSet::of(&[
+            RecordField::Fix,
+            RecordField::Latitude,
+            RecordField::Longitude,
+            RecordField::EllipsoidHeight,
+            RecordField::MeanSeaLevelHeight,
+            RecordField::Ecef,
+        ])
+    );
 }
 
 #[test]

@@ -1231,9 +1231,19 @@ specification; in short:
   fix mode besides.  Every field of the `Settings` is named by some
   row, the check holds.  The settings behind the rows some image sets
   are the crate's `IMAGE_SETS`, written by the tool as `IMAGE_USES`
-  is; a `Filler` declares the settings it acts on, and its test says
-  which of `IMAGE_SETS` it leaves (`Filler::unacted`).  Neither the
-  vectors' scene nor the u-blox crate acts on any yet.
+  is.  A `Filler` declares the settings it acts on, and its test
+  holds that those and its rows of `gps-setting-exceptions.tsv`, one
+  for each setting it is excused with the reason, are together
+  `IMAGE_SETS`, each setting once: `Filler::unacted` and
+  `Filler::needless` are empty, so a row goes when its setting is
+  acted on or no image sets it any longer.  A row names a setting by
+  its field of the `Settings`, and is the owner's to grant.  The
+  vectors' scene acts on position hold and the position to hold: held,
+  its record is at that position with a fix of time alone (VP pp. 56
+  and 73).  It is excused the rest, having no pulse, search, choice of
+  satellites or 2D fix for them to change.  The u-blox crate acts on
+  none and is excused all: each would be a configuration sent to the
+  receiver, and the crate only reads one.
 - **What the model does of its own for a command.**  `@@Aa` and
   `@@Ac` set its clock, the time or the date alone, unless the record
   tells the time: an Oncore tracking a satellite ignores them (VP

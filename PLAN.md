@@ -1109,8 +1109,10 @@ stands in for one.
   `FieldSet`, `Filler`), and its tests hold the declaration to
   `IMAGE_USES`, which the check writes from the table's used rows, to
   `docs/firmware/gps-field-exceptions.tsv`, empty until the owner adds
-  to it, and to what a fill really changes.  The model does not meet it yet: no
-  field an image uses for control or reports is a constant any longer, but the
+  to it, and to what a fill really changes.  Every field of a response
+  is now the record's, the model's state or the manual's value for not
+  known, a channel's URA of 63 the one such value; `RECORD_BYTES_MAX`
+  went from 640 to 704 for it.  The model does not meet the rule yet: the
   gaps left, a command an image sets that it does not honor, are listed by the
   check and in `docs/firmware/gps.md`, "The fields", and are open work.
 - **Settings change what the model sends only as far as the recorded

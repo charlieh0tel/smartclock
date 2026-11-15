@@ -1176,6 +1176,20 @@ specification; in short:
   p. 108), a VP's `@@Fa` (VP p. 143) or a UT Plus's (UT p. 6.43).  A
   part the manual gives two tests, a VP's RAM and ROM, fails both; a
   part an engine has no test of sets nothing.
+- **Every field of a message the model speaks is the record's, the
+  model's own state or the manual's value for not known.**  A record
+  has all nine tracking modes (VP p. 72), each satellite's momentum
+  alert, anti-spoof, inaccurate and parity error flags (VP p. 73) and
+  its URA, and for an extension the magnetic variation, the velocity
+  along each axis, the age of the differential data and the solution's
+  matrix, clock bias and oscillator offset (VP pp. 97 and 98).  The
+  ECEF position is sent in position hold as out of it, the manual
+  making no exception.  What a record lacks goes out as zero, the
+  manual giving no other value, but for a channel's URA: with none
+  decoded, or no satellite on the channel, it is 63 (VP p. 98), and
+  those are the two rows the lists below keep.  A Time RAIM status's
+  pulse rate is one a second, the model's own: the manual has no
+  command that sets it (VP pp. 104 and 105).
 - **A satellite `@@Am` ignores is `@@Bb`'s removed** (VP p. 75), and
   **a fix a record gives as propagated** sets the receiver status's
   position propagate bit with a DOP of zero (VP pp. 70, 72 and 73; UT
@@ -1204,38 +1218,11 @@ list.  The last is the command fields.
 
 | Message | Field | Bytes | Console only | The engine sends |
 |---|---|---|---|---|
-| `@@Ba` | channel status flags | 43-63, 6 x 1 | console: all four | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
-| `@@Bk` | magnetic variation | 14-15 | console: all four | zero |
-| `@@Bk` | velocity north | 16-17 | console: all four | zero |
-| `@@Bk` | velocity east | 18-19 | console: all four | zero |
-| `@@Bk` | velocity up | 20-21 | console: all four | zero |
-| `@@Bk` | age of differential data | 22-23 | console: all four | zero |
-| `@@Bk` | ECEF X | 24-27 | console: all four | zero: while holding position |
-| `@@Bk` | ECEF Y | 28-31 | console: all four | zero: while holding position |
-| `@@Bk` | ECEF Z | 32-35 | console: all four | zero: while holding position |
-| `@@Bk` | channel URA | 36-41, 6 x 1 | console: all four | zero |
-| `@@Bk` | least squares matrix elements 1 to 7 | 42-55, 7 x 2 | console: all four | zero |
-| `@@Bk` | least squares matrix elements 8 to 10 | 56-61, 3 x 2 | console: z3805a-3543b, z3801a-3543 | zero |
-| `@@Bk` | clock bias | 62-63 | console: z3805a-3543b, z3801a-3543 | zero |
-| `@@Bk` | oscillator offset | 64-65 | console: z3805a-3543b, z3801a-3543 | zero |
-| `@@Bn` | pulse rate | 9-11 | console: z3805a-3543b, z3801a-3543; stored: 58503a-3704, z3817a-3752 | constant: one pulse a second |
-| `@@Ea` | channel status flags | 43-71, 8 x 1 | console: 58503a-3704, z3817a-3752 | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
-| `@@Ek` | magnetic variation | 14-15 | console: 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | velocity north | 16-17 | console: 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | velocity east | 18-19 | console: 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | velocity up | 20-21 | console: 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | age of differential data | 22-23 | console: 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | ECEF X | 24-27 | console: 58503a-3704, z3817a-3752 | zero: while holding position |
-| `@@Ek` | ECEF Y | 28-31 | console: 58503a-3704, z3817a-3752 | zero: while holding position |
-| `@@Ek` | ECEF Z | 32-35 | console: 58503a-3704, z3817a-3752 | zero: while holding position |
-| `@@Ek` | channel URA | 36-43, 8 x 1 | console: 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | least squares matrix elements | 44-63, 10 x 2 | console: 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | clock bias | 64-65 | console: 58503a-3704, z3817a-3752 | zero |
-| `@@Ek` | oscillator offset | 66-67 | console: 58503a-3704, z3817a-3752 | zero |
+| `@@Bk` | channel URA | 36-41, 6 x 1 | console: all four | unknown: no URA decoded, or no satellite on the channel |
+| `@@Ek` | channel URA | 36-43, 8 x 1 | console: 58503a-3704, z3817a-3752 | unknown: no URA decoded, or no satellite on the channel |
 
 | Message | Field | Bytes | Stored only | The engine sends |
 |---|---|---|---|---|
-| `@@En` | pulse rate | 9-11 | stored: 58503a-3704, z3817a-3752 | constant: one pulse a second |
 
 | Command | Field | Set by | The engine has it |
 |---|---|---|---|

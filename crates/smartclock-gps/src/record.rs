@@ -19,7 +19,8 @@
 //! parts of it that may gain a field are `#[non_exhaustive]`: start from
 //! [`Record::EMPTY`], [`Satellite::new`], [`Timing::ZERO`],
 //! [`Almanac::new`], [`Derived::EMPTY`], [`XdopTable::new`],
-//! [`Corrections::new`] or [`Raim::new`] and set fields.
+//! [`Corrections::new`], [`Raim::new`] or [`Solver::ZERO`] and set
+//! fields.
 //!
 //! [`field`] names a record's parts, so that what fills one can say
 //! which it fills and be held to it.
@@ -32,6 +33,8 @@ use crate::time::LeapEvent;
 use crate::units::Centimeters;
 use crate::units::CentimetersPerSecond;
 use crate::units::DecibelHertz;
+use crate::units::Decimeters;
+use crate::units::DecimetersPerSecond;
 use crate::units::Deciseconds;
 use crate::units::Degrees;
 use crate::units::Hertz;
@@ -42,6 +45,7 @@ use crate::units::Prn;
 use crate::units::PrnSet;
 use crate::units::Seconds;
 use crate::units::TenthDegrees;
+use crate::units::TenthDegreesEast;
 use crate::units::Tenths;
 
 /// The satellites a record holds at most: the slots of `@@Bb` (VP
@@ -49,7 +53,7 @@ use crate::units::Tenths;
 pub const SATELLITES: usize = 12;
 
 /// A bound on a record's size in bytes, on every target.
-pub const RECORD_BYTES_MAX: usize = 640;
+pub const RECORD_BYTES_MAX: usize = 704;
 
 const _: () = assert!(size_of::<Record>() <= RECORD_BYTES_MAX);
 
@@ -218,10 +222,14 @@ pub enum Tracking {
     Searching,
     /// Its code is found.
     CodeLock,
+    /// The gain is set for it (mode 2, AGC set).
+    AgcSet,
     /// Its carrier is found.
     CarrierLock,
     /// Its data bits are in step.
     BitSync,
+    /// Its data's preamble is found (mode 5, message sync detect).
+    MessageSync,
     /// Its data frames are in step, so its time is known.
     FrameSync,
     /// Its ephemeris is being read.
@@ -241,6 +249,53 @@ pub enum Health {
     /// Not to be used.
     Unhealthy,
 }
+
+/// Something a satellite's data flags of it, or a channel of its
+/// reading of that data (VP p. 73, the channel status bits 6, 5, 3 and
+/// 0).  Bit 4, reported unhealthy, is [`Satellite::health`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum SatelliteFlag {
+    /// The satellite's momentum alert flag is set.
+    MomentumAlert,
+    /// Its anti-spoof flag is set.
+    AntiSpoof,
+    /// It reports itself inaccurate, by more than 16 m.
+    Inaccurate,
+    /// Its data failed parity.
+    ParityError,
+}
+
+/// A set of [`SatelliteFlag`]s.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct SatelliteFlags(u8);
+
+impl SatelliteFlags {
+    /// No flag.
+    pub const EMPTY: Self = Self(0);
+
+    /// The set with `flag` in it.
+    #[must_use]
+    pub const fn with(self, flag: SatelliteFlag) -> Self {
+        Self(self.0 | 1 << flag as u8)
+    }
+
+    /// Whether `flag` is in it.
+    #[must_use]
+    pub const fn contains(self, flag: SatelliteFlag) -> bool {
+        self.0 & 1 << flag as u8 != 0
+    }
+
+    /// Whether it holds none.
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+}
+
+/// The highest user range accuracy index a satellite sends (VP p. 98:
+/// 0 to 15).
+pub const URA_MAX: u8 = 15;
 
 /// One satellite in view.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -269,6 +324,11 @@ pub struct Satellite {
     /// Its own time solution less the mean of them all, which Time RAIM
     /// judges (the per-satellite time estimate of `@@Bn`, VP p. 106).
     pub time_error: Option<Nanoseconds<i32>>,
+    /// What its data flags of it.
+    pub flags: SatelliteFlags,
+    /// Its user range accuracy index as it sends it, 0 to [`URA_MAX`],
+    /// once that is decoded (VP p. 98).
+    pub ura: Option<u8>,
 }
 
 impl Satellite {
@@ -286,6 +346,8 @@ impl Satellite {
             ephemeris: false,
             doppler: None,
             time_error: None,
+            flags: SatelliteFlags::EMPTY,
+            ura: None,
         }
     }
 
@@ -484,6 +546,44 @@ pub struct Ecef {
     pub y: Centimeters,
     /// Along the axis through the north pole.
     pub z: Centimeters,
+}
+
+/// How the antenna moves along each axis (VP p. 97).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct VelocityAxes {
+    /// North.
+    pub north: DecimetersPerSecond<i16>,
+    /// East.
+    pub east: DecimetersPerSecond<i16>,
+    /// Up.
+    pub up: DecimetersPerSecond<i16>,
+}
+
+/// The elements of the least squares solution's symmetrical matrix
+/// (VP p. 98).
+pub const MATRIX_ELEMENTS: usize = 10;
+
+/// The inside of a receiver's least squares solution (VP p. 98).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct Solver {
+    /// The inverse matrix's upper triangle by rows, in tenths:
+    /// `[0][0]` to `[0][3]`, `[1][1]` to `[1][3]`, `[2][2]`, `[2][3]`
+    /// and `[3][3]`.
+    pub matrix: [i16; MATRIX_ELEMENTS],
+    /// The receiver's clock bias.
+    pub clock_bias: Decimeters,
+    /// Its oscillator's offset.
+    pub oscillator_offset: DecimetersPerSecond<u16>,
+}
+
+impl Solver {
+    /// All zero.
+    pub const ZERO: Self = Self {
+        matrix: [0; MATRIX_ELEMENTS],
+        clock_bias: Decimeters(0),
+        oscillator_offset: DecimetersPerSecond(0),
+    };
 }
 
 /// A kind of dilution of precision, as `@@Aj` chooses one and `@@Bc`
@@ -717,6 +817,13 @@ pub struct Derived {
     pub corrections: Option<Corrections>,
     /// Time RAIM's result.
     pub raim: Option<Raim>,
+    /// What to add to a true heading for a magnetic one, by a model of
+    /// the Earth's field (VP pp. 95 and 97).
+    pub magnetic_variation: Option<TenthDegreesEast>,
+    /// [`Record::velocity`] along each axis.
+    pub velocity: Option<VelocityAxes>,
+    /// The inside of the solution.
+    pub solver: Option<Solver>,
 }
 
 impl Derived {
@@ -726,6 +833,9 @@ impl Derived {
         xdops: None,
         corrections: None,
         raim: None,
+        magnetic_variation: None,
+        velocity: None,
+        solver: None,
     };
 }
 
@@ -753,6 +863,8 @@ pub struct Record {
     /// Whether the fix is corrected by a differential reference (VP
     /// p. 73, receiver status bit 2; UT p. 6.20).
     pub differential: bool,
+    /// How old the differential corrections it uses are (VP p. 98).
+    pub differential_age: Option<Deciseconds>,
     /// The position.  `None` when there is none to give.
     pub position: Option<Position>,
     /// The velocity.  `None` when it is not computed.
@@ -782,6 +894,7 @@ impl Record {
         leap: None,
         fix: Fix::None,
         differential: false,
+        differential_age: None,
         position: None,
         velocity: None,
         dops: None,

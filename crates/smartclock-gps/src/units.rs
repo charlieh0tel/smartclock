@@ -106,6 +106,11 @@ pub struct Degrees<T>(pub T);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct TenthDegrees(pub u16);
 
+/// An angle in tenths of a degree, east positive: a magnetic
+/// variation, -1800 to 1800 (p. 97).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct TenthDegreesEast(pub i16);
+
 /// An angle in milliarcseconds: a latitude, north positive, or a
 /// longitude, east positive (p. 71).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -114,6 +119,15 @@ pub struct MilliArcSeconds(pub i32);
 /// A length in centimeters: a height (p. 71).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Centimeters(pub i32);
+
+/// A length in tenths of a meter: a receiver's clock bias (p. 98).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Decimeters(pub i16);
+
+/// A speed in tenths of a meter a second: signed, a velocity along an
+/// axis (p. 97); unsigned, an oscillator's offset (p. 98).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct DecimetersPerSecond<T>(pub T);
 
 /// A speed in centimeters a second (p. 72).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]

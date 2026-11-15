@@ -1197,8 +1197,7 @@ specification; in short:
   none.  The matrix's elements are signed by our reading alone:
   the manual gives them two bytes and a resolution, and no range or
   sign (VP p. 98).  The manual has the oscillator offset as "0 to 65535 (in
-  m/s)" and no way to say an oscillator runs the other way, so a
-  record has none either.  The
+  m/s)" (VP p. 98), and a record has it unsigned too.  The
   ECEF position is sent in position hold as out of it, the manual
   making no exception.  What a record lacks goes out as zero, the
   manual giving no other value, but for a channel's URA: with none

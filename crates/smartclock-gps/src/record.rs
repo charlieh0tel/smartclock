@@ -604,9 +604,7 @@ pub struct Solver {
     /// as the least.
     pub clock_bias: Decimeters,
     /// Its oscillator's offset: "0 to 65535 (in m/s) resolution =
-    /// 0.1".  The manual has it unsigned and says nothing of an
-    /// oscillator that runs the other way, so neither does this: a
-    /// filler that has a negative drift has no value to give for it.
+    /// 0.1", unsigned as the manual has it.
     pub oscillator_offset: DecimetersPerSecond<u16>,
 }
 

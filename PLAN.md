@@ -674,11 +674,12 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   file of `common/`'s C may be left out of an image's export
   (`without=NAME`) when the image lacks every function in it: lack,
   never change, the file the unit, grouped by the device or command set
-  the others lack, the published three taking every file, so that the
-  published `common/` holds none they do not use (`rewrite.md`,
+  the others lack, the first three to share `common/` (the Z3805A
+  3543B, the 58503A 3704, the Z3801A 3543) taking every file, so that
+  `common/` holds none they do not use (`rewrite.md`,
   "Shared C", "A file for some images").  A function an image changes
   still goes back to every image's own C.  The alternative, a file for
-  any set of images sharing a function, published ones lacking it too,
+  any set of images sharing a function, those three lacking it too,
   is not taken.  Before (the Z3801A 3543, the third to share, sent back
   `counter_set_sync`, the `:LED:ALARm:USER` handlers, and the FPGA bit
   setters with each image's own table; the Z3817A 3752, the fifth,

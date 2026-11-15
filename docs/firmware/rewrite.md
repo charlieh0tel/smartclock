@@ -302,13 +302,13 @@ lack, never change:
   forced to a level, by the Z3815A 4010, the Z3816A 4001 and the Z3817A
   3752.  `bytes_equal.c`, the comparison of two counted byte strings,
   and `installer/installer_duart_transmit.c`, the installer's channel A
-  transmit interrupt and channel B polled write, are the three
-  published images' alone, the other four leaving them out.
+  transmit interrupt and channel B polled write, are the first three
+  sharing images' alone, the other four leaving them out.
   A function the same in some images but
   not in a file whose images are exactly those stays per image.
-- The published images (PLAN.md; the Z3805A 3543B, the 58503A 3704,
-  the Z3801A 3543) leave no file out, so that the published `common/`
-  holds no file no published image includes, and rule 1 still reads
+- The first three images to share `common/` (PLAN.md; the Z3805A
+  3543B, the 58503A 3704, the Z3801A 3543) leave no file out, so that
+  `common/` holds no file none of the three includes, and rule 1 still reads
   each function's class in each sharing image's diff against the Z3805A
   3543B; two or more images include each file.
 - Rules 1 to 3 hold among the images that include the file; types stay
@@ -319,15 +319,15 @@ lack, never change:
 `make check-common` holds each file to it: each image whose export
 leaves a file out must name none of its functions in its
 `.conventions.jsonl`, and the images including it must be two or more,
-the published three among them.  It checks too that each export says
+those three among them.  It checks too that each export says
 which file of `common/` defines a function it names, by the file's
 name, in its sidecar's `rewritten` and its C's `rewritten in` comment,
 as the exporter writes them, so that a function moved to another file
 with the export edited by hand, short of a new export, cannot leave
 the two apart.  The alternative, a file for any set of
-images that share a function, the published ones lacking it too, would
-leave the published `common/` with files that only an unpublished image
-includes; it is not taken.
+images that share a function, those three lacking it too, would
+leave `common/` with files that only later images
+include; it is not taken.
 
 How the build uses it.  `common/` is laid out as `rewritten/` is
 (`bindings/`, `installer/`), and an image that shares it gives the

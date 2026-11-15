@@ -1069,7 +1069,9 @@ repeated by channel or satellite the count and the stride; for a
 field that is part of a byte, its bits; the manual
 and page that give it; the images that read it, or for a command
 field set it; the images that compare it with the command sent; what
-the images that read it use it for; and where the model gets it.  The
+the images that read it use it for; where the model gets it; the
+value the manual gives the field for not known, where it gives one;
+and the fields of a record behind it.  The
 rows cover a message's
 data alone.  The `@@` and ID before it and the checksum, CR and LF
 after it are every message's and have no row, and a message with no
@@ -1085,7 +1087,8 @@ images use whole or not at all.
 
 `tools/firmware/gps_fields.py` holds the table to the images
 (`make check-gps-fields`; `make gps-fields` rewrites the images,
-compared and use columns and the tables below).  Its docstring is the
+compared, use and fields columns, the tables below and the crate's
+`IMAGE_USES`).  Its docstring is the
 specification; in short:
 
 - **Read by is measured.**  Each decoder of an image's message table
@@ -1147,6 +1150,25 @@ specification; in short:
   stride and between them give each of the eight bits once, and then
   stand as one field in the tiling.  The crate's tests hold the same
   rows, bits and all, to its own table of lengths.
+- **A record's fields are named.**  `RecordField` of
+  `crates/smartclock-gps/src/record/field.rs` has a member for each
+  thing a filler of records supplies or does not, with its path in a
+  record; a `record.` term of the engine column names the member whose
+  path it is or goes on from, and the fields column lists a row's.  The
+  members behind the rows some image uses as control or reported are
+  the crate's `IMAGE_USES`, written there by the tool and held by the
+  check.
+- **A filler declares what it fills.**  A `Filler` gives its name, the
+  fields it fills and the engine's settings it acts on, and its tests
+  hold it: what `IMAGE_USES` has that it does not fill must be excused
+  it by a row of `gps-field-exceptions.tsv`, which is the owner's alone
+  to add to and starts empty; a fill from data made to give every
+  field a value an empty record lacks must change every field declared
+  and no other.  The vectors' scene and the u-blox crate declare
+  theirs.  Neither fills the Time RAIM solution and RAIM status, which
+  the engine then works out from the satellites tracked and its alarm
+  limit; neither is excused them, and their tests name the two until
+  the owner rules.
 - **The Z3815A has no row.**  It speaks NMEA with Furuno's sentences,
   which the model does not.
 

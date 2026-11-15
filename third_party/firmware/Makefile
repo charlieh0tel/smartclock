@@ -287,13 +287,15 @@ loop-constants:
 
 # Fail if docs/firmware/gps-fields.tsv, the fields of every message the
 # GPS engine model speaks, does not tile each message, if its images,
-# compared and use columns or the gaps made from it between markers in
-# docs/firmware/gps.md are not what the images give, or if
+# compared, use and fields columns, the gaps made from it between
+# markers in docs/firmware/gps.md or the fields the images use between
+# markers in crates/smartclock-gps/src/record/field.rs are not what the
+# images give, or if
 # docs/firmware/gps-field-uses.tsv, by hand, lacks a function found
 # reading a field: the bytes their own decoders read of each message,
 # run in Unicorn, where they store them and which functions read them
 # there, and the commands their request scripts send; gps-fields
-# rewrites the columns and the gaps.
+# rewrites the columns, the gaps and the fields used.
 check-gps-fields:
 	uv run -q $(ROOT)/tools/firmware/gps_fields.py --check
 

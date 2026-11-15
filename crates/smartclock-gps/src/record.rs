@@ -294,8 +294,30 @@ impl SatelliteFlags {
 }
 
 /// The highest user range accuracy index a satellite sends (VP p. 98:
-/// 0 to 15).
+/// "0-15 is valid URA").
 pub const URA_MAX: u8 = 15;
+
+/// A satellite's user range accuracy index as it sends it, 0 to
+/// [`URA_MAX`] (VP p. 98).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Ura(u8);
+
+impl Ura {
+    /// `None` unless `index` is 0 to [`URA_MAX`].
+    #[must_use]
+    pub const fn new(index: u8) -> Option<Self> {
+        if index > URA_MAX {
+            return None;
+        }
+        Some(Self(index))
+    }
+
+    /// The index.
+    #[must_use]
+    pub const fn get(self) -> u8 {
+        self.0
+    }
+}
 
 /// One satellite in view.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -326,9 +348,8 @@ pub struct Satellite {
     pub time_error: Option<Nanoseconds<i32>>,
     /// What its data flags of it.
     pub flags: SatelliteFlags,
-    /// Its user range accuracy index as it sends it, 0 to [`URA_MAX`],
-    /// once that is decoded (VP p. 98).
-    pub ura: Option<u8>,
+    /// Its user range accuracy, once that is decoded (VP p. 98).
+    pub ura: Option<Ura>,
 }
 
 impl Satellite {
@@ -548,7 +569,9 @@ pub struct Ecef {
     pub z: Centimeters,
 }
 
-/// How the antenna moves along each axis (VP p. 97).
+/// How the antenna moves along each axis (VP p. 97: "- 32767 to 32767
+/// (m/s) resolution = 0.1", each a signed two bytes).  An engine sends
+/// one below the least as the least.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct VelocityAxes {
     /// North.
@@ -569,11 +592,18 @@ pub const MATRIX_ELEMENTS: usize = 10;
 pub struct Solver {
     /// The inverse matrix's upper triangle by rows, in tenths:
     /// `[0][0]` to `[0][3]`, `[1][1]` to `[1][3]`, `[2][2]`, `[2][3]`
-    /// and `[3][3]`.
+    /// and `[3][3]`.  The manual gives each two bytes and "resolution
+    /// = 0.1 (unitless)", and no range or sign; signed here, as an
+    /// element off the diagonal of such a matrix may be.
     pub matrix: [i16; MATRIX_ELEMENTS],
-    /// The receiver's clock bias.
+    /// The receiver's clock bias: "32767 to +32767 (in meters)
+    /// resolution = 0.1", signed.  An engine sends one below the least
+    /// as the least.
     pub clock_bias: Decimeters,
-    /// Its oscillator's offset.
+    /// Its oscillator's offset: "0 to 65535 (in m/s) resolution =
+    /// 0.1".  The manual has it unsigned and says nothing of an
+    /// oscillator that runs the other way, so neither does this: a
+    /// filler that has a negative drift has no value to give for it.
     pub oscillator_offset: DecimetersPerSecond<u16>,
 }
 

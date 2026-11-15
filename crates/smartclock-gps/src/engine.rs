@@ -147,7 +147,7 @@ use crate::record::Satellite;
 use crate::record::SatelliteFlag;
 use crate::record::Solver;
 use crate::record::Tracking;
-use crate::record::URA_MAX;
+use crate::record::Ura;
 use crate::record::XDOP_COMBINATIONS;
 use crate::record::XDOP_SATELLITES;
 use crate::record::XdopCombination;
@@ -386,6 +386,10 @@ const EXTENSION_DOPS: usize = 5;
 const AXES: usize = 3;
 /// A channel's URA with none decoded yet (VP p. 98).
 const URA_NOT_DECODED: u8 = 63;
+/// The most a magnetic variation is either way, in tenths of a degree,
+/// and the least a velocity or a clock bias is (VP pp. 97 and 98).
+const VARIATION_MOST: i16 = 1800;
+const SIGNED_LEAST: i16 = -i16::MAX;
 /// `@@Bj`'s statuses (VP p. 94).
 const NO_LEAP_PENDING: u8 = 0;
 const LEAP_ADDITION_PENDING: u8 = 1;
@@ -1844,16 +1848,14 @@ impl Engine {
             None => data.zeros(EXTENSION_DOPS * size_of::<u16>()),
         };
         let derived = &record.derived;
-        data.signed_word(
-            derived
-                .magnetic_variation
-                .map_or(0, |variation| variation.0),
-        );
+        data.signed_word(derived.magnetic_variation.map_or(0, |variation| {
+            variation.0.clamp(-VARIATION_MOST, VARIATION_MOST)
+        }));
         match derived.velocity {
             Some(velocity) => data
-                .signed_word(velocity.north.0)
-                .signed_word(velocity.east.0)
-                .signed_word(velocity.up.0),
+                .signed_word(velocity.north.0.max(SIGNED_LEAST))
+                .signed_word(velocity.east.0.max(SIGNED_LEAST))
+                .signed_word(velocity.up.0.max(SIGNED_LEAST)),
             None => data.zeros(AXES * size_of::<i16>()),
         };
         let age = record.differential_age.map_or(0, |age| age.0);
@@ -1866,16 +1868,14 @@ impl Engine {
             None => data.zeros(AXES * size_of::<i32>()),
         };
         for channel in self.channels(record, family) {
-            let ura = channel
-                .and_then(|satellite| satellite.ura)
-                .filter(|ura| *ura <= URA_MAX);
-            data.byte(ura.unwrap_or(URA_NOT_DECODED));
+            let ura = channel.and_then(|satellite| satellite.ura);
+            data.byte(ura.map_or(URA_NOT_DECODED, Ura::get));
         }
         let solver = derived.solver.unwrap_or(Solver::ZERO);
         for element in solver.matrix {
             data.signed_word(element);
         }
-        data.signed_word(solver.clock_bias.0)
+        data.signed_word(solver.clock_bias.0.max(SIGNED_LEAST))
             .word(solver.oscillator_offset.0);
         send(out, family.extension, &data);
     }

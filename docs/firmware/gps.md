@@ -1182,7 +1182,13 @@ specification; in short:
   alert, anti-spoof, inaccurate and parity error flags (VP p. 73) and
   its URA, and for an extension the magnetic variation, the velocity
   along each axis, the age of the differential data and the solution's
-  matrix, clock bias and oscillator offset (VP pp. 97 and 98).  The
+  matrix, clock bias and oscillator offset (VP pp. 97 and 98).  Each
+  is typed as the manual has it: the variation, the velocities and
+  the clock bias signed and sent within the manual's ranges, the age
+  and the oscillator offset unsigned, a URA an index of 0 to 15 or
+  none.  The manual has the oscillator offset as "0 to 65535 (in
+  m/s)" and no way to say an oscillator runs the other way, so a
+  record has none either.  The
   ECEF position is sent in position hold as out of it, the manual
   making no exception.  What a record lacks goes out as zero, the
   manual giving no other value, but for a channel's URA: with none

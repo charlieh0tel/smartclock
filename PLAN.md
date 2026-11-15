@@ -781,7 +781,19 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   had left it unnamed or named for the Z3815A's twins
   (`docs/firmware/z3817a-3752.md`, "Joining `common/`").  Its link
   check then passed, and it joined `REPORTED_IMAGES` the same day,
-  leaving `UNFINISHED_IMAGES` empty again.
+  leaving `UNFINISHED_IMAGES` empty again.  The Z3816A 4001 was
+  one from its own first export (2026-11-11), its function check at no
+  failures since 2026-11-12, the C its code carries from the other
+  images' own folders copied onto its addresses since the same day, its
+  own GPS, loop, SCI session, ALARm and installer C read and written by
+  hand since 2026-11-13, every function outside what `common/` writes
+  but `timecode_init` the same day.  Its join (2026-11-13), on the
+  Z3817A's, split three more functions out of `common/`, dropped the
+  image's copies of what `common/` defines, named what `common/`'s C
+  names, and gave the image its own copies of what the Z3817A's join
+  had sent back to each image's own C
+  (`docs/firmware/z3816a-4001.md`, "Joining `common/`"); its link
+  check then passed and it joined `REPORTED_IMAGES`, the sixth.
 - **Per-image tool tables**: what the function check gives an image
   other than the Z3805A 3543B is kept in tables keyed by image or held
   by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`,
@@ -806,13 +818,35 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   names and modules files are `tools/firmware/seed_names.py`'s output,
   and `make check-image-diff` fails when they fall behind the diff.
   Once edited by hand, `check-seed-names` checks only rows still marked
-  seeded; a hand row drops the mark.  A RAM label the rules leave
+  seeded; a hand row drops the mark.  A modules row added by hand
+  takes the place of the seeded row of its address, as a names row
+  does (the 58503B 1.01.04's file its SCI's routines under
+  `devices/sci`, where its base's rows file five of them under
+  `devices/duartb`, 2026-11-13).  A RAM label the rules leave
   unplaced is placed by a hand row citing the port's references, never
   by a new exception in the rules.  A single reference from a relocated
   function was tried as enough to place a label and dropped: relocated
   code may load another cell of the same record (`gps_receive`,
   `0x4c124`), so it placed labels wrong.  A port's C carries its own
-  image's constants (model, tag, revision).  A lead, a pairing changed
+  image's constants (model, tag, revision).  A function copied from a
+  base because image_diff finds it relocated is kept only where the
+  function check finds it agreeing: relocation masks a jump table's
+  offsets as well as addresses, which hid the Z3816A's SCPI port
+  number and task name (2026-11-12); a changed function copied from
+  a base is kept only after its instructions are read beside the
+  base's, as an agreeing check can miss a branch no case takes, and
+  the copies' ROM pointers are audited against their bases', a string
+  at the same text (the Z3817A's audit, run on the Z3816A, found one
+  text the base's, 2026-11-12).  A pairing a document makes by a
+  function's few stores is corrected by its callers: the 58503A's
+  `gps_pps_monitor_reset` had paired the Z3816A's `timecode_init`, and
+  the same bytes at two addresses, the Z3816A's `selftest_begin` and
+  `selftest_end`, are told apart by their callers too (2026-11-13).  A
+  function relocated by a few bytes is checked to be a function: the
+  Z3816A's `gps_receive` and `gps_command_send` changed past the bytes
+  image_diff compared, and its installer's
+  `installer_duartb_baud_from_settings` pairs a switch inside
+  `installer_sci_reconfigure`.  A lead, a pairing changed
   below the carrying threshold, is seeded under its base's name, its
   note saying it is a lead and at what similarity.  It was seeded with
   the port's suffix, `gps_init_58503a`, and that was dropped: the
@@ -827,8 +861,23 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   new are seeded from the second base's matches where those carry
   them, with its ROM tables at addresses and names free, each row
   noted as the second base's (the Z3817A's Oncore code from the
-  58503A, 2026-11-11); the Z3815A had named its SCI routines from the
-  Z3805A by hand rows instead.  A primary function matched inside the
+  58503A, 2026-11-11; the Z3816A 4001's from the Z3815A, whose
+  installer and layout it shares, its base the 58503A, which carries
+  more of its primary); the Z3815A had named its SCI routines from the
+  Z3805A by hand rows instead.  A port's base is the image whose
+  matches carry the most of its primary's functions, identical or
+  relocated, by
+  `tools/firmware/base_figures.py`'s table in its document: the
+  58503B's Z3817A carried one more than the Z3816A, whose share, of
+  fewer functions, and bytes are higher (2026-11-12); it stays the base
+  now that the joins have dropped from both the names that were other
+  routines' ends and the Z3816A carries one more (2026-11-13).  The
+  second base
+  is the image whose matches carry the most of what the base's find
+  new; only its own pairing being a lead keeps a function out, not a
+  carried note's saying it was one in an earlier port, or a hand row
+  placing its name elsewhere (the 58503B's `scpi_input_source`,
+  2026-11-13).  A primary function matched inside the
   installer's records, the installer's copy's bytes, has no row.
 
 ### The FPGA designs as netlists

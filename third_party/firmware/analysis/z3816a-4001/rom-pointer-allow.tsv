@@ -1,0 +1,8 @@
+# The ROM pointers of the hand-written C that
+# tools/firmware/rom_pointers.py finds and that stay as they are, each
+# with its reason (make check-rom-pointers).  Tab-separated: kind, where
+# (the file under rewritten/IMAGE/, or the function), base ('-' for a
+# literal), at (the literal as written, or the instruction's address),
+# found and reason.
+literal	scpi.h	-	0x392da	other	the console port's object, a scpi_port the image keeps unlabeled among its port routines, its method table's address (0x39296) and then its prompts, "E%+04d> " and "scpi > ": scpi_console_port returns it (0x38ffe, movel #0x392da,%d0)
+operand	fpga_read	z3815a-4010	0x440b6	in label -> other	the address field's entry of this image's table of FPGA bits, entry 4 of its six at 0x44c56 (types/smartclock.h, fpga_bit_index), which its names leave unlabeled, where it is entry 4 of the Z3815A 4010's fpga_bit_table; the C indexes its table by its own FPGA_BIT_ADDRESS

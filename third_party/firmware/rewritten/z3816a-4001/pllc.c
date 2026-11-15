@@ -1,0 +1,347 @@
+/* pllc.c's functions that are this image's own: the rest are common/pllc.c's,
+ * the same in every image (docs/firmware/rewrite.md, "Shared C").  From the
+ * 58503A 3704's rewritten/pllc.c: pll_scpi_send_to_loop, whose decompiler's
+ * reading lays the request it sends over separate locals, the 58503A's code
+ * but for this image's request codes, among which a descriptor's @@Cf is not
+ * sent (docs/firmware/z3816a-4001.md, "The function check").  Its comments'
+ * addresses are the Z3816A's.  Each function keeps its generated prototype.
+ * With them, from the 58503A 3704's rewritten/pllc.c, of its functions, those
+ * the Z3816A's code carries (identical or relocated by image_diff, or changed
+ * with the same instructions), with the static helpers they use, each the same
+ * here but where its comment says otherwise (docs/firmware/z3816a-4001.md,
+ * "The link check").  Their comments' addresses are the Z3816A's. */
+
+/* The hooks' and actions' shapes, which the descriptors keep as void
+ * pointers.  A changed hook is passed its caller's D3 first. */
+typedef void pllc_changed_hook(uint32_t caller_d3, int32_t index,
+                               int32_t source);
+
+typedef void pllc_setting_done_hook(int32_t index, int32_t source);
+
+typedef void pllc_numeric_done_hook(void);
+
+/* Sends the descriptor's GPS request to gpsx_exchange, its arguments in
+ * pll_scpi_gps_arguments by the request; 1 when sent, else 0 and in
+ * *status the condition to report, 0 for none (0x46714). */
+uint32_t pll_scpi_send_to_loop(gps_request_sender sender, uint8_t* status) {
+  pllc_param* param = pllc_current();
+  uint32_t* arguments = pll_scpi_gps_arguments;
+  gps_request_entry request;
+
+  /* The descriptor's request: gps_request_code, GPS_REQUEST_NONE for none. */
+  int16_t code =
+      (int8_t)(param->type == SCPI_PARAM_SETTING ? param->setting.gps_request
+                                                 : param->numeric.gps_request);
+  *status = 0;
+  switch (code) {
+    case GPS_REQUEST_TIME_OF_DAY:
+      arguments[0] = pll_scpi_validated[0];
+      arguments[1] = pll_scpi_validated[1];
+      arguments[2] = pll_scpi_validated[2];
+      break;
+    case GPS_REQUEST_DATE:
+      arguments[0] = pll_scpi_validated[1];
+      arguments[1] = pll_scpi_validated[2];
+      arguments[2] = pll_scpi_validated[0];
+      break;
+    case GPS_REQUEST_LATITUDE:
+    case GPS_REQUEST_LONGITUDE:
+    case GPS_REQUEST_MASK_ANGLE:
+    case GPS_REQUEST_IGNORE_LIST:
+    case GPS_REQUEST_PPS_OFFSET:
+    case GPS_REQUEST_CABLE_DELAY:
+    case GPS_STEP_GPS_HYSTERESIS:
+    case GPS_STEP_EXTERNAL_HYSTERESIS:
+      arguments[0] = pll_scpi_validated[0];
+      break;
+    case GPS_REQUEST_HEIGHT:
+      arguments[0] = pll_scpi_validated[0];
+      arguments[1] = 1;
+      break;
+    case GPS_REQUEST_POSITION_HOLD_POSITION:
+    case GPS_SCRIPT_HOLD_AT:
+    case GPS_SCRIPT_HOLD_POSITION:
+      arguments[0] = pll_scpi_validated[0];
+      arguments[1] = pll_scpi_validated[1];
+      arguments[2] = pll_scpi_validated[2];
+      arguments[3] = 1;
+      break;
+    case GPS_STEP_TRACKING_LOG:
+      arguments[0] = (int8_t)pll_scpi_setting;
+      break;
+    case GPS_REQUEST_POSITION_HOLD:
+    case GPS_SCRIPT_HOLD_RELEASE:
+    case GPS_SCRIPT_HOLD_SELECT:
+      arguments[0] = (int8_t)pll_scpi_setting;
+      if (nv_settings.douglas_state != 0 && pll_scpi_setting == 0) {
+        douglas_log_event = LOG_SURVEY_STARTED;
+      } else if (nv_settings.douglas_state == 0 && pll_scpi_setting != 0) {
+        douglas_log_event = LOG_POSITION_HOLD_STARTED;
+      }
+      break;
+    case GPS_SCRIPT_TRAIM:
+      if (!(pll_scpi_index == 0 && nv_settings.douglas_state != 0) &&
+          !(pll_scpi_index == 1 && nv_settings.douglas_state == 0)) {
+        *status = 0;
+        return 0;
+      }
+      arguments[0] = 1;
+      arguments[3] = 1;
+      if (param->type == SCPI_PARAM_SETTING) {
+        arguments[1] = (int8_t)pll_scpi_setting;
+        arguments[2] = nv_settings.raim_threshold[(int8_t)pll_scpi_index];
+      } else {
+        arguments[1] = (int8_t)nv_settings.raim_state[(int8_t)pll_scpi_index];
+        arguments[2] = pll_scpi_validated[0];
+      }
+      break;
+    case GPS_STEP_STATUS_SNAPSHOT:
+    case GPS_SCRIPT_HOLD_OFF:
+      break;
+    default:
+      *status = STATUS_DEVICE_SPECIFIC_ERROR;
+      return 0;
+  }
+  /* The rest of the message is left as the frame holds it. */
+  request.field_00 = 0;
+  request.field_04 = 0;
+  request.code = code;
+  request.argument_mode = GPS_ARGUMENTS_SET;
+  request.result = GPS_RESULT_REJECT;
+  request.sender = sender;
+  /* gps_request_entry's arguments are longs the export declares
+   * unsigned. */
+  request.arguments = (int32_t*)arguments;
+  if ((uint8_t)psos_send_x(gpsx_exchange, &request) == 0) {
+    *status = 0;
+    return 1;
+  }
+  *status = STATUS_DEVICE_SPECIFIC_ERROR;
+  return 0;
+}
+
+/* 1 when the request goes to the GPS before it is stored; a
+ * :DOUGlas:STATe 0 from 0 instead logs position hold (0x466c8). */
+uint32_t pll_scpi_needs_loop(void) {
+  if ((pllc_flags() & PLLC_FLAG_SEND_TO_GPS) != 0) {
+    if (pll_scpi_setting == 0 || pll_scpi_param != &scpi_param_DOUGlas_STATe) {
+      return 1;
+    }
+    if (nv_settings.douglas_state == 0) {
+      douglas_log_event = LOG_POSITION_HOLD_STARTED;
+    }
+  }
+  return 0;
+}
+
+/* :SYSTem:PON's action: in supervisor mode, zeroes the preserved region
+ * a long at a time up to reset_cleared_ram, so that the restart that
+ * trap #12 makes finds nothing to restore (docs/firmware/restart.md)
+ * (0x496f8). */
+void power_on_reset(void) {
+  enter_supervisor_mode();
+  for (uint32_t* next = (uint32_t*)&preserved_region;
+       next < (uint32_t*)&reset_cleared_ram; next++) {
+    *next = 0;
+  }
+  __m68k_trap(12);
+}
+
+/* Stores a request's validated values or setting, calling the
+ * descriptor's hooks, saves them as its flags say, and logs a
+ * :DOUGlas:STATe change (0x469e0).  The 58503A 3704's. */
+void finish_scpi_cmd(void) {
+  /* The image passes each changed hook a byte of its caller's D3, which
+   * it never sets; read before gcc's code uses the register. */
+  uint32_t caller_d3 = (uint8_t)CPU_CALLERS_REGISTER(uint32_t, "d3");
+  pllc_param* param = pllc_current();
+  int8_t index = (int8_t)pll_scpi_index;
+
+  switch (param->type) {
+    case SCPI_PARAM_NUMERIC: {
+      if (param->numeric.is_integer == PLLC_VALUE_LIST ||
+          param->numeric.is_integer == PLLC_VALUE_PAIR) {
+        for (uint8_t i = 0; i <= (int8_t)pll_scpi_index; i++) {
+          scpi_numeric_param* numeric = &pllc_current()->numeric;
+          ((uint32_t*)numeric->value)[i] = pll_scpi_validated[i];
+          ((pllc_changed_hook*)numeric->changed)(caller_d3, i,
+                                                 (int8_t)pll_scpi_source);
+        }
+      } else {
+        scpi_numeric_param* numeric = &pllc_current()->numeric;
+        ((uint32_t*)numeric->value)[(int8_t)pll_scpi_index] =
+            pll_scpi_validated[0];
+        ((pllc_changed_hook*)numeric->changed)(
+            caller_d3, (int8_t)pll_scpi_index, (int8_t)pll_scpi_source);
+      }
+      ((pllc_numeric_done_hook*)pllc_current()->numeric.done)();
+      break;
+    }
+    case SCPI_PARAM_SETTING:
+      param->setting.value[index] = pll_scpi_setting;
+      ((pllc_changed_hook*)param->setting.changed)(
+          caller_d3, (int8_t)pll_scpi_index, (int8_t)pll_scpi_source);
+      ((pllc_setting_done_hook*)param->setting.done)((int8_t)pll_scpi_index,
+                                                     (int8_t)pll_scpi_source);
+      break;
+    case SCPI_PARAM_ACTION:
+    case SCPI_PARAM_DOUBLE:
+      break;
+    default:
+      fatal_error("pll_scpi: finish_scpi_cmd() -- unknown structure type");
+      break;
+  }
+  if (scpi_param_saved_in_nv() != 0) {
+    nv_save(pll_scpi_source);
+  }
+  if (scpi_param_saved_in_record() != 0) {
+    save_parameter_record(pll_scpi_source);
+  }
+  if (douglas_log_event == LOG_SURVEY_STARTED) {
+    log_event(LOG_SURVEY_STARTED);
+    status_happening(STATUS_POSITION_HOLD_CLEARED);
+  } else if (douglas_log_event == LOG_POSITION_HOLD_STARTED) {
+    log_event(LOG_POSITION_HOLD_STARTED);
+    status_happening(STATUS_POSITION_HOLD_SET);
+  }
+}
+
+/* Copies a request into pll_scpi_param to pll_scpi_values, as its
+ * descriptor's type and a numeric one's is_integer say (0x46b6a).  The
+ * Z3815A 4010's, but that a request from SCPI waits on task_scpi_unset,
+ * which nothing here sets, and one from another source on task_scpi,
+ * the task "sci", where the Z3815A's waits on its task_scpi and
+ * task_sci. */
+void get_setup_vars(pllc_request* request) {
+  pll_scpi_source = request->source;
+  pll_scpi_waiting_task =
+      pll_scpi_source == REQUEST_SOURCE_SCPI ? task_scpi_unset : task_scpi;
+  pll_scpi_index = request->index;
+  pll_scpi_param = request->param;
+  pllc_param* param = pllc_current();
+  switch (param->type) {
+    case SCPI_PARAM_NUMERIC:
+      switch ((int8_t)param->numeric.is_integer) {
+        case PLLC_VALUE_FLOAT:
+          pll_scpi_values[0] = request->values[1];
+          break;
+        case PLLC_VALUE_INTEGER:
+          pll_scpi_values[0] = request->values[0];
+          break;
+        case PLLC_VALUE_LIST: {
+          /* values[0] holds the list's address. */
+          uint32_t* list = (uint32_t*)request->values[0];
+          for (uint8_t i = 0; i <= (int8_t)pll_scpi_index; i++) {
+            pll_scpi_values[i] = list[i];
+          }
+          break;
+        }
+        case PLLC_VALUE_PAIR:
+          pll_scpi_values[0] = request->values[0];
+          pll_scpi_values[1] = request->values[1];
+          break;
+        default:
+          break;
+      }
+      break;
+    case SCPI_PARAM_SETTING:
+      pll_scpi_setting = request->setting;
+      break;
+    case SCPI_PARAM_ACTION:
+    case SCPI_PARAM_DOUBLE:
+      break;
+    default:
+      fatal_error("pll_scpi: get_setup_vars() -- unknown structure type");
+      break;
+  }
+}
+
+/* Handles one request: takes it, validates it, sends what the GPS must
+ * hear, and, unless a reply from it is pending, stores and saves it
+ * (0x46c3c).  The Z3805A 3543B's, but that a request from another source
+ * than SCPI or the silent one goes to the GPS too, as the setting's other
+ * sender (0x46c90), as the Z3815A 4010's does. */
+void pll_scpi_command(pllc_request* request, uint8_t* reply_pending) {
+  char needs_loop;
+  /* Unset unless the request was sent: the image then reads its frame
+   * (0x46ca2). */
+  uint8_t loop_status;
+
+  get_setup_vars(request);
+  validate_or_doaction(&needs_loop, (char*)reply_pending);
+  if (needs_loop == 0) {
+    return;
+  }
+  douglas_log_event = LOG_CLEARED;
+  if (pll_scpi_needs_loop() != 0) {
+    const gps_request_sender sender =
+        pll_scpi_source == REQUEST_SOURCE_SCPI ||
+                pll_scpi_source == REQUEST_SOURCE_SILENT_TO_GPS
+            ? GPS_SENDER_SETTING
+            : GPS_SENDER_SETTING_OTHER;
+
+    *reply_pending = pll_scpi_send_to_loop(sender, &loop_status);
+    if (*reply_pending != 0) {
+      return;
+    }
+    if (loop_status != 0) {
+      status_report_from((int8_t)loop_status, pll_scpi_source);
+    }
+  }
+  finish_scpi_cmd();
+}
+
+/* The pllc task's pass: unless a reply is pending, counts down a signal
+ * delay or takes and handles a request from pllc_exchange, then signals
+ * the waiting task (0x46cc8).  The Z3805A 3543B's. */
+void pll_scpi_receive(void) {
+  pllc_request request;
+
+  if (pll_scpi_reply_pending != 0) {
+    return;
+  }
+  if (pll_scpi_signal_delay != 0) {
+    pll_scpi_signal_delay--;
+    if (pll_scpi_signal_delay != 0) {
+      return;
+    }
+  } else {
+    if ((uint8_t)psos_request_x(pllc_exchange, &request, 1, 0) != 0) {
+      return;
+    }
+    pll_scpi_command(&request, &pll_scpi_reply_pending);
+    if (pll_scpi_reply_pending != 0 || pll_scpi_signal_delay != 0) {
+      return;
+    }
+  }
+  psos_signal_v(pll_scpi_waiting_task, PLLC_DONE_EVENT);
+}
+
+/* :DIAG:TOFFset's done hook: clears the temporary-mode hold cause and
+ * saves the calibration block (0x4946c).  It passes
+ * save_calibration_block the low bytes of its own two stack arguments,
+ * sign-extended, which finish_scpi_cmd does not push for a numeric done
+ * hook: what its frame holds there.  The 58503A 3704's. */
+void time_offset_done(void) {
+  const int8_t index = (int8_t)CPU_CALLERS_STACK_LONG(0);
+  const int8_t source = (int8_t)CPU_CALLERS_STACK_LONG(1);
+
+  temporary_hold_clear();
+  save_calibration_block(index, source);
+}
+
+/* :DIAG:TOFFset's and :GPS:ADELay's action: the temporary-mode hold
+ * cause, with the TI limit overridden (0x49520).  The 58503A 3704's. */
+void temporary_hold_set(int32_t index, int32_t source) {
+  pll.hold_causes |= HOLD_CAUSE_TEMPORARY_MODE;
+  pll.ti_limit_override = 1;
+  pll_scpi_signal_delay = 1;
+}
+
+/* Requests the self-test numbered by the index, unless one is. */
+void selftest_request(int32_t index, int32_t source) {
+  if (selftest_requested == 0) {
+    selftest_number = index;
+    selftest_requested = 1;
+  }
+}

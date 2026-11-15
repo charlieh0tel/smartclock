@@ -1225,7 +1225,8 @@ impl Engine {
     /// and time `to` makes of the one it reports, unless that is none
     /// there is.  An Oncore tracking a satellite sets its clock by it
     /// and ignores the command; so does the engine while the record
-    /// tells the time, its clock then being the record's.
+    /// tells the time, its clock then being the record's.  No command
+    /// moves the engine off a record's time.
     fn set_clock(&mut self, record: &Record, to: impl FnOnce(DateTime) -> Option<DateTime>) {
         if record.time.is_some() {
             return;

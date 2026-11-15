@@ -274,10 +274,12 @@ const CORRECTION_ENTRY: usize = 7;
 const TIME_OF_WEEK_MOST: u32 = 6_047_999;
 const CORRECTION_RANGE_MOST: i32 = 1_048_576;
 const CORRECTION_RATE_MOST: i16 = 4096;
-/// `@@Bk`: the bytes between the DOPs and the position, and those after
-/// the channels (VP pp. 96 to 98).
-const EXTENSION_BEFORE_POSITION: usize = 10;
-const EXTENSION_REST: usize = 24;
+/// `@@Bk` (VP pp. 96 to 98): its DOPs, the axes a velocity and a
+/// position are given along, and the elements of its least squares
+/// matrix.
+const EXTENSION_DOPS: usize = 5;
+const AXES: usize = 3;
+const MATRIX_ELEMENTS: usize = 10;
 /// `@@Bj`'s statuses (VP p. 94).
 const NO_LEAP_PENDING: u8 = 0;
 const LEAP_ADDITION_PENDING: u8 = 1;
@@ -1012,23 +1014,26 @@ impl Engine {
     /// Starts a self-test (VP p. 107; UT p. 6.42).  A VP goes idle for
     /// it and stays so; a UT Plus tells what its antenna's feed draws.
     fn self_test(&mut self, id: MessageId, record: &Record, now: Milliseconds<u64>) {
-        let result = match self.identity.model() {
-            Model::VpSix | Model::VpEight => {
-                self.state.fixing = false;
-                0
-            }
-            Model::UtPlus => match record.antenna {
-                Antenna::Open => SELF_TEST_ANTENNA_UNDERCURRENT,
-                Antenna::Shorted => SELF_TEST_ANTENNA_OVERCURRENT,
-                Antenna::Unknown | Antenna::Connected => 0,
-            },
-        };
+        let result = self.self_test_result(record);
+        if self.identity.model() != Model::UtPlus {
+            self.state.fixing = false;
+        }
         if let Some(free) = self.deferred.iter_mut().find(|slot| slot.is_none()) {
             *free = Some(Deferred {
                 due: Milliseconds(now.0.saturating_add(SELF_TEST)),
                 id,
                 result,
             });
+        }
+    }
+
+    /// What a self-test finds (VP p. 108; UT p. 6.43): no fault, but
+    /// for a UT Plus what its antenna's feed draws.
+    fn self_test_result(&self, record: &Record) -> u16 {
+        match (self.identity.model(), record.antenna) {
+            (Model::UtPlus, Antenna::Open) => SELF_TEST_ANTENNA_UNDERCURRENT,
+            (Model::UtPlus, Antenna::Shorted) => SELF_TEST_ANTENNA_OVERCURRENT,
+            _ => 0,
         }
     }
 
@@ -1381,18 +1386,10 @@ impl Engine {
             match channel {
                 Some(satellite) => {
                     let strength = satellite.signal.map_or(0, |signal| signal.0);
-                    // A UT Plus uses for time what it uses for position,
-                    // less what Time RAIM removed (UT pp. 6.20, 6.93).
-                    let for_time = !isolated.contains(satellite.prn);
-                    let used = match (satellite.used, ut_plus, for_time) {
-                        (false, _, _) => 0,
-                        (true, false, _) | (true, true, false) => CHANNEL_USED,
-                        (true, true, true) => CHANNEL_USED | CHANNEL_USED_FOR_TIME,
-                    };
                     data.byte(satellite.prn.get())
                         .byte(tracking_mode(satellite.tracking))
                         .byte(if ut_plus { strength } else { signal(strength) })
-                        .byte(used);
+                        .byte(self.channel_flags(satellite, isolated));
                 }
                 None => {
                     data.zeros(STATUS_CHANNEL);
@@ -1403,9 +1400,22 @@ impl Engine {
         data
     }
 
+    /// A channel's status flags (VP p. 73; UT p. 6.20).  A UT Plus
+    /// uses for time what it uses for position, less the `isolated`
+    /// that Time RAIM removed (UT pp. 6.20, 6.93).
+    fn channel_flags(&self, satellite: &Satellite, isolated: PrnSet) -> u8 {
+        let ut_plus = self.identity.model() == Model::UtPlus;
+        let for_time = !isolated.contains(satellite.prn);
+        match (satellite.used, ut_plus, for_time) {
+            (false, _, _) => 0,
+            (true, false, _) | (true, true, false) => CHANNEL_USED,
+            (true, true, true) => CHANNEL_USED | CHANNEL_USED_FOR_TIME,
+        }
+    }
+
     /// `@@Bb`, kept to tell a change by.
     fn send_visibility<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
-        let data = Self::visibility(record);
+        let data = self.visibility(record);
         let mut kept = [0; VISIBILITY];
         kept.copy_from_slice(data.as_slice());
         self.visibility = Some(kept);
@@ -1416,7 +1426,7 @@ impl Engine {
     fn visibility_changed<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
         let changed = self
             .visibility
-            .is_none_or(|kept| kept[..] != *Self::visibility(record).as_slice());
+            .is_none_or(|kept| kept[..] != *self.visibility(record).as_slice());
         if changed {
             self.send_visibility(record, out);
         }
@@ -1428,7 +1438,7 @@ impl Engine {
     /// this one, finding a satellite in the `@@Bb` it keeps by
     /// bisecting on the ID (`satellite_find`, `screen.c` of each image
     /// under `third_party/firmware/rewritten/`).
-    fn visibility(record: &Record) -> Data {
+    fn visibility(&self, record: &Record) -> Data {
         let by_id = (1..=PRNS)
             .filter_map(Prn::new)
             .filter_map(|prn| record.satellites.get(prn));
@@ -1442,18 +1452,26 @@ impl Engine {
         let mut data = Data::new();
         data.byte(count_byte(count));
         for satellite in by_id {
-            let health = match satellite.health {
-                Health::Unhealthy => VISIBLE_UNHEALTHY,
-                Health::Unknown | Health::Healthy => 0,
-            };
             data.byte(satellite.prn.get())
                 .signed_word(satellite.doppler.map_or(0, |doppler| doppler.0))
                 .byte(satellite.elevation.0.max(0).cast_unsigned())
                 .word(satellite.azimuth.0)
-                .byte(health);
+                .byte(self.visible_health(satellite));
         }
         data.zeros((SATELLITES - count) * VISIBLE_SLOT);
         data
+    }
+
+    /// A satellite's health as `@@Bb` gives it (VP p. 75).
+    #[expect(
+        clippy::unused_self,
+        reason = "the field's other bit is the engine's to give"
+    )]
+    fn visible_health(&self, satellite: &Satellite) -> u8 {
+        match satellite.health {
+            Health::Unhealthy => VISIBLE_UNHEALTHY,
+            Health::Unknown | Health::Healthy => 0,
+        }
     }
 
     /// `@@Bc` (VP pp. 76 and 77): the kind of DOP `@@Aj` asks for, and
@@ -1576,21 +1594,27 @@ impl Engine {
                 .word(dops.horizontal.0)
                 .word(dops.vertical.0)
                 .word(dops.time.0),
-            None => data.zeros(5 * size_of::<u16>()),
+            None => data.zeros(EXTENSION_DOPS * size_of::<u16>()),
         };
-        data.zeros(EXTENSION_BEFORE_POSITION);
+        // The magnetic variation, the velocity along each axis and the
+        // age of the differential data.
+        data.zeros(size_of::<i16>())
+            .zeros(AXES * size_of::<i16>())
+            .zeros(size_of::<u16>());
         match record.derived.ecef {
             Some(ecef) if !self.state.store.holding() => data
                 .signed_long(ecef.x.0)
                 .signed_long(ecef.y.0)
                 .signed_long(ecef.z.0),
-            _ => data.zeros(3 * size_of::<i32>()),
+            _ => data.zeros(AXES * size_of::<i32>()),
         };
-        send(
-            out,
-            family.extension,
-            data.zeros(family.channels).zeros(EXTENSION_REST),
-        );
+        // Each channel's URA, the matrix, the clock bias and the
+        // oscillator offset.
+        data.zeros(family.channels)
+            .zeros(MATRIX_ELEMENTS * size_of::<i16>())
+            .zeros(size_of::<i16>())
+            .zeros(size_of::<u16>());
+        send(out, family.extension, &data);
     }
 
     /// What Time RAIM can do with `tracked` satellites (VP p. 106).

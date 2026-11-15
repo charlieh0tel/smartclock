@@ -31,13 +31,15 @@ The data, one JSON object:
                        (where a Yes cell links, a template)
     images             each row: image (its file's stem), name, model,
                        design (its FPGA bitstream's stem), design_name,
-                       dialect, rewrite (its rewritten C's document,
-                       for a Yes there), and cells, each column's
+                       dialect, gps (the GPS engines it accepts, as
+                       its GPS engine cell reads), rewrite (its
+                       rewritten C's document, for a Yes there), and
+                       cells, each column's
                        status by key, a status's key or {status,
                        note, text, evidence, link}, the last three in
                        place of the column's, Yes where it names none; or, for a model of
                        which no image is in IMAGES, no_image true, no
-                       image, design, rewrite or cells, and one cell
+                       image, design, gps, rewrite or cells, and one cell
                        across every column reading no_image
     footnotes          {id, text}, each a cell's note, numbered in order
     notes              paragraphs under the table

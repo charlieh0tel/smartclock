@@ -85,6 +85,7 @@ use crate::engine::settings::TimeBase;
 use crate::engine::store::Place;
 use crate::engine::store::QUERY;
 use crate::engine::store::Store;
+use crate::engine::store::dop_kind_code;
 use crate::engine::store::height_of;
 use crate::engine::store::is_setting;
 use crate::oncore::AA_TIME_OF_DAY;
@@ -133,7 +134,6 @@ use crate::oncore::encode;
 use crate::record::Antenna;
 use crate::record::Correction;
 use crate::record::Corrections;
-use crate::record::DopKind;
 use crate::record::Fault;
 use crate::record::Fix;
 use crate::record::Health;
@@ -2054,17 +2054,6 @@ fn is_ignored(list: u32, prn: Prn) -> bool {
 /// A VP's signal strength for a C/N0.
 fn signal(carrier_to_noise: u8) -> u8 {
     SIGNAL[usize::from(carrier_to_noise).min(SIGNAL.len() - 1)]
-}
-
-/// A kind of DOP as `@@Aj` and `@@Bc` number it (VP pp. 34 and 77).
-const fn dop_kind_code(kind: DopKind) -> u8 {
-    match kind {
-        DopKind::Geometric => 0,
-        DopKind::Position => 1,
-        DopKind::Horizontal => 2,
-        DopKind::Vertical => 3,
-        DopKind::Time => 4,
-    }
 }
 
 /// A channel's tracking mode (VP p. 72).

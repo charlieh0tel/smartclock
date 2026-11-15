@@ -4,6 +4,8 @@ engine vectors	altitude_hold	its fix is 3D under a sky of eight, never the 2D on
 engine vectors	time_base	a record carries GPS time and its offset from UTC whatever the base, and a scene has no pulse to put on either
 engine vectors	pulse_offset	a scene has no pulse, and a record carries none
 engine vectors	pulse_mode	a scene has no pulse, and a record carries none
+engine vectors	raim_algorithm	a scene gives one Time RAIM result, the same every second, and checks no time solution to turn on or off
+engine vectors	raim_alarm_limit	a scene gives one Time RAIM result, the same every second, and has no error in its time to hold to a limit
 engine vectors	application	a scene stays where its head puts it and searches for nothing
 engine vectors	initial_position	a scene has its position from the first second and searches for nothing
 engine vectors	satellite_select	a scene tracks its whole sky and chooses among no satellites
@@ -22,6 +24,8 @@ u-blox	altitude_hold	it would be a configuration sent to the receiver, and the c
 u-blox	time_base	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
 u-blox	pulse_offset	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
 u-blox	pulse_mode	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
+u-blox	raim_algorithm	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none: it reports the receiver's own Time RAIM as it finds it
+u-blox	raim_alarm_limit	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none: it reports the receiver's own Time RAIM as it finds it
 u-blox	application	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
 u-blox	initial_position	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
 u-blox	satellite_select	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none

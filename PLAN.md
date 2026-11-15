@@ -1128,7 +1128,10 @@ stands in for one.
   or one no image sets.  It may act on more than the images set:
   only a row can be needless.
   The scene acts on position hold and the position to hold; the
-  u-blox crate, which sends its receiver nothing, on none.
+  u-blox crate, which sends its receiver nothing, on none.  Each has
+  a row for the rest, Time RAIM's algorithm and alarm limit among
+  them: the scene gives one Time RAIM result and checks no time
+  solution, and the u-blox crate reports its receiver's own.
 - **Settings change what the model sends only as far as the recorded
   exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2), the
   automatic switch to altitude hold above `@@Al`'s PDOP, `@@Bb` sent on
@@ -1153,7 +1156,7 @@ stands in for one.
   `Engine::settings` gives the settings such a tool needs as types:
   the mask angle, position hold and its position, altitude hold and
   its height, the time base, the 1 PPS's cable delay, offset and
-  mode, the application type, the latitude, longitude and height
+  mode, Time RAIM's algorithm and alarm limit, the application type, the latitude, longitude and height
   `@@Ad`, `@@Ae` and `@@Af` last gave, which the model reports until
   the record has a position (VP pp. 17 and 25), and since the
   commands were sorted, everything else a command sets that is not

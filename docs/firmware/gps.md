@@ -1232,7 +1232,13 @@ specification; in short:
   whatever holds the model to apply.  *gap*: neither, a term `stored`,
   `echoed` or `ignored`.  A field can be both the first two: position
   hold changes the position the model reports and is the receiver's
-  fix mode besides.  Two engine fields are in the `Settings` all the
+  fix mode besides.  So with all Time RAIM's setup (`@@Bn` and
+  `@@En`, VP pp. 104 and 140), `raim_algorithm` and
+  `raim_alarm_limit` beside `pulse_mode`: the model reports the
+  solution unknown with the algorithm off and what can be done by the
+  limit and the satellites tracked (VP pp. 103, 105 and 106), and
+  whether a receiver checks its time solution, and against what
+  limit, is its holder's to set.  Two engine fields are in the `Settings` all the
   same (`given:`).  One is the kind of DOP `@@Aj` asks for,
   `dop_kind`: the model acts on it, sending a record's xDOP table of
   another kind as none (VP pp. 34 and 77), and whatever makes that
@@ -1258,9 +1264,12 @@ specification; in short:
   vectors' scene acts on position hold and the position to hold: held,
   its record is at that position with a fix of time alone (VP pp. 56
   and 73).  It is excused the rest, having no pulse, search, choice of
-  satellites or 2D fix for them to change.  The u-blox crate acts on
-  none and is excused all: each would be a configuration sent to the
-  receiver, and the crate only reads one.
+  satellites or 2D fix for them to change, and for Time RAIM one
+  result, the same every second, with no time solution checked.  The
+  u-blox crate acts on none and is excused all: each would be a
+  configuration sent to the receiver, and the crate only reads one,
+  Time RAIM's setup with the rest, the receiver's own being what it
+  reports.
 - **What the model does of its own for a command.**  `@@Aa` and
   `@@Ac` set its clock, the time or the date alone, unless the record
   tells the time: an Oncore tracking a satellite ignores them (VP
@@ -1369,8 +1378,8 @@ every command field, with who acts on it.
 | `@@Bj` | mode | none | engine | honored: polled only, nothing to do |
 | `@@Bk` | rate | all four | engine | honored |
 | `@@Bn` | rate | all four | engine | honored |
-| `@@Bn` | algorithm | all four | engine | honored |
-| `@@Bn` | alarm limit | all four | engine | honored |
+| `@@Bn` | algorithm | all four | engine, holder | honored; `raim_algorithm` |
+| `@@Bn` | alarm limit | all four | engine, holder | honored; `raim_alarm_limit` |
 | `@@Bn` | pulse mode | all four | engine, holder | honored; `pulse_mode` |
 | `@@Bn` | not used | all four | engine | honored: not used, nothing to do |
 | `@@Bo` | mode | none | engine | honored |
@@ -1379,8 +1388,8 @@ every command field, with who acts on it.
 | `@@Ea` | rate | 58503a-3704, z3817a-3752 | engine | honored |
 | `@@Ek` | rate | 58503a-3704, z3817a-3752 | engine | honored |
 | `@@En` | rate | 58503a-3704, z3817a-3752 | engine | honored |
-| `@@En` | algorithm | 58503a-3704, z3817a-3752 | engine | honored |
-| `@@En` | alarm limit | 58503a-3704, z3817a-3752 | engine | honored |
+| `@@En` | algorithm | 58503a-3704, z3817a-3752 | engine, holder | honored; `raim_algorithm` |
+| `@@En` | alarm limit | 58503a-3704, z3817a-3752 | engine, holder | honored; `raim_alarm_limit` |
 | `@@En` | pulse mode | 58503a-3704, z3817a-3752 | engine, holder | honored; `pulse_mode` |
 | `@@En` | not used | 58503a-3704, z3817a-3752 | engine | honored: not used, nothing to do |
 | `@@Ta` | values | none | gap | stored |

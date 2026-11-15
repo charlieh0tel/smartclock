@@ -129,6 +129,7 @@ use crate::units::Decimeters;
 use crate::units::DecimetersPerSecond;
 use crate::units::Deciseconds;
 use crate::units::Degrees;
+use crate::units::HundredNanoseconds;
 use crate::units::MilliArcSeconds;
 use crate::units::MillimetersPerSecond;
 use crate::units::Milliseconds;
@@ -1231,7 +1232,7 @@ fn height_data(height: Height) -> Vec<u8> {
 
 /// What an Oncore is set to at power-up: each command's default (VP
 /// pp. 11, 15, 17, 19, 21, 25, 27, 29, 33, 37, 41, 43, 50, 52, 54, 56,
-/// 58, 60, 62, 64, 66, 68 and 102).
+/// 58, 60, 62, 64, 66, 68 and 103).
 fn defaults() -> Settings {
     Settings {
         mask_angle: Degrees(10),
@@ -1243,6 +1244,8 @@ fn defaults() -> Settings {
         cable_delay: Nanoseconds(0),
         pulse_offset: Nanoseconds(0),
         pulse_mode: PulseMode::Always,
+        raim_algorithm: false,
+        raim_alarm_limit: HundredNanoseconds(10),
         application: Application::Land,
         initial_position: Location::default(),
         satellite_select: SatelliteSelect::BestGeometry,
@@ -1298,8 +1301,11 @@ fn each_setting_reads_back_after_its_command() {
         height: Centimeters(-4321),
         kind: HeightKind::Ellipsoid,
     };
-    let traim = |pps_mode: u8| [&[0, 1, 0, 10, pps_mode][..], &[0; 10]].concat();
-    let cases: [Case; 27] = [
+    let traim = |algorithm: u8, alarm_limit: u16, pps_mode: u8| {
+        let [high, low] = alarm_limit.to_be_bytes();
+        [&[0, algorithm, high, low, pps_mode][..], &[0; 10]].concat()
+    };
+    let cases: [Case; 29] = [
         (
             AH_SATELLITE_SELECT,
             vec![1],
@@ -1493,7 +1499,7 @@ fn each_setting_reads_back_after_its_command() {
         ),
         (
             BN_TIME_RAIM,
-            traim(0),
+            traim(0, 10, 0),
             vec![0xff; 15],
             Setting::PulseMode,
             {
@@ -1504,7 +1510,7 @@ fn each_setting_reads_back_after_its_command() {
         ),
         (
             BN_TIME_RAIM,
-            traim(2),
+            traim(0, 10, 2),
             vec![0xff; 15],
             Setting::PulseMode,
             {
@@ -1515,12 +1521,34 @@ fn each_setting_reads_back_after_its_command() {
         ),
         (
             EN_TIME_RAIM,
-            traim(3),
+            traim(0, 10, 3),
             vec![0xff; 15],
             Setting::PulseMode,
             {
                 let mut after = defaults();
                 after.pulse_mode = PulseMode::Confirmed;
+                after
+            },
+        ),
+        (
+            BN_TIME_RAIM,
+            traim(1, 10, 1),
+            vec![0xff; 15],
+            Setting::RaimAlgorithm,
+            {
+                let mut after = defaults();
+                after.raim_algorithm = true;
+                after
+            },
+        ),
+        (
+            EN_TIME_RAIM,
+            traim(0, 0xffff, 1),
+            vec![0xff; 15],
+            Setting::RaimAlarmLimit,
+            {
+                let mut after = defaults();
+                after.raim_alarm_limit = HundredNanoseconds(0xffff);
                 after
             },
         ),
@@ -1864,6 +1892,19 @@ fn a_command_not_taken_changes_no_setting() {
     assert_eq!(engine.settings(), defaults());
 }
 
+/// VP pp. 104 and 140: a Time RAIM setup with a byte out of range is
+/// not taken, none of it.
+#[test]
+fn a_time_raim_setup_out_of_range_changes_nothing() {
+    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    for setup in [[0, 2, 0, 3, 3], [0, 1, 0, 2, 3], [0, 1, 0, 3, 4]] {
+        let data = [&setup[..], &[0; 10]].concat();
+        assert_eq!(tell(&mut engine, BN_TIME_RAIM, &data), []);
+        assert_eq!(tell(&mut engine, EN_TIME_RAIM, &data), []);
+    }
+    assert_eq!(engine.settings(), defaults());
+}
+
 /// VP pp. 116 and 117: `@@Cf` puts every setting back, and is a reset
 /// that names the settings it changed.
 #[test]
@@ -1874,7 +1915,7 @@ fn set_to_defaults_is_a_reset_that_names_what_it_put_back() {
     tell(
         &mut engine,
         BN_TIME_RAIM,
-        &[0, 1, 0, 10, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        &[0, 1, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     );
     tell(&mut engine, AD_LATITUDE, &MADE_UP.latitude.0.to_be_bytes());
     assert_eq!(
@@ -1885,6 +1926,8 @@ fn set_to_defaults_is_a_reset_that_names_what_it_put_back() {
                 Setting::MaskAngle,
                 Setting::TimeBase,
                 Setting::PulseMode,
+                Setting::RaimAlgorithm,
+                Setting::RaimAlarmLimit,
                 Setting::InitialPosition,
             ]),
         ]

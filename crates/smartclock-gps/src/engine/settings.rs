@@ -28,6 +28,7 @@ use core::fmt::Result as FmtResult;
 use crate::record::DopKind;
 use crate::units::Centimeters;
 use crate::units::Degrees;
+use crate::units::HundredNanoseconds;
 use crate::units::MilliArcSeconds;
 use crate::units::Milliseconds;
 use crate::units::Nanoseconds;
@@ -193,6 +194,20 @@ pub struct Settings {
     pub pulse_offset: Nanoseconds<u32>,
     /// When the 1 PPS is put out (`@@Bn` and `@@En`).
     pub pulse_mode: PulseMode,
+    /// Whether the Time RAIM algorithm is on (`@@Bn` and `@@En`,
+    /// pp. 104 and 140): off at power-up (pp. 103 and 139).  The
+    /// engine reports the solution unknown while it is off (p. 105);
+    /// whether a receiver checks its time solution at all is its
+    /// holder's to set.
+    pub raim_algorithm: bool,
+    /// Time RAIM's alarm limit, the time solution's error past which
+    /// it gives an alarm (`@@Bn` and `@@En`, pp. 104 and 140): 3 to
+    /// 65,535 hundreds of nanoseconds, and 10 of them, 1000 ns, at
+    /// power-up (pp. 103 and 139).  The engine reports what Time RAIM
+    /// can do by it and the satellites tracked (pp. 103 and 106); the
+    /// limit a receiver checks its time solution against is its
+    /// holder's to set.
+    pub raim_alarm_limit: HundredNanoseconds,
     /// What the engine is used for (`@@AB`).
     pub application: Application,
     /// Where to start looking from: the latitude, longitude and height
@@ -272,6 +287,10 @@ pub enum Setting {
     PulseOffset,
     /// [`Settings::pulse_mode`].
     PulseMode,
+    /// [`Settings::raim_algorithm`].
+    RaimAlgorithm,
+    /// [`Settings::raim_alarm_limit`].
+    RaimAlarmLimit,
     /// [`Settings::application`].
     Application,
     /// [`Settings::initial_position`].
@@ -304,7 +323,7 @@ pub enum Setting {
 
 impl Setting {
     /// Every setting, in the order of [`Settings`]' fields.
-    pub const ALL: [Self; 23] = [
+    pub const ALL: [Self; 25] = [
         Self::MaskAngle,
         Self::PositionHold,
         Self::HeldPosition,
@@ -314,6 +333,8 @@ impl Setting {
         Self::CableDelay,
         Self::PulseOffset,
         Self::PulseMode,
+        Self::RaimAlgorithm,
+        Self::RaimAlarmLimit,
         Self::Application,
         Self::InitialPosition,
         Self::SatelliteSelect,
@@ -344,6 +365,8 @@ impl Setting {
             Self::CableDelay => "cable_delay",
             Self::PulseOffset => "pulse_offset",
             Self::PulseMode => "pulse_mode",
+            Self::RaimAlgorithm => "raim_algorithm",
+            Self::RaimAlarmLimit => "raim_alarm_limit",
             Self::Application => "application",
             Self::InitialPosition => "initial_position",
             Self::SatelliteSelect => "satellite_select",
@@ -469,6 +492,14 @@ impl Settings {
                 Setting::PulseOffset,
             ),
             (self.pulse_mode != after.pulse_mode, Setting::PulseMode),
+            (
+                self.raim_algorithm != after.raim_algorithm,
+                Setting::RaimAlgorithm,
+            ),
+            (
+                self.raim_alarm_limit != after.raim_alarm_limit,
+                Setting::RaimAlarmLimit,
+            ),
             (self.application != after.application, Setting::Application),
             (
                 self.initial_position != after.initial_position,

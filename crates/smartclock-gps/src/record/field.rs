@@ -520,6 +520,8 @@ pub const IMAGE_SETS: SettingSet = SettingSet::of(&[
     Setting::TimeBase,
     Setting::PulseOffset,
     Setting::PulseMode,
+    Setting::RaimAlgorithm,
+    Setting::RaimAlarmLimit,
     Setting::Application,
     Setting::InitialPosition,
     Setting::SatelliteSelect,

@@ -859,6 +859,8 @@ impl Engine {
             cable_delay: store.cable_delay(),
             pulse_offset: store.pulse_offset(),
             pulse_mode: self.state.traim.pulse_mode,
+            raim_algorithm: self.state.traim.algorithm,
+            raim_alarm_limit: self.state.traim.alarm_limit,
             application: store.application(),
             initial_position: self.state.initial,
             satellite_select: store.satellite_select(),

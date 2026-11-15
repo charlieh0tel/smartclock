@@ -42,6 +42,7 @@ use crate::units::MilliArcSeconds;
 use crate::units::Milliseconds;
 use crate::units::Minutes;
 use crate::units::Nanoseconds;
+use crate::units::PrnSet;
 use crate::units::Seconds;
 use crate::units::Tenths;
 
@@ -388,11 +389,11 @@ impl Store {
         self.byte(AG_MASK_ANGLE)
     }
 
-    /// The satellites not to track, bit 0 satellite 1 (`@@Am`).
-    pub(super) fn ignore_list(&self) -> u32 {
+    /// The satellites not to track (`@@Am`, p. 42).
+    pub(super) fn ignore_list(&self) -> PrnSet {
         match self.get(AM_IGNORE_LIST) {
-            Some(&[_, a, b, c, d]) => u32::from_be_bytes([a, b, c, d]),
-            _ => 0,
+            Some(&[_, a, b, c, d]) => PrnSet::from_bits(u32::from_be_bytes([a, b, c, d])),
+            _ => PrnSet::EMPTY,
         }
     }
 

@@ -156,6 +156,7 @@ use crate::time::LeapChange;
 use crate::time::LeapEvent;
 use crate::units::Centimeters;
 use crate::units::Degrees;
+use crate::units::HundredNanoseconds;
 use crate::units::MilliArcSeconds;
 use crate::units::Milliseconds;
 use crate::units::PRNS;
@@ -394,12 +395,11 @@ const LEAP_ADDITION_PENDING: u8 = 1;
 const LEAP_SUBTRACTION_PENDING: u8 = 2;
 
 /// Time RAIM's setup (VP pp. 102 to 106): the algorithm's states, the
-/// least alarm limit and the one at power-up, in hundreds of
-/// nanoseconds, and the 1 PPS modes.
+/// least alarm limit and the one at power-up, and the 1 PPS modes.
 const TRAIM_OFF: u8 = 0;
 const TRAIM_ON: u8 = 1;
-const ALARM_LIMIT_LEAST: u16 = 3;
-const ALARM_LIMIT_DEFAULT: u16 = 10;
+const ALARM_LIMIT_LEAST: HundredNanoseconds = HundredNanoseconds(3);
+const ALARM_LIMIT_DEFAULT: HundredNanoseconds = HundredNanoseconds(10);
 const PPS_OFF: u8 = 0;
 const PPS_ALWAYS: u8 = 1;
 const PPS_TRACKING: u8 = 2;
@@ -505,7 +505,7 @@ impl KeptStatus {
 #[derive(Debug)]
 struct TraimNeed {
     /// The least alarm limit this row is for.
-    from: u16,
+    from: HundredNanoseconds,
     /// To detect.
     detect: usize,
     /// To isolate.
@@ -515,22 +515,22 @@ struct TraimNeed {
 /// The needs by alarm limit, greatest first.
 const TRAIM_NEEDS: [TraimNeed; 4] = [
     TraimNeed {
-        from: 10,
+        from: HundredNanoseconds(10),
         detect: 2,
         isolate: 3,
     },
     TraimNeed {
-        from: 7,
+        from: HundredNanoseconds(7),
         detect: 3,
         isolate: 3,
     },
     TraimNeed {
-        from: 5,
+        from: HundredNanoseconds(5),
         detect: 4,
         isolate: 4,
     },
     TraimNeed {
-        from: 3,
+        from: HundredNanoseconds(3),
         detect: 4,
         isolate: 8,
     },
@@ -629,25 +629,57 @@ struct Rates {
 /// Time RAIM as it is set up, one setup for both families.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct TraimSetup {
-    /// Off or on.
-    algorithm: u8,
-    /// The alarm limit, in hundreds of nanoseconds.
-    alarm_limit: u16,
+    /// Whether the algorithm is on.
+    algorithm: bool,
+    /// The alarm limit.
+    alarm_limit: HundredNanoseconds,
     /// When the 1 PPS is put out.
-    pps_mode: u8,
+    pulse_mode: PulseMode,
 }
 
 impl TraimSetup {
     const DEFAULT: Self = Self {
-        algorithm: TRAIM_OFF,
+        algorithm: false,
         alarm_limit: ALARM_LIMIT_DEFAULT,
-        pps_mode: PPS_ALWAYS,
+        pulse_mode: PulseMode::Always,
     };
 
-    fn in_range(self) -> bool {
-        matches!(self.algorithm, TRAIM_OFF | TRAIM_ON)
-            && self.alarm_limit >= ALARM_LIMIT_LEAST
-            && self.pps_mode <= PPS_CONFIRMED
+    /// The setup a command's bytes give (VP p. 104): `None` if any of
+    /// them is out of range.
+    fn of(algorithm: u8, alarm_limit: u16, pps_mode: u8) -> Option<Self> {
+        let algorithm = match algorithm {
+            TRAIM_OFF => false,
+            TRAIM_ON => true,
+            _ => return None,
+        };
+        let pulse_mode = match pps_mode {
+            PPS_OFF => PulseMode::Off,
+            PPS_ALWAYS => PulseMode::Always,
+            PPS_TRACKING => PulseMode::Tracking,
+            PPS_CONFIRMED => PulseMode::Confirmed,
+            _ => return None,
+        };
+        let alarm_limit = HundredNanoseconds(alarm_limit);
+        (alarm_limit >= ALARM_LIMIT_LEAST).then_some(Self {
+            algorithm,
+            alarm_limit,
+            pulse_mode,
+        })
+    }
+
+    /// The algorithm's state as a message carries it.
+    const fn algorithm_byte(self) -> u8 {
+        if self.algorithm { TRAIM_ON } else { TRAIM_OFF }
+    }
+
+    /// The 1 PPS control mode as a message carries it.
+    const fn pps_mode(self) -> u8 {
+        match self.pulse_mode {
+            PulseMode::Off => PPS_OFF,
+            PulseMode::Always => PPS_ALWAYS,
+            PulseMode::Tracking => PPS_TRACKING,
+            PulseMode::Confirmed => PPS_CONFIRMED,
+        }
     }
 }
 
@@ -826,12 +858,7 @@ impl Engine {
             },
             cable_delay: store.cable_delay(),
             pulse_offset: store.pulse_offset(),
-            pulse_mode: match self.state.traim.pps_mode {
-                PPS_OFF => PulseMode::Off,
-                PPS_TRACKING => PulseMode::Tracking,
-                PPS_CONFIRMED => PulseMode::Confirmed,
-                _ => PulseMode::Always,
-            },
+            pulse_mode: self.state.traim.pulse_mode,
             application: store.application(),
             initial_position: self.state.initial,
             satellite_select: store.satellite_select(),
@@ -1274,12 +1301,7 @@ impl Engine {
         let &[rate, algorithm, high, low, pps_mode, ..] = data else {
             return;
         };
-        let setup = TraimSetup {
-            algorithm,
-            alarm_limit: u16::from_be_bytes([high, low]),
-            pps_mode,
-        };
-        if setup.in_range() {
+        if let Some(setup) = TraimSetup::of(algorithm, u16::from_be_bytes([high, low]), pps_mode) {
             self.state.rates[family.index].traim = Rate(rate);
             self.state.traim = setup;
         }
@@ -1428,7 +1450,7 @@ impl Engine {
             listening
                 && satellite.signal.is_some()
                 && i16::from(satellite.elevation.0) > mask
-                && !is_ignored(ignored, satellite.prn)
+                && !ignored.contains(satellite.prn)
         };
         // Those above a satellite, a tie going to the one first.
         let above = move |index: usize, satellite: &Satellite| {
@@ -1689,7 +1711,7 @@ impl Engine {
             Health::Unhealthy => VISIBLE_UNHEALTHY,
             Health::Unknown | Health::Healthy => 0,
         };
-        if is_ignored(self.state.store.ignore_list(), satellite.prn) {
+        if self.state.store.ignore_list().contains(satellite.prn) {
             unhealthy | VISIBLE_REMOVED
         } else {
             unhealthy
@@ -1883,7 +1905,7 @@ impl Engine {
     /// p. 6.93).
     fn traim_result(&self, record: &Record, tracked: usize) -> TraimResult {
         let holding = self.state.store.holding();
-        let on = self.state.traim.algorithm == TRAIM_ON;
+        let on = self.state.traim.algorithm;
         let able = self.traim_ability(tracked);
         match record.derived.raim.filter(|_| on && able != TRAIM_NEITHER) {
             Some(raim) => TraimResult {
@@ -1925,18 +1947,18 @@ impl Engine {
         let TraimResult {
             solution, ability, ..
         } = self.traim_result(record, tracked);
-        let pulse = match setup.pps_mode {
-            PPS_OFF => false,
-            PPS_TRACKING => tracked != 0,
-            PPS_CONFIRMED => solution == TRAIM_SOLUTION_OK,
-            _ => true,
+        let pulse = match setup.pulse_mode {
+            PulseMode::Off => false,
+            PulseMode::Always => true,
+            PulseMode::Tracking => tracked != 0,
+            PulseMode::Confirmed => solution == TRAIM_SOLUTION_OK,
         };
         let timing = record.timing.filter(|_| tracked >= SPREAD_OF);
         let mut data = Data::new();
         data.byte(self.state.rates[family.index].traim.0)
-            .byte(setup.algorithm)
-            .word(setup.alarm_limit)
-            .byte(setup.pps_mode);
+            .byte(setup.algorithm_byte())
+            .word(setup.alarm_limit.0)
+            .byte(setup.pps_mode());
         match self.identity.model() {
             Model::VpSix | Model::VpEight => {
                 let next = self.clock + Seconds(1);
@@ -2045,11 +2067,6 @@ fn kept<const N: usize>(data: &Data) -> Option<[u8; N]> {
 /// A count as a message's byte carries it.
 fn count_byte(count: usize) -> u8 {
     u8::try_from(count).unwrap_or(u8::MAX)
-}
-
-/// Whether an ignore list, bit 0 satellite 1, names `prn`.
-fn is_ignored(list: u32, prn: Prn) -> bool {
-    list & (1 << (prn.get() - 1)) != 0
 }
 
 /// A VP's signal strength for a C/N0.

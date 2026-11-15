@@ -98,6 +98,11 @@ pub struct Milliseconds<T>(pub T);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Nanoseconds<T>(pub T);
 
+/// A time in hundreds of nanoseconds: Time RAIM's alarm limit (`@@Bn`,
+/// p. 104).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct HundredNanoseconds(pub u16);
+
 /// An angle in whole degrees.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Degrees<T>(pub T);

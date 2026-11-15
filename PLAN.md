@@ -702,7 +702,10 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   unsupported entries,
   and `exception_name`, `selftest_request`,
   `scpi_set_DIAGnostic_GPSystem_UTC` and `lamp_test_command`, which
-  its code changes).
+  its code changes; the Z3805A 1.01.03, the eighth, sent back three
+  its code changes, `format_level`, `pps_init` and
+  `duartb_reconfigure`, `common/screen_level.c` going with the
+  first).
   Each seeded image's
   `check-layout.c`, which rule 2 compares once the image shares
   `common/`, the Z3815A 4010's too, asserts its layouts at its

@@ -1337,3 +1337,12 @@ void satellite_status_list(satellite_list_kind kind, uint8_t entries,
     *list = satellite_status_blank_entry;
   }
 }
+
+/* A signal level as "%3d", or blanks when negative. */
+void format_level(int16_t level, char* text) {
+  if (level < 0) {
+    libc_copy(text, "   ");
+    return;
+  }
+  sprintf(text, "%3d", level);
+}

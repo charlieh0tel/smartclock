@@ -363,3 +363,5 @@ int32_t console_write_polled(char* s) {
   cpu_sr_write(sr);
   return count;
 }
+
+CPU_IO_FUNCTION(duartb_reconfigure, duartb_reconfigure_settings);

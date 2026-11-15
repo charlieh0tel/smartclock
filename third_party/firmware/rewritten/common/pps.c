@@ -7,21 +7,6 @@
  * generated prototype.  The registers are mc68331.h's; the kernel's
  * services docs/firmware/psos.md's. */
 
-/* Creates the pps exchange, "1pps", clears its message and turns input
- * capture 1's interrupt on; returns create_x's error. */
-int32_t pps_init(void) {
-  int32_t status;
-
-  pps_exchange = 0;
-  status = psos_create_x("1pps", 0, 0, &pps_exchange);
-  if (status == 0) {
-    mutex_clear((mutex*)&pps_message);
-    gpt.tflg &= ~TFLG_ICF1;
-    gpt.tmsk |= TMSK_ICI1;
-  }
-  return status;
-}
-
 /* Deletes the pps exchange and turns input capture 1's interrupt off;
  * returns delete_x's error, or 4 with no exchange. */
 int32_t pps_interrupt_stop(void) {

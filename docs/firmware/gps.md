@@ -1162,14 +1162,18 @@ specification; in short:
   fields it fills and the engine's settings it acts on, and its tests
   hold it: what `IMAGE_USES` has that it does not fill must be excused
   it by a row of `gps-field-exceptions.tsv`, which is the owner's alone
-  to add to and starts empty; a fill from data made to give every
-  field a value an empty record lacks must change every field declared
-  and no other.  The vectors' scene and the u-blox crate declare
-  theirs.  Neither fills the Time RAIM solution and RAIM status, which
-  the engine then works out from the satellites tracked and its alarm
-  limit, nor what a self-test would find, neither having hardware to
-  ask; neither is excused them, and their tests name the three until
-  the owner rules.
+  to add to and is empty; a fill from data made to give every field a
+  value must change every field declared and no other, seen against
+  the crate's `UNFILLED`, an empty record whose self-test fails, so
+  that a fill of a pass shows.  The vectors' scene and the u-blox
+  crate declare theirs, and both fill all the images use, with no
+  exception.  Both fill the self-test as a pass, neither having a
+  part to fail.  The scene's Time RAIM result is its sky's: eight
+  satellites, the solution good and a bad one isolable, and with the
+  antenna off unknown and neither.  The u-blox crate's is `TIM-TP`'s
+  `raim` (UBX-13003221 R28, p. 433), which says only whether the
+  receiver's (T)RAIM is active; what a record makes of that is the
+  crate's reading, in its documentation.
 - **A record's Time RAIM result goes no further than the model's
   own.**  With Time RAIM off, the alarm limit too low for the
   satellites tracked or none tracked, the solution is unknown and

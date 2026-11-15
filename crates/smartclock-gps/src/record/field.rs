@@ -31,8 +31,11 @@
 
 use crate::engine::settings::Setting;
 use crate::engine::settings::SettingSet;
+use crate::record::Fault;
+use crate::record::FaultSet;
 use crate::record::Record;
 use crate::record::Satellite;
+use crate::record::SelfTest;
 use crate::record::Timing;
 use crate::units::Degrees;
 use crate::units::Nanoseconds;
@@ -456,6 +459,18 @@ impl Debug for FieldSet {
     }
 }
 
+/// A record with nothing in it and a self-test that fails: what a
+/// fill is seen against, so that one that writes a pass shows as every
+/// other field it writes does.
+pub const UNFILLED: Record = {
+    let mut record = Record::EMPTY;
+    record.self_test = SelfTest {
+        hardware: FaultSet::EMPTY.with(Fault::Ram),
+        channels: 0,
+    };
+    record
+};
+
 /// The fields in which `after` differs from `before`
 /// ([`RecordField::differs`]).
 #[must_use]
@@ -562,15 +577,16 @@ impl Filler {
     }
 
     /// The fields a fill changed, `before` to `after`, that it does not
-    /// declare.  A filler's test fails unless this is empty.
+    /// declare.  A filler's test fails unless this is empty, `before`
+    /// being [`UNFILLED`].
     #[must_use]
     pub fn undeclared(&self, before: &Record, after: &Record) -> FieldSet {
         changed(before, after).without(self.fills)
     }
 
     /// The fields it declares that are not among `shown`, those its
-    /// fills have been seen to change.  A filler's test fails unless
-    /// this is empty.
+    /// fills have been seen to change from [`UNFILLED`].  A filler's
+    /// test fails unless this is empty.
     #[must_use]
     pub const fn unshown(&self, shown: FieldSet) -> FieldSet {
         self.fills.without(shown)

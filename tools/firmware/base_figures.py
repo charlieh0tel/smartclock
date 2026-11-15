@@ -38,6 +38,7 @@ DOCUMENTS = {
     'docs/firmware/z3815a-4010.md': ('z3815a-4010-vs-58503a-3704', 'z3815a-4010-vs-z3805a-3543b'),
     'docs/firmware/z3817a-3752.md': ('z3817a-3752-vs-z3815a-4010', 'z3817a-3752-vs-58503a-3704',
                                      'z3817a-3752-vs-z3805a-3543b'),
+    'docs/firmware/z3816a-4001.md': ('z3816a-4001-vs-58503a-3704', 'z3816a-4001-vs-z3815a-4010'),
 }
 REGIONS = ('primary', 'installer')
 MARKER = re.compile(r'^<!-- base_figures\.py -->\n.*?^<!-- end base_figures\.py -->$', re.M | re.S)

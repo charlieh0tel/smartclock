@@ -129,6 +129,10 @@ request scripts in `oncore/`.
   seeded, a second base for its Oncore code, sharing `common/`, every
   C function written by hand; its time references, Oncore link, what a
   feed must give it, oscillator link and loop constants
+- [Z3816A 4001 against 58503A 3704 and Z3815A 4010](z3816a-4001.md),
+  seeded from the 58503A, the Z3815A a second base, sharing `common/`,
+  every C function written by hand; its host port and the types its
+  export corrects
 - [The floating-point library](softfloat.md)
 - [The C library](libc.md)
 - [The real-time kernel](psos.md)
@@ -415,7 +419,10 @@ part of what they change.  In order:
    calls the routines its headers bind takes
    `headers=third_party/firmware/rewritten/common` before its own
    folder: the export includes common/'s headers and bindings and none
-   of its C (the Z3817A 3752 until it joined, `z3817a-3752.md`).  `without=NAME`
+   of its C (the Z3817A 3752 and the Z3816A 4001
+   until each joined, `z3817a-3752.md` and `z3816a-4001.md`;
+   the Z3816A's installer is
+   entered with `SmartClockInstaller.java 0x8000 0x1013a2`).  `without=NAME`
    leaves out the file of that name from those folders: a header, for
    an image without the device its routines drive, whose registers they
    name, `without=duart.h` for one with no DUART; or a file of `common/`'s C every function of
@@ -455,6 +462,13 @@ counterpart of, from the 58503A's as its second base
 as the Z3815A's and corrected where its export shows otherwise, its
 SCPI trees' C and its own C, written from the bases' copies and the
 decompiler's reading, beside `common/`, which it shares since its
+join.  The Z3816A 4001's,
+`third_party/firmware/analysis/z3816a-4001/`, is seeded from the 58503A's
+and, for what the 58503A has no counterpart of, from the Z3815A's
+([`z3816a-4001.md`](z3816a-4001.md)), its `rewritten/` the
+58503A's types, corrected where its export shows otherwise, its SCPI
+trees' C and its own C, written from the bases' copies and the
+decompiler's reading, beside `common/`, which it shares since its
 join.  A change to the Z3805A's `names.tsv`,
 `modules.tsv` or export regenerates them with `make image-diff` in the
 same commit, and the 58503A's tree rows, which its names file shapes,
@@ -463,7 +477,7 @@ with `make scpi-tree IMAGE=58503a-3704`; a seeding rule or exception is changed 
 that check and generate it are `third_party/firmware/Makefile`'s, which
 runs alone, `make -C third_party/firmware TARGET IMAGE=z3805a-3543b`,
 for every image without `IMAGE=` (but `check-link` and
-`report-decompiled`, which run for the five reported images, at once
+`report-decompiled`, which run for the six reported images, at once
 under `make -j`; `rewrite.md`, "Reproducing"), and to which the top Makefile hands each target by name, so that `make
 check-decompiled` is the same.
 
@@ -2114,7 +2128,7 @@ report takes about as long on mc683xx as on Unicorn.
 ## The checks in CI
 
 `.github/workflows/firmware.yml` runs the firmware's checks for the
-five images on every pull request and push to `main`, and when run by
+six images on every pull request and push to `main`, and when run by
 hand (`workflow_dispatch`), a job of its own beside
 the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
@@ -2138,8 +2152,9 @@ check's summary, so that every function agreeing is
 checked in public.  `IMAGE=z3805a-3543b` is set for the job;
 `check-types`, `check-scpi-tree`, `check-magic-numbers` and
 `check-decompiled` run again with `IMAGE=58503a-3704` and
-`IMAGE=z3801a-3543`, `IMAGE=z3815a-4010` and `IMAGE=z3817a-3752`, and
-`check-link` and `report-decompiled` run without `IMAGE`, for the five,
+`IMAGE=z3801a-3543`, `IMAGE=z3815a-4010`, `IMAGE=z3817a-3752`
+and `IMAGE=z3816a-4001`, and
+`check-link` and `report-decompiled` run without `IMAGE`, for the six,
 as many images at once as the runner has CPUs (`make -j"$(nproc)"`;
 `rewrite.md`, "Reproducing"), each failing if any of its functions fails
 (`58503a-3704.md`, `z3801a-3543.md`, `z3815a-4010.md` and
@@ -2148,7 +2163,8 @@ firmware Makefile's `UNFINISHED_IMAGES`, none now) has its function
 check run without a link check, its figures checked any failed
 functions among them (`report_figures.py --unfinished`), until its link
 check passes, as the Z3815A 4010's did from its fifth link run and the
-Z3817A 3752's from its join.  `check-image-diff`
+Z3817A 3752's and the Z3816A 4001's from their
+joins.  `check-image-diff`
 checks the 58503A's and the Z3801A's diffs against the Z3805A, their
 seeded names and the 58503A's document's figures, and reads the
 Z3815A 4010's image and `handlers.txt`;

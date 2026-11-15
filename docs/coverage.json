@@ -130,7 +130,8 @@
     {
       "image": "z3816a-4001", "name": "Z3816A 4001", "model": "Z3816A",
       "design": "z3816a", "design_name": "Z3816A", "dialect": "Z3801",
-      "cells": {"gps": {"text": "Oncore VP or UT Plus"}, "rewrite": "not-yet"}
+      "rewrite": "docs/firmware/z3816a-4001.md",
+      "cells": {"gps": {"text": "Oncore VP or UT Plus"}}
     },
     {
       "image": "z3817a-3752", "name": "Z3817A 3752", "model": "Z3817A",

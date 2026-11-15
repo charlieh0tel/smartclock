@@ -113,20 +113,24 @@ module-figures:
 # against the 58503A, the base it was not seeded from, is the comparison
 # docs/firmware/z3817a-3752.md reads; its diff against the Z3805A, the
 # base common/ came from, is the one check-common reads, the
-# Z3817A's export including common/.  image-diff rewrites the TSVs,
-# docs/firmware/58503a-3704.md's, docs/firmware/z3815a-4010.md's and
-# docs/firmware/z3817a-3752.md's
-# figures and, through seed-names, each seeded image's names;
+# Z3817A's export including common/.  The Z3816A's against the
+# Z3815A, its second base, is docs/firmware/z3816a-4001.md's, and against
+# the Z3805A the one check-common and report-link read
+# (docs/firmware/rewrite.md, "Shared C").  image-diff rewrites the
+# TSVs, docs/firmware/58503a-3704.md's, z3815a-4010.md's,
+# z3817a-3752.md's and z3816a-4001.md's figures and, through
+# seed-names, each seeded image's names;
 # check-image-diff fails if any is not what the images give.  Each
 # TSV's counts by status and module go to the image's work folder, as
 # image-diff-vs-BASE.err.
-SEEDED_IMAGES = 58503a-3704 z3815a-4010 z3801a-3543 z3817a-3752
+SEEDED_IMAGES = 58503a-3704 z3815a-4010 z3801a-3543 z3817a-3752 z3816a-4001
 DIFF_BASE_58503a-3704 = z3805a-3543b
 DIFF_BASE_z3815a-4010 = 58503a-3704
 DIFF_BASE_z3801a-3543 = z3805a-3543b
 DIFF_BASE_z3817a-3752 = z3815a-4010
+DIFF_BASE_z3816a-4001 = 58503a-3704
 IMAGE_DIFFS = $(foreach image,$(SEEDED_IMAGES),$(image):$(DIFF_BASE_$(image))) z3815a-4010:z3805a-3543b \
-	z3817a-3752:58503a-3704 z3817a-3752:z3805a-3543b
+	z3817a-3752:58503a-3704 z3817a-3752:z3805a-3543b z3816a-4001:z3815a-4010 z3816a-4001:z3805a-3543b
 # The diffs run with image_diff's --callee-ties, as their ports seed
 # (tools/firmware/seed_names.py's Port.callee_ties).
 CALLEE_TIES_DIFFS = z3817a-3752:z3815a-4010
@@ -148,8 +152,8 @@ DIFF_FIGURES = python3 -I $(ROOT)/tools/firmware/diff_figures.py $(call image_di
 	--functions $(DECOMPILED_FOLDER)/$(call diff_base,$(FIGURES_DIFF))/$(call diff_base,$(FIGURES_DIFF)).conventions.jsonl
 
 # The candidate bases' tables the image documents give
-# (tools/firmware/base_figures.py): docs/firmware/z3815a-4010.md's and
-# docs/firmware/z3817a-3752.md's.
+# (tools/firmware/base_figures.py): docs/firmware/z3815a-4010.md's,
+# docs/firmware/z3817a-3752.md's and docs/firmware/z3816a-4001.md's.
 BASE_FIGURES = python3 -I $(ROOT)/tools/firmware/base_figures.py
 
 image-diff: seed-names
@@ -318,15 +322,16 @@ $(CPU32_LIBGCC): $(ROOT)/tools/firmware/cpu32_libgcc.py $(GCC_VENDORED)
 REPORT = report-decompiled.txt
 # The images whose function check the documents quote, each one's
 # sentences report_figures.py's CHECKS.
-REPORTED_IMAGES = z3805a-3543b 58503a-3704 z3801a-3543 z3815a-4010 z3817a-3752
+REPORTED_IMAGES = z3805a-3543b 58503a-3704 z3801a-3543 z3815a-4010 z3817a-3752 z3816a-4001
 # And those whose C is not yet all hand-written, whose document quotes
 # its function check, any failures and all: report-decompiled fails for
 # one only where the check does not run to its figures (an exit status
 # other than 1, the failed functions'), and its figures are checked
 # without a link check, which it does not pass yet
 # (report_figures.py --unfinished).  The Z3815A 4010 left it once its
-# link check passed, and the Z3817A 3752, one from its first export,
-# once it joined common/ and its link check passed; none is now.
+# link check passed, and the Z3817A 3752 and the Z3816A 4001, each one
+# from its first export, once each joined common/ and its link check
+# passed; none is now.
 UNFINISHED_IMAGES =
 FIGURED_IMAGES = $(REPORTED_IMAGES) $(UNFINISHED_IMAGES)
 unfinished = $(filter $(1),$(UNFINISHED_IMAGES))
@@ -347,7 +352,8 @@ report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1
 # how each is defined -- as docs/firmware/README.md,
 # docs/firmware/rewrite.md, docs/firmware/58503a-3704.md,
 # docs/firmware/z3801a-3543.md, docs/firmware/z3815a-4010.md,
-# docs/firmware/z3817a-3752.md and README.md quote them -- are not what
+# docs/firmware/z3817a-3752.md, docs/firmware/z3816a-4001.md and
+# README.md quote them -- are not what
 # the last make report-decompiled
 # and make check-link saved, or if any function of a reported image
 # failed; report-figures rewrites them.

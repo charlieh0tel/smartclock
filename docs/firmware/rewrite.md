@@ -456,8 +456,8 @@ text, comments and white space aside, how the others differ, and
 whether the diffs class the same copies identical or relocated.  Same
 text is a candidate, not a move: rule 2 is checked only once the
 function is in `common/`.
-1089 functions are defined in two or more images' own C, 994 of them the same
-text in two or more, 610 the same in every image defining them, and 110
+1099 functions are defined in two or more images' own C, 1025 of them the same
+text in two or more, 605 the same in every image defining them, and 123
 with a copy differing from the most images' by a constant or a name alone.
 
 ## The verification
@@ -905,11 +905,11 @@ The checks need no Ghidra: the export is checked in.
 
 Each is also a top-level target (`make check-decompiled`).  Without
 `IMAGE` each runs for every image it can: `check-link` and
-`report-decompiled` for the five reported images, each one's function
+`report-decompiled` for the six reported images, each one's function
 check held to the same standard ([`58503a-3704.md`](58503a-3704.md),
 "The function check").  Those two run each image as a target of its
-own, `report-decompiled/IMAGE`, so that `make -j5 report-decompiled`
-runs the five at once; each image's output goes to its
+own, `report-decompiled/IMAGE`, so that `make -j6 report-decompiled`
+runs the six at once; each image's output goes to its
 `report-decompiled.log` (or `check-link.log`), printed in the images'
 order once all have run, and the target fails if any image did.  The
 logs are in each image's work folder, beside its results, which for
@@ -1029,4 +1029,10 @@ and, for its Oncore code, the 58503A's, is the fifth image to share
 `common/`, every C function of it written by hand and held to the same
 standard.  The Z3817A 3752's link requires all 2155 of its functions and
 finds each defined: 1670 by hand-written C, 473 by assembly and 12 as another
-routine's name.
+routine's name.  The Z3816A 4001's, [`z3816a-4001.md`](z3816a-4001.md),
+seeded from the 58503A's and, for what the 58503A has no counterpart
+of, the Z3815A's, is the sixth image to share `common/`, every C
+function of it written by hand and held to the same standard.  The
+Z3816A 4001's link requires all 2139 of its functions and finds each
+defined: 1654 by hand-written C, 473 by assembly and 12 as another routine's
+name.

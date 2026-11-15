@@ -1236,12 +1236,14 @@ specification; in short:
   row, the check holds.  The settings behind the rows some image sets
   are the crate's `IMAGE_SETS`, written by the tool as `IMAGE_USES`
   is.  A `Filler` declares the settings it acts on, and its test
-  holds that those and its rows of `gps-setting-exceptions.tsv`, one
-  for each setting it is excused with the reason, are together
-  `IMAGE_SETS`, each setting once: `Filler::unacted` and
-  `Filler::needless` are empty, so a row goes when its setting is
-  acted on or no image sets it any longer.  A row names a setting by
-  its field of the `Settings`, and is the owner's to grant.  The
+  holds that each of `IMAGE_SETS` is one of those or has a row of
+  `gps-setting-exceptions.tsv`, one for each setting it is excused
+  with the reason, and that no row is for nothing: `Filler::unacted`
+  and `Filler::needless` are empty, so a row goes when its setting is
+  acted on or no image sets it any longer.  A filler may act on more
+  than the images set; that needs no row and fails nothing.  A row
+  names a setting by its field of the `Settings`, and is the owner's
+  to grant.  The
   vectors' scene acts on position hold and the position to hold: held,
   its record is at that position with a fix of time alone (VP pp. 56
   and 73).  It is excused the rest, having no pulse, search, choice of

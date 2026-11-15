@@ -28,8 +28,9 @@
 //! holder to apply.  [`IMAGE_SETS`], made the same way, is those the
 //! images set, and a filler's test holds that it acts on each or is
 //! excused it by a row of `docs/firmware/gps-setting-exceptions.tsv`,
-//! and on no other: [`Filler::unacted`] and [`Filler::needless`] are
-//! both empty.
+//! and is excused nothing else: [`Filler::unacted`] and
+//! [`Filler::needless`] are both empty.  A filler may act on more than
+//! the images set; only a row can be needless.
 
 use crate::engine::settings::Setting;
 use crate::engine::settings::SettingSet;
@@ -638,16 +639,15 @@ impl Filler {
             .without(excused_settings(self.name, exceptions))
     }
 
-    /// The settings it acts on or `exceptions` excuses it that need not
-    /// be: one no image sets, and one both acted on and excused, a row
-    /// gone stale.  A filler's test fails unless this is empty.
+    /// The settings `exceptions` excuses it that need no excuse: one
+    /// no image sets, and one it acts on, a row gone stale.  A setting
+    /// it acts on that no image sets is not among them: a filler may
+    /// act on more than the images set.  A filler's test fails unless
+    /// this is empty.
     #[must_use]
     pub fn needless(&self, exceptions: &str) -> SettingSet {
         let excused = excused_settings(self.name, exceptions);
-        self.acts
-            .union(excused)
-            .without(IMAGE_SETS)
-            .union(self.acts.common(excused))
+        excused.without(IMAGE_SETS).union(self.acts.common(excused))
     }
 }
 
@@ -766,7 +766,8 @@ mod tests {
     }
 
     /// A filler is held to the settings the images set: it acts on
-    /// each or the table excuses it, and neither on one for nothing.
+    /// each or the table excuses it, and the table excuses it none for
+    /// nothing.  It may act on one no image sets.
     #[test]
     fn a_filler_is_held_to_the_settings() {
         let hold = SettingSet::of(&[Setting::PositionHold]);
@@ -795,17 +796,29 @@ mod tests {
         assert_eq!(other.unacted(&table), IMAGE_SETS.without(hold));
 
         // A row for a setting acted on, and one for a setting no image
-        // sets, are both needless, as acting on such a one is.
+        // sets, are both needless.
         let stale = table.clone() + "one\tposition_hold\tstale\n";
         assert_eq!(filler.needless(&stale), hold);
         assert!(!IMAGE_SETS.contains(Setting::MaskAngle));
         let unset = SettingSet::of(&[Setting::MaskAngle]);
-        assert_eq!(filler.needless(&(table + "one\tmask_angle\t-\n")), unset);
+        let unset_excused = table.clone() + "one\tmask_angle\t-\n";
+        assert_eq!(filler.needless(&unset_excused), unset);
+
+        // Acting on a setting no image sets is not, with the rest
+        // acted on or excused; acting on it and being excused it is.
         let keen = Filler {
             acts: IMAGE_SETS.union(unset),
             ..filler
         };
-        assert_eq!(keen.needless(""), unset);
+        assert!(keen.unacted("").is_empty());
+        assert!(keen.needless("").is_empty());
+        let also = Filler {
+            acts: hold.union(unset),
+            ..filler
+        };
+        assert!(also.unacted(&table).is_empty());
+        assert!(also.needless(&table).is_empty());
+        assert_eq!(also.needless(&unset_excused), unset);
     }
 
     /// The setting exceptions table as it is: every row names a

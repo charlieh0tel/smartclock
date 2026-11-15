@@ -494,7 +494,7 @@ fn declared_head() -> Head {
 
 /// A scene fills what it declares and nothing else, and all the
 /// images use.  Of the settings the images set, it acts on those it
-/// declares and is excused the rest, each once.
+/// declares and is excused the rest, none for nothing.
 #[test]
 fn a_scene_fills_what_it_declares() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));

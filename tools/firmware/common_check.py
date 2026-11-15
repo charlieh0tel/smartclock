@@ -46,8 +46,8 @@ An image whose export leaves a common/ file out (the exporter's
 without=) is not asked about it: a header, having none of the device it
 serves; a file of common/'s code, lacking every function it defines,
 none of which its export names (rewrite.md, "Shared C", "A file for
-some images"), where a published image (PUBLISHED_IMAGES) leaves none
-out and two or more images share each.  And each export says which
+some images"), where an image that takes every file (EVERY_FILE_IMAGES)
+leaves none out and two or more images share each.  And each export says which
 file of common/ defines each function it names, in its sidecar's
 "rewritten" and its C's comment, as the exporter writes them.
 
@@ -109,10 +109,10 @@ image_diff = load('image_diff')
 TYPES = 'types'
 # The image the others' diffs are against, whose C common/ came from.
 BASE = 'z3805a-3543b'
-# The images whose exports are published (PLAN.md), which include every
-# file of common/, so that a published common/ holds none that no
-# published image includes.
-PUBLISHED_IMAGES = {'z3805a-3543b', '58503a-3704', 'z3801a-3543'}
+# The first three images to share common/ (PLAN.md), which include every
+# file of it, so that common/ holds none that none of the three
+# includes.
+EVERY_FILE_IMAGES = {'z3805a-3543b', '58503a-3704', 'z3801a-3543'}
 # The statuses rule 1 shares.
 SHARED = {'identical', 'relocated'}
 # A definition in hand-written C, as the exporter finds it
@@ -830,8 +830,8 @@ def flatten(signature):
 def subset(path, sharers, images, failures):
     """A file of common/'s C that some sharing images' exports leave out
     (rewrite.md, "Shared C", "A file for some images"): each that leaves
-    it out lacks every function it defines, having none of that name; a
-    published image takes it; and two or more images share it."""
+    it out lacks every function it defines, having none of that name; an
+    image that takes every file takes it; and two or more images share it."""
     relative = path.relative_to(ROOT)
     left_out = [image for image in images if image not in sharers]
     if not left_out:
@@ -841,8 +841,8 @@ def subset(path, sharers, images, failures):
     text = COMMENT.sub(' ', path.read_text())
     names = set(defined(text)) - set(STATIC.findall(text))
     for image in left_out:
-        if image in PUBLISHED_IMAGES:
-            failures.append(f'{relative}: {image}\'s export does not include it, and {image} is published')
+        if image in EVERY_FILE_IMAGES:
+            failures.append(f'{relative}: {image}\'s export does not include it, and {image} takes every file')
         functions = {json.loads(line)['name'] for line in open(DECOMPILED / image / f'{image}.conventions.jsonl')}
         for name in sorted(names & functions):
             failures.append(f'{relative}: {image}\'s export does not include it, and {image} has {name}')

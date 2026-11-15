@@ -1186,6 +1186,17 @@ fn tell(engine: &mut Engine, id: MessageId, data: &[u8]) -> Vec<Event> {
         .collect()
 }
 
+/// Each setting has its own bit and its own name, and
+/// [`Setting::ALL`] is in the order of the bits.
+#[test]
+fn settings_are_distinct() {
+    for (index, setting) in Setting::ALL.into_iter().enumerate() {
+        assert_eq!(setting as usize, index);
+        assert_eq!(Setting::of_name(setting.name()), Some(setting));
+        assert!(!SettingSet::of(&Setting::ALL[..index]).contains(setting));
+    }
+}
+
 fn changed(settings: &[Setting]) -> Event {
     Event::SettingsChanged(
         settings

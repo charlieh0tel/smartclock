@@ -271,6 +271,66 @@ pub enum Setting {
 }
 
 impl Setting {
+    /// Every setting, in the order of [`Settings`]' fields.
+    pub const ALL: [Self; 21] = [
+        Self::MaskAngle,
+        Self::PositionHold,
+        Self::HeldPosition,
+        Self::AltitudeHold,
+        Self::AltitudeHoldHeight,
+        Self::TimeBase,
+        Self::CableDelay,
+        Self::PulseOffset,
+        Self::PulseMode,
+        Self::Application,
+        Self::InitialPosition,
+        Self::SatelliteSelect,
+        Self::ManualSatellites,
+        Self::XdopHysteresis,
+        Self::AlmanacUpdate,
+        Self::AtmosphericCorrection,
+        Self::FixAlgorithm,
+        Self::EpochOffset,
+        Self::HdopThreshold,
+        Self::CorrectionThresholds,
+        Self::OutputFormat,
+    ];
+
+    /// The name of its field of [`Settings`], which is what the tables
+    /// under `docs/firmware` call it.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::MaskAngle => "mask_angle",
+            Self::PositionHold => "position_hold",
+            Self::HeldPosition => "held_position",
+            Self::AltitudeHold => "altitude_hold",
+            Self::AltitudeHoldHeight => "altitude_hold_height",
+            Self::TimeBase => "time_base",
+            Self::CableDelay => "cable_delay",
+            Self::PulseOffset => "pulse_offset",
+            Self::PulseMode => "pulse_mode",
+            Self::Application => "application",
+            Self::InitialPosition => "initial_position",
+            Self::SatelliteSelect => "satellite_select",
+            Self::ManualSatellites => "manual_satellites",
+            Self::XdopHysteresis => "xdop_hysteresis",
+            Self::AlmanacUpdate => "almanac_update",
+            Self::AtmosphericCorrection => "atmospheric_correction",
+            Self::FixAlgorithm => "fix_algorithm",
+            Self::EpochOffset => "epoch_offset",
+            Self::HdopThreshold => "hdop_threshold",
+            Self::CorrectionThresholds => "correction_thresholds",
+            Self::OutputFormat => "output_format",
+        }
+    }
+
+    /// The setting `name` names.
+    #[must_use]
+    pub fn of_name(name: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|setting| setting.name() == name)
+    }
+
     /// Its bit in a [`SettingSet`].
     const fn bit(self) -> u32 {
         1 << self as u32

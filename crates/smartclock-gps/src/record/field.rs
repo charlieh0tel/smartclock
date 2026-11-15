@@ -820,11 +820,13 @@ mod tests {
         assert!(also.needless(&table).is_empty());
         assert_eq!(also.needless(&unset_excused), unset);
 
-        // The kind of DOP is the engine's to act on: no filler is held
-        // to it, and one may act on it all the same.
+        // The kind of DOP and the ignore list are the engine's to act
+        // on: no filler is held to either, and one may act on them all
+        // the same.
         assert!(!IMAGE_SETS.contains(Setting::DopKind));
+        assert!(!IMAGE_SETS.contains(Setting::IgnoreList));
         let tabler = Filler {
-            acts: hold.with(Setting::DopKind),
+            acts: hold.with(Setting::DopKind).with(Setting::IgnoreList),
             ..filler
         };
         assert!(tabler.unacted(&table).is_empty());

@@ -8,12 +8,13 @@
 //! ([`Event`](crate::engine::event::Event)).  What a command changes in
 //! the bytes the engine builds, the engine does; what it would change
 //! in a receiver's tracking, fix or pulse, the engine can only hold
-//! here, for its holder to do.  One setting is here though the engine
-//! does all its command asks: the kind of DOP
+//! here, for its holder to do.  Two settings are here though the
+//! engine does all their commands ask: the kind of DOP
 //! ([`Settings::dop_kind`]), which whatever makes an xDOP table has to
-//! know.  A setting whose
-//! command an Oncore does not take, as a UT Plus takes no `@@AB`, stays
-//! as it is at power-up.
+//! know, and the satellites to ignore ([`Settings::ignore_list`]),
+//! which whatever chooses a record's satellites may leave out.  A
+//! setting whose command an Oncore does not take, as a UT Plus takes no
+//! `@@AB`, stays as it is at power-up.
 //!
 //! The pages cited are the VP Oncore's command reference,
 //! `third_party/motorola/VPCommands.pdf`, as printed.
@@ -30,6 +31,7 @@ use crate::units::Degrees;
 use crate::units::MilliArcSeconds;
 use crate::units::Milliseconds;
 use crate::units::Nanoseconds;
+use crate::units::PrnSet;
 use crate::units::Seconds;
 use crate::units::Tenths;
 
@@ -218,6 +220,15 @@ pub struct Settings {
     /// How much better another set of satellites' DOP must be before
     /// the engine changes to it (`@@Ak`, pp. 37 and 38).
     pub xdop_hysteresis: Tenths,
+    /// The satellites not to track (`@@Am`, pp. 41 and 42), none at
+    /// power-up.  The engine acts on this one itself, as it does on
+    /// [`Settings::dop_kind`]: it puts none of them on a channel and
+    /// marks each removed in `@@Bb` (p. 75), whatever the record has.
+    /// So it is not among
+    /// [`IMAGE_SETS`](crate::record::field::IMAGE_SETS) and no filler
+    /// is held to it.  It is here for a filler that chooses the
+    /// satellites a record is made from, to leave these out.
+    pub ignore_list: PrnSet,
     /// Whether a new almanac the satellites send replaces the one kept
     /// (`@@An`, pp. 43 and 44).
     pub almanac_update: bool,
@@ -273,6 +284,8 @@ pub enum Setting {
     DopKind,
     /// [`Settings::xdop_hysteresis`].
     XdopHysteresis,
+    /// [`Settings::ignore_list`].
+    IgnoreList,
     /// [`Settings::almanac_update`].
     AlmanacUpdate,
     /// [`Settings::atmospheric_correction`].
@@ -291,7 +304,7 @@ pub enum Setting {
 
 impl Setting {
     /// Every setting, in the order of [`Settings`]' fields.
-    pub const ALL: [Self; 22] = [
+    pub const ALL: [Self; 23] = [
         Self::MaskAngle,
         Self::PositionHold,
         Self::HeldPosition,
@@ -307,6 +320,7 @@ impl Setting {
         Self::ManualSatellites,
         Self::DopKind,
         Self::XdopHysteresis,
+        Self::IgnoreList,
         Self::AlmanacUpdate,
         Self::AtmosphericCorrection,
         Self::FixAlgorithm,
@@ -336,6 +350,7 @@ impl Setting {
             Self::ManualSatellites => "manual_satellites",
             Self::DopKind => "dop_kind",
             Self::XdopHysteresis => "xdop_hysteresis",
+            Self::IgnoreList => "ignore_list",
             Self::AlmanacUpdate => "almanac_update",
             Self::AtmosphericCorrection => "atmospheric_correction",
             Self::FixAlgorithm => "fix_algorithm",
@@ -472,6 +487,7 @@ impl Settings {
                 self.xdop_hysteresis != after.xdop_hysteresis,
                 Setting::XdopHysteresis,
             ),
+            (self.ignore_list != after.ignore_list, Setting::IgnoreList),
             (
                 self.almanac_update != after.almanac_update,
                 Setting::AlmanacUpdate,

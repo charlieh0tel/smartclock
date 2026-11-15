@@ -794,6 +794,28 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   had sent back to each image's own C
   (`docs/firmware/z3816a-4001.md`, "Joining `common/`"); its link
   check then passed and it joined `REPORTED_IMAGES`, the sixth.
+  The 58503B 1.01.04 was one from its first
+  export (2026-11-11), seeded from the Z3817A with the 58503A as its
+  second base, the Z3816A since its second wave (2026-11-12), its
+  hand-written C the Z3817A's copied, and since its
+  fifth wave (2026-11-12) what its link list (`make report-link
+  IMAGE=58503b-1.01.04`) listed that the `common/` join would not cover
+  and a base carries identical or relocated, copied from the first base
+  that writes it by hand, the Z3816A's first, and since its
+  seventh wave (2026-11-13) the rest of that list written by hand from
+  the image's own code, so that the list was the join's alone, and in
+  its eighth (2026-11-13) the four functions it names for itself that
+  the list did not give.  Its join (2026-11-13), on the Z3816A's,
+  split more functions out of `common/`, the DUART's among
+  them, dropped the image's copies of what `common/` defines, named
+  what `common/`'s C names, and gave the image its own copies of what
+  the Z3817A's join had sent back to each image's own C
+  (`docs/firmware/58503b-1.01.04.md`, "Joining `common/`"); its link
+  check then passed and it joined `REPORTED_IMAGES`, the seventh,
+  leaving `UNFINISHED_IMAGES` empty.  Having no DUART,
+  its export leaves `common/duart.h` out (`without=duart.h`), where a
+  name the header's routines need would otherwise be laid over its
+  ACIA.
 - **Per-image tool tables**: what the function check gives an image
   other than the Z3805A 3543B is kept in tables keyed by image or held
   by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`,

@@ -112,6 +112,8 @@ use crate::record::SatelliteFlags;
 use crate::record::Solver;
 use crate::record::Timing;
 use crate::record::Tracking;
+use crate::record::URA_MAX;
+use crate::record::Ura;
 use crate::record::Velocity;
 use crate::record::VelocityAxes;
 use crate::record::XdopCombination;
@@ -552,8 +554,9 @@ fn an_extension_tells_all_the_record_has_for_it() {
         up: DecimetersPerSecond(7),
     });
     record.differential_age = Some(Deciseconds(70_000));
-    record.satellites.get_mut(prn(3)).unwrap().ura = Some(2);
-    record.satellites.get_mut(prn(4)).unwrap().ura = Some(16);
+    record.satellites.get_mut(prn(3)).unwrap().ura = Ura::new(2);
+    assert_eq!(Ura::new(URA_MAX).map(Ura::get), Some(15));
+    assert_eq!(Ura::new(URA_MAX + 1), None);
     let mut solver = Solver::ZERO;
     solver.matrix = [1, -2, 3, 4, 5, 6, 7, 8, 9, 10];
     solver.clock_bias = Decimeters(-300);
@@ -573,7 +576,6 @@ fn an_extension_tells_all_the_record_has_for_it() {
         // An age past what the field holds is its most.
         assert_eq!(data[18..20], [0xff, 0xff]);
         assert_eq!(data[20..24], [0, 0, 0, 1]);
-        // A URA past 15 is none.
         let mut ura = [63; 8];
         ura[0] = 2;
         assert_eq!(data[32..32 + channels], ura[..channels]);
@@ -1739,6 +1741,35 @@ fn a_switched_format_ends_the_binary() {
         engine.second(&record, NOW, &mut sent);
         assert_eq!(sent.0.len(), 1);
     }
+}
+
+/// VP pp. 97, 98, 136 and 137: a magnetic variation is within 180
+/// degrees, and a velocity and a clock bias no less than -32767.
+#[test]
+fn an_extension_keeps_to_the_manuals_ranges() {
+    let mut record = full();
+    record.derived.magnetic_variation = Some(TenthDegreesEast(1801));
+    record.derived.velocity = Some(VelocityAxes {
+        north: DecimetersPerSecond(i16::MIN),
+        east: DecimetersPerSecond(i16::MAX),
+        up: DecimetersPerSecond(i16::MIN),
+    });
+    let mut solver = Solver::ZERO;
+    solver.clock_bias = Decimeters(i16::MIN);
+    record.derived.solver = Some(solver);
+    let mut engine = fixing(&VP_EIGHT);
+    let frames = ask(&mut engine, &record, EK_EXTENSION, &[0]);
+    let data = only(&frames, EK_EXTENSION);
+    assert_eq!(data[10..12], 1800_i16.to_be_bytes());
+    assert_eq!(data[12..18], [0x80, 0x01, 0x7f, 0xff, 0x80, 0x01]);
+    assert_eq!(data[60..62], [0x80, 0x01]);
+
+    record.derived.magnetic_variation = Some(TenthDegreesEast(-1801));
+    let frames = ask(&mut engine, &record, EK_EXTENSION, &[0]);
+    assert_eq!(
+        only(&frames, EK_EXTENSION)[10..12],
+        (-1800_i16).to_be_bytes()
+    );
 }
 
 /// The other application types (VP p. 12), each read back.

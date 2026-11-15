@@ -1132,8 +1132,8 @@ specification; in short:
   table says otherwise.  It does for the receiver status, whose rows
   all have the one store and the same readers: the survey averages by
   the 3D fix bit, the status screen tests that bit of its copy, and
-  the other seven, the position propagate bit the model leaves zero
-  among them, only the console's reports print.  It does too for a
+  the other seven, the position propagate bit among them, only the
+  console's reports print.  It does too for a
   store that takes bits from several fields, as the Z3817A's
   `gps.field_592` does.  A use more than one call from the reader is the reading's to
   follow.  The run covers the decoders alone, no other task.
@@ -1167,8 +1167,19 @@ specification; in short:
   and no other.  The vectors' scene and the u-blox crate declare
   theirs.  Neither fills the Time RAIM solution and RAIM status, which
   the engine then works out from the satellites tracked and its alarm
-  limit; neither is excused them, and their tests name the two until
+  limit, nor what a self-test would find, neither having hardware to
+  ask; neither is excused them, and their tests name the three until
   the owner rules.
+- **A self-test tells the record's faults.**  A record names the parts
+  a self-test would fail and the channels whose correlation would, and
+  the model sets the bits the message has for them: `@@Ca`'s (VP
+  p. 108), a VP's `@@Fa` (VP p. 143) or a UT Plus's (UT p. 6.43).  A
+  part the manual gives two tests, a VP's RAM and ROM, fails both; a
+  part an engine has no test of sets nothing.
+- **A satellite `@@Am` ignores is `@@Bb`'s removed** (VP p. 75), and
+  **a fix a record gives as propagated** sets the receiver status's
+  position propagate bit with a DOP of zero (VP pp. 70, 72 and 73; UT
+  p. 6.20).
 - **The Z3815A has no row.**  It speaks NMEA with Furuno's sentences,
   which the model does not.
 
@@ -1190,14 +1201,10 @@ list.  The last is the command fields.
 <!-- gps_fields.py gaps -->
 | Message | Field | Bytes | Use | By | The engine sends |
 |---|---|---|---|---|---|
-| `@@Bb` | health | 11-88, 12 x 1 | reported: all four | `status_snapshot` | zero: removed by @@Am bit |
-| `@@Ca` | self-test result | 4-5 | control: all four | `gps_diag_sequence`, `gps_selftest_run` | constant: every test passes |
-| `@@Fa` | self-test result | 4-5 | control: 58503a-3704, z3817a-3752 | `gps_diag_sequence`, `gps_selftest_run` | constant: every test passes |
 
 | Message | Field | Bytes | Console only | The engine sends |
 |---|---|---|---|---|
 | `@@Ba` | channel status flags | 43-63, 6 x 1 | console: all four | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
-| `@@Ba` | receiver status position propagate | 64, bit 7 | console: all four | zero |
 | `@@Bk` | magnetic variation | 14-15 | console: all four | zero |
 | `@@Bk` | velocity north | 16-17 | console: all four | zero |
 | `@@Bk` | velocity east | 18-19 | console: all four | zero |
@@ -1213,7 +1220,6 @@ list.  The last is the command fields.
 | `@@Bk` | oscillator offset | 64-65 | console: z3805a-3543b, z3801a-3543 | zero |
 | `@@Bn` | pulse rate | 9-11 | console: z3805a-3543b, z3801a-3543; stored: 58503a-3704, z3817a-3752 | constant: one pulse a second |
 | `@@Ea` | channel status flags | 43-71, 8 x 1 | console: 58503a-3704, z3817a-3752 | zero: momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits |
-| `@@Ea` | receiver status position propagate | 72, bit 7 | console: 58503a-3704, z3817a-3752 | zero |
 | `@@Ek` | magnetic variation | 14-15 | console: 58503a-3704, z3817a-3752 | zero |
 | `@@Ek` | velocity north | 16-17 | console: 58503a-3704, z3817a-3752 | zero |
 | `@@Ek` | velocity east | 18-19 | console: 58503a-3704, z3817a-3752 | zero |

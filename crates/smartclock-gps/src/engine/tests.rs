@@ -37,6 +37,7 @@ use crate::oncore::AF_HEIGHT;
 use crate::oncore::AG_MASK_ANGLE;
 use crate::oncore::AH_SATELLITE_SELECT;
 use crate::oncore::AJ_XDOP_TYPE;
+use crate::oncore::AM_IGNORE_LIST;
 use crate::oncore::AS_HOLD_POSITION;
 use crate::oncore::AT_POSITION_HOLD;
 use crate::oncore::AU_ALTITUDE_HOLD_HEIGHT;
@@ -77,8 +78,11 @@ use crate::record::Corrections;
 use crate::record::DopKind;
 use crate::record::Dops;
 use crate::record::Ecef;
+use crate::record::Fault;
+use crate::record::FaultSet;
 use crate::record::Fix;
 use crate::record::GpsTime;
+use crate::record::Health;
 use crate::record::Position;
 use crate::record::Raim;
 use crate::record::RaimAbility;
@@ -321,6 +325,8 @@ fn a_fix_is_no_better_than_the_records() {
     assert_eq!(status(Fix::TwoD, 5), (12, 1, 0x10));
     assert_eq!(status(Fix::ThreeD, 3), (12, 1, 0x10));
     assert_eq!(status(Fix::None, 5), (0, 0, 0x08));
+    // VP pp. 70 and 72: propagated, the DOP is zero.
+    assert_eq!(status(Fix::Propagated, 5), (0, 0, 0x80));
     assert_eq!(status(Fix::ThreeD, 2), (0, 0, 0x08 | 0x02));
 }
 
@@ -354,6 +360,43 @@ fn a_ut_plus_tells_what_its_antenna_draws() {
         assert_eq!(only(&sent.0, FA_SELF_TEST), result.to_be_bytes());
         assert_eq!(engine.deadline(), None);
     }
+}
+
+/// VP pp. 108 and 143; UT p. 6.43.
+#[test]
+fn a_self_test_tells_the_records_faults_in_its_own_bits() {
+    let mut record = full();
+    record.self_test.hardware = FaultSet::EMPTY
+        .with(Fault::RealTimeClock)
+        .with(Fault::TemperatureSensor)
+        .with(Fault::Eeprom)
+        .with(Fault::Ram);
+    record.self_test.channels = 0x0181;
+    for (identity, id, result) in [
+        (&VP_SIX, CA_SELF_TEST, 0x2d01_u16),
+        (&VP_EIGHT, FA_SELF_TEST, 0xb881),
+        (&UT_PLUS_2_2, FA_SELF_TEST, 0x3481),
+    ] {
+        let mut engine = fixing(identity);
+        assert!(ask(&mut engine, &record, id, &[]).is_empty());
+        let mut sent = Sent::default();
+        engine.poll(Milliseconds(2000), &mut sent);
+        assert_eq!(only(&sent.0, id), result.to_be_bytes());
+    }
+}
+
+/// VP pp. 41 and 75.
+#[test]
+fn a_satellite_on_the_ignore_list_is_listed_as_removed() {
+    let mut engine = fixing(&VP_EIGHT);
+    let mut record = full();
+    record.satellites.get_mut(prn(4)).unwrap().health = Health::Unhealthy;
+    // Satellites 3 and 4.
+    ask(&mut engine, &record, AM_IGNORE_LIST, &[0, 0, 0, 0, 0x0c]);
+    let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[0]);
+    let data = only(&frames, BB_VISIBLE_SATELLITES);
+    let health: Vec<u8> = (0..5).map(|slot| data[1 + slot * 7 + 6]).collect();
+    assert_eq!(health, [1, 3, 0, 0, 0]);
 }
 
 #[test]

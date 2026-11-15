@@ -1133,8 +1133,13 @@ fn whole_epoch() -> Vec<u8> {
 }
 
 /// What the images use that [`FILLER`] does not fill, and no exception
-/// excuses: a u-blox receiver reports no Time RAIM result.
-const UNFILLED: FieldSet = FieldSet::of(&[RecordField::RaimSolution, RecordField::RaimAbility]);
+/// excuses: no message here tells what a self-test would find, and a
+/// u-blox receiver reports no Time RAIM result.
+const UNFILLED: FieldSet = FieldSet::of(&[
+    RecordField::SelfTest,
+    RecordField::RaimSolution,
+    RecordField::RaimAbility,
+]);
 /// The exceptions table, from the crate's directory.
 const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
 

@@ -78,6 +78,9 @@
 //!   multiple of sigma `tAcc` is.  [`Record::almanac`], and a
 //!   satellite's Doppler and time error: no message here carries them.
 //!   The Time RAIM result: a u-blox receiver has none to report.
+//!   [`Record::self_test`]: no message here tells what a self-test
+//!   would find.  [`Fix::Propagated`] is never given: a fix by dead
+//!   reckoning alone is no fix here.
 //!
 //! [`FILLER`] says which parts of a record that comes to, and the
 //! crate's tests hold it to what [`Assembler`] writes.

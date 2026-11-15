@@ -138,10 +138,14 @@ const SCENE: Filler = Filler {
     acts: SettingSet::EMPTY,
 };
 /// What the images use that a scene does not fill, and no exception
-/// excuses: the Time RAIM result, which the engine then works out from
-/// the satellites tracked and its alarm limit.
-const SCENE_UNFILLED: FieldSet =
-    FieldSet::of(&[RecordField::RaimSolution, RecordField::RaimAbility]);
+/// excuses: what a self-test would find, a scene having no hardware to
+/// fail, and the Time RAIM result, which the engine then works out
+/// from the satellites tracked and its alarm limit.
+const SCENE_UNFILLED: FieldSet = FieldSet::of(&[
+    RecordField::SelfTest,
+    RecordField::RaimSolution,
+    RecordField::RaimAbility,
+]);
 /// The exceptions table, from the crate's directory.
 const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
 /// The vector whose scene is held to [`SCENE`]: one with a leap second

@@ -100,6 +100,8 @@ pub enum RecordField {
     Almanac,
     /// [`Record::antenna`].
     Antenna,
+    /// [`Record::self_test`].
+    SelfTest,
     /// The position in Earth-centered coordinates.
     Ecef,
     /// The DOPs of combinations of satellites.
@@ -116,7 +118,7 @@ pub enum RecordField {
 
 impl RecordField {
     /// Every field, in the order of their bits in a [`FieldSet`].
-    pub const ALL: [Self; 37] = [
+    pub const ALL: [Self; 38] = [
         Self::Time,
         Self::Subsecond,
         Self::UtcOffset,
@@ -148,6 +150,7 @@ impl RecordField {
         Self::SatelliteTimeError,
         Self::Almanac,
         Self::Antenna,
+        Self::SelfTest,
         Self::Ecef,
         Self::Xdops,
         Self::Corrections,
@@ -193,6 +196,7 @@ impl RecordField {
             Self::SatelliteTimeError => "satellites.time_error",
             Self::Almanac => "almanac",
             Self::Antenna => "antenna",
+            Self::SelfTest => "self_test",
             Self::Ecef => "derived.ecef",
             Self::Xdops => "derived.xdops",
             Self::Corrections => "derived.corrections",
@@ -303,6 +307,7 @@ impl RecordField {
             }
             Self::Almanac => one.almanac != other.almanac,
             Self::Antenna => one.antenna != other.antenna,
+            Self::SelfTest => one.self_test != other.self_test,
             Self::Ecef => one.derived.ecef != other.derived.ecef,
             Self::Xdops => one.derived.xdops != other.derived.xdops,
             Self::Corrections => one.derived.corrections != other.derived.corrections,
@@ -441,6 +446,7 @@ pub const IMAGE_USES: FieldSet = FieldSet::of(&[
     RecordField::SatelliteTracking,
     RecordField::SatelliteHealth,
     RecordField::Antenna,
+    RecordField::SelfTest,
     RecordField::RaimSolution,
     RecordField::RaimAbility,
 ]);

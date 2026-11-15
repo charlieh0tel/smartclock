@@ -75,6 +75,81 @@ pub enum Fix {
     ThreeD,
     /// Time alone, the position held (VP p. 73, bit 3, position hold).
     TimeOnly,
+    /// None computed: the position is the last one, carried on by the
+    /// last velocity, as an Oncore does for up to five seconds when it
+    /// can no longer compute a 2D fix (VP pp. 70 and 73, receiver
+    /// status bit 7; UT p. 6.20).
+    Propagated,
+}
+
+/// One thing an engine's self-test tries (`@@Ca`, VP pp. 107-108;
+/// `@@Fa`, VP pp. 142-143 and UT pp. 6.42-6.43).  Each engine has a bit
+/// for those it tries.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum Fault {
+    /// The real-time clock: talking to it, and its time.
+    RealTimeClock,
+    /// Talking to the oscillator (a VP's DCXO).
+    OscillatorLink,
+    /// The temperature sensor (a UT Plus's).
+    TemperatureSensor,
+    /// The EEPROM.
+    Eeprom,
+    /// The RAM.
+    Ram,
+    /// The ROM.
+    Rom,
+    /// The 1 kHz timebase is there.
+    Timebase,
+}
+
+/// A set of [`Fault`]s.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct FaultSet(u8);
+
+impl FaultSet {
+    /// No fault.
+    pub const EMPTY: Self = Self(0);
+
+    /// The set with `fault` in it.
+    #[must_use]
+    pub const fn with(self, fault: Fault) -> Self {
+        Self(self.0 | 1 << fault as u8)
+    }
+
+    /// Whether `fault` is in it.
+    #[must_use]
+    pub const fn contains(self, fault: Fault) -> bool {
+        self.0 & 1 << fault as u8 != 0
+    }
+
+    /// Whether it holds none.
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+}
+
+/// What a self-test run now would find wrong (VP pp. 107-108 and
+/// 142-143; UT pp. 6.42-6.43).  The antenna's feed, which a UT Plus's
+/// self-test also tells, is [`Record::antenna`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct SelfTest {
+    /// The parts that fail.
+    pub hardware: FaultSet,
+    /// The channels whose correlation test fails, bit 0 channel 1.  An
+    /// engine tells those of the channels it has.
+    pub channels: u16,
+}
+
+impl SelfTest {
+    /// Every test passes.
+    pub const PASS: Self = Self {
+        hardware: FaultSet::EMPTY,
+        channels: 0,
+    };
 }
 
 /// Where the antenna is (VP p. 71).
@@ -692,6 +767,9 @@ pub struct Record {
     pub almanac: Option<Almanac>,
     /// The antenna's feed.
     pub antenna: Antenna,
+    /// What a self-test would find.  [`SelfTest::PASS`] from a filler
+    /// that knows of no fault.
+    pub self_test: SelfTest,
     /// What whoever filled the record worked out from the rest.
     pub derived: Derived,
 }
@@ -711,6 +789,7 @@ impl Record {
         satellites: Satellites::EMPTY,
         almanac: None,
         antenna: Antenna::Unknown,
+        self_test: SelfTest::PASS,
         derived: Derived::EMPTY,
     };
 }

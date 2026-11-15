@@ -1063,7 +1063,10 @@ stands in for one.
   which speaks neither NMEA nor Loran and goes on in binary; an
   earlier revision had it fall silent, which took a call of its
   holder's to undo and gave nothing a holder could not do with the
-  event.  `Engine::receive` returns what its commands did: a reset,
+  event.  `@@Aa` and `@@Ac` set the model's clock only while the
+  record tells no time, as an Oncore tracking a satellite ignores
+  them (VP pp. 5 and 13); a command never overrides a record's time.
+  `Engine::receive` returns what its commands did: a reset,
   which is `@@Cf` (VP pp. 116 and 117), and the settings that
   changed, a command that gives a setting the value it has changing
   none.  They are returned, not called back, so the model holds no

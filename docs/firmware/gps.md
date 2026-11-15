@@ -1217,8 +1217,10 @@ specification; in short:
   `@@Ac` set its clock, the time or the date alone, unless the record
   tells the time: an Oncore tracking a satellite ignores them (VP
   pp. 5 and 13), and a record that tells the time is the model's
-  satellite.  A value out of the manual's range sets nothing (VP
-  pp. 6 and 14).  The position `@@Ad`, `@@Ae` and `@@Af` give to
+  satellite.  So a record's time always stands, and the commands
+  count only from power-up to the first record with a time, and
+  through a record that loses it.  A value out of the manual's range
+  sets nothing (VP pp. 6 and 14).  The position `@@Ad`, `@@Ae` and `@@Af` give to
   start from is the one reported while the record has none (VP
   pp. 17, 21 and 25).  `@@Bc` and `@@Bd` in mode 1 are sent again in
   each second their data differs from what was last sent (VP pp. 77

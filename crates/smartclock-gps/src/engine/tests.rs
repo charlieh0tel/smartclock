@@ -19,10 +19,16 @@ use crate::engine::identity::VP_EIGHT;
 use crate::engine::identity::VP_EIGHT_WITHOUT_TIME_RAIM;
 use crate::engine::identity::VP_SIX;
 use crate::engine::settings::Application;
+use crate::engine::settings::AtmosphericCorrection;
+use crate::engine::settings::CHANNELS_MOST;
+use crate::engine::settings::CorrectionThresholds;
+use crate::engine::settings::FixAlgorithm;
 use crate::engine::settings::Height;
 use crate::engine::settings::HeightKind;
 use crate::engine::settings::Location;
+use crate::engine::settings::OutputFormat;
 use crate::engine::settings::PulseMode;
+use crate::engine::settings::SatelliteSelect;
 use crate::engine::settings::Setting;
 use crate::engine::settings::SettingSet;
 use crate::engine::settings::Settings;
@@ -31,23 +37,32 @@ use crate::oncore::AA_TIME_OF_DAY;
 use crate::oncore::AB_APPLICATION_TYPE;
 use crate::oncore::AB_GMT_CORRECTION;
 use crate::oncore::AC_DATE;
+use crate::oncore::AC_HDOP_THRESHOLD;
+use crate::oncore::AD_CORRECTION_THRESHOLDS;
 use crate::oncore::AD_LATITUDE;
 use crate::oncore::AE_LONGITUDE;
 use crate::oncore::AF_HEIGHT;
 use crate::oncore::AG_MASK_ANGLE;
 use crate::oncore::AH_SATELLITE_SELECT;
+use crate::oncore::AI_MANUAL_SATELLITE;
 use crate::oncore::AJ_XDOP_TYPE;
+use crate::oncore::AK_XDOP_HYSTERESIS;
 use crate::oncore::AM_IGNORE_LIST;
+use crate::oncore::AN_ALMANAC_UPDATE;
+use crate::oncore::AQ_ATMOSPHERIC_CORRECTION;
+use crate::oncore::AR_FIX_ALGORITHM;
 use crate::oncore::AS_HOLD_POSITION;
 use crate::oncore::AT_POSITION_HOLD;
 use crate::oncore::AU_ALTITUDE_HOLD_HEIGHT;
 use crate::oncore::AV_ALTITUDE_HOLD;
 use crate::oncore::AW_TIME_MODE;
+use crate::oncore::AX_EPOCH_OFFSET;
 use crate::oncore::AY_PULSE_OFFSET;
 use crate::oncore::AZ_CABLE_DELAY;
 use crate::oncore::BA_POSITION_STATUS;
 use crate::oncore::BB_VISIBLE_SATELLITES;
 use crate::oncore::BC_XDOP_TABLE;
+use crate::oncore::BD_ALMANAC_STATUS;
 use crate::oncore::BH_CORRECTION_OUTPUT;
 use crate::oncore::BJ_LEAP_SECOND_PENDING;
 use crate::oncore::BK_EXTENSION;
@@ -57,6 +72,8 @@ use crate::oncore::CA_SELF_TEST;
 use crate::oncore::CE_PSEUDORANGE_CORRECTION;
 use crate::oncore::CF_SET_TO_DEFAULTS;
 use crate::oncore::CG_FIX_MODE;
+use crate::oncore::CI_IO_FORMAT;
+use crate::oncore::CJ_RECEIVER_ID;
 use crate::oncore::Deframer;
 use crate::oncore::EA_POSITION_STATUS;
 use crate::oncore::EK_EXTENSION;
@@ -1190,7 +1207,8 @@ fn height_data(height: Height) -> Vec<u8> {
 }
 
 /// What an Oncore is set to at power-up: each command's default (VP
-/// pp. 11, 17, 21, 25, 27, 54, 56, 58, 60, 62, 66, 68 and 102).
+/// pp. 11, 15, 17, 19, 21, 25, 27, 29, 37, 43, 50, 52, 54, 56, 58, 60,
+/// 62, 64, 66, 68 and 102).
 fn defaults() -> Settings {
     Settings {
         mask_angle: Degrees(10),
@@ -1204,6 +1222,22 @@ fn defaults() -> Settings {
         pulse_mode: PulseMode::Always,
         application: Application::Land,
         initial_position: Location::default(),
+        satellite_select: SatelliteSelect::BestGeometry,
+        manual_satellites: [0; CHANNELS_MOST],
+        xdop_hysteresis: Tenths(10),
+        almanac_update: true,
+        atmospheric_correction: AtmosphericCorrection {
+            ionospheric: true,
+            tropospheric: false,
+        },
+        fix_algorithm: FixAlgorithm::AllInView,
+        epoch_offset: Milliseconds(0),
+        hdop_threshold: Tenths(120),
+        correction_thresholds: CorrectionThresholds {
+            fix: Seconds(0),
+            output: Seconds(32),
+        },
+        output_format: OutputFormat::Binary,
     }
 }
 
@@ -1240,7 +1274,106 @@ fn each_setting_reads_back_after_its_command() {
         kind: HeightKind::Ellipsoid,
     };
     let traim = |pps_mode: u8| [&[0, 1, 0, 10, pps_mode][..], &[0; 10]].concat();
-    let cases: [Case; 16] = [
+    let cases: [Case; 25] = [
+        (
+            AH_SATELLITE_SELECT,
+            vec![1],
+            vec![0xff],
+            Setting::SatelliteSelect,
+            {
+                let mut after = defaults();
+                after.satellite_select = SatelliteSelect::Manual;
+                after
+            },
+        ),
+        (
+            AH_SATELLITE_SELECT,
+            vec![2],
+            vec![0xff],
+            Setting::SatelliteSelect,
+            {
+                let mut after = defaults();
+                after.satellite_select = SatelliteSelect::HighestInSky;
+                after
+            },
+        ),
+        (
+            AI_MANUAL_SATELLITE,
+            vec![8, 37],
+            vec![8, 0xff],
+            Setting::ManualSatellites,
+            {
+                let mut after = defaults();
+                after.manual_satellites[7] = 37;
+                after
+            },
+        ),
+        (
+            AK_XDOP_HYSTERESIS,
+            vec![0x03, 0xe7],
+            vec![0xff; 2],
+            Setting::XdopHysteresis,
+            {
+                let mut after = defaults();
+                after.xdop_hysteresis = Tenths(999);
+                after
+            },
+        ),
+        (
+            AN_ALMANAC_UPDATE,
+            vec![0],
+            vec![0xff],
+            Setting::AlmanacUpdate,
+            {
+                let mut after = defaults();
+                after.almanac_update = false;
+                after
+            },
+        ),
+        (
+            AQ_ATMOSPHERIC_CORRECTION,
+            vec![0],
+            vec![0xff],
+            Setting::AtmosphericCorrection,
+            {
+                let mut after = defaults();
+                after.atmospheric_correction.ionospheric = false;
+                after
+            },
+        ),
+        (
+            AR_FIX_ALGORITHM,
+            vec![0],
+            vec![0xff],
+            Setting::FixAlgorithm,
+            {
+                let mut after = defaults();
+                after.fix_algorithm = FixAlgorithm::BestFour;
+                after
+            },
+        ),
+        (
+            AX_EPOCH_OFFSET,
+            vec![0x01, 0xf4],
+            vec![0xff; 2],
+            Setting::EpochOffset,
+            {
+                let mut after = defaults();
+                after.epoch_offset = Milliseconds(500);
+                after
+            },
+        ),
+        (
+            AC_HDOP_THRESHOLD,
+            vec![0, 55],
+            vec![0xff; 2],
+            Setting::HdopThreshold,
+            {
+                let mut after = defaults();
+                after.hdop_threshold = Tenths(55);
+                after
+            },
+        ),
         (AG_MASK_ANGLE, vec![25], vec![0xff], Setting::MaskAngle, {
             let mut after = defaults();
             after.mask_angle = Degrees(25);
@@ -1419,6 +1552,192 @@ fn each_setting_reads_back_after_its_command() {
         assert_eq!(tell(&mut engine, id, &data), [], "{id:?} again");
         assert_eq!(tell(&mut engine, id, &asked), [], "{id:?} asked after");
         assert_eq!(engine.settings(), after, "{id:?} asked after");
+    }
+}
+
+/// `@@AD` (VP p. 20) and a UT Plus's `@@Aq` (UT p. 6.28), each read
+/// back.
+#[test]
+fn thresholds_and_a_ut_plus_correction_read_back() {
+    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    assert_eq!(
+        tell(&mut engine, AD_CORRECTION_THRESHOLDS, &[16, 8]),
+        [changed(&[Setting::CorrectionThresholds])]
+    );
+    assert_eq!(
+        engine.settings().correction_thresholds,
+        CorrectionThresholds {
+            fix: Seconds(16),
+            output: Seconds(8),
+        }
+    );
+    // A VP has no mode past 1 (VP p. 51).
+    assert_eq!(tell(&mut engine, AQ_ATMOSPHERIC_CORRECTION, &[2]), []);
+
+    let mut engine = Engine::new(&UT_PLUS_3_1, Options::DEFAULT);
+    for (mode, ionospheric, tropospheric) in [(3, true, true), (2, false, true), (0, false, false)]
+    {
+        assert_eq!(
+            tell(&mut engine, AQ_ATMOSPHERIC_CORRECTION, &[mode]),
+            [changed(&[Setting::AtmosphericCorrection])]
+        );
+        assert_eq!(
+            engine.settings().atmospheric_correction,
+            AtmosphericCorrection {
+                ionospheric,
+                tropospheric,
+            }
+        );
+    }
+}
+
+/// VP pp. 5, 6, 13 and 14: `@@Aa` and `@@Ac` set the clock of an engine
+/// whose record tells no time, which then runs on from there; one
+/// whose record tells it ignores them, as it does a value out of range.
+#[test]
+fn the_time_and_date_set_the_clock_the_record_does_not() {
+    let mut engine = fixing(&VP_EIGHT);
+    let record = Record::EMPTY;
+    // Not kept powered, it starts at 12:00:00 (VP p. 5).
+    let frames = ask(&mut engine, &record, AA_TIME_OF_DAY, &[0xff; 3]);
+    assert_eq!(only(&frames, AA_TIME_OF_DAY), [12, 0, 0]);
+    let frames = ask(&mut engine, &record, AC_DATE, &[5, 17, 0x07, 0xd1]);
+    assert_eq!(only(&frames, AC_DATE), [5, 17, 0x07, 0xd1]);
+    let frames = ask(&mut engine, &record, AA_TIME_OF_DAY, &[23, 59, 58]);
+    assert_eq!(only(&frames, AA_TIME_OF_DAY), [23, 59, 58]);
+    let mut sent = Sent::default();
+    engine.second(&record, NOW, &mut sent);
+    engine.second(&record, NOW, &mut sent);
+    engine.second(&record, NOW, &mut sent);
+    let frames = ask(&mut engine, &record, AC_DATE, &[0xff; 4]);
+    assert_eq!(only(&frames, AC_DATE), [5, 18, 0x07, 0xd1]);
+    let frames = ask(&mut engine, &record, AA_TIME_OF_DAY, &[0xff; 3]);
+    assert_eq!(only(&frames, AA_TIME_OF_DAY), [0, 0, 0]);
+
+    // Out of range: the 31st of February, the year 1979, 60 seconds.
+    for (id, data) in [
+        (AC_DATE, &[2, 31, 0x07, 0xd1][..]),
+        (AC_DATE, &[5, 17, 0x07, 0xbb]),
+        (AC_DATE, &[5, 17, 0x08, 0x1e]),
+    ] {
+        let frames = ask(&mut engine, &record, id, data);
+        assert_eq!(only(&frames, id), [5, 18, 0x07, 0xd1]);
+    }
+    for data in [[24, 0, 0], [0, 60, 0], [23, 59, 60]] {
+        let frames = ask(&mut engine, &record, AA_TIME_OF_DAY, &data);
+        assert_eq!(only(&frames, AA_TIME_OF_DAY), [0, 0, 0]);
+    }
+
+    let record = full();
+    let mut engine = fixing(&VP_EIGHT);
+    let before = ask(&mut engine, &record, AA_TIME_OF_DAY, &[0xff; 3]);
+    assert_eq!(
+        ask(&mut engine, &record, AA_TIME_OF_DAY, &[1, 2, 3]),
+        before
+    );
+    let before = ask(&mut engine, &record, AC_DATE, &[0xff; 4]);
+    assert_eq!(
+        ask(&mut engine, &record, AC_DATE, &[5, 17, 0x07, 0xd1]),
+        before
+    );
+}
+
+/// VP pp. 17, 21 and 25: the position given to start from is the one
+/// reported until the record has one.
+#[test]
+fn the_initial_position_is_reported_until_there_is_a_fix() {
+    let mut engine = fixing(&VP_EIGHT);
+    let mut record = full();
+    record.position = None;
+    ask(
+        &mut engine,
+        &record,
+        AD_LATITUDE,
+        &MADE_UP.latitude.0.to_be_bytes(),
+    );
+    ask(
+        &mut engine,
+        &record,
+        AE_LONGITUDE,
+        &MADE_UP.longitude.0.to_be_bytes(),
+    );
+    ask(
+        &mut engine,
+        &record,
+        AF_HEIGHT,
+        &height_data(MADE_UP.height),
+    );
+    let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+    let data = only(&frames, EA_POSITION_STATUS);
+    assert_eq!(data[11..15], MADE_UP.latitude.0.to_be_bytes());
+    assert_eq!(data[15..19], MADE_UP.longitude.0.to_be_bytes());
+    assert_eq!(data[19..23], MADE_UP.height.height.0.to_be_bytes());
+    assert_eq!(data[23..27], MADE_UP.height.height.0.to_be_bytes());
+    let frames = ask(&mut engine, &record, AD_LATITUDE, &[0x99; 4]);
+    assert_eq!(only(&frames, AD_LATITUDE), MADE_UP.latitude.0.to_be_bytes());
+
+    let record = full();
+    let frames = ask(&mut engine, &record, AD_LATITUDE, &[0x99; 4]);
+    assert_eq!(
+        only(&frames, AD_LATITUDE),
+        record.position.unwrap().latitude.0.to_be_bytes()
+    );
+}
+
+/// VP pp. 77 and 79: in mode 1 the xDOP table and the almanac status
+/// are sent again when they change, and only then; mode 0 ends it.
+#[test]
+fn a_table_asked_for_at_each_change_is_sent_when_it_changes() {
+    /// A message and a change to a record that changes it.
+    type Case = (MessageId, fn(&mut Record));
+    let cases: [Case; 2] = [
+        (BC_XDOP_TABLE, |record| {
+            let mut table = XdopTable::new(DopKind::Position);
+            assert!(table.push(XdopCombination::EMPTY));
+            record.derived.xdops = Some(table);
+        }),
+        (BD_ALMANAC_STATUS, |record| record.almanac = None),
+    ];
+    for (id, change) in cases {
+        let mut engine = fixing(&VP_EIGHT);
+        let mut record = full();
+        assert_eq!(ask(&mut engine, &record, id, &[1]).len(), 1);
+        let mut sent = Sent::default();
+        engine.second(&record, NOW, &mut sent);
+        assert_eq!(sent.0, Vec::<Vec<u8>>::new());
+        change(&mut record);
+        engine.second(&record, NOW, &mut sent);
+        engine.second(&record, NOW, &mut sent);
+        assert_eq!(sent.0, ask(&mut engine, &record, id, &[0]));
+        let mut sent = Sent::default();
+        engine.second(&full(), NOW, &mut sent);
+        assert_eq!(sent.0, Vec::<Vec<u8>>::new());
+    }
+}
+
+/// VP pp. 120 and 121: `@@Ci` is not answered; its formats 1 and 2 end
+/// the binary, in and out, and no other value does.
+#[test]
+fn a_switched_format_ends_the_binary() {
+    let record = full();
+    for (format, switched) in [(1, OutputFormat::Nmea), (2, OutputFormat::Loran)] {
+        let mut engine = fixing(&VP_EIGHT);
+        ask(&mut engine, &record, EA_POSITION_STATUS, &[1]);
+        assert_eq!(tell(&mut engine, CI_IO_FORMAT, &[0]), []);
+        assert_eq!(
+            tell(&mut engine, CI_IO_FORMAT, &[format]),
+            [changed(&[Setting::OutputFormat])]
+        );
+        assert_eq!(engine.settings().output_format, switched);
+        let mut sent = Sent::default();
+        engine.second(&record, NOW, &mut sent);
+        engine.receive(&command(CJ_RECEIVER_ID, &[]), &record, NOW, &mut sent);
+        assert_eq!(sent.0, Vec::<Vec<u8>>::new());
+
+        engine.return_to_binary();
+        assert_eq!(engine.settings().output_format, OutputFormat::Binary);
+        engine.second(&record, NOW, &mut sent);
+        assert_eq!(sent.0.len(), 1);
     }
 }
 

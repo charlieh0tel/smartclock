@@ -39,6 +39,7 @@ use smartclock_gps::record::Satellite;
 use smartclock_gps::record::Timing;
 use smartclock_gps::record::field::FieldSet;
 use smartclock_gps::record::field::Filler;
+use smartclock_gps::record::field::IMAGE_SETS;
 use smartclock_gps::record::field::RecordField;
 use smartclock_gps::record::field::changed;
 use smartclock_gps::time::DateTime;
@@ -438,12 +439,14 @@ fn vectors() -> Vec<PathBuf> {
 }
 
 /// A scene fills what it declares and nothing else, and of what the
-/// images use leaves only [`SCENE_UNFILLED`].
+/// images use leaves only [`SCENE_UNFILLED`].  It acts on no setting:
+/// a scene is written, not steered.
 #[test]
 fn a_scene_fills_what_it_declares() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let exceptions = fs::read_to_string(root.join(EXCEPTIONS)).expect("the exceptions table");
     assert_eq!(SCENE.shortfall(&exceptions), SCENE_UNFILLED);
+    assert_eq!(SCENE.unacted(), IMAGE_SETS);
 
     let text =
         fs::read_to_string(root.join("tests/vectors/engine").join(DECLARED_BY)).expect("a vector");

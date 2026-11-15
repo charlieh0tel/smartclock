@@ -20,7 +20,16 @@
 //! makes it from the field table, `docs/firmware/gps-fields.tsv`, whose
 //! rows name these fields by [`RecordField::path`], and
 //! `make check-gps-fields` fails when the two differ.
+//!
+//! A filler declares as well the engine's settings it acts on
+//! ([`Filler::acts`]): a command whose effect is not on the bytes the
+//! engine builds leaves its value in the engine's
+//! [`Settings`](crate::engine::settings::Settings) for the engine's
+//! holder to apply.  [`IMAGE_SETS`], made the same way, is those the
+//! images set, and [`Filler::unacted`] those of them a filler leaves
+//! alone.
 
+use crate::engine::settings::Setting;
 use crate::engine::settings::SettingSet;
 use crate::record::Record;
 use crate::record::Satellite;
@@ -482,6 +491,30 @@ pub const IMAGE_USES: FieldSet = FieldSet::of(&[
     RecordField::RaimSolution,
     RecordField::RaimAbility,
 ]);
+
+/// The settings a receiver's image sets that are a holder's to act
+/// on: those a command row of the field table holds and some image
+/// sets.
+pub const IMAGE_SETS: SettingSet = SettingSet::of(&[
+    Setting::PositionHold,
+    Setting::HeldPosition,
+    Setting::AltitudeHold,
+    Setting::TimeBase,
+    Setting::PulseOffset,
+    Setting::PulseMode,
+    Setting::Application,
+    Setting::InitialPosition,
+    Setting::SatelliteSelect,
+    Setting::ManualSatellites,
+    Setting::XdopHysteresis,
+    Setting::AlmanacUpdate,
+    Setting::AtmosphericCorrection,
+    Setting::FixAlgorithm,
+    Setting::EpochOffset,
+    Setting::HdopThreshold,
+    Setting::CorrectionThresholds,
+    Setting::OutputFormat,
+]);
 // end gps_fields.py
 
 /// The first line of the exceptions table that is not a comment: its
@@ -541,6 +574,14 @@ impl Filler {
     #[must_use]
     pub const fn unshown(&self, shown: FieldSet) -> FieldSet {
         self.fills.without(shown)
+    }
+
+    /// The settings the images set that it does not act on.  A
+    /// filler's test says what this is, so that it changes only when
+    /// someone means it to.
+    #[must_use]
+    pub const fn unacted(&self) -> SettingSet {
+        IMAGE_SETS.without(self.acts)
     }
 }
 

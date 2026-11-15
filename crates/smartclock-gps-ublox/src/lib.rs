@@ -1263,11 +1263,10 @@ struct Announced {
     before: Seconds<i8>,
 }
 
-/// Makes a [`Record`] of each navigation epoch in a stream of UBX bytes
-/// ("From messages to a record" in the crate's documentation).  `N`
-/// is the longest payload it takes, as a [`Deframer`]'s is:
 /// What an [`Assembler`] fills of a record.  It acts on none of an
-/// engine's settings: it reads a receiver and sets nothing in it.
+/// engine's settings, those the images set
+/// ([`IMAGE_SETS`](smartclock_gps::record::field::IMAGE_SETS))
+/// among them: it reads a receiver and sets nothing in it.
 pub const FILLER: Filler = Filler {
     name: "u-blox",
     fills: FieldSet::of(&[
@@ -1300,6 +1299,9 @@ pub const FILLER: Filler = Filler {
     acts: SettingSet::EMPTY,
 };
 
+/// Makes a [`Record`] of each navigation epoch in a stream of UBX bytes
+/// ("From messages to a record" in the crate's documentation).  `N`
+/// is the longest payload it takes, as a [`Deframer`]'s is:
 /// [`nav_sat_length`] of the satellites the receiver may report.
 ///
 /// ```

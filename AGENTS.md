@@ -166,6 +166,12 @@ here, where they go stale unnoticed.
   `RecordField`s it fills and the settings it acts on, with a test
   that holds it to `IMAGE_USES`, the exceptions and what a fill
   changes.  A new part of a `Record` gets a `RecordField`.
+- A command is one of three classes, no exceptions: the engine acts
+  (its effect is on bytes the engine builds), the holder acts (the
+  value is in `Engine::settings()` with a change event, and a filler
+  or application applies it), or it is a gap.  The table's acts
+  column says which; `IMAGE_SETS` is the settings the images set, and
+  a filler's test says which of them it leaves.
 - `docs/firmware/gps-fields.tsv` is the check: every field, the manual
   page, which images read or set it, measured from the images, what
   they use it for, and where the engine gets it.

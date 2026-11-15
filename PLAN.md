@@ -1018,9 +1018,15 @@ stands in for one.
   to it, and to what a fill really changes.  Every field of a response
   is now the record's, the model's state or the manual's value for not
   known, a channel's URA of 63 the one such value; `RECORD_BYTES_MAX`
-  went from 640 to 704 for it.  The model does not meet the rule yet: the
-  gaps left, a command an image sets that it does not honor, are listed by the
-  check and in `docs/firmware/gps.md`, "The fields", and are open work.
+  went from 640 to 704 for it.  A command is one of three classes, the
+  table's acts column: the engine acts, its effect being on the bytes
+  the engine builds; the holder acts, the value being in
+  `Engine::settings()` with a change event; or a gap.  No command an
+  image sets is a gap, and the check lists any that becomes one
+  (`docs/firmware/gps.md`, "The fields").  A filler declares the
+  settings it acts on beside the fields it fills, against
+  `IMAGE_SETS`, the settings the images set; the scene and the u-blox
+  crate act on none, which is open work for whatever holds them.
 - **Settings change what the model sends only as far as the recorded
   exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2), the
   automatic switch to altitude hold above `@@Al`'s PDOP, `@@Bb` sent on
@@ -1035,20 +1041,27 @@ stands in for one.
   and the images bisect the one they keep on the ID (`satellite_find`,
   `screen.c`).
   Manual selection (`@@Ah` 1 with `@@Ai`) and manual altitude hold
-  (`@@Av` 1 at `@@Au`'s height) would change answers the exchanges
-  hold, so the model takes and echoes them but tracks and fixes as
-  though selection and altitude hold were automatic.
-- **The model says what it was set to, and does nothing more for
-  it.**  A tool that stands in for an engine in front of a real GPS
+  (`@@Av` 1 at `@@Au`'s height) are how a receiver tracks and fixes,
+  which is the record's to show: the model keeps them, answers with
+  them and tells its holder, and tracks and fixes as the record says.
+- **The model says what it was set to, and acts only on what it
+  sends.**  A tool that stands in for an engine in front of a real GPS
   module has to set that module as the receiver set the model, and
   should not decode the Oncore commands a second time to do it.  So
   `Engine::settings` gives the settings such a tool needs as types:
   the mask angle, position hold and its position, altitude hold and
   its height, the time base, the 1 PPS's cable delay, offset and
-  mode, the application type, and the latitude, longitude and height
-  `@@Ad`, `@@Ae` and `@@Af` last gave.  Those last three the model
-  only echoed; it now keeps them, and still reports no position by
-  them.  `Engine::receive` returns what its commands did: a reset,
+  mode, the application type, the latitude, longitude and height
+  `@@Ad`, `@@Ae` and `@@Af` last gave, which the model reports until
+  the record has a position (VP pp. 17 and 25), and since the
+  commands were sorted, everything else a command sets that is not
+  the model's to do: satellite selection and the satellites assigned
+  by hand, the xDOP hysteresis and HDOP threshold, almanac update,
+  the atmospheric corrections, the fix algorithm, the epoch offset,
+  the correction thresholds and the port's format.  `@@Ci` 1 and 2
+  the model does act on, in the one way it can: it speaks neither
+  NMEA nor Loran, so it falls silent until its holder calls
+  `Engine::return_to_binary`.  `Engine::receive` returns what its commands did: a reset,
   which is `@@Cf` (VP pp. 116 and 117), and the settings that
   changed, a command that gives a setting the value it has changing
   none.  They are returned, not called back, so the model holds no

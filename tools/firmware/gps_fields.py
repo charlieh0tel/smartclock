@@ -133,11 +133,27 @@ for not known, where it gives one.  The fields the images use
 (IMAGE_USES) are those of the rows some image uses as control or
 reported.
 
-and what it does with a command field: honored, stored (kept and
-answered, with no effect), echoed (answered, not kept) or ignored.  A
-gap is a response field with a constant, zero or unknown term that an
-image uses, as control or reported, or compares, or a command field
-an image sets that is not honored.  Such a response field that an
+and what it does with a command field:
+
+    honored       the engine acts on it: what it changes is in the
+                  bytes the engine builds
+    held:FIELD    the engine keeps it in the FIELD of its Settings and
+                  tells its holder of a change; the holder acts on it
+    stored        kept and answered, with no effect and no Setting
+    echoed        answered, not kept
+    ignored       not looked at
+
+The acts column, made here, is a command field's class: engine (every
+term honored), holder (held), engine;holder (both), or gap (a stored,
+echoed or ignored term), and "-" for a response field.  A held term
+names a field of the Settings of
+crates/smartclock-gps/src/engine/settings.rs, each of which some row
+names.  The settings the images set (IMAGE_SETS) are those of the held
+terms of the rows some image sets.
+
+A gap is a response field with a constant, zero or unknown term that
+an image uses, as control or reported, or compares, or a command field
+an image sets whose class is gap.  Such a response field that an
 image only shows on the console or only stores is listed apart.
 """
 
@@ -177,6 +193,7 @@ USES = ROOT / 'docs/firmware/gps-field-uses.tsv'
 DOCUMENT = ROOT / 'docs/firmware/gps.md'
 RECORD = ROOT / 'crates/smartclock-gps/src/record.rs'
 FIELD = ROOT / 'crates/smartclock-gps/src/record/field.rs'
+SETTINGS = ROOT / 'crates/smartclock-gps/src/engine/settings.rs'
 ONCORE = ROOT / 'docs/firmware/oncore'
 
 # Each image's primary vector table, as harness.py's profiles have it.
@@ -249,6 +266,7 @@ COLUMNS = (
     'engine',
     'unknown',
     'fields',
+    'acts',
     'notes',
 )
 NONE = '-'
@@ -269,8 +287,15 @@ SOURCES = (
     'unknown',
 )
 GAP_SOURCES = ('constant', 'zero', 'unknown')
-HANDLINGS = ('honored', 'stored', 'echoed', 'ignored')
+HANDLINGS = ('honored', 'held', 'stored', 'echoed', 'ignored')
 HONORED = 'honored'
+HELD = 'held'
+# A command field's classes, and which of them a term of each handling
+# puts it in.
+ENGINE_ACTS = 'engine'
+HOLDER_ACTS = 'holder'
+GAP = 'gap'
+ACTS = {HONORED: ENGINE_ACTS, HELD: HOLDER_ACTS}
 # What a function does with a field it reads, weakest first, and the
 # use of a field no function reads.
 CLASSES = ('none', 'console', 'reported', 'control')
@@ -298,6 +323,9 @@ USES_END = '// end gps_fields.py'
 FIELD_PATH = re.compile(r'Self::(\w+) => "([\w.]+)",')
 # The RecordField the engine's clock is set from.
 CLOCK_FIELD = 'Time'
+# A field of the engine's Settings, and a member of its Setting.
+SETTINGS_FIELD = re.compile(r'^    pub (\w+):', re.MULTILINE)
+SETTING_MEMBER = re.compile(r'^    (\w+),$', re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -342,6 +370,7 @@ class Row:
     engine: str
     unknown: str
     fields: str
+    acts: str
     notes: str
 
     def instances(self) -> list[range]:
@@ -362,6 +391,17 @@ class Row:
     def terms(self) -> list[tuple[str, str]]:
         """The engine column's terms, each with its note."""
         return [tuple(term.partition(':')[::2]) for term in self.engine.split(';')]
+
+    def held(self) -> list[str]:
+        """The fields of the engine's Settings its terms name."""
+        return [note for term, note in self.terms() if term == HELD]
+
+    def acts_of(self) -> str:
+        """A command field's class, from its terms."""
+        classes = {ACTS.get(term, GAP) for term, _ in self.terms()}
+        if GAP in classes:
+            return GAP
+        return ';'.join(name for name in (ENGINE_ACTS, HOLDER_ACTS) if name in classes)
 
     def cells(self) -> list[str]:
         stride = NONE if self.count == 1 else str(self.stride)
@@ -1020,9 +1060,35 @@ def fields_of(row: Row, paths: dict[str, str]) -> list[str]:
     return [name for name in paths.values() if name in named]
 
 
+def settings_fields() -> dict[str, str]:
+    """Each field of the engine's Settings with the member of Setting
+    that names it, in the struct's order."""
+    source = SETTINGS.read_text()
+    body = source.partition('pub struct Settings {')[2].partition('\n}')[0]
+    members = set(SETTING_MEMBER.findall(source.partition('pub enum Setting {')[2].partition('\n}')[0]))
+    fields = {}
+    for name in SETTINGS_FIELD.findall(body):
+        member = ''.join(part.capitalize() for part in name.split('_'))
+        if member not in members:
+            sys.exit(f'{SETTINGS.relative_to(ROOT)}: no Setting::{member} for {name}')
+        fields[name] = member
+    return fields
+
+
 def image_uses(rows: list[Row], found: 'dict[int, dict[str, Found]]', paths: dict[str, str]) -> str:
-    """IMAGE_USES as field.rs has it between its markers: the fields of
-    the rows some image uses as control or reported."""
+    """IMAGE_USES and IMAGE_SETS as field.rs has them between its
+    markers: the fields of the rows some image uses as control or
+    reported, and the settings some image sets that a holder acts on."""
+    set_by_images = {name for row in rows if row.direction == 'command' and row.images != NONE for name in row.held()}
+    sets = [
+        '',
+        "/// The settings a receiver's image sets that are a holder's to act",
+        '/// on: those a command row of the field table holds and some image',
+        '/// sets.',
+        'pub const IMAGE_SETS: SettingSet = SettingSet::of(&[',
+        *(f'    Setting::{member},' for name, member in settings_fields().items() if name in set_by_images),
+        ']);',
+    ]
     used = {
         name
         for row in rows
@@ -1037,6 +1103,7 @@ def image_uses(rows: list[Row], found: 'dict[int, dict[str, Found]]', paths: dic
         'pub const IMAGE_USES: FieldSet = FieldSet::of(&[',
         *(f'    RecordField::{name},' for name in paths.values() if name in used),
         ']);',
+        *sets,
     ]
     return '\n'.join(lines) + '\n'
 
@@ -1051,6 +1118,10 @@ def check_rows(rows: list[Row], tables: dict[str, Requests]) -> list[str]:
         if not all(part in record_fields for part in path.split('.')):
             problems.append(f'{FIELD.relative_to(ROOT)}: {name}: no {path} in a record')
     messages = {row.message for row in rows}
+    settings = settings_fields()
+    unnamed = set(settings) - {name for row in rows if row.direction == 'command' for name in row.held()}
+    for name in sorted(unnamed):
+        problems.append(f'{SETTINGS.relative_to(ROOT)}: no command row holds {name}')
     groups: dict[tuple[str, str], list[Row]] = {}
     for row in rows:
         where = f'{TABLE.relative_to(ROOT)}:{row.line}'
@@ -1062,10 +1133,10 @@ def check_rows(rows: list[Row], tables: dict[str, Requests]) -> list[str]:
             any(manual not in MANUALS for manual in manuals) or len(manuals) != len(row.page.split(','))
         ):
             problems.append(f'{where}: manual {row.manual} page {row.page}')
-        for term, _ in row.terms():
+        for term, note in row.terms():
             kind, _, path = term.partition('.')
             if row.direction == 'command':
-                good = term in HANDLINGS
+                good = term in HANDLINGS and (term != HELD or note in settings)
             elif kind == 'record':
                 good = (
                     bool(path)
@@ -1081,6 +1152,7 @@ def check_rows(rows: list[Row], tables: dict[str, Requests]) -> list[str]:
         if row.direction == 'command' and row.unknown != NONE:
             problems.append(f'{where}: a command field with an unknown value')
         row.fields = ';'.join(fields_of(row, paths)) or NONE
+        row.acts = row.acts_of() if row.direction == 'command' else NONE
     lengths: dict[str, set[int]] = {}
     for table in tables.values():
         for entry in table.entries:
@@ -1314,7 +1386,7 @@ def gap_terms(row: Row) -> str:
     if row.images == NONE:
         return ''
     if row.direction == 'command':
-        wanted = [(term, note) for term, note in row.terms() if term != HONORED]
+        wanted = [(term, note) for term, note in row.terms() if term not in ACTS]
     else:
         wanted = [(term, note) for term, note in row.terms() if term in GAP_SOURCES]
     return '; '.join(f'{term}: {note}' if note else term for term, note in wanted)
@@ -1348,7 +1420,7 @@ def where_used(row: Row, found: dict[str, Found]) -> str:
 def gaps(rows: list[Row], found: dict[int, dict[str, Found]]) -> str:
     """The gaps as the document's tables: the response fields an image
     uses, those only a console word shows, those only stored, and the
-    command fields."""
+    command fields; then every command field with who acts on it."""
     wanting = [(row, found.get(row.line, {})) for row in rows if row.direction == 'response' and gap_terms(row)]
     strongest = {
         row.line: max((each.use for each in uses.values()), key=(STORED, *CLASSES[1:]).index, default=STORED)
@@ -1373,6 +1445,14 @@ def gaps(rows: list[Row], found: dict[int, dict[str, Found]]) -> str:
     for row in rows:
         if row.direction == 'command' and gap_terms(row):
             lines.append(f'| `@@{row.message}` | {row.field} | {short(row.images.split(","))} | {gap_terms(row)} |')
+    lines += ['', '| Command | Field | Set by | Who acts | How |', '|---|---|---|---|---|']
+    for row in rows:
+        if row.direction == 'command':
+            how = '; '.join(
+                f'`{note}`' if term == HELD else f'{term}: {note}' if note else term for term, note in row.terms()
+            )
+            by = 'none' if row.images == NONE else short(row.images.split(','))
+            lines.append(f'| `@@{row.message}` | {row.field} | {by} | {row.acts.replace(";", ", ")} | {how} |')
     return '\n'.join(lines) + '\n'
 
 
@@ -1450,7 +1530,8 @@ def main() -> None:
     if arguments.check:
         if uses != source:
             problems.append(
-                f'{FIELD.relative_to(ROOT)}: IMAGE_USES is not what the table gives; make gps-fields rewrites it'
+                f'{FIELD.relative_to(ROOT)}: IMAGE_USES or IMAGE_SETS is not what the table gives; '
+                'make gps-fields rewrites it'
             )
         if table != was:
             problems.append(f'{TABLE.relative_to(ROOT)} is not what the images give; make gps-fields rewrites it')

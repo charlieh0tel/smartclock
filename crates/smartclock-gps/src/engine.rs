@@ -23,7 +23,10 @@
 //! same as the last one's, or it has none, the engine's own clock runs
 //! on a second.  That clock starts at 12:00:00 on the day GPS time
 //! starts, as an Oncore's does that was not kept powered (VP p. 5), so
-//! a clock `@@Ab` sets behind UTC reads the day before.  A second in which the engine is to be silent is one
+//! a clock `@@Ab` sets behind UTC reads the day before.  `@@Aa` and
+//! `@@Ac` set that clock, but not while the record tells the time, as
+//! an Oncore tracking a satellite ignores them (VP pp. 5 and 13).  A
+//! second in which the engine is to be silent is one
 //! [`Engine::second`] is not called for.
 //!
 //! One answer is not sent at once: a self-test's, which comes two
@@ -34,19 +37,26 @@
 //!
 //! What a record cannot say, the engine does not make up: with no
 //! [`Dops`](crate::record::Dops) it sends zeros, and with no
-//! [`Ecef`](crate::record::Ecef) position, or while it holds a position
-//! of the host's, zeros for `@@Bk`'s.
+//! [`Ecef`](crate::record::Ecef) position, zeros for `@@Bk`'s.
 //!
-//! Two settings the engine takes and echoes but does not act on:
-//! manual satellite selection (`@@Ah` 1 with `@@Ai`'s assignments, VP
-//! pp. 29 to 32) and manual altitude hold (`@@Av` 1 at `@@Au`'s height,
-//! VP pp. 58 to 61).  It tracks and fixes as though both were
-//! automatic.
+//! A command is one of two kinds.  What it changes is in the bytes the
+//! engine builds, and the engine does it: the time and date, the mask
+//! angle, the ignore list, the position held or to start from, which
+//! is reported while the record has none (VP pp. 17 and 25), a message
+//! sent again at each change, and `@@Ci` (VP p. 120), after whose
+//! formats 1 and 2 the engine is silent and deaf until
+//! [`Engine::return_to_binary`].  Or it changes how a receiver tracks,
+//! fixes or puts out its pulse, which is the record's to show: the
+//! engine keeps the value, answers with it and tells its holder, and
+//! tracks and fixes as the record says.  Manual satellite selection
+//! (`@@Ah` 1 with `@@Ai`'s assignments, VP pp. 29 to 32) and manual
+//! altitude hold (`@@Av` 1 at `@@Au`'s height, VP pp. 58 to 61) are of
+//! that kind.
 //!
-//! What commands have set the engine to, a holder that has something
-//! else to set the same way reads as types: [`Engine::settings`] gives
-//! the [`Settings`], and [`Engine::receive`] returns the [`Events`] its
-//! commands made, a reset to defaults and which settings changed.
+//! What commands have set the engine to, a holder reads as types:
+//! [`Engine::settings`] gives the [`Settings`], and
+//! [`Engine::receive`] returns the [`Events`] its commands made, a
+//! reset to defaults and which settings changed.
 //!
 //! The pages cited are, as printed: VP, the VP Oncore's command
 //! reference, `third_party/motorola/VPCommands.pdf`; UT, TRM0003
@@ -66,9 +76,11 @@ use crate::engine::framer::Framer;
 use crate::engine::identity::Identity;
 use crate::engine::identity::LINE_END;
 use crate::engine::identity::Model;
+use crate::engine::settings::CHANNELS_MOST;
 use crate::engine::settings::Height;
 use crate::engine::settings::HeightKind;
 use crate::engine::settings::Location;
+use crate::engine::settings::OutputFormat;
 use crate::engine::settings::PulseMode;
 use crate::engine::settings::Settings;
 use crate::engine::settings::TimeBase;
@@ -107,6 +119,7 @@ use crate::oncore::CA_SELF_TEST;
 use crate::oncore::CE_PSEUDORANGE_CORRECTION;
 use crate::oncore::CF_SET_TO_DEFAULTS;
 use crate::oncore::CG_FIX_MODE;
+use crate::oncore::CI_IO_FORMAT;
 use crate::oncore::CJ_RECEIVER_ID;
 use crate::oncore::Channels;
 use crate::oncore::EA_POSITION_STATUS;
@@ -339,8 +352,21 @@ const VISIBILITY: usize = 1 + SATELLITES * VISIBLE_SLOT;
 /// `@@Bb`'s mode that asks for it each time it changes (VP p. 75).
 const VISIBILITY_EACH_CHANGE: u8 = 1;
 /// `@@Bc`: the bytes of one combination, a DOP and its satellites (VP
-/// p. 77).
+/// p. 77), those before the combinations and its data's.
 const XDOP_ENTRY: usize = size_of::<u16>() + XDOP_SATELLITES;
+const XDOP_HEAD: usize = 3;
+const XDOP_TABLE: usize = XDOP_HEAD + XDOP_COMBINATIONS * XDOP_ENTRY;
+/// `@@Bc`'s and `@@Bd`'s mode that asks for the message each time it
+/// changes (VP pp. 77 and 79).
+const TABLE_EACH_CHANGE: u8 = 1;
+/// `@@Ci`'s formats (VP p. 121).
+const FORMAT_NMEA: u8 = 1;
+const FORMAT_LORAN: u8 = 2;
+/// The years `@@Ac` takes, and the most seconds `@@Aa` does (VP pp. 6
+/// and 13).
+const YEAR_LEAST: u16 = 1980;
+const YEAR_MOST: u16 = 2077;
+const SECOND_MOST: u8 = 59;
 /// `@@Bd`'s almanac-valid flag, and the bytes of one almanac's status
 /// (VP p. 79).
 const ALMANAC_VALID: u8 = 1;
@@ -630,13 +656,13 @@ struct State {
     /// The values its settings have.
     store: Store,
     /// The satellite assigned to each channel by hand, zero for none.
-    assignments: [u8; EIGHT_CHANNELS],
+    assignments: [u8; CHANNELS_MOST],
     /// Each family's rates.
     rates: [Rates; FAMILIES.len()],
     /// Time RAIM's setup.
     traim: TraimSetup,
     /// The latitude, longitude and height last given by `@@Ad`, `@@Ae`
-    /// and `@@Af`, which nothing sent is made from.
+    /// and `@@Af`, the position reported while the record has none.
     initial: Location,
     /// The rate of `@@Ce`.
     corrections: Rate,
@@ -644,6 +670,12 @@ struct State {
     offset_updates: bool,
     /// Whether `@@Bb` is sent each time it changes.
     visibility_updates: bool,
+    /// Whether `@@Bc` is.
+    xdop_updates: bool,
+    /// Whether `@@Bd` is.
+    almanac_updates: bool,
+    /// What the port speaks.
+    format: OutputFormat,
 }
 
 impl State {
@@ -652,7 +684,7 @@ impl State {
         Self {
             fixing: matches!(model, Model::UtPlus),
             store: Store::DEFAULT,
-            assignments: [0; EIGHT_CHANNELS],
+            assignments: [0; CHANNELS_MOST],
             rates: [Rates {
                 status: Rate(0),
                 extension: Rate(0),
@@ -670,6 +702,9 @@ impl State {
             corrections: Rate(0),
             offset_updates: false,
             visibility_updates: false,
+            xdop_updates: false,
+            almanac_updates: false,
+            format: OutputFormat::Binary,
         }
     }
 }
@@ -708,6 +743,10 @@ pub struct Engine {
     offset: Option<u8>,
     /// The data of the last `@@Bb` sent.
     visibility: Option<[u8; VISIBILITY]>,
+    /// The data of the last `@@Bc` sent.
+    xdops: Option<[u8; XDOP_TABLE]>,
+    /// The data of the last `@@Bd` sent.
+    almanac: Option<[u8; 2 * ALMANAC_STATUS]>,
     /// Each family's last position status sent while fixing, which
     /// `@@Cf` does not forget.
     last_status: [Option<KeptStatus>; FAMILIES.len()],
@@ -748,6 +787,8 @@ impl Engine {
             heard: None,
             offset: None,
             visibility: None,
+            xdops: None,
+            almanac: None,
             last_status: [None; FAMILIES.len()],
             deferred: [None; DEFERRED],
         }
@@ -790,7 +831,30 @@ impl Engine {
             },
             application: store.application(),
             initial_position: self.state.initial,
+            satellite_select: store.satellite_select(),
+            manual_satellites: self.state.assignments,
+            xdop_hysteresis: store.xdop_hysteresis(),
+            almanac_update: store.almanac_update(),
+            atmospheric_correction: store.atmospheric_correction(),
+            fix_algorithm: store.fix_algorithm(),
+            epoch_offset: store.epoch_offset(),
+            hdop_threshold: store.hdop_threshold(),
+            correction_thresholds: store.correction_thresholds(),
+            output_format: self.state.format,
         }
+    }
+
+    /// Whether the port has been switched from binary (`@@Ci`, VP
+    /// p. 120), in which the engine neither sends nor takes anything.
+    fn silent(&self) -> bool {
+        self.state.format != OutputFormat::Binary
+    }
+
+    /// Puts the port back to binary, as the format `@@Ci` switched it
+    /// to has its own command to: the holder's to call, the engine
+    /// speaking no other format to be told in.
+    pub const fn return_to_binary(&mut self) {
+        self.state.format = OutputFormat::Binary;
     }
 
     /// When the next answer that is waiting is due, by the caller's
@@ -808,6 +872,9 @@ impl Engine {
     pub fn poll<O: Output + ?Sized>(&mut self, now: Milliseconds<u64>, out: &mut O) {
         let waiting = self.deferred;
         self.deferred = [None; DEFERRED];
+        if self.silent() {
+            return;
+        }
         let mut kept = 0;
         for answer in waiting.into_iter().flatten() {
             if answer.due <= now {
@@ -837,6 +904,9 @@ impl Engine {
             _ => self.clock + Seconds(1),
         };
         self.heard = told;
+        if self.silent() {
+            return;
+        }
 
         let offset = self.wire_offset(record);
         let stepped = self.offset.is_some_and(|before| before != offset);
@@ -860,6 +930,12 @@ impl Engine {
             }
             if self.state.visibility_updates {
                 self.visibility_changed(record, out);
+            }
+            if self.state.xdop_updates && self.xdops != kept(&self.xdop_table(record)) {
+                self.send_xdop_table(record, out);
+            }
+            if self.state.almanac_updates && self.almanac != kept(&Self::almanac_status(record)) {
+                self.send_almanac_status(record, out);
             }
         }
         if self.state.offset_updates && stepped {
@@ -887,7 +963,7 @@ impl Engine {
         bytes
             .iter()
             .fold(Events::NONE, |events, byte| match self.framer.push(*byte) {
-                Some(command) if self.takes(command.id) => {
+                Some(command) if !self.silent() && self.takes(command.id) => {
                     let before = self.settings();
                     self.answer(command.id, command.data(), record, now, out);
                     events.and(Events::of(
@@ -956,12 +1032,27 @@ impl Engine {
         }
         let model = self.identity.model();
         if id == AA_TIME_OF_DAY {
+            if let &[hour, minute, second] = data
+                && second <= SECOND_MOST
+            {
+                self.set_clock(record, |now| {
+                    DateTime::new(now.year, now.month, now.day, hour, minute, second)
+                });
+            }
             send(
                 out,
                 id,
                 Data::new().bytes(&self.time_of_day(record, self.clock)),
             );
         } else if id == AC_DATE {
+            if let &[month, day, high, low] = data {
+                let year = u16::from_be_bytes([high, low]);
+                if (YEAR_LEAST..=YEAR_MOST).contains(&year) {
+                    self.set_clock(record, |now| {
+                        DateTime::new(year, month, day, now.hour, now.minute, now.second)
+                    });
+                }
+            }
             send(out, id, Data::new().bytes(&self.date(record, self.clock)));
         } else if id == AB_GMT_CORRECTION {
             self.state.store.set_or_query(id, data, model);
@@ -1019,9 +1110,18 @@ impl Engine {
             self.state.visibility_updates = data == [VISIBILITY_EACH_CHANGE];
             self.send_visibility(record, out);
         } else if id == BC_XDOP_TABLE {
-            self.xdop_table(record, out);
+            self.state.xdop_updates = data == [TABLE_EACH_CHANGE];
+            self.send_xdop_table(record, out);
         } else if id == BD_ALMANAC_STATUS {
-            Self::almanac_status(record, out);
+            self.state.almanac_updates = data == [TABLE_EACH_CHANGE];
+            self.send_almanac_status(record, out);
+        } else if id == CI_IO_FORMAT {
+            // VP p. 121: no answer, and no format but these two.
+            match data {
+                [FORMAT_NMEA] => self.state.format = OutputFormat::Nmea,
+                [FORMAT_LORAN] => self.state.format = OutputFormat::Loran,
+                _ => {}
+            }
         } else if id == BH_CORRECTION_OUTPUT {
             self.state.corrections = Rate::of(data);
             self.corrections(record, out);
@@ -1137,6 +1237,24 @@ impl Engine {
             )
     }
 
+    /// `@@Aa` and `@@Ac` (VP pp. 5 and 13): sets the clock to the date
+    /// and time `to` makes of the one it reports, unless that is none
+    /// there is.  An Oncore tracking a satellite sets its clock by it
+    /// and ignores the command; so does the engine while the record
+    /// tells the time, its clock then being the record's.
+    fn set_clock(&mut self, record: &Record, to: impl FnOnce(DateTime) -> Option<DateTime>) {
+        if record.time.is_some() {
+            return;
+        }
+        let now = self.label(record, self.clock);
+        let set = to(now)
+            .and_then(|then| then.to_unix().checked_since(now.to_unix()))
+            .and_then(|shift| self.clock.checked_add(shift));
+        if let Some(clock) = set {
+            self.clock = clock;
+        }
+    }
+
     /// `@@Ai` (VP p. 31): a channel's satellite set by hand, or asked.
     fn assign<O: Output + ?Sized>(&mut self, data: &[u8], out: &mut O) {
         let &[channel, satellite] = data else {
@@ -1189,19 +1307,21 @@ impl Engine {
     }
 
     /// The position reported: the one held, when holding, else the
-    /// record's.
+    /// record's, and while it has none, the one `@@Ad`, `@@Ae` and
+    /// `@@Af` gave to start from (VP pp. 17 and 25).
     fn place(&self, record: &Record) -> Place {
         if self.state.store.holding() {
             return self.state.store.held_position(Self::separation(record));
         }
-        record
-            .position
-            .map_or_else(Place::default, |position| Place {
+        record.position.map_or_else(
+            || Place::of(self.state.initial, 0),
+            |position| Place {
                 latitude: position.latitude.0,
                 longitude: position.longitude.0,
                 ellipsoid: position.ellipsoid.0,
                 mean_sea_level: position.mean_sea_level.0,
-            })
+            },
+        )
     }
 
     /// `@@Af` (VP p. 25): a height given, or the current one asked, is
@@ -1593,7 +1713,7 @@ impl Engine {
     /// the record's combinations if they are of that kind.  The
     /// satellites a combination holds, Best-4 or N-in-View, is the most
     /// any of them names; six with none.
-    fn xdop_table<O: Output + ?Sized>(&self, record: &Record, out: &mut O) {
+    fn xdop_table(&self, record: &Record) -> Data {
         let asked = self.state.store.dop_type();
         let table = record
             .derived
@@ -1617,12 +1737,26 @@ impl Engine {
             }
         }
         data.zeros((XDOP_COMBINATIONS - count) * XDOP_ENTRY);
+        data
+    }
+
+    /// `@@Bc`, kept to tell a change by.
+    fn send_xdop_table<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
+        let data = self.xdop_table(record);
+        self.xdops = kept(&data);
         send(out, BC_XDOP_TABLE, &data);
+    }
+
+    /// `@@Bd`, kept to tell a change by.
+    fn send_almanac_status<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
+        let data = Self::almanac_status(record);
+        self.almanac = kept(&data);
+        send(out, BD_ALMANAC_STATUS, &data);
     }
 
     /// `@@Bd` (VP p. 79): the almanac's status, given twice, as the one
     /// in use and the one last read.
-    fn almanac_status<O: Output + ?Sized>(record: &Record, out: &mut O) {
+    fn almanac_status(record: &Record) -> Data {
         let mut status = Data::new();
         match record.almanac {
             Some(almanac) => status
@@ -1633,13 +1767,9 @@ impl Engine {
                 .long(almanac.held.bits()),
             None => status.zeros(ALMANAC_STATUS),
         };
-        send(
-            out,
-            BD_ALMANAC_STATUS,
-            Data::new()
-                .bytes(status.as_slice())
-                .bytes(status.as_slice()),
-        );
+        let mut data = Data::new();
+        data.bytes(status.as_slice()).bytes(status.as_slice());
+        data
     }
 
     /// `@@Ce` (VP pp. 89, 90, 114 and 115): the record's corrections
@@ -1918,6 +2048,11 @@ fn send<O: Output + ?Sized>(out: &mut O, id: MessageId, data: &Data) {
     if let Ok(length) = encode(id, data.as_slice(), &mut frame) {
         out.send(&frame[..length]);
     }
+}
+
+/// A message's data as an engine keeps it to tell a change by.
+fn kept<const N: usize>(data: &Data) -> Option<[u8; N]> {
+    data.as_slice().try_into().ok()
 }
 
 /// A count as a message's byte carries it.

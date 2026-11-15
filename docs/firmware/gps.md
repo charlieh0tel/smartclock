@@ -1190,6 +1190,39 @@ specification; in short:
   those are the two rows the lists below keep.  A Time RAIM status's
   pulse rate is one a second, the model's own: the manual has no
   command that sets it (VP pp. 104 and 105).
+- **A command is the engine's to act on, or its holder's.**  The acts
+  column, made by the tool from the engine column's terms, gives each
+  command field one of three classes.  *engine*: what the field
+  changes is in the bytes the model builds, and the model does it
+  (`honored`).  *holder*: it changes how a receiver tracks, fixes or
+  puts out its pulse, which a record shows and the model cannot; the
+  model keeps the value in the field of `Engine::settings()` the term
+  names (`held:`), answers with it, and returns a change event for
+  whatever holds the model to apply.  *gap*: neither, a term `stored`,
+  `echoed` or `ignored`.  A field can be both the first two: position
+  hold changes the position the model reports and is the receiver's
+  fix mode besides.  Every field of the `Settings` is named by some
+  row, the check holds.  The settings behind the rows some image sets
+  are the crate's `IMAGE_SETS`, written by the tool as `IMAGE_USES`
+  is; a `Filler` declares the settings it acts on, and its test says
+  which of `IMAGE_SETS` it leaves (`Filler::unacted`).  Neither the
+  vectors' scene nor the u-blox crate acts on any yet.
+- **What the model does of its own for a command.**  `@@Aa` and
+  `@@Ac` set its clock, the time or the date alone, unless the record
+  tells the time: an Oncore tracking a satellite ignores them (VP
+  pp. 5 and 13), and a record that tells the time is the model's
+  satellite.  A value out of the manual's range sets nothing (VP
+  pp. 6 and 14).  The position `@@Ad`, `@@Ae` and `@@Af` give to
+  start from is the one reported while the record has none (VP
+  pp. 17, 21 and 25).  `@@Bc` and `@@Bd` in mode 1 are sent again in
+  each second their data differs from what was last sent (VP pp. 77
+  and 79).  `@@Bj` is polled only (VP p. 94), so its mode asks
+  nothing more.  `@@Ci` 1 and 2 switch the port to NMEA and to Loran
+  (VP pp. 120 and 121), neither of which the model speaks: it then
+  sends nothing and takes no command until its holder calls
+  `Engine::return_to_binary`, and says so in `output_format`.  The
+  images send `@@Ci` 0, which the manual does not define and the
+  model stays binary for.
 - **A satellite `@@Am` ignores is `@@Bb`'s removed** (VP p. 75), and
   **a fix a record gives as propagated** sets the receiver status's
   position propagate bit with a DOP of zero (VP pp. 70, 72 and 73; UT
@@ -1206,11 +1239,12 @@ or `@@Ta`, and the Z3817A's `@@Sz` decoder reads nothing.
 The gaps are the work list: a response field some image uses, as
 control or reported, or compares, that the model sends as zero, a
 constant of its own or the manual's value for unknown, and a command
-field some image sets that the model does not honor.  The first table
+field some image sets whose class is gap.  The first table
 is those response fields, with the functions whose use puts them
 there.  The second and third are such fields that the images only
 show on the console and only store, kept in sight and off the work
-list.  The last is the command fields.
+list.  The fourth is the command fields.  The last is no gap list:
+every command field, with who acts on it.
 
 <!-- gps_fields.py gaps -->
 | Message | Field | Bytes | Use | By | The engine sends |
@@ -1226,32 +1260,74 @@ list.  The last is the command fields.
 
 | Command | Field | Set by | The engine has it |
 |---|---|---|---|
-| `@@Aa` | hours | all four | ignored |
-| `@@Aa` | minutes | all four | ignored |
-| `@@Aa` | seconds | all four | ignored |
-| `@@AB` | application type | all four | stored |
-| `@@Ac` | month | all four | ignored |
-| `@@Ac` | day | all four | ignored |
-| `@@Ac` | year | all four | ignored |
-| `@@AC` | HDOP threshold | all four | stored |
-| `@@Ad` | latitude | all four | echoed |
-| `@@AD` | fix threshold | all four | stored |
-| `@@AD` | output threshold | all four | stored |
-| `@@Ae` | longitude | all four | echoed |
-| `@@Af` | height | all four | echoed |
-| `@@Af` | height type | all four | echoed |
-| `@@Ah` | select option | all four | stored: 1, manual select |
-| `@@Ai` | channel | all four | stored |
-| `@@Ai` | satellite | all four | stored |
-| `@@Ak` | xDOP hysteresis | all four | stored |
-| `@@An` | almanac update | all four | stored |
-| `@@Aq` | ionospheric correction | all four | stored |
-| `@@Ar` | fix algorithm | all four | stored |
-| `@@Av` | altitude hold | all four | stored |
-| `@@Ax` | epoch offset | all four | stored |
-| `@@Ay` | pulse offset | all four | stored |
-| `@@Bc` | mode | all four | ignored |
-| `@@Ci` | format | z3805a-3543b, z3801a-3543 | ignored |
+
+| Command | Field | Set by | Who acts | How |
+|---|---|---|---|---|
+| `@@Aa` | hours | all four | engine | honored: while the record tells no time |
+| `@@Aa` | minutes | all four | engine | honored: while the record tells no time |
+| `@@Aa` | seconds | all four | engine | honored: while the record tells no time |
+| `@@Ab` | sign | all four | engine | honored |
+| `@@Ab` | hours | all four | engine | honored |
+| `@@Ab` | minutes | all four | engine | honored |
+| `@@AB` | application type | all four | holder | `application` |
+| `@@Ac` | month | all four | engine | honored: while the record tells no time |
+| `@@Ac` | day | all four | engine | honored: while the record tells no time |
+| `@@Ac` | year | all four | engine | honored: while the record tells no time |
+| `@@AC` | HDOP threshold | all four | holder | `hdop_threshold` |
+| `@@Ad` | latitude | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@AD` | fix threshold | all four | holder | `correction_thresholds` |
+| `@@AD` | output threshold | all four | holder | `correction_thresholds` |
+| `@@Ae` | longitude | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@Af` | height | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@Af` | height type | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@Ag` | mask angle | none | engine, holder | honored; `mask_angle` |
+| `@@Ah` | select option | all four | engine, holder | honored: 2, highest in sky; `satellite_select` |
+| `@@Ai` | channel | all four | holder | `manual_satellites` |
+| `@@Ai` | satellite | all four | holder | `manual_satellites` |
+| `@@Aj` | xDOP type | all four | engine | honored |
+| `@@Ak` | xDOP hysteresis | all four | holder | `xdop_hysteresis` |
+| `@@Al` | xDOP threshold | all four | engine | honored |
+| `@@Am` | constant | none | engine | honored |
+| `@@Am` | ignore list | none | engine | honored |
+| `@@An` | almanac update | all four | holder | `almanac_update` |
+| `@@Ao` | datum | all four | engine | honored |
+| `@@Aq` | ionospheric correction | all four | holder | `atmospheric_correction` |
+| `@@Ar` | fix algorithm | all four | holder | `fix_algorithm` |
+| `@@As` | latitude | all four | engine, holder | honored; `held_position` |
+| `@@As` | longitude | all four | engine, holder | honored; `held_position` |
+| `@@As` | height | all four | engine, holder | honored; `held_position` |
+| `@@As` | height type | all four | engine, holder | honored; `held_position` |
+| `@@At` | position hold | all four | engine, holder | honored; `position_hold` |
+| `@@Au` | height | none | holder | `altitude_hold_height` |
+| `@@Au` | height type | none | holder | `altitude_hold_height` |
+| `@@Av` | altitude hold | all four | holder | `altitude_hold` |
+| `@@Aw` | time mode | all four | engine, holder | honored; `time_base` |
+| `@@Ax` | epoch offset | all four | holder | `epoch_offset` |
+| `@@Ay` | pulse offset | all four | holder | `pulse_offset` |
+| `@@Az` | cable delay | none | holder | `cable_delay` |
+| `@@Ba` | rate | all four | engine | honored |
+| `@@Bb` | mode | all four | engine | honored |
+| `@@Bc` | mode | all four | engine | honored: 1 sends it again at each change |
+| `@@Bd` | mode | none | engine | honored: 1 sends it again at each change |
+| `@@Bh` | rate | none | engine | honored |
+| `@@Bj` | mode | none | engine | honored: polled only, nothing to do |
+| `@@Bk` | rate | all four | engine | honored |
+| `@@Bn` | rate | all four | engine | honored |
+| `@@Bn` | algorithm | all four | engine | honored |
+| `@@Bn` | alarm limit | all four | engine | honored |
+| `@@Bn` | pulse mode | all four | engine, holder | honored; `pulse_mode` |
+| `@@Bn` | not used | all four | engine | honored: not used, nothing to do |
+| `@@Bo` | mode | none | engine | honored |
+| `@@Cg` | mode | all four | engine | honored |
+| `@@Ci` | format | z3805a-3543b, z3801a-3543 | engine, holder | honored: 1 and 2 end the binary; `output_format` |
+| `@@Ea` | rate | 58503a-3704, z3817a-3752 | engine | honored |
+| `@@Ek` | rate | 58503a-3704, z3817a-3752 | engine | honored |
+| `@@En` | rate | 58503a-3704, z3817a-3752 | engine | honored |
+| `@@En` | algorithm | 58503a-3704, z3817a-3752 | engine | honored |
+| `@@En` | alarm limit | 58503a-3704, z3817a-3752 | engine | honored |
+| `@@En` | pulse mode | 58503a-3704, z3817a-3752 | engine, holder | honored; `pulse_mode` |
+| `@@En` | not used | 58503a-3704, z3817a-3752 | engine | honored: not used, nothing to do |
+| `@@Ta` | values | none | gap | stored |
 <!-- end gps_fields.py -->
 
 ## In every image

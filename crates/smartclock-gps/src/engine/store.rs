@@ -5,9 +5,13 @@
 
 use crate::engine::identity::Model;
 use crate::engine::settings::Application;
+use crate::engine::settings::AtmosphericCorrection;
+use crate::engine::settings::CorrectionThresholds;
+use crate::engine::settings::FixAlgorithm;
 use crate::engine::settings::Height;
 use crate::engine::settings::HeightKind;
 use crate::engine::settings::Location;
+use crate::engine::settings::SatelliteSelect;
 use crate::oncore::AB_APPLICATION_TYPE;
 use crate::oncore::AB_GMT_CORRECTION;
 use crate::oncore::AC_HDOP_THRESHOLD;
@@ -34,9 +38,11 @@ use crate::oncore::MessageId;
 use crate::oncore::TA_DCXO;
 use crate::units::Centimeters;
 use crate::units::MilliArcSeconds;
+use crate::units::Milliseconds;
 use crate::units::Minutes;
 use crate::units::Nanoseconds;
 use crate::units::Seconds;
+use crate::units::Tenths;
 
 /// The byte that asks for a value in place of setting it (as `@@Ag`'s,
 /// p. 27).
@@ -62,9 +68,18 @@ pub(super) fn height_of(data: &[u8]) -> Option<Height> {
     })
 }
 
-/// The satellite select mode that tracks the highest in the sky
-/// (`@@Ah`, p. 30).
+/// The satellite select modes that are not the best geometry (`@@Ah`,
+/// p. 30).
+const SELECT_MANUAL: u8 = 1;
 const SELECT_HIGHEST_IN_SKY: u8 = 2;
+/// The fix algorithm that is the best four (`@@Ar`, p. 53).
+const ALGORITHM_BEST_FOUR: u8 = 0;
+/// The almanac update mode that updates (`@@An`, p. 44).
+const ALMANAC_UPDATE_ON: u8 = 1;
+/// An atmospheric correction mode's bits (UT p. 6.28), of which a VP
+/// has the first alone (`@@Aq`, p. 51).
+const CORRECTION_IONOSPHERIC: u8 = 1;
+const CORRECTION_TROPOSPHERIC: u8 = 2;
 
 /// The first byte an ignore list's command must carry (`@@Am`, p. 41).
 const IGNORE_LIST_CONSTANT: u8 = 0;
@@ -273,6 +288,24 @@ pub(super) struct Place {
     pub(super) mean_sea_level: i32,
 }
 
+impl Place {
+    /// A position a command gave, `separation` being the ellipsoid's
+    /// height above mean sea level there.
+    pub(super) const fn of(given: Location, separation: i32) -> Self {
+        let height = given.height.height.0;
+        let (ellipsoid, mean_sea_level) = match given.height.kind {
+            HeightKind::MeanSeaLevel => (height.wrapping_add(separation), height),
+            HeightKind::Ellipsoid => (height, height.wrapping_sub(separation)),
+        };
+        Self {
+            latitude: given.latitude.0,
+            longitude: given.longitude.0,
+            ellipsoid,
+            mean_sea_level,
+        }
+    }
+}
+
 /// Every setting's value, each as its command carries it, one after
 /// another in the table's order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -376,12 +409,79 @@ impl Store {
         self.byte(AH_SATELLITE_SELECT) == SELECT_HIGHEST_IN_SKY
     }
 
+    /// How the satellites to track are chosen (`@@Ah`, p. 30).
+    pub(super) fn satellite_select(&self) -> SatelliteSelect {
+        match self.byte(AH_SATELLITE_SELECT) {
+            SELECT_MANUAL => SatelliteSelect::Manual,
+            SELECT_HIGHEST_IN_SKY => SatelliteSelect::HighestInSky,
+            _ => SatelliteSelect::BestGeometry,
+        }
+    }
+
+    fn word(&self, id: MessageId) -> Option<u16> {
+        match self.get(id) {
+            Some(&[high, low]) => Some(u16::from_be_bytes([high, low])),
+            _ => None,
+        }
+    }
+
     /// The DOP above which a 3D fix gives way to altitude hold, in
     /// tenths (`@@Al`, p. 39).
     pub(super) fn xdop_threshold(&self) -> u16 {
-        match self.get(AL_XDOP_THRESHOLD) {
-            Some(&[high, low]) => u16::from_be_bytes([high, low]),
-            _ => u16::MAX,
+        self.word(AL_XDOP_THRESHOLD).unwrap_or(u16::MAX)
+    }
+
+    /// How much better another set's DOP must be (`@@Ak`, p. 38).
+    pub(super) fn xdop_hysteresis(&self) -> Tenths {
+        Tenths(self.word(AK_XDOP_HYSTERESIS).unwrap_or(0))
+    }
+
+    /// The HDOP above which a 2D fix is given up (`@@AC`, p. 16).
+    pub(super) fn hdop_threshold(&self) -> Tenths {
+        Tenths(self.word(AC_HDOP_THRESHOLD).unwrap_or(u16::MAX))
+    }
+
+    /// Where in the second the measurement epoch is put (`@@Ax`,
+    /// p. 65).
+    pub(super) fn epoch_offset(&self) -> Milliseconds<u16> {
+        Milliseconds(self.word(AX_EPOCH_OFFSET).unwrap_or(0))
+    }
+
+    /// Whether a new almanac replaces the one kept (`@@An`, p. 44).
+    pub(super) fn almanac_update(&self) -> bool {
+        self.byte(AN_ALMANAC_UPDATE) == ALMANAC_UPDATE_ON
+    }
+
+    /// The models ranges are corrected by (`@@Aq`).
+    pub(super) fn atmospheric_correction(&self) -> AtmosphericCorrection {
+        let mode = self.byte(AQ_ATMOSPHERIC_CORRECTION);
+        AtmosphericCorrection {
+            ionospheric: mode & CORRECTION_IONOSPHERIC != 0,
+            tropospheric: mode & CORRECTION_TROPOSPHERIC != 0,
+        }
+    }
+
+    /// Which satellites the position is fixed by (`@@Ar`, p. 53).
+    pub(super) fn fix_algorithm(&self) -> FixAlgorithm {
+        if self.byte(AR_FIX_ALGORITHM) == ALGORITHM_BEST_FOUR {
+            FixAlgorithm::BestFour
+        } else {
+            FixAlgorithm::AllInView
+        }
+    }
+
+    /// How long a channel's code phase is filtered before use (`@@AD`,
+    /// p. 20).
+    pub(super) fn correction_thresholds(&self) -> CorrectionThresholds {
+        match self.get(AD_CORRECTION_THRESHOLDS) {
+            Some(&[fix, output]) => CorrectionThresholds {
+                fix: Seconds(fix),
+                output: Seconds(output),
+            },
+            _ => CorrectionThresholds {
+                fix: Seconds(0),
+                output: Seconds(0),
+            },
         }
     }
 
@@ -405,18 +505,7 @@ impl Store {
     /// The position to hold (`@@As`), `separation` being the ellipsoid's
     /// height above mean sea level there.
     pub(super) fn held_position(&self, separation: i32) -> Place {
-        let held = self.hold_position();
-        let height = held.height.height.0;
-        let (ellipsoid, mean_sea_level) = match held.height.kind {
-            HeightKind::MeanSeaLevel => (height.wrapping_add(separation), height),
-            HeightKind::Ellipsoid => (height, height.wrapping_sub(separation)),
-        };
-        Place {
-            latitude: held.latitude.0,
-            longitude: held.longitude.0,
-            ellipsoid,
-            mean_sea_level,
-        }
+        Place::of(self.hold_position(), separation)
     }
 
     /// Whether the altitude is held by hand (`@@Av`).

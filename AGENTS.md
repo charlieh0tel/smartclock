@@ -161,11 +161,14 @@ here, where they go stale unnoticed.
   read, from real data.  A field a filler cannot fill goes out as the
   manual's unknown value, else zero.
 - Exceptions are the owner's to grant: a row of
-  `docs/firmware/gps-field-exceptions.tsv`.  Never add one yourself.
+  `docs/firmware/gps-field-exceptions.tsv` for a field not filled, of
+  `docs/firmware/gps-setting-exceptions.tsv` for a setting not acted
+  on.  Never add one yourself.
 - A filler declares a `Filler` (`smartclock_gps::record::field`): the
   `RecordField`s it fills and the settings it acts on, with a test
   that holds it to `IMAGE_USES`, the exceptions and what a fill
-  changes.  A new part of a `Record` gets a `RecordField`.
+  changes, and to `IMAGE_SETS`: each setting acted on or excused,
+  once.  A new part of a `Record` gets a `RecordField`.
 - A command is one of three classes, no exceptions: the engine acts
   (its effect is on bytes the engine builds), the holder acts (the
   value is in `Engine::settings()` with a change event, and a filler

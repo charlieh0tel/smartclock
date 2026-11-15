@@ -17,6 +17,10 @@
 //!
 //! [`Engine::receive`]: crate::engine::Engine::receive
 
+use core::fmt::Debug;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+
 use crate::units::Centimeters;
 use crate::units::Degrees;
 use crate::units::MilliArcSeconds;
@@ -338,8 +342,14 @@ impl Setting {
 }
 
 /// A set of [`Setting`]s.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct SettingSet(u32);
+
+impl Debug for SettingSet {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
+        formatter.debug_set().entries(self.iter()).finish()
+    }
+}
 
 impl SettingSet {
     /// No setting.
@@ -364,7 +374,7 @@ impl SettingSet {
     }
 
     /// The set with all of `other` in it too.
-    pub(super) const fn union(self, other: Self) -> Self {
+    pub(crate) const fn union(self, other: Self) -> Self {
         Self(self.0 | other.0)
     }
 
@@ -372,6 +382,18 @@ impl SettingSet {
     #[must_use]
     pub const fn without(self, other: Self) -> Self {
         Self(self.0 & !other.0)
+    }
+
+    /// Those of it that are in `other` too.
+    pub(crate) const fn common(self, other: Self) -> Self {
+        Self(self.0 & other.0)
+    }
+
+    /// The settings in it, in the order of [`Setting::ALL`].
+    pub fn iter(self) -> impl Iterator<Item = Setting> {
+        Setting::ALL
+            .into_iter()
+            .filter(move |setting| self.contains(*setting))
     }
 
     /// Whether `setting` is in it.

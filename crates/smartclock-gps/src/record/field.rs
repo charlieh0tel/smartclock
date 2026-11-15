@@ -26,8 +26,10 @@
 //! engine builds leaves its value in the engine's
 //! [`Settings`](crate::engine::settings::Settings) for the engine's
 //! holder to apply.  [`IMAGE_SETS`], made the same way, is those the
-//! images set, and [`Filler::unacted`] those of them a filler leaves
-//! alone.
+//! images set, and a filler's test holds that it acts on each or is
+//! excused it by a row of `docs/firmware/gps-setting-exceptions.tsv`,
+//! and on no other: [`Filler::unacted`] and [`Filler::needless`] are
+//! both empty.
 
 use crate::engine::settings::Setting;
 use crate::engine::settings::SettingSet;
@@ -532,9 +534,11 @@ pub const IMAGE_SETS: SettingSet = SettingSet::of(&[
 ]);
 // end gps_fields.py
 
-/// The first line of the exceptions table that is not a comment: its
-/// columns.
+/// The first line of the field exceptions table that is not a
+/// comment: its columns.
 const EXCEPTION_COLUMNS: &str = "filler\tfield\treason";
+/// And that of the setting exceptions table.
+const SETTING_EXCEPTION_COLUMNS: &str = "filler\tsetting\treason";
 /// What a comment line of an exceptions table starts with.
 const EXCEPTION_COMMENT: char = '#';
 /// What parts the cells of a row of one.
@@ -576,10 +580,19 @@ fn excused(name: &str, exceptions: &str) -> FieldSet {
         .fold(FieldSet::EMPTY, FieldSet::with)
 }
 
+/// The settings the text of `docs/firmware/gps-setting-exceptions.tsv`
+/// excuses the filler called `name`: a row for each, of the filler, the
+/// setting's [`Setting::name`] and the reason.
+fn excused_settings(name: &str, exceptions: &str) -> SettingSet {
+    excused_names(name, exceptions, SETTING_EXCEPTION_COLUMNS)
+        .filter_map(Setting::of_name)
+        .fold(SettingSet::EMPTY, SettingSet::with)
+}
+
 /// What fills records, as it declares itself.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Filler {
-    /// What the exceptions table calls it.
+    /// What the exceptions tables call it.
     pub name: &'static str,
     /// The fields it fills from what it knows.
     pub fills: FieldSet,
@@ -614,12 +627,27 @@ impl Filler {
         self.fills.without(shown)
     }
 
-    /// The settings the images set that it does not act on.  A
-    /// filler's test says what this is, so that it changes only when
-    /// someone means it to.
+    /// The settings the images set that it does not act on and
+    /// `exceptions`, the text of
+    /// `docs/firmware/gps-setting-exceptions.tsv`, does not excuse it.
+    /// A filler's test fails unless this is empty.
     #[must_use]
-    pub const fn unacted(&self) -> SettingSet {
-        IMAGE_SETS.without(self.acts)
+    pub fn unacted(&self, exceptions: &str) -> SettingSet {
+        IMAGE_SETS
+            .without(self.acts)
+            .without(excused_settings(self.name, exceptions))
+    }
+
+    /// The settings it acts on or `exceptions` excuses it that need not
+    /// be: one no image sets, and one both acted on and excused, a row
+    /// gone stale.  A filler's test fails unless this is empty.
+    #[must_use]
+    pub fn needless(&self, exceptions: &str) -> SettingSet {
+        let excused = excused_settings(self.name, exceptions);
+        self.acts
+            .union(excused)
+            .without(IMAGE_SETS)
+            .union(self.acts.common(excused))
     }
 }
 
@@ -627,10 +655,12 @@ impl Filler {
 mod tests {
     use super::FieldSet;
     use super::Filler;
+    use super::IMAGE_SETS;
     use super::IMAGE_USES;
     use super::RecordField;
     use super::changed;
     use super::excused;
+    use crate::engine::settings::Setting;
     use crate::engine::settings::SettingSet;
     use crate::record::Fix;
     use crate::record::Health;
@@ -646,6 +676,8 @@ mod tests {
 
     /// The exceptions table, from the crate's directory.
     const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
+    /// And the settings'.
+    const SETTING_EXCEPTIONS: &str = "../../docs/firmware/gps-setting-exceptions.tsv";
     /// The cells of a row of an exceptions table: the filler, what it
     /// is excused and the reason.
     const EXCEPTION_CELLS: usize = 3;
@@ -731,6 +763,71 @@ mod tests {
         assert_eq!(none.undeclared(&Record::EMPTY, &record), shown);
         assert!(all.undeclared(&Record::EMPTY, &record).is_empty());
         assert_eq!(all.unshown(shown), all.fills.without(shown));
+    }
+
+    /// A filler is held to the settings the images set: it acts on
+    /// each or the table excuses it, and neither on one for nothing.
+    #[test]
+    fn a_filler_is_held_to_the_settings() {
+        let hold = SettingSet::of(&[Setting::PositionHold]);
+        let filler = Filler {
+            name: "one",
+            fills: FieldSet::EMPTY,
+            acts: hold,
+        };
+        assert_eq!(filler.unacted(""), IMAGE_SETS.without(hold));
+        assert!(filler.needless("").is_empty());
+
+        let rest = IMAGE_SETS
+            .without(hold)
+            .iter()
+            .fold(std::string::String::new(), |table, setting| {
+                table + "one\t" + setting.name() + "\tfor the test\n"
+            });
+        let table = std::string::String::from("# a comment\nfiller\tsetting\treason\n") + &rest;
+        assert!(filler.unacted(&table).is_empty());
+        assert!(filler.needless(&table).is_empty());
+        // Another filler's rows are not this one's.
+        let other = Filler {
+            name: "other",
+            ..filler
+        };
+        assert_eq!(other.unacted(&table), IMAGE_SETS.without(hold));
+
+        // A row for a setting acted on, and one for a setting no image
+        // sets, are both needless, as acting on such a one is.
+        let stale = table.clone() + "one\tposition_hold\tstale\n";
+        assert_eq!(filler.needless(&stale), hold);
+        assert!(!IMAGE_SETS.contains(Setting::MaskAngle));
+        let unset = SettingSet::of(&[Setting::MaskAngle]);
+        assert_eq!(filler.needless(&(table + "one\tmask_angle\t-\n")), unset);
+        let keen = Filler {
+            acts: IMAGE_SETS.union(unset),
+            ..filler
+        };
+        assert_eq!(keen.needless(""), unset);
+    }
+
+    /// The setting exceptions table as it is: every row names a
+    /// setting the images set, once for its filler, and gives a reason.
+    #[test]
+    fn the_setting_exceptions_name_settings() {
+        let text =
+            fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join(SETTING_EXCEPTIONS))
+                .expect("the setting exceptions table");
+        assert_eq!(heading(&text), Some(super::SETTING_EXCEPTION_COLUMNS));
+        let mut seen = BTreeSet::new();
+        for cells in super::exception_rows(&text, super::SETTING_EXCEPTION_COLUMNS) {
+            let cells: Vec<&str> = cells.collect();
+            assert_eq!(cells.len(), EXCEPTION_CELLS, "{cells:?}");
+            let setting = Setting::of_name(cells[1]);
+            assert!(
+                setting.is_some_and(|setting| IMAGE_SETS.contains(setting)),
+                "{cells:?}"
+            );
+            assert!(!cells[2].is_empty(), "{cells:?}");
+            assert!(seen.insert((cells[0], cells[1])), "twice: {cells:?}");
+        }
     }
 
     /// The exceptions table as it is: every row names a field.

@@ -1301,9 +1301,11 @@ struct Announced {
 }
 
 /// What an [`Assembler`] fills of a record.  It acts on none of an
-/// engine's settings, those the images set
-/// ([`IMAGE_SETS`](smartclock_gps::record::field::IMAGE_SETS))
-/// among them: it reads a receiver and sets nothing in it.
+/// engine's settings: it reads a receiver and sends it nothing, and
+/// each of those the images set
+/// ([`IMAGE_SETS`](smartclock_gps::record::field::IMAGE_SETS)) would
+/// be a configuration sent.  `docs/firmware/gps-setting-exceptions.tsv`
+/// excuses it each.
 pub const FILLER: Filler = Filler {
     name: "u-blox",
     fills: FieldSet::of(&[

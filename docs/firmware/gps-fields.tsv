@@ -200,7 +200,7 @@ Ce	response	rate correction	11	2	6	7	-	VP	90	z3805a-3543b,z3801a-3543,58503a-370
 Ce	response	issue of data	13	1	6	7	-	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.corrections.satellites.ephemeris_issue	-	Corrections	-	-
 Cg	command	mode	4	1	1	-	-	VP	119	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	engine	the manual gives the length as 7; the frame is 8
 Cg	response	mode	4	1	1	-	-	VP	119	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	control	state	-	-	-	-
-Ci	command	format	4	1	1	-	-	VP	121	z3805a-3543b,z3801a-3543	-	-	honored:1 and 2 end the binary;held:output_format	-	-	engine;holder	no answer
+Ci	command	format	4	1	1	-	-	VP	121	z3805a-3543b,z3801a-3543	-	-	held:output_format	-	-	holder	no answer
 Cj	response	first line end	4	2	1	-	-	VP	123	-	-	-	fixed	-	-	-	-
 Cj	response	copyright line	6	33	1	-	-	VP	123	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	identity	-	-	-	-
 Cj	response	line end	39	2	9	28	-	VP	123	-	-	-	fixed	-	-	-	-

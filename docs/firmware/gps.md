@@ -1224,11 +1224,11 @@ specification; in short:
   each second their data differs from what was last sent (VP pp. 77
   and 79).  `@@Bj` is polled only (VP p. 94), so its mode asks
   nothing more.  `@@Ci` 1 and 2 switch the port to NMEA and to Loran
-  (VP pp. 120 and 121), neither of which the model speaks: it then
-  sends nothing and takes no command until its holder calls
-  `Engine::return_to_binary`, and says so in `output_format`.  The
-  images send `@@Ci` 0, which the manual does not define and the
-  model stays binary for.
+  (VP pp. 120 and 121), neither of which the model speaks: it keeps
+  the value in `output_format`, returns the change event and goes on
+  in binary, sending and taking as before.  Another format is the
+  holder's to speak or to pass over.  The images send `@@Ci` 0, which
+  the manual does not define and the model keeps nothing for.
 - **A satellite `@@Am` ignores is `@@Bb`'s removed** (VP p. 75), and
   **a fix a record gives as propagated** sets the receiver status's
   position propagate bit with a DOP of zero (VP pp. 70, 72 and 73; UT
@@ -1325,7 +1325,7 @@ every command field, with who acts on it.
 | `@@Bn` | not used | all four | engine | honored: not used, nothing to do |
 | `@@Bo` | mode | none | engine | honored |
 | `@@Cg` | mode | all four | engine | honored |
-| `@@Ci` | format | z3805a-3543b, z3801a-3543 | engine, holder | honored: 1 and 2 end the binary; `output_format` |
+| `@@Ci` | format | z3805a-3543b, z3801a-3543 | holder | `output_format` |
 | `@@Ea` | rate | 58503a-3704, z3817a-3752 | engine | honored |
 | `@@Ek` | rate | 58503a-3704, z3817a-3752 | engine | honored |
 | `@@En` | rate | 58503a-3704, z3817a-3752 | engine | honored |

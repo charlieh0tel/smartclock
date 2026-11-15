@@ -1153,9 +1153,11 @@ stands in for one.
   by hand, the xDOP hysteresis and HDOP threshold, almanac update,
   the atmospheric corrections, the fix algorithm, the epoch offset,
   the correction thresholds and the port's format.  `@@Ci` 1 and 2
-  the model does act on, in the one way it can: it speaks neither
-  NMEA nor Loran, so it falls silent until its holder calls
-  `Engine::return_to_binary`.  `Engine::receive` returns what its commands did: a reset,
+  are held and told like the rest and change nothing in the model,
+  which speaks neither NMEA nor Loran and goes on in binary; an
+  earlier revision had it fall silent, which took a call of its
+  holder's to undo and gave nothing a holder could not do with the
+  event.  `Engine::receive` returns what its commands did: a reset,
   which is `@@Cf` (VP pp. 116 and 117), and the settings that
   changed, a command that gives a setting the value it has changing
   none.  They are returned, not called back, so the model holds no

@@ -1717,10 +1717,10 @@ fn a_table_asked_for_at_each_change_is_sent_when_it_changes() {
     }
 }
 
-/// VP pp. 120 and 121: `@@Ci` is not answered; its formats 1 and 2 end
-/// the binary, in and out, and no other value does.
+/// VP pp. 120 and 121: `@@Ci` is not answered; its formats 1 and 2 are
+/// kept and told, and no other value is.  The engine goes on in binary.
 #[test]
-fn a_switched_format_ends_the_binary() {
+fn a_switched_format_is_held_and_told() {
     let record = full();
     for (format, switched) in [(1, OutputFormat::Nmea), (2, OutputFormat::Loran)] {
         let mut engine = fixing(&VP_EIGHT);
@@ -1733,13 +1733,10 @@ fn a_switched_format_ends_the_binary() {
         assert_eq!(engine.settings().output_format, switched);
         let mut sent = Sent::default();
         engine.second(&record, NOW, &mut sent);
-        engine.receive(&command(CJ_RECEIVER_ID, &[]), &record, NOW, &mut sent);
-        assert_eq!(sent.0, Vec::<Vec<u8>>::new());
-
-        engine.return_to_binary();
-        assert_eq!(engine.settings().output_format, OutputFormat::Binary);
-        engine.second(&record, NOW, &mut sent);
         assert_eq!(sent.0.len(), 1);
+        engine.receive(&command(CJ_RECEIVER_ID, &[]), &record, NOW, &mut sent);
+        assert_eq!(sent.0.len(), 2);
+        assert_eq!(engine.settings().output_format, switched);
     }
 }
 

@@ -148,7 +148,8 @@ pub struct CorrectionThresholds {
 /// What an engine's port speaks (`@@Ci`, pp. 120 and 121).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OutputFormat {
-    /// Motorola binary, which is all the engine speaks.
+    /// Motorola binary, which is all an [`Engine`](crate::engine::Engine)
+    /// speaks.
     Binary,
     /// NMEA 0183, at 4800 baud.
     Nmea,
@@ -215,10 +216,9 @@ pub struct Settings {
     pub hdop_threshold: Tenths,
     /// How long a channel's code phase is filtered before use (`@@AD`).
     pub correction_thresholds: CorrectionThresholds,
-    /// What the port speaks (`@@Ci`).  Set to other than
-    /// [`Binary`](OutputFormat::Binary), the engine sends nothing and
-    /// takes no command until
-    /// [`Engine::return_to_binary`](crate::engine::Engine::return_to_binary).
+    /// What the port was last told to speak (`@@Ci`).  The engine
+    /// speaks binary whatever this is: another format is its holder's
+    /// to speak, or to pass over.
     pub output_format: OutputFormat,
 }
 

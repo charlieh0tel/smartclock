@@ -43,9 +43,7 @@
 //! engine builds, and the engine does it: the time and date, the mask
 //! angle, the ignore list, the position held or to start from, which
 //! is reported while the record has none (VP pp. 17 and 25), a message
-//! sent again at each change, and `@@Ci` (VP p. 120), after whose
-//! formats 1 and 2 the engine is silent and deaf until
-//! [`Engine::return_to_binary`].  Or it changes how a receiver tracks,
+//! sent again at each change.  Or it changes how a receiver tracks,
 //! fixes or puts out its pulse, which is the record's to show: the
 //! engine keeps the value, answers with it and tells its holder, and
 //! tracks and fixes as the record says.  Manual satellite selection
@@ -848,19 +846,6 @@ impl Engine {
         }
     }
 
-    /// Whether the port has been switched from binary (`@@Ci`, VP
-    /// p. 120), in which the engine neither sends nor takes anything.
-    fn silent(&self) -> bool {
-        self.state.format != OutputFormat::Binary
-    }
-
-    /// Puts the port back to binary, as the format `@@Ci` switched it
-    /// to has its own command to: the holder's to call, the engine
-    /// speaking no other format to be told in.
-    pub const fn return_to_binary(&mut self) {
-        self.state.format = OutputFormat::Binary;
-    }
-
     /// When the next answer that is waiting is due, by the caller's
     /// clock.  `None` when none waits.
     #[must_use]
@@ -876,9 +861,6 @@ impl Engine {
     pub fn poll<O: Output + ?Sized>(&mut self, now: Milliseconds<u64>, out: &mut O) {
         let waiting = self.deferred;
         self.deferred = [None; DEFERRED];
-        if self.silent() {
-            return;
-        }
         let mut kept = 0;
         for answer in waiting.into_iter().flatten() {
             if answer.due <= now {
@@ -908,9 +890,6 @@ impl Engine {
             _ => self.clock + Seconds(1),
         };
         self.heard = told;
-        if self.silent() {
-            return;
-        }
 
         let offset = self.wire_offset(record);
         let stepped = self.offset.is_some_and(|before| before != offset);
@@ -967,7 +946,7 @@ impl Engine {
         bytes
             .iter()
             .fold(Events::NONE, |events, byte| match self.framer.push(*byte) {
-                Some(command) if !self.silent() && self.takes(command.id) => {
+                Some(command) if self.takes(command.id) => {
                     let before = self.settings();
                     self.answer(command.id, command.data(), record, now, out);
                     events.and(Events::of(
@@ -1120,7 +1099,8 @@ impl Engine {
             self.state.almanac_updates = data == [TABLE_EACH_CHANGE];
             self.send_almanac_status(record, out);
         } else if id == CI_IO_FORMAT {
-            // VP p. 121: no answer, and no format but these two.
+            // VP p. 121: no answer, and no format but these two.  The
+            // engine goes on in binary, the one format it speaks.
             match data {
                 [FORMAT_NMEA] => self.state.format = OutputFormat::Nmea,
                 [FORMAT_LORAN] => self.state.format = OutputFormat::Loran,

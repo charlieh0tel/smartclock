@@ -34,13 +34,18 @@ use smartclock_gps::record::Ecef;
 use smartclock_gps::record::Fix;
 use smartclock_gps::record::GpsTime;
 use smartclock_gps::record::Position;
+use smartclock_gps::record::Raim;
+use smartclock_gps::record::RaimAbility;
+use smartclock_gps::record::RaimSolution;
 use smartclock_gps::record::Record;
 use smartclock_gps::record::Satellite;
+use smartclock_gps::record::SelfTest;
 use smartclock_gps::record::Timing;
 use smartclock_gps::record::field::FieldSet;
 use smartclock_gps::record::field::Filler;
 use smartclock_gps::record::field::IMAGE_SETS;
 use smartclock_gps::record::field::RecordField;
+use smartclock_gps::record::field::UNFILLED;
 use smartclock_gps::record::field::changed;
 use smartclock_gps::time::DateTime;
 use smartclock_gps::time::GpsSeconds;
@@ -104,6 +109,12 @@ const DOPS: Dops = Dops {
 const SIGMA: u16 = 12;
 /// The almanac's reference time, in the units `@@Bd` carries.
 const TIME_OF_ALMANAC: u8 = 144;
+/// What Time RAIM makes of the sky with the antenna on: eight
+/// satellites are enough to isolate a bad one under any alarm limit
+/// (VP p. 106), and none of them is bad.
+const RAIM: Raim = Raim::new(RaimSolution::Ok, RaimAbility::Isolation);
+/// And with it off, when no satellite is heard (VP pp. 105 and 106).
+const RAIM_WITHOUT_ANTENNA: Raim = Raim::new(RaimSolution::Unknown, RaimAbility::Neither);
 
 /// What a [`Scene`] fills of a record, and that it acts on no setting.
 const SCENE: Filler = Filler {
@@ -134,19 +145,13 @@ const SCENE: Filler = Filler {
         RecordField::SatelliteDoppler,
         RecordField::Almanac,
         RecordField::Antenna,
+        RecordField::SelfTest,
         RecordField::Ecef,
+        RecordField::RaimSolution,
+        RecordField::RaimAbility,
     ]),
     acts: SettingSet::EMPTY,
 };
-/// What the images use that a scene does not fill, and no exception
-/// excuses: what a self-test would find, a scene having no hardware to
-/// fail, and the Time RAIM result, which the engine then works out
-/// from the satellites tracked and its alarm limit.
-const SCENE_UNFILLED: FieldSet = FieldSet::of(&[
-    RecordField::SelfTest,
-    RecordField::RaimSolution,
-    RecordField::RaimAbility,
-]);
 /// The exceptions table, from the crate's directory.
 const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
 /// The vector whose scene is held to [`SCENE`]: one with a leap second
@@ -303,6 +308,8 @@ impl Scene {
         record.position = Some(position);
         record.dops = Some(DOPS);
         record.timing = Some(timing);
+        // A scene's engine has no part that fails.
+        record.self_test = SelfTest::PASS;
         record.derived.ecef = Some(ecef(position));
         let mut held = PrnSet::EMPTY;
         for (id, elevation, azimuth, signal, doppler) in SKY {
@@ -335,10 +342,10 @@ impl Scene {
             subsecond: Nanoseconds(0),
         });
         record.utc_offset = Some(offset);
-        record.antenna = if antenna {
-            Antenna::Connected
+        (record.antenna, record.derived.raim) = if antenna {
+            (Antenna::Connected, Some(RAIM))
         } else {
-            Antenna::Open
+            (Antenna::Open, Some(RAIM_WITHOUT_ANTENNA))
         };
         record
     }
@@ -438,14 +445,15 @@ fn vectors() -> Vec<PathBuf> {
     paths
 }
 
-/// A scene fills what it declares and nothing else, and of what the
-/// images use leaves only [`SCENE_UNFILLED`].  It acts on no setting:
-/// a scene is written, not steered.
+/// A scene fills what it declares and nothing else, and all the
+/// images use.  It acts on no setting: a scene is written, not
+/// steered.
 #[test]
 fn a_scene_fills_what_it_declares() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let exceptions = fs::read_to_string(root.join(EXCEPTIONS)).expect("the exceptions table");
-    assert_eq!(SCENE.shortfall(&exceptions), SCENE_UNFILLED);
+    let shortfall = SCENE.shortfall(&exceptions);
+    assert!(shortfall.is_empty(), "shortfall: {shortfall:?}");
     assert_eq!(SCENE.unacted(), IMAGE_SETS);
 
     let text =
@@ -459,9 +467,9 @@ fn a_scene_fills_what_it_declares() {
         head.fields.insert(key.to_owned(), value.to_owned());
     }
     let record = Scene::new(&head).record(1, true);
-    let undeclared = SCENE.undeclared(&Record::EMPTY, &record);
+    let undeclared = SCENE.undeclared(&UNFILLED, &record);
     assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
-    let unshown = SCENE.unshown(changed(&Record::EMPTY, &record));
+    let unshown = SCENE.unshown(changed(&UNFILLED, &record));
     assert!(unshown.is_empty(), "unshown: {unshown:?}");
 }
 

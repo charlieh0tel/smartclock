@@ -73,13 +73,23 @@
 //! - **Satellites** are `NAV-SAT`'s GPS ones with a known place in the
 //!   sky, those used in the fix first, and the lowest left out if there
 //!   are more than a record holds.
+//! - **Time RAIM** is `TIM-TP`'s `raim` (p. 433), as the last one
+//!   before the epoch's end gave it, and none from a receiver that
+//!   sends no `TIM-TP` or has no information.  The document says only
+//!   whether the receiver's (T)RAIM is active, so what a record makes
+//!   of it is this crate's reading: active with the pulse locked to
+//!   the satellites, the solution is good and a bad satellite can be
+//!   detected; active and not locked, the solution is not known; not
+//!   active, the solution is not known and nothing can be detected.
+//!   No satellite is given as isolated, and isolation is never
+//!   claimed.
+//! - **The self-test** passes: no message here tells of a part that
+//!   fails, and the receiver that sent the epoch runs.
 //! - **Not filled.**  [`Record::timing`]: `TIM-TP`'s `qErr` is decoded
 //!   ([`TimTp`]), but the document gives neither its sign nor what
 //!   multiple of sigma `tAcc` is.  [`Record::almanac`], and a
 //!   satellite's Doppler and time error: no message here carries them.
-//!   The Time RAIM result: a u-blox receiver has none to report.
-//!   [`Record::self_test`]: no message here tells what a self-test
-//!   would find.  [`Fix::Propagated`] is never given: a fix by dead
+//!   [`Fix::Propagated`] is never given: a fix by dead
 //!   reckoning alone is no fix here.  A satellite's flags and URA,
 //!   the age of differential data, the magnetic variation, the
 //!   velocity along each axis and the inside of the solution: not
@@ -106,9 +116,13 @@ use smartclock_gps::record::Fix;
 use smartclock_gps::record::GpsTime;
 use smartclock_gps::record::Health;
 use smartclock_gps::record::Position;
+use smartclock_gps::record::Raim;
+use smartclock_gps::record::RaimAbility;
+use smartclock_gps::record::RaimSolution;
 use smartclock_gps::record::Record;
 use smartclock_gps::record::Satellite;
 use smartclock_gps::record::Satellites;
+use smartclock_gps::record::SelfTest;
 use smartclock_gps::record::Tracking;
 use smartclock_gps::record::Velocity;
 use smartclock_gps::record::field::FieldSet;
@@ -1113,8 +1127,13 @@ impl MonHw {
     }
 }
 
-/// `TIM-TP`'s `flags` bits (p. 433).
+/// `TIM-TP`'s `flags` bits (p. 433), and the values of its `raim`,
+/// in bits 2 and 3: 0 is no information.
 const TP_UTC_BASE: u8 = 1 << 0;
+const TP_RAIM_SHIFT: u8 = 2;
+const TP_RAIM: u8 = 0b11;
+const TP_RAIM_NOT_ACTIVE: u8 = 1;
+const TP_RAIM_ACTIVE: u8 = 2;
 const TP_ERROR_INVALID: u8 = 1 << 4;
 const TP_NOT_LOCKED: u8 = 1 << 5;
 
@@ -1140,6 +1159,9 @@ pub struct TimTp {
     /// Whether the pulse is locked to the satellites: `TpNotLocked`
     /// clear.
     pub locked: bool,
+    /// `raim`: whether the receiver's (T)RAIM is active; `None` when
+    /// it has no information.
+    pub raim: Option<bool>,
 }
 
 impl TimTp {
@@ -1151,7 +1173,22 @@ impl TimTp {
             quantization_error: (flags & TP_ERROR_INVALID == 0).then(|| Picoseconds(fields.i32(8))),
             utc_base: flags & TP_UTC_BASE != 0,
             locked: flags & TP_NOT_LOCKED == 0,
+            raim: match (flags >> TP_RAIM_SHIFT) & TP_RAIM {
+                TP_RAIM_NOT_ACTIVE => Some(false),
+                TP_RAIM_ACTIVE => Some(true),
+                _ => None,
+            },
         }
+    }
+
+    /// What a record makes of `raim` ("From messages to a record" in
+    /// the crate's documentation).
+    fn time_raim(&self) -> Option<Raim> {
+        self.raim.map(|active| match (active, self.locked) {
+            (true, true) => Raim::new(RaimSolution::Ok, RaimAbility::Detection),
+            (true, false) => Raim::new(RaimSolution::Unknown, RaimAbility::Detection),
+            (false, _) => Raim::new(RaimSolution::Unknown, RaimAbility::Neither),
+        })
     }
 }
 
@@ -1294,7 +1331,10 @@ pub const FILLER: Filler = Filler {
         RecordField::SatelliteHealth,
         RecordField::SatelliteEphemeris,
         RecordField::Antenna,
+        RecordField::SelfTest,
         RecordField::Ecef,
+        RecordField::RaimSolution,
+        RecordField::RaimAbility,
     ]),
     acts: SettingSet::EMPTY,
 };
@@ -1341,6 +1381,8 @@ struct Assembly {
     epoch: Epoch,
     /// The antenna's feed, as `MON-HW` last gave it.
     antenna: Antenna,
+    /// The Time RAIM result, as `TIM-TP` last gave it.
+    raim: Option<Raim>,
     /// The leap second last announced.
     announced: Option<Announced>,
 }
@@ -1376,6 +1418,7 @@ impl<const N: usize> Assembler<N> {
                 reference,
                 epoch: Epoch::EMPTY,
                 antenna: Antenna::Unknown,
+                raim: None,
                 announced: None,
             },
             errors: 0,
@@ -1395,8 +1438,10 @@ impl Assembly {
     /// record is then in `record`.
     fn take(&mut self, message: &Message<'_>, record: &mut Record) -> bool {
         let Some(time_of_week) = message.epoch() else {
-            if let Message::MonHw(hardware) = message {
-                self.antenna = hardware.antenna;
+            match message {
+                Message::MonHw(hardware) => self.antenna = hardware.antenna,
+                Message::TimTp(pulse) => self.raim = pulse.time_raim(),
+                _ => {}
             }
             return false;
         };
@@ -1432,6 +1477,9 @@ impl Assembly {
         let epoch = mem::replace(&mut self.epoch, Epoch::EMPTY);
         *record = Record::EMPTY;
         record.antenna = self.antenna;
+        // The receiver that sent the epoch runs, and tells of no fault.
+        record.self_test = SelfTest::PASS;
+        record.derived.raim = self.raim;
         record.satellites = epoch.satellites;
         if let Some(solution) = epoch.solution.filter(|solution| solution.fix != Fix::None) {
             record.fix = solution.fix;

@@ -38,12 +38,15 @@ use smartclock_gps::record::Fix;
 use smartclock_gps::record::GpsTime;
 use smartclock_gps::record::Health;
 use smartclock_gps::record::Position;
+use smartclock_gps::record::Raim;
+use smartclock_gps::record::RaimAbility;
+use smartclock_gps::record::RaimSolution;
 use smartclock_gps::record::Record;
+use smartclock_gps::record::SelfTest;
 use smartclock_gps::record::Tracking;
 use smartclock_gps::record::Velocity;
-use smartclock_gps::record::field::FieldSet;
 use smartclock_gps::record::field::IMAGE_SETS;
-use smartclock_gps::record::field::RecordField;
+use smartclock_gps::record::field::UNFILLED;
 use smartclock_gps::record::field::changed;
 use smartclock_gps::source::Presence;
 use smartclock_gps::source::Source;
@@ -294,6 +297,12 @@ fn hw(status: u8) -> [u8; 60] {
 }
 
 /// `TIM-TP` (p. 432).
+/// `TIM-TP`'s `flags` with `raim` not active and active, and with
+/// `TpNotLocked` (p. 433).
+const RAIM_NOT_ACTIVE: u8 = 1 << 2;
+const RAIM_ACTIVE: u8 = 2 << 2;
+const NOT_LOCKED: u8 = 1 << 5;
+
 fn tp(time_of_week: u32, error: i32, week: u16, flags: u8) -> [u8; 16] {
     payload(&[
         (0, &time_of_week.to_le_bytes()),
@@ -1093,11 +1102,49 @@ fn tim_tp_is_decoded() {
     assert_eq!(pulse.quantization_error, Some(Picoseconds(-4_321)));
     assert!(!pulse.utc_base);
     assert!(pulse.locked);
+    assert_eq!(pulse.raim, None);
     let pulse = decode(0b11_0001);
     assert_eq!(pulse.quantization_error, None);
     assert!(pulse.utc_base);
     assert!(!pulse.locked);
     assert_eq!(Message::TimTp(pulse).epoch(), None);
+    assert_eq!(decode(RAIM_NOT_ACTIVE).raim, Some(false));
+    assert_eq!(decode(RAIM_ACTIVE).raim, Some(true));
+    assert_eq!(decode(0b1100).raim, None);
+}
+
+/// A record's Time RAIM result is the last `TIM-TP`'s, read as the
+/// crate's documentation says, and none without one.
+#[test]
+fn time_raim_is_the_last_pulses() {
+    for (flags, raim) in [
+        (0, None),
+        (
+            RAIM_ACTIVE,
+            Some(Raim::new(RaimSolution::Ok, RaimAbility::Detection)),
+        ),
+        (
+            RAIM_ACTIVE | NOT_LOCKED,
+            Some(Raim::new(RaimSolution::Unknown, RaimAbility::Detection)),
+        ),
+        (
+            RAIM_NOT_ACTIVE,
+            Some(Raim::new(RaimSolution::Unknown, RaimAbility::Neither)),
+        ),
+    ] {
+        let bytes = stream(&[
+            (TIM_TP, &tp(NOON, 0, WEEK, RAIM_ACTIVE)),
+            (TIM_TP, &tp(NOON + 1000, 0, WEEK, flags)),
+            (NAV_EOE, &eoe(NOON)),
+        ]);
+        let records = records(&mut Bench::new(), &bytes);
+        let [record] = records[..] else {
+            panic!("{records:?}");
+        };
+        assert_eq!(record.derived.raim, raim);
+    }
+    let records = records(&mut Bench::new(), &stream(&[(NAV_EOE, &eoe(NOON))]));
+    assert_eq!(records[0].derived.raim, None);
 }
 
 #[test]
@@ -1128,24 +1175,16 @@ fn whole_epoch() -> Vec<u8> {
                 ],
             ),
         ),
-        (TIM_TP, &tp(NOON + 1000, -4_321, WEEK, 0)),
+        (TIM_TP, &tp(NOON + 1000, -4_321, WEEK, RAIM_ACTIVE)),
         (NAV_EOE, &eoe(NOON)),
     ])
 }
 
-/// What the images use that [`FILLER`] does not fill, and no exception
-/// excuses: no message here tells what a self-test would find, and a
-/// u-blox receiver reports no Time RAIM result.
-const UNFILLED: FieldSet = FieldSet::of(&[
-    RecordField::SelfTest,
-    RecordField::RaimSolution,
-    RecordField::RaimAbility,
-]);
 /// The exceptions table, from the crate's directory.
 const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
 
 /// The assembler writes what [`FILLER`] declares and nothing else, and
-/// of what the images use leaves only [`UNFILLED`].  It acts on none
+/// all the images use.  It acts on none
 /// of the engine's settings: nothing here configures the receiver from
 /// them.
 #[test]
@@ -1153,16 +1192,17 @@ fn the_filler_fills_what_it_declares() {
     let exceptions =
         std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(EXCEPTIONS))
             .expect("the exceptions table");
-    assert_eq!(FILLER.shortfall(&exceptions), UNFILLED);
+    let shortfall = FILLER.shortfall(&exceptions);
+    assert!(shortfall.is_empty(), "shortfall: {shortfall:?}");
     assert_eq!(FILLER.unacted(), IMAGE_SETS);
 
     let records = records(&mut Bench::new(), &whole_epoch());
     let [record] = records[..] else {
         panic!("{records:?}");
     };
-    let undeclared = FILLER.undeclared(&Record::EMPTY, &record);
+    let undeclared = FILLER.undeclared(&UNFILLED, &record);
     assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
-    let unshown = FILLER.unshown(changed(&Record::EMPTY, &record));
+    let unshown = FILLER.unshown(changed(&UNFILLED, &record));
     assert!(unshown.is_empty(), "unshown: {unshown:?}");
 }
 
@@ -1186,6 +1226,11 @@ fn an_epoch_makes_a_record() {
     assert_eq!(record.satellites.len(), 2);
     assert_eq!(record.almanac, None);
     assert_eq!(record.antenna, Antenna::Connected);
+    assert_eq!(record.self_test, SelfTest::PASS);
+    assert_eq!(
+        record.derived.raim,
+        Some(Raim::new(RaimSolution::Ok, RaimAbility::Detection))
+    );
     assert_eq!(
         record.derived.ecef,
         Some(Ecef {

@@ -338,7 +338,8 @@ MODULES_HAND_HEADER = """\
 # document names it.
 IMAGE_NAMES = {'z3805a-3543b': ('Z3805A', '3543B'), '58503a-3704': ('58503A', '3704'),
                'z3815a-4010': ('Z3815A', '4010'), 'z3801a-3543': ('Z3801A', '3543'),
-               'z3817a-3752': ('Z3817A', '3752')}
+               'z3817a-3752': ('Z3817A', '3752'), 'z3816a-4001': ('Z3816A', '4001'),
+               '58503b-1.01.04': ('58503B', '1.01.04')}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -742,8 +743,224 @@ PORT_Z3817A_3752 = Port(folder='z3817a-3752', base_folder='z3815a-4010', second_
                         corrections=CORRECTIONS_Z3817A, confirmed=frozenset(CORRECTIONS_Z3817A),
                         corrections_text=CORRECTIONS_TEXT_Z3817A, labels_text=LABELS_TEXT_Z3817A,
                         callee_ties=True)
+# The Z3816A 4001's port from the 58503A 3704, the Z3815A 4010 its second
+# base (docs/firmware/z3816a-4001.md, "The base"): the two bare rts
+# pinned where their callers name them; and DUART channel B's driver
+# state, the 58503A's and its installer's, dropped where the SCI's is
+# (docs/firmware/z3816a-4001.md, "The host port").
+PINNED_Z3816A = {
+    ('primary', 0x47fa6): (
+        0x4b98a, 0x46468,
+        "its 2 bytes, an rts, match more than one; pinned to 0x46468, which output_state_done calls (0x464d2), "
+        "as the 58503A's calls 0x47fa6"),
+    ('primary', 0x47fa8): (
+        0x4ba08, 0x4646a,
+        "its 2 bytes, an rts, match more than one; pinned to 0x4646a, which pulse_settings_done calls (0x464c0), "
+        "as the 58503A's calls 0x47fa8"),
+    ('primary', 0x1d3d0): (
+        0x2d49a, 0x2e60e,
+        "its 2 bytes, an rts, match more than one; pinned to 0x2e60e, which the SCI's init stores as its echo "
+        "(0x2efa0), as the 58503A's duart_init stores 0x1d3d0"),
+    ('installer', 0x107674): (
+        0x10813a, 0x1074c2,
+        "its 4 bytes match more than one; pinned to installer::0x1074c2, which installer_scpi_interpret calls "
+        "three times, as the 58503A's calls installer::0x107674"),
+    ('installer', 0x107678): (
+        0x1081d0, 0x1074c6,
+        "its 4 bytes match more than one; pinned to installer::0x1074c6, which installer_scpi_interpret calls "
+        "once, as the 58503A's calls installer::0x107678"),
+}
+DROPPED_Z3816A = {'duartb': 0x1037b2, 'installer_duartb_receive_errors': 0x10aff7}
+LABELS_TEXT_Z3816A = '''.
+#   The functions whose few bytes match at more than one address are
+#   pinned where the Z3816A's callers name them: output_state_program
+#   and pulse_program, bare rts, at 0x46468 and 0x4646a, which
+#   output_state_done and pulse_settings_done call, where image_diff
+#   pairs other rts; duartb_echo_none at 0x2e60e, which the SCI's init
+#   stores as its echo, for 0x2d49a; and installer_scpi_message_done and
+#   installer_scpi_input_closed at installer::0x1074c2 and
+#   installer::0x1074c6, which installer_scpi_interpret calls, where it
+#   pairs installer::0x10813a and installer::0x1081d0.
+#   duartb and installer_duartb_receive_errors are dropped, though
+#   placed: the SCI, not DUART channel B, is the host port, and hand rows
+#   place its driver state, sci at 0x1037ea and installer_sci at
+#   0x10afea, over them.
+'''
+CORRECTIONS_Z3816A = {
+    ('primary', 0x4b6ec): (0x4f710, "%s: :SYSTem:PRINt?'s call (0x3ffd6), where the 58503A's calls "
+                                    "status_screen_print; it picks its snapshot by its first argument, "
+                                    "and image_diff pairs 0x4f720, its last instructions, the 58503A's code"
+                           % 'docs/firmware/z3816a-4001.md'),
+    ('primary', 0x4aad0): (0x4e9d2, "%s: the health monitor's third part, Oven Pwr, in status_screen's table "
+                                    "(0x5246c), as the 58503A's (0x4de3c); it passes bit_is_set 4 (0x4e9d2), "
+                                    "and image_diff pairs 0x4e976, which passes 12, by its callee"
+                           % 'docs/firmware/z3816a-4001.md'),
+    ('primary', 0x4aa74): (0x4e976, "%s: the health monitor's fourth part, OCXO, in status_screen's table "
+                                    "(0x5247a), as the 58503A's (0x4de4c); it passes bit_is_set 12 (0x4e976), "
+                                    "and image_diff pairs 0x4e9d2, which passes 4, by its callee"
+                           % 'docs/firmware/z3816a-4001.md'),
+    ('primary', 0x29246): (0x39480, "%s: the SCPI handlers' 147 calls with their call's input, as the "
+                                    "58503A's; image_diff pairs 0x3943c, port_object's last instructions, "
+                                    "by their bytes" % 'docs/firmware/z3816a-4001.md'),
+    ('installer', 0x108280): (0x108356, "%s: installer_system_init's call (installer::0x100c84), where the "
+                                        "58503A's calls installer_parameter_record_read (installer::0x100888); "
+                                        "its defaults, before it at installer::0x10834e, are what image_diff "
+                                        "pairs, as the Z3815A 4010's" % 'docs/firmware/z3816a-4001.md'),
+    ('primary', 0x238b0): (0x33ab6, "%s: pps_monitors_reset's first call (0x33fc2), as the 58503A's first "
+                                    "call (0x23dc2); image_diff pairs timecode_init (0x24070), which clears "
+                                    "five bytes as the 58503A's does" % 'docs/firmware/z3816a-4001.md'),
+    ('primary', 0x23a3c): (0x33c36, "%s: pps_monitors_reset's second call (0x33fc6), as the 58503A's second; "
+                                    "image_diff pairs 0x2407c, inside timecode_init, which nothing calls"
+                           % 'docs/firmware/z3816a-4001.md'),
+    ('primary', 0x1eb22): (0x2dd64, "%s: primary_reset's call (0x24aa2), as the 58503A's primary_reset calls "
+                                    "duart_early_init (0x14958); image_diff pairs it with the boot code's copy, "
+                                    "boot_duart_early_init, the same bytes, which this image's boot code has not"
+                           % 'docs/firmware/z3816a-4001.md'),
+}
+CORRECTIONS_TEXT_Z3816A = '''#   docs/firmware/z3816a-4001.md corrects eight pairings and carries them
+#   under their names: status_screen_print is 0x4f710, which
+#   :SYSTem:PRINt? calls where the 58503A's calls the function
+#   (image_diff pairs 0x4f720, its last instructions, which are the
+#   58503A's code); bit_4_set and bit_12_set, which image_diff swaps
+#   by their callee, are 0x4e9d2 and 0x4e976, by the bit each passes and
+#   its place in status_screen's health table;
+#   installer_parameter_record_read is installer::0x108356, which
+#   installer_system_init calls, where image_diff pairs its defaults,
+#   8 bytes before it, as for the Z3815A 4010; scpi_input_source is
+#   0x39480, which the SCPI handlers call, where image_diff pairs
+#   0x3943c, port_object's last instructions, by their bytes; and
+#   gps_pps_monitor_reset and internal_pps_monitor_reset are 0x33ab6 and
+#   0x33c36, which pps_monitors_reset calls, where image_diff pairs
+#   timecode_init, 0x24070, which clears five bytes as the first does,
+#   and 0x2407c inside it; and duart_early_init is 0x2dd64, which
+#   primary_reset calls, where image_diff pairs the boot code's copy,
+#   boot_duart_early_init, which this image's boot code has not, as for
+#   the Z3815A 4010.
+#   installer_duartb_baud_from_settings, whose bytes image_diff finds at
+#   installer::0x103ae6, has no row: they are a switch inside
+#   installer_sci_reconfigure, which runs into them; nor has
+#   installer_duarta_drain, whose one branch it finds at
+#   installer::0x103d80, inside installer_console_write_polled, to its
+#   loop: this image's installer reads nothing from DUART channel A, as
+#   the Z3815A 4010's.
+'''
+# installer_duartb_baud_from_settings' bytes are a switch inside
+# installer_sci_reconfigure (installer::0x103a6c), which runs into them;
+# installer_duarta_drain's, its one branch, a branch inside
+# installer_console_write_polled to its loop, as in the Z3815A 4010
+DROPPED_FUNCTIONS_Z3816A = {('installer', 0x1030b6): 0x103ae6, ('installer', 0x103a14): 0x103d80}
+NOT_CODE_Z3816A = frozenset({('primary', 0x581b4), ('primary', 0x581b6)})
+NOT_CODE_TEXT_Z3816A = '''  Nor are the
+#   words at 0x581b4 and 0x581b6, before psos_config_defaults, which the
+#   NV descriptors point to, though image_diff finds them new.'''
+PORT_Z3816A_4001 = Port(folder='z3816a-4001', base_folder='58503a-3704', second_base_folder='z3815a-4010',
+                        pinned=PINNED_Z3816A, corrections=CORRECTIONS_Z3816A,
+                        confirmed=frozenset(CORRECTIONS_Z3816A), corrections_text=CORRECTIONS_TEXT_Z3816A,
+                        dropped_functions=DROPPED_FUNCTIONS_Z3816A, dropped=DROPPED_Z3816A, labels_text=LABELS_TEXT_Z3816A, not_code=NOT_CODE_Z3816A,
+                        not_code_text=NOT_CODE_TEXT_Z3816A)
+# The 58503B 1.01.04's port from the Z3817A 3752, its Oncore code the
+# Z3816A 4001's where the Z3817A has none, whose matches carry more of
+# what the Z3817A's find new than the 58503A 3704's
+# (docs/firmware/58503b-1.01.04.md, "The base").
+# functions whose few bytes match at more than one address, pinned where
+# the 58503B's callers name them, as PINNED_Z3817A
+PINNED_58503B = {
+    ('primary', 0x47ca2): (
+        0x47a8a, 0x4d124,
+        "its 2 bytes, an rts, match more than one; pinned to 0x4d124, which output_state_done calls (0x4d18e), "
+        "as the Z3817A's calls 0x47ca2"),
+    ('primary', 0x47ca4): (
+        0x47ad6, 0x4d126,
+        "its 2 bytes, an rts, match more than one; pinned to 0x4d126, which pulse_settings_done calls (0x4d17c), "
+        "as the Z3817A's calls 0x47ca4"),
+    ('primary', 0x2e6fe): (
+        0x2da92, 0x2dc38,
+        "its 2 bytes, an rts, match more than one; pinned to 0x2dc38, which the SCI's set-up stores as its echo "
+        "(0x2e5e0), as the Z3817A's sci_init stores 0x2e6fe; 0x2da92 is hdac_write's last instruction"),
+}
+LABELS_TEXT_58503B = '''.
+#   The functions whose few bytes match at more than one address are
+#   pinned where the 58503B's callers name them: output_state_program
+#   and pulse_program, bare rts, at 0x4d124 and 0x4d126, which
+#   output_state_done and pulse_settings_done call; and sci_echo_none
+#   at 0x2dc38, which the SCI's set-up stores as its echo, where
+#   image_diff pairs hdac_write's last rts.
+#   nv_records_lost is dropped, though placed by its references, at
+#   0x1011a2: that is the self-test record's eeprom field, which
+#   nv_restore sets (0x42af4) and selftest_eeprom reads, where the
+#   Z3817A keeps a word of its own.  So is duart_shadow, at 0x103c94:
+#   this image has no DUART, nothing refers to 0x103c94 to 0x103c97,
+#   and 0x103c98, where its matches' references fall, is acia_control,
+#   the ACIA's control register's shadow, before acia_ring.
+#   duartb_echo_none and n3_lock_offset_nothing, bare rts, are dropped,
+#   though matched identical, at 0x2d4f2 and 0x4d194: each is another
+#   routine's return, acia_isr's and output_state_done's, this image
+#   having no DUART and no N3 lock to take them, and nothing calls
+#   either; so is fit_evaluate_latest,
+#   an rts the Z3817A's matches pair identical with 0x46c1c, the end of
+#   the routine before it: fit_linear and its kin call 0x46c1e;
+#   lamp_test_command, matched relocated at 0x28fac, the last three
+#   instructions of 0x28fa6, the check selftest_print_failure's table
+#   names "DISP" (0x288e4), which flashes the latch first;
+#   gps_status_alternate, moveq #0, move.b and rts, at 0x4fc10, the last
+#   three instructions of satellite_track_class, which branches to them,
+#   and which nothing calls; and gps_restart, a call and rts, matched
+#   relocated at 0x52ef2, gps_link_reset's last two instructions, its
+#   call of request_ring_clear, which nothing calls: this image has no
+#   timeref_switch to call it.
+#   selftest_table is dropped at 0x2866e, where the Z3817A's eleven
+#   entries' references place it: this image's has the Z3816A 4001's
+#   fourteen, from 0x28662, a hand row.
+'''
+# labels the rules place that are dropped all the same: name to the
+# 58503B address the rules give, which the header explains
+DROPPED_58503B = {'nv_records_lost': 0x1011a2, 'duart_shadow': 0x103c94, 'selftest_table': 0x2866e}
+# functions matched at another routine's last instructions, with no
+# counterpart: the Z3817A's address to the 58503B's image_diff gives
+DROPPED_FUNCTIONS_58503B = {('primary', 0x2d1a8): 0x2d4f2, ('primary', 0x4d6c8): 0x4d194,
+                            ('primary', 0x46ec4): 0x46c1c, ('primary', 0x28baa): 0x28fac,
+                            ('primary', 0x4fa06): 0x4fc10, ('primary', 0x52ab6): 0x52ef2}
+# the pairings docs/firmware/58503b-1.01.04.md corrects, each confirmed by
+# a caller's call, or the I/O table's entry, where the Z3817A's names the
+# base function
+CORRECTIONS_58503B = {
+    ('primary', 0x2f0b8): (0x2e5f6, "%s: the I/O table's entry for device 0's control (0x5c060), where the "
+                                    "Z3817A's names sci_reconfigure (0x592a4); this image's opens a frame for "
+                                    "the status register it raises at its end, and image_diff pairs the code "
+                                    "after its link, 0x2e5fa"
+                           % 'docs/firmware/58503b-1.01.04.md'),
+    ('primary', 0x230c2): (0x230c2, "%s: scpi_task_run's call for :SYSTem:LANGuage (0x38dd8), where the Z3817A's "
+                                    "calls enter_installer; this image's deletes fpnl and blanks the display before "
+                                    "trap #11, as the 58503A's does, and image_diff pairs the Z3817A's trap #11 "
+                                    "alone with its last two instructions, 0x230ee, which nothing calls"
+                           % 'docs/firmware/58503b-1.01.04.md'),
+    ('primary', 0x2e67c): (0x2dba0, "%s: efc_write_dithered's call (0x32d28), where the Z3817A's calls efc_write; "
+                                    "this image's pulses PE7 and reads cs7_window where the Z3817A's clears its "
+                                    "strobe, and image_diff pairs 0x2dc20, a transfer without one"
+                           % 'docs/firmware/58503b-1.01.04.md'),
+    ('primary', 0x2e6e6): (0x2dc20, "%s: the transfer after qspi_fpga_word_write's, the Z3816A 4001's "
+                                    "qspi_fpga_byte_write's instructions (image_diff, relocated), which nothing "
+                                    "calls; image_diff pairs the Z3817A's with efc_write, 0x2dba0"
+                           % 'docs/firmware/58503b-1.01.04.md'),
+}
+CORRECTIONS_TEXT_58503B = '''#   docs/firmware/58503b-1.01.04.md corrects four pairings and carries
+#   them under their names: efc_write is 0x2dba0, which
+#   efc_write_dithered calls, and qspi_fpga_byte_write 0x2dc20, the
+#   transfer after qspi_fpga_word_write's (image_diff pairs efc_write
+#   with 0x2dc20 and qspi_fpga_byte_write with 0x2dba0);
+#   sci_reconfigure 0x2e5f6, the I/O table's entry for
+#   device 0's control (image_diff pairs 0x2e5fa, the code after its
+#   link); and enter_installer 0x230c2, which scpi_task_run calls
+#   (image_diff pairs 0x230ee, its trap #11 and rts).
+'''
+PORT_58503B_1_01_04 = Port(folder='58503b-1.01.04', base_folder='z3817a-3752', second_base_folder='z3816a-4001',
+                           pinned=PINNED_58503B, labels_text=LABELS_TEXT_58503B, dropped=DROPPED_58503B,
+                           dropped_functions=DROPPED_FUNCTIONS_58503B,
+                           corrections=CORRECTIONS_58503B, confirmed=frozenset(CORRECTIONS_58503B),
+                           corrections_text=CORRECTIONS_TEXT_58503B)
 # Each seeded image's port, by its folder's name.
-PORTS = {port.folder: port for port in (PORT_58503A_3704, PORT_Z3815A_4010, PORT_Z3801A_3543, PORT_Z3817A_3752)}
+PORTS = {port.folder: port for port in (PORT_58503A_3704, PORT_Z3815A_4010, PORT_Z3801A_3543, PORT_Z3817A_3752,
+                                        PORT_Z3816A_4001, PORT_58503B_1_01_04)}
 
 
 class Offsets(collections.Counter):
@@ -1191,13 +1408,21 @@ class Seeding:
         new_addresses = {show(region, address) for region, address, _, _ in new}
         seeded = [line.split('\t') for line in self.second_text.split('\n')
                   if not line.startswith('#') and len(line.split('\t')) > 4 and origin in line.split('\t')[4]]
+        # a name a hand row places elsewhere is the hand row's
+        hand_placed = {row.split('\t')[2]: row.split('\t')[0] for row in self.hand_rows()
+                       if row.split('\t')[1] in ('function', 'label')}
         rows = []
         for fields in seeded:
             if fields[1] == 'function':
-                if fields[0] not in new_addresses or 'a lead' in fields[4]:
+                if fields[0] not in new_addresses or 'a lead' in fields[4].split(origin)[-1]:
                     continue
                 self.second_chosen.add(fields[0])
             elif fields[1] != 'label' or 'table, placed by' not in fields[4]:
+                continue
+            if hand_placed.get(fields[2], fields[0]) != fields[0]:
+                self.second_chosen.discard(fields[0])
+                self.notes.append('second base: %s at %s placed by hand at %s'
+                                  % (fields[2], fields[0], hand_placed[fields[2]]))
                 continue
             if fields[0] in seen_addresses or fields[2] in seen_names:
                 self.second_chosen.discard(fields[0])

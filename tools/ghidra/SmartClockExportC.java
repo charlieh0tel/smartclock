@@ -1667,8 +1667,9 @@ public class SmartClockExportC extends GhidraScript {
 	 * name only if every value it holds is a result so named, as the
 	 * decompiler reuses a variable for several values, only if its name
 	 * is the decompiler's own, not one given on purpose, and only if no
-	 * other name in the function is the same; the first such variable has
-	 * it where several would.
+	 * other name in the function is the same, nor a keyword or a type's
+	 * name standardTypes rewrites (drta_get_byte's byte); the first such
+	 * variable has it where several would.
 	 */
 	private void resultVariables(List<ClangToken> tokens, TokenEdits edits) throws Exception {
 		RENAMED.clear();
@@ -1677,6 +1678,8 @@ public class SmartClockExportC extends GhidraScript {
 			return;
 		}
 		Set<String> taken = new HashSet<>(KEYWORDS);
+		// a type's name standardTypes rewrites, byte among them, would be rewritten with it
+		taken.addAll(SIZED_TYPES.keySet());
 		// in the order the variables appear, so that the first takes a name several would
 		Map<HighVariable, List<ClangToken>> uses = new LinkedHashMap<>();
 		for (ClangToken token : tokens) {
@@ -4225,13 +4228,15 @@ public class SmartClockExportC extends GhidraScript {
 	/**
 	 * The files of a rewritten=DIR argument with a suffix, in DIR and the
 	 * folders under it (the installer's, installer/), sorted by path; not
-	 * TYPES_FOLDER's.
+	 * TYPES_FOLDER's, nor those without= names.
 	 */
-	private static List<File> rewrittenFiles(String arg, String suffix) {
+	private List<File> rewrittenFiles(String arg, String suffix) {
 		Path folder = Path.of(arg.substring(REWRITTEN.length()));
+		Set<String> without = without();
 		try (Stream<Path> paths = Files.walk(folder)) {
 			return paths.filter(path -> path.toString().endsWith(suffix) && Files.isRegularFile(path)
-				&& !path.startsWith(folder.resolve(TYPES_FOLDER))).sorted().map(Path::toFile).toList();
+				&& !path.startsWith(folder.resolve(TYPES_FOLDER))
+				&& !without.contains(path.getFileName().toString())).sorted().map(Path::toFile).toList();
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
@@ -4304,11 +4309,32 @@ public class SmartClockExportC extends GhidraScript {
 	 * it (docs/firmware/README.md, "Decompiling with Ghidra").
 	 */
 	private static final String HEADERS_ONLY = "headers=";
+	/**
+	 * The argument naming a file of the headers= and rewritten= folders
+	 * that the C leaves out, without=NAME, by its file's name: a header,
+	 * for an image without the device its routines drive, whose registers
+	 * they name, as duart.h for one with no DUART; or a file of common/'s
+	 * C, every function of which the image lacks, as duarta.c for one with
+	 * no DUART (docs/firmware/rewrite.md, "Shared C";
+	 * docs/firmware/README.md, "Decompiling with Ghidra").
+	 */
+	private static final String WITHOUT = "without=";
+
+	/** The files without= names, by their files' names. */
+	private Set<String> without() {
+		Set<String> without = new TreeSet<>();
+		for (String arg : getScriptArgs()) {
+			if (arg.startsWith(WITHOUT)) {
+				without.add(arg.substring(WITHOUT.length()));
+			}
+		}
+		return without;
+	}
 
 	/**
 	 * The headers= and rewritten= folders' .h files, what the .c files
 	 * share, which the C includes before them; not BINDINGS', which it
-	 * includes after its prototypes.
+	 * includes after its prototypes, nor those without= names.
 	 */
 	private List<File> rewrittenHeaders() {
 		List<File> headers = new ArrayList<>();

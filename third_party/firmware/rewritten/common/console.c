@@ -392,8 +392,6 @@ void diag_pr_gps_istate(void) {
 
 void diag_pr_gps_id(void) { gps_command.code = GPS_CONSOLE_PRINT_ID; }
 
-void diag_pr_1pps(void) { gps_command.code = GPS_CONSOLE_PRINT_PPS; }
-
 void diag_pr_time_raim(void) { gps_command.code = GPS_CONSOLE_PRINT_TIME_RAIM; }
 
 /* The word disable_gps_cmds: blocks gpsm_task's class 0 and 1 requests

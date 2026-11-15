@@ -18,16 +18,6 @@ int32_t scpi_query_OUTPut_STATe(void* parameters, void* response,
   return 0;
 }
 
-/* :OUTPut:STATe: hands pllc the new state. */
-int32_t scpi_set_OUTPut_STATe(void* parameters, void* response,
-                              scpi_call* call) {
-  scpi_word_parameter* given = parameters;
-
-  pllc_request_a(&scpi_param_OUTPut_STATe, 0, given->value,
-                 scpi_input_source(call->input));
-  return 0;
-}
-
 /* No antenna fault, whatever the settings: the image has no antenna
  * current channel, where the Z3815A's tests the current (0x32482). */
 uint8_t hmon_check_antenna_current(void) { return 0; }

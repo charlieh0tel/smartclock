@@ -78,3 +78,17 @@ void print_exception(uint16_t sr, uint32_t pc, uint16_t vector,
   for (;;) {
   }
 }
+
+/* An exception's name, from its frame's format and vector word: the
+ * vector's offset, 4 times its number, indexes exception_names as bytes
+ * from vector 2's, the first named, unchecked below it and unaligned as
+ * the image's is. */
+char* exception_name(uint16_t vector) {
+  uint16_t offset = vector & CPU_VECTOR_OFFSET_MASK;
+
+  if (offset > CPU_VECTOR_OFFSET_LAST_NAMED) {
+    return "Oooh! That tickles. I don't know that vector.";
+  }
+  return *(char**)((char*)exception_names + offset -
+                   CPU_VECTOR_OFFSET_FIRST_NAMED);
+}

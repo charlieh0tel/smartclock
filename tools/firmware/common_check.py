@@ -42,11 +42,25 @@ includes it.
    a literal to a pointer or write an installer address; a device's
    register, the board's, is no image's address.
 
+An image whose export leaves a common/ file out (the exporter's
+without=) is not asked about it: a header, having none of the device it
+serves; a file of common/'s code, lacking every function it defines,
+none of which its export names (rewrite.md, "Shared C", "A file for
+some images"), where a published image (PUBLISHED_IMAGES) leaves none
+out and two or more images share each.  And each export says which
+file of common/ defines each function it names, in its sidecar's
+"rewritten" and its C's comment, as the exporter writes them.
+
 And the figures the documents quote of what common/ holds (FIGURES):
 its functions an export names and its static helpers, its files, and
-each image's own functions an export names; with --write, rewrites them.
+each image's own functions an export names and those of common/'s files
+it includes; and docs/firmware/
+common-copies.tsv (COPIES), the functions two or more images' own C
+defines, candidates for common/, and its figures; with --write,
+rewrites them.  --copies checks the report and its figures alone,
+without clang.
 
-    python3 -I tools/firmware/common_check.py [--write]
+    python3 -I tools/firmware/common_check.py [--copies] [--write]
 
 Prints each failure; exits nonzero if any.  Needs clang and m68k-linux-gnu
 binutils.
@@ -95,6 +109,10 @@ image_diff = load('image_diff')
 TYPES = 'types'
 # The image the others' diffs are against, whose C common/ came from.
 BASE = 'z3805a-3543b'
+# The images whose exports are published (PLAN.md), which include every
+# file of common/, so that a published common/ holds none that no
+# published image includes.
+PUBLISHED_IMAGES = {'z3805a-3543b', '58503a-3704', 'z3801a-3543'}
 # The statuses rule 1 shares.
 SHARED = {'identical', 'relocated'}
 # A definition in hand-written C, as the exporter finds it
@@ -127,21 +145,28 @@ BOARD_TYPES = {match.group(1) for path in INCLUDE_FOLDER.glob('*.h')
                for match in re.finditer(r'(?m)^\}\s*(\w+)\s*;', path.read_text())}
 
 
+@functools.cache
+def included(image):
+    """The files an image's export includes, resolved."""
+    export = DECOMPILED / image / f'{image}.c'
+    return frozenset((export.parent / path).resolve() for path in INCLUDE.findall(export.read_text()))
+
+
 def sharing_images():
     """The images whose export includes a common/ .c file, by name: not
     one that takes common/'s headers alone (SmartClockExportC.java's
     headers=), whose own C shares none of common/'s."""
-    images = []
-    for export in sorted(DECOMPILED.glob('*/*.c')):
-        text = export.read_text()
-        if any(path.endswith('.c') and (export.parent / path).resolve().is_relative_to(COMMON)
-               for path in INCLUDE.findall(text)):
-            images.append(export.parent.name)
-    return images
+    return [export.parent.name for export in sorted(DECOMPILED.glob('*/*.c'))
+            if any(path.suffix == '.c' and path.is_relative_to(COMMON) for path in included(export.parent.name))]
 
 
 def common_files():
     return sorted(COMMON.rglob('*.[ch]')) if COMMON.is_dir() else []
+
+
+def sharing_files(image):
+    """The common/ files an image's export includes."""
+    return [path for path in common_files() if path.resolve() in included(image)]
 
 
 def defined(text):
@@ -151,8 +176,13 @@ def defined(text):
 
 def statuses(image):
     """Each base function's statuses in the image's diff against BASE."""
+    return statuses_in(DIFFS / f'{image}-vs-{BASE}.tsv')
+
+
+def statuses_in(path):
+    """Each base function's statuses in a diff."""
     found = collections.defaultdict(set)
-    for line in open(DIFFS / f'{image}-vs-{BASE}.tsv'):
+    for line in open(path):
         fields = line.rstrip('\n').split('\t')
         if line.startswith('#') or fields[0] == 'region' or fields[1] != 'function':
             continue
@@ -160,14 +190,19 @@ def statuses(image):
     return found
 
 
+def sharing(path, images):
+    """The images whose export includes a common/ file."""
+    return [image for image in images if path.resolve() in included(image)]
+
+
 def same_code(images, failures):
     """Rule 1."""
-    others = [image for image in images if image != BASE]
-    diffs = {image: statuses(image) for image in others}
+    diffs = {image: statuses(image) for image in images if image != BASE}
     for path in common_files():
         text = COMMENT.sub(' ', path.read_text())
         statics = set(STATIC.findall(text))
         names = set(defined(text)) | set(BINDING_DEFINITION.findall(text))
+        others = [image for image in sharing(path, images) if image != BASE]
         for name in sorted(names):
             for image in others:
                 found = diffs[image].get(name)
@@ -494,6 +529,8 @@ class Export:
         self.rewritten = REWRITTEN / image
         self.decompiled = DECOMPILED / image
         export = self.decompiled / f'{image}.c'
+        # common/'s files the export includes
+        self.included = included(image)
         flags = [flag for flag in shlex.split(os.environ.get('DECOMPILED_CFLAGS', magic_check.DEFAULT_CFLAGS))
                  if magic_check.PARSING_FLAG.match(flag)]
         command = [magic_check.CLANG, magic_check.CLANG_TARGET, *flags, *magic_check.CLANG_LENIENCY,
@@ -677,8 +714,13 @@ class Export:
     def named(self, path):
         """Everything a common/ file's code names that it does not
         define, by kind and name, with its signature here."""
-        place = 'common:' + str(path.relative_to(COMMON))
-        declarations = self.declared(place)
+        declarations = self.declared('common:' + str(path.relative_to(COMMON)))
+        return self.names(declarations, STRING.sub(' ', COMMENT.sub(' ', path.read_text())))
+
+    def names(self, declarations, code):
+        """Everything the declarations, whose code is given without its
+        comments and strings, name that they do not define, by kind and
+        name, with its signature here."""
         own = {node.get('name') for node in declarations}
         found, type_names = {}, set()
         stack = list(declarations)
@@ -700,9 +742,8 @@ class Export:
                                                self.place_of(enum))
             elif kind == 'VarDecl':
                 where = self.place_of(declaration)
-                if where != place:
-                    value = self.text_of(declaration) if where != 'export' else None
-                    found['global ' + name] = (reference['type']['qualType'], where, value)
+                value = self.text_of(declaration) if where != 'export' else None
+                found['global ' + name] = (reference['type']['qualType'], where, value)
             elif kind == 'FunctionDecl':
                 # a static function's body is compiled into its caller, so
                 # where it is defined counts; another resolves by address
@@ -711,7 +752,6 @@ class Export:
             type_names |= self.type_names(reference.get('type', {}).get('qualType', ''))
         for name, signature in self.types(type_names).items():
             found['type ' + name] = signature
-        code = STRING.sub(' ', COMMENT.sub(' ', path.read_text()))
         for word in set(IDENTIFIER.findall(code)):
             if word in self.macros:
                 found['macro ' + word] = tuple(sorted(self.macros[word]))
@@ -787,6 +827,53 @@ def flatten(signature):
             yield from flatten(item)
 
 
+def subset(path, sharers, images, failures):
+    """A file of common/'s C that some sharing images' exports leave out
+    (rewrite.md, "Shared C", "A file for some images"): each that leaves
+    it out lacks every function it defines, having none of that name; a
+    published image takes it; and two or more images share it."""
+    relative = path.relative_to(ROOT)
+    left_out = [image for image in images if image not in sharers]
+    if not left_out:
+        return
+    if len(sharers) < 2:
+        failures.append(f'{relative}: shared by {", ".join(sharers) or "no image"} alone')
+    text = COMMENT.sub(' ', path.read_text())
+    names = set(defined(text)) - set(STATIC.findall(text))
+    for image in left_out:
+        if image in PUBLISHED_IMAGES:
+            failures.append(f'{relative}: {image}\'s export does not include it, and {image} is published')
+        functions = {json.loads(line)['name'] for line in open(DECOMPILED / image / f'{image}.conventions.jsonl')}
+        for name in sorted(names & functions):
+            failures.append(f'{relative}: {image}\'s export does not include it, and {image} has {name}')
+
+
+WRITTEN_IN = re.compile(r'(?m)^/\* (\w+): rewritten in (\S+) \*/$')
+
+
+def named_files(images, failures):
+    """Each sharing export says which file of common/ defines a function
+    it names, as the exporter writes it, by the file's name: its
+    sidecar's "rewritten" and the C's "rewritten in" comment in the
+    function's place.  A function moved between common/'s files with the
+    export's includes edited by hand, short of a new export, shows here."""
+    for image in images:
+        export = DECOMPILED / image / f'{image}.c'
+        sidecar = {row['name']: row for row in map(json.loads, open(export.with_suffix('.conventions.jsonl')))}
+        comments = dict(WRITTEN_IN.findall(export.read_text()))
+        for path in sharing_files(image):
+            if path.suffix != '.c':
+                continue
+            text = COMMENT.sub(' ', path.read_text())
+            for name in sorted(set(defined(text)) - set(STATIC.findall(text))):
+                if name not in sidecar:
+                    continue
+                for where, file in (('sidecar', sidecar[name].get('rewritten')), ('C', comments.get(name))):
+                    if file != path.name:
+                        failures.append(f'{path.relative_to(ROOT)}: {image}\'s {where} says {name} is '
+                                        f'rewritten in {file}')
+
+
 def same_data(images, exports, failures):
     """Rule 2."""
     layouts = [export.layout() for export in exports]
@@ -800,18 +887,25 @@ def same_data(images, exports, failures):
             if path.resolve() not in included:
                 failures.append(f'{header.relative_to(ROOT)} does not include {path.relative_to(ROOT)}')
     for path in common_files():
-        found = [export.named(path) for export in exports]
         relative = path.relative_to(ROOT)
-        for record, field in sorted(set().union(*(export.global_fields(path) for export in exports))):
-            for image, layout in zip(images, layouts):
+        sharing = [export for export in exports if path.resolve() in export.included]
+        if path.suffix == '.c':
+            subset(path, [export.image for export in sharing], images, failures)
+        found = [export.named(path) for export in sharing]
+        if not found:
+            continue
+        images_here = [export.image for export in sharing]
+        layouts_here = [layout for export, layout in zip(exports, layouts) if export in sharing]
+        for record, field in sorted(set().union(*(export.global_fields(path) for export in sharing))):
+            for image, layout in zip(images_here, layouts_here):
                 if not any(asserted == field for asserted, _ in layout.get(record, ())):
                     failures.append(f'{relative}: {record}.{field}, reached through a global, is not asserted in '
                                     f'rewritten/{image}/{TYPES}/check-layout.c')
         for key in sorted(set().union(*found)):
             signatures = [names.get(key) for names in found]
             if any(signature != signatures[0] for signature in signatures):
-                failures.append(f'{relative}: {key} differs: '
-                                + '; '.join(f'{image} {signature}' for image, signature in zip(images, signatures)))
+                failures.append(f'{relative}: {key} differs: ' + '; '.join(
+                    f'{export.image} {signature}' for export, signature in zip(sharing, signatures)))
                 continue
             kind, name = key.split(' ', 1)
             signature = signatures[0]
@@ -826,15 +920,15 @@ def same_data(images, exports, failures):
             if kind != 'type' or signature[-1] != 'export' or BUILTIN_TYPE.match(name):
                 continue
             named_members = any(key.startswith('enumerator ') and found[0][key][1] == name for key in found[0])
-            if signature[0] == 'enum' and (not named_members or all(split_enum(image, name) for image in images)):
+            if signature[0] == 'enum' and (not named_members or all(split_enum(image, name) for image in images_here)):
                 pass  # its storage is the same, and it names none of its members, or the head's
             elif not re.search(r'}\s*%s\s*;|\b(?:struct|union|enum)\s+%s\s*\{|\btypedef\b[^;{}]*\b%s\s*[(;\[]'
                              % (name, name, name), headers):
                 failures.append(f'{relative}: type {name} is not defined in a common/{TYPES}/ header')
-            asserted = [layout.get(name, set()) for layout in layouts]
+            asserted = [layout.get(name, set()) for layout in layouts_here]
             if any(each != asserted[0] for each in asserted):
                 failures.append(f'{relative}: type {name} is laid out differently by '
-                                + ', '.join(f'rewritten/{image}/{TYPES}/check-layout.c' for image in images))
+                                + ', '.join(f'rewritten/{image}/{TYPES}/check-layout.c' for image in images_here))
 
 
 # The sentences that quote common/'s figures, each in its document once,
@@ -845,15 +939,19 @@ FIGURES = [
     (ROOT / 'docs/firmware/README.md',
      '`common/` holds {functions} functions\nand {helpers} static helpers'),
     (ROOT / 'docs/firmware/58503a-3704.md',
-     'its own C defines {58503a-3704} functions its export names, beside\n`common/`\'s {functions}'),
+     'its own C defines {58503a-3704} functions its export names, beside\n`common/`\'s {common-58503a-3704}'),
     (ROOT / 'docs/firmware/z3801a-3543.md',
-     'its own C defines {z3801a-3543} functions its export names, beside\n`common/`\'s {functions}'),
+     'its own C defines {z3801a-3543} functions its export names, beside\n`common/`\'s {common-z3801a-3543}'),
     (ROOT / 'docs/firmware/z3817a-3752.md',
-     'its own C defines {z3817a-3752} functions its export names,\nbeside `common/`\'s {functions}'),
+     'its own C defines {z3817a-3752} functions its export names,\nbeside `common/`\'s {common-z3817a-3752}'),
     (FIRMWARE / 'README.md',
      '`common/`, the C several images share ({functions} functions and\n{helpers} static helpers'),
+    (ROOT / 'docs/firmware/rewrite.md',
+     '{copies} functions are defined in two or more images\' own C, {copies-same} of them the same\ntext in two or more, {copies-whole} the same in every image defining them, and {copies-near}\nwith a copy differing from the most images\' by a constant or a name alone'),
 ]
-FIGURE = re.compile(r'\{([\w-]+)\}')
+# The figures of the copies (copies_figures), which --copies checks alone.
+COPIES_FIGURES = {'copies', 'copies-same', 'copies-whole', 'copies-near'}
+FIGURE = re.compile(r'\{([\w.-]+)\}')
 
 
 def defined_in(paths):
@@ -872,9 +970,9 @@ def figures(images):
     named, helpers = defined_in(common_files())
     found = {'functions': len(named), 'helpers': len(helpers), 'files': len(common_files())}
     for image in images:
-        own = [path for path in (REWRITTEN / image).rglob('*.[ch]')
-               if TYPES not in path.relative_to(REWRITTEN / image).parts]
-        found[image] = len(defined_in(own)[0])
+        found[image] = len(defined_in(own_files(image))[0])
+        found['common-' + image] = len(defined_in(sharing_files(image))[0])
+    found.update(copies_figures(copies(images)))
     return found
 
 
@@ -893,12 +991,15 @@ def figure_pattern(parts):
     return pattern
 
 
-def check_figures(images, write, failures):
-    """Each FIGURES sentence against figures(), rewritten with write."""
+def check_figures(images, write, failures, only=None):
+    """Each FIGURES sentence against figures(), rewritten with write;
+    with only, those of only's sentences alone."""
     found = figures(images)
     for document, template in FIGURES:
         parts = FIGURE.split(template)
         names = parts[1::2]
+        if only is not None and not set(names) <= only:
+            continue
         text = document.read_text()
         matches = list(re.finditer(figure_pattern(parts), text))
         if len(matches) != 1:
@@ -918,21 +1019,188 @@ def check_figures(images, write, failures):
                 f'{name} is {value}, not {found[name]}' for name, value in wrong))
 
 
+# The report of the functions defined in two or more images' own C.
+COPIES = ROOT / 'docs/firmware/common-copies.tsv'
+COPIES_HEADER = '''\
+# The functions two or more images' own hand-written C defines, by name:
+# candidates for rewritten/common/ (docs/firmware/rewrite.md, "Shared C").
+# Written by tools/firmware/common_check.py --copies --write
+# (make common-copies); make check-common-copies fails if it is not what
+# the files give.  Tab-separated:
+#   name     the function's name
+#   static   yes if a copy is static, a helper no export names
+#   images   the images whose own C defines it
+#   lacking  the images sharing common/ whose own C does not
+#   groups   the images whose copies are the same text, its comments
+#            and white space aside, a group per text, '|' between them,
+#            the largest first
+#   nearest  for each group but the first, how its text differs from
+#            the first's: constant, numbers alone; name, identifiers
+#            alone; code, anything else; '|' between them
+#   rule1    for the first group, if two or more: yes if the diffs
+#            (docs/firmware/diff/) class it identical or relocated
+#            between its images, joined through any chain of them; no
+#            if not; static, a helper, which the diffs do not name,
+#            checked by its callers
+#   files    the files defining it, relative to each image's folder
+'''
+COPIES_COLUMNS = ('name', 'static', 'images', 'lacking', 'groups', 'nearest', 'rule1', 'files')
+# A token of C, for comparing two copies: a number, an identifier, or
+# any other character.
+TOKEN = re.compile(r'0[xX][0-9a-fA-F]+[uUlL]*|\d+[uUlL]*|\w+|\S')
+NUMBER = re.compile(r'^(?:0[xX][0-9a-fA-F]+|\d+)[uUlL]*$')
+
+
+def own_files(image):
+    """An image's own hand-written C, its types/ aside."""
+    return [path for path in sorted((REWRITTEN / image).rglob('*.[ch]'))
+            if TYPES not in path.relative_to(REWRITTEN / image).parts]
+
+
+def bodies(text):
+    """Each function the text defines, by name: its definition, its
+    comments taken out and its white space made one space, and whether
+    it is static."""
+    code = COMMENT.sub(lambda match: re.sub(r'[^\n]', ' ', match.group()), text)
+    statics = set(STATIC.findall(code))
+    found = {}
+    for match in DEFINITION.finditer(code):
+        name = match.group(1)
+        if name in NOT_NAMES:
+            continue
+        end, depth = match.end(), 1
+        while depth:
+            depth += {'{': 1, '}': -1}.get(code[end], 0)
+            end += 1
+        found[name] = (' '.join(code[match.start():end].split()), name in statics)
+    for match in WRAPPED_DEFINITION.finditer(code):
+        end = code.index(';', match.end()) + 1
+        found[match.group(1)] = (' '.join(code[match.start():end].split()), False)
+    return found
+
+
+def difference(text, other):
+    """How one copy's text differs from another's: constant, name or
+    code (COPIES_HEADER)."""
+    tokens, others = TOKEN.findall(text), TOKEN.findall(other)
+    if len(tokens) != len(others):
+        return 'code'
+    changed = [(a, b) for a, b in zip(tokens, others) if a != b]
+    if all(NUMBER.match(a) and NUMBER.match(b) for a, b in changed):
+        return 'constant'
+    if all(IDENTIFIER.fullmatch(a) and IDENTIFIER.fullmatch(b) and not NUMBER.match(a) and not NUMBER.match(b)
+           for a, b in changed):
+        return 'name'
+    return 'code'
+
+
+def all_statuses():
+    """Each diff's base functions' statuses, by (image, base)."""
+    return {tuple(path.stem.split('-vs-')): statuses_in(path) for path in sorted(DIFFS.glob('*-vs-*.tsv'))}
+
+
+def joined(name, images, diffs):
+    """Whether the diffs class the function identical or relocated
+    between the images, joined through any chain of them."""
+    parent = {image: image for image in images}
+
+    def root(image):
+        while parent[image] != image:
+            image = parent[image]
+        return image
+
+    for (image, base), found in diffs.items():
+        if image in parent and base in parent and found.get(name) and found[name] <= SHARED:
+            parent[root(image)] = root(base)
+    return len({root(image) for image in images}) == 1
+
+
+def copies(images):
+    """The COPIES rows, each a tuple of COPIES_COLUMNS."""
+    defined_by = collections.defaultdict(dict)
+    for image in images:
+        for path in own_files(image):
+            for name, (text, static) in bodies(path.read_text()).items():
+                defined_by[name][image] = (str(path.relative_to(REWRITTEN / image)), text, static)
+    diffs = all_statuses()
+    rows = []
+    for name, found in sorted(defined_by.items()):
+        if len(found) < 2:
+            continue
+        texts = collections.defaultdict(list)
+        for image, (_, text, _) in sorted(found.items()):
+            texts[text].append(image)
+        groups = sorted(texts.items(), key=lambda item: (-len(item[1]), item[1]))
+        static = any(each[2] for each in found.values())
+        first_text, first = groups[0]
+        if len(first) < 2:
+            rule1 = ''
+        elif static:
+            rule1 = 'static'
+        else:
+            rule1 = 'yes' if joined(name, first, diffs) else 'no'
+        rows.append((name, 'yes' if static else 'no', ','.join(sorted(found)),
+                     ','.join(image for image in images if image not in found),
+                     '|'.join(','.join(group) for _, group in groups),
+                     '|'.join(difference(text, first_text) for text, _ in groups[1:]),
+                     rule1, ','.join(sorted({each[0] for each in found.values()}))))
+    return rows
+
+
+def copies_text(rows):
+    return COPIES_HEADER + '\t'.join(COPIES_COLUMNS) + '\n' + ''.join('\t'.join(row) + '\n' for row in rows)
+
+
+def copies_figures(rows):
+    """The figures the documents quote of the copies: the functions two
+    or more images' own C defines, those of them whose copies are the
+    same text in two or more images, those the same in every image
+    defining them, and those with a copy differing from the largest
+    group's by a constant or a name alone."""
+    return {'copies': len(rows),
+            'copies-same': sum(len(row[4].split('|')[0].split(',')) >= 2 for row in rows),
+            'copies-whole': sum('|' not in row[4] for row in rows),
+            'copies-near': sum(any(kind in ('constant', 'name') for kind in row[5].split('|')) for row in rows)}
+
+
+def check_copies(images, write, failures):
+    """The COPIES report against the files, rewritten with write."""
+    text = copies_text(copies(images))
+    if write:
+        COPIES.write_text(text)
+    elif not COPIES.exists() or COPIES.read_text() != text:
+        failures.append(f'{COPIES.relative_to(ROOT)} is not what the files give; make common-copies rewrites it')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--write', action='store_true')
+    parser.add_argument('--copies', action='store_true',
+                        help='check the COPIES report and its figures alone, with --write rewriting them')
     arguments = parser.parse_args()
     failures = []
     images = sharing_images()
+    if arguments.copies:
+        check_copies(images, arguments.write, failures)
+        check_figures(images, arguments.write, failures, only=COPIES_FIGURES)
+        for failure in failures:
+            print(failure)
+        print(f'{COPIES.relative_to(ROOT)}: ' + ', '.join(
+            f'{name} {value}' for name, value in copies_figures(copies(images)).items()))
+        if failures:
+            sys.exit(f'{len(failures)} failures')
+        return
     if BASE not in images and images:
         failures.append(f'{BASE}, the diffs\' base, does not include common/')
     if common_files():
         same_code(images, failures)
         no_address(failures)
+        named_files(images, failures)
         if images:
             exports = [Export(image) for image in images]
             same_data(images, exports, failures)
             same_callees(images, exports, failures)
+    check_copies(images, arguments.write, failures)
     check_figures(images, arguments.write, failures)
     for failure in failures:
         print(failure)

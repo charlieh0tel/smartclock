@@ -125,9 +125,13 @@ class Given:
 # Z3805A 3543B's, and the 58503A 3704's and the Z3815A 4010's, which
 # each one's qspi_start clears and reads (0x1f624, 0x1f664; 0x30fb4,
 # 0x30ff4), the Z3801A 3543's, the Z3805A's 0x184 lower, and the Z3817A
-# 3752's, which its qspi_start clears and reads (0x2f8f2, 0x2f932).
+# 3752's and the Z3816A 4001's, which each one's qspi_start clears and
+# reads (0x2f8f2, 0x2f932; 0x2f8c6, 0x2f906).
 QSPI_RUNNING = {"z3805a-3543b": 0x1032F3, "58503a-3704": 0x1034C3, "z3815a-4010": 0x103E69, "z3801a-3543": 0x10316F,
-                "z3817a-3752": 0x1039B5}
+                "z3817a-3752": 0x1039B5, "z3816a-4001": 0x103855}
+# The 58503B 1.01.04's, which its qspi_start clears and reads (0x2eeb6,
+# 0x2eef6).
+QSPI_RUNNING["58503b-1.01.04"] = 0x103F51
 QSPI_WORDS = struct.pack(">3H", 0x123, 0x456, 0x789)
 QSPI_COUNT = 3
 QSPI_RAW_DEVICES = (2, 7, 12)

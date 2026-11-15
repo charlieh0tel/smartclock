@@ -320,7 +320,7 @@ check-pages: pages
 # ci, and .github/workflows/firmware.yml runs the images' checks.
 FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-alone check-link report-decompiled \
 	scpi-tree check-scpi-tree handlers check-module-figures module-figures check-image-diff image-diff \
-	check-seed-names seed-names check-comment-addresses check-common check-plain-names \
+	check-seed-names seed-names check-comment-addresses check-common check-common-copies common-copies check-plain-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects check-magic-numbers magic-numbers check-rom-pointers check-loop-trace loop-trace \
 	check-loop-constants loop-constants record-access report-link check-status-register \

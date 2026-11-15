@@ -668,9 +668,18 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   moves to `common/`, but only by the rules in `rewrite.md`, "Shared
   C": identical or relocated code, identical data layouts, and every
   sharing image's checks unchanged after each move.  What differs, even
-  slightly, stays per image.  A new image that shares `common/` takes
-  all of it, so a function of it that differs there goes back to every
-  image's own C first (the Z3801A 3543, the third to share, sent back
+  slightly, stays per image.  A new image that shares `common/` took
+  all of it until 2026-11-14, so a function of it that differs or is
+  missing there went back to every image's own C first.  Since then a
+  file of `common/`'s C may be left out of an image's export
+  (`without=NAME`) when the image lacks every function in it: lack,
+  never change, the file the unit, grouped by the device or command set
+  the others lack, the published three taking every file, so that the
+  published `common/` holds none they do not use (`rewrite.md`,
+  "Shared C", "A file for some images").  A function an image changes
+  still goes back to every image's own C.  The alternative, a file for
+  any set of images sharing a function, published ones lacking it too,
+  is not taken.  Before (the Z3801A 3543, the third to share, sent back
   `counter_set_sync`, the `:LED:ALARm:USER` handlers, and the FPGA bit
   setters with each image's own table; the Z3817A 3752, the fifth,
   sent back, before it joined, each function it lacks, the hex DAC,
@@ -679,7 +688,20 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   changes, the FPGA's loader and readback check, the QSPI's FPGA
   writes, holdover's TI statistics and the self-tests' run over
   their list, one entry shorter, among them, one copy in each
-  of the four images' own C, since `common/` is all or nothing).
+  of the four images' own C, since `common/` was all or nothing; the
+  Z3816A 4001, the sixth, sent back three to the five images' own C,
+  `scpi_query_DIAGnostic_GPSystem_TIME` and
+  `satellite_elevation_azimuth`, whose callee and cell differ there,
+  and `diag_pr_1pps`, a console word it has not; the 58503B 1.01.04,
+  the seventh, sent back to the six images' own C the DUART's
+  input debounces, stop, channel A driver and transmit tests, which
+  it lacks, `common/duart.c` and `common/duarta.c` going with them
+  until they came back for the six with a DUART (2026-11-14), as
+  `common/scpi_unsupported.c` did for the five with the root's
+  unsupported entries,
+  and `exception_name`, `selftest_request`,
+  `scpi_set_DIAGnostic_GPSystem_UTC` and `lamp_test_command`, which
+  its code changes).
   Each seeded image's
   `check-layout.c`, which rule 2 compares once the image shares
   `common/`, the Z3815A 4010's too, asserts its layouts at its

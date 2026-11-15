@@ -1439,3 +1439,20 @@ void satellite_status_list(uint8_t tracked, uint8_t entries,
     *list = blank;
   }
 }
+
+/* A satellite's cell: its elevation and azimuth while the record holds
+ * them, below 91 and 360 degrees; else no position. */
+void satellite_elevation_azimuth(oncore_visible_satellite* satellite,
+                                 satellite_cell* cell) {
+  static const uint8_t ELEVATION_LIMIT = 91;
+  static const uint16_t AZIMUTH_LIMIT = 360;
+
+  if (satellite != NULL && satellite->elevation < ELEVATION_LIMIT &&
+      satellite->azimuth < AZIMUTH_LIMIT) {
+    cell->status = SATELLITE_CELL_POSITION;
+    cell->elevation = satellite->elevation;
+    cell->azimuth = satellite->azimuth;
+    return;
+  }
+  cell->status = SATELLITE_CELL_NO_POSITION;
+}

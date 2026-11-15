@@ -155,3 +155,12 @@ void duart_output_bits(board_led reset, board_led set) {
   duart.start_sopbc = ~duart_shadow.output_reset & DUART_OP_BITS;
   set_interrupt_mask(sr);
 }
+
+/* Stops both DUART channels and masks its interrupts. */
+void duart_stop(void) {
+  duart.a.cr = CR_RX_DISABLE;
+  duart.a.cr = CR_TX_DISABLE;
+  duart.b.cr = CR_RX_DISABLE;
+  duart.b.cr = CR_TX_DISABLE;
+  duart.isr_imr = 0;
+}

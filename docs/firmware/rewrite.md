@@ -222,16 +222,112 @@ nothing is taken for common that is not:
 6. **A difference found later splits it.**  When a new image's copy of
    a common function differs, that image gets its own copy in
    `rewritten/`; `common/` is not edited to cover both with a
-   condition.  Since an image that shares `common/` takes all of it,
-   a function the new image lacks or changes leaves `common/` for a
-   copy in each sharing image's own C before the new image joins: the
+   condition.  A function the new image changes leaves `common/` for
+   a copy in each sharing image's own C before the new image joins;
+   one it lacks may stay, in a file of `common/` its export leaves out
+   (below, "A file for some images").  Until 2026-11-14 an image that
+   shared `common/` took all of it, and a function the new image
+   lacked left too: the
    Z3817A 3752 sent back the hex DAC, the interpolator and its
    self-tests, the :OUTPut:PIN1 handlers and the root's unsupported
    entries, which it lacks, and the FPGA's loader and readback check,
    the QSPI's FPGA writes, holdover's TI statistics, the self-tests'
    run over their list, one entry shorter, and the rest its code
-   changes or its data lays otherwise (PLAN.md, "a second image is ported by copying the
-   first's work").
+   changes or its data lays otherwise; the Z3816A 4001, the sixth,
+   sent back three, `scpi_query_DIAGnostic_GPSystem_TIME`, whose
+   `gps_time_local_get` gives a fraction too there,
+   `satellite_elevation_azimuth`, whose cell holds a Doppler there,
+   and `diag_pr_1pps`, a console word it lacks, the same code its
+   `pr_satview`; the 58503B 1.01.04, the seventh, sent back
+   the DUART's that it lacks, having an ACIA and the SCI in its place
+   (`duart.c`'s input debounces and `duart_stop`, `duarta.c`'s driver,
+   `drta_send_message` among it, and the two
+   transmit tests, so that `common/duart.c` and `common/duarta.c` went,
+   to come back for the six images with a DUART, below), and four its code changes, `exception_name`, which names an
+   unknown vector by its offset, `selftest_request`, which keeps the
+   request's source, `scpi_set_DIAGnostic_GPSystem_UTC`, which takes a
+   number out of range as 1, and `lamp_test_command`, which flashes
+   the lamps first, and with them `holdover_steering_state`, which it
+   lays out without the slope's sums, went from `common/types/` back
+   to each image's `smartclock.h` (PLAN.md, "a second image is ported by copying the first's work").
+
+A file for some images.  A file of `common/`'s C is shared by every
+image that includes it, which need not be every image: an image's
+export leaves one out with the exporter's `without=NAME`, by the file's
+name, as it leaves out a header for a device it has not.  The rule is
+lack, never change:
+
+- An image leaves a file out only if it lacks every function the file
+  defines: its export names none of them.  An image whose code of one
+  of them differs, or which has a routine of that name doing something
+  else, takes no copy of the file and no copy of its own beside it;
+  the function leaves `common/` for each image's own C, by rule 6.
+- The file is the unit.  A file left out by some images holds only
+  functions those images lack, so that what it holds is what the
+  images that include it share, grouped by what the others lack: a
+  device or a command set.  `duart.c` and `duarta.c`, the DUART's
+  input debounces and channel A driver, are the six images' with a
+  DUART, the 58503B 1.01.04 leaving them out; `duart_stop`, which the
+  58503B has, its ACIA's, stays each image's own, and
+  `duart_test_tx_b`, channel B's part of the loopback self-test, is
+  `duartb_test.c`'s, the same six images'.  `scpi_unsupported.c`, the
+  root's unsupported four-letter entries, is the five images' that
+  have them, the Z3817A 3752 and the 58503B 1.01.04 leaving it out.
+  `hex_dac.c`, `interpolator.c` and `outer_oven.c` are the six images'
+  with a hex DAC, an interpolator and the outer oven's console word,
+  the Z3817A 3752 leaving them out: the hex DAC's console words, the
+  step of the low reference's DAC and the self-test's 36-bit shift;
+  the interpolator's calibration's defaults, its references' readings
+  and the self-tests' two entries for it; and the word `doven`.
+  Five files are the five images' whose trees and console have what
+  they serve, the Z3817A 3752 and the 58503B 1.01.04 leaving them out:
+  `scpi_output_pin1.c`, the :OUTPut:PIN1 handlers;
+  `scpi_diagnostic_tcoefficient.c`, :DIAGnostic:ROSCillator:TCOefficient's;
+  `scpi_diagnostic_ser1.c`, :DIAGnostic:SER1:EGResponse's;
+  `scpi_holdover_hysteresis.c`, :SOURce:ROSCillator:HOLDover:HYSTeresis's;
+  and `console_phase_off.c`, the console's word `phase_off`.
+  Three files are the six images' with the Oncore's decoded messages,
+  the output's state and the screen's level, the Z3815A 4010 leaving
+  them out: `oncore_decode.c`, the decode of a message's fields and
+  the DOP and almanac status messages; `scpi_output_state.c`,
+  :OUTPut:STATe's set handler; and `screen_level.c`, the status
+  screen's signal level.
+  Five more go by what else an image lacks.  `duartb_settings.c`,
+  DUART channel B's baud rate from the serial settings, its
+  reconfiguration and its polled write, is the four images' whose port
+  of that name is the DUART's, the 58503B 1.01.04, the Z3816A 4001 and
+  the Z3817A 3752, where it is the SCI, leaving it out.
+  `console_pr_1pps.c`, the console's word `pr_1pps`, is left out by the
+  58503B 1.01.04 and the Z3816A 4001, and `pwma.c`, the GPT's PWMA pin
+  forced to a level, by the Z3815A 4010, the Z3816A 4001 and the Z3817A
+  3752.  `bytes_equal.c`, the comparison of two counted byte strings,
+  and `installer/installer_duart_transmit.c`, the installer's channel A
+  transmit interrupt and channel B polled write, are the three
+  published images' alone, the other four leaving them out.
+  A function the same in some images but
+  not in a file whose images are exactly those stays per image.
+- The published images (PLAN.md; the Z3805A 3543B, the 58503A 3704,
+  the Z3801A 3543) leave no file out, so that the published `common/`
+  holds no file no published image includes, and rule 1 still reads
+  each function's class in each sharing image's diff against the Z3805A
+  3543B; two or more images include each file.
+- Rules 1 to 3 hold among the images that include the file; types stay
+  all or nothing, in `common/types/` only when every image's layout is
+  the same; and a comment cites no image's address, as anywhere in
+  `common/`.
+
+`make check-common` holds each file to it: each image whose export
+leaves a file out must name none of its functions in its
+`.conventions.jsonl`, and the images including it must be two or more,
+the published three among them.  It checks too that each export says
+which file of `common/` defines a function it names, by the file's
+name, in its sidecar's `rewritten` and its C's `rewritten in` comment,
+as the exporter writes them, so that a function moved to another file
+with the export edited by hand, short of a new export, cannot leave
+the two apart.  The alternative, a file for any set of
+images that share a function, the published ones lacking it too, would
+leave the published `common/` with files that only an unpublished image
+includes; it is not taken.
 
 How the build uses it.  `common/` is laid out as `rewritten/` is
 (`bindings/`, `installer/`), and an image that shares it gives the
@@ -345,11 +441,24 @@ holds; nor does it see the routines a table in ROM holds, which the
 code reaches through the table's address.
 
 What is shared, counted by `make check-common` from the files:
-`common/` holds 870 functions the exports name and 214
-static helpers, in 215 files; the rest is each image's own:
-685 functions the Z3805A 3543B's export names, 800 the
-58503A 3704's and 667 the Z3801A 3543's.  Each image's
+`common/` holds 922 functions the exports name and 214
+static helpers, in 232 files; the rest is each image's own:
+633 functions the Z3805A 3543B's export names, 748 the
+58503A 3704's and 615 the Z3801A 3543's.  Each image's
 hand-written C is the two together, as its link check counts it.
+
+What could be shared yet, the copies a join sent back to each image or
+a port copied, is `docs/firmware/common-copies.tsv`, which `make
+common-copies` writes and `make check-common-copies` checks against
+the files (`common_check.py --copies`): each function two or more
+images' own C defines, which images lack it, which copies are the same
+text, comments and white space aside, how the others differ, and
+whether the diffs class the same copies identical or relocated.  Same
+text is a candidate, not a move: rule 2 is checked only once the
+function is in `common/`.
+1089 functions are defined in two or more images' own C, 994 of them the same
+text in two or more, 610 the same in every image defining them, and 110
+with a copy differing from the most images' by a constant or a name alone.
 
 ## The verification
 

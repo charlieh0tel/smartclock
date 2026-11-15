@@ -656,29 +656,6 @@ bool qspi_efc_test(void) {
 
 #define SELFTEST_HEX_DAC_PATTERNS 2
 
-/* Shifts three 12-bit words, the first most significant, right one bit
- * as a 36-bit number; returns the bit carried from the first word into
- * the second. */
-uint16_t shift_right_36(uint16_t* words) {
-  static const uint16_t WORD_MASK = 0xfff;
-  static const uint16_t WORD_TOP_BIT = 0x800;
-
-  words[2] &= WORD_MASK;
-  words[1] &= WORD_MASK;
-  words[0] &= WORD_MASK;
-  words[2] >>= 1;
-  if (words[1] & 1) {
-    words[2] |= WORD_TOP_BIT;
-  }
-  words[1] >>= 1;
-  uint16_t carry = words[0] & 1;
-  if (carry) {
-    words[1] |= WORD_TOP_BIT;
-  }
-  words[0] >>= 1;
-  return carry;
-}
-
 /* Sends a pattern to the hex DAC's three words, then sends it again
  * while reading back the first, which returns a bit late; 1 when both
  * patterns read back; restores the DACs. */
@@ -710,20 +687,6 @@ uint8_t qspi_hex_dac_test(void) {
   return passed;
 }
 
-/* Entry 12, IMRC: on the second pass runs interpolator_selftest. */
-void selftest_interpolator_calibration(char_slot run) {
-  if (run.value == 1) {
-    interpolator_selftest();
-  }
-}
-
-/* Entry 13, QMRC: on the second pass runs interpolator_sample_test. */
-void selftest_interpolator_sample(char_slot run) {
-  if (run.value == 1) {
-    interpolator_sample_test();
-  }
-}
-
 /* Runs each self-test in selftest_list with run 0, the second slot's
  * char 1. */
 void selftest_run_all(void) {
@@ -740,4 +703,10 @@ void selftest_run_all_counted(void) {
     (*test)((char_slot){.value = 1, .next = 1});
     watchdog_pll++;
   }
+}
+
+/* "DISP": runs the lamp test; 0. */
+uint32_t lamp_test_command(void) {
+  lamp_test();
+  return 0;
 }

@@ -20,23 +20,6 @@ int32_t satellite_in_set(satellite_kind kind, uint8_t id, uint32_t mask) {
   return (mask & cpu_long_bit((uint8_t)(id - 1))) != 0;
 }
 
-/* A satellite's cell: its elevation and azimuth while the record holds
- * them, below 91 and 360 degrees; else no position. */
-void satellite_elevation_azimuth(oncore_visible_satellite* satellite,
-                                 satellite_cell* cell) {
-  static const uint8_t ELEVATION_LIMIT = 91;
-  static const uint16_t AZIMUTH_LIMIT = 360;
-
-  if (satellite != NULL && satellite->elevation < ELEVATION_LIMIT &&
-      satellite->azimuth < AZIMUTH_LIMIT) {
-    cell->status = SATELLITE_CELL_POSITION;
-    cell->elevation = satellite->elevation;
-    cell->azimuth = satellite->azimuth;
-    return;
-  }
-  cell->status = SATELLITE_CELL_NO_POSITION;
-}
-
 /* qsort's order of two satellites: by elevation, then the higher
  * number first. */
 int32_t satellite_compare(void* first, void* second) {

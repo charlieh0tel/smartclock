@@ -6,20 +6,6 @@
 
 #include <stddef.h>
 
-/* An exception's name, from its frame's format and vector word: the
- * vector's offset, 4 times its number, indexes exception_names as bytes
- * from vector 2's, the first named, unchecked below it and unaligned as
- * the image's is. */
-char* exception_name(uint16_t vector) {
-  uint16_t offset = vector & CPU_VECTOR_OFFSET_MASK;
-
-  if (offset > CPU_VECTOR_OFFSET_LAST_NAMED) {
-    return "Oooh! That tickles. I don't know that vector.";
-  }
-  return *(char**)((char*)exception_names + offset -
-                   CPU_VECTOR_OFFSET_FIRST_NAMED);
-}
-
 /* A length-prefixed message and ", %08X" with a code, to fatal_error;
  * the two arguments before the code are unread. */
 void fatal_error_with_code(char* message, uint32_t unused_1, uint32_t unused_2,

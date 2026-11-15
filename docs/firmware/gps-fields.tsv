@@ -167,8 +167,8 @@ Bk	response	least squares matrix elements 8 to 10	56	2	3	2	-	VP	98	z3805a-3543b,
 Bk	response	clock bias	62	2	1	-	-	VP	98	z3805a-3543b,z3801a-3543	-	console	record.derived.solver.clock_bias	-	Solver	-	-
 Bk	response	oscillator offset	64	2	1	-	-	VP	98	z3805a-3543b,z3801a-3543	-	console	record.derived.solver.oscillator_offset	-	Solver	-	-
 Bn	command	rate	4	1	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	engine	all fifteen 0xff asks
-Bn	command	algorithm	5	1	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	engine	-
-Bn	command	alarm limit	6	2	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	engine	-
+Bn	command	algorithm	5	1	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored;held:raim_algorithm	-	-	engine;holder	-
+Bn	command	alarm limit	6	2	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored;held:raim_alarm_limit	-	-	engine;holder	-
 Bn	command	pulse mode	8	1	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored;held:pulse_mode	-	-	engine;holder	-
 Bn	command	not used	9	10	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored:not used, nothing to do	-	-	engine	-
 Bn	response	rate	4	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	state	-	-	-	-
@@ -254,8 +254,8 @@ Ek	response	least squares matrix elements	44	2	10	2	-	VP	137	58503a-3704,z3817a-
 Ek	response	clock bias	64	2	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.solver.clock_bias	-	Solver	-	-
 Ek	response	oscillator offset	66	2	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.solver.oscillator_offset	-	Solver	-	-
 En	command	rate	4	1	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	-	-	engine	all fifteen 0xff asks
-En	command	algorithm	5	1	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	-	-	engine	-
-En	command	alarm limit	6	2	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	-	-	engine	-
+En	command	algorithm	5	1	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored;held:raim_algorithm	-	-	engine;holder	-
+En	command	alarm limit	6	2	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored;held:raim_alarm_limit	-	-	engine;holder	-
 En	command	pulse mode	8	1	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored;held:pulse_mode	-	-	engine;holder	-
 En	command	not used	9	10	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored:not used, nothing to do	-	-	engine	-
 En	response	rate	4	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	control	state	-	-	-	-

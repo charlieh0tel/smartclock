@@ -50,6 +50,7 @@ use crate::oncore::BB_VISIBLE_SATELLITES;
 use crate::oncore::BC_XDOP_TABLE;
 use crate::oncore::BH_CORRECTION_OUTPUT;
 use crate::oncore::BJ_LEAP_SECOND_PENDING;
+use crate::oncore::BK_EXTENSION;
 use crate::oncore::BN_TIME_RAIM;
 use crate::oncore::BO_UTC_OFFSET;
 use crate::oncore::CA_SELF_TEST;
@@ -89,9 +90,13 @@ use crate::record::RaimAbility;
 use crate::record::RaimSolution;
 use crate::record::Record;
 use crate::record::Satellite;
+use crate::record::SatelliteFlag;
+use crate::record::SatelliteFlags;
+use crate::record::Solver;
 use crate::record::Timing;
 use crate::record::Tracking;
 use crate::record::Velocity;
+use crate::record::VelocityAxes;
 use crate::record::XdopCombination;
 use crate::record::XdopTable;
 use crate::time::DateTime;
@@ -101,6 +106,8 @@ use crate::time::LeapEvent;
 use crate::units::Centimeters;
 use crate::units::CentimetersPerSecond;
 use crate::units::DecibelHertz;
+use crate::units::Decimeters;
+use crate::units::DecimetersPerSecond;
 use crate::units::Deciseconds;
 use crate::units::Degrees;
 use crate::units::MilliArcSeconds;
@@ -111,6 +118,7 @@ use crate::units::Prn;
 use crate::units::PrnSet;
 use crate::units::Seconds;
 use crate::units::TenthDegrees;
+use crate::units::TenthDegreesEast;
 use crate::units::Tenths;
 
 /// The frames an engine sent.
@@ -508,7 +516,77 @@ fn a_record_with_gaps_is_sent_as_zeros() {
     record.dops = None;
     record.derived.ecef = None;
     let frames = ask(&mut engine, &record, EK_EXTENSION, &[0]);
-    assert_eq!(only(&frames, EK_EXTENSION), [0; 64]);
+    let data = only(&frames, EK_EXTENSION);
+    // VP p. 137: no URA is decoded, which is 63.
+    assert_eq!(data[..32], [0; 32]);
+    assert_eq!(data[32..40], [63; 8]);
+    assert_eq!(data[40..], [0; 24]);
+}
+
+/// VP pp. 97 and 98, and 136 and 137: the rest of an extension is the
+/// record's, in position hold as out of it.
+#[test]
+fn an_extension_tells_all_the_record_has_for_it() {
+    let mut record = full();
+    record.derived.magnetic_variation = Some(TenthDegreesEast(-123));
+    record.derived.velocity = Some(VelocityAxes {
+        north: DecimetersPerSecond(5),
+        east: DecimetersPerSecond(-6),
+        up: DecimetersPerSecond(7),
+    });
+    record.differential_age = Some(Deciseconds(70_000));
+    record.satellites.get_mut(prn(3)).unwrap().ura = Some(2);
+    record.satellites.get_mut(prn(4)).unwrap().ura = Some(16);
+    let mut solver = Solver::ZERO;
+    solver.matrix = [1, -2, 3, 4, 5, 6, 7, 8, 9, 10];
+    solver.clock_bias = Decimeters(-300);
+    solver.oscillator_offset = DecimetersPerSecond(40_000);
+    record.derived.solver = Some(solver);
+
+    let matrix = [
+        0, 1, 0xff, 0xfe, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 10,
+    ];
+    for (identity, id, channels) in [(&VP_SIX, BK_EXTENSION, 6), (&VP_EIGHT, EK_EXTENSION, 8)] {
+        let mut engine = fixing(identity);
+        ask(&mut engine, &record, AT_POSITION_HOLD, &[1]);
+        let frames = ask(&mut engine, &record, id, &[0]);
+        let data = only(&frames, id);
+        assert_eq!(data[10..12], [0xff, 0x85]);
+        assert_eq!(data[12..18], [0, 5, 0xff, 0xfa, 0, 7]);
+        // An age past what the field holds is its most.
+        assert_eq!(data[18..20], [0xff, 0xff]);
+        assert_eq!(data[20..24], [0, 0, 0, 1]);
+        // A URA past 15 is none.
+        let mut ura = [63; 8];
+        ura[0] = 2;
+        assert_eq!(data[32..32 + channels], ura[..channels]);
+        let rest = &data[32 + channels..];
+        assert_eq!(rest[..20], matrix);
+        assert_eq!(rest[20..], [0xfe, 0xd4, 0x9c, 0x40]);
+    }
+}
+
+/// VP pp. 72 and 73.
+#[test]
+fn a_channel_tells_every_mode_and_flag() {
+    let mut record = full();
+    let first = record.satellites.get_mut(prn(3)).unwrap();
+    first.tracking = Tracking::AgcSet;
+    first.flags = SatelliteFlags::EMPTY
+        .with(SatelliteFlag::MomentumAlert)
+        .with(SatelliteFlag::Inaccurate);
+    let second = record.satellites.get_mut(prn(4)).unwrap();
+    second.tracking = Tracking::MessageSync;
+    second.used = false;
+    second.health = Health::Unhealthy;
+    second.flags = SatelliteFlags::EMPTY
+        .with(SatelliteFlag::AntiSpoof)
+        .with(SatelliteFlag::ParityError);
+    let mut engine = fixing(&VP_EIGHT);
+    let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+    let data = only(&frames, EA_POSITION_STATUS);
+    assert_eq!((data[37], data[39]), (2, 0x80 | 0x40 | 0x08));
+    assert_eq!((data[41], data[43]), (5, 0x20 | 0x10 | 0x01));
 }
 
 #[test]

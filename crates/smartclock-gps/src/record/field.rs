@@ -114,11 +114,23 @@ pub enum RecordField {
     RaimAbility,
     /// The satellites Time RAIM isolated.
     RaimIsolated,
+    /// [`Record::differential_age`].
+    DifferentialAge,
+    /// Each satellite's flags.
+    SatelliteFlags,
+    /// Each one's user range accuracy.
+    SatelliteUra,
+    /// The magnetic variation.
+    MagneticVariation,
+    /// The velocity along each axis.
+    VelocityAxes,
+    /// The inside of the solution.
+    Solver,
 }
 
 impl RecordField {
     /// Every field, in the order of their bits in a [`FieldSet`].
-    pub const ALL: [Self; 38] = [
+    pub const ALL: [Self; 44] = [
         Self::Time,
         Self::Subsecond,
         Self::UtcOffset,
@@ -157,6 +169,12 @@ impl RecordField {
         Self::RaimSolution,
         Self::RaimAbility,
         Self::RaimIsolated,
+        Self::DifferentialAge,
+        Self::SatelliteFlags,
+        Self::SatelliteUra,
+        Self::MagneticVariation,
+        Self::VelocityAxes,
+        Self::Solver,
     ];
 
     /// Where it is in a [`Record`], as the field table's engine column
@@ -203,6 +221,12 @@ impl RecordField {
             Self::RaimSolution => "derived.raim.solution",
             Self::RaimAbility => "derived.raim.ability",
             Self::RaimIsolated => "derived.raim.isolated",
+            Self::DifferentialAge => "differential_age",
+            Self::SatelliteFlags => "satellites.flags",
+            Self::SatelliteUra => "satellites.ura",
+            Self::MagneticVariation => "derived.magnetic_variation",
+            Self::VelocityAxes => "derived.velocity",
+            Self::Solver => "derived.solver",
         }
     }
 
@@ -328,6 +352,14 @@ impl RecordField {
                 };
                 isolated(one) != isolated(other)
             }
+            Self::DifferentialAge => one.differential_age != other.differential_age,
+            Self::SatelliteFlags => satellites_differ(one, other, |satellite| satellite.flags),
+            Self::SatelliteUra => satellites_differ(one, other, |satellite| satellite.ura),
+            Self::MagneticVariation => {
+                one.derived.magnetic_variation != other.derived.magnetic_variation
+            }
+            Self::VelocityAxes => one.derived.velocity != other.derived.velocity,
+            Self::Solver => one.derived.solver != other.derived.solver,
         }
     }
 }

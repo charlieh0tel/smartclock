@@ -80,7 +80,10 @@
 //!   The Time RAIM result: a u-blox receiver has none to report.
 //!   [`Record::self_test`]: no message here tells what a self-test
 //!   would find.  [`Fix::Propagated`] is never given: a fix by dead
-//!   reckoning alone is no fix here.
+//!   reckoning alone is no fix here.  A satellite's flags and URA,
+//!   the age of differential data, the magnetic variation, the
+//!   velocity along each axis and the inside of the solution: not
+//!   filled.
 //!
 //! [`FILLER`] says which parts of a record that comes to, and the
 //! crate's tests hold it to what [`Assembler`] writes.

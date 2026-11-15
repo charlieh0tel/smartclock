@@ -131,7 +131,10 @@ use crate::record::RaimSolution;
 use crate::record::Record;
 use crate::record::SATELLITES;
 use crate::record::Satellite;
+use crate::record::SatelliteFlag;
+use crate::record::Solver;
 use crate::record::Tracking;
+use crate::record::URA_MAX;
 use crate::record::XDOP_COMBINATIONS;
 use crate::record::XDOP_SATELLITES;
 use crate::record::XdopCombination;
@@ -208,6 +211,15 @@ const WGS_84_INVERSE_FLATTENING_FRACTION: u32 = 257_223_563;
 const STATUS_CHANNEL: usize = 4;
 /// A channel's status flag bits (VP p. 73; UT p. 6.20).
 const CHANNEL_USED: u8 = 0x80;
+const CHANNEL_UNHEALTHY: u8 = 0x10;
+/// The bit of a channel's status flags for each of a satellite's (VP
+/// p. 73).
+const CHANNEL_FLAG_BITS: [(SatelliteFlag, u8); 4] = [
+    (SatelliteFlag::MomentumAlert, 0x40),
+    (SatelliteFlag::AntiSpoof, 0x20),
+    (SatelliteFlag::Inaccurate, 0x08),
+    (SatelliteFlag::ParityError, 0x01),
+];
 const CHANNEL_USED_FOR_TIME: u8 = 0x02;
 /// The receiver status bits (VP p. 73).
 const STATUS_POSITION_PROPAGATE: u8 = 0x80;
@@ -346,7 +358,8 @@ const CORRECTION_RATE_MOST: i16 = 4096;
 /// matrix.
 const EXTENSION_DOPS: usize = 5;
 const AXES: usize = 3;
-const MATRIX_ELEMENTS: usize = 10;
+/// A channel's URA with none decoded yet (VP p. 98).
+const URA_NOT_DECODED: u8 = 63;
 /// `@@Bj`'s statuses (VP p. 94).
 const NO_LEAP_PENDING: u8 = 0;
 const LEAP_ADDITION_PENDING: u8 = 1;
@@ -1491,17 +1504,27 @@ impl Engine {
         data
     }
 
-    /// A channel's status flags (VP p. 73; UT p. 6.20).  A UT Plus
+    /// A channel's status flags (VP p. 73; UT p. 6.20): whether its
+    /// satellite is used, what the satellite flags of itself and that
+    /// it is unhealthy.  A UT Plus
     /// uses for time what it uses for position, less the `isolated`
     /// that Time RAIM removed (UT pp. 6.20, 6.93).
     fn channel_flags(&self, satellite: &Satellite, isolated: PrnSet) -> u8 {
         let ut_plus = self.identity.model() == Model::UtPlus;
         let for_time = !isolated.contains(satellite.prn);
-        match (satellite.used, ut_plus, for_time) {
+        let used = match (satellite.used, ut_plus, for_time) {
             (false, _, _) => 0,
             (true, false, _) | (true, true, false) => CHANNEL_USED,
             (true, true, true) => CHANNEL_USED | CHANNEL_USED_FOR_TIME,
-        }
+        };
+        let unhealthy = match satellite.health {
+            Health::Unhealthy => CHANNEL_UNHEALTHY,
+            Health::Unknown | Health::Healthy => 0,
+        };
+        CHANNEL_FLAG_BITS
+            .iter()
+            .filter(|(flag, _)| satellite.flags.contains(*flag))
+            .fold(used | unhealthy, |flags, (_, bit)| flags | bit)
     }
 
     /// `@@Bb`, kept to tell a change by.
@@ -1676,7 +1699,9 @@ impl Engine {
         send(out, CE_PSEUDORANGE_CORRECTION, &data);
     }
 
-    /// `@@Bk` and `@@Ek` (VP pp. 95 to 98 and 134 to 137).
+    /// `@@Bk` and `@@Ek` (VP pp. 95 to 98 and 134 to 137).  A channel
+    /// with no URA decoded, or with no satellite, has the manual's
+    /// value for that.
     fn extension<O: Output + ?Sized>(&self, record: &Record, family: &Family, out: &mut O) {
         let mut data = Data::new();
         match record.dops {
@@ -1688,24 +1713,40 @@ impl Engine {
                 .word(dops.time.0),
             None => data.zeros(EXTENSION_DOPS * size_of::<u16>()),
         };
-        // The magnetic variation, the velocity along each axis and the
-        // age of the differential data.
-        data.zeros(size_of::<i16>())
-            .zeros(AXES * size_of::<i16>())
-            .zeros(size_of::<u16>());
-        match record.derived.ecef {
-            Some(ecef) if !self.state.store.holding() => data
+        let derived = &record.derived;
+        data.signed_word(
+            derived
+                .magnetic_variation
+                .map_or(0, |variation| variation.0),
+        );
+        match derived.velocity {
+            Some(velocity) => data
+                .signed_word(velocity.north.0)
+                .signed_word(velocity.east.0)
+                .signed_word(velocity.up.0),
+            None => data.zeros(AXES * size_of::<i16>()),
+        };
+        let age = record.differential_age.map_or(0, |age| age.0);
+        data.word(u16::try_from(age).unwrap_or(u16::MAX));
+        match derived.ecef {
+            Some(ecef) => data
                 .signed_long(ecef.x.0)
                 .signed_long(ecef.y.0)
                 .signed_long(ecef.z.0),
-            _ => data.zeros(AXES * size_of::<i32>()),
+            None => data.zeros(AXES * size_of::<i32>()),
         };
-        // Each channel's URA, the matrix, the clock bias and the
-        // oscillator offset.
-        data.zeros(family.channels)
-            .zeros(MATRIX_ELEMENTS * size_of::<i16>())
-            .zeros(size_of::<i16>())
-            .zeros(size_of::<u16>());
+        for channel in self.channels(record, family) {
+            let ura = channel
+                .and_then(|satellite| satellite.ura)
+                .filter(|ura| *ura <= URA_MAX);
+            data.byte(ura.unwrap_or(URA_NOT_DECODED));
+        }
+        let solver = derived.solver.unwrap_or(Solver::ZERO);
+        for element in solver.matrix {
+            data.signed_word(element);
+        }
+        data.signed_word(solver.clock_bias.0)
+            .word(solver.oscillator_offset.0);
         send(out, family.extension, &data);
     }
 
@@ -1910,8 +1951,10 @@ const fn tracking_mode(tracking: Tracking) -> u8 {
     match tracking {
         Tracking::Searching => 0,
         Tracking::CodeLock => 1,
+        Tracking::AgcSet => 2,
         Tracking::CarrierLock => 3,
         Tracking::BitSync => 4,
+        Tracking::MessageSync => 5,
         Tracking::FrameSync => 6,
         Tracking::Ephemeris => 7,
         Tracking::Position => 8,

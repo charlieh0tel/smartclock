@@ -109,9 +109,9 @@ Ba	response	DOP type	37	1	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817
 Ba	response	visible satellites	38	1	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites;computed	-	Satellites	-
 Ba	response	tracked satellites	39	1	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.tracking;computed	-	SatelliteTracking	-
 Ba	response	channel satellite	40	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.satellites.prn	-	Satellites	-
-Ba	response	channel tracking mode	41	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.satellites.tracking	-	SatelliteTracking	the record has no state for modes 2, AGC set, and 5, message sync detect, so neither is sent
+Ba	response	channel tracking mode	41	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.satellites.tracking	-	SatelliteTracking	-
 Ba	response	channel signal strength	42	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.signal	-	SatelliteSignal	-
-Ba	response	channel status flags	43	1	6	4	-	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.used;zero:momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits	-	SatelliteUsed	-
+Ba	response	channel status flags	43	1	6	4	-	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.used;record.satellites.flags;record.satellites.health	-	SatelliteUsed;SatelliteHealth;SatelliteFlags	-
 Ba	response	receiver status position propagate	64	1	1	-	7	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix	-	Fix	-
 Ba	response	receiver status poor geometry	64	1	1	-	6	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;computed	-	PositionDop;HorizontalDop	-
 Ba	response	receiver status 3D fix	64	1	1	-	5	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-
@@ -153,19 +153,19 @@ Bk	response	PDOP	6	2	1	-	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-375
 Bk	response	HDOP	8	2	1	-	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.horizontal	-	HorizontalDop	-
 Bk	response	VDOP	10	2	1	-	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.vertical	-	VerticalDop	-
 Bk	response	TDOP	12	2	1	-	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.time	-	TimeDop	-
-Bk	response	magnetic variation	14	2	1	-	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Bk	response	velocity north	16	2	1	-	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Bk	response	velocity east	18	2	1	-	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Bk	response	velocity up	20	2	1	-	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Bk	response	age of differential data	22	2	1	-	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Bk	response	ECEF X	24	4	1	-	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.ecef.x;zero:while holding position	-	Ecef	-
-Bk	response	ECEF Y	28	4	1	-	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.ecef.y;zero:while holding position	-	Ecef	-
-Bk	response	ECEF Z	32	4	1	-	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.ecef.z;zero:while holding position	-	Ecef	-
-Bk	response	channel URA	36	1	6	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	63	-	-
-Bk	response	least squares matrix elements 1 to 7	42	2	7	2	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Bk	response	least squares matrix elements 8 to 10	56	2	3	2	-	VP	98	z3805a-3543b,z3801a-3543	-	console	zero	-	-	-
-Bk	response	clock bias	62	2	1	-	-	VP	98	z3805a-3543b,z3801a-3543	-	console	zero	-	-	-
-Bk	response	oscillator offset	64	2	1	-	-	VP	98	z3805a-3543b,z3801a-3543	-	console	zero	-	-	-
+Bk	response	magnetic variation	14	2	1	-	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.magnetic_variation	-	MagneticVariation	-
+Bk	response	velocity north	16	2	1	-	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.velocity.north	-	VelocityAxes	-
+Bk	response	velocity east	18	2	1	-	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.velocity.east	-	VelocityAxes	-
+Bk	response	velocity up	20	2	1	-	-	VP	97	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.velocity.up	-	VelocityAxes	-
+Bk	response	age of differential data	22	2	1	-	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.differential_age	-	DifferentialAge	-
+Bk	response	ECEF X	24	4	1	-	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.ecef.x	-	Ecef	-
+Bk	response	ECEF Y	28	4	1	-	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.ecef.y	-	Ecef	-
+Bk	response	ECEF Z	32	4	1	-	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.ecef.z	-	Ecef	-
+Bk	response	channel URA	36	1	6	1	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.ura;unknown:no URA decoded, or no satellite on the channel	63	SatelliteUra	-
+Bk	response	least squares matrix elements 1 to 7	42	2	7	2	-	VP	98	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.solver.matrix	-	Solver	-
+Bk	response	least squares matrix elements 8 to 10	56	2	3	2	-	VP	98	z3805a-3543b,z3801a-3543	-	console	record.derived.solver.matrix	-	Solver	-
+Bk	response	clock bias	62	2	1	-	-	VP	98	z3805a-3543b,z3801a-3543	-	console	record.derived.solver.clock_bias	-	Solver	-
+Bk	response	oscillator offset	64	2	1	-	-	VP	98	z3805a-3543b,z3801a-3543	-	console	record.derived.solver.oscillator_offset	-	Solver	-
 Bn	command	rate	4	1	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	all fifteen 0xff asks
 Bn	command	algorithm	5	1	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	-
 Bn	command	alarm limit	6	2	1	-	-	VP	104	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	-
@@ -175,7 +175,7 @@ Bn	response	rate	4	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-37
 Bn	response	algorithm	5	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	state	-	-	-
 Bn	response	alarm limit	6	2	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	state	-	-	-
 Bn	response	pulse mode	8	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=console,z3817a-3752=control	state	-	-	-
-Bn	response	pulse rate	9	3	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	constant:one pulse a second	-	-	-
+Bn	response	pulse rate	9	3	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	fixed:one pulse a second, which no command sets	-	-	-
 Bn	response	next pulse month	12	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-	Time	-
 Bn	response	next pulse day	13	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-	Time	-
 Bn	response	next pulse year	14	2	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-	Time	-
@@ -224,9 +224,9 @@ Ea	response	DOP type	37	1	1	-	-	VP,UT	126,6.20	58503a-3704,z3817a-3752	-	stored	
 Ea	response	visible satellites	38	1	1	-	-	VP	126	58503a-3704,z3817a-3752	-	console	record.satellites;computed	-	Satellites	-
 Ea	response	tracked satellites	39	1	1	-	-	VP	126	58503a-3704,z3817a-3752	-	console	record.satellites.tracking;computed	-	SatelliteTracking	-
 Ea	response	channel satellite	40	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	control	record.satellites.prn	-	Satellites	-
-Ea	response	channel tracking mode	41	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	control	record.satellites.tracking	-	SatelliteTracking	the record has no state for modes 2, AGC set, and 5, message sync detect, so neither is sent
+Ea	response	channel tracking mode	41	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	control	record.satellites.tracking	-	SatelliteTracking	-
 Ea	response	channel signal strength	42	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	reported	record.satellites.signal	-	SatelliteSignal	-
-Ea	response	channel status flags	43	1	8	4	-	VP,UT	126,6.20	58503a-3704,z3817a-3752	-	console	record.satellites.used;computed;zero:momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits	-	SatelliteUsed	a UT Plus adds the used for time bit
+Ea	response	channel status flags	43	1	8	4	-	VP,UT	126,6.20	58503a-3704,z3817a-3752	-	console	record.satellites.used;record.satellites.flags;record.satellites.health;computed	-	SatelliteUsed;SatelliteHealth;SatelliteFlags	a UT Plus adds the used for time bit
 Ea	response	receiver status position propagate	72	1	1	-	7	VP	126	58503a-3704,z3817a-3752	-	console	record.fix	-	Fix	-
 Ea	response	receiver status poor geometry	72	1	1	-	6	VP	126	58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;computed	-	PositionDop;HorizontalDop	-
 Ea	response	receiver status 3D fix	72	1	1	-	5	VP	126	58503a-3704,z3817a-3752	-	control	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-
@@ -241,18 +241,18 @@ Ek	response	PDOP	6	2	1	-	-	VP	135	58503a-3704,z3817a-3752	-	console	record.dops.
 Ek	response	HDOP	8	2	1	-	-	VP	135	58503a-3704,z3817a-3752	-	console	record.dops.horizontal	-	HorizontalDop	-
 Ek	response	VDOP	10	2	1	-	-	VP	135	58503a-3704,z3817a-3752	-	console	record.dops.vertical	-	VerticalDop	-
 Ek	response	TDOP	12	2	1	-	-	VP	135	58503a-3704,z3817a-3752	-	console	record.dops.time	-	TimeDop	-
-Ek	response	magnetic variation	14	2	1	-	-	VP	136	58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Ek	response	velocity north	16	2	1	-	-	VP	136	58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Ek	response	velocity east	18	2	1	-	-	VP	136	58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Ek	response	velocity up	20	2	1	-	-	VP	136	58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Ek	response	age of differential data	22	2	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Ek	response	ECEF X	24	4	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.ecef.x;zero:while holding position	-	Ecef	-
-Ek	response	ECEF Y	28	4	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.ecef.y;zero:while holding position	-	Ecef	-
-Ek	response	ECEF Z	32	4	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.ecef.z;zero:while holding position	-	Ecef	-
-Ek	response	channel URA	36	1	8	1	-	VP	137	58503a-3704,z3817a-3752	-	console	zero	63	-	-
-Ek	response	least squares matrix elements	44	2	10	2	-	VP	137	58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Ek	response	clock bias	64	2	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	zero	-	-	-
-Ek	response	oscillator offset	66	2	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	zero	-	-	-
+Ek	response	magnetic variation	14	2	1	-	-	VP	136	58503a-3704,z3817a-3752	-	console	record.derived.magnetic_variation	-	MagneticVariation	-
+Ek	response	velocity north	16	2	1	-	-	VP	136	58503a-3704,z3817a-3752	-	console	record.derived.velocity.north	-	VelocityAxes	-
+Ek	response	velocity east	18	2	1	-	-	VP	136	58503a-3704,z3817a-3752	-	console	record.derived.velocity.east	-	VelocityAxes	-
+Ek	response	velocity up	20	2	1	-	-	VP	136	58503a-3704,z3817a-3752	-	console	record.derived.velocity.up	-	VelocityAxes	-
+Ek	response	age of differential data	22	2	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.differential_age	-	DifferentialAge	-
+Ek	response	ECEF X	24	4	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.ecef.x	-	Ecef	-
+Ek	response	ECEF Y	28	4	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.ecef.y	-	Ecef	-
+Ek	response	ECEF Z	32	4	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.ecef.z	-	Ecef	-
+Ek	response	channel URA	36	1	8	1	-	VP	137	58503a-3704,z3817a-3752	-	console	record.satellites.ura;unknown:no URA decoded, or no satellite on the channel	63	SatelliteUra	-
+Ek	response	least squares matrix elements	44	2	10	2	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.solver.matrix	-	Solver	-
+Ek	response	clock bias	64	2	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.solver.clock_bias	-	Solver	-
+Ek	response	oscillator offset	66	2	1	-	-	VP	137	58503a-3704,z3817a-3752	-	console	record.derived.solver.oscillator_offset	-	Solver	-
 En	command	rate	4	1	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	-	-	all fifteen 0xff asks
 En	command	algorithm	5	1	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	-	-	-
 En	command	alarm limit	6	2	1	-	-	VP	140	58503a-3704,z3817a-3752	-	-	honored	-	-	-
@@ -262,7 +262,7 @@ En	response	rate	4	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	control	state	-	-	-
 En	response	algorithm	5	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	control	state	-	-	-
 En	response	alarm limit	6	2	1	-	-	VP	141	58503a-3704,z3817a-3752	-	console	state	-	-	-
 En	response	pulse mode	8	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	58503a-3704=console,z3817a-3752=control	state	-	-	-
-En	response	pulse rate	9	3	1	-	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	constant:one pulse a second;fixed:not used on a UT Plus	-	-	-
+En	response	pulse rate	9	3	1	-	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	fixed:one pulse a second, which no command sets;fixed:not used on a UT Plus	-	-	-
 En	response	next pulse month	12	1	1	-	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-	Time	-
 En	response	next pulse day	13	1	1	-	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-	Time	-
 En	response	next pulse year	14	2	1	-	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-	Time	-

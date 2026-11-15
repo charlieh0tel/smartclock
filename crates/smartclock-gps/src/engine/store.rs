@@ -36,6 +36,7 @@ use crate::oncore::AY_PULSE_OFFSET;
 use crate::oncore::AZ_CABLE_DELAY;
 use crate::oncore::MessageId;
 use crate::oncore::TA_DCXO;
+use crate::record::DopKind;
 use crate::units::Centimeters;
 use crate::units::MilliArcSeconds;
 use crate::units::Milliseconds;
@@ -170,7 +171,12 @@ const SETTINGS: [Setting; 23] = [
     setting(AB_GMT_CORRECTION, &[QUERY; 3], &[0; 3], Takes::Anything),
     setting(AG_MASK_ANGLE, &[QUERY], &[10], Takes::Bytes(89)),
     setting(AH_SATELLITE_SELECT, &[QUERY], &[0], Takes::Bytes(2)),
-    setting(AJ_XDOP_TYPE, &[QUERY], &[1], Takes::Bytes(4)),
+    setting(
+        AJ_XDOP_TYPE,
+        &[QUERY],
+        &[DOP_POSITION],
+        Takes::Bytes(DOP_TIME),
+    ),
     setting(
         AK_XDOP_HYSTERESIS,
         &[QUERY; 2],
@@ -249,6 +255,12 @@ const APPLICATION_HANDHELD: u8 = 1;
 const APPLICATION_LAND: u8 = 2;
 const APPLICATION_MARINE: u8 = 3;
 const APPLICATION_STATIC: u8 = 4;
+/// `@@Aj`'s DOP types (p. 34), which are `@@Bc`'s (p. 77).
+const DOP_GEOMETRIC: u8 = 0;
+const DOP_POSITION: u8 = 1;
+const DOP_HORIZONTAL: u8 = 2;
+const DOP_VERTICAL: u8 = 3;
+const DOP_TIME: u8 = 4;
 
 const MINUTES_PER_HOUR: i16 = 60;
 
@@ -547,6 +559,17 @@ impl Store {
             APPLICATION_STATIC => Application::Static,
             _ => Application::Land,
         }
+    }
+}
+
+/// A kind of DOP as `@@Aj` and `@@Bc` number it (pp. 34 and 77).
+pub(super) const fn dop_kind_code(kind: DopKind) -> u8 {
+    match kind {
+        DopKind::Geometric => DOP_GEOMETRIC,
+        DopKind::Position => DOP_POSITION,
+        DopKind::Horizontal => DOP_HORIZONTAL,
+        DopKind::Vertical => DOP_VERTICAL,
+        DopKind::Time => DOP_TIME,
     }
 }
 

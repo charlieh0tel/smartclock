@@ -1186,7 +1186,9 @@ specification; in short:
   is typed as the manual has it: the variation, the velocities and
   the clock bias signed and sent within the manual's ranges, the age
   and the oscillator offset unsigned, a URA an index of 0 to 15 or
-  none.  The manual has the oscillator offset as "0 to 65535 (in
+  none.  The matrix's elements are signed by our reading alone:
+  the manual gives them two bytes and a resolution, and no range or
+  sign (VP p. 98).  The manual has the oscillator offset as "0 to 65535 (in
   m/s)" and no way to say an oscillator runs the other way, so a
   record has none either.  The
   ECEF position is sent in position hold as out of it, the manual

@@ -593,8 +593,9 @@ pub struct Solver {
     /// The inverse matrix's upper triangle by rows, in tenths:
     /// `[0][0]` to `[0][3]`, `[1][1]` to `[1][3]`, `[2][2]`, `[2][3]`
     /// and `[3][3]`.  The manual gives each two bytes and "resolution
-    /// = 0.1 (unitless)", and no range or sign; signed here, as an
-    /// element off the diagonal of such a matrix may be.
+    /// = 0.1 (unitless)", and no range or sign.  That they are signed
+    /// is this crate's reading, not the manual's word: an element off
+    /// the diagonal of such a matrix may be negative.
     pub matrix: [i16; MATRIX_ELEMENTS],
     /// The receiver's clock bias: "32767 to +32767 (in meters)
     /// resolution = 0.1", signed.  An engine sends one below the least

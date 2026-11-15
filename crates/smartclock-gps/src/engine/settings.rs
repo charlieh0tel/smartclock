@@ -5,9 +5,10 @@
 //! [`Engine::settings`](crate::engine::Engine::settings) gives the
 //! [`Settings`] as they stand, and [`Engine::receive`] says which of
 //! them the commands it was given changed
-//! ([`Event`](crate::engine::event::Event)).  A setting is a value the
-//! engine holds, no more: what the engine itself sends differs by a
-//! setting only as the [module](crate::engine) says.  A setting whose
+//! ([`Event`](crate::engine::event::Event)).  What a command changes in
+//! the bytes the engine builds, the engine does; what it would change
+//! in a receiver's tracking, fix or pulse, the engine can only hold
+//! here, for its holder to do.  A setting whose
 //! command an Oncore does not take, as a UT Plus takes no `@@AB`, stays
 //! as it is at power-up.
 //!
@@ -19,7 +20,14 @@
 use crate::units::Centimeters;
 use crate::units::Degrees;
 use crate::units::MilliArcSeconds;
+use crate::units::Milliseconds;
 use crate::units::Nanoseconds;
+use crate::units::Seconds;
+use crate::units::Tenths;
+
+/// The channels the most an engine has, each of which `@@Ai` can put a
+/// satellite on (p. 32).
+pub const CHANNELS_MOST: usize = 8;
 
 /// What a height is measured from (`@@Af`'s height type, p. 26).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -93,6 +101,61 @@ pub enum Application {
     Static,
 }
 
+/// How an engine chooses the satellites it tracks (`@@Ah`, pp. 29 and
+/// 30).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SatelliteSelect {
+    /// Those of the best geometry.
+    BestGeometry,
+    /// Those `@@Ai` puts on its channels
+    /// ([`Settings::manual_satellites`]).
+    Manual,
+    /// Those highest above the horizon.
+    HighestInSky,
+}
+
+/// Which satellites an engine fixes its position by (`@@Ar`, pp. 52 and
+/// 53).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FixAlgorithm {
+    /// The best four of those it tracks.
+    BestFour,
+    /// All it tracks.
+    AllInView,
+}
+
+/// The models an engine corrects ranges by (`@@Aq`, pp. 50 and 51; UT
+/// p. 6.28).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct AtmosphericCorrection {
+    /// The ionospheric model.
+    pub ionospheric: bool,
+    /// The tropospheric model, a UT Plus's alone to set: a VP's command
+    /// has no value for it, and this is false on one.
+    pub tropospheric: bool,
+}
+
+/// How long an engine filters a channel's code phase before it uses it
+/// (`@@AD`, pp. 19 and 20).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CorrectionThresholds {
+    /// Before the channel is used in a fix, `FIX_THR`.
+    pub fix: Seconds<u8>,
+    /// Before its differential correction is put out, `OUT_THR`.
+    pub output: Seconds<u8>,
+}
+
+/// What an engine's port speaks (`@@Ci`, pp. 120 and 121).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum OutputFormat {
+    /// Motorola binary, which is all the engine speaks.
+    Binary,
+    /// NMEA 0183, at 4800 baud.
+    Nmea,
+    /// Loran emulation, at 1200 baud.
+    Loran,
+}
+
 /// What commands have set an engine to.  See the [module](self).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
@@ -123,9 +186,40 @@ pub struct Settings {
     pub application: Application,
     /// Where to start looking from: the latitude, longitude and height
     /// last given (`@@Ad`, `@@Ae` and `@@Af`, pp. 17 to 26), each as it
-    /// was sent, in range or not.  The engine reports no position by
-    /// it.
+    /// was sent, in range or not.  The engine reports it while the
+    /// record has no position.
     pub initial_position: Location,
+    /// How the satellites to track are chosen (`@@Ah`).
+    pub satellite_select: SatelliteSelect,
+    /// The satellite `@@Ai` put on each channel, the first channel
+    /// first (pp. 31 and 32): its ID as it was sent, in range or not,
+    /// and zero for none or a channel turned off.  They count only
+    /// while [`Settings::satellite_select`] is
+    /// [`Manual`](SatelliteSelect::Manual).
+    pub manual_satellites: [u8; CHANNELS_MOST],
+    /// How much better another set of satellites' DOP must be before
+    /// the engine changes to it (`@@Ak`, pp. 37 and 38).
+    pub xdop_hysteresis: Tenths,
+    /// Whether a new almanac the satellites send replaces the one kept
+    /// (`@@An`, pp. 43 and 44).
+    pub almanac_update: bool,
+    /// The models ranges are corrected by (`@@Aq`).
+    pub atmospheric_correction: AtmosphericCorrection,
+    /// Which satellites the position is fixed by (`@@Ar`).
+    pub fix_algorithm: FixAlgorithm,
+    /// Where in the second the measurement epoch is put (`@@Ax`, pp. 64
+    /// and 65): 0 to 999 ms.
+    pub epoch_offset: Milliseconds<u16>,
+    /// The HDOP above which a 2D fix is given up (`@@AC`, pp. 15 and
+    /// 16).
+    pub hdop_threshold: Tenths,
+    /// How long a channel's code phase is filtered before use (`@@AD`).
+    pub correction_thresholds: CorrectionThresholds,
+    /// What the port speaks (`@@Ci`).  Set to other than
+    /// [`Binary`](OutputFormat::Binary), the engine sends nothing and
+    /// takes no command until
+    /// [`Engine::return_to_binary`](crate::engine::Engine::return_to_binary).
+    pub output_format: OutputFormat,
 }
 
 /// One of the [`Settings`].
@@ -154,22 +248,54 @@ pub enum Setting {
     Application,
     /// [`Settings::initial_position`].
     InitialPosition,
+    /// [`Settings::satellite_select`].
+    SatelliteSelect,
+    /// [`Settings::manual_satellites`].
+    ManualSatellites,
+    /// [`Settings::xdop_hysteresis`].
+    XdopHysteresis,
+    /// [`Settings::almanac_update`].
+    AlmanacUpdate,
+    /// [`Settings::atmospheric_correction`].
+    AtmosphericCorrection,
+    /// [`Settings::fix_algorithm`].
+    FixAlgorithm,
+    /// [`Settings::epoch_offset`].
+    EpochOffset,
+    /// [`Settings::hdop_threshold`].
+    HdopThreshold,
+    /// [`Settings::correction_thresholds`].
+    CorrectionThresholds,
+    /// [`Settings::output_format`].
+    OutputFormat,
 }
 
 impl Setting {
     /// Its bit in a [`SettingSet`].
-    const fn bit(self) -> u16 {
-        1 << self as u16
+    const fn bit(self) -> u32 {
+        1 << self as u32
     }
 }
 
 /// A set of [`Setting`]s.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct SettingSet(u16);
+pub struct SettingSet(u32);
 
 impl SettingSet {
     /// No setting.
     pub const EMPTY: Self = Self(0);
+
+    /// The set of `settings`.
+    #[must_use]
+    pub const fn of(settings: &[Setting]) -> Self {
+        let mut set = Self::EMPTY;
+        let mut index = 0;
+        while index < settings.len() {
+            set = set.with(settings[index]);
+            index += 1;
+        }
+        set
+    }
 
     /// The set with `setting` in it.
     #[must_use]
@@ -180,6 +306,12 @@ impl SettingSet {
     /// The set with all of `other` in it too.
     pub(super) const fn union(self, other: Self) -> Self {
         Self(self.0 | other.0)
+    }
+
+    /// The set with none of `other` in it.
+    #[must_use]
+    pub const fn without(self, other: Self) -> Self {
+        Self(self.0 & !other.0)
     }
 
     /// Whether `setting` is in it.
@@ -227,6 +359,46 @@ impl Settings {
             (
                 self.initial_position != after.initial_position,
                 Setting::InitialPosition,
+            ),
+            (
+                self.satellite_select != after.satellite_select,
+                Setting::SatelliteSelect,
+            ),
+            (
+                self.manual_satellites != after.manual_satellites,
+                Setting::ManualSatellites,
+            ),
+            (
+                self.xdop_hysteresis != after.xdop_hysteresis,
+                Setting::XdopHysteresis,
+            ),
+            (
+                self.almanac_update != after.almanac_update,
+                Setting::AlmanacUpdate,
+            ),
+            (
+                self.atmospheric_correction != after.atmospheric_correction,
+                Setting::AtmosphericCorrection,
+            ),
+            (
+                self.fix_algorithm != after.fix_algorithm,
+                Setting::FixAlgorithm,
+            ),
+            (
+                self.epoch_offset != after.epoch_offset,
+                Setting::EpochOffset,
+            ),
+            (
+                self.hdop_threshold != after.hdop_threshold,
+                Setting::HdopThreshold,
+            ),
+            (
+                self.correction_thresholds != after.correction_thresholds,
+                Setting::CorrectionThresholds,
+            ),
+            (
+                self.output_format != after.output_format,
+                Setting::OutputFormat,
             ),
         ]
         .into_iter()

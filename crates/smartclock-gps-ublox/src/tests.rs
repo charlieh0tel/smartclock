@@ -42,6 +42,7 @@ use smartclock_gps::record::Record;
 use smartclock_gps::record::Tracking;
 use smartclock_gps::record::Velocity;
 use smartclock_gps::record::field::FieldSet;
+use smartclock_gps::record::field::IMAGE_SETS;
 use smartclock_gps::record::field::RecordField;
 use smartclock_gps::record::field::changed;
 use smartclock_gps::source::Presence;
@@ -1144,13 +1145,16 @@ const UNFILLED: FieldSet = FieldSet::of(&[
 const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
 
 /// The assembler writes what [`FILLER`] declares and nothing else, and
-/// of what the images use leaves only [`UNFILLED`].
+/// of what the images use leaves only [`UNFILLED`].  It acts on none
+/// of the engine's settings: nothing here configures the receiver from
+/// them.
 #[test]
 fn the_filler_fills_what_it_declares() {
     let exceptions =
         std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(EXCEPTIONS))
             .expect("the exceptions table");
     assert_eq!(FILLER.shortfall(&exceptions), UNFILLED);
+    assert_eq!(FILLER.unacted(), IMAGE_SETS);
 
     let records = records(&mut Bench::new(), &whole_epoch());
     let [record] = records[..] else {

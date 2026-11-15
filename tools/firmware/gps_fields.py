@@ -139,17 +139,22 @@ and what it does with a command field:
                   bytes the engine builds
     held:FIELD    the engine keeps it in the FIELD of its Settings and
                   tells its holder of a change; the holder acts on it
+    given:FIELD   beside honored: the engine acts on it and gives it
+                  in the FIELD of its Settings as well, telling its
+                  holder of a change, for whatever fills what the
+                  engine acts on; no holder is held to it
     stored        kept and answered, with no effect and no Setting
     echoed        answered, not kept
     ignored       not looked at
 
 The acts column, made here, is a command field's class: engine (every
-term honored), holder (held), engine;holder (both), or gap (a stored,
-echoed or ignored term), and "-" for a response field.  A held term
-names a field of the Settings of
+term honored or given), holder (held), engine;holder (both), or gap (a
+stored, echoed or ignored term), and "-" for a response field.  A held
+or given term names a field of the Settings of
 crates/smartclock-gps/src/engine/settings.rs, each of which some row
 names.  The settings the images set (IMAGE_SETS) are those of the held
-terms of the rows some image sets.
+terms of the rows some image sets; a given one is the engine's to act
+on and not among them.
 
 A gap is a response field with a constant, zero or unknown term that
 an image uses, as control or reported, or compares, or a command field
@@ -287,15 +292,18 @@ SOURCES = (
     'unknown',
 )
 GAP_SOURCES = ('constant', 'zero', 'unknown')
-HANDLINGS = ('honored', 'held', 'stored', 'echoed', 'ignored')
+HANDLINGS = ('honored', 'held', 'given', 'stored', 'echoed', 'ignored')
 HONORED = 'honored'
 HELD = 'held'
+GIVEN = 'given'
+# The handlings whose note names a field of the engine's Settings.
+NAMES_SETTING = (HELD, GIVEN)
 # A command field's classes, and which of them a term of each handling
 # puts it in.
 ENGINE_ACTS = 'engine'
 HOLDER_ACTS = 'holder'
 GAP = 'gap'
-ACTS = {HONORED: ENGINE_ACTS, HELD: HOLDER_ACTS}
+ACTS = {HONORED: ENGINE_ACTS, GIVEN: ENGINE_ACTS, HELD: HOLDER_ACTS}
 # What a function does with a field it reads, weakest first, and the
 # use of a field no function reads.
 CLASSES = ('none', 'console', 'reported', 'control')
@@ -393,8 +401,14 @@ class Row:
         return [tuple(term.partition(':')[::2]) for term in self.engine.split(';')]
 
     def held(self) -> list[str]:
-        """The fields of the engine's Settings its terms name."""
+        """The fields of the engine's Settings its terms hold for a
+        holder to act on."""
         return [note for term, note in self.terms() if term == HELD]
+
+    def settings(self) -> list[str]:
+        """The fields of the engine's Settings its terms name, held or
+        given."""
+        return [note for term, note in self.terms() if term in NAMES_SETTING]
 
     def acts_of(self) -> str:
         """A command field's class, from its terms."""
@@ -1119,9 +1133,9 @@ def check_rows(rows: list[Row], tables: dict[str, Requests]) -> list[str]:
             problems.append(f'{FIELD.relative_to(ROOT)}: {name}: no {path} in a record')
     messages = {row.message for row in rows}
     settings = settings_fields()
-    unnamed = set(settings) - {name for row in rows if row.direction == 'command' for name in row.held()}
+    unnamed = set(settings) - {name for row in rows if row.direction == 'command' for name in row.settings()}
     for name in sorted(unnamed):
-        problems.append(f'{SETTINGS.relative_to(ROOT)}: no command row holds {name}')
+        problems.append(f'{SETTINGS.relative_to(ROOT)}: no command row holds or gives {name}')
     groups: dict[tuple[str, str], list[Row]] = {}
     for row in rows:
         where = f'{TABLE.relative_to(ROOT)}:{row.line}'
@@ -1136,7 +1150,7 @@ def check_rows(rows: list[Row], tables: dict[str, Requests]) -> list[str]:
         for term, note in row.terms():
             kind, _, path = term.partition('.')
             if row.direction == 'command':
-                good = term in HANDLINGS and (term != HELD or note in settings)
+                good = term in HANDLINGS and (term not in NAMES_SETTING or note in settings)
             elif kind == 'record':
                 good = (
                     bool(path)

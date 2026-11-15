@@ -1232,10 +1232,15 @@ specification; in short:
   whatever holds the model to apply.  *gap*: neither, a term `stored`,
   `echoed` or `ignored`.  A field can be both the first two: position
   hold changes the position the model reports and is the receiver's
-  fix mode besides.  Every field of the `Settings` is named by some
-  row, the check holds.  The settings behind the rows some image sets
-  are the crate's `IMAGE_SETS`, written by the tool as `IMAGE_USES`
-  is.  A `Filler` declares the settings it acts on, and its test
+  fix mode besides.  One engine field is in the `Settings` all the
+  same (`given:`): the kind of DOP `@@Aj` asks for, `dop_kind`.  The
+  model acts on it, sending a record's xDOP table of another kind as
+  none (VP pp. 34 and 77), and whatever makes that table has to know
+  which kind to make; it has its change event as the rest have.
+  Every field of the `Settings` is named by some row, the check
+  holds.  The settings the rows some image sets hold are the crate's
+  `IMAGE_SETS`, written by the tool as `IMAGE_USES` is; `dop_kind`,
+  given and not held, is not one, and no filler is held to it.  A `Filler` declares the settings it acts on, and its test
   holds that each of `IMAGE_SETS` is one of those or has a row of
   `gps-setting-exceptions.tsv`, one for each setting it is excused
   with the reason, and that no row is for nothing: `Filler::unacted`
@@ -1329,7 +1334,7 @@ every command field, with who acts on it.
 | `@@Ah` | select option | all four | engine, holder | honored: 2, highest in sky; `satellite_select` |
 | `@@Ai` | channel | all four | holder | `manual_satellites` |
 | `@@Ai` | satellite | all four | holder | `manual_satellites` |
-| `@@Aj` | xDOP type | all four | engine | honored |
+| `@@Aj` | xDOP type | all four | engine | honored; given: dop_kind |
 | `@@Ak` | xDOP hysteresis | all four | holder | `xdop_hysteresis` |
 | `@@Al` | xDOP threshold | all four | engine | honored |
 | `@@Am` | constant | none | engine | honored |

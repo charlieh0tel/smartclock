@@ -5,7 +5,9 @@
 //! An [`Engine`] is one of the Oncores the receivers hold, chosen when
 //! it is made by its [`Identity`]: a six-channel VP, an eight-channel
 //! VP or a UT Plus.  It answers only what the receivers' firmware
-//! sends, and fills in only what that firmware decodes.
+//! sends, and fills in only what that firmware decodes.  One made
+//! six-channel can become an eight-channel Oncore of another identity
+//! at its first `@@Ea` ([`Options::eight_on_ea`]).
 //!
 //! Whoever holds the engine owns the clock and the serial link:
 //!
@@ -174,9 +176,16 @@ pub trait Output {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Options {
-    /// A six-channel engine becomes an eight-channel one at its first
-    /// `@@Ea`, and answers the eight-channel messages from then on.
-    pub eight_on_ea: bool,
+    /// With an identity, a six-channel engine becomes an eight-channel
+    /// one at its first `@@Ea`: it answers the eight-channel messages
+    /// from then on, and is the Oncore this identity names in place of
+    /// the one it was made with, in its `@@Cj` and in all else an
+    /// identity decides.  It has eight channels whatever this
+    /// identity's model, so the one the engine was made with keeps it
+    /// who it was.  `@@Cf` undoes neither, as it restores settings and
+    /// an Oncore's channels are not one; only a new engine, a power-up,
+    /// has six again.  `None` for an engine that stays as made.
+    pub eight_on_ea: Option<&'static Identity>,
     /// It takes no commands.
     pub deaf: bool,
     /// It fixes from power-up and sends its own position status at this
@@ -188,7 +197,7 @@ pub struct Options {
 impl Options {
     /// The Oncore as it is.
     pub const DEFAULT: Self = Self {
-        eight_on_ea: false,
+        eight_on_ea: None,
         deaf: false,
         status_rate: Seconds(0),
     };
@@ -758,11 +767,13 @@ struct Deferred {
 /// A model that stands in for an Oncore.  See the [module](self).
 #[derive(Debug)]
 pub struct Engine {
-    /// Which Oncore it is.
+    /// Which Oncore it is now: the one it was made as, or the one
+    /// [`Options::eight_on_ea`] made of it.
     identity: &'static Identity,
     /// How it departs from it.
     options: Options,
-    /// The receiver channels it has now.
+    /// The receiver channels it has now, which `@@Cf` leaves with the
+    /// identity.
     channels: usize,
     /// Finds the commands in what it is sent.
     framer: Framer,
@@ -829,7 +840,8 @@ impl Engine {
         }
     }
 
-    /// Which Oncore it is.
+    /// Which Oncore it is now: the one it was made as, until
+    /// [`Options::eight_on_ea`] makes it another.
     #[must_use]
     pub const fn identity(&self) -> &'static Identity {
         self.identity
@@ -1183,12 +1195,14 @@ impl Engine {
         out: &mut O,
     ) {
         if family.channels > self.channels {
-            if !(self.options.eight_on_ea && family.status == EA_POSITION_STATUS)
-                || member != Member::Status
-            {
+            let Some(identity) = self.options.eight_on_ea else {
+                return;
+            };
+            if family.status != EA_POSITION_STATUS || member != Member::Status {
                 return;
             }
             self.channels = family.channels;
+            self.identity = identity;
         }
         match member {
             Member::Status => {

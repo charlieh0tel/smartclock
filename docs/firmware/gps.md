@@ -28,7 +28,12 @@ described here.  Its `engine` module is a model that
 stands in for an Oncore, a VP of six or eight channels or a UT Plus:
 it answers the commands of "The message table" and sends the
 continuous messages from each second's record, to the rules listed
-below for what an engine in a receiver must do.  What the commands set
+below for what an engine in a receiver must do.  One made six-channel
+can be set to become an eight-channel Oncore at its first `@@Ea`
+(`Options::eight_on_ea`, which holds the identity it becomes): from
+then on it answers `@@Cj` as that one, through a `@@Cf` too, until it
+is made again, as at a power-up ("Six or eight channels" has when a
+58503A sends that `@@Ea`).  What the commands set
 it to -- mask angle, position and altitude hold, time base, the 1 PPS's
 cable delay, offset and mode, application type, initial position -- it
 gives as types (`Engine::settings`), and `Engine::receive` returns

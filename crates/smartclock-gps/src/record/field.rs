@@ -535,22 +535,44 @@ pub const IMAGE_SETS: SettingSet = SettingSet::of(&[
 /// The first line of the exceptions table that is not a comment: its
 /// columns.
 const EXCEPTION_COLUMNS: &str = "filler\tfield\treason";
-/// What a comment line of it starts with.
+/// What a comment line of an exceptions table starts with.
 const EXCEPTION_COMMENT: char = '#';
+/// What parts the cells of a row of one.
+const EXCEPTION_CELL: char = '\t';
+
+/// The rows of an exceptions table, `exceptions` being its text and
+/// `columns` its heading: each row's cells.
+fn exception_rows<'a>(
+    exceptions: &'a str,
+    columns: &'a str,
+) -> impl Iterator<Item = impl Iterator<Item = &'a str>> {
+    exceptions
+        .lines()
+        .filter(move |line| !line.starts_with(EXCEPTION_COMMENT) && *line != columns)
+        .map(|line| line.split(EXCEPTION_CELL))
+}
+
+/// What the rows of an exceptions table excuse the filler called
+/// `name`: the second cell of each of its rows, the first being the
+/// filler and the third the reason.
+fn excused_names<'a>(
+    name: &'a str,
+    exceptions: &'a str,
+    columns: &'a str,
+) -> impl Iterator<Item = &'a str> {
+    exception_rows(exceptions, columns).filter_map(move |mut cells| {
+        let filler = cells.next()?;
+        let excused = cells.next()?;
+        (filler == name).then_some(excused)
+    })
+}
 
 /// The fields the text of `docs/firmware/gps-field-exceptions.tsv`
 /// excuses the filler called `name`: a row for each, of the filler, the
 /// field's [`RecordField::path`] and the reason.
 fn excused(name: &str, exceptions: &str) -> FieldSet {
-    exceptions
-        .lines()
-        .filter(|line| !line.starts_with(EXCEPTION_COMMENT) && *line != EXCEPTION_COLUMNS)
-        .filter_map(|line| {
-            let mut cells = line.split('\t');
-            let filler = cells.next()?;
-            let field = RecordField::of_path(cells.next()?)?;
-            (filler == name).then_some(field)
-        })
+    excused_names(name, exceptions, EXCEPTION_COLUMNS)
+        .filter_map(RecordField::of_path)
         .fold(FieldSet::EMPTY, FieldSet::with)
 }
 
@@ -624,6 +646,15 @@ mod tests {
 
     /// The exceptions table, from the crate's directory.
     const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
+    /// The cells of a row of an exceptions table: the filler, what it
+    /// is excused and the reason.
+    const EXCEPTION_CELLS: usize = 3;
+
+    /// The first line of an exceptions table that is not a comment.
+    fn heading(text: &str) -> Option<&str> {
+        text.lines()
+            .find(|line| !line.starts_with(super::EXCEPTION_COMMENT))
+    }
 
     /// Each field has its own bit and its own path, and
     /// [`RecordField::ALL`] is in the order of the bits.
@@ -707,17 +738,11 @@ mod tests {
     fn the_exceptions_name_fields() {
         let text = fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join(EXCEPTIONS))
             .expect("the exceptions table");
-        let rows = text
-            .lines()
-            .filter(|line| !line.starts_with(super::EXCEPTION_COMMENT));
-        for (index, line) in rows.enumerate() {
-            if index == 0 {
-                assert_eq!(line, super::EXCEPTION_COLUMNS);
-                continue;
-            }
-            let cells: Vec<&str> = line.split('\t').collect();
-            assert_eq!(cells.len(), 3, "{line}");
-            assert!(RecordField::of_path(cells[1]).is_some(), "{line}");
+        assert_eq!(heading(&text), Some(super::EXCEPTION_COLUMNS));
+        for cells in super::exception_rows(&text, super::EXCEPTION_COLUMNS) {
+            let cells: Vec<&str> = cells.collect();
+            assert_eq!(cells.len(), EXCEPTION_CELLS, "{cells:?}");
+            assert!(RecordField::of_path(cells[1]).is_some(), "{cells:?}");
         }
     }
 }

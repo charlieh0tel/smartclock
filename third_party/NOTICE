@@ -356,6 +356,16 @@ EEPROM contents, read the same way, 8 KB from `0x400000` (chip select
   z3805a-3625A01487-eeprom.bin  the bench Z3805A, 3543B-A.
   z3817a-3832A03064-eeprom.bin  the bench Z3817A, 3752-A.
 
+One is not as its unit held it:
+
+  58503b-L00000-eeprom.bin      a 58503B's, 1.01.04, not a bench
+                                unit's.  Its serial number is replaced
+                                by L00000 and the position its settings
+                                hold by another, and the checksums over
+                                them are redone
+                                (`docs/firmware/58503b-1.01.04.md`, "A
+                                unit's EEPROM").
+
 FPGA bitstreams, in `firmware/images/fpga/`: the 3860 bytes each image loads
 into its Xilinx XC3042, copied unchanged from the image at the offset
 given (`docs/firmware/outputs.md`, "The FPGA bitstreams").  A test in

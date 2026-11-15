@@ -420,6 +420,10 @@ fn a_satellite_on_the_ignore_list_is_listed_as_removed() {
     record.satellites.get_mut(prn(4)).unwrap().health = Health::Unhealthy;
     // Satellites 3 and 4.
     ask(&mut engine, &record, AM_IGNORE_LIST, &[0, 0, 0, 0, 0x0c]);
+    assert_eq!(
+        engine.settings().ignore_list,
+        PrnSet::EMPTY.with(prn(3)).with(prn(4))
+    );
     let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[0]);
     let data = only(&frames, BB_VISIBLE_SATELLITES);
     let health: Vec<u8> = (0..5).map(|slot| data[1 + slot * 7 + 6]).collect();
@@ -1226,8 +1230,8 @@ fn height_data(height: Height) -> Vec<u8> {
 }
 
 /// What an Oncore is set to at power-up: each command's default (VP
-/// pp. 11, 15, 17, 19, 21, 25, 27, 29, 33, 37, 43, 50, 52, 54, 56, 58,
-/// 60, 62, 64, 66, 68 and 102).
+/// pp. 11, 15, 17, 19, 21, 25, 27, 29, 33, 37, 41, 43, 50, 52, 54, 56,
+/// 58, 60, 62, 64, 66, 68 and 102).
 fn defaults() -> Settings {
     Settings {
         mask_angle: Degrees(10),
@@ -1245,6 +1249,7 @@ fn defaults() -> Settings {
         manual_satellites: [0; CHANNELS_MOST],
         dop_kind: DopKind::Position,
         xdop_hysteresis: Tenths(10),
+        ignore_list: PrnSet::EMPTY,
         almanac_update: true,
         atmospheric_correction: AtmosphericCorrection {
             ionospheric: true,
@@ -1294,7 +1299,7 @@ fn each_setting_reads_back_after_its_command() {
         kind: HeightKind::Ellipsoid,
     };
     let traim = |pps_mode: u8| [&[0, 1, 0, 10, pps_mode][..], &[0; 10]].concat();
-    let cases: [Case; 26] = [
+    let cases: [Case; 27] = [
         (
             AH_SATELLITE_SELECT,
             vec![1],
@@ -1333,6 +1338,17 @@ fn each_setting_reads_back_after_its_command() {
             after.dop_kind = DopKind::Time;
             after
         }),
+        (
+            AM_IGNORE_LIST,
+            vec![0, 0x80, 0, 0, 0x04],
+            [&[0xff][..], &[0; 4]].concat(),
+            Setting::IgnoreList,
+            {
+                let mut after = defaults();
+                after.ignore_list = PrnSet::EMPTY.with(prn(3)).with(prn(32));
+                after
+            },
+        ),
         (
             AK_XDOP_HYSTERESIS,
             vec![0x03, 0xe7],

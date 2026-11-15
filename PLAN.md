@@ -1163,8 +1163,11 @@ stands in for one.
   the correction thresholds and the port's format.  The kind of DOP
   `@@Aj` asks for is there too, though the model does all the command
   asks, sending a table of another kind as none: whatever makes a
-  record's xDOP table has to know which kind to make.  It is not of
-  `IMAGE_SETS`, and no filler is held to it.  `@@Ci` 1 and 2
+  record's xDOP table has to know which kind to make.  So is the list
+  of satellites `@@Am` says to ignore, which the model leaves off its
+  channels and marks removed itself: whatever chooses the satellites
+  a record is made from may leave them out.  Neither is of
+  `IMAGE_SETS`, and no filler is held to either.  `@@Ci` 1 and 2
   are held and told like the rest and change nothing in the model,
   which speaks neither NMEA nor Loran and goes on in binary; an
   earlier revision had it fall silent, which took a call of its

@@ -48,7 +48,7 @@ Ak	response	xDOP hysteresis	4	2	1	-	-	VP	38	z3805a-3543b,z3801a-3543,58503a-3704
 Al	command	xDOP threshold	4	2	1	-	-	VP	40	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	engine	-
 Al	response	xDOP threshold	4	2	1	-	-	VP	40	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Al	-	-	-	-
 Am	command	constant	4	1	1	-	-	VP	42	-	-	-	honored	-	-	engine	0xff, with the list zero, asks
-Am	command	ignore list	5	4	1	-	-	VP	42	-	-	-	honored	-	-	engine	-
+Am	command	ignore list	5	4	1	-	-	VP	42	-	-	-	honored;given:ignore_list	-	-	engine	-
 Am	response	constant	4	1	1	-	-	VP	42	-	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	setting.Am	-	-	-	-
 Am	response	ignore list	5	4	1	-	-	VP	42	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Am	-	-	-	-
 An	command	almanac update	4	1	1	-	-	VP	44	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	held:almanac_update	-	-	holder	-

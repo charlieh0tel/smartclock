@@ -20,3 +20,18 @@ static __attribute__((used, noipa)) void pps_interrupt_kept(void) {
 }
 
 CPU_KEEPING_SCRATCH(pps_interrupt, pps_interrupt_kept);
+
+/* Creates the pps exchange, "1pps", clears its message and turns input
+ * capture 1's interrupt on; returns create_x's error. */
+int32_t pps_init(void) {
+  int32_t status;
+
+  pps_exchange = 0;
+  status = psos_create_x("1pps", 0, 0, &pps_exchange);
+  if (status == 0) {
+    mutex_clear((mutex*)&pps_message);
+    gpt.tflg &= ~TFLG_ICF1;
+    gpt.tmsk |= TMSK_ICI1;
+  }
+  return status;
+}

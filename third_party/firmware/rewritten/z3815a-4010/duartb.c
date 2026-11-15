@@ -477,3 +477,5 @@ void duartb_transmit_interrupt(void) {
   }
   duartb.in_transmit_interrupt = 0;
 }
+
+CPU_IO_FUNCTION(duartb_reconfigure, duartb_reconfigure_settings);

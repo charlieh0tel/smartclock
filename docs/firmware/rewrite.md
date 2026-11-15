@@ -249,7 +249,12 @@ nothing is taken for common that is not:
    number out of range as 1, and `lamp_test_command`, which flashes
    the lamps first, and with them `holdover_steering_state`, which it
    lays out without the slope's sums, went from `common/types/` back
-   to each image's `smartclock.h` (PLAN.md, "a second image is ported by copying the first's work").
+   to each image's `smartclock.h`; the Z3805A 1.01.03, the eighth,
+   sent back three its code changes: `format_level`, which prints a
+   level of none as dashes, `common/screen_level.c` going with it,
+   `pps_init`, which turns the interrupt on through a routine of its
+   own, and `duartb_reconfigure`, which holds the interrupts at level
+   7 (PLAN.md, "a second image is ported by copying the first's work").
 
 A file for some images.  A file of `common/`'s C is shared by every
 image that includes it, which need not be every image: an image's
@@ -286,15 +291,14 @@ lack, never change:
   `scpi_diagnostic_ser1.c`, :DIAGnostic:SER1:EGResponse's;
   `scpi_holdover_hysteresis.c`, :SOURce:ROSCillator:HOLDover:HYSTeresis's;
   and `console_phase_off.c`, the console's word `phase_off`.
-  Three files are the six images' with the Oncore's decoded messages,
-  the output's state and the screen's level, the Z3815A 4010 leaving
-  them out: `oncore_decode.c`, the decode of a message's fields and
-  the DOP and almanac status messages; `scpi_output_state.c`,
-  :OUTPut:STATe's set handler; and `screen_level.c`, the status
-  screen's signal level.
+  Two files are the six images' with the Oncore's decoded messages
+  and the output's state, the Z3815A 4010 leaving them out:
+  `oncore_decode.c`, the decode of a message's fields and the DOP and
+  almanac status messages; and `scpi_output_state.c`, :OUTPut:STATe's
+  set handler.
   Five more go by what else an image lacks.  `duartb_settings.c`,
-  DUART channel B's baud rate from the serial settings, its
-  reconfiguration and its polled write, is the four images' whose port
+  DUART channel B's baud rate from the serial settings and its polled
+  write, is the four images' whose port
   of that name is the DUART's, the 58503B 1.01.04, the Z3816A 4001 and
   the Z3817A 3752, where it is the SCI, leaving it out.
   `console_pr_1pps.c`, the console's word `pr_1pps`, is left out by the
@@ -441,10 +445,10 @@ holds; nor does it see the routines a table in ROM holds, which the
 code reaches through the table's address.
 
 What is shared, counted by `make check-common` from the files:
-`common/` holds 922 functions the exports name and 214
-static helpers, in 232 files; the rest is each image's own:
-633 functions the Z3805A 3543B's export names, 748 the
-58503A 3704's and 615 the Z3801A 3543's.  Each image's
+`common/` holds 919 functions the exports name and 214
+static helpers, in 231 files; the rest is each image's own:
+636 functions the Z3805A 3543B's export names, 751 the
+58503A 3704's and 618 the Z3801A 3543's.  Each image's
 hand-written C is the two together, as its link check counts it.
 
 What could be shared yet, the copies a join sent back to each image or
@@ -456,8 +460,8 @@ text, comments and white space aside, how the others differ, and
 whether the diffs class the same copies identical or relocated.  Same
 text is a candidate, not a move: rule 2 is checked only once the
 function is in `common/`.
-1164 functions are defined in two or more images' own C, 1078 of them the same
-text in two or more, 627 the same in every image defining them, and 147
+1167 functions are defined in two or more images' own C, 1081 of them the same
+text in two or more, 630 the same in every image defining them, and 147
 with a copy differing from the most images' by a constant or a name alone.
 
 ## The verification

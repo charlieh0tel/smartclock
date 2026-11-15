@@ -54294,7 +54294,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/screen.c"
 
-#include "../../rewritten/common/screen_level.c"
 
 #include "../../rewritten/common/selftest.c"
 

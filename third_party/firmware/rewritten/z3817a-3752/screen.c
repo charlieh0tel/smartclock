@@ -1280,3 +1280,12 @@ void satellite_elevation_azimuth(oncore_visible_satellite* satellite,
   }
   cell->status = SATELLITE_CELL_NO_POSITION;
 }
+
+/* A signal level as "%3d", or blanks when negative. */
+void format_level(int16_t level, char* text) {
+  if (level < 0) {
+    libc_copy(text, "   ");
+    return;
+  }
+  sprintf(text, "%3d", level);
+}

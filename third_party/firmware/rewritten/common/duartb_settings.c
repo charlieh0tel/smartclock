@@ -1,7 +1,7 @@
 /* DUART channel B as the serial settings set it, the same in each image
  * that includes this file (docs/firmware/rewrite.md, "Shared C", "A file
- * for some images"): its baud rate from the settings, its reconfiguration
- * and its polled write.  An image whose port of that name is the SCI
+ * for some images"): its baud rate from the settings and its polled
+ * write.  An image whose port of that name is the SCI
  * leaves the file out.  Written by hand in place of the decompiler's
  * (docs/firmware/README.md, "Hand-written C"); each keeps its generated
  * prototype. */
@@ -34,5 +34,3 @@ void duartb_baud_from_settings(void) {
 /* Waits for DUART channel B's transmitter and writes a character;
  * returns the status bit it waited on. */
 uint8_t duartb_putc_polled(uint8_t c) { return duart_b_putc_polled(c); }
-
-CPU_IO_FUNCTION(duartb_reconfigure, duartb_reconfigure_settings);

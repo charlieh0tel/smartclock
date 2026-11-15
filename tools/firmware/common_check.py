@@ -403,8 +403,7 @@ CALLEE_EXCEPTIONS = [
       for function, routine in (('psos_version', 'psos_call'), ('installer_psos_version', 'installer_psos_call'))),
     *(CalleeException(REPEATS, function, routine, f'{function} calls psos_call itself, as the stub {routine} '
                       'does, which the C calls')
-      for function, routine in (('pps_init', 'psos_create_x'), ('pps_interrupt_stop', 'psos_delete_x'),
-                                ('pps_wait_time', 'psos_request_x'))),
+      for function, routine in (('pps_interrupt_stop', 'psos_delete_x'), ('pps_wait_time', 'psos_request_x'))),
     *(CalleeException(REPEATS, function, 'memcpy', 'the image moves a value\'s bytes in place, which the C '
                       'copies with memcpy, as C must to read a float\'s bits')
       for function in ('float_decimal_exponent_floor', 'float_decimal_exponent_rounded', 'lifetime_record_read')),

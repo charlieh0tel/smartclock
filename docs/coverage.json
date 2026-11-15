@@ -36,11 +36,11 @@
     {
       "key": "gps",
       "heading": "GPS engine",
-      "about": "which GPS engines the image accepts, the cell linked to the table of them ([[docs/firmware/gps.md|Which engines each image accepts]]): an Oncore VP, or in the 58503B and the Z3816A a VP or a UT Plus, in its binary `@@` messages, whose message table, request scripts and polling lists `smartclock-cli dump-oncore` reads ([[docs/firmware/oncore/README.md]]); or, in the Z3815A, a Furuno GT-74, in NMEA framing with Furuno's own `$PFEC` sentences ([[docs/firmware/gps.md|In every image]])",
+      "about": "which GPS engines the image accepts and with how many channels, the cell linked to the table of them ([[docs/firmware/gps.md|Which engines each image accepts]]; [[docs/firmware/gps.md|Six or eight channels]]): an Oncore VP, six-channel only in the Z3801A and the Z3805A and six or eight in the 58503A, or in the 58503B and the Z3816A a VP, six or eight, or an eight-channel UT Plus, or in the Z3817A an external Oncore sending eight channels, in its binary `@@` messages, whose message table, request scripts and polling lists `smartclock-cli dump-oncore` reads ([[docs/firmware/oncore/README.md]]); or, in the Z3815A, a Furuno GT-74, in NMEA framing with Furuno's own `$PFEC` sentences ([[docs/firmware/gps.md|In every image]])",
       "text": "{gps}",
       "evidence": [{"file": "docs/firmware/oncore/{image}.txt"},
                    {"file": "docs/firmware/gps.md", "section": "Which engines each image accepts"},
-                   {"file": "docs/firmware/gps.md", "contains": "| {name} |"}],
+                   {"file": "docs/firmware/gps.md", "row": "{name}", "column": "Channels", "cell": "{gps_channels}"}],
       "link": {"path": "docs/firmware/gps.md", "section": "Which engines each image accepts"}
     },
     {
@@ -92,56 +92,64 @@
     {
       "image": "58503a-3633", "name": "58503A 3633", "model": "58503A",
       "design": "58503a-z3801a", "design_name": "58503A/Z3801A", "dialect": "58503",
-      "gps": "Oncore VP",
+      "gps": "Oncore VP, 6 or 8 channels",
+      "gps_channels": "6, or 8 once an `@@Ea` is seen",
       "cells": {"rewrite": "not-planned"}
     },
     {
       "image": "58503a-3704", "name": "58503A 3704", "model": "58503A",
       "design": "58503a-z3801a", "design_name": "58503A/Z3801A", "dialect": "58503",
-      "gps": "Oncore VP",
+      "gps": "Oncore VP, 6 or 8 channels",
+      "gps_channels": "6, or 8 once an `@@Ea` is seen",
       "rewrite": "docs/firmware/58503a-3704.md"
     },
     {
       "image": "58503b-1.01.04", "name": "58503B 1.01.04", "model": "58503B",
       "design": "58503b", "design_name": "58503B", "dialect": "58503",
-      "gps": "Oncore VP or UT Plus",
+      "gps": "Oncore VP (6 or 8) or UT Plus (8)",
+      "gps_channels": "VP: 6 or 8; UT Plus: 8",
       "rewrite": "docs/firmware/58503b-1.01.04.md"
     },
     {
       "image": "z3801a-3543", "name": "Z3801A 3543", "model": "Z3801A",
       "design": "58503a-z3801a", "design_name": "58503A/Z3801A", "dialect": "Z3801",
-      "gps": "Oncore VP",
+      "gps": "Oncore VP, 6 channels only",
+      "gps_channels": "6: `Ba`, `Bn`",
       "rewrite": "docs/firmware/z3801a-3543.md"
     },
     {
       "image": "z3805a-3543b", "name": "Z3805A 3543B", "model": "Z3805A",
       "design": "z3805a", "design_name": "Z3805A", "dialect": "Z3801",
-      "gps": "Oncore VP",
+      "gps": "Oncore VP, 6 channels only",
+      "gps_channels": "6: `Ba`, `Bn`",
       "rewrite": "docs/firmware/rewrite.md"
     },
     {
       "image": "z3815a-4010", "name": "Z3815A 4010", "model": "Z3815A",
       "design": "z3815a", "design_name": "Z3815A", "dialect": "Z3801",
       "gps": "Furuno GT-74 (native $PFEC)",
+      "gps_channels": "--",
       "rewrite": "docs/firmware/z3815a-4010.md",
       "cells": {
         "gps": {
           "evidence": [{"file": "docs/firmware/gps.md", "contains": "MODEL # FURUNO GT-74"},
                        {"file": "docs/firmware/gps.md", "section": "Which engines each image accepts"},
-                       {"file": "docs/firmware/gps.md", "contains": "| {name} |"}]
+                       {"file": "docs/firmware/gps.md", "row": "{name}", "column": "Channels", "cell": "{gps_channels}"}]
         }
       }
     },
     {
       "image": "z3816a-4001", "name": "Z3816A 4001", "model": "Z3816A",
       "design": "z3816a", "design_name": "Z3816A", "dialect": "Z3801",
-      "gps": "Oncore VP or UT Plus",
+      "gps": "Oncore VP (6 or 8) or UT Plus (8)",
+      "gps_channels": "as the 58503B",
       "rewrite": "docs/firmware/z3816a-4001.md"
     },
     {
       "image": "z3817a-3752", "name": "Z3817A 3752", "model": "Z3817A",
       "design": "z3817a", "design_name": "Z3817A", "dialect": "Z3801",
-      "gps": "Oncore (external)",
+      "gps": "Oncore (external), 8 channels only",
+      "gps_channels": "8: `Ea`",
       "rewrite": "docs/firmware/z3817a-3752.md",
       "cells": {
         "loop": "wip",

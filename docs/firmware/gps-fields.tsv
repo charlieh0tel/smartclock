@@ -112,7 +112,7 @@ Ba	response	channel satellite	40	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3
 Ba	response	channel tracking mode	41	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.satellites.tracking	-	SatelliteTracking	the record has no state for modes 2, AGC set, and 5, message sync detect, so neither is sent
 Ba	response	channel signal strength	42	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.signal	-	SatelliteSignal	-
 Ba	response	channel status flags	43	1	6	4	-	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.used;zero:momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits	-	SatelliteUsed	-
-Ba	response	receiver status position propagate	64	1	1	-	7	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	zero	-	-	-
+Ba	response	receiver status position propagate	64	1	1	-	7	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix	-	Fix	-
 Ba	response	receiver status poor geometry	64	1	1	-	6	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;computed	-	PositionDop;HorizontalDop	-
 Ba	response	receiver status 3D fix	64	1	1	-	5	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-
 Ba	response	receiver status 2D fix	64	1	1	-	4	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-
@@ -126,7 +126,7 @@ Bb	response	satellite	5	1	12	7	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z381
 Bb	response	Doppler	6	2	12	7	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.doppler	-	SatelliteDoppler	-
 Bb	response	elevation	8	1	12	7	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.elevation	-	SatelliteElevation	-
 Bb	response	azimuth	9	2	12	7	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.azimuth	-	SatelliteAzimuth	-
-Bb	response	health	11	1	12	7	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.health;zero:removed by @@Am bit	-	SatelliteHealth	-
+Bb	response	health	11	1	12	7	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.health;state	-	SatelliteHealth	-
 Bc	command	mode	4	1	1	-	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	ignored	-	-	answered once
 Bc	response	xDOP type	4	1	1	-	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	setting.Aj	-	-	-
 Bc	response	combinations	5	1	1	-	-	VP	77	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.xdops	-	Xdops	-
@@ -192,7 +192,7 @@ Bn	response	channel satellite	26	1	6	5	-	VP	106	z3805a-3543b,z3801a-3543,58503a-
 Bn	response	channel time fraction	27	4	6	5	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.time_error	-	SatelliteTimeError	-
 Bo	command	mode	4	1	1	-	-	UT	6.81	-	-	-	honored	-	-	-
 Bo	response	UTC offset	4	1	1	-	-	UT	6.81	-	-	-	record.utc_offset	-	UtcOffset	-
-Ca	response	self-test result	4	2	1	-	-	VP	108	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	constant:every test passes	-	-	-
+Ca	response	self-test result	4	2	1	-	-	VP	108	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.self_test	-	SelfTest	-
 Ce	response	time	4	3	1	-	-	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.corrections.time;clock	-	Time;Corrections	the layout is also the command's, VP p. 115
 Ce	response	satellite	7	1	6	7	-	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.corrections.satellites.prn	-	Corrections	-
 Ce	response	range correction	8	3	6	7	-	VP	90	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.derived.corrections.satellites.range	-	Corrections	-
@@ -227,7 +227,7 @@ Ea	response	channel satellite	40	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	contro
 Ea	response	channel tracking mode	41	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	control	record.satellites.tracking	-	SatelliteTracking	the record has no state for modes 2, AGC set, and 5, message sync detect, so neither is sent
 Ea	response	channel signal strength	42	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	reported	record.satellites.signal	-	SatelliteSignal	-
 Ea	response	channel status flags	43	1	8	4	-	VP,UT	126,6.20	58503a-3704,z3817a-3752	-	console	record.satellites.used;computed;zero:momentum alert, anti-spoof, unhealthy, inaccurate and parity error bits	-	SatelliteUsed	a UT Plus adds the used for time bit
-Ea	response	receiver status position propagate	72	1	1	-	7	VP	126	58503a-3704,z3817a-3752	-	console	zero	-	-	-
+Ea	response	receiver status position propagate	72	1	1	-	7	VP	126	58503a-3704,z3817a-3752	-	console	record.fix	-	Fix	-
 Ea	response	receiver status poor geometry	72	1	1	-	6	VP	126	58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;computed	-	PositionDop;HorizontalDop	-
 Ea	response	receiver status 3D fix	72	1	1	-	5	VP	126	58503a-3704,z3817a-3752	-	control	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-
 Ea	response	receiver status 2D fix	72	1	1	-	4	VP	126	58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-
@@ -277,7 +277,7 @@ En	response	sigma	23	2	1	-	-	VP	142	58503a-3704,z3817a-3752	-	console	record.tim
 En	response	sawtooth	25	1	1	-	-	VP	142	58503a-3704,z3817a-3752	-	console	record.timing.sawtooth	-	Sawtooth	-
 En	response	channel satellite	26	1	8	5	-	VP	142	58503a-3704,z3817a-3752	-	console	record.satellites.prn	-	Satellites	-
 En	response	channel time fraction	27	4	8	5	-	VP	142	58503a-3704,z3817a-3752	-	console	record.satellites.time_error	-	SatelliteTimeError	-
-Fa	response	self-test result	4	2	1	-	-	VP,UT	144,6.43	58503a-3704,z3817a-3752	-	control	constant:every test passes;record.antenna	-	Antenna	a UT Plus tells its antenna's feed
+Fa	response	self-test result	4	2	1	-	-	VP,UT	144,6.43	58503a-3704,z3817a-3752	-	control	record.self_test;record.antenna	-	Antenna;SelfTest	a UT Plus tells its antenna's feed
 Gj	response	present leap seconds	4	1	1	-	-	M12+	153	-	-	-	record.utc_offset	-	UtcOffset	-
 Gj	response	future leap seconds	5	1	1	-	-	M12+	153	-	-	-	record.leap;record.utc_offset	-	UtcOffset;Leap	-
 Gj	response	leap year	6	2	1	-	-	M12+	153	-	-	-	record.leap	-	Leap	-

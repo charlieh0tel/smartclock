@@ -123,6 +123,7 @@ use crate::record::Antenna;
 use crate::record::Correction;
 use crate::record::Corrections;
 use crate::record::DopKind;
+use crate::record::Fault;
 use crate::record::Fix;
 use crate::record::Health;
 use crate::record::RaimAbility;
@@ -209,6 +210,7 @@ const STATUS_CHANNEL: usize = 4;
 const CHANNEL_USED: u8 = 0x80;
 const CHANNEL_USED_FOR_TIME: u8 = 0x02;
 /// The receiver status bits (VP p. 73).
+const STATUS_POSITION_PROPAGATE: u8 = 0x80;
 const STATUS_POOR_GEOMETRY: u8 = 0x40;
 const STATUS_3D_FIX: u8 = 0x20;
 const STATUS_2D_FIX: u8 = 0x10;
@@ -243,6 +245,70 @@ const SATELLITES_2D: usize = 3;
 const SELF_TEST_ANTENNA_UNDERCURRENT: u16 = 0x8000;
 const SELF_TEST_ANTENNA_OVERCURRENT: u16 = 0x4000;
 
+/// The bits of a self-test's result that tell one part's tests, in
+/// each of the three layouts.  A part with more than one test, as a
+/// VP's RAM and ROM, fails them all; zero where the engine has no test
+/// of the part.
+struct SelfTestBits {
+    /// The part.
+    fault: Fault,
+    /// In `@@Ca` (VP p. 108).
+    six: u16,
+    /// In a VP's `@@Fa` (VP p. 143).
+    eight: u16,
+    /// In a UT Plus's `@@Fa` (UT p. 6.43).
+    ut_plus: u16,
+}
+
+const SELF_TEST_BITS: [SelfTestBits; 7] = [
+    SelfTestBits {
+        fault: Fault::RealTimeClock,
+        six: 1 << 13,
+        eight: 1 << 15,
+        ut_plus: 1 << 13,
+    },
+    SelfTestBits {
+        fault: Fault::OscillatorLink,
+        six: 1 << 12,
+        eight: 1 << 14,
+        ut_plus: 0,
+    },
+    SelfTestBits {
+        fault: Fault::TemperatureSensor,
+        six: 0,
+        eight: 0,
+        ut_plus: 1 << 12,
+    },
+    SelfTestBits {
+        fault: Fault::Eeprom,
+        six: 1 << 11,
+        eight: 1 << 13,
+        ut_plus: 0,
+    },
+    SelfTestBits {
+        fault: Fault::Ram,
+        six: 1 << 10 | 1 << 8,
+        eight: 1 << 12 | 1 << 11,
+        ut_plus: 1 << 10,
+    },
+    SelfTestBits {
+        fault: Fault::Rom,
+        six: 1 << 9 | 1 << 7,
+        eight: 1 << 10 | 1 << 9,
+        ut_plus: 1 << 9,
+    },
+    SelfTestBits {
+        fault: Fault::Timebase,
+        six: 1 << 6,
+        eight: 1 << 8,
+        ut_plus: 1 << 8,
+    },
+];
+/// The channels a self-test's result has a correlation bit for, from
+/// bit 0: `@@Ca`'s and `@@Fa`'s.
+const SELF_TEST_CHANNELS_SIX: u16 = 0x003f;
+const SELF_TEST_CHANNELS_EIGHT: u16 = 0x00ff;
+
 /// A VP's signal strength for each C/N0 in dB-Hz, the last for all
 /// above it (`docs/firmware/gps.md`, "The scale against C/N0").
 const SIGNAL: [u8; 61] = [
@@ -255,6 +321,7 @@ const SIGNAL: [u8; 61] = [
 /// field's bits.
 const VISIBLE_SLOT: usize = 7;
 const VISIBLE_UNHEALTHY: u8 = 2;
+const VISIBLE_REMOVED: u8 = 1;
 /// `@@Bb`'s data: the count, then the slots.
 const VISIBILITY: usize = 1 + SATELLITES * VISIBLE_SLOT;
 /// `@@Bb`'s mode that asks for it each time it changes (VP p. 75).
@@ -1014,7 +1081,7 @@ impl Engine {
     /// Starts a self-test (VP p. 107; UT p. 6.42).  A VP goes idle for
     /// it and stays so; a UT Plus tells what its antenna's feed draws.
     fn self_test(&mut self, id: MessageId, record: &Record, now: Milliseconds<u64>) {
-        let result = self.self_test_result(record);
+        let result = self.self_test_result(id, record);
         if self.identity.model() != Model::UtPlus {
             self.state.fixing = false;
         }
@@ -1027,14 +1094,34 @@ impl Engine {
         }
     }
 
-    /// What a self-test finds (VP p. 108; UT p. 6.43): no fault, but
-    /// for a UT Plus what its antenna's feed draws.
-    fn self_test_result(&self, record: &Record) -> u16 {
-        match (self.identity.model(), record.antenna) {
+    /// What the self-test `id` finds (VP pp. 108 and 143; UT p. 6.43):
+    /// the record's faults in that message's bits, and for a UT Plus
+    /// what its antenna's feed draws.
+    fn self_test_result(&self, id: MessageId, record: &Record) -> u16 {
+        let model = self.identity.model();
+        let six = id == CA_SELF_TEST;
+        let antenna = match (model, record.antenna) {
             (Model::UtPlus, Antenna::Open) => SELF_TEST_ANTENNA_UNDERCURRENT,
             (Model::UtPlus, Antenna::Shorted) => SELF_TEST_ANTENNA_OVERCURRENT,
             _ => 0,
-        }
+        };
+        let channels = if six {
+            SELF_TEST_CHANNELS_SIX
+        } else {
+            SELF_TEST_CHANNELS_EIGHT
+        };
+        SELF_TEST_BITS
+            .iter()
+            .filter(|bits| record.self_test.hardware.contains(bits.fault))
+            .map(|bits| match (six, model) {
+                (true, _) => bits.six,
+                (false, Model::UtPlus) => bits.ut_plus,
+                (false, Model::VpSix | Model::VpEight) => bits.eight,
+            })
+            .fold(
+                antenna | record.self_test.channels & channels,
+                |result, bits| result | bits,
+            )
     }
 
     /// `@@Ai` (VP p. 31): a channel's satellite set by hand, or asked.
@@ -1274,6 +1361,10 @@ impl Engine {
         let three_d = position <= self.state.store.xdop_threshold();
         match (self.state.store.holding(), tracked, record.fix) {
             (true, _, _) | (false, _, Fix::None) => NONE,
+            (false, _, Fix::Propagated) => Solution {
+                status: STATUS_POSITION_PROPAGATE,
+                ..NONE
+            },
             (false, SATELLITES_3D.., Fix::ThreeD | Fix::TimeOnly) if three_d => Solution {
                 dop: position,
                 dop_type: DOP_TYPE_PDOP,
@@ -1463,14 +1554,15 @@ impl Engine {
     }
 
     /// A satellite's health as `@@Bb` gives it (VP p. 75).
-    #[expect(
-        clippy::unused_self,
-        reason = "the field's other bit is the engine's to give"
-    )]
     fn visible_health(&self, satellite: &Satellite) -> u8 {
-        match satellite.health {
+        let unhealthy = match satellite.health {
             Health::Unhealthy => VISIBLE_UNHEALTHY,
             Health::Unknown | Health::Healthy => 0,
+        };
+        if is_ignored(self.state.store.ignore_list(), satellite.prn) {
+            unhealthy | VISIBLE_REMOVED
+        } else {
+            unhealthy
         }
     }
 

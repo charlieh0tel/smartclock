@@ -1174,8 +1174,16 @@ specification; in short:
   a self-test would fail and the channels whose correlation would, and
   the model sets the bits the message has for them: `@@Ca`'s (VP
   p. 108), a VP's `@@Fa` (VP p. 143) or a UT Plus's (UT p. 6.43).  A
-  part the manual gives two tests, a VP's RAM and ROM, fails both; a
-  part an engine has no test of sets nothing.
+  part the manual gives two tests, a VP's RAM and ROM, fails both: a
+  record has one fault for the RAM and one for the ROM, not one for
+  each of a VP's bits, and that stays.  A part an engine has no test
+  of sets nothing.
+- **`@@Ta` is a gap, and stays one.**  It is in no manual here, the
+  table's rows name no public image that sets it or decodes its
+  response, and the model keeps the values it is given and answers
+  with them (`stored`).  With nothing to say what the values are,
+  there is no field of the settings to hold them in and nothing for a
+  holder to do.
 - **Every field of a message the model speaks is the record's, the
   model's own state or the manual's value for not known.**  A record
   has all nine tracking modes (VP p. 72), each satellite's momentum

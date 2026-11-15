@@ -88,7 +88,9 @@ pub enum Fix {
 
 /// One thing an engine's self-test tries (`@@Ca`, VP pp. 107-108;
 /// `@@Fa`, VP pp. 142-143 and UT pp. 6.42-6.43).  Each engine has a bit
-/// for those it tries.
+/// for those it tries.  A VP has two for its RAM and two for its ROM,
+/// a byte's test and a checksum's (VP pp. 108 and 143); a record has
+/// one fault for each part, and a VP's result fails both bits for it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum Fault {

@@ -946,6 +946,8 @@ FIGURES = [
      'its own C defines {z3817a-3752} functions its export names,\nbeside `common/`\'s {common-z3817a-3752}'),
     (ROOT / 'docs/firmware/z3816a-4001.md',
      'its own C defines {z3816a-4001} functions its export names,\nbeside `common/`\'s {common-z3816a-4001}'),
+    (ROOT / 'docs/firmware/58503b-1.01.04.md',
+     'its own C defines {58503b-1.01.04} functions its export names,\nbeside `common/`\'s {common-58503b-1.01.04}'),
     (FIRMWARE / 'README.md',
      '`common/`, the C several images share ({functions} functions and\n{helpers} static helpers'),
     (ROOT / 'docs/firmware/rewrite.md',

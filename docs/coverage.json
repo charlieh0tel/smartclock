@@ -102,7 +102,8 @@
     {
       "image": "58503b-1.01.04", "name": "58503B 1.01.04", "model": "58503B",
       "design": "58503b", "design_name": "58503B", "dialect": "58503",
-      "cells": {"gps": {"text": "Oncore VP or UT Plus"}, "rewrite": "not-yet"}
+      "rewrite": "docs/firmware/58503b-1.01.04.md",
+      "cells": {"gps": {"text": "Oncore VP or UT Plus"}}
     },
     {
       "image": "z3801a-3543", "name": "Z3801A 3543", "model": "Z3801A",

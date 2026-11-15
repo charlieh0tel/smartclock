@@ -1167,7 +1167,11 @@ specification; in short:
   the crate's `UNFILLED`, an empty record whose self-test fails, so
   that a fill of a pass shows.  The vectors' scene and the u-blox
   crate declare theirs, and both fill all the images use, with no
-  exception.  Both fill the self-test as a pass, neither having a
+  exception.  Both exceptions tables, this and the settings' below,
+  are for the fillers this repository carries: a filler kept
+  elsewhere keeps tables of its own and gives their text to
+  `Filler::shortfall`, `Filler::unacted` and `Filler::needless`, and
+  shows its fills against the same `UNFILLED`.  Both fill the self-test as a pass, neither having a
   part to fail.  The scene's Time RAIM result is its sky's: eight
   satellites, the solution good and a bad one isolable, and with the
   antenna off unknown and neither.  The u-blox crate's is `TIM-TP`'s

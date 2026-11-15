@@ -1,2 +1,2 @@
-# Fields a receiver's image uses that a filler of records is excused from filling (docs/firmware/gps.md, "The fields").  A row is the project owner's to add, and no one else's.
+# Fields a receiver's image uses that a filler of records is excused from filling (docs/firmware/gps.md, "The fields").  A row is the project owner's to add, and no one else's.  The rows are for the fillers this repository carries: a filler kept elsewhere keeps a table of its own and gives its text to `Filler::shortfall`.
 filler	field	reason

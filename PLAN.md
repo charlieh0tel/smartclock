@@ -1043,6 +1043,26 @@ stands in for one.
   fixing, as the manual has it, and before it has fixed, the current
   one, tracking nothing; the recorded exchanges never poll an idle
   engine that has fixed, so none of their answers moved.
+- **A model that turns eight-channel carries who it turns into**
+  (`Options::eight_on_ea`, an identity or none; decided 2026-11-15).
+  The option was a flag: a six-channel model took eight channels at
+  its first `@@Ea` and went on answering `@@Cj` as the six-channel VP
+  it was made as.  A 58503A sends that `@@Ea` in its power-up
+  self-test, before the init script's `@@Cj`
+  (`docs/firmware/gps.md`, "Six or eight channels"), and what `@@Cj`
+  answers is what `:DIAGnostic:IDENtification:GPSystem?` shows, so a
+  receiver that had found eight channels showed a six-channel model
+  number.  The option now holds the identity the model becomes, any
+  the caller makes, and from the turn everything an identity decides
+  is that one's: the receiver ID, the commands taken, a VP's or a UT
+  Plus's layouts and limits, the state `@@Cf` restores.  The channels
+  are eight whatever the carried identity's model, so carrying the
+  identity the model was made with is the flag as it was.  `@@Cf`
+  undoes neither the channels nor the identity, as it never undid the
+  channels: both are outside the settings it restores, and are kept
+  in step.  A power-up is a new model, six-channel again.  The cost is
+  a caller of the flag that no longer builds, which is wanted: it has
+  to say who.
 - **The model computes nothing physical.**  Dilutions of precision, a
   position in Earth-centered coordinates and magnetic variation need
   floating point or tables a Cortex-M0 should not carry, so a record

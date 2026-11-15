@@ -13,6 +13,7 @@ use crate::engine::Output;
 use crate::engine::event::Event;
 use crate::engine::event::Events;
 use crate::engine::identity::Identity;
+use crate::engine::identity::Model;
 use crate::engine::identity::UT_PLUS_2_2;
 use crate::engine::identity::UT_PLUS_3_1;
 use crate::engine::identity::VP_EIGHT;
@@ -646,7 +647,7 @@ fn a_six_channel_engine_takes_the_eight_channel_messages_only_by_option() {
     assert!(ask(&mut engine, &record, EN_TIME_RAIM, &TRAIM_EACH_SECOND).is_empty());
 
     let mut options = Options::DEFAULT;
-    options.eight_on_ea = true;
+    options.eight_on_ea = Some(&VP_EIGHT);
     let mut engine = Engine::new(&VP_SIX, options);
     ask(&mut engine, &record, CG_FIX_MODE, &FIX);
     assert!(ask(&mut engine, &record, EN_TIME_RAIM, &TRAIM_EACH_SECOND).is_empty());
@@ -658,6 +659,103 @@ fn a_six_channel_engine_takes_the_eight_channel_messages_only_by_option() {
     assert_eq!(only(&frames, EN_TIME_RAIM).len(), 62);
     let frames = ask(&mut engine, &record, BN_TIME_RAIM, &TRAIM_EACH_SECOND);
     assert_eq!(only(&frames, BN_TIME_RAIM).len(), 52);
+}
+
+/// The data of the `@@Cj` an engine answers with.
+fn receiver_id(engine: &mut Engine, record: &Record) -> Vec<u8> {
+    let frames = ask(engine, record, CJ_RECEIVER_ID, &[]);
+    only(&frames, CJ_RECEIVER_ID).to_vec()
+}
+
+/// The data of the `@@Cj` an identity's lines make.
+fn lines_of(identity: &Identity) -> Vec<u8> {
+    identity
+        .lines()
+        .iter()
+        .flat_map(|line| [b"\r\n", line.as_bytes()].concat())
+        .collect()
+}
+
+/// An eight-channel identity a caller makes of its own lines.
+static CALLERS_OWN: Identity = Identity::new(
+    Model::VpEight,
+    false,
+    [
+        "COPYRIGHT 1991-1996 MOTOROLA INC.",
+        "SFTW P/N # 98-P36830P     ",
+        "SOFTWARE VER # 8          ",
+        "SOFTWARE REV # 8          ",
+        "SOFTWARE DATE  06 AUG 1996",
+        "MODEL #    B4121P1115     ",
+        "HDWR P/N # _              ",
+        "SERIAL #   A CALLER'S OWN ",
+        "MANUFACTUR DATE 7D01      ",
+        "OPTIONS LIST    IB        ",
+    ],
+)
+.expect("lines that fill the receiver ID");
+
+#[test]
+fn an_engine_turned_eight_channel_is_the_identity_the_option_carries() {
+    let record = full();
+    for carried in [&VP_EIGHT, &CALLERS_OWN] {
+        let mut options = Options::DEFAULT;
+        options.eight_on_ea = Some(carried);
+        let mut engine = Engine::new(&VP_SIX, options);
+        ask(&mut engine, &record, CG_FIX_MODE, &FIX);
+        assert_eq!(receiver_id(&mut engine, &record), lines_of(&VP_SIX));
+        assert_eq!(engine.identity(), &VP_SIX);
+
+        // Only `@@Ea` turns it: another eight-channel message does not.
+        assert!(ask(&mut engine, &record, EN_TIME_RAIM, &TRAIM_EACH_SECOND).is_empty());
+        assert_eq!(receiver_id(&mut engine, &record), lines_of(&VP_SIX));
+
+        ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+        assert_eq!(receiver_id(&mut engine, &record), lines_of(carried));
+        assert_eq!(engine.identity(), carried);
+
+        // `@@Cf` leaves it eight-channel, and so who it became.
+        ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
+        assert_eq!(receiver_id(&mut engine, &record), lines_of(carried));
+        assert_eq!(engine.identity(), carried);
+        let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+        assert!(!only(&frames, EA_POSITION_STATUS).is_empty());
+
+        // A power-up is a new engine, six-channel again.
+        let mut engine = Engine::new(&VP_SIX, options);
+        assert_eq!(receiver_id(&mut engine, &record), lines_of(&VP_SIX));
+    }
+}
+
+#[test]
+fn an_engine_with_no_identity_to_turn_to_stays_as_made() {
+    let record = full();
+    let mut engine = fixing(&VP_SIX);
+    assert!(ask(&mut engine, &record, EA_POSITION_STATUS, &[0]).is_empty());
+    assert_eq!(receiver_id(&mut engine, &record), lines_of(&VP_SIX));
+    assert_eq!(engine.identity(), &VP_SIX);
+    ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
+    assert!(ask(&mut engine, &record, EA_POSITION_STATUS, &[0]).is_empty());
+    assert_eq!(receiver_id(&mut engine, &record), lines_of(&VP_SIX));
+}
+
+/// What an identity decides is the current one's: turned into a UT
+/// Plus, the engine takes a UT Plus's commands and resets to fixing.
+#[test]
+fn what_an_identity_decides_follows_the_one_carried() {
+    let record = full();
+    let mut options = Options::DEFAULT;
+    options.eight_on_ea = Some(&UT_PLUS_3_1);
+    let mut engine = Engine::new(&VP_SIX, options);
+    ask(&mut engine, &record, CG_FIX_MODE, &FIX);
+    assert!(ask(&mut engine, &record, GJ_LEAP_SECOND_PENDING, &[]).is_empty());
+    assert!(!ask(&mut engine, &record, BA_POSITION_STATUS, &[0]).is_empty());
+
+    ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+    assert!(!ask(&mut engine, &record, GJ_LEAP_SECOND_PENDING, &[]).is_empty());
+    assert!(ask(&mut engine, &record, BA_POSITION_STATUS, &[0]).is_empty());
+    ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
+    assert!(engine.fixing());
 }
 
 #[test]

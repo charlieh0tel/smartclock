@@ -32,14 +32,18 @@ The data, one JSON object:
     images             each row: image (its file's stem), name, model,
                        design (its FPGA bitstream's stem), design_name,
                        dialect, gps (the GPS engines it accepts, as
-                       its GPS engine cell reads), rewrite (its
+                       its GPS engine cell reads), gps_channels (its
+                       Channels cell in docs/firmware/gps.md's table
+                       of engines, the evidence for the channel count
+                       gps gives), rewrite (its
                        rewritten C's document, for a Yes there), and
                        cells, each column's
                        status by key, a status's key or {status,
                        note, text, evidence, link}, the last three in
                        place of the column's, Yes where it names none; or, for a model of
                        which no image is in IMAGES, no_image true, no
-                       image, design, gps, rewrite or cells, and one cell
+                       image, design, gps, gps_channels, rewrite or
+                       cells, and one cell
                        across every column reading no_image
     footnotes          {id, text}, each a cell's note, numbered in order
     notes              paragraphs under the table
@@ -50,6 +54,10 @@ evidence check is one of:
     {"file": PATH}                       the file exists
     {"file": PATH, "section": TEXT}      and is Markdown with that heading
     {"file": PATH, "contains": TEXT}     and holds that text
+    {"file": PATH, "row": KEY, "column": HEADING, "cell": TEXT}
+                                         and is Markdown with a table
+                                         whose row KEY, by its first
+                                         cell, reads TEXT under HEADING
     {"make": PATH, "variable": NAME, "word": WORD}
                                          the Makefile's NAME lists WORD
     {"json": PATH, "list": KEY, "field": NAME, "value": VALUE}
@@ -145,12 +153,32 @@ def fill(template, row):
         die(f"{row['name']}: no {missing.args[0]} for {template!r}")
 
 
+def markdown_tables(text):
+    """Each of the text's Markdown tables, as its header's cells and its
+    rows', the delimiter row dropped; no cell may hold a pipe."""
+    tables = []
+    lines = text.splitlines()
+    start = 0
+    while start < len(lines):
+        if not lines[start].startswith("|"):
+            start += 1
+            continue
+        end = start
+        while end < len(lines) and lines[end].startswith("|"):
+            end += 1
+        cells = [[c.strip() for c in line.strip().strip("|").split("|")] for line in lines[start:end]]
+        tables.append((cells[0], cells[2:]))
+        start = end
+    return tables
+
+
 class Evidence:
     """Answers whether an evidence check, filled in for a row, holds,
     reading each file it names once."""
 
     def __init__(self):
         self.sections = {}
+        self.tables = {}
         self.variables = {}
         self.lists = {}
         self.dialect_rule = None
@@ -166,6 +194,9 @@ class Evidence:
             target = self.path(fill(check["file"], row))
             if target is not None and "contains" in check:
                 return fill(check["contains"], row) in target.read_text(encoding="utf-8")
+            if target is not None and "row" in check:
+                return self.table_cell(target, fill(check["row"], row),
+                                       fill(check["column"], row)) == fill(check["cell"], row)
             if target is None or "section" not in check:
                 return target is not None
             if target not in self.sections:
@@ -180,6 +211,18 @@ class Evidence:
         if "dialect" in check:
             return self.dialect(fill(check["dialect"], row)) == fill(check["is"], row)
         die(f"unknown evidence check {check}")
+
+    def table_cell(self, target, key, heading):
+        """The cell under HEADING in the row whose first cell is KEY, of
+        the first of the Markdown file's tables to have both, or None."""
+        if target not in self.tables:
+            self.tables[target] = markdown_tables(target.read_text(encoding="utf-8"))
+        for header, rows in self.tables[target]:
+            if heading in header:
+                for cells in rows:
+                    if cells[0] == key and len(cells) == len(header):
+                        return cells[header.index(heading)]
+        return None
 
     def variable(self, path, name):
         if path not in self.variables:

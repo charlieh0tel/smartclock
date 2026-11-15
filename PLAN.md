@@ -515,9 +515,9 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   work, from `docs/coverage.json` by `tools/coverage.py`, in the
   firmware group.  A hand-kept table of what is done goes stale
   silently, so each column names the evidence a Yes rests on (a
-  generated document, a heading, a Makefile list entry such as
-  `REPORTED_IMAGES`, a data file's entry, `dialect_for()`'s rule, the
-  command table's `complete` list), and
+  generated document, a heading, a Markdown table's cell, a Makefile
+  list entry such as `REPORTED_IMAGES`, a data file's entry,
+  `dialect_for()`'s rule, the command table's `complete` list), and
   the build fails on a Yes without it and on a cell that is not a Yes
   with it.  Work that exists only off main shows as WIP and names
   nothing of it; a model with no image, the 59551A, has a row that

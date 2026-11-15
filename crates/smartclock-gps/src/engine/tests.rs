@@ -902,7 +902,8 @@ fn an_eight_channel_engine_sends_corrections_past_the_sixth_in_a_second_message(
 }
 
 /// VP pp. 105 and 106; UT pp. 6.20, 6.93 and 6.95: the record's result
-/// while Time RAIM is on, isolation only in position hold.
+/// while Time RAIM is on and the engine tracks enough satellites for
+/// one, isolation only in position hold.
 #[test]
 fn a_time_raim_result_is_sent_while_time_raim_is_on() {
     let mut record = full();
@@ -926,6 +927,11 @@ fn a_time_raim_result_is_sent_while_time_raim_is_on() {
     // On, not holding: detection only, nothing isolated.
     assert_eq!(traim(&mut engine, &TRAIM_EACH_SECOND), [1, 0, 1, 1]);
     assert_eq!(channels(&mut engine), (0x82, 0x82));
+    // On, and no satellite heard: unknown, whatever the record has.
+    let mut unheard = record;
+    unheard.antenna = Antenna::Open;
+    let frames = ask(&mut engine, &unheard, EN_TIME_RAIM, &[0xff; 15]);
+    assert_eq!(only(&frames, EN_TIME_RAIM)[17..19], [2, 2]);
     // On and holding: satellite 4 is no longer used for time.
     ask(&mut engine, &record, AT_POSITION_HOLD, &[1]);
     assert_eq!(traim(&mut engine, &[0xff; 15]), [1, 0, 1, 0]);

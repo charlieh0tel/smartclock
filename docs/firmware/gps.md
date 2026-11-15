@@ -1170,6 +1170,14 @@ specification; in short:
   limit, nor what a self-test would find, neither having hardware to
   ask; neither is excused them, and their tests name the three until
   the owner rules.
+- **A record's Time RAIM result goes no further than the model's
+  own.**  With Time RAIM off, the alarm limit too low for the
+  satellites tracked or none tracked, the solution is unknown and
+  nothing can be detected (VP pp. 105 and 106), whatever the record
+  has: a record knows neither the limit nor the mask, the ignore
+  list and the idle mode that say which satellites the model tracks.
+  Else the solution is the record's, and what can be done the less of
+  the record's and the model's.
 - **A self-test tells the record's faults.**  A record names the parts
   a self-test would fail and the channels whose correlation would, and
   the model sets the bits the message has for them: `@@Ca`'s (VP

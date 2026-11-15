@@ -414,6 +414,7 @@ const NEXT_PULSE: usize = 3 + 4 + 3;
 const TRAIM_SOLUTION_OK: u8 = 0;
 const TRAIM_SOLUTION_ALARM: u8 = 1;
 const TRAIM_SOLUTION_UNKNOWN: u8 = 2;
+// What it can do, the most able first.
 const TRAIM_ISOLATION: u8 = 0;
 const TRAIM_DETECTION: u8 = 1;
 const TRAIM_NEITHER: u8 = 2;
@@ -1872,42 +1873,46 @@ impl Engine {
     }
 
     /// What Time RAIM reports with `tracked` satellites: the record's
-    /// result while the algorithm is on, else the engine's own.  Off,
-    /// the solution is unknown (VP p. 105) and nothing is isolated; out
-    /// of position hold, it can only detect (UT p. 6.93).
+    /// result while the algorithm is on, as far as the engine's own
+    /// goes, else the engine's own.  Off, with the alarm limit too low
+    /// or with too few satellites tracked, the solution is unknown (VP
+    /// p. 105) and nothing is isolated, whatever the record has: it
+    /// knows of neither the limit nor which satellites the engine was
+    /// set to track.  Out of position hold, it can only detect (UT
+    /// p. 6.93).
     fn traim_result(&self, record: &Record, tracked: usize) -> TraimResult {
         let holding = self.state.store.holding();
         let on = self.state.traim.algorithm == TRAIM_ON;
-        match record.derived.raim.filter(|_| on) {
+        let able = self.traim_ability(tracked);
+        match record.derived.raim.filter(|_| on && able != TRAIM_NEITHER) {
             Some(raim) => TraimResult {
                 solution: match raim.solution {
                     RaimSolution::Ok => TRAIM_SOLUTION_OK,
                     RaimSolution::Alarm => TRAIM_SOLUTION_ALARM,
                     RaimSolution::Unknown => TRAIM_SOLUTION_UNKNOWN,
                 },
+                // The less able of the record's and the engine's.
                 ability: match raim.ability {
-                    RaimAbility::Isolation if holding => TRAIM_ISOLATION,
-                    RaimAbility::Isolation | RaimAbility::Detection => TRAIM_DETECTION,
+                    RaimAbility::Isolation => TRAIM_ISOLATION,
+                    RaimAbility::Detection => TRAIM_DETECTION,
                     RaimAbility::Neither => TRAIM_NEITHER,
-                },
+                }
+                .max(able),
                 isolated: if holding {
                     raim.isolated
                 } else {
                     PrnSet::EMPTY
                 },
             },
-            None => {
-                let ability = self.traim_ability(tracked);
-                TraimResult {
-                    solution: if on && ability != TRAIM_NEITHER {
-                        TRAIM_SOLUTION_OK
-                    } else {
-                        TRAIM_SOLUTION_UNKNOWN
-                    },
-                    ability,
-                    isolated: PrnSet::EMPTY,
-                }
-            }
+            None => TraimResult {
+                solution: if on && able != TRAIM_NEITHER {
+                    TRAIM_SOLUTION_OK
+                } else {
+                    TRAIM_SOLUTION_UNKNOWN
+                },
+                ability: able,
+                isolated: PrnSet::EMPTY,
+            },
         }
     }
 

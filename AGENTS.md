@@ -160,7 +160,12 @@ here, where they go stale unnoticed.
 - Each filler of a `Record` supplies at least the fields the images
   read, from real data.  A field a filler cannot fill goes out as the
   manual's unknown value, else zero.
-- Exceptions are the owner's to grant.
+- Exceptions are the owner's to grant: a row of
+  `docs/firmware/gps-field-exceptions.tsv`.  Never add one yourself.
+- A filler declares a `Filler` (`smartclock_gps::record::field`): the
+  `RecordField`s it fills and the settings it acts on, with a test
+  that holds it to `IMAGE_USES`, the exceptions and what a fill
+  changes.  A new part of a `Record` gets a `RecordField`.
 - `docs/firmware/gps-fields.tsv` is the check: every field, the manual
   page, which images read or set it, measured from the images, what
   they use it for, and where the engine gets it.

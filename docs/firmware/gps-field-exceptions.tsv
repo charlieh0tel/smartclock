@@ -1,0 +1,2 @@
+# Fields a receiver's image uses that a filler of records is excused from filling (docs/firmware/gps.md, "The fields").  A row is the project owner's to add, and no one else's.
+filler	field	reason

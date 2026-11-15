@@ -1010,7 +1010,12 @@ stands in for one.
   implemented fully, per the manual, and whatever fills a `Record`
   supplies at least the fields the images read, from real data, a field
   it cannot fill going out as the manual's unknown value, else zero;
-  exceptions are the owner's.  The model does not meet it yet: the
+  exceptions are the owner's.  A filler declares the fields it fills
+  and the settings it acts on (`record::field`: `RecordField`,
+  `FieldSet`, `Filler`), and its tests hold the declaration to
+  `IMAGE_USES`, which the check writes from the table's used rows, to
+  `docs/firmware/gps-field-exceptions.tsv`, empty until the owner adds
+  to it, and to what a fill really changes.  The model does not meet it yet: the
   gaps, a field an image reads that the model sends as a constant and
   a command an image sets that it does not honor, are listed by the
   check and in `docs/firmware/gps.md`, "The fields", and are open work.

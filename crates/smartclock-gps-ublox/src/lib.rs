@@ -77,6 +77,10 @@
 //!   ([`TimTp`]), but the document gives neither its sign nor what
 //!   multiple of sigma `tAcc` is.  [`Record::almanac`], and a
 //!   satellite's Doppler and time error: no message here carries them.
+//!   The Time RAIM result: a u-blox receiver has none to report.
+//!
+//! [`FILLER`] says which parts of a record that comes to, and the
+//! crate's tests hold it to what [`Assembler`] writes.
 
 #![no_std]
 
@@ -86,6 +90,7 @@ use core::mem;
 use thiserror::Error;
 
 use smartclock_gps::NoRoom;
+use smartclock_gps::engine::settings::SettingSet;
 use smartclock_gps::framing::Step;
 use smartclock_gps::framing::feed;
 use smartclock_gps::record::Antenna;
@@ -100,6 +105,9 @@ use smartclock_gps::record::Satellite;
 use smartclock_gps::record::Satellites;
 use smartclock_gps::record::Tracking;
 use smartclock_gps::record::Velocity;
+use smartclock_gps::record::field::FieldSet;
+use smartclock_gps::record::field::Filler;
+use smartclock_gps::record::field::RecordField;
 use smartclock_gps::source::replay::Assemble;
 use smartclock_gps::time::ALMANAC_WEEKS;
 use smartclock_gps::time::BROADCAST_WEEKS;
@@ -1252,6 +1260,40 @@ struct Announced {
 /// Makes a [`Record`] of each navigation epoch in a stream of UBX bytes
 /// ("From messages to a record" in the crate's documentation).  `N`
 /// is the longest payload it takes, as a [`Deframer`]'s is:
+/// What an [`Assembler`] fills of a record.  It acts on none of an
+/// engine's settings: it reads a receiver and sets nothing in it.
+pub const FILLER: Filler = Filler {
+    name: "u-blox",
+    fills: FieldSet::of(&[
+        RecordField::Time,
+        RecordField::UtcOffset,
+        RecordField::Leap,
+        RecordField::Fix,
+        RecordField::Latitude,
+        RecordField::Longitude,
+        RecordField::EllipsoidHeight,
+        RecordField::MeanSeaLevelHeight,
+        RecordField::Speed,
+        RecordField::Heading,
+        RecordField::GeometricDop,
+        RecordField::PositionDop,
+        RecordField::HorizontalDop,
+        RecordField::VerticalDop,
+        RecordField::TimeDop,
+        RecordField::Satellites,
+        RecordField::SatelliteElevation,
+        RecordField::SatelliteAzimuth,
+        RecordField::SatelliteSignal,
+        RecordField::SatelliteTracking,
+        RecordField::SatelliteUsed,
+        RecordField::SatelliteHealth,
+        RecordField::SatelliteEphemeris,
+        RecordField::Antenna,
+        RecordField::Ecef,
+    ]),
+    acts: SettingSet::EMPTY,
+};
+
 /// [`nav_sat_length`] of the satellites the receiver may report.
 ///
 /// ```

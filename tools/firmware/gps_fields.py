@@ -10,10 +10,11 @@ commands its request scripts send.
 
     uv run -q tools/firmware/gps_fields.py [--check]
 
-Without --check it rewrites the table's images, compared and use
-columns and the list of gaps between the markers in
-docs/firmware/gps.md; with it, it fails if either is not what the
-images give.  Either way it fails if a message's rows do not tile its
+Without --check it rewrites the table's images, compared, use and
+fields columns, the list of gaps between the markers in
+docs/firmware/gps.md and the fields the images use between the markers
+in crates/smartclock-gps/src/record/field.rs; with it, it fails if any
+is not what the images give.  Either way it fails if a message's rows do not tile its
 data, if an image reads part of a field or outside the data, if a
 row's engine column is not in the vocabulary below, or if
 docs/firmware/gps-field-uses.tsv does not account for each function
@@ -123,6 +124,15 @@ after ":":
     zero          zero, the engine having nothing to say
     unknown       the manual's value for not known
 
+A record.PATH names a RecordField of
+crates/smartclock-gps/src/record/field.rs: the one whose path it is, or
+whose path it goes on from.  The fields column, made here, lists the
+RecordFields a row's terms name, the clock being the record's time.
+The unknown column, by hand, is the value the manual gives the field
+for not known, where it gives one.  The fields the images use
+(IMAGE_USES) are those of the rows some image uses as control or
+reported.
+
 and what it does with a command field: honored, stored (kept and
 answered, with no effect), echoed (answered, not kept) or ignored.  A
 gap is a response field with a constant, zero or unknown term that an
@@ -166,6 +176,7 @@ TABLE = ROOT / 'docs/firmware/gps-fields.tsv'
 USES = ROOT / 'docs/firmware/gps-field-uses.tsv'
 DOCUMENT = ROOT / 'docs/firmware/gps.md'
 RECORD = ROOT / 'crates/smartclock-gps/src/record.rs'
+FIELD = ROOT / 'crates/smartclock-gps/src/record/field.rs'
 ONCORE = ROOT / 'docs/firmware/oncore'
 
 # Each image's primary vector table, as harness.py's profiles have it.
@@ -236,6 +247,8 @@ COLUMNS = (
     'compared',
     'use',
     'engine',
+    'unknown',
+    'fields',
     'notes',
 )
 NONE = '-'
@@ -278,6 +291,13 @@ SET_MODES = (0, 2)
 
 BEGIN = '<!-- gps_fields.py gaps -->'
 END = '<!-- end gps_fields.py -->'
+# The same in field.rs, around the fields the images use.
+USES_BEGIN = '// gps_fields.py image uses'
+USES_END = '// end gps_fields.py'
+# A RecordField and its path, as RecordField::path gives them.
+FIELD_PATH = re.compile(r'Self::(\w+) => "([\w.]+)",')
+# The RecordField the engine's clock is set from.
+CLOCK_FIELD = 'Time'
 
 
 @dataclass(frozen=True)
@@ -320,6 +340,8 @@ class Row:
     compared: str
     use: str
     engine: str
+    unknown: str
+    fields: str
     notes: str
 
     def instances(self) -> list[range]:
@@ -970,11 +992,64 @@ def spans(offsets: set[int]) -> str:
     return ' '.join(f'{first}-{last}' if first != last else str(first) for first, last in runs) or NONE
 
 
+def field_paths() -> dict[str, str]:
+    """Each RecordField by its path, in the order of RecordField::ALL."""
+    return {path: name for name, path in FIELD_PATH.findall(FIELD.read_text())}
+
+
+def field_of(path: str, paths: dict[str, str]) -> str | None:
+    """The RecordField a record path names: the one whose path it is,
+    or the longest whose path it goes on from."""
+    parts = path.split('.')
+    for length in range(len(parts), 0, -1):
+        if (name := paths.get('.'.join(parts[:length]))) is not None:
+            return name
+    return None
+
+
+def fields_of(row: Row, paths: dict[str, str]) -> list[str]:
+    """The RecordFields a row's terms name, in the order of
+    RecordField::ALL."""
+    named = set()
+    for term, _ in row.terms():
+        kind, _, path = term.partition('.')
+        if term == 'clock':
+            named.add(CLOCK_FIELD)
+        elif kind == 'record' and (name := field_of(path, paths)) is not None:
+            named.add(name)
+    return [name for name in paths.values() if name in named]
+
+
+def image_uses(rows: list[Row], found: 'dict[int, dict[str, Found]]', paths: dict[str, str]) -> str:
+    """IMAGE_USES as field.rs has it between its markers: the fields of
+    the rows some image uses as control or reported."""
+    used = {
+        name
+        for row in rows
+        if any(each.use in USED for each in found.get(row.line, {}).values())
+        for name in row.fields.split(';')
+        if name != NONE
+    }
+    lines = [
+        "/// The fields a receiver's image uses, to control something or to",
+        '/// report it: those behind a row of the field table whose use is',
+        '/// control or reported.',
+        'pub const IMAGE_USES: FieldSet = FieldSet::of(&[',
+        *(f'    RecordField::{name},' for name in paths.values() if name in used),
+        ']);',
+    ]
+    return '\n'.join(lines) + '\n'
+
+
 def check_rows(rows: list[Row], tables: dict[str, Requests]) -> list[str]:
     """What is wrong with the table by itself and against the images'
     lengths."""
     problems = []
     record_fields = set(re.findall(r'^\s+pub (\w+):', RECORD.read_text(), re.MULTILINE))
+    paths = field_paths()
+    for path, name in paths.items():
+        if not all(part in record_fields for part in path.split('.')):
+            problems.append(f'{FIELD.relative_to(ROOT)}: {name}: no {path} in a record')
     messages = {row.message for row in rows}
     groups: dict[tuple[str, str], list[Row]] = {}
     for row in rows:
@@ -992,13 +1067,20 @@ def check_rows(rows: list[Row], tables: dict[str, Requests]) -> list[str]:
             if row.direction == 'command':
                 good = term in HANDLINGS
             elif kind == 'record':
-                good = bool(path) and all(part in record_fields for part in path.split('.'))
+                good = (
+                    bool(path)
+                    and all(part in record_fields for part in path.split('.'))
+                    and field_of(path, paths) is not None
+                )
             elif kind == 'setting':
                 good = path in messages
             else:
                 good = term in SOURCES
             if not good:
                 problems.append(f'{where}: engine term {term}')
+        if row.direction == 'command' and row.unknown != NONE:
+            problems.append(f'{where}: a command field with an unknown value')
+        row.fields = ';'.join(fields_of(row, paths)) or NONE
     lengths: dict[str, set[int]] = {}
     for table in tables.values():
         for entry in table.entries:
@@ -1294,13 +1376,13 @@ def gaps(rows: list[Row], found: dict[int, dict[str, Found]]) -> str:
     return '\n'.join(lines) + '\n'
 
 
-def between_markers(document: str, made: str) -> str | None:
+def between_markers(document: str, made: str, begin: str = BEGIN, end: str = END) -> str | None:
     """The document with made between its markers, or nothing if it
     lacks them."""
-    if BEGIN not in document or END not in document:
+    if begin not in document or end not in document:
         return None
-    head, _, rest = document.partition(BEGIN)
-    return f'{head}{BEGIN}\n{made}{END}{rest.partition(END)[2]}'
+    head, _, rest = document.partition(begin)
+    return f'{head}{begin}\n{made}{end}{rest.partition(end)[2]}'
 
 
 def summary(
@@ -1360,7 +1442,16 @@ def main() -> None:
         problems.append(f'{DOCUMENT.relative_to(ROOT)}: no {BEGIN} ... {END}')
         made = document
     table = text_of(rows)
+    source = FIELD.read_text()
+    uses = between_markers(source, image_uses(rows, found, field_paths()), USES_BEGIN, USES_END)
+    if uses is None:
+        problems.append(f'{FIELD.relative_to(ROOT)}: no {USES_BEGIN} ... {USES_END}')
+        uses = source
     if arguments.check:
+        if uses != source:
+            problems.append(
+                f'{FIELD.relative_to(ROOT)}: IMAGE_USES is not what the table gives; make gps-fields rewrites it'
+            )
         if table != was:
             problems.append(f'{TABLE.relative_to(ROOT)} is not what the images give; make gps-fields rewrites it')
         if made != document:
@@ -1368,6 +1459,7 @@ def main() -> None:
     elif not problems:
         TABLE.write_text(table)
         DOCUMENT.write_text(made)
+        FIELD.write_text(uses)
     for problem in problems:
         print(problem, file=sys.stderr)
     sys.exit(1 if problems else 0)

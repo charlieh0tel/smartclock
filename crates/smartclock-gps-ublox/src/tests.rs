@@ -9,6 +9,7 @@ use std::vec::Vec;
 use crate::Assembler;
 use crate::Deframer;
 use crate::EncodeError;
+use crate::FILLER;
 use crate::FrameError;
 use crate::LeapNotice;
 use crate::MESSAGES;
@@ -40,6 +41,9 @@ use smartclock_gps::record::Position;
 use smartclock_gps::record::Record;
 use smartclock_gps::record::Tracking;
 use smartclock_gps::record::Velocity;
+use smartclock_gps::record::field::FieldSet;
+use smartclock_gps::record::field::RecordField;
+use smartclock_gps::record::field::changed;
 use smartclock_gps::source::Presence;
 use smartclock_gps::source::Source;
 use smartclock_gps::source::Tick;
@@ -1100,11 +1104,9 @@ fn a_message_of_another_kind_or_length_is_not_decoded() {
     assert_eq!(decode(MessageId::new(0x01, 0x03), &[0; 16]), None);
 }
 
-/// One whole epoch, every message of it, as a receiver sends them:
-/// the record has all of it.
-#[test]
-fn an_epoch_makes_a_record() {
-    let bytes = stream(&[
+/// One whole epoch, every message of it, as a receiver sends them.
+fn whole_epoch() -> Vec<u8> {
+    stream(&[
         (MON_HW, &hw(2)),
         (NAV_POSECEF, &pos_ecef(NOON, ECEF)),
         (NAV_DOP, &dop(NOON, [251, 199, 155, 150, 94])),
@@ -1127,7 +1129,38 @@ fn an_epoch_makes_a_record() {
         ),
         (TIM_TP, &tp(NOON + 1000, -4_321, WEEK, 0)),
         (NAV_EOE, &eoe(NOON)),
-    ]);
+    ])
+}
+
+/// What the images use that [`FILLER`] does not fill, and no exception
+/// excuses: a u-blox receiver reports no Time RAIM result.
+const UNFILLED: FieldSet = FieldSet::of(&[RecordField::RaimSolution, RecordField::RaimAbility]);
+/// The exceptions table, from the crate's directory.
+const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
+
+/// The assembler writes what [`FILLER`] declares and nothing else, and
+/// of what the images use leaves only [`UNFILLED`].
+#[test]
+fn the_filler_fills_what_it_declares() {
+    let exceptions =
+        std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(EXCEPTIONS))
+            .expect("the exceptions table");
+    assert_eq!(FILLER.shortfall(&exceptions), UNFILLED);
+
+    let records = records(&mut Bench::new(), &whole_epoch());
+    let [record] = records[..] else {
+        panic!("{records:?}");
+    };
+    let undeclared = FILLER.undeclared(&Record::EMPTY, &record);
+    assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
+    let unshown = FILLER.unshown(changed(&Record::EMPTY, &record));
+    assert!(unshown.is_empty(), "unshown: {unshown:?}");
+}
+
+/// The record of a whole epoch has all of it.
+#[test]
+fn an_epoch_makes_a_record() {
+    let bytes = whole_epoch();
     let mut assembler = Bench::new();
     let records = records(&mut assembler, &bytes);
     let [record] = records[..] else {

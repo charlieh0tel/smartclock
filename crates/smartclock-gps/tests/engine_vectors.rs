@@ -26,6 +26,7 @@ use smartclock_gps::engine::identity::UT_PLUS_2_2;
 use smartclock_gps::engine::identity::VP_EIGHT;
 use smartclock_gps::engine::identity::VP_EIGHT_WITHOUT_TIME_RAIM;
 use smartclock_gps::engine::identity::VP_SIX;
+use smartclock_gps::engine::settings::SettingSet;
 use smartclock_gps::record::Almanac;
 use smartclock_gps::record::Antenna;
 use smartclock_gps::record::Dops;
@@ -36,6 +37,10 @@ use smartclock_gps::record::Position;
 use smartclock_gps::record::Record;
 use smartclock_gps::record::Satellite;
 use smartclock_gps::record::Timing;
+use smartclock_gps::record::field::FieldSet;
+use smartclock_gps::record::field::Filler;
+use smartclock_gps::record::field::RecordField;
+use smartclock_gps::record::field::changed;
 use smartclock_gps::time::DateTime;
 use smartclock_gps::time::GpsSeconds;
 use smartclock_gps::time::LeapChange;
@@ -98,6 +103,50 @@ const DOPS: Dops = Dops {
 const SIGMA: u16 = 12;
 /// The almanac's reference time, in the units `@@Bd` carries.
 const TIME_OF_ALMANAC: u8 = 144;
+
+/// What a [`Scene`] fills of a record, and that it acts on no setting.
+const SCENE: Filler = Filler {
+    name: "engine vectors",
+    fills: FieldSet::of(&[
+        RecordField::Time,
+        RecordField::UtcOffset,
+        RecordField::Leap,
+        RecordField::Fix,
+        RecordField::Latitude,
+        RecordField::Longitude,
+        RecordField::EllipsoidHeight,
+        RecordField::MeanSeaLevelHeight,
+        RecordField::GeometricDop,
+        RecordField::PositionDop,
+        RecordField::HorizontalDop,
+        RecordField::VerticalDop,
+        RecordField::TimeDop,
+        RecordField::Sigma,
+        RecordField::Satellites,
+        RecordField::SatelliteElevation,
+        RecordField::SatelliteAzimuth,
+        RecordField::SatelliteSignal,
+        RecordField::SatelliteTracking,
+        RecordField::SatelliteUsed,
+        RecordField::SatelliteHealth,
+        RecordField::SatelliteEphemeris,
+        RecordField::SatelliteDoppler,
+        RecordField::Almanac,
+        RecordField::Antenna,
+        RecordField::Ecef,
+    ]),
+    acts: SettingSet::EMPTY,
+};
+/// What the images use that a scene does not fill, and no exception
+/// excuses: the Time RAIM result, which the engine then works out from
+/// the satellites tracked and its alarm limit.
+const SCENE_UNFILLED: FieldSet =
+    FieldSet::of(&[RecordField::RaimSolution, RecordField::RaimAbility]);
+/// The exceptions table, from the crate's directory.
+const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
+/// The vector whose scene is held to [`SCENE`]: one with a leap second
+/// announced.
+const DECLARED_BY: &str = "vp-eight-leap.txt";
 
 /// WGS-84's semi-major axis in meters and its inverse flattening.
 const AXIS: f64 = 6_378_137.0;
@@ -382,6 +431,31 @@ fn vectors() -> Vec<PathBuf> {
         .collect();
     paths.sort();
     paths
+}
+
+/// A scene fills what it declares and nothing else, and of what the
+/// images use leaves only [`SCENE_UNFILLED`].
+#[test]
+fn a_scene_fills_what_it_declares() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let exceptions = fs::read_to_string(root.join(EXCEPTIONS)).expect("the exceptions table");
+    assert_eq!(SCENE.shortfall(&exceptions), SCENE_UNFILLED);
+
+    let text =
+        fs::read_to_string(root.join("tests/vectors/engine").join(DECLARED_BY)).expect("a vector");
+    let mut head = Head {
+        lines: Vec::new(),
+        fields: BTreeMap::new(),
+    };
+    for field in text.lines().filter_map(|line| line.strip_prefix("# ")) {
+        let (key, value) = field.split_once(": ").expect("a key and a value");
+        head.fields.insert(key.to_owned(), value.to_owned());
+    }
+    let record = Scene::new(&head).record(1, true);
+    let undeclared = SCENE.undeclared(&Record::EMPTY, &record);
+    assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
+    let unshown = SCENE.unshown(changed(&Record::EMPTY, &record));
+    assert!(unshown.is_empty(), "unshown: {unshown:?}");
 }
 
 #[test]

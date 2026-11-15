@@ -20,6 +20,11 @@
 //! [`Record::EMPTY`], [`Satellite::new`], [`Timing::ZERO`],
 //! [`Almanac::new`], [`Derived::EMPTY`], [`XdopTable::new`],
 //! [`Corrections::new`] or [`Raim::new`] and set fields.
+//!
+//! [`field`] names a record's parts, so that what fills one can say
+//! which it fills and be held to it.
+
+pub mod field;
 
 use crate::time::GpsSeconds;
 use crate::time::GpsWeek;

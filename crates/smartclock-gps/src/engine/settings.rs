@@ -8,7 +8,10 @@
 //! ([`Event`](crate::engine::event::Event)).  What a command changes in
 //! the bytes the engine builds, the engine does; what it would change
 //! in a receiver's tracking, fix or pulse, the engine can only hold
-//! here, for its holder to do.  A setting whose
+//! here, for its holder to do.  One setting is here though the engine
+//! does all its command asks: the kind of DOP
+//! ([`Settings::dop_kind`]), which whatever makes an xDOP table has to
+//! know.  A setting whose
 //! command an Oncore does not take, as a UT Plus takes no `@@AB`, stays
 //! as it is at power-up.
 //!
@@ -21,6 +24,7 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
+use crate::record::DopKind;
 use crate::units::Centimeters;
 use crate::units::Degrees;
 use crate::units::MilliArcSeconds;
@@ -202,6 +206,15 @@ pub struct Settings {
     /// while [`Settings::satellite_select`] is
     /// [`Manual`](SatelliteSelect::Manual).
     pub manual_satellites: [u8; CHANNELS_MOST],
+    /// The kind of DOP asked for (`@@Aj`, pp. 33 and 34).  The engine
+    /// acts on this one itself: its `@@Bc` gives the record's xDOP
+    /// table only if the table is of this kind
+    /// ([`XdopTable::kind`](crate::record::XdopTable::kind)), and none
+    /// otherwise (p. 77).  So it is not among
+    /// [`IMAGE_SETS`](crate::record::field::IMAGE_SETS) and no filler
+    /// is held to it.  It is here for a filler that makes a table, to
+    /// make it of the kind asked for.
+    pub dop_kind: DopKind,
     /// How much better another set of satellites' DOP must be before
     /// the engine changes to it (`@@Ak`, pp. 37 and 38).
     pub xdop_hysteresis: Tenths,
@@ -256,6 +269,8 @@ pub enum Setting {
     SatelliteSelect,
     /// [`Settings::manual_satellites`].
     ManualSatellites,
+    /// [`Settings::dop_kind`].
+    DopKind,
     /// [`Settings::xdop_hysteresis`].
     XdopHysteresis,
     /// [`Settings::almanac_update`].
@@ -276,7 +291,7 @@ pub enum Setting {
 
 impl Setting {
     /// Every setting, in the order of [`Settings`]' fields.
-    pub const ALL: [Self; 21] = [
+    pub const ALL: [Self; 22] = [
         Self::MaskAngle,
         Self::PositionHold,
         Self::HeldPosition,
@@ -290,6 +305,7 @@ impl Setting {
         Self::InitialPosition,
         Self::SatelliteSelect,
         Self::ManualSatellites,
+        Self::DopKind,
         Self::XdopHysteresis,
         Self::AlmanacUpdate,
         Self::AtmosphericCorrection,
@@ -318,6 +334,7 @@ impl Setting {
             Self::InitialPosition => "initial_position",
             Self::SatelliteSelect => "satellite_select",
             Self::ManualSatellites => "manual_satellites",
+            Self::DopKind => "dop_kind",
             Self::XdopHysteresis => "xdop_hysteresis",
             Self::AlmanacUpdate => "almanac_update",
             Self::AtmosphericCorrection => "atmospheric_correction",
@@ -450,6 +467,7 @@ impl Settings {
                 self.manual_satellites != after.manual_satellites,
                 Setting::ManualSatellites,
             ),
+            (self.dop_kind != after.dop_kind, Setting::DopKind),
             (
                 self.xdop_hysteresis != after.xdop_hysteresis,
                 Setting::XdopHysteresis,

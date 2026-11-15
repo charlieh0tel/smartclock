@@ -1226,8 +1226,8 @@ fn height_data(height: Height) -> Vec<u8> {
 }
 
 /// What an Oncore is set to at power-up: each command's default (VP
-/// pp. 11, 15, 17, 19, 21, 25, 27, 29, 37, 43, 50, 52, 54, 56, 58, 60,
-/// 62, 64, 66, 68 and 102).
+/// pp. 11, 15, 17, 19, 21, 25, 27, 29, 33, 37, 43, 50, 52, 54, 56, 58,
+/// 60, 62, 64, 66, 68 and 102).
 fn defaults() -> Settings {
     Settings {
         mask_angle: Degrees(10),
@@ -1243,6 +1243,7 @@ fn defaults() -> Settings {
         initial_position: Location::default(),
         satellite_select: SatelliteSelect::BestGeometry,
         manual_satellites: [0; CHANNELS_MOST],
+        dop_kind: DopKind::Position,
         xdop_hysteresis: Tenths(10),
         almanac_update: true,
         atmospheric_correction: AtmosphericCorrection {
@@ -1293,7 +1294,7 @@ fn each_setting_reads_back_after_its_command() {
         kind: HeightKind::Ellipsoid,
     };
     let traim = |pps_mode: u8| [&[0, 1, 0, 10, pps_mode][..], &[0; 10]].concat();
-    let cases: [Case; 25] = [
+    let cases: [Case; 26] = [
         (
             AH_SATELLITE_SELECT,
             vec![1],
@@ -1327,6 +1328,11 @@ fn each_setting_reads_back_after_its_command() {
                 after
             },
         ),
+        (AJ_XDOP_TYPE, vec![4], vec![0xff], Setting::DopKind, {
+            let mut after = defaults();
+            after.dop_kind = DopKind::Time;
+            after
+        }),
         (
             AK_XDOP_HYSTERESIS,
             vec![0x03, 0xe7],

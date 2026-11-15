@@ -410,9 +410,21 @@ impl Store {
         if sign == 0 { ahead } else { -ahead }
     }
 
-    /// The kind of DOP asked for (`@@Aj`).
+    /// The kind of DOP asked for (`@@Aj`), as the command numbers it.
     pub(super) fn dop_type(&self) -> u8 {
         self.byte(AJ_XDOP_TYPE)
+    }
+
+    /// The kind of DOP asked for (`@@Aj`, p. 34).  The store takes no
+    /// type but these five.
+    pub(super) fn dop_kind(&self) -> DopKind {
+        match self.dop_type() {
+            DOP_GEOMETRIC => DopKind::Geometric,
+            DOP_HORIZONTAL => DopKind::Horizontal,
+            DOP_VERTICAL => DopKind::Vertical,
+            DOP_TIME => DopKind::Time,
+            _ => DopKind::Position,
+        }
     }
 
     /// Whether satellites are chosen highest in the sky first (`@@Ah`,

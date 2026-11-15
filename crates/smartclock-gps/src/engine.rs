@@ -836,6 +836,7 @@ impl Engine {
             initial_position: self.state.initial,
             satellite_select: store.satellite_select(),
             manual_satellites: self.state.assignments,
+            dop_kind: store.dop_kind(),
             xdop_hysteresis: store.xdop_hysteresis(),
             almanac_update: store.almanac_update(),
             atmospheric_correction: store.atmospheric_correction(),

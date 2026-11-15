@@ -41,7 +41,7 @@ Ai	command	channel	4	1	1	-	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3
 Ai	command	satellite	5	1	1	-	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	held:manual_satellites	-	-	holder	0xff asks
 Ai	response	channel	4	1	1	-	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	echo	-	-	-	-
 Ai	response	satellite	5	1	1	-	-	VP	32	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	state	-	-	-	-
-Aj	command	xDOP type	4	1	1	-	-	VP	34	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	engine	-
+Aj	command	xDOP type	4	1	1	-	-	VP	34	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored;given:dop_kind	-	-	engine	-
 Aj	response	xDOP type	4	1	1	-	-	VP	34	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Aj	-	-	-	-
 Ak	command	xDOP hysteresis	4	2	1	-	-	VP	38	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	held:xdop_hysteresis	-	-	holder	-
 Ak	response	xDOP hysteresis	4	2	1	-	-	VP	38	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ak	-	-	-	-

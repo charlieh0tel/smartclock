@@ -1160,7 +1160,11 @@ stands in for one.
   the model's to do: satellite selection and the satellites assigned
   by hand, the xDOP hysteresis and HDOP threshold, almanac update,
   the atmospheric corrections, the fix algorithm, the epoch offset,
-  the correction thresholds and the port's format.  `@@Ci` 1 and 2
+  the correction thresholds and the port's format.  The kind of DOP
+  `@@Aj` asks for is there too, though the model does all the command
+  asks, sending a table of another kind as none: whatever makes a
+  record's xDOP table has to know which kind to make.  It is not of
+  `IMAGE_SETS`, and no filler is held to it.  `@@Ci` 1 and 2
   are held and told like the rest and change nothing in the model,
   which speaks neither NMEA nor Loran and goes on in binary; an
   earlier revision had it fall silent, which took a call of its

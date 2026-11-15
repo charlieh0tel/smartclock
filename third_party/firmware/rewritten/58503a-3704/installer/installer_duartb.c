@@ -223,12 +223,6 @@ void installer_duartb_transmit_interrupt(void) {
   installer_duartb.in_transmit_interrupt = 0;
 }
 
-/* Waits for DUART channel B's transmitter and writes a character;
- * returns the status bit it waited on. */
-uint8_t installer_duartb_putc_polled(uint8_t c) {
-  return duart_b_putc_polled(c);
-}
-
 /* DUART channel B's baud rate from the serial settings, 19200 for a
  * code out of range. */
 void installer_duartb_baud_from_settings(void) {

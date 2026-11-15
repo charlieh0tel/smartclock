@@ -1219,17 +1219,26 @@ void format_dms(int32_t mas, char longitude, char* text) {
     text[0] = ' ';
   }
 }
-/* A signal level as "%3d", or blanks when negative. */
-void format_level(int16_t level, char* text) {
-  if (level < 0) {
-    libc_copy(text, "   ");
-    return;
-  }
-  sprintf(text, "%3d", level);
-}
 /* :SYSTem:PRINt:LENGth?'s answer, the screen's lines. */
 uint8_t status_screen_length(void) {
   static const uint8_t LINES = 23;
 
   return LINES;
+}
+
+/* A satellite's cell: its elevation and azimuth while the record holds
+ * them, below 91 and 360 degrees; else no position. */
+void satellite_elevation_azimuth(oncore_visible_satellite* satellite,
+                                 satellite_cell* cell) {
+  static const uint8_t ELEVATION_LIMIT = 91;
+  static const uint16_t AZIMUTH_LIMIT = 360;
+
+  if (satellite != NULL && satellite->elevation < ELEVATION_LIMIT &&
+      satellite->azimuth < AZIMUTH_LIMIT) {
+    cell->status = SATELLITE_CELL_POSITION;
+    cell->elevation = satellite->elevation;
+    cell->azimuth = satellite->azimuth;
+    return;
+  }
+  cell->status = SATELLITE_CELL_NO_POSITION;
 }

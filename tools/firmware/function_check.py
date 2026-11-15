@@ -109,6 +109,7 @@ from harness import (
     MESSAGE_OFFSET,
     NULL_LONG,
     NUMERIC_DESCRIPTOR_58503A,
+    NUMERIC_DESCRIPTOR_58503B,
     NUMERIC_DESCRIPTOR_Z3815A,
     OVERLAY_SEPARATOR,
     PLLC_EXCHANGE,
@@ -868,6 +869,27 @@ SIGN_WIDTHS = [0, 1, 4, 5, 8, 11, 12, 16, 17, 24, 31, 32, 33, 255]
 # gives them (stdio.c): none, each bit, and all; with the line read, its
 # next past its end, so that the port reads the console.
 READ_ERRORS = [0, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF]
+
+
+def console_port_read_line_cases(line: str, read_errors: str) -> list[dict]:
+    """console_port_read's cases, or its installer copy's, the line's next
+    and end lvalues named from line, each of READ_ERRORS in the console
+    driver's read_errors, an lvalue."""
+    return [{PRESETS: {f"{line}_next": 2, f"{line}_end": 1, read_errors: errors}} for errors in READ_ERRORS]
+
+
+def console_port_read_cases(driver: str) -> dict[str, list]:
+    """console_port_read's and the installer's cases, the read errors in
+    the host port's driver, by its name: duartb, or sci where the SCI is
+    the host port (the Z3816A 4001's)."""
+    return {
+        f"{prefix}console_port_read": console_port_read_line_cases(
+            f"{prefix}scpi_input", f"{prefix}{driver}.read_errors"
+        )
+        for prefix in ("", "installer_")
+    }
+
+
 # atoi's texts with a high-bit character, which it indexes ctype_table
 # by sign extended (0x5ed0a), reading the 128 bytes before the table,
 # atoi's own code: 0x90, whose byte there has the space bit, before a
@@ -886,19 +908,7 @@ LIBRARY_CASES = {
         name: [{0: value, 1: width} for value in SIGN_VALUES for width in SIGN_WIDTHS]
         for name in ("sign_extend_bits", "installer_sign_extend_bits")
     },
-    **{
-        f"{prefix}console_port_read": [
-            {
-                PRESETS: {
-                    f"{prefix}scpi_input_next": 2,
-                    f"{prefix}scpi_input_end": 1,
-                    f"{prefix}duartb.read_errors": errors,
-                }
-            }
-            for errors in READ_ERRORS
-        ]
-        for prefix in ("", "installer_")
-    },
+    **console_port_read_cases("duartb"),
 }
 # The line readers' echoes as a routine of the image's reads its
 # character, at the start of a 2-byte slot, as drtb_putc, sci_putc and
@@ -945,7 +955,8 @@ def gps_request_build_cases(messages: int) -> list[dict[int, int | bytes]]:
     return [{0: message, 1: 0, 2: GPS_ARGUMENTS, 3: bytes(GPS_MESSAGE_ROOM)} for message in range(messages)]
 
 
-# The codes the 58503A 3704's, the Z3815A 4010's and the Z3817A 3752's
+# The codes the 58503A 3704's, the Z3815A 4010's, the Z3817A 3752's and the
+# Z3816A 4001's
 # log_event takes, each a given case, from 0 to one past the last its
 # table has a text for (LOG_SYSTEM_PRESET, 0x1b in each), so that each code's text, which the call of
 # log_write it makes passes (record_calls), is compared: the generated
@@ -1020,6 +1031,8 @@ NOT_GIVEN = {name: [] for name in ("save_calibration_block", "installer_console_
 # And the Z3815A's interval_wait_reading, which waits on its own tick
 # (INTERRUPT_CASES' are the base's).
 NOT_GIVEN_Z3815A = {**NOT_GIVEN, "interval_wait_reading": []}
+# The 58503B's gps.field_608 bit of a DCXO reading, GPS_FIELD_608_SIGNAL_SS.
+GPS_SIGNAL_SS_58503B = 0x02
 # The cases that reach what a function's status register's paths reach
 # no other way (status_register.coverage, "arms not reached"): the QSPI
 # lock taken, and a task waiting for it as it is released, signaled or
@@ -1060,6 +1073,7 @@ PATH_CASES = {
         name: [{PRESETS: {task: lambda m, types: m.tasks[RUNNING_TASK]}}]
         for name, task in (
             ("drta_send_message", "task_gpsm"),
+            ("acia_send_message", "task_gpsm"),
             ("drtb_send_message", "duartb_task"),
         )
     },
@@ -2455,12 +2469,38 @@ LOG_INIT_STATES_Z3815A = States(
     ),
     cases=96,
 )
-# The 58503A 3704's, the Z3815A 4010's and the Z3817A 3752's log_event,
+# The 58503A 3704's, the Z3815A 4010's, the Z3817A 3752's and the Z3816A
+# 4001's log_event,
 # which logs by a code, not the base's, which writes its entry itself, starts from none
 # of STRAGGLER_STATES' log cursors.
 LOG_EVENT_BY_CODE_STATES = {"log_event": States()}
+# The 58503B 1.01.04's enter_holdover: the holdover's event for a GPS
+# cause goes by gps.references[0].state (0x101773 at 0x487ce), a case
+# for each of 0 to 4 and one for the rest, where the base's reads
+# gps.status_reported: each of its states and one past.
+ENTER_HOLDOVER_STATES_58503B = States(
+    presets=tuple(
+        Preset("gps.references[0].state", tuple(range(10)) + (0x80,))
+        if preset.target == "gps.status_reported"
+        else preset
+        for preset in STATES["enter_holdover"].presets
+    ),
+    hooks=STATES["enter_holdover"].hooks,
+    cases=STATES["enter_holdover"].cases,
+)
+# oscillator_kind_done's report of a failed save (the Z3817A's 0x41a0e),
+# recorded, not run, so that what is compared is the source it passes,
+# its second argument's low byte (0x41a06): most sources report nothing,
+# and C reading the first agreed
+OSCILLATOR_KIND_DONE_STATES = {"oscillator_kind_done": States(hooks=(Hook("status_report_from"),))}
 IMAGE_STATES = {
     "58503a-3704": LOG_EVENT_BY_CODE_STATES,
+    "z3816a-4001": LOG_EVENT_BY_CODE_STATES,
+    "58503b-1.01.04": {
+        **LOG_EVENT_BY_CODE_STATES,
+        **OSCILLATOR_KIND_DONE_STATES,
+        "enter_holdover": ENTER_HOLDOVER_STATES_58503B,
+    },
     "z3801a-3543": {
         name: States(presets=(Preset("log_cursor", LOG_CURSORS_Z3801A), Preset("log_mutex.exchange", LOCK_EXCHANGES)))
         for name in ("log_write", "log_event")
@@ -2530,11 +2570,7 @@ IMAGE_STATES = {
     # where the Z3805A's reads gps.status_reported; log_write from its own
     # log cursors, and log_event, the 58503A's by a code, from none.
     "z3817a-3752": {
-        # oscillator_kind_done's report of a failed save (0x41a0e),
-        # recorded, not run, so that what is compared is the source it
-        # passes, its second argument's low byte (0x41a06): most sources
-        # report nothing, and C reading the first agreed
-        "oscillator_kind_done": States(hooks=(Hook("status_report_from"),)),
+        **OSCILLATOR_KIND_DONE_STATES,
         **{
             name: States(
                 presets=(Preset("interval_reading.armed", (1, 1, 0)),),
@@ -3069,10 +3105,20 @@ D5_SHARE_Z3817A = (
 TRANSMIT_FRAME_Z3817A = (
     "sci_puts leaves sci.transmit_next pointing into sci_putc's frame, each copy's stack its own (0x2e804)"
 )
+# The Z3816A 4001's, in its own code: os_report_processes holds "%s"'s
+# address, 0x58314, in D5 (0x2690c), and os_report_process is the
+# Z3805A's, relocated (0x26478).
+D5_SHARE_Z3816A = (
+    "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x2690c)"
+)
 INSTALLER_TRANSMIT_FRAME = Known(
     "the installer's copy of sci_puts leaves its transmit_next pointing into installer_sci_putc's frame, "
     "each copy's stack its own (installer::0x103230)",
     r"RAM differs from 10b009",
+)
+# The 58503B 1.01.04's (IMAGE_KNOWN).
+D5_SHARE_58503B = (
+    "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x26856)"
 )
 # A session's line of :DIAG:OS:PROC?, its memory and share columns
 # apart, as scpi_interpret's KNOWN gives it.
@@ -3098,6 +3144,24 @@ IMAGE_KNOWN = {
         "sci_putc": Known(TRANSMIT_FRAME_Z3817A, r"RAM differs from 10394b"),
         "installer_sci_putc": INSTALLER_TRANSMIT_FRAME,
     },
+    # the Z3816A 4001's D5 share (D5_SHARE_Z3816A), with D6 in a
+    # session, as the 58503A's; and its SCI driver, the Z3815A's
+    # (TRANSMIT_FRAME_Z3815A): its sci_puts leaves sci.transmit_next at
+    # the end of what it sent (0x2e70a), and the installer's copy its own
+    # (installer::0x103222)
+    "z3816a-4001": {
+        **{name: Known(D5_SHARE_Z3816A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
+        "scpi_interpret": Known(D5_SHARE_Z3816A + ", and adds D6, which scpi_interpret leaves", SESSION_SHARE),
+        "sci_putc": Known(
+            "sci_puts leaves sci.transmit_next pointing into sci_putc's frame, each copy's stack its own (0x2e70a)",
+            r"RAM differs from 1037ed",
+        ),
+        "installer_sci_putc": Known(
+            "the installer's copy of sci_puts leaves its transmit_next pointing into installer_sci_putc's frame, "
+            "each copy's stack its own (installer::0x103222)",
+            r"RAM differs from 10afed",
+        ),
+    },
     "z3801a-3543": {
         **{name: Known(D5_SHARE_Z3801A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
         "gps_debug_status": Known(
@@ -3114,6 +3178,24 @@ IMAGE_KNOWN = {
         **{name: Known(D5_SHARE_58503A, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
         "scpi_interpret": Known(D5_SHARE_58503A + ", and adds D6, which scpi_interpret leaves", SESSION_SHARE),
     },
+    # the 58503B 1.01.04's, in its own code: os_report_processes holds
+    # "%s"'s address, 0x5bce2, in D5 (0x26856), which os_report_process
+    # prints for a task the kernel finds no segment of (0x2644c,
+    # 0x2652c); its sci_puts leaves sci.transmit_next at the end of what
+    # it sent (0x2dcf8), as the Z3815A's does, and its sci_putc sends from
+    # its own frame (0x2e7ec); its installer is the Z3815A's
+    "58503b-1.01.04": {
+        **{name: Known(D5_SHARE_58503B, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
+        "sci_putc": Known(
+            "sci_puts leaves sci.transmit_next pointing into sci_putc's frame, each copy's stack its own (0x2dcf8)",
+            r"RAM differs from 103ee9",
+        ),
+        "installer_sci_putc": Known(
+            "the installer's copy of sci_puts leaves its transmit_next pointing into installer_sci_putc's frame, "
+            "each copy's stack its own (installer::0x103230)",
+            r"RAM differs from 10b009",
+        ),
+    },
 }
 # Another image's own given cases, in place of the base's of the same
 # function: the 58503A 3704's 56 messages (oncore_messages, 0x51178);
@@ -3128,6 +3210,21 @@ IMAGE_KNOWN = {
 # port layers serve, and on another.
 GPS_MESSAGES_58503A = 56
 GPS_MESSAGES_Z3817A = 57
+# The Z3816A 4001's messages, its oncore_messages' 64 entries (0x56732,
+# docs/firmware/oncore/z3816a-4001.txt), one gps_request_build case each.
+GPS_MESSAGES_Z3816A = 64
+# The 58503B 1.01.04's messages, its oncore_messages' 64 entries (0x58ae0,
+# docs/firmware/oncore/58503b-1.01.04.txt), one gps_request_build case
+# each.
+GPS_MESSAGES_58503B = 64
+# monitor_query_next's places, each of the 58503B 1.01.04's two query
+# lists' places, its null's among them, with the list: the generated
+# cases' are not lists of steps.  The lists, command_monitor_queries
+# (0x59f90) and poll_monitor_queries (0x59ff4), with 24 and 2 steps.
+MONITOR_QUERY_LISTS_58503B = ((0x59F90, 24), (0x59FF4, 2))
+MONITOR_QUERY_CASES_58503B = [
+    {0: head + 4 * place, 1: head} for head, steps in MONITOR_QUERY_LISTS_58503B for place in range(steps + 1)
+]
 LOAD_DOUBLE_58503A = 0x3220E
 LOAD_LONG_58503A = 0x32E3A
 LOAD_LONG_UNIT_STEP_58503A = 0x32E32
@@ -3813,6 +3910,12 @@ ACTION_REQUEST_Z3815A = struct.pack(">IIBBBBII", 0, 0x49EE8, 0, 0, 0, 0, 0, 0)
 VALIDATOR_CASES_Z3801A = validator_cases(0x310AE, 0x31C32, 0x31C2A)
 NUMERIC_REQUEST_Z3801A = struct.pack(">IIBBBBII", 0, SAMPLE_INTEGER_Z3801A, 0, 0, 0, 0, 7, 0)
 ACTION_REQUEST_Z3801A = struct.pack(">IIBBBBII", 0, 0x4137A, 0, 0, 0, 0, 0, 0)
+# The 58503B 1.01.04's numeric request, its pllc_exchange's (harness,
+# NUMERIC_DESCRIPTOR_58503B), and *TST?'s action, scpi_action_self_test
+# (0x45ae4), for SET_UP_REQUESTS' functions and pll_scpi_command, as the
+# 58503A's.
+NUMERIC_REQUEST_58503B = struct.pack(">IIBBBBII", 0, NUMERIC_DESCRIPTOR_58503B, 0, 0, 0, 0, 60, 0)
+ACTION_REQUEST_58503B = struct.pack(">IIBBBBII", 0, 0x45AE4, 0, 0, 0, 0, 0, 0)
 HOLD_HEIGHTS_Z3815A = (
     (-100001, -100001), (-100000, -99998), (-100000, -99997), (1800000, 1800002), (1800001, 1800001),
     (0, 3), (0, -2), (5, 7), (5, 2),
@@ -3954,6 +4057,37 @@ IMAGE_GIVEN_CASES = {
         "gps_request_build": gps_request_build_cases(GPS_MESSAGES_Z3817A),
         "log_event": LOG_EVENT_CASES,
     },
+    # the Z3816A 4001's host port, the SCI, and its installer's
+    # (docs/firmware/z3816a-4001.md, "The host port"), its log_event,
+    # the 58503A's, which logs by a code (LOG_EVENT_CASES), and its
+    # messages for gps_request_build (GPS_MESSAGES_Z3816A)
+    "z3816a-4001": {
+        **console_port_read_cases("sci"),
+        "log_event": LOG_EVENT_CASES,
+        "gps_request_build": gps_request_build_cases(GPS_MESSAGES_Z3816A),
+    },
+    # the 58503B 1.01.04's console, the SCI session's line, whose read
+    # errors console_read gives from sci.read_errors (0x2e8c4), and its
+    # installer's
+    # installer_console_port_read, the Z3815A's, given none as that
+    # image's (NOT_GIVEN); and its validators' step routines, load_double
+    # (0x424fa), load_long (0x43166) and load_long_unit_step (0x4315e);
+    # and its messages for gps_request_build (GPS_MESSAGES_58503B); its
+    # log_event, which logs by a code (LOG_EVENT_CASES); and its monitors'
+    # query lists for monitor_query_next (MONITOR_QUERY_CASES_58503B)
+    "58503b-1.01.04": {
+        "console_port_read": console_port_read_line_cases("sci_scpi_input", "sci.read_errors"),
+        "installer_console_port_read": NOT_GIVEN["installer_console_port_read"],
+        **validator_cases(0x424FA, 0x43166, 0x4315E),
+        "gps_request_build": gps_request_build_cases(GPS_MESSAGES_58503B),
+        "log_event": LOG_EVENT_CASES,
+        "monitor_query_next": MONITOR_QUERY_CASES_58503B,
+        # a DCXO reading there, its readings all zero and its last not,
+        # which the status register's paths reach no other way
+        "scpi_query_DIAGnostic_GPSystem_DCXO": [
+            {PRESETS: {"gps.field_608": GPS_SIGNAL_SS_58503B, "gps.field_56a": last}} for last in (0, 1)
+        ],
+    },
 }
 # Another image's own requests for SET_UP_REQUESTS' functions, the
 # 58503A 3704's (IMAGE_SET_UP_REQUESTS above).
@@ -3973,6 +4107,7 @@ IMAGE_SET_UP_REQUESTS = {
     "58503a-3704": image_set_up_requests(NUMERIC_REQUEST_58503A, ACTION_REQUEST_58503A),
     "z3815a-4010": image_set_up_requests(NUMERIC_REQUEST_Z3815A, ACTION_REQUEST_Z3815A),
     "z3801a-3543": image_set_up_requests(NUMERIC_REQUEST_Z3801A, ACTION_REQUEST_Z3801A),
+    "58503b-1.01.04": image_set_up_requests(NUMERIC_REQUEST_58503B, ACTION_REQUEST_58503B),
 }
 
 
@@ -4445,6 +4580,14 @@ MEANT_ELSEWHERE: dict[str, frozenset[tuple[str, str]]] = {
     # the Z3805A's fine's readings and GPS status, which the 58503A's C
     # names otherwise
     "58503a-3704": frozenset(
+        {
+            ("enter_holdover", "gps.status_reported"),
+            *(("fine", f"fine_readings[{index}]") for index in range(3)),
+        }
+    ),
+    # the Z3816A's, the 58503A's types (docs/firmware/z3816a-4001.md,
+    # "The function check")
+    "z3816a-4001": frozenset(
         {
             ("enter_holdover", "gps.status_reported"),
             *(("fine", f"fine_readings[{index}]") for index in range(3)),

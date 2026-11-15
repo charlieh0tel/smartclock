@@ -21822,10 +21822,10 @@ __asm__(
 /* selftest_power: rewritten in selftest.c */
 
 /* 00017cc8 */
-/* selftest_interpolator_calibration: rewritten in selftest.c */
+/* selftest_interpolator_calibration: rewritten in interpolator.c */
 
 /* 00017cd8 */
-/* selftest_interpolator_sample: rewritten in selftest.c */
+/* selftest_interpolator_sample: rewritten in interpolator.c */
 
 /* 00017fcc */
 /* selftest_begin: rewritten in selftest.c */
@@ -21882,7 +21882,7 @@ __asm__(
 /* selftest_print_failure: rewritten in selftest.c */
 
 /* 00018474 */
-/* shift_right_36: rewritten in selftest.c */
+/* shift_right_36: rewritten in hex_dac.c */
 
 /* 000184b2 */
 /* qspi_hex_dac_test: rewritten in selftest.c */
@@ -30581,10 +30581,10 @@ __asm__(
 /* diag_efc_write: rewritten in console.c */
 
 /* 0001af9a */
-/* diag_hdac_write: rewritten in console.c */
+/* diag_hdac_write: rewritten in hex_dac.c */
 
 /* 0001afb0 */
-/* diag_hdac_all: rewritten in console.c */
+/* diag_hdac_all: rewritten in hex_dac.c */
 
 /* 0001afe0 */
 /* diag_clk_synch: rewritten in console.c */
@@ -30698,7 +30698,7 @@ __asm__(
 /* diag_pr_gps_id: rewritten in console.c */
 
 /* 0001b42a */
-/* diag_pr_1pps: rewritten in console.c */
+/* diag_pr_1pps: rewritten in console_pr_1pps.c */
 
 /* 0001b434 */
 /* diag_pr_time_raim: rewritten in console.c */
@@ -30734,7 +30734,7 @@ __asm__(
 /* diag_pll_debug: rewritten in console.c */
 
 /* 0001b4e4 */
-/* diag_phase_off: rewritten in console.c */
+/* diag_phase_off: rewritten in console_phase_off.c */
 
 /* 0001b4f6 */
 /* print_gps_init_state: rewritten in console.c */
@@ -30794,7 +30794,7 @@ __asm__(
 /* diag_debug_psos: rewritten in console.c */
 
 /* 0001bbc6 */
-/* diag_doven: rewritten in console.c */
+/* diag_doven: rewritten in outer_oven.c */
 
 /* 0001bbe0 */
 /* diag_cal: rewritten in console.c */
@@ -30824,10 +30824,10 @@ __asm__(
 /* duartb_mode_from_settings: rewritten in duartb.c */
 
 /* 0001d33a */
-/* duartb_baud_from_settings: rewritten in duartb.c */
+/* duartb_baud_from_settings: rewritten in duartb_settings.c */
 
 /* 0001d388 */
-/* duartb_putc_polled: rewritten in duartb.c */
+/* duartb_putc_polled: rewritten in duartb_settings.c */
 
 /* 0001d3c2 */
 /* drtb_puts: rewritten in duartb.c */
@@ -31263,7 +31263,7 @@ __asm__(
 );
 
 /* 0001d986 */
-/* duartb_reconfigure: rewritten in duartb.c */
+/* duartb_reconfigure: rewritten in duartb_settings.c */
 
 /* 0001daa0 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -31449,7 +31449,7 @@ __asm__(
 /* duart_test_tx_a: rewritten in duarta.c */
 
 /* 0001e43e */
-/* duart_test_tx_b: rewritten in duartb.c */
+/* duart_test_tx_b: rewritten in duartb_test.c */
 
 /* 0001e46e */
 /* duarta_isr: rewritten in duarta.c */
@@ -34521,10 +34521,10 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* scpi_query_DIAGnostic_SER1_RESTricted: rewritten in scpi_diagnostic.c */
 
 /* 0002a8aa */
-/* scpi_set_DIAGnostic_SER1_EGResponse: rewritten in scpi_diagnostic.c */
+/* scpi_set_DIAGnostic_SER1_EGResponse: rewritten in scpi_diagnostic_ser1.c */
 
 /* 0002a8ae */
-/* scpi_query_DIAGnostic_SER1_EGResponse: rewritten in scpi_diagnostic.c */
+/* scpi_query_DIAGnostic_SER1_EGResponse: rewritten in scpi_diagnostic_ser1.c */
 
 /* 0002a8c0 */
 /* scpi_query_DIAGnostic_ROSCillator_CURRent: rewritten in scpi_diagnostic.c */
@@ -34536,10 +34536,10 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute: rewritten in scpi_diagnostic.c */
 
 /* 0002a93c */
-/* scpi_set_DIAGnostic_ROSCillator_TCOefficient: rewritten in scpi_diagnostic.c */
+/* scpi_set_DIAGnostic_ROSCillator_TCOefficient: rewritten in scpi_diagnostic_tcoefficient.c */
 
 /* 0002a976 */
-/* scpi_query_DIAGnostic_ROSCillator_TCOefficient: rewritten in scpi_diagnostic.c */
+/* scpi_query_DIAGnostic_ROSCillator_TCOefficient: rewritten in scpi_diagnostic_tcoefficient.c */
 
 /* 0002a99c */
 /* scpi_set_DIAGnostic_STATus_ERRor: rewritten in scpi_diagnostic.c */
@@ -34581,28 +34581,28 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* status_report_from: rewritten in status.c */
 
 /* 0002b00c */
-/* scpi_set_OUTPut_PIN1_DELay: rewritten in scpi_output.c */
+/* scpi_set_OUTPut_PIN1_DELay: rewritten in scpi_output_pin1.c */
 
 /* 0002b010 */
-/* scpi_query_OUTPut_PIN1_DELay: rewritten in scpi_output.c */
+/* scpi_query_OUTPut_PIN1_DELay: rewritten in scpi_output_pin1.c */
 
 /* 0002b022 */
 /* scpi_query_R1PO: rewritten in scpi_unsupported.c */
 
 /* 0002b034 */
-/* scpi_set_OUTPut_PIN1_DELay_ALIGnment: rewritten in scpi_output.c */
+/* scpi_set_OUTPut_PIN1_DELay_ALIGnment: rewritten in scpi_output_pin1.c */
 
 /* 0002b054 */
-/* scpi_query_OUTPut_PIN1_DELay_ALIGnment: rewritten in scpi_output.c */
+/* scpi_query_OUTPut_PIN1_DELay_ALIGnment: rewritten in scpi_output_pin1.c */
 
 /* 0002b066 */
 /* scpi_query_REAL: rewritten in scpi_unsupported.c */
 
 /* 0002b078 */
-/* scpi_set_OUTPut_PIN1_FREQuency: rewritten in scpi_output.c */
+/* scpi_set_OUTPut_PIN1_FREQuency: rewritten in scpi_output_pin1.c */
 
 /* 0002b07c */
-/* scpi_query_OUTPut_PIN1_FREQuency: rewritten in scpi_output.c */
+/* scpi_query_OUTPut_PIN1_FREQuency: rewritten in scpi_output_pin1.c */
 
 /* 0002b08e */
 /* scpi_query_RFOU: rewritten in scpi_unsupported.c */
@@ -34776,7 +34776,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* scpi_query_LED_TMHValid: rewritten in scpi_led.c */
 
 /* 0002c93c */
-/* scpi_set_OUTPut_STATe: rewritten in scpi_output.c */
+/* scpi_set_OUTPut_STATe: rewritten in scpi_output_state.c */
 
 /* 0002c96c */
 /* scpi_query_OUTPut_STATe: rewritten in scpi_output.c */
@@ -35076,10 +35076,10 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded: rewritten in scpi_source_roscillator.c */
 
 /* 0002eaa0 */
-/* scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis: rewritten in scpi_source_roscillator.c */
+/* scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis: rewritten in scpi_holdover_hysteresis.c */
 
 /* 0002eaa4 */
-/* scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis: rewritten in scpi_source_roscillator.c */
+/* scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis: rewritten in scpi_holdover_hysteresis.c */
 
 /* 0002eab6 */
 /* scpi_query_RAT2: rewritten in scpi_unsupported.c */
@@ -35442,16 +35442,16 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* reset_record_write: rewritten in log.c */
 
 /* 00040000 */
-/* interpolator_calibration_init: rewritten in ti.c */
+/* interpolator_calibration_init: rewritten in interpolator.c */
 
 /* 00040030 */
 /* interpolator_measure: rewritten in ti.c */
 
 /* 0004007e */
-/* interpolator_measure_low: rewritten in ti.c */
+/* interpolator_measure_low: rewritten in interpolator.c */
 
 /* 00040096 */
-/* interpolator_measure_high: rewritten in ti.c */
+/* interpolator_measure_high: rewritten in interpolator.c */
 
 /* 000400b0 */
 /* dac_search_bisect: rewritten in ti.c */
@@ -35460,7 +35460,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* dac_search_step: rewritten in ti.c */
 
 /* 0004018e */
-/* hdac_nudge: rewritten in ti.c */
+/* hdac_nudge: rewritten in hex_dac.c */
 
 /* 000401c4 */
 /* interpolator_prepare: rewritten in ti.c */
@@ -35820,7 +35820,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* gpt_input_capture_2_interrupt: rewritten in timers.c */
 
 /* 00045d1c */
-/* pwma_force_level: rewritten in timers.c */
+/* pwma_force_level: rewritten in pwma.c */
 
 /* 00045ec6 */
 /* powerup: rewritten in pll_stages.c */
@@ -35979,7 +35979,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* mark_flag: rewritten in screen.c */
 
 /* 000499fa */
-/* format_level: rewritten in screen.c */
+/* format_level: rewritten in screen_level.c */
 
 /* 00049a2c */
 /* format_satellite_cell: rewritten in screen.c */
@@ -36195,7 +36195,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* word_copy_14_bits: rewritten in gps_oncore.c */
 
 /* 0004efe8 */
-/* oncore_decode_fields: rewritten in gps_oncore.c */
+/* oncore_decode_fields: rewritten in oncore_decode.c */
 
 /* 0004f094 */
 /* satellite_id_valid: rewritten in gps_receiver.c */
@@ -36249,10 +36249,10 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* oncore_visibility_message: rewritten in gps_oncore.c */
 
 /* 0004f662 */
-/* oncore_dop_message: rewritten in gps_oncore.c */
+/* oncore_dop_message: rewritten in oncore_decode.c */
 
 /* 0004f67c */
-/* oncore_almanac_status_message: rewritten in gps_oncore.c */
+/* oncore_almanac_status_message: rewritten in oncore_decode.c */
 
 /* 0004f696 */
 /* oncore_corrections_message: rewritten in gps_oncore.c */
@@ -36282,7 +36282,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* gps_response_decode: rewritten in gps_oncore.c */
 
 /* 0004fb12 */
-/* bytes_equal_n: rewritten in arithmetic.c */
+/* bytes_equal_n: rewritten in bytes_equal.c */
 
 /* 0004fb44 */
 /* gps_response_match: rewritten in gps_oncore.c */
@@ -52594,7 +52594,7 @@ __asm__(
 /* installer_duartb_baud_from_settings: rewritten in installer_duartb.c */
 
 /* installer::00103102 */
-/* installer_duartb_putc_polled: rewritten in installer_duartb.c */
+/* installer_duartb_putc_polled: rewritten in installer_duart_transmit.c */
 
 /* installer::0010313c */
 /* installer_drtb_puts: rewritten in installer_duartb.c */
@@ -52725,7 +52725,7 @@ __asm__(
 /* installer_duartb_isr: rewritten in installer_duartb.c */
 
 /* installer::00103c7c */
-/* installer_duarta_transmit_interrupt: rewritten in installer_duarta.c */
+/* installer_duarta_transmit_interrupt: rewritten in installer_duart_transmit.c */
 
 /* installer::00103c90 */
 /* installer_duartb_transmit_interrupt: rewritten in installer_duartb.c */
@@ -54100,11 +54100,17 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/boot.c"
 
+#include "../../rewritten/common/bytes_equal.c"
+
 #include "../../rewritten/common/calendar.c"
 
 #include "../../rewritten/common/clock.c"
 
 #include "../../rewritten/common/console.c"
+
+#include "../../rewritten/common/console_phase_off.c"
+
+#include "../../rewritten/common/console_pr_1pps.c"
 
 #include "../../rewritten/common/cpu.c"
 
@@ -54115,6 +54121,10 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/duarta.c"
 
 #include "../../rewritten/common/duartb.c"
+
+#include "../../rewritten/common/duartb_settings.c"
+
+#include "../../rewritten/common/duartb_test.c"
 
 #include "../../rewritten/common/eeprom.c"
 
@@ -54128,11 +54138,15 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/gps_task.c"
 
+#include "../../rewritten/common/hex_dac.c"
+
 #include "../../rewritten/common/installer/installer_arithmetic.c"
 
 #include "../../rewritten/common/installer/installer_cpu.c"
 
 #include "../../rewritten/common/installer/installer_debug.c"
+
+#include "../../rewritten/common/installer/installer_duart_transmit.c"
 
 #include "../../rewritten/common/installer/installer_duarta.c"
 
@@ -54178,6 +54192,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/installer/installer_string.c"
 
+#include "../../rewritten/common/interpolator.c"
+
 #include "../../rewritten/common/klok.c"
 
 #include "../../rewritten/common/leap.c"
@@ -54190,7 +54206,11 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/nv.c"
 
+#include "../../rewritten/common/oncore_decode.c"
+
 #include "../../rewritten/common/os.c"
+
+#include "../../rewritten/common/outer_oven.c"
 
 #include "../../rewritten/common/pll_aging.c"
 
@@ -54204,6 +54224,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/pps.c"
 
+#include "../../rewritten/common/pwma.c"
+
 #include "../../rewritten/common/qspi.c"
 
 #include "../../rewritten/common/records.c"
@@ -54214,6 +54236,10 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/scpi_diagnostic.c"
 
+#include "../../rewritten/common/scpi_diagnostic_ser1.c"
+
+#include "../../rewritten/common/scpi_diagnostic_tcoefficient.c"
+
 #include "../../rewritten/common/scpi_douglas.c"
 
 #include "../../rewritten/common/scpi_engine.c"
@@ -54221,6 +54247,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/scpi_format.c"
 
 #include "../../rewritten/common/scpi_format_data.c"
+
+#include "../../rewritten/common/scpi_holdover_hysteresis.c"
 
 #include "../../rewritten/common/scpi_kenneth.c"
 
@@ -54231,6 +54259,10 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/scpi_misc.c"
 
 #include "../../rewritten/common/scpi_output.c"
+
+#include "../../rewritten/common/scpi_output_pin1.c"
+
+#include "../../rewritten/common/scpi_output_state.c"
 
 #include "../../rewritten/common/scpi_parameters.c"
 
@@ -54256,9 +54288,13 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/scpi_tree.c"
 
+#include "../../rewritten/common/scpi_unsupported.c"
+
 #include "../../rewritten/common/scpi_validators.c"
 
 #include "../../rewritten/common/screen.c"
+
+#include "../../rewritten/common/screen_level.c"
 
 #include "../../rewritten/common/selftest.c"
 
@@ -54421,8 +54457,6 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/z3801a-3543/scpi_system.c"
 
 #include "../../rewritten/z3801a-3543/scpi_tree_data.c"
-
-#include "../../rewritten/z3801a-3543/scpi_unsupported.c"
 
 #include "../../rewritten/z3801a-3543/scpi_validators.c"
 

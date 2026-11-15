@@ -2,19 +2,6 @@
  * common/arithmetic.c where it differs between the images (rewrite.md, "Shared
  * C", rule 6). */
 
-/* Whether two byte strings have the same nonzero length and bytes. */
-uint32_t bytes_equal_n(uint8_t* a, int16_t a_length, uint8_t* b,
-                       int16_t b_length) {
-  if (a_length != b_length || a_length == 0) {
-    return 0;
-  }
-  for (; *a == *b; a++, b++) {
-    if (--a_length == 0) {
-      return 1;
-    }
-  }
-  return 0;
-}
 /* A double as a signed 64-bit number: its
  * magnitude over 2^32 the high long, what remains the low, negated after;
  * nothing calls it. */

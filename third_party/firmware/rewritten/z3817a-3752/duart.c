@@ -285,3 +285,12 @@ void duart_channels_init(void) {
   duartb.held = 0;
   duart_shadow.field_0c = 1;
 }
+
+/* Stops both DUART channels and masks its interrupts. */
+void duart_stop(void) {
+  duart.a.cr = CR_RX_DISABLE;
+  duart.a.cr = CR_TX_DISABLE;
+  duart.b.cr = CR_RX_DISABLE;
+  duart.b.cr = CR_TX_DISABLE;
+  duart.isr_imr = 0;
+}

@@ -2128,6 +2128,138 @@ PRIMARY_Z3817A_3752 = replace(
     qspi_widths=QSPI_WIDTHS_Z3817A_3752,
     records=0x6A074,
 )
+# The Z3816A 4001's profiles (docs/firmware/z3816a-4001.md, "The function
+# check"), each address read from that image's own code.  The primary's
+# is the 58503A 3704's at this image's addresses: its vector table is at
+# 0x20000; psos_config_init (0x57fc6) copies the configuration from
+# 0x581bc to 0x102cfc and an I/O table of three devices from 0x58670 to
+# 0x102c90, the SCI (sci_init, 0x2ed56), the QSPI and the string device,
+# whose write is the SCI's (sci_write, 0x2f10e);
+# kernel_init and kernel_create_x are the Z3805A's bytes (0x25e7c,
+# 0x25522); root_task (0x2315a) passes "gpsx" from 0x23307 and calls
+# status_init (0x3eb60), which builds status_object (0x10356e);
+# scpi_task_start (0x2303a) sends spoo_exchange (0x10385a)
+# scpi_task_create (0x39732); vsprintf is at 0x683d2; scpi_console_port
+# (0x38ffe) returns 0x392da; the trees' root lists are scpi_list_main
+# (0x5a084) and scpi_list_common (0x59640); aging_curve is at 0x1026a2
+# and the screen's snapshot at 0x101798, which status_screen_print
+# (0x4f710) takes for any argument but 1 (0x4f720);
+# sci_gets (0x2e7b4) echoes through sci.echo, 0x103802, which sci_init
+# makes sci_echo_none (0x2e60e), a bare rts, to echo nothing (0x2efa0).
+# pllc_exchange (0x103d6a) gives the request of
+# NUMERIC_DESCRIPTOR_Z3816A, the fifth of nv_numeric_params (0x42648),
+# as the 58503A's.  Its QSPI's minor devices are its own,
+# QSPI_WIDTHS_Z3816A_4001.  Its reset unpacks no records of the primary's
+# (primary_unpack_records, 0x580e6, from address 0); its flash, one
+# 16-bit Intel-style part, is the Z3815A's model (WordFlash).
+# The Z3816A 4001's QSPI minor devices, each as qspi_queue_setup
+# (0x2f5d6, its jump table on the minor at 0x2f622) sets it up: the
+# Z3805A's (QSPI_WIDTHS), minor device 0 three 12-bit transfers, 0xc0,
+# 0xc0 and 0x40 with SPCR0 0xb311's 12 BITS (0x2f664), where the
+# 58503A's is one of 8, and minor device 3, which QSPI_WIDTHS has
+# none of, three more, 0xc3, 0xc3 and 0x43 with SPCR0 0xb202's or
+# 0xb302's 12 BITS (0x2f6da, 0x2f6e0) (MC68331UM 6.3.5.1, D.4.10).
+QSPI_WIDTHS_Z3816A_4001 = {**QSPI_WIDTHS, 3: (12,) * 3}
+PLLC_EXCHANGE_Z3816A = 0x103D6A
+NUMERIC_DESCRIPTOR_Z3816A = 0x435D8
+PRIMARY_Z3816A_4001 = replace(
+    PRIMARY_58503A_3704,
+    vectors=0x20000,
+    kernel_tables=((0x581BC, 0x102CFC, 0x62), (0x58670, 0x102C90, 0x6C)),
+    psos_config=0x102CFC,
+    kernel_init=((0x25E7C, 0x25FDE), (0x26000, 0x2600E)),
+    kernel_create=(0x25522, 0x25582),
+    initializers=(0x3EB60,),
+    received={
+        0x10385A: struct.pack(">5I", 0, 0x39732, SPOOLED_PRIORITY, 0, 0),
+        PLLC_EXCHANGE_Z3816A: struct.pack(">IIBBBBII", 0, NUMERIC_DESCRIPTOR_Z3816A, 0, 0, 0, 0, 60, 0),
+    },
+    caller_name=0x23307,
+    vsprintf=0x683D2,
+    status_object=0x10356E,
+    scpi=ScpiObjects(0x392DA, 0x5A084, 0x59640, tuple(KEYWORDS), SAMPLE_CALL),
+    variables={"aging_curve_state *": 0x1026A2, "status_snapshot_record *": 0x101798},
+    scpi_step=NUMERIC_DESCRIPTOR_Z3816A,
+    console_echo=(0x103802, 0x2E60E),
+    qspi_widths=QSPI_WIDTHS_Z3816A_4001,
+    flash=WordFlash,
+)
+# The installer's, the USA installer the Z3815A's Vatican one copies
+# (z3816a-4001.md, "The base"), each address read from this image's:
+# installer_psos_config_init (installer::0x108554) copies its
+# configuration from 0x108678 to 0x10ace6 and its I/O table from
+# 0x1086da to 0x10acc2; kernel_init and kernel_create_x are the Z3805A's
+# bytes (0x102724, 0x101dca); installer_status_init (0x10791c) builds
+# installer_status_object (0x10ad4e); the spool's name is at 0x104112
+# and its exchange's cell at 0x10b00e, and the root task sends it
+# installer_scpi_task_create (0x107866, 0x100d22); its vsprintf is at
+# 0x10ac08, its console port's object at 0x107d7e
+# (installer_scpi_console_port, 0x107ac2) and its trees' root lists at
+# 0x108768 and 0x10873a; its flash is the primary's (WordFlash).
+INSTALLER_Z3816A_4001 = InstallerAddresses(
+    kernel_tables=((0x108678, 0x10ACE6, 0x62), (0x1086DA, 0x10ACC2, 0x24)),
+    psos_config=0x10ACE6,
+    kernel_init=((0x102724, 0x102886), (0x1028A8, 0x1028B6)),
+    kernel_create=(0x101DCA, 0x101E2A),
+    initializers=(0x10791C,),
+    spoo_exchange=0x10B00E,
+    scpi_task_create=0x107866,
+    caller_name=0x104112,
+    vsprintf=0x10AC08,
+    status_object=0x10AD4E,
+    scpi=ScpiObjects(0x107D7E, 0x108768, 0x10873A, INSTALLER_KEYWORDS, INSTALLER_SAMPLE_CALL),
+    flash=WordFlash,
+)
+# The 58503B 1.01.04's primary profile (docs/firmware/58503b-1.01.04.md,
+# "The function check"), each address read from that image's own code,
+# as the Z3817A's: psos_config_init (0x5b590) copies the configuration
+# from 0x5bb8a to 0x1033f0 and an I/O table of four devices from 0x5c042
+# to 0x103360, the SCI, the QSPI, the string device, whose write is the
+# SCI's (0x2e760), and a fourth of bare returns; kernel_init and
+# kernel_create_x are the Z3805A's bytes (0x25dc6, 0x2546c); root_task
+# (0x23218) passes "gpsx" from 0x23404 and calls status_init (0x3f228),
+# which builds status_object (0x103c7c); scpi_task_start (0x230f2) has
+# sci_scpi_task_create (0x38e1c) start the SCPI session on the SCI,
+# which spoo_exchange (0x103f56) is sent; vsprintf is at 0x6bc2e;
+# scpi_console_port (0x386c4) returns 0x389b4; the trees' root lists are
+# scpi_list_main (0x5d9b0) and scpi_list_common (0x5cee2); aging_curve
+# is at 0x102a2a and the first of the screen's snapshots at 0x101abc
+# (status_screen_print, 0x51a4c); and the SCI's echo cell is 0x103efe,
+# which its set-up makes 0x2dc38, an rts, to echo nothing (0x2e5e0).
+# pllc_exchange (0x104492) gives the request of
+# NUMERIC_DESCRIPTOR_58503B, the fifth of nv_numeric_params (0x4309a),
+# the Z3817A's at this image's address.  Its QSPI's minor devices are
+# the 58503A 3704's (qspi_queue_setup, 0x2ec28: minor 0 one entry, BITSE,
+# SPCR0 0xa302's 8 BITS; the rest the Z3805A's).  Its reset unpacks the
+# primary's own records at 0x6d20c (primary_unpack_records, 0x5b6b0).
+# Its installer is the Z3817A's, and so the Z3815A's, byte for byte
+# (58503b-1.01.04.md, "The base"), whose profile it takes.
+PLLC_EXCHANGE_58503B = 0x104492
+NUMERIC_DESCRIPTOR_58503B = 0x4432A
+PRIMARY_58503B_1_01_04 = replace(
+    PRIMARY_Z3817A_3752,
+    kernel_tables=((0x5BB8A, 0x1033F0, 0x62), (0x5C042, 0x103360, 0x90)),
+    psos_config=0x1033F0,
+    kernel_init=((0x25DC6, 0x25F28), (0x25F4A, 0x25F58)),
+    kernel_create=(0x2546C, 0x254CC),
+    initializers=(0x3F228,),
+    received={
+        0x103F56: struct.pack(">5I", 0, 0x38E1C, SPOOLED_PRIORITY, 0, 0),
+        PLLC_EXCHANGE_58503B: struct.pack(">IIBBBBII", 0, NUMERIC_DESCRIPTOR_58503B, 0, 0, 0, 0, 60, 0),
+    },
+    caller_name=0x23404,
+    vsprintf=0x6BC2E,
+    status_object=0x103C7C,
+    scpi=ScpiObjects(0x389B4, 0x5D9B0, 0x5CEE2, tuple(KEYWORDS), SAMPLE_CALL),
+    variables={
+        "aging_curve_state *": 0x102A2A,
+        "status_snapshot_record *": 0x101ABC,
+    },
+    scpi_step=NUMERIC_DESCRIPTOR_58503B,
+    console_echo=(0x103EFE, 0x2DC38),
+    qspi_widths=QSPI_WIDTHS_58503A_3704,
+    records=0x6D20C,
+)
 # Each image's profiles, its primary's and its installer's addresses, by
 # the image's name, its .bin's and its folder's.
 IMAGE_PROFILES = {
@@ -2136,6 +2268,8 @@ IMAGE_PROFILES = {
     "z3801a-3543": (PRIMARY_Z3801A_3543, INSTALLER_ADDRESSES),
     "z3815a-4010": (PRIMARY_Z3815A_4010, INSTALLER_Z3815A_4010),
     "z3817a-3752": (PRIMARY_Z3817A_3752, INSTALLER_Z3815A_4010),
+    "z3816a-4001": (PRIMARY_Z3816A_4001, INSTALLER_Z3816A_4001),
+    "58503b-1.01.04": (PRIMARY_58503B_1_01_04, INSTALLER_Z3815A_4010),
 }
 
 
@@ -2399,6 +2533,9 @@ class RebuiltMachine(Machine):
         if ON_MC683XX:
             return self.uc.reg_read(UC_M68K_REG_SR)
         pc = self.uc.reg_read(UC_M68K_REG_PC)
+        # written again each time: a gcc copy's stray write may have
+        # overwritten it (the 58503B 1.01.04's status_screen_print)
+        self.uc.mem_write(PROBE, MOVE_FROM_CCR)
         self.uc.emu_start(PROBE, PROBE_END)
         self.uc.reg_write(UC_M68K_REG_PC, pc)
         return system_status(self.uc) | probed_codes(self.uc)
@@ -3755,7 +3892,15 @@ class Run:
         # memory another use has, where one is known: a pForth console
         # session's data stack, below its return stack (console_task_run)
         self.floor: int | None = None
-        self.status = m.status()
+        # a run that leaves the CPU where the status probe itself faults
+        # (a gcc copy of the 58503B 1.01.04's status_screen_print) has
+        # stopped, its status none
+        try:
+            self.status = m.status()
+        except UcError as error:
+            self.status = 0
+            if self.stopped is None:
+                self.stopped = self.stop_reason = f"status probe: {error}"
         self.memory = snapshot(m)
         self.compared = {name: m.read(start, size) for name, (start, size) in COMPARED.items()}
 

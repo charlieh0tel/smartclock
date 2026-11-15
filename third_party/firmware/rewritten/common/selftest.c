@@ -61,12 +61,6 @@ void selftest_lamps(char_slot run) {
  * selftest_print_failure: each runs its test, lighting a lamp on a failure, and
  * returns its word. */
 
-/* "DISP": runs the lamp test; 0. */
-uint32_t lamp_test_command(void) {
-  lamp_test();
-  return 0;
-}
-
 /* Sums a ROM's two byte lanes, the even bytes and the odd, over count
  * less 1 longs (the low word of count less 2 counts dbf, rom_lane_checksum);
  * the sums' high bytes, even then odd, then their low bytes.  Called by

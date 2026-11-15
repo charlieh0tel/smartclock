@@ -55,6 +55,8 @@ DOCUMENT_58503A = ROOT / 'docs/firmware/58503a-3704.md'
 DOCUMENT_Z3801A = ROOT / 'docs/firmware/z3801a-3543.md'
 DOCUMENT_Z3815A = ROOT / 'docs/firmware/z3815a-4010.md'
 DOCUMENT_Z3817A = ROOT / 'docs/firmware/z3817a-3752.md'
+DOCUMENT_Z3816A = ROOT / 'docs/firmware/z3816a-4001.md'
+DOCUMENT_58503B = ROOT / 'docs/firmware/58503b-1.01.04.md'
 
 # function_check.py's line of a profile's counts, the installer's
 # labeled with its overlay
@@ -161,22 +163,6 @@ def paths_figures(profile):
     return lambda f: tuple(f[f'{profile}_paths_{key}'] for key in PATHS_KEYS)
 
 
-def status_sentence(document):
-    """An image's document's sentence of its functions touching the
-    status register and those of them agreeing, each profile's, and of
-    those whose paths are traced, those reaching every event and arm
-    and those agreeing, each profile's."""
-    return (document, sentence(
-        "The status register: {} of the primary's functions touch it and {} agree, {} of the "
-        "installer's and {} agree; the paths of {} and {} are traced, of which {} and {} reach "
-        "every event and arm and {} and {} agree"),
-            lambda f: (f['primary_status_touch'], f['primary_status_agree'],
-                       f['installer_status_touch'], f['installer_status_agree'],
-                       f['primary_paths_traced'], f['installer_paths_traced'],
-                       f['primary_paths_reached'], f['installer_paths_reached'],
-                       f['primary_paths_agree'], f['installer_paths_agree']))
-
-
 # rewrite.md's row of the agreeing functions' cases, and the same row's
 # figure for a strict report, after the parity one
 CASES_ROW = sentence('| cases, in the agreeing functions | {} of {} compared')
@@ -197,6 +183,68 @@ def summary_row(image):
     the primary's and the installer's, and its assembly routines."""
     return (SUMMARY, sentence(f'| {image} | {{}} and {{}} | {{}} |'),
             lambda f: (f['primary_hand'], f['installer_hand'], f['assembly']))
+
+
+def status_sentence(document):
+    """An image's document's sentence of its functions touching the
+    status register and those of them agreeing, each profile's, and of
+    those whose paths are traced, those reaching every event and arm
+    and those agreeing, each profile's."""
+    return (document, sentence(
+        "The status register: {} of the primary's functions touch it and {} agree, {} of the "
+        "installer's and {} agree; the paths of {} and {} are traced, of which {} and {} reach "
+        "every event and arm and {} and {} agree"),
+            lambda f: (f['primary_status_touch'], f['primary_status_agree'],
+                       f['installer_status_touch'], f['installer_status_agree'],
+                       f['primary_paths_traced'], f['installer_paths_traced'],
+                       f['primary_paths_reached'], f['installer_paths_reached'],
+                       f['primary_paths_agree'], f['installer_paths_agree']))
+
+
+def profile_checks(document):
+    """A seeded image's document's sentences of its function check: its
+    profiles' table, its console sessions and its status register."""
+    return (
+        (document, sentence('| primary | {} | {} | {} | {} |'),
+         lambda f: (f['primary_agree'], f['primary_known'], f['primary_skipped'],
+                    f['primary_failed'])),
+        (document, sentence('| installer | {} | {} | {} | {} |'),
+         lambda f: (f['installer_agree'], f['installer_known'],
+                    f['installer_skipped'], f['installer_failed'])),
+        (document, sentence('Console sessions: {} of {} agree.'),
+         lambda f: (f['sessions_agree'], f['sessions_run'])),
+        status_sentence(document),
+    )
+
+
+def unfinished_checks(document):
+    """An unfinished image's document's sentences: its profiles' table,
+    its console sessions and its functions written by hand."""
+    return (
+        *profile_checks(document),
+        (document, sentence(
+            "Of its C functions the primary's {} and the installer's {} are written by hand, "
+            "{} left as the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    f['primary_reading'] + f['installer_reading'])),
+    )
+
+
+def joined_checks(document, image):
+    """The sentences of an image that left the unfinished ones as it
+    joined common/: its document's profiles' table, console sessions and
+    functions, all written by hand, README.md's row and rewrite.md's
+    sentence of its link check."""
+    return (
+        *profile_checks(document),
+        (document, sentence(
+            "Every C function of the image is written by hand: the primary's {} and the "
+            "installer's {}, {} left as the decompiler's reading"),
+         lambda f: (f['primary_hand'], f['installer_hand'],
+                    word(f['primary_reading'] + f['installer_reading']))),
+        summary_row(image),
+        link_sentence(image),
+    )
 
 
 # Each image's sentences: the document, the sentence, and its figures
@@ -355,24 +403,9 @@ CHECKS = {
         summary_row('Z3815A 4010'),
         link_sentence('Z3815A 4010'),
     ),
-    'z3817a-3752': (
-        (DOCUMENT_Z3817A, sentence('| primary | {} | {} | {} | {} |'),
-         lambda f: (f['primary_agree'], f['primary_known'], f['primary_skipped'],
-                    f['primary_failed'])),
-        (DOCUMENT_Z3817A, sentence('| installer | {} | {} | {} | {} |'),
-         lambda f: (f['installer_agree'], f['installer_known'],
-                    f['installer_skipped'], f['installer_failed'])),
-        (DOCUMENT_Z3817A, sentence('Console sessions: {} of {} agree.'),
-         lambda f: (f['sessions_agree'], f['sessions_run'])),
-        status_sentence(DOCUMENT_Z3817A),
-        (DOCUMENT_Z3817A, sentence(
-            "Every C function of the image is written by hand: the primary's {} and the "
-            "installer's {}, {} left as the decompiler's reading"),
-         lambda f: (f['primary_hand'], f['installer_hand'],
-                    word(f['primary_reading'] + f['installer_reading']))),
-        summary_row('Z3817A 3752'),
-        link_sentence('Z3817A 3752'),
-    ),
+    'z3817a-3752': joined_checks(DOCUMENT_Z3817A, 'Z3817A 3752'),
+    'z3816a-4001': joined_checks(DOCUMENT_Z3816A, 'Z3816A 4001'),
+    '58503b-1.01.04': joined_checks(DOCUMENT_58503B, '58503B 1.01.04'),
 }
 
 

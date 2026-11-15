@@ -54,7 +54,7 @@ IMAGE_TARGETS = $(NAMED_TARGETS) $(EXPORTED_TARGETS) check-link report-decompile
 QUERY_TARGETS = record-access report-link
 # The rest, run once.
 TARGETS = format-c check-format-c check-module-figures module-figures check-image-diff image-diff \
-	check-comment-addresses check-common check-plain-names \
+	check-comment-addresses check-common check-common-copies common-copies check-plain-names \
 	check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants \
@@ -190,6 +190,16 @@ check-plain-names:
 check-common:
 	python3 -I $(ROOT)/tools/firmware/layout_addresses.py
 	python3 -I $(ROOT)/tools/firmware/common_check.py
+
+# docs/firmware/common-copies.tsv, the functions two or more images' own
+# C defines, candidates for common/, and the figures docs/firmware/
+# rewrite.md gives of it (common_check.py --copies, which check-common
+# runs too); common-copies rewrites them.
+check-common-copies:
+	python3 -I $(ROOT)/tools/firmware/common_check.py --copies
+
+common-copies:
+	python3 -I $(ROOT)/tools/firmware/common_check.py --copies --write
 
 # Each seeded image's analysis/IMAGE/names.tsv and modules.tsv, seeded from its base's
 # by the same matches (tools/firmware/seed_names.py; the names file's

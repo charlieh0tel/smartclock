@@ -699,3 +699,9 @@ void selftest_run_all_counted(void) {
     watchdog_pll++;
   }
 }
+
+/* "DISP": runs the lamp test; 0. */
+uint32_t lamp_test_command(void) {
+  lamp_test();
+  return 0;
+}

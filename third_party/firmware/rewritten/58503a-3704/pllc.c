@@ -369,3 +369,11 @@ void get_setup_vars(pllc_request* request) {
       break;
   }
 }
+
+/* Requests the self-test numbered by the index, unless one is. */
+void selftest_request(int32_t index, int32_t source) {
+  if (selftest_requested == 0) {
+    selftest_number = index;
+    selftest_requested = 1;
+  }
+}

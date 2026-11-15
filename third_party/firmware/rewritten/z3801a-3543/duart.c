@@ -165,3 +165,12 @@ void duart_early_init(void) {
     duartb_loopback_check();
   }
 }
+
+/* Stops both DUART channels and masks its interrupts. */
+void duart_stop(void) {
+  duart.a.cr = CR_RX_DISABLE;
+  duart.a.cr = CR_TX_DISABLE;
+  duart.b.cr = CR_RX_DISABLE;
+  duart.b.cr = CR_TX_DISABLE;
+  duart.isr_imr = 0;
+}

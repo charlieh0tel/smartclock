@@ -233,7 +233,10 @@ def tables(listing: list[str], section: Section) -> list[tuple[int, int]]:
             if offset + 2 > len(section.data):
                 break
             entry = struct.unpack_from(">h", section.data, offset)[0]
-            if entry <= 0:
+            # a case is an instruction past the table, so its offset is
+            # even and positive; a word that is not is the code after a
+            # table whose nearest case does not follow it at once
+            if entry <= 0 or entry % 2:
                 break
             end = start + entry if end is None else min(end, start + entry)
             at += 2

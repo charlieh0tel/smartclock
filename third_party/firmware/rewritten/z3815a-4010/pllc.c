@@ -691,3 +691,11 @@ void temporary_hold_set(int32_t index, int32_t source) {
   pll.ti_limit_override = 1;
   pll_scpi_signal_delay = 1;
 }
+
+/* Requests the self-test numbered by the index, unless one is. */
+void selftest_request(int32_t index, int32_t source) {
+  if (selftest_requested == 0) {
+    selftest_number = index;
+    selftest_requested = 1;
+  }
+}

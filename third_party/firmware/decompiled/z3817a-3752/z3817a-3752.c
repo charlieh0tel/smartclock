@@ -31911,7 +31911,7 @@ __asm__(
 /* diag_pr_gps_id: rewritten in console.c */
 
 /* 0002b4ca */
-/* diag_pr_1pps: rewritten in console.c */
+/* diag_pr_1pps: rewritten in console_pr_1pps.c */
 
 /* 0002b4d4 */
 /* diag_pr_time_raim: rewritten in console.c */
@@ -32079,7 +32079,7 @@ __asm__(
 /* duart_test_tx_a: rewritten in duarta.c */
 
 /* 0002d836 */
-/* duart_test_tx_b: rewritten in duartb.c */
+/* duart_test_tx_b: rewritten in duartb_test.c */
 
 /* 0002d866 */
 /* duarta_isr: rewritten in duarta.c */
@@ -36899,7 +36899,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* scpi_query_LED_HOLDover: rewritten in scpi_led.c */
 
 /* 0003e792 */
-/* scpi_set_OUTPut_STATe: rewritten in scpi_output.c */
+/* scpi_set_OUTPut_STATe: rewritten in scpi_output_state.c */
 
 /* 0003e7c2 */
 /* scpi_query_OUTPut_STATe: rewritten in scpi_output.c */
@@ -38132,7 +38132,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* mark_flag: rewritten in screen.c */
 
 /* 0004fdfa */
-/* format_level: rewritten in screen.c */
+/* format_level: rewritten in screen_level.c */
 
 /* 0004fe2c */
 /* format_satellite_cell: rewritten in screen.c */
@@ -38396,7 +38396,7 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* word_copy_14_bits: rewritten in gps_nmea.c */
 
 /* 00056182 */
-/* oncore_decode_fields: rewritten in gps_oncore.c */
+/* oncore_decode_fields: rewritten in oncore_decode.c */
 
 /* 0005622e */
 /* nmea_field_char: rewritten in gps_nmea.c */
@@ -38471,10 +38471,10 @@ __asm__(".set scpi_console_write, scpi_console_write_loop");
 /* oncore_visibility_message: rewritten in gps_oncore.c */
 
 /* 00056a32 */
-/* oncore_dop_message: rewritten in gps_oncore.c */
+/* oncore_dop_message: rewritten in oncore_decode.c */
 
 /* 00056a4c */
-/* oncore_almanac_status_message: rewritten in gps_oncore.c */
+/* oncore_almanac_status_message: rewritten in oncore_decode.c */
 
 /* 00056a66 */
 /* oncore_corrections_message: rewritten in gps_oncore.c */
@@ -57380,6 +57380,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/console.c"
 
+#include "../../rewritten/common/console_pr_1pps.c"
+
 #include "../../rewritten/common/cpu.c"
 
 #include "../../rewritten/common/debug.c"
@@ -57389,6 +57391,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/duarta.c"
 
 #include "../../rewritten/common/duartb.c"
+
+#include "../../rewritten/common/duartb_test.c"
 
 #include "../../rewritten/common/eeprom.c"
 
@@ -57464,6 +57468,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/nv.c"
 
+#include "../../rewritten/common/oncore_decode.c"
+
 #include "../../rewritten/common/os.c"
 
 #include "../../rewritten/common/pll_aging.c"
@@ -57506,6 +57512,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 
 #include "../../rewritten/common/scpi_output.c"
 
+#include "../../rewritten/common/scpi_output_state.c"
+
 #include "../../rewritten/common/scpi_parameters.c"
 
 #include "../../rewritten/common/scpi_port.c"
@@ -57533,6 +57541,8 @@ __asm__(".set installer_call_atexit_functions_entry, installer_call_atexit_funct
 #include "../../rewritten/common/scpi_validators.c"
 
 #include "../../rewritten/common/screen.c"
+
+#include "../../rewritten/common/screen_level.c"
 
 #include "../../rewritten/common/selftest.c"
 

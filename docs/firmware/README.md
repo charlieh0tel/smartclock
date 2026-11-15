@@ -65,12 +65,19 @@ The boot code (`0x418` to `0x4d0`) writes CSPAR1 `0x03ab`, CSOR4 `0x7805`, CSBAR
 The Z3815A 4010's primary (`0x24b3e` to `0x24c06`) writes the same 26 values.
 <!-- end chip_selects.py -->
 
+The host port is the SCI, pSOS device 0 (`console.md`, "the console's
+port is pSOS device 0"): the I/O table the start-up copies from
+`0x58670` gives device 0 the SCI's driver, whose initialization,
+`0x2ed56`, creates `sciR` and `sciW`, though the names file seeds it
+`duart_init` after the 58503A's, whose device 0 is DUART channel B.
 The SCI's baud rate is f / (32 · SCBR), SCBR in SCCR0 at `0xfffc08`
-(section 6.4.3.3).  `FUN_0002e610` sets it from a setting byte: 437,
-218, 55 and 27 for settings 0 to 3, which at 16.777 MHz are 1200,
-2405, 9533 and 19418 baud -- the manual's four rates, each within
-0.7 %.  `FUN_0002ed56` sets PE and PT in SCCR1 (`0xfffc0a`) from the
-byte at `0x10261d`: no parity for 0, even for 1, odd for 2.
+(section 6.4.3.3).  `0x2e610` sets it from the setting byte at
+`0x10261c`, which `0x2ed56` passes it (`0x2ed92`): 437, 218, 55 and 27
+for settings 0 to 3, which at 16.777 MHz are 1200, 2405, 9533 and
+19418 baud -- the manual's four rates, each within 0.7 %.  `0x2ed56`
+then sets PE and PT in SCCR1 (`0xfffc0a`) from the byte at `0x10261d`:
+no parity for 0, even for 1, odd for 2; for 3 neither, and the
+port's polled writer sets bit 7 of each character (`0x2e688`).
 
 The Z3816A image describes the design family; the 58503A's own code is
 in `console.md`, "The 58503A image".
@@ -408,7 +415,12 @@ part of what they change.  In order:
    calls the routines its headers bind takes
    `headers=third_party/firmware/rewritten/common` before its own
    folder: the export includes common/'s headers and bindings and none
-   of its C (the Z3817A 3752 until it joined, `z3817a-3752.md`).
+   of its C (the Z3817A 3752 until it joined, `z3817a-3752.md`).  `without=NAME`
+   leaves out the file of that name from those folders: a header, for
+   an image without the device its routines drive, whose registers they
+   name, `without=duart.h` for one with no DUART; or a file of `common/`'s C every function of
+   which the image lacks (`rewrite.md`, "Shared C", "A file for some
+   images").
 
 Each path is from the repository's root, and IMAGE is the image's
 name, `z3805a-3543b`: its folder, `third_party/firmware/analysis/IMAGE/`, beside
@@ -1095,7 +1107,7 @@ A function rewritten by hand lives in
 `third_party/firmware/rewritten/IMAGE/`, apart from the decompiled C in
 `decompiled/IMAGE/`, a file to a subsystem (`clock.c`), or, when
 several images run it, once in `third_party/firmware/rewritten/common/`
-([`rewrite.md`, "Shared C"](rewrite.md#shared-c)): `common/` holds 870
+([`rewrite.md`, "Shared C"](rewrite.md#shared-c)): `common/` holds 922
 functions and 214 static helpers (`make check-common`).  The exporter
 finds the functions those files define (`rewritten=`), leaves the
 decompiler's reading of each out of the exported C, a line
@@ -2145,7 +2157,9 @@ cite; and `check-common` the shared C, `common/`, each function's
 callees in each image's code against its C's, and that the
 seeded images' `check-layout.c` assert their layouts at their own
 addresses, which its rule 2 compares, and the figures of what
-`common/` holds that the documents quote (`rewrite.md`, "Shared C");
+`common/` holds that the documents quote, and `common-copies.tsv`, the
+functions two or more images' own C defines, which
+`check-common-copies` checks alone (`rewrite.md`, "Shared C");
 `check-plain-names` that no function is named for an image
 (`rewrite.md`, "The rewrite"); and `check-rom-pointers`, for every
 image with an export, that each ROM pointer of its hand-written C, a

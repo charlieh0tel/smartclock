@@ -1268,39 +1268,47 @@ int32_t scpi_query_DIAGnostic_REFerence_EXTernal_QUEStionable_HYSTeresis(
   return 0;
 }
 
-/* :DIAGnostic:ROSCillator:TCOefficient, by pllc. */
-int32_t scpi_set_DIAGnostic_ROSCillator_TCOefficient(void* parameters,
-                                                     void* response,
-                                                     scpi_call* call) {
-  const scpi_diagnostic_numeric* given = parameters;
-
-  scpi_numeric_set(&scpi_param_DIAGnostic_ROSCillator_TCOefficient, 0,
-                   given->kind, given->bound, given->real_bits, 0,
-                   scpi_input_source(call->input));
-  return 0;
-}
-
-/* :DIAGnostic:ROSCillator:TCOefficient?, or its bound. */
-int32_t scpi_query_DIAGnostic_ROSCillator_TCOefficient(void* parameters,
-                                                       void* response,
-                                                       scpi_call* call) {
-  const scpi_diagnostic_numeric* given = parameters;
-  scpi_diagnostic_float* coefficient = response;
-
-  coefficient->value =
-      scpi_numeric_get(&scpi_param_DIAGnostic_ROSCillator_TCOefficient, 0,
-                       given->kind, given->bound);
-  return 0;
-}
-
-/* :DIAGnostic:SER1:EGResponse: undefined, -113. */
-int32_t scpi_set_DIAGnostic_SER1_EGResponse(void* parameters, void* response,
+/* :DIAGnostic:GPSystem:TIME?: the receiver's local time and date, -230
+ * before it has reported them. */
+int32_t scpi_query_DIAGnostic_GPSystem_TIME(void* parameters, void* response,
                                             scpi_call* call) {
-  return STATUS_SCPI_UNDEFINED_HEADER;
+  struct {
+    scpi_short_item hour;   /* +0x00 */
+    scpi_short_item minute; /* +0x04 */
+    scpi_short_item second; /* +0x08 */
+    scpi_short_item year;   /* +0x0c */
+    scpi_short_item month;  /* +0x10 */
+    scpi_short_item day;    /* +0x14 */
+  }* now = response;
+  time_of_day time;
+  /* The date as a long, which gps_time_local_get fills by its parts. */
+  union {
+    uint32_t packed;
+    calendar_date parts;
+  } date;
+
+  uint16_t sr = set_interrupt_mask(CPU_IPL_1);
+  bool known = gps_time_local_get(&time, &date.packed);
+
+  set_interrupt_mask(sr);
+  if (!known) {
+    return scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE, call);
+  }
+  now->hour.value = time.hour;
+  now->minute.value = time.minute;
+  now->second.value = time.second;
+  now->year.value = date.parts.year;
+  now->month.value = date.parts.month;
+  now->day.value = date.parts.day;
+  return 0;
 }
 
-/* :DIAGnostic:SER1:EGResponse?: undefined, -113. */
-int32_t scpi_query_DIAGnostic_SER1_EGResponse(void* parameters, void* response,
-                                              scpi_call* call) {
-  return scpi_query_failed(STATUS_SCPI_UNDEFINED_HEADER, call);
+/* :DIAGnostic:GPSystem:UTC, by pllc. */
+int32_t scpi_set_DIAGnostic_GPSystem_UTC(void* parameters, void* response,
+                                         scpi_call* call) {
+  const scpi_diagnostic_word* given = parameters;
+
+  pllc_request_a(&scpi_param_DIAGnostic_GPSystem_UTC, 0, given->value,
+                 scpi_input_source(call->input));
+  return 0;
 }

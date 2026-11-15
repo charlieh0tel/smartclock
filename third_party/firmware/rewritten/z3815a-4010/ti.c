@@ -487,19 +487,6 @@ void counter_configuration_init(counter_configuration_fields* configuration) {
   interval_reading.valid = 0;
 }
 
-/* The interpolator's calibration's defaults, both DACs in the middle. */
-void interpolator_calibration_init(interpolator_calibration* calibration) {
-  calibration->initialized = 0;
-  calibration->calibrated = 0;
-  calibration->hdac_2 = TI_HDAC_START;
-  calibration->hdac_3 = TI_HDAC_START;
-  calibration->result_hdac_2 = calibration->hdac_2;
-  calibration->result_hdac_3 = calibration->hdac_3;
-  calibration->result_valid = 0;
-  calibration->reading_low = 0;
-  calibration->reading_high = 0;
-}
-
 /* The counter's 24-bit count of 100 ns ticks, from FPGA registers 0x16
  * (its high byte) down to 0x12, less its preset. */
 int64_t counter_read_raw(void) {
@@ -524,18 +511,6 @@ uint8_t interpolator_measure(interpolator_reference reference) {
   fpga_set_bit(FPGA_BIT_START, 0);
   counter_wait_ready(TI_STATUS_INTERPOLATED);
   return interpolator_read();
-}
-
-/* The low reference's reading with its DAC at a value, a dac_measure. */
-uint8_t interpolator_measure_low(char_slot dac) {
-  hdac_set(dac.value, TI_HDAC_SLOT_LOW);
-  return interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
-}
-
-/* The high reference's reading with its DAC at a value, a dac_measure. */
-uint8_t interpolator_measure_high(char_slot dac) {
-  hdac_set(dac.value, TI_HDAC_SLOT_HIGH);
-  return interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
 }
 
 /* A dac_measure's reading with its DAC at a value, the byte the
@@ -587,17 +562,6 @@ uint8_t dac_search_step(uint8_t dac, uint8_t minimum, uint8_t maximum,
     }
   }
   return dac;
-}
-
-/* Moves the low reference's DAC a step against the spread's error,
- * unless it is at either end of its range; returns the DAC. */
-uint8_t hdac_nudge(int32_t error, uint8_t hdac) {
-  if (hdac == 0 || hdac >= TI_HDAC_MAXIMUM || error == 0) {
-    return hdac;
-  }
-  hdac += error < 0 ? 1 : -1;
-  hdac_set(hdac, TI_HDAC_SLOT_LOW);
-  return hdac;
 }
 
 /* The counter's count less 0x555555, which the FPGA presets it to. */

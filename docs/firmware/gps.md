@@ -1322,7 +1322,9 @@ specification; in short:
   gives the 12:00:00 and p. 13 leaves the date to the firmware.
   `@@Ac` sets the date and puts the time at 12:00:00 (VP p. 13),
   `@@Aa` sets the time (VP p. 5), and `@@Cf` puts it at 12:00:00 on
-  January 1 of the year it had (VP p. 116); it stands at each.
+  January 1 of the year it had (VP p. 116); it stands at each.  Idle,
+  as `@@Cf` leaves a VP (VP p. 118), the position status still gives
+  that date and time, the rest of it the last kept while fixing.
   `@@Aa`'s and `@@Ac`'s answers come from the other clock, which
   counts a second each second from power-up, set or not, and which
   the two commands set as they set the first.  Its value before

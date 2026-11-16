@@ -256,6 +256,14 @@ const STATUS_ACQUIRING_OR_HOLD: u8 = 0x08;
 const STATUS_DIFFERENTIAL: u8 = 0x04;
 const STATUS_FEW_VISIBLE: u8 = 0x02;
 const STATUS_BAD_ALMANAC: u8 = 0x01;
+/// The least channel tracking mode a position status counts as
+/// tracked: 5, message sync detect (VP p. 72).  The manual draws its
+/// line there, a channel "not using the channel as part of the
+/// position fix solution" reporting "mode 4 or lower" and one using
+/// it "modes 5 through 8" (VP p. 84); a capture of a real VP reported
+/// none tracked with a satellite at mode 3 and one with a satellite at
+/// mode 5.
+const TRACKING_LEAST: Tracking = Tracking::MessageSync;
 /// Fewer visible than this is too few.
 const FEW_VISIBLE: usize = 3;
 /// The elevation, in degrees, a satellite is above to count as visible
@@ -1508,6 +1516,16 @@ impl Engine {
             .take(channels)
     }
 
+    /// The satellites a position status counts as tracked: those on a
+    /// family's channels at a tracking mode of [`TRACKING_LEAST`] or
+    /// above, not every satellite a channel holds.  The fix, Time RAIM
+    /// and the 1 PPS go by this count too.
+    fn tracking(&self, record: &Record, family: &Family) -> usize {
+        self.tracked(record, family)
+            .filter(|satellite| satellite.tracking >= TRACKING_LEAST)
+            .count()
+    }
+
     /// A family's channels, each with the satellite on it if it has
     /// one.
     fn channels<'a>(
@@ -1620,7 +1638,7 @@ impl Engine {
     fn status(&self, record: &Record, family: &Family) -> Data {
         let ut_plus = self.identity.model() == Model::UtPlus;
         let place = self.place(record);
-        let tracked = self.tracked(record, family).count();
+        let tracked = self.tracking(record, family);
         let antenna_sense = match (ut_plus, record.antenna) {
             (true, Antenna::Open) => DOP_TYPE_ANTENNA_UNDERCURRENT,
             (true, Antenna::Shorted) => DOP_TYPE_ANTENNA_OVERCURRENT,
@@ -1975,7 +1993,7 @@ impl Engine {
     /// pp. 6.92 to 6.95).
     fn traim_status<O: Output + ?Sized>(&self, record: &Record, family: &Family, out: &mut O) {
         let setup = self.state.traim;
-        let tracked = self.tracked(record, family).count();
+        let tracked = self.tracking(record, family);
         let TraimResult {
             solution, ability, ..
         } = self.traim_result(record, tracked);

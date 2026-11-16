@@ -7,7 +7,9 @@
 //! VP or a UT Plus.  It answers only what the receivers' firmware
 //! sends, and fills in only what that firmware decodes.  One made
 //! six-channel can become an eight-channel Oncore of another identity
-//! at its first `@@Ea` ([`Options::eight_on_ea`]).
+//! at its first `@@Ea` ([`Options::eight_on_ea`]).  One can power up
+//! configured, fixing and sending unasked, as an Oncore a receiver
+//! configured before it was last turned off ([`Options::saved`]).
 //!
 //! Whoever holds the engine owns the clock and the serial link:
 //!
@@ -68,6 +70,7 @@ mod data;
 pub mod event;
 mod framer;
 pub mod identity;
+pub mod saved;
 pub mod settings;
 mod store;
 
@@ -77,6 +80,9 @@ use crate::engine::framer::Framer;
 use crate::engine::identity::Identity;
 use crate::engine::identity::LINE_END;
 use crate::engine::identity::Model;
+use crate::engine::saved::ChannelCount;
+use crate::engine::saved::ConfigurationError;
+use crate::engine::saved::SavedConfiguration;
 use crate::engine::settings::CHANNELS_MOST;
 use crate::engine::settings::Height;
 use crate::engine::settings::HeightKind;
@@ -190,10 +196,11 @@ pub struct Options {
     pub eight_on_ea: Option<&'static Identity>,
     /// It takes no commands.
     pub deaf: bool,
-    /// It fixes from power-up and sends its own position status at this
-    /// rate unasked, as an engine whose saved configuration says so.
-    /// Zero for an engine that waits to be told.
-    pub status_rate: Seconds<u8>,
+    /// What it powers up configured to, as an Oncore a receiver
+    /// configured before it was last turned off
+    /// ([`saved`]).  `None` for one that powers
+    /// up as it left the factory and waits to be told.
+    pub saved: Option<&'static SavedConfiguration>,
 }
 
 impl Options {
@@ -201,7 +208,7 @@ impl Options {
     pub const DEFAULT: Self = Self {
         eight_on_ea: None,
         deaf: false,
-        status_rate: Seconds(0),
+        saved: None,
     };
 }
 
@@ -773,7 +780,8 @@ struct State {
 }
 
 impl State {
-    /// The state at power-up: a VP idle, a UT Plus fixing.
+    /// The state at power-up with nothing saved, and after `@@Cf`: a
+    /// VP idle, a UT Plus fixing.
     const fn starting(model: Model) -> Self {
         Self {
             fixing: matches!(model, Model::UtPlus),
@@ -799,6 +807,23 @@ impl State {
             xdop_updates: false,
             almanac_updates: false,
             format: OutputFormat::Binary,
+        }
+    }
+
+    /// The state at power-up with `saved`, which suits `model`
+    /// ([`SavedConfiguration::check`]).
+    const fn saved(model: Model, saved: &SavedConfiguration) -> Self {
+        let starting = Self::starting(model);
+        let family = match saved.channels {
+            ChannelCount::Six => &SIX,
+            ChannelCount::Eight => &EIGHT,
+        };
+        let mut rates = starting.rates;
+        rates[family.index].status = Rate(saved.position_status_rate.0);
+        Self {
+            fixing: saved.fixing,
+            rates,
+            ..starting
         }
     }
 }
@@ -856,27 +881,28 @@ pub struct Engine {
 }
 
 impl Engine {
-    /// The Oncore `identity` names, just powered up.
-    #[must_use]
-    pub const fn new(identity: &'static Identity, options: Options) -> Self {
+    /// The Oncore `identity` names, just powered up: configured as
+    /// [`Options::saved`] has it, if it has one.
+    ///
+    /// # Errors
+    ///
+    /// A [`ConfigurationError`] if the saved configuration does not suit
+    /// the identity's Oncore.
+    pub const fn new(
+        identity: &'static Identity,
+        options: Options,
+    ) -> Result<Self, ConfigurationError> {
         let model = identity.model();
-        let starting = State::starting(model);
-        let state = if options.status_rate.0 == 0 {
-            starting
-        } else {
-            let own = match model {
-                Model::VpSix => SIX.index,
-                Model::VpEight | Model::UtPlus => EIGHT.index,
-            };
-            let mut rates = starting.rates;
-            rates[own].status = Rate(options.status_rate.0);
-            State {
-                fixing: true,
-                rates,
-                ..starting
+        let state = match options.saved {
+            None => State::starting(model),
+            Some(saved) => {
+                if let Err(error) = saved.check(model) {
+                    return Err(error);
+                }
+                State::saved(model, saved)
             }
         };
-        Self {
+        Ok(Self {
             identity,
             options,
             channels: model.channels(),
@@ -892,7 +918,7 @@ impl Engine {
             almanac: None,
             last_status: None,
             deferred: [None; DEFERRED],
-        }
+        })
     }
 
     /// Which Oncore it is now: the one it was made as, until

@@ -21,6 +21,9 @@ use crate::engine::identity::UT_PLUS_3_1;
 use crate::engine::identity::VP_EIGHT;
 use crate::engine::identity::VP_EIGHT_WITHOUT_TIME_RAIM;
 use crate::engine::identity::VP_SIX;
+use crate::engine::saved::ChannelCount;
+use crate::engine::saved::ConfigurationError;
+use crate::engine::saved::SavedConfiguration;
 use crate::engine::settings::Application;
 use crate::engine::settings::AtmosphericCorrection;
 use crate::engine::settings::CHANNELS_MOST;
@@ -262,8 +265,13 @@ fn only(frames: &[Vec<u8>], id: MessageId) -> &[u8] {
     &frame[HEADER..frame.len() - TRAILER]
 }
 
+/// The Oncore `identity` names, just powered up with nothing saved.
+fn powered_up(identity: &'static Identity) -> Engine {
+    Engine::new(identity, Options::DEFAULT).expect("an engine that powers up")
+}
+
 fn fixing(identity: &'static Identity) -> Engine {
-    let mut engine = Engine::new(identity, Options::DEFAULT);
+    let mut engine = powered_up(identity);
     ask(&mut engine, &Record::EMPTY, CG_FIX_MODE, &FIX);
     engine
 }
@@ -301,11 +309,11 @@ fn every_frame_sent_is_whole_and_of_its_length() {
 
 #[test]
 fn a_vp_powers_up_idle_and_a_ut_plus_fixing() {
-    assert!(!Engine::new(&VP_SIX, Options::DEFAULT).fixing());
-    assert!(!Engine::new(&VP_EIGHT, Options::DEFAULT).fixing());
-    assert!(Engine::new(&UT_PLUS_2_2, Options::DEFAULT).fixing());
+    assert!(!powered_up(&VP_SIX).fixing());
+    assert!(!powered_up(&VP_EIGHT).fixing());
+    assert!(powered_up(&UT_PLUS_2_2).fixing());
 
-    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let mut engine = powered_up(&VP_EIGHT);
     let mut sent = Sent::default();
     engine.second(&full(), NOW, &mut sent);
     assert!(sent.0.is_empty());
@@ -397,7 +405,7 @@ fn a_ut_plus_tells_what_its_antenna_draws() {
         (Antenna::Open, 0x80, 0x8000),
         (Antenna::Shorted, 0x40, 0x4000),
     ] {
-        let mut engine = Engine::new(&UT_PLUS_2_2, Options::DEFAULT);
+        let mut engine = powered_up(&UT_PLUS_2_2);
         let mut record = full();
         record.antenna = antenna;
         let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
@@ -506,7 +514,7 @@ fn a_time_raim_status_carries_the_records_timing() {
     assert_eq!(data[28..32], 40_u32.to_be_bytes());
     assert_eq!(data[47..62], [0; 15]);
 
-    let mut engine = Engine::new(&UT_PLUS_2_2, Options::DEFAULT);
+    let mut engine = powered_up(&UT_PLUS_2_2);
     let frames = ask(&mut engine, &record, EN_TIME_RAIM, &TRAIM_EACH_SECOND);
     let data = only(&frames, EN_TIME_RAIM);
     assert_eq!(data[5..15], [0; 10]);
@@ -528,7 +536,7 @@ fn an_engine_given_no_time_starts_at_noon() {
         [only(&date, AC_DATE), only(&time, AA_TIME_OF_DAY)].concat()
     };
     for identity in [&VP_SIX, &VP_EIGHT, &UT_PLUS_2_2] {
-        let mut engine = Engine::new(identity, Options::DEFAULT);
+        let mut engine = powered_up(identity);
         assert_eq!(clock(&mut engine), [&DATE[..], &[12, 0, 0]].concat());
         for _ in 0..3 {
             engine.second(&record, NOW, &mut Sent::default());
@@ -678,7 +686,7 @@ fn a_six_channel_engine_takes_the_eight_channel_messages_only_by_option() {
 
     let mut options = Options::DEFAULT;
     options.eight_on_ea = Some(&VP_EIGHT);
-    let mut engine = Engine::new(&VP_SIX, options);
+    let mut engine = Engine::new(&VP_SIX, options).expect("an engine that powers up");
     ask(&mut engine, &record, CG_FIX_MODE, &FIX);
     assert!(ask(&mut engine, &record, EN_TIME_RAIM, &TRAIM_EACH_SECOND).is_empty());
     let frames = ask(&mut engine, &record, BA_POSITION_STATUS, &[0]);
@@ -731,7 +739,7 @@ fn an_engine_turned_eight_channel_is_the_identity_the_option_carries() {
     for carried in [&VP_EIGHT, &CALLERS_OWN] {
         let mut options = Options::DEFAULT;
         options.eight_on_ea = Some(carried);
-        let mut engine = Engine::new(&VP_SIX, options);
+        let mut engine = Engine::new(&VP_SIX, options).expect("an engine that powers up");
         ask(&mut engine, &record, CG_FIX_MODE, &FIX);
         assert_eq!(receiver_id(&mut engine, &record), lines_of(&VP_SIX));
         assert_eq!(engine.identity(), &VP_SIX);
@@ -752,7 +760,7 @@ fn an_engine_turned_eight_channel_is_the_identity_the_option_carries() {
         assert!(!only(&frames, EA_POSITION_STATUS).is_empty());
 
         // A power-up is a new engine, six-channel again.
-        let mut engine = Engine::new(&VP_SIX, options);
+        let mut engine = Engine::new(&VP_SIX, options).expect("an engine that powers up");
         assert_eq!(receiver_id(&mut engine, &record), lines_of(&VP_SIX));
     }
 }
@@ -776,7 +784,7 @@ fn what_an_identity_decides_follows_the_one_carried() {
     let record = full();
     let mut options = Options::DEFAULT;
     options.eight_on_ea = Some(&UT_PLUS_3_1);
-    let mut engine = Engine::new(&VP_SIX, options);
+    let mut engine = Engine::new(&VP_SIX, options).expect("an engine that powers up");
     ask(&mut engine, &record, CG_FIX_MODE, &FIX);
     assert!(ask(&mut engine, &record, GJ_LEAP_SECOND_PENDING, &[]).is_empty());
     assert!(!ask(&mut engine, &record, BA_POSITION_STATUS, &[0]).is_empty());
@@ -788,12 +796,21 @@ fn what_an_identity_decides_follows_the_one_carried() {
     assert!(engine.fixing());
 }
 
+/// A configuration of a six-channel engine that fixes and sends its
+/// status every other second.
+const STATUS_EVERY_OTHER_SECOND: SavedConfiguration = SavedConfiguration {
+    channels: ChannelCount::Six,
+    fixing: true,
+    position_status_rate: Seconds(2),
+};
+
 #[test]
-fn an_engine_set_to_send_its_status_unasked_does() {
+fn an_engine_saved_to_send_its_status_unasked_does() {
     let mut options = Options::DEFAULT;
     options.deaf = true;
-    options.status_rate = Seconds(2);
-    let mut engine = Engine::new(&VP_SIX, options);
+    options.saved = Some(&STATUS_EVERY_OTHER_SECOND);
+    let mut engine = Engine::new(&VP_SIX, options).expect("an engine that powers up");
+    assert!(engine.fixing());
     let record = full();
     assert!(ask(&mut engine, &record, AA_TIME_OF_DAY, &[0xff; 3]).is_empty());
     let mut sent = Sent::default();
@@ -802,6 +819,56 @@ fn an_engine_set_to_send_its_status_unasked_does() {
     }
     assert_eq!(sent.0.len(), 2);
     assert_eq!(sent.0[0][2..HEADER], BA_POSITION_STATUS.bytes());
+}
+
+/// A saved configuration of channels the identity's Oncore has not,
+/// or idle for a UT Plus, which has no idle mode (VP p. 118), is not
+/// powered up with.
+#[test]
+fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
+    const EIGHT: SavedConfiguration = SavedConfiguration {
+        channels: ChannelCount::Eight,
+        ..STATUS_EVERY_OTHER_SECOND
+    };
+    const IDLE: SavedConfiguration = SavedConfiguration {
+        fixing: false,
+        ..EIGHT
+    };
+    let cases: [(
+        &'static Identity,
+        &'static SavedConfiguration,
+        ConfigurationError,
+    ); 3] = [
+        (
+            &VP_SIX,
+            &EIGHT,
+            ConfigurationError::Channels {
+                saved: ChannelCount::Eight,
+                identity: ChannelCount::Six,
+            },
+        ),
+        (
+            &VP_EIGHT,
+            &STATUS_EVERY_OTHER_SECOND,
+            ConfigurationError::Channels {
+                saved: ChannelCount::Six,
+                identity: ChannelCount::Eight,
+            },
+        ),
+        (&UT_PLUS_2_2, &IDLE, ConfigurationError::Idle),
+    ];
+    for (identity, saved, error) in cases {
+        let mut options = Options::DEFAULT;
+        options.saved = Some(saved);
+        assert_eq!(Engine::new(identity, options).err(), Some(error));
+    }
+    let mut options = Options::DEFAULT;
+    options.saved = Some(&IDLE);
+    assert!(
+        !Engine::new(&VP_EIGHT, options)
+            .expect("an idle VP")
+            .fixing()
+    );
 }
 
 /// The leap second at the end of 2027, in a record two seconds before
@@ -855,7 +922,7 @@ fn a_leap_second_to_be_removed_is_pending_as_a_subtraction() {
 #[test]
 fn the_offset_is_sent_when_it_changes_and_not_through_the_leap_second() {
     let (mut record, leap) = before_a_leap(LeapChange::Insert);
-    let mut engine = Engine::new(&UT_PLUS_2_2, Options::DEFAULT);
+    let mut engine = powered_up(&UT_PLUS_2_2);
     let frames = ask(&mut engine, &record, BO_UTC_OFFSET, &[1]);
     assert_eq!(only(&frames, BO_UTC_OFFSET), [18]);
     let mut offsets = Vec::new();
@@ -877,7 +944,7 @@ fn the_offset_is_sent_when_it_changes_and_not_through_the_leap_second() {
 #[test]
 fn leap_details_give_the_leap_second_and_when() {
     let (record, _) = before_a_leap(LeapChange::Insert);
-    let mut engine = Engine::new(&UT_PLUS_3_1, Options::DEFAULT);
+    let mut engine = powered_up(&UT_PLUS_3_1);
     let frames = ask(&mut engine, &record, GJ_LEAP_SECOND_PENDING, &[]);
     assert_eq!(
         only(&frames, GJ_LEAP_SECOND_PENDING),
@@ -897,7 +964,7 @@ fn leap_details_give_the_leap_second_and_when() {
         [18, 18, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0]
     );
 
-    let mut engine = Engine::new(&UT_PLUS_2_2, Options::DEFAULT);
+    let mut engine = powered_up(&UT_PLUS_2_2);
     assert!(ask(&mut engine, &record, GJ_LEAP_SECOND_PENDING, &[]).is_empty());
     let mut engine = fixing(&VP_EIGHT);
     assert!(ask(&mut engine, &record, GJ_LEAP_SECOND_PENDING, &[]).is_empty());
@@ -1053,7 +1120,7 @@ fn a_time_raim_result_is_sent_while_time_raim_is_on() {
         (data[39], data[43])
     };
 
-    let mut engine = Engine::new(&UT_PLUS_2_2, Options::DEFAULT);
+    let mut engine = powered_up(&UT_PLUS_2_2);
     // Off: unknown, and nothing isolated.
     assert_eq!(traim(&mut engine, &[0xff; 15]), [1, 0, 2, 1]);
     assert_eq!(channels(&mut engine), (0x82, 0x82));
@@ -1213,7 +1280,7 @@ fn a_record_put_in_another_order_is_no_change_to_the_visible_satellites() {
 #[test]
 fn the_visible_count_is_of_the_satellites_above_the_manuals_elevation() {
     let counted = |identity: &'static Identity, elevations: &[i8], almanac: bool| {
-        let mut engine = Engine::new(identity, Options::DEFAULT);
+        let mut engine = powered_up(identity);
         ask(&mut engine, &Record::EMPTY, CG_FIX_MODE, &FIX);
         ask(&mut engine, &Record::EMPTY, AG_MASK_ANGLE, &[45]);
         let mut record = full();
@@ -1304,7 +1371,7 @@ fn visible_satellites_are_listed_from_the_mask_angle() {
 #[test]
 fn the_receiver_status_says_what_the_record_and_settings_make_of_the_fix() {
     let status = |identity: &'static Identity, change: &dyn Fn(&mut Record)| {
-        let mut engine = Engine::new(identity, Options::DEFAULT);
+        let mut engine = powered_up(identity);
         ask(&mut engine, &Record::EMPTY, CG_FIX_MODE, &FIX);
         let mut record = full();
         change(&mut record);
@@ -1352,7 +1419,7 @@ fn an_idle_engine_answers_with_its_last_position_status() {
         )
         .to_vec()
     };
-    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let mut engine = powered_up(&VP_EIGHT);
     let before = poll(&mut engine, &record);
     assert_eq!(before[4..7], [12, 0, 0]);
     assert_eq!(before[34..36], [0, 0]);
@@ -1527,7 +1594,7 @@ fn defaults_of(identity: &Identity) -> Settings {
 #[test]
 fn settings_start_at_the_manuals_defaults() {
     for identity in PRESETS {
-        let mut engine = Engine::new(identity, Options::DEFAULT);
+        let mut engine = powered_up(identity);
         assert_eq!(engine.settings(), defaults_of(identity));
         // Set to its defaults when at them, it is reset and nothing
         // changes.
@@ -1885,7 +1952,7 @@ fn each_setting_reads_back_after_its_command() {
         ),
     ];
     for (id, data, asked, setting, after) in cases {
-        let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+        let mut engine = powered_up(&VP_EIGHT);
         assert_eq!(tell(&mut engine, id, &asked), [], "{id:?} asked");
         assert_eq!(engine.settings(), defaults(), "{id:?} asked");
         assert_eq!(
@@ -1904,7 +1971,7 @@ fn each_setting_reads_back_after_its_command() {
 /// back.
 #[test]
 fn thresholds_and_a_ut_plus_correction_read_back() {
-    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let mut engine = powered_up(&VP_EIGHT);
     assert_eq!(
         tell(&mut engine, AD_CORRECTION_THRESHOLDS, &[16, 8]),
         [changed(&[Setting::CorrectionThresholds])]
@@ -1919,7 +1986,7 @@ fn thresholds_and_a_ut_plus_correction_read_back() {
     // A VP has no mode past 1 (VP p. 51).
     assert_eq!(tell(&mut engine, AQ_ATMOSPHERIC_CORRECTION, &[2]), []);
 
-    let mut engine = Engine::new(&UT_PLUS_3_1, Options::DEFAULT);
+    let mut engine = powered_up(&UT_PLUS_3_1);
     for (mode, ionospheric, tropospheric) in [(3, true, true), (2, false, true), (0, false, false)]
     {
         assert_eq!(
@@ -2115,7 +2182,7 @@ fn an_extension_keeps_to_the_manuals_ranges() {
 /// The other application types (VP p. 12), each read back.
 #[test]
 fn every_application_type_reads_back() {
-    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let mut engine = powered_up(&VP_EIGHT);
     for (kind, application) in [
         (0, Application::Air),
         (1, Application::Handheld),
@@ -2136,7 +2203,7 @@ fn every_application_type_reads_back() {
 /// `@@AB`, and a deaf engine hears none.
 #[test]
 fn a_command_not_taken_changes_no_setting() {
-    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let mut engine = powered_up(&VP_EIGHT);
     assert_eq!(tell(&mut engine, AG_MASK_ANGLE, &[90]), []);
     assert_eq!(
         tell(
@@ -2156,13 +2223,13 @@ fn a_command_not_taken_changes_no_setting() {
     );
     assert_eq!(engine.settings(), defaults());
 
-    let mut engine = Engine::new(&UT_PLUS_3_1, Options::DEFAULT);
+    let mut engine = powered_up(&UT_PLUS_3_1);
     assert_eq!(tell(&mut engine, AB_APPLICATION_TYPE, &[4]), []);
     assert_eq!(engine.settings(), defaults_of(&UT_PLUS_3_1));
 
     let mut options = Options::DEFAULT;
     options.deaf = true;
-    let mut engine = Engine::new(&VP_EIGHT, options);
+    let mut engine = Engine::new(&VP_EIGHT, options).expect("an engine that powers up");
     assert_eq!(tell(&mut engine, AG_MASK_ANGLE, &[25]), []);
     assert_eq!(tell(&mut engine, CF_SET_TO_DEFAULTS, &[]), []);
     assert_eq!(engine.settings(), defaults());
@@ -2172,7 +2239,7 @@ fn a_command_not_taken_changes_no_setting() {
 /// not taken, none of it.
 #[test]
 fn a_time_raim_setup_out_of_range_changes_nothing() {
-    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let mut engine = powered_up(&VP_EIGHT);
     for setup in [[0, 2, 0, 3, 3], [0, 1, 0, 2, 3], [0, 1, 0, 3, 4]] {
         let data = [&setup[..], &[0; 10]].concat();
         assert_eq!(tell(&mut engine, BN_TIME_RAIM, &data), []);
@@ -2185,7 +2252,7 @@ fn a_time_raim_setup_out_of_range_changes_nothing() {
 /// that names the settings it changed.
 #[test]
 fn set_to_defaults_is_a_reset_that_names_what_it_put_back() {
-    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let mut engine = powered_up(&VP_EIGHT);
     tell(&mut engine, AG_MASK_ANGLE, &[25]);
     tell(&mut engine, AW_TIME_MODE, &[0]);
     tell(
@@ -2215,7 +2282,7 @@ fn set_to_defaults_is_a_reset_that_names_what_it_put_back() {
 /// wherever it came: the settings named are those to read afterward.
 #[test]
 fn one_calls_commands_are_told_of_together() {
-    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let mut engine = powered_up(&VP_EIGHT);
     let bytes = [
         command(AG_MASK_ANGLE, &[25]),
         command(CF_SET_TO_DEFAULTS, &[]),
@@ -2254,7 +2321,7 @@ fn one_calls_commands_are_told_of_together() {
 /// the settings and the messages agree (VP pp. 17, 21 and 55).
 #[test]
 fn the_held_position_read_is_the_one_reported() {
-    let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT);
+    let mut engine = powered_up(&VP_EIGHT);
     let record = full();
     let data = [
         &MADE_UP.latitude.0.to_be_bytes()[..],

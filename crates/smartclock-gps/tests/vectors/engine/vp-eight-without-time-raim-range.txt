@@ -8,7 +8,7 @@
 # height-msl-cm: 5500
 # antenna: on
 # answers: yes
-# status-rate: 0
+# saved: none
 1 to 404041675a7c0d0a
 1 from 404041670a2c0d0a
 1 to 40404167ffd90d0a

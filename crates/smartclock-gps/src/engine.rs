@@ -9,7 +9,10 @@
 //! six-channel can become an eight-channel Oncore of another identity
 //! at its first `@@Ea` ([`Options::eight_on_ea`]).  One can power up
 //! configured, fixing and sending unasked, as an Oncore a receiver
-//! configured before it was last turned off ([`Options::saved`]).
+//! configured before it was last turned off ([`Options::saved`]), as
+//! a 58503A leaves its engine
+//! ([`CONFIGURATION_58503A`](saved::CONFIGURATION_58503A)) or as the
+//! caller's own configuration has it.
 //!
 //! Whoever holds the engine owns the clock and the serial link:
 //!
@@ -820,9 +823,16 @@ impl State {
         };
         let mut rates = starting.rates;
         rates[family.index].status = Rate(saved.position_status_rate.0);
+        rates[family.index].traim = Rate(saved.time_raim_rate.0);
         Self {
             fixing: saved.fixing,
             rates,
+            traim: TraimSetup {
+                algorithm: saved.raim_algorithm,
+                alarm_limit: saved.raim_alarm_limit,
+                pulse_mode: saved.pulse_mode,
+            },
+            visibility_updates: saved.visibility_updates,
             ..starting
         }
     }

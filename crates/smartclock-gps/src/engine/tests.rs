@@ -21,6 +21,7 @@ use crate::engine::identity::UT_PLUS_3_1;
 use crate::engine::identity::VP_EIGHT;
 use crate::engine::identity::VP_EIGHT_WITHOUT_TIME_RAIM;
 use crate::engine::identity::VP_SIX;
+use crate::engine::saved::CONFIGURATION_58503A;
 use crate::engine::saved::ChannelCount;
 use crate::engine::saved::ConfigurationError;
 use crate::engine::saved::SavedConfiguration;
@@ -802,6 +803,11 @@ const STATUS_EVERY_OTHER_SECOND: SavedConfiguration = SavedConfiguration {
     channels: ChannelCount::Six,
     fixing: true,
     position_status_rate: Seconds(2),
+    visibility_updates: false,
+    time_raim_rate: Seconds(0),
+    raim_algorithm: false,
+    raim_alarm_limit: HundredNanoseconds(10),
+    pulse_mode: PulseMode::Always,
 };
 
 #[test]
@@ -822,8 +828,9 @@ fn an_engine_saved_to_send_its_status_unasked_does() {
 }
 
 /// A saved configuration of channels the identity's Oncore has not,
-/// or idle for a UT Plus, which has no idle mode (VP p. 118), is not
-/// powered up with.
+/// idle for a UT Plus, which has no idle mode (VP p. 118), or with a
+/// Time RAIM alarm limit below the least (VP p. 140), is not powered up
+/// with.
 #[test]
 fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
     const EIGHT: SavedConfiguration = SavedConfiguration {
@@ -834,11 +841,15 @@ fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
         fixing: false,
         ..EIGHT
     };
+    const LOW_LIMIT: SavedConfiguration = SavedConfiguration {
+        raim_alarm_limit: HundredNanoseconds(2),
+        ..CONFIGURATION_58503A
+    };
     let cases: [(
         &'static Identity,
         &'static SavedConfiguration,
         ConfigurationError,
-    ); 3] = [
+    ); 4] = [
         (
             &VP_SIX,
             &EIGHT,
@@ -856,6 +867,13 @@ fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
             },
         ),
         (&UT_PLUS_2_2, &IDLE, ConfigurationError::Idle),
+        (
+            &VP_EIGHT,
+            &LOW_LIMIT,
+            ConfigurationError::AlarmLimit {
+                limit: HundredNanoseconds(2),
+            },
+        ),
     ];
     for (identity, saved, error) in cases {
         let mut options = Options::DEFAULT;
@@ -868,6 +886,120 @@ fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
         !Engine::new(&VP_EIGHT, options)
             .expect("an idle VP")
             .fixing()
+    );
+}
+
+/// An engine made with `saved`, `deaf` or not.
+fn saved_as(identity: &'static Identity, saved: &'static SavedConfiguration, deaf: bool) -> Engine {
+    let mut options = Options::DEFAULT;
+    options.saved = Some(saved);
+    options.deaf = deaf;
+    Engine::new(identity, options).expect("an engine that powers up")
+}
+
+/// The IDs of the frames sent in each of `seconds` seconds of `record`.
+fn ids_each_second(engine: &mut Engine, record: &Record, seconds: u64) -> Vec<Vec<MessageId>> {
+    (1..=seconds)
+        .map(|second| {
+            let mut sent = Sent::default();
+            engine.second(record, Milliseconds(second * 1000), &mut sent);
+            sent.0
+                .iter()
+                .map(|frame| {
+                    MESSAGES
+                        .iter()
+                        .map(|message| message.id)
+                        .find(|id| frame[2..HEADER] == id.bytes())
+                        .expect("a message of the table")
+                })
+                .collect()
+        })
+        .collect()
+}
+
+/// Configured as a 58503A leaves it, an engine fixes from power-up on
+/// eight channels and sends unasked, deaf or not: `@@Ea` and `@@En`
+/// each second (VP pp. 124 and 138), and `@@Bb` from its first
+/// satellite alert computation on, when the visibility changed (VP
+/// pp. 74 and 75), which in a sky that stands still is once.
+#[test]
+fn an_engine_saved_as_a_58503a_leaves_it_sends_unasked() {
+    let record = full();
+    for identity in [&VP_EIGHT, &UT_PLUS_2_2] {
+        for deaf in [false, true] {
+            let mut engine = saved_as(identity, &CONFIGURATION_58503A, deaf);
+            assert!(engine.fixing());
+            let seconds = 2 * u64::from(ALERT_PERIOD.0);
+            let sent = ids_each_second(&mut engine, &record, seconds);
+            for (second, ids) in (1..).zip(&sent) {
+                let expected = if second == u64::from(ALERT_PERIOD.0) {
+                    vec![EA_POSITION_STATUS, EN_TIME_RAIM, BB_VISIBLE_SATELLITES]
+                } else {
+                    vec![EA_POSITION_STATUS, EN_TIME_RAIM]
+                };
+                assert_eq!(ids, &expected, "second {second}");
+            }
+        }
+    }
+    let mut engine = saved_as(&VP_EIGHT, &CONFIGURATION_58503A, false);
+    let mut sent = Sent::default();
+    engine.second(&record, NOW, &mut sent);
+    let [status, traim] = &sent.0[..] else {
+        panic!("{} frames, not two", sent.0.len());
+    };
+    assert_eq!(status.len(), 76);
+    // Time RAIM on, at an alarm limit of 10, the pulse always (VP
+    // p. 140).
+    assert_eq!(traim[HEADER + 1..HEADER + 5], [1, 0, 10, 1]);
+}
+
+/// What it is saved as, an engine reports as its settings.
+#[test]
+fn an_engine_saved_as_a_58503a_leaves_it_has_its_settings() {
+    let engine = saved_as(&VP_EIGHT, &CONFIGURATION_58503A, false);
+    let mut expected = defaults();
+    expected.raim_algorithm = true;
+    expected.raim_alarm_limit = HundredNanoseconds(10);
+    expected.pulse_mode = PulseMode::Always;
+    assert_eq!(engine.settings(), expected);
+}
+
+/// `@@Cf` sets every parameter to its default and every continuous
+/// message to polled only (VP p. 116), and a VP idle (VP p. 118),
+/// whatever the engine was saved as; it keeps its eight channels.  A
+/// new engine, a power-up, is configured again.
+#[test]
+fn set_to_defaults_puts_back_the_defaults_not_what_was_saved() {
+    let record = full();
+    let mut engine = saved_as(&VP_EIGHT, &CONFIGURATION_58503A, false);
+    assert_eq!(
+        tell(&mut engine, CF_SET_TO_DEFAULTS, &[]),
+        [Event::Reset, changed(&[Setting::RaimAlgorithm])]
+    );
+    assert_eq!(engine.settings(), defaults());
+    assert!(!engine.fixing());
+    assert!(
+        ids_each_second(&mut engine, &record, 12)
+            .iter()
+            .all(Vec::is_empty)
+    );
+    let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+    assert_eq!(only(&frames, EA_POSITION_STATUS).len(), 76 - OVERHEAD);
+
+    let mut engine = saved_as(&UT_PLUS_2_2, &CONFIGURATION_58503A, false);
+    tell(&mut engine, CF_SET_TO_DEFAULTS, &[]);
+    assert!(engine.fixing());
+    assert!(
+        ids_each_second(&mut engine, &record, 12)
+            .iter()
+            .all(Vec::is_empty)
+    );
+
+    let mut engine = saved_as(&VP_EIGHT, &CONFIGURATION_58503A, false);
+    assert!(engine.fixing());
+    assert_eq!(
+        ids_each_second(&mut engine, &record, 1),
+        [[EA_POSITION_STATUS, EN_TIME_RAIM]]
     );
 }
 

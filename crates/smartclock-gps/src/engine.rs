@@ -86,6 +86,7 @@ use crate::engine::framer::Framer;
 use crate::engine::identity::Identity;
 use crate::engine::identity::LINE_END;
 use crate::engine::identity::Model;
+use crate::engine::identity::Software;
 use crate::engine::saved::ChannelCount;
 use crate::engine::saved::ConfigurationError;
 use crate::engine::saved::SavedConfiguration;
@@ -116,6 +117,7 @@ use crate::oncore::AM_IGNORE_LIST;
 use crate::oncore::AO_DATUM_SELECT;
 use crate::oncore::AP_USER_DATUM;
 use crate::oncore::AQ_ATMOSPHERIC_CORRECTION;
+use crate::oncore::AR_FIX_ALGORITHM;
 use crate::oncore::AS_HOLD_POSITION;
 use crate::oncore::AT_POSITION_HOLD;
 use crate::oncore::AW_TIME_MODE;
@@ -233,6 +235,18 @@ const EIGHT_CHANNELS: usize = 8;
 /// `@@Cg`'s modes (VP p. 118).
 const MODE_IDLE: u8 = 0;
 const MODE_FIX: u8 = 1;
+/// The `@@Ar` argument the 58503A 3704, the 58503B and the Z3816A send
+/// a software 8.4 VP after `@@Ar`(1), and that release
+/// (`docs/firmware/gps.md`, "Six or eight channels").  VP p. 53
+/// defines only 0 and 1, so an engine of that release answers it by
+/// echoing it and changes nothing: the echo is what those images need
+/// to finish their set-up, and that a real 8.4 does the same is
+/// inferred.
+const ALGORITHM_SOFTWARE_8_4: u8 = 65;
+const SOFTWARE_8_4: Software = Software {
+    version: 8,
+    revision: 4,
+};
 /// `@@Bo`'s mode that asks for the offset each time it changes (UT
 /// p. 6.81).
 const OFFSET_EACH_CHANGE: u8 = 1;
@@ -1305,6 +1319,11 @@ impl Engine {
             send(out, id, Data::new().byte(mode));
         } else if id == CJ_RECEIVER_ID {
             self.receiver_id(out);
+        } else if id == AR_FIX_ALGORITHM
+            && data == [ALGORITHM_SOFTWARE_8_4]
+            && self.identity.software() == Some(SOFTWARE_8_4)
+        {
+            send(out, id, Data::new().bytes(data));
         } else if is_setting(id) {
             self.state.store.set_or_query(id, data, model);
             if let Some(held) = self.state.store.get(id) {

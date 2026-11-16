@@ -11,6 +11,21 @@ pub const IDENTITY_LINES: usize = 10;
 /// What ends each line but the last, and stands before the first.
 pub(super) const LINE_END: &[u8] = b"\r\n";
 
+/// The labels of the lines that give the software version and
+/// revision (`@@Cj`, p. 122 as printed).
+const VERSION_LABEL: &str = "SOFTWARE VER #";
+const REVISION_LABEL: &str = "SOFTWARE REV #";
+
+/// A software release, as a receiver ID's version and revision lines
+/// give it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) struct Software {
+    /// The version.
+    pub(super) version: u16,
+    /// The revision.
+    pub(super) revision: u16,
+}
+
 /// The kind of Oncore, which fixes the commands it answers and the
 /// layout of what it sends.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -94,6 +109,23 @@ impl Identity {
     #[must_use]
     pub const fn lines(&self) -> &[&'static str; IDENTITY_LINES] {
         &self.lines
+    }
+
+    /// The software release its lines give, `None` if either line is
+    /// missing or does not give a number after its label.
+    pub(super) fn software(&self) -> Option<Software> {
+        Some(Software {
+            version: self.number(VERSION_LABEL)?,
+            revision: self.number(REVISION_LABEL)?,
+        })
+    }
+
+    /// The number after `label` on the line that starts with it.
+    fn number(&self, label: &str) -> Option<u16> {
+        self.lines
+            .iter()
+            .find_map(|line| line.strip_prefix(label))
+            .and_then(|rest| rest.trim().parse().ok())
     }
 }
 

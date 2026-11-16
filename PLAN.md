@@ -1153,7 +1153,10 @@ stands in for one.
   them: the scene gives one Time RAIM result and checks no time
   solution, and the u-blox crate reports its receiver's own.
 - **Settings change what the model sends only as far as the recorded
-  exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2), the
+  exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2, and a
+  UT Plus's only selection, which has no `@@Ah` and "will attempt to
+  track the eight satellites that are highest in the sky", UT p. 6.18;
+  its `satellite_select` reads so), the
   automatic switch to altitude hold above `@@Al`'s PDOP, `@@Bb` sent on
   change, and the receiver status bits for poor geometry, a
   differential fix, too few visible and no almanac are the manual's.

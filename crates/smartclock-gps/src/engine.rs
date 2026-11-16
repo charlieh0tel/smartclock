@@ -83,6 +83,7 @@ use crate::engine::settings::HeightKind;
 use crate::engine::settings::Location;
 use crate::engine::settings::OutputFormat;
 use crate::engine::settings::PulseMode;
+use crate::engine::settings::SatelliteSelect;
 use crate::engine::settings::Settings;
 use crate::engine::settings::TimeBase;
 use crate::engine::store::Place;
@@ -879,7 +880,7 @@ impl Engine {
             raim_alarm_limit: self.state.traim.alarm_limit,
             application: store.application(),
             initial_position: self.state.initial,
-            satellite_select: store.satellite_select(),
+            satellite_select: self.satellite_select(),
             manual_satellites: self.state.assignments,
             dop_kind: store.dop_kind(),
             xdop_hysteresis: store.xdop_hysteresis(),
@@ -1452,10 +1453,20 @@ impl Engine {
         matches!(record.antenna, Antenna::Open | Antenna::Shorted)
     }
 
+    /// How it chooses the satellites it tracks: as `@@Ah` sets it (VP
+    /// pp. 29 and 30), but a UT Plus, which has no `@@Ah`, the eight
+    /// highest in the sky (UT p. 6.18).
+    fn satellite_select(&self) -> SatelliteSelect {
+        match self.identity.model() {
+            Model::VpSix | Model::VpEight => self.state.store.satellite_select(),
+            Model::UtPlus => SatelliteSelect::HighestInSky,
+        }
+    }
+
     /// The satellites on a family's channels: those of the record with
     /// a signal, above the mask angle and not ignored, in its order, as
     /// many as there are channels.  Set to track the highest in the
-    /// sky (VP p. 29), those are the highest of them, still in the
+    /// sky (VP p. 29), as a UT Plus always is, those are the highest of them, still in the
     /// record's order; else the record's order is its preference.
     fn tracked<'a>(
         &self,
@@ -1466,7 +1477,7 @@ impl Engine {
         let ignored = self.state.store.ignore_list();
         let listening = self.state.fixing && !Self::antenna_off(record);
         let channels = self.channels.min(family.channels);
-        let highest = self.state.store.highest_in_sky();
+        let highest = self.satellite_select() == SatelliteSelect::HighestInSky;
         let eligible = move |satellite: &Satellite| {
             listening
                 && satellite.signal.is_some()

@@ -123,7 +123,8 @@ fn nav_pvt_every_field() {
         (68, &47_u32.to_le_bytes()),
         (72, &48_u32.to_le_bytes()),
         (76, &149_u16.to_le_bytes()),
-        (78, &[1]),
+        // invalidLlh, lastCorrectionAge 11.
+        (78, &0b1_0111_u16.to_le_bytes()),
         (84, &(-49_i32).to_le_bytes()),
         (88, &(-1_234_i16).to_le_bytes()),
         (90, &50_u16.to_le_bytes()),
@@ -138,7 +139,6 @@ fn nav_pvt_every_field() {
         fix_type,
         fix_ok,
         differential,
-        power_save,
         vehicle_heading_valid,
         carrier_solution,
         satellites,
@@ -157,6 +157,7 @@ fn nav_pvt_every_field() {
         heading_accuracy,
         position_dop,
         position_invalid,
+        correction_age,
         vehicle_heading,
         magnetic_declination,
         magnetic_accuracy,
@@ -180,7 +181,7 @@ fn nav_pvt_every_field() {
     assert_eq!(time_accuracy, Nanoseconds(17));
     assert_eq!(fix_type, FixType::WithDeadReckoning);
     assert!(fix_ok && differential && vehicle_heading_valid);
-    assert_eq!((power_save, carrier_solution), (5, 2));
+    assert_eq!(carrier_solution, 2);
     assert_eq!(satellites, 9);
     assert_eq!(longitude, HundredNanodegrees(-1_219_978_333));
     assert_eq!(latitude, HundredNanodegrees(373_255_833));
@@ -197,6 +198,7 @@ fn nav_pvt_every_field() {
     assert_eq!(heading_accuracy, TenMicrodegrees(48));
     assert_eq!(position_dop, Hundredths(149));
     assert!(position_invalid);
+    assert_eq!(correction_age, 11);
     assert_eq!(pvt.position(), None);
     assert_eq!(vehicle_heading, TenMicrodegrees(-49));
     assert_eq!(magnetic_declination, HundredthDegrees(-1_234));
@@ -397,7 +399,7 @@ fn nav_sat_every_flag() {
     assert_eq!(none.orbit_source, OrbitSource::None);
     assert_eq!(none.health, Health::Unknown);
     type Read = fn(&SatelliteInfo) -> bool;
-    let bits: [(u32, Read); 16] = [
+    let bits: [(u32, Read); 18] = [
         (3, |info| info.used),
         (6, |info| info.differential),
         (7, |info| info.smoothed),
@@ -408,9 +410,11 @@ fn nav_sat_every_flag() {
         (16, |info| info.sbas_corrections),
         (17, |info| info.rtcm_corrections),
         (18, |info| info.slas_corrections),
+        (19, |info| info.spartn_corrections),
         (20, |info| info.pseudorange_corrections),
         (21, |info| info.carrier_corrections),
         (22, |info| info.doppler_corrections),
+        (23, |info| info.clas_corrections),
         (0, |info| info.quality == 1),
         (4, |info| info.health == Health::Healthy),
         (8, |info| info.orbit_source == OrbitSource::Ephemeris),
@@ -488,7 +492,6 @@ fn rxm_rawx_every_field() {
             measurements: 2,
             leap_seconds_known: true,
             clock_reset: true,
-            version: 1,
         }
     );
     let [first, second] = rawx.measurements().collect::<Vec<_>>()[..] else {
@@ -530,7 +533,7 @@ fn rxm_rawx_every_field() {
 #[test]
 fn rxm_sfrbx_every_field() {
     let words: [u32; 10] = core::array::from_fn(|index| 0xc000_0000 | (index as u32) << 8);
-    let mut bytes = std::vec![0, 17, 0, 3, 10, 6, 2, 0];
+    let mut bytes = std::vec![0, 17, 5, 3, 10, 6, 2, 0];
     bytes.extend(words.iter().flat_map(|word| word.to_le_bytes()));
     let Some(Message::RxmSfrbx(subframe)) = decode(RXM_SFRBX, &bytes) else {
         panic!();
@@ -539,12 +542,13 @@ fn rxm_sfrbx_every_field() {
         (
             subframe.system,
             subframe.id,
+            subframe.signal,
             subframe.frequency,
             subframe.count,
             subframe.channel,
             subframe.version
         ),
-        (0, 17, 3, 10, 6, 2)
+        (0, 17, 5, 3, 10, 6, 2)
     );
     assert_eq!(subframe.words().collect::<Vec<_>>(), words);
     assert_eq!(Message::RxmSfrbx(subframe).epoch(), None);
@@ -607,7 +611,7 @@ fn mon_hw_every_field() {
             crystal_absent: true,
             used_mask: 7,
             virtual_pins: pins,
-            jamming_indicator: 8,
+            cw_suppression: 8,
             pin_irq: 9,
             pull_high: 10,
             pull_low: 11,

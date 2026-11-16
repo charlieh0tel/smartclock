@@ -146,12 +146,12 @@ const PVT_VALID_TIME: u32 = 1;
 const PVT_FULLY_RESOLVED: u32 = 2;
 const PVT_VALID_MAGNETIC: u32 = 3;
 /// `NAV-PVT`'s `flags` (p. 377): `gnssFixOK` bit 0, `diffSoln` bit 1,
-/// `psmState` bits 2 to 4, `headVehValid` bit 5, `carrSoln` bits 6
-/// and 7.
+/// `headVehValid` bit 5, `carrSoln` bits 6 and 7.  The text gives the
+/// names in that order and leaves the places to a graphic; the places
+/// are those of the earlier revisions, whose bits 2 to 4 R28 no longer
+/// names.
 const PVT_FIX_OK: u32 = 0;
 const PVT_DIFFERENTIAL: u32 = 1;
-const PVT_POWER_SHIFT: u32 = 2;
-const PVT_POWER_WIDTH: u32 = 3;
 const PVT_HEADING_VALID: u32 = 5;
 const PVT_CARRIER_SHIFT: u32 = 6;
 const PVT_CARRIER_WIDTH: u32 = 2;
@@ -159,8 +159,11 @@ const PVT_CARRIER_WIDTH: u32 = 2;
 const PVT_CONFIRMED_AVAILABLE: u32 = 5;
 const PVT_CONFIRMED_DATE: u32 = 6;
 const PVT_CONFIRMED_TIME: u32 = 7;
-/// `NAV-PVT`'s `flags3` bit 0, `invalidLlh` (p. 378).
-const PVT_INVALID_POSITION: u32 = 0;
+/// `NAV-PVT`'s `flags3` (p. 378), two bytes: `invalidLlh` bit 0,
+/// `lastCorrectionAge` bits 1 to 4.
+const PVT_INVALID_POSITION: u16 = 1 << 0;
+const PVT_CORRECTION_AGE_SHIFT: u32 = 1;
+const PVT_CORRECTION_AGE_WIDTH: u32 = 4;
 
 /// `NAV-PVT`'s UTC date and time, as the receiver gives them, with
 /// their validity (pp. 375-377).
@@ -210,8 +213,6 @@ pub struct NavPvt {
     pub fix_ok: bool,
     /// `flags` bit 1, `diffSoln`: differential corrections applied.
     pub differential: bool,
-    /// `flags` bits 2 to 4, `psmState`: the power save mode's state.
-    pub power_save: u8,
     /// `flags` bit 5, `headVehValid`.
     pub vehicle_heading_valid: bool,
     /// `flags` bits 6 and 7, `carrSoln`: 0 none, 1 carrier phase
@@ -250,6 +251,10 @@ pub struct NavPvt {
     /// `flags3` bit 0, `invalidLlh`: the position and heights are not
     /// valid.
     pub position_invalid: bool,
+    /// `flags3` bits 1 to 4, `lastCorrectionAge`: the age of the last
+    /// differential correction, 0 none, 1 under a second, up to 12 and
+    /// more for two minutes and more.
+    pub correction_age: u8,
     /// `headVeh`, the vehicle's heading, if `headVehValid`.
     pub vehicle_heading: TenMicrodegrees<i32>,
     /// `magDec`, the magnetic declination, if `validMag`.
@@ -263,6 +268,7 @@ pub struct NavPvt {
 impl NavPvt {
     pub(crate) fn parse(fields: Fields<'_>) -> Self {
         let flags = u32::from(fields.u8(21));
+        let flags3 = fields.u16(78);
         Self {
             time_of_week: fields.time_of_week(),
             date: PvtDate {
@@ -284,7 +290,6 @@ impl NavPvt {
             fix_type: FixType::new(fields.u8(20)),
             fix_ok: fields.bit(21, PVT_FIX_OK),
             differential: fields.bit(21, PVT_DIFFERENTIAL),
-            power_save: bit_field(flags, PVT_POWER_SHIFT, PVT_POWER_WIDTH),
             vehicle_heading_valid: fields.bit(21, PVT_HEADING_VALID),
             carrier_solution: bit_field(flags, PVT_CARRIER_SHIFT, PVT_CARRIER_WIDTH),
             satellites: fields.u8(23),
@@ -302,7 +307,12 @@ impl NavPvt {
             speed_accuracy: MillimetersPerSecond(fields.u32(68)),
             heading_accuracy: TenMicrodegrees(fields.u32(72)),
             position_dop: Hundredths(fields.u16(76)),
-            position_invalid: fields.bit(78, PVT_INVALID_POSITION),
+            position_invalid: flags3 & PVT_INVALID_POSITION != 0,
+            correction_age: bit_field(
+                u32::from(flags3),
+                PVT_CORRECTION_AGE_SHIFT,
+                PVT_CORRECTION_AGE_WIDTH,
+            ),
             vehicle_heading: TenMicrodegrees(fields.i32(84)),
             magnetic_declination: HundredthDegrees(fields.i16(88)),
             magnetic_accuracy: HundredthDegrees(fields.u16(90)),
@@ -657,7 +667,7 @@ impl NavPosEcef {
     }
 }
 
-/// `UBX-NAV-VELECEF` (section 32.17.33), every field: the velocity in
+/// `UBX-NAV-VELECEF` (section 32.17.33, p. 401), every field: the velocity in
 /// Earth-centered coordinates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct NavVelEcef {
@@ -685,7 +695,7 @@ impl NavVelEcef {
     }
 }
 
-/// `UBX-NAV-CLOCK` (section 32.17.3), every field: the receiver's
+/// `UBX-NAV-CLOCK` (section 32.17.3, p. 359), every field: the receiver's
 /// clock solution.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct NavClock {
@@ -741,9 +751,11 @@ const SAT_ASSIST_NOW_AUTONOMOUS: u32 = 14;
 const SAT_SBAS_CORRECTIONS: u32 = 16;
 const SAT_RTCM_CORRECTIONS: u32 = 17;
 const SAT_SLAS_CORRECTIONS: u32 = 18;
+const SAT_SPARTN_CORRECTIONS: u32 = 19;
 const SAT_PSEUDORANGE_CORRECTIONS: u32 = 20;
 const SAT_CARRIER_CORRECTIONS: u32 = 21;
 const SAT_DOPPLER_CORRECTIONS: u32 = 22;
+const SAT_CLAS_CORRECTIONS: u32 = 23;
 /// `qualityInd` values (p. 382).
 const QUALITY_NO_SIGNAL: u8 = 0;
 const QUALITY_SEARCHING: u8 = 1;
@@ -850,12 +862,16 @@ pub struct SatelliteInfo {
     pub rtcm_corrections: bool,
     /// `slasCorrUsed`: QZSS SLAS corrections used.
     pub slas_corrections: bool,
+    /// `spartnCorrUsed`: SPARTN corrections used.
+    pub spartn_corrections: bool,
     /// `prCorrUsed`: pseudorange corrections used.
     pub pseudorange_corrections: bool,
     /// `crCorrUsed`: carrier range corrections used.
     pub carrier_corrections: bool,
     /// `doCorrUsed`: range rate (Doppler) corrections used.
     pub doppler_corrections: bool,
+    /// `clasCorrUsed`: CLAS corrections used.
+    pub clas_corrections: bool,
 }
 
 impl SatelliteInfo {
@@ -886,9 +902,11 @@ impl SatelliteInfo {
             sbas_corrections: bit(SAT_SBAS_CORRECTIONS),
             rtcm_corrections: bit(SAT_RTCM_CORRECTIONS),
             slas_corrections: bit(SAT_SLAS_CORRECTIONS),
+            spartn_corrections: bit(SAT_SPARTN_CORRECTIONS),
             pseudorange_corrections: bit(SAT_PSEUDORANGE_CORRECTIONS),
             carrier_corrections: bit(SAT_CARRIER_CORRECTIONS),
             doppler_corrections: bit(SAT_DOPPLER_CORRECTIONS),
+            clas_corrections: bit(SAT_CLAS_CORRECTIONS),
         }
     }
 

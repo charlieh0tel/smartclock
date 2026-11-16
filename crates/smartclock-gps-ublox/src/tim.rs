@@ -52,8 +52,8 @@ pub struct TimTp {
     /// it has no information.
     pub raim: Option<bool>,
     /// `timeRefGnss`: the system whose time the pulse is in, when the
-    /// time base is a system's: 0 GPS, 1 GLONASS, 2 `BeiDou`, 3 Galileo,
-    /// 15 unknown.
+    /// time base is a system's: 0 GPS, 1 GLONASS, 2 `BeiDou`, 3 Galileo, 4
+    /// `NavIC`, 15 unknown.
     pub time_reference: u8,
     /// `utcStandard`: the UTC standard, when the time base is UTC.
     pub utc_standard: u8,

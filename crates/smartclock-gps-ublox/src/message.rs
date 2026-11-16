@@ -50,11 +50,11 @@ pub const NAV_DOP: MessageId = MessageId::new(CLASS_NAV, 0x04);
 /// 32.17.17, p. 375).
 pub const NAV_PVT: MessageId = MessageId::new(CLASS_NAV, 0x07);
 /// `UBX-NAV-VELECEF`, the velocity in Earth-centered coordinates
-/// (section 32.17.33).
+/// (section 32.17.33, p. 401).
 pub const NAV_VELECEF: MessageId = MessageId::new(CLASS_NAV, 0x11);
 /// `UBX-NAV-TIMEGPS`, the GPS time solution (section 32.17.30, p. 397).
 pub const NAV_TIMEGPS: MessageId = MessageId::new(CLASS_NAV, 0x20);
-/// `UBX-NAV-CLOCK`, the clock solution (section 32.17.3).
+/// `UBX-NAV-CLOCK`, the clock solution (section 32.17.3, p. 359).
 pub const NAV_CLOCK: MessageId = MessageId::new(CLASS_NAV, 0x22);
 /// `UBX-NAV-TIMELS`, the leap second (section 32.17.31, p. 398).
 pub const NAV_TIMELS: MessageId = MessageId::new(CLASS_NAV, 0x26);
@@ -63,13 +63,13 @@ pub const NAV_SAT: MessageId = MessageId::new(CLASS_NAV, 0x35);
 /// `UBX-NAV-EOE`, the end of an epoch (section 32.17.8, p. 363).
 pub const NAV_EOE: MessageId = MessageId::new(CLASS_NAV, 0x61);
 /// `UBX-RXM-SFRBX`, a subframe of a satellite's navigation data
-/// (section 32.18.7).
+/// (section 32.18.7, p. 419).
 pub const RXM_SFRBX: MessageId = MessageId::new(CLASS_RXM, 0x13);
-/// `UBX-RXM-RAWX`, the raw measurements (section 32.18.4).
+/// `UBX-RXM-RAWX`, the raw measurements (section 32.18.4, p. 409).
 pub const RXM_RAWX: MessageId = MessageId::new(CLASS_RXM, 0x15);
-/// `UBX-ACK-NAK`, a message refused (section 32.8.2).
+/// `UBX-ACK-NAK`, a message refused (section 32.8.2, p. 179).
 pub const ACK_NAK: MessageId = MessageId::new(CLASS_ACK, 0x00);
-/// `UBX-ACK-ACK`, a message acknowledged (section 32.8.1).
+/// `UBX-ACK-ACK`, a message acknowledged (section 32.8.1, p. 179).
 pub const ACK_ACK: MessageId = MessageId::new(CLASS_ACK, 0x01);
 /// `UBX-MON-HW`, the hardware's status (section 32.16.4, p. 342).
 pub const MON_HW: MessageId = MessageId::new(CLASS_MON, 0x09);

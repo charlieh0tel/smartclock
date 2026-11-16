@@ -67,8 +67,9 @@ pub struct MonHw {
     pub used_mask: u32,
     /// `VP`: each virtual pin's physical pin.
     pub virtual_pins: [u8; VIRTUAL_PINS],
-    /// `jamInd`: the CW jamming indicator, 0 none to 255 strong.
-    pub jamming_indicator: u8,
+    /// `cwSuppression`: the CW interference suppression level, 0 no
+    /// CW jamming to 255 strong.
+    pub cw_suppression: u8,
     /// `pinIrq`: the pins with an interrupt.
     pub pin_irq: u32,
     /// `pullH`: the pins with a pull-up.
@@ -104,7 +105,7 @@ impl MonHw {
             crystal_absent: fields.bit(22, HW_CRYSTAL_ABSENT),
             used_mask: fields.u32(24),
             virtual_pins: fields.bytes(28),
-            jamming_indicator: fields.u8(45),
+            cw_suppression: fields.u8(45),
             pin_irq: fields.u32(48),
             pull_high: fields.u32(52),
             pull_low: fields.u32(56),

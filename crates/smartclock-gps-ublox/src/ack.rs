@@ -4,8 +4,8 @@
 use crate::fields::Fields;
 use crate::frame::MessageId;
 
-/// `UBX-ACK-ACK` (section 32.8.1) or `UBX-ACK-NAK` (section 32.8.2):
-/// the message acknowledged or refused.
+/// `UBX-ACK-ACK` (section 32.8.1, p. 179) or `UBX-ACK-NAK` (section
+/// 32.8.2, p. 179): the message acknowledged or refused.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Ack {
     /// `clsID` and `msgID`.

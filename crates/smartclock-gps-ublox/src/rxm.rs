@@ -36,10 +36,8 @@ pub const fn rxm_rawx_length(measurements: usize) -> usize {
     RAWX_HEADER + RAWX_BLOCK * measurements
 }
 
-/// `UBX-RXM-RAWX`'s header (section 32.18.4), before its
-/// measurements.  The document has two versions of the same layout,
-/// byte 13 reserved in the first and the version, 1, in the second;
-/// either is taken.
+/// `UBX-RXM-RAWX`'s header (section 32.18.4, pp. 409-411), before its
+/// measurements.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RxmRawxHeader {
     /// `rcvTow`, in seconds: the receiver's time of week of the
@@ -56,8 +54,6 @@ pub struct RxmRawxHeader {
     /// `recStat` bit 1, `clkReset`: the clock was reset, and the
     /// carrier phases are discontinuous.
     pub clock_reset: bool,
-    /// `version`.
-    pub version: u8,
 }
 
 impl RxmRawxHeader {
@@ -72,12 +68,11 @@ impl RxmRawxHeader {
             measurements,
             leap_seconds_known: fields.bit(12, RAWX_LEAP_KNOWN),
             clock_reset: fields.bit(12, RAWX_CLOCK_RESET),
-            version: fields.u8(13),
         })
     }
 }
 
-/// One measurement's block of `UBX-RXM-RAWX` (section 32.18.4), every
+/// One measurement's block of `UBX-RXM-RAWX` (pp. 410-411), every
 /// field.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Measurement {
@@ -143,7 +138,7 @@ impl Measurement {
     }
 }
 
-/// `UBX-RXM-RAWX` (section 32.18.4), whole.
+/// `UBX-RXM-RAWX` (section 32.18.4, p. 409), whole.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RxmRawx<'a> {
     /// Its header.
@@ -172,10 +167,10 @@ impl<'a> RxmRawx<'a> {
     }
 }
 
-/// `UBX-RXM-SFRBX` (section 32.18.7): one subframe of a satellite's
+/// `UBX-RXM-SFRBX` (section 32.18.7, pp. 419-420): one subframe of a satellite's
 /// navigation data, as broadcast.  The layout is the same in both of
-/// the document's versions, byte 5 reserved in the first and the
-/// channel in the second, so either is taken.
+/// the document's versions but for bytes 2 and 5, reserved in the
+/// first and `sigId` and `chn` in the second, so either is taken.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RxmSfrbx<'a> {
     /// `gnssId`: which system's satellite, [`SYSTEM_GPS`](crate::message::SYSTEM_GPS) for GPS.
@@ -184,9 +179,12 @@ pub struct RxmSfrbx<'a> {
     pub id: u8,
     /// `freqId`: a GLONASS satellite's frequency slot plus 7.
     pub frequency: u8,
+    /// `sigId`: the signal, in the second version; 0 in the first.
+    pub signal: u8,
     /// `numWords`: how many words follow.
     pub count: u8,
-    /// `chn`: the tracking channel it came on.
+    /// `chn`: the tracking channel it came on, in the second version;
+    /// 0 in the first.
     pub channel: u8,
     /// `version`.
     pub version: u8,
@@ -204,6 +202,7 @@ impl<'a> RxmSfrbx<'a> {
         (usize::from(count) * SFRBX_WORD == words.len()).then(|| Self {
             system: fields.u8(0),
             id: fields.u8(1),
+            signal: fields.u8(2),
             frequency: fields.u8(3),
             count,
             channel: fields.u8(5),

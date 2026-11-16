@@ -19,6 +19,19 @@
 //! `ENGINE_VECTORS=write` in the environment it writes what the engine
 //! did over each file in place of comparing.
 
+mod common;
+
+use common::EVENTS_AT;
+use common::EXCEPTIONS;
+use common::Head;
+use common::MILLISECONDS_PER_SECOND;
+use common::SETTING_EXCEPTIONS;
+use common::Scene;
+use common::WRITE;
+use common::WRITE_VARIABLE;
+use common::ecef;
+use common::hex;
+use common::unhex;
 use smartclock_gps::engine::Engine;
 use smartclock_gps::engine::Options;
 use smartclock_gps::engine::Output;
@@ -31,27 +44,18 @@ use smartclock_gps::engine::saved::CONFIGURATION_58503A;
 use smartclock_gps::engine::saved::ChannelCount;
 use smartclock_gps::engine::saved::SavedConfiguration;
 use smartclock_gps::engine::settings::PulseMode;
-use smartclock_gps::engine::settings::Settings;
-use smartclock_gps::record::Ecef;
 use smartclock_gps::record::Fix;
-use smartclock_gps::record::GpsTime;
 use smartclock_gps::record::Position;
-use smartclock_gps::record::Record;
 use smartclock_gps::record::field::FieldSet;
 use smartclock_gps::record::field::RecordField;
 use smartclock_gps::record::field::UNFILLED;
 use smartclock_gps::record::field::changed;
 use smartclock_gps::source::scene;
 use smartclock_gps::source::scene::DECLARATION;
-use smartclock_gps::time::DateTime;
-use smartclock_gps::time::GpsSeconds;
-use smartclock_gps::time::LeapChange;
-use smartclock_gps::time::LeapEvent;
 use smartclock_gps::units::Centimeters;
 use smartclock_gps::units::HundredNanoseconds;
 use smartclock_gps::units::MilliArcSeconds;
 use smartclock_gps::units::Milliseconds;
-use smartclock_gps::units::Nanoseconds;
 use smartclock_gps::units::Seconds;
 use std::collections::BTreeMap;
 use std::env;
@@ -62,30 +66,12 @@ use std::path::PathBuf;
 
 /// The format line every vector starts with.
 const FORMAT: &str = "oncore engine vectors 1";
-/// The environment variable that has the vectors written, and the value
-/// that does it.
-const WRITE_VARIABLE: &str = "ENGINE_VECTORS";
-const WRITE: &str = "write";
 /// How many vectors there are, so that none goes missing unseen.
 const VECTORS: usize = 56;
 
-/// How far into a second its events fall.
-const EVENTS_AT: u64 = 500;
-const MILLISECONDS_PER_SECOND: u64 = 1000;
-
-/// The exceptions tables, the fields' and the settings', from the
-/// crate's directory.
-const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
-const SETTING_EXCEPTIONS: &str = "../../docs/firmware/gps-setting-exceptions.tsv";
 /// The vector whose scene is held to [`DECLARATION`]: one with a leap second
 /// announced.
 const DECLARED_BY: &str = "vp-eight-leap.txt";
-
-/// WGS-84's semi-major axis in meters and its inverse flattening.
-const AXIS: f64 = 6_378_137.0;
-const INVERSE_FLATTENING: f64 = 298.257_223_563;
-const MILLI_ARC_SECONDS_PER_DEGREE: f64 = 3_600_000.0;
-const CENTIMETERS_PER_METER: f64 = 100.0;
 
 /// The configuration a vector's head names `status-every-other-second`,
 /// of an engine that fixes from power-up and sends its position status
@@ -105,64 +91,31 @@ const STATUS_EVERY_OTHER_SECOND_EIGHT: SavedConfiguration = SavedConfiguration {
     ..STATUS_EVERY_OTHER_SECOND_SIX
 };
 
-/// What a vector's head says.
-struct Head {
-    /// The lines of the head, as they are.
-    lines: Vec<String>,
-    /// Its fields by key.
-    fields: BTreeMap<String, String>,
+/// The engine a vector's head names.
+fn identity(head: &Head) -> &'static Identity {
+    match head.field("engine") {
+        "vp-six" => &VP_SIX,
+        "vp-eight" => &VP_EIGHT,
+        "vp-eight-without-time-raim" => &VP_EIGHT_WITHOUT_TIME_RAIM,
+        "ut-plus-2-2" => &UT_PLUS_2_2,
+        other => panic!("no engine {other}"),
+    }
 }
 
-impl Head {
-    fn field(&self, key: &str) -> &str {
-        self.fields
-            .get(key)
-            .unwrap_or_else(|| panic!("no {key} in the head"))
-    }
-
-    fn number(&self, key: &str) -> i32 {
-        self.field(key).parse().expect("a number")
-    }
-
-    /// A time as the head writes one, `2026-10-22T12:00:00Z`.
-    fn time(&self, key: &str) -> Option<DateTime> {
-        let text = self.fields.get(key)?;
-        let part = |range: std::ops::Range<usize>| text[range].parse::<u16>().expect("a number");
-        let byte = |range| u8::try_from(part(range)).expect("a byte");
-        DateTime::new(
-            part(0..4),
-            byte(5..7),
-            byte(8..10),
-            byte(11..13),
-            byte(14..16),
-            byte(17..19),
-        )
-    }
-
-    fn identity(&self) -> &'static Identity {
-        match self.field("engine") {
-            "vp-six" => &VP_SIX,
-            "vp-eight" => &VP_EIGHT,
-            "vp-eight-without-time-raim" => &VP_EIGHT_WITHOUT_TIME_RAIM,
-            "ut-plus-2-2" => &UT_PLUS_2_2,
-            other => panic!("no engine {other}"),
-        }
-    }
-
-    fn options(&self) -> Options {
-        let mut options = Options::DEFAULT;
-        options.deaf = self.field("answers") == "no";
-        options.saved = match self.field("saved") {
-            "none" => None,
-            "status-every-other-second" => Some(match ChannelCount::of(self.identity().model()) {
-                ChannelCount::Six => &STATUS_EVERY_OTHER_SECOND_SIX,
-                ChannelCount::Eight => &STATUS_EVERY_OTHER_SECOND_EIGHT,
-            }),
-            "58503a" => Some(&CONFIGURATION_58503A),
-            other => panic!("no saved configuration {other}"),
-        };
-        options
-    }
+/// How the engine a vector's head names departs from it.
+fn options(head: &Head) -> Options {
+    let mut options = Options::DEFAULT;
+    options.deaf = head.field("answers") == "no";
+    options.saved = match head.field("saved") {
+        "none" => None,
+        "status-every-other-second" => Some(match ChannelCount::of(identity(head).model()) {
+            ChannelCount::Six => &STATUS_EVERY_OTHER_SECOND_SIX,
+            ChannelCount::Eight => &STATUS_EVERY_OTHER_SECOND_EIGHT,
+        }),
+        "58503a" => Some(&CONFIGURATION_58503A),
+        other => panic!("no saved configuration {other}"),
+    };
+    options
 }
 
 /// One thing done to the engine.
@@ -186,116 +139,15 @@ impl Output for Lines {
     }
 }
 
-fn hex(bytes: &[u8]) -> String {
-    bytes.iter().fold(String::new(), |mut text, byte| {
-        write!(text, "{byte:02x}").expect("a string takes it");
-        text
-    })
-}
-
-fn unhex(text: &str) -> Vec<u8> {
-    (0..text.len())
-        .step_by(2)
-        .map(|at| u8::from_str_radix(&text[at..at + 2], 16).expect("hex"))
-        .collect()
-}
-
-/// The place's Earth-centered coordinates, which a record's provider
-/// works out.
-fn ecef(position: Position) -> Ecef {
-    let flattening = 1.0 / INVERSE_FLATTENING;
-    let eccentricity_squared = flattening * (2.0 - flattening);
-    let latitude = (f64::from(position.latitude.0) / MILLI_ARC_SECONDS_PER_DEGREE).to_radians();
-    let longitude = (f64::from(position.longitude.0) / MILLI_ARC_SECONDS_PER_DEGREE).to_radians();
-    let height = f64::from(position.ellipsoid.0) / CENTIMETERS_PER_METER;
-    let normal = AXIS / (1.0 - eccentricity_squared * latitude.sin().powi(2)).sqrt();
-    #[expect(
-        clippy::cast_possible_truncation,
-        reason = "a place on Earth is within an i32 of centimeters"
-    )]
-    let centimeters = |meters: f64| Centimeters((meters * CENTIMETERS_PER_METER).round() as i32);
-    Ecef {
-        x: centimeters((normal + height) * latitude.cos() * longitude.cos()),
-        y: centimeters((normal + height) * latitude.cos() * longitude.sin()),
-        z: centimeters((normal * (1.0 - eccentricity_squared) + height) * latitude.sin()),
-    }
-}
-
-/// What does not change through a vector.
-struct Scene {
-    /// The GPS second before the first.
-    start: GpsSeconds,
-    /// GPS less UTC before any leap.
-    offset: i8,
-    /// The leap second announced.
-    leap: Option<LeapEvent>,
-    /// The record less its time.
-    record: Record,
-}
-
-impl Scene {
-    fn new(head: &Head) -> Self {
-        let offset = i8::try_from(head.number("leap-seconds")).expect("an offset");
-        let gps = |time: DateTime| GpsSeconds::from_utc(time.to_unix(), Seconds(offset));
-        let start = gps(head.time("start").expect("a start")).expect("a GPS time");
-        let leap = head.time("pending-leap").map(|time| LeapEvent {
-            at: gps(time).expect("a GPS time"),
-            change: LeapChange::Insert,
-        });
-        let place = scene::position(
-            MilliArcSeconds(head.number("latitude-mas")),
-            MilliArcSeconds(head.number("longitude-mas")),
-            Centimeters(head.number("height-msl-cm")),
-        );
-        let week = start.week().expect("a week of GPS time");
-        let mut record = scene::sky(place, Seconds(offset), week);
-        record.leap = leap;
-        Self {
-            start,
-            offset,
-            leap,
-            record,
-        }
-    }
-
-    /// The record of the vector's `second`th second, of an engine set
-    /// to `settings`.  In position hold the receiver takes the position
-    /// it was given for its own and solves for time alone (VP pp. 56
-    /// and 73).
-    fn record(&self, second: u64, antenna: bool, settings: &Settings) -> Record {
-        let seconds = self.start + Seconds(second.cast_signed());
-        let offset = self.leap.map_or(Seconds(self.offset), |leap| {
-            leap.offset(seconds, Seconds(self.offset))
-        });
-        let mut record = self.record;
-        record.time = Some(GpsTime {
-            seconds,
-            subsecond: Nanoseconds(0),
-        });
-        record.utc_offset = Some(offset);
-        scene::hold(&mut record, settings);
-        record.derived.ecef = record.position.map(ecef);
-        if !antenna {
-            scene::unplug(&mut record);
-        }
-        record
-    }
-}
-
 /// Runs one vector's events and gives the file they make.
 fn run(text: &str) -> String {
-    let mut head = Head {
-        lines: Vec::new(),
-        fields: BTreeMap::new(),
-    };
+    let mut head = Head::of("");
     let mut events: BTreeMap<u64, Vec<Event>> = BTreeMap::new();
     let mut last = 0;
     let mut together = false;
     for line in text.lines() {
         if let Some(field) = line.strip_prefix("# ") {
-            let (key, value) = field.split_once(": ").expect("a key and a value");
-            head.fields.insert(key.to_owned(), value.to_owned());
-            head.lines.push(line.to_owned());
+            head.take(line, field);
             continue;
         }
         let mut words = line.split(' ');
@@ -328,7 +180,7 @@ fn run(text: &str) -> String {
 
     let scene = Scene::new(&head);
     let mut engine =
-        Engine::new(head.identity(), head.options()).expect("an engine that powers up");
+        Engine::new(identity(&head), options(&head)).expect("an engine that powers up");
     let mut antenna = head.field("antenna") == "on";
     let mut lines = Lines {
         text: head.lines.join("\n") + "\n",
@@ -386,15 +238,7 @@ fn declared_head() -> Head {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let text =
         fs::read_to_string(root.join("tests/vectors/engine").join(DECLARED_BY)).expect("a vector");
-    let mut head = Head {
-        lines: Vec::new(),
-        fields: BTreeMap::new(),
-    };
-    for field in text.lines().filter_map(|line| line.strip_prefix("# ")) {
-        let (key, value) = field.split_once(": ").expect("a key and a value");
-        head.fields.insert(key.to_owned(), value.to_owned());
-    }
-    head
+    Head::of(&text)
 }
 
 /// A scene fills what it declares and nothing else, and all the
@@ -414,7 +258,7 @@ fn a_scene_fills_what_it_declares() {
     assert!(needless.is_empty(), "needless: {needless:?}");
 
     let head = declared_head();
-    let engine = Engine::new(head.identity(), head.options()).expect("an engine that powers up");
+    let engine = Engine::new(identity(&head), options(&head)).expect("an engine that powers up");
     let record = Scene::new(&head).record(1, true, &engine.settings());
     let undeclared = DECLARATION.undeclared(&UNFILLED, &record);
     assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
@@ -444,7 +288,7 @@ fn a_scene_holds_the_position_it_is_told_to() {
     let head = declared_head();
     let scene = Scene::new(&head);
     let mut engine =
-        Engine::new(head.identity(), head.options()).expect("an engine that powers up");
+        Engine::new(identity(&head), options(&head)).expect("an engine that powers up");
     let mut lines = Lines {
         text: String::new(),
         second: 1,

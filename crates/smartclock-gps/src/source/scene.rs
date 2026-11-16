@@ -95,10 +95,10 @@ pub const PLACE: Position = position(
 /// What the scene fills of a record, with the position in
 /// Earth-centered coordinates its holder works out, and the settings
 /// it acts on: in position hold its receiver is where it was told it
-/// is.  The exceptions tables name it as the vectors' scene, the first
-/// to hold one.
+/// is.  The exceptions tables name it `scene`, for the vectors and the
+/// host feed alike.
 pub const DECLARATION: Declaration = Declaration {
-    name: "engine vectors",
+    name: "scene",
     fills: FieldSet::of(&[
         RecordField::Time,
         RecordField::UtcOffset,

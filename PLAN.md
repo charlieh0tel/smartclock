@@ -1301,7 +1301,7 @@ stands in for one.
   the engine's recorded exchanges are under is the crate's
   (`source::scene`), not the test's, so a tool can put an engine
   under the same provider, held to the same declaration and the same
-  rows of the exceptions tables; the position in Earth-centered
+  rows of the exceptions tables, which name it `scene`; the position in Earth-centered
   coordinates stays its holder's to work out.
 - **A u-blox receiver is a source, in a crate of its own**
   (`smartclock-gps-ublox`).  The `SmartClock`s never speak UBX: no
@@ -1372,7 +1372,8 @@ stands in for one.
   thread delivering into the `Latest` under a mutex; an async runtime
   would buy nothing for one connection each way.  Its scene is the
   vectors' provider, so it is held to `source::scene::DECLARATION` and
-  the exceptions tables' rows under that provider's name, and works
+  the exceptions tables' rows named `scene` (named `engine vectors`
+  until the feed shared the provider, renamed 2026-11-15), and works
   out the Earth-centered position itself, with the same arithmetic as
   the vectors' test.  `jiff` is the workspace's 0.2, not the newest,
   so the lock holds one copy.

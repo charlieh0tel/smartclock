@@ -21,19 +21,20 @@ use super::WORDS;
 use super::Words;
 use smartclock_gps::units::Seconds;
 
-/// A subframe's bits, set by their numbers in the subframe.
-struct Bits([u32; WORDS]);
+/// A subframe's bits, set by their numbers in the subframe.  The
+/// crate's tests build `RXM-SFRBX` of them too.
+pub(crate) struct Bits([u32; WORDS]);
 
 impl Bits {
     /// Bits a decoder must not read: the parity of each word, and the
     /// two bits above its 30.
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self([0xc000_002a; WORDS])
     }
 
     /// `width` bits of `value` from subframe bit `first`, 1 the first
     /// sent; within one word.
-    fn set(&mut self, first: u32, width: u32, value: i64) -> &mut Self {
+    pub(crate) fn set(&mut self, first: u32, width: u32, value: i64) -> &mut Self {
         let word = usize::try_from((first - 1) / 30).unwrap();
         let bit = (first - 1) % 30 + 1;
         assert!(bit + width - 1 <= 24, "field at {first} runs past the data");
@@ -46,7 +47,7 @@ impl Bits {
 
     /// TLM and HOW: the preamble, a TLM message, the integrity flag,
     /// a time of week, the alert flag and the subframe's ID.
-    fn head(&mut self, subframe: i64) -> &mut Self {
+    pub(crate) fn head(&mut self, subframe: i64) -> &mut Self {
         self.set(1, 8, i64::from(PREAMBLE))
             .set(9, 14, 0x1555)
             .set(23, 1, 1)
@@ -57,8 +58,13 @@ impl Bits {
     }
 
     /// A page of subframe 4 or 5: data ID `01` and its SV ID.
-    fn page(&mut self, subframe: i64, id: i64) -> &mut Self {
+    pub(crate) fn page(&mut self, subframe: i64, id: i64) -> &mut Self {
         self.head(subframe).set(61, 2, 1).set(63, 6, id)
+    }
+
+    /// The words, as `RXM-SFRBX` gives them.
+    pub(crate) const fn words(&self) -> [u32; WORDS] {
+        self.0
     }
 
     fn decode(&self) -> Option<Subframe> {
@@ -287,7 +293,7 @@ fn the_ionosphere_and_utc_page() {
 
 /// The first bit of each word's fields on a page 25, words 4 to 9 or 3
 /// to 8: the subframe's bits 91, 121, ... or 61, 91, ...
-fn word_start(word: u32) -> u32 {
+pub(crate) const fn word_start(word: u32) -> u32 {
     (word - 1) * 30 + 1
 }
 

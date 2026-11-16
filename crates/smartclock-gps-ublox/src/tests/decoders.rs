@@ -52,6 +52,7 @@ use crate::rxm::RxmRawxHeader;
 use crate::subframe::Body;
 use crate::subframe::PREAMBLE;
 use crate::subframe::Subframe;
+use crate::subframe::tests::Bits;
 use crate::tim::TimTp;
 use crate::units::Centimeters;
 use crate::units::CentimetersPerSecond;
@@ -573,10 +574,7 @@ fn sfrbx(system: u8, words: &[u32]) -> Vec<u8> {
 /// 905, each word with padding above its 30 bits.
 #[test]
 fn rxm_sfrbx_gives_a_gps_subframe() {
-    let mut words = [0xc000_0000; 10];
-    words[0] |= u32::from(PREAMBLE) << 22;
-    words[1] |= 1 << 8;
-    words[2] |= 905 << 20;
+    let words = Bits::new().head(1).set(61, 10, 905).words();
     let Some(Message::RxmSfrbx(message)) = decode(RXM_SFRBX, &sfrbx(0, &words)) else {
         panic!();
     };

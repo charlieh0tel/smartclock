@@ -271,43 +271,49 @@ lack, never change:
   functions those images lack, so that what it holds is what the
   images that include it share, grouped by what the others lack: a
   device or a command set.  `duart.c` and `duarta.c`, the DUART's
-  input debounces and channel A driver, are the six images' with a
+  input debounces and channel A driver, are the seven images' with a
   DUART, the 58503B 1.01.04 leaving them out; `duart_stop`, which the
   58503B has, its ACIA's, stays each image's own, and
   `duart_test_tx_b`, channel B's part of the loopback self-test, is
-  `duartb_test.c`'s, the same six images'.  `scpi_unsupported.c`, the
+  `duartb_test.c`'s, the same seven images'.  `scpi_unsupported.c`, the
   root's unsupported four-letter entries, is the five images' that
-  have them, the Z3817A 3752 and the 58503B 1.01.04 leaving it out.
-  `hex_dac.c`, `interpolator.c` and `outer_oven.c` are the six images'
+  have them, the Z3817A 3752, the 58503B 1.01.04 and the Z3805A
+  1.01.03 leaving it out.
+  `hex_dac.c`, `interpolator.c` and `outer_oven.c` are the seven images'
   with a hex DAC, an interpolator and the outer oven's console word,
   the Z3817A 3752 leaving them out: the hex DAC's console words, the
   step of the low reference's DAC and the self-test's 36-bit shift;
   the interpolator's calibration's defaults, its references' readings
   and the self-tests' two entries for it; and the word `doven`.
   Five files are the five images' whose trees and console have what
-  they serve, the Z3817A 3752 and the 58503B 1.01.04 leaving them out:
+  they serve, the Z3817A 3752, the 58503B 1.01.04 and the Z3805A
+  1.01.03 leaving them out:
   `scpi_output_pin1.c`, the :OUTPut:PIN1 handlers;
   `scpi_diagnostic_tcoefficient.c`, :DIAGnostic:ROSCillator:TCOefficient's;
   `scpi_diagnostic_ser1.c`, :DIAGnostic:SER1:EGResponse's;
   `scpi_holdover_hysteresis.c`, :SOURce:ROSCillator:HOLDover:HYSTeresis's;
   and `console_phase_off.c`, the console's word `phase_off`.
-  Two files are the six images' with the Oncore's decoded messages
-  and the output's state, the Z3815A 4010 leaving them out:
   `oncore_decode.c`, the decode of a message's fields and the DOP and
-  almanac status messages; and `scpi_output_state.c`, :OUTPut:STATe's
-  set handler.
+  almanac status messages, is the six images' with the Oncore's
+  decoded messages, the Z3815A 4010 and the Z3805A 1.01.03, the two
+  with a Furuno engine, leaving it out; and `scpi_output_state.c`,
+  :OUTPut:STATe's set handler, is the seven images' with the output's
+  state, the Z3815A 4010 leaving it out.
   Five more go by what else an image lacks.  `duartb_settings.c`,
   DUART channel B's baud rate from the serial settings and its polled
-  write, is the four images' whose port
+  write, is the five images' whose port
   of that name is the DUART's, the 58503B 1.01.04, the Z3816A 4001 and
   the Z3817A 3752, where it is the SCI, leaving it out.
   `console_pr_1pps.c`, the console's word `pr_1pps`, is left out by the
   58503B 1.01.04 and the Z3816A 4001, and `pwma.c`, the GPT's PWMA pin
-  forced to a level, by the Z3815A 4010, the Z3816A 4001 and the Z3817A
-  3752.  `bytes_equal.c`, the comparison of two counted byte strings,
-  and `installer/installer_duart_transmit.c`, the installer's channel A
-  transmit interrupt and channel B polled write, are the first three
-  sharing images' alone, the other four leaving them out.
+  forced to a level, by the Z3815A 4010, the Z3816A 4001, the Z3817A
+  3752 and the Z3805A 1.01.03.  `bytes_equal.c`, the comparison of two
+  counted byte strings, is the first three sharing images' alone, the
+  other five leaving it out, and
+  `installer/installer_duart_transmit.c`, the installer's channel A
+  transmit interrupt and channel B polled write, is theirs and the
+  Z3805A 1.01.03's, whose installer is the Z3805A 3543B's, the other
+  four leaving it out.
   A function the same in some images but
   not in a file whose images are exactly those stays per image.
 - The first three images to share `common/` (PLAN.md; the Z3805A
@@ -460,8 +466,8 @@ text, comments and white space aside, how the others differ, and
 whether the diffs class the same copies identical or relocated.  Same
 text is a candidate, not a move: rule 2 is checked only once the
 function is in `common/`.
-1167 functions are defined in two or more images' own C, 1081 of them the same
-text in two or more, 630 the same in every image defining them, and 147
+1332 functions are defined in two or more images' own C, 1242 of them the same
+text in two or more, 747 the same in every image defining them, and 158
 with a copy differing from the most images' by a constant or a name alone.
 
 ## The verification
@@ -791,8 +797,13 @@ cheapest first: each function's size and its counterpart in the images
 its diffs are against, with the file of that one's hand-written C, a
 function identical or relocated there, carried, being a port of that C;
 and whether `common/` would fit it, identical or relocated in every
-image that shares `common/` (rule 1).  Its first line counts the
-classes, the functions still named `FUN_` and those `common/` would fit.
+image that shares `common/` (rule 1); and whether it is the `common/`
+join's, a function `common/` defines already that is identical or
+relocated in the image's diff against the image `common/` was written
+from, so that the image has it on taking `common/`'s C and does not
+write it.  Its first line counts the classes, the functions still named
+`FUN_`, those `common/` would fit, and the join's against the image's
+own.
 
 And `make check-scpi-tree` (`scpi_tree_check.py`): each record of the
 generated trees, as gcc lays it out, is the image's bytes, pointers
@@ -909,11 +920,11 @@ The checks need no Ghidra: the export is checked in.
 
 Each is also a top-level target (`make check-decompiled`).  Without
 `IMAGE` each runs for every image it can: `check-link` and
-`report-decompiled` for the seven reported images, each one's function
+`report-decompiled` for the eight reported images, each one's function
 check held to the same standard ([`58503a-3704.md`](58503a-3704.md),
 "The function check").  Those two run each image as a target of its
-own, `report-decompiled/IMAGE`, so that `make -j7 report-decompiled`
-runs the seven at once; each image's output goes to its
+own, `report-decompiled/IMAGE`, so that `make -j8 report-decompiled`
+runs the eight at once; each image's output goes to its
 `report-decompiled.log` (or `check-link.log`), printed in the images'
 order once all have run, and the target fails if any image did.  The
 logs are in each image's work folder, beside its results, which for
@@ -1045,4 +1056,10 @@ of, the Z3816A's, is the seventh image to share `common/`, every C
 function of it written by hand and held to the same standard.  The
 58503B 1.01.04's link requires all 2207 of its functions and finds each
 defined: 1722 by hand-written C, 473 by assembly and 12 as another routine's
+name.  The Z3805A 1.01.03's, [`z3805a-1.01.03.md`](z3805a-1.01.03.md),
+seeded from the 58503B's and, for what the 58503B has no counterpart
+of, the Z3815A's, is the eighth image to share `common/`, every C
+function of it written by hand and held to the same standard.  The
+Z3805A 1.01.03's link requires all 2295 of its functions and finds each
+defined: 1807 by hand-written C, 476 by assembly and 12 as another routine's
 name.

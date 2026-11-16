@@ -14,9 +14,9 @@ trees, and how far each image is covered, at
 · [Tooling](docs/tooling.md)
 · [Monitoring](docs/monitoring.md)
 
-- **[Firmware](#the-firmware):** eight ROM images read and documented:
+- **[Firmware](#the-firmware):** nine ROM images read and documented:
   the SCPI trees, the 1 PPS measurement, the disciplining loop, the GPS
-  engine interface, the pForth console.  Seven are rewritten whole as C
+  engine interface, the pForth console.  Eight are rewritten whole as C
   and checked against the image function by function.  The loop's
   update law, constants, aging feed-forward and start-up are analyzed
   as a control system ([the loop](https://charlieh0tel.github.io/smartclock/loop.html)), and the images'
@@ -28,7 +28,7 @@ trees, and how far each image is covered, at
   and drawn as blocks
   ([the block diagram](https://charlieh0tel.github.io/smartclock/block-diagram.html)).
 - **[FPGAs](docs/firmware/fpga-comparison.md):** the six FPGA
-  designs in eight of the images, decoded from their bitstreams, simulated,
+  designs in the nine images, decoded from their bitstreams, simulated,
   traced and compared
   ([illustrated](https://charlieh0tel.github.io/smartclock/fpga.html),
   [in detail](https://charlieh0tel.github.io/smartclock/fpga-detail.html)).
@@ -38,14 +38,14 @@ trees, and how far each image is covered, at
 
 ## The firmware
 
-Eight ROM images -- two of the 58503A, and the 58503B, Z3801A, Z3805A,
-Z3815A, Z3816A and Z3817A -- read off bench units through the pForth debug
+Nine ROM images -- two of the 58503A, two of the Z3805A, and the
+58503B, Z3801A, Z3815A, Z3816A and Z3817A -- read off bench units through the pForth debug
 console or gathered from others.  [`docs/firmware/`](docs/firmware/)
 documents them and [`docs/scpi/`](docs/scpi/) their command trees.
 
-### Seven images in C
+### Eight images in C
 
-Seven images are rewritten whole as C: every C function of each, and of
+Eight images are rewritten whole as C: every C function of each, and of
 the installer it unpacks into RAM, was decompiled by Ghidra through the
 project's scripts and then written again by hand, as each image's link
 from its hand-written C and assembly alone, every function required,
@@ -66,11 +66,12 @@ fixed.
 | Z3817A 3752 | 1421 and 249 | 473 | [`z3817a-3752.md`](docs/firmware/z3817a-3752.md) |
 | Z3816A 4001 | 1405 and 249 | 473 | [`z3816a-4001.md`](docs/firmware/z3816a-4001.md) |
 | 58503B 1.01.04 | 1473 and 249 | 473 | [`58503b-1.01.04.md`](docs/firmware/58503b-1.01.04.md) |
+| Z3805A 1.01.03 | 1570 and 237 | 476 | [`z3805a-1.01.03.md`](docs/firmware/z3805a-1.01.03.md) |
 
 The Z3805A's came first; its function check finds all agree but six
 whose difference is the firmware's own or one C cannot express, and none
 the harness cannot run.  Its method, checks and limits are those of all
-seven.  The 58503A's C began as the Z3805A's and was rewritten to its
+eight.  The 58503A's C began as the Z3805A's and was rewritten to its
 own code: of the primary's functions 1418 agree and 4 differ for the
 firmware's own reasons, and the installer's 248 agree, none the harness
 cannot run; its console sessions agree, 8 of 8.  Its document says what
@@ -86,9 +87,11 @@ them too, and so is the Z3816A 4001, seeded from the 58503A's and the
 Z3815A's, which carries a Motorola Oncore's code as the 58503A does and
 takes its commands on the one host port, and the 58503B 1.01.04, seeded
 from the Z3817A's and the Z3816A's, the 58503A's successor, which has
-an ACIA and the processor's SCI where the others have a DUART.
+an ACIA and the processor's SCI where the others have a DUART, and the
+Z3805A 1.01.03, seeded from the 58503B's and the Z3815A's, a Z3805A
+whose GPS engine is a Furuno, spoken to as the Z3815A's is.
 
-The C the seven run alike lies once, in
+The C the eight run alike lies once, in
 `third_party/firmware/rewritten/common/`, moved there only by the rules
 of [`rewrite.md`](docs/firmware/rewrite.md), "Shared C"; each image's
 own C is in `rewritten/IMAGE/`.  The firmware tree is split by kind --
@@ -275,13 +278,13 @@ inside its own frame.
 | [`docs/58503a-second-10mhz.md`](docs/58503a-second-10mhz.md) | enabling the 58503A's 10 MHz OUT B, J15 |
 | [`docs/oncore-leap-week.md`](docs/oncore-leap-week.md) | the 58503A's Time Reset at the end of GPS week 2441, and the 256-week leap-parameter bugs it resembles |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
-| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the seven images in C |
+| [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the eight images in C |
 | [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md) | the rewrite's method, checks and limits, shown on the Z3805A 3543B, and the rules for shared C |
 | [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md) | the 58503A 3704 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3815a-4010.md`](docs/firmware/z3815a-4010.md) | the Z3815A 4010 against the 58503A 3704 and the Z3805A 3543B, and its rewrite |
 | [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
-| [`docs/firmware/fpga-comparison.md`](docs/firmware/fpga-comparison.md) | the six FPGA designs eight of the images load, decoded from their bitstreams, simulated and compared; each design's trace beside it |
+| [`docs/firmware/fpga-comparison.md`](docs/firmware/fpga-comparison.md) | the six FPGA designs the nine images load, decoded from their bitstreams, simulated and compared; each design's trace beside it |
 | [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html) | the six FPGA designs illustrated: the count, the two families, the telecom pair's phase detector and what of P7 reaches the firmware, with waveforms from the simulations; built by `make fpga` and checked by `check-explainer` |
 | [`fpga-detail.html`](https://charlieh0tel.github.io/smartclock/fpga-detail.html) | each FPGA design drawn twice by one generator: the whole chip, its pins on the frame and its function blocks in the signal's flow, the counters with their moduli and the nets between them named; and the time-interval counter gate by gate, each logic block with its equations; every element listed below with its trace's confidence word and section; a click opens a drawing full screen at its own scale to pan and zoom; pins, equations and connections read from the decoded netlists; built by `make fpga-detail` and checked by `check-detail` |
 | [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles, and the FFOM its start-up gives |

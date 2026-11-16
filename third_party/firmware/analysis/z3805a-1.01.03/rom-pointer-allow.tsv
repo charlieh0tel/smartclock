@@ -1,0 +1,9 @@
+# The ROM pointers of the hand-written C that
+# tools/firmware/rom_pointers.py finds and that stay as they are, each
+# with its reason (make check-rom-pointers).  Tab-separated: kind, where
+# (the file under rewritten/IMAGE/, or the function), base ('-' for a
+# literal), at (the literal as written, or the instruction's address),
+# found and reason.
+literal	log.c	-	0x7fffc	other	not an object but a bound, the ROM's last long: log_page_free_entry (0x33a48) takes an entry whose format lies past it, an erased entry's among them, as free, no text in the image lying there
+literal	selftest.c	-	0x18b5e	other	the self-tests' table of checks, each a routine and its name's address, "DISP" first, which the image keeps unlabeled: selftest_print_failure reads it in place (0x18aaa), and the C does, so that a failure's log entry keeps the name's address in the image
+operand	sci_scpi_session_init	z3815a-4010	0x2a28a	other -> label	the session's port object, which this image's names label console_port (0x2a4d2) and the Z3815A 4010's leave unlabeled (its own allowlist's 0x3c310), where the diff pairs this routine with the Z3815A's scpi_session_init; the C returns it through sci_scpi_port, the entry at the instruction (0x2a28a), which returns the label's address

@@ -176,7 +176,7 @@ def render(figures):
 <p class="eyebrow">SmartClock firmware &middot; FPGA</p>
 <h1>Inside the SmartClock FPGAs</h1>
 <p class="lede">The HP and Symmetricom SmartClock GPS receivers load a Xilinx XC3042
-FPGA from their firmware.  The eight firmware images carry six bitstreams.  Each is
+FPGA from their firmware.  The nine firmware images carry six bitstreams.  Each is
 decoded here into a netlist, run under Icarus Verilog, and traced through its logic.  This
 page is the short version, drawn from the same checked figures as the traces.</p>
 <p class="note">Nothing here has been checked on a board.  Every pin's role is read

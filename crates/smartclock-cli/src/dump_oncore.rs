@@ -650,8 +650,9 @@ mod tests {
     }
 
     #[test]
-    fn the_furuno_image_and_an_empty_one_are_refused() {
+    fn the_furuno_images_and_an_empty_one_are_refused() {
         assert!(oncore(&bytes("z3815a-4010")).is_err());
+        assert!(oncore(&bytes("z3805a-1.01.03")).is_err());
         assert!(oncore(&[0; 0x1000]).is_err());
     }
 }

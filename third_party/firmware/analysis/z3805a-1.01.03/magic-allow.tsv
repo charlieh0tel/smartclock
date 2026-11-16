@@ -1,0 +1,13 @@
+# The hand-written C's literals and constants that
+# tools/firmware/magic_check.py finds and that stay as they are, each
+# with its reason (make check-magic-numbers).  Tab-separated: kind, file
+# under rewritten/, function, literal as written, target, reason.
+duplicate	common/startup.h	startup_gpt_init	0xc	GPTMCR_ARBITRATION	the Z3805A 1.01.03's gpt_init body, the 58503B's (startup.h's startup_gpt_init_both_pwm), which forces PWMB too: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x650	ICR_LEVEL_6_VECTORS_0X50	the Z3805A 1.01.03's gpt_init body, the 58503B's (startup.h's startup_gpt_init_both_pwm), which forces PWMB too: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0xbc	DDRGP_OUTPUTS	the Z3805A 1.01.03's gpt_init body, the 58503B's (startup.h's startup_gpt_init_both_pwm), which forces PWMB too: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x80	PORTGP_INITIAL	the Z3805A 1.01.03's gpt_init body, the 58503B's (startup.h's startup_gpt_init_both_pwm), which forces PWMB too: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x04	PACTL_INPUT_CAPTURE_4	the Z3805A 1.01.03's gpt_init body, the 58503B's (startup.h's startup_gpt_init_both_pwm), which forces PWMB too: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	0x05	TCTL2_CAPTURES_1_2_RISING	the Z3805A 1.01.03's gpt_init body, the 58503B's (startup.h's startup_gpt_init_both_pwm), which forces PWMB too: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	common/startup.h	startup_gpt_init	3	TMSK_PRESCALER	the Z3805A 1.01.03's gpt_init body, the 58503B's (startup.h's startup_gpt_init_both_pwm), which forces PWMB too: common/startup.h's split for this image, not shared (rewrite.md, "Shared C", rule 6)
+duplicate	fpga.c	fpga_verify_first	10	LAST_BITS	each readback frame's own last bits, the first frame's and an odd frame's both 10 (0x23a76, 0x23db4), an even frame's 14
+duplicate	fpga.c	fpga_verify_first	5	WORDS	each readback frame's own words, the first frame's and an even frame's both 5 (0x23a76, 0x23fea), an odd frame's 6

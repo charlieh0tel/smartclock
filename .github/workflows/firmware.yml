@@ -1,14 +1,15 @@
 name: firmware
 
 # The Z3805A 3543B, 58503A 3704, Z3801A 3543, Z3815A 4010, Z3817A
-# 3752, Z3816A 4001 and 58503B 1.01.04 firmware's
+# 3752, Z3816A 4001, 58503B 1.01.04 and Z3805A 1.01.03 firmware's
 # checks (docs/firmware/README.md, "The checks in CI"): the C's format,
 # the layouts, the decompiled C's bytes and bindings, each hand-written
 # file compiled alone, each image's link from its hand-written C and
 # assembly alone, every function required, every decompiled function
 # run against the image's own and the figures the documents give, the
 # SCPI trees, the module and pForth figures, the 58503A's, Z3801A's,
-# Z3815A's, Z3817A's, Z3816A's and 58503B's diffs and the names seeded
+# Z3815A's, Z3817A's, Z3816A's, 58503B's and Z3805A 1.01.03's diffs and
+# the names seeded
 # from them, every image's
 # chip-select tables, the hand-written C's magic numbers and ROM
 # pointers, the addresses the 58503A's and Z3801A's C's comments cite,
@@ -23,7 +24,7 @@ name: firmware
 # repository in the fleet calls, and this needs an m68k toolchain,
 # clang, clang-format and uv the others do not; and so that it fails
 # on its own.  No Rust: none of these targets builds the workspace.  Most
-# of a run is report-decompiled's, the seven images' function checks,
+# of a run is report-decompiled's, the eight images' function checks,
 # as many at once as the runner has CPUs (make -j"$(nproc)").
 #
 # On pull requests and pushes to main, not on a branch's own pushes,
@@ -199,6 +200,15 @@ jobs:
       - run: make check-magic-numbers IMAGE=58503b-1.01.04
         if: ${{ !cancelled() }}
       - run: make check-decompiled IMAGE=58503b-1.01.04
+        if: ${{ !cancelled() }}
+      # The Z3805A 1.01.03's export, likewise.
+      - run: make check-types IMAGE=z3805a-1.01.03
+        if: ${{ !cancelled() }}
+      - run: make check-scpi-tree IMAGE=z3805a-1.01.03
+        if: ${{ !cancelled() }}
+      - run: make check-magic-numbers IMAGE=z3805a-1.01.03
+        if: ${{ !cancelled() }}
+      - run: make check-decompiled IMAGE=z3805a-1.01.03
         if: ${{ !cancelled() }}
       # Without IMAGE, for every reported image: fails if one does not link
       # from its hand-written C and assembly alone, every function

@@ -2600,6 +2600,23 @@ IMAGE_STATES = {
         ),
         **LOG_EVENT_BY_CODE_STATES,
     },
+    # The Z3805A 1.01.03's enter_holdover, whose GPS state is
+    # gps.references[0].state (0x440f6), as the Z3815A 4010's, where the
+    # Z3805A 3543B's is gps.status_reported: STATES' with that preset's
+    # target and values the Z3815A's (Z3815A_LOOP_STATES).
+    "z3805a-1.01.03": {
+        **LOG_EVENT_BY_CODE_STATES,
+        "enter_holdover": States(
+            presets=tuple(
+                Preset("gps.references[0].state", (0, 1, 2, 3, 4, 5, 0x80))
+                if preset.target == "gps.status_reported"
+                else preset
+                for preset in STATES["enter_holdover"].presets
+            ),
+            hooks=STATES["enter_holdover"].hooks,
+            cases=STATES["enter_holdover"].cases,
+        ),
+    },
 }
 # The functions whose cases find no task by name (harness.IDENT_NOT_FOUND),
 # by the generated cases that do so, the others finding one: a creator,
@@ -3120,6 +3137,16 @@ INSTALLER_TRANSMIT_FRAME = Known(
 D5_SHARE_58503B = (
     "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x26856)"
 )
+# The Z3805A 1.01.03's, in its own code, as the Z3815A 4010's:
+# os_report_processes holds "%s"'s address, 0x559e8, in D5 (0x16ac6);
+# its sci_puts leaves sci.transmit_next at the end of what it sent
+# (0x1f82e), and sci_putc sends from its own frame (0x202d0).
+D5_SHARE_Z3805A_1_01_03 = (
+    "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16ac6)"
+)
+TRANSMIT_FRAME_Z3805A_1_01_03 = (
+    "sci_puts leaves sci.transmit_next pointing into sci_putc's frame, each copy's stack its own (0x1f82e)"
+)
 # A session's line of :DIAG:OS:PROC?, its memory and share columns
 # apart, as scpi_interpret's KNOWN gives it.
 SESSION_SHARE = (
@@ -3195,6 +3222,10 @@ IMAGE_KNOWN = {
             "each copy's stack its own (installer::0x103230)",
             r"RAM differs from 10b009",
         ),
+    },
+    "z3805a-1.01.03": {
+        **{name: Known(D5_SHARE_Z3805A_1_01_03, D5_SHARE.outcome) for name in REPORT_FUNCTIONS},
+        "sci_putc": Known(TRANSMIT_FRAME_Z3805A_1_01_03, r"RAM differs from 104251"),
     },
 }
 # Another image's own given cases, in place of the base's of the same
@@ -3879,17 +3910,34 @@ GPS_CABLE_DELAY_CODES_Z3815A = (0x3F, 0x19)
 GPS_CABLE_DELAYS = (0, 1234, 999999, -999999)
 GPS_ARGUMENT_MODES = (0, 1)
 TIME_RAIM_Z3815A = 0x20
-GPS_REQUEST_BUILD_CASES_Z3815A = [
-    {0: code, 1: mode, 2: arguments, 3: bytes(GPS_MESSAGE_ROOM), PRESETS: {"gps.field_592": raim}}
-    for code in GPS_SENTENCE_CODES_Z3815A
-    for mode in GPS_ARGUMENT_MODES
-    for arguments in (
-        [struct.pack(">i", delay) + GPS_ARGUMENTS[4:] for delay in GPS_CABLE_DELAYS]
-        if code in GPS_CABLE_DELAY_CODES_Z3815A and mode == 0
-        else [GPS_ARGUMENTS]
-    )
-    for raim in (0, TIME_RAIM_Z3815A)
-]
+def sentence_request_build_cases(codes: tuple, cable_delay_codes: tuple, time_raim: int) -> list[dict]:
+    """gps_request_build's cases on a Furuno image's codes, its cable
+    delay's codes and its time RAIM bit."""
+    return [
+        {0: code, 1: mode, 2: arguments, 3: bytes(GPS_MESSAGE_ROOM), PRESETS: {"gps.field_592": raim}}
+        for code in codes
+        for mode in GPS_ARGUMENT_MODES
+        for arguments in (
+            [struct.pack(">i", delay) + GPS_ARGUMENTS[4:] for delay in GPS_CABLE_DELAYS]
+            if code in cable_delay_codes and mode == 0
+            else [GPS_ARGUMENTS]
+        )
+        for raim in (0, time_raim)
+    ]
+
+
+GPS_REQUEST_BUILD_CASES_Z3815A = sentence_request_build_cases(
+    GPS_SENTENCE_CODES_Z3815A, GPS_CABLE_DELAY_CODES_Z3815A, TIME_RAIM_Z3815A
+)
+# The Z3805A 1.01.03's: its sentences, GPS_NMEA_MASK_ANGLE to
+# GPS_NMEA_SELFTEST, 0x40 to 0x55, whose descriptors are 0x5469e plus
+# 0x20 a code (gps_request_descriptor, 0x5286a), and the Oncore requests
+# its translation table (0x551f4) takes to one of them; set,t's and
+# @@Az's cable delays; and its time RAIM bit, 0x10, which
+# gps_time_raim_supported returns (0x527da).
+GPS_REQUEST_BUILD_CASES_Z3805A_1_01_03 = sentence_request_build_cases(
+    (*range(0x40, 0x56), 0x06, 0x0C, 0x05, 0x12, 0x13, 0x19), (0x47, 0x19), 0x10
+)
 # The Z3815A 4010's validators' step routines, load_double (0x46970),
 # load_long (0x475a4) and load_long_unit_step (0x4759c);
 # scpi_format_resolution_array_record's eight zero bytes, those before
@@ -4087,6 +4135,18 @@ IMAGE_GIVEN_CASES = {
         "scpi_query_DIAGnostic_GPSystem_DCXO": [
             {PRESETS: {"gps.field_608": GPS_SIGNAL_SS_58503B, "gps.field_56a": last}} for last in (0, 1)
         ],
+    },
+    # the Z3805A 1.01.03's console, the SCPI session's line on channel B,
+    # whose read errors console_read gives from duartb.read_errors
+    # (0x1dfbc); its validators' step routines, load_double (0x34174),
+    # load_long (0x34da4) and load_long_unit_step (0x34d9c);
+    # gps_request_build on its own codes; and its log_event, which logs
+    # by a code (LOG_EVENT_CASES)
+    "z3805a-1.01.03": {
+        "console_port_read": console_port_read_line_cases("sci_scpi_input", "duartb.read_errors"),
+        **validator_cases(0x34174, 0x34DA4, 0x34D9C),
+        "gps_request_build": GPS_REQUEST_BUILD_CASES_Z3805A_1_01_03,
+        "log_event": LOG_EVENT_CASES,
     },
 }
 # Another image's own requests for SET_UP_REQUESTS' functions, the

@@ -1,0 +1,84 @@
+/* From the Z3805A 3543B's rewritten/boot.c, the Z3805A 1.01.03's own
+ * beside common/'s: of its functions, those the Z3805A 1.01.03's code
+ * carries identical or relocated (docs/firmware/z3805a-1.01.03.md, "The
+ * link list"). Its comments' addresses are the Z3805A 1.01.03's, but where
+ * they name another image. Each keeps its generated prototype. */
+
+/* Tests the DUART's interrupt vector register with two patterns and sets
+ * its vector, then, if it held them, sets channel B up for 9600 8N1 and
+ * checks it in loopback (0x4cc). */
+void boot_duart_early_init(void) {
+  boot_selftest.uart = 0;
+  duart.ivr = DUART_IVR_PATTERN_1;
+  if (duart.ivr != DUART_IVR_PATTERN_1) {
+    boot_selftest.uart |= SELFTEST_UART_REGISTER;
+  }
+  duart.ivr = DUART_IVR_PATTERN_2;
+  if (duart.ivr != DUART_IVR_PATTERN_2) {
+    boot_selftest.uart |= SELFTEST_UART_REGISTER;
+  }
+  duart.ivr = DUART_IVR_VECTOR;
+  if (boot_selftest.uart == 0) {
+    duart.b.cr = CR_RESET_RECEIVER;
+    duart.b.cr = CR_RESET_TRANSMITTER;
+    duart.b.cr = CR_RESET_MR_POINTER;
+    duart.b.mr = MR1_PARITY_NONE | DUART_MR1_EIGHT_BITS;
+    duart.b.mr = DUART_MR2_ONE_STOP_BIT;
+    duart.b.sr_csr = DUART_CSR_9600 << DUART_CSR_CLOCK_BITS | DUART_CSR_9600;
+    duart.ipcr_acr = ACR_BRG_SET_2 | DUART_ACR_COUNTER_CRYSTAL_16;
+    boot_duartb_loopback_check();
+  }
+}
+
+/* Copies the installer's records, installer_records' 0xa76d bytes at
+ * 0xbbc, into RAM (0xaa0). */
+uint32_t boot_unpack_installer(void) {
+  static const int32_t RECORDS_SIZE = 0xa76d;
+
+  return boot_unpack(installer_records, RECORDS_SIZE, false);
+}
+
+/* Sends "DUART" through channel B in local loopback, each character
+ * read back against the text; a wrong one sets SELFTEST_UART_CHANNEL_B_DATA,
+ * none within the spins SELFTEST_UART_CHANNEL_B_TIMEOUT (0x400). */
+void boot_duartb_loopback_check(void) {
+  char* text = "DUART";
+
+  (void)duart.b.mr;
+  duart.b.mr = MR2_MODE_LOCAL_LOOPBACK | DUART_MR2_ONE_STOP_BIT;
+  boot_loopback_send_next = (uint8_t*)text;
+  boot_loopback_expect_next = text;
+  duart.b.cr = CR_TX_ENABLE | CR_RX_ENABLE;
+  duart.b.rb_tb = *boot_loopback_send_next++;
+  while (*boot_loopback_expect_next != 0 && boot_selftest.uart == 0) {
+    for (int32_t spins = DUART_LOOPBACK_CHECK_SPINS;
+         spins > 0 && (duart.b.sr_csr & SR_RXRDY) == 0; spins--) {
+    }
+    if ((duart.b.sr_csr & SR_RXRDY) != 0) {
+      char expected = *boot_loopback_expect_next++;
+
+      if (duart.b.rb_tb != (uint8_t)expected) {
+        boot_selftest.uart |= SELFTEST_UART_CHANNEL_B_DATA;
+      }
+      if (*boot_loopback_send_next != 0) {
+        duart.b.rb_tb = *boot_loopback_send_next++;
+      }
+    } else {
+      boot_selftest.uart |= SELFTEST_UART_CHANNEL_B_TIMEOUT;
+    }
+  }
+  duart.b.cr = CR_RESET_RECEIVER;
+  duart.b.cr = CR_RESET_TRANSMITTER;
+  (void)duart.b.mr;
+  duart.b.mr = DUART_MR2_ONE_STOP_BIT;
+}
+
+/* The primary's copy of boot_unpack_installer, with memcpy, pointed at
+ * 11 bytes at address 0, boot_vectors, whose first byte, the initial
+ * stack pointer's high one, is no S: it always returns
+ * BOOT_UNPACK_NO_START. */
+uint32_t primary_unpack_records(void) {
+  static const int32_t RECORDS_SIZE = 0xb;
+
+  return boot_unpack((const uint8_t*)&boot_vectors, RECORDS_SIZE, true);
+}

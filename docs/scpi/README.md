@@ -139,6 +139,7 @@ The listing's paths, an alias pair counted once:
 | [Z3815A 4010](z3815a-4010.txt) | 823 | 564 | 445 | `0x6cd16` |
 | [58503B 1.01.04](58503b-1.01.04.txt) | 736 | 456 | 414 | `0x68316` |
 | [Z3817A 3752](z3817a-3752.txt) | 724 | 452 | 404 | `0x651ac` |
+| [Z3805A 1.01.03](z3805a-1.01.03.txt) | 738 | 456 | 415 | `0x6208a` |
 
 `models.md` counts by path with both nodes kept, so its counts are
 larger.
@@ -259,6 +260,8 @@ own copies.
 | `58503b-1.01.04` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
 | `z3817a-3752` | primary | 1936 | 501 | 144 | 308 | 446 | 172 | 295 | 26 | 3 | 306 |
 | `z3817a-3752` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
+| `z3805a-1.01.03` | primary | 1969 | 515 | 145 | 316 | 450 | 174 | 299 | 26 | 3 | 309 |
+| `z3805a-1.01.03` | installer | 34 | 9 | 4 | 9 | 3 | 3 | 5 | 0 | 0 | 15 |
 
 Records counts every kind: those in the columns, the tree pair, and a
 choice list's keywords and values and a unit's name.  A test checks

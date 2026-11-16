@@ -41,6 +41,8 @@ Pin numbers are the 132-pin QFP's (Figure 3-2).
 | 58503B 1.01.04 | primary | `0x245b4` to `0x2466c` | Writes CSPAR0 `0x2fef`, CSPAR1 `0x00ab`, CSBARBT `0x0006`, CSBAR1 `0x3000`, CSOR1 `0x7030`, CSBAR4 `0xfff8`, CSOR4 `0x7805`, CSBAR5 `0x3040`, CSOR5 `0x7930`, CSBAR6 `0x0006`, CSBAR7 `0x3020`, CSOR7 `0x6870`, CSOR8 `0xb830` and writes no CSBAR10, CSOR10 |
 | Z3801A 3543 | boot | `0x568` to `0x630` | Writes the same 26 values |
 | Z3801A 3543 | primary | `0x141da` to `0x142a2` | Writes the same 26 values |
+| Z3805A 1.01.03 | boot | `0x568` to `0x630` | Writes the same 26 values |
+| Z3805A 1.01.03 | primary | `0x14828` to `0x148e0` | Writes no CSBAR4, CSOR4 |
 | Z3805A 3543B | boot | `0x568` to `0x630` | Writes the same 26 values |
 | Z3805A 3543B | primary | `0x144d2` to `0x1459a` | -- |
 | Z3815A 4010 | boot@0x418 | `0x418` to `0x450` | Writes CSBARBT `0x0007`, CSBAR0 `0x1007`, CSBAR2 `0x1007`, CSBAR3 `0x1007` and writes no CSPAR0, CSPAR1, CSBAR1, CSOR1, CSBAR4, CSOR4, CSBAR5, CSOR5, CSBAR6, CSOR6, CSBAR7, CSOR7, CSBAR8, CSOR8, CSBAR9, CSOR9, CSBAR10, CSOR10 |
@@ -242,6 +244,48 @@ Pins: CSPAR0 `0x2bff` at `0x141da`, CSPAR1 `0x03af` at `0x141e2`.
 | `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x1428a`, `0x14292` | 8-bit | both, read and write, 3 wait |
 | `0x500000`--`0x5007ff`, 2 KiB | CS4 | 119, PC1/FC1 | `0x5000`, `0x7830`; `0x1423a`, `0x14242` | 8-bit | both, read and write, 0 wait |
 | CPU space, interrupt acknowledge at level 2 | CS10 | 125, ECLK/ADDR23 | `0xfff8`, `0x2bc4`; `0x1429a`, `0x142a2` | 16-bit | lower, read, external; CPU space, IPL 2 |
+
+## Z3805A 1.01.03
+
+### The boot code, `0x568` to `0x630`
+
+Pins: CSPAR0 `0x2bff` at `0x568`, CSPAR1 `0x03af` at `0x570`.
+
+| Window | Select | Pin | CSBAR, CSOR; written at | Port | BYTE, R/W, DSACK |
+| ------ | ------ | --- | ----------------------- | ---- | ---------------- |
+| `0x000000`--`0x03ffff`, 256 KiB | CSBOOT | 112 | `0x0005`, `0x6870`; `0x578`, `0x580` | 16-bit | both, read, 1 wait |
+| the same | CS6 | 121, PC3/ADDR19 | `0x0005`, `0x7070`; `0x5e8`, `0x5f0` | 16-bit | both, write, 1 wait |
+| `0x040000`--`0x07ffff`, 256 KiB | CS1 | 114, BG | `0x0405`, `0x6870`; `0x598`, `0x5a0` | 16-bit | both, read, 1 wait |
+| the same | CS7 | 122, PC4/ADDR20 | `0x0405`, `0x7070`; `0x5f8`, `0x600` | 16-bit | both, write, 1 wait |
+| `0x100000`--`0x10ffff`, 64 KiB | CS0 | 113, BR | `0x1003`, `0x6830`; `0x588`, `0x590` | 16-bit | both, read, 0 wait |
+| the same | CS2 | 115, BGACK | `0x1003`, `0x5030`; `0x5a8`, `0x5b0` | 16-bit | upper, write, 0 wait |
+| the same | CS3 | 118, PC0/FC0 | `0x1003`, `0x3030`; `0x5b8`, `0x5c0` | 16-bit | lower, write, 0 wait |
+| `0x200000`--`0x2007ff`, 2 KiB | CS8 | 123, PC5/ADDR21 | `0x2000`, `0x3bf0`; `0x608`, `0x610` | 8-bit | lower, read and write, external |
+| `0x300000`--`0x30ffff`, 64 KiB | CS5 | 120, PC2/FC2 | `0x3003`, `0x7b30`; `0x5d8`, `0x5e0` | 8-bit | both, read and write, 12 wait |
+| `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x618`, `0x620` | 8-bit | both, read and write, 3 wait |
+| `0x500000`--`0x5007ff`, 2 KiB | CS4 | 119, PC1/FC1 | `0x5000`, `0x7830`; `0x5c8`, `0x5d0` | 8-bit | both, read and write, 0 wait |
+| CPU space, interrupt acknowledge at level 2 | CS10 | 125, ECLK/ADDR23 | `0xfff8`, `0x2bc4`; `0x628`, `0x630` | 16-bit | lower, read, external; CPU space, IPL 2 |
+
+The primary (`0x14828` to `0x148e0`) writes no CSBAR4, CSOR4.
+
+### The primary, `0x14828` to `0x148e0`
+
+Pins: CSPAR0 `0x2bff` at `0x14828`, CSPAR1 `0x03af` at `0x14830`.
+
+| Window | Select | Pin | CSBAR, CSOR; written at | Port | BYTE, R/W, DSACK |
+| ------ | ------ | --- | ----------------------- | ---- | ---------------- |
+| `0x000000`--`0x03ffff`, 256 KiB | CSBOOT | 112 | `0x0005`, `0x6870`; `0x14838`, `0x14840` | 16-bit | both, read, 1 wait |
+| the same | CS6 | 121, PC3/ADDR19 | `0x0005`, `0x7070`; `0x14898`, `0x148a0` | 16-bit | both, write, 1 wait |
+| `0x040000`--`0x07ffff`, 256 KiB | CS1 | 114, BG | `0x0405`, `0x6870`; `0x14858`, `0x14860` | 16-bit | both, read, 1 wait |
+| the same | CS7 | 122, PC4/ADDR20 | `0x0405`, `0x7070`; `0x148a8`, `0x148b0` | 16-bit | both, write, 1 wait |
+| `0x100000`--`0x10ffff`, 64 KiB | CS0 | 113, BR | `0x1003`, `0x6830`; `0x14848`, `0x14850` | 16-bit | both, read, 0 wait |
+| the same | CS2 | 115, BGACK | `0x1003`, `0x5030`; `0x14868`, `0x14870` | 16-bit | upper, write, 0 wait |
+| the same | CS3 | 118, PC0/FC0 | `0x1003`, `0x3030`; `0x14878`, `0x14880` | 16-bit | lower, write, 0 wait |
+| `0x200000`--`0x2007ff`, 2 KiB | CS8 | 123, PC5/ADDR21 | `0x2000`, `0x3bf0`; `0x148b8`, `0x148c0` | 8-bit | lower, read and write, external |
+| `0x300000`--`0x30ffff`, 64 KiB | CS5 | 120, PC2/FC2 | `0x3003`, `0x7b30`; `0x14888`, `0x14890` | 8-bit | both, read and write, 12 wait |
+| `0x400000`--`0x401fff`, 8 KiB | CS9 | 124, PC6/ADDR22 | `0x4001`, `0x78f0`; `0x148c8`, `0x148d0` | 8-bit | both, read and write, 3 wait |
+| `0x500000`--`0x5007ff`, 2 KiB | CS4 | 119, PC1/FC1 | `0x5000`, `0x7830`; kept, kept (as the boot code's left them) | 8-bit | both, read and write, 0 wait |
+| CPU space, interrupt acknowledge at level 2 | CS10 | 125, ECLK/ADDR23 | `0xfff8`, `0x2bc4`; `0x148d8`, `0x148e0` | 16-bit | lower, read, external; CPU space, IPL 2 |
 
 ## Z3805A 3543B
 

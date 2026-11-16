@@ -57,6 +57,7 @@ DOCUMENT_Z3815A = ROOT / 'docs/firmware/z3815a-4010.md'
 DOCUMENT_Z3817A = ROOT / 'docs/firmware/z3817a-3752.md'
 DOCUMENT_Z3816A = ROOT / 'docs/firmware/z3816a-4001.md'
 DOCUMENT_58503B = ROOT / 'docs/firmware/58503b-1.01.04.md'
+DOCUMENT_Z3805A_1_01_03 = ROOT / 'docs/firmware/z3805a-1.01.03.md'
 
 # function_check.py's line of a profile's counts, the installer's
 # labeled with its overlay
@@ -406,6 +407,7 @@ CHECKS = {
     'z3817a-3752': joined_checks(DOCUMENT_Z3817A, 'Z3817A 3752'),
     'z3816a-4001': joined_checks(DOCUMENT_Z3816A, 'Z3816A 4001'),
     '58503b-1.01.04': joined_checks(DOCUMENT_58503B, '58503B 1.01.04'),
+    'z3805a-1.01.03': joined_checks(DOCUMENT_Z3805A_1_01_03, 'Z3805A 1.01.03'),
 }
 
 

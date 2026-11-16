@@ -350,11 +350,12 @@ mod tests {
 
     /// Each image in `third_party/firmware/images/`, by the name its list has
     /// in `docs/firmware/pforth/`.
-    const IMAGES: [&str; 8] = [
+    const IMAGES: [&str; 9] = [
         "58503a-3633",
         "58503a-3704",
         "58503b-1.01.04",
         "z3801a-3543",
+        "z3805a-1.01.03",
         "z3805a-3543b",
         "z3815a-4010",
         "z3816a-4001",

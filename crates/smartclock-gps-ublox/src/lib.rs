@@ -14,8 +14,7 @@
 //! The format is that of the u-blox 8 / u-blox M8 receiver description
 //! including protocol specification, UBX-13003221, revision R28.  No
 //! copy is in `third_party/`; a section and page cited here are that
-//! revision's, the page as printed.  Where only a section is cited, its
-//! page was not checked against a copy.
+//! revision's, the page as printed.
 //!
 //! A frame is the two sync bytes `B5 62`, a class, an ID, the payload's
 //! length as a little-endian 16-bit count, the payload, and two checksum

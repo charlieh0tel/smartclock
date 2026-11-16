@@ -1354,9 +1354,14 @@ stands in for one.
   arithmetic.  Its layouts are those of u-blox's protocol
   specification UBX-13003221 R28, cited by section and page, of which
   `third_party/` has no copy.  It is integer only, as the core is.
-  The assembler reads the receiver's navigation solution and none of
-  the satellites' own data, so it fills no almanac; the crate decodes
-  that data for a caller that wants it (below).
+  The assembler reads the receiver's navigation solution, and of the
+  satellites' own data only the almanac's pages, from `RXM-SFRBX`
+  when the receiver sends it (owner, 2026-11-16): without an almanac
+  the engine reports none visible and a bad almanac.  It gathers them
+  across epochs in fixed state, and a record has the almanac once
+  subframe 5, page 25 has given its time and week, holding the
+  satellites whose page is of that time.  The crate decodes the rest
+  of that data for a caller that wants it (below).
   - *A time-only fix has no DOPs* (owner, 2026-11-16).  A timing
     receiver in time mode gives `NAV-DOP`'s `pDOP`, `hDOP` and `vDOP`
     as 9999, placeholders for a position it does not solve for; passed
@@ -1400,7 +1405,7 @@ stands in for one.
     caller stages what it decodes and keeps it only at the end.  The
     whole-frame `Deframer` and the `Assembler` on it stay for hosts.
   - *Later, perhaps:* the decoders could let the provider fill a
-    record's almanac (subframes 4 and 5), URA (subframe 1), velocity
+    record's URA (subframe 1), velocity
     along each axis and magnetic variation (`NAV-PVT`) and Doppler
     (`RXM-RAWX`, from floating point); none is wired yet.
   - *A GPS satellite's navigation data is decoded here too*

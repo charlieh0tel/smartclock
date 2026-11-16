@@ -97,8 +97,9 @@
 //! the slot of a [`Latest`](smartclock_gps::source::Latest).  The
 //! receiver is to be set to one epoch a second with the messages it
 //! reads turned on: `NAV-PVT`, `NAV-TIMEGPS`, `NAV-TIMELS`, `NAV-DOP`,
-//! `NAV-POSECEF`, `NAV-SAT`, `NAV-EOE`, `MON-HW` and `TIM-TP`.
-//! Configuring it is the caller's affair.
+//! `NAV-POSECEF`, `NAV-SAT`, `NAV-EOE`, `MON-HW` and `TIM-TP`, and
+//! `RXM-SFRBX` for the almanac.  Configuring it is the caller's
+//! affair.
 //!
 //! - **Epochs.**  Messages with the same `iTOW` are one navigation
 //!   solution (section 9.3, p. 27).  `NAV-EOE` ends an epoch; so does a
@@ -144,15 +145,26 @@
 //!   active, the solution is not known and nothing can be detected.
 //!   No satellite is given as isolated, and isolation is never
 //!   claimed.
+//! - **The almanac** is gathered from the GPS subframes of `RXM-SFRBX`,
+//!   decoded by [`subframe`], across epochs, each page the last one
+//!   broadcast.  A record has it from the first epoch's end after
+//!   subframe 5, page 25 has given its time and week: it holds the
+//!   satellites whose page, of subframe 4 or 5 with the data ID `01`,
+//!   has that time, and calls healthy those whose page gives a health
+//!   of zero and whose page 25 does too or has not come (IS-GPS-200N,
+//!   sections 20.3.3.5.1.2 to 20.3.3.5.1.5).  Its eight bits of week
+//!   are resolved to the week nearest the last epoch with a time, or
+//!   before one, the week the assembler was made to resolve near.  It
+//!   need not be complete: a satellite whose page has not come is not
+//!   held.  None without `RXM-SFRBX`, before page 25, with no page of
+//!   page 25's time, or with no week to resolve near.
 //! - **The self-test** passes: no message here tells of a part that
 //!   fails, and the receiver that sent the epoch runs.
 //! - **Not filled.**
 //!   [`Record::timing`](smartclock_gps::record::Record::timing):
 //!   `TIM-TP`'s `qErr` is decoded ([`TimTp`](tim::TimTp)), but the
 //!   document gives neither its sign nor what multiple of sigma `tAcc`
-//!   is.  [`Record::almanac`](smartclock_gps::record::Record::almanac):
-//!   the assembler reads no satellite's own data, which [`subframe`]
-//!   decodes for a caller.  A satellite's Doppler: only `RXM-RAWX`
+//!   is.  A satellite's Doppler: only `RXM-RAWX`
 //!   carries it, as floating point.  A
 //!   satellite's time error: no message here carries it.
 //!   [`Fix::Propagated`](smartclock_gps::record::Fix::Propagated) is
@@ -169,6 +181,7 @@
 #![no_std]
 
 pub mod ack;
+mod almanac;
 pub mod assembler;
 mod fields;
 pub mod frame;

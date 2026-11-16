@@ -1071,7 +1071,14 @@ stands in for one.
   rate of its position status in nonvolatile memory, and one sending
   it when turned off sends it again at power-up (VP pp. 70 and 124),
   so an engine a receiver configured earlier comes up sending
-  unasked.  The option replaces a bare status rate, which said the
+  unasked.  Tests of a real VP showed it keeps the rest too: one
+  configured (its settings, a held position, `@@Ea` and `@@En` each
+  second with Time RAIM on, `@@Bb` at each change, `@@Cg` 1) and
+  power-cycled with no backup power came back up exactly as left,
+  fixing, its outputs running unasked, Time RAIM on at a limit of 10,
+  the pulse mode as set and all 20 `@@A` settings queried as saved;
+  only its clock was lost.  So a configuration holding whether it
+  fixes, its rates and Time RAIM is what a VP does.  The option replaces a bare status rate, which said the
   same of one message and fixed the family by the identity: a saved
   configuration names its channels, whether it fixes, and its rates,
   and grows a field for each thing a configuration needs.  Its
@@ -1091,7 +1098,12 @@ stands in for one.
   `@@Cf` puts the defaults back, not the saved configuration, as the
   manual has it set "all of the GPS receiver parameters to their
   default values" and a VP idle (VP pp. 116 and 118); a new model, a
-  power-up, starts from it again.
+  power-up, starts from it again.  The same tests found a VP told
+  `@@Cf` and power-cycled with no backup power idle and silent, its
+  clock at 1997-01-01 12:00:00 and not running, its almanac dropped
+  and its settings at `@@Cf`'s values: what `@@Cf` sets is what it
+  saves, so a holder modeling that power cycle makes the next model
+  with no saved configuration.
 - **The model computes nothing physical.**  Dilutions of precision, a
   position in Earth-centered coordinates and magnetic variation need
   floating point or tables a Cortex-M0 should not carry, so a record

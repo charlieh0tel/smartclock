@@ -8,4 +8,4 @@
 # height-msl-cm: 5500
 # antenna: on
 # answers: yes
-# status-rate: 0
+# saved: none

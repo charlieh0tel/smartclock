@@ -27,6 +27,8 @@ use smartclock_gps::engine::identity::UT_PLUS_2_2;
 use smartclock_gps::engine::identity::VP_EIGHT;
 use smartclock_gps::engine::identity::VP_EIGHT_WITHOUT_TIME_RAIM;
 use smartclock_gps::engine::identity::VP_SIX;
+use smartclock_gps::engine::saved::ChannelCount;
+use smartclock_gps::engine::saved::SavedConfiguration;
 use smartclock_gps::engine::settings::HeightKind;
 use smartclock_gps::engine::settings::Location;
 use smartclock_gps::engine::settings::Setting;
@@ -171,6 +173,19 @@ const INVERSE_FLATTENING: f64 = 298.257_223_563;
 const MILLI_ARC_SECONDS_PER_DEGREE: f64 = 3_600_000.0;
 const CENTIMETERS_PER_METER: f64 = 100.0;
 
+/// The configuration a vector's head names `status-every-other-second`,
+/// of an engine that fixes from power-up and sends its position status
+/// every other second, six-channel and eight-channel.
+const STATUS_EVERY_OTHER_SECOND_SIX: SavedConfiguration = SavedConfiguration {
+    channels: ChannelCount::Six,
+    fixing: true,
+    position_status_rate: Seconds(2),
+};
+const STATUS_EVERY_OTHER_SECOND_EIGHT: SavedConfiguration = SavedConfiguration {
+    channels: ChannelCount::Eight,
+    ..STATUS_EVERY_OTHER_SECOND_SIX
+};
+
 /// What a vector's head says.
 struct Head {
     /// The lines of the head, as they are.
@@ -218,7 +233,14 @@ impl Head {
     fn options(&self) -> Options {
         let mut options = Options::DEFAULT;
         options.deaf = self.field("answers") == "no";
-        options.status_rate = Seconds(u8::try_from(self.number("status-rate")).expect("a rate"));
+        options.saved = match self.field("saved") {
+            "none" => None,
+            "status-every-other-second" => Some(match ChannelCount::of(self.identity().model()) {
+                ChannelCount::Six => &STATUS_EVERY_OTHER_SECOND_SIX,
+                ChannelCount::Eight => &STATUS_EVERY_OTHER_SECOND_EIGHT,
+            }),
+            other => panic!("no saved configuration {other}"),
+        };
         options
     }
 }
@@ -428,7 +450,8 @@ fn run(text: &str) -> String {
     assert_eq!(head.field("format"), FORMAT);
 
     let scene = Scene::new(&head);
-    let mut engine = Engine::new(head.identity(), head.options());
+    let mut engine =
+        Engine::new(head.identity(), head.options()).expect("an engine that powers up");
     let mut antenna = head.field("antenna") == "on";
     let mut lines = Lines {
         text: head.lines.join("\n") + "\n",
@@ -514,7 +537,7 @@ fn a_scene_fills_what_it_declares() {
     assert!(needless.is_empty(), "needless: {needless:?}");
 
     let head = declared_head();
-    let engine = Engine::new(head.identity(), head.options());
+    let engine = Engine::new(head.identity(), head.options()).expect("an engine that powers up");
     let record = Scene::new(&head).record(1, true, &engine.settings());
     let undeclared = SCENE.undeclared(&UNFILLED, &record);
     assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
@@ -544,7 +567,8 @@ const HELD: Position = Position {
 fn a_scene_holds_the_position_it_is_told_to() {
     let head = declared_head();
     let scene = Scene::new(&head);
-    let mut engine = Engine::new(head.identity(), head.options());
+    let mut engine =
+        Engine::new(head.identity(), head.options()).expect("an engine that powers up");
     let mut lines = Lines {
         text: String::new(),
         second: 1,

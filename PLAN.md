@@ -1066,6 +1066,19 @@ stands in for one.
   in step.  A power-up is a new model, six-channel again.  The cost is
   a caller of the flag that no longer builds, which is wanted: it has
   to say who.
+- **A model can power up configured** (`Options::saved`, a
+  `SavedConfiguration` or none; decided 2026-11-15).  A VP keeps the
+  rate of its position status in nonvolatile memory, and one sending
+  it when turned off sends it again at power-up (VP pp. 70 and 124),
+  so an engine a receiver configured earlier comes up sending
+  unasked.  The option replaces a bare status rate, which said the
+  same of one message and fixed the family by the identity: a saved
+  configuration names its channels, whether it fixes, and its rates,
+  and grows a field for each thing a configuration needs.  Its
+  channels must be the identity's, and a UT Plus, which has no idle
+  mode, cannot be saved idle: `Engine::new` returns a
+  `ConfigurationError` for either, so it is fallible, where a silent
+  choice of family would hide a caller's mistake.
 - **The model computes nothing physical.**  Dilutions of precision, a
   position in Earth-centered coordinates and magnetic variation need
   floating point or tables a Cortex-M0 should not carry, so a record

@@ -1756,6 +1756,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "smartclock-gps-feed"
+version = "1.9.1"
+dependencies = [
+ "anyhow",
+ "clap",
+ "jiff",
+ "serialport",
+ "smartclock-gps",
+ "smartclock-gps-ublox",
+]
+
+[[package]]
 name = "smartclock-gps-ublox"
 version = "1.9.1"
 dependencies = [

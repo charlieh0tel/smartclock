@@ -210,6 +210,25 @@ Without a receiver, use the simulator; every tool takes
     smartclockd     --device tcp://127.0.0.1:5025 ...
     smartclock-cli  --device tcp://127.0.0.1:5025 diagnose
 
+### A GPS engine on a host
+
+`smartclock-gps-feed` stands in for a receiver's GPS engine: it runs
+the Oncore model of `smartclock-gps` on a host, paced to real time,
+and speaks Oncore binary to a `SmartClock`'s engine port, through a
+serial-to-TCP bridge (`--connect`), as a TCP server (`--listen`) or on
+a serial port at 9600 8N1 (`--serial`).  Each second's record comes
+from gpsd's raw output of a u-blox receiver, a raw UBX recording, or
+a made-up sky, fixed or with a leap second.  The 1 PPS is not carried.
+
+    smartclock-gps-feed gpsd:gpshost --engine vp-eight --connect bridge:2001
+    smartclock-gps-feed ubx:capture.ubx --engine ut-plus-3.1 --serial /dev/ttyUSB0
+    smartclock-gps-feed fixed --engine vp-eight --saved 58503a --deaf --listen 0.0.0.0:4001
+    smartclock-gps-feed leap:2028-01-01T00:00:00Z --engine vp-six --eight-on-ea vp-eight \
+        --connect bridge:2001 --log wire.log
+
+`--fake-start RFC3339` relabels any provider's time;
+`smartclock-gps-feed --help` has the rest, and `PLAN.md` the design.
+
 ## Development
 
 `make ci` runs CI's Rust checks: formatting, clippy, the tests, the

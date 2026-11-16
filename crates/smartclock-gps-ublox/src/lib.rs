@@ -95,7 +95,7 @@
 //!   velocity along each axis and the inside of the solution: not
 //!   filled.
 //!
-//! [`FILLER`] says which parts of a record that comes to, and the
+//! [`DECLARATION`] says which parts of a record that comes to, and the
 //! crate's tests hold it to what [`Assembler`] writes.
 
 #![no_std]
@@ -125,8 +125,8 @@ use smartclock_gps::record::Satellites;
 use smartclock_gps::record::SelfTest;
 use smartclock_gps::record::Tracking;
 use smartclock_gps::record::Velocity;
+use smartclock_gps::record::field::Declaration;
 use smartclock_gps::record::field::FieldSet;
-use smartclock_gps::record::field::Filler;
 use smartclock_gps::record::field::RecordField;
 use smartclock_gps::source::replay::Assemble;
 use smartclock_gps::time::ALMANAC_WEEKS;
@@ -1306,7 +1306,7 @@ struct Announced {
 /// ([`IMAGE_SETS`](smartclock_gps::record::field::IMAGE_SETS)) would
 /// be a configuration sent.  `docs/firmware/gps-setting-exceptions.tsv`
 /// excuses it each.
-pub const FILLER: Filler = Filler {
+pub const DECLARATION: Declaration = Declaration {
     name: "u-blox",
     fills: FieldSet::of(&[
         RecordField::Time,

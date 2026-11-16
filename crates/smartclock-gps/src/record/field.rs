@@ -1,17 +1,17 @@
 //! What a [`Record`] is made of, named, so that whoever fills one can
 //! say which parts it fills and have that checked.
 //!
-//! A [`RecordField`] is one thing a filler either supplies or does not.
-//! A filler declares the [`FieldSet`] it fills and the
-//! [`SettingSet`] of the engine's settings it acts on, as a [`Filler`],
+//! A [`RecordField`] is one thing a provider either supplies or does not.
+//! A provider declares the [`FieldSet`] it fills and the
+//! [`SettingSet`] of the engine's settings it acts on, as a [`Declaration`],
 //! and its tests hold the declaration to two things:
 //!
-//! - to the receivers: [`Filler::shortfall`] is what the images use
+//! - to the receivers: [`Declaration::shortfall`] is what the images use
 //!   ([`IMAGE_USES`]) that it does not fill and that
 //!   `docs/firmware/gps-field-exceptions.tsv` does not excuse it;
 //! - to itself: [`changed`] says which fields a fill made differ from
-//!   the record before it, [`Filler::undeclared`] which of those it did
-//!   not declare, and [`Filler::unshown`] which it declared that no
+//!   the record before it, [`Declaration::undeclared`] which of those it did
+//!   not declare, and [`Declaration::unshown`] which it declared that no
 //!   fill has been seen to change.  A field may rightly be left at the
 //!   value an empty record has, so the fills compared must be ones made
 //!   to give each field another.
@@ -21,15 +21,15 @@
 //! rows name these fields by [`RecordField::path`], and
 //! `make check-gps-fields` fails when the two differ.
 //!
-//! A filler declares as well the engine's settings it acts on
-//! ([`Filler::acts`]): a command whose effect is not on the bytes the
+//! A provider declares as well the engine's settings it acts on
+//! ([`Declaration::acts`]): a command whose effect is not on the bytes the
 //! engine builds leaves its value in the engine's
 //! [`Settings`](crate::engine::settings::Settings) for the engine's
 //! holder to apply.  [`IMAGE_SETS`], made the same way, is those the
-//! images set, and a filler's test holds that it acts on each or is
+//! images set, and a provider's test holds that it acts on each or is
 //! excused it by a row of `docs/firmware/gps-setting-exceptions.tsv`,
-//! and is excused nothing else: [`Filler::unacted`] and
-//! [`Filler::needless`] are both empty.  A filler may act on more than
+//! and is excused nothing else: [`Declaration::unacted`] and
+//! [`Declaration::needless`] are both empty.  A provider may act on more than
 //! the images set; only a row can be needless.
 
 use crate::engine::settings::Setting;
@@ -48,7 +48,7 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
-/// One part of a [`Record`] a filler supplies or does not.
+/// One part of a [`Record`] a provider supplies or does not.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum RecordField {
@@ -539,9 +539,9 @@ pub const IMAGE_SETS: SettingSet = SettingSet::of(&[
 
 /// The first line of the field exceptions table that is not a
 /// comment: its columns.
-const EXCEPTION_COLUMNS: &str = "filler\tfield\treason";
+const EXCEPTION_COLUMNS: &str = "provider\tfield\treason";
 /// And that of the setting exceptions table.
-const SETTING_EXCEPTION_COLUMNS: &str = "filler\tsetting\treason";
+const SETTING_EXCEPTION_COLUMNS: &str = "provider\tsetting\treason";
 /// What a comment line of an exceptions table starts with.
 const EXCEPTION_COMMENT: char = '#';
 /// What parts the cells of a row of one.
@@ -559,23 +559,23 @@ fn exception_rows<'a>(
         .map(|line| line.split(EXCEPTION_CELL))
 }
 
-/// What the rows of an exceptions table excuse the filler called
+/// What the rows of an exceptions table excuse the provider called
 /// `name`: the second cell of each of its rows, the first being the
-/// filler and the third the reason.
+/// provider and the third the reason.
 fn excused_names<'a>(
     name: &'a str,
     exceptions: &'a str,
     columns: &'a str,
 ) -> impl Iterator<Item = &'a str> {
     exception_rows(exceptions, columns).filter_map(move |mut cells| {
-        let filler = cells.next()?;
+        let provider = cells.next()?;
         let excused = cells.next()?;
-        (filler == name).then_some(excused)
+        (provider == name).then_some(excused)
     })
 }
 
 /// The fields the text of `docs/firmware/gps-field-exceptions.tsv`
-/// excuses the filler called `name`: a row for each, of the filler, the
+/// excuses the provider called `name`: a row for each, of the provider, the
 /// field's [`RecordField::path`] and the reason.
 fn excused(name: &str, exceptions: &str) -> FieldSet {
     excused_names(name, exceptions, EXCEPTION_COLUMNS)
@@ -584,7 +584,7 @@ fn excused(name: &str, exceptions: &str) -> FieldSet {
 }
 
 /// The settings the text of `docs/firmware/gps-setting-exceptions.tsv`
-/// excuses the filler called `name`: a row for each, of the filler, the
+/// excuses the provider called `name`: a row for each, of the provider, the
 /// setting's [`Setting::name`] and the reason.
 fn excused_settings(name: &str, exceptions: &str) -> SettingSet {
     excused_names(name, exceptions, SETTING_EXCEPTION_COLUMNS)
@@ -592,10 +592,10 @@ fn excused_settings(name: &str, exceptions: &str) -> SettingSet {
         .fold(SettingSet::EMPTY, SettingSet::with)
 }
 
-/// What fills records, as it declares itself.
+/// What a provider of records declares of itself.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Filler {
-    /// What the exceptions tables call it.
+pub struct Declaration {
+    /// What the exceptions tables call the provider.
     pub name: &'static str,
     /// The fields it fills from what it knows.
     pub fills: FieldSet,
@@ -603,10 +603,10 @@ pub struct Filler {
     pub acts: SettingSet,
 }
 
-impl Filler {
+impl Declaration {
     /// The fields the images use that it does not fill and `exceptions`,
     /// the text of `docs/firmware/gps-field-exceptions.tsv`, does not
-    /// excuse it.  A filler's test fails unless this is empty.
+    /// excuse it.  A provider's test fails unless this is empty.
     #[must_use]
     pub fn shortfall(&self, exceptions: &str) -> FieldSet {
         IMAGE_USES
@@ -615,7 +615,7 @@ impl Filler {
     }
 
     /// The fields a fill changed, `before` to `after`, that it does not
-    /// declare.  A filler's test fails unless this is empty, `before`
+    /// declare.  A provider's test fails unless this is empty, `before`
     /// being [`UNFILLED`].
     #[must_use]
     pub fn undeclared(&self, before: &Record, after: &Record) -> FieldSet {
@@ -623,7 +623,7 @@ impl Filler {
     }
 
     /// The fields it declares that are not among `shown`, those its
-    /// fills have been seen to change from [`UNFILLED`].  A filler's
+    /// fills have been seen to change from [`UNFILLED`].  A provider's
     /// test fails unless this is empty.
     #[must_use]
     pub const fn unshown(&self, shown: FieldSet) -> FieldSet {
@@ -633,7 +633,7 @@ impl Filler {
     /// The settings the images set that it does not act on and
     /// `exceptions`, the text of
     /// `docs/firmware/gps-setting-exceptions.tsv`, does not excuse it.
-    /// A filler's test fails unless this is empty.
+    /// A provider's test fails unless this is empty.
     #[must_use]
     pub fn unacted(&self, exceptions: &str) -> SettingSet {
         IMAGE_SETS
@@ -643,8 +643,8 @@ impl Filler {
 
     /// The settings `exceptions` excuses it that need no excuse: one
     /// no image sets, and one it acts on, a row gone stale.  A setting
-    /// it acts on that no image sets is not among them: a filler may
-    /// act on more than the images set.  A filler's test fails unless
+    /// it acts on that no image sets is not among them: a provider may
+    /// act on more than the images set.  A provider's test fails unless
     /// this is empty.
     #[must_use]
     pub fn needless(&self, exceptions: &str) -> SettingSet {
@@ -655,8 +655,8 @@ impl Filler {
 
 #[cfg(test)]
 mod tests {
+    use super::Declaration;
     use super::FieldSet;
-    use super::Filler;
     use super::IMAGE_SETS;
     use super::IMAGE_USES;
     use super::RecordField;
@@ -680,7 +680,7 @@ mod tests {
     const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
     /// And the settings'.
     const SETTING_EXCEPTIONS: &str = "../../docs/firmware/gps-setting-exceptions.tsv";
-    /// The cells of a row of an exceptions table: the filler, what it
+    /// The cells of a row of an exceptions table: the provider, what it
     /// is excused and the reason.
     const EXCEPTION_CELLS: usize = 3;
 
@@ -735,24 +735,25 @@ mod tests {
         );
     }
 
-    /// A filler is held to what the images use, less what the table
+    /// A provider is held to what the images use, less what the table
     /// excuses it by name, and to what its fills change.
     #[test]
-    fn a_filler_is_held_to_its_declaration() {
-        let all = Filler {
+    fn a_provider_is_held_to_its_declaration() {
+        let all = Declaration {
             name: "all",
             fills: FieldSet::of(&RecordField::ALL),
             acts: SettingSet::EMPTY,
         };
         assert!(all.shortfall("").is_empty());
-        let none = Filler {
+        let none = Declaration {
             name: "none",
             fills: FieldSet::EMPTY,
             acts: SettingSet::EMPTY,
         };
         assert_eq!(none.shortfall(""), IMAGE_USES);
         assert!(IMAGE_USES.contains(RecordField::Fix));
-        let table = "# a comment\nfiller\tfield\treason\nnone\tfix\tfor the test\nother\tleap\t-\n";
+        let table =
+            "# a comment\nprovider\tfield\treason\nnone\tfix\tfor the test\nother\tleap\t-\n";
         assert_eq!(excused("none", table), FieldSet::of(&[RecordField::Fix]));
         assert_eq!(
             none.shortfall(table),
@@ -767,19 +768,19 @@ mod tests {
         assert_eq!(all.unshown(shown), all.fills.without(shown));
     }
 
-    /// A filler is held to the settings the images set: it acts on
+    /// A provider is held to the settings the images set: it acts on
     /// each or the table excuses it, and the table excuses it none for
     /// nothing.  It may act on one no image sets.
     #[test]
-    fn a_filler_is_held_to_the_settings() {
+    fn a_provider_is_held_to_the_settings() {
         let hold = SettingSet::of(&[Setting::PositionHold]);
-        let filler = Filler {
+        let declaration = Declaration {
             name: "one",
             fills: FieldSet::EMPTY,
             acts: hold,
         };
-        assert_eq!(filler.unacted(""), IMAGE_SETS.without(hold));
-        assert!(filler.needless("").is_empty());
+        assert_eq!(declaration.unacted(""), IMAGE_SETS.without(hold));
+        assert!(declaration.needless("").is_empty());
 
         let rest = IMAGE_SETS
             .without(hold)
@@ -787,56 +788,56 @@ mod tests {
             .fold(std::string::String::new(), |table, setting| {
                 table + "one\t" + setting.name() + "\tfor the test\n"
             });
-        let table = std::string::String::from("# a comment\nfiller\tsetting\treason\n") + &rest;
-        assert!(filler.unacted(&table).is_empty());
-        assert!(filler.needless(&table).is_empty());
-        // Another filler's rows are not this one's.
-        let other = Filler {
+        let table = std::string::String::from("# a comment\nprovider\tsetting\treason\n") + &rest;
+        assert!(declaration.unacted(&table).is_empty());
+        assert!(declaration.needless(&table).is_empty());
+        // Another provider's rows are not this one's.
+        let other = Declaration {
             name: "other",
-            ..filler
+            ..declaration
         };
         assert_eq!(other.unacted(&table), IMAGE_SETS.without(hold));
 
         // A row for a setting acted on, and one for a setting no image
         // sets, are both needless.
         let stale = table.clone() + "one\tposition_hold\tstale\n";
-        assert_eq!(filler.needless(&stale), hold);
+        assert_eq!(declaration.needless(&stale), hold);
         assert!(!IMAGE_SETS.contains(Setting::MaskAngle));
         let unset = SettingSet::of(&[Setting::MaskAngle]);
         let unset_excused = table.clone() + "one\tmask_angle\t-\n";
-        assert_eq!(filler.needless(&unset_excused), unset);
+        assert_eq!(declaration.needless(&unset_excused), unset);
 
         // Acting on a setting no image sets is not, with the rest
         // acted on or excused; acting on it and being excused it is.
-        let keen = Filler {
+        let keen = Declaration {
             acts: IMAGE_SETS.union(unset),
-            ..filler
+            ..declaration
         };
         assert!(keen.unacted("").is_empty());
         assert!(keen.needless("").is_empty());
-        let also = Filler {
+        let also = Declaration {
             acts: hold.union(unset),
-            ..filler
+            ..declaration
         };
         assert!(also.unacted(&table).is_empty());
         assert!(also.needless(&table).is_empty());
         assert_eq!(also.needless(&unset_excused), unset);
 
         // The kind of DOP and the ignore list are the engine's to act
-        // on: no filler is held to either, and one may act on them all
+        // on: no provider is held to either, and one may act on them all
         // the same.
         assert!(!IMAGE_SETS.contains(Setting::DopKind));
         assert!(!IMAGE_SETS.contains(Setting::IgnoreList));
-        let tabler = Filler {
+        let tabler = Declaration {
             acts: hold.with(Setting::DopKind).with(Setting::IgnoreList),
-            ..filler
+            ..declaration
         };
         assert!(tabler.unacted(&table).is_empty());
         assert!(tabler.needless(&table).is_empty());
     }
 
     /// The setting exceptions table as it is: every row names a
-    /// setting the images set, once for its filler, and gives a reason.
+    /// setting the images set, once for its provider, and gives a reason.
     #[test]
     fn the_setting_exceptions_name_settings() {
         let text =

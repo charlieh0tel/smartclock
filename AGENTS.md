@@ -157,25 +157,25 @@ here, where they go stale unnoticed.
 - The message set is what the SmartClock images send and decode.
 - Each message the engine of `crates/smartclock-gps` speaks is
   implemented fully, every field per the manual.
-- Each filler of a `Record` supplies at least the fields the images
-  read, from real data.  A field a filler cannot fill goes out as the
+- Each provider of a `Record` supplies at least the fields the images
+  read, from real data.  A field a provider cannot fill goes out as the
   manual's unknown value, else zero.
 - Exceptions are the owner's to grant: a row of
   `docs/firmware/gps-field-exceptions.tsv` for a field not filled, of
   `docs/firmware/gps-setting-exceptions.tsv` for a setting not acted
   on.  Never add one yourself.
-- A filler declares a `Filler` (`smartclock_gps::record::field`): the
-  `RecordField`s it fills and the settings it acts on, with a test
-  that holds it to `IMAGE_USES`, the exceptions and what a fill
+- A provider declares a `Declaration`
+  (`smartclock_gps::record::field`): the `RecordField`s it fills and
+  the settings it acts on, with a test that holds it to `IMAGE_USES`, the exceptions and what a fill
   changes, and to `IMAGE_SETS`: each setting acted on or excused,
   never both, and none excused that no image sets.  It may act on
   more.  A new part of a `Record` gets a `RecordField`.
 - A command is one of three classes, no exceptions: the engine acts
   (its effect is on bytes the engine builds), the holder acts (the
-  value is in `Engine::settings()` with a change event, and a filler
+  value is in `Engine::settings()` with a change event, and a provider
   or application applies it), or it is a gap.  The table's acts
   column says which; `IMAGE_SETS` is the settings the images set, and
-  a filler's test says which of them it leaves.
+  a provider's test says which of them it leaves.
 - `docs/firmware/gps-fields.tsv` is the check: every field, the manual
   page, which images read or set it, measured from the images, what
   they use it for, and where the engine gets it.

@@ -1127,13 +1127,13 @@ stands in for one.
   implemented fully, per the manual, and whatever fills a `Record`
   supplies at least the fields the images read, from real data, a field
   it cannot fill going out as the manual's unknown value, else zero;
-  exceptions are the owner's.  A filler declares the fields it fills
+  exceptions are the owner's.  A provider declares the fields it fills
   and the settings it acts on (`record::field`: `RecordField`,
-  `FieldSet`, `Filler`), and its tests hold the declaration to
+  `FieldSet`, `Declaration`), and its tests hold the declaration to
   `IMAGE_USES`, which the check writes from the table's used rows, to
   `docs/firmware/gps-field-exceptions.tsv`, which is empty and the
   owner's alone to add to, and to what a fill really changes.  Both
-  fillers here fill all the images use: the self-test as a pass, and
+  providers here fill all the images use: the self-test as a pass, and
   the Time RAIM result from the scene's sky and from a u-blox
   receiver's `TIM-TP`.  Every field of a response
   is now the record's, the model's state or the manual's value for not
@@ -1143,7 +1143,7 @@ stands in for one.
   the engine builds; the holder acts, the value being in
   `Engine::settings()` with a change event; or a gap.  No command an
   image sets is a gap, and the check lists any that becomes one
-  (`docs/firmware/gps.md`, "The fields").  A filler declares the
+  (`docs/firmware/gps.md`, "The fields").  A provider declares the
   settings it acts on beside the fields it fills, and its test holds
   that each of `IMAGE_SETS`, the settings the images set, is one of
   those or has a row of `docs/firmware/gps-setting-exceptions.tsv`,
@@ -1216,7 +1216,7 @@ stands in for one.
   of satellites `@@Am` says to ignore, which the model leaves off its
   channels and marks removed itself: whatever chooses the satellites
   a record is made from may leave them out.  Neither is of
-  `IMAGE_SETS`, and no filler is held to either.  `@@Ci` 1 and 2
+  `IMAGE_SETS`, and no provider is held to either.  `@@Ci` 1 and 2
   are held and told like the rest and change nothing in the model,
   which speaks neither NMEA nor Loran and goes on in binary; an
   earlier revision had it fall silent, which took a call of its

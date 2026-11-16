@@ -46,8 +46,8 @@ use smartclock_gps::record::Record;
 use smartclock_gps::record::Satellite;
 use smartclock_gps::record::SelfTest;
 use smartclock_gps::record::Timing;
+use smartclock_gps::record::field::Declaration;
 use smartclock_gps::record::field::FieldSet;
-use smartclock_gps::record::field::Filler;
 use smartclock_gps::record::field::RecordField;
 use smartclock_gps::record::field::UNFILLED;
 use smartclock_gps::record::field::changed;
@@ -122,7 +122,7 @@ const RAIM_WITHOUT_ANTENNA: Raim = Raim::new(RaimSolution::Unknown, RaimAbility:
 
 /// What a [`Scene`] fills of a record, and the settings it acts on:
 /// in position hold its receiver is where it was told it is.
-const SCENE: Filler = Filler {
+const SCENE: Declaration = Declaration {
     name: "engine vectors",
     fills: FieldSet::of(&[
         RecordField::Time,
@@ -258,7 +258,7 @@ fn unhex(text: &str) -> Vec<u8> {
         .collect()
 }
 
-/// The place's Earth-centered coordinates, which a record's filler
+/// The place's Earth-centered coordinates, which a record's provider
 /// works out.
 fn ecef(position: Position) -> Ecef {
     let flattening = 1.0 / INVERSE_FLATTENING;

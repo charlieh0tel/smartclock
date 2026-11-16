@@ -1356,6 +1356,23 @@ stands in for one.
   `third_party/` has no copy.  It is integer only, as the core is: it
   reads the receiver's navigation solution and decodes no satellite's
   own data, so it fills no almanac.
+  - *One UBX parser, shared.*  A microcontroller board with a u-blox
+    module (a Cortex-M0, little RAM, small stack frames) reads its
+    module with this crate's framing and decoders rather than a parser
+    of its own, and hosts read recordings with the same code.  So the
+    decoders are complete, not cut to what a record holds: every field
+    of each message, in the message's own units, with the record's
+    view of a field a method beside it.  The board's configuration of
+    its module, the `CFG-*` messages it sends, stays the board's: this
+    crate decodes and builds no configuration.
+  - *Floating point is kept as bits.*  `RXM-RAWX` gives its
+    measurements as `R4` and `R8`; they are decoded to their bits and
+    the caller converts.  A Cortex-M0 has no floating-point unit, and
+    nothing here needs the numbers.
+  - *Exact lengths.*  A message of a header and blocks is decoded only
+    when its own count of blocks (`numSvs`, `numMeas`, `numWords`) is
+    the count its length gives; the deframer's length check alone lets
+    any whole number of blocks through.
   - *A length is not followed on its own word.*  A UBX frame says its
     own length, up to 65535 bytes, and the checksum that would vouch
     for it comes after them.  A message the crate decodes must have

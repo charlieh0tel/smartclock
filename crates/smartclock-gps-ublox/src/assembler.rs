@@ -235,12 +235,20 @@ impl Assembly {
         self.epoch.time_of_week = Some(time_of_week);
         match message {
             Message::NavPosEcef(ecef) => self.epoch.ecef = Some(ecef.position),
-            Message::NavDop(dop) => self.epoch.dops = Some(dop.dops),
+            Message::NavDop(dop) => self.epoch.dops = Some(dop.dops()),
             Message::NavPvt(solution) => self.epoch.solution = Some(*solution),
             Message::NavTimeGps(time) => self.epoch.time = Some(*time),
             Message::NavTimeLs(leap) => self.epoch.leap = Some(*leap),
             Message::NavSat(sat) => self.epoch.satellites = sat.sky(),
-            Message::NavEoe(_) | Message::MonHw(_) | Message::TimTp(_) => {}
+            Message::NavVelEcef(_)
+            | Message::NavClock(_)
+            | Message::NavEoe(_)
+            | Message::RxmSfrbx(_)
+            | Message::RxmRawx(_)
+            | Message::AckNak(_)
+            | Message::AckAck(_)
+            | Message::MonHw(_)
+            | Message::TimTp(_) => {}
         }
         other
     }
@@ -254,12 +262,15 @@ impl Assembly {
         record.self_test = SelfTest::PASS;
         record.derived.raim = self.raim;
         record.satellites = epoch.satellites;
-        if let Some(solution) = epoch.solution.filter(|solution| solution.fix != Fix::None) {
-            record.fix = solution.fix;
-            record.position = solution.position;
-            record.velocity = Some(solution.velocity);
+        if let Some(solution) = epoch
+            .solution
+            .filter(|solution| solution.fix() != Fix::None)
+        {
+            record.fix = solution.fix();
+            record.position = solution.position();
+            record.velocity = Some(solution.velocity());
             record.dops = epoch.dops;
-            record.derived.ecef = epoch.ecef.filter(|_| solution.position.is_some());
+            record.derived.ecef = epoch.ecef.filter(|_| record.position.is_some());
             record.time = epoch
                 .time
                 .and_then(|time| time.seconds(self.reference))
@@ -271,8 +282,8 @@ impl Assembly {
         let now = record.time.map(|time| time.seconds);
         let count = epoch
             .leap
-            .and_then(|leap| leap.count)
-            .or_else(|| epoch.time.and_then(|time| time.leap_seconds));
+            .and_then(|leap| leap.count())
+            .or_else(|| epoch.time.and_then(|time| time.leap_seconds()));
         self.note(now, count, epoch.leap);
         (record.utc_offset, record.leap) = match (self.announced, now) {
             (Some(Announced { event, before }), Some(now)) => {
@@ -295,7 +306,7 @@ impl Assembly {
         let (Some(now), Some(leap)) = (now, leap) else {
             return;
         };
-        let notice = leap.notice.filter(LeapNotice::pending);
+        let notice = leap.notice().filter(LeapNotice::pending);
         let withdrawn = self
             .announced
             .is_some_and(|announced| announced.event.pending(now));

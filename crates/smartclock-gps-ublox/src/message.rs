@@ -3,12 +3,14 @@
 
 use smartclock_gps::units::Milliseconds;
 
+use crate::ack::Ack;
 use crate::fields::Fields;
 use crate::frame::Frame;
 use crate::frame::MessageId;
 use crate::mon::MonHw;
 use crate::nav::NAV_SAT_BLOCK;
 use crate::nav::NAV_SAT_HEADER;
+use crate::nav::NavClock;
 use crate::nav::NavDop;
 use crate::nav::NavEoe;
 use crate::nav::NavPosEcef;
@@ -16,13 +18,28 @@ use crate::nav::NavPvt;
 use crate::nav::NavSat;
 use crate::nav::NavTimeGps;
 use crate::nav::NavTimeLs;
+use crate::nav::NavVelEcef;
+use crate::rxm::RAWX_BLOCK;
+use crate::rxm::RAWX_HEADER;
+use crate::rxm::RxmRawx;
+use crate::rxm::RxmSfrbx;
+use crate::rxm::SFRBX_HEADER;
+use crate::rxm::SFRBX_WORD;
 use crate::tim::TimTp;
+
 /// The navigation results' class (section 32.6, p. 172).
 const CLASS_NAV: u8 = 0x01;
+/// The receiver manager's class.
+const CLASS_RXM: u8 = 0x02;
+/// The acknowledgments' class.
+const CLASS_ACK: u8 = 0x05;
 /// The monitoring class.
 const CLASS_MON: u8 = 0x0a;
 /// The timing class.
 const CLASS_TIM: u8 = 0x0d;
+
+/// `gnssId` for GPS (appendix A, p. 446).
+pub const SYSTEM_GPS: u8 = 0;
 
 /// `UBX-NAV-POSECEF`, the position in Earth-centered coordinates
 /// (section 32.17.15, p. 374).
@@ -32,14 +49,28 @@ pub const NAV_DOP: MessageId = MessageId::new(CLASS_NAV, 0x04);
 /// `UBX-NAV-PVT`, the position, velocity and time solution (section
 /// 32.17.17, p. 375).
 pub const NAV_PVT: MessageId = MessageId::new(CLASS_NAV, 0x07);
+/// `UBX-NAV-VELECEF`, the velocity in Earth-centered coordinates
+/// (section 32.17.33).
+pub const NAV_VELECEF: MessageId = MessageId::new(CLASS_NAV, 0x11);
 /// `UBX-NAV-TIMEGPS`, the GPS time solution (section 32.17.30, p. 397).
 pub const NAV_TIMEGPS: MessageId = MessageId::new(CLASS_NAV, 0x20);
+/// `UBX-NAV-CLOCK`, the clock solution (section 32.17.3).
+pub const NAV_CLOCK: MessageId = MessageId::new(CLASS_NAV, 0x22);
 /// `UBX-NAV-TIMELS`, the leap second (section 32.17.31, p. 398).
 pub const NAV_TIMELS: MessageId = MessageId::new(CLASS_NAV, 0x26);
 /// `UBX-NAV-SAT`, the satellites (section 32.17.20, p. 381).
 pub const NAV_SAT: MessageId = MessageId::new(CLASS_NAV, 0x35);
 /// `UBX-NAV-EOE`, the end of an epoch (section 32.17.8, p. 363).
 pub const NAV_EOE: MessageId = MessageId::new(CLASS_NAV, 0x61);
+/// `UBX-RXM-SFRBX`, a subframe of a satellite's navigation data
+/// (section 32.18.7).
+pub const RXM_SFRBX: MessageId = MessageId::new(CLASS_RXM, 0x13);
+/// `UBX-RXM-RAWX`, the raw measurements (section 32.18.4).
+pub const RXM_RAWX: MessageId = MessageId::new(CLASS_RXM, 0x15);
+/// `UBX-ACK-NAK`, a message refused (section 32.8.2).
+pub const ACK_NAK: MessageId = MessageId::new(CLASS_ACK, 0x00);
+/// `UBX-ACK-ACK`, a message acknowledged (section 32.8.1).
+pub const ACK_ACK: MessageId = MessageId::new(CLASS_ACK, 0x01);
 /// `UBX-MON-HW`, the hardware's status (section 32.16.4, p. 342).
 pub const MON_HW: MessageId = MessageId::new(CLASS_MON, 0x09);
 /// `UBX-TIM-TP`, the next time pulse (section 32.20.8, p. 432).
@@ -74,11 +105,13 @@ impl PayloadLength {
 
 /// The messages this crate decodes, each with its payload's length as
 /// its section's "Message Structure" gives it.
-pub const MESSAGES: [(MessageId, PayloadLength); 9] = [
+pub const MESSAGES: [(MessageId, PayloadLength); 15] = [
     (NAV_POSECEF, PayloadLength::Fixed(20)),
     (NAV_DOP, PayloadLength::Fixed(18)),
     (NAV_PVT, PayloadLength::Fixed(92)),
+    (NAV_VELECEF, PayloadLength::Fixed(20)),
     (NAV_TIMEGPS, PayloadLength::Fixed(16)),
+    (NAV_CLOCK, PayloadLength::Fixed(20)),
     (NAV_TIMELS, PayloadLength::Fixed(24)),
     (
         NAV_SAT,
@@ -88,6 +121,22 @@ pub const MESSAGES: [(MessageId, PayloadLength); 9] = [
         },
     ),
     (NAV_EOE, PayloadLength::Fixed(4)),
+    (
+        RXM_SFRBX,
+        PayloadLength::Blocks {
+            header: SFRBX_HEADER,
+            block: SFRBX_WORD,
+        },
+    ),
+    (
+        RXM_RAWX,
+        PayloadLength::Blocks {
+            header: RAWX_HEADER,
+            block: RAWX_BLOCK,
+        },
+    ),
+    (ACK_NAK, PayloadLength::Fixed(2)),
+    (ACK_ACK, PayloadLength::Fixed(2)),
     (MON_HW, PayloadLength::Fixed(60)),
     (TIM_TP, PayloadLength::Fixed(16)),
 ];
@@ -110,14 +159,26 @@ pub enum Message<'a> {
     NavDop(NavDop),
     /// `UBX-NAV-PVT`.
     NavPvt(NavPvt),
+    /// `UBX-NAV-VELECEF`.
+    NavVelEcef(NavVelEcef),
     /// `UBX-NAV-TIMEGPS`.
     NavTimeGps(NavTimeGps),
+    /// `UBX-NAV-CLOCK`.
+    NavClock(NavClock),
     /// `UBX-NAV-TIMELS`.
     NavTimeLs(NavTimeLs),
     /// `UBX-NAV-SAT`.
     NavSat(NavSat<'a>),
     /// `UBX-NAV-EOE`.
     NavEoe(NavEoe),
+    /// `UBX-RXM-SFRBX`.
+    RxmSfrbx(RxmSfrbx<'a>),
+    /// `UBX-RXM-RAWX`.
+    RxmRawx(RxmRawx<'a>),
+    /// `UBX-ACK-NAK`.
+    AckNak(Ack),
+    /// `UBX-ACK-ACK`.
+    AckAck(Ack),
     /// `UBX-MON-HW`.
     MonHw(MonHw),
     /// `UBX-TIM-TP`.
@@ -125,9 +186,11 @@ pub enum Message<'a> {
 }
 
 impl<'a> Message<'a> {
-    /// What a frame says.  `None` for a message not in [`MESSAGES`],
-    /// and for a `NAV-SAT` or `NAV-TIMELS` of a version other than the
-    /// document's.
+    /// What a frame says.  `None` for a message not in [`MESSAGES`] or
+    /// not of a length it may have; for a `NAV-SAT`, `RXM-RAWX` or
+    /// `RXM-SFRBX` whose count of blocks is not the one its length
+    /// gives; and for a `NAV-SAT` or `NAV-TIMELS` of a version other
+    /// than the document's.
     #[must_use]
     pub fn parse(frame: Frame<'a>) -> Option<Self> {
         let payload = frame.payload();
@@ -139,12 +202,18 @@ impl<'a> Message<'a> {
             NAV_POSECEF => Self::NavPosEcef(NavPosEcef::parse(fields)),
             NAV_DOP => Self::NavDop(NavDop::parse(fields)),
             NAV_PVT => Self::NavPvt(NavPvt::parse(fields)),
+            NAV_VELECEF => Self::NavVelEcef(NavVelEcef::parse(fields)),
             NAV_TIMEGPS => Self::NavTimeGps(NavTimeGps::parse(fields)),
+            NAV_CLOCK => Self::NavClock(NavClock::parse(fields)),
             NAV_TIMELS => Self::NavTimeLs(NavTimeLs::parse(fields)?),
             NAV_SAT => Self::NavSat(NavSat::parse(payload)?),
             NAV_EOE => Self::NavEoe(NavEoe {
                 time_of_week: fields.time_of_week(),
             }),
+            RXM_SFRBX => Self::RxmSfrbx(RxmSfrbx::parse(payload)?),
+            RXM_RAWX => Self::RxmRawx(RxmRawx::parse(payload)?),
+            ACK_NAK => Self::AckNak(Ack::parse(fields)),
+            ACK_ACK => Self::AckAck(Ack::parse(fields)),
             MON_HW => Self::MonHw(MonHw::parse(fields)),
             TIM_TP => Self::TimTp(TimTp::parse(fields)),
             _ => return None,
@@ -159,11 +228,18 @@ impl<'a> Message<'a> {
             Self::NavPosEcef(message) => Some(message.time_of_week),
             Self::NavDop(message) => Some(message.time_of_week),
             Self::NavPvt(message) => Some(message.time_of_week),
+            Self::NavVelEcef(message) => Some(message.time_of_week),
             Self::NavTimeGps(message) => Some(message.time_of_week),
+            Self::NavClock(message) => Some(message.time_of_week),
             Self::NavTimeLs(message) => Some(message.time_of_week),
-            Self::NavSat(message) => Some(message.time_of_week),
+            Self::NavSat(message) => Some(message.header.time_of_week),
             Self::NavEoe(message) => Some(message.time_of_week),
-            Self::MonHw(_) | Self::TimTp(_) => None,
+            Self::RxmSfrbx(_)
+            | Self::RxmRawx(_)
+            | Self::AckNak(_)
+            | Self::AckAck(_)
+            | Self::MonHw(_)
+            | Self::TimTp(_) => None,
         }
     }
 }

@@ -1613,7 +1613,8 @@ impl Engine {
     /// The satellites in view as a position status counts them: the
     /// record's above the elevation the manual computes the number at,
     /// not `@@Ag`'s; none while idle, nor with no almanac to tell (VP
-    /// p. 70; UT p. 6.18).  `@@Bb` lists them all, counted or not.
+    /// p. 70; UT p. 6.18).  `@@Bb` lists by its own elevation
+    /// ([`Self::listed_from`]).
     fn visible(&self, record: &Record) -> usize {
         if !self.state.fixing || record.almanac.is_none() {
             return 0;
@@ -1773,23 +1774,39 @@ impl Engine {
         }
     }
 
-    /// The data of `@@Bb` (VP p. 75): the record's satellites, in the
-    /// order of their IDs whatever the record's, one given twice listed
-    /// once.  The manual gives no order; the receivers' firmware needs
-    /// this one, finding a satellite in the `@@Bb` it keeps by
-    /// bisecting on the ID (`satellite_find`, `screen.c` of each image
-    /// under `third_party/firmware/rewritten/`).
+    /// The elevation, in degrees, a satellite must be at or above for
+    /// `@@Bb` to list it: a VP's mask angle (`@@Ag`) and a UT Plus's
+    /// horizon (UT p. 6.23).  For the VP, a test of a real eight-channel
+    /// VP: with the mask at 10 or 20 degrees the lowest listed was at 21,
+    /// and with it at 0, satellites at 0, 6 and 8 degrees were listed.
+    /// Whether one exactly at the mask is listed is unsettled, none
+    /// having been between 10 and 21 degrees; the six-channel VP is
+    /// untested and taken to do the same.  None below the horizon is
+    /// listed.
+    fn listed_from(&self) -> i8 {
+        match self.identity.model() {
+            Model::VpSix | Model::VpEight => {
+                i8::try_from(self.state.store.mask_angle()).unwrap_or(i8::MAX)
+            }
+            Model::UtPlus => 0,
+        }
+        .max(0)
+    }
+
+    /// The data of `@@Bb` (VP p. 75): the record's satellites at or
+    /// above [`Self::listed_from`], in the order of their IDs whatever
+    /// the record's, one given twice listed once.  The manual gives no
+    /// order; the receivers' firmware needs this one, finding a
+    /// satellite in the `@@Bb` it keeps by bisecting on the ID
+    /// (`satellite_find`, `screen.c` of each image under
+    /// `third_party/firmware/rewritten/`).
     fn visibility(&self, record: &Record) -> Data {
+        let from = self.listed_from();
         let by_id = (1..=PRNS)
             .filter_map(Prn::new)
-            .filter_map(|prn| record.satellites.get(prn));
-        let count = record
-            .satellites
-            .iter()
-            .fold(PrnSet::EMPTY, |listed, satellite| {
-                listed.with(satellite.prn)
-            })
-            .len() as usize;
+            .filter_map(|prn| record.satellites.get(prn))
+            .filter(move |satellite| satellite.elevation.0 >= from);
+        let count = by_id.clone().count();
         let mut data = Data::new();
         data.byte(count_byte(count));
         for satellite in by_id {

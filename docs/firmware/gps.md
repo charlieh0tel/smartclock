@@ -59,7 +59,9 @@ it to -- mask angle, position and altitude hold, time base, the 1 PPS's
 cable delay, offset and mode, application type, initial position -- it
 gives as types (`Engine::settings`), and `Engine::receive` returns
 whether a command reset it (`@@Cf`) and which settings changed, for a
-tool that has something else to set the same way.
+tool that has something else to set the same way.  Its `engine::furuno`
+module stands in for the Z3815A's GT-74 the same way ("In every
+image").
 
 ## The serial link
 
@@ -1339,7 +1341,8 @@ specification; in short:
   position propagate bit with a DOP of zero (VP pp. 70, 72 and 73; UT
   p. 6.20).
 - **The Z3815A has no row.**  It speaks NMEA with Furuno's sentences,
-  which the model does not.
+  which the Oncore model does not; the Furuno model's are held to the
+  image's own table ("In every image").
 
 What the decoders skip: `@@Am`'s first byte; each line's CR LF in
 `@@Cj`, of which they read the text alone; and in `@@Bk`, on the 58503A
@@ -1466,6 +1469,38 @@ any talker, `$XXGLL` to set the initial position (p. 6) and `$XXZDA`
 the date and time (p. 8).  The GT-74's internal week rollover was
 2013/08/11 (`third_party/furuno/
 GNSS_Receiver_WeekNumberRollover_SE18-100-034-00_en.pdf` p. 5).
+
+**What the Z3815A sends its engine.**  Its requests are the Oncore's,
+translated (`gps_request_translate`, `0x5d7a8`, its table `0x5e6d4`):
+`@@Ag` to `set,M`, `@@Am` to `set,U`, `@@Af` to `set,H`, `@@As` to
+`GLL`, `@@At` to `set,Z`, `@@Az` to `set,t`, and `@@Aw` to a step of
+its own, the engine having no time mode to set.  Its start-up script
+`0x6b` (`0x5e82c`) sends `clr,1`, `int,tst00` and waits for `tst`, then
+`int,VTG00`, `int,ZDA00`, `int,GSV00`, `int,anc00`, `int,GGA01`,
+`int,GSA01`, `int,tps01`, `int,rrm01` and `rrs` with the Time RAIM
+arguments; `0x6c` is the same without the `clr`, `0x6d` sends `clr,2`,
+and the hold scripts `0x74`, `0x79` and `0x7b` send `set,Z2`, `GLL` and
+`set,H`.  At each `tps` it sends one sentence more
+(`gps_periodic_send`, `0x57cd8`): the query of the setting it last sent,
+up to four times, else `int,GSV00`, and `int,anc00` after 59, so that
+`GSV` and `anc` come once each time they are asked for.  Its command
+monitor's steps (`0x5e824`, `0x5e828`) send `$PFEC,GPzzz` in mode 0,
+then query `srq` and `rrq` the same way.  A set is answered by the
+query that follows it: `ssd` must hold the field of the set's letter
+as sent, a height within 10 cm while the position is held; `rsd` the
+three fields of `rrs`; `GLL` by a `GGA` within 12 mas while the position
+is held (`gps_response_match`, `gps_nmea.c`).
+
+**The model.**  `crates/smartclock-gps`'s `engine::furuno` stands in
+for the GT-74, from the GT-8031's specification and the image's
+tables, the image deciding where they part (its documentation lists
+each such assumption): it sends `GGA`, `GSA`, `GSV`, `RMC`, `anc`,
+`tst`, `tps` and `rrm` at the intervals `int` sets, once at an interval
+of 0, and `ssd` and `rsd` in answer, and gives what `set`, `GLL` and
+`rrs` set as the Oncore model's `Settings`.  A test holds each sentence
+it sends to the image's table at `0x5e32a`: its length, its count of
+fields and each decoded field's length, which the image takes exactly.
+Its recorded exchanges are `tests/vectors/furuno/`.
 
 **Time RAIM.**  The 58503B carries the Z3816A's `@@En` program, byte
 for byte, at `0x5a1e7`.  The Z3815A, with no `@@` messages, fills a

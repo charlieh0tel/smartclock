@@ -16,6 +16,15 @@
 //! setting whose command an Oncore does not take, as a UT Plus takes no
 //! `@@AB`, stays as it is at power-up.
 //!
+//! The Furuno model ([`furuno`](crate::engine::furuno)) gives the same
+//! settings, those its sentences set where they mean the same: the mask
+//! angle and the satellites to ignore (`$PFEC,GPset`'s `M` and `U`),
+//! position hold (`Z`), the position held and to start from, which on
+//! a GT-74 are one (`$GPGLL` and `H`), the 1 PPS's correction (`t`), a
+//! negative one as the cable delay and a positive one as the pulse
+//! offset, and Time RAIM's switch, alarm limit and the pulse's control
+//! mode (`$PFEC,GPrrs`).  The rest stay as they are at power-up.
+//!
 //! The pages cited are the VP Oncore's command reference,
 //! `third_party/motorola/VPCommands.pdf`, as printed.
 //!

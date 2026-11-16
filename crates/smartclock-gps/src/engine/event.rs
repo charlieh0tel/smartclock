@@ -15,7 +15,9 @@ pub enum Event {
     /// 117), which "sets all of the GPS receiver parameters to their
     /// default values", makes every continuous message polled only and
     /// leaves the time and date.  An Oncore clears its almanac and
-    /// ephemeris for it too; the engine holds neither.
+    /// ephemeris for it too; the engine holds neither.  A Furuno
+    /// engine's is a restart, `$PFEC,GPclr` (GT-8031 protocol
+    /// specification p. 10; [`furuno`](crate::engine::furuno)).
     Reset,
     /// Commands changed these settings.  A command that sets a setting
     /// to what it is, or asks for it, changes none.

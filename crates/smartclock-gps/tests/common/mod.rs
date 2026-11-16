@@ -17,7 +17,6 @@ use smartclock_gps::units::MilliArcSeconds;
 use smartclock_gps::units::Nanoseconds;
 use smartclock_gps::units::Seconds;
 use std::collections::BTreeMap;
-use std::fmt::Write as _;
 
 /// The exceptions tables, the fields' and the settings', from the
 /// crate's directory.
@@ -28,10 +27,6 @@ pub(crate) const SETTING_EXCEPTIONS: &str = "../../docs/firmware/gps-setting-exc
 /// that does it.
 pub(crate) const WRITE_VARIABLE: &str = "ENGINE_VECTORS";
 pub(crate) const WRITE: &str = "write";
-
-/// How far into a second its events fall.
-pub(crate) const EVENTS_AT: u64 = 500;
-pub(crate) const MILLISECONDS_PER_SECOND: u64 = 1000;
 
 /// WGS-84's semi-major axis in meters and its inverse flattening.
 const AXIS: f64 = 6_378_137.0;
@@ -93,13 +88,6 @@ impl Head {
             byte(17..19),
         )
     }
-}
-
-pub(crate) fn hex(bytes: &[u8]) -> String {
-    bytes.iter().fold(String::new(), |mut text, byte| {
-        write!(text, "{byte:02x}").expect("a string takes it");
-        text
-    })
 }
 
 pub(crate) fn unhex(text: &str) -> Vec<u8> {

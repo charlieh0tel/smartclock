@@ -67,6 +67,9 @@
 //! [`Engine::receive`] returns the [`Events`] its commands made, a
 //! reset to defaults and which settings changed.
 //!
+//! The Z3815A's Furuno GT-74 has a model of its own, [`furuno`], which
+//! shares [`Output`], the [`Settings`] and the [`Events`] with this one.
+//!
 //! The pages cited are, as printed: VP, the VP Oncore's command
 //! reference, `third_party/motorola/VPCommands.pdf`; UT, TRM0003
 //! chapter 6, `third_party/motorola/oncore-ut-users-guide/ch6.pdf`;
@@ -75,6 +78,7 @@
 mod data;
 pub mod event;
 mod framer;
+pub mod furuno;
 pub mod identity;
 pub mod saved;
 pub mod settings;
@@ -184,7 +188,8 @@ use crate::units::Seconds;
 
 /// Where an engine's frames go: the serial link to the receiver.
 pub trait Output {
-    /// Takes one whole frame, from its `@@` to its line feed.
+    /// Takes one whole frame to its line feed: an Oncore's message from
+    /// its `@@`, a Furuno's sentence ([`furuno`]) from its `$`.
     fn send(&mut self, frame: &[u8]);
 }
 

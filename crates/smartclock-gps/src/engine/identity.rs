@@ -126,7 +126,9 @@ pub const VP_SIX: Identity = preset(
     ],
 );
 
-/// An eight-channel VP on firmware 8.8.  The serial number is made up.
+/// An eight-channel VP on firmware 8.8, as the bench 58503A's reports
+/// itself (`docs/bench.md`, its software date's month in mixed case).
+/// The serial number is made up.
 pub const VP_EIGHT: Identity = preset(
     Model::VpEight,
     false,
@@ -135,7 +137,7 @@ pub const VP_EIGHT: Identity = preset(
         "SFTW P/N # 98-P36830P     ",
         "SOFTWARE VER # 8          ",
         "SOFTWARE REV # 8          ",
-        "SOFTWARE DATE  06 AUG 1996",
+        "SOFTWARE DATE  06 Aug 1996",
         "MODEL #    B4121P1115     ",
         "HDWR P/N # _              ",
         "SERIAL #   SYNTHETIC      ",
@@ -153,7 +155,7 @@ pub const VP_EIGHT_WITHOUT_TIME_RAIM: Identity = preset(
         "SFTW P/N # 98-P36830P     ",
         "SOFTWARE VER # 8          ",
         "SOFTWARE REV # 8          ",
-        "SOFTWARE DATE  06 AUG 1996",
+        "SOFTWARE DATE  06 Aug 1996",
         "MODEL #    B4121P1115     ",
         "HDWR P/N # _              ",
         "SERIAL #   SYNTHETIC      ",

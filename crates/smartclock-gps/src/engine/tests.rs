@@ -685,7 +685,7 @@ static CALLERS_OWN: Identity = Identity::new(
         "SFTW P/N # 98-P36830P     ",
         "SOFTWARE VER # 8          ",
         "SOFTWARE REV # 8          ",
-        "SOFTWARE DATE  06 AUG 1996",
+        "SOFTWARE DATE  06 Aug 1996",
         "MODEL #    B4121P1115     ",
         "HDWR P/N # _              ",
         "SERIAL #   A CALLER'S OWN ",

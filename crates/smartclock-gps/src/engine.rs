@@ -39,9 +39,15 @@
 //! (`@@Ea`, VP p. 71), and Time RAIM's next pulse from it, is that
 //! clock's while the engine is fixing, as tests of a real VP with no
 //! antenna showed.  While a VP is idle it stands at the time it went
-//! idle (by `@@Cf`, `@@Cg` 0 or a self-test), or at its power-up time;
-//! `@@Ac` sets it to 12:00:00 on the date, and the counting clock with
-//! it, `@@Aa` sets the time of both, and it stands at what they set.
+//! idle, or at its power-up time, a record's time or not; `@@Ac` sets
+//! it to 12:00:00 on the date, and the counting clock with it, `@@Aa`
+//! sets the time of both, and it stands at what they set.  The tests
+//! went idle by `@@Cf`; that `@@Cg` 0 and a self-test, which idle it
+//! too, leave it standing the same way is untested.  An idle engine
+//! given a record with a time is its holder's doing, as a real idle VP
+//! tracks nothing, and the date and time its standing status is then
+//! labeled with, by the record's offset of GPS time from UTC, is not
+//! measured.
 //! A UT Plus is always fixing, and its `@@Ac` keeps the time of day.
 //! `@@Aa` and `@@Ac` set nothing while the record tells the time, as
 //! an Oncore tracking a satellite ignores them (VP pp. 5 and 13).  A
@@ -1157,8 +1163,8 @@ impl Engine {
         if self.count == 0
             && let Some(time) = record.time
         {
-            self.clock = time.seconds;
             self.counting = time.seconds;
+            self.follow();
         }
         bytes
             .iter()

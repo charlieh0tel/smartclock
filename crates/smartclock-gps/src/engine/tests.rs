@@ -1759,7 +1759,13 @@ fn an_idle_engine_answers_with_its_last_position_status() {
     };
     let mut engine = powered_up(&VP_EIGHT);
     let before = poll(&mut engine, &record);
-    assert_eq!(before[4..7], [12, 0, 0]);
+    // Idle, its time stands at power-up though the record tells one,
+    // labeled with the record's offset; the answers' clock takes it.
+    assert_eq!(before[..7], [1, 1, 0x07, 0xcd, 11, 59, 42]);
+    assert_eq!(
+        counting(&mut engine, &record),
+        [10, 22, 0x07, 0xea, 12, 0, 0]
+    );
     assert_eq!(before[34..36], [0, 0]);
     assert_eq!(before[36..68], [0; 32]);
 

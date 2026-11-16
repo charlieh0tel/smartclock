@@ -1324,7 +1324,12 @@ specification; in short:
   VP went idle, by `@@Cf` (VP p. 118), `@@Cg` 0 or a self-test, its
   date kept, while the first counts on; `@@Ac` sets both to 12:00:00
   on the date (VP p. 13) and `@@Aa` the time of both (VP p. 5), and
-  it stands at what they set.  An idle position status is otherwise
+  it stands at what they set.  That `@@Cg` 0 and a self-test leave
+  it standing as `@@Cf` does is untested.  It stands through a
+  record's time too: an idle model given a timed record is its
+  holder's doing, a real idle VP tracking nothing, and the label the
+  record's offset of GPS time from UTC then puts on the standing time
+  is not measured.  An idle position status is otherwise
   the last kept while fixing.  A VP cleared with no backup power
   comes up idle at 1997-01-01 12:00:00 and stands there; VP p. 5
   gives the 12:00:00 and p. 13 leaves the date to the firmware.  The

@@ -327,7 +327,10 @@ mod tests {
     use crate::provider::Shared;
     use crate::provider::build;
     use crate::provider::recording;
+    use crate::provider::tests::EPOCHS;
+    use crate::provider::tests::capture;
     use smartclock_gps::engine::Options;
+    use smartclock_gps::engine::furuno::GT_74;
     use smartclock_gps::engine::identity::Identity;
     use smartclock_gps::engine::identity::VP_EIGHT;
     use smartclock_gps::engine::identity::VP_SIX;
@@ -544,6 +547,125 @@ mod tests {
             Some(10),
         );
         assert_eq!(end, End::Recording);
+    }
+
+    /// Whether a frame is the NMEA sentence of address `address`.
+    fn sentence(frame: &[u8], address: &str) -> bool {
+        frame.starts_with(format!("${address},").as_bytes())
+    }
+
+    /// The seconds in which `address` was sent, and how often in each.
+    fn seconds_of(instrument: &Instrument, address: &str) -> Vec<(u64, usize)> {
+        instrument
+            .received
+            .iter()
+            .map(|(second, frames)| {
+                let count = frames
+                    .iter()
+                    .filter(|frame| sentence(frame, address))
+                    .count();
+                (*second, count)
+            })
+            .filter(|(_, count)| *count > 0)
+            .collect()
+    }
+
+    /// A GT-74 under the made-up sky sends what it sends at power-up
+    /// each second from the first, unasked; takes an interval for `GSA`
+    /// and sends it at that interval from then on; and answers `srq`
+    /// with `ssd` in the second it was asked.
+    #[test]
+    fn a_furuno_engine_sends_at_its_intervals_and_answers() {
+        let mut feed = fixed(Engine::new(&EngineSpec::Furuno(&GT_74)).unwrap());
+        let asked = START.as_secs() + 2;
+        let mut instrument = instrument(BTreeMap::from([(
+            asked,
+            b"$PFEC,GPint,GSA02\r\n$PFEC,GPsrq\r\n".to_vec(),
+        )]));
+        let clock = instrument.clock.clone();
+        let mut log = Some(WireLog::new(Vec::new()));
+        let end = run(
+            &mut feed,
+            &mut instrument,
+            &clock,
+            &mut log,
+            Duration::ZERO,
+            Some(8),
+        );
+        assert_eq!(end, End::Seconds);
+
+        let first = START.as_secs() + 1;
+        let every: Vec<u64> = (first..first + 8).collect();
+        // GSV takes as many sentences as the sky's satellites need.
+        for address in ["GPGGA", "GPGSV", "PFEC,GPtps"] {
+            let seconds: Vec<u64> = seconds_of(&instrument, address)
+                .iter()
+                .map(|(second, _)| *second)
+                .collect();
+            assert_eq!(seconds, every, "{address}");
+        }
+        for address in ["GPGGA", "PFEC,GPtps"] {
+            assert!(
+                seconds_of(&instrument, address)
+                    .iter()
+                    .all(|(_, count)| *count == 1),
+                "{address}"
+            );
+        }
+        assert_eq!(seconds_of(&instrument, "PFEC,GPssd"), [(asked, 1)]);
+        let gsa: Vec<u64> = seconds_of(&instrument, "GPGSA")
+            .iter()
+            .map(|(second, count)| {
+                assert_eq!(*count, 1);
+                *second
+            })
+            .collect();
+        assert!(gsa.len() >= 2 && gsa[0] > asked, "{gsa:?}");
+        for pair in gsa.windows(2) {
+            assert_eq!(pair[1] - pair[0], 2, "{gsa:?}");
+        }
+        for frame in instrument.received.values().flatten() {
+            assert!(frame.starts_with(b"$") && frame.ends_with(b"\r\n"));
+        }
+
+        let text = String::from_utf8(log.unwrap().out).unwrap();
+        assert_eq!(text.lines().filter(|line| line.contains(" to ")).count(), 1);
+    }
+
+    /// A UBX recording drives a GT-74 to its end: a `GGA` a second, each
+    /// of the recording's UTC second.
+    #[test]
+    fn a_recording_drives_a_furuno_engine() {
+        let shared = Shared {
+            nest: LeapSchedule::new(FakeTime::new(recording(capture()), Relabel::Keep), None),
+            tick: Tick(0),
+        };
+        let mut feed = Feed::new(
+            Engine::new(&EngineSpec::Furuno(&GT_74)).unwrap(),
+            Arc::new(Mutex::new(shared)),
+            Kind::Recording,
+        );
+        let mut instrument = instrument(BTreeMap::new());
+        let clock = instrument.clock.clone();
+        let end = run(
+            &mut feed,
+            &mut instrument,
+            &clock,
+            &mut None::<WireLog<Vec<u8>>>,
+            Duration::ZERO,
+            Some(10),
+        );
+        assert_eq!(end, End::Recording);
+        // Noon GPS time less the recording's 18 leap seconds.
+        let times: Vec<String> = instrument
+            .received
+            .values()
+            .flatten()
+            .filter(|frame| sentence(frame, "GPGGA"))
+            .map(|frame| String::from_utf8_lossy(&frame[7..13]).into_owned())
+            .collect();
+        assert_eq!(times.len(), usize::try_from(EPOCHS).unwrap());
+        assert_eq!(times, ["115942", "115943", "115944"]);
     }
 
     /// A clock that jumps ahead does not make the feed catch up: the

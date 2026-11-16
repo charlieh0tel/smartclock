@@ -1522,10 +1522,19 @@ stands in for one.
 - **A host feed runs the engine in front of a real instrument**
   (`smartclock-gps-feed`, decided 2026-11-15): the first step of a test
   matrix of every image, engine configuration and GPS source.  It
-  speaks Oncore binary to a `SmartClock`'s engine port, over TCP to a
-  serial-to-TCP bridge, as a TCP server, or on a serial port at 9600
-  8N1, one connection at a time, made again after a wait that doubles
-  to 30 s.  The engine runs on while no instrument is connected, as an
+  speaks Oncore binary, or the GT-74's NMEA with its `$PFEC` sentences
+  (`engine::furuno`, added 2026-11-16), to a `SmartClock`'s engine
+  port, over TCP to a serial-to-TCP bridge, as a TCP server, or on a
+  serial port at 9600 8N1, one connection at a time, made again after
+  a wait that doubles to 30 s.  9600 8N1 is both families' line: the
+  Oncore's (TRM0003 table 3.7) and the one the Z3815A 4010's
+  `duart_init` (`0x2e00c`) sets on its engine's DUART channel.  The
+  loop steps either family through one enum in the feed; a GT-74
+  counts whole seconds and has nothing that waits, so it takes no
+  milliseconds and is not polled between seconds.  The Oncore-only
+  options are refused with a GT-74, each saying why: `--eight-on-ea`
+  (it has no `@@Ea`), `--saved` (the one configuration is a 58503A's,
+  whose engine is an Oncore) and `--deaf` (the model has no deaf mode).  The engine runs on while no instrument is connected, as an
   engine powered with its cable out would, and its frames are dropped.
   Its providers are gpsd's raw output of a u-blox receiver (asked for
   with `?WATCH` and `"raw":2`, a request to gpsd alone; nothing is sent

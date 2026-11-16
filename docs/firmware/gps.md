@@ -1592,6 +1592,12 @@ of 0, and `ssd` and `rsd` in answer, and gives what `set`, `GLL` and
 it sends to the image's table at `0x5e32a`: its length, its count of
 fields and each decoded field's length, which the image takes exactly.
 Its recorded exchanges are `tests/vectors/furuno/`.
+`smartclock-gps-feed --engine gt-74` (or `gt-74-without-time-raim`,
+`gt-74-pulse-early`) runs it on a host in front of a Z3815A's engine
+port, as it runs the Oncore model in front of the others', at the
+line the image sets its engine's DUART channel A to, 9600 8N1:
+`duart_init` (`0x2e00c`) writes CSRA `0xbb`, MR1A `0x13` and MR2A
+`0x07`, the Oncore's own line (TRM0003 table 3.7).
 
 **Time RAIM.**  The 58503B carries the Z3816A's `@@En` program, byte
 for byte, at `0x5a1e7`.  The Z3815A, with no `@@` messages, fills a

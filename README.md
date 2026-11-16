@@ -213,20 +213,28 @@ Without a receiver, use the simulator; every tool takes
 ### A GPS engine on a host
 
 `smartclock-gps-feed` stands in for a receiver's GPS engine: it runs
-the Oncore model of `smartclock-gps` on a host, paced to real time,
-and speaks Oncore binary to a `SmartClock`'s engine port, through a
-serial-to-TCP bridge (`--connect`), as a TCP server (`--listen`) or on
-a serial port at 9600 8N1 (`--serial`).  Each second's record comes
-from gpsd's raw output of a u-blox receiver, a raw UBX recording, or
-a made-up sky, fixed or with a leap second.  The 1 PPS is not carried.
+an engine model of `smartclock-gps` on a host, paced to real time --
+an Oncore (`vp-six`, `vp-eight`, `vp-eight-without-time-raim`,
+`ut-plus-2.2`, `ut-plus-3.1`), speaking Oncore binary, or the Z3815A's
+Furuno GT-74 (`gt-74`, `gt-74-without-time-raim`,
+`gt-74-pulse-early`), speaking NMEA with Furuno's `$PFEC` sentences --
+to a `SmartClock`'s engine port, through a serial-to-TCP bridge
+(`--connect`), as a TCP server (`--listen`) or on a serial port at
+9600 8N1, either family's line (`--serial`).  Each second's record
+comes from gpsd's raw output of a u-blox receiver, a raw UBX
+recording, or a made-up sky, fixed or with a leap second.  The 1 PPS
+is not carried.
 
     smartclock-gps-feed gpsd:gpshost --engine vp-eight --connect bridge:2001
     smartclock-gps-feed ubx:capture.ubx --engine ut-plus-3.1 --serial /dev/ttyUSB0
     smartclock-gps-feed fixed --engine vp-eight --saved 58503a --deaf --listen 0.0.0.0:4001
     smartclock-gps-feed leap:2028-01-01T00:00:00Z --engine vp-six --eight-on-ea vp-eight \
         --connect bridge:2001 --log wire.log
+    smartclock-gps-feed gpsd:gpshost --engine gt-74 --connect bridge:2002
 
-`--fake-start RFC3339` relabels any provider's time;
+`--eight-on-ea`, `--saved` and `--deaf` are an Oncore's alone, and
+refused with a GT-74.  `--fake-start RFC3339` relabels any provider's
+time;
 `smartclock-gps-feed --help` has the rest, and `PLAN.md` the design.
 
 ## Development

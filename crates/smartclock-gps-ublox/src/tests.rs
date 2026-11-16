@@ -37,8 +37,11 @@ use crate::message::payload_length;
 use crate::nav::LeapNotice;
 use crate::nav::nav_sat_length;
 use crate::rxm::rxm_rawx_length;
+use crate::subframe::tests::Bits;
+use crate::subframe::tests::word_start;
 use crate::units::Picoseconds;
 use smartclock_gps::NoRoom;
+use smartclock_gps::record::Almanac;
 use smartclock_gps::record::Antenna;
 use smartclock_gps::record::Dops;
 use smartclock_gps::record::Ecef;
@@ -71,6 +74,8 @@ use smartclock_gps::units::Degrees;
 use smartclock_gps::units::MilliArcSeconds;
 use smartclock_gps::units::Milliseconds;
 use smartclock_gps::units::Nanoseconds;
+use smartclock_gps::units::Prn;
+use smartclock_gps::units::PrnSet;
 use smartclock_gps::units::Seconds;
 use smartclock_gps::units::TenthDegrees;
 use smartclock_gps::units::Tenths;
@@ -317,6 +322,15 @@ fn tp(time_of_week: u32, error: i32, week: u16, flags: u8) -> [u8; 16] {
         (12, &week.to_le_bytes()),
         (14, &[flags]),
     ])
+}
+
+/// An `RXM-SFRBX` (section 32.18.7) of `words` from satellite 12 of
+/// `system`.
+fn sfrbx(system: u8, words: &[u32]) -> Vec<u8> {
+    let count = u8::try_from(words.len()).unwrap();
+    let mut bytes = vec![system, 12, 0, 0, count, 0, 2, 0];
+    bytes.extend(words.iter().flat_map(|word| word.to_le_bytes()));
+    bytes
 }
 
 fn decode(id: MessageId, payload: &[u8]) -> Option<Message<'static>> {
@@ -1190,6 +1204,68 @@ fn a_payload_off_its_length_is_not_decoded() {
     assert_eq!(Message::parse_payload(NAV_PVT, &pvt[1..]), None);
 }
 
+/// The almanac's time, raw (589 824 s into its week), and its week as
+/// broadcast: [`WEEK`] modulo 256.
+const TIME_OF_ALMANAC: u8 = 144;
+const ALMANAC_WEEK: u8 = 137;
+
+/// A GPS `RXM-SFRBX` of a subframe's bits.
+fn subframe(bits: &Bits) -> Vec<u8> {
+    sfrbx(0, &bits.words())
+}
+
+/// Satellite `id`'s almanac page in subframe `subframe`, of its time
+/// and its eight bits of health (IS-GPS-200N, Table 20-VI).
+fn almanac_page(subframe: i64, id: u8, time_of_almanac: u8, health: u8) -> Bits {
+    let mut bits = Bits::new();
+    bits.page(subframe, i64::from(id))
+        .set(91, 8, i64::from(time_of_almanac))
+        .set(137, 8, i64::from(health));
+    bits
+}
+
+/// Subframe 5, page 25: the almanac's time and week, and the six bits
+/// of health of satellites 1 to 24, four a word from word 4 (sections
+/// 20.3.3.5.1.3 and 20.3.3.5.1.5).
+fn almanac_health(time_of_almanac: u8, week: u8, health: [u8; 24]) -> Bits {
+    let mut bits = Bits::new();
+    bits.page(5, 51)
+        .set(69, 8, i64::from(time_of_almanac))
+        .set(77, 8, i64::from(week));
+    for (index, &value) in (0_u32..).zip(&health) {
+        bits.set(
+            word_start(4 + index / 4) + 6 * (index % 4),
+            6,
+            i64::from(value),
+        );
+    }
+    bits
+}
+
+/// Subframe 4, page 25's six bits of health of satellites 25 to 32:
+/// 25 at bit 229, 26 to 29 from 241, 30 to 32 from 271 (section
+/// 20.3.3.5.1.4).
+fn late_health(health: [u8; 8]) -> Bits {
+    let mut bits = Bits::new();
+    bits.page(4, 63);
+    for (first, &value) in [229, 241, 247, 253, 259, 271, 277, 283].iter().zip(&health) {
+        bits.set(*first, 6, i64::from(value));
+    }
+    bits
+}
+
+fn prns(ids: &[u8]) -> PrnSet {
+    ids.iter()
+        .fold(PrnSet::EMPTY, |set, &id| set.with(Prn::new(id).unwrap()))
+}
+
+/// An almanac of [`TIME_OF_ALMANAC`] and `week`.
+fn almanac(week: u16, held: &[u8], healthy: &[u8]) -> Option<Almanac> {
+    let mut almanac = Almanac::new(GpsWeek::new(week), TIME_OF_ALMANAC, prns(held));
+    almanac.healthy = prns(healthy);
+    Some(almanac)
+}
+
 /// One whole epoch, every message of it, as a receiver sends them.
 fn whole_epoch() -> Vec<u8> {
     stream(&[
@@ -1214,6 +1290,22 @@ fn whole_epoch() -> Vec<u8> {
             ),
         ),
         (TIM_TP, &tp(NOON + 1000, -4_321, WEEK, RAIM_ACTIVE)),
+        (
+            RXM_SFRBX,
+            &subframe(&almanac_page(5, 7, TIME_OF_ALMANAC, 0)),
+        ),
+        (
+            RXM_SFRBX,
+            &subframe(&almanac_page(5, 9, TIME_OF_ALMANAC, 0)),
+        ),
+        (
+            RXM_SFRBX,
+            &subframe(&almanac_health(
+                TIME_OF_ALMANAC,
+                ALMANAC_WEEK,
+                core::array::from_fn(|index| if index == 8 { 0x3f } else { 0 }),
+            )),
+        ),
         (NAV_EOE, &eoe(NOON)),
     ])
 }
@@ -1269,7 +1361,7 @@ fn an_epoch_makes_a_record() {
     assert_eq!(record.dops, Some(DOPS));
     assert_eq!(record.timing, None);
     assert_eq!(record.satellites.len(), 2);
-    assert_eq!(record.almanac, None);
+    assert_eq!(record.almanac, almanac(WEEK, &[7, 9], &[7]));
     assert_eq!(record.antenna, Antenna::Connected);
     assert_eq!(record.self_test, SelfTest::PASS);
     assert_eq!(
@@ -1701,6 +1793,111 @@ fn a_recording_replays_a_record_a_tick() {
         assert_eq!(record.time, time(WEEK, NOON + milliseconds));
     }
     assert_eq!(replay.record(Tick(3), &mut record), Presence::Silent);
+}
+
+/// The almanac's pages come across epochs, and it is in a record from
+/// the first epoch after subframe 5, page 25: the satellites of a page
+/// of its time, healthy as their pages and the pages 25 say.  A page of
+/// another time, of another data ID or of another system is left out.
+#[test]
+fn the_almanac_is_gathered_across_epochs() {
+    let mut other_data = almanac_page(5, 4, TIME_OF_ALMANAC, 0);
+    other_data.set(61, 2, 0);
+    let pages = [
+        subframe(&almanac_page(5, 1, TIME_OF_ALMANAC, 0)),
+        subframe(&almanac_page(5, 2, TIME_OF_ALMANAC, 0x20)),
+        subframe(&almanac_page(5, 3, TIME_OF_ALMANAC - 1, 0)),
+        subframe(&other_data),
+        sfrbx(6, &almanac_page(5, 5, TIME_OF_ALMANAC, 0).words()),
+        subframe(&almanac_page(4, 27, TIME_OF_ALMANAC, 0)),
+        subframe(&almanac_page(4, 28, TIME_OF_ALMANAC, 0)),
+    ];
+    let mut bytes: Vec<u8> = pages
+        .iter()
+        .flat_map(|page| frame(RXM_SFRBX, page))
+        .collect();
+    bytes.extend(epoch(NOON));
+    bytes.extend(frame(
+        RXM_SFRBX,
+        &subframe(&almanac_health(TIME_OF_ALMANAC, ALMANAC_WEEK, [0; 24])),
+    ));
+    bytes.extend(epoch(NOON + 1000));
+    let mut late = [0; 8];
+    late[3] = 0x3f;
+    bytes.extend(frame(RXM_SFRBX, &subframe(&late_health(late))));
+    bytes.extend(epoch(NOON + 2000));
+    // A new almanac: none of its pages yet, then one.
+    bytes.extend(frame(
+        RXM_SFRBX,
+        &subframe(&almanac_health(TIME_OF_ALMANAC + 1, ALMANAC_WEEK, [0; 24])),
+    ));
+    bytes.extend(epoch(NOON + 3000));
+    bytes.extend(frame(
+        RXM_SFRBX,
+        &subframe(&almanac_page(5, 1, TIME_OF_ALMANAC + 1, 0)),
+    ));
+    bytes.extend(epoch(NOON + 4000));
+    let almanacs: Vec<_> = records(&mut Bench::new(), &bytes)
+        .iter()
+        .map(|record| record.almanac)
+        .collect();
+    let mut next = almanac(WEEK, &[1], &[1]).unwrap();
+    next.time_of_almanac = TIME_OF_ALMANAC + 1;
+    assert_eq!(
+        almanacs,
+        [
+            None,
+            almanac(WEEK, &[1, 2, 27, 28], &[1, 27, 28]),
+            almanac(WEEK, &[1, 2, 27, 28], &[1, 27]),
+            None,
+            Some(next),
+        ]
+    );
+}
+
+/// The almanac's eight bits of week are resolved to the week nearest
+/// the last epoch's, or before any epoch has a time, nearest the week
+/// an assembler was made to resolve near; with neither there is no
+/// almanac.
+#[test]
+fn the_almanac_week_is_resolved_near_the_time() {
+    let pages = |week| {
+        stream(&[
+            (
+                RXM_SFRBX,
+                &subframe(&almanac_page(5, 1, TIME_OF_ALMANAC, 0)),
+            ),
+            (
+                RXM_SFRBX,
+                &subframe(&almanac_health(TIME_OF_ALMANAC, week, [0; 24])),
+            ),
+            (NAV_EOE, &eoe(NOON)),
+        ])
+    };
+    let one = |assembler: &mut Bench, bytes: &[u8]| {
+        let made = records(assembler, bytes);
+        let [record] = made[..] else {
+            panic!("{made:?}");
+        };
+        record.almanac
+    };
+    assert_eq!(one(&mut Bench::new(), &pages(ALMANAC_WEEK)), None);
+    let reference = GpsWeek::new(WEEK);
+    assert_eq!(
+        one(&mut Bench::near(reference), &pages(ALMANAC_WEEK + 1)),
+        almanac(WEEK + 1, &[1], &[1])
+    );
+    let mut assembler = Bench::new();
+    assert!(records(&mut assembler, &epoch(NOON))[0].almanac.is_none());
+    assert_eq!(
+        one(&mut assembler, &pages(ALMANAC_WEEK - 1)),
+        almanac(WEEK - 1, &[1], &[1])
+    );
+    // Across the eight bits' rollover, from week 2047's 255 to 2048's 0.
+    assert_eq!(
+        one(&mut Bench::near(GpsWeek::new(2047)), &pages(0)),
+        almanac(2048, &[1], &[1])
+    );
 }
 
 mod decoders;

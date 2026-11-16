@@ -17,6 +17,7 @@ use super::decode;
 use super::events;
 use super::frame;
 use super::payload;
+use super::sfrbx;
 use crate::ack::Ack;
 use crate::frame::FrameError;
 use crate::frame::MessageId;
@@ -560,14 +561,6 @@ fn rxm_sfrbx_every_field() {
     // numWords must be the length's count.
     bytes[4] = 9;
     assert_eq!(decode(RXM_SFRBX, &bytes), None);
-}
-
-/// An `RXM-SFRBX` of `words` from satellite `id` of `system`.
-fn sfrbx(system: u8, words: &[u32]) -> Vec<u8> {
-    let count = u8::try_from(words.len()).unwrap();
-    let mut bytes = std::vec![system, 12, 0, 0, count, 0, 2, 0];
-    bytes.extend(words.iter().flat_map(|word| word.to_le_bytes()));
-    bytes
 }
 
 /// A GPS subframe from `RXM-SFRBX` to its fields: subframe 1 of week

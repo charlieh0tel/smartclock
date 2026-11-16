@@ -24,12 +24,15 @@ use smartclock_gps::units::Milliseconds;
 use smartclock_gps::units::Nanoseconds;
 use smartclock_gps::units::Seconds;
 
+use crate::almanac::Gathered;
 use crate::frame::Deframer;
 use crate::message::Message;
 use crate::nav::LeapNotice;
 use crate::nav::NavPvt;
 use crate::nav::NavTimeGps;
 use crate::nav::NavTimeLs;
+use crate::subframe::Subframe;
+
 /// What an [`Assembler`] has of the epoch in progress.  Every message
 /// in it has the same `iTOW`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -103,6 +106,7 @@ pub const DECLARATION: Declaration = Declaration {
         RecordField::SatelliteUsed,
         RecordField::SatelliteHealth,
         RecordField::SatelliteEphemeris,
+        RecordField::Almanac,
         RecordField::Antenna,
         RecordField::SelfTest,
         RecordField::Ecef,
@@ -158,6 +162,11 @@ struct Assembly {
     raim: Option<Raim>,
     /// The leap second last announced.
     announced: Option<Announced>,
+    /// The almanac's pages, as `RXM-SFRBX` has given them.
+    almanac: Gathered,
+    /// The week of the last epoch with a time, to resolve the
+    /// almanac's.
+    week: Option<GpsWeek>,
 }
 
 impl<const N: usize> Default for Assembler<N> {
@@ -193,6 +202,8 @@ impl<const N: usize> Assembler<N> {
                 antenna: Antenna::Unknown,
                 raim: None,
                 announced: None,
+                almanac: Gathered::EMPTY,
+                week: None,
             },
             errors: 0,
         }
@@ -214,6 +225,12 @@ impl Assembly {
             match message {
                 Message::MonHw(hardware) => self.antenna = hardware.antenna,
                 Message::TimTp(pulse) => self.raim = pulse.time_raim(),
+                Message::RxmSfrbx(subframe) => {
+                    if let Some(subframe) = subframe.gps_words().as_ref().and_then(Subframe::decode)
+                    {
+                        self.almanac.take(&subframe);
+                    }
+                }
                 _ => {}
             }
             return false;
@@ -283,6 +300,11 @@ impl Assembly {
                 });
         }
         let now = record.time.map(|time| time.seconds);
+        self.week = now.and_then(GpsSeconds::week).or(self.week);
+        record.almanac = self
+            .week
+            .or(self.reference)
+            .and_then(|week| self.almanac.almanac(week));
         let count = epoch
             .leap
             .and_then(|leap| leap.count())

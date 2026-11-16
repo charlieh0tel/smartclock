@@ -1649,3 +1649,4 @@ fn a_recording_replays_a_record_a_tick() {
 }
 
 mod decoders;
+mod streaming;

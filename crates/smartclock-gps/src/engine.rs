@@ -279,14 +279,26 @@ const STATUS_BAD_ALMANAC: u8 = 0x01;
 const TRACKING_LEAST: Tracking = Tracking::MessageSync;
 /// Fewer visible than this is too few.
 const FEW_VISIBLE: usize = 3;
-/// The elevation, in degrees, a satellite is above to count as visible
-/// in a position status, whatever `@@Ag`'s mask: a VP's "default mask
-/// angle of ten degrees" (VP pp. 70 and 124) and a UT Plus's "mask
-/// angle of zero degrees, representing the horizon" (UT p. 6.18).
-/// Above, as a mask angle is taken: "greater than the satellite mask
-/// angle" (VP p. 27; UT p. 6.22).
-const VISIBLE_ABOVE_VP: i8 = 10;
-const VISIBLE_ABOVE_UT_PLUS: i8 = 0;
+/// The elevation, in degrees, a satellite is at or above to count as
+/// visible in a position status, whatever `@@Ag`'s mask: a VP's
+/// "default mask angle of ten degrees" (VP pp. 70 and 124) and a UT
+/// Plus's "mask angle of zero degrees, representing the horizon" (UT
+/// p. 6.18).  At or above, as a mask angle is taken ([`reaches_mask`]).
+const VISIBLE_FROM_VP: i8 = 10;
+const VISIBLE_FROM_UT_PLUS: i8 = 0;
+
+/// Whether a satellite at `elevation` is within a mask angle of
+/// `mask`, both in whole degrees: at or above it.  The manual has a VP
+/// track satellites whose elevation "is greater than the satellite mask
+/// angle" (VP p. 27; UT p. 6.22), but a test of a real VP kept a
+/// satellite exactly at the mask on a channel and tracked it, and
+/// listed it in `@@Bb`.  The test wins: a VP reports elevations in
+/// whole degrees (`@@Ea`, `@@Bb`), so one it reports at the mask can
+/// be above it by a fraction, and the comparison seen on the wire is at
+/// or above.
+const fn reaches_mask(elevation: i8, mask: i8) -> bool {
+    elevation >= mask
+}
 /// A DOP above this, in tenths, is poor geometry: a VP's (VP p. 73)
 /// and a UT Plus's (UT p. 6.20).
 const POOR_GEOMETRY_VP: u16 = 200;
@@ -1551,8 +1563,14 @@ impl Engine {
         }
     }
 
+    /// `@@Ag`'s mask angle, in degrees as elevations are.
+    fn mask_angle(&self) -> i8 {
+        i8::try_from(self.state.store.mask_angle()).unwrap_or(i8::MAX)
+    }
+
     /// The satellites on a family's channels: those of the record with
-    /// a signal, above the mask angle and not ignored, in its order, as
+    /// a signal, at or above the mask angle ([`reaches_mask`]) and not
+    /// ignored, in its order, as
     /// many as there are channels.  Set to track the highest in the
     /// sky (VP p. 29), as a UT Plus always is, those are the highest of them, still in the
     /// record's order; else the record's order is its preference.
@@ -1561,7 +1579,7 @@ impl Engine {
         record: &'a Record,
         family: &Family,
     ) -> impl Iterator<Item = &'a Satellite> + use<'a> {
-        let mask = i16::from(self.state.store.mask_angle());
+        let mask = self.mask_angle();
         let ignored = self.state.store.ignore_list();
         let listening = self.state.fixing && !Self::antenna_off(record);
         let channels = self.channels.min(family.channels);
@@ -1569,7 +1587,7 @@ impl Engine {
         let eligible = move |satellite: &Satellite| {
             listening
                 && satellite.signal.is_some()
-                && i16::from(satellite.elevation.0) > mask
+                && reaches_mask(satellite.elevation.0, mask)
                 && !ignored.contains(satellite.prn)
         };
         // Those above a satellite, a tie going to the one first.
@@ -1652,7 +1670,8 @@ impl Engine {
     }
 
     /// The satellites in view as a position status counts them: the
-    /// record's above the elevation the manual computes the number at,
+    /// record's at or above the elevation the manual computes the number
+    /// at ([`reaches_mask`]),
     /// not `@@Ag`'s; none while idle, nor with no almanac to tell (VP
     /// p. 70; UT p. 6.18).  `@@Bb` lists by its own elevation
     /// ([`Self::listed_from`]).
@@ -1660,14 +1679,14 @@ impl Engine {
         if !self.state.fixing || record.almanac.is_none() {
             return 0;
         }
-        let above = match self.identity.model() {
-            Model::VpSix | Model::VpEight => VISIBLE_ABOVE_VP,
-            Model::UtPlus => VISIBLE_ABOVE_UT_PLUS,
+        let from = match self.identity.model() {
+            Model::VpSix | Model::VpEight => VISIBLE_FROM_VP,
+            Model::UtPlus => VISIBLE_FROM_UT_PLUS,
         };
         record
             .satellites
             .iter()
-            .filter(|satellite| satellite.elevation.0 > above)
+            .filter(|satellite| reaches_mask(satellite.elevation.0, from))
             .count()
     }
 
@@ -1821,18 +1840,15 @@ impl Engine {
 
     /// The elevation, in degrees, a satellite must be at or above for
     /// `@@Bb` to list it: a VP's mask angle (`@@Ag`) and a UT Plus's
-    /// horizon (UT p. 6.23).  For the VP, a test of a real eight-channel
+    /// horizon (UT p. 6.23).  For the VP, tests of a real eight-channel
     /// VP: with the mask at 10 or 20 degrees the lowest listed was at 21,
-    /// and with it at 0, satellites at 0, 6 and 8 degrees were listed.
-    /// Whether one exactly at the mask is listed is unsettled, none
-    /// having been between 10 and 21 degrees; the six-channel VP is
-    /// untested and taken to do the same.  None below the horizon is
-    /// listed.
+    /// with it at 0, satellites at 0, 6 and 8 degrees were listed, and
+    /// one exactly at the mask was listed ([`reaches_mask`]); the
+    /// six-channel VP is untested and taken to do the same.  None below
+    /// the horizon is listed.
     fn listed_from(&self) -> i8 {
         match self.identity.model() {
-            Model::VpSix | Model::VpEight => {
-                i8::try_from(self.state.store.mask_angle()).unwrap_or(i8::MAX)
-            }
+            Model::VpSix | Model::VpEight => self.mask_angle(),
             Model::UtPlus => 0,
         }
         .max(0)
@@ -1850,7 +1866,7 @@ impl Engine {
         let by_id = (1..=PRNS)
             .filter_map(Prn::new)
             .filter_map(|prn| record.satellites.get(prn))
-            .filter(move |satellite| satellite.elevation.0 >= from);
+            .filter(move |satellite| reaches_mask(satellite.elevation.0, from));
         let count = by_id.clone().count();
         let mut data = Data::new();
         data.byte(count_byte(count));

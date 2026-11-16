@@ -1333,7 +1333,12 @@ stands in for one.
   assembler, there being no recording format among what the receivers
   use: the caller's own, or `smartclock-gps-ublox`'s for a u-blox
   receiver's output (below).  Wrappers relabel a source's time, announce a
-  leap second or silence it for a while, and nest by value.
+  leap second or silence it for a while, and nest by value.  The sky
+  the engine's recorded exchanges are under is the crate's
+  (`source::scene`), not the test's, so a tool can put an engine
+  under the same provider, held to the same declaration and the same
+  rows of the exceptions tables; the position in Earth-centered
+  coordinates stays its holder's to work out.
 - **A u-blox receiver is a source, in a crate of its own**
   (`smartclock-gps-ublox`).  The `SmartClock`s never speak UBX: no
   image sends or decodes it, so it is not in `smartclock-gps`, which

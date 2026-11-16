@@ -49,8 +49,10 @@ jobs:
     runs-on: ubuntu-26.04
     # Four images' function checks, each case run again poisoned, took
     # past 50 minutes on 2026-11-05; the Z3817A 3752's is a fifth, the
-    # Z3816A 4001's and the 58503B 1.01.04's a sixth and seventh.
-    timeout-minutes: 90
+    # Z3816A 4001's and the 58503B 1.01.04's a sixth and seventh, the
+    # Z3805A 1.01.03's an eighth, which took a pull request's full run
+    # past 90 minutes on 2026-11-16.
+    timeout-minutes: 120
     permissions:
       contents: read
     env:

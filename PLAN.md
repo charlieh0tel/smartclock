@@ -1196,9 +1196,9 @@ stands in for one.
   pp. 74 and 75, and before the first, what is visible now), and the receiver status bits for poor geometry, a
   differential fix, too few visible and no almanac are the manual's.
   So is the number visible in a position status, which is not
-  `@@Bb`'s: the record's satellites above ten degrees on a VP (VP
-  p. 70) and above the horizon on a UT Plus (UT p. 6.18), whatever
-  `@@Ag`'s mask, and none without an almanac; too few visible is fewer
+  `@@Bb`'s: the record's satellites at or above ten degrees on a VP
+  (VP p. 70) and at or above the horizon on a UT Plus (UT p. 6.18),
+  whatever `@@Ag`'s mask, and none without an almanac; too few visible is fewer
   than three of that number.  The number tracked counts only the
   channels at mode 5, message sync detect, or above, the line the
   manual draws between a channel not used for a fix ("mode 4 or
@@ -1208,12 +1208,17 @@ stands in for one.
   and the 1 PPS in its tracking mode go by that count.  `@@Bb` lists the record's
   satellites at or above `@@Ag`'s mask on a VP and at or above the
   horizon on a UT Plus (UT p. 6.23), never one below the horizon.  For
-  the VP that is a test of a real eight-channel VP: with the mask at 10
-  or 20 degrees the lowest listed was at 21, and with it at 0,
-  satellites at 0, 6 and 8 degrees were listed.  Whether one exactly at
-  the mask is listed is unsettled, none having been between 10 and 21
-  degrees, so the model takes "at or above"; the six-channel VP is
-  untested and given the same rule.  It lists them in the order of
+  the VP that is tests of a real eight-channel VP: with the mask at 10
+  or 20 degrees the lowest listed was at 21, with it at 0, satellites
+  at 0, 6 and 8 degrees were listed, and one exactly at the mask was
+  listed; the six-channel VP is untested and given the same rule.
+  The same test kept a satellite exactly at the mask on a channel and
+  tracked it, where VP p. 27 has a VP track those "greater than the
+  satellite mask angle".  The test wins: a VP reports elevations in
+  whole degrees, so one reported at the mask may be above it by a
+  fraction, and what the wire shows is at or above.  So the model
+  tracks, lists and counts visible every satellite at or above the
+  mask in question, one rule (`reaches_mask`).  It lists them in the order of
   their IDs: the manual gives no order,
   and the images bisect the one they keep on the ID (`satellite_find`,
   `screen.c`).

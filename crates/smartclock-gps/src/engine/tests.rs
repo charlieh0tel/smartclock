@@ -1404,13 +1404,14 @@ fn a_record_put_in_another_order_is_no_change_to_the_visible_satellites() {
     assert_eq!(only(&frames, BB_VISIBLE_SATELLITES), first);
 }
 
-/// VP pp. 27, 70 and 73: a VP counts as visible the satellites above
-/// ten degrees, whatever `@@Ag`'s mask.  UT pp. 6.18 and 6.22: a UT
-/// Plus, those above the horizon.  Either counts none with no almanac.
+/// VP pp. 70 and 73: a VP counts as visible the satellites at or above
+/// ten degrees, a mask angle taken as a test of a real VP showed (VP
+/// p. 27), whatever `@@Ag`'s mask.  UT pp. 6.18 and 6.22: a UT Plus,
+/// those at or above the horizon.  Either counts none with no almanac.
 /// `@@Bb` lists those at or above `@@Ag`'s mask, here 45, on a VP, and
 /// at or above the horizon on a UT Plus (UT p. 6.23).
 #[test]
-fn the_visible_count_is_of_the_satellites_above_the_manuals_elevation() {
+fn the_visible_count_is_of_the_satellites_at_the_manuals_elevation() {
     let counted = |identity: &'static Identity, elevations: &[i8], almanac: bool| {
         let mut engine = powered_up(identity);
         ask(&mut engine, &Record::EMPTY, CG_FIX_MODE, &FIX);
@@ -1431,13 +1432,13 @@ fn the_visible_count_is_of_the_satellites_above_the_manuals_elevation() {
         let listed = only(&frames, BB_VISIBLE_SATELLITES)[0];
         (data[34], data[68] & 0x02, listed)
     };
-    // At ten degrees is not above it.
-    assert_eq!(counted(&VP_EIGHT, &[9, 10, 11, 12, 90], true), (3, 0, 1));
-    assert_eq!(counted(&VP_EIGHT, &[0, 10, 11, 12], true), (2, 0x02, 0));
+    // At ten degrees counts, below it does not.
+    assert_eq!(counted(&VP_EIGHT, &[9, 10, 11, 12, 90], true), (4, 0, 1));
+    assert_eq!(counted(&VP_EIGHT, &[0, 9, 11, 12], true), (2, 0x02, 0));
     assert_eq!(counted(&VP_EIGHT, &[11, 12, 90], false), (0, 0x02, 1));
-    // On the horizon is not above it.
-    assert_eq!(counted(&UT_PLUS_2_2, &[-1, 0, 1, 9, 10], true), (3, 0, 4));
-    assert_eq!(counted(&UT_PLUS_2_2, &[0, 1, 9], true), (2, 0x02, 3));
+    // On the horizon counts, below it does not.
+    assert_eq!(counted(&UT_PLUS_2_2, &[-1, 0, 1, 9, 10], true), (4, 0, 4));
+    assert_eq!(counted(&UT_PLUS_2_2, &[-1, 1, 9], true), (2, 0x02, 2));
     assert_eq!(counted(&UT_PLUS_2_2, &[1, 9, 10], false), (0, 0x02, 3));
 }
 
@@ -1474,8 +1475,9 @@ fn a_visible_satellites_poll_answers_the_last_alert_computation() {
     assert_eq!(poll(&mut engine, &record)[4], 79);
 }
 
-/// A test of a real VP: `@@Bb` lists the satellites at or above the
-/// mask angle, and none below the horizon, the mask at 0 or not.
+/// Tests of a real VP: `@@Bb` lists the satellites at or above the
+/// mask angle, one exactly at it too, and none below the horizon, the
+/// mask at 0 or not.
 #[test]
 fn visible_satellites_are_listed_from_the_mask_angle() {
     let listed_at = |identity: &'static Identity, mask: u8| {
@@ -1623,6 +1625,25 @@ fn highest_in_the_sky_tracks_the_highest() {
     assert_eq!(channels(&mut engine), [3, 4, 31, 26, 16, 7]);
     ask(&mut engine, &record, AH_SATELLITE_SELECT, &[2]);
     assert_eq!(channels(&mut engine), [3, 4, 31, 26, 7, 9]);
+}
+
+/// A test of a real VP: a satellite exactly at the mask angle is kept on
+/// a channel, where VP p. 27 has only those above it tracked.
+#[test]
+fn a_satellite_at_the_mask_is_tracked() {
+    let mut record = full();
+    record.satellites = crate::record::Satellites::EMPTY;
+    for (id, elevation) in [(1, 19), (2, 20), (3, 21)] {
+        record.satellites.push(
+            Satellite::new(prn(id), Degrees(elevation), Degrees(0)).tracked(DecibelHertz(40)),
+        );
+    }
+    let mut engine = fixing(&VP_EIGHT);
+    ask(&mut engine, &Record::EMPTY, AG_MASK_ANGLE, &[20]);
+    let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+    let data = only(&frames, EA_POSITION_STATUS);
+    let channels = data[36..68].iter().step_by(4).copied().collect::<Vec<_>>();
+    assert_eq!(channels, [2, 3, 0, 0, 0, 0, 0, 0]);
 }
 
 /// The events one command made.

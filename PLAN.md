@@ -1384,6 +1384,34 @@ stands in for one.
     The specification gives `TIM-TP`'s `qErr` no sign convention and
     does not say what multiple of sigma `tAcc` is, so a record's timing
     block is left empty until one is measured or sourced.
+- **A host feed runs the engine in front of a real instrument**
+  (`smartclock-gps-feed`, decided 2026-11-15): the first step of a test
+  matrix of every image, engine configuration and GPS source.  It
+  speaks Oncore binary to a `SmartClock`'s engine port, over TCP to a
+  serial-to-TCP bridge, as a TCP server, or on a serial port at 9600
+  8N1, one connection at a time, made again after a wait that doubles
+  to 30 s.  The engine runs on while no instrument is connected, as an
+  engine powered with its cable out would, and its frames are dropped.
+  Its providers are gpsd's raw output of a u-blox receiver (asked for
+  with `?WATCH` and `"raw":2`, a request to gpsd alone; nothing is sent
+  to the receiver), a UBX recording, read whole and played an epoch a
+  second, and the vectors' scene, fixed or with a leap second, inside
+  the wrappers that relabel time and announce a leap second.  It is
+  always paced to real time (`Driver::Paced`): a live source admits no
+  other driver, and free running is not wanted yet.  A second starts
+  on each whole second of the host's clock, and half a second in for
+  gpsd, whose epoch arrives after the second it is of; a jump of the
+  clock restarts the count rather than bursting seconds.  The 1 PPS is
+  not carried: the instrument's comes from elsewhere, or not at all.
+  Plain threads, not tokio: one loop owns the engine and the link with
+  a read timeout up to the next second, and gpsd's reader is a second
+  thread delivering into the `Latest` under a mutex; an async runtime
+  would buy nothing for one connection each way.  Its scene is the
+  vectors' provider, so it is held to `source::scene::DECLARATION` and
+  the exceptions tables' rows under that provider's name, and works
+  out the Earth-centered position itself, with the same arithmetic as
+  the vectors' test.  `jiff` is the workspace's 0.2, not the newest,
+  so the lock holds one copy.
 - **A record takes a leap second once.**  Its UTC offset is the one in
   effect, with a past leap second's step already in it, so a leap
   second announced over another would step it twice.  Where both are

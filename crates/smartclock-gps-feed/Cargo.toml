@@ -1,0 +1,20 @@
+[package]
+name = "smartclock-gps-feed"
+description = "Runs the smartclock-gps engine on a host and speaks Oncore binary to a SmartClock's engine port, from gpsd, a UBX recording or a made-up sky"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+jiff = "0.2.38"
+serialport = "4.10.1"
+smartclock-gps = { path = "../smartclock-gps" }
+smartclock-gps-ublox = { path = "../smartclock-gps-ublox" }

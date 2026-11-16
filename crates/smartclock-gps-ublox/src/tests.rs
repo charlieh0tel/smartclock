@@ -1333,6 +1333,41 @@ fn no_time_without_a_fix() {
     assert_eq!(record.satellites.len(), 1);
 }
 
+/// In time mode a NEO-M8T gives `pDOP`, `hDOP` and `vDOP` as 9999 and
+/// only `gDOP` and `tDOP`: the time-only fix has the time and the
+/// position, and no DOPs.  A 3D fix's are kept.
+#[test]
+fn a_time_only_fix_has_no_dops() {
+    let time_mode = Pvt { fix_type: 5, ..PVT };
+    let placeholders = dop(NOON, [32, 9_999, 32, 9_999, 9_999]);
+    let bytes = stream(&[
+        (NAV_PVT, &time_mode.payload()),
+        (NAV_TIMEGPS, &time_gps(NOON, 0, WEEK.cast_signed(), 17, 7)),
+        (NAV_DOP, &placeholders),
+        (NAV_EOE, &eoe(NOON)),
+    ]);
+    let made = records(&mut Bench::new(), &bytes);
+    let [record] = made[..] else {
+        panic!("{made:?}");
+    };
+    assert_eq!(record.fix, Fix::TimeOnly);
+    assert_eq!(record.time, time(WEEK, NOON));
+    assert_eq!(record.position, Some(POSITION));
+    assert_eq!(record.dops, None);
+
+    let bytes = stream(&[
+        (NAV_PVT, &PVT.payload()),
+        (NAV_DOP, &placeholders),
+        (NAV_EOE, &eoe(NOON)),
+    ]);
+    let made = records(&mut Bench::new(), &bytes);
+    let [record] = made[..] else {
+        panic!("{made:?}");
+    };
+    assert_eq!(record.fix, Fix::ThreeD);
+    assert_eq!(record.dops.map(|dops| dops.position), Some(Tenths(1_000)));
+}
+
 #[test]
 fn no_time_without_a_valid_week_or_its_message() {
     let invalid = stream(&[

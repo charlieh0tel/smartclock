@@ -1357,6 +1357,13 @@ stands in for one.
   The assembler reads the receiver's navigation solution and none of
   the satellites' own data, so it fills no almanac; the crate decodes
   that data for a caller that wants it (below).
+  - *A time-only fix has no DOPs* (owner, 2026-11-16).  A timing
+    receiver in time mode gives `NAV-DOP`'s `pDOP`, `hDOP` and `vDOP`
+    as 9999, placeholders for a position it does not solve for; passed
+    on, they made the engine report a 2D fix of poor geometry, and a
+    `SmartClock` that surveys its position (58503B, Z3816A) never
+    locked.  With no DOPs the engine gives the 3D fix with a DOP of 0,
+    and `@@Bk`/`@@Ek` give every DOP as 0, `gDOP` and `tDOP` too.
   - *One UBX parser, shared.*  A microcontroller board with a u-blox
     module (a Cortex-M0, little RAM, small stack frames) reads its
     module with this crate's framing and decoders rather than a parser

@@ -15,9 +15,12 @@ use crate::frame::MessageId;
 use crate::frame::OVERHEAD;
 use crate::frame::checksum;
 use crate::frame::encode;
+use crate::message::ACK_ACK;
+use crate::message::ACK_NAK;
 use crate::message::MESSAGES;
 use crate::message::MON_HW;
 use crate::message::Message;
+use crate::message::NAV_CLOCK;
 use crate::message::NAV_DOP;
 use crate::message::NAV_EOE;
 use crate::message::NAV_POSECEF;
@@ -25,11 +28,15 @@ use crate::message::NAV_PVT;
 use crate::message::NAV_SAT;
 use crate::message::NAV_TIMEGPS;
 use crate::message::NAV_TIMELS;
+use crate::message::NAV_VELECEF;
+use crate::message::RXM_RAWX;
+use crate::message::RXM_SFRBX;
 use crate::message::TIM_TP;
 use crate::message::payload_length;
 use crate::nav::LeapNotice;
 use crate::nav::nav_sat_length;
-use crate::tim::Picoseconds;
+use crate::rxm::rxm_rawx_length;
+use crate::units::Picoseconds;
 use smartclock_gps::NoRoom;
 use smartclock_gps::record::Antenna;
 use smartclock_gps::record::Dops;
@@ -410,6 +417,13 @@ fn every_message_has_its_documented_length() {
         (NAV_SAT, 8),
         (NAV_SAT, 8 + 12 * 32),
         (NAV_EOE, 4),
+        (NAV_CLOCK, 20),
+        (NAV_VELECEF, 20),
+        (RXM_RAWX, 16),
+        (RXM_RAWX, 16 + 32 * 20),
+        (RXM_SFRBX, 8 + 4 * 10),
+        (ACK_ACK, 2),
+        (ACK_NAK, 2),
         (MON_HW, 60),
         (TIM_TP, 16),
     ] {
@@ -418,7 +432,8 @@ fn every_message_has_its_documented_length() {
         assert!(!own.allows(length + 1), "{id}");
         assert!(!own.allows(length - 1), "{id}");
     }
-    assert_eq!(MESSAGES.len(), 9);
+    assert_eq!(MESSAGES.len(), 15);
+    assert_eq!(rxm_rawx_length(20), 656);
     assert_eq!(payload_length(MessageId::new(0x01, 0x03)), None);
     assert_eq!(nav_sat_length(32), 392);
 }
@@ -506,8 +521,8 @@ fn a_length_that_lies_is_not_followed() {
 
 #[test]
 fn a_payload_past_the_buffer_is_not_followed() {
-    let unknown = MessageId::new(0x02, 0x15);
-    let mut bytes = vec![0xb5, 0x62, 0x02, 0x15, 0x11, 0x00];
+    let unknown = MessageId::new(0x0a, 0x04);
+    let mut bytes = vec![0xb5, 0x62, 0x0a, 0x04, 0x11, 0x00];
     bytes.extend(frame(NAV_EOE, &eoe(NOON)));
     assert_eq!(
         events::<16>(&bytes),
@@ -559,7 +574,7 @@ fn a_bad_checksum_drops_the_frame_and_the_next_is_found() {
 /// the buffer's length of what follows.
 #[test]
 fn a_damaged_length_costs_at_most_the_buffer() {
-    let unknown = MessageId::new(0x02, 0x15);
+    let unknown = MessageId::new(0x0a, 0x04);
     let mut bytes = frame(unknown, &[0; 2]);
     bytes[4] = 16;
     // The 16 bytes it now claims run through the next frame and into
@@ -606,9 +621,9 @@ fn pvt(fields: Pvt) -> crate::nav::NavPvt {
 fn nav_pvt_is_converted_to_the_records_units() {
     let decoded = pvt(PVT);
     assert_eq!(decoded.time_of_week, Milliseconds(NOON));
-    assert_eq!(decoded.fix, Fix::ThreeD);
-    assert_eq!(decoded.position, Some(POSITION));
-    assert_eq!(decoded.velocity, VELOCITY);
+    assert_eq!(decoded.fix(), Fix::ThreeD);
+    assert_eq!(decoded.position(), Some(POSITION));
+    assert_eq!(decoded.velocity(), VELOCITY);
 }
 
 #[test]
@@ -622,19 +637,19 @@ fn nav_pvt_fix_needs_gnss_fix_ok() {
         (5, Fix::TimeOnly),
         (6, Fix::None),
     ] {
-        assert_eq!(pvt(Pvt { fix_type, ..PVT }).fix, fix, "{fix_type}");
+        assert_eq!(pvt(Pvt { fix_type, ..PVT }).fix(), fix, "{fix_type}");
         let not_ok = Pvt {
             fix_type,
             flags: 0xfe,
             ..PVT
         };
-        assert_eq!(pvt(not_ok).fix, Fix::None, "{fix_type}");
+        assert_eq!(pvt(not_ok).fix(), Fix::None, "{fix_type}");
     }
 }
 
 #[test]
 fn nav_pvt_edges() {
-    assert_eq!(pvt(Pvt { flags3: 1, ..PVT }).position, None);
+    assert_eq!(pvt(Pvt { flags3: 1, ..PVT }).position(), None);
     // Heading wraps into 0 to 3599 tenths; speed is never negative.
     for (heading, tenths) in [
         (0, 0),
@@ -644,12 +659,16 @@ fn nav_pvt_edges() {
         (35_994_999, 3_599),
     ] {
         let decoded = pvt(Pvt { heading, ..PVT });
-        assert_eq!(decoded.velocity.heading, TenthDegrees(tenths), "{heading}");
+        assert_eq!(
+            decoded.velocity().heading,
+            TenthDegrees(tenths),
+            "{heading}"
+        );
     }
     for (speed, centimeters) in [(-20, 0), (4, 0), (5, 1), (i32::MAX, u16::MAX)] {
         let decoded = pvt(Pvt { speed, ..PVT });
         assert_eq!(
-            decoded.velocity.speed,
+            decoded.velocity().speed,
             CentimetersPerSecond(centimeters),
             "{speed}"
         );
@@ -663,7 +682,7 @@ fn nav_pvt_edges() {
         ..PVT
     });
     assert_eq!(
-        corner.position,
+        corner.position(),
         Some(Position {
             latitude: MilliArcSeconds(-324_000_000),
             longitude: MilliArcSeconds(648_000_000),
@@ -685,8 +704,8 @@ fn nav_timegps_gives_the_nearest_second() {
     let decoded = nav_time_gps(time_gps(NOON, -250_000, WEEK.cast_signed(), 17, 7));
     assert_eq!(decoded.time_of_week, Milliseconds(NOON));
     assert_eq!(decoded.fraction, Nanoseconds(-250_000));
-    assert_eq!(decoded.week, Some(GpsWeek::new(WEEK)));
-    assert_eq!(decoded.leap_seconds, Some(Seconds(17)));
+    assert_eq!(decoded.week(), Some(GpsWeek::new(WEEK)));
+    assert_eq!(decoded.leap_seconds(), Some(Seconds(17)));
     assert_eq!(decoded.accuracy, Nanoseconds(25));
     assert_eq!(decoded.seconds(None), Some(second(WEEK, NOON)));
     // A millisecond short of a second is that second; so is the last
@@ -704,17 +723,17 @@ fn nav_timegps_gives_the_nearest_second() {
 fn nav_timegps_validity() {
     for valid in [0b000, 0b001, 0b010, 0b100] {
         let decoded = nav_time_gps(time_gps(NOON, 0, WEEK.cast_signed(), 17, valid));
-        assert_eq!(decoded.week, None, "{valid}");
+        assert_eq!(decoded.week(), None, "{valid}");
         assert_eq!(decoded.seconds(None), None, "{valid}");
         assert_eq!(
-            decoded.leap_seconds,
+            decoded.leap_seconds(),
             (valid == 0b100).then_some(Seconds(17))
         );
     }
     let timed = nav_time_gps(time_gps(NOON, 0, WEEK.cast_signed(), 17, 0b011));
-    assert_eq!(timed.week, Some(GpsWeek::new(WEEK)));
-    assert_eq!(timed.leap_seconds, None);
-    assert_eq!(nav_time_gps(time_gps(NOON, 0, -1, 17, 7)).week, None);
+    assert_eq!(timed.week(), Some(GpsWeek::new(WEEK)));
+    assert_eq!(timed.leap_seconds(), None);
+    assert_eq!(nav_time_gps(time_gps(NOON, 0, -1, 17, 7)).week(), None);
 }
 
 /// A receiver that resolves the week 1024 off gives the right second
@@ -755,8 +774,8 @@ const NOTICE: LeapNotice = LeapNotice {
 fn nav_timels_count_and_notice() {
     let decoded = nav_time_ls(LS).unwrap();
     assert_eq!(decoded.time_of_week, Milliseconds(NOON));
-    assert_eq!(decoded.count, Some(BEFORE));
-    assert_eq!(decoded.notice, Some(NOTICE));
+    assert_eq!(decoded.count(), Some(BEFORE));
+    assert_eq!(decoded.notice(), Some(NOTICE));
     assert!(NOTICE.pending());
     assert_eq!(nav_time_ls(Ls { version: 1, ..LS }), None);
 }
@@ -777,7 +796,7 @@ fn nav_timels_count_needs_a_source() {
             ..LS
         };
         assert_eq!(
-            nav_time_ls(fields).unwrap().count,
+            nav_time_ls(fields).unwrap().count(),
             count,
             "{count_source} {valid}"
         );
@@ -786,7 +805,7 @@ fn nav_timels_count_needs_a_source() {
 
 #[test]
 fn nav_timels_notice_needs_a_gps_date() {
-    let none = |fields: Ls| assert_eq!(nav_time_ls(fields).unwrap().notice, None);
+    let none = |fields: Ls| assert_eq!(nav_time_ls(fields).unwrap().notice(), None);
     none(Ls { valid: 0b01, ..LS });
     none(Ls { change: 0, ..LS });
     none(Ls { change: 2, ..LS });
@@ -805,7 +824,7 @@ fn nav_timels_notice_needs_a_gps_date() {
         until: -5,
         ..LS
     };
-    let notice = nav_time_ls(galileo).unwrap().notice.unwrap();
+    let notice = nav_time_ls(galileo).unwrap().notice().unwrap();
     assert_eq!(notice.change, LeapChange::Remove);
     assert_eq!(notice.until, Seconds(-5));
     assert!(!notice.pending());
@@ -888,7 +907,7 @@ fn nav_dop(payload: [u8; 18]) -> Dops {
     match decode(NAV_DOP, &payload) {
         Some(Message::NavDop(dop)) => {
             assert_eq!(dop.time_of_week, Milliseconds(NOON));
-            dop.dops
+            dop.dops()
         }
         other => panic!("{other:?}"),
     }
@@ -942,7 +961,7 @@ const SAT: Sat = Sat {
 fn nav_sat(satellites: &[Sat]) -> smartclock_gps::record::Satellites {
     match decode(NAV_SAT, &sat(NOON, satellites)) {
         Some(Message::NavSat(sat)) => {
-            assert_eq!(sat.time_of_week, Milliseconds(NOON));
+            assert_eq!(sat.header.time_of_week, Milliseconds(NOON));
             assert_eq!(sat.satellites().count(), satellites.len());
             sat.sky()
         }
@@ -1628,3 +1647,5 @@ fn a_recording_replays_a_record_a_tick() {
     }
     assert_eq!(replay.record(Tick(3), &mut record), Presence::Silent);
 }
+
+mod decoders;

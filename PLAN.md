@@ -1161,7 +1161,11 @@ stands in for one.
   track the eight satellites that are highest in the sky", UT p. 6.18;
   its `satellite_select` reads so), the
   automatic switch to altitude hold above `@@Al`'s PDOP, `@@Bb` sent on
-  change, and the receiver status bits for poor geometry, a
+  change (compared only at the model's satellite alert computation,
+  every six seconds: the middle of an M12+'s "approximately once every
+  5-7 seconds", M12+ p. 105, and in step with a capture of a real VP,
+  where a comparison each second sent it each second, a record's
+  Doppler changing each second), and the receiver status bits for poor geometry, a
   differential fix, too few visible and no almanac are the manual's.
   So is the number visible in a position status, which is not
   `@@Bb`'s: the record's satellites above ten degrees on a VP (VP

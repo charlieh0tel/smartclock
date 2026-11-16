@@ -375,6 +375,14 @@ const VISIBLE_REMOVED: u8 = 1;
 const VISIBILITY: usize = 1 + SATELLITES * VISIBLE_SLOT;
 /// `@@Bb`'s mode that asks for it each time it changes (VP p. 75).
 const VISIBILITY_EACH_CHANGE: u8 = 1;
+/// How often the engine makes its satellite alert computation, which
+/// `@@Bb` in that mode is sent from "when visibility data changes"
+/// (VP pp. 74 and 75): the middle of the "approximately once every 5-7
+/// seconds" of an M12+ (M12+ p. 105), and the least of the 6 to 7
+/// seconds between `@@Bb`s a capture of a real VP shows.  A record's
+/// Doppler changes each second, so a comparison made each second would
+/// send it each second.
+const ALERT_PERIOD: Rate = Rate(6);
 /// `@@Bc`: the bytes of one combination, a DOP and its satellites (VP
 /// p. 77), those before the combinations and its data's.
 const XDOP_ENTRY: usize = size_of::<u16>() + XDOP_SATELLITES;
@@ -999,7 +1007,7 @@ impl Engine {
             if self.state.corrections.due(self.count) {
                 self.corrections(record, out);
             }
-            if self.state.visibility_updates {
+            if self.state.visibility_updates && ALERT_PERIOD.due(self.count) {
                 self.visibility_changed(record, out);
             }
             if self.state.xdop_updates && self.xdops != kept(&self.xdop_table(record)) {
@@ -1754,7 +1762,8 @@ impl Engine {
         send(out, BB_VISIBLE_SATELLITES, &data);
     }
 
-    /// `@@Bb` if it differs from the last sent (VP pp. 74 and 75).
+    /// `@@Bb` if it differs from the last sent (VP pp. 74 and 75),
+    /// called at each satellite alert computation ([`ALERT_PERIOD`]).
     fn visibility_changed<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
         let changed = self
             .visibility

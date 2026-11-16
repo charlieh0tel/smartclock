@@ -1146,21 +1146,20 @@ fn listed(data: &[u8]) -> Vec<u8> {
 
 /// The receivers bisect the `@@Bb` they keep on the satellite ID
 /// (`satellite_find`), so it lists the record's satellites in that
-/// order, whatever the record's, and all of them: one below the mask
-/// angle too.
+/// order, whatever the record's.
 #[test]
 fn visible_satellites_are_listed_in_the_order_of_their_ids() {
     let mut engine = fixing(&VP_EIGHT);
     let mut record = full();
     record
         .satellites
-        .push(Satellite::new(prn(1), Degrees(2), Degrees(359)));
+        .push(Satellite::new(prn(1), Degrees(12), Degrees(359)));
     let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[0]);
     let data = only(&frames, BB_VISIBLE_SATELLITES);
     assert_eq!(listed(data), [1, 3, 4, 16, 26, 31]);
     // Each keeps its own fields: the first's elevation and azimuth,
     // and the last's elevation, satellite 31's.
-    assert_eq!(data[1..8], [1, 0, 0, 2, 0x01, 0x67, 0]);
+    assert_eq!(data[1..8], [1, 0, 0, 12, 0x01, 0x67, 0]);
     assert_eq!(data[1 + 5 * 7 + 3], 41);
 
     // One the record gives twice is listed once, as it first has it.
@@ -1208,8 +1207,9 @@ fn a_record_put_in_another_order_is_no_change_to_the_visible_satellites() {
 
 /// VP pp. 27, 70 and 73: a VP counts as visible the satellites above
 /// ten degrees, whatever `@@Ag`'s mask.  UT pp. 6.18 and 6.22: a UT
-/// Plus, those above the horizon.  Either counts none with no almanac,
-/// and `@@Bb` lists them all.
+/// Plus, those above the horizon.  Either counts none with no almanac.
+/// `@@Bb` lists those at or above `@@Ag`'s mask, here 45, on a VP, and
+/// at or above the horizon on a UT Plus (UT p. 6.23).
 #[test]
 fn the_visible_count_is_of_the_satellites_above_the_manuals_elevation() {
     let counted = |identity: &'static Identity, elevations: &[i8], almanac: bool| {
@@ -1233,13 +1233,38 @@ fn the_visible_count_is_of_the_satellites_above_the_manuals_elevation() {
         (data[34], data[68] & 0x02, listed)
     };
     // At ten degrees is not above it.
-    assert_eq!(counted(&VP_EIGHT, &[9, 10, 11, 12, 90], true), (3, 0, 5));
-    assert_eq!(counted(&VP_EIGHT, &[0, 10, 11, 12], true), (2, 0x02, 4));
-    assert_eq!(counted(&VP_EIGHT, &[11, 12, 90], false), (0, 0x02, 3));
+    assert_eq!(counted(&VP_EIGHT, &[9, 10, 11, 12, 90], true), (3, 0, 1));
+    assert_eq!(counted(&VP_EIGHT, &[0, 10, 11, 12], true), (2, 0x02, 0));
+    assert_eq!(counted(&VP_EIGHT, &[11, 12, 90], false), (0, 0x02, 1));
     // On the horizon is not above it.
-    assert_eq!(counted(&UT_PLUS_2_2, &[-1, 0, 1, 9, 10], true), (3, 0, 5));
+    assert_eq!(counted(&UT_PLUS_2_2, &[-1, 0, 1, 9, 10], true), (3, 0, 4));
     assert_eq!(counted(&UT_PLUS_2_2, &[0, 1, 9], true), (2, 0x02, 3));
     assert_eq!(counted(&UT_PLUS_2_2, &[1, 9, 10], false), (0, 0x02, 3));
+}
+
+/// A test of a real VP: `@@Bb` lists the satellites at or above the
+/// mask angle, and none below the horizon, the mask at 0 or not.
+#[test]
+fn visible_satellites_are_listed_from_the_mask_angle() {
+    let listed_at = |identity: &'static Identity, mask: u8| {
+        let mut engine = fixing(identity);
+        ask(&mut engine, &Record::EMPTY, AG_MASK_ANGLE, &[mask]);
+        let mut record = full();
+        record.satellites = crate::record::Satellites::EMPTY;
+        for (id, elevation) in [(1, -3), (2, 0), (3, 6), (4, 10), (5, 21)] {
+            record
+                .satellites
+                .push(Satellite::new(prn(id), Degrees(elevation), Degrees(0)));
+        }
+        let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[0]);
+        listed(only(&frames, BB_VISIBLE_SATELLITES))
+    };
+    for identity in [&VP_SIX, &VP_EIGHT] {
+        assert_eq!(listed_at(identity, 0), [2, 3, 4, 5]);
+        assert_eq!(listed_at(identity, 10), [4, 5]);
+        assert_eq!(listed_at(identity, 20), [5]);
+    }
+    assert_eq!(listed_at(&UT_PLUS_2_2, 20), [2, 3, 4, 5]);
 }
 
 /// VP pp. 39, 60, 70 and 73; UT pp. 6.18 and 6.20.

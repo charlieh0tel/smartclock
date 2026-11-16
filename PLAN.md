@@ -1177,8 +1177,16 @@ stands in for one.
   lower") and one used ("modes 5 through 8", VP pp. 72 and 84), and a
   real VP's count agreed in a capture; a channel holds its satellite
   from mode 0 all the same.  The 2D or 3D fix, what Time RAIM can do
-  and the 1 PPS in its tracking mode go by that count.  `@@Bb` lists all the record's
-  satellites, in the order of their IDs: the manual gives no order,
+  and the 1 PPS in its tracking mode go by that count.  `@@Bb` lists the record's
+  satellites at or above `@@Ag`'s mask on a VP and at or above the
+  horizon on a UT Plus (UT p. 6.23), never one below the horizon.  For
+  the VP that is a test of a real eight-channel VP: with the mask at 10
+  or 20 degrees the lowest listed was at 21, and with it at 0,
+  satellites at 0, 6 and 8 degrees were listed.  Whether one exactly at
+  the mask is listed is unsettled, none having been between 10 and 21
+  degrees, so the model takes "at or above"; the six-channel VP is
+  untested and given the same rule.  It lists them in the order of
+  their IDs: the manual gives no order,
   and the images bisect the one they keep on the ID (`satellite_find`,
   `screen.c`).
   Manual selection (`@@Ah` 1 with `@@Ai`) and manual altitude hold

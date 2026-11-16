@@ -111,6 +111,7 @@ use crate::record::Record;
 use crate::record::Satellite;
 use crate::record::SatelliteFlag;
 use crate::record::SatelliteFlags;
+use crate::record::Satellites;
 use crate::record::Solver;
 use crate::record::Timing;
 use crate::record::Tracking;
@@ -327,13 +328,39 @@ fn a_position_status_is_laid_out_as_the_manual_has_it() {
     assert_eq!(data[23..27], 5500_i32.to_be_bytes());
     assert_eq!(data[27..29], 3_u16.to_be_bytes());
     assert_eq!(data[29..31], 900_u16.to_be_bytes());
-    // PDOP, its type, eight visible... five, and five tracked.
-    assert_eq!(data[31..36], [0, 20, 0, 5, 5]);
+    // PDOP, its type, five visible, and four tracked: satellite 4,
+    // at mode 4, is on a channel but not counted (VP pp. 72 and 84).
+    assert_eq!(data[31..36], [0, 20, 0, 5, 4]);
     // Satellite, mode 8, the signal strength of 44 dB-Hz, used.
     assert_eq!(data[36..40], [3, 8, 112, 0x80]);
     assert_eq!(data[40..44], [4, 4, 89, 0x00]);
     assert_eq!(data[56..68], [0; 12]);
     assert_eq!(data[68], 0x20);
+}
+
+/// VP pp. 72 and 84: a satellite counts as tracked from mode 5, message
+/// sync detect, though it holds its channel from mode 0.
+#[test]
+fn a_satellite_is_tracked_from_message_sync() {
+    let mut engine = fixing(&VP_EIGHT);
+    for (mode, tracked) in [
+        (Tracking::CarrierLock, 0),
+        (Tracking::BitSync, 0),
+        (Tracking::MessageSync, 1),
+    ] {
+        let mut record = full();
+        let first = *record.satellites.iter().next().expect("one in view");
+        record.satellites = Satellites::EMPTY;
+        record.satellites.push(Satellite {
+            tracking: mode,
+            used: false,
+            ..first
+        });
+        let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+        let data = only(&frames, EA_POSITION_STATUS);
+        assert_eq!(data[35], tracked, "at {mode:?}");
+        assert_eq!(data[36], first.prn.get(), "on its channel at {mode:?}");
+    }
 }
 
 #[test]

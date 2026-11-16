@@ -1164,7 +1164,13 @@ stands in for one.
   `@@Bb`'s: the record's satellites above ten degrees on a VP (VP
   p. 70) and above the horizon on a UT Plus (UT p. 6.18), whatever
   `@@Ag`'s mask, and none without an almanac; too few visible is fewer
-  than three of that number.  `@@Bb` lists all the record's
+  than three of that number.  The number tracked counts only the
+  channels at mode 5, message sync detect, or above, the line the
+  manual draws between a channel not used for a fix ("mode 4 or
+  lower") and one used ("modes 5 through 8", VP pp. 72 and 84), and a
+  real VP's count agreed in a capture; a channel holds its satellite
+  from mode 0 all the same.  The 2D or 3D fix, what Time RAIM can do
+  and the 1 PPS in its tracking mode go by that count.  `@@Bb` lists all the record's
   satellites, in the order of their IDs: the manual gives no order,
   and the images bisect the one they keep on the ID (`satellite_find`,
   `screen.c`).

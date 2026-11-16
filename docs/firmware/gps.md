@@ -1309,7 +1309,16 @@ specification; in short:
   satellite.  So a record's time always stands, and the commands
   count only from power-up to the first record with a time, and
   through a record that loses it.  A value out of the manual's range
-  sets nothing (VP pp. 6 and 14).  The position `@@Ad`, `@@Ae` and `@@Af` give to
+  sets nothing (VP pp. 6 and 14).  A VP model powers up at 1997-01-01 12:00:00 with its clock
+  standing, not running, until a record's time or `@@Aa` or `@@Ac`
+  sets it, as a test of a real VP (software 8.8) read; VP p. 5 gives
+  the 12:00:00 and p. 13 leaves the date to the firmware.  Until then
+  every time it sends is that one: the position status's date and
+  time, Time RAIM's next pulse (12:00:01) and `@@Aa`/`@@Ac`'s answers.
+  It is read with GPS less UTC as zero, the almanac that carries the
+  offset being dropped with the clock, so `@@Aw`'s GPS time and UTC
+  read alike.  A UT Plus model powers up at 12:00:00 on the day GPS
+  time starts, running, until a capture of one says otherwise.  The position `@@Ad`, `@@Ae` and `@@Af` give to
   start from is the one reported while the record has none (VP
   pp. 17, 21 and 25).  `@@Bc` and `@@Bd` in mode 1 are sent again in
   each second their data differs from what was last sent (VP pp. 77

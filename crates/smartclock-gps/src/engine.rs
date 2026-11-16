@@ -839,6 +839,9 @@ pub struct Engine {
     offset: Option<u8>,
     /// The data of the last `@@Bb` sent.
     visibility: Option<[u8; VISIBILITY]>,
+    /// The data of `@@Bb` as the last satellite alert computation
+    /// ([`ALERT_PERIOD`]) found it, which a poll answers.
+    alert: Option<[u8; VISIBILITY]>,
     /// The data of the last `@@Bc` sent.
     xdops: Option<[u8; XDOP_TABLE]>,
     /// The data of the last `@@Bd` sent.
@@ -884,6 +887,7 @@ impl Engine {
             heard: None,
             offset: None,
             visibility: None,
+            alert: None,
             xdops: None,
             almanac: None,
             last_status: None,
@@ -1007,8 +1011,8 @@ impl Engine {
             if self.state.corrections.due(self.count) {
                 self.corrections(record, out);
             }
-            if self.state.visibility_updates && ALERT_PERIOD.due(self.count) {
-                self.visibility_changed(record, out);
+            if ALERT_PERIOD.due(self.count) {
+                self.alert_computation(record, out);
             }
             if self.state.xdop_updates && self.xdops != kept(&self.xdop_table(record)) {
                 self.send_xdop_table(record, out);
@@ -1187,7 +1191,8 @@ impl Engine {
             );
         } else if id == BB_VISIBLE_SATELLITES {
             self.state.visibility_updates = data == [VISIBILITY_EACH_CHANGE];
-            self.send_visibility(record, out);
+            let alert = self.alert.unwrap_or_else(|| self.visibility_now(record));
+            self.send_visibility(alert, out);
         } else if id == BC_XDOP_TABLE {
             self.state.xdop_updates = data == [TABLE_EACH_CHANGE];
             self.send_xdop_table(record, out);
@@ -1754,23 +1759,27 @@ impl Engine {
             .fold(used | unhealthy, |flags, (_, bit)| flags | bit)
     }
 
-    /// `@@Bb`, kept to tell a change by.
-    fn send_visibility<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
-        let data = self.visibility(record);
-        let mut kept = [0; VISIBILITY];
-        kept.copy_from_slice(data.as_slice());
-        self.visibility = Some(kept);
-        send(out, BB_VISIBLE_SATELLITES, &data);
+    /// `@@Bb` with `data`, kept to tell a change by.
+    fn send_visibility<O: Output + ?Sized>(&mut self, data: [u8; VISIBILITY], out: &mut O) {
+        self.visibility = Some(data);
+        send(out, BB_VISIBLE_SATELLITES, Data::new().bytes(&data));
     }
 
-    /// `@@Bb` if it differs from the last sent (VP pp. 74 and 75),
-    /// called at each satellite alert computation ([`ALERT_PERIOD`]).
-    fn visibility_changed<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
-        let changed = self
-            .visibility
-            .is_none_or(|kept| kept[..] != *self.visibility(record).as_slice());
-        if changed {
-            self.send_visibility(record, out);
+    /// `@@Bb`'s data now.
+    fn visibility_now(&self, record: &Record) -> [u8; VISIBILITY] {
+        let mut data = [0; VISIBILITY];
+        data.copy_from_slice(self.visibility(record).as_slice());
+        data
+    }
+
+    /// A satellite alert computation: keeps `@@Bb`'s data for a poll
+    /// and, in its mode 1, sends it if it differs from the last sent
+    /// (VP pp. 74 and 75).
+    fn alert_computation<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
+        let alert = self.visibility_now(record);
+        self.alert = Some(alert);
+        if self.state.visibility_updates && self.visibility != Some(alert) {
+            self.send_visibility(alert, out);
         }
     }
 

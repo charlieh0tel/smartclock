@@ -1026,8 +1026,8 @@ stands in for one.
   build uses.
 - **Framing first:** IDs, lengths, checksums, encoders and streaming
   deframers.  What turns an engine's knowledge into a message's bytes
-  is a module beside these: `engine`, for the Oncores.  The Furuno's
-  is later work.
+  is a module beside these: `engine`, for the Oncores, and
+  `engine::furuno`, for the Z3815A's GT-74 (below).
 - **A model stands in for an Oncore** (`engine`): a six-channel VP, an
   eight-channel VP or a UT Plus, chosen when it is made by an identity,
   a `static` holding the model and the `@@Cj` text, so one build serves
@@ -1144,11 +1144,40 @@ stands in for one.
   other way: an engine resynchronizes a byte at a time, so a whole
   command straight after the start of a broken one is taken, where the
   receiver's firmware, which the deframer follows, would lose it.
+- **A model stands in for the Z3815A's GT-74** (`engine::furuno`,
+  decided 2026-11-16), built from the GT-8031's protocol specification,
+  the nearest at hand, and the Z3815A 4010's tables, as decided
+  earlier.  It is a module of `engine`, not a crate or a module beside
+  it: it shares `Output`, the `Settings` and the `Events`, and the
+  Oncore model's public API is as it was.  Its sentences are those the
+  image sends and decodes (`nmea::SENTENCES`): it sends `GGA`, `GSA`,
+  `GSV`, `RMC`, `anc`, `tst`, `tps` and `rrm` at the intervals `int`
+  sets, `ssd` and `rsd` in answer, and takes `set`, `srq`, `int`,
+  `rrs`, `rrq`, `clr`, `ZDA` and `GLL`; `int` takes `ZDA` and `VTG`,
+  which the image turns off, and the engine never sends them.  Where the
+  specification and the image part, or the specification is silent,
+  the image decides, and each such assumption is listed in the module's
+  documentation: chief among them, `ssd` is one sentence of 82 bytes
+  whose thirteen parameters include one the GT-8031 lacks, sent as a
+  made-up `E06`; `RMC` has eleven fields; fixed observation point mode
+  makes no fix but lists the satellites used; `GSV` lists satellites in
+  ID order.  Its settings are the Oncore's where they mean the same
+  (mask angle, satellites to ignore, position hold and the position,
+  the 1 PPS's correction as cable delay or pulse offset by its sign,
+  Time RAIM and the pulse's control mode), and none is new: the GT-74
+  keeps one position for starting from and holding, so
+  `initial_position` and `held_position` both give it.  The image reads
+  `MODEL # FURUNO GT-74` whatever the engine, and takes the engine's
+  software from `tst`, which an `Identity` holds, with whether it has
+  Time RAIM.  A test holds every sentence it sends to the image's own
+  table of what it takes, length, field count and each field's length.
 - **The model is held to recorded exchanges**:
   `crates/smartclock-gps/tests/vectors/engine/` holds scripted
   sessions, the bytes sent to an engine and the bytes it must send
   back, second by second, which `make check-engine-vectors` and the
-  crate's tests replay against the model byte for byte.
+  crate's tests replay against the model byte for byte;
+  `tests/vectors/furuno/` holds the Furuno model's, as text, under the
+  same scene.
   `make engine-vectors` rewrites the answers from the model, for
   review as a diff, when a change to them is meant.  Their sky is made
   up, and their position is the one the firmware's own script sets

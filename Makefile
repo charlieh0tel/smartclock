@@ -48,15 +48,15 @@ check-no-std:
 		$(CARGO) build --locked -p smartclock-gps -p smartclock-gps-ublox --target $$target; \
 	done
 
-# The Oncore model against its recorded exchanges, byte for byte:
-# crates/smartclock-gps/tests/vectors/engine.  "make test" runs this
-# too.  engine-vectors rewrites each file's answers from the model;
-# review the diff.
+# The Oncore and Furuno models against their recorded exchanges, byte
+# for byte: crates/smartclock-gps/tests/vectors/engine and
+# tests/vectors/furuno.  "make test" runs this too.  engine-vectors
+# rewrites each file's answers from the model; review the diff.
 check-engine-vectors:
-	$(CARGO) test --locked -p smartclock-gps --test engine_vectors
+	$(CARGO) test --locked -p smartclock-gps --test engine_vectors --test furuno_vectors
 
 engine-vectors:
-	ENGINE_VECTORS=write $(CARGO) test --locked -p smartclock-gps --test engine_vectors
+	ENGINE_VECTORS=write $(CARGO) test --locked -p smartclock-gps --test engine_vectors --test furuno_vectors
 
 # What CI runs.  Keep this the whole of it.
 # Use the repository's git hooks, once per clone: commit-msg refuses a

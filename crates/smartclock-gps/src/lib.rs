@@ -17,12 +17,11 @@
 //!   [`time`], UTC and the calendar;
 //! - where each second's record comes from: a [`source`], whether a
 //!   made-up sky, a recording or a receiver on the bench;
-//! - what turns a record into an Oncore's messages: an [`engine`], a
-//!   model that stands in for a VP or a UT Plus, taking the receiver's
-//!   commands and a record each second, and saying what those commands
-//!   set it to.
-//!
-//! Nothing turns a record into the Furuno's sentences yet.
+//! - what turns a record into an engine's messages: an [`engine`], a
+//!   model that stands in for a VP or a UT Plus, and
+//!   [`engine::furuno`], one that stands in for the Z3815A's GT-74, each
+//!   taking the receiver's commands and a record each second, and
+//!   saying what those commands set it to.
 //!
 //! A format no `SmartClock` speaks is not here but in a crate beside
 //! this one, on these types: `smartclock-gps-ublox` makes records of a

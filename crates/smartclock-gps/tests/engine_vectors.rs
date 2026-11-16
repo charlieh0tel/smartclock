@@ -21,16 +21,13 @@
 
 mod common;
 
-use common::EVENTS_AT;
 use common::EXCEPTIONS;
 use common::Head;
-use common::MILLISECONDS_PER_SECOND;
 use common::SETTING_EXCEPTIONS;
 use common::Scene;
 use common::WRITE;
 use common::WRITE_VARIABLE;
 use common::ecef;
-use common::hex;
 use common::unhex;
 use smartclock_gps::engine::Engine;
 use smartclock_gps::engine::Options;
@@ -68,6 +65,17 @@ use std::path::PathBuf;
 const FORMAT: &str = "oncore engine vectors 1";
 /// How many vectors there are, so that none goes missing unseen.
 const VECTORS: usize = 56;
+
+/// How far into a second its events fall.
+const EVENTS_AT: u64 = 500;
+const MILLISECONDS_PER_SECOND: u64 = 1000;
+
+fn hex(bytes: &[u8]) -> String {
+    bytes.iter().fold(String::new(), |mut text, byte| {
+        write!(text, "{byte:02x}").expect("a string takes it");
+        text
+    })
+}
 
 /// The vector whose scene is held to [`DECLARATION`]: one with a leap second
 /// announced.

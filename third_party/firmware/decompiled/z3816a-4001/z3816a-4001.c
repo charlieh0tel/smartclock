@@ -9201,8 +9201,8 @@ __asm__(".set s___address_____8x_installer__001007ab, 0x001007ab");
  * The decompiler's views of the stack at entry: stack0xN the bytes N
  * above the return address, so N + 4 above gcc's frame pointer.  A view
  * below the return address, into the routine's own frame, or of a
- * register has no C to stand for it: it is at an address the emulator
- * harness leaves unmapped, so that a use faults there, until its
+ * register has no C to stand for it: it is at an address the function
+ * check's harness leaves unmapped, so that a use faults there, until its
  * function is rewritten.
  */
 extern uint32_t register0x0000003c;

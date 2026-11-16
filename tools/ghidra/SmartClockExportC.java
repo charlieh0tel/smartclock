@@ -1264,8 +1264,8 @@ public class SmartClockExportC extends GhidraScript {
 		writer.println(" * The decompiler's views of the stack at entry: stack0xN the bytes N");
 		writer.println(" * above the return address, so N + 4 above gcc's frame pointer.  A view");
 		writer.println(" * below the return address, into the routine's own frame, or of a");
-		writer.println(" * register has no C to stand for it: it is at an address the emulator");
-		writer.println(" * harness leaves unmapped, so that a use faults there, until its");
+		writer.println(" * register has no C to stand for it: it is at an address the function");
+		writer.println(" * check's harness leaves unmapped, so that a use faults there, until its");
 		writer.println(" * function is rewritten.");
 		writer.println(" */");
 		for (Map.Entry<String, String> view : frames.entrySet()) {
@@ -1381,7 +1381,7 @@ public class SmartClockExportC extends GhidraScript {
 
 	/** The prefix of the decompiler's name for a view of the stack at entry. */
 	private static final String STACK_VIEW = "stack0x";
-	/** Where a view with no C stands: unmapped in the emulator harness. */
+	/** Where a view with no C stands: unmapped in the function check's harness. */
 	private static final long UNEXPRESSED = 0xfffff000L;
 
 	/**

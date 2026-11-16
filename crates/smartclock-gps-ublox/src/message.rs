@@ -280,12 +280,19 @@ impl<'a> Message<'a> {
     /// than the document's.
     #[must_use]
     pub fn parse(frame: Frame<'a>) -> Option<Self> {
-        let payload = frame.payload();
-        if !payload_length(frame.id())?.allows(payload.len()) {
+        Self::parse_payload(frame.id(), frame.payload())
+    }
+
+    /// What a message's payload says, for a caller that has its ID and
+    /// payload without a frame, such as a tool rewriting a recording.
+    /// `None` as for [`Message::parse`], whose checks it makes.
+    #[must_use]
+    pub fn parse_payload(id: MessageId, payload: &'a [u8]) -> Option<Self> {
+        if !payload_length(id)?.allows(payload.len()) {
             return None;
         }
         let fields = Fields(payload);
-        Some(match frame.id() {
+        Some(match id {
             NAV_POSECEF => Self::NavPosEcef(NavPosEcef::parse(fields)),
             NAV_DOP => Self::NavDop(NavDop::parse(fields)),
             NAV_PVT => Self::NavPvt(NavPvt::parse(fields)),

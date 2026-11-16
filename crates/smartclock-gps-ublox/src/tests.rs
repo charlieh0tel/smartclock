@@ -29,6 +29,7 @@ use crate::message::NAV_SAT;
 use crate::message::NAV_TIMEGPS;
 use crate::message::NAV_TIMELS;
 use crate::message::NAV_VELECEF;
+use crate::message::PayloadLength;
 use crate::message::RXM_RAWX;
 use crate::message::RXM_SFRBX;
 use crate::message::TIM_TP;
@@ -324,7 +325,9 @@ fn decode(id: MessageId, payload: &[u8]) -> Option<Message<'static>> {
     let deframer = Box::leak(Box::new(Deframer::<512>::new()));
     let (taken, event) = deframer.feed(&bytes);
     assert_eq!(taken, bytes.len());
-    Message::parse(event.unwrap().unwrap())
+    let message = Message::parse(event.unwrap().unwrap());
+    assert_eq!(Message::parse_payload(id, payload), message);
+    message
 }
 
 /// Every record `bytes` make.
@@ -1168,6 +1171,23 @@ fn time_raim_is_the_last_pulses() {
 #[test]
 fn a_message_of_another_kind_or_length_is_not_decoded() {
     assert_eq!(decode(MessageId::new(0x01, 0x03), &[0; 16]), None);
+}
+
+#[test]
+fn a_payload_off_its_length_is_not_decoded() {
+    // A fixed message's length, a streamed one's header's.
+    let lengths = MESSAGES.map(|(id, length)| match length {
+        PayloadLength::Fixed(own) => (id, own),
+        PayloadLength::Blocks { header, .. } => (id, header),
+    });
+    let bytes = vec![0; lengths.iter().map(|&(_, own)| own).max().unwrap() + 1];
+    for (id, own) in lengths {
+        assert_eq!(Message::parse_payload(id, &bytes[..own - 1]), None, "{id}");
+        assert_eq!(Message::parse_payload(id, &bytes[..=own]), None, "{id}");
+    }
+    let pvt = PVT.payload();
+    assert!(Message::parse_payload(NAV_PVT, &pvt).is_some());
+    assert_eq!(Message::parse_payload(NAV_PVT, &pvt[1..]), None);
 }
 
 /// One whole epoch, every message of it, as a receiver sends them.

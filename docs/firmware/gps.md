@@ -392,7 +392,12 @@ scripts `0x52` and `0x53` and 3633's `0x53`; 3633's `0x52` sends
 `Ar`(65) alone (read from the ROM).  It goes only to software 8.4.
 VPCommands p. 53 defines 0, Best-4, and 1, N-in-View; what 65 does is
 not known.  The Z380x send only `Ar`(1); the Z3816A and the 58503B
-also send 65.
+also send 65.  The engine of `crates/smartclock-gps` answers 65, on an
+identity whose `SOFTWARE VER #` and `SOFTWARE REV #` are 8 and 4, by
+echoing it and changing nothing, the fix algorithm held among the
+rest: the echo is what the images need to finish the script, and that
+a real 8.4 answers so is inferred.  On any other identity 65 is out
+of range and answered with the algorithm held, as before.
 
 3633 has the same selector at `0x50802`, the same two `bset` sites at
 `0x5051c` and `0x5078e`, the same identity tests at `0x50834` and
@@ -883,8 +888,8 @@ What an engine in a Z380x or 58503A must do, from the above:
 - **Answer `@@Cj`** with the 294-byte identity (pp. 122-123); start-up
   fails without it.  Each line must start with its label.  `OPTIONS
   LIST` must contain `I`, or no Time RAIM is sent.  In the 58503A,
-  software 8.4 brings the second `Ar`(65), which must be echoed; any
-  other version avoids it.
+  software 8.4 brings the second `Ar`(65), which must be echoed
+  ("Six or eight channels"); any other version avoids it.
 - **Six or eight channels**, in the 58503A:
   - Six: answer `Ba`, `Bk`, `Bn`, `Ca`; ignore `Ea` (the power-up
     self-test waits about 15 s for it).

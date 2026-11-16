@@ -1104,6 +1104,16 @@ stands in for one.
   and its settings at `@@Cf`'s values: what `@@Cf` sets is what it
   saves, so a holder modeling that power cycle makes the next model
   with no saved configuration.
+- **A software 8.4 model echoes `@@Ar`(65)** (decided 2026-11-15).
+  The 58503A 3704, the 58503B and the Z3816A send it to a software 8.4
+  VP after `@@Ar`(1) and wait for its echo (`docs/firmware/gps.md`,
+  "Six or eight channels"); VP p. 53 defines only 0 and 1, so the
+  model took 65 as out of range and answered the algorithm held, and
+  those images restarted their set-up forever on `VP_SIX`.  An
+  identity whose version and revision lines give 8.4 now echoes 65
+  and changes nothing, the algorithm held kept; others answer as
+  before.  What a real 8.4 does with 65 is not known: the echo is
+  what the images need, and that a real 8.4 echoes it is inferred.
 - **The model computes nothing physical.**  Dilutions of precision, a
   position in Earth-centered coordinates and magnetic variation need
   floating point or tables a Cortex-M0 should not carry, so a record

@@ -16,6 +16,7 @@ use crate::engine::event::Event;
 use crate::engine::event::Events;
 use crate::engine::identity::Identity;
 use crate::engine::identity::Model;
+use crate::engine::identity::Software;
 use crate::engine::identity::UT_PLUS_2_2;
 use crate::engine::identity::UT_PLUS_3_1;
 use crate::engine::identity::VP_EIGHT;
@@ -1694,6 +1695,46 @@ fn tell(engine: &mut Engine, id: MessageId, data: &[u8]) -> Vec<Event> {
     engine
         .receive(&command(id, data), &full(), NOW, &mut Sent::default())
         .collect()
+}
+
+/// A software 8.4 VP answers `@@Ar`(65) with 65 and keeps the
+/// algorithm it holds; a VP of another release takes 65 as out of
+/// range and answers with the algorithm held.
+#[test]
+fn only_a_software_8_4_vp_echoes_the_fix_algorithm_65() {
+    const ALGORITHM_65: [u8; 1] = [65];
+    const BEST_FOUR: [u8; 1] = [0];
+    const ASK: [u8; 1] = [0xff];
+    let record = full();
+    for (identity, answer) in [(&VP_SIX, ALGORITHM_65), (&VP_EIGHT, BEST_FOUR)] {
+        let mut engine = powered_up(identity);
+        ask(&mut engine, &record, AR_FIX_ALGORITHM, &BEST_FOUR);
+        let before = engine.settings();
+        let mut sent = Sent::default();
+        let events: Vec<Event> = engine
+            .receive(
+                &command(AR_FIX_ALGORITHM, &ALGORITHM_65),
+                &record,
+                NOW,
+                &mut sent,
+            )
+            .collect();
+        assert_eq!(events, []);
+        assert_eq!(only(&sent.0, AR_FIX_ALGORITHM), answer);
+        assert_eq!(engine.settings(), before);
+        let frames = ask(&mut engine, &record, AR_FIX_ALGORITHM, &ASK);
+        assert_eq!(only(&frames, AR_FIX_ALGORITHM), BEST_FOUR);
+    }
+}
+
+/// The presets' software releases, read from their receiver IDs.
+#[test]
+fn an_identity_gives_its_software_release() {
+    let release = |version, revision| Some(Software { version, revision });
+    assert_eq!(VP_SIX.software(), release(8, 4));
+    assert_eq!(VP_EIGHT.software(), release(8, 8));
+    assert_eq!(UT_PLUS_2_2.software(), release(2, 2));
+    assert_eq!(UT_PLUS_3_1.software(), release(3, 1));
 }
 
 /// Each setting has its own bit and its own name, and

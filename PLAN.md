@@ -1388,6 +1388,10 @@ stands in for one.
     framing.  The cost is that a part comes before its checksum, so a
     caller stages what it decodes and keeps it only at the end.  The
     whole-frame `Deframer` and the `Assembler` on it stay for hosts.
+  - *Later, perhaps:* the decoders could let the provider fill a
+    record's almanac (subframes 4 and 5), URA (subframe 1), velocity
+    along each axis and magnetic variation (`NAV-PVT`) and Doppler
+    (`RXM-RAWX`, from floating point); none is wired yet.
   - *A GPS satellite's navigation data is decoded here too*
     (`subframe`; owner, 2026-11-13: UBX decode and navigation data
     decode live here as one `no_std` source shared by board and host).

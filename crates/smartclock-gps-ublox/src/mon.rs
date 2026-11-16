@@ -12,7 +12,7 @@ const ANTENNA_OPEN: u8 = 4;
 /// `MON-HW`'s `aPower` values (p. 342).
 const POWER_OFF: u8 = 0;
 const POWER_ON: u8 = 1;
-/// `MON-HW`'s `flags` (p. 342): `rtcCalib` bit 0, `safeBoot` bit 1,
+/// `MON-HW`'s `flags` (the bitfield graphic, p. 343): `rtcCalib` bit 0, `safeBoot` bit 1,
 /// `jammingState` bits 2 and 3, `xtalAbsent` bit 4.
 const HW_RTC_CALIBRATED: u32 = 0;
 const HW_SAFE_BOOT: u32 = 1;

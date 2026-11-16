@@ -140,26 +140,27 @@ impl FixType {
     }
 }
 
-/// `NAV-PVT`'s `valid` bits (p. 375).
+/// `NAV-PVT`'s `valid` bits (the bitfield graphic, p. 376).
 const PVT_VALID_DATE: u32 = 0;
 const PVT_VALID_TIME: u32 = 1;
 const PVT_FULLY_RESOLVED: u32 = 2;
 const PVT_VALID_MAGNETIC: u32 = 3;
-/// `NAV-PVT`'s `flags` (p. 377): `gnssFixOK` bit 0, `diffSoln` bit 1,
-/// `headVehValid` bit 5, `carrSoln` bits 6 and 7.  The text gives the
-/// names in that order and leaves the places to a graphic; the places
-/// are those of the earlier revisions, whose bits 2 to 4 R28 no longer
-/// names.
+/// `NAV-PVT`'s `flags` (the bitfield graphic, p. 377): `gnssFixOK`
+/// bit 0, `diffSoln` bit 1, `psmState` bits 2 to 4, `headVehValid` bit
+/// 5, `carrSoln` bits 6 and 7.  The table under the graphic leaves
+/// `psmState` out; the graphic has it.
 const PVT_FIX_OK: u32 = 0;
 const PVT_DIFFERENTIAL: u32 = 1;
+const PVT_POWER_SHIFT: u32 = 2;
+const PVT_POWER_WIDTH: u32 = 3;
 const PVT_HEADING_VALID: u32 = 5;
 const PVT_CARRIER_SHIFT: u32 = 6;
 const PVT_CARRIER_WIDTH: u32 = 2;
-/// `NAV-PVT`'s `flags2` (p. 377).
+/// `NAV-PVT`'s `flags2` (the bitfield graphic, p. 377).
 const PVT_CONFIRMED_AVAILABLE: u32 = 5;
 const PVT_CONFIRMED_DATE: u32 = 6;
 const PVT_CONFIRMED_TIME: u32 = 7;
-/// `NAV-PVT`'s `flags3` (p. 378), two bytes: `invalidLlh` bit 0,
+/// `NAV-PVT`'s `flags3` (the bitfield graphic, p. 378), two bytes: `invalidLlh` bit 0,
 /// `lastCorrectionAge` bits 1 to 4.
 const PVT_INVALID_POSITION: u16 = 1 << 0;
 const PVT_CORRECTION_AGE_SHIFT: u32 = 1;
@@ -215,6 +216,9 @@ pub struct NavPvt {
     pub differential: bool,
     /// `flags` bit 5, `headVehValid`.
     pub vehicle_heading_valid: bool,
+    /// `flags` bits 2 to 4, `psmState`: the power save mode's state,
+    /// which the graphic gives and the table does not describe.
+    pub power_save: u8,
     /// `flags` bits 6 and 7, `carrSoln`: 0 none, 1 carrier phase
     /// with floating ambiguities, 2 with fixed ones.
     pub carrier_solution: u8,
@@ -291,6 +295,7 @@ impl NavPvt {
             fix_ok: fields.bit(21, PVT_FIX_OK),
             differential: fields.bit(21, PVT_DIFFERENTIAL),
             vehicle_heading_valid: fields.bit(21, PVT_HEADING_VALID),
+            power_save: bit_field(flags, PVT_POWER_SHIFT, PVT_POWER_WIDTH),
             carrier_solution: bit_field(flags, PVT_CARRIER_SHIFT, PVT_CARRIER_WIDTH),
             satellites: fields.u8(23),
             longitude: HundredNanodegrees(fields.i32(24)),
@@ -733,8 +738,8 @@ pub struct NavEoe {
 
 /// `NAV-SAT`'s version this crate knows (p. 381).
 const SAT_VERSION: u8 = 1;
-/// `NAV-SAT`'s `flags` (p. 382), each bit's place, and the shift and
-/// width of each field of more than one.
+/// `NAV-SAT`'s `flags` (the bitfield graphic, p. 382): each bit's
+/// place, and the shift and width of each field of more than one.
 const SAT_QUALITY_SHIFT: u32 = 0;
 const SAT_QUALITY_WIDTH: u32 = 3;
 const SAT_USED: u32 = 3;

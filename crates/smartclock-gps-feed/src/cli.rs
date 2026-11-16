@@ -13,6 +13,10 @@ use clap::Parser;
 use clap::ValueEnum;
 use jiff::Timestamp;
 use smartclock_gps::engine::Options;
+use smartclock_gps::engine::furuno::GT_74;
+use smartclock_gps::engine::furuno::GT_74_PULSE_EARLY;
+use smartclock_gps::engine::furuno::GT_74_WITHOUT_TIME_RAIM;
+use smartclock_gps::engine::furuno::Identity as FurunoIdentity;
 use smartclock_gps::engine::identity::Identity;
 use smartclock_gps::engine::identity::UT_PLUS_2_2;
 use smartclock_gps::engine::identity::UT_PLUS_3_1;
@@ -30,8 +34,8 @@ use smartclock_gps::units::Seconds;
 use crate::provider::GPSD_PORT;
 use crate::provider::UTC_OFFSET;
 
-/// Runs a GPS engine on this host and speaks Oncore binary to a
-/// `SmartClock`'s engine port.
+/// Runs a GPS engine on this host and speaks to a `SmartClock`'s engine
+/// port as it: Oncore binary, or a Furuno GT-74's NMEA.
 #[derive(Debug, Parser)]
 #[command(version)]
 pub(crate) struct Cli {
@@ -43,20 +47,21 @@ pub(crate) struct Cli {
     #[arg(value_name = "PROVIDER")]
     pub(crate) provider: ProviderSpec,
 
-    /// The Oncore the engine is.
+    /// The engine: an Oncore, or the Z3815A's Furuno GT-74.
     #[arg(long, value_enum)]
     pub(crate) engine: EngineName,
 
     /// The eight-channel Oncore a six-channel engine becomes at its
-    /// first `@@Ea`.
+    /// first `@@Ea`.  An Oncore's alone.
     #[arg(long, value_enum, value_name = "ENGINE")]
     pub(crate) eight_on_ea: Option<EngineName>,
 
-    /// The engine takes no commands.
+    /// The engine takes no commands.  An Oncore's alone.
     #[arg(long)]
     pub(crate) deaf: bool,
 
     /// The engine powers up configured, as the receiver named leaves it.
+    /// An Oncore's alone.
     #[arg(long, value_enum)]
     pub(crate) saved: Option<Saved>,
 
@@ -92,7 +97,8 @@ pub(crate) struct TransportArgs {
     pub(crate) serial: Option<PathBuf>,
 }
 
-/// An Oncore the engine can be, as the command line names it.
+/// An engine the feed can be, as the command line names it: an Oncore
+/// or a Furuno GT-74.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub(crate) enum EngineName {
     /// A six-channel VP.
@@ -107,6 +113,23 @@ pub(crate) enum EngineName {
     /// A UT Plus of firmware 3.1.
     #[value(name = "ut-plus-3.1")]
     UtPlus3_1,
+    /// A Furuno GT-74 with Time RAIM, the Z3815A's engine.
+    #[value(name = "gt-74")]
+    Gt74,
+    /// A GT-74 whose software has no Time RAIM.
+    #[value(name = "gt-74-without-time-raim")]
+    Gt74WithoutTimeRaim,
+    /// A GT-74 whose software puts the 1 PPS 400 ns early, which the
+    /// Z3815A corrects in the cable delay it sends.
+    #[value(name = "gt-74-pulse-early")]
+    Gt74PulseEarly,
+}
+
+/// The engine a name is, of its family.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Family {
+    Oncore(&'static Identity),
+    Furuno(&'static FurunoIdentity),
 }
 
 impl EngineName {
@@ -116,13 +139,16 @@ impl EngineName {
             .map_or_else(String::new, |value| value.get_name().to_owned())
     }
 
-    pub(crate) const fn identity(self) -> &'static Identity {
+    const fn family(self) -> Family {
         match self {
-            Self::VpSix => &VP_SIX,
-            Self::VpEight => &VP_EIGHT,
-            Self::VpEightWithoutTimeRaim => &VP_EIGHT_WITHOUT_TIME_RAIM,
-            Self::UtPlus2_2 => &UT_PLUS_2_2,
-            Self::UtPlus3_1 => &UT_PLUS_3_1,
+            Self::VpSix => Family::Oncore(&VP_SIX),
+            Self::VpEight => Family::Oncore(&VP_EIGHT),
+            Self::VpEightWithoutTimeRaim => Family::Oncore(&VP_EIGHT_WITHOUT_TIME_RAIM),
+            Self::UtPlus2_2 => Family::Oncore(&UT_PLUS_2_2),
+            Self::UtPlus3_1 => Family::Oncore(&UT_PLUS_3_1),
+            Self::Gt74 => Family::Furuno(&GT_74),
+            Self::Gt74WithoutTimeRaim => Family::Furuno(&GT_74_WITHOUT_TIME_RAIM),
+            Self::Gt74PulseEarly => Family::Furuno(&GT_74_PULSE_EARLY),
         }
     }
 }
@@ -271,6 +297,8 @@ pub(crate) enum EngineSpec {
         identity: &'static Identity,
         options: Options,
     },
+    /// A GT-74, which has no options.
+    Furuno(&'static FurunoIdentity),
 }
 
 /// What the command line asks for, checked.
@@ -290,22 +318,16 @@ impl Cli {
     /// Checks what the command line asks for.  The engine's options are
     /// checked when it is made.
     pub(crate) fn configure(self) -> Result<Config> {
-        let identity = self.engine.identity();
-        let mut options = Options::DEFAULT;
-        options.deaf = self.deaf;
-        options.saved = self.saved.map(Saved::configuration);
-        if let Some(eight) = self.eight_on_ea {
-            if ChannelCount::of(identity.model()) != ChannelCount::Six {
-                bail!(
-                    "--eight-on-ea is for a six-channel engine, and --engine names an eight-channel one"
-                );
+        let spec = match self.engine.family() {
+            Family::Oncore(identity) => EngineSpec::Oncore {
+                identity,
+                options: self.oncore_options(identity)?,
+            },
+            Family::Furuno(identity) => {
+                self.refuse_oncore_options()?;
+                EngineSpec::Furuno(identity)
             }
-            let target = eight.identity();
-            if ChannelCount::of(target.model()) != ChannelCount::Eight {
-                bail!("--eight-on-ea names a six-channel engine; give an eight-channel one");
-            }
-            options.eight_on_ea = Some(target);
-        }
+        };
         let fake_start = self.fake_start.as_ref().map(utc).transpose()?;
         let transport = match self.transport {
             TransportArgs {
@@ -324,11 +346,55 @@ impl Cli {
         Ok(Config {
             provider: self.provider,
             engine: self.engine,
-            spec: EngineSpec::Oncore { identity, options },
+            spec,
             fake_start,
             transport,
             log: self.log,
         })
+    }
+
+    /// How the Oncore `identity` names is to depart from it.
+    fn oncore_options(&self, identity: &'static Identity) -> Result<Options> {
+        let mut options = Options::DEFAULT;
+        options.deaf = self.deaf;
+        options.saved = self.saved.map(Saved::configuration);
+        if let Some(eight) = self.eight_on_ea {
+            if ChannelCount::of(identity.model()) != ChannelCount::Six {
+                bail!(
+                    "--eight-on-ea is for a six-channel engine, and --engine names an eight-channel one"
+                );
+            }
+            let target = match eight.family() {
+                Family::Oncore(target) => target,
+                Family::Furuno(_) => {
+                    bail!("--eight-on-ea names a Furuno engine; give an eight-channel Oncore")
+                }
+            };
+            if ChannelCount::of(target.model()) != ChannelCount::Eight {
+                bail!("--eight-on-ea names a six-channel engine; give an eight-channel one");
+            }
+            options.eight_on_ea = Some(target);
+        }
+        Ok(options)
+    }
+
+    /// Refuses the options only an Oncore has, for a GT-74.
+    fn refuse_oncore_options(&self) -> Result<()> {
+        let engine = self.engine.name();
+        if self.eight_on_ea.is_some() {
+            bail!(
+                "--eight-on-ea is for a six-channel Oncore, which becomes an eight-channel one at its first @@Ea; {engine} is a Furuno engine, which has no @@ messages"
+            );
+        }
+        if self.saved.is_some() {
+            bail!(
+                "--saved powers an Oncore up as the receiver named leaves it, and a 58503A's engine is an Oncore; {engine} always powers up with no backup"
+            );
+        }
+        if self.deaf {
+            bail!("--deaf is for an Oncore; the {engine} model has no deaf mode");
+        }
+        Ok(())
     }
 }
 
@@ -342,6 +408,9 @@ mod tests {
     use crate::provider::GPSD_PORT;
     use clap::Parser;
     use smartclock_gps::engine::Options;
+    use smartclock_gps::engine::furuno::GT_74;
+    use smartclock_gps::engine::furuno::GT_74_PULSE_EARLY;
+    use smartclock_gps::engine::furuno::GT_74_WITHOUT_TIME_RAIM;
     use smartclock_gps::engine::identity::Identity;
     use smartclock_gps::engine::identity::UT_PLUS_2_2;
     use smartclock_gps::engine::identity::VP_EIGHT;
@@ -369,7 +438,79 @@ mod tests {
     fn oncore(config: &Config) -> (&'static Identity, Options) {
         match config.spec {
             EngineSpec::Oncore { identity, options } => (identity, options),
+            EngineSpec::Furuno(_) => panic!("a Furuno engine"),
         }
+    }
+
+    /// Each GT-74 is made from its name, with any provider and
+    /// transport.
+    #[test]
+    fn the_command_line_names_a_furuno_engine() {
+        for (name, identity) in [
+            ("gt-74", &GT_74),
+            ("gt-74-without-time-raim", &GT_74_WITHOUT_TIME_RAIM),
+            ("gt-74-pulse-early", &GT_74_PULSE_EARLY),
+        ] {
+            let config = parse(&[
+                "gpsd:apu-0",
+                "--engine",
+                name,
+                "--fake-start",
+                "2027-12-31T23:58:00Z",
+                "--serial",
+                "/dev/ttyS0",
+                "--log",
+                "wire.log",
+            ])
+            .unwrap();
+            assert_eq!(config.spec, EngineSpec::Furuno(identity));
+            assert_eq!(config.engine.name(), name);
+            assert_eq!(
+                config.transport,
+                TransportSpec::Serial(PathBuf::from("/dev/ttyS0"))
+            );
+            assert!(config.fake_start.is_some());
+        }
+        let config = parse(&[
+            "leap:2028-01-01T00:00:00Z",
+            "--engine",
+            "gt-74",
+            "--connect",
+            "a:1",
+        ])
+        .unwrap();
+        assert_eq!(config.spec, EngineSpec::Furuno(&GT_74));
+    }
+
+    /// An Oncore's options are refused with a GT-74, each saying why,
+    /// and a GT-74 is no eight-channel Oncore to become.
+    #[test]
+    fn a_furuno_engine_refuses_an_oncores_options() {
+        for (option, why) in [
+            (&["--eight-on-ea", "vp-eight"][..], "no @@ messages"),
+            (&["--saved", "58503a"], "engine is an Oncore"),
+            (&["--deaf"], "no deaf mode"),
+        ] {
+            let arguments: Vec<&str> = ["fixed", "--engine", "gt-74", "--connect", "a:1"]
+                .iter()
+                .chain(option)
+                .copied()
+                .collect();
+            let refusal = parse(&arguments).unwrap_err().to_string();
+            assert!(refusal.contains(why), "{refusal}");
+        }
+        let refusal = parse(&[
+            "fixed",
+            "--engine",
+            "vp-six",
+            "--eight-on-ea",
+            "gt-74",
+            "--connect",
+            "a:1",
+        ])
+        .unwrap_err()
+        .to_string();
+        assert!(refusal.contains("Furuno"), "{refusal}");
     }
 
     fn provider(text: &str) -> anyhow::Result<ProviderSpec> {

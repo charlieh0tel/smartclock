@@ -1,6 +1,6 @@
 //! smartclock-gps-feed: runs the `smartclock-gps` engine on a host,
-//! paced to real time, and speaks Oncore binary to a `SmartClock`'s
-//! engine port over TCP or a serial port.  Each second it takes a
+//! paced to real time, and speaks Oncore binary, or a Furuno GT-74's
+//! NMEA, to a `SmartClock`'s engine port over TCP or a serial port.  Each second it takes a
 //! record from its provider -- gpsd, a UBX recording or a made-up sky
 //! -- and steps the engine; between seconds it answers what the
 //! instrument sends.  The 1 PPS is not carried: the instrument's comes

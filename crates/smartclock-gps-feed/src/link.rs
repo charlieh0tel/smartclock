@@ -26,9 +26,15 @@ use serialport::StopBits;
 use crate::cli::TransportSpec;
 use crate::event;
 
-/// The engine port's rate in Motorola binary, with eight data bits, no
-/// parity and one stop bit (TRM0003 table 3.7, p. 3.24,
-/// `third_party/motorola/oncore-ut-users-guide/ch3.pdf`).
+/// The engine port's rate, with eight data bits, no parity and one stop
+/// bit, whichever the engine: an Oncore's in Motorola binary (TRM0003
+/// table 3.7, p. 3.24,
+/// `third_party/motorola/oncore-ut-users-guide/ch3.pdf`), and the
+/// Z3815A's to its GT-74, which `duart_init` (`0x2e00c`,
+/// `third_party/firmware/decompiled/z3815a-4010/z3815a-4010.c`) sets on
+/// DUART channel A: CSRA `0xbb` (9600 each way, baud-rate set 2 by ACR
+/// `0xa0`), MR1A `0x13` (no parity, eight bits) and MR2A `0x07` (one
+/// stop bit).
 const BAUD: u32 = 9600;
 /// How much is read at once.
 const CHUNK: usize = 512;

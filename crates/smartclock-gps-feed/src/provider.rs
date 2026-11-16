@@ -303,7 +303,7 @@ fn read_gpsd(mut stream: TcpStream, assembler: &mut Ubx, shared: &Mutex<Shared>)
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::Built;
     use super::Kind;
     use super::Provider;
@@ -361,7 +361,7 @@ mod tests {
     /// GPS less UTC in it.
     const LEAP_SECONDS: i8 = 18;
     /// The epochs in it.
-    const EPOCHS: u32 = 3;
+    pub(crate) const EPOCHS: u32 = 3;
     /// How long a test waits for gpsd's reader.
     const PATIENCE: Duration = Duration::from_secs(5);
 
@@ -409,7 +409,7 @@ mod tests {
 
     /// A recording of [`EPOCHS`] epochs a second apart, with gpsd's JSON
     /// greeting in front, as `gpspipe -R` can leave it.
-    fn capture() -> Vec<u8> {
+    pub(crate) fn capture() -> Vec<u8> {
         let mut bytes = b"{\"class\":\"VERSION\",\"release\":\"3.25\"}\r\n".to_vec();
         for second in 0..EPOCHS {
             bytes.extend(epoch(NOON + second * MILLISECONDS_PER_SECOND));

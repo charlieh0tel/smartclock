@@ -28,9 +28,12 @@
 //! record whose time steps neither doubles a message nor skips one.
 //! The time it reports is the record's; when a record's time is the
 //! same as the last one's, or it has none, the engine's own clock runs
-//! on a second.  That clock starts at 12:00:00 on the day GPS time
-//! starts, as an Oncore's does that was not kept powered (VP p. 5), so
-//! a clock `@@Ab` sets behind UTC reads the day before.  `@@Aa` and
+//! on a second.  That clock starts at 12:00:00 (VP p. 5), on a date the
+//! manual leaves to the firmware (VP p. 13): a VP's at 1997-01-01, as a
+//! test of a real VP read, and standing there, not running, until a
+//! record's time or `@@Aa` or `@@Ac` sets it; a UT Plus's, of which
+//! there is no capture, at the day GPS time starts, running.  A clock
+//! `@@Ab` sets behind UTC reads the day before.  `@@Aa` and
 //! `@@Ac` set that clock, but not while the record tells the time, as
 //! an Oncore tracking a satellite ignores them (VP pp. 5 and 13).  A
 //! second in which the engine is to be silent is one
@@ -481,19 +484,29 @@ const NANOSECONDS_PER_SECOND: i32 = 1_000_000_000;
 /// The time an engine has before it is given one.  A real-time clock
 /// that was not kept powered "is initialized at 12:00:00 at power up"
 /// (`@@Aa`, VP p. 5), and to "the default date", which "varies
-/// depending upon the firmware" (`@@Ac`, VP p. 13); the model's is the
-/// day GPS time starts, so that 12:00:00 is the same in GPS time and in
-/// UTC with no offset known.
-const POWER_UP: GpsSeconds = match GpsSeconds::from_utc(
-    match DateTime::new(1980, 1, 6, 12, 0, 0) {
-        Some(noon) => noon.to_unix(),
-        None => panic!("not a date"),
-    },
-    Seconds(0),
-) {
-    Some(time) => time,
-    None => panic!("out of the count"),
-};
+/// depending upon the firmware" (`@@Ac`, VP p. 13).  A test of a real
+/// VP (software 8.8) told `@@Cf` and power-cycled with no backup power
+/// read 1997-01-01 12:00:00, its clock not running; that is a VP's.  A
+/// UT Plus keeps the day GPS time starts until a capture of one says
+/// otherwise.  Either is read with GPS less UTC as zero: a VP's almanac,
+/// which carries the offset, is dropped with its clock, so none is
+/// known, and 12:00:00 is the same in GPS time and in UTC.
+const POWER_UP_VP: GpsSeconds = noon(1997, 1, 1);
+const POWER_UP_UT_PLUS: GpsSeconds = noon(1980, 1, 6);
+
+/// 12:00:00 on a day, with no offset of GPS time from UTC.
+const fn noon(year: u16, month: u8, day: u8) -> GpsSeconds {
+    match GpsSeconds::from_utc(
+        match DateTime::new(year, month, day, 12, 0, 0) {
+            Some(noon) => noon.to_unix(),
+            None => panic!("not a date"),
+        },
+        Seconds(0),
+    ) {
+        Some(time) => time,
+        None => panic!("out of the count"),
+    }
+}
 
 /// The date and time sent when none can be worked out: the start of GPS
 /// time.
@@ -880,6 +893,10 @@ pub struct Engine {
     count: u32,
     /// The time it reports.
     clock: GpsSeconds,
+    /// Whether [`Engine::clock`](Self::clock) runs on a second each
+    /// second: a VP's stands at its power-up time until a record's time
+    /// or `@@Aa` or `@@Ac` sets it ([`POWER_UP_VP`]).
+    running: bool,
     /// The last record's time, to tell a new one from the same again.
     heard: Option<GpsSeconds>,
     /// GPS less UTC as `@@Bo` gave it in the second before.
@@ -931,7 +948,11 @@ impl Engine {
             framer: Framer::new(),
             state,
             count: 0,
-            clock: POWER_UP,
+            clock: match model {
+                Model::VpSix | Model::VpEight => POWER_UP_VP,
+                Model::UtPlus => POWER_UP_UT_PLUS,
+            },
+            running: matches!(model, Model::UtPlus),
             heard: None,
             offset: None,
             visibility: None,
@@ -1033,9 +1054,10 @@ impl Engine {
         let told = record.time.map(|time| time.seconds);
         self.clock = match told {
             Some(time) if told != self.heard => time,
-            _ if self.count == 1 => self.clock,
+            _ if self.count == 1 || !self.running => self.clock,
             _ => self.clock + Seconds(1),
         };
+        self.running |= told.is_some();
         self.heard = told;
 
         let offset = self.wire_offset(record);
@@ -1090,6 +1112,7 @@ impl Engine {
             && let Some(time) = record.time
         {
             self.clock = time.seconds;
+            self.running = true;
         }
         bytes
             .iter()
@@ -1388,6 +1411,7 @@ impl Engine {
             .and_then(|shift| self.clock.checked_add(shift));
         if let Some(clock) = set {
             self.clock = clock;
+            self.running = true;
         }
     }
 

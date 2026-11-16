@@ -1264,7 +1264,16 @@ stands in for one.
   which speaks neither NMEA nor Loran and goes on in binary; an
   earlier revision had it fall silent, which took a call of its
   holder's to undo and gave nothing a holder could not do with the
-  event.  `@@Aa` and `@@Ac` set the model's clock only while the
+  event.  A VP model powers up at 1997-01-01 12:00:00 with its clock
+  standing, not running, until a record's time or `@@Aa` or `@@Ac`
+  sets it, as a test of a real VP (software 8.8) read; VP p. 5 gives
+  the 12:00:00 and p. 13 leaves the date to the firmware.  Until then
+  every time it sends is that one: the position status's date and
+  time, Time RAIM's next pulse (12:00:01) and `@@Aa`/`@@Ac`'s answers.
+  It is read with GPS less UTC as zero, the almanac that carries the
+  offset being dropped with the clock, so `@@Aw`'s GPS time and UTC
+  read alike.  A UT Plus model powers up at 12:00:00 on the day GPS
+  time starts, running, until a capture of one says otherwise.  `@@Aa` and `@@Ac` set the model's clock only while the
   record tells no time, as an Oncore tracking a satellite ignores
   them (VP pp. 5 and 13); a command never overrides a record's time.
   `Engine::receive` returns what its commands did: a reset,

@@ -522,40 +522,83 @@ fn a_time_raim_status_carries_the_records_timing() {
     assert_eq!(data[22..27], [3, 0x3b, 0x9a, 0xc9, 0xfb]);
 }
 
-/// VP p. 5: "initialized at 12:00:00 at power up"; the date is the
-/// model's, the day GPS time starts.  The clock runs on from there, and
-/// one `@@Ab` sets behind UTC (VP p. 9) reads a time before the start
-/// of GPS time.
+/// VP p. 5: "initialized at 12:00:00 at power up"; the date "varies
+/// depending upon the firmware" (VP p. 13).  A test of a real VP read
+/// 1997-01-01, its clock not running until set; a UT Plus's is the
+/// model's, the day GPS time starts, and runs on.  One `@@Ab` sets
+/// behind UTC (VP p. 9) reads the day before.
 #[test]
 fn an_engine_given_no_time_starts_at_noon() {
-    const DATE: [u8; 4] = [1, 6, 0x07, 0xbc];
-    const EVE: [u8; 4] = [1, 5, 0x07, 0xbc];
     let record = Record::EMPTY;
     let clock = |engine: &mut Engine| {
         let date = ask(engine, &record, AC_DATE, &[0xff; 4]);
         let time = ask(engine, &record, AA_TIME_OF_DAY, &[0xff; 3]);
         [only(&date, AC_DATE), only(&time, AA_TIME_OF_DAY)].concat()
     };
-    for identity in [&VP_SIX, &VP_EIGHT, &UT_PLUS_2_2] {
+    // The date, the day before and the day after, and the seconds the
+    // clock has run in three seconds given: the first given is the one
+    // it is at.
+    let vp = (
+        [1, 1, 0x07, 0xcd],
+        [12, 31, 0x07, 0xcc],
+        [1, 2, 0x07, 0xcd],
+        0,
+    );
+    let ut_plus = (
+        [1, 6, 0x07, 0xbc],
+        [1, 5, 0x07, 0xbc],
+        [1, 7, 0x07, 0xbc],
+        2,
+    );
+    for (identity, (date, eve, morrow, ran)) in
+        [(&VP_SIX, vp), (&VP_EIGHT, vp), (&UT_PLUS_2_2, ut_plus)]
+    {
         let mut engine = powered_up(identity);
-        assert_eq!(clock(&mut engine), [&DATE[..], &[12, 0, 0]].concat());
+        assert_eq!(clock(&mut engine), [&date[..], &[12, 0, 0]].concat());
         for _ in 0..3 {
             engine.second(&record, NOW, &mut Sent::default());
         }
-        // The first second given is the one the clock is at.
-        assert_eq!(clock(&mut engine), [&DATE[..], &[12, 0, 2]].concat());
+        assert_eq!(clock(&mut engine), [&date[..], &[12, 0, ran]].concat());
 
         // Thirteen hours behind, and thirteen hours and a half.
         ask(&mut engine, &record, AB_GMT_CORRECTION, &[0xff, 13, 0]);
-        assert_eq!(clock(&mut engine), [&EVE[..], &[23, 0, 2]].concat());
+        assert_eq!(clock(&mut engine), [&eve[..], &[23, 0, ran]].concat());
         ask(&mut engine, &record, AB_GMT_CORRECTION, &[0xff, 13, 30]);
-        assert_eq!(clock(&mut engine), [&EVE[..], &[22, 30, 2]].concat());
+        assert_eq!(clock(&mut engine), [&eve[..], &[22, 30, ran]].concat());
         ask(&mut engine, &record, AB_GMT_CORRECTION, &[0, 13, 0]);
-        assert_eq!(
-            clock(&mut engine),
-            [&[1, 7, 0x07, 0xbc][..], &[1, 0, 2]].concat()
-        );
+        assert_eq!(clock(&mut engine), [&morrow[..], &[1, 0, ran]].concat());
     }
+}
+
+/// A VP's stopped clock runs once set, by `@@Aa` or by a record's time.
+#[test]
+fn a_vps_clock_runs_once_set() {
+    let time = |engine: &mut Engine, record: &Record| {
+        only(
+            &ask(engine, record, AA_TIME_OF_DAY, &[0xff; 3]),
+            AA_TIME_OF_DAY,
+        )
+        .to_vec()
+    };
+    let mut engine = powered_up(&VP_EIGHT);
+    ask(&mut engine, &Record::EMPTY, AA_TIME_OF_DAY, &[1, 2, 3]);
+    for _ in 0..3 {
+        engine.second(&Record::EMPTY, NOW, &mut Sent::default());
+    }
+    assert_eq!(time(&mut engine, &Record::EMPTY), [1, 2, 5]);
+
+    let mut engine = powered_up(&VP_EIGHT);
+    engine.second(&Record::EMPTY, NOW, &mut Sent::default());
+    let mut record = full();
+    engine.second(&record, NOW, &mut Sent::default());
+    let told = time(&mut engine, &record);
+    record.time = None;
+    engine.second(&record, NOW, &mut Sent::default());
+    assert_ne!(
+        time(&mut engine, &record),
+        told,
+        "runs on from the record's"
+    );
 }
 
 #[test]
@@ -564,7 +607,7 @@ fn a_record_with_gaps_is_sent_as_zeros() {
     let frames = ask(&mut engine, &Record::EMPTY, EA_POSITION_STATUS, &[0]);
     let data = only(&frames, EA_POSITION_STATUS);
     // The power-up clock, and nothing else but the status.
-    assert_eq!(data[..7], [1, 6, 0x07, 0xbc, 12, 0, 0]);
+    assert_eq!(data[..7], [1, 1, 0x07, 0xcd, 12, 0, 0]);
     assert_eq!(data[7..68], [0; 61]);
     // Acquiring, too few visible, no almanac (VP p. 73).
     assert_eq!(data[68], 0x08 | 0x02 | 0x01);

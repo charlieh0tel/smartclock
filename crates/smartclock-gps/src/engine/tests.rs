@@ -10,6 +10,7 @@ use std::vec::Vec;
 use crate::engine::Engine;
 use crate::engine::Options;
 use crate::engine::Output;
+use crate::engine::SELF_TEST;
 use crate::engine::event::Event;
 use crate::engine::event::Events;
 use crate::engine::identity::Identity;
@@ -381,11 +382,11 @@ fn a_ut_plus_tells_what_its_antenna_draws() {
         }
 
         assert!(ask(&mut engine, &record, FA_SELF_TEST, &[]).is_empty());
-        assert_eq!(engine.deadline(), Some(Milliseconds(2000)));
+        assert_eq!(engine.deadline(), Some(Milliseconds(SELF_TEST)));
         let mut sent = Sent::default();
-        engine.poll(Milliseconds(1999), &mut sent);
+        engine.poll(Milliseconds(SELF_TEST - 1), &mut sent);
         assert!(sent.0.is_empty());
-        engine.poll(Milliseconds(2000), &mut sent);
+        engine.poll(Milliseconds(SELF_TEST), &mut sent);
         assert_eq!(only(&sent.0, FA_SELF_TEST), result.to_be_bytes());
         assert_eq!(engine.deadline(), None);
     }
@@ -409,7 +410,7 @@ fn a_self_test_tells_the_records_faults_in_its_own_bits() {
         let mut engine = fixing(identity);
         assert!(ask(&mut engine, &record, id, &[]).is_empty());
         let mut sent = Sent::default();
-        engine.poll(Milliseconds(2000), &mut sent);
+        engine.poll(Milliseconds(SELF_TEST), &mut sent);
         assert_eq!(only(&sent.0, id), result.to_be_bytes());
     }
 }
@@ -440,7 +441,7 @@ fn a_vp_goes_idle_for_a_self_test_and_ignores_its_antenna() {
     assert!(ask(&mut engine, &record, CA_SELF_TEST, &[]).is_empty());
     assert!(!engine.fixing());
     let mut sent = Sent::default();
-    engine.second(&record, Milliseconds(2000), &mut sent);
+    engine.second(&record, Milliseconds(SELF_TEST), &mut sent);
     assert_eq!(only(&sent.0, CA_SELF_TEST), [0, 0]);
 }
 

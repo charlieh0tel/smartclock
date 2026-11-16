@@ -1165,7 +1165,9 @@ stands in for one.
   every six seconds: the middle of an M12+'s "approximately once every
   5-7 seconds", M12+ p. 105, and in step with a capture of a real VP,
   where a comparison each second sent it each second, a record's
-  Doppler changing each second), and the receiver status bits for poor geometry, a
+  Doppler changing each second; a poll answers that computation's
+  result too, "the most current satellite alert computation", VP
+  pp. 74 and 75, and before the first, what is visible now), and the receiver status bits for poor geometry, a
   differential fix, too few visible and no almanac are the manual's.
   So is the number visible in a position status, which is not
   `@@Bb`'s: the record's satellites above ten degrees on a VP (VP

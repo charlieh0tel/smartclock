@@ -1242,6 +1242,39 @@ fn the_visible_count_is_of_the_satellites_above_the_manuals_elevation() {
     assert_eq!(counted(&UT_PLUS_2_2, &[1, 9, 10], false), (0, 0x02, 3));
 }
 
+/// VP pp. 74 and 75: a poll of `@@Bb` answers the most current
+/// satellite alert computation, not the second it comes in; before the
+/// first, what is visible now.
+#[test]
+fn a_visible_satellites_poll_answers_the_last_alert_computation() {
+    let mut engine = fixing(&VP_EIGHT);
+    let mut record = full();
+    let poll = |engine: &mut Engine, record: &Record| {
+        only(
+            &ask(engine, record, BB_VISIBLE_SATELLITES, &[0]),
+            BB_VISIBLE_SATELLITES,
+        )
+        .to_vec()
+    };
+    let first = poll(&mut engine, &record);
+    for _ in 0..ALERT_PERIOD.0 {
+        engine.second(&record, NOW, &mut Sent::default());
+    }
+    let raise = |record: &mut Record, elevation| {
+        record
+            .satellites
+            .get_mut(prn(3))
+            .expect("in view")
+            .elevation = Degrees(elevation);
+    };
+    raise(&mut record, 79);
+    assert_eq!(poll(&mut engine, &record), first);
+    for _ in 0..ALERT_PERIOD.0 {
+        engine.second(&record, NOW, &mut Sent::default());
+    }
+    assert_eq!(poll(&mut engine, &record)[4], 79);
+}
+
 /// A test of a real VP: `@@Bb` lists the satellites at or above the
 /// mask angle, and none below the horizon, the mask at 0 or not.
 #[test]

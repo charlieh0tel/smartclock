@@ -22,9 +22,9 @@
 //! VP to idle (p. 118), whatever it was saved as: so the engine's
 //! `@@Cf` puts it back to its defaults, not to this.  It is what the
 //! VP saves, too: the same tests found one told `@@Cf` and
-//! power-cycled with no backup power idle and silent, its clock at
-//! 1997-01-01 12:00:00 and not running, its almanac dropped and its
-//! settings at `@@Cf`'s values.  So a holder modeling that power cycle
+//! power-cycled with no backup power idle and silent, its position
+//! status's time at 1997-01-01 12:00:00 and standing, its almanac
+//! dropped and its settings at `@@Cf`'s values.  So a holder modeling that power cycle
 //! makes the next engine with no saved configuration.
 //!
 //! One configuration is built in, [`CONFIGURATION_58503A`]: how a

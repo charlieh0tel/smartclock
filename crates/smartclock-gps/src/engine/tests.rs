@@ -525,81 +525,207 @@ fn a_time_raim_status_carries_the_records_timing() {
 
 /// VP p. 5: "initialized at 12:00:00 at power up"; the date "varies
 /// depending upon the firmware" (VP p. 13).  A test of a real VP read
-/// 1997-01-01, its clock not running until set; a UT Plus's is the
-/// model's, the day GPS time starts, and runs on.  One `@@Ab` sets
-/// behind UTC (VP p. 9) reads the day before.
+/// 1997-01-01; a UT Plus's is the model's, the day GPS time starts.
+/// The clock `@@Aa` and `@@Ac` answer from runs on in either.  One
+/// `@@Ab` sets behind UTC (VP p. 9) reads the day before.
 #[test]
 fn an_engine_given_no_time_starts_at_noon() {
+    // The seconds the clock has run in three seconds given: the first
+    // given is the one it is at.
+    const RAN: u8 = 2;
     let record = Record::EMPTY;
-    let clock = |engine: &mut Engine| {
-        let date = ask(engine, &record, AC_DATE, &[0xff; 4]);
-        let time = ask(engine, &record, AA_TIME_OF_DAY, &[0xff; 3]);
-        [only(&date, AC_DATE), only(&time, AA_TIME_OF_DAY)].concat()
-    };
-    // The date, the day before and the day after, and the seconds the
-    // clock has run in three seconds given: the first given is the one
-    // it is at.
-    let vp = (
-        [1, 1, 0x07, 0xcd],
-        [12, 31, 0x07, 0xcc],
-        [1, 2, 0x07, 0xcd],
-        0,
-    );
-    let ut_plus = (
-        [1, 6, 0x07, 0xbc],
-        [1, 5, 0x07, 0xbc],
-        [1, 7, 0x07, 0xbc],
-        2,
-    );
-    for (identity, (date, eve, morrow, ran)) in
-        [(&VP_SIX, vp), (&VP_EIGHT, vp), (&UT_PLUS_2_2, ut_plus)]
+    // The date, the day before and the day after.
+    let vp = ([1, 1, 0x07, 0xcd], [12, 31, 0x07, 0xcc], [1, 2, 0x07, 0xcd]);
+    let ut_plus = ([1, 6, 0x07, 0xbc], [1, 5, 0x07, 0xbc], [1, 7, 0x07, 0xbc]);
+    for (identity, (date, eve, morrow)) in [(&VP_SIX, vp), (&VP_EIGHT, vp), (&UT_PLUS_2_2, ut_plus)]
     {
         let mut engine = powered_up(identity);
-        assert_eq!(clock(&mut engine), [&date[..], &[12, 0, 0]].concat());
+        assert_eq!(
+            counting(&mut engine, &record),
+            [&date[..], &[12, 0, 0]].concat()
+        );
         for _ in 0..3 {
             engine.second(&record, NOW, &mut Sent::default());
         }
-        assert_eq!(clock(&mut engine), [&date[..], &[12, 0, ran]].concat());
+        assert_eq!(
+            counting(&mut engine, &record),
+            [&date[..], &[12, 0, RAN]].concat()
+        );
 
         // Thirteen hours behind, and thirteen hours and a half.
         ask(&mut engine, &record, AB_GMT_CORRECTION, &[0xff, 13, 0]);
-        assert_eq!(clock(&mut engine), [&eve[..], &[23, 0, ran]].concat());
+        assert_eq!(
+            counting(&mut engine, &record),
+            [&eve[..], &[23, 0, RAN]].concat()
+        );
         ask(&mut engine, &record, AB_GMT_CORRECTION, &[0xff, 13, 30]);
-        assert_eq!(clock(&mut engine), [&eve[..], &[22, 30, ran]].concat());
+        assert_eq!(
+            counting(&mut engine, &record),
+            [&eve[..], &[22, 30, RAN]].concat()
+        );
         ask(&mut engine, &record, AB_GMT_CORRECTION, &[0, 13, 0]);
-        assert_eq!(clock(&mut engine), [&morrow[..], &[1, 0, ran]].concat());
+        assert_eq!(
+            counting(&mut engine, &record),
+            [&morrow[..], &[1, 0, RAN]].concat()
+        );
     }
 }
 
-/// A VP's stopped clock runs once set, by `@@Aa` or by a record's time.
-#[test]
-fn a_vps_clock_runs_once_set() {
-    let time = |engine: &mut Engine, record: &Record| {
-        only(
-            &ask(engine, record, AA_TIME_OF_DAY, &[0xff; 3]),
-            AA_TIME_OF_DAY,
-        )
+/// The date and time `@@Ac` and `@@Aa` answer with (VP pp. 13 and 5).
+fn counting(engine: &mut Engine, record: &Record) -> Vec<u8> {
+    let date = ask(engine, record, AC_DATE, &[0xff; 4]);
+    let time = ask(engine, record, AA_TIME_OF_DAY, &[0xff; 3]);
+    [only(&date, AC_DATE), only(&time, AA_TIME_OF_DAY)].concat()
+}
+
+/// The date and time the position status gives (VP p. 71).
+fn status_time(engine: &mut Engine, record: &Record) -> Vec<u8> {
+    only(
+        &ask(engine, record, EA_POSITION_STATUS, &[0]),
+        EA_POSITION_STATUS,
+    )[..7]
         .to_vec()
-    };
-    let mut engine = powered_up(&VP_EIGHT);
-    ask(&mut engine, &Record::EMPTY, AA_TIME_OF_DAY, &[1, 2, 3]);
-    for _ in 0..3 {
+}
+
+/// Gives an engine `seconds` seconds with no time in them.
+fn wait(engine: &mut Engine, seconds: usize) {
+    for _ in 0..seconds {
         engine.second(&Record::EMPTY, NOW, &mut Sent::default());
     }
-    assert_eq!(time(&mut engine, &Record::EMPTY), [1, 2, 5]);
+}
 
+/// The seconds a test of a real VP watched its position status's time
+/// stand.
+const STOOD: usize = 30;
+
+/// A test of a real VP with no antenna: its position status's time
+/// stands at the power-up time while the clock `@@Aa` and `@@Ac`
+/// answer from counts a second each second.
+#[test]
+fn a_vps_status_time_stands_while_its_answers_count() {
     let mut engine = powered_up(&VP_EIGHT);
-    engine.second(&Record::EMPTY, NOW, &mut Sent::default());
+    wait(&mut engine, 1 + STOOD);
+    assert_eq!(
+        status_time(&mut engine, &Record::EMPTY),
+        [1, 1, 0x07, 0xcd, 12, 0, 0]
+    );
+    assert_eq!(
+        counting(&mut engine, &Record::EMPTY),
+        [1, 1, 0x07, 0xcd, 12, 0, 30]
+    );
+}
+
+/// A test of a real VP with no antenna: `@@Ac` (VP p. 13) puts both
+/// clocks at 12:00:00 on the date; the position status's then stands
+/// and the other counts on.
+#[test]
+fn a_vps_date_puts_both_clocks_at_noon() {
+    let record = Record::EMPTY;
+    let mut engine = powered_up(&VP_EIGHT);
+    wait(&mut engine, 1);
+    ask(&mut engine, &record, AA_TIME_OF_DAY, &[1, 2, 3]);
+    let frames = ask(&mut engine, &record, AC_DATE, &[5, 17, 0x07, 0xea]);
+    assert_eq!(only(&frames, AC_DATE), [5, 17, 0x07, 0xea]);
+    assert_eq!(
+        counting(&mut engine, &record),
+        [5, 17, 0x07, 0xea, 12, 0, 0]
+    );
+    wait(&mut engine, STOOD);
+    assert_eq!(
+        status_time(&mut engine, &record),
+        [5, 17, 0x07, 0xea, 12, 0, 0]
+    );
+    assert_eq!(
+        counting(&mut engine, &record),
+        [5, 17, 0x07, 0xea, 12, 0, 30]
+    );
+}
+
+/// A test of a real VP with no antenna: `@@Aa` (VP p. 5) puts both
+/// clocks at the time; the position status's then stands and the
+/// other counts on.
+#[test]
+fn a_vps_time_sets_both_clocks() {
+    let record = Record::EMPTY;
+    let mut engine = powered_up(&VP_EIGHT);
+    wait(&mut engine, 1);
+    let frames = ask(&mut engine, &record, AA_TIME_OF_DAY, &[1, 2, 3]);
+    assert_eq!(only(&frames, AA_TIME_OF_DAY), [1, 2, 3]);
+    wait(&mut engine, STOOD);
+    assert_eq!(
+        status_time(&mut engine, &record),
+        [1, 1, 0x07, 0xcd, 1, 2, 3]
+    );
+    assert_eq!(counting(&mut engine, &record), [1, 1, 0x07, 0xcd, 1, 2, 33]);
+}
+
+/// A test of a real VP with no antenna: `@@Cf` (VP p. 116) puts the
+/// position status's time at 12:00:00 on January 1 of the year it had,
+/// and it stands there, whether it stood or ran before.  A record that
+/// tells the time keeps it, and a UT Plus's clock runs on.
+#[test]
+fn defaults_put_a_vps_status_time_at_new_year() {
+    let record = Record::EMPTY;
+    let mut engine = fixing(&VP_EIGHT);
+    wait(&mut engine, 1);
+    ask(&mut engine, &record, AC_DATE, &[5, 17, 0x07, 0xea]);
+    ask(&mut engine, &record, AA_TIME_OF_DAY, &[1, 2, 3]);
+    ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
+    // Idle, it would answer with the status kept while fixing.
+    ask(&mut engine, &record, CG_FIX_MODE, &FIX);
+    wait(&mut engine, STOOD);
+    assert_eq!(
+        status_time(&mut engine, &record),
+        [1, 1, 0x07, 0xea, 12, 0, 0]
+    );
+
+    // Running from a record's time, then without one.
+    let mut engine = fixing(&VP_EIGHT);
+    let mut told = full();
+    wait(&mut engine, 1);
+    engine.second(&told, NOW, &mut Sent::default());
+    told.time = None;
+    engine.second(&told, NOW, &mut Sent::default());
+    let year = status_time(&mut engine, &told)[2..4].to_vec();
+    ask(&mut engine, &told, CF_SET_TO_DEFAULTS, &[]);
+    ask(&mut engine, &told, CG_FIX_MODE, &FIX);
+    wait(&mut engine, STOOD);
+    assert_eq!(
+        status_time(&mut engine, &told),
+        [&[1, 1][..], &year, &[12, 0, 0]].concat()
+    );
+
+    let mut engine = fixing(&VP_EIGHT);
+    let told = full();
+    engine.second(&told, NOW, &mut Sent::default());
+    let before = status_time(&mut engine, &told);
+    ask(&mut engine, &told, CF_SET_TO_DEFAULTS, &[]);
+    ask(&mut engine, &told, CG_FIX_MODE, &FIX);
+    assert_eq!(status_time(&mut engine, &told), before);
+
+    let mut engine = fixing(&UT_PLUS_2_2);
+    wait(&mut engine, 1);
+    ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
+    wait(&mut engine, 2);
+    assert_eq!(counting(&mut engine, &record), [1, 6, 0x07, 0xbc, 12, 0, 2]);
+}
+
+/// A VP's clocks are a record's time once one comes, and both run on
+/// from it when it goes.
+#[test]
+fn a_vps_clocks_run_from_a_records_time() {
+    let mut engine = fixing(&VP_EIGHT);
+    wait(&mut engine, 1);
+    ask(&mut engine, &Record::EMPTY, AA_TIME_OF_DAY, &[1, 2, 3]);
     let mut record = full();
     engine.second(&record, NOW, &mut Sent::default());
-    let told = time(&mut engine, &record);
+    let told = status_time(&mut engine, &record);
+    assert_eq!(counting(&mut engine, &record), told);
     record.time = None;
     engine.second(&record, NOW, &mut Sent::default());
-    assert_ne!(
-        time(&mut engine, &record),
-        told,
-        "runs on from the record's"
-    );
+    let ran = status_time(&mut engine, &record);
+    assert_ne!(ran, told, "runs on from the record's");
+    assert_eq!(counting(&mut engine, &record), ran);
 }
 
 #[test]

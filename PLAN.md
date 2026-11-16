@@ -1100,10 +1100,10 @@ stands in for one.
   default values" and a VP idle (VP pp. 116 and 118); a new model, a
   power-up, starts from it again.  The same tests found a VP told
   `@@Cf` and power-cycled with no backup power idle and silent, its
-  clock at 1997-01-01 12:00:00 and not running, its almanac dropped
-  and its settings at `@@Cf`'s values: what `@@Cf` sets is what it
-  saves, so a holder modeling that power cycle makes the next model
-  with no saved configuration.
+  position status's time at 1997-01-01 12:00:00 and standing, its
+  almanac dropped and its settings at `@@Cf`'s values: what `@@Cf`
+  sets is what it saves, so a holder modeling that power cycle makes
+  the next model with no saved configuration.
 - **A software 8.4 model echoes `@@Ar`(65)** (decided 2026-11-15).
   The 58503A 3704, the 58503B and the Z3816A send it to a software 8.4
   VP after `@@Ar`(1) and wait for its echo (`docs/firmware/gps.md`,
@@ -1274,18 +1274,30 @@ stands in for one.
   which speaks neither NMEA nor Loran and goes on in binary; an
   earlier revision had it fall silent, which took a call of its
   holder's to undo and gave nothing a holder could not do with the
-  event.  A VP model powers up at 1997-01-01 12:00:00 with its clock
-  standing, not running, until a record's time or `@@Aa` or `@@Ac`
-  sets it, as a test of a real VP (software 8.8) read; VP p. 5 gives
-  the 12:00:00 and p. 13 leaves the date to the firmware.  Until then
-  every time it sends is that one: the position status's date and
-  time, Time RAIM's next pulse (12:00:01) and `@@Aa`/`@@Ac`'s answers.
-  It is read with GPS less UTC as zero, the almanac that carries the
-  offset being dropped with the clock, so `@@Aw`'s GPS time and UTC
-  read alike.  A UT Plus model powers up at 12:00:00 on the day GPS
-  time starts, running, until a capture of one says otherwise.  `@@Aa` and `@@Ac` set the model's clock only while the
-  record tells no time, as an Oncore tracking a satellite ignores
-  them (VP pp. 5 and 13); a command never overrides a record's time.
+  event.  A VP model has two clocks until a record's time sets them,
+  as a test of a real VP (software 8.8, no antenna) showed.  The
+  position status's date and time (`@@Ea`/`@@Ba`, VP p. 71), and Time
+  RAIM's next pulse a second after it, stand still from power-up at
+  1997-01-01 12:00:00; VP p. 5 gives the 12:00:00 and p. 13 leaves the
+  date to the firmware.  `@@Ac` sets the date and puts the time at
+  12:00:00 (VP p. 13), `@@Aa` sets the time (VP p. 5), and `@@Cf`
+  puts it at 12:00:00 on January 1 of the year it had (VP p. 116);
+  it stands at each.  `@@Aa`'s and `@@Ac`'s answers come from the
+  other clock, which counts a second each second from power-up, set
+  or not, and which the two commands set as they set the first.  Its
+  value before either sets it was out of range on the VP tested (hour
+  64, year 2054); the model starts it at the power-up time instead,
+  and leaves it alone at `@@Cf`, after which the test did not read
+  it.  Once a record's time comes both are that time and run on
+  together, through a record that loses it.  Both are read with GPS
+  less UTC as zero, the almanac that carries the offset being dropped
+  with the clock, so `@@Aw`'s GPS time and UTC read alike.  A UT Plus
+  model has the one clock, at 12:00:00 on the day GPS time starts,
+  running, until a capture of one says otherwise; its `@@Ac` keeps
+  the time of day and its `@@Cf` leaves the clock alone.  `@@Aa`,
+  `@@Ac` and `@@Cf` move the model's clocks only while the record
+  tells no time, as an Oncore tracking a satellite ignores the first
+  two (VP pp. 5 and 13); a command never overrides a record's time.
   `Engine::receive` returns what its commands did: a reset,
   which is `@@Cf` (VP pp. 116 and 117), and the settings that
   changed, a command that gives a setting the value it has changing

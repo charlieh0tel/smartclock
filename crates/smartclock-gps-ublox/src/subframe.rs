@@ -573,8 +573,12 @@ const SUBFRAME_FIVE: u8 = 5;
 
 impl Subframe {
     /// Decodes a subframe's words.  `None` for a subframe ID outside 1
-    /// to 5.  The preamble is not checked: [`Telemetry::preamble`] is
-    /// for a caller that wants to.
+    /// to 5.  The preamble is reported, not checked: the receiver sends
+    /// a subframe only once its parity checks have passed and has
+    /// righted inverted data (UBX-13003221 R28, section 10.1, p. 30),
+    /// so a preamble other than [`PREAMBLE`] would be the receiver's
+    /// fault, not the link's, and refusing the subframe would hide it.
+    /// [`Telemetry::preamble`] is for a caller that wants to check.
     #[must_use]
     pub fn decode(words: &Words) -> Option<Self> {
         let handover = Handover {

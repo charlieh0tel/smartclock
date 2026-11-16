@@ -143,6 +143,7 @@ fn nav_pvt_every_field() {
         fix_ok,
         differential,
         vehicle_heading_valid,
+        power_save,
         carrier_solution,
         satellites,
         longitude,
@@ -184,7 +185,7 @@ fn nav_pvt_every_field() {
     assert_eq!(time_accuracy, Nanoseconds(17));
     assert_eq!(fix_type, FixType::WithDeadReckoning);
     assert!(fix_ok && differential && vehicle_heading_valid);
-    assert_eq!(carrier_solution, 2);
+    assert_eq!((power_save, carrier_solution), (5, 2));
     assert_eq!(satellites, 9);
     assert_eq!(longitude, HundredNanodegrees(-1_219_978_333));
     assert_eq!(latitude, HundredNanodegrees(373_255_833));

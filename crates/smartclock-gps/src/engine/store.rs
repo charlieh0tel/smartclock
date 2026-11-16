@@ -428,12 +428,6 @@ impl Store {
         }
     }
 
-    /// Whether satellites are chosen highest in the sky first (`@@Ah`,
-    /// p. 30).
-    pub(super) fn highest_in_sky(&self) -> bool {
-        self.byte(AH_SATELLITE_SELECT) == SELECT_HIGHEST_IN_SKY
-    }
-
     /// How the satellites to track are chosen (`@@Ah`, p. 30).
     pub(super) fn satellite_select(&self) -> SatelliteSelect {
         match self.byte(AH_SATELLITE_SELECT) {

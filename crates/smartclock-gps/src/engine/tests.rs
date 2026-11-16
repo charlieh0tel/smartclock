@@ -1368,16 +1368,50 @@ fn defaults() -> Settings {
     }
 }
 
+/// [`defaults`] as `identity` has them: a UT Plus, with no `@@Ah`,
+/// tracks the eight highest in the sky (UT p. 6.18).
+fn defaults_of(identity: &Identity) -> Settings {
+    let satellite_select = match identity.model() {
+        Model::VpSix | Model::VpEight => SatelliteSelect::BestGeometry,
+        Model::UtPlus => SatelliteSelect::HighestInSky,
+    };
+    Settings {
+        satellite_select,
+        ..defaults()
+    }
+}
+
 #[test]
 fn settings_start_at_the_manuals_defaults() {
     for identity in PRESETS {
         let mut engine = Engine::new(identity, Options::DEFAULT);
-        assert_eq!(engine.settings(), defaults());
+        assert_eq!(engine.settings(), defaults_of(identity));
         // Set to its defaults when at them, it is reset and nothing
         // changes.
         assert_eq!(tell(&mut engine, CF_SET_TO_DEFAULTS, &[]), [Event::Reset]);
-        assert_eq!(engine.settings(), defaults());
+        assert_eq!(engine.settings(), defaults_of(identity));
     }
+}
+
+/// UT p. 6.18: a UT Plus tracks the eight highest in the sky, where a
+/// VP at its defaults takes the record's first.
+#[test]
+fn a_ut_plus_tracks_the_highest() {
+    let mut record = full();
+    for (id, elevation) in [(7, 85), (8, 15), (9, 60), (10, 70), (11, 75)] {
+        record.satellites.push(
+            Satellite::new(prn(id), Degrees(elevation), Degrees(0)).tracked(DecibelHertz(40)),
+        );
+    }
+    let channels = |engine: &mut Engine| {
+        let frames = ask(engine, &record, EA_POSITION_STATUS, &[0]);
+        let data = only(&frames, EA_POSITION_STATUS);
+        data[36..68].iter().step_by(4).copied().collect::<Vec<_>>()
+    };
+    let vp = channels(&mut fixing(&VP_EIGHT));
+    let ut_plus = channels(&mut fixing(&UT_PLUS_2_2));
+    assert_ne!(vp, ut_plus);
+    assert!(!ut_plus.contains(&8), "the lowest is left off: {ut_plus:?}");
 }
 
 /// Each setting is read back as its command gave it and is the one
@@ -1981,7 +2015,7 @@ fn a_command_not_taken_changes_no_setting() {
 
     let mut engine = Engine::new(&UT_PLUS_3_1, Options::DEFAULT);
     assert_eq!(tell(&mut engine, AB_APPLICATION_TYPE, &[4]), []);
-    assert_eq!(engine.settings(), defaults());
+    assert_eq!(engine.settings(), defaults_of(&UT_PLUS_3_1));
 
     let mut options = Options::DEFAULT;
     options.deaf = true;

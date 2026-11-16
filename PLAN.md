@@ -1353,9 +1353,10 @@ stands in for one.
   core's chunk feeding (`framing`, public for it) and its time
   arithmetic.  Its layouts are those of u-blox's protocol
   specification UBX-13003221 R28, cited by section and page, of which
-  `third_party/` has no copy.  It is integer only, as the core is: it
-  reads the receiver's navigation solution and decodes no satellite's
-  own data, so it fills no almanac.
+  `third_party/` has no copy.  It is integer only, as the core is.
+  The assembler reads the receiver's navigation solution and none of
+  the satellites' own data, so it fills no almanac; the crate decodes
+  that data for a caller that wants it (below).
   - *One UBX parser, shared.*  A microcontroller board with a u-blox
     module (a Cortex-M0, little RAM, small stack frames) reads its
     module with this crate's framing and decoders rather than a parser
@@ -1373,6 +1374,20 @@ stands in for one.
     when its own count of blocks (`numSvs`, `numMeas`, `numWords`) is
     the count its length gives; the deframer's length check alone lets
     any whole number of blocks through.
+  - *A GPS satellite's navigation data is decoded here too*
+    (`subframe`; owner, 2026-11-13: UBX decode and navigation data
+    decode live here as one `no_std` source shared by board and host).
+    `RXM-SFRBX` gives a GPS L1 C/A subframe's ten words with parity
+    checked and inversion undone by the receiver, so the decoder reads
+    the data bits as they are.  It decodes subframes 1 to 3 (clock,
+    health, ephemeris) and the pages of 4 and 5 a timing receiver
+    uses: each satellite's almanac, the almanac's time, week and
+    health, each satellite's configuration, and the ionosphere and
+    UTC page with its leap second; any other page comes back by its
+    SV ID.  A field is its broadcast integer in a `Scaled<T, U,
+    SCALE>`, whose type carries the power of two and the unit
+    (IS-GPS-200N, Tables 20-I, 20-III, 20-VI, 20-IX and 20-X), so no
+    floating point is needed and none mixed up.
   - *A length is not followed on its own word.*  A UBX frame says its
     own length, up to 65535 bytes, and the checksum that would vouch
     for it comes after them.  A message the crate decodes must have

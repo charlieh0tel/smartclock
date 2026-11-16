@@ -63,6 +63,9 @@
 //! caller keeps is the caller's: the decoders give the system of each
 //! satellite and drop none.
 //!
+//! A GPS satellite's own navigation data, the subframes `RXM-SFRBX`
+//! carries, is decoded by [`subframe`], to IS-GPS-200N.
+//!
 //! # From messages to a record
 //!
 //! [`Assembler`](assembler::Assembler) takes the stream a byte at a
@@ -118,8 +121,9 @@
 //!   `TIM-TP`'s `qErr` is decoded ([`TimTp`](tim::TimTp)), but the
 //!   document gives neither its sign nor what multiple of sigma `tAcc`
 //!   is.  [`Record::almanac`](smartclock_gps::record::Record::almanac):
-//!   the assembler reads no satellite's own data.  A satellite's
-//!   Doppler: only `RXM-RAWX` carries it, as floating point.  A
+//!   the assembler reads no satellite's own data, which [`subframe`]
+//!   decodes for a caller.  A satellite's Doppler: only `RXM-RAWX`
+//!   carries it, as floating point.  A
 //!   satellite's time error: no message here carries it.
 //!   [`Fix::Propagated`](smartclock_gps::record::Fix::Propagated) is
 //!   never given: a fix by dead reckoning alone is no fix here.  A
@@ -142,6 +146,7 @@ pub mod message;
 pub mod mon;
 pub mod nav;
 pub mod rxm;
+pub mod subframe;
 pub mod tim;
 pub mod units;
 

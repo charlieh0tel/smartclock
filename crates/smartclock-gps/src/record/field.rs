@@ -490,6 +490,7 @@ pub fn changed(before: &Record, after: &Record) -> FieldSet {
 /// control or reported.
 pub const IMAGE_USES: FieldSet = FieldSet::of(&[
     RecordField::Time,
+    RecordField::UtcOffset,
     RecordField::Leap,
     RecordField::Fix,
     RecordField::Latitude,
@@ -503,11 +504,14 @@ pub const IMAGE_USES: FieldSet = FieldSet::of(&[
     RecordField::SatelliteAzimuth,
     RecordField::SatelliteSignal,
     RecordField::SatelliteTracking,
+    RecordField::SatelliteUsed,
     RecordField::SatelliteHealth,
+    RecordField::Almanac,
     RecordField::Antenna,
     RecordField::SelfTest,
     RecordField::RaimSolution,
     RecordField::RaimAbility,
+    RecordField::RaimIsolated,
 ]);
 
 /// The settings a receiver's image sets that are a holder's to act

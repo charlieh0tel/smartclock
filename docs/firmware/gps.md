@@ -1195,12 +1195,16 @@ specification; in short:
   name, the fields it fills and the engine's settings it acts on, and its tests
   hold it: what `IMAGE_USES` has that it does not fill must be excused
   it by a row of `gps-field-exceptions.tsv`, which is the owner's alone
-  to add to and is empty; a fill from data made to give every field a
+  to add to; a fill from data made to give every field a
   value must change every field declared and no other, seen against
   the crate's `UNFILLED`, an empty record whose self-test fails, so
   that a fill of a pass shows.  The vectors' scene, the crate's
-  `source::scene`, and the u-blox crate declare theirs, and both fill all the images use, with no
-  exception.  Both exceptions tables, this and the settings' below,
+  `source::scene`, and the u-blox crate declare theirs, and both fill all the images use but one
+  field, the u-blox crate's almanac from `RXM-SFRBX` among them.  The
+  one is the satellites Time RAIM isolated, which the Z3815A's status
+  screen shows from `rrm`: the owner granted both a row for it
+  (2026-11-16), the scene's sky having no bad satellite to isolate and
+  `TIM-TP` not saying which a receiver removed.  Both exceptions tables, this and the settings' below,
   are for the providers this repository carries: a provider kept
   elsewhere keeps tables of its own and gives their text to
   `Declaration::shortfall`, `Declaration::unacted` and
@@ -1340,9 +1344,37 @@ specification; in short:
   **a fix a record gives as propagated** sets the receiver status's
   position propagate bit with a DOP of zero (VP pp. 70, 72 and 73; UT
   p. 6.20).
-- **The Z3815A has no row.**  It speaks NMEA with Furuno's sentences,
-  which the Oncore model does not; the Furuno model's are held to the
-  image's own table ("In every image").
+- **The Z3815A's sentences have rows by field.**  Its engine speaks
+  NMEA with Furuno's sentences, which the Furuno model
+  (`engine::furuno`) speaks, and their rows, manual `GT` (the GT-8031's
+  specification), count fields, not bytes: a row's offset is the
+  field's index as the image numbers it, the address's fields first,
+  and its length one field.  They tile each sentence's fields after the
+  address, a response's to the end the image's table counts
+  (`0x5e32a`); `set`'s and `int`'s are by parameter, each at field 2,
+  where the image sends it, the parameters coming in any order.  What
+  the image reads of each is measured the same way, in Unicorn: each
+  field's decoder of the image's table is called with the field and its
+  place, the commit last, as `nmea_sentence_decode` calls them, on a
+  second of the model's sentences, and a field read is one whose
+  characters or ending NUL a decoder reads.  Where a field is stored is
+  where RAM differs after the second is decoded again with the field
+  changed, each digit's lowest bit, each hemisphere, sign or status
+  letter and `anc`'s healths in turn, the framer's record left out:
+  the commits copy the fields into the 58503A's records, and their
+  readers are the scan's, the walks running to the end of a field of
+  the `gps` record as `check-layout.c` places it.  The decoding and
+  committing functions of `gps_nmea.c` are not readers, but
+  `nmea_position_message`, the 58503A's `oncore_position_message`.
+  `gps_periodic_send`, which `tps`'s commit calls to send the engine a
+  sentence, and `psos_mode` return at once.  The run's state is the
+  record as `gps_init` clears it, the receiver on GPS time, so that
+  `tps`'s date, the engine on UTC, is only stored ("In every image").
+  What the image compares is `gps_response_match` asked about each
+  parameter of `set`, `GLL` and `rrs`, with the position held, and a
+  field compared is one it reads whole.  What it sets is its scripts'
+  and lists' sentences of mode 0 or 2, the Oncore's requests translated
+  first, a parameter of `set` or `int` by its letter or name.
 
 What the decoders skip: `@@Am`'s first byte; each line's CR LF in
 `@@Cj`, of which they read the text alone; and in `@@Bk`, on the 58503A
@@ -1442,6 +1474,44 @@ every command field, with who acts on it.
 | `@@En` | pulse mode | 58503a-3704, z3817a-3752 | engine, holder | honored; `pulse_mode` |
 | `@@En` | not used | 58503a-3704, z3817a-3752 | engine | honored: not used, nothing to do |
 | `@@Ta` | values | none | gap | stored |
+| `$PFEC,GPset` | A almanac validity | none | gap | stored |
+| `$PFEC,GPset` | D PDOP threshold | none | engine | honored: a 2D fix above it, none 3D at 0 |
+| `$PFEC,GPset` | G geodetic ID | none | gap | stored |
+| `$PFEC,GPset` | H altitude | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$PFEC,GPset` | M elevation mask | none | engine, holder | honored: satellites below it left out of the fix; `mask_angle` |
+| `$PFEC,GPset` | S signal mask | none | gap | stored |
+| `$PFEC,GPset` | T 1PPS correction | none | holder | `cable_delay`; `pulse_offset` |
+| `$PFEC,GPset` | U deleted satellites | none | engine | honored: left out of the fix; given: ignore_list |
+| `$PFEC,GPset` | W smoothing index | none | gap | stored |
+| `$PFEC,GPset` | X dynamic index | none | gap | stored |
+| `$PFEC,GPset` | Z observation point mode | z3815a-4010 | engine, holder | honored: tps mode and the position reported; `position_hold` |
+| `$PFEC,GPset` | Z3 averaging time | none | gap | stored |
+| `$PFEC,GPset` | t 1PPS correction | none | holder | `cable_delay`; `pulse_offset` |
+| `$PFEC,GPint` | GGA interval | z3815a-4010 | engine | honored |
+| `$PFEC,GPint` | ZDA interval | z3815a-4010 | engine | honored: kept, ZDA not sent |
+| `$PFEC,GPint` | GSA interval | z3815a-4010 | engine | honored |
+| `$PFEC,GPint` | GSV interval | z3815a-4010 | engine | honored |
+| `$PFEC,GPint` | VTG interval | z3815a-4010 | engine | honored: kept, VTG not sent |
+| `$PFEC,GPint` | RMC interval | none | engine | honored |
+| `$PFEC,GPint` | anc interval | z3815a-4010 | engine | honored |
+| `$PFEC,GPint` | tst interval | z3815a-4010 | engine | honored |
+| `$PFEC,GPint` | tps interval | z3815a-4010 | engine | honored |
+| `$PFEC,GPint` | rrm interval | z3815a-4010 | engine | honored |
+| `$PFEC,GPrrs` | TRAIM switch | z3815a-4010 | engine, holder | honored; `raim_algorithm` |
+| `$PFEC,GPrrs` | alarm limit | z3815a-4010 | engine, holder | honored; `raim_alarm_limit` |
+| `$PFEC,GPrrs` | 1PPS control mode | z3815a-4010 | engine, holder | honored; `pulse_mode` |
+| `$PFEC,GPclr` | clear mode | z3815a-4010 | engine | honored: a restart |
+| `$GPZDA` | time | z3815a-4010 | engine | honored: while the record tells no time |
+| `$GPZDA` | day | z3815a-4010 | engine | honored: while the record tells no time |
+| `$GPZDA` | month | z3815a-4010 | engine | honored: while the record tells no time |
+| `$GPZDA` | year | z3815a-4010 | engine | honored: while the record tells no time |
+| `$GPZDA` | zone hours | z3815a-4010 | engine | honored: anc in local time |
+| `$GPZDA` | zone minutes | z3815a-4010 | engine | honored: anc in local time |
+| `$GPGLL` | latitude | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$GPGLL` | north or south | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$GPGLL` | longitude | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$GPGLL` | east or west | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$GPGLL` | null | z3815a-4010 | engine | honored: null, any entry ignored |
 <!-- end gps_fields.py -->
 
 ## In every image

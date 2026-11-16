@@ -1032,6 +1032,9 @@ mod tests {
     /// bits, in that order, before columns the crate does not check
     /// (`tools/firmware/gps_fields.py`).
     const FIELDS: &str = "../../docs/firmware/gps-fields.tsv";
+    /// The manual column of the Z3815A's sentences' rows: Furuno's
+    /// GT-8031 specification.
+    const NMEA_MANUAL: &str = "GT";
 
     /// A message and direction of the field table: the ID and the
     /// direction's name.
@@ -1075,10 +1078,26 @@ mod tests {
         let mut masks: BTreeMap<FieldKey, SpanMasks> = BTreeMap::new();
         for line in text.lines().skip(1) {
             let cells: Vec<&str> = line.split('\t').collect();
-            let [id, direction, _, offset, length, count, stride, bits, ..] = cells.as_slice()
+            let [
+                id,
+                direction,
+                _,
+                offset,
+                length,
+                count,
+                stride,
+                bits,
+                manual,
+                ..,
+            ] = cells.as_slice()
             else {
                 panic!("a short row: {line}");
             };
+            // The Z3815A's sentences, by field, are the Furuno model's
+            // (`engine::furuno`'s tests).
+            if *manual == NMEA_MANUAL {
+                continue;
+            }
             let number = |cell: &str| -> usize { cell.parse().expect("a number") };
             let (offset, length, count) = (number(offset), number(length), number(count));
             let stride = if count == 1 { length } else { number(stride) };

@@ -1197,6 +1197,12 @@ stands in for one.
   scanned; what each function does with it is read off the rewritten
   C by hand, in `docs/firmware/gps-field-uses.tsv`, which the check
   holds complete but cannot hold right.
+  The Z3815A's sentences have rows too (decided 2026-11-16), by field
+  rather than byte, measured the same way: the image's own decoders,
+  from its sentence table, run in Unicorn on a second of the Furuno
+  model's sentences, and the second run again with each field changed
+  to find its stores, which the commits copy into the 58503A's records
+  the scan then follows (`docs/firmware/gps.md`, "The fields").
   A field is a row and a row is whole bytes, but for the receiver
   status of `@@Ba` and `@@Ea`, split by bit the same day: the
   images use its 3D fix bit and only print the rest, and one row put
@@ -1212,9 +1218,12 @@ stands in for one.
   and the settings it acts on (`record::field`: `RecordField`,
   `FieldSet`, `Declaration`), and its tests hold the declaration to
   `IMAGE_USES`, which the check writes from the table's used rows, to
-  `docs/firmware/gps-field-exceptions.tsv`, which is empty and the
-  owner's alone to add to, and to what a fill really changes.  Both
-  providers here fill all the images use: the self-test as a pass, and
+  `docs/firmware/gps-field-exceptions.tsv`, the owner's alone to add
+  to, and to what a fill really changes.  Both providers here fill all
+  the images use but the satellites Time RAIM isolated, which the
+  Z3815A's status screen shows from `rrm` and for which the owner
+  granted each a row (2026-11-16): the self-test as a pass, the almanac
+  (the u-blox crate's from `RXM-SFRBX`), and
   the Time RAIM result from the scene's sky and from a u-blox
   receiver's `TIM-TP`.  Every field of a response
   is now the record's, the model's state or the manual's value for not

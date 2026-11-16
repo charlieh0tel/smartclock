@@ -6,30 +6,30 @@ use std::boxed::Box;
 use std::vec;
 use std::vec::Vec;
 
-use crate::Assembler;
-use crate::DECLARATION;
-use crate::Deframer;
-use crate::EncodeError;
-use crate::FrameError;
-use crate::LeapNotice;
-use crate::MESSAGES;
-use crate::MON_HW;
-use crate::Message;
-use crate::MessageId;
-use crate::NAV_DOP;
-use crate::NAV_EOE;
-use crate::NAV_POSECEF;
-use crate::NAV_PVT;
-use crate::NAV_SAT;
-use crate::NAV_TIMEGPS;
-use crate::NAV_TIMELS;
-use crate::OVERHEAD;
-use crate::Picoseconds;
-use crate::TIM_TP;
-use crate::checksum;
-use crate::encode;
-use crate::nav_sat_length;
-use crate::payload_length;
+use crate::assembler::Assembler;
+use crate::assembler::DECLARATION;
+use crate::frame::Deframer;
+use crate::frame::EncodeError;
+use crate::frame::FrameError;
+use crate::frame::MessageId;
+use crate::frame::OVERHEAD;
+use crate::frame::checksum;
+use crate::frame::encode;
+use crate::message::MESSAGES;
+use crate::message::MON_HW;
+use crate::message::Message;
+use crate::message::NAV_DOP;
+use crate::message::NAV_EOE;
+use crate::message::NAV_POSECEF;
+use crate::message::NAV_PVT;
+use crate::message::NAV_SAT;
+use crate::message::NAV_TIMEGPS;
+use crate::message::NAV_TIMELS;
+use crate::message::TIM_TP;
+use crate::message::payload_length;
+use crate::nav::LeapNotice;
+use crate::nav::nav_sat_length;
+use crate::tim::Picoseconds;
 use smartclock_gps::NoRoom;
 use smartclock_gps::record::Antenna;
 use smartclock_gps::record::Dops;
@@ -595,7 +595,7 @@ const VELOCITY: Velocity = Velocity {
     heading: TenthDegrees(900),
 };
 
-fn pvt(fields: Pvt) -> crate::NavPvt {
+fn pvt(fields: Pvt) -> crate::nav::NavPvt {
     match decode(NAV_PVT, &fields.payload()) {
         Some(Message::NavPvt(pvt)) => pvt,
         other => panic!("{other:?}"),
@@ -673,7 +673,7 @@ fn nav_pvt_edges() {
     );
 }
 
-fn nav_time_gps(payload: [u8; 16]) -> crate::NavTimeGps {
+fn nav_time_gps(payload: [u8; 16]) -> crate::nav::NavTimeGps {
     match decode(NAV_TIMEGPS, &payload) {
         Some(Message::NavTimeGps(time)) => time,
         other => panic!("{other:?}"),
@@ -736,7 +736,7 @@ fn nav_timegps_week_near_a_reference() {
     );
 }
 
-fn nav_time_ls(fields: Ls) -> Option<crate::NavTimeLs> {
+fn nav_time_ls(fields: Ls) -> Option<crate::nav::NavTimeLs> {
     match decode(NAV_TIMELS, &fields.payload()) {
         Some(Message::NavTimeLs(leap)) => Some(leap),
         None => None,

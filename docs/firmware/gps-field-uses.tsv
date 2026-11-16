@@ -14,7 +14,7 @@ status_snapshot	*	*	*	reported	status_snapshot() copies the field, or what satel
 status_snapshot	*	Ba,Ea	channel status flags	none	status_snapshot() hands the channels to satellite_sets_build() and satellite_status_list(), which read each one's satellite, mode and signal strength and not its flags
 status_snapshot	*	Ba,Ea	receiver status position propagate; receiver status poor geometry; receiver status 2D fix; receiver status acquiring or position hold; receiver status differential; receiver status insufficient visible satellites; receiver status bad almanac	none	status_snapshot() copies the receiver status whole to the snapshot, of which status_screen_position() alone reads it, for its 3D fix bit, to say why a survey is suspended
 status_snapshot	*	Bb	Doppler	none	status_snapshot() hands the visibility to satellite_status_list(), which reads each satellite's number, elevation, azimuth and health and not its Doppler
-gps_debug_status	*	*	*	console	oncore_position_message() calls gps_debug_status(), which prints, only while a console word has set its interval
+gps_debug_status	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	*	*	console	oncore_position_message() calls gps_debug_status(), which prints, only while a console word has set its interval
 gps_print_average	*	*	*	console	gps_print_average() prints, on a request of gps_console_request()
 gps_print_best_combinations	*	*	*	console	gps_print_best_combinations() prints, on a request of gps_console_request()
 gps_print_extension	*	*	*	console	gps_print_extension() prints, on a request of gps_console_request()
@@ -66,5 +66,17 @@ gps_pps_pass_update	z3817a-3752	Bn,En	pulse mode	control	gps_pps_pass_update() p
 gps_print_time_raim	z3817a-3752	Bn,En	pulse mode	console	gps_print_time_raim() prints the pulse mode
 gps_request_build	*	*	*	none	gps_request_build() names oncore_messages for a message's kind, ID and encoders; gps_response_decode() alone walks its decoders, which store the field
 gps_response_lookup	*	*	*	none	gps_response_lookup() names oncore_messages for a message's ID and length; gps_response_decode() alone walks its decoders, which store the field
-gps_response_match	*	*	*	none	gps_response_match() names oncore_messages for a message's match kind, and compares the response with the request sent; gps_response_decode() alone walks its decoders, which store the field
+gps_response_match	z3805a-3543b,z3801a-3543	*	*	none	gps_response_match() names oncore_messages for a message's match kind, and compares the response with the request sent; gps_response_decode() alone walks its decoders, which store the field
 oncore_message_entry_at	*	*	*	none	oncore_message_entry_at() returns an entry of oncore_messages; of its callers gps_response_decode() alone walks the entry's decoders, which store the field
+gps_debug_status	z3815a-4010	*	*	console	nmea_position_message() calls gps_debug_status(), which prints, only while a console word has set its interval
+nmea_position_message	z3815a-4010	GGA	latitude; north or south; longitude; east or west; altitude; geoid altitude	control	nmea_position_message(), after tps's commit, averages the committed position and height while a survey runs out of position hold, the average the position the receiver comes to hold, as the 58503A oncore_position_message does
+nmea_position_message	z3815a-4010	GSA	mode	control	nmea_gsa_commit() makes the mode the receiver status's 3D fix bit, by which nmea_position_message() averages the survey only with a 3D fix
+gps_step_position_arguments	z3815a-4010	GGA	*	none	gps_step_position_arguments() puts GGA's other angle into the GLL the receiver sends its engine back, which reports nothing and controls nothing of the receiver's own
+gps_step_date_arguments	z3815a-4010	tps	*	none	gps_step_date_arguments() puts tps's time into the ZDA the receiver sends its engine back, which reports nothing and controls nothing of the receiver's own
+gps_receiver_abilities_update	z3815a-4010	tst	program and version	control	gps_receiver_abilities_update() decides by tst's software whether the engine has Time RAIM, which gates rrs and int,rrm, and whether its cable delay is corrected by 400 ns, which nmea_encode_cable_delay() adds
+gps_month_changed	z3815a-4010	tps	*	control	gps_month_changed() takes the committed GPS date and time, from tps, and at a new month has the loop's stages ask for the leap second's acknowledgment again
+command_monitor	z3815a-4010	tps	*	control	command_monitor(), in its status monitor, counts the statuses that repeat the last one's time, committed from tps, and at too many fails the receiver's health
+command_monitor	z3815a-4010	rsd	TRAIM switch	control	command_monitor(), in its status monitor, expects rrm with each status only while the Time RAIM switch rsd reports is on
+gps_response_match	z3815a-4010	*	*	none	gps_response_match() takes a response as the answer to the sentence sent, comparing their fields, and tests the position hold only to choose how near a position or a height must be; nmea_sentence_decode() alone stores the fields
+gps_step_time_arguments	z3815a-4010	tps	*	none	gps_step_time_arguments() puts tps's date into the ZDA the receiver sends its engine back, which reports nothing and controls nothing of the receiver's own
+nmea_position_message	z3815a-4010	tps	mode	control	nmea_tps_fields_commit() makes the mode the position hold, and nmea_position_message() averages the survey only out of it

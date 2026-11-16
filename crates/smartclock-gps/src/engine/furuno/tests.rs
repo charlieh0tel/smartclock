@@ -277,6 +277,37 @@ fn the_image_takes_every_sentence() {
     }
 }
 
+/// The field table's rows of the Z3815A's sentences, its manual `GT`,
+/// name only sentences of [`SENTENCES`](crate::nmea::SENTENCES), each
+/// in the direction the image uses it, and each response sentence the
+/// engine sends has rows (`tools/firmware/gps_fields.py` holds them to
+/// the image).
+#[test]
+fn the_field_table_has_the_sentences() {
+    const FIELDS: &str = "../../docs/firmware/gps-fields.tsv";
+    const MANUAL: &str = "GT";
+    let text = fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join(FIELDS))
+        .expect("the field table");
+    let mut named = std::collections::BTreeSet::new();
+    for line in text.lines().skip(1) {
+        let cells: Vec<&str> = line.split('\t').collect();
+        if cells.get(8) != Some(&MANUAL) {
+            continue;
+        }
+        let row = crate::nmea::sentence_type(cells[0].as_bytes()).expect("a sentence of the table");
+        let direction = match row.direction {
+            crate::Direction::ToEngine => "command",
+            crate::Direction::FromEngine => "response",
+        };
+        assert_eq!(cells[1], direction, "{line}");
+        named.insert(cells[0]);
+    }
+    for row in crate::nmea::SENTENCES {
+        let has_data = row.fields.most > 0;
+        assert_eq!(named.contains(row.name), has_data, "{}", row.name);
+    }
+}
+
 #[test]
 fn a_set_parameter_changes_its_setting() {
     let mut engine = Engine::new(&GT_74);

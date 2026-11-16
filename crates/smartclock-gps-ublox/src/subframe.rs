@@ -626,4 +626,4 @@ impl Subframe {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

@@ -1374,6 +1374,20 @@ stands in for one.
     when its own count of blocks (`numSvs`, `numMeas`, `numWords`) is
     the count its length gives; the deframer's length check alone lets
     any whole number of blocks through.
+  - *Long messages are streamed, a block at a time, on request.*  A
+    board with little RAM cannot buffer `NAV-SAT` and `RXM-RAWX`,
+    which grow by 12 and 32 bytes a satellite.  A `Streamer` is the
+    deframer's own state machine in a second mode: for those two
+    messages it lends the header, then each block, as each completes,
+    from a buffer of the longest part (a compile-time assertion holds
+    its size to that), and ends with the checksum's verdict; everything
+    else comes whole.  A callback or visitor was the other way, and was
+    passed over: it would invert the deframer's pull interface (bytes
+    in, an event out, the caller's loop in charge), lend nothing a
+    caller could not already have, and need the decoders' types in the
+    framing.  The cost is that a part comes before its checksum, so a
+    caller stages what it decodes and keeps it only at the end.  The
+    whole-frame `Deframer` and the `Assembler` on it stay for hosts.
   - *A GPS satellite's navigation data is decoded here too*
     (`subframe`; owner, 2026-11-13: UBX decode and navigation data
     decode live here as one `no_std` source shared by board and host).

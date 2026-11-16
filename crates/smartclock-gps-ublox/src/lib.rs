@@ -66,6 +66,24 @@
 //! A GPS satellite's own navigation data, the subframes `RXM-SFRBX`
 //! carries, is decoded by [`subframe`], to IS-GPS-200N.
 //!
+//! # Streaming
+//!
+//! `NAV-SAT` and `RXM-RAWX` grow with the sky, past 1 KB from a
+//! receiver tracking every system, which a [`Deframer`](frame::Deframer)
+//! must hold whole.  A [`Streamer`](frame::Streamer) gives them
+//! instead a part at a time, the header and then each block as its
+//! last byte is taken, each lent from a buffer that holds only the
+//! longest part and the longest message not streamed; the count of
+//! blocks comes from the length, and
+//! [`Part`](message::Part) decodes each part.  Every other message
+//! comes whole, as from a deframer.  The checksum comes last, so the
+//! parts come before anything vouches for them: a caller keeps what
+//! they say aside, and takes it at
+//! [`Event::End`](frame::Event::End) or drops it at the error that
+//! comes instead.  The rules of "Resynchronizing" hold as they are; a
+//! streamed message's length must be its own, and need not fit the
+//! buffer.
+//!
 //! # From messages to a record
 //!
 //! [`Assembler`](assembler::Assembler) takes the stream a byte at a

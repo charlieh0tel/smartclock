@@ -5,7 +5,9 @@ use smartclock_gps::units::Milliseconds;
 
 use crate::ack::Ack;
 use crate::fields::Fields;
+use crate::frame::Block;
 use crate::frame::Frame;
+use crate::frame::Header;
 use crate::frame::MessageId;
 use crate::mon::MonHw;
 use crate::nav::NAV_SAT_BLOCK;
@@ -16,12 +18,16 @@ use crate::nav::NavEoe;
 use crate::nav::NavPosEcef;
 use crate::nav::NavPvt;
 use crate::nav::NavSat;
+use crate::nav::NavSatHeader;
 use crate::nav::NavTimeGps;
 use crate::nav::NavTimeLs;
 use crate::nav::NavVelEcef;
+use crate::nav::SatelliteInfo;
+use crate::rxm::Measurement;
 use crate::rxm::RAWX_BLOCK;
 use crate::rxm::RAWX_HEADER;
 use crate::rxm::RxmRawx;
+use crate::rxm::RxmRawxHeader;
 use crate::rxm::RxmSfrbx;
 use crate::rxm::SFRBX_HEADER;
 use crate::rxm::SFRBX_WORD;
@@ -148,6 +154,87 @@ pub fn payload_length(id: MessageId) -> Option<PayloadLength> {
     MESSAGES
         .iter()
         .find_map(|&(known, length)| (known == id).then_some(length))
+}
+
+/// The messages a [`Streamer`](crate::frame::Streamer) gives a header
+/// and a block at a time: those whose length grows with the sky.
+/// `RXM-SFRBX` is not among them: a GPS subframe is 48 bytes, and is
+/// decoded whole.
+pub const STREAMED: [MessageId; 2] = [NAV_SAT, RXM_RAWX];
+
+/// A streamed message's header's and block's lengths; `None` for a
+/// message not streamed.
+pub(crate) fn streamed_layout(id: MessageId) -> Option<(usize, usize)> {
+    match payload_length(id).filter(|_| STREAMED.contains(&id))? {
+        PayloadLength::Blocks { header, block } => Some((header, block)),
+        PayloadLength::Fixed(_) => None,
+    }
+}
+
+/// The longest header or block of a message of [`STREAMED`]: the least
+/// a [`Streamer`](crate::frame::Streamer)'s buffer holds.
+pub const LONGEST_PART: usize = {
+    let mut longest = 0;
+    let mut index = 0;
+    while index < MESSAGES.len() {
+        let (id, length) = MESSAGES[index];
+        let mut streamed = 0;
+        while streamed < STREAMED.len() {
+            let other = STREAMED[streamed];
+            if let PayloadLength::Blocks { header, block } = length
+                && other.class == id.class
+                && other.id == id.id
+            {
+                if header > longest {
+                    longest = header;
+                }
+                if block > longest {
+                    longest = block;
+                }
+            }
+            streamed += 1;
+        }
+        index += 1;
+    }
+    longest
+};
+
+/// A part of a streamed message, decoded.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Part {
+    /// `UBX-NAV-SAT`'s header.
+    NavSatHeader(NavSatHeader),
+    /// One of its satellites.
+    Satellite(SatelliteInfo),
+    /// `UBX-RXM-RAWX`'s header.
+    RxmRawxHeader(RxmRawxHeader),
+    /// One of its measurements.
+    Measurement(Measurement),
+}
+
+impl Part {
+    /// What a header says.  `None` as for the whole message's
+    /// [`Message::parse`].
+    #[must_use]
+    pub fn header(header: &Header<'_>) -> Option<Self> {
+        let fields = Fields(header.bytes);
+        match header.id {
+            NAV_SAT => NavSatHeader::parse(fields, header.blocks).map(Self::NavSatHeader),
+            RXM_RAWX => RxmRawxHeader::parse(fields, header.blocks).map(Self::RxmRawxHeader),
+            _ => None,
+        }
+    }
+
+    /// What a block says.
+    #[must_use]
+    pub fn block(block: &Block<'_>) -> Option<Self> {
+        let fields = Fields(block.bytes);
+        match block.id {
+            NAV_SAT => Some(Self::Satellite(SatelliteInfo::parse(fields))),
+            RXM_RAWX => Some(Self::Measurement(Measurement::parse(fields))),
+            _ => None,
+        }
+    }
 }
 
 /// A message of [`MESSAGES`], decoded.

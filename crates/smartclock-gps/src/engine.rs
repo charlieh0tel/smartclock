@@ -233,8 +233,11 @@ const WGS_84_AXIS: u32 = 6_378_137;
 const WGS_84_INVERSE_FLATTENING: u16 = 298;
 const WGS_84_INVERSE_FLATTENING_FRACTION: u32 = 257_223_563;
 
-/// The bytes of one channel in `@@Ba` and `@@Ea` (VP p. 72).
+/// The bytes of one channel in `@@Ba` and `@@Ea` (VP p. 72), and where
+/// the channels start, after the count of satellites tracked (VP
+/// pp. 72 and 125).
 const STATUS_CHANNEL: usize = 4;
+const STATUS_CHANNELS_AT: usize = 36;
 /// A channel's status flag bits (VP p. 73; UT p. 6.20).
 const CHANNEL_USED: u8 = 0x80;
 const CHANNEL_UNHEALTHY: u8 = 0x10;
@@ -519,6 +522,32 @@ impl KeptStatus {
 
     fn as_slice(&self) -> &[u8] {
         &self.bytes[..self.length]
+    }
+
+    /// An eight-channel status as a six-channel one: the same up to the
+    /// channels (VP pp. 72 and 125), the first six channels, and the
+    /// receiver status, its count of tracked recounted from those six.
+    fn six(&self) -> Self {
+        let channels = STATUS_CHANNELS_AT + SIX_CHANNELS * STATUS_CHANNEL;
+        let eight = &self.bytes[..self.length];
+        let mut bytes = [0; STATUS_MOST];
+        let Some(receiver_status) = eight.last() else {
+            return *self;
+        };
+        bytes[..channels].copy_from_slice(&eight[..channels]);
+        bytes[channels] = *receiver_status;
+        let least = tracking_mode(TRACKING_LEAST);
+        let tracked = bytes[STATUS_CHANNELS_AT..channels]
+            .as_chunks::<STATUS_CHANNEL>()
+            .0
+            .iter()
+            .filter(|[prn, mode, ..]| *prn != 0 && *mode >= least)
+            .count();
+        bytes[STATUS_CHANNELS_AT - 1] = count_byte(tracked);
+        Self {
+            bytes,
+            length: channels + 1,
+        }
     }
 }
 
@@ -806,9 +835,10 @@ pub struct Engine {
     xdops: Option<[u8; XDOP_TABLE]>,
     /// The data of the last `@@Bd` sent.
     almanac: Option<[u8; 2 * ALMANAC_STATUS]>,
-    /// Each family's last position status sent while fixing, which
-    /// `@@Cf` does not forget.
-    last_status: [Option<KeptStatus>; FAMILIES.len()],
+    /// The last position status while fixing, kept each second in
+    /// its eight-channel form, which `@@Cf` does not forget.  A
+    /// six-channel one is made from it ([`KeptStatus::six`]).
+    last_status: Option<KeptStatus>,
     /// The self-tests' answers waiting, oldest
     /// first.
     deferred: [Option<Deferred>; DEFERRED],
@@ -848,7 +878,7 @@ impl Engine {
             visibility: None,
             xdops: None,
             almanac: None,
-            last_status: [None; FAMILIES.len()],
+            last_status: None,
             deferred: [None; DEFERRED],
         }
     }
@@ -953,6 +983,7 @@ impl Engine {
         self.offset = Some(offset);
 
         if self.state.fixing {
+            self.keep_status(record);
             for family in FAMILIES {
                 let rates = self.state.rates[family.index];
                 if rates.status.due(self.count) {
@@ -1610,27 +1641,35 @@ impl Engine {
         .fold(0, |status, (_, bit)| status | bit)
     }
 
+    /// Keeps the current position status as the last known valid one
+    /// (VP pp. 70 and 124).
+    fn keep_status(&mut self, record: &Record) {
+        self.last_status = Some(KeptStatus::of(&self.status(record, &EIGHT)));
+    }
+
     /// `@@Ba` and `@@Ea`.
-    /// Idle, it is the last one sent while fixing, once more (VP pp. 70
-    /// and 124), or with none yet, the current one, which tracks
-    /// nothing.
+    /// Idle, it is "the last known valid" one, kept each second while
+    /// fixing, once more (VP pp. 70 and 124): one status for both
+    /// families, `@@Ba` its first six channels.  With none yet, it is
+    /// the current one, which tracks nothing.
     fn position_status<O: Output + ?Sized>(
         &mut self,
         record: &Record,
         family: &Family,
         out: &mut O,
     ) {
-        if !self.state.fixing
-            && let Some(kept) = &self.last_status[family.index]
-        {
+        if self.state.fixing {
+            self.keep_status(record);
+        } else if let Some(kept) = &self.last_status {
+            let kept = if family.index == SIX.index {
+                kept.six()
+            } else {
+                *kept
+            };
             send(out, family.status, Data::new().bytes(kept.as_slice()));
             return;
         }
-        let data = self.status(record, family);
-        if self.state.fixing {
-            self.last_status[family.index] = Some(KeptStatus::of(&data));
-        }
-        send(out, family.status, &data);
+        send(out, family.status, &self.status(record, family));
     }
 
     /// The data of `@@Ba` and `@@Ea` (VP pp. 70 to 73 and 124 to 126;

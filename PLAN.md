@@ -1039,10 +1039,13 @@ stands in for one.
   time jumps neither doubles a message nor skips one.  The one answer
   that comes late, a self-test's, it holds until the caller's time,
   passed in with every call, reaches a deadline it reports.  Idle, a
-  poll of its position status answers the last one it sent while
-  fixing, as the manual has it, and before it has fixed, the current
-  one, tracking nothing; the recorded exchanges never poll an idle
-  engine that has fixed, so none of their answers moved.
+  poll of its position status answers "the last known valid" one (VP
+  pp. 70 and 124), which it keeps each second while fixing, polled or
+  not: one status for both families, `@@Ba` being `@@Ea`'s first six
+  channels with its count of tracked taken from those six.  Before it
+  has fixed, it answers the current one, tracking nothing; the
+  recorded exchanges never poll an idle engine that has fixed, so
+  none of their answers moved.
 - **A model that turns eight-channel carries who it turns into**
   (`Options::eight_on_ea`, an identity or none; decided 2026-11-15).
   The option was a flag: a six-channel model took eight channels at

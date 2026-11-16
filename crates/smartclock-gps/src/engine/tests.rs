@@ -1289,6 +1289,39 @@ fn an_idle_engine_answers_with_its_last_position_status() {
     assert_eq!(poll(&mut engine, &record), fixing);
 }
 
+/// VP pp. 70 and 124: the last known valid status is kept each second
+/// while fixing, polled or not, and `@@Ba` is `@@Ea`'s first six
+/// channels.
+#[test]
+fn an_idle_engine_answers_with_the_status_kept_while_fixing() {
+    let mut record = full();
+    for (id, elevation) in [(7, 85), (9, 60)] {
+        record.satellites.push(
+            Satellite::new(prn(id), Degrees(elevation), Degrees(0)).tracked(DecibelHertz(40)),
+        );
+    }
+    let mut engine = fixing(&VP_EIGHT);
+    engine.second(&record, NOW, &mut Sent::default());
+    let eight = only(
+        &ask(&mut engine, &record, EA_POSITION_STATUS, &[0]),
+        EA_POSITION_STATUS,
+    )
+    .to_vec();
+    assert_eq!(eight[35], 7);
+    let mut engine = fixing(&VP_EIGHT);
+    // Never polled while fixing.
+    engine.second(&record, NOW, &mut Sent::default());
+    ask(&mut engine, &record, CG_FIX_MODE, &[0]);
+    let idle = |engine: &mut Engine, id| only(&ask(engine, &Record::EMPTY, id, &[0]), id).to_vec();
+    assert_eq!(idle(&mut engine, EA_POSITION_STATUS), eight);
+    let six = idle(&mut engine, BA_POSITION_STATUS);
+    assert_eq!(six.len(), 61);
+    assert_eq!(six[..35], eight[..35]);
+    assert_eq!(six[35], 6, "tracked on the first six channels");
+    assert_eq!(six[36..60], eight[36..60]);
+    assert_eq!(six[60], eight[68]);
+}
+
 /// VP pp. 29 and 30: highest in the sky tracks the highest satellites,
 /// where automatic selection takes the record's first.
 #[test]

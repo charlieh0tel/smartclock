@@ -1199,6 +1199,10 @@ specification; in short:
   record has one fault for the RAM and one for the ROM, not one for
   each of a VP's bits, and that stays.  A part an engine has no test
   of sets nothing.
+- **A self-test answers six seconds after its command.**  The manual
+  gives it "up to ten seconds" (VP p. 107); two captures of a real VP
+  had `@@Ca` answered 5.2 and 7.1 seconds after it was sent, and the
+  model takes a time between them.
 - **`@@Ta` is a gap, and stays one.**  It is in no manual here, the
   table's rows name no public image that sets it or decodes its
   response, and the model keeps the values it is given and answers

@@ -31,8 +31,9 @@
 //! second in which the engine is to be silent is one
 //! [`Engine::second`] is not called for.
 //!
-//! One answer is not sent at once: a self-test's, which comes two
-//! seconds after its command.  [`Engine::deadline`] says when one is
+//! One answer is not sent at once: a self-test's, which comes six
+//! seconds after its command, as a real VP's comes some seconds after
+//! (VP p. 107).  [`Engine::deadline`] says when one is
 //! due and [`Engine::poll`] sends it; [`Engine::second`] and
 //! [`Engine::receive`] send what is due before anything else, so a
 //! caller whose link can wait up to a second for it need not poll.
@@ -203,8 +204,11 @@ impl Options {
     };
 }
 
-/// How long a self-test takes to answer.
-const SELF_TEST: u64 = 2000;
+/// How long a self-test takes to answer, in milliseconds: within the
+/// "up to ten seconds" the manual allows (VP p. 107), and between the
+/// two answers of a real VP to `@@Ca` captured, which came 5.2 and
+/// 7.1 seconds after the command.
+const SELF_TEST: u64 = 6000;
 /// The self-test answers an engine holds at once.
 const DEFERRED: usize = 4;
 

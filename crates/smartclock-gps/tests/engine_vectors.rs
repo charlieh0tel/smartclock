@@ -10,7 +10,8 @@
 //! - `antenna` `on` or `off`, the antenna put on or taken off.
 //!
 //! In each second the engine is first given the second, then that
-//! second's events in the file's order, half a second in.  What is sent
+//! second's events in the file's order, half a second in, and the run
+//! goes on past the last event until no answer waits.  What is sent
 //! on consecutive lines is sent together, before any answer is written
 //! down.  The test
 //! reads the head and the events sent, runs the engine, writes the file
@@ -433,7 +434,11 @@ fn run(text: &str) -> String {
         text: head.lines.join("\n") + "\n",
         second: 0,
     };
-    for second in 1..=last {
+    // On past the last event while an answer waits, so a self-test
+    // asked near the end still answers.
+    let mut second = 0;
+    while second < last || engine.deadline().is_some() {
+        second += 1;
         lines.second = second;
         let record = scene.record(second, antenna, &engine.settings());
         engine.second(

@@ -21,7 +21,7 @@
 //! with.
 //!
 //! One configuration is built in, [`CONFIGURATION_58503A`]: how a
-//! 58503A leaves its engine, for a receiver that never configures its
+//! 58503A leaves its engine, for a receiver that cannot command its
 //! own.
 //!
 //! The pages cited are the VP Oncore's command reference,
@@ -111,8 +111,10 @@ pub struct SavedConfiguration {
 /// RAIM"), here at their defaults in position hold: on, at an alarm
 /// limit of 1000 ns (`docs/firmware/structures.md`, `raim_state` and
 /// `raim_threshold`).  So it is how an engine a 58503A configured
-/// comes up, and it is offered for a receiver that never configures
-/// its engine, as the Z3817A, which sends its engine nothing.  An
+/// comes up, and it is offered for a receiver that cannot command its
+/// engine, as the Z3817A, whose firmware (3752) refuses every engine
+/// request internally and so sends its engine nothing
+/// (`docs/firmware/gps.md`, "Which engines each image accepts").  An
 /// engine made with it needs an eight-channel identity.
 pub const CONFIGURATION_58503A: SavedConfiguration = SavedConfiguration {
     channels: ChannelCount::Eight,

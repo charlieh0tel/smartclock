@@ -1082,9 +1082,11 @@ stands in for one.
   is built in, so a caller need not write one: `CONFIGURATION_58503A`,
   how a 58503A's power-up script leaves its engine (fixing, `@@Ea` and
   `@@En` each second, `@@Bb` at each change, Time RAIM on at 1000 ns,
-  the pulse always).  It is for a receiver that never configures its
-  engine, as the Z3817A, which sends its engine nothing and needs an
-  engine that comes up sending, and is given one configured as a
+  the pulse always).  It is for a receiver that cannot command its
+  engine, as the Z3817A, whose firmware (3752) refuses every engine
+  request internally, so that it sends its engine nothing
+  (`docs/firmware/gps.md`, "Which engines each image accepts"), and
+  needs an engine that comes up sending, and is given one configured as a
   58503A leaves its own.  More are added when a receiver needs one.
   `@@Cf` puts the defaults back, not the saved configuration, as the
   manual has it set "all of the GPS receiver parameters to their

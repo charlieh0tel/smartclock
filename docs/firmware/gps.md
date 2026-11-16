@@ -40,8 +40,10 @@ that keeps its output rates and setup through a power cycle
 built in, `CONFIGURATION_58503A`: how the 58503A's power-up script
 `0x53` and its Time RAIM request leave an eight-channel engine
 ("Time RAIM"), fixing, with `@@Ea` and `@@En` each second and `@@Bb` at
-each change.  It is for a receiver that never configures its engine,
-as the Z3817A ("The Z3817A takes an `@@Ea` stream").  `@@Cf` puts such
+each change.  It is for a receiver that cannot command its engine,
+as the Z3817A, whose 3752 refuses every engine request internally and
+so sends nothing ("Which engines each image accepts" and "The Z3817A
+takes an `@@Ea` stream").  `@@Cf` puts such
 an engine back to the defaults, not to the configuration (p. 116), and
 a VP idle (p. 118).  What the commands set
 it to -- mask angle, position and altitude hold, time base, the 1 PPS's

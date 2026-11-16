@@ -49,6 +49,9 @@ use crate::nav::OrbitSource;
 use crate::nav::SatelliteInfo;
 use crate::rxm::Measurement;
 use crate::rxm::RxmRawxHeader;
+use crate::subframe::Body;
+use crate::subframe::PREAMBLE;
+use crate::subframe::Subframe;
 use crate::tim::TimTp;
 use crate::units::Centimeters;
 use crate::units::CentimetersPerSecond;
@@ -555,6 +558,41 @@ fn rxm_sfrbx_every_field() {
     // numWords must be the length's count.
     bytes[4] = 9;
     assert_eq!(decode(RXM_SFRBX, &bytes), None);
+}
+
+/// An `RXM-SFRBX` of `words` from satellite `id` of `system`.
+fn sfrbx(system: u8, words: &[u32]) -> Vec<u8> {
+    let count = u8::try_from(words.len()).unwrap();
+    let mut bytes = std::vec![system, 12, 0, 0, count, 0, 2, 0];
+    bytes.extend(words.iter().flat_map(|word| word.to_le_bytes()));
+    bytes
+}
+
+/// A GPS subframe from `RXM-SFRBX` to its fields: subframe 1 of week
+/// 905, each word with padding above its 30 bits.
+#[test]
+fn rxm_sfrbx_gives_a_gps_subframe() {
+    let mut words = [0xc000_0000; 10];
+    words[0] |= u32::from(PREAMBLE) << 22;
+    words[1] |= 1 << 8;
+    words[2] |= 905 << 20;
+    let Some(Message::RxmSfrbx(message)) = decode(RXM_SFRBX, &sfrbx(0, &words)) else {
+        panic!();
+    };
+    let subframe = Subframe::decode(&message.gps_words().unwrap()).unwrap();
+    assert_eq!(subframe.telemetry.preamble, PREAMBLE);
+    let Body::Subframe1(clock) = subframe.body else {
+        panic!("{subframe:?}");
+    };
+    assert_eq!(clock.week, 905);
+    // Another system's, or other than ten words, is no GPS subframe.
+    for (system, count) in [(2, 10), (0, 8)] {
+        let Some(Message::RxmSfrbx(message)) = decode(RXM_SFRBX, &sfrbx(system, &words[..count]))
+        else {
+            panic!();
+        };
+        assert_eq!(message.gps_words(), None, "{system} {count}");
+    }
 }
 
 #[test]

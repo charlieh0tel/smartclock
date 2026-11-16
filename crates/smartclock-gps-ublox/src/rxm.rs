@@ -7,6 +7,9 @@ use smartclock_gps::units::Seconds;
 
 use crate::fields::Fields;
 use crate::fields::bit_field;
+use crate::message::SYSTEM_GPS;
+use crate::subframe::WORDS;
+use crate::subframe::Words;
 use crate::units::F32Bits;
 use crate::units::F64Bits;
 
@@ -83,7 +86,7 @@ pub struct Measurement {
     /// `doMes`, in hertz: the Doppler, positive for an approaching
     /// satellite.
     pub doppler: F32Bits,
-    /// `gnssId`: which system's satellite, [`SYSTEM_GPS`](crate::message::SYSTEM_GPS) for GPS.
+    /// `gnssId`: which system's satellite, [`SYSTEM_GPS`] for GPS.
     pub system: u8,
     /// `svId`: its number in that system.
     pub id: u8,
@@ -173,7 +176,7 @@ impl<'a> RxmRawx<'a> {
 /// first and `sigId` and `chn` in the second, so either is taken.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RxmSfrbx<'a> {
-    /// `gnssId`: which system's satellite, [`SYSTEM_GPS`](crate::message::SYSTEM_GPS) for GPS.
+    /// `gnssId`: which system's satellite, [`SYSTEM_GPS`] for GPS.
     pub system: u8,
     /// `svId`: its number in that system.
     pub id: u8,
@@ -218,5 +221,18 @@ impl<'a> RxmSfrbx<'a> {
             .0
             .iter()
             .map(|&word| u32::from_le_bytes(word))
+    }
+
+    /// A GPS L1 C/A subframe's ten words, for
+    /// [`Subframe::decode`](crate::subframe::Subframe::decode): `None`
+    /// unless the satellite is a GPS one and there are ten words.
+    /// The receiver sends a subframe only once its parity checks have
+    /// passed, with the data bits it had to invert inverted (section
+    /// 10.1, p. 30), and of GPS gives only L1 C/A's (section 10.9,
+    /// p. 34).
+    #[must_use]
+    pub fn gps_words(&self) -> Option<Words> {
+        let words: &[[u8; SFRBX_WORD]; WORDS] = self.words.as_chunks().0.try_into().ok()?;
+        (self.system == SYSTEM_GPS).then(|| Words::new(words.map(u32::from_le_bytes)))
     }
 }

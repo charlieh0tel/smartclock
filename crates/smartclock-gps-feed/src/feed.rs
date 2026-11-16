@@ -11,7 +11,6 @@ use std::time::Duration;
 use std::time::SystemTime;
 
 use jiff::Timestamp;
-use smartclock_gps::engine::Engine;
 use smartclock_gps::engine::Output;
 use smartclock_gps::engine::event::Event;
 use smartclock_gps::record::Record;
@@ -21,6 +20,7 @@ use smartclock_gps::source::Tick;
 use smartclock_gps::units::Milliseconds;
 use smartclock_gps::units::Seconds;
 
+use crate::engine::Engine;
 use crate::event;
 use crate::link::Transport;
 use crate::provider::Kind;
@@ -209,7 +209,7 @@ impl Feed {
         let events = self.engine.receive(bytes, &self.record, now, out);
         for happened in events {
             match happened {
-                Event::Reset => event("engine set to its defaults (@@Cf)"),
+                Event::Reset => event(self.engine.reset()),
                 Event::SettingsChanged(settings) => {
                     event(format_args!("engine settings changed: {settings:?}"));
                 }
@@ -318,15 +318,17 @@ mod tests {
     use super::Feed;
     use super::WireLog;
     use super::run;
+    use crate::cli::EngineSpec;
     use crate::cli::ProviderSpec;
+    use crate::engine::Engine;
     use crate::link::Transport;
     use crate::provider::Built;
     use crate::provider::Kind;
     use crate::provider::Shared;
     use crate::provider::build;
     use crate::provider::recording;
-    use smartclock_gps::engine::Engine;
     use smartclock_gps::engine::Options;
+    use smartclock_gps::engine::identity::Identity;
     use smartclock_gps::engine::identity::VP_EIGHT;
     use smartclock_gps::engine::identity::VP_SIX;
     use smartclock_gps::engine::saved::CONFIGURATION_58503A;
@@ -406,6 +408,10 @@ mod tests {
         out[..length].to_vec()
     }
 
+    fn oncore(identity: &'static Identity, options: Options) -> Engine {
+        Engine::new(&EngineSpec::Oncore { identity, options }).unwrap()
+    }
+
     fn fixed(engine: Engine) -> Feed {
         let now = DateTime::new(2027, 1, 1, 0, 0, 0).unwrap().to_unix();
         let Built { nest, kind } = build(&ProviderSpec::Fixed, None, now).unwrap();
@@ -432,7 +438,7 @@ mod tests {
     fn a_saved_engine_sends_each_second() {
         let mut options = Options::DEFAULT;
         options.saved = Some(&CONFIGURATION_58503A);
-        let mut feed = fixed(Engine::new(&VP_EIGHT, options).unwrap());
+        let mut feed = fixed(oncore(&VP_EIGHT, options));
         let mut instrument = instrument(BTreeMap::new());
         let clock = instrument.clock.clone();
         let mut log = Some(WireLog::new(Vec::new()));
@@ -488,7 +494,7 @@ mod tests {
         for deaf in [false, true] {
             let mut options = Options::DEFAULT;
             options.deaf = deaf;
-            let mut feed = fixed(Engine::new(&VP_SIX, options).unwrap());
+            let mut feed = fixed(oncore(&VP_SIX, options));
             let asked = START.as_secs() + 2;
             let mut instrument = instrument(BTreeMap::from([(asked, command(CJ_RECEIVER_ID))]));
             let clock = instrument.clock.clone();
@@ -523,7 +529,7 @@ mod tests {
             tick: Tick(0),
         };
         let mut feed = Feed::new(
-            Engine::new(&VP_SIX, Options::DEFAULT).unwrap(),
+            oncore(&VP_SIX, Options::DEFAULT),
             Arc::new(Mutex::new(shared)),
             Kind::Recording,
         );
@@ -561,7 +567,7 @@ mod tests {
         }
         let mut options = Options::DEFAULT;
         options.saved = Some(&CONFIGURATION_58503A);
-        let mut feed = fixed(Engine::new(&VP_EIGHT, options).unwrap());
+        let mut feed = fixed(oncore(&VP_EIGHT, options));
         let mut jumping = Jumping(instrument(BTreeMap::new()));
         let clock = jumping.0.clock.clone();
         run(

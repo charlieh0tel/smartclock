@@ -7,6 +7,7 @@
 //! from elsewhere.  `PLAN.md` has the design.
 
 mod cli;
+mod engine;
 mod feed;
 mod link;
 mod provider;
@@ -21,13 +22,13 @@ use std::time::Duration;
 use anyhow::Context as _;
 use anyhow::Result;
 use clap::Parser as _;
-use smartclock_gps::engine::Engine;
 use smartclock_gps::source::Tick;
 use smartclock_gps::time::UnixSeconds;
 use smartclock_gps::units::Seconds;
 
 use crate::cli::Cli;
 use crate::cli::ProviderSpec;
+use crate::engine::Engine;
 use crate::feed::Clock as _;
 use crate::feed::Feed;
 use crate::feed::LIVE_PHASE;
@@ -48,7 +49,7 @@ pub(crate) fn event(message: impl Display) {
 
 fn main() -> Result<()> {
     let config = Cli::parse().configure()?;
-    let engine = Engine::new(config.identity, config.options).context("making the engine")?;
+    let engine = Engine::new(&config.spec).context("making the engine")?;
     let now = SystemClock.now();
     let now = UnixSeconds::from_epoch(Seconds(i64::try_from(now.as_secs())?));
     let Built { nest, kind } = build(&config.provider, config.fake_start, now)?;

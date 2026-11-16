@@ -263,14 +263,24 @@ pub(crate) enum TransportSpec {
     Serial(PathBuf),
 }
 
+/// The engine to make, of its family.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum EngineSpec {
+    /// An Oncore, and how it departs from the one its identity names.
+    Oncore {
+        identity: &'static Identity,
+        options: Options,
+    },
+}
+
 /// What the command line asks for, checked.
 #[derive(Debug)]
 pub(crate) struct Config {
     pub(crate) provider: ProviderSpec,
     /// The engine as the command line names it.
     pub(crate) engine: EngineName,
-    pub(crate) identity: &'static Identity,
-    pub(crate) options: Options,
+    /// The engine to make.
+    pub(crate) spec: EngineSpec,
     pub(crate) fake_start: Option<UnixSeconds>,
     pub(crate) transport: TransportSpec,
     pub(crate) log: Option<PathBuf>,
@@ -314,8 +324,7 @@ impl Cli {
         Ok(Config {
             provider: self.provider,
             engine: self.engine,
-            identity,
-            options,
+            spec: EngineSpec::Oncore { identity, options },
             fake_start,
             transport,
             log: self.log,
@@ -327,10 +336,13 @@ impl Cli {
 mod tests {
     use super::Cli;
     use super::Config;
+    use super::EngineSpec;
     use super::ProviderSpec;
     use super::TransportSpec;
     use crate::provider::GPSD_PORT;
     use clap::Parser;
+    use smartclock_gps::engine::Options;
+    use smartclock_gps::engine::identity::Identity;
     use smartclock_gps::engine::identity::UT_PLUS_2_2;
     use smartclock_gps::engine::identity::VP_EIGHT;
     use smartclock_gps::engine::identity::VP_SIX;
@@ -351,6 +363,13 @@ mod tests {
                 .collect::<Vec<_>>(),
         )?;
         cli.configure()
+    }
+
+    /// The Oncore a configuration makes.
+    fn oncore(config: &Config) -> (&'static Identity, Options) {
+        match config.spec {
+            EngineSpec::Oncore { identity, options } => (identity, options),
+        }
     }
 
     fn provider(text: &str) -> anyhow::Result<ProviderSpec> {
@@ -421,10 +440,10 @@ mod tests {
             "shack:2001",
         ])
         .unwrap();
-        assert_eq!(config.identity, &VP_SIX);
-        assert_eq!(config.options.eight_on_ea.unwrap(), &VP_EIGHT);
-        assert!(!config.options.deaf);
-        assert_eq!(config.options.saved, None);
+        assert_eq!(oncore(&config).0, &VP_SIX);
+        assert_eq!(oncore(&config).1.eight_on_ea.unwrap(), &VP_EIGHT);
+        assert!(!oncore(&config).1.deaf);
+        assert_eq!(oncore(&config).1.saved, None);
         assert_eq!(
             config.transport,
             TransportSpec::Connect("shack:2001".to_owned())
@@ -447,9 +466,9 @@ mod tests {
             "wire.log",
         ])
         .unwrap();
-        assert_eq!(config.identity, &VP_EIGHT);
-        assert!(config.options.deaf);
-        assert_eq!(config.options.saved, Some(&CONFIGURATION_58503A));
+        assert_eq!(oncore(&config).0, &VP_EIGHT);
+        assert!(oncore(&config).1.deaf);
+        assert_eq!(oncore(&config).1.saved, Some(&CONFIGURATION_58503A));
         assert_eq!(
             config.transport,
             TransportSpec::Listen("127.0.0.1:4000".to_owned())
@@ -468,7 +487,7 @@ mod tests {
             "/dev/ttyS0",
         ])
         .unwrap();
-        assert_eq!(config.identity, &UT_PLUS_2_2);
+        assert_eq!(oncore(&config).0, &UT_PLUS_2_2);
         assert_eq!(
             config.transport,
             TransportSpec::Serial(PathBuf::from("/dev/ttyS0"))

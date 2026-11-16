@@ -1182,8 +1182,8 @@ specification; in short:
   to add to and is empty; a fill from data made to give every field a
   value must change every field declared and no other, seen against
   the crate's `UNFILLED`, an empty record whose self-test fails, so
-  that a fill of a pass shows.  The vectors' scene and the u-blox
-  crate declare theirs, and both fill all the images use, with no
+  that a fill of a pass shows.  The vectors' scene, the crate's
+  `source::scene`, and the u-blox crate declare theirs, and both fill all the images use, with no
   exception.  Both exceptions tables, this and the settings' below,
   are for the providers this repository carries: a provider kept
   elsewhere keeps tables of its own and gives their text to

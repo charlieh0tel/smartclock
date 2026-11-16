@@ -36,7 +36,16 @@ is made again, as at a power-up ("Six or eight channels" has when a
 58503A sends that `@@Ea`).  One can be made configured, as an engine
 that keeps its output rates and setup through a power cycle
 (VPCommands pp. 70, 124 and 138) comes up sending unasked
-(`Options::saved`, a `SavedConfiguration`).  One configuration is
+(`Options::saved`, a `SavedConfiguration`).  Tests of a real VP showed
+how much it keeps: configured (its settings, a held position, `@@Ea`
+and `@@En` each second with Time RAIM on, `@@Bb` at each change,
+`@@Cg` 1) and power-cycled with no backup power, it came back up
+exactly as left, fixing, its outputs running unasked, Time RAIM on at
+a limit of 10, the pulse mode as set and all 20 `@@A` settings queried
+as saved; only its clock was lost.  Told `@@Cf` and power-cycled the
+same way, it came up idle and silent, its clock at 1997-01-01 12:00:00
+and not running, its almanac dropped and its settings at `@@Cf`'s
+values.  One configuration is
 built in, `CONFIGURATION_58503A`: how the 58503A's power-up script
 `0x53` and its Time RAIM request leave an eight-channel engine
 ("Time RAIM"), fixing, with `@@Ea` and `@@En` each second and `@@Bb` at

@@ -4,21 +4,28 @@
 //! A VP keeps the rate of its position status in nonvolatile memory:
 //! one sending it continuously when turned off sends it again when
 //! power comes back (`@@Ba`, p. 70; `@@Ea`, p. 124).  Its Time RAIM
-//! setup and rate it keeps so while it has backup power (`@@Bn`,
-//! p. 102; `@@En`, p. 138).  So a receiver that configured its engine
-//! once can find it configured at the next power-up.  A
-//! [`SavedConfiguration`] is that configuration, given to an
-//! [`Engine`](crate::engine::Engine) through
+//! setup and rate the manual has it keep while it has backup power
+//! (`@@Bn`, p. 102; `@@En`, p. 138).  Tests of a real VP showed more:
+//! one configured (its settings, a held position, `@@Ea` and `@@En`
+//! each second with Time RAIM on, `@@Bb` at each change, `@@Cg` 1) and
+//! power-cycled with no backup power came back up exactly as left,
+//! fixing, its outputs running unasked, Time RAIM on at a limit of 10,
+//! the pulse mode as set and all 20 `@@A` settings queried as saved;
+//! only its clock was lost.  So a receiver that configured its engine
+//! once finds it configured at the next power-up, whether it fixes,
+//! its rates and Time RAIM included.  A [`SavedConfiguration`] is that
+//! configuration, given to an [`Engine`](crate::engine::Engine) through
 //! [`Options::saved`](crate::engine::Options::saved).
 //!
 //! `@@Cf` "sets all of the GPS receiver parameters to their default
 //! values", every continuous message to polled only (p. 116), and a
 //! VP to idle (p. 118), whatever it was saved as: so the engine's
-//! `@@Cf` puts it back to its defaults, not to this.  Only a new
-//! engine, a power-up, starts from it again.  Whether a real Oncore
-//! told `@@Cf` would still come up configured at its next power-up is
-//! its holder's to model, by the options it makes the next engine
-//! with.
+//! `@@Cf` puts it back to its defaults, not to this.  It is what the
+//! VP saves, too: the same tests found one told `@@Cf` and
+//! power-cycled with no backup power idle and silent, its clock at
+//! 1997-01-01 12:00:00 and not running, its almanac dropped and its
+//! settings at `@@Cf`'s values.  So a holder modeling that power cycle
+//! makes the next engine with no saved configuration.
 //!
 //! One configuration is built in, [`CONFIGURATION_58503A`]: how a
 //! 58503A leaves its engine, for a receiver that cannot command its
@@ -83,7 +90,8 @@ pub struct SavedConfiguration {
     /// Whether it sends `@@Bb` each time its satellite alert
     /// computation finds the visibility changed, `@@Bb`'s mode 1, not
     /// only when polled (pp. 74 and 75).  The manual does not say
-    /// whether a VP keeps this mode through a power cycle.
+    /// whether a VP keeps this mode through a power cycle; tests of a
+    /// real VP showed it does, with no backup power (the [module](self)).
     pub visibility_updates: bool,
     /// How often it sends Time RAIM's setup and status, `@@Bn` or
     /// `@@En` by [`SavedConfiguration::channels`], unasked (pp. 102,

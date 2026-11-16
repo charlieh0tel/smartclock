@@ -661,8 +661,11 @@ fn a_vps_time_sets_both_clocks() {
 
 /// A test of a real VP with no antenna: `@@Cf` (VP p. 116) puts the
 /// position status's time at 12:00:00 on January 1 of the year it had,
-/// and it stands there, whether it stood or ran before.  A record that
-/// tells the time keeps it, and a UT Plus's clock runs on.
+/// and it stands there, whether it stood or ran before.  Idle, as
+/// `@@Cf` leaves it (VP p. 118), its position status gives that time
+/// and those `@@Ac` and `@@Aa` then set, the rest of it still the
+/// status kept while fixing.  A record that tells the time keeps it,
+/// and a UT Plus's clock runs on.
 #[test]
 fn defaults_put_a_vps_status_time_at_new_year() {
     let record = Record::EMPTY;
@@ -670,13 +673,32 @@ fn defaults_put_a_vps_status_time_at_new_year() {
     wait(&mut engine, 1);
     ask(&mut engine, &record, AC_DATE, &[5, 17, 0x07, 0xea]);
     ask(&mut engine, &record, AA_TIME_OF_DAY, &[1, 2, 3]);
+    let kept = only(
+        &ask(&mut engine, &record, EA_POSITION_STATUS, &[0]),
+        EA_POSITION_STATUS,
+    )
+    .to_vec();
     ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
-    // Idle, it would answer with the status kept while fixing.
-    ask(&mut engine, &record, CG_FIX_MODE, &FIX);
+    assert!(!engine.fixing());
+    wait(&mut engine, STOOD);
+    let idle = only(
+        &ask(&mut engine, &record, EA_POSITION_STATUS, &[0]),
+        EA_POSITION_STATUS,
+    )
+    .to_vec();
+    assert_eq!(idle[..7], [1, 1, 0x07, 0xea, 12, 0, 0]);
+    assert_eq!(idle[7..], kept[7..]);
+    ask(&mut engine, &record, AC_DATE, &[5, 17, 0x07, 0xea]);
     wait(&mut engine, STOOD);
     assert_eq!(
         status_time(&mut engine, &record),
-        [1, 1, 0x07, 0xea, 12, 0, 0]
+        [5, 17, 0x07, 0xea, 12, 0, 0]
+    );
+    ask(&mut engine, &record, AA_TIME_OF_DAY, &[1, 2, 3]);
+    wait(&mut engine, STOOD);
+    assert_eq!(
+        status_time(&mut engine, &record),
+        [5, 17, 0x07, 0xea, 1, 2, 3]
     );
 
     // Running from a record's time, then without one.
@@ -688,7 +710,6 @@ fn defaults_put_a_vps_status_time_at_new_year() {
     engine.second(&told, NOW, &mut Sent::default());
     let year = status_time(&mut engine, &told)[2..4].to_vec();
     ask(&mut engine, &told, CF_SET_TO_DEFAULTS, &[]);
-    ask(&mut engine, &told, CG_FIX_MODE, &FIX);
     wait(&mut engine, STOOD);
     assert_eq!(
         status_time(&mut engine, &told),
@@ -700,7 +721,6 @@ fn defaults_put_a_vps_status_time_at_new_year() {
     engine.second(&told, NOW, &mut Sent::default());
     let before = status_time(&mut engine, &told);
     ask(&mut engine, &told, CF_SET_TO_DEFAULTS, &[]);
-    ask(&mut engine, &told, CG_FIX_MODE, &FIX);
     assert_eq!(status_time(&mut engine, &told), before);
 
     let mut engine = fixing(&UT_PLUS_2_2);
@@ -1738,9 +1758,12 @@ fn an_idle_engine_answers_with_its_last_position_status() {
         subsecond: Nanoseconds(0),
     });
     engine.second(&record, NOW, &mut Sent::default());
-    assert_eq!(poll(&mut engine, &record), fixing);
+    // But for its time, which is the current one.
+    let mut kept = fixing;
+    kept[6] = 5;
+    assert_eq!(poll(&mut engine, &record), kept);
     ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
-    assert_eq!(poll(&mut engine, &record), fixing);
+    assert_eq!(poll(&mut engine, &record), kept);
 }
 
 /// VP pp. 70 and 124: the last known valid status is kept each second
@@ -1767,10 +1790,15 @@ fn an_idle_engine_answers_with_the_status_kept_while_fixing() {
     engine.second(&record, NOW, &mut Sent::default());
     ask(&mut engine, &record, CG_FIX_MODE, &[0]);
     let idle = |engine: &mut Engine, id| only(&ask(engine, &Record::EMPTY, id, &[0]), id).to_vec();
-    assert_eq!(idle(&mut engine, EA_POSITION_STATUS), eight);
+    // The date and time are the current ones, the clocks running
+    // together, read without the offset.
+    let kept = idle(&mut engine, EA_POSITION_STATUS);
+    assert_eq!(kept[..7], counting(&mut engine, &Record::EMPTY));
+    assert_eq!(kept[7..], eight[7..]);
     let six = idle(&mut engine, BA_POSITION_STATUS);
     assert_eq!(six.len(), 61);
-    assert_eq!(six[..35], eight[..35]);
+    assert_eq!(six[..7], kept[..7]);
+    assert_eq!(six[7..35], eight[7..35]);
     assert_eq!(six[35], 6, "tracked on the first six channels");
     assert_eq!(six[36..60], eight[36..60]);
     assert_eq!(six[60], eight[68]);

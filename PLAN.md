@@ -1042,7 +1042,10 @@ stands in for one.
   poll of its position status answers "the last known valid" one (VP
   pp. 70 and 124), which it keeps each second while fixing, polled or
   not: one status for both families, `@@Ba` being `@@Ea`'s first six
-  channels with its count of tracked taken from those six.  Before it
+  channels with its count of tracked taken from those six.  Its date
+  and time are the current ones, not the kept: a test of a real VP,
+  idle after `@@Cf`, gave in `@@Ea` the time `@@Cf`, `@@Ac` and `@@Aa`
+  had set; its other fields were not logged.  Before it
   has fixed, it answers the current one, tracking nothing; the
   recorded exchanges never poll an idle engine that has fixed, so
   none of their answers moved.
@@ -1282,8 +1285,8 @@ stands in for one.
   date to the firmware.  `@@Ac` sets the date and puts the time at
   12:00:00 (VP p. 13), `@@Aa` sets the time (VP p. 5), and `@@Cf`
   puts it at 12:00:00 on January 1 of the year it had (VP p. 116);
-  it stands at each.  `@@Aa`'s and `@@Ac`'s answers come from the
-  other clock, which counts a second each second from power-up, set
+  it stands at each, idle or fixing.  `@@Aa`'s and `@@Ac`'s answers
+  come from the other clock, which counts a second each second from power-up, set
   or not, and which the two commands set as they set the first.  Its
   value before either sets it was out of range on the VP tested (hour
   64, year 2054); the model starts it at the power-up time instead,

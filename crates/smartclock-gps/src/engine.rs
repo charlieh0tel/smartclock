@@ -584,6 +584,10 @@ struct TraimResult {
 /// The most data a position status carries: an eight-channel one's
 /// message length less its framing (VP p. 126).
 const STATUS_MOST: usize = 76 - OVERHEAD;
+/// The bytes of a position status's date, and of its date and time,
+/// which come first (VP p. 71).
+const STATUS_DATE: usize = 4;
+const STATUS_DATE_TIME: usize = STATUS_DATE + 3;
 
 /// A position status's data, kept to answer a poll while idle.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1838,8 +1842,11 @@ impl Engine {
     /// `@@Ba` and `@@Ea`.
     /// Idle, it is "the last known valid" one, kept each second while
     /// fixing, once more (VP pp. 70 and 124): one status for both
-    /// families, `@@Ba` its first six channels.  With none yet, it is
-    /// the current one, which tracks nothing.
+    /// families, `@@Ba` its first six channels.  Its date and time are
+    /// the current ones, though, as a test of a real VP showed: idle
+    /// after `@@Cf`, its `@@Ea` gave the time `@@Cf`, `@@Ac` and `@@Aa`
+    /// had set.  With none kept yet, it is the current one, which
+    /// tracks nothing.
     fn position_status<O: Output + ?Sized>(
         &mut self,
         record: &Record,
@@ -1849,11 +1856,14 @@ impl Engine {
         if self.state.fixing {
             self.keep_status(record);
         } else if let Some(kept) = &self.last_status {
-            let kept = if family.index == SIX.index {
+            let mut kept = if family.index == SIX.index {
                 kept.six()
             } else {
                 *kept
             };
+            kept.bytes[..STATUS_DATE].copy_from_slice(&self.date(record, self.clock));
+            kept.bytes[STATUS_DATE..STATUS_DATE_TIME]
+                .copy_from_slice(&self.time_of_day(record, self.clock));
             send(out, family.status, Data::new().bytes(kept.as_slice()));
             return;
         }

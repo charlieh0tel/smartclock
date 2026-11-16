@@ -228,8 +228,8 @@ pub struct Settings {
     /// table only if the table is of this kind
     /// ([`XdopTable::kind`](crate::record::XdopTable::kind)), and none
     /// otherwise (p. 77).  So it is not among
-    /// [`IMAGE_SETS`](crate::record::field::IMAGE_SETS) and no filler
-    /// is held to it.  It is here for a filler that makes a table, to
+    /// [`IMAGE_SETS`](crate::record::field::IMAGE_SETS) and no provider
+    /// is held to it.  It is here for a provider that makes a table, to
     /// make it of the kind asked for.
     pub dop_kind: DopKind,
     /// How much better another set of satellites' DOP must be before
@@ -240,8 +240,8 @@ pub struct Settings {
     /// [`Settings::dop_kind`]: it puts none of them on a channel and
     /// marks each removed in `@@Bb` (p. 75), whatever the record has.
     /// So it is not among
-    /// [`IMAGE_SETS`](crate::record::field::IMAGE_SETS) and no filler
-    /// is held to it.  It is here for a filler that chooses the
+    /// [`IMAGE_SETS`](crate::record::field::IMAGE_SETS) and no provider
+    /// is held to it.  It is here for a provider that chooses the
     /// satellites a record is made from, to leave these out.
     pub ignore_list: PrnSet,
     /// Whether a new almanac the satellites send replaces the one kept

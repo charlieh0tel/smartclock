@@ -1157,14 +1157,14 @@ specification; in short:
   rows, bits and all, to its own table of lengths.
 - **A record's fields are named.**  `RecordField` of
   `crates/smartclock-gps/src/record/field.rs` has a member for each
-  thing a filler of records supplies or does not, with its path in a
+  thing a provider of records supplies or does not, with its path in a
   record; a `record.` term of the engine column names the member whose
   path it is or goes on from, and the fields column lists a row's.  The
   members behind the rows some image uses as control or reported are
   the crate's `IMAGE_USES`, written there by the tool and held by the
   check.
-- **A filler declares what it fills.**  A `Filler` gives its name, the
-  fields it fills and the engine's settings it acts on, and its tests
+- **A provider declares what it fills.**  Its `Declaration` gives its
+  name, the fields it fills and the engine's settings it acts on, and its tests
   hold it: what `IMAGE_USES` has that it does not fill must be excused
   it by a row of `gps-field-exceptions.tsv`, which is the owner's alone
   to add to and is empty; a fill from data made to give every field a
@@ -1173,9 +1173,10 @@ specification; in short:
   that a fill of a pass shows.  The vectors' scene and the u-blox
   crate declare theirs, and both fill all the images use, with no
   exception.  Both exceptions tables, this and the settings' below,
-  are for the fillers this repository carries: a filler kept
+  are for the providers this repository carries: a provider kept
   elsewhere keeps tables of its own and gives their text to
-  `Filler::shortfall`, `Filler::unacted` and `Filler::needless`, and
+  `Declaration::shortfall`, `Declaration::unacted` and
+  `Declaration::needless`, and
   shows its fills against the same `UNFILLED`.  Both fill the self-test as a pass, neither having a
   part to fail.  The scene's Time RAIM result is its sky's: eight
   satellites, the solution good and a bad one isolable, and with the
@@ -1260,13 +1261,14 @@ specification; in short:
   check holds.  The settings the rows some image sets hold are the
   crate's `IMAGE_SETS`, written by the tool as `IMAGE_USES` is;
   `dop_kind` and `ignore_list`, given and not held, are not of them,
-  and no filler is held to either.  A `Filler` declares the settings
-  it acts on, and its test
+  and no provider is held to either.  A provider's `Declaration`
+  gives the settings it acts on, and its test
   holds that each of `IMAGE_SETS` is one of those or has a row of
   `gps-setting-exceptions.tsv`, one for each setting it is excused
-  with the reason, and that no row is for nothing: `Filler::unacted`
-  and `Filler::needless` are empty, so a row goes when its setting is
-  acted on or no image sets it any longer.  A filler may act on more
+  with the reason, and that no row is for nothing:
+  `Declaration::unacted` and `Declaration::needless` are empty, so a
+  row goes when its setting is
+  acted on or no image sets it any longer.  A provider may act on more
   than the images set; that needs no row and fails nothing.  A row
   names a setting by its field of the `Settings`, and is the owner's
   to grant.  The

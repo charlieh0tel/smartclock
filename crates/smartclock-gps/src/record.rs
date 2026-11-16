@@ -910,7 +910,7 @@ pub struct Record {
     pub almanac: Option<Almanac>,
     /// The antenna's feed.
     pub antenna: Antenna,
-    /// What a self-test would find.  [`SelfTest::PASS`] from a filler
+    /// What a self-test would find.  [`SelfTest::PASS`] from a provider
     /// that knows of no fault.
     pub self_test: SelfTest,
     /// What whoever filled the record worked out from the rest.

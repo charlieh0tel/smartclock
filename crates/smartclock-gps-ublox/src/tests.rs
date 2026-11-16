@@ -7,9 +7,9 @@ use std::vec;
 use std::vec::Vec;
 
 use crate::Assembler;
+use crate::DECLARATION;
 use crate::Deframer;
 use crate::EncodeError;
-use crate::FILLER;
 use crate::FrameError;
 use crate::LeapNotice;
 use crate::MESSAGES;
@@ -1184,31 +1184,31 @@ fn whole_epoch() -> Vec<u8> {
 const EXCEPTIONS: &str = "../../docs/firmware/gps-field-exceptions.tsv";
 const SETTING_EXCEPTIONS: &str = "../../docs/firmware/gps-setting-exceptions.tsv";
 
-/// The assembler writes what [`FILLER`] declares and nothing else, and
+/// The assembler writes what [`DECLARATION`] declares and nothing else, and
 /// all the images use.  It acts on none of the engine's settings,
 /// nothing here configuring the receiver from them, and is excused
 /// each the images set, once.
 #[test]
-fn the_filler_fills_what_it_declares() {
+fn the_provider_fills_what_it_declares() {
     let table = |path: &str| {
         std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(path))
             .expect("an exceptions table")
     };
-    let shortfall = FILLER.shortfall(&table(EXCEPTIONS));
+    let shortfall = DECLARATION.shortfall(&table(EXCEPTIONS));
     assert!(shortfall.is_empty(), "shortfall: {shortfall:?}");
     let exceptions = table(SETTING_EXCEPTIONS);
-    let unacted = FILLER.unacted(&exceptions);
+    let unacted = DECLARATION.unacted(&exceptions);
     assert!(unacted.is_empty(), "unacted: {unacted:?}");
-    let needless = FILLER.needless(&exceptions);
+    let needless = DECLARATION.needless(&exceptions);
     assert!(needless.is_empty(), "needless: {needless:?}");
 
     let records = records(&mut Bench::new(), &whole_epoch());
     let [record] = records[..] else {
         panic!("{records:?}");
     };
-    let undeclared = FILLER.undeclared(&UNFILLED, &record);
+    let undeclared = DECLARATION.undeclared(&UNFILLED, &record);
     assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
-    let unshown = FILLER.unshown(changed(&UNFILLED, &record));
+    let unshown = DECLARATION.unshown(changed(&UNFILLED, &record));
     assert!(unshown.is_empty(), "unshown: {unshown:?}");
 }
 

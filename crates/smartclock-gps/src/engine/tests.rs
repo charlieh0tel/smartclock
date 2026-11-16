@@ -598,11 +598,11 @@ fn wait(engine: &mut Engine, seconds: usize) {
 /// stand.
 const STOOD: usize = 30;
 
-/// A test of a real VP with no antenna: its position status's time
-/// stands at the power-up time while the clock `@@Aa` and `@@Ac`
-/// answer from counts a second each second.
+/// A test of a real VP with no antenna: idle at power-up, its position
+/// status's time stands at the power-up time while the clock `@@Aa`
+/// and `@@Ac` answer from counts a second each second.
 #[test]
-fn a_vps_status_time_stands_while_its_answers_count() {
+fn an_idle_vps_status_time_stands_while_its_answers_count() {
     let mut engine = powered_up(&VP_EIGHT);
     wait(&mut engine, 1 + STOOD);
     assert_eq!(
@@ -616,8 +616,8 @@ fn a_vps_status_time_stands_while_its_answers_count() {
 }
 
 /// A test of a real VP with no antenna: `@@Ac` (VP p. 13) puts both
-/// clocks at 12:00:00 on the date; the position status's then stands
-/// and the other counts on.
+/// clocks at 12:00:00 on the date; idle, the position status's then
+/// stands and the other counts on.
 #[test]
 fn a_vps_date_puts_both_clocks_at_noon() {
     let record = Record::EMPTY;
@@ -642,8 +642,8 @@ fn a_vps_date_puts_both_clocks_at_noon() {
 }
 
 /// A test of a real VP with no antenna: `@@Aa` (VP p. 5) puts both
-/// clocks at the time; the position status's then stands and the
-/// other counts on.
+/// clocks at the time; idle, the position status's then stands and
+/// the other counts on.
 #[test]
 fn a_vps_time_sets_both_clocks() {
     let record = Record::EMPTY;
@@ -659,25 +659,44 @@ fn a_vps_time_sets_both_clocks() {
     assert_eq!(counting(&mut engine, &record), [1, 1, 0x07, 0xcd, 1, 2, 33]);
 }
 
-/// A test of a real VP with no antenna: `@@Cf` (VP p. 116) puts the
-/// position status's time at 12:00:00 on January 1 of the year it had,
-/// and it stands there, whether it stood or ran before.  Idle, as
-/// `@@Cf` leaves it (VP p. 118), its position status gives that time
-/// and those `@@Ac` and `@@Aa` then set, the rest of it still the
-/// status kept while fixing.  A record that tells the time keeps it,
-/// and a UT Plus's clock runs on.
+/// A test of a real VP with no antenna: fixing with no satellites, its
+/// position status's time counts with the clock `@@Aa` and `@@Ac`
+/// answer from.
 #[test]
-fn defaults_put_a_vps_status_time_at_new_year() {
+fn a_fixing_vps_status_time_counts_with_its_answers() {
     let record = Record::EMPTY;
     let mut engine = fixing(&VP_EIGHT);
     wait(&mut engine, 1);
     ask(&mut engine, &record, AC_DATE, &[5, 17, 0x07, 0xea]);
     ask(&mut engine, &record, AA_TIME_OF_DAY, &[1, 2, 3]);
+    wait(&mut engine, STOOD);
+    let now = [5, 17, 0x07, 0xea, 1, 2, 33];
+    assert_eq!(status_time(&mut engine, &record), now);
+    assert_eq!(counting(&mut engine, &record), now);
+}
+
+/// A test of a real VP with no antenna: `@@Cf` (VP p. 116) leaves it
+/// idle (VP p. 118), its position status's time standing at the time
+/// of `@@Cf`, date and all, while the clock `@@Aa` and `@@Ac` answer
+/// from counts on.  The rest of that status is the one kept while
+/// fixing; `@@Ac` and `@@Aa` then set its date at 12:00:00 and its
+/// time, and it stands at each.  `@@Cg` 0 leaves it standing the same
+/// way, and `@@Cg` 1 sets it counting again.  A record that tells the
+/// time keeps it, and a UT Plus's clock runs on.
+#[test]
+fn going_idle_leaves_a_vps_status_time_standing() {
+    let record = Record::EMPTY;
+    let mut engine = fixing(&VP_EIGHT);
+    wait(&mut engine, 1);
+    ask(&mut engine, &record, AC_DATE, &[5, 17, 0x07, 0xea]);
+    ask(&mut engine, &record, AA_TIME_OF_DAY, &[18, 41, 2]);
+    wait(&mut engine, STOOD);
     let kept = only(
         &ask(&mut engine, &record, EA_POSITION_STATUS, &[0]),
         EA_POSITION_STATUS,
     )
     .to_vec();
+    assert_eq!(kept[..7], [5, 17, 0x07, 0xea, 18, 41, 32]);
     ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
     assert!(!engine.fixing());
     wait(&mut engine, STOOD);
@@ -686,35 +705,30 @@ fn defaults_put_a_vps_status_time_at_new_year() {
         EA_POSITION_STATUS,
     )
     .to_vec();
-    assert_eq!(idle[..7], [1, 1, 0x07, 0xea, 12, 0, 0]);
-    assert_eq!(idle[7..], kept[7..]);
-    ask(&mut engine, &record, AC_DATE, &[5, 17, 0x07, 0xea]);
+    assert_eq!(idle, kept);
+    assert_eq!(
+        counting(&mut engine, &record),
+        [5, 17, 0x07, 0xea, 18, 42, 2]
+    );
+    ask(&mut engine, &record, AC_DATE, &[6, 1, 0x07, 0xea]);
     wait(&mut engine, STOOD);
     assert_eq!(
         status_time(&mut engine, &record),
-        [5, 17, 0x07, 0xea, 12, 0, 0]
+        [6, 1, 0x07, 0xea, 12, 0, 0]
     );
     ask(&mut engine, &record, AA_TIME_OF_DAY, &[1, 2, 3]);
     wait(&mut engine, STOOD);
     assert_eq!(
         status_time(&mut engine, &record),
-        [5, 17, 0x07, 0xea, 1, 2, 3]
+        [6, 1, 0x07, 0xea, 1, 2, 3]
     );
 
-    // Running from a record's time, then without one.
-    let mut engine = fixing(&VP_EIGHT);
-    let mut told = full();
-    wait(&mut engine, 1);
-    engine.second(&told, NOW, &mut Sent::default());
-    told.time = None;
-    engine.second(&told, NOW, &mut Sent::default());
-    let year = status_time(&mut engine, &told)[2..4].to_vec();
-    ask(&mut engine, &told, CF_SET_TO_DEFAULTS, &[]);
+    ask(&mut engine, &record, CG_FIX_MODE, &FIX);
+    let now = [6, 1, 0x07, 0xea, 1, 2, 33];
+    assert_eq!(status_time(&mut engine, &record), now);
+    ask(&mut engine, &record, CG_FIX_MODE, &[0]);
     wait(&mut engine, STOOD);
-    assert_eq!(
-        status_time(&mut engine, &told),
-        [&[1, 1][..], &year, &[12, 0, 0]].concat()
-    );
+    assert_eq!(status_time(&mut engine, &record), now);
 
     let mut engine = fixing(&VP_EIGHT);
     let told = full();
@@ -1757,13 +1771,11 @@ fn an_idle_engine_answers_with_its_last_position_status() {
         seconds: noon() + Seconds(5),
         subsecond: Nanoseconds(0),
     });
+    // Its time stands, too, though the record's runs on.
     engine.second(&record, NOW, &mut Sent::default());
-    // But for its time, which is the current one.
-    let mut kept = fixing;
-    kept[6] = 5;
-    assert_eq!(poll(&mut engine, &record), kept);
+    assert_eq!(poll(&mut engine, &record), fixing);
     ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
-    assert_eq!(poll(&mut engine, &record), kept);
+    assert_eq!(poll(&mut engine, &record), fixing);
 }
 
 /// VP pp. 70 and 124: the last known valid status is kept each second
@@ -1790,8 +1802,8 @@ fn an_idle_engine_answers_with_the_status_kept_while_fixing() {
     engine.second(&record, NOW, &mut Sent::default());
     ask(&mut engine, &record, CG_FIX_MODE, &[0]);
     let idle = |engine: &mut Engine, id| only(&ask(engine, &Record::EMPTY, id, &[0]), id).to_vec();
-    // The date and time are the current ones, the clocks running
-    // together, read without the offset.
+    // The date and time are the standing ones, which in the second it
+    // went idle are the counting clock's, read without the offset.
     let kept = idle(&mut engine, EA_POSITION_STATUS);
     assert_eq!(kept[..7], counting(&mut engine, &Record::EMPTY));
     assert_eq!(kept[7..], eight[7..]);

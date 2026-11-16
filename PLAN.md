@@ -1043,9 +1043,10 @@ stands in for one.
   pp. 70 and 124), which it keeps each second while fixing, polled or
   not: one status for both families, `@@Ba` being `@@Ea`'s first six
   channels with its count of tracked taken from those six.  Its date
-  and time are the current ones, not the kept: a test of a real VP,
-  idle after `@@Cf`, gave in `@@Ea` the time `@@Cf`, `@@Ac` and `@@Aa`
-  had set; its other fields were not logged.  Before it
+  and time are the standing status time, not the kept: tests of a
+  real VP, idle after `@@Cf`, gave in `@@Ea` the time it went idle
+  at and then those `@@Ac` and `@@Aa` set; its other fields were not
+  logged.  Before it
   has fixed, it answers the current one, tracking nothing; the
   recorded exchanges never poll an idle engine that has fixed, so
   none of their answers moved.
@@ -1277,30 +1278,35 @@ stands in for one.
   which speaks neither NMEA nor Loran and goes on in binary; an
   earlier revision had it fall silent, which took a call of its
   holder's to undo and gave nothing a holder could not do with the
-  event.  A VP model has two clocks until a record's time sets them,
-  as a test of a real VP (software 8.8, no antenna) showed.  The
-  position status's date and time (`@@Ea`/`@@Ba`, VP p. 71), and Time
-  RAIM's next pulse a second after it, stand still from power-up at
-  1997-01-01 12:00:00; VP p. 5 gives the 12:00:00 and p. 13 leaves the
-  date to the firmware.  `@@Ac` sets the date and puts the time at
-  12:00:00 (VP p. 13), `@@Aa` sets the time (VP p. 5), and `@@Cf`
-  puts it at 12:00:00 on January 1 of the year it had (VP p. 116);
-  it stands at each, idle or fixing.  `@@Aa`'s and `@@Ac`'s answers
-  come from the other clock, which counts a second each second from power-up, set
-  or not, and which the two commands set as they set the first.  Its
-  value before either sets it was out of range on the VP tested (hour
-  64, year 2054); the model starts it at the power-up time instead,
-  and leaves it alone at `@@Cf`, after which the test did not read
-  it.  Once a record's time comes both are that time and run on
-  together, through a record that loses it.  Both are read with GPS
-  less UTC as zero, the almanac that carries the offset being dropped
-  with the clock, so `@@Aw`'s GPS time and UTC read alike.  A UT Plus
-  model has the one clock, at 12:00:00 on the day GPS time starts,
-  running, until a capture of one says otherwise; its `@@Ac` keeps
-  the time of day and its `@@Cf` leaves the clock alone.  `@@Aa`,
-  `@@Ac` and `@@Cf` move the model's clocks only while the record
-  tells no time, as an Oncore tracking a satellite ignores the first
-  two (VP pp. 5 and 13); a command never overrides a record's time.
+  event.  A VP model has two clocks, as two tests of a real VP
+  (software 8.8, no antenna) showed.  One, which `@@Aa` and `@@Ac`
+  answer with and set, always counts a second each second, or is the
+  record's time when it has one.  The other is the position status's
+  date and time (`@@Ea`/`@@Ba`, VP p. 71), and Time RAIM's next pulse
+  a second after it.  Fixing, it is the first, record's time or not:
+  with no satellites the VP's `@@Ea` counted in step with its `@@Aa`.
+  Idle, it stands at the time the VP went idle, by `@@Cf` (VP p. 118),
+  `@@Cg` 0 or a self-test, its date kept, while the first counts on;
+  `@@Ac` sets both to 12:00:00 on the date (VP p. 13) and `@@Aa` the
+  time of both (VP p. 5), and it stands at what they set.  A VP
+  cleared with no backup power comes up idle at 1997-01-01 12:00:00
+  and stands there; VP p. 5 gives the 12:00:00 and p. 13 leaves the
+  date to the firmware.  The counting clock's value before `@@Aa` or
+  `@@Ac` sets it was out of range on the VP tested (hour 64, year
+  2054); the model starts it at the power-up time instead.  In that
+  first test, with the counting clock out of range, `@@Cf` took the
+  status time from 2026-01-01 12:00:44 to 12:00:00 of the same day:
+  a VP may fall back to 12:00:00 on January 1 of the year it has
+  when its clock is not valid.  The model, whose clock is always
+  valid, does not.  Both clocks are read with GPS less UTC as zero
+  until a record gives the offset, the almanac that carries it being
+  dropped with the clock, so `@@Aw`'s GPS time and UTC read alike.  A
+  UT Plus model is always fixing, so has in effect the one clock, at
+  12:00:00 on the day GPS time starts, running, until a capture of
+  one says otherwise; its `@@Ac` keeps the time of day.  `@@Aa` and
+  `@@Ac` move the model's clocks only while the record tells no
+  time, as an Oncore tracking a satellite ignores them (VP pp. 5 and
+  13); a command never overrides a record's time.
   `Engine::receive` returns what its commands did: a reset,
   which is `@@Cf` (VP pp. 116 and 117), and the settings that
   changed, a command that gives a setting the value it has changing

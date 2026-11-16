@@ -34,21 +34,19 @@
 //! at the day GPS time starts, running.  A clock `@@Ab` sets behind UTC
 //! reads the day before.
 //!
-//! A VP has two clocks until a record's time sets them, as a test of a
-//! real VP with no antenna showed.  The time its position status gives
-//! (`@@Ea`, VP p. 71), and Time RAIM's next pulse from it, stands still
-//! until a record's time: `@@Ac` (VP p. 13) sets its date and puts it
-//! at 12:00:00, `@@Aa` (VP p. 5) sets its time, and `@@Cf` (VP p. 116)
-//! puts it at 12:00:00 on January 1 of the year it had, and it stands
-//! at each.  The time `@@Aa` and `@@Ac` answer with is another clock,
-//! which counts a second each second from power-up whether set or not;
-//! the two commands set it as they set the first.  Once a record's time
-//! comes, both are that time and run on together.  `@@Aa` and `@@Ac`
-//! set neither while the record tells the time, as an Oncore tracking
-//! a satellite ignores them (VP pp. 5 and 13), and nor does `@@Cf`.  A
-//! UT Plus has the one clock, which `@@Cf` leaves alone.  A second in
-//! which the engine is to be silent is one [`Engine::second`] is not
-//! called for.
+//! That clock, which `@@Aa` (VP p. 5) and `@@Ac` (VP p. 13) answer
+//! with and set, always counts.  The time a position status gives
+//! (`@@Ea`, VP p. 71), and Time RAIM's next pulse from it, is that
+//! clock's while the engine is fixing, as tests of a real VP with no
+//! antenna showed.  While a VP is idle it stands at the time it went
+//! idle (by `@@Cf`, `@@Cg` 0 or a self-test), or at its power-up time;
+//! `@@Ac` sets it to 12:00:00 on the date, and the counting clock with
+//! it, `@@Aa` sets the time of both, and it stands at what they set.
+//! A UT Plus is always fixing, and its `@@Ac` keeps the time of day.
+//! `@@Aa` and `@@Ac` set nothing while the record tells the time, as
+//! an Oncore tracking a satellite ignores them (VP pp. 5 and 13).  A
+//! second in which the engine is to be silent is one
+//! [`Engine::second`] is not called for.
 //!
 //! One answer is not sent at once: a self-test's, which comes six
 //! seconds after its command, as a real VP's comes some seconds after
@@ -514,7 +512,13 @@ const NANOSECONDS_PER_SECOND: i32 = 1_000_000_000;
 /// read 1997-01-01 12:00:00 in its position status, standing; that is
 /// a VP's.  The clock `@@Aa` and `@@Ac` answer from counted on from a
 /// time out of range (hour 64, year 2054) in that test, which the
-/// engine does not send: it starts that one here too.  A UT Plus keeps
+/// engine does not send: it starts that one here too.  In that test,
+/// with the counting clock still out of range, `@@Cf` put the position
+/// status's time from 2026-01-01 12:00:44 to 12:00:00 of the same day,
+/// where with it valid `@@Cf` leaves the time as it was: a VP may fall
+/// back to 12:00:00 on January 1 of the year it has when its clock is
+/// not valid, which the engine, its clock always valid, does not
+/// model.  A UT Plus keeps
 /// the day GPS time starts until a capture of one says otherwise.
 /// Either is read with GPS less UTC as zero: a VP's almanac,
 /// which carries the offset, is dropped with its clock, so none is
@@ -523,7 +527,7 @@ const POWER_UP_VP: GpsSeconds = noon(1997, 1, 1);
 const POWER_UP_UT_PLUS: GpsSeconds = noon(1980, 1, 6);
 
 /// The hour a clock not kept powered starts at (VP p. 5), and that
-/// `@@Ac` and `@@Cf` put a VP's at.
+/// `@@Ac` puts a VP's at.
 const NOON_HOUR: u8 = 12;
 
 /// The time a `model` powers up at with no time given.
@@ -936,16 +940,12 @@ pub struct Engine {
     /// The seconds it has been given since power-up.
     count: u32,
     /// The time its position status reports, and the messages timed
-    /// from it.
+    /// from it: [`Engine::counting`](Self::counting) while fixing, and
+    /// standing while idle.
     clock: GpsSeconds,
     /// The time `@@Aa` and `@@Ac` answer with, which runs on a second
-    /// each second: the same as [`Engine::clock`](Self::clock) while
-    /// that runs.
+    /// each second, or is the record's.
     counting: GpsSeconds,
-    /// Whether [`Engine::clock`](Self::clock) runs on a second each
-    /// second: a VP's stands until a record's time sets it, and again
-    /// after `@@Cf` ([`POWER_UP_VP`]).
-    running: bool,
     /// The last record's time, to tell a new one from the same again.
     heard: Option<GpsSeconds>,
     /// GPS less UTC as `@@Bo` gave it in the second before.
@@ -999,7 +999,6 @@ impl Engine {
             count: 0,
             clock: power_up(model),
             counting: power_up(model),
-            running: matches!(model, Model::UtPlus),
             heard: None,
             offset: None,
             visibility: None,
@@ -1104,10 +1103,7 @@ impl Engine {
             _ if self.count == 1 => self.counting,
             _ => self.counting + Seconds(1),
         };
-        self.running |= told.is_some();
-        if self.running {
-            self.clock = self.counting;
-        }
+        self.follow();
         self.heard = told;
 
         let offset = self.wire_offset(record);
@@ -1163,7 +1159,6 @@ impl Engine {
         {
             self.clock = time.seconds;
             self.counting = time.seconds;
-            self.running = true;
         }
         bytes
             .iter()
@@ -1352,7 +1347,7 @@ impl Engine {
             self.leap_details(record, out);
         } else if id == CF_SET_TO_DEFAULTS {
             self.state = State::starting(model);
-            self.hold_new_year(record);
+            self.follow();
             send(out, id, &Data::new());
         } else if id == CG_FIX_MODE {
             match data.first() {
@@ -1360,6 +1355,7 @@ impl Engine {
                 Some(&MODE_IDLE) => self.state.fixing = false,
                 _ => {}
             }
+            self.follow();
             let mode = if self.state.fixing {
                 MODE_FIX
             } else {
@@ -1496,21 +1492,14 @@ impl Engine {
             .and_then(|shift| time.checked_add(shift))
     }
 
-    /// `@@Cf` (VP p. 116) on a VP whose record tells no time: as a test
-    /// of a real VP with no antenna showed, its position status's time
-    /// goes to 12:00:00 on January 1 of the year it had and stands
-    /// there.  The clock `@@Aa` and `@@Ac` answer from is left as it
-    /// was, which that test did not read.
-    fn hold_new_year(&mut self, record: &Record) {
-        if self.identity.model() == Model::UtPlus || record.time.is_some() {
-            return;
-        }
-        let held = self.shifted(record, self.clock, |now| {
-            DateTime::new(now.year, 1, 1, NOON_HOUR, 0, 0)
-        });
-        if let Some(held) = held {
-            self.clock = held;
-            self.running = false;
+    /// Puts the position status's time at the counting clock's while
+    /// fixing; idle, it stands where it is.  Tests of a real VP with no
+    /// antenna found `@@Ea`'s time counting with `@@Aa`'s while fixing,
+    /// and standing at the time of `@@Cf` once that left it idle, its
+    /// date kept, while `@@Aa`'s counted on.
+    fn follow(&mut self) {
+        if self.state.fixing {
+            self.clock = self.counting;
         }
     }
 
@@ -1843,10 +1832,10 @@ impl Engine {
     /// Idle, it is "the last known valid" one, kept each second while
     /// fixing, once more (VP pp. 70 and 124): one status for both
     /// families, `@@Ba` its first six channels.  Its date and time are
-    /// the current ones, though, as a test of a real VP showed: idle
-    /// after `@@Cf`, its `@@Ea` gave the time `@@Cf`, `@@Ac` and `@@Aa`
-    /// had set.  With none kept yet, it is the current one, which
-    /// tracks nothing.
+    /// the standing ones, though, as tests of a real VP showed: idle
+    /// after `@@Cf`, its `@@Ea` gave the time it went idle at, and then
+    /// those `@@Ac` and `@@Aa` set.  With none kept yet, it is the
+    /// current one, which tracks nothing.
     fn position_status<O: Output + ?Sized>(
         &mut self,
         record: &Record,

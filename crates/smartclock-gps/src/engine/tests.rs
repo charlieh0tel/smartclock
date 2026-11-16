@@ -7,6 +7,7 @@ use std::slice;
 use std::vec;
 use std::vec::Vec;
 
+use crate::engine::ALERT_PERIOD;
 use crate::engine::Engine;
 use crate::engine::Options;
 use crate::engine::Output;
@@ -132,6 +133,7 @@ use crate::units::Decimeters;
 use crate::units::DecimetersPerSecond;
 use crate::units::Deciseconds;
 use crate::units::Degrees;
+use crate::units::Hertz;
 use crate::units::HundredNanoseconds;
 use crate::units::MilliArcSeconds;
 use crate::units::MillimetersPerSecond;
@@ -1075,28 +1077,52 @@ fn a_time_raim_result_is_sent_while_time_raim_is_on() {
     assert_eq!(traim(&mut engine, &confirmed), [0, 0, 1, 1]);
 }
 
-/// VP pp. 74 and 75: mode 1 sends `@@Bb` when its data changes, until
+/// VP pp. 74 and 75: mode 1 sends `@@Bb` when its data changes, as
+/// found at each satellite alert computation ([`ALERT_PERIOD`]), until
 /// `@@Cf` puts the engine back to polled.
 #[test]
 fn visible_satellites_are_sent_when_they_change() {
+    let period = u32::from(ALERT_PERIOD.0);
     let mut engine = fixing(&VP_EIGHT);
     let mut record = full();
     let frames = ask(&mut engine, &record, BB_VISIBLE_SATELLITES, &[1]);
     assert_eq!(only(&frames, BB_VISIBLE_SATELLITES).len(), 85);
-    let mut sent = Sent::default();
-    engine.second(&record, NOW, &mut sent);
-    assert!(sent.0.is_empty());
+    // The seconds of the next `seconds` in which `@@Bb` is sent, the
+    // record changed by `change` before each.
+    let sent_in =
+        |engine: &mut Engine, record: &mut Record, seconds, change: &dyn Fn(&mut Record, u32)| {
+            (1..=seconds)
+                .filter(|&second| {
+                    change(record, second);
+                    let mut sent = Sent::default();
+                    engine.second(record, NOW, &mut sent);
+                    !sent.0.is_empty()
+                })
+                .collect::<Vec<u32>>()
+        };
+    assert_eq!(sent_in(&mut engine, &mut record, period, &|_, _| {}), []);
 
-    record
-        .satellites
-        .get_mut(prn(3))
-        .expect("in view")
-        .elevation = Degrees(79);
-    engine.second(&record, NOW, &mut sent);
-    assert_eq!(only(&sent.0, BB_VISIBLE_SATELLITES)[4], 79);
-    let mut sent = Sent::default();
-    engine.second(&record, NOW, &mut sent);
-    assert!(sent.0.is_empty());
+    // Raised in the first second, it goes at the next computation.
+    let raise = |record: &mut Record, second| {
+        if second == 1 {
+            record
+                .satellites
+                .get_mut(prn(3))
+                .expect("in view")
+                .elevation = Degrees(79);
+        }
+    };
+    assert_eq!(sent_in(&mut engine, &mut record, period, &raise), [period]);
+
+    // A Doppler that changes each second goes only at each computation.
+    let drift = |record: &mut Record, second: u32| {
+        record.satellites.get_mut(prn(3)).expect("in view").doppler =
+            Some(Hertz(i16::try_from(second).expect("small")));
+    };
+    assert_eq!(
+        sent_in(&mut engine, &mut record, 2 * period, &drift),
+        [period, 2 * period]
+    );
 
     ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
     ask(&mut engine, &record, CG_FIX_MODE, &FIX);
@@ -1105,8 +1131,7 @@ fn visible_satellites_are_sent_when_they_change() {
         .get_mut(prn(3))
         .expect("in view")
         .elevation = Degrees(80);
-    engine.second(&record, NOW, &mut sent);
-    assert!(sent.0.is_empty());
+    assert_eq!(sent_in(&mut engine, &mut record, period, &|_, _| {}), []);
 }
 
 /// The satellite IDs `@@Bb`'s data lists, after checking its count

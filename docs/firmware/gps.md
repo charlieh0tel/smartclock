@@ -33,7 +33,17 @@ can be set to become an eight-channel Oncore at its first `@@Ea`
 (`Options::eight_on_ea`, which holds the identity it becomes): from
 then on it answers `@@Cj` as that one, through a `@@Cf` too, until it
 is made again, as at a power-up ("Six or eight channels" has when a
-58503A sends that `@@Ea`).  What the commands set
+58503A sends that `@@Ea`).  One can be made configured, as an engine
+that keeps its output rates and setup through a power cycle
+(VPCommands pp. 70, 124 and 138) comes up sending unasked
+(`Options::saved`, a `SavedConfiguration`).  One configuration is
+built in, `CONFIGURATION_58503A`: how the 58503A's power-up script
+`0x53` and its Time RAIM request leave an eight-channel engine
+("Time RAIM"), fixing, with `@@Ea` and `@@En` each second and `@@Bb` at
+each change.  It is for a receiver that never configures its engine,
+as the Z3817A ("The Z3817A takes an `@@Ea` stream").  `@@Cf` puts such
+an engine back to the defaults, not to the configuration (p. 116), and
+a VP idle (p. 118).  What the commands set
 it to -- mask angle, position and altitude hold, time base, the 1 PPS's
 cable delay, offset and mode, application type, initial position -- it
 gives as types (`Engine::settings`), and `Engine::receive` returns

@@ -27,10 +27,12 @@ use smartclock_gps::engine::identity::UT_PLUS_2_2;
 use smartclock_gps::engine::identity::VP_EIGHT;
 use smartclock_gps::engine::identity::VP_EIGHT_WITHOUT_TIME_RAIM;
 use smartclock_gps::engine::identity::VP_SIX;
+use smartclock_gps::engine::saved::CONFIGURATION_58503A;
 use smartclock_gps::engine::saved::ChannelCount;
 use smartclock_gps::engine::saved::SavedConfiguration;
 use smartclock_gps::engine::settings::HeightKind;
 use smartclock_gps::engine::settings::Location;
+use smartclock_gps::engine::settings::PulseMode;
 use smartclock_gps::engine::settings::Setting;
 use smartclock_gps::engine::settings::SettingSet;
 use smartclock_gps::engine::settings::Settings;
@@ -61,6 +63,7 @@ use smartclock_gps::units::Centimeters;
 use smartclock_gps::units::DecibelHertz;
 use smartclock_gps::units::Degrees;
 use smartclock_gps::units::Hertz;
+use smartclock_gps::units::HundredNanoseconds;
 use smartclock_gps::units::MilliArcSeconds;
 use smartclock_gps::units::Milliseconds;
 use smartclock_gps::units::Nanoseconds;
@@ -82,7 +85,7 @@ const FORMAT: &str = "oncore engine vectors 1";
 const WRITE_VARIABLE: &str = "ENGINE_VECTORS";
 const WRITE: &str = "write";
 /// How many vectors there are, so that none goes missing unseen.
-const VECTORS: usize = 52;
+const VECTORS: usize = 55;
 
 /// How far into a second its events fall.
 const EVENTS_AT: u64 = 500;
@@ -180,6 +183,11 @@ const STATUS_EVERY_OTHER_SECOND_SIX: SavedConfiguration = SavedConfiguration {
     channels: ChannelCount::Six,
     fixing: true,
     position_status_rate: Seconds(2),
+    visibility_updates: false,
+    time_raim_rate: Seconds(0),
+    raim_algorithm: false,
+    raim_alarm_limit: HundredNanoseconds(10),
+    pulse_mode: PulseMode::Always,
 };
 const STATUS_EVERY_OTHER_SECOND_EIGHT: SavedConfiguration = SavedConfiguration {
     channels: ChannelCount::Eight,
@@ -239,6 +247,7 @@ impl Head {
                 ChannelCount::Six => &STATUS_EVERY_OTHER_SECOND_SIX,
                 ChannelCount::Eight => &STATUS_EVERY_OTHER_SECOND_EIGHT,
             }),
+            "58503a" => Some(&CONFIGURATION_58503A),
             other => panic!("no saved configuration {other}"),
         };
         options

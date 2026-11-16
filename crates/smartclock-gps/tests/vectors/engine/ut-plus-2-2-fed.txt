@@ -1,5 +1,5 @@
 # format: oncore engine vectors 1
-# scenario: fed: deaf, its status sent unasked every other second, as the Z3817A's feed
+# scenario: fed: deaf, fixing from power-up and sending its status unasked every other second
 # engine: ut-plus-2-2
 # start: 2026-10-22T12:00:00Z
 # leap-seconds: 18

@@ -62,6 +62,8 @@
 //! bits, for a caller to convert.  Which satellite system's data a
 //! caller keeps is the caller's: the decoders give the system of each
 //! satellite and drop none.
+//! [`Message::parse_payload`](message::Message::parse_payload) decodes
+//! an ID and payload a caller already has, with the same checks.
 //!
 //! A GPS satellite's own navigation data, the subframes `RXM-SFRBX`
 //! carries, is decoded by [`subframe`], to IS-GPS-200N.

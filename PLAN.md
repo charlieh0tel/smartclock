@@ -1374,6 +1374,10 @@ stands in for one.
     when its own count of blocks (`numSvs`, `numMeas`, `numWords`) is
     the count its length gives; the deframer's length check alone lets
     any whole number of blocks through.
+  - *A payload decodes without its frame.*  `Message::parse_payload`
+    takes an ID and a payload, for a caller that already has them,
+    such as a tool rewriting a recording; `Message::parse` is it on a
+    frame's, so both make the same checks.
   - *Long messages are streamed, a block at a time, on request.*  A
     board with little RAM cannot buffer `NAV-SAT` and `RXM-RAWX`,
     which grow by 12 and 32 bytes a satellite.  A `Streamer` is the

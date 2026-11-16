@@ -261,14 +261,16 @@ the XC3000 viewer ("Netlists", below).
 | 58503A 3704 | `0x1fd16` | `b9fcb082` | `0x20c34`, `d64b97e1` |
 | Z3801A 3543 | `0x1fddc` | `b9fcb082` | `0x20cfa`, `d64b97e1` |
 | Z3805A 3543B | `0x20f18` | `aa4750d3` | `0x21e36`, `d64b97e1` |
+| Z3805A 1.01.03 | `0x21044` | `aa4750d3` | `0x21f62`, `d64b97e1` |
 | 58503B 1.01.04 | `0x2f5a8` | `f095d6b5` | `0x304c6`, `d64b97e1` |
 | Z3815A 4010 | `0x316a6` | `3402456a` | `0x325c4`, `d64b97e1` |
 | Z3816A 4001 | `0x2ffb8` | `0bb50333` | `0x30ed6`, `d64b97e1` |
 | Z3817A 3752 | `0x2ffe4` | `4dc3aa57` | `0x30f02`, `d64b97e1` |
 
-The second block is the same in all eight.  The first comes in six
+The second block is the same in all nine.  The first comes in six
 designs:
-- The 58503A and the Z3801A share one, byte for byte.
+- The 58503A and the Z3801A share one, byte for byte, and the Z3805A
+  3543B and 1.01.03 another.
 - The Z3805A's differs from it in 1868 of 3860 bytes, the 58503B's in
   2347, the Z3816A's in 3315 and the Z3815A's in 3392.
 - The Z3815A's and the Z3816A's differ from each other in 1686.
@@ -284,6 +286,12 @@ transfers hand the QSPI routines a first argument of `0xc` and `0x10`
 where the Z3805A's hand 6 and 9 (`0x327d0`, `0x327f4`, `0x3280e`,
 `0x32830`; what the argument selects was not traced), and the flag it
 holds while it loads is at `0x102038`.
+
+The Z3805A 1.01.03's loader, `0x23854`, is the Z3805A 3543B's too, at
+its own addresses: its table is at `0x21f58`, the count 1 then one
+entry, `0x21044` to `0x21f58`.  Its one difference but addresses is
+the Z3817A's: it sets PORTF bit 6 alone (`0x2388a`); its QSPI
+arguments are the 3543B's 6 and 9.
 
 `cargo test -p smartclock-cli --test fpga_bitstreams` checks the
 offsets, the hashes (their first four bytes) and the byte differences

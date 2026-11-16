@@ -22,6 +22,7 @@ and code's addresses, its flags and inline size, its stack effect and,
 where one is known, what it does:
 [Z3801A 3543](z3801a-3543-words.md),
 [Z3805A 3543B](z3805a-3543b-words.md),
+[Z3805A 1.01.03](z3805a-1.01.03-words.md),
 [Z3815A 4010](z3815a-4010-words.md),
 [Z3816A 4001](z3816a-4001-words.md),
 [Z3817A 3752](z3817a-3752-words.md),

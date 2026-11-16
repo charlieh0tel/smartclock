@@ -2260,6 +2260,62 @@ PRIMARY_58503B_1_01_04 = replace(
     qspi_widths=QSPI_WIDTHS_58503A_3704,
     records=0x6D20C,
 )
+# The Z3805A 1.01.03's primary profile (docs/firmware/z3805a-1.01.03.md,
+# "The function check"), each address read from that image's own code,
+# the 58503B's, its base, at this image's addresses but for its vector
+# table, at 0x10000 as the Z3805A 3543B's: psos_config_init (0x5569a)
+# copies the configuration from 0x55890 to 0x103454 and an I/O table of
+# four devices from 0x55d48 to 0x1033c4, DUART channel B (duart_init,
+# 0x1d9e2), the QSPI, the string device, whose write is drtb_write's
+# (0x1de42), and the SCI (sci_init, 0x1fe7a), the Z3805A's order;
+# kernel_init and kernel_create_x are the Z3805A's bytes (0x16036,
+# 0x156dc); root_task (0x131b2) passes "gpsx" from 0x1335f and calls
+# status_init (0x30b8e), which builds status_object (0x103cde);
+# scpi_task_start (0x13092) sends spoo_exchange (0x1042be) 0x2a92a, which
+# starts the SCPI session on channel B, its writes console_write's and
+# printf's (0x2a8fe); vsprintf is at 0x65cf4; scpi_console_port
+# (0x2a1e2) returns 0x2a4d2; the trees' root lists are 0x576e8 and
+# 0x56c0c (scpi_trees, 0x6208a); aging_curve is at 0x102a8c and the
+# screen's one snapshot at 0x101c3c (status_screen_print, 0x4c9aa); and
+# drtb_gets (0x1d888) echoes through 0x1040fc, which duart_init makes
+# 0x1d61a, an rts, to echo nothing (0x1dd0a).  pllc_exchange (0x1047f2)
+# gives the request of NUMERIC_DESCRIPTOR_Z3805A_1_01_03, the fifth of
+# nv_numeric_params (0x34cc8), as the 58503B's.  Its QSPI's minor devices
+# are the 58503B's (qspi_queue_setup, 0x206c4, the same code but the
+# running flag's address).  Its reset unpacks no records of the primary's
+# (primary_unpack_records, 0x557ba, from address 0), and its code writes
+# no flash, :DIAGnostic:TEST:FLASh a refusal here (0x2d320).  Its
+# installer is the Z3805A 3543B's byte for byte (z3805a-1.01.03.md, "The
+# base"), whose profile it takes.
+PLLC_EXCHANGE_Z3805A_1_01_03 = 0x1047F2
+NUMERIC_DESCRIPTOR_Z3805A_1_01_03 = 0x36030
+PRIMARY_Z3805A_1_01_03 = replace(
+    PRIMARY_58503B_1_01_04,
+    vectors=0x10000,
+    kernel_tables=((0x55890, 0x103454, 0x62), (0x55D48, 0x1033C4, 0x90)),
+    psos_config=0x103454,
+    kernel_init=((0x16036, 0x16198), (0x161BA, 0x161C8)),
+    kernel_create=(0x156DC, 0x1573C),
+    initializers=(0x30B8E,),
+    received={
+        0x1042BE: struct.pack(">5I", 0, 0x2A92A, SPOOLED_PRIORITY, 0, 0),
+        PLLC_EXCHANGE_Z3805A_1_01_03: struct.pack(
+            ">IIBBBBII", 0, NUMERIC_DESCRIPTOR_Z3805A_1_01_03, 0, 0, 0, 0, 60, 0
+        ),
+    },
+    caller_name=0x1335F,
+    vsprintf=0x65CF4,
+    status_object=0x103CDE,
+    scpi=ScpiObjects(0x2A4D2, 0x576E8, 0x56C0C, tuple(KEYWORDS), SAMPLE_CALL),
+    variables={
+        "aging_curve_state *": 0x102A8C,
+        "status_snapshot_record *": 0x101C3C,
+    },
+    scpi_step=NUMERIC_DESCRIPTOR_Z3805A_1_01_03,
+    console_echo=(0x1040FC, 0x1D61A),
+    flash=None,
+    records=None,
+)
 # Each image's profiles, its primary's and its installer's addresses, by
 # the image's name, its .bin's and its folder's.
 IMAGE_PROFILES = {
@@ -2270,6 +2326,7 @@ IMAGE_PROFILES = {
     "z3817a-3752": (PRIMARY_Z3817A_3752, INSTALLER_Z3815A_4010),
     "z3816a-4001": (PRIMARY_Z3816A_4001, INSTALLER_Z3816A_4001),
     "58503b-1.01.04": (PRIMARY_58503B_1_01_04, INSTALLER_Z3815A_4010),
+    "z3805a-1.01.03": (PRIMARY_Z3805A_1_01_03, INSTALLER_ADDRESSES),
 }
 
 

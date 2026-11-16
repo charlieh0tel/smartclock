@@ -8,7 +8,7 @@ decoded bitstream, is here.
 
 | | |
 | --- | --- |
-| Images that load it | Z3805A 3543B |
+| Images that load it | Z3805A 3543B and 1.01.03 |
 | Bitstream | `third_party/firmware/images/fpga/z3805a.bit` |
 | Part | XC3042, PLCC84 |
 | Logic blocks, I/O blocks, nets | 86 of 144, 36, 165 (`tools/fpga/ref/z3805a.stats`) |

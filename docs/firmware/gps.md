@@ -322,6 +322,14 @@ its ID:
 | 58503A 3633 | yes | yes | yes | yes |
 | 58503A 3704 | yes | yes | yes | yes |
 | Z3816A 4001 | yes | yes | yes | yes |
+| Z3805A 1.01.03 | no | no | no | no |
+
+The Z3805A 1.01.03 takes no Oncore at all: its engine is a Furuno,
+spoken to in NMEA and Furuno's `$PFEC` sentences, as the Z3815A 4010's
+is, and the image holds no Oncore message table and frames no `@@`
+message.  It names the engine a GT-80, a GT-77 or a GT-74 by the
+software part number the engine reports
+([`z3805a-1.01.03.md`](z3805a-1.01.03.md), "The GPS engine").
 
 The Z380x send every message to any engine but `@@Bn`, which
 `gps_message_supported` (Z3805A `0x4f8fc`) refuses before `@@Cj` has
@@ -746,6 +754,7 @@ filters and table entries are in `oncore/IMAGE.txt`.
 | 58503B 1.01.04 | Oncore | VP or UT Plus | the 12th character of the `MODEL #` line: `B` a VP, `R` a UT Plus (`0x58098`) | VP: 8.4, second `Ar`(65); 10.0, bit 0.  UT Plus: 3.0, `Am` and `Gj` | VP: 6 or 8; UT Plus: 8 | VP: `I` in `OPTIONS LIST`; UT Plus: always | VP: as the 58503A; UT Plus: "The UT Plus" |
 | Z3816A 4001 | Oncore | VP or UT Plus | as the 58503B (`0x55cea`) | as the 58503B | as the 58503B | as the 58503B | as the 58503B |
 | Z3815A 4010 | Furuno | GT-74, its own protocol: NMEA framing with Furuno's `$PFEC` sentences | no Oncore code; its identification template reads `MODEL # FURUNO GT-74` (`0x5eae5`) | -- | -- | its engine's sentences ("In every image") | its sentences ("In every image") |
+| Z3805A 1.01.03 | Furuno | GT-74, GT-77 or GT-80, on the Z3815A's protocol | the software part number of its `tst` answer: 4850266 a GT-80, 4850207 a GT-77, any other a GT-74 (`0x53c12`; `z3805a-1.01.03.md`, "The GPS engine") | -- | 6, 8 or 12 by the model (`gps_channel_count_from_model`, `0x5279a`) | its engine's sentences | its sentences, the Z3815A's with `acc`, `set,X` and `int,acc` |
 | Z3817A 3752 | Oncore | an engine sending eight-channel `@@Ea` | nothing that works: `0x56e74` compares `gps+0x49d` with `R`, which can never match (below) | none | 8: `Ea` | not read | nothing: it sends nothing; it needs only an unsolicited `@@Ea` stream |
 
 **The Z380x and 58503A take a VP alone.**  They have no model check:

@@ -132,6 +132,9 @@ QSPI_RUNNING = {"z3805a-3543b": 0x1032F3, "58503a-3704": 0x1034C3, "z3815a-4010"
 # The 58503B 1.01.04's, which its qspi_start clears and reads (0x2eeb6,
 # 0x2eef6).
 QSPI_RUNNING["58503b-1.01.04"] = 0x103F51
+# The Z3805A 1.01.03's, which its qspi_start clears and reads (0x20952,
+# 0x20992).
+QSPI_RUNNING["z3805a-1.01.03"] = 0x1042B9
 QSPI_WORDS = struct.pack(">3H", 0x123, 0x456, 0x789)
 QSPI_COUNT = 3
 QSPI_RAW_DEVICES = (2, 7, 12)

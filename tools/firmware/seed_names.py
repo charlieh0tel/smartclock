@@ -47,6 +47,8 @@ SMALLEST_BY_BYTES = 8
 CARRIED = ('identical', 'relocated')
 # the first line of the base file's body, after its header
 BODY_START = '# float library'
+# an image's two regions: its primary, and its installer as unpacked
+REGIONS = ('primary', 'installer')
 
 # The 58503A 3704's port from the Z3805A 3543B (PORT_58503A_3704).
 DOCUMENT_58503A = 'docs/firmware/58503a-3704.md'
@@ -279,7 +281,17 @@ HEADER = """\
 #   the carried rows; the rest are the seeding's, which make
 #   check-image-diff checks.  A hand row may take a name the matches give
 #   another place only where a hand row takes that place too.%(hand_rows)s
-%(second)s#
+%(second)s%(installer)s#
+"""
+INSTALLER_HEADER = """\
+# - The installer is named from the installer's base, the %(installer_base)s's
+#   (third_party/firmware/analysis/%(installer_folder)s/names.tsv), not the
+#   %(base_model)s's, by the same rules and image_diff's matches between the
+#   %(installer_model)s and this image: its functions, local and call rows and
+#   tables, and the RAM labels its code's references place, where their
+#   address and name are free.  Neither the %(base_model)s's installer rows nor
+#   its installer's references give a row.  Their notes end
+#   "%(installer_origin)s".
 """
 SECOND_HEADER = """\
 # - A function the matches find new, which the %(base_model)s has no
@@ -290,6 +302,10 @@ SECOND_HEADER = """\
 #   there and its name is free; so are its local rows, and a ROM table
 #   the second base carries at an address and under a name no other row
 #   takes.  Its note ends "%(second_origin)s".
+"""
+INSTALLER_ROWS_HEADER = """\
+#
+# Rows from the installer's base, the %(installer_base)s's, for the installer
 """
 SECOND_ROWS_HEADER = """\
 #
@@ -339,7 +355,7 @@ MODULES_HAND_HEADER = """\
 IMAGE_NAMES = {'z3805a-3543b': ('Z3805A', '3543B'), '58503a-3704': ('58503A', '3704'),
                'z3815a-4010': ('Z3815A', '4010'), 'z3801a-3543': ('Z3801A', '3543'),
                'z3817a-3752': ('Z3817A', '3752'), 'z3816a-4001': ('Z3816A', '4001'),
-               '58503b-1.01.04': ('58503B', '1.01.04')}
+               '58503b-1.01.04': ('58503B', '1.01.04'), 'z3805a-1.01.03': ('Z3805A', '1.01.03')}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -400,6 +416,21 @@ class Port:
     # calls agree with it (image_diff.py's --callee-ties): the Makefile's
     # CALLEE_TIES_DIFFS passes it for the same diffs
     callee_ties: bool = False
+    # the second base's dropped_functions, as dropped_functions
+    second_dropped_functions: dict = dataclasses.field(default_factory=dict)
+    # the regions whose rows the seeding gives: their functions, local
+    # and call rows and tables, and the RAM labels their code's
+    # references place
+    regions: frozenset = frozenset(REGIONS)
+    # the installer's base's folder, which names the installer in place
+    # of the base (INSTALLER_HEADER), or none; with one, regions is the
+    # primary's alone
+    installer_base_folder: str = ''
+
+    def __post_init__(self):
+        if self.installer_base_folder and 'installer' in self.regions:
+            raise ValueError('%s: the installer from %s, so not from %s' % (
+                self.folder, self.installer_base_folder, self.base_folder))
 
     @property
     def image(self):
@@ -420,12 +451,23 @@ class Port:
     @property
     def origin(self):
         """How a carried row's note says where it came from."""
-        return 'from the %s, by image_diff%s' % (self.base, ' as the second base' if self.second else '')
+        role = ''
+        if self.second:
+            role = ' as the second base'
+        elif 'primary' not in self.regions:
+            role = " as the installer's base"
+        return 'from the %s, by image_diff%s' % (self.base, role)
 
     @property
     def second_port(self):
         """The port from the second base, its rows the second base's."""
-        return Port(folder=self.folder, base_folder=self.second_base_folder, second=True)
+        return Port(folder=self.folder, base_folder=self.second_base_folder, second=True, regions=self.regions,
+                    dropped_functions=self.second_dropped_functions)
+
+    @property
+    def installer_port(self):
+        """The port from the installer's base, its rows the installer's."""
+        return Port(folder=self.folder, base_folder=self.installer_base_folder, regions=frozenset({'installer'}))
 
     @property
     def document(self):
@@ -442,10 +484,14 @@ class Port:
     def text(self, template):
         """A header, its fields this port's."""
         second = self.second_port if self.second_base_folder else None
+        installer = self.installer_port if self.installer_base_folder else None
         fields = {
             'second': '', 'second_base': second.base if second else '',
             'second_model': second.base_model if second else '',
             'second_folder': self.second_base_folder, 'second_origin': second.origin if second else '',
+            'installer': '', 'installer_base': installer.base if installer else '',
+            'installer_model': installer.base_model if installer else '',
+            'installer_folder': self.installer_base_folder, 'installer_origin': installer.origin if installer else '',
             'threshold': THRESHOLD, 'lead': LEAD, 'smallest': SMALLEST_BY_BYTES,
             'called': len(self.called_unlisted), 'hand': self.hand, 'image': self.image, 'model': self.model,
             'base': self.base, 'base_model': self.base_model, 'base_folder': self.base_folder,
@@ -454,7 +500,17 @@ class Port:
             'not_code': self.not_code_text}
         if second:
             fields['second'] = SECOND_HEADER % fields
+        if installer:
+            fields['installer'] = INSTALLER_HEADER % fields
         return template % fields
+
+    @property
+    def unmatched_by(self):
+        """Whose functions the new functions and the leads are counted
+        against: the base's, and the installer's base's in the installer."""
+        if not self.installer_base_folder:
+            return self.base_model
+        return '%s (in the installer, %s)' % (self.base_model, self.installer_port.base)
 
 
 PORT_58503A_3704 = Port(
@@ -958,9 +1014,84 @@ PORT_58503B_1_01_04 = Port(folder='58503b-1.01.04', base_folder='z3817a-3752', s
                            dropped_functions=DROPPED_FUNCTIONS_58503B,
                            corrections=CORRECTIONS_58503B, confirmed=frozenset(CORRECTIONS_58503B),
                            corrections_text=CORRECTIONS_TEXT_58503B)
+# The Z3805A 1.01.03's port from the 58503B 1.01.04, the 1.01 line's
+# other image, its Furuno code the Z3815A 4010's, whose matches carry
+# the most of what the 58503B's find new
+# (docs/firmware/z3805a-1.01.03.md, "The base").
+# functions whose few bytes match at more than one address, pinned where
+# the Z3805A 1.01.03's callers name them, as PINNED_58503B
+PINNED_Z3805A_1_01_03 = {
+    ('primary', 0x4d124): (
+        0x488ba, 0x43308,
+        "its 2 bytes, an rts, match more than one; pinned to 0x43308, which output_state_done calls (0x43372), "
+        "as the 58503B's calls 0x4d124"),
+    ('primary', 0x4d126): (
+        0x48a02, 0x4330a,
+        "its 2 bytes, an rts, match more than one; pinned to 0x4330a, which pulse_settings_done calls (0x43360), "
+        "as the 58503B's calls 0x4d126"),
+    ('primary', 0x2dce6): (
+        0x1f7d6, 0x1f7cc,
+        "image_diff pairs it past its test of a zero length, which the 58503B's leaves unnamed (0x2dcdc); pinned to "
+        "0x1f7cc, which sci_write and sci_putc call (0x20270, 0x202d4)"),
+    ('primary', 0x2e5fa): (
+        0x200de, 0x200da,
+        "image_diff pairs it past its link, which the 58503B's leaves unnamed (0x2e5f6); pinned to 0x200da, where "
+        "the I/O table's entry jumps (0x55dd2)"),
+    ('primary', 0x315e8): (
+        0x230a4, 0x2309e,
+        "image_diff pairs it past its first instruction, which clears oven_warmup_bypassed (0x2309e) and runs on "
+        "into the rest; pinned to 0x2309e, which pps_monitors_reset calls (0x251bc)"),
+}
+LABELS_TEXT_Z3805A_1_01_03 = '''.
+#   The functions whose few bytes match at more than one address are
+#   pinned where the Z3805A 1.01.03's callers name them:
+#   output_state_program and pulse_program, bare rts, at 0x43308 and
+#   0x4330a, which output_state_done and pulse_settings_done call.
+#   Two whose starts image_diff pairs a few instructions in are pinned
+#   to their starts: sci_puts at 0x1f7cc, which sci_write and sci_putc
+#   call, past its test of a zero length, and sci_reconfigure at
+#   0x200da, where the I/O table's entry jumps, past its link, and
+#   hmon_reset at 0x2309e, which pps_monitors_reset calls, past its
+#   clear of oven_warmup_bypassed.
+#   nmea_frame_any and nmea_encode_nothing, whose few bytes image_diff
+#   finds at 0x431a2 and 0x51956, have no seeded row: those are the end
+#   of get_ffom, which branches to it, and of long_array_get_byte,
+#   which runs into it.  Hand rows name the two where the framer's
+#   table (0x54ab4) and a sentence's encoders (0x54eec) point, 0x53ebc
+#   and 0x52cdc.  fit_evaluate_latest, the 58503B's rts at 0x46c1c,
+#   has no seeded row either: image_diff finds it at 0x424d0, the end
+#   of the routine before; a hand row names the routine the aging fits
+#   call, 0x424d2.
+'''
+# nmea_frame_any's and nmea_encode_nothing's bytes are the ends of
+# get_ffom, which branches to them, and of long_array_get_byte, which
+# runs into them; the 58503B's rts named fit_evaluate_latest is the end
+# of the routine before 0x424d2, and so is the Z3815A's, the second
+# base's, whose return_one image_diff finds at get_ffom's end too, where
+# the 58503B's is the end of gps_request_admitted, which a hand row says
+DROPPED_FUNCTIONS_Z3805A_1_01_03 = {('primary', 0x478ec): 0x431a2, ('primary', 0x56cfe): 0x51956,
+                                    ('primary', 0x46c1c): 0x424d0}
+SECOND_DROPPED_FUNCTIONS_Z3805A_1_01_03 = {('primary', 0x4b062): 0x424d0, ('primary', 0x5172c): 0x431a2}
+NOT_CODE_Z3805A_1_01_03 = frozenset({('primary', 0x5588a)})
+NOT_CODE_TEXT_Z3805A_1_01_03 = '''  Nor is
+#   0x5588a, the last words before psos_config_defaults, a pointer to
+#   psos_config among them, though image_diff finds it new.'''
+# the 58503B's ACIA's registers and its control's shadow, which its
+# matches' references place on this image's DUART (duart, 0x200000) and
+# in duart_shadow (0x103e8e): this board has no ACIA
+DROPPED_Z3805A_1_01_03 = {'acia_control': 0x103e92, 'acia_data': 0x200007, 'acia_status_control': 0x20000b}
+# Its installer is the Z3805A 3543B's byte for byte, which names it in
+# place of the 58503B's Vatican installer.
+PORT_Z3805A_1_01_03 = Port(folder='z3805a-1.01.03', base_folder='58503b-1.01.04', second_base_folder='z3815a-4010',
+                           installer_base_folder='z3805a-3543b', regions=frozenset({'primary'}),
+                           pinned=PINNED_Z3805A_1_01_03, dropped_functions=DROPPED_FUNCTIONS_Z3805A_1_01_03,
+                           second_dropped_functions=SECOND_DROPPED_FUNCTIONS_Z3805A_1_01_03,
+                           dropped=DROPPED_Z3805A_1_01_03,
+                           labels_text=LABELS_TEXT_Z3805A_1_01_03,
+                           not_code=NOT_CODE_Z3805A_1_01_03, not_code_text=NOT_CODE_TEXT_Z3805A_1_01_03)
 # Each seeded image's port, by its folder's name.
 PORTS = {port.folder: port for port in (PORT_58503A_3704, PORT_Z3815A_4010, PORT_Z3801A_3543, PORT_Z3817A_3752,
-                                        PORT_Z3816A_4001, PORT_58503B_1_01_04)}
+                                        PORT_Z3816A_4001, PORT_58503B_1_01_04, PORT_Z3805A_1_01_03)}
 
 
 class Offsets(collections.Counter):
@@ -1093,8 +1224,8 @@ class Seeding:
         exact, interior = collections.defaultdict(set), collections.defaultdict(set)
         # the installer's code votes for plain RAM above both overlays: its
         # own data there, which the primary's labels name
-        sources = [(region, v) for v in matcher.references]
-        if region == 'primary':
+        sources = [(region, v) for v in matcher.references] if region in self.port.regions else []
+        if region == 'primary' and 'installer' in self.port.regions:
             sources += [('installer', v) for v in self.matchers['installer'].references
                         if v[0] >= self.overlay_ends[0] and v[1] >= self.overlay_ends[1]]
         for voter, (target, other, function, instruction, index) in sources:
@@ -1156,7 +1287,8 @@ class Seeding:
                         'at its start' if how == 'exact' else 'inside it',
                         ', one in an identical function' if identical else '')
                 self.label_target[region, address] = (top, text, 'ram ' + ('same' if top == address else 'moved'))
-            elif label.kind == 'label' and label.status in CARRIED and self.is_table(region, address):
+            elif (label.kind == 'label' and label.status in CARRIED and region in self.port.regions
+                  and self.is_table(region, address)):
                 if label.method == 'bytes' and label.size < SMALLEST_BY_BYTES:
                     continue
                 text = '%s: %s table, placed by %s' % (self.port.origin, label.status, label.method)
@@ -1226,6 +1358,10 @@ class Seeding:
             f = (line.split('\t') + [''] * 7)[:7]
             address, kind, name, source, note, prototype, convention = f
             region, value = image_diff.parse_address(address)
+            # another seeding gives a region not this one's, but for the RAM
+            # labels this one's code places
+            if region not in self.port.regions and not (kind == 'label' and (region, value) in self.label_target):
+                continue
             if kind == 'function':
                 item, other, outer = self.mapped_code(region, value)
                 if (region, value) in self.port.corrections and (region, value) in self.port.confirmed:
@@ -1321,7 +1457,11 @@ class Seeding:
             else:
                 dropped['kind ' + kind] += 1
 
-        out_rows = [self.installer_copy(row, seen_names) for row in out_rows]
+        out_rows = [self.installer_copy(row, self.primary_by_name(seen_names)) for row in out_rows]
+        self.carried_rows = out_rows
+        if self.port.installer_base_folder:
+            out_rows = out_rows + self.installer_rows(seen_addresses, seen_names)
+            weak_leads += self.installer_seeding.weak_leads
 
         # the image's own installer records, which Setup must type as data
         records, extent = image_diff.installer_records(self.other_image)
@@ -1334,7 +1474,7 @@ class Seeding:
 
         # a new function a pin or a correction names has its row
         new = sorted((region, item.other, item.other_size, item.summary)
-                     for region, found in self.results.items() for item in found
+                     for region, found in self.results.items() if region in self.port.regions for item in found
                      if item.status == 'new' and (region, item.other) not in corrected_others
                      and show(region, item.other) not in seen_addresses)
         listed = {(region, address) for region, address, _, _ in new}
@@ -1347,7 +1487,10 @@ class Seeding:
                 sys.exit('%s: listed or named by the matches; revisit the port\'s called_unlisted' % show(region, address))
             item = self.matchers[region].new_function(address, CALLED_UNLISTED_HOW)
             new.append((region, address, item.other_size, item.summary))
+        if self.port.installer_base_folder:
+            new += [item for item in self.installer_seeding.new if show(item[0], item[1]) not in seen_addresses]
         new.sort()
+        self.new, self.weak_leads = new, weak_leads
 
         # the base's format description, from its line that starts it to
         # its installer records' block or its body, less the Z3805A's
@@ -1377,7 +1520,7 @@ class Seeding:
                 INSTALLER_RECORDS % self.port.model + '\n' + '\t'.join(installer_row) + '\n#\n',
                 '\n'.join(out_rows) + '\n',
                 '#\n# New functions: the %s\'s functions no %s function or piece\n'
-                % (self.port.model, self.port.base_model) +
+                % (self.port.model, self.port.unmatched_by) +
                 '# matched (image_diff\'s "new"), and those found "called, by Ghidra\'s\n'
                 '# analysis" that image_diff does not find, unnamed, for the rewrite\n'
                 '# waves: entry rows, which Setup makes a function at, keeping\n'
@@ -1389,11 +1532,48 @@ class Seeding:
         text.append('#\n# Leads: functions image_diff pairs with a %s function as changed\n'
                     '# at a similarity below %.2f, a pairing too weak to name them by:\n'
                     '# address, the %s function, how it was paired and the similarity.\n'
-                    % (self.port.base_model, LEAD, self.port.base_model))
+                    % (self.port.unmatched_by, LEAD, self.port.unmatched_by))
         text += ['# %s\t%s\t%s\t%.3f\n' % (show(region, address), name, method, similarity)
                  for region, address, name, method, similarity in sorted(weak_leads)]
+        if self.port.installer_base_folder:
+            counts += self.installer_seeding.counts
+            dropped += self.installer_seeding.dropped
+            self.notes += ["installer's base: " + note for note in self.installer_seeding.notes]
         self.counts, self.dropped = counts, dropped
         return ''.join(text), carried
+
+    def installer_rows(self, seen_addresses, seen_names):
+        """The installer's base's rows (INSTALLER_HEADER), under their
+        comment: its seeding's carried rows, but a function or label row
+        at an address or under a name a row takes, each name and address
+        taken added to seen_names and seen_addresses; a copy's primary
+        found by its address in the installer's base's matches."""
+        self.installer_seeding = Seeding(str(FIRMWARE / 'analysis' / self.port.installer_base_folder), self.folder,
+                                         self.port.installer_port)
+        self.installer_seeding.names()
+
+        def primary_of(_, address):
+            item = self.installer_seeding.code.get(('primary', address))
+            if item is None or item.status not in CARRIED or item.other is None:
+                return None
+            fields = seen_addresses.get(show('primary', item.other))
+            return (fields[2], item.other) if fields is not None and fields[1] == 'function' else None
+
+        rows, comments = [], []
+        for row in self.installer_seeding.carried_rows:
+            if row.startswith('#'):
+                comments.append(row)
+                continue
+            fields = row.split('\t')
+            if fields[1] in ('function', 'label'):
+                if fields[0] in seen_addresses or fields[2] in seen_names:
+                    self.notes.append("installer's base: %s at %s taken" % (fields[2], fields[0]))
+                    comments.clear()
+                    continue
+                seen_addresses[fields[0]], seen_names[fields[2]] = fields, fields[0]
+            rows += comments + [self.installer_seeding.installer_copy(row, primary_of)]
+            comments.clear()
+        return [self.port.text(INSTALLER_ROWS_HEADER).rstrip('\n')] + rows
 
     def second_rows(self, seen_addresses, seen_names, new):
         """The second base's rows (SECOND_HEADER): its seeding's function
@@ -1452,8 +1632,8 @@ class Seeding:
     def with_hand_rows(self, out_rows, new, seen_names):
         """The carried rows and the new functions with the hand rows in
         them: each in place of the carried row of its address and kind,
-        or of the new function at its address, which a function row
-        names and a label row says is data; the rest
+        or of the function at its address, carried or new, which a
+        function row names and a label row says is data; the rest
         after the carried rows, under a comment of their own.  A hand row
         whose name the matches seed elsewhere fails, but in a second
         base's seeding, whose rows are taken only under names no row of
@@ -1465,11 +1645,17 @@ class Seeding:
             fields = row.split('\t')
             seeded = seen_names.get(fields[2])
             if (fields[1] in ('function', 'label') and seeded not in (None, fields[0])
-                    and (seeded, fields[1]) not in by_place):
+                    and (seeded, fields[1]) not in by_place and (seeded, 'label') not in by_place):
                 sys.exit('%s: added by hand at %s, seeded at %s' % (fields[2], fields[0], seeded))
         placed, rows = set(), []
         for row in out_rows:
             key = place_key(row.split('\t'))
+            # a label row says a carried function's place is data, as
+            # it does a new function's
+            if key[1:] == ('function',) and key not in by_place and (key[0], 'label') in by_place:
+                key = (key[0], 'label')
+                if key in placed:
+                    continue
             if key in by_place:
                 placed.add(key)
             rows.append(by_place.get(key, row))
@@ -1482,25 +1668,36 @@ class Seeding:
             rows += ['#', '# Rows added by hand that no carried row is in place of'] + rest
         return rows, new
 
-    def installer_copy(self, row, seen_names):
+    @staticmethod
+    def primary_by_name(seen_names):
+        """The lookup installer_copy takes: a copy's primary, by the
+        base's name and address for it, to its name and address in the
+        image, where it is carried under that name, or None."""
+        def lookup(name, _):
+            address = seen_names.get(name)
+            return None if address is None else (name, int(address, 16))
+        return lookup
+
+    def installer_copy(self, row, primary_of):
         """The row, an installer copy's note giving where it is relative
-        to its primary in the image, where the primary is carried under
-        its name; a copy said to be byte for byte is checked so."""
+        to its primary in the image, where primary_of finds the primary;
+        a copy said to be byte for byte is checked so."""
         fields = row.split('\t')
         found = INSTALLER_COPY.search(fields[4]) if len(fields) > 4 and fields[1] == 'function' else None
         if found is None:
             return row
-        primary = seen_names.get(found.group(1))
+        primary = primary_of(found.group(1), int(found.group(2), 16))
         if primary is None:
             return row
-        copy, start = image_diff.parse_address(fields[0])[1], int(primary, 16)
+        name, start = primary
+        copy = image_diff.parse_address(fields[0])[1]
         if found.group(4) == ', byte for byte':
             item = self.code['primary', int(found.group(2), 16)]
             matcher = self.matchers['installer']
             if matcher.other.bytes(copy, copy + item.size) != self.other_image[start:start + item.size]:
                 sys.exit('%s: not byte for byte its primary at 0x%x' % (fields[2], start))
         fields[4] = fields[4][:found.start()] + "the installer's copy of %s, at 0x%x plus 0x%x in this image%s" % (
-            found.group(1), start, copy - start, found.group(4) or '') + fields[4][found.end():]
+            name, start, copy - start, found.group(4) or '') + fields[4][found.end():]
         return '\t'.join(fields)
 
     def modules(self, carried, names):

@@ -19,9 +19,13 @@ hand).  A module's rows come in that order, smallest first, and the
 modules by the share of their bytes carried, highest first.  A row
 marked common/ is identical or relocated in every image that shares
 common/ (rewrite.md, "Shared C", rule 1), so that its C may move there
-rather than be copied.  The first line counts the classes, the
-functions named FUN_, and those common/ would fit.  Always exits 0
-once the link has run.
+rather than be copied.  A row marked join is the common/ join's: a
+function common/ defines already, identical or relocated in the
+image's diff against the image common/ was written from, which an
+image that takes common/'s C has without writing it.  The first line
+counts the classes, the functions named FUN_, those common/ would fit,
+and, for an image diffed against that one, the join's and the rest,
+the image's own.  Always exits 0 once the link has run.
 """
 
 import collections
@@ -32,7 +36,7 @@ import shlex
 import sys
 import tempfile
 
-from common_check import ANALYSIS, BASE, DIFFS, SHARED, sharing_images
+from common_check import ANALYSIS, BASE, DIFFS, SHARED, common_files, defined_in, sharing_images
 from diff_figures import read_rows
 from image_diff import SIMILAR_FAR
 from link_check import link_required
@@ -130,6 +134,8 @@ def report(c_path: str, missing: list[str]) -> list[str]:
     shared = [shared_names(other) for other in sharing if other not in (image, BASE)]
     fits = {name for name, base_name in common_bases.items()
             if image in sharing and all(base_name in names for names in shared)}
+    in_common, _ = defined_in(common_files())
+    joins = {name for name, base_name in common_bases.items() if base_name in in_common}
 
     rows = []
     for name in missing:
@@ -137,7 +143,7 @@ def report(c_path: str, missing: list[str]) -> list[str]:
         best = max(counterparts[name], key=lambda c: (c.rewritten is not None, c.similarity), default=None)
         kind = best.kind() if best else NEW
         rows.append((module_of.get(address, module.get(name, "unassigned")), kind, size.get(name, 0),
-                     name, address, best, name in fits))
+                     name, address, best, name in fits, name in joins))
 
     by_module = collections.defaultdict(list)
     for row in rows:
@@ -151,16 +157,19 @@ def report(c_path: str, missing: list[str]) -> list[str]:
     lines = [f"{image}: {len(missing)} of {len(own)} functions missing: "
              + ", ".join(f"{counts[kind]} {kind}" for kind in CLASSES)
              + f"; {sum(row[3].startswith(UNNAMED) for row in rows)} named {UNNAMED}"
-             + f", {sum(row[6] for row in rows)} that common/ would fit"]
+             + f", {sum(row[6] for row in rows)} that common/ would fit"
+             + (f"; {sum(row[7] for row in rows)} the common/ join's, {sum(not row[7] for row in rows)} its own"
+                if BASE in bases else "")]
     for name, entries in sorted(by_module.items(), key=lambda item: (carried_share(item[1]), item[0])):
         kinds = collections.Counter(entry[1] for entry in entries)
         lines.append("")
         lines.append(f"{name}: {len(entries)}, {sum(entry[2] for entry in entries)} bytes: "
                      + ", ".join(f"{kinds[kind]} {kind}" for kind in CLASSES if kinds[kind]))
-        for _, kind, length, function, address, best, fit in sorted(
+        for _, kind, length, function, address, best, fit, join in sorted(
                 entries, key=lambda entry: (CLASSES.index(entry[1]), entry[2], entry[3])):
             lines.append(f"  {kind:<15} {function} {address} {length}"
-                         + (f"  {best}" if best else "") + ("  common/" if fit else ""))
+                         + (f"  {best}" if best else "") + ("  common/" if fit else "")
+                         + ("  join" if join else ""))
     return lines
 
 

@@ -16,11 +16,12 @@ const LENGTH: usize = 3860;
 const HEADER: [u8; 4] = [0xff, 0x20, 0x07, 0x86];
 
 /// Each image, where its bitstream starts, and the file that copies it.
-const BITSTREAMS: [(&str, usize, &str); 8] = [
+const BITSTREAMS: [(&str, usize, &str); 9] = [
     ("58503a-3633.bin", 0x1ff84, "58503a-z3801a.bit"),
     ("58503a-3704.bin", 0x1fd16, "58503a-z3801a.bit"),
     ("z3801a-3543.bin", 0x1fddc, "58503a-z3801a.bit"),
     ("z3805a-3543b.bin", 0x20f18, "z3805a.bit"),
+    ("z3805a-1.01.03.bin", 0x21044, "z3805a.bit"),
     ("58503b-1.01.04.bin", 0x2f5a8, "58503b.bit"),
     ("z3815a-4010.bin", 0x316a6, "z3815a.bit"),
     ("z3816a-4001.bin", 0x2ffb8, "z3816a.bit"),
@@ -29,8 +30,8 @@ const BITSTREAMS: [(&str, usize, &str); 8] = [
 
 /// The block after each image's bitstream, the readback mask, where it
 /// starts in each image, as `BITSTREAMS` orders them.
-const SECOND_BLOCKS: [usize; 8] = [
-    0x20ea2, 0x20c34, 0x20cfa, 0x21e36, 0x304c6, 0x325c4, 0x30ed6, 0x30f02,
+const SECOND_BLOCKS: [usize; 9] = [
+    0x20ea2, 0x20c34, 0x20cfa, 0x21e36, 0x21f62, 0x304c6, 0x325c4, 0x30ed6, 0x30f02,
 ];
 
 /// Each bitstream file's SHA-256, its first four bytes in hex, as the

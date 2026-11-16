@@ -8,7 +8,7 @@ is how the firmware loads the designs and how they are decoded.
 
 ## Provenance
 
-The eight firmware images carry six XC3042 bitstreams between them
+The nine firmware images carry six XC3042 bitstreams between them
 (`outputs.md`, "The FPGA bitstreams"); the designs they were built from
 are lost.  Each bitstream is decoded with a third-party viewer, the
 XC3000 viewer by Arisotura (<https://github.com/Arisotura/xc3000>),
@@ -59,7 +59,7 @@ smartclock-cli --test fpga_bitstreams`).
 
 | | Z3805A | 58503A/Z3801A | 58503B | Z3815A | Z3816A | Z3817A |
 | --- | --- | --- | --- | --- | --- | --- |
-| Images | Z3805A 3543B | 58503A 3633, 3704; Z3801A 3543 | 58503B 1.01.04 | Z3815A 4010 | Z3816A 4001 | Z3817A 3752 |
+| Images | Z3805A 3543B, 1.01.03 | 58503A 3633, 3704; Z3801A 3543 | 58503B 1.01.04 | Z3815A 4010 | Z3816A 4001 | Z3817A 3752 |
 | Logic blocks, I/O blocks, nets | 86, 36, 165 | 87, 35, 166 | 101, 36, 187 | 142, 56, 256 | 116, 41, 207 | 100, 20, 175 |
 | Bytes differing from the 58503A/Z3801A's | 1868 | 0 | 2347 | 3392 | 3315 | 3310 |
 | Global clocks, and the logic blocks each clocks | GCLK from P7, 44 | GCLK from P7, 45 | GCLK from P7, 55 | ACLK from P53, 17; GCLK, ACLK halved, 47 | ACLK from P53, 17; GCLK, ACLK halved, 42 | GCLK from P7, 45 |
@@ -415,10 +415,10 @@ nets it quotes that had them.
 
 ## Glossary
 
-- **Image, design.**  An image is one of the eight firmware builds
+- **Image, design.**  An image is one of the nine firmware builds
   (`third_party/firmware/images/`); a design is one of the six FPGA
   bitstreams they load.  The 58503A 3633 and 3704 and the Z3801A 3543
-  share one.
+  share one, and the Z3805A 3543B and 1.01.03 another.
 - **Logic block, tile.**  The XC3042's 12 by 12 array of configurable
   logic blocks (CLBs), named by tile: the first letter the row, the
   second the column, AA at the top left and LL at the bottom right.

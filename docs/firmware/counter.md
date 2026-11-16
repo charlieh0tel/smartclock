@@ -297,7 +297,7 @@ the byte's 255, a fraction up to about 1.2.
    `pps_interrupt`, normally the internal 1 PPS, in place of a reading:
    the pace a reading keeps when it completes about 0.4 s after the
    internal 1 PPS.  The same `0x199` is in the seven images read for
-   it, all but the Z3817A 3752 (the eight firmware images load six FPGA
+   it, all but the Z3817A 3752 (the nine firmware images load six FPGA
    designs between them: `outputs.md`, "The FPGA bitstreams").
 4. The other images' calibrations (the immediate before the
    `move.l #200` of each `counter_configuration_init`): 0.4000003 s in

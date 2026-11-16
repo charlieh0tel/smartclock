@@ -142,6 +142,12 @@ CALLEE_TIES_DIFFS = z3817a-3752:z3815a-4010
 SEEDED_IMAGES += 58503b-1.01.04
 DIFF_BASE_58503b-1.01.04 = z3817a-3752
 IMAGE_DIFFS += 58503b-1.01.04:z3816a-4001 58503b-1.01.04:58503a-3704 58503b-1.01.04:z3805a-3543b
+# The Z3805A 1.01.03's, seeded from the 58503B, and its diffs against
+# the Z3815A, its second base, and the Z3805A 3543B, whose installer and
+# layout it shares, the candidates docs/firmware/z3805a-1.01.03.md reads.
+SEEDED_IMAGES += z3805a-1.01.03
+DIFF_BASE_z3805a-1.01.03 = 58503b-1.01.04
+IMAGE_DIFFS += z3805a-1.01.03:z3815a-4010 z3805a-1.01.03:z3805a-3543b
 diff_image = $(word 1,$(subst :, ,$(1)))
 diff_base = $(word 2,$(subst :, ,$(1)))
 image_diff_tsv = $(ROOT)/docs/firmware/diff/$(call diff_image,$(1))-vs-$(call diff_base,$(1)).tsv
@@ -333,16 +339,16 @@ $(CPU32_LIBGCC): $(ROOT)/tools/firmware/cpu32_libgcc.py $(GCC_VENDORED)
 REPORT = report-decompiled.txt
 # The images whose function check the documents quote, each one's
 # sentences report_figures.py's CHECKS.
-REPORTED_IMAGES = z3805a-3543b 58503a-3704 z3801a-3543 z3815a-4010 z3817a-3752 z3816a-4001 58503b-1.01.04
+REPORTED_IMAGES = z3805a-3543b 58503a-3704 z3801a-3543 z3815a-4010 z3817a-3752 z3816a-4001 58503b-1.01.04 z3805a-1.01.03
 # And those whose C is not yet all hand-written, whose document quotes
 # its function check, any failures and all: report-decompiled fails for
 # one only where the check does not run to its figures (an exit status
 # other than 1, the failed functions'), and its figures are checked
 # without a link check, which it does not pass yet
 # (report_figures.py --unfinished).  The Z3815A 4010 left it once its
-# link check passed, and the Z3817A 3752, the Z3816A 4001 and the 58503B
-# 1.01.04, each one from its first export, once each joined common/ and
-# its link check passed; none is now.
+# link check passed, and the Z3817A 3752, the Z3816A 4001, the 58503B
+# 1.01.04 and the Z3805A 1.01.03, each one from its first export, once
+# each joined common/ and its link check passed; none is now.
 UNFINISHED_IMAGES =
 FIGURED_IMAGES = $(REPORTED_IMAGES) $(UNFINISHED_IMAGES)
 unfinished = $(filter $(1),$(UNFINISHED_IMAGES))
@@ -364,7 +370,8 @@ report_figures = python3 -I $(ROOT)/tools/firmware/report_figures.py --image $(1
 # docs/firmware/rewrite.md, docs/firmware/58503a-3704.md,
 # docs/firmware/z3801a-3543.md, docs/firmware/z3815a-4010.md,
 # docs/firmware/z3817a-3752.md, docs/firmware/z3816a-4001.md,
-# docs/firmware/58503b-1.01.04.md and README.md quote them -- are not what
+# docs/firmware/58503b-1.01.04.md, docs/firmware/z3805a-1.01.03.md and
+# README.md quote them -- are not what
 # the last make report-decompiled
 # and make check-link saved, or if any function of a reported image
 # failed; report-figures rewrites them.

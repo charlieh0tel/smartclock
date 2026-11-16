@@ -819,7 +819,19 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   leaving `UNFINISHED_IMAGES` empty.  Having no DUART,
   its export leaves `common/duart.h` out (`without=duart.h`), where a
   name the header's routines need would otherwise be laid over its
-  ACIA.
+  ACIA.  The Z3805A 1.01.03, a Furuno engine's Z3805A, was one from its
+  first export (2026-11-12) until its join (2026-11-15), the eighth
+  image to share `common/` and to be reported
+  (`docs/firmware/z3805a-1.01.03.md`, "Joining `common/`"), seeded
+  from the 58503B with the Z3815A as its second base, its hand-written
+  C the 58503B's copied; its installer, the Z3805A 3543B's byte for
+  byte, is named from the 3543B and its C is the 3543B's,
+  `common/installer/`'s and its own, copied (2026-11-12); its serial
+  drivers', GPS requests' and parameter record's C is its own, read
+  from its code where image_diff's relocated matches mask the
+  interrupt masks and fields that differ, and its GPS request codes its
+  own, read from its descriptor, step and script tables, two sentences
+  and two steps more than the Z3815A's (2026-11-13).
 - **Per-image tool tables**: what the function check gives an image
   other than the Z3805A 3543B is kept in tables keyed by image or held
   by its profile (`harness.IMAGE_PROFILES`, `IMAGE_KNOWN`,
@@ -890,15 +902,24 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   58503A, 2026-11-11; the Z3816A 4001's from the Z3815A, whose
   installer and layout it shares, its base the 58503A, which carries
   more of its primary); the Z3815A had named its SCI routines from the
-  Z3805A by hand rows instead.  A port's base is the image whose
+  Z3805A by hand rows instead.  A port whose installer is another
+  image's, not its base's, takes its installer from that image
+  (`Port.installer_base_folder`): the base gives the primary's rows
+  alone (`Port.regions`), and the installer's base its installer's,
+  with the RAM labels its installer's code places, each row noted as
+  the installer's base's; neither the base's installer rows nor its
+  installer's references give a row (the Z3805A 1.01.03's from the
+  Z3805A 3543B, 2026-11-12, where the 58503B's Vatican installer had
+  named the 3543B's USA installer's routines).  A port's base is the image whose
   matches carry the most of its primary's functions, identical or
   relocated, by
   `tools/firmware/base_figures.py`'s table in its document: the
   58503B's Z3817A carried one more than the Z3816A, whose share, of
   fewer functions, and bytes are higher (2026-11-12); it stays the base
   now that the joins have dropped from both the names that were other
-  routines' ends and the Z3816A carries one more (2026-11-13).  The
-  second base
+  routines' ends and the Z3816A carries one more (2026-11-13); the Z3805A
+  1.01.03's 58503B carries more than the Z3815A, which carries more
+  with the changed ones and leaves fewer new (2026-11-12).  The second base
   is the image whose matches carry the most of what the base's find
   new; only its own pairing being a lead keeps a function out, not a
   carried note's saying it was one in an earlier port, or a hand row

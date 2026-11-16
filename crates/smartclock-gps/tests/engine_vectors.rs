@@ -85,7 +85,7 @@ const FORMAT: &str = "oncore engine vectors 1";
 const WRITE_VARIABLE: &str = "ENGINE_VECTORS";
 const WRITE: &str = "write";
 /// How many vectors there are, so that none goes missing unseen.
-const VECTORS: usize = 55;
+const VECTORS: usize = 56;
 
 /// How far into a second its events fall.
 const EVENTS_AT: u64 = 500;

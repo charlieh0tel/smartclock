@@ -33,6 +33,7 @@ use common::unhex;
 use smartclock_gps::engine::Output;
 use smartclock_gps::engine::furuno::Engine;
 use smartclock_gps::engine::furuno::GT_74;
+use smartclock_gps::engine::furuno::GT_74_PULSE_EARLY;
 use smartclock_gps::engine::furuno::GT_74_WITHOUT_TIME_RAIM;
 use smartclock_gps::engine::furuno::Identity;
 use smartclock_gps::record::Fix;
@@ -51,7 +52,7 @@ use std::path::PathBuf;
 /// The format line every vector starts with.
 const FORMAT: &str = "furuno engine vectors 1";
 /// How many vectors there are, so that none goes missing unseen.
-const VECTORS: usize = 7;
+const VECTORS: usize = 8;
 /// What ends every sentence, which the vectors leave off.
 const LINE_END: &[u8] = b"\r\n";
 
@@ -60,6 +61,7 @@ fn identity(head: &Head) -> &'static Identity {
     match head.field("engine") {
         "gt-74" => &GT_74,
         "gt-74-without-time-raim" => &GT_74_WITHOUT_TIME_RAIM,
+        "gt-74-pulse-early" => &GT_74_PULSE_EARLY,
         other => panic!("no engine {other}"),
     }
 }

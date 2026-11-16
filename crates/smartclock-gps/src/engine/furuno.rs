@@ -129,7 +129,9 @@
 //! - **`set,t` puts the pulse earlier or later**: a negative correction
 //!   advances it (GT p. 11), as [`Settings::cable_delay`] does, and a
 //!   positive one, which an Oncore has no cable delay for, is
-//!   [`Settings::pulse_offset`].
+//!   [`Settings::pulse_offset`].  For the software the image adds 400 ns
+//!   to `t` for, [`GT_74_PULSE_EARLY`], the settings take those 400 ns
+//!   back off, its pulse being taken to come that much early.
 //! - **`rrs`'s alarm limit** is in tens of nanoseconds (GT p. 15) and
 //!   [`Settings::raim_alarm_limit`] in hundreds: the setting is the
 //!   limit truncated to its unit, `rsd` the limit as sent.  The image
@@ -245,11 +247,15 @@ pub struct Identity {
     version: u16,
     /// Whether it takes `rrs` and `rrq` and sends `rrm` and `rsd`.
     time_raim: bool,
+    /// How much earlier than its `t` says its software puts the 1 PPS
+    /// out.
+    pulse_early: Nanoseconds<u16>,
 }
 
 impl Identity {
-    /// A GT-74 of program `program` and version `version`.  `None` if
-    /// either is more than its digits hold.
+    /// A GT-74 of program `program` and version `version`, its pulse
+    /// where `t` puts it.  `None` if either is more than its digits
+    /// hold.
     #[must_use]
     pub const fn new(program: u32, version: u16, time_raim: bool) -> Option<Self> {
         if program > PROGRAM_MOST || version > VERSION_MOST {
@@ -259,7 +265,24 @@ impl Identity {
             program,
             version,
             time_raim,
+            pulse_early: Nanoseconds(0),
         })
+    }
+
+    /// The same GT-74, its software putting the 1 PPS out `early` before
+    /// where `t` puts it.
+    #[must_use]
+    pub const fn with_pulse_early(self, early: Nanoseconds<u16>) -> Self {
+        Self {
+            pulse_early: early,
+            ..self
+        }
+    }
+
+    /// How much earlier than `t` says its software puts the 1 PPS out.
+    #[must_use]
+    pub const fn pulse_early(&self) -> Nanoseconds<u16> {
+        self.pulse_early
     }
 
     /// Its program number.
@@ -286,6 +309,7 @@ pub const GT_74: Identity = Identity {
     program: 4_850_120,
     version: 1,
     time_raim: true,
+    pulse_early: Nanoseconds(0),
 };
 
 /// The GT-74 the image knows to have no Time RAIM: program `0x4a01c1`,
@@ -294,6 +318,21 @@ pub const GT_74_WITHOUT_TIME_RAIM: Identity = Identity {
     program: 4_850_113,
     version: 2,
     time_raim: false,
+    pulse_early: Nanoseconds(0),
+};
+
+/// The GT-74 whose cable delay the image corrects: program `0x4a01b6`,
+/// 4850102, version 8, to whose `t` the image adds 400 ns, sending
+/// `-(delay - 400)` (`GPS_SOFTWARE_CABLE_DELAY`,
+/// `GPS_CABLE_DELAY_CORRECTION`, `nmea_encode_cable_delay`).  That its
+/// software puts the pulse 400 ns earlier than `t` says, which the
+/// correction makes good, is inferred from the correction; so its
+/// [`Settings::cable_delay`] is the delay the image was asked for.
+pub const GT_74_PULSE_EARLY: Identity = Identity {
+    program: 4_850_102,
+    version: 8,
+    time_raim: true,
+    pulse_early: Nanoseconds(400),
 };
 
 /// A sentence the engine sends, in the order GT p. 4 gives them
@@ -861,7 +900,8 @@ impl State {
                 kind: HeightKind::MeanSeaLevel,
             },
         };
-        let correction = self.parameters.correction.0;
+        // Where the pulse goes: `t`, less how early the software puts it.
+        let correction = self.parameters.correction.0 - i32::from(self.identity.pulse_early.0);
         Settings {
             mask_angle: self.parameters.mask_angle,
             position_hold: self.parameters.holding(),

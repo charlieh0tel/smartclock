@@ -367,6 +367,31 @@ fn without_time_raim_there_is_no_rrm() {
     assert!(sent.0.is_empty());
 }
 
+/// The software the image corrects the cable delay of: told the
+/// `t` the image sends for a delay of 300 ns, `+000100`, it reports
+/// software `4850102008`, which the image keys the correction on, echoes
+/// the `t` as sent, which the image compares, and puts the pulse 300 ns
+/// early, where the same `t` puts another GT-74's 100 ns late.
+#[test]
+fn the_image_corrects_one_softwares_cable_delay() {
+    let now = Record::EMPTY;
+    let mut corrected = Engine::new(&super::GT_74_PULSE_EARLY);
+    let mut sent = Sent::default();
+    corrected.receive(
+        b"$PFEC,GPset,t+000100\r\n$PFEC,GPint,tst00\r\n$PFEC,GPsrq\r\n",
+        &now,
+        &mut sent,
+    );
+    assert_eq!(sent.only("$PFEC,GPtst"), "$PFEC,GPtst,0,4850102008,0,0");
+    assert!(sent.only("$PFEC,GPssd").ends_with(",t+000100"));
+    assert_eq!(corrected.settings().cable_delay, Nanoseconds(300));
+    assert_eq!(corrected.settings().pulse_offset, Nanoseconds(0));
+    let mut plain = Engine::new(&GT_74);
+    plain.receive(b"$PFEC,GPset,t+000100\r\n", &now, &mut sent);
+    assert_eq!(plain.settings().cable_delay, Nanoseconds(0));
+    assert_eq!(plain.settings().pulse_offset, Nanoseconds(100));
+}
+
 /// `tst` gives the identity's software and the record's faults (GT
 /// p. 31).
 #[test]

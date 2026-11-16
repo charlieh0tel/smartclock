@@ -1169,7 +1169,11 @@ stands in for one.
   `initial_position` and `held_position` both give it.  The image reads
   `MODEL # FURUNO GT-74` whatever the engine, and takes the engine's
   software from `tst`, which an `Identity` holds, with whether it has
-  Time RAIM.  A test holds every sentence it sends to the image's own
+  Time RAIM.  Three are built in: one made up, and the two the image
+  names, 4850113 v2 without Time RAIM and 4850102 v8, to whose `t` the
+  image adds 400 ns; that software is taken to put its pulse 400 ns
+  early, so its settings give the delay the image was asked for
+  (inferred from the correction, decided 2026-11-16).  A test holds every sentence it sends to the image's own
   table of what it takes, length, field count and each field's length.
 - **The model is held to recorded exchanges**:
   `crates/smartclock-gps/tests/vectors/engine/` holds scripted

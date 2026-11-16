@@ -630,8 +630,11 @@ mod tests {
     const SENT: Range<usize> = 0x5e3cc..0x5e64c;
     const SENT_ENTRY: usize = 0x20;
     const SENT_QUERY: usize = 0x16;
-    /// The address of the descriptors that only query, which is never
-    /// sent.
+    /// The address of the descriptors that only query, which is in no
+    /// specification and so not in the table.  The image does send it:
+    /// its command monitor's steps (`0x5e824`, `0x5e828`) are of mode 0,
+    /// so it sends `$PFEC,GPzzz` before each query
+    /// (`engine::furuno` ignores it).
     const PLACEHOLDER: &str = "zzz";
     /// Characters in a sentence's name.
     const NAME: usize = 3;

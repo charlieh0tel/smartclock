@@ -82,12 +82,16 @@ impl TimTp {
     }
 
     /// What a record makes of `raim` ("From messages to a record" in
-    /// the crate's documentation).
+    /// the crate's documentation): the solution is never known, the
+    /// message giving no RAIM result or alarm.
     pub(crate) fn time_raim(&self) -> Option<Raim> {
-        self.raim.map(|active| match (active, self.locked) {
-            (true, true) => Raim::new(RaimSolution::Ok, RaimAbility::Detection),
-            (true, false) => Raim::new(RaimSolution::Unknown, RaimAbility::Detection),
-            (false, _) => Raim::new(RaimSolution::Unknown, RaimAbility::Neither),
+        self.raim.map(|active| {
+            let ability = if active {
+                RaimAbility::Detection
+            } else {
+                RaimAbility::Neither
+            };
+            Raim::new(RaimSolution::Unknown, ability)
         })
     }
 }

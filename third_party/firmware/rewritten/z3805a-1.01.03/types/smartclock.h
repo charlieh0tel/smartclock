@@ -2374,8 +2374,8 @@ typedef struct nmea_anc_fields {
 /* acc (0x54c54), which the Z3815A 4010 does not decode: the satellites
  * a hex digit above '6' marks, each by its place in the field
  * (nmea_decode_satellite_bits, 0x534ea), which nmea_acc_commit puts onto
- * the status's channels (0x539a4).  What the sentence reports is not
- * established. */
+ * the status's channels (0x539a4).  The sentence is the GT-8031's SV
+ * accuracy, a hex digit or X for each satellite (GT p. 28). */
 typedef struct nmea_acc_fields {
   uint32_t satellites; /* 2 */
 } nmea_acc_fields;

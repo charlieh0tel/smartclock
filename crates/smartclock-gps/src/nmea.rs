@@ -9,8 +9,9 @@
 //! (`third_party/furuno/Furuno_GT8031_Protocol_Specification_Rev1.pdf`,
 //! pp. 2-3), the nearest to the Z3815A's engine that is at hand.
 //!
-//! [`SENTENCES`] lists every sentence the Z3815A's firmware sends or
-//! decodes, and no other, with how many fields each has.
+//! [`SENTENCES`] lists every sentence the firmware of the Z3815A or the
+//! Z3805A 1.01.03 sends or decodes, and no other, with how many fields
+//! each has.
 //!
 //! A page cited here is the one the specification prints, which is its
 //! PDF's page number less 3.
@@ -518,18 +519,20 @@ impl SentenceType {
     }
 }
 
-/// Every sentence the Z3815A's firmware sends its engine or decodes from
-/// it.
+/// Every sentence the firmware of the Z3815A 4010 or the Z3805A 1.01.03
+/// sends its engine or decodes from it.
 ///
 /// Each row cites the page of Furuno's GT-8031 protocol specification
 /// (`third_party/furuno/Furuno_GT8031_Protocol_Specification_Rev1.pdf`,
-/// by printed page) that gives its fields.  That the Z3815A uses them is
-/// `docs/firmware/gps.md`, "In every image": it sends the first eight,
-/// built by `gps_request_build`, and decodes the rest by its table
+/// by printed page) that gives its fields.  That the images use them is
+/// `docs/firmware/gps.md`, "In every image": they send the first eight,
+/// built by `gps_request_build`, and decode the rest by their tables
 /// `nmea_sentences`
-/// (`third_party/firmware/rewritten/z3815a-4010/gps_nmea.c`).  Tests
-/// check the names, and the counts of the ones it decodes, against the
-/// image's tables.
+/// (`third_party/firmware/rewritten/z3815a-4010/gps_nmea.c`), the
+/// 1.01.03's with `acc`
+/// (`third_party/firmware/rewritten/z3805a-1.01.03/gps_nmea.c`).  Tests
+/// check the names, and the counts of the ones they decode, against the
+/// images' tables.
 pub const SENTENCES: &[SentenceType] = &[
     // p. 10.
     SentenceType::sent("clr", Fields::exactly(1)),
@@ -561,6 +564,8 @@ pub const SENTENCES: &[SentenceType] = &[
     SentenceType::decoded("RMC", Fields::between(11, 12)),
     // p. 27.
     SentenceType::decoded("anc", Fields::exactly(2)),
+    // p. 28.  The Z3805A 1.01.03 decodes it, the Z3815A not.
+    SentenceType::decoded("acc", Fields::exactly(1)),
     // p. 31.
     SentenceType::decoded("tst", Fields::exactly(4)),
     // p. 32, which gives no count: one field for each parameter set.  The
@@ -614,20 +619,38 @@ mod tests {
     const TPS: &[u8] =
         b"$PFEC,GPtps,940630123000,2,0,1,000000000000,00,00,000000000000,0755,390600\r\n";
 
-    /// The Z3815A's image, from the crate's directory.
-    const IMAGE: &str = "../../third_party/firmware/images/z3815a-4010.bin";
-    /// The image's table of the sentences it decodes, `nmea_sentences`,
-    /// and its entry, `nmea_sentence_entry`: a pointer to the name, then
-    /// two signed bytes, the second the count of fields
-    /// (`third_party/firmware/rewritten/z3815a-4010/types/smartclock.h`).
-    const DECODED: usize = 0x5e32a;
+    /// One image that speaks NMEA to its engine: its file, from the
+    /// crate's directory; its table of the sentences it decodes,
+    /// `nmea_sentences`; and its table of the sentences it sends,
+    /// `gps_sentence_descriptors`
+    /// (`third_party/firmware/rewritten/IMAGE/types/smartclock.h` and
+    /// `check-layout.c`).
+    struct Image {
+        path: &'static str,
+        decoded: usize,
+        sent: Range<usize>,
+    }
+
+    /// The Z3815A 4010 and the Z3805A 1.01.03.
+    const IMAGES: [Image; 2] = [
+        Image {
+            path: "../../third_party/firmware/images/z3815a-4010.bin",
+            decoded: 0x5e32a,
+            sent: 0x5e3cc..0x5e64c,
+        },
+        Image {
+            path: "../../third_party/firmware/images/z3805a-1.01.03.bin",
+            decoded: 0x54dee,
+            sent: 0x54e9e..0x5515e,
+        },
+    ];
+    /// An entry of `nmea_sentences`, `nmea_sentence_entry`: a pointer to
+    /// the name, then two signed bytes, the second the count of fields.
     const DECODED_ENTRY: usize = 10;
     const DECODED_FIELDS: usize = 5;
-    /// The image's table of the sentences it sends,
-    /// `gps_sentence_descriptors`, and its entry,
+    /// An entry of `gps_sentence_descriptors`,
     /// `gps_sentence_descriptor`: pointers to the address and to the
     /// query's.
-    const SENT: Range<usize> = 0x5e3cc..0x5e64c;
     const SENT_ENTRY: usize = 0x20;
     const SENT_QUERY: usize = 0x16;
     /// The address of the descriptors that only query, which is in no
@@ -1016,8 +1039,8 @@ mod tests {
         assert_eq!(sentence_type(b"VTG"), None);
     }
 
-    fn image() -> Vec<u8> {
-        fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join(IMAGE)).expect("the image")
+    fn image(image: &Image) -> Vec<u8> {
+        fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join(image.path)).expect("the image")
     }
 
     /// The big-endian pointer at an offset of the image.
@@ -1039,52 +1062,66 @@ mod tests {
         (start != 0).then(|| String::from_utf8(bytes.to_vec()).expect("ASCII"))
     }
 
-    /// The table holds the sentences the image decodes and no other, and
-    /// each one's fields are the count the image's table takes.  That
+    /// The table holds the sentences the images decode and no other, and
+    /// each one's fields are the count each image's table takes.  That
     /// count is of the fields from the address on, one more with a
-    /// checksum, and negative for a sentence that may have more: `GSV`.
-    /// `RMC`'s is one under the specification's twelve fields and
-    /// checksum.
+    /// checksum, and negative for a sentence whose count the image does
+    /// not hold it to (`nmea_sentence_decode`), but for `GSV`, which may
+    /// have more.  `RMC`'s is one under the specification's twelve fields
+    /// and checksum.
     #[test]
-    fn the_table_matches_the_sentences_the_image_decodes() {
-        let image = image();
-        let decoded: BTreeMap<String, i8> = (DECODED..)
-            .step_by(DECODED_ENTRY)
-            .map_while(|at| {
-                let name = text(&image, at)?;
-                Some((name, i8::from_be_bytes([image[at + DECODED_FIELDS]])))
-            })
-            .collect();
+    fn the_table_matches_the_sentences_the_images_decode() {
+        const GSV: &str = "GSV";
+        let mut every = BTreeSet::new();
+        for image in &IMAGES {
+            let bytes = self::image(image);
+            let decoded: BTreeMap<String, i8> = (image.decoded..)
+                .step_by(DECODED_ENTRY)
+                .map_while(|at| {
+                    let name = text(&bytes, at)?;
+                    Some((name, i8::from_be_bytes([bytes[at + DECODED_FIELDS]])))
+                })
+                .collect();
+            for (name, count) in &decoded {
+                let row = sentence_type(name.as_bytes()).expect("a row");
+                let data = usize::from(count.unsigned_abs()) - row.class.address_fields();
+                if name == "RMC" {
+                    assert_eq!((row.fields.least, row.fields.most), (data - 1, data));
+                } else if name == GSV {
+                    assert!(*count < 0, "{name}");
+                    assert_eq!(row.fields.least, data, "{name}");
+                    assert!(row.fields.most > data, "{name}");
+                } else if *count > 0 {
+                    assert_eq!((row.fields.least, row.fields.most), (data, data), "{name}");
+                }
+                every.insert(name.clone());
+            }
+        }
         let ours: BTreeSet<&str> = SENTENCES
             .iter()
             .filter(|row| row.direction == Direction::FromEngine)
             .map(|row| row.name)
             .collect();
-        assert_eq!(ours, decoded.keys().map(String::as_str).collect());
-        for (name, count) in &decoded {
-            let row = sentence_type(name.as_bytes()).expect("a row");
-            let data = usize::from(count.unsigned_abs()) - row.class.address_fields();
-            if name == "RMC" {
-                assert_eq!((row.fields.least, row.fields.most), (data - 1, data));
-            } else if *count < 0 {
-                assert_eq!(row.fields.least, data, "{name}");
-                assert!(row.fields.most > data, "{name}");
-            } else {
-                assert_eq!((row.fields.least, row.fields.most), (data, data), "{name}");
-            }
-        }
+        assert_eq!(ours, every.iter().map(String::as_str).collect());
     }
 
-    /// The table holds the sentences the image sends and no other: each
+    /// The table holds the sentences the images send and no other: each
     /// descriptor's address and query, but the placeholder's.
     #[test]
-    fn the_table_matches_the_sentences_the_image_sends() {
-        let image = image();
-        let sent: BTreeSet<String> = SENT
-            .step_by(SENT_ENTRY)
-            .flat_map(|at| [text(&image, at), text(&image, at + SENT_QUERY)])
-            .flatten()
-            .map(|address| address[..NAME].to_string())
+    fn the_table_matches_the_sentences_the_images_send() {
+        let sent: BTreeSet<String> = IMAGES
+            .iter()
+            .flat_map(|image| {
+                let bytes = self::image(image);
+                image
+                    .sent
+                    .clone()
+                    .step_by(SENT_ENTRY)
+                    .flat_map(|at| [text(&bytes, at), text(&bytes, at + SENT_QUERY)])
+                    .flatten()
+                    .map(|address| address[..NAME].to_string())
+                    .collect::<Vec<_>>()
+            })
             .filter(|name| name != PLACEHOLDER)
             .collect();
         let ours: BTreeSet<&str> = SENTENCES

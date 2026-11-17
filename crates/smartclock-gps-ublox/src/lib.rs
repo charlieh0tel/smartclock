@@ -147,12 +147,12 @@
 //!   before the epoch's end gave it, and none from a receiver that
 //!   sends no `TIM-TP` or has no information.  The document says only
 //!   whether the receiver's (T)RAIM is active, so what a record makes
-//!   of it is this crate's reading: active with the pulse locked to
-//!   the satellites, the solution is good and a bad satellite can be
-//!   detected; active and not locked, the solution is not known; not
-//!   active, the solution is not known and nothing can be detected.
-//!   No satellite is given as isolated, and isolation is never
-//!   claimed.
+//!   of it is this crate's reading: active, a bad satellite can be
+//!   detected; not active, nothing can be.  The solution is always
+//!   [`RaimSolution::Unknown`](smartclock_gps::record::RaimSolution::Unknown),
+//!   the message giving no RAIM result or alarm: a receiver alarming
+//!   on a bad satellite may still have its pulse locked.  No satellite
+//!   is given as isolated, and isolation is never claimed.
 //! - **The almanac** is gathered from the GPS subframes of `RXM-SFRBX`,
 //!   decoded by [`subframe`], across epochs, each page the last one
 //!   broadcast.  A record has it from the first epoch's end after

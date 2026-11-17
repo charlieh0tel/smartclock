@@ -1149,14 +1149,16 @@ fn tim_tp_is_decoded() {
 }
 
 /// A record's Time RAIM result is the last `TIM-TP`'s, read as the
-/// crate's documentation says, and none without one.
+/// crate's documentation says, and none without one.  Its solution is
+/// never known, even active with the pulse locked: the message gives no
+/// RAIM result.
 #[test]
 fn time_raim_is_the_last_pulses() {
     for (flags, raim) in [
         (0, None),
         (
             RAIM_ACTIVE,
-            Some(Raim::new(RaimSolution::Ok, RaimAbility::Detection)),
+            Some(Raim::new(RaimSolution::Unknown, RaimAbility::Detection)),
         ),
         (
             RAIM_ACTIVE | NOT_LOCKED,
@@ -1366,7 +1368,7 @@ fn an_epoch_makes_a_record() {
     assert_eq!(record.self_test, SelfTest::PASS);
     assert_eq!(
         record.derived.raim,
-        Some(Raim::new(RaimSolution::Ok, RaimAbility::Detection))
+        Some(Raim::new(RaimSolution::Unknown, RaimAbility::Detection))
     );
     assert_eq!(
         record.derived.ecef,

@@ -1253,7 +1253,8 @@ stands in for one.
   granted each a row (2026-11-16): the self-test as a pass, the almanac
   (the u-blox crate's from `RXM-SFRBX`), and
   the Time RAIM result from the scene's sky and from a u-blox
-  receiver's `TIM-TP`.  Every field of a response
+  receiver's `TIM-TP`, whose solution is always unknown, `TIM-TP`
+  giving no RAIM result or alarm.  Every field of a response
   is now the record's, the model's state or the manual's value for not
   known, a channel's URA of 63 the one such value; `RECORD_BYTES_MAX`
   went from 640 to 704 for it.  A command is one of three classes, the

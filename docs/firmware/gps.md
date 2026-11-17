@@ -1224,7 +1224,9 @@ specification; in short:
   antenna off unknown and neither.  The u-blox crate's is `TIM-TP`'s
   `raim` (UBX-13003221 R28, p. 433), which says only whether the
   receiver's (T)RAIM is active; what a record makes of that is the
-  crate's reading, in its documentation.
+  crate's reading, in its documentation: whether a bad satellite can
+  be detected, with the solution always unknown, the message giving
+  no RAIM result or alarm.
 - **A record's Time RAIM result goes no further than the model's
   own.**  With Time RAIM off, the alarm limit too low for the
   satellites tracked or none tracked, the solution is unknown and

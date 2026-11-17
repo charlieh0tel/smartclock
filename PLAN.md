@@ -1614,8 +1614,13 @@ stands in for one.
   always paced to real time (`Driver::Paced`): a live source admits no
   other driver, and free running is not wanted yet.  A second starts
   on each whole second of the host's clock, and half a second in for
-  gpsd, whose epoch arrives after the second it is of; a jump of the
-  clock restarts the count rather than bursting seconds.  The 1 PPS is
+  gpsd, whose epoch arrives after the second it is of.  The host's
+  clock is read against the monotonic one, so the two things that make
+  a second late are told apart: a step of the clock, either way,
+  restarts the count from the next whole second rather than bursting
+  seconds or waiting a step back out, and a loop held up with the
+  clock unstepped skips the seconds it missed, unstepped, so a made-up
+  sky's time stays the clock's.  The 1 PPS is
   not carried: the instrument's comes from elsewhere, or not at all.
   Plain threads, not tokio: one loop owns the engine and the link with
   a read timeout up to the next second, and gpsd's reader is a second

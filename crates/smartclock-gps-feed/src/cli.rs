@@ -169,9 +169,9 @@ pub(crate) enum Saved {
 }
 
 impl Saved {
-    const fn configuration(self) -> &'static SavedConfiguration {
+    const fn configuration(self) -> SavedConfiguration {
         match self {
-            Self::Receiver58503A => &CONFIGURATION_58503A,
+            Self::Receiver58503A => CONFIGURATION_58503A,
         }
     }
 }
@@ -687,7 +687,7 @@ mod tests {
         .unwrap();
         assert_eq!(oncore(&config).0, &VP_EIGHT);
         assert!(oncore(&config).1.deaf);
-        assert_eq!(oncore(&config).1.saved, Some(&CONFIGURATION_58503A));
+        assert_eq!(oncore(&config).1.saved, Some(CONFIGURATION_58503A));
         assert_eq!(
             config.transport,
             TransportSpec::Listen("127.0.0.1:4000".to_owned())

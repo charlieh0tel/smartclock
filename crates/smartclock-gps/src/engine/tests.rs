@@ -1047,7 +1047,7 @@ const STATUS_EVERY_OTHER_SECOND: SavedConfiguration = SavedConfiguration {
 fn an_engine_saved_to_send_its_status_unasked_does() {
     let mut options = Options::DEFAULT;
     options.deaf = true;
-    options.saved = Some(&STATUS_EVERY_OTHER_SECOND);
+    options.saved = Some(STATUS_EVERY_OTHER_SECOND);
     let mut engine = Engine::new(&VP_SIX, options).expect("an engine that powers up");
     assert!(engine.fixing());
     let record = full();
@@ -1078,14 +1078,10 @@ fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
         raim_alarm_limit: HundredNanoseconds(2),
         ..CONFIGURATION_58503A
     };
-    let cases: [(
-        &'static Identity,
-        &'static SavedConfiguration,
-        ConfigurationError,
-    ); 4] = [
+    let cases: [(&'static Identity, SavedConfiguration, ConfigurationError); 4] = [
         (
             &VP_SIX,
-            &EIGHT,
+            EIGHT,
             ConfigurationError::Channels {
                 saved: ChannelCount::Eight,
                 identity: ChannelCount::Six,
@@ -1093,16 +1089,16 @@ fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
         ),
         (
             &VP_EIGHT,
-            &STATUS_EVERY_OTHER_SECOND,
+            STATUS_EVERY_OTHER_SECOND,
             ConfigurationError::Channels {
                 saved: ChannelCount::Six,
                 identity: ChannelCount::Eight,
             },
         ),
-        (&UT_PLUS_2_2, &IDLE, ConfigurationError::Idle),
+        (&UT_PLUS_2_2, IDLE, ConfigurationError::Idle),
         (
             &VP_EIGHT,
-            &LOW_LIMIT,
+            LOW_LIMIT,
             ConfigurationError::AlarmLimit {
                 limit: HundredNanoseconds(2),
             },
@@ -1114,7 +1110,7 @@ fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
         assert_eq!(Engine::new(identity, options).err(), Some(error));
     }
     let mut options = Options::DEFAULT;
-    options.saved = Some(&IDLE);
+    options.saved = Some(IDLE);
     assert!(
         !Engine::new(&VP_EIGHT, options)
             .expect("an idle VP")
@@ -1123,7 +1119,7 @@ fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
 }
 
 /// An engine made with `saved`, `deaf` or not.
-fn saved_as(identity: &'static Identity, saved: &'static SavedConfiguration, deaf: bool) -> Engine {
+fn saved_as(identity: &'static Identity, saved: SavedConfiguration, deaf: bool) -> Engine {
     let mut options = Options::DEFAULT;
     options.saved = Some(saved);
     options.deaf = deaf;
@@ -1160,7 +1156,7 @@ fn an_engine_saved_as_a_58503a_leaves_it_sends_unasked() {
     let record = full();
     for identity in [&VP_EIGHT, &UT_PLUS_2_2] {
         for deaf in [false, true] {
-            let mut engine = saved_as(identity, &CONFIGURATION_58503A, deaf);
+            let mut engine = saved_as(identity, CONFIGURATION_58503A, deaf);
             assert!(engine.fixing());
             let seconds = 2 * u64::from(ALERT_PERIOD.0);
             let sent = ids_each_second(&mut engine, &record, seconds);
@@ -1174,7 +1170,7 @@ fn an_engine_saved_as_a_58503a_leaves_it_sends_unasked() {
             }
         }
     }
-    let mut engine = saved_as(&VP_EIGHT, &CONFIGURATION_58503A, false);
+    let mut engine = saved_as(&VP_EIGHT, CONFIGURATION_58503A, false);
     let mut sent = Sent::default();
     engine.second(&record, NOW, &mut sent);
     let [status, traim] = &sent.0[..] else {
@@ -1189,7 +1185,7 @@ fn an_engine_saved_as_a_58503a_leaves_it_sends_unasked() {
 /// What it is saved as, an engine reports as its settings.
 #[test]
 fn an_engine_saved_as_a_58503a_leaves_it_has_its_settings() {
-    let engine = saved_as(&VP_EIGHT, &CONFIGURATION_58503A, false);
+    let engine = saved_as(&VP_EIGHT, CONFIGURATION_58503A, false);
     let mut expected = defaults();
     expected.raim_algorithm = true;
     expected.raim_alarm_limit = HundredNanoseconds(10);
@@ -1204,7 +1200,7 @@ fn an_engine_saved_as_a_58503a_leaves_it_has_its_settings() {
 #[test]
 fn set_to_defaults_puts_back_the_defaults_not_what_was_saved() {
     let record = full();
-    let mut engine = saved_as(&VP_EIGHT, &CONFIGURATION_58503A, false);
+    let mut engine = saved_as(&VP_EIGHT, CONFIGURATION_58503A, false);
     assert_eq!(
         tell(&mut engine, CF_SET_TO_DEFAULTS, &[]),
         [Event::Reset, changed(&[Setting::RaimAlgorithm])]
@@ -1219,7 +1215,7 @@ fn set_to_defaults_puts_back_the_defaults_not_what_was_saved() {
     let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
     assert_eq!(only(&frames, EA_POSITION_STATUS).len(), 76 - OVERHEAD);
 
-    let mut engine = saved_as(&UT_PLUS_2_2, &CONFIGURATION_58503A, false);
+    let mut engine = saved_as(&UT_PLUS_2_2, CONFIGURATION_58503A, false);
     tell(&mut engine, CF_SET_TO_DEFAULTS, &[]);
     assert!(engine.fixing());
     assert!(
@@ -1228,7 +1224,7 @@ fn set_to_defaults_puts_back_the_defaults_not_what_was_saved() {
             .all(Vec::is_empty)
     );
 
-    let mut engine = saved_as(&VP_EIGHT, &CONFIGURATION_58503A, false);
+    let mut engine = saved_as(&VP_EIGHT, CONFIGURATION_58503A, false);
     assert!(engine.fixing());
     assert_eq!(
         ids_each_second(&mut engine, &record, 1),

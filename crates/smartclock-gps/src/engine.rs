@@ -236,7 +236,7 @@ pub struct Options {
     /// configured before it was last turned off
     /// ([`saved`]).  `None` for one that powers
     /// up as it left the factory and waits to be told.
-    pub saved: Option<&'static SavedConfiguration>,
+    pub saved: Option<SavedConfiguration>,
 }
 
 impl Options {
@@ -1006,7 +1006,7 @@ impl Engine {
                 if let Err(error) = saved.check(model) {
                     return Err(error);
                 }
-                State::saved(model, saved)
+                State::saved(model, &saved)
             }
         };
         Ok(Self {

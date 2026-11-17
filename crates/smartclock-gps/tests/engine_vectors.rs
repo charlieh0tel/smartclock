@@ -117,10 +117,10 @@ fn options(head: &Head) -> Options {
     options.saved = match head.field("saved") {
         "none" => None,
         "status-every-other-second" => Some(match ChannelCount::of(identity(head).model()) {
-            ChannelCount::Six => &STATUS_EVERY_OTHER_SECOND_SIX,
-            ChannelCount::Eight => &STATUS_EVERY_OTHER_SECOND_EIGHT,
+            ChannelCount::Six => STATUS_EVERY_OTHER_SECOND_SIX,
+            ChannelCount::Eight => STATUS_EVERY_OTHER_SECOND_EIGHT,
         }),
-        "58503a" => Some(&CONFIGURATION_58503A),
+        "58503a" => Some(CONFIGURATION_58503A),
         other => panic!("no saved configuration {other}"),
     };
     options

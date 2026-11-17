@@ -242,8 +242,11 @@ output of every device it has, so it should have one receiver only.
 
 `--eight-on-ea`, `--saved` and `--deaf` are an Oncore's alone, and
 refused with a GT-74.  `--fake-start RFC3339` relabels any provider's
-time;
-`smartclock-gps-feed --help` has the rest, and `PLAN.md` the design.
+time: its first second reads as that UTC second under the provider's
+own GPS less UTC, which a recording or gpsd gives in its first record
+that has one (until then it is taken to be 18, the made-up sky's), and
+GPS less UTC stays at it.  `smartclock-gps-feed --help` has the rest,
+and `PLAN.md` the design.
 
 ## Development
 

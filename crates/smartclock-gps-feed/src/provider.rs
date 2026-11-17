@@ -164,19 +164,23 @@ fn gps(utc: UnixSeconds) -> Result<GpsSeconds> {
 /// `now` being the UTC second the first tick goes out in.  A recording is
 /// read whole.  Refuses one the driver, paced to real time, cannot
 /// serve.
+///
+/// A fake start is a UTC second.  The made-up sky's GPS time is the
+/// one that UTC second is under its own offset; a recording's or
+/// gpsd's, the one it is under theirs, frozen at the first record's
+/// that has one and taken to be the sky's until then.
 pub(crate) fn build(
     spec: &ProviderSpec,
     fake_start: Option<UnixSeconds>,
     now: UnixSeconds,
 ) -> Result<Built> {
-    let fake_start = fake_start.map(gps).transpose()?;
     let (provider, relabel, leap) = match spec {
         ProviderSpec::Fixed => {
-            let start = fake_start.map_or_else(|| gps(now), Ok)?;
+            let start = gps(fake_start.unwrap_or(now))?;
             (scene_from(start)?, Relabel::Keep, None)
         }
         ProviderSpec::Leap(event) => {
-            let start = match fake_start {
+            let start = match fake_start.map(gps).transpose()? {
                 Some(start) => start,
                 None => event
                     .at
@@ -203,9 +207,13 @@ pub(crate) fn build(
     })
 }
 
-const fn relabel(fake_start: Option<GpsSeconds>) -> Relabel {
+/// What a fake start makes of a recording's or gpsd's time.
+const fn relabel(fake_start: Option<UnixSeconds>) -> Relabel {
     match fake_start {
-        Some(start) => Relabel::Start(start),
+        Some(start) => Relabel::StartUtc {
+            start,
+            assumed: UTC_OFFSET,
+        },
         None => Relabel::Keep,
     }
 }
@@ -371,6 +379,7 @@ pub(crate) mod tests {
     use smartclock_gps::time::GpsWeek;
     use smartclock_gps::time::LeapChange;
     use smartclock_gps::time::LeapEvent;
+    use smartclock_gps::time::UnixSeconds;
     use smartclock_gps::units::Milliseconds;
     use smartclock_gps::units::Nanoseconds;
     use smartclock_gps::units::Seconds;
@@ -397,6 +406,8 @@ pub(crate) mod tests {
     const MILLISECONDS_PER_SECOND: u32 = 1000;
     /// GPS less UTC in it.
     const LEAP_SECONDS: i8 = 18;
+    /// GPS less UTC in a recording made before the end of 2016.
+    const OLD_LEAP_SECONDS: i8 = 17;
     /// The epochs in it.
     pub(crate) const EPOCHS: u32 = 3;
     /// How long a test waits for gpsd's reader.
@@ -419,8 +430,9 @@ pub(crate) mod tests {
 
     /// One epoch of a u-blox receiver with a 3D fix: `NAV-PVT` (UBX-13003221
     /// R28 pp. 375-378), `NAV-TIMEGPS` (p. 397) with its time of week,
-    /// week and leap seconds valid, and `NAV-EOE` (p. 363).
-    fn epoch(time_of_week: u32) -> Vec<u8> {
+    /// week and leap seconds, `leap_seconds`, valid, and `NAV-EOE`
+    /// (p. 363).
+    fn epoch(time_of_week: u32, leap_seconds: i8) -> Vec<u8> {
         let tow = time_of_week.to_le_bytes();
         let pvt: [u8; 92] = payload(&[
             (0, &tow),
@@ -433,7 +445,7 @@ pub(crate) mod tests {
         let time: [u8; 16] = payload(&[
             (0, &tow),
             (8, &WEEK.to_le_bytes()),
-            (10, &LEAP_SECONDS.to_le_bytes()),
+            (10, &leap_seconds.to_le_bytes()),
             (11, &[0x07]),
         ]);
         [
@@ -447,9 +459,14 @@ pub(crate) mod tests {
     /// A recording of [`EPOCHS`] epochs a second apart, with gpsd's JSON
     /// greeting in front, as `gpspipe -R` can leave it.
     pub(crate) fn capture() -> Vec<u8> {
+        capture_of(LEAP_SECONDS)
+    }
+
+    /// [`capture`], GPS less UTC in it `leap_seconds`.
+    fn capture_of(leap_seconds: i8) -> Vec<u8> {
         let mut bytes = b"{\"class\":\"VERSION\",\"release\":\"3.25\"}\r\n".to_vec();
         for second in 0..EPOCHS {
-            bytes.extend(epoch(NOON + second * MILLISECONDS_PER_SECOND));
+            bytes.extend(epoch(NOON + second * MILLISECONDS_PER_SECOND, leap_seconds));
         }
         bytes
     }
@@ -499,21 +516,56 @@ pub(crate) mod tests {
         );
     }
 
-    /// A recording from a file, as the command line names one.
-    #[test]
-    fn a_ubx_file_is_read_whole() {
+    /// Builds the provider of a UBX file holding `bytes`, as the command
+    /// line names one, `name` telling the test's file apart.
+    fn from_file(bytes: &[u8], name: &str, fake_start: Option<UnixSeconds>) -> Built {
         let path = std::env::temp_dir().join(format!(
-            "smartclock-gps-feed-test-{}.ubx",
+            "smartclock-gps-feed-test-{name}-{}.ubx",
             std::process::id()
         ));
-        std::fs::write(&path, capture()).unwrap();
-        let Built { mut nest, kind } = build(
+        std::fs::write(&path, bytes).unwrap();
+        let built = build(
             &ProviderSpec::Ubx(path.clone()),
-            None,
+            fake_start,
             DateTime::new(2026, 1, 1, 0, 0, 0).unwrap().to_unix(),
         )
         .unwrap();
         std::fs::remove_file(&path).unwrap();
+        built
+    }
+
+    /// A fake start is the UTC second a recording's first epoch reads,
+    /// under the recording's own GPS less UTC, not the made-up sky's.
+    #[test]
+    fn a_fake_start_reads_as_given_under_the_sources_offset() {
+        let fake = DateTime::new(2027, 12, 31, 23, 58, 0).unwrap();
+        for leap_seconds in [LEAP_SECONDS, OLD_LEAP_SECONDS] {
+            let Built { mut nest, .. } = from_file(
+                &capture_of(leap_seconds),
+                &format!("fake-{leap_seconds}"),
+                Some(fake.to_unix()),
+            );
+            let mut record = Record::EMPTY;
+            for tick in 0..EPOCHS {
+                assert_eq!(
+                    nest.record(Tick(u64::from(tick)), &mut record),
+                    Presence::Fresh
+                );
+                assert_eq!(record.utc_offset, Some(Seconds(leap_seconds)));
+                assert_eq!(
+                    DateTime::of(record.time.unwrap().seconds, Seconds(leap_seconds), None)
+                        .unwrap(),
+                    DateTime::new(2027, 12, 31, 23, 58, u8::try_from(tick).unwrap()).unwrap(),
+                    "{leap_seconds}"
+                );
+            }
+        }
+    }
+
+    /// A recording from a file, as the command line names one.
+    #[test]
+    fn a_ubx_file_is_read_whole() {
+        let Built { mut nest, kind } = from_file(&capture(), "whole", None);
         assert_eq!(kind, Kind::Recording);
         let mut record = Record::EMPTY;
         assert_eq!(nest.record(Tick(2), &mut record), Presence::Fresh);

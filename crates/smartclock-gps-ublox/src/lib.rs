@@ -113,7 +113,8 @@
 //!   solution (section 9.3, p. 27).  `NAV-EOE` ends an epoch; so does a
 //!   navigation message with another `iTOW`, for a receiver that sends
 //!   no `NAV-EOE` or a stream that lost one, and then the record comes
-//!   a message late.  Nothing from one `iTOW` is put with another's.
+//!   a message late.  Nothing from one `iTOW` is put with another's,
+//!   but for a lost `NAV-SAT`'s sky (below).
 //! - **Time** is `NAV-TIMEGPS`'s, to the nearest second, and only from
 //!   an epoch whose `NAV-PVT` has `gnssFixOK` set and whose
 //!   `NAV-TIMEGPS` has a valid time of week and week: without a fix the
@@ -142,7 +143,19 @@
 //!   the document not saying in which second `currLs` steps.
 //! - **Satellites** are `NAV-SAT`'s GPS ones with a known place in the
 //!   sky, those used in the fix first, and the lowest left out if there
-//!   are more than a record holds.
+//!   are more than a record holds.  An epoch with a fix and no `NAV-SAT`
+//!   of its own, one the receiver did not send or that was lost on the
+//!   way, has the last
+//!   `NAV-SAT`'s satellites if that came no more than three seconds of
+//!   `iTOW` before it, three epochs at one a second: a receiver does
+//!   not lose its sky with a message, and an engine given none would
+//!   report no satellites tracked for that second.  A longer loss, or
+//!   an epoch without a fix, has none, as a receiver that sends no
+//!   `NAV-SAT` does.  Such epochs after the stream's first `NAV-SAT`
+//!   are counted
+//!   ([`Assembler::lost_skies`](assembler::Assembler::lost_skies)):
+//!   a `NAV-SAT` that never came whole is no frame error, and only
+//!   that count shows it.
 //! - **Time RAIM** is `TIM-TP`'s `raim` (p. 433), as the last one
 //!   before the epoch's end gave it, and none from a receiver that
 //!   sends no `TIM-TP` or has no information.  The document says only

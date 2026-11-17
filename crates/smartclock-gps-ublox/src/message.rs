@@ -11,6 +11,7 @@ use crate::frame::Header;
 use crate::frame::MessageId;
 use crate::mon::MonHw;
 use crate::nav::NAV_SAT_BLOCK;
+use crate::nav::NAV_SAT_COUNT;
 use crate::nav::NAV_SAT_HEADER;
 use crate::nav::NavClock;
 use crate::nav::NavDop;
@@ -25,10 +26,12 @@ use crate::nav::NavVelEcef;
 use crate::nav::SatelliteInfo;
 use crate::rxm::Measurement;
 use crate::rxm::RAWX_BLOCK;
+use crate::rxm::RAWX_COUNT;
 use crate::rxm::RAWX_HEADER;
 use crate::rxm::RxmRawx;
 use crate::rxm::RxmRawxHeader;
 use crate::rxm::RxmSfrbx;
+use crate::rxm::SFRBX_COUNT;
 use crate::rxm::SFRBX_HEADER;
 use crate::rxm::SFRBX_WORD;
 use crate::tim::TimTp;
@@ -87,12 +90,15 @@ pub const TIM_TP: MessageId = MessageId::new(CLASS_TIM, 0x01);
 pub enum PayloadLength {
     /// Always this many bytes.
     Fixed(usize),
-    /// `header` bytes and any number of blocks of `block`.
+    /// `header` bytes and any number of blocks of `block`, the header
+    /// giving their count in its byte at `count`.
     Blocks {
         /// The bytes before the first block.
         header: usize,
         /// Each block's bytes.
         block: usize,
+        /// Where in the header the count of blocks is.
+        count: usize,
     },
 }
 
@@ -102,7 +108,7 @@ impl PayloadLength {
     pub const fn allows(self, length: usize) -> bool {
         match self {
             Self::Fixed(fixed) => length == fixed,
-            Self::Blocks { header, block } => {
+            Self::Blocks { header, block, .. } => {
                 length >= header && (length - header).is_multiple_of(block)
             }
         }
@@ -124,6 +130,7 @@ pub const MESSAGES: [(MessageId, PayloadLength); 15] = [
         PayloadLength::Blocks {
             header: NAV_SAT_HEADER,
             block: NAV_SAT_BLOCK,
+            count: NAV_SAT_COUNT,
         },
     ),
     (NAV_EOE, PayloadLength::Fixed(4)),
@@ -132,6 +139,7 @@ pub const MESSAGES: [(MessageId, PayloadLength); 15] = [
         PayloadLength::Blocks {
             header: SFRBX_HEADER,
             block: SFRBX_WORD,
+            count: SFRBX_COUNT,
         },
     ),
     (
@@ -139,6 +147,7 @@ pub const MESSAGES: [(MessageId, PayloadLength); 15] = [
         PayloadLength::Blocks {
             header: RAWX_HEADER,
             block: RAWX_BLOCK,
+            count: RAWX_COUNT,
         },
     ),
     (ACK_NAK, PayloadLength::Fixed(2)),
@@ -162,11 +171,29 @@ pub fn payload_length(id: MessageId) -> Option<PayloadLength> {
 /// decoded whole.
 pub const STREAMED: [MessageId; 2] = [NAV_SAT, RXM_RAWX];
 
-/// A streamed message's header's and block's lengths; `None` for a
-/// message not streamed.
-pub(crate) fn streamed_layout(id: MessageId) -> Option<(usize, usize)> {
+/// How a streamed message's payload is cut.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct Layout {
+    /// The header's length.
+    pub(crate) header: usize,
+    /// Each block's.
+    pub(crate) block: usize,
+    /// Where in the header the count of blocks is.
+    pub(crate) count: usize,
+}
+
+/// A streamed message's layout; `None` for a message not streamed.
+pub(crate) fn streamed_layout(id: MessageId) -> Option<Layout> {
     match payload_length(id).filter(|_| STREAMED.contains(&id))? {
-        PayloadLength::Blocks { header, block } => Some((header, block)),
+        PayloadLength::Blocks {
+            header,
+            block,
+            count,
+        } => Some(Layout {
+            header,
+            block,
+            count,
+        }),
         PayloadLength::Fixed(_) => None,
     }
 }
@@ -181,7 +208,7 @@ pub const LONGEST_PART: usize = {
         let mut streamed = 0;
         while streamed < STREAMED.len() {
             let other = STREAMED[streamed];
-            if let PayloadLength::Blocks { header, block } = length
+            if let PayloadLength::Blocks { header, block, .. } = length
                 && other.class == id.class
                 && other.id == id.id
             {

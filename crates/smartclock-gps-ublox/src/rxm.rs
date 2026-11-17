@@ -17,10 +17,14 @@ use crate::units::F64Bits;
 pub(crate) const RAWX_HEADER: usize = 16;
 /// One measurement's block of `RXM-RAWX`.
 pub(crate) const RAWX_BLOCK: usize = 32;
+/// Where in `RXM-RAWX`'s header its count of blocks, `numMeas`, is.
+pub(crate) const RAWX_COUNT: usize = 11;
 /// `RXM-SFRBX`'s payload before its first word.
 pub(crate) const SFRBX_HEADER: usize = 8;
 /// One word of `RXM-SFRBX`.
 pub(crate) const SFRBX_WORD: usize = 4;
+/// Where in `RXM-SFRBX`'s header its count of words, `numWords`, is.
+pub(crate) const SFRBX_COUNT: usize = 4;
 
 /// `RXM-RAWX`'s `recStat` bits.
 const RAWX_LEAP_KNOWN: u32 = 0;
@@ -63,7 +67,7 @@ impl RxmRawxHeader {
     /// The header of a payload with `blocks` measurements after it.
     /// `None` for a `numMeas` that is not `blocks`.
     pub(crate) fn parse(fields: Fields<'_>, blocks: usize) -> Option<Self> {
-        let measurements = fields.u8(11);
+        let measurements = fields.u8(RAWX_COUNT);
         (usize::from(measurements) == blocks).then(|| Self {
             receiver_time_of_week: F64Bits(fields.u64(0)),
             week: fields.u16(8),
@@ -201,7 +205,7 @@ impl<'a> RxmSfrbx<'a> {
     pub(crate) fn parse(payload: &'a [u8]) -> Option<Self> {
         let fields = Fields(payload);
         let words = payload.get(SFRBX_HEADER..)?;
-        let count = fields.u8(4);
+        let count = fields.u8(SFRBX_COUNT);
         (usize::from(count) * SFRBX_WORD == words.len()).then(|| Self {
             system: fields.u8(0),
             id: fields.u8(1),

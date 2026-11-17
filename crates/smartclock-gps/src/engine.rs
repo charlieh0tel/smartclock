@@ -80,7 +80,11 @@
 //! What commands have set the engine to, a holder reads as types:
 //! [`Engine::settings`] gives the [`Settings`], and
 //! [`Engine::receive`] returns the [`Events`] its commands made, a
-//! reset to defaults and which settings changed.
+//! reset to defaults and which settings changed.  Whoever makes the
+//! 1 PPS gates it by [`Engine::pulsing`], which applies the 1PPS
+//! control mode (VP p. 102) as the engine's Time RAIM message reports
+//! it, so it need not copy the rule; [`Engine::tracking`] says whether
+//! the engine tracks a satellite, the mode's condition for a pulse.
 //!
 //! The Z3815A's Furuno GT-74 has a model of its own, [`furuno`], which
 //! shares [`Output`], the [`Settings`] and the [`Events`] with this one.
@@ -1038,6 +1042,32 @@ impl Engine {
         self.state.fixing
     }
 
+    /// Whether it tracks a satellite of `record`, as the 1PPS control
+    /// mode's "tracking at least one satellite" means it (`@@Bn`, VP
+    /// p. 102): fixing, with the antenna heard, a satellite with a
+    /// signal at or above the mask angle and not ignored on one of its
+    /// channels, at a tracking mode of message sync or above.  Its
+    /// position status counts the satellites it tracks so, and Time
+    /// RAIM and its 1 PPS go by that count.
+    #[must_use]
+    pub fn tracking(&self, record: &Record) -> bool {
+        self.tracked_count(record, self.family()) != 0
+    }
+
+    /// Whether its 1 PPS goes out with `record`, by the 1PPS control
+    /// mode ([`Settings::pulse_mode`]; `@@Bn`, VP p. 102): never,
+    /// always, while [tracking](Self::tracking), or while Time RAIM
+    /// confirms the time solution's error within the alarm limit, its
+    /// solution status OK (VP p. 105).  It is the pulse status its Time
+    /// RAIM message reports (VP p. 104), for whoever makes the pulse to
+    /// gate it by.
+    #[must_use]
+    pub fn pulsing(&self, record: &Record) -> bool {
+        let family = self.family();
+        let tracked = self.tracked_count(record, family);
+        self.pulse(tracked, self.traim_result(record, tracked).solution)
+    }
+
     /// What commands have set it to.
     #[must_use]
     pub fn settings(&self) -> Settings {
@@ -1704,6 +1734,15 @@ impl Engine {
     fn time_of_day(&self, record: &Record, time: GpsSeconds) -> [u8; 3] {
         let label = self.label(record, time);
         [label.hour, label.minute, label.second]
+    }
+
+    /// The family of the channels it has now.
+    const fn family(&self) -> &'static Family {
+        if self.channels == EIGHT_CHANNELS {
+            &EIGHT
+        } else {
+            &SIX
+        }
     }
 
     /// Whether the antenna's feed says no antenna can be heard.

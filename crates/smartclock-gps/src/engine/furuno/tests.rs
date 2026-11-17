@@ -593,6 +593,7 @@ fn zda_keeps_the_sign_of_no_hours() {
 /// of four satellites or more with a PDOP under 6, and then goes out
 /// with one satellite or more (GT p. 47, (2)-1): a 2D fix of three
 /// satellites, or a fix of four at a PDOP of 6.0, does not make it.
+/// [`Engine::pulsing`] says what `tps` does.
 #[test]
 fn the_pulse_waits_for_a_first_fix_of_four_satellites() {
     let base = record(at(2026, 10, 22, 12, 0, 0));
@@ -616,7 +617,9 @@ fn the_pulse_waits_for_a_first_fix_of_four_satellites() {
         let mut sent = Sent::default();
         engine.second(now, &mut sent);
         let tps = sent.only("$PFEC,GPtps");
-        tps.split(',').nth(4).expect("the pulse").to_string()
+        let flag = tps.split(',').nth(4).expect("the pulse").to_string();
+        assert_eq!(engine.pulsing(now), flag == "1");
+        flag
     };
     let mut engine = Engine::new(&GT_74);
     assert_eq!(pulse(&mut engine, &using(3, 20)), "0");

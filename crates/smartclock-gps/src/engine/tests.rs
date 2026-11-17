@@ -1560,6 +1560,82 @@ fn a_time_raim_result_is_sent_while_time_raim_is_on() {
     assert_eq!(traim(&mut engine, &confirmed), [0, 0, 1, 1]);
 }
 
+/// VP p. 102: the engine tracks for its pulse while fixing, with the
+/// antenna heard, a satellite at or above the mask and not ignored.
+#[test]
+fn tracking_is_a_satellite_on_a_channel() {
+    let record = full();
+    let mut engine = powered_up(&VP_EIGHT);
+    assert!(!engine.tracking(&record));
+    ask(&mut engine, &record, CG_FIX_MODE, &FIX);
+    assert!(engine.tracking(&record));
+    assert!(!engine.tracking(&Record::EMPTY));
+
+    let mut unheard = record;
+    unheard.antenna = Antenna::Open;
+    assert!(!engine.tracking(&unheard));
+
+    // The lowest is at 29 degrees: at the mask it is tracked, above it
+    // not.
+    let mut low = full();
+    let lowest: Vec<Satellite> = record
+        .satellites
+        .iter()
+        .filter(|satellite| satellite.elevation.0 == 29)
+        .copied()
+        .collect();
+    low.satellites = Satellites::from_slice(&lowest);
+    tell(&mut engine, AG_MASK_ANGLE, &[29]);
+    assert!(engine.tracking(&low));
+    tell(&mut engine, AG_MASK_ANGLE, &[30]);
+    assert!(!engine.tracking(&low));
+    tell(&mut engine, AG_MASK_ANGLE, &[10]);
+
+    let all = record.satellites.iter().fold(0_u32, |bits, satellite| {
+        bits | 1 << (satellite.prn.get() - 1)
+    });
+    tell(
+        &mut engine,
+        AM_IGNORE_LIST,
+        &[&[0][..], &all.to_be_bytes()].concat(),
+    );
+    assert!(!engine.tracking(&record));
+}
+
+/// VP pp. 102 to 105: the 1 PPS goes out by its control mode, and
+/// [`Engine::pulsing`] says what the Time RAIM message's pulse status
+/// does.
+#[test]
+fn pulsing_follows_the_pulse_mode() {
+    let record = full();
+    let mut unheard = full();
+    unheard.antenna = Antenna::Open;
+    // Polled, Time RAIM on or off at 1 us, and a 1PPS control mode.
+    let setup = |on: u8, mode: u8| [0, on, 0, 10, mode, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let cases = [
+        (1, 0, &record, false),
+        (0, 1, &unheard, true),
+        (0, 2, &record, true),
+        (1, 2, &unheard, false),
+        (1, 3, &record, true),
+        (0, 3, &record, false),
+        (1, 3, &unheard, false),
+    ];
+    let mut engine = fixing(&VP_EIGHT);
+    for (on, mode, record, pulsing) in cases {
+        let frames = ask(&mut engine, record, EN_TIME_RAIM, &setup(on, mode));
+        let reported = only(&frames, EN_TIME_RAIM)[15] == 1;
+        assert_eq!(engine.pulsing(record), pulsing, "on {on}, mode {mode}");
+        assert_eq!(reported, pulsing, "on {on}, mode {mode}");
+    }
+
+    // Always, even idle; tracking, never idle.
+    let mut engine = powered_up(&VP_SIX);
+    assert!(engine.pulsing(&record));
+    tell(&mut engine, BN_TIME_RAIM, &setup(0, 2));
+    assert!(!engine.pulsing(&record));
+}
+
 /// VP pp. 74 and 75: mode 1 sends `@@Bb` when its data changes, as
 /// found at each satellite alert computation ([`ALERT_PERIOD`]), until
 /// `@@Cf` puts the engine back to polled.

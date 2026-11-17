@@ -2039,7 +2039,12 @@ specification; in short:
   pulse acts on the pulse settings, the crate's `PULSE_SETTINGS`:
   `@@Az`'s cable delay and `@@Ay`'s offset, which move the 1 PPS alone
   (VP pp. 66 and 68), and `@@Bn`'s 1PPS control mode, which only turns
-  it on or off (VP p. 102).  A `Declaration` says whether its provider
+  it on or off (VP p. 102).  The models say whether the pulse is on
+  this second by the mode (`Engine::pulsing`, and the Furuno model's
+  by GT p. 47), as their Time RAIM message or `tps` reports it, and
+  `Engine::tracking` whether the Oncore tracks a satellite, the
+  mode's own condition, so whoever makes the pulse gates it by the
+  model's rule and does not copy it.  A `Declaration` says whether its provider
   makes the pulse; one that does is held to them, one that does not
   to none of them, and a row excusing it one is needless.  Neither the
   scene nor the u-blox crate makes a pulse, a record carrying none:

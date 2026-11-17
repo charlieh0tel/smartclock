@@ -646,7 +646,9 @@ fn excused_settings(name: &str, exceptions: &str) -> SettingSet {
 /// cable delay (VP p. 68) and `@@Ay`'s offset (VP p. 66), and when it
 /// is put out at all, `@@Bn`'s 1PPS control mode, which turns the pulse
 /// on, off, on while tracking or on while Time RAIM confirms the time
-/// (VP p. 102).  Whoever makes the pulse acts on them: a provider of
+/// (VP p. 102).  Whoever makes the pulse acts on them, the control mode
+/// by the engine's own rule
+/// ([`Engine::pulsing`](crate::engine::Engine::pulsing)): a provider of
 /// records that makes none is not held to them ([`Declaration::makes_pulse`]).
 pub const PULSE_SETTINGS: SettingSet = SettingSet::of(&[
     Setting::CableDelay,

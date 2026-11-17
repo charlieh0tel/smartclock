@@ -10,8 +10,10 @@ use smartclock_gps::framing::Step;
 use smartclock_gps::framing::feed;
 
 use crate::message::LONGEST_PART;
+use crate::message::Layout;
 use crate::message::payload_length;
 use crate::message::streamed_layout;
+
 /// A frame's first two bytes (section 32.2, p. 168).
 pub const SYNC: [u8; 2] = [0xb5, 0x62];
 
@@ -190,14 +192,6 @@ enum Ended {
     End,
 }
 
-/// How a streamed message's payload is cut: its header's and each
-/// block's length.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Parts {
-    header: usize,
-    block: usize,
-}
-
 /// Finds frames in a stream of bytes, however it is cut into chunks
 /// ("Resynchronizing" in the crate's documentation).  `N` is the
 /// longest payload it holds; a longer one is not framed, it is
@@ -214,7 +208,7 @@ pub struct Deframer<const N: usize> {
     /// Its payload's length.
     length: usize,
     /// How it is cut, if it is streamed.
-    parts: Option<Parts>,
+    parts: Option<Layout>,
     /// The parts of it given so far.
     given: usize,
     /// The bytes of its payload taken so far.
@@ -358,9 +352,7 @@ impl<const N: usize> Deframer<N> {
                 self.given = 0;
                 self.head(byte, self.body());
                 let (id, length) = (self.id, self.length);
-                self.parts = streamed_layout(id)
-                    .filter(|_| self.streaming)
-                    .map(|(header, block)| Parts { header, block });
+                self.parts = streamed_layout(id).filter(|_| self.streaming);
                 let error = if payload_length(id).is_some_and(|own| !own.allows(length)) {
                     FrameError::BadLength { id, length }
                 } else if length > N && self.parts.is_none() {

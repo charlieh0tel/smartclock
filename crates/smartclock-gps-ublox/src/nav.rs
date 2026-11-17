@@ -48,6 +48,8 @@ use crate::units::TenMicrodegrees;
 pub(crate) const NAV_SAT_HEADER: usize = 8;
 /// One satellite's block of `NAV-SAT`.
 pub(crate) const NAV_SAT_BLOCK: usize = 12;
+/// Where in `NAV-SAT`'s header its count of blocks, `numSvs`, is.
+pub(crate) const NAV_SAT_COUNT: usize = 5;
 
 /// The length of a `NAV-SAT` payload that reports `satellites`: what a
 /// [`Deframer`](crate::frame::Deframer)'s or an
@@ -817,7 +819,7 @@ impl NavSatHeader {
     /// it.  `None` for a version other than 1, and for a `numSvs` that
     /// is not `blocks`: a payload not of its own exact length.
     pub(crate) fn parse(fields: Fields<'_>, blocks: usize) -> Option<Self> {
-        let satellites = fields.u8(5);
+        let satellites = fields.u8(NAV_SAT_COUNT);
         (fields.u8(4) == SAT_VERSION && usize::from(satellites) == blocks).then(|| Self {
             time_of_week: fields.time_of_week(),
             satellites,

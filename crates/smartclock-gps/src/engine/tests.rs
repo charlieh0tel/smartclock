@@ -2873,9 +2873,17 @@ fn hold_position_data(position: Location) -> Vec<u8> {
 /// not held; while it is, it is answered with the position held.
 #[test]
 fn the_held_position_is_not_changed_while_it_is_held() {
+    // Above the ellipsoid, which a UT Plus takes alone (UT p. 6.88).
+    let made_up = Location {
+        height: Height {
+            kind: HeightKind::Ellipsoid,
+            ..MADE_UP.height
+        },
+        ..MADE_UP
+    };
     let moved = Location {
         latitude: MilliArcSeconds(200_000_000),
-        ..MADE_UP
+        ..made_up
     };
     for identity in [&VP_EIGHT, &UT_PLUS_3_1] {
         let mut engine = powered_up(identity);
@@ -2884,7 +2892,7 @@ fn the_held_position_is_not_changed_while_it_is_held() {
             &mut engine,
             &record,
             AS_HOLD_POSITION,
-            &hold_position_data(MADE_UP),
+            &hold_position_data(made_up),
         );
         ask(&mut engine, &record, AT_POSITION_HOLD, &[1]);
         let frames = ask(
@@ -2893,8 +2901,8 @@ fn the_held_position_is_not_changed_while_it_is_held() {
             AS_HOLD_POSITION,
             &hold_position_data(moved),
         );
-        assert_eq!(only(&frames, AS_HOLD_POSITION), hold_position_data(MADE_UP));
-        assert_eq!(engine.settings().held_position, MADE_UP);
+        assert_eq!(only(&frames, AS_HOLD_POSITION), hold_position_data(made_up));
+        assert_eq!(engine.settings().held_position, made_up);
         assert_eq!(
             tell(&mut engine, AS_HOLD_POSITION, &hold_position_data(moved)),
             []
@@ -2978,5 +2986,124 @@ fn a_hold_position_out_of_range_is_not_taken() {
             hold_position_data(position)
         );
         assert_eq!(engine.settings().held_position, position);
+    }
+}
+
+/// VP pp. 17, 21 and 25: `@@Ad`, `@@Ae` and `@@Af` out of range are not
+/// taken, and answered as their queries are; each at the end of its
+/// range is taken.
+#[test]
+fn a_position_to_start_from_out_of_range_is_not_taken() {
+    let record = full();
+    let height = |centimeters: i32, kind: u8| [&centimeters.to_be_bytes()[..], &[kind]].concat();
+    let cases: [(MessageId, &[u8], Vec<u8>, bool); 14] = [
+        (
+            AD_LATITUDE,
+            &[0x99; 4],
+            324_000_000_i32.to_be_bytes().to_vec(),
+            true,
+        ),
+        (
+            AD_LATITUDE,
+            &[0x99; 4],
+            (-324_000_000_i32).to_be_bytes().to_vec(),
+            true,
+        ),
+        (
+            AD_LATITUDE,
+            &[0x99; 4],
+            324_000_001_i32.to_be_bytes().to_vec(),
+            false,
+        ),
+        (
+            AD_LATITUDE,
+            &[0x99; 4],
+            (-324_000_001_i32).to_be_bytes().to_vec(),
+            false,
+        ),
+        (
+            AE_LONGITUDE,
+            &[0x99; 4],
+            648_000_000_i32.to_be_bytes().to_vec(),
+            true,
+        ),
+        (
+            AE_LONGITUDE,
+            &[0x99; 4],
+            (-648_000_000_i32).to_be_bytes().to_vec(),
+            true,
+        ),
+        (
+            AE_LONGITUDE,
+            &[0x99; 4],
+            648_000_001_i32.to_be_bytes().to_vec(),
+            false,
+        ),
+        (
+            AE_LONGITUDE,
+            &[0x99; 4],
+            (-648_000_001_i32).to_be_bytes().to_vec(),
+            false,
+        ),
+        (AF_HEIGHT, &[0x99; 5], height(1_800_000, 1), true),
+        (AF_HEIGHT, &[0x99; 5], height(-100_000, 0), true),
+        (AF_HEIGHT, &[0x99; 5], height(1_800_001, 1), false),
+        (AF_HEIGHT, &[0x99; 5], height(-100_001, 0), false),
+        (AF_HEIGHT, &[0x99; 5], height(0, 2), false),
+        (AF_HEIGHT, &[0x99; 5], height(0, 1), true),
+    ];
+    for (id, query, data, taken) in cases {
+        let mut engine = powered_up(&VP_EIGHT);
+        let asked = ask(&mut engine, &record, id, query);
+        let frames = ask(&mut engine, &record, id, &data);
+        if taken {
+            assert_ne!(engine.settings().initial_position, Location::default());
+            if id != AF_HEIGHT {
+                assert_eq!(only(&frames, id), data);
+            }
+        } else {
+            assert_eq!(engine.settings().initial_position, Location::default());
+            assert_eq!(frames, asked);
+        }
+    }
+}
+
+/// UT pp. 6.16 and 6.88: a UT Plus takes a height above the ellipsoid
+/// alone, in `@@Af` and `@@As`; a VP takes mean sea level too (VP
+/// pp. 25 and 54).
+#[test]
+fn a_ut_plus_takes_heights_above_the_ellipsoid_alone() {
+    let record = full();
+    let above = |kind| Location {
+        height: Height {
+            height: Centimeters(5500),
+            kind,
+        },
+        ..Location::default()
+    };
+    for (identity, mean_sea_level_taken) in [(&UT_PLUS_3_1, false), (&VP_EIGHT, true)] {
+        for (kind, taken) in [
+            (HeightKind::Ellipsoid, true),
+            (HeightKind::MeanSeaLevel, mean_sea_level_taken),
+        ] {
+            let position = above(kind);
+            let mut engine = powered_up(identity);
+            ask(
+                &mut engine,
+                &record,
+                AF_HEIGHT,
+                &height_data(position.height),
+            );
+            ask(
+                &mut engine,
+                &record,
+                AS_HOLD_POSITION,
+                &hold_position_data(position),
+            );
+            let settings = engine.settings();
+            let expected = if taken { position } else { Location::default() };
+            assert_eq!(settings.initial_position.height, expected.height);
+            assert_eq!(settings.held_position, expected);
+        }
     }
 }

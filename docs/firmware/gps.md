@@ -889,7 +889,12 @@ What an engine in a Z380x or 58503A must do, from the above:
   - `As`: latitude, longitude and type as sent; the height within
     2 cm.  While position hold is on, a real Oncore does not take
     `As` (VP p. 53, UT p. 6.87) and answers with the position held,
-    and so does the engine; so it does to one out of p. 54's ranges.
+    and so does the engine; so it does to one out of p. 54's ranges,
+    and a UT Plus engine to height type 1, as the UT guide gives the
+    ellipsoid alone (UT p. 6.88).  `Ad`, `Ae` and `Af` out of their
+    ranges (VP pp. 17, 21 and 25; UT pp. 6.12, 6.14 and 6.16) are not
+    taken and are answered as their queries are; a UT Plus engine
+    takes `Af` above the ellipsoid alone.
   - `Cg` query (mode 2): any `@@Cg`.
 - **Answer queries** (mode 1, the query forms) with the message of the
   same ID, and polls and output requests (kind 7) with one message of

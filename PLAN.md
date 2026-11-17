@@ -1158,7 +1158,13 @@ stands in for one.
   taken either, answered the same way, as every setting out of range
   is.  Before, any `@@As` was stored and echoed, so an image that sent
   one while holding passed against the model and would not against a
-  real Oncore.
+  real Oncore.  `@@Ad`, `@@Ae` and `@@Af`, which were taken whatever
+  they gave, are held to their ranges the same way (VP pp. 17, 21 and
+  25; UT pp. 6.12, 6.14 and 6.16), one out of range answered as its
+  query is; and a UT Plus takes a height above the ellipsoid alone in
+  `@@Af`, `@@As` and `@@Au` (UT pp. 6.16, 6.88 and 6.50), where a VP
+  takes mean sea level too.  The UT Plus images send height type 0
+  unless a flag says otherwise ("The `@@As` height type").
 - **The model computes nothing physical.**  Dilutions of precision, a
   position in Earth-centered coordinates and magnetic variation need
   floating point or tables a Cortex-M0 should not carry, so a record

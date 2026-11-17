@@ -119,6 +119,10 @@ pub(super) fn height_takes(data: &[u8], model: Model) -> bool {
     };
     (HEIGHT_LEAST..=HEIGHT_MOST).contains(&i32::from_be_bytes([a, b, c, d])) && kind <= kind_most
 }
+/// The most cable delay `@@Az` takes, in nanoseconds: its range is 0
+/// to 999,999, with no sign (p. 69; UT p. 6.82).  A delay with its top
+/// bit set, as a negative one sent as two's complement, is past it.
+pub(super) const CABLE_DELAY_MOST: u32 = 999_999;
 /// The most a VP's atmospheric correction mode may be (`@@Aq`, p. 50),
 /// and a UT Plus's, which has two modes more.
 const CORRECTION_MOST_VP: u8 = 1;
@@ -278,7 +282,12 @@ const SETTINGS: [Setting; 23] = [
         &[0; 4],
         Takes::Long(999_999_999),
     ),
-    setting(AZ_CABLE_DELAY, &[QUERY; 4], &[0; 4], Takes::Anything),
+    setting(
+        AZ_CABLE_DELAY,
+        &[QUERY; 4],
+        &[0; 4],
+        Takes::Long(CABLE_DELAY_MOST),
+    ),
     setting(
         AB_APPLICATION_TYPE,
         &[QUERY],

@@ -421,9 +421,15 @@ the one each unit came with.
 
 ## The cable delay
 
-`@@Az` sets the 1PPS cable delay, `tttt`, a signed 32-bit count of ns
-(p. 69, 0 to 999999).  The Z380x send the `:GPS:ADELay` setting as
-given.  The 58503A adds `pps_cable_delay_offset` (`0x10201c`) in
+`@@Az` sets the 1PPS cable delay, `tttt`, a 32-bit count of ns, 0 to
+999999 with no sign (p. 69; UT p. 6.82; M12+ pp. 102 and 103): it only ever
+puts the pulse earlier.  The images hold the delay as a signed long,
+but `:GPS:REFerence:ADELay`'s range is 0 to 999999 ns too
+(`097-59551-02`, p. 5-17).  The engine of `crates/smartclock-gps`
+takes no delay past that range, a negative one included, and answers
+with the delay it holds, as it does any setting out of range; that a
+real Oncore refuses one so is inferred from the range.  The Z380x send
+the `:GPS:ADELay` setting as given.  The 58503A adds `pps_cable_delay_offset` (`0x10201c`) in
 `oncore_cable_delay_encode` (3704 `0x4feec`; 3633 `0x4fd64`, the same
 code, read from the ROM), with no clamp.
 
@@ -444,7 +450,9 @@ code, read from the ROM), with no clamp.
   shows the engine's value as `CABLE DLY` (`0x492a4`).
 - `@@Az` is an echo: the engine must return `tttt` exactly.  Start-up
   sends it from `gps_init_sequence` (`0x46a00`), which on any failure
-  logs `ant delay ack failure` and sends it again, without end.
+  logs `ant delay ack failure` and sends it again, without end.  So a
+  setting and offset whose sum is past 999999 ns, which nothing
+  clamps, would hold start-up there with an engine that refuses it.
 
 ## Time RAIM
 

@@ -1,6 +1,6 @@
 [package]
 name = "smartclock-gps-feed"
-description = "Runs the smartclock-gps engine on a host and speaks Oncore binary to a SmartClock's engine port, from gpsd, a UBX recording or a made-up sky"
+description = "Runs the smartclock-gps engine on a host and speaks Oncore binary, or a Furuno GT-74's NMEA, to a SmartClock's engine port, from gpsd, a UBX recording or a made-up sky"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

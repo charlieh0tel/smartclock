@@ -468,7 +468,7 @@ class Machine:
 
     def __init__(self, image: str, rom: bytes) -> None:
         self.image = image
-        self.vectors = IMAGES.get(image, NMEA_VECTORS)
+        self.vectors = IMAGES.get(image) or NMEA_IMAGES[image]
         self.fault: str | None = None
         self.raised: int | None = None
         self.reads: set[int] | None = None
@@ -1033,32 +1033,19 @@ def trace(image: str, rows: list[Row], table: Requests) -> Traced:
     return Traced(reads, compared(rows, table, by_count[min(by_count)]), stored, found, reach, ran, scan.walks)
 
 
-# The Z3815A 4010, whose engine speaks NMEA with Furuno's sentences
-# (docs/firmware/gps.md, "In every image"), and its primary's vector
-# table, as harness.py's profile has it.
-NMEA_IMAGE = 'z3815a-4010'
-NMEA_VECTORS = 0x20000
-# Its table of the sentences it decodes, nmea_sentences, and the sizes of
-# an nmea_sentence_entry and an nmea_field_entry
-# (rewritten/z3815a-4010/types/smartclock.h).
-NMEA_SENTENCES = 0x5E32A
+# The images whose engine speaks NMEA with Furuno's sentences
+# (docs/firmware/gps.md, "In every image"), each with its primary's
+# vector table, as harness.py's profiles have it.  Where each keeps
+# its tables and its records is where its exported C's globals place
+# them (Nmea), and its request codes are gps_paths.py's.
+NMEA_IMAGES = {'z3815a-4010': 0x20000}
+# The sizes of an nmea_sentence_entry and an nmea_field_entry, and of a
+# gps_sentence_descriptor (rewritten/IMAGE/types/smartclock.h).
 NMEA_ENTRY = 10
 NMEA_FIELD_ENTRY = 10
-# Its sentence descriptors, gps_sentence_descriptors, one for each code
-# from the first, gps_request_translations, and the scripts' steps: a
-# code and an argument mode.
-NMEA_DESCRIPTORS = 0x5E3CC
 NMEA_DESCRIPTOR = 0x20
-NMEA_FIRST_CODE = 0x39
-NMEA_CODES = 0x14
-NMEA_TRANSLATIONS = 0x5E6D4
-NMEA_TRANSLATION = 8
-REQUEST_NONE = 0xFF
-# The script tables whose steps are sent, by their names in names.tsv.
-NMEA_SCRIPTS = re.compile(r'gps_script_\w+|command_monitor_queries')
 # The framer's record, gps_response_buffer, an nmea_frame: its text,
 # cursor, count of fields, checksum digits and each field's start.
-NMEA_FRAME = 0x1015B0
 FRAME_TEXT = 0x52
 FRAME_CURSOR = 0x52
 FRAME_FIELDS = 0x56
@@ -1069,9 +1056,6 @@ FRAME_SIZE = 0x6C
 # tps's commit calls to send the engine a sentence through the DUART
 # (gps_requests.c), touching no field; and psos_mode, a kernel call.
 NMEA_STUBS = ('gps_periodic_send', 'psos_mode')
-# gps.position_hold, which gps_response_match tests before it compares a
-# position or a height (gps_nmea.c).
-POSITION_HOLD = 0xB6
 # A field's address in a decoder's call, its first argument, and the
 # decoder's place, its second, as nmea_sentence_decode pushes them.
 PLACE_ARGUMENT = 8
@@ -1109,6 +1093,48 @@ NMEA_SECONDS = (NMEA_SECOND, NMEA_LEAP_DUE)
 # The commands gps_response_match is asked about, each with the response
 # that answers it: the set of each parameter the image sets, GLL and rrs.
 NMEA_COMMANDS = ('set', 'GLL', 'rrs')
+# The fields of an image's gps record, where its check-layout.c places
+# them: the records the commits fill, each a record a walk runs to the
+# end of, as an Oncore decoder's record is; and gps.position_hold, which
+# gps_response_match tests before it compares a position or a height
+# (gps_nmea.c).
+GPS_FIELD = re.compile(r'CHECK_FIELD\(gps_state, \w+, (0x[0-9a-f]+) ')
+POSITION_HOLD = re.compile(r'CHECK_FIELD\(gps_state, position_hold, (0x[0-9a-f]+) ')
+
+
+@dataclass(frozen=True)
+class Nmea:
+    """Where one of NMEA_IMAGES keeps what the run needs: its table of
+    the sentences it decodes, its sentence descriptors and the first
+    code and count of them, the framer's record, its gps record, the
+    address of gps.position_hold and the fields of gps."""
+
+    image: str
+    sentences: int
+    descriptors: int
+    first_code: int
+    codes: int
+    frame: int
+    gps: int
+    position_hold: int
+    gps_fields: frozenset[int]
+
+
+def nmea_of(image: str) -> Nmea:
+    known = globals_of(image)
+    layout = (FIRMWARE / 'rewritten' / image / 'types' / 'check-layout.c').read_text()
+    first_code, codes = gps_paths.NMEA_IMAGES[image]
+    return Nmea(
+        image,
+        known['nmea_sentences'],
+        known['gps_sentence_descriptors'],
+        first_code,
+        codes,
+        known['gps_response_buffer'],
+        known['gps'],
+        int(POSITION_HOLD.search(layout)[1], 16),
+        frozenset(int(address, 16) for address in GPS_FIELD.findall(layout)),
+    )
 
 
 def nmea_name(sentence: str) -> str:
@@ -1140,8 +1166,8 @@ class Sentence:
     entries: tuple[tuple[int, int, int, int], ...]
 
 
-def nmea_table(rom: bytes) -> dict[str, Sentence]:
-    """The image's table of the sentences it decodes, by name."""
+def nmea_table(rom: bytes, nmea: Nmea) -> dict[str, Sentence]:
+    """An image's table of the sentences it decodes, by name."""
 
     def long(at: int) -> int:
         return struct.unpack_from('>I', rom, at)[0]
@@ -1150,7 +1176,7 @@ def nmea_table(rom: bytes) -> dict[str, Sentence]:
         return rom[at : rom.index(0, at)].decode('ascii')
 
     found = {}
-    at = NMEA_SENTENCES
+    at = nmea.sentences
     while long(at):
         length, fields = struct.unpack_from('>bb', rom, at + 4)
         entries = []
@@ -1178,9 +1204,9 @@ def sets(path: gps_paths.Path) -> bool:
     return not path.refused and path.target.kind == 'message' and path.mode in SET_MODES
 
 
-def nmea_frame(sentence: str) -> tuple[bytes, list[int]]:
-    """A sentence as the framer leaves it in its record, and each field's
-    offset in the text."""
+def nmea_frame(sentence: str, frame: int) -> tuple[bytes, list[int]]:
+    """A sentence as the framer leaves it in its record, at frame, and
+    each field's offset in the text."""
     text = bytearray(b'$')
     starts = [1]
     for character in sentence[1:].encode('ascii'):
@@ -1192,7 +1218,7 @@ def nmea_frame(sentence: str) -> tuple[bytes, list[int]]:
     text += b'\x00\n'
     record = bytearray(FRAME_SIZE)
     record[: len(text)] = text
-    struct.pack_into('>I', record, FRAME_CURSOR, NMEA_FRAME + len(text))
+    struct.pack_into('>I', record, FRAME_CURSOR, frame + len(text))
     record[FRAME_FIELDS] = len(starts)
     for index, start in enumerate(starts[:FRAME_STARTS_COUNT]):
         record[FRAME_STARTS + index] = start
@@ -1200,17 +1226,18 @@ def nmea_frame(sentence: str) -> tuple[bytes, list[int]]:
 
 
 class NmeaMachine(Machine):
-    """The Z3815A's ROM in Unicorn, decoding its sentences as
+    """An NMEA image's ROM in Unicorn, decoding its sentences as
     nmea_sentence_decode does, with NMEA_STUBS returning at once."""
 
-    def __init__(self, rom: bytes, table: dict[str, Sentence]) -> None:
-        super().__init__(NMEA_IMAGE, rom)
+    def __init__(self, rom: bytes, table: dict[str, Sentence], nmea: Nmea) -> None:
+        super().__init__(nmea.image, rom)
         self.table = table
+        self.nmea = nmea
         self.frame_reads: set[int] | None = None
-        known = names(NMEA_IMAGE)
+        known = names(nmea.image)
         for stub in NMEA_STUBS:
             self.uc.hook_add(UC_HOOK_CODE, self.stub, begin=known[stub], end=known[stub])
-        self.uc.hook_add(UC_HOOK_MEM_READ, self.frame_read, begin=NMEA_FRAME, end=NMEA_FRAME + FRAME_TEXT - 1)
+        self.uc.hook_add(UC_HOOK_MEM_READ, self.frame_read, begin=nmea.frame, end=nmea.frame + FRAME_TEXT - 1)
 
     def stub(self, uc: Uc, address: int, size: int, data: object) -> None:
         sp = uc.reg_read(UC_M68K_REG_A7)
@@ -1220,19 +1247,19 @@ class NmeaMachine(Machine):
 
     def frame_read(self, uc: Uc, access: int, address: int, size: int, value: int, data: object) -> None:
         if self.frame_reads is not None:
-            self.frame_reads.update(range(address - NMEA_FRAME, address - NMEA_FRAME + size))
+            self.frame_reads.update(range(address - self.nmea.frame, address - self.nmea.frame + size))
 
     def sentence(self, sentence: str) -> set[int]:
         """Decodes one sentence, each field's decoder called with the
         field and its place and the commit last, as nmea_sentence_decode
         calls them; the indices of the fields they read, a field's NUL,
         which ends it, its own, and the address's left out."""
-        record, starts = nmea_frame(sentence)
-        self.uc.mem_write(NMEA_FRAME, record)
+        record, starts = nmea_frame(sentence, self.nmea.frame)
+        self.uc.mem_write(self.nmea.frame, record)
         self.frame_reads = set()
         for index, _, decode, place in self.table[nmea_name(sentence)].entries:
             if decode and index < len(starts):
-                self.call(decode, NMEA_FRAME + starts[index], place)
+                self.call(decode, self.nmea.frame + starts[index], place)
         reads, self.frame_reads = self.frame_reads, None
         address = 2 if sentence.startswith('$PFEC') else 1
         return {
@@ -1242,10 +1269,12 @@ class NmeaMachine(Machine):
         }
 
     def second(self, sentences: tuple[str, ...]) -> dict[str, set[int]]:
-        """Decodes a second's sentences; the fields read of each."""
+        """Decodes those of a second's sentences the image decodes; the
+        fields read of each."""
         found: dict[str, set[int]] = {}
         for sentence in sentences:
-            found.setdefault(nmea_name(sentence), set()).update(self.sentence(sentence))
+            if nmea_name(sentence) in self.table:
+                found.setdefault(nmea_name(sentence), set()).update(self.sentence(sentence))
         return found
 
 
@@ -1280,24 +1309,14 @@ def with_field(sentence: str, index: int, value: str) -> str:
     return ','.join(fields)
 
 
-# The fields of the Z3815A's gps record, where check-layout.c places
-# them: the records the commits fill, each a record a walk runs to the
-# end of, as an Oncore decoder's record is.
-LAYOUT = FIRMWARE / 'rewritten' / NMEA_IMAGE / 'types' / 'check-layout.c'
-GPS_FIELD = re.compile(r'CHECK_FIELD\(gps_state, \w+, (0x[0-9a-f]+) ')
-
-
-def gps_fields_at() -> set[int]:
-    return {int(address, 16) for address in GPS_FIELD.findall(LAYOUT.read_text())}
-
-
 def nmea_compared(machine: NmeaMachine, rom: bytes) -> dict[str, set[int]]:
     """The fields of each response gps_response_match reads whole when
     asked whether it answers a command of the same values sent to set,
     with the position held: each of set's parameters the image sets
     against ssd, GLL against GGA and rrs against rsd."""
-    match = names(NMEA_IMAGE)[MATCH]
-    machine.uc.mem_write(globals_of(NMEA_IMAGE)['gps'] + POSITION_HOLD, b'\x01')
+    nmea = machine.nmea
+    match = names(nmea.image)[MATCH]
+    machine.uc.mem_write(nmea.position_hold, b'\x01')
     second = {nmea_name(sentence): sentence for sentence in NMEA_SECOND}
     ssd = second['ssd'].split(',')[2:]
     gga = second['GGA'].split(',')
@@ -1306,22 +1325,22 @@ def nmea_compared(machine: NmeaMachine, rom: bytes) -> dict[str, set[int]]:
     asked.append((f'$GPGLL,{",".join(gga[2:6])},,', 'GLL,', second['GGA']))
     asked.append((f'$PFEC,GPrrs,{",".join(rsd)}', 'rrs,', second['rsd']))
     codes = {
-        rom[(at := struct.unpack_from('>I', rom, NMEA_DESCRIPTORS + code * NMEA_DESCRIPTOR)[0]) : rom.index(0, at)].decode(
+        rom[(at := struct.unpack_from('>I', rom, nmea.descriptors + code * NMEA_DESCRIPTOR)[0]) : rom.index(0, at)].decode(
             'ascii'
-        ): NMEA_FIRST_CODE + code
-        for code in range(NMEA_CODES)
+        ): nmea.first_code + code
+        for code in range(nmea.codes)
     }
     found: dict[str, set[int]] = {}
     for sent, address, response in asked:
         if address not in codes:
             continue
         text = sent.encode('ascii') + b'\r\n'
-        record, starts = nmea_frame(response)
+        record, starts = nmea_frame(response, nmea.frame)
         machine.uc.mem_write(SENT, text)
-        machine.uc.mem_write(NMEA_FRAME, record)
+        machine.uc.mem_write(nmea.frame, record)
         machine.frame_reads = set()
         code = codes[address]
-        machine.call_with(match, struct.pack(MATCH_ARGUMENTS, code, SENT, len(text), 0, code, NMEA_FRAME, len(response) + 2))
+        machine.call_with(match, struct.pack(MATCH_ARGUMENTS, code, SENT, len(text), 0, code, nmea.frame, len(response) + 2))
         reads, machine.frame_reads = machine.frame_reads, None
         ends = starts[1:] + [len(response) + 1]
         found.setdefault(nmea_name(response), set()).update(
@@ -1330,16 +1349,17 @@ def nmea_compared(machine: NmeaMachine, rom: bytes) -> dict[str, set[int]]:
     return found
 
 
-def nmea_trace(rows: list[Row]) -> tuple[Traced, dict[str, Sentence]]:
-    """The Z3815A's Traced, and its sentences' fields by index.
+def nmea_trace(image: str, rows: list[Row]) -> tuple[Traced, dict[str, Sentence]]:
+    """An NMEA image's Traced, and its sentences' fields by index.
     Where a field is stored is where RAM differs after a
     second's sentences are decoded with the field's value another, each
     of its variants, from a second decoded before, for each of
     NMEA_SECONDS; its readers are the scan's, the decoding functions
     (NMEA_DECODING) left out."""
-    rom = (FIRMWARE / 'images' / f'{NMEA_IMAGE}.bin').read_bytes()
-    table = nmea_table(rom)
-    machine = NmeaMachine(rom, table)
+    nmea = nmea_of(image)
+    rom = (FIRMWARE / 'images' / f'{image}.bin').read_bytes()
+    table = nmea_table(rom, nmea)
+    machine = NmeaMachine(rom, table, nmea)
     reads: dict[str, set[int]] = {}
     seen_all: set[tuple[int, int]] = set()
     stored: dict[int, set[int]] = {}
@@ -1354,7 +1374,7 @@ def nmea_trace(rows: list[Row]) -> tuple[Traced, dict[str, Sentence]]:
         machine.watched = None
         base = machine.ram()
         for row in rows:
-            if row.direction != 'response' or not is_nmea(row.message):
+            if row.direction != 'response' or row.message not in table:
                 continue
             changes = stored.setdefault(row.line, set())
             for span in row.instances():
@@ -1370,12 +1390,12 @@ def nmea_trace(rows: list[Row]) -> tuple[Traced, dict[str, Sentence]]:
                     machine.second(tuple(altered))
                     # The framer's record holds the sentence itself.
                     changes |= {
-                        address for address in changed(base, machine.ram()) if not NMEA_FRAME <= address < NMEA_FRAME + FRAME_SIZE
+                        address for address in changed(base, machine.ram()) if not nmea.frame <= address < nmea.frame + FRAME_SIZE
                     }
     machine.uc.mem_write(RAM, primed_by[NMEA_SECOND])
     compared_fields = nmea_compared(machine, rom)
-    every = set().union(*stored.values()) or {globals_of(NMEA_IMAGE)['gps']}
-    first = min(min(every), globals_of(NMEA_IMAGE)['gps'])
+    every = set().union(*stored.values()) or {nmea.gps}
+    first = min(min(every), nmea.gps)
     last = max(every)
     seeds = [
         (decode, PLACE_ARGUMENT, place)
@@ -1383,21 +1403,21 @@ def nmea_trace(rows: list[Row]) -> tuple[Traced, dict[str, Sentence]]:
         for _, _, decode, place in sentence.entries
         if decode and first <= place <= last
     ]
-    scan = readers(NMEA_IMAGE, first, last, seeds)
-    decoding = {name for name in record_access.primary_functions(NMEA_IMAGE).values() if NMEA_DECODING.fullmatch(name)}
+    scan = readers(image, first, last, seeds)
+    decoding = {name for name in record_access.primary_functions(image).values() if NMEA_DECODING.fullmatch(name)}
     found = {
         line: set().union(*(scan.by_address.get(address, set()) for address in addresses)) - decoding
         for line, addresses in stored.items()
     }
-    functions = record_access.primary_functions(NMEA_IMAGE)
+    functions = record_access.primary_functions(image)
     starts = sorted(functions)
     places = sorted(every)
     records = sorted(
         {place for sentence in table.values() for _, _, decode, place in sentence.entries if decode and place}
-        | gps_fields_at()
+        | nmea.gps_fields
     )
     reach: dict[int, set[str]] = {line: set() for line in stored}
-    scan.walks |= tabled(NMEA_IMAGE, every)
+    scan.walks |= tabled(image, every)
     for function, address, how in scan.walks:
         after = bisect.bisect_left(places, address)
         if function in decoding or after == len(places) or places[after] - address > WALK_BEFORE:
@@ -1409,7 +1429,7 @@ def nmea_trace(rows: list[Row]) -> tuple[Traced, dict[str, Sentence]]:
         for line, addresses in stored.items():
             if function not in found[line] and any(address <= place < end for place in addresses):
                 reach[line].add(function)
-    calls = calls_of(NMEA_IMAGE)
+    calls = calls_of(image)
     ran: dict[int, set[str]] = {line: set() for line in stored}
     for row in rows:
         if row.line not in stored:
@@ -1573,9 +1593,9 @@ def image_uses(
     return '\n'.join(lines) + '\n'
 
 
-def check_rows(rows: list[Row], tables: dict[str, Requests], sentences: 'dict[str, Sentence]') -> list[str]:
+def check_rows(rows: list[Row], tables: dict[str, Requests], sentences: 'dict[str, dict[str, Sentence]]') -> list[str]:
     """What is wrong with the table by itself and against the images'
-    lengths and the Z3815A's counts of fields."""
+    lengths and the NMEA images' counts of fields."""
     problems = []
     record_fields = set(re.findall(r'^\s+pub (\w+):', RECORD.read_text(), re.MULTILINE))
     paths = field_paths()
@@ -1666,12 +1686,14 @@ ANY_ORDER = ('set', 'int')
 GSV_FIELDS = 20
 
 
-def check_sentence(message: str, direction: str, group: list[Row], sentences: 'dict[str, Sentence]') -> list[str]:
+def check_sentence(
+    message: str, direction: str, group: list[Row], sentences: 'dict[str, dict[str, Sentence]]'
+) -> list[str]:
     """What is wrong with a sentence's rows: each a whole field, they
     tile its fields from the first after its address, and a response's
-    end where the image's table counts its fields: one fewer for RMC,
-    whose checksum's field the count takes in, and at most its most for
-    GSV, whose count is negative."""
+    end where each NMEA image's table counts its fields: one fewer for
+    RMC, whose checksum's field the count takes in, and at most its most
+    where the count is negative."""
     problems = []
     for row in group:
         if row.length != 1 or row.bits != NONE:
@@ -1684,11 +1706,13 @@ def check_sentence(message: str, direction: str, group: list[Row], sentences: 'd
         if start != at:
             problems.append(f'{TABLE.relative_to(ROOT)}:{line}: {nmea_shown(message)} {direction} field {at} then {start}')
         at = stop
-    taken = sentences.get(message)
-    if direction == 'response' and taken is not None:
+    for image, table in sentences.items():
+        taken = table.get(message)
+        if direction != 'response' or taken is None:
+            continue
         fields = GSV_FIELDS if taken.fields < 0 else taken.fields - (1 if message == 'RMC' else 0)
         if (taken.fields > 0 and at != fields) or (taken.fields < 0 and at > fields):
-            problems.append(f'{nmea_shown(message)}: rows end at field {at}, the image counts {taken.fields}')
+            problems.append(f'{nmea_shown(message)}: rows end at field {at}, {image} counts {taken.fields}')
     return problems
 
 
@@ -1696,18 +1720,19 @@ def images_of(
     rows: list[Row],
     tables: dict[str, Requests],
     reads: dict[str, dict[str, set[int]]],
-    sent: set[tuple[str, str | None]],
+    sent: dict[str, set[tuple[str, str | None]]],
 ) -> list[str]:
     """Sets each row's images from the images; what stops that.  A
-    sentence's are the Z3815A's alone: a response field its decoders
-    read, a command field it sends to set, a parameter of set or
-    int by its letter or name, the first word of the row's field."""
+    sentence's are the NMEA images': each whose decoders read a
+    response field, each that sends a command field to set, a parameter
+    of set or int by its letter or name, the first word of the row's
+    field."""
     problems = []
-    nmea_reads = reads.get(NMEA_IMAGE, {})
-    for message, indices in nmea_reads.items():
-        fields = {index for row in rows if row.message == message and row.direction == 'response' for span in row.instances() for index in span}
-        if indices - fields:
-            problems.append(f'{NMEA_IMAGE}: {nmea_shown(message)}: reads fields {spans(indices - fields)}, outside its rows')
+    for image in NMEA_IMAGES:
+        for message, indices in reads[image].items():
+            fields = {index for row in rows if row.message == message and row.direction == 'response' for span in row.instances() for index in span}
+            if indices - fields:
+                problems.append(f'{image}: {nmea_shown(message)}: reads fields {spans(indices - fields)}, outside its rows')
     for image in IMAGES:
         for message, offsets in reads[image].items():
             data = {
@@ -1721,16 +1746,20 @@ def images_of(
                 problems.append(f'{image}: @@{message}: reads {spans(offsets - data)}, outside its rows')
     for row in rows:
         if is_nmea(row.message):
-            if row.direction == 'command':
-                key = row.field.split()[0] if row.message in ANY_ORDER else None
-                taken = (row.message, key) in sent
-            else:
-                indices = nmea_reads.get(row.message, set())
-                read = [span.start in indices for span in row.instances()]
-                if len(set(read)) != 1:
-                    problems.append(f'{TABLE.relative_to(ROOT)}:{row.line}: {NMEA_IMAGE} reads some of {nmea_shown(row.message)} {row.field}')
-                taken = any(read)
-            row.images = NMEA_IMAGE if taken else NONE
+            found = []
+            for image in NMEA_IMAGES:
+                if row.direction == 'command':
+                    key = row.field.split()[0] if row.message in ANY_ORDER else None
+                    taken = (row.message, key) in sent[image]
+                else:
+                    indices = reads[image].get(row.message, set())
+                    read = [span.start in indices for span in row.instances()]
+                    if len(set(read)) != 1:
+                        problems.append(f'{TABLE.relative_to(ROOT)}:{row.line}: {image} reads some of {nmea_shown(row.message)} {row.field}')
+                    taken = any(read)
+                if taken:
+                    found.append(image)
+            row.images = ','.join(found) or NONE
             continue
         found = []
         for image in IMAGES:
@@ -1797,7 +1826,7 @@ def uses_of(text: str) -> tuple[list[Use], list[str]]:
         }
         if cell['use'] not in CLASSES:
             problems.append(f'{where}: use {cell["use"]}')
-        if listed['images'] - set(IMAGES) - {NMEA_IMAGE}:
+        if listed['images'] - set(IMAGES) - set(NMEA_IMAGES):
             problems.append(f'{where}: images {cell["images"]}')
         if not CITED.search(cell['evidence']):
             problems.append(f'{where}: the evidence cites no function()')
@@ -2061,7 +2090,7 @@ def summary(
     for image, traced in traces.items():
         lines.append(f'{image} reads:')
         for message, offsets in traced.reads.items():
-            if image == NMEA_IMAGE:
+            if image in NMEA_IMAGES:
                 lines.append(f'  {message} fields {spans(offsets)}')
                 continue
             entry = next(entry for entry in tables[image].entries if entry.id == message)
@@ -2095,15 +2124,15 @@ def main() -> None:
     arguments = parser.parse_args()
     found_paths = {image: gps_paths.paths(image) for image in gps_paths.PATH_IMAGES}
     tables = {image: requests(image, found_paths[image]) for image in IMAGES}
-    sent = nmea_sent(found_paths[NMEA_IMAGE])
+    sent = {image: nmea_sent(found_paths[image]) for image in NMEA_IMAGES}
     was = TABLE.read_text()
     rows = rows_of(was)
-    nmea, sentences = nmea_trace(rows)
-    problems = check_rows(rows, tables, sentences)
+    nmea = {image: nmea_trace(image, rows) for image in NMEA_IMAGES}
+    problems = check_rows(rows, tables, {image: sentences for image, (_, sentences) in nmea.items()})
     hand, wrong = uses_of(USES.read_text())
     problems += wrong
     traces = {image: trace(image, rows, tables[image]) for image in IMAGES}
-    traces[NMEA_IMAGE] = nmea
+    traces |= {image: traced for image, (traced, _) in nmea.items()}
     problems += images_of(rows, tables, {image: traced.reads for image, traced in traces.items()}, sent)
     found, wrong = classify(rows, traces, hand)
     problems += wrong + cells_of(rows, traces, found)

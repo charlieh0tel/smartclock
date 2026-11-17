@@ -222,9 +222,9 @@ pub struct Settings {
     /// What the engine is used for (`@@AB`).
     pub application: Application,
     /// Where to start looking from: the latitude, longitude and height
-    /// last given (`@@Ad`, `@@Ae` and `@@Af`, pp. 17 to 26), each as it
-    /// was sent, in range or not.  The engine reports it while the
-    /// record has no position.
+    /// last given in range (`@@Ad`, `@@Ae` and `@@Af`, pp. 17 to 26; a
+    /// UT Plus's height above the ellipsoid alone, UT p. 6.16).  The
+    /// engine reports it while the record has no position.
     pub initial_position: Location,
     /// How the satellites to track are chosen (`@@Ah`).
     pub satellite_select: SatelliteSelect,

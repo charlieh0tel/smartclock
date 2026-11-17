@@ -123,7 +123,10 @@ use crate::engine::store::QUERY;
 use crate::engine::store::Store;
 use crate::engine::store::dop_kind_code;
 use crate::engine::store::height_of;
+use crate::engine::store::height_takes;
 use crate::engine::store::is_setting;
+use crate::engine::store::latitude_takes;
+use crate::engine::store::longitude_takes;
 use crate::oncore::AA_TIME_OF_DAY;
 use crate::oncore::AB_GMT_CORRECTION;
 use crate::oncore::AC_DATE;
@@ -1291,27 +1294,43 @@ impl Engine {
                 None => {}
             }
         } else if id == AD_LATITUDE || id == AE_LONGITUDE {
-            if data.iter().all(|byte| *byte == POSITION_QUERY) {
+            // One out of range (pp. 17 and 21; UT pp. 6.12 and 6.14) is
+            // not taken, and answered as the query is.
+            let latitude = id == AD_LATITUDE;
+            let given = match data {
+                &[a, b, c, d] if data.iter().any(|byte| *byte != POSITION_QUERY) => {
+                    Some(i32::from_be_bytes([a, b, c, d]))
+                }
+                _ => None,
+            }
+            .filter(|given| {
+                if latitude {
+                    latitude_takes(*given)
+                } else {
+                    longitude_takes(*given)
+                }
+            });
+            if let Some(given) = given {
+                if latitude {
+                    self.state.initial.latitude = MilliArcSeconds(given);
+                } else {
+                    self.state.initial.longitude = MilliArcSeconds(given);
+                }
+                send(out, id, Data::new().bytes(data));
+            } else {
                 let place = self.place(record);
-                let value = if id == AD_LATITUDE {
+                let value = if latitude {
                     place.latitude
                 } else {
                     place.longitude
                 };
                 send(out, id, Data::new().signed_long(value));
-            } else {
-                if let &[a, b, c, d] = data {
-                    let given = MilliArcSeconds(i32::from_be_bytes([a, b, c, d]));
-                    if id == AD_LATITUDE {
-                        self.state.initial.latitude = given;
-                    } else {
-                        self.state.initial.longitude = given;
-                    }
-                }
-                send(out, id, Data::new().bytes(data));
             }
         } else if id == AF_HEIGHT {
-            let given = height_of(data).filter(|_| data.iter().any(|byte| *byte != POSITION_QUERY));
+            // As `@@Ad` and `@@Ae` (p. 25; UT p. 6.16).
+            let given = height_of(data).filter(|_| {
+                data.iter().any(|byte| *byte != POSITION_QUERY) && height_takes(data, model)
+            });
             if let Some(height) = given {
                 self.state.initial.height = height;
             }

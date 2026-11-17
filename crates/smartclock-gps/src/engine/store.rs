@@ -50,7 +50,8 @@ use crate::units::Tenths;
 /// p. 27).
 pub(super) const QUERY: u8 = 0xff;
 
-/// The height type that says mean sea level (`@@Af`, p. 25).
+/// The height types: the ellipsoid and mean sea level (`@@Af`, p. 25).
+const HEIGHT_ELLIPSOID: u8 = 0;
 const HEIGHT_MEAN_SEA_LEVEL: u8 = 1;
 
 /// The height a command gives as four bytes and a height type (`@@Af`,
@@ -85,14 +86,39 @@ const CORRECTION_TROPOSPHERIC: u8 = 2;
 
 /// The first byte an ignore list's command must carry (`@@Am`, p. 41).
 const IGNORE_LIST_CONSTANT: u8 = 0;
-/// The heights an altitude hold and a position to hold take, in
-/// centimeters (`@@Au`, p. 58; `@@As`, p. 54).
+/// The heights a command takes, in centimeters (`@@Af`, p. 25, UT
+/// p. 6.16; `@@As`, p. 54, UT p. 6.88; `@@Au`, p. 58, UT p. 6.50).
 const HEIGHT_LEAST: i32 = -100_000;
 const HEIGHT_MOST: i32 = 1_800_000;
-/// The most a position to hold's latitude and longitude may be from 0,
-/// in milliarcseconds (`@@As`, p. 54).
+/// The most a latitude and a longitude may be from 0, in
+/// milliarcseconds (`@@Ad`, p. 17, UT p. 6.12; `@@Ae`, p. 21, UT
+/// p. 6.14; `@@As`, p. 54, UT p. 6.88).
 const LATITUDE_MOST: i32 = 324_000_000;
 const LONGITUDE_MOST: i32 = 648_000_000;
+
+/// Whether a latitude, in milliarcseconds, is in range.
+pub(super) fn latitude_takes(latitude: i32) -> bool {
+    (-LATITUDE_MOST..=LATITUDE_MOST).contains(&latitude)
+}
+
+/// Whether a longitude, in milliarcseconds, is in range.
+pub(super) fn longitude_takes(longitude: i32) -> bool {
+    (-LONGITUDE_MOST..=LONGITUDE_MOST).contains(&longitude)
+}
+
+/// Whether four bytes of height and a height type are in range on an
+/// Oncore of `model`: a VP takes the ellipsoid or mean sea level, a
+/// UT Plus the ellipsoid alone (UT pp. 6.16, 6.50 and 6.88).
+pub(super) fn height_takes(data: &[u8], model: Model) -> bool {
+    let &[a, b, c, d, kind] = data else {
+        return false;
+    };
+    let kind_most = match model {
+        Model::VpSix | Model::VpEight => HEIGHT_MEAN_SEA_LEVEL,
+        Model::UtPlus => HEIGHT_ELLIPSOID,
+    };
+    (HEIGHT_LEAST..=HEIGHT_MOST).contains(&i32::from_be_bytes([a, b, c, d])) && kind <= kind_most
+}
 /// The most a VP's atmospheric correction mode may be (`@@Aq`, p. 50),
 /// and a UT Plus's, which has two modes more.
 const CORRECTION_MOST_VP: u8 = 1;
@@ -113,7 +139,7 @@ enum Takes {
     IgnoreList,
     /// An atmospheric correction mode, whose range is the model's.
     Correction,
-    /// A height within range and its type.
+    /// A height within range and its type ([`height_takes`]).
     Height,
     /// A latitude and longitude within range, then a height as
     /// [`Self::Height`].
@@ -137,15 +163,11 @@ impl Takes {
                         Model::UtPlus => CORRECTION_MOST_UT_PLUS,
                     }
             }
-            (Self::Height, &[a, b, c, d, kind]) => {
-                (HEIGHT_LEAST..=HEIGHT_MOST).contains(&i32::from_be_bytes([a, b, c, d]))
-                    && kind <= HEIGHT_MEAN_SEA_LEVEL
-            }
+            (Self::Height, _) => height_takes(data, model),
             (Self::Position, &[a, b, c, d, e, f, g, h, ref height @ ..]) => {
-                (-LATITUDE_MOST..=LATITUDE_MOST).contains(&i32::from_be_bytes([a, b, c, d]))
-                    && (-LONGITUDE_MOST..=LONGITUDE_MOST)
-                        .contains(&i32::from_be_bytes([e, f, g, h]))
-                    && Self::Height.takes(height, model)
+                latitude_takes(i32::from_be_bytes([a, b, c, d]))
+                    && longitude_takes(i32::from_be_bytes([e, f, g, h]))
+                    && height_takes(height, model)
             }
             _ => false,
         }

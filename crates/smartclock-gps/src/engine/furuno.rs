@@ -1770,16 +1770,18 @@ fn sorted(record: &Record) -> impl Iterator<Item = &Satellite> {
         .filter_map(|prn| record.satellites.get(prn))
 }
 
-/// A field of exactly `length` decimal digits, its value.
+/// A field of exactly `length` decimal digits, its value; `None` too for
+/// one more than a `u32` holds.
 fn number(field: &[u8], length: usize) -> Option<u32> {
-    if field.len() != length || !field.iter().all(u8::is_ascii_digit) {
+    const RADIX: u32 = 10;
+    if field.len() != length {
         return None;
     }
-    Some(
-        field
-            .iter()
-            .fold(0, |value, digit| value * 10 + u32::from(digit - b'0')),
-    )
+    field.iter().try_fold(0, |value: u32, &digit| {
+        value
+            .checked_mul(RADIX)?
+            .checked_add(char::from(digit).to_digit(RADIX)?)
+    })
 }
 
 /// A field of exactly `length` digits whose value is `least` to `most`.
@@ -1800,15 +1802,17 @@ fn signed(field: &[u8], length: usize) -> Option<i32> {
     }
 }
 
-/// A height as `set,H` gives one, a sign, whole meters, a point and a
-/// tenth (GT p. 11), its `+` perhaps a `0`; its value in tenths.
+/// A height as `set,H` gives one, a sign, five digits of whole meters, a
+/// point and a tenth, nine bytes with its letter (GT p. 11), its `+`
+/// perhaps a `0`; its value in tenths.
 fn signed_tenths(field: &[u8]) -> Option<i32> {
+    const WHOLE_DIGITS: usize = 5;
     let (&sign, rest) = field.split_first()?;
     let (whole, tenth) = rest.split_at(rest.len().checked_sub(2)?);
     let [b'.', tenth] = *tenth else {
         return None;
     };
-    let whole = i32::try_from(number(whole, whole.len())?).ok()?;
+    let whole = i32::try_from(number(whole, WHOLE_DIGITS)?).ok()?;
     let tenth = i32::try_from(number(&[tenth], 1)?).ok()?;
     let magnitude = whole.checked_mul(10)?.checked_add(tenth)?;
     match sign {

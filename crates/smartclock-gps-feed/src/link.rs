@@ -25,6 +25,8 @@ use serialport::FlowControl;
 use serialport::Parity;
 use serialport::SerialPort;
 use serialport::StopBits;
+use socket2::SockRef;
+use socket2::TcpKeepalive;
 
 use crate::cli::TransportSpec;
 use crate::event;
@@ -47,6 +49,22 @@ const SHORTEST_WAIT: Duration = Duration::from_millis(1);
 const ACCEPT_POLL: Duration = Duration::from_millis(50);
 /// How long a connection is tried for.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+/// How long a write may wait for room, as for a peer that has stopped
+/// reading, before the connection is dropped: under a second, so the
+/// loop is not held up past the slack it allows a second.
+const WRITE_TIMEOUT: Duration = Duration::from_millis(500);
+/// A TCP connection with nothing to send is probed after this long
+/// idle, again at the interval, and dropped after this many probes go
+/// unanswered: a peer gone without a word, as one powered off, is found
+/// in under half a minute.
+const KEEPALIVE_IDLE: Duration = Duration::from_secs(10);
+const KEEPALIVE_INTERVAL: Duration = Duration::from_secs(5);
+const KEEPALIVE_PROBES: u32 = 3;
+/// How long what was sent may go unacknowledged before the connection
+/// is dropped, where probes are not sent for there being data in
+/// flight.
+#[cfg(target_os = "linux")]
+const UNACKNOWLEDGED: Duration = Duration::from_secs(30);
 /// The first wait before connecting again, and the longest.
 pub(crate) const FIRST_WAIT: Duration = Duration::from_secs(1);
 pub(crate) const LONGEST_WAIT: Duration = Duration::from_secs(30);
@@ -100,11 +118,15 @@ impl Default for Backoff {
     }
 }
 
-/// A connection that can wait for bytes for a while.
-trait Link: Write {
+/// A connection that can wait for bytes, or for room for them, for a
+/// while.
+trait Link {
     /// Waits up to `timeout` for bytes: `Ok(None)` when none came,
     /// `Ok(Some(0))` at the end of the stream.
     fn read_within(&mut self, buffer: &mut [u8], timeout: Duration) -> io::Result<Option<usize>>;
+
+    /// Writes all of `bytes`, each write waiting up to `timeout`.
+    fn write_within(&mut self, bytes: &[u8], timeout: Duration) -> io::Result<()>;
 }
 
 fn timed_out(error: &io::Error) -> bool {
@@ -120,6 +142,28 @@ impl Link for TcpStream {
             Err(error) => Err(error),
         }
     }
+
+    fn write_within(&mut self, bytes: &[u8], timeout: Duration) -> io::Result<()> {
+        self.set_write_timeout(Some(timeout.max(SHORTEST_WAIT)))?;
+        self.write_all(bytes)?;
+        self.flush()
+    }
+}
+
+/// Readies a TCP connection: sent without delay, and dropped when its
+/// peer has gone without a word ([`KEEPALIVE_IDLE`]).
+pub(crate) fn ready(stream: &TcpStream) -> io::Result<()> {
+    stream.set_nodelay(true)?;
+    let socket = SockRef::from(stream);
+    socket.set_tcp_keepalive(
+        &TcpKeepalive::new()
+            .with_time(KEEPALIVE_IDLE)
+            .with_interval(KEEPALIVE_INTERVAL)
+            .with_retries(KEEPALIVE_PROBES),
+    )?;
+    #[cfg(target_os = "linux")]
+    socket.set_tcp_user_timeout(Some(UNACKNOWLEDGED))?;
+    Ok(())
 }
 
 impl Link for Box<dyn SerialPort> {
@@ -132,6 +176,14 @@ impl Link for Box<dyn SerialPort> {
             Err(error) if timed_out(&error) => Ok(None),
             Err(error) => Err(error),
         }
+    }
+
+    /// With no flow control the port always drains, at its rate; the
+    /// one timeout bounds reads and writes alike.
+    fn write_within(&mut self, bytes: &[u8], timeout: Duration) -> io::Result<()> {
+        self.set_timeout(timeout.max(SHORTEST_WAIT))?;
+        self.write_all(bytes)?;
+        self.flush()
     }
 }
 
@@ -158,7 +210,7 @@ fn read_link(link: &mut dyn Link, into: &mut Vec<u8>, timeout: Duration, name: &
 
 /// Writes `bytes` to `link`; `false` if the connection is to be dropped.
 fn write_link(link: &mut dyn Link, bytes: &[u8], name: &str) -> bool {
-    match link.write_all(bytes).and_then(|()| link.flush()) {
+    match link.write_within(bytes, WRITE_TIMEOUT) {
         Ok(()) => true,
         Err(error) => {
             event(format_args!("{name}: {error}"));
@@ -188,7 +240,7 @@ impl Dial for TcpDial {
 
     fn dial(&self) -> io::Result<TcpStream> {
         let stream = connect(&self.0)?;
-        stream.set_nodelay(true)?;
+        ready(&stream)?;
         Ok(stream)
     }
 }
@@ -366,10 +418,7 @@ impl Server {
     fn accept(&mut self) {
         match self.listener.accept() {
             Ok((stream, peer)) if self.link.is_none() => {
-                if let Err(error) = stream
-                    .set_nonblocking(false)
-                    .and_then(|()| stream.set_nodelay(true))
-                {
+                if let Err(error) = stream.set_nonblocking(false).and_then(|()| ready(&stream)) {
                     event(format_args!("{peer}: {error}"));
                     return;
                 }
@@ -432,6 +481,8 @@ mod tests {
     use super::Server;
     use super::TcpDial;
     use super::Transport;
+    use super::WRITE_TIMEOUT;
+    use socket2::SockRef;
     use std::io::Read as _;
     use std::io::Write as _;
     use std::net::TcpListener;
@@ -537,6 +588,58 @@ mod tests {
         let (mut bridge, _) = listener.accept().unwrap();
         bridge.write_all(b"made").unwrap();
         assert_eq!(read_until(&mut dialer, 4), b"made");
+    }
+
+    /// A connection made or taken is probed when idle, so a peer gone
+    /// without a word is dropped and, for a listener, makes way for the
+    /// next.
+    #[test]
+    fn connections_are_probed_when_idle() {
+        let mut server = Server::bind("127.0.0.1:0").unwrap();
+        let address = server.listener.local_addr().unwrap();
+        let mut dialer = Dialer::new(TcpDial(address.to_string()), Backoff::default());
+        let started = Instant::now();
+        while dialer.link.is_none() || server.link.is_none() {
+            assert!(started.elapsed() < PATIENCE, "never connected");
+            dialer.read(&mut Vec::new(), STEP);
+            server.read(&mut Vec::new(), STEP);
+        }
+        assert!(
+            SockRef::from(dialer.link.as_ref().unwrap())
+                .keepalive()
+                .unwrap()
+        );
+        assert!(
+            SockRef::from(&server.link.as_ref().unwrap().0)
+                .keepalive()
+                .unwrap()
+        );
+    }
+
+    /// A peer that stops reading is dropped once what is written to it
+    /// has nowhere to go: no write waits much past its timeout.
+    #[test]
+    fn a_peer_that_stops_reading_is_dropped() {
+        const BLOCK: usize = 1 << 20;
+        let mut server = Server::bind("127.0.0.1:0").unwrap();
+        let address = server.listener.local_addr().unwrap();
+        let _deaf = TcpStream::connect(address).unwrap();
+        let started = Instant::now();
+        while server.link.is_none() {
+            assert!(started.elapsed() < PATIENCE, "never connected");
+            server.read(&mut Vec::new(), STEP);
+        }
+        let block = vec![0; BLOCK];
+        while server.link.is_some() {
+            assert!(started.elapsed() < PATIENCE * 4, "never dropped");
+            let write = Instant::now();
+            server.write(&block);
+            assert!(
+                write.elapsed() < WRITE_TIMEOUT * 4,
+                "a write waited {:?}",
+                write.elapsed()
+            );
+        }
     }
 
     /// A listener holds one connection, closes a second, and takes the

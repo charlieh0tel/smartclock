@@ -18,3 +18,4 @@ jiff = "0.2.38"
 serialport = "4.10.1"
 smartclock-gps = { path = "../smartclock-gps" }
 smartclock-gps-ublox = { path = "../smartclock-gps-ublox" }
+socket2 = { version = "0.6.5", features = ["all"] }

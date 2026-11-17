@@ -2606,6 +2606,55 @@ PLLP_TASK_STATES_Z3805A_1_01_03 = States(
     ),
     cases=PLLP_TASK_STATES_Z3815A.cases,
 )
+# The Z3817A 3752's loop stages and readings, the Z3815A 4010's with
+# the oscillator's kind for its switch word (docs/firmware/z3817a-3752.md,
+# "The loop's constants"): Z3815A_LOOP_PRESETS' functions with its own
+# cells where the Z3815A's differ: holdover's block in separate cells,
+# as the Z3805A 1.01.03's, its mean in holdover_ti_mean, and the offset
+# holdover starts with and its step; a block of pll.block_length
+# readings, 10 in 1PPS, 5 in PP2S, in holdover, startup_pll and
+# pll_normal, each block's last second about each; no TI setpoint in
+# pll_normal; holdover_recovery's restart of the ramp after more
+# holdover than half of max_loop_time (0x492f2), about each half of
+# its two defaults, 1000 s and kind 1's 500 s; startup_pll's ramp from
+# initial_loop_time; and powerup without an external reference.  Its
+# enter_holdover and gps_reference_update keep their own (below).
+Z3817A_3752_BLOCK_LENGTHS = (10, 5)
+Z3817A_3752_BLOCK_SECONDS = (0, 4, 8, 9)
+Z3817A_3752_MAX_LOOP_TIMES = (1000.0, 500.0, 300.0)
+Z3817A_3752_INITIAL_LOOP_TIMES = (150.0, 300.0)
+Z3817A_3752_DROPPED = {"ti_setpoint", "pll.external_reference", "DAT_0010218b"}
+Z3817A_3752_ADDED = {
+    "holdover": (
+        Preset("holdover_seconds", Z3817A_3752_BLOCK_SECONDS),
+        Preset("holdover_ti_mean", SMALL),
+        Preset("pll.holdover_offset", (0.0, 30.0, -2.0, 0.5)),
+        Preset("pll.holdover_offset_step", (0.0, 2.0, 1.0)),
+        Preset("pll.block_length", Z3817A_3752_BLOCK_LENGTHS),
+    ),
+    "holdover_recovery": (
+        Preset("pll.holdover_duration", (0, 250, 251, 500, 501, 100000)),
+        Preset("max_loop_time", Z3817A_3752_MAX_LOOP_TIMES),
+        Preset("initial_loop_time", Z3817A_3752_INITIAL_LOOP_TIMES),
+    ),
+    "pll_normal": (
+        Preset("loop_steering.seconds", Z3817A_3752_BLOCK_SECONDS),
+        Preset("max_loop_time", Z3817A_3752_MAX_LOOP_TIMES),
+        Preset("pll.block_length", Z3817A_3752_BLOCK_LENGTHS),
+    ),
+    "startup_pll": (
+        Preset("loop_steering.seconds", Z3817A_3752_BLOCK_SECONDS),
+        Preset("max_loop_time", Z3817A_3752_MAX_LOOP_TIMES),
+        Preset("initial_loop_time", Z3817A_3752_INITIAL_LOOP_TIMES),
+        Preset("pll.block_length", Z3817A_3752_BLOCK_LENGTHS),
+    ),
+}
+Z3817A_3752_LOOP_STATES = unswitched_loop_states(Z3805A_1_01_03_RENAMED, Z3817A_3752_DROPPED, Z3817A_3752_ADDED)
+# Its pllp_task as the Z3815A's (PLLP_TASK_STATES_Z3815A), each stage's
+# routine answered, without the n3 lock pll (0x4cb34).
+PLLP_TASK_STATES_Z3817A_3752 = States(
+    presets=PLLP_TASK_PRESETS_UNSWITCHED, hooks=PLLP_STAGE_HOOKS_UNSWITCHED, cases=PLLP_TASK_STATES_Z3815A.cases
+)
 IMAGE_STATES = {
     "58503a-3704": LOG_EVENT_BY_CODE_STATES,
     "z3816a-4001": LOG_EVENT_BY_CODE_STATES,
@@ -2681,8 +2730,13 @@ IMAGE_STATES = {
     # enter_holdover's STATES with the GPS reference's state, which it
     # switches on for its log code (0x48a8a), as the Z3815A's does,
     # where the Z3805A's reads gps.status_reported; log_write from its own
-    # log cursors, and log_event, the 58503A's by a code, from none.
+    # log cursors, and log_event, the 58503A's by a code, from none.  Its
+    # loop's (Z3817A_3752_LOOP_STATES), pllp_task's and the stage's
+    # readers', from each stage, the Z3815A's (PLLP_STAGE_STATES_UNSWITCHED).
     "z3817a-3752": {
+        **Z3817A_3752_LOOP_STATES,
+        "pllp_task": PLLP_TASK_STATES_Z3817A_3752,
+        **{name: PLLP_STAGE_STATES_UNSWITCHED for name in PLLP_STAGE_READERS},
         **OSCILLATOR_KIND_DONE_STATES,
         **{
             name: States(
@@ -2780,6 +2834,8 @@ IMAGE_COUNTED_LOOPS = {
     # the Z3805A 1.01.03's, which counts its set-up and passes so too
     # (0x47fc4)
     "z3805a-1.01.03": {"pllp_task": ("watchdog_pll", PLLP_SET_UP_COUNTS_Z3815A + PLLP_PASSES_Z3815A)},
+    # and the Z3817A 3752's (0x4cb34)
+    "z3817a-3752": {"pllp_task": ("watchdog_pll", PLLP_SET_UP_COUNTS_Z3815A + PLLP_PASSES_Z3815A)},
 }
 # The status register a function starts with that runs only in a task,
 # as a task does, in user mode, its interrupts unmasked, rather than

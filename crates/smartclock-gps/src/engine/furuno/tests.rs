@@ -589,6 +589,32 @@ fn zda_keeps_the_sign_of_no_hours() {
     assert_eq!(almanac_date(b"-01,30") - utc, Seconds(90 * 60));
 }
 
+/// `GGA`'s geoid separation stays six characters over GT p. 19's range,
+/// -999.9 to 9999.9, and at its ends past it, so the image takes the
+/// sentence.
+#[test]
+fn gga_carries_the_geoid_separation_in_six_characters() {
+    let table = table();
+    for (separation, field) in [
+        (160_000, "1600.0"),
+        (2_000_000, "9999.9"),
+        (3_600, "0036.0"),
+        (-50_000, "-500.0"),
+        (-200_000, "-999.9"),
+    ] {
+        let mut now = record(at(2026, 10, 22, 12, 0, 0));
+        let mut position = now.position.expect("a position");
+        position.ellipsoid = Centimeters(position.mean_sea_level.0 + separation);
+        now.position = Some(position);
+        let mut engine = Engine::new(&GT_74);
+        let mut sent = Sent::default();
+        engine.receive(b"$PFEC,GPint,GGA00\r\n", &now, &mut sent);
+        let gga = sent.only("$GPGGA");
+        assert_eq!(gga.split(',').nth(11), Some(field), "{gga}");
+        assert_eq!(refused(&table, &sent.0[0]), None);
+    }
+}
+
 /// A height of more digits than `set,H` has (GT p. 11), one a `u32`
 /// cannot hold among them, is ignored, and so is any number too long
 /// for one.

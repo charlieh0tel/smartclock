@@ -18,6 +18,7 @@ use smartclock_gps::record::Record;
 use smartclock_gps::source::Presence;
 use smartclock_gps::source::Source;
 use smartclock_gps::source::Tick;
+use smartclock_gps::time::UnixSeconds;
 use smartclock_gps::units::Milliseconds;
 use smartclock_gps::units::Seconds;
 
@@ -328,6 +329,19 @@ fn next_second(now: Duration, phase: Duration) -> Duration {
     Duration::from_secs(now.as_secs() + 1) + phase
 }
 
+/// When the first tick is due, `phase` into the next whole second of
+/// `clock`: read once, both for the provider's start
+/// ([`utc_second`]) and for [`run`], so a made-up sky's time is that of
+/// the second its frames go out in.
+pub(crate) fn first_second(clock: &dyn Clock, phase: Duration) -> Duration {
+    next_second(clock.now(), phase)
+}
+
+/// The UTC second `at` is in.
+pub(crate) fn utc_second(at: Duration) -> UnixSeconds {
+    UnixSeconds::from_epoch(Seconds(i64::try_from(at.as_secs()).unwrap_or(i64::MAX)))
+}
+
 /// Writes the engine's frames to the instrument and the log.
 fn send<W: Write>(
     frames: &mut Frames,
@@ -351,8 +365,8 @@ fn log_line<W: Write>(log: &mut Option<WireLog<W>>, at: Duration, direction: &st
 }
 
 /// Runs `feed` against `transport` on `clock`: a second each whole
-/// second of it, `phase` in, until a recording ends or, if given,
-/// `seconds` have been stepped.
+/// second of it from `first` ([`first_second`]), as far into each,
+/// until a recording ends or, if given, `seconds` have been stepped.
 ///
 /// A step of the clock, either way, counts the seconds again from now.
 /// A loop that fell behind with the clock unstepped skips the seconds
@@ -362,10 +376,11 @@ pub(crate) fn run<W: Write>(
     transport: &mut dyn Transport,
     clock: &dyn Clock,
     log: &mut Option<WireLog<W>>,
-    phase: Duration,
+    first: Duration,
     seconds: Option<u64>,
 ) -> End {
-    let mut pace = Pace::new(clock, next_second(clock.now(), phase), phase);
+    let phase = Duration::from_nanos(u64::from(first.subsec_nanos()));
+    let mut pace = Pace::new(clock, first, phase);
     let mut frames = Frames::default();
     let mut inbound = Vec::new();
     'seconds: loop {
@@ -419,7 +434,9 @@ mod tests {
     use super::Feed;
     use super::ONE_SECOND;
     use super::WireLog;
+    use super::first_second;
     use super::run;
+    use super::utc_second;
     use crate::cli::EngineSpec;
     use crate::cli::ProviderSpec;
     use crate::engine::Engine;
@@ -444,7 +461,6 @@ mod tests {
     use smartclock_gps::source::wrap::FakeTime;
     use smartclock_gps::source::wrap::LeapSchedule;
     use smartclock_gps::source::wrap::Relabel;
-    use smartclock_gps::time::DateTime;
     use std::cell::Cell;
     use std::collections::BTreeMap;
     use std::rc::Rc;
@@ -541,8 +557,11 @@ mod tests {
         Engine::new(&EngineSpec::Oncore { identity, options }).unwrap()
     }
 
+    /// The made-up sky from the second the test's first tick is in, as
+    /// the feed starts it.
     fn fixed(engine: Engine) -> Feed {
-        let now = DateTime::new(2027, 1, 1, 0, 0, 0).unwrap().to_unix();
+        let clock = instrument(BTreeMap::new()).clock;
+        let now = utc_second(first_second(&clock, Duration::ZERO));
         let Built { nest, kind } = build(&ProviderSpec::Fixed, None, now).unwrap();
         Feed::new(
             engine,
@@ -576,7 +595,7 @@ mod tests {
             &mut instrument,
             &clock,
             &mut log,
-            Duration::ZERO,
+            first_second(&clock, Duration::ZERO),
             Some(5),
         );
         assert_eq!(end, End::Seconds);
@@ -632,7 +651,7 @@ mod tests {
                 &mut instrument,
                 &clock,
                 &mut None::<WireLog<Vec<u8>>>,
-                Duration::ZERO,
+                first_second(&clock, Duration::ZERO),
                 Some(4),
             );
             let answered: Vec<u64> = instrument
@@ -669,7 +688,7 @@ mod tests {
             &mut instrument,
             &clock,
             &mut None::<WireLog<Vec<u8>>>,
-            Duration::ZERO,
+            first_second(&clock, Duration::ZERO),
             Some(10),
         );
         assert_eq!(end, End::Recording);
@@ -715,7 +734,7 @@ mod tests {
             &mut instrument,
             &clock,
             &mut log,
-            Duration::ZERO,
+            first_second(&clock, Duration::ZERO),
             Some(8),
         );
         assert_eq!(end, End::Seconds);
@@ -778,7 +797,7 @@ mod tests {
             &mut instrument,
             &clock,
             &mut None::<WireLog<Vec<u8>>>,
-            Duration::ZERO,
+            first_second(&clock, Duration::ZERO),
             Some(10),
         );
         assert_eq!(end, End::Recording);
@@ -841,7 +860,7 @@ mod tests {
             &mut interrupted,
             &clock,
             &mut None::<WireLog<Vec<u8>>>,
-            Duration::ZERO,
+            first_second(&clock, Duration::ZERO),
             Some(seconds),
         );
         interrupted
@@ -892,6 +911,20 @@ mod tests {
                     })
             })
             .collect()
+    }
+
+    /// The made-up sky's time is the second each of its frames goes out
+    /// in.
+    #[test]
+    fn the_sky_reads_the_second_it_goes_out_in() {
+        let interrupted = interrupted(
+            Engine::new(&EngineSpec::Furuno(&GT_74)).unwrap(),
+            0,
+            false,
+            4,
+        );
+        let offsets = sky_less_host(&interrupted.instrument);
+        assert_eq!(offsets, [0; 4]);
     }
 
     /// A loop held up five seconds, the clock unstepped, as by a link

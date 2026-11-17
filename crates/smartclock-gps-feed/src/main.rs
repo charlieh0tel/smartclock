@@ -22,22 +22,22 @@ use anyhow::Context as _;
 use anyhow::Result;
 use clap::Parser as _;
 use smartclock_gps::source::Tick;
-use smartclock_gps::time::UnixSeconds;
-use smartclock_gps::units::Seconds;
 
 use crate::cli::Cli;
 use crate::cli::ProviderSpec;
 use crate::engine::Engine;
-use crate::feed::Clock as _;
 use crate::feed::Feed;
 use crate::feed::SystemClock;
 use crate::feed::WireLog;
+use crate::feed::first_second;
 use crate::feed::phase;
 use crate::feed::run;
+use crate::feed::utc_second;
 use crate::link::Backoff;
 use crate::provider::Built;
 use crate::provider::Shared;
 use crate::provider::build;
+use crate::provider::kind;
 use crate::provider::spawn_gpsd;
 
 /// Reports what happened, on standard error.
@@ -49,9 +49,8 @@ fn main() -> Result<()> {
     let config = Cli::parse().configure()?;
     let engine = Engine::new(&config.spec).context("making the engine")?;
     let clock = SystemClock::new();
-    let now = clock.now();
-    let now = UnixSeconds::from_epoch(Seconds(i64::try_from(now.as_secs())?));
-    let Built { nest, kind } = build(&config.provider, config.fake_start, now)?;
+    let first = first_second(&clock, phase(kind(&config.provider)));
+    let Built { nest, kind } = build(&config.provider, config.fake_start, utc_second(first))?;
     let shared = Arc::new(Mutex::new(Shared {
         nest,
         tick: Tick(0),
@@ -74,8 +73,7 @@ fn main() -> Result<()> {
         config.engine.name(),
         config.provider
     ));
-    let phase = phase(kind);
     let mut feed = Feed::new(engine, shared, kind);
-    run(&mut feed, transport.as_mut(), &clock, &mut log, phase, None);
+    run(&mut feed, transport.as_mut(), &clock, &mut log, first, None);
     Ok(())
 }

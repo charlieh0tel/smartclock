@@ -147,6 +147,8 @@ struct Setting {
     query: &'static [u8],
     /// The value at power-up and after `@@Cf`.
     default: &'static [u8],
+    /// A UT Plus's, where it is not a VP's.
+    default_ut_plus: &'static [u8],
     /// What it may be set to.
     takes: Takes,
 }
@@ -162,7 +164,18 @@ const fn setting(
         id,
         query,
         default,
+        default_ut_plus: default,
         takes,
+    }
+}
+
+impl Setting {
+    /// The value at power-up and after `@@Cf` on an Oncore of `model`.
+    const fn default_of(&self, model: Model) -> &'static [u8] {
+        match model {
+            Model::VpSix | Model::VpEight => self.default,
+            Model::UtPlus => self.default_ut_plus,
+        }
     }
 }
 
@@ -328,13 +341,16 @@ pub(super) struct Store {
 }
 
 impl Store {
-    /// The values at power-up.
-    pub(super) const DEFAULT: Self = {
+    /// A VP's values at power-up.
+    pub(super) const DEFAULT: Self = Self::starting(Model::VpEight);
+
+    /// The values at power-up and after `@@Cf` on an Oncore of `model`.
+    pub(super) const fn starting(model: Model) -> Self {
         let mut bytes = [0; SETTINGS_BYTES];
         let mut index = 0;
         let mut at = 0;
         while index < SETTINGS.len() {
-            let default = SETTINGS[index].default;
+            let default = SETTINGS[index].default_of(model);
             let mut byte = 0;
             while byte < default.len() {
                 bytes[at] = default[byte];
@@ -344,7 +360,7 @@ impl Store {
             index += 1;
         }
         Self { bytes }
-    };
+    }
 
     fn index(id: MessageId) -> Option<usize> {
         SETTINGS.iter().position(|setting| setting.id == id)

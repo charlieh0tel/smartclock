@@ -17,7 +17,6 @@ use std::fs::File;
 use std::io::BufWriter;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::time::Duration;
 
 use anyhow::Context as _;
 use anyhow::Result;
@@ -31,13 +30,12 @@ use crate::cli::ProviderSpec;
 use crate::engine::Engine;
 use crate::feed::Clock as _;
 use crate::feed::Feed;
-use crate::feed::LIVE_PHASE;
 use crate::feed::SystemClock;
 use crate::feed::WireLog;
+use crate::feed::phase;
 use crate::feed::run;
 use crate::link::Backoff;
 use crate::provider::Built;
-use crate::provider::Kind;
 use crate::provider::Shared;
 use crate::provider::build;
 use crate::provider::spawn_gpsd;
@@ -75,11 +73,7 @@ fn main() -> Result<()> {
         config.engine.name(),
         config.provider
     ));
-    let phase = if kind == Kind::Live {
-        LIVE_PHASE
-    } else {
-        Duration::ZERO
-    };
+    let phase = phase(kind);
     let mut feed = Feed::new(engine, shared, kind);
     run(
         &mut feed,

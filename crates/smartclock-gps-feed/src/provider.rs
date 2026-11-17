@@ -332,9 +332,53 @@ pub(crate) fn spawn_gpsd(
     })
 }
 
+/// A count an assembler keeps, as last reported.
+#[derive(Debug, Default)]
+struct Reported {
+    /// The count last reported.
+    last: u32,
+}
+
+impl Reported {
+    /// How far `count` has risen since the last report, if at all.
+    fn note(&mut self, count: u32) -> Option<u32> {
+        let risen = count.checked_sub(self.last).filter(|&risen| risen > 0)?;
+        self.last = count;
+        Some(risen)
+    }
+}
+
+/// What a connection's assembler has lost, as last reported: the UBX
+/// frames it discarded, and the epochs with a fix that came without a
+/// `NAV-SAT`, which gpsd, passing on only whole packets, may have
+/// dropped before they reached it.
+#[derive(Debug, Default)]
+struct Losses {
+    frames: Reported,
+    skies: Reported,
+}
+
+impl Losses {
+    /// What to report of `assembler`'s losses since the last report.
+    fn note(&mut self, assembler: &Ubx) -> Vec<String> {
+        let frames = assembler.errors();
+        let skies = assembler.lost_skies();
+        let frames = self.frames.note(frames).map(|risen| {
+            format!("gpsd: {risen} UBX frame(s) discarded, {frames} on this connection")
+        });
+        let skies = self.skies.note(skies).map(|risen| {
+            format!("gpsd: {risen} epoch(s) with a fix and no NAV-SAT, {skies} on this connection")
+        });
+        frames.into_iter().chain(skies).collect()
+    }
+}
+
 /// Asks gpsd for its raw output and delivers each epoch's record, until
 /// the connection ends.  What gpsd says of itself in JSON is not UBX,
-/// and the deframer passes over it.
+/// and the deframer passes over it.  A frame discarded, damaged or
+/// longer than the assembler holds, and an epoch with a fix that came
+/// without its `NAV-SAT`, are reported after the read they came in, so
+/// a message lost on the way shows in the log.
 fn read_gpsd(
     mut stream: TcpStream,
     watch: &[u8],
@@ -344,6 +388,7 @@ fn read_gpsd(
     stream.write_all(watch)?;
     let mut chunk = [0; GPSD_CHUNK];
     let mut record = Record::EMPTY;
+    let mut losses = Losses::default();
     loop {
         let count = stream.read(&mut chunk)?;
         if count == 0 {
@@ -358,6 +403,9 @@ fn read_gpsd(
                 record = Record::EMPTY;
             }
         }
+        for loss in losses.note(assembler) {
+            event(loss);
+        }
     }
 }
 
@@ -365,9 +413,11 @@ fn read_gpsd(
 pub(crate) mod tests {
     use super::Built;
     use super::Kind;
+    use super::Losses;
     use super::Provider;
     use super::Shared;
     use super::UTC_OFFSET;
+    use super::Ubx;
     use super::build;
     use super::complete_scene;
     use super::recording;
@@ -395,6 +445,7 @@ pub(crate) mod tests {
     use smartclock_gps::source::Presence;
     use smartclock_gps::source::Source;
     use smartclock_gps::source::Tick;
+    use smartclock_gps::source::replay::Assemble as _;
     use smartclock_gps::source::scene;
     use smartclock_gps::source::scene::DECLARATION as SCENE;
     use smartclock_gps::source::wrap::FakeTime;
@@ -417,6 +468,7 @@ pub(crate) mod tests {
     use smartclock_gps_ublox::frame::encode;
     use smartclock_gps_ublox::message::NAV_EOE;
     use smartclock_gps_ublox::message::NAV_PVT;
+    use smartclock_gps_ublox::message::NAV_SAT;
     use smartclock_gps_ublox::message::NAV_TIMEGPS;
     use std::io::Read as _;
     use std::io::Write as _;
@@ -775,6 +827,52 @@ pub(crate) mod tests {
             drop(guard);
             drop(gpsd);
         }
+    }
+
+    /// A frame damaged on the way from gpsd, and an epoch with a fix
+    /// whose `NAV-SAT` gpsd never passed on, are each reported once,
+    /// with the count on the connection; nothing is reported while
+    /// nothing is lost.
+    #[test]
+    fn losses_are_reported() {
+        let mut assembler = Ubx::new();
+        let mut losses = Losses::default();
+        let mut record = Record::EMPTY;
+        let push = |assembler: &mut Ubx, bytes: &[u8], record: &mut Record| {
+            for &byte in bytes {
+                assembler.push(byte, record);
+            }
+        };
+        push(&mut assembler, &capture(), &mut record);
+        assert_eq!(losses.note(&assembler), Vec::<String>::new());
+
+        let mut damaged = capture();
+        // The last checksum byte of the last epoch's `NAV-EOE`.
+        let last = damaged.len() - 1;
+        damaged[last] ^= 0xff;
+        push(&mut assembler, &damaged, &mut record);
+        assert_eq!(
+            losses.note(&assembler),
+            ["gpsd: 1 UBX frame(s) discarded, 1 on this connection"]
+        );
+
+        // An epoch with a `NAV-SAT` of no satellites (UBX-13003221 R28
+        // p. 381, version 1), then one with a fix and none.
+        let second = NOON + EPOCHS * MILLISECONDS_PER_SECOND;
+        let tow = second.to_le_bytes();
+        let sky: [u8; 8] = payload(&[(0, &tow), (4, &[1, 0])]);
+        let with_sky = [frame(NAV_SAT, &sky), frame(NAV_EOE, &tow)].concat();
+        push(&mut assembler, &with_sky, &mut record);
+        push(
+            &mut assembler,
+            &epoch(second + MILLISECONDS_PER_SECOND, LEAP_SECONDS),
+            &mut record,
+        );
+        assert_eq!(
+            losses.note(&assembler),
+            ["gpsd: 1 epoch(s) with a fix and no NAV-SAT, 1 on this connection"]
+        );
+        assert_eq!(losses.note(&assembler), Vec::<String>::new());
     }
 
     /// What an engine sends, dropped.
